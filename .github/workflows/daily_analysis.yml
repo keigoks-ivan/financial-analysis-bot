@@ -1,0 +1,36 @@
+name: Daily Financial Analysis
+
+on:
+  schedule:
+    - cron: '0 22 * * *'
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: python analyzer.py
+      - run: python tts_podcast.py
+      - run: python web_generator.py
+      - name: Push docs to GitHub Pages
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/
+          git diff --staged --quiet || git commit -m "Auto update: $(date)"
+          git push
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_8K_DB_ID: ${{ secrets.NOTION_8K_DB_ID }}
+          NOTION_10Q_DB_ID: ${{ secrets.NOTION_10Q_DB_ID }}
+          NOTION_10K_DB_ID: ${{ secrets.NOTION_10K_DB_ID }}
+          GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
