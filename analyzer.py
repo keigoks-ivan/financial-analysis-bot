@@ -52,17 +52,14 @@ def get_google_sheets_watchlist() -> list[dict]:
       - 環境變數 GOOGLE_CREDENTIALS_JSON (service account JSON 字串)
       - Application Default Credentials
     """
-    creds_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
     scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-
-    if creds_json:
-        creds_info = json.loads(creds_json)
-        creds = service_account.Credentials.from_service_account_info(
-            creds_info, scopes=scopes
-        )
-    else:
-        from google.auth import default
-        creds, _ = default(scopes=scopes)
+    credentials_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+    if not credentials_json:
+        raise RuntimeError("環境變數 GOOGLE_CREDENTIALS_JSON 未設定")
+    credentials_dict = json.loads(credentials_json)
+    creds = service_account.Credentials.from_service_account_info(
+        credentials_dict, scopes=scopes
+    )
 
     service = build("sheets", "v4", credentials=creds)
     result  = (
