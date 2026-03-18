@@ -339,47 +339,9 @@ def run_synthesis(all_8k_analyses: list[dict]) -> str:
     return "".join(result_parts)
 
 
-# ── 測試函數 ─────────────────────────────────────────────────────────────────
-
-def test_edgar() -> None:
-    """
-    用 NVDA (CIK 0001045810) 查詢最近 30 天的 8-K filing，
-    印出找到的 filing 日期和類型清單，確認 EDGAR API 連線正常。
-    """
-    cik = "0001045810"
-    url = f"https://data.sec.gov/submissions/CIK{cik}.json"
-
-    print("=" * 60)
-    print(f"[TEST] 查詢 NVDA (CIK {cik}) 最近 30 天 8-K filing")
-    print("=" * 60)
-
-    resp = requests.get(url, headers=EDGAR_HEADERS, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-
-    recent = data.get("filings", {}).get("recent", {})
-    forms = recent.get("form", [])
-    dates = recent.get("filingDate", [])
-
-    cutoff = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
-
-    print(f"\n篩選條件：filingDate >= {cutoff}，form = 8-K\n")
-
-    found = 0
-    for form, date in zip(forms, dates):
-        if date >= cutoff and form == "8-K":
-            print(f"  {date}  |  {form}")
-            found += 1
-
-    print(f"\n共找到 {found} 筆 8-K filing")
-    print("=" * 60 + "\n")
-
-
 # ── 主程式 ───────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    test_edgar()
-
     from prompts import PROMPT_8K_BRIEF, PROMPT_10Q, PROMPT_10K
     from knowledge_base import KnowledgeBase
 
