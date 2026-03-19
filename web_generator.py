@@ -16,8 +16,6 @@ import html as html_lib
 import requests
 from pathlib import Path
 from jinja2 import Environment, BaseLoader
-from notion_client import Client as NotionClient
-
 # ── 路徑常數 ─────────────────────────────────────────────────────────────────
 DOCS_DIR    = Path("docs")
 
@@ -26,7 +24,6 @@ NOTION_TOKEN      = os.environ.get("NOTION_TOKEN")
 NOTION_8K_DB_ID   = os.environ.get("NOTION_8K_DB_ID")
 NOTION_10Q_DB_ID  = os.environ.get("NOTION_10Q_DB_ID")
 NOTION_10K_DB_ID  = os.environ.get("NOTION_10K_DB_ID")
-notion            = NotionClient(auth=NOTION_TOKEN)
 KB_DIR      = Path("knowledge_base")
 BASE_URL    = "https://research.investmquest.com"
 
@@ -567,7 +564,17 @@ def generate_report_page(report: dict) -> None:
 
 def _fetch_page_content(page_id: str) -> str:
     """讀取 Notion 頁面的所有 block，拼接為純文字。"""
-    blocks = notion.blocks.children.list(block_id=page_id, page_size=100)
+    headers = {
+        "Authorization": f"Bearer {NOTION_TOKEN}",
+        "Notion-Version": "2022-06-28",
+    }
+    resp = requests.get(
+        f"https://api.notion.com/v1/blocks/{page_id}/children?page_size=100",
+        headers=headers,
+        timeout=30,
+    )
+    resp.raise_for_status()
+    blocks = resp.json()
     parts: list[str] = []
     for block in blocks.get("results", []):
         btype = block.get("type", "")
