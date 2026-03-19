@@ -194,14 +194,12 @@ def fetch_filing_text(filing: dict, max_chars: int = 120_000) -> str:
 def analyze_with_claude(system_prompt: str, filing_text: str) -> str:
     """
     使用串流呼叫 Claude API 進行財報分析。
-    使用 adaptive thinking 讓模型自動決定推理深度。
     """
     result_parts = []
 
     with anthropic_client.messages.stream(
         model=MODEL,
         max_tokens=4096,
-        thinking={"type": "adaptive"},
         messages=[
             {
                 "role": "user",
