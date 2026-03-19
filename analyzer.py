@@ -3,7 +3,7 @@ analyzer.py — 財報自動化分析主程式
 
 流程：
   1. 從 Google Sheets 讀取 Watchlist (A欄 Ticker / C欄 CIK)
-  2. 查詢 SEC EDGAR API，找今天發布的 8-K / 10-Q / 10-K
+  2. 查詢 SEC EDGAR API，找過去 48 小時內發布的 8-K / 10-Q / 10-K
   3. 抓取申報全文
   4. 呼叫 Claude API (claude-sonnet-4-0) 串流分析
   5. 寫入 Notion 三個資料庫
@@ -82,12 +82,13 @@ def get_google_sheets_watchlist() -> list[dict]:
 
 # ── SEC EDGAR ────────────────────────────────────────────────────────────────
 
-def get_todays_filings(cik: str) -> list[dict]:
+def get_recent_filings(cik: str, hours: int = 48) -> list[dict]:
     """
-    查詢 SEC EDGAR submissions API，回傳今天的 8-K / 10-Q / 10-K 申報資料。
+    查詢 SEC EDGAR submissions API，回傳過去 *hours* 小時內的 8-K / 10-Q / 10-K 申報資料。
+    預設 48 小時，即使排程延遲也不會漏掉任何 filing。
     """
-    today = datetime.date.today().isoformat()
-    url   = f"https://data.sec.gov/submissions/CIK{cik}.json"
+    cutoff = (datetime.date.today() - datetime.timedelta(hours=hours)).isoformat()
+    url    = f"https://data.sec.gov/submissions/CIK{cik}.json"
 
     resp = requests.get(url, headers=EDGAR_HEADERS, timeout=30)
     resp.raise_for_status()
@@ -104,7 +105,7 @@ def get_todays_filings(cik: str) -> list[dict]:
     filings = []
 
     for form, date, acc, doc, desc in zip(forms, dates, accessions, prim_docs, descriptions):
-        if date == today and form in target_forms:
+        if date >= cutoff and form in target_forms:
             filings.append({
                 "form":               form,
                 "date":               date,
@@ -369,7 +370,7 @@ def main() -> None:
         print(f"\n  {ticker} (CIK {cik})")
 
         try:
-            filings = get_todays_filings(cik)
+            filings = get_recent_filings(cik)
             time.sleep(0.3)          # 遵守 EDGAR 10 req/s 限制
         except Exception as exc:
             msg = f"  [ERROR] {ticker} 查詢申報失敗: {exc}"
@@ -378,7 +379,7 @@ def main() -> None:
             continue
 
         if not filings:
-            print("  → 今日無新申報")
+            print("  → 過去 48 小時無新申報")
             continue
 
         for filing in filings:
