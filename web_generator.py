@@ -95,6 +95,7 @@ header nav a:hover,header nav a.active{color:var(--brand)}
      font-size:.72rem;font-weight:600;letter-spacing:.02em}
 .tag-10q{background:#dbeafe;color:#1e40af}
 .tag-10k{background:#f3e8ff;color:#6b21a8}
+.tag-dd{background:#1e3a5f;color:#fff}
 
 /* Moat Badges */
 .moat-badge{display:inline-block;padding:.2rem .7rem;border-radius:20px;
@@ -696,6 +697,34 @@ def fetch_notion_reports() -> list[dict]:
     return reports
 
 
+# ── 深度研究掃描 ─────────────────────────────────────────────────────────────
+
+def _scan_dd_reports() -> list[dict]:
+    """
+    掃描 docs/dd/ 資料夾，找出所有 DD_*.html 檔案。
+    檔名格式：DD_TICKER_YYYYMMDD.html
+    回傳 [{ticker, date, filename}, ...]，按日期降冪。
+    """
+    results = []
+    dd_dir = DOCS_DIR / "dd"
+    if not dd_dir.is_dir():
+        return results
+    for p in dd_dir.glob("DD_*.html"):
+        m = re.match(r"DD_([A-Za-z]+)_(\d{8})\.html$", p.name)
+        if not m:
+            continue
+        ticker = m.group(1).upper()
+        raw_date = m.group(2)
+        date_fmt = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:8]}"
+        results.append({
+            "ticker": ticker,
+            "date": date_fmt,
+            "filename": p.name,
+        })
+    results.sort(key=lambda r: r["date"], reverse=True)
+    return results
+
+
 # ── 首頁生成 ─────────────────────────────────────────────────────────────────
 
 def generate_index(reports: list[dict]) -> None:
@@ -757,6 +786,42 @@ def generate_index(reports: list[dict]) -> None:
         <tbody>
           {rows or '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">尚無報告</td></tr>'}
         </tbody>
+      </table>
+    </div>
+  </div>
+</div>"""
+
+    # ── 深度研究報告區塊
+    dd_reports = _scan_dd_reports()
+    if dd_reports:
+        dd_rows = ""
+        for dd in dd_reports:
+            t = html_lib.escape(dd["ticker"])
+            d = html_lib.escape(dd["date"])
+            fn = html_lib.escape(dd["filename"])
+            dd_rows += f"""
+<tr class="searchable">
+  <td><strong>{t}</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>{d}</td>
+  <td><a href="/dd/{fn}">查看 &rarr;</a></td>
+</tr>"""
+
+        body += f"""
+<div class="section">
+  <div class="container">
+    <h2 class="section-title">深度研究報告</h2>
+    <div class="card" style="overflow-x:auto;padding:0">
+      <table>
+        <thead>
+          <tr>
+            <th>公司</th>
+            <th>類型</th>
+            <th>日期</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>{dd_rows}</tbody>
       </table>
     </div>
   </div>
