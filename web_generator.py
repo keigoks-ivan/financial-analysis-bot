@@ -158,6 +158,26 @@ tbody tr:hover td{background:#f3f4f6}
 .signal-neg{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
 .signal-neu{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
 
+/* Guidance Box (10-Q) */
+.guidance-box{background:var(--brand-light);border:1px solid #93c5fd;border-radius:8px;
+              padding:1rem 1.25rem;margin-bottom:1.25rem}
+.guidance-box h4{color:var(--brand);font-size:.9rem;font-weight:600;margin-bottom:.4rem}
+.guidance-box .gd-text{font-size:.85rem;line-height:1.6;color:#1e40af}
+
+/* Capital Cards (10-Q) */
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.85rem}
+.cap-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem}
+.cap-card .cap-icon{font-size:1.2rem;margin-bottom:.25rem}
+.cap-card .cap-label{font-size:.76rem;color:var(--muted);text-transform:uppercase;
+                     letter-spacing:.03em;margin-bottom:.25rem}
+.cap-card .cap-amount{font-size:1.05rem;font-weight:700;color:var(--text)}
+.cap-card .cap-detail{font-size:.78rem;color:var(--muted);margin-top:.25rem;line-height:1.45}
+
+/* Change Arrows (10-Q table) */
+.chg-up{color:var(--green);font-weight:600}
+.chg-down{color:var(--red);font-weight:600}
+.chg-flat{color:var(--muted);font-weight:600}
+
 /* Moat Bar */
 .moat-bar{height:7px;border-radius:4px;background:var(--border);overflow:hidden}
 .moat-fill{height:100%;border-radius:4px}
@@ -198,6 +218,7 @@ footer a{color:var(--muted)}
   .radar-risks{grid-template-columns:1fr}
   .hdr-inner{flex-direction:column;gap:.5rem}
   header nav a{margin-left:0;margin-right:1rem}
+  .cap-grid{grid-template-columns:1fr}
 }
 """
 
@@ -459,20 +480,107 @@ def _parse_10q_sections(text: str) -> dict:
 
 def _extract_10q_financials(content: str) -> list[dict]:
     """
-    從 10-Q 數字變化段落提取財務指標，回傳 [{label, value}, ...]。
-    以冒號分割每行為「指標名稱」與「數值描述」。
+    從 10-Q 數字變化段落提取財務指標，含變動方向偵測。
+    回傳 [{label, value, direction}, ...]，direction 為 "up"/"down"/"flat"/""。
     """
+    up_kw = ["上升", "增加", "成長", "提升", "增長", "上漲", "擴大",
+             "改善", "高出", "超越", "優於", "好轉"]
+    down_kw = ["下降", "減少", "衰退", "降低", "下滑", "縮小", "惡化",
+               "低於", "不及", "壓縮", "收窄", "萎縮"]
+    flat_kw = ["持平", "不變", "維持", "穩定", "持穩"]
+
     rows = []
     for line in content.split("\n"):
         line = line.strip().lstrip("-•*").strip()
         if not line:
             continue
         m = re.split(r"[：:]", line, maxsplit=1)
-        if len(m) == 2 and m[0].strip() and m[1].strip():
-            rows.append({"label": m[0].strip(), "value": m[1].strip()})
-        elif line:
-            rows.append({"label": line, "value": ""})
+        label = m[0].strip() if m else line
+        value = m[1].strip() if len(m) >= 2 else ""
+
+        check = value or line
+        if any(k in check for k in up_kw) or re.search(r"[+＋]\s*\d", check):
+            direction = "up"
+        elif any(k in check for k in down_kw) or re.search(r"[-－]\s*\d", check):
+            direction = "down"
+        elif any(k in check for k in flat_kw):
+            direction = "flat"
+        else:
+            direction = ""
+
+        if label or value:
+            rows.append({"label": label, "value": value, "direction": direction})
     return rows
+
+
+def _extract_10q_guidance(content: str) -> str:
+    """
+    從 10-Q 段落二（敘事變化）擷取前瞻指引文字。
+    找不到時回傳空字串。
+    """
+    lines = content.split("\n")
+    guidance_lines = []
+    capturing = False
+    for line in lines:
+        stripped = line.strip().lstrip("-•*").strip()
+        if any(kw in stripped for kw in ["前瞻指引", "guidance", "Guidance"]):
+            capturing = True
+            parts = re.split(r"[：:]", stripped, maxsplit=1)
+            if len(parts) >= 2 and parts[1].strip():
+                guidance_lines.append(parts[1].strip())
+            elif parts[0].strip():
+                guidance_lines.append(parts[0].strip())
+            continue
+        if capturing:
+            if stripped and not stripped.startswith("#"):
+                # 仍屬同一段（縮排或無新 bullet 開頭）
+                if line.startswith("  ") or line.startswith("\t"):
+                    guidance_lines.append(stripped)
+                else:
+                    break
+            else:
+                break
+    return " ".join(guidance_lines).strip()
+
+
+def _extract_10q_capital(content: str) -> list[dict]:
+    """
+    從 10-Q 段落三（資本配置）擷取結構化卡片資料。
+    回傳 [{icon, label, amount, detail}, ...]。
+    """
+    items = []
+    for line in content.split("\n"):
+        line = line.strip().lstrip("-•*").strip()
+        if not line:
+            continue
+        parts = re.split(r"[：:]", line, maxsplit=1)
+        label = parts[0].strip()
+        detail = parts[1].strip() if len(parts) >= 2 else ""
+
+        # 嘗試從描述中提取關鍵數字
+        num_m = re.search(
+            r"[\$￥]?\s*\d[\d,.]*\s*(?:億|百萬|千萬|million|billion|萬)?",
+            detail, re.IGNORECASE,
+        )
+        amount = num_m.group(0).strip() if num_m else ""
+
+        # 依關鍵字選 icon
+        if any(k in label for k in ["回購", "buyback", "庫藏股"]):
+            icon = "&#x1F4B8;"
+        elif any(k in label for k in ["股息", "dividend", "配息"]):
+            icon = "&#x1F4B5;"
+        elif any(k in label for k in ["收購", "acquisition", "合資", "出售", "佈局"]):
+            icon = "&#x1F3E2;"
+        elif any(k in label for k in ["資產負債", "淨現金", "淨負債", "利息"]):
+            icon = "&#x1F3E6;"
+        else:
+            icon = "&#x1F4CA;"
+
+        items.append({
+            "icon": icon, "label": label,
+            "amount": amount, "detail": detail,
+        })
+    return items
 
 
 # ── Notion 資料讀取 ──────────────────────────────────────────────────────────
@@ -877,7 +985,9 @@ document.addEventListener('DOMContentLoaded',function(){{
 
 def generate_report_page_10q(report: dict, content: str) -> None:
     """
-    生成 10-Q 報告頁面：財務數字 + 護城河信號 + 一句話摘要。
+    生成 10-Q 報告頁面：
+      一句話摘要 → 財務數字表格（含↑↓箭頭）→ 前瞻指引（藍色框）
+      → 資本配置卡片 → 護城河信號（✓/✗）→ 完整分析
     """
     page_id = report.get("page_id", "")
     slug = page_id.replace("-", "")
@@ -886,7 +996,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
 
     parsed = _parse_10q_sections(content)
 
-    # ── 一句話摘要
+    # ── 1. 一句話摘要（頁面頂部大字）
     summary_html = ""
     if parsed["summary"]:
         summary_html = f"""
@@ -894,7 +1004,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <p>&ldquo;{html_lib.escape(parsed["summary"])}&rdquo;</p>
 </div>"""
 
-    # ── 財務數字表格（段落一）
+    # ── 2. 財務數字表格（段落一）——含變動方向箭頭
     fin_table_html = ""
     if 1 in parsed["sections"]:
         fin_rows = _extract_10q_financials(parsed["sections"][1]["content"])
@@ -903,16 +1013,25 @@ def generate_report_page_10q(report: dict, content: str) -> None:
             for fr in fin_rows:
                 label = html_lib.escape(fr["label"])
                 value = html_lib.escape(fr["value"])
-                if fr["value"]:
-                    trs += f"<tr><td style='font-weight:600;white-space:nowrap'>{label}</td><td>{value}</td></tr>"
+                d = fr["direction"]
+                if d == "up":
+                    arrow = '<span class="chg-up">&uarr;</span>'
+                elif d == "down":
+                    arrow = '<span class="chg-down">&darr;</span>'
+                elif d == "flat":
+                    arrow = '<span class="chg-flat">&mdash;</span>'
                 else:
-                    trs += f"<tr><td colspan='2'>{label}</td></tr>"
+                    arrow = ""
+                if value:
+                    trs += f"<tr><td style='font-weight:600;white-space:nowrap'>{label}</td><td>{value}</td><td style='text-align:center'>{arrow}</td></tr>"
+                else:
+                    trs += f"<tr><td colspan='3'>{label}</td></tr>"
             fin_table_html = f"""
 <div class="fin-section">
   <div class="card" style="overflow-x:auto">
     <h3>&#x1F4CA; 數字變化</h3>
     <table>
-      <thead><tr><th>指標</th><th>數值 / 說明</th></tr></thead>
+      <thead><tr><th>指標</th><th>分析</th><th style="text-align:center">趨勢</th></tr></thead>
       <tbody>{trs}</tbody>
     </table>
   </div>
@@ -926,28 +1045,76 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   </div>
 </div>"""
 
-    # ── 段落二、三（文字卡片）
-    section_cards = ""
-    for sec_num in [2, 3]:
-        if sec_num not in parsed["sections"]:
-            continue
-        sec = parsed["sections"][sec_num]
-        icon = {2: "&#x1F4DD;", 3: "&#x1F4B0;"}.get(sec_num, "")
-        section_cards += f"""
+    # ── 3. 前瞻指引（藍色提示框）+ 敘事變化卡片
+    guidance_html = ""
+    narrative_html = ""
+    if 2 in parsed["sections"]:
+        sec2 = parsed["sections"][2]["content"]
+        guidance_text = _extract_10q_guidance(sec2)
+        if guidance_text:
+            guidance_html = f"""
+<div class="guidance-box">
+  <h4>&#x1F52E; 前瞻指引 Forward Guidance</h4>
+  <div class="gd-text">{html_lib.escape(guidance_text)}</div>
+</div>"""
+        # 其餘敘事變化內容（排除已提取的 guidance 行）
+        remaining_lines = []
+        for line in sec2.split("\n"):
+            stripped = line.strip().lstrip("-•*").strip()
+            if not stripped:
+                continue
+            if any(kw in stripped for kw in ["前瞻指引", "guidance", "Guidance"]):
+                continue
+            remaining_lines.append(stripped)
+        if remaining_lines:
+            remaining_text = "\n".join(remaining_lines)
+            narrative_html = f"""
 <div class="fin-section">
   <div class="card">
-    <h3>{icon} {html_lib.escape(sec["title"])}</h3>
-    <div class="fin-content">{html_lib.escape(sec["content"])}</div>
+    <h3>&#x1F4DD; 敘事變化</h3>
+    <div class="fin-content">{html_lib.escape(remaining_text)}</div>
   </div>
 </div>"""
 
-    # ── 護城河信號
+    # ── 4. 資本配置卡片（段落三）
+    capital_html = ""
+    if 3 in parsed["sections"]:
+        cap_items = _extract_10q_capital(parsed["sections"][3]["content"])
+        if cap_items:
+            cards = ""
+            for ci in cap_items:
+                amount_line = f'<div class="cap-amount">{html_lib.escape(ci["amount"])}</div>' if ci["amount"] else ""
+                detail_line = f'<div class="cap-detail">{html_lib.escape(ci["detail"])}</div>' if ci["detail"] else ""
+                cards += f"""
+<div class="cap-card">
+  <div class="cap-icon">{ci["icon"]}</div>
+  <div class="cap-label">{html_lib.escape(ci["label"])}</div>
+  {amount_line}
+  {detail_line}
+</div>"""
+            capital_html = f"""
+<div class="fin-section">
+  <div class="card">
+    <h3>&#x1F4B0; 資本配置</h3>
+    <div class="cap-grid">{cards}</div>
+  </div>
+</div>"""
+        else:
+            capital_html = f"""
+<div class="fin-section">
+  <div class="card">
+    <h3>&#x1F4B0; {html_lib.escape(parsed["sections"][3]["title"])}</h3>
+    <div class="fin-content">{html_lib.escape(parsed["sections"][3]["content"])}</div>
+  </div>
+</div>"""
+
+    # ── 5. 護城河信號（✓ 強化 / ✗ 弱化）
     signals_html = ""
     if parsed["signals"]:
         sig_items = ""
         for sig in parsed["signals"]:
             cls_map = {"positive": "signal-pos", "negative": "signal-neg", "neutral": "signal-neu"}
-            prefix_map = {"positive": "&#x25B2; ", "negative": "&#x25BC; ", "neutral": ""}
+            prefix_map = {"positive": "&#x2713; ", "negative": "&#x2717; ", "neutral": ""}
             cls = cls_map.get(sig["type"], "signal-neu")
             prefix = prefix_map.get(sig["type"], "")
             sig_items += f'<span class="signal {cls}">{prefix}{html_lib.escape(sig["text"])}</span>\n'
@@ -959,7 +1126,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   </div>
 </div>"""
 
-    # ── 完整分析
+    # ── 完整分析（可展開）
     full_text = html_lib.escape(content)
 
     body = f"""
@@ -975,7 +1142,9 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div class="container">
     {summary_html}
     {fin_table_html}
-    {section_cards}
+    {guidance_html}
+    {narrative_html}
+    {capital_html}
     {signals_html}
     <details style="margin-top:1.5rem">
       <summary style="cursor:pointer;font-weight:600;font-size:.95rem;color:var(--brand);
