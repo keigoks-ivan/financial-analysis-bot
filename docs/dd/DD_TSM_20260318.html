@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_TSM_20260318 — 台積電快速版研究報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2f4a;
+    --accent: #00d4ff;
+    --accent2: #3b82f6;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --header-h: 52px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── FIXED HEADER ── */
+  .top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    background: rgba(10,14,23,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    z-index: 100;
+  }
+  .top-bar .ticker {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .top-bar .meta {
+    display: flex; gap: 24px; align-items: center;
+    font-size: 12px; color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .top-bar .meta span { display: flex; align-items: center; gap: 6px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .badge-quick { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-red   { background: rgba(239,68,68,0.15);  color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
+  .badge-yellow{ background: rgba(245,158,11,0.15); color: var(--yellow);border: 1px solid rgba(245,158,11,0.3); }
+  .badge-blue  { background: rgba(59,130,246,0.15); color: var(--accent2);border: 1px solid rgba(59,130,246,0.3);}
+
+  /* ── MAIN LAYOUT ── */
+  .main { max-width: 1040px; margin: 0 auto; padding: calc(var(--header-h) + 36px) 24px 80px; }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0f1e38 0%, #0a1628 60%, #060d1a 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px 40px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-name { font-size: 13px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .hero-title { font-size: 32px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+  .hero-sub { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .stat-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: var(--accent); font-family: 'DM Mono', monospace; }
+  .stat-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .data-note { font-size: 11px; color: var(--text-muted); margin-top: 16px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── SECTION ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 24px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; color: var(--accent);
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+  }
+  .section-title { font-size: 15px; font-weight: 700; color: #fff; }
+  .section-body { padding: 24px; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: rgba(0,212,255,0.06);
+    color: var(--accent);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+  }
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  td { padding: 10px 14px; color: var(--text-dim); vertical-align: top; }
+  td:first-child { color: var(--text); font-weight: 500; }
+  .num { font-family: 'DM Mono', monospace; }
+
+  .beat  { color: var(--green); font-weight: 700; font-family:'DM Mono',monospace; }
+  .miss  { color: var(--red);   font-weight: 700; font-family:'DM Mono',monospace; }
+  .yes   { color: var(--green); font-weight: 700; }
+  .no    { color: var(--red);   font-weight: 700; }
+  .warn  { color: var(--yellow);font-weight: 700; }
+  .expand{ color: var(--green); font-weight: 700; }
+  .shrink{ color: var(--red);   font-weight: 700; }
+  .stable{ color: var(--yellow);font-weight: 700; }
+
+  /* ── PROSE ── */
+  .prose { font-size: 13.5px; color: var(--text-dim); line-height: 1.8; }
+  .prose + .prose { margin-top: 14px; }
+  .prose strong { color: var(--text); }
+  .prose .hl { color: var(--accent); font-weight: 600; }
+  .prose .warn-txt { color: var(--yellow); font-weight: 600; }
+  .prose .danger-txt { color: var(--red); font-weight: 600; }
+
+  /* ── CALL-OUT BOXES ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .callout-blue   { background: rgba(59,130,246,0.08);  border-left: 3px solid var(--accent2); }
+  .callout-green  { background: rgba(16,185,129,0.08);  border-left: 3px solid var(--green); }
+  .callout-yellow { background: rgba(245,158,11,0.08);  border-left: 3px solid var(--yellow); }
+  .callout-red    { background: rgba(239,68,68,0.08);   border-left: 3px solid var(--red); }
+
+  /* ── INVERSION RISK ── */
+  .risk-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-top: 8px; }
+  .risk-card {
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .risk-card .risk-tag {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--red); font-weight: 700; margin-bottom: 6px;
+    font-family: 'DM Mono', monospace;
+  }
+  .risk-card .risk-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .risk-card .risk-body { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
+  /* ── MOAT SCORE ── */
+  .moat-score-wrap {
+    display: flex; align-items: center; gap: 20px; margin: 16px 0;
+  }
+  .moat-score-big {
+    font-size: 56px; font-weight: 900; color: var(--accent);
+    font-family: 'DM Mono', monospace; line-height: 1;
+  }
+  .moat-score-label { font-size: 13px; color: var(--text-muted); }
+
+  /* ── SCENARIOS ── */
+  .scenario-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+  .sc-bull { background: rgba(16,185,129,0.07);  border: 1px solid rgba(16,185,129,0.25); border-radius: 8px; padding: 18px; }
+  .sc-base { background: rgba(245,158,11,0.07);  border: 1px solid rgba(245,158,11,0.25); border-radius: 8px; padding: 18px; }
+  .sc-bear { background: rgba(239,68,68,0.07);   border: 1px solid rgba(239,68,68,0.25);  border-radius: 8px; padding: 18px; }
+  .sc-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 8px; font-family:'DM Mono',monospace; }
+  .sc-bull .sc-label { color: var(--green); }
+  .sc-base .sc-label { color: var(--yellow); }
+  .sc-bear .sc-label { color: var(--red); }
+  .sc-assumption { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+  .sc-valuation { font-size: 13px; color: var(--text); font-weight: 600; }
+
+  /* ── VERDICT ── */
+  .verdict-box {
+    background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(59,130,246,0.05));
+    border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin-top: 18px;
+  }
+  .verdict-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; margin-bottom: 10px; font-family:'DM Mono',monospace; }
+  .verdict-body { font-size: 14px; color: var(--text); line-height: 1.8; }
+
+  /* ── KPI MONITOR ── */
+  .kpi-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px; color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+
+  /* ── SUBHEADINGS ── */
+  h3 { font-size: 13px; font-weight: 700; color: var(--text); text-transform: uppercase; letter-spacing: 0.08em; margin: 20px 0 8px; }
+  h3:first-child { margin-top: 0; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── PRINT BUTTON ── */
+  .print-btn {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,212,255,0.35);
+    transition: all 0.2s;
+    z-index: 200;
+  }
+  .print-btn:hover { background: #33dcff; transform: translateY(-2px); }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: #fff; color: #000; font-size: 12px; }
+    .top-bar { position: static; background: #f0f4f8; border-bottom: 2px solid #ccc; }
+    .print-btn { display: none; }
+    .main { padding-top: 16px; }
+    .hero { background: #f0f4f8; border: 1px solid #ccc; }
+    .hero::before { display: none; }
+    .hero-title, .section-title, .stat-value { color: #000; }
+    .stat-card, .section, .risk-card, .sc-bull, .sc-base, .sc-bear, .verdict-box { border-color: #ccc; }
+    .section { break-inside: avoid; }
+    .section-header { background: #f5f7fa; }
+    .top-bar .ticker { color: #1a56db; }
+    .section-num { color: #1a56db; }
+    td, .prose, .risk-body, .sc-assumption, .stat-sub { color: #333; }
+    a { color: #1a56db; }
+  }
+
+  @media (max-width: 768px) {
+    .hero-stats { grid-template-columns: repeat(2,1fr); }
+    .risk-grid { grid-template-columns: 1fr; }
+    .scenario-grid { grid-template-columns: 1fr; }
+    .top-bar .meta { gap: 12px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── FIXED HEADER ── -->
+<div class="top-bar">
+  <span class="ticker">NYSE: TSM &nbsp;|&nbsp; TWSE: 2330</span>
+  <div class="meta">
+    <span><span class="badge badge-quick">⚡ 快速版</span></span>
+    <span>資料截止：2026-03-18</span>
+    <span>最新股價 <strong style="color:#fff">$336.71</strong></span>
+    <span>最近財報：Q4 2025</span>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-name">Buy-Side 快速研究報告 · 買側標的研究框架 v3.1</div>
+    <div class="hero-title">台灣積體電路製造 TSMC</div>
+    <div class="hero-sub">全球最大純晶圓代工廠 · AI 算力基礎設施核心卡口</div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <div class="stat-label">市值 (ADR)</div>
+        <div class="stat-value">$1.76T</div>
+        <div class="stat-sub">全球第6大上市公司</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">52週區間</div>
+        <div class="stat-value">$134–390</div>
+        <div class="stat-sub">近1年漲幅 +85.6%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TTM EPS</div>
+        <div class="stat-value">$10.57</div>
+        <div class="stat-sub">P/E(TTM) 32.7× | Fwd P/E 23.9×</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ROE (TTM)</div>
+        <div class="stat-value">35.4%</div>
+        <div class="stat-sub">Q4 2025 單季 ROE 38.8%</div>
+      </div>
+    </div>
+    <div class="data-note"><span class="dot"></span> 即時數據抓取：2026-03-18 · 最新財報 Q4 2025（2026-01-15 發布）· 下次財報 2026-04-19(est)</div>
+  </div>
+
+  <!-- ── 序章：逆向推演 ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">§0</span>
+      <span class="section-title">逆向推演（Munger Inversion）— 讓這筆投資虧損50%+的路徑</span>
+    </div>
+    <div class="section-body">
+      <div class="risk-grid">
+        <div class="risk-card">
+          <div class="risk-tag">路徑一</div>
+          <div class="risk-title">地緣政治：台海衝突</div>
+          <div class="risk-body">
+            TSMC 90%以上先進製程產能集中台灣，台海衝突或中國武力威脅封鎖，即便未真實開戰，投資人信心崩潰即可引發股價腰斬。Arizona、Japan、Germany 分廠至少 2027-2030 才形成有效分散，當前曝險視窗極大。中國佔TSMC營收約12%，制裁升級亦造成雙向打擊。沃倫·巴菲特2022年出清正是基於此判斷。
+          </div>
+        </div>
+        <div class="risk-card">
+          <div class="risk-tag">路徑二</div>
+          <div class="risk-title">技術替代：Intel/Samsung突破 或 AI需求反轉</div>
+          <div class="risk-body">
+            Intel 18A 節點若順利量產並拿下 NVIDIA/Apple 訂單，TSMC 的技術壟斷溢價將快速消解。另一風險：AI 算力需求若出現 DeepSeek 式的效率革命（更少 FLOPs 達到同等效果），整個 hyperscaler 的 capex 週期可能快速反轉，TSMC 的 52-56B 資本支出將成為沉重固定成本包袱，FCF 崩跌 60%+。
+          </div>
+        </div>
+        <div class="risk-card">
+          <div class="risk-tag">路徑三</div>
+          <div class="risk-title">管理層失職：海外擴張稀釋利潤</div>
+          <div class="risk-body">
+            Arizona 廠毛利率較台灣低 2-3%，Germany 更甚；若海外比重快速拉升至30%+，整體毛利率可能從62%跌破56%的長期底線。美國政治壓力持續強迫 TSMC 在美投資，若補貼不到位、管理層為維持關係而接受低於成本的定價，資本配置將出現結構性錯誤。
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-red" style="margin-top:16px">
+        <strong>綜合結論：</strong> 最高概率虧損路徑為「地緣政治事件 × AI需求短暫回撤」的複合衝擊，任一單獨事件已可引發30-40%回調；雙重共振時50%虧損完全可達。TSMC 基本面越強，股價越可能因地緣政治風險溢價不足而在黑天鵝發生時急速重估。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── §1 即時財報情報 ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">§1</span>
+      <span class="section-title">即時財報情報 — Q4 2025 最新數據</span>
+    </div>
+    <div class="section-body">
+
+      <h3>① 最新一季財報關鍵數字</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>指標</th>
+            <th>本季實際</th>
+            <th>市場預期</th>
+            <th>Beat/Miss</th>
+            <th>YoY 成長</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Revenue (USD)</td>
+            <td class="num">$33.73B</td>
+            <td class="num">$33.27B</td>
+            <td><span class="beat">▲ BEAT +$460M</span></td>
+            <td class="num beat">+25.5% YoY</td>
+          </tr>
+          <tr>
+            <td>EPS (ADR, USD)</td>
+            <td class="num">$3.14</td>
+            <td class="num">$2.78</td>
+            <td><span class="beat">▲ BEAT +$0.36</span></td>
+            <td class="num beat">+40.2% YoY</td>
+          </tr>
+          <tr>
+            <td>FCF (全年 2025)</td>
+            <td class="num">~$31B</td>
+            <td class="num">~$26B</td>
+            <td><span class="beat">▲ BEAT</span></td>
+            <td class="num beat">+15.2% YoY</td>
+          </tr>
+          <tr>
+            <td>Gross Margin</td>
+            <td class="num">62.3%</td>
+            <td class="num">59.4% (guided)</td>
+            <td><span class="beat">▲ BEAT +130bps</span></td>
+            <td class="num beat">+3.3pp YoY</td>
+          </tr>
+          <tr>
+            <td>Operating Margin</td>
+            <td class="num">54.0%</td>
+            <td class="num">51.0% (guided)</td>
+            <td><span class="beat">▲ BEAT +300bps</span></td>
+            <td class="num beat">+5.0pp YoY</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+      <h3>② Earnings Call 語氣解析（Q4 2025, 2026-01-15）</h3>
+
+      <div class="callout callout-green">
+        <strong>管理層基調：顯著樂觀，較上季進一步升溫。</strong> CEO C.C. Wei 罕見使用「no signs of deceleration」描述AI需求，並多次強調「2024-2029 AI accelerator CAGR 上修至54-56%（前值45%）」。CFO Wendell Huang 直接承諾「long-term gross margin 56%+ is achievable」，傳遞明確的利潤底線信心。
+      </div>
+
+      <div class="callout callout-blue" style="margin-top:10px">
+        <strong>Forward Guidance（Q1 2026）：</strong> Revenue $34.6B–$35.8B（隱含+38% YoY，超市場共識約5%）。Gross Margin 63-65%（較Q4再升100-300bps）。Operating Margin 54-56%。2026全年 capex 指引 $52-56B（較2025 $40.9B大幅提升）。
+      </div>
+
+      <div class="prose" style="margin-top:12px">
+        <strong>刻意強調的主題：</strong> AI需求可持續性（反覆5次以上引用）、N2 良率超預期量產成功、Arizona 加速擴產、advanced packaging（CoWoS/SoIC）預計2026年佔比超10%。
+      </div>
+      <div class="prose" style="margin-top:8px">
+        <strong>刻意迴避的問題：</strong> <span class="warn-txt">Trump 關稅對 TSMC 的具體衝擊幅度</span>（僅稱「持續監控」）；Intel 18A 進展具體評估（轉而強調自身技術領先）；Arizona 廠具體爬坡成本（未給出利潤率vs台灣的精確對比）。這三個迴避點是最值得追蹤的風險節點。
+      </div>
+
+      <hr class="divider">
+      <h3>③ 產業 Imply 萃取</h3>
+
+      <table>
+        <thead>
+          <tr><th>維度</th><th>信號解讀</th><th>連帶推論</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>需求端</td>
+            <td>AI accelerator 訂單能見度延伸至2027年；客戶 lead time 2-3年提前鎖定</td>
+            <td class="beat" style="font-weight:400;color:var(--green)">利多 NVDA/AVGO/AMD 晶片設計商；HBM 廠（SK Hynix）同向受益</td>
+          </tr>
+          <tr>
+            <td>供給端</td>
+            <td>N2已量產但仍處緊張；CoWoS 產能瓶頸明示；2026 capex 跳升確認供不應求</td>
+            <td class="beat" style="font-weight:400;color:var(--green)">利多設備廠 ASML / AMAT / LRCX；先進封裝材料商</td>
+          </tr>
+          <tr>
+            <td>競爭格局</td>
+            <td>定價「strategic not opportunistic」，客戶無力壓價；3nm以下市占95%+</td>
+            <td class="miss" style="font-weight:400;color:var(--red)">利空 Intel Foundry（客戶流失確認）；Samsung 先進製程繼續失地</td>
+          </tr>
+          <tr>
+            <td>總體經濟</td>
+            <td>管理層僅輕描 PC/手機端走弱（DCE季減22%），HPC/AI完全對沖</td>
+            <td class="warn" style="font-weight:400;color:var(--yellow)">若 AI capex 週期轉折，傳統消費電子將無法補位，風險不對稱</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── §2 核心門檻檢核 ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">§2</span>
+      <span class="section-title">核心門檻檢核</span>
+    </div>
+    <div class="section-body">
+      <table>
+        <thead>
+          <tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FCF Margin</td>
+            <td>&gt;15%</td>
+            <td><span class="yes">✓ 符合</span></td>
+            <td class="num">全年2025 FCF ~$31B / Revenue $122B ≈ <strong>25.4%</strong>，遠超門檻，且趨勢向上</td>
+          </tr>
+          <tr>
+            <td>ROIC</td>
+            <td>產業頂尖</td>
+            <td><span class="yes">✓ 符合</span></td>
+            <td class="num">ROE 35.4%（2025全年），Q4單季達38.8%；ROIC 估算約32%，為晶圓代工業無可爭議第一</td>
+          </tr>
+          <tr>
+            <td>EPS CAGR（未來3年）</td>
+            <td>&gt;20%</td>
+            <td><span class="yes">✓ 符合</span></td>
+            <td class="num">2025 EPS +46.4% YoY；管理層指引2026整體收入CAGR ~25%（2024-2029），分析師共識EPS CAGR ~25-30%</td>
+          </tr>
+          <tr>
+            <td>現金覆蓋總負債</td>
+            <td>是/否</td>
+            <td><span class="yes">✓ 是</span></td>
+            <td class="num">Q4 2025末現金+有價證券 <strong>$98B</strong>，負債 $34B；淨現金正 <strong>$64B</strong>，資產負債表極健康</td>
+          </tr>
+          <tr>
+            <td>護城河強度</td>
+            <td>&gt;8分，趨勢擴大</td>
+            <td><span class="yes">✓ 符合</span></td>
+            <td>9/10分，3nm以下市占95%+，技術領先競爭對手2-3年；趨勢：<span class="expand">擴大</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-yellow" style="margin-top:16px">
+        <strong>最大財務弱點：</strong> 海外擴產（Arizona/Germany）帶來的毛利率結構性下壓（每年 -2~4pp），將在2026-2028年顯著侵蝕利潤品質，而 $52-56B capex 若需求反轉，FCF 將在12-18個月內急劇惡化。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── §3 護城河分析 ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">§3</span>
+      <span class="section-title">護城河分析</span>
+    </div>
+    <div class="section-body">
+
+      <div class="moat-score-wrap">
+        <div class="moat-score-big">9</div>
+        <div>
+          <div style="color:#fff;font-weight:700;font-size:15px">/ 10</div>
+          <div class="moat-score-label">全球上市公司最嚴格標準 · 趨勢：<span class="expand">擴大</span></div>
+        </div>
+      </div>
+
+      <h3>真實護城河來源</h3>
+      <div class="prose">
+        <strong>① 規模效應 + 製程技術壟斷（核心，無可複製）：</strong> TSMC 在 3nm 以下節點持有 95%+ 全球市佔。對手複製此護城河需要：至少 $100B+資本支出（Intel 21-22年合計砸入$75B 仍無法量產競爭性先進節點）、超過5萬名製程工程師的密集知識積累、至少10年的良率爬坡經驗。這不是資金問題，是時間與隱性知識的複合壁壘。
+      </div>
+      <div class="prose" style="margin-top:8px">
+        <strong>② 客戶轉換成本（高）：</strong> Apple/NVIDIA/AMD 的晶片設計完全依賴 TSMC 特定 PDK（Process Design Kit）；換廠等同重新設計晶片，需12-24個月、數億美元 NRE 費用，且良率不確定性極高。NVIDIA H100→H200→B系列的整個路線圖皆綁定 TSMC N3/N2。
+      </div>
+      <div class="prose" style="margin-top:8px">
+        <strong>最大護城河威脅（24個月內）：</strong> <span class="warn-txt">Intel 18A 若成功拿下 NVIDIA 部分訂單</span>（預計2026年下半年才有樣品數據），將正面衝擊 TSMC 定價談判籌碼；此外 <span class="warn-txt">AI 需求效率革命</span>（如 DeepSeek R2/R3 等模型大幅降低推理成本）可能壓縮 hyperscaler capex，使 TSMC N2 產能陷入供過於求。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── §4 財務品質監測 ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">§4</span>
+      <span class="section-title">財務品質監測</span>
+    </div>
+    <div class="section-body">
+      <h3>三年趨勢</h3>
+      <table>
+        <thead>
+          <tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FCF Margin</td>
+            <td class="num">~13%</td>
+            <td class="num">~22%</td>
+            <td class="num beat">~25.4%</td>
+          </tr>
+          <tr>
+            <td>Gross Margin</td>
+            <td class="num">54.4%</td>
+            <td class="num">56.1%</td>
+            <td class="num beat">59.9%</td>
+          </tr>
+          <tr>
+            <td>Operating Margin</td>
+            <td class="num">42.6%</td>
+            <td class="num">45.7%</td>
+            <td class="num beat">50.8%</td>
+          </tr>
+          <tr>
+            <td>ROE</td>
+            <td class="num">26.7%</td>
+            <td class="num">30.3%</td>
+            <td class="num beat">35.4%</td>
+          </tr>
+          <tr>
+            <td>Revenue YoY</td>
+            <td class="num miss">-4.5%</td>
+            <td class="num beat">+33.9%</td>
+            <td class="num beat">+35.9%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <hr class="divider">
+      <h3>獲利品質警訊（快速版：前兩項）</h3>
+
+      <div class="callout callout-green" style="margin-top:8px">
+        <strong>淨利 vs. OCF：</strong> Q4 2025 OCF 達 NT$726B，淨利 NT$505.7B；OCF/淨利比約 1.44×，顯示盈餘品質極高，無操縱跡象。現金流轉換率持續改善。<span class="yes">✓ 健康</span>
+      </div>
+      <div class="callout callout-yellow" style="margin-top:10px">
+        <strong>AR成長 vs. 營收成長：</strong> 目前無公開顯著 AR 膨脹跡象。但需留意 2026 年 AI 客戶付款條件是否隨訂單快速增長而拉長（大客戶議價要求）。建議下季財報時重點核查 AR Days Trend。<span class="warn">⚠ 需持續監控</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── §7 投資結論 ── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">§7</span>
+      <span class="section-title">投資結論與情境預測</span>
+    </div>
+    <div class="section-body">
+
+      <h3>財報信號與估值銜接</h3>
+      <div class="prose">
+        Q4 2025 財報全面超預期，Q1 2026 指引再度上調，市場反應卻呈現「Buy the rumor, sell the news」的疲態（報告後股價從 ~$390 高點回落至 ~$337，約-14%）。這說明當前 <span class="hl">Fwd P/E 23.9×</span> 已充分定價近期增長，但尚未完全反映兩個維度的修正：(1) 地緣政治折扣是否應在AI需求加速下部分解除；(2) 海外擴廠帶來的長期毛利率下壓是否已充分定價。目前估值處於歷史偏高但非泡沫區間。
+      </div>
+
+      <hr class="divider">
+      <h3>三年情境預測</h3>
+      <div class="scenario-grid">
+        <div class="sc-bull">
+          <div class="sc-label">🟢 樂觀情境（40%機率）</div>
+          <div class="sc-assumption">
+            • AI capex 週期延伸至2028年無明顯衰退<br>
+            • N2/A16 良率超預期，毛利率守在65%+<br>
+            • 地緣政治風險溢價持續縮小<br>
+            • Intel 18A 延遲或良率不達標<br>
+            • 2026 EPS ~$14–15（+35-40% YoY）
+          </div>
+          <div class="sc-valuation">3年目標價：$480–$550（+43-63%）<br>基於 Fwd P/E 25-28× 2028E EPS ~$19</div>
+        </div>
+        <div class="sc-base">
+          <div class="sc-label">🟡 中性情境（40%機率）</div>
+          <div class="sc-assumption">
+            • AI 需求持續但增速放緩至15-20%<br>
+            • 海外擴廠將毛利率壓至58-60%<br>
+            • 地緣政治事件偶發但未升級<br>
+            • 2026 EPS ~$12–13（+20-25% YoY）
+          </div>
+          <div class="sc-valuation">3年目標價：$380–$440（+13-30%）<br>基於 Fwd P/E 22-24× 2028E EPS ~$17</div>
+        </div>
+        <div class="sc-bear">
+          <div class="sc-label">🔴 悲觀情境（20%機率）</div>
+          <div class="sc-assumption">
+            • AI 算力需求因效率革命或衰退驟降<br>
+            • 台海緊張局勢升級，訂單轉移<br>
+            • Intel 18A 搶奪部分 NVIDIA 訂單<br>
+            • 毛利率跌至55-57%，FCF 腰斬<br>
+            • 2026 EPS ~$9–10
+          </div>
+          <div class="sc-valuation">3年目標價：$160–$220（-35-52%）<br>地緣政治折扣重估 P/E 15-18×</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="verdict-box">
+        <div class="verdict-title">⚡ 最終結論</div>
+        <div class="verdict-body">
+          <strong>結論：條件性觀望，等待更佳進場點。</strong><br><br>
+          TSMC 是全球最優質的科技基礎設施資產之一，基本面無可挑剔——護城河9/10、FCF 25%、ROE 35%+、全五項門檻均符合。然而當前 $337 股價已從高點修正14%，Fwd P/E 23.9× 對應 25%+ EPS CAGR 並非昂貴，但仍有兩個理由傾向等待：<br><br>
+          (1) <strong>海外擴廠毛利率稀釋尚未充分定價</strong>：$52-56B capex 週期中，2026-2028 毛利率將面臨 -2~4pp 的結構性壓力，市場估值尚未完全消化。<br>
+          (2) <strong>地緣政治風險溢價低估</strong>：全球第6大市值公司90%先進產能集中單一高風險地理點，任何台海事件的保險費用都難以量化。<br><br>
+          <strong>若出現以下任一情境，可積極建倉</strong>：股價跌至 $280-300（Fwd P/E ~20×），對應5-10%地緣折扣；或 Q1 2026財報（2026-04-19）確認毛利率守住63%上限且N2良率優於預期。
+        </div>
+      </div>
+
+      <div style="margin-top:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--text-muted)">持續監測的最關鍵單一指標：</span>
+        <span class="kpi-pill">📊 N2 / N3 Gross Margin vs. Corporate Average（每季追蹤）</span>
+      </div>
+      <div class="prose" style="margin-top:8px;font-size:12px">
+        理由：N2 毛利率何時超越公司平均（管理層預測2026年內），是TSMC技術升級能否完全對沖海外擴廠成本的唯一量化指標，亦是 bull/bear case 的分水嶺。若N2提前達標且毛利率守住65%+，樂觀情境機率大幅上升，進場信號即形成。
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="text-align:center;padding:20px 0;font-size:11px;color:var(--text-muted)">
+    本報告由買側標的研究框架 v3.1 自動生成 · 資料截止 2026-03-18 · 僅供研究參考，不構成投資建議<br>
+    DD_TSM_20260318 · ⚡ 快速版
+  </div>
+
+</div><!-- /main -->
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>
