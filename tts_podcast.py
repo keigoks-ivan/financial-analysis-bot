@@ -222,7 +222,7 @@ def generate_rss_feed(episodes: list[dict]) -> None:
     fg.podcast.itunes_category("Business", "Investing")
     fg.podcast.itunes_author(PODCAST_AUTHOR)
     fg.podcast.itunes_summary(PODCAST_DESC)
-    fg.podcast.itunes_explicit("false")
+    fg.podcast.itunes_explicit("no")
     fg.podcast.itunes_image(f"{BASE_URL}/assets/podcast_cover.png")
 
     for ep in reversed(episodes):     # 最新在前
