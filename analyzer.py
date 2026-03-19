@@ -236,16 +236,17 @@ def _notion_text_blocks(text: str) -> list[dict]:
 
 @retry()
 def write_to_notion_8k(ticker: str, filing_date: str, analysis: str) -> None:
-    """寫入 8-K 分析至 Notion 資料庫。"""
+    """寫入 8-K 分析至 Notion 每日財報整合資料庫。"""
     notion.pages.create(
         parent={"database_id": NOTION_8K_DB_ID},
         properties={
-            "Ticker": {
-                "title": [{"type": "text", "text": {"content": ticker}}]
+            "Name": {
+                "title": [{"type": "text", "text": {"content": f"{ticker} 8-K — {filing_date}"}}]
             },
-            "Date":   {"date": {"start": filing_date}},
-            "Form":   {"select": {"name": "8-K"}},
-            "Status": {"select": {"name": "Analyzed"}},
+            "日期":       {"date": {"start": filing_date}},
+            "公司 Ticker": {
+                "rich_text": [{"type": "text", "text": {"content": ticker}}]
+            },
         },
         children=[
             {
@@ -262,16 +263,19 @@ def write_to_notion_8k(ticker: str, filing_date: str, analysis: str) -> None:
 
 @retry()
 def write_to_notion_10q(ticker: str, filing_date: str, analysis: str) -> None:
-    """寫入 10-Q 分析至 Notion 資料庫。"""
+    """寫入 10-Q 分析至 Notion 季報分析資料庫。"""
     notion.pages.create(
         parent={"database_id": NOTION_10Q_DB_ID},
         properties={
-            "Ticker": {
-                "title": [{"type": "text", "text": {"content": ticker}}]
+            "Name": {
+                "title": [{"type": "text", "text": {"content": f"{ticker} 10-Q — {filing_date}"}}]
             },
-            "Date":   {"date": {"start": filing_date}},
-            "Form":   {"select": {"name": "10-Q"}},
-            "Status": {"select": {"name": "Analyzed"}},
+            "Ticker": {
+                "rich_text": [{"type": "text", "text": {"content": ticker}}]
+            },
+            "財報年度": {
+                "rich_text": [{"type": "text", "text": {"content": filing_date[:4]}}]
+            },
         },
         children=[
             {
@@ -293,21 +297,17 @@ def write_to_notion_10k(
     analysis: str,
     moat_score: float | None = None,
 ) -> None:
-    """寫入 10-K 分析至 Notion 資料庫。"""
-    properties: dict = {
-        "Ticker": {
-            "title": [{"type": "text", "text": {"content": ticker}}]
-        },
-        "Date":   {"date": {"start": filing_date}},
-        "Form":   {"select": {"name": "10-K"}},
-        "Status": {"select": {"name": "Analyzed"}},
-    }
-    if moat_score is not None:
-        properties["Moat Score"] = {"number": round(moat_score, 2)}
-
+    """寫入 10-K 分析至 Notion 年報分析資料庫。"""
     notion.pages.create(
         parent={"database_id": NOTION_10K_DB_ID},
-        properties=properties,
+        properties={
+            "Name": {
+                "title": [{"type": "text", "text": {"content": f"{ticker} 10-K — {filing_date}"}}]
+            },
+            "財報年度": {
+                "rich_text": [{"type": "text", "text": {"content": filing_date[:4]}}]
+            },
+        },
         children=[
             {
                 "object": "block",
@@ -323,16 +323,17 @@ def write_to_notion_10k(
 
 @retry()
 def write_synthesis_to_notion(date_str: str, synthesis: str) -> None:
-    """將跨公司整合報告寫入 Notion 8-K 資料庫（特殊 Ticker = SYNTHESIS）。"""
+    """將跨公司整合報告寫入 Notion 每日財報整合資料庫。"""
     notion.pages.create(
         parent={"database_id": NOTION_8K_DB_ID},
         properties={
-            "Ticker": {
-                "title": [{"type": "text", "text": {"content": "SYNTHESIS"}}]
+            "Name": {
+                "title": [{"type": "text", "text": {"content": f"每日整合 — {date_str}"}}]
             },
-            "Date":   {"date": {"start": date_str}},
-            "Form":   {"select": {"name": "8-K"}},
-            "Status": {"select": {"name": "Synthesis"}},
+            "日期":       {"date": {"start": date_str}},
+            "公司 Ticker": {
+                "rich_text": [{"type": "text", "text": {"content": "SYNTHESIS"}}]
+            },
         },
         children=[
             {
