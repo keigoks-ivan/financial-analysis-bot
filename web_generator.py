@@ -15,9 +15,17 @@ import datetime
 import html as html_lib
 from pathlib import Path
 from jinja2 import Environment, BaseLoader
+from notion_client import Client as NotionClient
 
 # ── 路徑常數 ─────────────────────────────────────────────────────────────────
 DOCS_DIR    = Path("docs")
+
+# ── Notion 設定 ──────────────────────────────────────────────────────────────
+NOTION_TOKEN      = os.environ.get("NOTION_TOKEN")
+NOTION_8K_DB_ID   = os.environ.get("NOTION_8K_DB_ID")
+NOTION_10Q_DB_ID  = os.environ.get("NOTION_10Q_DB_ID")
+NOTION_10K_DB_ID  = os.environ.get("NOTION_10K_DB_ID")
+notion            = NotionClient(auth=NOTION_TOKEN)
 KB_DIR      = Path("knowledge_base")
 BASE_URL    = "https://research.investmquest.com"
 
@@ -193,14 +201,17 @@ def generate_index(
     """
     today = datetime.date.today().strftime("%Y 年 %m 月 %d 日")
 
-    # 今日報告卡片
+    # 報告卡片（顯示所有報告）
     report_cards = ""
-    for r in reports[:12]:              # 最多顯示 12 張
+    for r in reports:
         form    = r.get("form", "")
         ticker  = r.get("ticker", "")
+        name    = r.get("name", "")
         summary = html_lib.escape(r.get("summary", "")[:180])
         date    = r.get("date", "")
+        page_id = r.get("page_id", "")
         tag_cls = {"8-K": "tag-8k", "10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-8k")
+        slug    = page_id.replace("-", "")
 
         moat_html = ""
         if ms := r.get("moat_score"):
@@ -210,14 +221,14 @@ def generate_index(
         report_cards += f"""
 <div class="card searchable">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
-    <span class="card-title">{html_lib.escape(ticker)}</span>
+    <span class="card-title">{html_lib.escape(ticker or name)}</span>
     <span class="tag {tag_cls}">{html_lib.escape(form)}</span>
   </div>
   <p style="font-size:.85rem;color:var(--muted)">{date}</p>
-  <p style="font-size:.9rem;margin-top:.5rem">{summary}…</p>
+  <p style="font-size:.9rem;margin-top:.5rem">{html_lib.escape(name)}</p>
   {moat_html}
-  <a href="/company/{ticker.lower()}.html" style="font-size:.85rem;display:block;margin-top:.75rem">
-    → 查看完整報告
+  <a href="/report/{slug}.html" style="font-size:.85rem;display:block;margin-top:.75rem">
+    → 查看完整分析
   </a>
 </div>"""
 
@@ -510,6 +521,155 @@ def generate_industry_page(
     )
 
 
+# ── 個別報告頁面 ─────────────────────────────────────────────────────────────
+
+def generate_report_page(report: dict) -> None:
+    """
+    生成 docs/report/{page_id}.html，顯示完整 Notion 分析內容。
+    """
+    page_id = report.get("page_id", "")
+    slug    = page_id.replace("-", "")
+    name    = report.get("name", "")
+    ticker  = report.get("ticker", "")
+    form    = report.get("form", "")
+    date    = report.get("date", "")
+    tag_cls = {"8-K": "tag-8k", "10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-8k")
+
+    content = _fetch_page_content(page_id)
+
+    body = f"""
+<div class="hero">
+  <div class="container">
+    <h1>{html_lib.escape(ticker or name)}</h1>
+    <p><span class="tag {tag_cls}" style="font-size:.9rem">{html_lib.escape(form)}</span> ── {html_lib.escape(date)}</p>
+  </div>
+</div>
+<section class="section">
+  <div class="container">
+    <a href="/" style="font-size:.85rem">← 返回首頁</a>
+    <div class="card" style="margin-top:1rem">
+      <h3 style="margin-bottom:1rem">{html_lib.escape(name)}</h3>
+      <div style="white-space:pre-line;font-size:.9rem;line-height:1.8">{html_lib.escape(content)}</div>
+    </div>
+  </div>
+</section>"""
+
+    out_dir = DOCS_DIR / "report"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    _write_html(
+        out_dir / f"{slug}.html",
+        _base_page(f"{ticker} {form} — {date}", body),
+    )
+
+
+# ── Notion 資料讀取 ──────────────────────────────────────────────────────────
+
+def _fetch_page_content(page_id: str) -> str:
+    """讀取 Notion 頁面的所有 block，拼接為純文字。"""
+    blocks = notion.blocks.children.list(block_id=page_id, page_size=100)
+    parts: list[str] = []
+    for block in blocks.get("results", []):
+        btype = block.get("type", "")
+        data = block.get(btype, {})
+        rich_text = data.get("rich_text", [])
+        text = "".join(rt.get("plain_text", "") for rt in rich_text)
+        if text:
+            parts.append(text)
+    return "\n".join(parts)
+
+
+def _get_title_text(page: dict, prop_name: str) -> str:
+    """從 Notion page properties 中取出 title 欄位的文字。"""
+    prop = page.get("properties", {}).get(prop_name, {})
+    for item in prop.get("title", []):
+        return item.get("plain_text", "")
+    return ""
+
+
+def _get_rich_text(page: dict, prop_name: str) -> str:
+    """從 Notion page properties 中取出 rich_text 欄位的文字。"""
+    prop = page.get("properties", {}).get(prop_name, {})
+    for item in prop.get("rich_text", []):
+        return item.get("plain_text", "")
+    return ""
+
+
+def _get_date_value(page: dict, prop_name: str) -> str:
+    """從 Notion page properties 中取出 date 欄位的 start 值。"""
+    prop = page.get("properties", {}).get(prop_name, {})
+    date_obj = prop.get("date")
+    if date_obj:
+        return date_obj.get("start", "")
+    return ""
+
+
+def _query_all_pages(db_id: str) -> list[dict]:
+    """分頁查詢 Notion 資料庫的所有頁面。"""
+    pages: list[dict] = []
+    cursor = None
+    while True:
+        kwargs = {"database_id": db_id, "page_size": 100}
+        if cursor:
+            kwargs["start_cursor"] = cursor
+        resp = notion.databases.query(**kwargs)
+        pages.extend(resp.get("results", []))
+        if not resp.get("has_more"):
+            break
+        cursor = resp.get("next_cursor")
+    return pages
+
+
+def fetch_notion_reports() -> list[dict]:
+    """
+    從三個 Notion 資料庫讀取所有報告，回傳統一格式的 list。
+    每筆：{name, ticker, form, date, page_id}
+    """
+    reports: list[dict] = []
+
+    # 8-K：欄位 Name(title)、日期(date)、公司 Ticker(rich_text)
+    pages_8k = _query_all_pages(NOTION_8K_DB_ID)
+    print(f"  [DEBUG] 8-K 資料庫讀取到 {len(pages_8k)} 筆頁面")
+    for page in pages_8k:
+        reports.append({
+            "name":    _get_title_text(page, "Name"),
+            "ticker":  _get_rich_text(page, "公司 Ticker"),
+            "form":    "8-K",
+            "date":    _get_date_value(page, "日期"),
+            "page_id": page["id"],
+        })
+
+    # 10-Q：欄位 Name(title)、Ticker(rich_text)、財報年度(rich_text)
+    pages_10q = _query_all_pages(NOTION_10Q_DB_ID)
+    print(f"  [DEBUG] 10-Q 資料庫讀取到 {len(pages_10q)} 筆頁面")
+    for page in pages_10q:
+        reports.append({
+            "name":    _get_title_text(page, "Name"),
+            "ticker":  _get_rich_text(page, "Ticker"),
+            "form":    "10-Q",
+            "date":    _get_rich_text(page, "財報年度"),
+            "page_id": page["id"],
+        })
+
+    # 10-K：欄位 Name(title)、財報年度(rich_text)
+    pages_10k = _query_all_pages(NOTION_10K_DB_ID)
+    print(f"  [DEBUG] 10-K 資料庫讀取到 {len(pages_10k)} 筆頁面")
+    for page in pages_10k:
+        name = _get_title_text(page, "Name")
+        # 10-K 沒有獨立 Ticker 欄位，從 Name 解析（格式如 "AAPL 10-K — ..."）
+        ticker = name.split()[0] if name else ""
+        reports.append({
+            "name":    name,
+            "ticker":  ticker,
+            "form":    "10-K",
+            "date":    _get_rich_text(page, "財報年度"),
+            "page_id": page["id"],
+        })
+
+    # 按日期降冪排序（最新在上）
+    reports.sort(key=lambda r: r.get("date", ""), reverse=True)
+    return reports
+
+
 # ── 工具函式 ─────────────────────────────────────────────────────────────────
 
 def _write_html(path: Path, content: str) -> None:
@@ -541,7 +701,7 @@ def _ensure_404_and_cname() -> None:
 
 def build_site() -> None:
     """
-    從 knowledge_base JSON 讀取所有資料，重建完整靜態網站。
+    從 Notion 三個資料庫讀取報告，重建完整靜態網站。
     """
     print("\n[Web] 開始生成靜態網站...")
 
@@ -558,34 +718,24 @@ def build_site() -> None:
         with open(synthesis_path, encoding="utf-8") as f:
             synthesis_text = f.read()
 
-    # 首頁 reports 清單（彙整所有公司最新申報）
-    index_reports: list[dict] = []
-    for ticker, co_data in companies_data.items():
-        for rep in co_data.get("reports", [])[:2]:   # 每家最新 2 份
-            avg_moat = None
-            if ticker in moat_scores:
-                latest_yr = sorted(moat_scores[ticker].keys())[-1]
-                sc = moat_scores[ticker][latest_yr]
-                avg_moat = sum(sc.values()) / len(sc) if sc else None
-            index_reports.append({
-                "ticker":     ticker,
-                "form":       rep.get("form", ""),
-                "date":       rep.get("date", ""),
-                "summary":    rep.get("analysis", "")[:200],
-                "moat_score": avg_moat,
-            })
-    index_reports.sort(key=lambda r: r["date"], reverse=True)
+    # 從 Notion 三個資料庫讀取所有報告（已按日期降冪排序）
+    print("\n[Web] 從 Notion 資料庫讀取報告...")
+    notion_reports = fetch_notion_reports()
+    print(f"  [DEBUG] 共讀取 {len(notion_reports)} 筆報告")
 
     industries = list(industries_data.keys())
-    generate_index(index_reports, industries, synthesis_text)
+    generate_index(notion_reports, industries, synthesis_text)
 
-    # 個別公司頁面
+    # 為每筆報告生成獨立頁面
+    for report in notion_reports:
+        generate_report_page(report)
+
+    # 個別公司頁面（從 knowledge_base）
     for ticker, co_data in companies_data.items():
         history     = co_data.get("reports", [])
         moat_hist   = moat_scores.get(ticker, {})
         company_name = co_data.get("name", ticker)
 
-        # 為每筆 report 附上護城河均分
         for rep in history:
             year = rep.get("date", "")[:4]
             if year and year in moat_hist:
@@ -614,7 +764,7 @@ def build_site() -> None:
             })
         generate_industry_page(industry, cos_in_industry)
 
-    print(f"[Web] 網站生成完成！共 {len(companies_data)} 家公司、{len(industries_data)} 個產業")
+    print(f"[Web] 網站生成完成！共 {len(notion_reports)} 筆報告、{len(industries_data)} 個產業")
 
 
 if __name__ == "__main__":
