@@ -32,7 +32,7 @@ EPISODES_META  = AUDIO_DIR / "episodes.json"
 BASE_URL       = "https://research.investmquest.com"
 PODCAST_TITLE  = "InvestMQuest 財報分析播客"
 PODCAST_AUTHOR = "InvestMQuest Research"
-PODCAST_DESC   = "每日財報自動化分析，涵蓋 8-K / 10-Q / 10-K 深度解讀與產業趨勢整合報告。"
+PODCAST_DESC   = "每日財報自動化分析，涵蓋 10-Q / 10-K 深度解讀與產業趨勢整合報告。"
 PODCAST_LANG   = "zh-tw"
 PODCAST_EMAIL  = "research@investmquest.com"
 

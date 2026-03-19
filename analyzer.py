@@ -3,10 +3,10 @@ analyzer.py — 財報自動化分析主程式
 
 流程：
   1. 從 Google Sheets 讀取 Watchlist (A欄 Ticker / C欄 CIK)
-  2. 查詢 SEC EDGAR API，找過去 48 小時內發布的 8-K / 10-Q / 10-K
+  2. 查詢 SEC EDGAR API，找過去 48 小時內發布的 10-Q / 10-K
   3. 抓取申報全文
   4. 呼叫 Claude API (claude-sonnet-4-0) 串流分析
-  5. 寫入 Notion 三個資料庫
+  5. 寫入 Notion 兩個資料庫
 """
 
 import os
@@ -23,7 +23,6 @@ from googleapiclient.discovery import build
 # ── 環境變數 ────────────────────────────────────────────────────────────────
 ANTHROPIC_API_KEY  = os.environ.get("ANTHROPIC_API_KEY")
 NOTION_TOKEN       = os.environ.get("NOTION_TOKEN")
-NOTION_8K_DB_ID    = os.environ.get("NOTION_8K_DB_ID")
 NOTION_10Q_DB_ID   = os.environ.get("NOTION_10Q_DB_ID")
 NOTION_10K_DB_ID   = os.environ.get("NOTION_10K_DB_ID")
 GOOGLE_SHEETS_ID   = os.environ.get("GOOGLE_SHEETS_ID")
@@ -123,7 +122,7 @@ def get_google_sheets_watchlist() -> list[dict]:
 
 def get_recent_filings(cik: str, hours: int = 48) -> list[dict]:
     """
-    查詢 SEC EDGAR submissions API，回傳過去 *hours* 小時內的 8-K / 10-Q / 10-K 申報資料。
+    查詢 SEC EDGAR submissions API，回傳過去 *hours* 小時內的 10-Q / 10-K 申報資料。
     預設 48 小時，即使排程延遲也不會漏掉任何 filing。
     """
     cutoff = (datetime.date.today() - datetime.timedelta(hours=hours)).isoformat()
@@ -139,16 +138,12 @@ def get_recent_filings(cik: str, hours: int = 48) -> list[dict]:
     accessions  = recent.get("accessionNumber", [])
     prim_docs   = recent.get("primaryDocument", [])
     descriptions = recent.get("primaryDocDescription", [])
-    items_list   = recent.get("items", [])
 
-    target_forms = {"8-K", "10-Q", "10-K"}
+    target_forms = {"10-Q", "10-K"}
     filings = []
 
-    for form, date, acc, doc, desc, items in zip(forms, dates, accessions, prim_docs, descriptions, items_list):
+    for form, date, acc, doc, desc in zip(forms, dates, accessions, prim_docs, descriptions):
         if date < cutoff or form not in target_forms:
-            continue
-        # 8-K 只保留 Item 2.02（業績公告）；items 格式為 "2.02,9.01" 逗號分隔
-        if form == "8-K" and "2.02" not in [x.strip() for x in items.split(",")]:
             continue
         filings.append({
             "form":               form,
@@ -193,65 +188,15 @@ def fetch_filing_text(filing: dict, max_chars: int = 120_000) -> str:
     return raw[:max_chars]
 
 
-def fetch_exhibit_99_1(filing: dict, max_chars: int = 120_000) -> str | None:
-    """
-    從 EDGAR filing index 頁找到 Exhibit 99.1 附件並下載其文字內容。
-    找不到時回傳 None。
-    """
-    cik = filing["cik"]
-    acc = filing["accession_number"]
-    acc_dashed = filing["accession_dashed"]
-
-    # 查詢 filing index JSON 取得所有附件清單
-    index_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{acc_dashed}-index.json"
-    try:
-        resp = requests.get(index_url, headers=EDGAR_HEADERS, timeout=30)
-        resp.raise_for_status()
-        index_data = resp.json()
-    except Exception:
-        return None
-
-    # 在 directory items 中尋找 Exhibit 99.1
-    items = index_data.get("directory", {}).get("item", [])
-    exhibit_filename = None
-    for item in items:
-        name = item.get("name", "").lower()
-        # 常見命名：ex99-1.htm, ex991.htm, exhibit991.htm 等
-        if re.search(r"ex\w*99[-_.]?1", name):
-            exhibit_filename = item.get("name")
-            break
-
-    if not exhibit_filename:
-        return None
-
-    # 下載 Exhibit 99.1
-    exhibit_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{exhibit_filename}"
-    try:
-        resp = requests.get(exhibit_url, headers=EDGAR_HEADERS, timeout=60)
-        resp.raise_for_status()
-    except Exception:
-        return None
-
-    raw = resp.text
-    if "<" in raw:
-        raw = re.sub(r"<[^>]+>", " ", raw)
-        raw = re.sub(r"&[a-zA-Z]+;", " ", raw)
-        raw = re.sub(r"\s+", " ", raw).strip()
-
-    return raw[:max_chars] if raw else None
-
-
 # ── Notion 去重查詢 ──────────────────────────────────────────────────────────
 
 def _get_notion_db_id(form: str) -> str | None:
     """根據表單類型回傳對應的 Notion 資料庫 ID。"""
-    return {"8-K": NOTION_8K_DB_ID, "10-Q": NOTION_10Q_DB_ID, "10-K": NOTION_10K_DB_ID}.get(form)
+    return {"10-Q": NOTION_10Q_DB_ID, "10-K": NOTION_10K_DB_ID}.get(form)
 
 
 def _get_ticker_property(form: str) -> str:
     """不同資料庫中 ticker 欄位名稱不同。"""
-    if form == "8-K":
-        return "公司 Ticker"
     return "Ticker"
 
 
@@ -265,27 +210,12 @@ def already_analyzed(ticker: str, filing_date: str, form: str) -> bool:
 
     ticker_prop = _get_ticker_property(form)
 
-    # 8-K 資料庫有「日期」date 欄位；10-Q / 10-K 沒有 date 欄位，改用 Name title 比對
-    if form == "8-K":
-        filters = {
-            "and": [
-                {
-                    "property": ticker_prop,
-                    "rich_text": {"equals": ticker},
-                },
-                {
-                    "property": "日期",
-                    "date": {"equals": filing_date},
-                },
-            ]
-        }
-    else:
-        # 10-Q / 10-K 的 Name title 格式為 "{TICKER} 10-Q — {date}"
-        expected_title = f"{ticker} {form} — {filing_date}"
-        filters = {
-            "property": "Name",
-            "title": {"equals": expected_title},
-        }
+    # 10-Q / 10-K 的 Name title 格式為 "{TICKER} 10-Q — {date}"
+    expected_title = f"{ticker} {form} — {filing_date}"
+    filters = {
+        "property": "Name",
+        "title": {"equals": expected_title},
+    }
 
     try:
         resp = requests.post(
@@ -353,33 +283,6 @@ def _notion_text_blocks(text: str) -> list[dict]:
 
 
 @retry()
-def write_to_notion_8k(ticker: str, filing_date: str, analysis: str) -> None:
-    """寫入 8-K 分析至 Notion 每日財報整合資料庫。"""
-    notion.pages.create(
-        parent={"database_id": NOTION_8K_DB_ID},
-        properties={
-            "Name": {
-                "title": [{"type": "text", "text": {"content": f"{ticker} 8-K — {filing_date}"}}]
-            },
-            "日期":       {"date": {"start": filing_date}},
-            "公司 Ticker": {
-                "rich_text": [{"type": "text", "text": {"content": ticker}}]
-            },
-        },
-        children=[
-            {
-                "object": "block",
-                "type": "heading_2",
-                "heading_2": {
-                    "rich_text": [{"text": {"content": f"{ticker} 8-K Analysis"}}]
-                },
-            },
-            *_notion_text_blocks(analysis),
-        ],
-    )
-
-
-@retry()
 def write_to_notion_10q(ticker: str, filing_date: str, analysis: str) -> None:
     """寫入 10-Q 分析至 Notion 季報分析資料庫。"""
     notion.pages.create(
@@ -439,72 +342,10 @@ def write_to_notion_10k(
     )
 
 
-@retry()
-def write_synthesis_to_notion(date_str: str, synthesis: str) -> None:
-    """將跨公司整合報告寫入 Notion 每日財報整合資料庫。"""
-    notion.pages.create(
-        parent={"database_id": NOTION_8K_DB_ID},
-        properties={
-            "Name": {
-                "title": [{"type": "text", "text": {"content": f"每日整合 — {date_str}"}}]
-            },
-            "日期":       {"date": {"start": date_str}},
-            "公司 Ticker": {
-                "rich_text": [{"type": "text", "text": {"content": "SYNTHESIS"}}]
-            },
-        },
-        children=[
-            {
-                "object": "block",
-                "type": "heading_2",
-                "heading_2": {
-                    "rich_text": [
-                        {"text": {"content": f"Industry Synthesis — {date_str}"}}
-                    ]
-                },
-            },
-            *_notion_text_blocks(synthesis),
-        ],
-    )
-
-
-# ── 整合報告 ─────────────────────────────────────────────────────────────────
-
-@retry()
-def run_synthesis(all_8k_analyses: list[dict]) -> str:
-    """
-    彙整當日所有 8-K 分析，產生跨公司產業趨勢報告。
-    """
-    from prompts import PROMPT_8K_SYNTHESIS
-
-    combined = "\n\n---\n\n".join(
-        f"**{item['ticker']} 8-K:**\n{item['analysis']}"
-        for item in all_8k_analyses
-    )
-
-    result_parts = []
-    with anthropic_client.messages.stream(
-        model=MODEL,
-        max_tokens=4096,
-        messages=[
-            {
-                "role": "user",
-                "content": f"{PROMPT_8K_SYNTHESIS}\n\n{combined}",
-            }
-        ],
-    ) as stream:
-        for chunk in stream.text_stream:
-            result_parts.append(chunk)
-            print(chunk, end="", flush=True)
-
-    print()
-    return "".join(result_parts)
-
-
 # ── 主程式 ───────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    from prompts import PROMPT_8K_BRIEF, PROMPT_10Q, PROMPT_10K
+    from prompts import PROMPT_10Q, PROMPT_10K
     from knowledge_base import KnowledgeBase
 
     kb    = KnowledgeBase()
@@ -515,15 +356,14 @@ def main() -> None:
     print("=" * 60)
 
     # 1. 讀取 Watchlist
-    print("\n[1/4] 讀取 Google Sheets Watchlist...")
+    print("\n[1/3] 讀取 Google Sheets Watchlist...")
     watchlist = get_google_sheets_watchlist()
     print(f"      共 {len(watchlist)} 家公司")
 
-    all_8k_analyses: list[dict] = []
     errors: list[str] = []
 
     # 2. 逐公司處理
-    print("\n[2/4] 查詢 SEC EDGAR 申報...")
+    print("\n[2/3] 查詢 SEC EDGAR 申報...")
     for company in watchlist:
         ticker = company["ticker"]
         cik    = company["cik"]
@@ -563,21 +403,7 @@ def main() -> None:
                 continue
 
             try:
-                if form == "8-K":
-                    # 嘗試抓取 Exhibit 99.1 合併分析
-                    exhibit_text = fetch_exhibit_99_1(filing)
-                    if exhibit_text:
-                        print("  [Exhibit 99.1 ✓]", end=" ")
-                        text = text + "\n\n--- Exhibit 99.1 ---\n\n" + exhibit_text
-                    else:
-                        print("  [Exhibit 99.1 未找到，僅用主文]", end=" ")
-                    analysis = analyze_with_claude(PROMPT_8K_BRIEF, text)
-                    write_to_notion_8k(ticker, filing_date, analysis)
-                    all_8k_analyses.append(
-                        {"ticker": ticker, "analysis": analysis}
-                    )
-
-                elif form == "10-Q":
+                if form == "10-Q":
                     analysis = analyze_with_claude(PROMPT_10Q, text)
                     write_to_notion_10q(ticker, filing_date, analysis)
 
@@ -603,24 +429,8 @@ def main() -> None:
                 print(msg)
                 errors.append(f"{ticker} {form}: {msg}")
 
-    # 3. 整合報告
-    if len(all_8k_analyses) >= 2:
-        print(f"\n[3/4] 整合 {len(all_8k_analyses)} 份 8-K 報告...")
-        synthesis = run_synthesis(all_8k_analyses)
-        write_synthesis_to_notion(today, synthesis)
-
-        # 儲存供 TTS / 網站使用
-        os.makedirs("docs", exist_ok=True)
-        with open("docs/latest_synthesis.txt", "w", encoding="utf-8") as f:
-            f.write(synthesis)
-
-        kb.update_industry_summary(synthesis, today)
-        print("  整合報告已寫入 Notion 並儲存至 docs/latest_synthesis.txt")
-    else:
-        print("\n[3/4] 8-K 數量不足（< 2），跳過整合分析")
-
-    # 4. 摘要
-    print("\n[4/4] 執行摘要")
+    # 3. 摘要
+    print("\n[3/3] 執行摘要")
     print(f"  ✓  處理完成")
     if errors:
         print(f"  ✗  {len(errors)} 個錯誤：")

@@ -21,7 +21,6 @@ DOCS_DIR    = Path("docs")
 
 # ── Notion 設定 ──────────────────────────────────────────────────────────────
 NOTION_TOKEN      = os.environ.get("NOTION_TOKEN")
-NOTION_8K_DB_ID   = os.environ.get("NOTION_8K_DB_ID")
 NOTION_10Q_DB_ID  = os.environ.get("NOTION_10Q_DB_ID")
 NOTION_10K_DB_ID  = os.environ.get("NOTION_10K_DB_ID")
 KB_DIR      = Path("knowledge_base")
@@ -71,7 +70,6 @@ header nav a:hover{color:#fff}
 .card-title{font-weight:700;margin-bottom:.4rem}
 .tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;
      font-size:.75rem;font-weight:600}
-.tag-8k{background:#fef3c7;color:#92400e}
 .tag-10q{background:#dbeafe;color:#1e40af}
 .tag-10k{background:#d1fae5;color:#065f46}
 .tag-synthesis{background:#ede9fe;color:#5b21b6}
@@ -135,7 +133,7 @@ def _base_page(title: str, body: str, extra_head: str = "") -> str:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{html_lib.escape(title)} | InvestMQuest Research</title>
-  <meta name="description" content="AI 驅動財報分析平台，提供 8-K / 10-Q / 10-K 深度解讀">
+  <meta name="description" content="AI 驅動財報分析平台，提供 10-Q / 10-K 深度解讀">
   <meta property="og:title" content="{html_lib.escape(title)}">
   <meta property="og:site_name" content="InvestMQuest Research">
   <style>{SHARED_CSS}</style>
@@ -208,7 +206,7 @@ def generate_index(
         summary = html_lib.escape(r.get("summary", "")[:180])
         date    = r.get("date", "")
         page_id = r.get("page_id", "")
-        tag_cls = {"8-K": "tag-8k", "10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-8k")
+        tag_cls = {"10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-10q")
         slug    = page_id.replace("-", "")
 
         moat_html = ""
@@ -316,7 +314,7 @@ def generate_company_page(
         form    = rep.get("form", "")
         date    = rep.get("date", "")
         summary = html_lib.escape(rep.get("analysis", "")[:200])
-        tag_cls = {"8-K": "tag-8k", "10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-8k")
+        tag_cls = {"10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-10q")
         ms      = rep.get("moat_score")
         moat_td = f'<span class="score {_moat_score_class(ms)}">{ms:.1f}</span>' if ms else "–"
 
@@ -531,7 +529,7 @@ def generate_report_page(report: dict) -> None:
     ticker  = report.get("ticker", "")
     form    = report.get("form", "")
     date    = report.get("date", "")
-    tag_cls = {"8-K": "tag-8k", "10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-8k")
+    tag_cls = {"10-Q": "tag-10q", "10-K": "tag-10k"}.get(form, "tag-10q")
 
     content = _fetch_page_content(page_id)
 
@@ -641,22 +639,10 @@ def _query_all_pages(db_id: str) -> list[dict]:
 
 def fetch_notion_reports() -> list[dict]:
     """
-    從三個 Notion 資料庫讀取所有報告，回傳統一格式的 list。
+    從兩個 Notion 資料庫讀取所有報告，回傳統一格式的 list。
     每筆：{name, ticker, form, date, page_id}
     """
     reports: list[dict] = []
-
-    # 8-K：欄位 Name(title)、日期(date)、公司 Ticker(rich_text)
-    pages_8k = _query_all_pages(NOTION_8K_DB_ID)
-    print(f"  [DEBUG] 8-K 資料庫讀取到 {len(pages_8k)} 筆頁面")
-    for page in pages_8k:
-        reports.append({
-            "name":    _get_title_text(page, "Name"),
-            "ticker":  _get_rich_text(page, "公司 Ticker"),
-            "form":    "8-K",
-            "date":    _get_date_value(page, "日期"),
-            "page_id": page["id"],
-        })
 
     # 10-Q：欄位 Name(title)、Ticker(rich_text)、財報年度(rich_text)
     pages_10q = _query_all_pages(NOTION_10Q_DB_ID)
@@ -721,7 +707,7 @@ def _ensure_404_and_cname() -> None:
 
 def build_site() -> None:
     """
-    從 Notion 三個資料庫讀取報告，重建完整靜態網站。
+    從 Notion 兩個資料庫讀取報告，重建完整靜態網站。
     """
     print("\n[Web] 開始生成靜態網站...")
 
@@ -738,7 +724,7 @@ def build_site() -> None:
         with open(synthesis_path, encoding="utf-8") as f:
             synthesis_text = f.read()
 
-    # 從 Notion 三個資料庫讀取所有報告（已按日期降冪排序）
+    # 從 Notion 兩個資料庫讀取所有報告（已按日期降冪排序）
     print("\n[Web] 從 Notion 資料庫讀取報告...")
     notion_reports = fetch_notion_reports()
     print(f"  [DEBUG] 共讀取 {len(notion_reports)} 筆報告")
