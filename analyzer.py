@@ -368,7 +368,6 @@ def run_synthesis(all_8k_analyses: list[dict]) -> str:
     with anthropic_client.messages.stream(
         model=MODEL,
         max_tokens=4096,
-        thinking={"type": "adaptive"},
         messages=[
             {
                 "role": "user",
