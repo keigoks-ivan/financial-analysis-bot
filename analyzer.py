@@ -37,6 +37,45 @@ EDGAR_HEADERS = {
     "Accept-Encoding": "gzip, deflate",
 }
 
+# ── 重試機制 ──────────────────────────────────────────────────────────────────
+
+import functools
+
+RETRYABLE_EXCEPTIONS = (
+    requests.exceptions.ConnectionError,
+    requests.exceptions.Timeout,
+    requests.exceptions.HTTPError,
+    ConnectionError,
+    TimeoutError,
+    anthropic.APIConnectionError,
+    anthropic.APITimeoutError,
+)
+
+
+def retry(max_retries: int = 3, delay: int = 5):
+    """
+    裝飾器：遇到連線相關錯誤時自動重試。
+    最多重試 max_retries 次，每次等待 delay 秒。
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exc = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except RETRYABLE_EXCEPTIONS as exc:
+                    last_exc = exc
+                    if attempt < max_retries:
+                        print(f"[RETRY] 第{attempt}次重試... ({type(exc).__name__}: {exc})")
+                        time.sleep(delay)
+                    else:
+                        print(f"[ERROR] 已重試 {max_retries} 次仍失敗: {type(exc).__name__}: {exc}")
+                        raise
+        return wrapper
+    return decorator
+
+
 # ── 客戶端初始化 ─────────────────────────────────────────────────────────────
 anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 notion           = NotionClient(auth=NOTION_TOKEN)
@@ -151,6 +190,7 @@ def fetch_filing_text(filing: dict, max_chars: int = 120_000) -> str:
 
 # ── Claude 分析 ──────────────────────────────────────────────────────────────
 
+@retry()
 def analyze_with_claude(system_prompt: str, filing_text: str) -> str:
     """
     使用串流呼叫 Claude API 進行財報分析。
@@ -196,6 +236,7 @@ def _notion_text_blocks(text: str) -> list[dict]:
     ]
 
 
+@retry()
 def write_to_notion_8k(ticker: str, filing_date: str, analysis: str) -> None:
     """寫入 8-K 分析至 Notion 資料庫。"""
     notion.pages.create(
@@ -221,6 +262,7 @@ def write_to_notion_8k(ticker: str, filing_date: str, analysis: str) -> None:
     )
 
 
+@retry()
 def write_to_notion_10q(ticker: str, filing_date: str, analysis: str) -> None:
     """寫入 10-Q 分析至 Notion 資料庫。"""
     notion.pages.create(
@@ -246,6 +288,7 @@ def write_to_notion_10q(ticker: str, filing_date: str, analysis: str) -> None:
     )
 
 
+@retry()
 def write_to_notion_10k(
     ticker: str,
     filing_date: str,
@@ -280,6 +323,7 @@ def write_to_notion_10k(
     )
 
 
+@retry()
 def write_synthesis_to_notion(date_str: str, synthesis: str) -> None:
     """將跨公司整合報告寫入 Notion 8-K 資料庫（特殊 Ticker = SYNTHESIS）。"""
     notion.pages.create(
@@ -309,6 +353,7 @@ def write_synthesis_to_notion(date_str: str, synthesis: str) -> None:
 
 # ── 整合報告 ─────────────────────────────────────────────────────────────────
 
+@retry()
 def run_synthesis(all_8k_analyses: list[dict]) -> str:
     """
     彙整當日所有 8-K 分析，產生跨公司產業趨勢報告。
