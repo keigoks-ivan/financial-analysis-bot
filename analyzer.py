@@ -144,16 +144,20 @@ def get_recent_filings(cik: str, hours: int = 48) -> list[dict]:
     filings = []
 
     for form, date, acc, doc, desc in zip(forms, dates, accessions, prim_docs, descriptions):
-        if date >= cutoff and form in target_forms:
-            filings.append({
-                "form":               form,
-                "date":               date,
-                "accession_number":   acc.replace("-", ""),
-                "accession_dashed":   acc,
-                "primary_document":   doc,
-                "description":        desc,
-                "cik":                cik.lstrip("0") or "0",
-            })
+        if date < cutoff or form not in target_forms:
+            continue
+        # 8-K 只保留 Item 2.02（業績公告）
+        if form == "8-K" and "2.02" not in desc:
+            continue
+        filings.append({
+            "form":               form,
+            "date":               date,
+            "accession_number":   acc.replace("-", ""),
+            "accession_dashed":   acc,
+            "primary_document":   doc,
+            "description":        desc,
+            "cik":                cik.lstrip("0") or "0",
+        })
 
     return filings
 
@@ -186,6 +190,108 @@ def fetch_filing_text(filing: dict, max_chars: int = 120_000) -> str:
         raw = re.sub(r"\s+", " ", raw).strip()
 
     return raw[:max_chars]
+
+
+def fetch_exhibit_99_1(filing: dict, max_chars: int = 120_000) -> str | None:
+    """
+    從 EDGAR filing index 頁找到 Exhibit 99.1 附件並下載其文字內容。
+    找不到時回傳 None。
+    """
+    cik = filing["cik"]
+    acc = filing["accession_number"]
+    acc_dashed = filing["accession_dashed"]
+
+    # 查詢 filing index JSON 取得所有附件清單
+    index_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{acc_dashed}-index.json"
+    try:
+        resp = requests.get(index_url, headers=EDGAR_HEADERS, timeout=30)
+        resp.raise_for_status()
+        index_data = resp.json()
+    except Exception:
+        return None
+
+    # 在 directory items 中尋找 Exhibit 99.1
+    items = index_data.get("directory", {}).get("item", [])
+    exhibit_filename = None
+    for item in items:
+        name = item.get("name", "").lower()
+        # 常見命名：ex99-1.htm, ex991.htm, exhibit991.htm 等
+        if re.search(r"ex\w*99[-_.]?1", name):
+            exhibit_filename = item.get("name")
+            break
+
+    if not exhibit_filename:
+        return None
+
+    # 下載 Exhibit 99.1
+    exhibit_url = f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc}/{exhibit_filename}"
+    try:
+        resp = requests.get(exhibit_url, headers=EDGAR_HEADERS, timeout=60)
+        resp.raise_for_status()
+    except Exception:
+        return None
+
+    raw = resp.text
+    if "<" in raw:
+        raw = re.sub(r"<[^>]+>", " ", raw)
+        raw = re.sub(r"&[a-zA-Z]+;", " ", raw)
+        raw = re.sub(r"\s+", " ", raw).strip()
+
+    return raw[:max_chars] if raw else None
+
+
+# ── Notion 去重查詢 ──────────────────────────────────────────────────────────
+
+def _get_notion_db_id(form: str) -> str | None:
+    """根據表單類型回傳對應的 Notion 資料庫 ID。"""
+    return {"8-K": NOTION_8K_DB_ID, "10-Q": NOTION_10Q_DB_ID, "10-K": NOTION_10K_DB_ID}.get(form)
+
+
+def _get_ticker_property(form: str) -> str:
+    """不同資料庫中 ticker 欄位名稱不同。"""
+    if form == "8-K":
+        return "公司 Ticker"
+    return "Ticker"
+
+
+def already_analyzed(ticker: str, filing_date: str, form: str) -> bool:
+    """
+    查詢 Notion 資料庫，檢查是否已存在相同 ticker + 日期的記錄。
+    """
+    db_id = _get_notion_db_id(form)
+    if not db_id:
+        return False
+
+    ticker_prop = _get_ticker_property(form)
+
+    # 8-K 資料庫有「日期」date 欄位；10-Q / 10-K 沒有 date 欄位，改用 Name title 比對
+    if form == "8-K":
+        filters = {
+            "and": [
+                {
+                    "property": ticker_prop,
+                    "rich_text": {"equals": ticker},
+                },
+                {
+                    "property": "日期",
+                    "date": {"equals": filing_date},
+                },
+            ]
+        }
+    else:
+        # 10-Q / 10-K 的 Name title 格式為 "{TICKER} 10-Q — {date}"
+        expected_title = f"{ticker} {form} — {filing_date}"
+        filters = {
+            "property": "Name",
+            "title": {"equals": expected_title},
+        }
+
+    try:
+        result = notion.databases.query(database_id=db_id, filter=filters, page_size=1)
+        return len(result.get("results", [])) > 0
+    except Exception as exc:
+        print(f"  [WARN] Notion 去重查詢失敗: {exc}")
+        return False
 
 
 # ── Claude 分析 ──────────────────────────────────────────────────────────────
@@ -427,7 +533,13 @@ def main() -> None:
 
         for filing in filings:
             form = filing["form"]
-            print(f"  → {form}  ({filing['date']})", end=" ")
+            filing_date = filing["date"]
+            print(f"  → {form}  ({filing_date})", end=" ")
+
+            # 去重：檢查 Notion 是否已分析過
+            if already_analyzed(ticker, filing_date, form):
+                print(f"  [SKIP] {ticker} {form} {filing_date} 已分析過")
+                continue
 
             try:
                 text = fetch_filing_text(filing)
@@ -440,15 +552,22 @@ def main() -> None:
 
             try:
                 if form == "8-K":
+                    # 嘗試抓取 Exhibit 99.1 合併分析
+                    exhibit_text = fetch_exhibit_99_1(filing)
+                    if exhibit_text:
+                        print("  [Exhibit 99.1 ✓]", end=" ")
+                        text = text + "\n\n--- Exhibit 99.1 ---\n\n" + exhibit_text
+                    else:
+                        print("  [Exhibit 99.1 未找到，僅用主文]", end=" ")
                     analysis = analyze_with_claude(PROMPT_8K_BRIEF, text)
-                    write_to_notion_8k(ticker, filing["date"], analysis)
+                    write_to_notion_8k(ticker, filing_date, analysis)
                     all_8k_analyses.append(
                         {"ticker": ticker, "analysis": analysis}
                     )
 
                 elif form == "10-Q":
                     analysis = analyze_with_claude(PROMPT_10Q, text)
-                    write_to_notion_10q(ticker, filing["date"], analysis)
+                    write_to_notion_10q(ticker, filing_date, analysis)
 
                 elif form == "10-K":
                     analysis   = analyze_with_claude(PROMPT_10K, text)
@@ -459,10 +578,10 @@ def main() -> None:
                         else None
                     )
                     write_to_notion_10k(
-                        ticker, filing["date"], analysis, avg_moat
+                        ticker, filing_date, analysis, avg_moat
                     )
                     kb.update_moat_scores(
-                        ticker, moat_data, filing["date"][:4]
+                        ticker, moat_data, filing_date[:4]
                     )
 
                 print("  [Notion 寫入完成]")
