@@ -13,6 +13,7 @@ import os
 import json
 import datetime
 import html as html_lib
+import requests
 from pathlib import Path
 from jinja2 import Environment, BaseLoader
 from notion_client import Client as NotionClient
@@ -607,15 +608,27 @@ def _query_all_pages(db_id: str) -> list[dict]:
     """分頁查詢 Notion 資料庫的所有頁面。"""
     pages: list[dict] = []
     cursor = None
+    headers = {
+        "Authorization": f"Bearer {NOTION_TOKEN}",
+        "Notion-Version": "2022-06-28",
+        "Content-Type": "application/json",
+    }
     while True:
-        kwargs = {"database_id": db_id, "page_size": 100}
+        body: dict = {"page_size": 100}
         if cursor:
-            kwargs["start_cursor"] = cursor
-        resp = notion.databases.query(**kwargs)
-        pages.extend(resp.get("results", []))
-        if not resp.get("has_more"):
+            body["start_cursor"] = cursor
+        resp = requests.post(
+            f"https://api.notion.com/v1/databases/{db_id}/query",
+            headers=headers,
+            json=body,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        pages.extend(data.get("results", []))
+        if not data.get("has_more"):
             break
-        cursor = resp.get("next_cursor")
+        cursor = data.get("next_cursor")
     return pages
 
 
