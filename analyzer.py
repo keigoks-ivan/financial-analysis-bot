@@ -139,15 +139,16 @@ def get_recent_filings(cik: str, hours: int = 48) -> list[dict]:
     accessions  = recent.get("accessionNumber", [])
     prim_docs   = recent.get("primaryDocument", [])
     descriptions = recent.get("primaryDocDescription", [])
+    items_list   = recent.get("items", [])
 
     target_forms = {"8-K", "10-Q", "10-K"}
     filings = []
 
-    for form, date, acc, doc, desc in zip(forms, dates, accessions, prim_docs, descriptions):
+    for form, date, acc, doc, desc, items in zip(forms, dates, accessions, prim_docs, descriptions, items_list):
         if date < cutoff or form not in target_forms:
             continue
-        # 8-K 只保留 Item 2.02（業績公告）
-        if form == "8-K" and "2.02" not in desc:
+        # 8-K 只保留 Item 2.02（業績公告）；items 格式為 "2.02,9.01" 逗號分隔
+        if form == "8-K" and "2.02" not in [x.strip() for x in items.split(",")]:
             continue
         filings.append({
             "form":               form,
@@ -287,7 +288,18 @@ def already_analyzed(ticker: str, filing_date: str, form: str) -> bool:
         }
 
     try:
-        result = notion.databases.query(database_id=db_id, filter=filters, page_size=1)
+        resp = requests.post(
+            f"https://api.notion.com/v1/databases/{db_id}/query",
+            headers={
+                "Authorization": f"Bearer {NOTION_TOKEN}",
+                "Notion-Version": "2022-06-28",
+                "Content-Type": "application/json",
+            },
+            json={"filter": filters, "page_size": 1},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        result = resp.json()
         return len(result.get("results", [])) > 0
     except Exception as exc:
         print(f"  [WARN] Notion 去重查詢失敗: {exc}")
