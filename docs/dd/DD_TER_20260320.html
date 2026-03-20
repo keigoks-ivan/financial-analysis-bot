@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_TER_20260320 | Teradyne 深度分析報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC;--card:#FFF;--accent:#4F46E5;--navy:#1E1B4B;
+    --text:#1A2332;--text-sub:#4A5568;--border:#E2E8F0;--alt-row:#F1F5F9;
+    --green-bg:#DCFCE7;--green-text:#166534;
+    --red-bg:#FEE2E2;--red-text:#991B1B;
+    --yellow-bg:#FEF9C3;--yellow-text:#92400E;
+    --blue-bg:#EFF6FF;--blue-text:#1E40AF;
+    --purple-bg:#EDE9FE;--purple-text:#5B21B6;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:var(--text);font-size:14px;line-height:1.7;}
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 24px;font-family:var(--mono);font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  #topbar .left{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+  #topbar .ticker{font-size:18px;font-weight:700;letter-spacing:2px;color:#A5B4FC;}
+  #topbar .mode-badge{background:#4F46E5;color:#fff;padding:2px 10px;border-radius:3px;font-size:11px;font-weight:700;}
+  #topbar .price{font-size:16px;font-weight:600;color:#FCD34D;}
+  #print-btn{background:#4F46E5;color:#fff;border:none;cursor:pointer;padding:6px 16px;border-radius:3px;font-size:12px;font-family:var(--mono);font-weight:700;white-space:nowrap;}
+  .wrap{max-width:1100px;margin:0 auto;padding:80px 24px 60px;}
+  .sec-head{background:var(--navy);color:#fff;padding:10px 20px;margin:32px 0 16px;border-left:4px solid var(--accent);font-size:15px;font-weight:700;}
+  .sub-head{color:var(--navy);font-size:13px;font-weight:700;padding:8px 0 4px;border-bottom:2px solid var(--accent);margin:20px 0 10px;}
+  .card{background:var(--card);border:1px solid var(--border);padding:16px 20px;margin-bottom:14px;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:16px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 16px;}
+  .stat-card .label{font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;}
+  .stat-card .value{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--navy);}
+  .stat-card .note{font-size:11px;color:var(--text-sub);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:var(--navy);color:#fff;padding:8px 12px;text-align:left;font-weight:600;font-size:12px;}
+  td{padding:7px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:nth-child(even) td{background:var(--alt-row);}
+  tr:hover td{background:var(--purple-bg);}
+  .mono{font-family:var(--mono);}
+  .beat{background:var(--green-bg);color:var(--green-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .miss{background:var(--red-bg);color:var(--red-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .neutral{background:var(--yellow-bg);color:var(--yellow-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .pass{background:var(--green-bg);color:var(--green-text);}
+  .fail{background:var(--red-bg);color:var(--red-text);}
+  .warn{background:var(--yellow-bg);color:var(--yellow-text);}
+  .bull td{background:var(--green-bg)!important;}
+  .base td{background:var(--yellow-bg)!important;}
+  .bear td{background:var(--red-bg)!important;}
+  .rating-block{border:2px solid;padding:14px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:16px;}
+  .rating-block.green{border-color:#16A34A;background:var(--green-bg);}
+  .rating-block.yellow{border-color:#D97706;background:var(--yellow-bg);}
+  .rating-block.red{border-color:#DC2626;background:var(--red-bg);}
+  .rating-block.purple{border-color:#7C3AED;background:var(--purple-bg);}
+  .rating-block .icon{font-size:28px;line-height:1;min-width:36px;}
+  .rating-block .title{font-weight:700;font-size:15px;margin-bottom:4px;}
+  .rating-block .body{font-size:13px;line-height:1.6;}
+  .alert-warn{background:#FFFBEB;border-left:4px solid #F59E0B;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-info{background:var(--blue-bg);border-left:4px solid #3B82F6;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-green{background:var(--green-bg);border-left:4px solid #16A34A;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-danger{background:var(--red-bg);border-left:4px solid #DC2626;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-purple{background:var(--purple-bg);border-left:4px solid #7C3AED;padding:10px 16px;margin:12px 0;font-size:13px;}
+  p{margin-bottom:10px;font-size:13px;}
+  ul,ol{padding-left:20px;margin-bottom:10px;}
+  li{margin-bottom:4px;font-size:13px;}
+  strong{color:var(--navy);}
+  .data-stamp{font-family:var(--mono);font-size:11px;color:var(--text-sub);background:var(--alt-row);padding:6px 14px;border:1px solid var(--border);display:inline-block;margin-bottom:16px;}
+  .score-big{font-size:48px;font-family:var(--mono);font-weight:700;color:var(--navy);}
+  @media print{
+    #topbar,#print-btn{display:none!important;}
+    .wrap{padding:20px;}
+    .sec-head{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .bull td,.base td,.bear td,.pass,.fail,.warn{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="left">
+    <span class="ticker">TER</span>
+    <span class="mode-badge">🔍 深度版</span>
+    <span>Teradyne, Inc.</span>
+    <span>資料抓取：2026-03-20</span>
+    <span class="price">現價 ~$300 USD</span>
+    <span>最新財報：Q4 FY2025（2026-02-03）｜ 下次：Q1 FY2026（2026-04-27）</span>
+  </div>
+  <button id="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</div>
+
+<div class="wrap">
+<div class="data-stamp">
+  資料抓取：2026-03-20 ｜ TER 現價：~$300 USD ｜ 市值：~$47B（~157M 股）｜ 52 週：$65.77 – $344.92 ｜ 全時最高 $344.92（2026-02-25）｜ 距高點 -13% ｜ 過去 52 週 +240%！ ｜ 最新財報：Q4 FY2025（2026-02-03）
+</div>
+<div class="alert-purple">
+  <strong>🔑 TER 的特殊性：ATE（自動測試設備）≠ WFE（晶圓製程設備）</strong><br>
+  Teradyne 是<strong>半導體「測試」設備商</strong>，而非製程設備商（ASML/LRCX/KLAC/AMAT）。WFE 是在晶圓上製造晶片的機器；ATE 是在晶片製造好之後測試其功能和品質的機器。兩者業務模型不同：WFE 與晶圓廠 Capex 連動；ATE 與晶片出貨量和複雜度連動。理解這個差異是分析 TER 的前提。
+</div>
+<div class="alert-green">
+  <strong>🔑 本報告核心命題：</strong>Teradyne 是全球半導體測試設備（ATE）龍頭（SoC #1、記憶體 #2），正在經歷從「手機週期股」到「AI 計算基礎設施核心」的根本性業務轉型。Q4 2025 AI 驅動收入 >60%；Q1 2026E >70%；Compute（AI）收入 2025 年 +90% YoY。最重要的是管理層在 Q4 Call 宣布「新目標模型」——當 ATE TAM 達到 $12-14B 時，目標 Revenue $6B（vs 2025 $3.19B，+88%）和 EPS $9.50-11（vs 2025 $3.96，+140-178%）。三大新平台（Photon 100 矽光子、Omnyx AI PCBA、UR AI Trainer 物理 AI）確認了 2026+ 的全面 AI 化升級。但當前股價 $300 的 TTM P/E ~83x、Fwd P/E ~48-50x，估值是十八個標的中最高的——是「成長狂歡」還是「有支撐的轉型」？
+</div>
+
+<!-- §0 -->
+<div class="sec-head">§0 ｜ 序章：第一性原理 × 逆向思考</div>
+<div class="sub-head">存在意義（深度版）</div>
+<div class="card">
+  <p>Teradyne 解決的核心問題：<strong>一顆 AI 晶片（NVIDIA B200、AMD Instinct MI450）包含 1,000+ 億個電晶體，製造出來後如何驗證每一個電晶體是否工作正確？如何以最快速度、最低成本篩出良品和不良品？這就是 ATE（自動測試設備）的存在意義。</strong></p>
+  <p>ATE 的業務邏輯是：① 晶片設計越複雜 → 測試步驟越多 → 每顆晶片的測試時間越長 → 每顆晶片消耗的 ATE 容量越多 ② 晶片出貨量越大 → 需要的 ATE 機台越多 ③ 測試標準越嚴格（AI 推論晶片不能有任何錯誤，否則訓練結果出錯）→ 更多測試步驟。AI 晶片同時滿足以上三個條件的最大化：複雜度（100B+ 電晶體）+ 出貨量（NVIDIA 年出貨 400 萬+ GPU）+ 測試標準（AI 資料中心容忍零缺陷）= ATE 需求爆炸性增長。</p>
+  <p><strong>從手機週期股到 AI 基礎設施核心的業務轉型：</strong>2020-2023 年 Teradyne 的最大業務是手機 SoC 測試（蘋果 A-chip，佔收入 ~30%+），這是典型的週期性業務——手機新機型每年推出，ATE 需求跟著週期波動。AI 時代的最大改變：Compute（AI GPU/ASIC）在 2025 年超越手機成為最大的收入來源，且 +90% YoY。這個「從手機 → AI 計算」的轉型，將 TER 從週期股（P/E 15-25x）重新定價為 AI 基礎設施股（P/E 40-80x+）。</p>
+  <p><strong>為何 ATE 是 AI 算力的「隱形門衛」：</strong>NVIDIA Blackwell GPU（B200）在出廠前必須通過 Teradyne 的 UltraFLEXplus 平台的完整功能測試——每一個 Compute Die、每一個 HBM 堆疊都需要測試。沒有 ATE，NVIDIA 無法出貨 GPU；沒有 GPU，AI 數據中心無法建設。Teradyne 是 AI 算力供應鏈中最少被人討論、但最不可或缺的環節之一。</p>
+</div>
+
+<div class="sub-head">逆向推演（Munger Inversion）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>風險維度</th><th>具體情境</th><th>機率</th><th>股價影響</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>🎯 客戶集中度（最大已知風險）</strong><br>兩家「指定客戶」各貢獻 ~10% 收入；一個「採購客戶」貢獻 ~10%</td>
+        <td>Teradyne 在 2025 年有兩個「specifying customers」（晶片設計公司，決定用哪種測試標準）和一個「purchasing customer」（代工廠/OSAT，實際採購設備）各佔約 10%+ 收入。最可能是 NVIDIA（晶片設計）+ TSMC 或 SK Hynix（採購設備）。若 NVIDIA 下一代晶片（Rubin，2027）採用競爭對手的測試平台（Advantest）或自研測試方案，TER 的 Compute 收入可能大幅損失。管理層說「revenue lumpiness」和「limited visibility beyond H1 2026 because of concentrated customer programs」——這是最直接的風險承認。</td>
+        <td class="mono warn">中高（集中度高 = 任何大客戶的決策都是重大事件）</td>
+        <td>大客戶測試平台轉換：Compute 收入 -30~50% → EPS -30~50% → 股票 -40~60%</td>
+      </tr>
+      <tr>
+        <td><strong>📉 AI Capex 超週期提前結束或放緩</strong><br>最大宏觀風險</td>
+        <td>Teradyne 的 Compute 業務 2025 年 +90%，幾乎完全依賴 AI GPU 需求。若 2027 年 AI Capex 超週期放緩（超大型雲廠商削減採購，類比 2022 年雲端 Capex 修正），NVIDIA GPU 出貨量平台化，Teradyne 的 Compute 測試收入將大幅下滑。CEO 的話「concentrated customer programs and timing of large socket ramps」說明 Compute 收入的「on/off」特性——一旦大型訂單完成，收入可能急劇下跌。管理層警告「limited visibility beyond H1 2026」——這是罕見的前瞻性風險提示。</td>
+        <td class="mono warn">中等（2026 高確定；2027+ 不確定）</td>
+        <td>Compute 測試收入 H2 2026 急跌：全年 EPS 低於共識 → 股票 -35~50%</td>
+      </tr>
+      <tr>
+        <td><strong>🤖 Advantest（競爭者）反攻</strong><br>最大競爭威脅</td>
+        <td>Advantest（日本，NYSE: ATEYY）是 TER 在 SoC 和記憶體測試領域最直接的競爭者。Advantest 在 HBM 記憶體測試（三星/SK Hynix 主要供應商）有更深的護城河，且近年積極拓展 AI 計算測試市場。若 Advantest 在 NVIDIA/AMD 的 GPU 測試中奪取份額，TER 的最重要成長引擎（AI Compute）受威脅。</td>
+        <td class="mono warn">低中（TER 在 Compute SoC 測試有先發優勢，但不是壟斷）</td>
+        <td>Compute 測試市佔損失 20%：EPS -15~25% → 股票 -20~30%</td>
+      </tr>
+      <tr>
+        <td><strong>🤝 機器人業務「復甦延遲」</strong><br>Robotics 長期看好但短期承壓</td>
+        <td>Teradyne 的 Robotics 業務（Universal Robots 協作機器人 + MiR 自主移動機器人）在 2023-2024 年因工業製造需求下滑而大幅萎縮，Q4 2025 只有 $89M（Robotics 歷史高峰曾達 $200M+/季）。管理層說「large e-commerce customer ramp」是 2026 年 Robotics 的主要成長驅動——若電商客戶的機器人採購計畫延後，Robotics 業務繼續拖累整體成長預期。</td>
+        <td class="mono neutral">低中（機器人業務是加分項，非核心驅動）</td>
+        <td>Robotics 復甦延遲：整體 EPS -5~10%；但 Compute 主導的情況下影響有限</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="alert-danger" style="margin-top:12px">
+    <strong>最重要的逆向推演結論——「Revenue Lumpiness」是 TER 最根本的投資風險：</strong>CEO Greg Smith 在 Q4 Call 中用「revenue lumpiness」這個詞來描述 Compute 測試業務的本質——AI GPU 的測試需求集中在少數大客戶的大型訂單，這些訂單的時序（timing）是不可預測的。這與 ASML（積壓訂單 €38.8B，兩年能見度）或 LRCX（WFE $135B 確認，全年能見度）的長期訂單可見度完全不同。TER 的業務更接近「高成長但高不確定性」的短週期設備商，而非長週期的基礎設施建設受益者。這個「lumpiness」特性使 TER 不適合以 P/E 40-80x 的穩定成長股倍數評估——應以 P/E 30-45x 的高成長週期股倍數更合理。
+  </div>
+</div>
+
+<!-- §1 -->
+<div class="sec-head">§1 ｜ 即時財報情報（Q4 FY2025，2026-02-03）</div>
+<div class="sub-head">① Q4 2025 + 全年財報關鍵數字</div>
+<table>
+  <thead><tr><th>指標</th><th>Q4 FY2025 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 變化</th></tr></thead>
+  <tbody>
+    <tr><td>Total Revenue</td><td class="mono">$1.083B（史上第二高季度！）</td><td class="mono">$969M（共識）</td><td><span class="beat">✓ BEAT +11.8%！大幅超預期；歷史第二高</span></td><td class="mono">+44% YoY（vs Q4 2024 $753M）；+41% QoQ（vs Q3 2025 $769M）</td></tr>
+    <tr><td>Semiconductor Test Revenue</td><td class="mono">$883M（82%）</td><td class="mono">—</td><td><span class="beat">✓ SoC $647M（+47% QoQ）；Memory $206M（+61% QoQ，記錄！）</span></td><td class="mono">AI Compute + HBM 爆發；史上最高記憶體測試季度</td></tr>
+    <tr><td>Product Test Revenue</td><td class="mono">$110M（10%）</td><td class="mono">—</td><td><span class="beat">✓ AI PCBA 測試需求 + 防禦/航太；雙位數 QoQ 成長</span></td><td class="mono">Omnyx 平台的新市場機會</td></tr>
+    <tr><td>Robotics Revenue</td><td class="mono">$89M（8%）</td><td class="mono">—</td><td><span class="neutral">⚪ 雙位數 QoQ 成長；仍大幅低於歷史高峰（$200M+/季）；電商客戶爬坡中</span></td><td class="mono">Universal Robots + MiR；Foxconn 合作（Skild AI，GTC 2026）是長期正面信號</td></tr>
+    <tr><td>Non-GAAP EPS</td><td class="mono">$1.80</td><td class="mono">$1.36（共識）</td><td><span class="beat">✓ BEAT +$0.44（+32.4%）！史上最大 EPS Beat 之一</span></td><td class="mono">+89.5% YoY（vs Q4 2024 $0.95）；利潤槓桿巨大</span></td></tr>
+    <tr><td>Non-GAAP Gross Margin（Q4）</td><td class="mono">~59%（估；Q1 2026 指引 58.5-59.5%）</td><td class="mono">—</td><td><span class="beat">✓ 高利潤率水準；AI Compute 測試 ASP 高且利潤率優異</span></td><td class="mono">Q1 2026 指引 GM 58.5-59.5%（接近歷史高點）</td></tr>
+    <tr><td>AI 驅動收入佔比</td><td class="mono">>60%（Q4 2025）</td><td class="mono">—</td><td><span class="beat">✓ vs Q3 2025 ~40-50%；AI 佔比快速加速！Q1 2026E >70%</span></td><td class="mono">從「手機主導」到「AI 主導」的轉型在 Q4 已完成跨越</td></tr>
+    <tr><td>FY2025 全年 Revenue</td><td class="mono">$3.19B（+13% YoY）</td><td class="mono">—</td><td><span class="beat">✓ vs FY2024 $2.82B；全年 +13% 但 H2 爆炸性加速（Q4 +44%）</span></td><td class="mono">FY2025 SoC +23% YoY；Compute +90% YoY！Memory 平</td></tr>
+    <tr><td>FY2025 全年 Non-GAAP EPS</td><td class="mono">$3.96（+23% YoY）</td><td class="mono">—</td><td><span class="beat">✓ vs FY2024 $3.21（+23%）；EPS 加速中</span></td><td class="mono">2025 Non-GAAP EPS CAGR 加速至 23%</td></tr>
+    <tr><td>新目標模型（重大宣告）</td><td class="mono">Revenue $6B + EPS $9.50-11<br>（當 ATE TAM = $12-14B 時）</td><td class="mono">—</td><td><span class="beat">✓ 最重要的 Call 宣告：確認長期業務轉型的量化承諾</span></td><td class="mono">$6B = $3.19B（2025）的 +88%；$9.50-11 = $3.96 的 +140-178%</td></tr>
+  </tbody>
+</table>
+<div class="alert-green" style="margin-top:8px">
+  <strong>✅ Q4 FY2025 最重要信號：</strong>① Non-GAAP EPS $1.80（Beat +32.4%，史上最大 Beat 之一）② 記憶體測試記錄季度（$206M，HBM 爆發）③ AI 驅動收入 >60%（Q3 ~40-50% → Q4 >60% → Q1 2026E >70%，快速加速）④ 「新目標模型」$6B Revenue + EPS $9.50-11 ⑤ 三大新平台（Photon 100、Omnyx、UR AI Trainer）確認 AI 全面化。但 CEO 也直接承認「Revenue lumpiness」和「limited visibility beyond H1 2026」——這兩個誠實的警告是本次 Call 最重要的風險提示，不應被市場興奮情緒掩蓋。
+</div>
+
+<div class="sub-head">② Q1 2026 指引 + 新目標模型</div>
+<div class="card">
+  <table>
+    <thead><tr><th>指標</th><th>數據</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td>Q1 2026 Revenue 指引</td><td class="mono">$1.15B – $1.25B（中位 $1.20B）</td><td><span class="beat">✓ 中位 $1.20B = +75% YoY（vs Q1 2025 $686M）；+10.8% QoQ</span></td></tr>
+      <tr><td>Q1 2026 Non-GAAP EPS 指引</td><td class="mono">$1.89 – $2.25（中位 $2.07）</td><td><span class="beat">✓ 中位 $2.07；若達到上限 $2.25 = +25% QoQ（vs Q4 $1.80）；Q1 2026 EPS 預計超越 Q4 2025</span></td></tr>
+      <tr><td>Q1 2026 Non-GAAP GM 指引</td><td class="mono">58.5% – 59.5%（中位 59%）</td><td><span class="beat">✓ 高利潤率維持；AI Compute 高 ASP 支撐 GM</span></td></tr>
+      <tr><td>AI 驅動收入佔比 Q1 2026E</td><td class="mono">>70%（vs Q4 2025 >60%）</td><td><span class="beat">✓ 持續加速；AI 佔比快速擴大確認業務轉型</span></td></tr>
+      <tr><td>新目標模型（最重要宣告）</td><td class="mono">當 ATE TAM = $12-14B 時：Revenue $6B；Non-GAAP EPS $9.50-$11</td><td><span class="beat">✓ ATE TAM 2025 約 $8B；達 $12-14B 預計需要 2-4 年（2027-2029）</span></td></tr>
+      <tr><td>2026 全年展望</td><td class="mono">「所有業務 YoY 成長」；Compute（AI）繼續強勁</td><td><span class="neutral">⚪ 但限制性措辭：「H1 2026 能見度好；H2 2026 能見度有限」</span></td></tr>
+      <tr><td>MultiLane JV（2026-01 宣布）</td><td class="mono">TER 主導合資企業（MultiLane Test Products），目標 AI 數據中心高速 I/O 測試</td><td><span class="beat">✓ 矽光子 + CPO 測試市場的戰略布局；Photon 100 的生態系擴展</span></td></tr>
+      <tr><td>Foxconn 機器人合作（GTC 2026，2026-03-16）</td><td class="mono">Universal Robots（TER 旗下）+ Skild AI + Foxconn 休士頓工廠機器人操作</td><td><span class="beat">✓ 物理 AI（Physical AI）概念最強確認；UR AI Trainer 的首個工廠規模應用案例</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">③ Earnings Call 語氣解析</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td><strong>管理層基調</strong></td><td><span class="beat">積極但坦率承認高度不確定性</span>：CEO Greg Smith 在開場直接說「strong fourth quarter with 41% sequential revenue growth and more than 100% non-GAAP earnings growth」，語氣顯然對業務表現高度滿意。但隨後立即說「revenue lumpiness」「limited visibility beyond H1 2026」「concentrated customer programs」——這種「成功但謹慎」的雙重表態是 TER 管理層的一貫風格（相對於 AMAT 或 ASML 的長期大型合同確認，TER 的業務本質上更短週期），說明管理層對業務有清醒認識，不誇大也不迴避風險。</td></tr>
+      <tr><td><strong>三大刻意強調</strong></td><td>
+        ① <strong>「新目標模型：$6B Revenue，EPS $9.50-11」</strong>：這是本次 Call 最重要的新信息。$6B 目標（vs 2025 $3.19B，+88%）說明管理層相信 ATE TAM 仍有巨大的成長空間，且 Teradyne 有能力保持或提升市佔。EPS $9.50-11 的範圍說明即使是「目標模型」也有相當的確定性——不是「最樂觀情境」，而是在特定 TAM 假設下的合理預估<br>
+        ② <strong>「Compute 2025 年成長 90%，現在是最大的業務，且 2026 年繼續強勁」</strong>：Compute 取代 Mobile 成為 TER 最大業務是業務性質的根本轉變，而非週期性波動。管理層連結到 NVIDIA GPU 出貨量增長和 HBM 堆疊層數增加（測試時間倍增）<br>
+        ③ <strong>「物理 AI（Physical AI）正在擴大機器人的應用」</strong>：Universal Robots + Scale AI（NVIDIA GTC 2026）的合作，以及 Foxconn 休士頓工廠部署，說明 TER 的機器人業務不只是「協作機器人銷售」，而是正在進入「AI 模型訓練 × 工廠自動化」的融合賽道，這個市場的長期增長潛力比傳統工業機器人大得多
+      </td></tr>
+      <tr><td><strong>刻意迴避的問題</strong></td><td>
+        ① <strong>H2 2026 能見度為何「有限」</strong>：分析師多次追問 H2 2026 的具體收入展望，管理層只說「concentrated customer programs and timing of large socket ramps」，不給具體數字。這實際上是承認 H2 的業務高度不確定，依賴少數大客戶的大型訂單是否落地<br>
+        ② <strong>具體客戶身份</strong>：管理層說「two specifying customers and one purchasing customer」各佔 10%+，但不說明是誰。市場普遍猜測是 NVIDIA（Compute Specifier）+ TSMC/SK Hynix（Purchaser），但無法確認<br>
+        ③ <strong>機器人業務的長期盈利路徑</strong>：Robotics 在 $89M/季的規模下，相對於 TER ~$47B 的市值只有約 3-4% 的收入貢獻，但管理層從不討論機器人的具體 ROI 或何時達到盈利目標
+      </td></tr>
+      <tr><td><strong>新目標模型詳細解析（最重要）</strong></td><td>
+        <strong>目標模型假設：ATE TAM = $12-14B；Teradyne 市佔 ~43-50%</strong><br>
+        2025 ATE TAM 約 $7-8B（Teradyne $3.19B / ~40-45% 市佔 = TAM $7.1-8.0B）<br>
+        目標 TAM $12-14B = +57-75% 成長（需要 3-5 年，假設 10-15% CAGR）<br>
+        目標 Revenue $6B / TAM $12-14B = TER 市佔 ~43-50%（持平或微增）<br>
+        目標 EPS $9.50-11 / Revenue $6B = Net Margin ~23-26%（vs 2025 ~17.4%，大幅改善 → 規模槓桿）<br>
+        最關鍵問題：ATE TAM 何時達到 $12-14B？管理層的邏輯：AI Compute 持續爆發 + HBM 測試複雜度增加 + Edge AI 滲透（手機/汽車）+ 矽光子測試（Photon 100）。若每年 10-15% 成長，2028-2030 年可達 $12-14B。
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">④ 產業 Imply 萃取</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td><strong>AI GPU = 測試密集度最高的晶片</strong></td><td>NVIDIA Blackwell B200（140B 電晶體）的測試時間是前代 Hopper H100 的數倍——因為更多電晶體 = 更多測試向量 = 更長的測試時間。且 B200 的 HBM3e 堆疊（8 顆 HBM × 16 層）需要每層 TSV 互連的完整功能測試。這意味著即使出貨顆數不變，每個 B200 消耗的 ATE 機台時間遠大於 H100。管理層說「HBM 堆疊層數從 12 增至 16 再到 20+」——每增加 4 層，測試步驟增加 ~25-33%，是 ATE 需求的「嵌入式乘數」。</td></tr>
+      <tr><td><strong>矽光子（Silicon Photonics）= TER 的下一個 10 億美元業務機會</strong></td><td>2026-03-17 Photon 100 的發布是 TER 進入「光電測試」市場的重大宣言。矽光子和共封裝光學（CPO = Co-Packaged Optics）是 AI 數據中心高速互連的下一代技術（替代傳統銅互連）——NVIDIA 的 Rubin GPU（2027）預計採用 CPO 技術。每個 CPO 模組需要 Teradyne Photon 100 的光電整合測試，這是現有 ATE 設備無法完成的（需要同時測試光學和電子信號）。矽光子測試市場預計在 2026-2030 年快速成長，TER 的 Photon 100 可能成為這個市場的標準測試平台。</td></tr>
+      <tr><td><strong>物理 AI（Physical AI）= 機器人業務的復甦觸媒</strong></td><td>NVIDIA GTC 2026 上，Jensen Huang 提出「Physical AI」（物理 AI）——AI 不只存在於數據中心，而是滲入機器人和物理世界。Teradyne 的 Universal Robots 和 Scale AI 在 GTC 2026 宣布「首個直接從 AI 實驗室到工廠的物理 AI 模型訓練解決方案」——這意味著工廠機器人可以從 Scale AI 平台直接訓練 AI 模型，而不需要數週的人工示教編程。Foxconn 在休士頓工廠部署這個方案是最具說服力的商業化案例。這個模式若規模化，Universal Robots 的 TAM 從「工業自動化」擴展到「AI 驅動物理世界」，市場規模可能是現有業務的 5-10 倍。</td></tr>
+      <tr><td><strong>HDD（硬碟）測試回流 = 意外的近期正面催化劑</strong></td><td>Aletheia（台灣研究機構）在 2026-03 發布報告，指出台灣測試儀器進口數據急劇反彈，主因是 AI 數據中心的 HDD 需求復甦（AI 推論需要大容量存儲）。Teradyne 的磁頭測試（HDD 組件測試）業務自 2023-2024 年持續低迷後可能在 2026 年反彈。這是分析師意外的正面信號，說明 TER 的業務復甦面更廣（不只是 AI Compute）。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §2 -->
+<div class="sec-head">§2 ｜ 核心門檻檢核</div>
+<div class="sub-head">EPS CAGR 搜尋結果</div>
+<div class="card">
+  <div class="alert-info">
+    <strong>口徑說明：</strong>TER 使用「Non-GAAP EPS」作為主要報告口徑（剔除 SBC ~$60M/年、M&A 攤銷、重組費用）。GAAP EPS 和 Non-GAAP EPS 差距較小（GAAP 稍低）。FY2025 Non-GAAP EPS $3.96；GAAP EPS $3.47（差距 $0.49，主要是攤銷）。TER 財年 = 曆年（12 月底）。<br>
+    <strong>⚠️ EPS 共識多樣性注意：</strong>Zacks $5.91（2026E）vs WallStreetZen $6.30（2026E）vs Q1 指引中位 $2.07 × 4 ≈ $8.28（若所有季度等同 Q1，但不現實）。「Revenue lumpiness」使 EPS 共識分散。本報告使用 Zacks $5.91（保守）和 WallStreetZen $6.30（中性）的區間。
+  </div>
+  <table>
+    <thead><tr><th>年度</th><th>Non-GAAP EPS</th><th>分析師人數</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><strong>FY2025（已公布，基期）</strong></td><td class="mono">$3.96（+23% YoY）；GAAP $3.47</td><td>—</td><td>H2 爆炸性加速；Q4 $1.80（史上第二高季度）；AI 轉型啟動</td></tr>
+      <tr><td><strong>FY2026E（Q1 2026E + H2 估）</strong></td><td class="mono">$5.91-$6.30（Zacks / WallStreetZen，n=21-29）；Q1 指引中位 $2.07</td><td>n≈21-29</td><td>+49-59% YoY！；但 H2 2026 能見度「有限」；上限 $7.65（積極）</td></tr>
+      <tr><td><strong>FY2027E</strong></td><td class="mono">$8.30（WallStreetZen，n=21）；範圍 $6.62-$10.40</td><td>n≈21</td><td>+32% YoY（中性）；新目標模型路徑 $9.50-11（當 TAM $12-14B 時）</td></tr>
+      <tr><td><strong>FY2028E</strong></td><td class="mono">$10.60（WallStreetZen）；範圍 $8.43-$13.06</td><td>n≈15</td><td>若 2028 年 ATE TAM 接近 $12B，則接近新目標模型的低端 $9.50</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:12px;font-family:var(--mono);font-size:13px;padding:10px;background:var(--alt-row);border:1px solid var(--border);">
+    <strong>EPS CAGR 計算（Non-GAAP，FY2025 $3.96 → FY2028E）：</strong><br>
+    中性 FY2028E $10.60：3 年 CAGR = ($10.60 ÷ $3.96)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +38.8%</span><br>
+    保守 FY2028E $8.43：3 年 CAGR = ($8.43 ÷ $3.96)^(1/3) − 1 = <span style="color:#D97706;font-weight:700">約 +28.5%</span><br>
+    目標模型 FY2028E（$9.50-11）：3 年 CAGR = ($10.25 ÷ $3.96)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +37.4%</span><br>
+    <em>注：TER 的 EPS CAGR（~29-39%）是十八個標的中最高的之一！遠超 KLAC（13.5%）、LRCX（16-20%）、ASML（17-27%），接近 AMD（34-48%）和 MRVL（38-42%）的水準。但這個高 CAGR 是基於「Revenue lumpiness」的前提下——單季業績好壞對全年 EPS 影響極大，預測不確定性也最高。</em>
+  </div>
+</div>
+
+<div class="sub-head">門檻檢核表</div>
+<table>
+  <thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr></thead>
+  <tbody>
+    <tr><td><strong>FCF Margin</strong></td><td>> 15%</td>
+      <td class="pass mono">✓ 符合（FY2025 估 ~20-22%；ATE 業務輕資本模型）</td>
+      <td>TER 是輕資本業務（主要是軟體和電子系統設計，製造外包比例高）。Capex 低（~$100-150M/年），FCF 高。FY2025 OCF 估 ~$700-800M / Revenue $3.19B = ~22-25% FCF Margin。2026 年隨 Revenue 成長，FCF 有望快速提升（$1B+ 可能性）。</td></tr>
+    <tr><td><strong>ROIC</strong></td><td>產業頂尖</td>
+      <td class="pass mono">✓ 強（ROE 71%+ FY2026E；ROI 遠高於 ATE 行業平均）</td>
+      <td>WallStreetZen FY2026E ROE 71.43%。TER 的輕資本、高利潤（Non-GAAP GM ~59%）模式確保了優異的資本效率。$1B 回購計畫（2025 宣布）進一步壓縮股本，提升 ROE。</td></tr>
+    <tr><td><strong>EPS CAGR（3年，FY2025-2028）</strong></td><td>> 20%</td>
+      <td class="pass mono">✓✓ 大幅超標（~29-39%；十八標的最高之一！）</td>
+      <td>基期 FY2025：$3.96 Non-GAAP<br>FY2026E：$5.91-6.30（保守/中性）<br>FY2027E：$8.30（中性）<br>FY2028E：$10.60（中性）<br>━━━━━━<br>3 年 CAGR：~29-39%（保守/中性）<br>⚠️ 但高度依賴 AI Compute 需求持續 + H2 2026 能見度</td></tr>
+    <tr><td><strong>PEG</strong></td><td>< 2</td>
+      <td class="warn mono">⚠️ 高但視角關鍵（TTM PEG ~2.3x；Fwd PEG ~1.3-1.5x）</td>
+      <td>TTM P/E ~$300 ÷ $3.96 = <strong>75.8x</strong>（基期偏低，反映 2025 H1 低迷）<br>Fwd P/E（FY2026E $6.10）= $300 ÷ $6.10 = <strong>49.2x</strong><br>PEG（Fwd P/E 49x ÷ CAGR 35%）= <strong>1.40x（合理！）</strong><br>PEG（Fwd P/E 49x ÷ CAGR 28%保守）= <strong>1.75x（合理偏高）</strong><br>以高 CAGR 調整後，TER 的 PEG 並非「貴」——只是 EPS 基期低 + 成長率高的視覺錯誤</td></tr>
+    <tr><td><strong>現金覆蓋總負債</strong></td><td>是/否</td>
+      <td class="pass mono">✓ 是（現金 > 長期負債；健康資產負債表）</td>
+      <td>TER 現金及短期投資 ~$900M-1.1B；長期負債低（TER 是輕負債公司）。$1B 股票回購計畫（2025 授權）可在 FCF 充裕時執行而不危及財務健康。</td></tr>
+    <tr><td><strong>護城河強度</strong></td><td>> 8 分，趨勢擴大</td>
+      <td class="warn mono">⚠️ 良好但非壟斷（7.5/10；ATE 市場有真實競爭）</td>
+      <td>SoC Test #1（~50-60% 市佔）+ Compute AI Test 先發 + Photon 100（矽光子，首創）+ 機器人（Physical AI）；但 Advantest 是強力競爭者，且 Memory Test 上 Advantest 更強；趨勢：緩慢擴大（AI Compute 測試護城河加深中）</td></tr>
+  </tbody>
+</table>
+
+<!-- §2.5 -->
+<div class="sec-head">§2.5 ｜ 長期成長性評估</div>
+<div class="rating-block purple">
+  <div class="icon">🔵</div>
+  <div>
+    <div class="title">長期成長性綜合評級：中等偏高確信，但需持續監控（AI Compute 高速成長 + 新目標模型清晰，但「Revenue Lumpiness」和 H2 2026 能見度有限是主要不確定性；物理 AI 是長期期權）</div>
+    <div class="body">Runway ≥8 年（ATE TAM $12-14B 目標需 3-5 年）｜ 有機成長為主 ｜ 護城河中性至強化型（AI Compute 深化）｜ FCF Margin ~20-25%（輕資本模型）</div>
+  </div>
+</div>
+
+<div class="sub-head">A｜成長跑道（Runway）估算</div>
+<table>
+  <thead><tr><th>業務</th><th>TAM</th><th>2025 規模</th><th>成長驅動</th><th>Runway</th></tr></thead>
+  <tbody>
+    <tr><td><strong>SoC Test（AI Compute 為主）</strong><br>最大最快成長業務</td><td class="mono">AI Compute ATE TAM $4-6B（估）</td><td class="mono">~$2.3B（估；Compute +90%）</td><td>NVIDIA B200/Rubin；AMD MI450；Google/Amazon/Meta ASIC；HBM 測試複雜度增加</td><td class="mono pass">≥8 年（AI 算力每年增長確定）</td></tr>
+    <tr><td><strong>Memory Test（HBM 主導）</strong><br>第二重要成長業務</td><td class="mono">HBM + DRAM ATE TAM $1.5-2.5B</td><td class="mono">~$600M（Q4 記錄 $206M / 季）</td><td>HBM 堆疊層數 12→16→20+；SK Hynix / 三星 HBM4 生產</td><td class="mono pass">≥6 年（HBM 每代需求翻倍）</td></tr>
+    <tr><td><strong>Silicon Photonics Test（Photon 100）</strong><br>新興高潛力業務</td><td class="mono">SiPh + CPO ATE TAM $500M-1B（估，2026-2030）</td><td class="mono">接近零（剛推出 Photon 100）</td><td>NVIDIA Rubin（2027）CPO；AI 數據中心光互連替換銅互連</td><td class="mono pass">≥10 年（光電轉型不可逆）</td></tr>
+    <tr><td><strong>Robotics（Universal Robots + MiR）</strong><br>復甦中的選擇性期權</td><td class="mono">協作機器人 TAM $8-12B；AMR $4-8B</td><td class="mono">$89M/Q（歷史峰值曾 $200M+/Q）</td><td>物理 AI（Foxconn + Scale AI）；電商自動化；汽車電氣化生產線</td><td class="mono neutral">≥8 年（若物理 AI 加速，可能升至更高評級）</td></tr>
+    <tr><td><strong>成長可持續年數</strong></td><td class="mono" style="color:#166534;font-weight:700" colspan="4">≥8 年（AI Compute 測試 + 矽光子 + 機器人物理 AI 三引擎確保中長期成長）</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">B｜成長品質判斷</div>
+<div class="card">
+  <table>
+    <thead><tr><th>類型</th><th>判斷</th><th>趨勢</th></tr></thead>
+    <tbody>
+      <tr><td><strong>有機成長（技術領先驅動）</strong></td><td>Quantifi Photonics 收購（2025-03，光學測試）是唯一小型 M&A；主要是有機</td><td><span class="beat">AI Compute 的技術複雜度不可逆上升 = ATE 需求有機成長</span></td></tr>
+      <tr><td><strong>ASP 驅動（複雜晶片 = 更高測試設備 ASP）</strong></td><td>AI GPU 的測試系統 ASP 比手機 SoC 高 3-5 倍（更複雜 = 更多測試向量 = 更高系統單價）；隨晶片複雜度提升，ASP 自然上升</td><td><span class="beat">AI GPU 每代複雜度倍增 = ATE ASP 持續提升</span></td></tr>
+      <tr><td><strong>集中度風險（最大弱點）</strong></td><td>2 個 specifying + 1 個 purchasing 客戶各 ~10%；Compute 可能 >50% 集中在 1-2 家</td><td><span class="warn">⚠️ 高集中度 = 高波動性；Revenue Lumpiness 的根本原因</span></td></tr>
+      <tr><td><strong>機器人（長期期權）</strong></td><td>物理 AI + Foxconn 合作是新的長期成長向量；目前 $89M/Q 相對市值偏小</td><td><span class="neutral">⚪ 短期不是主驅動；長期可能升為重要成長引擎</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">C｜成長護城河連動評估</div>
+<div class="rating-block yellow">
+  <div class="icon">⚠️</div>
+  <div>
+    <div class="title">中性至強化型（AI Compute 深化中，但護城河深度低於 WFE 設備商；Photon 100 是新護城河的起點）</div>
+    <div class="body">
+      <strong>ATE 護城河的本質弱點：</strong>ATE 的轉換成本比 WFE 低——更換 ATE 供應商（從 TER 換到 Advantest）需要重新開發測試程序，但時間（3-6 個月）比更換 WFE 設備（12-18 個月重新認證）短很多。這使 TER 的客戶更有能力多元化供應商。Advantest 在 Samsung/SK Hynix 的 HBM 測試中佔有重要地位（這些客戶優先用 Advantest），說明 TER 的記憶體測試護城河並非不可逾越。<br><br>
+      <strong>但 Compute SoC 測試是 TER 的深度護城河：</strong>TER 在 AI GPU 和 ASIC 的 SoC 測試（UltraFLEXplus 平台）有先發優勢，且 NVIDIA/Google/Amazon 的測試程序是在 TER 平台上開發的——轉換需要重新開發整套測試向量和程序，成本較高。這是 TER 最深的護城河，也是 Compute +90% YoY 的根本原因。
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">D｜ROIC 與 FCF 長期可維持性</div>
+<table>
+  <thead><tr><th>指標</th><th>FY2026（進行中）</th><th>FY2025</th><th>FY2024</th><th>趨勢</th><th>符合</th></tr></thead>
+  <tbody>
+    <tr><td>Non-GAAP GM</td><td class="mono">58.5-59.5%（Q1 指引）</td><td class="mono">~57%（全年均值）</td><td class="mono">~54%</td><td>↑ 快速提升；AI Compute 高利潤率帶動</td><td class="pass">✓</td></tr>
+    <tr><td>Non-GAAP OM（估）</td><td class="mono">~30-35%（受益於高 Revenue 槓桿）</td><td class="mono">~25%</td><td class="mono">~20%</td><td>↑↑ 規模槓桿效應顯著</td><td class="pass">✓✓</td></tr>
+    <tr><td>FCF Margin</td><td class="mono">~25-28%（估；Revenue 快速成長）</td><td class="mono">~22%（估）</td><td class="mono">~18%</td><td>↑ 快速改善</td><td class="pass">✓</td></tr>
+    <tr><td>ROE（WallStreetZen FY2026E）</td><td class="mono">71.43%</td><td class="mono">~45%</td><td class="mono">~35%</td><td>↑ 爆炸性增長（Revenue + 回購共同提升）</td><td class="pass">✓✓</td></tr>
+    <tr><td>Revenue Lumpiness（風險指標）</td><td class="mono">高（H1 2026 可見；H2 能見度有限）</td><td class="mono">高（Q4 $1.083B vs Q1 $686M = 58% 波動）</td><td class="mono">低</td><td>⚠️ AI Compute 高集中度導致季度波動巨大</td><td class="warn">需持續追蹤</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">E｜成長熄火情境壓力測試</div>
+<table>
+  <thead><tr><th>情境</th><th>對應特徵</th><th>合理 P/E</th><th>潛在跌幅（vs 當前 Fwd P/E ~49x）</th></tr></thead>
+  <tbody>
+    <tr class="base"><td>EPS CAGR 降至 20%（AI 成長平緩）</td><td>大客戶測試需求放緩；H2 2026 低於預期</td><td class="mono">28~35x</td><td class="mono">-29% ～ -43%（$170~$213）</td></tr>
+    <tr class="bear"><td>降至 10%（AI Capex 週期反轉）</td><td>NVIDIA 大幅削減 GPU 產量；測試需求坍塌</td><td class="mono">18~24x</td><td class="mono">-51% ～ -63%（$110~$146）</td></tr>
+    <tr style="background:#DCFCE7"><td>維持 35%+（新目標模型 2027 兌現）</td><td>ATE TAM 快速達 $12B+；Photon 100 商業化</td><td class="mono">45~60x</td><td class="mono">-8% ～ +22%（$275~$366）</td></tr>
+  </tbody>
+</table>
+
+<!-- §3 -->
+<div class="sec-head">§3 ｜ 護城河分析</div>
+<div class="card" style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:24px;margin-bottom:16px;">
+    <div><span class="score-big">7.5</span><span style="font-size:24px;font-family:var(--mono);color:var(--navy)">/10（↑升級中）</span></div>
+    <div>
+      <div style="font-weight:700;color:var(--navy);font-size:16px;">中強護城河，SoC Test #1 + AI Compute 先發 + Photon 100 新護城河起點，但 ATE 轉換成本低於 WFE</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-top:4px;">評分 7.5/10（ATE 行業中最深護城河，但比 WFE 設備商低）。護城河來源：① SoC Test 市場 #1（~50-60% 市佔）② AI Compute 測試的先發技術優勢（UltraFLEXplus 是 NVIDIA GPU 測試標準）③ Photon 100 進入矽光子測試（零競爭起點）④ Universal Robots 協作機器人 #1 全球出貨量 ⑤ 輕資本高利潤率業務模型（GM ~59%）。護城河 7.5 的主要限制：ATE 轉換成本比 WFE 低；Advantest 是強力競爭者（尤其在記憶體測試）；Compute 業務高度集中在少數客戶（Revenue Lumpiness 是護城河弱點的體現）。</div>
+      <div style="margin-top:8px;"><span class="beat">趨勢：緩慢擴大（AI Compute 深化 + Photon 100 是護城河擴展的新向量）</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">護城河來源深度分析</div>
+<table>
+  <thead><tr><th>護城河類型</th><th>深度</th><th>機制與不可複製性</th></tr></thead>
+  <tbody>
+    <tr><td><strong>SoC Test 市場 #1（~50-60%）</strong><br>（AI GPU 測試的事實標準）</td>
+      <td><span class="beat">強（SoC Test #1；AI Compute 先發，轉換成本中等）</span></td>
+      <td>TER 的 UltraFLEXplus 是全球最廣泛使用的 SoC 測試平台，NVIDIA/AMD/Qualcomm 等主流 AI 晶片的測試程序都是在 TER 平台上開發的。一旦測試程序在 TER 平台上開發和驗證，換到 Advantest 需要重新開發，這個切換成本（時間 3-6 個月 + 測試開發成本 $10-50M）是有效的護城河，但比 WFE 的 12-18 個月重認證週期短。Advantest 在 Mobile 和部分記憶體測試更強，但 TER 在 AI Compute（GPU/ASIC）的 SoC 測試中佔主導，這是 2025-2027 年最快成長的市場。</td></tr>
+    <tr><td><strong>Universal Robots（協作機器人 #1）</strong><br>（輕型協作機器人出貨量全球最大）</td>
+      <td><span class="neutral">中等（協作機器人出貨 #1；但護城河相對淺；物理 AI 是升級路徑）</span></td>
+      <td>Universal Robots 是全球出貨量最大的協作機器人品牌（UR 系列），在工廠自動化中有廣泛的裝機基礎（>100,000 台累計裝機）。護城河來自：① 最廣的應用程序庫（UR+ 生態系）② 最多認證系統集成商（1,000+ 家）③ 物理 AI（Scale AI + Foxconn）的最新升級。但護城河相對 FANUC、ABB 等工業機器人巨頭較淺——協作機器人市場有 KUKA、ABB、Doosan 等強力競爭者。物理 AI 的導入（UR AI Trainer）是護城河升級的關鍵催化劑。</td></tr>
+    <tr><td><strong>Photon 100（矽光子測試，首創）</strong><br>（最新護城河，零競爭起點）</td>
+      <td><span class="beat">強潛力（目前是先行者壟斷；矽光子 ATE 市場剛剛形成）</span></td>
+      <td>矽光子（Silicon Photonics）測試是一個全新的市場，沒有已建立的 ATE 標準和競爭者。TER 的 Photon 100（2026-03-17 發布）是業界首個「光電整合」測試平台，整合了光學和電子測試，支持晶圓、光學引擎和 CPO 測試。在市場形成初期進入的「先行者」通常能成為「事實標準」——客戶在 Photon 100 上開發的測試程序和流程，在沒有替代選項的情況下幾乎無法遷移。這個護城河的強度取決於矽光子在 AI 數據中心的滲透速度（預計 2026-2030 年加速）。</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">ATE 競爭格局</div>
+<table>
+  <thead><tr><th>細分市場</th><th>TER 地位</th><th>競爭者</th><th>3 年趨勢</th></tr></thead>
+  <tbody>
+    <tr><td>SoC Test（邏輯/AI GPU/ASIC）</td><td class="mono">#1（~50-60%）</td><td>Advantest（#2）；Cohu</td><td>↑ AI Compute +90%；UltraFLEXplus 主導 GPU 測試</td></tr>
+    <tr><td>Memory Test（DRAM/HBM/NAND）</td><td class="mono">#2（~35%；Advantest #1 ~50%）</td><td>Advantest（#1，尤其 HBM）</td><td>↑ HBM 爆發但 Advantest 更強；TER 有份額成長</td></tr>
+    <tr><td>Silicon Photonics Test</td><td class="mono">#1（先行者壟斷；市場剛形成）</td><td>無已知直接競爭者</td><td>↑↑ 2026-2030 市場高速形成；TER 佈局最早</td></tr>
+    <tr><td>Collaborative Robots（協作機器人）</td><td class="mono">#1 出貨量（Universal Robots）</td><td>KUKA；ABB；Doosan；Fanuc</td><td>→ 恢復成長；物理 AI 可能升級市場空間</td></tr>
+    <tr><td>Wireless Test（5G/6G）</td><td class="mono">LitePoint（#2-3）</td><td>Keysight（#1）；Rohde & Schwarz</td><td>→ 穩定；5G mmWave 合作（MWC 2026 展示）</td></tr>
+  </tbody>
+</table>
+
+<!-- §4 -->
+<div class="sec-head">§4 ｜ 財務品質監測</div>
+<div class="sub-head">三年趨勢表（Calendar Year 口徑）</div>
+<table>
+  <thead><tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>評估</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue（$B）</td><td class="mono">$2.67B（-19%，手機週期低谷）</td><td class="mono">$2.82B（+6%，低成長）</td><td class="mono">$3.19B（+13%，加速）</td><td><span class="beat">↑ 加速；FY2026E ~$5.0-5.2B（+55-63%，爆炸性成長）</span></td></tr>
+    <tr><td>Non-GAAP GM</td><td class="mono">~53%</td><td class="mono">~55%</td><td class="mono">~57%（全年）</td><td><span class="beat">↑ AI Compute 高利潤率推動；Q1 2026 指引 58.5-59.5%</span></td></tr>
+    <tr><td>Non-GAAP EPS</td><td class="mono">$3.14</td><td class="mono">$3.21（+2%）</td><td class="mono">$3.96（+23%）</td><td><span class="beat">↑↑ 加速；FY2026E $5.91-6.30（+49-59%）</span></td></tr>
+    <tr><td>Compute Revenue（估）</td><td class="mono">~$300M（小）</td><td class="mono">~$600M（成長中）</td><td class="mono">~$1.1B（+90%）</td><td><span class="beat">↑↑↑ 業務轉型最關鍵指標；從手機到 AI 計算</span></td></tr>
+    <tr><td>Revenue Lumpiness（季度標準差）</td><td class="mono">低</td><td class="mono">低</td><td class="mono">高（Q1 $686M → Q4 $1,083M，+58%）</td><td><span class="warn">⚠️ AI Compute 集中度提高 = 季度波動加大；需接受</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">獲利品質警訊</div>
+<div class="card">
+  <table>
+    <thead><tr><th>項目</th><th>結論</th><th>佐證</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Revenue Lumpiness（核心警示）</strong></td><td><span class="warn">⚠️ 最重要的風險：CEO 自己說「limited visibility beyond H1 2026」</span></td><td>Q4 2025 $1.083B vs Q1 2025 $686M（58% 波動）說明 Compute 業務的「大訂單時序依賴性」。H2 2026 是否有類似 H2 2025 的第二波爆發？管理層不能保證。這是 TER 投資最大的不確定性，而不是業務品質問題。</td></tr>
+      <tr><td><strong>客戶高集中度</strong></td><td><span class="warn">⚠️ 兩個 specifying 客戶 + 一個 purchasing 客戶各 ~10%；實際 Compute 集中度可能 >30%</span></td><td>若 NVIDIA（最大 Compute 客戶）在 2027 年 Rubin 晶片選擇 Advantest 替代 TER 測試，TER 的最大成長引擎被挖走。這是最嚴重的單一事件風險，但目前沒有這個跡象（TER 在 Rubin 測試開發中）。</td></tr>
+      <tr><td><strong>財務品質整體良好</strong></td><td><span class="beat">✓ GAAP vs Non-GAAP 差距小；FCF 轉換優異</span></td><td>FY2025 GAAP EPS $3.47 vs Non-GAAP $3.96（差距 $0.49，主要是攤銷）。FCF 品質高（輕資本），$1B 回購計畫按計畫推進。無重大會計異常。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §5 -->
+<div class="sec-head">§5 ｜ 產業格局、議價權與 Unit Economics</div>
+<div class="card-grid">
+  <div class="stat-card"><div class="label">FY2025 全年收入</div><div class="value">$3.19B</div><div class="note">+13% YoY；H2 爆炸（Q4 +44%）</div></div>
+  <div class="stat-card"><div class="label">Q1 2026 Revenue 指引</div><div class="value">$1.15-1.25B</div><div class="note">中位 $1.20B；+75% YoY！</div></div>
+  <div class="stat-card"><div class="label">新目標模型 Revenue</div><div class="value">$6B</div><div class="note">ATE TAM $12-14B 時；+88% vs 2025</div></div>
+  <div class="stat-card"><div class="label">新目標模型 EPS</div><div class="value">$9.50-11</div><div class="note">+140-178% vs FY2025；2027-2029 路徑</div></div>
+  <div class="stat-card"><div class="label">AI 驅動收入佔比</div><div class="value">&gt;70%</div><div class="note">Q1 2026E；從手機主導到 AI 主導</div></div>
+  <div class="stat-card"><div class="label">Compute 成長（2025）</div><div class="value">+90%</div><div class="note">業務最大驅動；超越 Mobile 成最大收入</div></div>
+</div>
+
+<div class="sub-head">ATE 市場 vs WFE 市場的本質差異</div>
+<div class="card">
+  <table>
+    <thead><tr><th>特性</th><th>ATE（Teradyne）</th><th>WFE（ASML/LRCX/KLAC/AMAT）</th></tr></thead>
+    <tbody>
+      <tr><td>業務邏輯</td><td>測試已製造好的晶片</td><td>製造晶片所用的機器</td></tr>
+      <tr><td>客戶</td><td>晶片設計商（NVIDIA）+ OSAT + 晶圓廠最終測試</td><td>晶圓廠（TSMC、三星、Micron）</td></tr>
+      <tr><td>需求驅動</td><td>晶片出貨量 × 測試複雜度</td><td>晶圓廠 Capex 計畫</td></tr>
+      <tr><td>訂單可見度</td><td>短（季度）；「Revenue Lumpiness」</td><td>長（月-年）；積壓訂單確認</td></tr>
+      <tr><td>客戶集中度</td><td>高（2-3 個大客戶 > 30% 收入）</td><td>中（TSMC 20-30%；更分散）</td></tr>
+      <tr><td>護城河深度</td><td>中（測試程序切換需 3-6 個月）</td><td>高（設備認證切換需 12-18 個月+）</td></tr>
+      <tr><td>估值倍數歷史均值</td><td>15-35x Fwd P/E（手機週期）；轉型後 40-60x（AI 轉型中）</td><td>20-40x Fwd P/E；ASML 35-50x（壟斷溢價）</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §6 -->
+<div class="sec-head">§6 ｜ 公司治理與資本配置</div>
+<div class="sub-head">管理層與資本配置</div>
+<div class="card">
+  <ul>
+    <li><strong>Greg Smith（CEO，2023 年起）</strong>：從 Teradyne 半導體測試業務總裁升任 CEO，深度半導體測試技術背景。Smith 在 Q4 Call 宣布「新目標模型（$6B Revenue，EPS $9.50-11）」是一個重大的長期戰略承諾，說明他對 AI 驅動的 ATE 成長有高度信心。但他同時明確警示「Revenue lumpiness」和「H2 2026 能見度有限」，顯示管理層有清醒的風險認識。</li>
+    <li><strong>新 CFO（2026-02-03 Call 提及）</strong>：「I'm thrilled to have joined the Teradyne team」——Call 中有新 CFO 發言，說明財務管理層剛更換，需追蹤新 CFO 的財務策略是否有變。</li>
+    <li><strong>$1B 股票回購計畫（2025-04 宣布，2026 末完成）</strong>：積極股東回報；但相對 $47B 市值，每年回購 ~$500M = ~1.1%/年，力度比 KLAC（$7B 授權，~3.6%/年）低。</li>
+    <li><strong>Quantifi Photonics 收購（2025-03）</strong>：光學測試公司，是 Photon 100 的技術基礎。收購金額小（約 $19M，Trefis 數據），說明 TER 通過精準小型收購補充技術缺口，而非大型 M&A。這個收購在 2026-03 推出 Photon 100 後已顯現成果。</li>
+  </ul>
+</div>
+
+<!-- §7 -->
+<div class="sec-head">§7 ｜ 五維度估值分析</div>
+<div class="sub-head">7.1｜歷史估值分位</div>
+<div class="alert-warn">
+  <strong>⚠️ TER 估值的特殊挑戰：</strong>TER 正在從「手機週期 ATE 股（P/E 15-25x）」轉型為「AI 基礎設施 ATE 股（P/E 40-60x）」。這個轉型尚未完成，市場對「合適的估值倍數」存在高度分歧。TTM P/E ~76x 顯得極高，但以 FY2026E EPS $6.10 計算的 Fwd P/E ~49x 相對合理（對應 35%+ EPS CAGR 的 PEG ~1.4x）。估值的核心問題：「Revenue Lumpiness 是否使高倍數永遠不安全？」
+</div>
+<table>
+  <thead><tr><th>估值指標</th><th>當前值</th><th>歷史範圍</th><th>分位評估</th></tr></thead>
+  <tbody>
+    <tr><td>TTM P/E（FY2025 $3.96）</td><td class="mono">~75.8x</td><td>手機高峰 ~35-50x；低谷 ~18-25x；AI 轉型後新高</td><td><span class="warn">🔴 歷史極高分位（>90%），但基期 EPS 偏低（H1 2025 拖累）</span></td></tr>
+    <tr><td>Fwd P/E（FY2026E $6.10）</td><td class="mono">~49.2x</td><td>歷史 ATE 均值 ~20-30x；轉型後高位</td><td><span class="warn">🔴 ~80-85% 歷史分位（仍高）；但 EPS CAGR 35%+ = PEG 1.4x 合理</span></td></tr>
+    <tr><td>Fwd P/E（FY2027E $8.30）</td><td class="mono">~36.1x</td><td>—</td><td><span class="neutral">🟡 ~65% 分位（合理偏高）；以 2 年視野更合理</span></td></tr>
+    <tr><td>Fwd P/E（新目標模型 $10）</td><td class="mono">~30x（若 2028-2029 兌現）</td><td>—</td><td><span class="beat">🟢 30x = 歷史合理均值（ATE 轉型後）；吸引力高</span></td></tr>
+    <tr><td>P/S（FY2025 $3.19B）</td><td class="mono">~14.7x</td><td>手機高峰 ~5-8x；AI 轉型後 ~10-15x</td><td><span class="warn">🔴 高（70-80% 分位）；但 Revenue 在 2026 有望 +55-63%</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">7.2｜成長性估值：PEG 與 Price-to-Growth 矩陣</div>
+<table>
+  <thead><tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr></thead>
+  <tbody>
+    <tr><td>Fwd P/E（FY2026E $6.10）</td><td class="mono">~49.2x</td><td>—</td><td>$300 ÷ $6.10（Zacks $5.91 和 WallStreetZen $6.30 的中位）</td></tr>
+    <tr><td>EPS CAGR（FY2025-2028，3年）</td><td class="mono">~28.5-38.8%（保守/中性）；目標模型 ~37%</td><td>—</td><td>十八標的中最高 CAGR 之一</td></tr>
+    <tr><td>PEG（中性 35% CAGR）</td><td class="mono">49.2 ÷ 35 = <strong>1.41x（合理！）</strong></td><td>&lt;1.0 便宜 / 1∼2 合理 / >2 貴</td><td><span class="beat">以中性 CAGR 計算，PEG 1.41x 是合理區間</span></td></tr>
+    <tr><td>PEG（保守 28% CAGR）</td><td class="mono">49.2 ÷ 28 = <strong>1.76x（合理偏高）</strong></td><td>—</td><td><span class="neutral">保守情境下偏高但仍在合理邊界內</span></td></tr>
+    <tr><td>FY2027 視野 P/E 36.1x ÷ 35%</td><td class="mono">36.1 ÷ 35 = <strong>1.03x（接近便宜！）</strong></td><td>—</td><td><span class="beat">以 2 年視野，TER 在 PEG 維度接近便宜；是最重要的估值信號</span></td></tr>
+  </tbody>
+</table>
+<div class="alert-green" style="margin-top:8px">
+  <strong>🔑 TER 最重要的估值框架：FY2027 Fwd P/E 36x + PEG 1.03x</strong>——如果 FY2027 EPS $8.30 共識兌現，當前 $300 的股票以 FY2027 視野的 P/E 只有 36.1x，PEG 接近 1.0x（便宜）。這個邏輯與 ASML（FY2027 P/E 27.3x）一樣——以 1-2 年視野評估，TER 的估值並不昂貴。問題在於：TER 的「Revenue Lumpiness」使 FY2027 EPS $8.30 的可信度低於 ASML 的 FY2027 EPS €42.92（ASML 有 €38.8B 積壓訂單支撐）。這是為什麼 TER 的投資確信度低於 ASML，但估值已部分反映這個不確定性折扣。
+</div>
+
+<div class="sub-head">7.3｜DCF 試算：三情境合理股價</div>
+<div class="card">
+  <strong>輸入參數：</strong>
+  <ul>
+    <li>基期 FCF（FY2025 估）：~$700M（~22% Margin × $3.19B）</li>
+    <li>WACC：~10.0%（10Y UST 4.27% + Beta 1.69 × ERP 6% × 0.56 = 5.7% → ~10.0%）</li>
+    <li>永續成長率：3.5%（ATE 與半導體成長長期綁定）</li>
+    <li>FCF：「新目標模型」達成時 FCF Margin ~25-28%（規模槓桿）</li>
+  </ul>
+</div>
+<table style="margin-top:8px">
+  <thead><tr><th>情境</th><th>FCF CAGR（前 5 年）</th><th>FCF CAGR（後 5 年）</th><th>永續成長率</th><th>WACC</th><th>DCF 合理價</th><th>vs 當前 $300</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（30%）</strong><br>新目標模型 2027-2028 兌現；$6B Revenue；Photon 100 商業化</td><td class="mono">38%</td><td class="mono">18%</td><td class="mono">4.0%</td><td class="mono">9.5%</td><td class="mono" style="font-weight:700">$780</td><td class="mono" style="color:#166534">+160%</td></tr>
+    <tr class="base"><td><strong>中性（45%）</strong><br>FY2027 EPS $8.30 兌現；H2 2026 正常；機器人復甦</td><td class="mono">30%</td><td class="mono">15%</td><td class="mono">3.5%</td><td class="mono">10.0%</td><td class="mono" style="font-weight:700">$360</td><td class="mono" style="color:#D97706">+20%</td></tr>
+    <tr class="bear"><td><strong>悲觀（25%）</strong><br>H2 2026 急劇放緩；大客戶測試需求下滑；CAGR 壓縮</td><td class="mono">10%</td><td class="mono">6%</td><td class="mono">2.0%</td><td class="mono">11.5%</td><td class="mono" style="font-weight:700">$145</td><td class="mono" style="color:#DC2626">-52%</td></tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:12px">
+  <strong>DCF 敏感度（中性情境）：</strong>
+  <table>
+    <thead><tr><th>WACC \ 永續成長率</th><th>2.0%</th><th>3.5%（基準）</th><th>5.0%</th></tr></thead>
+    <tbody>
+      <tr><td>WACC 9.0%</td><td class="mono">$310</td><td class="mono">$450</td><td class="mono">$700</td></tr>
+      <tr><td>WACC 10.0%（基準）</td><td class="mono">$260</td><td class="mono">$360</td><td class="mono">$540</td></tr>
+      <tr><td>WACC 11.5%</td><td class="mono">$200</td><td class="mono">$265</td><td class="mono">$370</td></tr>
+    </tbody>
+  </table>
+  <div class="alert-warn" style="margin-top:8px">
+    <strong>中性 DCF $360（+20%）是最重要的估值發現：</strong>相比 ASML（+53%）、ANET（+69%）、MRVL（+78%），TER 的中性 DCF 上行（+20%）相對有限，且悲觀情境 $145（-52%）說明下行風險很大（Revenue Lumpiness 的代價）。TER 的風險報酬不對稱性（+20% 中性 / -52% 悲觀）比其他 AI 基礎設施標的更差，說明 TER 是一個「高成長但高風險」的投資，而不是「護城河支撐的安全成長複利」。
+  </div>
+</div>
+
+<div class="sub-head">7.4｜同業估值比較</div>
+<table>
+  <thead><tr><th>公司</th><th>市值</th><th>Fwd P/E（1年）</th><th>EPS CAGR（3年）</th><th>PEG</th><th>DCF 中性上行</th><th>護城河</th><th>Revenue Lumpiness</th></tr></thead>
+  <tbody>
+    <tr style="background:var(--purple-bg)">
+      <td><strong>TER（Teradyne）</strong></td>
+      <td class="mono">$47B</td>
+      <td class="mono">~49x（高⚠️）</td>
+      <td class="mono">~29-39%★★</td>
+      <td class="mono">1.41x（中性）</td>
+      <td class="mono">+20%</td>
+      <td class="mono">7.5/10（ATE #1）</td>
+      <td class="mono">高⚠️（AI Compute 集中）</td>
+    </tr>
+    <tr>
+      <td>KLAC</td>
+      <td class="mono">$193B</td>
+      <td class="mono">~40x（⚠️）</td>
+      <td class="mono">~13.5%</td>
+      <td class="mono">2.97x（⚠️）</td>
+      <td class="mono">+9%</td>
+      <td class="mono">9.0/10</td>
+      <td class="mono">低（CSBG 底板）</td>
+    </tr>
+    <tr>
+      <td>LRCX</td>
+      <td class="mono">$296B</td>
+      <td class="mono">~36x</td>
+      <td class="mono">~16-20%</td>
+      <td class="mono">~1.97x</td>
+      <td class="mono">+34%</td>
+      <td class="mono">8.5/10</td>
+      <td class="mono">中（WFE 週期）</td>
+    </tr>
+    <tr>
+      <td>ASML</td>
+      <td class="mono">$538B</td>
+      <td class="mono">~39x（FY2026）</td>
+      <td class="mono">~17-27%</td>
+      <td class="mono">1.44x（BofA）</td>
+      <td class="mono">+53%</td>
+      <td class="mono">10/10★</td>
+      <td class="mono">低（€38.8B 積壓）</td>
+    </tr>
+    <tr>
+      <td>Advantest（ATEYY，ATE 競爭者）</td>
+      <td class="mono">~$35B</td>
+      <td class="mono">~45x（估）</td>
+      <td class="mono">~35%（估）</td>
+      <td class="mono">~1.3x</td>
+      <td class="mono">—</td>
+      <td class="mono">7.5/10（記憶體 #1）</td>
+      <td class="mono">高</td>
+    </tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:10px">
+  <p><strong>TER vs KLAC（最直接的「週期設備」比較）：</strong>TER Fwd P/E 49x vs KLAC 40x（TER 更貴 22.5%），TER EPS CAGR 35% vs KLAC 13.5%（TER 高 2.6 倍），TER PEG 1.41x vs KLAC 2.97x（TER 更有吸引力）。在 EPS 成長率調整後，TER 比 KLAC 更便宜。但 KLAC 的護城河（9.0/10）比 TER（7.5/10）更深，且 Revenue Lumpiness 低得多——這是 KLAC 估值溢價的合理性。</p>
+  <p><strong>TER vs Advantest（直接競爭對手比較）：</strong>兩者 EPS CAGR 相似（~35%），PEG 相似（~1.3-1.4x），市值 TER $47B vs Advantest $35B（TER 略大）。TER 在 SoC/Compute 更強，Advantest 在 Memory 更強。若投資 ATE 行業，TER 是「AI Compute + Robotics」的押注，Advantest 是「HBM 記憶體測試」的押注——可互補。</p>
+</div>
+
+<div class="sub-head">7.5｜綜合估值判斷</div>
+<table>
+  <thead><tr><th>維度</th><th>訊號</th><th>評語</th></tr></thead>
+  <tbody>
+    <tr><td>歷史分位（7.1）</td><td><span class="warn">🔴 偏高（FY2026 Fwd P/E ~80-85% 分位；但業務性質已轉型）</span></td><td>轉型期間估值倍數上移是正常的，但目前仍偏高</td></tr>
+    <tr><td>成長性匹配（7.2 PEG）</td><td><span class="beat">🟢 合理（中性 PEG 1.41x；FY2027 PEG 1.03x；高 CAGR 支撐高倍數）</span></td><td>以 EPS 成長率調整後，估值並非「貴」</td></tr>
+    <tr><td>DCF 內在價值（7.3）</td><td><span class="neutral">🟡 中性（中性 DCF +20%；樂觀 +160%；悲觀 -52%）</span></td><td>不對稱性較差；Revenue Lumpiness 的代價</td></tr>
+    <tr><td>同業相對（7.4）</td><td><span class="neutral">🟡 偏貴但 PEG 合理（比 KLAC 便宜；比 LRCX 貴；DCF 上行比 ASML 小）</span></td><td>在 WFE 設備同業中，TER 的高 CAGR 使 PEG 合理，但 Revenue Lumpiness 應折扣</td></tr>
+    <tr><td>長期成長確信度（§2.5）</td><td><span class="neutral">🟡 中等確信（AI Compute 確定，但 Revenue Lumpiness 和客戶集中度是顯著不確定性）</span></td><td>非「高確信」，因為 H2 2026 和 FY2027 能見度有限</td></tr>
+  </tbody>
+</table>
+
+<div class="card" style="margin-top:14px">
+  <strong>應有的合理估值（Target Valuation Range）：</strong><br>
+  中性假設下，合理 Non-GAAP Fwd P/E（FY2026E $6.10）：<strong>40x ∼ 52x</strong>（轉型溢價 × Revenue Lumpiness 折扣）<br>
+  對應合理股價（FY2026E）：<strong>$244 ∼ $317</strong>（當前 $300 在上限附近）<br>
+  對應合理股價（FY2027E $8.30）：<strong>$298 ∼ $415</strong>（1 年後視野，$300 接近下限）
+</div>
+
+<div class="rating-block yellow">
+  <div class="icon">🟡</div>
+  <div>
+    <div class="title">當前評價：觀望（等待 H1 2026 確認後評估）——FY2027 視野下估值合理（PEG 1.03x），但 Revenue Lumpiness + H2 2026 不確定性 + 悲觀 DCF -52% 說明當前進場需要接受高風險。等 Q1 2026 財報（2026-04-27）確認 H2 能見度後再決定。</div>
+    <div class="body">TER 是十八個標的中最「高成長 × 高不確定性」的標的——EPS CAGR ~35%（最高之一），但 Revenue Lumpiness 和客戶集中度使業績波動性極大。這是一個「如果看對，漲幅驚人；如果看錯，損失慘重」的投資，而非「護城河保護的穩定複利」。更適合能忍受高波動且願意積極追蹤季度業績的投資者。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>分析師目標價對照（注意：分析師目標較分散且部分已過時）：</strong><br>
+  Investing.com（11 Buy, 1 Sell）：平均目標 $314.18（+4.7%）；高 $400，低 $250<br>
+  WallStreetZen：平均 $266（此目標可能是股票在 $200 時設定；已過時）<br>
+  MarketBeat：$273.73（同樣偏低）<br>
+  Meyka（2026-03-16 分析）：PE 82.78x 說明 TTM 基期偏低；FY2026E 視角更有意義<br>
+  本分析中性 12 個月目標：$340-380（FY2027E $8.30 × 41-46x；H1 2026 確認後上修可能性高）
+</div>
+
+<!-- §8 -->
+<div class="sec-head">§8 ｜ 投資結論與情境預測</div>
+<div class="sub-head">財報信號與估值銜接</div>
+<div class="card">
+  <p>Q4 2025（2026-02-03）是 Teradyne 歷史上最強勁的財報之一：Revenue $1.083B（史上第二高，+44% YoY，超共識 +11.8%）；Non-GAAP EPS $1.80（Beat +32.4%）；AI 驅動收入 >60%；全年 Compute +90%。這份財報確認了「Teradyne = AI 測試基礎設施核心受益者」的論點。</p>
+  <p>但同樣在這份財報中，CEO 說了最重要的風險提示：「Revenue lumpiness」「limited visibility beyond H1 2026」「concentrated customer programs」——這三個措辭在一份創新高的財報中出現，說明管理層在 H1 表現確定性強的同時，對 H2 有真實的不確定性。股票在 Q4 財報後達到全時最高 $344.92（2026-02-25），隨後回落至 ~$300（-13%）。這個「財報強但股票回落」的模式說明：①市場已充分定價了 H1 2026 的強勁表現 ② H2 2026 是否延續同等強度是問題核心。</p>
+  <p>當前 $300 對應的估值：FY2026E Fwd P/E ~49x（偏高但 PEG 1.41x 合理），FY2027E Fwd P/E ~36x（接近合理）。核心問題是「FY2027 EPS $8.30 的可信度」——取決於 ATE TAM 是否如期向 $12-14B 邁進（Compute 繼續 +50%+）和 Revenue Lumpiness 是否在 H2 2026 引發業績大幅波動。</p>
+</div>
+
+<div class="sub-head">三年情境預測（Non-GAAP EPS）</div>
+<table>
+  <thead><tr><th>情境</th><th>核心假設</th><th>FY2028E EPS</th><th>EPS CAGR（FY2025-2028）</th><th>目標 P/E</th><th>目標股價</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（30%）</strong><br>新目標模型 2027-2028 兌現；Photon 100 爆發；Robotics 物理 AI</td><td>ATE TAM $12B+ by 2028；TER $6B Revenue；EPS $10-11</td><td class="mono">$11+</td><td class="mono">~40.8%</td><td class="mono">50~65x</td><td class="mono" style="font-weight:700;color:#166534">$550~$715</td></tr>
+    <tr class="base"><td><strong>中性（45%）</strong><br>FY2027 EPS $8.30 兌現；H2 2026 稍弱但全年正成長</td><td>ATE TAM 緩步成長至 $10-11B；EPS 路徑穩定</td><td class="mono">$10.60（共識）</td><td class="mono">~38.8%</td><td class="mono">38~48x</td><td class="mono" style="font-weight:700;color:#D97706">$403~$509</td></tr>
+    <tr class="bear"><td><strong>悲觀（25%）</strong><br>H2 2026 大幅放緩；大客戶測試平台轉換；ATE TAM 成長停滯</td><td>EPS H2 急跌；FY2027 $5.5 低於共識</td><td class="mono">$7.0</td><td class="mono">~20.8%</td><td class="mono">22~30x</td><td class="mono" style="font-weight:700;color:#DC2626">$154~$210</td></tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:8px">
+  <strong>機率加權預期目標股價（3 年）：</strong><br>
+  30% × $632 + 45% × $456 + 25% × $182 = <strong class="mono">$436（3 年，+45%）</strong><br>
+  12 個月目標（Q1 2026 確認 + H2 能見度評估）：30% × $440 + 45% × $350 + 25% × $200 = <strong class="mono">$339（+13%）</strong><br>
+  <em>注：3 年 +45% 看似吸引，但風險分布極不均衡（樂觀 +110% vs 悲觀 -48%），適合能承受高波動的投資者。</em>
+</div>
+
+<div class="sub-head">最終結論</div>
+<div class="rating-block yellow">
+  <div class="icon">🟡</div>
+  <div>
+    <div class="title">投資判斷：觀望（等 Q1 2026 財報 2026-04-27 確認 H2 能見度）——高 EPS CAGR（35%+，最高之一）但 Revenue Lumpiness + H2 不確定性 + Fwd P/E 49x 使安全邊際不足；這是「高成長 × 高風險」的投資，非「護城河複利」</div>
+    <div class="body">$300 的 TER 是十八標的中最難評估的標的：EPS CAGR ~35%（最高之一），FY2027 PEG 1.03x（幾乎便宜），新目標模型 $6B Revenue / EPS $10+（清晰的長期路徑），三大新平台（矽光子 + AI PCBA + 物理 AI）確認生態系擴展。但 Revenue Lumpiness（季度波動 ±40-60%）、H2 2026 不確定性、悲觀 DCF -52% 使這個投資需要極高的風險承受能力和緊密追蹤。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="sub-head" style="margin-top:0">① 短期催化劑（0~12 個月）</div>
+  <p><strong>Q1 2026 財報（2026-04-27）</strong>是最重要的近期確認點。若 Q1 Revenue 達到 $1.20B（指引中位）且 Q2 指引強勁（>$1.15B），說明 H2 能見度開始改善，TER 的 12 個月目標 $339（+13%）有望兌現，更積極的投資者可在財報後建倉。若 Q2 指引低於 $1.0B（說明 H2 放緩開始提前），股票可能下跌至 $240-260（-15~20%），那反而是更好的買入時機。<br>最大額外短期催化劑：Foxconn + Universal Robots + Skild AI 合作的具體量產成果（2026 H1-H2 可能宣布）；Photon 100 首個大型商業客戶宣布（矽光子 CPO 測試標準確認）。</p>
+
+  <div class="sub-head">② 中期成長可見度（1~3 年）</div>
+  <p>中期最確定的是 <strong>AI Compute 測試的持續成長</strong>——NVIDIA Rubin（2027）的複雜度是 Blackwell 的 4 倍（CEO 自己說的），意味著同樣的出貨量下，Rubin 需要的 ATE 機台時間是 Blackwell 的 4 倍，這是 TER 收入的「嵌入式乘數」。但這個預期已部分反映在 $300 的股價中。更重要的是 <strong>矽光子（Photon 100）的商業化速度</strong>——若 CPO 成為 AI 數據中心互連標準（NVIDIA Rubin 採用），Photon 100 可能成為 TER 的「第二增長曲線」，使新目標模型 $6B Revenue 在 2027-2028 年而非 2029-2030 年提前兌現。</p>
+
+  <div class="sub-head">③ 長期成長護城河（3 年後）</div>
+  <p>TER 的長期論點是「<strong>AI 晶片複雜度的持續上升 = ATE 需求的永久性擴大</strong>」：每一代 AI 晶片（B200 → Rubin → Rubin Next）包含更多電晶體 → 更長的測試時間 → 更多的 ATE 容量需求。這個邏輯與 ASML（每代技術節點需要更多 EUV）平行但 ATE 的護城河更淺。<strong>物理 AI 機器人</strong>是 TER 最大的長期「藏寶選擇權」：若 Universal Robots + Scale AI 的合作模式（AI 訓練直接連結工廠機器人）在 2027-2030 年被工業界廣泛採用，TER 的機器人業務從 $300-400M/年 可能成長至 $1-2B/年，使 TER 的長期估值框架從「半導體測試」升級為「AI 測試 + AI 機器人」的雙引擎成長公司。</p>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>進場建議：</strong>
+  <ul>
+    <li>當前 $300（Fwd P/E ~49x；PEG 1.41x；中性 DCF +20%）：<strong>觀望</strong>（等 Q1 2026 財報 2026-04-27 確認 H2 能見度；當前安全邊際有限）</li>
+    <li>若 Q1 財報後上漲且 Q2 指引強勁（>$1.2B）→ 建倉 20-25%（動能確認但不追高）</li>
+    <li>若回調至 <strong>$240-260</strong>（Fwd P/E 39-43x；PEG ~1.1x；FY2027 P/E ~29-31x）→ <strong>建倉 30-40%</strong>（有安全邊際，FY2027 目標清晰）</li>
+    <li>若跌至 <strong>$190-210</strong>（Fwd P/E 31-34x；PEG ~0.9x；接近「便宜」象限）→ <strong>50-60%</strong>（強力買入信號）</li>
+    <li><strong>風險提示：</strong>TER 不適合作為「核心倉位」（Revenue Lumpiness 太高），更適合作為「成長衛星倉位」（10-15% 最大倉位），在 AI Compute 超週期確認期間持有。</li>
+  </ul>
+</div>
+
+<div class="sub-head">下行風險量化（引用 §2.5E）</div>
+<div class="card">
+  <p>若 EPS CAGR 降至 20%（H2 2026 放緩）：<strong class="mono">合理估值 $170-213（-29% ～ -43%）</strong></p>
+  <p>若降至 10%（AI Capex 反轉）：<strong class="mono">合理估值 $110-146（-51% ～ -63%）</strong></p>
+  <div class="alert-danger">
+    <strong>⚠️ TER 是十八個標的中下行風險最大的之一（僅次於 TSLA）：</strong>悲觀情境（-52%）相比 ASML（-30%）、KLAC（-44%）、LRCX（-50~61%）均在最大下行範圍。原因：① Fwd P/E 49x 的高起點 ② Revenue Lumpiness 使任何季度意外都可能引發大幅重新定價 ③ 客戶集中度高（2-3 個客戶 >30% 收入）。建議：若持有 TER，必須積極追蹤每季財報和指引，不適合「持有不追蹤」的被動投資策略。
+  </div>
+</div>
+
+<div class="sub-head">最關鍵監測指標</div>
+<table>
+  <thead><tr><th>#</th><th>監測指標</th><th>性質</th><th>閾值</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>每季 Q2 / Q3 / Q4 Revenue 指引</strong><br>Revenue Lumpiness 使季度指引的變化是最重要的實時信號。Q1 2026（2026-04-27）的 Q2 指引是最近最重要的確認點——管理層給出的 Q2 指引直接說明 H2 能見度是否改善。</td><td><span class="beat">🔵 最重要的短期信號（頻率：每季）</span></td><td>Q2 2026 指引 > $1.2B = H2 能見度改善，買入信號；< $1.0B = H1 2026 高峰後急劇放緩，評估是否減倉</td></tr>
+    <tr><td>2</td><td><strong>AI Compute 測試收入佔比追蹤</strong><br>Q4 2025 >60%；Q1 2026E >70%。若 AI Compute 佔比持續提升（> 75%），說明業務轉型確認；若突然下滑（< 50%），說明大客戶訂單完成後的周期性低谷。</td><td>長期業務轉型確認信號</td><td>若 AI Compute 佔比連續 2 季 < 50%，業務轉型論點受挑戰，需重新評估；若持續 > 70%，新目標模型路徑確認</td></tr>
+    <tr><td>3</td><td><strong>Photon 100 首個商業化里程碑</strong><br>矽光子測試是 TER 的新增長向量。Photon 100 是否贏得首個大型客戶（NVIDIA Rubin CPO 測試、Intel 光互連）是確認這個護城河是否真實的關鍵信號。</td><td>長期成長期權確認信號</td><td>若 2026 H2 宣布 Photon 100 的首個量產客戶，ATE TAM 向 $12-14B 路徑加速，TER 目標股價上修至 $400+</td></tr>
+  </tbody>
+</table>
+
+<!-- 十八標的全覽 -->
+<div class="sec-head">附錄：十八標的完整核心對照表（加入 TER）</div>
+<table style="font-size:8.5px">
+  <thead><tr><th>指標</th><th>TSM</th><th>NVDA</th><th>AVGO</th><th>GOOGL</th><th>MSFT</th><th>AMZN</th><th>AAPL</th><th>META</th><th>TSLA</th><th>AMD</th><th>MRVL</th><th>VRT</th><th>ANET</th><th>LRCX</th><th>ASML</th><th>KLAC</th><th>AMAT</th><th>TER</th></tr></thead>
+  <tbody>
+    <tr><td>護城河</td><td>9.5</td><td>9.5</td><td>8.5</td><td>9.0</td><td>9.0</td><td>9.0</td><td>9.5</td><td>8.5</td><td>6.5⚠️</td><td>8.0↑</td><td>8.0↑</td><td>8.5↑</td><td>9.0</td><td>8.5</td><td>10.0★</td><td>9.0</td><td>8.5↑</td><td>7.5↑</td></tr>
+    <tr><td>現價（USD）</td><td>~$340</td><td>~$180</td><td>~$316</td><td>~$307</td><td>~$390</td><td>~$209</td><td>~$250</td><td>~$615</td><td>~$383</td><td>~$199</td><td>~$90</td><td>~$265</td><td>~$136</td><td>~$220</td><td>~$1,370</td><td>~$1,465</td><td>~$355</td><td>~$300</td></tr>
+    <tr><td>市值</td><td>$1.76T</td><td>$4.38T</td><td>$1.50T</td><td>$3.72T</td><td>$2.90T</td><td>$2.24T</td><td>$3.67T</td><td>$1.56T</td><td>$1.43T</td><td>$325B</td><td>$78B</td><td>$101B</td><td>$171B</td><td>$296B</td><td>$538B</td><td>$193B</td><td>$281B</td><td>$47B</td></tr>
+    <tr><td>Fwd P/E（1年）</td><td>24x</td><td>22x★</td><td>24x</td><td>26x</td><td>22x★</td><td>27x</td><td>29x</td><td>20x★</td><td>170x⚠️</td><td>30x</td><td>24x</td><td>44x⚠️</td><td>40x</td><td>36x</td><td>39x</td><td>40x⚠️</td><td>32x★</td><td>49x⚠️</td></tr>
+    <tr><td>EPS CAGR（3年）</td><td>~23%</td><td>~34%</td><td>~38-41%</td><td>~17-23%</td><td>~18-22%</td><td>~28-36%</td><td>~20-27%</td><td>~19-25%</td><td>分歧</td><td>~34-48%</td><td>~38-42%</td><td>~24-34%</td><td>~20%</td><td>~16-20%</td><td>~17-27%</td><td>~13.5%⚠️</td><td>~17-22%</td><td>~29-39%★★</td></tr>
+    <tr><td>PEG</td><td>1.02x</td><td>0.64x★</td><td>0.60x★</td><td>1.13x</td><td>~1.08x</td><td>~0.84x</td><td>~1.26x</td><td>~0.93x</td><td>4.06x⚠️</td><td>0.59x★</td><td>0.62x★</td><td>1.42x</td><td>~2.0x</td><td>~1.97x</td><td>1.44x</td><td>2.97x⚠️</td><td>1.47x★</td><td>1.41x（中性）</td></tr>
+    <tr><td>FCF Margin</td><td>26.5%</td><td>44.7%★</td><td>41%★</td><td>18%</td><td>25%</td><td>19.5%</td><td>22%</td><td>26%</td><td>6.5%⚠️</td><td>13%</td><td>15-17%</td><td>16-18%</td><td>~41%</td><td>~30%</td><td>~33.7%</td><td>~34%</td><td>~23%</td><td>~20-25%</td></tr>
+    <tr><td>DCF 中性上行</td><td>+4%</td><td>+44%</td><td>+36%</td><td>+24%</td><td>+28%</td><td>+53%</td><td>+16%</td><td>+30%</td><td>-48%</td><td>+56%</td><td>+78%</td><td>+11%</td><td>+69%</td><td>+34%</td><td>+53%</td><td>+9%</td><td>+35%</td><td>+20%</td></tr>
+    <tr><td>最終判斷</td><td>🟡</td><td>🟢 積極</td><td>🟡</td><td>🟢</td><td>🟢 積極</td><td>🟢</td><td>🟡 等$215</td><td>🟢 積極</td><td>🔴</td><td>🟢 積極</td><td>🟢 積極</td><td>🟡 等$220</td><td>🟢 積極</td><td>🟢</td><td>🟢 積極</td><td>🟡 等$1,200</td><td>🟢 積極</td><td>🟡 觀望等Q1確認</td></tr>
+  </tbody>
+</table>
+
+<div class="rating-block purple" style="margin-top:20px">
+  <div class="icon">🏆</div>
+  <div>
+    <div class="title">十八標的最終綜合排名（安全邊際 × 確定性 × 護城河 × 估值）</div>
+    <div class="body">
+      <strong>🥇 NVDA</strong>：AI 超週期直接受益，PEG 0.64x，DCF +44%，CUDA 壟斷，2 年 P/E 16x。<br>
+      <strong>🥈 MSFT</strong>：歷史最低估值，護城河最廣，DCF +28%。<br>
+      <strong>🥉 META</strong>：PEG 0.93x，Net Margin 37%，廣告加速。<br>
+      <strong>4️⃣ AMD</strong>：PEG 0.59x（最低），DCF +56%，EPYC + MI450 期權。<br>
+      <strong>5️⃣ MRVL</strong>：DCF +78%（最大），PEG 0.62x，FY2028 P/E 16.6x。<br>
+      <strong>6️⃣ ASML</strong>：護城河 10/10，FY2027 P/E 27.3x，DCF +53%，€38.8B 積壓。<br>
+      <strong>7️⃣ ANET</strong>：護城河 9.0/10，FCF 41%，ROIC 183%，DCF +69%。<br>
+      <strong>8️⃣ AMZN</strong>：DCF +53%，AWS 積壓。<br>
+      <strong>9️⃣ LRCX</strong>：Etch #1，WFE $135B，NAND 復甦，DCF +34%。<br>
+      <strong>🔟 AMAT</strong>：WFE 四大最低估值（32x），PEG 1.47x，DCF +35%，EPIC Center 護城河升級。<br>
+      <strong>1️⃣1️⃣ AVGO</strong>：XPU $100B，FCF 41%，PEG 0.60x。<br>
+      <strong>1️⃣2️⃣ GOOGL</strong>：多引擎護城河，DCF +24%。<br>
+      <strong>1️⃣3️⃣ KLAC</strong>：護城河 9.0/10，等 $1,200-1,300。<br>
+      <strong>1️⃣4️⃣ TER ★NEW</strong>：<strong>ATE #1，EPS CAGR 35%+（十八標的最高之一），FY2027 PEG 1.03x，新目標模型 $6B Revenue / EPS $9.50-11</strong>。但 Revenue Lumpiness + H2 2026 不確定性 + 悲觀 DCF -52% = 觀望等 Q1 2026 財報（2026-04-27）確認。這是最高成長但最高風險的標的。<br>
+      <strong>1️⃣5️⃣ VRT</strong>：護城河 8.5/10，等 $220-235。<br>
+      <strong>1️⃣6️⃣ AAPL</strong>：護城河 9.5/10，等 $215-225。<br>
+      <strong>1️⃣7️⃣ TSM</strong>：代工壟斷，台海地緣折扣，DCF +4%。<br>
+      <strong>❌ TSLA</strong>：中性情境高估 91%，迴避。<br><br>
+      <strong>★ TER 的特殊定位：「AI 測試 + 物理 AI 機器人」的高成長雙重期權</strong><br>
+      TER 是十八個標的中唯一同時押注「AI 晶片測試（ATE）」和「物理 AI 機器人（Physical AI）」的公司，這兩個都是 AI 超週期的核心受益業務。但 Revenue Lumpiness 使它更接近「成長股期權」而非「護城河複利機器」。以下兩個條件同時成立才建議積極建倉：① Q1 2026 財報（2026-04-27）指引 Q2 >$1.2B（H2 能見度確認）② 股價回調至 $240-260（FY2026E Fwd P/E ~40-42x，安全邊際充分）。<br><br>
+      <strong>「AI 全鏈路生態系」最完整組合：NVDA + AMAT（製造）+ LRCX（製程）+ ASML（微影）+ TER（測試）+ ANET（網路）</strong><br>
+      NVDA（設計晶片）→ ASML（光刻）+ AMAT（沉積/封裝）+ LRCX（蝕刻）→ TER（測試）→ ANET（AI 數據中心網路）= 覆蓋 AI 晶片「設計 → 製造 → 測試 → 連接」的完整生態系。TER 是這個鏈條中「缺少的最後一環」。
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:32px;font-size:12px;color:var(--text-sub);">
+  <strong>免責聲明：</strong>本報告由 Claude AI 根據公開市場資料生成，僅供研究參考，不構成投資建議。數據來源：Teradyne IR、SEC 申報（Q4 FY2025，2026-02-03）、Investing.com、TradingView、WallStreetZen（21 位分析師）、StockInvest、Trefis、AlphaSpread、Nasdaq（Zacks）、Meyka AI（2026-03-16）。數據截止 2026-03-20。<br><br>
+  <strong>關鍵分析提示：</strong>① TER 是「ATE（自動測試設備）」公司，而非「WFE（晶圓製程設備）」公司——業務邏輯、訂單能見度、估值框架均不同於 ASML/LRCX/KLAC/AMAT ② Revenue Lumpiness（季度 ±40-60% 波動）是 TER 最根本的業務特性，使 TTM P/E 毫無意義（Q4 EPS $1.80 vs Q1 EPS $0.57 相差 3 倍），只有 FY2026/2027 全年 EPS 才有評估意義 ③ 管理層公告的「新目標模型（$6B Revenue / EPS $9.50-11）」是在 ATE TAM 達 $12-14B 的前提下——這個 TAM 成長需要 3-5 年，不是 FY2026 的承諾 ④ 分析師目標價分散（$250-$400）反映了對 Revenue Lumpiness 的不同假設，平均目標可能已過時（部分在股票 $200 時設定）。<br><br>
+  <strong>報告版本：</strong>DD_TER_20260320 ｜ 模式：深度版 ｜ 生成時間：2026-03-20
+</div>
+</div>
+</body>
+</html>

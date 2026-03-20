@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_AMAT_20260320 | Applied Materials 深度分析報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC;--card:#FFF;--accent:#B45309;--navy:#451A03;
+    --text:#1A2332;--text-sub:#4A5568;--border:#E2E8F0;--alt-row:#F1F5F9;
+    --green-bg:#DCFCE7;--green-text:#166534;
+    --red-bg:#FEE2E2;--red-text:#991B1B;
+    --yellow-bg:#FEF9C3;--yellow-text:#92400E;
+    --blue-bg:#EFF6FF;--blue-text:#1E40AF;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:var(--text);font-size:14px;line-height:1.7;}
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 24px;font-family:var(--mono);font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  #topbar .left{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+  #topbar .ticker{font-size:18px;font-weight:700;letter-spacing:2px;color:#FCD34D;}
+  #topbar .mode-badge{background:#B45309;color:#fff;padding:2px 10px;border-radius:3px;font-size:11px;font-weight:700;}
+  #topbar .price{font-size:16px;font-weight:600;color:#FDE68A;}
+  #print-btn{background:#B45309;color:#fff;border:none;cursor:pointer;padding:6px 16px;border-radius:3px;font-size:12px;font-family:var(--mono);font-weight:700;white-space:nowrap;}
+  .wrap{max-width:1100px;margin:0 auto;padding:80px 24px 60px;}
+  .sec-head{background:var(--navy);color:#fff;padding:10px 20px;margin:32px 0 16px;border-left:4px solid var(--accent);font-size:15px;font-weight:700;}
+  .sub-head{color:var(--navy);font-size:13px;font-weight:700;padding:8px 0 4px;border-bottom:2px solid var(--accent);margin:20px 0 10px;}
+  .card{background:var(--card);border:1px solid var(--border);padding:16px 20px;margin-bottom:14px;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:16px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 16px;}
+  .stat-card .label{font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;}
+  .stat-card .value{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--navy);}
+  .stat-card .note{font-size:11px;color:var(--text-sub);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:var(--navy);color:#fff;padding:8px 12px;text-align:left;font-weight:600;font-size:12px;}
+  td{padding:7px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:nth-child(even) td{background:var(--alt-row);}
+  tr:hover td{background:#FEF3C7;}
+  .mono{font-family:var(--mono);}
+  .beat{background:var(--green-bg);color:var(--green-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .miss{background:var(--red-bg);color:var(--red-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .neutral{background:var(--yellow-bg);color:var(--yellow-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .pass{background:var(--green-bg);color:var(--green-text);}
+  .fail{background:var(--red-bg);color:var(--red-text);}
+  .warn{background:var(--yellow-bg);color:var(--yellow-text);}
+  .bull td{background:var(--green-bg)!important;}
+  .base td{background:var(--yellow-bg)!important;}
+  .bear td{background:var(--red-bg)!important;}
+  .rating-block{border:2px solid;padding:14px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:16px;}
+  .rating-block.green{border-color:#16A34A;background:var(--green-bg);}
+  .rating-block.yellow{border-color:#D97706;background:var(--yellow-bg);}
+  .rating-block.red{border-color:#DC2626;background:var(--red-bg);}
+  .rating-block .icon{font-size:28px;line-height:1;min-width:36px;}
+  .rating-block .title{font-weight:700;font-size:15px;margin-bottom:4px;}
+  .rating-block .body{font-size:13px;line-height:1.6;}
+  .alert-warn{background:#FFFBEB;border-left:4px solid #F59E0B;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-info{background:var(--blue-bg);border-left:4px solid #3B82F6;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-green{background:var(--green-bg);border-left:4px solid #16A34A;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-danger{background:var(--red-bg);border-left:4px solid #DC2626;padding:10px 16px;margin:12px 0;font-size:13px;}
+  p{margin-bottom:10px;font-size:13px;}
+  ul,ol{padding-left:20px;margin-bottom:10px;}
+  li{margin-bottom:4px;font-size:13px;}
+  strong{color:var(--navy);}
+  .data-stamp{font-family:var(--mono);font-size:11px;color:var(--text-sub);background:var(--alt-row);padding:6px 14px;border:1px solid var(--border);display:inline-block;margin-bottom:16px;}
+  .score-big{font-size:48px;font-family:var(--mono);font-weight:700;color:var(--navy);}
+  @media print{
+    #topbar,#print-btn{display:none!important;}
+    .wrap{padding:20px;}
+    .sec-head{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .bull td,.base td,.bear td,.pass,.fail,.warn{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="left">
+    <span class="ticker">AMAT</span>
+    <span class="mode-badge">🔍 深度版</span>
+    <span>Applied Materials, Inc.</span>
+    <span>資料抓取：2026-03-20</span>
+    <span class="price">現價 ~$355 USD</span>
+    <span>最新財報：Q1 FY2026（2026-02-12，截至 2026-01-25）｜ 下次：Q2 FY2026（2026-05-14 est.）</span>
+  </div>
+  <button id="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</div>
+
+<div class="wrap">
+<div class="data-stamp">
+  資料抓取：2026-03-20 ｜ AMAT 現價：~$355 USD ｜ 市值：~$281B（~793M 股）｜ 52 週：$123.74 – $395.95 ｜ YTD +~15% ｜ 過去 52 週 +133% ｜ 距 52 週高點 -10% ｜ 最新財報：Q1 FY2026（截至 2026-01-25，2026-02-12 發布）
+</div>
+<div class="alert-info">
+  <strong>📅 財年說明：</strong>Applied Materials 的財年（FY）以 10 月結束。FY2025 = 截至 2025-10-26；FY2026 Q1 = 截至 2026-01-25（2026-02-12 發布）。「Calendar Year 2025」 ≠ FY2025。本報告以 FY 口徑為主（EPS 預測與 FY 一致），標注「Cal.」時才是曆年口徑。
+</div>
+<div class="alert-green">
+  <strong>🔑 本報告核心命題：</strong>Applied Materials 是全球最大的 WFE（晶圓製程設備）供應商——涵蓋沉積（Deposition #1）、蝕刻（Etch #2）、CMP、離子注入、先進封裝等最廣泛的製程技術組合。FY2025 收入 $28.37B（史上最高，+4%），Non-GAAP EPS $9.42（+9%）。Q1 FY2026 Non-GAAP EPS $2.38（Beat +7.7%）；Q2 FY2026 指引 $7.65B（+9%）；Cal. 2026 設備業務成長 >20% 目標。最新：**SK Hynix + Micron 雙重 R&D 長期合作（2026-03-10）** + **EPIC Center $5B R&D 園區**（春季 2026 開幕）+ **股息 +15%**（$0.46→$0.53/季，連續 9 年成長）。以 GAA 邏輯、HBM DRAM、先進封裝三重市場領導地位切入 AI 算力超週期核心，是 WFE 中「最廣泛覆蓋的 AI 基礎設施受益者」。
+</div>
+
+<!-- §0 -->
+<div class="sec-head">§0 ｜ 序章：第一性原理 × 逆向思考</div>
+<div class="sub-head">存在意義（深度版）</div>
+<div class="card">
+  <p>Applied Materials 的存在意義用一句話：<strong>「半導體製造中的每一個關鍵材料工程步驟，Applied Materials 都有工具解決它。」</strong> AMAT 是 WFE 生態系的「全科醫生」——相對於 LRCX（蝕刻專科）、KLA（製程控制專科）、ASML（微影專科），AMAT 的獨特性在於廣度：它在沉積（#1 全球）、蝕刻（#2，僅次 LRCX）、CMP（#1）、離子注入（#1）、先進封裝（#1 HBM + Advanced Packaging）均有領先地位。</p>
+  <p><strong>AI 時代的特殊價值：</strong>CEO Gary Dickerson 的核心論點是「Materials Complexity = AMAT's Opportunity」。GAA（Gate-All-Around）邏輯晶片引入了 4-5 種新材料（鉬接點 Molybdenum contacts = AMAT Spectral ALD 系統、矽奈米片平滑化 = AMAT Viva 系統），每一種新材料步驟對 AMAT 都是新收入機會。HBM（High Bandwidth Memory）需要 3x-4x 更多晶圓起始數（per bit delivered），每個晶圓需要 AMAT 的沉積、蝕刻、封裝設備。AMAT 是唯一一家在 GAA 邏輯、HBM DRAM、先進封裝三個最高成長市場同時是 #1 設備提供商的 WFE 公司。</p>
+  <p><strong>EPIC Center：改變遊戲規則的 R&D 生態系。</strong>AMAT 正在投資 $5B 建設 EPIC（Engineering in Practice of Integrated Circuits）Center，一個 18 萬平方英尺的潔淨室研發中心（春季 2026 開幕）。SK Hynix 和三星已成為創始合作夥伴，Micron 剛宣布合作。EPIC Center 的核心價值：讓 AMAT 的材料工程師與客戶的製程工程師在同一屋簷下共同開發下一代工藝，比傳統的「設備商送樣品→客戶評估」快 10-15 年。這將護城河從「設備銷售」升級為「材料工程生態系合作者」，估值方法將更接近 ASML（技術夥伴）而非純設備商。</p>
+  <p>若 AMAT 明天消失：① GAA 邏輯（2nm 以下）的鉬接點工藝無法實現（AMAT Spectral ALD 是唯一已驗證的系統）② HBM4 的 TSV 電鍍和先進封裝 Hybrid Bonding 無法替換（AMAT 在這兩個步驟是 #1）③ 全球 DRAM 製造（AMAT 是 DRAM 沉積 #1）產能擴張停止。LRCX 可以部分填補蝕刻空缺，但 AMAT 在沉積和先進封裝的地位無法被單一競爭者替代。</p>
+</div>
+
+<div class="sub-head">逆向推演（Munger Inversion）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>風險維度</th><th>具體情境</th><th>機率</th><th>股價影響</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>🇨🇳 中國出口管制（最大已知風險）</strong><br>Q1 FY2026 中國佔收入 30%；$253M Commerce 罰款歷史</td>
+        <td>AMAT 在 2024 年因違反出口管制（向中芯等受制裁實體出售設備）支付了 $253M 的美國商務部罰款——這不只是財務損失，更說明了 AMAT 對中國市場的高度依賴和合規風險。若美國進一步擴大制裁（禁止所有中國晶圓廠的 DRAM 設備採購），中國 30% 的收入可能降至 15%，年損失 ~$4-5B，EPS 下調 ~$1-1.5。與 LRCX（35%，最高）、ASML（目標 20%）、KLA（28%）相比，AMAT 的中國曝露是四大設備商中第二高。</td>
+        <td class="mono warn">中等（出口管制升級風險持續存在，AMAT 有前科）</td>
+        <td>中國收入損失 $4B → EPS -$1.3 → 估值壓縮 -20~30%</td>
+      </tr>
+      <tr>
+        <td><strong>🏭 廣度護城河 vs 深度護城河的本質矛盾</strong><br>AMAT 是「廣度 #1」，但每個細分市場都有更深的專業競爭者</td>
+        <td>AMAT 的最大結構性風險是：在每個細分市場，都有更專注的競爭者（蝕刻：LRCX #1；製程控制：KLA #1；微影：ASML #1；部分封裝：日本東京威力 TEL）。若客戶在技術升級時選擇「最專業的工具」（而非「最廣泛的生態系」），AMAT 的市佔可能在關鍵節點被蠶食。GAA 是關鍵測試——AMAT 能否在 GAA 蝕刻（vs LRCX Acara）和 GAA 量測（vs KLA Archer）上同時保持競爭力？</td>
+        <td class="mono warn">低中（AMAT 在 GAA 的多個步驟已獲得 ToR；但長期警惕）</td>
+        <td>GAA 市佔低於預期：EPS CAGR 降至 10% → 估值壓縮 -20~25%</td>
+      </tr>
+      <tr>
+        <td><strong>📉 WFE 週期反轉 + ICAPS 市場持平</strong><br>AMAT 特有的雙重週期風險</td>
+        <td>AMAT 的 ICAPS（IoT/汽車/工業/功率/感測器）業務佔 ~15% 收入，管理層說「2026 年 ICAPS 持平」——這說明非 AI 市場已飽和或下行。若 AI Capex 超週期同時在 2027 年放緩（WFE 反轉），AMAT 的雙重業務都承壓（先進 WFE 下行 + ICAPS 持平/下行），整體收入可能從 $35B（FY2026E）跌至 $28-30B，EPS 大幅下調。</td>
+        <td class="mono warn">低中（2026-2027 高確定性；2028+ 不確定）</td>
+        <td>WFE 週期反轉 + ICAPS 下行：EPS -25~35% → 股票 -35~45%</td>
+      </tr>
+      <tr>
+        <td><strong>💸 EPIC Center $5B 投資的回報風險</strong><br>史上最大的 AMAT 單一資本投資</td>
+        <td>$5B EPIC Center 是 AMAT 的長期戰略押注（比 FY2025 全年 Capex 高 5 倍以上）。若科技客戶（SK Hynix、三星、Micron）在 EPIC Center 完成共同開發後，選擇將核心工藝轉向競爭設備，$5B 投資的 ROI 可能遠低於預期。EPIC Center 是護城河升級的機會，但也是史上最大的「技術策略賭注」。</td>
+        <td class="mono neutral">低（SK Hynix + 三星 + Micron 作為創始夥伴，退出成本極高）</td>
+        <td>EPIC Center ROI 不如預期：長期估值折扣 -5~10%；但短期影響有限</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="alert-warn" style="margin-top:12px">
+    <strong>最大複合風險：</strong>中國出口管制升級（-$4B 收入）+ WFE 週期轉向（先進端下行）+ ICAPS 持平。三者同時發生（概率 ~10-15%），FY2027 EPS 可能大幅下修至 $7-8，估值從 ~30x 壓至 22x，股票 -40~50%。但這個情境需要 AI Capex 超週期完整結束（2027 年），目前確定性不高。
+  </div>
+</div>
+
+<!-- §1 -->
+<div class="sec-head">§1 ｜ 即時財報情報（Q1 FY2026，截至 2026-01-25，2026-02-12 發布）</div>
+<div class="sub-head">① 最新財報關鍵數字</div>
+<table>
+  <thead><tr><th>指標</th><th>Q1 FY2026 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 變化</th></tr></thead>
+  <tbody>
+    <tr><td>Total Revenue</td><td class="mono">$7.01B</td><td class="mono">$6.90B（指引中位 $6.85B）</td><td><span class="beat">✓ BEAT 指引；但 YoY -2.1%（基期效應）</span></td><td class="mono">-2.1% YoY（vs Q1 FY2025 $7.17B）；+3.4% QoQ（vs Q4 FY2025 $6.80B）</td></tr>
+    <tr><td>Semiconductor Systems Revenue</td><td class="mono">$5.14B（73%）</td><td class="mono">—</td><td><span class="beat">✓ 記錄季度；DRAM 34%（vs Q1 FY2025 27%）；HBM 爆發</span></td><td class="mono">DRAM 佔半導體系統 34% = HBM 採購急速爬升</td></tr>
+    <tr><td>AGS（Applied Global Services）</td><td class="mono">$1.56B（22%）</td><td class="mono">—</td><td><span class="beat">✓ 記錄服務收入；+15%+ YoY；高利潤率防禦底板</span></td><td class="mono">服務和零件均創新高；類似 LRCX CSBG 的複利引擎</td></tr>
+    <tr><td>Non-GAAP Gross Margin</td><td class="mono">49.1%</td><td class="mono">~48.5%（指引）</td><td><span class="beat">✓ BEAT +60bps；+20bps YoY；+100bps QoQ</span></td><td class="mono">趨勢改善；2026 全年指引 ~49.3%（Q2）</td></tr>
+    <tr><td>Non-GAAP Operating Margin</td><td class="mono">30.0%（AMAT IR 確認）</td><td class="mono">—</td><td><span class="beat">✓ 30% 是 AMAT 歷史最高 OM 水準之一</span></td><td class="mono">OpEx 增速低於收入增速（Brice Hill CFO 明確說明）</td></tr>
+    <tr><td>Non-GAAP EPS</td><td class="mono">$2.38</td><td class="mono">$2.21（共識）</td><td><span class="beat">✓ BEAT +7.7%！（+$0.17；強勁）</span></td><td class="mono">vs Q1 FY2025 $2.38（持平 YoY）；+10.2% QoQ</td></tr>
+    <tr><td>GAAP EPS</td><td class="mono">$2.54（+75% YoY！）</td><td class="mono">—</td><td><span class="beat">✓ GAAP 大幅 Beat；含 $253M 商務部罰款的逆向比較效益（FY2025 Q1 受罰款影響 GAAP 大幅下降）</span></td><td class="mono">GAAP +75% 主因 FY2025 Q1 有 $253M 法律和解費用；Non-GAAP 更能反映正常化業績</td></tr>
+    <tr><td>Non-GAAP FCF（Q1）</td><td class="mono">$1.04B（+91% YoY！）</td><td class="mono">—</td><td><span class="beat">✓ FCF Margin ~14.8%（$1.04B / $7.01B）；大幅改善</span></td><td class="mono">OCF $1.69B；Capex ~$650M（EPIC Center 建設加速）</td></tr>
+    <tr><td>資本回報（Q1）</td><td class="mono">$702M（回購 $337M + 股息 $365M）</td><td class="mono">—</td><td><span class="neutral">⚪ 穩定回報；FY2026 Q1 回購稍低（建設 EPIC Center 佔用部分現金）</span></td><td class="mono">新 $10B 回購授權（2025 宣布）；股息 +15%（2026-03）</td></tr>
+    <tr><td>FY2025 全年 Revenue（基期）</td><td class="mono">$28.37B（+4% YoY；史上最高）</td><td class="mono">—</td><td><span class="beat">✓ 第六年連續成長；Non-GAAP EPS $9.42（+9%）</span></td><td class="mono">FY2025 GAAP EPS $8.66；GAAP 和 Non-GAAP 差距 ~$0.76（SBC+攤銷）</td></tr>
+  </tbody>
+</table>
+<div class="alert-warn" style="margin-top:8px">
+  <strong>⚠️ 股票財報後下跌 -3.38% 的深層原因：</strong>儘管 EPS 強力 Beat +7.7%，AMAT 財報後股票下跌 -3.38%（至 $339）。主因：① Q1 FY2026 Revenue YoY -2.1%（即使 QoQ +3.4%，但 YoY 下滑是市場敏感點）② 中國收入仍高達 30%（出口管制風險未解除）③ 先前有 $253M Commerce 罰款（Morningstar 記錄）引發合規問題聯想 ④ ICAPS 「持平」指引讓部分投資者擔憂非 AI 業務的頂部。這個財報後下跌是「逢低買入」機會還是「訊號性警示」，是本次分析的核心問題。
+</div>
+
+<div class="sub-head">② Q2 FY2026 指引 + Cal. 2026 展望</div>
+<div class="card">
+  <table>
+    <thead><tr><th>指標</th><th>數據</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td>Q2 FY2026 Revenue 指引（截至 2026-04-25）</td><td class="mono">$7.65B（±$500M）= 中位 $7.65B</td><td><span class="beat">✓ +9.1% QoQ；+~13% YoY（vs Q2 FY2025 $6.77B）；強勁</span></td></tr>
+      <tr><td>Q2 FY2026 Non-GAAP EPS 指引</td><td class="mono">$2.64（±$0.20）= 中位 $2.64</td><td><span class="beat">✓ +10.9% QoQ（vs Q1 $2.38）；+~$0.26 QoQ 增量</span></td></tr>
+      <tr><td>Q2 FY2026 Non-GAAP GM 指引</td><td class="mono">~49.3%（±1%）</td><td><span class="beat">✓ +20bps QoQ；持續改善趨勢</span></td></tr>
+      <tr><td>Cal. 2026 半導體設備業務成長目標</td><td class="mono">>20%（CEO Gary Dickerson 明確宣示）</td><td><span class="beat">✓ 管理層給出「>20%」而非「mid-single digit」——這是比大多數 WFE 同業更積極的指引</span></td></tr>
+      <tr><td>Cal. 2026 WFE 特性</td><td class="mono">「H2 加重」（Clean Room 建設完成後設備交付加速）</td><td><span class="neutral">⚪ 與 LRCX/ASML 一致；H1 穩健，H2 爆發</span></td></tr>
+      <tr><td>EPIC Center 開幕</td><td class="mono">春季 2026；Samsung + SK Hynix + Micron 三大記憶體廠均為合作夥伴</td><td><span class="beat">✓ 2026 最重要的戰略里程碑；「lab-to-fab」加速商業化</span></td></tr>
+      <tr><td>股息 +15%（2026-03-13）</td><td class="mono">$0.46 → $0.53/季（年化 $2.12，殖利率 ~0.60%）；連續 9 年股息成長</td><td><span class="beat">✓ 9 年連續成長；確認長期現金流可持續性的強烈信號</span></td></tr>
+      <tr><td>BE Semiconductor（BESI）收購傳言</td><td class="mono">Reuters 2026-03-13：AMAT + LRCX 對 BESI 感興趣，BESI 聘用 Morgan Stanley 評估</td><td><span class="warn">⚠️ 若 AMAT 收購 BESI（先進封裝 Die Attach 設備 #1），封裝護城河大幅提升；但收購溢價可能 30-50%，EPS 短期稀釋</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">③ Earnings Call 語氣解析</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td><strong>管理層基調</strong></td><td><span class="beat">高度積極，強調「Materials Engineering Leadership × AI 需求」的系統性機會</span>：CEO Gary Dickerson 是 WFE 業界最善於「技術宏大敘事」的 CEO——他在 Call 中構建了一個完整的技術演進路線圖（GAA → 2nm → 鉬接點 → HBM4 → 先進封裝），而 AMAT 在每個步驟都是 #1 提供者。這個敘事的可信度來自：① 具體的技術名稱和產品（Viva、Sym3 Z Magnum、Spectral ALD）② TSMC 頒發的多個卓越獎項（2025 TSMC Excellent Performance Award）③ Samsung + SK Hynix + Micron 同時成為 EPIC Center 合作夥伴。CFO Brice Hill 在財務層面補充了「OpEx 成長慢於收入 → 利潤槓桿」的具體承諾。</td></tr>
+      <tr><td><strong>三大刻意強調</strong></td><td>
+        ① <strong>「Applied 是 GAA 邏輯的 #1 製程設備提供者，且有機會奪取 >50% 的 GAA 和 Wiring（含 Backside Power）可服務市場」</strong>：這個 >50% 的市佔目標是一個非常積極的宣示，意味著 AMAT 在 GAA 的市佔超過其在 FinFET 的現有份額，是明確的「市佔擴張論點」<br>
+        ② <strong>「HBM 需要 3x-4x 更多晶圓起始，且 HBM 堆疊層數從 12 增至 16 再到 20+」</strong>：這個數字直接量化了 AI GPU 記憶體升級對 AMAT 的需求乘數。每個 HBM 層增加 = 更多的 AMAT 沉積、蝕刻、封裝步驟。這比 LRCX 的「NVIDIA Rubin 4 倍晶圓需求」是更精確的自身業務量化<br>
+        ③ <strong>「EPIC Center 已有 Samsung 加入，加上 SK Hynix 和 Micron = 全球前三大記憶體廠商全部參與」</strong>：這是 2026-03 最重要的護城河升級宣告。三大記憶體廠商同時入駐 EPIC Center，說明 AMAT 的 R&D 生態系戰略已成功，其「材料工程夥伴」的定位從概念變為現實
+      </td></tr>
+      <tr><td><strong>刻意迴避的問題</strong></td><td>
+        ① <strong>中國業務的具體合規狀態</strong>：管理層對 $253M Commerce 罰款（2025 年和解）的後續影響幾乎隻字未提。分析師追問中國風險時，管理層只說「持續監控地緣政治風險」，未說明是否有新的合規問題<br>
+        ② <strong>BESI 收購的可能性（2026-03-13 Reuters 報導，在 Call 之前）</strong>：Call 在 2026-02-12（BESI 傳言是 2026-03-13），所以 Call 中未提及。但後續需追蹤管理層的立場<br>
+        ③ <strong>EPIC Center 的具體 ROI 時間表</strong>：$5B 投資何時開始貢獻收入？管理層只說「縮短 10-15 年的開發週期」，未給出具體的 ROI 時間線
+      </td></tr>
+      <tr><td><strong>最重要新技術宣告</strong></td><td>
+        <strong>三款新產品（2026-02-12 發布）：</strong><br>
+        ① <strong>Viva Radical Treatment System</strong>：矽奈米片精密平滑化（GAA 必要步驟），原子級精度控制，提升 GAA 電晶體速度。「這是 AMAT 開創的全新工藝類別，沒有現有競爭者。」<br>
+        ② <strong>Sym3 Z Magnum</strong>：AMAT 旗艦蝕刻系統的最新版本（GAA 和 DRAM 1D 節點關鍵步驟），延伸 AMAT 在導體蝕刻的市場領導地位（對抗 LRCX）<br>
+        ③ <strong>Spectral ALD（鉬接點 Molybdenum Contacts）</strong>：用鉬取代鎢作為邏輯電晶體接點材料，降低電阻 15%，是 2nm 節點的關鍵材料創新。AMAT 說「我們在主導從 ALD 鎢到 ALD 鉬的邏輯接點轉型」——這是新的材料護城河，任何採用 2nm 鉬接點的晶片廠都需要 AMAT 的 Spectral 系統
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">④ 產業 Imply 萃取</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td><strong>DRAM 佔 Semiconductor Systems 升至 34%（vs 前年 27%）</strong></td><td>+7 個百分點說明 HBM 需求在 Q1 FY2026 急速爬升。AMAT 是 DRAM 沉積 #1，這個趨勢直接說明：SK Hynix / 三星 / Micron 的 HBM4（12→16→20 層堆疊）投資正在實際轉換為 AMAT 設備採購。DRAM 的快速回升（vs NAND 維持 &lt;10% WFE）說明記憶體市場的結構性分化：AI 記憶體（HBM）爆發 vs 消費記憶體（NAND）復甦緩慢。</td></tr>
+      <tr><td><strong>「設備業務 Cal. 2026 >20% 成長」的信心來自客戶能見度，不是預估</strong></td><td>CEO Dickerson 說「based on our conversations with our customers and partners, we are preparing Applied's operations and service organizations to be ready to support higher demand beginning in the second half of calendar 2026」——這個表述說明 H2 加速的預期已有客戶的直接採購確認（訂單或預訂），而不只是行業預測。AMAT 的 Cal. 2026 >20% 比 LRCX 的 WFE $135B 目標更保守（$135B WFE 的 AMAT 份額約 20-22%，應貢獻 $27-29B，比 FY2025 $28.37B 僅成長 0-5%）——說明 AMAT 的設備業務 >20% 成長預期是自身的材料工程市佔提升，而非僅跟隨 WFE 整體。</td></tr>
+      <tr><td><strong>Backside Power（背側電源傳遞網路）= AMAT 的新增長向量</strong></td><td>GAA 邏輯的下一步演進是「Backside Power Delivery」（背側電源網路）——將電源線從晶片正面移至背面，釋放正面面積給更多電晶體，提升效率。AMAT 在 Backside Power 的 CVD 沉積和 CMP 拋光中有領先地位。Intel 的 Intel 18A（2025-2026 量產）是第一個採用 Backside Power 的邏輯製程，TSMC 的 N2P+ 也在規劃。AMAT 在這個市場幾乎沒有已知的直接競爭者，是純增量機會。</td></tr>
+      <tr><td><strong>AMAT 是 WFE 四大供應商中「SK Hynix + 三星 + Micron 三合一最受信任的記憶體夥伴」</strong></td><td>SK Hynix 是 HBM #1（NVIDIA 最大 HBM 供應商），三星是全球最大 DRAM 廠，Micron 是美國最大記憶體廠——三家同時成為 AMAT EPIC Center 的合作夥伴（SK Hynix + 三星為創始夥伴，Micron 2026-03-10 宣布加入），說明 AMAT 在 AI 記憶體生態系中的戰略地位已獲得最高層面的確認。這意味著 AMAT 的下一代 DRAM 技術開發路線圖（1D/1E → HBM5）將與三大記憶體廠深度整合，護城河持續加深。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §2 -->
+<div class="sec-head">§2 ｜ 核心門檻檢核</div>
+<div class="sub-head">EPS CAGR 搜尋結果</div>
+<div class="card">
+  <div class="alert-info">
+    <strong>口徑說明：</strong>AMAT 使用「Non-GAAP EPS」作為主要報告口徑（剔除 SBC ~$400M/年、M&A 攤銷、法律和解費用、一次性重組費用）。FY2025 Non-GAAP EPS $9.42（GAAP $8.66，差距 $0.76）。分析師預測通常以 FY 口徑（AMAT 財年 = 截至 10 月）為主。Zacks FY2026 EPS 共識：$10.97（+16% vs FY2025 $9.42）。
+  </div>
+  <table>
+    <thead><tr><th>年度（AMAT 財年 FY）</th><th>Non-GAAP EPS</th><th>分析師人數</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><strong>FY2025（已公布，基期）</strong></td><td class="mono">$9.42（+9% YoY）；GAAP $8.66</td><td>—</td><td>Revenue $28.37B（史上最高）；第六年連續成長</td></tr>
+      <tr><td><strong>FY2026E（截至 2026-10）</strong></td><td class="mono">$10.97（Zacks 共識）；Q1 $2.38 + Q2 指引 $2.64 + H2 加速（估 $2.9+$3.0）= ~$11.0</td><td>n≈28-37</td><td>+16.5% YoY；Cal. 2026 >20% 設備成長；H2 加速</td></tr>
+      <tr><td><strong>FY2027E</strong></td><td class="mono">~$13.0-14.0（估；WFE $135B + 市佔提升）</td><td>n≈25+</td><td>+18-27% YoY；GAA 全量產；HBM4 擴產；先進封裝爆發</td></tr>
+      <tr><td><strong>FY2028E</strong></td><td class="mono">~$14.5-16.0（估；共識缺乏，以成長率外推）</td><td>n≈15</td><td>+12-15% YoY；WFE 週期是否維持決定上下限</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:12px;font-family:var(--mono);font-size:13px;padding:10px;background:var(--alt-row);border:1px solid var(--border);">
+    <strong>EPS CAGR 計算（Non-GAAP，FY2025 $9.42 → FY2028E）：</strong><br>
+    中性 FY2028E $15：3 年 CAGR = ($15 ÷ $9.42)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +16.7%</span><br>
+    積極 FY2028E $17：3 年 CAGR = ($17 ÷ $9.42)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +21.8%</span>（Cal. 2026 >20% + 市佔提升）<br>
+    保守 FY2028E $13：3 年 CAGR = ($13 ÷ $9.42)^(1/3) − 1 = <span style="color:#D97706;font-weight:700">約 +11.3%</span><br>
+    <em>注：AMAT 的中性 EPS CAGR（~17%）高於 LRCX（16-20%）和 KLAC（13.5%），低於 MRVL（38-42%）和 AMD（34-48%）。與 LRCX 相比，AMAT 在 EPS 成長率上接近，但估值更低（Fwd P/E ~30x vs LRCX 36x），使 AMAT 在 WFE 設備中提供更好的 PEG 效率。</em>
+  </div>
+</div>
+
+<div class="sub-head">門檻檢核表</div>
+<table>
+  <thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr></thead>
+  <tbody>
+    <tr><td><strong>FCF Margin</strong></td><td>> 15%</td>
+      <td class="warn mono">⚠️ 接近（Q1 FY2026 ~14.8%；FY2025 全年 ~23%）</td>
+      <td>Q1 FY2026 FCF $1.04B / $7.01B = 14.8%（接近但未超 15%）。FY2025 全年：非 GAAP FCF 估計 ~$6.5-7B（含 EPIC Center Capex）/ $28.37B ≈ 23%。EPIC Center $5B 建設期（2024-2026）造成 Capex 偏高，壓縮 FCF Margin。2027 年 EPIC Center 建設完成後，FCF Margin 有望回升至 25%+。這是 AMAT 相對 LRCX（30%）和 KLAC（34%）FCF Margin 偏低的主要原因。</td></tr>
+    <tr><td><strong>ROIC</strong></td><td>產業頂尖</td>
+      <td class="pass mono">✓ 良好（ROE 38.86% TTM；ROIC ~25-30%，WFE 次頂尖）</td>
+      <td>CNBC 數據：ROE（TTM）38.86%。相比 KLAC（ROE 62.8%）和 LRCX（ROE 62.8%），AMAT 的 ROE 較低，主因是 D/E 較低（AMAT 資本結構更保守，D/E ~0.30），且 EPIC Center $5B 大型投資壓縮了資本效率。長期（EPIC Center ROI 釋放）ROE 有望提升至 50%+。</td></tr>
+    <tr><td><strong>EPS CAGR（3年，FY2025-2028）</strong></td><td>> 20%</td>
+      <td class="warn mono">⚠️ 接近（中性 ~17%；積極 ~22%）</td>
+      <td>基期 FY2025：$9.42 Non-GAAP<br>FY2026E：$10.97（Zacks 共識，n=28-37）<br>FY2027E：$13.0-14.0（估）<br>FY2028E：$14.5-16.0（估）<br>━━━━━━<br>3 年 CAGR：~17%（中性）/ ~22%（積極）<br>⚠️ 積極情境（22%）需要 Cal. 2026 >20% + GAA 市佔提升 + HBM4 擴產全兌現</td></tr>
+    <tr><td><strong>PEG</strong></td><td>< 2</td>
+      <td class="pass mono">✓ 合理（PEG ~1.7-2.1x；中性 17% / 積極 22%）</td>
+      <td>Fwd P/E（FY2026E $10.97）= $355 ÷ $10.97 = <strong>32.4x</strong><br>EPS CAGR 17% → PEG = 32.4 ÷ 17 = <strong>1.91x（接近 2x，合理偏高）</strong><br>EPS CAGR 22% → PEG = 32.4 ÷ 22 = <strong>1.47x（合理！）</strong><br>CNBC 數據：Fwd P/E 29.88x（NTM）→ PEG 29.88 ÷ 17 = <strong>1.76x（合理）</strong></td></tr>
+    <tr><td><strong>現金覆蓋總負債</strong></td><td>是/否</td>
+      <td class="warn mono">⚠️ 否，但可管理（D/E ~0.30；保守槓桿）</td>
+      <td>CNBC：D/E = 30.17%（相對最低；比 KLAC 的 D/E 2.06 健康得多）。FY2025 末現金 ~$6-7B；長期負債 ~$7-8B；淨負債約 $1-2B。EPIC Center $5B 建設中（部分已支出），說明 AMAT 在大投資期仍保持穩健的財務結構。2027 年 EPIC Center 完工後，FCF 大幅提升，可加速債務清還或回購。</td></tr>
+    <tr><td><strong>護城河強度</strong></td><td>> 8 分，趨勢擴大</td>
+      <td class="pass mono">✓ 強（8.5/10，趨勢快速擴大；EPIC Center 護城河升級）</td>
+      <td>沉積 #1 + 封裝 #1（HBM/AP）+ 鉬接點材料首創 + EPIC Center 三大記憶體廠全部合作；趨勢：2026 年 EPIC Center 開幕是護城河升級的重大里程碑</td></tr>
+  </tbody>
+</table>
+
+<!-- §2.5 -->
+<div class="sec-head">§2.5 ｜ 長期成長性評估</div>
+<div class="rating-block green">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">長期成長性綜合評級：高確信（GAA 材料工程 + HBM 記憶體 + 先進封裝三重最高成長市場 #1 地位；EPIC Center 確保 2030+ 路線圖；EPS CAGR 中性 17%，積極 22%）</div>
+    <div class="body">Runway ≥10 年（GAA → 鉬接點 → 背側電源 → sub-1nm）｜ 有機成長為主 ｜ 護城河強化型（EPIC Center 生態系）｜ FCF Margin 目前受建設期壓縮，2027 年有望回升 25%+</div>
+  </div>
+</div>
+
+<div class="sub-head">A｜成長跑道（Runway）估算</div>
+<table>
+  <thead><tr><th>業務</th><th>TAM / 市場機會</th><th>FY2025 規模</th><th>成長驅動</th><th>Runway</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Leading-Edge Logic（TSMC、Intel、Samsung）</strong><br>最高單位 ASP 業務</td><td class="mono">Logic WFE TAM $65-70B（Cal. 2026）</td><td class="mono">~$12B+（估；$28.37B × ~45%）</td><td>GAA（2nm+）新材料步驟 Viva / Spectral ALD / Backside Power；TSMC 2026 Capex $38-42B</td><td class="mono pass">≥12 年（2nm → 1.4nm → sub-1nm）</td></tr>
+    <tr><td><strong>DRAM + HBM（記憶體最大業務）</strong><br>最快成長業務（Q1 FY2026 +7 ppts 至 34%）</td><td class="mono">DRAM WFE TAM $20-25B（Cal. 2026）</td><td class="mono">~$6B+（估）</td><td>HBM 3x-4x 晶圓需求；層數 12→16→20；SK Hynix + 三星 + Micron 同步擴產</td><td class="mono pass">≥10 年（HBM 每代需求翻倍）</td></tr>
+    <tr><td><strong>Advanced Packaging（最新高成長引擎）</strong><br>Cal. 2025 成長 +70% YoY</td><td class="mono">AP WFE TAM ~$12B（Cal. 2026）；AMAT #1</td><td class="mono">~$3.5B（估；2025 快速成長中）</td><td>CoWoS（TSMC）；HBM Packaging；3D Chiplet 整合；Hybrid Bonding</td><td class="mono pass">≥8 年（AI 晶片封裝密度持續提升）</td></tr>
+    <tr><td><strong>AGS（服務複利）</strong><br>防禦性高利潤底板</td><td class="mono">裝機基礎複利；最大裝機基礎之一</td><td class="mono">$5.9B（FY2025）；+~15% YoY</td><td>全球最大 WFE 裝機基礎（設備數量 >> 任何同業）；服務複利</td><td class="mono pass">≥15 年（裝機積累不可逆）</td></tr>
+    <tr><td><strong>ICAPS（IoT/汽車/工業/功率/感測）</strong><br>多元化穩定業務</td><td class="mono">~$15-20B TAM（相對成熟）</td><td class="mono">~$4.3B（估）</td><td>2026 持平；汽車電子長期 tailwind；但非 AI 主驅動</td><td class="mono neutral">≥8 年（穩定，非成長驅動）</td></tr>
+    <tr><td><strong>Runway 合計</strong></td><td class="mono" style="color:#166534;font-weight:700" colspan="4">≥10 年；EPIC Center 確保 sub-1nm（2028-2035）路線圖；三大記憶體廠 + TSMC 合作確認</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">B｜成長品質判斷</div>
+<div class="card">
+  <table>
+    <thead><tr><th>類型</th><th>判斷</th><th>趨勢</th></tr></thead>
+    <tbody>
+      <tr><td><strong>有機成長（材料工程創新驅動）</strong></td><td>幾乎完全有機；BESI 潛在收購（2026-03 傳聞）若成真是唯一無機成長</td><td><span class="beat">每個技術節點的材料複雜度上升 = AMAT 的有機成長天然保障</span></td></tr>
+      <tr><td><strong>定價驅動（新材料 = 新 ASP）</strong></td><td>每個新材料步驟（Viva、Spectral ALD 鉬接點）均比前代設備 ASP 高 30-80%；材料工程的「技術升級定價」是 AMAT 最確定的 ASP 上升路徑</td><td><span class="beat">GAA 材料複雜度提升 = AMAT ASP 每代自然上升</span></td></tr>
+      <tr><td><strong>AGS 服務複利底板</strong></td><td>FY2025 AGS $5.9B（+~15% YoY）；記錄服務和零件收入；最大的 WFE 裝機基礎 → 最大的服務複利</td><td><span class="beat">與 LRCX CSBG 和 KLA Services 類似；防禦性複利收入</span></td></tr>
+      <tr><td><strong>弱點：ICAPS 持平 + 中國 30%</strong></td><td>ICAPS（~15% 收入）2026 持平；中國 30% 出口管制風險</td><td><span class="warn">非 AI 業務頂部信號；地緣政治持續折扣</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">C｜成長護城河連動評估</div>
+<div class="rating-block green">
+  <div class="icon">✅</div>
+  <div>
+    <div class="title">強化型（EPIC Center 生態系飛輪——材料工程與客戶共同開發，每個節點更不可替代；最大 AGS 裝機基礎的服務複利）</div>
+    <div class="body">
+      <strong>EPIC Center 飛輪（最新且最重要）：</strong>Samsung + SK Hynix + Micron 在 EPIC Center 共同開發下一代 DRAM/HBM → 在 AMAT 的設備上驗證新工藝 → 商業化時採購 AMAT 設備（先驗證，後採購）→ 記憶體廠無法輕易「已驗證的工藝換到競爭設備」（工藝重新認證 = 6-12 個月 + 良率損失）→ AMAT 的記憶體市佔更難被侵蝕。<br><br>
+      <strong>材料複雜度護城河飛輪：</strong>每個技術節點引入新材料（銅→鎢→鉬；矽→矽鍺→奈米片）→ AMAT 擁有最廣的材料工程工具箱 → 每次新材料轉換，AMAT 有更高機率是最合適的設備提供者 → 護城河隨技術演進自動加深（類似 ASML 但在材料層面）。
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">D｜ROIC 與 FCF 長期可維持性</div>
+<table>
+  <thead><tr><th>指標</th><th>FY2026（進行中）</th><th>FY2025</th><th>FY2024</th><th>趨勢</th><th>符合</th></tr></thead>
+  <tbody>
+    <tr><td>Non-GAAP GM</td><td class="mono">~49.3%（Q2 指引）</td><td class="mono">48.7%（全年均值）</td><td class="mono">~47.5%</td><td>↑ 持續改善</td><td class="pass">✓</td></tr>
+    <tr><td>Non-GAAP OM</td><td class="mono">30.0%（Q1 FY2026）</td><td class="mono">~28.5%（估）</td><td class="mono">~27%</td><td>↑ 快速提升</td><td class="pass">✓</td></tr>
+    <tr><td>FCF Margin</td><td class="mono">~14.8%（Q1；建設期偏低）</td><td class="mono">~23%（全年）</td><td class="mono">~20%</td><td>→ 2026-2027 建設期壓縮；2028 回升至 25%+</td><td class="warn">⚠️ 暫時受壓</td></tr>
+    <tr><td>ROE（TTM）</td><td class="mono">38.86%</td><td class="mono">~32%</td><td class="mono">~28%</td><td>↑ 提升中；EPIC Center 完工後加速</td><td class="pass">✓</td></tr>
+    <tr><td>EPS 成長（YoY）</td><td class="mono">~16-22%（FY2026E）</td><td class="mono">+9%（FY2025）</td><td class="mono">+6%（FY2024）</td><td>↑↑ 大幅加速（WFE 超週期啟動）</td><td class="pass">✓</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">E｜成長熄火情境壓力測試</div>
+<table>
+  <thead><tr><th>情境</th><th>對應特徵</th><th>合理 P/E</th><th>潛在跌幅（vs 當前 Fwd P/E ~32x）</th></tr></thead>
+  <tbody>
+    <tr class="base"><td>CAGR 降至 12%（WFE 平緩 + 中國管制）</td><td>Cal. 2027 WFE $110-115B；ICAPS 持平延續</td><td class="mono">20~26x</td><td class="mono">-19% ～ -38%（$220~$286）</td></tr>
+    <tr class="bear"><td>降至 6%（WFE 週期反轉 + 中國全面管制）</td><td>2022 年重演；多重逆風同時</td><td class="mono">14~18x</td><td class="mono">-44% ～ -57%（$153~$198）</td></tr>
+    <tr style="background:#DCFCE7"><td>維持 22%+（Cal. 2026 >20% 兌現 + GAA 市佔 >50%）</td><td>EPIC Center 加速商業化；BESI 收購封裝護城河</td><td class="mono">33~42x</td><td class="mono">+3% ～ +31%（$364~$465）</td></tr>
+  </tbody>
+</table>
+
+<!-- §3 -->
+<div class="sec-head">§3 ｜ 護城河分析</div>
+<div class="card" style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:24px;margin-bottom:16px;">
+    <div><span class="score-big">8.5</span><span style="font-size:24px;font-family:var(--mono);color:var(--navy)">/10（↑升級中）</span></div>
+    <div>
+      <div style="font-weight:700;color:var(--navy);font-size:16px;">強護城河，全球最廣的材料工程工具組合 + EPIC Center 護城河升級（從設備商→材料工程生態系）</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-top:4px;">評分 8.5/10（同 KLA、VRT）。目前護城河：① 沉積 #1（全球最廣泛沉積工藝覆蓋）② Advanced Packaging #1（HBM + 3D Chiplet）③ 材料工程廣度（唯一在所有主要材料步驟均有領先工具的 WFE 公司）④ 最大 WFE 裝機基礎 → AGS 服務複利最強 ⑤ EPIC Center（三大記憶體廠創始夥伴）。評分升級潛力：EPIC Center 開幕（2026 春）+ BESI 潛在收購 → 若兩者兌現，2027 年護城河評分可升至 9.0/10。</div>
+      <div style="margin-top:8px;"><span class="beat">趨勢：快速擴大（EPIC Center 2026 是護城河的重大升級節點）</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">護城河來源深度分析</div>
+<table>
+  <thead><tr><th>護城河類型</th><th>深度</th><th>機制與不可複製性</th></tr></thead>
+  <tbody>
+    <tr><td><strong>沉積（Deposition）市場 #1</strong><br>（CVD / ALD / PVD 最廣泛組合）</td>
+      <td><span class="beat">極強（全球 #1；DRAM 沉積 #1；Logic 沉積 #1）</span></td>
+      <td>AMAT 在化學氣相沉積（CVD）、原子層沉積（ALD）、物理氣相沉積（PVD）三大沉積方式均有全球領先系統，覆蓋 100+ 種材料的沉積工藝。這個廣度是 40 年積累的材料工程知識，即使在個別細分（如 High-k Gate Dielectric ALD），AMAT 也是市場第一。Spectral ALD（鉬接點）是最新的護城河延伸，在「鎢→鉬」過渡期 AMAT 是唯一已商業化的 ALD 鉬系統提供者。</td></tr>
+    <tr><td><strong>Advanced Packaging #1</strong><br>（HBM + CoWoS + Hybrid Bonding）</td>
+      <td><span class="beat">極強（HBM #1；先進封裝整體 #1）</span></td>
+      <td>AMAT 在先進封裝的主導地位來自其最廣泛的工具組合（沉積+蝕刻+CMP+封裝）+ 最深的封裝工藝知識。HBM4（16-20 層堆疊）的製造需要 AMAT 的：① TSV 沉積（CVD 絕緣層 + ALD 阻障層 + PVD 種子層）② Hybrid Bonding（先進封裝的最新趨勢，AMAT 領先）③ 3D Chiplet Stacking（CMP + 清潔技術）。這三個步驟中 AMAT 均是 #1，使 AMAT 在 HBM 每個晶片層的「入場費」最多。</td></tr>
+    <tr><td><strong>EPIC Center 生態系護城河（最新升級）</strong><br>（三大記憶體廠創始夥伴 = 材料工程「國家隊」）</td>
+      <td><span class="beat">強且快速升級中（Samsung + SK Hynix + Micron + 2026 開幕）</span></td>
+      <td>EPIC Center 是 AMAT 護城河最重要的升級。當三家競爭對手（Samsung、SK Hynix、Micron）共同選擇在 AMAT 的研發中心合作開發下一代技術，這說明：① 他們認為 AMAT 的材料工程能力無可替代 ② 他們願意在 AMAT 的環境中共享部分研發資訊（意味著極高的信任度）③ 未來 5-8 年的技術路線圖（HBM5/HBM6）將在 AMAT 設備上驗證，確保 AMAT 在下一代設備的 ToR 認證。這是從「設備銷售」到「材料工程生態系夥伴」的護城河本質升級，類比 ASML 通過 Carl Zeiss 持股確保光學供應鏈。</td></tr>
+    <tr><td><strong>AGS 最大 WFE 裝機基礎複利</strong><br>（$5.9B/年服務，全球最大 WFE 裝機）</td>
+      <td><span class="beat">極強（全球最大 WFE 裝機基礎 → 最大服務複利）</span></td>
+      <td>AMAT 是全球最大的 WFE 公司，裝機的設備台數遠超 LRCX 和 KLA。AGS（Applied Global Services）的 $5.9B（FY2025）收入代表了這個裝機基礎的服務複利——每年 +15% 成長，且週期韌性強（量產設備不因 WFE 週期下行而停止維護）。這是 AMAT 最確定的「防禦性收入底板」，也是最難被競爭者複製的護城河（只有 AMAT 的工程師才能提供 AMAT 設備的最優服務）。</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">競爭格局（WFE 各細分市場）</div>
+<table>
+  <thead><tr><th>細分市場</th><th>AMAT 地位</th><th>主要競爭者</th><th>3 年趨勢</th></tr></thead>
+  <tbody>
+    <tr><td>CVD/ALD/PVD 沉積（最大市場）</td><td class="mono">#1（~35-40%）</td><td>Lam Research（CVD）；TEL（ALD/CVD）；Aixtron</td><td>↑ GAA 新材料（鉬）= AMAT 新護城河；HBM 沉積爆發</td></tr>
+    <tr><td>Conductor Etch（導體蝕刻）</td><td class="mono">#2（~25%，vs LRCX #1 ~45%）</td><td>LRCX（#1）；Hitachi</td><td>↑ AMAT Sym3 Z Magnum 競爭 LRCX；GAA 蝕刻市佔爭奪</td></tr>
+    <tr><td>CMP（化學機械拋光）</td><td class="mono">#1（~70%）</td><td>Ebara；Speedfam</td><td>↑ 先進封裝 Hybrid Bonding 需要精密 CMP</td></tr>
+    <tr><td>Ion Implantation（離子注入）</td><td class="mono">#1（~55%）</td><td>Axcelis（#2）；Sumitomo</td><td>→ 穩定；非最高成長市場</td></tr>
+    <tr><td>Advanced Packaging（先進封裝）</td><td class="mono">#1（整體；HBM #1）</td><td>BESI（Die Attach，若被收購成 AMAT）；Kulicke & Soffa</td><td>↑↑ HBM4 + 3D Chiplet；Cal. 2025 +70%；最快成長市場</td></tr>
+    <tr><td>AGS（服務）</td><td class="mono">#1（規模；全球最大裝機）</td><td>第三方（份額極低）</td><td>↑ FY2025 +15%；EPIC Center 升級</td></tr>
+  </tbody>
+</table>
+
+<!-- §4 -->
+<div class="sec-head">§4 ｜ 財務品質監測</div>
+<div class="sub-head">三年趨勢表（FY 口徑）</div>
+<table>
+  <thead><tr><th>指標</th><th>FY2024（截至 2024-10）</th><th>FY2025（截至 2025-10）</th><th>FY2026E</th><th>評估</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue（$B）</td><td class="mono">$27.17B（+2%）</td><td class="mono">$28.37B（+4%）</td><td class="mono">~$33B（估；Cal. 2026 >20% 推算）</td><td><span class="beat">加速；Q2 FY2026 指引 $7.65B 確認成長加速</span></td></tr>
+    <tr><td>Non-GAAP GM</td><td class="mono">~47.5%</td><td class="mono">48.7%</td><td class="mono">~49.3%（Q2 指引）</td><td><span class="beat">持續改善；KLAC（62.8%）和 LRCX（49.7%）相比：AMAT 接近 LRCX，遠低於 KLAC</span></td></tr>
+    <tr><td>Non-GAAP OM</td><td class="mono">~27%</td><td class="mono">~28.5%</td><td class="mono">~30%（Q1 FY2026 實現）</td><td><span class="beat">↑ 快速擴張；OpEx 增速低於收入（CFO 明確承諾）</span></td></tr>
+    <tr><td>Non-GAAP EPS</td><td class="mono">$8.65（+6%）</td><td class="mono">$9.42（+9%）</td><td class="mono">$10.97（Zacks，+16%）</td><td><span class="beat">EPS 成長加速（從 9% → 16%）；WFE 超週期效應啟動</span></td></tr>
+    <tr><td>FCF Margin（估）</td><td class="mono">~20%</td><td class="mono">~23%</td><td class="mono">~18-22%（EPIC Center Capex 壓縮）</td><td><span class="warn">⚠️ 建設期暫時壓縮；2028 年 EPIC 完工後有望 25%+</span></td></tr>
+    <tr><td>AGS Revenue</td><td class="mono">~$5.2B</td><td class="mono">$5.9B（+~15%）</td><td class="mono">~$6.5B（估，+10%+）</td><td><span class="beat">↑ 服務複利加速；全球最大 WFE 裝機基礎的防禦性底板</span></td></tr>
+    <tr><td>股息（年化）</td><td class="mono">$1.60/股</td><td class="mono">$1.84/股</td><td class="mono">$2.12/股（+15%，2026-03 提升至 $0.53/季）</td><td><span class="beat">連續 9 年股息成長；2026-03 股息 +15% 是管理層信心宣言</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">獲利品質警訊</div>
+<div class="card">
+  <table>
+    <thead><tr><th>項目</th><th>結論</th><th>佐證</th></tr></thead>
+    <tbody>
+      <tr><td><strong>$253M Commerce 罰款（2025 年和解）</strong></td><td><span class="warn">⚠️ 已完成和解，但需持續追蹤合規狀況</span></td><td>AMAT 2025 年因違反出口管制（向受制裁中國實體出口設備）支付 $253M 美國商務部罰款。AMAT 的 Non-GAAP 已排除這筆費用，但 GAAP 受影響——這解釋了 FY2025 Q1 GAAP EPS 偏低（受罰款影響），也是 Q1 FY2026 GAAP EPS +75% YoY 的主因（比較基期低）。未來合規風險需持續追蹤，特別是中國收入仍佔 30% 的情況下。</td></tr>
+      <tr><td><strong>EPIC Center $5B 投資期 FCF 壓縮</strong></td><td><span class="warn">⚠️ 2026-2027 建設期 Capex 偏高；FCF Margin 暫時低於 LRCX/KLAC</span></td><td>AMAT 的 Q1 FY2026 Capex ~$650M（vs 歷史 $250-350M/季），主因 EPIC Center 建設衝刺。這使 Q1 FCF Margin 只有 14.8%（vs LRCX 30%，KLAC 34%）。投資者需理解這是「選擇性暫時壓縮」而非「業務質量下降」——EPIC Center 的 ROI 預計在 2027-2030 年透過更高的市佔和 ASP 釋放。</td></tr>
+      <tr><td><strong>財務品質整體良好</strong></td><td><span class="beat">✓ GAAP vs Non-GAAP 差距合理；FCF 轉換率正常</span></td><td>Q1 FY2026 GAAP GM 49.0% vs Non-GAAP 49.1%（差距極小！說明 AMAT 的 Non-GAAP 調整非常保守）。FCF $1.04B vs Net Income ~$2.0B（FCF 低於淨利主因 Working Capital 週期波動，非結構性問題）。內部人士賣股（CNN 2026-02-26 報導「Top Applied Materials Insider Quietly Unloads a Big Chunk of Stock」）需追蹤是否計畫性。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §5 -->
+<div class="sec-head">§5 ｜ 產業格局、議價權與 Unit Economics</div>
+<div class="card-grid">
+  <div class="stat-card"><div class="label">FY2025 全年收入</div><div class="value">$28.37B</div><div class="note">+4% YoY；史上最高；第六年連續成長</div></div>
+  <div class="stat-card"><div class="label">Q2 FY2026 Revenue 指引</div><div class="value">$7.65B</div><div class="note">+9% QoQ；+~13% YoY；H2 加速中</div></div>
+  <div class="stat-card"><div class="label">Cal. 2026 設備業務成長</div><div class="value">&gt;20%</div><div class="note">CEO 明確宣示；H2 加重</div></div>
+  <div class="stat-card"><div class="label">AGS 服務（FY2025）</div><div class="value">$5.9B</div><div class="note">+~15% YoY；記錄服務收入；複利底板</div></div>
+  <div class="stat-card"><div class="label">EPIC Center 投資</div><div class="value">$5B</div><div class="note">Samsung + SK Hynix + Micron 合作；春 2026 開幕</div></div>
+  <div class="stat-card"><div class="label">季度股息（2026-03 提升）</div><div class="value">$0.53/季</div><div class="note">+15%；年化 $2.12；連續 9 年成長</div></div>
+</div>
+
+<div class="sub-head">全球最大 WFE 公司：業務廣度 vs 深度</div>
+<div class="card">
+  <p><strong>AMAT vs LRCX vs KLAC vs ASML 的根本差異：</strong>AMAT 是 WFE 的「廣度冠軍」，ASML 是「深度壟斷者」，LRCX 是「蝕刻深度 #1」，KLAC 是「製程控制深度 #1」。這四個定位的投資含義：</p>
+  <ul>
+    <li><strong>AMAT（廣度）的優勢：</strong>每個技術節點的材料複雜度上升時，AMAT 有最多的「受益步驟」；客戶不願意讓單一步驟的設備商「大到不能失去」，而 AMAT 的廣度讓它在每個技術轉折點都有多個機會點。</li>
+    <li><strong>AMAT（廣度）的弱點：</strong>在每個細分市場，都有更專注的競爭者。AMAT 在蝕刻市場是 #2（vs LRCX #1），在製程控制是 #2-3（vs KLAC #1），在微影完全不存在（vs ASML #1）。這使 AMAT 的護城河比 ASML、LRCX（在蝕刻）更廣但也更淺。</li>
+    <li><strong>EPIC Center 的戰略意義：</strong>將 AMAT 從「廣度」升級為「廣度 + 生態系整合者」——通過把三大記憶體廠的 R&D 集中在 AMAT 的園區，AMAT 的廣度工具組合成為「生態系標準」，類比 ASML 在 EUV 的壟斷性但在材料工程領域。</li>
+  </ul>
+</div>
+
+<!-- §6 -->
+<div class="sec-head">§6 ｜ 公司治理與資本配置</div>
+<div class="sub-head">管理層</div>
+<div class="card">
+  <ul>
+    <li><strong>Gary Dickerson（CEO，2013 年起）</strong>：Applied Materials + Novellus Systems 合併後的整合者，在 13 年任期內主導了 AMAT 從「設備商」向「材料工程解決方案供應商」的定位轉型。Dickerson 最具戰略眼光的決策是 EPIC Center $5B 投資——這不是一個設備商的「擴廠」，而是一個「材料工程生態系創建者」的宣言。他的技術洞察力（GAA 鉬接點、Backside Power、先進封裝的多重材料挑戰）在同行 CEO 中最為深入，Call 中的技術敘事最具說服力。</li>
+    <li><strong>Brice Hill（CFO，最近幾年）</strong>：財務紀律與成長投資的平衡者——在 EPIC Center $5B 大投資期仍維持穩健的資本回報（$10B 回購授權 + 股息 9 年連續成長）。「OpEx 成長慢於收入」的承諾是最重要的財務紀律信號。</li>
+    <li><strong>注意：高管賣股（2026-02-26 報導）</strong>：CNN 報導「Top Applied Materials Insider Quietly Unloads a Big Chunk of Stock」——需確認是否是計畫性 10b5-1 賣股（通常是有序的財務規劃，非信息性賣股）。財報後股票下跌期間的高管賣股需謹慎對待。</li>
+  </ul>
+</div>
+
+<div class="sub-head">資本配置軌跡</div>
+<div class="card">
+  <table>
+    <thead><tr><th>配置</th><th>FY2024</th><th>FY2025</th><th>FY2026（最新）</th><th>評估</th></tr></thead>
+    <tbody>
+      <tr><td>EPIC Center（$5B，最重要）</td><td class="mono">建設中</td><td class="mono">加速建設（Samsung 已加入）</td><td class="mono">春季 2026 開幕；SK Hynix + Micron 加入</td><td><span class="beat">史上最重要的 AMAT 戰略投資；護城河升級的根本驅動</span></td></tr>
+      <tr><td>股票回購</td><td class="mono">~$3B+</td><td class="mono">~$3.5B</td><td class="mono">$10B 授權（2025 宣布）；Q1 FY2026 $337M</td><td><span class="neutral">⚪ 相對 LRCX/KLAC 的積極回購，AMAT 在建設期稍保守；合理</span></td></tr>
+      <tr><td>股息</td><td class="mono">$1.60/股（年化）</td><td class="mono">$1.84/股</td><td class="mono">$2.12/股（$0.53/季，+15%）；9 年連續成長</td><td><span class="beat">連續 9 年成長；2026-03 +15% 是最強信心宣言之一</span></td></tr>
+      <tr><td>R&D</td><td class="mono">~$3.5B</td><td class="mono">~$3.6B</td><td class="mono">~$3.8B（估）</td><td>WFE 業界最大 R&D 預算（超 LRCX、KLAC、ASML 的任何一家）；EPIC Center 額外 $5B 是戰略 R&D 投資</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §7 -->
+<div class="sec-head">§7 ｜ 五維度估值分析</div>
+<div class="sub-head">7.1｜歷史估值分位</div>
+<div class="alert-green">
+  <strong>🔑 AMAT 的估值定位：</strong>在四大 WFE 設備商中，AMAT 的 Fwd P/E（~32x）是最低的——低於 ASML（39x）、LRCX（36x）、KLAC（40x）。這個折扣反映了：① 「廣度護城河 &lt; 壟斷性護城河（ASML）或深度護城河（LRCX 蝕刻 #1、KLAC PC #1）」的市場評估 ② EPIC Center 建設期的 FCF 壓縮 ③ 中國 30% 的出口管制溢價風險。這個折扣是 AMAT 的主要估值機會——若 EPIC Center 和材料護城河升級被市場充分認可，AMAT 應該至少得到與 LRCX 相近的估值倍數（36x），對應股票上行 ~12%。
+</div>
+<table>
+  <thead><tr><th>估值指標</th><th>當前值</th><th>歷史均值</th><th>分位評估</th></tr></thead>
+  <tbody>
+    <tr><td>Non-GAAP Fwd P/E（FY2026E $10.97）</td><td class="mono">~32.4x（$355 ÷ $10.97）</td><td>歷史均值 ~20-26x；WFE 超週期峰值 ~35-40x</td><td><span class="neutral">🟡 ~60% 分位（合理；低於 LRCX/KLAC 但高於歷史均值）</span></td></tr>
+    <tr><td>CNBC Fwd P/E（NTM）</td><td class="mono">29.88x（NTM，CNBC 數據）</td><td>—</td><td><span class="beat">🟢 ~50% 分位（NTM 視角接近歷史中位值）</span></td></tr>
+    <tr><td>Non-GAAP Fwd P/E（FY2027E $13.5）</td><td class="mono">~26.3x</td><td>—</td><td><span class="beat">🟢 ~40% 分位（合理偏低；1 年後視野吸引力高）</span></td></tr>
+    <tr><td>EV/EBITDA（TTM $8.848B）</td><td class="mono">~34x（EV ~$283B + 淨負債 $1-2B）</td><td>歷史均值 ~18-25x</td><td><span class="neutral">🟡 60-65% 分位（AI 超週期溢價；合理偏高）</span></td></tr>
+    <tr><td>P/S（TTM $28.214B Revenue）</td><td class="mono">~9.9x</td><td>歷史均值 ~5-8x</td><td><span class="neutral">🟡 65-70% 分位（WFE 超週期的合理溢價）</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">7.2｜成長性估值：PEG</div>
+<table>
+  <thead><tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr></thead>
+  <tbody>
+    <tr><td>Non-GAAP Fwd P/E（FY2026E）</td><td class="mono">~32.4x</td><td>—</td><td>$355 ÷ $10.97（Zacks 共識）</td></tr>
+    <tr><td>EPS CAGR（FY2025-2028，3年，中性 17%）</td><td class="mono">~17%</td><td>—</td><td>中性；積極情境 22%（Cal. 2026 >20% + 市佔提升兌現）</td></tr>
+    <tr><td>PEG（中性 17%）</td><td class="mono">32.4 ÷ 17 = <strong>1.91x（合理偏高，接近 2x）</strong></td><td>&lt;1.0 便宜 / 1∼2 合理 / >2 貴</td><td><span class="neutral">接近 2x 邊界；中性情境下估值偏高但可接受</span></td></tr>
+    <tr><td>PEG（積極 22%）</td><td class="mono">32.4 ÷ 22 = <strong>1.47x（合理！）</strong></td><td>—</td><td><span class="beat">若 Cal. 2026 >20% 成長目標兌現，PEG 1.47x 是 WFE 中最吸引力的之一</span></td></tr>
+    <tr><td>NTM PEG（CNBC 29.88x ÷ 17%）</td><td class="mono">29.88 ÷ 17 = <strong>1.76x（合理）</strong></td><td>—</td><td><span class="beat">NTM 視角合理；比 KLAC（2.97x）便宜得多</span></td></tr>
+  </tbody>
+</table>
+<div class="alert-green" style="margin-top:8px">
+  <strong>🔑 AMAT 最重要的 PEG 比較：</strong>AMAT（PEG 1.91x 中性 / 1.47x 積極）vs KLAC（PEG 2.97x）vs LRCX（PEG 1.97x）——AMAT 的 PEG 是四大 WFE 設備商中最低的之一（僅次於 ASML BofA 積極視角 1.44x）。相同的 WFE 行業風險曝露下，AMAT 提供了更好的成長性價比，是四大 WFE 設備商中「最物有所值」的選擇。
+</div>
+
+<div class="sub-head">7.3｜DCF 試算：三情境合理股價</div>
+<div class="card">
+  <strong>輸入參數：</strong>
+  <ul>
+    <li>基期 FCF（FY2025 全年估）：~$6.5B（~23% Margin）</li>
+    <li>WACC：~9.5%（10Y UST 4.27% + Beta 1.64 × ERP 6% × 0.53 = 5.2% → ~9.5%）</li>
+    <li>永續成長率：3.5%（半導體長期成長；廣度護城河支撐）</li>
+    <li>FCF：2026-2027 建設期偏低，2028 後回升至 25%+ Margin</li>
+  </ul>
+</div>
+<table style="margin-top:8px">
+  <thead><tr><th>情境</th><th>FCF CAGR（前 5 年）</th><th>FCF CAGR（後 5 年）</th><th>永續成長率</th><th>WACC</th><td>DCF 合理價</td><th>vs 當前 $355</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（30%）</strong><br>Cal. 2026 >20% 兌現；GAA 市佔 >50%；EPIC Center 加速 ROI</td><td class="mono">28%</td><td class="mono">15%</td><td class="mono">4.0%</td><td class="mono">9.0%</td><td class="mono" style="font-weight:700">$760</td><td class="mono" style="color:#166534">+114%</td></tr>
+    <tr class="base"><td><strong>中性（45%）</strong><br>設備業務 ~18% 成長；EPIC Center 正常 ROI；FCF 2028 恢復 25%</td><td class="mono">20%</td><td class="mono">12%</td><td class="mono">3.5%</td><td class="mono">9.5%</td><td class="mono" style="font-weight:700">$480</td><td class="mono" style="color:#D97706">+35%</td></tr>
+    <tr class="bear"><td><strong>悲觀（25%）</strong><br>WFE 週期反轉；中國管制升級；EPIC Center ROI 延遲</td><td class="mono">5%</td><td class="mono">3%</td><td class="mono">2.0%</td><td class="mono">11.0%</td><td class="mono" style="font-weight:700">$205</td><td class="mono" style="color:#DC2626">-42%</td></tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:12px">
+  <strong>DCF 敏感度（中性情境）：</strong>
+  <table>
+    <thead><tr><th>WACC \ 永續成長率</th><th>2.0%</th><th>3.5%（基準）</th><th>5.0%</th></tr></thead>
+    <tbody>
+      <tr><td>WACC 8.5%</td><td class="mono">$415</td><td class="mono">$590</td><td class="mono">$900</td></tr>
+      <tr><td>WACC 9.5%（基準）</td><td class="mono">$340</td><td class="mono">$480</td><td class="mono">$700</td></tr>
+      <tr><td>WACC 11.0%</td><td class="mono">$260</td><td class="mono">$345</td><td class="mono">$475</td></tr>
+    </tbody>
+  </table>
+  <div class="alert-green" style="margin-top:8px">
+    <strong>中性 DCF $480（+35%）是 AMAT 核心估值吸引力：</strong>這個 +35% 的中性 DCF 上行比 KLAC（+9%）高得多，與 LRCX（+34%）接近，且 AMAT 當前 Fwd P/E（32x）比 LRCX（36x）更低。在 WFE 設備中，$355 的 AMAT 提供了「LRCX 的中性 DCF 上行 + 更低的估值倍數」的組合，是 WFE 設備中最具性價比的選擇（在護城河 8.5/10 的前提下）。
+  </div>
+</div>
+
+<div class="sub-head">7.4｜同業估值比較</div>
+<table>
+  <thead><tr><th>公司</th><th>市值</th><th>Fwd P/E（1年）</th><th>EPS CAGR（3年）</th><th>PEG</th><th>FCF Margin</th><th>護城河</th><th>DCF 中性上行</th></tr></thead>
+  <tbody>
+    <tr style="background:#FEF3C7">
+      <td><strong>AMAT（Applied Materials）</strong></td>
+      <td class="mono">$281B</td>
+      <td class="mono">~32.4x（最低⭐）</td>
+      <td class="mono">~17-22%</td>
+      <td class="mono">1.47-1.91x（最低⭐）</td>
+      <td class="mono">~23%（建設期壓縮）</td>
+      <td class="mono">8.5/10（↑升級中）</td>
+      <td class="mono">+35%</td>
+    </tr>
+    <tr>
+      <td>ASML</td>
+      <td class="mono">~$538B</td>
+      <td class="mono">~39x（FY2026）/ 27x（FY2027）</td>
+      <td class="mono">~17-27%</td>
+      <td class="mono">1.44x（BofA）</td>
+      <td class="mono">~33.7%</td>
+      <td class="mono">10/10★★★</td>
+      <td class="mono">+53%</td>
+    </tr>
+    <tr>
+      <td>LRCX</td>
+      <td class="mono">$296B</td>
+      <td class="mono">~36x</td>
+      <td class="mono">~16-20%</td>
+      <td class="mono">~1.97x</td>
+      <td class="mono">~30%</td>
+      <td class="mono">8.5/10</td>
+      <td class="mono">+34%</td>
+    </tr>
+    <tr>
+      <td>KLAC</td>
+      <td class="mono">$193B</td>
+      <td class="mono">~40x（最高⚠️）</td>
+      <td class="mono">~13.5%</td>
+      <td class="mono">2.97x（最高⚠️）</td>
+      <td class="mono">~34%</td>
+      <td class="mono">9.0/10</td>
+      <td class="mono">+9%（最低⚠️）</td>
+    </tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:10px">
+  <p><strong>AMAT vs LRCX（最直接比較）：</strong>AMAT Fwd P/E 32.4x vs LRCX 36x（AMAT 便宜 10%），EPS CAGR 17-22% vs 16-20%（AMAT 稍高），護城河 8.5/10 vs 8.5/10（持平），DCF 上行 +35% vs +34%（幾乎持平）。整體來看，AMAT 和 LRCX 的財務和護城河特質非常接近，但 AMAT 的估值略低（Fwd P/E 低 10%），且 AMAT 有更廣泛的業務覆蓋（沉積 #1 + 封裝 #1）和 EPIC Center 的長期護城河升級。在 WFE 設備的選擇中，AMAT 提供了比 LRCX 稍好的性價比。</p>
+  <p><strong>AMAT vs KLAC：</strong>AMAT Fwd P/E 32.4x vs KLAC 40x（AMAT 便宜 19%），EPS CAGR 17-22% vs 13.5%（AMAT 更高），DCF 上行 +35% vs +9%（AMAT 大幅優勢）。AMAT 的護城河（8.5/10）稍低於 KLAC（9.0/10），但估值差距（AMAT 便宜 19%）遠大於護城河差距，說明 AMAT 比 KLAC 更具性價比。這是本次十七標的分析中最重要的相對估值結論之一。</p>
+</div>
+
+<div class="sub-head">7.5｜綜合估值判斷</div>
+<table>
+  <thead><tr><th>維度</th><th>訊號</th><th>評語</th></tr></thead>
+  <tbody>
+    <tr><td>歷史分位（7.1）</td><td><span class="neutral">🟡 合理（~60% 分位；NTM 視角 ~50% 分位）</span></td><td>非過熱；WFE 超週期合理溢價</td></tr>
+    <tr><td>成長性匹配（7.2 PEG）</td><td><span class="beat">🟢 合理（積極 PEG 1.47x；WFE 四大中最低之一）</span></td>
+    <td>若 Cal. 2026 >20% 兌現，PEG 1.47x 是四大 WFE 中最具吸引力的</td></tr>
+    <tr><td>DCF 內在價值（7.3）</td><td><span class="beat">🟢 低估（中性 DCF +35%）</span></td><td>類似 LRCX（+34%）；比 KLAC（+9%）大幅更好</td></tr>
+    <tr><td>同業相對（7.4）</td><td><span class="beat">🟢 折價（WFE 四大中估值最低；成長性最佳性價比）</span></td><td>AMAT 折價 vs LRCX（10%）、KLAC（19%）、ASML（17%）均有基本面支撐不足</td></tr>
+    <tr><td>長期成長確信度（§2.5）</td><td><span class="beat">🟢 高確信（GAA/HBM/AP 三重市場 #1；EPIC Center 確認路線圖）</span></td><td>三大記憶體廠共同參與 EPIC Center 是最強的長期信心佐證</td></tr>
+  </tbody>
+</table>
+
+<div class="card" style="margin-top:14px">
+  <strong>應有的合理估值（Target Valuation Range）：</strong><br>
+  中性假設下，合理 Non-GAAP Fwd P/E（FY2026E $10.97）：<strong>33x ∼ 42x</strong><br>
+  對應合理股價（FY2026E）：<strong>$362 ∼ $461</strong>（當前 $355 接近下限，有上行空間）<br>
+  對應合理股價（FY2027E $13.5）：<strong>$378 ∼ $527</strong>（1 年後明顯低估）
+  <table style="margin-top:12px">
+    <thead><tr><th>因素</th><th>判斷</th><th>對目標 P/E 影響</th></tr></thead>
+    <tbody>
+      <tr><td>① 護城河品質（§3）</td><td>8.5/10（沉積 #1 + 封裝 #1 + EPIC Center）</td><td>WFE 基準 22x + 8x = 30x 基礎</td></tr>
+      <tr><td>② Runway（§2.5A）</td><td>🟢 ≥10 年（GAA → sub-1nm；三大記憶體廠確認）</td><td>+4x</td></tr>
+      <tr><td>③ EPS CAGR 17-22%（積極情境超 20%）</td><td>積極情境接近 20% 門檻</td><td>+3x</td></tr>
+      <tr><td>④ EPIC Center 護城河升級潛力</td><td>2026 開幕；Samsung + SK Hynix + Micron</td><td>+2x</td></tr>
+      <tr><td>⑤ FCF 建設期壓縮（暫時性）</td><td>2026-2027 Capex 偏高；2028 恢復</td><td>-2x</td></tr>
+      <tr><td>⑥ 中國 30% 出口管制風險 + $253M 罰款歷史</td><td>地緣政治折扣最大（四大 WFE 中最高中國曝露）</td><td>-3x</td></tr>
+      <tr><td>⑦ 利率環境 + Beta 1.64</td><td>高 Beta；利率 4.27%</td><td>-2x</td></tr>
+      <tr style="background:#F1F5F9"><td><strong>WFE 設備業基準倍數</strong></td><td><strong>~25x（LRCX 36x 打九折）</strong></td><td><strong>調整後：33x ∼ 42x</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="rating-block green" style="margin-top:16px">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">當前評價：積極建倉——四大 WFE 設備商中估值最低（Fwd P/E 32x），中性 DCF +35%，積極 PEG 1.47x，Cal. 2026 >20% 設備成長明確，EPIC Center + 三大記憶體廠 = 護城河升級最大的催化劑</div>
+    <div class="body">$355 的 AMAT 是四大 WFE 設備商中「最性價比」的標的——比 LRCX 便宜 10%、比 KLAC 便宜 19%、比 ASML 便宜 17%，但 AMAT 的業務廣度（全球最大 WFE 公司）和 EPIC Center 護城河升級提供了其他標的所沒有的「廣度溢價」潛力。唯一的「折扣」來源是中國 30% 曝露和 EPIC Center 建設期 FCF 壓縮，這兩個都是暫時性或可量化的風險，而非結構性護城河問題。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>分析師目標價對照：</strong><br>
+  28 位分析師（StockAnalysis）Buy 共識；平均目標 $334.57（-2%，略低於當前價格——反映財報後股票飆升超過了分析師的舊目標）<br>
+  Zacks FY2026 EPS 共識：$10.97（+16%）<br>
+  24/7 Wall St. 引用：28 of 37 analysts Buy，共識目標 ~$411（+16%）<br>
+  MarketBeat：平均目標 $363.46（+2.4%）<br>
+  本分析中性 12 個月目標：$430-480（FY2027E $13.5 × 32-36x）；分析師共識 $334-411 較保守（分析師目標可能滯後於股票近期漲幅）。
+</div>
+
+<!-- §8 -->
+<div class="sec-head">§8 ｜ 投資結論與情境預測</div>
+<div class="sub-head">財報信號與估值銜接</div>
+<div class="card">
+  <p>Q1 FY2026（2026-02-12）是一份「強勁 Beat EPS（+7.7%）但市場對 YoY -2% Revenue 不滿意」的財報。股票財報後 -3.38% 的下跌主要是情緒性的（YoY -2% 的視覺衝擊 + 中國 30% 的出口管制擔憂），而非基本面惡化——QoQ +3.4%、FCF +91% YoY、設備業務 Cal. 2026 >20% 成長的技術性指標均顯示業務正在加速。</p>
+  <p>更重要的是 2026-03 的三個宣告：① SK Hynix 長期 R&D 合作（2026-03-10）② Micron 長期 R&D 合作（2026-03-10）③ 股息 +15%（2026-03-13）。這三個同週宣告形成了「三合一信號炸彈」——說明三大記憶體廠全部認可 AMAT 的材料工程核心地位，且管理層對長期 FCF 有足夠的信心提高 15% 股息。</p>
+  <p>當前 $355 是「財報後修正 + 市場誤讀」的複合折扣，對比 52 週高點 $395.95（-10%），且 Q2 FY2026 指引 $7.65B（+9% QoQ）確認了 H1 的業務健康性。</p>
+</div>
+
+<div class="sub-head">三年情境預測（Non-GAAP FY 口徑）</div>
+<table>
+  <thead><tr><th>情境</th><th>核心假設</th><th>FY2028E EPS</th><th>EPS CAGR（FY2025-2028）</th><th>目標 P/E</th><th>目標股價</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（30%）</strong><br>Cal. 2026 >20% 兌現；GAA 市佔 >50%；EPIC Center 加速 ROI；BESI 收購</td><td>FY2027 $16+ → FY2028 $19+</td><td class="mono">$19+</td><td class="mono">~26%</td><td class="mono">38~45x</td><td class="mono" style="font-weight:700;color:#166534">$722~$855</td></tr>
+    <tr class="base"><td><strong>中性（45%）</strong><br>設備業務 ~18% 成長；EPIC Center 正常推進；FCF 2028 恢復</td><td>FY2027 $13.5 → FY2028 $15.5</td><td class="mono">$15.5</td><td class="mono">~18%</td><td class="mono">30~38x</td><td class="mono" style="font-weight:700;color:#D97706">$465~$589</td></tr>
+    <tr class="bear"><td><strong>悲觀（25%）</strong><br>WFE 週期反轉；中國管制升級；ICAPS 下行</td><td>FY2027 $10.5 → FY2028 $11.5</td><td class="mono">$11.5</td><td class="mono">~7%</td><td class="mono">18~24x</td><td class="mono" style="font-weight:700;color:#DC2626">$207~$276</td></tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:8px">
+  <strong>機率加權預期目標股價（3 年）：</strong><br>
+  30% × $788 + 45% × $527 + 25% × $242 = <strong class="mono">$538（3 年，+51%）</strong><br>
+  12 個月目標（Q2 FY2026 成長確認）：30% × $520 + 45% × $440 + 25% × $280 = <strong class="mono">$434（+22%）</strong>
+</div>
+
+<div class="sub-head">最終結論</div>
+<div class="rating-block green">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">投資判斷：積極建倉——四大 WFE 最低估值（Fwd P/E 32x）＋ 最佳 PEG（積極 1.47x）＋ 中性 DCF +35%＋ 三大記憶體廠 EPIC Center 合作確認護城河升級，是 WFE 設備中當前最具性價比的選擇</div>
+    <div class="body">$355 的 AMAT 在四大 WFE 設備商中提供了最好的「成長性價比」：最低的 Fwd P/E（32x，vs KLAC 40x、LRCX 36x、ASML 39x），最低的積極 PEG（1.47x），最大的 DCF 上行（+35%，並列 LRCX，遠超 KLAC +9%），且有 EPIC Center 護城河升級（Samsung + SK Hynix + Micron 三大記憶體廠同時合作）和 Cal. 2026 >20% 設備成長的明確指引作為近期催化劑。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="sub-head" style="margin-top:0">① 短期催化劑（0~12 個月）</div>
+  <p><strong>Q2 FY2026 財報（2026-05-14 est.）</strong>是最重要的近期確認點：若 Revenue 達到 $7.65B 指引（+9% QoQ），且 FY2026 全年設備業務 >20% 成長路徑得到確認（H2 指引強勁），FY2026E EPS 上調至 $11.5+，12 個月目標 $434-480（+22-35%）。最大短期催化劑：① EPIC Center 正式開幕（春季 2026），媒體和技術社群的廣泛關注 ② BESI 收購若確認（Reuters 傳言），AMAT 先進封裝護城河大幅提升，估值重新評級 ③ H2 Cal. 2026 的設備訂單加速（若 Clean Room 瓶頸緩解速度快於預期）。</p>
+
+  <div class="sub-head">② 中期成長可見度（1~3 年）</div>
+  <p>中期最確定的驅動力是<strong>HBM DRAM + GAA 邏輯 + 先進封裝</strong>的三重同步爆發。管理層明確說：① DRAM 佔 Semiconductor Systems 從 27%（前年）升至 34%（Q1 FY2026），且 HBM 堆疊層數繼續從 12→16→20 升級 ② GAA 邏輯：AMAT 正在追求 >50% 的 GAA + Wiring 可服務市場（vs 目前 ~35-40%）③ 先進封裝：Cal. 2025 +70%，2026 繼續 mid-to-high teens 成長。這三個業務線同時加速，說明 AMAT 的中期成長可見度比任何單一業務受益者（LRCX = 蝕刻；KLAC = 製程控制）更廣且更確定。</p>
+
+  <div class="sub-head">③ 長期成長護城河（3 年後）</div>
+  <p>AMAT 的長期論點是「材料工程複雜度的不可逆上升 = AMAT 的需求自然增長」——每個技術節點（2nm → 1.4nm → sub-1nm）都引入新材料（鉬接點、新型閘氧化物、新型互連），而每種新材料都需要 AMAT 的新系統（Spectral ALD 等）。EPIC Center 確保了下一代（2028-2035）的材料工程路線圖在 AMAT 的環境中開發，形成從「設備供應商」到「材料工程生態系核心」的不可逆轉型。長期來看，AMAT 的估值方法應逐漸向「材料工程平台公司」靠近（類比 ASML 的壟斷性生態系溢價），而非純設備商的週期性倍數。</p>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>進場建議：</strong>
+  <ul>
+    <li>當前 $355（Fwd P/E ~32x；積極 PEG 1.47x；中性 DCF +35%）：<strong>積極建倉 35-45%</strong>（四大 WFE 最低估值，有安全邊際）</li>
+    <li>若回調至 <strong>$310-330</strong>（Fwd P/E 28-30x；接近歷史均值下限）→ 55-65%</li>
+    <li>若跌至 <strong>$270-290</strong>（Fwd P/E 25-26x；歷史低估值區間）→ 全倉（極強安全邊際）</li>
+    <li><strong>停損考量：</strong>若中國出口管制進一步升級（新增受制裁 DRAM 廠商），且 Q2 FY2026 Revenue 低於 $7.2B（指引 $7.65B ±$500M 下限），需重新評估 Cal. 2026 成長路徑。高管繼續賣股（非計畫性）也是需要追蹤的警示信號。</li>
+  </ul>
+</div>
+
+<div class="sub-head">下行風險量化（引用 §2.5E）</div>
+<div class="card">
+  <p>若 EPS CAGR 降至 12%（WFE 平緩 + 中國管制）：<strong class="mono">合理估值 $220-286（-19% ～ -38%）</strong></p>
+  <p>若降至 6%（WFE 週期反轉 + 多重逆風）：<strong class="mono">合理估值 $153-198（-44% ～ -57%）</strong></p>
+  <div class="alert-warn">
+    <strong>AMAT 的下行風險介於 LRCX 和 KLAC 之間：</strong>AMAT 的下行風險（-44~57% 悲觀情境）略高於 ASML（-30%），與 LRCX（-50~61%）相近，但低於 TSLA。AGS 服務業務（$5.9B，週期韌性強）是 AMAT 最重要的「下行緩衝器」，使 WFE 週期下行時的 EPS 跌幅比純設備業務公司更小。中國 30% 曝露是 AMAT 獨有的下行風險，若出口管制升級，AMAT 的跌幅可能比其他 WFE 公司更大（vs ASML 目標 20%、KLAC 28%）。
+  </div>
+</div>
+
+<div class="sub-head">最關鍵監測指標</div>
+<table>
+  <thead><tr><th>#</th><th>監測指標</th><th>性質</th><th>閾值</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>Cal. 2026 設備業務成長是否兌現 >20%</strong><br>管理層明確宣示「設備業務 Cal. 2026 >20% 成長」。每季追蹤：FY2026 Q1（$7.01B）→ Q2（指引 $7.65B）→ H2 加速。若全年設備業務累計成長 ≥20%，EPS 路徑確認，目標股價上調至 $480+。這是最重要的業務成長確認信號。</td><td><span class="beat">🔵 長期成長領先信號（最重要）</span></td><td>若 FY2026 Q3+Q4 指引合計 > $16B（隱含 H2 年化 $32B+），成長目標確認；若 Q3 指引 &lt; $7.5B，成長目標受挑戰</td></tr>
+    <tr><td>2</td><td><strong>EPIC Center 合作深化追蹤</strong><br>Samsung + SK Hynix + Micron 三大記憶體廠入駐 EPIC Center，是 AMAT 護城河升級最確定的長期信號。追蹤 EPIC Center 的研究成果是否轉化為商業訂單（特別是 HBM4/HBM5 的材料工程工具 ToR 認證）。</td><td>護城河深化信號（最重要的長期指標）</td><td>若 EPIC Center 在 2026-2027 年宣布首個「lab-to-fab」商業化案例（新材料技術從 EPIC 直接轉化為記憶體廠的量產設備訂單），是護城河升級的確認，目標 P/E 升至 38x+</td></tr>
+    <tr><td>3</td><td><strong>中國收入佔比追蹤</strong><br>Q1 FY2026 中國佔 30%（vs LRCX Q2 FY2026 的 35%，ASML 目標 20%）。若中國佔比在未來幾季降至 20-25%（去中國化），出口管制風險折扣縮小；若出口管制升級導致強制快速去化，短期收入受衝擊。</td><td>政策風險監測信號</td><td>若中國佔比在 2027 年自然降至 &lt;25%，風險折扣消除，估值目標上調；若美國擴大制裁（新增 Entity List 的重大中國廠商），短期 -15~25%</td></tr>
+  </tbody>
+</table>
+
+<!-- 十七標的全覽 -->
+<div class="sec-head">附錄：十七標的完整核心對照表（加入 AMAT）</div>
+<table style="font-size:9px">
+  <thead><tr><th>指標</th><th>TSM</th><th>NVDA</th><th>AVGO</th><th>GOOGL</th><th>MSFT</th><th>AMZN</th><th>AAPL</th><th>META</th><th>TSLA</th><th>AMD</th><th>MRVL</th><th>VRT</th><th>ANET</th><th>LRCX</th><th>ASML</th><th>KLAC</th><th>AMAT</th></tr></thead>
+  <tbody>
+    <tr><td>護城河</td><td>9.5</td><td>9.5</td><td>8.5</td><td>9.0</td><td>9.0</td><td>9.0</td><td>9.5</td><td>8.5</td><td>6.5⚠️</td><td>8.0↑</td><td>8.0↑</td><td>8.5↑</td><td>9.0</td><td>8.5</td><td>10.0★★★</td><td>9.0</td><td>8.5（↑升級）</td></tr>
+    <tr><td>現價（USD）</td><td>~$340</td><td>~$180</td><td>~$316</td><td>~$307</td><td>~$390</td><td>~$209</td><td>~$250</td><td>~$615</td><td>~$383</td><td>~$199</td><td>~$90</td><td>~$265</td><td>~$136</td><td>~$220</td><td>~$1,370</td><td>~$1,465</td><td>~$355</td></tr>
+    <tr><td>市值</td><td>$1.76T</td><td>$4.38T</td><td>$1.50T</td><td>$3.72T</td><td>$2.90T</td><td>$2.24T</td><td>$3.67T</td><td>$1.56T</td><td>$1.43T</td><td>$325B</td><td>$78B</td><td>$101B</td><td>$171B</td><td>$296B</td><td>$538B</td><td>$193B</td><td>$281B</td></tr>
+    <tr><td>Fwd P/E（1年）</td><td>24x</td><td>22x★</td><td>24x</td><td>26x</td><td>22x★</td><td>27x</td><td>29x</td><td>20x★</td><td>170x⚠️</td><td>30x</td><td>24x</td><td>44x⚠️</td><td>40x</td><td>36x</td><td>39x</td><td>40x⚠️</td><td>32x★</td></tr>
+    <tr><td>EPS CAGR（3年）</td><td>~23%</td><td>~34%</td><td>~38-41%</td><td>~17-23%</td><td>~18-22%</td><td>~28-36%</td><td>~20-27%</td><td>~19-25%</td><td>分歧</td><td>~34-48%</td><td>~38-42%</td><td>~24-34%</td><td>~20%</td><td>~16-20%</td><td>~17-27%</td><td>~13.5%⚠️</td><td>~17-22%</td></tr>
+    <tr><td>PEG</td><td>1.02x</td><td>0.64x★</td><td>0.60x★</td><td>1.13x</td><td>~1.08x</td><td>~0.84x</td><td>~1.26x</td><td>~0.93x</td><td>4.06x⚠️</td><td>0.59x★</td><td>0.62x★</td><td>1.42x</td><td>~2.0x</td><td>~1.97x</td><td>1.44x</td><td>2.97x⚠️</td><td>1.47x★</td></tr>
+    <tr><td>FCF Margin</td><td>26.5%</td><td>44.7%★</td><td>41%★</td><td>18%</td><td>25%</td><td>19.5%</td><td>22%</td><td>26%</td><td>6.5%⚠️</td><td>13%</td><td>15-17%</td><td>16-18%</td><td>~41%</td><td>~30%</td><td>~33.7%</td><td>~34%★</td><td>~23%（建設期）</td></tr>
+    <tr><td>DCF 中性上行</td><td>+4%</td><td>+44%</td><td>+36%</td><td>+24%</td><td>+28%</td><td>+53%</td><td>+16%</td><td>+30%</td><td>-48%</td><td>+56%</td><td>+78%</td><td>+11%</td><td>+69%</td><td>+34%</td><td>+53%</td><td>+9%⚠️</td><td>+35%★</td></tr>
+    <tr><td>最終判斷</td><td>🟡</td><td>🟢 積極</td><td>🟡</td><td>🟢</td><td>🟢 積極</td><td>🟢</td><td>🟡 等$215</td><td>🟢 積極</td><td>🔴</td><td>🟢 積極</td><td>🟢 積極</td><td>🟡 等$220</td><td>🟢 積極</td><td>🟢</td><td>🟢 積極</td><td>🟡 等$1,200</td><td>🟢 積極建倉</td></tr>
+  </tbody>
+</table>
+
+<div class="rating-block green" style="margin-top:20px">
+  <div class="icon">🏆</div>
+  <div>
+    <div class="title">十七標的最終綜合排名（安全邊際 × 確定性 × 護城河 × 估值）</div>
+    <div class="body">
+      <strong>🥇 NVDA</strong>：AI 超週期直接受益，PEG 0.64x，DCF +44%，CUDA 壟斷，2 年 P/E 16x。<br>
+      <strong>🥈 MSFT</strong>：歷史最低估值（15% 分位），護城河最廣，DCF +28%。<br>
+      <strong>🥉 META</strong>：PEG 0.93x，Net Margin 37%，廣告加速，2 年 P/E 16x。<br>
+      <strong>4️⃣ AMD</strong>：PEG 0.59x（最低），DCF +56%，EPYC + MI450 期權。<br>
+      <strong>5️⃣ MRVL</strong>：DCF +78%（最大），PEG 0.62x，FY2028 P/E 16.6x，三次上調指引。<br>
+      <strong>6️⃣ ASML</strong>：護城河 10/10（唯一滿分），FY2027 P/E 27.3x，DCF +53%，€38.8B 積壓。<br>
+      <strong>7️⃣ ANET</strong>：護城河 9.0/10，FCF 41%，ROIC 183%，DCF +69%，AI 網路純玩。<br>
+      <strong>8️⃣ AMZN</strong>：DCF +53%，AWS 積壓，需等 FY2027 FCF 反彈。<br>
+      <strong>9️⃣ LRCX</strong>：Etch #1，WFE $135B，NAND 復甦，DCF +34%。<br>
+      <strong>🔟 AMAT ★NEW</strong>：<strong>四大 WFE 最低估值（Fwd P/E 32x），最低 PEG（積極 1.47x），DCF +35%，Cal. 2026 設備業務 >20% 明確，EPIC Center 三大記憶體廠合作 = 護城河升級最大潛力</strong>。是 WFE 設備中「最性價比」的選擇。<br>
+      <strong>1️⃣1️⃣ AVGO</strong>：XPU $100B 能見度，FCF 41%，PEG 0.60x。<br>
+      <strong>1️⃣2️⃣ GOOGL</strong>：多引擎護城河，DCF +24%。<br>
+      <strong>1️⃣3️⃣ KLAC</strong>：護城河 9.0/10，FCF 34%，$7B 回購，但 PEG 2.97x + DCF +9% = 等 $1,200-1,300。<br>
+      <strong>1️⃣4️⃣ VRT</strong>：護城河 8.5/10，等 $220-235。<br>
+      <strong>1️⃣5️⃣ AAPL</strong>：護城河 9.5/10，等 $215-225。<br>
+      <strong>1️⃣6️⃣ TSM</strong>：代工壟斷，台海地緣折扣，DCF +4%。<br>
+      <strong>❌ TSLA</strong>：中性情境高估 91%，迴避。<br><br>
+      <strong>★ AMAT 的獨特定位：「WFE 設備中的最性價比選擇 + EPIC Center 護城河升級的最大潛在受益者」</strong><br>
+      AMAT 在十七個標的中排第 10 名，但它是四大 WFE 設備商（ASML/LRCX/KLAC/AMAT）中估值最低、PEG 最好的選擇。對已持有 ASML（護城河 10/10）和 LRCX（蝕刻 #1）的投資者，AMAT 提供了一個「廣度補強」——添加沉積 #1 + 封裝 #1 的廣度護城河，形成更完整的 WFE 基礎設施覆蓋，同時 AMAT 的相對估值折扣（比 LRCX 便宜 10%）是一個額外的安全邊際。<br><br>
+      <strong>「完整 WFE 四角組合」：ASML + LRCX + KLAC（等 $1,200-1,300）+ AMAT</strong><br>
+      ASML（微影壟斷）+ LRCX（蝕刻 #1）+ KLAC（製程控制 #1，等回調）+ AMAT（沉積 #1 + 封裝 #1）= 覆蓋半導體製造「從光到刻到量測到材料」的完整生產鏈，四者的護城河幾乎完全互補、不重疊，是 AI 算力基礎設施建設中最確定的「基礎設施層受益組合」。
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:32px;font-size:12px;color:var(--text-sub);">
+  <strong>免責聲明：</strong>本報告由 Claude AI 根據公開市場資料生成，僅供研究參考，不構成投資建議。所有數據來源：Applied Materials IR、SEC 申報（Q1 FY2026，2026-02-12）、Motley Fool Transcript、Investing.com、Quartr、TIKR、StockTitan、24/7 Wall St.、CNBC（Fwd P/E 29.88x，Market Cap $283B，Beta 1.64）。數據截止 2026-03-20。<br><br>
+  <strong>財年說明：</strong>Applied Materials 的財年（FY）結束於 10 月（每年 10 月底）。FY2026 Q1 = 截至 2026-01-25 的季度（2026-02-12 發布）。本報告的 EPS 預測以 FY 口徑為主：FY2025 基期 $9.42；FY2026E ~$10.97（Zacks 共識；n=28-37）。「Calendar Year 2026 設備業務 >20%」是管理層的 Cal. 口徑指引，跨越 FY2026 Q2-Q4 + FY2027 Q1。<br><br>
+  <strong>特別注意：</strong>① $253M Commerce 罰款（2025 年和解）說明 AMAT 有出口管制合規前科，中國 30% 收入的風險比同業更高 ② EPIC Center $5B 投資使 FY2026-2027 FCF Margin 暫時低於 LRCX/KLAC ③ 高管賣股（2026-02-26 CNN 報導）需確認是否計畫性 ④ BESI 收購傳言（2026-03-13 Reuters）若確認，先進封裝護城河大幅提升但短期 EPS 稀釋 ⑤ AMAT 在「Deposition #1」的地位與 LRCX（Etch #1）形成互補而非競爭關係。<br><br>
+  <strong>報告版本：</strong>DD_AMAT_20260320 ｜ 模式：深度版 ｜ 生成時間：2026-03-20
+</div>
+</div>
+</body>
+</html>

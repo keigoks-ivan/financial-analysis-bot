@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_COHR_20260320 | Coherent Corp. 深度分析報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC;--card:#FFF;--accent:#7C3AED;--navy:#2E1065;
+    --text:#1A2332;--text-sub:#4A5568;--border:#E2E8F0;--alt-row:#F1F5F9;
+    --green-bg:#DCFCE7;--green-text:#166534;
+    --red-bg:#FEE2E2;--red-text:#991B1B;
+    --yellow-bg:#FEF9C3;--yellow-text:#92400E;
+    --blue-bg:#EFF6FF;--blue-text:#1E40AF;
+    --violet-bg:#EDE9FE;--violet-text:#5B21B6;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:var(--text);font-size:14px;line-height:1.7;}
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 24px;font-family:var(--mono);font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  #topbar .left{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+  #topbar .ticker{font-size:18px;font-weight:700;letter-spacing:2px;color:#C4B5FD;}
+  #topbar .mode-badge{background:#7C3AED;color:#fff;padding:2px 10px;border-radius:3px;font-size:11px;font-weight:700;}
+  #topbar .price{font-size:16px;font-weight:600;color:#FCD34D;}
+  #print-btn{background:#7C3AED;color:#fff;border:none;cursor:pointer;padding:6px 16px;border-radius:3px;font-size:12px;font-family:var(--mono);font-weight:700;white-space:nowrap;}
+  .wrap{max-width:1100px;margin:0 auto;padding:80px 24px 60px;}
+  .sec-head{background:var(--navy);color:#fff;padding:10px 20px;margin:32px 0 16px;border-left:4px solid var(--accent);font-size:15px;font-weight:700;}
+  .sub-head{color:var(--navy);font-size:13px;font-weight:700;padding:8px 0 4px;border-bottom:2px solid var(--accent);margin:20px 0 10px;}
+  .card{background:var(--card);border:1px solid var(--border);padding:16px 20px;margin-bottom:14px;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:16px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 16px;}
+  .stat-card .label{font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;}
+  .stat-card .value{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--navy);}
+  .stat-card .note{font-size:11px;color:var(--text-sub);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:var(--navy);color:#fff;padding:8px 12px;text-align:left;font-weight:600;font-size:12px;}
+  td{padding:7px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:nth-child(even) td{background:var(--alt-row);}
+  tr:hover td{background:var(--violet-bg);}
+  .mono{font-family:var(--mono);}
+  .beat{background:var(--green-bg);color:var(--green-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .miss{background:var(--red-bg);color:var(--red-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .neutral{background:var(--yellow-bg);color:var(--yellow-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .pass{background:var(--green-bg);color:var(--green-text);}
+  .fail{background:var(--red-bg);color:var(--red-text);}
+  .warn{background:var(--yellow-bg);color:var(--yellow-text);}
+  .bull td{background:var(--green-bg)!important;}
+  .base td{background:var(--yellow-bg)!important;}
+  .bear td{background:var(--red-bg)!important;}
+  .rating-block{border:2px solid;padding:14px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:16px;}
+  .rating-block.green{border-color:#16A34A;background:var(--green-bg);}
+  .rating-block.yellow{border-color:#D97706;background:var(--yellow-bg);}
+  .rating-block.red{border-color:#DC2626;background:var(--red-bg);}
+  .rating-block.violet{border-color:#7C3AED;background:var(--violet-bg);}
+  .rating-block .icon{font-size:28px;line-height:1;min-width:36px;}
+  .rating-block .title{font-weight:700;font-size:15px;margin-bottom:4px;}
+  .rating-block .body{font-size:13px;line-height:1.6;}
+  .alert-warn{background:#FFFBEB;border-left:4px solid #F59E0B;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-info{background:var(--blue-bg);border-left:4px solid #3B82F6;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-green{background:var(--green-bg);border-left:4px solid #16A34A;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-danger{background:var(--red-bg);border-left:4px solid #DC2626;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-violet{background:var(--violet-bg);border-left:4px solid #7C3AED;padding:10px 16px;margin:12px 0;font-size:13px;}
+  p{margin-bottom:10px;font-size:13px;}
+  ul,ol{padding-left:20px;margin-bottom:10px;}
+  li{margin-bottom:4px;font-size:13px;}
+  strong{color:var(--navy);}
+  .data-stamp{font-family:var(--mono);font-size:11px;color:var(--text-sub);background:var(--alt-row);padding:6px 14px;border:1px solid var(--border);display:inline-block;margin-bottom:16px;}
+  .score-big{font-size:48px;font-family:var(--mono);font-weight:700;color:var(--navy);}
+  @media print{
+    #topbar,#print-btn{display:none!important;}
+    .wrap{padding:20px;}
+    .sec-head{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .bull td,.base td,.bear td,.pass,.fail,.warn{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="left">
+    <span class="ticker">COHR</span>
+    <span class="mode-badge">🔍 深度版</span>
+    <span>Coherent Corp. (前 II-VI)</span>
+    <span>資料抓取：2026-03-20</span>
+    <span class="price">現價 ~$247 USD（距全時高 $300 -17%）</span>
+    <span>最新財報：Q2 FY2026（2026-02-04，截至 2025-12-31）｜ 下次：Q3 FY2026（2026-05-06/13 est.）</span>
+  </div>
+  <button id="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</div>
+
+<div class="wrap">
+<div class="data-stamp">
+  資料抓取：2026-03-20 ｜ COHR 現價：~$247 USD（2026-03-20 盤中 $239-$251 波動）｜ 市值：~$47-48B（~193M 股）｜ 52 週：$45.58 – $300.20（全時最高，2026-03-02/04）｜ 距高點 -17% ｜ 過去 52 週 +275-287%！｜ 最新財報：Q2 FY2026（截至 2025-12-31，2026-02-04 發布）
+</div>
+<div class="alert-violet">
+  <strong>⚡ 最新重大事件摘要（2026-02 至 2026-03）：</strong><br>
+  ① <strong>NVIDIA $2B 投資 + 多十億美元採購承諾（2026-03-02）</strong>——與 Lumentum 同批，NVIDIA 同時鎖定 COHR 的光互連產能<br>
+  ② <strong>加入 S&P 500（2026-03-23，本報告後 3 天）</strong>——與 LITE、VRT、EchoStar 同批加入<br>
+  ③ <strong>Q2 FY2026（截至 2025-12-31）：Revenue $1.69B（+17% YoY）；Non-GAAP EPS $1.29（Beat +6.7%）；資料中心 Book-to-Bill >4x！</strong><br>
+  ④ <strong>Q3 FY2026 指引：Revenue $1.70-1.84B（中位 $1.77B，+21% YoY）；Non-GAAP EPS $1.28-1.48</strong><br>
+  ⑤ <strong>OFC 2026（2026-03-17）：展示 6.4T CPO、3.2T 可插拔和 12.8T+ 未來架構</strong><br>
+  ⑥ <strong>Stifel 上調目標 $235 → $275（2026-03-20）；5 次連續季報 Beat，平均超 15.7%</strong>
+</div>
+<div class="alert-green">
+  <strong>🔑 本報告核心命題：</strong>Coherent Corp.（前 II-VI Incorporated）是全球最廣泛的光子技術公司——同時擁有 InP（磷化銦）雷射、矽光子（Silicon Photonics）、VCSEL（垂直腔面射型雷射）三大技術平台，以及光收發器（Transceiver）、光路交換器（OCS）、共封裝光學（CPO）三大 AI 光互連產品線。與 Lumentum（LITE）的「InP 深度專家」定位不同，COHR 是「廣度多平台整合者」——同時押注多種光互連技術路線。但 COHR 也有 LITE 沒有的重要包袱：II-VI 2022 年收購 Coherent 引入的 ~$4B 負債、大量業務整合成本、工業雷射業務下滑。<strong>核心問題：COHR 的多平台廣度是最強的差異化護城河，還是「什麼都做、什麼都不深」的分散風險？</strong>
+</div>
+
+<!-- §0 -->
+<div class="sec-head">§0 ｜ 序章：第一性原理 × 逆向思考</div>
+<div class="sub-head">存在意義（深度版）</div>
+<div class="card">
+  <p>Coherent 的存在意義：<strong>「在 AI 算力超週期中，光互連技術路線尚未最終確定（InP 雷射 vs 矽光子 vs VCSEL），而 Coherent 是唯一同時在三條技術路線上都有深度能力的公司。</strong> 這個「技術路線對沖」定位使 Coherent 在技術轉型期具有不可替代的價值——無論哪種光互連技術最終主導，Coherent 都不會被完全排除在外。</p>
+  <p><strong>三大技術平台的互補邏輯：</strong></p>
+  <ul>
+    <li><strong>InP（磷化銦）雷射：</strong>目前 800G/1.6T 主流 EML 技術，ASP 高、利潤率高，COHR 和 LITE 共同主導。正在大力擴廠（6 英吋晶圓，2026 年底翻倍）。Q2 FY2026 InP 產能已達翻倍目標的 80%。</li>
+    <li><strong>矽光子（Silicon Photonics）：</strong>下一代整合平台，可在矽上製造光子元件，CMOS 工廠相容，成本更低但目前性能稍遜於 InP。COHR 的矽光子平台是 1.6T EML 收發器和 CPO 的核心技術之一，OFC 2026 展示了 6.4T 矽光子 CPO。</li>
+    <li><strong>VCSEL（垂直腔面射型雷射）：</strong>成本最低但速率傳統上低於 InP EML，現在 COHR 正在開發 200G VCSEL（用於 1.6T 收發器），預計 2026 H2 爬坡，屆時成本較低的 VCSEL 可服務對成本更敏感的客戶群。</li>
+  </ul>
+  <p>這三個平台不是互相競爭，而是覆蓋不同的性能/成本曲線——高性能高成本（InP）→ 中性能中成本（矽光子）→ 低成本（VCSEL）。Coherent 是光互連市場的「全品項供應商」，類比半導體代工中的「全製程能力晶圓廠」。若 AI 資料中心對光互連的需求多樣化（高端用 InP、中端用矽光子、短距用 VCSEL），COHR 的廣度護城河將遠超任何單一平台公司。</p>
+  <p><strong>歷史包袱：II-VI + Coherent 合併的漫長整合之路。</strong>2022 年 II-VI 以 $5.7B 收購 Coherent（前公司），形成今天的「Coherent Corp.」。這次收購引入了：① ~$4B 長期負債 ② 大量重疊業務（需要整合和關閉） ③ 不同企業文化。過去 6 個季度，Coherent 已關閉 33 個站點、精簡約 2,000+ 人員、出售 A&D（航太/國防）業務和慕尼黑材料處理部門——整合進度良好，但負債和整合成本仍是最重要的財務包袱。</p>
+</div>
+
+<div class="sub-head">逆向推演（Munger Inversion）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>風險維度</th><th>具體情境</th><th>機率</th><th>股價影響</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>💰 $4B 負債 + 高利息費用（最根本的財務包袱）</strong></td>
+        <td>COHR 的 Non-GAAP EPS 和 GAAP EPS 差距較大（Q2 $1.29 vs $0.76），主要原因之一是大量的攤銷費用（II-VI 收購時產生的無形資產攤銷，約 $100-150M/季）和利息費用（$4B 負債 × ~6% = ~$240M/年利息）。這個「攤銷 + 利息」的財務包袱使 GAAP EPS 顯著低於 Non-GAAP EPS，且在業務低迷時（工業雷射下滑、資料中心週期轉向）可能迅速轉為 GAAP 虧損。若 AI Capex 週期在 2028 年反轉，COHR 的 $4B 負債將成為嚴重的財務壓力。</td>
+        <td class="mono warn">持續存在（需每季追蹤；目前 FCF 在改善中但速度不夠快）</td>
+        <td>若 AI 週期反轉：利息費用侵蝕盈利 → GAAP 虧損 → 估值壓縮 -40~60%；若按計畫降債：財務包袱逐漸消除</td>
+      </tr>
+      <tr>
+        <td><strong>📉 LITE（Lumentum）直接競爭 + InP 技術領先劣勢</strong></td>
+        <td>在 InP EML 雷射這個核心戰場，LITE 是更深的護城河擁有者（EML 市佔 50-60%，COHR 第二但更低）。若 NVIDIA 在 LITE 的 InP 上集中更多採購（LITE NVIDIA $2B 投資同等），而 COHR 的 InP 份額低於預期，COHR 的「技術廣度優勢」在 InP 細分市場被 LITE 的「技術深度護城河」壓制。兩家公司同時獲得 NVIDIA $2B 投資，但這可能是「確保雙供應商策略」而非「COHR 技術比 LITE 更好」的信號。</td>
+        <td class="mono warn">中等（雙供應商策略有利於 COHR；但 InP 技術深度可能長期落後 LITE）</td>
+        <td>若 LITE 在 NVIDIA 的 InP 份額擴大至 70%+：COHR 的 InP 收入成長慢於 LITE；估值折扣拉大</td>
+      </tr>
+      <tr>
+        <td><strong>🏭 工業雷射業務持續下滑（業務組合風險）</strong></td>
+        <td>COHR 的工業雷射（Lasers）業務（約 28% 收入）主要服務半導體設備、顯示製造、精密加工。Q2 FY2026 工業收入 $478M（-9.9% YoY），持續低於 AI 資料中心驅動的資料中心業務。若工業雷射繼續下滑（EV 減速 + 半導體設備週期轉平），COHR 的整體 GM 和 EPS 提升速度受到拖累。工業業務不像 AI 資料中心那樣結構性成長，更接近傳統週期性業務。</td>
+        <td class="mono warn">低中（管理層預測工業業務 2026 年 6 月季開始反彈；半導體設備訂單改善）</td>
+        <td>工業持續下滑 4+ 季：整體 Revenue 成長受拖累；GM 目標（50%+）延後兌現；估值折扣 -10~20%</td>
+      </tr>
+      <tr>
+        <td><strong>🔬 GM 長期目標（50%+）的可達性爭議</strong></td>
+        <td>COHR 目前 Non-GAAP GM 約 39%（Q2 FY2026）——遠低於 LITE 的 42.5%（Q2 FY2026）、ANET 的 64%、ASML 的 52%。管理層的長期目標是 GM 50%+（隨工業業務退場和資料中心高利潤率業務佔比提升）。但 GM 39% → 50% 需要：① 工業業務進一步降低佔比 ② 1.6T 和更高速率收發器的 ASP 和利潤率改善 ③ InP 6 英吋晶圓效率提升。這個 GM 提升路徑比 LITE（已達 42.5%，目標 45%+）更長更不確定。</td>
+        <td class="mono neutral">低中（可達，但需要更長時間；工業業務是主要阻礙）</td>
+        <td>若 FY2028 GM 仍低於 46%（未達 50% 目標路徑）：EPS 低於預期 → 估值壓縮 -15~25%</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="alert-warn" style="margin-top:12px">
+    <strong>最重要的逆向推演結論：COHR vs LITE 的本質差異是「廣度 vs 深度」的基本投資哲學問題。</strong>LITE 是「InP EML 深度護城河 + NVIDIA 單一技術路線鎖定 + $2B 直接投資」的「深度專家」；COHR 是「InP + 矽光子 + VCSEL 三平台廣度 + 轉換器業務成熟度更高 + 但 GM 更低 + 負債更高」的「廣度整合者」。<br>
+    <strong>若 InP 保持長期技術優勢（5-8 年）→ LITE 比 COHR 更好；若矽光子和 VCSEL 快速崛起（3-5 年）→ COHR 的廣度優勢顯現。</strong> 當前市場對 LITE 的 P/E 更高（FY2027 視角），反映了對 InP 長期優勢的信念。COHR 的低一些的 P/E 反映了「工業業務拖累 + 負債包袱 + 技術路線不確定性」的折扣。
+  </div>
+</div>
+
+<!-- §1 -->
+<div class="sec-head">§1 ｜ 即時財報情報（Q2 FY2026，截至 2025-12-31，2026-02-04 發布）</div>
+<div class="alert-info">
+  <strong>📅 財年說明：</strong>Coherent 財年（FY）結束於 6 月底。FY2026 Q2 = 截至 2025-12-31（2026-02-04 發布）。Q3 FY2026 = 截至 2026-03-31（預計 2026-05-06/13 發布）。曆年 2026 = FY2026 H2 + FY2027 H1。
+</div>
+<div class="sub-head">① Q2 FY2026 關鍵數字</div>
+<table>
+  <thead><tr><th>指標</th><th>Q2 FY2026 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 變化</th></tr></thead>
+  <tbody>
+    <tr><td>Total Revenue</td><td class="mono">$1.69B（$1,685.6M）</td><td class="mono">$1.64B（共識）</td><td><span class="beat">✓ BEAT +2.9%；另有口徑 $1.6B → Beat +5.6%</span></td><td class="mono">+17% YoY（+22% Pro Forma，調整出售 A&D 業務）；+9% QoQ</td></tr>
+    <tr><td>資料中心 & 通訊收入</td><td class="mono">$1.208B（71.7% 占比）</td><td class="mono">—</td><td><span class="beat">✓ +33.6% YoY；連續 5 季 QoQ 成長；+11% QoQ；AI 加速</span></td><td class="mono">800G + 1.6T 爆發；DCI 和電信復甦</td></tr>
+    <tr><td>工業收入</td><td class="mono">$478M（28.3% 占比）</td><td class="mono">—</td><td><span class="miss">⚠️ -9.9% YoY；持續下滑；半導體設備訂單逐漸回溫</span></td><td class="mono">EV + 工業製造低迷；Q3 FY2026 預計開始反彈</td></tr>
+    <tr><td>Non-GAAP Gross Margin</td><td class="mono">39.0%（+77bps YoY；+120bps QoQ vs Q1 37.8%）</td><td class="mono">~38.5%（Q1 指引）</td><td><span class="beat">✓ BEAT +50bps；1.6T 高利潤率提升組合</span></td><td class="mono">趨勢正確但速度較慢（vs LITE Q2 42.5%）</td></tr>
+    <tr><td>Non-GAAP EPS</td><td class="mono">$1.29（5 次連續 Beat）</td><td class="mono">$1.14-1.21（共識 $1.14/1.21 不同來源）</td><td><span class="beat">✓ BEAT +6.7-13%；5 次連續 Beat，平均超 15.7%</span></td><td class="mono">+35% YoY（vs Q2 FY2025 $0.95）；+17.3% QoQ（vs Q1 $1.10）</td></tr>
+    <tr><td>GAAP EPS</td><td class="mono">$0.76（+71% YoY！）</td><td class="mono">—</td><td><span class="beat">✓ GAAP EPS +71% YoY 是最重要的基本面改善信號（II-VI 整合成本逐漸消化）</span></td><td class="mono">GAAP vs Non-GAAP 差距 $0.53（攤銷 + 整合費用 + SBC）；差距仍大但在縮小</td></tr>
+    <tr><td>資料中心 Book-to-Bill</td><td class="mono"><strong>>4x！</strong>（史無前例）</td><td class="mono">—</td><td><span class="beat">✓ 部分客戶訂單已延伸至 2028；供不應求的最強信號</span></td><td class="mono">Q1 FY2026 已是高 B2B，Q2 進一步加速；顯示 2026-2027 能見度極高</td></tr>
+    <tr><td>6 英吋 InP 晶圓產能</td><td class="mono">已達翻倍目標的 80%（Q2 晶圓啟動量較 Q1 翻 4 倍！）</td><td class="mono">—</td><td><span class="beat">✓ 年底翻倍完成路徑確認；Q2 InP 容量限制是過去季度的主要增長瓶頸</span></td><td class="mono">Q1 InP 限制了資料中心成長（增長 4%）；Q2 InP 擴充使成長加速至 +11% QoQ</td></tr>
+    <tr><td>OCS 積壓</td><td class="mono">積壓持續增加；>10 個客戶；多數朝 320×320 系統</td><td class="mono">—</td><td><span class="beat">✓ 年底開始收入；COHR 的下一個「10 億美元業務」路徑確認</span></td><td class="mono">類似 LITE 的 OCS 業務但更廣（多客戶基礎）</td></tr>
+    <tr><td>CPO 大型訂單</td><td class="mono">「大型 AI 資料中心領導客戶」的 6 英吋 InP CPO 訂單；年底開始收入</td><td class="mono">—</td><td><span class="beat">✓ CPO 從概念進入真實採購；與 LITE 的 CPO NVIDIA 訂單並行</span></td><td class="mono">COHR 在 CPO 有三種技術路線（InP + 矽光子 + VCSEL）= 更廣的客戶覆蓋</td></tr>
+  </tbody>
+</table>
+<div class="alert-green" style="margin-top:8px">
+  <strong>✅ Q2 FY2026 最重要信號：</strong>① 資料中心 Book-to-Bill >4x（最強需求確認；訂單能見度延伸至 2028）② 6 英吋 InP 晶圓啟動量 QoQ 翻 4 倍（供應瓶頸開始突破）③ 管理層：「FY2027 Revenue 成長率將超過 FY2026 成長率」（連續加速）④ 5 次連續 Beat（平均 15.7%）⑤ GAAP EPS +71% YoY（整合成本逐漸消化）⑥ 工業業務 Q3 FY2026 預計反彈（半導體設備訂單改善）
+</div>
+
+<div class="sub-head">② Q3 FY2026 指引 + 長期目標</div>
+<div class="card">
+  <table>
+    <thead><tr><th>指標</th><th>數據</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td>Q3 FY2026 Revenue 指引</td><td class="mono">$1.70-1.84B（中位 $1.77B）</td><td><span class="beat">✓ +5% QoQ（中位）；+21% YoY（vs Q3 FY2025 $1.46B）；持續加速</span></td></tr>
+      <tr><td>Q3 FY2026 Non-GAAP GM 指引</td><td class="mono">38.5%-40.5%（中位 39.5%）</td><td><span class="beat">✓ +50bps QoQ（繼續改善）；1.6T 組合提升驅動</span></td></tr>
+      <tr><td>Q3 FY2026 Non-GAAP EPS 指引</td><td class="mono">$1.28-$1.48（中位 $1.38）</td><td><span class="neutral">⚠️ 中位 $1.38 vs Q2 $1.29（+7% QoQ）；上限 $1.48 = Beat 可能性高（5 次連續 Beat）</span></td></tr>
+      <tr><td>FY2027 成長率展望</td><td class="mono">「FY2027 Revenue 成長率將超過 FY2026 成長率」（CEO 明確說明）</td><td><span class="beat">✓ 加速成長邏輯確認；FY2027 是 COHR 全年「收益最大」的財年（1.6T 全面爬坡 + 200G VCSEL 加入 + OCS 收入 + InP 產能翻倍）</span></td></tr>
+      <tr><td>SG&A 和 R&D 長期目標</td><td class="mono">SG&A → 8% Revenue；R&D → 10% Revenue</td><td><span class="beat">✓ 運營效率提升路線圖；目前 Q2 SG&A ~15%、R&D ~10%（SG&A 仍有大幅壓縮空間）</span></td></tr>
+      <tr><td>NVIDIA $2B 投資意涵</td><td class="mono">多十億採購承諾；長期多年協議；非排他性</td><td><span class="beat">✓ COHR 和 LITE 均獲 NVIDIA $2B = NVIDIA「雙供應商策略」；COHR 的多平台廣度是 NVIDIA 的供應鏈多元化選擇</span></td></tr>
+      <tr><td>OFC 2026 展示（2026-03-17）</td><td class="mono">6.4T 矽光子 CPO；多模式 VCSEL CPO；400G InP 調製器；3.2T 可插拔；12.8T+ 未來架構預覽</td><td><span class="beat">✓ COHR 的技術路線圖是三大設備商中最廣泛的展示——從當前 800G/1.6T 到未來 12.8T+，展示清晰的技術代際路線圖</span></td></tr>
+      <tr><td>200G VCSEL 1.6T 爬坡</td><td class="mono">2026 H2 爬坡；成本較低但速率足夠的 1.6T 選項</td><td><span class="beat">✓ COHR 的獨特技術——LITE 沒有 VCSEL 1.6T，COHR 的 VCSEL 為成本敏感客戶開闢第二市場</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">③ Earnings Call 語氣解析（Q2 FY2026）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td><strong>管理層基調</strong></td><td><span class="beat">積極且精準量化</span>：CEO Jim Anderson（2023 年接任，前 Lattice Semiconductor CEO）是一位工程師出身的 CEO，習慣給出精確的技術路線圖而非模糊保證。他在 Call 中量化了 InP 晶圓啟動量「翻 4 倍 QoQ」、InP 翻倍目標「80% 達成」、資料中心 Book-to-Bill「>4x」——這些具體數字說明管理層對業務執行細節有深度掌握，增加了指引的可信度。</td></tr>
+      <tr><td><strong>三大刻意強調</strong></td><td>
+        ① <strong>「1.6T 將在多個客戶間顯著爬坡，800G 和 1.6T 均將在 2026 年顯著成長」</strong>：管理層罕見地為兩個主要產品線同時給出「顯著成長」的保證，說明對訂單能見度的高度確信——Book-to-Bill >4x 支撐了這個判斷<br>
+        ② <strong>「資料中心訂單已延伸至 2028，對部分客戶而言」</strong>：這是比 LITE 更長的訂單能見度（LITE 主要說「完全售罄到 2027」）。2028 年的訂單說明客戶不只是在採購現有產品，而是在為下一代技術（如 3.2T、6.4T）預訂產能<br>
+        ③ <strong>「FY2027 Revenue 成長率將超過 FY2026 成長率」</strong>：這是最重要的長期加速信號。FY2026 預計 Revenue 成長 ~20-25%，FY2027 成長率超過這個水準 = FY2027 Revenue 成長可能達到 30%+
+      </td></tr>
+      <tr><td><strong>刻意迴避的問題</strong></td><td>
+        ① <strong>NVIDIA $2B 投資的財務細節</strong>：Q2 Call 在 2026-02-04（NVIDIA 協議在 2026-03-02 宣布），所以 Call 中沒有討論。但後來的分析師追問 NVIDIA 協議對利潤率的影響，管理層沒有給出量化答案<br>
+        ② <strong>與 LITE 的競爭</strong>：分析師多次問 COHR 在 NVIDIA 供應鏈中的份額，管理層不直接回答，只說「我們有多個主要客戶的多技術路線訂單」<br>
+        ③ <strong>GM 50% 的時間表</strong>：管理層繼續強調「進展中」但不給具體季度目標，反映了工業業務下滑和 InP 爬坡成本使 GM 提升的不確定性
+      </td></tr>
+      <tr><td><strong>最重要技術發展</strong></td><td>
+        <strong>6 英吋 InP 晶圓爬坡（核心短期驅動）：</strong>從 4 英吋到 6 英吋 InP 晶圓不只是「更大的晶圓」，而是一次重大的技術和製造效率升級。6 英吋晶圓每片可生產更多的雷射晶片，且生產效率更高（更少的邊緣損耗）、成本更低。Q2 FY2026 的 InP 6 英吋晶圓啟動量「翻 4 倍」說明擴產速度遠超預期，這是 Q3-Q4 FY2026 資料中心收入爆發的核心技術前提。CEO 說「年底翻倍完成」——如果如期，COHR 的 InP 供給瓶頸在 2026 H2 將大幅緩解，資料中心收入有望從 $1.2B/季（Q2）加速至 $1.6-1.8B/季。
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">④ 產業 Imply 萃取</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td><strong>「三平台並行」是差異化護城河，不是技術猶豫</strong></td><td>OFC 2026 展示了 COHR 同時推進 InP EML + 矽光子 + VCSEL 的三條 1.6T-6.4T+ 路徑。這個「技術多元化」策略的意義：① AI 資料中心客戶（Google、Meta、Amazon、Microsoft）有不同的技術偏好和架構選擇——Google 更傾向矽光子，Meta/Amazon 更靈活。COHR 的多平台使它能服務不同技術路線偏好的客戶 ② 一旦某個技術路線的成本/性能比達到拐點，COHR 可以快速轉向，而 LITE 必須完全依賴 InP 路線 ③ 這也解釋了 NVIDIA 同時投資 COHR 和 LITE——NVIDIA 本身也在技術路線上進行對沖，不依賴單一供應商。</td></tr>
+      <tr><td><strong>VCSEL 200G 是 COHR 的獨特武器</strong></td><td>LITE 的收發器技術主要是 EML（高性能高成本），COHR 擁有業界最強的 VCSEL 技術（用於短距離高速互連）。200G VCSEL 的技術突破使 COHR 可以提供比 EML 成本低 30-50% 的 1.6T 收發器，用於數據中心機架內和近距離連接。這個技術在 2026 H2 爬坡，可能在 2027 年成為 COHR 資料中心收入的第三大支柱（補充 800G EML 和 1.6T InP EML）。沒有 VCSEL 1.6T 的 LITE 在這個市場沒有份額。</td></tr>
+      <tr><td><strong>工業業務反轉是未預期的上行期權</strong></td><td>COHR 的工業雷射（Lasers）業務（$478M，-9.9% YoY）主要因 EV 放緩、工業自動化需求疲軟而下滑。管理層說「Q3 FY2026 工業業務將恢復 QoQ 成長，主要由半導體設備訂單改善驅動」。若半導體設備（ASML、AMAT、LRCX、KLAC 均在擴產）的訂單如期回升，COHR 的工業雷射業務在 2026 H2 反彈，將成為額外的 Revenue 上行催化劑（目前市場未完全計算）。</td></tr>
+      <tr><td><strong>整合優化進度確認長期 GM 路徑</strong></td><td>過去 6 個季度：關閉 33 個站點（目標是整合效率）；-425 人（Q2 一季）；出售 A&D 業務（低利潤率業務退出）；出售慕尼黑材料處理部門（低利潤率業務退出）。每次業務退出都會：① 立即提升 GM（低利潤率業務退出後）② 降低 OpEx（相關人員和設施成本） ③ 聚焦管理層精力於高利潤率的 AI 光互連業務。這個「聚焦 + 整合」策略是 COHR GM 從 ~35%（FY2025 H1）→ 39%（Q2 FY2026）→ 目標 50%+ 的核心路徑。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §2 -->
+<div class="sec-head">§2 ｜ 核心門檻檢核</div>
+<div class="sub-head">EPS CAGR 搜尋結果</div>
+<div class="card">
+  <div class="alert-info">
+    <strong>口徑說明：</strong>COHR 使用「Non-GAAP EPS」（剔除 SBC ~$60-70M/季、M&A 攤銷 ~$100-150M/季、整合費用）。GAAP vs Non-GAAP 差距很大（Q2：$0.76 vs $1.29，差距 $0.53），主要原因是 II-VI 收購的無形資產攤銷和整合費用，這些費用在 2026-2028 年會持續（攤銷是固定費用直到攤完）。COHR 財年結束於 6 月，WallStreetZen 的 FY2026 EPS 對應 COHR FY2026（截至 2026-06）。本報告以 Q2 FY2026（截至 2025-12-31）作為半年基期計算。
+  </div>
+  <table>
+    <thead><tr><th>年度（COHR 財年 FY，截至 6 月）</th><th>Non-GAAP EPS</th><th>分析師人數</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><strong>FY2025（已公布，基期，截至 2025-06）</strong></td><td class="mono">~$4.00-4.20（Q1+Q2 FY2025 $0.85+$0.95 + H2 FY2025 $1.10+1.10 = ~$4.00）</td><td>—</td><td>整合進行中；資料中心剛開始加速；工業業務高峰期</td></tr>
+      <tr><td><strong>FY2026E（截至 2026-06）</strong></td><td class="mono">WallStreetZen $5.18（n=24，範圍 $4.76-5.66）；Q1+Q2 已公布 $1.10+1.29=$2.39；Q3E 中位 $1.38；Q4E 估 $1.45+ → 全年 ~$6.21+（可能高於共識）</td><td>n≈24</td><td>Q3 指引中位 $1.38；管理層連續 Beat 模式；FY2026 全年可能 $6-7</td></tr>
+      <tr><td><strong>FY2027E（截至 2027-06）</strong></td><td class="mono">WallStreetZen $6.49（n=21，範圍 $5.66-8.11）；管理層說 FY2027 成長率超 FY2026 成長率</td><td>n≈21</td><td>InP 翻倍完成 + 200G VCSEL 1.6T 爬坡 + OCS 收入啟動 + 整合費用持續下降</td></tr>
+      <tr><td><strong>FY2028E（截至 2028-06）</strong></td><td class="mono">~$8-10（估；以 FY2027 $6.49 × 1.25-1.35 外推）</td><td>n≈15</td><td>CPO 收入爆發；GM 接近 50%；S&P 500 帶來更多機構關注</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:12px;font-family:var(--mono);font-size:13px;padding:10px;background:var(--alt-row);border:1px solid var(--border);">
+    <strong>EPS CAGR 計算（FY2025 ~$4.10 基期 → FY2028E）：</strong><br>
+    中性 FY2028E $9.0：3 年 CAGR = ($9.0 ÷ $4.10)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +30.0%</span><br>
+    保守 FY2028E $7.0：3 年 CAGR = ($7.0 ÷ $4.10)^(1/3) − 1 = <span style="color:#D97706;font-weight:700">約 +19.6%</span>（接近 20% 門檻）<br>
+    積極 FY2028E $11.0：3 年 CAGR = ($11.0 ÷ $4.10)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +39.0%</span><br>
+    <em>注：COHR 的 EPS CAGR（~20-39%）顯著低於 LITE（60-77%）和 MU（67-113%），但高於 LRCX（16-20%）和 AMAT（17-22%）。這反映了 COHR 「轉型中的整合公司」的特性——有成長潛力但整合包袱使起跑基期偏高（$4.10 vs LITE 的 $2.06）。</em>
+  </div>
+</div>
+
+<div class="sub-head">門檻檢核表</div>
+<table>
+  <thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr></thead>
+  <tbody>
+    <tr><td><strong>FCF Margin</strong></td><td>> 15%</td>
+      <td class="warn mono">⚠️ 尚未穩定達標（$4B 負債利息侵蝕 FCF；建設期 Capex 偏高）</td>
+      <td>Q2 FY2026 Capex $154M（大幅上升，vs Q1 $104M、Q2 FY2025 $106M）。Non-GAAP Operating Income $336M（Q2）→ 年化 ~$1.34B；扣除利息費用 ~$240M/年、稅和 Capex $600M/年估；FCF ~$500M / Revenue ~$7B = ~7%。FCF Margin 目前偏低（<10%），主因：$4B 負債利息 + InP 產能擴充 Capex。若負債降至 $2B（2027-2028）且 Capex 正常化，FCF Margin 可達 15%+。</td></tr>
+    <tr><td><strong>ROIC</strong></td><td>產業頂尖</td>
+      <td class="warn mono">⚠️ 中等（Simply Wall St 預測 FY2028 ROE 11.8%——偏低）</td>
+      <td>$4B 負債 + 大量 M&A 商譽 = 資產基礎偏大 → ROIC 被壓縮。Q2 GAAP EPS $0.76 = 年化約 $3.04，$247 市值/股 = ROE ~4%（GAAP 基礎）；Non-GAAP 更高。目前 ROIC 在整合期偏低，預計 FY2027-2028 在 GM 提升和負債降低後顯著改善。</td></tr>
+    <tr><td><strong>EPS CAGR（3年，FY2025-2028）</strong></td><td>> 20%</td>
+      <td class="warn mono">⚠️ 接近標準（中性 ~30%；保守 ~20%；取決於工業業務和 GM 提升速度）</td>
+      <td>基期 FY2025：~$4.10<br>FY2026E：~$6.0-6.5（超 WallStreetZen $5.18 共識；連續 Beat 模式）<br>FY2027E：$6.49（WallStreetZen，+25% YoY；或更高）<br>FY2028E：$8-11（估）<br>━━━━━━<br>3 年 CAGR：~20-39%（保守/積極）<br>⚠️ 保守情境接近 20% 門檻；關鍵在於 GM 是否如期向 45-50% 提升</td></tr>
+    <tr><td><strong>PEG</strong></td><td>< 2</td>
+      <td class="pass mono">✓ 合理（Fwd PEG ~1.6-2.0x；估值合理）</td>
+      <td>Fwd P/E（FY2026E $6.0）= $247 ÷ $6.0 = <strong>~41.2x</strong><br>EPS CAGR 30% → PEG = 41.2 ÷ 30 = <strong>1.37x（合理）</strong><br>EPS CAGR 20% → PEG = 41.2 ÷ 20 = <strong>2.06x（合理偏高）</strong><br>CNBC 數據：PE 214.97x TTM（GAAP，基期偏低）；Fwd P/E 39x（TradingView）</td></tr>
+    <tr><td><strong>現金覆蓋總負債</strong></td><td>是/否</td>
+      <td class="fail mono">✗ 否（$4B 負債是最主要的財務弱點；現金 ~$1.5B）</td>
+      <td>II-VI 2022 年收購 Coherent 引入的 ~$4B 長期負債。目前現金 ~$1.5-2B，淨負債約 $2-2.5B。管理層在積極降債（出售 A&D 業務 + 出售慕尼黑部門的現金都用於還債），但以當前 FCF 速度，清零淨負債需要 3-4 年。這個負債是 COHR 相對 LITE（近零負債）的主要估值折扣來源。</td></tr>
+    <tr><td><strong>護城河強度</strong></td><td>> 8 分，趨勢擴大</td>
+      <td class="warn mono">⚠️ 中強（7.5/10；多平台廣度護城河；但各平台深度不如 LITE 的 InP 深度）</td>
+      <td>多平台（InP + 矽光子 + VCSEL）+ NVIDIA 鎖定 + 轉換器業務成熟度 + OFC 技術路線圖；但 InP EML 深度低於 LITE，負債削弱財務護城河；趨勢：緩慢擴大（整合完成後護城河加深）</td></tr>
+  </tbody>
+</table>
+<div class="alert-warn" style="margin-top:8px">
+  <strong>最大財務弱點（快速版一句話）：</strong>$4B 負債年利息 ~$240M 侵蝕盈利能力，在業務加速期是隱性的成長稅，在市場下行期是財務危機的潛在引爆點。
+</div>
+
+<!-- §2.5 -->
+<div class="sec-head">§2.5 ｜ 長期成長性評估</div>
+<div class="rating-block violet">
+  <div class="icon">🟡</div>
+  <div>
+    <div class="title">長期成長性綜合評級：中等確信（多平台廣度確保技術路線對沖；資料中心爆發確認；Book-to-Bill >4x 是最強業務信號；但 $4B 負債 + GM 路徑比 LITE 長 + 保守 EPS CAGR ~20% 接近門檻）</div>
+    <div class="body">Runway ≥8 年（1.6T → 3.2T → 6.4T → CPO 技術代際路線清晰；OFC 2026 展示 12.8T+ 預覽）｜ 有機成長為主 ｜ 護城河中性至加強型（整合完成後護城河加深）｜ FCF Margin 目前 <10%，FY2027-2028 改善至 15%+</div>
+  </div>
+</div>
+
+<div class="sub-head">A｜成長跑道（Runway）估算</div>
+<table>
+  <thead><tr><th>業務</th><th>TAM</th><th>FY2026 規模（估）</th><th>成長驅動</th><th>Runway</th></tr></thead>
+  <tbody>
+    <tr><td><strong>資料中心光收發器（主業）</strong><br>800G + 1.6T + 3.2T</td><td class="mono">轉換器 TAM $10-15B（2026）</td><td class="mono">~$4.8-5B/年（Q2 $1.2B × 4）</td><td>1.6T 全面爬坡（2026 H2）；200G VCSEL 加入；Coherent 的多平台廣度</td><td class="mono pass">≥8 年（每代技術升代需要新設備）</td></tr>
+    <tr><td><strong>OCS（光路交換器）</strong><br>下一個 10 億業務</td><td class="mono">OCS TAM $2-5B（2026-2029）</td><td class="mono">小量（年底開始）；2027 爆發</td><td>AI 集群電力效率需求；COHR 擁有 >10 客戶接洽</td><td class="mono pass">≥10 年（光交換架構轉型不可逆）</td></tr>
+    <tr><td><strong>CPO（共封裝光學）</strong><br>高利潤率未來業務</td><td class="mono">CPO TAM $5-15B（2027-2030）</td><td class="mono">接近零（年底首個大訂單開始）</td><td>NVIDIA 訂單確認；三平台 CPO（InP + SiPh + VCSEL）覆蓋更廣</td><td class="mono pass">≥10 年</td></tr>
+    <tr><td><strong>工業雷射（Lasers）</strong><br>整合後的高利潤率業務</td><td class="mono">工業雷射 TAM $3-5B</td><td class="mono">~$1.9B（$478M × 4）</td><td>半導體設備回升；EV 逐步恢復；顯示製造</td><td class="mono neutral">≥8 年（週期性但長期穩定）</td></tr>
+    <tr><td><strong>成長可持續年數</strong></td><td class="mono" style="color:#7C3AED;font-weight:700" colspan="4">≥8 年（中等確信）；OCS + CPO 是未來的增量引擎；多平台技術對沖確保長期不被淘汰</td></tr>
+  </tbody>
+</table>
+
+<!-- §3 -->
+<div class="sec-head">§3 ｜ 護城河分析</div>
+<div class="card" style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:24px;margin-bottom:16px;">
+    <div><span class="score-big">7.5</span><span style="font-size:24px;font-family:var(--mono);color:var(--navy)">/10（↑整合完成後升至 8.0）</span></div>
+    <div>
+      <div style="font-weight:700;color:var(--navy);font-size:16px;">中強護城河，多平台廣度（InP + 矽光子 + VCSEL）+ NVIDIA 雙供應商鎖定 + OCS 早期份額</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-top:4px;">評分 7.5/10（與 TER 同分）。COHR 的護城河比 LITE（8.5/10）稍弱，主要因為：① InP EML 深度低於 LITE（LITE 市佔 50-60% vs COHR 估 25-30%）② $4B 負債削弱財務護城河 ③ 工業業務的週期性拖累。但 COHR 有 LITE 沒有的護城河：① VCSEL 1.6T（成本更低的 1.6T 選項）② 矽光子整合能力（更廣的客戶技術路線覆蓋）③ OCS 和 CPO 同時推進的多元業務線護城河。整合完成後（FY2027-2028），COHR 的護城河應升至 8.0/10。</div>
+      <div style="margin-top:8px;"><span class="beat">趨勢：緩慢擴大（整合完成 + 多平台技術路線爬坡 + NVIDIA 雙供應商確認）</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">COHR vs LITE 深度護城河比較</div>
+<table>
+  <thead><tr><th>護城河維度</th><th>COHR 深度</th><th>LITE 深度</th><th>誰更強？</th></tr></thead>
+  <tbody>
+    <tr><td>InP EML 技術深度</td><td>中（估市佔 25-30%；6 英吋擴廠中）</td><td>極強（市佔 50-60%；UHP 雷射 350mW 壟斷）</td><td>LITE ✓</td></tr>
+    <tr><td>矽光子整合能力</td><td>強（多年矽光子收發器 + CPO 研發）</td><td>中（正在布局但深度不如 COHR）</td><td>COHR ✓</td></tr>
+    <tr><td>VCSEL 技術</td><td>極強（200G VCSEL = 業界領先；應用於短距連接和 1.6T）</td><td>無 VCSEL 業務</td><td>COHR 獨有 ✓</td></tr>
+    <tr><td>OCS（光路交換器）</td><td>強（早期市場；多客戶接洽）</td><td>極強（積壓 >$400M；OFC 聯合 Marvell 展示）</td><td>LITE 稍強</td></tr>
+    <tr><td>CPO 技術路線</td><td>最廣（InP + 矽光子 + VCSEL 三種 CPO 路線）</td><td>中強（InP CPO 為主；UHP 外部雷射源）</td><td>COHR 廣度 ✓</td></tr>
+    <tr><td>NVIDIA 鎖定深度</td><td>中（$2B 投資 + 採購；雙供應商之一）</td><td>強（$2B 投資 + EPIC Center 合作；主要 InP 供應商）</td><td>LITE 稍強</td></tr>
+    <tr><td>財務護城河（負債）</td><td>弱（$4B 負債；FCF 被利息侵蝕）</td><td>強（近零負債；FCF 快速成長）</td><td>LITE ✓✓</td></tr>
+    <tr><td>利潤率護城河</td><td>中（GM 39%；目標 50%+；工業業務拖累）</td><td>強（GM 42.5%→43-44%；快速向 45%+ 提升）</td><td>LITE ✓</td></tr>
+    <tr><td>整體護城河</td><td>7.5/10（廣度護城河；技術路線多元化）</td><td>8.5/10（InP 深度護城河；NVIDIA 主要鎖定）</td><td>LITE 整體 ✓</td></tr>
+  </tbody>
+</table>
+<div class="alert-violet" style="margin-top:8px">
+  <strong>核心結論：COHR 的護城河是「廣度型」，LITE 的護城河是「深度型」。</strong>前者在技術路線轉型期（InP → 矽光子 → VCSEL 的動態平衡）更有防禦力；後者在 InP 主導期更有攻擊力和定價能力。目前（2026-2027）InP 仍是主流，LITE 的深度護城河更直接體現在財務指標上（GM 更高、FCF 更強）。但如果矽光子技術在 2027-2029 年快速崛起，COHR 的廣度護城河將快速升值。
+</div>
+
+<!-- §4 -->
+<div class="sec-head">§4 ｜ 財務品質監測</div>
+<div class="sub-head">季度趨勢（改善中但速度較慢）</div>
+<table>
+  <thead><tr><th>指標</th><th>Q2 FY2025（基期）</th><th>Q1 FY2026</th><th>Q2 FY2026</th><th>Q3 FY2026（指引）</th><th>評估</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue</td><td class="mono">$1.44B（+0%）</td><td class="mono">$1.55B（+8%）</td><td class="mono">$1.69B（+9%）</td><td class="mono">$1.77B（+5%，中位）</td><td><span class="beat">↑ 加速中；資料中心驅動；工業拖累縮小</span></td></tr>
+    <tr><td>Non-GAAP GM</td><td class="mono">38.2%（Q2 FY2025）</td><td class="mono">37.8%（估）</td><td class="mono">39.0%（+77bps YoY）</td><td class="mono">38.5-40.5%（中位 39.5%）</td><td><span class="neutral">↑ 改善但慢（vs LITE 42.5%；差距 3.5ppts）</span></td></tr>
+    <tr><td>Non-GAAP EPS</td><td class="mono">$0.95</td><td class="mono">$1.10（+16%）</td><td class="mono">$1.29（+17%）</td><td class="mono">$1.28-1.48（中位 $1.38）</td><td><span class="beat">↑ 持續加速；5 次連續 Beat 確認執行能力</span></td></tr>
+    <tr><td>GAAP EPS</td><td class="mono">$0.44</td><td class="mono">~$0.55</td><td class="mono">$0.76（+73%）</td><td class="mono">—</td><td><span class="beat">↑↑ GAAP 大幅改善（整合費用下降）；GAAP vs Non-GAAP 差距縮小是最正面信號</span></td></tr>
+    <tr><td>Capex</td><td class="mono">$106M</td><td class="mono">$104M</td><td class="mono">$154M（+47% QoQ！）</td><td class="mono">—（估 $170-180M）</td><td><span class="warn">⚠️ InP 6 英吋擴廠加速；FCF 短期受壓</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">財務品質警訊</div>
+<div class="card">
+  <table>
+    <thead><tr><th>項目</th><th>結論</th><th>佐證</th></tr></thead>
+    <tbody>
+      <tr><td><strong>$4B 負債（最重要財務警示）</strong></td><td><span class="warn">⚠️ 年利息 ~$240M；侵蝕 FCF；在業務下行期有財務危機風險</span></td><td>II-VI 2022 收購 Coherent 引入的負債。目前通過出售 A&D 業務（$800M+）和其他資產降債，但仍需 3-4 年才能降至合理水準（$1-1.5B）。在 AI 光互連超週期中，高負債不是致命問題；但若市場下行，$240M/年利息將迅速侵蝕盈利。</td></tr>
+      <tr><td><strong>GAAP vs Non-GAAP 差距大</strong></td><td><span class="warn">⚠️ Q2 GAAP $0.76 vs Non-GAAP $1.29（差距 $0.53 = 41%）；主因：M&A 攤銷 + 整合費用</span></td><td>M&A 攤銷是固定費用（不管業務好壞都要計），約 $100-150M/季。整合費用在逐漸減少（33 站點關閉基本完成）。2027-2028 年隨攤銷期結束，GAAP 和 Non-GAAP 差距將縮小，GAAP EPS 屆時將顯著提升。</td></tr>
+      <tr><td><strong>5 次連續 Beat（正面品質信號）</strong></td><td><span class="beat">✓ 管理層對自身執行能力高度確信；指引保守模式確認</span></td><td>連續 5 季 Beat，平均超預期 15.7%（24/7 Wall St.）——這是管理層執行能力的最強確認，也說明指引是「保守估算」而非「樂觀承諾」，Q3 FY2026 EPS $1.38 中位很可能也被 Beat。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §5 -->
+<div class="sec-head">§5 ｜ 產業格局、議價權與 Unit Economics</div>
+<div class="card-grid">
+  <div class="stat-card"><div class="label">Q2 FY2026 資料中心收入</div><div class="value">$1.208B</div><div class="note">+33.6% YoY；+11% QoQ；佔總收入 72%</div></div>
+  <div class="stat-card"><div class="label">資料中心 Book-to-Bill</div><div class="value">&gt;4x！</div><div class="note">史無前例；訂單延伸至 2028</div></div>
+  <div class="stat-card"><div class="label">Q3 FY2026 Revenue 指引</div><div class="value">$1.77B</div><div class="note">中位；+21% YoY；+5% QoQ</div></div>
+  <div class="stat-card"><div class="label">NVIDIA 投資</div><div class="value">$2B</div><div class="note">+多十億採購承諾；長期協議</div></div>
+  <div class="stat-card"><div class="label">InP 6 英吋翻倍進度</div><div class="value">80%</div><div class="note">年底 100%；供應瓶頸突破</div></div>
+  <div class="stat-card"><div class="label">長期 GM 目標</div><div class="value">50%+</div><div class="note">目前 39%；整合 + 產品組合升級路徑</div></div>
+</div>
+
+<!-- §6 -->
+<div class="sec-head">§6 ｜ 公司治理與資本配置</div>
+<div class="card">
+  <ul>
+    <li><strong>Jim Anderson（CEO，2023 年接任）</strong>：前 Lattice Semiconductor CEO，以「執行工程師」著稱（不是「市場推廣 CEO」）。他的核心成就：① 加速整合進度（33 站點，6 季）② 出售低利潤率業務（A&D、慕尼黑材料處理）③ 給出精確的技術路線圖量化數據（InP 翻 4 倍、80% 完成）。Jim Anderson 的 Lattice Semiconductor 任期（2018-2023）的成功案例：將 LSCC 從一個邊緣 FPGA 廠商轉型為高端低功耗 FPGA 供應商，使股票從 $7 漲至 $90（+1,186%）。COHR 的轉型路徑與 LSCC 非常類似（整合後聚焦、高利潤率市場）。</li>
+    <li><strong>資本配置重點：降債優先</strong>：出售 A&D 業務（2025-09）和慕尼黑材料處理部門（Q2 FY2026 完成）的資金均優先用於降債，說明管理層理解 $4B 負債是最緊迫的財務包袱。若降債進度超預期（如追加出售資產），FCF 提升速度也會超預期。</li>
+    <li><strong>96% 機構持股</strong>：高機構持股說明專業投資者對 COHR 的信心，也意味著少量散戶情緒波動對股價影響較小。</li>
+  </ul>
+</div>
+
+<!-- §7 -->
+<div class="sec-head">§7 ｜ 五維度估值分析</div>
+<div class="sub-head">7.1｜歷史估值分位</div>
+<div class="alert-warn">
+  <strong>⚠️ COHR 估值的特殊挑戰：</strong>COHR 的歷史估值框架（光通訊設備整合公司，P/E 15-30x）在 AI 光互連爆發前是合理的，但目前 Fwd P/E ~41x（FY2026E $6）已超越這個歷史範圍。關鍵問題：COHR 應以「AI 光互連基礎設施（35-50x P/E）」還是「整合中的複合技術公司（20-30x P/E）」估值？$4B 負債、GM 39%（vs LITE 42.5%）、工業業務下滑是「整合中公司」的折扣因素；Book-to-Bill >4x、NVIDIA $2B 投資、多平台廣度是「AI 基礎設施」的溢價因素。
+</div>
+<table>
+  <thead><tr><th>估值指標</th><th>當前值（$247）</th><th>解讀</th><th>分位評估</th></tr></thead>
+  <tbody>
+    <tr><td>Fwd P/E（FY2026E $6.0）</td><td class="mono">~41.2x</td><td>比 LITE（71x FY2027）低但比 WFE 設備商高；「整合中的 AI 光互連公司」的合理區間</td><td><span class="neutral">🟡 ~65% 歷史分位（偏高但尚合理）</span></td></tr>
+    <tr><td>Fwd P/E（FY2027E $6.49 WallStreetZen）</td><td class="mono">~38.1x</td><td>以 1 年視野，$247 的 COHR 以 38x P/E 交易；若 FY2027 EPS 超共識（如 $8+），P/E 降至 ~31x</td><td><span class="neutral">🟡 ~60% 分位（合理）</span></td></tr>
+    <tr><td>EV/Sales（FY2026E Revenue ~$7B）</td><td class="mono">~7.0x（EV = 市值 $47B + 負債 $4B - 現金 $1.5B ≈ $50B）</td><td>比 LITE 的 P/S ~17x 低得多；負債降低後 EV/Sales 將快速改善</td><td><span class="beat">🟢 合理（考慮負債後的 EV/Sales 合理）</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">7.2｜PEG 分析</div>
+<table>
+  <thead><tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr></thead>
+  <tbody>
+    <tr><td>Fwd P/E（FY2026E $6.0）</td><td class="mono">~41.2x</td><td>—</td><td>$247 ÷ $6.0</td></tr>
+    <tr><td>EPS CAGR（3年，FY2025-2028，中性）</td><td class="mono">~30%</td><td>—</td><td>中性；積極可達 39%（整合完成 + GM 提升 + 負債降低）</td></tr>
+    <tr><td>PEG（中性 30% CAGR）</td><td class="mono">41.2 ÷ 30 = <strong>1.37x（合理）</strong></td><td>&lt;1.0 便宜 / 1∼2 合理 / >2 貴</td><td><span class="beat">合理；比 KLAC（2.97x）便宜很多；比 LRCX（1.97x）稍低</span></td></tr>
+    <tr><td>PEG（保守 20% CAGR）</td><td class="mono">41.2 ÷ 20 = <strong>2.06x（合理偏高）</strong></td><td>—</td><td><span class="neutral">保守情境下稍高；需要確認工業業務反轉和 GM 提升</span></td></tr>
+    <tr><td>vs LITE 比較（FY2027 PEG）</td><td class="mono">FY2027 P/E 38.1x ÷ CAGR 30% = <strong>1.27x（合理）</strong></td><td>—</td><td><span class="beat">COHR FY2027 PEG 1.27x 比 LITE FY2026 PEG 1.42x 稍低；但 LITE FY2027 PEG 0.92x 更低——LITE 從 CAGR 角度更便宜</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">7.3｜DCF 試算：三情境合理股價</div>
+<div class="card">
+  <strong>輸入參數：</strong>
+  <ul>
+    <li>基期 FCF（FY2026 估）：~$600-700M（Non-GAAP Operating Income ~$1.3B/年 - 利息 $240M - Capex $600M - 稅 = ~$450-700M FCF）</li>
+    <li>WACC：~11.5%（10Y UST 4.27% + Beta 2.07 × ERP 6% × 0.59 = 7.3% → ~11.5%；高 Beta 反映整合期風險）</li>
+    <li>永續成長率：3.5%（AI 光互連長期趨勢；但工業業務降低整體增長率）</li>
+  </ul>
+</div>
+<table style="margin-top:8px">
+  <thead><tr><th>情境</th><th>FCF CAGR（前 5 年）</th><th>FCF CAGR（後 5 年）</th><th>永續成長率</th><th>WACC</th><th>DCF 合理價</th><th>vs 當前 $247</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（30%）</strong><br>GM 50% 達成；負債降至 $1B；OCS + CPO 爆發；工業業務反轉</td><td class="mono">40%</td><td class="mono">20%</td><td class="mono">4.5%</td><td class="mono">11.0%</td><td class="mono" style="font-weight:700">$620</td><td class="mono" style="color:#166534">+151%</td></tr>
+    <tr class="base"><td><strong>中性（45%）</strong><br>FY2027 EPS $6.49 兌現；GM 達 44%；負債降至 $2.5B；工業業務穩定</td><td class="mono">25%</td><td class="mono">12%</td><td class="mono">3.5%</td><td class="mono">11.5%</td><td class="mono" style="font-weight:700">$330</td><td class="mono" style="color:#D97706">+34%</td></tr>
+    <tr class="bear"><td><strong>悲觀（25%）</strong><br>AI 週期放緩；工業持續低迷；$4B 負債利息侵蝕盈利；GM 未達目標</td><td class="mono">5%</td><td class="mono">0%</td><td class="mono">1.5%</td><td class="mono">13.0%</td><td class="mono" style="font-weight:700">$110</td><td class="mono" style="color:#DC2626">-55%</td></tr>
+  </tbody>
+</table>
+<div class="alert-violet" style="margin-top:8px">
+  <strong>中性 DCF $330（+34%）：</strong>比 LITE（+51%）和 MRVL（+78%）低，與 LRCX（+34%）相近。COHR 的中性 DCF 上行有限（+34%），但樂觀情境（+151%）非常吸引人——這個「中性有限但樂觀爆炸」的特性，使 COHR 更像一個「整合期轉型股」的特性，而非「穩定成長複利股」。
+</div>
+
+<div class="sub-head">7.4｜同業估值比較（COHR vs LITE vs 其他 AI 光互連公司）</div>
+<table>
+  <thead><tr><th>公司</th><th>市值</th><th>Fwd P/E（FY+1）</th><th>EPS CAGR</th><th>PEG</th><th>GM</th><th>DCF 中性上行</th><th>負債</th></tr></thead>
+  <tbody>
+    <tr style="background:var(--violet-bg)">
+      <td><strong>COHR（Coherent）</strong></td>
+      <td class="mono">~$47B</td>
+      <td class="mono">~41x</td>
+      <td class="mono">~20-30%</td>
+      <td class="mono">1.37x（合理）</td>
+      <td class="mono">39%（目標 50%+）</td>
+      <td class="mono">+34%</td>
+      <td class="mono">~$4B⚠️</td>
+    </tr>
+    <tr>
+      <td>LITE（Lumentum，直接比較）</td>
+      <td class="mono">~$46B</td>
+      <td class="mono">71x（FY2027）</td>
+      <td class="mono">~61-77%</td>
+      <td class="mono">0.92x★（FY2027）</td>
+      <td class="mono">42.5%（目標 45%+）</td>
+      <td class="mono">+51%</td>
+      <td class="mono">極低</td>
+    </tr>
+    <tr>
+      <td>MRVL（Marvell，DSP 生態系夥伴）</td>
+      <td class="mono">$78B</td>
+      <td class="mono">24x</td>
+      <td class="mono">~38-42%</td>
+      <td class="mono">0.62x★</td>
+      <td class="mono">~65%（ASIC）</td>
+      <td class="mono">+78%</td>
+      <td class="mono">中</td>
+    </tr>
+    <tr>
+      <td>ANET（Arista，AI 網路，間接比較）</td>
+      <td class="mono">$171B</td>
+      <td class="mono">~40x</td>
+      <td class="mono">~20%</td>
+      <td class="mono">~2.0x</td>
+      <td class="mono">~64%</td>
+      <td class="mono">+69%</td>
+      <td class="mono">零負債</td>
+    </tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:10px">
+  <p><strong>COHR vs LITE（最核心比較）：</strong></p>
+  <ul>
+    <li>市值幾乎相同（$47B vs $46B），但財務結構差異巨大：COHR 有 $4B 負債，LITE 幾乎零負債</li>
+    <li>GM COHR 39% vs LITE 42.5%——LITE 高 3.5ppts，這直接反映在 EPS 成長率上（LITE CAGR 61-77% vs COHR 20-30%）</li>
+    <li>EPS CAGR 的差距來自：① LITE InP 更深的市佔 + 更快的 GM 提升 ② COHR 的工業業務拖累 + 利息費用</li>
+    <li>COHR 的優勢：FY2027 PEG 1.27x（合理）vs LITE 0.92x（略便宜於 COHR）——但差距不大；COHR 在矽光子和 VCSEL 上的廣度是 LITE 沒有的；NVIDIA 雙供應商策略使兩者都有確定採購</li>
+    <li><strong>結論：若只能選一個，LITE 的財務質量（更低負債、更高 GM、更快 CAGR）更好；但 COHR 的技術多元化廣度使它在矽光子崛起時有更大的上行彈性，也更適合作為「技術路線對沖」的補充持倉。</strong></li>
+  </ul>
+</div>
+
+<div class="sub-head">7.5｜綜合估值判斷</div>
+<table>
+  <thead><tr><th>維度</th><th>訊號</th><th>評語</th></tr></thead>
+  <tbody>
+    <tr><td>歷史分位（7.1）</td><td><span class="neutral">🟡 合理（~65% 歷史分位；AI 基礎設施溢價合理）</span></td><td>不便宜但也不貴；以成長潛力調整後合理</td></tr>
+    <tr><td>成長性匹配（7.2 PEG）</td><td><span class="beat">🟢 合理（中性 PEG 1.37x；FY2027 PEG 1.27x）</span></td><td>比 KLAC（2.97x）和 LRCX（1.97x）更有吸引力</td></tr>
+    <tr><td>DCF 內在價值（7.3）</td><td><span class="beat">🟢 稍低估（中性 DCF +34%；樂觀 +151%）</span></td><td>中性上行 +34% 確認有安全邊際；樂觀情境吸引人</td></tr>
+    <tr><td>同業相對（7.4）</td><td><span class="neutral">🟡 合理折扣（vs LITE：負債折扣合理；vs ANET：成長折扣合理）</span></td><td>$4B 負債是相對 LITE 折扣的主要來源；合理</td></tr>
+    <tr><td>長期成長確信度（§2.5）</td><td><span class="neutral">🟡 中等確信（Book-to-Bill >4x 最強確認；但 GM 路徑慢 + 負債壓力）</span></td><td>比 LITE 低，因為整合包袱和 InP 深度劣勢</td></tr>
+  </tbody>
+</table>
+
+<div class="rating-block violet" style="margin-top:16px">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">當前評價：有條件建倉（20-25%）——中性 DCF +34%，PEG 1.37x（合理），Book-to-Bill >4x（最強需求確認），FY2027 成長加速確認，S&P 500 加入 + NVIDIA 雙供應商 = 近期技術面正面；但 $4B 負債 + GM 39%（低於 LITE）使 COHR 的確信度低於 LITE</div>
+    <div class="body">$247 的 COHR 在「AI 光互連廣度技術對沖」的組合中有特定位置——不是替代 LITE，而是補充 LITE 的「矽光子 + VCSEL」覆蓋缺口。若已持有 LITE，COHR 提供了技術路線多元化。若未持有 LITE，COHR 是次優選擇（LITE 的財務質量更好）。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>分析師目標價對照：</strong><br>
+  TradingView（15 位）：平均目標 $275（+11%）；高 $375，低 $170<br>
+  Stifel（2026-03-20 最新）：上調至 $275（+11%）；OFC 2026 展示後<br>
+  Morgan Stanley（2026-03）：$250（+1%）<br>
+  JPMorgan（2026-01-15）：置於「Positive Catalyst Watch」<br>
+  MarketBeat 共識：$231.25（稍低於當前，部分目標設置較早）<br>
+  本分析中性 12 個月目標：$300-360（FY2027E $6.5-8 × 40-50x 倍數確認加速成長）
+</div>
+
+<!-- §8 -->
+<div class="sec-head">§8 ｜ 投資結論與情境預測</div>
+<div class="sub-head">財報信號與估值銜接</div>
+<div class="card">
+  <p>Q2 FY2026（2026-02-04）確認了 COHR 的三個核心業務信號：① 資料中心 Book-to-Bill >4x（訂單能見度延伸至 2028）② 6 英吋 InP 已達翻倍目標 80%（供應瓶頸即將突破）③ FY2027 成長率將超過 FY2026（加速成長確認）。隨後的 NVIDIA $2B 投資（2026-03-02）和 OFC 2026 展示（2026-03-17，6.4T CPO + 三平台廣度）進一步確認了 COHR 在 AI 光互連生態系中的雙供應商地位。</p>
+  <p>股票從全時最高 $300（2026-03-02）回落至 ~$247（-17%），主要原因是 S&P 500 加入前的「買消息賣事實」動態（從 $45 漲至 $300，在加入日前 3 天回調）。這個 -17% 的回調是 COHR 的建倉機會——業務基本面沒有任何惡化，5 次連續 Beat 的執行模式仍然完整。</p>
+</div>
+
+<div class="sub-head">三年情境預測（Non-GAAP FY 口徑）</div>
+<table>
+  <thead><tr><th>情境</th><th>核心假設</th><th>FY2028E EPS</th><th>EPS CAGR</th><th>目標 P/E</th><th>目標股價</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（30%）</strong><br>GM 50% 達成；負債降至 $1.5B；OCS $1B+；CPO 爆發；矽光子崛起</td><td>FY2027 EPS $9 → FY2028 $12</td><td class="mono">$12</td><td class="mono">~43%</td><td class="mono">45~55x</td><td class="mono" style="font-weight:700;color:#166534">$540~$660</td></tr>
+    <tr class="base"><td><strong>中性（45%）</strong><br>FY2027 EPS $7-8；GM 達 44%；負債降至 $2.5B；工業反轉</td><td>FY2027 $7.5 → FY2028 $9.5</td><td class="mono">$9.5</td><td class="mono">~32%</td><td class="mono">35~45x</td><td class="mono" style="font-weight:700;color:#D97706">$333~$428</td></tr>
+    <tr class="bear"><td><strong>悲觀（25%）</strong><br>AI 光互連競爭加劇；工業持續低迷；GM 未改善；$4B 負債壓力</td><td>FY2027 $5.5 → FY2028 $6.5</td><td class="mono">$6.5</td><td class="mono">~17%</td><td class="mono">25~32x</td><td class="mono" style="font-weight:700;color:#DC2626">$163~$208</td></tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:8px">
+  <strong>機率加權預期目標股價（3 年）：</strong><br>
+  30% × $600 + 45% × $381 + 25% × $186 = <strong class="mono">$393（3 年，+59%）</strong><br>
+  12 個月目標（Q3 FY2026 確認加速）：30% × $380 + 45% × $310 + 25% × $200 = <strong class="mono">$309（+25%）</strong>
+</div>
+
+<div class="sub-head">最終結論</div>
+<div class="rating-block green">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">投資判斷：有條件建倉（20-25%）——S&P 500 加入前後的 -17% 回調是建倉機會；中性 DCF +34%；PEG 1.37x 合理；Book-to-Bill >4x 確認業務加速；但 COHR 是「LITE 的技術廣度補充」而非替代，確信度低於 LITE</div>
+    <div class="body">$247 的 COHR 在二十一個標的中排名約 15-16 名（介於 LITE 第 14 名和 TER 第 16 名之間）。COHR 的核心投資論點是「三平台廣度技術對沖 + NVIDIA 雙供應商 + 整合完成後 GM 大幅提升」，但 $4B 負債和 GM 路徑比 LITE 慢是相對劣勢。COHR 最適合作為已持有 LITE 的組合的補充倉位（覆蓋矽光子和 VCSEL 技術路線），或是不想持有 LITE 但想要 AI 光互連曝露的投資者的次優選擇。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="sub-head" style="margin-top:0">① 短期催化劑（0~12 個月）</div>
+  <p><strong>Q3 FY2026 財報（2026-05-06/13 est.）</strong>——指引中位 Revenue $1.77B 和 Non-GAAP EPS $1.38。考慮到 5 次連續 Beat 的模式（平均 Beat 15.7%），Q3 的 EPS 很可能達到 $1.48-1.55。若 ① Q3 Revenue 達到 $1.8B+（超指引上限）② OCS 首季收入確認（年底開始）③ 工業業務如期反彈，12 個月目標 $309（+25%）可能快速達到。S&P 500 加入（2026-03-23）帶來的被動基金需求已基本定價，加入後的回調（歷史均值 -1.7%）反而可能是更好的入場點。</p>
+
+  <div class="sub-head">② 中期成長可見度（1~3 年）</div>
+  <p>中期最確定的是 <strong>資料中心收入的持續加速</strong>——Book-to-Bill >4x 且訂單延伸至 2028，說明 FY2027 的資料中心收入能見度極高（管理層都罕見地給出「FY2027 成長率超過 FY2026」的承諾）。200G VCSEL 1.6T 在 2026 H2 爬坡，是 COHR 特有的第三條成長線（LITE 沒有 VCSEL 業務）。中期最大不確定性是 <strong>GM 提升速度</strong>——從 39% 到 50% 的路徑需要工業業務反轉（Q3 開始）+ 1.6T 混合比例提升 + InP 6 英吋效率改善。若 FY2027 Non-GAAP GM 達到 43-44%（比目前 39% 高 4-5ppts），EPS 超共識的概率大幅提升。</p>
+
+  <div class="sub-head">③ 長期成長護城河（3 年後）</div>
+  <p>COHR 的長期論點在於 <strong>「技術路線最終多元化勝過單一深度」的長期趨勢</strong>。AI 資料中心的光互連需求將從「目前以 InP EML 為主」過渡到「矽光子 + VCSEL 大規模商業化」的多平台共存時代（2027-2030）。在這個轉型過程中，COHR 是唯一同時在三條技術路線上有深度能力的公司，且 OFC 2026 展示的 6.4T CPO 和 12.8T+ 預覽說明 COHR 的技術路線圖延伸至 2029-2030 年以後。CEO Jim Anderson 的 Lattice Semiconductor 轉型成功案例說明他有能力將「整合中的多技術平台公司」轉型為「高利潤率技術主導者」——若 COHR 的整合完成（FY2027-2028），GM 從 39% 提升至 48%+，負債從 $4B 降至 $1.5B，COHR 的估值框架將快速向 LITE 靠攏（甚至超越，因為 COHR 的技術廣度更大）。</p>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>進場建議：</strong>
+  <ul>
+    <li>當前 $247（Fwd P/E ~41x；PEG 1.37x；中性 DCF +34%）：<strong>建倉 20-25%</strong>（S&P 500 加入後的 -17% 回調是機會；比 LITE 確信度稍低，倉位稍小）</li>
+    <li>若 S&P 500 加入（2026-03-23）後繼續回調至 <strong>$210-230</strong>（Fwd P/E ~35-38x；PEG 1.15-1.27x）→ 建倉 35-45%</li>
+    <li>Q3 FY2026 財報（2026-05）確認 Revenue 超 $1.8B + GM ≥ 40% + OCS 首季收入 → 加碼至 50-55%</li>
+    <li>若跌至 <strong>$180-200</strong>（Fwd P/E ~30-33x；中性 DCF 接近公允） → 積極建倉 60%+</li>
+    <li><strong>COHR vs LITE 選擇：</strong>若必須只選一個，選 LITE（更高 CAGR、更低負債、更深 InP 護城河）；若想同時持有，COHR 20-25% + LITE 25-30% = AI 光互連完整覆蓋（InP 深度 + 矽光子/VCSEL 廣度）</li>
+  </ul>
+</div>
+
+<div class="sub-head">下行風險量化</div>
+<div class="card">
+  <p>若 EPS CAGR 降至 15%（工業持續低迷 + GM 未改善）：<strong class="mono">合理估值 $180-230（-7% ～ -27%）</strong></p>
+  <p>若 AI 週期反轉（EPS CAGR 降至 5%）：<strong class="mono">合理估值 $110-165（-33% ～ -55%）</strong></p>
+  <div class="alert-danger">
+    <strong>⚠️ $4B 負債在業務下行期的風險：</strong>若 AI 光互連需求在 2028 年放緩，COHR 的 $240M/年利息費用 + 高折舊（M&A 攤銷 ~$100-150M/季）可能使 GAAP EPS 轉負，引發「高負債科技股」的估值重新定價（比 LITE 的下行幅度更大）。這是 COHR 相對 LITE 的核心風險——COHR 的下行（-33~55%）比 LITE（-52%）稍好，但考慮到 COHR 的 EPS CAGR 也低於 LITE，COHR 的風險調整後回報並不比 LITE 更好。
+  </div>
+</div>
+
+<div class="sub-head">最關鍵監測指標</div>
+<table>
+  <thead><tr><th>#</th><th>監測指標</th><th>性質</th><th>閾值</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>Non-GAAP Gross Margin 趨勢</strong><br>Q2 FY2026 39%；Q3 指引 38.5-40.5%。GM 是 COHR 整合成功最重要的財務指標——從 39% → 45% → 50% 的路徑決定 EPS 超預期的速度。若 FY2027 任何季度 GM ≥ 42%（追平 LITE Q2 水準），說明整合效果超預期，估值重估加速。</td><td><span class="beat">🔵 最重要的長期成長領先信號</span></td><td>若 FY2027 任何季度 Non-GAAP GM ≥ 42%，目標股價上修至 $380-420；若停滯在 39-40%，中性情境維持 $330</td></tr>
+    <tr><td>2</td><td><strong>資料中心 Book-to-Bill + OCS 首季收入</strong><br>Book-to-Bill >4x 說明 2026-2028 的資料中心業務能見度極高。OCS 的首季收入（預計 FY2026 Q3/Q4）是「下一個十億業務」的確認里程碑。</td><td>業務成長加速信號</td><td>若 OCS 單季收入達到 $50M+（FY2026 Q4），OCS 爬坡路徑確認，目標股價 +10-15%；若 Book-to-Bill 降至 2x 以下，需重新評估資料中心業務能見度</td></tr>
+    <tr><td>3</td><td><strong>負債降低進度追蹤</strong><br>$4B 負債是 COHR 最重要的財務包袱。每季追蹤負債水準（季報中的 Long-term Debt）和 FCF 是否充足支持還款計畫。若 FY2027 負債降至 $2.5B 以下，估值折扣開始縮小。</td><td>財務改善信號（間接護城河強化指標）</td><td>若 FY2027 末長期負債 &lt; $2.5B（vs 目前 $4B），COHR vs LITE 的估值折扣縮小，目標股價上修；若負債增加（再次收購），立即評估整合能力</td></tr>
+  </tbody>
+</table>
+
+<!-- 二十一標的全覽 -->
+<div class="sec-head">附錄：二十一個標的完整核心對照表（加入 COHR）</div>
+<table style="font-size:7px">
+  <thead><tr><th>指標</th><th>TSM</th><th>NVDA</th><th>AVGO</th><th>GOOGL</th><th>MSFT</th><th>AMZN</th><th>AAPL</th><th>META</th><th>TSLA</th><th>AMD</th><th>MRVL</th><th>VRT</th><th>ANET</th><th>LRCX</th><th>ASML</th><th>KLAC</th><th>AMAT</th><th>TER</th><th>LITE</th><th>MU</th><th>COHR</th></tr></thead>
+  <tbody>
+    <tr><td>護城河</td><td>9.5</td><td>9.5</td><td>8.5</td><td>9.0</td><td>9.0</td><td>9.0</td><td>9.5</td><td>8.5</td><td>6.5⚠️</td><td>8.0↑</td><td>8.0↑</td><td>8.5↑</td><td>9.0</td><td>8.5</td><td>10.0★</td><td>9.0</td><td>8.5↑</td><td>7.5↑</td><td>8.5↑</td><td>7.0↑</td><td>7.5↑</td></tr>
+    <tr><td>現價</td><td>$340</td><td>$180</td><td>$316</td><td>$307</td><td>$390</td><td>$209</td><td>$250</td><td>$615</td><td>$383</td><td>$199</td><td>$90</td><td>$265</td><td>$136</td><td>$220</td><td>$1,370</td><td>$1,465</td><td>$355</td><td>$300</td><td>$650</td><td>$444</td><td>$247</td></tr>
+    <tr><td>Fwd P/E（FY+1）</td><td>24x</td><td>22x★</td><td>24x</td><td>26x</td><td>22x★</td><td>27x</td><td>29x</td><td>20x★</td><td>170x⚠️</td><td>30x</td><td>24x</td><td>44x⚠️</td><td>40x</td><td>36x</td><td>39x</td><td>40x⚠️</td><td>32x</td><td>49x⚠️</td><td>71x（FY2027）</td><td>10x★★★</td><td>41x</td></tr>
+    <tr><td>EPS CAGR（3年）</td><td>~23%</td><td>~34%</td><td>~38-41%</td><td>~17-23%</td><td>~18-22%</td><td>~28-36%</td><td>~20-27%</td><td>~19-25%</td><td>分歧</td><td>~34-48%</td><td>~38-42%</td><td>~24-34%</td><td>~20%</td><td>~16-20%</td><td>~17-27%</td><td>~13.5%</td><td>~17-22%</td><td>~29-39%</td><td>~61-77%</td><td>~67-113%</td><td>~20-30%</td></tr>
+    <tr><td>PEG</td><td>1.02x</td><td>0.64x</td><td>0.60x★</td><td>1.13x</td><td>~1.08x</td><td>~0.84x</td><td>~1.26x</td><td>~0.93x</td><td>4.06x⚠️</td><td>0.59x★</td><td>0.62x★</td><td>1.42x</td><td>~2.0x</td><td>~1.97x</td><td>1.44x</td><td>2.97x⚠️</td><td>1.47x</td><td>1.41x</td><td>1.42x/0.92x</td><td>0.13x★</td><td>1.37x</td></tr>
+    <tr><td>DCF 中性上行</td><td>+4%</td><td>+44%</td><td>+36%</td><td>+24%</td><td>+28%</td><td>+53%</td><td>+16%</td><td>+30%</td><td>-48%</td><td>+56%</td><td>+78%</td><td>+11%</td><td>+69%</td><td>+34%</td><td>+53%</td><td>+9%</td><td>+35%</td><td>+20%</td><td>+51%</td><td>+46%</td><td>+34%</td></tr>
+    <tr><td>最終判斷</td><td>🟡</td><td>🟢 積極</td><td>🟡</td><td>🟢</td><td>🟢 積極</td><td>🟢</td><td>🟡 等$215</td><td>🟢 積極</td><td>🔴</td><td>🟢 積極</td><td>🟢 積極</td><td>🟡 等$220</td><td>🟢 積極</td><td>🟢</td><td>🟢 積極</td><td>🟡 等$1,200</td><td>🟢 積極</td><td>🟡 等Q1確認</td><td>🟢 有條件20-25%</td><td>🟢 積極建倉★</td><td>🟢 有條件20-25%</td></tr>
+  </tbody>
+</table>
+
+<div class="rating-block violet" style="margin-top:20px">
+  <div class="icon">🏆</div>
+  <div>
+    <div class="title">二十一個標的最終綜合排名</div>
+    <div class="body">
+      <strong>🥇 NVDA</strong> | <strong>🥈 MSFT</strong> | <strong>🥉 META</strong><br>
+      <strong>4️⃣ AMD</strong> | <strong>5️⃣ MRVL</strong> | <strong>6️⃣ ASML</strong> | <strong>7️⃣ ANET</strong> | <strong>8️⃣ AMZN</strong> | <strong>9️⃣ LRCX</strong> | <strong>🔟 AMAT</strong><br>
+      <strong>1️⃣1️⃣ AVGO</strong> | <strong>1️⃣2️⃣ GOOGL</strong> | <strong>1️⃣3️⃣ KLAC</strong><br>
+      <strong>1️⃣4️⃣ MU</strong>（最便宜，Fwd P/E 10.1x）| <strong>1️⃣5️⃣ LITE</strong>（AI 光互連深度，DCF +51%）<br>
+      <strong>1️⃣6️⃣ COHR ★NEW</strong>：<strong>AI 光互連廣度（InP + 矽光子 + VCSEL 三平台）+ NVIDIA 雙供應商 + Book-to-Bill >4x（最強需求確認）+ FY2027 加速確認 + S&P 500 加入 + 中性 DCF +34% + PEG 1.37x 合理</strong>。但 $4B 負債 + GM 39%（低於 LITE 42.5%）+ EPS CAGR 20-30%（低於 LITE 61-77%）使 COHR 排名低於 LITE。COHR 的最佳定位是「LITE 的技術廣度補充」——兩者同時持有形成「AI 光互連最完整覆蓋」。<br>
+      <strong>1️⃣7️⃣ TER</strong>（等Q1確認）| <strong>1️⃣8️⃣ VRT</strong>（等$220）| <strong>1️⃣9️⃣ AAPL</strong>（等$215）| <strong>2️⃣0️⃣ TSM</strong> | <strong>❌ TSLA</strong><br><br>
+      <strong>★ COHR 的特殊定位：「AI 光互連生態系中的技術廣度對沖者」</strong><br>
+      COHR 是唯一同時擁有 InP EML + 矽光子 + VCSEL 三大光互連技術平台的公司，這個廣度使它能在技術路線轉型時保持競爭力（vs LITE 的 InP 純粹深度）。若矽光子技術在 2027-2029 年快速崛起（替代部分 InP 應用），COHR 的估值將快速向 LITE 靠攏；若 InP 持續主導，LITE 的護城河優勢持續擴大。因此，最完整的 AI 光互連配置是：<strong>LITE（25-30% 倉位，InP 深度）+ COHR（15-20% 倉位，廣度補充）</strong> = 覆蓋所有光互連技術路線。<br><br>
+      <strong>「AI 完整光互連生態系」最佳組合：MRVL（DSP）+ LITE（InP 深度雷射 + OCS）+ COHR（廣度三平台）+ ANET（AI 網路 EOS）</strong><br>
+      MRVL（信號處理 DSP）+ LITE（InP EML 主宰 + OCS 積壓）+ COHR（矽光子 + VCSEL + InP 廣度）+ ANET（AI 數據中心高速以太網）= 覆蓋 AI 光互連從「雷射光源→信號調製→光路交換→網路骨幹」的完整生態系，且技術路線完全互補。
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:32px;font-size:12px;color:var(--text-sub);">
+  <strong>免責聲明：</strong>本報告由 Claude AI 根據公開市場資料生成，僅供研究參考，不構成投資建議。數據來源：Coherent IR/SEC（Q2 FY2026，2026-02-04）、Motley Fool Transcript、Investing.com（$239-251 盤中）、TradingView（52 週高 $300.20；Beta 2.07）、WallStreetZen（24 位分析師：FY2026E $5.18 / FY2027E $6.49）、Futurum Research、24/7 Wall St.、StockTitan（OFC 2026 展示）、Stifel（目標上調至 $275，2026-03-20）、MacroTrends（市值 $40-48B）。數據截止 2026-03-20。<br><br>
+  <strong>財年說明：</strong>Coherent 財年（FY）結束於 6 月底。FY2026 Q2 = 截至 2025-12-31（2026-02-04 發布）；Q3 FY2026 = 截至 2026-03-31（預計 2026-05-06/13 發布）。WallStreetZen 的 FY2026 EPS $5.18 對應 COHR FY2026（截至 2026-06）；本報告基於 Q1+Q2 已公布數據（$1.10+$1.29=$2.39）+ Q3 指引中位 $1.38 + Q4 估計 $1.45-1.55 = FY2026E ~$6.2-6.7（可能高於 WallStreetZen 的 $5.18 舊共識）。<br><br>
+  <strong>特別注意：</strong>① COHR 前身為 II-VI Incorporated，2022 年以 $5.7B 收購 Coherent Inc.，形成今日的「Coherent Corp.」——$4B 負債是這次收購的遺留問題，也是 COHR 與 LITE（零負債）最重要的財務差異 ② COHR 的 Beta 2.07（TradingView）是二十一個標的中最高的之一，說明股票波動性極大，需要承受更大的短期波動 ③ S&P 500 加入（2026-03-23）前的股票在 $247-300 之間波動，歷史上 S&P 500 新加入標的在加入後 21 個交易日平均 underperform 1.7%，可能提供更好的入場機會 ④ COHR 和 LITE 均同時獲得 NVIDIA $2B 投資（2026-03-02），反映 NVIDIA 的「雙供應商策略」而非對單一供應商的特殊偏好。<br><br>
+  <strong>報告版本：</strong>DD_COHR_20260320 ｜ 模式：深度版 ｜ 生成時間：2026-03-20
+</div>
+</div>
+</body>
+</html>

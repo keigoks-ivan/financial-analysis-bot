@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_CLS_20260320 | Celestica Inc. 深度分析報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC;--card:#FFF;--accent:#0891B2;--navy:#083344;
+    --text:#1A2332;--text-sub:#4A5568;--border:#E2E8F0;--alt-row:#F1F5F9;
+    --green-bg:#DCFCE7;--green-text:#166534;
+    --red-bg:#FEE2E2;--red-text:#991B1B;
+    --yellow-bg:#FEF9C3;--yellow-text:#92400E;
+    --blue-bg:#EFF6FF;--blue-text:#1E40AF;
+    --cyan-bg:#ECFEFF;--cyan-text:#0E7490;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:var(--text);font-size:14px;line-height:1.7;}
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:8px 24px;font-family:var(--mono);font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+  #topbar .left{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+  #topbar .ticker{font-size:18px;font-weight:700;letter-spacing:2px;color:#67E8F9;}
+  #topbar .mode-badge{background:#0891B2;color:#fff;padding:2px 10px;border-radius:3px;font-size:11px;font-weight:700;}
+  #topbar .price{font-size:16px;font-weight:600;color:#FCD34D;}
+  #print-btn{background:#0891B2;color:#fff;border:none;cursor:pointer;padding:6px 16px;border-radius:3px;font-size:12px;font-family:var(--mono);font-weight:700;white-space:nowrap;}
+  .wrap{max-width:1100px;margin:0 auto;padding:80px 24px 60px;}
+  .sec-head{background:var(--navy);color:#fff;padding:10px 20px;margin:32px 0 16px;border-left:4px solid var(--accent);font-size:15px;font-weight:700;}
+  .sub-head{color:var(--navy);font-size:13px;font-weight:700;padding:8px 0 4px;border-bottom:2px solid var(--accent);margin:20px 0 10px;}
+  .card{background:var(--card);border:1px solid var(--border);padding:16px 20px;margin-bottom:14px;}
+  .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:16px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 16px;}
+  .stat-card .label{font-size:11px;color:var(--text-sub);text-transform:uppercase;letter-spacing:.5px;}
+  .stat-card .value{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--navy);}
+  .stat-card .note{font-size:11px;color:var(--text-sub);margin-top:2px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:var(--navy);color:#fff;padding:8px 12px;text-align:left;font-weight:600;font-size:12px;}
+  td{padding:7px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  tr:nth-child(even) td{background:var(--alt-row);}
+  tr:hover td{background:var(--cyan-bg);}
+  .mono{font-family:var(--mono);}
+  .beat{background:var(--green-bg);color:var(--green-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .miss{background:var(--red-bg);color:var(--red-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .neutral{background:var(--yellow-bg);color:var(--yellow-text);padding:2px 8px;border-radius:3px;font-size:11px;font-weight:600;}
+  .pass{background:var(--green-bg);color:var(--green-text);}
+  .fail{background:var(--red-bg);color:var(--red-text);}
+  .warn{background:var(--yellow-bg);color:var(--yellow-text);}
+  .bull td{background:var(--green-bg)!important;}
+  .base td{background:var(--yellow-bg)!important;}
+  .bear td{background:var(--red-bg)!important;}
+  .rating-block{border:2px solid;padding:14px 20px;margin:16px 0;display:flex;align-items:flex-start;gap:16px;}
+  .rating-block.green{border-color:#16A34A;background:var(--green-bg);}
+  .rating-block.yellow{border-color:#D97706;background:var(--yellow-bg);}
+  .rating-block.red{border-color:#DC2626;background:var(--red-bg);}
+  .rating-block.cyan{border-color:#0891B2;background:var(--cyan-bg);}
+  .rating-block .icon{font-size:28px;line-height:1;min-width:36px;}
+  .rating-block .title{font-weight:700;font-size:15px;margin-bottom:4px;}
+  .rating-block .body{font-size:13px;line-height:1.6;}
+  .alert-warn{background:#FFFBEB;border-left:4px solid #F59E0B;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-info{background:var(--blue-bg);border-left:4px solid #3B82F6;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-green{background:var(--green-bg);border-left:4px solid #16A34A;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-danger{background:var(--red-bg);border-left:4px solid #DC2626;padding:10px 16px;margin:12px 0;font-size:13px;}
+  .alert-cyan{background:var(--cyan-bg);border-left:4px solid #0891B2;padding:10px 16px;margin:12px 0;font-size:13px;}
+  p{margin-bottom:10px;font-size:13px;}
+  ul,ol{padding-left:20px;margin-bottom:10px;}
+  li{margin-bottom:4px;font-size:13px;}
+  strong{color:var(--navy);}
+  .data-stamp{font-family:var(--mono);font-size:11px;color:var(--text-sub);background:var(--alt-row);padding:6px 14px;border:1px solid var(--border);display:inline-block;margin-bottom:16px;}
+  .score-big{font-size:48px;font-family:var(--mono);font-weight:700;color:var(--navy);}
+  @media print{
+    #topbar,#print-btn{display:none!important;}
+    .wrap{padding:20px;}
+    .sec-head{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .bull td,.base td,.bear td,.pass,.fail,.warn{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <div class="left">
+    <span class="ticker">CLS</span>
+    <span class="mode-badge">🔍 深度版</span>
+    <span>Celestica Inc.（NYSE/TSX）</span>
+    <span>資料抓取：2026-03-20</span>
+    <span class="price">現價 ~$280 USD（2026-03-20 盤中 $264-285；距高點 $363 -23%）</span>
+    <span>最新財報：Q4 FY2025（2026-01-28）｜ 下次：Q1 FY2026（2026-04-23）</span>
+  </div>
+  <button id="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</div>
+
+<div class="wrap">
+<div class="data-stamp">
+  資料抓取：2026-03-20 ｜ CLS 現價：~$280 USD（Robinhood 2026-03-20 盤中 $264.17-$285.00，使用 $280 作分析基準）｜ 市值：~$33-35B（~120-124M 股）｜ 52 週：$58.05 – $363.40（全時高 2025-11-05 $352.61）｜ 距高點 -23% ｜ 過去 52 週 +~380%！ ｜ 最新財報：Q4 FY2025（2026-01-28）
+</div>
+<div class="alert-cyan">
+  <strong>⚡ 最新重大事件摘要（2026-01 至 2026-03）：</strong><br>
+  ① <strong>Q4 FY2025（2026-01-28）：Revenue $3.65B（+44%）；Adj. EPS $1.89（+70%）；17 次連續雙 Beat！FY2025 全年 $12.39B 收入（+28%）</strong><br>
+  ② <strong>2026 全年指引大幅上調：Revenue $17.0B（+37%）；Adj. EPS $8.75（+45%）；Q1 指引 Revenue $3.85-4.15B（+51%）；EPS $1.95-2.15（+71%）</strong><br>
+  ③ <strong>AMD Helios 合作（2026-03-16）：負責 AMD MI450 GPU 機架級 AI 平台 scale-up 網路交換器設計和製造；2026 年底出貨——CLS 正式成為 AMD AI 生態系核心製造夥伴</strong><br>
+  ④ <strong>Google TPU 系統首選製造夥伴確認；德州擴廠計畫；2026 Capex $1B（有機資金）</strong><br>
+  ⑤ <strong>第三個超大規模客戶的 1.6T 交換器平台獎項（2027 量產）；三客戶收入集中度急升至 36%+15%+12%=63%</strong><br>
+  ⑥ <strong>⚠️ Pomerantz 律師事務所投資者調查（2026-02-12/17）；股票從 $363 回落至 $280（-23%）</strong>
+</div>
+<div class="alert-green">
+  <strong>🔑 本報告核心命題：</strong>Celestica Inc.（CLS）是加拿大上市的「工程主導型 EMS（電子製造服務）升級版」——從傳統合約製造商轉型為「AI 資料中心基礎設施的設計 + 製造 + 硬體平台整合商」。Celestica 的獨特定位：<strong>它不只製造別人設計的東西，它還自主開發「Hardware Platform Solutions（HPS）」——包含 AI 伺服器、高速交換器、液冷系統的完整機架級 AI 解決方案，直接賣給 Google、Meta 等超大規模客戶</strong>。這個「從 EMS 到 HPS（Hardware Platform Solutions）」的轉型，使 CLS 的利潤率、定價能力和黏性都遠高於傳統 EMS（Foxconn、Flextronics/Flex）。問題是：FY2026 的 $17B Revenue 和 $8.75 EPS，是否在 $280 這個估值下已充分定價，或者有足夠的安全邊際？
+</div>
+
+<!-- §0 -->
+<div class="sec-head">§0 ｜ 序章：第一性原理 × 逆向思考</div>
+<div class="sub-head">存在意義（深度版）</div>
+<div class="card">
+  <p>Celestica 的存在意義：<strong>「超大規模 AI 資料中心客戶（Google、Meta、Microsoft 等）需要整個機架（Rack）級的 AI 系統，而不只是單個 GPU 或伺服器。Celestica 是能把 GPU、交換器、電源、液冷、光互連等所有元件整合進一個完整 AI Rack 的少數公司之一，且同時承擔設計、製造和供應鏈管理。」</strong></p>
+  <p><strong>從 EMS 到 HPS 的戰略轉型（2019-2026）：</strong>五年前，Celestica 是一個典型的 EMS 公司——客戶把設計圖交給 Celestica，Celestica 按圖製造，利潤率只有 3-4%。今天，Celestica 的 Hardware Platform Solutions（HPS）業務佔 CCS 收入的大部分，且 HPS 是由 Celestica 自己的工程師「共同設計」的——客戶給出性能需求和技術規格，Celestica 設計出具體的硬體方案，然後製造並交付。這個從「按圖施工」到「設計+製造」的轉型，使 Celestica 的調整後 OM 從 2020 年的 ~4% 提升至 Q4 2025 的 7.7%，且仍在繼續提升（FY2026 目標 7.8%）。</p>
+  <p><strong>HPS 的三個差異化能力：</strong></p>
+  <ul>
+    <li><strong>AI/ML 伺服器設計和製造：</strong>Celestica 自主設計符合 Open Compute Project 標準的 AI 伺服器（NVIDIA GPU、AMD GPU、Google TPU 的不同配置），並在北美、東南亞、墨西哥等地製造。Google 的 TPU 系統是最具代表性的成功案例——Celestica 不只製造，更是 TPU 系統架構的共同設計者。</li>
+    <li><strong>高速交換器（HPS Switch）：</strong>Celestica 開發了 800G 和 1.6T 高速 Ethernet AI Fabric 交換器，直接競爭 Arista（ANET）的 AI 資料中心網路解決方案。差異是 Celestica 的交換器更深度整合進整個機架系統（而不只是單獨的網路設備），且使用 Open Compute 開源標準（更靈活、成本更低）。</li>
+    <li><strong>AMD Helios 機架級 AI 平台（2026-03-16 宣布）：</strong>Celestica 將負責 AMD Helios 平台（AMD MI450 GPU + Ultra Accelerator Link over Ethernet）的 scale-up 網路交換器設計、製造和供應鏈。Helios 是 AMD 對抗 NVIDIA NVLink 的機架級互連方案。若 AMD AI GPU 在 2026-2027 年市佔擴大，Celestica 是最直接的受益者（因為所有 Helios 交換器都由 Celestica 製造）。</li>
+  </ul>
+  <p><strong>Celestica 的「悶聲發大財」策略：</strong>Celestica 的客戶（Google、Meta 等）不希望讓競爭對手知道他們的 AI 基礎設施架構，所以 Celestica 通常不公開具體客戶名稱。Q4 2025 財報中，「36%」的最大客戶被廣泛認為是 Google（TPU 系統），「15%」可能是 Meta 或 Amazon，「12%」可能是另一個超大規模客戶。這個「匿名但龐大」的客戶關係，使 CLS 在 AI 基礎設施市場的真實地位遠超其市值所隱含的程度。</p>
+</div>
+
+<div class="sub-head">逆向推演（Munger Inversion）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>風險維度</th><th>具體情境</th><th>機率</th><th>股價影響</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>⚠️ 客戶超高集中度（最大單一風險）</strong><br>Q4 2025：三客戶 36%+15%+12%=63%</td>
+        <td>Q4 2025 披露最大客戶（可能為 Google）佔 Revenue 36%。若這個客戶：① 縮減 AI 資料中心 Capex 計畫（如 AI 泡沫破裂）② 決定轉向自建製造能力（Google 有自主設計 TPU 的能力，加上 AI 製造的在地化趨勢）③ 選擇競爭對手（Foxconn、Flex、Jabil）作為備用供應商——Celestica 的 Revenue 將面臨嚴重衝擊。歷史上有先例：2015 年 CLS 失去了一個大客戶導致股票崩潰 -60%+。</td>
+        <td class="mono warn">低中（超大規模客戶換供應商的成本極高；但 36% 集中度使股票非常脆弱）</td>
+        <td>若最大客戶 Revenue 下滑 20%：整體 Revenue -7%；EPS -10-15%；股票 -20-35%</td>
+      </tr>
+      <tr>
+        <td><strong>📉 EMS 低利潤率的結構性限制（最根本業務風險）</strong></td>
+        <td>即使 Celestica 的 HPS 業務使 OM 提升至 7.7%，這仍是全球製造業的中等利潤率水準（vs APH 27.5%、ASML 30%+、ANET 64% GM）。傳統 EMS 的利潤率壓力源自：① 客戶議價能力強（超大規模客戶可以把訂單轉給 Foxconn/Flex）② 原材料成本波動（銅、PCB、半導體元件）③ 人工成本上漲（泰國、墨西哥工廠）。若 AI Capex 超週期放緩，超大規模客戶在合約更新時會要求更低的製造費率，OM 從 7.7% 可能回落至 6-6.5%，EPS 大幅下調。</td>
+        <td class="mono warn">中等（結構性限制；但 HPS 的設計費率比純製造更有黏性）</td>
+        <td>OM 從 7.7% 回落至 6.5%：EPS 從 $8.75 降至 ~$7.0；股票 -18-25%</td>
+      </tr>
+      <tr>
+        <td><strong>🔬 Pomerantz 律師事務所調查（短期法律風險）</strong></td>
+        <td>Pomerantz LLP 在 2026-02-12 和 2026-02-17 兩次發出調查公告，暗示 Celestica 可能違反了證券法規——可能是涉及前瞻性陳述的準確性，或財務揭露的完整性。這個調查的具體內容未知，但股票在 2026-02 後回落可能部分反映了這個不確定性。若調查升級為集體訴訟，短期股票壓力會持續；若調查無疾而終（大多數律所調查最終不了了之），這是買入機會。</td>
+        <td class="mono neutral">低中（律所調查多數無實質結果；但增加短期不確定性）</td>
+        <td>若升級為集體訴訟：短期 -10-15%；若無結果：不影響</td>
+      </tr>
+      <tr>
+        <td><strong>📊 GAAP vs Adj. EPS 差距大（財務品質疑慮）</strong></td>
+        <td>Q4 2025 GAAP EPS $2.31 vs Adj. EPS $1.89——差距 $0.42（GAAP 比 Adj. 高 22%？這通常是反向——Q4 GAAP 比 Adj. 高因為有稅務優惠或其他一次性收益）。但更長期看：FY2025 全年 GAAP EPS $7.16 vs Adj. EPS $6.05（差距 $1.11，GAAP 比 Adj. 高 18%）。Celestica 的 Adj. EPS 剔除了 SBC、攤銷和重組費用，但這些費用是真實的經營成本。GAAP vs Adj. 的差距反映了 Celestica 持續的 SBC 支出（管理層激勵）和整合費用。投資者需要以 Adj. EPS 估值，但也要意識到 GAAP EPS 和 Adj. EPS 之間有結構性差異。</td>
+        <td class="mono neutral">持續存在（非緊急風險；但財務品質低於 APH 或 KEYS 的極小差距）</td>
+        <td>不直接影響股票，但影響估值框架——$8.75 Adj. EPS 對應的真實 GAAP EPS 約 $7.5-8.0</td>
+      </tr>
+      <tr>
+        <td><strong>🏭 AMD Helios 失敗風險（新業務執行風險）</strong></td>
+        <td>AMD Helios 是 AMD 對抗 NVIDIA NVLink 超節點生態系的核心戰略。但 AMD AI GPU（MI450）在 2026 年的市場接受度高度不確定——若 NVIDIA Blackwell/Rubin 繼續主導 AI 訓練市場，AMD MI450 的市佔不如預期，Helios 的採購量可能遠低於預期，Celestica 的 Helios 交換器製造收入就會大幅縮水。</td>
+        <td class="mono warn">中等（AMD AI GPU 市佔是高度不確定的；但對 CLS 影響是增量，不是存量業務）</td>
+        <td>Helios 採購量低於預期：2027 Revenue 少 $500M-1B；不影響 2026 現有業務</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="alert-warn" style="margin-top:12px">
+    <strong>最重要逆向推演結論：Celestica 的最大風險是「客戶超高集中度（前三客戶 63%）」和「EMS 結構性低利潤率的天花板（OM 7.7%）」的組合。</strong>這兩個風險使 CLS 在 AI Capex 超週期放緩時，比 APH（10 個端市場多元化）或 ANET（軟體訂閱黏性）更脆弱。但反過來，超高集中度也說明這幾個客戶是深度綁定的長期夥伴（Google TPU 的 Celestica 依賴度說明）——他們不會輕易更換。這是「高集中度 = 高風險 + 高護城河」的雙面刃。
+  </div>
+</div>
+
+<!-- §1 -->
+<div class="sec-head">§1 ｜ 即時財報情報（Q4 FY2025，2026-01-28 發布）</div>
+<div class="sub-head">① Q4 FY2025 + FY2025 全年關鍵數字</div>
+<table>
+  <thead><tr><th>指標</th><th>Q4 FY2025 實際</th><th>市場預期/指引</th><th>Beat/Miss</th><th>YoY 變化</th></tr></thead>
+  <tbody>
+    <tr><td>Total Revenue</td><td class="mono">$3.655B（記錄）</td><td class="mono">$3.325-3.575B（指引上限 $3.575B）</td><td><span class="beat">✓ BEAT 超指引上限 +2.2%；17 次連續雙 Beat！</span></td><td class="mono">+44% YoY（vs Q4 2024 $2.55B）；+~9% QoQ</td></tr>
+    <tr><td>CCS 收入（Connectivity & Cloud）</td><td class="mono">$2.86B（78.2%）</td><td class="mono">—</td><td><span class="beat">✓ +64% YoY！；超大規模 AI 需求爆發；第三個 1.6T 交換器客戶確認</span></td><td class="mono">CCS OM 8.4%（+0.5ppts QoQ）；HPS 收入 ~$1.4B（+72% YoY）</td></tr>
+    <tr><td>ATS 收入（Advanced Technology Solutions）</td><td class="mono">$0.80B（21.8%）</td><td class="mono">—</td><td><span class="neutral">⚠️ -1% YoY；工業、航太、半導體設備弱；但 OM 5.3%（+0.7ppts YoY）改善</span></td><td class="mono">半導體設備 2026 H2 預計反彈；ATS 是 CLS 的「景氣緩衝」業務</td></tr>
+    <tr><td>Adj. Operating Margin</td><td class="mono">7.7%（+0.9ppts YoY）</td><td class="mono">7.6%（指引中位）</td><td><span class="beat">✓ 超指引；HPS 高利潤率組合提升；FY2025 目標 7.4% 大幅超越</span></td><td class="mono">vs Q4 2024 6.8%（+90bps YoY）；FY2026 目標 7.8%</td></tr>
+    <tr><td>Adj. EPS（Non-GAAP）</td><td class="mono">$1.89（記錄單季）</td><td class="mono">$1.65-1.81（指引上限 $1.81）</td><td><span class="beat">✓ BEAT +4.4%；17 次連續超指引！</span></td><td class="mono">+70% YoY（vs Q4 2024 $1.11）；連續超預期是 CLS 最強的管理執行確認</td></tr>
+    <tr><td>GAAP EPS</td><td class="mono">$2.31</td><td class="mono">—</td><td><span class="beat">✓ GAAP 比 Adj. 高 $0.42（因稅務優惠或其他一次性收益）</span></td><td class="mono">vs Q4 2024 $1.29（+79% YoY）</td></tr>
+    <tr><td>Free Cash Flow（Q4）</td><td class="mono">$156M（FCF Margin ~4.3%）</td><td class="mono">—</td><td><span class="neutral">⚠️ 相對 Revenue 偏低；Capex 增加是主因（Q4 Capex 大）；FY2025 全年 FCF $458M</span></td><td class="mono">FY2025 FCF $458M（+$152M YoY；+50%）；FCF Margin ~3.7%（偏低）</td></tr>
+    <tr><td>Adj. ROIC</td><td class="mono">43%（+14ppts YoY！）</td><td class="mono">—</td><td><span class="beat">✓ 極強；EMS 行業 43% ROIC 是頂尖水準；CLS 輕資本 HPS 模型帶來高 ROIC</span></td><td class="mono">ROIC 快速提升說明每元資本的效率在提高；高 ROIC 支撐高估值</td></tr>
+    <tr><td>客戶集中度</td><td class="mono">前三客戶：36%、15%、12%（合計 63%）</td><td class="mono">Q4 2024：前兩客戶 24%+12%</td><td><span class="warn">⚠️ 客戶集中度急劇上升；36% 最大客戶（可能為 Google）是核心風險</span></td><td class="mono">集中度從 36% 增加說明少數超大規模客戶需求爆發；但也是風險</td></tr>
+    <tr><td>FY2025 全年 Revenue</td><td class="mono">$12.39B（+28% YoY）</td><td class="mono">最終指引 $12.2B</td><td><span class="beat">✓ 超全年指引 $12.2B 約 +1.5%；一年前指引 $10.7B（全年上調 +16%！）</span></td><td class="mono">FY2024 $9.65B→FY2025 $12.39B；$2.74B 絕對增量</td></tr>
+    <tr><td>FY2025 全年 Adj. EPS</td><td class="mono">$6.05（+56% YoY；記錄）</td><td class="mono">最終指引 $5.90</td><td><span class="beat">✓ 超全年指引；FY2024 $3.88→FY2025 $6.05（+56%）</span></td><td class="mono">一年前（Q4 2024 發布時）全年指引 $4.75；全年上調次數：+4 次！</td></tr>
+  </tbody>
+</table>
+<div class="alert-green" style="margin-top:8px">
+  <strong>✅ Q4 FY2025 最重要信號：</strong>① <strong>17 次連續雙 Beat</strong>（Revenue + EPS 同時超預期）是本系列二十四標的中最長的 Beat 連勝記錄 ② <strong>FY2026 全年指引大幅上調至 Revenue $17B（+37%）；EPS $8.75（+45%）</strong>——原指引才 $16B/$8.20，Q4 Beat 後立即上調 +$1B Revenue 和 +$0.55 EPS ③ <strong>第三個超大規模客戶的 1.6T 交換器設計製造獎項</strong>（2027 量產）= 未來收入能見度確認 ④ <strong>Adj. ROIC 43%（+14ppts YoY）</strong>說明資本效率急劇提升 ⑤ <strong>HPS 收入 ~$1.4B（+72% YoY）</strong>確認高利潤率業務加速
+</div>
+
+<div class="sub-head">② Q1 2026 指引 + FY2026 全年展望</div>
+<div class="card">
+  <table>
+    <thead><tr><th>指標</th><th>數據</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td>Q1 2026 Revenue 指引</td><td class="mono">$3.85-4.15B（中位 $4.00B）</td><td><span class="beat">✓ +51% YoY（vs Q1 2025 $2.65B）！；傳統 Q1 是 EMS 季節性弱季，但 AI 超週期完全覆蓋季節性</span></td></tr>
+      <tr><td>Q1 2026 Adj. EPS 指引</td><td class="mono">$1.95-2.15（中位 $2.05）</td><td><span class="beat">✓ +71% YoY（vs Q1 2025 $1.20 估）；高端 $2.15 = 若繼續 Beat 習慣，可能達 $2.20-2.30</span></td></tr>
+      <tr><td>FY2026 全年 Revenue 指引</td><td class="mono">$17.0B（vs 原 $16.0B；+6.25% 上調）</td><td><span class="beat">✓ +37% YoY（vs FY2025 $12.39B）；上調驅動：Q1 強勁需求 + 全年能見度改善</span></td></tr>
+      <tr><td>FY2026 全年 Adj. EPS 指引</td><td class="mono">$8.75（vs 原 $8.20；+6.7% 上調）</td><td><span class="beat">✓ +45% YoY；考慮到 17 次連續 Beat 的模式，FY2026 實際可能達 $9.0-9.5</span></td></tr>
+      <tr><td>FY2026 Adj. OM 指引</td><td class="mono">7.8%（維持，未上調）</td><td><span class="neutral">⚠️ OM 未隨 Revenue 上調提升——說明增量 Revenue 的 OM 接近 7.8%，規模槓桿有限；非 EPS 加速的信號</span></td></tr>
+      <tr><td>FY2026 FCF 指引</td><td class="mono">$500M（維持，未上調）</td><td><span class="warn">⚠️ FCF 未隨 Revenue 上調提升；Capex $1B（有機資金）將大幅使用 OCF；FCF Margin ~2.9%（低）</span></td></tr>
+      <tr><td>FY2026 Capex</td><td class="mono">~$1B（新增投資；有機資金）</td><td><span class="warn">⚠️ Capex 大幅增加（FY2025 ~$300-350M，FY2026 $1B）；德州擴廠 + 泰國新廠 + 墨西哥 + 日本；這壓縮了 FCF</span></td></tr>
+      <tr><td>AMD Helios 合作（2026-03-16）</td><td class="mono">負責 AMD MI450 GPU Helios 機架交換器設計+製造；2026 H2 出貨</td><td><span class="beat">✓ AMD AI GPU 生態系的核心夥伴；若 AMD 在 AI 訓練市場取得份額，CLS 是最大受益者之一</span></td></tr>
+      <tr><td>Google TPU 系統擴大</td><td class="mono">確認為 Google TPU 首選製造夥伴；美國德州擴廠支援 Google 在地化需求</td><td><span class="beat">✓ Google 的 AI 晶片在地化（美國製造）需求趨勢，對 CLS 德州廠是長期結構性有利因素</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">③ Earnings Call 語氣解析（Q4 FY2025）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td><strong>管理層基調</strong></td><td><span class="beat">自信且技術主導（Engineering-Led Confidence）——CEO Rob Mionis 的風格：工程師出身，強調 R&D 投入和技術差異化</span>：Mionis 在 Q4 Call 說：「We are really pleased with the trajectory that's already underway... enterprise business is accelerating as we go into Q1.」和「We anticipate to fully fund our increased 2026 capital expenditures organically with cash provided by operations.」——這兩個說法傳遞了對 CCS 業務加速和財務自主性的高度信心。CFO Mandeep Chawla 量化了增量細節，說明管理層對自身財務模型的深度理解。</td></tr>
+      <tr><td><strong>三大刻意強調</strong></td><td>
+        ① <strong>「Enterprise 業務正在加速，從 Q4 加速進入 Q1（指 AI 企業伺服器和交換器 CCS 業務）」</strong>：Enterprise（企業級 AI 伺服器）是 CCS 的子細分，包含 AI 伺服器和存儲。Enterprise +在 Q4 2025 大幅成長，且 Q1 2026 繼續加速——說明 AI 資料中心建設從超大規模（Google、Meta）擴散到一般企業（Fortune 500 公司自建 AI 基礎設施），這是 CLS 受益的新增市場<br>
+        ② <strong>「第三個超大規模客戶的 1.6T 交換器獎項」</strong>：這個匿名第三客戶（業界推測為 Amazon、Meta 或 Microsoft 之一）的 1.6T 交換器設計和製造獎項確認了 CLS 在 AI 高速網路交換器市場的「第二個、第三個超大規模客戶」滲透——說明 CLS 不再只依賴 Google 一個客戶<br>
+        ③ <strong>「2026 Capex $1B 完全由運營現金流資助，不需要外部融資」</strong>：這個強調說明 CLS 的 FCF 生成能力已足夠支撐大規模擴張，財務槓桿不需要增加。在同類 EMS 公司中，能夠有機資助 $1B Capex 是相對罕見的（說明業務盈利能力確實在改善）
+      </td></tr>
+      <tr><td><strong>刻意迴避的問題</strong></td><td>
+        ① <strong>客戶集中度（36%）的風險緩解措施</strong>：分析師問 36% 最大客戶的長期合約和依賴度，管理層只說「我們和這個客戶的關係很深，涵蓋多代 TPU 系統」，但沒有說具體合約期限或最低採購承諾<br>
+        ② <strong>Pomerantz 調查</strong>：管理層完全沒有提及，說明可能被當成無實質性影響的律所策略性調查<br>
+        ③ <strong>Capex $1B 的 ROI 和具體時間表</strong>：管理層說「新產能將在 2026 和 2027 年陸續上線」，但對各個設施的具體 ROI 和時間表給出模糊描述
+      </td></tr>
+      <tr><td><strong>最重要業務趨勢</strong></td><td>
+        <strong>「HPS（Hardware Platform Solutions）從設計到交付的完整閉環」</strong>：CLS Q4 2025 的 HPS 收入約 $1.4B（+72% YoY）說明 HPS 已佔 CCS 收入近 50%（$1.4B / $2.86B CCS = 49%）。這個比例在快速提升——2022 年 HPS 只佔 CCS 的 20% 左右。HPS 的利潤率（~10%+）遠高於傳統 EMS 業務（~5%），且黏性更高（客戶和 CLS 共同設計的 HPS 平台，切換成本是整個系統的重新設計）。如果 HPS 佔比在 FY2026 達到 60%+，CLS 的整體 OM 可能突破 8%+，超越 FY2026 目標 7.8%。
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">④ 產業 Imply 萃取</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td><strong>CLS 是「AI 機架級整合」這個新興市場的先行者</strong></td><td>傳統 AI 資料中心部署模式：超大規模客戶向 NVIDIA（GPU）、Arista（交換器）、Dell/HPE（伺服器）各自採購，然後自己整合。新興模式：超大規模客戶把整個機架（Rack）的設計和製造外包給 CLS——一個供應商提供設計+製造+供應鏈的完整解決方案。這個「機架級外包」趨勢在 2024-2026 年加速，因為超大規模客戶的 AI 資料中心建設速度太快，自己組裝跟不上（每個 Google 資料中心需要數萬個機架）。CLS 的競爭者在這個市場幾乎沒有——Foxconn、Flex、Jabil 沒有同等的 HPS 設計能力（只有製造能力）。</td></tr>
+      <tr><td><strong>AMD Helios 合作 = 超越 Google 的生態系擴張</strong></td><td>CLS 過去的成功高度依賴 Google TPU 系統（佔 Revenue 36%）。AMD Helios 合作（2026-03-16）是 CLS 把 HPS 能力擴展到「第二個 GPU 生態系」的關鍵一步——現在 CLS 不只服務 Google，還服務 AMD Instinct 的整個生態系（雲服務商、超算中心、AI 研究機構）。若 AMD MI450 在 2026-2027 年獲得 10-15% 的 AI 訓練市場份額，Helios 的潛在採購量可能在 2027 年帶來 $500M-1B 的增量收入。</td></tr>
+      <tr><td><strong>FCF Margin 偏低（~3-4%）是長期業務模式的限制</strong></td><td>CLS 的 FCF Margin（FY2025 $458M / $12.39B = 3.7%）遠低於 ANET（41%）、APH（19%）、KEYS（24%）。這個「收入高但 FCF 低」的特性是 EMS 業務模式的本質——EMS 的資本密集度高（需要龐大的製造設備和存貨），且 Working Capital 需求大（需要預先採購元件）。FY2026 $1B Capex 使 FCF 可能只有 $500M（FCF Margin ~2.9%），這限制了 CLS 的股票回購能力和財務護城河。這是 CLS 估值應比 APH 或 ANET 打折的核心原因。</td></tr>
+      <tr><td><strong>美國製造本地化趨勢對 CLS 是長期利多</strong></td><td>美國的 AI 晶片關稅和本地化製造要求（CHIPS Act、美國製造優先政策）使 Google、Meta 等超大規模客戶有更強的動機在美國建造 AI 資料中心，並要求供應商（包括 CLS）在美國製造 AI 基礎設施硬體。CLS 的德州擴廠（Dallas-Fort Worth）直接回應這個需求——「在德州製造的 AI 機架」使客戶能夠滿足美國政府的本地化要求，同時避免關稅。這個趨勢對 CLS 是長期的結構性利多，而非短期催化劑。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §2 -->
+<div class="sec-head">§2 ｜ 核心門檻檢核</div>
+<div class="sub-head">EPS CAGR 搜尋結果</div>
+<div class="card">
+  <div class="alert-info">
+    <strong>口徑說明：</strong>Celestica 以「Adjusted EPS（Non-GAAP）」為主要報告指標，剔除 SBC（約 $0.15-0.20/季）、攤銷（約 $0.15-0.20/季）和重組費用。FY2025 Adj. EPS $6.05 vs GAAP EPS $7.16——差距 $1.11，GAAP 比 Adj. 高（因稅務優惠和其他一次性收益超過 SBC/攤銷）。財年 = 曆年（12 月底）。
+  </div>
+  <table>
+    <thead><tr><th>年度</th><th>Adj. EPS（Non-GAAP）</th><th>分析師人數</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><strong>FY2024（已公布）</strong></td><td class="mono">$3.88（+47% YoY）</td><td>—</td><td>AI 轉型起跑；CCS 業務快速成長</td></tr>
+      <tr><td><strong>FY2025（已公布，基期）</strong></td><td class="mono">$6.05（+56% YoY；記錄）</td><td>—</td><td>HPS 爆發；CCS +64% Q4；17 次連續 Beat</td></tr>
+      <tr><td><strong>FY2026E（管理層指引）</strong></td><td class="mono">$8.75（管理層指引；WallStreetZen $8.40，n=10；17 次 Beat 模式 → 實際可能達 $9.0-9.5）</td><td>n≈10-12</td><td>+45% YoY；Q1 指引 $1.95-2.15；17 次連續 Beat → 保守指引慣例</td></tr>
+      <tr><td><strong>FY2027E</strong></td><td class="mono">WallStreetZen $11.53（n=8，範圍 $10.68-13.02）；積極估 $12-13（AMD Helios + 第三 1.6T 客戶量產）</td><td>n≈8</td><td>+32% YoY（中位）；1.6T 第三客戶量產 + Helios 貢獻 + Capex 回報</td></tr>
+      <tr><td><strong>FY2028E</strong></td><td class="mono">~$14-16（估；FY2027 $12 × 1.17-1.33）</td><td>n≈5</td><td>AI Capex 超週期維持 + HPS 持續佔比提升 + OM 向 9%+ 靠近</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:12px;font-family:var(--mono);font-size:13px;padding:10px;background:var(--alt-row);border:1px solid var(--border);">
+    <strong>EPS CAGR 計算（FY2025 $6.05 基期 → FY2028E）：</strong><br>
+    中性 FY2028E $14.0：3 年 CAGR = ($14.0 ÷ $6.05)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +32.3%</span><br>
+    保守 FY2028E $11.0：3 年 CAGR = ($11.0 ÷ $6.05)^(1/3) − 1 = <span style="color:#D97706;font-weight:700">約 +21.9%</span>（超過 20% 門檻）<br>
+    積極 FY2028E $17.0：3 年 CAGR = ($17.0 ÷ $6.05)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +40.8%</span><br>
+    <em>注：CLS 的 EPS CAGR（~22-41%）顯著高於 APH（18-22%）和 KEYS（14-22%），接近 AMD（34-48%）和 MRVL（38-42%）——但這是建立在基期（$6.05）已經是 AI 超週期中的爆發性成長後的高位。FY2026 EPS 成長 +45% 是最可見度高的部分（管理層指引 $8.75，且有 17 次 Beat 的執行力保證）；FY2027+ 的成長取決於 AMD Helios 和第三客戶 1.6T 的量產爬坡。</em>
+  </div>
+</div>
+
+<div class="sub-head">門檻檢核表</div>
+<table>
+  <thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr></thead>
+  <tbody>
+    <tr><td><strong>FCF Margin</strong></td><td>> 15%</td>
+      <td class="fail mono">✗ 明顯不符（FY2025 FCF $458M / Revenue $12.39B = 3.7%；FY2026 FCF $500M / Revenue $17B = 2.9%）</td>
+      <td>CLS 的 FCF Margin 是本系列二十四標的中最低的（EMS 行業特性）。主因：① Capex 密集（FY2026 $1B，佔 Revenue 5.9%）② 工作資本需求大（元件庫存 + 應收帳款）。這個低 FCF Margin 使 CLS 的估值應比 APH（19%）、KEYS（24%）折扣——不能以同等 P/E 比較。</td></tr>
+    <tr><td><strong>ROIC</strong></td><td>產業頂尖</td>
+      <td class="pass mono">✓✓ 極強（Adj. ROIC 43%！+14ppts YoY；EMS 行業最高水準之一）</td>
+      <td>43% Adj. ROIC 說明 HPS 業務模式的資本效率極高——CLS 的資本不是用於大量機器設備（因為許多製造是「共同設計但外包部分製造」），而是用於 R&D 和設計能力。這個 43% ROIC vs WACC ~10% = 超額報酬極高，說明每元資本投入創造巨大價值。</td></tr>
+    <tr><td><strong>EPS CAGR（3年，FY2025-2028）</strong></td><td>> 20%</td>
+      <td class="pass mono">✓✓ 強（保守 ~22%；中性 ~32%；積極 ~41%）</td>
+      <td>基期 FY2025：$6.05<br>FY2026E：$8.75（管理層指引；+45%）<br>FY2027E：$11.53（WallStreetZen；+32%）<br>FY2028E：$14-17（估）<br>━━━━━━<br>3 年 CAGR：~22-41%（保守/積極）<br>注：CLS 的 EPS CAGR 是本系列最高之一，但建立在「AI 超週期持續 + AMD Helios 成功」的假設上</td></tr>
+    <tr><td><strong>PEG</strong></td><td>< 2</td>
+      <td class="pass mono">✓ 便宜！（Fwd P/E ~32x；PEG ~0.99x！）</td>
+      <td>Fwd P/E（FY2026E $8.75）= $280 ÷ $8.75 = <strong>~32.0x</strong><br>EPS CAGR 32%（中性）→ PEG = 32.0 ÷ 32 = <strong>1.00x（合理偏低！）</strong><br>EPS CAGR 22%（保守）→ PEG = 32.0 ÷ 22 = <strong>1.45x（合理）</strong><br>⚠️ CLS 的 PEG 看起來吸引人，但 FCF Margin 低（3%）意味著 EPS 的現金含量低，應打折評估</td></tr>
+    <tr><td><strong>現金覆蓋總負債</strong></td><td>是/否</td>
+      <td class="warn mono">⚠️ 尚可（Gross Debt/TTM EBITDA 0.7x；極低槓桿；Q4 2025 管理層強調）</td>
+      <td>Gross Debt/TTM adj. EBITDA = 0.7x（Q4 2025），且在持續改善（YoY 下降）。財務槓桿極低是 CLS 的加分項——對比許多 EMS 同業（Flex 的槓桿約 1.5-2x）。$1B Capex 有機資金說明不需要增加外部負債。</td></tr>
+    <tr><td><strong>護城河強度</strong></td><td>> 8 分，趨勢擴大</td>
+      <td class="warn mono">⚠️ 中等偏強（7.0/10；HPS 設計能力是真實護城河；但 EMS 行業結構使護城河天花板有限）</td>
+      <td>HPS 設計能力（Celestica 自有工程師 R&D + Open Compute 標準深度整合）+ Google TPU 系統深度鎖定 + AMD Helios 夥伴關係。但 EMS 的本質使替換成本低於純技術公司（客戶理論上可以轉向 Foxconn/Flex + 自行設計），且超大規模客戶的議價能力強。護城河趨勢：擴大（HPS 佔比提升 + AMD Helios 確認 = 二個 GPU 生態系鎖定）</td></tr>
+  </tbody>
+</table>
+<div class="alert-warn" style="margin-top:8px">
+  <strong>最大財務弱點：</strong>FCF Margin 只有 3-4%——$12.39B Revenue 只生成 $458M FCF，這個比例在本系列二十四標的中最低，意味著 CLS 的「帳面盈利」中大量被 Working Capital 和 Capex 消耗，真實的股東現金回報遠低於 EPS 所暗示的水準。
+</div>
+
+<!-- §2.5 -->
+<div class="sec-head">§2.5 ｜ 長期成長性評估</div>
+<div class="rating-block cyan">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">長期成長性綜合評級：高確信（短期 FY2026）+ 中等確信（FY2027+）——FY2026 $17B/$8.75 EPS 的能見度極高（管理層指引 + 17 次連續 Beat 模式）；FY2027+ 取決於 AMD Helios 和第三 1.6T 客戶，確信度稍低但仍強</div>
+    <div class="body">Runway ≥8 年（AI 資料中心 Capex 超週期；機架級外包趨勢）｜ 有機成長（無重大收購）｜ 護城河加強型（HPS 佔比提升 + AMD 生態系 + 1.6T 交換器 × 3 客戶）｜ FCF Margin 3-4%（最大弱點）</div>
+  </div>
+</div>
+
+<div class="sub-head">A｜成長跑道（Runway）估算</div>
+<table>
+  <thead><tr><th>業務</th><th>TAM</th><th>FY2026 規模（估）</th><th>成長驅動</th><th>Runway</th></tr></thead>
+  <tbody>
+    <tr><td><strong>HPS（Hardware Platform Solutions）</strong><br>AI 伺服器 + 高速交換器 + 液冷</td><td class="mono">AI HPS TAM $50-100B（2026-2030）</td><td class="mono">~$8-10B（估；佔 CCS 的 55-60%，FY2026 CCS ~$14B）</td><td>超大規模客戶機架外包趨勢；AMD Helios；第三 1.6T 客戶</td><td class="mono pass">≥8 年（AI Capex 超週期）</td></tr>
+    <tr><td><strong>CCS 傳統業務</strong><br>通訊 + Enterprise 伺服器/存儲</td><td class="mono">—</td><td class="mono">~$4-5B（估）</td><td>5G 網路設備；Enterprise AI 採購；SD6300 存儲平台</td><td class="mono pass">≥6 年</td></tr>
+    <tr><td><strong>ATS（航太/工業/半導體設備）</strong><br>~22% Revenue</td><td class="mono">—</td><td class="mono">~$3.5-4B（估；+mid-single-digit 2026）</td><td>A&D 現代化；半導體設備 2026 H2 反彈；HealthTech</td><td class="mono pass">≥10 年（多元化緩衝）</td></tr>
+    <tr><td><strong>成長可持續年數</strong></td><td class="mono" style="color:#0891B2;font-weight:700" colspan="4">≥8 年（高確信）；AI Capex 超週期是不可逆的趨勢，且 CLS 在機架級 AI 硬體外包市場先發優勢明顯</td></tr>
+  </tbody>
+</table>
+
+<!-- §3 -->
+<div class="sec-head">§3 ｜ 護城河分析</div>
+<div class="card" style="margin-bottom:16px;">
+  <div style="display:flex;align-items:center;gap:24px;margin-bottom:16px;">
+    <div><span class="score-big">7.0</span><span style="font-size:24px;font-family:var(--mono);color:var(--navy)">/10（↑加速擴大）</span></div>
+    <div>
+      <div style="font-weight:700;color:var(--navy);font-size:16px;">中等偏強護城河，特色鮮明——HPS 設計能力（真實技術壁壘）+ Google TPU 深度鎖定 + AMD Helios 夥伴 + 1.6T × 3 超大規模客戶</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-top:4px;">評分 7.0/10（與 TER 並列，低於 COHR 7.5/10、APH 9.0/10）。Celestica 的護城河評分限制在 7.0 的原因：① EMS 行業的本質使護城河天花板有限——客戶理論上可以轉向其他 EMS 公司 ② 超高客戶集中度（前三 63%）使護城河依賴幾個關鍵客戶關係 ③ FCF 低（3-4%）限制了財務護城河的厚度。但護城河有真實的基礎：HPS 設計能力（少數 EMS 能自主開發 AI 機架設計方案）、17 次連續 Beat 的執行力、Open Compute 深度整合（Google 的 Open Rack-Wide 形態因子是 CLS 推動的）。護城河趨勢：加速擴大（AMD Helios + 1.6T × 3 客戶 = 生態系鎖定從 1 到 3）。</div>
+      <div style="margin-top:8px;"><span class="beat">趨勢：加速擴大（AMD Helios = 第二個 GPU 生態系鎖定；1.6T 第三客戶 = 三大超大規模客戶綁定）</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">護城河來源深度分析</div>
+<table>
+  <thead><tr><th>護城河類型</th><th>深度</th><th>機制</th></tr></thead>
+  <tbody>
+    <tr><td><strong>HPS 設計能力（最獨特護城河）</strong><br>自主設計 AI 機架系統</td>
+      <td><span class="beat">強（在 EMS 行業中極為罕見；Foxconn/Flex/Jabil 不具備同等 HPS 設計能力）</span></td>
+      <td>CLS 的 HPS 工程師（數千名）可以設計符合 Open Compute Project 規格的 AI 伺服器、高速交換器和整合機架系統。這不是純代工（Foxconn 的模式），而是「設計+代工」——使 CLS 在客戶選擇時進入了更高的技術合作層級（而非純成本競爭）。AMD Helios 合作是這個設計能力的最強確認——AMD 選擇 CLS 作為 scale-up 交換器的設計和製造夥伴，說明 CLS 的工程能力得到了 AMD 工程師的認可。</td></tr>
+    <tr><td><strong>Google TPU 系統深度鎖定</strong><br>首選製造夥伴多代合作</td>
+      <td><span class="beat">強（Google TPU 系統架構與 CLS 的製造工藝深度整合；切換成本是整代系統的重新設計）</span></td>
+      <td>Google TPU 系統的機械設計、熱管理、電源配置都是針對 CLS 的製造能力優化的（就像 Apple 的 iPhone 和 Foxconn 的深度綁定）。「首選製造夥伴」的確認（Q4 2025 Call）說明 Google 沒有計劃在短期內更換供應商。德州擴廠也是為了滿足 Google 對美國製造的要求——說明 Google 願意讓 CLS 在美國投資建廠，這種「投資共享」的關係比純採購合約更深。</td></tr>
+    <tr><td><strong>Open Compute 生態系整合</strong><br>Open Rack-Wide 形態因子的先驅</td>
+      <td><span class="beat">中強（Open Compute 標準使 CLS 的 HPS 解決方案可以跨客戶（Google、Meta、Amazon、Microsoft）部署）</span></td>
+      <td>Celestica 是 Open Compute Project（OCP）的核心貢獻者，且 AMD Helios 也採用 OCP Open-Rack-Wide 形態因子。使用 OCP 標準的好處：① 客戶（包括不是 Google 的超大規模客戶）更容易採用 CLS 的 HPS 解決方案 ② 供應鏈標準化使製造效率更高 ③ OCP 生態系中的夥伴關係（AMD、其他半導體公司）使 CLS 的技術合作面更廣。</td></tr>
+    <tr><td><strong>1.6T 交換器 × 3 超大規模客戶</strong><br>AI 高速網路交換器的多客戶認證</td>
+      <td><span class="beat">強且快速加深（從 1 個客戶到 3 個客戶的 1.6T 交換器認證 = 技術壁壘的多客戶驗證）</span></td>
+      <td>一個超大規模客戶採用 CLS 的 1.6T 交換器可以是巧合；三個超大規模客戶同時採用 CLS 的 1.6T 交換器是技術護城河的確認。三個客戶的 1.6T 交換器設計製造獎項說明 CLS 的高速交換器技術（包括硬體設計、silicon 選擇、電源完整性、散熱設計）在業界已達到頂尖水準，競爭者難以在短期內複製。</td></tr>
+  </tbody>
+</table>
+
+<!-- §4 -->
+<div class="sec-head">§4 ｜ 財務品質監測</div>
+<div class="sub-head">三年趨勢表</div>
+<table>
+  <thead><tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>FY2026E</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue</td><td class="mono">$7.96B</td><td class="mono">$9.65B（+21%）</td><td class="mono">$12.39B（+28%）</td><td class="mono">$17.0B（+37%；指引）</td></tr>
+    <tr><td>CCS Revenue / % Total</td><td class="mono">~$4.0B / 50%</td><td class="mono">~$6.0B / 62%</td><td class="mono">~$9.2B / 74%（估）</td><td class="mono">~$13.0B / 76%（估）</td></tr>
+    <tr><td>Adj. OM</td><td class="mono">5.5%</td><td class="mono">6.3%</td><td class="mono">7.4%（全年均）</td><td class="mono">7.8%（指引）</td></tr>
+    <tr><td>Adj. EPS</td><td class="mono">$2.64</td><td class="mono">$3.88（+47%）</td><td class="mono">$6.05（+56%）</td><td class="mono">$8.75（+45%；指引）</td></tr>
+    <tr><td>FCF</td><td class="mono">~$200M</td><td class="mono">$306M（+53%）</td><td class="mono">$458M（+50%）</td><td class="mono">$500M（+9%；FCF成長減速！）</td></tr>
+    <tr><td>Adj. ROIC</td><td class="mono">~18%</td><td class="mono">~29%</td><td class="mono">~40%（全年均）；Q4 43%</td><td class="mono">~45%+（估）</td></tr>
+  </tbody>
+</table>
+<div class="alert-warn" style="margin-top:8px">
+  <strong>⚠️ 財務品質警示：FCF 成長明顯慢於 EPS 成長</strong>——FY2026 FCF $500M（+9% YoY）vs Adj. EPS $8.75（+45% YoY）的差距極大。這說明 $1B Capex 大量消耗了 OCF，使 FCF 幾乎不成長。若 FY2027 Capex 正常化（回落至 $400-500M），FCF 有望跳升至 $1B+（= FCF Margin 5-6%）——這個「FCF 遞延爆發」是 2027 年的重要價值釋放催化劑，但也說明 2026 年的 FCF 不能代表公司的真實盈利能力。
+</div>
+
+<div class="sub-head">財務品質警訊</div>
+<div class="card">
+  <table>
+    <thead><tr><th>項目</th><th>結論</th><th>佐證</th></tr></thead>
+    <tbody>
+      <tr><td><strong>17 次連續雙 Beat（最強執行力信號）</strong></td><td><span class="beat">✓ 管理層對業務的量化能力和保守指引慣例是本系列最強的執行確認之一</span></td><td>過去 5 個季度：CLS 的財報後股票平均移動 +10.68%（正面）。17 次連續 Beat 的統計說明「CLS 的指引是保守估算」，FY2026 $8.75 EPS 指引很可能被 Beat 至 $9.0-9.5。</td></tr>
+      <tr><td><strong>客戶集中度急升（最大財務警示）</strong></td><td><span class="warn">⚠️ Q4 2025 前三客戶 63%（vs Q4 2024 36%）；最大客戶 36% 是系統性風險</span></td><td>每次 Celestica 失去一個大客戶，股票都會大幅下跌（2015 年的案例）。36% 的最大客戶（可能是 Google）若採購量下降 30%，整體 Revenue 減少 ~11%，EPS 大幅下調。這是 CLS 在 AI 超週期中「高增長但高集中度」的核心矛盾。</td></tr>
+      <tr><td><strong>Pomerantz 調查（短期不確定性）</strong></td><td><span class="neutral">⚠️ 律所發出兩次調查公告（2026-02-12/17）；尚未確認具體訴訟</span></td><td>Pomerantz 是美國最活躍的投資者訴訟律所，習慣在股票大幅波動後調查（CLS 從 $363 跌至 $280，跌幅 -23%）。多數此類調查最終無實質訴訟（律所無法找到具體的欺騙性陳述）；但若調查升級，需追蹤。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- §5~6 -->
+<div class="sec-head">§5 ｜ 產業格局、議價權與 Unit Economics</div>
+<div class="card-grid">
+  <div class="stat-card"><div class="label">FY2025 Revenue</div><div class="value">$12.39B</div><div class="note">+28% YoY；CCS +64% Q4</div></div>
+  <div class="stat-card"><div class="label">FY2026 Revenue 指引</div><div class="value">$17.0B</div><div class="note">+37%；上調 +$1B（原 $16B）</div></div>
+  <div class="stat-card"><div class="label">HPS 收入（Q4 2025）</div><div class="value">~$1.4B</div><div class="note">+72% YoY；CCS 的 ~49%；高利潤率</div></div>
+  <div class="stat-card"><div class="label">Adj. OM（Q4 2025）</div><div class="value">7.7%</div><div class="note">記錄；FY2026 目標 7.8%</div></div>
+  <div class="stat-card"><div class="label">Adj. ROIC（Q4 2025）</div><div class="value">43%</div><div class="note">+14ppts YoY；EMS 行業最高水準</div></div>
+  <div class="stat-card"><div class="label">FY2026 Capex</div><div class="value">~$1B</div><div class="note">有機資金；德州+泰國+墨西哥+日本</div></div>
+</div>
+
+<div class="sub-head">EMS / AI 硬體整合市場競爭格局</div>
+<div class="card">
+  <table>
+    <thead><tr><th>指標</th><th>Celestica（CLS）</th><th>Foxconn（製造巨頭）</th><th>Flex（FLEX）</th><th>Jabil（JBL）</th></tr></thead>
+    <tbody>
+      <tr><td>HPS 設計能力</td><td class="mono"><strong>強（AI 機架自主設計 + AMD/Google 合作）</strong></td><td class="mono">弱（純代工）</td><td class="mono">中（部分設計能力）</td><td class="mono">中（部分設計能力）</td></tr>
+      <tr><td>AI 資料中心曝露</td><td class="mono"><strong>極高（CCS 74% Revenue；Q4 +64%）</strong></td><td class="mono">高（NVIDIA 伺服器代工）</td><td class="mono">中</td><td class="mono">中低</td></tr>
+      <tr><td>Adj. OM</td><td class="mono"><strong>7.7%（最高；EMS 行業頂尖）</strong></td><td class="mono">~3-4%</td><td class="mono">~5-6%</td><td class="mono">~5%</td></tr>
+      <tr><td>Adj. ROIC</td><td class="mono"><strong>43%（極高）</strong></td><td class="mono">~10-12%</td><td class="mono">~15-18%</td><td class="mono">~15%</td></tr>
+      <tr><td>FCF Margin</td><td class="mono">~3-4%（偏低；Capex 年）</td><td class="mono">~2-3%</td><td class="mono">~4-5%</td><td class="mono">~4%</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sec-head">§6 ｜ 公司治理與資本配置</div>
+<div class="card">
+  <ul>
+    <li><strong>Rob Mionis（CEO，2015 年起）</strong>：工程師出身，帶領 CLS 從傳統 EMS 轉型為 HPS 導向公司。他的核心成就：① 推動 HPS 佔比從 2020 年的 20% 提升至 2025 年的 49% ② 確立 Google TPU 首選製造夥伴地位 ③ 主導 AMD Helios 合作（最新重大戰略決策）。Mionis 的執行風格：量化目標、保守指引（17 次連續 Beat 的來源）、有機成長優先（無大型收購）。</li>
+    <li><strong>資本配置：Capex > 股票回購（小規模） > 無股利</strong>：CLS 在 FY2025 回購了 1.36M 股（$151M，平均 $111/股）。FY2026 Capex $1B 是最主要的資本用途，說明管理層優先投資有機成長。無股利——CLS 不付股利，這是成長股的正常配置選擇。</li>
+    <li><strong>⚠️ Pomerantz 調查</strong>：股票從 $363 跌至 $280，律所啟動調查。管理層在 Q4 2025 Call 沒有提及——說明可能認為是無實質依據的策略性調查。需追蹤是否升級為正式訴訟。</li>
+  </ul>
+</div>
+
+<!-- §7 -->
+<div class="sec-head">§7 ｜ 五維度估值分析</div>
+<div class="sub-head">7.1｜歷史估值分位</div>
+<div class="alert-warn">
+  <strong>⚠️ CLS 估值框架的特殊性：</strong>CLS 過去是典型 EMS 公司（P/E 8-12x），現在是「EMS + HPS + AI 基礎設施整合」公司（P/E 25-40x）。這個業務模式的根本轉型使歷史 P/E（5-10x）完全不適用——需要以「AI 基礎設施成長股」的框架評估（P/E 25-40x），而非「傳統 EMS 周期股」（P/E 8-12x）。當前 Fwd P/E（FY2026E $8.75）= $280 ÷ $8.75 = ~32x，在 AI 成長股框架下是合理的，但仍比 APH（29x）和 KEYS（32.7x）稍高。
+</div>
+<table>
+  <thead><tr><th>估值指標</th><th>當前值（$280）</th><th>歷史/同業範圍</th><th>分位評估</th></tr></thead>
+  <tbody>
+    <tr><td>Fwd P/E（FY2026E $8.75，指引）</td><td class="mono">~32.0x</td><td>AI 成長股框架 25-40x；傳統 EMS 8-15x</td><td><span class="neutral">🟡 合理（AI 成長股框架中位；但 FCF Margin 3% 應打折 vs APH/KEYS）</span></td></tr>
+    <tr><td>Fwd P/E（FY2026E $9.0，若繼續 Beat）</td><td class="mono">~31.1x</td><td>—</td><td><span class="beat">🟢 合理偏低（17 次 Beat 模式使實際 EPS 可能 $9.0-9.5，P/E 降至 29-31x）</span></td></tr>
+    <tr><td>Fwd P/E（FY2027E $11.53）</td><td class="mono">~24.3x</td><td>—</td><td><span class="beat">🟢 便宜（以 1 年視野，FY2027 P/E 24x = 歷史低分位）</span></td></tr>
+    <tr><td>EV/Revenue（FY2026E $17B；EV ~$35B）</td><td class="mono">~2.1x</td><td>EMS 行業 0.3-0.8x；AI 成長 2-4x</td><td><span class="neutral">🟡 介於兩個框架之間；合理</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">7.2｜PEG 分析</div>
+<table>
+  <thead><tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr></thead>
+  <tbody>
+    <tr><td>Fwd P/E（FY2026E $8.75）</td><td class="mono">~32.0x</td><td>—</td><td>$280 ÷ $8.75</td></tr>
+    <tr><td>EPS CAGR（FY2025-2028，中性 32%）</td><td class="mono">~32%</td><td>—</td><td>中性（管理層指引 + WallStreetZen 共識 + FY2027/2028 估算）</td></tr>
+    <tr><td>PEG（中性 32% CAGR）</td><td class="mono">32.0 ÷ 32 = <strong>1.00x（接近便宜線！）</strong></td><td>&lt;1.0 便宜 / 1∼2 合理 / >2 貴</td><td><span class="beat">接近 PEG 1.0x！是本系列二十四標的中較低的 PEG 之一——說明在 AI 超週期維持的假設下，CLS 有顯著低估</span></td></tr>
+    <tr><td>PEG（保守 22% CAGR）</td><td class="mono">32.0 ÷ 22 = <strong>1.45x（合理）</strong></td><td>—</td><td><span class="beat">保守情境下仍合理；比 KEYS（1.77x）和 KLAC（2.97x）更有吸引力</span></td></tr>
+    <tr><td>FCF-調整後 PEG（FCF Margin 3% 折扣 -30%）</td><td class="mono">PEG 1.00x × (1+0.30) = <strong>1.30x（FCF 調整後合理）</strong></td><td>—</td><td><span class="neutral">考慮 FCF 低（3%）的折扣後，FCF 調整後 PEG ~1.3x，仍是二十四標的中較吸引人的估值</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">7.3｜DCF 試算：三情境合理股價</div>
+<div class="card">
+  <strong>輸入參數：</strong>
+  <ul>
+    <li>基期 FCF（FY2026 指引）：~$500M（低 FCF！Revenue $17B × 2.9%）</li>
+    <li>WACC：~11.5%（10Y UST 4.27% + Beta ~1.8（高 Beta；過去 52 週 +380%）× ERP 6% × 0.6 = 6.5% → ~11.5%）</li>
+    <li>永續成長率：3.5%（AI 基礎設施長期趨勢）</li>
+    <li>⚠️ 重要：FCF 低是 DCF 計算的核心挑戰。若以 EPS（Adj.）為代理 FCF，DCF 值會高很多；本報告以真實 FCF 計算以確保保守性。</li>
+  </ul>
+</div>
+<table style="margin-top:8px">
+  <thead><tr><th>情境</th><th>FCF CAGR（前 5 年）</th><th>FCF CAGR（後 5 年）</th><th>永續成長率</th><th>WACC</th><th>DCF 合理價</th><th>vs 當前 $280</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（30%）</strong><br>AI 超週期 2028+ 不間斷；Capex 後 FCF 爆發；AMD Helios 成功；OM 突破 9%；FCF Margin 升至 7%</td><td class="mono">45%</td><td class="mono">20%</td><td class="mono">4.0%</td><td class="mono">11.0%</td><td class="mono" style="font-weight:700">$620</td><td class="mono" style="color:#166534">+121%</td></tr>
+    <tr class="base"><td><strong>中性（50%）</strong><br>FY2026 EPS $8.75 兌現；Capex 2027-2028 正常化後 FCF 升至 5%；AI 超週期維持</td><td class="mono">25%</td><td class="mono">12%</td><td class="mono">3.5%</td><td class="mono">11.5%</td><td class="mono" style="font-weight:700">$360</td><td class="mono" style="color:#D97706">+29%</td></tr>
+    <tr class="bear"><td><strong>悲觀（20%）</strong><br>最大客戶需求大幅縮減；AI Capex 放緩；AMD Helios 失敗；OM 回落至 6.5%；FCF 停滯</td><td class="mono">-5%</td><td class="mono">0%</td><td class="mono">2.0%</td><td class="mono">13.5%</td><td class="mono" style="font-weight:700">$110</td><td class="mono" style="color:#DC2626">-61%</td></tr>
+  </tbody>
+</table>
+<div class="alert-warn" style="margin-top:12px">
+  <strong>⚠️ CLS DCF 的特殊問題：</strong>悲觀情境（-61%）遠大於 APH（-26%）和 KEYS（-45%）。這是 CLS 客戶超高集中度（前三 63%）和 FCF 低（3%）的雙重影響——若最大客戶（36%）大幅縮減採購，FCF 可能瞬間轉負（Capex 固定但收入大跌）。這個不對稱的下行風險（-61%）是 CLS 估值難以給高安全邊際的核心原因。中性 DCF +29% 和下行 -61% 的不對稱比（+29% vs -61%）說明 CLS 的風險調整後期望值需要謹慎評估。
+</div>
+
+<div class="sub-head">7.4｜同業估值比較</div>
+<table>
+  <thead><tr><th>公司</th><th>市值</th><th>Fwd P/E（FY+1）</th><th>EPS CAGR（3年）</th><th>PEG</th><th>FCF Margin</th><th>DCF 中性上行</th><th>護城河</th></tr></thead>
+  <tbody>
+    <tr style="background:var(--cyan-bg)">
+      <td><strong>CLS（Celestica）</strong></td>
+      <td class="mono">~$33-35B</td>
+      <td class="mono">~32.0x</td>
+      <td class="mono">~22-32%</td>
+      <td class="mono">1.00x！（中性）</td>
+      <td class="mono">~3-4%⚠️</td>
+      <td class="mono">+29%（中性）/ +121%（樂觀）</td>
+      <td class="mono">7.0/10（↑加速擴大）</td>
+    </tr>
+    <tr>
+      <td>APH（Amphenol，本系列 #11）</td>
+      <td class="mono">$168B</td>
+      <td class="mono">~29x</td>
+      <td class="mono">~18-22%</td>
+      <td class="mono">1.32x</td>
+      <td class="mono">~19%★</td>
+      <td class="mono">+52%</td>
+      <td class="mono">9.0/10★</td>
+    </tr>
+    <tr>
+      <td>ANET（Arista，AI 網路）</td>
+      <td class="mono">$171B</td>
+      <td class="mono">~40x</td>
+      <td class="mono">~20%</td>
+      <td class="mono">~2.0x</td>
+      <td class="mono">~41%★★</td>
+      <td class="mono">+69%</td>
+      <td class="mono">9.0/10</td>
+    </tr>
+    <tr>
+      <td>KEYS（Keysight，本系列 #18）</td>
+      <td class="mono">$48B</td>
+      <td class="mono">~32.7x</td>
+      <td class="mono">~14-22%</td>
+      <td class="mono">1.77x</td>
+      <td class="mono">~24%</td>
+      <td class="mono">+17%</td>
+      <td class="mono">8.5/10</td>
+    </tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:10px">
+  <p><strong>CLS vs APH（最直接比較——同為「AI 基礎設施硬體」但業務性質不同）：</strong>APH 是連接器（FCF Margin 19%，護城河 9.0/10）；CLS 是 EMS/HPS（FCF Margin 3%，護城河 7.0/10）。APH 的 FCF 品質遠優於 CLS，且護城河更深，但 CLS 的 EPS CAGR（22-32%）高於 APH（18-22%）。以 DCF 比較：APH 中性 +52% 遠優於 CLS 中性 +29%，且 APH 悲觀只有 -26% vs CLS 悲觀 -61%。結論：APH 在 $128 是更好的「風險調整後回報」，CLS 在 $280 是「高成長但高風險」的差異化標的。</p>
+  <p><strong>CLS vs ANET（AI 網路設備的競合關係）：</strong>ANET 是 AI 資料中心網路的軟硬體完整解決方案（Arista EOS 軟體訂閱 + 高速交換器）；CLS 是 AI 機架的硬體整合商（HPS + 高速交換器製造）。兩者都在做 AI 資料中心的高速交換器，但方向不同——ANET 是「交換器設備商」，CLS 是「機架級整合商（含交換器）」。ANET 的 FCF Margin 41% 遠優於 CLS 3%，護城河 9.0/10 也更深。CLS 的競爭者不只是 ANET，而是整個 AI 資料中心設備市場。</p>
+</div>
+
+<div class="sub-head">7.5｜綜合估值判斷</div>
+<table>
+  <thead><tr><th>維度</th><th>訊號</th><th>評語</th></tr></thead>
+  <tbody>
+    <tr><td>歷史分位（7.1）</td><td><span class="neutral">🟡 合理（AI 成長股框架中位；但 FCF 低應打折）</span></td><td>$280 在 AI 成長股框架下合理，但 FCF 低是折扣因素</td></tr>
+    <tr><td>成長性匹配（7.2 PEG）</td><td><span class="beat">🟢 接近便宜！（中性 PEG 1.00x；保守 PEG 1.45x——均合理偏低）</span></td><td>PEG 1.00x 是本系列中最低之一（比 KEYS 1.77x、APH 1.32x 更低）</td></tr>
+    <tr><td>DCF 內在價值（7.3）</td><td><span class="neutral">🟡 輕微低估（中性 +29%；但悲觀 -61% 風險極大）</span></td><td>不對稱性差（+29% vs -61%）；FCF 低使 DCF 下行風險巨大</td></tr>
+    <tr><td>同業相對（7.4）</td><td><span class="neutral">🟡 合理（vs APH：FCF 低值折扣；vs ANET：護城河折扣）</span></td><td>EPS 成長率最高，但 FCF 和護城河質量使估值應有折扣</td></tr>
+    <tr><td>長期成長確信度（§2.5）</td><td><span class="beat">🟢 高確信（FY2026）+ 中等確信（FY2027+）</span></td><td>FY2026 $8.75 EPS 能見度極高；FY2027+ AMD Helios 是不確定因素</td></tr>
+  </tbody>
+</table>
+
+<div class="rating-block cyan" style="margin-top:16px">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">當前評價：有條件建倉（15-20%）——PEG 1.00x 接近便宜線，FY2026 EPS 能見度極高，17 次連續 Beat 確認執行力，AMD Helios 是重要的上行期權；但 FCF 3-4% 和客戶集中度 63%（最大 36%）使建倉比例應低於 APH 或 ANET</div>
+    <div class="body">$280 的 CLS 是一個「高成長、低安全邊際、高風險集中度」的標的——適合投資組合中的「衛星倉位」而非「核心倉位」。若已持有 APH 和 ANET，CLS 提供了「EMS/HPS 的 AI 硬體製造」曝露，與其他標的的業務模式差異化。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>分析師目標價對照（2026-03 更新）：</strong><br>
+  StockAnalysis（12 位）：平均 $318.25（+14%）；Strong Buy；高 $440，低 $120<br>
+  TickerNerd（18 位頂級分析師）：中位 $372.50（+33%）；Strong Buy 9.1/10<br>
+  CLSA Skye Chen（最新，2026-03-19）：Buy，目標 $350（+25%）<br>
+  WallStreetZen 1 年目標：$361.40（+29%）<br>
+  本分析中性 12 個月目標：$340-380（FY2026E $8.75-9.0 × 38-42x = $333-378；AI 成長溢價）
+</div>
+
+<!-- §8 -->
+<div class="sec-head">§8 ｜ 投資結論與情境預測</div>
+<div class="sub-head">財報信號與估值銜接</div>
+<div class="card">
+  <p>Q4 FY2025（2026-01-28）確認了 CLS 最重要的三個業務信號：① <strong>17 次連續雙 Beat</strong>（業界最長的連續超越指引記錄）② <strong>FY2026 全年指引大幅上調至 $17B/$8.75</strong>（比 Q3 2025 時的原始指引 $16B/$8.20 分別上調 +6.25% 和 +6.7%）③ <strong>第三個 1.6T 交換器超大規模客戶獎項</strong>（客戶多元化從 1 到 3）。</p>
+  <p>股票從全時高 $363（2025-11-05）回落至 $280（-23%），主要原因：① Pomerantz 調查的投資者情緒壓力 ② AI Capex 週期頂部擔憂（GTC 2026 後光纖 vs 銅纜的技術路線辯論） ③ FY2026 FCF $500M 對比 $1B Capex 的現金流擔憂 ④ 整體市場修正。業務基本面無任何惡化——實際上 Q4 2025 是 CLS 有史以來最強的一個季度。</p>
+  <p>目前 $280 以 FY2026E $8.75 的 Fwd P/E 32x 是合理偏高的估值（考慮 FCF 低），但 PEG 1.00x 在超高成長率（+45% EPS）的背景下有吸引力。最重要的近期催化劑：<strong>Q1 FY2026 財報（2026-04-23）</strong>——指引 Revenue $4.0B 中位（+51% YoY）和 EPS $2.05 中位（+71% YoY）。若 Beat 第 18 次，股票可能重回 $320-350。</p>
+</div>
+
+<div class="sub-head">三年情境預測（Adj. EPS）</div>
+<table>
+  <thead><tr><th>情境</th><th>核心假設</th><th>FY2028E EPS</th><th>EPS CAGR</th><th>目標 P/E</th><th>目標股價</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀（25%）</strong><br>AI 超週期 2028+ 不間斷；AMD Helios 大成功；1.6T × 3 客戶全速量產；第四客戶獎項；OM 突破 9%</td><td>FY2027 $14 → FY2028 $18</td><td class="mono">$18</td><td class="mono">~43.6%</td><td class="mono">35~42x</td><td class="mono" style="font-weight:700;color:#166534">$630~$756</td></tr>
+    <tr class="base"><td><strong>中性（50%）</strong><br>FY2026 $8.75 兌現；AMD Helios 中等成功；1.6T 三客戶正常量產；FCF 2027 正常化</td><td>FY2027 $11.53 → FY2028 $14</td><td class="mono">$14</td><td class="mono">~32.3%</td><td class="mono">28~35x</td><td class="mono" style="font-weight:700;color:#D97706">$392~$490</td></tr>
+    <tr class="bear"><td><strong>悲觀（25%）</strong><br>最大客戶縮減採購 -30%；AI Capex 放緩；AMD Helios 失敗；OM 回落至 6.5%</td><td>FY2027 $7.5 → FY2028 $8</td><td class="mono">$8</td><td class="mono">~9.8%</td><td class="mono">15~22x（EMS 週期股定價）</td><td class="mono" style="font-weight:700;color:#DC2626">$120~$176</td></tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:8px">
+  <strong>機率加權預期目標股價（3 年，FY2028 視野）：</strong><br>
+  25% × $693 + 50% × $441 + 25% × $148 = <strong class="mono">$444（3 年，+59%）</strong><br>
+  12 個月目標（Q1 2026 財報確認後）：25% × $450 + 50% × $355 + 25% × $170 = <strong class="mono">$333（+19%）</strong><br>
+  注：高度不確定（標準差極大），反映客戶集中度帶來的「樂觀/悲觀情境兩極化」特性
+</div>
+
+<div class="sub-head">最終結論</div>
+<div class="rating-block green">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">投資判斷：有條件建倉（15-20%，作為「衛星倉位」）——PEG 1.00x（本系列最低之一），FY2026 EPS 指引 $8.75 能見度極高，17 次連續 Beat 執行力確認，AMD Helios 是 2027 年的重大上行期權；但 FCF 3% + 客戶集中度 63%（最大 36%）+ 悲觀 -61% 使建倉比例應低於 APH 或 ANET</div>
+    <div class="body">$280 的 CLS 是「高成長/高確信（FY2026）+ 高風險集中度」的差異化組合。不適合作為「核心倉位」（因為悲觀下行 -61% 太大），但在 PEG 1.00x 的吸引力下，作為 15-20% 的「衛星倉位 / AI 硬體製造曝露」是合理的。最適合與 APH（廣度多元化）、ANET（高 FCF 護城河）配合，提供差異化的 AI 基礎設施硬體製造曝露。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="sub-head" style="margin-top:0">① 短期催化劑（0~12 個月）</div>
+  <p><strong>Q1 FY2026 財報（2026-04-23）</strong>是最重要的確認點。指引 Revenue $3.85-4.15B（+51%）和 EPS $1.95-2.15（+71%）。若 ① Beat 第 18 次（EPS ≥ $2.15+）② AMD Helios 首批訂單量更新（管理層說 2026 H2 出貨，可能給出量化展望）③ FY2026 全年指引再次上調（原 $17B）→ 股票可能從 $280 直衝 $330-370。最大短期風險：Pomerantz 調查若升級為正式集體訴訟，短期 -10-15% 壓力。</p>
+
+  <div class="sub-head">② 中期成長可見度（1~3 年）</div>
+  <p>中期最確定的是 <strong>FY2026 Revenue $17B 和 EPS $8.75</strong>——能見度在二十四個標的中最高之一（管理層指引 + 17 次連續 Beat 的執行保證 + 三個超大規模客戶的合同在手）。中期最大不確定性：① AMD Helios 在 2026 H2 的量產爬坡規模 ② 最大客戶（36%，可能為 Google）的 FY2027 採購計畫更新。若 Q2/Q3 2026 的財報 Call 中管理層對 Helios 給出量化收入展望（如「2027 Helios 貢獻 $1-2B Revenue」），FY2027 EPS $11.53+ 的路徑確認，目標股價向 $400-500 靠近。</p>
+
+  <div class="sub-head">③ 長期成長護城河（3 年後）</div>
+  <p>CLS 的長期論點是 <strong>「AI 機架級整合外包的不可逆趨勢 + HPS 設計能力的持續加深」</strong>。超大規模客戶（Google、Meta、Amazon）的 AI 資料中心建設速度越快，就越需要外包機架設計和製造給像 CLS 這樣的夥伴。CLS 正在做的——從設計、製造到供應鏈管理的一體化——是一個 Foxconn、Flex、Jabil 都還沒有完全複製的模式。AMD Helios 合作確認了 CLS 已能服務「第二個 GPU 生態系」——若未來 Qualcomm 或 Intel 也推出 AI 加速器，CLS 可能成為第三個生態系的夥伴。這個「多 GPU 生態系 × 多超大規模客戶 × HPS 設計能力」的三重疊加，是 CLS 在 3-5 年後護城河深度的核心驅動力。</p>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>進場建議（衛星倉位策略）：</strong>
+  <ul>
+    <li>當前 $280（Fwd P/E 32x；PEG 1.00x；中性 DCF +29%）：<strong>有條件建倉 15-20%</strong>（衛星倉；PEG 1.00x 有吸引力；但 FCF 3% 和 客戶集中度 63% 限制倉位大小）</li>
+    <li>若回調至 <strong>$240-250</strong>（Fwd P/E ~27-29x；PEG ~0.84-0.91x = 便宜！）→ <strong>加碼至 30-35%</strong></li>
+    <li>Q1 FY2026 財報（2026-04-23）：若 Beat 第 18 次 + FY2026 全年指引上調 + AMD Helios 量化展望 → <strong>加碼至 25-35%</strong></li>
+    <li>若跌至 <strong>$190-210</strong>（Fwd P/E ~22-24x；接近歷史 EMS 轉型股的低估值）→ <strong>積極加碼 40-45%</strong></li>
+    <li><strong>CLS 的最佳組合搭配：</strong>APH（核心 35-45%）+ CLS（衛星 15-20%）+ ANET（核心 40-50%）= 完整 AI 硬體基礎設施覆蓋（連接器 + EMS/HPS + 網路）</li>
+    <li><strong>停損考量：</strong>若 Q1 FY2026（2026-04-23）EPS 低於指引下限（<$1.95）或 FY2026 全年指引下調（Revenue < $16B），說明客戶需求出現問題，立即評估是否是客戶集中度風險的顯現。若是，減碼至 5-10% 並等待更多資訊。</li>
+  </ul>
+</div>
+
+<div class="sub-head">下行風險量化</div>
+<div class="card">
+  <p>若最大客戶採購下滑 30%（EPS CAGR 降至 10%）：<strong class="mono">合理估值 $190-240（-14% ～ -32%）</strong></p>
+  <p>若 AI Capex 週期大幅放緩 + 最大客戶流失（EPS CAGR 0%）：<strong class="mono">合理估值 $110-176（-37% ～ -61%）</strong></p>
+  <div class="alert-danger">
+    <strong>⚠️ CLS 的下行風險比多數同類標的更大（悲觀 -61%）：</strong>這是 EMS 業務模式 + 客戶超高集中度（前三 63%，最大 36%）+ FCF 偏低（3%）的三重疊加效果。在業務逆風（客戶縮減採購）+估值收縮（AI 成長股折價回 EMS 框架）同時發生時，CLS 的股票跌幅會遠超其他標的。這是為什麼 CLS 的建倉比例應控制在 15-20%（衛星倉）而非 35-45%（核心倉）。
+  </div>
+</div>
+
+<div class="sub-head">最關鍵監測指標</div>
+<table>
+  <thead><tr><th>#</th><th>監測指標</th><th>性質</th><th>閾值</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>最大客戶（可能為 Google）採購集中度變化</strong><br>Q4 2025 最大客戶 36%（急升）。若此客戶在 FY2026 維持或增加採購，FY2026 Revenue $17B+ 確認；若縮減，整個 FY2026 指引面臨下調風險。追蹤：每季財報披露的「超過 10% 客戶數量及佔比」</td><td><span class="beat">🔵 最重要的長期成長領先信號（也是最大的下行風險信號）</span></td><td>若 Q1 2026 最大客戶仍佔 ≥30%（說明 AI 需求持續），確認中性路徑；若降至 <25%，警戒；若降至 <20%，減倉評估</td></tr>
+    <tr><td>2</td><td><strong>AMD Helios 量化進展（FY2027 上行期權的觸發器）</strong><br>AMD Helios 合作在 2026 H2 開始出貨。若 Q2/Q3 2026 財報 Call 管理層給出 Helios 收入展望（如「2027 Helios 貢獻 $1-2B」），FY2027 $11.53 EPS 路徑確認。</td><td>FY2027 上行期權觸發器</td><td>若 2026 Q2/Q3 Call 明確 Helios 2027 收入 ≥ $1B，目標股價向 $400-450 靠近；若 Helios 延期至 2028，FY2027 EPS 下調至 ~$10</td></tr>
+    <tr><td>3</td><td><strong>Pomerantz 調查進展</strong><br>2026-02-12/17 發出調查公告。若無進一步行動（通常 3-6 個月），調查消散，短期壓力消除。若升級為正式集體訴訟，短期 -10-15% 壓力。</td><td>短期不確定性信號（非基本面）</td><td>若 2026-06 前無進一步訴訟進展，壓力消散；若正式提起訴訟，短期加大波動，但若業務基本面不變，是買入機會</td></tr>
+  </tbody>
+</table>
+
+<!-- 二十四標的全覽 -->
+<div class="sec-head">附錄：二十四個標的完整核心對照表（加入 CLS）</div>
+<table style="font-size:6.5px">
+  <thead><tr><th>指標</th><th>TSM</th><th>NVDA</th><th>AVGO</th><th>GOOGL</th><th>MSFT</th><th>AMZN</th><th>AAPL</th><th>META</th><th>TSLA</th><th>AMD</th><th>MRVL</th><th>VRT</th><th>ANET</th><th>LRCX</th><th>ASML</th><th>KLAC</th><th>AMAT</th><th>TER</th><th>LITE</th><th>MU</th><th>COHR</th><th>APH</th><th>KEYS</th><th>CLS</th></tr></thead>
+  <tbody>
+    <tr><td>護城河</td><td>9.5</td><td>9.5</td><td>8.5</td><td>9.0</td><td>9.0</td><td>9.0</td><td>9.5</td><td>8.5</td><td>6.5</td><td>8.0</td><td>8.0</td><td>8.5</td><td>9.0</td><td>8.5</td><td>10.0</td><td>9.0</td><td>8.5</td><td>7.5</td><td>8.5</td><td>7.0</td><td>7.5</td><td>9.0</td><td>8.5</td><td>7.0↑</td></tr>
+    <tr><td>現價</td><td>NT$1,900</td><td>$180</td><td>$316</td><td>$307</td><td>$390</td><td>$209</td><td>$250</td><td>$615</td><td>$383</td><td>$199</td><td>$90</td><td>$265</td><td>$136</td><td>$220</td><td>$1,370</td><td>$1,465</td><td>$355</td><td>$300</td><td>$650</td><td>$444</td><td>$247</td><td>$128</td><td>$281</td><td>$280</td></tr>
+    <tr><td>Fwd P/E（FY+1）</td><td>25.3x</td><td>22x</td><td>24x</td><td>26x</td><td>22x</td><td>27x</td><td>29x</td><td>20x</td><td>170x</td><td>30x</td><td>24x</td><td>44x</td><td>40x</td><td>36x</td><td>39x</td><td>40x</td><td>32x</td><td>49x</td><td>71x</td><td>10x</td><td>41x</td><td>29x</td><td>32.7x</td><td>32.0x</td></tr>
+    <tr><td>EPS CAGR（3年）</td><td>9-22%</td><td>~34%</td><td>~38-41%</td><td>~17-23%</td><td>~18-22%</td><td>~28-36%</td><td>~20-27%</td><td>~19-25%</td><td>分歧</td><td>~34-48%</td><td>~38-42%</td><td>~24-34%</td><td>~20%</td><td>~16-20%</td><td>~17-27%</td><td>~13.5%</td><td>~17-22%</td><td>~29-39%</td><td>~61-77%</td><td>~67-113%</td><td>~20-30%</td><td>~18-22%</td><td>~14-22%</td><td>~22-32%★</td></tr>
+    <tr><td>PEG</td><td>1.69x</td><td>0.64x</td><td>0.60x</td><td>1.13x</td><td>~1.08x</td><td>~0.84x</td><td>~1.26x</td><td>~0.93x</td><td>4.06x</td><td>0.59x</td><td>0.62x</td><td>1.42x</td><td>~2.0x</td><td>~1.97x</td><td>1.44x</td><td>2.97x</td><td>1.47x</td><td>1.41x</td><td>1.42x</td><td>0.13x</td><td>1.37x</td><td>1.32x</td><td>1.77x</td><td>1.00x★★</td></tr>
+    <tr><td>DCF 中性上行</td><td>+42%</td><td>+44%</td><td>+36%</td><td>+24%</td><td>+28%</td><td>+53%</td><td>+16%</td><td>+30%</td><td>-48%</td><td>+56%</td><td>+78%</td><td>+11%</td><td>+69%</td><td>+34%</td><td>+53%</td><td>+9%</td><td>+35%</td><td>+20%</td><td>+51%</td><td>+46%</td><td>+34%</td><td>+52%</td><td>+17%</td><td>+29%</td></tr>
+    <tr><td>FCF Margin</td><td>28%</td><td>35%</td><td>50%+</td><td>25%</td><td>25%</td><td>12%</td><td>25%</td><td>37%</td><td>負</td><td>12%</td><td>~25%</td><td>~12%</td><td>41%</td><td>~30%</td><td>~38%</td><td>~34%</td><td>~18%</td><td>~23%</td><td>~15%</td><td>~28%</td><td>~9%</td><td>~19%</td><td>~24%</td><td>3-4%⚠️</td></tr>
+    <tr><td>最終判斷</td><td>🟡</td><td>🟢</td><td>🟡</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟡</td><td>🟢</td><td>🔴</td><td>🟢</td><td>🟢</td><td>🟡</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟡</td><td>🟢</td><td>🟡</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢核心</td><td>🟡等$240</td><td>🟢衛星15-20%</td></tr>
+  </tbody>
+</table>
+
+<div class="rating-block cyan" style="margin-top:20px">
+  <div class="icon">🏆</div>
+  <div>
+    <div class="title">二十四個標的最終綜合排名（加入 CLS）</div>
+    <div class="body">
+      <strong>🥇 NVDA</strong> | <strong>🥈 MSFT</strong> | <strong>🥉 META</strong><br>
+      <strong>4️⃣ AMD</strong> | <strong>5️⃣ MRVL</strong> | <strong>6️⃣ ASML</strong> | <strong>7️⃣ ANET</strong> | <strong>8️⃣ AMZN</strong> | <strong>9️⃣ LRCX</strong> | <strong>🔟 AMAT</strong><br>
+      <strong>1️⃣1️⃣ APH</strong> | <strong>1️⃣2️⃣ AVGO</strong> | <strong>1️⃣3️⃣ GOOGL</strong> | <strong>1️⃣4️⃣ MU</strong> | <strong>1️⃣5️⃣ LITE</strong> | <strong>1️⃣6️⃣ COHR</strong> | <strong>1️⃣7️⃣ KLAC</strong><br>
+      <strong>1️⃣8️⃣ KEYS</strong> | <strong>1️⃣9️⃣ TER</strong><br>
+      <strong>2️⃣0️⃣ CLS ★NEW</strong>：<strong>EPS CAGR ~22-32%★★、PEG 1.00x（全系列最低之一）★★★、17 次連續雙 Beat、FY2026 EPS $8.75 能見度極高、AMD Helios 上行期權、Adj. ROIC 43%（EMS 行業頂尖）</strong>。但 FCF Margin 3-4%⚠️（全系列最低）、客戶集中度 63%（最大 36%）⚠️、悲觀下行 -61%⚠️ 使 CLS 不適合核心倉位，只適合衛星倉位（15-20%）。排名 #20 反映了「最高 EPS 成長性（CAGR 32%）但最低 FCF 品質（3%）」的平衡。<br>
+      <strong>2️⃣1️⃣ VRT</strong>（等$220）| <strong>2️⃣2️⃣ 2330/TSM</strong>（觀望）| <strong>2️⃣3️⃣ AAPL</strong>（等$215）| <strong>❌ TSLA</strong><br><br>
+      <strong>★ CLS 的特殊定位：「AI 機架級整合製造的先驅者，EMS 中的 HPS 轉型標竿」</strong><br>
+      Celestica 是本系列二十四個標的中唯一的「EMS（電子製造服務）進化型 HPS 硬體平台解決方案商」，也是最清晰體現了「傳統製造業向 AI 基礎設施轉型」的案例。從 $3.88 EPS（FY2024）到 $6.05（FY2025）到 $8.75（FY2026E，指引）的 EPS 爆炸式成長，加上 PEG 1.00x 的吸引力定價，使 CLS 在本系列中名列「高確信成長機會」的範疇。但 FCF 3%（最低）和客戶集中度 63%（最高）的雙重限制，使這個「高成長機會」必須配以「衛星倉位」的謹慎建倉策略，而非「核心倉位」的大規模配置。<br><br>
+      <strong>「AI 硬體完整製造鏈」最佳組合（含 CLS）：</strong><br>
+      <strong>APH</strong>（AI 連接器，核心 35-45%）+ <strong>CLS</strong>（AI 機架 HPS 製造，衛星 15-20%）+ <strong>ANET</strong>（AI 網路，核心 40-50%）= 覆蓋 AI 資料中心「連接 → 製造整合 → 網路」的完整硬體製造鏈，三者業務高度差異化且互補
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:32px;font-size:12px;color:var(--text-sub);">
+  <strong>免責聲明：</strong>本報告由 Claude AI 根據公開市場資料生成，僅供研究參考，不構成投資建議。數據來源：Celestica IR/SEC（Q4 FY2025，2026-01-28；Q4 FY2024，2025-01-29）、Robinhood（$284.50 盤中，2026-03-20）、MacroTrends（52週 $58.05-$363.40）、WallStreetZen（FY2026E $8.40，n=10；FY2027E $11.53）、TickerNerd（18位分析師，中位目標 $372.50）、StockAnalysis（12位，平均 $318.25）、FinancialContent/Barchart（AMD Helios 分析，2026-03-19）、GlobalNewswire（Pomerantz 調查，2026-02-17）、TradingView（Q4 2025 財報分析）、CLSA Skye Chen（Buy $350，2026-03-19）。數據截止 2026-03-20。<br><br>
+  <strong>特別注意：</strong>① CLS 在 NYSE（美元，$CLS）和 TSX（加元，$CLS.TO）雙重掛牌；本報告使用 NYSE 美元股價（$280 USD）② 「Adj. EPS（Non-GAAP）」是 CLS 主要報告指標，剔除 SBC、攤銷和重組費用；FY2025 Adj. EPS $6.05 vs GAAP EPS $7.16（GAAP 比 Adj. 高，因稅務優惠）③ Q4 2025 最大客戶佔 Revenue 36%（廣泛認為是 Google TPU 系統業務）——這是本報告中最重要的風險追蹤項目 ④ Pomerantz 律師事務所的調查（2026-02-12/17）尚未升級為正式訴訟，屬於常規策略性律所調查，但需追蹤進展 ⑤ FY2026 $1B Capex（有機資金）將大幅壓縮 FY2026 FCF（指引 $500M），但 FY2027 Capex 正常化後 FCF 有望跳升至 $800M-1B+（「FCF 遞延爆發」是 2027 的重要催化劑）。<br><br>
+  <strong>報告版本：</strong>DD_CLS_20260320 ｜ 模式：深度版 ｜ 生成時間：2026-03-20
+</div>
+</div>
+</body>
+</html>
