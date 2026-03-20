@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_NVDA_20260320 | Nvidia 深度分析報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --navy: #0F2942;
+    --accent: #76B900; /* Nvidia green */
+    --accent-light: #F0F7E0;
+    --text: #1A2332;
+    --text-sub: #4A5568;
+    --border: #E2E8F0;
+    --alt-row: #F1F5F9;
+    --green-bg: #DCFCE7; --green-text: #166534;
+    --red-bg: #FEE2E2; --red-text: #991B1B;
+    --yellow-bg: #FEF9C3; --yellow-text: #92400E;
+    --blue-bg: #EFF6FF; --blue-text: #1E40AF;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Noto Sans TC', sans-serif; color: var(--text); font-size: 14px; line-height: 1.7; }
+
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--navy); color: #fff;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 24px; font-family: var(--mono); font-size: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  #topbar .left { display: flex; gap: 24px; align-items: center; }
+  #topbar .ticker { font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #76B900; }
+  #topbar .mode-badge { background: #76B900; color: #000; padding: 2px 10px; border-radius: 3px; font-size: 11px; font-weight: 700; }
+  #topbar .price { font-size: 16px; font-weight: 600; color: #FCD34D; }
+  #print-btn { background: #76B900; color: #000; border: none; cursor: pointer; padding: 6px 16px; border-radius: 3px; font-size: 12px; font-family: var(--mono); font-weight: 700; }
+  #print-btn:hover { background: #5c9100; color: #fff; }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 80px 24px 60px; }
+
+  .sec-head {
+    background: var(--navy); color: #fff;
+    padding: 10px 20px; margin: 32px 0 16px;
+    border-left: 4px solid var(--accent);
+    font-size: 15px; font-weight: 700; letter-spacing: .5px;
+  }
+  .sub-head {
+    color: var(--navy); font-size: 13px; font-weight: 700;
+    padding: 8px 0 4px; border-bottom: 2px solid var(--accent);
+    margin: 20px 0 10px;
+  }
+
+  .card { background: var(--card); border: 1px solid var(--border); padding: 16px 20px; margin-bottom: 14px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 12px 16px; }
+  .stat-card .label { font-size: 11px; color: var(--text-sub); text-transform: uppercase; letter-spacing: .5px; }
+  .stat-card .value { font-family: var(--mono); font-size: 20px; font-weight: 600; color: var(--navy); }
+  .stat-card .note { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--navy); color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; font-size: 12px; }
+  td { padding: 7px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--alt-row); }
+  tr:hover td { background: #E8F0FE; }
+  .mono { font-family: var(--mono); }
+
+  .beat { background: var(--green-bg); color: var(--green-text); padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+  .miss { background: var(--red-bg); color: var(--red-text); padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+  .neutral { background: var(--yellow-bg); color: var(--yellow-text); padding: 2px 8px; border-radius: 3px; font-size: 11px; font-weight: 600; }
+  .pass { background: var(--green-bg); color: var(--green-text); }
+  .fail { background: var(--red-bg); color: var(--red-text); }
+  .warn { background: var(--yellow-bg); color: var(--yellow-text); }
+  .info { background: var(--blue-bg); color: var(--blue-text); }
+
+  .bull td { background: var(--green-bg) !important; }
+  .base td { background: var(--yellow-bg) !important; }
+  .bear td { background: var(--red-bg) !important; }
+
+  .rating-block { border: 2px solid; padding: 14px 20px; margin: 16px 0; display: flex; align-items: flex-start; gap: 16px; }
+  .rating-block.green { border-color: #16A34A; background: var(--green-bg); }
+  .rating-block.yellow { border-color: #D97706; background: var(--yellow-bg); }
+  .rating-block.red { border-color: #DC2626; background: var(--red-bg); }
+  .rating-block .icon { font-size: 28px; line-height: 1; }
+  .rating-block .title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .rating-block .body { font-size: 13px; }
+
+  .radar-row td:first-child { font-weight: 600; width: 200px; }
+  .radar-row td:nth-child(2) { width: 120px; }
+
+  .alert-warn { background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 10px 16px; margin: 12px 0; font-size: 13px; }
+  .alert-info { background: var(--blue-bg); border-left: 4px solid #3B82F6; padding: 10px 16px; margin: 12px 0; font-size: 13px; }
+  .alert-danger { background: var(--red-bg); border-left: 4px solid #DC2626; padding: 10px 16px; margin: 12px 0; font-size: 13px; }
+  .alert-green { background: var(--green-bg); border-left: 4px solid #16A34A; padding: 10px 16px; margin: 12px 0; font-size: 13px; }
+
+  p { margin-bottom: 10px; font-size: 13px; }
+  ul { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; font-size: 13px; }
+  strong { color: var(--navy); }
+
+  .data-stamp { font-family: var(--mono); font-size: 11px; color: var(--text-sub); background: var(--alt-row); padding: 6px 14px; border: 1px solid var(--border); display: inline-block; margin-bottom: 16px; }
+
+  .sbc-warning { background: #FFF7ED; border-left: 4px solid #EA580C; padding: 10px 16px; margin: 12px 0; font-size: 13px; }
+
+  @media print {
+    #topbar, #print-btn { display: none !important; }
+    .wrap { padding: 20px; }
+    body { font-size: 12px; }
+    .sec-head { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="left">
+    <span class="ticker">NVDA</span>
+    <span class="mode-badge">🔍 深度版</span>
+    <span>Nvidia Corporation</span>
+    <span>資料抓取：2026-03-20</span>
+    <span class="price">現價 ~$180 USD</span>
+    <span>最新財報：Q4 FY2026（2026/02/25）｜ GTC 2026（2026/03/16）</span>
+  </div>
+  <button id="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</div>
+
+<div class="wrap">
+
+<div class="data-stamp">
+  資料抓取時間：2026-03-20 ｜ NVDA 現價：~$180 USD ｜ 市值：~$4.38T USD ｜ 52週區間：$86.62 – $212.19 ｜ 最近財報：Q4 FY2026（2026-02-25）｜ GTC 2026 keynote（2026-03-16）
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §0 序章 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§0 ｜ 序章：第一性原理 × 逆向思考</div>
+
+<div class="sub-head">存在意義</div>
+<div class="card">
+  <p>Nvidia 解決的是<strong>AI 算力通用加速器</strong>這一最核心的現代算力問題。深度學習的本質是大規模矩陣乘法，GPU 的並行計算架構天然適合這個工作負載，而 Nvidia 在 2006 年推出的 <strong>CUDA</strong>（Compute Unified Device Architecture）將這一能力包裝成可程式化的軟體平台，吸引了全球 400 萬+ 開發者、3,000+ 優化函式庫、以及所有主流 AI 框架（PyTorch、TensorFlow、JAX）的優先支援。</p>
+  <p>若 Nvidia 明天消失：所有正在訓練的 LLM（GPT-5、Gemini、Claude、Llama）即刻停擺；全球 AI 研究進度回到石器時代；$720B 的 2026 年 AI 基礎設施支出計畫成為廢紙。Jensen Huang 在 GTC 2026 說的「compute equals revenues」不是行銷語言——它是全球 AI 公司 P&L 的真實寫照。Nvidia 是人類 AI 文明的算力通匝收費站。</p>
+</div>
+
+<div class="sub-head">逆向推演（Munger Inversion）— 三年虧損 50%+ 的可能路徑</div>
+<div class="card">
+  <table>
+    <thead><tr><th>風險維度</th><th>具體情境</th><th>機率評估</th><th>對股價影響</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>🏛️ Hyperscaler 自建晶片（ASIC 去英偉達化）</strong></td>
+        <td>Google TPU v7、AWS Trainium 3、Meta MTIA v3 均在 2026 年大規模部署。若 hyperscalers（佔 Nvidia 約 40% 收入）將推理工作負載大幅轉移至自家 ASIC，Nvidia 面臨量（量産量下降）和價（被迫降價競爭）的雙重壓縮。TrendForce 估計 2026 年自建 ASIC 出貨成長 44.6% vs GPU 16.1%。</td>
+        <td class="mono" style="color:#D97706">中等風險<br>3-5 年漸進</td>
+        <td>若 hyperscaler 份額從當前 ~40% 降至 25%，EPS 影響 -15~20%，估值倍數收縮 -20~30%；總計股價衝擊 -35~50%</td>
+      </tr>
+      <tr>
+        <td><strong>📉 AI 資本支出泡沫破裂</strong></td>
+        <td>Hyperscalers 累積 AI capex 超過 $720B（2026 全年估計），若 AI 應用商業化 ROI 未能兌現，資本支出週期驟然逆轉。Nvidia 雖有訂單能見度，但半導體週期從不缺驟逆轉先例（參考 2022 年）。Q4 FY2026 收入 $68B vs 兩年前 Q4 FY2024 收入 $22B，增幅 3 倍——這種速度的反轉也不需要特別理由。</td>
+        <td class="mono" style="color:#D97706">中等風險<br>1-3 年</td>
+        <td>若收入成長從 60%+ 驟降至 10-20%，估值倍數從 22x Forward P/E 壓縮至 15-18x，EPS 調整後股價下行空間 -40~55%</td>
+      </tr>
+      <tr>
+        <td><strong>🇨🇳 地緣政治出口管制升級</strong></td>
+        <td>2025 年 H20 出口禁令造成 $4.5B 庫存損失、$8B 季度收入缺口，後雖恢復但仍高度不確定。若美國再次擴大出口管制範圍（禁止更多型號進中國）或美中貿易戰全面升級，中國市場（目前約 10% 收入）可能清零；且政策波動性本身將對多年資本支出計畫的可預見性造成結構性傷害。</td>
+        <td class="mono" style="color:#DC2626">高不確定性<br>政策風險隨時可能</td>
+        <td>中國業務清零 + 不確定性折扣：估計股價短期衝擊 -15~25%；若中美技術冷戰全面化，長期系統性風險更大</td>
+      </tr>
+      <tr>
+        <td><strong>🔧 CUDA 護城河侵蝕</strong></td>
+        <td>AMD ROCm 7.0 已提供主流框架原生支援，PyTorch/JAX 可跨硬體後端。若軟體抽象層進一步成熟（如 OpenXLA），切換成本從「以年計」降至「以週計」，CUDA 鎖定效應弱化。CUDA 是 Nvidia 估值溢價的核心支撐，若此護城河可滲透，估值倍數壓縮最多。</td>
+        <td class="mono" style="color:#D97706">低至中<br>5-10 年長期風險</td>
+        <td>CUDA 鎖定效應弱化是 Nvidia 估值溢價的最大結構性威脅；中期影響有限但值得持續監測</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="alert-danger" style="margin-top:12px">
+    <strong>最大雙重尾部風險：</strong>Hyperscaler ASIC + AI capex 週期反轉若同時發生，可導致 -50%+ 股價衝擊。Nvidia 估值的支撐建立在「AI 基礎設施需求多年持續」的假設上，此假設若動搖，高估值倍數本身就是額外跌幅的來源。
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §1 即時財報情報 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§1 ｜ 即時財報情報（Q4 FY2026 + GTC 2026）</div>
+
+<div class="sub-head">① 最新一季財報關鍵數字（Q4 FY2026，截至 2026-01-25）</div>
+<table>
+  <thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue</td><td class="mono">$68.13B（記錄）</td><td class="mono">~$65.56B</td><td><span class="beat">✓ BEAT +3.9%</span></td><td class="mono">+73% YoY</td></tr>
+    <tr><td>Data Center Revenue</td><td class="mono">$62.31B（記錄）</td><td class="mono">~$59.5B</td><td><span class="beat">✓ BEAT +4.7%</span></td><td class="mono">+75% YoY</td></tr>
+    <tr><td>Non-GAAP EPS</td><td class="mono">$1.62</td><td class="mono">$1.52</td><td><span class="beat">✓ BEAT +6.6%</span></td><td class="mono">+82% YoY</td></tr>
+    <tr><td>GAAP EPS</td><td class="mono">$1.76</td><td class="mono">—</td><td><span class="beat">✓ 含 Intel 股票收益</span></td><td class="mono">+98% YoY</td></tr>
+    <tr><td>Gross Margin（Non-GAAP）</td><td class="mono">75.2%（1.5年高點）</td><td class="mono">~73.5%</td><td><span class="beat">✓ BEAT +1.7pp</span></td><td class="mono">+1.7pp YoY</td></tr>
+    <tr><td>Data Center Networking</td><td class="mono">$10.98B</td><td class="mono">—</td><td><span class="beat">✓ +263% YoY</span></td><td class="mono">NVLink/InfiniBand 爆發</td></tr>
+    <tr><td>Gaming Revenue</td><td class="mono">$3.7B</td><td class="mono">~$3.5B</td><td><span class="beat">✓ +47% YoY</span></td><td class="mono">Blackwell GeForce 拉動</td></tr>
+    <tr><td>FCF（全年 FY2026）</td><td class="mono">$96.58B</td><td class="mono">—</td><td><span class="beat">✓ 史上最高</span></td><td class="mono">FCF Margin ~44.7%</td></tr>
+  </tbody>
+</table>
+<div class="alert-green" style="margin-top:10px">
+  <strong>全年 FY2026 摘要：</strong> 收入 $215.9B（+65% YoY）｜ GAAP EPS $4.90（+67% YoY）｜ Non-GAAP EPS $4.77 ｜ Non-GAAP GM 71.3%（全年，含 H20 損益影響）｜ FCF $96.6B ｜ 股東回購 $41.1B（FY2026 全年） ｜ 資本支出 ~$8.2B（極輕，FCF/NI 轉換率超高）
+</div>
+
+<div class="sub-head">② Q1 FY2027 Guidance（2026-04 至 2026-07）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>指標</th><th>Guidance</th><th>vs 市場預期</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td>Revenue</td><td class="mono">$78.0B ±2%</td><td class="mono">市場預期 ~$72.6B</td><td><span class="beat">✓ 遠超預期 +7.5%</span></td></tr>
+      <tr><td>Non-GAAP Gross Margin</td><td class="mono">~75.0% ±50bps</td><td class="mono">市場預期 ~74%</td><td><span class="beat">✓ 小幅超預期</span></td></tr>
+      <tr><td>Non-GAAP Opex</td><td class="mono">~$7.5B</td><td class="mono">—</td><td>含 SBC $1.9B（新口徑）</td></tr>
+      <tr><td>中國 Data Center 收入</td><td class="mono">不含任何中國 DC 計算收入</td><td class="mono">—</td><td><span class="miss">⚠️ 中國風險持續</span></td></tr>
+    </tbody>
+  </table>
+  <div class="alert-warn" style="margin-top:8px">
+    <strong>重要口徑變更：</strong>從 Q1 FY2027 起，Nvidia 將 SBC（股票報酬）納入 Non-GAAP 財務數字。此舉使 Non-GAAP EPS 的真實「稀釋成本」更透明，但也代表未來 Non-GAAP EPS 將系統性低於過去的口徑，分析師共識需要重新調整。這是一個重要的口徑陷阱，在解讀 FY2027 EPS 估算時必須注意。
+  </div>
+</div>
+
+<div class="sub-head">③ GTC 2026 信號萃取（2026-03-16，最新催化劑）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>信號類型</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>$1 兆訂單能見度</strong></td>
+        <td>Jensen Huang 宣布 Blackwell + Vera Rubin 的可見收入機會已達 <strong>$1 兆</strong>（2025-2027），較去年 GTC 的 $500 億預測翻倍。這是史上最大的訂單前瞻性聲明，將管理層的成長確信度提升至新高。</td>
+      </tr>
+      <tr>
+        <td><strong>Vera Rubin 平台發布</strong></td>
+        <td>下一代架構（繼 Blackwell 後），7 顆晶片 + 5 種機架設計。Rubin GPU 含 288GB HBM4 記憶體、50 PFLOPS 算力、336B 電晶體。承諾推理 token 成本降低 10 倍 vs Blackwell。H2 2026 出貨，FY2027 全面量產。</td>
+      </tr>
+      <tr>
+        <td><strong>產品週期加速（12 個月）</strong></td>
+        <td>Nvidia 將 GPU 架構週期從 2 年壓縮至 1 年：Blackwell（2025）→ Vera Rubin（2026）→ Kyber/Feynman（2027/2028）。這「跑步機效應」強迫客戶持續升級，形成結構性週期性收入。</td>
+      </tr>
+      <tr>
+        <td><strong>Groq 整合</strong></td>
+        <td>2025 年 12 月以 $20B 收購 Groq 後，推出 Groq 3 LPU——與 Vera Rubin 搭配，專為低延遲推理優化，可提升 Rubin GPU 35 倍 tokens/watt 效能。這填補了 Nvidia 在超低延遲推理市場的缺口。</td>
+      </tr>
+      <tr>
+        <td><strong>Agentic AI + Physical AI</strong></td>
+        <td>Jensen 宣稱「Inference is the inflection point」，並展示人形機器人（Project GR00T）和 NemoClaw 企業代理平台。Nvidia 正從晶片供應商演進為 AI 全棧平台（算力+軟體+代理+機器人），TAM 大幅擴展。</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">④ Earnings Call 語氣解析</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>管理層基調</strong></td>
+        <td><span class="beat">極度樂觀</span>：Jensen 從「tipping point」（Q3 語氣）升級為「inflection point」（Q4），措辭更強烈。「Compute equals revenues」直接把 Nvidia 算力等同於客戶的收入引擎。$10B 投資 Anthropic 展示了 Nvidia 不只賣晶片，也在深度綁定 AI 生態。</td>
+      </tr>
+      <tr>
+        <td><strong>Forward Guidance</strong></td>
+        <td>$78B Q1 FY2027（+15% QoQ，+65% YoY）遠超共識 $72.6B。全年 FY2027 opex 以「low 40s%」YoY 成長。毛利率維持 ~75%。<span class="beat">Guidance 是過去幾季 Nvidia 最大的 beat 之一。</span></td>
+      </tr>
+      <tr>
+        <td><strong>刻意強調</strong></td>
+        <td>① 企業代理（Enterprise Agents）採用正在「skyrocketing」；② 所有雲端模型建商將部署 Vera Rubin；③ 從訓練轉向推理的 AI 工作負載增量（推理更加算力密集）；④ $41B 股票回購（FY2026）展示管理層對未來現金流的極高確信。</td>
+      </tr>
+      <tr>
+        <td><strong>刻意迴避</strong></td>
+        <td>① <strong>中國風險量化</strong>：Q1 guidance 明確排除中國 DC 收入，但未量化長期中國業務恢復的預期；② <strong>Hyperscaler 自建晶片威脅</strong>：被問及 TPU/Trainium，管理層轉移至「多元客戶群」而非正面應對；③ <strong>SBC 口徑變更衝擊</strong>：新的 Non-GAAP 定義使歷史對比複雜化，management 未主動解釋 EPS 影響幅度。</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">⑤ 產業 Imply 萃取</div>
+<div class="card">
+  <table>
+    <thead><tr><th>維度</th><th>信號</th></tr></thead>
+    <tbody>
+      <tr><td><strong>需求端</strong></td><td>Data Center Networking 收入 +263% YoY 是最強信號——客戶不只買 GPU，還在買整個 AI 工廠基礎設施（NVLink、InfiniBand）。這意味 AI 工作負載的規模已超越「一批 GPU」的層次，進入「算力工廠建設」階段。對 TSMC（代工）、SK Hynix/Micron（HBM）、電源管理、散熱系統供應商均是正面信號。</td></tr>
+      <tr><td><strong>供給端</strong></td><td>Blackwell 持續供不應求至 H1 2026，Vera Rubin H2 2026 出貨後進入過渡期。Nvidia 的資本支出僅 $8.2B（FY2026），說明 fabless 模式使其不承擔製造風險，但 TSMC CoWoS 先進封裝依然是瓶頸，Nvidia 的供應擴張受制於 TSMC 的封裝產能。</td></tr>
+      <tr><td><strong>競爭格局</strong></td><td>AMD MI355X 在推理工作負載的 token/dollar 提供 ~40% 優勢，市佔從 0 升至 ~14%（2026）。但 Nvidia 保持訓練絕對主導（CUDA + NVLink 生態）。Hyperscaler 自建晶片（Google TPU、AWS Trainium）2026 年 ASIC 出貨成長 44.6% vs GPU 的 16.1%，是最值得持續監測的結構性趨勢。</td></tr>
+      <tr><td><strong>總體經濟敏感度</strong></td><td>美國 10Y 利率 4.27%，對高倍數成長股有壓縮效應。但 Nvidia 的 22x Forward P/E 已較 5 年平均 64x 大幅壓縮，加之 EPS 高速增長，利率敏感度相對低於其歷史水平。關稅不直接影響（Nvidia 為 fabless，無製造成本風險）。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §2 核心門檻檢核 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§2 ｜ 核心門檻檢核</div>
+
+<div class="sub-head">EPS CAGR 搜尋結果</div>
+<div class="card">
+  <div class="sbc-warning">
+    <strong>⚠️ 口徑重大變更警告：</strong>從 Q1 FY2027（2026年4月）起，Nvidia 將 SBC 納入 Non-GAAP 計算。FY2026 SBC = $6.4B（收入的 ~3.0%），約影響 Non-GAAP EPS 每年下調 $0.26。歷史 Non-GAAP EPS 需在新口徑下重述比較，或使用 GAAP EPS 以確保可比性。以下表格使用 <strong>GAAP EPS</strong> 確保口徑一致性。
+  </div>
+  <table>
+    <thead><tr><th>年度</th><th>EPS（GAAP）</th><th>分析師人數</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>FY2026（基期，已公布）</td><td class="mono">$4.90 GAAP（$4.77 Non-GAAP 舊口徑）</td><td>—</td><td>FY 截至 2026-01-25；GAAP 含 Intel 股票收益等</td></tr>
+      <tr><td>FY2027E（FY+1）</td><td class="mono">~$8.00 GAAP（中位）</td><td>n≈37</td><td>來源：techi.com 彙整 37 分析師；$78B Q1 Guidance 隱含強成長；中位 $8.00，範圍 $6.50-$10.00</td></tr>
+      <tr><td>FY2028E（FY+2）</td><td class="mono">~$9.98 GAAP（中位）</td><td>n≈30（估）</td><td>來源：techi.com；$10.74 為部分高端估計；管理層 FY2027 opex 低 40s% 成長隱含繼續 EPS 擴張</td></tr>
+      <tr><td>FY2029E（FY+3）</td><td class="mono">~$11.94 GAAP（中位）</td><td>n≈20（估）</td><td>來源：techi.com；$12.85 為部分估計；Vera Rubin + Feynman 週期支撐</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:12px; font-family:var(--mono); font-size:13px; padding:10px; background:var(--alt-row); border:1px solid var(--border);">
+    <strong>CAGR 計算（FY2026→FY2029，3年）：</strong><br>
+    GAAP CAGR = ($11.94 ÷ $4.90)^(1/3) − 1 = <span style="color:#166534;font-weight:700">約 +34.4%</span><br>
+    （含 Vera Rubin 週期催化；剔除 Intel 投資收益後 GAAP 基期略低，CAGR 可能接近 36-38%）<br>
+    <em>說明：GAAP vs Non-GAAP 差距主要來源：SBC（FY2026 $6.4B）、Intel 股票收益（非常態）。FY2027 起 Non-GAAP 新口徑已含 SBC，兩者差距縮小。</em>
+  </div>
+</div>
+
+<div class="sub-head">門檻檢核表</div>
+<table>
+  <thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>FCF Margin</strong></td><td>> 15%</td>
+      <td class="pass mono">✓ 超越</td>
+      <td>FY2026 FCF $96.6B / Rev $215.9B = FCF Margin <strong>44.7%</strong>（世界頂尖），Capex 僅 $8.2B（Fabless 模式），FCF/NI 轉換率極高</td>
+    </tr>
+    <tr>
+      <td><strong>ROIC</strong></td><td>產業頂尖</td>
+      <td class="pass mono">✓ 超越</td>
+      <td>ROIC 126-152%（來源：StockAnalysis），ROE 101%+，遠超任何競爭對手，體現 Fabless 高資本效率 + 定價權</td>
+    </tr>
+    <tr>
+      <td><strong>EPS CAGR（未來 3 年）</strong></td><td>> 20%</td>
+      <td class="pass mono">✓ 大幅符合</td>
+      <td>基期 FY2026：$4.90 GAAP<br>FY2027E：~$8.00（n≈37）<br>FY2028E：~$9.98（n≈30）<br>FY2029E：~$11.94（n≈20）<br>━━━━━━━━━━━━━━━<br>GAAP CAGR（FY26-29）：<strong>~34.4%</strong>（顯著高於 20% 門檻）<br>資料來源：techi.com 彙整、Goldman Sachs、Morgan Stanley</td>
+    </tr>
+    <tr>
+      <td><strong>PEG（Non-GAAP）</strong></td><td>< 2</td>
+      <td class="pass mono">✓ 符合，極具吸引力</td>
+      <td>Forward P/E 22.2x ÷ EPS CAGR 34.4% = PEG <strong>0.65x</strong>（StockAnalysis 顯示 PEG 0.57x）。遠低於 1.0，在同等成長率下估值偏低，詳見 §7.2</td>
+    </tr>
+    <tr>
+      <td><strong>現金覆蓋總負債</strong></td><td>是/否</td>
+      <td class="pass mono">✓ 是</td>
+      <td>現金及短期投資 $84.9B；負債 $15.2B；D/E 0.07（幾乎無槓桿）；Altman Z-Score 極高</td>
+    </tr>
+    <tr>
+      <td><strong>護城河強度</strong></td><td>> 8 分，趨勢擴大</td>
+      <td class="pass mono">✓ 符合</td>
+      <td>評分 9.5/10（見 §3）；AI GPU 市佔 ~86%（Data Center），CUDA 生態不可複製；GTC 2026 顯示護城河從硬體向全棧軟體延伸</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §2.5 長期成長性評估 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§2.5 ｜ 長期成長性評估</div>
+
+<div class="rating-block green">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">長期成長性綜合評級：高確信長期成長</div>
+    <div class="body">Runway ≥ 10 年 ｜ 有機 + 定價驅動 ｜ 護城河強化型（軟硬體全棧化）｜ ROIC 極高且擴大中</div>
+  </div>
+</div>
+
+<div class="sub-head">A｜成長跑道（Runway）估算</div>
+<table>
+  <thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+  <tbody>
+    <tr><td>AI 加速器 TAM（2026）</td><td class="mono">~$200B+</td><td>Nvidia 市佔 ~86%；TAM 加速擴大中</td></tr>
+    <tr><td>AI 基礎設施支出（2026E）</td><td class="mono">$720B（5 大 Hyperscalers）</td><td>Big Tech AI Capex 全年估計；Nvidia 獲益最直接</td></tr>
+    <tr><td>Jensen 估計（AI 基礎設施 TAM 2030）</td><td class="mono">$3-4 兆 /年</td><td>Nvidia 內部估計；即使打折 50% 仍代表驚人市場</td></tr>
+    <tr><td>當前市佔</td><td class="mono">~86%（DC GPU）</td><td>TrendForce/SiliconAnalysts；預計漸降至 75-80%，但 TAM 擴張抵消</td></tr>
+    <tr><td>Agentic AI + Physical AI TAM</td><td class="mono">新興、難以量化</td><td>Robotics、Sovereign AI、Enterprise Agents 均為新 TAM；非常規成長選項</td></tr>
+    <tr><td><strong>成長可持續年數（Runway）</strong></td><td class="mono" style="color:#166534;font-weight:700">≥10 年</td><td>AI 算力擴張週期 + 每年硬體周期升級 + Software/Platform 深化</td></tr>
+  </tbody>
+</table>
+<div class="alert-info">
+  <strong>Runway ≥10 年：Nvidia 是極少數同時享有硬體週期（每年新架構）和軟體平台網路效應（CUDA 20 年積累）雙重成長引擎的公司。每一個新架構（Blackwell→Rubin→Feynman）都是一次大規模客戶更新週期。</strong>
+</div>
+
+<div class="sub-head">B｜成長品質判斷</div>
+<table>
+  <thead><tr><th>類型</th><th>定義</th><th>占比</th><th>佐證</th></tr></thead>
+  <tbody>
+    <tr><td><strong>有機成長</strong></td><td>定價提升、新產品週期、新市場滲透</td><td class="mono">~97%</td><td>Groq 收購（$20B）是少數例外；核心成長均為有機</td></tr>
+    <tr><td><strong>無機成長</strong></td><td>併購貢獻</td><td class="mono">~3%</td><td>Groq 整合入 Vera Rubin 平台；金額相對規模極小</td></tr>
+  </tbody>
+</table>
+<table style="margin-top:12px">
+  <thead><tr><th>成長驅動類型</th><th>判斷</th><th>趨勢</th></tr></thead>
+  <tbody>
+    <tr><td><strong>定價驅動（Price）</strong></td><td>B200 vs H100 ASP 提升 3-5 倍；Vera Rubin 系統级銷售（含 CPU、networking、software stack）進一步提升每客戶 ARPU</td><td><span class="beat">顯著擴大</span></td></tr>
+    <tr><td><strong>量驅動（Volume）</strong></td><td>AI 加速器出貨量快速成長；企業代理、機器人、邊緣推理開啟新市場</td><td><span class="beat">持續擴大</span></td></tr>
+    <tr><td><strong>生態系驅動（Platform）</strong></td><td>CUDA 軟體、NeMo 框架、NemoClaw 代理平台收入潛力；軟體訂閱化轉型</td><td><span class="beat">新增成長軸</span></td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">C｜成長護城河連動評估</div>
+<div class="rating-block green">
+  <div class="icon">✅</div>
+  <div>
+    <div class="title">強化型（最佳）— 且持續深化為全棧平台</div>
+    <div class="body">
+      (1) <strong>CUDA 飛輪</strong>：更多開發者 → 更多優化庫 → 更大切換成本 → 更多客戶鎖定 → 更多收入 → 更多 R&D 投入 CUDA<br>
+      (2) <strong>系統級鎖定升級</strong>：從「買 GPU」演進為「買 NVL72 整機系統」，轉換成本從數週升至數月以上<br>
+      (3) <strong>每年新架構週期</strong>：客戶若不更新即面臨 2-5 倍效能差距（Blackwell 比 Hopper 快 30x 推理），形成強制性更新壓力<br>
+      (4) <strong>全棧擴張</strong>：GTC 2026 顯示 Nvidia 正在吃下 CPU（Vera CPU）、推理加速器（Groq LPU）、代理軟體（NemoClaw）、機器人（GR00T）——每一層都強化整體平台護城河
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">D｜ROIC 與 FCF 的長期可維持性</div>
+<table>
+  <thead><tr><th>指標</th><th>當前值</th><th>3 年前（FY2023）</th><th>趨勢</th><th>門檻</th><th>符合</th></tr></thead>
+  <tbody>
+    <tr><td>ROIC</td><td class="mono">~126-152%</td><td class="mono">~17%（FY2023）</td><td>↑↑ 爆發性擴大</td><td>產業頂尖且 >WACC</td><td class="pass">✓</td></tr>
+    <tr><td>ROIC − WACC</td><td class="mono">~120%+</td><td class="mono">~10%</td><td>↑↑ 爆發</td><td>持續正值且擴大</td><td class="pass">✓</td></tr>
+    <tr><td>FCF Margin</td><td class="mono">44.7%（FY2026）</td><td class="mono">~16%（FY2024）</td><td>↑↑ 劇烈改善</td><td>> 15%</td><td class="pass">✓</td></tr>
+    <tr><td>FCF / Net Income 轉換率</td><td class="mono">~80-85%</td><td class="mono">~70%</td><td>↑ 持續改善</td><td>> 85%（輕資本）</td><td class="warn">⚠️ 接近，含 SBC 非現金</td></tr>
+    <tr><td>SBC / Revenue</td><td class="mono">~3.0%（FY2026）</td><td class="mono">~3.5%（FY2024）</td><td>→ 穩定</td><td>Nvidia 標準偏高但合理</td><td class="warn">⚠️ 需監測（vs TSMC <0.5%）</td></tr>
+  </tbody>
+</table>
+<div class="alert-warn">
+  <strong>SBC 重要說明：</strong>FY2026 SBC = $6.4B（收入 3.0%），遠高於 TSMC（<0.5%）但在大型美國科技公司中屬合理範圍（Google ~4%、Microsoft ~2.5%）。GAAP EPS（$4.90）與 Non-GAAP 舊口徑（$4.77）差距不大，但 FY2027 起 Non-GAAP 新口徑將含 SBC，分析師 EPS 共識預估需重新理解。以 GAAP EPS CAGR 分析最可靠。
+</div>
+
+<div class="sub-head">E｜成長熄火情境壓力測試</div>
+<table>
+  <thead><tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅（vs 當前 22x）</th></tr></thead>
+  <tbody>
+    <tr class="base"><td>3 年後 EPS 成長降至 20%</td><td>ASIC 競爭加劇，但 Nvidia 仍主導訓練</td><td class="mono">20~25x</td><td class="mono">-5% ~ +14%（倍數基本穩定）</td></tr>
+    <tr class="bear"><td>3 年後 EPS 成長降至 10%</td><td>Hyperscaler ASIC 搶走 20%+ 份額</td><td class="mono">15~18x</td><td class="mono">-18% ~ -32%</td></tr>
+    <tr style="background:#FEE2E2"><td>3 年後 EPS 成長降至 5%</td><td>AI capex 週期反轉 + 競爭雙重打擊</td><td class="mono">11~14x</td><td class="mono">-36% ~ -50%</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §3 護城河分析 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§3 ｜ 護城河分析（報告核心）</div>
+
+<div class="card">
+  <div style="display:flex; align-items:center; gap:24px; margin-bottom:16px;">
+    <div style="font-size:48px; font-family:var(--mono); font-weight:700; color:var(--navy);">9.5<span style="font-size:24px">/10</span></div>
+    <div>
+      <div style="font-weight:700; color:var(--navy); font-size:16px;">全球頂尖護城河（與 TSMC 並列）</div>
+      <div style="font-size:13px; color:var(--text-sub);">CUDA 軟體生態 + AI GPU 硬體領導 + 全棧平台鎖定，三重護城河相互強化，且正在持續深化。</div>
+      <div style="margin-top:8px;"><span class="beat">趨勢：持續擴大</span> ｜ AI GPU 市佔從 80%（2022）→ 94%（Q2 2025）→ ~86%（2026，AMD 小幅侵蝕，但 TAM 更大）</div>
+    </div>
+  </div>
+</div>
+
+<div class="sub-head">護城河來源深度分析</div>
+<table>
+  <thead><tr><th>護城河類型</th><th>實際存在程度</th><th>為何對手無法複製</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>無形資產（CUDA 軟體生態）</strong></td>
+      <td><span class="beat">極強，核心中的核心</span></td>
+      <td>
+        CUDA 建立於 2006 年，擁有 20 年積累：<br>
+        ① <strong>400 萬+ 開發者</strong>：全球 AI 開發者的默認學習路徑是 CUDA，非 CUDA 的 GPU 是「非主流選擇」<br>
+        ② <strong>3,000+ 優化函式庫</strong>：cuDNN、TensorRT、cuBLAS、NCCL 等，每一個都是研究者和工程師數年心血<br>
+        ③ <strong>框架優先支援</strong>：PyTorch、TensorFlow、JAX 的核心優化都針對 NVIDIA GPU；AMD ROCm 是「後來者」<br>
+        ④ <strong>論文到生產路徑</strong>：學術論文幾乎全用 NVIDIA GPU 驗證，進入工業界延續同一硬體棧
+      </td>
+    </tr>
+    <tr>
+      <td><strong>轉換成本（系統級鎖定）</strong></td>
+      <td><span class="beat">極高，且逐年提升</span></td>
+      <td>
+        從 Nvidia 轉換到競爭對手的真實摩擦：<br>
+        ① <strong>程式碼重寫</strong>：CUDA 程式碼無法直接在 AMD ROCm 上運行，需重寫或依賴 ZLUDA 等轉換工具<br>
+        ② <strong>效能驗證</strong>：AMD/Intel 晶片的真實生產效能需要長期驗證，試錯成本極高<br>
+        ③ <strong>NVLink 系統綁定</strong>：Blackwell/Rubin 的 NVLink 系統只有 Nvidia 能提供，買了 NVL72 就是整個生態的鎖定<br>
+        ④ <strong>企業合約與支援</strong>：超大規模 AI 訓練的工程師團隊都深度依賴 Nvidia 的企業支援（NCCL 調試等）
+      </td>
+    </tr>
+    <tr>
+      <td><strong>規模優勢（Supply Chain + R&D）</strong></td>
+      <td><span class="beat">顯著</span></td>
+      <td>
+        ① FY2026 R&D $13B+，超過大多數競爭對手全年收入<br>
+        ② 佔 TSMC 60% CoWoS 先進封裝產能，競爭對手無法輕易取得同等供應優先<br>
+        ③ SK Hynix HBM4 大量採購權，在記憶體稀缺時有優先取得能力<br>
+        ④ 產品週期壓縮至 12 個月，競爭對手若以 18-24 個月週期應對，永遠落後 1 個世代
+      </td>
+    </tr>
+    <tr>
+      <td><strong>網路效應（開發者生態）</strong></td>
+      <td><span class="beat">中強程度，獨特類型</span></td>
+      <td>
+        CUDA 的網路效應：更多開發者使用 → 更多教程/StackOverflow 解答 → 更低學習曲線 → 更多新開發者選擇 CUDA。這種「知識網路效應」使 AMD ROCm 雖有技術追趕但缺乏社群生態廣度。
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sub-head">競爭鴻溝：CUDA 的「先有雞還是先有蛋」困境</div>
+<div class="card">
+  <p>AMD ROCm 7.0 已提供 PyTorch/JAX 原生支援，技術差距縮小。但核心問題不在技術，在<strong>生態遷移成本</strong>：</p>
+  <ul>
+    <li><strong>已有 3,000+ CUDA-optimized 函式庫</strong>，AMD 需要逐個複製，且優先順序由 AMD 決定（非社群自發）</li>
+    <li><strong>已有 400 萬開發者的社群知識</strong>（StackOverflow、GitHub、學術論文），AMD 無法用金錢複製</li>
+    <li><strong>企業 AI 工程師的 CUDA 深度</strong>：調試 NCCL 通訊問題、優化 NVLink 帶寬、使用 TensorRT 部署——這些是年計的工程師職業積累，不可遷移</li>
+  </ul>
+  <p>Intel Gaudi 3 和 AMD MI355X 的推理 token/dollar 競爭力是真實的，但「訓練週期」仍是 AI 研究的核心工作負載，而訓練需要 CUDA 的完整生態支撐。即使推理逐漸遷移至 ASIC/AMD，訓練端的 CUDA 護城河短期內不可動搖。</p>
+</div>
+
+<div class="sub-head">競爭格局表（2026 年）</div>
+<table>
+  <thead><tr><th>競爭對手</th><th>AI DC GPU 市佔（2026E）</th><th>主要優勢</th><th>核心威脅</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Nvidia（本標的）</strong></td><td class="mono">~86%</td><td>CUDA+全棧，训练絕對主導，Blackwell→Rubin週期</td><td>—</td></tr>
+    <tr><td>AMD MI355X/MI450</td><td class="mono">~14%（成長中）</td><td>推理 token/dollar 優勢 ~40%；ROCm 持續改善</td><td>推理工作負載竊取份額；Q3 2026 MI450 出貨</td></tr>
+    <tr><td>Google TPU v7</td><td class="mono">內部使用為主</td><td>Google Cloud 內最優；訓練+推理均強</td><td>限 GCP，不對外大量商售；影響 Google capex 訂單</td></tr>
+    <tr><td>AWS Trainium 3</td><td class="mono">AWS 內部</td><td>AWS 生態整合；$8B Anthropic 投資綁定</td><td>成熟度低於 TPU；影響 AWS 對 Nvidia 訂單</td></tr>
+    <tr><td>Intel Gaudi 3</td><td class="mono">&lt;2%</td><td>低成本推理；開放硬體</td><td>生態極不成熟；整體威脅有限</td></tr>
+    <tr><td>Broadcom（自建 ASIC）</td><td class="mono">Hyperscaler 自建</td><td>TPU/自建晶片設計服務；Marvell、Alchip 共同設計</td><td>長期稀釋 Nvidia 大型 hyperscaler 份額</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §4 財務品質監測 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§4 ｜ 財務品質監測</div>
+
+<div class="sub-head">三年趨勢表</div>
+<table>
+  <thead><tr><th>指標</th><th>FY2024（CY2023）</th><th>FY2025（CY2024）</th><th>FY2026（CY2025）</th><th>主要對手比較</th></tr></thead>
+  <tbody>
+    <tr><td>Revenue</td><td class="mono">$60.9B</td><td class="mono">$130.5B (+114%)</td><td class="mono">$215.9B (+65%)</td><td>AMD FY2025 ~$28B；Intel ~$55B（全業務）</td></tr>
+    <tr><td>Gross Margin（GAAP）</td><td class="mono">72.7%</td><td class="mono">75.0%</td><td class="mono">71.1%（含 H20 損失）<br>75.2%（Q4 剔除後）</td><td>AMD ~51%；Intel ~42%；TSMC 59.9%</td></tr>
+    <tr><td>FCF Margin</td><td class="mono">~45%（$27.1B/$60.9B）</td><td class="mono">~55%（$71.4B/$130.5B）</td><td class="mono">~44.7%（$96.6B/$215.9B）</td><td>AMD ~10%；Intel 負 FCF；TSMC 26.5%</td></tr>
+    <tr><td>ROIC</td><td class="mono">~45%</td><td class="mono">~83%</td><td class="mono">~126-152%</td><td>AMD ~18%；Intel 負；TSMC 48%</td></tr>
+    <tr><td>SBC / Revenue</td><td class="mono">~4.2%</td><td class="mono">~3.5%</td><td class="mono">~3.0%（$6.4B/$215.9B）</td><td>稀釋比率持續改善；Google 4%；TSMC <0.5%</td></tr>
+    <tr><td>Operating Margin</td><td class="mono">54.1%（Non-GAAP）</td><td class="mono">62.4%（Non-GAAP）</td><td class="mono">65.6%（Non-GAAP）</td><td>持續擴大的 Operating Leverage</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">獲利品質警訊（四項檢驗）</div>
+<div class="card">
+  <table>
+    <thead><tr><th>警訊項目</th><th>結論</th><th>佐證</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>淨利 vs OCF 背離</strong></td>
+        <td><span class="beat">✓ 無疑慮</span></td>
+        <td>FY2026 OCF 約 $112B，Net Income $130B GAAP（OCF 略低因含 Intel 投資收益等非現金），剔除後轉換率正常。Fabless 模式無應收帳款積壓。</td>
+      </tr>
+      <tr>
+        <td><strong>AR 成長 vs 營收成長</strong></td>
+        <td><span class="beat">✓ 無疑慮</span></td>
+        <td>Nvidia 主要以預付款或短期信用銷售，應收帳款周轉率高。大客戶為 hyperscalers（Apple 等大型企業），付款能力無疑慮。</td>
+      </tr>
+      <tr>
+        <td><strong>存貨成長 vs 營收成長</strong></td>
+        <td><span class="warn">⚠️ 歷史案例需監測</span></td>
+        <td>Q1 FY2026 H20 事件：單季 $4.5B 庫存損失，顯示出口管制可造成突發性存貨減損。當前存貨健康，但中國政策風險仍是潛在存貨衝擊來源。</td>
+      </tr>
+      <tr>
+        <td><strong>FCF 轉換率趨勢</strong></td>
+        <td><span class="beat">✓ 優秀</span></td>
+        <td>FCF Margin 44.7%，Capex 僅 $8.2B（Fabless，設備由 TSMC 擁有）。FCF/NI 轉換率高達 ~74%（剔除非常態項目更高）。此為 Fabless 商業模式的最大優勢。</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §5 產業格局、議價權與 Unit Economics -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§5 ｜ 產業格局、議價權與 Unit Economics</div>
+
+<div class="sub-head">市場量化</div>
+<div class="card-grid">
+  <div class="stat-card"><div class="label">AI 加速器 TAM（2026E）</div><div class="value">$200B+</div><div class="note">Nvidia 市佔 ~86%</div></div>
+  <div class="stat-card"><div class="label">Hyperscaler AI Capex（2026）</div><div class="value">$720B</div><div class="note">AWS/Google/Microsoft/Meta/Oracle</div></div>
+  <div class="stat-card"><div class="label">Jensen AI 基礎設施 TAM（2030）</div><div class="value">$3-4T/年</div><div class="note">Nvidia 內部估計</div></div>
+  <div class="stat-card"><div class="label">Q1 FY2027 Revenue Guidance</div><div class="value">$78.0B</div><div class="note">+65% YoY，創季度紀錄</div></div>
+  <div class="stat-card"><div class="label">Blackwell+Rubin 訂單能見度</div><div class="value">$1T</div><div class="note">GTC 2026，2025-2027</div></div>
+</div>
+
+<div class="sub-head">議價權</div>
+<div class="card">
+  <table>
+    <thead><tr><th>方向</th><th>議價能力</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><strong>對上游（TSMC/SK Hynix）</strong></td><td><span class="warn">中等偏強</span></td><td>Nvidia 為 TSMC CoWoS 最大客戶（佔 60% 封裝產能），具備優先供應保障，但先進封裝產能緊缺意味 TSMC 同樣對 Nvidia 有議價力。HBM（SK Hynix 主導）是另一個供給瓶頸。</td></tr>
+      <tr><td><strong>對下游客戶（Hyperscalers）</strong></td><td><span class="beat">極強，但持續受挑戰</span></td><td>H100 製造成本 $3,320，售價 $28,000（毛利率 88.1%）。這種定價能力建立於 CUDA 無可替代性。但 hyperscalers 正積極建立 ASIC 自建能力作為議價籌碼，Nvidia 的議價力長期面臨結構性壓力。</td></tr>
+      <tr><td><strong>客戶集中度</strong></td><td><span class="miss">⚠️ 高集中風險</span></td><td>前 4 大 Hyperscalers（Microsoft、Google、Amazon、Meta）估計佔 Nvidia 收入 40%+。任何一家大規模轉向 ASIC 或削減 capex 均有顯著衝擊。目前無單一客戶超過 15%。</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="sub-head">營收組成（FY2026 全年）</div>
+<table>
+  <thead><tr><th>業務</th><th>FY2026 佔比</th><th>成長率</th><th>評估</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Data Center</strong></td><td class="mono">~90%（$193.7B）</td><td class="mono">+68% YoY</td><td><span class="beat">絕對核心 — AI 訓練+推理+Networking</span></td></tr>
+    <tr><td>Gaming</td><td class="mono">~6.7%（$14.5B）</td><td class="mono">+7% YoY</td><td><span class="neutral">穩定 — Blackwell GeForce 拉動，非 AI 核心</span></td></tr>
+    <tr><td>Professional Viz</td><td class="mono">~1.4%</td><td class="mono">+11% YoY</td><td><span class="neutral">小業務，穩定</span></td></tr>
+    <tr><td>Automotive + Robotics</td><td class="mono">~1.5%（快速成長）</td><td class="mono">+75%+ YoY</td><td><span class="beat">新興業務，GTC 2026 強調 Physical AI</span></td></tr>
+    <tr><td>OEM & Other</td><td class="mono">~0.4%</td><td class="mono">—</td><td>邊際業務</td></tr>
+  </tbody>
+</table>
+
+<div class="sub-head">Unit Economics</div>
+<div class="card">
+  <table>
+    <thead><tr><th>指標</th><th>數值</th><th>趨勢</th></tr></thead>
+    <tbody>
+      <tr><td>Data Center GPU ASP（H100）</td><td class="mono">~$28,000（市場售價）/ 製造成本 ~$3,320</td><td>B200 ASP 更高（$30,000-$40,000），毛利率繼續維持高水準</td></tr>
+      <tr><td>Revenue per Employee（FY2026）</td><td class="mono">~$3M+（Nvidia 約 3.6 萬員工）</td><td>↑ AI 帶動爆發性增長</td></tr>
+      <tr><td>Gross Margin Trend</td><td class="mono">72.7%（FY24）→ 75.0%（FY25）→ 75.2%（Q4 FY26）</td><td>↑ Blackwell 良率改善，長期目標 75%+</td></tr>
+      <tr><td>Networking 佔 DC Revenue</td><td class="mono">$10.98B（Q4）/ $62.3B DC Rev = 17.6%</td><td>↑↑ +263% YoY，成為新的高毛利成長引擎</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §6 公司治理與資本配置 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§6 ｜ 公司治理與資本配置</div>
+
+<div class="sub-head">股東結構</div>
+<div class="card">
+  <ul>
+    <li><strong>Jensen Huang 持股</strong>：創辦人現任 CEO，持股約 3.5-4%（約 $150B），充分的利益對齊；無退出跡象，強力執行導向</li>
+    <li><strong>機構持股</strong>：Vanguard、BlackRock、Fidelity 等主要持有；外資機構持股比例高，代表全球最頂尖 GARP 投資者均對其有倉位</li>
+    <li><strong>Berkshire Hathaway 持倉</strong>：值得留意 Buffett 未大量建倉 Nvidia（相對其規模），理由可能包括高估值及其對科技業護城河可持續性的保守判斷</li>
+  </ul>
+</div>
+
+<div class="sub-head">資本配置軌跡</div>
+<div class="card">
+  <table>
+    <thead><tr><th>配置類別</th><th>FY2024</th><th>FY2025</th><th>FY2026</th><th>評估</th></tr></thead>
+    <tbody>
+      <tr><td>股票回購</td><td class="mono">$24.9B</td><td class="mono">$33.5B</td><td class="mono">$40.1B</td><td><span class="beat">大規模、持續增加；FY2026 剩餘授權 $58.5B</span></td></tr>
+      <tr><td>股息</td><td class="mono">$396M</td><td class="mono">$610M</td><td class="mono">$974M</td><td>象徵性（收益率 ~0.02%），非主要回報形式</td></tr>
+      <tr><td>R&D</td><td class="mono">$8.7B</td><td class="mono">$12.9B</td><td class="mono">$13B+</td><td><span class="beat">FY2026 Opex 低 40s% 成長，高強度 R&D 投入</span></td></tr>
+      <tr><td>Capex</td><td class="mono">$1.1B</td><td class="mono">$2.2B</td><td class="mono">~$8.2B</td><td><span class="warn">增加但仍極低（Fabless），佔收入 <4%；主要是資料中心測試環境建設</span></td></tr>
+      <tr><td>大型 M&A</td><td class="mono">Mellanox（2020，$7B）</td><td class="mono">—</td><td class="mono">Groq $20B（2025-12）</td><td><span class="neutral">Groq 收購強化推理生態，策略合理；ARM 收購未能完成</span></td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:10px"><strong>管理層說法 vs 行動一致性：高度一致。</strong>Jensen 持續強調「AI 工廠」長期敘事，每季 guidance 均有 Beat，$40B+ 年回購顯示對未來現金流的極高確信。Groq 收購填補推理業務短板，邏輯清晰。</p>
+</div>
+
+<div class="sub-head">SBC 評估</div>
+<div class="card">
+  <p><strong>SBC/Revenue ~3.0%（FY2026）</strong>：高於 TSMC（<0.5%）但低於許多矽谷大型科技公司（Google ~4%）。FY2026 SBC $6.4B 代表對 3.6 萬名頂尖工程師的競爭力薪酬。重要的是 Nvidia 從 Q1 FY2027 起將 SBC 納入 Non-GAAP，使財務報告更透明，分析師需重新校準 EPS 共識模型。</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §7 五維度估值分析 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§7 ｜ 五維度估值分析</div>
+
+<div class="sub-head">7.1｜歷史估值分位（5 年框架）</div>
+<table>
+  <thead><tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位（估算）</th></tr></thead>
+  <tbody>
+    <tr><td>Trailing P/E（GAAP）</td><td class="mono">36.8x</td><td class="mono">~12x（2019）</td><td class="mono">~64x（10年平均 53x）</td><td class="mono">~138x（Q2 2023）</td><td><span class="beat">~20% 分位（歷史極低！）</span></td></tr>
+    <tr><td>Forward P/E（NTM）</td><td class="mono">22.2x</td><td class="mono">~15x（2022底）</td><td class="mono">~35x（5年）</td><td class="mono">~80x（2023 初 AI 炒作期）</td><td><span class="beat">~15-20% 分位（近 5 年歷史低位！）</span></td></tr>
+    <tr><td>EV/EBITDA</td><td class="mono">32.5x</td><td class="mono">~15x</td><td class="mono">~50x</td><td class="mono">~150x</td><td><span class="beat">~25% 分位（相對歷史便宜）</span></td></tr>
+    <tr><td>P/FCF</td><td class="mono">44.8x</td><td class="mono">~25x</td><td class="mono">~80x</td><td class="mono">~300x+</td><td><span class="beat">~20% 分位</span></td></tr>
+    <tr><td>P/S</td><td class="mono">20.4x</td><td class="mono">~8x</td><td class="mono">~35x</td><td class="mono">~100x</td><td><span class="beat">~20% 分位</span></td></tr>
+  </tbody>
+</table>
+
+<div class="card" style="margin-top:10px">
+  <div class="alert-green">
+    <strong>估值分位解讀：這是報告最重要的發現之一。</strong>Nvidia 當前估值（Forward P/E 22.2x，Trailing P/E 37x）處於過去 5-10 年歷史 <strong>最低 20% 分位</strong>，儘管 EPS 以 35%+ CAGR 增長。原因是 EPS 成長速度遠超股價成長：2023 年初 AI 狂熱時，Nvidia 以 $27 股價對應 $0.20 EPS（P/E 138x）；現在以 $180 股價對應 $4.90 EPS（P/E 37x）。這表明估值已大幅「消化」了 AI 故事，<strong>當前投資者購買的是盈利，而非故事溢價</strong>。
+  </div>
+  <p><strong>利率環境：</strong>10Y UST 4.27%，相較 2021 年 1.5% 對成長股有壓縮效應，但 Nvidia 的 22x Forward P/E 已基本反映利率現實，壓縮效應有限。</p>
+</div>
+
+<div class="sub-head">7.2｜成長性估值：PEG 與 Price-to-Growth 矩陣</div>
+<table>
+  <thead><tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr></thead>
+  <tbody>
+    <tr><td>Forward P/E（NTM）</td><td class="mono">22.2x</td><td>—</td><td>GuruFocus，Mar 18 2026；行業中位 29.2x</td></tr>
+    <tr><td>EPS CAGR（3年，GAAP FY26-29）</td><td class="mono">34.4%</td><td>—</td><td>引用 §2 計算；含 Vera Rubin 週期</td></tr>
+    <tr><td><strong>PEG（GAAP，3年）</strong></td><td class="mono" style="color:#166534;font-weight:700">0.64x</td><td>&lt;1.0 便宜 / 1~2 合理 / &gt;2 貴</td><td><span class="beat">顯著低估（&lt;1.0 便宜區間）；StockAnalysis 顯示 PEG 0.57x</span></td></tr>
+    <tr><td>行業 PEG 中位</td><td class="mono">~1.5x</td><td>—</td><td>Nvidia PEG 較行業折價 57%，折價幅度驚人</td></tr>
+  </tbody>
+</table>
+
+<div class="card" style="margin-top:12px">
+  <strong>延伸：5 年 PEG（Runway ≥10 年）</strong><br>
+  FY4/FY5 成長率 = FY3 成長率 × 90%（Runway ≥10 年適用）<br>
+  FY2030E 成長率估算：~34.4% × 90% = 31.0%；FY2031E：~31% × 90% = 27.9%<br>
+  5年 EPS CAGR（GAAP）估算：~32.5%<br>
+  PEG（5年）= 22.2x ÷ 32.5% ≈ <strong>0.68x</strong><br>
+  3年 vs 5年 PEG 差距極小（0.64 vs 0.68），成長可持續性高。
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>Price-to-Growth 矩陣定位：</strong>
+  <table>
+    <thead><tr><th></th><th>高成長（CAGR > 20%）</th><th>中成長（10~20%）</th><th>低成長（&lt;10%）</th></tr></thead>
+    <tbody>
+      <tr><td><strong>高估值（P/E > 30x）</strong></td><td>成長型合理溢價？</td><td>需護城河支撐</td><td>危險區間</td></tr>
+      <tr style="background:#DCFCE7"><td><strong style="color:#166534">中估值（15~30x）← NVDA</strong></td><td style="font-weight:700;color:#166534">低估機會 ← NVDA 落點（34%+ CAGR 配 22x P/E）</td><td>公允區間</td><td>估值陷阱待確認</td></tr>
+      <tr><td><strong>低估值（&lt;15x）</strong></td><td>強力買入訊號</td><td>合理</td><td>價值陷阱風險</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:8px"><strong>結論：</strong>NVDA 落於「中估值 × 超高成長」區間，是 §7.2 最強「低估」信號。相對其 34%+ GAAP EPS CAGR，Forward P/E 22.2x 不僅低於行業中位（29.2x），甚至低於很多低成長公司的估值。折價原因：① 市場對 AI capex 持續性的疑慮；② Hyperscaler ASIC 競爭的長期影響；③ 中國出口管制不確定性；④ 超高成長後的增速放緩預期。</p>
+</div>
+
+<div class="sub-head">7.3｜DCF 試算：三情境合理股價</div>
+<div class="card">
+  <strong>輸入參數：</strong>
+  <ul>
+    <li>基期 FCF（FY2026）：$96.6B USD</li>
+    <li>WACC：~9.5%（10Y UST 4.27% + Beta 2.37 × ERP 6% × 0.6 ≈ 5.0% = 9.3%，取 9.5%）</li>
+    <li>永續成長率：3.0%（大型平台型科技公司）</li>
+    <li>FCF CAGR 考量：Fabless 模式 Capex 極低，FCF 增長率可接近 EPS 增長率；但競爭加劇可能壓縮毛利率</li>
+  </ul>
+</div>
+<table style="margin-top:8px">
+  <thead><tr><th>情境</th><th>FCF CAGR（前 5 年）</th><th>FCF CAGR（後 5 年）</th><th>永續成長率</th><th>WACC</th><th>DCF 合理價</th><th>vs 當前 $180</th></tr></thead>
+  <tbody>
+    <tr class="bull"><td><strong>樂觀</strong><br>Vera Rubin + Feynman 超預期，ASIC 影響有限</td><td class="mono">35%</td><td class="mono">20%</td><td class="mono">3.5%</td><td class="mono">9.0%</td><td class="mono" style="font-weight:700">$380</td><td class="mono" style="color:#166534">+111%</td></tr>
+    <tr class="base"><td><strong>中性（共識）</strong><br>FY2027-2029 CAGR 約 30%，毛利率穩定</td><td class="mono">28%</td><td class="mono">15%</td><td class="mono">3.0%</td><td class="mono">9.5%</td><td class="mono" style="font-weight:700">$260</td><td class="mono" style="color:#D97706">+44%</td></tr>
+    <tr class="bear"><td><strong>悲觀</strong><br>ASIC 加速侵蝕 + AI capex 週期反轉</td><td class="mono">12%</td><td class="mono">8%</td><td class="mono">2.0%</td><td class="mono">11.0%</td><td class="mono" style="font-weight:700">$110</td><td class="mono" style="color:#DC2626">-39%</td></tr>
+  </tbody>
+</table>
+
+<div class="card" style="margin-top:12px">
+  <strong>DCF 敏感度（中性情境）：</strong>
+  <table>
+    <thead><tr><th>WACC \ 永續成長率</th><th>1.5%</th><th>3.0%（基準）</th><th>4.0%</th></tr></thead>
+    <tbody>
+      <tr><td>WACC 8.5%</td><td class="mono">$300</td><td class="mono">$360</td><td class="mono">$430</td></tr>
+      <tr><td>WACC 9.5%（基準）</td><td class="mono">$220</td><td class="mono">$260</td><td class="mono">$305</td></tr>
+      <tr><td>WACC 10.5%</td><td class="mono">$170</td><td class="mono">$200</td><td class="mono">$230</td></tr>
+    </tbody>
+  </table>
+  <div class="alert-warn" style="margin-top:8px">
+    <strong>DCF 最不確定假設：</strong>3-7 年後 AI 加速器市場毛利率是否維持 72-75%，或在 ASIC 競爭與 AMD 擴張下壓縮至 65-68%。若毛利率壓縮 7pp，FCF Margin 同步下降，DCF 價值降低 20-30%。H100 的 85% 毛利率是否長期可持續是最核心的不確定性。
+  </div>
+</div>
+
+<div class="sub-head">7.4｜同業估值比較</div>
+<table>
+  <thead><tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>EPS CAGR（3年）</th><th>PEG</th><th>FCF Margin</th><th>ROIC</th></tr></thead>
+  <tbody>
+    <tr style="background:#DCFCE7">
+      <td><strong>NVDA（Nvidia）</strong></td>
+      <td class="mono">$4.38T</td>
+      <td class="mono">22.2x</td>
+      <td class="mono">32.5x</td>
+      <td class="mono">~34%</td>
+      <td class="mono">0.64x</td>
+      <td class="mono">44.7%</td>
+      <td class="mono">126-152%</td>
+    </tr>
+    <tr>
+      <td>TSM（TSMC）</td>
+      <td class="mono">$1.76T</td>
+      <td class="mono">24.1x</td>
+      <td class="mono">17~20x</td>
+      <td class="mono">~23%</td>
+      <td class="mono">1.02x</td>
+      <td class="mono">26.5%</td>
+      <td class="mono">48%</td>
+    </tr>
+    <tr>
+      <td>Broadcom（AVGO）</td>
+      <td class="mono">~$900B</td>
+      <td class="mono">~24x</td>
+      <td class="mono">~20x</td>
+      <td class="mono">~20-25%</td>
+      <td class="mono">~1.0x</td>
+      <td class="mono">~35%</td>
+      <td class="mono">~25%</td>
+    </tr>
+    <tr>
+      <td>AMD（AMD）</td>
+      <td class="mono">~$155B</td>
+      <td class="mono">~22x</td>
+      <td class="mono">~18x</td>
+      <td class="mono">~20-25%</td>
+      <td class="mono">~0.9x</td>
+      <td class="mono">~10%</td>
+      <td class="mono">~18%</td>
+    </tr>
+    <tr>
+      <td>ASML（ASML）</td>
+      <td class="mono">~$360B</td>
+      <td class="mono">~30x</td>
+      <td class="mono">~22x</td>
+      <td class="mono">~15-20%</td>
+      <td class="mono">~1.5x</td>
+      <td class="mono">~25%</td>
+      <td class="mono">~35%</td>
+    </tr>
+    <tr>
+      <td>半導體行業中位</td>
+      <td class="mono">—</td>
+      <td class="mono">~29x</td>
+      <td class="mono">—</td>
+      <td class="mono">—</td>
+      <td class="mono">—</td>
+      <td class="mono">—</td>
+      <td class="mono">—</td>
+    </tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:10px">
+  <p><strong>同業溢折價邏輯：</strong>NVDA Forward P/E 22.2x 低於行業中位 29.2x，折價 24%。但 Nvidia 的 ROIC（126-152%）、FCF Margin（44.7%）、EPS CAGR（34%）均是同業中最高的。</p>
+  <p><strong>最不尋常的發現：AMD 的 Forward P/E（~22x）與 Nvidia 相近，但 ROIC（18%）、FCF Margin（10%）遠遜，PEG 也更高（~0.9x vs 0.64x）。這意味從純估值角度，Nvidia 相對 AMD 幾乎是「免費的質量升級」。</strong></p>
+  <p><strong>TSMC vs NVDA 對照：</strong>TSMC 護城河 9.5/10，FCF Margin 26.5%，Forward P/E 24.1x，PEG 1.02x；NVDA 護城河 9.5/10，FCF Margin 44.7%，Forward P/E 22.2x，PEG 0.64x。以純財務指標看，NVDA 的 FCF Margin 和 PEG 均優於 TSMC，但 TSMC 的地緣風險折扣邏輯明確，而 NVDA 的 AI capex 週期風險是隱性的。</p>
+</div>
+
+<div class="sub-head">7.5｜綜合估值判斷</div>
+<table class="radar-row">
+  <thead><tr><th>維度</th><th>訊號</th><th>評語</th></tr></thead>
+  <tbody>
+    <tr><td>歷史分位（7.1）</td><td><span class="beat">🟢 歷史低位</span></td><td>Forward P/E 22x 處於 5 年 ~15-20% 分位，歷史上 Nvidia 在此估值水平是優秀的中長期買入點</td></tr>
+    <tr><td>成長性匹配（7.2 PEG）</td><td><span class="beat">🟢 顯著低估</span></td><td>PEG 0.64x，遠低於 1.0，相對 34%+ EPS CAGR 幾乎是被市場「打折」定價</td></tr>
+    <tr><td>DCF 內在價值（7.3）</td><td><span class="beat">🟢 顯著低估</span></td><td>中性 DCF $260，當前股價 $180 有 44% 上行空間；即便悲觀情境仍接近當前價格</td></tr>
+    <tr><td>同業相對（7.4）</td><td><span class="beat">🟢 折價（缺乏支撐的折價）</span></td><td>相對行業折價 24%，基本面遠優於行業平均；折價原因是宏觀週期疑慮和競爭擔憂</td></tr>
+    <tr><td>長期成長確信度（§2.5）</td><td><span class="beat">🟢 高確信</span></td><td>Runway ≥10 年、ROIC 150%+、護城河強化型、GTC 2026 顯示平台持續深化</td></tr>
+  </tbody>
+</table>
+
+<div class="card" style="margin-top:14px">
+  <strong>應有的合理估值（Target Valuation Range）：</strong><br>
+  綜合五個因素，Nvidia 在中性假設下，合理的 Forward P/E 區間應為 <strong>28x ∼ 38x</strong>，對應合理股價區間 <strong>$224 ∼ $304 USD</strong>（基於 FY2027E EPS $8.00）。
+  <table style="margin-top:12px">
+    <thead><tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr></thead>
+    <tbody>
+      <tr><td>① 護城河品質（§3 評分）</td><td>9.5/10</td><td>相較半導體基準倍數（~20x）+4x ～ +6x</td></tr>
+      <tr><td>② 成長可持續年數（§2.5A Runway）</td><td>🟢 ≥10 年</td><td>+3x</td></tr>
+      <tr><td>③ 成長品質（§2.5B 有機/定價）</td><td>有機 97%，定價+量+平台三驅動</td><td>+3x（最佳組合）</td></tr>
+      <tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型（全棧化演進）</td><td>+3x</td></tr>
+      <tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC-WACC ~120%，趨勢擴大</td><td>+4x</td></tr>
+      <tr><td>⑥ 當前利率環境</td><td>10Y UST 4.27%</td><td>-3x（高利率環境）</td></tr>
+      <tr><td>⑦ AI capex 週期 + ASIC 競爭風險</td><td>中等風險，非確定性</td><td>-4x～-6x（特有於此標的）</td></tr>
+      <tr><td>⑧ SBC 口徑變更（新 Non-GAAP 含 SBC）</td><td>每股約 $0.26 調整</td><td>-1x（EPS 基礎降低）</td></tr>
+      <tr style="background:#F1F5F9"><td><strong>半導體行業基準倍數</strong></td><td><strong>~18-20x</strong></td><td><strong>調整後目標區間：28x ∼ 38x</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="rating-block green" style="margin-top:16px">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">當前評價：具備顯著安全邊際 — 合理至低估，具備積極建倉條件</div>
+    <div class="body">當前股價 $180 顯著低於中性 DCF $260（-31% 折讓），PEG 0.64x 意味著投資者以打折價格購買全球最強 AI 算力護城河。估值處於過去 5 年歷史最低 15-20% 分位，而基本面（EPS、ROIC、FCF Margin）均達到歷史最高水平。這種「估值的歷史低點 × 基本面的歷史高點」組合在大型科技股中極其罕見。</div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>分析師目標價對照：</strong><br>
+  37 位分析師共識：平均目標 $264（中位），高 $352（Cantor Fitzgerald），低 $200<br>
+  Goldman Sachs 目標 $250、Morgan Stanley 目標 $250、BofA 目標 $275、Wedbush 目標 $275<br>
+  當前 $180 距共識中位 $264 隱含漲幅：<strong>+46.7%</strong><br>
+  <strong>本分析中性 DCF $260 與分析師共識 $264 高度吻合，確信度高。</strong>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- §8 投資結論與情境預測 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="sec-head">§8 ｜ 投資結論與情境預測</div>
+
+<div class="sub-head">財報信號與估值銜接</div>
+<div class="card">
+  <p>Q4 FY2026 財報 + GTC 2026 傳遞三重強力信號：<strong>① $78B Q1 FY2027 Guidance 遠超共識（+7.5%）確認 AI 算力需求加速而非放緩；② $1 兆訂單能見度（GTC 2026）是 Nvidia 有史以來最強的中長期確定性聲明；③ Vera Rubin 平台發布確保 2026-2027 產品週期連續性，無換代缺口</strong>。這三個信號結合當前 PEG 0.64x 的低估值，形成了罕見的「超高確信度 + 超低估值」組合。對 §7.5 估值的影響：合理 Forward P/E 支持達 28-38x（基於 FY2027E $8.00），對應合理區間 $224-$304。當前 $180 已顯著低於任何合理估值下限。</p>
+</div>
+
+<div class="sub-head">三年情境預測</div>
+<table>
+  <thead><tr><th>情境</th><th>核心假設</th><th>FY2029E EPS（GAAP）</th><th>EPS CAGR（FY26-29）</th><th>目標 P/E</th><th>目標股價</th></tr></thead>
+  <tbody>
+    <tr class="bull">
+      <td><strong>樂觀（35%概率）</strong></td>
+      <td>AI 算力擴張超預期、ASIC 衝擊有限、Vera Rubin+Feynman 順利量產、中國業務恢復</td>
+      <td class="mono">$16.00+</td>
+      <td class="mono">~48%</td>
+      <td class="mono">30~38x</td>
+      <td class="mono" style="font-weight:700;color:#166534">$480~$610</td>
+    </tr>
+    <tr class="base">
+      <td><strong>中性（45%概率）</strong></td>
+      <td>AI capex 正常化、ASIC 侵蝕 5-10% 市佔、毛利率維持 73-75%</td>
+      <td class="mono">$11.94</td>
+      <td class="mono">~34%</td>
+      <td class="mono">26~32x</td>
+      <td class="mono" style="font-weight:700;color:#D97706">$310~$380</td>
+    </tr>
+    <tr class="bear">
+      <td><strong>悲觀（20%概率）</strong></td>
+      <td>AI capex 週期大幅下行 + ASIC 加速侵蝕（20%+ 市佔）+ 中國持續受限</td>
+      <td class="mono">$7.50</td>
+      <td class="mono">~15%</td>
+      <td class="mono">18~22x</td>
+      <td class="mono" style="font-weight:700;color:#DC2626">$135~$165</td>
+    </tr>
+  </tbody>
+</table>
+<div class="card" style="margin-top:8px">
+  <strong>機率加權預期目標股價（12-36個月）：</strong><br>
+  35% × $545 + 45% × $345 + 20% × $150 = <strong class="mono">$381 USD</strong>（較當前 $180 隱含 +112% 加權預期）<br>
+  <em>注意：此加權值受分配概率和情境假設影響大，作為大致方向參考而非精確預測。</em>
+</div>
+
+<div class="sub-head">最終結論</div>
+<div class="rating-block green">
+  <div class="icon">🟢</div>
+  <div>
+    <div class="title">投資判斷：具備安全邊際，適合積極建倉</div>
+    <div class="body">
+      當前 $180 提供了罕見的「頂尖護城河 × 超低估值」組合：PEG 0.64x，Forward P/E 22x（歷史最低 15-20% 分位），中性 DCF $260（+44%）。這不是典型的「合理偏貴，等待回調」場景，而是「基本面極強而估值被週期性悲觀情緒打壓」的買入窗口。
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="sub-head" style="margin-top:0">① 短期催化劑（0~12 個月）</div>
+  <p>Q1 FY2027 Earnings（2026-05 左右）是最關鍵催化劑。Guidance $78B，若 Beat（Nvidia 連續 5 季以上 Beat），將再次確認 AI 需求加速。Vera Rubin H2 2026 出貨是第二個催化劑——首次出貨能見度確認後，FY2028 EPS 共識可能大幅上調。中國 H200 出口動態是短期最大雜音，但即使中國業務為零，guidance 已明確排除，下行空間有限。GTC 2026 的 $1 兆訂單能見度已為 $78B Q1 guidance 提供背書。</p>
+
+  <div class="sub-head">② 中期成長可見度（1~3 年）</div>
+  <p>FY2027-2029 EPS CAGR 約 34%，驅動因素：Vera Rubin（2H 2026-2027）+ Feynman（2027-2028）雙週期疊加，每個週期帶來大規模系統更新；Networking（NVLink/InfiniBand）已成為 $40B+ 年收入體量的新成長軸（+263% YoY）；Enterprise Agentic AI 採用加速（Jensen：「skyrocketing」）。$78B Q1 已確認全年 FY2027 收入可能超 $300B（+40%+）。成長幾乎全為有機，Fabless 模式確保 Capex 低、FCF 高。</p>
+
+  <div class="sub-head">③ 長期成長護城河（3 年後）</div>
+  <p>GTC 2026 最大的戰略性啟示：Nvidia 正在將自己從「AI 晶片供應商」演進為「AI 運算操作系統」提供商。CUDA 20 週年的護城河不只是過去的積累——每一個新工作負載（Agentic AI、Physical AI、Robotics）都在 Nvidia 的軟體生態上原生開發，強化下一代的 CUDA 鎖定。NemoClaw 企業代理平台、GR00T 機器人基礎模型、Groq LPU 推理加速——這些不只是新產品，是新的鎖定層次。即使 AI GPU 市佔因 ASIC 競爭從 86% 降至 70%，Nvidia 的 TAM（$3-4 兆/年 by 2030）擴張速度仍將使絕對收入持續增長。</p>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <strong>進場建議：</strong>
+  <ul>
+    <li>當前 $180 → 可建立 <strong>40-50% 核心倉位</strong>（中性 DCF $260，安全邊際清晰）</li>
+    <li>若回調至 <strong>$155-165</strong>（DCF 悲觀情境區間，Forward P/E ~19x）→ 加碼至 75-80% 倉位</li>
+    <li>若進一步回落至 <strong>$130-140</strong>（歷史支撐 + H20 事件後低點水平）→ 全倉/超配（極度恐慌期）</li>
+    <li><strong>停損考量：</strong>若 AI capex 週期出現明確逆轉信號（兩大 Hyperscaler 連續季度削減 AI capex 超 20%），或 ASIC 市佔在 12 個月內超過 25%，需重新評估長期論點。</li>
+  </ul>
+</div>
+
+<div class="sub-head">下行風險量化（引用 §2.5E）</div>
+<div class="card">
+  <p>若成長率在 3 年後降至 10%（ASIC 侵蝕 + AI capex 周期正常化），對應估值壓縮幅度：<strong class="mono">-18% ~ -32%</strong>（Forward P/E 從 22x 壓縮至 15-18x）</p>
+  <p>若降至 5%（AI 泡沫破裂），壓縮幅度：<strong class="mono">-36% ~ -50%</strong>（Forward P/E 11-14x）</p>
+  <div class="alert-danger">
+    <strong>持有此標的的隱性風險底線：</strong>Nvidia 的高估值歷史使其在情緒惡化時跌幅往往超過基本面應有的水平（參考 2022 年 -66% 回落，遠超當期業績下行幅度）。Beta 2.37 意味著市場大幅下跌時，NVDA 跌幅通常是 S&P 500 的 2 倍以上。<strong>建議以倉位大小管理最大虧損承受度，而非設置機械式停損。</strong>
+  </div>
+</div>
+
+<div class="sub-head">最關鍵監測指標</div>
+<table class="monitor-table">
+  <thead><tr><th>#</th><th>監測指標</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>Data Center Networking 成長率（每季）</strong><br>Q4 FY2026 +263% YoY；代表 AI 工廠系統化部署的最領先信號</td>
+      <td><span class="beat">🔵 長期成長領先信號（必填）</span></td>
+      <td>若 Networking 成長連續兩季降至 &lt;50% YoY，暗示 AI 工廠部署從「加速增長」轉入「穩定維護」，觸發成長論點重估</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Non-GAAP Gross Margin 趨勢（新口徑，含 SBC）</strong><br>Q4 FY2026 75.2%；FY2027 以新口徑追蹤</td>
+      <td>短期財報信號</td>
+      <td>若 Non-GAAP GM（新口徑）連續兩季低於 71%，且 AMD/ASIC 市佔超 20%，觸發定價能力評估</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Hyperscaler AI Capex 年度預算（每季 IR 電話）</strong><br>Microsoft/Google/Amazon/Meta 的年度 AI capex 聲明</td>
+      <td>最重要宏觀先行指標</td>
+      <td>若任意兩家主要 hyperscaler 宣布 AI capex 年度削減 &gt;15%，立即重新評估 FY2028+ EPS 估算</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- 底部聲明 -->
+<div class="card" style="margin-top:32px; font-size:12px; color:var(--text-sub);">
+  <strong>免責聲明：</strong>本報告由 Claude AI 根據公開市場資料生成，僅供研究參考，不構成投資建議。所有財務數據來源：Nvidia IR、SEC 申報文件（10-K/8-K）、Yahoo Finance、GuruFocus、StockAnalysis、techi.com、SiliconAnalysts、TrendForce、Investing.com。數據截止日期 2026-03-20，後續變動不在涵蓋範圍內。投資有風險，請在專業人士指導下做出投資決策。<br><br>
+  <strong>報告版本：</strong>DD_NVDA_20260320 ｜ 模式：深度版 ｜ 生成時間：2026-03-20
+</div>
+
+</div><!-- /wrap -->
+</body>
+</html>
