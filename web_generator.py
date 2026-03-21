@@ -758,7 +758,7 @@ def _scan_dd_reports() -> list[dict]:
     """
     掃描 docs/dd/ 資料夾，找出所有 DD_*.html 檔案。
     檔名格式：DD_TICKER_YYYYMMDD.html
-    回傳 [{ticker, date, filename}, ...]，按日期降冪。
+    回傳 [{ticker, date, filename}, ...]，按 Ticker 字母順序排序。
     """
     results = []
     dd_dir = DOCS_DIR / "dd"
@@ -776,7 +776,7 @@ def _scan_dd_reports() -> list[dict]:
             "date": date_fmt,
             "filename": p.name,
         })
-    results.sort(key=lambda r: r["date"], reverse=True)
+    results.sort(key=lambda r: r["ticker"])
     return results
 
 
