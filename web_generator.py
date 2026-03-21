@@ -702,13 +702,18 @@ def fetch_notion_reports() -> list[dict]:
     pages_10q = _query_all_pages(NOTION_10Q_DB_ID)
     print(f"  [DEBUG] 10-Q 資料庫讀取到 {len(pages_10q)} 筆頁面")
     for page in pages_10q:
-        filed = _get_date_value(page, "Date") or page.get("created_time", "")[:10]
+        full_date = (
+            _get_date_value(page, "財報年度")
+            or _get_date_value(page, "Date")
+            or _get_date_value(page, "日期")
+            or _get_rich_text(page, "財報年度")
+            or page.get("created_time", "")[:10]
+        )
         reports.append({
             "name": _get_title_text(page, "Name"),
             "ticker": _get_rich_text(page, "Ticker"),
             "form": "10-Q",
-            "date": _get_rich_text(page, "財報年度"),
-            "filed_date": filed,
+            "date": full_date,
             "page_id": page["id"],
         })
 
@@ -718,7 +723,13 @@ def fetch_notion_reports() -> list[dict]:
     for page in pages_10k:
         name = _get_title_text(page, "Name")
         ticker = name.split()[0] if name else ""
-        filed = _get_date_value(page, "Date") or page.get("created_time", "")[:10]
+        full_date = (
+            _get_date_value(page, "財報年度")
+            or _get_date_value(page, "Date")
+            or _get_date_value(page, "日期")
+            or _get_rich_text(page, "財報年度")
+            or page.get("created_time", "")[:10]
+        )
         # 嘗試從 Notion 欄位讀取護城河五維度分數
         moat_sub = {}
         for key in MOAT_5_DIMS:
@@ -731,14 +742,13 @@ def fetch_notion_reports() -> list[dict]:
             "name": name,
             "ticker": ticker,
             "form": "10-K",
-            "date": _get_rich_text(page, "財報年度"),
-            "filed_date": filed,
+            "date": full_date,
             "page_id": page["id"],
             "moat_sub_scores": moat_sub,
         })
 
-    # 依 filed_date 降冪排序（最新在最上面）
-    reports.sort(key=lambda r: r.get("filed_date", ""), reverse=True)
+    # 依日期降冪排序（最新在最上面）
+    reports.sort(key=lambda r: r.get("date", ""), reverse=True)
     return reports
 
 
@@ -781,17 +791,23 @@ def generate_index(reports: list[dict]) -> None:
         ticker = html_lib.escape(r.get("ticker", ""))
         form = r.get("form", "")
         date = html_lib.escape(r.get("date", ""))
-        filed_date = html_lib.escape(r.get("filed_date", ""))
         page_id = r.get("page_id", "")
         slug = page_id.replace("-", "")
         tag_cls = "tag-10k" if form == "10-K" else "tag-10q"
 
         # 護城河等級
         moat_avg = r.get("moat_avg")
+        moat_level = r.get("moat_level")
         if moat_avg is not None:
             level = _moat_level(moat_avg)
             badge_cls = _moat_badge_cls(level)
             level_cn = _moat_level_cn(moat_avg)
+            moat_cell = f'<span class="moat-badge {badge_cls}">{html_lib.escape(level_cn)}</span>'
+        elif moat_level:
+            badge_cls = _moat_badge_cls(moat_level)
+            level_cn = {"Wide": "寬護城河 Wide Moat", "Narrow": "窄護城河 Narrow Moat"}.get(
+                moat_level, "無護城河 No Moat"
+            )
             moat_cell = f'<span class="moat-badge {badge_cls}">{html_lib.escape(level_cn)}</span>'
         else:
             moat_cell = '<span style="color:var(--muted)">—</span>'
@@ -801,7 +817,6 @@ def generate_index(reports: list[dict]) -> None:
   <td><strong>{ticker}</strong></td>
   <td><span class="tag {tag_cls}">{html_lib.escape(form)}</span></td>
   <td>{date}</td>
-  <td>{filed_date}</td>
   <td>{moat_cell}</td>
   <td><a href="/report/{slug}.html">查看 &rarr;</a></td>
 </tr>"""
@@ -825,14 +840,13 @@ def generate_index(reports: list[dict]) -> None:
           <tr>
             <th>公司</th>
             <th>類型</th>
-            <th>財報年度</th>
-            <th>發布日期</th>
+            <th>日期</th>
             <th>護城河等級</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {rows or '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">尚無報告</td></tr>'}
+          {rows or '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">尚無報告</td></tr>'}
         </tbody>
       </table>
     </div>
@@ -1554,26 +1568,7 @@ def build_site() -> None:
     notion_reports = fetch_notion_reports()
     print(f"  [DEBUG] 共讀取 {len(notion_reports)} 筆報告")
 
-    # 為每筆報告附加護城河等級（僅 10-K）
-    for r in notion_reports:
-        ticker = r.get("ticker", "")
-        # 優先使用 Notion 欄位讀取的護城河分數
-        moat_sub = r.get("moat_sub_scores", {})
-        if r.get("form") == "10-K" and moat_sub:
-            avg = sum(moat_sub.values()) / len(moat_sub)
-            r["moat_avg"] = avg
-        elif r.get("form") == "10-K" and ticker in moat_scores:
-            co_moat = moat_scores[ticker]
-            if co_moat:
-                latest_yr = sorted(co_moat.keys())[-1]
-                sc = co_moat[latest_yr]
-                avg = sum(sc.values()) / len(sc) if sc else 0
-                r["moat_avg"] = avg
-
-    # 首頁
-    generate_index(notion_reports)
-
-    # 為每筆報告生成獨立頁面
+    # 為每筆報告讀取內容、解析護城河、生成個別頁面
     for report in notion_reports:
         ticker = report.get("ticker", "")
         form = report.get("form", "")
@@ -1600,10 +1595,33 @@ def build_site() -> None:
                 if moat_sub:
                     print(f"  [DEBUG] {ticker} 從分析文字解析護城河: {moat_sub}")
             print(f"  [DEBUG] {ticker} 10-K moat_sub_scores = {moat_sub}")
+
+            # 設定護城河等級供首頁使用
+            if moat_sub:
+                avg = sum(moat_sub.values()) / len(moat_sub)
+                report["moat_avg"] = avg
+            elif ticker in moat_scores:
+                co_moat = moat_scores[ticker]
+                if co_moat:
+                    latest_yr = sorted(co_moat.keys())[-1]
+                    sc = co_moat[latest_yr]
+                    avg = sum(sc.values()) / len(sc) if sc else 0
+                    report["moat_avg"] = avg
+
+            # 從分析文字解析護城河等級（寬/窄/無）
+            if "moat_avg" not in report:
+                parsed = _parse_10k_analysis(content)
+                if parsed["moat_level"]:
+                    report["moat_level"] = parsed["moat_level"]
+                    print(f"  [DEBUG] {ticker} 從文字解析護城河等級: {parsed['moat_level']}")
+
             generate_report_page_10k(report, moat_sub, content)
 
         elif form == "10-Q":
             generate_report_page_10q(report, content)
+
+    # 首頁（在讀取內容並解析護城河之後生成，確保護城河等級已填入）
+    generate_index(notion_reports)
 
     # 個別公司頁面
     for ticker, co_data in companies_data.items():
