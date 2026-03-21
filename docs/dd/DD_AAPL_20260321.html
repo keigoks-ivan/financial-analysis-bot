@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_AAPL_20260321 | Apple 深度研究報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC;--card:#FFFFFF;--navy:#1C1C1E;--accent:#147EFB;--accent2:#0A7AFF;
+    --text:#1E293B;--text-muted:#64748B;--border:#E2E8F0;--row-alt:#F0F9FF;
+    --green-bg:#DCFCE7;--green-text:#166534;--red-bg:#FEE2E2;--red-text:#991B1B;
+    --yellow-bg:#FEF9C3;--yellow-text:#92400E;--blue-bg:#EFF6FF;--blue-text:#1D4ED8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.7;padding-top:64px;}
+  .sticky-header{position:fixed;top:0;left:0;right:0;z-index:999;background:var(--navy);color:#fff;padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,0.3);border-bottom:2px solid var(--accent);}
+  .sticky-header .ticker{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;letter-spacing:2px;color:#60A5FA;}
+  .sticky-header .meta{display:flex;gap:24px;align-items:center;font-size:12px;color:#CBD5E1;}
+  .sticky-header .price-tag{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#93C5FD;}
+  .mode-badge{background:var(--accent2);color:#fff;padding:2px 10px;border-radius:3px;font-size:11px;font-weight:700;letter-spacing:1px;}
+  .container{max-width:1100px;margin:0 auto;padding:32px 24px 80px;}
+  .section{background:var(--card);border-radius:2px;margin-bottom:28px;border:1px solid var(--border);overflow:hidden;}
+  .section-header{background:var(--navy);color:#fff;padding:14px 24px;display:flex;align-items:center;gap:12px;border-left:5px solid var(--accent);}
+  .section-header .section-num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#93C5FD;font-weight:500;letter-spacing:1px;}
+  .section-header h2{font-family:'Noto Serif TC',serif;font-size:15px;font-weight:700;letter-spacing:0.5px;}
+  .section-body{padding:24px;}
+  .sub-title{font-weight:700;color:var(--navy);font-size:13px;border-bottom:2px solid var(--accent);padding-bottom:6px;margin:20px 0 14px;display:inline-block;}
+  .sub-title:first-child{margin-top:0;}
+  p{margin-bottom:10px;line-height:1.75;}p:last-child{margin-bottom:0;}
+  .table-wrap{overflow-x:auto;margin:12px 0;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead tr{background:var(--navy);color:#fff;}
+  thead th{padding:10px 14px;text-align:left;font-weight:600;font-size:12px;letter-spacing:0.5px;white-space:nowrap;}
+  tbody tr:nth-child(even){background:var(--row-alt);}
+  tbody tr:hover{background:#DBEAFE;}
+  tbody td{padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+  tfoot td{padding:9px 14px;background:#F8FAFC;font-weight:600;border-top:2px solid var(--navy);}
+  .badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700;}
+  .badge-green{background:var(--green-bg);color:var(--green-text);}
+  .badge-red{background:var(--red-bg);color:var(--red-text);}
+  .badge-yellow{background:var(--yellow-bg);color:var(--yellow-text);}
+  .badge-blue{background:var(--blue-bg);color:var(--blue-text);}
+  .badge-gray{background:#F1F5F9;color:#475569;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+  .stat-card{border:1px solid var(--border);padding:16px;background:var(--card);}
+  .stat-card .label{font-size:11px;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:6px;}
+  .stat-card .value{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--navy);line-height:1.2;}
+  .stat-card .sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+  .verdict{padding:16px 20px;border-left:4px solid;margin:16px 0;font-size:13.5px;line-height:1.7;}
+  .verdict-green{border-color:#16A34A;background:var(--green-bg);color:var(--green-text);}
+  .verdict-red{border-color:#DC2626;background:var(--red-bg);color:var(--red-text);}
+  .verdict-yellow{border-color:#D97706;background:var(--yellow-bg);color:var(--yellow-text);}
+  .verdict-blue{border-color:#2563EB;background:var(--blue-bg);color:var(--blue-text);}
+  .verdict-gray{border-color:#94A3B8;background:#F8FAFC;color:#1E293B;}
+  .risk-block{border:1px solid var(--border);padding:16px;margin:10px 0;border-left:4px solid #DC2626;background:#FFF5F5;}
+  .risk-block .risk-title{font-weight:700;color:#991B1B;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+  hr{border:none;border-top:1px solid var(--border);margin:20px 0;}
+  .summary-bar{background:var(--navy);color:#fff;padding:20px 24px;margin-bottom:28px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;border-bottom:3px solid var(--accent);}
+  .summary-bar .s-item .s-label{font-size:10px;color:#64748B;text-transform:uppercase;letter-spacing:0.8px;}
+  .summary-bar .s-item .s-val{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:#F8FAFC;margin-top:2px;}
+  .datasource{font-size:11px;color:var(--text-muted);margin-top:8px;font-family:'IBM Plex Mono',monospace;}
+  .em{font-weight:700;color:var(--navy);}
+  .highlight{background:#FEF9C3;padding:1px 4px;border-radius:2px;}
+  ul.bullets{padding-left:20px;}ul.bullets li{margin-bottom:6px;}
+  .print-btn{position:fixed;bottom:28px;right:28px;background:var(--navy);color:#fff;border:none;padding:12px 20px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:1px;cursor:pointer;z-index:998;box-shadow:0 4px 16px rgba(0,0,0,0.2);border-left:3px solid var(--accent);}
+  @media print{.sticky-header,.print-btn{display:none!important;}body{padding-top:0;}.section{break-inside:avoid;}}
+</style>
+</head>
+<body>
+
+<div class="sticky-header">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <span class="ticker">AAPL</span>
+    <span class="mode-badge">深度版</span>
+  </div>
+  <div class="meta">
+    <span>資料抓取：2026-03-21</span>
+    <span>最近財報：Q1 FY2026（2026-01-29）</span>
+    <span class="price-tag">$249.80 USD</span>
+  </div>
+</div>
+
+<button class="print-btn" onclick="window.print()">⬇ 列印 PDF</button>
+
+<div class="container">
+
+<div class="summary-bar">
+  <div class="s-item"><div class="s-label">最新股價</div><div class="s-val">$249.80</div></div>
+  <div class="s-item"><div class="s-label">市值</div><div class="s-val">~$3.67T</div></div>
+  <div class="s-item"><div class="s-label">52週區間</div><div class="s-val">$169 – $289</div></div>
+  <div class="s-item"><div class="s-label">Trailing P/E</div><div class="s-val">31.6x</div></div>
+  <div class="s-item"><div class="s-label">Forward P/E（FY26E）</div><div class="s-val">28.9x</div></div>
+  <div class="s-item"><div class="s-label">PEG</div><div class="s-val">2.76（⚠ 偏高）</div></div>
+  <div class="s-item"><div class="s-label">EV/EBITDA</div><div class="s-val">23.6x</div></div>
+  <div class="s-item"><div class="s-label">Services ARR</div><div class="s-val">>$120B/年</div></div>
+  <div class="s-item"><div class="s-label">次季財報</div><div class="s-val">2026-04-30（est）</div></div>
+</div>
+
+<!-- §0 序章 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§0</span><h2>序章：第一性原理 × 逆向思考</h2></div>
+  <div class="section-body">
+
+    <div class="sub-title">存在意義</div>
+    <p>人類對「美感+易用性+隱私+生產力」的追求是不可逆的。Apple解決的根本問題是：<strong>讓每個人都能以不需要懂技術的方式，使用世界上最先進的計算技術</strong>。這個使命在每一代產品中都得到再詮釋——從麥金塔電腦使圖形界面民主化，到iPhone使智慧型手機大眾化，再到Apple Watch使健康監測便攜化，到2026年的Apple Intelligence使AI功能私密化。Apple的存在意義不是「造最快的晶片」或「賣最多的手機」，而是<span class="highlight">讓技術消失在體驗之中，讓使用者感到被尊重而非被演算法操控</span>。若Apple明日消失：全球25億活躍裝置的生態系崩解；iOS的14億iPhone用戶失去長期積累的生態資本（應用、訂閱、購買記錄、健康數據）；Broadcom的FBAR射頻濾波器（iPhone獨家採購）及TSMC的3nm晶片最大客戶之一消失。</p>
+
+    <hr>
+
+    <div class="sub-title">逆向推演（Munger Inversion）：讓這筆投資在3年內虧損50%以上的路徑</div>
+
+    <div class="risk-block">
+      <div class="risk-title">🔴 風險一：Google搜尋預設付款（~$20-24B/年）被DOJ反壟斷裁決終止</div>
+      <p><strong>具體路徑：</strong>Google每年支付Apple約$20-24B（估計佔Services Revenue的16-20%），作為在iPhone/Safari上成為預設搜尋引擎的費用。DOJ已確認Google的搜尋壟斷，若反壟斷裁決終止這個協議（裁決預計2025年8月已宣布，但仍在上訴中），Apple將立即損失$20-24B/年的純利潤。按2026年EPS $8.63計算，這個損失相當於EPS減少$1.00-1.60，即EPS下降12-19%。若同時疊加App Store佣金下調（EU DMA強制要求），Services Revenue成長可能從+14%驟降至+5%，整個估值邏輯從「高毛利Services成長股」坍縮為「iPhone週期性硬件公司」，Forward P/E從29x降至20x，股票跌幅-30%+。<br>
+      <strong>2026年3月狀態：</strong>Google已與Apple簽署Gemini AI整合協議（Apple付費約$1B/年給Google使用Gemini模型）——這個新合作使兩者關係更深，但Google的搜尋預設付款問題仍在法庭上。若DOJ裁決最終強制終止，是最大的單點估值風險。</p>
+    </div>
+
+    <div class="risk-block">
+      <div class="risk-title">🔴 風險二：AI差距擴大——Apple Intelligence落後於競爭對手，iPhone升級週期提前結束</div>
+      <p><strong>具體路徑：</strong>Q1 FY2026 iPhone +23%的驚人成長是iPhone 17週期疊加Apple Intelligence功能驅動的升級潮。但Apple在AI的執行上一直落後——Siri的「on-device AI」策略（Privacy First）雖然體現了品牌價值，但在複雜任務執行上明顯劣於ChatGPT/Gemini/Claude的雲端AI能力。若Siri 2.0（預計Q2 2026正式推出，以Google Gemini為雲端後端）在用戶體驗上仍無法達到「Apple品質」，iPhone 18的升級需求可能大幅低於iPhone 17週期，導致FY2027 Revenue回到低個位數成長，EPS增速從15%跌至5%。<br>
+      <strong>具體時間軸：</strong>2026年WWDC（6月）是「Siri 2.0」的最重要展示機會——若該版本仍讓外界失望，它將成為Apple AI失去話語權的象徵性時刻。</p>
+    </div>
+
+    <div class="risk-block">
+      <div class="risk-title">🔴 風險三：中國供應鏈風險 + 中美關係惡化</div>
+      <p><strong>具體路徑：</strong>儘管Apple已將25%的iPhone生產移至印度（Q1 FY2026財報確認），Pro型號的生產仍高度集中在中國（富士康鄭州）。若中美關係出現緊急惡化（台海危機、更高關稅），Apple面臨：①中國市場封鎖（FY2025 Greater China Revenue ~$66B/年）；②中國製造的iPhone無法出口美國（需要緊急轉移生產，需12-18個月）。Q1 FY2026 Greater China +38%的強勁成長說明目前中國風險在控制之內，但地緣政治尾部風險仍是最大的「黑天鵝」之一。</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- §1 財報 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§1</span><h2>即時財報情報（Q1 FY2026 ｜ 2026-01-29公告）</h2></div>
+  <div class="section-body">
+
+    <div class="sub-title">① 最新一季財報關鍵數字（Apple FY為9月結算，Q1=10月-12月）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY成長</th></tr></thead>
+        <tbody>
+          <tr><td>Total Revenue</td><td class="mono">$143.8B</td><td class="mono">$138.5B（LSEG）</td><td><span class="badge badge-green">✓ BEAT +3.8%（大幅）</span></td><td class="mono">+16%（超強）</td></tr>
+          <tr><td>iPhone Revenue</td><td class="mono">$85.3B</td><td class="mono">$78.7B（LSEG）</td><td><span class="badge badge-green">✓ BEAT +8.4%（爆炸性）</span></td><td class="mono">+23%（史上最佳）</td></tr>
+          <tr><td>Services Revenue</td><td class="mono">$30.0B</td><td class="mono">~$27.8B</td><td><span class="badge badge-green">✓ BEAT +8.0%</span></td><td class="mono">+14%（史上最高）</td></tr>
+          <tr><td>Mac Revenue</td><td class="mono">$8.39B</td><td class="mono">~$7.9B</td><td><span class="badge badge-green">✓ BEAT</span></td><td class="mono">+17%</td></tr>
+          <tr><td>iPad Revenue</td><td class="mono">$8.09B</td><td class="mono">~$7.1B</td><td><span class="badge badge-green">✓ BEAT</span></td><td class="mono">+15%</td></tr>
+          <tr><td>Wearables/Home/Acc.</td><td class="mono">$11.97B</td><td class="mono">~$11.7B</td><td><span class="badge badge-green">✓ BEAT</span></td><td class="mono">+4%（AirPods週期低點）</td></tr>
+          <tr><td>EPS（GAAP）</td><td class="mono">$2.84</td><td class="mono">$2.67（LSEG）</td><td><span class="badge badge-green">✓ BEAT +6.4%</span></td><td class="mono">+19%（史上最高）</td></tr>
+          <tr><td>Gross Margin</td><td class="mono">48.2%</td><td class="mono">~47.3%（指引中點）</td><td><span class="badge badge-green">✓ BEAT 指引上緣</span></td><td>vs 46.9% YoY（+130bps）</td></tr>
+          <tr><td>Services Gross Margin</td><td class="mono">76.5%</td><td class="mono">—</td><td><span class="badge badge-green">✓ 極高</span></td><td>—</td></tr>
+          <tr><td>Operating Cash Flow</td><td class="mono">$53.9B</td><td class="mono">—</td><td><span class="badge badge-green">✓ 史上單季最高</span></td><td>—</td></tr>
+          <tr><td>Greater China</td><td class="mono">+38% YoY</td><td class="mono">—</td><td><span class="badge badge-green">✓ 大幅超預期</span></td><td>Tim Cook確認：升級用戶和門店客流均創新高</td></tr>
+          <tr><td>Q2 FY2026 Revenue Guidance</td><td class="mono">+13% to +16% YoY</td><td class="mono">~$91B（vs Q2 FY2025 $95.4B的比較基準）</td><td><span class="badge badge-yellow">⚠ 含記憶體成本壓力提示，下限謹慎</span></td><td>Q2為旺季後回落，傳統指引謹慎</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="datasource">資料來源：Apple Q1 FY2026 Press Release（SEC 8-K，2026-01-29）｜安裝基礎：2.5億以上活躍裝置；FY2025全年Revenue $416.16B；Q1是Apple的財政年度最強季（黑色星期五+聖誕節購物季）；記憶體成本上升是CFO Kevan Parekh在Q2指引中明確提到的毛利壓力因素；Google Gemini合作（Apple付費~$1B/年）官方確認於2026年1月。</p>
+
+    <hr>
+
+    <div class="sub-title">② Earnings Call 語氣解析</div>
+    <p><span class="em">管理層基調：「創紀錄」是Q1 Call的主旋律，Tim Cook使用了歷史上最多的「all-time record」描述，語氣是本分析系列所有CEO中最為自信的。</span>但CFO Kevan Parekh的語氣更謹慎——他在Q2指引中主動提到「記憶體價格上升是已知的毛利壓力因素」，說明Apple的成本端在FY2026有新的摩擦。</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>向度</th><th>細節</th></tr></thead>
+        <tbody>
+          <tr><td style="width:180px"><strong>Forward Guidance（Q2 FY2026）</strong></td><td>Revenue YoY成長+13%-16%（對應$107-111B，低於Q1的$143.8B，因季節性；若以FY2025 Q2的$95.4B為基準，+13-16%代表$107-110B）；Gross Margin 46.5%-47.5%（低於Q1的48.2%，記憶體成本是主要壓力因素；服務組合有利但硬件成本上升）；OpEx正常成長。</td></tr>
+          <tr><td><strong>刻意強調的主題</strong></td><td>① <strong>iPhone 17全球「最佳換機季」</strong>：升級用戶數創新高，且新增用戶（switchers）保持「雙位數成長」——說明Android→iOS的轉換仍在繼續。② <strong>Greater China+38%逆轉2025年中的疲弱</strong>：2025年Q2/Q3中國區增速曾轉負，Q1 FY2026的+38%是中國市場的強勁復甦，Tim Cook親訪中國（2026-03-21 Reuters報導）進一步確認中國戰略的重要性。③ <strong>Services的「廣泛性」</strong>：廣告、App Store、iCloud、Apple Music、支付服務均創紀錄——說明Services的成長不依賴任何單一業務，護城河廣度深化。④ <strong>Apple Intelligence的初步整合</strong>：iOS 18/19帶來的AI功能已在Q1 iPhone出貨中「推動升級意願」，管理層表示AI是iPhone 17週期需求超強的重要驅動因素之一。⑤ <strong>MacBook Neo（$599）的「最佳新客戶」記錄</strong>：新低價MacBook帶來的新客戶比例是有記錄以來最高，生態擴大效應確認。</td></tr>
+          <tr><td><strong>刻意迴避的問題</strong></td><td>① <strong>Google Gemini協議的財務條款</strong>：管理層不願確認$1B/年的傳言，也不願說明這對Services毛利的長期影響。② <strong>DOJ搜尋預設付款裁決的影響量化</strong>：以「不評論進行中法律程序」應對，沒有提供「若裁決不利，對EPS的影響估計」。③ <strong>Siri 2.0具體推出時間表</strong>：只說「持續改進Apple Intelligence」，沒有給出「Siri全面升級」的明確季度。④ <strong>iPhone供應限制的具體缺口規模</strong>：Tim Cook說「目前受制」但沒有量化Q2可能損失的銷售額。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr>
+
+    <div class="sub-title">③ 產業 Imply 萃取</div>
+    <div class="grid-2">
+      <div>
+        <p><span class="em">消費電子需求端：</span>iPhone +23%是全球高端智慧型手機需求健康的最強確認訊號。蘋果代表高端手機市場（$700+ASP），其強勁成長說明消費者在AI功能驅動下的硬件升級意願仍強——這對台積電（TSMC，蘋果是最大客戶）、三星HBM/DRAM（蘋果是記憶體大買家）、Broadcom（iPhone射頻濾波器獨家供應商）都是正向確認。Greater China +38%逆轉了2025年的疲弱趨勢，說明中國消費者的高端消費意願在2026年初反彈。</p>
+        <p><span class="em">記憶體成本訊號：</span>CFO明確提到「記憶體市場定價上升顯著」是Q2毛利壓力的主因——這直接確認了Micron（MU）的業績前景正面（供給緊缺→價格上漲），同時意味著所有智慧型手機廠商在2026年面臨原料成本上升的壓力。</p>
+      </div>
+      <div>
+        <p><span class="em">AI整合策略：</span>Apple選擇Google Gemini（付費）作為Siri的雲端AI後端，而非自研，是「AI落後者的務實主義」的最典型案例——Apple在公開場合一直宣稱「隱私優先、on-device AI」，但選擇向Google付費使用雲端AI說明on-device AI能力有其上限。這個戰略承認對Google的AI能力（以Google為原材料）同時Meta的Llama也在Apple設備上運行（Meta為此支付Apple）——Apple正在從「封閉AI自研」轉向「付費整合最佳AI」的策略。這對OpenAI（正面，Apple也在整合ChatGPT）和Anthropic是機會訊號。</p>
+        <p><span class="em">App Store/Services：</span>Services +14%（$30B在最強季）說明Apple的內容消費平台在用戶安裝基礎2.5B的支撐下持續成長。尤其是廣告服務創紀錄（App Store搜尋廣告快速成長），說明即使在EU DMA限制下，Apple的廣告業務仍在高速擴張。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- §2 核心門檻 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§2</span><h2>核心門檻檢核</h2></div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>項目</th><th>標準</th><th>符合</th><th>關鍵數據與趨勢</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>FCF Margin</strong></td><td class="mono">&gt;15%</td>
+            <td><span class="badge badge-green">✓ 優秀</span></td>
+            <td>FY2025 FCF $95.5B / Revenue $416.2B = FCF Margin ~22.9%。Q1 FY2026 Operating CF $53.9B（史上最高）；全年Capex極低（~$10-11B，幾乎是Mag 7中最少的）。蘋果是本系列唯一Capex實際下降的公司（TipRanks 2026-03-19報導），這使FCF在同業中幾乎最穩定。淨現金：Cash $145B（Q1末）- Long-term Debt（~$97B）= 淨現金+$48B。注：Apple管理層目標是「現金中性」，持續用大量回購和配息耗盡現金。</td>
+          </tr>
+          <tr>
+            <td><strong>ROIC</strong></td><td>產業頂尖</td>
+            <td><span class="badge badge-green">✓ 極高（但因高槓桿）</span></td>
+            <td>ROIC = 96.8%（StockAnalysis）；ROE = 152%（因高財務槓桿，D/E 1.03）。ROIC因大規模回購使equity大幅縮水而失真偏高——不代表「業務產生極高回報」，而是「財務工程的效果」。更有意義的是Apple的invested capital回報：Operating Income / (Revenue × 10%) = 業務資本效率約40-50%，仍屬世界頂尖。ROIC-WACC（WACC ~8.5%）= 極大正值，但需要理解槓桿放大效應。</td>
+          </tr>
+          <tr>
+            <td><strong>EPS CAGR（未來3年）</strong></td><td class="mono">&gt;20%</td>
+            <td><span class="badge badge-red">✗ 低於標準（~12-15%）</span></td>
+            <td>
+              基期 FY2025：EPS $7.46（GAAP，StockAnalysis）<br>
+              FY2026E：$8.63（共識，n=48位分析師）<br>
+              FY2027E：$9.46（共識，n=45位分析師）<br>
+              FY2028E：參考趨勢推算約$10.6-11.0<br>
+              ━━━━━━━━━━━━<br>
+              GAAP EPS CAGR（FY25→FY28）= (10.8÷7.46)^(1/3)−1 ≈ <strong>13.2%</strong>（低於20%標準）<br>
+              FY2026 EPS成長+15.7%（iPhone 17超級週期推動）<br>
+              FY2027 EPS成長+9.6%（週期正常化後顯著放緩）<br>
+              關鍵：EPS成長依賴回購（每年約-2.5%股數）和Services成長，iPhone硬件本身成長放緩是長期制約<br>
+              資料來源：StockAnalysis.com（2026-02-27抓取）；n=48位分析師
+            </td>
+          </tr>
+          <tr>
+            <td><strong>PEG（GAAP）</strong></td><td class="mono">&lt;2</td>
+            <td><span class="badge badge-red">✗ 明顯超出（PEG 2.76）</span></td>
+            <td>Forward P/E 28.9x ÷ EPS CAGR 13.2% = PEG ≈ 2.19；StockAnalysis顯示PEG = 2.76（使用更保守的成長率估算）。**PEG &gt;2是本系列七標的中唯一一家**——意味著市場正在為「護城河品質溢價」而非「成長速度」而付款。這是Apple估值的核心矛盾：業務品質頂尖，但以成長速度衡量，估值是本系列最貴的。</td>
+          </tr>
+          <tr>
+            <td><strong>現金覆蓋總負債</strong></td><td>是/否</td>
+            <td><span class="badge badge-green">✓ 淨現金正值</span></td>
+            <td>Cash $145B；Long-term Debt ~$97B；淨現金 +$48B。D/E 1.03（相對較高，但Apple刻意使用槓桿來「現金中性」，每年大量回購）。FCF $95B+/年使債務完全可控，利息覆蓋比率極高。</td>
+          </tr>
+          <tr>
+            <td><strong>護城河強度</strong></td><td>&gt;8分，擴大</td>
+            <td><span class="badge badge-green">✓ 符合</span></td>
+            <td>§3評分 9.5/10（本系列最高）。護城河趨勢：穩定（2.5B活躍裝置是世界上最深的消費電子生態），但AI落後和監管壓力是「護城河侵蝕」的潛在風險。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p><span class="em">最大財務弱點：</span>EPS CAGR ~13%（低於20%門檻）且PEG 2.76（本系列最高），意味著Apple的高估值完全依賴「護城河品質溢價」而非成長速度支撐。若市場重估這個溢價（如Services受監管衝擊），估值壓縮的幅度將遠大於其他成長更快的標的。</p>
+  </div>
+</div>
+
+<!-- §2.5 長期成長性 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§2.5</span><h2>長期成長性評估</h2></div>
+  <div class="section-body">
+
+    <div class="verdict verdict-yellow">
+      🟡 <strong>長期成長性綜合評級：中等可見度成長（護城河極深但成長速度受限）</strong><br>
+      Runway ≥ 10年（Services成長 + AI升級週期 + 印度/新興市場擴張）；有機成長~99%；成長品質佳（Services定價驅動）。制約評級的核心因素：①iPhone在成熟市場的週期性—— 換機週期2-3年，而非持續成長；②EPS CAGR ~13%（本系列最低），大量依賴回購工程（每年約-2.5%股數縮減）；③AI功能落後（Siri相比ChatGPT/Gemini的能力差距）限制了「AI超級週期」的持續時間。若Services繼續加速（>15%成長），可升評至🟢。
+    </div>
+
+    <div class="sub-title">A｜成長跑道（Runway）估算</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>業務</th><th>當前規模</th><th>TAM/成長潛力</th><th>Runway</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Services（最重要的成長引擎）</strong></td><td class="mono">$30B/季（$120B ARR）；+14% YoY</td><td>Services TAM：App Store、iCloud、Advertising、Apple TV+、Apple Music、Apple Pay的全球機會合計$500B+</td><td>≥10年（每年穩定+10-15%，Services佔Revenue從25%→35%+）</td></tr>
+          <tr><td><strong>iPhone（最大硬件業務）</strong></td><td class="mono">$85.3B（Q1，最強季）；全年~$220B</td><td>全球高端智慧型手機市場$400B+；Apple市佔~55-60%（$700+價格段）</td><td>5-8年（成熟市場飽和；新興市場（印度）提供延伸跑道）</td></tr>
+          <tr><td><strong>印度/新興市場擴張</strong></td><td class="mono">印度正在加速（生產移轉+銷售增長）</td><td>印度智慧型手機市場$15B+，Apple滲透率仍低</td><td>5-10年（生產+銷售雙輪驅動）</td></tr>
+          <tr><td><strong>Apple Intelligence訂閱（未來選擇權）</strong></td><td class="mono">目前免費，尚未貨幣化</td><td>2.5B裝置×$5-20/月Premium AI訂閱= $15-60B/年潛力</td><td>選擇權（FY2026-2027開始）</td></tr>
+          <tr><td><strong>Apple Vision Pro/AR眼鏡</strong></td><td class="mono">早期市場，銷量有限（&lt;300萬台）</td><td>長期空間巨大，但Vision Pro 2定價仍高</td><td>選擇權（7-12年）</td></tr>
+          <tr><td><strong>Runway綜合評估</strong></td><td colspan="3" class="mono"><strong>≥10年（Services主導），但整體業務成長速度中等（不是高速成長股）</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr>
+
+    <div class="sub-title">B｜成長品質判斷</div>
+    <div class="grid-2">
+      <div>
+        <strong>成長來源</strong>
+        <div class="table-wrap" style="margin-top:8px">
+          <table>
+            <thead><tr><th>類型</th><th>佔比</th><th>佐證</th></tr></thead>
+            <tbody>
+              <tr><td>有機成長</td><td class="mono">~99%</td><td>無重大收購；有機生態擴張</td></tr>
+              <tr><td>回購驅動EPS提升</td><td class="mono">EPS vs Revenue差距</td><td>FY2025股數-2.5%，使EPS成長超過Revenue成長</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <strong>成長結構分析</strong>
+        <div class="table-wrap" style="margin-top:8px">
+          <table>
+            <thead><tr><th>業務</th><th>成長類型</th><th>趨勢</th></tr></thead>
+            <tbody>
+              <tr><td>Services</td><td>定價驅動（App Store提成+訂閱提價）+ 量（用戶成長）</td><td><span class="badge badge-green">擴大</span></td></tr>
+              <tr><td>iPhone</td><td>週期性量驅動（換機升級）+ 輕微定價</td><td><span class="badge badge-yellow">週期性（不穩定）</span></td></tr>
+              <tr><td>Mac/iPad</td><td>量驅動（M系列晶片升級週期）</td><td><span class="badge badge-green">穩定成長</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:12px"><span class="em">最關鍵的成長品質特徵：</span>Apple是「高品質防禦型成長股」——不是高速成長股，而是「慢但穩」的複利機器。Services從2018年的$40B成長到2026年的$120B（年化+18%），這個成長的複利性比iPhone硬件更重要——每增加一美元Services收入，邊際利潤率高達76.5%，而iPhone硬件的邊際利潤率只有40.7%。因此，Services佔收入比例的持續提升（從14%→25%→目標35%），是Apple最重要的長期估值支柱。</p>
+
+    <hr>
+
+    <div class="sub-title">C｜成長護城河連動評估</div>
+    <div class="verdict verdict-green">
+      🟢 <strong>強化型（生態系正循環，AI是新的加速器）</strong><br>
+      ①iPhone → Services：每賣出一台iPhone就增加一個Services潛在用戶。2.5B活躍裝置 × Services ARPU $50+/年 = $125B+的Services ARR，且每新增裝置使ARR潛力增加。②Services → iPhone：iCloud數據、Apple Watch健康追蹤、FaceTime/iMessage生態使換機時的數據遷移成本極高——這直接強化了iPhone的換機忠誠度。③AI Intelligence → 硬件升級：Apple Intelligence需要較新的晶片（A17 Pro/M系列）運行，強制了「不升級就無法使用最新AI功能」的升級循環，這是Apple硬件成長的新驅動力。④MacBook Neo（$599）→ 新用戶 → 生態擴張：低價MacBook帶來的新用戶長期貢獻比現有用戶更大（升級路徑更長）。
+    </div>
+
+    <hr>
+
+    <div class="sub-title">D｜ROIC 與 FCF 的長期可維持性</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>指標</th><th>當前值</th><th>3年前(FY2022)</th><th>趨勢</th><th>門檻</th><th>符合</th></tr></thead>
+        <tbody>
+          <tr><td><strong>FCF Margin</strong></td><td class="mono">~23%（FY2025）</td><td class="mono">~22%（FY2022）</td><td>→ 穩定</td><td>&gt;15%</td><td><span class="badge badge-green">✓ 穩定</span></td></tr>
+          <tr><td><strong>Operating Margin</strong></td><td class="mono">~31.8%（FY2025 TTM）</td><td class="mono">~30%（FY2022）</td><td>↑（Services混合提升）</td><td>—</td><td><span class="badge badge-green">✓ 穩定上升</span></td></tr>
+          <tr><td><strong>Gross Margin</strong></td><td class="mono">~48.2%（Q1 FY2026）</td><td class="mono">43.3%（FY2022）</td><td>↑↑（Services混合提升）</td><td>—</td><td><span class="badge badge-green">✓ 結構性改善</span></td></tr>
+          <tr><td><strong>ROIC（業務口徑）</strong></td><td class="mono">~40-50%（剔除回購槓桿）</td><td class="mono">~40%</td><td>→ 穩定</td><td>產業頂尖</td><td><span class="badge badge-green">✓</span></td></tr>
+          <tr><td><strong>FCF/Net Income轉換率</strong></td><td class="mono">~95%（Q1 FCF $53.9B / NI ~$42B × 4 ≈高）</td><td class="mono">~100%+</td><td>→ 穩定（Capex最低）</td><td>&gt;85%</td><td><span class="badge badge-green">✓</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><span class="em">Apple的財務品質診斷：</span>Gross Margin從FY2022的43.3%提升至FY2026 Q1的48.2%，是過去4年最重要的財務品質改善——主要驅動力是Services（76.5%毛利）佔比上升，使混合毛利率持續提升。這個結構性改善使Apple在iPhone週期波動中仍能維持穩定的FCF（FCF Margin ~23%穩定）。Apple是本系列七家中Capex/Revenue比率最低的公司（Capex ~$11B vs Revenue $416B = 2.6%），這使Free Cash Flow幾乎等同於Operating Cash Flow，財務品質極高。</p>
+
+    <hr>
+
+    <div class="sub-title">E｜成長熄火情境壓力測試</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr></thead>
+        <tbody>
+          <tr style="background:var(--green-bg)"><td>3年後成長率維持13-15%（AI訂閱加速）</td><td>Services繼續20%+，AI Intelligence Premium推出</td><td class="mono">27–32x</td><td class="mono">0% to +11%（維持區間）</td></tr>
+          <tr style="background:var(--yellow-bg)"><td>3年後成長率降至8%（iPhone週期放緩）</td><td>Services成長放緩至10%，iPhone平均成長3%</td><td class="mono">20–24x</td><td class="mono">-17% to -30%</td></tr>
+          <tr style="background:var(--red-bg)"><td>3年後成長率降至5%（Google付款終止+App Store受損）</td><td>Services受監管雙重打擊，成長停滯</td><td class="mono">15–18x</td><td class="mono">-38% to -48%</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="4">計算基礎：當前Forward P/E 28.9x（FY2026E EPS $8.63，股價$249.80）。</td></tr></tfoot>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- §3 護城河 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§3</span><h2>護城河分析（報告核心）</h2></div>
+  <div class="section-body">
+
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+      <div class="stat-card" style="width:180px">
+        <div class="label">護城河評分</div>
+        <div class="value" style="font-size:36px;color:#16A34A">9.5</div>
+        <div class="sub">/ 10（本系列最高）</div>
+      </div>
+      <div style="flex:1">
+        <div class="verdict verdict-green">
+          護城河趨勢：<strong>穩定（最深的消費生態系護城河，Morningstar給予「Wide Moat」最高評級）</strong><br>
+          Apple的護城河是本系列所有公司中最難被複製的——不是因為有某個技術壁壘，而是因為它同時在硬件設計、軟體整合、芯片自研、服務生態、品牌溢價、隱私定位這六個維度上都處於行業頂尖。這個六維度的同時頂尖性使競爭者必須在每個維度都達到Apple的水準才能挑戰，而這在過去30年從未發生。
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-title">護城河來源逐一檢驗</div>
+    <div class="grid-2">
+      <div>
+        <p><span class="em">① 轉換成本（最強，本系列唯一達到「接近完美」的轉換成本護城河）</span><br>
+        <strong>量化轉換成本：</strong>從iPhone切換至Android涉及：①所有AppStore購買（遊戲、應用的付費版）無法遷移（Android無法讀取iOS購買記錄）；②iCloud照片、文件需要手動遷移（通常10-15年的歷史）；③iMessage歷史紀錄不可移植（GreenBubble的心理壓力）；④Apple Watch的健康數據在Android上無法完整還原；⑤AirDrop、AirPlay、Handoff等無縫功能消失。研究顯示，iOS用戶的年度留存率超過90%（遠高於Android用戶的75-80%），且換機到Android的用戶中約30%在一年內換回iOS。這個轉換成本在「設備年齡越大→積累數據越多→轉換成本越高」的正向循環中持續加深。</p>
+
+        <p><span class="em">② 無形資產（品牌 × 設計專利 × 自研芯片）</span><br>
+        Apple品牌是全球品牌價值第一（Interbrand持續排名，2025年仍是$1500B+的品牌資產）。更重要的是「設計哲學」和「用戶體驗理念」的無形資產——這無法被任何公司收購或複製，只能靠文化積累。自研芯片（A系列/M系列）使Apple在效能、功耗和AI推理能力上同時領先競爭對手2-3代，沒有任何Android廠商能在芯片設計上接近。Apple的在制品設計專利覆蓋了數萬項，雖然大量專利可被規避，但核心的Face ID、Dynamic Island等體驗專利建立了較長的先發優勢保護期。</p>
+      </div>
+      <div>
+        <p><span class="em">③ 網路效應（中等，iMessage最強）</span><br>
+        iMessage/FaceTime在美國形成了最強的「iPhone-to-iPhone」通訊網路效應——在美國，不使用iPhone就意味著成為「綠色氣泡」，承受社交壓力。這個效應在青少年群體中尤其強烈（青少年iPhone用戶比例超過90%），使iPhone一旦成為「默認手機」就幾乎不可能被替代。App Store的雙邊網路效應（14億iPhone用戶 → 更多開發者 → 更好的App → 更多用戶）是Services成長的底層邏輯，且App Store的應用品質和規範性（相比Android的更嚴格審核）形成了一個「高品質App平台」的品牌護城河。</p>
+
+        <p><span class="em">④ 規模優勢（製造/供應鏈，行業最強）</span><br>
+        Apple每年出貨~2.3億台iPhone，是全球單一最大智慧型手機型號線。這個規模使Apple能向TSMC購買最先進製程（3nm）的最優先產能，向Samsung/SK Hynix購買最優質的LPDDR5X記憶體，向Sony購買最頂尖的CMOS感光元件——所有供應商都願意為Apple提供「最高品質、最低價格、最優先交期」，因為失去Apple訂單的代價對任何零部件供應商而言都是毀滅性的。這個供應鏈優勢使Apple能維持比所有競爭對手更高的硬件利潤率（iPhone毛利率40.7%，遠高於三星硬件的~25%）。</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="sub-title">護城河最大威脅：監管侵蝕Services利潤</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>威脅</th><th>當前狀態</th><th>潛在影響</th><th>概率評估</th></tr></thead>
+        <tbody>
+          <tr style="background:#FEE2E2"><td><strong>Google搜尋預設付款終止（DOJ）</strong></td><td>裁決已宣布（2025年8月），上訴進行中；補救措施仍待定</td><td>~$20-24B/年損失（EPS -$1.0-1.6，約-12-19%）</td><td>中等（30-40%概率在2027年前實施）</td></tr>
+          <tr><td><strong>App Store佣金下調（EU DMA + 美國訴訟）</strong></td><td>EU已強制部分App使用替代付款；美國App Store費用結構訴訟進行中</td><td>App Store收入~$24B/年，若佣金從30%降至20%，影響~$8B/年</td><td>中等（40-50%概率佣金部分下調）</td></tr>
+          <tr style="background:#FEF9C3"><td><strong>iMessage/iCloud在EU的開放性要求</strong></td><td>EU DMA要求iMessage開放互通性（與WhatsApp等互通）</td><td>可能削弱iMessage的美國外護城河深度</td><td>低中（已在歐洲生效，但美國外iMessage護城河弱）</td></tr>
+          <tr><td><strong>Apple Intelligence訂閱（機會，非威脅）</strong></td><td>目前免費，但管理層暗示未來Premium AI功能可能付費</td><td>潛在+$10-20B/年新Services收入（正向）</td><td>高概率（FY2026-2027開始測試訂閱模式）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- §4 財務品質 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§4</span><h2>財務品質監測</h2></div>
+  <div class="section-body">
+
+    <div class="sub-title">四年趨勢表（USD，Apple FY為9月結算）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>指標</th><th>FY2022</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>FY2026E</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Revenue</strong></td><td class="mono">$394.3B</td><td class="mono">$383.3B（iPhone低谷）</td><td class="mono">$391.0B</td><td class="mono">$416.2B</td><td class="mono">$474.5B（共識，+14%）</td></tr>
+          <tr><td><strong>Gross Margin</strong></td><td class="mono">43.3%</td><td class="mono">44.1%</td><td class="mono">46.2%</td><td class="mono">46.6%（FY2025 TTM）</td><td class="mono">~47-48%（Services mix提升）</td></tr>
+          <tr><td><strong>Operating Margin</strong></td><td class="mono">29.9%</td><td class="mono">29.8%</td><td class="mono">31.5%</td><td class="mono">~31.8%</td><td class="mono">~32-33%（穩定）</td></tr>
+          <tr><td><strong>FCF Margin</strong></td><td class="mono">~22%</td><td class="mono">~24%</td><td class="mono">~23%</td><td class="mono">~23%</td><td class="mono">~22-23%（穩定；Capex低但記憶體成本↑）</td></tr>
+          <tr><td><strong>Services Revenue佔比</strong></td><td class="mono">~19%</td><td class="mono">~22%</td><td class="mono">~24%</td><td class="mono">~26%</td><td class="mono">~27-28%（持續提升中）</td></tr>
+          <tr><td><strong>Capital Return（回購+股息）</strong></td><td class="mono">~$87B</td><td class="mono">~$93B</td><td class="mono">~$95B</td><td class="mono">~$95B</td><td class="mono">~$100B（維持大規模回購）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-title">獲利品質警訊（四項完整檢驗）</div>
+    <div class="grid-2">
+      <div>
+        <p><span class="em">① 淨利 vs OCF：</span><span class="badge badge-green">✓ 極健康（OCF/NI > 100%）</span><br>
+        Q1 FY2026 Net Income $42.1B；Operating Cash Flow $53.9B。OCF/NI = 128%——Apple的現金轉換率持續超過100%，因為Capex極低（~$2.5B/季），D&A加回充足，且預付款結構（App Store開發者預付、訂閱預付）提供了強勁的現金流。這個水準比本系列任何公司都更健康（除了Meta）。</p>
+
+        <p><span class="em">② AR成長 vs 收入成長：</span><span class="badge badge-green">✓ 健康</span><br>
+        Apple的App Store和訂閱服務主要以預付或即時結算，應收帳款周轉率高（DSO通常40-50天）。iPhone硬件銷售給電信商，應收帳款信用質量好。Current Ratio 0.97偏低，但Apple持有大量長期有價證券（$145B總現金），流動性不是問題。</p>
+      </div>
+      <div>
+        <p><span class="em">③ 回購力度分析（Apple獨特的財務品質指標）：</span><span class="badge badge-green">✓ 極強，全球最大回購機器之一</span><br>
+        FY2025全年回購約$91B，配息$15B，合計約$106B的股東回報。這幾乎等同於FY2025全年FCF的110%（Apple在以略微提高淨負債來支撐回購）。回購使股數每年減少~2.5%，即使Revenue和EPS成長率溫和，按股EPS仍能保持10-15%的成長。這個「資本配置引擎」是Apple EPS成長超過Revenue成長的根本原因，也是支撐高估值的「非有機成長驅動力」——但需要警惕：這個策略依賴強勁的FCF持續維持，任何FCF大幅下降（如Google付款終止）將迫使回購規模縮減。</p>
+
+        <p><span class="em">④ FCF轉換率趨勢：</span><span class="badge badge-green">✓ 穩定健康</span><br>
+        Apple是本系列唯一Capex在下降的公司（TipRanks 2026-03-19確認）——絕大多數Big Tech在競相加大AI基礎設施投資，Apple的「輕資產+生態系黏性」使其可以在不大幅增加Capex的情況下持續成長。FY2026全年FCF預計仍在$95-100B範圍，FCF Margin維持~22-23%。</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- §5 產業格局 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§5</span><h2>產業格局、議價權與 Unit Economics</h2></div>
+  <div class="section-body">
+
+    <div class="grid-3" style="margin-bottom:16px">
+      <div class="stat-card">
+        <div class="label">Services Q1 FY2026</div>
+        <div class="value">$30.0B</div>
+        <div class="sub">+14% YoY；史上最高；Margin 76.5%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">iPhone Q1 FY2026</div>
+        <div class="value">$85.3B</div>
+        <div class="sub">+23% YoY；史上最高；Margin 40.7%</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">活躍裝置安裝基礎</div>
+        <div class="value">2.5B+</div>
+        <div class="sub">每新增一台裝置=新Services潛力</div>
+      </div>
+    </div>
+
+    <div class="sub-title">業務組成與議價權</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>業務</th><th>Q1 FY2026 Revenue</th><th>YoY</th><th>Gross Margin</th><th>議價力評估</th></tr></thead>
+        <tbody>
+          <tr><td><strong>iPhone</strong></td><td class="mono">$85.3B</td><td class="mono">+23%</td><td class="mono">~40.7%</td><td>極強（高端市場唯一最強品牌）</td></tr>
+          <tr><td><strong>Services</strong></td><td class="mono">$30.0B</td><td class="mono">+14%</td><td class="mono">76.5%</td><td>強（壟斷iOS分發渠道，但受監管制約）</td></tr>
+          <tr><td><strong>Mac</strong></td><td class="mono">$8.4B</td><td class="mono">+17%</td><td class="mono">—</td><td>強（M系列效能優勢，MacBook Neo擴大市場）</td></tr>
+          <tr><td><strong>iPad</strong></td><td class="mono">$8.1B</td><td class="mono">+15%</td><td class="mono">—</td><td>中等（Android平板競爭較激烈，但教育市場壟斷）</td></tr>
+          <tr><td><strong>Wearables/Home/Acc</strong></td><td class="mono">$12.0B</td><td class="mono">+4%</td><td class="mono">—</td><td>強（Apple Watch在可穿戴健康設備無直接競爭者）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sub-title" style="margin-top:16px">Unit Economics 核心指標</div>
+    <p><span class="em">iPhone ARPU趨勢：</span>iPhone平均售價（ASP）從FY2022的~$875提升至FY2025的~$910，FY2026因Pro/Pro Max佔比提升可能超過$935。這個定價能力在通脹背景下仍保持，說明iPhone的品牌溢價沒有稀釋。</p>
+    <p><span class="em">Services每用戶年均Revenue：</span>Services $120B ARR ÷ 安裝基礎2.5B ≈ $48/裝置/年（非所有裝置都是活躍付費用戶）。若以iPhone活躍用戶14億計算，Services ARPU ≈ $86/用戶/年，且每年以12-15%的速度增長——這是Apple最重要的「複利引擎」，因為新增收入是高毛利的增量，不需要額外硬件成本。</p>
+
+  </div>
+</div>
+
+<!-- §6 公司治理 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§6</span><h2>公司治理與資本配置</h2></div>
+  <div class="section-body">
+    <div class="grid-2">
+      <div>
+        <div class="sub-title">股東結構 + 接班人問題</div>
+        <p><strong>Tim Cook（CEO）：</strong>持股極少（&lt;0.1%），但薪酬結構以長期股票激勵為主。Cook自2011年接任以來，將Apple從$370B市值成長至$3.7T（10倍），主要靠：①生態系擴張②Services業務建立③自研芯片（M/A系列）④創紀錄的資本回報。Cook在供應鏈管理和商業執行上是世界頂尖，但在「下一代技術願景」上的創新性有分析師質疑。</p>
+        <p><strong>接班人問題（2026年最重要的治理議題）：</strong>FinancialContent報導Apple董事會正在為Tim Cook的接班人制定計劃（Cook目前63歲，業界預計在2026-2028年可能交班）。Apple最高質量的AI工程師John Giannandrea已退休，AI部門現由Amar Subramanya領導，這個人事變動受到科技媒體的密切關注——AI主管的更換對一個正處「AI追趕」關鍵期的Apple來說時機並不理想。</p>
+        <p><strong>機構持股：</strong>Berkshire Hathaway（Warren Buffett）持有~40%以上的公開持股；Vanguard ~8%；BlackRock ~6%。Buffett的長期持有本身就是「護城河高度可信」的隱性背書。</p>
+      </div>
+      <div>
+        <div class="sub-title">資本配置軌跡</div>
+        <p><strong>資本配置策略：「現金中性 + 最大回購」：</strong>自2018年宣布「現金中性目標」，Apple每年回購~$85-100B（全球最大的單一股票回購計劃），使股數每年縮減2-2.5%，EPS增速持續高於Revenue增速3-5pp。這個策略在低利率環境下是最優資本配置，但在高利率環境下（如2023-2024年）被部分分析師批評為「回購而非投資未來」。</p>
+        <p><strong>R&D vs 回購的爭議：</strong>FY2025 R&D $34B vs 回購$91B（每$1 R&D投入對應$2.7回購），有分析師認為Apple應將更多資金用於AI基礎設施建設（例如自研AI雲端），而非回購。這個批評在Apple Intelligence仍落後競爭對手的背景下更為尖銳。</p>
+        <p><strong>股息：</strong>$0.26/季（$1.04/年，Yield ~0.42%）；每年小幅提升；對長期持有者是有意義的累積回報。</p>
+        <p><strong>SBC：</strong>SBC/Revenue ~3%，每年稀釋~1%，被回購計劃充分抵銷（淨股數每年仍減少-2.5%）。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- §7 估值 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§7</span><h2>估值診斷</h2></div>
+  <div class="section-body">
+
+    <div class="verdict verdict-yellow">
+      📐 <strong>設計原則與核心挑戰：</strong>Apple的估值分析有一個獨特複雜性——這家公司是本系列護城河評分最高（9.5/10）但EPS成長最慢（~13%）的公司，導致PEG 2.76是全系列最高。因此，Apple的估值不能用「PEG偏高=定價過貴，賣出」這種簡單邏輯——它是全球最稀缺的「消費電子+生態系+Services複合護城河」資產，應給予一定的護城河品質溢價。但溢價的邊界在哪裡？這是本章最核心的判斷。
+    </div>
+
+    <div class="sub-title">7.1｜歷史估值分位（5年框架）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>估值指標</th><th>當前值</th><th>5年低點</th><th>5年中位</th><th>5年高點</th><th>當前分位</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Trailing P/E</strong></td><td class="mono">31.6x</td><td class="mono">~19x（2022）</td><td class="mono">~28x</td><td class="mono">~37x（2024）</td><td><span class="badge badge-yellow">~55-60th百分位（歷史中等偏高）</span></td></tr>
+          <tr><td><strong>Forward P/E（FY2026E）</strong></td><td class="mono">28.9x</td><td class="mono">~20x（2022）</td><td class="mono">~25x</td><td class="mono">~33x（2024）</td><td><span class="badge badge-yellow">~55-60th百分位</span></td></tr>
+          <tr><td><strong>EV/EBITDA（TTM）</strong></td><td class="mono">23.6x</td><td class="mono">~13x（2022）</td><td class="mono">~20x</td><td class="mono">~29x（2024）</td><td><span class="badge badge-yellow">~55th百分位</span></td></tr>
+          <tr><td><strong>EV/FCF（TTM）</strong></td><td class="mono">~29.2x</td><td class="mono">~19x（2022）</td><td class="mono">~28x</td><td class="mono">~38x（2021）</td><td><span class="badge badge-yellow">~50th百分位（合理）</span></td></tr>
+          <tr><td><strong>FCF Yield</strong></td><td class="mono">~3.4%（FY2026E FCF/市值）</td><td>—</td><td>~3%</td><td>—</td><td><span class="badge badge-green">~50th百分位（合理，低息環境下較有吸引力）</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><span class="em">解讀：</span></p>
+    <ol style="padding-left:20px;line-height:2">
+      <li><strong>當前估值情緒：歷史中等偏高（50-60th百分位）。</strong>Apple並非「歷史便宜」——Forward P/E 28.9x相比5年中位的25x溢價約16%。這個溢價的合理性需要從兩個角度評估：①Q1 FY2026的超強業績（iPhone +23%、EPS +19%）使市場願意給予短期溢價；②Services占比持續提升（26%→趨向35%）使Apple的業務品質比5年前更好，應該享有更高的中位估值。</li>
+      <li><strong>從$288高點回落至$249（-14%）：</strong>回調主因包括Apple Intelligence落後的市場失望、DOJ搜尋預設裁決的不確定性，以及Q2指引暗示的毛利壓力。這次回調使估值從「過熱」（33x Forward P/E高峰）回落至「合理偏高」的範疇。</li>
+      <li><strong>EV/FCF ~29x是最重要的長期估值錨點：</strong>對比美國10年期國債收益率~4.3%，EV/FCF 29x隱含的FCF Yield ~3.4%，比無風險利率高出約90bps——這個利差對於Apple級別的護城河來說偏低，說明估值在利率不下降的情況下很難大幅擴張。</li>
+    </ol>
+
+    <hr>
+
+    <div class="sub-title">7.2｜PEG診斷</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Forward P/E（FY2026E）</strong></td><td class="mono">28.9x</td><td>—</td><td>基於FY2026E EPS共識$8.63（n=48位分析師）</td></tr>
+          <tr><td><strong>GAAP EPS CAGR（3年，FY25→FY28）</strong></td><td class="mono">~13.2%</td><td>—</td><td>引自§2（$7.46→$10.8E），含回購效果</td></tr>
+          <tr><td><strong>PEG（GAAP，3年）</strong></td><td class="mono"><strong>2.19</strong></td><td>&lt;1便宜 / 1~2合理 / &gt;2貴</td><td><span class="badge badge-red">偏貴</span>——按成長速度衡量，Apple是本系列估值最高的標的</td></tr>
+          <tr><td><strong>PEG（StockAnalysis）</strong></td><td class="mono"><strong>2.76</strong></td><td>同上</td><td><span class="badge badge-red">明顯偏貴</span></td></tr>
+          <tr><td><strong>「護城河品質調整後PEG」</strong></td><td class="mono">~1.5-1.8（若成長率用15-16%）</td><td>同上</td><td><span class="badge badge-yellow">合理</span>——若使用FY2026的+15.7%成長率，PEG更合理；但這是強週期性的「iPhone超級週期EPS」</td></tr>
+          <tr><td><strong>PEG（5年，含Runway遞減）</strong></td><td class="mono">~2.0-2.5</td><td>同上</td><td><span class="badge badge-red">偏高</span>——長期EPS成長約10%，Forward P/E 29x = 高護城河溢價定價</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="verdict verdict-yellow">
+      📊 <strong>Price-to-Growth矩陣落點：護城河溢價定價（非成長型便宜股）</strong><br>
+      Apple的PEG 2.19-2.76是本系列最高——這不是「市場錯誤定價」，而是「市場在為護城河品質付費，而非為成長速度付費」。Apple更像「Hermès手袋」而非「成長型科技股」：你不會用DCF或PEG來評估Hermès的公允價值，因為其護城河本身就創造了稀缺溢價。同理，Apple的定價邏輯更接近：「全球最深的消費電子生態系，值多少倍FCF？」而非「這家公司的EPS能以多快速度成長？」。但這個護城河溢價邏輯有其邊界——若Services受監管重創，這個護城河溢價將面臨重估。
+    </div>
+
+    <hr>
+
+    <div class="sub-title">7.3｜Reverse DCF：當前股價隱含了什麼？</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>參數</th><th>數值</th><th>來源</th></tr></thead>
+        <tbody>
+          <tr><td>當前市值</td><td class="mono">~$3.67T USD</td><td>Robinhood/Investing.com（2026-03-21）</td></tr>
+          <tr><td>基期FCF（TTM）</td><td class="mono">~$113B USD</td><td>FY2025 FCF $95.5B + Q1 FY2026 OCF $53.9B（換算）</td></tr>
+          <tr><td>WACC</td><td class="mono">8.5%</td><td>10Y UST 4.3% + Beta 1.12 × ERP 3.7% = 8.4%，取8.5%</td></tr>
+          <tr><td>永續成長率</td><td class="mono">3.0%</td><td>成熟消費電子+Services組合，保守設定</td></tr>
+          <tr><td>預測期</td><td class="mono">10年</td><td>標準設定</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:12px"><span class="em">反推隱含FCF CAGR：</span></p>
+    <div class="verdict verdict-blue">
+      使DCF現值 ≈ $3.67T，所需前10年FCF CAGR ≈ <strong>9–11%</strong><br>
+      計算驗證：基期FCF $113B，以10%成長10年 → FY2036 FCF $293B，終值$5.3T，折現後~$3.7T市值。
+    </div>
+
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>比較基準</th><th>數值</th><th>隱含CAGR相對位置</th></tr></thead>
+        <tbody>
+          <tr><td>分析師共識FCF成長（FY25-FY27，基於Revenue+Margin）</td><td class="mono">~12-14%（Services提升Margin）</td><td><span class="badge badge-yellow">隱含CAGR 9-11%輕微低於共識，安全邊際有限</span></td></tr>
+          <tr><td>過去5年FCF CAGR（FY2020-FY2025）</td><td class="mono">~8-9%（含FY2023 iPhone低潮）</td><td>歷史FCF CAGR與隱含要求接近，安全邊際不充裕</td></tr>
+          <tr><td>Services從$80B→$120B的成長貢獻</td><td class="mono">Services成長對FCF的槓桿效應（高毛利）</td><td>Services加速是能讓隱含CAGR更容易達標的關鍵</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="verdict verdict-yellow">
+      🟡 <strong>隱含預期判斷：合理（市場要求的FCF CAGR 9-11%接近Apple的歷史FCF成長，定價公允但無顯著折扣）</strong><br>
+      換言之：Apple當前股價已正確反映了其業務品質和成長預期，既沒有被嚴重低估（不存在「安全邊際」讓你放心大膽買入），也沒有被嚴重高估（不存在「泡沫」需要緊急迴避）。這是一個「公允定價的全球最優質消費生態系資產」的合理結論。催化劑（Apple Intelligence訂閱、Google協議續簽）或風險（Google付款被終止）才能決定下一步的方向。
+    </div>
+
+    <hr>
+
+    <div class="sub-title">7.4｜同業估值比較</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3年）</th></tr></thead>
+        <tbody>
+          <tr style="background:var(--row-alt)"><td><strong>Apple（AAPL）</strong></td><td class="mono">$3.67T</td><td class="mono">28.9x</td><td class="mono">23.6x</td><td class="mono"><strong>2.19–2.76</strong></td><td class="mono">23%（穩定）</td><td class="mono">~13%（GAAP）</td></tr>
+          <tr><td>Microsoft（MSFT）</td><td class="mono">$2.89T</td><td class="mono">21.8x</td><td class="mono">16.4x</td><td class="mono">1.20–1.61</td><td class="mono">26%↓</td><td class="mono">~18%</td></tr>
+          <tr><td>Meta（META）</td><td class="mono">$1.53T</td><td class="mono">19.9x</td><td class="mono">15.3x</td><td class="mono">0.85–0.91</td><td class="mono">26%</td><td class="mono">~23%</td></tr>
+          <tr><td>Alphabet（GOOGL）</td><td class="mono">$3.64T</td><td class="mono">26.5x</td><td class="mono">24.0x</td><td class="mono">1.70–1.89</td><td class="mono">18%↓</td><td class="mono">~14%</td></tr>
+          <tr><td>Amazon（AMZN）</td><td class="mono">$2.24T</td><td class="mono">26.3x</td><td class="mono">15.9x</td><td class="mono">1.30–1.49</td><td class="mono">1.6%（Capex）</td><td class="mono">~20%</td></tr>
+          <tr><td>NVDA</td><td class="mono">$4.34T</td><td class="mono">21.5x</td><td class="mono">32x</td><td class="mono">0.60–0.62</td><td class="mono">~45%</td><td class="mono">~34%</td></tr>
+          <tr><td>消費電子/科技行業中位數</td><td>—</td><td class="mono">~25-28x</td><td class="mono">~20x</td><td class="mono">~1.5</td><td class="mono">~20%</td><td class="mono">~15%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p><span class="em">同業溢折價邏輯：</span></p>
+    <ol style="padding-left:20px;line-height:2">
+      <li><strong>AAPL vs GOOGL：</strong>幾乎相同的市值（$3.67T vs $3.64T），但Apple的Forward P/E（28.9x）略高於GOOGL（26.5x），而EPS CAGR（13%）遠低於GOOGL（14%）。從PEG角度（2.19 vs 1.70-1.89），Apple比GOOGL貴約15-25%。唯一為這個溢價辯護的論點：Apple的FCF Margin更穩定（23% vs 18%且在下降），且EV/FCF更合理（29x vs 50x），說明Apple在FCF質量上仍優於GOOGL。</li>
+      <li><strong>AAPL在Mag 7中是最高PEG的標的，同時擁有最低EPS CAGR。</strong>這個組合只有一個解釋：市場給Apple的是「護城河品質溢價」，而非「成長溢價」。這是合理的，但需要監控Services是否遭受監管實質性打擊——一旦護城河品質被質疑，溢價將快速消失。</li>
+      <li><strong>若估值向行業中位數回歸：</strong>Forward P/E從28.9x降至25x，股票跌幅約13%——說明Apple的估值沒有「顯著上漲空間」，但也沒有「危機性下跌風險」（除非Google付款被終止）。</li>
+    </ol>
+
+    <hr>
+
+    <div class="sub-title">7.5｜估值四角驗證與結論</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>工具</th><th>訊號</th><th>核心依據</th></tr></thead>
+        <tbody>
+          <tr><td><strong>歷史分位（7.1）</strong></td><td><span class="badge badge-yellow">🟡 合理偏高（55-60th百分位）</span></td><td>Forward P/E 28.9x高於5年中位25x約16%，Services品質提升支撐部分溢價</td></tr>
+          <tr><td><strong>PEG診斷（7.2）</strong></td><td><span class="badge badge-red">🔴 偏高（PEG 2.19-2.76，全系列最高）</span></td><td>EPS CAGR ~13%，Forward P/E 29x = 按成長速度衡量最貴的標的</td></tr>
+          <tr><td><strong>Reverse DCF（7.3）</strong></td><td><span class="badge badge-yellow">🟡 隱含預期合理（FCF CAGR 9-11%接近歷史）</span></td><td>安全邊際有限，公允定價；Services成長是超越隱含CAGR的關鍵</td></tr>
+          <tr><td><strong>同業相對（7.4）</strong></td><td><span class="badge badge-yellow">🟡 略高於行業（+16%溢價）</span></td><td>PEG全系列最高，護城河溢價有一定合理性但空間有限</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="verdict verdict-yellow">
+      🟡 <strong>當前定價判斷：公允定價——適合長期持有，建倉吸引力低於META/AVGO/NVDA</strong><br>
+      三個黃燈、一個紅燈——Apple的估值訊號最不一致：護城河評分9.5/10（本系列最高），但PEG 2.76（本系列最高），EPS成長最慢（13%）。「最強護城河+最慢成長+最高PEG」的組合說明Apple是一個「優質但不便宜」的標的。最佳定性描述：Apple是「Berkshire Hathaway旗下永久持有的核心資產」——適合長期持有，但不是當前此刻的最優化建倉機會。股票在$220-230（Forward P/E ~26x，歷史中位附近）才提供更好的性價比。<br>
+      <strong>最大的市場分歧點：</strong>「Apple Intelligence Premium訂閱」是否在FY2026年啟動——若啟動且採用率達5%的2.5B裝置（1.25億用戶 × $15/月 = $22.5B/年新Revenue），則當前估值在一年後回頭看是便宜的。若不啟動或採用率低迷，則PEG 2.76+的貴定價將難以維持。
+    </div>
+
+    <p style="margin-top:16px"><span class="em">估值倍數定錨（合理Forward P/E區間：24x～32x）：</span></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>因素</th><th>判斷結果</th><th>對目標P/E的影響</th></tr></thead>
+        <tbody>
+          <tr><td>① 護城河品質（§3）</td><td>9.5/10（本系列最高）</td><td>相較行業基準（~20x）+8x（最強護城河溢價）</td></tr>
+          <tr><td>② 成長可持續年數（§2.5A）</td><td>≥10年（Services）；5-8年（iPhone）</td><td>+3x（中等可見度）</td></tr>
+          <tr><td>③ 成長品質（§2.5B）</td><td>有機99% / Services定價驅動 / iPhone週期性</td><td>+2x（Services品質高，iPhone週期性扣分）</td></tr>
+          <tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型（AI+裝置+Services三輪強化）</td><td>+3x</td></tr>
+          <tr><td>⑤ FCF質量（§2.5D）</td><td>FCF Margin 23%穩定；Capex極低；EV/FCF合理</td><td>+3x</td></tr>
+          <tr><td>⑥ AI落後風險（Siri vs Gemini/ChatGPT差距）</td><td>Apple Intelligence仍落後，Siri 2.0是關鍵考驗</td><td>-4x to -5x（AI護城河缺口折扣）</td></tr>
+          <tr><td>⑦ Google付款+App Store監管折扣</td><td>$20-24B/年的Google付款風險 + App Store佣金壓縮</td><td>-3x to -4x</td></tr>
+          <tr><td>⑧ EPS成長最慢（13% vs 系列平均20%+）</td><td>PEG 2.76，成長速度是制約高估值的核心</td><td>-2x（成長折扣）</td></tr>
+          <tr style="background:var(--navy);color:#fff"><td><strong>行業基準倍數</strong></td><td><strong>~20x</strong></td><td><strong>調整後合理區間：24x ～ 32x</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:12px"><span class="em">分析師目標價參考：</span>共識平均 $298.75（StockAnalysis，n=26）；中位 $310；高 $350（Wedbush Dan Ives）；低 $200（悲觀）。當前股價$249.80對共識中位的折扣約19%。<br>
+    <strong>是否認同共識中位？</strong>認同$290-310的12-18個月目標，前提是：①Siri 2.0在WWDC 2026（6月）展示超預期；②Services持續+14%以上成長且Google付款問題無重大不利裁決；③iPhone 18週期（秋季）維持換機意願。若上述確認，股票到$290-310有合理路徑（約+16-24%）。</p>
+
+  </div>
+</div>
+
+<!-- §8 投資結論 -->
+<div class="section">
+  <div class="section-header"><span class="section-num">§8</span><h2>投資結論</h2></div>
+  <div class="section-body">
+
+    <div class="sub-title">財報信號與估值銜接</div>
+    <div class="verdict verdict-yellow">
+      Q1 FY2026這份財報讓隱含預期<strong>維持合理，但沒有創造顯著超額安全邊際</strong>：<br>
+      ① iPhone +23%（史上最強）和EPS $2.84（+19%，史上最高）確認了iPhone 17超級週期的高度，且Greater China +38%逆轉了市場對中國業務衰退的悲觀預期；<br>
+      ② Services $30B（+14%）繼續穩健成長，Services佔Revenue比例提升確認了「Apple從硬件公司轉型為軟件/服務公司」的長期敘事；<br>
+      ③ <strong>然而，Q2毛利壓力（記憶體成本+39%指引下緣謹慎）、Siri 2.0仍未亮相、Google付款法律不確定性，使這份強勁財報的邊際效應已被估值消化</strong>（股票在財報後僅小幅上漲，說明市場預期已比較充分）。
+    </div>
+
+    <hr>
+
+    <div class="sub-title">進場 / 觀望 / 迴避判斷</div>
+    <div class="verdict verdict-yellow">
+      📊 <strong>結論：觀望至分批建倉——等待$220-235（Forward P/E ~26x，歷史中位）後才有更好的安全邊際；現價$249.80（Forward P/E 28.9x）可小幅建立基礎倉位</strong><br>
+      Apple是全球最優質的消費電子生態系資產，長期持有的確定性極高。但相比META（PEG 0.91）、AVGO（PEG 0.60）或NVDA（PEG 0.62），Apple的性價比是本系列最低的。在同等資金分配下，其他六家標的的預期回報更高。Apple更適合作為「防禦型核心持倉」——波動較小（Beta 1.12），護城河極深，Buffett長期持有背書——而非「進攻型超額回報」的工具。
+    </div>
+
+    <p><span class="em">① 短期信號（0–12個月）</span><br>
+    Q2 FY2026財報（2026-04-30）和WWDC 2026（六月）是兩大關鍵催化劑。Q2財報：①Revenue是否達到+13-16%指引中點（$109-111B）；②Gross Margin是否符合46.5-47.5%（記憶體成本壓力可控）；③Services是否維持+14%以上。WWDC 2026：Siri 2.0（Google Gemini整合）的展示質量是決定iPhone 18換機週期強度的最重要因素——若Siri 2.0讓觀眾驚艷，整個AI超級週期敘事將得到確認，股票重新測試$280-290。</p>
+
+    <p><span class="em">② 中期成長確信度（1–3年）</span><br>
+    分析師共識Revenue成長+14%（FY2026），+6.7%（FY2027）——這個「高後低」模式反映了iPhone超級週期的典型形態：FY2026受益於iPhone 17/AI Intelligence升級，FY2027在比較基準變高後成長放緩。EPS的「韌性」來自Services（穩定+14%）和回購（-2.5%股數），使每股盈利在Revenue成長放緩時仍能維持10-15%的增速。引用§2.5B：成長品質屬於「Services定價驅動（高品質）+ iPhone週期性量驅動（波動）」，整體成長品質屬中高水準但低於META/AVGO的純有機成長。</p>
+
+    <p><span class="em">③ 長期護城河邏輯（3年後）</span><br>
+    3年後持有Apple的理由：Services佔Revenue比例從26%→35%（未來5年），使Apple的整體Gross Margin持續從48%向52%+邁進；ROIC保持40-50%；安裝基礎2.5B→3B+；Apple Intelligence Premium訂閱（若成功）在FY2027後成為全新的複利成長引擎（2.5B裝置的潛在訂閱渠道比任何其他公司都大）。<strong>Apple是「慢複利機器」——每年8-13%的EPS成長，護城河極深，回購持續，20年後回頭看，現在任何時候買入都是正確的。但在本系列性價比比較下，不是「此刻最優先配置」的標的。</strong></p>
+
+    <hr>
+
+    <div class="sub-title">條件式進場判斷</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>條件類型</th><th>具體內容</th></tr></thead>
+        <tbody>
+          <tr><td><strong>估值條件</strong></td><td>Forward P/E 26x以下（引用§7.5合理區間下緣），對應FY2026E EPS $8.63，即股價在$224以下——是歷史中位定價（加入護城河品質後合理）。當前$249.80（Forward P/E 28.9x）可小幅建立基礎倉位（10%計劃倉位）；$230以下建立完整倉位；$215以下加碼。</td></tr>
+          <tr><td><strong>基本面條件</strong></td><td>需確認：①WWDC 2026 Siri 2.0展示超預期（定性判斷，觀眾反應和科技媒體評價）；②Services Q2 FY2026維持+14%以上（確認非iPhone週期的穩定成長）；③Q2毛利不低於指引下緣（46.5%），說明記憶體成本壓力在預期之內。</td></tr>
+          <tr><td><strong>事件觸發條件</strong></td><td>① Apple Intelligence Premium訂閱宣布（WWDC 2026或之後，每$10-15/月的訂閱計劃是最重要的上行催化劑）；② Google DOJ裁決最終溫和（Apple付款模式調整而非全面終止，降低Services最大風險）；③iPhone Fold宣布（預計2026年末，若成功復製iPhone原有的「形態革命」效應，是新的超級週期觸發器）；④Warren Buffett繼續持有Apple（每次Berkshire 13F披露都是對護城河的隱性背書）。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr>
+
+    <div class="sub-title">下行風險量化（引用§2.5E）</div>
+    <div class="verdict verdict-yellow">
+      ⚠️ <strong>持有此標的前，須確認能承受以下幅度的回撤：</strong><br>
+      若3年後成長率降至8%（iPhone週期放緩，Services受監管打擊）：估值壓縮 <strong>-17% to -30%</strong><br>
+      若3年後成長率降至5%（Google付款終止 + App Store佣金下調同時發生）：估值壓縮 <strong>-38% to -48%</strong><br>
+      最大近期尾部風險（DOJ裁決強制終止Google付款 + AI Intelligence採用率低迷同時發生）：短期跌幅估計 <strong>-20% to -30%</strong><br>
+      最大保護因素：2.5B安裝基礎提供Services底部收入，即使iPhone成長停滯，Services仍每年自動貢獻$10-14B的增量Operating Income
+    </div>
+
+    <hr>
+
+    <div class="sub-title">最關鍵監測指標（最多兩個）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>監測指標</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><strong>Services Revenue YoY成長率 + Google搜尋預設付款法律進展</strong></td><td><span class="badge badge-blue">🔵 長期成長領先信號（必填）</span></td><td>若Services成長跌破8%（目前+14%），同時Google付款出現不利裁決（即使是「調整模式」而非「全面終止」），代表Apple最重要的長期成長引擎和最大的單點收入風險同時惡化——這是需要立即重評的觸發點。反之，若Services維持+14%以上且Google付款在更溫和的條件下維持，是加碼信號。</td></tr>
+          <tr><td>2</td><td><strong>Siri 2.0（Apple Intelligence）的用戶採用率 + WWDC 2026展示質量</strong></td><td>短期催化劑/AI競爭力信號</td><td>若WWDC 2026 Siri 2.0的展示讓科技媒體/用戶感到「終於追上ChatGPT水準」（定性判斷），是iPhone 18超級週期的前置信號，應考慮增加配置至完整倉位。若展示繼續讓人失望（第三年AI功能「令人期待但未達標」），說明Apple AI能力差距可能是結構性的，護城河溢價面臨重評，應維持觀望姿態。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div style="background:var(--navy);color:#475569;padding:16px 24px;font-size:11px;font-family:'IBM Plex Mono',monospace;line-height:1.8;border-top:3px solid var(--accent)">
+  <strong style="color:#94A3B8">免責聲明</strong><br>
+  資料抓取時間：2026年3月21日 | 最新股價：$249.80 USD（2026-03-21）| 最近財報：Q1 FY2026（2026-01-29公告）| 下季財報：Q2 FY2026（2026-04-30估）<br>
+  Apple是唯一Capex實際下降的Mag 7公司（2026-03-19 TipRanks確認）。最大非模型化風險：①DOJ裁決強制終止Google搜尋預設付款（$20-24B/年服務收入風險，約EPS -12-19%）；②Siri/Apple Intelligence繼續落後ChatGPT/Gemini，iPhone升級週期提前結束；③中美關係惡化影響中國市場（+38% YoY的Greater China是現在的成長亮點，也是地緣政治最脆弱點）。Apple的核心護城河（消費電子生態系轉換成本）在本系列八標的中評分最高（9.5/10），Warren Buffett的長期持有是對護城河的隱性信任背書。當前PEG 2.76是全系列最高，提醒投資者Apple是「高品質護城河資產」而非「高成長股」。<br>
+  資料來源：Apple Q1 FY2026 Earnings Release（SEC 8-K）、StockAnalysis.com、Morningstar（Wide Moat）、TIKR.com、BeingShivam、FinancialContent（PredictStreet）、CNBC、Quartr、Motley Fool Earnings Transcript、Robinhood、Investing.com
+</div>
+
+</div>
+</body>
+</html>
