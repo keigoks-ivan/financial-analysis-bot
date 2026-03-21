@@ -282,7 +282,7 @@ def _gauge_color_hex(score: float, max_score: float = 80.0) -> str:
 # ── HTML 骨架 ────────────────────────────────────────────────────────────────
 
 def _header(active: str = "") -> str:
-    links = [("首頁", "/"), ("播客", "/podcast.xml")]
+    links = [("首頁", "/")]
     nav = " ".join(
         f'<a href="{url}" class="{"active" if active == lbl else ""}">{lbl}</a>'
         for lbl, url in links
@@ -301,7 +301,6 @@ def _footer() -> str:
 <footer>
   <div class="container">
     &copy; {year} InvestMQuest Research &middot;
-    <a href="/podcast.xml">Podcast RSS</a> &middot;
     由 AI 自動生成，僅供參考
   </div>
 </footer>"""
