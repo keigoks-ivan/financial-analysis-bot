@@ -702,11 +702,13 @@ def fetch_notion_reports() -> list[dict]:
     pages_10q = _query_all_pages(NOTION_10Q_DB_ID)
     print(f"  [DEBUG] 10-Q 資料庫讀取到 {len(pages_10q)} 筆頁面")
     for page in pages_10q:
+        filed = _get_date_value(page, "Date") or page.get("created_time", "")[:10]
         reports.append({
             "name": _get_title_text(page, "Name"),
             "ticker": _get_rich_text(page, "Ticker"),
             "form": "10-Q",
             "date": _get_rich_text(page, "財報年度"),
+            "filed_date": filed,
             "page_id": page["id"],
         })
 
@@ -716,6 +718,7 @@ def fetch_notion_reports() -> list[dict]:
     for page in pages_10k:
         name = _get_title_text(page, "Name")
         ticker = name.split()[0] if name else ""
+        filed = _get_date_value(page, "Date") or page.get("created_time", "")[:10]
         # 嘗試從 Notion 欄位讀取護城河五維度分數
         moat_sub = {}
         for key in MOAT_5_DIMS:
@@ -729,11 +732,13 @@ def fetch_notion_reports() -> list[dict]:
             "ticker": ticker,
             "form": "10-K",
             "date": _get_rich_text(page, "財報年度"),
+            "filed_date": filed,
             "page_id": page["id"],
             "moat_sub_scores": moat_sub,
         })
 
-    reports.sort(key=lambda r: r.get("date", ""), reverse=True)
+    # 依 filed_date 降冪排序（最新在最上面）
+    reports.sort(key=lambda r: r.get("filed_date", ""), reverse=True)
     return reports
 
 
@@ -776,6 +781,7 @@ def generate_index(reports: list[dict]) -> None:
         ticker = html_lib.escape(r.get("ticker", ""))
         form = r.get("form", "")
         date = html_lib.escape(r.get("date", ""))
+        filed_date = html_lib.escape(r.get("filed_date", ""))
         page_id = r.get("page_id", "")
         slug = page_id.replace("-", "")
         tag_cls = "tag-10k" if form == "10-K" else "tag-10q"
@@ -795,6 +801,7 @@ def generate_index(reports: list[dict]) -> None:
   <td><strong>{ticker}</strong></td>
   <td><span class="tag {tag_cls}">{html_lib.escape(form)}</span></td>
   <td>{date}</td>
+  <td>{filed_date}</td>
   <td>{moat_cell}</td>
   <td><a href="/report/{slug}.html">查看 &rarr;</a></td>
 </tr>"""
@@ -818,13 +825,14 @@ def generate_index(reports: list[dict]) -> None:
           <tr>
             <th>公司</th>
             <th>類型</th>
-            <th>日期</th>
+            <th>財報年度</th>
+            <th>發布日期</th>
             <th>護城河等級</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {rows or '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">尚無報告</td></tr>'}
+          {rows or '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">尚無報告</td></tr>'}
         </tbody>
       </table>
     </div>
