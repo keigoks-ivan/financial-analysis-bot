@@ -479,6 +479,30 @@ def _parse_10q_sections(text: str) -> dict:
     return result
 
 
+def _parse_moat_from_text(text: str) -> dict:
+    """
+    從 10-K 分析文字中解析護城河五維度評分。
+    支援格式：
+      - 品牌力（8/10分）、品牌力：8/10
+      - 品牌力（2/2分）（滿分 2 分制，按比例換算為 10 分制）
+    回傳 {brand_power: float, ...}，找不到的維度不包含。
+    """
+    result = {}
+    for key, cn_label in MOAT_5_DIMS.items():
+        # 匹配「品牌力（8/10分）」或「品牌力：8/10」等
+        pattern = rf"{re.escape(cn_label)}[（(：:]\s*(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)\s*分?[）)]?"
+        m = re.search(pattern, text)
+        if m:
+            score = float(m.group(1))
+            max_score = float(m.group(2))
+            # 統一換算為 10 分制
+            if max_score > 0:
+                result[key] = round(score / max_score * 10, 1)
+            else:
+                result[key] = 0.0
+    return result
+
+
 def _extract_10q_financials(content: str) -> list[dict]:
     """
     從 10-Q 數字變化段落提取財務指標，含變動方向偵測。
@@ -632,6 +656,13 @@ def _get_date_value(page: dict, prop_name: str) -> str:
     return ""
 
 
+def _get_number_value(page: dict, prop_name: str) -> float | None:
+    """讀取 Notion 頁面的 number 屬性，回傳 float 或 None。"""
+    prop = page.get("properties", {}).get(prop_name, {})
+    val = prop.get("number")
+    return float(val) if val is not None else None
+
+
 def _query_all_pages(db_id: str) -> list[dict]:
     """分頁查詢 Notion 資料庫的所有頁面。"""
     pages: list[dict] = []
@@ -685,12 +716,21 @@ def fetch_notion_reports() -> list[dict]:
     for page in pages_10k:
         name = _get_title_text(page, "Name")
         ticker = name.split()[0] if name else ""
+        # 嘗試從 Notion 欄位讀取護城河五維度分數
+        moat_sub = {}
+        for key in MOAT_5_DIMS:
+            val = _get_number_value(page, key)
+            if val is not None:
+                moat_sub[key] = val
+        if moat_sub:
+            print(f"  [DEBUG] {ticker} Notion 護城河欄位: {moat_sub}")
         reports.append({
             "name": name,
             "ticker": ticker,
             "form": "10-K",
             "date": _get_rich_text(page, "財報年度"),
             "page_id": page["id"],
+            "moat_sub_scores": moat_sub,
         })
 
     reports.sort(key=lambda r: r.get("date", ""), reverse=True)
@@ -1497,6 +1537,7 @@ def build_site() -> None:
     companies_data: dict = _load_json(KB_DIR / "companies.json")
     industries_data: dict = _load_json(KB_DIR / "industries.json")
     moat_scores: dict = _load_json(KB_DIR / "moat_scores.json")
+    print(f"  [DEBUG] moat_scores.json 載入結果: {len(moat_scores)} 家公司, keys={list(moat_scores.keys())[:10]}")
 
     _ensure_404_and_cname()
 
@@ -1508,7 +1549,12 @@ def build_site() -> None:
     # 為每筆報告附加護城河等級（僅 10-K）
     for r in notion_reports:
         ticker = r.get("ticker", "")
-        if r.get("form") == "10-K" and ticker in moat_scores:
+        # 優先使用 Notion 欄位讀取的護城河分數
+        moat_sub = r.get("moat_sub_scores", {})
+        if r.get("form") == "10-K" and moat_sub:
+            avg = sum(moat_sub.values()) / len(moat_sub)
+            r["moat_avg"] = avg
+        elif r.get("form") == "10-K" and ticker in moat_scores:
             co_moat = moat_scores[ticker]
             if co_moat:
                 latest_yr = sorted(co_moat.keys())[-1]
@@ -1532,12 +1578,20 @@ def build_site() -> None:
             continue
 
         if form == "10-K":
-            # 取得最新年度護城河子維度
-            co_moat = moat_scores.get(ticker, {})
-            moat_sub = {}
-            if co_moat:
-                latest_yr = sorted(co_moat.keys())[-1]
-                moat_sub = co_moat[latest_yr]
+            # 1) 優先：Notion 欄位直接讀取的護城河分數
+            moat_sub = report.get("moat_sub_scores", {})
+            # 2) 備援：從 knowledge_base/moat_scores.json
+            if not moat_sub:
+                co_moat = moat_scores.get(ticker, {})
+                if co_moat:
+                    latest_yr = sorted(co_moat.keys())[-1]
+                    moat_sub = co_moat[latest_yr]
+            # 3) 最終備援：從分析文字解析（品牌力（8/10分）格式）
+            if not moat_sub:
+                moat_sub = _parse_moat_from_text(content)
+                if moat_sub:
+                    print(f"  [DEBUG] {ticker} 從分析文字解析護城河: {moat_sub}")
+            print(f"  [DEBUG] {ticker} 10-K moat_sub_scores = {moat_sub}")
             generate_report_page_10k(report, moat_sub, content)
 
         elif form == "10-Q":
