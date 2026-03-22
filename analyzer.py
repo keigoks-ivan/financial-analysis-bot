@@ -5,30 +5,37 @@ analyzer.py — 財報自動化分析主程式
   1. 從 Google Sheets 讀取 Watchlist (A欄 Ticker / C欄 CIK)
   2. 查詢 SEC EDGAR API，找過去 48 小時內發布的 10-Q / 10-K
   3. 抓取申報全文
-  4. 呼叫 Claude API (claude-sonnet-4-0) 串流分析
+  4. 呼叫 AI API 分析：
+     - 10-Q：預設 Gemini 2.5 Flash，若有 transcript 則用 Claude Sonnet 4.6
+     - 10-K：Claude Opus 4.6
   5. 寫入 Notion 兩個資料庫
 """
 
 import os
 import re
 import json
+import glob
 import datetime
 import time
 import requests
 import anthropic
+import google.generativeai as genai
 from notion_client import Client as NotionClient
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
 # ── 環境變數 ────────────────────────────────────────────────────────────────
 ANTHROPIC_API_KEY  = os.environ.get("ANTHROPIC_API_KEY")
+GEMINI_API_KEY     = os.environ.get("GEMINI_API_KEY")
 NOTION_TOKEN       = os.environ.get("NOTION_TOKEN")
 NOTION_10Q_DB_ID   = os.environ.get("NOTION_10Q_DB_ID")
 NOTION_10K_DB_ID   = os.environ.get("NOTION_10K_DB_ID")
 GOOGLE_SHEETS_ID   = os.environ.get("GOOGLE_SHEETS_ID")
 
-# claude-sonnet-4-0 = claude-sonnet-4-20250514（使用者指定）
-MODEL = "claude-sonnet-4-0"
+# ── 模型設定 ────────────────────────────────────────────────────────────────
+MODEL_10K          = "claude-opus-4-0"          # 10-K 年報用 Claude Opus 4.6
+MODEL_10Q_CLAUDE   = "claude-sonnet-4-0"        # 10-Q 有 transcript 時用 Claude Sonnet 4.6
+MODEL_GEMINI       = "gemini-2.5-flash"         # 10-Q 預設用 Gemini 2.5 Flash
 
 # SEC EDGAR 必填 User-Agent
 EDGAR_HEADERS = {
@@ -78,6 +85,9 @@ def retry(max_retries: int = 3, delay: int = 5):
 # ── 客戶端初始化 ─────────────────────────────────────────────────────────────
 anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 notion           = NotionClient(auth=NOTION_TOKEN)
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 
 # ── Google Sheets ────────────────────────────────────────────────────────────
@@ -236,18 +246,16 @@ def already_analyzed(ticker: str, filing_date: str, form: str) -> bool:
         return False
 
 
-# ── Claude 分析 ──────────────────────────────────────────────────────────────
+# ── AI 分析 ───────────────────────────────────────────────────────────────────
 
 @retry()
-def analyze_with_claude(system_prompt: str, filing_text: str) -> str:
-    """
-    使用串流呼叫 Claude API 進行財報分析。
-    """
+def analyze_with_claude(system_prompt: str, filing_text: str, model: str = MODEL_10Q_CLAUDE) -> str:
+    """使用串流呼叫 Claude API 進行財報分析。"""
     result_parts = []
 
     with anthropic_client.messages.stream(
-        model=MODEL,
-        max_tokens=4096,
+        model=model,
+        max_tokens=16384,
         messages=[
             {
                 "role": "user",
@@ -261,6 +269,29 @@ def analyze_with_claude(system_prompt: str, filing_text: str) -> str:
 
     print()  # 換行
     return "".join(result_parts)
+
+
+@retry()
+def analyze_with_gemini(system_prompt: str, filing_text: str) -> str:
+    """使用 Gemini 2.5 Flash 進行財報分析。"""
+    model = genai.GenerativeModel(MODEL_GEMINI)
+    prompt = f"{system_prompt}\n\n---\n\n{filing_text}"
+    response = model.generate_content(prompt)
+    text = response.text
+    print(text)
+    return text
+
+
+def _find_transcript(ticker: str) -> str | None:
+    """檢查 transcripts/ 資料夾是否有對應 ticker 的 transcript 檔案。"""
+    pattern = os.path.join("transcripts", f"{ticker}_*.txt")
+    matches = glob.glob(pattern)
+    if not matches:
+        return None
+    # 取最新的檔案
+    matches.sort(reverse=True)
+    with open(matches[0], "r", encoding="utf-8") as f:
+        return f.read()
 
 
 # ── Notion 寫入 ──────────────────────────────────────────────────────────────
@@ -404,11 +435,19 @@ def main() -> None:
 
             try:
                 if form == "10-Q":
-                    analysis = analyze_with_claude(PROMPT_10Q, text)
+                    transcript = _find_transcript(ticker)
+                    if transcript:
+                        print(f"  [Claude Sonnet] {ticker} 10-Q 分析中（含Transcript）...")
+                        combined = f"{text}\n\n---\n\nEarnings Call Transcript:\n{transcript}"
+                        analysis = analyze_with_claude(PROMPT_10Q, combined, model=MODEL_10Q_CLAUDE)
+                    else:
+                        print(f"  [Gemini 2.5 Flash] {ticker} 10-Q 分析中...")
+                        analysis = analyze_with_gemini(PROMPT_10Q, text)
                     write_to_notion_10q(ticker, filing_date, analysis)
 
                 elif form == "10-K":
-                    analysis   = analyze_with_claude(PROMPT_10K, text)
+                    print(f"  [Claude Opus] {ticker} 10-K 分析中...")
+                    analysis   = analyze_with_claude(PROMPT_10K, text, model=MODEL_10K)
                     moat_data  = kb.extract_moat_scores(analysis, ticker)
                     avg_moat   = (
                         sum(moat_data.values()) / len(moat_data)
