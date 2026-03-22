@@ -16,6 +16,7 @@ import json
 import datetime
 import html as html_lib
 import requests
+import markdown as md_lib
 from pathlib import Path
 
 # ── 路徑常數 ─────────────────────────────────────────────────────────────────
@@ -136,6 +137,9 @@ tbody tr:hover td{background:#f3f4f6}
 .dim-bar .fill{height:100%;border-radius:3px}
 .dim-text{font-size:.82rem;color:#4b5563;line-height:1.55;
           display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.dim-text h3{font-size:.88rem;font-weight:600;color:var(--text);margin:.6rem 0 .25rem}
+.dim-text p{margin-bottom:.4rem}.dim-text strong{color:var(--text)}
+.dim-text ul,.dim-text ol{margin:0 0 .4rem 1.1rem}
 
 /* Thesis */
 .thesis{background:var(--brand-light);border-left:4px solid var(--brand);
@@ -192,7 +196,11 @@ tbody tr:hover td{background:#f3f4f6}
                padding-bottom:.4rem;border-bottom:2px solid var(--brand)}
 
 /* Content */
-.analysis{white-space:pre-line;font-size:.88rem;line-height:1.75;color:#374151}
+.analysis{font-size:.88rem;line-height:1.75;color:#374151}
+.analysis h1,.analysis h2,.analysis h3{color:var(--text);margin:1rem 0 .4rem;line-height:1.3}
+.analysis h1{font-size:1.15rem}.analysis h2{font-size:1.05rem}.analysis h3{font-size:.95rem}
+.analysis p{margin-bottom:.6rem}.analysis ul,.analysis ol{margin:0 0 .6rem 1.2rem}
+.analysis strong{color:var(--text)}
 
 /* Financials Card */
 .fin-section{margin-bottom:1.25rem}
@@ -337,6 +345,15 @@ def _base_page(title: str, body: str, extra_head: str = "") -> str:
 </script>
 </body>
 </html>"""
+
+
+# ── Markdown → HTML 轉換 ────────────────────────────────────────────────────
+
+def _md(text: str) -> str:
+    """將 Notion 分析文本中的 Markdown 語法轉為 HTML。"""
+    if not text:
+        return ""
+    return md_lib.markdown(text, extensions=["tables"])
 
 
 # ── 分析文本解析 ─────────────────────────────────────────────────────────────
@@ -1019,8 +1036,8 @@ def generate_report_page_10k(
     if radar_html or risks_html:
         radar_risks = f'<div class="radar-risks">{radar_html}{risks_html}</div>'
 
-    # ── 完整分析（可展開）
-    full_text = html_lib.escape(content)
+    # ── 完整分析（可展開）— Markdown → HTML
+    full_text = _md(content)
 
     body = f"""
 <div class="page-hdr">
@@ -1179,7 +1196,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div class="dim-hdr">
     <span class="dim-name">一、數字變化<span class="dim-en">Financial Changes</span></span>
   </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{html_lib.escape(parsed["sections"][1]["content"])}</div>
+  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["sections"][1]["content"])}</div>
 </div>"""
 
     # ── 2. 敘事變化卡片 + 前瞻指引
@@ -1195,7 +1212,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div style="background:var(--brand-light);border:1px solid #93c5fd;border-radius:6px;
               padding:.75rem 1rem;margin-top:.6rem">
     <div style="font-size:.78rem;font-weight:600;color:var(--brand);margin-bottom:.25rem">前瞻指引 Forward Guidance</div>
-    <div style="font-size:.82rem;line-height:1.55;color:#1e40af">{html_lib.escape(guidance_text)}</div>
+    <div style="font-size:.82rem;line-height:1.55;color:#1e40af">{_md(guidance_text)}</div>
   </div>"""
 
         remaining_lines = []
@@ -1213,7 +1230,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div class="dim-hdr">
     <span class="dim-name">二、敘事變化<span class="dim-en">Narrative Changes</span></span>
   </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{html_lib.escape(remaining_text)}</div>
+  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(remaining_text)}</div>
   {guidance_inset}
 </div>"""
 
@@ -1246,7 +1263,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div class="dim-hdr">
     <span class="dim-name">三、資本配置<span class="dim-en">Capital Allocation</span></span>
   </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{html_lib.escape(parsed["sections"][3]["content"])}</div>
+  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["sections"][3]["content"])}</div>
 </div>"""
 
     # ── 4. 護城河信號卡片（強化=綠色 / 弱化=紅色）
@@ -1261,7 +1278,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
                 prefix = prefix_map.get(sig["type"], "")
                 sig_items += f'<span class="signal {cls}">{prefix}{html_lib.escape(sig["text"])}</span>\n'
         elif 4 in parsed["sections"]:
-            sig_items = f'<div class="dim-text" style="-webkit-line-clamp:unset">{html_lib.escape(parsed["sections"][4]["content"])}</div>'
+            sig_items = f'<div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["sections"][4]["content"])}</div>'
 
         moat_card_html = f"""
 <div class="dim-card" style="grid-column:1/-1">
@@ -1271,8 +1288,8 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div style="margin-top:.4rem">{sig_items}</div>
 </div>"""
 
-    # ── 完整分析（可展開）
-    full_text = html_lib.escape(content)
+    # ── 完整分析（可展開）— Markdown → HTML
+    full_text = _md(content)
 
     body = f"""
 <div class="page-hdr" style="background:#fff;padding:2rem 0 1.5rem;border-bottom:1px solid var(--border)">
