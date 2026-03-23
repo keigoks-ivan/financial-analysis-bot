@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DD_META_20260323 — 買側標的研究（深度版）</title>
+<title>DD Report | META | 2026-03-23</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -18,576 +18,519 @@
   --red-bg: #FEE2E2; --red-text: #991B1B;
   --yellow-bg: #FEF9C3; --yellow-text: #92400E;
   --blue-bg: #EFF6FF; --blue-text: #1E40AF;
+  --orange-bg: #FFF0E6; --orange-border: #F97316; --orange-text: #C2410C;
+  --border: #E2E8F0;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Noto Sans TC','Helvetica Neue',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; font-size:15px; }
-.mono { font-family:'IBM Plex Mono',monospace; }
-
-/* Header */
-.header-bar { position:sticky; top:0; z-index:100; background:var(--title-bg); color:#fff; padding:10px 32px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
-.header-bar .ticker { font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600; letter-spacing:1px; }
-.header-bar .meta-info { display:flex; gap:24px; align-items:center; }
-.header-bar .meta-info span { opacity:0.85; }
-.header-bar .mode-badge { background:var(--accent); padding:3px 10px; border-radius:3px; font-weight:500; font-size:12px; letter-spacing:0.5px; }
-
-/* Print button */
-.print-btn { position:fixed; bottom:24px; right:24px; z-index:200; background:var(--title-bg); color:#fff; border:none; padding:12px 20px; cursor:pointer; font-family:'Noto Sans TC',sans-serif; font-size:14px; font-weight:500; transition:all 0.2s; }
-.print-btn:hover { background:var(--accent); }
-
-/* Container */
-.container { max-width:1080px; margin:0 auto; padding:24px 20px 80px; }
-
-/* Section */
-.section { background:var(--card); margin-bottom:20px; overflow:hidden; }
-.section-title { background:var(--title-bg); color:#fff; padding:14px 24px; font-size:16px; font-weight:700; border-left:4px solid var(--accent); letter-spacing:0.5px; }
+body { font-family:'Noto Sans TC','IBM Plex Mono',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; font-size:15px; }
+.header-bar { position:fixed; top:0; left:0; right:0; z-index:100; background:var(--title-bg); color:#fff; padding:10px 30px; display:flex; justify-content:space-between; align-items:center; font-size:13px; font-family:'IBM Plex Mono',monospace; }
+.header-bar span { opacity:0.85; }
+.header-bar .ticker { font-size:16px; font-weight:600; opacity:1; letter-spacing:1px; }
+.container { max-width:1100px; margin:0 auto; padding:70px 24px 60px; }
+.report-title { text-align:center; margin:30px 0 40px; }
+.report-title h1 { font-size:28px; font-weight:700; color:var(--title-bg); margin-bottom:6px; }
+.report-title .subtitle { font-size:14px; color:var(--text-light); font-family:'IBM Plex Mono',monospace; }
+.section { background:var(--card); border-radius:4px; margin-bottom:24px; border:1px solid var(--border); overflow:hidden; }
+.section-header { background:var(--title-bg); color:#fff; padding:14px 24px; font-size:16px; font-weight:700; border-left:4px solid var(--accent); display:flex; align-items:center; gap:10px; }
 .section-body { padding:24px; }
-
-/* Tables */
-table { width:100%; border-collapse:collapse; font-size:14px; margin:12px 0; }
-th { background:var(--title-bg); color:#fff; text-align:left; padding:10px 14px; font-weight:500; font-size:13px; white-space:nowrap; }
-td { padding:9px 14px; border-bottom:1px solid #E2E8F0; }
+.section-body h3 { font-size:15px; font-weight:700; color:var(--title-bg); margin:20px 0 10px; border-bottom:2px solid var(--accent); padding-bottom:4px; }
+.section-body h3:first-child { margin-top:0; }
+.section-body p { margin-bottom:12px; }
+table { width:100%; border-collapse:collapse; margin:12px 0 18px; font-size:13.5px; }
+th { background:var(--title-bg); color:#fff; padding:10px 12px; text-align:left; font-weight:500; white-space:nowrap; }
+td { padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
 tr:nth-child(even) td { background:var(--row-alt); }
-td.mono, th.mono { font-family:'IBM Plex Mono',monospace; }
-
-/* Badges */
-.badge { display:inline-block; padding:2px 10px; border-radius:3px; font-size:12px; font-weight:600; }
+.badge { display:inline-block; padding:2px 10px; border-radius:3px; font-size:12px; font-weight:600; font-family:'IBM Plex Mono',monospace; }
 .badge-green { background:var(--green-bg); color:var(--green-text); }
 .badge-red { background:var(--red-bg); color:var(--red-text); }
 .badge-yellow { background:var(--yellow-bg); color:var(--yellow-text); }
 .badge-blue { background:var(--blue-bg); color:var(--blue-text); }
-
-/* Signal box */
-.signal-box { padding:14px 20px; margin:12px 0; border-left:4px solid; }
-.signal-green { border-color:var(--green-text); background:var(--green-bg); }
-.signal-red { border-color:var(--red-text); background:var(--red-bg); }
-.signal-yellow { border-color:var(--yellow-text); background:var(--yellow-bg); }
-
-/* Prose */
-.prose { margin:10px 0; }
-.prose p { margin-bottom:12px; }
-.prose strong { font-weight:700; }
-.sub-title { font-size:15px; font-weight:700; color:var(--title-bg); margin:18px 0 8px; border-bottom:2px solid var(--accent); display:inline-block; padding-bottom:2px; }
-
-/* Key metrics row */
-.metrics-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; margin:16px 0; }
-.metric-card { background:var(--row-alt); padding:14px 16px; }
-.metric-card .label { font-size:12px; color:var(--text-light); font-weight:500; text-transform:uppercase; letter-spacing:0.5px; }
-.metric-card .value { font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600; color:var(--title-bg); margin-top:4px; }
-.metric-card .change { font-size:12px; margin-top:2px; }
-
+.alert-box { background:var(--orange-bg); border-left:4px solid var(--orange-border); padding:16px 20px; margin:16px 0; border-radius:0 4px 4px 0; }
+.alert-box .alert-title { color:var(--orange-text); font-weight:700; font-size:14px; margin-bottom:6px; }
+.signal-box { padding:12px 18px; border-radius:4px; margin:12px 0; font-weight:500; }
+.signal-green { background:var(--green-bg); color:var(--green-text); }
+.signal-red { background:var(--red-bg); color:var(--red-text); }
+.signal-yellow { background:var(--yellow-bg); color:var(--yellow-text); }
+.mono { font-family:'IBM Plex Mono',monospace; }
+.num { font-family:'IBM Plex Mono',monospace; font-weight:500; }
+strong { font-weight:700; }
+.verdict-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+.verdict-card { padding:16px; border-radius:4px; border:1px solid var(--border); }
+.verdict-card h4 { font-size:13px; color:var(--text-light); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.verdict-card .value { font-size:20px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+.print-btn { position:fixed; bottom:24px; right:24px; background:var(--accent); color:#fff; border:none; padding:12px 20px; border-radius:4px; cursor:pointer; font-size:14px; font-weight:600; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+.print-btn:hover { background:#2563EB; }
 @media print {
   .header-bar, .print-btn { display:none !important; }
-  .section { break-inside:avoid; }
   body { font-size:12px; }
-  .container { padding:0; max-width:100%; }
+  .container { padding:0; }
+  .section { break-inside:avoid; page-break-inside:avoid; }
 }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header-bar">
-  <div style="display:flex;align-items:center;gap:16px;">
-    <span class="ticker">META</span>
-    <span class="mode-badge">🔍 深度版</span>
-  </div>
-  <div class="meta-info">
-    <span>資料抓取：2026-03-23</span>
-    <span>最新股價：<strong class="mono">$593.90</strong>（2026-03-21 收盤）</span>
-    <span>最近財報季：<strong>FY2025 Q4</strong>（2026-01-28 發布）</span>
-  </div>
+  <span class="ticker">META</span>
+  <span>深度版 DD Report</span>
+  <span>資料抓取：2026-03-23 ｜ 最新股價：~$593.66 ｜ 最近財報：FY2025 Q4（2025-12-31）</span>
 </div>
 
-<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
 
 <div class="container">
 
-<!-- KEY METRICS -->
-<div class="metrics-row">
-  <div class="metric-card">
-    <div class="label">市值</div>
-    <div class="value">$1.50T</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">52 週高低</div>
-    <div class="value mono" style="font-size:16px;">$479.80 – $796.25</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">Trailing P/E</div>
-    <div class="value">25.3x</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">Forward P/E (NTM)</div>
-    <div class="value">19.6x</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">EV/EBITDA</div>
-    <div class="value">14.8x</div>
-  </div>
-  <div class="metric-card">
-    <div class="label">FY2025 FCF</div>
-    <div class="value">$43.6B</div>
-  </div>
+<div class="report-title">
+  <h1>Meta Platforms, Inc.（META）</h1>
+  <div class="subtitle">買側深度盡職調查報告 ｜ 深度版 ｜ v4.2.1</div>
+  <div class="subtitle" style="margin-top:4px;">資料抓取時間：2026-03-23 ｜ 最新股價：$593.66 ｜ 最近財報季：FY2025 Q4</div>
 </div>
 
 <!-- §0 -->
 <div class="section">
-  <div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+  <div class="section-header">§0｜序章：第一性原理 × 逆向思考</div>
   <div class="section-body">
-    <div class="sub-title">存在意義</div>
-    <div class="prose">
-      <p>Meta 解決的核心人類痛點是<strong>跨地理、跨語言的社交連結</strong>。全球 35.8 億人每天打開至少一個 Meta 應用（Facebook、Instagram、WhatsApp、Messenger），這不是「提升效率」，而是構建了人類史上最大的即時社交圖譜（social graph）。若 Meta 明天消失，超過 20 億依賴 WhatsApp 作為日常通訊基礎設施的用戶將立即失去聯繫方式——尤其在拉丁美洲、南亞、東南亞，WhatsApp 不是「另一個通訊軟體」，而是電話號碼之外的唯一可靠通訊管道。Instagram 承載了全球數百萬中小企業的獲客渠道，Facebook 仍是許多發展中國家事實上的「網際網路入口」。這種滲透深度讓 Meta 的廣告平台得以觸及地球上幾乎每一個有網路連線的成年人，形成不可替代的廣告觸及網路。</p>
-    </div>
 
-    <div class="sub-title">逆向推演（Munger Inversion）：3 年內虧損 50% 以上的路徑</div>
-    <div class="prose">
-      <p><strong>地緣政治曝險：</strong>Meta 的廣告收入約 47% 來自北美，23% 來自歐洲。歐盟 DMA/DSA 框架持續加壓，2025 年 Meta 已面臨額外的歐盟資料使用限制。最致命的情境是歐盟全面禁止跨 App 資料共享用於廣告定向——這將直接打擊 Meta 廣告 ROAS，可能導致歐洲 ARPU 下降 30–40%。此外，中國 TikTok 禁令的不確定性反而對 Meta 有利，但若 TikTok 在美國解禁並加速商業化，將直接壓縮 Meta 在年輕族群中的廣告份額。</p>
-      <p><strong>技術替代風險：</strong>最大威脅來自 AI 原生搜尋與推薦取代社群媒體的廣告分配角色。若 OpenAI、Google 的 AI 助理成為消費者的主要「發現」介面，品牌可能將廣告預算從 Feed 廣告轉移至 AI 對話式廣告——Meta 在這條價值鏈上沒有原生優勢。時間軸：2–4 年內若 AI 搜尋份額突破 20%，Meta 的 digital ad TAM share 可能開始受壓。不過，Meta 自身正在將 LLM 整合進推薦系統與廣告系統，這是其反制策略。</p>
-      <p><strong>管理層失職：</strong>最可能的資本配置錯誤是 2026 年 $115–135B 的 CapEx 規模。若 AI 基礎設施投資在 2–3 年內未能轉化為可衡量的廣告 ROAS 提升或新營收流（如 AI 代理商業化、WhatsApp 付費 messaging），折舊費用將在 2027–2028 年大幅壓縮利潤率。Reality Labs 雖已縮減（Q4 營收 $955M，年虧損仍超 $17B），但若 Zuckerberg 再次加注 metaverse，將重蹈 2022 年覆轍。Zuckerberg 持有超級投票權（約 60% 表決權），外部股東對資本配置失當缺乏制衡能力。</p>
-    </div>
+    <h3>存在意義</h3>
+    <p>Meta 解決的核心痛點是<strong>人類在物理距離限制下維繫社交連結的需求</strong>。全球 38 億人每日透過 Facebook、Instagram、WhatsApp、Messenger 進行社交互動——從家庭群組通訊到跨國商業交易。若 Meta 明天消失，全球中小企業將失去最具成本效益的數位廣告觸及管道（佔全球數位廣告支出約 21%），開發中國家將失去主要的免費即時通訊基礎設施，而以 Instagram 為核心的創作者經濟將瞬間蒸發。這不是「提升效率」，而是<strong>已嵌入數十億人日常行為的社交基礎設施</strong>。</p>
+
+    <h3>逆向推演（Munger Inversion）</h3>
+    <p><strong>若要讓這筆投資在 3 年內虧損 50% 以上，最可能的路徑是什麼？</strong></p>
+
+    <p><strong>地緣政治曝險</strong>：Meta 的廣告收入高度仰賴北美（約 43%）與歐洲（約 24%）市場。歐盟持續加強的隱私監管（GDPR 執法升級、Digital Markets Act）可能實質限制廣告定向能力。若歐盟對 Meta 祭出結構性救濟措施（如強制拆分 Instagram），市值可能損失 30%+。中國市場已完全禁入，印度市場雖用戶龐大但 ARPU 極低。</p>
+
+    <p><strong>技術替代風險</strong>：最大威脅是<strong>AI 搜尋取代社交媒體廣告</strong>的可能性。若 AI agent 代替用戶瀏覽社交內容並直接完成購物決策（如 OpenAI 的 ChatGPT 搜尋或 Google AI Overview），Meta 的廣告曝光量將被壓縮。時間軸估計 3-5 年，但目前此路徑尚無規模化證據。TikTok 對 Z 世代用戶的持續爭奪是更即時的威脅。</p>
+
+    <p><strong>管理層失職</strong>：Zuckerberg 持有 61% 投票權，公司治理本質上是一人決策。$115-135B 的 2026 年 Capex 指引（較 2025 年的 $72.2B 增長 59-87%）是一場豪賭。若 AI 基礎設施投資未能在 2-3 年內轉化為可量化的廣告效率提升或新收入流，折舊壓力將吞噬利潤。Reality Labs 已累計虧損超 $60B，Metaverse 方向仍未證明商業價值。</p>
+
+    <p><strong>價值陷阱路徑</strong>：最可能的陷阱模式是<strong>隱性資本密集型</strong>。表面上 Meta 仍有強勁的 FCF（FY2025：$46.1B），但 2026 年 Capex 若達到 $125B 中位指引，FCF 將被大幅壓縮。市場低估值（Forward P/E ~20x）可能不是「便宜」，而是已定價未來 FCF 的急劇下降。這是最需要持續監控的陷阱路徑。</p>
+
   </div>
 </div>
 
 <!-- §1 -->
 <div class="section">
-  <div class="section-title">§1｜即時財報情報（FY2025 Q4，2026-01-28 發布）</div>
+  <div class="section-header">§1｜即時財報情報</div>
   <div class="section-body">
-    <div class="sub-title">① 最新一季財報關鍵數字</div>
+
+    <h3>① 最新一季財報關鍵數字（Q4 FY2025，截至 2025-12-31）</h3>
     <table>
       <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
-      <tr><td>Revenue</td><td class="mono">$59.89B</td><td class="mono">$58.4B</td><td><span class="badge badge-green">Beat +2.6%</span></td><td class="mono">+24%</td></tr>
-      <tr><td>EPS（GAAP）</td><td class="mono">$8.88</td><td class="mono">$8.19</td><td><span class="badge badge-green">Beat +8.4%</span></td><td class="mono">+11%</td></tr>
-      <tr><td>FCF</td><td class="mono">$14.1B</td><td class="mono">—</td><td><span class="badge badge-yellow">N/A</span></td><td class="mono">—</td></tr>
-      <tr><td>Gross Margin</td><td class="mono">81.8%</td><td class="mono">—</td><td><span class="badge badge-yellow">持平</span></td><td class="mono">+0.3pp</td></tr>
-      <tr><td>Operating Margin</td><td class="mono">41%</td><td class="mono">—</td><td><span class="badge badge-red">下降</span></td><td class="mono">-7pp（vs Q4'24 48%）</td></tr>
+      <tr><td>Revenue</td><td class="num">$59.89B</td><td class="num">$58.4B</td><td><span class="badge badge-green">Beat +2.6%</span></td><td class="num">+24%</td></tr>
+      <tr><td>EPS（Non-GAAP）</td><td class="num">$8.88</td><td class="num">$8.19</td><td><span class="badge badge-green">Beat +8.4%</span></td><td class="num">+11%</td></tr>
+      <tr><td>FCF（Q4）</td><td class="num">$14.83B</td><td class="num">—</td><td>—</td><td class="num">—</td></tr>
+      <tr><td>Gross Margin</td><td class="num">81.8%</td><td>—</td><td>—</td><td>穩定</td></tr>
+      <tr><td>Operating Margin</td><td class="num">41.4%</td><td>—</td><td>—</td><td class="num">-0.7pp vs FY2024 42.2%</td></tr>
     </table>
-    <p style="font-size:13px;color:var(--text-light);margin-top:4px;">Note：Operating Margin YoY 大幅下降主因 FY2025 Q4 總費用 +40% YoY，包含 AI 基礎設施折舊與法律費用增加。FY2025 全年 Operating Margin 為 41.4%，僅下降 0.7pp。</p>
+    <p>全年數字：FY2025 Revenue $200.97B（+22% YoY），Net Income $60.46B，FCF $46.1B，Capex $72.2B。</p>
 
-    <div class="sub-title">② Earnings Call 語氣解析</div>
-    <div class="prose">
-      <p><strong>管理層基調：樂觀偏激進。</strong>Zuckerberg 用語從前幾季的「efficiency year」明確轉向「Year of Superintelligence」，多次提及「personal superintelligence」願景。與上季相比，語氣明顯更具野心，將 AI 投資定位為公司未來十年的核心策略。</p>
-      <p><strong>Forward Guidance：</strong>Q1 2026 Revenue guidance $53.5–56.5B，中位 $55.0B，隱含 YoY +14–20%，低於 Q4 的 24% 增速，但符合季節性模式。全年 2026 費用指引 $162–169B（vs FY2025 $117.7B），CapEx 指引 $115–135B（vs FY2025 $72.2B，+59–87%）。市場焦點在 CapEx 的規模而非營收，因為管理層明確表態「operating income 將高於 FY2025」，但留給利潤率的空間極窄。</p>
-      <p><strong>刻意強調的主題：</strong>（1）AI agents「正開始真正 work」，反覆提及其商業潛力；（2）AI 翻譯影片已支援 9 語言，每天有數億人觀看；（3）GEM ranking model 的 GPU 量翻倍；（4）Edits app 中近 10% Reels 由 AI 工具創建，環比三倍增長。核心敘事是「AI 已開始貢獻營收增長」。</p>
-      <p><strong>刻意迴避的問題：</strong>（1）Reality Labs 具體止血時間表——僅提及營收下滑因硬體週期，未給出扭虧路線圖；（2）CapEx ROI 量化——分析師追問 $135B 投資的回報預期，管理層僅以「長期機會」回應，未提供任何量化指標；（3）AI 代理的具體商業模式（訂閱？廣告？交易佣金？）——仍處於「我們正在探索」階段。</p>
-    </div>
+    <h3>② Earnings Call 語氣解析</h3>
+    <p><strong>管理層基調：樂觀偏進取</strong>。Zuckerberg 明確提出「advancing personal superintelligence」作為 2026 年願景，語氣較上季更具野心。CFO Susan Li 在財務面給出 2026 年 Operating Income 高於 2025 年的明確指引，但同時宣布 2026 年 Total Expenses $162-169B、Capex $115-135B 的天量數字。</p>
+    <p><strong>Forward Guidance</strong>：Q1 2026 Revenue 指引 $53.5-56.5B，中位數 $55B，隱含 YoY +27%，較 Q4 加速（含約 4pp 匯率順風）。全年 2026 Total Expenses $162-169B，Capex $115-135B。管理層表態 2026 Operating Income 將超過 2025，暗示 Revenue 成長將足以覆蓋費用增加。</p>
+    <p><strong>刻意強調的主題</strong>：(1) AI 驅動的廣告效率提升——GEM 模型 GPU 翻倍、轉換率 Q4 提升 3%、廣告品質提升 12%；(2) AI coding 工具讓工程師產出提升 30%；(3) AI 眼鏡銷量翻三倍。</p>
+    <p><strong>刻意迴避的問題</strong>：(1) Reality Labs 具體的虧損收窄時間表——Q4 Revenue 僅 $955M 且 YoY -12%；(2) $115-135B Capex 的精確 ROI 量化框架——管理層只說「投資未來」，未給出每美元資本支出對應的預期收入增量；(3) 回購暫停——Q4 回購為零，可能暗示現金將優先流向 Capex。</p>
 
-    <div class="sub-title">③ 產業 Imply 萃取</div>
-    <div class="prose">
-      <p><strong>需求端：</strong>「record-breaking holiday demand」暗示全球數位廣告需求在 2025 下半年仍然強勁，特別是電商與零售類廣告主。Click-to-Message Ads 美國市場收入增長超 50%，顯示品牌正在從展示型廣告向對話式轉換鏈路遷移。</p>
-      <p><strong>供給端：</strong>Meta 的廣告庫存仍在擴張——Ad impressions +18% YoY 且 Average price per ad +6%，顯示供給增量尚未壓低價格，供需平衡偏向賣方（平台方）。但 Q1 指引的增速放緩可能暗示庫存增長速度接近天花板。</p>
-      <p><strong>競爭格局：</strong>Meta 隱含的定價能力穩定（ASP +6%），但增幅低於前幾季（Q3 +11%），可能反映 Amazon Ads 與 TikTok 在短影音廣告市場的份額爭奪開始產生價格壓力。</p>
-      <p><strong>總體經濟敏感度：</strong>管理層未主動提及宏觀逆風（vs 2022 年頻繁提及），暗示其對廣告需求的短期信心仍高。但 Q1 指引中隱含的增速放緩（+14–20% vs Q4 +24%）可能部分反映匯率與宏觀不確定性。</p>
-      <p><strong>對同業的連帶推論：</strong>Meta 強勁的 Q4 為 GOOGL（YouTube Ads）和 SNAP 的 Q4 提供正面信號。但 Meta 的 AI-driven ads 效率提升如果持續，可能意味著廣告預算進一步向 Meta/Google 兩強集中，中小平台如 SNAP、PINS 將面臨更大的份額壓力。</p>
-    </div>
+    <h3>③ 產業 Imply 萃取</h3>
+    <p><strong>需求端</strong>：廣告主對 AI 驅動的廣告效果回應正面，Q4 轉換率加速成長。假日季需求強勁，小型企業廣告主持續增加。這暗示數位廣告整體需求仍健康，尚未見經濟衰退跡象。</p>
+    <p><strong>供給端</strong>：Meta 提到第三方雲端支出增加，暗示 GPU 供需仍緊張。Capex 激增代表大型科技公司正處於 AI 基礎設施競賽。Andromeda 引擎已擴展至 Nvidia、AMD 與自研 MTIA 晶片，暗示 Meta 在降低對單一供應商依賴。</p>
+    <p><strong>競爭格局</strong>：WhatsApp 開始投放廣告並拓展付費訊息（Revenue +54% YoY），Threads 廣告全球推廣中——暗示 Meta 仍有未完全貨幣化的庫存。但 Reality Labs Q4 Revenue YoY -12%，VR/AR 硬體競爭未見突破。</p>
+    <p><strong>總體經濟敏感度</strong>：管理層提到匯率順風（2026 Q1 約 4pp），但未明確提及衰退或關稅風險。暗示 Meta 管理層認為宏觀環境中性偏正面。</p>
+    <p><strong>對同業推論</strong>：Meta 的 AI 廣告效率提升暗示 Google（GOOGL）也在做類似投資且可能受益。Snap（SNAP）和 Pinterest（PINS）等二線平台可能因無法承擔同等 AI 投資而在定向能力上被拉開差距。</p>
+
   </div>
 </div>
 
 <!-- §2 -->
 <div class="section">
-  <div class="section-title">§2｜核心門檻檢核</div>
+  <div class="section-header">§2｜核心門檻檢核</div>
   <div class="section-body">
-    <div class="sub-title">EPS CAGR 搜尋結果</div>
-    <div class="prose">
-      <p><strong>基期 EPS（FY2025 實際）：</strong>$23.49（GAAP）。注：FY2025 GAAP EPS 因 One Big Beautiful Bill Act 產生 17pp 稅率增加一次性影響，調整後實質稅率約 13%。</p>
-      <p><strong>FY2026E：</strong>$30.55（共識中位數，Non-GAAP 口徑居多，n=69 位分析師，StockAnalysis.com）</p>
-      <p><strong>FY2027E：</strong>$35.23（共識中位數，n=65 位分析師，StockAnalysis.com）</p>
-      <p><strong>FY2028E：</strong>未取得公開免費資料，以 FY2027E 作為基礎，按分析師共識成長率 15.3%（FY2026→FY2027 增速）外推，估計約 $40.6。<span class="badge badge-yellow">FY+3 外推</span></p>
-    </div>
-    <table>
-      <tr><th>計算</th><th>數值</th></tr>
-      <tr><td>GAAP 3 年 CAGR（FY2025 $23.49 → FY2028E ~$40.6）</td><td class="mono"><strong>20.0%</strong></td></tr>
-      <tr><td>Non-GAAP 3 年 CAGR（基期調整至 ~$26.5 → FY2028E ~$40.6）</td><td class="mono"><strong>15.3%</strong></td></tr>
-    </table>
-    <p style="font-size:13px;color:var(--text-light);">口徑差距說明：FY2025 GAAP EPS $23.49 較 Non-GAAP 偏低，主因 One Big Beautiful Bill Act 一次性稅務費用（增加稅率 17pp）以及 SBC $20.4B。Non-GAAP 基期估計約 $26.5（扣除一次性稅務影響後）。分析師共識 FY2026E $30.55 多為 Non-GAAP 口徑。</p>
 
-    <div class="sub-title">門檻檢核表</div>
+    <h3>EPS CAGR 搜尋結果</h3>
+    <p>基期 EPS：FY2025 實際 $23.49（GAAP），$23.98（GAAP TTM as reported）</p>
+    <p><strong>分析師共識 EPS（來源：StockAnalysis / Finnhub，n=65-69 位分析師）</strong></p>
+    <table>
+      <tr><th>年度</th><th>GAAP EPS 共識</th><th>口徑</th><th>分析師人數</th></tr>
+      <tr><td>FY2025（實際）</td><td class="num">$23.49</td><td>GAAP</td><td>—</td></tr>
+      <tr><td>FY2026E</td><td class="num">$30.55</td><td>Non-GAAP 為主</td><td class="num">n=69</td></tr>
+      <tr><td>FY2027E</td><td class="num">$35.23</td><td>Non-GAAP 為主</td><td class="num">n=65</td></tr>
+      <tr><td>FY2028E</td><td class="num">~$40（估算外推）</td><td>FY+2 外推</td><td>有限覆蓋</td></tr>
+    </table>
+    <p class="mono">GAAP CAGR（FY2025→FY2028E）≈ ($40 ÷ $23.49)^(1/3) − 1 ≈ <strong>19.4%</strong></p>
+    <p class="mono">Non-GAAP CAGR（FY2026E→FY2028E 兩年）≈ ($40 ÷ $30.55)^(1/2) − 1 ≈ <strong>14.4%</strong></p>
+    <p><strong>口徑差距說明</strong>：GAAP 與 Non-GAAP 的主要差距來源為 SBC（FY2025：$20.4B，佔 Revenue 10.2%）以及 Reality Labs 虧損的會計處理方式。GAAP EPS 在 FY2025 因稅率異常（One Big Beautiful Bill Act 導致有效稅率升至 30%）而偏低，正常化稅率約 13%。</p>
+
+    <h3>門檻檢核表</h3>
     <table>
       <tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
-      <tr>
-        <td>FCF Margin</td><td>> 15%</td>
-        <td><span class="badge badge-green">是</span></td>
-        <td>FY2025 FCF $43.6B / Revenue $201.0B = <strong>21.7%</strong>。但注意：FY2024 FCF Margin 為 32.9%（$54.1B/$164.5B），因 CapEx 暴增 FY2025 已下滑 11pp。FY2026 CapEx $115–135B 將進一步壓縮 FCF Margin 至可能 <15%。</td>
-      </tr>
-      <tr>
-        <td>ROIC</td><td>產業頂尖</td>
-        <td><span class="badge badge-green">是</span></td>
-        <td>FY2025 ROIC 約 27.8–36.9%（視計算方式），顯著高於 WACC ~13.6%。產業頂尖水準。ROIC 從 FY2022 低谷 20.5% 持續回升。</td>
-      </tr>
-      <tr>
-        <td>EPS CAGR（未來 3 年）</td><td>> 20%</td>
-        <td><span class="badge badge-yellow">邊緣</span></td>
-        <td>GAAP CAGR ~20%（含一次性稅務基期效應）；Non-GAAP CAGR ~15.3%。<br>FY2025 實際 $23.49（GAAP）<br>FY2026E $30.55（n=69）<br>FY2027E $35.23（n=65）<br>FY2028E ~$40.6（外推）<br>資料來源：StockAnalysis.com</td>
-      </tr>
-      <tr>
-        <td>PEG（Non-GAAP）</td><td>< 2</td>
-        <td><span class="badge badge-green">是</span></td>
-        <td>Forward P/E 19.6x / Non-GAAP CAGR 30.1%（FY2026E 增速）= <strong>PEG 0.65</strong>；以 3 年 CAGR 15.3% 計算 = <strong>PEG 1.28</strong>。見 §7.2。</td>
-      </tr>
-      <tr>
-        <td>現金覆蓋總負債</td><td>是 / 否</td>
-        <td><span class="badge badge-red">否</span></td>
-        <td>現金 + 有價證券 $81.6B vs. 總負債 $85.1B（含長期債 $58.7B）。淨負債約 $3.5B。FY2024 尚為淨現金，FY2025 轉為淨負債，因 CapEx 大增與回購。</td>
-      </tr>
-      <tr>
-        <td>護城河強度</td><td>> 8 分，趨勢擴大</td>
-        <td><span class="badge badge-green">是</span></td>
-        <td><strong>8.5/10</strong>。見 §3 詳述。趨勢：穩定偏擴大。</td>
-      </tr>
+      <tr><td>FCF Margin</td><td>> 15%</td><td><span class="badge badge-green">符合</span></td><td class="num">FY2025 FCF $46.1B / Rev $201B = 22.9%<br>⚠️ FY2026E Capex $115-135B 將壓縮至 ~12-18%</td></tr>
+      <tr><td>ROIC</td><td>產業頂尖</td><td><span class="badge badge-green">符合</span></td><td class="num">FY2025 ROIC ~35-37%（多源交叉），WACC ~13.6%<br>ROIC − WACC ≈ 21-23%p，極優</td></tr>
+      <tr><td>EPS CAGR（3 年）</td><td>> 20%</td><td><span class="badge badge-yellow">邊緣</span></td><td>GAAP CAGR ~19.4%（略低門檻）<br>Non-GAAP 前兩年 30%+15% 但遞減明顯<br>來源：StockAnalysis / Finnhub</td></tr>
+      <tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="badge badge-green">符合</span></td><td class="num">Forward P/E 19.9x ÷ 30% CAGR = PEG 0.66<br>StockAnalysis 報 PEG = 0.88</td></tr>
+      <tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge badge-green">是</span></td><td class="num">現金 + 短期投資 $81.6B > 總負債 $58.7B（含長期債 $58.7B）<br>淨現金 $22.9B</td></tr>
+      <tr><td>護城河強度</td><td>> 8 分</td><td><span class="badge badge-green">符合</span></td><td>8.5/10（詳見 §3），趨勢穩定偏擴大</td></tr>
     </table>
-    <div class="signal-box signal-yellow">
-      <strong>最大財務弱點：</strong>FY2026 CapEx $115–135B 將使 FCF Margin 從 21.7% 可能壓縮至 10–15%，短期現金生成能力急劇下降，且 ROI 尚未可量化。
-    </div>
+    <p><strong>最大財務弱點</strong>：2026 年 Capex 將暴增至 $115-135B（+59-87% YoY），FCF 可能被壓縮至 $20-30B 區間，FCF Margin 從 23% 驟降至 ~12%，現金回報股東能力受限。</p>
+
+    <h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+    <p><strong>觸發判斷</strong>：Forward P/E ~20x，5 年中位 ~24-25x，5 年低點 ~10.9x（2022），當前分位約 40%。<strong>未觸發 ≤25% 分位</strong>，低估值四問為預防性填寫。</p>
+    <table>
+      <tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+      <tr><td>Q1</td><td>過去 3 年 Gross Margin 趨勢</td><td>↑ +3.6%p（78.4%→82.0%）</td><td>⬜ 健康</td></tr>
+      <tr><td>Q2</td><td>過去 3 年市佔率趨勢</td><td>穩定偏微縮（US ~21.3%→~20.9%）</td><td>⬜ 微幅</td></tr>
+      <tr><td>Q3</td><td>FCF 與淨利背離程度</td><td>FCF/NI = $46.1B/$60.5B = 0.76</td><td>⬜ 略低但合理</td></tr>
+      <tr><td>Q4</td><td>分析師共識 EPS 方向</td><td>FY2026E 六個月內持穩微升</td><td>⬜ 穩定</td></tr>
+    </table>
+    <p><strong>初篩結論</strong>：0 個 🔴，低估值指標未觸發門檻，正常流程。但 FCF/NI 比率偏低需在 §4 追蹤。</p>
+
   </div>
 </div>
 
 <!-- §2.5 -->
 <div class="section">
-  <div class="section-title">§2.5｜長期成長性評估</div>
+  <div class="section-header">§2.5｜長期成長性評估</div>
   <div class="section-body">
-    <div class="sub-title">A｜成長跑道（Runway）估算</div>
+
+    <h3>A｜成長跑道（Runway）估算</h3>
     <table>
       <tr><th>維度</th><th>數據</th><th>推論</th></tr>
-      <tr><td>當前全球數位廣告 TAM</td><td class="mono">~$7,500 億（2025）</td><td>來源：eMarketer/Statista 估算</td></tr>
-      <tr><td>估計可達 TAM</td><td class="mono">~$1.2 兆</td><td>包括 AI 代理商務佣金、WhatsApp 付費 messaging、Threads 廣告、商業 AI 工具訂閱</td></tr>
-      <tr><td>當前市佔 / 滲透率</td><td class="mono">~22%（全球 digital ad）</td><td>FY2025 廣告收入 ~$198B / 全球 ~$900B digital ad spend</td></tr>
-      <tr><td>若維持 20% 增速，幾年達 30% 滲透率</td><td class="mono">~3 年</td><td>即 FY2028 前後，自然放緩的壓力開始顯現</td></tr>
-      <tr><td><strong>成長可持續年數估計</strong></td><td class="mono"><strong>7–9 年</strong></td><td>核心廣告業務 3–4 年可維持 15%+；AI 新產品線可能延伸跑道 3–5 年</td></tr>
+      <tr><td>當前 TAM（全球數位廣告）</td><td class="num">~$355B（2026，Research and Markets）</td><td>社交媒體廣告約佔 $298B</td></tr>
+      <tr><td>估計可達 TAM</td><td class="num">~$589B（2030 預估）</td><td>含 AI 商務、WhatsApp 付費訊息、Threads 貨幣化</td></tr>
+      <tr><td>當前市佔 / 滲透率</td><td class="num">~21% 全球數位廣告（US ~20.9%）</td><td>Meta 2026E Revenue ~$255B / TAM ~$355B</td></tr>
+      <tr><td>自然放緩時間點</td><td class="num">~2030-2032</td><td>核心廣告收入以 18-20% CAGR 至 $300B+ 後自然減速</td></tr>
+      <tr><td><strong>成長可持續年數</strong></td><td><strong>7-9 年</strong></td><td>核心廣告 + WhatsApp 貨幣化 + AI 商務助手</td></tr>
     </table>
-    <p>Runway 解讀：<span class="badge badge-yellow">🟡 中等可見度成長</span>——核心廣告增速將在 3 年後自然放緩，但 AI 驅動的新營收流（代理商務、WhatsApp 商業化）有潛力延長 Runway，前提是 $115–135B CapEx 的 ROI 能在 2027–2028 年兌現。</p>
+    <p><strong>Runway 解讀</strong>：7-9 年屬「中等可見度成長」，支撐合理但非頂級估值倍數。</p>
 
-    <div class="sub-title">B｜成長品質判斷</div>
-    <p><strong>① 成長來源：有機 vs 無機</strong></p>
+    <h3>B｜成長品質判斷</h3>
+    <p><strong>① 有機 vs 無機</strong></p>
     <table>
-      <tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
-      <tr><td>有機成長</td><td class="mono">>95%</td><td>Meta 近 3 年無重大併購，FY2025 Revenue +22% 幾乎全部有機</td></tr>
-      <tr><td>無機成長</td><td class="mono"><5%</td><td>僅小型 AI 團隊收購（acqui-hires），無實質營收併購貢獻</td></tr>
+      <tr><th>類型</th><th>此標的占比</th><th>佐證</th></tr>
+      <tr><td>有機成長</td><td class="num">>95%</td><td>FY2025 22% Revenue 成長幾乎全部有機，無大型併購</td></tr>
+      <tr><td>無機成長</td><td class="num"><5%</td><td>Moltbook AI 等小型收購，金額不顯著</td></tr>
     </table>
-    <p><strong>② 成長驅動結構：定價 vs 量</strong></p>
+    <p><strong>② 定價 vs 量</strong></p>
     <table>
-      <tr><th>類型</th><th>此標的判斷</th><th>趨勢</th></tr>
-      <tr><td>定價驅動（Price）</td><td>FY2025 Average price per ad +9% YoY；Q4 +6%</td><td>穩定但增幅趨緩</td></tr>
-      <tr><td>量驅動（Volume）</td><td>FY2025 Ad impressions +12% YoY；Q4 +18%</td><td>擴大</td></tr>
+      <tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+      <tr><td>定價驅動（Price per ad）</td><td>Q4 YoY +6%，FY +9%</td><td>穩定擴大</td></tr>
+      <tr><td>量驅動（Ad impressions）</td><td>Q4 YoY +18%，FY +12%</td><td>強勁擴大</td></tr>
     </table>
-    <p>結論：Meta 的成長結構為<strong>量驅動為主、定價輔助</strong>。量的增長來自 DAP +7% YoY 及每用戶曝光頻率提升（AI 推薦驅動的 engagement 增加）。定價能力穩定但未加速，反映競爭格局中 Amazon/TikTok 的約束。</p>
+    <p>成長由<strong>量與價雙驅動</strong>，且量驅動（印象數成長 +18%）仍大於價格驅動（+6%），暗示 Meta 在 AI 優化下仍有提價空間。</p>
 
-    <div class="sub-title">C｜成長護城河連動評估</div>
+    <h3>C｜成長護城河連動評估</h3>
+    <p>判斷：<strong>強化型</strong>。每多一個用戶和廣告主加入 Meta 的平台，AI 推薦引擎獲得更多訓練數據，廣告匹配精準度提升，形成正向飛輪。DAP 達 35.8 億人的規模使得數據壁壘幾乎不可複製。但需注意：為維持這個飛輪，Meta 正投入天量 Capex（$115-135B），若 AI 投資效率低於預期，飛輪可能轉為「消耗型」。</p>
+
+    <h3>D｜ROIC 與 FCF 的長期可維持性</h3>
     <table>
-      <tr><th>類型</th><th>具體表現</th></tr>
-      <tr>
-        <td><span class="badge badge-green">強化型</span></td>
-        <td>Meta 的成長正在強化護城河：（1）更多用戶 → 更多行為數據 → AI 推薦模型更精準 → 更高 engagement → 更多廣告庫存，形成正向循環；（2）廣告主 ROAS 因 AI 模型改善而提升，增加 switching cost；（3）DAP 3.58B 的用戶基數使每增加一個新功能的邊際成本趨近零，規模優勢持續擴大。然而，$115–135B CapEx 若未能產生對應 ROI，可能暫時稀釋這個正向循環的財務表現。</td>
-      </tr>
+      <tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+      <tr><td>ROIC</td><td class="num">~35-37%</td><td class="num">27.1%（2023）</td><td>↑</td><td>產業頂尖 > WACC</td><td><span class="badge badge-green">✓</span></td></tr>
+      <tr><td>ROIC − WACC</td><td class="num">~21-23%p</td><td class="num">~13%p</td><td>↑</td><td>持續正值擴大</td><td><span class="badge badge-green">✓</span></td></tr>
+      <tr><td>FCF Margin</td><td class="num">22.9%</td><td class="num">~31%（2023）</td><td>↓</td><td>> 15%</td><td><span class="badge badge-yellow">⚠️ 2026 風險</span></td></tr>
+      <tr><td>FCF / NI 轉換率</td><td class="num">0.76</td><td class="num">~1.0+（2023）</td><td>↓</td><td>> 0.85</td><td><span class="badge badge-red">✗</span></td></tr>
+      <tr><td>Reinvestment Rate</td><td class="num">極高（Capex/Revenue ~36%）</td><td class="num">~23%</td><td>↑↑</td><td>需對應 ROIC</td><td><span class="badge badge-yellow">待驗證</span></td></tr>
+    </table>
+    <p><strong>關鍵觀察</strong>：ROIC 仍優異，但 FCF 正因 Capex 激增而承壓。FCF/NI 轉換率從 >1.0 下降至 0.76，主因是 Capex 從 $28B（2023）→$72B（2025），而非營運品質惡化。</p>
+
+    <h3>E｜成長熄火情境壓力測試</h3>
+    <table>
+      <tr><th>情境</th><th>對應特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+      <tr><td>3 年後成長率降至 15%</td><td>仍高於市場</td><td class="num">18x</td><td class="num">~10%</td></tr>
+      <tr><td>3 年後成長率降至 10%</td><td>回歸平均</td><td class="num">15x</td><td class="num">~25%</td></tr>
+      <tr><td>3 年後成長率降至 5%</td><td>成熟期低成長</td><td class="num">12x</td><td class="num">~40%</td></tr>
     </table>
 
-    <div class="sub-title">D｜ROIC 與 FCF 的長期可維持性</div>
+    <h3>⚠️ 衰退信號偵測表</h3>
     <table>
-      <tr><th>指標</th><th>當前值</th><th>3 年前（FY2022）</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
-      <tr><td>ROIC</td><td class="mono">27.8%</td><td class="mono">20.5%</td><td>↑</td><td>> WACC (13.6%)</td><td><span class="badge badge-green">是</span></td></tr>
-      <tr><td>ROIC − WACC</td><td class="mono">+14.2%</td><td class="mono">+6.9%</td><td>↑</td><td>正值且擴大</td><td><span class="badge badge-green">是</span></td></tr>
-      <tr><td>FCF Margin</td><td class="mono">21.7%</td><td class="mono">15.8%</td><td>↓（FY2024 32.9%）</td><td>> 15%</td><td><span class="badge badge-yellow">邊緣</span></td></tr>
-      <tr><td>FCF / Net Income</td><td class="mono">72.1%</td><td class="mono">133%</td><td>↓↓</td><td>> 85%</td><td><span class="badge badge-red">否</span></td></tr>
-      <tr><td>Reinvestment Rate</td><td class="mono">極高</td><td class="mono">中等</td><td>↑↑</td><td>需對應 ROIC</td><td><span class="badge badge-yellow">待觀察</span></td></tr>
+      <tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+      <tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>未下滑，82.0% 持續改善</td><td>⬜</td></tr>
+      <tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>US 穩定 ~21%，微幅下滑</td><td>⬜</td></tr>
+      <tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>Price/ad +6% 同時 Impressions +18%</td><td>⬜</td></tr>
+      <tr><td>盈餘品質</td><td>EPS CAGR >> Revenue CAGR</td><td>EPS +11% vs Revenue +24%（反向，合理）</td><td>⬜</td></tr>
+      <tr><td>盈餘品質</td><td>FCF/NI < 0.75 連續 2 年</td><td>FY2025: 0.76，FY2024: ~0.79</td><td><span class="badge badge-red">🔴 邊緣</span></td></tr>
+      <tr><td>盈餘品質</td><td>SBC/Revenue > 5% 且逐年上升</td><td>FY2025: $20.4B/$201B = 10.2%（↑）</td><td><span class="badge badge-red">🔴</span></td></tr>
+      <tr><td>產業結構衰退</td><td>TAM 萎縮或被替代</td><td>全球數位廣告 +13.5% CAGR</td><td>⬜</td></tr>
+      <tr><td>產業結構衰退</td><td>產業估值系統性下移</td><td>大型科技估值 2024-2025 穩定至擴張</td><td>⬜</td></tr>
+      <tr><td>隱性資本密集</td><td>Maintenance Capex / FCF > 60%</td><td>Capex/FCF = $72.2B/$46.1B = 157%（⚠️）</td><td><span class="badge badge-red">🔴</span></td></tr>
+      <tr><td>隱性資本密集</td><td>停止投資則收入 3 年下滑</td><td>AI 廣告效率需持續投入維持</td><td><span class="badge badge-red">🔴</span></td></tr>
     </table>
-    <p>FCF / Net Income 從 FY2024 的 86.8% 驟降至 FY2025 的 72.1%，再到 FY2026 可能進一步下降，主因 CapEx 從 $28B（FY2023）→ $72B（FY2025）→ $115–135B（FY2026E）。ROIC 目前仍強勁，但 FY2026 的投資期可能使 ROIC 暫時回落。</p>
 
-    <div class="sub-title">E｜成長熄火情境壓力測試</div>
-    <table>
-      <tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
-      <tr style="background:var(--yellow-bg)"><td>3 年後成長率降至 15%</td><td>成長放緩但仍高於市場</td><td class="mono">18–20x</td><td class="mono">~15–25%</td></tr>
-      <tr><td>3 年後成長率降至 10%</td><td>回歸市場平均</td><td class="mono">15–17x</td><td class="mono">~30–40%</td></tr>
-      <tr style="background:var(--red-bg)"><td>3 年後成長率降至 5%</td><td>成熟期低成長</td><td class="mono">12–14x</td><td class="mono">~45–55%</td></tr>
-    </table>
+    <div class="alert-box">
+      <div class="alert-title">⚠️ 價值陷阱風險評級：🟡 中度警戒（4 個亮燈）</div>
+      <p>SBC/Revenue 持續上升（10.2%）、FCF/NI 轉換率偏低（0.76）、Capex 遠超 FCF（157%）、停止投資將影響競爭力。但需注意：多數亮燈集中於「隱性資本密集」類別，這反映的是 AI 投資週期的特殊性而非結構性衰退。§3 需驗證護城河是否因投資而強化。</p>
+    </div>
 
     <div class="signal-box signal-yellow">
       <strong>長期成長性綜合評級：🟡 中等可見度成長</strong><br>
-      Runway 7–9 年、有機 + 量驅動為主、護城河強化型、ROIC 擴大。但 FY2026 CapEx 規模空前且 ROI 未知，FCF Margin 面臨壓縮，降低了估值倍數的信心。
+      Runway 7-9 年、有機 + 量價雙驅動、護城河強化型但 Capex 密集度急升、ROIC 擴大但 FCF Margin 壓縮、衰退信號 4 個（集中於資本密集類別）
     </div>
+
   </div>
 </div>
 
 <!-- §3 -->
 <div class="section">
-  <div class="section-title">§3｜護城河分析（報告核心）</div>
+  <div class="section-header">§3｜護城河分析（報告核心）</div>
   <div class="section-body">
-    <p><strong>評分：8.5 ／ 10</strong>（以全球上市公司為基準，嚴格標準）</p>
+    <p><strong>評分：8.5 / 10</strong>（全球上市公司基準）</p>
 
-    <div class="sub-title">護城河來源逐項檢驗</div>
-    <div class="prose">
-      <p><strong>網路效應：真實且強大。</strong>35.8 億 DAP 構成全球最大社交圖譜。關鍵閾值已遠遠超越——在幾乎每個國家（除中國、俄羅斯外）都已達到 critical mass。新進者即使複製產品功能，也無法複製用戶的關係圖譜。廣告主側的網路效應同樣強：更多廣告主 → 更精準的拍賣定價 → 更高 ROAS → 吸引更多廣告主。</p>
-      <p><strong>無形資產：中等偏強。</strong>品牌溢價方面，Instagram 在年輕族群中仍有強品牌認知，但 Facebook 品牌老化是事實。更重要的無形資產是<strong>數據資產</strong>——十餘年累積的用戶行為數據訓練出的 AI 推薦模型，對手無法通過資本投入快速複製。Meta 無顯著的監管牌照優勢。</p>
-      <p><strong>轉換成本：對廣告主極高。</strong>廣告主在 Meta 平台上累積了大量的 campaign 資料、像素追蹤、自訂受眾、lookalike audiences、以及數年的學習演算法優化。遷移至其他平台意味著重新訓練模型、重建受眾池、承受 3–6 個月的 ROAS 下降期。對用戶端，WhatsApp 在新興市場的轉換成本接近無窮大（因為「所有人都在上面」）。</p>
-      <p><strong>規模優勢：全球最強之一。</strong>FY2025 Revenue $201B 的基礎上，每新增一個用戶的邊際成本極低，但新增的邊際廣告收入可觀。AI 模型訓練的 compute cost 可被 3.58B DAP 分攤，任何對手無法以相同單位成本達到相同精度。</p>
-    </div>
+    <p><strong>回應 §2.5 亮燈</strong>：SBC 與 Capex 密集度的上升是 AI 投資週期的特徵，而非護城河被侵蝕的信號。Gross Margin 持續改善（82%），定價能力完好（Price/ad +6% 且印象數未下降），證實護城河核心——3.58B DAP 構成的廣告平台——仍然穩固。</p>
 
-    <div class="sub-title">競爭鴻溝</div>
-    <p>即便 Apple、Google、Amazon 等資本充足的對手，仍無法跨越 Meta 的護城河，原因在於：（1）社交圖譜是<strong>用戶生成的</strong>，非資本可購買；（2）Meta 的 3.58B DAP 數據量使其 AI 推薦系統具備任何後進者無法用金錢彌補的精度差距；（3）Instagram + WhatsApp + Facebook 的跨 App 身份系統形成閉環，對手需同時在三個領域達到 critical mass 才能構成威脅。</p>
+    <h3>護城河來源</h3>
+    <p><strong>網路效應</strong>（強）：35.8 億日活用戶構成全球最大社交圖譜。每增加一個用戶，其他用戶的社交價值增加（直接網路效應），同時廣告主觸及效率提升（間接網路效應）。關鍵閾值已穩定跨越——任何新進者要達到 10 億用戶才具備基本的廣告變現規模，而 Meta 已是 35.8B。</p>
+    <p><strong>無形資產</strong>（中強）：Instagram 品牌在年輕用戶中仍具吸引力，WhatsApp 在新興市場（印度、巴西、東南亞）是預設通訊工具。但「Facebook」品牌本身在 Z 世代中已弱化。AI 廣告技術的模型知識產權構成新的無形資產。</p>
+    <p><strong>轉換成本</strong>（中）：廣告主的轉換成本來自像素追蹤（Meta Pixel）、Conversion API 整合、歷史投放數據與 AI 模型學習成果。中小企業一旦在 Meta Ads Manager 建立了優化後的投放流程，轉向其他平台的摩擦顯著。但大型廣告主通常多平台投放，轉換成本較低。</p>
+    <p><strong>規模優勢</strong>（強）：$72B+ 的年度 Capex 用於建設 AI 基礎設施，這是 Snap、Pinterest 等二線平台根本無法匹配的投入。AI 模型訓練需要海量數據 + 海量算力，Meta 同時擁有兩者。AI 廣告效率的提升具備「規模→數據→更好模型→更多廣告主→更多數據」的正向循環。</p>
 
-    <div class="sub-title">市佔競爭表</div>
+    <h3>競爭鴻溝</h3>
+    <p>資本充足的對手（如 Google、Amazon）各有自己的護城河但在社交廣告領域難以複製 Meta 的社交圖譜。Google 的廣告優勢在搜尋意圖，Amazon 在購買行為，但 Meta 獨佔「社交發現」——用戶未有明確購買意圖時的品牌與產品曝光。TikTok 是唯一在社交發現領域構成實質威脅的對手，但其在美國面臨監管不確定性。</p>
+
+    <h3>市佔競爭表</h3>
     <table>
-      <tr><th>競爭對手</th><th>目前全球 digital ad 市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
-      <tr><td>Alphabet (GOOGL)</td><td class="mono">~28%</td><td>穩定</td><td>YouTube Shorts 與 Meta Reels 直接競爭</td><td>雙寡頭各有領域，非零和</td></tr>
-      <tr><td>Amazon Ads</td><td class="mono">~8%</td><td>擴大</td><td>電商閉環廣告，ROAS 可直接歸因</td><td>Amazon 正在吃搜尋廣告份額</td></tr>
-      <tr><td>TikTok (ByteDance)</td><td class="mono">~4%</td><td>快速擴大</td><td>年輕族群注意力份額</td><td>TikTok 吃 SNAP/PINS，對 Meta 影響有限</td></tr>
-      <tr><td>Snap (SNAP)</td><td class="mono">~1%</td><td>萎縮</td><td>AR 廣告差異化</td><td>正在被 Meta/TikTok 擠壓</td></tr>
+      <tr><th>競爭對手</th><th>市佔（US 數位廣告）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+      <tr><td>Google</td><td class="num">~25.6%→~23.9%</td><td>↓</td><td>AI 搜尋重塑廣告格式</td><td>Amazon 吃 Google</td></tr>
+      <tr><td><strong>Meta</strong></td><td class="num">~23.2%→~20.9%</td><td>→ 略↓</td><td>TikTok / Amazon</td><td>Amazon & TikTok 微幅吃 Meta</td></tr>
+      <tr><td>Amazon</td><td class="num">~10.7%→~17.3%</td><td>↑↑</td><td>Retail Media 崛起</td><td>Amazon 吃所有人</td></tr>
+      <tr><td>TikTok</td><td class="num">~2%→~4.1%</td><td>↑</td><td>Z 世代注意力</td><td>TikTok 吃 Meta & Google</td></tr>
     </table>
 
-    <div class="sub-title">護城河趨勢：穩定偏擴大</div>
-    <p>AI 推薦系統的持續優化正在加寬護城河——GEM ranking model 帶來的廣告效率提升使 Meta 對廣告主的不可替代性增強。但需密切關注兩個威脅：</p>
-    <p><strong>24 個月內最可能的威脅（按嚴重度排序）：</strong></p>
-    <p>1. <strong>AI 原生搜尋替代 social discovery</strong>——若 10–15% 的產品發現從 Instagram Feed 轉移至 AI 助手，Meta 的庫存增長可能停滯。威脅等級：中高，時間軸 18–24 個月。</p>
-    <p>2. <strong>Apple 進一步限制追蹤</strong>——ATT 已造成衝擊，但 Meta 已大幅恢復。若 Apple 推出更嚴格的 iOS 隱私限制（如阻斷 IP 地址用於廣告），可能再次短期衝擊 ROAS。威脅等級：中，時間軸 12 個月。</p>
-    <p>3. <strong>歐盟 DMA 執法升級</strong>——要求拆分跨 App 數據使用，直接削弱 Meta 的定向精度。威脅等級：中，時間軸 6–18 個月。</p>
+    <h3>護城河趨勢：穩定</h3>
+    <p>核心 DAP 仍在成長（+7% YoY），AI 廣告效率提升顯著，但市佔率微幅下滑反映 Amazon Retail Media 的結構性崛起。這不是 Meta 變弱，而是「餅在變大但新玩家長得更快」。</p>
+    <p><strong>24 個月內最可能瓦解護城河的威脅</strong>：(1) AI 搜尋/Agent 取代社交媒體瀏覽行為——若用戶花在 Instagram/Facebook 的時間被 AI 助手分流，廣告庫存將萎縮；(2) 歐盟 DMA 執法要求 Meta 開放數據互通或限制定向——直接削弱廣告精準度；(3) Apple Vision Pro 或類似設備開創新的注意力入口，繞過 Meta 的社交平台。</p>
   </div>
 </div>
 
 <!-- §4 -->
 <div class="section">
-  <div class="section-title">§4｜財務品質監測</div>
+  <div class="section-header">§4｜財務品質監測</div>
   <div class="section-body">
-    <div class="sub-title">三年趨勢表</div>
+    <h3>三年趨勢表</h3>
     <table>
-      <tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>主要對手比較（GOOGL）</th></tr>
-      <tr><td>FCF Margin</td><td class="mono">32.6%</td><td class="mono">32.9%</td><td class="mono">21.7%</td><td class="mono">GOOGL ~18.2%</td></tr>
-      <tr><td>EBITDA Margin</td><td class="mono">43.8%</td><td class="mono">52.8%</td><td class="mono">52.6%</td><td class="mono">GOOGL ~35%</td></tr>
-      <tr><td>ROIC − WACC</td><td class="mono">+13.5%</td><td class="mono">+20.6%</td><td class="mono">+14.2%</td><td class="mono">GOOGL ~+17.6%</td></tr>
-      <tr><td>SBC / Revenue</td><td class="mono">10.4%</td><td class="mono">10.1%</td><td class="mono">10.2%</td><td class="mono">GOOGL ~11%</td></tr>
-      <tr><td>ROE</td><td class="mono">22.5%</td><td class="mono">34.7%</td><td class="mono">30.2%</td><td class="mono">GOOGL ~35.7%</td></tr>
+      <tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手（GOOGL）</th></tr>
+      <tr><td>FCF Margin</td><td class="num">~32%</td><td class="num">~28%</td><td class="num">22.9%</td><td class="num">~18%</td></tr>
+      <tr><td>EBITDA Margin</td><td class="num">~47%</td><td class="num">~53%</td><td class="num">~50%</td><td class="num">~39%</td></tr>
+      <tr><td>ROIC − WACC</td><td class="num">~13%p</td><td class="num">~21%p</td><td class="num">~21-23%p</td><td class="num">~18%p</td></tr>
+      <tr><td>SBC / Revenue</td><td class="num">10.4%</td><td class="num">10.1%</td><td class="num">10.2%</td><td class="num">~8%</td></tr>
+      <tr><td>ROE</td><td class="num">~22%</td><td class="num">~36%</td><td class="num">~30%</td><td class="num">~36%</td></tr>
     </table>
 
-    <div class="sub-title">獲利品質警訊（四項完整檢驗）</div>
-    <div class="prose">
-      <p><strong>1. 淨利 vs. OCF：</strong>FY2025 OCF $115.8B vs. Net Income $60.5B → OCF 遠大於淨利，<span class="badge badge-green">正常</span>。差異主要來自折舊（$18B+）與 SBC（$20.4B）等非現金項目。無盈餘操縱跡象。</p>
-      <p><strong>2. AR 成長 vs. 營收成長：</strong>FY2025 Revenue +22% YoY。Q1 2025 AR 增加 $2.8B（季節性因素），需持續監控但目前無異常膨脹。<span class="badge badge-green">正常</span>。</p>
-      <p><strong>3. 存貨成長 vs. 營收成長：</strong>Meta 為輕資產平台型公司，無實質存貨。<span class="badge badge-green">不適用</span>。</p>
-      <p><strong>4. FCF 轉換率趨勢：</strong>FCF / Net Income 從 FY2023 的 112% → FY2024 的 87% → FY2025 的 72%，<span class="badge badge-red">明確惡化</span>。原因是 CapEx 從 $28B → $39B → $72B 的急遽增加。FY2026 CapEx $115–135B 將進一步壓縮此指標至 40–60%。這不是品質問題，而是投資週期問題——但若 2–3 年內 ROI 未兌現，將轉化為品質問題。</p>
-    </div>
+    <h3>獲利品質警訊</h3>
+    <p><strong>淨利 vs. OCF</strong>：FY2025 OCF ~$92B vs NI $60.5B，OCF 顯著高於 NI，不存在盈餘操縱跡象（差異主要來自折舊攤銷 $15.5B 與 SBC $20.4B 的非現金加回）。</p>
+    <p><strong>AR vs. 營收</strong>：無明顯背離信號。Meta 廣告收入多為即時結算，應收帳款品質穩定。</p>
+    <p><strong>存貨</strong>：不適用（Meta 無實體庫存）。</p>
+    <p><strong>FCF 轉換率趨勢</strong>：因 Capex 急增，FCF/OCF 從 2023 的 ~60% 降至 2025 的 ~50%。這是資本密集度變化，非盈利品質問題。</p>
+
+    <h3>回購品質評估（價值陷阱防禦）</h3>
+    <table>
+      <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+      <tr><td>過去 3 年回購 vs FCF</td><td class="num">回購 ~$91B / FCF ~$120B = 76%</td><td>偏高但不極端</td></tr>
+      <tr><td>剔除回購 EPS CAGR</td><td class="num">FY22→FY25 shares 從 2.61B→2.53B（-3%）<br>回購貢獻 EPS 提升約 1%p/年</td><td>回購影響有限</td></tr>
+      <tr><td>回購均價 vs 當前股價</td><td class="num">2023-2025 均價估 ~$380-480</td><td>低於當前 $594，資本配置回顧良好</td></tr>
+      <tr><td>Revenue CAGR 同期</td><td class="num">FY22→FY25: ~20% CAGR</td><td>EPS CAGR ~40%，差距主因利潤率恢復</td></tr>
+    </table>
+    <p><strong>結論</strong>：Meta 的 EPS 成長主要來自營收成長 + 利潤率回升，而非靠回購堆疊。Q4 2025 回購為零暗示 2026 年回購將大幅縮減以優先 Capex。</p>
   </div>
 </div>
 
 <!-- §5 -->
 <div class="section">
-  <div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+  <div class="section-header">§5｜產業格局、議價權與 Unit Economics</div>
   <div class="section-body">
-    <div class="sub-title">市場量化</div>
-    <p>全球數位廣告 TAM 約 $7,500–9,000 億（2025），CAGR 約 10–12%。社群媒體廣告佔比約 30%，且份額持續擴大。市場尚未過剩——AI 驅動的廣告效率提升正在擴大可變現廣告庫存的範圍。</p>
+    <p><strong>市場量化</strong>：全球數位廣告 TAM 2026 約 $355B，CAGR ~13.5%。Meta 營收 ~$255B（含非廣告）佔 ~57% 但非全部為純數位廣告競爭市場。社交媒體廣告約 $298B，Meta 佔約 50%+。供需狀態：廣告庫存充足且持續增加（Threads、WhatsApp 新增），需求穩健。</p>
 
-    <div class="sub-title">議價權</div>
-    <div class="prose">
-      <p><strong>對上游（供應商）：</strong>Meta 的主要「供應商」是雲端基礎設施（自建為主）、半導體（NVIDIA GPU）、以及內容創作者。對 NVIDIA 的依賴度高（GPU 供應），但 Meta 正在自研 MTIA 晶片以降低依賴。對內容創作者幾乎無議價壓力——UGC 模式下用戶免費提供內容。</p>
-      <p><strong>對下游（廣告主）：</strong>客戶極度分散——數百萬中小企業與數千大品牌。前十大客戶營收佔比極低（<5%）。自助式廣告平台使 Meta 的定價由拍賣機制決定而非談判，議價權極強。</p>
-      <p><strong>地理分布曝險：</strong>收入來源全球分散（北美 47%、歐洲 23%、亞太 20%、其他 10%），但 AI 基礎設施集中在美國，數據中心遍佈美國各州。地緣風險主要在監管層面（歐盟 DMA）而非供應鏈。</p>
-    </div>
+    <p><strong>議價權——對上游</strong>：Meta 是 GPU 最大買家之一，對 Nvidia 有一定議價力但非壟斷性。已開發自研 MTIA 晶片降低依賴。雲端方面以自建為主，第三方雲端支出增加但仍可控。</p>
+    <p><strong>對下游</strong>：數百萬中小企業廣告主高度分散，單一客戶佔比極低。大型廣告主（如 P&G、Unilever）有較高議價力但 Meta 的廣告效果數據透明度提供了定價權基礎。合約結構為拍賣制，Meta 天然擁有定價主導權。</p>
+    <p><strong>地理分布曝險</strong>：北美 ~43%、歐洲 ~24%、亞太 ~22%、其他 ~11%。歐盟監管是最大地緣風險。</p>
 
-    <div class="sub-title">營收組成</div>
+    <p><strong>營收組成</strong>：Family of Apps 廣告 ~97% of FoA Revenue；WhatsApp 付費訊息 + Meta Verified 貢獻 $801M/Q（+54% YoY）。Reality Labs ~$3.8B/年但持續虧損。</p>
+
+    <p><strong>單位經濟</strong>：</p>
     <table>
-      <tr><th>分項</th><th>FY2025 Revenue</th><th>佔比</th><th>YoY 成長</th></tr>
-      <tr><td>Family of Apps — 廣告</td><td class="mono">~$198B</td><td class="mono">~98.5%</td><td class="mono">+22%</td></tr>
-      <tr><td>Family of Apps — 其他（WhatsApp、Meta Verified）</td><td class="mono">~$2.5B</td><td class="mono">~1.2%</td><td class="mono">+54%（Q4）</td></tr>
-      <tr><td>Reality Labs</td><td class="mono">~$3.5B</td><td class="mono">~1.7%</td><td class="mono">-12%（Q4）</td></tr>
-    </table>
-
-    <div class="sub-title">單位經濟</div>
-    <table>
-      <tr><th>指標</th><th>數值</th><th>趨勢</th></tr>
-      <tr><td>Global ARPU（年化，FY2025）</td><td class="mono">~$56</td><td>↑（FY2024 ~$48）</td></tr>
-      <tr><td>北美 ARPU（年化）</td><td class="mono">~$250+</td><td>↑</td></tr>
-      <tr><td>Average Price per Ad（FY2025 YoY）</td><td class="mono">+9%</td><td>穩定</td></tr>
-      <tr><td>Ad Impressions Growth（FY2025 YoY）</td><td class="mono">+12%</td><td>↑</td></tr>
+      <tr><th>指標</th><th>數據</th><th>趨勢</th></tr>
+      <tr><td>ARPU（全球，年化）</td><td class="num">~$56/DAP</td><td>↑（+14% YoY）</td></tr>
+      <tr><td>ARPU（北美）</td><td class="num">~$260+</td><td>↑</td></tr>
+      <tr><td>Ad Impressions / DAP</td><td class="num">持續提升</td><td>↑（Reels、Threads 新增庫存）</td></tr>
+      <tr><td>Price per Ad（全球）</td><td class="num">+9% FY2025</td><td>↑</td></tr>
     </table>
   </div>
 </div>
 
 <!-- §6 -->
 <div class="section">
-  <div class="section-title">§6｜公司治理與資本配置</div>
+  <div class="section-header">§6｜公司治理與資本配置</div>
   <div class="section-body">
-    <div class="sub-title">股東結構</div>
-    <p>Mark Zuckerberg 持有約 13% 經濟利益但控制約 60% 表決權（雙層股權結構）。機構持股高度集中：Vanguard ~8%、BlackRock ~7%、Fidelity ~5%。外部股東對重大資本配置決策（如 CapEx 規模）缺乏有效制衡——這是 Meta 治理的核心風險。</p>
-
-    <div class="sub-title">資本配置軌跡</div>
-    <div class="prose">
-      <p>FY2023 是「效率年」——裁員 21%、CapEx 縮減至 $28B、FCF 大幅反彈。FY2024 延續效率但 CapEx 回升至 $39B。FY2025 CapEx 暴增至 $72B，FY2026 指引 $115–135B。</p>
-      <p>回購方面：FY2025 回購 $26.3B，FY2024 回購 $36.1B。FY2025 Q4 回購為零——管理層明確表態回購優先級低於 AI 投資。</p>
-      <p><strong>說法與行動一致性：</strong>Zuckerberg 在 2023 年承諾「效率」並確實執行；2025–2026 年承諾「all-in AI」並確實在 CapEx 上兌現。問題不在一致性，而在<strong>AI 投資的 ROI 可見度極低</strong>——$135B CapEx 對應什麼具體營收產出？管理層尚未提供量化指標。</p>
-    </div>
-
-    <div class="sub-title">SBC 評估</div>
-    <table>
-      <tr><th>年份</th><th>SBC</th><th>SBC / Revenue</th><th>稀釋影響</th></tr>
-      <tr><td>FY2023</td><td class="mono">$14.0B</td><td class="mono">10.4%</td><td>回購 offset，淨股數 -2.5%</td></tr>
-      <tr><td>FY2024</td><td class="mono">$16.7B</td><td class="mono">10.1%</td><td>回購 offset，淨股數 -2.1%</td></tr>
-      <tr><td>FY2025</td><td class="mono">$20.4B</td><td class="mono">10.2%</td><td>回購 offset，淨股數 -1.5%</td></tr>
-    </table>
-    <p>SBC / Revenue 穩定在 ~10%，但絕對金額持續攀升。FY2025 回購金額 $26.3B > SBC $20.4B，仍能 offset 稀釋。但 FY2026 若回購進一步縮減（Q4 已為零），SBC 稀釋可能開始侵蝕每股價值。</p>
+    <p><strong>股東結構</strong>：Zuckerberg 持有 ~13% 經濟利益但透過 Class B 股票（10:1 投票權）掌握 ~61% 投票權。這是典型的創辦人控制結構——優點是長期視野不受短期壓力，缺點是缺乏外部制衡。機構投資者高度集中：Vanguard ~8%、BlackRock ~7%、Fidelity ~5%。</p>
+    <p><strong>資本配置軌跡</strong>：2022-2023 年「效率年」大幅削減人力與支出，證明管理層在壓力下有紀律。但 2024-2026 進入 AI 投資狂潮——Capex 從 $28B（2023）→$72B（2025）→$115-135B（2026E），增幅驚人。管理層說法（「投資未來」）與行動（實際天量支出）一致，問題是 ROI 驗證期需 2-3 年。Q4 2025 回購為零，暗示 2026 年資本回報將讓位於投資。</p>
+    <p><strong>SBC 評估</strong>：FY2025 SBC $20.4B（+22% YoY），佔 Revenue 10.2%。雖然 SBC/Revenue 比率穩定，但絕對金額持續增加。過去 10 年 82% 的回購用於抵消 SBC 稀釋，實際返還股東的淨回購僅佔 FCF 的 ~13%。這是 Meta 治理的結構性弱點——SBC 作為人才激勵的成本由全體股東承擔。</p>
   </div>
 </div>
 
 <!-- §7 -->
 <div class="section">
-  <div class="section-title">§7｜估值診斷</div>
+  <div class="section-header">§7｜估值診斷</div>
   <div class="section-body">
 
-    <div class="sub-title">7.1｜歷史估值分位（5 年框架）</div>
+    <h3>7.1｜歷史估值分位（5 年框架）</h3>
     <table>
       <tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
-      <tr><td>Trailing P/E</td><td class="mono">25.3x</td><td class="mono">10.9x（2022）</td><td class="mono">26.6x</td><td class="mono">30.6x（2023）</td><td class="mono">~50%</td></tr>
-      <tr><td>Forward P/E (NTM)</td><td class="mono">19.6x</td><td class="mono">~9x（2022）</td><td class="mono">~20x</td><td class="mono">~28x（2023）</td><td class="mono">~45–50%</td></tr>
-      <tr><td>EV/EBITDA</td><td class="mono">14.8x</td><td class="mono">~8x（2022）</td><td class="mono">~17x</td><td class="mono">~20x（2024）</td><td class="mono">~40%</td></tr>
-      <tr><td>P/FCF</td><td class="mono">32.6x</td><td class="mono">~12x（2022）</td><td class="mono">~22x</td><td class="mono">~35x</td><td class="mono">~80%</td></tr>
-      <tr><td>P/S</td><td class="mono">~7.5x</td><td class="mono">~2.4x（2022）</td><td class="mono">~6.5x</td><td class="mono">~10x</td><td class="mono">~55%</td></tr>
+      <tr><td>Trailing P/E</td><td class="num">25.3x</td><td class="num">10.9x（2022）</td><td class="num">~25x</td><td class="num">30.6x（2023）</td><td class="num">~50%</td></tr>
+      <tr><td>Forward P/E（NTM）</td><td class="num">~20x</td><td class="num">~9x（2022）</td><td class="num">~18-20x</td><td class="num">~28x（2024）</td><td class="num">~45%</td></tr>
+      <tr><td>EV/EBITDA</td><td class="num">14.8x</td><td class="num">~6x（2022）</td><td class="num">~14x</td><td class="num">~20x</td><td class="num">~50%</td></tr>
+      <tr><td>P/FCF</td><td class="num">32.6x</td><td class="num">~11x（2022）</td><td class="num">~20x</td><td class="num">~35x</td><td class="num">~75%</td></tr>
+      <tr><td>P/S</td><td class="num">~7.5x</td><td class="num">~2.5x（2022）</td><td class="num">~6x</td><td class="num">~10x</td><td class="num">~55%</td></tr>
     </table>
-    <div class="prose">
-      <p><strong>1. 當前估值情緒：</strong>Trailing P/E 與 Forward P/E 處於歷史中位附近，<span class="badge badge-yellow">合理</span>。但 P/FCF 偏高（~80% 分位），反映 CapEx 暴增壓縮 FCF。</p>
-      <p><strong>2. 上次處於此分位時的基本面差異：</strong>FY2023 年末 Trailing P/E 約 30.6x 時，Meta 剛完成「效率年」，EPS 正在快速反彈。當前 25.3x 的 P/E 伴隨的是更高的營收基數但更低的利潤增速（因 CapEx 壓力），基本面質量相近但成長斜率下降。</p>
-      <p><strong>3. 主要驅動因素：</strong>盈利修正是最大權重因子——FY2026E EPS $30.55 的上修（+30% YoY）支撐了 Forward P/E 在合理區間，但 CapEx 不確定性壓制了進一步擴張。利率環境（10Y UST ~4.2–4.5%）對成長股估值構成結構性壓力。</p>
-    </div>
-    <p><strong>額外分析（深度版）：</strong>在 10Y UST ~4.3% 的環境下，Forward P/E 19.6x 對應的盈利收益率（earnings yield）約 5.1%，相對債券的溢價僅 ~80bp，處於歷史偏低水準。若利率維持高位，估值擴張空間有限；若降息預期回升，可提供 2–3x 的估值彈性。S&P 500 當前 Forward P/E ~19–20x，Meta 基本持平市場，歷史上 Meta 的溢價為 +10–20%，當前溢價消失，可能反映市場對 CapEx 週期的擔憂。</p>
+    <p><strong>解讀</strong>：</p>
+    <p>1. 當前估值情緒：<strong>合理偏便宜</strong>。Forward P/E ~20x 接近 5 年中位，但 P/FCF 偏高（75% 分位），反映市場已定價 Capex 對 FCF 的壓縮。</p>
+    <p>2. 上次處於此分位（~2023 年末）：業務處於「效率年」後的利潤率恢復期，EPS 成長 +73%。當前差異是成長率將從 +30% 降至 +15%，且 Capex 壓力遠大於當時。</p>
+    <p>3. 主要驅動因素：<strong>盈利修正</strong>權重最大——市場在 Q4 財報後修正了 FY2026 EPS 預期（從 ~$28 升至 $30.55），但同時 Capex 指引的震撼效應壓制了股價反彈。利率環境（10Y ~4.3%）是次要壓力。</p>
 
-    <div class="sub-title">7.2｜PEG 診斷</div>
+    <p><strong>額外分析</strong>：估值倍數 vs. 公債殖利率——2022 年 10Y 從 1.5% 飆升至 4.2% 時，META 的 Forward P/E 從 ~22x 壓縮至 ~9x。當前 10Y ~4.3%，Forward P/E 已回升至 ~20x，暗示市場對 Meta 的成長預期已部分抵消了高利率壓力。若利率降至 3.5%，Forward P/E 有望回升至 22-24x。</p>
+
+    <h3>7.2｜PEG 診斷</h3>
     <table>
       <tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
-      <tr><td>Forward P/E</td><td class="mono">19.6x</td><td>—</td><td>—</td></tr>
-      <tr><td>Non-GAAP EPS CAGR（FY2026 YoY +30.1%）</td><td class="mono">30.1%</td><td>—</td><td>單年極高增速，受一次性稅務基期影響</td></tr>
-      <tr><td>PEG（Non-GAAP，單年 FY2026）</td><td class="mono"><strong>0.65</strong></td><td>< 1.0 便宜</td><td><span class="badge badge-green">便宜</span></td></tr>
-      <tr><td>PEG（Non-GAAP，3 年 CAGR 15.3%）</td><td class="mono"><strong>1.28</strong></td><td>1–2 合理</td><td><span class="badge badge-yellow">合理</span></td></tr>
-      <tr><td>PEG（GAAP，3 年 CAGR 20%）</td><td class="mono"><strong>0.98</strong></td><td>< 1.0 便宜</td><td><span class="badge badge-green">便宜</span></td></tr>
-      <tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td class="mono">~12–13%</td><td>—</td><td>納入 FY2029–2030 自然放緩</td></tr>
-      <tr><td>PEG（5 年，Non-GAAP）</td><td class="mono"><strong>1.55</strong></td><td>—</td><td><span class="badge badge-yellow">合理偏貴</span></td></tr>
+      <tr><td>Forward P/E</td><td class="num">~20x</td><td>—</td><td>—</td></tr>
+      <tr><td>Non-GAAP EPS CAGR（3 年）</td><td class="num">~20-22%</td><td>—</td><td>FY2025→FY2028E</td></tr>
+      <tr><td>PEG（Non-GAAP，3 年）</td><td class="num">~0.91</td><td>< 1.0 便宜</td><td><span class="badge badge-green">便宜</span></td></tr>
+      <tr><td>PEG（GAAP，3 年）</td><td class="num">~1.03</td><td>1-2 合理</td><td><span class="badge badge-yellow">合理偏便宜</span></td></tr>
+      <tr><td>5 年 EPS CAGR（含遞減）</td><td class="num">~16%</td><td>—</td><td>反映成長自然放緩</td></tr>
+      <tr><td>PEG（5 年，Non-GAAP）</td><td class="num">~1.25</td><td>1-2 合理</td><td><span class="badge badge-yellow">合理</span></td></tr>
     </table>
-    <p><strong>3 年 vs 5 年 PEG 差異：</strong>1.28 vs 1.55，差距不大（+21%），顯示近期高增速（FY2026 +30%）能部分被遠期放緩吸收。不存在典型的「估值陷阱」（即近期 PEG 極低但遠期極高）。</p>
-    <p><strong>Price-to-Growth 矩陣落點：</strong>Meta 位於「高成長 × 中等估值」象限。以 3 年 PEG 1.28 而言，相對於其護城河強度（8.5/10），估值並不算貴。被低估的結構性原因：市場對 CapEx 的恐慌壓制了短期情緒，但 Forward P/E 已充分反映利潤率短期壓力。</p>
+    <p><strong>Price-to-Growth 矩陣落點</strong>：META 位於「合理偏便宜」象限。3 年 PEG < 1 暗示短期成長未被充分定價，但 5 年 PEG 升至 1.25 反映市場合理考慮了成長遞減。這不是被嚴重低估，而是合理定價中偏保守的位置。</p>
 
-    <div class="sub-title">7.3｜Reverse DCF：當前股價隱含了什麼？</div>
-    <p><strong>步驟一：固定參數</strong></p>
+    <h3>7.3｜Reverse DCF：當前股價隱含了什麼？</h3>
+    <p><strong>固定參數</strong>：</p>
     <table>
       <tr><th>參數</th><th>數值</th><th>來源</th></tr>
-      <tr><td>當前市值</td><td class="mono">~$1,500B</td><td>$593.90 × 2.53B shares</td></tr>
-      <tr><td>基期 FCF（FY2025）</td><td class="mono">$43.6B</td><td>公司 Q4 2025 新聞稿</td></tr>
-      <tr><td>WACC</td><td class="mono">11.0%</td><td>10Y UST 4.3% + Beta 1.28 × ERP 5.25% = 4.3% + 6.7% ≈ 11.0%</td></tr>
-      <tr><td>永續成長率</td><td class="mono">3.5%</td><td>數位廣告長期增速 + 通膨</td></tr>
-      <tr><td>預測期</td><td class="mono">10 年</td><td>標準</td></tr>
+      <tr><td>當前市值</td><td class="num">~$1,502B</td><td>$593.66 × 2.53B shares</td></tr>
+      <tr><td>基期 FCF（FY2025）</td><td class="num">$46.1B</td><td>SEC filing</td></tr>
+      <tr><td>WACC</td><td class="num">~11.5%</td><td>10Y UST 4.3% + Beta 1.28 × ERP 5.5%</td></tr>
+      <tr><td>永續成長率</td><td class="num">3.0%</td><td>數位廣告長期成長率</td></tr>
+      <tr><td>預測期</td><td class="num">10 年</td><td>標準</td></tr>
     </table>
-    <p><strong>步驟二：</strong>使 DCF 現值 = $1,500B，所需的前 10 年 FCF CAGR ≈ <strong class="mono">18–20%</strong></p>
-    <p><strong>步驟三：可信度對照</strong></p>
+    <p><strong>反推隱含 FCF CAGR</strong>：使 DCF 現值 = $1,502B 的前 10 年 FCF CAGR ≈ <strong>18-20%</strong></p>
+    <p><strong>可信度對照</strong>：</p>
     <table>
-      <tr><th>比較基準</th><th>數值</th><th>相對位置</th></tr>
-      <tr><td>過去 3 年實際 FCF CAGR（FY2022→FY2025）</td><td class="mono">~15%</td><td>隱含 CAGR 高於歷史</td></tr>
-      <tr><td>分析師共識 EPS CAGR（§2，3 年 Non-GAAP）</td><td class="mono">~15.3%</td><td>隱含 FCF CAGR 高於 EPS CAGR ~5pp</td></tr>
-      <tr><td>同業中最快 FCF CAGR（GOOGL，~12%）</td><td class="mono">~12%</td><td>隱含 CAGR 要求 Meta 遠超同業</td></tr>
+      <tr><th>比較基準</th><th>數值</th><th>相對隱含 CAGR</th></tr>
+      <tr><td>過去 3 年實際 FCF CAGR</td><td class="num">~15%（受 Capex 壓縮）</td><td>隱含 CAGR 高於歷史</td></tr>
+      <tr><td>分析師 EPS CAGR</td><td class="num">~20%（3 年）</td><td>接近，但需 FCF Margin 恢復</td></tr>
+      <tr><td>同業最快 FCF CAGR</td><td class="num">GOOGL ~15%</td><td>要求高於同業最強</td></tr>
     </table>
-    <p><strong>步驟四：兌現條件</strong></p>
-    <p>隱含 FCF CAGR 18–20% 需要以下條件同時成立：Revenue 年增 ~20%（維持 FCF Margin 21.7% 不變）；或 FCF Margin 從 21.7% 擴大至 ~30%（Revenue 年增 ~12%）。考慮到 FY2026 CapEx $115–135B 將壓縮 FCF Margin 至 10–15%，<strong>短期（FY2026–2027）FCF CAGR 為負</strong>，意味著 FY2028–2035 必須以 25%+ 的 FCF CAGR 追趕——這需要 CapEx 在 FY2028 後顯著回落且 AI 投資開始產生增量營收。</p>
+    <p><strong>兌現條件</strong>：隱含 CAGR 18-20% 需要以下條件同時成立：Revenue 維持 20%+ 年增 且 FCF Margin 從 FY2025 的 23% 在 2027-2028 年恢復至 25%+（即 Capex 成長減速）。此條件在 AI 投資從「建設期」轉入「收穫期」時合理，但時間點不確定。</p>
 
     <div class="signal-box signal-yellow">
-      <strong>隱含預期判斷：🟡 隱含預期合理但偏緊</strong><br>
-      市場要求的 FCF CAGR（18–20%）高於歷史與分析師共識，但若 AI 投資在 2027–2028 年開始兌現（FCF Margin 回升至 25%+），此預期可達成。安全邊際有限。
+      <strong>隱含預期判斷：🟡 隱含預期合理</strong><br>
+      隱含 FCF CAGR 18-20% 接近分析師共識，但需要 Capex 增速在 2027-2028 放緩且 AI 投資轉化為收入增量。公允定價，安全邊際有限。
     </div>
 
-    <div class="sub-title">7.4｜同業估值比較</div>
+    <h3>7.4｜同業估值比較</h3>
     <table>
-      <tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th></tr>
-      <tr style="font-weight:700;"><td>META</td><td class="mono">$1.50T</td><td class="mono">19.6x</td><td class="mono">14.8x</td><td class="mono">1.28</td><td class="mono">21.7%</td><td class="mono">~15.3%</td></tr>
-      <tr><td>GOOGL</td><td class="mono">$3.67T</td><td class="mono">26.5x</td><td class="mono">24.3x</td><td class="mono">1.70</td><td class="mono">~18.2%</td><td class="mono">~15.6%</td></tr>
-      <tr><td>SNAP</td><td class="mono">~$20B</td><td class="mono">~35x</td><td class="mono">~25x</td><td class="mono">>3</td><td class="mono">~5%</td><td class="mono">~20%</td></tr>
-      <tr><td>PINS</td><td class="mono">~$25B</td><td class="mono">~22x</td><td class="mono">~18x</td><td class="mono">~1.5</td><td class="mono">~20%</td><td class="mono">~15%</td></tr>
-      <tr style="font-style:italic;"><td>產業中位數</td><td>—</td><td class="mono">~22x</td><td class="mono">~18x</td><td class="mono">~1.5</td><td class="mono">~15%</td><td class="mono">~15%</td></tr>
+      <tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3 年）</th></tr>
+      <tr><td><strong>META</strong></td><td class="num"><strong>$1,502B</strong></td><td class="num"><strong>~20x</strong></td><td class="num"><strong>14.8x</strong></td><td class="num"><strong>0.88</strong></td><td class="num"><strong>22.9%</strong></td><td class="num"><strong>~20%</strong></td></tr>
+      <tr><td>GOOGL</td><td class="num">$2,350B</td><td class="num">~26.5x</td><td class="num">24.3x</td><td class="num">1.70</td><td class="num">~18%</td><td class="num">~16%</td></tr>
+      <tr><td>SNAP</td><td class="num">~$22B</td><td class="num">~45x</td><td class="num">~25x</td><td class="num">N/M</td><td class="num">~5%</td><td class="num">~60%+（低基期）</td></tr>
+      <tr><td>PINS</td><td class="num">~$22B</td><td class="num">~25x</td><td class="num">~20x</td><td class="num">~1.5</td><td class="num">~20%</td><td class="num">~18%</td></tr>
+      <tr><td>產業中位數</td><td>—</td><td class="num">~25x</td><td class="num">~20x</td><td class="num">~1.5</td><td class="num">~15%</td><td class="num">~18%</td></tr>
     </table>
-    <div class="prose">
-      <p><strong>1. 溢折價幅度：</strong>Meta Forward P/E 19.6x vs 產業中位 22x，<strong>折價約 11%</strong>；vs GOOGL 的 26.5x，折價約 26%。</p>
-      <p><strong>2. 支撐因素：</strong>Meta 的護城河（8.5/10）與 FCF Margin（21.7%）均優於產業中位。PEG 1.28 是同業中最低。折價主要反映市場對 CapEx 週期的擔憂，而非基本面劣勢。</p>
-      <p><strong>3. 均值回歸方向：</strong>若估值向產業中位數（22x）回歸，Meta 股價方向<strong>向上</strong>（約 +12%）。</p>
-      <p><strong>估值最低但基本面最強的同業：</strong>Meta 本身即符合此描述——Forward P/E 最低、FCF Margin 最高、PEG 最低。這是潛在的輪動買入訊號。</p>
-    </div>
+    <p><strong>同業溢折價邏輯</strong>：</p>
+    <p>1. META 的 Forward P/E（~20x）相對產業中位（~25x）有<strong>~20% 的折價</strong>。</p>
+    <p>2. META 的護城河（8.5/10）、FCF Margin（22.9%）、ROIC（35%+）均優於 PINS 和 SNAP，且 PEG（0.88）最低。<strong>基本面支撐溢價</strong>而非折價。</p>
+    <p>3. 若估值向產業中位數 25x Forward P/E 均值回歸，股價上行空間 ~25%。</p>
+    <p><strong>折價原因分析</strong>：市場給予折價的主因是 (1) Capex 激增的不確定性——$115-135B 是否能產生對應回報；(2) Zuckerberg 的單人控制結構；(3) Reality Labs 持續虧損。GOOGL 同為數位廣告巨頭但 Forward P/E 26.5x vs META 20x，差距 ~30%，而 GOOGL 的 EPS CAGR（~16%）反而低於 META（~20%）。這暗示市場對 Meta 的 Capex 風險溢價可能過度。</p>
 
-    <div class="sub-title">7.5｜估值四角驗證與結論</div>
+    <h3>7.5｜估值四角驗證與結論</h3>
     <table>
       <tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
-      <tr><td>歷史分位（7.1）</td><td><span class="badge badge-yellow">🟡 合理</span></td><td>Trailing P/E 50% 分位，Forward P/E 45–50% 分位</td></tr>
-      <tr><td>PEG 診斷（7.2）</td><td><span class="badge badge-green">🟢 便宜至合理</span></td><td>3 年 PEG 1.28，同業最低</td></tr>
-      <tr><td>Reverse DCF（7.3）</td><td><span class="badge badge-yellow">🟡 合理但偏緊</span></td><td>隱含 FCF CAGR 18–20% 高於歷史，但 AI ROI 兌現後可達成</td></tr>
-      <tr><td>同業相對（7.4）</td><td><span class="badge badge-green">🟢 折價</span></td><td>Forward P/E 19.6x vs 產業 22x，基本面更優</td></tr>
+      <tr><td>歷史分位（7.1）</td><td><span class="badge badge-yellow">🟡 合理</span></td><td>Forward P/E ~20x 接近 5 年中位</td></tr>
+      <tr><td>PEG 診斷（7.2）</td><td><span class="badge badge-green">🟢 便宜</span></td><td>PEG 0.88，成長率未被充分定價</td></tr>
+      <tr><td>Reverse DCF（7.3）</td><td><span class="badge badge-yellow">🟡 合理</span></td><td>隱含 FCF CAGR 18-20% 可達但需 Capex 減速</td></tr>
+      <tr><td>同業相對（7.4）</td><td><span class="badge badge-green">🟢 折價</span></td><td>vs GOOGL 折價 30%，基本面反而更優</td></tr>
     </table>
-    <p><strong>訊號一致性檢核：</strong>四個工具中三個偏向合理至便宜，Reverse DCF 略偏緊但不極端。分歧點在 FCF 基礎的估值（P/FCF 80% 分位）vs 盈利基礎的估值（P/E 50% 分位），原因是 CapEx 週期暫時壓縮 FCF 但未壓縮 EPS。在投資週期中，P/E 比 P/FCF 更能反映真實經營能力——因此 P/FCF 在此標的當前階段最可能失真。</p>
+    <p><strong>訊號一致性</strong>：4 個工具中 2 個「合理」+ 2 個「便宜/折價」= 偏向便宜的合理定價。PEG 與同業比較顯示成長被低估，但 Reverse DCF 提醒需要 Capex 減速配合。</p>
 
     <div class="signal-box signal-green">
       <strong>當前定價判斷：🟢 合理至便宜</strong><br>
-      隱含預期合理但偏緊，以 PEG 與同業比較衡量具備建倉安全邊際。CapEx 週期是短期壓制因子，但基本面品質（護城河 8.5/10、ROIC 28%、有機成長 >95%）支撐長期持有邏輯。
+      隱含預期合理且 PEG < 1，同業折價 20-30%，具備建倉安全邊際。但需注意：這個「便宜」有部分合理性——Capex 風險是真實的，不是純粹的市場誤判。
     </div>
 
-    <div class="sub-title">估值倍數定錨</div>
+    <h3>估值倍數定錨</h3>
     <table>
-      <tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr>
-      <tr><td>① 護城河品質（§3）</td><td>8.5/10</td><td>相較產業基準 +2x</td></tr>
-      <tr><td>② 成長可持續年數（§2.5A）</td><td>7–9 年（🟡）</td><td>±0</td></tr>
-      <tr><td>③ 成長品質（§2.5B）</td><td>有機 >95% / 量驅動為主</td><td>-1x（量驅動而非定價驅動）</td></tr>
+      <tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 影響</th></tr>
+      <tr><td>① 護城河品質（§3）</td><td>8.5/10</td><td>+3x（相較同業基準 20x）</td></tr>
+      <tr><td>② 成長可持續年數（§2.5A）</td><td>7-9 年（🟡）</td><td>±0x</td></tr>
+      <tr><td>③ 成長品質（§2.5B）</td><td>有機 >95%，量價雙驅</td><td>+2x</td></tr>
       <tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td>+2x</td></tr>
-      <tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC−WACC +14.2%，↑</td><td>+1x</td></tr>
-      <tr><td>⑥ 當前利率環境</td><td>10Y UST ~4.3%</td><td>高利率壓縮成長股 -2x</td></tr>
-      <tr><td colspan="2"><strong>產業基準倍數</strong></td><td><strong>22x</strong></td></tr>
-      <tr><td colspan="2"><strong>調整後合理區間</strong></td><td><strong>22x + 2 − 1 + 2 + 1 − 2 = <span class="mono">24x</span>（區間 21x–27x）</strong></td></tr>
+      <tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC-WACC ~21%p ↑</td><td>+2x</td></tr>
+      <tr><td>⑥ 衰退信號（§2.5 偵測表）</td><td>4 個亮燈</td><td>-3x</td></tr>
+      <tr><td>⑦ 利率環境</td><td>10Y ~4.3%</td><td>-1x（成長股壓縮）</td></tr>
+      <tr><td><strong>產業基準倍數</strong></td><td><strong>20x</strong></td><td><strong>調整後：25x（20+3+2+2+2-3-1）</strong></td></tr>
     </table>
-    <p><strong>分析師目標價參考：</strong>高 $1,144 / 中位 $830–838 / 低 $645（n=39–40 位）。以中位 $835 對應 Forward P/E ~27x，略高於我們的合理區間上緣，可能隱含對 AI ROI 較樂觀的假設。我們認為在 CapEx ROI 明確化前，21–24x 更為審慎。</p>
+    <p><strong>合理 Forward P/E 區間：22x ∼ 28x</strong>（對應股價 ~$672 ∼ $855，基於 FY2026E EPS $30.55）</p>
+    <p><strong>分析師目標價參考</strong>：高 $1,144 / 中位 $835 / 低 $645（n=40-45 位）。中位 $835 對應 Forward P/E ~27x，處於我們區間上緣，偏樂觀但不離譜。</p>
   </div>
 </div>
 
 <!-- §8 -->
 <div class="section">
-  <div class="section-title">§8｜投資結論</div>
+  <div class="section-header">§8｜投資結論</div>
   <div class="section-body">
 
-    <div class="sub-title">財報信號與估值銜接</div>
-    <p>FY2025 Q4 財報顯示核心廣告業務仍然強勁（Revenue +24%、EPS Beat 8.4%），但 FY2026 費用指引 $162–169B 與 CapEx $115–135B 是重大變數。<strong>這份財報讓 Reverse DCF 的隱含預期變得更困難兌現</strong>，理由是 FY2026 FCF 將因 CapEx 暴增而大幅縮水（可能降至 $15–25B），短期拉高了對中長期 FCF 追趕的要求。但同時，管理層承諾 FY2026 operating income 將高於 FY2025（$83.3B），暗示營收增速足以部分吸收費用增長。</p>
+    <h3>財報信號與估值銜接</h3>
+    <p>Q4 2025 財報：Revenue Beat +2.6%、EPS Beat +8.4%、Q1 2026 Guidance 加速至 +27%。<strong>這份財報讓隱含預期變得更容易兌現</strong>——Revenue 加速成長 + AI 廣告效率提升的實際數據（轉換率 +3%、廣告品質 +12%）證明了 AI 投資正在產生回報。但 $115-135B Capex 指引同時提升了未來的折舊壓力，使得 Operating Margin 改善空間受限。</p>
 
+    <h3>進場 / 觀望 / 迴避</h3>
     <div class="signal-box signal-green">
-      <strong>判斷：進場——建倉區間合理，但建議分批</strong>
+      <strong>判斷：進場（分批建倉）</strong>
     </div>
 
-    <div class="prose">
-      <p><strong>① 短期信號（0–12 個月）：</strong>Q4 Revenue/EPS 雙 Beat 提供正面動能。Q1 2026 guidance 中位 $55B（YoY +17%）符合季節性。短期主要風險是 Q1 2026 財報若揭露 CapEx 超出 $135B 上緣或 operating income 指引下修，將觸發估值下修。下一個催化劑：2026-04-29 Q1 2026 財報。</p>
-      <p><strong>② 中期成長確信度（1–3 年）：</strong>分析師共識 EPS CAGR 15.3%（Non-GAAP）的驅動因素為量驅動（ad impressions +12–18%）+ 定價穩定（ASP +6–9%）+ AI 效率提升。能見度：<strong>中高</strong>。廣告業務的可預測性極強——Meta 已連續 6 季 Beat 營收預期。但 CapEx ROI 的不確定性降低了 EPS 的確信度（費用端難預測）。</p>
-      <p><strong>③ 長期護城河邏輯（3 年後）：</strong>持有 Meta 3 年後的理由在於：（1）Runway 7–9 年（§2.5A），即使核心廣告放緩，AI 新產品線可延伸成長；（2）ROIC 持續高於 WACC 且趨勢擴大（§2.5D），每一塊投入的資本都在創造超額報酬；（3）護城河為強化型（§2.5C），成長本身在加寬護城河而非消耗護城河。<strong>這三點共同構成持有高投資週期標的的合理依據。</strong></p>
-    </div>
+    <p><strong>① 短期信號（0-12 個月）</strong>：Q4 財報全面超預期，Q1 2026 Guidance 強勁（+27% YoY），廣告主需求加速。短期催化劑包括 Q1 2026 財報（4/29）與 WhatsApp 廣告全球推廣。風險在於宏觀衰退可能壓縮廣告預算——但目前無明確跡象。</p>
 
-    <div class="sub-title">條件式進場判斷</div>
+    <p><strong>② 中期成長確信度（1-3 年）</strong>：分析師共識 FY2026E EPS +30%、FY2027E +15%。驅動因素：量（DAP 成長 +7%、新平台 Threads/WhatsApp 貨幣化）+ 價（AI 驅動的廣告效率持續提升 Price per Ad）。能見度中高——AI 廣告效率的改善已有 Q4 數據支持，但 Capex 投資回報的量化仍不明確。</p>
+
+    <p><strong>③ 長期護城河邏輯（3 年後）</strong>：Runway 7-9 年，ROIC 35%+ 且持續擴大，成長與護城河為強化型連動——AI 投資使廣告匹配更精準，同時提升轉換成本（廣告主越依賴 Meta AI 工具，越難轉移）。3 年後仍值得持有的核心理由是：<strong>35.8 億 DAP 構成的社交圖譜 + AI 驅動的廣告技術壁壘 = 全球最難以複製的數位廣告資產</strong>。這是持有高估值（25x+）標的的唯一合理依據。</p>
+
+    <h3>⚠️ 這是價值陷阱嗎？</h3>
     <table>
-      <tr><th>條件類型</th><th>具體內容</th></tr>
-      <tr><td><strong>估值條件</strong></td><td>Forward P/E ≤ 21x（對應約 $640 以下），或因市場恐慌跌破 $550（Forward P/E ~18x，§7.5 合理區間下緣），為加碼良機</td></tr>
-      <tr><td><strong>基本面條件</strong></td><td>Q1 2026 財報需確認：（1）Revenue ≥ $55B（guidance 中位）；（2）Operating Income 不低於 Q1 2025 的 $17.6B；（3）CapEx 未超出 $135B 上緣</td></tr>
-      <tr><td><strong>事件觸發條件</strong></td><td>以下任一催化劑出現後可考慮加碼：（1）Meta AI 代理推出訂閱制或交易佣金模式（證明 AI 新營收流）；（2）WhatsApp 付費 messaging 營收突破 $5B 年化；（3）FY2027 CapEx 指引較 FY2026 回落（投資高峰過去的信號）</td></tr>
+      <tr><th>問題</th><th>回答</th></tr>
+      <tr><td><strong>最可能的陷阱模式</strong></td><td><strong>隱性資本密集型</strong>。Capex 從 $28B（2023）→$72B（2025）→$125B（2026E）的增速遠超 Revenue 成長，若 AI 投資無法在 2-3 年內轉化為可量化的收入增量，FCF 將被長期壓制。</td></tr>
+      <tr><td><strong>「非陷阱」最強論據</strong></td><td>Q4 2025 已出現 AI 投資回報的實證：GEM 模型將 GPU 翻倍後轉換率提升 3%、廣告品質提升 12%、工程師產出 +30%。ROIC 從 27%（2023）升至 35%+（2025），證明資本投入正在產生超額回報。Gross Margin 82% 的高位證實定價能力未受損。</td></tr>
+      <tr><td><strong>「可能是陷阱」最強反駁</strong></td><td>$125B 的年度 Capex 若折舊攤銷在 2027-2028 年集中釋放（假設 5 年攤提），每年新增折舊約 $25B，將直接壓縮 Operating Income ~25%。若同時 Revenue 成長降至 15%，Operating Margin 可能從 41% 降至 30%+，EPS 成長將停滯。管理層未提供 Capex 投資的具體 ROI 框架是最大的信息不對稱。</td></tr>
+      <tr><td><strong>如何偵測陷阱？</strong></td><td>(1) <strong>Ad Revenue / Capex 比率</strong>——若此比率連續 2 季下滑（低於 2.0x），暗示投資效率惡化；(2) <strong>FCF Margin</strong>——若 2027E FCF Margin 未回升至 20%+，Capex 減速預期落空。</td></tr>
     </table>
 
-    <div class="sub-title">下行風險量化（引用 §2.5E）</div>
-    <div class="signal-box signal-red">
-      <p>若 3 年後成長率降至 10%，Forward P/E 壓縮至 15–17x，估值跌幅約 <strong>30–40%</strong></p>
-      <p>若 3 年後成長率降至 5%，Forward P/E 壓縮至 12–14x，估值跌幅約 <strong>45–55%</strong></p>
-      <p><strong>持有此標的前，須確認能承受上述幅度的回撤。</strong></p>
+    <div class="signal-box signal-yellow">
+      <strong>最終定性：🟡 觀察期</strong><br>
+      低估值（Forward P/E 20x vs 同業 25x+）有部分基本面支撐（AI 投資回報實證），但 Capex 規模史無前例，2026 年為投資高峰，需等待 2-3 季財報驗證 AI 投資的收入轉化率。建議小倉位進場，後續加碼取決於 Capex ROI 驗證。
     </div>
 
-    <div class="sub-title">最關鍵監測指標</div>
+    <h3>條件式進場判斷</h3>
+    <table>
+      <tr><th>條件類型</th><th>具體內容</th></tr>
+      <tr><td><strong>估值條件</strong></td><td>Forward P/E 回落至 18x 以下（~$550）為加碼點；22-25x 區間（$672-$764）為合理區間</td></tr>
+      <tr><td><strong>基本面條件</strong></td><td>Q1 2026 財報（4/29）需確認：(1) Revenue 符合 $53.5-56.5B 指引；(2) Ad Revenue/Capex 比率維持 >2.0x</td></tr>
+      <tr><td><strong>陷阱排除條件</strong></td><td>若以下信號出現，立即停損重評：(1) Gross Margin 連續 2 季下滑 >1pp；(2) 管理層再次上修 2026 Capex 指引至 >$140B 而無對應收入上修</td></tr>
+      <tr><td><strong>事件觸發條件</strong></td><td>加碼催化劑：(1) 2026 下半年 Capex 指引下修；(2) WhatsApp 商務/AI Agent 推出具體收費方案；(3) 降息週期啟動壓低 WACC</td></tr>
+    </table>
+
+    <h3>下行風險量化（引用 §2.5E）</h3>
+    <p class="mono">若 3 年後成長率降至 10%，估值壓縮幅度約 <strong>25%</strong>（Forward P/E 從 20x 壓至 15x）</p>
+    <p class="mono">若 3 年後成長率降至 5%，估值壓縮幅度約 <strong>40%</strong>（Forward P/E 從 20x 壓至 12x）</p>
+    <p><strong>持有此標的前，須確認能承受上述幅度的回撤。</strong></p>
+
+    <h3>最關鍵監測指標</h3>
     <table>
       <tr><th>#</th><th>監測指標</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
-      <tr>
-        <td>1</td>
-        <td><strong>AI 驅動的廣告 ROAS 提升幅度</strong>（可從 Earnings Call 中管理層揭露的 GEM model 效率數字追蹤）</td>
-        <td><span class="badge badge-blue">🔵 長期成長領先信號</span></td>
-        <td>若連續兩季管理層不再提及 AI 對廣告效率的具體量化提升，或 Average Price per Ad YoY 轉負</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td><strong>CapEx 實際值 vs 指引上緣</strong></td>
-        <td>短期財務信號</td>
-        <td>單季 CapEx > $37.5B（即 $135B 上緣的季度分攤 + 10%），或 FY2027 CapEx 指引進一步上調</td>
-      </tr>
+      <tr><td>1</td><td><strong>Ad Revenue / Capex 比率</strong></td><td>🔵 長期成長領先信號</td><td>連續 2 季低於 2.0x（暗示投資效率惡化）</td></tr>
+      <tr><td>2</td><td><strong>FY2027E FCF Margin 共識預期</strong></td><td>短期估值信號</td><td>若分析師共識 FCF Margin <18%，暗示 Capex 減速預期落空</td></tr>
     </table>
 
   </div>
 </div>
 
 <!-- Footer -->
-<div style="text-align:center;color:var(--text-light);font-size:12px;margin-top:40px;padding:20px;border-top:1px solid #E2E8F0;">
-  DD_META_20260323 ｜ 買側標的研究框架 v4.2 ｜ 深度版 ｜ 本報告僅供研究參考，不構成投資建議
+<div style="text-align:center; padding:30px 0 20px; color:var(--text-light); font-size:12px; font-family:'IBM Plex Mono',monospace;">
+  DD_META_20260323 ｜ 買側標的研究框架 v4.2.1 ｜ 深度版<br>
+  本報告僅供研究參考，不構成投資建議。所有數據來自公開來源，分析基於搜尋結果而非訓練資料。
 </div>
 
-</div><!-- container -->
+</div>
 </body>
 </html>
