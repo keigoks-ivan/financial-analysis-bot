@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_KLAC_20260323 | 買側深度研究報告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8FAFC; --card: #FFFFFF; --title-bg: #1E3A5F; --accent: #3B82F6;
+  --row-alt: #F1F5F9; --beat: #DCFCE7; --beat-text: #166534;
+  --miss: #FEE2E2; --miss-text: #991B1B; --neutral-bg: #FEF9C3; --neutral-text: #92400E;
+  --green-bg: #DCFCE7; --red-bg: #FEE2E2; --yellow-bg: #FEF9C3; --blue-bg: #EFF6FF;
+  --text: #1E293B; --text-secondary: #64748B; --border: #E2E8F0;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); font-size:14px; line-height:1.7; }
+.header-bar { position:sticky; top:0; z-index:100; background:var(--title-bg); color:#fff; padding:10px 32px; display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:13px; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+.header-bar span { opacity:0.85; } .header-bar .ticker { font-size:18px; font-weight:600; opacity:1; letter-spacing:1px; }
+.container { max-width:1100px; margin:0 auto; padding:24px 20px 80px; }
+.section { background:var(--card); border:1px solid var(--border); margin-bottom:20px; overflow:hidden; }
+.section-title { background:var(--title-bg); color:#fff; padding:14px 24px; font-size:16px; font-weight:700; border-left:4px solid var(--accent); letter-spacing:0.5px; }
+.section-body { padding:24px; }
+.section-body h3 { font-size:14px; font-weight:700; color:var(--title-bg); margin:20px 0 10px; border-bottom:2px solid var(--accent); padding-bottom:4px; display:inline-block; }
+.section-body h3:first-child { margin-top:0; }
+.section-body p { margin-bottom:10px; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+th { background:var(--title-bg); color:#fff; padding:8px 12px; text-align:left; font-weight:500; font-size:12px; }
+td { padding:7px 12px; border-bottom:1px solid var(--border); }
+tr:nth-child(even) td { background:var(--row-alt); }
+.mono { font-family:'IBM Plex Mono',monospace; font-size:12px; }
+.badge { display:inline-block; padding:2px 10px; border-radius:3px; font-size:12px; font-weight:600; }
+.badge-beat { background:var(--beat); color:var(--beat-text); }
+.badge-miss { background:var(--miss); color:var(--miss-text); }
+.badge-neutral { background:var(--neutral-bg); color:var(--neutral-text); }
+.badge-green { background:var(--green-bg); color:var(--beat-text); }
+.badge-red { background:var(--red-bg); color:var(--miss-text); }
+.badge-yellow { background:var(--yellow-bg); color:var(--neutral-text); }
+.badge-blue { background:var(--blue-bg); color:#1E40AF; }
+.verdict-box { padding:16px 20px; border-left:4px solid; margin:16px 0; font-weight:500; }
+.verdict-green { background:var(--green-bg); border-color:var(--beat-text); }
+.verdict-yellow { background:var(--yellow-bg); border-color:var(--neutral-text); }
+.verdict-red { background:var(--red-bg); border-color:var(--miss-text); }
+.print-btn { position:fixed; bottom:24px; right:24px; background:var(--title-bg); color:#fff; border:none; padding:12px 20px; font-family:'Noto Sans TC',sans-serif; font-size:13px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.2); z-index:200; }
+.print-btn:hover { background:var(--accent); }
+.rating-badge { display:inline-block; padding:6px 16px; font-size:14px; font-weight:700; border-radius:4px; margin:8px 0; }
+.sub-note { font-size:12px; color:var(--text-secondary); font-style:italic; }
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:16px 0; }
+.kpi-card { background:var(--row-alt); padding:14px; border-left:3px solid var(--accent); }
+.kpi-card .kpi-label { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; }
+.kpi-card .kpi-value { font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:600; color:var(--title-bg); }
+.kpi-card .kpi-sub { font-size:11px; color:var(--text-secondary); }
+@media print { .header-bar,.print-btn{display:none!important} body{background:#fff;font-size:11px} .container{padding:0;max-width:100%} .section{break-inside:avoid;border:1px solid #ccc;margin-bottom:12px} .section-body{padding:16px} table{font-size:10px} }
+</style>
+</head>
+<body>
+<div class="header-bar">
+  <span class="ticker">KLAC</span>
+  <span>深度版 DD</span>
+  <span>資料抓取：2026-03-23</span>
+  <span>最新股價：~$1,500 USD</span>
+  <span>最近財報：FY2026 Q2（2026/01/29）</span>
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+<div class="container">
+
+<div class="kpi-grid">
+  <div class="kpi-card"><div class="kpi-label">市值</div><div class="kpi-value">~$196B</div><div class="kpi-sub">全球 #82</div></div>
+  <div class="kpi-card"><div class="kpi-label">52 週區間 (USD)</div><div class="kpi-value">$551–$1,693</div><div class="kpi-sub">近歷史高點</div></div>
+  <div class="kpi-card"><div class="kpi-label">Trailing P/E</div><div class="kpi-value">~43x</div><div class="kpi-sub">5 年均值 ~25x</div></div>
+  <div class="kpi-card"><div class="kpi-label">Forward P/E (NTM)</div><div class="kpi-value">~36x</div><div class="kpi-sub">基於 CY26E EPS ~$42</div></div>
+  <div class="kpi-card"><div class="kpi-label">FY25 EPS (GAAP)</div><div class="kpi-value">$30.37</div><div class="kpi-sub">FY ended Jun 2025</div></div>
+  <div class="kpi-card"><div class="kpi-label">LTM FCF</div><div class="kpi-value">$4.38B</div><div class="kpi-sub">FCF Margin ~34%</div></div>
+</div>
+
+<!-- §0 -->
+<div class="section"><div class="section-title">§0｜序章：第一性原理 × 逆向思考</div><div class="section-body">
+<h3>存在意義</h3>
+<p>KLA 解決的核心問題是：如何在半導體製造過程中即時偵測奈米級缺陷並精確量測圖案品質。晶片良率是製造商獲利的命脈——一個微小缺陷即可導致整片晶圓報廢。隨著電晶體尺寸縮小至 2nm 以下，製程複雜度指數級上升，缺陷偵測難度也同步飆升。KLA 是「半導體製造的品管系統」，涵蓋光學檢測、電子束檢測、計量與數據分析。</p>
+<p>若 KLA 明天消失，全球晶片良率將在數週內開始崩潰。TSMC、Samsung、Intel 無法在沒有製程控制的情況下量產先進製程晶片。沒有良率管理就沒有先進製程，沒有先進製程就沒有 AI 晶片。KLA 佔全球製程控制設備市場約 50–55%，是該領域的絕對領導者。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p><strong>地緣政治曝險：</strong>KLA 總部在美國加州，但中國營收佔比約 25–30%（mid to high 20%）。美國出口管制已限制先進設備對中國銷售，管理層指引中國 WFE 將「溫和成長」。進一步限制可能壓縮 5–10% 營收。此外，KLA 的客戶（TSMC）集中在台灣，台海風險為系統性風險。</p>
+<p><strong>技術替代風險：</strong>製程控制領域的技術壁壘極高，但不如 ASML 的 EUV 那般絕對壟斷。Applied Materials、Onto Innovation、Hitachi High-Tech 在特定細分領域有競爭力。最大的結構性風險是 AI/ML 驅動的軟體式良率管理是否可能部分替代硬體檢測——但目前趨勢顯示 AI 反而增加了對更多數據（即更多檢測）的需求。時間軸：5+ 年內不構成實質威脅。</p>
+<p><strong>管理層失職情境：</strong>KLA 的資本配置紀律在半導體設備業中堪稱最佳（17 次連續股息增加、$11B+ 回購授權）。最大執行風險在於先進封裝市場（Advanced Packaging）的激烈競爭——KLA 宣稱 70% YoY 成長，但該市場參與者眾多，市佔維持需要持續創新。</p>
+</div></div>
+
+<!-- §1 -->
+<div class="section"><div class="section-title">§1｜即時財報情報（FY2026 Q2，截至 2025/12/31，2026/01/29 公布）</div><div class="section-body">
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>Q2 FY26 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td class="mono">$3.30B</td><td class="mono">$3.25B</td><td><span class="badge badge-beat">Beat</span></td><td class="mono">+7.2%</td></tr>
+<tr><td>Non-GAAP EPS</td><td class="mono">$8.85</td><td class="mono">$8.81</td><td><span class="badge badge-beat">Beat</span></td><td class="mono">+7.9%</td></tr>
+<tr><td>GAAP EPS</td><td class="mono">$8.68</td><td class="mono">$8.98</td><td><span class="badge badge-miss">Miss</span></td><td class="mono">+40.9%</td></tr>
+<tr><td>Non-GAAP Gross Margin</td><td class="mono">62.6%</td><td class="mono">~62%</td><td><span class="badge badge-beat">Beat +60bps</span></td><td class="mono">+90bps</td></tr>
+<tr><td>Operating Margin (non-GAAP)</td><td class="mono">42.8%</td><td class="mono">~42%</td><td><span class="badge badge-beat">Beat</span></td><td class="mono">stable</td></tr>
+<tr><td>FCF</td><td class="mono">$1.26B</td><td class="mono">—</td><td><span class="badge badge-beat">Record LTM</span></td><td class="mono">+30% LTM</td></tr>
+</table>
+<p class="sub-note">CY2025 全年（KLA 財年橫跨 7 月至 6 月，此處以日曆年計）：營收 $12.745B（+17% YoY）、EPS +29% YoY、FCF $4.38B LTM（+30%）。Q2 為公司歷史營收紀錄季。</p>
+
+<h3>② Earnings Call 語氣解析</h3>
+<p><strong>管理層基調：自信但審慎。</strong>CEO Rick Wallace 多次使用「record」描述 Q2 與 CY2025 全年表現。但對 FY2026（CY2026 H1）的成長預期為「mid-single digit」，較市場部分樂觀預期溫和。管理層強調「second half acceleration」——H2 將顯著加速。</p>
+<p><strong>Forward Guidance（Q3 FY2026，Mar-26 季）：</strong>營收 $3.35B ± $150M，Non-GAAP EPS $9.80 ± $0.78（顯著環比提升），Non-GAAP 毛利率 61.75% ± 1%。全年 FY2026 營收 mid-single digit growth vs FY2025 的 $12.75B。2026/03/12 Investor Day 確認 Q3 指引不變，並發布新 2030 Target Model。</p>
+<p><strong>刻意強調的主題：</strong>① 製程控制密度提升（Process Control Intensity）隨先進製程增加——更小節點 = 更多檢測需求；② 先進封裝營收 CY2025 $950M（+70% YoY），預計 2026 年再增 mid-to-high-teens；③ 服務營收持續雙位數成長，受益於 installed base 擴大；④ AI 生態系統中 KLA 的角色。</p>
+<p><strong>刻意迴避的問題：</strong>① DRAM 零件成本上升對毛利率的具體壓力（僅說 75–100bps for FY2026）；② 供應鏈瓶頸的具體解決時程（光學元件和記憶體相關零件短缺限制 H1 出貨）；③ 中國市場具體下滑幅度未量化。</p>
+
+<h3>③ 產業 Imply 萃取</h3>
+<p><strong>需求端：</strong>WFE 市場 CY2025 ~$121B，KLA 預期 CY2026 core WFE 增至 low $120B，加上先進封裝約 $12B，合計 mid-$130B。暗示整體設備需求穩健成長但非爆發式，H2 加速主要來自客戶設施就緒（facility readiness）。</p>
+<p><strong>供給端：</strong>光學元件和記憶體相關零件供應受限，KLA 自身產能為 H1 瓶頸。管理層正優先解決，預計 H2 緩解。暗示需求 > 供給，但非結構性短缺。</p>
+<p><strong>競爭格局：</strong>KLA 在光學 wafer 檢測和 reticle 檢測的市佔持續強化。先進封裝市場為新戰場，KLA 宣稱份額增長快於市場。Foundry/Logic 佔 SPC 營收 ~60%，Memory ~40%（Q2）。</p>
+<p><strong>對同業推論：</strong>KLA 的 mid-single digit 成長預期低於 ASML 的 10–19% range，暗示製程控制設備的週期性回升慢於微影設備。但 KLA 的高毛利率（62%+ vs ASML 52%）和更低的客戶集中度提供更穩定的獲利基礎。</p>
+</div></div>
+
+<!-- §2 -->
+<div class="section"><div class="section-title">§2｜核心門檻檢核</div><div class="section-body">
+<h3>EPS CAGR 強制搜尋結果</h3>
+<p>基期：CY2025 EPS（GAAP）≈ $32.0（WallStreetZen：$31.99）。KLA 財年為 Jul–Jun，此處用日曆年 CY 以便比較。</p>
+<p>CY2026E（FY+1）：共識 ~$36.49（n=29，WallStreetZen），低 $33.74，高 $39.82。Zacks FY2026 全年 EPS 共識 $34。</p>
+<p>CY2027E（FY+2）：共識 ~$42.81（n=26），低 $37.84，高 $52.63。</p>
+<p>CY2028E（FY+3）：共識 ~$46.76（n=20+），低 $40.76，高 $55.29。</p>
+<p class="sub-note">口徑：KLA GAAP 與 Non-GAAP 差距主要來自 SBC、收購無形資產攤銷與重組費用。Non-GAAP 通常高於 GAAP 約 2–5%。</p>
+<p><strong>GAAP CAGR（3 年）：</strong>($46.76 ÷ $32.0)^(1/3) − 1 ≈ <span class="mono">13.5%</span></p>
+<p><strong>Non-GAAP CAGR（3 年）：</strong>估算 ~<span class="mono">14–16%</span>（Non-GAAP 基數略高）</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin</td><td>> 15%</td><td><span class="badge badge-beat">✓</span></td><td class="mono">LTM FCF $4.38B / Rev $12.7B = ~34%（極優秀）</td></tr>
+<tr><td>ROIC</td><td>產業頂尖</td><td><span class="badge badge-beat">✓</span></td><td class="mono">ROIC ~42–73%（不同來源口徑），ROE ~101%</td></tr>
+<tr><td>EPS CAGR (3 年)</td><td>> 20%</td><td><span class="badge badge-miss">✗ 不符</span></td><td>GAAP CAGR ~13.5%，Non-GAAP ~15%<br>低於 20% 門檻<br>資料來源：WallStreetZen, TipRanks, Zacks</td></tr>
+<tr><td>PEG (Non-GAAP)</td><td>< 2</td><td><span class="badge badge-miss">✗ 邊際不符</span></td><td class="mono">Forward P/E ~36x ÷ CAGR ~15% = PEG ~2.4；StockAnalysis PEG 2.42</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge badge-neutral">部分</span></td><td class="mono">現金 $5.2B vs 長期負債 $5.88B，淨負債 ~$0.9B，D/E 1.12</td></tr>
+<tr><td>護城河強度</td><td>> 8 分，趨勢擴大</td><td><span class="badge badge-beat">✓</span></td><td>評分 8.5/10，趨勢：穩定至擴大</td></tr>
+</table>
+<div class="verdict-box verdict-yellow"><strong>門檻警示：</strong>EPS CAGR ~14% 未達 20% 門檻，PEG 2.4 偏高。KLA 是高品質複利機器（FCF/ROIC 頂尖），但以當前估值（43x trailing P/E）衡量，成長率不足以支撐「高成長股」定位。更像是「高品質穩健成長股被賦予高成長估值」。</div>
+</div></div>
+
+<!-- §2.5 -->
+<div class="section"><div class="section-title">§2.5｜長期成長性評估</div><div class="section-body">
+<div class="rating-badge" style="background:var(--yellow-bg);color:var(--neutral-text);">🟡 中等可見度成長</div>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>WFE TAM（億美元）</td><td class="mono">~$1,350（含先進封裝）</td><td>CY2026E，來源：KLA Investor Day / SEMI</td></tr>
+<tr><td>KLA 市佔</td><td class="mono">製程控制 ~50–55%</td><td>穩定擴大中，先進封裝份額增長</td></tr>
+<tr><td>成長可持續年數</td><td class="mono"><strong>7–9 年</strong></td><td>製程控制密度隨節點推進結構性提升，但 WFE 整體成長 ~HSD–LDD，KLA 的 alpha 來自份額增長</td></tr>
+</table>
+
+<h3>B｜成長品質判斷</h3>
+<table>
+<tr><th>類型</th><th>佔比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td class="mono">~85%</td><td>核心製程控制系統 + 服務業務自然增長</td></tr>
+<tr><td>無機成長</td><td class="mono">~15%</td><td>歷史上透過收購擴展（如 Orbotech 2019），但近年以有機為主</td></tr>
+</table>
+<p><strong>驅動結構：</strong>定價驅動（ASP 隨先進製程提升）+ 量驅動（更多檢測步驟 per wafer）。雙引擎但量的增速溫和。</p>
+
+<h3>C｜成長護城河連動</h3>
+<table>
+<tr><th>類型</th><th>具體表現</th></tr>
+<tr><td><strong>強化型 ✓</strong></td><td>更多 installed base → 更多服務收入（高毛利）→ 更多製程數據回饋 → 更好的 AI/ML 良率分析軟體 → 更深客戶黏著。服務營收持續雙位數成長，CY2025 佔比 ~28%。</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>符合</th></tr>
+<tr><td>ROIC</td><td class="mono">~42–73%</td><td class="mono">~35%</td><td>↑</td><td><span class="badge badge-beat">✓</span></td></tr>
+<tr><td>FCF Margin</td><td class="mono">~34%</td><td class="mono">~30%</td><td>↑</td><td><span class="badge badge-beat">✓</span></td></tr>
+<tr><td>FCF/NI</td><td class="mono">~96%</td><td class="mono">~85%</td><td>↑</td><td><span class="badge badge-beat">✓</span></td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>合理 Fwd P/E</th><th>潛在跌幅</th></tr>
+<tr style="background:var(--yellow-bg)"><td>3 年後成長率降至 10%</td><td class="mono">~25x</td><td class="mono">~31%</td></tr>
+<tr style="background:var(--yellow-bg)"><td>3 年後成長率降至 7%</td><td class="mono">~22x</td><td class="mono">~39%</td></tr>
+<tr style="background:var(--red-bg)"><td>3 年後成長率降至 3%</td><td class="mono">~18x</td><td class="mono">~50%</td></tr>
+</table>
+</div></div>
+
+<!-- §3 -->
+<div class="section"><div class="section-title">§3｜護城河分析（報告核心）</div><div class="section-body">
+<p><strong>評分：8.5 ／ 10</strong>（全球最嚴標準。扣分原因：非壟斷，存在競爭者）</p>
+
+<h3>護城河來源</h3>
+<p><strong>無形資產（9/10）：</strong>KLA 擁有數十年的光學檢測、電子束技術與演算法累積。其 broadband plasma 光學檢測平台和 e-beam 缺陷檢測技術在精度和速度上領先競爭者。超過 30,000 台 installed base 產生的海量製程數據構成獨特的軟體/數據護城河。</p>
+<p><strong>轉換成本（8/10）：</strong>KLA 的檢測與量測系統深度嵌入客戶的良率管理工作流程。製程開發期間（2–3 年）的所有良率學習曲線都基於 KLA 設備的數據格式和分析平台。更換供應商意味著重建整個良率知識庫。</p>
+<p><strong>規模優勢（7/10）：</strong>R&D 支出 ~$1.5B/年（11.6% of Rev），比任何純製程控制競爭對手高出數倍。規模優勢表現為研發密度和全球服務網路覆蓋。</p>
+<p><strong>網路效應（6/10）：</strong>類似 ASML，KLA 的 installed base 越大，製程數據越豐富，良率分析軟體越精準，形成正反饋循環。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th></tr>
+<tr><td>Applied Materials (光學檢測)</td><td class="mono">~15%</td><td>穩定</td><td>在特定層次有競爭力，但整體不如 KLA</td></tr>
+<tr><td>Onto Innovation</td><td class="mono">~8%</td><td>略增</td><td>在量測領域有一定份額</td></tr>
+<tr><td>Hitachi High-Tech</td><td class="mono">~10%</td><td>穩定</td><td>CD-SEM 量測有競爭力</td></tr>
+<tr><td>Lasertec (光罩檢測)</td><td class="mono">~5%</td><td>穩定</td><td>EUV 光罩檢測的日本競爭者</td></tr>
+</table>
+
+<h3>護城河趨勢：<span class="badge badge-beat">穩定至擴大</span></h3>
+<p>先進封裝的快速增長（+70% YoY）為 KLA 開闢了新的成長領域，且 KLA 在該市場的份額正在增長。服務營收的結構性上升進一步強化了經常性收入基礎。24 個月內最大威脅：AI/ML 驅動的虛擬檢測（virtual inspection）若成功規模化，可能減少物理檢測需求——但目前仍為互補而非替代關係。</p>
+</div></div>
+
+<!-- §4 -->
+<div class="section"><div class="section-title">§4｜財務品質監測</div><div class="section-body">
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>主要對手</th></tr>
+<tr><td>Non-GAAP Gross Margin</td><td class="mono">~62%</td><td class="mono">~61%</td><td class="mono">~62.8%</td><td>AMAT ~47% / ASML ~52%</td></tr>
+<tr><td>Operating Margin (non-GAAP)</td><td class="mono">~44%</td><td class="mono">~41%</td><td class="mono">~43.6%</td><td>業界最高</td></tr>
+<tr><td>FCF Margin</td><td class="mono">~30%</td><td class="mono">~32%</td><td class="mono">~34%</td><td>ASML ~34% / LRCX ~28%</td></tr>
+<tr><td>ROIC</td><td class="mono">~38%</td><td class="mono">~40%</td><td class="mono">~42%+</td><td>業界頂尖</td></tr>
+<tr><td>D/E Ratio</td><td class="mono">~2.0</td><td class="mono">~1.5</td><td class="mono">~1.12</td><td>槓桿持續下降</td></tr>
+</table>
+<p><strong>獲利品質：</strong>FCF/NI ~96%，現金流品質極佳。AR 成長與營收成長同步。無盈餘操縱跡象。唯一警訊：DRAM 零件成本上升預計壓縮 FY2026 毛利率 75–100bps，管理層預期 2027 年恢復正常。</p>
+</div></div>
+
+<!-- §5 -->
+<div class="section"><div class="section-title">§5｜產業格局、議價權與 Unit Economics</div><div class="section-body">
+<p><strong>市場量化：</strong>全球 WFE 市場 CY2026E ~$126B（+9% YoY），加先進封裝 ~$12B，合計 ~$138B。KLA 在製程控制（PC）的 TAM 約 $18–20B，佔 WFE ~15%。製程控制密度（PC intensity）隨節點推進結構性上升。</p>
+<p><strong>議價權：</strong>對上游——KLA 的關鍵零件包括光學元件（有供應瓶頸）和精密機械，依賴度中等。對下游——客戶集中但 KLA 並非壟斷者，議價權強但不如 ASML 絕對。Foundry/Logic 佔 ~60%，Memory ~40%。</p>
+<p><strong>營收組成：</strong>Semiconductor Process Control $3.0B/Q（91%）| Specialty Semi $141M（4%）| PCB & Component $152M（5%）。服務營收佔比 ~28%（含在 SPC 內）。</p>
+<p><strong>地理分布：</strong>中國 ~25–30%（管理層指引 mid-to-high 20%），台灣 / 韓國 / 美國 各 15–20%。</p>
+</div></div>
+
+<!-- §6 -->
+<div class="section"><div class="section-title">§6｜公司治理與資本配置</div><div class="section-body">
+<p><strong>資本配置軌跡：堪稱業界標桿。</strong>17 次連續年度股息增加（最新 +21% 至 $2.30/季）。2026/03/12 宣布新 $7B 回購授權（加上既有 $3.94B 剩餘 = 共 ~$11B 授權）。過去 12 個月資本返還 $3.0B。Piotroski F-Score 完美 9 分。</p>
+<p><strong>內部人交易：</strong>過去 6 個月 12 筆交易，全部為賣出，0 筆買入。在股價處於歷史高位時屬正常，但缺乏內部人買入值得注意。</p>
+<p><strong>SBC：</strong>KLA 的 SBC 佔營收比約 3–4%，高於 ASML（~1.7%）但低於軟體公司。Non-GAAP 調整中 SBC 約佔差異的 60%+。稀釋影響被回購計畫充分抵銷。</p>
+<p><strong>2030 Target Model（2026/03/12 Investor Day 發布）：</strong>管理層預計持續跑贏 WFE 市場成長，維持業界領先的營運利潤率，並透過回購和股息持續提高每股價值。</p>
+</div></div>
+
+<!-- §7 -->
+<div class="section"><div class="section-title">§7｜估值診斷</div><div class="section-body">
+<h3>7.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td class="mono">~43x</td><td class="mono">~10x</td><td class="mono">~25x</td><td class="mono">~43x</td><td><span class="badge badge-red">~95%+</span></td></tr>
+<tr><td>Forward P/E</td><td class="mono">~36x</td><td class="mono">~14x</td><td class="mono">~22x</td><td class="mono">~36x</td><td><span class="badge badge-red">~95%</span></td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">~34x</td><td class="mono">~12x</td><td class="mono">~20x</td><td class="mono">~34x</td><td><span class="badge badge-red">~95%</span></td></tr>
+<tr><td>P/S</td><td class="mono">~15x</td><td class="mono">~4x</td><td class="mono">~8x</td><td class="mono">~15x</td><td><span class="badge badge-red">~95%</span></td></tr>
+</table>
+<p><strong>解讀：</strong>KLA 當前估值處於 5 年歷史的<strong>絕對頂部</strong>。過去 12 個月股價翻倍（+97–114%），估值倍數擴張遠超 EPS 成長（EPS +29% vs 股價 +114%）。上次處於此分位不存在——這是歷史最高。主要推動力：AI 敘事 > 盈利修正 > 利率。</p>
+
+<h3>7.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td class="mono">~36x</td><td></td></tr>
+<tr><td>GAAP EPS CAGR（3 年）</td><td class="mono">~13.5%</td><td></td></tr>
+<tr><td>PEG（GAAP，3 年）</td><td class="mono">~2.7</td><td><span class="badge badge-miss">貴</span></td></tr>
+<tr><td>StockAnalysis PEG</td><td class="mono">2.42</td><td><span class="badge badge-miss">貴</span></td></tr>
+<tr><td>Zacks PEG</td><td class="mono">1.3*</td><td>*使用更高成長率假設</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣：</strong>KLA 處於「高 P/E × 中等成長」象限——PEG 2.4–2.7 明確偏貴。與 ASML（PEG ~2.0 但成長率更高）相比，KLA 的估值/成長比更不利。核心問題：36x Forward P/E 定價的是 >20% 的成長，但分析師共識僅 ~14%。這個差距要嘛由估值壓縮填補，要嘛由超預期成長驗證。</p>
+
+<h3>7.3｜Reverse DCF：當前股價隱含了什麼？</h3>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td class="mono">~$196B</td><td>搜尋確認</td></tr>
+<tr><td>基期 FCF</td><td class="mono">$4.38B（LTM）</td><td>Q2 FY2026 報告</td></tr>
+<tr><td>WACC</td><td class="mono">~11.0%</td><td>10Y UST 4.28% + Beta 1.46 × ERP 4.0%</td></tr>
+<tr><td>永續成長率</td><td class="mono">3.0%</td><td></td></tr>
+</table>
+<p>使 DCF 現值 = $196B，所需前 10 年 FCF CAGR ≈ <span class="mono" style="font-size:16px;font-weight:700;">~16–18%</span></p>
+<p><strong>可信度對照：</strong>過去 3 年 FCF CAGR ~15%。分析師 EPS CAGR ~14%。隱含 FCF CAGR 16–18% <strong>高於</strong>歷史和共識。需要 FCF margin 從 34% 擴張至 38%+ 或營收成長加速才能兌現。</p>
+<div class="verdict-box verdict-red"><strong>隱含預期判斷：🔴 隱含預期激進</strong><br>市場隱含 FCF CAGR 16–18% 高於分析師共識（~14%）和歷史水平，安全邊際為負。只有最樂觀情境（先進封裝爆發 + 毛利率擴張 + 持續回購縮股）才能辯護當前股價。</div>
+
+<h3>7.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR(3Y)</th></tr>
+<tr style="font-weight:700;background:var(--blue-bg)"><td>KLA (KLAC)</td><td class="mono">$196B</td><td class="mono">~36x</td><td class="mono">~34x</td><td class="mono">~2.4</td><td class="mono">~34%</td><td class="mono">~14%</td></tr>
+<tr><td>ASML</td><td class="mono">$530B</td><td class="mono">~42x</td><td class="mono">~38x</td><td class="mono">~2.0</td><td class="mono">~34%</td><td class="mono">~21%</td></tr>
+<tr><td>AMAT</td><td class="mono">$140B</td><td class="mono">~26x</td><td class="mono">~20x</td><td class="mono">~1.5</td><td class="mono">~22%</td><td class="mono">~15%</td></tr>
+<tr><td>LRCX</td><td class="mono">$100B</td><td class="mono">~30x</td><td class="mono">~24x</td><td class="mono">~1.8</td><td class="mono">~28%</td><td class="mono">~18%</td></tr>
+<tr><td>產業中位數</td><td class="mono">—</td><td class="mono">~28x</td><td class="mono">~22x</td><td class="mono">~1.8</td><td class="mono">~28%</td><td class="mono">~16%</td></tr>
+</table>
+<p><strong>同業溢折價邏輯：</strong>KLA 相對產業中位數 Forward P/E 溢價 +29%（36x vs 28x）。其 FCF Margin 最高（34%），但 EPS CAGR（14%）低於中位數（16%）。溢價部分由品質（最高毛利率、最強資本回報紀律）支撐，但幅度已過大。若均值回歸，股價下行 ~20%。AMAT 的 Forward P/E 26x + 類似成長率 15% 提供更好的 PEG 比。</p>
+
+<h3>7.5｜估值四角驗證與結論</h3>
+<table class="signal-table">
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="badge badge-red">🔴 過熱</span></td><td>所有倍數均處 5 年 95%+ 分位，歷史最高</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="badge badge-red">🔴 貴</span></td><td>PEG 2.4–2.7，成長率不足以支撐倍數</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="badge badge-red">🔴 激進</span></td><td>隱含 FCF CAGR 16–18% 高於共識和歷史</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="badge badge-yellow">🟡 溢價偏高</span></td><td>品質支撐部分溢價，但幅度過大</td></tr>
+</table>
+<p><strong>訊號一致性：</strong>四個工具中三個紅色、一個黃色。高度一致地指向估值過高。歷史分位的可靠度在此最高——KLA 從未在這個估值水平交易過。唯一可能的反駁是「AI 時代的結構性重估」，但 14% 的 EPS CAGR 不支持重估論述。</p>
+
+<div class="verdict-box verdict-red"><strong>當前定價判斷：🔴 明顯貴</strong><br>Reverse DCF 隱含預期激進，安全邊際為負。所有估值倍數處於歷史極端。不適合現價建倉。</div>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>判斷</th><th>影響</th></tr>
+<tr><td>護城河（§3）</td><td>8.5/10</td><td>+5x vs 產業基準 28x</td></tr>
+<tr><td>Runway（§2.5A）</td><td>7–9 年（🟡）</td><td>+1x</td></tr>
+<tr><td>成長品質</td><td>有機 85%，雙引擎</td><td>+1x</td></tr>
+<tr><td>ROIC 可維持</td><td>>WACC，↑</td><td>+1x</td></tr>
+<tr><td>利率環境</td><td>10Y 4.28%</td><td>−2x</td></tr>
+<tr><td><strong>合理 Fwd P/E 區間</strong></td><td colspan="2"><strong>28x – 34x</strong>（當前 36x 超出上緣）</td></tr>
+</table>
+<p><strong>分析師目標價：</strong>高 $1,950 / 中位 $1,638–$1,716 / 低 $1,280–$1,450（n=23–29）。中位目標隱含 ~10–15% upside。部分分析師目標價已在 Investor Day 後上調。</p>
+</div></div>
+
+<!-- §8 -->
+<div class="section"><div class="section-title">§8｜投資結論</div><div class="section-body">
+<h3>財報信號與估值銜接</h3>
+<p>Q2 FY2026 的紀錄營收和 FCF 確認了 KLA 的業務基本面強勁，但管理層僅指引 FY2026 mid-single digit 成長，低於市場隱含的 16–18% FCF CAGR。Investor Day 的 $7B 回購和 +21% 股息增加雖然積極，但無法填補估值與基本面之間的差距。<strong>這份財報讓隱含預期變得更困難兌現</strong>——因為 mid-single digit 營收成長 + 毛利率因 DRAM 成本壓力下降 = FCF 增速可能低於 10% in near term。</p>
+
+<div class="verdict-box verdict-red"><strong>判斷：🔴 迴避——估值問題</strong><br>Reverse DCF 隱含預期激進，安全邊際為負。所有估值倍數處於歷史極端。KLA 是優秀公司，但好公司不等於好投資。</div>
+
+<p><strong>① 短期信號（0–12 月）：</strong>Q2 財報穩健但未超預期太多（Non-GAAP EPS beat 0.45%），且 GAAP EPS miss。下季指引 $9.80 Non-GAAP EPS 暗示環比加速，但需執行驗證。供應鏈瓶頸為 H1 逆風。伊朗衝突相關的航運延遲和氦氣供應也可能影響設備交付。</p>
+
+<p><strong>② 中期確信度（1–3 年）：</strong>成長驅動為定價 + 量的雙引擎，但 CAGR ~14% 屬於中等成長，非高成長。WFE 市場 CY2026 成長 ~9%，KLA 預計小幅跑贏。先進封裝為最大增量機會但基數尚小。能見度：<strong>中等</strong>——WFE 週期性 + 中國不確定性 + AI capex 持續性均需觀察。</p>
+
+<p><strong>③ 長期護城河邏輯（3 年後）：</strong>Runway 7–9 年，護城河穩定至擴大。製程控制密度的結構性提升是長期持有理由——只要晶片繼續縮小，檢測需求就持續增加。但 7–9 年的 Runway 搭配 14% CAGR 不足以辯護 36x Forward P/E——需要等待估值回落。</p>
+
+<h3>條件式進場判斷</h3>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td><strong>估值條件</strong></td><td>Forward P/E 回落至 <strong>28x 以下</strong>（§7.5 合理區間下緣），對應股價約 $1,020（基於 CY26E EPS ~$36.5）。或 ~$1,200 水平（~33x，合理區間中段）。</td></tr>
+<tr><td><strong>基本面條件</strong></td><td>Q3 FY2026（Apr 23）需確認：① 營收 ≥$3.4B；② 毛利率 ≥62%；③ H2 加速敘事得到訂單數據支撐。</td></tr>
+<tr><td><strong>事件觸發</strong></td><td>半導體週期回調導致股價跌回 $900–1,100 區間（~20–25x Forward P/E）= 極具吸引力的長期入場點。</td></tr>
+</table>
+
+<h3>下行風險量化（引用 §2.5E）</h3>
+<p>若 3 年後成長率降至 7%，估值壓縮至 22x，跌幅 <strong>~39%</strong></p>
+<p>若 3 年後成長率降至 3%，估值壓縮至 18x，跌幅 <strong>~50%</strong></p>
+<p style="color:var(--miss-text);font-weight:700;">持有此標的前，須確認能承受上述幅度的回撤。</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td><strong>製程控制密度（PC Intensity as % of WFE）</strong></td><td><span class="badge badge-blue">🔵 長期成長領先信號</span></td><td>若 PC intensity 停止上升（目前 ~15% of WFE），暗示結構性成長引擎熄火</td></tr>
+<tr><td>2</td><td><strong>Non-GAAP Gross Margin</strong></td><td>短期財報信號</td><td>連續 2 季 < 60%（低於 long-term model），暗示競爭壓力或成本結構惡化</td></tr>
+</table>
+</div></div>
+
+<div class="section"><div class="section-body" style="text-align:center;padding:12px;">
+<p class="sub-note">本報告僅為分析框架演練，不構成投資建議。所有數據來自公開搜尋結果，可能存在延遲或誤差。投資決策前請諮詢持牌財務顧問。</p>
+</div></div>
+
+</div>
+</body>
+</html>
