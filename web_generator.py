@@ -672,6 +672,20 @@ def _get_date_value(page: dict, prop_name: str) -> str:
     return ""
 
 
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
+
+
+def _normalize_full_date(raw: str, page: dict) -> str:
+    """確保日期為 YYYY-MM-DD 格式；若不符則回退至頁面建立時間。"""
+    if raw and _DATE_RE.match(raw):
+        return raw[:10]  # 截取前 10 字元，避免帶時間
+    # 回退：取頁面建立時間
+    ct = page.get("created_time", "")
+    if ct and _DATE_RE.match(ct):
+        return ct[:10]
+    return raw  # 最後保底
+
+
 def _get_number_value(page: dict, prop_name: str) -> float | None:
     """讀取 Notion 頁面的 number 屬性，回傳 float 或 None。"""
     prop = page.get("properties", {}).get(prop_name, {})
@@ -718,13 +732,13 @@ def fetch_notion_reports() -> list[dict]:
     pages_10q = _query_all_pages(NOTION_10Q_DB_ID)
     print(f"  [DEBUG] 10-Q 資料庫讀取到 {len(pages_10q)} 筆頁面")
     for page in pages_10q:
-        full_date = (
+        raw_date = (
             _get_date_value(page, "財報年度")
             or _get_date_value(page, "Date")
             or _get_date_value(page, "日期")
             or _get_rich_text(page, "財報年度")
-            or page.get("created_time", "")[:10]
         )
+        full_date = _normalize_full_date(raw_date, page)
         reports.append({
             "name": _get_title_text(page, "Name"),
             "ticker": _get_rich_text(page, "Ticker"),
@@ -739,13 +753,13 @@ def fetch_notion_reports() -> list[dict]:
     for page in pages_10k:
         name = _get_title_text(page, "Name")
         ticker = name.split()[0] if name else ""
-        full_date = (
+        raw_date = (
             _get_date_value(page, "財報年度")
             or _get_date_value(page, "Date")
             or _get_date_value(page, "日期")
             or _get_rich_text(page, "財報年度")
-            or page.get("created_time", "")[:10]
         )
+        full_date = _normalize_full_date(raw_date, page)
         # 嘗試從 Notion 欄位讀取護城河五維度分數
         moat_sub = {}
         for key in MOAT_5_DIMS:
