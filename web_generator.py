@@ -146,8 +146,7 @@ tbody tr:hover td{background:#f3f4f6}
 .dim-score{font-weight:700;font-size:1.05rem;white-space:nowrap}
 .dim-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin:.6rem 0}
 .dim-bar .fill{height:100%;border-radius:3px}
-.dim-text{font-size:.82rem;color:#4b5563;line-height:1.55;
-          display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.dim-text{font-size:.82rem;color:#4b5563;line-height:1.55}
 .dim-text h3{font-size:.88rem;font-weight:600;color:var(--text);margin:.6rem 0 .25rem}
 .dim-text p{margin-bottom:.4rem}.dim-text strong{color:var(--text)}
 .dim-text ul,.dim-text ol{margin:0 0 .4rem 1.1rem}
