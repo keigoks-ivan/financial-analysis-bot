@@ -19,7 +19,7 @@ import datetime
 import time
 import requests
 import anthropic
-import google.generativeai as genai
+from google import genai
 from notion_client import Client as NotionClient
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -33,7 +33,7 @@ NOTION_10K_DB_ID   = os.environ.get("NOTION_10K_DB_ID")
 GOOGLE_SHEETS_ID   = os.environ.get("GOOGLE_SHEETS_ID")
 
 # ── 模型設定 ────────────────────────────────────────────────────────────────
-MODEL_10K          = "claude-opus-4-0"          # 10-K 年報用 Claude Opus 4.6
+MODEL_10K          = "claude-sonnet-4-0"        # 10-K 年報用 Claude Sonnet 4.6
 MODEL_10Q_CLAUDE   = "claude-sonnet-4-0"        # 10-Q 有 transcript 時用 Claude Sonnet 4.6
 MODEL_GEMINI       = "gemini-2.5-flash"         # 10-Q 預設用 Gemini 2.5 Flash
 
@@ -87,7 +87,7 @@ anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 notion           = NotionClient(auth=NOTION_TOKEN)
 
 if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+    gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 # ── Google Sheets ────────────────────────────────────────────────────────────
@@ -274,9 +274,11 @@ def analyze_with_claude(system_prompt: str, filing_text: str, model: str = MODEL
 @retry()
 def analyze_with_gemini(system_prompt: str, filing_text: str) -> str:
     """使用 Gemini 2.5 Flash 進行財報分析。"""
-    model = genai.GenerativeModel(MODEL_GEMINI)
     prompt = f"{system_prompt}\n\n---\n\n{filing_text}"
-    response = model.generate_content(prompt)
+    response = gemini_client.models.generate_content(
+        model=MODEL_GEMINI,
+        contents=prompt,
+    )
     text = response.text
     print(text)
     return text
