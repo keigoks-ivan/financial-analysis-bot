@@ -479,10 +479,32 @@ def _parse_10k_analysis(text: str) -> dict:
     return result
 
 
-def _parse_committee_summary(text: str) -> str:
-    """解析「## 投資委員會總結」到下一個「---」之間的內容。"""
+def _parse_committee_summary(text: str) -> dict:
+    """
+    解析「## 投資委員會總結」區塊，回傳 {raw, viewpoints}。
+    viewpoints: [{label, content}, ...] — 四位大師的觀點。
+    """
     m = re.search(r"##\s*投資委員會總結\s*\n(.*?)(?:\n---|\n##\s|\Z)", text, re.DOTALL)
-    return m.group(1).strip() if m else ""
+    if not m:
+        return {"raw": "", "viewpoints": []}
+    raw = m.group(1).strip()
+
+    # 解析各大師觀點行
+    viewpoints = []
+    vp_pat = re.compile(
+        r"\*{0,2}(巴菲特[/／]蒙格|Peter\s*Lynch|Hamilton\s*Helmer|Howard\s*Marks)"
+        r"\s*觀點[：:]\s*\*{0,2}\s*(.*?)(?=\n\*{0,2}(?:巴菲特|Peter|Hamilton|Howard)|\Z)",
+        re.DOTALL,
+    )
+    for vm in vp_pat.finditer(raw):
+        label = vm.group(1).strip()
+        content = vm.group(2).strip()
+        # 清理多餘 markdown 標記
+        content = re.sub(r"^\*{1,2}|\*{1,2}$", "", content).strip()
+        if content:
+            viewpoints.append({"label": label, "content": content})
+
+    return {"raw": raw, "viewpoints": viewpoints}
 
 
 _MASTER_NAMES = ["Peter Lynch", "Hamilton Helmer", "Howard Marks"]
@@ -1193,13 +1215,28 @@ def generate_report_page_10k(
         radar_risks = f'<div class="radar-risks">{radar_html}{risks_html}</div>'
 
     # ── 投資委員會總結
-    committee_raw = _parse_committee_summary(content)
+    committee_parsed = _parse_committee_summary(content)
     committee_html = ""
-    if committee_raw:
+    if committee_parsed["viewpoints"]:
+        vp_rows = ""
+        for vp in committee_parsed["viewpoints"]:
+            vp_rows += f"""
+<div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.7rem">
+  <span style="display:inline-block;padding:.25rem .6rem;border-radius:4px;
+               background:var(--brand);color:#fff;font-size:.75rem;font-weight:600;
+               white-space:nowrap;flex-shrink:0;margin-top:.1rem">{html_lib.escape(vp["label"])}</span>
+  <span style="font-size:.88rem;line-height:1.6;color:#374151">{_md(vp["content"])}</span>
+</div>"""
+        committee_html = f"""
+<div class="card" style="border-left:4px solid var(--brand);background:var(--brand-light);margin-bottom:1.25rem">
+  <h3 style="color:var(--brand);margin-bottom:.75rem">投資委員會總結</h3>
+  {vp_rows}
+</div>"""
+    elif committee_parsed["raw"]:
         committee_html = f"""
 <div class="card" style="border-left:4px solid var(--brand);background:var(--brand-light);margin-bottom:1.25rem">
   <h3 style="color:var(--brand);margin-bottom:.6rem">投資委員會總結</h3>
-  <div class="analysis">{_md(committee_raw)}</div>
+  <div class="analysis">{_md(committee_parsed["raw"])}</div>
 </div>"""
 
     # ── 大師框架分析
