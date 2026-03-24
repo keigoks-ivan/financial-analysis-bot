@@ -519,6 +519,35 @@ def _parse_10q_sections(text: str) -> dict:
         s = re.sub(r'[\*\"\u300c\u300d]', "", s).strip()
         result["summary"] = s
 
+    # ── 額外維度：管理層誠信驗證（二點五 / 指引 vs 實際）
+    mgmt_m = re.search(
+        r"(?:##?\s*)?(?:二點五|2\.5)[、.]\s*(.*?)$",
+        text, re.MULTILINE,
+    )
+    if not mgmt_m:
+        mgmt_m = re.search(r"(?:##?\s*)?指引\s*vs\.?\s*實際", text)
+    if mgmt_m:
+        start = mgmt_m.end()
+        end_m = re.search(r"\n(?:##?\s*)?[三四五六七八][\u3001.]", text[start:])
+        end = start + end_m.start() if end_m else len(text)
+        result["mgmt_integrity"] = text[start:end].strip()
+
+    # ── 額外維度：附注重點掃描（六、附注）
+    note_m = re.search(r"(?:##?\s*)?六[、.]\s*附注", text)
+    if note_m:
+        start = note_m.end()
+        end_m = re.search(r"\n(?:##?\s*)?[七八九][\u3001.]", text[start:])
+        end = start + end_m.start() if end_m else len(text)
+        result["footnote_scan"] = text[start:end].strip()
+
+    # ── 額外維度：數字一致性驗證（七、數字一致性）
+    consist_m = re.search(r"(?:##?\s*)?七[、.]\s*數字一致性", text)
+    if consist_m:
+        start = consist_m.end()
+        end_m = re.search(r"\n(?:##?\s*)?[八九十][\u3001.]|\n---|\Z", text[start:])
+        end = start + end_m.start() if end_m else len(text)
+        result["consistency_check"] = text[start:end].strip()
+
     # 護城河信號分類
     if 4 in result["sections"]:
         pos_kw = ["強化", "提升", "增加", "擴大", "改善", "成長", "上升", "漲價", "穩定"]
@@ -1320,15 +1349,18 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   {guidance_inset}
 </div>"""
 
-    # ── 3. 資本配置卡片
+    # ── 3. 資本配置卡片（內容為空時不顯示）
     capital_card_html = ""
-    if 3 in parsed["sections"]:
+    if 3 in parsed["sections"] and parsed["sections"][3]["content"].strip():
         cap_items = _extract_10q_capital(parsed["sections"][3]["content"])
+        if cap_items:
+            # 過濾掉沒有實質內容的卡片
+            cap_items = [ci for ci in cap_items if ci.get("amount") or ci.get("detail")]
         if cap_items:
             cap_cards = ""
             for ci in cap_items:
                 amount_line = f'<div class="cap-amount">{html_lib.escape(ci["amount"])}</div>' if ci["amount"] else ""
-                detail_line = f'<div class="cap-detail">{html_lib.escape(ci["detail"])}</div>' if ci["detail"] else ""
+                detail_line = f'<div class="cap-detail">{_md(ci["detail"])}</div>' if ci["detail"] else ""
                 cap_cards += f"""
 <div class="cap-card">
   <div class="cap-icon">{ci["icon"]}</div>
@@ -1344,12 +1376,14 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div class="cap-grid" style="margin-top:.5rem">{cap_cards}</div>
 </div>"""
         else:
-            capital_card_html = f"""
+            sec3_html = _md(parsed["sections"][3]["content"])
+            if sec3_html.strip():
+                capital_card_html = f"""
 <div class="dim-card">
   <div class="dim-hdr">
     <span class="dim-name">三、資本配置<span class="dim-en">Capital Allocation</span></span>
   </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["sections"][3]["content"])}</div>
+  <div class="dim-text" style="-webkit-line-clamp:unset">{sec3_html}</div>
 </div>"""
 
     # ── 4. 護城河信號卡片（強化=綠色 / 弱化=紅色）
@@ -1374,6 +1408,39 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div style="margin-top:.4rem">{sig_items}</div>
 </div>"""
 
+    # ── 新維度：管理層誠信驗證
+    mgmt_card_html = ""
+    if parsed.get("mgmt_integrity"):
+        mgmt_card_html = f"""
+<div class="dim-card" style="grid-column:1/-1">
+  <div class="dim-hdr">
+    <span class="dim-name">管理層誠信驗證<span class="dim-en">Management Integrity</span></span>
+  </div>
+  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["mgmt_integrity"])}</div>
+</div>"""
+
+    # ── 新維度：附注重點掃描
+    footnote_card_html = ""
+    if parsed.get("footnote_scan"):
+        footnote_card_html = f"""
+<div class="dim-card" style="grid-column:1/-1">
+  <div class="dim-hdr">
+    <span class="dim-name">附注重點掃描<span class="dim-en">Footnote Highlights</span></span>
+  </div>
+  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["footnote_scan"])}</div>
+</div>"""
+
+    # ── 新維度：數字一致性驗證
+    consistency_card_html = ""
+    if parsed.get("consistency_check"):
+        consistency_card_html = f"""
+<div class="dim-card" style="grid-column:1/-1">
+  <div class="dim-hdr">
+    <span class="dim-name">數字一致性驗證<span class="dim-en">Consistency Check</span></span>
+  </div>
+  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["consistency_check"])}</div>
+</div>"""
+
     # ── 完整分析（可展開）— Markdown → HTML
     full_text = _md(content)
 
@@ -1390,12 +1457,15 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div class="container">
     {summary_hero}
 
-    <h2 class="section-title">季報五維度分析</h2>
+    <h2 class="section-title">季報分析</h2>
     <div class="dim-grid">
       {fin_card_html}
       {narrative_card_html}
       {capital_card_html}
       {moat_card_html}
+      {mgmt_card_html}
+      {footnote_card_html}
+      {consistency_card_html}
     </div>
 
     <details style="margin-top:1.5rem">
