@@ -509,11 +509,18 @@ def _parse_committee_summary(text: str) -> dict:
 _MASTER_NAMES = ["Peter Lynch", "Hamilton Helmer", "Howard Marks"]
 _MASTER_ICONS = {"Peter Lynch": "📈", "Hamilton Helmer": "🏰", "Howard Marks": "⚖️"}
 
+# Helmer 七種 Power
+_HELMER_POWERS = [
+    "規模經濟", "網絡經濟", "反向定位", "轉換成本",
+    "壟斷性資源", "品牌", "流程優勢",
+]
+
 
 def _parse_master_frameworks(text: str) -> list[dict]:
     """
     解析「## 大師框架分析」之後的三位大師段落。
-    回傳 [{name, content}, ...]
+    回傳 [{name, content, score, extra}, ...]
+    extra 為各大師特有的結構化資料。
     """
     sec_m = re.search(r"##\s*大師框架分析\s*\n", text)
     if not sec_m:
@@ -539,7 +546,57 @@ def _parse_master_frameworks(text: str) -> list[dict]:
             if next_m:
                 break
         end = start + next_m.start() if next_m else len(body)
-        results.append({"name": name, "content": body[start:end].strip()})
+        raw = body[start:end].strip()
+
+        # 提取評分 (X/10)
+        score_m = re.search(r"(\d+(?:\.\d+)?)\s*/\s*10", raw)
+        score = score_m.group(1) if score_m else None
+
+        extra = {}
+
+        # Hamilton Helmer: 解析七種 Power 強弱
+        if name == "Hamilton Helmer":
+            powers = []
+            for pw in _HELMER_POWERS:
+                pw_pat = re.compile(
+                    rf"{re.escape(pw)}[：:（(]?\s*(強|中等|弱|不存在|無|✓|✗|有)",
+                    re.IGNORECASE,
+                )
+                pw_m = pw_pat.search(raw)
+                if pw_m:
+                    level = pw_m.group(1).strip()
+                    powers.append({"name": pw, "level": level})
+                else:
+                    # 嘗試從行內判斷：包含該 Power 名稱且有強/弱等關鍵字
+                    for line in raw.split("\n"):
+                        if pw in line:
+                            if any(k in line for k in ["強", "✓", "最強", "存在", "有"]):
+                                powers.append({"name": pw, "level": "強"})
+                            elif any(k in line for k in ["弱", "較弱", "有限"]):
+                                powers.append({"name": pw, "level": "弱"})
+                            elif any(k in line for k in ["不存在", "無", "✗", "不適用"]):
+                                powers.append({"name": pw, "level": "不存在"})
+                            else:
+                                powers.append({"name": pw, "level": "中等"})
+                            break
+            extra["powers"] = powers
+
+        # Howard Marks: 解析週期位置
+        if name == "Howard Marks":
+            cycle_pos = None
+            cycle_kw = {
+                "底部": 10, "早期": 25, "中前期": 35, "中期": 50,
+                "中後期": 65, "後期": 75, "晚期": 85, "頂部": 95,
+            }
+            for kw, pct in cycle_kw.items():
+                if kw in raw:
+                    cycle_pos = {"label": kw, "pct": pct}
+                    break
+            extra["cycle"] = cycle_pos
+
+        results.append({
+            "name": name, "content": raw, "score": score, "extra": extra,
+        })
     return results
 
 
@@ -1255,16 +1312,74 @@ def generate_report_page_10k(
     masters_html = ""
     if masters:
         master_cards = ""
-        for m in masters:
-            icon = _MASTER_ICONS.get(m["name"], "📊")
+        for mst in masters:
+            icon = _MASTER_ICONS.get(mst["name"], "📊")
+            score_tag = ""
+            if mst.get("score"):
+                score_tag = f"""
+<div style="text-align:right;margin-top:.75rem;padding-top:.6rem;border-top:1px solid var(--border)">
+  <span style="font-size:1.3rem;font-weight:700;color:var(--brand)">{html_lib.escape(mst["score"])}</span>
+  <span style="font-size:.85rem;color:var(--muted)">/ 10</span>
+</div>"""
+
+            # ── Hamilton Helmer: 七種 Power 表格
+            power_table = ""
+            if mst["name"] == "Hamilton Helmer" and mst.get("extra", {}).get("powers"):
+                pw_rows = ""
+                for pw in mst["extra"]["powers"]:
+                    lv = pw["level"]
+                    if lv in ("強", "✓", "最強", "有"):
+                        badge = '<span style="display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.75rem;font-weight:600;background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)">強</span>'
+                    elif lv in ("弱", "較弱", "有限"):
+                        badge = '<span style="display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.75rem;font-weight:600;background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)">弱</span>'
+                    elif lv in ("不存在", "無", "✗", "不適用"):
+                        badge = '<span style="display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.75rem;font-weight:600;background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db">不存在</span>'
+                    else:
+                        badge = f'<span style="display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.75rem;font-weight:600;background:#dbeafe;color:#1e40af;border:1px solid #93c5fd">{html_lib.escape(lv)}</span>'
+                    pw_rows += f"<tr><td style='font-weight:600;font-size:.85rem'>{html_lib.escape(pw['name'])}</td><td style='text-align:center'>{badge}</td></tr>"
+                power_table = f"""
+<table style="margin:.6rem 0;font-size:.85rem">
+  <thead><tr><th>Power</th><th style="text-align:center">強度</th></tr></thead>
+  <tbody>{pw_rows}</tbody>
+</table>"""
+
+            # ── Howard Marks: 週期位置進度條
+            cycle_bar = ""
+            if mst["name"] == "Howard Marks" and mst.get("extra", {}).get("cycle"):
+                cyc = mst["extra"]["cycle"]
+                pct = cyc["pct"]
+                cycle_bar = f"""
+<div style="margin:.75rem 0">
+  <div style="font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.35rem">週期位置</div>
+  <div style="position:relative;height:28px;background:linear-gradient(90deg,var(--green-bg) 0%,#fffbeb 50%,var(--red-bg) 100%);border-radius:6px;border:1px solid var(--border)">
+    <div style="position:absolute;left:{pct}%;top:50%;transform:translate(-50%,-50%);
+                width:14px;height:14px;background:var(--brand);border-radius:50%;border:2px solid #fff;
+                box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-top:.2rem">
+    <span>底部</span><span>早期</span><span>中期</span><span>晚期</span><span>頂部</span>
+  </div>
+  <div style="text-align:center;margin-top:.3rem;font-size:.85rem;font-weight:600;color:var(--brand)">{html_lib.escape(cyc["label"])}</div>
+</div>"""
+
+            # 組合卡片內容：先文字、再特殊區塊、最後評分
+            card_body = f'<div class="dim-text">{_md(mst["content"])}</div>'
+            if power_table:
+                card_body = power_table + f'<div class="dim-text" style="margin-top:.5rem">{_md(mst["content"])}</div>'
+            if cycle_bar:
+                card_body = f'<div class="dim-text">{_md(mst["content"])}</div>' + cycle_bar
+
             master_cards += f"""
-<div class="card" style="margin-bottom:.85rem">
-  <h3>{icon} {html_lib.escape(m["name"])}</h3>
-  <div class="analysis">{_md(m["content"])}</div>
+<div class="dim-card" style="grid-column:1/-1">
+  <div class="dim-hdr">
+    <span class="dim-name">{icon} {html_lib.escape(mst["name"])}</span>
+  </div>
+  {card_body}
+  {score_tag}
 </div>"""
         masters_html = f"""
 <h2 class="section-title" style="margin-top:1.5rem">大師框架分析</h2>
-{master_cards}"""
+<div class="dim-grid">{master_cards}</div>"""
 
     # ── 完整分析（可展開）— Markdown → HTML
     full_text = _md(content)
