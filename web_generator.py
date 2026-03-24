@@ -404,8 +404,8 @@ def _parse_10k_analysis(text: str) -> dict:
             {"cn": cn_name, "en": en_name, "score": score, "text": clean}
         )
 
-    # 總分
-    total_m = re.search(r"總分[：:]\s*(\d+(?:\.\d+)?)\s*/\s*80", text)
+    # 總分（支援 /80 和 /110 兩種格式）
+    total_m = re.search(r"總分[：:]\s*(\d+(?:\.\d+)?)\s*/\s*(?:80|110)", text)
     if total_m:
         result["total_score"] = float(total_m.group(1))
     else:
@@ -441,6 +441,49 @@ def _parse_10k_analysis(text: str) -> dict:
         result["core_thesis"] = t
 
     return result
+
+
+def _parse_committee_summary(text: str) -> str:
+    """解析「## 投資委員會總結」到下一個「---」之間的內容。"""
+    m = re.search(r"##\s*投資委員會總結\s*\n(.*?)(?:\n---|\n##\s|\Z)", text, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
+_MASTER_NAMES = ["Peter Lynch", "Hamilton Helmer", "Howard Marks"]
+_MASTER_ICONS = {"Peter Lynch": "📈", "Hamilton Helmer": "🏰", "Howard Marks": "⚖️"}
+
+
+def _parse_master_frameworks(text: str) -> list[dict]:
+    """
+    解析「## 大師框架分析」之後的三位大師段落。
+    回傳 [{name, content}, ...]
+    """
+    sec_m = re.search(r"##\s*大師框架分析\s*\n", text)
+    if not sec_m:
+        return []
+    body = text[sec_m.end():]
+    # 截斷到下一個 ## 段落或 ---
+    end_m = re.search(r"\n##\s[^#]|\n---", body)
+    if end_m:
+        body = body[:end_m.start()]
+
+    results = []
+    for i, name in enumerate(_MASTER_NAMES):
+        pat = re.compile(rf"###?\s*{re.escape(name)}.*?\n", re.IGNORECASE)
+        m = pat.search(body)
+        if not m:
+            continue
+        start = m.end()
+        # 找下一位大師或結尾
+        next_m = None
+        for next_name in _MASTER_NAMES[i + 1:]:
+            next_pat = re.compile(rf"###?\s*{re.escape(next_name)}", re.IGNORECASE)
+            next_m = next_pat.search(body[start:])
+            if next_m:
+                break
+        end = start + next_m.start() if next_m else len(body)
+        results.append({"name": name, "content": body[start:end].strip()})
+    return results
 
 
 def _parse_10q_sections(text: str) -> dict:
@@ -676,13 +719,14 @@ _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
 def _normalize_full_date(raw: str, page: dict) -> str:
-    """確保日期為 YYYY-MM-DD 格式；若不符則回退至頁面建立時間。"""
+    """確保日期為 YYYY-MM-DD 格式；若不符則回退至頁面時間戳。"""
     if raw and _DATE_RE.match(raw):
         return raw[:10]  # 截取前 10 字元，避免帶時間
-    # 回退：取頁面建立時間
-    ct = page.get("created_time", "")
-    if ct and _DATE_RE.match(ct):
-        return ct[:10]
+    # 回退：優先 created_time，再 last_edited_time
+    for key in ("created_time", "last_edited_time"):
+        ts = page.get(key, "")
+        if ts and _DATE_RE.match(ts):
+            return ts[:10]
     return raw  # 最後保底
 
 
@@ -968,22 +1012,22 @@ def generate_report_page_10k(
 </div>"""
 
     # ── 圓形儀表（Chart.js Doughnut）+ 護城河等級
-    gauge_color = _gauge_color_hex(total, 80.0)
-    remaining = max(0, 80 - total)
+    gauge_color = _gauge_color_hex(total, 110.0)
+    remaining = max(0, 110 - total)
     score_hero = f"""
 <div class="score-hero">
   <div class="gauge-wrap" style="position:relative;width:160px;height:160px">
     <canvas id="gaugeChart" width="160" height="160"></canvas>
     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
       <div style="font-size:28px;font-weight:700;color:{gauge_color}">{total:.0f}</div>
-      <div style="font-size:13px;color:var(--muted)">/ 80</div>
+      <div style="font-size:13px;color:var(--muted)">/ 110</div>
     </div>
   </div>
   <div class="gauge-meta">
     {badge_html}
     <div style="font-size:.85rem;color:var(--muted)">
-      八維度評分加總（滿分 80）<br>
-      換算：{total / 80 * 100:.0f}%
+      綜合評分（滿分 110）<br>
+      換算：{total / 110 * 100:.0f}%
     </div>
   </div>
 </div>"""
@@ -1002,7 +1046,7 @@ def generate_report_page_10k(
             score_html = '<span class="dim-score" style="color:var(--muted)">—</span>'
             bar_html = ""
 
-        text_preview = html_lib.escape(d["text"][:200]) if d["text"] else ""
+        text_html = _md(d["text"]) if d["text"] else ""
         dim_cards += f"""
 <div class="dim-card">
   <div class="dim-hdr">
@@ -1010,7 +1054,7 @@ def generate_report_page_10k(
     {score_html}
   </div>
   {bar_html}
-  <div class="dim-text">{text_preview}</div>
+  <div class="dim-text">{text_html}</div>
 </div>"""
 
     # ── Chart.js 雷達圖 + 風險
@@ -1050,6 +1094,32 @@ def generate_report_page_10k(
     if radar_html or risks_html:
         radar_risks = f'<div class="radar-risks">{radar_html}{risks_html}</div>'
 
+    # ── 投資委員會總結
+    committee_raw = _parse_committee_summary(content)
+    committee_html = ""
+    if committee_raw:
+        committee_html = f"""
+<div class="card" style="border-left:4px solid var(--brand);background:var(--brand-light);margin-bottom:1.25rem">
+  <h3 style="color:var(--brand);margin-bottom:.6rem">投資委員會總結</h3>
+  <div class="analysis">{_md(committee_raw)}</div>
+</div>"""
+
+    # ── 大師框架分析
+    masters = _parse_master_frameworks(content)
+    masters_html = ""
+    if masters:
+        master_cards = ""
+        for m in masters:
+            icon = _MASTER_ICONS.get(m["name"], "📊")
+            master_cards += f"""
+<div class="card" style="margin-bottom:.85rem">
+  <h3>{icon} {html_lib.escape(m["name"])}</h3>
+  <div class="analysis">{_md(m["content"])}</div>
+</div>"""
+        masters_html = f"""
+<h2 class="section-title" style="margin-top:1.5rem">大師框架分析</h2>
+{master_cards}"""
+
     # ── 完整分析（可展開）— Markdown → HTML
     full_text = _md(content)
 
@@ -1064,11 +1134,13 @@ def generate_report_page_10k(
 
 <div class="section">
   <div class="container">
+    {committee_html}
     {score_hero}
     {thesis_html}
     <h2 class="section-title">八維度評分</h2>
     <div class="dim-grid">{dim_cards}</div>
     {radar_risks}
+    {masters_html}
     <details style="margin-top:1.5rem">
       <summary style="cursor:pointer;font-weight:600;font-size:.95rem;color:var(--brand);
                        padding:.5rem 0">展開完整分析文本</summary>
