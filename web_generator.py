@@ -120,6 +120,17 @@ tbody tr:hover td{background:#f3f4f6}
 .search-wrap input:focus{outline:none;border-color:var(--brand);
                          box-shadow:0 0 0 3px rgba(26,86,219,.1)}
 
+/* Filter Bar */
+.filter-bar{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;align-items:center}
+.filter-group{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}
+.filter-label{font-size:.78rem;font-weight:600;color:var(--muted);margin-right:.2rem;
+              text-transform:uppercase;letter-spacing:.03em}
+.filter-btn{padding:.3rem .7rem;border:1px solid var(--border);border-radius:5px;
+            background:var(--card);font-size:.8rem;color:var(--text);cursor:pointer;
+            transition:all .15s}
+.filter-btn:hover{border-color:var(--brand);color:var(--brand)}
+.filter-btn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+
 /* Score Hero (10-K gauge area) */
 .score-hero{display:flex;align-items:center;gap:2.5rem;padding:1.5rem 0}
 .gauge-wrap{text-align:center;flex-shrink:0}
@@ -334,11 +345,36 @@ def _base_page(title: str, body: str, extra_head: str = "") -> str:
 <script>
 (function(){{
   var si=document.getElementById('search-input');
-  if(!si) return;
-  si.addEventListener('input',function(e){{
-    var q=e.target.value.toLowerCase();
-    document.querySelectorAll('.searchable').forEach(function(el){{
-      el.style.display=el.textContent.toLowerCase().indexOf(q)>=0?'':'none';
+  var fc=document.getElementById('filter-count');
+  var filters={{form:'all',moat:'all'}};
+
+  function applyFilters(){{
+    var q=si?si.value.toLowerCase():'';
+    var rows=document.querySelectorAll('#report-tbody .searchable');
+    var total=rows.length,shown=0;
+    rows.forEach(function(el){{
+      var matchText=!q||el.textContent.toLowerCase().indexOf(q)>=0;
+      var matchForm=filters.form==='all'||el.getAttribute('data-form')===filters.form;
+      var matchMoat=filters.moat==='all'||el.getAttribute('data-moat')===filters.moat;
+      var vis=matchText&&matchForm&&matchMoat;
+      el.style.display=vis?'':'none';
+      if(vis) shown++;
+    }});
+    if(fc) fc.textContent='\u986F\u793A '+shown+' / \u5171 '+total+' \u7B46';
+  }}
+
+  if(si) si.addEventListener('input',applyFilters);
+
+  document.querySelectorAll('.filter-btn').forEach(function(btn){{
+    btn.addEventListener('click',function(){{
+      var group=btn.getAttribute('data-filter');
+      var val=btn.getAttribute('data-value');
+      filters[group]=val;
+      btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){{
+        b.classList.remove('active');
+      }});
+      btn.classList.add('active');
+      applyFilters();
     }});
   }});
 }})();
@@ -914,9 +950,19 @@ def generate_index(reports: list[dict]) -> None:
             moat_cell = f'<span class="moat-badge {badge_cls}">{html_lib.escape(level_cn)}</span>'
         else:
             moat_cell = '<span style="color:var(--muted)">—</span>'
+            moat_data = "none"
+
+        # 設定 data-moat 屬性值
+        if moat_avg is not None:
+            level = _moat_level(moat_avg)
+            moat_data = {"Wide": "wide", "Narrow": "narrow", "No Moat": "nomoat"}.get(level, "unrated")
+        elif moat_level:
+            moat_data = {"Wide": "wide", "Narrow": "narrow", "No Moat": "nomoat"}.get(moat_level, "unrated")
+        else:
+            moat_data = "unrated"
 
         rows += f"""
-<tr class="searchable">
+<tr class="searchable" data-form="{html_lib.escape(form)}" data-moat="{moat_data}">
   <td><strong>{ticker}</strong></td>
   <td><span class="tag {tag_cls}">{html_lib.escape(form)}</span></td>
   <td>{date}</td>
@@ -924,6 +970,7 @@ def generate_index(reports: list[dict]) -> None:
   <td><a href="/report/{slug}.html">查看 &rarr;</a></td>
 </tr>"""
 
+    total_count = len(reports)
     body = f"""
 <div class="page-hdr">
   <div class="container">
@@ -937,6 +984,28 @@ def generate_index(reports: list[dict]) -> None:
     <div class="search-wrap">
       <input id="search-input" type="text" placeholder="搜尋 Ticker、報告類型…">
     </div>
+
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">類型</span>
+        <button class="filter-btn active" data-filter="form" data-value="all">全部</button>
+        <button class="filter-btn" data-filter="form" data-value="10-K">10-K</button>
+        <button class="filter-btn" data-filter="form" data-value="10-Q">10-Q</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">護城河</span>
+        <button class="filter-btn active" data-filter="moat" data-value="all">全部</button>
+        <button class="filter-btn" data-filter="moat" data-value="wide">寬護城河</button>
+        <button class="filter-btn" data-filter="moat" data-value="narrow">窄護城河</button>
+        <button class="filter-btn" data-filter="moat" data-value="nomoat">無護城河</button>
+        <button class="filter-btn" data-filter="moat" data-value="unrated">未評級</button>
+      </div>
+    </div>
+
+    <div id="filter-count" style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">
+      顯示 {total_count} / 共 {total_count} 筆
+    </div>
+
     <div class="card" style="overflow-x:auto;padding:0">
       <table>
         <thead>
@@ -948,7 +1017,7 @@ def generate_index(reports: list[dict]) -> None:
             <th></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="report-tbody">
           {rows or '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">尚無報告</td></tr>'}
         </tbody>
       </table>
