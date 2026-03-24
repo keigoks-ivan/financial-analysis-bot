@@ -1133,7 +1133,8 @@ def generate_report_page_10k(
 
     # ── 圓形儀表（Chart.js Doughnut）+ 護城河等級
     gauge_color = _gauge_color_hex(total, 110.0)
-    remaining = max(0, 110 - total)
+    progress_pct = min(100, total / 110 * 100) if total > 0 else 0
+    remaining_pct = 100 - progress_pct
     score_hero = f"""
 <div class="score-hero">
   <div class="gauge-wrap" style="position:relative;width:160px;height:160px">
@@ -1322,7 +1323,7 @@ document.addEventListener('DOMContentLoaded',function(){{
     type:'doughnut',
     data:{{
       datasets:[{{
-        data:[{total},{remaining}],
+        data:[{progress_pct:.1f},{remaining_pct:.1f}],
         backgroundColor:['{gauge_color}','#e5e7eb'],
         borderWidth:0
       }}]
