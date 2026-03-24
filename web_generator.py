@@ -630,21 +630,28 @@ def _parse_moat_from_text(text: str) -> dict:
     支援格式：
       - 品牌力（8/10分）、品牌力：8/10
       - 品牌力（2/2分）（滿分 2 分制，按比例換算為 10 分制）
+      - 品牌力（1分）（無分母，假設滿分 2 分制換算為 10 分制）
     回傳 {brand_power: float, ...}，找不到的維度不包含。
     """
     result = {}
     for key, cn_label in MOAT_5_DIMS.items():
-        # 匹配「品牌力（8/10分）」或「品牌力：8/10」等
-        pattern = rf"{re.escape(cn_label)}[（(：:]\s*(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)\s*分?[）)]?"
-        m = re.search(pattern, text)
+        # 優先匹配「品牌力（8/10分）」或「品牌力：8/10」（含分母）
+        pat_frac = rf"{re.escape(cn_label)}[（(：:]\s*(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)\s*分?[）)]?"
+        m = re.search(pat_frac, text)
         if m:
             score = float(m.group(1))
             max_score = float(m.group(2))
-            # 統一換算為 10 分制
             if max_score > 0:
                 result[key] = round(score / max_score * 10, 1)
             else:
                 result[key] = 0.0
+            continue
+        # 備援匹配「品牌力（1分）」（無分母，假設滿分 2 分換算為 10 分制）
+        pat_simple = rf"{re.escape(cn_label)}[（(：:]\s*(\d+(?:\.\d+)?)\s*分[）)]?"
+        m2 = re.search(pat_simple, text)
+        if m2:
+            score = float(m2.group(1))
+            result[key] = round(score / 2 * 10, 1)
     return result
 
 
@@ -1103,6 +1110,10 @@ def generate_report_page_10k(
     parsed = _parse_10k_analysis(content)
     total = parsed["total_score"] or 0
     moat_level = parsed["moat_level"]
+
+    # 備援：若 Notion 欄位讀取不到分數，從分析文字解析
+    if not moat_sub_scores:
+        moat_sub_scores = _parse_moat_from_text(content)
 
     # 若無法從文本解析護城河等級，從 moat_sub_scores 計算
     if not moat_level and moat_sub_scores:
