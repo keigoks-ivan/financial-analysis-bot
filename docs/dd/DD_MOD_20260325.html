@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_MOD_20260325 | 買側標的研究報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --navy: #1E3A5F;
+    --accent: #3B82F6;
+    --accent2: #0EA5E9;
+    --text: #1E293B;
+    --muted: #64748B;
+    --border: #E2E8F0;
+    --green-bg: #DCFCE7; --green-text: #166534;
+    --red-bg: #FEE2E2; --red-text: #991B1B;
+    --yellow-bg: #FEF9C3; --yellow-text: #92400E;
+    --blue-bg: #EFF6FF; --blue-text: #1D4ED8;
+    --orange-bg: #FFF0E6; --orange-border: #F97316; --orange-title: #C2410C;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans TC', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  /* ── TOP HEADER ── */
+  #top-header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid var(--accent);
+    font-family: var(--mono);
+    font-size: 12px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-ticker { font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #60A5FA; }
+  .header-meta { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+  .header-item { display: flex; flex-direction: column; gap: 1px; }
+  .header-label { color: #94A3B8; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .header-value { color: #E2E8F0; font-weight: 600; }
+  .header-price { color: #34D399; font-size: 16px; font-weight: 700; }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── SECTION TITLES ── */
+  .section-block { margin-bottom: 40px; }
+  .section-title {
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    font-size: 15px; font-weight: 700;
+    border-left: 4px solid var(--accent);
+    letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px;
+  }
+  .section-num {
+    font-family: var(--mono);
+    background: var(--accent);
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .subsection-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--navy);
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 6px;
+    margin: 20px 0 12px;
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card-grid { display: grid; gap: 16px; }
+  .card-grid-2 { grid-template-columns: 1fr 1fr; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  @media (max-width: 768px) {
+    .card-grid-2, .card-grid-3, .card-grid-4 { grid-template-columns: 1fr; }
+  }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--navy); color: #fff; }
+  thead th { padding: 10px 12px; text-align: left; font-weight: 600; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  tbody tr:nth-child(even) { background: #F1F5F9; }
+  tbody tr:hover { background: #E0F2FE; }
+  tbody td { padding: 9px 12px; vertical-align: top; }
+  .num { font-family: var(--mono); }
+
+  /* ── STATUS BADGES ── */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 2px; font-size: 11px; font-weight: 700; font-family: var(--mono); white-space: nowrap; }
+  .badge-green { background: var(--green-bg); color: var(--green-text); }
+  .badge-red { background: var(--red-bg); color: var(--red-text); }
+  .badge-yellow { background: var(--yellow-bg); color: var(--yellow-text); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-orange { background: var(--orange-bg); color: var(--orange-title); }
+
+  /* ── ALERT BLOCKS ── */
+  .alert-trap {
+    background: var(--orange-bg);
+    border-left: 4px solid var(--orange-border);
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+  .alert-trap-title { color: var(--orange-title); font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+  .alert-info { background: var(--blue-bg); border-left: 4px solid var(--accent); padding: 14px 18px; margin: 12px 0; }
+  .alert-green { background: var(--green-bg); border-left: 4px solid #16A34A; padding: 14px 18px; margin: 12px 0; }
+  .alert-yellow { background: var(--yellow-bg); border-left: 4px solid #D97706; padding: 14px 18px; margin: 12px 0; }
+  .alert-red { background: var(--red-bg); border-left: 4px solid #DC2626; padding: 14px 18px; margin: 12px 0; }
+
+  /* ── SIGNAL ROWS ── */
+  .signal-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .signal-row:last-child { border-bottom: none; }
+  .signal-icon { font-size: 18px; min-width: 24px; }
+  .signal-label { font-weight: 600; font-size: 13px; flex: 1; }
+  .signal-val { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  /* ── METRIC CARDS ── */
+  .metric-card { background: var(--card); border: 1px solid var(--border); padding: 16px; }
+  .metric-card-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .metric-card-value { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--navy); }
+  .metric-card-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { margin: 8px 0; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .progress-bar { height: 6px; background: #E2E8F0; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+
+  /* ── SCORE METER ── */
+  .score-display {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--navy); color: #fff; padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .score-num { font-family: var(--mono); font-size: 40px; font-weight: 700; color: #34D399; }
+  .score-out { font-family: var(--mono); font-size: 18px; color: #94A3B8; }
+  .score-label { font-size: 13px; color: #CBD5E1; }
+
+  /* ── VERDICT BLOCK ── */
+  .verdict-block { padding: 20px 24px; margin: 20px 0; border: 2px solid; }
+  .verdict-enter { border-color: #16A34A; background: #F0FDF4; }
+  .verdict-watch { border-color: #D97706; background: #FFFBEB; }
+  .verdict-avoid { border-color: #DC2626; background: #FFF5F5; }
+  .verdict-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+
+  /* ── MISC ── */
+  p { margin-bottom: 10px; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+  strong { font-weight: 700; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .mono { font-family: var(--mono); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  .tag { background: #E0F2FE; color: #0369A1; font-size: 11px; padding: 2px 6px; font-family: var(--mono); }
+
+  /* ── PRINT ── */
+  @media print {
+    #top-header { display: none; }
+    #print-btn { display: none; }
+    body { font-size: 12px; }
+    .card { page-break-inside: avoid; }
+  }
+
+  /* ── PRINT BUTTON ── */
+  #print-btn {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--navy); color: #fff;
+    border: none; padding: 12px 20px;
+    font-family: var(--mono); font-size: 12px;
+    cursor: pointer; letter-spacing: 1px;
+    z-index: 200;
+    border-left: 3px solid var(--accent);
+  }
+  #print-btn:hover { background: var(--accent); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  .chapter-intro { font-style: italic; color: var(--muted); font-size: 13px; margin-bottom: 16px; border-left: 3px solid var(--accent); padding-left: 12px; }
+</style>
+</head>
+<body>
+
+<!-- TOP STICKY HEADER -->
+<div id="top-header">
+  <div class="header-ticker">NYSE: MOD</div>
+  <div class="header-meta">
+    <div class="header-item">
+      <span class="header-label">標的</span>
+      <span class="header-value">Modine Manufacturing Co.</span>
+    </div>
+    <div class="header-item">
+      <span class="header-label">模式</span>
+      <span class="header-value">🔍 深度版</span>
+    </div>
+    <div class="header-item">
+      <span class="header-label">資料抓取</span>
+      <span class="header-value">2026-03-25</span>
+    </div>
+    <div class="header-item">
+      <span class="header-label">最新股價（近期）</span>
+      <span class="header-price">~$200</span>
+    </div>
+    <div class="header-item">
+      <span class="header-label">最近財報季</span>
+      <span class="header-value">Q3 FY2026（2025.12.31）</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ─────────────────────────────── §0 序章 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§0</span> 序章：第一性原理 × 逆向思考
+  </div>
+
+  <div class="subsection-title">存在意義（深度版）</div>
+  <div class="card">
+    <p>Modine 解決的核心痛點是：<strong>算力密度爆炸帶來的熱密度危機</strong>。NVIDIA Blackwell GPU 每張功耗突破 700W、AI 訓練叢集動輒 24,000 GPU——這不是「效率優化」，而是物理上的生死線：若散熱跟不上算力，GPU 烤壞，超算停擺，雲端服務中斷。Modine 的 Airedale 系列冷水機組、CRAH、混合自由冷卻系統，以及 CDU，正是讓這些超算能夠持續運行的「散熱基礎設施」。</p>
+    <p>若 Modine 明天消失，Microsoft、Meta、Google 的資料中心無法採購兼具自由冷卻與高密度液冷能力的整合方案——Vertiv 主打的是電力基礎設施（UPS + PDU + 冷卻），並非純粹熱管理；STULZ 以精密空調為主，缺乏 Modine 在自由冷卻冷水機組上的 100 年工程積累。Modine 作為資料中心冷卻的「中型純粹玩家」一旦缺席，高效率、可擴展的熱管理方案將出現真空，超算業者需要 2–3 年才能完成供應商資質驗證並轉單。</p>
+  </div>
+
+  <div class="subsection-title">逆向推演（Munger Inversion）</div>
+  <div class="card">
+    <p><strong>讓這筆投資在 3 年內虧損 50% 以上的最可能路徑：</strong></p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>風險維度</th><th>具體路徑</th><th>時間軸</th><th>概率評估</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>地緣政治曝險</strong></td>
+            <td>Modine 在英國（Leeds, Airedale 總部）、歐洲有大量製造能力；若中美科技戰升級，中國客戶流失，且美國課徵供應鏈相關關稅使原材料成本（銅、鋁）大幅上升，壓縮毛利率 3–5%p</td>
+            <td>1–3 年</td>
+            <td><span class="badge badge-yellow">中度</span></td>
+          </tr>
+          <tr>
+            <td><strong>技術替代風險</strong></td>
+            <td>在晶片封裝層面整合液冷（如 Microsoft 宣佈的 in-chip cooling 技術），降低對外部 CDU / 冷水機組的依賴；或兩相浸沒式冷卻（Submer、GRC）規模化，使傳統風冷 / 混合方案邊緣化</td>
+            <td>3–7 年</td>
+            <td><span class="badge badge-yellow">中低</span></td>
+          </tr>
+          <tr>
+            <td><strong>管理層失職</strong></td>
+            <td>Q3 FY2026 已出現 CEO Brinker 出售 31,871 股（2025/12/2）、CFO Lucareli 出售 19,595 股、Director Williams 出售 12,000 股（2026/2/24），大規模內部人減持且在高價位；若資本配置過度押注資料中心而忽視 PT 分拆的執行風險，分拆交易若因 Gentherm 整合失敗而折損，剩餘實體的槓桿風險上升</td>
+            <td>1–2 年</td>
+            <td><span class="badge badge-red">⚠ 需監測</span></td>
+          </tr>
+          <tr>
+            <td><strong>價值陷阱路徑</strong></td>
+            <td>此標的最接近<strong>「隱性資本密集型」</strong>陷阱的變體：為維持資料中心高速成長，CapEx 急遽擴張（FY2026E $150–180M），目前 FCF 為負（Q3 FY2026 季度 FCF = -$17M），若資料中心需求放緩或競爭加劇，大量固定產能成本將壓垮 FCF 轉換，EPS 成長與 FCF 背離風險浮現</td>
+            <td>2–4 年</td>
+            <td><span class="badge badge-orange">核心風險</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §1 財報情報 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§1</span> 即時財報情報（Q3 FY2026，期間截至 2025.12.31）
+  </div>
+
+  <div class="subsection-title">① 最新一季財報關鍵數字</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Revenue（淨銷售額）</td>
+          <td class="num">$805.0M</td>
+          <td class="num">$760.4M</td>
+          <td><span class="badge badge-green">BEAT +5.9%</span></td>
+          <td class="num">+31.0% YoY</td>
+        </tr>
+        <tr>
+          <td>Adj. EPS（Non-GAAP）</td>
+          <td class="num">$1.19</td>
+          <td class="num">$0.99</td>
+          <td><span class="badge badge-green">BEAT +20.2%</span></td>
+          <td class="num">+29.3% YoY（vs $0.92）</td>
+        </tr>
+        <tr>
+          <td>GAAP EPS（含養老金終止一次性費用）</td>
+          <td class="num">-$0.90</td>
+          <td class="num">$1.00</td>
+          <td><span class="badge badge-red">MISS（非常態）</span></td>
+          <td class="num">N/A（非常態費用）</td>
+        </tr>
+        <tr>
+          <td>Free Cash Flow</td>
+          <td class="num">-$17.1M</td>
+          <td class="num">正值（預期）</td>
+          <td><span class="badge badge-yellow">弱（CapEx 擴張期）</span></td>
+          <td class="num">vs 前季 -$30.3M，有改善</td>
+        </tr>
+        <tr>
+          <td>Gross Margin</td>
+          <td class="num">23.1%</td>
+          <td class="num">~24%（估）</td>
+          <td><span class="badge badge-yellow">低於預期</span></td>
+          <td class="num">-120bps YoY（容量擴張臨時成本）</td>
+        </tr>
+        <tr>
+          <td>Adj. EBITDA</td>
+          <td class="num">$119.6M</td>
+          <td class="num">—</td>
+          <td><span class="badge badge-green">BEAT</span></td>
+          <td class="num">+37.0% YoY；Margin 14.9%（+70bps）</td>
+        </tr>
+        <tr>
+          <td>Data Center 細分</td>
+          <td class="num">約$350M（季估）</td>
+          <td class="num">—</td>
+          <td><span class="badge badge-green">+78% YoY</span></td>
+          <td class="num">+31% 環比（vs Q2 FY2026）</td>
+        </tr>
+        <tr>
+          <td>Operating Cash Flow</td>
+          <td class="num">$24.7M</td>
+          <td class="num">—</td>
+          <td><span class="badge badge-red">-59.3% YoY</span></td>
+          <td class="num">CapEx $41.8M（+161% YoY）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">注：Modine 財年截至 3 月 31 日。FY2026 = 2025/4–2026/3。Q3 FY2026 = 2025/10–2025/12。</p>
+
+  <div class="subsection-title">② Earnings Call 語氣解析（Q3 FY2026，2026/2/5）</div>
+  <div class="card">
+    <div class="signal-row">
+      <span class="signal-icon">🎯</span>
+      <span class="signal-label">管理層基調：<strong>強烈樂觀</strong>，與 Q2 相比語氣更積極</span>
+      <span class="signal-val">Brinker: "unprecedented investments in the future"</span>
+    </div>
+    <div class="signal-row">
+      <span class="signal-icon">📈</span>
+      <span class="signal-label">Forward Guidance：<strong>上調（二次）</strong></span>
+      <span class="signal-val">FY2026 銷售成長 20–25%（原 10–15%）；Adj. EBITDA $455–475M</span>
+    </div>
+    <div class="signal-row">
+      <span class="signal-icon">🔑</span>
+      <span class="signal-label">刻意強調：<strong>資料中心分拆純化＋FY2028 $2B 目標</strong></span>
+      <span class="signal-val">PT 剝離後成為純粹 Climate Solutions，更高估值倍數重定價預期</span>
+    </div>
+    <div class="signal-row">
+      <span class="signal-icon">⚠️</span>
+      <span class="signal-label">刻意迴避：<strong>長期供應協議具體條款＋客戶集中度</strong></span>
+      <span class="signal-val">分析師追問 hyperscaler 訂單集中是否有前 3 大客戶佔比，未正面回答</span>
+    </div>
+    <div class="signal-row">
+      <span class="signal-icon">💡</span>
+      <span class="signal-label">PT 分拆細節：Gentherm 合併，MOD 收 $210M 現金＋40% 新公司股份，PT 估值約 $1B（6.8x TTM EBITDA）</span>
+    </div>
+    <div class="signal-row">
+      <span class="signal-icon">🏭</span>
+      <span class="signal-label">產能擴張進度：Q3 啟動 Leeds、Grenada MS、Jefferson City MO 冷水機生產線；Q4 再增 4 條線；FY2028 初達 ~20 條線</span>
+    </div>
+  </div>
+
+  <div class="subsection-title">③ 產業 Imply 萃取</div>
+  <div class="two-col">
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">需求端 & 供給端</div>
+      <p><strong>需求：</strong>管理層透露 backlog「能見度接近 5 年」，創歷史新高，訂單拆分約半冷水機 / 半其他 DC 產品。訂單以長期供應協議形式簽署，結構改變表明超算業者正在把冷卻容量視為算力資源一樣稀缺。</p>
+      <p><strong>供給：</strong>製造產能是最核心瓶頸——Modine 的冷水機生產線從 0 到 FY2028 初約 20 條，每條線需要精密工程認證流程，新進者無法快速追上。</p>
+    </div>
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">競爭格局 & 總體敏感度</div>
+      <p><strong>競爭：</strong>定價能力維持——毛利率下降是<strong>臨時性產能擴張成本</strong>，非定價讓步。管理層明確說明 Q4 邊際改善，目標 CS 段 EBITDA Margin 20–21%。競爭者（Vertiv、STULZ）雖同步擴產，但 Modine 的自由冷卻混合技術在 AI 工作負載的 PUE 優勢成為差異化點。</p>
+      <p><strong>總體敏感度：</strong>主要尾風是超算資本支出（Microsoft $80B、Meta $65B、Google $75B FY2025），主要逆風是 PT 段（重卡、農機、建築市場疲軟，PT FY2026 導引為持平至下降 7%）。</p>
+      <p><strong>對同業連帶推論：</strong>Modine 的 78% DC 成長 + 5 年 backlog 能見度，強力確認 Vertiv、Schneider 等熱管理設備商的需求週期，對 HVAC 設備供應鏈（銅管、鋁材、風扇電機廠商）屬於正面信號。</p>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §2 門檻 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§2</span> 核心門檻檢核
+  </div>
+
+  <div class="subsection-title">EPS CAGR 搜尋結果（StockAnalysis + 多方交叉驗證）</div>
+  <div class="alert-info">
+    <strong>口徑說明：</strong>StockAnalysis 以 GAAP 為歷史基期，分析師預測混合 Non-GAAP（SBC 攤銷、一次性費用等已排除）。Modine FY2026 GAAP EPS 因 $116.1M 養老金終止費用大幅失真，故以 Adj. EPS 為主口徑。<br>
+    <strong>差距來源：</strong>GAAP vs Non-GAAP 差距主要來自 SBC、重組費用及收購無形資產攤銷（FY2025 差距約 $0.50/股）。
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>財年</th><th>GAAP EPS（實際）</th><th>Non-GAAP Adj. EPS</th><th>分析師覆蓋</th><th>來源</th></tr></thead>
+      <tbody>
+        <tr><td>FY2025（基期，截至 2025/3）</td><td class="num">$3.42</td><td class="num">$3.42（估）</td><td>—</td><td>StockAnalysis / SEC 8-K</td></tr>
+        <tr><td>FY2026E（截至 2026/3）</td><td class="num">$4.73E</td><td class="num">~$4.73（Non-GAAP）</td><td>n=9</td><td>StockAnalysis</td></tr>
+        <tr><td>FY2027E（截至 2027/3）</td><td class="num">$6.41E</td><td class="num">~$6.41</td><td>n=9</td><td>StockAnalysis</td></tr>
+        <tr><td>FY2028E</td><td colspan="3" style="font-style:italic;color:var(--muted)">需 Pro 訂閱；以 FY2027 外推（標注：FY+2 外推）</td><td>StockAnalysis Pro Required</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <p><strong>CAGR 計算（以 FY2025–FY2027 為 2 年 CAGR，FY2028 外推）：</strong></p>
+    <ul>
+      <li>2 年 Non-GAAP CAGR（FY2025→FY2027）：(6.41 / 3.42)^(1/2) − 1 ≈ <strong>36.9%</strong></li>
+      <li>3 年 CAGR 外推估計（假設 FY2028E ~$8.50，基於 Roth/MKM 64% DC CAGR 隱含）：<strong>~35%</strong></li>
+      <li>GAAP CAGR 因 FY2026 養老金費用失真，以 Adj. 為準；差距約 $0.5–1.0/股</li>
+    </ul>
+    <p class="muted">資料來源：StockAnalysis.com（Finnhub data）、SEC Form 8-K、Roth/MKM initiation report（2026/2/18）</p>
+  </div>
+
+  <div class="subsection-title">門檻檢核表</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>FCF Margin</td>
+          <td>&gt; 15%</td>
+          <td><span class="badge badge-red">❌ 暫不符</span></td>
+          <td>FY2025 FCF = $129.3M / 銷售 $2.58B = <strong>5.0%</strong>；FY2026 因大量 CapEx（$150–180M 全年）FCF 轉負。管理層目標 FY2027+ 達 6–8% of sales，FCF 正常化需等 FY2028</td>
+        </tr>
+        <tr>
+          <td>ROIC</td>
+          <td>產業頂尖</td>
+          <td><span class="badge badge-yellow">🟡 進行中</span></td>
+          <td>ROE TTM ~10.3%（CNBC 數據），CapEx 密集期壓低；FY2025 管理層目標 ROIC 達頂尖，CS 段 EBITDA Margin 20%+，ROIC 擴張趨勢確立但 FY2026 CapEx 週期抑制</td>
+        </tr>
+        <tr>
+          <td>EPS CAGR（3 年）</td>
+          <td>&gt; 20%</td>
+          <td><span class="badge badge-green">✅ 符合</span></td>
+          <td>FY2025: $3.42 → FY2027E: $6.41（n=9 分析師）<br>Non-GAAP 2yr CAGR ≈ <strong>36.9%</strong> >> 20% 門檻<br>口徑差距：SBC + 攤銷 ~$0.5/股</td>
+        </tr>
+        <tr>
+          <td>PEG（Non-GAAP）</td>
+          <td>&lt; 2</td>
+          <td><span class="badge badge-yellow">🟡 邊界</span></td>
+          <td>Forward P/E ~32x（NTM，CNBC）/ EPS CAGR 37% → PEG ≈ 0.87（§7.2 詳算）</td>
+        </tr>
+        <tr>
+          <td>現金覆蓋總負債</td>
+          <td>是</td>
+          <td><span class="badge badge-red">❌ 否</span></td>
+          <td>Q3 FY2026 現金 $98.7M，淨債務 $517M；FY2025 末淨債務 $279M，因收購及 CapEx 大幅上升</td>
+        </tr>
+        <tr>
+          <td>護城河強度</td>
+          <td>&gt; 8 分，擴大</td>
+          <td><span class="badge badge-yellow">🟡 7/10，趨擴</span></td>
+          <td>詳見 §3；具備真實轉換成本與製造規模壁壘，但液冷技術門檻尚在建立中</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert-trap">
+    <div class="alert-trap-title">⚠️ 注意：FCF Margin 與現金覆蓋不達標均與產能擴張週期直接相關，非結構性惡化——但需密切追蹤 FY2028 FCF 正常化能否兌現</div>
+  </div>
+
+  <div class="subsection-title">⚠️ 價值陷阱初篩：低估值四問</div>
+  <div class="alert-info">
+    <strong>觸發評估：</strong>MOD 當前 Forward P/E ~32x，5 年歷史平均 16x（Intellectia 數據），當前分位遠 > 25%（高位）。<strong>低估值四問條件未觸發。</strong>此標的屬於估值溢價標的，方向相反——需關注的是高估值能否被基本面支撐。
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §2.5 長期成長性 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§2.5</span> 長期成長性評估
+  </div>
+
+  <div class="subsection-title">A｜成長跑道（Runway）估算</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>資料中心冷卻 TAM（全球）</td>
+          <td class="num">$15–18B（2025 年，多方估算）</td>
+          <td>GMI Insights: $18.4B (2024)，CAGR 10.2% to 2034；Precedence Research: $16.4B (2026)</td>
+        </tr>
+        <tr>
+          <td>可達 TAM（Modine 可觸及）</td>
+          <td class="num">$8–10B（冷水機 + CRAH + 液冷 CDU）</td>
+          <td>AI 算力密度提升使液冷份額快速增加，液冷 TAM 本身更快速擴張（CAGR 可能達 20%+）</td>
+        </tr>
+        <tr>
+          <td>當前 DC 市佔 / 滲透率</td>
+          <td class="num">Modine DC 收入 FY2025 $644M，佔 TAM ~4%</td>
+          <td>前 7 大玩家共佔 ~30%（GBI Insights），市場高度分散，Modine 仍有大量份額可爭奪</td>
+        </tr>
+        <tr>
+          <td>若維持 ~50% DC CAGR，達 30% TAM 滲透的年份</td>
+          <td class="num">不適用（TAM 本身持續擴大）</td>
+          <td>AI 算力需求是持續驅動力，TAM 擴張速度可能超越 Modine 的成長速度</td>
+        </tr>
+        <tr>
+          <td><strong>成長可持續年數（Runway）</strong></td>
+          <td class="num"><strong>7–10 年</strong></td>
+          <td>訂單能見度達 5 年；AI 超算資本支出週期（Microsoft $80B/yr、Meta $65B/yr、Google $75B/yr）有 5 年以上明確計畫，之後是否延續取決於 AI 算力需求軌跡</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="alert-yellow">
+    <strong>Runway 解讀：7–10 年屬中等至高可見度，支撐估值溢價但不達「最高確信」等級。</strong>AI 超算週期的可持續性是 Runway 延長或縮短的核心變數。
+  </div>
+
+  <div class="subsection-title">B｜成長品質判斷</div>
+  <div class="two-col">
+    <div class="card">
+      <p><strong>有機 vs 無機成長</strong></p>
+      <table style="margin-top:8px">
+        <thead><tr><th>類型</th><th>占比估計</th><th>佐證</th></tr></thead>
+        <tbody>
+          <tr><td>有機</td><td class="num">~70–75%</td><td>Q3 FY2026 有機成長 21%；DC 業務 78% YoY 為純有機；Q2 FY2026 收購貢獻 $28.1M</td></tr>
+          <tr><td>無機</td><td class="num">~25–30%</td><td>Scott Springfield 收購（FY2025）、Airedale 原為收購品牌；近期 TMG Core 液冷 IP 收購</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="margin-top:8px">近 3 年主要收購：Scott Springfield（IAQ）、TMG Core（液冷 IP）、Airedale（已整合良好）。無機佔比在合理範圍，且各收購均圍繞 DC 冷卻核心主題，整合策略一致。</p>
+    </div>
+    <div class="card">
+      <p><strong>成長驅動結構</strong></p>
+      <table style="margin-top:8px">
+        <thead><tr><th>類型</th><th>判斷</th><th>趨勢</th></tr></thead>
+        <tbody>
+          <tr><td>定價驅動</td><td>有，但程度有限——DC 產品議價力強，但整合毛利受產能擴張臨時成本壓制</td><td>穩定偏擴大</td></tr>
+          <tr><td>量驅動</td><td>主要驅動力——DC 業務 78% YoY 成長主要來自量的爆發；冷水機生產線數量從接近 0 擴至 FY2028 初 ~20 條</td><td>快速擴大</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="margin-top:8px">目前以量驅動為主，但管理層目標是提升 ARPU（從標準 CRAH 轉向高附加值混合冷水機系統），定價驅動比例將隨產品組合升級而上升。</p>
+    </div>
+  </div>
+
+  <div class="subsection-title">C｜成長護城河連動評估</div>
+  <div class="card">
+    <div class="signal-row">
+      <span class="signal-icon">🔗</span>
+      <span class="signal-label"><strong>判斷：中性型偏強化型（正在建立中）</strong></span>
+    </div>
+    <p>具體佐證：</p>
+    <ul>
+      <li>DC 業務規模擴大→製造成本曲線壓縮（規模優勢正在建立）</li>
+      <li>長期供應協議鎖定客戶，形成客戶數據與供應鏈深度綁定</li>
+      <li>自由冷卻技術積累（100 年工程知識）隨更多 hyperscaler 驗證而強化品牌護城河</li>
+      <li><strong>但尚未達到「強化型」：</strong>網路效應不顯著；數據壁壘尚在建立；競爭者（Vertiv、Schneider）正在平行跑資質驗證，護城河邊界尚在爭奪中</li>
+    </ul>
+  </div>
+
+  <div class="subsection-title">D｜ROIC 與 FCF 長期可維持性</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>指標</th><th>當前值</th><th>3 年前（FY2023）</th><th>趨勢</th><th>標準門檻</th><th>符合</th></tr></thead>
+      <tbody>
+        <tr><td>ROIC（估）</td><td class="num">~12–15%（CS 段）</td><td class="num">~8%</td><td>↑ 改善中</td><td>產業頂尖 &gt; WACC</td><td><span class="badge badge-yellow">進行中</span></td></tr>
+        <tr><td>ROIC − WACC（超額報酬）</td><td class="num">正值，但收窄（CapEx 期）</td><td class="num">接近零</td><td>↑ 趨正</td><td>持續正值且擴大</td><td><span class="badge badge-yellow">建立中</span></td></tr>
+        <tr><td>FCF Margin</td><td class="num">負值（FY2026E）</td><td class="num">~5%</td><td>↓ 暫時</td><td>&gt; 15%</td><td><span class="badge badge-red">CapEx 週期</span></td></tr>
+        <tr><td>FCF / Net Income 轉換率</td><td class="num">FY2025: $129M / $185M = 70%</td><td class="num">~80%</td><td>↓ 暫時</td><td>&gt; 85%</td><td><span class="badge badge-yellow">臨時偏低</span></td></tr>
+        <tr><td>Reinvestment Rate</td><td class="num">高（FY2026 CapEx $150–180M）</td><td class="num">低（~$40M/yr）</td><td>↑↑ 急升</td><td>成長期合理偏高，需對應 ROIC</td><td><span class="badge badge-green">策略性</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection-title">E｜成長熄火情境壓力測試</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>情境假設</th><th>成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>3 年後成長率降至 15%</td>
+          <td>DC 成長放緩，CS 段仍優於市場</td>
+          <td class="num">~22–25x</td>
+          <td class="num"><span class="badge badge-yellow">-22%～-31%</span></td>
+        </tr>
+        <tr>
+          <td>3 年後成長率降至 10%</td>
+          <td>DC 成長趨緩，回歸工業成長平均</td>
+          <td class="num">~15–18x</td>
+          <td class="num"><span class="badge badge-red">-44%～-53%</span></td>
+        </tr>
+        <tr>
+          <td>3 年後成長率降至 5%</td>
+          <td>純成熟期低成長工業股</td>
+          <td class="num">~10–12x</td>
+          <td class="num"><span class="badge badge-red">-63%～-69%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">目標 P/E 基於工業科技股同業中位數調整；壓縮幅度基於當前 Forward P/E ~32x。</p>
+
+  <div class="subsection-title">⚠️ 衰退信號偵測表</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>護城河侵蝕</td>
+          <td>Gross Margin 連續 2 季 YoY 下滑</td>
+          <td>Q3 FY2026: 23.1%（-120bps YoY）；Q2 FY2026: 22.3%（-290bps YoY）——連 2 季下滑</td>
+          <td><span class="badge badge-yellow">🟡（臨時性，非結構）</span></td>
+        </tr>
+        <tr>
+          <td>護城河侵蝕</td>
+          <td>核心市場市佔率縮減（12M）</td>
+          <td>DC 市佔實際在擴大（FY2025 DC 收入 +119% YoY）；PT 段市佔因主動退出低毛利產品線而縮減</td>
+          <td><span class="badge badge-green">⬜（PT 縮減屬策略性）</span></td>
+        </tr>
+        <tr>
+          <td>護城河侵蝕</td>
+          <td>最近一次提價後銷量是否下滑？</td>
+          <td>Q4 FY2024 / FY2025 定價提升後，DC 銷售加速，無銷量下滑跡象；反而供不應求</td>
+          <td><span class="badge badge-green">⬜ 定價能力確認</span></td>
+        </tr>
+        <tr>
+          <td>盈餘品質</td>
+          <td>EPS CAGR 顯著高於 Revenue CAGR（差 > 5%p）</td>
+          <td>FY2025–FY2027 Revenue CAGR ~17%，EPS CAGR ~37%——差距 ~20%p</td>
+          <td><span class="badge badge-red">🔴（但來源為利潤率擴張，非一次性）</span></td>
+        </tr>
+        <tr>
+          <td>盈餘品質</td>
+          <td>FCF / Net Income 轉換率 &lt; 0.75（連續 2 年）</td>
+          <td>FY2025: 70%（$129M / $185M）；FY2026E 轉負——1 年明顯低，FY2025 首次觸線</td>
+          <td><span class="badge badge-yellow">🟡（觸發 1 年，需觀察 FY2026）</span></td>
+        </tr>
+        <tr>
+          <td>盈餘品質</td>
+          <td>SBC / Revenue &gt; 5% 且逐年上升</td>
+          <td>TTM Revenue $2.87B，SBC 未公開精確數字但屬工業製造商（估計 &lt; 2%），屬低 SBC 行業</td>
+          <td><span class="badge badge-green">⬜ 無此問題</span></td>
+        </tr>
+        <tr>
+          <td>產業結構衰退</td>
+          <td>TAM 本身在萎縮或被替代技術壓縮</td>
+          <td>DC 冷卻 TAM $15–18B（2025）→ $24–34B（2030–2034），持續擴張</td>
+          <td><span class="badge badge-green">⬜ TAM 擴張中</span></td>
+        </tr>
+        <tr>
+          <td>產業結構衰退</td>
+          <td>整個產業估值倍數過去 3 年系統性下移</td>
+          <td>Vertiv、Modine 估值倍數過去 3 年顯著上移（反向信號），產業熱度高</td>
+          <td><span class="badge badge-green">⬜ 相反，倍數上移</span></td>
+        </tr>
+        <tr>
+          <td>隱性資本密集</td>
+          <td>Maintenance Capex 占 FCF 比例 &gt; 60%</td>
+          <td>目前 CapEx 主要為 Growth Capex（新產能線）；FY2025 Maintenance CapEx 估計 ~$40M；FCF $129M，比例約 31%</td>
+          <td><span class="badge badge-green">⬜ 低於閾值</span></td>
+        </tr>
+        <tr>
+          <td>隱性資本密集</td>
+          <td>若停止投資新產能，收入在 3 年內下滑？</td>
+          <td>現有訂單 backlog 5 年能見度，現有產能已能支撐 FY2027 部分成長；但無新產能則無法達 $2B DC 目標，因此停止擴產確實會使成長率降至市場平均</td>
+          <td><span class="badge badge-yellow">🟡（有此特徵）</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert-yellow">
+    <strong>亮燈統計：🔴 1 個（EPS 遠高於 Revenue CAGR）、🟡 3 個（毛利率連降 2Q、FCF 轉換率偏低、停產能成長即放緩）</strong><br>
+    <strong>價值陷阱風險評級：🟡 中度警戒</strong>——主要風險點是「高速成長的 EPS 能否轉化為真實 FCF」，以及「CapEx 產能擴張的回收時間」。本標的不是傳統低估值陷阱，而是高估值的「執行風險陷阱」。
+  </div>
+
+  <div class="card" style="border-left: 4px solid #3B82F6; margin-top:16px">
+    <strong>長期成長性綜合評級：🟡 中等至高可見度成長</strong>
+    <p>Runway 7–10 年（中高）、有機成長占主導、成長護城河從中性轉向強化型、ROIC 改善中但 CapEx 週期壓縮 FCF；衰退信號 1 紅 3 黃（EPS 品質問題需後續驗證）。</p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §3 護城河 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§3</span> 護城河分析（報告核心）
+  </div>
+
+  <div class="score-display">
+    <div>
+      <div class="score-num">7<span class="score-out">/10</span></div>
+      <div class="score-label">護城河強度（全球上市公司最嚴基準）</div>
+    </div>
+    <div style="padding-left:20px; border-left: 1px solid rgba(255,255,255,0.2)">
+      <div style="color:#FCD34D; font-weight:700; font-size:14px">趨勢：擴大中</div>
+      <div style="color:#94A3B8; font-size:12px">從 FY2022 的 4/10 快速提升</div>
+    </div>
+  </div>
+
+  <div class="subsection-title">護城河來源：逐一檢驗</div>
+  <div class="card-grid card-grid-2">
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">🌐 網路效應</div>
+      <p><span class="badge badge-yellow">部分存在</span></p>
+      <p>規模閾值在「超算客戶驗證積累」層面存在：Modine 在 hyperscaler 供應商名單中的資質每增加一個，下一個 hyperscaler 的驗證週期縮短，形成弱網路效應。但不具備平台型或用戶端網路效應。若對手規模化，此優勢可被追上。</p>
+    </div>
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">🏛️ 無形資產</div>
+      <p><span class="badge badge-green">真實存在，中度強度</span></p>
+      <p>Airedale 品牌在英國精密空調市場有 40+ 年歷史；自由冷卻設計 IP（Concurrent Free Cooling 技術專利）；100 年熱管理工程知識。關鍵點：這使 Modine 的 DC 產品在高 GPU 密度環境中的 PUE 最優化，是可量化的能源成本優勢（超算業者以能源成本計 ROI）。</p>
+    </div>
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">🔒 轉換成本</div>
+      <p><span class="badge badge-green">中高強度，快速建立中</span></p>
+      <p>對手無法複製的原因：(1) 訂單以長期供應協議形式鎖定（能見度接近 5 年）；(2) hyperscaler 的資料中心設計與 Modine 設備深度整合，切換需重新設計機房冷卻架構，成本 $M 級別；(3) 每條冷水機生產線的工廠驗收測試（FAT）需 6–12 個月——若換供應商等同重新計時。Q3 FY2026 earnings call 分析師問及 LTA（長期協議）情況，管理層未披露具體比例但確認趨勢明確向長期協議移動。</p>
+    </div>
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">⚖️ 規模優勢</div>
+      <p><span class="badge badge-yellow">建立中，尚未確立</span></p>
+      <p>Modine 正從產能受限的小玩家（FY2022 DC 收入 ~$100M）快速擴張至 FY2028E $2B。規模到達此水準後，與 STULZ、Rittal 的成本曲線差異才會明顯。目前仍在投資建立規模，成本優勢尚未充分展現。<strong>不可複製之處：</strong>精密冷水機製造的精度要求使新進者需要 3–5 年驗證週期，這是資本充足對手也難以快速跨越的障礙。</p>
+    </div>
+  </div>
+
+  <div class="subsection-title">競爭鴻溝</div>
+  <div class="card">
+    <p>資本充足的對手（如 Vertiv $70B 市值）為何仍難以快速超越？</p>
+    <ul>
+      <li><strong>供應鏈驗證時間：</strong>hyperscaler 需要 12–24 個月完成新供應商工廠驗收 + 樣機測試 + 量產驗證，Modine 已在多個超算設施完成認證，先發優勢具體量化為約 2 年的市場先機</li>
+      <li><strong>自由冷卻工程知識：</strong>Modine 可在全年 &gt;70% 時間切換至自由冷卻，PUE 低至 1.05，這需要百年工程積累的「如何設計控制邏輯」知識，非單純資本可買到</li>
+      <li><strong>生產節奏：</strong>Modine Q3 FY2026 已啟動 8 條冷水機生產線，Q4 再加 4 條，FY2028 初目標 20 條；建立如此緊湊的製造攀升曲線需要大量現場學習，先行者優勢顯著</li>
+    </ul>
+  </div>
+
+  <div class="subsection-title">市佔競爭表</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>競爭對手</th><th>DC 冷卻估計市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Vertiv (VRT)</strong></td><td class="num">~15–20%（整合基礎設施）</td><td>↑ 快速</td><td>液冷 CDU 快速規模化，hyperscaler 深度關係</td><td>Modine 高端液冷、整合系統</td></tr>
+        <tr><td><strong>Schneider Electric</strong></td><td class="num">~10–15%</td><td>↑</td><td>EcoStruxure DCIM 平台生態系統，Motivair 收購加速液冷</td><td>中高端市場</td></tr>
+        <tr><td><strong>STULZ</strong></td><td class="num">~5%</td><td>→</td><td>精密空調領域強，液冷較弱</td><td>Modine 空調冷卻</td></tr>
+        <tr><td><strong>Rittal</strong></td><td class="num">~5%</td><td>→</td><td>機架冷卻、模組化設計</td><td>邊緣資料中心</td></tr>
+        <tr><td><strong>Modine（Airedale）</strong></td><td class="num">~3–5%，快速增長中</td><td>↑↑</td><td>產能擴張執行風險</td><td>自由冷卻混合方案搶佔效率敏感客戶</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection-title">護城河趨勢：<span class="badge badge-green">擴大（但仍需 2–3 年鞏固）</span></div>
+  <div class="card">
+    <p><strong>最大威脅（24 個月內，按威脅程度排序）：</strong></p>
+    <ol>
+      <li><strong>在晶片封裝層面整合冷卻（Microsoft in-chip cooling）：</strong>若 GPU 製造商（NVIDIA/AMD）直接在晶片設計中整合冷卻解決方案，外部冷卻設備需求可能部分被替代。但此技術量產落地仍需 3–5 年，且不會完全取代機房層面的熱量散逸需求（熱量必須排到哪裡）。</li>
+      <li><strong>兩相浸沒式冷卻規模化：</strong>若 GRC（Green Revolution Cooling）或 Submer 在大型 hyperscaler 設施廣泛部署，對傳統空冷/混合冷卻的需求將結構性下降。目前仍受限於液體洩漏風險、維護複雜度，5 年內大規模替代的概率低。</li>
+      <li><strong>Vertiv 加速垂直整合：</strong>若 Vertiv 收購 STULZ 或其他冷卻純玩家，形成端到端整合（電力+冷卻+監控），Modine 的純冷卻定位面臨整合競爭壓力。</li>
+    </ol>
+  </div>
+
+  <div class="alert-info">
+    <strong>對 §2.5 衰退信號（毛利率連降 2Q）的正面回應：</strong>Q3 FY2026 毛利率下降 120bps 明確由「產能擴張臨時成本」所致（新生產線 ramp-up 期的效率不足、工人培訓、初期廢料），非競爭性定價讓步。管理層明確提示 Q4 將有「超過 200bps 的環比改善」，CS 段 EBITDA Margin 回至 20–21%。這是<strong>暫時性，非結構性惡化。</strong>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §4 財務品質 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§4</span> 財務品質監測
+  </div>
+
+  <div class="subsection-title">三年趨勢表</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>指標</th><th>FY2023（3/31）</th><th>FY2024（3/31）</th><th>FY2025（3/31）</th><th>主要對手比較</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>FCF Margin</td>
+          <td class="num">~4.0%</td>
+          <td class="num">~5.1%（$127M/2.41B）</td>
+          <td class="num">5.0%（$129M/2.58B）</td>
+          <td>Vertiv TTM FCF Margin ~8–10%；JCI ~5%</td>
+        </tr>
+        <tr>
+          <td>EBITDA Margin（Adj.）</td>
+          <td class="num">~10.2%</td>
+          <td class="num">~13.1%</td>
+          <td class="num">~15.1%（$390M/2.58B）</td>
+          <td>VRT ~20.5%；JCI ~15%</td>
+        </tr>
+        <tr>
+          <td>ROIC − WACC（估）</td>
+          <td class="num">小幅負值</td>
+          <td class="num">接近零</td>
+          <td class="num">正值，~2–4%（CS 段更高）</td>
+          <td>VRT ROIC 28.85%；MOD 追趕中</td>
+        </tr>
+        <tr>
+          <td>SBC / Revenue</td>
+          <td class="num">~1.0%</td>
+          <td class="num">~1.1%</td>
+          <td class="num">~1.2%（估）</td>
+          <td>工業製造商標準，遠低於科技股</td>
+        </tr>
+        <tr>
+          <td>ROE</td>
+          <td class="num">~14%</td>
+          <td class="num">~21%</td>
+          <td class="num">~23%（8-K 數據）</td>
+          <td>VRT ROE 41.81%；MOD 顯著改善但仍落後</td>
+        </tr>
+        <tr>
+          <td>Gross Margin</td>
+          <td class="num">~18%</td>
+          <td class="num">~22%</td>
+          <td class="num">24.9%（FY2025）</td>
+          <td>VRT ~35%；CS 段 FY2025 為 28.9%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection-title">獲利品質警訊（深度版四項）</div>
+  <div class="two-col">
+    <div class="card">
+      <p><strong>① 淨利 vs. OCF 連動性</strong></p>
+      <p>FY2025 淨利 $185M，OCF $213M，FCF $129M——OCF > 淨利，無盈餘操縱跡象。Q3 FY2026 OCF 驟降至 $24.7M（-59% YoY），但主因是工作資本（存貨）大量增加以支撐產能擴張，並非盈利品質下降。</p>
+      <span class="badge badge-green">無異常</span>
+    </div>
+    <div class="card">
+      <p><strong>② AR 成長 vs 營收成長</strong></p>
+      <p>未取得完整 AR 細項，但 Q3 FY2026 大量現金流壓力來自存貨而非應收帳款，且管理層明確說明客戶是 hyperscaler（信用風險極低）。DC 客戶通常要求快速發貨但付款條件良好。</p>
+      <span class="badge badge-green">無明顯膨脹跡象</span>
+    </div>
+    <div class="card">
+      <p><strong>③ 存貨成長 vs 營收成長</strong></p>
+      <p>FY2026 存貨快速增加（支撐 Q4 FY2026 大量新產能線出貨），屬主動備貨而非被動積壓。管理層預計 Q4 正 FCF，暗示庫存將轉化為銷售，不存在積壓風險。</p>
+      <span class="badge badge-yellow">策略性增加，需監測能否如期消化</span>
+    </div>
+    <div class="card">
+      <p><strong>④ FCF 轉換率趨勢</strong></p>
+      <p>FY2023: ~70% → FY2024: ~80% → FY2025: ~70% → FY2026: 負值。趨勢惡化明顯，但<strong>結構原因是 Growth CapEx 急升</strong>（FY2022 $40M → FY2026E $150–180M）。關鍵問題是 FY2027 起 CapEx 是否能回落至 Revenue 的 ~5% 以下，從而使 FCF 轉換率正常化至 85%+。</p>
+      <span class="badge badge-red">核心監測指標，FY2027 驗證點</span>
+    </div>
+  </div>
+
+  <div class="subsection-title">回購品質評估（價值陷阱防禦）</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>過去 3 年回購總金額 vs FCF 總額</td>
+          <td>回購規模較小（MOD 主要用 FCF 做 M&amp;A 及 CapEx），FY2023–2025 回購估計 &lt; $50M 總計</td>
+          <td><span class="badge badge-green">回購 / FCF &lt; 30%，不依賴回購撐 EPS</span></td>
+        </tr>
+        <tr>
+          <td>若剔除回購，EPS CAGR 降為多少？</td>
+          <td>股數從 55M 左右幾乎持平（略有稀釋），EPS 成長主要來自盈利改善而非回購</td>
+          <td><span class="badge badge-green">EPS 成長真實</span></td>
+        </tr>
+        <tr>
+          <td>Revenue CAGR（同期）</td>
+          <td>FY2023–FY2025 Revenue CAGR ~6%；FY2025–FY2027E ~17%；EPS CAGR ~37%</td>
+          <td><span class="badge badge-yellow">差距大，但主因是利潤率擴張（CS 段 margin +1000bps），而非回購或一次性</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §5 產業格局 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§5</span> 產業格局、議價權與 Unit Economics
+  </div>
+
+  <div class="subsection-title">市場量化</div>
+  <div class="card-grid card-grid-3">
+    <div class="metric-card">
+      <div class="metric-card-label">DC 冷卻 TAM (2024)</div>
+      <div class="metric-card-value">$18.4B</div>
+      <div class="metric-card-sub">CAGR 10.2% → $34B by 2034</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-label">液冷細分 CAGR</div>
+      <div class="metric-card-value">~20%+</div>
+      <div class="metric-card-sub">AI GPU 熱密度推動，最快成長子市場</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-card-label">Modine DC 份額（估）</div>
+      <div class="metric-card-value">~3.5%</div>
+      <div class="metric-card-sub">FY2025 $644M；目標 FY2028 $2B</div>
+    </div>
+  </div>
+  <p class="muted">供需狀態：嚴重供給不足——CDU 產能是 AI 超算部署的真實瓶頸，Modine Q3 FY2026 earning call 確認 5 年訂單能見度，符合典型供不應求市場特徵。</p>
+
+  <div class="subsection-title">議價權分析</div>
+  <div class="two-col">
+    <div class="card">
+      <p><strong>對上游供應商（銅、鋁、冷媒、鋼材）</strong></p>
+      <ul>
+        <li>供應商集中度中等；銅鋁屬大宗商品，Modine 議價力有限</li>
+        <li>關稅風險：若美國對進口鋁鋼加徵關稅，成本壓力無法 100% 轉嫁</li>
+        <li>FY2025 毛利改善部分來自商品成本下降——若原材料反彈，毛利率承壓</li>
+      </ul>
+    </div>
+    <div class="card">
+      <p><strong>對下游客戶（hyperscaler、Colo 業者）</strong></p>
+      <ul>
+        <li>客戶集中度偏高（未披露，但管理層迴避前幾大客戶佔比問題）——<strong>主要風險之一</strong></li>
+        <li>但供不應求使 Modine 在談判中具備議價力，長期協議保護邊際</li>
+        <li>合約結構從現貨逐漸轉向 LTA（長期供應協議），議價力改善中</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="subsection-title">營收組成</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>業務/地區</th><th>FY2025 收入估計</th><th>佔比</th><th>成長性</th></tr></thead>
+      <tbody>
+        <tr><td>Climate Solutions — Data Center</td><td class="num">$644M</td><td class="num">25%</td><td><span class="badge badge-green">+119% YoY FY2025；FY2026E +70%+</span></td></tr>
+        <tr><td>Climate Solutions — HVAC&R</td><td class="num">~$640M</td><td class="num">25%</td><td><span class="badge badge-yellow">+10–15% YoY（穩健）</span></td></tr>
+        <tr><td>Climate Solutions — Heat Transfer</td><td class="num">~$157M</td><td class="num">6%</td><td><span class="badge badge-red">-13% YoY（客戶在地化壓力）</span></td></tr>
+        <tr><td>Performance Technologies（PT）</td><td class="num">~$1.14B</td><td class="num">44%</td><td><span class="badge badge-red">FY2026E 持平至 -7%（重卡/農機疲軟）</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">PT 分拆後（預計 CY2026Q4 完成），Modine 將成為純 Climate Solutions 公司，DC 成長佔比從 25% 急升至約 50%+，業務品質大幅提升。</p>
+
+  <div class="subsection-title">Unit Economics</div>
+  <div class="card">
+    <p>Modine 的核心 Unit Economics 指標（以 DC 業務為主）：</p>
+    <ul>
+      <li><strong>平均訂單規模：</strong>FY2025 最大單筆訂單 $180M（公司歷史最高），暗示 hyperscaler 訂單規模 $50–200M/筆</li>
+      <li><strong>EBITDA Margin（CS 段）：</strong>FY2025 達 18.8%（含臨時 CapEx 成本壓制），正常化目標 20–23%（FY2027）</li>
+      <li><strong>資本回收：</strong>FY2026 CapEx $150–180M；若 FY2027 DC 收入達 ~$1.3B（50% DC CAGR），CapEx 佔比回落至 Revenue 的 ~5%，FCF 轉換率正常化</li>
+      <li><strong>冷水機生產線產能：</strong>每條線估計支撐 ~$50–100M 年收入，20 條線 → $1B–2B 產能天花板，符合 FY2028 $2B 目標的物理可行性</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §6 治理 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§6</span> 公司治理與資本配置
+  </div>
+
+  <div class="subsection-title">股東結構</div>
+  <div class="card">
+    <ul>
+      <li><strong>機構持股：</strong>高度機構化，主要持有人包括 Vanguard、BlackRock、Wellington 等大型資管；近期資料顯示 229 家機構增持，223 家減持，基本平衡</li>
+      <li><strong>創辦人持股：</strong>Modine 成立於 1916 年，長期為 Modine 家族控制但現已轉為專業管理層；無創辦人持股集中問題</li>
+      <li><strong>⚠️ 近期大規模內部人減持（高度關注）：</strong></li>
+    </ul>
+    <div class="table-wrap" style="margin-top:8px">
+      <table>
+        <thead><tr><th>內部人</th><th>職位</th><th>出售時間</th><th>出售股數</th><th>評估</th></tr></thead>
+        <tbody>
+          <tr><td>Neil Brinker</td><td>CEO</td><td>2025/12/2</td><td class="num">31,871 股</td><td><span class="badge badge-yellow">高價位出售，需關注</span></td></tr>
+          <tr><td>Michael Lucareli</td><td>CFO</td><td>2026/2 前後</td><td class="num">19,595 股</td><td><span class="badge badge-yellow">業績公布前後出售</span></td></tr>
+          <tr><td>Marsha Williams</td><td>Director</td><td>2026/2/24</td><td class="num">12,000 股</td><td><span class="badge badge-yellow">業績公布後出售</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:8px">三位內部人在股價高位（$197–238 區間）密集出售，合計超過 63,000 股。<strong>這是本報告最重要的治理警示信號。</strong>雖然內部人出售可能有稅務規劃或多元化動機，但集中出售模式值得審慎對待。</p>
+  </div>
+
+  <div class="subsection-title">資本配置軌跡</div>
+  <div class="card">
+    <p>管理層的說法與行動基本一致，但有一個重要矛盾：</p>
+    <ul>
+      <li><strong>一致之處：</strong>從 FY2022 Investor Day 起，管理層持續強調從低端汽車熱管理轉向高成長 DC 冷卻，行動上確實完成了 Airedale、Scott Springfield 等收購，並大幅投資 DC 產能——執行力強，言行合一</li>
+      <li><strong>矛盾之處（輕微）：</strong>管理層強調「為股東創造價值」，但 PT 分拆的條款（MOD 收 $210M 現金＋40% 新公司股份，非全現金對價）意味著 PT 的真正價值可能仍被部分捆綁，短期並非最優配置。不過 Reverse Morris Trust 結構對稅務有利，整體合理</li>
+      <li><strong>槓桿策略：</strong>淨債務從 FY2024 末 $371M → FY2025 末 $279M → Q3 FY2026 $517M，因收購和 CapEx 快速上升。杠杆率 1.2x 管理層認為安全，但需監測</li>
+    </ul>
+  </div>
+
+  <div class="subsection-title">SBC 評估</div>
+  <div class="card">
+    <p>SBC / Revenue ~1.0–1.2%，屬工業製造商常見水準，遠低於科技股（通常 5–15%）。對每股價值的稀釋程度極小，SBC 不是此標的的核心風險。</p>
+    <span class="badge badge-green">SBC 水準健康，無需擔憂</span>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §7 估值 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§7</span> 估值診斷
+  </div>
+  <div class="chapter-intro">核心任務：判斷當前股價（~$200）隱含了什麼預期，而非預測股票應該值多少。</div>
+
+  <div class="subsection-title">7.1｜歷史估值分位（5 年框架）</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Trailing P/E</td>
+          <td class="num">~120x（CNBC，含非常態費用）/ 正常化 ~55–60x</td>
+          <td class="num">~5x（FY2022 虧損期）</td>
+          <td class="num">~31.5x（10yr avg）</td>
+          <td class="num">~220x（FY2016 特殊期）</td>
+          <td><span class="badge badge-red">高分位（不具參考意義，含非常態費用）</span></td>
+        </tr>
+        <tr>
+          <td>Forward P/E（NTM）</td>
+          <td class="num">~32x（CNBC NTM 32.37x）</td>
+          <td class="num">~5x（FY2022）</td>
+          <td class="num">~16x（Intellectia 5yr avg）</td>
+          <td class="num">~35–40x（FY2024 高點）</td>
+          <td><span class="badge badge-red">~85–90% 分位（高估值區間）</span></td>
+        </tr>
+        <tr>
+          <td>EV/EBITDA</td>
+          <td class="num">~25–28x（估，基於市值 $10.6B + 淨債 $517M）</td>
+          <td class="num">~4x</td>
+          <td class="num">~10–12x</td>
+          <td class="num">~30x</td>
+          <td><span class="badge badge-red">~80% 分位</span></td>
+        </tr>
+        <tr>
+          <td>P/FCF</td>
+          <td class="num">負值（FY2026 FCF 為負）/ FY2025 $129M → P/FCF ~82x</td>
+          <td class="num">~5x</td>
+          <td class="num">~20x</td>
+          <td class="num">~80x</td>
+          <td><span class="badge badge-red">極高（FCF 壓制期）</span></td>
+        </tr>
+        <tr>
+          <td>P/S</td>
+          <td class="num">~3.7x（Morningstar）</td>
+          <td class="num">~0.3x</td>
+          <td class="num">~1.0x</td>
+          <td class="num">~4.0x</td>
+          <td><span class="badge badge-red">~90% 分位</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <p><strong>解讀：</strong></p>
+    <ol>
+      <li><strong>估值情緒：</strong>明顯過熱區間（Forward P/E ~85–90% 分位）——市場已在為 DC 純化成長故事定價</li>
+      <li><strong>上次在此分位時（FY2024 高點），業務基本面：</strong>DC 收入尚 ~$300M（現已 $644M FY2025），成長故事尚未完全兌現；現在基本面顯著更強，部分支撐高倍數</li>
+      <li><strong>推動當前分位的主要因素：</strong>PT 分拆催化劑（佔最大權重）+ 盈利快速成長（業績 beat 確認）+ 資本市場對 AI 基礎設施的整體估值重定價（情緒因素）</li>
+    </ol>
+    <p><strong>利率環境補充：</strong>當前 10Y UST ~4.3–4.5%（估）。高利率環境理論上壓縮成長股估值，但 Modine 因 PT 分拆事件驅動使市場願意給予更高溢價。若利率進一步上升至 5%+，成長股估值壓縮風險上升。</p>
+  </div>
+
+  <div class="subsection-title">7.2｜PEG 診斷</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Forward P/E（NTM）</td>
+          <td class="num">32.4x</td>
+          <td>—</td>
+          <td>基於 CNBC 數據</td>
+        </tr>
+        <tr>
+          <td>Non-GAAP EPS CAGR（2yr，FY25→FY27）</td>
+          <td class="num">36.9%</td>
+          <td>—</td>
+          <td>基於 StockAnalysis 共識（n=9）</td>
+        </tr>
+        <tr>
+          <td>PEG（Non-GAAP，2yr CAGR）</td>
+          <td class="num"><strong>0.88</strong></td>
+          <td>&lt; 1.0 便宜 / 1–2 合理 / &gt; 2 貴</td>
+          <td><span class="badge badge-green">🟢 PEG &lt; 1，基於成長率顯「便宜」</span></td>
+        </tr>
+        <tr>
+          <td>PEG（GAAP 3yr，含非常態）</td>
+          <td class="num">失真（FY2026 GAAP EPS 因養老金費用扭曲）</td>
+          <td>—</td>
+          <td>不具參考性</td>
+        </tr>
+        <tr>
+          <td>5 年 EPS CAGR（含 Runway 遞減）</td>
+          <td class="num">~20–25%（FY2025–FY2030E，假設 DC 成長在 FY2028 後放緩至 20%）</td>
+          <td>—</td>
+          <td>長期成長遞減假設</td>
+        </tr>
+        <tr>
+          <td>PEG（5yr）</td>
+          <td class="num">~1.3–1.6</td>
+          <td>&lt; 2 合理</td>
+          <td><span class="badge badge-yellow">🟡 合理區間，若長期成長達成</span></td>
+        </tr>
+        <tr>
+          <td>3yr vs 5yr PEG 差異</td>
+          <td class="num">0.88 vs 1.4 → 差距顯著</td>
+          <td>差距大 = 近期成長不可持續？</td>
+          <td><span class="badge badge-yellow">注意：3 年 PEG 極佳係因 EPS 爆發期，5 年後必然遞減</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <p><strong>Price-to-Growth 矩陣落點：</strong>MOD 落在「高成長但非極度高估」象限。Forward P/E 32x 配合 37% EPS CAGR，PEG 0.88 提供表面上的安全邊際——但這種 PEG 分析的陷阱是：若分析師共識 37% CAGR 因任何一項假設偏差而下調至 20%，PEG 立即跳至 1.6x，安全邊際消失。<strong>此標的不存在傳統意義的「被低估」，而是「若成長達標則合理，若未達標則大幅下修」的高成長執行賭注。</strong></p>
+  </div>
+
+  <div class="subsection-title">7.3｜Reverse DCF：當前股價隱含了什麼？</div>
+  <div class="two-col">
+    <div class="card">
+      <p><strong>步驟一：固定參數</strong></p>
+      <table>
+        <thead><tr><th>參數</th><th>數值</th><th>來源</th></tr></thead>
+        <tbody>
+          <tr><td>當前市值</td><td class="num">~$10.6B</td><td>Morningstar / CNBC（$200 × 52.7M 股）</td></tr>
+          <tr><td>基期 FCF（FY2025 實際）</td><td class="num">$129M</td><td>SEC 8-K（FY2025）</td></tr>
+          <tr><td>WACC（估）</td><td class="num">~9.5–10%</td><td>10Y UST 4.3% + Beta 1.7 × ERP 3.5% ≈ 10.2%；保守取 9.5%</td></tr>
+          <tr><td>永續成長率</td><td class="num">3%</td><td>工業製造商長期成長基準</td></tr>
+          <tr><td>預測期</td><td class="num">10 年</td><td>標準</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <p><strong>步驟二–四：反推隱含 FCF CAGR</strong></p>
+      <p>使 DCF 現值 = $10.6B 市值，所需前 10 年 FCF CAGR ≈ <strong>28–32%</strong></p>
+      <table>
+        <thead><tr><th>比較基準</th><th>數值</th><th>相對位置</th></tr></thead>
+        <tbody>
+          <tr><td>過去 3yr 實際 FCF CAGR</td><td class="num">~10%（$84M→$129M）</td><td class="num">隱含 CAGR 高於歷史 3 倍</td></tr>
+          <tr><td>分析師 EPS CAGR 共識</td><td class="num">~37%（2yr）</td><td class="num">FCF CAGR 應在 EPS CAGR 附近或略低</td></tr>
+          <tr><td>同業最快 FCF CAGR（Vertiv）</td><td class="num">~25–30%</td><td class="num">需要達到或略超行業最快</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:8px"><strong>兌現條件：</strong>FCF CAGR 28–32% 需要 Revenue 年增 20%+ 且 FCF Margin 從 5% 正常化至 10–12%（FY2028–FY2032）。這在 DC 產能擴張完畢後（FY2027）具備可能性，但需要：(1) DC $2B 目標如期達成；(2) CS 段 Margin 維持 20–23%；(3) 無重大競爭蠶食；(4) CapEx 顯著回落。</p>
+    </div>
+  </div>
+  <div class="alert-yellow">
+    <strong>隱含預期判斷：🟡 合理偏激進</strong>——隱含 FCF CAGR 28–32% 在「最樂觀主流情境」可以辯護，但不在「基準情境」可以輕易兌現。安全邊際薄，但並非完全脫離現實。
+  </div>
+
+  <div class="subsection-title">7.4｜同業估值比較</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（2yr）</th></tr></thead>
+      <tbody>
+        <tr style="background:#EFF6FF">
+          <td><strong>Modine (MOD) [標的]</strong></td>
+          <td class="num">$10.6B</td>
+          <td class="num">32x</td>
+          <td class="num">~26x（估）</td>
+          <td class="num">0.88</td>
+          <td class="num">5%（FY2025；FY2026 負）</td>
+          <td class="num">~37%</td>
+        </tr>
+        <tr>
+          <td>Vertiv (VRT)</td>
+          <td class="num">~$70B</td>
+          <td class="num">42–43x</td>
+          <td class="num">~45x</td>
+          <td class="num">1.32</td>
+          <td class="num">~8–10%</td>
+          <td class="num">~30%</td>
+        </tr>
+        <tr>
+          <td>Johnson Controls (JCI)</td>
+          <td class="num">~$24B</td>
+          <td class="num">~18x</td>
+          <td class="num">~14x</td>
+          <td class="num">~1.5–2.0</td>
+          <td class="num">~5%</td>
+          <td class="num">~10–12%</td>
+        </tr>
+        <tr>
+          <td>Schneider Electric</td>
+          <td class="num">~€120B</td>
+          <td class="num">~30x</td>
+          <td class="num">~22x</td>
+          <td class="num">~1.2</td>
+          <td class="num">~8%</td>
+          <td class="num">~20%</td>
+        </tr>
+        <tr>
+          <td><em>產業中位數（DC 設備）</em></td>
+          <td>—</td>
+          <td class="num">~30x</td>
+          <td class="num">~25x</td>
+          <td class="num">~1.1</td>
+          <td class="num">~7%</td>
+          <td class="num">~20–25%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <ol>
+      <li><strong>溢折價幅度：</strong>MOD vs 產業中位 Forward P/E（30x）幾乎持平，但 PEG（0.88 vs 1.1）顯示 MOD 相對成長率便宜。相對 Vertiv（42x）有明顯折價，與 Schneider 相近。</li>
+      <li><strong>哪項更優以支撐溢價？</strong>成長性更優（37% vs 30% EPS CAGR）但 FCF Margin 偏低（5% vs VRT 8–10%）；資本效率（ROIC）仍落後於 Vertiv。綜合看，MOD 的估值折讓 Vertiv 主要反映 FCF Margin 和 ROIC 的差距，且考慮到 FCF 為 CapEx 擴張期壓制，分析師認為折讓屬機會。</li>
+      <li><strong>若向產業中位數回歸：</strong>若 MOD Forward P/E 從 32x 向 30x 收斂，股價小幅向下；若向 Vertiv 的 42x 靠攏（純 DC 公司 re-rating），則有 30% 上行空間。</li>
+    </ol>
+    <p><strong>低估值同業補充：</strong>JCI（18x Forward P/E）FCF Margin 相近但成長性更低，差距純粹是成長率差異所致，非市場情緒偏差——JCI 是工業成熟股而非成長股。</p>
+  </div>
+
+  <div class="subsection-title">7.5｜估值四角驗證與結論</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>工具</th><th>訊號</th><th>核心依據</th></tr></thead>
+      <tbody>
+        <tr><td>歷史分位（7.1）</td><td><span class="badge badge-red">🔴 過熱（~85–90% 分位）</span></td><td>Forward P/E 32x vs 5yr avg 16x</td></tr>
+        <tr><td>PEG 診斷（7.2）</td><td><span class="badge badge-green">🟢 便宜（PEG 0.88）</span></td><td>37% EPS CAGR 使絕對估值相對合理</td></tr>
+        <tr><td>Reverse DCF（7.3）</td><td><span class="badge badge-yellow">🟡 合理偏激進</span></td><td>隱含 FCF CAGR 28–32%，最樂觀主流情境可辯護</td></tr>
+        <tr><td>同業相對（7.4）</td><td><span class="badge badge-yellow">🟡 合理折價</span></td><td>vs Vertiv 折讓合理（FCF Margin 差距）；vs 產業中位持平</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <p><strong>訊號分歧說明：</strong>歷史分位顯示「過熱」，但 PEG 顯示「便宜」——分歧原因是 Modine 的商業模式在 2 年內發生結構性轉變（從汽車熱管理低成長股 → DC 冷卻高成長股），<strong>歷史分位在此情況下最可能失真</strong>，因為歷史平均倍數包含了大量低成長年份。更適合的基準是 DC 冷卻同業的當前倍數，而非 Modine 自身的歷史倍數。</p>
+  </div>
+
+  <div class="alert-yellow">
+    <strong>當前定價判斷：🟡 公允定價（成長達標可持有；首次建倉安全邊際不足）</strong><br>
+    在 DC 收入如期達成 50–70% CAGR 的情境下，股價有向 Vertiv 倍數靠攏的上行空間；但若成長低於預期，下行風險顯著（參見 §2.5E 壓力測試）。
+  </div>
+
+  <div class="subsection-title">估值倍數定錨（深度版）</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr></thead>
+      <tbody>
+        <tr><td>① 護城河品質（§3）</td><td>7/10，趨擴大</td><td>相較產業基準（~20x）+5x</td></tr>
+        <tr><td>② 成長可持續年數（§2.5A）</td><td>7–10 年（🟡 中高）</td><td>+3~5x</td></tr>
+        <tr><td>③ 成長品質（§2.5B）</td><td>量驅動為主（轉定價驅動中）</td><td>±0x（量驅動不加分）</td></tr>
+        <tr><td>④ 成長護城河連動（§2.5C）</td><td>中性偏強化</td><td>+1~2x</td></tr>
+        <tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC 改善中，差 WACC 正值</td><td>+1x</td></tr>
+        <tr><td>⑥ 衰退信號（§2.5 偵測表）</td><td>1 紅 3 黃</td><td>-2~3x（中度警戒折扣）</td></tr>
+        <tr><td>⑦ 利率環境</td><td>10Y UST ~4.3–4.5%</td><td>-1~2x（成長股估值壓縮）</td></tr>
+        <tr><td colspan="2"><strong>產業基準倍數（工業科技 DC 冷卻）</strong></td><td class="num"><strong>~20x（保守基準）</strong></td></tr>
+        <tr style="background:#EFF6FF">
+          <td colspan="2"><strong>調整後合理 Forward P/E 區間</strong></td>
+          <td class="num"><strong>28x ∼ 38x</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <p><strong>分析師目標價參考（最新，post Q3 FY2026 業績）：</strong></p>
+    <ul>
+      <li>DA Davidson: $265（Strong Buy）</li>
+      <li>Roth/MKM: $263（Buy，新設）</li>
+      <li>KeyBanc: $250（Overweight）</li>
+      <li>Oppenheimer: $240（Outperform）</li>
+      <li>UBS: $210（Buy）</li>
+    </ul>
+    <p>中位數 ~$252，vs 當前 ~$200，隱含 ~26% 上行空間。</p>
+    <p><strong>是否認同共識？</strong>部分認同，但認為 $263–265 的高端目標過於樂觀——隱含了 38–40x Forward P/E（FY2027E $6.41），相當於接近 Vertiv 的估值水準，尚需 PT 分拆完成並確認 FY2027 DCrevenue 兌現後才能辯護。中位目標 ~$240–250（約 37–39x FY2027 PE）在最佳情境下合理。</p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────── §8 投資結論 ─────────────────────────────── -->
+<div class="section-block">
+  <div class="section-title">
+    <span class="section-num">§8</span> 投資結論
+  </div>
+
+  <div class="card" style="border-left: 4px solid var(--accent)">
+    <p><strong>財報信號與估值銜接：</strong></p>
+    <p>Q3 FY2026 財報讓隱含預期<strong>變得略微更容易兌現</strong>，理由是：(1) DC 業務 78% YoY 成長超出預期，確認了 DC 業務的真實需求強度；(2) 產能爬坡如期進行（Q3 啟動 4 條線，Q4 再增 4 條），支撐 FY2027 FCF 正常化的物理前提成立；(3) 上調 FY2026 Guidance 兩次，管理層的預測可信度上升。但 FCF 仍為負（-$17M），未完全消除「CapEx 是否能按期轉化為 FCF」的疑慮。</p>
+  </div>
+
+  <div class="verdict-block verdict-watch" style="margin-top: 20px">
+    <div class="verdict-title" style="color:#D97706">⚖️ 結論：條件式觀望，等待更佳進場點</div>
+    <p>當前定價公允但安全邊際薄，不支持積極首次建倉。持有現有倉位者可繼續，但現價新建倉需要更強的安全邊際。</p>
+  </div>
+
+  <div class="subsection-title">三個時間層次</div>
+  <div class="card-grid card-grid-3">
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">① 短期（0–12 個月）</div>
+      <p>Q3 FY2026 beat 確認成長軌跡；Q4 FY2026（2026/5 公布）是關鍵財報，需確認：(a) DCrevenue 季度 >$400M（管理層承諾）；(b) CS 段 EBITDA Margin 回升至 20%+；(c) 全年 FCF 轉正。若 Q4 低於預期，股價回調可能是更好的進場時機。</p>
+      <span class="badge badge-yellow">短期觀望，等 Q4 驗證</span>
+    </div>
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">② 中期（1–3 年）</div>
+      <p>EPS CAGR 37%（FY2025→FY2027）驅動力：70%+ DC 成長（量驅動）+ 15% HVAC 成長 + PT 脫包提純。能見度高（5 年 backlog）但執行風險真實存在——20 條生產線的同步 ramp-up，供應鏈、品質控制、人力培訓三大挑戰並存。PT 分拆成功與否（CY2026Q4）是催化劑。</p>
+      <span class="badge badge-green">中期成長確信度高</span>
+    </div>
+    <div class="card">
+      <div class="subsection-title" style="margin-top:0">③ 長期（3 年後）</div>
+      <p>核心邏輯：AI 算力密度持續增加 → 熱密度問題只會更嚴重 → 冷卻需求持續 7–10 年。Modine 完成 PT 分拆後的純 Climate Solutions 公司，ROIC 預計持續擴大，CS 段 Margin 20–23% 可維持。長期護城河依賴：能否在第二波冷卻技術浪潮（液冷規模化）中保持競爭力是 FY2029+ 的核心問題。</p>
+      <span class="badge badge-blue">長期持有邏輯成立，但技術風險需監測</span>
+    </div>
+  </div>
+
+  <div class="alert-trap" style="margin-top: 24px">
+    <div class="alert-trap-title">⚠️ 這是價值陷阱嗎？（深度版強制回答）</div>
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>問題</th><th>回答</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>最可能的價值陷阱模式？</strong></td>
+            <td><strong>隱性資本密集型（變體）</strong>——Modine 不是傳統低估值陷阱，而是「高估值執行風險」：大量 CapEx 能否如期轉化為 FCF，是成立高成長論題的前提。若產能擴張遇阻或 DC 需求放緩，高倍數將承受大幅壓縮。</td>
+          </tr>
+          <tr>
+            <td><strong>支持「這不是陷阱」的最強論據</strong></td>
+            <td>DC 業務訂單能見度 5 年（歷史最長）、Revenue CAGR 37%+、hyperscaler 資本支出計畫明確（Microsoft $80B/yr）；FY2025 CS 段 EBITDA Margin 已達 18.8%（FY2022 約 8%），盈利品質真實改善有財務數字支撐；SBC 低、EPS 成長非回購驅動——這些都指向真實業務改善而非帳面美化。</td>
+          </tr>
+          <tr>
+            <td><strong>支持「這可能是陷阱」的最強反駁</strong></td>
+            <td>(1) 內部人密集高位減持（CEO+CFO+董事合計 63,000 股）——管理層對公司未來的信心存疑；(2) FCF 持續為負且惡化（FY2025 $129M → FY2026 負值），EPS 成長 37% 但 FCF CAGR 在過去 3 年僅 10%——若 FCF 無法在 FY2027 正常化，高估值將難以維持；(3) 客戶集中度風險從未被正面披露，若前三大客戶佔比 >50%，一旦某 hyperscaler 轉單，收入衝擊難以被其他客戶彌補。</td>
+          </tr>
+          <tr>
+            <td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td>
+            <td><strong>領先指標 1：</strong>季度 FCF 能否在 FY2027 轉為正值且全年達到 Revenue 的 5%+（即 ~$175M+，基於 FY2027E Revenue $3.55B）。若連續 2 季 FCF 低於預期，需重評估。<br><strong>領先指標 2：</strong>CS 段毛利率能否在 Q4 FY2026 回升至 25%+（管理層承諾 200bps+ 環比改善）。若毛利率持續低於 24%，意味著產能擴張成本未如預期消化，ROIC 回收論題動搖。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px">
+      <strong>最終定性：🟡 觀察期——尚不確定</strong><br>
+      Modine 不是典型價值陷阱，但確實存在「高成長高估值高執行風險」的三高組合。建議小倉位進場，等待 Q4 FY2026 財報和 PT 分拆完成作為驗證點。
+    </div>
+  </div>
+
+  <div class="subsection-title">條件式進場判斷</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>條件類型</th><th>具體內容</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>估值條件（當前偏貴）</strong></td>
+          <td>Forward P/E 回落至 25–28x 以下（對應 FY2027E EPS $6.41，隱含股價 ~$160–180）；或股價從當前回落 10–15% 至 ~$170–180 附近（§7.5 合理區間下緣）</td>
+        </tr>
+        <tr>
+          <td><strong>基本面條件</strong></td>
+          <td>Q4 FY2026 財報（2026/5）需確認：DC 季度收入 ≥ $400M；CS 段 EBITDA Margin ≥ 20%；全年 FCF 轉正；PT 分拆交割進程無重大延誤</td>
+        </tr>
+        <tr>
+          <td><strong>陷阱排除條件</strong></td>
+          <td>若以下信號出現，立即停損重評：(1) FY2027Q1 FCF 持續為負 (2) CS 毛利率低於 22%（非臨時性）(3) 任一主要 hyperscaler 客戶訂單取消或重大縮減 (4) 管理層繼續大規模高價位出售</td>
+        </tr>
+        <tr>
+          <td><strong>事件觸發加碼條件</strong></td>
+          <td>PT 分拆完成 + FY2027E EPS 上調超 10%（確認 DC $2B 軌跡）→ 估值重定價至 35–40x；或液冷 CDU 簽署 $500M+ 的歷史最大 LTA，確認市場份額擴大</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection-title">下行風險量化（引用 §2.5E）</div>
+  <div class="two-col">
+    <div class="card" style="background: var(--yellow-bg); border-left: 3px solid #D97706">
+      <p><strong>情境 A：3 年後成長降至 10%</strong></p>
+      <p>P/E 壓縮至 15–18x → 股價約 $96–$115（vs 當前 ~$200）</p>
+      <p style="font-size:20px; font-weight:800; color:#D97706">估值跌幅 -43%～-52%</p>
+    </div>
+    <div class="card" style="background: var(--red-bg); border-left: 3px solid #DC2626">
+      <p><strong>情境 B：3 年後成長降至 5%</strong></p>
+      <p>P/E 壓縮至 10–12x → 股價約 $64–$77</p>
+      <p style="font-size:20px; font-weight:800; color:#DC2626">估值跌幅 -62%～-68%</p>
+    </div>
+  </div>
+  <p class="muted">持有此標的前，須確認能承受上述幅度的回撤。這正是為何當前公允定價下建議等待更好進場點。</p>
+
+  <div class="subsection-title">最關鍵監測指標</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>監測指標</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>CS 段 EBITDA Margin</strong>（季度）</td>
+          <td><span class="badge badge-blue">🔵 長期成長領先信號</span></td>
+          <td>連續 2 季低於 19%（暗示產能擴張成本無法消化 → DC 業務 ROIC 邏輯動搖）</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>季度 FCF</strong>（尤其 FY2027 Q1 起）</td>
+          <td>短期財報信號</td>
+          <td>FY2027 任一季度 FCF 持續負值且管理層下修 FCF 展望 → 隱含 DCF 預期破裂</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 免責聲明 -->
+<div class="card" style="background: #F8FAFC; border: 1px dashed var(--border); margin-top: 32px;">
+  <p class="muted" style="text-align:center; font-size: 12px">
+    本報告僅供研究分析參考用途，不構成任何投資建議或招募行為。資料截至 2026/3/25，市場數據可能已有變動。投資存在風險，請自行判斷並承擔相應責任。<br>
+    資料來源：SEC Edgar（8-K、10-Q）、CNBC、Morningstar、StockAnalysis.com、Macrotrends、Investing.com、各分析師公開報告
+  </p>
+</div>
+
+</div><!-- /container -->
+
+<button id="print-btn" onclick="window.print()">⬇ 列印為 PDF</button>
+</body>
+</html>

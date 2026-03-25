@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_KEYS_20260325 | Keysight Technologies 深度版研究報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; font-size: 14px; line-height: 1.7; }
+  code, .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* Fixed Header */
+  #fixed-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: #1E3A5F; color: #fff; padding: 8px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18); font-size: 13px;
+  }
+  #fixed-header .ticker { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700; color: #93C5FD; }
+  #fixed-header .meta { display: flex; gap: 20px; align-items: center; }
+  #fixed-header .meta span { color: #CBD5E1; font-size: 12px; }
+  #fixed-header .price { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 700; color: #4ADE80; }
+
+  /* Print button */
+  #print-btn {
+    position: fixed; bottom: 28px; right: 28px; z-index: 1001;
+    background: #1E3A5F; color: #fff; border: none; border-radius: 4px;
+    padding: 10px 20px; cursor: pointer; font-size: 13px; font-family: 'Noto Sans TC', sans-serif;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  #print-btn:hover { background: #2563EB; }
+
+  /* Main layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 88px 24px 60px; }
+
+  /* Report title */
+  .report-title {
+    background: #1E3A5F; color: #fff; padding: 28px 32px;
+    border-left: 6px solid #3B82F6; margin-bottom: 28px;
+  }
+  .report-title h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.02em; }
+  .report-title .subtitle { font-size: 13px; color: #93C5FD; margin-top: 6px; }
+  .report-title .data-stamp { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #CBD5E1; margin-top: 10px; }
+
+  /* Section title */
+  .section-title {
+    background: #1E3A5F; color: #fff; padding: 14px 20px;
+    border-left: 4px solid #3B82F6; margin: 32px 0 16px;
+    font-size: 15px; font-weight: 700;
+  }
+  .sub-section-title {
+    color: #1E3A5F; border-left: 3px solid #3B82F6;
+    padding: 8px 14px; margin: 20px 0 12px;
+    font-size: 14px; font-weight: 700; background: #EFF6FF;
+  }
+
+  /* Cards */
+  .card { background: #fff; border: 1px solid #E2E8F0; padding: 20px 24px; margin-bottom: 16px; }
+  .card p { margin-bottom: 10px; }
+  .card p:last-child { margin-bottom: 0; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+  th { background: #1E3A5F; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  tr:nth-child(odd) td { background: #fff; }
+  td { padding: 9px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+  th:first-child { width: 28%; }
+
+  /* Status badges */
+  .beat { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 2px; font-size: 11px; font-weight: 700; }
+  .miss { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 2px; font-size: 11px; font-weight: 700; }
+  .neutral { background: #FEF9C3; color: #92400E; padding: 2px 8px; border-radius: 2px; font-size: 11px; font-weight: 700; }
+  .green-cell { background: #DCFCE7 !important; }
+  .yellow-cell { background: #FEF9C3 !important; }
+  .red-cell { background: #FEE2E2 !important; }
+  .blue-cell { background: #EFF6FF !important; }
+
+  /* Warning block */
+  .warning-block {
+    background: #FFF0E6; border-left: 4px solid #F97316; padding: 16px 20px; margin: 16px 0;
+  }
+  .warning-block .warning-title { color: #C2410C; font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+
+  /* Rating badges */
+  .rating-green { background: #DCFCE7; color: #166534; padding: 4px 12px; font-weight: 700; border-radius: 2px; display: inline-block; }
+  .rating-yellow { background: #FEF9C3; color: #92400E; padding: 4px 12px; font-weight: 700; border-radius: 2px; display: inline-block; }
+  .rating-red { background: #FEE2E2; color: #991B1B; padding: 4px 12px; font-weight: 700; border-radius: 2px; display: inline-block; }
+  .rating-blue { background: #EFF6FF; color: #1D4ED8; padding: 4px 12px; font-weight: 700; border-radius: 2px; display: inline-block; }
+
+  /* Signal row coloring in tables */
+  .sig-green td { background: #DCFCE7 !important; }
+  .sig-yellow td { background: #FEF9C3 !important; }
+  .sig-red td { background: #FEE2E2 !important; }
+
+  /* Scores */
+  .moat-score { font-family: 'IBM Plex Mono', monospace; font-size: 28px; font-weight: 700; color: #1E3A5F; }
+
+  /* Misc */
+  ul { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 6px; }
+  strong { font-weight: 700; }
+  .small { font-size: 12px; color: #64748B; }
+  .mono-val { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  hr { border: none; border-top: 1px solid #E2E8F0; margin: 16px 0; }
+  .divider { border-top: 2px solid #3B82F6; margin: 28px 0; }
+
+  /* Print styles */
+  @media print {
+    #fixed-header, #print-btn { display: none !important; }
+    body { background: #fff; }
+    .container { padding: 20px; }
+    .section-title { break-before: auto; }
+    table { page-break-inside: avoid; }
+    .card { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Fixed Header -->
+<div id="fixed-header">
+  <span class="ticker">NYSE: KEYS</span>
+  <div class="meta">
+    <span>🔍 深度版 DD</span>
+    <span>資料抓取：2026-03-25</span>
+    <span>最新財報：FQ1 2026（Jan 31, 2026）</span>
+    <span class="price">$288.96</span>
+  </div>
+</div>
+
+<!-- Print Button -->
+<button id="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+
+<div class="container">
+
+<!-- Title Block -->
+<div class="report-title">
+  <h1>Keysight Technologies, Inc. (KEYS) ｜ 買側深度研究報告 v4.2</h1>
+  <div class="subtitle">電子測試與量測設備龍頭 ‧ AI基礎設施 / 5G/6G / 航太國防多重成長驅動</div>
+  <div class="data-stamp">
+    資料抓取時間：2026-03-25 ｜ 最新股價：$288.96（+3.7% prev close）｜ 市值：~$49.6B ｜ 最近財報季：FQ1 FY2026（Oct 2025年度）
+  </div>
+</div>
+
+
+<!-- =========================================
+     §0  序章：第一性原理 × 逆向思考
+     ========================================= -->
+<div class="section-title">§0 ｜ 序章：第一性原理 × 逆向思考</div>
+
+<div class="sub-section-title">【存在意義】剝離財務表象的本質追問</div>
+<div class="card">
+  <p>Keysight 解決的根本問題是：<strong>電子系統的不可見性</strong>。任何電子訊號、波形、頻率、邊際效應，在肉眼下都是零。每一個更快的通訊標準（5G→6G）、每一代更密的晶片（3nm→2nm）、每一個更複雜的AI加速器互聯（400G→1.6T乙太網）——這些技術進步都必須被「量測」後才能被信任部署。若Keysight明天消失，全球通訊設備廠的研發周期至少延長30-50%，因為沒有任何替代品能同時提供RF、光電、高速數位、網路協議的完整量測工具鏈。這不是「提升效率」，而是：<strong>沒有量測，技術就沒有存在的可驗證性</strong>。</p>
+  <p>更關鍵的是：每一次技術門檻提升，量測難度的複雜度呈非線性增長——量測頻寬從100GHz到220GHz，所需工程專業、硬體設計、校準系統都必須重建。這構成了持久的進入壁壘，任何後進者都必須先越過這道技術鴻溝才能競爭。</p>
+</div>
+
+<div class="sub-section-title">【逆向推演】Munger Inversion — 讓這筆投資3年內虧損50%的路徑</div>
+<div class="card">
+  <p><strong>① 地緣政治曝險</strong><br>
+  Keysight在中國的業務佔整體約15-18%。美國持續出口管制（EAR管制清單擴大）可能進一步壓縮對中半導體客戶的銷售；FQ1 2026 earnings call中，管理層明確表示Q2 Guidance「不含最新IEEPA關稅裁決的影響」，代表此風險尚未被量化。若關稅衝擊使年化EPS壓縮$0.75+（Q3 2025估約$75M年化曝險），結合China export控制加碼，可能引發10-15%估值下修。供應鏈：製造廠位於美國、德國、馬來西亞、中國，存在多點地緣分散，但中國市場依存仍是風險集中點。</p>
+  <p><strong>② 技術替代風險</strong><br>
+  最直接威脅是：AI工具鏈是否能部分替代實體測試設備（數位孿生/模擬替代實體驗證）？短期（3年）：不可能。實體RF與高速數位信號的最終驗證仍需物理量測，模擬工具（如Ansys）只能做前期設計，不能替代製造驗證。中長期（5-8年）：AI-driven測試優化可壓縮測試時間30-40%，但同時會提升量測設備單價（更多AI功能附加值），屬於提升而非替代。真正的替代風險來自客戶若大幅削減R&D預算（如5G滲透完成後、6G啟動前的空窗期），導致資本支出驟降。2023年正是這個邏輯驗證——KEYS收入較峰值下跌約13%。</p>
+  <p><strong>③ 管理層失職情境</strong><br>
+  Keysight在FY2025共進行三起大型收購：Spirent（~$1.46B）、Synopsys OSG（光學解決方案）、Ansys PowerArtist。若Spirent整合失敗——技術人才流失、產品線重疊無法協同、客戶因DoJ強制資產分拆（Spirent Ethernet Testing賣給Viavi）而關係破裂——可能導致~$375M增量收入無法兌現，直接損及FY2026+的EPS CAGR預期。此外，管理層若將$1.5B回購授權用於高價回購（均價已遠高於歷史成本），將損害長期資本配置品質。</p>
+  <p><strong>④ 價值陷阱路徑評估</strong><br>
+  <span class="rating-green">最可能模式：非陷阱（目前）</span>，但需關注以下警示路徑：若AI基礎設施資本支出在2027年後急剎車（如超大規模雲廠商Capex指引大幅下修），KEYS可能重演2023年型循環下行——屆時Reverse DCF的隱含CAGR假設將無法兌現，估值將從~30x Forward PE壓縮至20x，形成盈餘品質型陷阱（EPS CAGR靠高基期比較優勢撐起，而非真實需求持續增長）。</p>
+</div>
+
+
+<!-- =========================================
+     §1  即時財報情報
+     ========================================= -->
+<div class="section-title">§1 ｜ 即時財報情報</div>
+<div class="small" style="margin-bottom:12px;">資料來源：FQ1 FY2026 8-K（2026-02-23）、10-Q（2026-01-31）、Earnings Call Transcript</div>
+
+<div class="sub-section-title">① 最新一季財報關鍵數字（FQ1 FY2026，截至Jan 31, 2026）</div>
+<table>
+  <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+  <tr>
+    <td><strong>Revenue</strong></td>
+    <td class="mono-val">$1,600M</td>
+    <td class="mono-val">$1,540M</td>
+    <td><span class="beat">BEAT +$60M (+3.9%)</span></td>
+    <td class="mono-val green-cell">+23.3%</td>
+  </tr>
+  <tr>
+    <td><strong>Non-GAAP EPS</strong></td>
+    <td class="mono-val">$2.17</td>
+    <td class="mono-val">$2.00</td>
+    <td><span class="beat">BEAT +$0.17 (+8.5%)</span></td>
+    <td class="mono-val green-cell">+19.2%（vs $1.82）</td>
+  </tr>
+  <tr>
+    <td><strong>GAAP EPS</strong></td>
+    <td class="mono-val">$1.63</td>
+    <td class="mono-val">~$1.35E</td>
+    <td><span class="beat">BEAT（稅務優惠助推）</span></td>
+    <td class="mono-val green-cell">+68.0%（vs $0.97）</td>
+  </tr>
+  <tr>
+    <td><strong>FCF（自由現金流）</strong></td>
+    <td class="mono-val">$407M</td>
+    <td class="mono-val">N/A</td>
+    <td><span class="beat">+17.6%（vs $346M）</span></td>
+    <td class="mono-val green-cell">+17.6% YoY</td>
+  </tr>
+  <tr>
+    <td><strong>Non-GAAP Gross Margin</strong></td>
+    <td class="mono-val">66.7%</td>
+    <td class="mono-val">~65.5%E</td>
+    <td><span class="beat">BEAT</span></td>
+    <td class="mono-val green-cell">擴張（+~1.0%p YoY）</td>
+  </tr>
+  <tr>
+    <td><strong>Non-GAAP Operating Margin</strong></td>
+    <td class="mono-val">28.9%（Core）</td>
+    <td>—</td>
+    <td><span class="beat">歷史高位</span></td>
+    <td class="mono-val">擴張趨勢延續</td>
+  </tr>
+  <tr>
+    <td><strong>Orders</strong></td>
+    <td class="mono-val">$1,645M</td>
+    <td class="mono-val">~$1,400M E</td>
+    <td><span class="beat">BEAT +30% YoY 報告基礎</span></td>
+    <td class="mono-val green-cell">Core +22%</td>
+  </tr>
+  <tr>
+    <td><strong>Backlog（積壓訂單）</strong></td>
+    <td class="mono-val">$2.8B（Record）</td>
+    <td>—</td>
+    <td><span class="beat">歷史新高</span></td>
+    <td>—</td>
+  </tr>
+</table>
+
+<div class="card">
+  <p><strong>段別分拆：</strong>CSG（通訊解決方案）營收 $1,124M（+27% YoY），其中商業通訊 +33%（AI/5G基礎設施）、航太國防 +18%；EISG（電子工業解決方案）$476M（+15%），汽車能源、一般電子、半導體三大子市場均達雙位數成長。</p>
+  <p><strong>資產負債表快照：</strong>期末現金 $2.18B，長期負債 $2.53B，淨負債約 $594M。收購Spirent等已消耗大量現金，但FQ1 OCF達 $441M，顯示現金創造能力強勁。</p>
+</div>
+
+<div class="sub-section-title">② Earnings Call 語氣解析</div>
+<div class="card">
+  <p><strong>管理層基調：積極樂觀，創公司歷史最強措辭之一</strong><br>
+  CEO Satish Dhanasekaran：<em>「outstanding results that exceeded our expectations」</em>、<em>「investments over the last 3 years are enabling us to capitalize on continued momentum」</em>。相比FY2024-2025週期的「gradual recovery」謹慎措辭，本季語氣轉變極為顯著——「gradual」一詞在Q1 FY2026 Call中已完全消失。CFO Neil Dougherty表示「strong visibility one quarter out, decent visibility two quarters out」，為公司近兩年最明確的前瞻能見度聲明。</p>
+  <p><strong>Forward Guidance（大幅上調）：</strong><br>
+  Q2 FY2026 Revenue：$1.69–1.71B（中點 ~+30% YoY），大幅超越Street先前預期之~$1.34B（約超出26-29%）。Q2 Non-GAAP EPS：$2.27–2.33（中點 ~+35% YoY vs $1.68）。全年FY2026框架：調整後EPS成長「just above 20%」（原框架 >10%），隱含全年Non-GAAP EPS $8.59+（vs 先前共識$8.11）。</p>
+  <p><strong>刻意強調的主題（高頻詞）：</strong> AI infrastructure、6G、wireline、semiconductor testing、record orders、backlog、data center。值得注意：<em>「wireline orders surpassed wireless for the first time」</em>——AI資料中心互聯的測試需求已超過傳統5G無線測試，代表客戶組合正在結構性轉移。</p>
+  <p><strong>刻意迴避/未直接回答的議題：</strong></p>
+  <ul>
+    <li>Spirent整合詳細時間表與毛利率恢復節奏：管理層僅表示「整合按計畫進行」，未提供具體財務目標。</li>
+    <li>IEEPA最高法院裁決的具體關稅衝擊數字：Guidance明確聲明「不含此影響」，為尾部風險留白。</li>
+    <li>中國業務具體佔比與增長預測：分析師追問，管理層以「整體地理區域均衡成長」模糊帶過。</li>
+  </ul>
+</div>
+
+<div class="sub-section-title">③ 產業 Imply 萃取</div>
+<div class="card">
+  <p><strong>需求端：</strong>Orders $1.645B（+30%）遠超收入，book-to-bill &gt;1倍，代表有效backlog持續累積。AI數據中心相關訂單「significantly above company average」成長，AI客戶數量翻倍——這意味超大規模雲廠（Hyperscalers）的資本支出正從基礎層（土地、電力、機架）進入積極的設備驗收與測試階段。AI資料中心每一個新世代互聯標準（200G→400G→1.6T）的推進都必然帶動測試設備更新需求。</p>
+  <p><strong>供給端：</strong>Backlog達歷史新高$2.8B，意味著KEYS目前並非供不應求而是需求爆發暫時超過交付速度。這是健康的積壓，而非庫存過剩。未見任何漲價阻力。</p>
+  <p><strong>競爭格局：</strong>Keysight在wireline基礎設施測試的突破（wireline &gt; wireless for first time）代表競爭優勢正擴展。高速乙太網測試市場整合（Spirent部分資產被DoJ強制剝離給Viavi）雖短期形成新對手，但Keysight保留了更高毛利的部分（衛星模擬、位置定位）。</p>
+  <p><strong>總體經濟敏感度：</strong>管理層提及關稅與IEEPA作為尾部風險，但Q1業績顯示需求強度足以抵消短期宏觀不確定性。汽車/EV仍「stable but mixed」，為整體的溫和逆風點。</p>
+  <p><strong>對同業的連帶推論：</strong>Teradyne的半導體測試業務可望受益（KEYS確認半導體雙位數成長）。Rohde &amp; Schwarz在歐洲替代性需求可能上升（部分客戶為規避單一供應商集中風險）。Viavi獲得Spirent Ethernet資產後，近期競爭力應有所提升，需關注。</p>
+</div>
+
+
+<!-- =========================================
+     §2  核心門檻檢核
+     ========================================= -->
+<div class="section-title">§2 ｜ 核心門檻檢核（含價值陷阱初篩）</div>
+
+<div class="sub-section-title">EPS CAGR 搜尋結果（強制確認）</div>
+<div class="card">
+  <p><strong>基期 FY2025（Oct 31, 2025）實際：</strong><span class="mono-val">$4.89 GAAP EPS</span>；Non-GAAP $7.41（推算，基於FY2025全年Non-GAAP NI ~$1,288M / ~174M shares）</p>
+  <p><strong>FY2026E（n=17 分析師，StockAnalysis / Zacks）：</strong>Non-GAAP EPS $8.25（Avg）/ 高 $8.82 / 低 $7.80；FY2026 GAAP EPS預測 ~$6.50-7.00E（差距主要來自：SBC、攤銷、收購整合費用）</p>
+  <p><strong>FY2027E（n=15 分析師）：</strong>Non-GAAP EPS $9.45（Avg）/ 高 $10.22；Zacks另標注 $8.23E（略保守）</p>
+  <p><strong>FY2028E（n=有限，Zacks Dec 2025）：</strong>Non-GAAP EPS $9.23（Zacks Dec 31, 2025，但此為老數字；Q1爆發後預期將大幅上修）——注：鑑於管理層FY2026 full-year Non-GAAP EPS框架 $8.59+，FY2026E已被市場上修至 $8.59-9.0E範圍，FY2028E預計 ~$10-11E</p>
+  <p><strong>GAAP CAGR（3年，FY2025→FY2028E）：</strong>($9.0E ÷ $4.89)^(1/3) − 1 ≈ <span class="mono-val">22.5%</span></p>
+  <p><strong>Non-GAAP CAGR（3年，基於$7.41→~$10.5E）：</strong>($10.5E ÷ $7.41)^(1/3) − 1 ≈ <span class="mono-val">12.3%</span>（注：若採更樂觀 $11E：~14%）</p>
+  <p><strong>口徑差距說明：</strong>GAAP vs Non-GAAP 差距主要來源（預計 $1.5-2.5/share）：① 收購相關攤銷（Spirent、OSG、PowerArtist等）；② SBC（Stock-Based Compensation），FY2025 SBC約$180-200M；③ 重組費用；④ 稅率正規化（Q1 GAAP出現$83M稅務優惠，非常態）。Non-GAAP CAGR偏低反映高基期（FY2022高峰 Non-GAAP EPS $8.33），FY2023-2024下行週期後，FY2026回升已超越峰值。</p>
+  <p class="small">資料來源：StockAnalysis.com FY2026/2027 Forecast、Zacks Research Dec 2025、BofA FY2026 revised estimate post Q1、SEC 8-K FQ1 2026。</p>
+</div>
+
+<div class="sub-section-title">門檻檢核表</div>
+<table>
+  <tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+  <tr class="sig-green">
+    <td><strong>FCF Margin</strong></td>
+    <td>&gt; 15%</td>
+    <td><span class="beat">✓ 符合</span></td>
+    <td>FQ1 FY2026 FCF $407M / Revenue $1,600M = <span class="mono-val">25.4%</span>（TTM FCF ~$1.34B / Revenue ~$5.38B = ~24.9%）。歷史：FY2022 ~22%、FY2023 ~21%（下行期）、FY2025 TTM回升至~25%。軌跡向上。</td>
+  </tr>
+  <tr class="sig-green">
+    <td><strong>ROIC</strong></td>
+    <td>產業頂尖</td>
+    <td><span class="beat">✓ 符合（但有隱憂）</span></td>
+    <td>TTM ROIC ~<span class="mono-val">13.0%</span>（StockAnalysis）。Spirent整合使分母（invested capital）大幅增加，短期壓縮ROIC。3年前（FY2022峰值期）：~28-30%。產業同業中位約10-15%，Teradyne ~20%+。ROIC仍高於WACC（估~8-9%），但因收購後稀釋，需觀察FY2027恢復軌跡。</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td><strong>EPS CAGR（未來3年）</strong></td>
+    <td>&gt; 20%</td>
+    <td><span class="neutral">⚡ 部分符合</span></td>
+    <td>基期 FY2025 GAAP $4.89｜FY2026E Non-GAAP $8.25（n=17）｜FY2027E $9.45（n=15）｜FY2028E ~$10.5E（外推/上修中）<br>━━━━━━━━━━━<br>GAAP CAGR（3年）：<span class="mono-val">~22.5%</span> ✓<br>Non-GAAP CAGR（3年）：<span class="mono-val">~12.3%</span> ✗<br>口徑差距：$1.5-2.5/share，主要來源：Spirent攤銷、SBC、稅率正規化<br>資料來源：StockAnalysis、Zacks、BofA post-Q1 revisions</td>
+  </tr>
+  <tr class="sig-green">
+    <td><strong>PEG（Non-GAAP）</strong></td>
+    <td>&lt; 2</td>
+    <td><span class="beat">✓ 符合（邊際）</span></td>
+    <td>Forward P/E ~34x（$288 / $8.59 guidance midpoint）/ Non-GAAP EPS CAGR 12-14%（3年）= PEG ~<span class="mono-val">2.4-2.8x</span>（邊際偏高）。若以GAAP CAGR 22.5%計算：PEG ~<span class="mono-val">1.5x</span>（符合）。詳見§7.2。</td>
+  </tr>
+  <tr class="sig-green">
+    <td><strong>現金覆蓋總負債</strong></td>
+    <td>是 / 否</td>
+    <td><span class="miss">否（淨負債）</span></td>
+    <td>現金 $2.18B vs 長期負債 $2.53B = 淨負債 $~350M（Jan 31, 2026）。Spirent等三筆收購後資產負債表承壓，但OCF強勁可在12-18月內回到淨現金。短期流動性無虞（Current Ratio 2.60x）。</td>
+  </tr>
+  <tr class="sig-green">
+    <td><strong>護城河強度</strong></td>
+    <td>&gt; 8分，趨勢擴大</td>
+    <td><span class="beat">✓ 符合</span></td>
+    <td>本框架評分：<strong>8.5/10</strong>。詳見§3。護城河趨勢：擴大（AI/wireline新市場確立 + Spirent整合帶來軟體服務佔比提升）。最大威脅：VIAVI+Spirent資產整合、中國本土競爭加劇。</td>
+  </tr>
+</table>
+
+<div class="warning-block">
+  <div class="warning-title">⚠️ 價值陷阱初篩：低估值四問</div>
+  <p style="margin-bottom:10px;"><strong>觸發評估：</strong>Forward P/E ~34x，5年歷史中位~33-35x，分位約50-55%。P/FCF EV/FCF ~36.6x，歷史中位估~30x，分位約65%。<span class="rating-green">未觸發（分位均 &gt;25%）</span>。以下四問作為預防性基礎驗證仍予執行。</p>
+  <table>
+    <tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+    <tr class="sig-green">
+      <td>Q1</td>
+      <td>過去3年 Gross Margin 趨勢？</td>
+      <td>FY2022: 63.7% → FY2024低谷: ~62-63%（下行期） → FY2025 Q4: 66%（CSG）/ 整體回升 → FQ1 2026: 66.7%。3年整體趨勢：↑ +3%p</td>
+      <td><span class="beat">⬜ 無信號（上升）</span></td>
+    </tr>
+    <tr class="sig-green">
+      <td>Q2</td>
+      <td>過去3年市佔率趨勢？</td>
+      <td>Keysight在通訊測試、示波器（~30%市佔）領域市佔穩定至擴大。FY2024下行期為整個T&amp;M產業收縮，非Keysight失去份額。Spirent整合後服務市場份額擴張。</td>
+      <td><span class="beat">⬜ 無信號（持平至擴大）</span></td>
+    </tr>
+    <tr class="sig-green">
+      <td>Q3</td>
+      <td>FCF 與淨利背離程度？</td>
+      <td>FQ1 FCF $407M / GAAP NI $281M = 1.45倍（FCF品質極佳）。TTM FCF/NI ≈ $1.34B / $962M ≈ 1.39倍。3年均值估計：&gt;1.0（FCF持續超過淨利）</td>
+      <td><span class="beat">⬜ 無信號（FCF 優於淨利）</span></td>
+    </tr>
+    <tr class="sig-green">
+      <td>Q4</td>
+      <td>分析師共識 EPS 方向（過去6個月）？</td>
+      <td>Q1 FY2026爆發後，FY2026 EPS共識從約$6.32（Nov 2025）大幅上修至$8.25+（post Q1），方向：強力上修</td>
+      <td><span class="beat">⬜ 無信號（持續上修）</span></td>
+    </tr>
+  </table>
+  <p style="margin-top:10px;"><strong>初篩結論：</strong><span class="rating-green">0個🔴</span>——低估值初篩未觸發，四問均無陷阱信號，繼續正常深入分析。</p>
+</div>
+
+
+<!-- =========================================
+     §2.5  長期成長性評估
+     ========================================= -->
+<div class="section-title">§2.5 ｜ 長期成長性評估（含衰退信號偵測）</div>
+<div style="padding:8px 16px; background:#DCFCE7; border-left:4px solid #16A34A; margin-bottom:16px;">
+  <strong>長期成長性綜合評級（預判）：</strong> <span class="rating-green">🟢 高確信長期成長</span> ← 詳見本節全部論述
+</div>
+
+<div class="sub-section-title">A｜成長跑道（Runway）估算</div>
+<table>
+  <tr><th>維度</th><th>數據</th><th>推論</th></tr>
+  <tr>
+    <td>當前 TAM（電子測試量測市場）</td>
+    <td class="mono-val">~$100B+（2025）</td>
+    <td>Technavio等估計T&amp;M市場2026-2030 CAGR約6-8%，絕對規模含軟體服務擴張後達$100B+。Keysight在10-K中稱SAM因Spirent收購擴展~$1.25B。</td>
+  </tr>
+  <tr>
+    <td>Keysight當前市佔</td>
+    <td class="mono-val">~5-6%（$5.4B / ~$100B）</td>
+    <td>在電子T&amp;M領域市佔最高；在特定子市場（示波器~30%、5G原型測試）佔主導。整體滲透率仍低，意味市場未飽和。</td>
+  </tr>
+  <tr>
+    <td>估計可達SAM（2028-2030）</td>
+    <td class="mono-val">~$115-125B</td>
+    <td>新品類擴張：AI基礎設施測試（224G/1.6T）、6G研發工具（2027+商業化）、電動車高壓測試（充電標準升級）、衛星模擬（LEO部署加速）。</td>
+  </tr>
+  <tr>
+    <td>目標市佔（FY2028）</td>
+    <td class="mono-val">~6-7%</td>
+    <td>按管理層 $6.3B FY2026E / $6.7B FY2027E成長路徑，市佔率持續緩步上升。</td>
+  </tr>
+  <tr>
+    <td><strong>成長可持續年數（Runway）</strong></td>
+    <td class="mono-val"><strong>10-12 年</strong></td>
+    <td>6G商業化2030+、AI數據中心驗收標準持續演進、半導體制程縮減推動更複雜測試，多輪技術週期可維持成長跑道超過10年。</td>
+  </tr>
+</table>
+<p><span class="rating-green">🟢 Runway ≥ 10 年</span>：支撐高估值倍數溢價，高確信長期複利。</p>
+
+<div class="sub-section-title">B｜成長品質判斷</div>
+<p><strong>① 成長來源：有機 vs 無機</strong></p>
+<table>
+  <tr><th>類型</th><th>定義</th><th>此標的占比估計</th><th>佐證</th></tr>
+  <tr class="sig-green">
+    <td>有機成長</td>
+    <td>定價提升、現有客戶深化、新市場自然滲透</td>
+    <td class="mono-val">~70-75%</td>
+    <td>Core Revenue Growth（剔除收購和匯率）FQ1 2026為14%（報告+23%），意味約9%來自Spirent等收購貢獻。有機為主，但Q1起收購貢獻比例上升。</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>無機成長</td>
+    <td>併購貢獻的營收與EPS</td>
+    <td class="mono-val">~25-30%</td>
+    <td>FY2025三筆收購（Spirent/OSG/PowerArtist）合計年化貢獻約$375M收入（管理層stated），整合中。若整合失敗，此部分增量消失。</td>
+  </tr>
+</table>
+<p class="small">無機占比&lt;30%，尚未觸發額外風險預警，但需持續追蹤有機成長動能。</p>
+
+<p style="margin-top:12px;"><strong>② 成長驅動結構：定價 vs 量</strong></p>
+<table>
+  <tr><th>類型</th><th>此標的判斷</th><th>趨勢</th></tr>
+  <tr class="sig-green">
+    <td>定價驅動（Price）</td>
+    <td>高效能儀器（220GHz光波分析儀、1.6T AI測試平台）：新品定價遠高於舊款，隨技術演進自然提升ARPU。軟體/服務年費化：ARR佔比持續提升（FY2025約28%為ARR），高毛利且定價黏性強。</td>
+    <td>擴大（定價能力確認）</td>
+  </tr>
+  <tr class="sig-green">
+    <td>量驅動（Volume）</td>
+    <td>AI數據中心客戶數量翻倍（Q1 call disclosed）；新客戶進入（超過32,000家年度客戶）；6G研發啟動帶動前期儀器採購量。</td>
+    <td>擴大（新市場滲透）</td>
+  </tr>
+</table>
+<p><span class="rating-green">雙輪驅動：定價+量同步擴大</span>，是最優質的成長結構。</p>
+
+<div class="sub-section-title">C｜成長護城河連動評估</div>
+<table>
+  <tr><th>類型</th><th>定義</th><th>Keysight具體表現</th></tr>
+  <tr class="sig-green">
+    <td><strong>強化型（最佳）</strong></td>
+    <td>成長帶來更強的網路效應、規模優勢、數據壁壘</td>
+    <td>✅ 此標的屬強化型：① AI客戶數翻倍→在AI生態系的測試標準制定話語權增強；② Spirent整合→從「儀器供應商」升級為「端到端驗證平台」；③ R&D投入持續（FQ1 R&amp;D $303M，佔收入19%），規模越大→研發費用率越高→競爭壁壘越厚。PathWave軟體平台的用戶越多，其測試數據庫越完整，新客戶轉換成本越高。</td>
+  </tr>
+</table>
+<p><strong>判斷：</strong><span class="rating-green">強化型</span>——成長正在加深護城河，而非消耗護城河資源。</p>
+
+<div class="sub-section-title">D｜ROIC 與 FCF 的長期可維持性</div>
+<table>
+  <tr><th>指標</th><th>當前值（TTM）</th><th>3年前（FY2022）</th><th>趨勢</th><th>標準門檻</th><th>符合？</th></tr>
+  <tr>
+    <td>ROIC</td>
+    <td class="mono-val">~13.0%</td>
+    <td class="mono-val">~28%</td>
+    <td>↓（收購後資本基數擴大）</td>
+    <td>產業頂尖 &gt; WACC</td>
+    <td><span class="neutral">⚠ 暫時壓縮</span></td>
+  </tr>
+  <tr>
+    <td>ROIC − WACC（超額報酬）</td>
+    <td class="mono-val">~+4-5%p</td>
+    <td class="mono-val">~+19%p</td>
+    <td>↓（同上）</td>
+    <td>持續正值且擴大</td>
+    <td><span class="neutral">⚠ 正值但已縮窄</span></td>
+  </tr>
+  <tr>
+    <td>FCF Margin</td>
+    <td class="mono-val">~24-25%</td>
+    <td class="mono-val">~22%</td>
+    <td>↑</td>
+    <td>&gt;15%</td>
+    <td><span class="beat">✓</span></td>
+  </tr>
+  <tr>
+    <td>FCF / Net Income 轉換率</td>
+    <td class="mono-val">~1.39x（TTM）</td>
+    <td class="mono-val">~1.2x</td>
+    <td>↑</td>
+    <td>&gt;85%（&gt;1.0x）</td>
+    <td><span class="beat">✓ 優良</span></td>
+  </tr>
+  <tr>
+    <td>Reinvestment Rate（再投資率）</td>
+    <td class="mono-val">Capex ~$120-130M / OCF ~$1.47B = ~8.5%</td>
+    <td class="mono-val">~7-9%</td>
+    <td>→（輕資本行業特性）</td>
+    <td>成長期合理</td>
+    <td><span class="beat">✓</span></td>
+  </tr>
+</table>
+<p class="small">ROIC壓縮係因Spirent等收購使Invested Capital從~$5.5B擴大至~$8-9B；預期FY2027-2028隨整合完成、盈利提升，ROIC應恢復至18-22%區間。此為暫時性稀釋而非結構性惡化。</p>
+
+<div class="sub-section-title">E｜成長熄火情境壓力測試</div>
+<table>
+  <tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+  <tr class="yellow-cell">
+    <td>3年後成長率降至15%</td>
+    <td>成長放緩但仍高於市場（AI Capex週期趨緩）</td>
+    <td class="mono-val">~28-30x</td>
+    <td class="mono-val">~10-18%</td>
+  </tr>
+  <tr class="yellow-cell">
+    <td>3年後成長率降至10%</td>
+    <td>回歸市場平均成長（5G週期完成、6G尚早）</td>
+    <td class="mono-val">~22-25x</td>
+    <td class="mono-val">~25-35%</td>
+  </tr>
+  <tr class="red-cell">
+    <td>3年後成長率降至5%</td>
+    <td>成熟期低成長（重演2023型產業衰退）</td>
+    <td class="mono-val">~16-18x</td>
+    <td class="mono-val">~45-55%</td>
+  </tr>
+</table>
+<p class="small">目標P/E基準引用§7.5估值定錨結果。5%成長情境對應2023年週期底部，屆時護城河若完整，股價通常提前反映回升預期，因此實際跌幅可能低於理論值。</p>
+
+<div class="warning-block">
+  <div class="warning-title">⚠️ 衰退信號偵測表</div>
+  <table>
+    <tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+    <tr class="sig-green">
+      <td>護城河侵蝕</td>
+      <td>Gross Margin 連續2季 YoY 下滑</td>
+      <td>FQ1 GM 66.7%（創近年新高），持續回升趨勢</td>
+      <td>⬜</td>
+    </tr>
+    <tr class="sig-green">
+      <td>護城河侵蝕</td>
+      <td>核心市場市佔率縮減（過去12月）</td>
+      <td>市佔穩定至擴大，AI新市場確立，wireline超越wireless</td>
+      <td>⬜</td>
+    </tr>
+    <tr class="sig-green">
+      <td>護城河侵蝕</td>
+      <td>最近一次提價後銷量是否下滑？</td>
+      <td>Q1訂單+30%，說明定價能力完整，提價未影響需求</td>
+      <td>⬜</td>
+    </tr>
+    <tr class="sig-green">
+      <td>盈餘品質</td>
+      <td>EPS CAGR 顯著高於 Revenue CAGR（差距&gt;5%p）</td>
+      <td>FY2026E Revenue CAGR ~17%，EPS GAAP CAGR ~22%。差距5%p，主因Operating Leverage + 稅務優惠（一次性，需監控）</td>
+      <td><span class="neutral">⚠ 邊際（5%p=閾值）</span></td>
+    </tr>
+    <tr class="sig-green">
+      <td>盈餘品質</td>
+      <td>FCF / Net Income 轉換率 &lt; 0.75（連續2年）</td>
+      <td>FCF/NI ~1.39x（TTM），持續優良，無惡化跡象</td>
+      <td>⬜</td>
+    </tr>
+    <tr class="sig-yellow">
+      <td>盈餘品質</td>
+      <td>SBC / Revenue &gt; 5% 且逐年上升</td>
+      <td>FY2025 SBC ~$180-200M / Revenue $5,375M ≈ 3.4-3.7%。低於5%閾值，但需觀察是否因大型收購後攀升。</td>
+      <td><span class="neutral">⚠ 邊際偏高，需追蹤</span></td>
+    </tr>
+    <tr class="sig-green">
+      <td>產業結構衰退</td>
+      <td>TAM 本身在萎縮或被替代技術壓縮</td>
+      <td>T&amp;M TAM預計CAGR 6-8%，AI驅動加速擴張，6G為下一大催化劑</td>
+      <td>⬜</td>
+    </tr>
+    <tr class="sig-green">
+      <td>產業結構衰退</td>
+      <td>整個產業估值倍數過去3年系統性下移</td>
+      <td>Keysight自FY2024低谷後估值重新擴張，產業平均亦回升</td>
+      <td>⬜</td>
+    </tr>
+    <tr class="sig-green">
+      <td>隱性資本密集</td>
+      <td>Maintenance Capex 占 FCF 比例 &gt; 60%</td>
+      <td>全年Capex約$120-130M / FCF ~$1.34B ≈ 9-10%。遠低於60%閾值，業務高度輕資本。</td>
+      <td>⬜</td>
+    </tr>
+    <tr class="sig-green">
+      <td>隱性資本密集</td>
+      <td>若停止投資新產能，收入是否在3年內下滑？</td>
+      <td>儀器業務有2-4年服務週期，即使停止R&D，backlog和服務合約仍可支撐1-2年收入。但競爭力下滑風險顯著。</td>
+      <td>⬜</td>
+    </tr>
+  </table>
+  <p style="margin-top:10px;"><strong>亮燈計數：0個🔴</strong>（有2個邊際黃燈⚠ 需持續追蹤）</p>
+  <p><strong>價值陷阱風險評級：</strong> <span class="rating-green">🟢 低風險</span>——未見系統性惡化信號，低估值具備進一步研究價值。</p>
+</div>
+
+<div style="padding:10px 16px; background:#DCFCE7; border-left:4px solid #16A34A; margin-top:16px;">
+  <strong>長期成長性綜合評級：</strong> <span class="rating-green">🟢 高確信長期成長</span><br>
+  Runway ≥ 10年、有機+定價雙驅動、護城河強化型、FCF Margin擴張、衰退信號0個。ROIC暫時因收購壓縮，但結構性優勢完整，FY2027-2028恢復可期。
+</div>
+
+
+<!-- =========================================
+     §3  護城河分析
+     ========================================= -->
+<div class="section-title">§3 ｜ 護城河分析（報告核心）</div>
+<div style="text-align:center; padding:16px 0;">
+  <span class="moat-score">8.5 / 10</span>
+  <div class="small" style="margin-top:4px;">（全球上市公司基準，最嚴格標準）</div>
+</div>
+<p style="padding: 0 0 12px;"><strong>護城河趨勢：</strong><span class="rating-green">擴大（Expanding）</span>——AI/wireline新市場確立 + Spirent整合帶來軟體/服務平台化 + standards body領導地位鞏固</p>
+
+<div class="sub-section-title">護城河來源（四項完整檢驗）</div>
+
+<div class="card">
+  <p><strong>① 網路效應：部分存在，規模閾值在行業標準層</strong></p>
+  <p>傳統意義的雙邊網路效應（越多用戶越有價值）不直接適用，但存在「標準制定的網路效應」：Keysight積極參與IEEE、3GPP、Wi-Fi Alliance等全球技術標準委員會，且是多項標準的測試工具參考平台。當一個新標準（如IEEE 802.3ck 100G）將Keysight儀器指定為認證測試工具時，全球所有需要該認證的企業都必須使用相容設備——這是一種「標準鎖定」型的準網路效應。PathWave軟體平台積累的測試配方（test recipes）數量越多，新用戶的遷移成本越高，形成數據壁壘。AI客戶數翻倍意味Keysight正在AI生態系建立同樣的早期鎖定。</p>
+</div>
+
+<div class="card">
+  <p><strong>② 無形資產：強，品牌溢價顯著且有定價能力佐證</strong></p>
+  <p>來自HP的80年品牌歷史在量測領域等同於「品質保證」，這不是情感溢價，而是具體商業價值：① 毛利率66-67%（非GAAP），遠高於硬體製造業平均40-50%，說明客戶願意付出顯著溢價；② Rohde &amp; Schwarz（主要競爭對手，私有公司）在射頻測試領域可與Keysight競爭，但Keysight的示波器（~30%市場份額）、高速電子量測、AI數據中心測試平台無同等競爭者；③ 自主開發的半導體和封裝技術（Santa Rosa / Colorado Springs / Böblingen技術中心）構成專利壁壘，難以快速複製。</p>
+</div>
+
+<div class="card">
+  <p><strong>③ 轉換成本：高，且因軟體化而持續加深</strong></p>
+  <p>轉換成本的關鍵機制：<br>
+  (a) <strong>工程師工作流嵌入：</strong>一個使用Keysight示波器的RF工程師，其測試程式、校準數據、MATLAB/Python腳本都與PathWave環境整合。更換品牌意味全部工作流重建，成本可達工程師6-12個月生產力。<br>
+  (b) <strong>合規認證鎖定：</strong>已通過ITAR/EAR認證的國防測試設備組合更換，需要重新進行政府認證（3-5年流程），實際上不可能替換。<br>
+  (c) <strong>維護合約黏性：</strong>KeysightCare支持計畫（多年合約）使客戶在維修、校準、升級上形成持續消費關係，年費率通常為設備原價10-15%，高毛利且極度黏性。<br>
+  (d) <strong>Spirent整合後：</strong>數位孿生/lab-to-live驗證平台（軟體）進一步加深工作流鎖定，SaaS型ARR佔比提升（目標~30%+），增加轉換摩擦。</p>
+</div>
+
+<div class="card">
+  <p><strong>④ 規模優勢：存在，且隨技術複雜度提升而加速擴大</strong></p>
+  <p>Keysight R&amp;D投入FQ1 2026達$303M（年化約$1.2B），佔收入約19%。一個小型競爭者（如Anritsu，收入約$5B）難以維持同等規模的研發。具體優勢：<br>
+  (a) 研發規模 → 更快的「first-to-market」新標準工具（通常比競爭者快6-12個月）；<br>
+  (b) 全球服務網絡（100+國家，>32,000客戶）→ 讓國際客戶的本地支持無法被小規模競爭者複製；<br>
+  (c) 採購規模使硬體BOM成本更低，進一步拉大毛利差距（Keysight GM ~66% vs Anritsu ~50-55%）。</p>
+</div>
+
+<div class="sub-section-title">競爭鴻溝</div>
+<div class="card">
+  <p>為何資本充足的對手仍無法跨越？三重鴻溝：<br>
+  <strong>1. 時間鴻溝：</strong>Keysight有80年量測科學積累，包括自主研發的μWave/mm-wave半導體、特殊封裝技術。一個新進者即使有無限資本，也需要10-15年才能在高端RF領域建立可信的校準能力。<br>
+  <strong>2. 標準鴻溝：</strong>Keysight在IEEE、3GPP等標準委員會的話語權意味著它可以影響下一代測試需求的定義方式，使其儀器更自然地符合要求——競爭者通常是標準的追隨者而非制定者。<br>
+  <strong>3. 生態系鴻溝：</strong>PathWave平台已有數十萬工程師使用，替換生態系的成本遠超替換單一儀器的成本。</p>
+</div>
+
+<div class="sub-section-title">市佔競爭表</div>
+<table>
+  <tr><th>競爭對手</th><th>目前市佔（估）</th><th>3年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+  <tr>
+    <td>Rohde &amp; Schwarz</td>
+    <td class="mono-val">~8-12%（RF/通訊）</td>
+    <td>→ 穩定</td>
+    <td>歐洲替代採購需求；5G/6G原型工具競爭</td>
+    <td>雙方平分歐洲防務合約</td>
+  </tr>
+  <tr>
+    <td>Teradyne</td>
+    <td class="mono-val">~15%（半導體測試ATE）</td>
+    <td>↑（AI晶片浪潮受益）</td>
+    <td>半導體ATE市場重疊；TER在AI GPU測試強勢</td>
+    <td>Keysight吃TER的部分系統整合市場；TER在ATE維持優勢</td>
+  </tr>
+  <tr>
+    <td>VIAVI Solutions（+Spirent資產）</td>
+    <td class="mono-val">~3-5%</td>
+    <td>↑（獲得Spirent Ethernet/Security資產）</td>
+    <td>高速乙太網測試；網路安全測試</td>
+    <td>DoJ強制分拆後，VIAVI成為新型對手，但缺乏KEYS的RF+軟體整合能力</td>
+  </tr>
+  <tr>
+    <td>Anritsu</td>
+    <td class="mono-val">~5-7%（5G通訊）</td>
+    <td>→ 穩定</td>
+    <td>日本/亞洲市場5G測試競爭</td>
+    <td>Keysight在西方市場佔優；Anritsu在日系客戶強勢</td>
+  </tr>
+  <tr>
+    <td>中國本土競爭者（如大華、是德同類）</td>
+    <td class="mono-val">&lt;5%（快速成長）</td>
+    <td>↑（受益國產替代政策）</td>
+    <td>中國市場佔比15-18%面臨本土替代壓力</td>
+    <td>KEYS在中國高端市場仍無可替代，但中低端受壓</td>
+  </tr>
+</table>
+
+<div class="sub-section-title">最大單一威脅（未來24個月）</div>
+<div class="card">
+  <ul>
+    <li><strong>① VIAVI+Spirent整合加速（高概率，中影響）：</strong> Viavi獲得Spirent Ethernet/Security/RF Channel Emulation資產後，可能打造比預期更完整的競爭方案。若KEYS的Spirent整合拖延，而VIAVI整合超預期，可能在網路測試市場失去客戶。</li>
+    <li><strong>② 中國出口管制升級（中概率，中-高影響）：</strong>若美國進一步限制半導體測試設備對中出口，KEYS中國業務（~15-18%）可能面臨5-10%整體收入衝擊。Q1 guidance已排除此風險，代表有上行驚喜空間，但也有尾部下行風險。</li>
+    <li><strong>③ AI Capex 週期急剎車（低概率，極高影響）：</strong>超大規模雲廠若同時下修Capex，將直接衝擊AI數據中心測試需求，類似2023年5G採購急凍效應。目前AI Capex指引仍向上，但此為主要看空案例。</li>
+  </ul>
+</div>
+
+
+<!-- =========================================
+     §4  財務品質監測
+     ========================================= -->
+<div class="section-title">§4 ｜ 財務品質監測</div>
+
+<div class="sub-section-title">三年趨勢表</div>
+<table>
+  <tr><th>指標</th><th>FY2022</th><th>FY2023（底部）</th><th>FY2025</th><th>FQ1 2026（TTM近似）</th></tr>
+  <tr>
+    <td>Revenue</td>
+    <td class="mono-val">$5,420M</td>
+    <td class="mono-val">$5,464M</td>
+    <td class="mono-val">$5,375M</td>
+    <td class="mono-val">~$5,680M（TTM）</td>
+  </tr>
+  <tr>
+    <td>Non-GAAP Gross Margin</td>
+    <td class="mono-val">~66%</td>
+    <td class="mono-val">~65%</td>
+    <td class="mono-val">~65.3%（FY avg）</td>
+    <td class="mono-val">66.7%（FQ1 peak）</td>
+  </tr>
+  <tr class="sig-green">
+    <td>FCF Margin</td>
+    <td class="mono-val">~21%</td>
+    <td class="mono-val">~19%（下行期）</td>
+    <td class="mono-val">~24%</td>
+    <td class="mono-val">~24-25%（↑）</td>
+  </tr>
+  <tr class="sig-green">
+    <td>EBITDA Margin（Non-GAAP）</td>
+    <td class="mono-val">~32%</td>
+    <td class="mono-val">~30%</td>
+    <td class="mono-val">~31%</td>
+    <td class="mono-val">~33%（↑）</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>ROIC − WACC</td>
+    <td class="mono-val">~+19%p</td>
+    <td class="mono-val">~+12%p</td>
+    <td class="mono-val">~+4-5%p（↓，收購稀釋）</td>
+    <td class="mono-val">開始回升中</td>
+  </tr>
+  <tr>
+    <td>SBC / Revenue</td>
+    <td class="mono-val">~3.0%</td>
+    <td class="mono-val">~3.2%</td>
+    <td class="mono-val">~3.5%</td>
+    <td class="mono-val">~3.4-3.7%（穩定，低於5%閾值）</td>
+  </tr>
+  <tr class="sig-green">
+    <td>ROE</td>
+    <td class="mono-val">~30%</td>
+    <td class="mono-val">~25%</td>
+    <td class="mono-val">~19.3%（TTM）</td>
+    <td class="mono-val">回升中</td>
+  </tr>
+</table>
+
+<div class="sub-section-title">獲利品質警訊（四項完整檢驗）</div>
+<div class="card">
+  <p><strong>① 淨利 vs. OCF 連動性（盈餘操縱跡象）：</strong><br>
+  FQ1 2026：GAAP NI $281M / OCF $441M = 1.57x。TTM：NI ~$962M / OCF ~$1.47B = 1.53x。<span class="beat">✓ 高度連動，無操縱跡象</span>。值得注意：FQ1 GAAP NI受$83M稅務優惠（負稅）大幅助推，若去除此一次性項目，NI應為~$198M，OCF/NI更接近2.2x——說明OCF品質實際上更好，非靠會計美化。</p>
+  <p><strong>② AR成長 vs. 營收成長（應收帳款膨脹）：</strong><br>
+  FQ1訂單$1,645M遠超收入$1,600M（book-to-bill &gt;1），但此為正常順序——backlog積累，未來收入可見。AR/Revenue比率需觀察。一般T&amp;M行業AR Days約60-70天，Keysight歷史正常範圍，無異常膨脹跡象。<span class="beat">✓ 正常</span></p>
+  <p><strong>③ 存貨成長 vs. 營收成長（庫存積壓）：</strong><br>
+  FQ1快速成長期，存貨適度增加以滿足backlog需求屬正常。FY2023-2024下行期存貨曾一度積壓（收入下滑+庫存慣性），已正常消化。目前快速增長環境下無積壓風險。<span class="beat">✓ 無異常</span></p>
+  <p><strong>④ FCF轉換率趨勢（資本密集度變化）：</strong><br>
+  FCF/NI持續超過1.0x（FQ1: 1.45x），Capex佔OCF比例僅~8-9%，資本密集度極低。此業務模式為「高毛利儀器+軟體訂閱+服務」的輕資本組合，FCF轉換率趨勢健康。<span class="beat">✓ 優良且改善中</span></p>
+</div>
+
+<div class="sub-section-title">回購品質評估（價值陷阱防禦）</div>
+<table>
+  <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+  <tr class="sig-green">
+    <td>過去3年回購總金額 vs. FCF 總額</td>
+    <td>FY2023-2025 累計FCF ~$3.5-4.0B；回購約$1.2-1.5B（含FY2024-2025被收購資金需求壓縮）；新授權$1.5B（Nov 2024）</td>
+    <td>回購 / FCF ≈ 35-40%（健康，未過度回購）✓</td>
+  </tr>
+  <tr class="sig-green">
+    <td>若剔除回購，EPS CAGR 降為多少？</td>
+    <td>股數從FY2022 ~180M降至FQ1 2026 ~173M（減少約4%）；回購貢獻EPS提升約4-5%。原CAGR ~22% → 剔除後約 ~18%</td>
+    <td>差距 &lt;5%p ✓（非依賴回購）</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>回購均價 vs. 當前股價</td>
+    <td>FY2024-2025回購均價約$155-180（歷史低谷期）；當前$289，回購均價遠低於當前價</td>
+    <td>資本配置得當（低位回購）✓</td>
+  </tr>
+  <tr class="sig-green">
+    <td>Revenue CAGR（同期）</td>
+    <td>FY2022→FY2025 Revenue CAGR：($5,375 / $5,420)^(1/3) - 1 ≈ -0.3%（下行期）；FY2025→FY2027E：17%+ CAGR</td>
+    <td>下行期EPS靠回購+margin維持，非結構性問題；上行期Revenue重新領先。差距來源已明確。✓</td>
+  </tr>
+</table>
+
+
+<!-- =========================================
+     §5  產業格局、議價權與 Unit Economics
+     ========================================= -->
+<div class="section-title">§5 ｜ 產業格局、議價權與 Unit Economics</div>
+
+<div class="card">
+  <p><strong>市場量化：</strong><br>
+  全球電子測試與量測（T&amp;M）市場TAM估計~$100B+（含軟體服務，2025）。傳統硬體T&amp;M約$35-40B，軟體/EDA約$10-15B，服務與校準約$15-20B，網路測試（Spirent類）約$5-8B。整體CAGR預估6-8%（Technavio）；AI基礎設施測試、6G研發工具為增速超過行業均值的子市場（CAGR &gt;15%）。當前滲透率：Keysight ~5-6%整體市佔，在高端通訊測試可達20-30%。供需：快速增長期，backlog $2.8B顯示需求明顯超過當前交付速度，健康的供需緊張。</p>
+  <p><strong>議價權分析：</strong></p>
+  <ul>
+    <li><strong>對上游供應商：</strong>電子元器件（被動元件、MMIC晶片、封裝材料）。Keysight部分關鍵元件自製（Santa Rosa/Colorado Springs技術中心），降低供應商集中風險。通用電子元件採購量大，具有定價談判優勢。主要集中風險：先進半導體製程（如台積電先進節點供應），但高精度量測儀器對最先進製程需求程度低於AI晶片。</li>
+    <li><strong>對下游客戶：</strong>客戶集中度低（年度活躍客戶32,000+，無單一客戶超過10%）。合約結構：KeysightCare多年維護合約+軟體訂閱ARR（年化~$1.5B+），為定期收入來源。客戶無法輕易替換（轉換成本高），Keysight擁有強定價能力。</li>
+    <li><strong>地理分佈曝險：</strong>美洲~35%、歐洲~25%、亞太~40%（估）。中國約15-18%（主要風險點）；中國市場受出口管制，本土替代壓力漸升。日本/韓國/台灣半導體客戶貢獻穩定。製造：美德馬多地分散。</li>
+  </ul>
+  <p><strong>營收組成（FY2025 Actual）：</strong><br>
+  CSG：$3,726M（69%）— 商業通訊$2,488M（5G基礎設施、AI數據中心、wireline）+ 航太國防政府$1,238M；<br>
+  EISG：$1,649M（31%）— 汽車與能源、一般電子、半導體。<br>
+  軟體+服務佔比：約30-35%（ARR比例~28%，逐年提升趨勢，目標35%+）</p>
+  <p><strong>Unit Economics：</strong><br>
+  ARPU趨勢：新世代儀器（220GHz LCA、1.6T AI工作負載測試平台）定價遠超前代，客戶ARPU持續提升。軟體訂閱ARR模式使每客戶年收入可預期性增加。<br>
+  服務+軟體毛利率遠高於硬體（估~75%+），整體GM持續改善的主因。<br>
+  R&amp;D強度：~19%（持續，競爭差異的核心來源）。</p>
+</div>
+
+
+<!-- =========================================
+     §6  公司治理與資本配置
+     ========================================= -->
+<div class="section-title">§6 ｜ 公司治理與資本配置</div>
+
+<div class="card">
+  <p><strong>股東結構：</strong><br>
+  Keysight為機構主導的公司（非創辦人持股）。主要機構股東：Vanguard Group（~12.5%）、State Street（~4.6%）、Capital World Investors、Boston Partners等。外部董事為主，治理結構正常。<br>
+  近期內部人交易：CEO Satish Dhanasekaran於2025年12月出售4,230股（$894K，約持股3.2%下降），SVP Ingrid Estrada於2026年3月出售2,000股——均屬常態性計畫性出售（Rule 10b5-1計畫），且持股仍大。值得注意：Q1 爆發後，March 25 2026有新一筆CEO出售記錄，屬預設計畫，非基本面驅動。</p>
+  <p><strong>資本配置軌跡（說法與行動一致性）：</strong></p>
+  <ul>
+    <li><strong>說法：</strong>管理層長期堅持「disciplined capital allocation」，三步驟：① 有機R&D投資；② 戰略性收購（補強解決方案組合）；③ 股東回報（回購）。</li>
+    <li><strong>行動：</strong>FY2025三筆收購（Spirent $1.46B、OSG ~$350M、PowerArtist ~$250M），總計~$1.7B，確實符合「軟體化、解決方案平台化」戰略。收購後毛利率預期提升（acquired gross margin &gt;75%）。低谷期（FY2024）回購均價約$155-165，高CP值。$1.5B新授權（Nov 2024）展現對股東的承諾。</li>
+    <li><strong>一致性評估：</strong><span class="beat">高度一致</span>——無明顯說法與行動背離。FY2025收購密集，短期壓縮ROIC，但管理層已明確表示收購EPS accretive預期（12個月後）。</li>
+  </ul>
+  <p><strong>SBC評估：</strong><br>
+  FY2025 SBC約$180-200M / Revenue $5,375M ≈ 3.4-3.7%。低於5%警示線，且SBC趨勢相對穩定。稀釋：股數從FY2022 ~180M降至FQ1 2026 ~173M（實際淨回購）。SBC對真實EPS稀釋約$0.80-1.0/share，需列入Non-GAAP→GAAP口徑調整的考量，但總體可控。</p>
+</div>
+
+
+<!-- =========================================
+     §7  估值診斷
+     ========================================= -->
+<div class="section-title">§7 ｜ 估值診斷（含便宜理由檢驗）</div>
+
+<div class="sub-section-title">7.1｜歷史估值分位（5年框架）</div>
+<table>
+  <tr><th>估值指標</th><th>當前值</th><th>5年低點</th><th>5年中位</th><th>5年高點</th><th>當前分位</th></tr>
+  <tr class="sig-yellow">
+    <td>Trailing P/E</td>
+    <td class="mono-val">~52x</td>
+    <td class="mono-val">~19x（2023）</td>
+    <td class="mono-val">~33x</td>
+    <td class="mono-val">~48x（2025）</td>
+    <td><span class="neutral">~85-90%（過熱）</span></td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>Forward P/E（NTM，~FY2026E）</td>
+    <td class="mono-val">~34x（$288/$8.59）</td>
+    <td class="mono-val">~14x（2023）</td>
+    <td class="mono-val">~25-28x</td>
+    <td class="mono-val">~45x（2021峰）</td>
+    <td><span class="neutral">~65-70%（合理偏高）</span></td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>EV/EBITDA</td>
+    <td class="mono-val">~38x（StockAnalysis TTM）</td>
+    <td class="mono-val">~13x（2023底）</td>
+    <td class="mono-val">~22-25x</td>
+    <td class="mono-val">~50x（2021）</td>
+    <td><span class="neutral">~75%（偏高）</span></td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>P/FCF（EV/FCF）</td>
+    <td class="mono-val">~36.6x（TTM）</td>
+    <td class="mono-val">~15x（2023）</td>
+    <td class="mono-val">~24-28x</td>
+    <td class="mono-val">~55x（2021）</td>
+    <td><span class="neutral">~68-72%（偏高）</span></td>
+  </tr>
+  <tr class="sig-green">
+    <td>P/S</td>
+    <td class="mono-val">~8.7x（$49.6B/$5.68B TTM）</td>
+    <td class="mono-val">~4.5x（2023）</td>
+    <td class="mono-val">~7x</td>
+    <td class="mono-val">~12x（2021）</td>
+    <td><span class="neutral">~60-65%（合理）</span></td>
+  </tr>
+</table>
+
+<div class="card">
+  <p><strong>解讀：</strong></p>
+  <p>① <strong>當前估值情緒：</strong>合理偏熱（Forward P/E ~65-70%分位）。Trailing P/E受下行週期低基數扭曲（高分位），但更有意義的Forward P/E仍在「合理」到「偏熱」的過渡區間。EV/EBITDA偏高（75%分位），P/FCF相對合理。</p>
+  <p>② <strong>上次處於此分位（Forward P/E ~30-35x）時的基本面對比：</strong>2021年FQ4-FY2022峰值期，Forward P/E在35-45x，但當時 Revenue Growth &gt;17%，EPS也在高峰。目前核心差異是：這次是「從谷底爆發回升」的前期，而非峰值期的高估值維持。2021是成熟期高估值，2026是週期回升初期的重新定價——意義不同。</p>
+  <p>③ <strong>推動當前分位的主要因素（權重估計）：</strong>盈利修正（60%，Q1大幅超預期 + 全年Guidance大幅上調）&gt; 市場情緒（25%，AI主題估值擴張）&gt; 利率環境（15%，10Y UST ~4.2-4.5%，對成長股仍有壓制但已較2023峰值緩和）。</p>
+  <p style="margin-top:8px;"><strong>估值與利率：</strong>10Y UST目前約4.2-4.5%（2026年3月）。歷史上，KEYS在10Y &lt;3.5%時享受45x+ NTM P/E；目前較高利率環境下，30-35x NTM P/E較為合理（較低利率環境折扣~20-25%）。相對S&amp;P 500 Forward P/E約22x，KEYS溢價約55%，高於歷史均值（通常35-45%溢價），但考慮到成長加速，溢價有一定合理性。</p>
+</div>
+
+<div class="sub-section-title">7.2｜PEG 診斷</div>
+<table>
+  <tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+  <tr>
+    <td>Forward P/E（NTM，FY2026E）</td>
+    <td class="mono-val">~34x</td>
+    <td>—</td>
+    <td>基於管理層Guidance $8.59+，市場調整後</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>Non-GAAP EPS CAGR（3年，§2）</td>
+    <td class="mono-val">~12-14%</td>
+    <td>—</td>
+    <td>基期FY2025 Non-GAAP較高，CAGR偏保守</td>
+  </tr>
+  <tr class="sig-red">
+    <td><strong>PEG（Non-GAAP，3年）</strong></td>
+    <td class="mono-val"><strong>~2.4-2.8x</strong></td>
+    <td>&lt;1.0 便宜 / 1-2 合理 / &gt;2 貴</td>
+    <td>以Non-GAAP CAGR計算：偏高</td>
+  </tr>
+  <tr class="sig-green">
+    <td><strong>PEG（GAAP，3年）</strong></td>
+    <td class="mono-val"><strong>~1.5x</strong></td>
+    <td>同上</td>
+    <td>以GAAP CAGR 22.5%計算：合理區間</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>5年 EPS CAGR（含Runway遞減，§2.5A）</td>
+    <td class="mono-val">~10-12%</td>
+    <td>—</td>
+    <td>5年後成長率自然遞減至10-12%區間</td>
+  </tr>
+  <tr class="sig-red">
+    <td>PEG（5年，Non-GAAP）</td>
+    <td class="mono-val">~2.8-3.4x</td>
+    <td>—</td>
+    <td>以更長期保守假設，估值偏貴</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>3年 vs 5年 PEG 差異</td>
+    <td class="mono-val">差異約0.6x</td>
+    <td>差異大=近期成長不可持續</td>
+    <td>中等差異：FY2026-2027為高速反彈期，FY2028+自然放緩。近期成長確實部分反映週期性回升而非永久性新水準。</td>
+  </tr>
+</table>
+
+<div class="card">
+  <p><strong>Price-to-Growth 矩陣落點：</strong><br>
+  KEYS目前位於「高估值 / 中高成長」象限——非「便宜的成長股」，也非「貴得無理由」。其PEG分歧主要來源是GAAP vs Non-GAAP的顯著差距（約$1.5-2.5/share，主要是Spirent攤銷與SBC）。若投資者認同Non-GAAP口徑為業務真實盈利能力，則PEG偏高（>2x），需要更高的成長確信度來支撐。若認同GAAP口徑（含攤銷但一次性收購費用逐步消化），PEG約1.5x，處於合理範圍。此分歧將隨Spirent整合完成（FY2027-2028攤銷陡降）而自然收斂，為未來估值重估的催化劑。</p>
+</div>
+
+<div class="sub-section-title">7.3｜Reverse DCF：當前股價隱含了什麼？</div>
+<table>
+  <tr><th>參數</th><th>數值</th><th>來源</th></tr>
+  <tr><td>當前市值</td><td class="mono-val">~$49.6B</td><td>$288.96 × 171.5M shares（March 25, 2026）</td></tr>
+  <tr><td>基期 FCF（FY2025 TTM）</td><td class="mono-val">~$1.34B</td><td>$1.47B OCF - $130M Capex（§1/§4）</td></tr>
+  <tr><td>Net Debt</td><td class="mono-val">+$0.35B</td><td>$2.53B LTD - $2.18B Cash（Jan 31, 2026）</td></tr>
+  <tr><td>Enterprise Value</td><td class="mono-val">~$49.95B</td><td>市值 + 淨負債</td></tr>
+  <tr><td>WACC</td><td class="mono-val">~8.5%</td><td>10Y UST 4.3% + Beta 1.14 × ERP 4.5% ≈ 9.4%；調整後~8.5%（考慮輕債務結構）</td></tr>
+  <tr><td>永續成長率</td><td class="mono-val">3.0%</td><td>T&amp;M產業長期GDP+成長率，穩定期合理假設</td></tr>
+  <tr><td>預測期</td><td class="mono-val">10年</td><td>標準設定</td></tr>
+</table>
+
+<div class="card">
+  <p><strong>步驟二：反推隱含 FCF CAGR</strong><br>
+  使 DCF 現值 = $49.95B（EV）<br>
+  基期 FCF $1.34B，WACC 8.5%，永續成長率 3.0%，10年預測期<br>
+  求解隱含 FCF CAGR（前10年）≈ <span class="mono-val" style="font-size:18px;"><strong>~18%</strong></span></p>
+
+  <table>
+    <tr><th>比較基準</th><th>數值</th><th>隱含CAGR相對位置</th></tr>
+    <tr>
+      <td>過去3年（FY2022-2025）實際 FCF CAGR</td>
+      <td class="mono-val">~0-2%（下行週期）</td>
+      <td><span class="neutral">高於歷史（但歷史受週期壓縮）</span></td>
+    </tr>
+    <tr>
+      <td>分析師共識 Revenue CAGR（FY2025→2027E）</td>
+      <td class="mono-val">~17%</td>
+      <td><span class="beat">FCF CAGR 18% ≈ Revenue CAGR，合理範圍內</span></td>
+    </tr>
+    <tr>
+      <td>管理層全年FY2026 Guidance（Revenue成長20%+）</td>
+      <td class="mono-val">&gt;20%（FY2026）</td>
+      <td><span class="beat">隱含CAGR低於近期管理層Guidance</span></td>
+    </tr>
+    <tr>
+      <td>同業（Teradyne）FCF CAGR（歷史最快）</td>
+      <td class="mono-val">~20-25%（AI爆發期）</td>
+      <td><span class="neutral">KEYS隱含18% &lt; 行業最快，不需「行業最快」才能辯護</span></td>
+    </tr>
+  </table>
+
+  <p style="margin-top:12px;"><strong>步驟四：兌現條件</strong><br>
+  隱含 FCF CAGR 18% 需要以下條件成立：<br>
+  • Revenue 年增約17-20%（基於當前FCF Margin ~24%不變）；或<br>
+  • Revenue 增長15% + FCF Margin從24%擴大至~27%（軟體/服務佔比提升帶動）<br>
+  此條件在以下情境下合理：① AI數據中心資本支出維持高增速至2028年（NVIDIA/AMD/Google Capex持續上修）；② 6G研發投資在2027-2028年開始規模化（韓國、日本、美國6G研發預算已撥款）；③ Spirent整合完成後毛利率從66%提升至68%+（軟體佔比每提升300bps GM提升~1.5%p）。以上三條均有基本面支撐，並非最樂觀情境。</p>
+
+  <p style="margin-top:12px;"><strong>隱含預期判斷：</strong><span class="rating-green">🟢 隱含預期合理至略保守</span><br>
+  市場隱含FCF CAGR約18%，低於管理層FY2026 Guidance（20%+），且低於分析師FY2027的Revenue成長預期。若Guidance兌現，當前股價實際上低估了未來2-3年的現金流規模。</p>
+</div>
+
+<p>【便宜理由檢驗觸發評估：Forward P/E ~65-70%分位、P/FCF ~68-72%分位，均未達≤25%，Reverse DCF結論「合理至保守」——按框架規則，僅需輕度觸發或不觸發。本節進行預防性簡答。】</p>
+
+<div class="sub-section-title">7.4｜同業估值比較</div>
+<table>
+  <tr><th>公司</th><th>市值</th><th>Forward P/E（FY2026）</th><th>EV/EBITDA</th><th>PEG（Non-GAAP）</th><th>FCF Margin</th><th>EPS CAGR（3年）</th></tr>
+  <tr style="background:#EFF6FF;">
+    <td><strong>KEYS（Keysight）</strong></td>
+    <td class="mono-val">$49.6B</td>
+    <td class="mono-val"><strong>~34x</strong></td>
+    <td class="mono-val">~38x（TTM）</td>
+    <td class="mono-val">~2.4x（Non-GAAP）/ 1.5x（GAAP）</td>
+    <td class="mono-val">~24-25%</td>
+    <td class="mono-val">GAAP ~22% / Non-GAAP ~12-14%</td>
+  </tr>
+  <tr>
+    <td>Teradyne（TER）</td>
+    <td class="mono-val">~$18B</td>
+    <td class="mono-val">~28x</td>
+    <td class="mono-val">~22x</td>
+    <td class="mono-val">~1.8x</td>
+    <td class="mono-val">~20-22%</td>
+    <td class="mono-val">~15-18%</td>
+  </tr>
+  <tr>
+    <td>Fortive（FTV）</td>
+    <td class="mono-val">~$23B</td>
+    <td class="mono-val">~22x</td>
+    <td class="mono-val">~16x</td>
+    <td class="mono-val">~1.7x</td>
+    <td class="mono-val">~18-20%</td>
+    <td class="mono-val">~12-15%</td>
+  </tr>
+  <tr>
+    <td>AMETEK（AME）</td>
+    <td class="mono-val">~$37B</td>
+    <td class="mono-val">~26x</td>
+    <td class="mono-val">~22x</td>
+    <td class="mono-val">~2.0x</td>
+    <td class="mono-val">~20%</td>
+    <td class="mono-val">~13%</td>
+  </tr>
+  <tr style="background:#F1F5F9; font-weight:600;">
+    <td>產業中位數（T&amp;M）</td>
+    <td>—</td>
+    <td class="mono-val">~25-27x</td>
+    <td class="mono-val">~20-22x</td>
+    <td class="mono-val">~1.8-2.0x</td>
+    <td class="mono-val">~18-20%</td>
+    <td class="mono-val">~13-15%</td>
+  </tr>
+</table>
+
+<div class="card">
+  <p><strong>同業溢折價邏輯：</strong></p>
+  <p>① KEYS相對產業中位數 Forward P/E 溢價約25-35%（34x vs 25-27x），EV/EBITDA溢價約70%（38x vs 22x，但後者為TTM受低基期影響，NTM EV/EBITDA估約22-24x，溢價收窄至~10%）。</p>
+  <p>② 支撐溢價的三項優勢：<strong>護城河</strong>（高轉換成本 + 標準制定話語權）&gt;<strong>成長性</strong>（Revenue CAGR FY2025→FY2027E ~17%，高於同業TER/FTV的~12-15%）&gt;<strong>FCF品質</strong>（FCF Margin ~24-25%，高於同業均值~20%）。三項均優，溢價有基本面支撐。</p>
+  <p>③ 若估值向產業中位數均值回歸（25-27x Forward P/E），股價方向：顯著下行（~20-25%）。但此回歸需要成長預期下修或市場整體風險偏好收縮，在當前AI驅動訂單加速的背景下可能性較低。</p>
+</div>
+
+<div class="sub-section-title">7.5｜估值四角驗證與結論</div>
+<table>
+  <tr><th>工具</th><th>訊號</th><th>核心依據（一句話）</th></tr>
+  <tr class="sig-yellow">
+    <td>歷史分位（7.1）</td>
+    <td><span class="neutral">🟡 合理偏熱</span></td>
+    <td>Forward P/E ~65-70%分位，Trailing P/E受低基期扭曲，整體屬合理偏高</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>PEG 診斷（7.2）</td>
+    <td><span class="neutral">🟡 合理（GAAP視角）/ 🔴 偏貴（Non-GAAP）</span></td>
+    <td>GAAP PEG 1.5x合理；Non-GAAP PEG 2.4x偏高，反映攤銷口徑差異</td>
+  </tr>
+  <tr class="sig-green">
+    <td>Reverse DCF（7.3）</td>
+    <td><span class="beat">🟢 隱含預期合理至保守</span></td>
+    <td>隱含FCF CAGR 18%低於管理層FY2026 Guidance（20%+），股票有安全邊際</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td>同業相對（7.4）</td>
+    <td><span class="neutral">🟡 合理溢價（基本面支撐）</span></td>
+    <td>25-35% Forward P/E溢價有護城河、成長性、FCF品質三重支撐</td>
+  </tr>
+</table>
+
+<div class="card">
+  <p><strong>訊號一致性檢核：</strong>三個工具指向「合理偏高」，一個（Reverse DCF）指向「合理至便宜」。分歧來源：Reverse DCF使用FCF基期較低（TTM含弱年），而歷史分位和PEG使用盈利基礎（近期高基期EPS）。在加速成長週期中，Reverse DCF更能捕捉未來現金流創造能力，是最可靠的工具；PEG的GAAP口徑（1.5x）也指向合理。Non-GAAP PEG偏高（2.4x）是口徑差異問題，非定價問題。</p>
+  <p><strong>當前定價判斷：</strong><span class="rating-green">🟢 公允至合理</span>——Reverse DCF隱含預期保守，基本面加速確認，具備建倉安全邊際；但不屬於「顯著低估」，需確保成長兌現。</p>
+</div>
+
+<div class="card">
+  <p><strong>估值倍數定錨（深度版）</strong><br>
+  產業基準 Forward P/E：~25x（T&amp;M行業健康業者中位）</p>
+  <table>
+    <tr><th>因素</th><th>判斷結果</th><th>對目標P/E影響</th></tr>
+    <tr><td>① 護城河品質（§3）</td><td>8.5/10，趨勢擴大</td><td class="mono-val green-cell">+6x</td></tr>
+    <tr><td>② 成長可持續年數（§2.5A）</td><td>10-12年（🟢）</td><td class="mono-val green-cell">+5x</td></tr>
+    <tr><td>③ 成長品質（§2.5B）</td><td>有機~70%，定價+量雙驅動</td><td class="mono-val green-cell">+3x</td></tr>
+    <tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td class="mono-val green-cell">+2x</td></tr>
+    <tr><td>⑤ ROIC可維持性（§2.5D）</td><td>ROIC-WACC +4-5%，暫縮（收購稀釋）</td><td class="mono-val yellow-cell">±0（等整合完成確認）</td></tr>
+    <tr><td>⑥ 衰退信號數量（§2.5偵測表）</td><td>0個🔴</td><td class="mono-val green-cell">±0</td></tr>
+    <tr><td>⑦ 當前利率環境</td><td>10Y UST ~4.3%</td><td class="mono-val yellow-cell">−3x（相較低利率時期壓縮）</td></tr>
+    <tr style="background:#1E3A5F; color:#fff; font-weight:700;">
+      <td>產業基準倍數</td><td>25x</td><td>調整後合理區間：<strong>33x～40x</strong></td>
+    </tr>
+  </table>
+  <p style="margin-top:8px;"><strong>合理 Forward P/E 區間：33x～40x</strong>（基於FY2026E $8.59+，對應合理股價區間約 <span class="mono-val">$283-344</span>）</p>
+  <p><strong>分析師目標價參考（Post Q1 Updated）：</strong><br>
+  高：$340（BofA / UBS） ｜ 中位：~$295-310 ｜ 低：$268（Morgan Stanley Equal Weight）｜ n=12+位<br>
+  Citi最新（Mar 25, 2026）：$320（Buy）<br>
+  MarketBeat共識：$295.36<br>
+  我們基本認同中位共識（$295-320範圍），Morgan Stanley $268的偏低目標反映其「等重量」的偏保守立場，主要擔憂點是中期成長Guidance能否持續兌現。</p>
+</div>
+
+
+<!-- =========================================
+     §8  投資結論
+     ========================================= -->
+<div class="section-title">§8 ｜ 投資結論（含價值陷阱終判）</div>
+
+<div class="sub-section-title">財報信號與估值銜接</div>
+<div class="card">
+  <p>FQ1 FY2026這份財報的核心發現：Revenue +23%超預期、Orders +30%歷史新高、Backlog達$2.8B記錄、Q2 Guidance大幅超越共識。這份財報讓隱含預期（Reverse DCF 18% FCF CAGR）<strong>變得更容易兌現</strong>，理由是：① 管理層首次給出「full year growth just above 20%」的明確框架，令原本隱含的18%顯得保守；② $2.8B backlog提供未來4-6個季度的收入能見度，大幅降低兌現不確定性；③ wireline首次超越wireless代表AI需求已從概念期進入密集部署期，未來幾年持續性更可預期。</p>
+</div>
+
+<div class="sub-section-title">進場 ／ 觀望 ／ 迴避</div>
+<div style="padding:12px 16px; background:#DCFCE7; border-left:4px solid #16A34A; font-weight:700; font-size:15px; margin-bottom:16px;">
+  ✅ 結論：進場（建倉）——條件式，優先等待短期回檔確認進場時機
+</div>
+
+<div class="card">
+  <p><strong>① 短期信號（0-12個月）：</strong><br>
+  Q1爆發後股價從$244飆升至$289（+18%），短期已在高位。Q2 Guidance（Revenue $1.69-1.71B，+30% YoY；EPS $2.27-2.33）為市場設置了高預期。若Q2財報（預計2026年5月）達標或超標，動能延續；若僅「符合」而非超越，可能引發短期獲利了結。<br>
+  短期注意事項：① IEEPA關稅最終影響尚未納入Guidance；② Spirent整合進度若不及預期，Q2毛利率可能低於預期。<br>
+  建倉策略：可在$275-285區間（距Q1 ATH -5-8%，對應~32x FY2026E）分批建立初始倉位，Q2財報確認後可考慮加碼。</p>
+
+  <p><strong>② 中期成長確信度（1-3年）：</strong><br>
+  分析師共識 EPS CAGR 驅動因素（依重要性排序）：① 定價驅動（AI/高速互聯儀器ARPU提升，佔約40%）；② 量驅動（AI客戶數持續擴張 + 6G研發啟動，佔約35%）；③ 軟體/服務滲透深化（ARR佔比30%+，佔約25%）。無機（Spirent）貢獻約$375M增量，占FY2026預期收入~6-7%，整合進度為關鍵觀察指標。<br>
+  成長能見度：<strong>高</strong>——$2.8B backlog + AI/6G多年secular tailwind + 管理層明確年度框架。中期成長確信度高於過去任何週期。</p>
+
+  <p><strong>③ 長期護城河邏輯（3年後）：</strong><br>
+  為何3年後仍有持有理由：<br>
+  • <strong>Runway（§2.5A）：10-12年</strong>——6G商業化（2030+）、AI加速器量測複雜度持續提升（每兩年一個世代）、電動車高壓平台升級，均為超出FY2028的長期成長驅動。<br>
+  • <strong>ROIC趨勢（§2.5D）：</strong>ROIC從當前13%恢復至FY2027-2028的18-22%（Spirent整合完成、盈利規模化），ROIC-WACC超額報酬持續正值且擴大，代表每一個再投資單元持續創造超額價值。<br>
+  • <strong>護城河連動（§2.5C）：強化型</strong>——每一個新AI客戶在PathWave平台上的嵌入深化都讓競爭者越難進入，形成良性飛輪。3年後KEYS在AI測試領域的地位預期比今天更鞏固，而非被侵蝕。</p>
+</div>
+
+<div class="warning-block">
+  <div class="warning-title">⚠️ 這是價值陷阱嗎？（強制回答題）</div>
+  <table>
+    <tr><th>問題</th><th>回答</th></tr>
+    <tr>
+      <td><strong>最可能的價值陷阱模式？</strong></td>
+      <td><span class="beat">非陷阱（當前）</span>——若要定義最大風險，最接近「盈餘品質型」：若AI Capex急凍導致backlog取消，現有高EPS CAGR預期將快速崩塌，類似2023年5G急凍效應重演。</td>
+    </tr>
+    <tr>
+      <td><strong>支持「這不是陷阱」的最強論據</strong></td>
+      <td>FCF/NI持續 &gt;1.4x（FQ1 2026），說明EPS由真實現金支撐而非應計虛增；$2.8B backlog為有形的未來收入基礎（非僅市場預期）；Orders +30%（含core +22%剔除收購影響）確認有機需求真實；毛利率創近年新高66.7%說明定價能力完整無侵蝕。</td>
+    </tr>
+    <tr>
+      <td><strong>支持「這可能是陷阱」的最強反駁</strong></td>
+      <td>① FY2023的快速急凍（Revenue -13% peak-to-trough）說明T&amp;M行業對技術Capex週期高度敏感，AI Capex並非免疫；② Spirent整合後無機成長佔比提升（~25-30%），若整合失敗或已分拆給Viavi的業務造成客戶混亂，實際有機成長率可能低於表面數字；③ FY2026 GAAP EPS雖大幅上升，但Q1出現$83M稅務優惠，若後續季度稅率正規化，GAAP盈利將回落，影響部分以GAAP為基準的估值比較。</td>
+    </tr>
+    <tr>
+      <td><strong>如何早期偵測陷阱正在發生？</strong></td>
+      <td>①（領先指標）Orders Growth：若連續兩季 YoY 成長率跌破 +10%（當前+30%），代表AI Capex週期急凍開始，需降低倉位。②（同步指標）Spirent相關收入整合進度：若FY2027 Spirent貢獻收入低於$300M（管理層承諾$375M+），代表整合失敗風險上升，需重新評估無機成長假設。</td>
+    </tr>
+  </table>
+  <p style="margin-top:10px;"><strong>最終定性：</strong><span class="rating-green">🟢 非陷阱</span>——低估值因素不適用（估值合理偏高），但基本面強勁、FCF品質優良、護城河擴大，無價值陷阱特徵。主要風險為週期性而非結構性。</p>
+</div>
+
+<div class="sub-section-title">條件式進場判斷</div>
+<table>
+  <tr><th>條件類型</th><th>具體內容</th></tr>
+  <tr class="sig-green">
+    <td><strong>估值條件</strong></td>
+    <td>Forward P/E 回落至 32x 以下（對應股價 ~$274，引用§7.5合理區間下緣33x），或等待Q2財報確認Guidance達標後在當前價位建立初始倉位（~1/3倉）</td>
+  </tr>
+  <tr class="sig-green">
+    <td><strong>基本面條件</strong></td>
+    <td>Q2 FY2026財報需確認：① Revenue達到Guidance中點$1.70B（+30% YoY）；② Spirent整合毛利率貢獻按計畫（整體GM維持 &gt;65%）；③ Orders繼續 &gt;Revenue（book-to-bill &gt;1）</td>
+  </tr>
+  <tr class="sig-yellow">
+    <td><strong>陷阱排除條件</strong></td>
+    <td>若Orders YoY成長率連續2季跌破+10%（當前+30%），立即停損重評；若Spirent整合收入貢獻低於$250M年化，啟動減倉；IEEPA關稅若導致年化EPS衝擊超過$0.50（遠超管理層$0.15估算），重新評估論點</td>
+  </tr>
+  <tr class="sig-blue">
+    <td><strong>事件觸發加碼條件</strong></td>
+    <td>① Q2 FY2026超預期 + 上修全年Guidance ② 美國政府撥款啟動6G研發項目（直接受益） ③ 主要競爭對手（Rohde &amp; Schwarz，私有）傳出業務困難（市場份額轉移機會）</td>
+  </tr>
+</table>
+
+<div class="sub-section-title">下行風險量化（引用§2.5E）</div>
+<div class="card">
+  <p>若3年後成長率降至10%，Forward P/E應壓縮至~22-25x → 對應股價約$189-215（基於FY2028E EPS ~$8.6），<strong>潛在跌幅約25-35%</strong></p>
+  <p>若3年後成長率降至5%，Forward P/E應壓縮至~16-18x → 對應股價約$138-155（基於FY2028E EPS），<strong>潛在跌幅約45-55%</strong></p>
+  <p style="color:#C2410C; font-weight:600;">持有此標的前，須確認能承受上述幅度的回撤。5%成長情境對應完整的T&amp;M行業週期性衰退，歷史上KEYS在FY2023最深跌幅約45%（$200→$121），此情境並非不可能。</p>
+</div>
+
+<div class="sub-section-title">最關鍵監測指標（最多兩個）</div>
+<table>
+  <tr><th>#</th><th>監測指標</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+  <tr class="sig-blue">
+    <td>1</td>
+    <td><strong>季度 Orders YoY 成長率</strong></td>
+    <td><span class="rating-blue">🔵 長期成長領先信號</span></td>
+    <td>連續2季跌破 +10%（當前+30%），代表AI/5G Capex週期急凍，立即降低倉位；連續2季維持 &gt;+20%，支持繼續持有高估值。</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td><strong>Non-GAAP Gross Margin（季度值）</strong></td>
+    <td>短期財報信號</td>
+    <td>若連續2季跌破 64%（當前66.7%），代表Spirent整合拖累或競爭環境惡化，需重新評估護城河論點；維持 &gt;65.5%為健康確認信號。</td>
+  </tr>
+</table>
+
+<hr style="margin-top:24px; border-top: 2px solid #3B82F6;">
+<div class="card" style="background:#F8FAFC; border: 1px solid #3B82F6;">
+  <p><strong>📋 最終一頁摘要：</strong></p>
+  <ul>
+    <li><strong>企業本質：</strong>全球電子測試量測龍頭，AI基礎設施 + 5G/6G + 航太國防多重secular tailwind受益者，護城河評分 8.5/10</li>
+    <li><strong>成長評級：</strong>🟢 高確信長期成長｜Runway 10-12年｜有機+定價雙驅動｜強化型護城河</li>
+    <li><strong>財務品質：</strong>FCF Margin 25%✓ | FCF/NI 1.4x✓ | SBC/Rev 3.5%✓ | 衰退信號0個🔴</li>
+    <li><strong>估值水位：</strong>Forward P/E ~34x（65-70%分位）｜Reverse DCF隱含保守（18%，低於Guidance 20%+）</li>
+    <li><strong>進場建議：</strong>✅ 建倉（分批）｜優先等待~$275-285回檔；或Q2財報確認後在當前價位建1/3倉</li>
+    <li><strong>陷阱判定：</strong>🟢 非陷阱｜無結構性惡化信號｜週期性風險存在但護城河完整</li>
+    <li><strong>最大尾部風險：</strong>AI Capex急凍（類2023型急凍）→ 下行30-50%；關稅衝擊超預期（$75M年化已部分已知）</li>
+    <li><strong>核心監測指標：</strong>① Orders YoY &gt;+10%（必守）② GM &gt;65.5%（品質確認）</li>
+  </ul>
+</div>
+
+<div class="small" style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #E2E8F0;">
+  <strong>免責聲明：</strong>本報告僅供研究參考，不構成投資建議。所有數據基於公開資訊截至2026年3月25日，投資決策須自行承擔風險。分析框架基於買側研究最佳實踐，不保證未來投資結果。<br>
+  <strong>報告框架版本：</strong>買側標的研究框架 v4.2.1 ｜ 生成日期：2026-03-25 ｜ 分析師：AI Deep Research Engine
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
