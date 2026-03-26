@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD_LLY_20260325 | 買側標的研究報告</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --heading: #1E3A5F;
+  --accent: #3B82F6;
+  --text: #1E293B;
+  --text-secondary: #64748B;
+  --border: #E2E8F0;
+  --row-alt: #F1F5F9;
+  --green-bg: #DCFCE7; --green-text: #166534;
+  --red-bg: #FEE2E2; --red-text: #991B1B;
+  --yellow-bg: #FEF9C3; --yellow-text: #92400E;
+  --blue-bg: #EFF6FF; --blue-text: #1E3A5F;
+  --trap-bg: #FFF0E6; --trap-border: #F97316; --trap-text: #C2410C;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; font-size:15px; }
+.mono { font-family:'IBM Plex Mono',monospace; }
+.header-bar { position:sticky; top:0; z-index:100; background:var(--heading); color:#fff; padding:10px 32px; display:flex; justify-content:space-between; align-items:center; font-size:13px; }
+.header-bar .ticker { font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600; letter-spacing:1px; }
+.header-bar .meta { opacity:0.85; }
+.container { max-width:1080px; margin:0 auto; padding:24px 20px 80px; }
+.section { background:var(--card); border-left:4px solid var(--accent); margin-bottom:24px; padding:28px 32px; }
+.section-title { background:var(--heading); color:#fff; margin:-28px -32px 24px; padding:14px 32px; font-size:17px; font-weight:700; letter-spacing:0.5px; }
+.hypothesis-section { background:var(--blue-bg); border-left:4px solid var(--accent); }
+.hypothesis-section .section-title { background:var(--accent); }
+.trap-section { background:var(--trap-bg); border-left:4px solid var(--trap-border); }
+.trap-section .section-title { background:var(--trap-border); }
+h3 { color:var(--heading); font-size:15px; font-weight:700; margin:20px 0 10px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+h4 { color:var(--heading); font-size:14px; font-weight:600; margin:16px 0 8px; }
+table { width:100%; border-collapse:collapse; margin:12px 0 18px; font-size:13.5px; }
+th { background:var(--heading); color:#fff; padding:8px 12px; text-align:left; font-weight:500; font-size:12.5px; }
+td { padding:7px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+tr:nth-child(even) td { background:var(--row-alt); }
+.badge { display:inline-block; padding:2px 10px; border-radius:3px; font-size:12px; font-weight:600; }
+.beat { background:var(--green-bg); color:var(--green-text); }
+.miss { background:var(--red-bg); color:var(--red-text); }
+.neutral { background:var(--yellow-bg); color:var(--yellow-text); }
+.blue-badge { background:var(--blue-bg); color:var(--blue-text); }
+.signal-box { padding:12px 16px; margin:10px 0; border-left:3px solid; }
+.signal-green { background:var(--green-bg); border-color:var(--green-text); color:var(--green-text); }
+.signal-yellow { background:var(--yellow-bg); border-color:var(--yellow-text); color:var(--yellow-text); }
+.signal-red { background:var(--red-bg); border-color:var(--red-text); color:var(--red-text); }
+.signal-blue { background:var(--blue-bg); border-color:var(--accent); color:var(--blue-text); }
+p { margin:8px 0; }
+.key-num { font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--heading); }
+.small { font-size:12.5px; color:var(--text-secondary); }
+.print-btn { position:fixed; bottom:24px; right:24px; background:var(--heading); color:#fff; border:none; padding:10px 20px; cursor:pointer; font-size:13px; font-family:'Noto Sans TC',sans-serif; z-index:100; }
+.print-btn:hover { background:var(--accent); }
+@media print {
+  .header-bar, .print-btn { display:none !important; }
+  .section { break-inside:avoid; }
+  body { font-size:12px; }
+}
+.verdict-box { padding:16px 20px; margin:14px 0; font-size:14px; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="header-bar">
+  <div><span class="ticker">LLY</span> &nbsp;Eli Lilly and Company &nbsp;|&nbsp; 🔍 深度版</div>
+  <div class="meta">資料抓取：2026-03-25 ｜ 最新股價：~$906 ｜ 最近財報季：FY2025 Q4（2026/2/4 發布）</div>
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+
+<!-- ==================== §0 ==================== -->
+<div class="section">
+<div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+
+<h3>存在意義</h3>
+<p>Eli Lilly 解決的核心痛點是<strong>代謝性疾病的全球流行病</strong>。全球超過 10 億人口患有肥胖症，5.37 億人患有糖尿病，兩者互為因果且共同驅動心血管疾病、腎病、阿茲海默症等巨額社會成本。若 Lilly 明天消失，全球將失去 GLP-1 類藥物最大的供應源與創新引擎：Mounjaro / Zepbound（tirzepatide）是唯一已上市的 GLP-1/GIP 雙重受體激動劑；orforglipron 是最接近上市的口服 GLP-1；retatrutide 是唯一進入 Phase 3 的三重受體激動劑（GLP-1/GIP/Glucagon）。短期內沒有任何單一公司能替代這三條產品線的臨床深度與產能規模。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p><strong>若要讓這筆投資在 3 年內虧損 50% 以上，最可能的路徑：</strong></p>
+
+<p><strong>地緣政治曝險：</strong>Lilly 的製造基地主要在美國（Indiana、North Carolina、新建 Texas / Virginia / Puerto Rico 廠），以及歐洲（Ireland）。供應鏈集中度在已開發國家，地緣風險相對可控。主要風險在於美國藥價政策——若聯邦政府擴大 Medicare 議價範圍或強制大幅降價，將直接壓縮 tirzepatide 的 ASP。2026 年初公布的 BALANCE 計畫已設定 $50/月患者自付上限，Lilly 管理層已將低至中雙位數的價格拖累納入 2026 指引。</p>
+
+<p><strong>技術替代風險：</strong>Novo Nordisk 的 amycretin（GLP-1 + amylin）若數據優於 tirzepatide，可能搶走市場敘事。更深層的威脅來自小分子口服 GLP-1 的競爭——若 Pfizer / Structure Therapeutics / 其他公司開發出效果相當但價格更低的口服產品，tirzepatide 的注射形式將面臨轉換壓力。但 Lilly 自身的 orforglipron 正是為此佈局。時間軸：2026-2028 年將是關鍵分水嶺。</p>
+
+<p><strong>管理層失職情境：</strong>最大風險在於產能擴張過快但需求不如預期。Lilly 已承諾 $200 億以上的製造投資，若口服 GLP-1 過度侵蝕注射市場、或 Medicare 覆蓋延遲，巨額固定資產可能成為拖累。另一風險是 orforglipron 上市後若出現安全性信號（肝毒性、胰腺炎），將重創整個 GLP-1 平台敘事。</p>
+
+<p><strong>價值陷阱路徑：</strong>在當前估值水位下（Forward P/E ~27x），LLY 不太可能是傳統意義的價值陷阱。若要歸類，最可能的惡化劇本是<strong>護城河侵蝕型</strong>：競爭加劇 → 定價能力下滑 → 市場不再給予成長股溢價 → 估值倍數從 30x 壓縮至 15-20x。這需要同時出現：① Novo Nordisk 或新進者在效果上追平 tirzepatide、② 口服 GLP-1 商品化、③ 美國藥價強制降價。三者同時發生的概率目前不高但非零。</p>
+</div>
+
+<!-- ==================== §0.5 ==================== -->
+<div class="section hypothesis-section">
+<div class="section-title">§0.5｜投資論點錨定（核心假設顯性化）</div>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th style="width:30%">項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td class="mono">2～3 年</td></tr>
+<tr><td><strong>主要驅動理由</strong></td><td>orforglipron 上市（2026 Q2-Q3 FDA action date）→ 口服 GLP-1 市場擴張 → 2027-2028 EPS 加速；retatrutide Phase 3 數據陸續出爐構成長期催化劑</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>短期藥價折讓是噪音（管理層已 guide）；口服 GLP-1 的市場滲透速度是訊號；護城河趨勢（NRR / 市佔 / pipeline 進度）是訊號</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td class="mono">H1</td><td><strong>GLP-1 市場持續快速擴張</strong>：全球 GLP-1 市場 TAM 從 ~$70B（2025）成長至 $150B+（2030），Lilly 維持 35-40% 市佔</td><td>全球 GLP-1 市場年度銷售數據；Mounjaro + Zepbound 合併季度銷售增速 ≥ 25% YoY</td><td>每季財報</td></tr>
+<tr><td class="mono">H2</td><td><strong>orforglipron 成功上市並達成 $5B+ 年化營收</strong>：口服 GLP-1 滲透率在 2027 達到 GLP-1 市場的 15-20%，orforglipron 為口服市場領導者</td><td>FDA approval timing；上市首 6 個月 TRx 處方量；與 oral Wegovy 的市佔比較</td><td>2026 Q2-Q4 FDA decision；2027 全年銷售</td></tr>
+<tr><td class="mono">H3</td><td><strong>估值倍數維持或擴張</strong>：Forward P/E 維持 28-35x 區間，反映高成長可見度 + pipeline optionality</td><td>Forward P/E 分位；EPS 修正方向（上修 vs 下修）</td><td>持續監測</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td class="mono">R1</td><td>美國藥價強制大幅降價（超出管理層 guide 的 low-to-mid teens 價格拖累）</td><td>H1, H3</td><td>政策新聞 / CMS 公告 / Gross Margin 趨勢</td><td>Gross Margin < 80% 連續 2 季</td></tr>
+<tr><td class="mono">R2</td><td>orforglipron 安全性問題或 FDA 延遲（CRL / 肝毒性信號）</td><td>H2</td><td>FDA Advisory Committee / PDUFA date / 安全性數據</td><td>CRL 發出 或 Phase 4 安全性警告</td></tr>
+<tr><td class="mono">R3</td><td>競品效果追平 + 價格更低（amycretin / oral sema 2.0 / Pfizer-Metsera 產品）</td><td>H1, H3</td><td>競品 Phase 3 數據（weight loss % / side effects）/ Novo 管線進展</td><td>競品 weight loss > 25% 且副作用更低</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>2-3 年持有期：短期季度波動降噪，中期 pipeline 進展是訊號</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（市場規模） / H2（orforglipron） / H3（估值）中的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / −削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱是否達到重新評估閾值（R1-R3 的警戒線）？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>Forward P/E ≤ 28x（~$940）；Q1 2026 財報確認增速 ≥ 25% YoY</td><td>建倉 3-4%</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 均確認（orforglipron 獲 FDA 批准 + 首季銷售達標）</td><td>加碼至 5-6%</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 或 R3 風險信號出現（Gross Margin < 80% 或競品效果追平）</td><td>減至 2%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>H2 被推翻（orforglipron CRL）或 H1 被推翻（GLP-1 市場增速降至 < 10%）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</div>
+
+<!-- ==================== §1 ==================== -->
+<div class="section">
+<div class="section-title">§1｜即時財報情報（FY2025 Q4，2026/2/4 發布）</div>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td class="mono">$19.29B</td><td class="mono">$17.96B</td><td><span class="badge beat">Beat +7.4%</span></td><td class="mono">+43%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td class="mono">$7.54</td><td class="mono">$6.93</td><td><span class="badge beat">Beat +8.7%</span></td><td class="mono">+42%</td></tr>
+<tr><td>EPS（GAAP）</td><td class="mono">$7.39</td><td class="mono">—</td><td>—</td><td class="mono">+51%</td></tr>
+<tr><td>Gross Margin（Non-GAAP）</td><td class="mono">83.2%</td><td>—</td><td><span class="badge neutral">持平 YoY</span></td><td class="mono">+0 bps</td></tr>
+<tr><td>Operating Margin</td><td class="mono">43.4%</td><td>—</td><td><span class="badge beat">擴張</span></td><td class="mono">+540 bps YoY</td></tr>
+</table>
+<p class="small">FY2025 全年：Revenue $65.18B（+45% YoY）｜Non-GAAP EPS $24.21（+86% YoY）｜Operating Cash Flow $16.81B｜Capex $10.85B｜FCF $5.96B（FCF Margin ~9.1%）</p>
+
+<h3>財報對 §0.5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（GLP-1 市場擴張）</td><td><span class="badge beat">＋ 強化</span></td><td>Revenue +43% YoY，volume +46%，遠超市場預期；美國 incretin 市場 Q4 TRx 成長 33%</td></tr>
+<tr><td>H2（orforglipron）</td><td><span class="badge beat">＋ 強化</span></td><td>已提交 40+ 國，管理層 guide Q2 2026 美國上市；Phase 3 數據 positive</td></tr>
+<tr><td>H3（估值維持）</td><td><span class="badge beat">＋ 強化</span></td><td>2026 guidance：Revenue $80-83B（+25%），Non-GAAP EPS $33.50-35.00（+41%），均大幅超越共識</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<p><strong>管理層基調：樂觀，較上季更為自信。</strong>CEO Dave Ricks 反覆強調「momentum」、「positioned to reach more patients than ever」。語氣較 Q3 更為積極，特別在 orforglipron 提交進度與 Medicare 覆蓋取得突破方面。</p>
+<p><strong>Forward Guidance：</strong>2026 Revenue $80-83B（midpoint +25%），顯著高於共識 ~$76B；EPS $33.50-35.00（midpoint +41%），高於共識 ~$33.3。價格拖累 guide low-to-mid teens %，但 volume 增長將更大幅度抵消。</p>
+<p><strong>刻意強調的主題：</strong>① orforglipron 全球提交與加速審批路徑（FDA voucher program）；② Medicare / Medicaid 覆蓋擴展（BALANCE 計畫，$50/月 patient cap）；③ 製造產能擴張（新 Texas、Virginia 設施）；④ retatrutide Phase 3 積極數據（TRIUMPH-4 obesity + knee OA）。</p>
+<p><strong>刻意迴避的問題：</strong>① 具體的 orforglipron pricing 策略（未給出價格指引）；② Hims & Hers 的 compound semaglutide 競爭影響（FDA 5/22/2025 後理應已終止，但市場仍擔心）；③ 長期價格侵蝕的底線（管理層僅給出 low-to-mid teens，未定量化 2027+ 的價格壓力）。</p>
+
+<h3>③ 產業 Imply 萃取</h3>
+<p><strong>需求端：</strong>美國 incretin 市場 Q4 TRx +33% YoY，加速趨勢明確。管理層提到 LillyDirect 平台已有 1M 美國患者互動，暗示 DTC 通路正在打開新患者群。Medicare 覆蓋預計 2026 年 7 月正式開放，將新增數百萬潛在患者。</p>
+<p><strong>供給端：</strong>Lilly 預計 2026H1 vs 2025H1 可銷售劑量增加 60%+。新產能持續上線。供不應求的瓶頸正在緩解，但管理層暗示產能仍將被需求追趕。</p>
+<p><strong>競爭格局：</strong>Novo Nordisk guide 2026 銷售下降 5-13%，形成鮮明對比。口服 Wegovy 已上市，但 Lilly 認為它反而驗證了口服 GLP-1 的市場需求，有利於 orforglipron 上市後的 TAM 擴張。Kisanlo（alzheimer's）已取得 >50% 美國市佔，超越競品 Lecanemab。</p>
+<p><strong>對同業推論：</strong>Novo Nordisk 的困境（CagriSema 數據失望 + 銷售下降指引）暗示 tirzepatide 的臨床優勢正在轉化為市佔擴張。若 orforglipron 在口服市場也佔據領導地位，Novo 的雙重壓力將加劇。</p>
+</div>
+
+<!-- ==================== §2 ==================== -->
+<div class="section">
+<div class="section-title">§2｜核心門檻檢核</div>
+
+<h3>EPS CAGR 搜尋結果</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>基期 EPS（FY2025 實際）</td><td class="mono">$22.95（GAAP）/ $24.21（Non-GAAP）</td><td>Lilly Q4 2025 8-K</td></tr>
+<tr><td>FY2026E（FY+1）</td><td class="mono">$33.56（Non-GAAP，n=32 位分析師）</td><td>StockAnalysis / Finnhub consensus</td></tr>
+<tr><td>FY2027E（FY+2）</td><td class="mono">$41.57（Non-GAAP，n=25 位分析師）</td><td>StockAnalysis / Finnhub consensus</td></tr>
+<tr><td>FY2028E（FY+3）</td><td class="mono">~$48-50（Non-GAAP，n 較少，WallStreetZen high: $48.04）</td><td>WallStreetZen / TradingView（FY+2 外推估計）</td></tr>
+</table>
+<p class="small"><strong>CAGR 計算（3 年，Non-GAAP，基期 FY2025 $24.21）：</strong><br>
+若 FY2028E = $49（中位估計）：CAGR = (49/24.21)^(1/3) − 1 ≈ <span class="key-num">26.5%</span><br>
+若 FY2028E = $48.04（StockAnalysis high）：CAGR ≈ 25.6%<br>
+<strong>GAAP CAGR 估計</strong>（基期 $22.95）：差距主要來自 SBC 與 acquired IPR&D 費用，GAAP/Non-GAAP 差距 ~$1-2/share，GAAP CAGR ≈ 24-26%<br>
+<strong>口徑差距來源：</strong>Acquired IPR&D charges（2025 年 ~$3.3B）、資產減損、重組費用</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin</td><td>> 15%</td><td><span class="badge miss">不符合</span></td><td class="mono">FY2025: $5.96B / $65.18B = 9.1%。因 Capex $10.85B（製造擴張高峰期），OCF margin 25.8% 健康，FCF 被投資支出壓低。預計 2027+ 隨 capex 正常化 FCF margin 將回升至 15%+</td></tr>
+<tr><td>ROIC</td><td>產業頂尖</td><td><span class="badge beat">符合</span></td><td class="mono">ROIC 29-42%（不同計算口徑），WACC ~6.5%，超額報酬 23-36%p，藥業頂尖水準</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>> 20%</td><td><span class="badge beat">符合</span></td><td class="mono">Non-GAAP CAGR ~26.5%（超過 20% 門檻）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="badge beat">符合</span></td><td class="mono">Forward P/E ~27x / CAGR ~26.5% = PEG ~1.02（見 §7.2）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge miss">否</span></td><td class="mono">現金 $7.27B vs 總負債 $42.58B，淨負債 $35.3B。但 D/E 1.65x，利息覆蓋率充裕（EBITDA $31.7B），信用評級 A+/A1</td></tr>
+<tr><td>護城河強度</td><td>> 8 分，趨勢擴大</td><td><span class="badge beat">符合</span></td><td class="mono">9/10，趨勢擴大（見 §3）</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>FCF margin 受大規模產能投資（$10.85B capex）壓制至 9.1%，短期內低於門檻，但這是進攻性投資而非結構性問題，預計 2027-2028 隨 capex 正常化將回升。</p>
+
+<h3>⚠️ 價值陷阱初篩</h3>
+<p><strong>觸發條件檢核：</strong>Forward P/E ~27x，5 年 Forward P/E 均值 ~40x、低點 ~25x。當前分位約 <span class="key-num">10-15%</span> 分位。→ <span class="badge miss">🔴 強制觸發（≤ 25% 分位）</span>，需回答低估值四問。</p>
+<p class="small">注：LLY 的低分位主要因為 EPS 快速增長使 Forward P/E 壓縮，而非股價大跌。5 年中位 P/E ~40x+ 的分母是低得多的 EPS。</p>
+
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+<tr><td>Q1</td><td>過去 3 年 Gross Margin 趨勢？</td><td>↑ 82.5%（2024）→ 83.2%（Q4 2025 Non-GAAP），穩步上升 +0.7%p</td><td><span class="badge beat">⬜ 無</span></td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢？</td><td>擴大：美國 incretin 市場 Lilly share 從 2023 ~25% → 2025 ~40%+；Kisanlo 在 amyloid Alzheimer's 取得 >50% 市佔</td><td><span class="badge beat">⬜ 無</span></td></tr>
+<tr><td>Q3</td><td>FCF 與淨利背離程度？</td><td>FY2025 FCF $5.96B / NI $20.64B = 0.29。但此數字因 $10.85B capex 而嚴重失真；OCF/NI = $16.81B/$20.64B = 0.81，健康</td><td><span class="badge neutral">⬜ 需注意但非陷阱</span></td></tr>
+<tr><td>Q4</td><td>分析師共識 EPS 方向？</td><td>過去 6 個月持續上修：FY2026 共識從 ~$31 → $33.56，主要因 Q4 beat + guidance 上調</td><td><span class="badge beat">⬜ 無</span></td></tr>
+</table>
+<div class="signal-box signal-green"><strong>初篩結論：0 個 🔴</strong>——低 Forward P/E 分位是 EPS 高速成長壓縮估值的自然結果，而非基本面惡化。所有四項指標均健康。繼續深入分析。</div>
+</div>
+
+<!-- ==================== §2.5 ==================== -->
+<div class="section">
+<div class="section-title">§2.5｜長期成長性評估</div>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td class="mono">GLP-1 全市場 ~$70B（2025），其中 obesity ~$8-10B</td><td>Grand View Research / Gabelli 估計</td></tr>
+<tr><td>估計可達 TAM</td><td class="mono">GLP-1 全市場 $150-200B（2030）；加上 Alzheimer's（Kisanlo）+ Oncology（Verzenio）TAM 更大</td><td>Goldman Sachs 估 $95B 保守；其他估 $150B+；oral GLP-1 將佔 ~1/3</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td class="mono">Lilly 占全球 GLP-1 ~35-40%（以 revenue 計）；美國 incretin 市場約 ~10M 患者，全球潛在 obesity 可治療人口 > 500M</td><td>滲透率 < 5%</td></tr>
+<tr><td>自然放緩時間點</td><td class="mono">維持 25% revenue 增速，約在 2030-2031 達 $150B+ revenue 水準，成長率自然降至 10-15%</td><td></td></tr>
+<tr><td><strong>Runway</strong></td><td class="mono"><strong>10+ 年</strong></td><td>Obesity + diabetes + MASH + cardiovascular + Alzheimer's + oncology 多條賽道並行，且口服 GLP-1、triple agonist 持續擴張 TAM</td></tr>
+</table>
+<div class="signal-box signal-green"><strong>Runway ≥ 10 年</strong>：支撐高估值倍數溢價</div>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td class="mono">~95%</td><td>FY2025 revenue +45% 幾乎全靠 Mounjaro / Zepbound volume；最大併購為 Scorpion Therapeutics（PI3K α 抑制劑，非核心），非營收驅動</td></tr>
+<tr><td>無機成長</td><td class="mono">~5%</td><td>Acquired IPR&D 主要為 pipeline 資產，非既有營收貢獻</td></tr>
+</table>
+<h4>② 定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>負貢獻：realized price -5% YoY（Q4 2025），因 Medicaid 折讓、DTC 降價、government agreement</td><td>縮減（價格拖累 low-to-mid teens %）</td></tr>
+<tr><td>量驅動（Volume）</td><td>主要驅動力：volume +46% YoY（Q4 2025），完全抵消價格拖累並帶動 +43% revenue 成長</td><td>擴大（supply 增加 60%+ YoY + TAM 擴張 + Medicare unlock）</td></tr>
+</table>
+<p class="small">⚠️ 注意：定價能力持續被壓縮是結構性趨勢（Medicare 議價、DTC 降價、compounding 競爭），Lilly 的成長策略是以量補價。只要 volume 增速 > price erosion，此模式可持續。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<div class="signal-box signal-green"><strong>強化型</strong>：成長帶來更強的規模優勢與數據壁壘。① 每增加一個患者，real-world data 增加，支撐新適應症審批（如 sleep apnea, MASH, cardiovascular outcomes）；② 製造規模擴大後，單位成本下降，Gross Margin 維持 83%+ 即使 ASP 下降；③ LillyDirect 平台（1M 用戶）建立了 DTC 通路護城河。</div>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合？</th></tr>
+<tr><td>ROIC</td><td class="mono">29-42%</td><td class="mono">~10-15%（2022 因 Trulicity 衰退）</td><td>↑ 大幅上升</td><td>> WACC 6.5%</td><td><span class="badge beat">✓</span></td></tr>
+<tr><td>ROIC − WACC</td><td class="mono">+23-36%p</td><td class="mono">+5-10%p</td><td>↑ 擴大</td><td>持續正值且擴大</td><td><span class="badge beat">✓</span></td></tr>
+<tr><td>FCF Margin</td><td class="mono">9.1%</td><td class="mono">~14%（2022）</td><td>↓ 暫時下降</td><td>> 15%</td><td><span class="badge miss">✗ 暫時</span></td></tr>
+<tr><td>FCF / NI（OCF/NI）</td><td class="mono">0.81</td><td class="mono">~1.0</td><td>→</td><td>> 0.85</td><td><span class="badge neutral">接近</span></td></tr>
+<tr><td>Reinvestment Rate</td><td class="mono">高（Capex/Revenue ~17%）</td><td class="mono">~8%</td><td>↑ 投資高峰</td><td>成長期合理偏高</td><td><span class="badge beat">✓ 有對應 ROIC</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th style="background:var(--green-bg);color:var(--green-text)">情境假設</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td class="mono">22-25x</td><td class="mono">~15-25%</td></tr>
+<tr style="background:var(--yellow-bg)"><td>3 年後成長率降至 10%</td><td class="mono">18-20x</td><td class="mono">~30-40%</td></tr>
+<tr style="background:var(--red-bg)"><td>3 年後成長率降至 5%</td><td class="mono">14-16x</td><td class="mono">~45-55%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>Q3 83.6% → Q4 83.2%（微降，但均 > 上年同期）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>美國 incretin 市佔擴大至 ~40%+</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑？</td><td>Lilly 實際上在降價（-5% YoY），但 volume +46%</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR >> Revenue CAGR（差 > 5%p）</td><td>FY2025 EPS +86% vs Rev +45%，差距 41%p——主要因利潤率擴張（op margin 38% → 43.4%）而非回購</td><td><span class="badge neutral">🟡 需注意</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI < 0.75（連續 2 年）</td><td>FY2025 FCF/NI = 0.29（capex 扭曲），OCF/NI = 0.81</td><td>⬜（capex 投資期）</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Revenue > 5% 且逐年上升</td><td>SBC 估計 < 2% revenue（Lilly 非科技股，SBC 佔比低）</td><td>⬜</td></tr>
+<tr><td>產業衰退</td><td>TAM 萎縮或被替代</td><td>GLP-1 TAM 從 $53B（2024）→ $150B+（2030），快速擴張</td><td>⬜</td></tr>
+<tr><td>產業衰退</td><td>產業估值系統性下移 3 年</td><td>GLP-1 主題估值近 3 年上升（LLY 從 $300 → $900+）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF > 60%</td><td>大部分 capex 是 growth capex（新廠房），maintenance capex 估計 < $2B</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資後 3 年收入下滑？</td><td>不會——現有 tirzepatide 供應已穩定，新 capex 主要為 orforglipron 擴產</td><td>⬜</td></tr>
+</table>
+<div class="signal-box signal-green"><strong>價值陷阱風險評級：🟢 低風險（0 個 🔴）</strong>——未見系統性惡化信號。1 個 🟡（EPS/Rev CAGR 差距大）係因利潤率自然擴張（not 回購堆疊），非陷阱訊號。</div>
+<div class="verdict-box signal-green"><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>——Runway ≥ 10 年、有機 + 量驅動為主、護城河強化型、ROIC 大幅擴大、衰退信號 0 個。</div>
+</div>
+
+<!-- ==================== §3 ==================== -->
+<div class="section">
+<div class="section-title">§3｜護城河分析（報告核心）</div>
+
+<h3>評分：<span class="key-num">9 / 10</span>（趨勢：擴大）</h3>
+
+<h3>護城河來源</h3>
+<p><strong>1. 無形資產（極強）：</strong>① 專利群：tirzepatide 的雙重受體激動劑機制專利至 2036+，orforglipron 的小分子 GLP-1 專利更新。② 臨床數據壁壘：超過 25 項 Phase 3 試驗的 real-world evidence，特別是 SURMOUNT（obesity）、SURPASS（T2D）系列構成的臨床數據護城河極難複製。③ FDA 審批門檻：新競品需完成多年 Phase 3 + 大規模 CVOT，時間成本 5-7 年。④ 品牌：Mounjaro / Zepbound 已成為 GLP-1 領域的 consumer brand。</p>
+<p><strong>2. 規模優勢（強且擴大中）：</strong>Lilly 已投入 $20B+ 建設全球製造網路（Indiana, North Carolina, Ireland, Texas, Virginia, Puerto Rico）。GLP-1 的生物製造技術門檻高，新進者需要 3-5 年才能建立可比產能。Gross Margin 83%+ 意味著規模擴張直接轉化為利潤杠桿。</p>
+<p><strong>3. 轉換成本（中等偏強）：</strong>GLP-1 患者一旦開始治療，轉換成本包括：① 劑量滴定需從最低劑量重新開始（4-8 週），患者不願中斷；② 醫師處方慣性（tirzepatide 的 dual-agonist 臨床數據最強，醫師傾向維持）；③ 保險 formulary 鎖定（PBM 合約 typically 1-3 年）。</p>
+<p><strong>4. 網路效應（中等，新興）：</strong>LillyDirect 平台已累積 1M 美國患者，構成 DTC 數據資產 + 直接通路。這是傳統藥企中罕見的數位護城河雛形。</p>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼資本充足的對手仍無法跨越？Novo Nordisk 是唯一真正的同級別競爭者，但面臨三個劣勢：① CagriSema Phase 3 數據未達預期（weight loss ~22% vs tirzepatide ~26%）；② 預測 2026 銷售下降 5-13%；③ 口服 semaglutide（已上市）weight loss ~15% vs orforglipron 預期 ~15%，但 Novo 缺乏 triple agonist pipeline。Pfizer 在 2025 放棄自研 GLP-1 後收購 Metsera（$10B），但產品仍在 Phase 1-2，至少落後 Lilly 3-4 年。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>Eli Lilly</strong></td><td class="mono">~35-40%</td><td>快速擴大</td><td>—</td><td>搶佔 Novo + Trulicity 流失份額</td></tr>
+<tr><td>Novo Nordisk</td><td class="mono">~50-55%</td><td>縮減中</td><td>tirzepatide 效果優勢</td><td>被 Lilly 擠壓</td></tr>
+<tr><td>Amgen / Viking / 其他</td><td class="mono">< 5%</td><td>萌芽期</td><td>新機制但遠期</td><td>尚未形成威脅</td></tr>
+</table>
+
+<h3>護城河趨勢：<span class="badge beat">擴大</span></h3>
+<p><strong>24 個月內最可能瓦解護城河的威脅（按威脅程度）：</strong></p>
+<p>1. <strong>口服 GLP-1 商品化</strong>——若多款口服 GLP-1 同時上市（oral Wegovy + orforglipron + Structure Therapeutics），價格競爭可能壓縮 margin。但 Lilly 自身有 orforglipron，此風險已被內部化。</p>
+<p>2. <strong>Novo amycretin Phase 3 數據超預期</strong>——若 weight loss > 26% 且副作用更低，可能搶回敘事。預計 2027 H1 出數據。</p>
+<p>3. <strong>美國 IRA 對 GLP-1 的擴大議價</strong>——Medicare 議價範圍可能在 2027-2028 擴大至 GLP-1 obesity drugs，進一步壓縮 ASP。</p>
+</div>
+
+<!-- ==================== §4 ==================== -->
+<div class="section">
+<div class="section-title">§4｜財務品質監測</div>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th class="mono">2023</th><th class="mono">2024</th><th class="mono">2025</th><th>主要對手（NVO）</th></tr>
+<tr><td>Revenue</td><td class="mono">$34.1B</td><td class="mono">$45.0B</td><td class="mono">$65.2B</td><td class="mono">$48.6B</td></tr>
+<tr><td>Gross Margin</td><td class="mono">~80%</td><td class="mono">~82.5%</td><td class="mono">~83%</td><td class="mono">~85%</td></tr>
+<tr><td>EBITDA Margin</td><td class="mono">~28%</td><td class="mono">~38%</td><td class="mono">~49%</td><td class="mono">~45%</td></tr>
+<tr><td>ROIC</td><td class="mono">~10%</td><td class="mono">~24%</td><td class="mono">~29-42%</td><td class="mono">~41%</td></tr>
+<tr><td>FCF Margin</td><td class="mono">1.2%</td><td class="mono">0.9%</td><td class="mono">9.1%</td><td class="mono">~30%</td></tr>
+<tr><td>SBC / Revenue</td><td class="mono">< 2%</td><td class="mono">< 2%</td><td class="mono">< 2%</td><td class="mono">< 2%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<p><strong>淨利 vs OCF：</strong>FY2025 OCF $16.81B vs NI $20.64B，OCF/NI = 0.81——差距主要因非現金項目（depreciation, SBC, acquired IPR&D 的現金 vs 費用時間差異）。無顯著背離。</p>
+<p><strong>AR vs Revenue：</strong>AR 成長率大致跟隨 Revenue 成長（+45% YoY），未見異常膨脹。</p>
+<p><strong>存貨 vs Revenue：</strong>因產能擴張，存貨增加但與 volume 增長匹配。</p>
+<p><strong>FCF 轉換率趨勢：</strong>FY2023-2024 FCF 受 $15B+ capex 壓制（2023: $0.4B, 2024: $0.4B），FY2025 回升至 $5.96B。隨 capex cycle 正常化（2027+），預計 FCF margin 回升至 15-20%。</p>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF</td><td class="mono">$7.4B 回購 / $6.3B FCF = 117%</td><td>回購 > FCF，部分以舉債融資，但負債水位可控（A+ 信評）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td class="mono">FY2025 EPS +86%，share count 僅降 0.5%，回購對 EPS 貢獻 < 1%p</td><td>EPS 成長幾乎 100% 來自獲利成長，非回購堆疊</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td class="mono">大部分回購在 $700-1000 區間</td><td>部分高於當前 ~$906，資本配置時機一般</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td class="mono">+38%（3 年 CAGR）</td><td>EPS CAGR >> Rev CAGR 是因 margin 擴張，非回購</td></tr>
+</table>
+</div>
+
+<!-- ==================== §5 ==================== -->
+<div class="section">
+<div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+
+<h3>市場量化</h3>
+<p>GLP-1 receptor agonist 全球市場：2025 年 ~$70B，預計 2030 年 $95-157B（Goldman Sachs 保守端 $95B；Grand View Research 樂觀端 $200B）；CAGR 13-17%。包含 diabetes + obesity 兩大適應症，obesity 占比從 15% → 2030 年預計 35-40%。</p>
+<p>口服 GLP-1 子市場：預計 2030 年佔 GLP-1 市場 ~25-33%（$20-50B），為最大增量來源。</p>
+
+<h3>議價權</h3>
+<p><strong>對上游（原料 / 製造）：</strong>高度自有垂直整合。Lilly 自建製造網路，API 生產自控。供應商依賴度低。</p>
+<p><strong>對下游（患者 / 支付方）：</strong>中等且趨勢偏弱。PBM / 保險公司議價能力強，Medicare 進場將進一步壓縮 ASP。但 Lilly 以 LillyDirect 繞過中間商、以及 volume 增長抵消 ASP 下降來對沖此風險。</p>
+<p><strong>地理分布：</strong>FY2025 Q4 美國 $12.9B（67%）、OUS $6.4B（33%）。國際擴張加速中（Mounjaro 完成全球 rollout），2027 預計 OUS 佔比升至 35-38%。</p>
+
+<h3>營收組成</h3>
+<table>
+<tr><th>產品</th><th>FY2025 估計營收</th><th>佔比</th><th>成長性</th></tr>
+<tr><td>Mounjaro（tirzepatide, T2D）</td><td class="mono">~$18-20B</td><td class="mono">~30%</td><td>成熟期高成長</td></tr>
+<tr><td>Zepbound（tirzepatide, obesity）</td><td class="mono">~$12-14B</td><td class="mono">~20%</td><td>高速成長中</td></tr>
+<tr><td>Verzenio（oncology）</td><td class="mono">~$5-6B</td><td class="mono">~8%</td><td>穩定成長</td></tr>
+<tr><td>Jardiance（T2D, alliance）</td><td class="mono">~$3-4B</td><td class="mono">~5%</td><td>穩定</td></tr>
+<tr><td>Kisanlo（Alzheimer's）</td><td class="mono">~$1-2B</td><td class="mono">~2%</td><td>快速成長</td></tr>
+<tr><td>Taltz / Olumiant / Omvoh / 其他</td><td class="mono">~$10-12B</td><td class="mono">~18%</td><td>混合</td></tr>
+<tr><td>Legacy（Trulicity 衰退 + Humalog）</td><td class="mono">~$5-7B</td><td class="mono">~10%</td><td>衰退中</td></tr>
+</table>
+</div>
+
+<!-- ==================== §6 ==================== -->
+<div class="section">
+<div class="section-title">§6｜公司治理與資本配置</div>
+
+<p><strong>股東結構：</strong>機構持股 ~85%，以 Vanguard / BlackRock / State Street 為最大股東。內部人持股低（< 1%），CEO Dave Ricks 自 2017 年任職，薪酬以 performance-based equity 為主。無 dual-class share 結構。</p>
+<p><strong>資本配置軌跡：</strong>① 再投資優先：FY2025 R&D $12.5B（19% of revenue），Capex $10.85B（17%），均為產業最高水準；② 回購克制：$4.1B（FY2025），佔 FCF 的 69%，合理水平；③ 股利穩定：$6.92/share TTM，yield 0.68%，payout ratio ~26%，低且可持續。管理層說法與行動一致：「invest first, return second」。</p>
+<p><strong>SBC 評估：</strong>SBC 佔 revenue < 2%，藥企標準偏低，對每股價值稀釋可忽略。Shares outstanding 年降 0.5%，回購 > SBC 稀釋。</p>
+</div>
+
+<!-- ==================== §7 ==================== -->
+<div class="section">
+<div class="section-title">§7｜估值診斷</div>
+
+<h3>7.0｜估值體系診斷</h3>
+<h4>A｜當前主流估值邏輯</h4>
+<table>
+<tr><th>類型</th><th>指標</th><th>是否主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E, EV/EBITDA</td><td><strong>✓ 主流</strong></td><td>隨 EPS 快速增長，市場從成長型（EV/Sales）轉向盈利型（P/E）定價</td></tr>
+<tr><td>成長型</td><td>PEG, EV/Rev</td><td>次要</td><td>PEG 仍被引用但權重下降</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>暫不適用</td><td>因 capex 投資高峰，FCF 被壓制，P/FCF 失真</td></tr>
+</table>
+<p><strong>當前主流邏輯：</strong>市場正在從「成長股估值」（EV/Sales 15x+）過渡到「盈利成長股估值」（Forward P/E 27-35x），反映 Lilly 從投資期進入盈利兌現期。</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<p><strong>情境一（資產→盈利）：</strong>已完成。2022-2023 的 EV/Sales 主導已轉為 2025-2026 的 P/E 主導。</p>
+<p><strong>情境二（新度量衡）：</strong>不存在明顯斷層。GAAP vs Non-GAAP 差距主要因 acquired IPR&D，非系統性會計失真。</p>
+<p><strong>情境三（定價偏好漂移）：</strong>🔴 值得關注——若 GLP-1 產業被市場重新歸類為「類消費品 / 穩定成長型」而非「創新藥高成長型」，估值邏輯可能從 30x+ P/E 壓縮至 20-25x。觸發因素：多個口服 GLP-1 競品同時上市，定價能力顯著下降。</p>
+
+<div class="signal-box signal-green"><strong>估值體系診斷結論：🟢 估值邏輯穩定</strong>——從 EV/Sales 到 P/E 的轉換已基本完成。當前 Forward P/E ~27x 處於合理區間。未來 12 個月內估值邏輯轉換風險低。</div>
+
+<h3>7.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td class="mono">~40x</td><td class="mono">~14x</td><td class="mono">~52x</td><td class="mono">~228x</td><td class="mono">~25%</td></tr>
+<tr><td>Forward P/E（NTM）</td><td class="mono">~27x</td><td class="mono">~25x</td><td class="mono">~41x</td><td class="mono">~65x</td><td class="mono">~10%</td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">~27x</td><td class="mono">~20x</td><td class="mono">~35x</td><td class="mono">~80x+</td><td class="mono">~15%</td></tr>
+<tr><td>P/S</td><td class="mono">~12.5x</td><td class="mono">~8x</td><td class="mono">~15x</td><td class="mono">~25x</td><td class="mono">~25%</td></tr>
+</table>
+<p class="small">⚠️ 重要背景：LLY 5 年 Forward P/E 的中位數 ~41x 包含了 2022-2023 EPS 極低（$5-6）時期的 70-100x Forward P/E。隨著 EPS 從 $6 → $34，Forward P/E 自然壓縮。當前 ~27x 是 EPS 成熟化的結果，而非股價崩潰。</p>
+<p><strong>解讀：</strong></p>
+<p>1. <strong>估值情緒：便宜（< 30% 分位）</strong>——但這是 EPS 高速增長壓縮倍數的結果，需與基本面變化一起看。</p>
+<p>2. <strong>上次處於此分位</strong>大約在 2021-2022，當時 EPS ~$6-8，Mounjaro 尚未上市。現在 EPS $24+，業務規模完全不同。</p>
+<p>3. <strong>推動當前分位的主要因素：</strong>盈利修正（EPS 快速增長使分母大幅增加），權重最大。</p>
+
+<h3>7.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td class="mono">~27x</td><td></td><td></td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td class="mono">~26.5%</td><td></td><td>§2 計算</td></tr>
+<tr><td>PEG（Non-GAAP，3 年）</td><td class="mono">1.02</td><td>< 1.0 便宜 / 1∼2 合理</td><td><span class="badge beat">合理偏便宜</span></td></tr>
+<tr><td>PEG（GAAP，3 年）</td><td class="mono">~1.1</td><td></td><td>合理</td></tr>
+<tr><td>5 年 EPS CAGR（含遞減）</td><td class="mono">~22%（假設 Y4-5 降至 15-20%）</td><td></td><td></td></tr>
+<tr><td>PEG（5 年，Non-GAAP）</td><td class="mono">~1.23</td><td></td><td>合理</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td class="mono">1.02 vs 1.23</td><td>差異 0.21</td><td>差異小，近期成長可持續性高</td></tr>
+</table>
+
+<h3>7.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td class="mono">~$810B</td><td>$906 × 895M shares</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td class="mono">$5.96B</td><td>Yahoo Finance（OCF - Capex）</td></tr>
+<tr><td>WACC</td><td class="mono">7.5%</td><td>10Y UST 4.39% + Beta 0.39 × ERP 5.5% + size/liquidity premium ≈ 7.5%</td></tr>
+<tr><td>永續成長率</td><td class="mono">3.5%</td><td>藥品行業：通膨 + aging population + TAM expansion 支撐高於一般 3%</td></tr>
+<tr><td>預測期</td><td class="mono">10 年</td><td></td></tr>
+</table>
+<p><strong>反推隱含 FCF CAGR：~32%</strong></p>
+<p><strong>可信度對照：</strong></p>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td class="mono">不適用（FY2023-2024 FCF 受 capex 壓制）</td><td>—</td></tr>
+<tr><td>分析師共識 EPS CAGR（3 年）</td><td class="mono">~26.5%</td><td>隱含 FCF CAGR 32% > EPS CAGR 26.5%</td></tr>
+<tr><td>OCF CAGR（更有意義）</td><td class="mono">FY2023 $4.24B → FY2025 $16.81B，CAGR ~99%</td><td>隱含 32% 顯著低於歷史 OCF 增速</td></tr>
+</table>
+<p><strong>兌現條件：</strong>隱含 32% FCF CAGR 需要：①Revenue 年增 20-25%（與管理層 2026 guide 一致）+ ②FCF Margin 從 9.1% 提升至 15-20%（隨 capex 正常化完全可行）。以 FY2028 Revenue ~$110-120B、FCF Margin 18% 計算，FCF ≈ $20-22B，對照模型所需的 FY2028 FCF ~$15-18B，有安全邊際。</p>
+<div class="signal-box signal-green"><strong>🟢 隱含預期保守至合理</strong>：隱含 FCF CAGR 32% 看似高，但 FY2025 FCF 因 capex 被壓低（基期效應），以正常化 FCF 計算，實際隱含增速合理。</div>
+
+<h3>7.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>Gross Margin</th><th>EPS CAGR 3Y</th></tr>
+<tr style="font-weight:700"><td>LLY</td><td class="mono">$810B</td><td class="mono">~27x</td><td class="mono">~27x</td><td class="mono">1.02</td><td class="mono">83%</td><td class="mono">~27%</td></tr>
+<tr><td>NVO</td><td class="mono">$163B</td><td class="mono">~11x</td><td class="mono">~8x</td><td class="mono">—（declining）</td><td class="mono">~85%</td><td class="mono">~-5%（2026 guide 下降）</td></tr>
+<tr><td>VRTX</td><td class="mono">$113B</td><td class="mono">~22x</td><td class="mono">~21x</td><td class="mono">0.15</td><td class="mono">~86%</td><td class="mono">~30%+</td></tr>
+<tr><td>ABBV</td><td class="mono">~$400B</td><td class="mono">~15x</td><td class="mono">~13x</td><td class="mono">~1.5</td><td class="mono">~70%</td><td class="mono">~10%</td></tr>
+</table>
+<p><strong>同業溢折價邏輯：</strong></p>
+<p>1. LLY vs NVO 溢價 ~150%（27x vs 11x）：因 Lilly 2026 guide +25% vs Novo guide -5~-13%。護城河（tirzepatide 臨床優勢）+ 成長性（orforglipron pipeline）+ 資本效率（ROIC 42% vs 41%）三項均支撐溢價。</p>
+<p>2. LLY vs VRTX 溢價 ~23%：VRTX EPS CAGR 更高（~30%+）且 PEG 更低（0.15），但 TAM 小得多（CF $10B vs GLP-1 $70B+），市場給 Lilly 的溢價來自 TAM scale。</p>
+<p>3. 若 LLY 估值向大型製藥中位數（~15x）回歸，股價將跌 ~45%——但這需要成長率降至 10% 以下，目前看不到此路徑。</p>
+</div>
+
+<!-- 7.5 估值五角 -->
+<div class="section">
+<div class="section-title">§7.5｜估值五角驗證與結論</div>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（7.0）</td><td><span class="badge beat">🟢 穩定</span></td><td>P/E 主導定價已確立，邏輯清晰</td></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="badge beat">🟢 便宜</span></td><td>Forward P/E ~27x 處於 5 年 ~10% 分位（因 EPS 增長壓縮）</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="badge beat">🟢 合理偏便宜</span></td><td>PEG 1.02，< 1.5 區間</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="badge beat">🟢 保守至合理</span></td><td>隱含 FCF CAGR 32% 以正常化 FCF 衡量可達</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="badge neutral">🟡 合理溢價</span></td><td>相對 NVO 溢價大但有基本面支撐；vs VRTX 溢價合理</td></tr>
+</table>
+<p><strong>訊號一致性檢核：</strong>4 個🟢 + 1 個🟡，高度一致，看向「合理至便宜」。同業相對的 🟡 並非負面，而是 LLY 的估值溢價需要持續的成長兌現來支撐。</p>
+<div class="verdict-box signal-green"><strong>當前定價判斷：🟢 合理至便宜</strong>——Forward P/E ~27x 處於歷史低位，PEG ~1.0，Reverse DCF 隱含預期可達。具備建倉安全邊際。</div>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河品質（§3）</td><td>9/10</td><td>相較同業 15x 基準 +10x</td></tr>
+<tr><td>② 成長可持續年數（§2.5A）</td><td>10+ 年 🟢</td><td>+5x</td></tr>
+<tr><td>③ 成長品質（§2.5B）</td><td>有機 95% / 量驅動為主</td><td>+0x（量驅動 neutral）</td></tr>
+<tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td>+3x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC-WACC +25%p，趨勢擴大</td><td>+3x</td></tr>
+<tr><td>⑥ 衰退信號（§2.5）</td><td>0 個亮燈</td><td>±0x</td></tr>
+<tr><td>⑦ 估值體系方向（§7.0）</td><td>穩定</td><td>±0x</td></tr>
+<tr><td>⑧ 當前利率環境</td><td>10Y UST 4.39%</td><td>-2x（高利率壓縮成長股估值）</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td><strong>15x</strong></td><td><strong>調整後合理區間：34x ∼ 38x</strong></td></tr>
+</table>
+<p><strong>分析師目標價參考：</strong>高 $1,500 / 中位 $1,252 / 低 $850（n=21 位，TipRanks）。當前 ~$906 距中位上行 38%。共識中位合理，但 $1,500 需要 orforglipron 超預期上市。</p>
+</div>
+
+<!-- ==================== §8 ==================== -->
+<div class="section">
+<div class="section-title">§8｜投資結論</div>
+
+<h3>財報信號與假設校準</h3>
+<p><strong>H1 當前狀態：＋ 強化</strong>——Q4 Revenue +43% YoY beat 7.4%，美國 incretin TRx +33% YoY，2026 guide $80-83B（+25%）均超共識。GLP-1 市場擴張確認中。</p>
+<p><strong>H2 當前狀態：＋ 強化</strong>——orforglipron 已提交 40+ 國，Phase 3 數據 positive（ATTAIN 系列），管理層 guide Q2 2026 美國上市。FDA voucher program 可能加速審批。</p>
+<p><strong>H3 當前狀態：＋ 強化</strong>——Forward P/E 從 2024 年高點 ~65x 壓縮至 ~27x，估值已充分消化定價壓力擔憂。PEG ~1.0 為近年低點。</p>
+<p><strong>這份財報讓隱含預期變得更容易兌現</strong>——2026 guidance 大幅超越共識（revenue +6%, EPS +3% vs consensus），加上 Novo Nordisk 同期 guide 下降，相對競爭地位進一步強化。</p>
+
+<h3>進場 / 觀望 / 迴避：<span class="badge beat" style="font-size:16px;padding:4px 16px;">進場</span></h3>
+
+<p><strong>① 短期信號（0∼12 個月）：</strong>Q4 2025 大幅 beat + 2026 guidance 超越共識 → 短期 EPS 修正方向為上修。Q1 2026 財報（4/30 發布）將驗證 2026 guidance 的可信度。關鍵：Medicare obesity 覆蓋預計 7 月開放，是 2026H2 的增量催化劑。orforglipron FDA decision 預計 Q2-Q3，是最大短期催化劑。</p>
+
+<p><strong>② 中期成長確信度（1∼3 年）：中→高。</strong>分析師共識 EPS CAGR ~27% 的驅動因素為：量增長（TAM 擴張 + Medicare unlock + orforglipron）>> 價格拖累。能見度高，因管理層已將價格壓力 quantify 並 guide。主要不確定性：orforglipron 上市首年的市場接受度。</p>
+
+<p><strong>③ 長期護城河邏輯（3 年後）：</strong>Runway ≥ 10 年（GLP-1 TAM $150B+，加上 Alzheimer's、oncology 多條管線）。ROIC 持續擴大（29-42%）。護城河為強化型——每增加一個患者、每多一個適應症獲批，數據壁壘與品牌價值都在加深。retatrutide（triple agonist）若 2027-2028 獲批，將開啟新的成長曲線（weight loss up to 24.2%，可能是 best-in-class）。</p>
+
+<!-- 價值陷阱判斷 -->
+<div class="trap-section" style="margin:20px 0;padding:20px 24px;">
+<h3 style="color:var(--trap-text);border:none;margin-top:0;">⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th style="width:35%">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的模式？</strong></td><td><strong>非陷阱</strong>——低 Forward P/E 是 EPS 高速增長（+86% YoY）壓縮分母的結果，不是因為市場 de-rate。若要歸類，唯一需警覺的是「護城河侵蝕型」——但目前所有市佔、margin、pipeline 指標均指向護城河擴大。</td></tr>
+<tr><td><strong>支持「非陷阱」的最強論據</strong></td><td>FY2025 Revenue +45%、EPS +86%、Gross Margin 83.2% 穩定、美國 incretin 市佔擴大至 40%+、管理層 2026 guide 大幅超共識、ROIC 從 10% → 42%。這些數字不可能與「價值陷阱」共存。</td></tr>
+<tr><td><strong>支持「可能是陷阱」的最強反駁</strong></td><td>① 定價能力在結構性下降（ASP -5~-15% YoY）；② 若多個口服 GLP-1 同時上市（2027-2028），tirzepatide 的 franchise value 可能受損；③ $42B 負債在利率高企環境下增加財務風險。但這些更接近「成長減速風險」而非「價值陷阱」。</td></tr>
+<tr><td><strong>持有期間如何判斷陷阱？</strong></td><td>① <strong>Gross Margin < 80%</strong>（連續 2 季）= 定價能力系統性惡化信號；② <strong>美國 incretin 市佔跌破 30%</strong> = 競品取得實質性領先</td></tr>
+</table>
+<div class="signal-box signal-green"><strong>最終定性：🟢 非陷阱</strong>——低估值有明確基本面支撐（EPS 高速增長壓縮倍數），市場不存在系統性誤判，但也不存在被低估的機會——估值合理反映了高成長的當前事實。</div>
+</div>
+
+<h3>條件式進場判斷</h3>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td><strong>估值條件</strong></td><td>Forward P/E ≤ 28x（~$940 基於 FY2026E EPS $33.56），或 stock price ≤ $940。當前 ~$906 已符合。</td></tr>
+<tr><td><strong>基本面條件</strong></td><td>Q1 2026 財報（4/30）需確認：Revenue ≥ $17.5B（vs consensus $17.6B）；Gross Margin ≥ 82%</td></tr>
+<tr><td><strong>陷阱排除條件</strong></td><td>Gross Margin 若連續 2 季 < 80%，或 美國 incretin 市佔跌破 30%，立即重評</td></tr>
+<tr><td><strong>事件觸發條件</strong></td><td>orforglipron FDA approval 後加碼；若 CRL 則減碼至最小倉位或清倉</td></tr>
+</table>
+
+<h3>下行風險量化</h3>
+<p>若 3 年後成長率降至 10%，Forward P/E 壓縮至 ~18-20x → 股價跌幅約 <span class="key-num">30-40%</span></p>
+<p>若 3 年後成長率降至 5%，Forward P/E 壓縮至 ~14-16x → 股價跌幅約 <span class="key-num">45-55%</span></p>
+<p><strong>持有此標的前，須確認能承受上述幅度的回撤。</strong></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td class="mono">1</td><td>orforglipron FDA approval 結果與上市首季 TRx</td><td>§0.5 H2</td><td>🔵 核心假設驗證</td><td>CRL 發出 = 立即重評；首季 TRx < 同期 oral Wegovy 50% = 市場接受度不足</td></tr>
+<tr><td class="mono">2</td><td>美國 incretin 市場市佔率（Lilly share）</td><td>§2.5 / §3</td><td>🔵 長期成長領先信號</td><td>市佔跌破 30% = 護城河侵蝕確認</td></tr>
+<tr><td class="mono">3</td><td>Non-GAAP Gross Margin 季度趨勢</td><td>§4 / §1</td><td>短期財報信號</td><td>< 80% 連續 2 季 = 定價能力系統性惡化</td></tr>
+</table>
+</div>
+
+</div><!-- end container -->
+</body>
+</html>

@@ -193,6 +193,22 @@ tbody tr:hover td{background:#f3f4f6}
 .chg-down{color:var(--red);font-weight:600}
 .chg-flat{color:var(--muted);font-weight:600}
 
+/* 10-Q Consistency Badges */
+.consistency-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .75rem;
+  border-radius:6px;font-size:.82rem;font-weight:600;margin:.25rem .3rem .25rem 0}
+.consistency-pass{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.consistency-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+
+/* 10-Q Footnote List */
+.footnote-list{list-style:none;padding:0;margin:0}
+.footnote-list li{padding:.55rem .75rem;border-bottom:1px solid var(--border);font-size:.85rem;
+  line-height:1.65;color:#374151}
+.footnote-list li:last-child{border-bottom:none}
+.footnote-list li::before{content:'\1F4CC';margin-right:.5rem}
+
+/* 10-Q Management Card */
+.mgmt-card{background:linear-gradient(135deg,#eff6ff,#fff);border:1px solid #93c5fd}
+
 /* Moat Bar */
 .moat-bar{height:7px;border-radius:4px;background:var(--border);overflow:hidden}
 .moat-fill{height:100%;border-radius:4px}
@@ -715,7 +731,7 @@ def _parse_moat_from_text(text: str) -> dict:
 def _extract_10q_financials(content: str) -> list[dict]:
     """
     從 10-Q 數字變化段落提取財務指標，含變動方向偵測。
-    回傳 [{label, value, direction}, ...]，direction 為 "up"/"down"/"flat"/""。
+    回傳 [{label, value, current, previous, change, direction}, ...]
     """
     up_kw = ["上升", "增加", "成長", "提升", "增長", "上漲", "擴大",
              "改善", "高出", "超越", "優於", "好轉"]
@@ -723,14 +739,49 @@ def _extract_10q_financials(content: str) -> list[dict]:
                "低於", "不及", "壓縮", "收窄", "萎縮"]
     flat_kw = ["持平", "不變", "維持", "穩定", "持穩"]
 
+    NUM_PAT = r'[\$￥]?\s*\d[\d,.]*\s*(?:億|百萬|千萬|million|billion|萬|%|％)?'
+
     rows = []
     for line in content.split("\n"):
         line = line.strip().lstrip("-•*").strip()
+        # Strip markdown bold markers
+        line = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', line)
         if not line:
             continue
         m = re.split(r"[：:]", line, maxsplit=1)
         label = m[0].strip() if m else line
         value = m[1].strip() if len(m) >= 2 else ""
+
+        current = ""
+        previous = ""
+        change = ""
+
+        if value:
+            # Try to find previous period number
+            prev_m = re.search(
+                r'(?:前期|去年同期?|上期|上季|前季|prior)\s*[:：]?\s*(' + NUM_PAT + r')',
+                value, re.IGNORECASE,
+            )
+            if prev_m:
+                previous = prev_m.group(1).strip()
+
+            # Try to find change percentage
+            chg_m = re.search(
+                r'(?:年增|季增|成長|增長|下降|衰退|變化|YoY|QoQ|年減|季減)\s*[:：]?\s*([+-]?\s*'
+                + NUM_PAT + r')',
+                value, re.IGNORECASE,
+            )
+            if not chg_m:
+                chg_m = re.search(r'([+-]\s*\d[\d,.]*\s*[%％])', value)
+            if chg_m:
+                change = chg_m.group(1).strip()
+
+            # First number in value is likely current period
+            first_num = re.search(NUM_PAT, value)
+            if first_num:
+                candidate = first_num.group(0).strip()
+                if candidate != previous and candidate != change:
+                    current = candidate
 
         check = value or line
         if any(k in check for k in up_kw) or re.search(r"[+＋]\s*\d", check):
@@ -743,7 +794,11 @@ def _extract_10q_financials(content: str) -> list[dict]:
             direction = ""
 
         if label or value:
-            rows.append({"label": label, "value": value, "direction": direction})
+            rows.append({
+                "label": label, "value": value,
+                "current": current, "previous": previous,
+                "change": change, "direction": direction,
+            })
     return rows
 
 
@@ -1475,9 +1530,9 @@ document.addEventListener('DOMContentLoaded',function(){{
 
 def generate_report_page_10q(report: dict, content: str) -> None:
     """
-    生成 10-Q 報告頁面（與 10-K 風格一致）：
-      頂部 Ticker 大標題 + 季度年度 + 一句話摘要大字
-      → 五維度卡片排版 → 財務數字表格（含↑↓箭頭）→ 完整分析
+    生成 10-Q 報告頁面（全新版面設計）：
+      頂部 Ticker + 一句話摘要 → 數字變化表格 → 敘事變化 →
+      管理層誠信 → 資本配置卡片 → 護城河信號 → 附注清單 → 一致性驗證
     """
     page_id = report.get("page_id", "")
     slug = page_id.replace("-", "")
@@ -1486,7 +1541,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
 
     parsed = _parse_10q_sections(content)
 
-    # ── 頂部：Ticker 大字標題 + 季度年度 + 一句話摘要
+    # ── 頂部：一句話摘要
     summary_hero = ""
     if parsed["summary"]:
         summary_hero = f"""
@@ -1494,16 +1549,7 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <p>&ldquo;{html_lib.escape(parsed["summary"])}&rdquo;</p>
 </div>"""
 
-    # ── 五維度卡片（dim-grid，與 10-K 八維度同風格）
-    dim_titles = {
-        1: ("數字變化", "Financial Changes"),
-        2: ("敘事變化", "Narrative Changes"),
-        3: ("資本配置", "Capital Allocation"),
-        4: ("護城河信號", "Moat Signals"),
-        5: ("一句話摘要", "One-line Summary"),
-    }
-
-    # ── 1. 數字變化 → 表格卡片
+    # ── 1. 數字變化 → 乾淨表格
     fin_card_html = ""
     if 1 in parsed["sections"]:
         fin_rows = _extract_10q_financials(parsed["sections"][1]["content"])
@@ -1511,55 +1557,60 @@ def generate_report_page_10q(report: dict, content: str) -> None:
             trs = ""
             for fr in fin_rows:
                 label = html_lib.escape(fr["label"])
-                value = html_lib.escape(fr["value"])
+                cur = html_lib.escape(fr.get("current", ""))
+                prev = html_lib.escape(fr.get("previous", ""))
+                chg = html_lib.escape(fr.get("change", ""))
                 d = fr["direction"]
                 if d == "up":
-                    arrow = '<span class="chg-up">&uarr;</span>'
+                    chg_display = f'<span class="chg-up">{chg} &#x2191;</span>' if chg else '<span class="chg-up">&#x2191;</span>'
                 elif d == "down":
-                    arrow = '<span class="chg-down">&darr;</span>'
+                    chg_display = f'<span class="chg-down">{chg} &#x2193;</span>' if chg else '<span class="chg-down">&#x2193;</span>'
                 elif d == "flat":
-                    arrow = '<span class="chg-flat">&mdash;</span>'
+                    chg_display = '<span class="chg-flat">&mdash; 持平</span>'
                 else:
-                    arrow = ""
-                if value:
-                    trs += f"<tr><td style='font-weight:600;white-space:nowrap'>{label}</td><td>{value}</td><td style='text-align:center'>{arrow}</td></tr>"
+                    chg_display = html_lib.escape(chg) if chg else ""
+
+                if cur or prev:
+                    trs += (f"<tr><td style='font-weight:600'>{label}</td>"
+                            f"<td>{cur}</td><td>{prev}</td>"
+                            f"<td style='text-align:center'>{chg_display}</td></tr>")
                 else:
-                    trs += f"<tr><td colspan='3'>{label}</td></tr>"
+                    # Fallback: show full value spanning current+previous columns
+                    val = html_lib.escape(fr["value"])
+                    trs += (f"<tr><td style='font-weight:600'>{label}</td>"
+                            f"<td colspan='2'>{val}</td>"
+                            f"<td style='text-align:center'>{chg_display}</td></tr>")
+
             fin_card_html = f"""
-<div class="dim-card" style="grid-column:1/-1">
-  <div class="dim-hdr">
-    <span class="dim-name">一、數字變化<span class="dim-en">Financial Changes</span></span>
-  </div>
-  <div style="overflow-x:auto;margin-top:.5rem">
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">一、數字變化 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Financial Changes</span></h3>
+  <div style="overflow-x:auto">
     <table>
-      <thead><tr><th>指標</th><th>分析</th><th style="text-align:center">趨勢</th></tr></thead>
+      <thead><tr><th>指標</th><th>本期數字</th><th>前期數字</th><th style="text-align:center">變化</th></tr></thead>
       <tbody>{trs}</tbody>
     </table>
   </div>
 </div>"""
         else:
             fin_card_html = f"""
-<div class="dim-card" style="grid-column:1/-1">
-  <div class="dim-hdr">
-    <span class="dim-name">一、數字變化<span class="dim-en">Financial Changes</span></span>
-  </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["sections"][1]["content"])}</div>
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">一、數字變化 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Financial Changes</span></h3>
+  <div class="analysis">{_md(parsed["sections"][1]["content"])}</div>
 </div>"""
 
-    # ── 2. 敘事變化卡片 + 前瞻指引
+    # ── 2. 敘事變化 + 前瞻指引
     narrative_card_html = ""
     if 2 in parsed["sections"]:
         sec2 = parsed["sections"][2]["content"]
         guidance_text = _extract_10q_guidance(sec2)
 
-        # 前瞻指引藍色提示（嵌入卡片內）
         guidance_inset = ""
         if guidance_text:
             guidance_inset = f"""
   <div style="background:var(--brand-light);border:1px solid #93c5fd;border-radius:6px;
-              padding:.75rem 1rem;margin-top:.6rem">
-    <div style="font-size:.78rem;font-weight:600;color:var(--brand);margin-bottom:.25rem">前瞻指引 Forward Guidance</div>
-    <div style="font-size:.82rem;line-height:1.55;color:#1e40af">{_md(guidance_text)}</div>
+              padding:.75rem 1rem;margin-top:.75rem">
+    <div style="font-size:.78rem;font-weight:600;color:var(--brand);margin-bottom:.25rem">&#x1F52D; 前瞻指引 Forward Guidance</div>
+    <div style="font-size:.85rem;line-height:1.6;color:#1e40af">{_md(guidance_text)}</div>
   </div>"""
 
         remaining_lines = []
@@ -1569,25 +1620,32 @@ def generate_report_page_10q(report: dict, content: str) -> None:
                 continue
             if any(kw in stripped for kw in ["前瞻指引", "guidance", "Guidance"]):
                 continue
-            remaining_lines.append(stripped)
+            remaining_lines.append(line)
         remaining_text = "\n".join(remaining_lines)
 
         narrative_card_html = f"""
-<div class="dim-card">
-  <div class="dim-hdr">
-    <span class="dim-name">二、敘事變化<span class="dim-en">Narrative Changes</span></span>
-  </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(remaining_text)}</div>
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">二、敘事變化 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Narrative Changes</span></h3>
+  <div class="analysis">{_md(remaining_text)}</div>
   {guidance_inset}
 </div>"""
 
-    # ── 3. 資本配置卡片（內容為空時不顯示）
+    # ── 2.5 管理層誠信驗證（獨立卡片）
+    mgmt_card_html = ""
+    if parsed.get("mgmt_integrity"):
+        mgmt_card_html = f"""
+<div class="card mgmt-card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem;color:var(--brand)">&#x1F50D; 管理層誠信驗證 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Management Integrity Check</span></h3>
+  <div class="analysis">{_md(parsed["mgmt_integrity"])}</div>
+</div>"""
+
+    # ── 3. 資本配置卡片（只顯示有實際數字的卡片）
     capital_card_html = ""
     if 3 in parsed["sections"] and parsed["sections"][3]["content"].strip():
         cap_items = _extract_10q_capital(parsed["sections"][3]["content"])
         if cap_items:
-            # 過濾掉沒有實質內容的卡片
-            cap_items = [ci for ci in cap_items if ci.get("amount") or ci.get("detail")]
+            # 只保留有實際數字的卡片
+            cap_items = [ci for ci in cap_items if ci.get("amount")]
         if cap_items:
             cap_cards = ""
             for ci in cap_items:
@@ -1601,76 +1659,94 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   {detail_line}
 </div>"""
             capital_card_html = f"""
-<div class="dim-card">
-  <div class="dim-hdr">
-    <span class="dim-name">三、資本配置<span class="dim-en">Capital Allocation</span></span>
-  </div>
-  <div class="cap-grid" style="margin-top:.5rem">{cap_cards}</div>
-</div>"""
-        else:
-            sec3_html = _md(parsed["sections"][3]["content"])
-            if sec3_html.strip():
-                capital_card_html = f"""
-<div class="dim-card">
-  <div class="dim-hdr">
-    <span class="dim-name">三、資本配置<span class="dim-en">Capital Allocation</span></span>
-  </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{sec3_html}</div>
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">三、資本配置 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Capital Allocation</span></h3>
+  <div class="cap-grid">{cap_cards}</div>
 </div>"""
 
-    # ── 4. 護城河信號卡片（強化=綠色 / 弱化=紅色）
+    # ── 4. 護城河信號（強化=綠色✓ / 弱化=紅色✗）
     moat_card_html = ""
     if parsed["signals"] or (4 in parsed["sections"]):
         sig_items = ""
         if parsed["signals"]:
             for sig in parsed["signals"]:
-                cls_map = {"positive": "signal-pos", "negative": "signal-neg", "neutral": "signal-neu"}
-                prefix_map = {"positive": "&#x2713; ", "negative": "&#x2717; ", "neutral": ""}
-                cls = cls_map.get(sig["type"], "signal-neu")
-                prefix = prefix_map.get(sig["type"], "")
-                sig_items += f'<span class="signal {cls}">{prefix}{html_lib.escape(sig["text"])}</span>\n'
+                if sig["type"] == "positive":
+                    sig_items += f'<span class="signal signal-pos">&#x2713; {html_lib.escape(sig["text"])}</span>\n'
+                elif sig["type"] == "negative":
+                    sig_items += f'<span class="signal signal-neg">&#x2717; {html_lib.escape(sig["text"])}</span>\n'
+                else:
+                    sig_items += f'<span class="signal signal-neu">{html_lib.escape(sig["text"])}</span>\n'
         elif 4 in parsed["sections"]:
-            sig_items = f'<div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["sections"][4]["content"])}</div>'
+            sig_items = f'<div class="analysis">{_md(parsed["sections"][4]["content"])}</div>'
 
         moat_card_html = f"""
-<div class="dim-card" style="grid-column:1/-1">
-  <div class="dim-hdr">
-    <span class="dim-name">四、護城河信號<span class="dim-en">Moat Signals</span></span>
-  </div>
-  <div style="margin-top:.4rem">{sig_items}</div>
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">四、護城河信號 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Moat Signals</span></h3>
+  <div style="display:flex;flex-wrap:wrap;gap:.4rem">{sig_items}</div>
 </div>"""
 
-    # ── 新維度：管理層誠信驗證
-    mgmt_card_html = ""
-    if parsed.get("mgmt_integrity"):
-        mgmt_card_html = f"""
-<div class="dim-card" style="grid-column:1/-1">
-  <div class="dim-hdr">
-    <span class="dim-name">管理層誠信驗證<span class="dim-en">Management Integrity</span></span>
-  </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["mgmt_integrity"])}</div>
-</div>"""
-
-    # ── 新維度：附注重點掃描
+    # ── 6. 附注重點掃描（清單格式）
     footnote_card_html = ""
     if parsed.get("footnote_scan"):
-        footnote_card_html = f"""
-<div class="dim-card" style="grid-column:1/-1">
-  <div class="dim-hdr">
-    <span class="dim-name">附注重點掃描<span class="dim-en">Footnote Highlights</span></span>
-  </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["footnote_scan"])}</div>
+        fn_lines = parsed["footnote_scan"].split("\n")
+        fn_items = ""
+        for line in fn_lines:
+            stripped = line.strip().lstrip("-•*#").strip()
+            stripped = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', stripped)
+            if stripped:
+                fn_items += f"<li>{html_lib.escape(stripped)}</li>\n"
+        if fn_items:
+            footnote_card_html = f"""
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">六、附注重點掃描 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Footnote Highlights</span></h3>
+  <ul class="footnote-list">{fn_items}</ul>
+</div>"""
+        else:
+            footnote_card_html = f"""
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">六、附注重點掃描 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Footnote Highlights</span></h3>
+  <div class="analysis">{_md(parsed["footnote_scan"])}</div>
 </div>"""
 
-    # ── 新維度：數字一致性驗證
+    # ── 7. 數字一致性驗證（通過/不通過視覺化）
     consistency_card_html = ""
     if parsed.get("consistency_check"):
-        consistency_card_html = f"""
-<div class="dim-card" style="grid-column:1/-1">
-  <div class="dim-hdr">
-    <span class="dim-name">數字一致性驗證<span class="dim-en">Consistency Check</span></span>
-  </div>
-  <div class="dim-text" style="-webkit-line-clamp:unset">{_md(parsed["consistency_check"])}</div>
+        cc_text = parsed["consistency_check"]
+        cc_lines = cc_text.split("\n")
+        badges_html = ""
+        has_badges = False
+        pass_kw = ["通過", "一致", "吻合", "相符", "正確", "pass", "Pass", "✓", "符合"]
+        fail_kw = ["不通過", "不一致", "差異", "不符", "偏差", "fail", "Fail", "✗", "異常"]
+        for line in cc_lines:
+            stripped = line.strip().lstrip("-•*#").strip()
+            stripped = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', stripped)
+            if not stripped:
+                continue
+            is_pass = any(k in stripped for k in pass_kw)
+            is_fail = any(k in stripped for k in fail_kw)
+            if is_fail:
+                badges_html += f'<div class="consistency-badge consistency-fail">&#x2717; {html_lib.escape(stripped)}</div>\n'
+                has_badges = True
+            elif is_pass:
+                badges_html += f'<div class="consistency-badge consistency-pass">&#x2713; {html_lib.escape(stripped)}</div>\n'
+                has_badges = True
+            else:
+                badges_html += (f'<div class="consistency-badge" style="background:#f3f4f6;'
+                                f'color:#374151;border:1px solid #d1d5db">'
+                                f'{html_lib.escape(stripped)}</div>\n')
+                has_badges = True
+
+        if has_badges:
+            consistency_card_html = f"""
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">七、數字一致性驗證 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Consistency Check</span></h3>
+  <div style="display:flex;flex-wrap:wrap;gap:.5rem">{badges_html}</div>
+</div>"""
+        else:
+            consistency_card_html = f"""
+<div class="card" style="margin-bottom:1.25rem">
+  <h3 style="margin-bottom:.75rem">七、數字一致性驗證 <span style="font-size:.78rem;color:var(--muted);font-weight:400">Consistency Check</span></h3>
+  <div class="analysis">{_md(cc_text)}</div>
 </div>"""
 
     # ── 完整分析（可展開）— Markdown → HTML
@@ -1689,16 +1765,15 @@ def generate_report_page_10q(report: dict, content: str) -> None:
   <div class="container">
     {summary_hero}
 
-    <h2 class="section-title">季報分析</h2>
-    <div class="dim-grid">
-      {fin_card_html}
-      {narrative_card_html}
-      {capital_card_html}
-      {moat_card_html}
-      {mgmt_card_html}
-      {footnote_card_html}
-      {consistency_card_html}
-    </div>
+    <h2 class="section-title" style="margin-top:1.5rem">季報分析</h2>
+
+    {fin_card_html}
+    {narrative_card_html}
+    {mgmt_card_html}
+    {capital_card_html}
+    {moat_card_html}
+    {footnote_card_html}
+    {consistency_card_html}
 
     <details style="margin-top:1.5rem">
       <summary style="cursor:pointer;font-weight:600;font-size:.95rem;color:var(--brand);
