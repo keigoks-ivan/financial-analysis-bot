@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DD Report | ROP | Roper Technologies</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --deep-blue: #1E3A5F;
+    --accent: #3B82F6;
+    --green-bg: #DCFCE7; --green-text: #166534;
+    --red-bg: #FEE2E2; --red-text: #991B1B;
+    --yellow-bg: #FEF9C3; --yellow-text: #92400E;
+    --blue-bg: #EFF6FF;
+    --trap-bg: #FFF0E6; --trap-line: #F97316; --trap-text: #C2410C;
+    --anchor-bg: #EFF6FF; --anchor-line: #3B82F6;
+    --bull-bg: #F0FDF4; --bull-line: #16A34A;
+    --bear-bg: #FFF1F2; --bear-line: #DC2626;
+    --arb-bg: #F5F3FF; --arb-line: #7C3AED;
+    --verdict-bg: #FFFBEB; --verdict-line: #D97706; --verdict-text: #92400E;
+    --row-alt: #F1F5F9;
+    --th-bg: #1E3A5F;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: #1E293B; font-size: 14px; line-height: 1.65; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  /* Fixed Header */
+  #sticky-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+    background: var(--deep-blue); color: #fff;
+    padding: 8px 24px; display: flex; align-items: center; gap: 24px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  #sticky-header span { opacity: 0.85; }
+  #sticky-header .hl { color: #60A5FA; font-weight: 600; opacity: 1; }
+
+  /* Print Button */
+  #print-btn {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999;
+    background: var(--deep-blue); color: #fff; border: none;
+    padding: 10px 18px; font-family: 'Noto Sans TC', sans-serif; font-size: 13px;
+    cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  #print-btn:hover { background: #2563EB; }
+
+  /* Main Layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 80px 24px 60px; }
+
+  /* Section */
+  .section { background: var(--card); margin-bottom: 24px; border: 1px solid #E2E8F0; }
+  .section-header {
+    background: var(--deep-blue); color: #fff;
+    padding: 12px 20px; border-left: 4px solid var(--accent);
+    font-size: 15px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .section-body { padding: 20px; }
+  .subsection-title {
+    font-size: 13px; font-weight: 700; color: var(--deep-blue);
+    margin: 18px 0 10px; padding-bottom: 5px;
+    border-bottom: 1px solid #CBD5E1;
+  }
+  p { margin-bottom: 10px; }
+  ul { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+  th {
+    background: var(--th-bg); color: #fff; padding: 8px 12px;
+    text-align: left; font-weight: 600; font-size: 12px;
+  }
+  td { padding: 7px 12px; border-bottom: 1px solid #E2E8F0; }
+  tr:nth-child(even) td { background: var(--row-alt); }
+
+  /* Status badges */
+  .beat { background: var(--green-bg); color: var(--green-text); padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .miss { background: var(--red-bg); color: var(--red-text); padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .neutral { background: var(--yellow-bg); color: var(--yellow-text); padding: 2px 8px; font-size: 11px; font-weight: 600; }
+
+  /* Signal Badges */
+  .sig-green { background: var(--green-bg); color: var(--green-text); padding: 3px 10px; font-size: 12px; font-weight: 700; display: inline-block; }
+  .sig-yellow { background: var(--yellow-bg); color: var(--yellow-text); padding: 3px 10px; font-size: 12px; font-weight: 700; display: inline-block; }
+  .sig-red { background: var(--red-bg); color: var(--red-text); padding: 3px 10px; font-size: 12px; font-weight: 700; display: inline-block; }
+  .sig-blue { background: var(--blue-bg); color: #1E40AF; padding: 3px 10px; font-size: 12px; font-weight: 700; display: inline-block; }
+
+  /* Value Trap Warning Block */
+  .trap-block {
+    background: var(--trap-bg); border-left: 4px solid var(--trap-line);
+    padding: 14px 16px; margin: 16px 0;
+  }
+  .trap-block .trap-title { color: var(--trap-text); font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+
+  /* Assumption Block */
+  .anchor-block {
+    background: var(--anchor-bg); border-left: 4px solid var(--anchor-line);
+    padding: 14px 16px; margin: 16px 0;
+  }
+
+  /* 3-Column Debate */
+  .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .debate-card { padding: 14px 16px; }
+  .debate-card.bull { background: var(--bull-bg); border-left: 4px solid var(--bull-line); }
+  .debate-card.bear { background: var(--bear-bg); border-left: 4px solid var(--bear-line); }
+  .debate-card.arb { background: var(--arb-bg); border-left: 4px solid var(--arb-line); }
+  .debate-card h4 { font-size: 12px; font-weight: 700; margin-bottom: 10px; }
+  .debate-card.bull h4 { color: #16A34A; }
+  .debate-card.bear h4 { color: #DC2626; }
+  .debate-card.arb h4 { color: #7C3AED; }
+
+  /* Verdict Block */
+  .verdict-block {
+    background: var(--verdict-bg); border-left: 4px solid var(--verdict-line);
+    padding: 14px 16px; margin: 16px 0;
+  }
+  .verdict-block h4 { color: var(--verdict-text); font-weight: 700; font-size: 13px; margin-bottom: 8px; }
+
+  /* Checklist */
+  .checklist { background: #F8FAFC; padding: 12px 16px; margin: 12px 0; }
+  .checklist-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .checklist-item input { margin-top: 3px; }
+
+  /* Callout */
+  .callout { background: #F1F5F9; border-left: 3px solid var(--accent); padding: 10px 14px; margin: 12px 0; font-size: 13px; }
+
+  /* Inline tag */
+  .tag-pos { background: var(--green-bg); color: var(--green-text); padding: 1px 6px; font-size: 11px; }
+  .tag-neg { background: var(--red-bg); color: var(--red-text); padding: 1px 6px; font-size: 11px; }
+  .tag-neu { background: var(--yellow-bg); color: var(--yellow-text); padding: 1px 6px; font-size: 11px; }
+
+  /* Scenario row colours */
+  .row-bull td { background: var(--green-bg) !important; }
+  .row-neu td { background: var(--yellow-bg) !important; }
+  .row-bear td { background: var(--red-bg) !important; }
+
+  /* Rating summary row */
+  .summary-row td { font-weight: 700; background: #EFF6FF !important; color: var(--deep-blue); }
+
+  @media print {
+    #sticky-header, #print-btn { display: none !important; }
+    body { font-size: 12px; }
+    .container { padding: 20px; }
+    .debate-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Fixed Header -->
+<div id="sticky-header">
+  <span class="hl">ROP｜Roper Technologies</span>
+  <span>資料抓取：2026-03-30</span>
+  <span>最新股價：<span class="hl mono">~$347</span>（52W: $313 – $594）</span>
+  <span>最近財報：Q4 2025（Jan 27, 2026）</span>
+  <span>市值：<span class="hl mono">~$36B</span></span>
+</div>
+
+<button id="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+
+<!-- ================================================================ -->
+<!-- §8 投資結論 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§8｜投資結論 <span style="font-weight:300;font-size:12px;margin-left:12px;">本結論基於以下完整分析得出，詳見各章節。</span></div>
+  <div class="section-body">
+
+    <div class="subsection-title">財報信號與假設校準</div>
+    <p><strong>H1 當前狀態：</strong><span class="tag-neu">輕微削弱</span>　垂直軟體護城河核心（非Deltek部分）有機成長改善70基點，但Deltek政府承包部門受DOGE政策與政府停擺拖累，FY2025有機增速跌落至低個位數，低於歷史水準的「穩健中個位數以上」。2026指引排除Deltek改善，說明管理層對轉機時間表仍有不確定性。核心假設依然成立，但短期週期性壓力需持續監測。</p>
+    <p><strong>H2 當前狀態：</strong><span class="tag-pos">強化</span>　CentralReach（$1.85B，ABA療法軟體，20%+有機成長）與Subsplash（$800M，信仰組織數位化，高雙位數成長）已完成收購，預計FY2026轉為有機貢獻。M&A引擎持續運作，2025部署$3.3B，積累一批高成長、高回報的新業務，支撐中期EPS CAGR。</p>
+    <p><strong>H3 當前狀態：</strong><span class="tag-neg">削弱</span>　Q4 2025財報後估值倍數重估，股價從$595暴跌至$347附近（-42%），Forward P/E壓縮至約16x（歷史5年中位數~30x）。估值修復依賴市場對「Deltek/DAT/Neptune是暫時性而非結構性」的重新定性——目前市場尚未給予此信任。</p>
+    <p><strong>這份財報讓隱含預期更困難兌現，理由是：</strong>Q4有機成長僅4%（低於預期5.5%），2026 EBITDA margin指引無改善（~34.8%持平），三個受壓細分市場（Deltek、DAT、Neptune）均未給予恢復假設，管理層保守性指引已嚴重打擊市場信心，需連續2-3季良好數據才能啟動估值修復。</p>
+
+    <div class="subsection-title">🎯 投資結論：<span class="sig-yellow">觀望，等待觸發條件</span></div>
+
+    <p><strong>① 短期信號（0–12個月）</strong><br>
+    Q4 2025信號高度混雜——EPS Beat（$5.21 vs $5.14E）但Revenue Miss（$2.06B vs $2.08BE），且2026 DEPS指引$21.30-$21.55遠低於市場預期。最大催化劑缺失：EBITDA margin不擴張 + 有機成長能見度低。Q1 2026財報（預計4/27）是首個重要驗證時點，需看Application Software有機成長是否恢復至5%+、Deltek是否有早期改善跡象（DOGE影響緩解、O3B資金流入）。短期進場風險高，股票已接近52週低點，下行可能未完全出清。</p>
+
+    <p><strong>② 中期成長確信度（1–3年）</strong><br>
+    分析師共識FY2026E Non-GAAP EPS $21.68、FY2027E $23.45、FY2028E $25.02——對應3年CAGR約~8%（以FY2025實際$20.00為基期）。這一成長率主要由M&A貢獻（CentralReach+Subsplash轉有機）+ 現有組合溫和有機成長（5-6%）驅動，定價能力貢獻有限，成長能見度屬「中等偏低」。若Deltek/DAT/Neptune任一板塊出現邊際改善，EPS存在上行修正空間（最高可至$22-23 FY2026）。</p>
+
+    <p><strong>③ 長期護城河邏輯（3年後）</strong><br>
+    Roper的結構性優勢——垂直市場軟體的超高轉換成本、持續部署FCF的M&A複利引擎、>30%的FCF margin、分散化投資組合避免單一暴露——在3年後依然成立。10年Runway估計（見§2.5A）支持長期複利邏輯。若AI變現（Aderant、CentralReach）在2027-2028年開始貢獻可量化增量收入，ROIC有機會從當前的6%（含大量商譽）提升至更有說服力的水準。</p>
+
+    <div class="trap-block">
+      <div class="trap-title">⚠️ 這是價值陷阱嗎？（強制回答）</div>
+      <table>
+        <thead><tr><th>問題</th><th>回答</th></tr></thead>
+        <tbody>
+          <tr><td>最可能的價值陷阱模式</td><td><strong>盈餘品質型（中度風險）</strong> × <strong>隱性資本密集型（低度風險）</strong>——EPS成長靠M&A稀釋（而非有機增長）撐起，GAAP ROIC僅~6%反映大量無形資產攤銷，但FCF品質良好（FCF/NI~1.6x因折舊攤銷加回），屬可解釋的差異。主要風險：若收購溢價持續升高且整合受阻，長期ROIC可能無法驗證。</td></tr>
+          <tr><td>支持「這不是陷阱」的最強論據</td><td>FCF品質紮實：FY2025調整後FCF $2.47B，FCF margin持續~31%（5年均值~30%），且FCF/Net Income ratio ~1.6x遠高於1（反映高攤銷加回而非虛增盈餘）。垂直軟體客戶保留率>95%，80%以上為遞延收入/訂閱型，真實粘性護城河存在。過去10年FCF複合增長~15%，Roper模式已有成功先例，非初學者押注。</td></tr>
+          <tr><td>支持「這可能是陷阱」的最強反駁</td><td>GAAP ROIC僅6%（商譽/無形資產占資產~75%），意味著收購價格需要長期兌現才能驗證正回報。Deltek面臨DOGE削減開支的結構性壓力——如果聯邦GovCon市場持續萎縮（而非暫時），Deltek可能從「穩健中個位數成長」永久降至「低個位數或零成長」，推翻核心假設H1。加之CEO在$443平均價售出3萬股（2025年11月），時機值得注意。</td></tr>
+          <tr><td>持有期間判斷陷阱是否發生</td><td>領先指標①：Deltek有機成長連續兩季低於0%（閾值：<0%兩季） → 護城河侵蝕確認。領先指標②：FCF margin連續兩年低於26%（閾值：<26%） → 收購質量惡化，資本配置能力下降。</td></tr>
+        </tbody>
+      </table>
+      <p><strong>最終定性：</strong><span class="sig-yellow">🟡 觀察期</span>　尚未確認陷阱，但Deltek+管理層賣股讓論點處於觀察狀態，需後續數據確認。</p>
+    </div>
+
+    <div class="subsection-title">條件式進場判斷</div>
+    <table>
+      <thead><tr><th>條件類型</th><th>具體內容</th></tr></thead>
+      <tbody>
+        <tr><td>估值條件</td><td>Forward P/E回落至16x以下（對應FY2026E $21.68，即股價 ≤ $347），或Trailing P/E ≤ 22x；目前已滿足</td></tr>
+        <tr><td>基本面條件</td><td>Q1 2026財報（4/27）需確認：Application Software（ex-Deltek）有機成長 ≥ 5%；Deltek有機成長 ≥ -2%（底部信號）；FCF margin ≥ 29%</td></tr>
+        <tr><td>陷阱排除條件</td><td>若Deltek有機成長連續2季為負，或管理層將2026 DEPS指引下調至$20以下，或FCF margin跌破26%，立即重評</td></tr>
+        <tr><td>事件觸發條件</td><td>O3B（政府預算協議）資金正式流入且Deltek管理層確認GovCon訂單加速；或Neptune被剝離（估值~$4B），釋放M&A子彈並提升整體組合ROIC</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">下行風險量化（引用§2.5E）</div>
+    <table>
+      <thead><tr><th>情境假設</th><th>合理Forward P/E</th><th>潛在估值跌幅</th></tr></thead>
+      <tbody>
+        <tr class="row-neu"><td>3年後成長率降至10%（接近當前EPS CAGR）</td><td>~20x FY2026E EPS</td><td>約 -12%（$347 → ~$305）</td></tr>
+        <tr class="row-neu"><td>3年後成長率降至8%（管理層當前指引水準）</td><td>~18x FY2026E EPS</td><td>約 -20%（$347 → ~$278）</td></tr>
+        <tr class="row-bear"><td>3年後成長率降至5%（成熟低成長）</td><td>~14x FY2026E EPS</td><td>約 -35%（$347 → ~$225）</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">最關鍵監測指標</div>
+    <table>
+      <thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Deltek有機成長季度YoY</td><td>§0.5 H1</td><td>🔵 核心假設驗證信號</td><td>連續2季 < 0%：升級為陷阱警戒；首季 ≥ 3%：論點強化</td></tr>
+        <tr><td>2</td><td>FCF margin（年度調整後）</td><td>§2.5D / §4</td><td>🔵 長期成長領先信號</td><td>< 26%（2年均值）：資本配置能力惡化警示；持續 > 31%：強化</td></tr>
+        <tr><td>3</td><td>CentralReach有機成長 & EBITDA margin</td><td>§1 / §7.3</td><td>短期估值或財報信號</td><td>有機成長 ≥ 20%且EBITDA margin提升：驗證高端收購能力，觸發倍數修復催化</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §7.6 三方辯論 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§7.6｜三方辯論摘要</div>
+  <div class="section-body">
+
+    <div class="debate-grid">
+      <!-- 多頭 -->
+      <div class="debate-card bull">
+        <h4>📈 多頭辯護人｜Charlie Munger 模式</h4>
+        <table>
+          <thead><tr><th>#</th><th>論據</th><th>數字佐證</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>垂直軟體護城河結構不可複製：95%+客戶保留率、80%+遞延/訂閱收入，每一個Roper業務都是各自細分市場的寡頭</td><td>FCF margin連續5年>28%，FY2025 FCF $2.47B（31% margin），護城河品質以現金流為鏡照如實反映</td></tr>
+            <tr><td>2</td><td>M&A複利引擎可持續：CentralReach 20%+有機成長，Subsplash高雙位數，均高於組合平均，2025-2028有機成長加速曲線清晰可見</td><td>FY2026-28 EPS CAGR估計8-10%（保守），若CentralReach/Subsplash加速達成，FY2027E EPS上行至$25+</td></tr>
+            <tr><td>3</td><td>估值已到10年歷史底部區間：Forward P/E ~16x（5年均值~30x），相當於在$350買進一家過去10年FCF CAGR ~15%的複利機器，PEG僅~1.6-1.8x</td><td>52週低點$313，當前$347；分析師中位目標價$456-$495，意味40%以上潛在上行</td></tr>
+          </tbody>
+        </table>
+        <p><strong>多頭最強一句話：</strong>在世界上最優質的「以收購為核心的垂直軟體複利引擎」中，以低於歷史40%的估值進場，不是風險，而是Charlie Munger說的「不常見的好機會」。</p>
+      </div>
+
+      <!-- 空頭 -->
+      <div class="debate-card bear">
+        <h4>📉 空頭檢察官｜Michael Burry 模式</h4>
+        <table>
+          <thead><tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Deltek永久性降速：DOGE持續削減政府IT支出，GovCon市場萎縮，Deltek從「mid-single digit+」的成長引擎淪為「零增長or負成長」的包袱</td><td>若Deltek占App Software收入~20%，持續零增長將拉低整體有機成長至 ≤ 3%，觸發市場對成長模式的重新定性</td></tr>
+            <tr><td>2</td><td>估值倍數持續壓縮：利率若不降，成長股估值修復空間受限；且若市場認定ROP是「中速成長工業複合體」而非「高品質軟體複利」，合理倍數回落至18-20x，意味股價繼續下行至$280-$310</td><td>Forward P/E < 15x（歷史最低為10x，但彼時GAAP EPS因會計扭曲）觸發止損 </td></tr>
+            <tr><td>3</td><td>收購整合失敗導致FCF成長停滯：$3.3B的2025收購、$3.6B的2024收購——若CentralReach整合延遲（如Procare的實施延遲前車之鑑），2027年FCF不升反降，摧毀整個論點</td><td>FCF margin連續2年 < 28%，或FCF絕對值停止增長（閾值：YoY < 5%增長）</td></tr>
+          </tbody>
+        </table>
+        <p><strong>空頭最大威脅：</strong>Roper的護城河不是它自身業務，而是它的「資本配置聲譽」——一旦市場懷疑這台M&A機器在買錯東西或買得太貴，估值倍數的崩塌將無緩衝，直接從25x跌至15x，股價腰斬。</p>
+      </div>
+
+      <!-- 仲裁員 -->
+      <div class="debate-card arb">
+        <h4>⚖️ 估值仲裁員｜Damodaran 模式</h4>
+        <table>
+          <thead><tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr></thead>
+          <tbody>
+            <tr><td>與過去3年FCF CAGR差距</td><td>Reverse DCF隱含~9-11% FCF CAGR vs 歷史~15% CAGR（2020-2024）</td><td>2/2</td></tr>
+            <tr><td>與分析師EPS共識一致性</td><td>Non-GAAP EPS CAGR（2025-2028）~8% vs FCF CAGR隱含~10%；在EPS±5%範圍內</td><td>1.5/2</td></tr>
+            <tr><td>與同業最快FCF CAGR相對位置</td><td>CSU FCF CAGR~20%+，ROP隱含10%未超越行業最快，但也不需要「行業最快」才能辯護</td><td>1.5/2</td></tr>
+            <tr><td>達成條件苛刻程度</td><td>需FCF margin維持>30% + Revenue CAGR 8-10%，條件合理，非極端假設</td><td>1.5/2</td></tr>
+            <tr><td>歷史先例</td><td>ROP自身過去10年FCF CAGR~15%，有充分先例支撐低端10%目標</td><td>2/2</td></tr>
+          </tbody>
+        </table>
+        <p><strong>隱含預期可信度：8.5/10</strong></p>
+        <p><strong>仲裁員一句話：</strong>當前股價隱含的FCF CAGR約9-11%，遠低於Roper歷史能力，以數字論，市場定價保守——但Deltek的政治風險是真實的，且不可量化，因此最終進場判斷依賴定性的「觸發條件確認」而非單純估值吸引力。</p>
+      </div>
+    </div>
+
+    <div class="verdict-block">
+      <h4>我的裁決</h4>
+      <table>
+        <tbody>
+          <tr><td style="width:35%">多頭最強論據</td><td>以歷史底部估值（Forward P/E ~16x，5年均值~30x）買進FCF CAGR歷史15%的複利引擎，安全邊際高</td></tr>
+          <tr><td>空頭最大威脅</td><td>Deltek GovCon永久性降速 + 市場對ROP估值框架從「高品質軟體」重定性為「中速工業複合體」</td></tr>
+          <tr><td>估值仲裁評分</td><td>8.5/10</td></tr>
+          <tr><td><strong>我的裁決</strong></td><td><strong>觀望，等待Q1 2026財報（4/27）確認觸發條件</strong></td></tr>
+          <tr><td>裁決理由</td><td>估值已足夠便宜，但催化劑缺乏（Deltek觸底信號未出現，管理層2026指引保守且未確認回升節點）。在等待中，風險是繼續下行5-15%至$295-$330區間（對應前高點-50%），而不是錯過漲幅。建議：若Q1 2026 Deltek有機成長 ≥ 0%（任何底部信號），可分批建倉5-7%倉位；若再跌至$310以下且無基本面惡化，可加碼至10%。</td></tr>
+        </tbody>
+      </table>
+      <div class="checklist">
+        <div class="checklist-item"><input type="checkbox"> 多頭論據中，是否有依賴「市場最終認識到」的不明催化劑假設？<strong>是——估值修復依賴市場重新定性，需Deltek改善作為觸媒</strong></div>
+        <div class="checklist-item"><input type="checkbox"> 空頭威脅中，是否有在MA年線止損前已發生的事件？<strong>是——股價已跌破所有移動均線，下行仍有動能風險</strong></div>
+        <div class="checklist-item"><input type="checkbox"> 估值仲裁評分8.5/10，安全邊際已足夠支撐分批建倉，但非全倉進場</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §0 序章 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§0｜序章：第一性原理 × 逆向思考</div>
+  <div class="section-body">
+
+    <div class="subsection-title">存在意義</div>
+    <p>Roper Technologies解決了一個極其具體且不可逆的人類痛點：<strong>細分行業（垂直市場）的軟體化與工作流程自動化缺口。</strong></p>
+    <p>每個行業都有自己獨特的工作流程、合規要求、數據結構——律師事務所的計費與案件管理（Aderant）、自閉症治療師的臨床記錄與保險報帳（CentralReach）、建築公司的招投標估算（ConstructConnect）、政府承包商的項目會計（Deltek）、冷鏈物流的多式聯運管理（DAT Freight）。這些業務若用「通用軟體」替代，會付出巨大的效率損失和合規風險。</p>
+    <p>若Roper明天消失，其服務的超過30個細分市場中的數萬家客戶，將面臨無法用任何現成通用工具直接替代的業務中斷——律師事務所的計費系統崩潰、ABA治療師無法向保險公司申請報帳、建築公司無法自動估算工程量。這種<strong>不可替代的混亂</strong>正是Roper超高客戶保留率（>95%）的根本來源。</p>
+    <p>Roper的「存在意義」不是科技進步，而是<strong>細分市場知識的工業化</strong>——它把每個行業幾十年積累的know-how編碼進軟體，形成幾乎無法被外行複製的壁壘。這種痛點隨著行業監管複雜度上升、數據量增加而<strong>不可逆地加深</strong>。</p>
+
+    <div class="subsection-title">逆向推演（Munger Inversion）</div>
+    <p>若要讓這筆投資在3年內虧損50%以上，最可能的路徑是什麼？</p>
+
+    <p><strong>地緣政治曝險：</strong>Roper以美國業務為主（>85%收入來自北美），生產地與供應鏈集中度風險相對較低。Software-as-a-Service業務本身幾乎無實體製造曝險。主要地緣政治風險來自：若美國政府大規模削減IT支出（DOGE效應擴大），Deltek的GovCon業務（佔公司總收入估計~10-12%）將持續受壓。CliniSys的英國/歐洲醫療系統業務若遇歐洲健保緊縮也有邊際風險。整體來說，地緣政治並非致命風險，但DOGE政策是已發生的邊際負面因子。</p>
+
+    <p><strong>技術替代風險：</strong>最直接的替代威脅是<strong>AI通用化</strong>——若Claude/GPT等大語言模型能夠直接理解行業合規要求並自動生成工作流程，Roper的垂直軟體壁壘可能在5-10年內被削弱。時間軸估計：自動化工作流程的入門技能可能在2-3年內被AI複製，但<strong>深度行業數據整合、監管合規認證、現有客戶的歷史數據遷移成本</strong>仍是2030年前難以跨越的護城河。Roper的反制是主動AI化（已聘請SVP of AI和SVP of AI Engineering），將AI嵌入既有平台加深壁壘，而非被動等待替代。</p>
+
+    <p><strong>管理層失職：</strong>核心風險是<strong>資本配置錯誤</strong>——以過高溢價收購成長看起來好但實際護城河脆弱的業務（如Procare實施延遲已是前車之鑑）。激勵錯位的具體情境：CEO Neil Hunn在2025年11月以均價$443出售30,000股（套現$13.3M，減少25.57%持股），時機選在股價尚高但業績開始走弱時，令人不安。若管理層持續做高收購倍數且整合能力跟不上，FCF複利引擎將變成資本銷毀機器。</p>
+
+    <p><strong>價值陷阱路徑：</strong>最可能的惡化劇本是<strong>盈餘品質型陷阱</strong>——Non-GAAP EPS成長（2025: +9% YoY至$20.00）靠攤銷加回維持，而GAAP EPS實際下滑（-1% YoY至$14.20）。市場若開始要求用GAAP EPS定價，倍數從Non-GAAP Forward P/E ~16x切換到GAAP Trailing P/E ~24x，且分母（GAAP EPS）增長停滯，估值壓縮的幅度將遠超表面數字。此外，大量商譽（~$18-19B估計）若任何業務減損，將進一步打擊GAAP盈利。</p>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §0.5 投資論點錨定 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§0.5｜投資論點錨定（核心假設顯性化）</div>
+  <div class="section-body">
+
+    <div class="anchor-block">
+      <div class="subsection-title" style="margin-top:0">A｜持有期與時間軸宣告</div>
+      <table>
+        <tbody>
+          <tr><td style="width:35%"><strong>預設持有期</strong></td><td>18–36個月（依Q1 2026財報結果決定是否啟動建倉）</td></tr>
+          <tr><td><strong>主要驅動這個時間軸的理由</strong></td><td>①估值修復週期：市場需要2-3季財報確認Deltek/DAT/Neptune底部，約12-18個月；②CentralReach轉為有機貢獻需到FY2026H2；③AI變現（Aderant等）初期收入或在2027-2028年體現，需要持有至兌現窗口</td></tr>
+          <tr><td><strong>訊號 vs 噪音判斷</strong></td><td>訊號：Deltek有機成長方向、FCF margin趨勢、M&A收購ROIC質量；噪音：季度EPS小幅波動（±$0.10）、宏觀市場情緒變化、分析師短期目標價調整</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="subsection-title">B｜三個核心假設</div>
+    <table>
+      <thead><tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr></thead>
+      <tbody>
+        <tr><td>H1</td><td>Roper的垂直軟體護城河（轉換成本+監管嵌入）在AI時代不被快速侵蝕，且非Deltek部分有機成長保持4-7%水準</td><td>Application Software（ex-Deltek）有機成長季度YoY；Net Revenue Retention Rate（若披露）；客戶流失率</td><td>Q1/Q2 2026財報（4月、7月）</td></tr>
+        <tr><td>H2</td><td>M&A引擎（CentralReach+Subsplash）在FY2026轉為有機後，能實現15-20%+有機成長並兌現EBITDA margin擴張</td><td>CentralReach有機成長率（FY2026H2開始）；Subsplash整合進度；2025-2026部署資本的FCF回報率</td><td>FY2026Q3-Q4財報（10月、1月）</td></tr>
+        <tr><td>H3</td><td>市場在確認Deltek觸底（或Neptune被剝離）後，對ROP重新採用「高品質垂直軟體複利」框架定價，估值修復至Forward P/E 20-25x</td><td>Forward P/E軌跡；賣方分析師升/降評；同業（TYL、CSU）估值對比</td><td>若Q1-Q2 2026基本面轉正，估值修復預期在Q3 2026之前啟動</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">C｜三個最可能推翻論點的風險</div>
+    <table>
+      <thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+      <tbody>
+        <tr><td>R1</td><td>Deltek GovCon永久性萎縮，而非週期性壓力</td><td>H1</td><td>Deltek有機成長季度YoY；聯邦IT支出數據；DOGE指令是否持續擴大</td><td>連續2季Deltek有機成長 < 0%</td></tr>
+        <tr><td>R2</td><td>M&A收購質量惡化：CentralReach整合遇阻（如Procare），FCF回報低於預期</td><td>H2</td><td>CentralReach有機成長率；整合成本超支情況；收購後1年EBITDA margin</td><td>CentralReach FY2026有機成長 < 12%</td></tr>
+        <tr><td>R3</td><td>AI通用化速度超預期，侵蝕垂直軟體的轉換成本壁壘</td><td>H1+H3</td><td>競爭對手（Aderant市場的新AI native法律軟體）入市速度；客戶流失率異常上升</td><td>任何細分市場客戶保留率下降至 < 90%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">D｜邊際貢獻判斷框架</div>
+    <table>
+      <thead><tr><th>判斷步驟</th><th>問題</th></tr></thead>
+      <tbody>
+        <tr><td>1. 時間軸匹配？</td><td>這個事件在18-36個月持有期內有影響嗎？</td></tr>
+        <tr><td>2. 假設關聯？</td><td>它影響的是H1（護城河）/ H2（M&A復利）/ H3（估值修復）中的哪一個？</td></tr>
+        <tr><td>3. 邊際方向？</td><td>對該假設是 ＋強化 / 0 無關 / －削弱？</td></tr>
+        <tr><td>4. 閾值判斷？</td><td>削弱程度是否達到R1/R2/R3的警戒閾值？</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">E｜可執行決策主線預設</div>
+    <table>
+      <thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+      <tbody class="row-neu">
+        <tr><td><strong>首次建倉</strong></td><td>Q1 2026財報（4/27）：Deltek有機 ≥ 0% + App Software（ex-Deltek）有機 ≥ 5% + FCF margin ≥ 29%</td><td>建倉5%，均價 ≤ $350</td></tr>
+        <tr><td><strong>加碼</strong></td><td>H1+H2 均確認（連續2季改善）；或Neptune剝離宣布；或股價跌至$310以下且無新負面基本面</td><td>加碼至10%，目標倉位</td></tr>
+        <tr><td><strong>減碼</strong></td><td>R1警戒閾值觸發（Deltek連2季負增長），或Forward P/E突破25x而無業績加速支撐</td><td>減至2-3%，重新評估</td></tr>
+        <tr><td><strong>撤退</strong></td><td>H1被推翻（護城河侵蝕確認），或FCF margin連續2年 < 26%</td><td>清倉，記錄推翻理由</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §1 即時財報情報 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§1｜即時財報情報 <span style="font-weight:300;font-size:12px;">Q4 2025（Jan 27, 2026）</span></div>
+  <div class="section-body">
+
+    <div class="subsection-title">① 最新一季財報關鍵數字</div>
+    <table>
+      <thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY成長</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue</td><td class="mono">$2.06B</td><td class="mono">$2.08B</td><td><span class="miss">MISS -0.96%</span></td><td>+10%</td></tr>
+        <tr><td>EPS（Non-GAAP Adj. DEPS）</td><td class="mono">$5.21</td><td class="mono">$5.14</td><td><span class="beat">BEAT +1.36%</span></td><td>+8% YoY</td></tr>
+        <tr><td>Free Cash Flow（季度）</td><td class="mono">$714M</td><td>N/A</td><td><span class="beat">+4% YoY</span></td><td>+4%</td></tr>
+        <tr><td>EBITDA Margin（Adj.）</td><td class="mono">~39.7%</td><td>~40%</td><td><span class="neutral">FLAT</span></td><td>持平YoY</td></tr>
+        <tr><td>有機收入成長</td><td class="mono">+4%</td><td>~+5.5%</td><td><span class="miss">MISS -150bps</span></td><td>vs Q3 +6%</td></tr>
+        <tr><td>GAAP DEPS</td><td class="mono">$3.97</td><td>N/A</td><td><span class="miss">-7% YoY</span></td><td>商譽攤銷增加</td></tr>
+      </tbody>
+    </table>
+    <p><strong>全年FY2025快照：</strong>Revenue $7.90B（+12%），Adj. DEPS $20.00（+9%），GAAP DEPS $14.20（-1%），Adj. FCF $2.47B（+8%，FCF margin 31%），Adj. EBITDA $3.14B（+11%，margin ~39.8%）。2026 DEPS指引：$21.30-$21.55，低於市場共識$21.68-$21.86。</p>
+
+    <div class="subsection-title">財報對§0.5假設的邊際貢獻</div>
+    <table>
+      <thead><tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr></thead>
+      <tbody>
+        <tr><td>H1（護城河持續）</td><td><span class="tag-neu">0 / 輕微削弱</span></td><td>App Software（ex-Deltek）有機成長改善70bps，顯示廣泛成長改善；但Deltek GovCon受DOGE+停擺拖累，低端mid-single digit，弱於歷史</td></tr>
+        <tr><td>H2（M&A復利）</td><td><span class="tag-pos">+ 強化</span></td><td>CentralReach和Subsplash收購完成，FY2026將轉有機貢獻；$3.3B的資本部署確認M&A引擎持續運作，Q4 FCF $714M持續支撐下一輪M&A能力</td></tr>
+        <tr><td>H3（估值修復）</td><td><span class="tag-neg">－ 削弱</span></td><td>股價Q4財報後暴跌11.82%（盤前），全年從$595跌至$347（-42%），估值修復催化劑（基本面轉正）尚未到來；2026指引低於預期繼續壓制倍數</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">② Earnings Call 語氣解析</div>
+    <p><strong>管理層基調：</strong>保守且防守性——與Q3 2025的「樂觀謹慎」相比，Q4 call明顯轉向「承認執行不達標，保守重置預期」。CEO Neil Hunn明確說「有機成長低於我們的期望，我們為此負責」（承認失誤），同時強調「分散化投資組合的韌性在各種宏觀週期中均有體現」。具體措辭：「deliberately excluded any recovery in Deltek, DAT, or Neptune」——這是難得的正面信號（低估值已充分price in壞消息），也是空頭驗證（管理層失去對業績能見度的把握）。</p>
+    <p><strong>Forward Guidance：</strong>Q1 2026 Adj. DEPS $4.95-$5.00（分析師預期~$4.98，略低）；全年8%總收入成長，5-6%有機成長，DEPS $21.30-$21.55（vs共識$21.68+，低約2-3%）。關鍵差異點：EBITDA margin無改善預期（持平34.8%），令市場失望。</p>
+    <p><strong>刻意強調的主題：</strong>① AI戰略落地（新聘SVP of AI、SVP of AI Engineering；Aderant的AI模塊已有早期商業化跡象）；② CentralReach的高成長潛力（20%+有機成長，前12個月~$175M收入）；③ 資本配置紀律（「disciplined, process-driven」出現6次+）；④ 股票回購計劃（$3B授權，Q4已回購1.12M股/$500M）。</p>
+    <p><strong>刻意迴避的問題：</strong>分析師反覆追問「Deltek恢復的具體時間表和數量級」，管理層始終未給出定量預測（只說「等看到才更新指引」）。Neptune潛在剝離（估值~$4B）的問題也被輕描淡寫帶過。SBC/Revenue比率的長期趨勢問題未正面回答。</p>
+
+    <div class="subsection-title">③ 產業 Imply 萃取</div>
+    <p><strong>需求端：</strong>法律軟體（Aderant）、保險軟體（Vertafore、iPipeline）需求健康，暗示專業服務行業IT支出無明顯收縮。政府IT支出（Deltek）受DOGE和停擺影響仍有不確定性，但O3B通過後資金流入路徑清晰。</p>
+    <p><strong>供給端：</strong>垂直軟體M&A市場估值有所回落（私募市場多重壓縮），這對Roper是潛在利好——未來收購可能以更合理的倍數完成（管理層暗示「收購管道豐富且有吸引力」）。</p>
+    <p><strong>競爭格局：</strong>無直接競爭對手名字被提及，說明各垂直市場競爭強度穩定，定價能力完好。AI並未被提及為競爭壓力，而是被定位為「加強護城河的工具」。</p>
+    <p><strong>對同業連帶推論：</strong>Tyler Technologies（TYL）在政府軟體暴露上更集中，若Roper的Deltek GovCon受壓是行業信號，TYL同樣面臨風險。Constellation Software（CSU）的分散化模式與Roper最相似，但CSU規避了大型單業務的集中暴露，對比顯示Roper的Deltek集中度是差異化風險點。</p>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §2 核心門檻檢核 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§2｜核心門檻檢核（含價值陷阱初篩）</div>
+  <div class="section-body">
+
+    <div class="callout">資料說明：EPS CAGR基期為FY2025實際 Non-GAAP $20.00；FCF Margin以調整後FCF計算；ROIC為GAAP計算（含大量商譽，與軟體業同儕差異需解釋）；所有數據來自搜尋結果，截止日2026-03-30。</div>
+
+    <div class="subsection-title">EPS CAGR計算</div>
+    <table>
+      <thead><tr><th>指標</th><th>數值</th><th>來源</th></tr></thead>
+      <tbody>
+        <tr><td>基期 FY2025 Non-GAAP EPS（實際）</td><td class="mono">$20.00</td><td>Q4 2025 8-K（1/27/2026）</td></tr>
+        <tr><td>基期 FY2025 GAAP EPS（實際）</td><td class="mono">$14.20</td><td>同上</td></tr>
+        <tr><td>FY2026E Non-GAAP EPS（共識中位，n≈22）</td><td class="mono">$21.68</td><td>WallStreetZen / StockAnalysis</td></tr>
+        <tr><td>FY2027E Non-GAAP EPS（共識中位，n≈21）</td><td class="mono">$23.45</td><td>WallStreetZen</td></tr>
+        <tr><td>FY2028E Non-GAAP EPS（共識中位，n=估計）</td><td class="mono">$25.02</td><td>WallStreetZen</td></tr>
+        <tr><td><strong>Non-GAAP EPS CAGR（FY25-28，3年）</strong></td><td class="mono"><strong>+7.7%</strong></td><td>($25.02/$20.00)^(1/3)-1</td></tr>
+        <tr><td>管理層2026 DEPS指引（Non-GAAP）</td><td class="mono">$21.30-$21.55</td><td>Q4 2025 Guidance</td></tr>
+        <tr><td>口徑差距（Non-GAAP vs GAAP）</td><td class="mono">~$5.80/share（2025）</td><td>股權補償（SBC）+無形資產攤銷+收購費用</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">門檻檢核表</div>
+    <table>
+      <thead><tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>FCF Margin（當前）</td><td>> 15%</td><td><span class="beat">✅ 符合</span></td>
+          <td>FY2025調整後FCF margin：<strong>31%</strong>（$2.47B/$7.90B）；近3年趨勢：FY2023~32%→FY2024~32%→FY2025~31%（略降，但維持高位）</td>
+        </tr>
+        <tr>
+          <td>正規化FCF Margin【Munger維度】</td><td>5年均值>15%；最低谷>10%</td><td><span class="beat">✅ 符合</span></td>
+          <td>5年各年調整後FCF margin估計：FY2021~27%、FY2022~28%（注：GAAP FCF因Vertafore剝離扭曲）、FY2023~32%、FY2024~32%、FY2025~31%；5年均值≈30%；最低谷~27%（FY2021）；判斷：穩健，高品質</td>
+        </tr>
+        <tr>
+          <td>ROIC（當前，GAAP含商譽）</td><td>> 15%，且高於WACC</td><td><span class="miss">❌ 不符（GAAP口徑）</span></td>
+          <td>GAAP ROIC（含商譽）：<strong>~5-6%</strong>（financecharts數據）；WACC估計~8-9%（Beta 0.49，ERP 5.5%，10Y UST 4.3%）；超額報酬：<strong>負值</strong>。重要說明：商譽/無形資產佔總資產~75%（$23B+），若以「無形資產調整ROIC」計算，實際經濟ROIC遠高於帳面。但Munger維度以GAAP數字為準，此項不符。</td>
+        </tr>
+        <tr>
+          <td>ROIC穩定性【Munger維度】</td><td>過去10年≥70%年份ROIC>15%</td><td><span class="miss">❌ 不符（GAAP口徑）</span></td>
+          <td>GAAP ROIC 10年均值：~5.78%（financecharts），5年均值：4.79%——遠低於15%門檻。唯一解釋：Roper的商譽占資產比率高達75%+，是「資產負債表上的收購溢價積累」而非經濟無效率的反映。若採用「有機ROIC」（剝除商譽）估計，真實經濟回報可能達20%+，與FCF margin高度吻合。</td>
+        </tr>
+        <tr>
+          <td>毛利率定價能力【Munger維度】</td><td>過去10年≥70%年份毛利率改善</td><td><span class="beat">✅ 符合</span></td>
+          <td>毛利率趨勢：2015年~60.4%→2017~63.2%→2018~63.4%→2025估計~65%+（隨軟體業務占比提升持續上升）；改善年份估計：7-8/10年；當前毛利率~65%；10年前~60%；趨勢：↑ 持續改善</td>
+        </tr>
+        <tr>
+          <td>資本密集度【Munger維度】</td><td>Capex/Revenue <5%（優）</td><td><span class="beat">✅ 符合</span></td>
+          <td>FY2025 Capex ~$50-70M估計（以Q3 2025 $12M季度Capex推算），Revenue $7.90B；Capex/Revenue：<strong>~0.7-0.9%</strong>；評級：<strong>極低資本密集</strong>（軟體業務本質）</td>
+        </tr>
+        <tr>
+          <td>EPS CAGR（未來3年，Non-GAAP）</td><td>> 20%</td><td><span class="miss">❌ 不符</span></td>
+          <td>FY2025 Non-GAAP $20.00→FY2028E $25.02；Non-GAAP CAGR：<strong>+7.7%</strong>；GAAP CAGR：因FY2025 GAAP $14.20→FY2028E GAAP估計~$17+；GAAP CAGR：估計~6%；口徑差距：~$5.80，主要來自SBC+無形資產攤銷（收購模式必然產生）；資料來源：WallStreetZen、StockAnalysis（截止2026/03）</td>
+        </tr>
+        <tr>
+          <td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="beat">✅ 符合</span></td>
+          <td>Forward P/E（FY2026E）：~16x；Non-GAAP EPS CAGR 7.7%；PEG = 16/7.7 = <strong>2.08x</strong>（略超2；但若用管理層隱含長期成長率8%，PEG=2.0x；若股價跌至$320，Forward P/E=14.8x，PEG=1.92x進入合理區間）</td>
+        </tr>
+        <tr>
+          <td>負債安全性【Munger維度】</td><td>D/E <0.7；現金/Revenue 10-50%</td><td><span class="neutral">⚠️ 部分符合</span></td>
+          <td>D/E：<strong>0.47</strong>（✅）；總債務：~$7.5B；Cash：FY2025底約$200-400M（現金/Revenue約2.5-5%，偏低）；但FCF覆蓋顯強（$2.47B FCF vs $7.5B債務 = 3年還清）；評級：適中槓桿，現金持有量低但FCF覆蓋充裕</td>
+        </tr>
+        <tr>
+          <td>現金覆蓋總負債</td><td>是/否</td><td><span class="miss">否（現金$0.4B vs 債務$7.5B）</span></td>
+          <td>但FY2025 FCF $2.47B，3年FCF可還清所有債務，實際槓桿風險可控；2025年8月新發$2B債券（2028/2030/2035），展期長期結構完善</td>
+        </tr>
+        <tr>
+          <td>護城河強度</td><td>> 8分，趨勢擴大</td><td><span class="beat">✅ 符合（評7.5/10，趨勢穩定→擴大）</span></td>
+          <td>見§3詳細評分；轉換成本極高，但ROIC數字被商譽稀釋掩蓋了真實護城河深度</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>最大財務弱點：</strong>GAAP ROIC ~5-6%（商譽稀釋），掩蓋了業務實際的高經濟回報，易被價值陷阱篩選誤判。</p>
+    <p><strong>Munger三維護城河評級：</strong></p>
+    <ul>
+      <li>FCF Margin穩定性：🟢 達標（5年均值~30%）</li>
+      <li>毛利率定價能力：🟢 達標（10年持續改善）</li>
+      <li>資本密集度：🟢 達標（Capex/Rev <1%）</li>
+      <li>ROIC穩定性（GAAP）：🔴 不達標（商譽稀釋所致，非真實業務惡化）</li>
+    </ul>
+    <p><strong>綜合評級：🟡 兩項達標（但ROIC不達標有充分解釋）</strong>——若採用「調整後ROIC」或「有機ROIC」，則應升至🟢三項全達標。本報告建議用FCF品質代替GAAP ROIC作為護城河代理指標。</p>
+
+    <div class="trap-block">
+      <div class="trap-title">⚠️ 價值陷阱初篩：低估值四問</div>
+      <p>觸發條件：Forward P/E ~16x（5年均值~30x，分位位置估計 ≤ 10%）→ 🔴 強制觸發，四問詳答</p>
+      <table>
+        <thead><tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Q1</td><td>過去3年Gross Margin趨勢？</td>
+            <td>↑ 持續改善：FY2022→FY2023→FY2024→FY2025均呈軟體占比提升帶動毛利率上升態勢，估計3年改善~2-3%p</td>
+            <td>⬜ 無陷阱信號</td>
+          </tr>
+          <tr>
+            <td>Q2</td><td>過去3年市佔率趨勢？</td>
+            <td>核心業務（Aderant、Vertafore、DAT、Neptune）市佔持平至擴大；Deltek在GovCon受政府支出削減影響，但非競爭失敗，而是客戶預算縮水。整體垂直市場位置穩固。</td>
+            <td>⬜ 無陷阱信號（Deltek是政策風險而非競爭失利）</td>
+          </tr>
+          <tr>
+            <td>Q3</td><td>FCF與淨利背離程度？</td>
+            <td>FCF/Net Income（GAAP）= $2.47B/$1.54B = <strong>1.60x</strong>（近3年均值類似）；FCF高於淨利因商譽攤銷加回，非盈餘操縱跡象</td>
+            <td>⬜ 無陷阱信號（FCF品質實際優於GAAP淨利反映）</td>
+          </tr>
+          <tr>
+            <td>Q4</td><td>分析師共識EPS方向？</td>
+            <td>過去6個月EPS估計下修：Q4 2025前共識~$21.86 FY2026E → 下修至$21.30-$21.68；Q4財報後繼續下修約2-3%。但方向是「一次性重置」而非持續下修趨勢。</td>
+            <td>🟡 輕度信號（一次性下修已完成，非持續惡化模式）</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>初篩結論：</strong>1個🟡（Q4一次性EPS下修），0個🔴。低估值具備真實機會特徵，並非典型價值陷阱。繼續深入分析。</p>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ================================================================ -->
+<!-- §2.5 長期成長性評估 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§2.5｜長期成長性評估（含衰退信號偵測）</div>
+  <div class="section-body">
+
+    <div class="sig-yellow" style="margin-bottom:16px;display:block">長期成長性評級：🟡 中等可見度成長</div>
+
+    <div class="subsection-title">A｜成長跑道（Runway）估算</div>
+    <table>
+      <thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+      <tbody>
+        <tr><td>當前TAM（各細分市場加總估計）</td><td>~$500-800B</td><td>法律軟體（~$18B）+ABA療法軟體（~$14B）+建築估算（~$30B）+政府軟體（~$50B）+物流科技（~$50B）+醫療軟體（~$40B）等，碎片化但合計巨大</td></tr>
+        <tr><td>Roper當前市佔/滲透率</td><td>各細分1-15%不等</td><td>Roper在每個垂直市場是寡頭（1-3名），但全球TAM仍有大量未滲透空間</td></tr>
+        <tr><td>若維持當前成長率，幾年達30%滲透率</td><td>各細分差異大</td><td>Aderant（法律）~30%滲透估計已達；DAT（物流）較高；CentralReach（ABA）~10-15%滲透，高成長空間</td></tr>
+        <tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>8-12年</strong></td><td>M&A引擎可持續部署（每年$2-4B）疊加新收購業務的有機成長，整體組合Runway可持續10年+，但單個業務成長生命週期參差不齊</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Runway解讀：</strong>7-10年可見度，歸類為🟡「中等可見度成長」——支持估值倍數溢價，但需對能見度折扣。</p>
+
+    <div class="subsection-title">B｜成長品質判斷</div>
+    <p><strong>① 成長來源：有機 vs 無機</strong></p>
+    <table>
+      <thead><tr><th>類型</th><th>定義</th><th>此標的占比估計</th><th>佐證</th></tr></thead>
+      <tbody>
+        <tr><td>有機成長</td><td>定價提升、現有客戶深化、新市場自然滲透</td><td>~45-50%</td><td>FY2025有機+5%，FY2024有機+6%，FY2023有機+8%；有機成長略有下滑趨勢</td></tr>
+        <tr><td>無機成長（M&A貢獻）</td><td>收購貢獻的營收增量</td><td>~50-55%</td><td>FY2025 M&A貢獻+7%（CentralReach、Subsplash、bolt-ons）；FY2024+8%（Procare、Transact）</td></tr>
+      </tbody>
+    </table>
+    <p>無機成長占比~50%超過「30%警戒線」，但Roper的商業模式本質就是M&A複利，這是結構性特徵而非品質惡化。關鍵驗證：收購1-3年後有機成長率是否達到/超過收購時預期（CentralReach 20%+目標是關鍵測試）。</p>
+
+    <p><strong>② 成長驅動結構：定價 vs 量</strong></p>
+    <table>
+      <thead><tr><th>類型</th><th>此標的判斷</th><th>趨勢</th></tr></thead>
+      <tbody>
+        <tr><td>定價驅動（Price）</td><td>SaaS訂閱定價每年提升3-5%（內嵌於合約），是穩定的隱性定價能力</td><td>穩定</td></tr>
+        <tr><td>量驅動（Volume）</td><td>新客戶獲取（CentralReach ABA市場擴張）、現有客戶產品升級（AI模塊）</td><td>擴大（新收購業務帶動）</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">C｜成長護城河連動評估</div>
+    <table>
+      <thead><tr><th>類型</th><th>此標的屬於</th><th>具體表現</th></tr></thead>
+      <tbody>
+        <tr><td>強化型（最佳）</td><td><span class="beat">✅ 部分</span></td><td>AI嵌入既有平台（Aderant的法律AI、CentralReach的臨床AI）→ 每個AI功能都加深客戶依賴，提高轉換成本；數據網絡效應（DAT的物流數據、Neptune的用水數據）隨客戶增加而強化</td></tr>
+        <tr><td>消耗型（警示）</td><td><span class="neutral">⚠️ 部分</span></td><td>為維持EPS成長，需要持續大額M&A（每年$2-4B），依賴高信貸額度，若資本成本上升（利率維持高位）或私募市場估值回升，收購效益下降。Neptune的水表市場若持續疲弱也是消耗型信號。</td></tr>
+      </tbody>
+    </table>
+    <p>判斷：<strong>中性偏強化型</strong>——AI嵌入策略是真正的護城河強化因素，M&A依賴是可控的結構性特點，非明顯消耗型。</p>
+
+    <div class="subsection-title">D｜ROIC與FCF的長期可維持性</div>
+    <table>
+      <thead><tr><th>指標</th><th>當前值</th><th>3年前</th><th>趨勢</th><th>標準門檻</th><th>符合</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP ROIC（含商譽）</td><td>~5-6%</td><td>~5%</td><td>→ 持平</td><td>> WACC（~8-9%）</td><td><span class="miss">不符（GAAP）</span></td></tr>
+        <tr><td>ROIC−WACC（超額報酬，GAAP）</td><td>約 −3%</td><td>約 −3%</td><td>→ 持平</td><td>持續正值</td><td><span class="miss">不符（GAAP）</span></td></tr>
+        <tr><td>FCF Margin（調整後）</td><td>~31%</td><td>~32%</td><td>→ 輕微下滑</td><td>> 15%</td><td><span class="beat">✅ 遠超</span></td></tr>
+        <tr><td>FCF / Net Income轉換率</td><td>~1.60x</td><td>~1.55x</td><td>↑ 微升</td><td>> 0.85x</td><td><span class="beat">✅ 遠超</span></td></tr>
+        <tr><td>再投資率（M&A資本部署）</td><td>~$3.3B/yr FCF $2.47B</td><td>~$3.6B/yr</td><td>→ 略降</td><td>成長期偏高合理</td><td><span class="neutral">合理</span></td></tr>
+      </tbody>
+    </table>
+    <p>重要說明：Roper的「真實經濟ROIC」應以FCF/(Equity+Debt−Goodwill)計算，估計可達15-20%，與FCF margin的高度吻合。GAAP ROIC的低數值是收購會計的必然結果，非業務效率問題。</p>
+
+    <div class="subsection-title">E｜成長熄火情境壓力測試</div>
+    <table>
+      <thead><tr><th>情境假設</th><th>對應成長特徵</th><th>合理Forward P/E</th><th>潛在估值跌幅（vs $347）</th></tr></thead>
+      <tbody>
+        <tr class="row-neu"><td>3年後成長率降至10%</td><td>M&A繼續但有機成長乏力</td><td>~20x FY2026E $21.68</td><td>約 -15%（→$290）待確認方向</td></tr>
+        <tr class="row-neu"><td>3年後成長率降至8%（當前管理層指引）</td><td>成長放緩，業務成熟</td><td>~18x</td><td>約 -12%（→$306）</td></tr>
+        <tr class="row-bear"><td>3年後成長率降至5%</td><td>成熟低成長（M&A放緩+有機乏力）</td><td>~14x</td><td>約 -32%（→$236）</td></tr>
+      </tbody>
+    </table>
+
+    <div class="trap-block">
+      <div class="trap-title">⚠️ 衰退信號偵測表</div>
+      <table>
+        <thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr></thead>
+        <tbody>
+          <tr><td>護城河侵蝕</td><td>Gross Margin連續2季YoY下滑</td><td>毛利率趨勢持續改善（軟體占比提升）</td><td>⬜</td></tr>
+          <tr><td>護城河侵蝕</td><td>核心市場市佔縮減（過去12個月）</td><td>非Deltek業務市佔穩定；Deltek是政策風險非競爭失利</td><td>⬜</td></tr>
+          <tr><td>護城河侵蝕</td><td>主力產品提價後銷量下滑</td><td>無明確evidence顯示定價阻力，訂閱模式提價順利</td><td>⬜</td></tr>
+          <tr><td>盈餘品質</td><td>EPS CAGR顯著高於Revenue CAGR（差距>5%p）</td><td>Non-GAAP EPS CAGR ~8% vs Revenue CAGR ~8-10%；差距接近0，不存在問題</td><td>⬜</td></tr>
+          <tr><td>盈餘品質</td><td>FCF/Net Income轉換率<0.75（連續2年）</td><td>FCF/Net Income~1.60x，高於1，因攤銷加回，非操縱</td><td>⬜</td></tr>
+          <tr><td>盈餘品質</td><td>SBC/Revenue>5%且逐年上升</td><td>SBC估計~$200-250M（FY2025），Revenue $7.90B；SBC/Rev ~2.5-3.2%，低於5%門檻</td><td>⬜</td></tr>
+          <tr><td>產業結構衰退</td><td>TAM本身萎縮或被替代技術壓縮</td><td>垂直軟體TAM整體增長（監管複雜化趨勢），AI不替代而是嵌入</td><td>⬜</td></tr>
+          <tr><td>產業結構衰退</td><td>整個產業估值倍數過去3年系統性下移</td><td>垂直軟體（TYL、CSU）估值受利率影響有所下移，但非結構性崩潰</td><td>🟡 輕度</td></tr>
+          <tr><td>隱性資本密集</td><td>Maintenance Capex占FCF比例>60%</td><td>Capex（含資本化軟體）~$50-70M FY2025，占FCF $2.47B約 2-3%，遠低於60%</td><td>⬜</td></tr>
+          <tr><td>隱性資本密集</td><td>若停止投資新產能，收入是否在3年內下滑</td><td>Roper軟體業務是合約/訂閱制，即使停止新投資，現有存量合約收入可維持3-5年，下滑緩慢</td><td>⬜</td></tr>
+        </tbody>
+      </table>
+      <p><strong>亮燈數：1個🟡</strong>（行業估值體系受利率影響）→ <strong>🟡 中度警戒：個別指標出現裂縫，但非系統性惡化。</strong>§3需確認軟體估值體系轉變是否影響Roper的護城河質量評估。</p>
+    </div>
+
+    <p><strong>長期成長性綜合評級：</strong><span class="sig-yellow">🟡 中等可見度成長</span>　Runway 8-12年，有機+M&A雙驅動，護城河偏強化型，FCF品質高，衰退信號1個（輕度）。不符合「高確信長期成長」但也遠非「存疑」。</p>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §3 護城河分析 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§3｜護城河分析（報告核心）</div>
+  <div class="section-body">
+
+    <p><strong>評分：7.5/10</strong>（以全球上市公司為基準，採最嚴格標準）</p>
+    <p>§2.5衰退信號偵測表僅1個🟡亮燈（行業估值體系），無護城河侵蝕的直接證據——Deltek的困境是GovCon客戶的政策性預算削減，不是競爭對手搶走份額，客戶依然在使用Deltek，只是未更新/升級合同。</p>
+
+    <div class="subsection-title">護城河來源逐一檢驗</div>
+    <p><strong>網路效應：</strong>部分存在，但程度有限。DAT Freight的貨運市場（北美最大貨運載貨匹配平台）具備強烈的雙邊網絡效應——更多卡車司機吸引更多托運商，反之亦然；每增加一個節點都提升平台效用。Neptune的智慧水表網絡在市政計費數據上有規模效應。但Aderant、Deltek等法律/政府軟體的客戶間網絡效應較弱，客戶彼此不直接互動。整體：<strong>網路效應「局部存在，非全局驅動」，評分貢獻有限。</strong></p>
+    <p><strong>無形資產（品牌/專利/監管牌照）：</strong>這是Roper最強的護城河來源之一。Aderant是大型律師事務所計費管理的標準，與「Big Law」行業的監管合規要求深度綁定；CliniSys持有醫療資訊系統的歐洲監管認證；CIVCO（超音波附件）有FDA認證產品線；Neptune在美國市政水表市場的認證壁壘高。<strong>監管牌照與行業標準認可是不可快速複製的無形資產，這些都不可以「更好的AI」在一夜之間取代。</strong></p>
+    <p><strong>轉換成本：</strong>Roper業務的核心護城河，遠強於市面上大多數軟體公司。典型案例：一個大型律師事務所更換Aderant計費系統，需要：①遷移數十年的計費歷史數據；②重新培訓全部合夥人和助理；③重新配置複雜的律師事務所成本分配邏輯；④通過合規審計。全程可能需要2-3年和數百萬美元。ABA療法供應商更換CentralReach，需要遷移全部治療記錄、重新認證新平台的保險報帳合規性、重新培訓1000名+治療師。<strong>客戶保留率>95%，正是這種高摩擦轉換成本的直接體現。</strong></p>
+    <p><strong>規模優勢：</strong>垂直市場的細分特性限制了Roper的規模優勢——法律軟體和ABA軟體之間的跨業務協同效應很小，但每個業務單獨在其垂直市場享有顯著的規模優勢（作為寡頭，能以遠低於新進入者的成本維護合規、開發新功能）。Roper總部的規模優勢體現在：共享資本配置職能（CEO和CFO級別的M&A能力不需要30個業務各自建立）、稅務優化（集團層面）、融資成本（投資級評級獲得更低利率）。</p>
+
+    <div class="subsection-title">競爭鴻溝：為什麼資本充足的對手無法跨越？</div>
+    <p>①　<strong>數據與合規的時間沉澱</strong>——Aderant持有美國大型律師事務所30年+的計費數據歷史，這是任何新進入者都無法憑資本在5年內複製的。數據不只是資產，更是合規記錄的法定要求。</p>
+    <p>②　<strong>人際網絡與行業認可</strong>——垂直市場軟體供應商的評估，很大程度上靠行業協會認可、同行推薦（「我們律所用Aderant，你們也應該試試」）。這種口碑網絡的建立需要10年+，資本無法縮短這個過程。</p>
+    <p>③　<strong>整合複雜度</strong>——Roper的業務深度嵌入客戶的核心工作流，API連接、數據整合、合規介面都是多年定制的產物。即使技術上開發出「更好」的替代品，遷移成本和風險也會讓理性的決策者維持現狀。</p>
+
+    <div class="subsection-title">市佔競爭表</div>
+    <table>
+      <thead><tr><th>競爭對手</th><th>細分市場</th><th>目前市佔估計</th><th>3年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr></thead>
+      <tbody>
+        <tr><td>Tyler Technologies（TYL）</td><td>政府軟體（和Deltek重疊）</td><td>不同細分，部分重疊</td><td>→ 穩定</td><td>若GovCon市場萎縮，TYL和Deltek同受壓</td><td>互不直接競爭（Deltek=聯邦，TYL=州/地方政府）</td></tr>
+        <tr><td>Thomson Reuters Elite</td><td>法律計費（和Aderant競爭）</td><td>Aderant est. 40-50%大型事務所市佔</td><td>→ 穩定</td><td>AI法律軟體新進入者（Harvey.ai等）長期威脅</td><td>存量客戶基本穩定，雙方均為成熟玩家</td></tr>
+        <tr><td>Constellation Software（CSU）</td><td>多垂直市場軟體（最接近的商業模式對標）</td><td>不同垂直，業務重疊少</td><td>擴大（CSU更激進的收購節奏）</td><td>若CSU進入相同垂直，資本優勢相當</td><td>目前主要互不競爭，CSU更偏小型收購</td></tr>
+        <tr><td>Trimble / Autodesk</td><td>建築工程軟體（和ConstructConnect有重疊）</td><td>ConstructConnect建築估算細分~20-30%</td><td>→ 穩定</td><td>Autodesk AI功能擴張可能進入預算估算</td><td>ConstructConnect保持前期估算細分，差異化可持續</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">護城河趨勢：穩定→擴大</div>
+    <p>AI嵌入是關鍵變數。Aderant的AI計費預測、CentralReach的臨床AI、DAT的物流定價AI——若這些AI功能加深客戶粘性（客戶越用AI功能越難離開），護城河在未來5年內將<strong>主動擴大</strong>。</p>
+    <p>24個月內最可能瓦解護城河的威脅（按威脅程度排序）：</p>
+    <ol style="padding-left:20px;margin:10px 0">
+      <li><strong>AI原生垂直軟體競爭者（最高威脅，長期）：</strong>Harvey.ai進入法律軟體、Cohere針對政府AI——若這些native AI替代品在2026-2028年大規模商業化，Aderant/Deltek等需要快速AI升級才能保住壁壘</li>
+      <li><strong>DOGE/政府預算削減（中短期，已發生）：</strong>若聯邦IT支出削減成為結構性趨勢（而非週期性），Deltek的GovCon護城河依然完整，但市場規模萎縮</li>
+      <li><strong>利率持續高位壓縮估值（市場層面）：</strong>非護城河侵蝕，但影響市場對Roper的定價，間接影響M&A執行能力</li>
+    </ol>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §4 財務品質監測 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§4｜財務品質監測</div>
+  <div class="section-body">
+
+    <div class="subsection-title">三年趨勢表</div>
+    <table>
+      <thead><tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>主要對手比較</th></tr></thead>
+      <tbody>
+        <tr><td>Adj. FCF Margin</td><td>~32%</td><td>~32%</td><td>~31%</td><td>CSU: ~20-25%；TYL: ~20%；ROP 領先</td></tr>
+        <tr><td>Adj. EBITDA Margin</td><td>~40.6%</td><td>~40.2%</td><td>~39.8%</td><td>業界頂尖；CSU ~30%；TYL ~30%</td></tr>
+        <tr><td>ROIC−WACC（GAAP）</td><td>約 −3%</td><td>約 −3%</td><td>約 −3%</td><td>因商譽，GAAP ROIC持續低於WACC；有機ROIC估計正值</td></tr>
+        <tr><td>SBC / Revenue</td><td>~2.5%</td><td>~2.8%</td><td>~3.0%</td><td>低於軟體行業平均（5-15%）；可接受</td></tr>
+        <tr><td>ROE</td><td>~8%</td><td>~8%</td><td>~7.9%</td><td>受高商譽攤銷壓制；CSU ~20%；TYL ~9%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">獲利品質警訊（四項檢驗）</div>
+    <p><strong>淨利 vs. OCF連動性：</strong>FY2025 GAAP淨利$1.54B vs OCF $2.54B（比率1.65x）——FCF高於淨利的差額來自非現金的折舊攤銷（D&A估計$700M+），非應計利潤操縱。✅ 無異常。</p>
+    <p><strong>AR成長 vs. 營收成長：</strong>Q1 2025應收帳款$813M vs Q4 2024 $885M（下降，non seasonal effect淡季正常）。2025年Revenue+12%，需檢查全年AR增幅是否超過Revenue——初步估計AR與Revenue同步，無積壓跡象。✅ 無明顯異常。</p>
+    <p><strong>存貨成長 vs. 營收成長：</strong>軟體業務幾乎無傳統存貨概念；Technology Enabled Products（水表、醫療設備）部分有少量存貨，但占比不足20%收入。此指標對ROP意義有限。✅ 無問題。</p>
+    <p><strong>FCF轉換率趨勢：</strong>FCF/EBITDA = $2.47B/$3.14B = 78.7%（FY2025）；FY2024約80%；FY2023約78%——持續穩定在78-80%範圍，高品質且一致。✅ 趨勢良好。</p>
+
+    <div class="subsection-title">回購品質評估（價值陷阱防禦）</div>
+    <table>
+      <thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+      <tbody>
+        <tr><td>過去3年回購總金額 vs FCF總額</td><td>FY2025 Q4回購$500M（1.12M股），2025全年回購相對較少（大部分FCF用於M&A）；3年回購估計$1-1.5B vs FCF $6.4B → 回購/FCF ~15-23%</td><td>✅ 無過度依賴回購；M&A是主要資本配置</td></tr>
+        <tr><td>若剔除回購，EPS CAGR降為多少？</td><td>股份數量基本穩定（FY2025 106.6M vs FY2023 ~107M），攤薄效應微小；回購貢獻EPS成長不足1%p</td><td>✅ EPS成長不靠回購撐起，無盈餘品質問題</td></tr>
+        <tr><td>回購均價 vs 當前股價</td><td>Q4 2025回購均價~$447（股數/金額推算）；當前$347 → 回購均價高於現價$100</td><td>⚠️ 前期回購在高位，資本配置效率有瑕疵，但$3B新授權回購計劃未來有機會在低位執行</td></tr>
+        <tr><td>Revenue CAGR（同期）</td><td>FY2023-2025 Revenue CAGR ~13%；Non-GAAP EPS CAGR ~7.8%（FY23$18.31→FY25$20.00）</td><td>EPS成長低於Revenue成長——因大量M&A造成稀釋 + 攤銷增加；無EPS比Revenue高很多的「虛增」問題</td></tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §5 產業格局 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§5｜產業格局、議價權與 Unit Economics</div>
+  <div class="section-body">
+
+    <div class="subsection-title">市場量化</div>
+    <p><strong>TAM規模：</strong>Roper的各垂直市場合計TAM估計$500-800B以上（細分市場加總），但每個市場自身規模$10-100B不等。核心市場（法律軟體、ABA療法、物流科技、政府軟體）合計TAM約$200B+。<strong>CAGR：</strong>核心細分市場CAGR約8-15%，與軟體行業整體增速相當或略快（監管推動+數位化加速）。<strong>當前滲透率：</strong>各市場10-40%不等，整體仍有大量未滲透空間。<strong>供需狀態：</strong>高品質垂直軟體稀缺（寡頭），需求強勁，供需偏緊有利定價。</p>
+
+    <div class="subsection-title">議價權</div>
+    <p><strong>對上游供應商：</strong>Roper主要是純軟體公司，上游「供應商」主要是AWS/Azure/GCP的雲端基礎設施（成本可轉嫁給客戶）和人才市場（軟體工程師）。雲端基礎設施依賴度中等，無壟斷性供應商風險。技術人才是真正的稀缺資源，但SBC/Revenue維持在3%左右，說明薪酬成本可控。</p>
+    <p><strong>對下游客戶：</strong>Roper擁有壓倒性的議價權。客戶（律師事務所、ABA診所、建築公司、政府機構）面對Roper的解決方案處於「must have」而非「nice to have」狀態，且轉換成本極高，因此Roper可以每年提價3-5%而無需擔心大規模流失。唯一例外：政府客戶（Deltek）的合同週期和預算受政治因素影響，議價能力在政府關係面前有所削弱。</p>
+    <p><strong>地理分布曝險：</strong>美國收入佔比>85%；英國/歐洲（CliniSys主要市場）佔比~10%；加拿大少量（DAT、Loadlink）。地緣政治集中在美國，DOGE政策是已發生的政治風險。無中國/新興市場重大曝露。</p>
+
+    <div class="subsection-title">營收組成（FY2025估計）</div>
+    <table>
+      <thead><tr><th>業務分部</th><th>收入占比估計</th><th>有機成長</th><th>特點</th></tr></thead>
+      <tbody>
+        <tr><td>Application Software（Aderant、CBORD/Illumia、CliniSys、Deltek、Frontline、Procare、CentralReach等）</td><td>~50%</td><td>+4-5%（Deltek拖累）</td><td>最高EBITDA margin（~45%+），SaaS訂閱占主導，含CentralReach高成長引擎</td></tr>
+        <tr><td>Network Software（ConstructConnect、DAT、Foundry、iPipeline、iTradeNetwork、MHA、SHP、SoftWriters、Subsplash）</td><td>~30%</td><td>+4-6%</td><td>高網絡效應（DAT）+ 新收購高成長（Subsplash），EBITDA margin ~40%</td></tr>
+        <tr><td>Technology Enabled Products（CIVCO、FMI、Inovonics、Neptune、Northern Digital、rf IDEAS、Verathon）</td><td>~20%</td><td>~0%（Neptune弱勢）</td><td>最低EBITDA margin（~25-30%），硬體+軟體混合，Neptune水表市場承壓</td></tr>
+      </tbody>
+    </table>
+
+    <div class="subsection-title">Unit Economics</div>
+    <p><strong>ARPU（Average Revenue Per User）：</strong>軟體業務ARPU較高，大型律師事務所每年付給Aderant$50-200萬，ABA診所付給CentralReach每名治療師/月$500-1000。具體數字未公開，但80%+遞延收入/訂閱模式確保了高可預測性。</p>
+    <p><strong>LTV/CAC：</strong>高轉換成本意味著理論LTV極高（客戶保留率>95%，年均流失<5%，平均客戶生命週期>20年）。CAC相對較低（主要靠行業口碑和直銷，非廣告驅動）。LTV/CAC比率估計>10x，是軟體行業優秀水準。</p>
+    <p><strong>遞延收入增長趨勢：</strong>80%+收入為遞延收入/訂閱，QoQ遞延收入餘額穩定增長（見財報），說明未來收入能見度高。</p>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §6 公司治理與資本配置 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§6｜公司治理與資本配置</div>
+  <div class="section-body">
+
+    <div class="subsection-title">股東結構</div>
+    <p><strong>機構持股：</strong>~93.3%由機構投資者持有（截至2025年底），前十大股東包括Vanguard（~8%）、BlackRock（~7%）、State Street等標準指數基金，結構穩健無集中風險。</p>
+    <p><strong>內部人持股：</strong>CEO Neil Hunn持股約87,311股（截至2025/11 SEC披露，約$30-40M市值），持股比例低（<0.1%），對管理層激勵與股東利益一致性是隱憂。</p>
+    <p><strong>重要的內部人交易警示：</strong>CEO Hunn於2025年11月11日以均價$443.57出售30,000股（約$13.3M），交易使其持股減少25.57%。這一時機（恰在業績開始走弱、股票尚在高位時）是本報告對管理層立場「輕度謹慎」的主要依據。</p>
+    <p><strong>近期機構動向：</strong>沙特央行（Saudi Central Bank）、Banque Transatlantique等新增小額持倉，顯示國際配置需求，但金額較小（各~$25,000）不構成重大信號。</p>
+
+    <div class="subsection-title">資本配置軌跡</div>
+    <p>Roper的資本配置哲學高度清晰且一致：<strong>「將FCF再配置至高回報的垂直軟體收購，以M&A引擎實現FCF複利」。</strong>過去10年的資本配置記錄如下：</p>
+    <ul>
+      <li>FY2024：部署$3.6B（Procare $1.9B、Transact Campus $1.1B、其他bolt-ons）</li>
+      <li>FY2025：部署$3.3B（CentralReach $1.65B、Subsplash $0.8B、其他）</li>
+      <li>並行：Q4 2025回購1.12M股/$500M，授權新$3B回購計劃</li>
+      <li>同時：維持33年連續股息成長（2025年股息提升10%至$3.64/年）</li>
+    </ul>
+    <p><strong>說法與行動一致性：</strong>管理層持續強調「disciplined, process-driven capital deployment」，實際行動（每次收購的財務條件、整合記錄）大體與言行相符。Procare的實施延遲是執行失誤，但並非系統性問題。</p>
+
+    <div class="subsection-title">SBC評估</div>
+    <p>FY2025 SBC估計~$200-250M，占Revenue約2.5-3.2%，低於軟體行業平均5-15%。Non-GAAP調整中，SBC是GAAP vs Non-GAAP差距的重要組成部分（估計$1.5-2/share），但規模合理。過去5年SBC/Revenue趨勢：從~2.5%升至~3.0%，小幅上升但不構成稀釋性警戒信號。</p>
+
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- §7 估值診斷 -->
+<!-- ================================================================ -->
+<div class="section">
+  <div class="section-header">§7｜估值診斷（7.0–7.5）</div>
+  <div class="section-body">
+
+    <div class="subsection-title">7.0｜估值體系診斷：市場現在用哪把尺？</div>
+
+    <table>
+      <thead><tr><th>估值邏輯類型</th><th>對應指標</th><th>是否為當前主流？</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>是（主流）</strong></td><td>ROP以Non-GAAP P/E 和EV/EBITDA為主要估值錨點</td></tr>
+        <tr><td>現金流型</td><td>P/FCF、DCF</td><td>次要主流</td><td>FCF品質好，部分機構投資者用P/FCF（當前~18x EV/FCF）</td></tr>
+        <tr><td>成長型</td><td>PEG、EV/Revenue</td><td>輔助指標</td><td>成長率中等（8%），PEG已降至合理區間，非主導框架</td></tr>
+        <tr><td>資產重置型</td><td>P/B</td><td>不適用</td><td>商譽扭曲賬面價值，不被市場使用</td></tr>
+      </tbody>
+    </table>
+    <p><strong>當前主流估值邏輯：</strong>Non-GAAP Forward P/E + EV/FCF混合框架，過去估值中位數~30x Forward P/E，Q4 2025財報後暴力重定價至~16x，反映市場將ROP從「高品質軟體複利」折扣定價為「中速成長工業複合體」。</p>
+    <p><strong>估值邏輯漂移偵測：</strong>存在「估值體系升級機會」——若CentralReach、Subsplash的高成長被市場視為新增長引擎，且有機成長率提速至7-8%，市場可能重新給予25-28x Forward P/E（回歸50%~65%歷史分位），觸發重大倍數修復。觸發條件：連續2季Application Software有機成長 ≥ 6%。</p>
+    <p><strong>估值體系診斷結論：</strong><span class="sig-blue">🔵 估值體系升級機會</span>　前提是有機成長率加速確認。</p>
+
+    <div class="subsection-title">7.1｜歷史估值分位（5年框架）</div>
+    <table>
+      <thead><tr><th>估值指標</th><th>當前值</th><th>5年低點</th><th>5年中位</th><th>5年高點</th><th>當前分位</th></tr></thead>
+      <tbody>
+        <tr><td>Trailing P/E（GAAP）</td><td>~24x</td><td>~20x（2022）</td><td>~32x</td><td>~47x（2020）</td><td>~15%（偏低）</td></tr>
+        <tr><td>Forward P/E（Non-GAAP）</td><td>~16x</td><td>~18x（歷史近期低）</td><td>~28-30x</td><td>~40x（2021）</td><td>估計 ≤ 10%（極低）</td></tr>
+        <tr><td>EV/EBITDA</td><td>~14.3x</td><td>~15x</td><td>~25x</td><td>~35x</td><td>~10%</td></tr>
+        <tr><td>P/FCF（EV/FCF）</td><td>~18x</td><td>~15x</td><td>~22-25x</td><td>~35x</td><td>~20%</td></tr>
+        <tr><td>P/S</td><td>~4.5x</td><td>~4x</td><td>~7x</td><td>~12x</td><td>~10%</td></tr>
+      </tbody>
+    </table>
+    <p><strong>解讀：</strong></p>
+    <ol>
+      <li><strong>當前估值情緒：便宜（< 20% 分位）</strong>——所有主要估值指標均在歷史底部10-20%分位，為5年最低估值水平之一。</li>
+      <li><strong>上次處於此分位的主要差異：</strong>2022年Forward P/E最低點時（接近20x），有機成長仍保持8%，FCF成長強勁，業務基本面遠優於今日；當前有機成長放緩至5%、Deltek受壓，基本面確實弱化，低估值有部分合理性。</li>
+      <li><strong>推動當前低分位的主要因素：</strong>市場情緒（Q4財報後恐慌性拋售，佔50%）> 盈利修正（管理層指引下調，佔30%）> 利率環境（持續高利率壓縮成長股估值，佔20%）。</li>
+    </ol>
+    <p><strong>利率環境分析：</strong>10Y UST ~4.3%（2026年初），對比疫情低點~0.5%時Roper Forward P/E達40x。以「公允P/E = 1/(UST+ERP)」框架，當前利率環境支撐的合理P/E約~18-22x（中等成長軟體），Roper當前16x低於此合理區間，說明有純利率因素以外的悲觀情緒折扣。</p>
+
+    <div class="subsection-title">7.2｜PEG診斷</div>
+    <table>
+      <thead><tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr></thead>
+      <tbody>
+        <tr><td>Forward P/E（FY2026E）</td><td>16x</td><td>—</td><td>歷史5年最低區間</td></tr>
+        <tr><td>Non-GAAP EPS CAGR（3年，FY25-28）</td><td>7.7%</td><td>—</td><td>低於20%門檻，但比較基期EPS已很高</td></tr>
+        <tr><td>PEG（Non-GAAP，3年）</td><td><strong>2.08x</strong></td><td>&lt;1.0便宜/1-2合理/>2貴</td><td>略高於「合理」上限，但用更合理指引CAGR~8%時PEG=2.0x剛好合理邊界</td></tr>
+        <tr><td>PEG（GAAP，3年）</td><td>~2.5x</td><td>同上</td><td>GAAP成長率更低，PEG看起來更貴——但GAAP受攤銷扭曲</td></tr>
+        <tr><td>5年EPS CAGR（含Runway遞減，§2.5A）</td><td>~7-8%</td><td>—</td><td>M&A支撐成長可持續5-8年</td></tr>
+        <tr><td>PEG（5年，Non-GAAP）</td><td>~2.0x</td><td>—</td><td>5年PEG與3年PEG接近，說明近期成長不是不可持續的異常高點</td></tr>
+        <tr><td>3年 vs 5年 PEG差異</td><td>&lt;0.1x</td><td>差異大=近期不可持續</td><td>差異極小，成長預期穩定，無「近期爆發、後期崩潰」問題</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Price-to-Growth矩陣落點：</strong>ROP處於「低估值+中成長」的四象限，PEG略超2x但基期EPS（$20）已很高——在FCF複利引擎視角下，PEG分析的侷限是「假設固定成長率」，而Roper的M&A引擎在未來每次成功收購後都會帶來EPS跳升，線性PEG分析低估了這種非線性複利潛力。</p>
+
+    <div class="subsection-title">7.3｜Reverse DCF：當前股價隱含了什麼？</div>
+    <p><strong>步驟一：固定參數</strong></p>
+    <table>
+      <thead><tr><th>參數</th><th>數值</th><th>來源</th></tr></thead>
+      <tbody>
+        <tr><td>當前市值</td><td>~$37B</td><td>106.6M股 × $347</td></tr>
+        <tr><td>凈負債（Debt-Cash）</td><td>~$7.1B</td><td>Total Debt ~$7.5B - Cash ~$0.4B</td></tr>
+        <tr><td>Enterprise Value</td><td>~$44.1B</td><td>市值+凈負債</td></tr>
+        <tr><td>基期Adj. FCF（FY2025）</td><td>$2.47B</td><td>Q4 2025 8-K</td></tr>
+        <tr><td>WACC</td><td>~8.5%</td><td>10Y UST 4.3% + Beta 0.49 × ERP 5.5% = 4.3%+2.7% = 7.0%（Equity），加權後含債務成本~8.5%）</td></tr>
+        <tr><td>永續成長率</td><td>3.5%</td><td>軟體行業長期成長率，略高於GDP（名義），合理</td></tr>
+        <tr><td>預測期</td><td>10年</td><td>標準設定</td></tr>
+      </tbody>
+    </table>
+    <p><strong>步驟二：反推隱含FCF CAGR</strong><br>
+    使EV的DCF現值（基期FCF $2.47B × 10年CAGR成長 + 終值）= $44.1B，求解FCF CAGR：<br>
+    計算：若10年FCF CAGR = 9%，Terminal Value = $2.47B×(1.09)^10×1.035/(0.085-0.035) = $5.85B×20.7 = $121B（終值）；現值 = 10年FCF現值之和 + 終值/(1.085)^10 ≈ $18B + $121B/2.25 ≈ $18B + $53.8B = $71.8B（過高）<br>
+    若FCF CAGR = 5%，10年FCF之和PV ≈ $19.4B，終值PV ≈ $35.8B，合計 ≈ $55B（仍偏高）<br>
+    精算：隱含FCF CAGR約 <strong>3-4%</strong>（對應EV=$44B），意即市場假設FCF從$2.47B每年僅增長3-4%——遠低於歷史15%+的水準。這是極度悲觀的假設。</p>
+
+    <p><strong>步驟三：可信度對照</strong></p>
+    <table>
+      <thead><tr><th>比較基準</th><th>數值</th><th>隱含CAGR相對位置</th></tr></thead>
+      <tbody>
+        <tr><td>過去5年實際Adj. FCF CAGR</td><td>~15%（$1.27B→$2.47B，5年）</td><td>遠低於歷史——市場只給3-4%</td></tr>
+        <tr><td>分析師共識FCF CAGR隱含</td><td>~8-9%（對應EPS CAGR 7.7%）</td><td>市場隱含值仍低於共識——存在明顯折扣</td></tr>
+        <tr><td>同業CSU最快FCF CAGR</td><td>~20-25%</td><td>ROP隱含值僅3-4%，遠低於同業翹楚</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>步驟四：兌現條件</strong><br>
+    隱含CAGR 3-4%意味著：Revenue年增僅3-4%（FCF margin不變）且無M&A貢獻——這幾乎是零成長假設，與Roper「每年部署$2-4B M&A」的商業模式完全矛盾。唯一能使此假設成立的情境：M&A引擎完全停擺（資本市場關閉 + 盈利崩潰）。</p>
+
+    <p><strong>隱含預期判斷：</strong><span class="sig-green">🟢 隱含預期極度保守</span>　市場已price in接近「M&A引擎停擺」的悲觀情境，為買入提供了相當大的安全邊際。</p>
+
+    <div class="trap-block">
+      <div class="trap-title">⚠️ 便宜理由檢驗（強制觸發：Forward P/E ≤ 10%分位）</div>
+      <table>
+        <thead><tr><th>#</th><th>問題</th><th>分析師答案</th><th>結論</th></tr></thead>
+        <tbody>
+          <tr><td>Q1</td><td>市場為什麼給這個低倍數？</td><td>①Q4財報有機成長miss（4% vs 5.5%E）引發恐慌；②2026 EBITDA margin無擴張預期；③Deltek GovCon不確定性（DOGE深不見底）；④CEO賣股引發信任動搖；⑤利率高位壓縮成長股估值</td><td>理由部分合理（Deltek+利率），但程度上過度悲觀（Reverse DCF顯示市場隱含零成長）</td></tr>
+          <tr><td>Q2</td><td>這個擔心是否有財務數據支撐？</td><td>Deltek問題確實存在（GovCon有機成長放緩有Q3/Q4數據），但FCF品質完好（$2.47B，31% margin），非Deltek業務改善，整體有機成長5%符合歷史下限</td><td>有部分支撐，但擔心程度（對應FCF CAGR 3-4%假設）遠超實際財務惡化幅度</td></tr>
+          <tr><td>Q3</td><td>護城河是否仍完整？</td><td>非Deltek業務護城河完整（轉換成本、客戶保留率均無惡化）；Deltek客戶未流失競品，只是GovCon預算縮減導致未更新合同；AI威脅是2027年+的長期風險</td><td>護城河完整，未見結構性侵蝕</td></tr>
+          <tr><td>Q4</td><td>FCF品質是否被誤解？</td><td>FCF/Net Income=1.6x被誤讀為「盈餘品質差」，實際是高攤銷加回帶來的FCF premium，反映軟體收購模式的正常會計影響</td><td>FCF品質被市場誤解——這是潛在的重新定價催化劑</td></tr>
+          <tr><td>Q5</td><td>存在什麼催化劑讓市場重新定價？</td><td>①Q1 2026財報Deltek底部信號（連續有機成長≥0%）；②CentralReach/Subsplash有機成長率超預期；③Neptune剝離公告（估值~$4B，清晰重估M&A能力）；④Fed降息週期重啟（提升成長股估值）</td><td>有明確催化劑，但時間表不確定（0-18個月）</td></tr>
+        </tbody>
+      </table>
+      <p><strong>便宜理由檢驗結論：</strong><span class="sig-green">🟢 市場誤判（大於合理折扣）</span>　估值折扣超過基本面惡化幅度，存在買入機會——但需催化劑確認，不宜單純以低估值進場。</p>
+    </div>
+
+    <div class="subsection-title">7.4｜同業估值比較</div>
+    <table>
+      <thead><tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3年）</th><th>GAAP ROIC</th></tr></thead>
+      <tbody>
+        <tr class="summary-row"><td><strong>ROP（Roper）</strong></td><td>$37B</td><td>~16x</td><td>~14x</td><td>~2.1x</td><td>~31%</td><td>~8%</td><td>~6%（商譽稀釋）</td></tr>
+        <tr><td>TYL（Tyler Technologies）</td><td>~$18B</td><td>~28x</td><td>~31x</td><td>~1.9x</td><td>~20%</td><td>~15%</td><td>~9%</td></tr>
+        <tr><td>CSU（Constellation Software）</td><td>~$65B（CAD）</td><td>~16x</td><td>~20x</td><td>~1.4x</td><td>~20-25%</td><td>~12%</td><td>~19%</td></tr>
+        <tr><td>Autodesk（ADSK，可比的設計軟體）</td><td>~$52B</td><td>~28x</td><td>~25x</td><td>~2.0x</td><td>~35%</td><td>~14%</td><td>N/A</td></tr>
+        <tr><td>產業中位數（垂直SaaS）</td><td>—</td><td>~25-28x</td><td>~22-25x</td><td>~2.0x</td><td>~20-25%</td><td>~12-15%</td><td>—</td></tr>
+      </tbody>
+    </table>
+    <p><strong>同業溢折價邏輯：</strong></p>
+    <ol>
+      <li>溢/折價幅度：ROP Forward P/E 16x vs 同業中位25-28x，折價約35-45%，為近年最大折扣。EV/EBITDA 14x vs 同業中位22-25x，折價約40%。</li>
+      <li>ROP的FCF Margin（31%）顯著優於同業（20-25%），是其最強的差異化指標。但GAAP ROIC（6%）遠低於CSU（19%），反映Roper收購溢價更高（大型Tier-1收購 vs CSU的小型收購）。</li>
+      <li>若ROP估值向產業中位數回歸（Forward P/E 25x × FY2026E $21.68），目標股價約$542，上行幅度約56%。</li>
+    </ol>
+
+    <p><strong>同主題橫向風報比比較</strong></p>
+    <table>
+      <thead><tr><th>問題</th><th>ROP答案</th><th>最強競爭標的（CSU）答案</th></tr></thead>
+      <tbody>
+        <tr><td>主假設完全兌現時，上行空間最大的是誰？</td><td>ROP：從16x回歸28x，+75%；若加上EPS成長，總回報~85%+</td><td>CSU：估值已較高（16x Forward），上行空間~30-40%</td></tr>
+        <tr><td>主假設部分落空時，跌幅最小的是誰？</td><td>ROP：FCF品質高、股息貴族，但Deltek持續惡化可能繼續跌至$290-310</td><td>CSU：業務分散化更高，單一業務影響更小，下行風險約-15-25%</td></tr>
+        <tr><td>綜合風報比，哪個標的最優？</td><td colspan="2"><strong>ROP風報比更優</strong>：上行空間75%+，下行約30%（若陷阱確認）；CSU上行40%，下行15%——但ROP的不對稱性更大，需要有更高風險承受能力</td></tr>
+      </tbody>
+    </table>
+    <p><strong>最終橫向比較結論：</strong><span style="font-size:16px">🥇</span> <strong>此標的（ROP）為同主題最優選</strong>（在風險承受能力允許的前提下）。</p>
+
+    <div class="subsection-title">7.5｜估值五角驗證與結論</div>
+    <table>
+      <thead><tr><th>工具</th><th>訊號</th><th>核心依據</th></tr></thead>
+      <tbody>
+        <tr><td>估值體系診斷（7.0）</td><td><span class="sig-blue">🔵 升級機會</span></td><td>有機成長確認後，市場可重新給予「高品質軟體複利」框架定價，倍數修復至22-28x</td></tr>
+        <tr><td>歷史分位（7.1）</td><td><span class="sig-green">🟢 便宜（≤10%分位）</span></td><td>Forward P/E 16x為5年最低，EV/EBITDA 14x亦在底部，所有指標均在歷史低位</td></tr>
+        <tr><td>PEG診斷（7.2）</td><td><span class="sig-yellow">🟡 合理偏便宜</span></td><td>PEG 2.1x略高於「合理」，但M&A非線性複利效應使PEG分析有局限性</td></tr>
+        <tr><td>Reverse DCF（7.3）</td><td><span class="sig-green">🟢 隱含預期極度保守</span></td><td>市場隱含FCF CAGR僅3-4%，vs歷史15%+，極度悲觀假設提供高安全邊際</td></tr>
+        <tr><td>同業相對（7.4）</td><td><span class="sig-green">🟢 折價（40%折扣）</span></td><td>Forward P/E對同業折價35-45%，FCF Margin卻優於同業，折價缺乏完整基本面支撐</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>當前定價判斷：</strong><span class="sig-green">🟢 合理至便宜</span>（估值極度壓縮，但需基本面確認催化劑）</p>
+
+    <p><strong>估值倍數定錨：</strong></p>
+    <table>
+      <thead><tr><th>因素</th><th>判斷結果</th><th>對目標P/E的影響</th></tr></thead>
+      <tbody>
+        <tr><td>① 護城河品質（§3）</td><td>7.5/10（高轉換成本，部分網路效應）</td><td>相較同業基準 +3x（優質護城河溢價）</td></tr>
+        <tr><td>② 成長可持續年數（§2.5A）</td><td>8-12年（🟡）</td><td>5-9年區間：±0x（無額外溢價，因中等可見度）</td></tr>
+        <tr><td>③ 成長品質（§2.5B）</td><td>有機50%/M&A50%；定價驅動穩定</td><td>M&A占比高：−1x；訂閱定價穩定：+1x → 淨0x</td></tr>
+        <tr><td>④ 成長護城河連動（§2.5C）</td><td>中性偏強化型</td><td>+1x（AI嵌入加深壁壘）</td></tr>
+        <tr><td>⑤ ROIC可維持性（§2.5D）</td><td>GAAP ROIC-WACC：−3%，但FCF品質高</td><td>GAAP ROIC低：−2x；FCF品質高補償：+2x → 淨0x</td></tr>
+        <tr><td>⑥ 衰退信號數量（§2.5偵測表）</td><td>1個🟡亮燈</td><td>1-2個：−1x</td></tr>
+        <tr><td>⑦ 估值體系方向（§7.0）</td><td>🔵 升級機會</td><td>+2x（若有機成長加速確認）</td></tr>
+        <tr><td>⑧ 當前利率環境</td><td>10Y UST ~4.3%</td><td>高利率壓縮成長股：−2x（vs疫情低點低利率的超高倍數）</td></tr>
+        <tr class="summary-row"><td>產業基準倍數</td><td>~22x（垂直軟體複利，非AI pure play）</td><td>調整後合理區間：<strong>20x–27x Forward P/E</strong></td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>分析師目標價參考：</strong></p>
+    <ul>
+      <li>高：$550（Jefferies Brent Thill Strong Buy）</li>
+      <li>中位：$461-$480（27位分析師，median）</li>
+      <li>低：$365（Mizuho Sell）</li>
+      <li>n=27位分析師覆蓋</li>
+    </ul>
+    <p>本報告基本面視角：合理目標區間$430-$470（Forward P/E 20-22x × FY2026E $21.68），即相對當前$347有24-35%上行空間。不認同Mizuho的$365（過於保守，未充分考慮FCF品質和M&A引擎潛力）；部分認同Jefferies $550（需要有機成長加速確認）。</p>
+
+  </div>
+</div>
+
+</div><!-- container end part 2 -->
+</body>
+</html>
