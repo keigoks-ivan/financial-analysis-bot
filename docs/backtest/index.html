@@ -11,7 +11,8 @@
       --text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
       --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
       --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
-      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
+      --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-border:#c4b5fd;--purple-text:#5b21b6}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
      background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}
@@ -41,6 +42,7 @@ tbody tr:hover td{background:#f3f4f6}
 .tag-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
 .tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
 .tag-sys{background:#dbeafe;color:#1e40af}.tag-bh{background:#f3f4f6;color:#374151}
+.tag-dual{background:var(--purple-bg);color:var(--purple-text);border:1px solid var(--purple-border)}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;margin-bottom:1rem}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.7rem .8rem;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .kpi .label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem}
@@ -63,7 +65,8 @@ tbody tr:hover td{background:#f3f4f6}
 .chart-wrap{position:relative;width:100%;height:340px}
 .chart-wrap-sm{height:160px}
 .chart-wrap-bar{height:280px}
-.dual-chart{display:grid;grid-template-columns:1fr;gap:0}
+.dual-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.mdd-bar{height:18px;border-radius:3px;display:inline-block;vertical-align:middle}
 footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem}
 @media(max-width:768px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
@@ -71,6 +74,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   header nav a{margin-left:0;margin-right:1rem}
   table{font-size:.74rem}th,td{padding:.4rem .45rem}
   .chart-wrap{height:260px}.chart-wrap-sm{height:130px}.chart-wrap-bar{height:220px}
+  .dual-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -96,7 +100,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="section">
 <div class="tabs">
   <button class="tab active" onclick="showTab('overview')">總覽</button>
-  <button class="tab" onclick="showTab('ch12')">Ch12 雙軌系統</button>
+  <button class="tab" onclick="showTab('dual')">Ch12 雙軌多空</button>
+  <button class="tab" onclick="showTab('ch12')">Ch12 Long Track Only</button>
   <button class="tab" onclick="showTab('ch8')">Ch8 六狀態機</button>
   <button class="tab" onclick="showTab('yearly')">逐年績效</button>
 </div>
@@ -116,7 +121,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <td style="color:var(--red)">-40.35%</td>
   <td>0.83</td><td>0.38</td><td>68</td>
   <td>$17.40M</td>
-  <td><span class="tag tag-sys">主動</span></td>
+  <td><span class="tag tag-sys">進攻</span></td>
 </tr>
 <tr>
   <td><strong>Ch12 Long Track Only</strong><br><span style="font-size:.72rem;color:var(--muted)">50/50 SPY/QQQ W52/104/250</span></td>
@@ -124,15 +129,15 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <td>-19.99%</td>
   <td style="font-weight:600">0.86</td><td style="font-weight:600;color:var(--green)">0.55</td><td>37</td>
   <td>$5.00M</td>
-  <td><span class="tag tag-sys">主動</span></td>
+  <td><span class="tag tag-best">推薦</span></td>
 </tr>
 <tr>
-  <td><strong>Ch12 原始雙軌</strong><br><span style="font-size:.72rem;color:var(--muted)">50/50 SPY/QQQ Short+Long</span></td>
+  <td><strong>Ch12 雙軌多空</strong><br><span style="font-size:.72rem;color:var(--muted)">50/50 SPY/QQQ Short+Long 70/30</span></td>
   <td>+4.60%</td>
   <td>-26.83%</td>
   <td>0.42</td><td>0.17</td><td>210</td>
   <td>$2.00M</td>
-  <td><span class="tag tag-warn">淘汰</span></td>
+  <td><span class="tag tag-dual">多空</span></td>
 </tr>
 <tr style="background:#f9fafb">
   <td>QQQ Buy &amp; Hold</td>
@@ -176,7 +181,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <h3 class="section-title" style="margin-top:1.25rem">Summary Statistics</h3>
 <div class="card" style="overflow-x:auto">
 <table id="summary-stats-table">
-<thead><tr><th>Metric</th><th style="color:#d32f2f">Ch8 六狀態機</th><th style="color:#2e7d32">Ch12 Long Only</th><th style="color:#1565c0">QQQ B&amp;H</th><th style="color:#757575">SPY B&amp;H</th></tr></thead>
+<thead><tr><th>Metric</th><th style="color:#d32f2f">Ch8 六狀態機</th><th style="color:#2e7d32">Ch12 Long Only</th><th style="color:#7c3aed">Ch12 雙軌多空</th><th style="color:#1565c0">QQQ B&amp;H</th><th style="color:#757575">SPY B&amp;H</th></tr></thead>
 <tbody></tbody>
 </table>
 </div>
@@ -189,9 +194,9 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="verdict">
-  <strong>結論:</strong> 兩個系統各有定位。<strong>六狀態機</strong>追求高絕對報酬 (CAGR 15.14%)，接受較大回撤 (-40%)，適合進攻型配置。
+  <strong>結論:</strong> 三個系統各有定位。<strong>六狀態機</strong>追求高絕對報酬 (CAGR 15.14%)，接受較大回撤 (-40%)，適合進攻型配置。
   <strong>Long Track Only</strong> 追求最佳風險調整報酬 (Calmar 0.55)，回撤僅 -20%，適合防守型配置。
-  原始雙軌系統因短線軌拖累 (獲利因子僅 1.15) 已淘汰。
+  <strong>雙軌多空</strong>為原始設計 (短線軌 70% + 長線軌 30%)，CAGR 僅 4.60%，短線軌獲利因子 ~1.15 是主要拖累。
 </div>
 
 <h3 class="section-title" style="margin-top:1.25rem">穩健性驗證</h3>
@@ -209,7 +214,232 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 
 </div>
 
-<!-- ==================== CH12 TAB ==================== -->
+<!-- ==================== DUAL TRACK (多空) TAB ==================== -->
+<div id="tab-dual" class="tab-content">
+
+<h3 class="section-title">Ch12 雙軌系統 — 完整多空回測 (50/50 SPY/QQQ)</h3>
+<div class="kpi-grid">
+  <div class="kpi"><div class="label">CAGR</div><div class="value">+4.60%</div></div>
+  <div class="kpi"><div class="label">MDD</div><div class="value neg">-26.83%</div></div>
+  <div class="kpi"><div class="label">Sharpe</div><div class="value">0.42</div></div>
+  <div class="kpi"><div class="label">Sortino</div><div class="value">0.51</div></div>
+  <div class="kpi"><div class="label">Calmar</div><div class="value">0.17</div></div>
+  <div class="kpi"><div class="label">交易次數</div><div class="value">210</div></div>
+  <div class="kpi"><div class="label">期末資產</div><div class="value">$2.00M</div></div>
+  <div class="kpi"><div class="label">年化波動</div><div class="value">12.48%</div></div>
+</div>
+
+<div class="card">
+<h3>系統架構</h3>
+<p style="font-size:.84rem;color:#374151;line-height:1.7">
+  <strong>雙軌完整版</strong>: 短線軌 (70% 資金, D60/D120/D200 日線) + 長線軌 (30% 資金, W52/W104/W250 週線)。
+  兩軌完全獨立，可同時持有相反方向部位。短線軌做多做空皆有，長線軌在 20 年美股中從未觸發做空。
+  交易成本: 單邊 7bps (手續費 5bps + 滑價 2bps)。
+</p>
+</div>
+
+<!-- Dual: Three configs comparison -->
+<h3 class="section-title" style="margin-top:1rem">三種配比對比</h3>
+<table>
+<thead><tr><th>配比</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Sortino</th><th>Calmar</th><th>期末資產</th></tr></thead>
+<tbody>
+<tr style="background:var(--brand-light)">
+  <td><strong>50/50</strong></td>
+  <td>+4.60%</td><td>-26.83%</td><td>0.42</td><td>0.51</td><td>0.17</td><td>$2.00M</td>
+</tr>
+<tr>
+  <td>60/40</td>
+  <td>+4.43%</td><td>-27.16%</td><td>0.42</td><td>0.50</td><td>0.16</td><td>$1.96M</td>
+</tr>
+<tr>
+  <td>70/30</td>
+  <td>+4.25%</td><td>-27.57%</td><td>0.41</td><td>0.48</td><td>0.15</td><td>$1.91M</td>
+</tr>
+</tbody>
+</table>
+
+<!-- Dual: Growth -->
+<div class="chart-card">
+  <h3>Growth of $1,000,000 — 雙軌多空 vs Benchmarks</h3>
+  <div class="chart-sub">Logarithmic scale &middot; 2010–2026</div>
+  <div class="chart-wrap"><canvas id="chart-dual-nav"></canvas></div>
+</div>
+
+<!-- Dual: Drawdown -->
+<div class="chart-card">
+  <h3>Underwater Equity (Drawdown)</h3>
+  <div style="position:relative;width:100%;height:180px"><canvas id="chart-dual-dd"></canvas></div>
+</div>
+
+<!-- MDD Decomposition -->
+<h3 class="section-title" style="margin-top:1.25rem">MDD 拆解 (50/50 配置)</h3>
+<div class="card">
+<p style="font-size:.84rem;color:var(--muted);margin-bottom:.75rem">
+  最大回撤期間: <strong>2014-11-28</strong> → <strong>2016-06-27</strong> (577 天) &middot; 深度: <strong>-26.83%</strong>
+</p>
+<table>
+<thead><tr><th>子軌</th><th>配置權重</th><th>子軌跌幅</th><th>金額變化</th><th>佔 MDD 比例</th><th></th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>SPY 短線軌</strong></td><td>35%</td>
+  <td style="color:var(--red)">-33.75%</td><td>-$159K</td>
+  <td style="font-weight:700;color:var(--red)">46.2%</td>
+  <td><div class="mdd-bar" style="width:46.2%;background:var(--red)"></div></td>
+</tr>
+<tr>
+  <td><strong>QQQ 短線軌</strong></td><td>35%</td>
+  <td style="color:var(--red)">-29.81%</td><td>-$101K</td>
+  <td style="font-weight:700;color:var(--red)">29.5%</td>
+  <td><div class="mdd-bar" style="width:29.5%;background:#ef4444"></div></td>
+</tr>
+<tr>
+  <td>SPY 長線軌</td><td>15%</td>
+  <td>-15.62%</td><td>-$39K</td>
+  <td>11.5%</td>
+  <td><div class="mdd-bar" style="width:11.5%;background:var(--green)"></div></td>
+</tr>
+<tr>
+  <td>QQQ 長線軌</td><td>15%</td>
+  <td>-14.59%</td><td>-$34K</td>
+  <td>10.0%</td>
+  <td><div class="mdd-bar" style="width:10%;background:#10b981"></div></td>
+</tr>
+<tr style="border-top:2px solid var(--border);font-weight:700">
+  <td colspan="2">短線軌合計</td>
+  <td></td><td>-$260K</td>
+  <td style="color:var(--red)">75.7%</td>
+  <td></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+  <strong>Short track 合計貢獻 75.7% 的最大回撤。</strong>
+  70% 資金配給獲利因子 ~1.15 的短線軌，是原始雙軌系統表現不佳的根本原因。
+</div>
+
+<!-- Sub-track performance -->
+<h3 class="section-title" style="margin-top:1.25rem">四條子軌獨立表現</h3>
+<table>
+<thead><tr><th></th><th>SPY 短線軌</th><th>SPY 長線軌</th><th>QQQ 短線軌</th><th>QQQ 長線軌</th></tr></thead>
+<tbody>
+<tr><td>交易數</td><td>84</td><td>15</td><td>89</td><td>22</td></tr>
+<tr><td>勝率</td><td>40.5%</td><td style="color:var(--green);font-weight:600">53.3%</td><td>36.0%</td><td>40.9%</td></tr>
+<tr><td>盈虧比</td><td>1.68x</td><td style="color:var(--green);font-weight:600">5.77x</td><td>2.10x</td><td style="color:var(--green);font-weight:600">12.87x</td></tr>
+<tr><td>獲利因子</td><td>1.14</td><td style="color:var(--green);font-weight:600">6.60</td><td>1.18</td><td style="color:var(--green);font-weight:600">8.91</td></tr>
+<tr><td>做空勝率</td><td style="color:var(--red)">11.8%</td><td>—</td><td style="color:var(--red)">15.8%</td><td>—</td></tr>
+<tr><td>最長連敗</td><td>11</td><td>—</td><td>9</td><td>—</td></tr>
+<tr><td>總 P&amp;L</td><td>+$131K</td><td style="font-weight:600">+$865K</td><td>+$264K</td><td style="font-weight:600">+$1,464K</td></tr>
+</tbody>
+</table>
+
+<!-- MDD decomposition chart -->
+<div class="chart-card">
+  <h3>MDD 貢獻分佈</h3>
+  <div class="chart-sub">各子軌對最大回撤的貢獻百分比</div>
+  <div style="position:relative;width:100%;height:280px"><canvas id="chart-mdd-pie"></canvas></div>
+</div>
+
+<!-- Stress Events -->
+<h3 class="section-title" style="margin-top:1.25rem">歷史壓力事件</h3>
+<div class="event-card">
+  <div class="ev-name">2008 GFC <span class="tag tag-best" style="margin-left:.5rem">完全閃避</span></div>
+  <div class="ev-detail">系統報酬 0.00%，回撤 0.00%。暖機期未結束，全程空倉。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2011 歐債危機 <span class="tag tag-fail" style="margin-left:.5rem">-16.07%</span></div>
+  <div class="ev-detail">系統 -16.07% vs 最大回撤 -16.42%。短線軌反覆 whipsaw。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2015 中國匯改 <span class="tag tag-fail" style="margin-left:.5rem">-18.18%</span></div>
+  <div class="ev-detail">系統 -18.18%，最大回撤 -19.37%。短線軌做空方向虧損加重。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2018 Q4 <span class="tag tag-warn" style="margin-left:.5rem">-3.73%</span></div>
+  <div class="ev-detail">系統 -3.73%，最大回撤 -7.90%。短線軌及時出場，長線軌持穩。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2020 COVID <span class="tag tag-fail" style="margin-left:.5rem">-18.09%</span></div>
+  <div class="ev-detail">系統 -18.09%，最大回撤 -19.38%。V 轉型崩跌，短線軌來不及反應。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2022 通膨熊市 <span class="tag tag-warn" style="margin-left:.5rem">-13.15%</span></div>
+  <div class="ev-detail">系統 -13.15%，最大回撤 -15.71%。持續性熊市中短線軌有部分避險效果。</div>
+</div>
+
+<!-- Top 5 Drawdowns -->
+<h3 class="section-title" style="margin-top:1.25rem">Top 5 回撤</h3>
+<table>
+<thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2014-12-09</td><td>2016-06-27</td><td>2018-01-04</td><td style="color:var(--red)">-26.83%</td><td>566</td><td>556</td></tr>
+<tr><td>2</td><td>2011-02-18</td><td>2012-01-09</td><td>2013-12-09</td><td style="color:var(--red)">-24.89%</td><td>325</td><td>700</td></tr>
+<tr><td>3</td><td>2020-02-20</td><td>2020-04-14</td><td>2020-09-01</td><td>-19.38%</td><td>54</td><td>140</td></tr>
+<tr><td>4</td><td>2022-01-04</td><td>2023-03-14</td><td>2024-01-29</td><td>-19.17%</td><td>434</td><td>321</td></tr>
+<tr><td>5</td><td>2024-12-17</td><td>2025-05-23</td><td>2025-09-22</td><td>-14.33%</td><td>157</td><td>122</td></tr>
+</tbody>
+</table>
+
+<!-- Dual vs Long Track vs B&H -->
+<h3 class="section-title" style="margin-top:1.25rem">雙軌 vs Long Track Only vs Buy &amp; Hold</h3>
+<table>
+<thead><tr><th>指標</th><th>雙軌多空</th><th>Long Track Only</th><th>50/50 B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>CAGR</td><td>+4.60%</td><td style="color:var(--green);font-weight:600">+10.95%</td><td>+12.78%</td></tr>
+<tr><td>MDD</td><td>-26.83%</td><td style="color:var(--green);font-weight:600">-19.99%</td><td style="color:var(--red)">-53.66%</td></tr>
+<tr><td>Sharpe</td><td>0.42</td><td style="font-weight:600">0.86</td><td>0.70</td></tr>
+<tr><td>Calmar</td><td>0.17</td><td style="color:var(--green);font-weight:600">0.55</td><td>0.24</td></tr>
+<tr><td>交易次數</td><td>210</td><td>37</td><td>—</td></tr>
+<tr><td>做空筆數</td><td>~50</td><td>0</td><td>—</td></tr>
+<tr><td>資金效率</td><td style="color:var(--red)">低</td><td style="color:var(--green)">高</td><td>—</td></tr>
+</tbody>
+</table>
+
+<div class="verdict">
+  <strong>分析:</strong> 雙軌系統的問題在於資金配置倒掛 — 70% 資金放在獲利因子僅 1.15 的短線軌，30% 放在獲利因子 ~7.5 的長線軌。
+  短線軌的做空方向勝率僅 11-16%，幾乎全軍覆沒。
+  移除短線軌後 (Long Track Only)，CAGR 從 4.60% 提升到 10.95%，MDD 從 -26.83% 改善到 -19.99%。
+</div>
+
+<!-- Dual: Yearly Returns -->
+<h3 class="section-title" style="margin-top:1.25rem">逐年報酬</h3>
+<div class="chart-card">
+  <h3>Annual Returns — 雙軌多空 vs Long Track Only</h3>
+  <div class="chart-wrap-bar" style="position:relative;width:100%"><canvas id="chart-dual-yearly"></canvas></div>
+</div>
+
+<table>
+<thead><tr><th>年份</th><th>雙軌多空</th><th>Long Track Only</th><th>差異</th></tr></thead>
+<tbody>
+<tr><td>2010</td><td>+5.69%</td><td>+4.47%</td><td style="color:var(--green)">+1.22pp</td></tr>
+<tr><td>2011</td><td style="color:var(--red)">-19.27%</td><td style="color:var(--red)">-9.51%</td><td style="color:var(--red)">-9.76pp</td></tr>
+<tr><td>2012</td><td>+5.18%</td><td>+8.64%</td><td style="color:var(--red)">-3.46pp</td></tr>
+<tr><td>2013</td><td>+29.62%</td><td style="color:var(--green);font-weight:600">+31.26%</td><td style="color:var(--red)">-1.64pp</td></tr>
+<tr><td>2014</td><td>+7.79%</td><td>+17.36%</td><td style="color:var(--red)">-9.57pp</td></tr>
+<tr><td>2015</td><td style="color:var(--red)">-18.49%</td><td>-5.19%</td><td style="color:var(--red)">-13.30pp</td></tr>
+<tr><td>2016</td><td>-2.28%</td><td>+3.45%</td><td style="color:var(--red)">-5.73pp</td></tr>
+<tr><td>2017</td><td>+25.48%</td><td>+26.09%</td><td style="color:var(--red)">-0.61pp</td></tr>
+<tr><td>2018</td><td>+4.43%</td><td>-1.78%</td><td style="color:var(--green)">+6.21pp</td></tr>
+<tr><td>2019</td><td>+1.62%</td><td>+20.49%</td><td style="color:var(--red)">-18.87pp</td></tr>
+<tr><td>2020</td><td>+9.42%</td><td>+25.78%</td><td style="color:var(--red)">-16.36pp</td></tr>
+<tr><td>2021</td><td>+18.27%</td><td>+30.01%</td><td style="color:var(--red)">-11.74pp</td></tr>
+<tr><td>2022</td><td style="color:var(--red)">-13.13%</td><td style="color:var(--red)">-14.72%</td><td style="color:var(--green)">+1.59pp</td></tr>
+<tr><td>2023</td><td>+12.22%</td><td>+8.71%</td><td style="color:var(--green)">+3.51pp</td></tr>
+<tr><td>2024</td><td>+15.26%</td><td>+26.74%</td><td style="color:var(--red)">-11.48pp</td></tr>
+<tr><td>2025</td><td>+6.23%</td><td>+17.03%</td><td style="color:var(--red)">-10.80pp</td></tr>
+<tr><td>2026</td><td>-2.40%</td><td>-5.07%</td><td style="color:var(--green)">+2.67pp</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+  雙軌多空僅在少數年份 (2010, 2018, 2022, 2023, 2026) 勝過 Long Track Only，且優勢幅度很小 (1-6pp)。
+  但在牛市年份 (2019, 2020, 2021, 2024) 大幅落後 10-19pp。短線軌頻繁進出侵蝕了大趨勢中的獲利。
+</div>
+
+</div>
+
+<!-- ==================== CH12 LONG TRACK ONLY TAB ==================== -->
 <div id="tab-ch12" class="tab-content">
 
 <h3 class="section-title">Ch12 雙軌系統 — Long Track Only 推薦配置</h3>
@@ -404,29 +634,29 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <table>
-<thead><tr><th>Year</th><th>Ch8 六狀態機</th><th>Ch12 Long Only</th><th>QQQ B&amp;H</th><th>SPY B&amp;H</th></tr></thead>
+<thead><tr><th>Year</th><th>Ch8 六狀態機</th><th>Ch12 Long Only</th><th>Ch12 雙軌多空</th><th>QQQ B&amp;H</th><th>SPY B&amp;H</th></tr></thead>
 <tbody>
-<tr><td>2006</td><td>+1.54%</td><td>—</td><td>+6.93%</td><td>+13.81%</td></tr>
-<tr><td>2007</td><td>+15.38%</td><td>—</td><td>+18.67%</td><td>+3.69%</td></tr>
-<tr><td>2008</td><td style="color:var(--red)">-27.86%</td><td>—</td><td style="color:var(--red)">-41.73%</td><td style="color:var(--red)">-36.81%</td></tr>
-<tr><td>2009</td><td style="color:var(--green);font-weight:600">+43.31%</td><td>—</td><td>+53.47%</td><td>+25.94%</td></tr>
-<tr><td>2010</td><td>+16.86%</td><td>+4.47%</td><td>+19.22%</td><td>+12.78%</td></tr>
-<tr><td>2011</td><td style="color:var(--red)">-8.14%</td><td style="color:var(--red)">-9.51%</td><td>+2.70%</td><td>+0.00%</td></tr>
-<tr><td>2012</td><td>+11.56%</td><td>+8.64%</td><td>+16.82%</td><td>+13.47%</td></tr>
-<tr><td>2013</td><td>+30.17%</td><td style="color:var(--green);font-weight:600">+31.26%</td><td>+33.27%</td><td>+29.93%</td></tr>
-<tr><td>2014</td><td>+21.50%</td><td>+17.36%</td><td>+19.18%</td><td>+11.39%</td></tr>
-<tr><td>2015</td><td>+4.58%</td><td style="color:var(--red)">-5.19%</td><td>+7.09%</td><td>-0.73%</td></tr>
-<tr><td>2016</td><td>+8.47%</td><td>+3.45%</td><td>+5.89%</td><td>+9.54%</td></tr>
-<tr><td>2017</td><td style="color:var(--green);font-weight:600">+31.57%</td><td>+26.09%</td><td>+31.60%</td><td>+19.42%</td></tr>
-<tr><td>2018</td><td>-2.39%</td><td>-1.78%</td><td>-1.04%</td><td>-6.24%</td></tr>
-<tr><td>2019</td><td>+35.38%</td><td>+20.49%</td><td>+37.96%</td><td>+28.88%</td></tr>
-<tr><td>2020</td><td style="color:var(--green);font-weight:600">+40.25%</td><td>+25.78%</td><td>+47.58%</td><td>+16.26%</td></tr>
-<tr><td>2021</td><td>+31.11%</td><td>+30.01%</td><td>+26.63%</td><td>+26.89%</td></tr>
-<tr><td>2022</td><td style="color:var(--red)">-25.29%</td><td style="color:var(--red)">-14.72%</td><td style="color:var(--red)">-32.58%</td><td style="color:var(--red)">-19.44%</td></tr>
-<tr><td>2023</td><td style="color:var(--green);font-weight:600">+56.96%</td><td>+8.71%</td><td>+53.81%</td><td>+24.23%</td></tr>
-<tr><td>2024</td><td>+30.20%</td><td>+26.74%</td><td>+28.73%</td><td>+23.31%</td></tr>
-<tr><td>2025</td><td>+26.96%</td><td>+17.03%</td><td>+23.88%</td><td>+21.50%</td></tr>
-<tr><td>2026</td><td>-0.99%</td><td>-5.07%</td><td>-3.50%</td><td>+1.20%</td></tr>
+<tr><td>2006</td><td>+1.54%</td><td>—</td><td>—</td><td>+6.93%</td><td>+13.81%</td></tr>
+<tr><td>2007</td><td>+15.38%</td><td>—</td><td>—</td><td>+18.67%</td><td>+3.69%</td></tr>
+<tr><td>2008</td><td style="color:var(--red)">-27.86%</td><td>—</td><td>—</td><td style="color:var(--red)">-41.73%</td><td style="color:var(--red)">-36.81%</td></tr>
+<tr><td>2009</td><td style="color:var(--green);font-weight:600">+43.31%</td><td>—</td><td>—</td><td>+53.47%</td><td>+25.94%</td></tr>
+<tr><td>2010</td><td>+16.86%</td><td>+4.47%</td><td>+5.69%</td><td>+19.22%</td><td>+12.78%</td></tr>
+<tr><td>2011</td><td style="color:var(--red)">-8.14%</td><td style="color:var(--red)">-9.51%</td><td style="color:var(--red)">-19.27%</td><td>+2.70%</td><td>+0.00%</td></tr>
+<tr><td>2012</td><td>+11.56%</td><td>+8.64%</td><td>+5.18%</td><td>+16.82%</td><td>+13.47%</td></tr>
+<tr><td>2013</td><td>+30.17%</td><td style="color:var(--green);font-weight:600">+31.26%</td><td>+29.62%</td><td>+33.27%</td><td>+29.93%</td></tr>
+<tr><td>2014</td><td>+21.50%</td><td>+17.36%</td><td>+7.79%</td><td>+19.18%</td><td>+11.39%</td></tr>
+<tr><td>2015</td><td>+4.58%</td><td style="color:var(--red)">-5.19%</td><td style="color:var(--red)">-18.49%</td><td>+7.09%</td><td>-0.73%</td></tr>
+<tr><td>2016</td><td>+8.47%</td><td>+3.45%</td><td>-2.28%</td><td>+5.89%</td><td>+9.54%</td></tr>
+<tr><td>2017</td><td style="color:var(--green);font-weight:600">+31.57%</td><td>+26.09%</td><td>+25.48%</td><td>+31.60%</td><td>+19.42%</td></tr>
+<tr><td>2018</td><td>-2.39%</td><td>-1.78%</td><td>+4.43%</td><td>-1.04%</td><td>-6.24%</td></tr>
+<tr><td>2019</td><td>+35.38%</td><td>+20.49%</td><td>+1.62%</td><td>+37.96%</td><td>+28.88%</td></tr>
+<tr><td>2020</td><td style="color:var(--green);font-weight:600">+40.25%</td><td>+25.78%</td><td>+9.42%</td><td>+47.58%</td><td>+16.26%</td></tr>
+<tr><td>2021</td><td>+31.11%</td><td>+30.01%</td><td>+18.27%</td><td>+26.63%</td><td>+26.89%</td></tr>
+<tr><td>2022</td><td style="color:var(--red)">-25.29%</td><td style="color:var(--red)">-14.72%</td><td style="color:var(--red)">-13.13%</td><td style="color:var(--red)">-32.58%</td><td style="color:var(--red)">-19.44%</td></tr>
+<tr><td>2023</td><td style="color:var(--green);font-weight:600">+56.96%</td><td>+8.71%</td><td>+12.22%</td><td>+53.81%</td><td>+24.23%</td></tr>
+<tr><td>2024</td><td>+30.20%</td><td>+26.74%</td><td>+15.26%</td><td>+28.73%</td><td>+23.31%</td></tr>
+<tr><td>2025</td><td>+26.96%</td><td>+17.03%</td><td>+6.23%</td><td>+23.88%</td><td>+21.50%</td></tr>
+<tr><td>2026</td><td>-0.99%</td><td>-5.07%</td><td>-2.40%</td><td>-3.50%</td><td>+1.20%</td></tr>
 </tbody>
 </table>
 
@@ -438,8 +668,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 </div>
 
 <div class="note">
-  Ch12 Long Track Only 的回測期從 2010 開始 (MA200 需要 ~4 年暖機)。
-  2006-2009 期間無 Ch12 數據。六狀態機的 QQQ B&amp;H 年報酬數據可能因資料來源略有差異。
+  Ch12 系列的回測期從 2010 開始 (MA200 需要 ~4 年暖機)。
+  2006-2009 期間無 Ch12 數據。
 </div>
 
 </div>
@@ -470,6 +700,7 @@ var LABELS=YEARS.map(String);
 var RET={
   ch8:[1.54,15.38,-27.86,43.31,16.86,-8.14,11.56,30.17,21.50,4.58,8.47,31.57,-2.39,35.38,40.25,31.11,-25.29,56.96,30.20,26.96,-0.99],
   ch12:[null,null,null,null,4.47,-9.51,8.64,31.26,17.36,-5.19,3.45,26.09,-1.78,20.49,25.78,30.01,-14.72,8.71,26.74,17.03,-5.07],
+  dual:[null,null,null,null,5.69,-19.27,5.18,29.62,7.79,-18.49,-2.28,25.48,4.43,1.62,9.42,18.27,-13.13,12.22,15.26,6.23,-2.40],
   qqq:[6.93,18.67,-41.73,53.47,19.22,2.70,16.82,33.27,19.18,7.09,5.89,31.60,-1.04,37.96,47.58,26.63,-32.58,53.81,28.73,23.88,-3.50],
   spy:[13.81,3.69,-36.81,25.94,12.78,0.00,13.47,29.93,11.39,-0.73,9.54,19.42,-6.24,28.88,16.26,26.89,-19.44,24.23,23.31,21.50,1.20]
 };
@@ -495,7 +726,6 @@ function toDD(nav){
   return dd;
 }
 
-/* compute NAV starting from year-end of previous year (end of 2005 = 1.0) */
 var NAV_LABELS=['2005'].concat(LABELS);
 function toNAVfull(ret){
   var nav=[1];var v=1;
@@ -505,13 +735,14 @@ function toNAVfull(ret){
   }
   return nav;
 }
-var NAV={ch8:toNAVfull(RET.ch8),ch12:toNAVfull(RET.ch12),qqq:toNAVfull(RET.qqq),spy:toNAVfull(RET.spy)};
-var DD={ch8:toDD(NAV.ch8),ch12:toDD(NAV.ch12),qqq:toDD(NAV.qqq),spy:toDD(NAV.spy)};
+var NAV={ch8:toNAVfull(RET.ch8),ch12:toNAVfull(RET.ch12),dual:toNAVfull(RET.dual),qqq:toNAVfull(RET.qqq),spy:toNAVfull(RET.spy)};
+var DD={ch8:toDD(NAV.ch8),ch12:toDD(NAV.ch12),dual:toDD(NAV.dual),qqq:toDD(NAV.qqq),spy:toDD(NAV.spy)};
 
-/* ===== Colors (PV-inspired) ===== */
+/* ===== Colors ===== */
 var C={
   ch8:'#d32f2f',ch8bg:'rgba(211,47,47,0.08)',
   ch12:'#2e7d32',ch12bg:'rgba(46,125,50,0.08)',
+  dual:'#7c3aed',dualbg:'rgba(124,58,237,0.08)',
   qqq:'#1565c0',qqqbg:'rgba(21,101,192,0.08)',
   spy:'#757575',spybg:'rgba(117,117,117,0.08)'
 };
@@ -637,6 +868,7 @@ function buildBarChart(canvasId){
       datasets:[
         {label:'Ch8 六狀態機',data:RET.ch8,backgroundColor:RET.ch8.map(function(v){return v>=0?'rgba(211,47,47,0.75)':'rgba(211,47,47,0.35)'}),borderColor:C.ch8,borderWidth:1,borderRadius:2},
         {label:'Ch12 Long Only',data:RET.ch12,backgroundColor:RET.ch12.map(function(v){return v===null?'transparent':v>=0?'rgba(46,125,50,0.75)':'rgba(46,125,50,0.35)'}),borderColor:C.ch12,borderWidth:1,borderRadius:2},
+        {label:'Ch12 雙軌多空',data:RET.dual,backgroundColor:RET.dual.map(function(v){return v===null?'transparent':v>=0?'rgba(124,58,237,0.75)':'rgba(124,58,237,0.35)'}),borderColor:C.dual,borderWidth:1,borderRadius:2},
         {label:'QQQ B&H',data:RET.qqq,backgroundColor:RET.qqq.map(function(v){return v>=0?'rgba(21,101,192,0.75)':'rgba(21,101,192,0.35)'}),borderColor:C.qqq,borderWidth:1,borderRadius:2},
         {label:'SPY B&H',data:RET.spy,backgroundColor:RET.spy.map(function(v){return v>=0?'rgba(117,117,117,0.75)':'rgba(117,117,117,0.35)'}),borderColor:C.spy,borderWidth:1,borderRadius:2}
       ]
@@ -663,7 +895,7 @@ function buildBarChart(canvasId){
   });
 }
 
-/* ===== Summary Statistics (computed from annual returns) ===== */
+/* ===== Summary Statistics ===== */
 function calcStats(ret){
   var valid=ret.filter(function(v){return v!==null});
   if(!valid.length)return null;
@@ -676,7 +908,6 @@ function calcStats(ret){
   var downsideDev=Math.sqrt(downsideVar);
   var sorted=valid.slice().sort(function(a,b){return a-b});
   var median=n%2?sorted[Math.floor(n/2)]:(sorted[n/2-1]+sorted[n/2])/2;
-  // CAGR from cumulative
   var cum=1;valid.forEach(function(r){cum*=(1+r/100)});
   var cagr=(Math.pow(cum,1/n)-1)*100;
   var pos=valid.filter(function(v){return v>0}).length;
@@ -691,7 +922,7 @@ function calcStats(ret){
 function populateSummaryTable(){
   var tbody=document.querySelector('#summary-stats-table tbody');
   if(!tbody)return;
-  var s={ch8:calcStats(RET.ch8),ch12:calcStats(RET.ch12),qqq:calcStats(RET.qqq),spy:calcStats(RET.spy)};
+  var s={ch8:calcStats(RET.ch8),ch12:calcStats(RET.ch12),dual:calcStats(RET.dual),qqq:calcStats(RET.qqq),spy:calcStats(RET.spy)};
   var rows=[
     ['CAGR',function(x){return fmt(x.cagr)+'%'}],
     ['Arithmetic Mean',function(x){return fmt(x.mean)+'%'}],
@@ -708,14 +939,14 @@ function populateSummaryTable(){
   rows.forEach(function(row){
     var tr=document.createElement('tr');
     tr.innerHTML='<td style="font-weight:500">'+row[0]+'</td>'+
-      ['ch8','ch12','qqq','spy'].map(function(k){
+      ['ch8','ch12','dual','qqq','spy'].map(function(k){
         return '<td>'+(s[k]?row[1](s[k]):'—')+'</td>';
       }).join('');
     tbody.appendChild(tr);
   });
 }
 
-/* ===== Rolling N-Year Annualized Returns ===== */
+/* ===== Rolling N-Year Returns ===== */
 function rollingReturns(ret,n){
   var labels=[];var vals=[];
   for(var i=n-1;i<ret.length;i++){
@@ -770,6 +1001,7 @@ function buildScatter(canvasId){
   var points=[
     {label:'Ch8 六狀態機',x:40.35,y:15.14,color:C.ch8,r:8},
     {label:'Ch12 Long Only',x:19.99,y:10.95,color:C.ch12,r:8},
+    {label:'Ch12 雙軌多空',x:26.83,y:4.60,color:C.dual,r:8},
     {label:'QQQ B&H',x:53.40,y:14.90,color:C.qqq,r:6},
     {label:'SPY B&H',x:55.19,y:10.50,color:C.spy,r:6},
     {label:'50/50 B&H',x:53.66,y:12.78,color:'#9e9e9e',r:5}
@@ -808,13 +1040,78 @@ function buildScatter(canvasId){
   });
 }
 
-/* ===== Return Distribution (box-plot style with scatter) ===== */
+/* ===== MDD Pie Chart ===== */
+function buildMDDPie(canvasId){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  charts[canvasId]=new Chart(el,{
+    type:'doughnut',
+    data:{
+      labels:['SPY 短線軌 (46.2%)','QQQ 短線軌 (29.5%)','SPY 長線軌 (11.5%)','QQQ 長線軌 (10.0%)'],
+      datasets:[{
+        data:[46.2,29.5,11.5,10.0],
+        backgroundColor:['#dc2626','#ef4444','#059669','#10b981'],
+        borderColor:'#fff',borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,position:'right',labels:{padding:12,font:{size:11}}},
+        tooltip:{callbacks:{
+          label:function(ctx){return ctx.label+' = $'+(ctx.parsed*343155/100/1000).toFixed(0)+'K'}
+        }}
+      }
+    }
+  });
+}
+
+/* ===== Dual Yearly Bar ===== */
+function buildDualYearlyBar(canvasId){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  var dualLabels=LABELS.slice(4); // 2010 onwards
+  var dualData=RET.dual.slice(4);
+  var ch12Data=RET.ch12.slice(4);
+  charts[canvasId]=new Chart(el,{
+    type:'bar',
+    data:{
+      labels:dualLabels,
+      datasets:[
+        {label:'雙軌多空',data:dualData,backgroundColor:dualData.map(function(v){return v>=0?'rgba(124,58,237,0.75)':'rgba(124,58,237,0.35)'}),borderColor:C.dual,borderWidth:1,borderRadius:2},
+        {label:'Long Track Only',data:ch12Data,backgroundColor:ch12Data.map(function(v){return v===null?'transparent':v>=0?'rgba(46,125,50,0.75)':'rgba(46,125,50,0.35)'}),borderColor:C.ch12,borderWidth:1,borderRadius:2}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',align:'start',
+          labels:{usePointStyle:true,pointStyle:'rect',padding:14,font:{size:11}}},
+        tooltip:{mode:'index',intersect:false,
+          callbacks:{label:function(ctx){
+            if(ctx.parsed.y===null)return null;
+            return ctx.dataset.label+': '+(ctx.parsed.y>0?'+':'')+ctx.parsed.y.toFixed(2)+'%';
+          }}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'},
+          ticks:{callback:function(v){return v+'%'},font:{size:10}},
+          title:{display:true,text:'Annual Return %',font:{size:11,weight:'600'},color:'#6b7280'}}
+      }
+    }
+  });
+}
+
+/* ===== Return Distribution ===== */
 function buildDistChart(canvasId){
   var el=document.getElementById(canvasId);
   if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
   var series=[
     {key:'ch8',label:'Ch8',color:C.ch8},
-    {key:'ch12',label:'Ch12',color:C.ch12},
+    {key:'ch12',label:'Ch12 LTO',color:C.ch12},
+    {key:'dual',label:'Ch12 雙軌',color:C.dual},
     {key:'qqq',label:'QQQ',color:C.qqq},
     {key:'spy',label:'SPY',color:C.spy}
   ];
@@ -826,7 +1123,6 @@ function buildDistChart(canvasId){
       pointRadius:5,pointHoverRadius:7,pointStyle:'circle',showLine:false
     };
   });
-  // Add mean markers
   series.forEach(function(s,idx){
     var valid=RET[s.key].filter(function(v){return v!==null});
     var mean=valid.reduce(function(a,b){return a+b},0)/valid.length;
@@ -849,8 +1145,8 @@ function buildDistChart(canvasId){
         }}
       },
       scales:{
-        x:{type:'linear',min:-0.5,max:3.5,grid:{display:false},
-          ticks:{callback:function(v){return['Ch8','Ch12','QQQ','SPY'][v]||''},stepSize:1,font:{size:11,weight:'600'}}},
+        x:{type:'linear',min:-0.5,max:4.5,grid:{display:false},
+          ticks:{callback:function(v){return['Ch8','Ch12 LTO','雙軌','QQQ','SPY'][v]||''},stepSize:1,font:{size:11,weight:'600'}}},
         y:{grid:{color:'rgba(0,0,0,0.06)'},
           ticks:{callback:function(v){return v+'%'},font:{size:10}},
           title:{display:true,text:'Annual Return %',font:{size:11,weight:'600'},color:'#6b7280'}}
@@ -866,15 +1162,32 @@ function initCharts(){
   buildNavChart('chart-overview-nav',[
     makeDataset('Ch8 六狀態機',NAV.ch8,C.ch8,null,false,true),
     makeDataset('Ch12 Long Only',NAV.ch12,C.ch12,null,false,true),
+    makeDataset('Ch12 雙軌多空',NAV.dual,C.dual,null,false,true),
     makeDataset('QQQ B&H',NAV.qqq,C.qqq,null,true,false),
     makeDataset('SPY B&H',NAV.spy,C.spy,null,true,false)
   ]);
   buildDDChart('chart-overview-dd',[
     makeFillDataset('Ch8',DD.ch8,C.ch8,C.ch8bg),
-    makeFillDataset('Ch12',DD.ch12,C.ch12,C.ch12bg),
+    makeFillDataset('Ch12 LTO',DD.ch12,C.ch12,C.ch12bg),
+    makeFillDataset('雙軌多空',DD.dual,C.dual,C.dualbg),
     makeFillDataset('QQQ',DD.qqq,C.qqq,C.qqqbg),
     makeFillDataset('SPY',DD.spy,C.spy,C.spybg)
   ]);
+
+  /* Dual tab */
+  buildNavChart('chart-dual-nav',[
+    makeDataset('Ch12 雙軌多空',NAV.dual,C.dual,null,false,true),
+    makeDataset('Ch12 Long Only',NAV.ch12,C.ch12,null,false,false),
+    makeDataset('QQQ B&H',NAV.qqq,C.qqq,null,true,false),
+    makeDataset('SPY B&H',NAV.spy,C.spy,null,true,false)
+  ]);
+  buildDDChart('chart-dual-dd',[
+    makeFillDataset('雙軌多空',DD.dual,C.dual,C.dualbg),
+    makeFillDataset('Ch12 LTO',DD.ch12,C.ch12,C.ch12bg),
+    makeFillDataset('QQQ',DD.qqq,C.qqq,C.qqqbg)
+  ]);
+  buildMDDPie('chart-mdd-pie');
+  buildDualYearlyBar('chart-dual-yearly');
 
   /* Ch12 */
   buildNavChart('chart-ch12-nav',[
@@ -900,12 +1213,13 @@ function initCharts(){
     makeFillDataset('SPY',DD.spy,C.spy,C.spybg)
   ]);
 
-  /* Overview: Scatter + Rolling 3Y */
+  /* Scatter + Rolling 3Y */
   buildScatter('chart-scatter');
-  var r3={ch8:rollingReturns(RET.ch8,3),ch12:rollingReturns(RET.ch12,3),qqq:rollingReturns(RET.qqq,3),spy:rollingReturns(RET.spy,3)};
+  var r3={ch8:rollingReturns(RET.ch8,3),ch12:rollingReturns(RET.ch12,3),dual:rollingReturns(RET.dual,3),qqq:rollingReturns(RET.qqq,3),spy:rollingReturns(RET.spy,3)};
   buildRollingChart('chart-rolling3',[
     {label:'Ch8 六狀態機',rolling:r3.ch8,color:C.ch8,dashed:false},
     {label:'Ch12 Long Only',rolling:r3.ch12,color:C.ch12,dashed:false},
+    {label:'Ch12 雙軌多空',rolling:r3.dual,color:C.dual,dashed:false},
     {label:'QQQ B&H',rolling:r3.qqq,color:C.qqq,dashed:true},
     {label:'SPY B&H',rolling:r3.spy,color:C.spy,dashed:true}
   ],3);
