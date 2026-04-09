@@ -151,6 +151,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </tbody>
 </table>
 
+<div class="card" style="padding:1rem">
+  <h3>淨值曲線對比 (log scale)</h3>
+  <canvas id="chart-overview" style="width:100%;height:380px"></canvas>
+  <div id="legend-overview" style="display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;margin-top:.6rem;font-size:.8rem"></div>
+</div>
+
 <div class="verdict">
   <strong>結論:</strong> 兩個系統各有定位。<strong>六狀態機</strong>追求高絕對報酬 (CAGR 15.14%)，接受較大回撤 (-40%)，適合進攻型配置。
   <strong>Long Track Only</strong> 追求最佳風險調整報酬 (Calmar 0.55)，回撤僅 -20%，適合防守型配置。
@@ -195,6 +201,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   長線軌在 20 年間從未觸發做空 (0 筆空單)，事實上等同「只做多」。
   平均持有 255 天/筆，年均交易 ~2 筆，交易成本極低。
 </p>
+</div>
+
+<div class="card" style="padding:1rem">
+  <h3>Ch12 Long Track Only 淨值曲線 vs Buy &amp; Hold (log scale)</h3>
+  <canvas id="chart-ch12" style="width:100%;height:380px"></canvas>
+  <div id="legend-ch12" style="display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;margin-top:.6rem;font-size:.8rem"></div>
 </div>
 
 <h3 class="section-title" style="margin-top:1rem">短線軌 vs 長線軌對比</h3>
@@ -250,6 +262,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   三主狀態 + Grid 加碼層。<strong>S1</strong> 正常巡航 (95% 股票)，<strong>S2</strong> 防守模式 (47.5% 股票)，<strong>S5</strong> 趨勢重啟 (每週 +15%)。
   標的: QQQ (75%) + SMH (20%) + BIL (5%)。Grid 在 S2 下根據跌破 MA104/MA200/MA156 逐層加碼。
 </p>
+</div>
+
+<div class="card" style="padding:1rem">
+  <h3>Ch8 六狀態機淨值曲線 vs Buy &amp; Hold (log scale)</h3>
+  <canvas id="chart-ch8" style="width:100%;height:380px"></canvas>
+  <div id="legend-ch8" style="display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;margin-top:.6rem;font-size:.8rem"></div>
 </div>
 
 <h3 class="section-title" style="margin-top:1rem">狀態轉換與 Grid 統計</h3>
@@ -370,7 +388,132 @@ function showTab(id){
   document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active')});
   document.getElementById('tab-'+id).classList.add('active');
   event.target.classList.add('active');
+  // redraw charts when tab becomes visible
+  requestAnimationFrame(drawAllCharts);
 }
+
+/* ===== Equity Curve Data ===== */
+var YEARS=[2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+var RET={
+  ch8:[1.54,15.38,-27.86,43.31,16.86,-8.14,11.56,30.17,21.50,4.58,8.47,31.57,-2.39,35.38,40.25,31.11,-25.29,56.96,30.20,26.96,-0.99],
+  ch12:[null,null,null,null,4.47,-9.51,8.64,31.26,17.36,-5.19,3.45,26.09,-1.78,20.49,25.78,30.01,-14.72,8.71,26.74,17.03,-5.07],
+  qqq:[6.93,18.67,-41.73,53.47,19.22,2.70,16.82,33.27,19.18,7.09,5.89,31.60,-1.04,37.96,47.58,26.63,-32.58,53.81,28.73,23.88,-3.50],
+  spy:[13.81,3.69,-36.81,25.94,12.78,0.00,13.47,29.93,11.39,-0.73,9.54,19.42,-6.24,28.88,16.26,26.89,-19.44,24.23,23.31,21.50,1.20]
+};
+
+function toNAV(ret){
+  var nav=[1];var last=1;
+  for(var i=0;i<ret.length;i++){
+    if(ret[i]===null){nav.push(null)}
+    else{last=last*(1+ret[i]/100);nav.push(last)}
+  }
+  return nav;
+}
+
+var NAV={ch8:toNAV(RET.ch8),ch12:toNAV(RET.ch12),qqq:toNAV(RET.qqq),spy:toNAV(RET.spy)};
+var LABELS=['2005'].concat(YEARS.map(String));
+
+/* ===== Generic Chart Renderer ===== */
+function drawChart(canvasId,legendId,series){
+  var canvas=document.getElementById(canvasId);
+  if(!canvas||canvas.offsetParent===null)return; // skip hidden
+  var dpr=window.devicePixelRatio||1;
+  var rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
+  var ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  var W=rect.width,H=rect.height;
+  var pad={t:20,r:60,b:40,l:55};
+  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+
+  // compute log range across all series
+  var allVals=[];
+  series.forEach(function(s){s.nav.forEach(function(v){if(v!==null)allVals.push(v)})});
+  var logMin=Math.log10(Math.min.apply(null,allVals))*0.95;
+  var logMax=Math.log10(Math.max.apply(null,allVals))*1.05;
+
+  function xPos(i){return pad.l+i/(LABELS.length-1)*cw}
+  function yPos(v){return pad.t+ch-(Math.log10(v)-logMin)/(logMax-logMin)*ch}
+
+  // background
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+
+  // grid lines & Y labels
+  ctx.strokeStyle='#e5e7eb';ctx.lineWidth=0.5;ctx.fillStyle='#6b7280';ctx.font='11px -apple-system,sans-serif';ctx.textAlign='right';
+  var yTicks=[0.5,1,2,3,5,7,10,15,20];
+  yTicks.forEach(function(v){
+    if(Math.log10(v)<logMin||Math.log10(v)>logMax)return;
+    var y=yPos(v);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillText('$'+v,pad.l-6,y+4);
+  });
+
+  // X labels
+  ctx.textAlign='center';ctx.fillStyle='#6b7280';
+  for(var i=0;i<LABELS.length;i++){
+    var x=xPos(i);
+    if(i%2===0||LABELS.length<=12){
+      ctx.save();ctx.translate(x,H-pad.b+14);ctx.rotate(-0.5);
+      ctx.fillText(LABELS[i],0,0);ctx.restore();
+    }
+    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,H-pad.b);ctx.stroke();
+  }
+
+  // draw each series
+  series.forEach(function(s){
+    ctx.strokeStyle=s.color;ctx.lineWidth=s.primary?2.8:1.8;
+    if(!s.primary){ctx.setLineDash([5,3])}else{ctx.setLineDash([])}
+    ctx.globalAlpha=s.primary?1:0.7;
+    ctx.beginPath();var started=false;
+    for(var i=0;i<s.nav.length;i++){
+      if(s.nav[i]===null)continue;
+      var x=xPos(i),y=yPos(s.nav[i]);
+      if(!started){ctx.moveTo(x,y);started=true}else{ctx.lineTo(x,y)}
+    }
+    ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+
+    // end label
+    var lastVal=s.nav[s.nav.length-1];
+    if(lastVal!==null){
+      var ex=xPos(s.nav.length-1),ey=yPos(lastVal);
+      ctx.fillStyle=s.color;ctx.font='bold 11px -apple-system,sans-serif';ctx.textAlign='left';
+      ctx.fillText(lastVal>=10?'$'+lastVal.toFixed(1):'$'+lastVal.toFixed(2),ex+4,ey+4);
+    }
+  });
+
+  // legend
+  var leg=document.getElementById(legendId);
+  if(leg){
+    leg.innerHTML='';
+    series.forEach(function(s){
+      var span=document.createElement('span');
+      span.innerHTML='<span style="display:inline-block;width:18px;height:3px;background:'+s.color+';vertical-align:middle;margin-right:4px;border-radius:2px'+(s.primary?'':';border-top:1px dashed '+s.color)+'"></span>'+s.label;
+      leg.appendChild(span);
+    });
+  }
+}
+
+function drawAllCharts(){
+  drawChart('chart-overview','legend-overview',[
+    {nav:NAV.ch8,color:'#dc2626',label:'Ch8 六狀態機 (CAGR 15.14%)',primary:true},
+    {nav:NAV.ch12,color:'#059669',label:'Ch12 Long Only (CAGR 10.95%)',primary:true},
+    {nav:NAV.qqq,color:'#3b82f6',label:'QQQ B&H (CAGR 14.90%)',primary:false},
+    {nav:NAV.spy,color:'#9ca3af',label:'SPY B&H (CAGR 10.50%)',primary:false}
+  ]);
+  drawChart('chart-ch12','legend-ch12',[
+    {nav:NAV.ch12,color:'#059669',label:'Ch12 Long Only (CAGR 10.95%, MDD -19.99%)',primary:true},
+    {nav:NAV.qqq,color:'#3b82f6',label:'QQQ B&H',primary:false},
+    {nav:NAV.spy,color:'#9ca3af',label:'SPY B&H',primary:false}
+  ]);
+  drawChart('chart-ch8','legend-ch8',[
+    {nav:NAV.ch8,color:'#dc2626',label:'Ch8 六狀態機 (CAGR 15.14%, MDD -40.35%)',primary:true},
+    {nav:NAV.qqq,color:'#3b82f6',label:'QQQ B&H',primary:false},
+    {nav:NAV.spy,color:'#9ca3af',label:'SPY B&H',primary:false}
+  ]);
+}
+
+window.addEventListener('load',drawAllCharts);
+window.addEventListener('resize',drawAllCharts);
 </script>
 </body>
 </html>
