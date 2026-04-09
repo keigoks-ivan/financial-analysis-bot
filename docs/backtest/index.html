@@ -165,6 +165,29 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
   <div class="chart-wrap-sm" style="position:relative;width:100%;height:180px"><canvas id="chart-overview-dd"></canvas></div>
 </div>
 
+<!-- Overview: Risk-Return Scatter -->
+<div class="chart-card">
+  <h3>Risk vs Return</h3>
+  <div class="chart-sub">X = Max Drawdown (%), Y = CAGR (%) &middot; 右上角為最佳象限</div>
+  <div style="position:relative;width:100%;height:300px"><canvas id="chart-scatter"></canvas></div>
+</div>
+
+<!-- Overview: Summary Statistics -->
+<h3 class="section-title" style="margin-top:1.25rem">Summary Statistics</h3>
+<div class="card" style="overflow-x:auto">
+<table id="summary-stats-table">
+<thead><tr><th>Metric</th><th style="color:#d32f2f">Ch8 六狀態機</th><th style="color:#2e7d32">Ch12 Long Only</th><th style="color:#1565c0">QQQ B&amp;H</th><th style="color:#757575">SPY B&amp;H</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+
+<!-- Overview: Rolling Returns -->
+<div class="chart-card">
+  <h3>Rolling 3-Year Annualized Returns</h3>
+  <div class="chart-sub">每個資料點 = 過去3年的年化報酬率</div>
+  <div class="chart-wrap"><canvas id="chart-rolling3"></canvas></div>
+</div>
+
 <div class="verdict">
   <strong>結論:</strong> 兩個系統各有定位。<strong>六狀態機</strong>追求高絕對報酬 (CAGR 15.14%)，接受較大回撤 (-40%)，適合進攻型配置。
   <strong>Long Track Only</strong> 追求最佳風險調整報酬 (Calmar 0.55)，回撤僅 -20%，適合防守型配置。
@@ -222,6 +245,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="chart-card">
   <h3>Underwater Equity (Drawdown)</h3>
   <div style="position:relative;width:100%;height:180px"><canvas id="chart-ch12-dd"></canvas></div>
+</div>
+
+<!-- Ch12: Rolling Returns -->
+<div class="chart-card">
+  <h3>Rolling 3-Year Annualized Returns</h3>
+  <div class="chart-wrap"><canvas id="chart-ch12-rolling"></canvas></div>
 </div>
 
 <h3 class="section-title" style="margin-top:1rem">短線軌 vs 長線軌對比</h3>
@@ -290,6 +319,12 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <div class="chart-card">
   <h3>Underwater Equity (Drawdown)</h3>
   <div style="position:relative;width:100%;height:180px"><canvas id="chart-ch8-dd"></canvas></div>
+</div>
+
+<!-- Ch8: Rolling Returns -->
+<div class="chart-card">
+  <h3>Rolling 3-Year Annualized Returns</h3>
+  <div class="chart-wrap"><canvas id="chart-ch8-rolling"></canvas></div>
 </div>
 
 <h3 class="section-title" style="margin-top:1rem">狀態轉換與 Grid 統計</h3>
@@ -394,6 +429,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);tex
 <tr><td>2026</td><td>-0.99%</td><td>-5.07%</td><td>-3.50%</td><td>+1.20%</td></tr>
 </tbody>
 </table>
+
+<!-- Return Distribution -->
+<div class="chart-card">
+  <h3>Return Distribution</h3>
+  <div class="chart-sub">年度報酬分佈 &middot; 每個點代表一年</div>
+  <div style="position:relative;width:100%;height:280px"><canvas id="chart-dist"></canvas></div>
+</div>
 
 <div class="note">
   Ch12 Long Track Only 的回測期從 2010 開始 (MA200 需要 ~4 年暖機)。
@@ -621,8 +663,205 @@ function buildBarChart(canvasId){
   });
 }
 
+/* ===== Summary Statistics (computed from annual returns) ===== */
+function calcStats(ret){
+  var valid=ret.filter(function(v){return v!==null});
+  if(!valid.length)return null;
+  var n=valid.length;
+  var mean=valid.reduce(function(a,b){return a+b},0)/n;
+  var variance=valid.reduce(function(a,b){return a+Math.pow(b-mean,2)},0)/(n-1);
+  var std=Math.sqrt(variance);
+  var downside=valid.filter(function(v){return v<0});
+  var downsideVar=downside.length?downside.reduce(function(a,b){return a+b*b},0)/(n-1):0;
+  var downsideDev=Math.sqrt(downsideVar);
+  var sorted=valid.slice().sort(function(a,b){return a-b});
+  var median=n%2?sorted[Math.floor(n/2)]:(sorted[n/2-1]+sorted[n/2])/2;
+  // CAGR from cumulative
+  var cum=1;valid.forEach(function(r){cum*=(1+r/100)});
+  var cagr=(Math.pow(cum,1/n)-1)*100;
+  var pos=valid.filter(function(v){return v>0}).length;
+  return{
+    cagr:cagr,std:std,best:Math.max.apply(null,valid),worst:Math.min.apply(null,valid),
+    median:median,mean:mean,downsideDev:downsideDev,
+    posYears:pos,totalYears:n,posPct:(pos/n*100),
+    endNAV:cum
+  };
+}
+
+function populateSummaryTable(){
+  var tbody=document.querySelector('#summary-stats-table tbody');
+  if(!tbody)return;
+  var s={ch8:calcStats(RET.ch8),ch12:calcStats(RET.ch12),qqq:calcStats(RET.qqq),spy:calcStats(RET.spy)};
+  var rows=[
+    ['CAGR',function(x){return fmt(x.cagr)+'%'}],
+    ['Arithmetic Mean',function(x){return fmt(x.mean)+'%'}],
+    ['Median Return',function(x){return fmt(x.median)+'%'}],
+    ['Standard Deviation',function(x){return x.std.toFixed(2)+'%'}],
+    ['Downside Deviation',function(x){return x.downsideDev.toFixed(2)+'%'}],
+    ['Best Year',function(x){return '<span style="color:var(--green);font-weight:600">+'+x.best.toFixed(2)+'%</span>'}],
+    ['Worst Year',function(x){return '<span style="color:var(--red);font-weight:600">'+x.worst.toFixed(2)+'%</span>'}],
+    ['Positive Years',function(x){return x.posYears+' / '+x.totalYears+' ('+x.posPct.toFixed(0)+'%)'}],
+    ['Final NAV (per $1)',function(x){return '$'+x.endNAV.toFixed(2)}]
+  ];
+  function fmt(v){return (v>0?'+':'')+v.toFixed(2)}
+  tbody.innerHTML='';
+  rows.forEach(function(row){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td style="font-weight:500">'+row[0]+'</td>'+
+      ['ch8','ch12','qqq','spy'].map(function(k){
+        return '<td>'+(s[k]?row[1](s[k]):'—')+'</td>';
+      }).join('');
+    tbody.appendChild(tr);
+  });
+}
+
+/* ===== Rolling N-Year Annualized Returns ===== */
+function rollingReturns(ret,n){
+  var labels=[];var vals=[];
+  for(var i=n-1;i<ret.length;i++){
+    var allValid=true;var cum=1;
+    for(var j=i-n+1;j<=i;j++){
+      if(ret[j]===null){allValid=false;break}
+      cum*=(1+ret[j]/100);
+    }
+    labels.push(YEARS[i].toString());
+    vals.push(allValid?(Math.pow(cum,1/n)-1)*100:null);
+  }
+  return{labels:labels,data:vals};
+}
+
+function buildRollingChart(canvasId,series,n){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  var first=series[0];
+  var labels=first.rolling.labels;
+  var datasets=series.map(function(s){
+    return makeDataset(s.label,s.rolling.data,s.color,null,s.dashed,!s.dashed);
+  });
+  charts[canvasId]=new Chart(el,{
+    type:'line',
+    data:{labels:labels,datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',align:'start',
+          labels:{usePointStyle:true,pointStyle:'line',padding:14,font:{size:11}}},
+        tooltip:{mode:'index',intersect:false,
+          callbacks:{label:function(ctx){
+            if(ctx.parsed.y===null)return null;
+            return ctx.dataset.label+': '+(ctx.parsed.y>0?'+':'')+ctx.parsed.y.toFixed(2)+'%';
+          }}}
+      },
+      scales:{
+        x:{grid:{display:true,color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'},
+          ticks:{callback:function(v){return v+'%'},font:{size:10}},
+          title:{display:true,text:n+'-Year Annualized Return %',font:{size:11,weight:'600'},color:'#6b7280'}}
+      }
+    }
+  });
+}
+
+/* ===== Risk-Return Scatter ===== */
+function buildScatter(canvasId){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  var points=[
+    {label:'Ch8 六狀態機',x:40.35,y:15.14,color:C.ch8,r:8},
+    {label:'Ch12 Long Only',x:19.99,y:10.95,color:C.ch12,r:8},
+    {label:'QQQ B&H',x:53.40,y:14.90,color:C.qqq,r:6},
+    {label:'SPY B&H',x:55.19,y:10.50,color:C.spy,r:6},
+    {label:'50/50 B&H',x:53.66,y:12.78,color:'#9e9e9e',r:5}
+  ];
+  charts[canvasId]=new Chart(el,{
+    type:'scatter',
+    data:{
+      datasets:points.map(function(p){
+        return{
+          label:p.label,data:[{x:p.x,y:p.y}],
+          backgroundColor:p.color,borderColor:p.color,
+          pointRadius:p.r,pointHoverRadius:p.r+3,
+          pointStyle:'circle'
+        };
+      })
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,position:'top',align:'start',
+          labels:{usePointStyle:true,padding:12,font:{size:10}}},
+        tooltip:{callbacks:{
+          title:function(items){return items[0].dataset.label},
+          label:function(ctx){return 'CAGR: +'+ctx.parsed.y.toFixed(2)+'%  |  MDD: -'+ctx.parsed.x.toFixed(2)+'%'}
+        }}
+      },
+      scales:{
+        x:{reverse:true,grid:{color:'rgba(0,0,0,0.06)'},
+          title:{display:true,text:'Max Drawdown % (lower = better)',font:{size:11,weight:'600'},color:'#6b7280'},
+          ticks:{callback:function(v){return '-'+v+'%'},font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'},
+          title:{display:true,text:'CAGR % (higher = better)',font:{size:11,weight:'600'},color:'#6b7280'},
+          ticks:{callback:function(v){return v+'%'},font:{size:10}}}
+      }
+    }
+  });
+}
+
+/* ===== Return Distribution (box-plot style with scatter) ===== */
+function buildDistChart(canvasId){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  var series=[
+    {key:'ch8',label:'Ch8',color:C.ch8},
+    {key:'ch12',label:'Ch12',color:C.ch12},
+    {key:'qqq',label:'QQQ',color:C.qqq},
+    {key:'spy',label:'SPY',color:C.spy}
+  ];
+  var datasets=series.map(function(s,idx){
+    var valid=RET[s.key].filter(function(v){return v!==null});
+    var points=valid.map(function(v){return{x:idx,y:v}});
+    return{
+      label:s.label,data:points,backgroundColor:s.color+'99',borderColor:s.color,
+      pointRadius:5,pointHoverRadius:7,pointStyle:'circle',showLine:false
+    };
+  });
+  // Add mean markers
+  series.forEach(function(s,idx){
+    var valid=RET[s.key].filter(function(v){return v!==null});
+    var mean=valid.reduce(function(a,b){return a+b},0)/valid.length;
+    datasets.push({
+      label:s.label+' Mean',data:[{x:idx,y:mean}],
+      backgroundColor:'#fff',borderColor:s.color,borderWidth:3,
+      pointRadius:8,pointHoverRadius:10,pointStyle:'crossRot',showLine:false
+    });
+  });
+  charts[canvasId]=new Chart(el,{
+    type:'scatter',
+    data:{datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{
+          title:function(items){return items[0].dataset.label},
+          label:function(ctx){return (ctx.parsed.y>0?'+':'')+ctx.parsed.y.toFixed(2)+'%'}
+        }}
+      },
+      scales:{
+        x:{type:'linear',min:-0.5,max:3.5,grid:{display:false},
+          ticks:{callback:function(v){return['Ch8','Ch12','QQQ','SPY'][v]||''},stepSize:1,font:{size:11,weight:'600'}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'},
+          ticks:{callback:function(v){return v+'%'},font:{size:10}},
+          title:{display:true,text:'Annual Return %',font:{size:11,weight:'600'},color:'#6b7280'}}
+      }
+    }
+  });
+}
+
 /* ===== Init ===== */
 function initCharts(){
+  populateSummaryTable();
   /* Overview */
   buildNavChart('chart-overview-nav',[
     makeDataset('Ch8 六狀態機',NAV.ch8,C.ch8,null,false,true),
@@ -661,8 +900,33 @@ function initCharts(){
     makeFillDataset('SPY',DD.spy,C.spy,C.spybg)
   ]);
 
-  /* Yearly bar */
+  /* Overview: Scatter + Rolling 3Y */
+  buildScatter('chart-scatter');
+  var r3={ch8:rollingReturns(RET.ch8,3),ch12:rollingReturns(RET.ch12,3),qqq:rollingReturns(RET.qqq,3),spy:rollingReturns(RET.spy,3)};
+  buildRollingChart('chart-rolling3',[
+    {label:'Ch8 六狀態機',rolling:r3.ch8,color:C.ch8,dashed:false},
+    {label:'Ch12 Long Only',rolling:r3.ch12,color:C.ch12,dashed:false},
+    {label:'QQQ B&H',rolling:r3.qqq,color:C.qqq,dashed:true},
+    {label:'SPY B&H',rolling:r3.spy,color:C.spy,dashed:true}
+  ],3);
+
+  /* Ch12: Rolling 3Y */
+  buildRollingChart('chart-ch12-rolling',[
+    {label:'Ch12 Long Only',rolling:r3.ch12,color:C.ch12,dashed:false},
+    {label:'QQQ B&H',rolling:r3.qqq,color:C.qqq,dashed:true},
+    {label:'SPY B&H',rolling:r3.spy,color:C.spy,dashed:true}
+  ],3);
+
+  /* Ch8: Rolling 3Y */
+  buildRollingChart('chart-ch8-rolling',[
+    {label:'Ch8 六狀態機',rolling:r3.ch8,color:C.ch8,dashed:false},
+    {label:'QQQ B&H',rolling:r3.qqq,color:C.qqq,dashed:true},
+    {label:'SPY B&H',rolling:r3.spy,color:C.spy,dashed:true}
+  ],3);
+
+  /* Yearly bar + distribution */
   buildBarChart('chart-yearly-bar');
+  buildDistChart('chart-dist');
 }
 
 window.addEventListener('load',initCharts);
