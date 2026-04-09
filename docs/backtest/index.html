@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SystemProtocol v7 回測結果 | InvestMQuest Research</title>
+  <meta name="description" content="SystemProtocol v7 雙軌系統與六狀態機回測結果">
+  <style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+header{background:#fff;border-bottom:1px solid var(--border);padding:.7rem 0}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+header .logo{font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em}
+header nav a{color:var(--muted);margin-left:1.4rem;font-size:.85rem;font-weight:500}
+header nav a:hover,header nav a.active{color:var(--brand)}
+.page-hdr{padding:1.75rem 0 1.25rem;background:#fff;border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem;color:var(--text)}
+.section{padding:1.5rem 0}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:.85rem;
+               padding-bottom:.4rem;border-bottom:2px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.65rem .8rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;
+     font-size:.72rem;font-weight:600;letter-spacing:.02em}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-sys{background:#dbeafe;color:#1e40af}
+.tag-bh{background:#f3f4f6;color:#374151}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;text-align:center}
+.kpi .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem}
+.kpi .value{font-size:1.3rem;font-weight:700}
+.kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--brand)}
+.verdict{background:var(--brand-light);border-left:4px solid var(--brand);
+         padding:1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.92rem;line-height:1.7}
+.verdict strong{color:var(--brand)}
+.event-card{background:var(--card);border:1px solid var(--border);border-radius:8px;
+            padding:.85rem 1.1rem;margin-bottom:.6rem}
+.event-card .ev-name{font-weight:600;font-size:.9rem;margin-bottom:.3rem}
+.event-card .ev-detail{font-size:.82rem;color:var(--muted);line-height:1.55}
+.tabs{display:flex;gap:0;margin-bottom:1.25rem;border-bottom:2px solid var(--border)}
+.tab{padding:.6rem 1.2rem;font-size:.88rem;font-weight:500;cursor:pointer;
+     border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);background:none;border-top:0;border-left:0;border-right:0}
+.tab:hover{color:var(--text)}.tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.tab-content{display:none}.tab-content.active{display:block}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:var(--amber-text);margin:1rem 0}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem}
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .hdr-inner{flex-direction:column;gap:.5rem}
+  header nav a{margin-left:0;margin-right:1rem}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="container hdr-inner">
+    <a class="logo" href="/">InvestMQuest Research</a>
+    <nav><a href="/">首頁</a> <a href="/backtest/" class="active">回測</a></nav>
+  </div>
+</header>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / 回測結果</div>
+    <h1>SystemProtocol v7 回測結果</h1>
+    <div class="sub">2006-01-01 ~ 2026-04-09 &middot; 真實 yfinance 資料 &middot; 初始資金 $1,000,000</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== Tabs ===== -->
+<div class="section">
+<div class="tabs">
+  <button class="tab active" onclick="showTab('overview')">總覽</button>
+  <button class="tab" onclick="showTab('ch12')">Ch12 雙軌系統</button>
+  <button class="tab" onclick="showTab('ch8')">Ch8 六狀態機</button>
+  <button class="tab" onclick="showTab('yearly')">逐年績效</button>
+</div>
+
+<!-- ==================== OVERVIEW TAB ==================== -->
+<div id="tab-overview" class="tab-content active">
+
+<h3 class="section-title">配置對比總表</h3>
+<table>
+<thead>
+<tr><th>配置</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>交易次數</th><th>期末資產</th><th></th></tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Ch8 六狀態機</strong><br><span style="font-size:.75rem;color:var(--muted)">QQQ+SMH+BIL</span></td>
+  <td style="font-weight:700;color:var(--green)">+15.14%</td>
+  <td style="color:var(--red)">-40.35%</td>
+  <td>0.83</td><td>0.38</td><td>68</td>
+  <td>$17.40M</td>
+  <td><span class="tag tag-sys">主動</span></td>
+</tr>
+<tr>
+  <td><strong>Ch12 Long Track Only</strong><br><span style="font-size:.75rem;color:var(--muted)">50/50 SPY/QQQ W52/104/250</span></td>
+  <td style="font-weight:700;color:var(--green)">+10.95%</td>
+  <td>-19.99%</td>
+  <td style="font-weight:600">0.86</td><td style="font-weight:600;color:var(--green)">0.55</td><td>37</td>
+  <td>$5.00M</td>
+  <td><span class="tag tag-sys">主動</span></td>
+</tr>
+<tr>
+  <td><strong>Ch12 原始雙軌</strong><br><span style="font-size:.75rem;color:var(--muted)">50/50 SPY/QQQ Short+Long</span></td>
+  <td>+4.60%</td>
+  <td>-26.83%</td>
+  <td>0.42</td><td>0.17</td><td>210</td>
+  <td>$2.00M</td>
+  <td><span class="tag tag-warn">淘汰</span></td>
+</tr>
+<tr style="background:#f9fafb">
+  <td>QQQ Buy &amp; Hold</td>
+  <td>+14.90%</td><td style="color:var(--red)">-53.40%</td><td>0.74</td><td>0.28</td><td>—</td><td>—</td>
+  <td><span class="tag tag-bh">基準</span></td>
+</tr>
+<tr style="background:#f9fafb">
+  <td>SPY Buy &amp; Hold</td>
+  <td>+10.50%</td><td style="color:var(--red)">-55.19%</td><td>0.61</td><td>0.19</td><td>—</td><td>—</td>
+  <td><span class="tag tag-bh">基準</span></td>
+</tr>
+<tr style="background:#f9fafb">
+  <td>50/50 SPY/QQQ B&amp;H</td>
+  <td>+12.78%</td><td style="color:var(--red)">-53.66%</td><td>0.70</td><td>0.24</td><td>—</td><td>—</td>
+  <td><span class="tag tag-bh">基準</span></td>
+</tr>
+</tbody>
+</table>
+
+<div class="verdict">
+  <strong>結論:</strong> 兩個系統各有定位。<strong>六狀態機</strong>追求高絕對報酬 (CAGR 15.14%)，接受較大回撤 (-40%)，適合進攻型配置。
+  <strong>Long Track Only</strong> 追求最佳風險調整報酬 (Calmar 0.55)，回撤僅 -20%，適合防守型配置。
+  原始雙軌系統因短線軌拖累 (獲利因子僅 1.15) 已淘汰。
+</div>
+
+<h3 class="section-title" style="margin-top:1.5rem">穩健性驗證</h3>
+<div class="card">
+<h3>Ch12 Long Track Only — 三項檢驗全部通過</h3>
+<table>
+<thead><tr><th>檢驗</th><th>標準</th><th>結果</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>Walk-Forward</td><td>Sharpe 差距 &lt; 0.3</td><td>0.22 (訓練 0.71 / 驗證 0.94)</td><td><span class="tag tag-best">通過</span></td></tr>
+<tr><td>參數敏感度</td><td>CAGR 極差 &lt; 3pp</td><td>0.44pp (三組 ±8% 參數)</td><td><span class="tag tag-best">通過</span></td></tr>
+<tr><td>年度穩定性</td><td>無連虧兩年 / 無 +50% 年</td><td>最長連虧 1 年 / 最好年 +31%</td><td><span class="tag tag-best">通過</span></td></tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<!-- ==================== CH12 TAB ==================== -->
+<div id="tab-ch12" class="tab-content">
+
+<h3 class="section-title">Ch12 雙軌系統 — Long Track Only 推薦配置</h3>
+<div class="kpi-grid">
+  <div class="kpi"><div class="label">CAGR</div><div class="value pos">+10.95%</div></div>
+  <div class="kpi"><div class="label">MDD</div><div class="value neg">-19.99%</div></div>
+  <div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.86</div></div>
+  <div class="kpi"><div class="label">Sortino</div><div class="value neu">1.02</div></div>
+  <div class="kpi"><div class="label">Calmar</div><div class="value pos">0.55</div></div>
+  <div class="kpi"><div class="label">交易次數</div><div class="value">37</div></div>
+  <div class="kpi"><div class="label">獲利因子</div><div class="value pos">7.86</div></div>
+  <div class="kpi"><div class="label">期末資產</div><div class="value">$5.00M</div></div>
+</div>
+
+<div class="card">
+<h3>系統說明</h3>
+<p style="font-size:.88rem;color:#374151;line-height:1.7">
+  只使用<strong>週線長線軌</strong> (W52/W104/W250)，50/50 SPY/QQQ 配置。
+  短線軌 (D60/D120/D200) 因獲利因子僅 1.15、貢獻 76% 的 MDD 而被移除。
+  長線軌在 20 年間從未觸發做空 (0 筆空單)，事實上等同「只做多」。
+  平均持有 255 天/筆，年均交易 ~2 筆，交易成本極低。
+</p>
+</div>
+
+<h3 class="section-title" style="margin-top:1rem">短線軌 vs 長線軌對比</h3>
+<table>
+<thead><tr><th></th><th>SPY Short</th><th>SPY Long</th><th>QQQ Short</th><th>QQQ Long</th></tr></thead>
+<tbody>
+<tr><td>交易數</td><td>84</td><td>15</td><td>89</td><td>22</td></tr>
+<tr><td>勝率</td><td>40.5%</td><td style="color:var(--green);font-weight:600">53.3%</td><td>36.0%</td><td>40.9%</td></tr>
+<tr><td>盈虧比</td><td>1.68x</td><td style="color:var(--green);font-weight:600">5.77x</td><td>2.10x</td><td style="color:var(--green);font-weight:600">12.87x</td></tr>
+<tr><td>獲利因子</td><td>1.14</td><td style="color:var(--green);font-weight:600">6.60</td><td>1.18</td><td style="color:var(--green);font-weight:600">8.91</td></tr>
+<tr><td>做空勝率</td><td style="color:var(--red)">11.8%</td><td>—</td><td style="color:var(--red)">15.8%</td><td>—</td></tr>
+<tr><td>總 P&amp;L</td><td>+$131K</td><td style="font-weight:600">+$865K</td><td>+$264K</td><td style="font-weight:600">+$1,464K</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+  短線軌的做空方向幾乎全軍覆沒 (SPY 11.8%、QQQ 15.8% 勝率)。
+  70% 資金配給獲利因子 ~1.15 的短線軌是原始系統 underperform 的根本原因。
+</div>
+
+<h3 class="section-title" style="margin-top:1.5rem">Top 5 回撤</h3>
+<table>
+<thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2014-11-28</td><td>2016-06-27</td><td>2018-01-04</td><td style="color:var(--red)">-26.83%</td><td>577</td><td>556</td></tr>
+<tr><td>2</td><td>2011-02-18</td><td>2012-01-09</td><td>2013-12-09</td><td style="color:var(--red)">-24.89%</td><td>325</td><td>700</td></tr>
+<tr><td>3</td><td>2020-02-19</td><td>2020-04-14</td><td>2020-09-01</td><td>-19.38%</td><td>55</td><td>140</td></tr>
+<tr><td>4</td><td>2021-12-29</td><td>2023-03-14</td><td>2024-01-29</td><td>-19.17%</td><td>440</td><td>321</td></tr>
+<tr><td>5</td><td>2024-12-17</td><td>2025-05-23</td><td>2025-09-22</td><td>-14.33%</td><td>157</td><td>122</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<!-- ==================== CH8 TAB ==================== -->
+<div id="tab-ch8" class="tab-content">
+
+<h3 class="section-title">Ch8 六狀態機簡化版 (路徑 B)</h3>
+<div class="kpi-grid">
+  <div class="kpi"><div class="label">CAGR</div><div class="value pos">+15.14%</div></div>
+  <div class="kpi"><div class="label">MDD</div><div class="value neg">-40.35%</div></div>
+  <div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.83</div></div>
+  <div class="kpi"><div class="label">Sortino</div><div class="value neu">1.10</div></div>
+  <div class="kpi"><div class="label">Calmar</div><div class="value">0.38</div></div>
+  <div class="kpi"><div class="label">交易次數</div><div class="value">68</div></div>
+  <div class="kpi"><div class="label">期末資產</div><div class="value">$17.40M</div></div>
+  <div class="kpi"><div class="label">Vol</div><div class="value">19.36%</div></div>
+</div>
+
+<div class="card">
+<h3>系統架構</h3>
+<p style="font-size:.88rem;color:#374151;line-height:1.7">
+  三主狀態 + Grid 加碼層。<strong>S1</strong> 正常巡航 (95% 股票)，<strong>S2</strong> 防守模式 (47.5% 股票)，<strong>S5</strong> 趨勢重啟 (每週 +15%)。
+  標的: QQQ (75%) + SMH (20%) + BIL (5%)。Grid 在 S2 下根據跌破 MA104/MA200/MA156 逐層加碼。
+</p>
+</div>
+
+<h3 class="section-title" style="margin-top:1rem">狀態轉換與 Grid 統計</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+<div class="card">
+  <h3>狀態轉換 (20年)</h3>
+  <table>
+  <tbody>
+  <tr><td>S1→S2 進入防守</td><td style="font-weight:600">11 次</td></tr>
+  <tr><td>S2→S5 趨勢重啟</td><td style="font-weight:600">18 次</td></tr>
+  <tr><td>S5→S1 完成恢復</td><td style="font-weight:600;color:var(--green)">11 次</td></tr>
+  <tr><td>S5→S2 恢復失敗</td><td style="font-weight:600;color:var(--red)">7 次</td></tr>
+  </tbody>
+  </table>
+</div>
+<div class="card">
+  <h3>Grid 觸發 &amp; 時間分布</h3>
+  <table>
+  <tbody>
+  <tr><td>Grid #1+#2 (MA104)</td><td style="font-weight:600">8 次</td></tr>
+  <tr><td>Grid #3 (MA200)</td><td style="font-weight:600">1 次</td></tr>
+  <tr><td>Grid #4 (MA156)</td><td style="font-weight:600">3 次</td></tr>
+  <tr style="border-top:2px solid var(--border)"><td>S1 巡航時間</td><td>81.8%</td></tr>
+  <tr><td>S2 防守時間</td><td>15.4%</td></tr>
+  <tr><td>S5 過渡時間</td><td>2.8%</td></tr>
+  </tbody>
+  </table>
+</div>
+</div>
+
+<h3 class="section-title" style="margin-top:1.5rem">關鍵事件行為</h3>
+<div class="event-card">
+  <div class="ev-name">2008 GFC <span class="tag tag-best" style="margin-left:.5rem">+16pp vs B&amp;H</span></div>
+  <div class="ev-detail">系統 -16.97% vs QQQ B&amp;H -33.18%。S2 + G12 + G4 觸發。2009-06 以 80% 曝險快速恢復。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2011 歐債 <span class="tag tag-fail" style="margin-left:.5rem">-6.6pp vs B&amp;H</span></div>
+  <div class="ev-detail">系統 -7.89% vs QQQ B&amp;H -1.33%。S2/S5 來回 whipsaw 4 次。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2018 Q4 <span class="tag tag-best" style="margin-left:.5rem">+1.9pp vs B&amp;H</span></div>
+  <div class="ev-detail">系統 -14.96% vs QQQ B&amp;H -16.90%。S2 + G12 觸發。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2020 COVID <span class="tag tag-fail" style="margin-left:.5rem">-3.7pp vs B&amp;H</span></div>
+  <div class="ev-detail">系統 -11.15% vs QQQ B&amp;H -7.43%。S2 進入太晚 (3/20)，但 G12+G4 觸發，S5→S1 太快。</div>
+</div>
+<div class="event-card">
+  <div class="ev-name">2022 通膨熊 <span class="tag tag-best" style="margin-left:.5rem">+6.1pp vs B&amp;H</span></div>
+  <div class="ev-detail">系統 -24.32% vs QQQ B&amp;H -30.46%。三層 Grid 全觸發 (G12+G4+G3)。2023-02 以 95% 曝險回 S1。</div>
+</div>
+
+<h3 class="section-title" style="margin-top:1.5rem">Top 5 回撤</h3>
+<table>
+<thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2007-10-31</td><td>2009-03-09</td><td>2010-01-08</td><td style="color:var(--red)">-40.35%</td><td>495</td><td>305</td></tr>
+<tr><td>2</td><td>2021-12-29</td><td>2022-10-14</td><td>2023-06-12</td><td style="color:var(--red)">-29.41%</td><td>289</td><td>241</td></tr>
+<tr><td>3</td><td>2020-02-19</td><td>2020-03-16</td><td>2020-06-23</td><td>-28.45%</td><td>26</td><td>99</td></tr>
+<tr><td>4</td><td>2018-09-04</td><td>2018-12-24</td><td>2019-04-23</td><td>-18.99%</td><td>111</td><td>120</td></tr>
+<tr><td>5</td><td>2006-01-13</td><td>2006-07-21</td><td>2006-11-20</td><td>-18.44%</td><td>189</td><td>122</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<!-- ==================== YEARLY TAB ==================== -->
+<div id="tab-yearly" class="tab-content">
+
+<h3 class="section-title">逐年報酬對比</h3>
+<table>
+<thead><tr><th>Year</th><th>Ch8 六狀態機</th><th>Ch12 Long Only</th><th>QQQ B&amp;H</th><th>SPY B&amp;H</th></tr></thead>
+<tbody>
+<tr><td>2006</td><td>+1.54%</td><td>—</td><td>+6.93%</td><td>+13.81%</td></tr>
+<tr><td>2007</td><td>+15.38%</td><td>—</td><td>+18.67%</td><td>+3.69%</td></tr>
+<tr><td>2008</td><td style="color:var(--red)">-27.86%</td><td>—</td><td style="color:var(--red)">-41.73%</td><td style="color:var(--red)">-36.81%</td></tr>
+<tr><td>2009</td><td style="color:var(--green);font-weight:600">+43.31%</td><td>—</td><td>+53.47%</td><td>+25.94%</td></tr>
+<tr><td>2010</td><td>+16.86%</td><td>+4.47%</td><td>+19.22%</td><td>+12.78%</td></tr>
+<tr><td>2011</td><td style="color:var(--red)">-8.14%</td><td style="color:var(--red)">-9.51%</td><td>+2.70%</td><td>+0.00%</td></tr>
+<tr><td>2012</td><td>+11.56%</td><td>+8.64%</td><td>+16.82%</td><td>+13.47%</td></tr>
+<tr><td>2013</td><td>+30.17%</td><td style="color:var(--green);font-weight:600">+31.26%</td><td>+33.27%</td><td>+29.93%</td></tr>
+<tr><td>2014</td><td>+21.50%</td><td>+17.36%</td><td>+19.18%</td><td>+11.39%</td></tr>
+<tr><td>2015</td><td>+4.58%</td><td style="color:var(--red)">-5.19%</td><td>+7.09%</td><td>-0.73%</td></tr>
+<tr><td>2016</td><td>+8.47%</td><td>+3.45%</td><td>+5.89%</td><td>+9.54%</td></tr>
+<tr><td>2017</td><td style="color:var(--green);font-weight:600">+31.57%</td><td>+26.09%</td><td>+31.60%</td><td>+19.42%</td></tr>
+<tr><td>2018</td><td>-2.39%</td><td>-1.78%</td><td>-1.04%</td><td>-6.24%</td></tr>
+<tr><td>2019</td><td>+35.38%</td><td>+20.49%</td><td>+37.96%</td><td>+28.88%</td></tr>
+<tr><td>2020</td><td style="color:var(--green);font-weight:600">+40.25%</td><td>+25.78%</td><td>+47.58%</td><td>+16.26%</td></tr>
+<tr><td>2021</td><td>+31.11%</td><td>+30.01%</td><td>+26.63%</td><td>+26.89%</td></tr>
+<tr><td>2022</td><td style="color:var(--red)">-25.29%</td><td style="color:var(--red)">-14.72%</td><td style="color:var(--red)">-32.58%</td><td style="color:var(--red)">-19.44%</td></tr>
+<tr><td>2023</td><td style="color:var(--green);font-weight:600">+56.96%</td><td>+8.71%</td><td>+53.81%</td><td>+24.23%</td></tr>
+<tr><td>2024</td><td>+30.20%</td><td>+26.74%</td><td>+28.73%</td><td>+23.31%</td></tr>
+<tr><td>2025</td><td>+26.96%</td><td>+17.03%</td><td>+23.88%</td><td>+21.50%</td></tr>
+<tr><td>2026</td><td>-0.99%</td><td>-5.07%</td><td>-3.50%</td><td>+1.20%</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+  Ch12 Long Track Only 的回測期從 2010 開始 (MA200 需要 ~4 年暖機)。
+  2006-2009 期間無 Ch12 數據。六狀態機的 QQQ B&amp;H 年報酬數據可能因資料來源略有差異。
+</div>
+
+</div>
+</div><!-- /section -->
+
+</div><!-- /container -->
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 回測結果僅供研究參考，不構成投資建議 &middot;
+    過往表現不代表未來業績
+  </div>
+</footer>
+
+<script>
+function showTab(id){
+  document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active')});
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active')});
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
