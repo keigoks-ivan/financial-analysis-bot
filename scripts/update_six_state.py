@@ -1,0 +1,672 @@
+#!/usr/bin/env python3
+"""
+Six-State Machine Status Page Generator
+========================================
+Fetches QQQ weekly data, computes all MAs and state,
+generates docs/six-state/index.html.
+
+Schedule: weekdays after US market close.
+- Non-S2: only meaningful on Fridays (weekly MA updates)
+- S2: daily Grid monitoring needed
+"""
+import json
+import math
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
+OUTPUT = Path(__file__).parent.parent / "docs" / "six-state" / "index.html"
+
+# ---------------------------------------------------------------------------
+# Data
+# ---------------------------------------------------------------------------
+def fetch_data():
+    end = datetime.now() + timedelta(days=1)
+    start = end - timedelta(days=365 * 6)  # 6 years for MA200
+    df = yf.download("QQQ", start=start.strftime("%Y-%m-%d"),
+                     end=end.strftime("%Y-%m-%d"), progress=False)
+    close = df["Close"]
+    if isinstance(close, pd.DataFrame):
+        close = close.iloc[:, 0]
+    return close
+
+
+def compute_state(close: pd.Series):
+    weekly = close.resample("W-FRI").last().dropna()
+
+    ma = {}
+    for n in [12, 20, 52, 80, 104, 156, 200]:
+        ma[n] = weekly.rolling(n).mean()
+
+    std20 = weekly.rolling(20).std()
+    std80 = weekly.rolling(80).std()
+
+    last = float(weekly.iloc[-1])
+    last_date = weekly.index[-1].strftime("%Y-%m-%d")
+
+    # Key levels
+    ma_vals = {n: float(ma[n].iloc[-1]) for n in ma}
+    ma12_098 = ma_vals[12] * 0.98
+    ma52_097 = ma_vals[52] * 0.97
+
+    # Red lights
+    bb = {
+        "20_2s": float(ma[20].iloc[-1] + 2 * std20.iloc[-1]),
+        "20_3s": float(ma[20].iloc[-1] + 3 * std20.iloc[-1]),
+        "80_2s": float(ma[80].iloc[-1] + 2 * std80.iloc[-1]),
+        "80_3s": float(ma[80].iloc[-1] + 3 * std80.iloc[-1]),
+    }
+    red_lights = {k: last > v for k, v in bb.items()}
+    red_count = sum(red_lights.values())
+
+    # Recent 8 weeks for state tracking
+    recent = []
+    for i in range(-8, 0):
+        w = float(weekly.iloc[i])
+        d = weekly.index[i].strftime("%Y-%m-%d")
+        m12 = float(ma[12].iloc[i])
+        m52 = float(ma[52].iloc[i])
+        recent.append({
+            "date": d, "close": w, "ma12": m12, "ma52": m52,
+            "above_ma12": w >= m12, "below_ma12_098": w < m12 * 0.98,
+            "above_ma52": w >= m52, "below_ma52_097": w < m52 * 0.97,
+            "pct_ma12": (w / m12 - 1) * 100,
+            "pct_ma52": (w / m52 - 1) * 100,
+        })
+
+    # Determine current state by walking recent history
+    state = "S1"
+    weeks_above_ma12 = 0
+    s15_entry_date = None
+
+    for r in recent:
+        if state == "S1":
+            if r["below_ma52_097"]:
+                state = "S2"
+            elif r["below_ma12_098"]:
+                state = "S1.5"
+                s15_entry_date = r["date"]
+                weeks_above_ma12 = 0
+        elif state == "S1.5":
+            if r["below_ma52_097"]:
+                state = "S2"
+            elif r["above_ma12"]:
+                weeks_above_ma12 += 1
+                if weeks_above_ma12 >= 2:
+                    state = "S1"
+                    weeks_above_ma12 = 0
+            else:
+                weeks_above_ma12 = 0
+        elif state == "S2":
+            if r["above_ma52"]:
+                state = "S5"
+        elif state == "S5":
+            if not r["above_ma52"]:
+                state = "S2"
+            else:
+                state = "S1"  # simplified: assume recovery complete
+
+    # Check consecutive weeks below MA52 for S2
+    if state in ("S1", "S1.5"):
+        if len(recent) >= 2 and not recent[-1]["above_ma52"] and not recent[-2]["above_ma52"]:
+            state = "S2"
+
+    # State info
+    state_info = {
+        "S1":   {"name": "S1 正常巡航",  "css": "s1",  "exposure": 95,   "nq": 75, "stock": 20, "bond": 5,    "desc": "所有均線之上，正常配置"},
+        "S1.5": {"name": "S1.5 緩衝層",  "css": "s15", "exposure": 90,   "nq": 70, "stock": 20, "bond": 10,   "desc": ""},
+        "S0":   {"name": "S0 紅燈過熱",  "css": "s0",  "exposure": 79.8, "nq": 63, "stock": 16.8, "bond": 20.2, "desc": "紅燈 4/4 全亮，主動減碼"},
+        "S2":   {"name": "S2 防守模式",  "css": "s2",  "exposure": 47.5, "nq": 37.5, "stock": 10, "bond": 52.5, "desc": "跌破 MA52，大幅減碼防守"},
+        "S5":   {"name": "S5 趨勢重啟",  "css": "s5",  "exposure": 0,    "nq": 0, "stock": 0, "bond": 0,       "desc": "從 S2 恢復中，每週 +15%"},
+    }
+
+    if red_count >= 4 and state in ("S1", "S1.5"):
+        state = "S0"
+
+    si = state_info[state]
+
+    # Build S1.5 specific desc
+    if state == "S1.5":
+        if weeks_above_ma12 >= 1:
+            si["desc"] = f"Close 回到 MA12 之上，已確認 {weeks_above_ma12}/2 週"
+        else:
+            si["desc"] = f"Close 低於 MA12×0.98，等待恢復"
+
+    return {
+        "state": state,
+        "state_info": si,
+        "last_close": last,
+        "last_date": last_date,
+        "ma_vals": ma_vals,
+        "ma12_098": ma12_098,
+        "ma52_097": ma52_097,
+        "bb": bb,
+        "red_lights": red_lights,
+        "red_count": red_count,
+        "recent": recent,
+        "weeks_above_ma12": weeks_above_ma12,
+    }
+
+
+# ---------------------------------------------------------------------------
+# HTML Generation
+# ---------------------------------------------------------------------------
+def pct(close, ma):
+    return (close / ma - 1) * 100
+
+def fmt_pct(v):
+    sign = "+" if v >= 0 else ""
+    return f"{sign}{v:.2f}%"
+
+def pct_class(v):
+    return "g-above" if v >= 0 else "g-below"
+
+def bulb(on):
+    return "on" if on else "off"
+
+def state_tag(r, recent_list, idx):
+    """Determine display state for a week in the recent table."""
+    # Walk forward from start to determine state at each point
+    # Simplified: use the data we already computed
+    return ""
+
+def generate_html(d):
+    si = d["state_info"]
+    s = d["state"]
+    last = d["last_close"]
+    ma = d["ma_vals"]
+
+    pct_ma12 = pct(last, ma[12])
+    pct_ma52 = pct(last, ma[52])
+    pct_s2 = pct(last, d["ma52_097"])
+
+    # S1 recovery progress
+    if s == "S1.5":
+        recovery_text = f'{d["weeks_above_ma12"]} / 2 週'
+        recovery_sub = "需連續 2 週 ≥ MA12"
+    elif s == "S1":
+        recovery_text = "已完成"
+        recovery_sub = "正常巡航中"
+    else:
+        recovery_text = "N/A"
+        recovery_sub = f"當前 {s}"
+
+    # Recent weeks table rows
+    recent_rows = ""
+    # Re-walk state for display
+    display_state = "S1"
+    display_wk_above = 0
+    for i, r in enumerate(d["recent"]):
+        prev_state = display_state
+        entry_note = ""
+
+        if display_state == "S1":
+            if r["below_ma52_097"]:
+                display_state = "S2"
+                entry_note = "S2 進入"
+            elif r["below_ma12_098"]:
+                display_state = "S1.5"
+                entry_note = "S1.5 進入"
+                display_wk_above = 0
+        elif display_state == "S1.5":
+            if r["below_ma52_097"]:
+                display_state = "S2"
+                entry_note = "S2 進入"
+            elif r["above_ma12"]:
+                display_wk_above += 1
+                if display_wk_above >= 2:
+                    display_state = "S1"
+                    entry_note = "回 S1"
+                    display_wk_above = 0
+                else:
+                    entry_note = f"{display_wk_above}/2 週 ≥ MA12"
+            else:
+                display_wk_above = 0
+        elif display_state == "S2":
+            if r["above_ma52"]:
+                display_state = "S5"
+                entry_note = "S5 重啟"
+        elif display_state == "S5":
+            if not r["above_ma52"]:
+                display_state = "S2"
+                entry_note = "回 S2"
+            else:
+                display_state = "S1"
+                entry_note = "恢復完成"
+
+        # Check 2 consecutive below MA52
+        if display_state in ("S1", "S1.5") and i >= 1:
+            if not r["above_ma52"] and not d["recent"][i-1]["above_ma52"]:
+                display_state = "S2"
+                entry_note = "連續2週<MA52"
+
+        if d["red_count"] >= 4 and display_state in ("S1", "S1.5"):
+            display_state = "S0"
+            entry_note = "紅燈 4/4"
+
+        state_colors = {
+            "S1": ("green", "green"),
+            "S1.5": ("blue", "blue"),
+            "S0": ("amber", "amber"),
+            "S2": ("red", "red"),
+            "S5": ("purple", "purple"),
+        }
+        sc = state_colors.get(display_state, ("green", "green"))
+
+        # Highlight rows
+        row_bg = ""
+        if entry_note and "進入" in entry_note:
+            bg_map = {"S1.5": "var(--blue-bg)", "S2": "var(--red-bg)", "S0": "var(--amber-bg)"}
+            row_bg = f' style="background:{bg_map.get(display_state, "")}"'
+        elif entry_note and ("回 S1" in entry_note or "恢復" in entry_note):
+            row_bg = ' style="background:var(--green-bg)"'
+        elif not r["above_ma52"]:
+            row_bg = ' style="background:var(--amber-bg)"'
+        elif i == len(d["recent"]) - 1 and r["above_ma12"]:
+            row_bg = ' style="background:var(--green-bg)"'
+
+        pct12_style = f'color:var(--green)' if r["pct_ma12"] >= 0 else f'color:var(--red)'
+        pct52_style = f'color:var(--green)' if r["pct_ma52"] >= 0 else f'color:var(--red)'
+        pct12_bold = ' font-weight:700;' if abs(r["pct_ma12"]) > 2 else ''
+        pct52_bold = ' font-weight:700;' if abs(r["pct_ma52"]) > 2 else ''
+
+        tag_html = f'<span class="tag" style="background:var(--{sc[0]}-bg);color:var(--{sc[0]}-text)">{display_state}</span>'
+        if entry_note:
+            note_color = "green" if "回" in entry_note or "恢復" in entry_note else "amber" if "接近" in entry_note or "週" in entry_note else sc[0]
+            tag_html += f' <span style="font-size:.7rem;color:var(--{note_color})">{entry_note}</span>'
+
+        recent_rows += f"""<tr{row_bg}>
+  <td>{r['date']}</td><td>{r['close']:.2f}</td><td>{r['ma12']:.2f}</td><td>{r['ma52']:.2f}</td>
+  <td style="{pct12_style};{pct12_bold}">{fmt_pct(r['pct_ma12'])}</td>
+  <td style="{pct52_style};{pct52_bold}">{fmt_pct(r['pct_ma52'])}</td>
+  <td>{tag_html}</td>
+</tr>\n"""
+
+    # Grid distances
+    grid_data = [
+        ("#1+#2", "MA104", ma[104], 57.5),
+        ("#3", "MA200", ma[200], 72.5),
+        ("#4", "MA156", ma[156], 95),
+    ]
+    grid_html = ""
+    for gname, ma_name, ma_val, target_exp in grid_data:
+        dist = pct(last, ma_val)
+        grid_html += f"""<div class="gt">
+    <div class="gt-name">Grid {gname}</div>
+    <div class="gt-trigger">觸發: Close ≤ {ma_name}</div>
+    <div class="gt-trigger">{ma_name} = {ma_val:.2f} ({fmt_pct(-dist)})</div>
+    <div class="gt-status gt-ready">{'待命' if s != 'S2' else '就緒'}</div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem">觸發後曝險 → {target_exp}%</div>
+  </div>\n"""
+
+    # Active node markers
+    def active(st):
+        return " active" if st == s else ""
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+    html = f"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>六狀態機即時狀態 | InvestMQuest Research</title>
+  <meta name="description" content="SystemProtocol v7 Ch8 六狀態機 — 當前狀態與規則總覽">
+  <style>
+:root{{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f8f9fa;--card:#fff;
+      --text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
+      --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#93c5fd;--blue-text:#1e40af;
+      --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-border:#c4b5fd;--purple-text:#5b21b6}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}}
+a{{color:var(--brand);text-decoration:none}}a:hover{{text-decoration:underline}}
+.container{{max-width:1140px;margin:0 auto;padding:0 1.5rem}}
+header{{background:#fff;border-bottom:1px solid var(--border);padding:.7rem 0}}
+.hdr-inner{{display:flex;align-items:center;justify-content:space-between}}
+header .logo{{font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em}}
+header nav a{{color:var(--muted);margin-left:1.4rem;font-size:.85rem;font-weight:500}}
+header nav a:hover,header nav a.active{{color:var(--brand)}}
+.page-hdr{{padding:1.5rem 0 1.2rem;background:#fff;border-bottom:1px solid var(--border)}}
+.page-hdr h1{{font-size:1.5rem;font-weight:700;letter-spacing:-.03em}}
+.page-hdr .sub{{color:var(--muted);font-size:.85rem;margin-top:.2rem}}
+.crumb{{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}}
+.crumb a{{color:var(--muted)}}
+.card{{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+.card h3{{font-size:.95rem;font-weight:600;margin-bottom:.75rem;color:var(--text)}}
+.section{{padding:1.25rem 0}}
+.section-title{{font-size:1.05rem;font-weight:700;margin-bottom:.8rem;padding-bottom:.35rem;border-bottom:2px solid var(--brand)}}
+table{{width:100%;border-collapse:collapse;font-size:.82rem}}
+th,td{{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}}
+th{{background:#f8f9fa;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}}
+td{{font-variant-numeric:tabular-nums}}
+tbody tr:hover td{{background:#f3f4f6}}
+.tag{{display:inline-block;padding:.12rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600;letter-spacing:.02em}}
+footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem}}
+.status-hero{{padding:2rem 0;text-align:center}}
+.status-badge{{display:inline-flex;align-items:center;gap:.75rem;padding:1rem 2.5rem;border-radius:16px;font-size:1.8rem;font-weight:800;letter-spacing:-.02em;margin-bottom:1rem}}
+.status-badge .dot{{width:16px;height:16px;border-radius:50%;animation:pulse 2s infinite}}
+@keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:.4}}}}
+.status-sub{{font-size:1rem;color:var(--muted);margin-bottom:.5rem}}
+.status-exposure{{font-size:2.5rem;font-weight:800;margin:.5rem 0}}
+.status-date{{font-size:.8rem;color:var(--muted)}}
+.status-s1 .status-badge{{background:var(--green-bg);color:var(--green-text);border:2px solid var(--green-border)}}
+.status-s1 .dot{{background:var(--green)}}.status-s1 .status-exposure{{color:var(--green)}}
+.status-s15 .status-badge{{background:var(--blue-bg);color:var(--blue-text);border:2px solid var(--blue-border)}}
+.status-s15 .dot{{background:var(--blue)}}.status-s15 .status-exposure{{color:var(--blue)}}
+.status-s0 .status-badge{{background:var(--amber-bg);color:var(--amber-text);border:2px solid var(--amber-border)}}
+.status-s0 .dot{{background:var(--amber)}}.status-s0 .status-exposure{{color:var(--amber)}}
+.status-s2 .status-badge{{background:var(--red-bg);color:var(--red-text);border:2px solid var(--red-border)}}
+.status-s2 .dot{{background:var(--red)}}.status-s2 .status-exposure{{color:var(--red)}}
+.status-s5 .status-badge{{background:var(--purple-bg);color:var(--purple-text);border:2px solid var(--purple-border)}}
+.status-s5 .dot{{background:var(--purple)}}.status-s5 .status-exposure{{color:var(--purple)}}
+.gauge-row{{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem;margin-bottom:1.5rem}}
+.gauge{{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.8rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}}
+.gauge .g-label{{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem}}
+.gauge .g-value{{font-size:1.1rem;font-weight:700;font-variant-numeric:tabular-nums}}
+.gauge .g-sub{{font-size:.7rem;color:var(--muted);margin-top:.15rem}}
+.g-above{{color:var(--green)}}.g-below{{color:var(--red)}}.g-neu{{color:var(--text)}}
+.flow{{display:flex;align-items:center;justify-content:center;gap:.3rem;flex-wrap:wrap;margin:1.5rem 0}}
+.flow-node{{padding:.5rem 1rem;border-radius:8px;font-size:.8rem;font-weight:600;text-align:center;min-width:80px;border:2px solid var(--border);background:#fff;color:var(--muted);position:relative}}
+.flow-node.active{{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:2}}
+.flow-node.s1{{border-color:var(--green-border);color:var(--green-text)}}
+.flow-node.s1.active{{background:var(--green-bg);border-color:var(--green)}}
+.flow-node.s15{{border-color:var(--blue-border);color:var(--blue-text)}}
+.flow-node.s15.active{{background:var(--blue-bg);border-color:var(--blue)}}
+.flow-node.s0{{border-color:var(--amber-border);color:var(--amber-text)}}
+.flow-node.s0.active{{background:var(--amber-bg);border-color:var(--amber)}}
+.flow-node.s2{{border-color:var(--red-border);color:var(--red-text)}}
+.flow-node.s2.active{{background:var(--red-bg);border-color:var(--red)}}
+.flow-node.s5{{border-color:var(--purple-border);color:var(--purple-text)}}
+.flow-node.s5.active{{background:var(--purple-bg);border-color:var(--purple)}}
+.flow-arrow{{font-size:1.2rem;color:var(--muted)}}
+.flow-node .fn-sub{{font-size:.65rem;font-weight:400;display:block;margin-top:.1rem}}
+.alloc-bar{{display:flex;height:36px;border-radius:8px;overflow:hidden;margin:.75rem 0;font-size:.72rem;font-weight:600;color:#fff}}
+.alloc-bar div{{display:flex;align-items:center;justify-content:center;transition:width .5s ease}}
+.ab-nq{{background:#2563eb}}.ab-stock{{background:#7c3aed}}.ab-bond{{background:#9ca3af}}
+.rl-row{{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0}}
+.rl{{display:flex;align-items:center;gap:.4rem;padding:.35rem .7rem;border-radius:6px;font-size:.78rem;border:1px solid var(--border);background:#fff}}
+.rl .bulb{{width:12px;height:12px;border-radius:50%;border:1px solid #ddd}}
+.rl .bulb.on{{background:var(--red);border-color:var(--red);box-shadow:0 0 6px rgba(220,38,38,.4)}}
+.rl .bulb.off{{background:#e5e7eb}}
+.levels{{position:relative;height:280px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem;margin:1rem 0}}
+.level-line{{position:absolute;left:80px;right:16px;height:1px;display:flex;align-items:center}}
+.level-line .ll-tag{{position:absolute;left:-72px;font-size:.7rem;font-weight:600;white-space:nowrap}}
+.level-line .ll-val{{position:absolute;right:0;font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums}}
+.level-line .ll-bar{{flex:1;height:1px;margin:0 65px 0 0}}
+.price-marker{{position:absolute;left:80px;right:16px;height:3px;display:flex;align-items:center}}
+.price-marker .ll-tag{{position:absolute;left:-72px;font-size:.78rem;font-weight:800}}
+.price-marker .ll-val{{position:absolute;right:0;font-size:.78rem;font-weight:700}}
+.price-marker .ll-bar{{flex:1;height:3px;margin:0 65px 0 0;border-radius:2px}}
+.tabs{{display:flex;gap:0;margin-bottom:1rem;border-bottom:2px solid var(--border);overflow-x:auto}}
+.tab{{padding:.55rem 1.1rem;font-size:.85rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);background:none;border-top:0;border-left:0;border-right:0;white-space:nowrap}}
+.tab:hover{{color:var(--text)}}.tab.active{{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}}
+.tab-content{{display:none}}.tab-content.active{{display:block}}
+.grid-tracker{{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0}}
+.gt{{background:#fff;border:1px solid var(--border);border-radius:8px;padding:.75rem;text-align:center}}
+.gt .gt-name{{font-size:.8rem;font-weight:700;margin-bottom:.3rem}}
+.gt .gt-trigger{{font-size:.72rem;color:var(--muted);margin-bottom:.3rem}}
+.gt .gt-status{{font-size:.82rem;font-weight:600;padding:.2rem .6rem;border-radius:4px;display:inline-block}}
+.gt-ready{{background:#f3f4f6;color:#6b7280}}
+.gt-armed{{background:var(--green-bg);color:var(--green-text)}}
+@media(max-width:768px){{
+  .hdr-inner{{flex-direction:column;gap:.5rem}}
+  header nav a{{margin-left:0;margin-right:1rem}}
+  .gauge-row{{grid-template-columns:repeat(2,1fr)}}
+  .grid-tracker{{grid-template-columns:1fr}}
+  .flow{{gap:.2rem}}.flow-node{{min-width:60px;padding:.35rem .6rem;font-size:.72rem}}
+  .status-badge{{font-size:1.3rem;padding:.75rem 1.5rem}}
+  .status-exposure{{font-size:2rem}}
+  table{{font-size:.74rem}}th,td{{padding:.4rem .45rem}}
+}}
+</style>
+</head>
+<body>
+<header>
+  <div class="container hdr-inner">
+    <a class="logo" href="/">InvestMQuest Research</a>
+    <nav><a href="/">首頁</a> <a href="/briefing/">每日簡報</a> <a href="/weekly/">週報</a> <a href="/backtest/">回測</a> <a href="/six-state/" class="active">六狀態機</a></nav>
+  </div>
+</header>
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / 六狀態機</div>
+    <h1>Ch8 六狀態機 — 即時狀態</h1>
+    <div class="sub">SystemProtocol v7 動態曝險調整系統 &middot; QQQ 週線</div>
+  </div>
+</div>
+<div class="container">
+
+<!-- STATUS HERO -->
+<div class="status-hero status-{si['css']}">
+  <div class="status-badge"><span class="dot"></span><span>{si['name']}</span></div>
+  <div class="status-sub">{si['desc']}</div>
+  <div class="status-exposure">{si['exposure']}%</div>
+  <div style="font-size:.8rem;color:var(--muted)">股票曝險</div>
+  <div class="status-date">數據截至 {d['last_date']} (週五收盤) &middot; 頁面更新 {now}</div>
+</div>
+
+<!-- Allocation Bar -->
+<div class="card">
+<h3>當前配置</h3>
+<div class="alloc-bar">
+  <div class="ab-nq" style="width:{si['nq']}%">NQ100 {si['nq']}%</div>
+  <div class="ab-stock" style="width:{si['stock']}%">個股 {si['stock']}%</div>
+  <div class="ab-bond" style="width:{si['bond']}%">IB01 {si['bond']}%</div>
+</div>
+<div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)">
+  <span>股票曝險 {si['exposure']}% ({s}: NQ {si['nq']}% + 個股 {si['stock']}%)</span>
+  <span>債券 {si['bond']}%</span>
+</div>
+</div>
+
+<!-- Key Gauges -->
+<div class="gauge-row">
+  <div class="gauge"><div class="g-label">QQQ 收盤</div><div class="g-value g-neu">{last:.2f}</div><div class="g-sub">{d['last_date']}</div></div>
+  <div class="gauge"><div class="g-label">vs MA12</div><div class="g-value {pct_class(pct_ma12)}">{fmt_pct(pct_ma12)}</div><div class="g-sub">MA12 = {ma[12]:.2f}</div></div>
+  <div class="gauge"><div class="g-label">vs MA52</div><div class="g-value {pct_class(pct_ma52)}">{fmt_pct(pct_ma52)}</div><div class="g-sub">MA52 = {ma[52]:.2f}</div></div>
+  <div class="gauge"><div class="g-label">S2 觸發線</div><div class="g-value {pct_class(pct_s2)}">{fmt_pct(pct_s2)}</div><div class="g-sub">MA52&times;0.97 = {d['ma52_097']:.2f}</div></div>
+  <div class="gauge"><div class="g-label">紅燈</div><div class="g-value g-neu">{d['red_count']} / 4</div><div class="g-sub">{'過熱!' if d['red_count']>=4 else '未過熱'}</div></div>
+  <div class="gauge"><div class="g-label">回 S1 條件</div><div class="g-value" style="color:var({'--green' if s=='S1' else '--amber'})">{recovery_text}</div><div class="g-sub">{recovery_sub}</div></div>
+</div>
+
+<!-- State Flow -->
+<div class="card">
+<h3>狀態流程圖</h3>
+<div class="flow">
+  <div class="flow-node s1{active('S1')}">S1<span class="fn-sub">正常巡航<br>95%</span></div>
+  <span class="flow-arrow">&harr;</span>
+  <div class="flow-node s15{active('S1.5')}">S1.5<span class="fn-sub">緩衝層<br>90%</span></div>
+  <span class="flow-arrow">&rarr;</span>
+  <div class="flow-node s2{active('S2')}">S2<span class="fn-sub">防守模式<br>47.5%</span></div>
+  <span class="flow-arrow">&harr;</span>
+  <div class="flow-node s5{active('S5')}">S5<span class="fn-sub">趨勢重啟<br>+15%/週</span></div>
+</div>
+<div class="flow" style="margin-top:.5rem">
+  <div class="flow-node s0{active('S0')}">S0<span class="fn-sub">紅燈過熱<br>79.8%</span></div>
+  <span style="font-size:.75rem;color:var(--muted);margin:0 .5rem">紅燈 4/4 時從 S1 進入</span>
+</div>
+</div>
+
+<!-- Price Level Map -->
+<div class="card">
+<h3>價位地圖 — QQQ 關鍵均線</h3>
+<div class="levels">
+  <div class="price-marker" style="bottom:85%"><span class="ll-tag" style="color:var(--brand)">QQQ</span><div class="ll-bar" style="background:var(--brand)"></div><span class="ll-val" style="color:var(--brand);font-weight:700">{last:.2f}</span></div>
+  <div class="level-line" style="bottom:80%"><span class="ll-tag" style="color:var(--blue)">MA12</span><div class="ll-bar" style="background:var(--blue-border);border-top:1px dashed var(--blue)"></div><span class="ll-val">{ma[12]:.2f}</span></div>
+  <div class="level-line" style="bottom:72%"><span class="ll-tag" style="color:var(--blue)">MA12&times;0.98</span><div class="ll-bar" style="background:var(--blue-border);border-top:1px dotted var(--blue)"></div><span class="ll-val">{d['ma12_098']:.2f}</span></div>
+  <div class="level-line" style="bottom:62%"><span class="ll-tag" style="color:var(--green)">MA52</span><div class="ll-bar" style="background:var(--green-border);border-top:1px dashed var(--green)"></div><span class="ll-val">{ma[52]:.2f}</span></div>
+  <div class="level-line" style="bottom:52%"><span class="ll-tag" style="color:var(--red)">MA52&times;0.97</span><div class="ll-bar" style="background:var(--red-border);border-top:1px dotted var(--red)"></div><span class="ll-val">{d['ma52_097']:.2f}</span></div>
+  <div class="level-line" style="bottom:40%"><span class="ll-tag">MA80</span><div class="ll-bar" style="background:#e5e7eb;border-top:1px dashed #9ca3af"></div><span class="ll-val">{ma[80]:.2f}</span></div>
+  <div class="level-line" style="bottom:30%"><span class="ll-tag" style="color:var(--amber)">MA104</span><div class="ll-bar" style="background:var(--amber-border);border-top:1px dashed var(--amber)"></div><span class="ll-val">{ma[104]:.2f}</span></div>
+  <div class="level-line" style="bottom:15%"><span class="ll-tag" style="color:var(--red)">MA156</span><div class="ll-bar" style="background:var(--red-border);border-top:1px dashed var(--red)"></div><span class="ll-val">{ma[156]:.2f}</span></div>
+  <div class="level-line" style="bottom:5%"><span class="ll-tag" style="color:var(--red)">MA200</span><div class="ll-bar" style="background:var(--red-border);border-top:1px dashed #991b1b"></div><span class="ll-val">{ma[200]:.2f}</span></div>
+</div>
+</div>
+
+<!-- Red Lights -->
+<div class="card">
+<h3>紅燈面板 (S0 觸發條件: 4/4 全亮)</h3>
+<div class="rl-row">
+  <div class="rl"><span class="bulb {bulb(d['red_lights']['20_2s'])}"></span> #1 Close &gt; MA20+2&sigma; ({d['bb']['20_2s']:.2f})</div>
+  <div class="rl"><span class="bulb {bulb(d['red_lights']['20_3s'])}"></span> #2 Close &gt; MA20+3&sigma; ({d['bb']['20_3s']:.2f})</div>
+  <div class="rl"><span class="bulb {bulb(d['red_lights']['80_2s'])}"></span> #3 Close &gt; MA80+2&sigma; ({d['bb']['80_2s']:.2f})</div>
+  <div class="rl"><span class="bulb {bulb(d['red_lights']['80_3s'])}"></span> #4 Close &gt; MA80+3&sigma; ({d['bb']['80_3s']:.2f})</div>
+</div>
+<div style="font-size:.78rem;color:var(--muted);margin-top:.5rem">
+  目前 {d['red_count']}/4 亮燈。{'需要 QQQ > ' + f"{min(d['bb'].values()):.0f}" + ' 才開始亮第一盞燈。' if d['red_count']==0 else ''}
+</div>
+</div>
+
+<!-- Grid Tracker -->
+<div class="card">
+<h3>Grid 加碼追蹤器 (僅 S2 狀態下啟用)</h3>
+<div class="grid-tracker">{grid_html}</div>
+<div style="font-size:.78rem;color:var(--muted);margin-top:.3rem">
+  {'Grid 僅在 S2 狀態下才能觸發。目前不在 S2，Grid 層處於待命狀態。' if s != 'S2' else 'S2 狀態中，Grid 層已就緒。日收盤觸及均線即觸發。'}
+</div>
+</div>
+
+<!-- TABS -->
+<div class="section">
+<div class="tabs">
+  <button class="tab active" onclick="showTab('rules')">規則總覽</button>
+  <button class="tab" onclick="showTab('transitions')">狀態轉移</button>
+  <button class="tab" onclick="showTab('recent')">近期紀錄</button>
+</div>
+
+<div id="tab-rules" class="tab-content active">
+<h3 class="section-title">五個主狀態</h3>
+<table>
+<thead><tr><th>狀態</th><th>名稱</th><th>NQ100</th><th>個股</th><th>IB01</th><th>股票曝險</th><th>進入條件</th></tr></thead>
+<tbody>
+<tr style="background:var(--green-bg)"><td><strong>S1</strong></td><td>正常巡航</td><td>75%</td><td>20%</td><td>5%</td><td style="font-weight:700">95%</td><td>預設 / S5 完成恢復 / S1.5 連續 2 週 &ge; MA12</td></tr>
+<tr style="background:var(--blue-bg)"><td><strong>S1.5</strong></td><td>緩衝層</td><td>70%</td><td>20%</td><td>10%</td><td style="font-weight:700">90%</td><td>週五收盤 &lt; MA12 &times; 0.98</td></tr>
+<tr style="background:var(--amber-bg)"><td><strong>S0</strong></td><td>紅燈過熱</td><td>63%</td><td>16.8%</td><td>20.2%</td><td style="font-weight:700">79.8%</td><td>紅燈 4/4 全亮</td></tr>
+<tr style="background:var(--red-bg)"><td><strong>S2</strong></td><td>防守模式</td><td>37.5%</td><td>10%</td><td>52.5%</td><td style="font-weight:700">47.5%</td><td>Close &lt; MA52&times;0.97 或 連續 2 週 &lt; MA52</td></tr>
+<tr style="background:var(--purple-bg)"><td><strong>S5</strong></td><td>趨勢重啟</td><td colspan="3">每週買回 +15% 股票</td><td style="font-weight:700">動態</td><td>從 S2 恢復: 週五收盤 &gt; MA52</td></tr>
+</tbody>
+</table>
+<h3 class="section-title" style="margin-top:1.25rem">Grid 加碼層 (S2 下啟用)</h3>
+<table>
+<thead><tr><th>Grid</th><th>觸發條件</th><th>加碼幅度</th><th>觸發後曝險</th><th>設計邏輯</th></tr></thead>
+<tbody>
+<tr><td><strong>#1+#2</strong></td><td>日收盤 &le; MA104</td><td>+10%</td><td>57.5%</td><td>試探性加碼</td></tr>
+<tr><td><strong>#3</strong></td><td>日收盤 &le; MA200</td><td>+15%</td><td>72.5%</td><td>中度承接</td></tr>
+<tr><td><strong>#4</strong></td><td>日收盤 &le; MA156</td><td>+22.5%</td><td>95%</td><td>全倉抄底</td></tr>
+</tbody>
+</table>
+<div style="font-size:.78rem;color:var(--muted);margin-top:.5rem">加速式設計: 跌越深加越多。每個 Grid 一個下跌週期內只觸發一次。完全回到 S1 後重置。</div>
+<h3 class="section-title" style="margin-top:1.25rem">核心設計哲學</h3>
+<div class="card" style="border-left:4px solid var(--brand)">
+<ul style="font-size:.84rem;line-height:2;color:#374151;padding-left:1.2rem">
+  <li><strong>總投入永遠 100%</strong> — 股票降低時資金進 IB01，不閒置</li>
+  <li><strong>防守優先於進攻</strong> — 同時滿足進場和防守條件時，先執行防守</li>
+  <li><strong>跌越深加越多</strong> — Grid 加速式設計，最大彈藥留到最便宜的時候</li>
+  <li><strong>分批恢復</strong> — S5 每週 +15% 買回，避免一次性追高</li>
+  <li><strong>雙層架構</strong> — 主狀態管配置，Grid 管下跌加碼，互不干擾</li>
+</ul>
+</div>
+</div>
+
+<div id="tab-transitions" class="tab-content">
+<h3 class="section-title">狀態轉移規則 (每週五判斷)</h3>
+<table>
+<thead><tr><th>從</th><th>到</th><th>條件</th><th>優先級</th></tr></thead>
+<tbody>
+<tr><td>S1</td><td>S1.5</td><td>收盤 &lt; MA12 &times; 0.98</td><td>5</td></tr>
+<tr><td>S1</td><td>S0</td><td>紅燈 4/4</td><td>4</td></tr>
+<tr><td>S1</td><td>S2</td><td>收盤 &lt; MA52&times;0.97 或 連續 2 週 &lt; MA52</td><td>2</td></tr>
+<tr style="background:#f9fafb"><td>S1.5</td><td>S1</td><td>連續 2 週 收盤 &ge; MA12</td><td>6</td></tr>
+<tr style="background:#f9fafb"><td>S1.5</td><td>S2</td><td>收盤 &lt; MA52&times;0.97 或 連續 2 週 &lt; MA52</td><td>2</td></tr>
+<tr style="background:#f9fafb"><td>S1.5</td><td>S0</td><td>紅燈 4/4</td><td>4</td></tr>
+<tr><td>S0</td><td>S1</td><td>紅燈 &lt; 4/4</td><td>7</td></tr>
+<tr><td>S0</td><td>S1.5</td><td>收盤 &lt; MA12 &times; 0.98</td><td>5</td></tr>
+<tr style="background:var(--red-bg)"><td>S2</td><td>S5</td><td>週五收盤 &gt; MA52</td><td>—</td></tr>
+<tr style="background:var(--purple-bg)"><td>S5</td><td>S1</td><td>曝險恢復到 95%</td><td>—</td></tr>
+<tr style="background:var(--purple-bg)"><td>S5</td><td>S2</td><td>週五收盤 &lt; MA52 (保留 Grid)</td><td>1</td></tr>
+</tbody>
+</table>
+<div style="font-size:.78rem;color:var(--muted);margin-top:.5rem">優先級數字越小越優先。衝突時防守條件優先於恢復條件。</div>
+<h3 class="section-title" style="margin-top:1.25rem">Grid 判斷 (每個交易日)</h3>
+<div class="card">
+<ol style="font-size:.84rem;line-height:2;color:#374151;padding-left:1.2rem">
+  <li>確認主狀態為 S2 → 否則跳過</li>
+  <li>日收盤 &le; MA104 且本週期未觸發 → 執行 Grid #1+#2 (+10%)</li>
+  <li>日收盤 &le; MA200 且本週期未觸發 → 執行 Grid #3 (+15%)</li>
+  <li>日收盤 &le; MA156 且本週期未觸發 → 執行 Grid #4 (+22.5%)</li>
+  <li>隔日開盤執行交易</li>
+</ol>
+</div>
+<h3 class="section-title" style="margin-top:1.25rem">S5 恢復邏輯</h3>
+<div class="card">
+<p style="font-size:.84rem;line-height:1.8;color:#374151">
+  進入 S5 時保留所有已觸發 Grid。起始曝險 = S2 當時水位。<br>
+  每週買回 +15% 股票 (NQ:個股 = 75:20 比例)，資金從 IB01 撥出。<br>
+  最多 <strong>5 週</strong>從 47.5% 恢復到 95%。<br>
+  S5 期間若任一週五收盤跌破 MA52 → 立即回 S2，保留已觸發 Grid 記錄。
+</p>
+</div>
+</div>
+
+<div id="tab-recent" class="tab-content">
+<h3 class="section-title">近 8 週狀態追蹤</h3>
+<table>
+<thead><tr><th>週五</th><th>QQQ 收盤</th><th>MA12</th><th>MA52</th><th>vs MA12</th><th>vs MA52</th><th>推斷狀態</th></tr></thead>
+<tbody>
+{recent_rows}</tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 狀態判斷僅供研究參考，不構成投資建議 &middot;
+    數據來源: yfinance &middot; 自動更新: 每週五美股收盤後
+  </div>
+</footer>
+<script>
+function showTab(id){{
+  document.querySelectorAll('.tab-content').forEach(function(e){{e.classList.remove('active')}});
+  document.querySelectorAll('.tab').forEach(function(e){{e.classList.remove('active')}});
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}}
+</script>
+</body>
+</html>"""
+    return html
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+def main():
+    print("Fetching QQQ data...")
+    close = fetch_data()
+    print(f"  Got {len(close)} daily bars")
+
+    print("Computing state...")
+    data = compute_state(close)
+    print(f"  State: {data['state']} | Close: {data['last_close']:.2f} | Date: {data['last_date']}")
+
+    print("Generating HTML...")
+    html = generate_html(data)
+
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT.write_text(html, encoding="utf-8")
+    print(f"  Written to {OUTPUT}")
+    print(f"  State: {data['state_info']['name']} | Exposure: {data['state_info']['exposure']}%")
+
+
+if __name__ == "__main__":
+    main()

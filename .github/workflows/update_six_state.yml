@@ -1,0 +1,32 @@
+name: Update Six-State Machine Status
+
+on:
+  schedule:
+    # Every Friday 21:30 UTC (US market close 16:00 ET + 1.5h buffer)
+    # = Saturday 05:30 Taiwan time
+    - cron: '30 21 * * 5'
+  workflow_dispatch:  # Manual trigger anytime
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install yfinance pandas numpy
+
+      - name: Run six-state update
+        run: python scripts/update_six_state.py
+
+      - name: Commit and push
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
+          git add docs/six-state/index.html
+          git diff --staged --quiet || git commit -m "Auto update six-state: $(date -u '+%Y-%m-%d')"
+          git push
