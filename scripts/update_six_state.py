@@ -315,7 +315,7 @@ def generate_html(d):
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>六狀態機即時狀態 | InvestMQuest Research</title>
-  <meta name="description" content="SystemProtocol v7 Ch8 六狀態機 — 當前狀態與規則總覽">
+  <meta name="description" content="SystemProtocol v7 六狀態機 — 當前狀態與規則總覽">
   <style>
 :root{{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f8f9fa;--card:#fff;
       --text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
@@ -438,7 +438,7 @@ footer{{background:#fff;border-top:1px solid var(--border);color:var(--muted);te
 <div class="page-hdr">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> / 六狀態機</div>
-    <h1>Ch8 六狀態機 — 即時狀態</h1>
+    <h1>六狀態機 — 即時狀態</h1>
     <div class="sub">SystemProtocol v7 動態曝險調整系統 &middot; QQQ 週線</div>
   </div>
 </div>
