@@ -5,71 +5,72 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SystemProtocol v7 回測結果 | InvestMQuest Research</title>
   <meta name="description" content="SystemProtocol v7 雙軌系統與六狀態機回測結果">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
-      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f8f9fa;--card:#fff;
+      --text:#1a1a2e;--muted:#6b7280;--border:#e2e5e9;
       --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
       --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
       --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
-.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+.container{max-width:1140px;margin:0 auto;padding:0 1.5rem}
 header{background:#fff;border-bottom:1px solid var(--border);padding:.7rem 0}
 .hdr-inner{display:flex;align-items:center;justify-content:space-between}
 header .logo{font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em}
 header nav a{color:var(--muted);margin-left:1.4rem;font-size:.85rem;font-weight:500}
 header nav a:hover,header nav a.active{color:var(--brand)}
-.page-hdr{padding:1.75rem 0 1.25rem;background:#fff;border-bottom:1px solid var(--border)}
-.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
-.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
-.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.page-hdr{padding:1.5rem 0 1.2rem;background:#fff;border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.5rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.85rem;margin-top:.2rem}
+.crumb{font-size:.8rem;color:var(--muted);margin-bottom:.35rem}
 .crumb a{color:var(--muted)}
-.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
-.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem;color:var(--text)}
-.section{padding:1.5rem 0}
-.section-title{font-size:1.1rem;font-weight:700;margin-bottom:.85rem;
-               padding-bottom:.4rem;border-bottom:2px solid var(--brand)}
-table{width:100%;border-collapse:collapse;font-size:.88rem}
-th,td{text-align:left;padding:.65rem .8rem;border-bottom:1px solid var(--border)}
-th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
-   letter-spacing:.04em;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.card h3{font-size:.95rem;font-weight:600;margin-bottom:.75rem;color:var(--text)}
+.section{padding:1.25rem 0}
+.section-title{font-size:1.05rem;font-weight:700;margin-bottom:.8rem;padding-bottom:.35rem;border-bottom:2px solid var(--brand)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
+th{background:#f8f9fa;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 td{font-variant-numeric:tabular-nums}
 tbody tr:hover td{background:#f3f4f6}
-.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;
-     font-size:.72rem;font-weight:600;letter-spacing:.02em}
+.tag{display:inline-block;padding:.12rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600;letter-spacing:.02em}
 .tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
 .tag-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
 .tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
-.tag-sys{background:#dbeafe;color:#1e40af}
-.tag-bh{background:#f3f4f6;color:#374151}
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;text-align:center}
-.kpi .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.3rem}
-.kpi .value{font-size:1.3rem;font-weight:700}
+.tag-sys{background:#dbeafe;color:#1e40af}.tag-bh{background:#f3f4f6;color:#374151}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem;margin-bottom:1rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.7rem .8rem;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.kpi .label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem}
+.kpi .value{font-size:1.15rem;font-weight:700}
 .kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--brand)}
-.verdict{background:var(--brand-light);border-left:4px solid var(--brand);
-         padding:1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.92rem;line-height:1.7}
+.verdict{background:var(--brand-light);border-left:4px solid var(--brand);padding:.9rem 1.2rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.88rem;line-height:1.7}
 .verdict strong{color:var(--brand)}
-.event-card{background:var(--card);border:1px solid var(--border);border-radius:8px;
-            padding:.85rem 1.1rem;margin-bottom:.6rem}
-.event-card .ev-name{font-weight:600;font-size:.9rem;margin-bottom:.3rem}
-.event-card .ev-detail{font-size:.82rem;color:var(--muted);line-height:1.55}
-.tabs{display:flex;gap:0;margin-bottom:1.25rem;border-bottom:2px solid var(--border)}
-.tab{padding:.6rem 1.2rem;font-size:.88rem;font-weight:500;cursor:pointer;
-     border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);background:none;border-top:0;border-left:0;border-right:0}
+.event-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin-bottom:.5rem;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.event-card .ev-name{font-weight:600;font-size:.85rem;margin-bottom:.2rem}
+.event-card .ev-detail{font-size:.8rem;color:var(--muted);line-height:1.55}
+.tabs{display:flex;gap:0;margin-bottom:1rem;border-bottom:2px solid var(--border);overflow-x:auto}
+.tab{padding:.55rem 1.1rem;font-size:.85rem;font-weight:500;cursor:pointer;
+     border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);background:none;border-top:0;border-left:0;border-right:0;white-space:nowrap}
 .tab:hover{color:var(--text)}.tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
 .tab-content{display:none}.tab-content.active{display:block}
-.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
-      padding:.85rem 1.1rem;font-size:.82rem;color:var(--amber-text);margin:1rem 0}
-footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
-       text-align:center;padding:1.25rem 0;font-size:.78rem}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;padding:.75rem 1rem;font-size:.8rem;color:var(--amber-text);margin:1rem 0}
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:1rem 1rem .75rem;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.chart-card h3{font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:.5rem}
+.chart-card .chart-sub{font-size:.75rem;color:var(--muted);margin-bottom:.6rem}
+.chart-wrap{position:relative;width:100%;height:340px}
+.chart-wrap-sm{height:160px}
+.chart-wrap-bar{height:280px}
+.dual-chart{display:grid;grid-template-columns:1fr;gap:0}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);text-align:center;padding:1rem 0;font-size:.75rem}
 @media(max-width:768px){
   .kpi-grid{grid-template-columns:repeat(2,1fr)}
   .hdr-inner{flex-direction:column;gap:.5rem}
   header nav a{margin-left:0;margin-right:1rem}
-  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+  table{font-size:.74rem}th,td{padding:.4rem .45rem}
+  .chart-wrap{height:260px}.chart-wrap-sm{height:130px}.chart-wrap-bar{height:220px}
 }
 </style>
 </head>
@@ -110,7 +111,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </thead>
 <tbody>
 <tr>
-  <td><strong>Ch8 六狀態機</strong><br><span style="font-size:.75rem;color:var(--muted)">QQQ+SMH+BIL</span></td>
+  <td><strong>Ch8 六狀態機</strong><br><span style="font-size:.72rem;color:var(--muted)">QQQ+SMH+BIL</span></td>
   <td style="font-weight:700;color:var(--green)">+15.14%</td>
   <td style="color:var(--red)">-40.35%</td>
   <td>0.83</td><td>0.38</td><td>68</td>
@@ -118,7 +119,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <td><span class="tag tag-sys">主動</span></td>
 </tr>
 <tr>
-  <td><strong>Ch12 Long Track Only</strong><br><span style="font-size:.75rem;color:var(--muted)">50/50 SPY/QQQ W52/104/250</span></td>
+  <td><strong>Ch12 Long Track Only</strong><br><span style="font-size:.72rem;color:var(--muted)">50/50 SPY/QQQ W52/104/250</span></td>
   <td style="font-weight:700;color:var(--green)">+10.95%</td>
   <td>-19.99%</td>
   <td style="font-weight:600">0.86</td><td style="font-weight:600;color:var(--green)">0.55</td><td>37</td>
@@ -126,7 +127,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <td><span class="tag tag-sys">主動</span></td>
 </tr>
 <tr>
-  <td><strong>Ch12 原始雙軌</strong><br><span style="font-size:.75rem;color:var(--muted)">50/50 SPY/QQQ Short+Long</span></td>
+  <td><strong>Ch12 原始雙軌</strong><br><span style="font-size:.72rem;color:var(--muted)">50/50 SPY/QQQ Short+Long</span></td>
   <td>+4.60%</td>
   <td>-26.83%</td>
   <td>0.42</td><td>0.17</td><td>210</td>
@@ -151,10 +152,17 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </tbody>
 </table>
 
-<div class="card" style="padding:1rem">
-  <h3>淨值曲線對比 (log scale)</h3>
-  <canvas id="chart-overview" style="width:100%;height:380px"></canvas>
-  <div id="legend-overview" style="display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;margin-top:.6rem;font-size:.8rem"></div>
+<!-- Overview: Growth of $1M -->
+<div class="chart-card">
+  <h3>Growth of $1,000,000</h3>
+  <div class="chart-sub">Logarithmic scale &middot; 2006–2026</div>
+  <div class="chart-wrap"><canvas id="chart-overview-nav"></canvas></div>
+</div>
+
+<!-- Overview: Drawdown -->
+<div class="chart-card">
+  <h3>Underwater Equity (Drawdown)</h3>
+  <div class="chart-wrap-sm" style="position:relative;width:100%;height:180px"><canvas id="chart-overview-dd"></canvas></div>
 </div>
 
 <div class="verdict">
@@ -163,7 +171,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   原始雙軌系統因短線軌拖累 (獲利因子僅 1.15) 已淘汰。
 </div>
 
-<h3 class="section-title" style="margin-top:1.5rem">穩健性驗證</h3>
+<h3 class="section-title" style="margin-top:1.25rem">穩健性驗證</h3>
 <div class="card">
 <h3>Ch12 Long Track Only — 三項檢驗全部通過</h3>
 <table>
@@ -195,7 +203,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 
 <div class="card">
 <h3>系統說明</h3>
-<p style="font-size:.88rem;color:#374151;line-height:1.7">
+<p style="font-size:.84rem;color:#374151;line-height:1.7">
   只使用<strong>週線長線軌</strong> (W52/W104/W250)，50/50 SPY/QQQ 配置。
   短線軌 (D60/D120/D200) 因獲利因子僅 1.15、貢獻 76% 的 MDD 而被移除。
   長線軌在 20 年間從未觸發做空 (0 筆空單)，事實上等同「只做多」。
@@ -203,10 +211,17 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </p>
 </div>
 
-<div class="card" style="padding:1rem">
-  <h3>Ch12 Long Track Only 淨值曲線 vs Buy &amp; Hold (log scale)</h3>
-  <canvas id="chart-ch12" style="width:100%;height:380px"></canvas>
-  <div id="legend-ch12" style="display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;margin-top:.6rem;font-size:.8rem"></div>
+<!-- Ch12: Growth -->
+<div class="chart-card">
+  <h3>Growth of $1,000,000 — Ch12 Long Track Only vs Benchmarks</h3>
+  <div class="chart-sub">Logarithmic scale &middot; 2010–2026</div>
+  <div class="chart-wrap"><canvas id="chart-ch12-nav"></canvas></div>
+</div>
+
+<!-- Ch12: Drawdown -->
+<div class="chart-card">
+  <h3>Underwater Equity (Drawdown)</h3>
+  <div style="position:relative;width:100%;height:180px"><canvas id="chart-ch12-dd"></canvas></div>
 </div>
 
 <h3 class="section-title" style="margin-top:1rem">短線軌 vs 長線軌對比</h3>
@@ -227,7 +242,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   70% 資金配給獲利因子 ~1.15 的短線軌是原始系統 underperform 的根本原因。
 </div>
 
-<h3 class="section-title" style="margin-top:1.5rem">Top 5 回撤</h3>
+<h3 class="section-title" style="margin-top:1.25rem">Top 5 回撤</h3>
 <table>
 <thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th></tr></thead>
 <tbody>
@@ -258,16 +273,23 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 
 <div class="card">
 <h3>系統架構</h3>
-<p style="font-size:.88rem;color:#374151;line-height:1.7">
+<p style="font-size:.84rem;color:#374151;line-height:1.7">
   三主狀態 + Grid 加碼層。<strong>S1</strong> 正常巡航 (95% 股票)，<strong>S2</strong> 防守模式 (47.5% 股票)，<strong>S5</strong> 趨勢重啟 (每週 +15%)。
   標的: QQQ (75%) + SMH (20%) + BIL (5%)。Grid 在 S2 下根據跌破 MA104/MA200/MA156 逐層加碼。
 </p>
 </div>
 
-<div class="card" style="padding:1rem">
-  <h3>Ch8 六狀態機淨值曲線 vs Buy &amp; Hold (log scale)</h3>
-  <canvas id="chart-ch8" style="width:100%;height:380px"></canvas>
-  <div id="legend-ch8" style="display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;margin-top:.6rem;font-size:.8rem"></div>
+<!-- Ch8: Growth -->
+<div class="chart-card">
+  <h3>Growth of $1,000,000 — Ch8 六狀態機 vs Benchmarks</h3>
+  <div class="chart-sub">Logarithmic scale &middot; 2006–2026</div>
+  <div class="chart-wrap"><canvas id="chart-ch8-nav"></canvas></div>
+</div>
+
+<!-- Ch8: Drawdown -->
+<div class="chart-card">
+  <h3>Underwater Equity (Drawdown)</h3>
+  <div style="position:relative;width:100%;height:180px"><canvas id="chart-ch8-dd"></canvas></div>
 </div>
 
 <h3 class="section-title" style="margin-top:1rem">狀態轉換與 Grid 統計</h3>
@@ -298,7 +320,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </div>
 </div>
 
-<h3 class="section-title" style="margin-top:1.5rem">關鍵事件行為</h3>
+<h3 class="section-title" style="margin-top:1.25rem">關鍵事件行為</h3>
 <div class="event-card">
   <div class="ev-name">2008 GFC <span class="tag tag-best" style="margin-left:.5rem">+16pp vs B&amp;H</span></div>
   <div class="ev-detail">系統 -16.97% vs QQQ B&amp;H -33.18%。S2 + G12 + G4 觸發。2009-06 以 80% 曝險快速恢復。</div>
@@ -320,7 +342,7 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
   <div class="ev-detail">系統 -24.32% vs QQQ B&amp;H -30.46%。三層 Grid 全觸發 (G12+G4+G3)。2023-02 以 95% 曝險回 S1。</div>
 </div>
 
-<h3 class="section-title" style="margin-top:1.5rem">Top 5 回撤</h3>
+<h3 class="section-title" style="margin-top:1.25rem">Top 5 回撤</h3>
 <table>
 <thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th></tr></thead>
 <tbody>
@@ -338,6 +360,14 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 <div id="tab-yearly" class="tab-content">
 
 <h3 class="section-title">逐年報酬對比</h3>
+
+<!-- Annual Returns Bar Chart -->
+<div class="chart-card">
+  <h3>Annual Returns</h3>
+  <div class="chart-sub">Grouped bar chart &middot; 2006–2026</div>
+  <div class="chart-wrap-bar" style="position:relative;width:100%"><canvas id="chart-yearly-bar"></canvas></div>
+</div>
+
 <table>
 <thead><tr><th>Year</th><th>Ch8 六狀態機</th><th>Ch12 Long Only</th><th>QQQ B&amp;H</th><th>SPY B&amp;H</th></tr></thead>
 <tbody>
@@ -383,17 +413,18 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 </footer>
 
 <script>
+/* ===== Tab switching ===== */
 function showTab(id){
-  document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active')});
-  document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active')});
+  document.querySelectorAll('.tab-content').forEach(function(e){e.classList.remove('active')});
+  document.querySelectorAll('.tab').forEach(function(e){e.classList.remove('active')});
   document.getElementById('tab-'+id).classList.add('active');
   event.target.classList.add('active');
-  // redraw charts when tab becomes visible
-  requestAnimationFrame(drawAllCharts);
+  setTimeout(initCharts,50);
 }
 
-/* ===== Equity Curve Data ===== */
+/* ===== Data ===== */
 var YEARS=[2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+var LABELS=YEARS.map(String);
 var RET={
   ch8:[1.54,15.38,-27.86,43.31,16.86,-8.14,11.56,30.17,21.50,4.58,8.47,31.57,-2.39,35.38,40.25,31.11,-25.29,56.96,30.20,26.96,-0.99],
   ch12:[null,null,null,null,4.47,-9.51,8.64,31.26,17.36,-5.19,3.45,26.09,-1.78,20.49,25.78,30.01,-14.72,8.71,26.74,17.03,-5.07],
@@ -401,119 +432,240 @@ var RET={
   spy:[13.81,3.69,-36.81,25.94,12.78,0.00,13.47,29.93,11.39,-0.73,9.54,19.42,-6.24,28.88,16.26,26.89,-19.44,24.23,23.31,21.50,1.20]
 };
 
-function toNAV(ret){
-  var nav=[1];var last=1;
+function toNAV(ret,startIdx){
+  startIdx=startIdx||0;
+  var nav=[];var v=1;
   for(var i=0;i<ret.length;i++){
-    if(ret[i]===null){nav.push(null)}
-    else{last=last*(1+ret[i]/100);nav.push(last)}
+    if(i<startIdx||ret[i]===null){nav.push(null);continue}
+    if(nav.filter(function(x){return x!==null}).length===0){nav.push(1);v=1;continue}
+    v=v*(1+ret[i]/100);nav.push(v);
   }
   return nav;
 }
 
-var NAV={ch8:toNAV(RET.ch8),ch12:toNAV(RET.ch12),qqq:toNAV(RET.qqq),spy:toNAV(RET.spy)};
-var LABELS=['2005'].concat(YEARS.map(String));
-
-/* ===== Generic Chart Renderer ===== */
-function drawChart(canvasId,legendId,series){
-  var canvas=document.getElementById(canvasId);
-  if(!canvas||canvas.offsetParent===null)return; // skip hidden
-  var dpr=window.devicePixelRatio||1;
-  var rect=canvas.getBoundingClientRect();
-  canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;
-  var ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  var W=rect.width,H=rect.height;
-  var pad={t:20,r:60,b:40,l:55};
-  var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
-
-  // compute log range across all series
-  var allVals=[];
-  series.forEach(function(s){s.nav.forEach(function(v){if(v!==null)allVals.push(v)})});
-  var logMin=Math.log10(Math.min.apply(null,allVals))*0.95;
-  var logMax=Math.log10(Math.max.apply(null,allVals))*1.05;
-
-  function xPos(i){return pad.l+i/(LABELS.length-1)*cw}
-  function yPos(v){return pad.t+ch-(Math.log10(v)-logMin)/(logMax-logMin)*ch}
-
-  // background
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-
-  // grid lines & Y labels
-  ctx.strokeStyle='#e5e7eb';ctx.lineWidth=0.5;ctx.fillStyle='#6b7280';ctx.font='11px -apple-system,sans-serif';ctx.textAlign='right';
-  var yTicks=[0.5,1,2,3,5,7,10,15,20];
-  yTicks.forEach(function(v){
-    if(Math.log10(v)<logMin||Math.log10(v)>logMax)return;
-    var y=yPos(v);
-    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
-    ctx.fillText('$'+v,pad.l-6,y+4);
-  });
-
-  // X labels
-  ctx.textAlign='center';ctx.fillStyle='#6b7280';
-  for(var i=0;i<LABELS.length;i++){
-    var x=xPos(i);
-    if(i%2===0||LABELS.length<=12){
-      ctx.save();ctx.translate(x,H-pad.b+14);ctx.rotate(-0.5);
-      ctx.fillText(LABELS[i],0,0);ctx.restore();
-    }
-    ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,H-pad.b);ctx.stroke();
+function toDD(nav){
+  var dd=[];var peak=0;
+  for(var i=0;i<nav.length;i++){
+    if(nav[i]===null){dd.push(null);continue}
+    if(nav[i]>peak)peak=nav[i];
+    dd.push((nav[i]/peak-1)*100);
   }
-
-  // draw each series
-  series.forEach(function(s){
-    ctx.strokeStyle=s.color;ctx.lineWidth=s.primary?2.8:1.8;
-    if(!s.primary){ctx.setLineDash([5,3])}else{ctx.setLineDash([])}
-    ctx.globalAlpha=s.primary?1:0.7;
-    ctx.beginPath();var started=false;
-    for(var i=0;i<s.nav.length;i++){
-      if(s.nav[i]===null)continue;
-      var x=xPos(i),y=yPos(s.nav[i]);
-      if(!started){ctx.moveTo(x,y);started=true}else{ctx.lineTo(x,y)}
-    }
-    ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
-
-    // end label
-    var lastVal=s.nav[s.nav.length-1];
-    if(lastVal!==null){
-      var ex=xPos(s.nav.length-1),ey=yPos(lastVal);
-      ctx.fillStyle=s.color;ctx.font='bold 11px -apple-system,sans-serif';ctx.textAlign='left';
-      ctx.fillText(lastVal>=10?'$'+lastVal.toFixed(1):'$'+lastVal.toFixed(2),ex+4,ey+4);
-    }
-  });
-
-  // legend
-  var leg=document.getElementById(legendId);
-  if(leg){
-    leg.innerHTML='';
-    series.forEach(function(s){
-      var span=document.createElement('span');
-      span.innerHTML='<span style="display:inline-block;width:18px;height:3px;background:'+s.color+';vertical-align:middle;margin-right:4px;border-radius:2px'+(s.primary?'':';border-top:1px dashed '+s.color)+'"></span>'+s.label;
-      leg.appendChild(span);
-    });
-  }
+  return dd;
 }
 
-function drawAllCharts(){
-  drawChart('chart-overview','legend-overview',[
-    {nav:NAV.ch8,color:'#dc2626',label:'Ch8 六狀態機 (CAGR 15.14%)',primary:true},
-    {nav:NAV.ch12,color:'#059669',label:'Ch12 Long Only (CAGR 10.95%)',primary:true},
-    {nav:NAV.qqq,color:'#3b82f6',label:'QQQ B&H (CAGR 14.90%)',primary:false},
-    {nav:NAV.spy,color:'#9ca3af',label:'SPY B&H (CAGR 10.50%)',primary:false}
-  ]);
-  drawChart('chart-ch12','legend-ch12',[
-    {nav:NAV.ch12,color:'#059669',label:'Ch12 Long Only (CAGR 10.95%, MDD -19.99%)',primary:true},
-    {nav:NAV.qqq,color:'#3b82f6',label:'QQQ B&H',primary:false},
-    {nav:NAV.spy,color:'#9ca3af',label:'SPY B&H',primary:false}
-  ]);
-  drawChart('chart-ch8','legend-ch8',[
-    {nav:NAV.ch8,color:'#dc2626',label:'Ch8 六狀態機 (CAGR 15.14%, MDD -40.35%)',primary:true},
-    {nav:NAV.qqq,color:'#3b82f6',label:'QQQ B&H',primary:false},
-    {nav:NAV.spy,color:'#9ca3af',label:'SPY B&H',primary:false}
-  ]);
+/* compute NAV starting from year-end of previous year (end of 2005 = 1.0) */
+var NAV_LABELS=['2005'].concat(LABELS);
+function toNAVfull(ret){
+  var nav=[1];var v=1;
+  for(var i=0;i<ret.length;i++){
+    if(ret[i]===null){nav.push(null)}
+    else{v=v*(1+ret[i]/100);nav.push(v)}
+  }
+  return nav;
+}
+var NAV={ch8:toNAVfull(RET.ch8),ch12:toNAVfull(RET.ch12),qqq:toNAVfull(RET.qqq),spy:toNAVfull(RET.spy)};
+var DD={ch8:toDD(NAV.ch8),ch12:toDD(NAV.ch12),qqq:toDD(NAV.qqq),spy:toDD(NAV.spy)};
+
+/* ===== Colors (PV-inspired) ===== */
+var C={
+  ch8:'#d32f2f',ch8bg:'rgba(211,47,47,0.08)',
+  ch12:'#2e7d32',ch12bg:'rgba(46,125,50,0.08)',
+  qqq:'#1565c0',qqqbg:'rgba(21,101,192,0.08)',
+  spy:'#757575',spybg:'rgba(117,117,117,0.08)'
+};
+
+/* ===== Chart.js defaults ===== */
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+Chart.defaults.plugins.tooltip.backgroundColor='rgba(30,30,30,0.88)';
+Chart.defaults.plugins.tooltip.titleFont={weight:'600',size:12};
+Chart.defaults.plugins.tooltip.bodyFont={size:11};
+Chart.defaults.plugins.tooltip.padding=10;
+Chart.defaults.plugins.tooltip.cornerRadius=6;
+Chart.defaults.plugins.tooltip.displayColors=true;
+Chart.defaults.plugins.tooltip.boxPadding=4;
+
+/* ===== Crosshair plugin ===== */
+var crosshairPlugin={
+  id:'crosshair',
+  afterDraw:function(chart){
+    if(chart.tooltip&&chart.tooltip._active&&chart.tooltip._active.length){
+      var x=chart.tooltip._active[0].element.x;
+      var ctx=chart.ctx;var top=chart.chartArea.top;var bot=chart.chartArea.bottom;
+      ctx.save();ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bot);
+      ctx.lineWidth=1;ctx.strokeStyle='rgba(0,0,0,0.12)';ctx.stroke();ctx.restore();
+    }
+  }
+};
+Chart.register(crosshairPlugin);
+
+/* ===== Chart builders ===== */
+var charts={};
+
+function makeDataset(label,data,color,bgColor,dashed,thick){
+  return{
+    label:label,data:data,borderColor:color,backgroundColor:bgColor||'transparent',
+    borderWidth:thick?2.5:1.8,borderDash:dashed?[6,3]:[],
+    pointRadius:0,pointHoverRadius:4,pointHoverBackgroundColor:color,
+    tension:0.15,fill:false,spanGaps:false
+  };
 }
 
-window.addEventListener('load',drawAllCharts);
-window.addEventListener('resize',drawAllCharts);
+function makeFillDataset(label,data,color,bgColor){
+  return{
+    label:label,data:data,borderColor:color,backgroundColor:bgColor,
+    borderWidth:1.5,pointRadius:0,pointHoverRadius:3,pointHoverBackgroundColor:color,
+    tension:0.15,fill:'origin',spanGaps:false
+  };
+}
+
+function navTooltip(ctx){
+  var raw=ctx.parsed.y;
+  if(raw===null||raw===undefined)return null;
+  var dollar=raw*1000000;
+  if(dollar>=1e6)return ctx.dataset.label+': $'+((dollar/1e6).toFixed(2))+'M';
+  return ctx.dataset.label+': $'+dollar.toLocaleString();
+}
+
+function ddTooltip(ctx){
+  var raw=ctx.parsed.y;
+  if(raw===null||raw===undefined)return null;
+  return ctx.dataset.label+': '+raw.toFixed(2)+'%';
+}
+
+function buildNavChart(canvasId,datasets){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  charts[canvasId]=new Chart(el,{
+    type:'line',
+    data:{labels:NAV_LABELS,datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',align:'start',
+          labels:{usePointStyle:true,pointStyle:'line',padding:14,font:{size:11}}},
+        tooltip:{mode:'index',intersect:false,
+          callbacks:{label:navTooltip}}
+      },
+      scales:{
+        x:{grid:{display:true,color:'rgba(0,0,0,0.04)'},ticks:{maxRotation:45,font:{size:10}}},
+        y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},
+          ticks:{callback:function(v){
+            if([0.3,0.5,1,2,3,5,7,10,15,20].indexOf(v)>=0)return '$'+v;return '';
+          },font:{size:10}},
+          title:{display:true,text:'Growth of $1 (log)',font:{size:11,weight:'600'},color:'#6b7280'}}
+      }
+    }
+  });
+}
+
+function buildDDChart(canvasId,datasets){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  charts[canvasId]=new Chart(el,{
+    type:'line',
+    data:{labels:NAV_LABELS,datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',align:'start',
+          labels:{usePointStyle:true,pointStyle:'line',padding:14,font:{size:10}}},
+        tooltip:{mode:'index',intersect:false,
+          callbacks:{label:ddTooltip}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{maxRotation:45,font:{size:9}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'},max:0,
+          ticks:{callback:function(v){return v+'%'},font:{size:10}},
+          title:{display:true,text:'Drawdown %',font:{size:10,weight:'600'},color:'#6b7280'}}
+      }
+    }
+  });
+}
+
+function buildBarChart(canvasId){
+  var el=document.getElementById(canvasId);
+  if(!el)return;if(charts[canvasId]){charts[canvasId].destroy()}
+  charts[canvasId]=new Chart(el,{
+    type:'bar',
+    data:{
+      labels:LABELS,
+      datasets:[
+        {label:'Ch8 六狀態機',data:RET.ch8,backgroundColor:RET.ch8.map(function(v){return v>=0?'rgba(211,47,47,0.75)':'rgba(211,47,47,0.35)'}),borderColor:C.ch8,borderWidth:1,borderRadius:2},
+        {label:'Ch12 Long Only',data:RET.ch12,backgroundColor:RET.ch12.map(function(v){return v===null?'transparent':v>=0?'rgba(46,125,50,0.75)':'rgba(46,125,50,0.35)'}),borderColor:C.ch12,borderWidth:1,borderRadius:2},
+        {label:'QQQ B&H',data:RET.qqq,backgroundColor:RET.qqq.map(function(v){return v>=0?'rgba(21,101,192,0.75)':'rgba(21,101,192,0.35)'}),borderColor:C.qqq,borderWidth:1,borderRadius:2},
+        {label:'SPY B&H',data:RET.spy,backgroundColor:RET.spy.map(function(v){return v>=0?'rgba(117,117,117,0.75)':'rgba(117,117,117,0.35)'}),borderColor:C.spy,borderWidth:1,borderRadius:2}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:true,position:'top',align:'start',
+          labels:{usePointStyle:true,pointStyle:'rect',padding:14,font:{size:11}}},
+        tooltip:{mode:'index',intersect:false,
+          callbacks:{label:function(ctx){
+            if(ctx.parsed.y===null)return null;
+            return ctx.dataset.label+': '+(ctx.parsed.y>0?'+':'')+ctx.parsed.y.toFixed(2)+'%';
+          }}}
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,0.06)'},
+          ticks:{callback:function(v){return v+'%'},font:{size:10}},
+          title:{display:true,text:'Annual Return %',font:{size:11,weight:'600'},color:'#6b7280'}}
+      }
+    }
+  });
+}
+
+/* ===== Init ===== */
+function initCharts(){
+  /* Overview */
+  buildNavChart('chart-overview-nav',[
+    makeDataset('Ch8 六狀態機',NAV.ch8,C.ch8,null,false,true),
+    makeDataset('Ch12 Long Only',NAV.ch12,C.ch12,null,false,true),
+    makeDataset('QQQ B&H',NAV.qqq,C.qqq,null,true,false),
+    makeDataset('SPY B&H',NAV.spy,C.spy,null,true,false)
+  ]);
+  buildDDChart('chart-overview-dd',[
+    makeFillDataset('Ch8',DD.ch8,C.ch8,C.ch8bg),
+    makeFillDataset('Ch12',DD.ch12,C.ch12,C.ch12bg),
+    makeFillDataset('QQQ',DD.qqq,C.qqq,C.qqqbg),
+    makeFillDataset('SPY',DD.spy,C.spy,C.spybg)
+  ]);
+
+  /* Ch12 */
+  buildNavChart('chart-ch12-nav',[
+    makeDataset('Ch12 Long Only',NAV.ch12,C.ch12,null,false,true),
+    makeDataset('QQQ B&H',NAV.qqq,C.qqq,null,true,false),
+    makeDataset('SPY B&H',NAV.spy,C.spy,null,true,false)
+  ]);
+  buildDDChart('chart-ch12-dd',[
+    makeFillDataset('Ch12',DD.ch12,C.ch12,C.ch12bg),
+    makeFillDataset('QQQ',DD.qqq,C.qqq,C.qqqbg),
+    makeFillDataset('SPY',DD.spy,C.spy,C.spybg)
+  ]);
+
+  /* Ch8 */
+  buildNavChart('chart-ch8-nav',[
+    makeDataset('Ch8 六狀態機',NAV.ch8,C.ch8,null,false,true),
+    makeDataset('QQQ B&H',NAV.qqq,C.qqq,null,true,false),
+    makeDataset('SPY B&H',NAV.spy,C.spy,null,true,false)
+  ]);
+  buildDDChart('chart-ch8-dd',[
+    makeFillDataset('Ch8',DD.ch8,C.ch8,C.ch8bg),
+    makeFillDataset('QQQ',DD.qqq,C.qqq,C.qqqbg),
+    makeFillDataset('SPY',DD.spy,C.spy,C.spybg)
+  ]);
+
+  /* Yearly bar */
+  buildBarChart('chart-yearly-bar');
+}
+
+window.addEventListener('load',initCharts);
 </script>
 </body>
 </html>
