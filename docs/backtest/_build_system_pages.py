@@ -100,6 +100,7 @@ COMPARISON_LINKS = [
 INDIVIDUAL_LINKS = [
     ("/backtest/dual_track/", "雙軌多空", "dual"),
     ("/backtest/long_track/", "Long Track", "long"),
+    ("/backtest/long_track_qqq/", "LTO QQQ only", "long_qqq"),
     ("/backtest/six_state/", "六狀態機", "six_state"),
     ("/backtest/gem/", "GEM", "gem"),
     ("/backtest/slope_filter/", "W52 斜率", "slope"),
@@ -120,6 +121,8 @@ def make_toggle(active: str) -> str:
                 bg = "#dc2626"
             elif key == "turtle":
                 bg = "#0f766e"
+            elif key == "long_qqq":
+                bg = "#16a34a"
             else:
                 bg = "var(--brand)"
             return f'<a href="{url}" style="padding:.4rem .85rem;background:{bg};color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">{label}</a>'
@@ -128,6 +131,8 @@ def make_toggle(active: str) -> str:
                 color = "#dc2626"
             elif key == "turtle":
                 color = "#0f766e"
+            elif key == "long_qqq":
+                color = "#16a34a"
             else:
                 color = "var(--brand)"
             return f'<a href="{url}" style="padding:.4rem .85rem;background:#fff;color:{color};font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">{label}</a>'
@@ -220,6 +225,61 @@ SYSTEMS = {
 <tr><td>正報酬比</td><td>&gt; 60%</td><td>71% (12 / 17 年)</td><td><span class="tag tag-best">通過</span></td></tr>
 </tbody>
 </table>
+        """),
+    },
+    "long_qqq": {
+        "name": "Long Track Only — QQQ only",
+        "subtitle": "100% QQQ · 只用週線長線軌 · Long Track 進攻變體",
+        "color": "#16a34a",
+        "rules": """
+            與 <a href="/backtest/long_track/" style="color:var(--brand)">Long Track Only (50/50 SPY/QQQ)</a> 完全相同的規則,但<strong>只持有 QQQ</strong>:<br>
+            週線均線 W52 / W104 / W250,斜率 lookback N=4 週,出場確認 N=1 (週線收盤跌破 W52 即出場)。<br>
+            進場條件: 週線收盤 &gt; W52, W104, W250 且 W104, W250 斜率 &gt; 0 (score == 5)。<br>
+            放棄 SPY 的分散保護,集中曝險於 NASDAQ 100 (科技股),追求更高絕對報酬。
+        """,
+        "m20": {"cagr": 12.33, "mdd": -25.18, "sharpe": 0.81, "sortino": 0.94, "calmar": 0.49, "vol": 15.92, "trades": 22, "final": "$6.05M"},
+        "m10": {"cagr": 15.34, "mdd": -25.18, "sharpe": 0.94, "sortino": 1.10, "calmar": 0.61, "vol": 15.10, "trades": 14, "final": "$4.18M"},
+        "yearly": [None, None, None, None, 3.85, -14.36, 6.93, 33.46, 20.12, -0.93, -0.47, 31.49, 4.35, 19.54, 37.80, 29.24, -18.39, 18.09, 27.74, 18.40, -5.51],
+        "verdict": """
+            <strong>Long Track Only 的進攻變體 — 集中持有 QQQ,放棄分散。</strong>
+            CAGR 12.33% (vs 50/50 baseline 10.95%, +1.38pp),但 MDD 也加深到 -25.18% (vs -19.99%, -5.19pp)。
+            10 年視窗下 CAGR 衝到 15.34%,Calmar 0.61。
+            <strong>適合的角色:</strong> 在更大的組合裡作為「進攻位」,搭配防守型 (例如 W52 或 GEM) 平衡 MDD。
+            若單獨持有,50/50 baseline 的 Calmar 0.55 仍優於 QQQ only 的 0.49,因為 SPY 的分散在 2020 COVID 等急跌時提供了實質緩衝。
+        """,
+        "extra_section": ("與 50/50 baseline 對比", """
+<table>
+<thead><tr><th>指標</th><th>QQQ only</th><th>50/50 baseline</th><th>差異</th></tr></thead>
+<tbody>
+<tr><td>20Y CAGR</td><td style="color:var(--green);font-weight:600">+12.33%</td><td>+10.95%</td><td class="tag tag-best">+1.38pp</td></tr>
+<tr><td>20Y MDD</td><td style="color:var(--red)">-25.18%</td><td>-19.99%</td><td class="tag tag-fail">-5.19pp</td></tr>
+<tr><td>20Y Sharpe</td><td>0.81</td><td style="font-weight:600">0.86</td><td>-0.05</td></tr>
+<tr><td>20Y Calmar</td><td>0.49</td><td style="font-weight:600">0.55</td><td>-0.06</td></tr>
+<tr><td>10Y CAGR</td><td style="color:var(--green);font-weight:600">+15.34%</td><td>+13.06%</td><td class="tag tag-best">+2.28pp</td></tr>
+<tr><td>10Y Calmar</td><td>0.61</td><td style="font-weight:600">0.69</td><td>-0.08</td></tr>
+<tr><td>交易次數</td><td>22</td><td>37</td><td>-15</td></tr>
+<tr><td>勝率</td><td>40.9%</td><td style="font-weight:600">45.9%</td><td>-5.0pp</td></tr>
+<tr><td>盈虧比</td><td style="color:var(--green);font-weight:600">12.87x</td><td>—</td><td>QQQ 贏家更大</td></tr>
+<tr><td>獲利因子</td><td style="color:var(--green);font-weight:600">8.91</td><td>~7.86</td><td>+1.05</td></tr>
+</tbody>
+</table>
+
+<h3 class="section-title" style="margin-top:1.5rem">Top 5 回撤</h3>
+<table>
+<thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>2020-02-20</td><td>2020-03-12</td><td>2020-07-01</td><td style="color:var(--red)">-25.18%</td><td>21</td><td>111</td></tr>
+<tr><td>2</td><td>2015-07-21</td><td>2016-07-05</td><td>2017-05-01</td><td>-21.75%</td><td>350</td><td>300</td></tr>
+<tr><td>3</td><td>2011-07-26</td><td>2012-01-09</td><td>2013-09-17</td><td>-21.17%</td><td>167</td><td><strong>617</strong></td></tr>
+<tr><td>4</td><td>2021-12-29</td><td>2023-10-26</td><td>2024-01-29</td><td>-19.69%</td><td><strong>665</strong></td><td>95</td></tr>
+<tr><td>5</td><td>2024-07-10</td><td>2024-08-07</td><td>2024-11-06</td><td>-13.56%</td><td>28</td><td>91</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+  <strong>2020 COVID 一週跌 25%</strong> 是 QQQ only 與 50/50 最大的差距點 (50/50 同期只跌 19.4%)。
+  SPY 部位在那一週幫助緩衝。<strong>2011 那次花了 617 天才恢復</strong> — 不能承受漫長套牢的人不適合此配置。
+</div>
         """),
     },
     "six_state": {
@@ -606,18 +666,18 @@ new Chart(document.getElementById('chart-yearly'),{{
 """
 
 
+SLUG_TO_DIR = {
+    "dual": "dual_track",
+    "long": "long_track",
+    "long_qqq": "long_track_qqq",
+    "six_state": "six_state",
+    "gem": "gem",
+}
+
+
 def main():
     for slug, system in SYSTEMS.items():
-        out_dir = OUT / slug if slug != "long" else OUT / "long_track"
-        # Map slug to output dir
-        if slug == "dual":
-            out_dir = OUT / "dual_track"
-        elif slug == "long":
-            out_dir = OUT / "long_track"
-        elif slug == "six_state":
-            out_dir = OUT / "six_state"
-        elif slug == "gem":
-            out_dir = OUT / "gem"
+        out_dir = OUT / SLUG_TO_DIR.get(slug, slug)
         out_dir.mkdir(exist_ok=True)
         out_file = out_dir / "index.html"
         html = build_page(slug, system)
