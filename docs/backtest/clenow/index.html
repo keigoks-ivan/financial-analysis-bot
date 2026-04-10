@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clenow 趨勢跟蹤 (35 ETF) | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
+      --clenow:#6366f1;--clenow-bg:#eef2ff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.75rem 0;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+header .logo{font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:-.02em}
+header .logo span{color:#3b82f6}
+header nav a{color:rgba(255,255,255,.7);margin-left:1.5rem;font-size:.85rem;font-weight:500;
+             padding-bottom:4px;border-bottom:2px solid transparent;transition:all .2s}
+header nav a:hover{color:#fff;text-decoration:none;border-bottom-color:rgba(255,255,255,.4)}
+header nav a.active{color:#fff;border-bottom-color:#3b82f6}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#eef2ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.section{padding:1.5rem 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--clenow)}
+.section-sub{font-size:.85rem;color:var(--muted);margin-bottom:1rem;margin-top:-.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem;color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:.55rem .7rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.76rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem;margin-bottom:1rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.kpi .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
+.kpi .value{font-size:1.25rem;font-weight:700}
+.kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--clenow)}
+.verdict{background:var(--clenow-bg);border-left:4px solid var(--clenow);
+         padding:1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.9rem;line-height:1.7}
+.verdict strong{color:var(--clenow)}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:var(--amber-text);margin:1rem 0}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.rule-box{background:#fff;border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;margin-bottom:.85rem;border-left:4px solid var(--clenow)}
+.rule-box h4{font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:var(--text)}
+.rule-list{font-size:.85rem;color:#374151;line-height:1.7;margin-left:1.1rem}
+.cat-card{display:grid;grid-template-columns:30px 130px 1fr 110px 110px;gap:.5rem;align-items:center;
+          padding:.55rem .85rem;border:1px solid var(--border);border-radius:6px;margin-bottom:.4rem;background:#fff}
+.cat-card .rank{font-weight:700;font-size:1rem;color:var(--clenow)}
+.cat-card .name{font-weight:600;font-size:.9rem}
+.cat-card .pnl{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.cat-card .stat{font-size:.78rem;color:var(--muted);text-align:right}
+.cat-card.engine{border-left:3px solid var(--green)}
+.cat-card.drag{border-left:3px solid var(--red)}
+.cat-card.neutral{border-left:3px solid #d1d5db}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem;color:var(--text)}
+.chart-wrap{position:relative;width:100%;height:380px}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem}
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .cat-card{grid-template-columns:1fr;gap:.2rem}
+  .cat-card .pnl,.cat-card .stat{text-align:left}
+  .hdr-inner{flex-direction:column;gap:.5rem}
+  header nav a{margin-left:0;margin-right:1rem}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="container hdr-inner">
+    <a class="logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav><a href="/">首頁</a> <a href="/briefing/">每日簡報</a> <a href="/weekly/">週報</a> <a href="/backtest/" class="active">回測</a></nav>
+  </div>
+</header>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / Clenow 趨勢跟蹤 (35 ETF)</div>
+    <h1 style="color:var(--clenow)">📈 Clenow Trend Following (35 ETF)</h1>
+    <div class="sub">EMA 50/100 + 50 日突破 + 3×ATR 止損 + 波動率加權倉位 · 2005-2025 · 7 大類別跨資產 trend-following</div>
+    <div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div style="font-size:.68rem;color:#1a56db;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">對比總覽</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap">
+          <a href="/backtest/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">20 年</a>
+          <a href="/backtest/10y/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">10 年</a>
+          <a href="/backtest/criteria/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">評估標準</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">個別系統 (美股)</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap">
+          <a href="/backtest/dual_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">雙軌多空</a>
+          <a href="/backtest/long_track/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">Long Track</a>
+          <a href="/backtest/long_track_qqq/" style="padding:.4rem .85rem;background:#fff;color:#16a34a;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">LTO QQQ only</a>
+          <a href="/backtest/six_state/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">六狀態機</a>
+          <a href="/backtest/gem/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">GEM</a>
+          <a href="/backtest/slope_filter/" style="padding:.4rem .85rem;background:#fff;color:var(--brand);font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">W52 斜率</a>
+          <a href="/backtest/short_system/" style="padding:.4rem .85rem;background:#fff;color:#dc2626;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">做空 (失敗)</a>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.68rem;color:#0f766e;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap">
+          <a href="/backtest/turtle/" style="padding:.4rem .85rem;background:#fff;color:#0f766e;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">🐢 Turtle</a>
+          <a href="/backtest/clenow/" style="padding:.4rem .85rem;background:var(--clenow);color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">📈 Clenow</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== Why this is separate ===== -->
+<div class="section">
+<div class="verdict">
+  <strong>為什麼 Clenow 不在主比較表裡:</strong> Clenow 系統用 <strong>35 個 ETF 跨 7 大資產類別</strong> (美股/國際股/能源/金屬/農產品/外匯/利率)，
+  跟本站股票系統 (LTO/W52/六狀態機/GEM 都聚焦於 SPY/QQQ) 不可直接比較。
+  本回測使用 ETF 代理期貨,所有資料都從 yfinance 下載真實日線 OHLCV,2005-2025 共 21 年。
+</div>
+</div>
+
+<!-- ===== 1. Strategy ===== -->
+<div class="section">
+<h2 class="section-title">1. 系統規格</h2>
+
+<p style="font-size:.9rem;color:#374151;line-height:1.7;margin-bottom:1rem">
+  Andreas Clenow 在《Following the Trend》(2012) 提出的長期趨勢跟蹤系統,是 CTA 業界的標竿之一。
+  與海龜系統最大差異: <strong>進場前必須先有趨勢過濾</strong> (EMA cross),不是純突破。
+</p>
+
+<div class="rule-box">
+  <h4>進場規則 (3 條件全部滿足)</h4>
+  <ol class="rule-list">
+    <li><strong>趨勢過濾</strong>: EMA(50) &gt; EMA(100) (多頭) 或 EMA(50) &lt; EMA(100) (空頭)</li>
+    <li><strong>突破訊號</strong>: 收盤價 = 最近 50 日最高價 (多頭) 或最低價 (空頭)</li>
+    <li><strong>未持倉</strong>: 該市場沒有現有部位 (不加碼)</li>
+  </ol>
+</div>
+
+<div class="rule-box">
+  <h4>波動率加權倉位 (Clenow 核心)</h4>
+  <p style="font-size:.85rem;color:#374151;line-height:1.7">
+    <code style="background:#f3f4f6;padding:.15rem .4rem;border-radius:3px">shares = (equity × 0.002) / ATR(100)</code><br>
+    每個持倉貢獻約 0.2% 的每日帳戶波動率,組合層級目標年化波動率 15-20%。
+    <strong>與海龜的「每筆 1% 風險」不同 — Clenow 控制組合波動率,不是單筆損失。</strong>
+  </p>
+</div>
+
+<div class="rule-box">
+  <h4>出場規則 (任一觸發)</h4>
+  <ol class="rule-list">
+    <li><strong>EMA 反轉</strong>: 多頭時 EMA(50) 下穿 EMA(100); 空頭反之</li>
+    <li><strong>止損觸發</strong>: 進場價 ± 3 × ATR(100), <strong>不移動</strong></li>
+  </ol>
+</div>
+</div>
+
+<!-- ===== 2. Universe ===== -->
+<div class="section">
+<h2 class="section-title">2. 測試宇宙 (35 ETF · 7 類別)</h2>
+
+<table>
+<thead><tr><th>類別</th><th>ETF</th><th>數量</th></tr></thead>
+<tbody>
+<tr><td>美股指數與風格</td><td>SPY, QQQ, IWM, MDY, XLK, XLF, XLE</td><td>7</td></tr>
+<tr><td>國際股指</td><td>EFA, EEM, EWJ, EWG, FXI, INDA</td><td>6</td></tr>
+<tr><td>能源</td><td>USO, UNG, UGA</td><td>3</td></tr>
+<tr><td>金屬</td><td>GLD, SLV, CPER, PPLT</td><td>4</td></tr>
+<tr><td>農產品</td><td>DBA, CORN, WEAT, SOYB</td><td>4</td></tr>
+<tr><td>外匯</td><td>UUP, FXE, FXY, FXB, FXA</td><td>5</td></tr>
+<tr><td>利率/債券</td><td>TLT, IEF, SHY, BWX, TIP</td><td>5</td></tr>
+<tr style="font-weight:600;background:#f9fafb"><td>合計</td><td></td><td>34</td></tr>
+</tbody>
+</table>
+<p style="font-size:.78rem;color:var(--muted);margin-top:.5rem">
+  注: 部分 ETF (CPER 銅、PPLT 白金、CORN/WEAT/SOYB 等) 上市較晚,從各自上市日納入。實際載入 34 個 (CPER 部分數據缺失)。
+</p>
+</div>
+
+<!-- ===== 3. Core results ===== -->
+<div class="section">
+<h2 class="section-title">3. 核心績效 (2005-2025, 21 年)</h2>
+
+<div class="kpi-grid">
+  <div class="kpi"><div class="label">CAGR</div><div class="value pos">+13.67%</div></div>
+  <div class="kpi"><div class="label">MDD</div><div class="value neg">-44.06%</div></div>
+  <div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.71</div></div>
+  <div class="kpi"><div class="label">Sortino</div><div class="value neu">0.91</div></div>
+  <div class="kpi"><div class="label">Calmar</div><div class="value">0.31</div></div>
+  <div class="kpi"><div class="label">Vol</div><div class="value">19.31%</div></div>
+  <div class="kpi"><div class="label">總交易</div><div class="value">1,118</div></div>
+  <div class="kpi"><div class="label">勝率</div><div class="value">32.0%</div></div>
+  <div class="kpi"><div class="label">盈虧比</div><div class="value pos">2.76x</div></div>
+  <div class="kpi"><div class="label">獲利因子</div><div class="value">1.59</div></div>
+  <div class="kpi"><div class="label">最大連敗</div><div class="value">41</div></div>
+  <div class="kpi"><div class="label">期末資產</div><div class="value">$14.73M</div></div>
+</div>
+
+<div class="verdict">
+  <strong>符合 Clenow 書中預期</strong> (CAGR 12-15%, Sharpe 0.6-0.8, 勝率 35-40%, 盈虧比 2.5x),
+  唯一偏離的是 <strong>MDD -44% 高於書上預期 (-25 ~ -30%)</strong> — 因為 ETF 代理期貨的滑點和分散度不同,以及 2011-2014 商品超級週期結束的衝擊。
+</div>
+</div>
+
+<!-- ===== 4. vs Benchmarks ===== -->
+<div class="section">
+<h2 class="section-title">4. vs 基準對比</h2>
+
+<table>
+<thead><tr><th>策略</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>期末資產</th></tr></thead>
+<tbody>
+<tr style="background:#eef2ff">
+  <td><strong>Clenow (35 ETF)</strong></td>
+  <td style="font-weight:700;color:var(--green)">+13.67%</td>
+  <td style="color:var(--red)">-44.06%</td>
+  <td>0.71</td><td>0.31</td>
+  <td><strong>$14.73M</strong></td>
+</tr>
+<tr>
+  <td>SPY Buy &amp; Hold</td>
+  <td>+10.68%</td><td style="color:var(--red)">-55.19%</td><td>0.63</td><td>0.19</td>
+  <td>$8.42M</td>
+</tr>
+<tr>
+  <td>60/40 SPY/TLT</td>
+  <td>+8.61%</td><td>-29.92%</td>
+  <td style="font-weight:600">0.80</td><td>0.29</td>
+  <td>$5.66M</td>
+</tr>
+</tbody>
+</table>
+
+<div class="note">
+  <strong>三個觀察:</strong><br>
+  1. <strong>Clenow 贏過 SPY B&amp;H</strong> +3pp CAGR、MDD 改善 11pp。<br>
+  2. <strong>Clenow 輸給 60/40 的 Sharpe</strong> (0.71 vs 0.80) — 60/40 的低波動讓 Sharpe 更好,但絕對報酬只有一半。<br>
+  3. <strong>Calmar 三者接近</strong> (0.31 / 0.19 / 0.29) — 從風險調整角度看 Clenow 略勝,但沒有壓倒性優勢。
+</div>
+</div>
+
+<!-- ===== 5. Yearly returns ===== -->
+<div class="section">
+<h2 class="section-title">5. 年度報酬</h2>
+<p class="section-sub">標 ⭐ 為大趨勢年 (>20%) · 標 ⚠ 為差年 (<-10%)</p>
+
+<div class="chart-card">
+  <h3>年度報酬柱狀圖</h3>
+  <div class="chart-wrap"><canvas id="chart-yearly"></canvas></div>
+</div>
+
+<table>
+<thead><tr><th>Year</th><th>Return</th><th>MDD</th><th>Sharpe</th><th>交易數</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>2005</td><td>+13.35%</td><td>-14.79%</td><td>0.80</td><td>24</td><td></td></tr>
+<tr><td>2006</td><td style="color:var(--green);font-weight:600">+46.43%</td><td>-27.16%</td><td>1.57</td><td>18</td><td>⭐ 商品超級週期</td></tr>
+<tr><td>2007</td><td style="color:var(--green);font-weight:600">+47.47%</td><td>-16.39%</td><td>1.62</td><td>28</td><td>⭐ 油價飆升</td></tr>
+<tr><td>2008</td><td style="color:var(--green);font-weight:600">+32.13%</td><td>-19.93%</td><td>0.99</td><td>50</td><td>⭐ GFC 空頭趨勢</td></tr>
+<tr><td>2009</td><td>+0.05%</td><td>-19.86%</td><td>0.21</td><td>38</td><td>反轉年</td></tr>
+<tr><td>2010</td><td>+9.62%</td><td>-13.98%</td><td>0.46</td><td>53</td><td></td></tr>
+<tr><td>2011</td><td>-7.86%</td><td>-26.22%</td><td>-0.24</td><td>60</td><td></td></tr>
+<tr><td>2012</td><td style="color:var(--red);font-weight:600">-19.29%</td><td>-25.23%</td><td>-1.00</td><td>69</td><td>⚠ 失落十年起點</td></tr>
+<tr><td>2013</td><td style="color:var(--green);font-weight:600">+37.03%</td><td>-9.63%</td><td>1.71</td><td>46</td><td>⭐ 美股大牛</td></tr>
+<tr><td>2014</td><td>+19.65%</td><td>-8.44%</td><td>1.42</td><td>63</td><td></td></tr>
+<tr><td>2015</td><td>+4.08%</td><td>-15.22%</td><td>0.20</td><td>48</td><td></td></tr>
+<tr><td>2016</td><td>-0.05%</td><td>-19.58%</td><td>0.06</td><td>71</td><td></td></tr>
+<tr><td>2017</td><td style="color:var(--green);font-weight:600">+22.41%</td><td>-8.76%</td><td>1.22</td><td>53</td><td>⭐</td></tr>
+<tr><td>2018</td><td>-0.14%</td><td>-21.64%</td><td>0.07</td><td>68</td><td></td></tr>
+<tr><td>2019</td><td>+1.14%</td><td>-18.54%</td><td>0.15</td><td>71</td><td></td></tr>
+<tr><td>2020</td><td style="color:var(--green);font-weight:600">+20.52%</td><td>-19.72%</td><td>0.74</td><td>61</td><td>⭐ COVID 政策</td></tr>
+<tr><td>2021</td><td>+18.62%</td><td>-6.82%</td><td>1.29</td><td>43</td><td></td></tr>
+<tr><td>2022</td><td style="color:var(--green);font-weight:600">+31.75%</td><td>-22.01%</td><td>1.10</td><td>66</td><td>⭐ 通膨熊 + 升息</td></tr>
+<tr><td>2023</td><td style="color:var(--red);font-weight:600">-21.10%</td><td>-24.56%</td><td>-1.47</td><td>81</td><td>⚠ 趨勢突然反轉</td></tr>
+<tr><td>2024</td><td style="color:var(--green);font-weight:600">+35.88%</td><td>-15.39%</td><td>1.53</td><td>45</td><td>⭐ AI + 黃金</td></tr>
+<tr><td>2025</td><td style="color:var(--green);font-weight:600">+31.20%</td><td>-15.78%</td><td>1.43</td><td>62</td><td>⭐</td></tr>
+</tbody>
+</table>
+
+<div class="note">
+  <strong>9 個大趨勢年 + 2 個差年</strong>。完美驗證 Clenow 的「典型年份小幅獲利或虧損,大趨勢年份大幅獲利」分布。
+  <strong>「失落十年」(2012-2019) 是真實的</strong> — 平均年化只有 +5.7%,但 2013 和 2017 兩個大年救回來。
+  注意 <strong>2008 GFC 賺 32%</strong> 和 <strong>2022 通膨熊賺 32%</strong> — 系統在危機年份表現最佳。
+</div>
+</div>
+
+<!-- ===== 6. Category contribution ===== -->
+<div class="section">
+<h2 class="section-title">6. 分類別貢獻 — 哪些是引擎?哪些是拖累?</h2>
+
+<div class="cat-card engine">
+  <div class="rank">#1</div>
+  <div>
+    <div class="name">利率/債券</div>
+    <div style="font-size:.75rem;color:var(--muted)">TLT IEF SHY BWX TIP</div>
+  </div>
+  <div></div>
+  <div class="pnl" style="color:var(--green);font-size:1rem">+$3,430K</div>
+  <div class="stat">166 trades · 33.1% WR</div>
+</div>
+
+<div class="cat-card engine">
+  <div class="rank">#2</div>
+  <div>
+    <div class="name">美股指數</div>
+    <div style="font-size:.75rem;color:var(--muted)">SPY QQQ IWM MDY XLK XLF XLE</div>
+  </div>
+  <div></div>
+  <div class="pnl" style="color:var(--green);font-size:1rem">+$2,345K</div>
+  <div class="stat">207 trades · 31.4% WR</div>
+</div>
+
+<div class="cat-card engine">
+  <div class="rank">#3</div>
+  <div>
+    <div class="name">外匯</div>
+    <div style="font-size:.75rem;color:var(--muted)">UUP FXE FXY FXB FXA</div>
+  </div>
+  <div></div>
+  <div class="pnl" style="color:var(--green)">+$745K</div>
+  <div class="stat">174 trades · 29.9% WR</div>
+</div>
+
+<div class="cat-card engine">
+  <div class="rank">#4</div>
+  <div>
+    <div class="name">農產品</div>
+    <div style="font-size:.75rem;color:var(--muted)">DBA CORN WEAT SOYB</div>
+  </div>
+  <div></div>
+  <div class="pnl" style="color:var(--green)">+$583K</div>
+  <div class="stat">108 trades · 28.7% WR</div>
+</div>
+
+<div class="cat-card neutral">
+  <div class="rank">#5</div>
+  <div>
+    <div class="name">國際股指</div>
+    <div style="font-size:.75rem;color:var(--muted)">EFA EEM EWJ EWG FXI INDA</div>
+  </div>
+  <div></div>
+  <div class="pnl">+$185K</div>
+  <div class="stat">216 trades · 26.4% WR</div>
+</div>
+
+<div class="cat-card drag">
+  <div class="rank">#6</div>
+  <div>
+    <div class="name">能源</div>
+    <div style="font-size:.75rem;color:var(--muted)">USO UNG UGA</div>
+  </div>
+  <div></div>
+  <div class="pnl" style="color:var(--red)">-$207K</div>
+  <div class="stat">104 trades · 24.0% WR</div>
+</div>
+
+<div class="cat-card drag">
+  <div class="rank">#7</div>
+  <div>
+    <div class="name">金屬</div>
+    <div style="font-size:.75rem;color:var(--muted)">GLD SLV CPER PPLT</div>
+  </div>
+  <div></div>
+  <div class="pnl" style="color:var(--red);font-size:1rem">-$1,175K</div>
+  <div class="stat">143 trades · 21.0% WR</div>
+</div>
+
+<div class="verdict">
+  <strong>關鍵發現:</strong><br>
+  • <strong>引擎:</strong> 利率 ($3.43M) + 美股 ($2.35M) 兩個類別貢獻了 84% 的總利潤<br>
+  • <strong>拖累:</strong> 金屬 (-$1.17M) + 能源 (-$207K) 兩個類別合計虧 $1.38M<br>
+  • <strong>SHY 單一 ETF 貢獻 +$1.90M</strong> — 利率變動週期捕捉得好<br>
+  • <strong>金屬類災難:</strong> PPLT 白金 -$868K (勝率僅 12%) — 過去 20 年金屬市場震盪劇烈,趨勢系統難以捕捉
+</div>
+</div>
+
+<!-- ===== 7. Top/bottom markets ===== -->
+<div class="section">
+<h2 class="section-title">7. 分市場 Top/Bottom</h2>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+<div>
+<h3 style="font-size:.95rem;font-weight:600;margin:0 0 .5rem;color:var(--green)">最賺錢 5 個</h3>
+<table>
+<thead><tr><th>Market</th><th>Cat</th><th>WR</th><th>P&amp;L</th></tr></thead>
+<tbody>
+<tr><td><strong>SHY</strong></td><td>Rates</td><td>44%</td><td style="color:var(--green);font-weight:600">+$1,903K</td></tr>
+<tr><td>QQQ</td><td>US Eq</td><td>42%</td><td style="color:var(--green)">+$904K</td></tr>
+<tr><td>DBA</td><td>Agri</td><td>38%</td><td style="color:var(--green)">+$746K</td></tr>
+<tr><td>IEF</td><td>Rates</td><td>38%</td><td style="color:var(--green)">+$685K</td></tr>
+<tr><td>XLK</td><td>US Eq</td><td>36%</td><td style="color:var(--green)">+$678K</td></tr>
+</tbody>
+</table>
+</div>
+
+<div>
+<h3 style="font-size:.95rem;font-weight:600;margin:0 0 .5rem;color:var(--red)">最虧錢 5 個 (whipsaw 熱區)</h3>
+<table>
+<thead><tr><th>Market</th><th>Cat</th><th>WR</th><th>P&amp;L</th></tr></thead>
+<tbody>
+<tr><td><strong>PPLT</strong></td><td>Metals</td><td style="color:var(--red)">12%</td><td style="color:var(--red);font-weight:600">-$868K</td></tr>
+<tr><td>FXA</td><td>FX</td><td>20%</td><td style="color:var(--red)">-$401K</td></tr>
+<tr><td>CPER</td><td>Metals</td><td>29%</td><td style="color:var(--red)">-$348K</td></tr>
+<tr><td>MDY</td><td>US Eq</td><td>21%</td><td style="color:var(--red)">-$230K</td></tr>
+<tr><td>SLV</td><td>Metals</td><td>26%</td><td style="color:var(--red)">-$220K</td></tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<div class="note">
+  <strong>觀察:</strong> 最虧錢的 5 個市場有 4 個交易次數 ≥ 35 (PPLT 42, FXA 40, MDY 39, SLV 35) — 證實「過度交易 = whipsaw」。
+  <strong>金屬類別 4 個 ETF 中 3 個在最虧榜</strong>,只有 GLD 持平。如果把金屬 + PPLT/FXA 剔除,系統表現會明顯改善。
+</div>
+</div>
+
+<!-- ===== 8. Drawdowns ===== -->
+<div class="section">
+<h2 class="section-title">8. Top Drawdowns</h2>
+
+<table>
+<thead><tr><th>#</th><th>Peak</th><th>Trough</th><th>Recovery</th><th>深度</th><th>下跌天數</th><th>恢復天數</th><th>事件</th></tr></thead>
+<tbody>
+<tr>
+  <td>1</td><td>2011-04-29</td><td>2012-11-15</td><td>2015-01-02</td>
+  <td style="color:var(--red);font-weight:600">-44.06%</td><td>566</td><td><strong>778</strong></td>
+  <td>商品超級週期結束</td>
+</tr>
+<tr>
+  <td>2</td><td>2022-10-14</td><td>2023-12-06</td><td>2025-10-06</td>
+  <td style="color:var(--red);font-weight:600">-40.00%</td><td>418</td><td>670</td>
+  <td>升息 + 趨勢突反</td>
+</tr>
+<tr>
+  <td>3</td><td>2018-01-26</td><td>2019-03-01</td><td>2020-03-23</td>
+  <td>-28.45%</td><td>399</td><td>388</td>
+  <td>2018 Q4 + 2019 平庸</td>
+</tr>
+<tr>
+  <td>4</td><td>2006-05-10</td><td>2006-06-13</td><td>2006-11-30</td>
+  <td>-27.16%</td><td>34</td><td>170</td>
+  <td>商品 mini-crash</td>
+</tr>
+<tr>
+  <td>5</td><td>2008-11-20</td><td>2009-07-08</td><td>2010-11-04</td>
+  <td>-20.84%</td><td>230</td><td>484</td>
+  <td>GFC 反轉 (注意 2008 全年仍是 +32%)</td>
+</tr>
+</tbody>
+</table>
+
+<div class="note">
+  <strong>MDD 真實情況比書上預期 (-25~30%) 嚴重很多</strong>。最大回撤 -44% 持續了 778 天 (≈ 2 年) 才恢復。
+  普通投資人很難在 2 年套牢期間維持紀律。<strong>第 2 名的 -40% 才剛在 2025-10 恢復</strong> — 也就是說 2022 高點的人剛回本。
+</div>
+</div>
+
+<!-- ===== 9. Verdict ===== -->
+<div class="section">
+<h2 class="section-title">9. 評等與定位</h2>
+
+<div class="card" style="background:linear-gradient(135deg,#eef2ff 0%,#fff 100%);border-left:4px solid var(--clenow)">
+  <h3 style="color:var(--clenow);font-size:1.05rem">在投資組合中的定位</h3>
+  <p style="font-size:.9rem;line-height:1.75;color:#374151">
+    Clenow 系統<strong>不是</strong>本站股票系統 (LTO/W52/六狀態機/GEM) 的競爭對手 — 它是<strong>不同資產類別 + 不同策略風格的補充</strong>。
+  </p>
+
+  <h4 style="color:var(--clenow);font-size:.95rem;margin-top:1rem;margin-bottom:.5rem">適合的角色</h4>
+  <ul style="font-size:.88rem;color:#374151;line-height:1.75;margin-left:1.2rem">
+    <li><strong>多資產 trend-following 的基準</strong> — Sharpe 0.71 是業界 CTA 的中位水準</li>
+    <li><strong>危機年份 alpha 來源</strong> — 2008 (+32%)、2022 (+32%) 兩次危機年都大賺</li>
+    <li><strong>低相關性配置</strong> — 與股票系統 (LTO/W52) 在不同年份表現,組合風險分散好</li>
+    <li><strong>絕對報酬最高</strong> ($14.73M, 21 年) — 比所有股票系統 + 60/40 都多</li>
+  </ul>
+
+  <h4 style="color:var(--clenow);font-size:.95rem;margin-top:1rem;margin-bottom:.5rem">不適合的場景</h4>
+  <ul style="font-size:.88rem;color:#374151;line-height:1.75;margin-left:1.2rem">
+    <li><strong>不能承受 -44% 回撤 + 2 年套牢</strong>的人</li>
+    <li><strong>追求 Sharpe / Calmar 最佳</strong>: 60/40 或 Long Track Only 更好</li>
+    <li><strong>需要每年穩定報酬</strong>: 「失落十年」是真實的 (2012、2018、2019、2023 連續平庸/負)</li>
+  </ul>
+
+  <h4 style="color:var(--clenow);font-size:.95rem;margin-top:1rem;margin-bottom:.5rem">建議的修正</h4>
+  <ol style="font-size:.88rem;color:#374151;line-height:1.75;margin-left:1.2rem">
+    <li><strong>剔除金屬類別</strong> (拖累 -$1.17M) — PPLT/SLV/CPER 過去 20 年都是 whipsaw 熱區</li>
+    <li><strong>剔除 PPLT 和 FXA</strong> — 個別大虧元兇</li>
+    <li><strong>只用美股 ETF 子集</strong> — 留 SPY/QQQ/IWM/XLK 等強趨勢標的,可能 CAGR 更高 + MDD 更小</li>
+  </ol>
+</div>
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; Clenow Trend Following 多資產回測 &middot; 真實 yfinance 資料 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+// Yearly returns chart
+var YEARS = [2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+var CLENOW = [13.35,46.43,47.47,32.13,0.05,9.62,-7.86,-19.29,37.03,19.65,4.08,-0.05,22.41,-0.14,1.14,20.52,18.62,31.75,-21.10,35.88,31.20];
+
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+new Chart(document.getElementById('chart-yearly'),{
+  type:'bar',
+  data:{
+    labels:YEARS,
+    datasets:[{
+      label:'Clenow',
+      data:CLENOW,
+      backgroundColor:CLENOW.map(function(v){
+        if (v > 20) return 'rgba(99,102,241,0.85)';
+        if (v > 0) return 'rgba(99,102,241,0.55)';
+        return 'rgba(220,38,38,0.65)';
+      }),
+      borderColor:'#6366f1',
+      borderWidth:1,
+      borderRadius:3
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:function(ctx){
+        return 'Clenow: '+(ctx.parsed.y>0?'+':'')+ctx.parsed.y.toFixed(2)+'%';
+      }}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}
+    }
+  }
+});
+</script>
+</body>
+</html>

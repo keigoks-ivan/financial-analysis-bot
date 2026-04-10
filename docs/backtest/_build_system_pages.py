@@ -108,6 +108,7 @@ INDIVIDUAL_LINKS = [
 ]
 MULTI_LINKS = [
     ("/backtest/turtle/", "🐢 Turtle", "turtle"),
+    ("/backtest/clenow/", "📈 Clenow", "clenow"),
 ]
 TOGGLE_LINKS = COMPARISON_LINKS + INDIVIDUAL_LINKS + MULTI_LINKS  # back-compat
 
@@ -121,6 +122,8 @@ def make_toggle(active: str) -> str:
                 bg = "#dc2626"
             elif key == "turtle":
                 bg = "#0f766e"
+            elif key == "clenow":
+                bg = "#6366f1"
             elif key == "long_qqq":
                 bg = "#16a34a"
             else:
@@ -131,6 +134,8 @@ def make_toggle(active: str) -> str:
                 color = "#dc2626"
             elif key == "turtle":
                 color = "#0f766e"
+            elif key == "clenow":
+                color = "#6366f1"
             elif key == "long_qqq":
                 color = "#16a34a"
             else:
