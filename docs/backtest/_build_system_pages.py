@@ -91,11 +91,13 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 }
 """
 
-# Toggle pill — grouped: 美股系統 first, 多資產 second
-US_LINKS = [
+# Toggle pill — three semantic groups
+COMPARISON_LINKS = [
     ("/backtest/", "20 年", "20y"),
     ("/backtest/10y/", "10 年", "10y"),
     ("/backtest/criteria/", "評估標準", "criteria"),
+]
+INDIVIDUAL_LINKS = [
     ("/backtest/dual_track/", "雙軌多空", "dual"),
     ("/backtest/long_track/", "Long Track", "long"),
     ("/backtest/six_state/", "六狀態機", "six_state"),
@@ -106,11 +108,11 @@ US_LINKS = [
 MULTI_LINKS = [
     ("/backtest/turtle/", "🐢 Turtle", "turtle"),
 ]
-TOGGLE_LINKS = US_LINKS + MULTI_LINKS  # back-compat for any code referencing this
+TOGGLE_LINKS = COMPARISON_LINKS + INDIVIDUAL_LINKS + MULTI_LINKS  # back-compat
 
 
 def make_toggle(active: str) -> str:
-    """Build dual-group toggle: 美股系統 + 多資產."""
+    """Build three-group toggle: 對比總覽 / 個別系統 / 多資產."""
     def link(url, label, key):
         is_active = key == active
         if is_active:
@@ -130,18 +132,17 @@ def make_toggle(active: str) -> str:
                 color = "var(--brand)"
             return f'<a href="{url}" style="padding:.4rem .85rem;background:#fff;color:{color};font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">{label}</a>'
 
-    us_html = "".join(link(u, l, k) for u, l, k in US_LINKS)
-    multi_html = "".join(link(u, l, k) for u, l, k in MULTI_LINKS)
+    def group(label_text, links, accent):
+        links_html = "".join(link(u, l, k) for u, l, k in links)
+        return f'''<div>
+        <div style="font-size:.68rem;color:{accent};text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">{label_text}</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap">{links_html}</div>
+      </div>'''
 
     return f'''<div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
-      <div>
-        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">美股系統 (SPY/QQQ)</div>
-        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap">{us_html}</div>
-      </div>
-      <div>
-        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div>
-        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden">{multi_html}</div>
-      </div>
+      {group("對比總覽", COMPARISON_LINKS, "#1a56db")}
+      {group("個別系統 (美股)", INDIVIDUAL_LINKS, "var(--muted)")}
+      {group("多資產", MULTI_LINKS, "#0f766e")}
     </div>'''
 
 
