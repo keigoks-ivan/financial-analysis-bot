@@ -101,6 +101,7 @@ TOGGLE_LINKS = [
     ("/backtest/six_state/", "六狀態機", "six_state"),
     ("/backtest/gem/", "GEM", "gem"),
     ("/backtest/slope_filter/", "W52 斜率", "slope"),
+    ("/backtest/short_system/", "做空 (失敗)", "short"),
 ]
 
 
@@ -108,7 +109,9 @@ def make_toggle(active: str) -> str:
     parts = []
     for url, label, key in TOGGLE_LINKS:
         cls = "active" if key == active else ""
-        parts.append(f'<a href="{url}" class="{cls}">{label}</a>')
+        # Special styling for the failed-experiment link
+        style = ' style="color:#dc2626"' if key == "short" and cls != "active" else ""
+        parts.append(f'<a href="{url}" class="{cls}"{style}>{label}</a>')
     return '<div class="toggle-pill">' + "".join(parts) + '</div>'
 
 
