@@ -316,14 +316,21 @@ def _gauge_color_hex(score: float, max_score: float = 80.0) -> str:
 # ── HTML 骨架 ────────────────────────────────────────────────────────────────
 
 def _header(active: str = "") -> str:
-    links = [("首頁", "/")]
+    links = [
+        ("首頁", "/"),
+        ("每日簡報", "/briefing/"),
+        ("週報", "/weekly/"),
+        ("回測", "/backtest/"),
+        ("研究報告", "/research/"),
+        ("六狀態機", "/six-state/"),
+    ]
     nav = " ".join(
         f'<a href="{url}" class="{"active" if active == lbl else ""}">{lbl}</a>'
         for lbl, url in links
     )
     return f"""<header>
   <div class="container hdr-inner">
-    <a class="logo" href="/">InvestMQuest Research</a>
+    <a class="logo" href="/">InvestMQuest<span>.</span> Research</a>
     <nav>{nav}</nav>
   </div>
 </header>"""
@@ -359,15 +366,34 @@ def _base_page(title: str, body: str, extra_head: str = "") -> str:
 {_footer()}
 <script>
 (function(){{
-  var si=document.getElementById('search-input');
-  var fc=document.getElementById('filter-count');
-  var filters={{form:'all',moat:'all'}};
+  // DD table search
+  var ddSearch=document.getElementById('dd-search');
+  var ddCount=document.getElementById('dd-count');
+  var ddRows=document.querySelectorAll('#dd-tbody tr.searchable');
+  function renderDdCount(s,t){{ if(ddCount) ddCount.textContent='\u5171 '+t+' \u7B46'+(s!==t?'\uFF08\u986F\u793A '+s+'\uFF09':''); }}
+  function filterDd(){{
+    var q=(ddSearch&&ddSearch.value||'').toLowerCase();
+    var shown=0;
+    ddRows.forEach(function(r){{
+      var m=!q||r.textContent.toLowerCase().indexOf(q)>=0;
+      r.style.display=m?'':'none';
+      if(m) shown++;
+    }});
+    renderDdCount(shown,ddRows.length);
+  }}
+  if(ddSearch) ddSearch.addEventListener('input',filterDd);
+  if(ddRows.length) renderDdCount(ddRows.length,ddRows.length);
 
-  function applyFilters(){{
-    var q=si?si.value.toLowerCase():'';
-    var rows=document.querySelectorAll('#report-tbody .searchable');
-    var total=rows.length,shown=0;
-    rows.forEach(function(el){{
+  // Earnings table search + filter
+  var erSearch=document.getElementById('earnings-search');
+  var erCount=document.getElementById('earnings-count');
+  var erRows=document.querySelectorAll('#report-tbody tr.searchable');
+  var filters={{form:'all',moat:'all'}};
+  function renderErCount(s,t){{ if(erCount) erCount.textContent='\u5171 '+t+' \u7B46'+(s!==t?'\uFF08\u986F\u793A '+s+'\uFF09':''); }}
+  function filterEr(){{
+    var q=(erSearch&&erSearch.value||'').toLowerCase();
+    var shown=0;
+    erRows.forEach(function(el){{
       var matchText=!q||el.textContent.toLowerCase().indexOf(q)>=0;
       var matchForm=filters.form==='all'||el.getAttribute('data-form')===filters.form;
       var matchMoat=filters.moat==='all'||el.getAttribute('data-moat')===filters.moat;
@@ -375,11 +401,9 @@ def _base_page(title: str, body: str, extra_head: str = "") -> str:
       el.style.display=vis?'':'none';
       if(vis) shown++;
     }});
-    if(fc) fc.textContent='\u986F\u793A '+shown+' / \u5171 '+total+' \u7B46';
+    renderErCount(shown,erRows.length);
   }}
-
-  if(si) si.addEventListener('input',applyFilters);
-
+  if(erSearch) erSearch.addEventListener('input',filterEr);
   document.querySelectorAll('.filter-btn').forEach(function(btn){{
     btn.addEventListener('click',function(){{
       var group=btn.getAttribute('data-filter');
@@ -389,9 +413,10 @@ def _base_page(title: str, body: str, extra_head: str = "") -> str:
         b.classList.remove('active');
       }});
       btn.classList.add('active');
-      applyFilters();
+      filterEr();
     }});
   }});
+  if(erRows.length) renderErCount(erRows.length,erRows.length);
 }})();
 </script>
 </body>
@@ -1062,7 +1087,167 @@ def _scan_dd_reports() -> list[dict]:
 # ── 首頁生成 ─────────────────────────────────────────────────────────────────
 
 def generate_index(reports: list[dict]) -> None:
-    """生成 docs/index.html —— 報告總表 + 搜尋過濾。"""
+    """生成 docs/index.html —— 乾淨 landing page（hero + feature cards only）。
+
+    Phase 3: 報告表格已移至 /research/。首頁只留導覽與入口卡片。
+    `reports` 參數保留為介面相容，實際不使用內容。
+    """
+    dd_count = len(_scan_dd_reports())
+    body = f"""
+<section class="hero">
+  <div class="container">
+    <span class="eyebrow">AI 驅動 · 每日更新</span>
+    <h1>InvestMQuest Research</h1>
+    <p class="sub">量化系統回測 · 每日市場簡報 · 深度週報 · 個股 DD · 財報分析 — 一站式投資研究平台</p>
+    <div class="stats">
+      <div class="stat"><div class="stat-num">{dd_count}+</div><div class="stat-label">深度研究</div></div>
+      <div class="stat"><div class="stat-num">10+</div><div class="stat-label">量化系統</div></div>
+      <div class="stat"><div class="stat-num">06:00</div><div class="stat-label">每日簡報</div></div>
+      <div class="stat"><div class="stat-num">10</div><div class="stat-label">週報主題</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container">
+    <div class="feature-grid">
+      <a href="/research/" class="feature-card">
+        <div class="feature-icon-wrap">📑</div>
+        <h3>研究報告 <span class="arrow">&rarr;</span></h3>
+        <p>個股深度 DD 報告（買側框架、護城河、估值、R:R 診斷）與 10-K / 10-Q 財報分析，涵蓋美股與台股。</p>
+      </a>
+      <a href="/backtest/" class="feature-card">
+        <div class="feature-icon-wrap">📈</div>
+        <h3>量化系統回測 <span class="arrow">&rarr;</span></h3>
+        <p>10+ 量化交易系統的完整 20 年回測。趨勢跟蹤、動量輪動、波動率加權、海龜系統等，真實 yfinance 資料。</p>
+      </a>
+      <a href="/briefing/" class="feature-card">
+        <div class="feature-icon-wrap">📰</div>
+        <h3>每日市場簡報 <span class="arrow">&rarr;</span></h3>
+        <p>每日全球市場數據、新聞主題、央行政策、技術面與基本面綜合分析。每天台北時間 06:00 自動更新。</p>
+      </a>
+      <a href="/weekly/" class="feature-card">
+        <div class="feature-icon-wrap">📊</div>
+        <h3>每週深度週報 <span class="arrow">&rarr;</span></h3>
+        <p>10 個主題的深度週度分析：央行、流動性、信用、選擇權、AI 產業、半導體、財報、宏觀、商品、黑天鵝。</p>
+      </a>
+      <a href="/six-state/" class="feature-card">
+        <div class="feature-icon-wrap">🎯</div>
+        <h3>六狀態機即時狀態 <span class="arrow">&rarr;</span></h3>
+        <p>即時市場狀態指示器。SPY/QQQ 當前 S1 巡航 / S2 防守 / S5 趨勢重啟狀態，以及 Grid 加碼觸發判斷。</p>
+      </a>
+    </div>
+  </div>
+</section>"""
+
+    # 首頁使用客製 CSS（lean landing），不走 _base_page
+    _write_html(DOCS_DIR / "index.html", _landing_page("InvestMQuest Research", body))
+
+
+def _landing_page(title: str, body: str) -> str:
+    """Clean landing page template（僅 homepage 使用）。"""
+    landing_css = """
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;
+     min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem;width:100%}
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.75rem 0;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+header .logo{font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:-.02em}
+header .logo span{color:#3b82f6}
+header nav a{color:rgba(255,255,255,.7);margin-left:1.4rem;font-size:.85rem;font-weight:500;
+             padding-bottom:4px;border-bottom:2px solid transparent;transition:all .2s}
+header nav a:hover{color:#fff;text-decoration:none;border-bottom-color:rgba(255,255,255,.4)}
+header nav a.active{color:#fff;border-bottom-color:#3b82f6}
+.hero{padding:4rem 0 3rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);
+      border-bottom:1px solid var(--border);text-align:center}
+.hero .eyebrow{display:inline-block;padding:.35rem .9rem;background:rgba(26,86,219,.08);
+               color:var(--brand);border-radius:999px;font-size:.75rem;font-weight:600;
+               letter-spacing:.04em;margin-bottom:1rem;text-transform:uppercase}
+.hero h1{font-size:2.6rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;
+         background:linear-gradient(135deg,#0f172a 0%,#1a56db 100%);
+         -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+         background-clip:text;color:transparent;margin-bottom:.85rem}
+.hero .sub{color:var(--muted);font-size:1.05rem;max-width:640px;margin:0 auto;line-height:1.65}
+.hero .stats{display:flex;flex-wrap:wrap;justify-content:center;gap:2rem;
+             margin-top:1.75rem;padding-top:1.5rem;border-top:1px solid rgba(0,0,0,.05);
+             max-width:640px;margin-left:auto;margin-right:auto}
+.hero .stat{text-align:center}
+.hero .stat-num{font-size:1.35rem;font-weight:700;color:var(--text);line-height:1.1}
+.hero .stat-label{font-size:.72rem;color:var(--muted);margin-top:.25rem;
+                  text-transform:uppercase;letter-spacing:.05em}
+.features{padding:3rem 0 2rem;flex:1}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.1rem}
+.feature-card{display:block;background:var(--card);border:1px solid var(--border);
+              border-radius:12px;padding:1.5rem 1.55rem;text-decoration:none;
+              color:var(--text);transition:all .22s ease;position:relative;overflow:hidden}
+.feature-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+                      background:linear-gradient(90deg,var(--brand),#3b82f6);
+                      opacity:0;transition:opacity .22s ease}
+.feature-card:hover{text-decoration:none;border-color:transparent;transform:translateY(-3px);
+                    box-shadow:0 10px 24px rgba(15,23,42,.08),0 2px 4px rgba(26,86,219,.06)}
+.feature-card:hover::before{opacity:1}
+.feature-icon-wrap{display:inline-flex;align-items:center;justify-content:center;
+                   width:44px;height:44px;border-radius:10px;
+                   background:linear-gradient(135deg,#eff6ff,#dbeafe);
+                   margin-bottom:1rem;font-size:1.4rem}
+.feature-card h3{font-size:1.02rem;font-weight:700;color:var(--text);margin-bottom:.45rem;
+                 display:flex;align-items:center;gap:.4rem}
+.feature-card h3 .arrow{color:var(--muted);font-size:.95rem;
+                        transition:transform .22s ease,color .22s ease;margin-left:auto}
+.feature-card:hover h3 .arrow{color:var(--brand);transform:translateX(4px)}
+.feature-card p{font-size:.83rem;color:var(--muted);line-height:1.65;margin:0}
+.disclaimer{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+            padding:.85rem 1.1rem;font-size:.76rem;color:#78350f;margin:1.75rem 0}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem}
+@media(max-width:768px){
+  .hero{padding:2.5rem 0 2rem}.hero h1{font-size:1.85rem}
+  .hero .sub{font-size:.9rem}.hero .stats{gap:1.25rem;margin-top:1.25rem;padding-top:1rem}
+  .hero .stat-num{font-size:1.15rem}.features{padding:2rem 0 1.5rem}
+  .feature-grid{grid-template-columns:1fr;gap:.8rem}.feature-card{padding:1.2rem 1.3rem}
+  .hdr-inner{flex-direction:column;gap:.5rem}
+  header nav{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem 0}
+  header nav a{margin-left:0;margin-right:1rem;font-size:.78rem}
+}
+"""
+    return f"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{html_lib.escape(title)}</title>
+  <meta name="description" content="量化交易系統 20 年回測、每日市場簡報、深度週報、個股 DD 研究、財報分析的整合性投資研究平台">
+  <meta property="og:title" content="{html_lib.escape(title)}">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <style>{landing_css}</style>
+</head>
+<body>
+{_header('首頁')}
+{body}
+<div class="container">
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>
+    本網站所有內容均由 AI 自動生成，僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+  </div>
+</div>
+<footer>
+  <div class="container">
+    &copy; {datetime.date.today().year} InvestMQuest Research &middot;
+    由 AI 自動生成，僅供參考
+  </div>
+</footer>
+</body>
+</html>"""
+
+
+def generate_research(reports: list[dict]) -> None:
+    """生成 docs/research/index.html —— 深度研究報告 + 財報分析總表。"""
     today = datetime.date.today().strftime("%Y 年 %m 月 %d 日")
 
     rows = ""
@@ -1111,18 +1296,64 @@ def generate_index(reports: list[dict]) -> None:
 </tr>"""
 
     total_count = len(reports)
+
+    # ── 深度研究報告區塊（DD 放在最上方）
+    dd_reports = _scan_dd_reports()
+    dd_rows_html = ""
+    for dd in dd_reports:
+        t = html_lib.escape(dd["ticker"])
+        d = html_lib.escape(dd["date"])
+        fn = html_lib.escape(dd["filename"])
+        dd_rows_html += f"""
+<tr class="searchable">
+  <td><strong>{t}</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>{d}</td>
+  <td><a href="/dd/{fn}">查看 &rarr;</a></td>
+</tr>"""
+
+    if not dd_rows_html:
+        dd_rows_html = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem">尚無深度研究報告</td></tr>'
+
     body = f"""
 <div class="page-hdr">
   <div class="container">
-    <h1>財報分析總覽</h1>
-    <p class="sub">{today} &mdash; AI 驅動，涵蓋 10-Q / 10-K 深度解讀</p>
+    <div class="crumb"><a href="/">首頁</a> &rsaquo; 研究報告</div>
+    <h1>研究報告</h1>
+    <p class="sub">深度個股研究（買側 DD 框架）· 10-K / 10-Q 財報分析（AI 驅動）。涵蓋美股與台股。</p>
   </div>
 </div>
 
-<div class="section">
+<div class="section" style="padding-top:1.25rem" id="dd-reports">
   <div class="container">
+    <h2 class="section-title">深度研究報告<span class="count" id="dd-count">&nbsp;</span></h2>
     <div class="search-wrap">
-      <input id="search-input" type="text" placeholder="搜尋 Ticker、報告類型…">
+      <input id="dd-search" type="text" placeholder="搜尋 Ticker 或日期…">
+    </div>
+    <div class="card" style="overflow-x:auto;padding:0">
+      <table>
+        <thead>
+          <tr>
+            <th>公司</th>
+            <th>類型</th>
+            <th>日期</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="dd-tbody">
+{dd_rows_html}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="earnings-reports">
+  <div class="container">
+    <h2 class="section-title">財報分析<span class="count" id="earnings-count">&nbsp;</span></h2>
+
+    <div class="search-wrap">
+      <input id="earnings-search" type="text" placeholder="搜尋 Ticker、報告類型…">
     </div>
 
     <div class="filter-bar">
@@ -1140,10 +1371,6 @@ def generate_index(reports: list[dict]) -> None:
         <button class="filter-btn" data-filter="moat" data-value="nomoat">無護城河</button>
         <button class="filter-btn" data-filter="moat" data-value="unrated">未評級</button>
       </div>
-    </div>
-
-    <div id="filter-count" style="font-size:.82rem;color:var(--muted);margin-bottom:.6rem">
-      顯示 {total_count} / 共 {total_count} 筆
     </div>
 
     <div class="card" style="overflow-x:auto;padding:0">
@@ -1165,43 +1392,9 @@ def generate_index(reports: list[dict]) -> None:
   </div>
 </div>"""
 
-    # ── 深度研究報告區塊
-    dd_reports = _scan_dd_reports()
-    if dd_reports:
-        dd_rows = ""
-        for dd in dd_reports:
-            t = html_lib.escape(dd["ticker"])
-            d = html_lib.escape(dd["date"])
-            fn = html_lib.escape(dd["filename"])
-            dd_rows += f"""
-<tr class="searchable">
-  <td><strong>{t}</strong></td>
-  <td><span class="tag tag-dd">深度研究</span></td>
-  <td>{d}</td>
-  <td><a href="/dd/{fn}">查看 &rarr;</a></td>
-</tr>"""
-
-        body += f"""
-<div class="section">
-  <div class="container">
-    <h2 class="section-title">深度研究報告</h2>
-    <div class="card" style="overflow-x:auto;padding:0">
-      <table>
-        <thead>
-          <tr>
-            <th>公司</th>
-            <th>類型</th>
-            <th>日期</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>{dd_rows}</tbody>
-      </table>
-    </div>
-  </div>
-</div>"""
-
-    _write_html(DOCS_DIR / "index.html", _base_page(f"首頁 — {today}", body))
+    out_path = DOCS_DIR / "research" / "index.html"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_html(out_path, _base_page(f"研究報告 — {today}", body))
 
 
 # ── 10-K 報告頁面 ───────────────────────────────────────────────────────────
@@ -2099,8 +2292,9 @@ def build_site() -> None:
         elif form == "10-Q":
             generate_report_page_10q(report, content)
 
-    # 首頁（在讀取內容並解析護城河之後生成，確保護城河等級已填入）
+    # 首頁 + 研究報告頁（在讀取內容並解析護城河之後生成，確保護城河等級已填入）
     generate_index(notion_reports)
+    generate_research(notion_reports)
 
     # 個別公司頁面
     for ticker, co_data in companies_data.items():

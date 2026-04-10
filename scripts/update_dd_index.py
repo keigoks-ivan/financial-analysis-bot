@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Scan docs/dd/ for DD_*.html files and update the deep research table in docs/index.html.
-Run after adding new DD files to auto-update the homepage listing.
+Scan docs/dd/ for DD_*.html files and update the deep research table in
+docs/research/index.html (Phase 3: homepage cleaned, reports moved to /research/).
+Run after adding new DD files to auto-update the research page listing.
 """
 import re
 from pathlib import Path
 
 DOCS = Path(__file__).parent.parent / "docs"
 DD_DIR = DOCS / "dd"
-INDEX = DOCS / "index.html"
+INDEX = DOCS / "research" / "index.html"
 
 
 def scan_dd_files():
@@ -43,14 +44,14 @@ def build_rows(entries):
 def update_index(entries):
     html = INDEX.read_text(encoding="utf-8")
 
-    # Find the deep research tbody and replace its contents
-    # Pattern: from <h2 class="section-title">深度研究報告</h2> ... <tbody> ... </tbody>
-    pattern = r'(<h2 class="section-title">深度研究報告</h2>.*?<tbody>)\n.*?(</tbody>)'
+    # Target the DD tbody directly (research page uses id="dd-tbody" for this).
+    # Replace everything between <tbody id="dd-tbody"> ... </tbody>.
+    pattern = r'(<tbody id="dd-tbody">)\n?.*?(\s*</tbody>)'
     replacement = r'\1\n' + build_rows(entries) + r'\2'
     new_html, count = re.subn(pattern, replacement, html, flags=re.DOTALL)
 
     if count == 0:
-        print("ERROR: Could not find deep research table in index.html")
+        print(f"ERROR: Could not find <tbody id=\"dd-tbody\"> in {INDEX}")
         return False
 
     INDEX.write_text(new_html, encoding="utf-8")

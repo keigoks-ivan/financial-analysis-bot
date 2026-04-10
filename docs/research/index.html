@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>研究報告 — InvestMQuest Research</title>
+  <meta name="description" content="深度個股研究報告 · 10-K / 10-Q 財報分析。買側 DD 框架、護城河評分、風報比診斷。">
+  <meta property="og:title" content="研究報告 — InvestMQuest Research">
+  <meta property="og:site_name" content="InvestMQuest Research">
+  <style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--brand-dark:#1e40af;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+
+/* Header */
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.75rem 0;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+header .logo{font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:-.02em}
+header .logo span{color:#3b82f6}
+header nav a{color:rgba(255,255,255,.7);margin-left:1.4rem;font-size:.85rem;font-weight:500;
+             padding-bottom:4px;border-bottom:2px solid transparent;transition:all .2s}
+header nav a:hover{color:#fff;text-decoration:none;border-bottom-color:rgba(255,255,255,.4)}
+header nav a.active{color:#fff;border-bottom-color:#3b82f6}
+
+/* Page Header */
+.page-hdr{padding:2rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.75rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.95rem;margin-top:.35rem;max-width:680px;line-height:1.55}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.45rem}
+.crumb a{color:var(--muted)}
+.crumb a:hover{color:var(--brand)}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+
+/* Tags */
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;
+     font-size:.72rem;font-weight:600;letter-spacing:.02em}
+.tag-10q{background:#dbeafe;color:#1e40af}
+.tag-10k{background:#f3e8ff;color:#6b21a8}
+.tag-dd{background:#1e3a5f;color:#fff}
+
+/* Moat Badges */
+.moat-badge{display:inline-block;padding:.2rem .7rem;border-radius:20px;
+            font-size:.78rem;font-weight:600}
+.moat-wide{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.moat-narrow{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
+.moat-none{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.7rem .85rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.75rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+tbody tr:hover td{background:#f3f4f6}
+tbody tr:last-child td{border-bottom:none}
+
+/* Search */
+.search-wrap{margin-bottom:1rem}
+.search-wrap input{width:100%;max-width:420px;padding:.6rem 1rem;
+                   border:1px solid var(--border);border-radius:6px;font-size:.88rem;
+                   background:var(--card);transition:all .15s}
+.search-wrap input:focus{outline:none;border-color:var(--brand);
+                         box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+
+/* Filter Bar */
+.filter-bar{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;align-items:center}
+.filter-group{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}
+.filter-label{font-size:.76rem;font-weight:600;color:var(--muted);margin-right:.2rem;
+              text-transform:uppercase;letter-spacing:.03em}
+.filter-btn{padding:.3rem .7rem;border:1px solid var(--border);border-radius:5px;
+            background:var(--card);font-size:.8rem;color:var(--text);cursor:pointer;
+            transition:all .15s}
+.filter-btn:hover{border-color:var(--brand);color:var(--brand)}
+.filter-btn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* Section */
+.section{padding:1.5rem 0}
+.section-title{font-size:1.05rem;font-weight:700;margin-bottom:.85rem;
+               padding-bottom:.4rem;border-bottom:2px solid var(--brand);
+               display:flex;align-items:baseline;justify-content:space-between}
+.section-title .count{font-size:.78rem;font-weight:500;color:var(--muted);
+                      letter-spacing:0;text-transform:none;border:none}
+
+/* Disclaimer & Footer */
+.disclaimer{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+            padding:.85rem 1.1rem;font-size:.76rem;color:#78350f;margin:1.75rem 0}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem}
+footer a{color:var(--muted)}
+
+/* Responsive */
+@media(max-width:768px){
+  .page-hdr{padding:1.5rem 0 1rem}
+  .page-hdr h1{font-size:1.4rem}
+  .page-hdr .sub{font-size:.85rem}
+  .hdr-inner{flex-direction:column;gap:.5rem}
+  header nav{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem 0}
+  header nav a{margin-left:0;margin-right:1rem;font-size:.78rem}
+  th,td{padding:.55rem .65rem;font-size:.8rem}
+  .filter-bar{gap:.5rem}
+  .filter-btn{font-size:.72rem;padding:.25rem .55rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="container hdr-inner">
+    <a class="logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav>
+      <a href="/">首頁</a>
+      <a href="/briefing/">每日簡報</a>
+      <a href="/weekly/">週報</a>
+      <a href="/backtest/">回測</a>
+      <a href="/research/" class="active">研究報告</a>
+      <a href="/six-state/">六狀態機</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> &rsaquo; 研究報告</div>
+    <h1>研究報告</h1>
+    <p class="sub">深度個股研究（買側 DD 框架）· 10-K / 10-Q 財報分析（AI 驅動）。涵蓋美股與台股。</p>
+  </div>
+</div>
+
+<div class="section" style="padding-top:1.25rem" id="dd-reports">
+  <div class="container">
+    <h2 class="section-title">深度研究報告<span class="count" id="dd-count">&nbsp;</span></h2>
+    <div class="search-wrap">
+      <input id="dd-search" type="text" placeholder="搜尋 Ticker 或日期…">
+    </div>
+    <div class="card" style="overflow-x:auto;padding:0">
+      <table>
+        <thead>
+          <tr>
+            <th>公司</th>
+            <th>類型</th>
+            <th>日期</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="dd-tbody">
+<tr class="searchable">
+  <td><strong>STX</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-04-10</td>
+  <td><a href="/dd/DD_STX_20260410.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>MSFT</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-04-10</td>
+  <td><a href="/dd/DD_MSFT_20260410.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>MRVL</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-04-10</td>
+  <td><a href="/dd/DD_MRVL_20260410.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>GOOGL</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-04-10</td>
+  <td><a href="/dd/DD_GOOGL_20260410.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>AMZN</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-04-10</td>
+  <td><a href="/dd/DD_AMZN_20260410.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>NVDA</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-04-09</td>
+  <td><a href="/dd/DD_NVDA_20260409.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>2330</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-04-09</td>
+  <td><a href="/dd/DD_2330_20260409.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>ROP</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-30</td>
+  <td><a href="/dd/DD_ROP_20260330.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>VRT</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_VRT_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>NET</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_NET_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>MOD</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_MOD_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>LLY</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_LLY_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>KEYS</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_KEYS_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>ISRG</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_ISRG_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>GEV</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_GEV_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>ETN</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_ETN_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>2330</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_2330_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>2308</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-25</td>
+  <td><a href="/dd/DD_2308_20260325.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>VIK</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_VIK_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>NVDA</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_NVDA_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>MRVL</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_MRVL_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>CRWD</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_CRWD_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>BWXT</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_BWXT_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>BSX</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_BSX_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>APH</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_APH_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>AMD</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-24</td>
+  <td><a href="/dd/DD_AMD_20260324.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>TSM</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_TSM_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>PYPL</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_PYPL_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>MU</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_MU_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>MSFT</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_MSFT_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>META</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_META_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>GRAB</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_GRAB_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>CRM</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_CRM_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>AVGO</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_AVGO_20260323.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable">
+  <td><strong>AMZN</strong></td>
+  <td><span class="tag tag-dd">深度研究</span></td>
+  <td>2026-03-23</td>
+  <td><a href="/dd/DD_AMZN_20260323.html">查看 &rarr;</a></td>
+</tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="earnings-reports">
+  <div class="container">
+    <h2 class="section-title">財報分析<span class="count" id="earnings-count">&nbsp;</span></h2>
+
+    <div class="search-wrap">
+      <input id="earnings-search" type="text" placeholder="搜尋 Ticker、報告類型…">
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">類型</span>
+        <button class="filter-btn active" data-filter="form" data-value="all">全部</button>
+        <button class="filter-btn" data-filter="form" data-value="10-K">10-K</button>
+        <button class="filter-btn" data-filter="form" data-value="10-Q">10-Q</button>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">護城河</span>
+        <button class="filter-btn active" data-filter="moat" data-value="all">全部</button>
+        <button class="filter-btn" data-filter="moat" data-value="wide">寬護城河</button>
+        <button class="filter-btn" data-filter="moat" data-value="narrow">窄護城河</button>
+        <button class="filter-btn" data-filter="moat" data-value="nomoat">無護城河</button>
+        <button class="filter-btn" data-filter="moat" data-value="unrated">未評級</button>
+      </div>
+    </div>
+
+    <div class="card" style="overflow-x:auto;padding:0">
+      <table>
+        <thead>
+          <tr>
+            <th>公司</th>
+            <th>類型</th>
+            <th>日期</th>
+            <th>護城河等級</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="report-tbody">
+<tr class="searchable" data-form="10-Q" data-moat="unrated">
+  <td><strong>ADBE</strong></td>
+  <td><span class="tag tag-10q">10-Q</span></td>
+  <td>2026-03-26</td>
+  <td><span style="color:var(--muted)">—</span></td>
+  <td><a href="/report/32f5fbfbbd738102bfb2e8b4da3fe1de.html">查看 &rarr;</a></td>
+</tr>
+<tr class="searchable" data-form="10-K" data-moat="narrow">
+  <td><strong>LOW</strong></td>
+  <td><span class="tag tag-10k">10-K</span></td>
+  <td>2026-03-24</td>
+  <td><span class="moat-badge moat-narrow">窄護城河 Narrow Moat</span></td>
+  <td><a href="/report/32d5fbfbbd738146916dd89cd9621bb2.html">查看 &rarr;</a></td>
+</tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>
+    本網站所有內容（包含 DD 報告、財報摘要、護城河評分及產業分析）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot;
+    由 AI 自動生成，僅供參考
+  </div>
+</footer>
+
+<script>
+(function(){
+  // DD table: ticker/date search
+  var ddSearch = document.getElementById('dd-search');
+  var ddRows = document.querySelectorAll('#dd-tbody tr.searchable');
+  var ddCount = document.getElementById('dd-count');
+
+  function renderDdCount(shown, total){
+    if(ddCount) ddCount.textContent = '共 ' + total + ' 筆' + (shown !== total ? '（顯示 ' + shown + '）' : '');
+  }
+
+  function filterDd(){
+    var q = (ddSearch && ddSearch.value || '').toLowerCase();
+    var shown = 0;
+    ddRows.forEach(function(row){
+      var match = !q || row.textContent.toLowerCase().indexOf(q) >= 0;
+      row.style.display = match ? '' : 'none';
+      if(match) shown++;
+    });
+    renderDdCount(shown, ddRows.length);
+  }
+  if(ddSearch) ddSearch.addEventListener('input', filterDd);
+  renderDdCount(ddRows.length, ddRows.length);
+
+  // Earnings table: search + form/moat filter
+  var earningsSearch = document.getElementById('earnings-search');
+  var earningsRows = document.querySelectorAll('#report-tbody tr.searchable');
+  var earningsCount = document.getElementById('earnings-count');
+  var filters = {form: 'all', moat: 'all'};
+
+  function renderEarningsCount(shown, total){
+    if(earningsCount) earningsCount.textContent = '共 ' + total + ' 筆' + (shown !== total ? '（顯示 ' + shown + '）' : '');
+  }
+
+  function filterEarnings(){
+    var q = (earningsSearch && earningsSearch.value || '').toLowerCase();
+    var shown = 0;
+    earningsRows.forEach(function(row){
+      var matchText = !q || row.textContent.toLowerCase().indexOf(q) >= 0;
+      var matchForm = filters.form === 'all' || row.getAttribute('data-form') === filters.form;
+      var matchMoat = filters.moat === 'all' || row.getAttribute('data-moat') === filters.moat;
+      var vis = matchText && matchForm && matchMoat;
+      row.style.display = vis ? '' : 'none';
+      if(vis) shown++;
+    });
+    renderEarningsCount(shown, earningsRows.length);
+  }
+  if(earningsSearch) earningsSearch.addEventListener('input', filterEarnings);
+
+  document.querySelectorAll('.filter-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var group = btn.getAttribute('data-filter');
+      var val = btn.getAttribute('data-value');
+      filters[group] = val;
+      btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+      filterEarnings();
+    });
+  });
+  renderEarningsCount(earningsRows.length, earningsRows.length);
+})();
+</script>
+</body>
+</html>
