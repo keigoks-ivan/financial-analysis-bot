@@ -91,8 +91,8 @@ footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
 }
 """
 
-# Toggle pill — order: comparison views first, then individual systems
-TOGGLE_LINKS = [
+# Toggle pill — grouped: 美股系統 first, 多資產 second
+US_LINKS = [
     ("/backtest/", "20 年", "20y"),
     ("/backtest/10y/", "10 年", "10y"),
     ("/backtest/criteria/", "評估標準", "criteria"),
@@ -102,23 +102,47 @@ TOGGLE_LINKS = [
     ("/backtest/gem/", "GEM", "gem"),
     ("/backtest/slope_filter/", "W52 斜率", "slope"),
     ("/backtest/short_system/", "做空 (失敗)", "short"),
+]
+MULTI_LINKS = [
     ("/backtest/turtle/", "🐢 Turtle", "turtle"),
 ]
+TOGGLE_LINKS = US_LINKS + MULTI_LINKS  # back-compat for any code referencing this
 
 
 def make_toggle(active: str) -> str:
-    parts = []
-    for url, label, key in TOGGLE_LINKS:
-        cls = "active" if key == active else ""
-        # Special styling
-        style = ""
-        if cls != "active":
+    """Build dual-group toggle: 美股系統 + 多資產."""
+    def link(url, label, key):
+        is_active = key == active
+        if is_active:
             if key == "short":
-                style = ' style="color:#dc2626"'
+                bg = "#dc2626"
             elif key == "turtle":
-                style = ' style="color:#0f766e"'
-        parts.append(f'<a href="{url}" class="{cls}"{style}>{label}</a>')
-    return '<div class="toggle-pill">' + "".join(parts) + '</div>'
+                bg = "#0f766e"
+            else:
+                bg = "var(--brand)"
+            return f'<a href="{url}" style="padding:.4rem .85rem;background:{bg};color:#fff;font-size:.8rem;font-weight:600;text-decoration:none;border-left:1px solid var(--border)">{label}</a>'
+        else:
+            if key == "short":
+                color = "#dc2626"
+            elif key == "turtle":
+                color = "#0f766e"
+            else:
+                color = "var(--brand)"
+            return f'<a href="{url}" style="padding:.4rem .85rem;background:#fff;color:{color};font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)">{label}</a>'
+
+    us_html = "".join(link(u, l, k) for u, l, k in US_LINKS)
+    multi_html = "".join(link(u, l, k) for u, l, k in MULTI_LINKS)
+
+    return f'''<div style="margin-top:.75rem;display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap">
+      <div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">美股系統 (SPY/QQQ)</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-wrap:wrap">{us_html}</div>
+      </div>
+      <div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;font-weight:600">多資產</div>
+        <div style="display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden">{multi_html}</div>
+      </div>
+    </div>'''
 
 
 # Years used in yearly returns arrays
