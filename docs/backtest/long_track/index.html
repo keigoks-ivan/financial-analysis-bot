@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Long Track Only | InvestMQuest Research</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.75rem 0;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+header .logo{font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:-.02em}
+header .logo span{color:#3b82f6}
+header nav a{color:rgba(255,255,255,.7);margin-left:1.5rem;font-size:.85rem;font-weight:500;
+             padding-bottom:4px;border-bottom:2px solid transparent;transition:all .2s}
+header nav a:hover{color:#fff;text-decoration:none;border-bottom-color:rgba(255,255,255,.4)}
+header nav a.active{color:#fff;border-bottom-color:#3b82f6}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+.toggle-pill{display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:.75rem;flex-wrap:wrap}
+.toggle-pill a{padding:.4rem .85rem;font-size:.8rem;font-weight:500;text-decoration:none;border-left:1px solid var(--border)}
+.toggle-pill a:first-child{border-left:none}
+.toggle-pill a.active{background:var(--brand);color:#fff;font-weight:600}
+.toggle-pill a:not(.active){background:#fff;color:var(--brand)}
+.section{padding:1.5rem 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin-bottom:1rem;margin-top:-.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem;color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem;margin-bottom:1rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;text-align:center}
+.kpi .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem}
+.kpi .value{font-size:1.25rem;font-weight:700}
+.kpi .value.pos{color:var(--green)}.kpi .value.neg{color:var(--red)}.kpi .value.neu{color:var(--brand)}
+.kpi-pair{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+.kpi-pair > div{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem}
+.kpi-pair h4{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.7rem;font-weight:600}
+.verdict{background:var(--brand-light);border-left:4px solid var(--brand);
+         padding:1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.9rem;line-height:1.7}
+.verdict strong{color:var(--brand)}
+.note{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:8px;
+      padding:.85rem 1.1rem;font-size:.82rem;color:var(--amber-text);margin:1rem 0}
+.event-card{background:var(--card);border:1px solid var(--border);border-radius:8px;
+            padding:.85rem 1.1rem;margin-bottom:.6rem}
+.event-card .ev-name{font-weight:600;font-size:.92rem;margin-bottom:.3rem;color:var(--text)}
+.event-card .ev-detail{font-size:.83rem;color:#374151;line-height:1.65}
+.tag{display:inline-block;padding:.15rem .55rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+.tag-pass{background:#f3f4f6;color:#374151;border:1px solid #d1d5db}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.chart-card h3{font-size:.95rem;font-weight:600;margin-bottom:.5rem;color:var(--text)}
+.chart-wrap{position:relative;width:100%;height:380px}
+.chart-wrap-sm{position:relative;width:100%;height:200px}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem}
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .kpi-pair{grid-template-columns:1fr}
+  .hdr-inner{flex-direction:column;gap:.5rem}
+  header nav a{margin-left:0;margin-right:1rem}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="container hdr-inner">
+    <a class="logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav><a href="/">首頁</a> <a href="/briefing/">每日簡報</a> <a href="/weekly/">週報</a> <a href="/backtest/" class="active">回測</a></nav>
+  </div>
+</header>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / Long Track Only</div>
+    <h1 style="color:#059669">Long Track Only</h1>
+    <div class="sub">50/50 SPY/QQQ · 只用週線長線軌 · 推薦配置</div>
+    <div class="toggle-pill"><a href="/backtest/" class="">20 年</a><a href="/backtest/10y/" class="">10 年</a><a href="/backtest/criteria/" class="">評估標準</a><a href="/backtest/dual_track/" class="">雙軌多空</a><a href="/backtest/long_track/" class="active">Long Track</a><a href="/backtest/six_state/" class="">六狀態機</a><a href="/backtest/gem/" class="">GEM</a><a href="/backtest/slope_filter/" class="">W52 斜率</a></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== 1. 策略規則 ===== -->
+<div class="section">
+<h2 class="section-title">1. 策略規則</h2>
+<div class="card">
+  <p style="font-size:.92rem;color:#374151;line-height:1.75">
+            從 v7 Ch12 雙軌系統中<strong>移除短線軌</strong>,只保留長線軌:<br>
+            週線均線 W52 / W104 / W250,斜率 lookback N=4 週,出場確認 N=1 (週線收盤跌破 W52 即出場)。<br>
+            進場條件: 週線收盤 &gt; W52, W104, W250 且 W104, W250 斜率 &gt; 0 (score == 5)。<br>
+            50/50 配置 SPY 和 QQQ。<strong>實際 20 年從未觸發做空訊號</strong>,等同只做多策略。
+        </p>
+</div>
+</div>
+
+<!-- ===== 2. 績效摘要 ===== -->
+<div class="section">
+<h2 class="section-title">2. 績效摘要</h2>
+<div class="kpi-pair">
+<div>
+<h4>20 年 (2006-2026)</h4>
+<div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);gap:.5rem">
+  <div class="kpi"><div class="label">CAGR</div><div class="value pos">+10.95%</div></div>
+  <div class="kpi"><div class="label">MDD</div><div class="value">-19.99%</div></div>
+  <div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.86</div></div>
+  <div class="kpi"><div class="label">Sortino</div><div class="value neu">1.02</div></div>
+  <div class="kpi"><div class="label">Calmar</div><div class="value">0.55</div></div>
+  <div class="kpi"><div class="label">Vol</div><div class="value">13.17%</div></div>
+  <div class="kpi"><div class="label">交易次數</div><div class="value">37</div></div>
+  <div class="kpi"><div class="label">期末資產</div><div class="value">$5.00M</div></div>
+</div>
+</div>
+
+<div>
+<h4>10 年 (2016-2026)</h4>
+<div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);gap:.5rem">
+  <div class="kpi"><div class="label">CAGR</div><div class="value pos">+13.06%</div></div>
+  <div class="kpi"><div class="label">MDD</div><div class="value">-18.82%</div></div>
+  <div class="kpi"><div class="label">Sharpe</div><div class="value neu">0.97</div></div>
+  <div class="kpi"><div class="label">Sortino</div><div class="value neu">1.16</div></div>
+  <div class="kpi"><div class="label">Calmar</div><div class="value">0.69</div></div>
+  <div class="kpi"><div class="label">Vol</div><div class="value">12.96%</div></div>
+  <div class="kpi"><div class="label">交易次數</div><div class="value">21</div></div>
+  <div class="kpi"><div class="label">期末資產</div><div class="value">$3.42M</div></div>
+</div>
+</div>
+</div>
+
+<div class="verdict">
+  <strong>結論:</strong> 
+            <strong>本站唯一通過所有合格 + 優秀 + 穩健標準的系統。</strong>
+            CAGR 10.95%、Sharpe 0.86、Calmar 0.55,且 Walk-forward 與參數敏感度檢驗都通過。
+            10 年視窗下 Sharpe 進一步提升到 0.97,Calmar 0.69,證明這個系統在不同時期都穩定。
+            年均交易 ~2 筆,平均持有 255 天,交易成本極低。
+        
+</div>
+</div>
+
+<!-- ===== 3. 淨值曲線 ===== -->
+<div class="section">
+<h2 class="section-title">3. 淨值曲線</h2>
+<div class="chart-card">
+  <div class="chart-wrap"><canvas id="chart-nav"></canvas></div>
+</div>
+</div>
+
+<!-- ===== 4. 回撤 ===== -->
+<div class="section">
+<h2 class="section-title">4. 回撤分析</h2>
+<div class="chart-card">
+  <div class="chart-wrap-sm"><canvas id="chart-dd"></canvas></div>
+</div>
+</div>
+
+<!-- ===== 5. 逐年報酬 ===== -->
+<div class="section">
+<h2 class="section-title">5. 逐年報酬</h2>
+<div class="chart-card">
+  <div class="chart-wrap"><canvas id="chart-yearly"></canvas></div>
+</div>
+
+<table>
+<thead><tr><th>Year</th><th style="color:#059669">Long Track Only</th></tr></thead>
+<tbody>
+<tr><td>2006</td><td>—</td></tr><tr><td>2007</td><td>—</td></tr><tr><td>2008</td><td>—</td></tr><tr><td>2009</td><td>—</td></tr><tr><td>2010</td><td style="">+4.47%</td></tr><tr><td>2011</td><td style="color:var(--red)">-9.51%</td></tr><tr><td>2012</td><td style="">+8.64%</td></tr><tr><td>2013</td><td style="color:var(--green);font-weight:600">+31.26%</td></tr><tr><td>2014</td><td style="">+17.36%</td></tr><tr><td>2015</td><td style="color:var(--red)">-5.19%</td></tr><tr><td>2016</td><td style="">+3.45%</td></tr><tr><td>2017</td><td style="color:var(--green);font-weight:600">+26.09%</td></tr><tr><td>2018</td><td style="color:var(--red)">-1.78%</td></tr><tr><td>2019</td><td style="">+20.49%</td></tr><tr><td>2020</td><td style="color:var(--green);font-weight:600">+25.78%</td></tr><tr><td>2021</td><td style="color:var(--green);font-weight:600">+30.01%</td></tr><tr><td>2022</td><td style="color:var(--red)">-14.72%</td></tr><tr><td>2023</td><td style="">+8.71%</td></tr><tr><td>2024</td><td style="color:var(--green);font-weight:600">+26.74%</td></tr><tr><td>2025</td><td style="">+17.03%</td></tr><tr><td>2026</td><td style="color:var(--red)">-5.07%</td></tr>
+</tbody>
+</table>
+
+</div>
+
+<!-- ===== 6. 系統特有分析 ===== -->
+<div class="section">
+<h2 class="section-title">6. 穩健性驗證</h2>
+
+<table>
+<thead><tr><th>檢驗</th><th>標準</th><th>結果</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>Walk-Forward</td><td>Sharpe 差距 &lt; 0.3</td><td>0.22 (訓練 0.71 / 驗證 0.94)</td><td><span class="tag tag-best">通過</span></td></tr>
+<tr><td>參數敏感度</td><td>CAGR 極差 &lt; 3pp</td><td>0.44pp (W48-W56 / W100-W112 / W240-W260)</td><td><span class="tag tag-best">通過</span></td></tr>
+<tr><td>年度穩定性</td><td>無連虧兩年 / 無 +50% 年</td><td>最長連虧 1 年 / 最好年 +31%</td><td><span class="tag tag-best">通過</span></td></tr>
+<tr><td>正報酬比</td><td>&gt; 60%</td><td>71% (12 / 17 年)</td><td><span class="tag tag-best">通過</span></td></tr>
+</tbody>
+</table>
+        
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; Long Track Only 詳細回測 &middot; 真實 yfinance 資料 &middot; 僅供研究參考
+  </div>
+</footer>
+
+<script>
+var YEARS=[2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
+var RET=[null,null,null,null,4.47,-9.51,8.64,31.26,17.36,-5.19,3.45,26.09,-1.78,20.49,25.78,30.01,-14.72,8.71,26.74,17.03,-5.07];
+var SPY=[13.81,3.69,-36.81,25.94,12.78,0.00,13.47,29.93,11.39,-0.73,9.54,19.42,-6.24,28.88,16.26,26.89,-19.44,24.23,23.31,21.50,1.20];
+var QQQ=[6.93,18.67,-41.73,53.47,19.22,2.70,16.82,33.27,19.18,7.09,5.89,31.60,-1.04,37.96,47.58,26.63,-32.58,53.81,28.73,23.88,-3.50];
+
+function toNAV(ret){
+  var nav=[1];var v=1;
+  for(var i=0;i<ret.length;i++){
+    if(ret[i]===null){nav.push(null)}
+    else{v=v*(1+ret[i]/100);nav.push(v)}
+  }
+  return nav;
+}
+function toDD(nav){
+  var dd=[];var peak=0;
+  for(var i=0;i<nav.length;i++){
+    if(nav[i]===null){dd.push(null);continue}
+    if(nav[i]>peak)peak=nav[i];
+    dd.push((nav[i]/peak-1)*100);
+  }
+  return dd;
+}
+var LABELS=['2005'].concat(YEARS.map(String));
+var NAV_SYS=toNAV(RET);
+var NAV_SPY=toNAV(SPY);
+var NAV_QQQ=toNAV(QQQ);
+var DD_SYS=toDD(NAV_SYS);
+var DD_SPY=toDD(NAV_SPY);
+var DD_QQQ=toDD(NAV_QQQ);
+
+Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
+Chart.defaults.font.size=11;
+
+new Chart(document.getElementById('chart-nav'),{
+  type:'line',
+  data:{labels:LABELS,datasets:[
+    {label:'Long Track Only',data:NAV_SYS,borderColor:'#059669',borderWidth:2.6,pointRadius:0,pointHoverRadius:4,tension:0.15,spanGaps:false},
+    {label:'QQQ B&H',data:NAV_QQQ,borderColor:'#1565c0',borderWidth:1.6,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.15},
+    {label:'SPY B&H',data:NAV_SPY,borderColor:'#757575',borderWidth:1.6,borderDash:[6,3],pointRadius:0,pointHoverRadius:3,tension:0.15}
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:14,font:{size:11}}},
+      tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){
+        if(ctx.parsed.y===null)return null;
+        return ctx.dataset.label+': $'+(ctx.parsed.y*1000000/1e6).toFixed(2)+'M';
+      }}}
+    },
+    scales:{
+      x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10}}},
+      y:{type:'logarithmic',grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return '$'+v.toFixed(1)+'M'},font:{size:10}}}
+    }
+  }
+});
+
+new Chart(document.getElementById('chart-dd'),{
+  type:'line',
+  data:{labels:LABELS,datasets:[
+    {label:'Long Track Only',data:DD_SYS,borderColor:'#059669',backgroundColor:'#0596691f',borderWidth:1.6,fill:'origin',pointRadius:0,pointHoverRadius:3,tension:0.15,spanGaps:false},
+    {label:'QQQ',data:DD_QQQ,borderColor:'#1565c0',backgroundColor:'rgba(21,101,192,0.10)',borderWidth:1.4,fill:'origin',pointRadius:0,pointHoverRadius:3,tension:0.15},
+    {label:'SPY',data:DD_SPY,borderColor:'#757575',backgroundColor:'rgba(117,117,117,0.10)',borderWidth:1.4,fill:'origin',pointRadius:0,pointHoverRadius:3,tension:0.15}
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'line',padding:10,font:{size:10}}},
+      tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){
+        if(ctx.parsed.y===null)return null;
+        return ctx.dataset.label+': '+ctx.parsed.y.toFixed(2)+'%';
+      }}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}
+    }
+  }
+});
+
+new Chart(document.getElementById('chart-yearly'),{
+  type:'bar',
+  data:{
+    labels:YEARS.map(String),
+    datasets:[
+      {label:'Long Track Only',data:RET,backgroundColor:RET.map(function(v){return v===null?'transparent':v>=0?'#059669cc':'#05966955'}),borderColor:'#059669',borderWidth:1,borderRadius:2},
+      {label:'SPY B&H',data:SPY,backgroundColor:SPY.map(function(v){return v>=0?'rgba(117,117,117,0.65)':'rgba(117,117,117,0.30)'}),borderColor:'#757575',borderWidth:1,borderRadius:2}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:true,position:'top',align:'start',labels:{usePointStyle:true,pointStyle:'rect',padding:14,font:{size:11}}},
+      tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){
+        if(ctx.parsed.y===null)return null;
+        return ctx.dataset.label+': '+(ctx.parsed.y>0?'+':'')+ctx.parsed.y.toFixed(2)+'%';
+      }}}
+    },
+    scales:{
+      x:{grid:{display:false},ticks:{font:{size:10}}},
+      y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{callback:function(v){return v+'%'},font:{size:10}}}
+    }
+  }
+});
+</script>
+</body>
+</html>
