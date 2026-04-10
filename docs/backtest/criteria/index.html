@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>系統評估標準 | InvestMQuest Research</title>
+  <meta name="description" content="量化交易系統的合格指標門檻">
+  <style>
+:root{--brand:#1a56db;--brand-light:#eff6ff;--bg:#f9fafb;--card:#fff;
+      --text:#111827;--muted:#6b7280;--border:#e5e7eb;
+      --green:#059669;--green-bg:#ecfdf5;--green-border:#a7f3d0;--green-text:#065f46;
+      --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;--red-text:#991b1b;
+      --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fde68a;--amber-text:#92400e;
+      --gray:#6b7280;--gray-bg:#f3f4f6}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:15px}
+a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem}
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.75rem 0;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+header .logo{font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:-.02em}
+header .logo span{color:#3b82f6}
+header nav a{color:rgba(255,255,255,.7);margin-left:1.5rem;font-size:.85rem;font-weight:500;
+             padding-bottom:4px;border-bottom:2px solid transparent;transition:all .2s}
+header nav a:hover{color:#fff;text-decoration:none;border-bottom-color:rgba(255,255,255,.4)}
+header nav a.active{color:#fff;border-bottom-color:#3b82f6}
+.page-hdr{padding:1.75rem 0 1.25rem;background:linear-gradient(180deg,#f0f4ff 0%,#f9fafb 100%);border-bottom:1px solid var(--border)}
+.page-hdr h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em}
+.page-hdr .sub{color:var(--muted);font-size:.9rem;margin-top:.2rem}
+.crumb{font-size:.82rem;color:var(--muted);margin-bottom:.4rem}
+.crumb a{color:var(--muted)}
+
+.section{padding:1.5rem 0}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1rem;
+               padding-bottom:.45rem;border-bottom:2px solid var(--brand)}
+.section-sub{font-size:.85rem;color:var(--muted);margin-bottom:1rem;margin-top:-.5rem}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin-bottom:1rem}
+.card h3{font-size:1rem;font-weight:600;margin-bottom:.85rem;color:var(--text)}
+
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid var(--border)}
+th{background:#f9fafb;font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.04em;color:var(--muted)}
+td{font-variant-numeric:tabular-nums}
+tbody tr:hover td{background:#f3f4f6}
+
+/* Grade scale rows */
+.grade-row{display:flex;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.grade-row:last-child{border-bottom:none}
+.grade-label{width:80px;font-weight:600;flex-shrink:0}
+.grade-range{width:140px;color:var(--muted);font-variant-numeric:tabular-nums}
+.grade-bar{flex:1;height:8px;border-radius:4px;margin:0 .8rem;min-width:60px}
+.grade-desc{flex:1;font-size:.8rem;color:#374151}
+
+.grade-fail{color:var(--red-text)}
+.grade-pass{color:var(--gray)}
+.grade-good{color:var(--brand)}
+.grade-great{color:var(--green-text)}
+.grade-warn{color:var(--amber-text)}
+
+.bar-fail{background:var(--red)}
+.bar-pass{background:var(--gray)}
+.bar-good{background:var(--brand)}
+.bar-great{background:var(--green)}
+.bar-warn{background:var(--amber)}
+
+/* Tags */
+.tag{display:inline-block;padding:.18rem .6rem;border-radius:4px;
+     font-size:.72rem;font-weight:600;letter-spacing:.02em}
+.tag-best{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border)}
+.tag-good{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}
+.tag-pass{background:var(--gray-bg);color:#374151;border:1px solid #d1d5db}
+.tag-warn{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border)}
+.tag-fail{background:var(--red-bg);color:var(--red-text);border:1px solid var(--red-border)}
+
+/* Criteria boxes */
+.criteria-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.criteria-box{background:var(--card);border:2px solid;border-radius:8px;padding:1.1rem 1.3rem}
+.criteria-box.pass{border-color:var(--brand)}
+.criteria-box.elite{border-color:var(--green)}
+.criteria-box h3{font-size:.95rem;font-weight:700;margin-bottom:.6rem}
+.criteria-box.pass h3{color:var(--brand)}
+.criteria-box.elite h3{color:var(--green-text)}
+.criteria-box ul{list-style:none;padding:0}
+.criteria-box li{padding:.3rem 0;font-size:.85rem;color:#374151;border-bottom:1px dashed #e5e7eb}
+.criteria-box li:last-child{border-bottom:none}
+.criteria-box li::before{content:'✓ ';color:var(--brand);font-weight:700;margin-right:.3rem}
+.criteria-box.elite li::before{color:var(--green)}
+
+/* Verdict box */
+.verdict{background:var(--brand-light);border-left:4px solid var(--brand);
+         padding:1rem 1.4rem;border-radius:0 8px 8px 0;margin:1rem 0;font-size:.92rem;line-height:1.7}
+.verdict strong{color:var(--brand)}
+
+/* System eval cards */
+.sys-grid{display:grid;grid-template-columns:1fr;gap:.85rem;margin:1rem 0}
+.sys-card{background:var(--card);border:1px solid var(--border);border-radius:8px;
+          padding:1rem 1.25rem;border-left:4px solid}
+.sys-card.qualified{border-left-color:var(--green)}
+.sys-card.acceptable{border-left-color:var(--brand)}
+.sys-card.warning{border-left-color:var(--amber)}
+.sys-card.failed{border-left-color:var(--red)}
+.sys-card .sys-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.4rem}
+.sys-card .sys-name{font-size:1.02rem;font-weight:700}
+.sys-card .sys-eval{font-size:.82rem;color:#374151;line-height:1.55}
+
+.toggle-pill{display:inline-flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:.75rem}
+.toggle-pill a{padding:.4rem .9rem;font-size:.82rem;font-weight:500;text-decoration:none}
+.toggle-pill a.active{background:var(--brand);color:#fff;font-weight:600}
+.toggle-pill a:not(.active){background:#fff;color:var(--brand)}
+
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.25rem 0;font-size:.78rem}
+
+@media(max-width:768px){
+  .criteria-grid{grid-template-columns:1fr}
+  .grade-row{flex-wrap:wrap}
+  .grade-bar{width:100%;margin:.3rem 0;flex:none}
+  .grade-desc{flex:none;width:100%}
+  .hdr-inner{flex-direction:column;gap:.5rem}
+  header nav a{margin-left:0;margin-right:1rem}
+  table{font-size:.78rem}th,td{padding:.45rem .5rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="container hdr-inner">
+    <a class="logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav><a href="/">首頁</a> <a href="/briefing/">每日簡報</a> <a href="/weekly/">週報</a> <a href="/backtest/" class="active">回測</a></nav>
+  </div>
+</header>
+
+<div class="page-hdr">
+  <div class="container">
+    <div class="crumb"><a href="/">首頁</a> / <a href="/backtest/">回測</a> / 系統評估標準</div>
+    <h1>合格交易系統的指標門檻</h1>
+    <div class="sub">業界基準 · 個人判斷框架 · 套用到本站四個系統的評等</div>
+    <div class="toggle-pill">
+      <a href="/backtest/">20 年 (2006-2026)</a>
+      <a href="/backtest/10y/">10 年 (2016-2026)</a>
+      <a href="/backtest/criteria/" class="active">評估標準</a>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== Section 1: 各指標門檻 ===== -->
+<div class="section">
+<h2 class="section-title">1. 各指標的業界門檻</h2>
+<p class="section-sub">沒有單一指標能定義「合格」,但業界對每一項都有共識的等級劃分。</p>
+
+<!-- CAGR -->
+<div class="card">
+  <h3>CAGR · 年化報酬率</h3>
+  <div class="grade-row">
+    <span class="grade-label grade-fail">不及格</span>
+    <span class="grade-range">&lt; 6%</span>
+    <div class="grade-bar bar-fail" style="max-width:60px"></div>
+    <span class="grade-desc">跑輸長期通膨 + 風險溢酬</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-pass">及格</span>
+    <span class="grade-range">6 ~ 10%</span>
+    <div class="grade-bar bar-pass" style="max-width:80px"></div>
+    <span class="grade-desc">約等於 SPY 長期 Buy &amp; Hold</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-good">良好</span>
+    <span class="grade-range">10 ~ 15%</span>
+    <div class="grade-bar bar-good" style="max-width:120px"></div>
+    <span class="grade-desc">有明確 alpha</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-great">優秀</span>
+    <span class="grade-range">15 ~ 20%</span>
+    <div class="grade-bar bar-great" style="max-width:160px"></div>
+    <span class="grade-desc">接近頂級基金水準</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-warn">可疑</span>
+    <span class="grade-range">&gt; 20%</span>
+    <div class="grade-bar bar-warn" style="max-width:200px"></div>
+    <span class="grade-desc">⚠ 通常是過擬合或樣本期太短</span>
+  </div>
+</div>
+
+<!-- MDD -->
+<div class="card">
+  <h3>MDD · 最大回撤</h3>
+  <div class="grade-row">
+    <span class="grade-label grade-great">優秀</span>
+    <span class="grade-range">&gt; -15%</span>
+    <div class="grade-bar bar-great" style="max-width:60px"></div>
+    <span class="grade-desc">心理可承受、可加槓桿</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-good">良好</span>
+    <span class="grade-range">-15% ~ -25%</span>
+    <div class="grade-bar bar-good" style="max-width:100px"></div>
+    <span class="grade-desc">大多數人能熬過</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-pass">及格</span>
+    <span class="grade-range">-25% ~ -35%</span>
+    <div class="grade-bar bar-pass" style="max-width:140px"></div>
+    <span class="grade-desc">需要強紀律</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-warn">風險高</span>
+    <span class="grade-range">-35% ~ -50%</span>
+    <div class="grade-bar bar-warn" style="max-width:180px"></div>
+    <span class="grade-desc">多數散戶會在底部出場</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-fail">不合格</span>
+    <span class="grade-range">&lt; -50%</span>
+    <div class="grade-bar bar-fail" style="max-width:220px"></div>
+    <span class="grade-desc">等於 B&amp;H,沒做風險控制</span>
+  </div>
+</div>
+
+<!-- Sharpe -->
+<div class="card">
+  <h3>Sharpe Ratio · 風險調整後報酬</h3>
+  <div class="grade-row">
+    <span class="grade-label grade-fail">不及格</span>
+    <span class="grade-range">&lt; 0.5</span>
+    <div class="grade-bar bar-fail" style="max-width:50px"></div>
+    <span class="grade-desc"></span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-pass">及格</span>
+    <span class="grade-range">0.5 ~ 0.8</span>
+    <div class="grade-bar bar-pass" style="max-width:80px"></div>
+    <span class="grade-desc">≈ Buy &amp; Hold 水準</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-good">良好</span>
+    <span class="grade-range">0.8 ~ 1.0</span>
+    <div class="grade-bar bar-good" style="max-width:110px"></div>
+    <span class="grade-desc">有明確 alpha</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-great">優秀</span>
+    <span class="grade-range">1.0 ~ 1.5</span>
+    <div class="grade-bar bar-great" style="max-width:160px"></div>
+    <span class="grade-desc">專業基金水準</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-great">卓越</span>
+    <span class="grade-range">1.5 ~ 2.0</span>
+    <div class="grade-bar bar-great" style="max-width:200px"></div>
+    <span class="grade-desc">對沖基金級別</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-warn">可疑</span>
+    <span class="grade-range">&gt; 2.0</span>
+    <div class="grade-bar bar-warn" style="max-width:240px"></div>
+    <span class="grade-desc">⚠ 過擬合警報</span>
+  </div>
+</div>
+
+<!-- Sortino -->
+<div class="card">
+  <h3>Sortino Ratio · 下行風險調整後報酬</h3>
+  <p style="font-size:.85rem;color:#374151;margin-bottom:.4rem">
+    通常是 Sharpe 的 <strong>1.2 ~ 1.5 倍</strong>。標準同 Sharpe 但更精準衡量「下行風險」。
+  </p>
+  <p style="font-size:.85rem;color:#374151">
+    若 <strong>Sortino 顯著高於 Sharpe</strong>，代表獲利分布偏正(賺多虧少),這是好事。
+    一般及格門檻 ≥ 0.8,優秀 ≥ 1.2,卓越 ≥ 1.8。
+  </p>
+</div>
+
+<!-- Calmar -->
+<div class="card">
+  <h3>Calmar Ratio · CAGR ÷ |MDD| <span style="color:var(--brand);font-size:.78rem;font-weight:600">★ 最重要的單一指標</span></h3>
+  <div class="grade-row">
+    <span class="grade-label grade-fail">不及格</span>
+    <span class="grade-range">&lt; 0.3</span>
+    <div class="grade-bar bar-fail" style="max-width:50px"></div>
+    <span class="grade-desc">報酬不抵回撤痛苦</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-pass">及格</span>
+    <span class="grade-range">0.3 ~ 0.5</span>
+    <div class="grade-bar bar-pass" style="max-width:90px"></div>
+    <span class="grade-desc">接近 Buy &amp; Hold</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-good">良好</span>
+    <span class="grade-range">0.5 ~ 1.0</span>
+    <div class="grade-bar bar-good" style="max-width:130px"></div>
+    <span class="grade-desc">風險效率有實質優勢</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-great">優秀</span>
+    <span class="grade-range">1.0 ~ 2.0</span>
+    <div class="grade-bar bar-great" style="max-width:180px"></div>
+    <span class="grade-desc">罕見,通常是趨勢跟蹤大師</span>
+  </div>
+  <div class="grade-row">
+    <span class="grade-label grade-warn">可疑</span>
+    <span class="grade-range">&gt; 2.0</span>
+    <div class="grade-bar bar-warn" style="max-width:220px"></div>
+    <span class="grade-desc">⚠ 幾乎必為過擬合</span>
+  </div>
+</div>
+
+<!-- Final asset -->
+<div class="card">
+  <h3>期末資產 · 衍生指標</h3>
+  <p style="font-size:.85rem;color:#374151;margin-bottom:.6rem">
+    這是 CAGR + 時間的衍生品,不是獨立指標。$1M 初始下:
+  </p>
+  <table>
+    <thead><tr><th>CAGR</th><th>20 年後資產</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>10%</td><td>$6.7M</td><td>SPY 長期 B&amp;H 水準</td></tr>
+      <tr><td>12%</td><td>$9.6M</td><td>有明確 alpha</td></tr>
+      <tr><td>15%</td><td>$16.4M</td><td>接近頂級主動基金</td></tr>
+      <tr><td>20%</td><td>$38.3M</td><td>進入「可疑」區</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</div>
+
+<!-- ===== Section 2: 組合標準 ===== -->
+<div class="section">
+<h2 class="section-title">2. 組合標準</h2>
+<p class="section-sub">單一指標好不夠,要同時通過多項才算合格。</p>
+
+<div class="criteria-grid">
+  <div class="criteria-box pass">
+    <h3>最低門檻 (合格)</h3>
+    <ul>
+      <li>CAGR ≥ 8%</li>
+      <li>MDD ≥ -35%</li>
+      <li>Sharpe ≥ 0.5</li>
+      <li>Calmar ≥ 0.3</li>
+      <li>樣本期 ≥ 15 年</li>
+      <li>Walk-forward 通過 (Sharpe 差距 &lt; 0.3)</li>
+      <li>參數敏感度通過 (CAGR 極差 &lt; 3pp)</li>
+    </ul>
+  </div>
+  <div class="criteria-box elite">
+    <h3>優秀標準 (有商業價值)</h3>
+    <ul>
+      <li>CAGR ≥ 12%</li>
+      <li>MDD ≥ -25%</li>
+      <li>Sharpe ≥ 0.8</li>
+      <li>Calmar ≥ 0.5</li>
+      <li>Sortino ≥ 1.0</li>
+      <li>Sharpe &gt; 同期 B&amp;H Sharpe (證明有 alpha)</li>
+    </ul>
+  </div>
+</div>
+
+<div class="verdict">
+  <strong>規則:</strong> 任何一條未達標 → 直接出局,無論其他指標多漂亮。例如 CAGR 20% 但 MDD -55% 的系統,還是不合格。
+</div>
+
+</div>
+
+<!-- ===== Section 3: 套用到本站系統 ===== -->
+<div class="section">
+<h2 class="section-title">3. 套用到本站系統</h2>
+<p class="section-sub">同時看 20 年和 10 年兩個視窗,才能判斷穩健性。</p>
+
+<h3 style="font-size:1rem;font-weight:600;margin:1rem 0 .5rem;color:var(--text)">20 年回測 (2006-2026)</h3>
+<table>
+<thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>評等</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Long Track Only</strong></td>
+  <td>10.95%</td><td>-19.99%</td><td style="font-weight:600">0.86</td><td style="font-weight:600;color:var(--green)">0.55</td>
+  <td><span class="tag tag-best">優秀 (4/5 過關)</span></td>
+</tr>
+<tr>
+  <td><strong>GEM 雙動能</strong></td>
+  <td>8.15%</td><td>-21.54%</td><td>0.69</td><td>0.38</td>
+  <td><span class="tag tag-good">合格</span></td>
+</tr>
+<tr>
+  <td><strong>六狀態機</strong></td>
+  <td>15.14%</td><td style="color:var(--red)">-40.35%</td><td>0.83</td><td>0.38</td>
+  <td><span class="tag tag-warn">MDD 不合格</span></td>
+</tr>
+<tr>
+  <td><strong>雙軌多空</strong></td>
+  <td style="color:var(--red)">4.60%</td><td>-26.83%</td><td style="color:var(--red)">0.42</td><td style="color:var(--red)">0.17</td>
+  <td><span class="tag tag-fail">CAGR/Sharpe 雙不合格</span></td>
+</tr>
+</tbody>
+</table>
+
+<h3 style="font-size:1rem;font-weight:600;margin:1.5rem 0 .5rem;color:var(--text)">10 年回測 (2016-2026)</h3>
+<table>
+<thead><tr><th>系統</th><th>CAGR</th><th>MDD</th><th>Sharpe</th><th>Calmar</th><th>評等</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>六狀態機</strong></td>
+  <td style="color:var(--amber);font-weight:600">21.24%</td><td>-29.41%</td><td>1.03</td><td>0.72</td>
+  <td><span class="tag tag-warn">CAGR 進入「可疑」區</span></td>
+</tr>
+<tr>
+  <td><strong>Long Track Only</strong></td>
+  <td>13.06%</td><td style="color:var(--green);font-weight:600">-18.82%</td><td style="font-weight:600">0.97</td><td style="font-weight:600;color:var(--green)">0.69</td>
+  <td><span class="tag tag-best">優秀</span></td>
+</tr>
+<tr>
+  <td><strong>GEM 雙動能</strong></td>
+  <td>8.93%</td><td>-21.54%</td><td>0.70</td><td>0.41</td>
+  <td><span class="tag tag-good">合格</span></td>
+</tr>
+<tr>
+  <td><strong>雙軌多空</strong></td>
+  <td>7.28%</td><td>-19.38%</td><td>0.60</td><td>0.38</td>
+  <td><span class="tag tag-pass">邊緣 (CAGR 略低)</span></td>
+</tr>
+<tr style="background:#f9fafb">
+  <td>QQQ Buy &amp; Hold</td>
+  <td>19.37%</td><td>-35.12%</td><td>0.91</td><td>0.55</td>
+  <td><span class="tag tag-pass">基準</span></td>
+</tr>
+<tr style="background:#f9fafb">
+  <td>SPY Buy &amp; Hold</td>
+  <td>14.39%</td><td>-33.72%</td><td>0.84</td><td>0.43</td>
+  <td><span class="tag tag-pass">基準</span></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+
+<!-- ===== Section 4: 評等與解讀 ===== -->
+<div class="section">
+<h2 class="section-title">4. 個別系統評等</h2>
+
+<div class="sys-grid">
+
+<div class="sys-card qualified">
+  <div class="sys-hdr">
+    <span class="sys-name" style="color:#2e7d32">Long Track Only</span>
+    <span class="tag tag-best">唯一合格 + 優秀 + 穩健</span>
+  </div>
+  <p class="sys-eval">
+    在 20Y 和 10Y 兩個視窗都通過所有最低門檻、Calmar 都 ≥ 0.55 (勝過 B&amp;H)、
+    樣本期 16 年、Walk-forward + 參數敏感度都通過。<strong>這是唯一一個有資格上實盤的系統。</strong>
+  </p>
+</div>
+
+<div class="sys-card warning">
+  <div class="sys-hdr">
+    <span class="sys-name" style="color:#d32f2f">六狀態機</span>
+    <span class="tag tag-warn">樣本內勝者,未驗證</span>
+  </div>
+  <p class="sys-eval">
+    20Y CAGR 15.14% 漂亮,但 MDD -40% 不合格。10Y 的 21.24% CAGR + 1.03 Sharpe 看似優秀,
+    但 21% CAGR 已進入「可疑」區,加上沒做 walk-forward 驗證,
+    <strong>應懷疑是過擬合</strong>。需要外推樣本驗證才能採信。
+  </p>
+</div>
+
+<div class="sys-card acceptable">
+  <div class="sys-hdr">
+    <span class="sys-name" style="color:#f57c00">GEM 雙動能</span>
+    <span class="tag tag-good">老掉牙的合格系統</span>
+  </div>
+  <p class="sys-eval">
+    各項指標都剛好及格,沒一項突出。優點是<strong>邏輯極簡 (只有 2 個規則)</strong>，
+    20Y 和 10Y 表現幾乎一致 (CAGR 8.15% vs 8.93%),這個穩定性反而證明它沒過擬合。
+    <strong>信心度最高,但天花板也最低。</strong>
+  </p>
+</div>
+
+<div class="sys-card failed">
+  <div class="sys-hdr">
+    <span class="sys-name" style="color:#7c3aed">雙軌多空</span>
+    <span class="tag tag-fail">不該存在的系統</span>
+  </div>
+  <p class="sys-eval">
+    兩個視窗都不合格。它存在的價值是<strong>當對照組 — 證明短線軌拖累了整個系統</strong>。
+    短線軌獲利因子僅 1.15,佔 70% 資金,把長線軌的優勢稀釋掉了。
+  </p>
+</div>
+
+</div>
+</div>
+
+<!-- ===== Section 5: 結論 ===== -->
+<div class="section">
+<h2 class="section-title">5. 最終結論</h2>
+
+<div class="card" style="background:linear-gradient(135deg,#eff6ff 0%,#fff 100%);border-left:4px solid var(--brand)">
+  <h3 style="color:var(--brand);font-size:1.05rem">推薦配置</h3>
+  <p style="font-size:.92rem;line-height:1.75;color:#374151;margin-bottom:.8rem">
+    <strong>單一系統:</strong> Long Track Only (50/50 SPY/QQQ, W52/W104/W250)<br>
+    <strong>組合配置:</strong> 70% Long Track Only + 30% GEM
+  </p>
+  <p style="font-size:.85rem;line-height:1.7;color:var(--muted)">
+    Long Track Only 衝報酬 (CAGR 11%, Sharpe 0.86),GEM 降低 vol 並對 GFC 型危機提供額外保險 (避開 2008 → 1.30%,vs SPY -36.81%)。
+    兩者相關性不高 — Long Track Only 是趨勢跟蹤,GEM 是動量輪動。
+  </p>
+
+  <h3 style="color:var(--brand);font-size:1.05rem;margin-top:1.2rem">不推薦</h3>
+  <p style="font-size:.85rem;line-height:1.7;color:#374151">
+    <strong>六狀態機</strong>看似漂亮但 MDD -40% 不可接受,且未做穩健性驗證,有過擬合疑慮。<br>
+    <strong>雙軌多空</strong>已被證明是錯誤設計,短線軌應被移除。
+  </p>
+</div>
+
+</div>
+
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot; 評估標準參考業界共識與個人經驗,僅供研究參考
+  </div>
+</footer>
+</body>
+</html>
