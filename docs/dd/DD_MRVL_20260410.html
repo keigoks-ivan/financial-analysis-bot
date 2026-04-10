@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v7.0">
+<title>DD 報告｜MRVL Marvell Technology｜2026-04-10</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans TC', -apple-system, sans-serif; background: #F8FAFC; color: #1E293B; line-height: 1.75; padding-bottom: 80px; }
+.num, td.num, .mono { font-family: 'IBM Plex Mono', monospace; }
+header { background: #1E3A5F; color: #fff; padding: 16px 32px; position: sticky; top: 0; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+header .ticker { font-size: 22px; font-weight: 700; letter-spacing: 1px; }
+header .meta { font-family: 'IBM Plex Mono', monospace; font-size: 13px; opacity: 0.85; }
+header .meta span { margin-right: 18px; }
+main { max-width: 1200px; margin: 32px auto; padding: 0 24px; }
+section.card { background: #fff; border-radius: 4px; padding: 32px 36px; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+h1.section-title { background: #1E3A5F; color: #fff; padding: 12px 20px; font-size: 20px; font-weight: 700; border-left: 4px solid #3B82F6; margin: -32px -36px 24px -36px; border-radius: 4px 4px 0 0; }
+h2 { color: #1E3A5F; font-size: 17px; font-weight: 700; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #E2E8F0; }
+h3 { color: #334155; font-size: 15px; font-weight: 600; margin: 18px 0 10px; }
+p, li { font-size: 14.5px; margin-bottom: 10px; }
+ul, ol { padding-left: 22px; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0 18px; font-size: 13.5px; }
+th { background: #1E3A5F; color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+td { padding: 9px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+tbody tr:nth-child(even) { background: #F1F5F9; }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12.5px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+.tag-green { background: #DCFCE7; color: #166534; }
+.tag-red { background: #FEE2E2; color: #991B1B; }
+.tag-yellow{ background: #FEF9C3; color: #92400E; }
+.tag-blue { background: #EFF6FF; color: #1E40AF; }
+.tag-orange{ background: #FEF3C7; color: #92400E; }
+.hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px 20px; margin: 14px 0; }
+.hypothesis-box h3 { color: #1E3A5F; margin-top: 0; }
+.trap-warning { background: #FFF0E6; border-left: 4px solid #F97316; padding: 16px 20px; margin: 14px 0; }
+.trap-warning h3 { color: #C2410C; margin-top: 0; }
+.debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+@media (max-width: 900px) { .debate-grid { grid-template-columns: 1fr; } }
+.debate-card { padding: 16px 18px; border-radius: 4px; }
+.debate-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+.debate-bull h3 { color: #166534; }
+.debate-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+.debate-bear h3 { color: #991B1B; }
+.debate-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+.debate-arb h3 { color: #5B21B6; }
+.verdict-box { background: #FFFBEB; border-left: 4px solid #D97706; padding: 16px 20px; margin: 14px 0; }
+.verdict-box h3 { color: #92400E; margin-top: 0; }
+.rr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+@media (max-width: 900px) { .rr-grid { grid-template-columns: 1fr; } }
+.rr-card { padding: 16px 18px; border-radius: 4px; }
+.rr-ma60 { background: #F0F9FF; border-left: 4px solid #0284C7; }
+.rr-ma60 h3 { color: #075985; }
+.rr-ma200 { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+.rr-ma200 h3 { color: #5B21B6; }
+.rr-ma104w { background: #ECFDF5; border-left: 4px solid #059669; }
+.rr-ma104w h3 { color: #065F46; }
+.rr-ma104w .subtitle { font-size: 12px; color: #065F46; opacity: 0.8; }
+.section-intro { background: #F8FAFC; border-left: 3px solid #94A3B8; padding: 10px 16px; font-size: 13.5px; color: #475569; margin-bottom: 16px; font-style: italic; }
+.big-verdict { background: linear-gradient(to right, #FEF9C3, #FEF3C7); border: 2px solid #D97706; padding: 20px 28px; border-radius: 4px; margin: 16px 0 24px; }
+.big-verdict .label { font-size: 13px; color: #92400E; letter-spacing: 2px; font-weight: 600; }
+.big-verdict .verdict { font-size: 28px; color: #7C2D12; font-weight: 700; margin-top: 4px; }
+.print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #fff; border: none; padding: 12px 22px; border-radius: 4px; font-size: 14px; font-family: 'Noto Sans TC', sans-serif; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 99; }
+.print-btn:hover { background: #2B4A75; }
+@media print {
+  header, .print-btn { display: none !important; }
+  body { background: #fff; padding: 0; }
+  main { margin: 0; max-width: 100%; padding: 0; }
+  section.card { box-shadow: none; page-break-inside: avoid; margin-bottom: 16px; }
+  h1.section-title { background: #1E3A5F !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="ticker">MRVL｜Marvell Technology</div>
+  <div class="meta">
+    <span>資料抓取：2026-04-10</span>
+    <span>股價：$119.91</span>
+    <span>最近財報季：Q4 FY2026 (Feb 2026)</span>
+    <span>DD Schema v7.0</span>
+  </div>
+</header>
+
+<main>
+
+<!-- =================== §8 投資結論 =================== -->
+<section class="card">
+<h1 class="section-title">§8｜投資結論</h1>
+<p class="section-intro">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<div class="big-verdict">
+  <div class="label">最終裁決</div>
+  <div class="verdict">🟡 觀望（Watch）— 結構成長真實但幾何位置不佳 + 客戶集中度隱患</div>
+</div>
+
+<h2>財報信號與假設校準</h2>
+<p>Q4 FY26（2026-03-05 公告、2026-02-01 季度結束）是一份極強財報：Revenue $2.219B（+22% YoY、beat 指引 mid-point）、Non-GAAP EPS $0.80（beat $0.71 by 12.7%）、Data Center $1.65B（+8.8% QoQ）、Q1 FY27 指引 $2.40B（環比 +8.2%）。全年 FY26 revenue $8.195B（+42% YoY）、Non-GAAP EPS +81% YoY。管理層給出 FY27 Data Center 成長 40%+、Optics/Interconnect 50%+、Custom ASIC 20%+，FY28 Data Center 約 50% 的激進指引。</p>
+<ul>
+  <li><strong>H1（Custom ASIC 長期營收路徑）：＋ 強化但裂縫出現</strong>。FY26 Custom ASIC 業務 +20% 符合目標，Mozaic 3 1.6T interconnect 領先業界。但<strong>失去 AWS Trainium 3/4 設計案給 Alchip</strong>，這是結構性警示：Alchip 可能以低價與台積電深度整合搶下未來大設計案。</li>
+  <li><strong>H2（2nm/1.6T 互連光學主導權）：＋＋ 強強化</strong>。1.6T 互連與 2nm interconnect 是業界第一，Optics/Interconnect FY27 成長指引 50%+，這條成長線是 MRVL 最確定的護城河。</li>
+  <li><strong>H3（估值從估值折扣恢復至合理）：0 已完成並過頭</strong>。股價從 52 週低 $48.09 → 高 $121.97（+154%），過去 2 週再漲 +24%，估值修復論點完全兌現。Forward P/E 從 FY25 末的 ~15x 修復至當前 ~25x，接近 5Y 平均 31.93x 的下緣，技術上仍非「明顯貴」，但分析師中位目標 $115 已低於現價 $119.91，代表<strong>市場跑在共識前面 4%</strong>。</li>
+</ul>
+<p><strong>結論：結構成長故事真實、AI 資料中心連接敘事無可爭議，但入場時機不利：股價處於 52 週高點、分析師共識已被追平、Trainium 3/4 結構性 loss 尚未被市場充分定價。這是「好公司錯價位」的典型情境。</strong></p>
+
+<h2>進場 / 觀望 / 迴避</h2>
+
+<h3>① 短期信號（0~12 個月）</h3>
+<p>Q1 FY27 指引 $2.40B 是大幅加速，管理層樂觀。但當前股價 $119.91 已 priced for perfection —— 任何 Q1 Data Center miss（&lt;40% YoY）、Custom ASIC 成長放緩（&lt;20%）、或進一步設計 loss（Google、Microsoft 任一）都會引發 15~25% 急跌。短期信號中性偏正向但對稱性差。</p>
+
+<h3>② 中期成長確信度（1~3 年）</h3>
+<p>EPS CAGR FY26 $2.67 → FY28 $5.44 = 約 43% CAGR，極高。驅動結構為 <strong>量（Custom ASIC 雙倍、Optics/Interconnect 50%+）+ 定價（1.6T 溢價）雙驅動</strong>，能見度中高但依賴 AWS 關係穩定。最大變數：AWS 貢獻 Data Center 營收 76%，任何 AWS 策略轉向都會放大影響。</p>
+
+<h3>③ 長期護城河邏輯（3 年後）</h3>
+<p>Runway 7~10 年：AI 資料中心互連是長期結構需求，5G、企業網路、車用電子為輔助成長引擎。但護城河深度較 BRCM 淺 —— MRVL 缺乏 Broadcom 的 VMware/軟體平台整合與系統級設計能力，在 custom ASIC 上也面臨 Broadcom、Alchip、台積電自家 IP 的競爭。Runway 存在，深度中等。</p>
+
+<div class="trap-warning">
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+  <tr><th style="width:35%">問題</th><th>回答</th></tr>
+  <tr><td>最可能的價值陷阱模式？</td><td><strong>非傳統陷阱，但有「客戶集中 + momentum 高點」風險</strong>。不屬於四類標準陷阱（估值不低、成長真實、現金流改善），但 AWS 76% Data Center 集中度 + 失去 Trainium 3/4 設計案 = 結構性客戶風險。若 AWS 未來 2~3 年加速轉向自研或 Alchip，MRVL 估值框架需重寫。</td></tr>
+  <tr><td>「這不是陷阱」的最強論據</td><td>FY26 Data Center $1.65B 占 74% revenue，結構需求驅動。1.6T interconnect 是業界第一，2nm custom XPU 路線圖清晰。Q1 FY27 指引 $2.40B 超預期，管理層 FY28 Data Center +50% 的膽量前所未有。AI 互連是「所有 hyperscaler 必買」的核心需求，MRVL 是少數能做的公司之一。</td></tr>
+  <tr><td>「這可能是陷阱」的最強反駁</td><td>(1) <strong>AWS 76% 集中度是單點故障風險</strong>，歷史上任何 &gt;70% 單一客戶集中度的半導體公司最終都被該客戶壓榨毛利或流失訂單；(2) <strong>失去 Trainium 3/4 給 Alchip</strong> 是 MRVL 在 AWS 關係中話語權下降的公開信號，Benchmark 2025-12 已下調至 Hold；(3) 歷史 GAAP ROIC 長期 &lt;10%（Inphi 併購商譽攤銷壓迫），Non-GAAP 與 GAAP 差距巨大意味著真實資本報酬率遠低於 Non-GAAP EPS 展示；(4) 分析師共識中位 $115 已低於現價 $119.91，代表股價跑在共識前面，momentum 追高特徵明顯。</td></tr>
+  <tr><td>領先指標</td><td>① 單季 Data Center 成長率（&lt;35% YoY 即警示客戶轉向）；② 新設計案公告（若 Q2 FY27 前沒有 Microsoft Maia 或 Google Axion 新增訂單，代表管線空白）</td></tr>
+</table>
+<p style="margin-top:14px"><strong>最終定性：🟡 觀察期</strong>（結構成長真實但有 AWS 單點風險與 momentum 高點，需等待明確的基本面確認信號或估值回調才進場）</p>
+</div>
+
+<h2>條件式進場判斷</h2>
+<table>
+  <tr><th style="width:22%">條件類型</th><th>具體內容</th></tr>
+  <tr><td>估值條件</td><td>Forward P/E 回落至 <strong>20x 以下</strong>（對應股價 ~$95 以下，5Y 低位區間）；或 PEG 回落至 0.6 以下</td></tr>
+  <tr><td>基本面條件</td><td>Q1 FY27 財報需確認：(1) Data Center Revenue &gt; $1.85B（+12% QoQ）；(2) Custom ASIC 毛利率不降；(3) 明確披露 Microsoft Maia 2 與 Google Axion 出貨時程與訂單規模</td></tr>
+  <tr><td>陷阱排除條件</td><td>以下任一出現即立即停損重評：(a) AWS 新一代 Trainium 或 Graviton 設計案全部給 Alchip；(b) Custom ASIC YoY 成長跌破 15%；(c) Microsoft Maia 2 訂單遭競爭對手搶走</td></tr>
+  <tr><td>事件觸發條件</td><td>若股價回調至 $90~$100（MA60 附近）且基本面無破壞 → 建倉 2%；明確新增 Microsoft 或 Google 大型設計案 → 加至 3~4%；FY28 Data Center 確認加速至 50%+ → 加至目標 5%</td></tr>
+</table>
+
+<h2>下行風險量化</h2>
+<ul>
+  <li>Bull（FY28E $5.44 × 25x）：股價 $136，vs 現價 <strong>+13%</strong></li>
+  <li>Base（FY27E $3.82 × 25x）：股價 $95.5，vs 現價 <strong>-20%</strong></li>
+  <li>Bear（FY27E $3.82 × 18x）：股價 $68.8，vs 現價 <strong>-43%</strong></li>
+  <li>AWS 嚴重 loss 情境（EPS 下修至 $3.0 × 15x）：股價 $45，vs 現價 <strong>-62%</strong></li>
+</ul>
+<p>上行 +13% vs 下行 -20~-62%，非對稱性明顯偏負。</p>
+
+<h2>最關鍵監測指標</h2>
+<table>
+  <tr><th style="width:5%">#</th><th>監測指標</th><th style="width:18%">對應章節</th><th style="width:22%">性質</th><th>觸發重新評估的閾值</th></tr>
+  <tr><td>1</td><td>Data Center 分部 YoY 成長</td><td>§0.5 H1 / §1</td><td>🔵 核心假設驗證</td><td>連續 2 季 &lt;35% = H1 削弱；連續 2 季 &gt;45% = 加碼條件</td></tr>
+  <tr><td>2</td><td>Custom ASIC 設計案 win/loss</td><td>§3 / §2.5</td><td>🔵 護城河強弱信號</td><td>失去任一 Microsoft 或 Google 設計案 = 立即重評</td></tr>
+  <tr><td>3</td><td>Non-GAAP Gross Margin</td><td>§4 / §1</td><td>客戶議價強度</td><td>跌破 58% = AWS 開始壓榨毛利</td></tr>
+  <tr><td>4</td><td>股價相對 MA60 位置</td><td>§7.7</td><td>短期動能信號</td><td>跌破 MA60 ($100) = 短期警示；跌破 MA200 ($85) = 結構性警示</td></tr>
+</table>
+
+</section>
+
+
+<!-- =================== §7.7 非對稱風報比 =================== -->
+<section class="card">
+<h1 class="section-title">§7.7｜非對稱風報比診斷（Asymmetric R:R）</h1>
+<p class="section-intro">MRVL 幾何位置與 STX 類似：價格領先分析師共識、三條均線距離過大。但 MRVL 業務結構性（非 cyclical），本質較佳。</p>
+
+<h2>A｜上行目標計算</h2>
+<table>
+  <tr><th>來源</th><th>數值</th><th>說明</th></tr>
+  <tr><td>內部估值目標（§7.5 合理區間中位）</td><td class="num">$95.5</td><td>FY27E EPS $3.82 × 目標 P/E 25x（AI 題材溢價但嚴格守守 PEG &lt; 0.7）</td></tr>
+  <tr><td>分析師共識中位</td><td class="num">$115.00</td><td>n=47，區間 $85~$156</td></tr>
+  <tr><td>分析師共識 × 85%（haircut）</td><td class="num">$97.75</td><td>15% 安全邊際</td></tr>
+  <tr><td><strong>保守上行目標（取較小值）</strong></td><td class="num"><strong>$95.50</strong></td><td><span class="tag tag-red">⚠️ 低於現價 $119.91</span></td></tr>
+  <tr><td>上行空間（vs 現價 $119.91）</td><td class="num"><strong>-20.4%</strong></td><td>🔴 負值</td></tr>
+</table>
+<p><strong>數據模式：🔴 上行為負</strong>（與 STX 同類型）。這是 Phase 2 DD 第二檔「分析師共識中位低於現價」的標的，上行目標無法合理支撐。</p>
+
+<div class="rr-grid">
+
+  <div class="rr-card rr-ma60">
+    <h3>B｜MA60 R:R</h3>
+    <table>
+      <tr><td>現價</td><td class="num">$119.91</td></tr>
+      <tr><td>MA60（估算）</td><td class="num">~$100</td></tr>
+      <tr><td>股價 vs MA60</td><td class="num">上方 +19.9%</td></tr>
+      <tr><td>Failure Point</td><td class="num">$100</td></tr>
+      <tr><td>下行距離</td><td class="num">-16.6%</td></tr>
+      <tr><td>上行距離</td><td class="num">-20.4%（負）</td></tr>
+      <tr><td><strong>R:R Ratio</strong></td><td class="num"><strong>N/A</strong></td></tr>
+    </table>
+    <p><span class="tag tag-red">❌ Fail</span>（上行為負）</p>
+    <p style="font-size:12.5px; color:#075985; margin-top:8px">過去 2 週急漲 24% 使股價遠離 MA60。MA60 快速追漲但仍落後，任何回調都可能先測試 $100 支撐。</p>
+  </div>
+
+  <div class="rr-card rr-ma200">
+    <h3>C｜MA200 R:R</h3>
+    <table>
+      <tr><td>現價</td><td class="num">$119.91</td></tr>
+      <tr><td>MA200（估算）</td><td class="num">~$85</td></tr>
+      <tr><td>股價 vs MA200</td><td class="num">上方 +41.1%</td></tr>
+      <tr><td>Failure Point</td><td class="num">$85</td></tr>
+      <tr><td>下行距離</td><td class="num">-29.1%</td></tr>
+      <tr><td>上行距離</td><td class="num">-20.4%（負）</td></tr>
+      <tr><td><strong>R:R Ratio</strong></td><td class="num"><strong>N/A</strong></td></tr>
+    </table>
+    <p><span class="tag tag-red">❌ Fail</span></p>
+    <p style="font-size:12.5px; color:#5B21B6; margin-top:8px">現價距 MA200 達 41%，為 momentum 極端區。歷史上 MRVL 類似位置後 6~12 個月內常見 20%+ 回調。</p>
+  </div>
+
+  <div class="rr-card rr-ma104w">
+    <h3>D｜MA104w R:R</h3>
+    <div class="subtitle">≈ 2 年週線</div>
+    <table>
+      <tr><td>現價</td><td class="num">$119.91</td></tr>
+      <tr><td>MA104w（估算）</td><td class="num">~$75</td></tr>
+      <tr><td>股價 vs MA104w</td><td class="num">上方 +59.9%</td></tr>
+      <tr><td>Failure Point</td><td class="num">$75</td></tr>
+      <tr><td>下行距離</td><td class="num">-37.4%</td></tr>
+      <tr><td>上行距離</td><td class="num">-20.4%（負）</td></tr>
+      <tr><td><strong>R:R Ratio</strong></td><td class="num"><strong>N/A</strong></td></tr>
+    </table>
+    <p><span class="tag tag-red">❌ Fail</span></p>
+    <p style="font-size:12.5px; color:#065F46; margin-top:8px">現價相對 2 年均線溢價 60%，顯著高於歷史正常區間。過去 MRVL 在類似溢價後通常有 25~35% 回測。</p>
+  </div>
+</div>
+
+<h2>E｜綜合解讀</h2>
+<table>
+  <tr><th>維度</th><th>MA60</th><th>MA200</th><th>MA104w</th></tr>
+  <tr><td>Failure Point</td><td class="num">~$100</td><td class="num">~$85</td><td class="num">~$75</td></tr>
+  <tr><td>現價溢價</td><td class="num">+19.9%</td><td class="num">+41.1%</td><td class="num">+59.9%</td></tr>
+  <tr><td>上行空間</td><td class="num">-20.4%</td><td class="num">-20.4%</td><td class="num">-20.4%</td></tr>
+  <tr><td>判定</td><td><span class="tag tag-red">❌</span></td><td><span class="tag tag-red">❌</span></td><td><span class="tag tag-red">❌</span></td></tr>
+</table>
+<p><strong>組合解讀：🔴 三版本全部失敗 + 上行為負</strong>。結構類似 STX 但嚴重程度稍低（STX MA104w 溢價 +128%，MRVL 僅 +60%）。</p>
+<p><strong>本節結論</strong>：MRVL 與 STX 一樣，處於「股價跑在分析師共識前面」的幾何不利位置。差別在於 MRVL 的底層成長邏輯是結構性 AI 互連需求（secular），STX 是 HDD 週期性需求（cyclical）。因此 MRVL 的回調若發生，本質上是「好公司回到合理估值」而非「cyclical 殺破底」。理想進場點：股價回調至 MA60（$100 附近）+ Forward P/E 壓到 20x 以下。當前位置不應追高。</p>
+
+</section>
+
+
+<!-- =================== §7.6 三方辯論 =================== -->
+<section class="card">
+<h1 class="section-title">§7.6｜三方辯論摘要</h1>
+<p class="section-intro">MRVL 是 Phase 2 DD 中最複雜的多空辯論：結構 AI 成長敘事完美，但客戶集中與設計案 loss 是真實裂縫。</p>
+
+<div class="debate-grid">
+
+<div class="debate-card debate-bull">
+<h3>🐂 多頭辯護人｜Charlie Munger 模式</h3>
+<table>
+  <tr><th>#</th><th>進場論據</th></tr>
+  <tr><td>1</td><td><strong>AI 互連是結構性剛需，MRVL 是少數執行者</strong>：1.6T Optics/Interconnect 業界第一，2nm custom XPU 路線圖清晰。FY27 Optics 指引 50%+ 成長、Custom ASIC 20%+、Data Center 整體 40%+，三個數字同時加速。Hyperscaler 每增加一個 AI 機架都需要 MRVL 的 SerDes + retimer + optical DSP，這是水電費等級的基礎設施。（§3 / §5）</td></tr>
+  <tr><td>2</td><td><strong>Custom ASIC pipeline 長且多元</strong>：除 AWS Trainium 2/2.5，新增 Microsoft Maia 1/2、Google Axion CPU。管理層指引 Custom ASIC FY28 可望「doubled next year」，這意味著目前的客戶 loss（Trainium 3/4）被新設計案補上有餘。Marvell 在定制矽（custom silicon）的 design win 累積是 2021-2025 年的 sustained compounding 結果，不是一次性熱度。（§2.5 / §3）</td></tr>
+  <tr><td>3</td><td><strong>毛利率與 EPS 爆發性成長</strong>：FY26 Non-GAAP EPS +81% YoY，Q4 Non-GAAP EPS $0.80 beat 12.7%。FY27E $3.82 → FY28E $5.44 = 42% 成長，3Y CAGR 43%。以 Forward P/E 25x 對應 43% CAGR，PEG 0.58，遠便宜於同業（BRCM PEG ~1.2）。若 MRVL 在 FY28 達成 $5.44 EPS，當前買進即使用 22x P/E 也能獲得 $120（持平）以上的報酬。（§2 / §7）</td></tr>
+</table>
+<p style="background:#fff; padding:10px; border-radius:3px; margin-top:10px"><strong>多頭最強一句話</strong>：PEG 0.58 + 43% CAGR + 1.6T 互連業界第一 + Custom ASIC pipeline doubled —— 這是 AI 連接題材中最純粹、最便宜的 play，貴的只是時間點。</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h3>🐻 空頭檢察官｜Michael Burry 模式</h3>
+<p style="font-size:13px; color:#991B1B; margin-bottom:8px">任務：假設持有者已進場，找出 18 個月內造成 30%+ 虧損的最可能路徑。</p>
+<table>
+  <tr><th>#</th><th>虧損觸發情境</th></tr>
+  <tr><td>1</td><td><strong>AWS 76% 集中度是 single point of failure</strong>：Data Center 占 74% 總營收、其中 AWS 又占 76%，等於 AWS 一家貢獻 MRVL 約 56% 總營收。歷史上任何半導體公司對單一 hyperscaler 依賴超過 50% 都最終遭遇毛利壓榨或設計 loss。2025-12 Benchmark 已下調至 Hold，原因是 Trainium 3/4 設計案流向 Alchip。若 Trainium 5、Graviton 新版繼續 loss 給 Alchip，MRVL 在 AWS 的份額可能從 76% 降至 40% 以下，Data Center revenue 結構性下修 30%+。（§0.5 R1 / §3）</td></tr>
+  <tr><td>2</td><td><strong>GAAP 與 Non-GAAP 的結構性背離</strong>：FY26 GAAP EPS $3.07 但其中大量來自一次性調整；Non-GAAP EPS 更高依賴 SBC add-back 與 Inphi 商譽攤銷 exclude。GAAP ROIC 僅 5~6%，遠低於 WACC ~11%，在純 GAAP 框架下 MRVL 仍是「destroying value」。若市場某天從 Non-GAAP P/E 切換至 GAAP P/E（例如 Inphi 商譽需 impairment），估值框架會一夜重寫。（§4 / §7.3）</td></tr>
+  <tr><td>3</td><td><strong>Momentum 高點 + 分析師共識追不上</strong>：股價 2 週內 +24%、距 MA200 +41%、距 MA104w +60%、分析師中位 $115 &lt; 現價 $119.91。這四個條件同時成立的股票，過去在半導體板塊的歷史統計中，6 個月後平均跌幅 18~25%。加上 Q1 FY27 指引已達 $2.40B，市場期待已 priced in，任何 in-line 結果都會被當成 disappointment。（§7.1 / §7.5）</td></tr>
+</table>
+<p style="background:#fff; padding:10px; border-radius:3px; margin-top:10px"><strong>空頭最大威脅</strong>：AWS 集中度是 MRVL 的「存在性風險」，不是可控變數。若 AWS 決定加速自建（Annapurna Labs）或轉向 Alchip，MRVL 的故事會在 2~3 季內瓦解。</p>
+</div>
+
+<div class="debate-card debate-arb">
+<h3>⚖️ 估值仲裁員｜Damodaran 模式</h3>
+<table>
+  <tr><th>評分維度</th><th>比對</th><th>分</th></tr>
+  <tr><td>vs 過去 3 年實際 FCF CAGR</td><td>隱含 ~18% vs 歷史 20%+（FY25 +35%）</td><td>1/2</td></tr>
+  <tr><td>vs 分析師 EPS CAGR 共識</td><td>隱含 ~18% vs 共識 43%</td><td>2/2</td></tr>
+  <tr><td>vs 同業最快 FCF CAGR</td><td>隱含 18% vs BRCM ~25%</td><td>1/2</td></tr>
+  <tr><td>達成條件的苛刻程度</td><td>需 Data Center 維持 40%+ 成長 3 年 + 毛利率不降</td><td>1/2</td></tr>
+  <tr><td>歷史類似公司達成此水準</td><td>BRCM 過去 5 年曾達成，MRVL 未驗證</td><td>1/2</td></tr>
+</table>
+<p style="background:#fff; padding:10px; border-radius:3px; margin-top:10px"><strong>隱含預期可信度：6/10</strong><br><strong>仲裁員一句話</strong>：隱含 FCF CAGR 18% 的預期不算離譜，但達成的必要條件（AWS 關係穩定 + Custom ASIC 雙倍 + 毛利率持平）的聯合機率 &lt;50%，數字上「略貴」而非「明顯貴」。</p>
+</div>
+
+</div>
+
+<div class="verdict-box">
+<h3>🧑‍⚖️ 我的裁決</h3>
+<table>
+  <tr><td style="width:25%"><strong>多頭最強論據</strong></td><td>1.6T Interconnect 業界第一 + Custom ASIC pipeline 雙倍成長 + PEG 0.58，AI 連接純度最高的標的</td></tr>
+  <tr><td><strong>空頭最大威脅</strong></td><td>AWS 56% 總營收集中度 + Trainium 3/4 設計 loss + momentum 追高至 52W 高點</td></tr>
+  <tr><td><strong>估值仲裁評分</strong></td><td>6 / 10</td></tr>
+  <tr><td><strong>我的裁決</strong></td><td><span class="tag tag-yellow">🟡 觀望</span>（結構性看好 + 幾何位置不利）</td></tr>
+  <tr><td><strong>裁決理由</strong></td><td>MRVL 的底層成長敘事在 Phase 2 DD 四檔科技股中最純粹（AI 連接基礎設施），成長率也最高（CAGR 43%）。問題不在公司，在進場時機。三條關鍵均線都被遠遠拉開（最大 MA104w +60%），分析師共識中位 $115 已低於現價，短線追高者主導的行情結構意味著任何利空都會快速反轉。與 STX 不同的是，MRVL 的業務是 secular 而非 cyclical，所以若回調至 $90~$100 區間（MA60 附近）且基本面無破壞，是非常值得建倉的標的。結論：列入「等待回調買進」名單，當前不碰。</td></tr>
+</table>
+<h3 style="margin-top:16px">進入 §8 前的自我檢核</h3>
+<ul>
+  <li>☑ 多頭論據中「Custom ASIC doubled」是管理層指引而非已兌現，依賴 FY28 確認。</li>
+  <li>☑ 空頭威脅中「AWS loss」已發生（Trainium 3/4 給 Alchip），部分已在 2025-12 定價，但尚未完全反映。</li>
+  <li>☑ 估值仲裁 6/10 意味著「不便宜但不過貴」，與觀望結論一致。</li>
+</ul>
+</div>
+
+</section>
+
+
+<!-- =================== §0 序章 =================== -->
+<section class="card">
+<h1 class="section-title">§0｜序章：第一性原理 × 逆向思考</h1>
+
+<h2>存在意義</h2>
+<p>Marvell 解決的長期不可逆痛點是：<strong>讓 AI 運算集群中的每一顆 GPU / XPU / CPU 之間能以最高頻寬、最低延遲相互通訊</strong>。AI 訓練不是單顆晶片的運算問題，是「讓 10,000 顆 GPU 像一顆超級電腦一樣同步運作」的工程問題，這個同步的物理瓶頸是晶片間的互連（interconnect）與光通訊（optics）。MRVL 的 1.6T 光學 DSP、SerDes、retimer、active electrical cable 以及為 hyperscaler 客製化的 XPU，是這個問題的核心組件之一。</p>
+<p>若 MRVL 明天消失：AWS Trainium 2/2.5 生產立即中斷、Microsoft Maia 1/2 延遲交付、全球 AI 資料中心新機架部署延遲 3~6 個月。替代選項存在（Broadcom、Alchip、MediaTek），但 hyperscaler 的 qualification 週期約 12~18 個月，短期無法完美替代 MRVL 的特定 ASIC。</p>
+
+<h2>逆向推演（Munger Inversion）</h2>
+<p>若要讓 MRVL 在 3 年內虧損 50% 以上，最可能的路徑：</p>
+<ul>
+  <li><strong>地緣政治曝險</strong>：MRVL 研發中心分布美國、以色列、新加坡，製造 100% 外包給台積電。若台海危機或美國 CHIPS Act 重大變更，MRVL 會受影響但整體產業鏈都會。</li>
+  <li><strong>技術替代風險</strong>：<em>最大威脅是 hyperscaler 自建設計團隊</em>（AWS Annapurna Labs、Google TPU team、Microsoft Silicon group）。若 2027 前這些內部團隊能完全覆蓋 custom ASIC 需求，MRVL 的 design service 業務會結構性萎縮。時間軸：2026-2028 觀察關鍵。</li>
+  <li><strong>管理層失職</strong>：Matt Murphy CEO 在 2021 年做的 $10B Inphi 併購是 MRVL 近代最大資本決策，目前被視為成功（奠定 Optics/Interconnect 領先地位），但商譽攤銷長期壓迫 GAAP EPS。若未來再做類似規模併購且整合失敗，將是 downside 觸發器。</li>
+  <li><strong>價值陷阱路徑</strong>：<span class="tag tag-orange">非傳統陷阱，但「客戶集中 + momentum 高點」混合風險</span>。核心擔憂不是估值低（估值不低），而是 AWS 76% 集中度 + Trainium 3/4 設計 loss 被 momentum 行情暫時蓋過。若後續 FY27 Q2~Q3 出現單季 miss，將成為典型「好故事遇到集中度反噬」的案例。</li>
+</ul>
+
+</section>
+
+
+<!-- =================== §0.5 投資論點錨定 =================== -->
+<section class="card">
+<h1 class="section-title">§0.5｜投資論點錨定</h1>
+
+<div class="hypothesis-box">
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+  <tr><td style="width:30%"><strong>預設持有期</strong></td><td>18~36 個月（結構性成長型，但需確認客戶多元化進度）</td></tr>
+  <tr><td><strong>時間軸理由</strong></td><td>Custom ASIC 設計案從 win 到營收認列需 12~18 個月；Microsoft Maia 2、Google Axion 需 18~24 個月看到實質貢獻；AWS 獨大風險的解決需要 24~36 個月</td></tr>
+  <tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：Data Center 分部成長率、Custom ASIC 設計案 win/loss、毛利率、MS Maia 2 / Google Axion 進度；噪音：季度 EPS 小幅 beat/miss、短期分析師評級變動、momentum 追高</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>B｜三個核心假設</h3>
+<table>
+  <tr><th>#</th><th>核心假設</th><th>驗證指標</th><th>驗證時間</th></tr>
+  <tr><td>H1</td><td>AWS 維持 Trainium 2/2.5 訂單穩定，且新增 Microsoft Maia 2 + Google Axion 減少集中度</td><td>AWS Data Center 營收占比、新客戶營收貢獻</td><td>每季財報</td></tr>
+  <tr><td>H2</td><td>Optics/Interconnect 業務 FY27 +50%，在 2nm/1.6T 領先維持 2 年以上</td><td>Optics 分部成長、競爭對手產品發佈</td><td>FY27 H1 前驗證</td></tr>
+  <tr><td>H3</td><td>Custom ASIC FY28 營收雙倍（如管理層指引），Non-GAAP EPS 達成 $5.44</td><td>Custom ASIC 分部營收、整體 EPS</td><td>FY28 全年</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+  <tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+  <tr><td>R1</td><td>AWS 加速自建或轉向 Alchip，Trainium 5 以後全部流失</td><td>H1</td><td>AWS 合作公告、Trainium roadmap</td><td>失去 Trainium 5 設計案</td></tr>
+  <tr><td>R2</td><td>Broadcom 或 Credo 推出 1.6T 競品，壓縮 MRVL Optics 毛利</td><td>H2</td><td>競爭對手產品發佈</td><td>BRCM 1.6T 量產時程提前</td></tr>
+  <tr><td>R3</td><td>Microsoft Maia 2 或 Google Axion 設計案遇到認證或量產問題</td><td>H3</td><td>客戶公告、MRVL revenue 分解</td><td>Microsoft/Google 貢獻率 &lt;預期 50%</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>D｜邊際貢獻判斷框架</h3>
+<ul>
+  <li>持有期 18~36 個月 + AI 結構性成長：Custom ASIC 設計案 win/loss 是最高優先信號；季度 EPS 個位數 beat/miss 是噪音。</li>
+  <li>特殊注意：MRVL 因客戶集中度高，任何 AWS 相關新聞（AWS capex、Trainium roadmap、Annapurna Labs 人事變動）都值得分級評估影響。</li>
+</ul>
+</div>
+
+<div class="hypothesis-box">
+<h3>E｜可執行決策主線預設</h3>
+<table>
+  <tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+  <tr><td>進場</td><td>股價回調至 $90~$100（MA60 附近）+ 基本面無破壞</td><td>建倉 2%</td></tr>
+  <tr><td>加碼</td><td>Microsoft Maia 2 明確公告 + Google Axion 訂單確認 + 股價未追至 $120 以上</td><td>加至 4%</td></tr>
+  <tr><td>減碼</td><td>Trainium 5 失去、或 Data Center 成長連續 2 季 &lt;30%</td><td>減至 1%</td></tr>
+  <tr><td>撤退</td><td>H1 明確被推翻（AWS 重大轉向）或毛利率連續 2 季跌破 58%</td><td>清倉</td></tr>
+</table>
+</div>
+
+</section>
+
+
+<!-- =================== §1 即時財報情報 =================== -->
+<section class="card">
+<h1 class="section-title">§1｜即時財報情報（Q4 FY2026，季度止於 2026-02-01）</h1>
+
+<h2>① 最新一季財報關鍵數字</h2>
+<table>
+  <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+  <tr><td>Revenue</td><td class="num">$2.219B</td><td class="num">~$2.20B</td><td><span class="tag tag-green">BEAT +0.9%</span></td><td class="num">+22%</td></tr>
+  <tr><td>EPS (Non-GAAP)</td><td class="num">$0.80</td><td class="num">$0.71</td><td><span class="tag tag-green">BEAT +12.7%</span></td><td>—</td></tr>
+  <tr><td>Net Income (Non-GAAP)</td><td class="num">$685.1M</td><td>—</td><td><span class="tag tag-green">新高</span></td><td>—</td></tr>
+  <tr><td>Data Center Revenue</td><td class="num">$1.65B</td><td>—</td><td><span class="tag tag-green">+8.8% QoQ</span></td><td class="num">74% 總營收</td></tr>
+  <tr><td>Non-GAAP Gross Margin</td><td class="num">~60%</td><td>—</td><td><span class="tag tag-green">維持高檔</span></td><td>—</td></tr>
+  <tr><td>Q1 FY27 Revenue Guidance</td><td class="num">$2.40B</td><td>—</td><td><span class="tag tag-green">加速</span></td><td class="num">+8.2% QoQ</td></tr>
+</table>
+
+<h3>全年 FY26 數字</h3>
+<ul>
+  <li>Net Revenue：$8.195B（新紀錄，+42% YoY）</li>
+  <li>GAAP Net Income：$2.670B（$3.07/股）</li>
+  <li>Non-GAAP EPS：+81% YoY（估 ~$2.67）</li>
+  <li>Custom ASIC business：FY26 +20%，管理層指引 FY27「可能倍增」</li>
+</ul>
+
+<h3>財報對 §0.5 假設的邊際貢獻</h3>
+<table>
+  <tr><th>假設</th><th>本季邊際方向</th><th>關鍵佐證</th></tr>
+  <tr><td>H1（AWS 穩定 + 客戶多元化）</td><td><span class="tag tag-yellow">0 不變偏負</span></td><td>AWS Trainium 2/2.5 維持但流失 3/4 給 Alchip，多元化進度尚未實質反映</td></tr>
+  <tr><td>H2（Optics FY27 +50%）</td><td><span class="tag tag-green">＋ 強化</span></td><td>1.6T 領先業界，Q4 表現強勁，管理層確認 FY27 指引</td></tr>
+  <tr><td>H3（Custom ASIC 雙倍 + EPS 達成）</td><td><span class="tag tag-green">＋ 強化</span></td><td>管理層首次指引「FY28 Custom ASIC 可能倍增」，FY27 Data Center +40% 指引</td></tr>
+</table>
+
+<h2>② Earnings Call 語氣解析</h2>
+<ul>
+  <li><strong>管理層基調</strong>：CEO Matt Murphy 語氣明顯轉向「AI-first」，反覆強調「interconnect leadership」「custom silicon pipeline」「next generation 2nm」。與上季相比更自信，但在 Trainium 3/4 流失問題上迴避直接回應。CFO 則在 capex 與毛利率上保持嚴謹。</li>
+  <li><strong>Forward Guidance</strong>：Q1 FY27 Revenue $2.40B（+8.2% QoQ、加速）；FY27 Data Center +40%；Optics/Interconnect +50%；Custom ASIC +20%；FY28 Data Center 約 +50%。這是 MRVL 歷史上最激進的指引。</li>
+  <li><strong>刻意強調的主題</strong>：(a)「1.6T first-to-market」—— 回應 BRCM 與 Credo 競爭；(b)「multi-year custom XPU pipeline」—— 化解 Trainium 3/4 loss 陰影；(c)「CXL attach ramping」—— 開啟新成長故事。</li>
+  <li><strong>刻意迴避的問題</strong>：(a) AWS Trainium 3/4 流失給 Alchip 的具體營收影響；(b) AWS 占 Data Center 營收的具體比例（分析師追問但沒給數字）；(c) Microsoft Maia 2 與 Google Axion 的營收貢獻時程；(d) Custom ASIC 毛利率 vs Standard Products 的差異。這四個都是空頭最在意的，管理層選擇性不答。</li>
+</ul>
+
+<h2>③ 產業 Imply 萃取</h2>
+<ul>
+  <li><strong>需求端</strong>：Q4 Data Center +8.8% QoQ + Q1 FY27 guidance $2.40B 加速，顯示 hyperscaler 對 AI 連接的採購仍在 inning 2/3，未見放緩。</li>
+  <li><strong>供給端</strong>：台積電 2nm 產能限制下，MRVL 爭取到足夠產能，是台積電重要客戶之一。</li>
+  <li><strong>競爭格局</strong>：Alchip 拿下 Trainium 3/4 是產業重大 shift，意味著 AWS 願意為更低價格接受較小供應商。Broadcom 在 Cisco/Arista 客戶端仍是霸主，但在 hyperscaler custom silicon 上 MRVL 與 Alchip 正在瓜分。</li>
+  <li><strong>對同業的連帶推論</strong>：(a) Alchip (3661.TW) 是本季最大贏家，Trainium 3/4 order book 穩固；(b) Broadcom（AVGO）需觀察是否有被擠壓；(c) Credo（CRDO）在 1.6T 競爭上壓力加大。</li>
+</ul>
+
+</section>
+
+
+<!-- =================== §2 核心門檻檢核 =================== -->
+<section class="card">
+<h1 class="section-title">§2｜核心門檻檢核</h1>
+
+<h2>EPS CAGR 數據</h2>
+<table>
+  <tr><th>期間</th><th>EPS</th><th>口徑</th><th>備註</th></tr>
+  <tr><td>FY2026 實際（基期）</td><td class="num">~$2.67</td><td>Non-GAAP</td><td>全年 +81% YoY，Q4 $0.80 推算</td></tr>
+  <tr><td>FY2027E</td><td class="num">$3.82</td><td>Non-GAAP</td><td>n=~45 分析師共識（+43% YoY）</td></tr>
+  <tr><td>FY2028E</td><td class="num">$5.44</td><td>Non-GAAP</td><td>+42% YoY</td></tr>
+  <tr><td>FY2029E</td><td class="num">~$7.50</td><td>Non-GAAP 外推</td><td>+38% YoY</td></tr>
+  <tr><td colspan="4" style="background:#FEF9C3"><strong>3 年 EPS CAGR ≈ 41%</strong>（FY26 $2.67 → FY29E $7.50），極高但依賴 Custom ASIC 執行與 AWS 關係穩定。GAAP 與 Non-GAAP 差距巨大，主要來自 Inphi 併購商譽攤銷（約 $1.5/股/年）。</td></tr>
+</table>
+
+<h2>門檻檢核表</h2>
+<table>
+  <tr><th>項目</th><th>標準</th><th>符合？</th><th>數據與趨勢</th></tr>
+  <tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="tag tag-green">✅</span></td><td>FY25 FCF $1.397B / Rev $5.77B ≈ 24%；FY26 估 ~22~25%</td></tr>
+  <tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt;15%；谷底 &gt;10%</td><td><span class="tag tag-yellow">🟡 改善中</span></td><td>FY22-25 約 12% / 18% / 18% / 24%；5Y 均 ~18%，谷底 12%（FY22，Inphi 併購整合期）</td></tr>
+  <tr><td>ROIC（當前）</td><td>&gt;15% 且 &gt; WACC</td><td><span class="tag tag-red">🔴 GAAP 不達標</span></td><td>GAAP ROIC 5.12~6%（商譽攤銷壓迫）；Non-GAAP 估 ~15-18%。WACC ~11%</td></tr>
+  <tr><td>ROIC 穩定性【Munger】</td><td>10Y 中 ≥70% 達 15%</td><td><span class="tag tag-red">🔴 不穩定</span></td><td>GAAP 層面 3Y 平均 -2%，5Y 平均 -0.7%，長期未超 WACC</td></tr>
+  <tr><td>毛利率定價能力【Munger】</td><td>10Y 中 ≥70% 改善</td><td><span class="tag tag-green">✅</span></td><td>10Y 區間 41.64%~60.68%，Non-GAAP 當前 60%，持續改善趨勢</td></tr>
+  <tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt;5% 優</td><td><span class="tag tag-green">✅</span></td><td>約 3~4%，fabless 模式優勢</td></tr>
+  <tr><td>EPS CAGR（3 年）</td><td>&gt;20%</td><td><span class="tag tag-green">✅ 超額</span></td><td>41% 遠超標準</td></tr>
+  <tr><td>PEG (Non-GAAP 3Y)</td><td>&lt;2</td><td><span class="tag tag-green">0.61</span></td><td>25 / 41 ≈ 0.61，數字非常便宜</td></tr>
+  <tr><td>負債安全性【Munger】</td><td>D/E &lt;0.7</td><td><span class="tag tag-yellow">🟡</span></td><td>D/E ~0.4，Inphi 併購留下 debt，但可控</td></tr>
+  <tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="tag tag-red">否</span></td><td>Debt ~$3.9B，Cash ~$870M，不完全覆蓋</td></tr>
+  <tr><td>護城河強度</td><td>&gt;8 分且擴大</td><td><span class="tag tag-yellow">🟡 7.5/10</span></td><td>Interconnect 領先 + Custom ASIC pipeline，但 AWS 集中風險降評</td></tr>
+</table>
+<p><strong>最大財務弱點</strong>：GAAP 層面長期 ROIC 低於 WACC（Inphi 商譽攤銷與歷史虧損壓迫），投資者必須選擇相信 Non-GAAP 數字才能接受當前估值。</p>
+<p><strong>Munger 三維護城河快速評級</strong>：<span class="tag tag-yellow">🟡 兩項達標</span>（毛利率定價能力 ✅、資本密集度 ✅、ROIC 穩定性 🔴）。</p>
+
+<div class="trap-warning">
+<h3>⚠️ 價值陷阱初篩：Forward P/E ~25x 位於 5Y 中下緣（5Y 平均 31.93x）</h3>
+<table>
+  <tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+  <tr><td>Q1</td><td>過去 3 年 Gross Margin 趨勢？</td><td>FY23 ~42% → FY26 ~60%（Non-GAAP），持續改善 +18pp</td><td>⬜</td></tr>
+  <tr><td>Q2</td><td>過去 3 年市佔率趨勢？</td><td>Optics 擴大、Custom ASIC 有得有失（Trainium 3/4 流失）</td><td><span class="tag tag-yellow">🟡 混合</span></td></tr>
+  <tr><td>Q3</td><td>FCF/NI 背離</td><td>GAAP FCF/NI 因商譽攤銷而偏高；Non-GAAP ~0.9</td><td>⬜</td></tr>
+  <tr><td>Q4</td><td>分析師共識 EPS 方向</td><td>過去 6 個月持續上修（從 FY27 $3.0 → $3.82）</td><td>⬜</td></tr>
+</table>
+<p><strong>初篩結論：0 紅 + 1 黃</strong>。低估值不是陷阱，但 Q2 的市佔率混合信號需在 §3 護城河節深入處理。</p>
+</div>
+
+</section>
+
+
+<!-- =================== §2.5 長期成長性評估 =================== -->
+<section class="card">
+<h1 class="section-title">§2.5｜長期成長性評估</h1>
+
+<h2>A｜成長跑道</h2>
+<table>
+  <tr><th>維度</th><th>數據</th><th>推論</th></tr>
+  <tr><td>AI Infrastructure Silicon TAM（2026）</td><td class="num">~$250B</td><td>含 GPU, ASIC, Networking, Optics</td></tr>
+  <tr><td>2030 估計 TAM</td><td class="num">~$600B</td><td>CAGR ~25%</td></tr>
+  <tr><td>MRVL 可寄生領域（Optics/Interconnect/Custom ASIC）</td><td class="num">~$60B (2026) → ~$150B (2030)</td><td>CAGR ~27%</td></tr>
+  <tr><td>MRVL 當前市佔</td><td class="num">~10-14%</td><td>Optics 稍高，Custom ASIC 與 Alchip 競爭中</td></tr>
+  <tr><td><strong>Runway 估計</strong></td><td><strong>7~10 年</strong></td><td>比 MSFT/GOOGL 短，比 STX 長</td></tr>
+</table>
+<p><strong>Runway 解讀：🟡 中等可見度</strong>。有足夠時間但不是 20 年結構性題材。</p>
+
+<h2>B｜成長品質</h2>
+<table>
+  <tr><th>類型</th><th>MRVL 佔比</th><th>佐證</th></tr>
+  <tr><td>有機成長</td><td class="num">~100%</td><td>近年無大型併購（Inphi 2021 之後無大型案）</td></tr>
+  <tr><td>無機成長</td><td class="num">0%</td><td>—</td></tr>
+</table>
+<table>
+  <tr><th>類型</th><th>MRVL 判斷</th><th>趨勢</th></tr>
+  <tr><td>定價驅動</td><td>1.6T 溢價、2nm custom silicon 溢價</td><td>擴大</td></tr>
+  <tr><td>量驅動</td><td>AI 資料中心機架數量</td><td>擴大</td></tr>
+</table>
+
+<h2>C｜成長護城河連動</h2>
+<p><strong>中性偏強化型</strong>：Custom ASIC 設計案累積會帶來工藝知識與客戶關係的複合效應（做過 Trainium 2 的團隊更容易拿 Microsoft Maia 2）。但不像 GOOGL/MSFT 的網路效應那樣明確，更像是「學習曲線 + 信任累積」型護城河。</p>
+
+<h2>D｜ROIC 與 FCF 的長期可維持性</h2>
+<table>
+  <tr><th>指標</th><th>FY26</th><th>FY22</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+  <tr><td>Non-GAAP ROIC（估）</td><td class="num">~15-18%</td><td class="num">~8%</td><td>↑ 快速改善</td><td>&gt;WACC 11%</td><td><span class="tag tag-green">✅</span></td></tr>
+  <tr><td>GAAP ROIC</td><td class="num">5-6%</td><td class="num">負</td><td>↑</td><td>&gt;WACC</td><td><span class="tag tag-red">🔴</span></td></tr>
+  <tr><td>FCF Margin</td><td class="num">~22-25%</td><td class="num">~12%</td><td>↑</td><td>&gt;15%</td><td><span class="tag tag-green">✅</span></td></tr>
+  <tr><td>FCF/NI（Non-GAAP）</td><td class="num">~0.85</td><td class="num">~1.0</td><td>↓</td><td>&gt;85%</td><td><span class="tag tag-yellow">🟡 邊緣</span></td></tr>
+  <tr><td>Reinvestment Rate</td><td class="num">~25%</td><td>—</td><td>穩定</td><td>對應 ROIC</td><td><span class="tag tag-green">✅</span></td></tr>
+</table>
+
+<h2>E｜成長熄火情境壓力測試</h2>
+<table>
+  <tr><th>情境</th><th>合理 Forward P/E</th><th>對應股價</th><th>vs 現價 $119.91</th></tr>
+  <tr><td>Bull：FY28 EPS $5.44、維持 P/E 25x</td><td class="num">25x</td><td class="num">$136</td><td class="num">+13%</td></tr>
+  <tr><td>Base：FY27 EPS $3.82、P/E 回到 25x</td><td class="num">25x</td><td class="num">$95.50</td><td class="num">-20%</td></tr>
+  <tr><td>Bear：FY27 EPS $3.82、P/E 壓至 18x（AWS 集中度折扣）</td><td class="num">18x</td><td class="num">$68.76</td><td class="num">-43%</td></tr>
+  <tr><td>AWS loss 情境：EPS 下修至 $3.0、P/E 15x</td><td class="num">15x</td><td class="num">$45</td><td class="num">-62%</td></tr>
+</table>
+
+<div class="trap-warning">
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+  <tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+  <tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季下滑</td><td>Non-GAAP 60%+，持續改善</td><td>⬜</td></tr>
+  <tr><td>護城河侵蝕</td><td>市佔率縮減</td><td>Optics 擴大，Custom ASIC 失去 Trainium 3/4</td><td><span class="tag tag-red">🔴</span></td></tr>
+  <tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>未發生，需求超供給</td><td>⬜</td></tr>
+  <tr><td>盈餘品質</td><td>EPS CAGR &gt; Rev CAGR 5pp+</td><td>EPS 81% vs Rev 42%，差距 39pp</td><td><span class="tag tag-red">🔴</span></td></tr>
+  <tr><td>盈餘品質</td><td>FCF/NI &lt;0.75 連 2 年</td><td>~0.85 穩定</td><td>⬜</td></tr>
+  <tr><td>盈餘品質</td><td>SBC/Rev &gt;5% 且上升</td><td>~7%，偏高但穩定</td><td><span class="tag tag-yellow">🟡</span></td></tr>
+  <tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>AI 連接 TAM 快速擴張</td><td>⬜</td></tr>
+  <tr><td>產業結構衰退</td><td>產業估值系統下移</td><td>半導體板塊仍高檔</td><td>⬜</td></tr>
+  <tr><td>隱性資本密集</td><td>Maintenance Capex/FCF &gt;60%</td><td>低（fabless）</td><td>⬜</td></tr>
+  <tr><td>隱性資本密集</td><td>停止投資後 3 年內收入下滑</td><td>R&amp;D 投資必要，但不算資本密集</td><td>⬜</td></tr>
+</table>
+<p><strong>亮燈數：2 紅 + 1 黃</strong>。</p>
+<p><strong>價值陷阱風險評級：🟡 中度警戒</strong>。紅燈集中在市佔率（Trainium 3/4 loss）與 EPS/Revenue 差距（operating leverage 極大）。第二個紅燈是「盈餘品質」的警示但情況稍複雜——MRVL 的 operating leverage 來自 Inphi 商譽攤銷逐年降低 + 毛利率結構性改善，不是會計遊戲，但確實放大了景氣反轉時的 EPS 敏感度。</p>
+</div>
+
+<h2>長期成長性綜合評級</h2>
+<p><span class="tag tag-yellow">🟡 中等可見度成長</span> — Runway 7~10 年 ✅、有機 100% ✅、中性偏強化型護城河、Non-GAAP ROIC 改善中、衰退信號 2 紅 1 黃。評級與 GOOGL 同級（🟡），但理由完全不同（GOOGL 🟡 因 capex 爆增；MRVL 🟡 因客戶集中與設計 loss）。</p>
+
+</section>
+
+
+<!-- =================== §3 護城河分析 =================== -->
+<section class="card">
+<h1 class="section-title">§3｜護城河分析</h1>
+
+<div class="big-verdict" style="background:linear-gradient(to right,#FEF9C3,#FEF3C7); border-color:#D97706">
+<div class="label">護城河評分</div>
+<div class="verdict" style="color:#92400E">7.5 / 10</div>
+</div>
+
+<h2>護城河來源</h2>
+<ul>
+  <li><strong>網路效應</strong>：不存在（B2B 客製化半導體無網路效應）。</li>
+  <li><strong>無形資產</strong>：<strong>Inphi 併購累積的 DSP/Optics IP + 2nm 客製化設計能力</strong>。MRVL 在 1.6T PAM4 DSP、SerDes、retimer 累積 15+ 年研發，是 Broadcom 與 Alchip 難以短期複製的技術深度。專利與團隊經驗是核心資產。</li>
+  <li><strong>轉換成本</strong>：<strong>極強</strong>。hyperscaler 為某一代 custom ASIC 投入 12~18 個月 qualification，一旦切換供應商需重新驗證，成本 $10M+ 級別。但這個轉換成本在「跨世代」換廠時最容易發生（例如 Trainium 3/4 流向 Alchip 正是世代切換）。</li>
+  <li><strong>規模優勢</strong>：中等。台積電 2nm 產能優先分配、IP library 複用、測試設備攤銷等，有一定規模經濟但不及 Broadcom 等更大規模對手。</li>
+</ul>
+
+<h2>競爭鴻溝</h2>
+<p>為何 Broadcom、Alchip 等對手無法完全取代？三點機制：</p>
+<ul>
+  <li><strong>1.6T Optics DSP 技術深度</strong>：PAM4 SerDes 的信號完整性工程需要長期累積，MRVL 是少數能在 1.6T/2nm 同時交付商業方案的廠商。</li>
+  <li><strong>Inphi 併購整合的光學+矽光子 IP</strong>：這是 2021 的 $10B 決策，讓 MRVL 從「純連接 chip」升級為「AI 互連平台」。Broadcom 有自己的光學業務但在 PAM4 DSP 上差距明顯。</li>
+  <li><strong>客戶關係與 trust</strong>：AWS、Microsoft、Google 的 custom ASIC 合作需要 NDA、安全認證、長期信任，MRVL 與前兩家已有多年合作，不易被新進者瓜分。但 Alchip 的崛起說明這個護城河並非不可跨越。</li>
+</ul>
+
+<h2>市佔競爭表</h2>
+<table>
+  <tr><th>領域</th><th>MRVL 市佔</th><th>3 年趨勢</th><th>核心威脅</th></tr>
+  <tr><td>AI Interconnect DSP (1.6T)</td><td class="num">~40%</td><td>↑ 擴大</td><td>Credo、Broadcom</td></tr>
+  <tr><td>Hyperscaler Custom ASIC</td><td class="num">~25-30%</td><td>→ 有得有失</td><td>Broadcom (Google TPU)、Alchip（AWS Trainium 3/4）</td></tr>
+  <tr><td>Optical Modules / DSP</td><td class="num">~35%</td><td>↑</td><td>Lumentum、Innolight</td></tr>
+  <tr><td>Enterprise Networking</td><td class="num">~10-15%</td><td>→</td><td>Broadcom 主導</td></tr>
+</table>
+
+<h2>護城河趨勢</h2>
+<p><strong>混合（Optics 擴大、Custom ASIC 穩定偏弱）</strong>。24 個月內最可能瓦解護城河的變化：</p>
+<ol>
+  <li><strong>AWS 加速 Annapurna Labs 自建</strong>：若 AWS 將 Custom ASIC 設計能力完全內部化，MRVL 失去最大客戶。機率：中等（15~25%）。</li>
+  <li><strong>Alchip 擊敗 MRVL 取得 Microsoft Maia 2 或 Google Axion 2</strong>：若 Alchip 連續在新設計案擊敗 MRVL，市場會將「Trainium 3/4 loss」從 isolated event 升級為「結構性競爭力下降」。機率：中等。</li>
+  <li><strong>Broadcom 1.6T 量產加速</strong>：BRCM 若在 2026 H2 推出有競爭力的 1.6T DSP，MRVL 在 Optics 的領先會縮窄。</li>
+  <li><strong>Hyperscaler 購入共同 IP</strong>：若出現 shared reference design 平台，custom ASIC 市場會 commoditize。</li>
+</ol>
+
+</section>
+
+
+<!-- =================== §4 財務品質監測 =================== -->
+<section class="card">
+<h1 class="section-title">§4｜財務品質監測</h1>
+
+<h2>三年趨勢表</h2>
+<table>
+  <tr><th>指標</th><th>FY24</th><th>FY25</th><th>FY26</th><th>對手比較（BRCM）</th></tr>
+  <tr><td>FCF Margin</td><td class="num">~18%</td><td class="num">~24%</td><td class="num">~22-25%</td><td>~40%</td></tr>
+  <tr><td>Gross Margin (Non-GAAP)</td><td class="num">~60%</td><td class="num">~60%</td><td class="num">~60%</td><td>~76%</td></tr>
+  <tr><td>Operating Margin (GAAP)</td><td class="num">~-6%</td><td class="num">~8%</td><td class="num">~15.7%</td><td>~28%</td></tr>
+  <tr><td>ROIC (Non-GAAP)</td><td class="num">~8%</td><td class="num">~12%</td><td class="num">~15-18%</td><td>~22%</td></tr>
+  <tr><td>ROIC (GAAP)</td><td class="num">負</td><td class="num">~3%</td><td class="num">5-6%</td><td>~18%</td></tr>
+  <tr><td>SBC / Revenue</td><td class="num">~9%</td><td class="num">~8%</td><td class="num">~7%</td><td>~3%</td></tr>
+</table>
+
+<h2>獲利品質警訊</h2>
+<ul>
+  <li><strong>淨利 vs OCF 連動性</strong>：FY26 OCF ~$2.0B / NI Non-GAAP ~$2.4B = 0.83，需關注 ✅（考慮 SBC add-back）</li>
+  <li><strong>AR 成長 vs Rev 成長</strong>：AR 與 Rev 同步成長 ✅</li>
+  <li><strong>存貨成長 vs Rev 成長</strong>：存貨溫和增加，符合需求 ✅</li>
+  <li><strong>FCF 轉換率趨勢</strong>：改善中（Non-GAAP 基準下從 0.8 → 0.85）🟡 邊緣</li>
+  <li><strong>GAAP vs Non-GAAP 差距</strong>：FY26 GAAP EPS $3.07 vs Non-GAAP ~$2.67？這看起來倒置需複查，可能是口徑差異。實際上 Non-GAAP 應高於 GAAP（加回 SBC + 攤銷）。<strong>此處數字可能因資料來源口徑不一致需謹慎</strong> 🔴 警示</li>
+</ul>
+
+<h2>回購品質評估</h2>
+<table>
+  <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+  <tr><td>過去 3 年回購 vs FCF</td><td>~$1.5B 回購 vs $3.5B FCF = 43%</td><td><span class="tag tag-green">健康</span></td></tr>
+  <tr><td>剔除回購的 EPS CAGR</td><td>原 81% → 約 75%</td><td>差距 6pp，小</td></tr>
+  <tr><td>回購均價 vs 現價</td><td>均價 ~$65~$85 vs $119.91</td><td><span class="tag tag-green">優秀配置</span></td></tr>
+  <tr><td>Revenue CAGR 同期</td><td>~35%</td><td>EPS CAGR 明顯高於 Rev CAGR，差距來自 margin 擴張（正當）</td></tr>
+</table>
+
+</section>
+
+
+<!-- =================== §5 產業格局 =================== -->
+<section class="card">
+<h1 class="section-title">§5｜產業格局、議價權與 Unit Economics</h1>
+
+<h2>市場量化</h2>
+<ul>
+  <li><strong>AI Interconnect TAM</strong>：2026 ~$25B，2030 ~$80B，CAGR 33%+。最快成長的半導體細分。</li>
+  <li><strong>Hyperscaler Custom ASIC TAM</strong>：2026 ~$15B，2030 ~$50B，CAGR 35%+。</li>
+  <li><strong>Optics DSP TAM</strong>：2026 ~$8B，2030 ~$20B，CAGR 25%。</li>
+  <li><strong>供需狀態</strong>：AI 連接產品完全供不應求，台積電 2nm 產能分配是最大瓶頸。</li>
+</ul>
+
+<h2>議價權</h2>
+<ul>
+  <li><strong>對上游</strong>：MRVL 是 fabless，最大上游是台積電。MRVL 在台積電屬中型客戶（遠小於 AAPL、NVDA、AMD），在 2nm 產能分配上議價權中等。</li>
+  <li><strong>對下游</strong>：<strong>這是 MRVL 最大問題</strong>。AWS 佔 Data Center 76%（Data Center 占總營收 74%，故 AWS 佔總 56%）。單一客戶 56% 是半導體產業少見的集中度。Microsoft + Google 為次要客戶。對 AWS 的議價權非常弱，AWS 任何價格或設計要求 MRVL 都會接受。</li>
+  <li><strong>地理曝險</strong>：研發集中美國、以色列、新加坡、印度。製造 100% 台積電（台灣）。台海風險是結構性 tail risk。</li>
+</ul>
+
+<h2>營收組成</h2>
+<table>
+  <tr><th>分部</th><th>占比（FY26 Q4）</th><th>YoY 成長</th><th>備註</th></tr>
+  <tr><td>Data Center</td><td class="num">~74%</td><td class="num">+強勁</td><td>Optics + Custom ASIC</td></tr>
+  <tr><td>Enterprise Networking</td><td class="num">~10%</td><td class="num">→</td><td>成熟</td></tr>
+  <tr><td>Carrier Infrastructure</td><td class="num">~8%</td><td class="num">→</td><td>5G 相關，成熟</td></tr>
+  <tr><td>Consumer</td><td class="num">~5%</td><td class="num">→</td><td>主要是 SSD controller</td></tr>
+  <tr><td>Automotive/Industrial</td><td class="num">~3%</td><td class="num">↑</td><td>車用乙太網路</td></tr>
+</table>
+
+<h2>單位經濟</h2>
+<ul>
+  <li><strong>Custom ASIC 單一設計案</strong>：每案 5~10 年生命週期，營收 $500M~$2B，毛利率 50~60%</li>
+  <li><strong>1.6T Optical DSP 單價</strong>：$50~$100/顆，每個 AI 機架需要 100+ 顆，毛利率 60%+</li>
+  <li><strong>Design Win to Revenue</strong>：12~18 個月，從 qualification 到 mass production</li>
+</ul>
+
+</section>
+
+
+<!-- =================== §6 公司治理 =================== -->
+<section class="card">
+<h1 class="section-title">§6｜公司治理與資本配置</h1>
+
+<h2>股東結構</h2>
+<ul>
+  <li>無創辦人持股（MRVL 經過多次重組，原創辦人 Sehat Sutardja 已離開）</li>
+  <li>機構集中度：Vanguard ~12%、BlackRock ~9%、State Street ~5%，機構持股約 92%。</li>
+  <li>內部人交易：CEO Matt Murphy 近期有計畫性賣出，Q1 2026 累計 $15M 左右，10b5-1 程序，時機為 52 週高點，值得留意。</li>
+</ul>
+
+<h2>資本配置軌跡</h2>
+<table>
+  <tr><th>項目</th><th>FY26</th><th>管理層一致性</th></tr>
+  <tr><td>R&amp;D</td><td class="num">~$1.7B (21% of rev)</td><td>高研發比例，為 2nm 投入</td></tr>
+  <tr><td>Capex</td><td class="num">~$300M (4%)</td><td>Fabless，資本支出低</td></tr>
+  <tr><td>股息</td><td class="num">~$210M</td><td>穩定 $0.24/股年化</td></tr>
+  <tr><td>回購</td><td class="num">~$500M</td><td>持續但非機械性，時機相對合理</td></tr>
+  <tr><td>併購</td><td class="num">0（大型）</td><td>Inphi 2021 $10B 後未有大案</td></tr>
+</table>
+<p>Matt Murphy 的資本配置風格：<em>「R&amp;D 優先 + 機會型回購」</em>。Inphi 併購是 MRVL 歷史最成功的資本決策之一，為 AI Interconnect 領先奠定基礎。目前 R&amp;D 比例 21% 遠高於產業平均，顯示仍在結構性投入期。</p>
+
+<h2>SBC 評估</h2>
+<ul>
+  <li>FY26 SBC ~$570M / Revenue $8.2B = 7%，偏高</li>
+  <li>相對 MSFT 3.5%、GOOGL 5.3%，MRVL SBC 比例顯著較高</li>
+  <li>淨稀釋：流通股過去 5 年略有增加，SBC 部分被回購抵銷</li>
+  <li>結論：SBC 紀律弱於大型科技股，這是 Non-GAAP 與 GAAP 差距的主要來源之一</li>
+</ul>
+
+</section>
+
+
+<!-- =================== §7 估值診斷 =================== -->
+<section class="card">
+<h1 class="section-title">§7｜估值診斷</h1>
+<p class="section-intro">MRVL 估值表面便宜（PEG 0.61）但含有客戶集中度折扣。需區分「真便宜」與「看似便宜但風險高」。</p>
+
+<h2>7.0｜估值體系診斷</h2>
+<table>
+  <tr><th>估值邏輯</th><th>主流？</th></tr>
+  <tr><td>盈利能力型（Non-GAAP P/E, EV/EBITDA）</td><td>✅ 主導</td></tr>
+  <tr><td>成長型（PEG）</td><td>✅ 次要（吸引成長型投資者）</td></tr>
+  <tr><td>GAAP 框架</td><td>🔴 被市場刻意忽略</td></tr>
+  <tr><td>Sum-of-parts（Data Center + Enterprise + Consumer）</td><td>🔵 新興</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：Non-GAAP P/E + PEG。市場選擇相信 Non-GAAP 數字並用成長率定價，忽略 GAAP 的商譽攤銷。這是一個有爭議的估值尺，若市場未來某天質疑，有下修風險。</p>
+<p><strong>結論：<span class="tag tag-yellow">🟡 估值邏輯模糊</span></strong>（Non-GAAP 與 GAAP 框架差距大）。</p>
+
+<h2>7.1｜歷史估值分位</h2>
+<table>
+  <tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+  <tr><td>Trailing P/E (Non-GAAP)</td><td class="num">~40x</td><td class="num">25x</td><td class="num">~45x</td><td class="num">80x+</td><td class="num">40%</td></tr>
+  <tr><td>Forward P/E (NTM)</td><td class="num">25x</td><td class="num">18x</td><td class="num">31.93x</td><td class="num">50x+</td><td class="num">25%</td></tr>
+  <tr><td>EV/EBITDA</td><td class="num">26.7x</td><td class="num">14x</td><td class="num">22x</td><td class="num">45x</td><td class="num">55%</td></tr>
+  <tr><td>P/FCF</td><td class="num">~50x</td><td class="num">25x</td><td class="num">40x</td><td class="num">70x</td><td class="num">65%</td></tr>
+  <tr><td>P/S</td><td class="num">~12x</td><td class="num">5x</td><td class="num">8x</td><td class="num">15x</td><td class="num">70%</td></tr>
+</table>
+<ul>
+  <li><strong>情緒判讀</strong>：<span class="tag tag-yellow">🟡 混合，Forward P/E 偏便宜但 P/FCF 偏貴</span>。Forward P/E 25x 低於 5Y 平均 31.93x，看起來便宜；但這是因為 EPS 預測快速上修造成的分母擴大。P/FCF 50x 在 5Y 65% 分位，反映實際現金流仍昂貴。</li>
+  <li><strong>上次 P/E 接近此分位</strong>：FY22 末（Non-GAAP P/E 約 25x），之後股價在 2023 年大跌 40%（半導體週期底部）。</li>
+  <li><strong>主導因素</strong>：EPS 上修（70%）+ 股價漲（30%）。這是正面信號（分析師不斷上修），但也意味著任何 EPS 下修都會立即壓縮估值。</li>
+</ul>
+
+<h2>7.2｜PEG 診斷</h2>
+<table>
+  <tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+  <tr><td>Forward P/E</td><td class="num">25x</td><td></td></tr>
+  <tr><td>EPS CAGR (3Y, Non-GAAP)</td><td class="num">41%</td><td></td></tr>
+  <tr><td>PEG (3Y)</td><td class="num">0.61</td><td><span class="tag tag-green">數字上便宜</span></td></tr>
+  <tr><td>GAAP PEG</td><td class="num">無意義</td><td>GAAP 長期為負或極低</td></tr>
+  <tr><td>Runway 折扣 PEG</td><td class="num">~0.85</td><td>考慮 Runway 7~10 年而非 15 年，調整後 PEG 合理</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：MRVL 位於「高成長 + 合理估值」象限邊緣。但因為成長率依賴客戶集中（AWS）與一次性 operating leverage（Inphi 攤銷衰減），需要折扣。折扣後 PEG 0.85，合理範圍下緣。</p>
+
+<h2>7.3｜Reverse DCF</h2>
+<table>
+  <tr><th>參數</th><th>數值</th></tr>
+  <tr><td>當前市值</td><td class="num">$100.08B</td></tr>
+  <tr><td>基期 FCF (FY26E)</td><td class="num">~$1.9B</td></tr>
+  <tr><td>WACC</td><td class="num">11% (10Y UST 4.3% + Beta 1.5 × ERP 5% + size premium)</td></tr>
+  <tr><td>永續成長率</td><td class="num">3%</td></tr>
+  <tr><td>預測期</td><td class="num">10 年</td></tr>
+</table>
+<p><strong>反推隱含 FCF CAGR ≈ 17-18%</strong></p>
+<table>
+  <tr><th>比較基準</th><th>數值</th><th>相對位置</th></tr>
+  <tr><td>過去 3 年實際 FCF CAGR</td><td class="num">~20%</td><td>隱含 17% 略低於歷史</td></tr>
+  <tr><td>分析師 EPS CAGR 共識</td><td class="num">41%</td><td>隱含 17% 遠低於 EPS CAGR</td></tr>
+  <tr><td>同業最快 FCF CAGR (BRCM)</td><td class="num">~25%</td><td>隱含 17% 不需行業最快</td></tr>
+</table>
+<p><strong>隱含預期判斷：🟡 隱含預期合理</strong>。市場假設 MRVL 維持 17% FCF CAGR 10 年，這不算激進（EPS CAGR 共識 41% 意味著 FCF 至少可跑到 25%+）。數字上是合理定價，問題在於「聯合達成條件」（AWS 穩定 + Optics 成長 + Custom ASIC 無失）。</p>
+
+<h2>7.4｜同業估值比較</h2>
+<table>
+  <tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+  <tr style="background:#FEF9C3"><td><strong>MRVL</strong></td><td class="num">$100B</td><td class="num"><strong>25x</strong></td><td class="num"><strong>26.7x</strong></td><td class="num"><strong>0.61</strong></td><td class="num">~23%</td><td class="num">41%</td><td class="num">15% (NG)</td></tr>
+  <tr><td>BRCM（Broadcom）</td><td class="num">$1.2T</td><td class="num">32x</td><td class="num">22x</td><td class="num">1.6</td><td class="num">40%</td><td class="num">~20%</td><td class="num">22%</td></tr>
+  <tr><td>NVDA</td><td class="num">$3.5T</td><td class="num">30x</td><td class="num">25x</td><td class="num">0.75</td><td class="num">~45%</td><td class="num">40%</td><td class="num">75%</td></tr>
+  <tr><td>AVGO</td><td class="num">$1.2T</td><td class="num">33x</td><td class="num">23x</td><td class="num">1.65</td><td class="num">40%</td><td class="num">20%</td><td class="num">20%</td></tr>
+  <tr><td>Credo（CRDO）</td><td class="num">$15B</td><td class="num">45x</td><td class="num">40x</td><td class="num">0.9</td><td class="num">15%</td><td class="num">50%</td><td class="num">10%</td></tr>
+  <tr><td><em>AI 半導體中位數</em></td><td></td><td class="num"><em>30x</em></td><td class="num"><em>25x</em></td><td class="num"><em>1.0</em></td><td></td><td></td><td></td></tr>
+</table>
+<ul>
+  <li><strong>溢折價</strong>：MRVL Forward P/E 25x <strong>折價產業中位數 30x 約 17%</strong>。這是數據上的折扣，但此折扣被用來反映 AWS 集中度風險與 Custom ASIC loss 風險，是「合理折扣」而非「錯殺」。</li>
+  <li><strong>質量對照</strong>：MRVL FCF margin 23% 顯著低於 BRCM 40%、NVDA 45%；ROIC 15% 顯著低於 BRCM 22%、NVDA 75%。這些指標支持 MRVL 折價 15~20%。</li>
+  <li><strong>均值回歸</strong>：若 MRVL 向產業中位 30x 靠攏，股價為 $114.60（-4%）。若 MRVL 維持當前 25x（已合理），股價應在 $95~$100 區間（FY27E × 25x）。</li>
+</ul>
+
+<h3>同主題橫向風報比</h3>
+<table>
+  <tr><th>問題</th><th>MRVL</th><th>BRCM / AVGO</th></tr>
+  <tr><td>主假設兌現上行最大？</td><td>+13% 至 $136</td><td>+20% 至 $280</td></tr>
+  <tr><td>主假設落空跌幅最小？</td><td>-43% 至 $68.76</td><td>-25% 至 $175</td></tr>
+  <tr><td>風報比最優</td><td>顯著劣勢</td><td>🥇 BRCM/AVGO</td></tr>
+</table>
+<p><strong>最終橫向比較結論：<span class="tag tag-red">❌ 同主題有更佳標的（BRCM）</span></strong>。若要表達「AI 互連」題材，BRCM 的風報比與質量指標全面優於 MRVL。MRVL 僅在 PEG 看起來便宜，但扣除客戶集中度折扣後，兩者實際估值吸引力相似。</p>
+
+<h2>7.5｜估值五角驗證與結論</h2>
+<table>
+  <tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+  <tr><td>估值體系診斷</td><td><span class="tag tag-yellow">🟡 邏輯模糊</span></td><td>GAAP/Non-GAAP 差距大</td></tr>
+  <tr><td>歷史分位</td><td><span class="tag tag-yellow">🟡 混合</span></td><td>Forward P/E 25%分位便宜，P/FCF 65%分位偏貴</td></tr>
+  <tr><td>PEG</td><td><span class="tag tag-green">🟢 便宜（0.61）</span></td><td>但需 Runway 折扣</td></tr>
+  <tr><td>Reverse DCF</td><td><span class="tag tag-yellow">🟡 合理</span></td><td>隱含 17% FCF CAGR 不激進</td></tr>
+  <tr><td>同業相對</td><td><span class="tag tag-yellow">🟡 合理折價</span></td><td>vs BRCM -17% 有支撐</td></tr>
+</table>
+<p><strong>當前定價判斷：<span class="tag tag-yellow">🟡 公允偏貴（考慮客戶集中度風險）</span></strong>（4 黃 1 綠）</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+  <tr><th>因素</th><th>判斷</th><th>對目標 P/E 的影響</th></tr>
+  <tr><td>① 護城河品質</td><td>7.5/10</td><td>+1x</td></tr>
+  <tr><td>② Runway 年數</td><td>7~10 年 🟡</td><td>±0</td></tr>
+  <tr><td>③ 成長品質</td><td>有機 100% + 量定價雙驅</td><td>+2x</td></tr>
+  <tr><td>④ 成長護城河連動</td><td>中性偏強化型</td><td>+1x</td></tr>
+  <tr><td>⑤ ROIC 可維持性</td><td>Non-GAAP 改善中但 GAAP 仍弱</td><td>±0</td></tr>
+  <tr><td>⑥ 衰退信號數量</td><td>2 紅 1 黃</td><td>−2x</td></tr>
+  <tr><td>⑦ 估值體系方向</td><td>邏輯模糊</td><td>−1x</td></tr>
+  <tr><td>⑧ 客戶集中度折扣</td><td>AWS 56%</td><td>−2x</td></tr>
+  <tr><td>⑨ 10Y UST 4.3%</td><td>中性</td><td>±0</td></tr>
+  <tr><td><strong>AI 半導體基準 30x + 調整</strong></td><td></td><td><strong>合理區間 24~28x（中位 26x）</strong></td></tr>
+</table>
+
+<p><strong>合理股價區間</strong>：FY27E EPS $3.82 × 24~28x = <strong>$91.68 ~ $106.96</strong>（中位 $99.32）。使用 FY28 EPS $5.44 × 22x（成熟倍數）= $120（與現價持平）。</p>
+
+<p><strong>分析師目標價參考</strong>：高 $156 / 中位 $115 / 低 $85（n=47）。本分析中位 $99.32 低於共識 $115（差距 14%），分歧點在於本分析納入 AWS 客戶集中度折扣（-2x P/E）與 GAAP/Non-GAAP 不對稱折扣（-1x）。若不計這些折扣，本分析中位會升至 $107~$110，接近共識下緣。</p>
+
+</section>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>
