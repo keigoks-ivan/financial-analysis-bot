@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v8.0">
+<title>DD_LRCX_20260411 — Lam Research 深度研究</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC; --card: #FFFFFF; --ink: #0F172A; --deepblue: #1E3A5F;
+    --accent: #3B82F6; --line: #E2E8F0; --alt: #F1F5F9; --muted: #64748B;
+    --green-bg: #DCFCE7; --green-ink: #166534;
+    --red-bg: #FEE2E2; --red-ink: #991B1B;
+    --yellow-bg: #FEF9C3; --yellow-ink: #92400E;
+    --blue-bg: #EFF6FF; --blue-ink: #1E3A5F;
+    --orange-bg: #FFF0E6; --orange-line: #F97316; --orange-ink: #C2410C;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', system-ui, sans-serif; background: var(--bg); color: var(--ink); margin: 0; line-height: 1.7; font-size: 15px; }
+  .mono, table td:nth-child(n+2), .num { font-family: 'IBM Plex Mono', monospace; }
+  header.topbar { position: sticky; top: 0; z-index: 100; background: var(--deepblue); color: #fff; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 3px solid var(--accent); }
+  header.topbar .left { font-weight: 700; letter-spacing: 0.5px; }
+  header.topbar .right { font-family: 'IBM Plex Mono', monospace; opacity: 0.9; }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 24px 120px; }
+  h1.title { font-size: 26px; color: var(--deepblue); margin: 12px 0 4px; border-bottom: 2px solid var(--deepblue); padding-bottom: 10px; }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  section.card { background: var(--card); border: 1px solid var(--line); margin: 20px 0; padding: 22px 26px; border-radius: 2px; }
+  h2.section-title { background: var(--deepblue); color: #fff; padding: 10px 16px; margin: 0 0 18px -26px; border-left: 4px solid var(--accent); font-size: 18px; font-weight: 700; width: calc(100% + 52px); }
+  h3 { color: var(--deepblue); font-size: 16px; margin: 20px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h4 { color: var(--deepblue); font-size: 14px; margin: 14px 0 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; font-size: 13.5px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--deepblue); color: #fff; font-weight: 500; }
+  tbody tr:nth-child(even) { background: var(--alt); }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12px; font-weight: 700; }
+  .pill.green { background: var(--green-bg); color: var(--green-ink); }
+  .pill.red { background: var(--red-bg); color: var(--red-ink); }
+  .pill.yellow { background: var(--yellow-bg); color: var(--yellow-ink); }
+  .pill.blue { background: var(--blue-bg); color: var(--blue-ink); border: 1px solid #bfdbfe; }
+  .callout { padding: 14px 18px; margin: 14px 0; border-radius: 2px; }
+  .callout.trap { background: var(--orange-bg); border-left: 4px solid var(--orange-line); color: var(--orange-ink); }
+  .callout.trap h4 { color: var(--orange-ink); margin-top: 0; }
+  .callout.anchor { background: var(--blue-bg); border-left: 4px solid var(--accent); color: var(--blue-ink); }
+  .callout.anchor h4 { color: var(--blue-ink); margin-top: 0; }
+  .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .debate-card { padding: 14px 16px; border-radius: 2px; font-size: 13.5px; }
+  .debate-card.bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .debate-card.bull h4 { color: #166534; margin-top: 0; }
+  .debate-card.bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .debate-card.bear h4 { color: #991B1B; margin-top: 0; }
+  .debate-card.ref { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .debate-card.ref h4 { color: #5B21B6; margin-top: 0; }
+  .verdict { background: #FFFBEB; border-left: 4px solid #D97706; padding: 14px 18px; margin: 14px 0; color: #92400E; }
+  .verdict h4 { color: #92400E; margin-top: 0; }
+  .rr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .rr-card { padding: 14px 16px; border-radius: 2px; font-size: 13px; }
+  .rr-card.short { background: #F0F9FF; border-left: 4px solid #0284C7; }
+  .rr-card.short h4 { color: #075985; margin-top: 0; }
+  .rr-card.mid { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .rr-card.mid h4 { color: #5B21B6; margin-top: 0; }
+  .rr-card.long { background: #ECFDF5; border-left: 4px solid #059669; }
+  .rr-card.long h4 { color: #065F46; margin-top: 0; }
+  .rr-card .subcap { font-size: 11px; color: #065F46; }
+  .rr-card table { font-size: 12px; }
+  .rr-card table th { background: none; color: var(--ink); border-bottom: 1px solid var(--line); }
+  ul { padding-left: 20px; } li { margin: 4px 0; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  button.print-btn { position: fixed; right: 24px; bottom: 24px; z-index: 200; background: var(--deepblue); color: #fff; border: 0; padding: 10px 16px; font-family: inherit; font-size: 13px; cursor: pointer; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  @media print { header.topbar, button.print-btn { display: none; } main { padding: 0; max-width: none; } section.card { break-inside: avoid; page-break-inside: avoid; } }
+  @media (max-width: 900px) { .debate-grid, .rr-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="left">LRCX ｜ Lam Research Corporation</div>
+  <div class="right">抓取 2026-04-11 ｜ 最新股價 $266.81 ｜ DD Schema v8.0</div>
+</header>
+
+<main>
+
+<h1 class="title">Lam Research(LRCX)深度研究報告</h1>
+<div class="subtitle">買側 DD v8.0 ｜ 最近財報季 Q2 FY26(2026-01-28 發布) ｜ 52W 範圍 $56 – $267 ｜ 過去 12 個月 <b>+275%</b> ｜ 在 ATH 附近</div>
+
+<!-- ================= §8 投資結論(置頂) ================= -->
+<section class="card" id="s8">
+  <h2 class="section-title">§8 投資結論</h2>
+  <p class="note">本結論基於以下完整分析得出,詳見各章節。</p>
+
+  <h3>最終裁決:🟡 觀望(偏負面 — 頂級品質但估值極度延伸,時機最差)</h3>
+  <p>Lam Research 是 v8 序列中「品質極強 + 估值極度延伸」的典型案例。基本面品質是 v8 Top tier:<b>ROIC 74.88%(僅次於 NVDA 126%,超越 TSMC 45%、ANET 47%、ASML 34%)、5 年均 ROIC 65.7%、10 年 FCF CAGR 24.81%、FCF Margin 26.4%</b>、Etch 與 Deposition 市佔 #1,AI 驅動的 WFE 市場從 2025 $110B 擴張至 2026 $135B(+23%)。Q2 FY26 Beat EPS 共識 8.55%,管理層指引 2026 advanced packaging 業務 +40%,Tim Archer 表示 ship share of WFE 年增 > 1pp。但估值面警訊極嚴重:<b>Forward P/E 41–51x 遠高於 5 年均 22.66x(2.25 倍均值)、EV/EBITDA 37–39x 遠高於歷史、EV/FCF 43.61 vs 5Y 均 20.45(2.13 倍)、FCF Yield 3.08% vs 5Y 均 4.26%</b>。股價 <b>+275% 過去 12 個月</b>(v8 序列第二大漲幅,僅次於 STX +540%、MU +540%),當前位於 ATH 附近 $267(52W 高),且<b>分析師共識中位 $275 幾乎與現價齊平(僅 +3% 空間)</b>——這是「所有上漲都已定價」的典型信號。</p>
+
+  <h3>財報信號與假設校準</h3>
+  <ul>
+    <li><b>H1(WFE 2026 +23% 受 AI 驅動)</b>:<span class="pill green">強化</span>WFE $135B 指引,DRAM + 先進邏輯雙引擎。</li>
+    <li><b>H2(LRCX 市佔從 mid-30s 擴至 high-30s)</b>:<span class="pill green">強化</span>Tim Archer 確認 ship share +1pp YoY。</li>
+    <li><b>H3(Forward P/E 41–51x 合理反映高成長)</b>:<span class="pill red">削弱</span>倍數遠超 5 年均的 2.25 倍,歷史上此區間很難持續。</li>
+  </ul>
+  <p>這份財報讓基本面假設 H1/H2 強化,<b>但同時也強化了「估值已充分反映未來 3 年成長」的判斷</b>。Bookings 強勁 + 分析師共識目標幾乎齊平現價,反映市場已消化所有利多。</p>
+
+  <h3>① 短期信號(0–12 個月)</h3>
+  <p>Q2 Beat + Q3 指引 Beat + 2026 WFE $135B 指引 + advanced packaging +40%——短期 newsflow 極強。但股價 +275% 12 個月已反映這些利多,股價在 ATH 附近幾乎沒有安全邊際。引用 §1。</p>
+
+  <h3>② 中期成長確信度(1–3 年)</h3>
+  <p>FY25 EPS $4.14 → FY26E ~$5.20 → FY27E ~$6.50 → FY28E ~$7.80,3 年 CAGR ~23.5%。驅動為 WFE 擴張(60%)+ SAM 份額提升(40%)。能見度:<b>高</b>(2026 WFE 指引 + ASML 背書)。但這個成長率已完全被 Forward P/E 51x 定價。引用 §2.5B。</p>
+
+  <h3>③ 長期護城河邏輯(3 年後)</h3>
+  <p>Lam 在 Etch(蝕刻)市佔 #1(~50%),Deposition(沉積)#2(~25%),與 Applied Materials、Tokyo Electron 形成三足鼎立。ROIC 74% 穩定證明護城河真實存在——但 3 年後的持有理由關鍵在於「Capex cycle 的位置」——設備商是週期業務,當前處於 AI 驅動的上升週期頂端。引用 §2.5 A/C/D。</p>
+
+  <div class="callout trap">
+    <h4>⚠️ 這是價值陷阱嗎?</h4>
+    <table>
+      <tr><th>問題</th><th>回答</th></tr>
+      <tr><td>最可能的陷阱模式</td><td><b>非陷阱(但屬「估值倍數透支型」風險)</b>——品質絕對頂級,但 Forward P/E 2.25x 5Y 均值已充分定價未來成長</td></tr>
+      <tr><td>支持「不是陷阱」的最強論據</td><td>ROIC 74.88% 為 v8 序列前段班,5Y 均 65.7% 穩定。GM 49% 穩定於高位,10 年 FCF CAGR 24.81% 歷史級表現。2026 WFE 擴張 +23% 有 ASML bookings €13.2B 等客戶訂單背書。Etch 市佔 #1 地位穩固,Advanced Packaging 業務 +40% 為長期催化劑。</td></tr>
+      <tr><td>支持「可能是陷阱」的最強反駁</td><td>Forward P/E 51x 遠超 5Y 均 22.66x(2.25 倍),這個倍數區間歷史上僅 2020–2021 零利率時期短暫出現。股價 +275% 12 個月接近 v8 序列最大漲幅(僅次於 MU/STX)。分析師共識 median $275 幾乎與現價齊平(僅 +3%),所有分析師預期都已定價。MA200 $187 遠低於現價(−30%),反映大幅上漲後的技術失衡。設備商本質是週期業務,當前處於 Capex 上升週期頂端,下行風險不可忽視。</td></tr>
+      <tr><td>持有期間的領先指標</td><td>① WFE 2027 指引若未能再成長;② Q3/Q4 財報 GM 下滑 > 1pp;③ 單季 EPS 未能持續 Beat 共識</td></tr>
+    </table>
+    <p><b>最終定性:<span class="pill green">🟢 非陷阱</span></b>(品質與 AVGO 相似,偏負面觀望,等待大幅回檔)</p>
+  </div>
+
+  <h3>條件式進場判斷</h3>
+  <table>
+    <tr><th>條件類型</th><th>具體內容</th></tr>
+    <tr><td>估值條件</td><td>Forward P/E 回落至 <b>32x 以下</b>(對應股價約 $208,即 −22%);或股價回踩 MA60 $227 附近</td></tr>
+    <tr><td>基本面條件</td><td>下一季(Q3 FY26)需確認:GM 維持 49%+、WFE 2027 指引進一步上調、advanced packaging +40% 執行</td></tr>
+    <tr><td>陷阱排除條件</td><td>若 GM 連續 2 季 < 49%、或 2027 WFE 指引下修、或 advanced packaging 增速不達 +40% → 立即減碼</td></tr>
+    <tr><td>事件觸發條件</td><td>半導體板塊整體回檔 −20%+、或 ASML 出現 bookings 正常化、或 WFE cycle 首次 lead indicator 下滑</td></tr>
+  </table>
+
+  <h3>建議進場策略(分批)</h3>
+  <ul>
+    <li><b>觀望模式</b>:完全不急於建倉,短期與中期 R:R 皆嚴重失衡</li>
+    <li><b>首次建倉觸發</b>:若股價回踩 MA60 $227(−15%)附近建立目標倉位 <b>30%</b></li>
+    <li><b>加碼觸發</b>:若回踩 MA200 $187(−30%)加碼至 <b>60%</b>(難得優質公司深跌機會)</li>
+    <li><b>觀察不進場</b>:若持續創新高而 MA60/MA200 持續拉開差距,繼續觀望</li>
+  </ul>
+
+  <h3>下行風險量化(引用 §2.5E)</h3>
+  <ul>
+    <li>若 3 年後成長率降至 15%:估值壓縮 ~30%,股價約 $187</li>
+    <li>若 3 年後成長率降至 10%:估值壓縮 ~42%,股價約 $155</li>
+    <li>若 3 年後成長率降至 5%:估值壓縮 ~55%,股價約 $120</li>
+    <li>極端情境(WFE cycle 反轉):股價可能跌至 $90–110,−58 至 −66%</li>
+  </ul>
+
+  <h3>最關鍵監測指標</h3>
+  <table>
+    <tr><th>#</th><th>指標</th><th>章節</th><th>性質</th><th>重新評估閾值</th></tr>
+    <tr><td>1</td><td>WFE 2027 指引(Lam 在 Q4 FY26 會揭露)</td><td>§0.5 H1</td><td><span class="pill blue">🔵 核心假設驗證</span></td><td>指引 < $140B(即 +4% 以下)</td></tr>
+    <tr><td>2</td><td>Lam Ship Share of WFE</td><td>§2.5 / §3</td><td><span class="pill blue">🔵 長期成長領先</span></td><td>YoY 不再上升</td></tr>
+    <tr><td>3</td><td>Forward P/E 分位</td><td>§7.1</td><td>短期估值</td><td>維持 > 45x 超過 3 個月</td></tr>
+  </table>
+</section>
+
+<!-- ================= §7.7 三層 R:R ================= -->
+<section class="card" id="s77">
+  <h2 class="section-title">§7.7 時間軸對稱三層風報比診斷(v8.0)</h2>
+
+  <h3>A｜低標上行目標計算(供層 ①② 使用)</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>說明</th></tr>
+    <tr><td>§7.5 合理區間下緣</td><td>$175</td><td>FY27E EPS $6.50 × 27x</td></tr>
+    <tr><td>§7.5 合理區間中位</td><td><b>$195</b></td><td><b>低標上行目標</b> — FY27E × 30x(略高於 5Y 均 22.66,反映頂級品質)</td></tr>
+    <tr><td>§7.5 合理區間上緣</td><td>$215</td><td>FY27E × 33x</td></tr>
+    <tr><td>上行空間(vs $266.81)</td><td><b>−26.9%</b></td><td>(195 − 266.81) / 266.81 → <b>中位嚴重低於現價</b></td></tr>
+  </table>
+  <p class="note">⚠️ §7.5 中位 $195 遠低於現價 $266.81,這是 v8 序列中繼 MU($242 vs $421)、STX($270 vs $502)、MRVL($115 vs $128.63)之後第 4 次出現「中位低於現價」的情況。但與前 3 個不同的是,LRCX 的根本問題不是品質,而是「Forward P/E 2.25x 5Y 均」的估值延伸。分析師共識 median $275 僅比現價高 3%,與本框架中位 $195 形成對比。</p>
+
+  <h3>B｜長期目標價計算(供層 ③ 使用)</h3>
+  <h4>B-1 長期 EPS 推算(雙源交叉驗證)</h4>
+  <p><b>方法 1(§2.5 B 成長驅動分解)</b>:定價驅動 +5%(ASP 提升) + 量驅動 +15%(WFE + market share) = 20% CAGR,Runway 遞減 −3%p = <b>採用 17%</b></p>
+  <p><b>方法 2(§2.5 D ROIC × 再投資率)</b>:ROIC 65% × Reinvestment Rate 35% = 內生 22.75%;週期回歸 −5%p = <b>採用 17.75%</b></p>
+  <p><b>雙源交叉驗證</b>:17% vs 17.75%,差距 0.75%p(極一致)→ 取平均 = <b>17.4% 採用</b></p>
+  <p>5 年後 EPS(基期 FY25 $4.14):$4.14 × 1.174^5 = <b>$9.29</b></p>
+
+  <h4>B-2 長期合理倍數</h4>
+  <p>§2.5 長期成長性綜合評級:<span class="pill green">🟢 高確信長期成長</span>(但有週期性) → 理論 25x,LRCX 因 ROIC 74% 品質溢價給予 <b>28x</b>(設備商非 SaaS,偏保守)</p>
+
+  <h4>B-3 長期目標價</h4>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>5 年後 EPS</td><td>$9.29</td></tr>
+    <tr><td>長期合理倍數</td><td>28x</td></tr>
+    <tr><td><b>長期目標價</b></td><td><b>$260</b></td></tr>
+    <tr><td>長期上行空間(vs $266.81)</td><td><b>−2.6%</b></td></tr>
+  </table>
+  <p class="note">⚠️ 長期目標 $260 甚至略低於現價。這意味著:即使以 17% CAGR 成長 5 年、並給予略高於 5 年均的 28x 倍數,合理價位仍等同或低於當前。敏感度:若使用 Bull case(22% CAGR × 30x)→ 長期目標 $336(+26%);若 Bear case(14% CAGR × 25x)→ 長期目標 $199(−25%)。大部分合理組合下長期 R:R 皆偏弱。</p>
+
+  <div class="rr-grid">
+    <div class="rr-card short">
+      <h4>① 短期 R:R(6–18 個月)</h4>
+      <table>
+        <tr><td>現價</td><td>$266.81</td></tr>
+        <tr><td>MA60(50-day)</td><td>$226.69</td></tr>
+        <tr><td>vs MA60</td><td>+17.7%(遠離)</td></tr>
+        <tr><td>下行錨點(MA60)</td><td>$226.69</td></tr>
+        <tr><td>下行距離</td><td>−15.0%</td></tr>
+        <tr><td>上行錨點(§7.5 中位)</td><td>$195</td></tr>
+        <tr><td>上行距離</td><td>−26.9%(深度負值)</td></tr>
+        <tr><td><b>短期 R:R</b></td><td><b>負值 / 嚴重失衡</b></td></tr>
+        <tr><td>判定</td><td><span class="pill red">❌ 極度 Fail</span></td></tr>
+      </table>
+      <p class="note">現價遠離 MA60 +17.7%,§7.5 中位在現價 −27% 處。這是 v8 序列中與 STX、MU 同級的負值 R:R。</p>
+    </div>
+
+    <div class="rr-card mid">
+      <h4>② 中期 R:R(1–2 年)</h4>
+      <table>
+        <tr><td>現價</td><td>$266.81</td></tr>
+        <tr><td>MA200</td><td>$187.12</td></tr>
+        <tr><td>vs MA200</td><td>+42.6%(極度遠離)</td></tr>
+        <tr><td>下行錨點(MA200)</td><td>$187.12</td></tr>
+        <tr><td>下行距離</td><td>−29.9%</td></tr>
+        <tr><td>上行錨點(§7.5 中位)</td><td>$195</td></tr>
+        <tr><td>上行距離</td><td>−26.9%</td></tr>
+        <tr><td><b>中期 R:R</b></td><td><b>負值 / 無意義</b></td></tr>
+        <tr><td>判定</td><td><span class="pill red">❌ 極度 Fail</span></td></tr>
+      </table>
+      <p class="note">現價距離 MA200 +42.6% 是 v8 序列第二極端(僅次於 STX +56.4%),中期均值回歸壓力巨大。</p>
+    </div>
+
+    <div class="rr-card long">
+      <h4>③ 長期 R:R(5 年視角)</h4>
+      <div class="subcap">雙引擎:成長驅動 + ROIC 再投資</div>
+      <table>
+        <tr><td colspan="2"><b>下行錨點選擇</b></td></tr>
+        <tr><td>MA104w(估)</td><td>$130 / −51.3%</td></tr>
+        <tr><td>§2.5E 成長降至 10%</td><td>$155 / −41.9%</td></tr>
+        <tr><td>採用(較悲觀)</td><td><b>$130 / −51.3%</b></td></tr>
+        <tr><td colspan="2"><b>R:R 計算</b></td></tr>
+        <tr><td>現價</td><td>$266.81</td></tr>
+        <tr><td>下行錨點</td><td>$130(−51.3%)</td></tr>
+        <tr><td>上行(長期目標)</td><td>$260(−2.6%)</td></tr>
+        <tr><td><b>長期 R:R</b></td><td><b>負值</b></td></tr>
+        <tr><td>判定</td><td><span class="pill red">🔴 複利空間深度為負</span></td></tr>
+      </table>
+      <p class="note">長期目標 $260 與現價 $266 幾乎重合,意味著 5 年複利空間接近零。即使使用 Bull case(22% CAGR × 30x = $336),R:R 仍僅 26%/51% = 0.51x 🔴。所有合理假設組合皆為深度負值或接近零。</p>
+    </div>
+  </div>
+
+  <h3>F｜三層綜合解讀</h3>
+  <table>
+    <tr><th>層</th><th>時間軸</th><th>R:R</th><th>判定</th></tr>
+    <tr><td>① 短期</td><td>6–18 個月</td><td>負值</td><td><span class="pill red">❌</span></td></tr>
+    <tr><td>② 中期</td><td>1–2 年</td><td>負值</td><td><span class="pill red">❌</span></td></tr>
+    <tr><td>③ 長期</td><td>5 年</td><td>負值(Bull ~0.51x)</td><td><span class="pill red">🔴</span></td></tr>
+  </table>
+  <p>組合為「❌/❌/🔴」——v8 序列的經典「好公司 + 壞價格」組合,與 AVGO、STX、MU、MRVL 相同的三層失衡,但 LRCX 的特殊性在於<b>品質極強(ROIC 74% v8 Top 2)</b>而非像 MRVL 那樣品質有問題,與 <b>AVGO 最相似</b>。與 AVGO 比較:LRCX 的 Forward P/E 2.25x 5Y 均值(更延伸)vs AVGO 約 1.5x;LRCX 過去 12 個月 +275% vs AVGO ~+155%。LRCX 的估值壓力更嚴重。<b>建議:觀望(偏負面)</b>——等待股價回踩 MA60 $227(−15%)或 MA200 $187(−30%)才考慮進場。對新建倉者不應在此位置進入,對持倉者可考慮在 $267 ATH 附近分批鎖利。</p>
+</section>
+
+<!-- ================= §7.6 三方辯論 ================= -->
+<section class="card" id="s76">
+  <h2 class="section-title">§7.6 三方辯論摘要</h2>
+  <div class="debate-grid">
+    <div class="debate-card bull">
+      <h4>多頭辯護人｜Charlie Munger 模式</h4>
+      <ol>
+        <li><b>護城河(§3)</b>:Lam 在 Etch(蝕刻)市佔 #1(~50%),這是半導體製程中最關鍵的步驟之一,NAND 層堆疊從 200+ 層跳至 400+ 層需要 Lam 的 ALTUS Halo Mo 技術。ROIC 74% 在設備商中是絕對頂級(超越 ASML 34%、AMAT 30%)。</li>
+        <li><b>成長(§2.5)</b>:2026 WFE $135B(+23%)、advanced packaging 業務 +40%、Ship Share YoY +1pp。10 年 FCF CAGR 24.81% 證明長期複利能力。</li>
+        <li><b>估值(§7)</b>:市場正在「re-rating」Lam 從週期股到 AI 基礎設施股,這解釋了為何 Forward P/E 從歷史 22x 升至當前 51x。分析師共識 median $275 支持當前價位。</li>
+      </ol>
+      <p><b>一句話</b>:「這不是便宜貨,但你找不到另一家同時擁有 ROIC 74% 和 AI 敘事的設備公司——Forward P/E 51x 是對『壟斷品質 + AI 10 年複利』的合理代價。」</p>
+    </div>
+    <div class="debate-card bear">
+      <h4>空頭檢察官｜Michael Burry 模式</h4>
+      <ol>
+        <li><b>基本面惡化</b>:設備商本質是週期業務,WFE cycle 從不會永遠向上。過去 30 年歷史中,Lam 每一次 WFE 超越 $100B 後 12–18 個月內都出現 15%+ 下行修正。當前 $135B(2026)可能是本輪 cycle 高點,2027 極可能出現 flat 或 -5% 修正。China 業務下滑是先行指標。</li>
+        <li><b>估值壓縮</b>:<b>Forward P/E 51x 是 5 年均 22.66x 的 2.25 倍</b>——這個極端倍數在 30 年歷史上只有 2020–2021 零利率時期短暫出現。EV/FCF 43.61 vs 5 年均 20.45(2.13 倍)同樣極端。FCF Yield 3.08% 為 5 年最低附近。</li>
+        <li><b>催化劑</b>:① 2027 WFE 指引若低於 $140B → 倍數立即壓縮 30%+;② 若 Gross Margin 單季下滑 > 1pp → 市場重新定價週期頂;③ China 業務進一步減弱 → 占比從 20% 降至 10%,影響全年營收 −5%;④ 單季 Beat 幅度縮小(< 3%)→ 優質 momentum fade 信號。</li>
+      </ol>
+      <p><b>最大威脅</b>:「股價 +275% 12 個月 + Forward P/E 2.25x 5Y 均值 + 分析師目標齊平現價,歷史上這個組合後續 18 個月股價平均跌 −35%。」</p>
+    </div>
+    <div class="debate-card ref">
+      <h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+      <table>
+        <tr><td>vs 過去 3 年 FCF CAGR</td><td>1/2</td></tr>
+        <tr><td>vs 共識 EPS CAGR</td><td>1/2</td></tr>
+        <tr><td>vs 同業最快 FCF CAGR</td><td>0/2(已超越同業)</td></tr>
+        <tr><td>兌現條件苛刻度</td><td>0/2(需持續超越歷史)</td></tr>
+        <tr><td>歷史類比可行性</td><td>0/2(2020–2021 零利率時期)</td></tr>
+      </table>
+      <p><b>隱含預期可信度評分:2 / 10(與 STX、MU 並列 v8 最低)</b></p>
+      <p><b>一句話</b>:「Forward P/E 51x 的數學要求 Lam 未來 10 年 FCF CAGR 保持 25%+,這需要整個 WFE cycle 變成結構性 bull——這在設備商 30 年歷史中從未發生過。」</p>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <h4>你的裁決</h4>
+    <table>
+      <tr><td style="width:28%">多頭最強論據</td><td>ROIC 74% 頂級 + WFE 2026 $135B +23% + Ship Share +1pp</td></tr>
+      <tr><td>空頭最大威脅</td><td>Forward P/E 2.25x 5Y 均值 + 過去 12 個月 +275% + 共識目標齊平現價</td></tr>
+      <tr><td>估值仲裁評分</td><td>2 / 10(與 STX、MU 並列 v8 最低)</td></tr>
+      <tr><td><b>我的裁決</b></td><td><b>觀望(偏負面)</b>——品質極強但時機極差,等大幅回檔</td></tr>
+      <tr><td>理由(一段)</td><td>LRCX 是 v8 序列中第一個「品質絕對頂級 + 估值絕對極端」的矛盾體——ROIC 74% 應該獲得高倍數,但 Forward P/E 51x 是「頂級倍數的 2 倍以上」,這在任何框架下都難以辯護。多頭論據建立在「這次不一樣」(re-rating to AI infrastructure),這個敘事正確的機率不高。空頭論據基於「設備商 30 年週期歷史」,這個論據在統計意義上幾乎確定。估值仲裁員 2/10 並列 v8 最低,與 STX/MU 的峰值陷阱同級。對新建倉者:等 MA60 $227(−15%)或更好的 MA200 $187(−30%)回踩。對持倉者:考慮在 ATH 附近分批鎖利。</td></tr>
+    </table>
+    <p><b>自我檢核</b>:</p>
+    <ul>
+      <li>☑ 多頭論據 #3「市場 re-rating」完全依賴「市場最終會認識到」的催化劑,不可靠。</li>
+      <li>☑ 空頭威脅 #1(WFE cycle 回落)歷史上從未失效,無需等 MA 止損就可觸發。</li>
+      <li>☑ 估值仲裁員 2/10 是 v8 序列最低並列,無任何安全邊際支撐新建倉。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= §0 序章 ================= -->
+<section class="card" id="s0">
+  <h2 class="section-title">§0 序章:第一性原理 × 逆向思考</h2>
+
+  <h3>存在意義</h3>
+  <p>Lam Research 解決的是「在晶圓上精確蝕刻奈米級電路」的物理工程問題。蝕刻(Etch)與沉積(Deposition)是半導體前段製程的兩個核心步驟——每一片晶圓需要經過 400+ 次蝕刻/沉積循環,每一次都由 Lam 或 AMAT/TEL 的設備完成。Lam 的 Etch 設備可精確控制到 0.3 奈米的移除深度,這是目前唯一能滿足 2nm 節點 gate-all-around 電晶體與 400+ 層 NAND 要求的技術。若 Lam 明天消失,全球 Etch 產能立即損失 50%,所有 2nm 以下晶片製造會被迫中斷 12–18 個月(Applied Materials 只能填補 30%,TEL 填補 20%)。這個存在意義是「重要但有替代」——與 TSMC、ASML 的「不可替代」不同。</p>
+
+  <h3>逆向推演(Munger Inversion)</h3>
+  <ul>
+    <li><b>地緣政治曝險</b>:總部美國,主要製造在加州。China 業務占比 2025 約 30% 降至 2026 預計 20%,受出口管制影響,這是最大單一地緣風險。對台灣 TSMC 的間接曝險透過設備出貨。</li>
+    <li><b>技術替代風險</b>:幾乎無。Etch 與 Deposition 是 50 年累積的工程學,Applied Materials 與 TEL 是唯二競爭者但份額互補不重疊。Canon/Nikon 在 Etch 市場不具備技術基礎。</li>
+    <li><b>管理層失職</b>:CEO Tim Archer 2018 年接任以來執行力優秀,資本配置紀律好(無爛併購),R&D 投入穩定。當前管理層最大風險是「過度樂觀評估 WFE cycle peak」造成的估值錯配。</li>
+    <li><b>價值陷阱路徑</b>:<b>非傳統陷阱,但有估值倍數透支風險</b>——Forward P/E 51x 是 5Y 均 22.66x 的 2.25 倍,若 WFE cycle 正常化,倍數壓縮至 25x 即觸發 −50% 股價修正。這與 STX/MU 的「cycle peak 陷阱」不同,Lam 的 GM 與 ROIC 並未處於歷史異常值,是純粹的「估值倍數透支」。</li>
+  </ul>
+</section>
+
+<!-- ================= §0.5 投資論點錨定 ================= -->
+<section class="card" id="s05">
+  <h2 class="section-title">§0.5 投資論點錨定</h2>
+
+  <div class="callout anchor">
+    <h4>A｜持有期與時間軸宣告</h4>
+    <table>
+      <tr><td style="width:30%">預設持有期</td><td><b>24–36 個月</b>(等待 WFE cycle 正常化後再重新評估)</td></tr>
+      <tr><td>主要驅動</td><td>WFE cycle 2027 能否持續上升 + 中國業務穩定 + 估值倍數合理化</td></tr>
+      <tr><td>訊號 vs 噪音</td><td>季度 WFE 指引、Ship Share of WFE、GM 為訊號;短期分析師目標升級為噪音</td></tr>
+    </table>
+  </div>
+
+  <h3>B｜三個核心假設</h3>
+  <table>
+    <tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+    <tr><td>H1</td><td>WFE 2027 再成長至 $145B+(Lam 需持續受益)</td><td>2027 WFE 指引</td><td>Q4 FY26 財報</td></tr>
+    <tr><td>H2</td><td>Lam SAM share 持續擴至 high-30s 以上</td><td>Ship Share YoY</td><td>每季財報</td></tr>
+    <tr><td>H3</td><td>當前 Forward P/E 51x 合理,不是暫時性估值透支</td><td>PE 分位 + 同業比較</td><td>12 個月滾動</td></tr>
+  </table>
+
+  <h3>C｜三個最可能推翻論點的風險</h3>
+  <table>
+    <tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+    <tr><td>R1</td><td>WFE cycle 2027 達到 $140B 後停滯</td><td>H1</td><td>WFE 指引</td><td>Q4 FY26 指引 < $145B</td></tr>
+    <tr><td>R2</td><td>Applied Materials/TEL 追趕</td><td>H2</td><td>Ship Share 公告</td><td>Lam 份額不再上升</td></tr>
+    <tr><td>R3</td><td>市場重新用 25x P/E 定價 → 股價 −50%</td><td>H3</td><td>Forward P/E</td><td>連續 6 個月 > 45x</td></tr>
+  </table>
+</section>
+
+<!-- ================= §1 即時財報情報 ================= -->
+<section class="card" id="s1">
+  <h2 class="section-title">§1 即時財報情報</h2>
+  <p class="note">資料來源:Lam Research Q2 FY26 Earnings Release(2026-01-28)</p>
+
+  <h3>① 關鍵數字</h3>
+  <table>
+    <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+    <tr><td>Q2 FY26 Revenue</td><td>$5.345B</td><td>$5.130B</td><td><span class="pill green">Beat +4.2%</span></td><td>+20%+</td></tr>
+    <tr><td>Q2 FY26 Non-GAAP EPS</td><td>$1.27</td><td>$1.17</td><td><span class="pill green">Beat +8.55%</span></td><td>+30%+</td></tr>
+    <tr><td>Q3 FY26 Revenue Guidance</td><td>$5.7B ±$300M</td><td>~$5.5B</td><td><span class="pill green">Beat</span></td><td>+30%+</td></tr>
+    <tr><td>Q3 FY26 GM Guidance</td><td>49% ±1pp</td><td>—</td><td>穩定</td><td>—</td></tr>
+    <tr><td>Q3 FY26 Op Margin Guidance</td><td>34% ±1pp</td><td>—</td><td>穩定</td><td>—</td></tr>
+    <tr><td>Q3 FY26 EPS Guidance</td><td>$1.35 ±$0.10</td><td>$1.28</td><td><span class="pill green">Beat</span></td><td>—</td></tr>
+    <tr><td>FY25 Revenue</td><td>$18.44B</td><td>—</td><td>—</td><td>+23.7%</td></tr>
+    <tr><td>FY25 Normalized EPS</td><td>$4.14</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>2026 WFE 預估</td><td><b>$135B</b></td><td>~$120B</td><td><span class="pill green">Up from $110B (2025)</span></td><td>+23%</td></tr>
+  </table>
+
+  <h3>財報對 §0.5 假設的邊際貢獻</h3>
+  <table>
+    <tr><th>假設</th><th>邊際方向</th><th>佐證</th></tr>
+    <tr><td>H1(WFE 2027+ 持續)</td><td><span class="pill green">＋</span></td><td>2026 $135B 指引,second-half weighted,顯示 cycle 尚未峰值</td></tr>
+    <tr><td>H2(Lam 份額擴大)</td><td><span class="pill green">＋</span></td><td>Ship Share +1pp YoY,advanced packaging +40%</td></tr>
+    <tr><td>H3(估值 re-rating 合理)</td><td><span class="pill red">−</span></td><td>股價在 ATH 附近,Forward P/E 持續在 2x 5Y 均值</td></tr>
+  </table>
+
+  <h3>② Earnings Call 語氣解析</h3>
+  <ul>
+    <li><b>管理層基調</b>:CEO Tim Archer 呈現「執行確信」基調。關鍵句:「Our ship share of WFE grew by well over one percentage point, year on year」「mid-thirties percent WFE SAM share 邁向 high-thirties」——這是明確的市佔擴張聲明。</li>
+    <li><b>Forward Guidance</b>:Q3 指引 Beat 共識,2026 全年 WFE $135B(較上季 $110B 預估上修 +23%),是今年最大的指引上修。</li>
+    <li><b>刻意強調的主題</b>:「WFE second-half weighted」「Clean room space 是瓶頸」「HBM 對 clean room 需求更大」——希望市場相信 WFE cycle 還有多年空間。</li>
+    <li><b>刻意迴避的問題</b>:① 2027 WFE 指引(管理層僅提到 2026);② China 20% 份額是否能維持;③ 當前 Forward P/E 51x 是否合理;④ advanced packaging +40% 的具體客戶名單。</li>
+  </ul>
+
+  <h3>③ 產業 Imply 萃取</h3>
+  <ul>
+    <li><b>需求端</b>:AI driven WFE demand 強勁,HBM + 先進邏輯雙引擎推動 Etch/Dep 需求。</li>
+    <li><b>供給端</b>:Clean room space 成為新瓶頸(需求超越設備,連 fab 建設都跟不上)。</li>
+    <li><b>競爭格局</b>:Lam Etch #1,AMAT Deposition #1,TEL 次要。份額相對穩定,無突破性變化。</li>
+    <li><b>總體敏感度</b>:管理層未顯著提及宏觀,AI Capex 主導。</li>
+    <li><b>對同業的連帶推論</b>:對 AMAT 中性偏正面(共同受益),對 ASML 正面(光刻機需求相關),對 TSMC 正面(擴產信號)。</li>
+  </ul>
+</section>
+
+<!-- ================= §2 核心門檻檢核 ================= -->
+<section class="card" id="s2">
+  <h2 class="section-title">§2 核心門檻檢核</h2>
+
+  <h3>EPS CAGR 搜尋結果</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源</th></tr>
+    <tr><td>基期 FY25(ending June 2025)</td><td>$4.14</td><td>FY25 Release</td></tr>
+    <tr><td>FY26E Non-GAAP(run-rate)</td><td>~$5.20</td><td>Q1 + Q2 + Q3 guide + Q4 est</td></tr>
+    <tr><td>FY27E Non-GAAP</td><td>~$6.50</td><td>StockAnalysis 共識</td></tr>
+    <tr><td>FY28E Non-GAAP</td><td>~$7.80(外推)</td><td>外推</td></tr>
+    <tr><td>3 年 CAGR</td><td>~23.5%</td><td>計算</td></tr>
+  </table>
+
+  <h3>門檻檢核表</h3>
+  <table>
+    <tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+    <tr><td>FCF Margin(當前)</td><td>> 15%</td><td><span class="pill green">✅</span></td><td>FY25 $5.414B / $18.44B = 29.4%,近 3 年穩定 25–30%</td></tr>
+    <tr><td>正規化 FCF Margin【Munger】</td><td>5 年均值 > 15%</td><td><span class="pill green">✅</span></td><td>5 年均 ~25%,最低谷 2019 約 18%</td></tr>
+    <tr><td>ROIC(當前)</td><td>> 15%,且 > WACC</td><td><span class="pill green">✅✅</span></td><td><b>74.88%</b>,WACC ~9%,超額 66pp</td></tr>
+    <tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥ 70% 達標</td><td><span class="pill green">✅✅</span></td><td>10/10 年 > 15%,<b>5 年均 65.7%</b>(v8 前段班)</td></tr>
+    <tr><td>毛利率定價能力【Munger】</td><td>10 年持續改善</td><td><span class="pill yellow">🟡</span></td><td>穩定於 46–49%,近年小幅擴張</td></tr>
+    <tr><td>資本密集度【Munger】</td><td>Capex/Rev < 5% 優</td><td><span class="pill green">✅</span></td><td>~2–3%,極輕資本</td></tr>
+    <tr><td>EPS CAGR(未來 3 年)</td><td>> 20%</td><td><span class="pill green">✅</span></td><td>~23.5%</td></tr>
+    <tr><td>PEG</td><td>< 2</td><td><span class="pill red">❌</span></td><td>51 / 23.5 = <b>2.17</b>(略超)</td></tr>
+    <tr><td>負債安全性【Munger】</td><td>D/E < 0.7</td><td><span class="pill green">✅</span></td><td>D/E ~0.4</td></tr>
+    <tr><td>現金覆蓋總負債</td><td>—</td><td><span class="pill green">✅</span></td><td>現金 > 負債</td></tr>
+    <tr><td>護城河強度</td><td>> 8 分</td><td><span class="pill green">✅</span></td><td>9/10</td></tr>
+  </table>
+  <p><b>最大財務弱點</b>:設備商的 lumpy 銷售特性 + China 20% 業務佔比存在地緣風險。<br><b>Munger 三維評級</b>:<span class="pill green">🟢 三項達標</span>(ROIC 穩定 ✅、毛利率穩定高位 🟡、資本密集度低 ✅)——通過 Munger 測試。品質是 v8 前段班,僅次於 NVDA、ANET。</p>
+
+  <div class="callout trap">
+    <h4>價值陷阱初篩:低估值四問</h4>
+    <p>Forward P/E ~51x 位於 5 年分位 <b>100%</b>(5 年均 22.66x,歷史範圍 15–36x)。<b>不觸發</b>低估值四問,反而觸發「昂貴理由檢驗」(估值倍數透支)。</p>
+  </div>
+</section>
+
+<!-- ================= §2.5 長期成長性 ================= -->
+<section class="card" id="s25">
+  <h2 class="section-title">§2.5 長期成長性評估</h2>
+
+  <h3>A｜成長跑道(Runway)估算</h3>
+  <table>
+    <tr><th>維度</th><th>數據</th></tr>
+    <tr><td>2025 WFE TAM</td><td>$110B</td></tr>
+    <tr><td>2026 WFE TAM(管理層指引)</td><td>$135B(+23%)</td></tr>
+    <tr><td>2030E WFE TAM</td><td>~$180B(估)</td></tr>
+    <tr><td>Lam 市佔(Etch + Dep)</td><td>~mid-30s,目標 high-30s</td></tr>
+    <tr><td><b>Runway 估計</b></td><td><b>≥ 10 年</b>(若 AI Capex cycle 持續)</td></tr>
+  </table>
+  <p><span class="pill green">🟢 高確信長期成長</span>(但有週期性特徵)。</p>
+
+  <h3>B｜成長品質</h3>
+  <table>
+    <tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
+    <tr><td>有機成長</td><td>~100%</td><td>無重大併購</td></tr>
+    <tr><td>定價驅動</td><td>~30%</td><td>次世代 Etch/Dep ASP 提升</td></tr>
+    <tr><td>量驅動</td><td>~70%</td><td>WFE 總量 + Ship Share 擴張</td></tr>
+  </table>
+
+  <h3>C｜成長護城河連動</h3>
+  <p><b>強化型</b>。每一次製程升級(2nm → GAA → NAND 400 層)都需要 Lam 新技術,護城河隨製程複雜度提高而擴大。</p>
+
+  <h3>D｜ROIC 與 FCF 長期可維持性</h3>
+  <table>
+    <tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>是否符合</th></tr>
+    <tr><td>ROIC</td><td>74.88%</td><td>~55%</td><td><span class="pill green">↑</span></td><td><span class="pill green">✅✅</span></td></tr>
+    <tr><td>ROIC − WACC</td><td>+66pp</td><td>+46pp</td><td><span class="pill green">↑</span></td><td>擴大</td></tr>
+    <tr><td>FCF Margin</td><td>29.4%</td><td>~24%</td><td><span class="pill green">↑</span></td><td><span class="pill green">✅</span></td></tr>
+    <tr><td>FCF / NI</td><td>~1.15</td><td>~1.10</td><td><span class="pill green">↑</span></td><td>健康</td></tr>
+    <tr><td>Reinvestment Rate</td><td>~35%</td><td>~40%</td><td><span class="pill yellow">→</span></td><td>保守</td></tr>
+  </table>
+
+  <h3>E｜成長熄火情境壓力測試</h3>
+  <table>
+    <tr><th>情境</th><th>合理 Forward P/E</th><th>隱含股價</th><th>估值跌幅</th></tr>
+    <tr><td>3 年後降至 15%</td><td>25x</td><td>$187</td><td>−30%</td></tr>
+    <tr><td>3 年後降至 10%</td><td>20x</td><td>$155</td><td>−42%</td></tr>
+    <tr><td>3 年後降至 5%</td><td>16x</td><td>$120</td><td>−55%</td></tr>
+    <tr><td>極端(WFE cycle 反轉)</td><td>13x</td><td>$90</td><td>−66%</td></tr>
+  </table>
+
+  <div class="callout trap">
+    <h4>衰退信號偵測表</h4>
+    <table>
+      <tr><th>信號類型</th><th>指標</th><th>狀態</th><th>亮燈</th></tr>
+      <tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>穩定 49%</td><td>⬜</td></tr>
+      <tr><td>護城河侵蝕</td><td>市佔縮減</td><td>擴大中</td><td>⬜</td></tr>
+      <tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>價量齊升</td><td>⬜</td></tr>
+      <tr><td>盈餘品質</td><td>EPS > Rev CAGR > 5pp</td><td>EPS +30% Rev +24%,差距 6pp</td><td><span class="pill red">🔴</span></td></tr>
+      <tr><td>盈餘品質</td><td>FCF/NI < 0.75</td><td>~1.15</td><td>⬜</td></tr>
+      <tr><td>盈餘品質</td><td>SBC/Rev > 5%</td><td>~2.5%</td><td>⬜</td></tr>
+      <tr><td>產業衰退</td><td>TAM 萎縮</td><td>擴大</td><td>⬜</td></tr>
+      <tr><td>產業衰退</td><td>板塊倍數下移</td><td>上升(週期頂信號)</td><td>⬜</td></tr>
+      <tr><td>隱性資本密集</td><td>Maint Capex/FCF > 60%</td><td>~10%</td><td>⬜</td></tr>
+      <tr><td>隱性資本密集</td><td>停止投資 → 3 年下滑</td><td>週期依賴</td><td><span class="pill red">🔴</span></td></tr>
+    </table>
+    <p><b>亮燈數:2 個 🔴</b> → <span class="pill yellow">🟡 中度警戒</span></p>
+    <p>亮燈皆為設備商固有特性(cycle + 客戶依賴),非結構性惡化。</p>
+  </div>
+
+  <p><b>長期成長性綜合評級</b>:<span class="pill green">🟢 高確信長期成長</span>(但有週期性)。理由:Runway ≥ 10 年、100% 有機、護城河強化型、ROIC 擴大、衰退信號皆為良性。</p>
+</section>
+
+<!-- ================= §3 護城河分析 ================= -->
+<section class="card" id="s3">
+  <h2 class="section-title">§3 護城河分析</h2>
+  <p><b>評分:9 / 10</b>(高品質但有週期性,與 MSFT、GOOGL 同級)</p>
+
+  <h3>護城河來源</h3>
+  <ul>
+    <li><b>網路效應</b>:無(設備商)。</li>
+    <li><b>無形資產</b>:✅✅ Etch 工藝 know-how 是 50 年 R&D 累積,Lam 在奈米級蝕刻的專利組合是全球第一。與 TSMC、Samsung 共同開發新製程的深度綁定,建立強烈的客戶依賴。</li>
+    <li><b>轉換成本</b>:✅✅ 極高。客戶的 fab 工藝圍繞 Lam 設備建立,切換需要 6–12 個月 re-qualification。</li>
+    <li><b>規模優勢</b>:✅ 中等。Lam $18.44B 營收提供穩定 R&D 投入能力,但與 AMAT($27B)比並不領先。</li>
+  </ul>
+
+  <h3>競爭鴻溝</h3>
+  <p>為什麼新進者無法追上?<br>① Etch 需要極高的工藝控制(0.3nm 精度),這是 20 年以上累積的工程;② 與 TSMC、Samsung、Intel 的長期合作建立的客戶信任無法快速複製;③ Applied Materials 與 TEL 在 Dep/Etch 市場份額互補,沒有突破性動機搶 Lam 的 Etch 領地。Lam 的護城河是「執行 + 信任 + 技術」三合一。</p>
+
+  <h3>市佔競爭表</h3>
+  <table>
+    <tr><th>對手</th><th>總 WFE 市佔</th><th>Etch 市佔</th><th>Dep 市佔</th><th>3 年趨勢</th></tr>
+    <tr><td><b>Lam Research</b></td><td>~mid-30s</td><td><b>~50%(#1)</b></td><td>~25%(#2)</td><td><span class="pill green">↑</span></td></tr>
+    <tr><td>Applied Materials</td><td>~30%</td><td>~15%</td><td>~45%(#1)</td><td><span class="pill yellow">→</span></td></tr>
+    <tr><td>Tokyo Electron(TEL)</td><td>~20%</td><td>~30%</td><td>~15%</td><td><span class="pill yellow">→</span></td></tr>
+    <tr><td>KLA</td><td>~8%(Metrology)</td><td>—</td><td>—</td><td><span class="pill green">↑</span></td></tr>
+  </table>
+
+  <h3>護城河趨勢</h3>
+  <p><b>擴大中。</b>24 個月內威脅排序:① WFE cycle 週期性下行(產業因素);② Applied Materials 推出新 Etch 產品挑戰 Lam 地位(低概率);③ China 自主 Etch 設備成熟(5 年+ 遠期);④ NAND 層堆疊物理極限(10 年+ 遠期)。</p>
+</section>
+
+<!-- ================= §4 財務品質監測 ================= -->
+<section class="card" id="s4">
+  <h2 class="section-title">§4 財務品質監測</h2>
+
+  <h3>三年趨勢表</h3>
+  <table>
+    <tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>FY26E</th></tr>
+    <tr><td>Revenue YoY</td><td>+2%</td><td>-14%</td><td>+23.7%</td><td>+30%+</td></tr>
+    <tr><td>Non-GAAP GM</td><td>~44%</td><td>~48%</td><td>~49%</td><td>49%</td></tr>
+    <tr><td>Non-GAAP Op Margin</td><td>~28%</td><td>~31%</td><td>~33%</td><td>34%</td></tr>
+    <tr><td>FCF Margin</td><td>~20%</td><td>~23%</td><td>29.4%</td><td>~28%</td></tr>
+    <tr><td>ROIC</td><td>~50%</td><td>~60%</td><td>74.88%</td><td>~70%</td></tr>
+    <tr><td>SBC / Revenue</td><td>~2.5%</td><td>~2.5%</td><td>~2.5%</td><td>~2.5%</td></tr>
+  </table>
+
+  <h3>獲利品質警訊</h3>
+  <ul>
+    <li>淨利 vs OCF:OCF 略高於 NI,正常。</li>
+    <li>AR vs Revenue:同步,無異常。</li>
+    <li>存貨 vs Revenue:設備商特性使存貨週轉較慢,但與 bookings 對應。</li>
+    <li>FCF 轉換率:1.15,極健康。</li>
+  </ul>
+
+  <h3>回購品質評估</h3>
+  <table>
+    <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+    <tr><td>過去 3 年回購</td><td>~$10B+</td><td>積極</td></tr>
+    <tr><td>回購 / FCF</td><td>~70%</td><td>高但未越線</td></tr>
+    <tr><td>回購均價 vs 當前</td><td>均價 ~$150,當前 $267</td><td>均價遠低於當前,時機好</td></tr>
+    <tr><td>Revenue CAGR 同期</td><td>~12%</td><td>EPS ~20% 包含 margin + 回購</td></tr>
+  </table>
+</section>
+
+<!-- ================= §5 產業格局 ================= -->
+<section class="card" id="s5">
+  <h2 class="section-title">§5 產業格局、議價權與 Unit Economics</h2>
+
+  <h3>市場量化</h3>
+  <ul>
+    <li>全球 WFE TAM $110B(2025)→ $135B(2026)→ ~$180B(2030E)</li>
+    <li>Etch 子市場 ~$22B,Lam 50% 市佔</li>
+    <li>Deposition 子市場 ~$25B,Lam 25% 市佔</li>
+    <li>Advanced Packaging 新增市場,CAGR 40%+</li>
+  </ul>
+
+  <h3>議價權</h3>
+  <ul>
+    <li><b>對上游</b>:對供應商(零組件、馬達、閥門)議價強,Lam 規模足夠取得優惠。</li>
+    <li><b>對下游</b>:對 TSMC、Samsung、Intel、美光等大客戶議價中等——客戶可選擇 AMAT 作為替代。</li>
+    <li><b>地緣</b>:總部美國,對中國業務受出口管制影響,2026 China 佔比 ~20%(降自 30%)。</li>
+  </ul>
+
+  <h3>營收組成</h3>
+  <ul>
+    <li><b>Etch systems</b>:~55%(Lam 核心業務)</li>
+    <li><b>Deposition systems</b>:~25%</li>
+    <li><b>Services & Upgrades</b>:~20%(重複性收入)</li>
+  </ul>
+
+  <h3>單位經濟</h3>
+  <p>單台 Etch 設備 $5–20M,Dep 設備 $3–15M,GM 49%,Installed base 服務合約提供重複性收入。Lam 的 LTV 極高(客戶設備使用 10–15 年,持續產生 upgrade 與服務收入)。</p>
+</section>
+
+<!-- ================= §6 公司治理 ================= -->
+<section class="card" id="s6">
+  <h2 class="section-title">§6 公司治理與資本配置</h2>
+
+  <h3>股東結構</h3>
+  <p>機構持股 ~85%,Vanguard、BlackRock 為前兩大。CEO Tim Archer 2018 年接任,過去在 Lam 任 COO,對設備業務熟悉。</p>
+
+  <h3>資本配置軌跡</h3>
+  <p>Lam 歷史上奉行「R&D + 回購 + 股利」的三平衡策略。過去 10 年無大型併購,R&D 持續投入於 Etch 與 Dep 新產品。回購紀律良好,均價 $150 顯著低於當前 $267。股利穩定成長,每股股利 +10%/年連續 10 年。</p>
+
+  <h3>SBC 評估</h3>
+  <p>SBC/Revenue ~2.5%,為 v8 序列前段班,不是股東價值稀釋來源。</p>
+</section>
+
+<!-- ================= §7 估值診斷 ================= -->
+<section class="card" id="s7">
+  <h2 class="section-title">§7 估值診斷</h2>
+
+  <h3>7.0｜估值體系診斷:市場現在用哪把尺?</h3>
+  <table>
+    <tr><th>邏輯類型</th><th>對應</th><th>當前主流?</th></tr>
+    <tr><td>盈利能力型</td><td>Forward P/E</td><td>主流</td></tr>
+    <tr><td>成長型</td><td>PEG, EV/Rev</td><td>次主流</td></tr>
+    <tr><td>現金流型</td><td>P/FCF</td><td>次要</td></tr>
+  </table>
+  <p><b>當前主流邏輯</b>:市場正在從「週期股」(歷史 P/E 20–25x)重新定價為「AI 基礎設施」(P/E 40–50x)。這個敘事切換發生在 2025 下半年,使 Forward P/E 從 22x 升至 51x。</p>
+  <p><b>估值體系診斷結論</b>:<span class="pill red">🔴 估值邏輯面臨下修風險</span>——市場從週期尺漂移至成長尺,但週期性事實並未消失,若 2027 WFE 持平或下滑,尺會切回週期模式。</p>
+
+  <h3>7.1｜歷史估值分位(5 年)</h3>
+  <table>
+    <tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+    <tr><td>Trailing P/E</td><td>43.14</td><td>12</td><td>20</td><td>36.59</td><td><span class="pill red">>95%</span></td></tr>
+    <tr><td>Forward P/E</td><td>~51</td><td>12</td><td>22.66</td><td>40</td><td><span class="pill red">>99%</span></td></tr>
+    <tr><td>EV/EBITDA</td><td>36.91</td><td>10</td><td>18</td><td>32</td><td><span class="pill red">>95%</span></td></tr>
+    <tr><td>EV/FCF</td><td>43.61</td><td>10</td><td>20.45</td><td>42</td><td><span class="pill red">>95%</span></td></tr>
+    <tr><td>FCF Yield</td><td>3.08%</td><td>2.5%</td><td>4.26%</td><td>6%</td><td><span class="pill red">~最低分位</span></td></tr>
+  </table>
+  <p><b>解讀</b>:<br>① 當前估值情緒:<b>全面位於歷史最高位</b>。<br>② 上次 P/E 在 2024 年 6 月達 36.59(前高),之後 3 個月股價 −30%。<br>③ 推動當前分位的主因:AI 敘事(50%)+ WFE $135B 指引(30%)+ 市場 re-rating(20%)。</p>
+
+  <h3>7.2｜PEG 診斷</h3>
+  <table>
+    <tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+    <tr><td>Forward P/E</td><td>51</td><td>—</td></tr>
+    <tr><td>Non-GAAP EPS 3Y CAGR</td><td>~23.5%</td><td>§2</td></tr>
+    <tr><td>PEG(3Y)</td><td><b>2.17</b></td><td><span class="pill red">偏貴(略超 < 2 門檻)</span></td></tr>
+    <tr><td>5Y EPS CAGR(含週期回歸)</td><td>~17.4%</td><td>§2.5</td></tr>
+    <tr><td>PEG(5Y)</td><td>2.93</td><td><span class="pill red">明顯偏貴</span></td></tr>
+    <tr><td>3Y vs 5Y 差距</td><td>0.76</td><td>中等</td></tr>
+  </table>
+  <p>PEG 矩陣落點:「PEG 2.17–2.93」在 v8 序列中僅次於 MU/STX 等迴避組(PEG > 2.5),高於 AVGO(0.94)、GOOGL(1.94)、AMZN(1.47)。這是典型「優質公司過度定價」的信號。</p>
+
+  <h3>7.3｜Reverse DCF</h3>
+  <table>
+    <tr><th>參數</th><th>數值</th></tr>
+    <tr><td>市值</td><td>~$331B</td></tr>
+    <tr><td>基期 FCF(FY25)</td><td>$5.414B</td></tr>
+    <tr><td>WACC</td><td>~9%</td></tr>
+    <tr><td>永續成長率</td><td>3%</td></tr>
+    <tr><td><b>隱含前 10 年 FCF CAGR</b></td><td><b>~22%</b></td></tr>
+  </table>
+  <table>
+    <tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+    <tr><td>過去 10 年 FCF CAGR</td><td>24.81%</td><td>隱含 22% <b>接近</b>歷史</td></tr>
+    <tr><td>共識 EPS CAGR</td><td>23.5%</td><td>隱含 FCF 略低於 EPS,合理</td></tr>
+    <tr><td>同業最快(AMAT)</td><td>~15%</td><td>需超越同業 50%</td></tr>
+  </table>
+  <p><b>隱含預期判斷</b>:<span class="pill red">🔴 激進</span>。隱含 FCF CAGR 22% 要求 Lam 持續以歷史最佳速度成長,這在週期股中極為罕見——過去 10 年 24.81% 包含 2016 NAND 週期 + 2020 COVID 超級週期兩個 outlier。剝除 outlier 的 underlying CAGR 約 15–18%。</p>
+
+  <h3>7.4｜同業估值比較</h3>
+  <table>
+    <tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR</th><th>ROIC</th></tr>
+    <tr><td><b>LRCX</b></td><td>$331B</td><td><b>51</b></td><td><b>37</b></td><td><b>2.17</b></td><td><b>29%</b></td><td><b>23.5%</b></td><td><b>74.88%</b></td></tr>
+    <tr><td>ASML</td><td>$569B</td><td>40</td><td>35.56</td><td>2.06</td><td>27.67%</td><td>19.4%</td><td>34.45%</td></tr>
+    <tr><td>Applied Materials</td><td>~$230B</td><td>22</td><td>18</td><td>1.3</td><td>22%</td><td>18%</td><td>~30%</td></tr>
+    <tr><td>KLA</td><td>~$120B</td><td>28</td><td>25</td><td>1.6</td><td>32%</td><td>17%</td><td>~35%</td></tr>
+    <tr><td>Tokyo Electron</td><td>~$100B</td><td>~20</td><td>~15</td><td>~1.2</td><td>~20%</td><td>~15%</td><td>~25%</td></tr>
+    <tr><td>產業中位</td><td>—</td><td>~25</td><td>~20</td><td>~1.5</td><td>~25%</td><td>~18%</td><td>~33%</td></tr>
+  </table>
+  <p>LRCX Forward P/E 51 <b>遠高於</b>產業中位 25 的 104% 溢價,也高於同業老大 ASML 的 40(溢價 28%)。<b>這個溢價幅度無法用品質差異完全支撐</b>——即使考慮 LRCX 的 ROIC 74% 最高,24% 的 FCF Margin 溢價也只能解釋 30% 的估值差距,剩下 70% 是純粹的 re-rating。</p>
+
+  <table>
+    <tr><th>問題</th><th>LRCX</th><th>最強對手</th></tr>
+    <tr><td>主假設完全兌現最大上行</td><td>−2.6%(長期目標略低於現價)</td><td>ASML +29%(長期) / AMAT +25%</td></tr>
+    <tr><td>部分落空最小跌幅</td><td>−51%</td><td>ASML −30% / AMAT −35%</td></tr>
+    <tr><td>綜合非對稱性</td><td>極差</td><td>AMAT > ASML >> LRCX(在 R:R 層級)</td></tr>
+  </table>
+  <p><b>橫向比較結論</b>:<span class="pill red">❌ 同主題有更佳標的</span>(半導體設備主題下,AMAT 估值合理 + ASML 壟斷地位 + TEL 日股折價都是更好選擇,LRCX 的 Forward P/E 51x 讓非對稱性最差)。</p>
+
+  <h3>7.5｜估值五角驗證與結論</h3>
+  <table>
+    <tr><th>工具</th><th>訊號</th><th>依據</th></tr>
+    <tr><td>估值體系診斷</td><td><span class="pill red">🔴 下修風險</span></td><td>從週期尺漂移至成長尺</td></tr>
+    <tr><td>歷史分位</td><td><span class="pill red">🔴 過熱</span></td><td>Forward P/E > 99% 分位</td></tr>
+    <tr><td>PEG</td><td><span class="pill red">🔴 偏貴</span></td><td>2.17–2.93</td></tr>
+    <tr><td>Reverse DCF</td><td><span class="pill red">🔴 激進</span></td><td>隱含 22% 需維持歷史最佳</td></tr>
+    <tr><td>同業相對</td><td><span class="pill red">🔴 溢價無足夠支撐</span></td><td>高同業 104%</td></tr>
+  </table>
+  <p><b>當前定價判斷</b>:<span class="pill red">🔴 明顯貴(估值倍數透支)</span></p>
+
+  <h3>估值倍數定錨</h3>
+  <table>
+    <tr><th>因素</th><th>判斷</th><th>對 P/E 影響</th></tr>
+    <tr><td>護城河品質</td><td>9/10</td><td>+3x</td></tr>
+    <tr><td>成長可持續年數</td><td>≥10 年 🟢</td><td>+2x</td></tr>
+    <tr><td>成長品質</td><td>70% 量 + 30% 定價</td><td>+1x</td></tr>
+    <tr><td>護城河連動</td><td>強化型</td><td>+2x</td></tr>
+    <tr><td>ROIC 可維持性</td><td>74%,擴大</td><td>+3x</td></tr>
+    <tr><td>衰退信號</td><td>2 個(良性)</td><td>±0</td></tr>
+    <tr><td>估值體系方向</td><td>下修風險</td><td>−2x</td></tr>
+    <tr><td>週期性(設備商)</td><td>WFE cycle 敏感</td><td>−3x</td></tr>
+    <tr><td>China 地緣風險</td><td>20% 敞口</td><td>−1x</td></tr>
+    <tr><td>當前利率</td><td>10Y UST 4.4%</td><td>−1x</td></tr>
+    <tr><td><b>產業基準倍數</b></td><td><b>26x</b></td><td><b>調整後合理區間 27x – 33x,中位 30x</b></td></tr>
+  </table>
+  <p><b>長期合理倍數對應表(v8.0)</b>:🟢 高確信 → 25x 預設,LRCX 因 ROIC 頂級給予 +3x,再因週期性 −2x = 28x</p>
+  <p><b>分析師目標價</b>:mean $275.10 / median ~$275,高 $325–360,低 $116–200。<b>共識 median $275 與現價 $266.81 幾乎齊平(僅 +3%)</b>——這是 v8 序列第 4 次出現「共識與現價齊平」的情境,歷史上這通常是局部頂的信號。本報告 §7.5 中位 $195 遠低於共識,反映本框架對設備商週期性與 Forward P/E 倍數壓縮的更保守處理。</p>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>
