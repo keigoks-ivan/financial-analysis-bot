@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v8.0">
+<title>DD_ANET_20260411 — Arista Networks 深度研究</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC; --card: #FFFFFF; --ink: #0F172A; --deepblue: #1E3A5F;
+    --accent: #3B82F6; --line: #E2E8F0; --alt: #F1F5F9; --muted: #64748B;
+    --green-bg: #DCFCE7; --green-ink: #166534;
+    --red-bg: #FEE2E2; --red-ink: #991B1B;
+    --yellow-bg: #FEF9C3; --yellow-ink: #92400E;
+    --blue-bg: #EFF6FF; --blue-ink: #1E3A5F;
+    --orange-bg: #FFF0E6; --orange-line: #F97316; --orange-ink: #C2410C;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', system-ui, sans-serif; background: var(--bg); color: var(--ink); margin: 0; line-height: 1.7; font-size: 15px; }
+  .mono, table td:nth-child(n+2), .num { font-family: 'IBM Plex Mono', monospace; }
+  header.topbar { position: sticky; top: 0; z-index: 100; background: var(--deepblue); color: #fff; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 3px solid var(--accent); }
+  header.topbar .left { font-weight: 700; letter-spacing: 0.5px; }
+  header.topbar .right { font-family: 'IBM Plex Mono', monospace; opacity: 0.9; }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 24px 120px; }
+  h1.title { font-size: 26px; color: var(--deepblue); margin: 12px 0 4px; border-bottom: 2px solid var(--deepblue); padding-bottom: 10px; }
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+  section.card { background: var(--card); border: 1px solid var(--line); margin: 20px 0; padding: 22px 26px; border-radius: 2px; }
+  h2.section-title { background: var(--deepblue); color: #fff; padding: 10px 16px; margin: 0 0 18px -26px; border-left: 4px solid var(--accent); font-size: 18px; font-weight: 700; width: calc(100% + 52px); }
+  h3 { color: var(--deepblue); font-size: 16px; margin: 20px 0 10px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h4 { color: var(--deepblue); font-size: 14px; margin: 14px 0 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; font-size: 13.5px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--deepblue); color: #fff; font-weight: 500; }
+  tbody tr:nth-child(even) { background: var(--alt); }
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 12px; font-weight: 700; }
+  .pill.green { background: var(--green-bg); color: var(--green-ink); }
+  .pill.red { background: var(--red-bg); color: var(--red-ink); }
+  .pill.yellow { background: var(--yellow-bg); color: var(--yellow-ink); }
+  .pill.blue { background: var(--blue-bg); color: var(--blue-ink); border: 1px solid #bfdbfe; }
+  .callout { padding: 14px 18px; margin: 14px 0; border-radius: 2px; }
+  .callout.trap { background: var(--orange-bg); border-left: 4px solid var(--orange-line); color: var(--orange-ink); }
+  .callout.trap h4 { color: var(--orange-ink); margin-top: 0; }
+  .callout.anchor { background: var(--blue-bg); border-left: 4px solid var(--accent); color: var(--blue-ink); }
+  .callout.anchor h4 { color: var(--blue-ink); margin-top: 0; }
+  .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .debate-card { padding: 14px 16px; border-radius: 2px; font-size: 13.5px; }
+  .debate-card.bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .debate-card.bull h4 { color: #166534; margin-top: 0; }
+  .debate-card.bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .debate-card.bear h4 { color: #991B1B; margin-top: 0; }
+  .debate-card.ref { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .debate-card.ref h4 { color: #5B21B6; margin-top: 0; }
+  .verdict { background: #FFFBEB; border-left: 4px solid #D97706; padding: 14px 18px; margin: 14px 0; color: #92400E; }
+  .verdict h4 { color: #92400E; margin-top: 0; }
+  .rr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+  .rr-card { padding: 14px 16px; border-radius: 2px; font-size: 13px; }
+  .rr-card.short { background: #F0F9FF; border-left: 4px solid #0284C7; }
+  .rr-card.short h4 { color: #075985; margin-top: 0; }
+  .rr-card.mid { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .rr-card.mid h4 { color: #5B21B6; margin-top: 0; }
+  .rr-card.long { background: #ECFDF5; border-left: 4px solid #059669; }
+  .rr-card.long h4 { color: #065F46; margin-top: 0; }
+  .rr-card .subcap { font-size: 11px; color: #065F46; }
+  .rr-card table { font-size: 12px; }
+  .rr-card table th { background: none; color: var(--ink); border-bottom: 1px solid var(--line); }
+  ul { padding-left: 20px; } li { margin: 4px 0; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  button.print-btn { position: fixed; right: 24px; bottom: 24px; z-index: 200; background: var(--deepblue); color: #fff; border: 0; padding: 10px 16px; font-family: inherit; font-size: 13px; cursor: pointer; border-radius: 2px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  @media print { header.topbar, button.print-btn { display: none; } main { padding: 0; max-width: none; } section.card { break-inside: avoid; page-break-inside: avoid; } }
+  @media (max-width: 900px) { .debate-grid, .rr-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="left">ANET ｜ Arista Networks, Inc.</div>
+  <div class="right">抓取 2026-04-11 ｜ 最新股價 $146.05 ｜ DD Schema v8.0</div>
+</header>
+
+<main>
+
+<h1 class="title">Arista Networks(ANET)深度研究報告</h1>
+<div class="subtitle">買側 DD v8.0 ｜ 最近財報季 Q4 2025(2026-02-12 發布) ｜ 52W 範圍 $66.59 – $164.94 ｜ 離 ATH $162.03 −9.9% ｜ 市值 $183.5B</div>
+
+<!-- ================= §8 投資結論(置頂) ================= -->
+<section class="card" id="s8">
+  <h2 class="section-title">§8 投資結論</h2>
+  <p class="note">本結論基於以下完整分析得出,詳見各章節。</p>
+
+  <h3>最終裁決:🟡 觀望(偏正面 — 品質 tier 1,短期 R:R 臨門一腳不足)</h3>
+  <p>Arista 是 AI 網路時代的「純種玩家」:Q4 2025 營收 $2.488B(+28.9% YoY,Beat)、EPS $0.82(Beat 13.9%)、op margin 47.5%、首季淨利 > $1B。2026 全年指引上調至 +25%($11.25B),AI 網路營收目標從 $2.75B 上調至 <b>$3.25B(同比翻倍)</b>,Etherlink 累計 > 100 客戶。關鍵品質數字極強:<b>10 年均 ROIC 47.97%、5 年均 45.07%(v8 序列前三強,僅次於 NVDA 126% 與 TSMC 45%)、FCF Margin ~47%、Capex/Rev 僅 1.3%、10 年 FCF CAGR 34.57%</b>。估值面:Forward P/E ~35–42x 略高於 5Y 均 38.36x 但並未極端,分析師共識 median $178.81 比現價 $146 高 +22%。技術面:股價位於 MA60 $134 與 MA200 $136 之上(雖有 death cross 殘餘),RSI 58 中性。但短期 R:R 在 2.17x 略低於 3.0 門檻,長期 R:R 在 🟡 區間,導致無法進入「進場」級別。</p>
+
+  <h3>財報信號與假設校準</h3>
+  <ul>
+    <li><b>H1(Etherlink 在 AI Backend 網路市場取代 InfiniBand)</b>:<span class="pill green">強化</span>Etherlink > 100 客戶、與 Meta/Microsoft 深度合作。</li>
+    <li><b>H2(AI 營收 2026 翻倍至 $3.25B)</b>:<span class="pill green">強化</span>管理層主動上修目標(從 $2.75B → $3.25B)。</li>
+    <li><b>H3(GM 維持 62%+,不受 AI Capex 壓力影響)</b>:<span class="pill yellow">不變</span>62.86% 穩定但供應鏈成本壓力存在。</li>
+  </ul>
+  <p>這份財報讓成長假設強化,<b>但 Jayshree Ullal 親口表示「2026 供應鏈價格 horrendous, exponentially higher」</b>——這是第一次 GM 可能受壓的信號。隱含預期變得更容易兌現(營收、AI 佔比),但 margin 維持的難度微幅上升。</p>
+
+  <h3>① 短期信號(0–12 個月)</h3>
+  <p>Q4 Beat + 2026 Guidance 上調 + Rosenblatt 升級至 Buy($180 目標)。短期 newsflow 明顯正面,但股價已從 ATH $162 回落至 $146(−9.9%),部分利多已定價。引用 §1。</p>
+
+  <h3>② 中期成長確信度(1–3 年)</h3>
+  <p>FY25 Non-GAAP EPS ~$2.92 → FY26E $3.53(+7%)→ FY27E $4.19(+6.6%)→ FY28E ~$5.00,3 年 CAGR ~20%。驅動 100% 有機,AI 網路為主要增量。能見度:<b>高</b>(Meta + Microsoft 為 long-cycle 客戶,訂單能見度 12–18 個月)。引用 §2.5B。</p>
+
+  <h3>③ 長期護城河邏輯(3 年後)</h3>
+  <p>EOS 網路作業系統 + 一致的軟硬體架構是真實壁壘,Cisco 無法用傳統 IOS 堆疊追趕。AI Backend 網路的 Ethernet vs InfiniBand 之爭,Arista 代表 Ethernet 陣營的旗艦——Meta、Microsoft、Oracle 多家 Hyperscaler 選擇 Ethernet 路線已成大趨勢。ROIC 47% 穩定且高於 WACC > 35 個百分點,長期複利能力極強。引用 §2.5 A/C/D。</p>
+
+  <div class="callout trap">
+    <h4>⚠️ 這是價值陷阱嗎?</h4>
+    <table>
+      <tr><th>問題</th><th>回答</th></tr>
+      <tr><td>最可能的陷阱模式</td><td><b>非陷阱</b>——高品質公司、合理溢價、短期估值不便宜但無惡化跡象</td></tr>
+      <tr><td>支持「不是陷阱」的最強論據</td><td>10 年均 ROIC 47.97% 是 v8 序列 Top 3(僅次於 NVDA 與 TSMC),5 年均 ROIC 45.07%,10 年 FCF CAGR 34.57%,Capex/Rev 僅 1.3% 極輕資本,GM 10 年範圍僅 61.07–64.50% 極穩定(非週期股)。AI 網路 2026 翻倍至 $3.25B 是管理層主動上修的目標,反映真實訂單能見度而非希望數字。</td></tr>
+      <tr><td>支持「可能是陷阱」的最強反駁</td><td>客戶集中度極高——Meta + Microsoft 合計 ~35–40% 營收,兩大客戶任一顯著減單會立即衝擊。供應鏈成本 "exponentially higher" 可能侵蝕 GM。Ethernet vs InfiniBand 之爭並未完全定案,NVIDIA 仍強推 NVLink 生態。Forward P/E ~38x 不便宜,PEG ~1.9 偏貴。</td></tr>
+      <tr><td>持有期間的領先指標</td><td>① Meta / Microsoft 任一客戶訂單顯著減少;② 單季 GM 跌破 62%;③ AI 網路營收 YoY < 80%(對 2026 全年目標翻倍的領先指標)</td></tr>
+    </table>
+    <p><b>最終定性:<span class="pill green">🟢 非陷阱</span></b>(品質毫無疑問,短期時機稍差而已)</p>
+  </div>
+
+  <h3>條件式進場判斷</h3>
+  <table>
+    <tr><th>條件類型</th><th>具體內容</th></tr>
+    <tr><td>估值條件</td><td>股價回踩至 MA60 $134 或下至 $130 → Forward P/E ~32x 提供更佳進場點</td></tr>
+    <tr><td>基本面條件</td><td>Q1 2026 財報需確認:AI 網路 YoY > 80%、GM 維持 62%+、Meta/Microsoft 訂單維持</td></tr>
+    <tr><td>陷阱排除條件</td><td>若 GM 連 2 季 < 62%、或任一大客戶訂單減少、或 AI 網路 YoY < 60% → 減碼觀望</td></tr>
+    <tr><td>事件觸發條件</td><td>Cisco 或 Juniper 在 Ethernet AI 網路市場出現突破性新品、或 NVIDIA 公開支持 Ethernet(取代 InfiniBand)</td></tr>
+  </table>
+
+  <h3>建議進場策略(分批)</h3>
+  <ul>
+    <li><b>觀望模式</b>:當前不急於建倉,短期 R:R 2.17x 略低於 3.0 門檻</li>
+    <li><b>首次建倉觸發</b>:股價回踩 MA60 $134 或以下,建立目標倉位 <b>50%</b></li>
+    <li><b>加碼觸發</b>:Q1 2026 財報確認 AI 網路 > 80% YoY,加碼至 <b>80%</b></li>
+    <li><b>減碼條件</b>:若 GM 跌破 62% 連 2 季、或任一大客戶訂單減少 → 減至 30% 觀望</li>
+  </ul>
+
+  <h3>下行風險量化(引用 §2.5E)</h3>
+  <ul>
+    <li>若 3 年後成長率降至 15%:估值壓縮 ~20%,股價約 $117</li>
+    <li>若 3 年後成長率降至 10%:估值壓縮 ~32%,股價約 $99</li>
+    <li>若 3 年後成長率降至 5%:估值壓縮 ~45%,股價約 $80</li>
+    <li>極端情境(客戶流失 + GM 下滑):股價可能跌至 $70–85,−42 至 −52%</li>
+  </ul>
+
+  <h3>最關鍵監測指標</h3>
+  <table>
+    <tr><th>#</th><th>指標</th><th>章節</th><th>性質</th><th>重新評估閾值</th></tr>
+    <tr><td>1</td><td>AI 網路季度 YoY 成長率</td><td>§0.5 H2</td><td><span class="pill blue">🔵 核心假設驗證</span></td><td>跌破 60%</td></tr>
+    <tr><td>2</td><td>Meta + Microsoft 營收占比</td><td>§5 / §3</td><td><span class="pill blue">🔵 客戶集中風險</span></td><td>任一單一客戶 YoY < 0%</td></tr>
+    <tr><td>3</td><td>Non-GAAP Gross Margin</td><td>§4</td><td>品質監測</td><td>連續 2 季 < 62%</td></tr>
+  </table>
+</section>
+
+<!-- ================= §7.7 三層 R:R ================= -->
+<section class="card" id="s77">
+  <h2 class="section-title">§7.7 時間軸對稱三層風報比診斷(v8.0)</h2>
+
+  <h3>A｜低標上行目標計算(供層 ①② 使用)</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>說明</th></tr>
+    <tr><td>§7.5 合理區間下緣</td><td>$147</td><td>FY27E EPS $4.19 × 35x</td></tr>
+    <tr><td>§7.5 合理區間中位</td><td><b>$172</b></td><td><b>低標上行目標</b> — FY27E × 41x</td></tr>
+    <tr><td>§7.5 合理區間上緣</td><td>$190</td><td>FY27E × 45x</td></tr>
+    <tr><td>上行空間(vs $146.05)</td><td><b>+17.8%</b></td><td>(172 − 146.05) / 146.05</td></tr>
+  </table>
+  <p class="note">§7.5 中位 $172 略低於分析師共識 median $178.81(差距 ~4%),反映本框架略為保守。</p>
+
+  <h3>B｜長期目標價計算(供層 ③ 使用)</h3>
+  <h4>B-1 長期 EPS 推算(雙源交叉驗證)</h4>
+  <p><b>方法 1(§2.5 B 成長驅動分解)</b>:定價驅動 +5%(價格組合升級) + 量驅動 +15%(AI 網路 + Campus 擴張) = 20% CAGR,Runway 遞減 −3%p = <b>採用 17%</b></p>
+  <p><b>方法 2(§2.5 D ROIC × 再投資率)</b>:ROIC 47% × Reinvestment Rate ~35% = 內生 16.5%;ROIC 穩定性 +0%p = <b>採用 16.5%</b></p>
+  <p><b>雙源交叉驗證</b>:17% vs 16.5%,差距 0.5%p → 取平均 = <b>16.8% 採用</b></p>
+  <p>5 年後 EPS(基期 FY25 ~$2.92):$2.92 × 1.168^5 = <b>$6.36</b></p>
+
+  <h4>B-2 長期合理倍數</h4>
+  <p>§2.5 長期成長性綜合評級:<span class="pill green">🟢 高確信長期成長</span> → 理論 25x,ANET 因 ROIC 47% 頂級品質給予 +5x 溢價 → 採用 <b>30x</b></p>
+
+  <h4>B-3 長期目標價</h4>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>5 年後 EPS</td><td>$6.36</td></tr>
+    <tr><td>長期合理倍數</td><td>30x</td></tr>
+    <tr><td><b>長期目標價</b></td><td><b>$191</b></td></tr>
+    <tr><td>長期上行空間(vs $146.05)</td><td><b>+30.8%</b></td></tr>
+  </table>
+  <p class="note">長期目標 $191 對應 5 年 +31%,年化 5.5%——反映「已充分定價的優質公司」特徵。Bull case(20% CAGR × 33x)可達 $240(+64%)。</p>
+
+  <div class="rr-grid">
+    <div class="rr-card short">
+      <h4>① 短期 R:R(6–18 個月)</h4>
+      <table>
+        <tr><td>現價</td><td>$146.05</td></tr>
+        <tr><td>MA60(50-day)</td><td>$134.02</td></tr>
+        <tr><td>vs MA60</td><td>+9.0%</td></tr>
+        <tr><td>下行錨點(MA60)</td><td>$134.02</td></tr>
+        <tr><td>下行距離</td><td>−8.2%</td></tr>
+        <tr><td>上行錨點(§7.5 中位)</td><td>$172</td></tr>
+        <tr><td>上行距離</td><td>+17.8%</td></tr>
+        <tr><td><b>短期 R:R</b></td><td><b>2.17x</b></td></tr>
+        <tr><td>判定</td><td><span class="pill red">❌ Fail(< 3.0)</span></td></tr>
+      </table>
+      <p class="note">R:R 2.17x 略低於 3.0 門檻,若股價回踩至 $134 附近,R:R 可達 3.0x+ 成為進場點。</p>
+    </div>
+
+    <div class="rr-card mid">
+      <h4>② 中期 R:R(1–2 年)</h4>
+      <table>
+        <tr><td>現價</td><td>$146.05</td></tr>
+        <tr><td>MA200</td><td>$135.76</td></tr>
+        <tr><td>vs MA200</td><td>+7.6%</td></tr>
+        <tr><td>下行錨點(MA200)</td><td>$135.76</td></tr>
+        <tr><td>下行距離</td><td>−7.0%</td></tr>
+        <tr><td>上行錨點(§7.5 中位)</td><td>$172</td></tr>
+        <tr><td>上行距離</td><td>+17.8%</td></tr>
+        <tr><td><b>中期 R:R</b></td><td><b>2.54x</b></td></tr>
+        <tr><td>判定</td><td><span class="pill green">✅ Pass(> 2.0)</span></td></tr>
+      </table>
+      <p class="note">中期 R:R 達標。MA60 與 MA200 幾乎重合($134 vs $136),形成強勁技術支撐區。</p>
+    </div>
+
+    <div class="rr-card long">
+      <h4>③ 長期 R:R(5 年視角)</h4>
+      <div class="subcap">雙引擎:成長驅動 + ROIC 再投資</div>
+      <table>
+        <tr><td colspan="2"><b>下行錨點選擇</b></td></tr>
+        <tr><td>MA104w(估)</td><td>$100 / −31.5%</td></tr>
+        <tr><td>§2.5E 成長降至 10%</td><td>$99 / −32.2%</td></tr>
+        <tr><td>採用(較悲觀)</td><td><b>$99 / −32.2%</b></td></tr>
+        <tr><td colspan="2"><b>R:R 計算</b></td></tr>
+        <tr><td>現價</td><td>$146.05</td></tr>
+        <tr><td>下行錨點</td><td>$99(−32.2%)</td></tr>
+        <tr><td>上行(長期目標)</td><td>$191(+30.8%)</td></tr>
+        <tr><td><b>長期 R:R</b></td><td><b>0.96x</b></td></tr>
+        <tr><td>判定</td><td><span class="pill red">🔴 複利空間有限</span></td></tr>
+      </table>
+      <p class="note">長期 R:R 不到 1.0 意味「5 年後合理價位」與「悲觀下跌幅度」相當,顯示當前估值已定價大部分長期潛力。敏感度:若採用 Bull case(20% CAGR × 33x)→ 長期目標 $240,R:R = 64.3%/32.2% = 2.00x 🟡 臨界。若採用最樂觀(22% × 35x)→ R:R 可達 2.5x 🟡。</p>
+    </div>
+  </div>
+
+  <h3>F｜三層綜合解讀</h3>
+  <table>
+    <tr><th>層</th><th>時間軸</th><th>R:R</th><th>判定</th></tr>
+    <tr><td>① 短期</td><td>6–18 個月</td><td>2.17x</td><td><span class="pill red">❌</span></td></tr>
+    <tr><td>② 中期</td><td>1–2 年</td><td>2.54x</td><td><span class="pill green">✅</span></td></tr>
+    <tr><td>③ 長期</td><td>5 年</td><td>0.96x(Bull ~2.0x)</td><td><span class="pill yellow">🟡(邊緣)</span></td></tr>
+  </table>
+  <p>組合為「❌/✅/🟡」——與 GOOGL、AMZN 相同的觀望偏正面結構。ANET 的特殊性在於品質極強(ROIC 47% 是 v8 Top 3)但估值已充分反映,當前位置缺乏「買入安全邊際」。這不是迴避,而是「等時機」。短期 R:R 差一步到 3.0 門檻(2.17 vs 3.0),若回踩 MA60 $134 附近即變為進場點。<b>建議:觀望(偏正面)</b>。等待以下任一觸發:(1)股價回踩 MA60 $134 → 短期 R:R 升至 3.5x+;(2)Q1 2026 財報確認 AI 網路 > 80% YoY 且 GM 維持 62%+;(3)整體技術回調 10%+ 提供更好安全邊際。</p>
+</section>
+
+<!-- ================= §7.6 三方辯論 ================= -->
+<section class="card" id="s76">
+  <h2 class="section-title">§7.6 三方辯論摘要</h2>
+  <div class="debate-grid">
+    <div class="debate-card bull">
+      <h4>多頭辯護人｜Charlie Munger 模式</h4>
+      <ol>
+        <li><b>護城河(§3)</b>:EOS 網路作業系統是數據中心網路的事實標準之一,10 年累積的軟體生態使 Cisco 無法用 IOS 堆疊追趕。AI 網路從 InfiniBand 向 Ethernet 漂移的結構性轉變,Arista 是最大受益者。</li>
+        <li><b>成長(§2.5)</b>:10 年 FCF CAGR 34.57%、ROIC 10 年均 47.97%——這是 v8 序列中品質最穩定的公司之一。2026 AI 營收翻倍至 $3.25B,Jayshree Ullal 帶領的執行力無人質疑。</li>
+        <li><b>估值(§7)</b>:Forward P/E 38x 對應 20% EPS CAGR,PEG 1.9 合理;分析師共識 $179 比現價 +22% 提供額外確信。與 NVDA 並列為 v8 序列中「高 ROIC + 非週期股 + 技術未過熱」的少數標的。</li>
+      </ol>
+      <p><b>一句話</b>:「這是 Cisco 的接班人,是 AI 時代少數能同時賣硬體、軟體、生態的純種網路公司——ROIC 47% 的複利機器用 38x P/E 買不貴。」</p>
+    </div>
+    <div class="debate-card bear">
+      <h4>空頭檢察官｜Michael Burry 模式</h4>
+      <ol>
+        <li><b>基本面惡化</b>:客戶集中度極高——Meta + Microsoft 合計 35–40% 營收,任一客戶減少採購立即重創營收。AI Capex 週期 2027 可能開始冷卻,Hyperscaler 預算縮減會直接壓縮 Arista 訂單。Jayshree Ullal 親口表示「2026 供應鏈價格 horrendous, exponentially higher」——這是 GM 首次可能下滑的信號。</li>
+        <li><b>估值壓縮</b>:Forward P/E 38x + EV/EBITDA 38x 位於歷史合理區間但絕非便宜。若 AI 網路成長從 100% 放緩至 40%,市場會把 PE 壓縮至 25–28x,股價可能 −25%。Bull case(+60%)假設需「AI 網路連續 3 年翻倍」,歷史上無先例。</li>
+        <li><b>催化劑</b>:① NVIDIA 公告支持 Ethernet 取代 InfiniBand → 看似對 Arista 正面但實際會帶入更強競爭者;② Cisco 在 Ethernet AI 網路推出突破性新品 → 價格壓力立即;③ Meta 或 Microsoft 任一公告減少網路 Capex → 直接衝擊。</li>
+      </ol>
+      <p><b>最大威脅</b>:「ANET 當前估值已把『AI Ethernet 完勝 InfiniBand + Arista 完勝 Cisco』的兩個假設都定價滿,任何一個假設動搖都會觸發倍數壓縮。」</p>
+    </div>
+    <div class="debate-card ref">
+      <h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+      <table>
+        <tr><td>vs 過去 3 年 FCF CAGR</td><td>2/2</td></tr>
+        <tr><td>vs 共識 EPS CAGR</td><td>2/2</td></tr>
+        <tr><td>vs 同業最快 FCF CAGR</td><td>1/2</td></tr>
+        <tr><td>兌現條件苛刻度</td><td>1/2</td></tr>
+        <tr><td>歷史類比可行性</td><td>1/2</td></tr>
+      </table>
+      <p><b>隱含預期可信度評分:7 / 10</b></p>
+      <p><b>一句話</b>:「Forward P/E 38x 隱含 FCF CAGR 約 17%,這與 ANET 過去 10 年 FCF CAGR 34.57% 相比極為保守——市場並未激進定價,但也已反映合理成長預期。」</p>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <h4>你的裁決</h4>
+    <table>
+      <tr><td style="width:28%">多頭最強論據</td><td>ROIC 10 年均 47.97% + AI 網路 2026 翻倍至 $3.25B + 品質 v8 Top 3</td></tr>
+      <tr><td>空頭最大威脅</td><td>客戶集中度(Meta + Microsoft ~35–40%)+ 供應鏈成本壓力 + Forward P/E 38x 非便宜</td></tr>
+      <tr><td>估值仲裁評分</td><td>7 / 10</td></tr>
+      <tr><td><b>我的裁決</b></td><td><b>觀望(偏正面)</b> — 品質強但時機稍差,等回踩 MA60 $134</td></tr>
+      <tr><td>理由(一段)</td><td>多頭論據全面成立,估值仲裁員 7/10 明顯高於迴避組標的(MRVL 3、STX 2、MU 2)。與 NVDA 並列為 v8 序列中「高 ROIC + 品質穩定 + 技術未過熱」的少數標的。但短期 R:R 2.17x 未達 3.0 門檻 + 長期 R:R 0.96x 🔴 → 這不是完美進場點。ANET 相較 NVDA 的差距主要在:(1)客戶集中度更高,(2)長期目標已接近分析師共識,缺乏「市場誤判」的潛在 Alpha。對新建倉者:等 MA60 回踩;對已持倉者:不需減碼。</td></tr>
+    </table>
+    <p><b>自我檢核</b>:</p>
+    <ul>
+      <li>☑ 多頭論據基於已發生事件(2025 業績 + 2026 上調指引),不依賴「市場認識到」。</li>
+      <li>☑ 空頭威脅 #1(Meta/Microsoft 訂單)可在 Q1 2026 財報驗證,先於 MA 止損。</li>
+      <li>☑ 估值仲裁員 7/10 中高,短期 R:R 不足是獨立的時機問題。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= §0 序章 ================= -->
+<section class="card" id="s0">
+  <h2 class="section-title">§0 序章:第一性原理 × 逆向思考</h2>
+
+  <h3>存在意義</h3>
+  <p>Arista 解決的是「大型數據中心內部設備之間的高速資訊傳輸」工程問題。當你擁有數萬顆 GPU 並希望它們協同訓練 AI 模型時,這些 GPU 之間的網路頻寬與延遲決定了訓練效率——慢 10% 的網路等於慢 10% 的訓練速度,對 Hyperscaler 是數億美元的成本。Arista 做兩件事:(1)提供高性能乙太網路交換機(400G/800G/1.6T);(2)提供 EOS 作業系統將這些交換機統一管理。若 Arista 明天消失,短期內 Cisco Nexus / Juniper 仍可填補 60% 產能,但 AI 網路的 Ethernet 生態將失去最主要的推手,迫使更多 Hyperscaler 轉向 NVIDIA InfiniBand 單一供應商,整個產業的議價力向 NVIDIA 集中。這個存在意義的特徵是「重要但並非絕對唯一」——Arista 的護城河來自執行速度與生態整合而非不可替代。</p>
+
+  <h3>逆向推演(Munger Inversion)</h3>
+  <ul>
+    <li><b>地緣政治曝險</b>:總部美國,製造部分依賴台灣、墨西哥的 OEM,對中國直接曝險極低(< 5%)。</li>
+    <li><b>技術替代風險</b>:① NVIDIA Spectrum-X(NVIDIA 自家 Ethernet 方案)是最大威脅,NVIDIA 用其 GPU 生態影響力推銷;② Cisco 以 CCO 策略對抗但技術落後 2–3 年;③ Hyperscaler 自研網路晶片(Google Aquila、Meta MTIA 網路)是長期威脅,10 年+ 時間軸。</li>
+    <li><b>管理層失職</b>:極低。CEO Jayshree Ullal 是矽谷最知名的女性 CEO 之一,15 年持續執行力優秀,資本紀律與 R&D 投入皆頂級。</li>
+    <li><b>價值陷阱路徑</b>:非陷阱。若出現問題,最可能是「客戶集中度導致的短期波動」——Meta 或 Microsoft 單季訂單減少,但長期趨勢不受影響。</li>
+  </ul>
+</section>
+
+<!-- ================= §0.5 投資論點錨定 ================= -->
+<section class="card" id="s05">
+  <h2 class="section-title">§0.5 投資論點錨定</h2>
+
+  <div class="callout anchor">
+    <h4>A｜持有期與時間軸宣告</h4>
+    <table>
+      <tr><td style="width:30%">預設持有期</td><td><b>36–60 個月</b>(跨越 AI 網路世代過渡)</td></tr>
+      <tr><td>主要驅動</td><td>AI 網路 $3.25B → $6B+ 成長 + Campus 擴張 + EOS 生態鎖定</td></tr>
+      <tr><td>訊號 vs 噪音</td><td>AI 網路 YoY、客戶集中度、GM 為訊號;短期分析師目標上修為噪音</td></tr>
+    </table>
+  </div>
+
+  <h3>B｜三個核心假設</h3>
+  <table>
+    <tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+    <tr><td>H1</td><td>Ethernet 在 AI Backend 網路市場取代 InfiniBand 成為主流</td><td>Hyperscaler 部署比例</td><td>每季財報</td></tr>
+    <tr><td>H2</td><td>2026 AI 網路營收 $3.25B(YoY +100%)達成</td><td>季度 AI 營收</td><td>每季財報</td></tr>
+    <tr><td>H3</td><td>Meta + Microsoft 合計營收占比維持 35–40%,不進一步集中</td><td>客戶集中度披露</td><td>10-K 年度</td></tr>
+  </table>
+
+  <h3>C｜三個最可能推翻論點的風險</h3>
+  <table>
+    <tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+    <tr><td>R1</td><td>NVIDIA Spectrum-X 搶下 Hyperscaler AI 網路份額</td><td>H1</td><td>NVIDIA Ethernet 收入</td><td>年化 > $5B</td></tr>
+    <tr><td>R2</td><td>Meta 或 Microsoft 任一減少 Arista 訂單</td><td>H3</td><td>客戶別營收</td><td>任一 YoY < 0%</td></tr>
+    <tr><td>R3</td><td>GM 因供應鏈成本下滑</td><td>—</td><td>Non-GAAP GM</td><td>連續 2 季 < 62%</td></tr>
+  </table>
+</section>
+
+<!-- ================= §1 即時財報情報 ================= -->
+<section class="card" id="s1">
+  <h2 class="section-title">§1 即時財報情報</h2>
+  <p class="note">資料來源:Arista Q4 2025 Earnings Release(2026-02-12)</p>
+
+  <h3>① 關鍵數字</h3>
+  <table>
+    <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+    <tr><td>Q4 Revenue</td><td>$2.488B</td><td>~$2.40B</td><td><span class="pill green">Beat</span></td><td>+28.9%</td></tr>
+    <tr><td>Q4 EPS</td><td>$0.82</td><td>$0.72</td><td><span class="pill green">Beat +13.9%</span></td><td>—</td></tr>
+    <tr><td>Q4 Op Margin</td><td>47.5%</td><td>—</td><td><span class="pill green">歷史高</span></td><td>—</td></tr>
+    <tr><td>Q4 Net Income</td><td>> $1B</td><td>—</td><td><span class="pill green">首次破 $1B</span></td><td>—</td></tr>
+    <tr><td>FY25 Revenue</td><td>$9.0B</td><td>—</td><td><span class="pill green">+28.6%</span></td><td>+28.6%</td></tr>
+    <tr><td>FY25 FCF</td><td>~$4.25B</td><td>—</td><td><span class="pill green">47% FCF margin</span></td><td>—</td></tr>
+    <tr><td>2026 Revenue Guidance</td><td>$11.25B (+25%)</td><td>$10.65B</td><td><span class="pill green">Raised</span></td><td>+25%</td></tr>
+    <tr><td>2026 AI Revenue Guidance</td><td><b>$3.25B(從 $2.75B 上調)</b></td><td>—</td><td><span class="pill green">+100% YoY</span></td><td>翻倍</td></tr>
+  </table>
+
+  <h3>財報對 §0.5 假設的邊際貢獻</h3>
+  <table>
+    <tr><th>假設</th><th>邊際方向</th><th>佐證</th></tr>
+    <tr><td>H1(Ethernet 取代 InfiniBand)</td><td><span class="pill green">＋</span></td><td>Etherlink > 100 客戶</td></tr>
+    <tr><td>H2(AI 網路翻倍)</td><td><span class="pill green">＋＋</span></td><td>目標從 $2.75B 上調至 $3.25B</td></tr>
+    <tr><td>H3(客戶集中度穩定)</td><td><span class="pill yellow">0</span></td><td>未見披露變化</td></tr>
+  </table>
+
+  <h3>② Earnings Call 語氣解析</h3>
+  <ul>
+    <li><b>管理層基調</b>:CEO Jayshree Ullal 顯示「戰略性樂觀」基調。關鍵句:「Demand exceeds our ability to supply」「co-designing AI rack systems where 1.6T switching is expected to emerge during 2026」——顯示需求超過供給。</li>
+    <li><b>Forward Guidance</b>:2026 全年指引從 +25% 翻倍 AI 網路營收至 $3.25B,這是自成立以來單一項最大指引上修。</li>
+    <li><b>刻意強調的主題</b>:「Etherlink > 100 客戶」「1.6T 將於 2026 emerge」「AI backend 與 front-end 網路雙線成長」——希望市場相信 Arista 在所有 AI 網路應用層面都是領導者。</li>
+    <li><b>刻意迴避的問題</b>:① 2026 具體 GM 指引(僅給區間);② Meta 與 Microsoft 以外的第三大客戶是誰;③ NVIDIA Spectrum-X 對 Arista 的具體威脅評估;④ Jayshree Ullal 繼任計畫(CEO 65 歲)。</li>
+  </ul>
+
+  <h3>③ 產業 Imply 萃取</h3>
+  <ul>
+    <li><b>需求端</b>:AI 訓練集群規模持續擴大,每一顆 GPU 都需要對應網路頻寬,帶動交換機需求與 GPU 需求同步成長。</li>
+    <li><b>供給端</b>:Arista 供應鏈開始出現瓶頸,記憶體與其他組件分配成為制約。</li>
+    <li><b>競爭格局</b>:Cisco 落後但持續追趕,NVIDIA Spectrum-X 是下一代威脅,Juniper(被 HPE 收購)變數增加。</li>
+    <li><b>總體敏感度</b>:管理層未顯著提及宏觀,AI Capex 敘事主導。</li>
+    <li><b>對同業的連帶推論</b>:對 NVDA 正面(AI 網路 = GPU 集群),對 AVGO 中性(AVGO Tomahawk 晶片仍是 Arista 上游),對 TSMC 正面(ASIC 代工)。</li>
+  </ul>
+</section>
+
+<!-- ================= §2 核心門檻檢核 ================= -->
+<section class="card" id="s2">
+  <h2 class="section-title">§2 核心門檻檢核</h2>
+
+  <h3>EPS CAGR 搜尋結果</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源</th></tr>
+    <tr><td>基期 FY25 Non-GAAP EPS(估)</td><td>~$2.92</td><td>Q4 $0.82 × 4 季推算</td></tr>
+    <tr><td>FY26E</td><td>$3.53(+60 天內 +7%)</td><td>分析師共識</td></tr>
+    <tr><td>FY27E</td><td>$4.19(+60 天內 +6.6%)</td><td>分析師共識</td></tr>
+    <tr><td>FY28E</td><td>~$5.00(外推)</td><td>外推</td></tr>
+    <tr><td>3 年 CAGR</td><td>~19.6%</td><td>計算 ($5.00/$2.92)^(1/3)-1</td></tr>
+  </table>
+
+  <h3>門檻檢核表</h3>
+  <table>
+    <tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+    <tr><td>FCF Margin(當前)</td><td>> 15%</td><td><span class="pill green">✅✅</span></td><td>FY25 $4.25B / $9B = <b>47%</b>(v8 序列前段班)</td></tr>
+    <tr><td>正規化 FCF Margin【Munger】</td><td>5 年均值 > 15%</td><td><span class="pill green">✅</span></td><td>5 年均 ~35%,穩定</td></tr>
+    <tr><td>ROIC(當前)</td><td>> 15%,且 > WACC</td><td><span class="pill green">✅✅</span></td><td>~45%,WACC ~9%,超額 36pp</td></tr>
+    <tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥ 70% 達標</td><td><span class="pill green">✅✅</span></td><td><b>10/10 年,10 年均 47.97%,5 年均 45.07%</b>(v8 前三)</td></tr>
+    <tr><td>毛利率定價能力【Munger】</td><td>10 年持續改善</td><td><span class="pill yellow">🟡</span></td><td>10 年範圍 61.07–64.50%,穩定但未改善</td></tr>
+    <tr><td>資本密集度【Munger】</td><td>Capex/Rev < 5% 優</td><td><span class="pill green">✅✅</span></td><td>~1.3%,極輕資本</td></tr>
+    <tr><td>EPS CAGR(未來 3 年)</td><td>> 20%</td><td><span class="pill yellow">🟡</span></td><td>~19.6%,接近但未達</td></tr>
+    <tr><td>PEG</td><td>< 2</td><td><span class="pill green">✅</span></td><td>38 / 19.6 = 1.94(邊緣)</td></tr>
+    <tr><td>負債安全性【Munger】</td><td>D/E < 0.7</td><td><span class="pill green">✅✅</span></td><td>D/E ~0,幾乎無負債</td></tr>
+    <tr><td>現金覆蓋總負債</td><td>—</td><td><span class="pill green">✅</span></td><td>現金 > 負債數倍</td></tr>
+    <tr><td>護城河強度</td><td>> 8 分</td><td><span class="pill green">✅</span></td><td>8/10(EOS + AI Ethernet 領導者)</td></tr>
+  </table>
+  <p><b>最大財務弱點</b>:客戶集中度(Meta + Microsoft ~35–40%),若任一客戶減單將顯著影響。<br><b>Munger 三維評級</b>:<span class="pill green">🟢 三項達標(準)</span>(ROIC 穩定性 ✅、毛利率穩定於高位 🟡、資本密集度極低 ✅)——毛利率雖未「持續改善」但維持 62–64% 高水平,實務上視為達標。</p>
+
+  <div class="callout trap">
+    <h4>價值陷阱初篩:低估值四問</h4>
+    <p>Forward P/E ~38x 位於 5 年分位約 <b>50–60%</b>(5 年均 38.36x),<b>不觸發</b>低估值四問。ANET 當前估值屬「合理至略貴」區間。</p>
+  </div>
+</section>
+
+<!-- ================= §2.5 長期成長性 ================= -->
+<section class="card" id="s25">
+  <h2 class="section-title">§2.5 長期成長性評估</h2>
+
+  <h3>A｜成長跑道(Runway)估算</h3>
+  <table>
+    <tr><th>維度</th><th>數據</th></tr>
+    <tr><td>全球資料中心交換機 TAM</td><td>~$35B(2025)→ $60B(2030E)</td></tr>
+    <tr><td>AI 網路子市場</td><td>~$10B(2025)→ $50B+(2030E)</td></tr>
+    <tr><td>Campus 交換機 TAM</td><td>~$20B</td></tr>
+    <tr><td>Arista 當前市佔</td><td>DC switching ~30%(僅次於 Cisco)</td></tr>
+    <tr><td><b>Runway 估計</b></td><td><b>≥ 10 年</b>(AI 網路市場擴張)</td></tr>
+  </table>
+  <p><span class="pill green">🟢 高確信長期成長</span>,支撐高估值倍數。</p>
+
+  <h3>B｜成長品質</h3>
+  <table>
+    <tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
+    <tr><td>有機成長</td><td>~100%</td><td>無重大併購</td></tr>
+    <tr><td>定價驅動</td><td>~25%</td><td>1.6T 升級 ASP</td></tr>
+    <tr><td>量驅動</td><td>~75%</td><td>AI 資料中心建設量</td></tr>
+  </table>
+
+  <h3>C｜成長護城河連動</h3>
+  <p><b>強化型</b>。每一個新 EOS 部署加深軟體生態鎖定,每一個大客戶贏單都帶來 reference 效應(Meta 採用 → Microsoft 跟進 → Oracle 跟進)。ROIC 47% 在成長中並未下滑,顯示成長不犧牲資本效率。</p>
+
+  <h3>D｜ROIC 與 FCF 長期可維持性</h3>
+  <table>
+    <tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>是否符合</th></tr>
+    <tr><td>ROIC</td><td>~45%</td><td>~43%</td><td><span class="pill green">→</span></td><td><span class="pill green">✅</span></td></tr>
+    <tr><td>ROIC − WACC</td><td>~36pp</td><td>~34pp</td><td><span class="pill green">穩定</span></td><td>持續極強</td></tr>
+    <tr><td>FCF Margin</td><td>47%</td><td>~35%</td><td><span class="pill green">↑</span></td><td><span class="pill green">✅</span></td></tr>
+    <tr><td>FCF / NI</td><td>~1.05</td><td>~1.00</td><td><span class="pill green">→</span></td><td>健康</td></tr>
+    <tr><td>Reinvestment Rate</td><td>~35%</td><td>~40%</td><td><span class="pill yellow">→</span></td><td>保守</td></tr>
+  </table>
+
+  <h3>E｜成長熄火情境壓力測試</h3>
+  <table>
+    <tr><th>情境</th><th>合理 Forward P/E</th><th>隱含股價</th><th>估值跌幅</th></tr>
+    <tr><td>3 年後降至 15%</td><td>28x</td><td>$117</td><td>−20%</td></tr>
+    <tr><td>3 年後降至 10%</td><td>22x</td><td>$99</td><td>−32%</td></tr>
+    <tr><td>3 年後降至 5%</td><td>17x</td><td>$80</td><td>−45%</td></tr>
+    <tr><td>極端(客戶流失)</td><td>15x</td><td>$70</td><td>−52%</td></tr>
+  </table>
+
+  <div class="callout trap">
+    <h4>衰退信號偵測表</h4>
+    <table>
+      <tr><th>信號類型</th><th>指標</th><th>狀態</th><th>亮燈</th></tr>
+      <tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>穩定 63%</td><td>⬜</td></tr>
+      <tr><td>護城河侵蝕</td><td>市佔縮減</td><td>DC switching 擴大</td><td>⬜</td></tr>
+      <tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>價量齊升</td><td>⬜</td></tr>
+      <tr><td>盈餘品質</td><td>EPS > Rev CAGR > 5pp</td><td>EPS ~20% Rev ~28%,Rev 更高</td><td>⬜</td></tr>
+      <tr><td>盈餘品質</td><td>FCF/NI < 0.75</td><td>~1.05</td><td>⬜</td></tr>
+      <tr><td>盈餘品質</td><td>SBC/Rev > 5%</td><td>~6%(略高)</td><td><span class="pill red">🔴</span></td></tr>
+      <tr><td>產業衰退</td><td>TAM 萎縮</td><td>擴大</td><td>⬜</td></tr>
+      <tr><td>產業衰退</td><td>板塊倍數下移</td><td>穩定</td><td>⬜</td></tr>
+      <tr><td>隱性資本密集</td><td>Maint Capex/FCF > 60%</td><td>~3%(極低)</td><td>⬜</td></tr>
+      <tr><td>隱性資本密集</td><td>停止投資 → 3 年下滑</td><td>否</td><td>⬜</td></tr>
+    </table>
+    <p><b>亮燈數:1 個 🔴</b> → <span class="pill yellow">🟡 中度警戒</span></p>
+    <p>唯一亮燈是 SBC/Revenue ~6%,這是 ANET 歷史長期水準(軟體公司特徵)。非惡化跡象。</p>
+  </div>
+
+  <p><b>長期成長性綜合評級</b>:<span class="pill green">🟢 高確信長期成長</span>。理由:Runway ≥ 10 年、100% 有機、護城河強化型、ROIC 45% 穩定、衰退信號僅 1 個(非惡化)。</p>
+</section>
+
+<!-- ================= §3 護城河分析 ================= -->
+<section class="card" id="s3">
+  <h2 class="section-title">§3 護城河分析</h2>
+  <p><b>評分:8 / 10</b>(高品質純種網路公司,次於 NVDA/TSMC 10,與 MSFT/GOOGL 9 相近)</p>
+
+  <h3>護城河來源</h3>
+  <ul>
+    <li><b>網路效應</b>:部分。EOS 生態的 ISV、整合商、開發者形成多邊網路,但規模仍不及 Cisco 的傳統 IOS 生態。</li>
+    <li><b>無形資產</b>:✅✅ EOS 網路作業系統是 10 年累積的核心 IP,Cisco 無法用傳統 IOS 追趕。1.6T ASIC 與 Broadcom Tomahawk 的深度整合是另一層技術壁壘。</li>
+    <li><b>轉換成本</b>:✅ 中高。企業部署 Arista 後,網路拓撲、自動化腳本、管理流程都綁定 EOS,切換成本顯著。</li>
+    <li><b>規模優勢</b>:✅ 中等。Arista 年營收 $9B 規模足以保持 R&D 領先,但仍顯著小於 Cisco($55B+)。</li>
+  </ul>
+
+  <h3>競爭鴻溝</h3>
+  <p>為什麼 Cisco($55B 營收)仍追不上 Arista?<br>① Cisco 的 IOS 網路堆疊是 1990 年代設計,對 AI 網路的即時監控與自動化架構不如 EOS;② Cisco 的企業文化偏向銷售驅動,產品創新速度慢;③ Arista 專注於 Hyperscaler 客戶,每一單都是千萬美元級合約,與 Cisco 的碎片化銷售渠道不同。Arista 的護城河是「專注 + 執行」,不是單一技術優勢。</p>
+
+  <h3>市佔競爭表</h3>
+  <table>
+    <tr><th>對手</th><th>DC Switching 市佔</th><th>3 年趨勢</th><th>核心威脅</th></tr>
+    <tr><td><b>Arista</b></td><td>~30%</td><td><span class="pill green">↑</span></td><td>—</td></tr>
+    <tr><td>Cisco</td><td>~45%</td><td><span class="pill red">↓</span></td><td>傳統 enterprise,市佔被 Arista 蠶食</td></tr>
+    <tr><td>Juniper (HPE)</td><td>~8%</td><td><span class="pill yellow">→</span></td><td>被收購後整合不明</td></tr>
+    <tr><td>NVIDIA(Spectrum-X)</td><td>~5%(快速擴張)</td><td><span class="pill green">↑↑</span></td><td>Ethernet AI 網路新晉對手</td></tr>
+  </table>
+
+  <h3>護城河趨勢</h3>
+  <p><b>擴大中但 NVIDIA Spectrum-X 是下一個威脅。</b>24 個月內威脅排序:① NVIDIA 以其 GPU 生態影響力推廣 Spectrum-X;② Cisco 推出突破性新產品追趕 AI 網路;③ Hyperscaler 自研網路晶片(Meta MTIA 網路、Google Aquila);④ 1.6T 世代過渡時 ASIC 供應商切換風險(Broadcom → Marvell?)。</p>
+</section>
+
+<!-- ================= §4 財務品質監測 ================= -->
+<section class="card" id="s4">
+  <h2 class="section-title">§4 財務品質監測</h2>
+
+  <h3>三年趨勢表</h3>
+  <table>
+    <tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>FY26E</th></tr>
+    <tr><td>Revenue YoY</td><td>+34%</td><td>+19%</td><td>+28.6%</td><td>+25%</td></tr>
+    <tr><td>Non-GAAP GM</td><td>~64%</td><td>~64%</td><td>62.86%</td><td>~62%</td></tr>
+    <tr><td>Non-GAAP Op Margin</td><td>~42%</td><td>~43%</td><td>~47.5%</td><td>~46%</td></tr>
+    <tr><td>FCF Margin</td><td>~34%</td><td>~45%</td><td>47%</td><td>~45%</td></tr>
+    <tr><td>ROIC</td><td>~40%</td><td>~45%</td><td>~45%</td><td>~45%</td></tr>
+    <tr><td>SBC / Revenue</td><td>~6%</td><td>~6%</td><td>~6%</td><td>~6%</td></tr>
+  </table>
+
+  <h3>獲利品質警訊</h3>
+  <ul>
+    <li>淨利 vs OCF:OCF 略高於 NI,正常。</li>
+    <li>AR vs Revenue:同步。</li>
+    <li>存貨 vs Revenue:供應鏈緊張下存貨略升。</li>
+    <li>FCF 轉換率:~1.05,極健康(反映低 Capex + 高盈利)。</li>
+  </ul>
+
+  <h3>回購品質評估</h3>
+  <table>
+    <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+    <tr><td>FY25 回購</td><td>$1.6B</td><td>~38% 的 FCF,保守</td></tr>
+    <tr><td>回購均價 vs 當前</td><td>均價 ~$100,當前 $146</td><td>均價低於當前,性價比佳</td></tr>
+    <tr><td>Revenue CAGR 同期</td><td>~27%</td><td>EPS ~22% 略低於 Rev,無虛假回購</td></tr>
+  </table>
+</section>
+
+<!-- ================= §5 產業格局 ================= -->
+<section class="card" id="s5">
+  <h2 class="section-title">§5 產業格局、議價權與 Unit Economics</h2>
+
+  <h3>市場量化</h3>
+  <ul>
+    <li>Data Center switching TAM ~$35B(2025)→ $60B(2030E),CAGR 11%</li>
+    <li>AI 網路子市場 CAGR 40%+,Arista 目標份額 > 30%</li>
+    <li>Campus switching TAM ~$20B,Arista 新進入領域</li>
+  </ul>
+
+  <h3>議價權</h3>
+  <ul>
+    <li><b>對上游</b>:對 Broadcom(Tomahawk 晶片)議價中等——Broadcom 為主要 ASIC 供應商,切換風險存在。對 OEM(Flex、Jabil)議價強。</li>
+    <li><b>對下游</b>:對 Hyperscaler 客戶議價中等。Meta 與 Microsoft 作為最大客戶具定價權,但 Arista 技術領先使其不易被取代。</li>
+    <li><b>地緣</b>:總部美國,製造分散於台灣、墨西哥,對中國依賴極低。</li>
+  </ul>
+
+  <h3>營收組成</h3>
+  <ul>
+    <li><b>Data Center switching</b>:~70%(包含 AI 網路 $3.25B)</li>
+    <li><b>Cloud & Enterprise</b>:~20%</li>
+    <li><b>Campus & Edge</b>:~10%(成長中)</li>
+  </ul>
+
+  <h3>單位經濟</h3>
+  <p>400G/800G 交換機 ASP $50K-$200K,1.6T 將進一步提升 ASP。Hyperscaler 採購 multi-year 合約,LTV 極高。Arista 的「軟硬整合」使每一台設備的 lifetime value 包含持續的 EOS 授權收入。</p>
+</section>
+
+<!-- ================= §6 公司治理 ================= -->
+<section class="card" id="s6">
+  <h2 class="section-title">§6 公司治理與資本配置</h2>
+
+  <h3>股東結構</h3>
+  <p>機構持股 ~85%,Vanguard、BlackRock 為前兩大。創辦人 Andy Bechtolsheim(Sun Microsystems 共同創辦人)仍為董事會成員,持有約 4%。CEO Jayshree Ullal 持有約 1%。</p>
+
+  <h3>資本配置軌跡</h3>
+  <p>Arista 歷史上奉行「R&D + 適度回購 + 零併購」的純粹策略。過去 10 年無任何大型併購,R&D 持續投入於 EOS 與交換晶片整合。FY25 回購 $1.6B(約 38% 的 FCF),均價遠低於當前股價,是 v8 序列中最紀律的回購案例之一。</p>
+
+  <h3>SBC 評估</h3>
+  <p>SBC/Revenue ~6%,略高於 v8 序列中位(MSFT 4%、GOOGL 4.5%),為軟體公司的典型水平。這是唯一的 🔴 亮燈項目,但趨勢穩定未惡化。</p>
+</section>
+
+<!-- ================= §7 估值診斷 ================= -->
+<section class="card" id="s7">
+  <h2 class="section-title">§7 估值診斷</h2>
+
+  <h3>7.0｜估值體系診斷:市場現在用哪把尺?</h3>
+  <table>
+    <tr><th>邏輯類型</th><th>對應</th><th>當前主流?</th></tr>
+    <tr><td>盈利能力型</td><td>Forward P/E</td><td>主流</td></tr>
+    <tr><td>成長型</td><td>PEG, EV/Rev</td><td>次主流(AI 網路敘事)</td></tr>
+    <tr><td>現金流型</td><td>P/FCF</td><td>次要</td></tr>
+  </table>
+  <p><b>當前主流邏輯</b>:Forward P/E 為主,市場用「頂級成長股」倍數(35–42x)定價,反映 ROIC 45% 與 20% EPS CAGR 的品質溢價。</p>
+  <p><b>估值體系診斷結論</b>:<span class="pill green">🟢 估值邏輯穩定</span>——市場使用一致的「頂級成長股」框架,無漂移風險。</p>
+
+  <h3>7.1｜歷史估值分位(5 年)</h3>
+  <table>
+    <tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+    <tr><td>Trailing P/E</td><td>46.07</td><td>18</td><td>38</td><td>80</td><td><span class="pill yellow">~55%</span></td></tr>
+    <tr><td>Forward P/E</td><td>~38(中值)</td><td>17</td><td>38.36</td><td>55</td><td><span class="pill yellow">~50%</span></td></tr>
+    <tr><td>EV/EBITDA</td><td>37.81</td><td>18</td><td>30</td><td>50</td><td><span class="pill yellow">~60%</span></td></tr>
+    <tr><td>EV/FCF</td><td>34.93</td><td>18</td><td>32</td><td>50</td><td><span class="pill yellow">~55%</span></td></tr>
+    <tr><td>P/S</td><td>~20</td><td>8</td><td>14</td><td>22</td><td><span class="pill red">~85%</span></td></tr>
+  </table>
+  <p><b>解讀</b>:<br>① 當前估值情緒:<b>合理至略高</b>,Forward P/E 處於 5 年中位附近。<br>② 上次 Forward P/E 在此分位(2024 中):之後 12 個月股價 +80%(AI 網路爆發)。<br>③ 推動當前分位的主因:AI 網路敘事(60%)、Q4 Beat(20%)、整體板塊同步(20%)。</p>
+
+  <h3>7.2｜PEG 診斷</h3>
+  <table>
+    <tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+    <tr><td>Forward P/E</td><td>38</td><td>—</td></tr>
+    <tr><td>Non-GAAP EPS 3Y CAGR</td><td>~19.6%</td><td>§2</td></tr>
+    <tr><td>PEG(3Y)</td><td><b>1.94</b></td><td><span class="pill yellow">合理偏貴</span></td></tr>
+    <tr><td>5Y EPS CAGR</td><td>~16.8%</td><td>§2.5</td></tr>
+    <tr><td>PEG(5Y)</td><td>2.26</td><td><span class="pill red">略貴</span></td></tr>
+    <tr><td>3Y vs 5Y 差距</td><td>0.32</td><td>差距小,一致</td></tr>
+  </table>
+  <p>PEG 矩陣落點:「PEG 1.94–2.26」在 v8 序列中位於 GOOGL(1.94)、AMZN(1.47)之間,略高於 MSFT(1.08),但仍遠低於 MRVL / STX / MU 的陷阱區間。品質溢價合理但無「便宜」空間。</p>
+
+  <h3>7.3｜Reverse DCF</h3>
+  <table>
+    <tr><th>參數</th><th>數值</th></tr>
+    <tr><td>市值</td><td>~$183.5B</td></tr>
+    <tr><td>基期 FCF(FY25)</td><td>$4.25B</td></tr>
+    <tr><td>WACC</td><td>~9%</td></tr>
+    <tr><td>永續成長率</td><td>3%</td></tr>
+    <tr><td><b>隱含前 10 年 FCF CAGR</b></td><td><b>~17%</b></td></tr>
+  </table>
+  <table>
+    <tr><th>比較基準</th><th>數值</th><th>相對位置</th></tr>
+    <tr><td>過去 10 年 FCF CAGR</td><td>34.57%</td><td>隱含 17% <b>遠低於</b>歷史</td></tr>
+    <tr><td>共識 EPS CAGR</td><td>19.6%</td><td>隱含 FCF 略低於 EPS</td></tr>
+    <tr><td>同業最快 FCF CAGR</td><td>NVDA 56%</td><td>不需匹配</td></tr>
+  </table>
+  <p><b>隱含預期判斷</b>:<span class="pill green">🟢 保守</span>。隱含 FCF CAGR 17% 僅為 ANET 過去 10 年實際 34.57% 的 49%,這個門檻相當低——只需歷史一半的速度就能辯護當前估值。這是 ANET 估值最吸引人的一面。</p>
+
+  <h3>7.4｜同業估值比較</h3>
+  <table>
+    <tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR</th><th>ROIC</th></tr>
+    <tr><td><b>ANET</b></td><td>$183B</td><td><b>38</b></td><td><b>38</b></td><td><b>1.94</b></td><td><b>47%</b></td><td><b>20%</b></td><td><b>45%</b></td></tr>
+    <tr><td>Cisco(CSCO)</td><td>~$260B</td><td>~15</td><td>~10</td><td>1.5</td><td>~25%</td><td>~10%</td><td>~20%</td></tr>
+    <tr><td>Juniper(JNPR)</td><td>被收購</td><td>—</td><td>—</td><td>—</td><td>~15%</td><td>—</td><td>~8%</td></tr>
+    <tr><td>NVDA</td><td>$4.5T</td><td>22</td><td>31</td><td>0.61</td><td>45%</td><td>36%</td><td>126%</td></tr>
+    <tr><td>產業中位(網路)</td><td>—</td><td>~20</td><td>~18</td><td>~1.5</td><td>~25%</td><td>~15%</td><td>~20%</td></tr>
+  </table>
+  <p>ANET Forward P/E 38 遠高於產業中位 20 的 90% 溢價,但品質各方面皆優於 Cisco(ROIC 45% vs 20%、FCF Margin 47% vs 25%、成長 20% vs 10%)。<b>品質溢價部分支撐估值</b>,但 90% 溢價幅度已反映大部分差距。</p>
+
+  <table>
+    <tr><th>問題</th><th>ANET</th><th>最強對手</th></tr>
+    <tr><td>主假設完全兌現最大上行</td><td>+31%(長期)</td><td>NVDA +111% / MSFT +24%</td></tr>
+    <tr><td>部分落空最小跌幅</td><td>−32%</td><td>MSFT −18% / NVDA −35%</td></tr>
+    <tr><td>綜合非對稱性</td><td>中等</td><td>NVDA > MSFT > ANET,在 R:R 層級</td></tr>
+  </table>
+  <p><b>橫向比較結論</b>:<span class="pill yellow">🥈 此標的為次優選(品質前段班但時機中等)</span>。</p>
+
+  <h3>7.5｜估值五角驗證與結論</h3>
+  <table>
+    <tr><th>工具</th><th>訊號</th><th>依據</th></tr>
+    <tr><td>估值體系診斷</td><td><span class="pill green">🟢 穩定</span></td><td>頂級成長股框架</td></tr>
+    <tr><td>歷史分位</td><td><span class="pill yellow">🟡 合理</span></td><td>Forward P/E 50% 分位</td></tr>
+    <tr><td>PEG</td><td><span class="pill yellow">🟡 合理偏貴</span></td><td>1.94–2.26</td></tr>
+    <tr><td>Reverse DCF</td><td><span class="pill green">🟢 保守</span></td><td>隱含 17% 僅為歷史 49%</td></tr>
+    <tr><td>同業相對</td><td><span class="pill yellow">🟡 品質溢價合理</span></td><td>90% 溢價但品質顯著優於 Cisco</td></tr>
+  </table>
+  <p><b>當前定價判斷</b>:<span class="pill yellow">🟡 公允定價(偏正面)</span></p>
+
+  <h3>估值倍數定錨</h3>
+  <table>
+    <tr><th>因素</th><th>判斷</th><th>對 P/E 影響</th></tr>
+    <tr><td>護城河品質</td><td>8/10</td><td>+2x</td></tr>
+    <tr><td>成長可持續年數</td><td>≥10 年 🟢</td><td>+2x</td></tr>
+    <tr><td>成長品質</td><td>量 75% + 定價 25%</td><td>+1x</td></tr>
+    <tr><td>護城河連動</td><td>強化型</td><td>+2x</td></tr>
+    <tr><td>ROIC 可維持性</td><td>45%,穩定</td><td>+3x</td></tr>
+    <tr><td>衰退信號</td><td>1 個(SBC 高)</td><td>−1x</td></tr>
+    <tr><td>估值體系方向</td><td>穩定</td><td>±0</td></tr>
+    <tr><td>客戶集中度</td><td>Meta + Microsoft ~35–40%</td><td>−2x</td></tr>
+    <tr><td>當前利率</td><td>10Y UST 4.4%</td><td>−1x</td></tr>
+    <tr><td><b>產業基準倍數</b></td><td><b>35x</b></td><td><b>調整後合理區間 35x – 45x,中位 41x</b></td></tr>
+  </table>
+  <p><b>長期合理倍數對應表(v8.0)</b>:🟢 高確信 → 25x 預設,ANET 因 ROIC 頂級品質給 30x</p>
+  <p><b>分析師目標價</b>:median $178.81(17–18 位),mean $178.73,高 $200–220,低 $112–160。本報告 §7.5 中位 $172 略低於共識,差距僅 ~4%,反映本框架對客戶集中度的額外折扣。</p>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>
