@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v9.0">
+<title>DD Report — ANET (Arista Networks) | 2026-04-12</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--title:#1E3A5F;--accent:#3B82F6;--text:#1E293B;--muted:#64748B;--border:#E2E8F0;--green-bg:#DCFCE7;--green-txt:#166534;--red-bg:#FEE2E2;--red-txt:#991B1B;--yellow-bg:#FEF9C3;--yellow-txt:#92400E;--blue-bg:#EFF6FF;--blue-txt:#1E3A5F;--orange-bg:#FFF0E6;--orange-border:#F97316;--orange-txt:#C2410C;--bull-bg:#F0FDF4;--bull-border:#16A34A;--bear-bg:#FFF1F2;--bear-border:#DC2626;--arb-bg:#F5F3FF;--arb-border:#7C3AED;--verdict-bg:#FFFBEB;--verdict-border:#D97706;--verdict-txt:#92400E}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px}
+.header-bar{position:sticky;top:0;z-index:100;background:var(--title);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px}.header-bar .ticker{font-size:20px;font-weight:700}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px 80px}.section{background:var(--card);border-radius:4px;margin-bottom:20px;border:1px solid var(--border);overflow:hidden}.section-title{background:var(--title);color:#fff;padding:14px 20px;font-size:16px;font-weight:700;border-left:4px solid var(--accent)}.section-body{padding:20px}.section-body p{margin-bottom:12px}.section-body h3{color:var(--title);margin:18px 0 10px;font-size:15px;border-bottom:1px solid var(--border);padding-bottom:6px}.section-body h4{color:var(--title);margin:14px 0 8px;font-size:14px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}th{background:var(--title);color:#fff;padding:8px 10px;text-align:left;font-weight:500}td{padding:7px 10px;border-bottom:1px solid var(--border)}tr:nth-child(even){background:#F1F5F9}.mono{font-family:'IBM Plex Mono',monospace}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}.badge-green{background:var(--green-bg);color:var(--green-txt)}.badge-red{background:var(--red-bg);color:var(--red-txt)}.badge-yellow{background:var(--yellow-bg);color:var(--yellow-txt)}.badge-blue{background:var(--blue-bg);color:var(--blue-txt)}
+.trap-warning{background:var(--orange-bg);border-left:4px solid var(--orange-border);padding:14px 18px;margin:12px 0;border-radius:0 4px 4px 0}.trap-warning h4{color:var(--orange-txt);margin:0 0 8px}
+.hypothesis-box{background:var(--blue-bg);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0;border-radius:0 4px 4px 0}.hypothesis-box h4{color:var(--blue-txt);margin:0 0 8px}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0}.debate-card{padding:14px;border-radius:4px}.debate-card.bull{background:var(--bull-bg);border-left:4px solid var(--bull-border)}.debate-card.bear{background:var(--bear-bg);border-left:4px solid var(--bear-border)}.debate-card.arb{background:var(--arb-bg);border-left:4px solid var(--arb-border)}
+.verdict-box{background:var(--verdict-bg);border-left:4px solid var(--verdict-border);padding:14px 18px;margin:14px 0;border-radius:0 4px 4px 0}.verdict-box h4{color:var(--verdict-txt);margin:0 0 8px}
+.rr-card{padding:14px;border-radius:4px;margin:14px 0}
+.quality-score-box{background:linear-gradient(135deg,#EFF6FF,#F0FDF4);border:2px solid var(--accent);padding:16px;border-radius:4px;margin:14px 0;text-align:center}.quality-score-box .score{font-size:36px;font-weight:700;color:var(--title);font-family:'IBM Plex Mono',monospace}
+.pass{background:var(--green-bg);color:var(--green-txt);padding:3px 10px;border-radius:3px;font-weight:700;font-family:'IBM Plex Mono',monospace}.fail{background:var(--red-bg);color:var(--red-txt);padding:3px 10px;border-radius:3px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.note-line{font-size:12.5px;color:var(--muted);margin:6px 0}ul{margin:8px 0 8px 20px}li{margin-bottom:4px}
+@media print{.header-bar,.print-btn{display:none}.container{padding:0}.section{break-inside:avoid}}@media(max-width:768px){.debate-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header-bar">
+<div><span class="ticker">ANET</span> &nbsp; Arista Networks, Inc.</div>
+<div>資料抓取：2026-04-12 ｜ 最新股價：$147.35 ｜ 最近財報：Q4 2025（2025/12/31） ｜ DD Schema v9.0</div>
+</div>
+<div class="container">
+<p style="font-size:13px;color:var(--muted);margin-bottom:18px">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<!-- §8 -->
+<div class="section"><div class="section-title">§8｜投資結論</div><div class="section-body">
+<h3>財報信號與假設校準</h3>
+<table>
+<tr><th>假設</th><th>狀態</th><th>方向</th><th>佐證</th></tr>
+<tr><td><b>H1</b> AI 網路（800G/1.6T）成為資料中心骨幹，ANET 維持 >40% 高速端口市佔</td><td>強化</td><td>＋</td><td>800G 出貨 QoQ 3 倍增長，ANET 800G 市佔第一；FY2026 AI 收入指引上調至 $3.25B（vs 上次 $2.75B）</td></tr>
+<tr><td><b>H2</b> Campus / Enterprise 成為第二引擎，年營收破 $1.25B</td><td>強化</td><td>＋</td><td>FY2026 Campus 指引 $1.25B；國際市場亞歐 >40% YoY 增長</td></tr>
+<tr><td><b>H3</b> Forward PE 回落至 35x 提供更好安全邊際</td><td>未觸發</td><td>0</td><td>Forward PE 41.68x，5Y 62% 分位——偏高但非極端</td></tr>
+</table>
+<p>H1+H2 強化、H3 尚可。管理層將 FY2026 營收指引從 20% 上調至 25% growth（$11.25B），AI networking 指引上調 18%（$2.75B→$3.25B），基本面加速中。</p>
+
+<h3>進場 / 觀望 / 迴避：<span class="badge badge-green">進場</span></h3>
+<p><b>① 短期</b>：Q4 2025 EPS beat 14%，Q1 2026 指引 $2.6B 營收。管理層上調全年指引至 25%。但 memory 短缺壓力可能壓縮短期毛利（指引 62-63% vs 64% 歷史）。</p>
+<p><b>② 中期</b>：Non-GAAP EPS CAGR ~21%（FY2025-28E），驅動：AI 800G/1.6T 部署 + Campus 擴張。能見度高——$6.8B 採購承諾已鎖定供應鏈。</p>
+<p><b>③ 長期</b>：TAM $70B（2028E），ANET 從 19% DC 市佔擴展至 AI+Campus。EOS 軟體平台形成轉換成本壁壘。護城河 8/10 且擴大中。</p>
+
+<div class="trap-warning">
+<h4>⚠️ 這是價值陷阱嗎？</h4>
+<table>
+<tr><td><b>最可能陷阱模式</b></td><td><b>非陷阱</b>——Forward PE 41.68x 不在低位（非「便宜」），FCF Margin 47%、ROIC >52%、營收 +29% 加速中。所有指標指向高品質成長股。</td></tr>
+<tr><td><b>「不是陷阱」論據</b></td><td>FCF $4.25B（47% margin）、D/E 0.01（幾乎零負債）、現金 $10.7B > 市值 5.8%。資產負債表為科技股中最乾淨之一。</td></tr>
+<tr><td><b>「可能是陷阱」反駁</b></td><td>Forward PE 42x × PEG 1.92 → 對 21% CAGR 而言偏貴。若 AI 網路支出在 2028 前見頂，成長放緩至 12-15%，PE 可壓縮至 30x（-28%）。</td></tr>
+<tr><td><b>領先指標</b></td><td>① 800G/1.6T 季度端口出貨量 ② 雲端巨頭網路 Capex 指引</td></tr>
+</table>
+<p><b>定性：</b><span class="badge badge-green">🟢 非陷阱</span></p>
+</div>
+
+<h3>條件式進場</h3>
+<table>
+<tr><th>條件</th><th>內容</th></tr>
+<tr><td><b>估值</b></td><td>Forward PE ≤ 42x（當前 41.68 ✅ 勉強符合）；若回落至 ≤35x 大幅加碼</td></tr>
+<tr><td><b>基本面</b></td><td>Q1 2026 需確認 Rev ≥$2.5B + GM ≥61%</td></tr>
+<tr><td><b>停損</b></td><td>AI networking 季營收 QoQ 連 2 季負成長，或 GM 跌破 58%</td></tr>
+</table>
+
+<h3>下行風險量化</h3>
+<p>若 3 年後成長降至 12%，PE 壓至 28x → 跌幅 <b>-25%</b>。若降至 8%，PE 壓至 22x → 跌幅 <b>-42%</b>。</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>指標</th><th>閾值</th></tr>
+<tr><td>1</td><td>800G/1.6T 季端口出貨量</td><td>QoQ 連 2 季負成長</td></tr>
+<tr><td>2</td><td>Non-GAAP Gross Margin</td><td>跌破 58%（memory 成本失控）</td></tr>
+<tr><td>3</td><td>Cloud Titan 收入佔比</td><td>持續 >45% 且集中度不降</td></tr>
+</table>
+</div></div>
+
+<!-- §7.7 -->
+<div class="section"><div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div><div class="section-body">
+<h3>A｜綜合品質分</h3>
+<div class="quality-score-box"><div class="score">8.70</div><div style="font-size:13px;color:var(--muted)">綜合品質分 — 高品質（High Quality）</div></div>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權</th></tr>
+<tr><td>護城河</td><td>§3：8/10</td><td class="mono">8</td><td>0.30</td><td class="mono">2.40</td></tr>
+<tr><td>長期成長性</td><td>§2.5 🟢 = 9</td><td class="mono">9</td><td>0.45</td><td class="mono">4.05</td></tr>
+<tr><td>財務品質</td><td>ROIC >52%、FCF 47%、GM 64%、零負債</td><td class="mono">9</td><td>0.10</td><td class="mono">0.90</td></tr>
+<tr><td>AI 風險</td><td>§2.5 F 🟢 = 9</td><td class="mono">9</td><td>0.15</td><td class="mono">1.35</td></tr>
+<tr style="font-weight:700;background:var(--green-bg)"><td colspan="4"><b>綜合品質分</b></td><td class="mono"><b>8.70</b></td></tr>
+</table>
+<p>品質：<b>高（8.5+）</b> → R:R 門檻 2.0x → 底倉 30%</p>
+
+<h3>B｜上行三引擎</h3>
+<table>
+<tr><th>引擎</th><th>觸發</th><th>係數</th></tr>
+<tr><td>A ROIC</td><td>✅（ROIC >52%，3Y 擴大）</td><td class="mono">1.175</td></tr>
+<tr style="font-weight:700;background:var(--green-bg)"><td>B PEG 動態</td><td>✅（5Y CAGR 21% > 20%）→ 21×2.5=52.5x</td><td class="mono">2.10（最高）</td></tr>
+<tr><td>C 護城河</td><td>❌（8 < 9）</td><td class="mono">—</td></tr>
+</table>
+
+<h3>C–D｜AI × 最終 P/E</h3>
+<p>AI 🟢 → ×1.10</p>
+<p class="mono" style="font-size:16px;font-weight:700;background:var(--green-bg);padding:10px;border-radius:4px">基準 25x × 2.10 × 1.10 = <b>57.75x</b></p>
+
+<h3>E｜長期 EPS</h3>
+<table>
+<tr><th>業務段</th><th>占比（§5）</th><th>5Y CAGR</th><th>加權</th></tr>
+<tr><td>AI Networking（800G/1.6T）</td><td>35%</td><td>30%</td><td>10.5%</td></tr>
+<tr><td>Cloud Titan 傳統</td><td>30%</td><td>12%</td><td>3.6%</td></tr>
+<tr><td>Campus / Enterprise</td><td>20%</td><td>20%</td><td>4.0%</td></tr>
+<tr><td>服務 / 其他</td><td>15%</td><td>8%</td><td>1.2%</td></tr>
+<tr style="font-weight:700"><td colspan="3">Rev CAGR + 槓桿 2%</td><td class="mono">21.3% → 採用 21%</td></tr>
+</table>
+<p>方法 2：ROIC 52% × 再投資 40% = 20.8%。採用 = <b>21%</b>。</p>
+<p>基期 $2.98（FY2025 Non-GAAP）× 1.21<sup>5</sup> = $2.98 × 2.594 = <b>$7.73</b></p>
+<p>長期目標 = $7.73 × 57.75 = <b>$447</b></p>
+
+<h3>G｜下行錨點</h3>
+<p>護城河 8 → -20% ｜ 一般成長股 → 0% ｜ AI 🟢 → -5% ｜ 淨 = <b>-25%</b></p>
+<p>壓測 EPS = $2.98 × 0.75 = $2.24 ｜ 恐慌 PE = 20+0.25×35 = 28.75x</p>
+<p class="mono" style="background:var(--red-bg);padding:10px;border-radius:4px;font-weight:700">下行錨點 = $2.24 × 28.75 = <b>$64</b></p>
+
+<h3>H｜R:R</h3>
+<div class="rr-card" style="background:var(--green-bg);border-left:4px solid #059669">
+<h4 style="color:#065F46">長期 R:R（5 年視角）</h4>
+<table>
+<tr><td>現價</td><td class="mono">$147.35</td></tr>
+<tr><td>長期目標</td><td class="mono">$447</td></tr>
+<tr><td>上行</td><td class="mono"><b>+203%</b></td></tr>
+<tr><td>下行錨點</td><td class="mono">$64</td></tr>
+<tr><td>下行</td><td class="mono">-57%</td></tr>
+<tr style="font-weight:700;font-size:16px"><td>長期 R:R</td><td class="mono" style="color:#166534"><b>3.61x</b></td></tr>
+<tr><td>門檻</td><td class="mono">2.0x</td></tr>
+<tr><td>判定</td><td><span class="pass">✅ Pass</span></td></tr>
+</table>
+</div>
+
+<h3>I｜波動率燈號</h3>
+<table>
+<tr><td>週 2σ 上</td><td class="mono">$145.0</td><td style="color:var(--red-txt)">股價 $147 > 2σ → 🔴×1</td></tr>
+<tr><td>月 2σ 上</td><td class="mono">$163.0</td><td>未觸發</td></tr>
+<tr style="font-weight:700"><td>🔴 紅燈</td><td colspan="2" class="mono">1/4</td></tr>
+<tr><td>🟢 綠燈</td><td colspan="2" class="mono">0/4</td></tr>
+</table>
+
+<h3>J–M｜建倉</h3>
+<p>高品質 + 1 紅燈 → J 表：<b>30%</b>（一次建倉）。MA200 $132.81 上方、斜率向上 → 100% 權限。</p>
+<table>
+<tr><th>階段</th><th>倉位</th><th>條件</th></tr>
+<tr style="background:var(--green-bg)"><td><b>立即</b></td><td class="mono"><b>30%</b></td><td>R:R 3.61x Pass + 品質 8.70 + MA200 上方</td></tr>
+<tr><td>MA60 加碼</td><td class="mono">30%</td><td>MA60（$135）回踩不破</td></tr>
+<tr><td>MA200 加碼</td><td class="mono">40%</td><td>MA200（$133）深跌反轉</td></tr>
+<tr style="font-weight:700"><td>目標</td><td class="mono">100%</td><td></td></tr>
+</table>
+<p class="note-line">底倉 30% = 目標倉位的 30%。目標倉位需自行根據組合紀律決定（典型 8-15% / 檔）。</p>
+</div></div>
+
+<!-- §7.6 -->
+<div class="section"><div class="section-title">§7.6｜三方辯論摘要</div><div class="section-body">
+<div class="debate-grid">
+<div class="debate-card bull">
+<h4 style="color:#166534">🟢 多頭</h4>
+<p>1. 800G 市佔第一 + 1.6T 率先試產 = AI 網路硬體的「下一個 NVDA」。</p>
+<p>2. EOS 軟體平台 = 網路界的 iOS，400+ 企業客戶鎖定，轉換成本 5 年。</p>
+<p>3. FCF Margin 47% + D/E 0.01 + 現金 $10.7B = 科技股中最乾淨的資產負債表。</p>
+<p style="font-weight:700">最強一句話：AI 訓練需要 GPU（NVDA），AI 互連需要 Ethernet（ANET）——ANET 是 AI 基礎設施的第二塊必需品。</p>
+</div>
+<div class="debate-card bear">
+<h4 style="color:#991B1B">🔴 空頭</h4>
+<p>1. Forward PE 42x + PEG 1.92 = 對 21% CAGR 定價偏高。一季 miss 就是 20% 回撤。</p>
+<p>2. Memory 短缺 + 矽成本上升正在壓縮 GM 從 64% → 62-63%，利潤率見頂風險。</p>
+<p>3. Cisco + Juniper/HPE Aruba 在 Campus 市場反攻，Campus 滲透率可能不達預期。</p>
+<p style="font-weight:700">最大威脅：估值偏高（PEG 1.92）+ GM 壓力 = 短期回撤空間大。</p>
+</div>
+<div class="debate-card arb">
+<h4 style="color:#7C3AED">🟣 仲裁員</h4>
+<p>隱含 10Y FCF CAGR ~12%。歷史 3Y FCF CAGR 112%。隱含預期保守。</p>
+<p style="font-weight:700">可信度：7 / 10</p>
+<p>一句話：數字支持進場，但 42x 不算便宜——安全邊際來自成長而非估值折扣。</p>
+</div>
+</div>
+<div class="verdict-box">
+<h4>🏛️ 裁決</h4>
+<table>
+<tr style="font-weight:700"><td>裁決</td><td><span class="badge badge-green">進場</span></td></tr>
+<tr><td>理由</td><td>品質 8.70 + R:R 3.61x 通過 2.0x 門檻 + AI 網路是確定性極高的成長向量。估值偏高（PEG 1.92）是主要顧慮，但 FCF 47% + 零負債提供強力安全網。若 Forward PE 回落至 35x 以下，風報比將大幅改善。</td></tr>
+</table>
+</div>
+</div></div>
+
+<!-- §0 -->
+<div class="section"><div class="section-title">§0｜序章：第一性原理 × 逆向思考</div><div class="section-body">
+<h3>存在意義</h3>
+<p>Arista 解決的核心痛點：<b>如何讓數千台 GPU 在 AI 訓練集群中以最低延遲、最高頻寬交換數據</b>。GPU 是 AI 的「大腦」，Arista 的 800G/1.6T 乙太網路交換機是 AI 的「神經系統」。沒有高速網路，再多的 GPU 也只是孤島。若 Arista 消失，全球 AI 訓練集群的互連效率降低 50%+，訓練時間加倍。</p>
+<h3>逆向推演</h3>
+<ul>
+<li><b>技術替代</b>：NVIDIA InfiniBand / NVLink 在 GPU-to-GPU 互連佔優。若 NVDA 將更多互連內製化，Ethernet 的角色可能被壓縮。但趨勢相反——業界正從 InfiniBand 轉向開放 Ethernet。</li>
+<li><b>競爭</b>：Cisco 在 Campus 有巨大裝機量（>60% 份額），ANET 的 Campus 擴張可能遇到強阻力。</li>
+<li><b>估值壓縮</b>：Forward PE 42x，若成長放緩至 12%，PE 壓縮至 25x = -40%。</li>
+<li><b>價值陷阱路徑</b>：非陷阱——不便宜，但不是衰退。</li>
+</ul>
+</div></div>
+
+<!-- §0.5 -->
+<div class="section"><div class="section-title">§0.5｜投資論點錨定</div><div class="section-body">
+<div class="hypothesis-box">
+<h4>核心假設</h4>
+<table>
+<tr><th>#</th><th>假設</th><th>指標</th><th>時間</th></tr>
+<tr><td>H1</td><td>AI 網路（800G→1.6T→3.2T）成為 DC 骨幹，ANET >40% 高速端口市佔</td><td>季端口出貨量 + 市佔</td><td>每季</td></tr>
+<tr><td>H2</td><td>Campus/Enterprise 年營收突破 $1.25B</td><td>Campus 季營收</td><td>FY2026</td></tr>
+<tr><td>H3</td><td>Forward PE ≤ 42x 即可建倉（品質支撐）</td><td>PE 分位</td><td>持續</td></tr>
+</table>
+</div>
+</div></div>
+
+<!-- §1 -->
+<div class="section"><div class="section-title">§1｜即時財報情報</div><div class="section-body">
+<h3>Q4 2025（截至 2025/12/31）</h3>
+<table>
+<tr><th>指標</th><th>實際</th><th>預期</th><th>Beat</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="mono">$2.488B</td><td class="mono">$2.41B</td><td><span class="badge badge-green">+3.2%</span></td><td class="mono">+28.9%</td></tr>
+<tr><td>Non-GAAP EPS</td><td class="mono">$0.82</td><td class="mono">$0.72</td><td><span class="badge badge-green">+13.9%</span></td><td class="mono">+23%</td></tr>
+<tr><td>Gross Margin</td><td class="mono">64.06%</td><td>—</td><td>—</td><td class="mono">穩定</td></tr>
+<tr><td>FCF</td><td class="mono">~$1.1B</td><td>—</td><td>—</td><td>—</td></tr>
+</table>
+<p>FY2025 全年：Rev $9.0B（+28.6%）、Non-GAAP EPS $2.98、Non-GAAP Op Margin 48.2%。</p>
+<p>FY2026 指引上調至 25% growth（$11.25B），AI networking $3.25B（+18% vs 上次指引）。Q1 指引 Rev $2.6B、GM 62-63%。</p>
+<p><b>Earnings Call 亮點</b>：Memory 短缺「materially worsened」→ 採購承諾從 $4.8B 增至 $6.8B 以鎖定供應。亞歐國際成長 >40%。1.6T 交換機 CY2026 下半年開始客戶試用。</p>
+</div></div>
+
+<!-- §2 -->
+<div class="section"><div class="section-title">§2｜核心門檻檢核</div><div class="section-body">
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>數據</th></tr>
+<tr><td>FCF Margin</td><td>>15%</td><td><span class="badge badge-green">✓✓</span></td><td>47%（$4.25B / $9.0B）</td></tr>
+<tr><td>ROIC</td><td>>15%</td><td><span class="badge badge-green">✓✓</span></td><td>52-176%（計算方法差異，均遠超門檻）</td></tr>
+<tr><td>毛利率</td><td>改善</td><td><span class="badge badge-green">✓</span></td><td>64%，5Y 從 63%→64%，穩定偏上。FY2026 指引 62-63% 因 memory 成本。</td></tr>
+<tr><td>資本密集度</td><td><5%</td><td><span class="badge badge-green">✓✓</span></td><td><1%（Fabless 模式，Capex 極低）</td></tr>
+<tr><td>EPS CAGR 3Y</td><td>>20%</td><td><span class="badge badge-green">✓</span></td><td>~21%（FY2025-28E Non-GAAP）</td></tr>
+<tr><td>PEG</td><td><2</td><td><span class="badge badge-green">✓</span></td><td>1.92（邊際符合）</td></tr>
+<tr><td>D/E</td><td><0.7</td><td><span class="badge badge-green">✓✓</span></td><td>0.01（幾乎零負債，現金 $10.7B）</td></tr>
+<tr><td>護城河</td><td>>8</td><td><span class="badge badge-green">✓</span></td><td>8/10</td></tr>
+</table>
+<p><b>Munger 三維</b>：<span class="badge badge-green">🟢 三項達標</span>（ROIC✓✓ + 毛利率✓ + 資本密集度✓✓）</p>
+</div></div>
+
+<!-- §2.5 -->
+<div class="section"><div class="section-title">§2.5｜長期成長性評估</div><div class="section-body">
+<p><b>Runway ≥ 10 年</b>（TAM $70B by 2028，目前滲透率 13%）。有機 100%。價格+量雙驅動（800G ASP 上升 + 端口量爆發）。護城河連動：<b>強化型</b>（EOS 客戶越多，軟體生態越強）。衰退信號：<b>0 個</b>。</p>
+<p><b>綜合評級</b>：<span class="badge badge-green">🟢 高確信長期成長</span></p>
+<h3>F｜AI 取代風險</h3>
+<p><span class="badge badge-green">🟢 AI 核心受益（9 分）</span>——AI 集群越大，高速乙太網路需求越高。ANET 是 AI 的「神經系統」。</p>
+</div></div>
+
+<!-- §3 -->
+<div class="section"><div class="section-title">§3｜護城河分析</div><div class="section-body">
+<p><b>評分：8 / 10</b></p>
+<p><b>轉換成本（最強）</b>：EOS（Extensible Operating System）+ CloudVision 管理平台。一旦部署，重配整個網路 fabric 需 12-24 個月 + 百萬美元級工程成本。</p>
+<p><b>規模優勢</b>：R&D 效率業界最高——~$750M R&D 產出 $9B 營收（12:1），vs Cisco $7B R&D : $55B 營收（8:1）。</p>
+<p><b>無形資產</b>：EOS 單一二進制鏡像架構（vs Cisco IOS 的碎片化）是 10+ 年工程積累，無法短期複製。</p>
+<p><b>趨勢：擴大</b>。800G 市佔第一 + Campus 新向量 + 國際擴張。威脅：Cisco 在 Campus 有裝機量優勢。</p>
+</div></div>
+
+<!-- §4 -->
+<div class="section"><div class="section-title">§4｜財務品質監測</div><div class="section-body">
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>CSCO 比較</th></tr>
+<tr><td>Gross Margin</td><td class="mono">61%</td><td class="mono">64%</td><td class="mono">64%</td><td>~64%</td></tr>
+<tr><td>FCF Margin</td><td class="mono">37%</td><td class="mono">42%</td><td class="mono">47%</td><td>~28%</td></tr>
+<tr><td>Op Margin (Non-GAAP)</td><td class="mono">43%</td><td class="mono">47%</td><td class="mono">48%</td><td>~32%</td></tr>
+<tr><td>D/E</td><td class="mono">0.01</td><td class="mono">0.01</td><td class="mono">0.01</td><td>~0.4</td></tr>
+<tr><td>SBC/Revenue</td><td class="mono">~6%</td><td class="mono">~5%</td><td class="mono">~5%</td><td>~6%</td></tr>
+</table>
+<p>回購品質佳（累計 ~$5B），FCF/NI >100%（FCF 超過淨利），零獲利品質警訊。</p>
+</div></div>
+
+<!-- §5 -->
+<div class="section"><div class="section-title">§5｜產業格局</div><div class="section-body">
+<p><b>TAM</b>：DC Ethernet $35B（2025）→ $70B（2028E）。AI 網路子市場 800G+ 以 90% CAGR 成長。</p>
+<p><b>營收組成（FY2025）</b>：Cloud Titan ~48%、Enterprise ~30%、Campus ~12%、服務 ~10%。AI networking ~$1.5B（~17%）。</p>
+<p><b>市佔</b>：整體 DC 交換 19.2%、高速端口（400G+）43%。vs Cisco 50% 整體但高速端口 <30%。</p>
+</div></div>
+
+<!-- §6 -->
+<div class="section"><div class="section-title">§6｜公司治理</div><div class="section-body">
+<p><b>CEO</b>：Jayshree Ullal（2008 至今），前 Cisco 高管，被譽為「矽谷最被低估的 CEO」之一。執行力極強。</p>
+<p><b>薪酬</b>：FY2024 ~$95M（股權為主），與股東利益一致。</p>
+<p><b>D/E 0.01</b>、現金 $10.7B > 債 $90M。資本配置：R&D 優先→回購→零股利。</p>
+<p><b>內部人交易</b>：Ullal 定期減持（計畫性 10b5-1），無異常。</p>
+</div></div>
+
+<!-- §7 -->
+<div class="section"><div class="section-title">§7｜估值診斷（7.0 – 7.5）</div><div class="section-body">
+<h3>7.0｜估值體系</h3>
+<p>主流：Forward PE + AI 網路成長敘事。<span class="badge badge-green">🟢 穩定</span></p>
+
+<h3>7.1｜歷史分位</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Forward PE</td><td class="mono">41.68</td><td class="mono">20</td><td class="mono">32</td><td class="mono">55</td><td class="mono"><b>62%</b></td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">44.42</td><td class="mono">18</td><td class="mono">35</td><td class="mono">55</td><td class="mono">71%</td></tr>
+</table>
+<p class="note-line">Forward PE 分位 = (41.68-20)/(55-20) = 62%。合理偏高。</p>
+
+<h3>7.2｜PEG</h3>
+<p>PEG 1.92 → <span class="badge badge-yellow">合理</span>（對 21% CAGR 偏貴但未極端）</p>
+
+<h3>7.3｜Reverse DCF</h3>
+<p>隱含 10Y FCF CAGR ~12%。歷史 3Y FCF CAGR 112%。<span class="badge badge-green">🟢 保守</span></p>
+
+<h3>7.4｜同業</h3>
+<table>
+<tr><th>公司</th><th>Fwd PE</th><th>PEG</th><th>FCF%</th><th>Rev Growth</th><th>ROIC</th></tr>
+<tr style="font-weight:700;background:var(--blue-bg)"><td>ANET</td><td class="mono">41.68</td><td class="mono">1.92</td><td class="mono">47%</td><td class="mono">+29%</td><td class="mono">52%+</td></tr>
+<tr><td>CSCO</td><td class="mono">~16</td><td class="mono">~2.5</td><td class="mono">28%</td><td class="mono">+3%</td><td class="mono">~15%</td></tr>
+</table>
+<p>ANET 溢價 vs CSCO 160%，完全由成長（29% vs 3%）和 FCF 品質（47% vs 28%）支撐。</p>
+<p><span class="badge badge-green">🥇 同主題最優選</span></p>
+
+<h3>7.5｜五角</h3>
+<table>
+<tr><td>體系</td><td><span class="badge badge-green">🟢 穩定</span></td></tr>
+<tr><td>分位</td><td><span class="badge badge-yellow">🟡 合理 62%</span></td></tr>
+<tr><td>PEG</td><td><span class="badge badge-yellow">🟡 合理 1.92</span></td></tr>
+<tr><td>RDCF</td><td><span class="badge badge-green">🟢 保守</span></td></tr>
+<tr><td>同業</td><td><span class="badge badge-green">🟢 最優選</span></td></tr>
+</table>
+<p><b>定價</b>：<span class="badge badge-green">🟢 合理至便宜</span></p>
+<p>分析師目標：高 $200 / 中位 $178 / 低 $112（n=17）。認同中位方向（+21%）。</p>
+</div></div>
+
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body></html>
