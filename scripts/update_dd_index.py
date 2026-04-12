@@ -43,8 +43,12 @@ def scan_dd_files():
             "href": f"/dd/{f.name}",
             "version": version,
         })
-    # Sort by date desc, then ticker
-    entries.sort(key=lambda e: (e["date"], e["ticker"]), reverse=True)
+    # Sort priority: 1) date desc, 2) ticker asc, 3) version desc
+    # Apply in reverse order — Python's sort is stable, so earlier sorts
+    # become tiebreakers for later ones.
+    entries.sort(key=lambda e: e["version"], reverse=True)
+    entries.sort(key=lambda e: e["ticker"])
+    entries.sort(key=lambda e: e["date"], reverse=True)
     return entries
 
 
