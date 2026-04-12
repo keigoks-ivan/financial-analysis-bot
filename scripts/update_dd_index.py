@@ -11,9 +11,24 @@ DOCS = Path(__file__).parent.parent / "docs"
 DD_DIR = DOCS / "dd"
 INDEX = DOCS / "research" / "index.html"
 
+VERSION_CUTOFF = "2026-04-11"  # Only show version column for DDs on/after this date
+META_RE = re.compile(r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE)
+
+
+def extract_version(path: Path) -> str:
+    """Read <meta name="dd-schema-version" content="vX.Y"> from DD HTML head."""
+    try:
+        # Read first 4KB — meta tag is always in <head>
+        with path.open("r", encoding="utf-8", errors="ignore") as fh:
+            head = fh.read(4096)
+        m = META_RE.search(head)
+        return m.group(1) if m else ""
+    except OSError:
+        return ""
+
 
 def scan_dd_files():
-    """Parse DD_{TICKER}_{YYYYMMDD}.html filenames."""
+    """Parse DD_{TICKER}_{YYYYMMDD}.html filenames and extract schema version."""
     entries = []
     for f in sorted(DD_DIR.glob("DD_*.html")):
         m = re.match(r"DD_(.+)_(\d{4})(\d{2})(\d{2})\.html", f.name)
@@ -21,7 +36,13 @@ def scan_dd_files():
             continue
         ticker = m.group(1)
         date_str = f"{m.group(2)}-{m.group(3)}-{m.group(4)}"
-        entries.append({"ticker": ticker, "date": date_str, "href": f"/dd/{f.name}"})
+        version = extract_version(f) if date_str >= VERSION_CUTOFF else ""
+        entries.append({
+            "ticker": ticker,
+            "date": date_str,
+            "href": f"/dd/{f.name}",
+            "version": version,
+        })
     # Sort by date desc, then ticker
     entries.sort(key=lambda e: (e["date"], e["ticker"]), reverse=True)
     return entries
@@ -30,11 +51,13 @@ def scan_dd_files():
 def build_rows(entries):
     rows = []
     for e in entries:
+        version_cell = e["version"] or "&mdash;"
         rows.append(
             f'<tr class="searchable">\n'
             f'  <td><strong>{e["ticker"]}</strong></td>\n'
             f'  <td><span class="tag tag-dd">深度研究</span></td>\n'
             f'  <td>{e["date"]}</td>\n'
+            f'  <td>{version_cell}</td>\n'
             f'  <td><a href="{e["href"]}">查看 &rarr;</a></td>\n'
             f'</tr>'
         )
