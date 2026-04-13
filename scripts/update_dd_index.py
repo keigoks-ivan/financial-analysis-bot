@@ -206,8 +206,8 @@ def build_rows(entries):
     for e in entries:
         rows.append(
             f'<tr class="searchable">\n'
-            f'  <td><a href="{e["href"]}" style="color:inherit;text-decoration:none;font-weight:700">{e["ticker"]}</a></td>\n'
-            f'  <td>{e["date"]}</td>\n'
+            f'  <td><a href="{e["href"]}" class="ticker-link">{e["ticker"]}</a></td>\n'
+            f'  <td class="date-cell">{e["date"]}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
             f'  <td>{quality_badge(e["quality"])}</td>\n'
             f'  <td>{rr_badge(e["rr_value"])}</td>\n'
@@ -258,25 +258,29 @@ def update_index(entries):
     if "verdict-badge" not in new_html:
         badge_css = """
 /* v9.0 Badge Styles */
-.verdict-badge{display:inline-block;padding:.2rem .6rem;border-radius:4px;font-size:.78rem;font-weight:600}
-.verdict-buy{background:#dcfce7;color:#166534}
-.verdict-watch{background:#fef9c3;color:#92400e}
-.verdict-avoid{background:#fee2e2;color:#991b1b}
-.quality-badge{display:inline-block;padding:.15rem .5rem;border-radius:3px;font-size:.72rem;font-weight:600}
-.quality-h{background:#dbeafe;color:#1e40af}
-.quality-mh{background:#e0e7ff;color:#3730a3}
-.quality-m{background:#f3e8ff;color:#6b21a8}
-.quality-w{background:#fef2f2;color:#991b1b}
-.rr-pass{color:#059669;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.rr-mid{color:#d97706;font-weight:600;font-family:'IBM Plex Mono',monospace}
-.rr-fail{color:#dc2626;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.rr-neg{color:#6b7280;font-style:italic;font-family:'IBM Plex Mono',monospace}
-.rl-0{color:#059669;font-weight:600}.rl-1{color:#d97706;font-weight:600}
-.rl-2{color:#ea580c;font-weight:700}.rl-3{color:#dc2626;font-weight:700}
-.trap-ok{color:#059669;font-size:.82rem}.trap-watch{color:#d97706;font-size:.82rem}
-.trap-danger{color:#dc2626;font-weight:700;font-size:.82rem}
-.comment-cell{color:#64748b;font-size:.82rem}
-td a[href*="/dd/"]:hover{color:#3b82f6!important;text-decoration:underline!important}
+.verdict-badge{display:inline-block;padding:.2rem .6rem;border-radius:5px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
+.verdict-buy{background:rgba(52,211,153,.12);color:#34d399}
+.verdict-watch{background:rgba(251,191,36,.12);color:#fbbf24}
+.verdict-avoid{background:rgba(248,113,113,.12);color:#f87171}
+.quality-badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.72rem;font-weight:600}
+.quality-h{background:rgba(59,130,246,.15);color:#93bbfd}
+.quality-mh{background:rgba(167,139,250,.12);color:#a78bfa}
+.quality-m{background:rgba(100,116,139,.15);color:#94a3b8}
+.quality-w{background:rgba(248,113,113,.12);color:#fca5a5}
+.rr-pass{color:#34d399;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rr-mid{color:#fbbf24;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rr-fail{color:#f87171;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rr-neg{color:#64748b;font-style:italic;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rl-0{color:#34d399;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.rl-1{color:#fbbf24;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.rl-2{color:#fb923c;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.rl-3{color:#f87171;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.trap-ok{color:#34d399;font-size:.8rem}.trap-watch{color:#fbbf24;font-size:.8rem}
+.trap-danger{color:#f87171;font-weight:700;font-size:.8rem}
+.comment-cell{color:#94a3b8;font-size:.78rem;max-width:260px;line-height:1.45}
+td a.ticker-link{color:#fff;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
+td a.ticker-link:hover{color:#60a5fa}
+td.date-cell{color:#64748b;font-family:'IBM Plex Mono',monospace;font-size:.8rem;white-space:nowrap}
 """
         new_html = new_html.replace("</style>", badge_css + "</style>", 1)
 
