@@ -259,28 +259,28 @@ def update_index(entries):
         badge_css = """
 /* v9.0 Badge Styles */
 .verdict-badge{display:inline-block;padding:.2rem .6rem;border-radius:5px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
-.verdict-buy{background:rgba(52,211,153,.12);color:#34d399}
-.verdict-watch{background:rgba(251,191,36,.12);color:#fbbf24}
-.verdict-avoid{background:rgba(248,113,113,.12);color:#f87171}
+.verdict-buy{background:rgba(5,150,105,.08);color:#059669}
+.verdict-watch{background:rgba(217,119,6,.08);color:#d97706}
+.verdict-avoid{background:rgba(220,38,38,.07);color:#dc2626}
 .quality-badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.72rem;font-weight:600}
-.quality-h{background:rgba(59,130,246,.15);color:#93bbfd}
-.quality-mh{background:rgba(167,139,250,.12);color:#a78bfa}
-.quality-m{background:rgba(100,116,139,.15);color:#94a3b8}
-.quality-w{background:rgba(248,113,113,.12);color:#fca5a5}
-.rr-pass{color:#34d399;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rr-mid{color:#fbbf24;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rr-fail{color:#f87171;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rr-neg{color:#64748b;font-style:italic;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rl-0{color:#34d399;font-weight:600;font-family:'IBM Plex Mono',monospace}
-.rl-1{color:#fbbf24;font-weight:600;font-family:'IBM Plex Mono',monospace}
-.rl-2{color:#fb923c;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.rl-3{color:#f87171;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.trap-ok{color:#34d399;font-size:.8rem}.trap-watch{color:#fbbf24;font-size:.8rem}
-.trap-danger{color:#f87171;font-weight:700;font-size:.8rem}
-.comment-cell{color:#94a3b8;font-size:.78rem;max-width:260px;line-height:1.45}
-td a.ticker-link{color:#fff;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
-td a.ticker-link:hover{color:#60a5fa}
-td.date-cell{color:#64748b;font-family:'IBM Plex Mono',monospace;font-size:.8rem;white-space:nowrap}
+.quality-h{background:#dbeafe;color:#1e40af}
+.quality-mh{background:#ede9fe;color:#5b21b6}
+.quality-m{background:#f1f5f9;color:#475569}
+.quality-w{background:rgba(220,38,38,.07);color:#991b1b}
+.rr-pass{color:#059669;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rr-mid{color:#d97706;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rr-fail{color:#dc2626;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rr-neg{color:#94a3b8;font-style:italic;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
+.rl-0{color:#059669;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.rl-1{color:#d97706;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.rl-2{color:#ea580c;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.rl-3{color:#dc2626;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.trap-ok{color:#059669;font-size:.8rem}.trap-watch{color:#d97706;font-size:.8rem}
+.trap-danger{color:#dc2626;font-weight:700;font-size:.8rem}
+.comment-cell{color:#475569;font-size:.78rem;max-width:260px;line-height:1.45}
+td a.ticker-link{color:#1e293b;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
+td a.ticker-link:hover{color:#2563eb}
+td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem;white-space:nowrap}
 """
         new_html = new_html.replace("</style>", badge_css + "</style>", 1)
 
