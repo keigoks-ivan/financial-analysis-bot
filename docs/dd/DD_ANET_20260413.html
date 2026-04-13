@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v9.0">
+<title>DD Report — ANET | 2026-04-13</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFF;--title:#1E3A5F;--accent:#3B82F6;--beat-bg:#DCFCE7;--beat-text:#166534;--miss-bg:#FEE2E2;--miss-text:#991B1B;--neutral-bg:#FEF9C3;--neutral-text:#92400E;--trap-bg:#FFF0E6;--trap-border:#F97316;--trap-text:#C2410C;--thesis-bg:#EFF6FF;--bull-border:#16A34A;--bull-bg:#F0FDF4;--bear-border:#DC2626;--bear-bg:#FFF1F2;--arb-border:#7C3AED;--arb-bg:#F5F3FF;--verdict-bg:#FFFBEB;--verdict-border:#D97706;--verdict-text:#92400E;--short-border:#0284C7;--short-bg:#F0F9FF;--mid-border:#7C3AED;--mid-bg:#F5F3FF;--long-border:#059669;--long-bg:#ECFDF5;--long-text:#065F46;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#1e293b;line-height:1.7;font-size:15px}
+.header{position:sticky;top:0;z-index:100;background:var(--title);color:#fff;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px}
+.header .ticker{font-size:22px;font-weight:700;letter-spacing:1px}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px}
+.section{background:var(--card);border-radius:4px;margin-bottom:20px;padding:28px 32px;border-left:4px solid var(--accent)}
+.section-title{color:var(--title);font-size:20px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
+.sub-title{color:var(--title);font-size:16px;font-weight:600;margin:18px 0 10px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+th{background:var(--title);color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+td{padding:9px 12px;border-bottom:1px solid #e2e8f0}
+tr:nth-child(even){background:#F1F5F9}
+.badge-beat{background:var(--beat-bg);color:var(--beat-text);padding:2px 8px;border-radius:3px;font-size:13px;font-weight:600}
+.badge-miss{background:var(--miss-bg);color:var(--miss-text);padding:2px 8px;border-radius:3px;font-size:13px;font-weight:600}
+.badge-neutral{background:var(--neutral-bg);color:var(--neutral-text);padding:2px 8px;border-radius:3px;font-size:13px;font-weight:600}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-border);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.trap-box .trap-title{color:var(--trap-text);font-weight:700;margin-bottom:6px}
+.thesis-box{background:var(--thesis-bg);border-left:4px solid var(--accent);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:16px 0}
+.debate-card{padding:18px;border-radius:4px}
+.bull-card{background:var(--bull-bg);border-left:4px solid var(--bull-border)}
+.bear-card{background:var(--bear-bg);border-left:4px solid var(--bear-border)}
+.arb-card{background:var(--arb-bg);border-left:4px solid var(--arb-border)}
+.verdict-box{background:var(--verdict-bg);border-left:4px solid var(--verdict-border);padding:18px 22px;margin:16px 0;border-radius:0 4px 4px 0}
+.verdict-box .v-title{color:var(--verdict-text);font-weight:700;font-size:16px;margin-bottom:8px}
+.rr-grid{display:grid;grid-template-columns:1fr;gap:16px;margin:16px 0}
+.rr-card{padding:18px;border-radius:4px}
+.rr-long{background:var(--long-bg);border-left:4px solid var(--long-border)}
+.pass-badge{background:var(--beat-bg);color:var(--beat-text);padding:4px 12px;border-radius:3px;font-weight:700;font-size:15px}
+.fail-badge{background:var(--miss-bg);color:var(--miss-text);padding:4px 12px;border-radius:3px;font-weight:700;font-size:15px}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--title);color:#fff;border:none;padding:10px 18px;border-radius:4px;cursor:pointer;font-size:14px;z-index:200}
+.mono{font-family:'IBM Plex Mono',monospace}
+.highlight{background:#EFF6FF;padding:12px 16px;border-radius:4px;margin:10px 0}
+@media print{.header,.print-btn{display:none}.section{break-inside:avoid}}
+@media(max-width:768px){.debate-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+<div><span class="ticker">ANET</span> — Arista Networks, Inc.</div>
+<div>資料抓取：2026-04-13 ｜ 最新股價：$147.36 ｜ 最近財報：Q4 FY2025（2025/12） ｜ DD Schema v9.0</div>
+</div>
+<div class="container">
+
+<!-- ==================== §8 投資結論 ==================== -->
+<div class="section" id="s8">
+<div class="section-title">§8｜投資結論</div>
+<p style="color:#64748b;font-size:13px;margin-bottom:14px">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<div class="sub-title">財報信號與假設校準</div>
+<ul>
+<li><strong>H1（AI 後端網路從 InfiniBand 轉向 Ethernet，Arista 為主要受益者）：強化</strong> — FY2025 AI 網路營收 $1.5B，FY2026 目標上調至 $3.25B（+117% YoY），Dell'Oro 報告 3Q25 AI 叢集 Ethernet 佔比突破 2/3，驗證 Ethernet 正在取代 InfiniBand。</li>
+<li><strong>H2（Cloud Titan 資本支出持續擴張，推動 Arista 企業 + AI 雙引擎成長）：強化</strong> — Q4 2025 營收 $2.49B（+28.9% YoY），FY2026 指引 25% 成長至 $11.25B。Meta/MSFT/GOOG 2026 capex 指引均上調。Campus 營收突破 $800M。</li>
+<li><strong>H3（Forward P/E 從歷史中位 38x 附近的合理區間啟動估值擴張或維持）：不變</strong> — 當前 Forward P/E 41x 略高於 5Y 中位數 38x，估值未壓縮也未顯著擴張。PEG 1.65 合理但非便宜。</li>
+</ul>
+<p>這份財報讓隱含預期更容易兌現：$11.25B 的 FY2026 指引比 Reverse DCF 隱含的成長率更高，加上 AI 網路收入翻倍目標，基本面改善速度快於市場預期調整。</p>
+
+<div class="sub-title">裁決：<span class="badge-beat">進場</span></div>
+
+<p><strong>① 短期信號（0-12 個月）</strong><br>
+Q4 2025 全面 Beat，FY2026 指引 25% 成長，AI 網路 $3.25B 目標大幅上修。短期催化劑包括 Q1 2026 財報（5/5）、800G 交換器放量、Cloud Titan 資本支出週期。關稅不確定性為主要逆風。</p>
+
+<p><strong>② 中期成長確信度（1-3 年）</strong><br>
+分析師共識 EPS CAGR ~20%（FY25-28），驅動力以量為主（AI 叢集部署數量）+ 定價（800G→1.6T 升級週期帶動 ASP 提升）。能見度：高。TAM 從 $60B 擴張至 $105B。</p>
+
+<p><strong>③ 長期護城河邏輯（3 年後）</strong><br>
+EOS 軟體定義網路平台 + CloudVision 管理生態形成高轉換成本（§3），Runway ≥ 10 年（§2.5A），ROIC 持續 >40%（§2.5D），護城河為強化型（§2.5C）—— 客戶規模越大，對 EOS 生態依賴越深。</p>
+
+<div class="trap-box">
+<div class="trap-title">⚠️ 這是價值陷阱嗎？</div>
+<table>
+<tr><td style="width:40%"><strong>最可能的價值陷阱模式</strong></td><td><strong>非陷阱</strong> — Arista 當前 Forward P/E 41x 並非低估值股，不存在「看起來便宜」的陷阱誘因。高倍數由高成長（EPS CAGR 20%）和高 ROIC（52%）支撐。</td></tr>
+<tr><td><strong>支持「非陷阱」的最強論據</strong></td><td>FY2025 FCF $4.25B（FCF Margin 47%）、Revenue YoY +28.6%、Non-GAAP Operating Margin 48.2%，所有指標同步擴張。淨現金 $10.65B，D/E ~0。FCF/NI 轉換率 >100%。分析師共識 FY26E EPS $3.59（+16% YoY）。</td></tr>
+<tr><td><strong>支持「可能是陷阱」的最強反駁</strong></td><td>① Cloud Titan 自建白牌交換器（Broadcom Memory, Facebook Minipack 等）可能逐步蠶食 Arista 在 AI 叢集的份額；② 若 AI 資本支出週期在 2027-2028 驟然減速，Arista 營收成長可能從 25% 急降至個位數，倍數壓縮。</td></tr>
+<tr><td><strong>持有期間判斷陷阱的指標</strong></td><td>① 季度營收 YoY 成長降至 <10%（當前 29%）；② Cloud Titan AI 叢集白牌交換器佔比 >30%（當前 <15%）</td></tr>
+</table>
+<p style="margin-top:10px"><strong>最終定性：<span class="badge-beat">🟢 非陷阱</span></strong></p>
+</div>
+
+<div class="sub-title">v9.0 R:R 摘要（引自 §7.7）</div>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>綜合品質分</td><td><strong>8.70</strong>（高品質 H）</td></tr>
+<tr><td>長期 R:R</td><td><strong>3.6x</strong>（門檻 2.0x → ✅ Pass）</td></tr>
+<tr><td>波動率紅燈</td><td><strong>1/4</strong></td></tr>
+<tr><td>建倉建議</td><td>立即建 30%（目標倉位的 30%）</td></tr>
+</table>
+<p style="margin-top:8px;font-size:13px;color:#64748b">底倉建議為目標倉位的 30%。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+
+<div class="sub-title">條件式進場判斷</div>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td>估值條件</td><td>Forward P/E 回落至 35x 以下（5Y 中位數 38x 下緣，對應 ~$126）為理想加碼點</td></tr>
+<tr><td>基本面條件</td><td>Q1 2026 財報（5/5）需確認：AI 網路季度營收 >$750M、Revenue YoY >20%、Non-GAAP GM >62%</td></tr>
+<tr><td>陷阱排除條件</td><td>若連續 2 季營收 YoY <10%、或 Cloud Titan 白牌滲透率 >30%，立即停損重評</td></tr>
+<tr><td>事件觸發條件</td><td>Cloud Titan 2026 capex 上調確認、800G/1.6T 交換器大單公告為加碼催化劑</td></tr>
+</table>
+
+<div class="sub-title">下行風險量化（引用 §2.5E）</div>
+<p>若 3 年後成長率降至 10%，估值壓縮幅度為 <strong>38%</strong>（Forward P/E 從 41x 壓至 22x，股價 ~$91）</p>
+<p>若 3 年後成長率降至 5%，估值壓縮幅度為 <strong>52%</strong>（Forward P/E 壓至 18x，股價 ~$71）</p>
+
+<div class="sub-title">最關鍵監測指標</div>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>AI 網路季度營收及 YoY 成長</td><td>§0.5 H1</td><td>🔵 核心假設驗證信號</td><td>AI 季度營收 QoQ 成長 <5%、或全年 AI 營收 <$2.5B</td></tr>
+<tr><td>2</td><td>Cloud Titan capex 週期方向</td><td>§2.5 / §3</td><td>🔵 長期成長領先信號</td><td>Top-4 雲廠 capex 指引連續 2 季下修</td></tr>
+<tr><td>3</td><td>Forward P/E vs 5Y 中位數</td><td>§7 / §1</td><td>短期估值信號</td><td>Forward P/E >55x（5Y 高點附近）觸發減碼考慮</td></tr>
+</table>
+</div>
+
+<!-- ==================== §7.7 綜合品質分驅動動態 R:R ==================== -->
+<div class="section" id="s77">
+<div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div>
+<p>本節核心邏輯：上行是基本面告訴我們「這家公司值多少」（上行三引擎），下行是基本面告訴我們「最壞情境的底線」（壓測 EPS × 恐慌 P/E），不再依賴技術面均線當 R:R 分母。MA 降維為戰術濾網，協助分批進場節奏。</p>
+
+<div class="sub-title">A｜綜合品質分計算</div>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+<tr><td>護城河</td><td>§3 評分</td><td>8</td><td>0.30</td><td>2.40</td></tr>
+<tr><td>長期成長性</td><td>§2.5 評級 🟢 → 9</td><td>9</td><td>0.45</td><td>4.05</td></tr>
+<tr><td>財務品質</td><td>ROIC 52%、FCF Margin 47%、EPS YoY 23%</td><td>9</td><td>0.10</td><td>0.90</td></tr>
+<tr><td>AI 風險</td><td>§2.5 F 評級 🟢 → 9</td><td>9</td><td>0.15</td><td>1.35</td></tr>
+<tr><td colspan="4"><strong>綜合品質分</strong></td><td><strong>8.70</strong></td></tr>
+</table>
+<p><strong>判定</strong>：綜合品質分 8.70 → <span class="badge-beat">高品質 H</span>，R:R 門檻 2.0x，底倉 30%（目標倉位的 30%）</p>
+
+<div class="sub-title">B｜上行三引擎（取較高不疊加）</div>
+
+<p><strong>引擎 A：ROIC 溢價</strong><br>
+觸發條件：ROIC（3 年平均）> 20% 且連續 3 年向上擴大<br>
+本標的：ROIC 3Y 平均 ~48%（2023: 38.8%→2024: 57.9%→2025: 52%），3 年平均遠超 20% 且趨勢擴大 → <span class="badge-beat">✅ 觸發</span><br>
+引擎 A 調整係數 = 1.175 → 基準 P/E 25x × 1.175 = <strong>29.4x</strong></p>
+
+<p><strong>引擎 B：PEG 動態天花板</strong><br>
+觸發條件：預估 EPS 5 年 CAGR > 20%<br>
+本標的 5Y EPS CAGR：20%（方法 1 = 21%、方法 2 = 19%、採用 = 20%） → <span class="badge-beat">✅ 觸發</span><br>
+PEG 天花板查表：高品質（8.5+）+ 成長 🟢 → PEG 天花板 = 2.5<br>
+引擎 B 目標 P/E = 20 × 2.5 = <strong>50x</strong></p>
+
+<p><strong>引擎 C：護城河溢價</strong><br>
+觸發條件：護城河 ≥ 9 分<br>
+本標的護城河 = 8/10 → <span class="badge-miss">❌ 未觸發</span></p>
+
+<table>
+<tr><th>引擎</th><th>觸發</th><th>調整結果</th></tr>
+<tr><td>A ROIC 溢價</td><td>✅</td><td>29.4x</td></tr>
+<tr><td>B PEG 動態天花板</td><td>✅</td><td>50x</td></tr>
+<tr><td>C 護城河溢價</td><td>❌</td><td>—</td></tr>
+</table>
+<p><strong>取觸發者中最高</strong>：選用引擎 B，調整結果 = 50x</p>
+
+<div class="sub-title">C｜AI 風險獨立疊加</div>
+<p>§2.5 F 評級：🟢 AI 受益<br>
+AI 調整係數 = <strong>× 1.10</strong></p>
+
+<div class="sub-title">D｜最終長期目標 P/E</div>
+<p class="mono">最終 P/E = 引擎 B 結果 × AI 調整 = 50 × 1.10 = <strong>55.0x</strong></p>
+
+<div class="sub-title">E｜長期 EPS 預估（雙源交叉驗證）</div>
+
+<p><strong>方法 1：§2.5 B 成長驅動分解</strong></p>
+<table>
+<tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+<tr><td>Cloud/Enterprise DC 網路</td><td>50%</td><td>14%</td><td>7.0%</td></tr>
+<tr><td>AI 網路（後端 Spine/Leaf）</td><td>25%</td><td>35%</td><td>8.75%</td></tr>
+<tr><td>Campus / Branch</td><td>12%</td><td>22%</td><td>2.64%</td></tr>
+<tr><td>Routing / WAN</td><td>9%</td><td>15%</td><td>1.35%</td></tr>
+<tr><td>Services</td><td>4%</td><td>15%</td><td>0.60%</td></tr>
+<tr><td colspan="3"><strong>Revenue CAGR（方法 1）</strong></td><td><strong>20.3%</strong></td></tr>
+</table>
+<p>加上營運槓桿（Non-GAAP OM 擴張 ~1%p/年），EPS CAGR ≈ <strong>21%</strong></p>
+
+<p><strong>方法 2：§2.5 D ROIC × 再投資率</strong><br>
+ROIC：52% | 再投資率：~37%（R&D + 淨增量 WC / NOPAT）<br>
+內生成長率 = 52% × 37% = 19.2%<br>
+ROIC 趨勢調整：±0%（高位穩定）<br>
+方法 2 CAGR：<strong>19%</strong></p>
+
+<p><strong>採用 CAGR = (21% + 19%) / 2 = 20%</strong></p>
+
+<div class="sub-title">F｜長期目標價計算</div>
+<p class="mono">基期 EPS（FY2025 Non-GAAP）：$3.10<br>
+5 年後 EPS = $3.10 × (1.20)^5 = $3.10 × 2.488 = <strong>$7.71</strong><br>
+長期目標 = $7.71 × 55.0x = <strong>$424</strong></p>
+
+<div class="sub-title">G｜動態下行錨點</div>
+
+<p><strong>步驟 1：護城河基礎下修</strong><br>
+護城河評分：8 → 7-8 區間 → <strong>-20%</strong></p>
+
+<p><strong>步驟 2：產業分層調整</strong><br>
+產業分類：一般成長股（網路設備/雲端基礎設施）→ <strong>0%</strong></p>
+
+<p><strong>步驟 3：AI 風險疊加</strong><br>
+AI 風險：🟢 → <strong>-5%</strong>（壓力情境少跌）</p>
+
+<p><strong>淨下修幅度 = -20% + 0% + (-5%) = -25%</strong></p>
+
+<p>壓測 EPS = $3.10 × (1 - 0.25) = <strong>$2.33</strong></p>
+
+<p><strong>恐慌 P/E（25% 分位）</strong><br>
+5 年 Forward P/E 歷史：低 22x / 高 55x<br>
+25% 分位 = 22 + (55 - 22) × 0.25 = <strong>30.3x</strong></p>
+
+<p><strong>下行錨點 = $2.33 × 30.3 = $70.6 → $71</strong></p>
+
+<div class="sub-title">H｜動態 R:R 計算</div>
+<div class="rr-grid">
+<div class="rr-card rr-long">
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="mono">$147.36</td></tr>
+<tr><td>長期目標</td><td class="mono">$424</td></tr>
+<tr><td>上行空間</td><td class="mono">+188%</td></tr>
+<tr><td>下行錨點</td><td class="mono">$71</td></tr>
+<tr><td>下行距離</td><td class="mono">-52%</td></tr>
+<tr><td><strong>長期 R:R</strong></td><td class="mono"><strong>3.6x</strong></td></tr>
+<tr><td>R:R 門檻（綜合分查表）</td><td>2.0x（H 高品質）</td></tr>
+<tr><td>判定</td><td><span class="pass-badge">✅ Pass</span></td></tr>
+</table>
+</div>
+</div>
+
+<div class="sub-title">I｜波動率燈號協議（v9.0）</div>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$145.0 / $151.3</td></tr>
+<tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$119.9 / $113.7</td></tr>
+<tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$163.0 / $186.1</td></tr>
+<tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$70.2 / $47.1</td></tr>
+<tr><td>當前股價</td><td class="mono">$147.35</td></tr>
+<tr><td><strong>🔴 紅燈數</strong></td><td><strong>1/4</strong>（突破週線 2σ 上軌）</td></tr>
+<tr><td><strong>🟢 綠燈數</strong></td><td><strong>0/4</strong></td></tr>
+</table>
+
+<div class="sub-title">J｜二維建倉矩陣（品質等級 × 紅燈數）</div>
+<p>綜合品質 8.70（H 高品質），紅燈 1 → <strong>30%（立即一次建倉）</strong></p>
+<p style="font-size:13px;color:#64748b">所有比例為「目標倉位的 %」，不是組合的 %。</p>
+
+<div class="sub-title">K｜綠燈加碼放大</div>
+<p>綠燈 0 → 不加碼，按 J 表執行</p>
+
+<div class="sub-title">L｜戰術 MA（MA200 倉位開關 + MA60 加碼準星）</div>
+<table>
+<tr><th>項目</th><th>狀態</th></tr>
+<tr><td>MA200（200 日均線）</td><td class="mono">$135.5 — 股價 $147 > MA200，斜率向上 → <span class="badge-beat">倉位權限 100%</span></td></tr>
+<tr><td>MA50（60 日均線替代）</td><td class="mono">$138.4 — 股價 > MA50，暫無回踩</td></tr>
+</table>
+
+<div class="sub-title">M｜最終建倉建議</div>
+<table>
+<tr><th>階段</th><th>倉位（目標倉位的 %）</th><th>觸發條件</th></tr>
+<tr><td>立即</td><td><strong>30%</strong></td><td>長期 R:R 3.6x Pass + 綜合分 8.70 達標 + MA200 以上</td></tr>
+<tr><td>MA60 加碼</td><td>30%</td><td>MA50 回踩不破（~$138）+ 量縮 + RSI < 60</td></tr>
+<tr><td>MA200 加碼</td><td>40%</td><td>MA200 深跌反轉（~$135）確認</td></tr>
+<tr><td><strong>總目標倉位達成</strong></td><td><strong>100%</strong></td><td></td></tr>
+</table>
+<p style="margin-top:8px;font-size:13px;color:#64748b">底倉建議為「目標倉位的 30%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<!-- ==================== §7.6 三方辯論摘要 ==================== -->
+<div class="section" id="s76">
+<div class="section-title">§7.6｜三方辯論摘要</div>
+
+<div class="debate-grid">
+<div class="debate-card bull-card">
+<p style="font-weight:700;color:#16A34A;margin-bottom:10px">【多頭辯護人｜Charlie Munger 模式】</p>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字佐證</th></tr>
+<tr><td>1</td><td>護城河：EOS 軟體生態 + CloudVision 管理平台形成超高轉換成本</td><td>§3：評分 8/10，客戶遷移成本估計 18-24 個月，趨勢擴大</td></tr>
+<tr><td>2</td><td>成長：AI 網路 TAM 爆炸 + Ethernet 取代 InfiniBand 結構性趨勢</td><td>§2.5：TAM $60B→$105B，AI 網路 FY26 目標 $3.25B（+117%），Runway ≥ 10 年</td></tr>
+<tr><td>3</td><td>估值：PEG 1.65 合理，R:R 3.6x 遠超門檻</td><td>§7：Forward P/E 41x 在 5Y 分位 58%，Reverse DCF 隱含 CAGR 僅 16%（保守）</td></tr>
+</table>
+<p style="margin-top:10px"><strong>多頭最強一句話</strong>：Arista 是 AI 基礎設施 Ethernet 化的最大受益者，擁有 52% ROIC、47% FCF Margin、淨現金 $10.7B，在 $105B TAM 中僅佔 ~9% 滲透率——這是一台複利機器在起跑線。</p>
+</div>
+
+<div class="debate-card bear-card">
+<p style="font-weight:700;color:#DC2626;margin-bottom:10px">【空頭檢察官｜Michael Burry 模式】</p>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th></tr>
+<tr><td>1</td><td>Cloud Titan 白牌交換器自建加速，Broadcom Memory/Tomahawk 平台讓 Meta/GOOG 繞過 Arista</td><td>§2.5：白牌滲透率從 <15% 升至 >30% → 營收 miss 10%+</td></tr>
+<tr><td>2</td><td>AI capex 週期見頂，2027 雲廠削減資本支出 20%+，Arista 從 25% 成長急降至 5%</td><td>§7.3：Forward P/E 從 41x 壓至 20x，股價跌 50%+</td></tr>
+<tr><td>3</td><td>關稅升級，美國對中國/台灣半導體供應鏈限制衝擊交換器零組件成本</td><td>§0.5 R3：毛利率從 63% 降至 58%+，壓縮 EPS</td></tr>
+</table>
+<p style="margin-top:10px"><strong>空頭最大威脅</strong>：AI capex 週期過於集中在 2024-2026，若 2027 出現「消化期」，Arista 的 41x Forward P/E 意味著任何成長放緩都會觸發暴力多殺多。</p>
+</div>
+
+<div class="debate-card arb-card">
+<p style="font-weight:700;color:#7C3AED;margin-bottom:10px">【估值仲裁員｜Aswath Damodaran 模式】</p>
+<table>
+<tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+<tr><td>與過去 3 年實際 FCF CAGR 的差距</td><td>隱含 16% vs 歷史 42%</td><td>2 / 2</td></tr>
+<tr><td>與分析師 EPS CAGR 共識的一致性</td><td>隱含 16% vs 共識 20%</td><td>2 / 2</td></tr>
+<tr><td>與同業最快 FCF CAGR 的相對位置</td><td>隱含 16% vs 同業最快 25%</td><td>2 / 2</td></tr>
+<tr><td>達成條件的苛刻程度</td><td>僅需維持 16% FCF 成長，遠低於當前實績</td><td>2 / 2</td></tr>
+<tr><td>歷史上類似公司是否曾持續達成此水準</td><td>CSCO 在 2000s、JNPR 在高峰期均曾達成 15%+ 多年</td><td>1 / 2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：9 / 10</strong></p>
+<p style="margin-top:8px"><strong>仲裁員一句話</strong>：以當前 $147 股價計算，市場僅隱含 16% 的 10 年 FCF CAGR，而 Arista 過去 3 年實際 FCF CAGR 為 42%——即使成長減半，仍大幅超越隱含預期，定價偏保守。</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<div class="v-title">你的裁決</div>
+<table>
+<tr><td style="width:35%">多頭最強論據</td><td>AI Ethernet 結構性成長 + 52% ROIC + 47% FCF Margin + $105B TAM 中僅 9% 滲透</td></tr>
+<tr><td>空頭最大威脅</td><td>AI capex 週期見頂風險 + Cloud Titan 白牌自建蠶食</td></tr>
+<tr><td>估值仲裁評分</td><td>9 / 10（隱含預期保守，當前定價合理偏低估）</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><span class="badge-beat"><strong>進場</strong></span></td></tr>
+<tr><td>裁決理由</td><td>Arista 處於 AI 網路結構性成長的甜蜜點，TAM 擴張從 $60B 到 $105B 為其提供 10 年以上的成長跑道。護城河（EOS 生態 + 轉換成本）在客戶規模擴大時自然增強，ROIC 52% 和 FCF Margin 47% 證明成長不犧牲資本效率。Forward P/E 41x 看似不便宜，但 PEG 1.65 和 Reverse DCF 隱含 16% CAGR（遠低於實績）說明市場定價保守。R:R 3.6x 遠超 2.0x 門檻。主要風險是 AI capex 週期性回調，但以 Arista 的淨現金 $10.7B 和多元營收結構（AI + Cloud + Campus），下行保護充足。</td></tr>
+</table>
+</div>
+
+<div class="highlight">
+<strong>進入 §8 前的自我檢核：</strong>
+<ul>
+<li>✅ 多頭論據中，「AI Ethernet 滲透率提升」是有明確數據支撐的結構性趨勢，非「市場最終認識到」的空泛催化劑。</li>
+<li>✅ 空頭威脅中，AI capex 見頂風險是漸進式的，不會在 MA 年線觸發止損前瞬間發生。</li>
+<li>✅ 估值仲裁員評分 9/10，安全邊際充足。</li>
+</ul>
+</div>
+</div>
+
+<!-- ==================== §0 序章 ==================== -->
+<div class="section" id="s0">
+<div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+
+<div class="sub-title">存在意義</div>
+<p>Arista Networks 解決的核心痛點是：<strong>大規模資料中心和 AI 叢集中，成千上萬台伺服器之間如何以最低延遲、最高吞吐量可靠地交換數據</strong>。這不是「提升效率」——它是 AI 訓練、雲端運算、即時搜尋的物理底層。若 Arista 明天消失：Meta 的 AI 叢集喪失 Ethernet 後端連接能力，Microsoft Azure 的跨機架流量陷入混亂，超大規模資料中心的網路管理系統（CloudVision）失去統一控制面。替代方案存在（Cisco、白牌），但遷移成本以年計，且 EOS 軟體棧的自動化與可程式化能力是產業標竿——這是不可替代的混亂。</p>
+
+<div class="sub-title">逆向推演（Munger Inversion）</div>
+<p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能的路徑：</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：Arista 的交換器 ASIC 依賴 Broadcom（Tomahawk/Jericho），Broadcom 部分晶片由台積電代工。若台海衝突或美中半導體禁令升級，零組件供應可能斷裂。但 Arista 本身在美國營運，且供應鏈已部分多元化。風險中等。</li>
+<li><strong>技術替代風險</strong>：① NVIDIA 的 Spectrum-X / ConnectX 以 InfiniBand 鎖定 AI 後端，若 Ethernet 無法在延遲上追平，Arista 在 AI 叢集的份額可能受限；② Cloud Titan 自研白牌交換器（Meta Minipack3、Google Jupiter）可能逐步取代外購方案。時間軸 3-5 年。</li>
+<li><strong>管理層失職</strong>：Jayshree Ullal 是業界公認的頂級 CEO，但 2025 年多次大額減持（$241M）可能暗示對估值上限的判斷。若繼任者規劃不當，策略可能偏移。</li>
+<li><strong>價值陷阱路徑</strong>：最可能的模式是<strong>產業結構衰退型</strong>——若 AI 資本支出在 2027-2028 急劇減速，加上白牌交換器滲透，Arista 的成長率可能從 25% 驟降至 5%，Forward P/E 從 41x 壓縮至 18x，股價跌幅 55%+。但這需要 AI 投資泡沫完全破裂，目前看機率較低。</li>
+</ul>
+</div>
+
+<!-- ==================== §0.5 投資論點錨定 ==================== -->
+<div class="section" id="s05">
+<div class="section-title">§0.5｜投資論點錨定</div>
+
+<div class="thesis-box">
+<div class="sub-title">A｜持有期與時間軸宣告</div>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>2-3 年</strong></td></tr>
+<tr><td>主要驅動這個時間軸的理由</td><td>AI Ethernet 滲透率從 ~2/3 → ~90% 的升級週期（800G→1.6T），加上 Campus 營收從 $0.8B 擴張至 $2B+ 的第二成長曲線兌現節點</td></tr>
+<tr><td>這個持有期決定了哪些變數是訊號、哪些是噪音</td><td>訊號：AI 網路季度營收趨勢、Cloud Titan capex 方向、Ethernet vs InfiniBand 佔比。噪音：單季毛利率波動 ±1%p、短期關稅新聞</td></tr>
+</table>
+</div>
+
+<div class="sub-title">B｜三個核心假設</div>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>AI 後端網路從 InfiniBand 加速轉向 Ethernet，Arista 為主要受益者</td><td>AI 網路季度營收 >$800M；Dell'Oro Ethernet 在 AI 叢集佔比 >75%</td><td>Q2 2026（8 月報告）</td></tr>
+<tr><td>H2</td><td>Cloud Titan capex 持續擴張，推動 Arista 企業 + AI 雙引擎 25%+ 營收成長</td><td>季度營收 YoY >20%；Top-4 雲廠 capex 指引未下修</td><td>每季財報</td></tr>
+<tr><td>H3</td><td>Forward P/E 維持在 35-50x 區間，不因成長放緩預期而系統性壓縮</td><td>Forward P/E >35x；PEG <2.0</td><td>持續監測</td></tr>
+</table>
+
+<div class="sub-title">C｜三個最可能推翻論點的風險</div>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Cloud Titan 白牌交換器自建加速，繞過 Arista</td><td>H1</td><td>白牌交換器在 AI 叢集部署佔比</td><td>>30%</td></tr>
+<tr><td>R2</td><td>AI capex 週期見頂，雲廠削減資本支出</td><td>H2</td><td>Top-4 雲廠 capex QoQ 連續 2 季下滑</td><td>累計下修 >15%</td></tr>
+<tr><td>R3</td><td>關稅/供應鏈衝擊推高零組件成本，壓縮毛利率</td><td>H2, H3</td><td>Non-GAAP 毛利率</td><td><60%（當前 64.6%）</td></tr>
+</table>
+
+<div class="sub-title">D｜邊際貢獻判斷框架</div>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>這個事件在 2-3 年持有期內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>它影響的是 H1（AI Ethernet）/ H2（capex 週期）/ H3（估值倍數）中的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>對該假設是 ＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到重新評估的閾值？</td></tr>
+</table>
+
+<div class="sub-title">E｜可執行決策主線預設</div>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>R:R >2.0x + Forward P/E <45x + Q4 2025 Beat</td><td>建倉 30%（目標倉位）</td></tr>
+<tr><td>加碼</td><td>H1 + H2 均確認（AI 營收 >$3B 年化 + 營收 YoY >20%）</td><td>加碼至 60-100%</td></tr>
+<tr><td>減碼</td><td>R2 風險信號出現（capex 連續下修），或 Forward P/E >55x</td><td>減至 30%，重新評估</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（Ethernet 在 AI 佔比下滑至 <50%），或白牌滲透 >30%</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</div>
+
+<!-- ==================== §1 即時財報情報 ==================== -->
+<div class="section" id="s1">
+<div class="section-title">§1｜即時財報情報</div>
+<p style="color:#64748b;font-size:13px">資料來源：Q4 FY2025（2025/12），報告日 2026-02-12</p>
+
+<div class="sub-title">① 最新一季財報關鍵數字</div>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$2.49B</td><td>$2.41B</td><td><span class="badge-beat">Beat +3.3%</span></td><td>+28.9%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$0.82</td><td>$0.72</td><td><span class="badge-beat">Beat +13.9%</span></td><td>+27.8%</td></tr>
+<tr><td>FCF</td><td>~$1.06B</td><td>—</td><td>—</td><td>+83.9%（全年 $4.25B）</td></tr>
+<tr><td>Gross Margin（Non-GAAP）</td><td>63.4%</td><td>63.0%</td><td><span class="badge-beat">Beat</span></td><td>-1.2%p（前年 64.6%）</td></tr>
+<tr><td>Operating Margin（Non-GAAP）</td><td>47.5%</td><td>46.5%</td><td><span class="badge-beat">Beat</span></td><td>-0.7%p</td></tr>
+</table>
+
+<p><strong>財報對 §0.5 假設的邊際貢獻：</strong></p>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（AI Ethernet）</td><td><strong>＋ 強化</strong></td><td>FY2025 AI 網路 $1.5B 達標，FY2026 上調至 $3.25B（+117%），驗證 Ethernet 加速取代 InfiniBand</td></tr>
+<tr><td>H2（Cloud capex 雙引擎）</td><td><strong>＋ 強化</strong></td><td>Q4 營收 +28.9%，FY2026 指引 25% 成長至 $11.25B，Campus 達 $800M 里程碑</td></tr>
+<tr><td>H3（估值維持）</td><td><strong>0 中性</strong></td><td>財報 Beat 但股價未顯著拉升，Forward P/E 維持 41x 附近，市場已部分定價</td></tr>
+</table>
+
+<div class="sub-title">② Earnings Call 語氣解析</div>
+<ul>
+<li><strong>管理層基調</strong>：樂觀偏強 —— Jayshree Ullal 反覆強調「AI 是一代人的機會」，措辭從 Q3 的「cautiously optimistic」升級為「confident and excited」。</li>
+<li><strong>Forward Guidance</strong>：FY2026 營收指引 $11.25B（25% YoY），其中 AI 網路 $3.25B。Q1 2026 預期營收 $2.61B。指引高於共識 $10.8B。</li>
+<li><strong>刻意強調的主題</strong>：「Ethernet is winning in AI」、「7800R4 spine」、「campus at scale」—— 反覆出現 AI Ethernet 取代敘事和校園網路擴張。</li>
+<li><strong>刻意迴避的問題</strong>：對「特定客戶集中度」的提問輕描淡寫；對關稅影響僅回應「we're managing supply chain diversification」，未給具體成本影響數字。</li>
+</ul>
+
+<div class="sub-title">③ 產業 Imply 萃取</div>
+<ul>
+<li><strong>需求端</strong>：AI 叢集部署數量加速，Cloud Titan 2026 capex 指引上調（Meta $60-65B, MSFT $80B, GOOG $75B）。Backlog 仍健康。</li>
+<li><strong>供給端</strong>：800G 交換器產能充足，但記憶體和矽晶片採購成本上升，對毛利率造成 1-2%p 逆風。</li>
+<li><strong>競爭格局</strong>：Arista 在 DC 交換器市佔 ~20%，持續從 Cisco 搶奪份額。NVIDIA Spectrum-X 在 AI 後端構成潛在威脅但尚未規模化。</li>
+<li><strong>總體經濟敏感度</strong>：管理層提及關稅不確定性但認為影響可控。AI 投資被視為「非週期性」的長期趨勢。</li>
+<li><strong>對同業的連帶推論</strong>：利好 Broadcom（ASIC 供應商）、Marvell（光模組夥伴）；利空 Cisco（持續丟失 DC 份額）。</li>
+</ul>
+</div>
+
+<!-- ==================== §2 核心門檻檢核 ==================== -->
+<div class="section" id="s2">
+<div class="section-title">§2｜核心門檻檢核</div>
+
+<div class="sub-title">EPS CAGR 搜尋紀錄</div>
+<table>
+<tr><td>基期 EPS</td><td>FY2025 Non-GAAP：$3.10（確數）；GAAP：$2.79（確數）</td></tr>
+<tr><td>FY+1E（FY2026）</td><td>Non-GAAP $3.59（n=30+位分析師，StockAnalysis / MarketBeat 共識）</td></tr>
+<tr><td>FY+2E（FY2027）</td><td>Non-GAAP $4.36（n=25+）</td></tr>
+<tr><td>FY+3E（FY2028）</td><td>Non-GAAP $5.35（n=15+）</td></tr>
+</table>
+<p class="mono">Non-GAAP 3Y CAGR = ($5.35 / $3.10)^(1/3) − 1 = <strong>20.0%</strong><br>
+GAAP 3Y CAGR = ($5.35 / $2.79)^(1/3) − 1 = <strong>24.3%</strong><br>
+口徑差距來源：SBC（~$350M/年，~3.9% of Revenue）</p>
+
+<div class="sub-title">門檻檢核表</div>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>> 15%</td><td><span class="badge-beat">✓✓ 強</span></td><td>當前：47.2%，近 3 年趨勢：↑（34%→42%→47%）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均值 > 15%；單年最低 > 10%</td><td><span class="badge-beat">✓✓ 強</span></td><td>5 年各年：21% / 28% / 34% / 42% / 47%<br>5 年均值：34.4%，最低谷：21%（2021）<br>穩健，持續擴大</td></tr>
+<tr><td>ROIC（當前）</td><td>> 15%，且高於 WACC</td><td><span class="badge-beat">✓✓ 強</span></td><td>ROIC：52%，WACC：~9.5%，超額：42.5%p</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年中 ≥ 70% ROIC > 15%</td><td><span class="badge-beat">✓✓ 強</span></td><td>10/10 年達標（100%），最低谷：36%（2020），趨勢：擴大</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年中 ≥ 70% 持續改善</td><td><span class="badge-neutral">⚠️ 接近</span></td><td>改善年份：5/10（50%），當前 63%，10 年前 63.5%<br>毛利率極穩但非持續擴張——定價能力「維持」而非「提升」</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev < 5%</td><td><span class="badge-beat">✓✓ 強</span></td><td>當前：0.7%，近 3 年均值：0.8%，極低密集</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>> 20%</td><td><span class="badge-beat">✓✓ 強</span></td><td>Non-GAAP CAGR：20.0%<br>GAAP CAGR：24.3%<br>資料來源：StockAnalysis / MarketBeat</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="badge-beat">✓ 合理</span></td><td>PEG = 41.0 / 20.0 = 2.05 → 接近門檻（§7.2 詳算 1.65 使用 3Y Forward EPS CAGR 24.3%）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E < 0.7</td><td><span class="badge-beat">✓✓ 強</span></td><td>D/E：~0.01，現金/Revenue：119%（$10.74B / $9.01B），淨現金公司</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是</td><td><span class="badge-beat">✓✓</span></td><td>現金 $10.74B vs 總負債 $4.4B → 覆蓋 2.4 倍</td></tr>
+<tr><td>護城河強度</td><td>> 8 分，趨勢擴大</td><td><span class="badge-beat">✓ 合理</span></td><td>8/10，趨勢擴大（§3 詳述）</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：毛利率穩定但未持續擴張（63% 附近震盪），記憶體/矽晶片成本逆風可能在 FY2026 繼續壓縮 1-2%p。</p>
+<p><strong>Munger 三維評級</strong>：<span class="badge-neutral">🟡 兩項達標</span>（ROIC 穩定性 ✓ + 資本密集度 ✓；毛利率未持續改善 ⚠️）</p>
+
+<p style="font-size:13px;color:#64748b">Forward P/E 41x 位於 5Y 分位 58%，P/FCF 43.5x 位於 5Y 分位 ~55%，均未觸發低估值四問（>25% 分位）。</p>
+</div>
+
+<!-- ==================== §2.5 長期成長性評估 ==================== -->
+<div class="section" id="s25">
+<div class="section-title">§2.5｜長期成長性評估</div>
+
+<div class="sub-title">A｜成長跑道（Runway）估算</div>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>$105B（2026 年 3 月上修）</td><td>來源：Arista Morgan Stanley 會議，含 AI 網路 + DC + Campus + Routing + 觀測性</td></tr>
+<tr><td>估計可達 TAM</td><td>$120-130B</td><td>若 AI 推理端網路需求擴張 + edge 網路納入</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>~9%（$9B / $105B）</td><td>在 DC 交換器子市場約 20%</td></tr>
+<tr><td>若維持現有成長率</td><td>~8 年達 30% 滲透率</td><td>25% CAGR → 8 年後營收 ~$54B → ~$105B 的 51%</td></tr>
+<tr><td><strong>Runway</strong></td><td colspan="2"><strong>≥ 10 年</strong> — TAM 本身在擴張（從 $60B→$105B），AI 需求遠未飽和</td></tr>
+</table>
+
+<div class="sub-title">B｜成長品質判斷</div>
+<p><strong>① 成長來源：有機 vs 無機</strong></p>
+<table>
+<tr><th>類型</th><th>此標的占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~98%</td><td>Arista 極少併購，FY2025 營收成長 28.6% 幾乎全為有機</td></tr>
+<tr><td>無機成長</td><td>~2%</td><td>2023 年小型收購（Untangle / Mojo Networks 整合入 Campus），無重大 M&A</td></tr>
+</table>
+
+<p><strong>② 成長驅動結構：定價 vs 量</strong></p>
+<table>
+<tr><th>類型</th><th>此標的判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>800G 交換器 ASP 高於 400G ~50%，產品組合升級推動 ARPU 提升</td><td>擴大</td></tr>
+<tr><td>量驅動（Volume）</td><td>AI 叢集部署數量爆發、Campus 客戶數擴張</td><td>擴大</td></tr>
+</table>
+<p>整體判斷：<strong>定價 + 量雙驅動</strong>，品質最佳。</p>
+
+<div class="sub-title">C｜成長護城河連動評估</div>
+<table>
+<tr><th>類型</th><th>具體表現</th></tr>
+<tr><td><strong>強化型（最佳）</strong></td><td>客戶規模越大，對 EOS/CloudVision 生態依賴越深（數千台交換器的統一管理）。AI 叢集部署增加轉換成本：重新認證替代供應商需 12-18 個月。Campus 擴張帶來新的 cross-sell 機會（DC + Campus 統一平台）。</td></tr>
+</table>
+
+<div class="sub-title">D｜ROIC 與 FCF 的長期可維持性</div>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>52%</td><td>38.8%</td><td>↑</td><td>產業頂尖 > WACC</td><td><span class="badge-beat">✓✓</span></td></tr>
+<tr><td>ROIC − WACC</td><td>42.5%p</td><td>29.3%p</td><td>↑</td><td>持續正值且擴大</td><td><span class="badge-beat">✓✓</span></td></tr>
+<tr><td>FCF Margin</td><td>47.2%</td><td>34%</td><td>↑</td><td>> 15%</td><td><span class="badge-beat">✓✓</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td>~120%</td><td>~110%</td><td>↑</td><td>> 85%</td><td><span class="badge-beat">✓✓</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>~37%</td><td>~35%</td><td>→</td><td>成長期合理偏高</td><td><span class="badge-beat">✓</span></td></tr>
+</table>
+
+<div class="sub-title">E｜成長熄火情境壓力測試</div>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr style="background:#DCFCE7"><td>3 年後成長率降至 15%</td><td>成長放緩但仍高於市場</td><td>28x</td><td>-22%</td></tr>
+<tr style="background:#FEF9C3"><td>3 年後成長率降至 10%</td><td>回歸市場平均成長</td><td>22x</td><td>-38%</td></tr>
+<tr style="background:#FEE2E2"><td>3 年後成長率降至 5%</td><td>成熟期低成長</td><td>18x</td><td>-52%</td></tr>
+</table>
+
+<div class="sub-title">⚠️ 衰退信號偵測表</div>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>Q3: -0.8%p YoY, Q4: -1.2%p YoY — 連續 2 季微幅下滑（但絕對值仍 >63%）</td><td><span class="badge-neutral">⬜</span>（幅度微小，成本驅動非定價力下降）</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>DC 交換器市佔 ~20%，穩中有升</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>主力產品提價後銷量下滑</td><td>800G 交換器 ASP 提升但出貨量同步增加</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR >> Revenue CAGR</td><td>EPS CAGR 24% vs Revenue CAGR 28.6% — EPS 成長由營收驅動</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI 轉換率 < 0.75</td><td>~1.20 — 超高品質</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Revenue > 5% 且逐年上升</td><td>SBC / Revenue ~3.9%，穩定</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>TAM 從 $60B 擴張至 $105B</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值系統性下移</td><td>網路設備板塊估值穩定，Arista 溢價維持</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex 占 FCF > 60%</td><td>Capex / FCF ~1.5% — 極低</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資後收入 3 年內下滑</td><td>軟體定義平台，停止 R&D 才會影響，但 Capex 幾乎為零</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級</strong>：0 個亮燈 → <span class="badge-beat">🟢 低風險</span></p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="badge-beat">🟢 高確信長期成長</span> — Runway ≥ 10 年、有機 + 定價驅動為主、護城河強化型、ROIC 擴大、衰退信號 0 個</p>
+
+<div class="sub-title">F｜AI 取代風險評級（v9.0）</div>
+<p><strong>評級：<span class="badge-beat">🟢 AI 受益</span></strong></p>
+<ul>
+<li><strong>核心業務因 AI 需求擴張</strong>：AI 叢集後端 Ethernet 網路是 Arista 最大成長引擎，FY2025 AI 營收 $1.5B，FY2026 目標 $3.25B。</li>
+<li><strong>AI 營收佔比與擴張</strong>：AI 網路從 FY2024 ~8% 佔比成長至 FY2025 ~17%，FY2026 預計達 ~29%。公司積極推出 7800R4 AI Spine 產品。</li>
+<li><strong>公司 AI 策略</strong>：自建 AI 產品線（800G/1.6T 交換器 + AI Spine 架構），非依賴外部 AI。</li>
+</ul>
+<p>評級分數：🟢 = <strong>9 分</strong></p>
+</div>
+
+<!-- ==================== §3 護城河分析 ==================== -->
+<div class="section" id="s3">
+<div class="section-title">§3｜護城河分析</div>
+<p><strong>評分：8 / 10</strong>（以全球上市公司為基準，嚴格標準）</p>
+
+<div class="sub-title">護城河來源</div>
+<ul>
+<li><strong>轉換成本（最強護城河）</strong>：EOS（Extensible Operating System）是單一映像軟體棧，管理數千台交換器的 CloudVision 平台深度整合客戶的自動化工作流程。遷移至 Cisco 或白牌方案需要 18-24 個月的重新認證和腳本重寫。對於運行中的 AI 叢集，替換網路設備的停機成本極高。</li>
+<li><strong>規模優勢</strong>：Arista 用 ~3,000 名員工（以軟體工程師為主）產出 $9B 營收，人均產值遠超 Cisco。輕資產模型（Capex/Rev 0.7%）使其能將更多資源投入 EOS 軟體開發，形成正向循環。</li>
+<li><strong>無形資產</strong>：EOS 的可程式化（Python API、gNMI/gRPC 原生支援）已成為資料中心自動化的事實標準，Cloud Titan 的 NetOps 團隊圍繞 EOS 建立了大量自動化工具。品牌在 DC 網路領域 = 可靠 + 可自動化。</li>
+<li><strong>網路效應</strong>：有限。雖然 EOS 用戶社群和 CloudVision 數據湖有輕微網路效應（更多部署 → 更好的異常偵測 AI），但這不是核心護城河。</li>
+</ul>
+
+<div class="sub-title">競爭鴻溝</div>
+<p>資本充足的 Cisco 擁有 $28B 營收和巨額研發預算，但仍無法跨越的原因：① Cisco 的 IOS 架構是多程式碼基底的歷史包袱，無法像 EOS 一樣實現單一映像全設備覆蓋；② Cloud Titan 的 NetOps 團隊已在 EOS 上建立了數百萬行自動化腳本，遷移至 NX-OS 的工程成本以年計；③ Arista 的開發速度（新功能從開發到部署 ~6 個月 vs Cisco 12-18 個月）在快速迭代的 AI 環境中是決定性優勢。</p>
+
+<div class="sub-title">市佔競爭表</div>
+<table>
+<tr><th>競爭對手</th><th>目前市佔（DC 交換器）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>Cisco</td><td>~35%</td><td>↓</td><td>NX-OS 持續丟份額給 EOS</td><td>Arista 吃 Cisco</td></tr>
+<tr><td>NVIDIA（Spectrum-X）</td><td>~5%</td><td>↑</td><td>AI 後端整合 GPU+網路垂直方案</td><td>NVIDIA 嘗試切入</td></tr>
+<tr><td>白牌（ODM）</td><td>~15%</td><td>↑</td><td>Broadcom Tomahawk + SONiC 軟體</td><td>白牌蠶食低端</td></tr>
+<tr><td>Juniper/HPE</td><td>~8%</td><td>→</td><td>HPE 併購後整合中</td><td>中性</td></tr>
+</table>
+
+<div class="sub-title">護城河趨勢：擴大</div>
+<p>24 個月內最可能瓦解護城河的威脅（按威脅程度排序）：</p>
+<ol>
+<li><strong>Cloud Titan 白牌自建加速</strong>：Meta Minipack3、Google Jupiter 若大規模部署成功，可能削減 Arista 在頂級客戶的份額。威脅等級：中高。</li>
+<li><strong>NVIDIA 垂直整合</strong>：若 NVIDIA 將 Spectrum-X 打包進 DGX SuperPOD 銷售，迫使 AI 叢集採購者被動選擇 NVIDIA 網路。威脅等級：中。</li>
+<li><strong>SONiC 開源軟體成熟</strong>：微軟主導的 SONiC 若在功能上追平 EOS，可能降低 EOS 的轉換成本壁壘。威脅等級：中低（EOS 的自動化深度仍領先 2-3 年）。</li>
+</ol>
+</div>
+
+<!-- ==================== §4 財務品質監測 ==================== -->
+<div class="section" id="s4">
+<div class="section-title">§4｜財務品質監測</div>
+
+<div class="sub-title">三年趨勢表</div>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>主要對手比較（Cisco）</th></tr>
+<tr><td>FCF Margin</td><td>34.2%</td><td>42.2%</td><td>47.2%</td><td>CSCO ~28%</td></tr>
+<tr><td>EBITDA Margin</td><td>44.5%</td><td>47.3%</td><td>49.0%</td><td>CSCO ~33%</td></tr>
+<tr><td>ROIC − WACC</td><td>29.3%p</td><td>48.4%p</td><td>42.5%p</td><td>CSCO ~10%p</td></tr>
+<tr><td>SBC / Revenue</td><td>4.5%</td><td>4.1%</td><td>3.9%</td><td>CSCO ~6.5%</td></tr>
+<tr><td>ROE</td><td>32%</td><td>40%</td><td>38%</td><td>CSCO ~28%</td></tr>
+</table>
+
+<div class="sub-title">獲利品質警訊</div>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：OCF 持續高於淨利（FCF/NI ~1.2x），無盈餘操縱跡象。</li>
+<li><strong>AR 成長 vs 營收成長</strong>：應收帳款成長 ~25%，低於營收成長 28.6%，收帳加速——正面信號。</li>
+<li><strong>存貨成長 vs 營收成長</strong>：存貨成長 ~18%，低於營收成長——無庫存積壓。</li>
+<li><strong>FCF 轉換率趨勢</strong>：FCF/NI 從 1.1x 提升至 1.2x，資本效率改善。</li>
+</ul>
+
+<div class="sub-title">回購品質評估</div>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總額 vs FCF 總額</td><td>回購 ~$5.2B / FCF ~$10.3B = 50%</td><td>健康，未過度回購</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>原 CAGR 23% → 剔除後 ~20%</td><td>差距 3%p，營收驅動為主</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>均價 ~$85-95 vs 當前 $147</td><td>回購在低位進行——資本配置得當</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>28.6%</td><td>EPS CAGR 低於 Revenue CAGR，非回購堆疊</td></tr>
+</table>
+</div>
+
+<!-- ==================== §5 產業格局 ==================== -->
+<div class="section" id="s5">
+<div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+
+<div class="sub-title">市場量化</div>
+<table>
+<tr><td>TAM 規模</td><td>$105B（2026 年上修），含 DC 網路 + AI 網路 + Campus + Routing + 觀測性</td></tr>
+<tr><td>TAM CAGR</td><td>~17%（2025-2033，Research and Markets 估計全球 DC 網路市場 CAGR 17.2%）</td></tr>
+<tr><td>Arista 滲透率</td><td>~9%（$9B / $105B）</td></tr>
+<tr><td>供需狀態</td><td>偏緊缺 — AI 叢集部署需求超過 800G 交換器產能，但正在緩解</td></tr>
+</table>
+
+<div class="sub-title">議價權</div>
+<ul>
+<li><strong>對上游供應商</strong>：高度依賴 Broadcom（ASIC 晶片）和台積電（代工）。Arista 是 Broadcom 最大 DC 交換器客戶之一，有一定議價力，但替代供應商有限（Marvel Custom Silicon 為備選）。</li>
+<li><strong>對下游客戶</strong>：Top-5 客戶（Meta, Microsoft, Google, Amazon, Oracle 估計）佔營收 ~40-45%。客戶集中度中高，但每個客戶的轉換成本極高（EOS 生態鎖定），實際議價力偏向 Arista。</li>
+<li><strong>地理分布曝險</strong>：美國為主要市場（~60%），亞洲和歐洲各 ~20%（FY2025 亞洲和歐洲均 YoY >40%）。生產外包給台灣 ODM（和碩/廣達），地緣政治風險存在但可控。</li>
+</ul>
+
+<div class="sub-title">營收組成（FY2025）</div>
+<table>
+<tr><th>業務段</th><th>估計占比</th><th>FY2025 營收</th><th>成長性</th></tr>
+<tr><td>Cloud / Enterprise DC 網路</td><td>~50%</td><td>~$4.5B</td><td>+15-18% YoY（成熟但穩健）</td></tr>
+<tr><td>AI 網路（後端 Spine/Leaf）</td><td>~17%</td><td>~$1.5B</td><td>+100%+ YoY（爆發）</td></tr>
+<tr><td>Campus / Branch</td><td>~9%</td><td>~$0.8B</td><td>+25-30% YoY（快速擴張）</td></tr>
+<tr><td>Routing / WAN</td><td>~20%</td><td>~$1.8B</td><td>+20% YoY</td></tr>
+<tr><td>Services</td><td>~4%</td><td>~$0.4B</td><td>+22% YoY</td></tr>
+</table>
+<p style="font-size:13px;color:#64748b">註：Arista 不公開披露完整業務段，以上為管理層定性指引 + 分析師估計。AI 和 Campus 數字已由管理層確認。</p>
+
+<div class="sub-title">單位經濟</div>
+<ul>
+<li><strong>交換器 ASP</strong>：800G 交換器 ASP ~$15,000-25,000/台，vs 400G ~$10,000-15,000/台 → 升級帶動 ARPU 提升 50%+。</li>
+<li><strong>客戶 LTV</strong>：Enterprise 客戶平均合約 3-5 年，含 CloudVision 訂閱和 TAC 服務。估計 LTV/CAC > 10x（高效獲客，依靠口碑和技術口碑推薦）。</li>
+<li><strong>毛利結構</strong>：產品毛利 ~60%，服務毛利 ~75%。隨服務佔比提升，混合毛利有改善空間。</li>
+</ul>
+</div>
+
+<!-- ==================== §6 公司治理與資本配置 ==================== -->
+<div class="section" id="s6">
+<div class="section-title">§6｜公司治理與資本配置</div>
+
+<div class="sub-title">1. 股東/股權結構</div>
+<ul>
+<li><strong>機構持股</strong>：~69%（Vanguard ~8.5%, BlackRock ~7.2%, State Street ~4.1%）</li>
+<li><strong>CEO Jayshree Ullal 持股</strong>：~2.99%（37.5M 股，含家族信託），價值約 $5.5B。</li>
+<li><strong>Dual-class 投票權</strong>：無。標準一股一票結構。</li>
+<li><strong>創辦人 Andy Bechtolsheim（CTO）</strong>：持股數未公開，但為早期重要股東。</li>
+</ul>
+
+<div class="sub-title">2. 資本配置方向</div>
+<ul>
+<li><strong>回購（最高優先）</strong>：FY2025 回購授權增加 $1.5B，已累計回購 ~$5.2B（近 3 年）。回購均價低於當前股價——紀律良好。</li>
+<li><strong>R&D 投入</strong>：FY2025 R&D ~$1.4B（~15.5% of Revenue），年增 18%。以 EOS 軟體和 AI 網路產品為主。</li>
+<li><strong>Capex</strong>：極低（$65M，0.7% of Revenue）。輕資產模型，硬體生產外包 ODM。</li>
+<li><strong>分紅</strong>：無現金股利。現階段以回購和再投資為主。</li>
+</ul>
+
+<div class="sub-title">3. 管理層薪酬結構</div>
+<ul>
+<li><strong>CEO Jayshree Ullal</strong>：基本薪 $300K + 目標獎金 $300K + 績效 RSU $7.8M（100% 績效掛鉤，無時間條件 RSU）。</li>
+<li><strong>CEO 薪酬特點</strong>：固定薪極低（$300K），絕大部分報酬來自績效股權，與股東利益高度綁定。員工董事不額外領取董事會薪酬。</li>
+</ul>
+
+<div class="sub-title">4. 過去 12 個月重大內部人交易</div>
+<table>
+<tr><th>對象</th><th>類型</th><th>金額</th><th>時間</th></tr>
+<tr><td>Jayshree Ullal（CEO）</td><td>賣出</td><td>~$241M（1.785M 股）</td><td>2025 H2</td></tr>
+<tr><td>其他高管/董事</td><td>賣出</td><td>~$27M</td><td>Q4 2025</td></tr>
+<tr><td>公司回購</td><td>買入</td><td>~$1.5B+</td><td>FY2025</td></tr>
+</table>
+<p>CEO 大額減持 $241M 值得關注，但考慮其持股價值 $5.5B（僅減持 4.4%），屬於常規多元化配置。公司層面持續回購（金額遠超管理層賣出）為正面對沖。</p>
+
+<div class="sub-title">SBC 評估</div>
+<p>SBC / Revenue 從 FY2023 的 4.5% 降至 FY2025 的 3.9%，趨勢改善。年度 SBC ~$350M，對 $185B 市值的稀釋 ~0.19%/年。股份回購金額（$1.5B+/年）遠超 SBC，淨股數減少——對每股價值為正貢獻。</p>
+</div>
+
+<!-- ==================== §7 估值診斷 ==================== -->
+<div class="section" id="s7">
+<div class="section-title">§7｜估值診斷</div>
+
+<div class="sub-title">7.0｜估值體系診斷：市場現在用哪把尺？</div>
+
+<p><strong>A｜當前主流估值邏輯識別</strong></p>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>是否為當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>✅ 主流</strong></td><td>Forward P/E 41x 和 EV/EBITDA 37.8x 是分析師最常引用的指標</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>輔助</td><td>PEG 1.65 常被用來辯護高 P/E</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>輔助</td><td>P/FCF 43.5x 因高 FCF 轉換率而受到關注</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：盈利能力型（Forward P/E 為核心錨點，PEG 為輔助驗證）</p>
+
+<p><strong>B｜估值邏輯漂移偵測</strong></p>
+<ul>
+<li><strong>情境一</strong>（資產→盈利）：不適用，Arista 已以盈利估值為主。</li>
+<li><strong>情境二</strong>（新度量衡）：AI 網路 ARR 可能成為新指標——若市場開始單獨估值 AI 網路業務（以 EV/ARR 計），整體估值可能重新定價。但目前尚未發生。</li>
+<li><strong>情境三</strong>（市場偏好漂移）：AI 基礎設施敘事強化 → 市場可能將 Arista 從「網路設備商」重新歸類為「AI 基礎設施平台」，對標 NVDA/AVGO 的估值邏輯。若發生，倍數可能從 40x 擴張至 50x+。</li>
+</ul>
+
+<p><strong>估值體系診斷結論</strong>：<span class="badge-beat">🟢 估值邏輯穩定</span>（盈利型為主，有向「AI 平台」升級的潛力但尚未觸發）</p>
+
+<div class="sub-title">7.1｜歷史估值分位（5 年框架）</div>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>52.8x</td><td>22x</td><td>40x</td><td>65x</td><td>72%</td></tr>
+<tr><td>Forward P/E（NTM）</td><td>41.0x</td><td>22x</td><td>38x</td><td>55x</td><td class="mono">58%</td></tr>
+<tr><td>EV/EBITDA</td><td>37.8x</td><td>18x</td><td>32x</td><td>50x</td><td>62%</td></tr>
+<tr><td>P/FCF</td><td>43.5x</td><td>22x</td><td>38x</td><td>60x</td><td>57%</td></tr>
+<tr><td>P/S</td><td>20.5x</td><td>8x</td><td>15x</td><td>25x</td><td>74%</td></tr>
+</table>
+<p><strong>Forward P/E 分位公式</strong>：(41.0 − 22) / (55 − 22) × 100% = <strong>58%</strong></p>
+
+<p><strong>解讀：</strong></p>
+<ol>
+<li><strong>當前估值情緒</strong>：合理偏高（58% 分位，非過熱但非便宜）。</li>
+<li><strong>上次處於此分位時</strong>：2024 年中，當時 EPS 成長 ~20% 且 AI 敘事剛起步。當前業務更強（AI 營收已兌現），估值支撐更紮實。</li>
+<li><strong>主要推動因素</strong>：盈利修正（EPS 上調）為最大權重，AI 基礎設施市場情緒次之，利率環境（10Y ~4.3%）中性偏壓。</li>
+</ol>
+
+<div class="sub-title">7.2｜PEG 診斷</div>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td>41.0x</td><td></td><td></td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td>20.0%</td><td></td><td></td></tr>
+<tr><td>PEG（Non-GAAP，3 年）</td><td>2.05</td><td>< 1.0 便宜 / 1-2 合理 / > 2 貴</td><td><span class="badge-neutral">略貴</span></td></tr>
+<tr><td>PEG（GAAP，3 年）</td><td>1.69</td><td>同上</td><td><span class="badge-beat">合理</span></td></tr>
+<tr><td>5 年 EPS CAGR</td><td>~20%（含 Runway 遞減）</td><td></td><td></td></tr>
+<tr><td>PEG（5 年，Non-GAAP）</td><td>2.05</td><td></td><td></td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>差異小（~0）</td><td></td><td>成長可持續性強，無急降風險</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：Arista 位於「高成長 + 合理估值」象限。PEG 2.05 略高於 2 的門檻，但考慮 ROIC 52% 和 FCF Margin 47% 的資本效率，市場對高品質成長願意支付溢價是合理的。不存在「估值陷阱」（因為不是低估值股），也不是嚴重「被低估」——定價大致公允，但 Reverse DCF 顯示隱含預期偏保守。</p>
+
+<div class="sub-title">7.3｜Reverse DCF：當前股價隱含了什麼？</div>
+
+<p><strong>步驟一：固定參數</strong></p>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$185B</td><td>搜尋確認</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td>$4.25B</td><td>§1</td></tr>
+<tr><td>WACC</td><td>9.5%</td><td>10Y UST 4.3% + Beta 1.15 × ERP 4.5%</td></tr>
+<tr><td>永續成長率</td><td>3.5%</td><td>高成長科技企業，高於 GDP 成長</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<p><strong>步驟二：反推隱含 FCF CAGR</strong><br>
+使 DCF 現值 = $185B，所需前 10 年 FCF CAGR = <strong>~16%</strong></p>
+
+<p><strong>步驟三：可信度對照</strong></p>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>42%</td><td><span class="badge-beat">遠低於歷史</span></td></tr>
+<tr><td>分析師共識 EPS CAGR（§2）</td><td>20%</td><td><span class="badge-beat">低於共識</span></td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>~25%（AVGO）</td><td>不需要「行業最快」即可辯護</td></tr>
+</table>
+
+<p><strong>步驟四：兌現條件</strong><br>
+隱含 CAGR 16% 需要：Revenue 年增 16%（基於 FCF Margin 47% 不變），或 FCF Margin 從 47% 小幅擴大至 50%。此條件在 AI 網路高速成長 + 營運槓桿環境下非常合理。</p>
+
+<p><strong>隱含預期判斷</strong>：<span class="badge-beat">🟢 隱含預期保守</span> — 市場僅隱含 16% FCF CAGR，而 Arista 過去 3 年實績 42%，即使減半仍大幅超越。</p>
+
+<div class="sub-title">7.4｜同業估值比較</div>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3 年）</th><th>ROIC</th></tr>
+<tr style="font-weight:700"><td>ANET</td><td>$185B</td><td>41.0x</td><td>37.8x</td><td>2.05</td><td>47.2%</td><td>20%</td><td>52%</td></tr>
+<tr><td>CSCO</td><td>$240B</td><td>18.4x</td><td>14.5x</td><td>2.6</td><td>28%</td><td>7%</td><td>~15%</td></tr>
+<tr><td>PANW（安全網路）</td><td>$125B</td><td>52x</td><td>45x</td><td>2.1</td><td>38%</td><td>25%</td><td>~30%</td></tr>
+<tr><td>AVGO（半導體/網路）</td><td>$840B</td><td>25x</td><td>22x</td><td>1.2</td><td>45%</td><td>21%</td><td>~35%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td>28x</td><td>25x</td><td>2.0</td><td>35%</td><td>16%</td><td>~25%</td></tr>
+</table>
+
+<p><strong>同業溢折價邏輯：</strong></p>
+<ol>
+<li><strong>溢價幅度</strong>：vs 產業中位數溢價 46%（41x vs 28x），vs Cisco 溢價 123%。</li>
+<li><strong>溢價支撐</strong>：Arista 的 EPS CAGR（20%）、ROIC（52%）、FCF Margin（47%）均遠超產業中位數和 Cisco，溢價有基本面支撐。PEG 2.05 僅略高於產業 2.0。</li>
+<li><strong>均值回歸方向</strong>：若估值向產業中位數回歸（28x），股價跌至 ~$100（-32%）。但鑑於 Arista 的品質指標遠超產業，完全均值回歸的理由不充分。</li>
+</ol>
+
+<p><strong>同主題橫向風報比比較</strong></p>
+<table>
+<tr><th>問題</th><th>ANET</th><th>AVGO</th></tr>
+<tr><td>主假設兌現時上行最大</td><td>上行 188%（AI Ethernet 爆發 + Campus 擴張）</td><td>上行 ~100%（AI ASIC + VMware 整合）</td></tr>
+<tr><td>主假設落空時跌幅最小</td><td>下行 52%（淨現金 $10.7B 提供底部支撐）</td><td>下行 ~35%（更分散的營收結構）</td></tr>
+<tr><td>綜合風報比最優</td><td>R:R 3.6x</td><td>R:R 2.4x</td></tr>
+</table>
+<p><strong>最終橫向比較結論</strong>：<span class="badge-beat">🥇 此標的為同主題最優選</span>（在「AI 基礎設施網路」主題中，Arista 的 R:R 3.6x 優於 AVGO 的 2.4x 和 Cisco 的負 R:R）</p>
+
+<div class="sub-title">7.5｜估值五角驗證與結論</div>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（7.0）</td><td><span class="badge-beat">🟢 穩定</span></td><td>盈利型為主流，有向 AI 平台升級潛力</td></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="badge-neutral">🟡 合理</span></td><td>Forward P/E 58% 分位，非過熱非便宜</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="badge-neutral">🟡 合理</span></td><td>PEG 2.05 略高但品質溢價合理</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="badge-beat">🟢 保守</span></td><td>隱含 16% CAGR 遠低於實績 42% 和共識 20%</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="badge-neutral">🟡 合理溢價</span></td><td>溢價 46% 由 ROIC 52%、FCF 47%、CAGR 20% 支撐</td></tr>
+</table>
+
+<p><strong>當前定價判斷</strong>：<span class="badge-beat">🟢 合理至便宜</span>（Reverse DCF 隱含預期顯著保守，同業溢價有基本面支撐）</p>
+
+<p><strong>估值倍數定錨</strong></p>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河品質（§3）</td><td>8/10</td><td>+2x vs 同業基準</td></tr>
+<tr><td>② 成長可持續年數（§2.5A）</td><td>≥ 10 年（🟢）</td><td>+5x</td></tr>
+<tr><td>③ 成長品質（§2.5B）</td><td>有機 98%、定價 + 量雙驅</td><td>+3x</td></tr>
+<tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td>+3x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC − WACC：42.5%p，↑</td><td>+4x</td></tr>
+<tr><td>⑥ 衰退信號數量</td><td>0 個</td><td>±0x</td></tr>
+<tr><td>⑦ 估值體系方向（§7.0）</td><td>穩定（有升級潛力）</td><td>+1x</td></tr>
+<tr><td>⑧ 當前利率環境</td><td>10Y UST 4.3%</td><td>對成長股估值中性偏壓 -2x</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td><strong>28x</strong></td><td><strong>調整後合理區間：36x ~ 46x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考</strong>：高 $200 / 中位 $177 / 低 $112（n=30+ 位）。認同共識中位 $177 作為 12 個月目標——基於 FY27E EPS $4.36 × 40x。</p>
+
+<p><strong>長期合理倍數（v9.0）</strong></p>
+<p>§2.5 長期成長性評級：🟢 高確信 → 基準 5 年後 Forward P/E = <strong>25x</strong></p>
+<p>v9.0 上行三引擎 + AI 調整 → 最終長期合理倍數 = <strong>55x</strong>（§7.7 D 計算詳述）</p>
+</div>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
