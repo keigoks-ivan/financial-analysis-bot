@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v9.0">
+<title>DD Report — ASML | 2026-04-13</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --title: #1E3A5F;
+  --accent: #3B82F6;
+  --row-alt: #F1F5F9;
+  --green-bg: #DCFCE7; --green-txt: #166534;
+  --red-bg: #FEE2E2; --red-txt: #991B1B;
+  --yellow-bg: #FEF9C3; --yellow-txt: #92400E;
+  --blue-bg: #EFF6FF; --blue-txt: #1E3A5F;
+  --trap-bg: #FFF0E6; --trap-line: #F97316; --trap-txt: #C2410C;
+  --bull-bg: #F0FDF4; --bull-line: #16A34A;
+  --bear-bg: #FFF1F2; --bear-line: #DC2626;
+  --arb-bg: #F5F3FF; --arb-line: #7C3AED;
+  --verdict-bg: #FFFBEB; --verdict-line: #D97706; --verdict-txt: #92400E;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: #1E293B; line-height: 1.7; }
+.sticky-header { position: sticky; top: 0; z-index: 100; background: var(--title); color: #fff; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; }
+.sticky-header span { opacity: 0.85; }
+.container { max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+.section { background: var(--card); border-radius: 4px; margin-bottom: 20px; padding: 28px 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.section-title { font-size: 20px; font-weight: 700; color: var(--title); border-left: 4px solid var(--accent); padding-left: 14px; margin-bottom: 18px; }
+.section-subtitle { font-size: 16px; font-weight: 600; color: var(--title); margin: 16px 0 10px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+th { background: var(--title); color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+td { padding: 9px 12px; border-bottom: 1px solid #E2E8F0; }
+tr:nth-child(even) td { background: var(--row-alt); }
+.tag-green { background: var(--green-bg); color: var(--green-txt); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 13px; }
+.tag-red { background: var(--red-bg); color: var(--red-txt); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 13px; }
+.tag-yellow { background: var(--yellow-bg); color: var(--yellow-txt); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 13px; }
+.tag-blue { background: var(--blue-bg); color: var(--blue-txt); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 13px; }
+.verdict-box { background: var(--verdict-bg); border-left: 4px solid var(--verdict-line); padding: 16px 20px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+.trap-box { background: var(--trap-bg); border-left: 4px solid var(--trap-line); padding: 16px 20px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+.trap-box .trap-title { color: var(--trap-txt); font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+.hypothesis-box { background: var(--blue-bg); border-left: 4px solid var(--accent); padding: 16px 20px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+.debate-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+.debate-card { padding: 18px; border-radius: 4px; }
+.bull-card { background: var(--bull-bg); border-left: 4px solid var(--bull-line); }
+.bear-card { background: var(--bear-bg); border-left: 4px solid var(--bear-line); }
+.arb-card { background: var(--arb-bg); border-left: 4px solid var(--arb-line); }
+.rr-row { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 16px 0; }
+.rr-card { padding: 18px; border-radius: 4px; border-left: 4px solid; }
+.rr-long { background: #ECFDF5; border-color: #059669; }
+.pass-tag { background: var(--green-bg); color: var(--green-txt); padding: 4px 12px; border-radius: 3px; font-weight: 700; }
+.fail-tag { background: var(--red-bg); color: var(--red-txt); padding: 4px 12px; border-radius: 3px; font-weight: 700; }
+.print-btn { position: fixed; bottom: 24px; right: 24px; background: var(--title); color: #fff; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-family: 'Noto Sans TC'; z-index: 100; }
+p { margin-bottom: 10px; }
+ul, ol { margin: 8px 0 12px 20px; }
+li { margin-bottom: 4px; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+.note { font-size: 13px; color: #64748B; margin-top: 6px; }
+strong { font-weight: 600; }
+@media print {
+  .sticky-header, .print-btn { display: none !important; }
+  .section { break-inside: avoid; box-shadow: none; border: 1px solid #E2E8F0; }
+  body { background: #fff; }
+}
+@media (max-width: 768px) {
+  .debate-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="sticky-header">
+  <span><strong>ASML</strong> — ASML Holding NV</span>
+  <span>資料抓取：2026-04-13 ｜ 最新股價 $1,478.28 ｜ 最近財報 Q4 2025 ｜ DD Schema v9.0</span>
+</div>
+
+<div class="container">
+
+<!-- ==================== §8 投資結論 ==================== -->
+<div class="section">
+  <div class="section-title">§8｜投資結論</div>
+  <p class="note">本結論基於以下完整分析得出，詳見各章節。</p>
+
+  <div class="section-subtitle">財報信號與假設校準</div>
+  <ul>
+    <li><strong>H1（AI 驅動半導體資本支出持續增長）當前狀態：</strong><span class="tag-green">＋ 強化</span> — Q4 2025 新增訂單創歷史新高 €13.2B，EUV 訂單 €7.4B，backlog 達 €38.8B，客戶對 AI 需求中長期展望更為樂觀。</li>
+    <li><strong>H2（High-NA EUV 進入量產採用）當前狀態：</strong><span class="tag-green">＋ 強化</span> — Q4 已認列兩台 High-NA 系統營收，管理層指出 High-NA 客戶需求加速中，TSMC 2nm 制程計畫中 High-NA 扮演關鍵角色。</li>
+    <li><strong>H3（市場給予 ASML 更高估值倍數）當前狀態：</strong><span class="tag-yellow">0 不變</span> — 目前 Forward P/E 42.2x 已處 5 年 72% 分位，市場已部分反映增長預期，進一步重估空間有限。</li>
+  </ul>
+  <p>這份財報讓隱含預期變得<strong>稍微更容易兌現</strong>——訂單和 backlog 的強度支撐了未來 2-3 年的營收可見度，但股價也已充分走強，安全邊際收窄。</p>
+
+  <div class="section-subtitle">最終裁決</div>
+  <div class="verdict-box">
+    <p style="font-size:22px; font-weight:700; color:var(--verdict-txt);">觀望</p>
+    <p>ASML 是全球半導體設備領域中品質最高的標的之一——100% EUV 壟斷、AI 結構性受益、護城河接近完美。但當前股價 $1,478 對應 Forward P/E 42.2x（5 年 72% 分位），長期 R:R 僅 0.30x，遠低於 2.0x 門檻。<strong>偉大公司在偉大價格下才是偉大投資</strong>。</p>
+  </div>
+
+  <p><strong>① 短期信號（0-12 個月）：</strong>Q4 2025 訂單創紀錄（€13.2B），2026 營收指引 €34-39B，Q1 2026 指引 €8.2-8.9B。短期業績能見度高。但市場已定價這些利多，Forward P/E 42.2x 已處高位。短期催化劑（Q1 2026 財報 4/15）可能帶來波動，但不改變估值偏貴的事實。</p>
+  <p><strong>② 中期成長確信度（1-3 年）：</strong>FY26E EPS 共識 $35.03（+25% YoY），驅動因素為 EUV 出貨量增加（AI 晶片需求）+ 毛利率擴張（52.8% → 53-55%）。分析師覆蓋廣（n≈30），能見度<strong>中高</strong>。主要風險是 China 營收從 33% 顯著下滑，管理層已預警。</p>
+  <p><strong>③ 長期護城河邏輯（3 年後）：</strong>EUV 壟斷地位至少維持到 2035+（無替代技術）。半導體微縮路線圖（2nm→1.4nm→1nm→Sub-1nm）每一步都需更多 ASML 機台。Runway ≥ 15 年。ROIC 持續 >20%，護城河為強化型——更多裝機量 = 更多服務收入 = 更深客戶綁定。</p>
+
+  <div class="section-subtitle">⚠️ 這是價值陷阱嗎？</div>
+  <div class="trap-box">
+    <div class="trap-title">強制回答題</div>
+    <table>
+      <tr><th style="width:40%;">問題</th><th>回答</th></tr>
+      <tr><td>最可能的價值陷阱模式？</td><td><span class="tag-green">非陷阱</span> — Forward P/E 42.2x，處 5 年 72% 分位，不存在「便宜」假象。這不是價值陷阱問題，而是成長股高估值問題。</td></tr>
+      <tr><td>支持「非陷阱」的最強論據？</td><td>100% EUV 壟斷、Backlog €38.8B（>1 年營收）、FY2025 ROIC 29%（20 年最高區間）、毛利率趨勢 44.7%→52.8%（10 年穩定上升）、FCF 從 FY23 低點 €3.6B 恢復至 FY25 €11.1B、D/E 僅 0.14。每一個維度都指向品質強化，而非惡化。</td></tr>
+      <tr><td>支持「可能是陷阱」的最強反駁？</td><td>唯一可疑點是 China 營收佔比（33% 工具出貨），若出口管制急劇升級導致 FY26 營收跳崖，短期 EPS 可能不增反降。但 backlog 的非中國訂單足以覆蓋 2-3 年，這不是結構性問題。</td></tr>
+      <tr><td>如何判斷陷阱是否發生？</td><td>① 監測 EUV 季度新增訂單金額，若連續 2 季 < €3B（vs Q4 2025 的 €7.4B），代表需求端出問題。② 毛利率若跌破 50% 且趨勢不反轉，代表 High-NA 盈利能力低於預期。</td></tr>
+    </table>
+    <p style="margin-top:12px;"><strong>最終定性：</strong><span class="tag-green">🟢 非陷阱</span></p>
+  </div>
+
+  <div class="section-subtitle">條件式進場判斷</div>
+  <table>
+    <tr><th>條件類型</th><th>具體內容</th></tr>
+    <tr><td>估值條件</td><td>Forward P/E 回落至 30x 以下（對應股價 ≈ $1,050，接近 MA200 $1,066），R:R 可升至 2.0x+</td></tr>
+    <tr><td>基本面條件</td><td>Q1 2026 財報（4/15）需確認：① EUV 訂單維持 >€4B/季、② 毛利率指引維持 51-53%、③ China 營收下滑不超過預期</td></tr>
+    <tr><td>陷阱排除條件</td><td>若 EUV 季度訂單跌至 <€2B，或毛利率連續 2 季 <50%，立即停損重評</td></tr>
+    <tr><td>事件觸發條件</td><td>若美中貿易戰導致股價回落至 MA200 附近（~$1,066），且基本面仍完好，可考慮建倉</td></tr>
+  </table>
+
+  <div class="section-subtitle">下行風險量化</div>
+  <table>
+    <tr><th>情境</th><th>估值壓縮幅度</th></tr>
+    <tr><td>若 3 年後成長率降至 10%</td><td>Forward P/E 壓縮至 25x，潛在跌幅約 -40%（至 ~$875）</td></tr>
+    <tr><td>若 3 年後成長率降至 5%</td><td>Forward P/E 壓縮至 18x，潛在跌幅約 -57%（至 ~$630）</td></tr>
+  </table>
+
+  <div class="section-subtitle">最關鍵監測指標</div>
+  <table>
+    <tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>警戒閾值</th></tr>
+    <tr><td>1</td><td>EUV 季度新增訂單金額</td><td>§0.5 H1</td><td>🔵 核心假設驗證</td><td>連續 2 季 < €3B</td></tr>
+    <tr><td>2</td><td>毛利率趨勢（季度）</td><td>§2.5 / §3</td><td>🔵 長期成長領先信號</td><td>跌破 50% 且不反彈</td></tr>
+    <tr><td>3</td><td>Forward P/E 回落至 30x 區間</td><td>§7</td><td>短期估值信號</td><td>進場觸發：Forward P/E ≤ 30x</td></tr>
+  </table>
+</div>
+
+<!-- ==================== §7.7 動態 R:R ==================== -->
+<div class="section">
+  <div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div>
+
+  <div class="section-subtitle">A｜綜合品質分計算</div>
+  <table>
+    <tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+    <tr><td>護城河</td><td>§3 評分</td><td class="mono">9</td><td>0.30</td><td class="mono">2.70</td></tr>
+    <tr><td>長期成長性</td><td>§2.5 評級 🟢 = 9</td><td class="mono">9</td><td>0.45</td><td class="mono">4.05</td></tr>
+    <tr><td>財務品質</td><td>ROIC 29%、FCF Margin 32%、EPS YoY +34%</td><td class="mono">8</td><td>0.10</td><td class="mono">0.80</td></tr>
+    <tr><td>AI 風險</td><td>§2.5 F 🟢 = 9</td><td class="mono">9</td><td>0.15</td><td class="mono">1.35</td></tr>
+    <tr><td colspan="4"><strong>綜合品質分</strong></td><td class="mono"><strong>8.90</strong></td></tr>
+  </table>
+  <p>品質等級：<span class="tag-green">高品質（8.5+）</span>｜R:R 門檻：2.0x｜底倉（目標倉位的）：30%</p>
+
+  <div class="section-subtitle">B｜上行三引擎（取較高不疊加）</div>
+  <p><strong>引擎 A：ROIC 溢價</strong><br>
+  觸發條件：ROIC（3 年平均）>20% 且連續 3 年向上擴大<br>
+  ASML 3 年 ROIC：FY23 24% → FY24 22%（下滑）→ FY25 29%。FY24 中斷上升趨勢。<br>
+  本標的觸發狀態：<span class="tag-red">❌ 未觸發</span>（FY24 ROIC 下滑中斷連續性）</p>
+
+  <p><strong>引擎 B：PEG 動態天花板</strong><br>
+  觸發條件：預估 EPS 5 年 CAGR >20%<br>
+  管理層 2030 營收目標 €44-60B（中位 €52B），加上毛利率擴張和回購，隱含 5 年 EPS CAGR ≈ 15%。<br>
+  本標的觸發狀態：<span class="tag-red">❌ 未觸發</span>（5 年 CAGR ~15% < 20%）</p>
+
+  <p><strong>引擎 C：護城河溢價</strong><br>
+  觸發條件：護城河 ≥ 9 分<br>
+  護城河：9 → × 1.10（+10%）<br>
+  本標的觸發狀態：<span class="tag-green">✅ 觸發</span></p>
+
+  <table>
+    <tr><th>引擎</th><th>觸發</th><th>調整係數</th></tr>
+    <tr><td>A ROIC 溢價</td><td>❌</td><td>—</td></tr>
+    <tr><td>B PEG 動態</td><td>❌</td><td>—</td></tr>
+    <tr><td>C 護城河溢價</td><td>✅</td><td class="mono">1.10</td></tr>
+  </table>
+  <p>選用引擎 C，調整係數 = <strong>1.10</strong></p>
+
+  <div class="section-subtitle">C｜AI 風險獨立疊加</div>
+  <p>§2.5 F 評級：<span class="tag-green">🟢 AI 受益</span> → AI 調整係數 = <strong class="mono">1.10</strong></p>
+
+  <div class="section-subtitle">D｜最終長期目標 P/E</div>
+  <p class="mono">最終 P/E = 基準 25x × 引擎 C 1.10 × AI 1.10 = <strong>30.25x</strong></p>
+
+  <div class="section-subtitle">E｜長期 EPS 預估（雙源交叉驗證）</div>
+  <p><strong>方法 1：§2.5 B 成長驅動分解（引用 §5 營收組成）</strong></p>
+  <table>
+    <tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+    <tr><td>EUV Systems</td><td>35.5%</td><td>20%（AI 驅動高階製程需求）</td><td>7.10%</td></tr>
+    <tr><td>DUV Systems</td><td>36.7%</td><td>5%（成熟，China 限制）</td><td>1.84%</td></tr>
+    <tr><td>Installed Base Mgmt</td><td>25.3%</td><td>15%（裝機量持續擴大）</td><td>3.80%</td></tr>
+    <tr><td>Metrology &amp; Inspection</td><td>2.5%</td><td>12%</td><td>0.30%</td></tr>
+    <tr><td colspan="3"><strong>合計營收 CAGR（方法 1）</strong></td><td class="mono"><strong>13.04%</strong></td></tr>
+  </table>
+  <p>加上毛利率擴張（52.8%→58%）貢獻 ~2%/年 + 回購 ~2%/年 → <strong>方法 1 EPS CAGR ≈ 17%</strong></p>
+
+  <p><strong>方法 2：ROIC × 再投資率</strong><br>
+  ROIC = 29%，再投資率 ≈ 35%（capex + R&D / NOPAT）<br>
+  內生成長率 = 29% × 35% = 10.2%<br>
+  加上回購 +2%、毛利率擴張 +1.5% → <strong>方法 2 CAGR ≈ 13.7%</strong></p>
+
+  <p class="mono"><strong>採用 CAGR = (17% + 13.7%) / 2 = 15.4%</strong></p>
+
+  <div class="section-subtitle">F｜長期目標價計算</div>
+  <p class="mono">5 年後 EPS = $27.96 × (1.154)^5 = <strong>$57.73</strong><br>
+  長期目標 = $57.73 × 30.25x = <strong>$1,746</strong></p>
+
+  <div class="section-subtitle">G｜動態下行錨點</div>
+  <table>
+    <tr><th>步驟</th><th>項目</th><th>數值</th></tr>
+    <tr><td>1</td><td>護城河基礎下修（9 分 → -10%）</td><td class="mono">-10%</td></tr>
+    <tr><td>2</td><td>產業分層調整（半導體 = 週期股 → +5%）</td><td class="mono">+5%</td></tr>
+    <tr><td>3</td><td>AI 風險疊加（🟢 → -5%）</td><td class="mono">-5%</td></tr>
+    <tr><td></td><td><strong>淨下修幅度</strong></td><td class="mono"><strong>-10%</strong></td></tr>
+  </table>
+  <p class="mono">壓測 EPS = $27.96 × (1 − 10%) = <strong>$25.16</strong></p>
+  <p>恐慌 P/E（5 年 Forward P/E 25% 分位）：5 年 Forward P/E 範圍 22x–50x<br>
+  <span class="mono">25% 分位 = 22 + 0.25 × (50 − 22) = <strong>29.0x</strong></span></p>
+  <p class="mono">下行錨點 = $25.16 × 29.0x = <strong>$730</strong></p>
+
+  <div class="section-subtitle">H｜動態 R:R 計算</div>
+  <div class="rr-row">
+    <div class="rr-card rr-long">
+      <p style="font-weight:700; color:#059669; font-size:16px;">長期 R:R（5 年視角）</p>
+      <table>
+        <tr><td>現價</td><td class="mono">$1,478.28</td></tr>
+        <tr><td>長期目標</td><td class="mono">$1,746</td></tr>
+        <tr><td>上行空間</td><td class="mono">+18.1%</td></tr>
+        <tr><td>下行錨點</td><td class="mono">$730</td></tr>
+        <tr><td>下行距離</td><td class="mono">−50.6%</td></tr>
+        <tr><td><strong>長期 R:R</strong></td><td class="mono"><strong>0.36x</strong></td></tr>
+        <tr><td>R:R 門檻（品質 8.9 → 高品質）</td><td class="mono">2.0x</td></tr>
+        <tr><td>判定</td><td><span class="fail-tag">❌ Fail</span></td></tr>
+      </table>
+      <p class="note" style="margin-top:10px;">上行 $268 vs 下行 $748。以當前價格計，風報比嚴重不足。需回落至 ~$1,054（MA200 附近）才能達到 2.0x 門檻。</p>
+    </div>
+  </div>
+
+  <div class="section-subtitle">I｜波動率燈號協議（v9.0）</div>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$1,574.50 / $1,717.97</td></tr>
+    <tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$1,000.63 / $857.17</td></tr>
+    <tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$1,485.93 / $1,769.38</td></tr>
+    <tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$352.13 / $68.68</td></tr>
+    <tr><td>當前股價</td><td class="mono">$1,478.28</td></tr>
+    <tr><td><strong>🔴 紅燈數</strong></td><td class="mono"><strong>0/4</strong></td></tr>
+    <tr><td><strong>🟢 綠燈數</strong></td><td class="mono"><strong>0/4</strong></td></tr>
+  </table>
+  <p class="note">股價接近月線 2σ 上軌（$1,486），但尚未突破。處於中性區間偏上。</p>
+
+  <div class="section-subtitle">J｜二維建倉矩陣</div>
+  <p>品質 8.90（高）× 紅燈 0 → 查表：<strong>30%</strong></p>
+  <p class="note">但 R:R 未通過 2.0x 門檻，建倉建議無效化。</p>
+
+  <div class="section-subtitle">K｜綠燈加碼放大</div>
+  <p>綠燈 0 → 不加碼，按 J 表執行。</p>
+
+  <div class="section-subtitle">L｜戰術 MA</div>
+  <table>
+    <tr><td>MA200</td><td class="mono">$1,065.64（斜率向上）</td><td>股價 > MA200 → 倉位權限 100%</td></tr>
+    <tr><td>MA60</td><td class="mono">$1,388.54</td><td>股價 > MA60 → 上升趨勢確認</td></tr>
+    <tr><td>MA50</td><td class="mono">$1,392.30</td><td>股價 > MA50</td></tr>
+  </table>
+
+  <div class="section-subtitle">M｜最終建倉建議</div>
+  <div class="verdict-box">
+    <p style="font-weight:700; color:var(--red-txt); font-size:16px;">🚫 不建倉 — R:R 0.36x 遠低於 2.0x 門檻</p>
+    <table>
+      <tr><th>階段</th><th>倉位（目標倉位的%）</th><th>觸發條件</th></tr>
+      <tr><td>立即</td><td class="mono">0%</td><td>R:R 未達標，不建倉</td></tr>
+      <tr><td>MA200 回踩進場</td><td class="mono">30%</td><td>股價回落至 ~$1,054（Forward P/E ~30x），R:R 達 2.0x</td></tr>
+      <tr><td>深度回調加碼</td><td class="mono">+30%</td><td>跌至 $900 附近（Forward P/E ~25.7x），R:R > 3.0x</td></tr>
+      <tr><td>恐慌加碼</td><td class="mono">+40%</td><td>跌至 $730 附近，全面恐慌底部</td></tr>
+    </table>
+    <p class="note" style="margin-top:8px;">底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+  </div>
+</div>
+
+<!-- ==================== §7.6 三方辯論 ==================== -->
+<div class="section">
+  <div class="section-title">§7.6｜三方辯論摘要</div>
+
+  <div class="debate-row">
+    <div class="debate-card bull-card">
+      <p style="font-weight:700; color:#16A34A;">【多頭辯護人｜Munger 模式】</p>
+      <table>
+        <tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr>
+        <tr><td>1</td><td>護城河：全球唯一 EUV 供應商，100% 市佔率，無替代技術至少 10 年</td><td>§3 護城河 9/10</td></tr>
+        <tr><td>2</td><td>成長：AI 晶片需求推動 EUV 出貨加速，FY25 EUV 營收 +39%；backlog €38.8B 覆蓋 >1 年營收</td><td>§2.5 成長 🟢</td></tr>
+        <tr><td>3</td><td>盈利能力上行：毛利率 52.8% → 管理層目標 56-60%（2030），回購 €12B/3 年壓低股本</td><td>§7 毛利率+回購</td></tr>
+      </table>
+      <p style="margin-top:10px;"><strong>多頭最強一句話：</strong>ASML 是人類半導體微縮最後 15 年的唯一收費站，每一片先進製程晶圓都必須經過它的 EUV 光刻機。</p>
+    </div>
+
+    <div class="debate-card bear-card">
+      <p style="font-weight:700; color:#DC2626;">【空頭檢察官｜Burry 模式】</p>
+      <table>
+        <tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+        <tr><td>1</td><td>China 營收崩盤：出口管制全面收緊，33% 出貨佔比歸零，FY26 營收缺口 €10B+</td><td>§5 China 33%</td></tr>
+        <tr><td>2</td><td>半導體週期下行：AI 資本支出放緩，客戶推遲 EUV 採購，Forward P/E 從 42x 壓至 25x = -40%</td><td>§7.3 週期風險</td></tr>
+        <tr><td>3</td><td>High-NA 盈利失望：每台 $350M+ 的 High-NA 毛利率低於預期，拉低整體毛利率軌跡</td><td>§0.5 R2</td></tr>
+      </table>
+      <p style="margin-top:10px;"><strong>空頭最大威脅：</strong>42x Forward P/E 定價了完美劇本——任何需求放緩信號都會引發雙殺（EPS 下修 + 倍數壓縮），30%+ 跌幅觸手可及。</p>
+    </div>
+
+    <div class="debate-card arb-card">
+      <p style="font-weight:700; color:#7C3AED;">【估值仲裁員｜Damodaran 模式】</p>
+      <table>
+        <tr><th>維度</th><th>數字比對</th><th>評分</th></tr>
+        <tr><td>vs 歷史 FCF CAGR</td><td>隱含 19% vs 歷史 3 年 16.4%</td><td>1.5 / 2</td></tr>
+        <tr><td>vs 共識 EPS CAGR</td><td>隱含 19% vs 共識 11-20%</td><td>1.0 / 2</td></tr>
+        <tr><td>vs 同業最快 FCF CAGR</td><td>隱含 19% vs LRCX ~22%</td><td>1.5 / 2</td></tr>
+        <tr><td>達成條件苛刻度</td><td>需營收 +10% CAGR + 毛利率擴張 + 回購齊備</td><td>1.0 / 2</td></tr>
+        <tr><td>歷史先例</td><td>ASML 2019-2025 實際做到（但包含週期反彈）</td><td>1.5 / 2</td></tr>
+      </table>
+      <p style="margin-top:8px;"><strong>隱含預期可信度：6.5 / 10</strong></p>
+      <p><strong>仲裁員一句話：</strong>市場定價合理但不便宜——ASML 有能力兌現 15-19% FCF CAGR，但 42x 倍數留給投資者的安全邊際幾乎為零。</p>
+    </div>
+  </div>
+
+  <div class="verdict-box">
+    <p style="font-weight:700; color:var(--verdict-txt);">【裁決】</p>
+    <table>
+      <tr><td>多頭最強論據</td><td>全球唯一 EUV 收費站，Runway 15+ 年</td></tr>
+      <tr><td>空頭最大威脅</td><td>42x P/E 定價完美，任何 miss 都觸發雙殺</td></tr>
+      <tr><td>估值仲裁評分</td><td class="mono">6.5 / 10</td></tr>
+      <tr><td><strong>裁決</strong></td><td><strong>觀望</strong> — 品質無可挑剔，但價格不對。等待 Forward P/E 回落至 30x 區間再進場。</td></tr>
+    </table>
+    <p style="margin-top:10px;">自我檢核：</p>
+    <ul>
+      <li>☑ 多頭論據中，H3（市場重新估值）依賴「市場最終認識到」假設 → 已用盡（Forward P/E 已在 72% 分位）</li>
+      <li>☑ 空頭威脅中，China 營收崩盤可能在 MA200 觸及前已發生 → 屬於黑天鵝情境</li>
+      <li>☑ 估值仲裁 6.5 分 > 5，有基本安全邊際，但不足以抵消 0.36x R:R</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ==================== §0 序章 ==================== -->
+<div class="section">
+  <div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+
+  <div class="section-subtitle">存在意義</div>
+  <p>ASML 解決的痛點：<strong>讓半導體微縮繼續成為可能</strong>。半導體是現代文明的物理基底——從 AI 訓練到手機、從電動車到醫療設備，所有數位運算都依賴晶片。而晶片的效能提升（摩爾定律）依賴光刻製程的持續微縮。ASML 的 EUV（極紫外光刻）是目前人類唯一能在 7nm 以下製程進行大規模量產的技術。</p>
+  <p>若 ASML 明天消失：<strong>全球先進晶片生產立即停擺</strong>。TSMC 無法生產 3nm/2nm 晶片，NVIDIA 的 AI GPU 無法製造，蘋果 iPhone 處理器退回 7nm 世代，Samsung 和 Intel 的先進製程計畫全部作廢。全球 AI 產業發展倒退 5-10 年。這不是效率問題，這是文明級別的瓶頸——<strong>沒有替代品</strong>。</p>
+
+  <div class="section-subtitle">逆向推演（Munger Inversion）</div>
+  <p>若要讓 ASML 投資在 3 年內虧損 50% 以上，最可能的路徑：</p>
+  <ul>
+    <li><strong>地緣政治曝險：</strong>ASML 總部在荷蘭，但關鍵光學元件來自德國蔡司（Zeiss，獨家供應商）。若美國擴大對 China 出口管制到極端程度（禁止所有 DUV 出口），ASML 可能失去 20-33% 營收。更極端情境：若台海衝突導致 TSMC（ASML 最大客戶）停擺，ASML 短期訂單歸零。</li>
+    <li><strong>技術替代風險：</strong>目前無可見替代技術。奈米壓印（NIL，Canon 研發中）理論上可用於特定層次，但精度和產能遠不及 EUV。Directed Self-Assembly（DSA）仍在實驗室階段。時間軸：至少 10 年內無威脅。</li>
+    <li><strong>管理層失職：</strong>最大風險是 High-NA EUV（€350M+/台）開發遇技術瓶頸，導致數十億歐元 R&D 沉沒成本。或管理層過度擴產（如 2000 年代初半導體設備泡沫），在週期高點累積產能。</li>
+    <li><strong>價值陷阱路徑：</strong>不適用。ASML 以 42x Forward P/E 交易，不存在「便宜假象」。但若走「<strong>估值泡沫崩潰路徑</strong>」——Forward P/E 從 42x 壓至 22x（5 年低點），即使 EPS 不變也等同 -48% 跌幅。</li>
+  </ul>
+</div>
+
+<!-- ==================== §0.5 投資論點錨定 ==================== -->
+<div class="section">
+  <div class="section-title">§0.5｜投資論點錨定</div>
+
+  <div class="hypothesis-box">
+    <div class="section-subtitle">A｜持有期與時間軸宣告</div>
+    <table>
+      <tr><td><strong>預設持有期</strong></td><td>3-5 年</td></tr>
+      <tr><td><strong>時間軸驅動理由</strong></td><td>ASML 2030 營收目標（€44-60B）兌現需 4-5 年；High-NA 量產採用需 2-3 年；毛利率擴張至 56-60% 需至 2029-2030</td></tr>
+      <tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：EUV 訂單趨勢、毛利率軌跡、High-NA 採用進度。噪音：單季營收波動（設備確認收入時點不規律）、短期匯率影響</td></tr>
+    </table>
+  </div>
+
+  <div class="hypothesis-box">
+    <div class="section-subtitle">B｜三個核心假設</div>
+    <table>
+      <tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+      <tr><td>H1</td><td>AI 驅動的半導體資本支出在 FY26-FY28 維持年增 15%+，推動 EUV 系統出貨加速</td><td>TSMC/Samsung/Intel 年度 capex 指引；ASML 季度新增訂單金額</td><td>每季財報（Q1 2026 為首個驗證點）</td></tr>
+      <tr><td>H2</td><td>High-NA EUV 在 2027 前進入量產採用，單台 ASP >€350M 不壓低毛利率</td><td>High-NA 出貨台數、High-NA 毛利率（管理層 guidance）</td><td>FY26-FY27 逐季追蹤</td></tr>
+      <tr><td>H3</td><td>Installed Base Management 營收以 15%+ CAGR 增長，推動 ASML 估值向「裝機基礎收入模型」靠攏</td><td>IBM 營收佔比從 25% 提升至 30%+；服務合約續約率</td><td>FY27-FY28</td></tr>
+    </table>
+  </div>
+
+  <div class="hypothesis-box">
+    <div class="section-subtitle">C｜三個最可能推翻論點的風險</div>
+    <table>
+      <tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+      <tr><td>R1</td><td>China 出口管制升級導致 DUV 全面禁運，FY26 營收缺口超預期</td><td>H1</td><td>美國 BIS 新規公告、China 營收季度佔比</td><td>China 單季營收 < 10%（從 33% 急降）</td></tr>
+      <tr><td>R2</td><td>AI 資本支出週期 2027 前顯著放緩（hyperscaler 削減 capex）</td><td>H1</td><td>TSMC capex 指引、NVDA 數據中心營收趨勢</td><td>全球 WFE 年增轉負</td></tr>
+      <tr><td>R3</td><td>High-NA 良率問題導致客戶推遲採用，ASML 出貨延後、毛利率壓力</td><td>H2</td><td>High-NA 累計出貨台數、管理層對 High-NA 毛利率預期</td><td>FY27 High-NA 出貨 < 10 台</td></tr>
+    </table>
+  </div>
+
+  <div class="hypothesis-box">
+    <div class="section-subtitle">D｜邊際貢獻判斷框架</div>
+    <table>
+      <tr><th>判斷步驟</th><th>問題</th></tr>
+      <tr><td>1. 時間軸匹配？</td><td>這個事件在 3-5 年持有期內有影響嗎？</td></tr>
+      <tr><td>2. 假設關聯？</td><td>影響 H1（AI capex）/ H2（High-NA）/ H3（IBM 成長）？</td></tr>
+      <tr><td>3. 邊際方向？</td><td>對該假設是 ＋強化 / 0 無關 / −削弱？</td></tr>
+      <tr><td>4. 閾值判斷？</td><td>削弱程度是否達到 R1/R2/R3 警戒閾值？</td></tr>
+    </table>
+  </div>
+
+  <div class="hypothesis-box">
+    <div class="section-subtitle">E｜可執行決策主線</div>
+    <table>
+      <tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+      <tr><td>進場</td><td>Forward P/E ≤ 30x（~$1,054）+ EUV 訂單仍 >€3B/季</td><td>建倉 30%（目標倉位）</td></tr>
+      <tr><td>加碼</td><td>H1 + H2 均確認（FY27 High-NA 出貨 >10 台 + 毛利率 >53%）</td><td>加碼至 60%</td></tr>
+      <tr><td>減碼</td><td>R1 觸發（China 營收崩盤）或 Forward P/E >50x</td><td>減至 20%，重新評估</td></tr>
+      <tr><td>撤退</td><td>H1 被推翻（全球 WFE 連續 2 年萎縮）+ Forward P/E 仍 >40x</td><td>清倉，記錄推翻理由</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== §1 即時財報情報 ==================== -->
+<div class="section">
+  <div class="section-title">§1｜即時財報情報</div>
+  <p class="note">最新財報：Q4 2025（2026 年 1 月 28 日公布）</p>
+
+  <div class="section-subtitle">① 最新一季財報關鍵數字（Q4 2025）</div>
+  <table>
+    <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+    <tr><td>Revenue</td><td>€9.7B</td><td>€9.7B</td><td><span class="tag-green">In-line</span></td><td>+24%</td></tr>
+    <tr><td>EPS（Basic）</td><td>€7.35</td><td>€7.60</td><td><span class="tag-red">Slight Miss</span></td><td>+25%</td></tr>
+    <tr><td>Gross Margin</td><td>52.2%</td><td>52-53%</td><td><span class="tag-green">In-line</span></td><td>+1.6%p</td></tr>
+    <tr><td>Net Income</td><td>€2.8B</td><td>—</td><td>—</td><td>+25%</td></tr>
+    <tr><td>New Orders</td><td>€13.2B</td><td>~€5B</td><td><span class="tag-green">Massive Beat</span></td><td>Record</td></tr>
+  </table>
+
+  <p><strong>FY2025 全年：</strong>營收 €32.7B（+16% YoY），淨利 €9.6B，EPS €24.73，毛利率 52.8%，FCF €11.1B，Backlog €38.8B（歷史新高）。</p>
+
+  <div class="section-subtitle">財報對假設的邊際貢獻</div>
+  <table>
+    <tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+    <tr><td>H1</td><td><span class="tag-green">＋ 強化</span></td><td>Q4 訂單 €13.2B 創歷史新高（遠超預期 €5B），EUV 訂單 €7.4B；管理層指出客戶對 AI 中長期需求更樂觀</td></tr>
+    <tr><td>H2</td><td><span class="tag-green">＋ 強化</span></td><td>Q4 認列 2 台 High-NA 營收；管理層指出 High-NA 客戶需求加速</td></tr>
+    <tr><td>H3</td><td><span class="tag-green">＋ 強化</span></td><td>IBM 營收 FY25 €8.2B（+26%），增速超過系統營收，佔比提升至 25%</td></tr>
+  </table>
+
+  <div class="section-subtitle">② Earnings Call 語氣解析</div>
+  <ul>
+    <li><strong>管理層基調：</strong>明顯樂觀，較 Q3 2025 語氣更正面。CEO Fouquet 多次強調 AI 需求的「持續性」和「廣度」。</li>
+    <li><strong>Forward Guidance：</strong>FY26 全年 €34-39B（寬幅，但中位數 €36.5B 代表 +12%）；Q1 2026 €8.2-8.9B、毛利率 51-53%。指引上限暗示如果需求強勁可突破 €39B。</li>
+    <li><strong>刻意強調主題：</strong>反覆提及「AI-related demand sustainability」、「High-NA adoption」、「2030 revenue opportunity €44-60B」。</li>
+    <li><strong>刻意迴避問題：</strong>對 China 出口管制的具體影響只給了模糊回答（「expect significant decline」但不量化具體金額）。對 High-NA 毛利率壓力的提問，管理層迴避給出具體數字。</li>
+  </ul>
+
+  <div class="section-subtitle">③ 產業隱含萃取</div>
+  <ul>
+    <li><strong>需求端：</strong>記錄性訂單（€13.2B）暗示 AI 晶片的投資週期仍在加速，而非見頂。Logic（66%）強於 Memory（34%），反映先進製程需求主導。</li>
+    <li><strong>供給端：</strong>ASML 正擴產（荷蘭+德國+美國設施），但產能仍是瓶頸。交期 12-18 個月，客戶必須提前下單。</li>
+    <li><strong>競爭格局：</strong>EUV 無競爭。DUV 領域 Nikon 份額持續萎縮。ASML 定價能力絕對。</li>
+    <li><strong>對同業推論：</strong>ASML 訂單強勁 → TSMC/Samsung 資本支出承諾堅定 → 利好 AMAT、LRCX、KLAC 等前道設備商。但 China DUV 需求下滑 → 可能壓制 AMAT 的 China 營收。</li>
+  </ul>
+</div>
+
+<!-- ==================== §2 核心門檻檢核 ==================== -->
+<div class="section">
+  <div class="section-title">§2｜核心門檻檢核</div>
+
+  <div class="section-subtitle">EPS 共識估計</div>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源</th></tr>
+    <tr><td>基期 EPS（FY2025 實際）</td><td class="mono">$27.96（GAAP/IFRS, 確數）</td><td>MacroTrends</td></tr>
+    <tr><td>FY2026E</td><td class="mono">$35.03（n≈30 位分析師）</td><td>StockAnalysis</td></tr>
+    <tr><td>FY2027E</td><td class="mono">$34.44（range $27.64-$48.03，n≈15）</td><td>StockAnalysis / TradingView</td></tr>
+    <tr><td>FY2028E</td><td class="mono">$38.32（range $32.27-$46.80）</td><td>StockAnalysis</td></tr>
+  </table>
+  <p class="note">⚠️ FY27E 共識均值 $34.44 低於 FY26E $35.03，可能反映部分分析師模型尚未更新 Q4 2025 強勁數據，或預期 2027 有週期性放緩。Morgan Stanley 獨立預測 FY27 €46（~$52），遠高於共識。極寬 range 表明市場對半導體週期走向嚴重分歧。</p>
+
+  <p class="mono">GAAP CAGR（共識 FY28E）= ($38.32 / $27.96)^(1/3) − 1 = <strong>11.1%</strong><br>
+  調整後 CAGR（採用 Morgan Stanley 偏上估計）≈ <strong>20-25%</strong></p>
+  <p>口徑差距：ASML 為荷蘭公司，報告口徑為 IFRS。Non-GAAP 調整極小（SBC < 1% Revenue），GAAP ≈ Non-GAAP。</p>
+
+  <div class="section-subtitle">門檻檢核表</div>
+  <table>
+    <tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+    <tr><td>FCF Margin（當前）</td><td>> 15%</td><td><span class="tag-green">✅</span></td><td>FY25: 34%（€11.1B / €32.7B），近 3 年趨勢：↑（12%→32%→34%）</td></tr>
+    <tr><td>正規化 FCF Margin（5 年均值）</td><td>5 年均值 > 15%；最低谷 > 10%</td><td><span class="tag-green">✅</span></td><td>5 年值：42%/35%/12%/32%/34%，均值：31%，最低谷：12%（2023，因重大 capex + 付款時點）<br>判斷：有週期波動但結構性強健</td></tr>
+    <tr><td>ROIC（當前）</td><td>> 15%，高於 WACC</td><td><span class="tag-green">✅</span></td><td>ROIC: 29%，WACC: ~10%，超額：+19%p</td></tr>
+    <tr><td>ROIC 穩定性（10 年）</td><td>≥ 70% 年份 > 15%</td><td><span class="tag-green">✅</span></td><td>10/10 年達標（100%），最低谷 2020 年 ~20%，趨勢：持續擴大<br>5 年均 24%，20 年均 22%</td></tr>
+    <tr><td>毛利率定價能力（10 年）</td><td>≥ 70% 改善</td><td><span class="tag-yellow">🟡</span></td><td>改善年份：6/10，當前 52.8%（10 年前 44.7%），趨勢：↑ 但有波動（2022-23 小幅回落）<br>整體仍呈結構性上行</td></tr>
+    <tr><td>資本密集度</td><td>Capex/Rev < 10%</td><td><span class="tag-green">✅</span></td><td>FY25: ~5%，FY24: ~12%（建廠高峰），FY23: ~12%。3 年均 ~10%，評級：尚可（擴產期暫時偏高）</td></tr>
+    <tr><td>EPS CAGR（3 年）</td><td>> 20%</td><td><span class="tag-yellow">🟡</span></td><td>共識 11.1%（❌），調整後 ~20%（✅）。取決於 FY27-28 是否有週期性放緩。</td></tr>
+    <tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="tag-yellow">🟡</span></td><td>共識 PEG: 42.2/11.1 = 3.80（❌）。調整後 PEG: 42.2/20 = 2.11（接近但 >2）</td></tr>
+    <tr><td>負債安全性</td><td>D/E < 0.7</td><td><span class="tag-green">✅</span></td><td>D/E: 0.14（極低），Cash/Rev: 41%（€13.3B/€32.7B），評級：極低槓桿</td></tr>
+    <tr><td>現金覆蓋總負債</td><td>—</td><td><span class="tag-green">是</span></td><td>現金 €13.3B >> 總負債 €2.7B</td></tr>
+    <tr><td>護城河強度</td><td>> 8 分</td><td><span class="tag-green">✅</span></td><td>9/10（詳見 §3）</td></tr>
+  </table>
+  <p><strong>最大財務弱點：</strong>FCF 因設備收入確認時點和 capex 週期波動大（FY23 僅 12%），但結構性 FCF margin >30% 不成問題。</p>
+  <p>Munger 三維護城河快速評級：<span class="tag-green">🟢 三項全達標</span>（ROIC 穩定性 100%、毛利率長期改善、資本密集度尚可且正在下降）</p>
+
+  <div class="section-subtitle">價值陷阱初篩</div>
+  <p>Forward P/E 42.2x 處 5 年 72% 分位 → <strong>不觸發</strong>（>25% 分位）。估值不存在「低估假象」，跳過四問篩選。</p>
+</div>
+
+<!-- ==================== §2.5 長期成長性 ==================== -->
+<div class="section">
+  <div class="section-title">§2.5｜長期成長性評估</div>
+
+  <div class="section-subtitle">A｜成長跑道（Runway）</div>
+  <table>
+    <tr><th>維度</th><th>數據</th><th>推論</th></tr>
+    <tr><td>當前 TAM</td><td>~$126B（全球半導體設備市場 2025，來源：SEMI）</td><td>ASML 佔 ~$37B（29%）</td></tr>
+    <tr><td>EUV 子市場 TAM</td><td>$12.6B（2025）→ $21.8B（2030），CAGR ~12%</td><td>來源：GM Insights</td></tr>
+    <tr><td>估計可達 TAM</td><td>$40-65B（含 High-NA、DUV Installed Base、服務合約擴大）</td><td>管理層 2030 營收目標 €44-60B 即為可達 TAM 的體現</td></tr>
+    <tr><td>當前市佔/滲透率</td><td>EUV: 100%；DUV: 90%+</td><td>壟斷地位</td></tr>
+    <tr><td>成長可持續年數</td><td><strong>≥ 15 年</strong></td><td>半導體微縮路線圖（2nm→1.4nm→1nm→Sub-1nm）每一代都需更多 EUV 曝光層次；High-NA EUV 剛開始導入；EUV 裝機量從 ~200 台將增至 2030 年 500+ 台</td></tr>
+  </table>
+  <p><strong>Runway 解讀：</strong><span class="tag-green">≥ 15 年</span>（最高等級），支撐高估值倍數溢價。半導體微縮是不可逆的技術趨勢，ASML 是唯一供應商。</p>
+
+  <div class="section-subtitle">B｜成長品質判斷</div>
+  <p><strong>① 有機 vs 無機：</strong></p>
+  <table>
+    <tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+    <tr><td>有機成長</td><td>~95%</td><td>ASML 極少做併購，成長主要來自技術代際更新（DUV→EUV→High-NA）和裝機量擴大</td></tr>
+    <tr><td>無機成長</td><td>~5%</td><td>偶爾收購小型技術公司（如 Berliner Glas），但不影響整體營收結構</td></tr>
+  </table>
+  <p><strong>② 定價 vs 量：</strong></p>
+  <table>
+    <tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+    <tr><td>定價驅動</td><td>核心驅動。EUV 從 $120M/台 → High-NA $350M+/台，ASP 持續上升。服務合約也在提價。</td><td>擴大</td></tr>
+    <tr><td>量驅動</td><td>次要驅動。EUV 年出貨從 2020 年 ~30 台增至 2025 年 ~50 台。</td><td>穩定增長</td></tr>
+  </table>
+
+  <div class="section-subtitle">C｜成長護城河連動</div>
+  <p><span class="tag-green"><strong>強化型</strong>（最佳）</span>：更多 EUV 裝機量 → 更多服務收入（IBM 營收 +26%/年）→ 客戶整個 fab 圍繞 ASML 設備設計 → 轉換成本急劇上升 → 護城河加深。這是一個正向飛輪。</p>
+
+  <div class="section-subtitle">D｜ROIC 與 FCF 長期可維持性</div>
+  <table>
+    <tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+    <tr><td>ROIC</td><td>29%</td><td>24%</td><td>↑</td><td>產業頂尖 + > WACC</td><td><span class="tag-green">✅</span></td></tr>
+    <tr><td>ROIC − WACC</td><td>+19%p</td><td>+14%p</td><td>↑</td><td>持續正值且擴大</td><td><span class="tag-green">✅</span></td></tr>
+    <tr><td>FCF Margin</td><td>34%</td><td>12%</td><td>↑（恢復）</td><td>> 15%</td><td><span class="tag-green">✅</span></td></tr>
+    <tr><td>FCF / NI 轉換率</td><td>~116%</td><td>~47%</td><td>↑（正常化）</td><td>> 85%</td><td><span class="tag-green">✅</span></td></tr>
+    <tr><td>Reinvestment Rate</td><td>~35%</td><td>~50%</td><td>↓（建廠高峰過去）</td><td>成長期合理偏高</td><td><span class="tag-green">✅</span></td></tr>
+  </table>
+
+  <div class="section-subtitle">E｜成長熄火壓力測試</div>
+  <table>
+    <tr><th>情境</th><th>成長特徵</th><th>合理 Forward P/E</th><th>潛在跌幅</th></tr>
+    <tr><td style="background:var(--green-bg);">3 年後成長率降至 15%</td><td>放緩但仍優於市場</td><td>30x</td><td>-29%</td></tr>
+    <tr><td style="background:var(--yellow-bg);">3 年後成長率降至 10%</td><td>回歸市場平均</td><td>25x</td><td>-41%</td></tr>
+    <tr><td style="background:var(--red-bg);">3 年後成長率降至 5%</td><td>成熟低成長</td><td>18x</td><td>-57%</td></tr>
+  </table>
+
+  <div class="section-subtitle">衰退信號偵測表</div>
+  <table>
+    <tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+    <tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>Q3 52.9% → Q4 52.2%（微降，但 YoY 仍 +1.6%p）</td><td>⬜</td></tr>
+    <tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>EUV 100%、DUV 90%+ — 無變化</td><td>⬜</td></tr>
+    <tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>High-NA 定價 €350M+，訂單創紀錄 — 無銷量壓力</td><td>⬜</td></tr>
+    <tr><td>盈餘品質</td><td>EPS CAGR >> Revenue CAGR</td><td>EPS +34% vs Revenue +16%（差 18%p），但來自毛利率擴張+回購，非一次性</td><td>⬜</td></tr>
+    <tr><td>盈餘品質</td><td>FCF/NI < 0.75（連續 2 年）</td><td>FY24: ~100%+, FY25: ~116% — 正常</td><td>⬜</td></tr>
+    <tr><td>盈餘品質</td><td>SBC/Revenue > 5% 且逐年上升</td><td>SBC/Rev: ~0.5-0.6% — 極低</td><td>⬜</td></tr>
+    <tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>EUV TAM CAGR 12%+ — 擴大中</td><td>⬜</td></tr>
+    <tr><td>產業結構衰退</td><td>產業估值倍數 3 年系統性下移</td><td>半導體設備 P/E 近 3 年在 25-45x 波動，未見系統性下移</td><td>⬜</td></tr>
+    <tr><td>隱性資本密集</td><td>Maintenance Capex / FCF > 60%</td><td>維護性 capex 估計 ~€1B / FCF €11B ≈ 9%</td><td>⬜</td></tr>
+    <tr><td>隱性資本密集</td><td>停止投資 3 年內收入下滑？</td><td>短期不會（backlog €38.8B），但長期需持續 R&D（€4B+/年）</td><td>⬜</td></tr>
+  </table>
+  <p><strong>亮燈數：0 個</strong> → <span class="tag-green">🟢 低風險</span></p>
+
+  <div class="section-subtitle">長期成長性綜合評級</div>
+  <p><span class="tag-green" style="font-size:16px;">🟢 高確信長期成長</span></p>
+  <p>Runway ≥ 15 年 + 有機成長 95% + 定價驅動為主 + 護城河強化型 + ROIC 擴大 + 衰退信號 0 個。ASML 是所有半導體標的中成長可見度最高的公司。</p>
+
+  <div class="section-subtitle">F｜AI 取代風險評級</div>
+  <p><span class="tag-green" style="font-size:16px;">🟢 AI 受益</span>（9 分）</p>
+  <ul>
+    <li><strong>AI 與核心業務關係：</strong>每一顆 AI 訓練/推理晶片（NVIDIA H100/B200、AMD MI300、Google TPU、AWS Trainium）都必須使用 ASML 的 EUV 光刻機製造。AI 是 ASML 最大的結構性需求加速器。</li>
+    <li><strong>AI 營收證據：</strong>FY2025 EUV 營收 +39%，管理層明確將成長歸因於「AI-related demand sustainability」。Logic（AI 晶片）佔系統營收 66%。</li>
+    <li><strong>公司 AI 策略：</strong>不需要自建 AI——ASML 本身就是 AI 基礎設施供應鏈的核心收費站。</li>
+  </ul>
+</div>
+
+<!-- ==================== §3 護城河分析 ==================== -->
+<div class="section">
+  <div class="section-title">§3｜護城河分析（報告核心）</div>
+  <p><strong>評分：9 / 10</strong>（以全球上市公司為基準）</p>
+
+  <div class="section-subtitle">護城河來源</div>
+  <ul>
+    <li><strong>網路效應：</strong>不直接具備。但存在間接生態系效應——ASML 的 EUV 技術標準被全球所有先進 fab 採用，形成產業標準鎖定，新進者需要整個生態系配合才能替代。</li>
+    <li><strong>無形資產：</strong><span class="tag-green">極強</span>。超過 20,000 項專利、30+ 年累積的極紫外光源技術 know-how、與蔡司光學系統的獨家合作關係。EUV 光刻機包含超過 100,000 個零件、數千面鏡片，其中 Zeiss 反射鏡精度達到「如果鏡片放大到德國國土面積，最大凸起不超過 1 毫米」。這種精度是不可複製的。</li>
+    <li><strong>轉換成本：</strong><span class="tag-green">極高</span>。每台 EUV 系統 €200M+，整個 fab 的生產流程、自動化系統、光罩設計都圍繞 ASML 設備最佳化。轉換供應商意味著重新設計整條產線。客戶 TSMC 在一個 fab 中可能投入 $20B+，其中 ASML 設備佔 30-40%，任何不兼容都是災難。</li>
+    <li><strong>規模優勢：</strong><span class="tag-green">絕對</span>。ASML 每年 R&D 投入 €4B+，因為是唯一 EUV 供應商，這些成本分攤到全球所有客戶。新進者需要從零開始投入 $10B+、耗時 10-15 年才可能追上，且面臨 ASML 持續迭代的動態壁壘。</li>
+  </ul>
+
+  <div class="section-subtitle">競爭鴻溝</div>
+  <p>為什麼資本充足的對手無法跨越？答案有三層：</p>
+  <ol>
+    <li><strong>光源技術壟斷：</strong>EUV 光源（由 Cymer/ASML 子公司開發）是唯一能穩定產生 13.5nm 波長極紫外光的商用光源。這項技術花了 20 年、$10B+ 才商業化。</li>
+    <li><strong>光學系統獨家：</strong>Carl Zeiss SMT 是全球唯一能製造 EUV 反射光學系統的公司，且與 ASML 有獨家供應協議。即使有人能造出光源，沒有 Zeiss 的鏡片也無法組裝光刻機。</li>
+    <li><strong>安裝基礎壁壘：</strong>全球已安裝 ~200+ 台 EUV 系統，每台都需要持續服務和升級。這個 installed base 產生了 €8.2B/年的黏性收入。</li>
+  </ol>
+
+  <div class="section-subtitle">市佔競爭表</div>
+  <table>
+    <tr><th>公司</th><th>EUV 市佔</th><th>DUV 市佔</th><th>3 年趨勢</th><th>核心威脅</th></tr>
+    <tr><td><strong>ASML</strong></td><td>100%</td><td>~90%</td><td>穩定壟斷</td><td>技術替代（NIL，10年+）</td></tr>
+    <tr><td>Nikon</td><td>0%</td><td>~8%</td><td>持續萎縮</td><td>已放棄 EUV 開發</td></tr>
+    <tr><td>Canon（NIL）</td><td>0%</td><td>~2%</td><td>NIL 在研</td><td>奈米壓印僅適用特定層</td></tr>
+  </table>
+
+  <div class="section-subtitle">護城河趨勢</div>
+  <p><span class="tag-green"><strong>擴大</strong></span>：High-NA EUV 的推出進一步拉大了 ASML 與任何潛在競爭者的技術差距。從 Low-NA（0.33 NA）到 High-NA（0.55 NA）的跨越，光學系統複雜度倍增，研發投入再加 $3-4B。每一代技術更新都讓護城河更深。</p>
+  <p><strong>24 個月內最可能瓦解護城河的變化：</strong></p>
+  <ol>
+    <li>美國政府要求 ASML 進一步限制對 China 出口（影響營收但不影響壟斷地位）</li>
+    <li>Canon NIL 技術突破性進展（當前機率極低，僅適用於 NAND Flash 特定層）</li>
+    <li>半導體微縮路線圖出現根本性轉向（如 3D 堆疊完全替代 2D 微縮——但即使 3D NAND 也需要光刻）</li>
+  </ol>
+</div>
+
+<!-- ==================== §4 財務品質監測 ==================== -->
+<div class="section">
+  <div class="section-title">§4｜財務品質監測</div>
+
+  <div class="section-subtitle">三年趨勢表</div>
+  <table>
+    <tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>主要對手比較</th></tr>
+    <tr><td>FCF Margin</td><td>12%</td><td>32%</td><td>34%</td><td>AMAT ~25%, LRCX ~28%, KLAC ~30%</td></tr>
+    <tr><td>Gross Margin</td><td>51.4%</td><td>51.7%</td><td>52.8%</td><td>AMAT ~47%, LRCX ~48%, KLAC ~61%</td></tr>
+    <tr><td>ROIC − WACC</td><td>+14%p</td><td>+12%p</td><td>+19%p</td><td>AMAT ~+37%p, KLAC ~+30%p</td></tr>
+    <tr><td>SBC / Revenue</td><td>0.5%</td><td>0.6%</td><td>~0.6%</td><td>AMAT ~3%, LRCX ~4%</td></tr>
+    <tr><td>ROE</td><td>~56%</td><td>~50%</td><td>~50%</td><td>AMAT ~45%, KLAC ~100%+（高槓桿）</td></tr>
+  </table>
+
+  <div class="section-subtitle">獲利品質警訊</div>
+  <ul>
+    <li><strong>淨利 vs OCF 連動性：</strong>FY2025 淨利 €9.6B，OCF €12.7B — OCF > NI，無盈餘操縱跡象。FY2023 曾出現 OCF < NI（因客戶預付款時點），但已正常化。</li>
+    <li><strong>AR 成長 vs 營收成長：</strong>營收 +16%，應收帳款增速與營收大致同步 — 正常。</li>
+    <li><strong>存貨成長 vs 營收成長：</strong>ASML 的在製品存貨（WIP）隨訂單增加而增長，這是正常的。Backlog €38.8B 支撐了存貨合理性。</li>
+    <li><strong>FCF 轉換率趨勢：</strong>FCF/NI 從 FY23 的 ~47% 恢復到 FY25 的 ~116%，顯示資本密集度高峰已過，FCF 正在正常化。</li>
+  </ul>
+
+  <div class="section-subtitle">回購品質評估</div>
+  <table>
+    <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+    <tr><td>3 年回購 / FCF</td><td>~€8B / ~€24B ≈ 33%</td><td>合理（< 80%），保留充裕 FCF 用於 R&D 和 capex</td></tr>
+    <tr><td>剔除回購後 EPS CAGR</td><td>原 ~34%（FY25 YoY）→ 剔除後 ~30%</td><td>差距 ~4%p，回購非 EPS 成長主要來源</td></tr>
+    <tr><td>回購均價 vs 當前</td><td>FY25 Q1 回購 €2.7B，均價估計 ~€700</td><td>低於當前 €1,253 — 資本配置得當</td></tr>
+    <tr><td>Revenue CAGR（3 年）</td><td>~10%</td><td>EPS CAGR 34% 遠高於 Rev CAGR 10%，差距來源：毛利率擴張 + 回購 + 營業槓桿，非一次性</td></tr>
+  </table>
+</div>
+
+<!-- ==================== §5 產業格局 ==================== -->
+<div class="section">
+  <div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+
+  <div class="section-subtitle">市場量化</div>
+  <ul>
+    <li><strong>TAM：</strong>全球半導體設備市場 ~$110-130B（2025）；EUV 子市場 $12.6B → $21.8B（2030），CAGR ~12%。</li>
+    <li><strong>全球 WFE（Wafer Fab Equipment）：</strong>2025 ~$100B，2026E ~$112B（+12%）。ASML 佔 WFE 約 30%。</li>
+    <li><strong>供需狀態：</strong>供不應求。ASML 產能是瓶頸，交期 12-18 個月，客戶需提前 2-3 年規劃。</li>
+  </ul>
+
+  <div class="section-subtitle">議價權</div>
+  <ul>
+    <li><strong>對上游供應商：</strong>Zeiss（獨家光學供應商）是唯一風險點。ASML 與 Zeiss 有長期戰略合作 + 持股關係，議價權平衡。其他零件供應商多元分散。</li>
+    <li><strong>對下游客戶：</strong>極強。TSMC、Samsung、Intel 必須購買 ASML 設備才能製造先進晶片，無替代品。ASML 有定價權，每代產品 ASP 大幅提升（EUV €150M → High-NA €350M+）。</li>
+    <li><strong>地理分布曝險：</strong>客戶集中於台灣（TSMC）、韓國（Samsung）、美國（Intel）。生產基地在荷蘭（Veldhoven），光學在德國（Zeiss），出口受荷蘭/美國政府管控。China 出貨 33%（2025）但預計 2026 顯著下降。</li>
+  </ul>
+
+  <div class="section-subtitle">營收組成（FY2025）</div>
+  <table>
+    <tr><th>業務段</th><th>營收</th><th>佔比</th><th>YoY</th><th>成長性評估</th></tr>
+    <tr><td>EUV Systems</td><td>€11.6B</td><td>35.5%</td><td>+39%</td><td>AI 驅動核心成長引擎</td></tr>
+    <tr><td>DUV Systems</td><td>€12.0B</td><td>36.7%</td><td>-6%</td><td>成熟穩定，China 限制影響</td></tr>
+    <tr><td>Installed Base Mgmt</td><td>€8.2B</td><td>25.1%</td><td>+26%</td><td>高黏性服務收入，持續增長</td></tr>
+    <tr><td>Metrology &amp; Inspection</td><td>€825M</td><td>2.5%</td><td>+28%</td><td>隨 fab 數量增長</td></tr>
+  </table>
+  <p><strong>地理分布：</strong>Taiwan ~35%、Korea ~15%、China ~33%（預計 2026 顯著下降）、US ~10%、歐洲 ~7%。</p>
+  <p><strong>終端市場：</strong>Logic 66%（含 AI 晶片）、Memory 34%（含 HBM）。</p>
+
+  <div class="section-subtitle">單位經濟</div>
+  <ul>
+    <li><strong>每台 EUV ASP：</strong>~€200-250M（Low-NA），€350M+（High-NA）</li>
+    <li><strong>每台 EUV 年服務收入：</strong>~€20-30M（裝機後持續產生）</li>
+    <li><strong>裝機量：</strong>~200+ 台 EUV（全球），預計 2030 年達 500+ 台</li>
+    <li><strong>LTV/台：</strong>一台 EUV 壽命 15+ 年，LTV ≈ €250M（設備）+ €350M（服務）= €600M+</li>
+  </ul>
+</div>
+
+<!-- ==================== §6 公司治理 ==================== -->
+<div class="section">
+  <div class="section-title">§6｜公司治理與資本配置</div>
+
+  <div class="section-subtitle">1. 股東/股權結構</div>
+  <ul>
+    <li><strong>股權結構：</strong>無 dual-class 投票權。一股一票。</li>
+    <li><strong>機構持股：</strong>~18% 由前 20 大機構持有（Fisher Investments 1.12%、Capital World 1.08%、Capital International 1.01%）。散戶佔比高（~82%），但這反映 ASML 的廣泛全球持股基礎。</li>
+    <li><strong>近期大額變動：</strong>JPMorgan 增持 47.69%（+552K 股至 1.7M 股，$2.3B）；T. Rowe Price 減持 38.7%（-842K 股）；Fidelity 減持 24.5%（-368K 股）。</li>
+  </ul>
+
+  <div class="section-subtitle">2. 資本配置方向</div>
+  <table>
+    <tr><th>優先順序</th><th>項目</th><th>金額/年度</th></tr>
+    <tr><td>1</td><td>R&D 投入</td><td>~€4B+/年（12-13% of Rev）</td></tr>
+    <tr><td>2</td><td>Capex（擴產）</td><td>€1.6-3.7B/年（建廠週期性）</td></tr>
+    <tr><td>3</td><td>股票回購</td><td>€12B / 3 年（2026-2028 計畫）</td></tr>
+    <tr><td>4</td><td>股息</td><td>€6.40/股（FY25，yield ~0.5%）</td></tr>
+  </table>
+  <p>管理層優先保障 R&D（護城河維護），其次擴產，剩餘大部分返還股東。言行一致——2022-2025 回購計畫 €12B 已按計劃執行。</p>
+
+  <div class="section-subtitle">3. 管理層薪酬結構</div>
+  <p>CEO Christophe Fouquet（2024 年 4 月上任）：</p>
+  <ul>
+    <li>FY2024 總薪酬：€5.43M</li>
+    <li>結構：18% 固定薪（~€978K）/ 82% 績效獎金 + 股權激勵（~€4.45M）</li>
+    <li>股權持有要求：CEO 需持有 ≥ 4 倍年薪的公司股票</li>
+  </ul>
+  <p>薪酬以績效為主導（82%），與股東利益高度綁定。荷蘭薪酬委員會近期通過提高薪酬上限以留才（2025 年 AGM 通過）。</p>
+
+  <div class="section-subtitle">4. 內部人交易（過去 12 個月）</div>
+  <p>過去 3 個月內僅有<strong>賣出</strong>交易（exercise + sell），無重大買入。這在歐洲科技公司中常見（高管行使期權後部分變現），不構成負面信號但也缺乏正面的 insider buying 支撐。</p>
+  <p class="note">⚠️ 美國國會議員交易方面——有報導指出部分議員未大量增持 ASML，暗示可能存在地緣政治顧慮。但這屬於間接信號，不作為主要判斷依據。</p>
+
+  <div class="section-subtitle">SBC 評估</div>
+  <p>SBC/Revenue: FY23 0.5% → FY24 0.6% → FY25 ~0.6%。<strong>極低</strong>，每股稀釋幾乎可忽略。回購 >10 倍覆蓋 SBC 稀釋。</p>
+</div>
+
+<!-- ==================== §7 估值診斷 ==================== -->
+<div class="section">
+  <div class="section-title">§7｜估值診斷（7.0–7.5）</div>
+
+  <div class="section-subtitle">7.0｜估值體系診斷</div>
+  <table>
+    <tr><th>估值邏輯類型</th><th>對應指標</th><th>當前主流？</th><th>理由</th></tr>
+    <tr><td>盈利能力型</td><td>P/E, EV/EBITDA</td><td><span class="tag-green">✅ 是</span></td><td>市場主要用 Forward P/E 和 EV/EBITDA 定價 ASML</td></tr>
+    <tr><td>成長型</td><td>PEG</td><td>部分</td><td>PEG 用於判斷成長定價合理性</td></tr>
+    <tr><td>現金流型</td><td>P/FCF, DCF</td><td>部分</td><td>FCF 波動大，投資者較少單獨使用 P/FCF</td></tr>
+    <tr><td>行業專屬</td><td>Backlog 覆蓋率</td><td>部分</td><td>Backlog/Revenue 是設備股專屬指標，當前 1.2x 歷史最高</td></tr>
+  </table>
+  <p><strong>當前主流邏輯：</strong>盈利能力型（Forward P/E）+ 成長型（PEG）雙框架。</p>
+
+  <p><strong>估值邏輯漂移偵測：</strong></p>
+  <ul>
+    <li><strong>情境三（定價偏好漂移）：</strong>ASML 的 Installed Base Management 營收佔比從 20% → 25% 且增速最快。若市場開始將 IBM 視為「類 SaaS 經常性收入」，ASML 的估值邏輯可能從純設備股向「設備 + 服務平台」轉移，支撐更高倍數。這是一個潛在的長期 rerate 機會。</li>
+  </ul>
+  <p><strong>估值體系診斷結論：</strong><span class="tag-green">🟢 估值邏輯穩定</span>（現有 P/E 框架可靠，IBM 成長可能帶來長期漂移但尚未發生）</p>
+
+  <div class="section-subtitle">7.1｜歷史估值分位（5 年框架）</div>
+  <table>
+    <tr><th>估值指標</th><th>當前值</th><th>5Y 低點</th><th>5Y 中位</th><th>5Y 高點</th><th>當前分位</th></tr>
+    <tr><td>Trailing P/E</td><td class="mono">52.9x</td><td class="mono">35.4x</td><td class="mono">42.0x</td><td class="mono">52.6x</td><td class="mono">102%</td></tr>
+    <tr><td>Forward P/E（NTM）</td><td class="mono">42.2x</td><td class="mono">22.0x</td><td class="mono">33.0x</td><td class="mono">50.0x</td><td class="mono">72%</td></tr>
+    <tr><td>EV/EBITDA</td><td class="mono">36.0x</td><td class="mono">18.0x</td><td class="mono">28.0x</td><td class="mono">40.0x</td><td class="mono">82%</td></tr>
+    <tr><td>P/FCF</td><td class="mono">~48x</td><td class="mono">~25x</td><td class="mono">~40x</td><td class="mono">~80x</td><td class="mono">~42%</td></tr>
+    <tr><td>P/S</td><td class="mono">15.7x</td><td class="mono">8.0x</td><td class="mono">13.0x</td><td class="mono">18.0x</td><td class="mono">77%</td></tr>
+  </table>
+  <p class="note">Forward P/E 分位公式：(42.2 − 22.0) / (50.0 − 22.0) × 100% = <strong>72%</strong></p>
+  <p><strong>解讀：</strong></p>
+  <ol>
+    <li>當前估值情緒：<span class="tag-yellow">偏高（72% 分位）</span>，接近但未達過熱（>80%）。</li>
+    <li>上次 Forward P/E 在 42x+ 時（2021 年底），FY21 營收僅 €19B、EPS 大幅低於現在。當前基本面明顯優於上一次同等估值水位。</li>
+    <li>推動當前分位的主要因素：AI 敘事帶動的市場情緒（~60%）+ EPS 上修（~30%）+ 利率穩定預期（~10%）。</li>
+  </ol>
+
+  <div class="section-subtitle">7.2｜PEG 診斷</div>
+  <table>
+    <tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+    <tr><td>Forward P/E</td><td class="mono">42.2x</td><td></td></tr>
+    <tr><td>Non-GAAP EPS CAGR（3 年共識）</td><td class="mono">11.1%</td><td></td></tr>
+    <tr><td>PEG（共識，3 年）</td><td class="mono">3.80</td><td><span class="tag-red">> 2 偏貴</span></td></tr>
+    <tr><td>Non-GAAP EPS CAGR（3 年調整）</td><td class="mono">~20%</td><td></td></tr>
+    <tr><td>PEG（調整，3 年）</td><td class="mono">2.11</td><td><span class="tag-yellow">1-2 合理（略高）</span></td></tr>
+    <tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td class="mono">~15%</td><td></td></tr>
+    <tr><td>PEG（5 年）</td><td class="mono">2.81</td><td><span class="tag-red">> 2 偏貴</span></td></tr>
+  </table>
+  <p>3 年 PEG（2.11）vs 5 年 PEG（2.81）差異 0.7 → 近期成長較快但 5 年後自然減速。PEG 整體處於「合理偏貴」區間，反映壟斷溢價。</p>
+
+  <div class="section-subtitle">7.3｜Reverse DCF</div>
+  <table>
+    <tr><th>參數</th><th>數值</th><th>來源</th></tr>
+    <tr><td>當前市值</td><td class="mono">~$580B</td><td>$1,478 × ~392M 股</td></tr>
+    <tr><td>基期 FCF（FY2025）</td><td class="mono">~$12B</td><td>€11.1B × 1.08</td></tr>
+    <tr><td>WACC</td><td class="mono">10.0%</td><td>10Y UST 4.3% + Beta 1.15 × ERP 5%</td></tr>
+    <tr><td>永續成長率</td><td class="mono">3.0%</td><td>半導體長期成長高於 GDP</td></tr>
+    <tr><td>預測期</td><td class="mono">10 年</td><td>標準</td></tr>
+  </table>
+  <p>反推隱含 FCF CAGR = <strong class="mono">~19%</strong></p>
+  <table>
+    <tr><th>比較基準</th><th>數值</th><th>相對位置</th></tr>
+    <tr><td>過去 4 年實際 FCF CAGR（2021→2025）</td><td>~9%</td><td>隱含高於歷史</td></tr>
+    <tr><td>分析師共識 EPS CAGR</td><td>11-20%</td><td>隱含在上緣</td></tr>
+    <tr><td>同業最快 FCF CAGR（LRCX）</td><td>~22%</td><td>隱含低於最快同業</td></tr>
+  </table>
+  <p><strong>兌現條件：</strong>隱含 19% FCF CAGR 需要：Revenue CAGR ~10%（管理層 2030 目標）+ FCF Margin 從 34% 擴至 ~40%（合理）+ 回購貢獻。條件嚴格但非不可能。</p>
+  <p><strong>隱含預期判斷：</strong><span class="tag-yellow">🟡 隱含預期合理（偏上緣）</span></p>
+
+  <div class="section-subtitle">7.4｜同業估值比較</div>
+  <table>
+    <tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG（3Y）</th><th>Gross Margin</th><th>ROIC</th></tr>
+    <tr><td><strong>ASML</strong></td><td><strong>$580B</strong></td><td><strong>42.2x</strong></td><td><strong>36x</strong></td><td><strong>2.1x</strong></td><td><strong>52.8%</strong></td><td><strong>29%</strong></td></tr>
+    <tr><td>KLAC</td><td>$100B</td><td>36.6x</td><td>22x</td><td>~2.4x</td><td>61%</td><td>~40%</td></tr>
+    <tr><td>LRCX</td><td>$100B</td><td>32.2x</td><td>20x</td><td>~2.1x</td><td>48%</td><td>~25%</td></tr>
+    <tr><td>AMAT</td><td>$140B</td><td>28.8x</td><td>~20x</td><td>~3.5x</td><td>47%</td><td>~47%</td></tr>
+    <tr><td>產業中位數</td><td>—</td><td>33x</td><td>21x</td><td>~2.3x</td><td>49%</td><td>~35%</td></tr>
+  </table>
+  <p><strong>同業溢折價邏輯：</strong></p>
+  <ol>
+    <li>ASML Forward P/E 42.2x vs 產業中位 33x → 溢價 28%。</li>
+    <li>溢價支撐：100% EUV 壟斷（同業無可比）、Runway 最長（>15 年）、Backlog 覆蓋率最高。ROIC 略低於 AMAT/KLAC，但 FCF Margin 和成長可見度最佳。</li>
+    <li>若向中位數回歸：Forward P/E 壓至 33x → 股價 $1,156（-22%）。</li>
+  </ol>
+
+  <p><strong>最終橫向比較結論：</strong><span class="tag-green">🥇 此標的為同主題最優選</span> — ASML 壟斷地位無可比擬，長期 Runway 最長，是半導體設備領域品質最高的標的。但最優品質≠最優風報比，當前估值溢價偏高。</p>
+
+  <div class="section-subtitle">7.5｜估值五角驗證與結論</div>
+  <table>
+    <tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+    <tr><td>估值體系（7.0）</td><td><span class="tag-green">🟢 穩定</span></td><td>P/E 框架可靠，IBM 成長帶來潛在 rerate</td></tr>
+    <tr><td>歷史分位（7.1）</td><td><span class="tag-yellow">🟡 偏高（72%）</span></td><td>Forward P/E 42.2x 在歷史上偏貴，但基本面也處歷史最佳</td></tr>
+    <tr><td>PEG（7.2）</td><td><span class="tag-yellow">🟡 合理偏貴</span></td><td>共識 PEG 3.8（貴），調整 PEG 2.1（合理）</td></tr>
+    <tr><td>Reverse DCF（7.3）</td><td><span class="tag-yellow">🟡 合理</span></td><td>隱含 19% FCF CAGR，嚴格但非不可能</td></tr>
+    <tr><td>同業相對（7.4）</td><td><span class="tag-yellow">🟡 合理溢價</span></td><td>28% 溢價有壟斷地位支撐，但偏上緣</td></tr>
+  </table>
+  <p><strong>當前定價判斷：</strong><span class="tag-yellow">🟡 公允定價（偏上緣）</span></p>
+
+  <p><strong>長期合理倍數：</strong></p>
+  <table>
+    <tr><th>因素</th><th>判斷</th><th>影響</th></tr>
+    <tr><td>護城河品質（§3）</td><td>9/10</td><td>+2x</td></tr>
+    <tr><td>成長可持續年數（§2.5A）</td><td>≥15 年 🟢</td><td>+3x</td></tr>
+    <tr><td>成長品質（§2.5B）</td><td>有機 95%、定價驅動</td><td>+2x</td></tr>
+    <tr><td>護城河連動（§2.5C）</td><td>強化型</td><td>+1x</td></tr>
+    <tr><td>ROIC（§2.5D）</td><td>+19%p 超額</td><td>+2x</td></tr>
+    <tr><td>衰退信號（§2.5）</td><td>0 個</td><td>±0</td></tr>
+    <tr><td>估值體系（§7.0）</td><td>穩定</td><td>±0</td></tr>
+    <tr><td>利率環境</td><td>10Y UST 4.3%</td><td>−2x（利率偏高壓制成長股）</td></tr>
+    <tr><td colspan="2"><strong>產業基準倍數</strong></td><td><strong>33x（半導體設備中位），調整後合理區間 25x–41x</strong></td></tr>
+  </table>
+
+  <p>基準長期合理倍數（§2.5 🟢）：<strong>25x</strong><br>
+  v9.0 上行三引擎 + AI 調整後：<strong>30.25x</strong>（見 §7.7）</p>
+
+  <p><strong>分析師目標價參考：</strong>高 $1,971 / 中位 $1,476 / 低 $940-1,150（n≈9-37 位，來源因平台不同有差異）。當前股價 $1,478 幾乎等於中位目標價，暗示分析師認為上行空間有限。</p>
+</div>
+
+</div><!-- container end -->
+
+<button class="print-btn" onclick="window.print()">🖨️ 列印為 PDF</button>
+
+</body>
+</html>
