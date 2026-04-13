@@ -201,11 +201,54 @@ def trap_short(t: str) -> str:
     return t
 
 
+def _sort_keys(e):
+    """Compute numeric sort keys for data attributes."""
+    q_map = {"H": 1, "MH": 2, "M": 3, "W": 4}
+    v_map = {"進場": 1, "觀望": 2, "迴避": 3}
+    t_map = {}  # trap
+    trap = e.get("trap", "")
+    if "非陷阱" in trap:
+        t_val = 1
+    elif "觀察期" in trap:
+        t_val = 2
+    else:
+        t_val = 3
+
+    rr_raw = e.get("rr_value", "").strip()
+    try:
+        rr_num = float(rr_raw.replace("x", ""))
+    except (ValueError, AttributeError):
+        rr_num = -999
+
+    rl_raw = e.get("red_lights", "").strip()
+    try:
+        rl_num = int(rl_raw)
+    except (ValueError, AttributeError):
+        rl_num = 0
+
+    return {
+        "quality": q_map.get(e.get("quality", "").strip(), 9),
+        "verdict": v_map.get(e.get("verdict", "").strip(), 9),
+        "rr": rr_num,
+        "rl": rl_num,
+        "trap": t_val,
+    }
+
+
 def build_rows(entries):
     rows = []
     for e in entries:
+        sk = _sort_keys(e)
         rows.append(
-            f'<tr class="searchable">\n'
+            f'<tr class="searchable"'
+            f' data-ticker="{e["ticker"]}"'
+            f' data-date="{e["date"]}"'
+            f' data-verdict="{sk["verdict"]}"'
+            f' data-quality="{sk["quality"]}"'
+            f' data-rr="{sk["rr"]}"'
+            f' data-rl="{sk["rl"]}"'
+            f' data-trap="{sk["trap"]}"'
+            f'>\n'
             f'  <td><a href="{e["href"]}" class="ticker-link">{e["ticker"]}</a></td>\n'
             f'  <td class="date-cell">{e["date"]}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
@@ -226,13 +269,13 @@ def update_index(entries):
     new_thead = (
         '<thead>\n'
         '          <tr>\n'
-        '            <th>公司</th>\n'
-        '            <th>日期</th>\n'
-        '            <th>建議</th>\n'
-        '            <th>品質</th>\n'
-        '            <th>R:R</th>\n'
-        '            <th>紅燈</th>\n'
-        '            <th>陷阱</th>\n'
+        '            <th class="sortable" data-sort="ticker">公司</th>\n'
+        '            <th class="sortable" data-sort="date">日期</th>\n'
+        '            <th class="sortable" data-sort="verdict">建議</th>\n'
+        '            <th class="sortable sorted-asc" data-sort="quality">品質</th>\n'
+        '            <th class="sortable" data-sort="rr">R:R</th>\n'
+        '            <th class="sortable" data-sort="rl">紅燈</th>\n'
+        '            <th class="sortable" data-sort="trap">陷阱</th>\n'
         '            <th>備註</th>\n'
         '          </tr>\n'
         '        </thead>'
