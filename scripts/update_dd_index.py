@@ -30,6 +30,35 @@ BULL_SHORT_RE = re.compile(
 )
 TAG_RE = re.compile(r'<[^>]+>')
 
+# Patterns to extract upside / downside from §7.7 H table
+UPSIDE_RE = re.compile(
+    r'<tr>\s*<td>上行空間</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
+)
+DOWNSIDE_RE = re.compile(
+    r'<tr>\s*<td>下行距離</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
+)
+PCT_RE = re.compile(r'[+\-−]?\d+(?:\.\d+)?%')
+
+
+def _extract_pct(html: str, pattern: re.Pattern) -> str:
+    """Extract a percentage value from HTML using the given pattern."""
+    m = pattern.search(html)
+    if not m:
+        return ""
+    raw = TAG_RE.sub("", m.group(1)).strip()
+    # Find the first percentage in the raw text
+    pm = PCT_RE.search(raw)
+    return pm.group(0).replace("−", "-") if pm else raw
+
+
+def extract_updown(path: Path) -> tuple[str, str]:
+    """Extract upside % and downside % from DD HTML §7.7 table."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ("", "")
+    return (_extract_pct(text, UPSIDE_RE), _extract_pct(text, DOWNSIDE_RE))
+
 
 def extract_version(path: Path) -> str:
     """Read <meta name="dd-schema-version" content="vX.Y"> from DD HTML head."""
@@ -119,6 +148,7 @@ def scan_v9_files(index_data: dict):
 
         md = index_data.get(f.name, {})
         comment = extract_comment(f)
+        upside, downside = extract_updown(f)
         entries.append({
             "ticker": ticker,
             "date": date_str,
@@ -128,6 +158,8 @@ def scan_v9_files(index_data: dict):
             "quality": md.get("quality", "—"),
             "rr_value": md.get("rr_value", "—"),
             "red_lights": md.get("red_lights", "—"),
+            "upside": upside,
+            "downside": downside,
             "comment": comment,
         })
 
@@ -178,6 +210,36 @@ def rr_badge(rr: str) -> str:
         return rr
 
 
+def updown_badge(val: str, is_upside: bool = True) -> str:
+    """Format upside/downside percentage with color coding."""
+    val = val.strip()
+    if not val:
+        return '<span class="ud-na">—</span>'
+    # Parse numeric value
+    try:
+        num = float(val.replace("%", "").replace("+", "").replace("−", "-"))
+    except ValueError:
+        return f'<span class="ud-na">{val}</span>'
+    if is_upside:
+        if num >= 100:
+            cls = "ud-up-strong"
+        elif num >= 30:
+            cls = "ud-up"
+        elif num > 0:
+            cls = "ud-up-weak"
+        else:
+            cls = "ud-negative"
+    else:
+        # downside: higher magnitude = worse
+        if abs(num) >= 70:
+            cls = "ud-down-severe"
+        elif abs(num) >= 50:
+            cls = "ud-down"
+        else:
+            cls = "ud-down-mild"
+    return f'<span class="{cls}">{val}</span>'
+
+
 def red_light_display(r: str) -> str:
     r = r.strip()
     if r in ("0", ""):
@@ -226,12 +288,20 @@ def _sort_keys(e):
     except (ValueError, AttributeError):
         rl_num = 0
 
+    def _parse_pct(s):
+        try:
+            return float(s.strip().replace("%", "").replace("+", "").replace("−", "-"))
+        except (ValueError, AttributeError):
+            return -999
+
     return {
         "quality": q_map.get(e.get("quality", "").strip(), 9),
         "verdict": v_map.get(e.get("verdict", "").strip(), 9),
         "rr": rr_num,
         "rl": rl_num,
         "trap": t_val,
+        "upside": _parse_pct(e.get("upside", "")),
+        "downside": _parse_pct(e.get("downside", "")),
     }
 
 
@@ -246,6 +316,8 @@ def build_rows(entries):
             f' data-verdict="{sk["verdict"]}"'
             f' data-quality="{sk["quality"]}"'
             f' data-rr="{sk["rr"]}"'
+            f' data-upside="{sk["upside"]}"'
+            f' data-downside="{sk["downside"]}"'
             f' data-rl="{sk["rl"]}"'
             f' data-trap="{sk["trap"]}"'
             f'>\n'
@@ -254,6 +326,8 @@ def build_rows(entries):
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
             f'  <td>{quality_badge(e["quality"])}</td>\n'
             f'  <td>{rr_badge(e["rr_value"])}</td>\n'
+            f'  <td class="updown-cell">{updown_badge(e["upside"], True)}</td>\n'
+            f'  <td class="updown-cell">{updown_badge(e["downside"], False)}</td>\n'
             f'  <td>{red_light_display(e["red_lights"])}</td>\n'
             f'  <td>{trap_short(e["trap"])}</td>\n'
             f'  <td class="comment-cell">{e["comment"]}</td>\n'
@@ -274,6 +348,8 @@ def update_index(entries):
         '            <th class="sortable" data-sort="verdict">建議</th>\n'
         '            <th class="sortable sorted-asc" data-sort="quality">品質</th>\n'
         '            <th class="sortable" data-sort="rr">R:R</th>\n'
+        '            <th class="sortable" data-sort="upside">上檔</th>\n'
+        '            <th class="sortable" data-sort="downside">下檔</th>\n'
         '            <th class="sortable" data-sort="rl">紅燈</th>\n'
         '            <th class="sortable" data-sort="trap">陷阱</th>\n'
         '            <th>備註</th>\n'
@@ -320,6 +396,9 @@ def update_index(entries):
 .rl-3{color:#dc2626;font-weight:700;font-family:'IBM Plex Mono',monospace}
 .trap-ok{color:#059669;font-size:.8rem}.trap-watch{color:#d97706;font-size:.8rem}
 .trap-danger{color:#dc2626;font-weight:700;font-size:.8rem}
+.updown-cell{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;white-space:nowrap}
+.ud-up-strong{color:#059669}.ud-up{color:#059669}.ud-up-weak{color:#6b7280}.ud-negative{color:#dc2626}
+.ud-down-severe{color:#dc2626}.ud-down{color:#ea580c}.ud-down-mild{color:#d97706}.ud-na{color:#94a3b8}
 .comment-cell{color:#475569;font-size:.78rem;max-width:260px;line-height:1.45}
 td a.ticker-link{color:#1e293b;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
 td a.ticker-link:hover{color:#2563eb}
