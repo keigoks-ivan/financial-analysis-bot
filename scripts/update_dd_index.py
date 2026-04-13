@@ -18,6 +18,18 @@ META_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
 )
 
+# Patterns to extract the bull one-liner from DD HTML (used as comment)
+BULL_ONELINER_RE = re.compile(
+    r'多頭最強一句話</strong>[：:]\s*(.*?)</p>', re.DOTALL
+)
+BULL_ARGUMENT_RE = re.compile(
+    r'多頭最強論據</td>\s*<td>(.*?)</td>', re.DOTALL
+)
+BULL_SHORT_RE = re.compile(
+    r'多頭最強</(?:strong|td)>\s*</td>\s*<td>(.*?)</td>', re.DOTALL
+)
+TAG_RE = re.compile(r'<[^>]+>')
+
 
 def extract_version(path: Path) -> str:
     """Read <meta name="dd-schema-version" content="vX.Y"> from DD HTML head."""
@@ -28,6 +40,31 @@ def extract_version(path: Path) -> str:
         return m.group(1) if m else ""
     except OSError:
         return ""
+
+
+def extract_comment(path: Path, max_len: int = 60) -> str:
+    """Extract the bull one-liner from DD HTML as a short comment."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+
+    # Try "多頭最強一句話" paragraph first
+    m = BULL_ONELINER_RE.search(text)
+    if not m:
+        # Fallback to "多頭最強論據" table cell
+        m = BULL_ARGUMENT_RE.search(text)
+    if not m:
+        # Fallback to "多頭最強" short form
+        m = BULL_SHORT_RE.search(text)
+    if not m:
+        return ""
+
+    raw = TAG_RE.sub("", m.group(1)).strip()
+    # Truncate with ellipsis
+    if len(raw) > max_len:
+        raw = raw[:max_len].rstrip("，。、；") + "…"
+    return raw
 
 
 def parse_index_md() -> dict:
@@ -81,6 +118,7 @@ def scan_v9_files(index_data: dict):
         date_str = f"{m.group(2)}-{m.group(3)}-{m.group(4)}"
 
         md = index_data.get(f.name, {})
+        comment = extract_comment(f)
         entries.append({
             "ticker": ticker,
             "date": date_str,
@@ -90,6 +128,7 @@ def scan_v9_files(index_data: dict):
             "quality": md.get("quality", "—"),
             "rr_value": md.get("rr_value", "—"),
             "red_lights": md.get("red_lights", "—"),
+            "comment": comment,
         })
 
     # Sort: date desc, then ticker asc
@@ -174,7 +213,7 @@ def build_rows(entries):
             f'  <td>{rr_badge(e["rr_value"])}</td>\n'
             f'  <td>{red_light_display(e["red_lights"])}</td>\n'
             f'  <td>{trap_short(e["trap"])}</td>\n'
-            f'  <td class="comment-cell"></td>\n'
+            f'  <td class="comment-cell">{e["comment"]}</td>\n'
             f'</tr>'
         )
     return "\n".join(rows)
