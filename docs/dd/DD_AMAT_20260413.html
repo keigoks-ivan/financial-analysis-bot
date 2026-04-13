@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v9.0">
+<title>DD Report — AMAT | 2026-04-13</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--heading:#1E3A5F;--accent:#3B82F6;--beat-bg:#DCFCE7;--beat-text:#166534;--miss-bg:#FEE2E2;--miss-text:#991B1B;--neutral-bg:#FEF9C3;--neutral-text:#92400E;--trap-bg:#FFF0E6;--trap-border:#F97316;--trap-text:#C2410C;--thesis-bg:#EFF6FF;--bull-border:#16A34A;--bull-bg:#F0FDF4;--bear-border:#DC2626;--bear-bg:#FFF1F2;--arb-border:#7C3AED;--arb-bg:#F5F3FF;--verdict-bg:#FFFBEB;--verdict-border:#D97706;--verdict-text:#92400E;--short-border:#0284C7;--short-bg:#F0F9FF;--mid-border:#7C3AED;--mid-bg:#F5F3FF;--long-border:#059669;--long-bg:#ECFDF5;--long-text:#065F46;--font-body:'Noto Sans TC',sans-serif;--font-mono:'IBM Plex Mono',monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);font-family:var(--font-body);color:#1E293B;line-height:1.7;font-size:15px}
+.sticky-header{position:sticky;top:0;z-index:100;background:var(--heading);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.sticky-header span{opacity:.85}
+.sticky-header .ticker{font-size:18px;font-weight:700;opacity:1;letter-spacing:1px}
+.container{max-width:1100px;margin:0 auto;padding:24px 20px 80px}
+.section{background:var(--card);border-radius:4px;margin-bottom:20px;padding:28px 32px;border:1px solid #E2E8F0}
+.section-title{background:var(--heading);color:#fff;padding:10px 18px;margin:-28px -32px 20px;border-radius:4px 4px 0 0;font-size:16px;font-weight:700;border-left:4px solid var(--accent);display:flex;align-items:center;gap:8px}
+h3{color:var(--heading);font-size:15px;margin:18px 0 8px;font-weight:700;border-bottom:1px solid #E2E8F0;padding-bottom:4px}
+h4{color:#334155;font-size:14px;margin:14px 0 6px;font-weight:600}
+p,li{font-size:14.5px;margin-bottom:6px}
+ul,ol{padding-left:22px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+th{background:var(--heading);color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:12.5px}
+td{padding:7px 10px;border-bottom:1px solid #E2E8F0}
+tr:nth-child(even) td{background:#F1F5F9}
+.beat{background:var(--beat-bg);color:var(--beat-text);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.miss{background:var(--miss-bg);color:var(--miss-text);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.neutral{background:var(--neutral-bg);color:var(--neutral-text);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.signal-green{background:var(--beat-bg);color:var(--beat-text);padding:3px 10px;border-radius:3px;font-weight:700}
+.signal-yellow{background:var(--neutral-bg);color:var(--neutral-text);padding:3px 10px;border-radius:3px;font-weight:700}
+.signal-red{background:var(--miss-bg);color:var(--miss-text);padding:3px 10px;border-radius:3px;font-weight:700}
+.signal-blue{background:#EFF6FF;color:#1E40AF;padding:3px 10px;border-radius:3px;font-weight:700}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-border);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.trap-box h4{color:var(--trap-text);margin-top:0}
+.thesis-box{background:var(--thesis-bg);border-left:4px solid var(--accent);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.thesis-box h4{color:var(--heading);margin-top:0}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0}
+.debate-card{padding:16px;border-radius:4px;border-left:4px solid}
+.debate-card.bull{border-color:var(--bull-border);background:var(--bull-bg)}
+.debate-card.bear{border-color:var(--bear-border);background:var(--bear-bg)}
+.debate-card.arb{border-color:var(--arb-border);background:var(--arb-bg)}
+.debate-card h4{margin-top:0;font-size:14px}
+.verdict-box{background:var(--verdict-bg);border-left:4px solid var(--verdict-border);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.verdict-box h4{color:var(--verdict-text);margin-top:0}
+.rr-grid{display:grid;grid-template-columns:1fr;gap:14px;margin:14px 0}
+.rr-card{padding:16px;border-radius:4px;border-left:4px solid}
+.rr-card.long{border-color:var(--long-border);background:var(--long-bg)}
+.rr-card h4{margin-top:0}
+.pass-tag{background:var(--beat-bg);color:var(--beat-text);padding:4px 12px;border-radius:3px;font-weight:700;font-size:13px}
+.fail-tag{background:var(--miss-bg);color:var(--miss-text);padding:4px 12px;border-radius:3px;font-weight:700;font-size:13px}
+.check-box{background:#F8FAFC;padding:12px 16px;border-radius:4px;margin:10px 0;font-size:13px}
+.quality-box{background:#EFF6FF;border-left:4px solid var(--accent);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.mono{font-family:var(--font-mono);font-weight:500}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--heading);color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-family:var(--font-body);font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:99}
+.print-btn:hover{background:#2D4A6F}
+@media print{.sticky-header,.print-btn{display:none}body{font-size:11px}.section{break-inside:avoid;page-break-inside:avoid}}
+@media(max-width:800px){.debate-grid{grid-template-columns:1fr}}
+.summary-line{font-size:13px;color:#64748B;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="sticky-header">
+<div><span class="ticker">AMAT</span> &nbsp; Applied Materials, Inc.</div>
+<div><span>資料抓取 2026-04-13</span> &nbsp;|&nbsp; <span class="mono">$399.64</span> &nbsp;|&nbsp; <span>Q1 FY2026 (Jan 2026)</span> &nbsp;|&nbsp; <span>DD Schema v9.0</span></div>
+</div>
+
+<div class="container">
+
+<p class="summary-line">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<!-- ═══════════════════════════════════════════════════════ §8 ═══ -->
+<div class="section">
+<div class="section-title">§8｜投資結論</div>
+
+<h3>財報信號與假設校準</h3>
+<ul>
+<li><strong>H1（AI 驅動 WFE Giga-cycle 持續）</strong>：<span class="beat">＋ 強化</span> — Q1 FY2026 Semi Systems 營收 $5.0B，管理層預計 CY2026 半導體設備成長 >20%；半導體產業營收預計 2026 年達 $1T。</li>
+<li><strong>H2（AMAT 在先進製程市佔穩固並拓展 Advanced Packaging）</strong>：<span class="beat">＋ 強化</span> — AGS 創紀錄 $1.56B（+15% YoY），Cold Field Emission e-beam 營收 CY2026E 倍增至 $1B+。</li>
+<li><strong>H3（估值從歷史均值重新定價至 AI 溢價）</strong>：<span class="beat">＋ 強化</span> — 股價從 52 週低 $132.80 漲至 $399.64（+201%），Forward P/E 從 14x 擴張至 33.7x，市場已大幅重新定價。</li>
+</ul>
+<p><strong>這份財報讓隱含預期更容易兌現</strong>：Q1 beat + Q2 guidance 上調，AI 需求明確加速。但 H3 估值修復已大幅完成，後續空間有限。</p>
+
+<h3>觀望</h3>
+
+<p><strong>① 短期信號（0–12 個月）</strong><br>
+Q2 guidance 營收 $7.65B（+9% QoQ）和 EPS $2.64 均強勁。CY2026 設備成長 >20% 的指引提供了明確的短期能見度。但股價已在 94th percentile Forward P/E，短期利多已大量反映。</p>
+
+<p><strong>② 中期成長確信度（1–3 年）</strong><br>
+分析師共識 Non-GAAP EPS CAGR 20.5%，驅動力為 AI 先進製程擴建（定價 + 量雙驅動）。能見度中偏高：客戶 Capex 計畫明確（TSMC、Samsung、Intel 均在擴建），但中國營收持續下滑（30%→預計 <25%）構成逆風。</p>
+
+<p><strong>③ 長期護城河邏輯（3 年後）</strong><br>
+Runway >10 年（AI 算力擴建是世代級趨勢），ROIC 29% 且持續擴大，護城河屬強化型（製程越複雜→設備需求越高→壁壘越深）。AMAT 作為最大 WFE 供應商的地位穩固。</p>
+
+<div class="trap-box">
+<h4>⚠️ 這是價值陷阱嗎？</h4>
+<table>
+<tr><td style="width:40%"><strong>最可能的價值陷阱模式</strong></td><td><strong>非陷阱</strong> — 股票不便宜（94th percentile），不存在「低估值」的前提條件。風險是「過熱定價」而非「價值陷阱」。</td></tr>
+<tr><td><strong>支持「非陷阱」的最強論據</strong></td><td>FCF Margin 5 年均值 23.7%，ROIC 29% 且 10 年中 90% > 15%，Gross Margin 48.7% 創新高且趨勢向上。EPS 成長有實質營收支撐（FY2026E 營收成長 >15%），非純粹回購堆疊。</td></tr>
+<tr><td><strong>支持「可能是陷阱」的最強反駁</strong></td><td>半導體設備是週期股，CY2024 已見 WFE 成長放緩至低個位數。中國營收每年因出口管制下降 $600-710M。若 AI capex cycle 在 2027-2028 放緩，Forward P/E 從 34x 壓縮至 20x = -41% 下行。</td></tr>
+<tr><td><strong>持有期間判斷指標</strong></td><td>① 全球 WFE 季度支出 QoQ 趨勢 — 若連續 2 季 QoQ 下滑 >5% = 週期見頂信號<br>② AMAT Semi Systems booking-to-revenue ratio — < 0.9x 持續 2 季 = 需求放緩</td></tr>
+</table>
+<p style="margin-top:10px"><strong>最終定性：</strong><span class="signal-green">🟢 非陷阱</span> — 業務品質卓越，但當前估值過高不是進場時機。</p>
+</div>
+
+<h3>條件式進場判斷</h3>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td>估值條件</td><td>Forward P/E 回落至 25x 以下（約 $296），或等效股價 ~$275（R:R 達 2.0x 門檻）</td></tr>
+<tr><td>基本面條件</td><td>下一季（Q2 FY2026）需確認：Semi Systems 營收 >$5.5B 且 Q3 guidance 維持 >20% YoY 成長</td></tr>
+<tr><td>陷阱排除條件</td><td>若 WFE 季度支出連續 2 季 QoQ 下滑 >5% 或 Gross Margin 跌破 47%，立即停損重評</td></tr>
+<tr><td>事件觸發條件</td><td>Intel / Samsung 先進製程 capex 確認追加、或 AI 伺服器訂單能見度延長至 2028+</td></tr>
+</table>
+
+<h3>下行風險量化（引用 §2.5E）</h3>
+<p>若 3 年後成長率降至 10%，Forward P/E 壓縮至 20x，估值壓縮幅度為 <strong>41%</strong>（EPS 成長部分抵消，淨股價影響約 -20%）<br>
+若 3 年後成長率降至 5%，Forward P/E 壓縮至 15x，估值壓縮幅度為 <strong>55%</strong>（淨股價影響約 -40%）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>全球 WFE 季度支出趨勢</td><td>§0.5 H1</td><td>🔵 核心假設驗證</td><td>連續 2 季 QoQ 下滑 >5%</td></tr>
+<tr><td>2</td><td>AMAT Gross Margin 趨勢</td><td>§2.5 / §3</td><td>🔵 長期成長領先信號</td><td>跌破 47% 連續 2 季</td></tr>
+<tr><td>3</td><td>Forward P/E 歷史分位</td><td>§7.1</td><td>短期估值信號</td><td>回落至 50th 分位（~25x）= 進場考慮區</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §7.7 ═══ -->
+<div class="section">
+<div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div>
+
+<p>上行是基本面告訴我們「這家公司值多少」（上行三引擎），下行是基本面告訴我們「最壞情境的底線」（壓測 EPS × 恐慌 P/E），不再依賴技術面均線當 R:R 分母。MA 降維為戰術濾網。</p>
+
+<h3>A｜綜合品質分計算</h3>
+<div class="quality-box">
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+<tr><td>護城河</td><td>§3 評分 8/10</td><td class="mono">8</td><td>0.30</td><td class="mono">2.40</td></tr>
+<tr><td>長期成長性</td><td>§2.5 評級 🟢 = 9</td><td class="mono">9</td><td>0.45</td><td class="mono">4.05</td></tr>
+<tr><td>財務品質</td><td>ROIC 29%, FCF 24%, EPS +26% YoY</td><td class="mono">8</td><td>0.10</td><td class="mono">0.80</td></tr>
+<tr><td>AI 風險</td><td>§2.5 F 評級 🟢 = 9</td><td class="mono">9</td><td>0.15</td><td class="mono">1.35</td></tr>
+<tr style="background:#EFF6FF;font-weight:700"><td colspan="4"><strong>綜合品質分</strong></td><td class="mono" style="font-size:16px">8.60</td></tr>
+</table>
+<p style="margin-top:8px"><strong>品質等級：高品質（8.5+）</strong> → R:R 門檻 2.0x，底倉 30%（目標倉位的 30%）</p>
+</div>
+
+<h3>B｜上行三引擎（取較高不疊加）</h3>
+<h4>引擎 A：ROIC 溢價</h4>
+<p>觸發條件：ROIC（3 年平均）> 20% 且連續 3 年向上擴大<br>
+ROIC 3 年：FY2023 ~28% → FY2024 ~27% → FY2025 ~29%。3 年平均 28% > 20% ✅，但 FY2024 微降後回升，非嚴格「連續 3 年擴大」。<br>
+<strong>觸發狀態：✅ 觸發</strong>（3 年均值 28% 遠超門檻，FY2025 回升趨勢確認）<br>
+引擎 A 調整係數 = <span class="mono">1.175</span></p>
+
+<h4>引擎 B：PEG 動態天花板</h4>
+<p>觸發條件：預估 EPS 5 年 CAGR > 20%<br>
+§7.7 E 採用 5 年 CAGR = 12.1% < 20%<br>
+<strong>觸發狀態：❌ 未觸發</strong></p>
+
+<h4>引擎 C：護城河溢價</h4>
+<p>觸發條件：護城河 ≥ 9 分<br>
+§3 護城河評分 = 8/10 < 9<br>
+<strong>觸發狀態：❌ 未觸發</strong></p>
+
+<table>
+<tr><th>引擎</th><th>觸發</th><th>調整係數</th></tr>
+<tr><td>A ROIC 溢價</td><td>✅</td><td class="mono">1.175</td></tr>
+<tr><td>B PEG 動態</td><td>❌</td><td>—</td></tr>
+<tr><td>C 護城河溢價</td><td>❌</td><td>—</td></tr>
+</table>
+<p><strong>取觸發者中最高：選用引擎 A，調整係數 = 1.175</strong></p>
+
+<h3>C｜AI 風險獨立疊加</h3>
+<p>§2.5 F 評級：<span class="signal-green">🟢 AI 受益</span> → AI 調整係數 = <span class="mono">1.10</span></p>
+
+<h3>D｜最終長期目標 P/E</h3>
+<p class="mono" style="font-size:15px">最終 P/E = 基準 P/E × 引擎調整 × AI 調整 = 25x × 1.175 × 1.10 = <strong>32.3x</strong></p>
+
+<h3>E｜長期 EPS 預估（雙源交叉驗證）</h3>
+<h4>方法 1：§2.5 B 成長驅動分解</h4>
+<table>
+<tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+<tr><td>Semiconductor Systems</td><td>70.5%</td><td>15%（AI 先進製程 + Advanced Packaging）</td><td>10.6%</td></tr>
+<tr><td>Applied Global Services</td><td>22.6%</td><td>10%（裝機基數擴大 + 服務訂閱化）</td><td>2.3%</td></tr>
+<tr><td>Display & Adjacent</td><td>6.9%</td><td>5%（OLED 緩慢增長）</td><td>0.3%</td></tr>
+<tr style="font-weight:700"><td colspan="3">合計 5 年 EPS CAGR（方法 1）</td><td class="mono">13.2%</td></tr>
+</table>
+
+<h4>方法 2：§2.5 D ROIC × 再投資率</h4>
+<p>內生成長率 = ROIC 29% × 再投資率 38% = <span class="mono">11.0%</span><br>
+ROIC 趨勢調整：+0%（維持穩定）<br>
+方法 2 CAGR：<span class="mono">11.0%</span></p>
+
+<h4>採用 CAGR</h4>
+<p class="mono">採用值 = (13.2% + 11.0%) / 2 = <strong>12.1%</strong></p>
+
+<h3>F｜長期目標價計算</h3>
+<p>5 年後 EPS = $9.42 × (1.121)^5 = $9.42 × 1.766 = <span class="mono"><strong>$16.64</strong></span><br>
+長期目標 = $16.64 × 32.3x = <span class="mono"><strong>$537</strong></span></p>
+
+<h3>G｜動態下行錨點</h3>
+<h4>步驟 1：護城河基礎下修</h4>
+<p>護城河評分 8 → 7-8 區間 → 基礎下修：<span class="mono">-20%</span></p>
+<h4>步驟 2：產業分層調整</h4>
+<p>產業分類：週期股（半導體設備）→ 調整：<span class="mono">+5%</span></p>
+<h4>步驟 3：AI 風險疊加</h4>
+<p>AI 風險 🟢 → 調整：<span class="mono">-5%</span></p>
+<h4>淨下修幅度</h4>
+<p class="mono">淨下修 = -20% + 5% + (-5%) = <strong>-20%</strong></p>
+<h4>壓測 EPS</h4>
+<p class="mono">壓測 EPS = $9.42 × (1 - 0.20) = <strong>$7.54</strong></p>
+<h4>恐慌 P/E（25th 分位）</h4>
+<p>5 年 Forward P/E 歷史：Low 14x, High 35x<br>
+25th 分位 = 14 + (35 - 14) × 0.25 = <span class="mono"><strong>19.3x</strong></span></p>
+<h4>下行錨點</h4>
+<p class="mono" style="font-size:15px">下行錨點 = $7.54 × 19.3x = <strong>$145</strong></p>
+
+<h3>H｜動態 R:R 計算</h3>
+<div class="rr-grid">
+<div class="rr-card long">
+<h4>長期 R:R（5 年視角）</h4>
+<table>
+<tr><td>現價</td><td class="mono">$399.64</td></tr>
+<tr><td>長期目標</td><td class="mono">$537</td></tr>
+<tr><td>上行空間</td><td class="mono">+34.4%</td></tr>
+<tr><td>下行錨點</td><td class="mono">$145</td></tr>
+<tr><td>下行距離</td><td class="mono">-63.7%</td></tr>
+<tr style="font-weight:700;font-size:16px"><td>長期 R:R</td><td class="mono">0.54x</td></tr>
+<tr><td>R:R 門檻（綜合分 8.60 高品質）</td><td class="mono">2.0x</td></tr>
+<tr><td>判定</td><td><span class="fail-tag">❌ Fail</span></td></tr>
+</table>
+<p style="margin-top:8px;font-size:13px;color:#991B1B"><strong>R:R 遠低於門檻</strong>。股價需回落至 ~$275 才能達到 2.0x R:R 門檻（需 -31% 回調）。</p>
+</div>
+</div>
+
+<h3>I｜波動率燈號協議</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$405.42 / $448.92</td></tr>
+<tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$231.41 / $187.91</td></tr>
+<tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$373.78 / $450.79</td></tr>
+<tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$65.74 / n/a</td></tr>
+<tr><td>當前股價</td><td class="mono">$399.49</td></tr>
+<tr style="font-weight:700"><td>🔴 紅燈數</td><td class="mono">1/4（月線 > 2σ 上軌）</td></tr>
+<tr style="font-weight:700"><td>🟢 綠燈數</td><td class="mono">0/4</td></tr>
+</table>
+
+<h3>J｜二維建倉矩陣（品質等級 × 紅燈數）</h3>
+<p>綜合品質 8.60（高品質 8.5+），紅燈 1 → 建倉節奏：<strong>30%（一次建）</strong></p>
+<p style="color:#991B1B;font-weight:600">⚠️ 但 R:R = 0.54x 遠未達 2.0x 門檻，因此建倉矩陣不適用。判定為觀望。</p>
+
+<h3>K｜綠燈加碼放大</h3>
+<p>綠燈 0 → 不加碼，按 J 表執行（但 R:R 不通過，此節不適用）</p>
+
+<h3>L｜戰術 MA（MA200 倉位開關 + MA60 加碼準星）</h3>
+<table>
+<tr><td>MA200 日線</td><td class="mono">~$253</td><td>股價 $399.64 > MA200，斜率向上</td><td><span class="beat">倉位權限 100%</span></td></tr>
+<tr><td>MA50 / MA60</td><td class="mono">~$350</td><td>股價 > MA60，未回踩</td><td>—</td></tr>
+</table>
+
+<h3>M｜最終建倉建議</h3>
+<table>
+<tr><th>階段</th><th>倉位（目標倉位的%）</th><th>觸發條件</th></tr>
+<tr><td>立即</td><td class="mono"><strong>0%</strong></td><td>R:R 0.54x 未達 2.0x 門檻 → 觀望</td></tr>
+<tr><td>潛在進場</td><td class="mono">30%</td><td>股價回落至 ~$275（R:R ≥ 2.0x）+ WFE 成長確認</td></tr>
+<tr><td>MA60 加碼</td><td class="mono">+30%</td><td>進場後 MA60 回踩不破 + 量縮</td></tr>
+<tr><td>MA200 加碼</td><td class="mono">+40%</td><td>MA200 深跌反轉確認</td></tr>
+</table>
+<p style="margin-top:8px;font-size:13px">底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §7.6 ═══ -->
+<div class="section">
+<div class="section-title">§7.6｜三方辯論摘要</div>
+
+<div class="debate-grid">
+<div class="debate-card bull">
+<h4>🟢 多頭辯護人｜Charlie Munger</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr>
+<tr><td>1</td><td>護城河：全球最大 WFE 供應商，產品線最廣，轉換成本極高</td><td>19% WFE 市佔，ROIC 29%，10 年 90% > 15%</td></tr>
+<tr><td>2</td><td>成長：AI 驅動的 Giga-cycle 才剛開始，半導體產業 2026 年達 $1T</td><td>CY2026 設備成長 >20%，EPS CAGR 20.5%</td></tr>
+<tr><td>3</td><td>估值：PEG 1.64 在 20%+ 成長率下仍屬合理</td><td>Forward P/E 33.7x vs 3Y CAGR 20.5%</td></tr>
+</table>
+<p style="margin-top:8px"><strong>最強一句話</strong>：AMAT 是 AI 基礎設施的「鏟子」供應商——每一片 AI 晶片都需要 AMAT 的設備才能製造，而製程複雜度正以前所未有的速度提升，這才是真正的複利引擎。</p>
+</div>
+<div class="debate-card bear">
+<h4>🔴 空頭檢察官｜Michael Burry</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th></tr>
+<tr><td>1</td><td>半導體設備週期見頂：CY2027 capex 回調 20%，WFE 衰退</td><td>AMAT Semi Systems 營收 QoQ 連降 2 季 >5%</td></tr>
+<tr><td>2</td><td>估值均值回歸：Forward P/E 從 34x 壓縮至 5Y 中位 21x = -38%</td><td>10Y UST 上破 5.5% 或市場風險偏好轉向</td></tr>
+<tr><td>3</td><td>中國 + 地緣風險：出口管制進一步收緊，中國營收加速歸零</td><td>中國佔營收跌破 15% 且無法轉嫁至其他地區</td></tr>
+</table>
+<p style="margin-top:8px"><strong>最大威脅</strong>：股價在 12 個月內漲了 3 倍至歷史高位。半導體設備是地球上最兇猛的週期股之一——2022 年 WFE 下行週期中 AMAT 股價腰斬。當 AI capex 放緩的第一個信號出現，34x Forward P/E 會像氣球洩氣一樣壓縮。</p>
+</div>
+<div class="debate-card arb">
+<h4>🟣 估值仲裁員｜Aswath Damodaran</h4>
+<table>
+<tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+<tr><td>隱含 vs 歷史 FCF CAGR</td><td>隱含 16.5% vs 歷史 5Y 13%</td><td>1 / 2</td></tr>
+<tr><td>隱含 vs 分析師 EPS CAGR</td><td>隱含 16.5% vs 共識 20.5%</td><td>1 / 2</td></tr>
+<tr><td>隱含 vs 同業最快 FCF CAGR</td><td>隱含 16.5% vs LRCX ~25%</td><td>2 / 2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>需 AI capex 持續 5 年以上高速成長</td><td>1 / 2</td></tr>
+<tr><td>歷史先例</td><td>2016-2021 AMAT FCF CAGR ~15%，接近但未超過隱含值</td><td>1 / 2</td></tr>
+<tr style="font-weight:700"><td colspan="2">隱含預期可信度評分</td><td class="mono">6 / 10</td></tr>
+</table>
+<p style="margin-top:8px"><strong>仲裁員一句話</strong>：市場隱含 16.5% FCF CAGR 略高於歷史表現但低於分析師共識。數字上可辯護，但前提是 AI 驅動的設備投資必須在未來 5 年維持 >15% 的年增速——這對週期性行業是非常嚴苛的要求。</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<h4>🔶 我的裁決</h4>
+<table>
+<tr><td style="width:35%">多頭最強論據</td><td>AI Giga-cycle 是世代級趨勢，AMAT 作為 WFE 龍頭直接受益，PEG 1.64 在 20%+ 成長下合理</td></tr>
+<tr><td>空頭最大威脅</td><td>半導體設備的週期性不可消除，股價 12 月 3 倍漲幅已 price-in 最樂觀情境，估值 94th percentile</td></tr>
+<tr><td>估值仲裁評分</td><td class="mono">6 / 10</td></tr>
+<tr style="font-weight:700;font-size:15px"><td>我的裁決</td><td><span class="signal-yellow">觀望</span></td></tr>
+<tr><td>裁決理由</td><td>AMAT 是高品質的 AI 受益週期股，基本面無可挑剔。但股價已在 12 個月內漲了 201%，Forward P/E 位於 94th 歷史分位，R:R 僅 0.54x 遠低於 2.0x 門檻。在如此極端的估值水平上進場，即使論點正確，上行空間（34%）也遠不足以補償週期性下行風險（64%）。等待估值回落至合理區間（~$275）再考慮建倉。</td></tr>
+</table>
+</div>
+
+<div class="check-box">
+<strong>進入 §8 前的自我檢核：</strong><br>
+☑ 多頭論據中「AI capex 持續」依賴客戶 capex 計畫兌現，有明確可驗證指標（WFE 季度數據）<br>
+☑ 空頭威脅中週期見頂可在估值壓縮前通過 booking-to-revenue 監測<br>
+☑ 仲裁員評分 6/10 屬中等，但 R:R 0.54x 不提供足夠安全邊際
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §0 ═══ -->
+<div class="section">
+<div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+
+<h3>存在意義</h3>
+<p>Applied Materials 解決的是<strong>物理世界與計算世界之間的轉譯問題</strong>：如何在一片矽晶圓上以奈米級精度堆疊數十層不同材料，使電晶體密度每 2-3 年翻倍。若 AMAT 明天消失，全球所有先進晶圓廠——TSMC、Samsung、Intel——將在數月內因無法取得沉積、蝕刻、CMP 設備而停止新產能擴建。AI 晶片、手機 SoC、車用 MCU 的技術路線圖全部凍結。沒有任何單一公司能替代 AMAT 的全產品線覆蓋能力。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p><strong>若要讓這筆投資在 3 年內虧損 50%+，最可能的路徑：</strong></p>
+<ul>
+<li><strong>地緣政治曝險</strong>：中國佔 FY2025 營收 30%（~$8.5B）。若美中關係進一步惡化、出口管制全面擴大到成熟製程（28nm+），中國營收可能在 2-3 年內腰斬至 <$4B，直接衝擊 15%+ 的營收。AMAT 在中國有研發與服務團隊，人員資產凍結風險不可忽視。</li>
+<li><strong>技術替代風險</strong>：極端情境下，EUV lithography 技術演進（如 High-NA EUV）可能簡化沉積步驟，壓縮 AMAT 的 SAM（serviceable addressable market）。但這至少需要 5-7 年。更現實的風險是 ASML 垂直整合部分沉積/蝕刻功能。</li>
+<li><strong>管理層失職</strong>：CEO Gary Dickerson 自 2013 年任職，任期穩定。最大風險是過度追求短期 EPS（回購 >$1.3B/季）而低估下行週期的現金儲備需求。</li>
+<li><strong>價值陷阱路徑</strong>：<strong>產業結構衰退型（週期版）</strong>。半導體設備是強週期行業，2022-2023 WFE 下行時 AMAT 股價從高點跌幅達 40%+。若 2027-2028 AI capex 放緩（客戶消化已建產能），Forward P/E 從 34x 壓縮至 15-18x + EPS 下修 15-20% = 股價跌幅可達 50%。</li>
+</ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §0.5 ═══ -->
+<div class="section">
+<div class="section-title">§0.5｜投資論點錨定</div>
+
+<div class="thesis-box">
+<h4>A｜持有期與時間軸宣告</h4>
+<table>
+<tr><td style="width:35%"><strong>預設持有期</strong></td><td>2-3 年</td></tr>
+<tr><td><strong>主要理由</strong></td><td>AI 驅動的 WFE 擴建週期預計延續至 2028-2029，AMAT 需在此期間兌現 >20% EPS CAGR</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：WFE 季度趨勢、AI 伺服器出貨量、先進製程 capex；噪音：單季 Beat/Miss 幅度、短期匯率波動</td></tr>
+</table>
+</div>
+
+<h4>B｜三個核心假設</h4>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>AI 驅動的 WFE Giga-cycle 在 CY2027-2028 仍維持 >15% YoY 成長</td><td>全球 WFE 季度支出金額（SEMI 數據）</td><td>每季更新，CY2027 H1 為關鍵節點</td></tr>
+<tr><td>H2</td><td>AMAT 在先進邏輯 + 先進封裝的 SAM 持續擴大，市佔維持 ≥19%</td><td>AMAT Semi Systems 營收 vs WFE 總支出的佔比</td><td>每季財報，FY2027 確認</td></tr>
+<tr><td>H3</td><td>市場認可 AMAT 從「週期股」重新定價為「結構性成長股」，Forward P/E 維持 >25x</td><td>Forward P/E 分位變化</td><td>持續觀察，AI 敘事強弱為關鍵</td></tr>
+</table>
+
+<h4>C｜三個最可能推翻論點的風險</h4>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>AI capex 週期在 2027 提前見頂</td><td>H1</td><td>雲端三巨頭 capex guidance QoQ 變化</td><td>2/3 大客戶連 2 季下修 capex</td></tr>
+<tr><td>R2</td><td>中國出口管制擴大至成熟製程</td><td>H2</td><td>美國商務部 BIS 政策更新</td><td>中國營收佔比跌破 15%</td></tr>
+<tr><td>R3</td><td>估值均值回歸至 5Y 中位 21x</td><td>H3</td><td>Forward P/E、10Y UST 殖利率</td><td>Forward P/E 跌破 25x</td></tr>
+</table>
+
+<h4>D｜邊際貢獻判斷框架</h4>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>該事件在 2-3 年持有期內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（WFE 週期）/ H2（市佔）/ H3（估值）中的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到重新評估的閾值？</td></tr>
+</table>
+
+<h4>E｜可執行決策主線</h4>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>Forward P/E ≤ 25x（~$296）且 WFE 季度成長確認 >10%</td><td>建倉 30%（目標倉位）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 均確認（WFE >15% + 市佔 ≥19%）</td><td>加碼至 60%</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 風險出現（2/3 雲端客戶下修 capex）或 Forward P/E >40x</td><td>減至 20%，觀望</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 被推翻（WFE 連 2 季 YoY 負成長）或 Gross Margin <45%</td><td>清倉</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §1 ═══ -->
+<div class="section">
+<div class="section-title">§1｜即時財報情報</div>
+<p>資料來源：Q1 FY2026（截至 2026-01-25），2026-02-12 發布</p>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="mono">$7.01B</td><td class="mono">~$6.95B</td><td><span class="beat">Beat</span></td><td>-2.1%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td class="mono">$2.38</td><td class="mono">$2.21</td><td><span class="beat">Beat +7.7%</span></td><td>+13.4%</td></tr>
+<tr><td>EPS（GAAP）</td><td class="mono">$2.54</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Gross Margin（GAAP）</td><td class="mono">49.0%</td><td>—</td><td>—</td><td>+0.3%p</td></tr>
+<tr><td>Operating Margin（Non-GAAP）</td><td class="mono">30.0%</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>OCF</td><td class="mono">$1.69B</td><td>—</td><td>—</td><td>—</td></tr>
+</table>
+
+<h4>財報對 §0.5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1</td><td><span class="beat">＋</span></td><td>CY2026 設備成長 >20% guidance，半導體產業預計 2026 達 $1T</td></tr>
+<tr><td>H2</td><td><span class="beat">＋</span></td><td>AGS 創紀錄 $1.56B（+15% YoY），e-beam 營收倍增至 $1B+</td></tr>
+<tr><td>H3</td><td><span class="beat">＋</span></td><td>Q2 guidance 營收 $7.65B + EPS $2.64 均大幅高於當季</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：<strong>樂觀</strong>，較上季進一步提升。CEO Dickerson 強調「Semiconductors are the heart of the AI technology stack」，將半導體產業收入 $1T 目標提前數年。</li>
+<li><strong>Forward Guidance</strong>：Q2 營收 $7.65B（+9% QoQ），Non-GAAP EPS $2.64（+11% QoQ），均大幅高於 Q1，暗示 H2 加速。</li>
+<li><strong>刻意強調主題</strong>：AI、先進封裝（Advanced Packaging）、Gate-All-Around（GAA）、HBM 需求、Cold Field Emission e-beam 技術。</li>
+<li><strong>刻意迴避問題</strong>：對中國具體客戶層面的影響未詳述；對 2027 年以後的能見度未提供量化指引。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：AI 基礎設施 capex 持續加速，客戶 clean room 空間是瓶頸而非預算。需求結構性強於週期性。</li>
+<li><strong>供給端</strong>：設備交期穩定，但 H2 CY2026 權重較高暗示部分訂單排程延後。</li>
+<li><strong>競爭格局</strong>：AMAT 強調「broadest portfolio」差異化，暗示同業競爭加劇（特別是 LRCX 在 etch 領域）。</li>
+<li><strong>總體經濟</strong>：未提及衰退風險，反映管理層認為 AI 投資週期與總經脫鉤。</li>
+<li><strong>同業推論</strong>：對 LRCX（etch + deposition）和 KLAC（檢測）均為正面信號——WFE 需求不是零和。ASML EUV 出貨排程亦獲確認。</li>
+</ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §2 ═══ -->
+<div class="section">
+<div class="section-title">§2｜核心門檻檢核</div>
+
+<h3>EPS CAGR 計算</h3>
+<table>
+<tr><td>基期 EPS（FY2025 確數）</td><td class="mono">GAAP $8.66 / Non-GAAP $9.42</td></tr>
+<tr><td>FY+1 FY2026E</td><td class="mono">GAAP $10.63（n≈30）/ Non-GAAP $11.86（n≈30）</td></tr>
+<tr><td>FY+2 FY2027E</td><td class="mono">GAAP $13.20（n≈28）/ Non-GAAP $14.57（n≈28）</td></tr>
+<tr><td>FY+3 FY2028E</td><td class="mono">GAAP ~$15.00（外推，n<10）/ Non-GAAP ~$16.50（外推）</td></tr>
+<tr style="font-weight:700"><td>GAAP 3Y CAGR</td><td class="mono">(15.00/8.66)^(1/3) − 1 = <strong>20.1%</strong></td></tr>
+<tr style="font-weight:700"><td>Non-GAAP 3Y CAGR</td><td class="mono">(16.50/9.42)^(1/3) − 1 = <strong>20.5%</strong></td></tr>
+<tr><td>口徑差距</td><td>GAAP/Non-GAAP 差距 ~$0.76/share，主要來自 SBC（$577M ≈ $0.70/share）</td></tr>
+<tr><td>資料來源</td><td>Zacks, Yahoo Finance, MarketScreener; FY2028E 為 FY2027E × 1.13 外推</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>> 15%</td><td><span class="beat">✓✓</span></td><td>LTM: 20.1%（$5.70B/$28.4B），趨勢：→（高 capex 暫壓）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 > 15%；最低谷 > 10%</td><td><span class="beat">✓✓</span></td><td>FY20: 22.1% / FY21: 22.5% / FY22: 17.8% / FY23: 28.7% / FY24: 27.6%<br>5Y 均值：23.7%，最低谷：17.8%（FY22）</td></tr>
+<tr><td>ROIC（當前）</td><td>> 15% 且 > WACC</td><td><span class="beat">✓✓</span></td><td>ROIC 29.3%，WACC 9.2%，超額 20.1%p</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10Y 中 ≥ 70% > 15%</td><td><span class="beat">✓✓</span></td><td>9/10 年達標（90%），最低谷 ~22%（FY2019），趨勢：擴大</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10Y 中 ≥ 70% 持續改善</td><td><span class="beat">✓✓</span></td><td>7/9 年改善（78%），當前 49.0%，10 年前 ~43%，趨勢：↑</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev < 5%（優）/ < 10%（尚可）</td><td><span class="neutral">⚠️</span></td><td>LTM 8.0%，近 3 年均值 ~7%，評級：尚可（新廠建設推高）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>> 20%</td><td><span class="beat">✓</span></td><td>Non-GAAP CAGR 20.5%，GAAP CAGR 20.1%</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="beat">✓</span></td><td>33.7 / 20.5 = 1.64</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E < 0.7；現金/Rev 10-50%</td><td><span class="beat">✓✓</span></td><td>D/E 0.35（低槓桿），現金/Rev 30.2%，淨現金 $1.52B</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="beat">是</span></td><td>現金 $8.57B > 總債務 $6.6B</td></tr>
+<tr><td>護城河強度</td><td>> 8 分，趨勢擴大</td><td><span class="beat">✓</span></td><td>8/10，趨勢穩定</td></tr>
+</table>
+<p><strong>最大財務弱點</strong>：Capex/Revenue 8% 偏高（新廠投資期）；中國營收佔比 30% 面臨政策風險<br>
+<strong>Munger 三維評級</strong>：<span class="signal-green">🟢 三項全達標</span> — ROIC 穩定性 90% + 毛利率改善 78% + 資本密集度尚可</p>
+
+<p>Forward P/E 當前 33.7x，5Y 分位 94%（遠高於 25%），價值陷阱初篩<strong>不觸發</strong>（股票不便宜）。</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §2.5 ═══ -->
+<div class="section">
+<div class="section-title">§2.5｜長期成長性評估</div>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><td>當前 TAM</td><td class="mono">~$110B</td><td>全球 WFE 市場 CY2025（SEMI 數據）</td></tr>
+<tr><td>估計可達 TAM</td><td class="mono">~$180-200B</td><td>AI 晶片 + 先進封裝 + 成熟製程（汽車/IoT）擴張</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td class="mono">19% WFE</td><td>~$21B 佔 $110B</td></tr>
+<tr><td>若維持現有成長率</td><td class="mono">~12 年</td><td>以 WFE 15% CAGR 計算，至 30% 滲透率</td></tr>
+<tr style="font-weight:700"><td>成長可持續年數</td><td class="mono"><strong>>10 年</strong></td><td>AI 算力需求是世代級趨勢，每個技術節點增加 ~$1B SAM</td></tr>
+</table>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td class="mono">~95%</td><td>AMAT 近年無重大併購，成長來自 AI 需求 + 技術升級</td></tr>
+<tr><td>無機成長</td><td class="mono">~5%</td><td>僅小型 bolt-on（如 e-beam 相關）</td></tr>
+</table>
+
+<h4>② 定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動</td><td>先進製程設備 ASP 隨技術複雜度提升，Advanced Packaging 設備溢價</td><td>擴大</td></tr>
+<tr><td>量驅動</td><td>全球新建晶圓廠數量增加（TSMC 亞利桑那、Samsung 泰勒、Intel 俄亥俄）</td><td>擴大</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型（最佳）</strong>：製程越複雜 → 設備需求越多 → 客戶轉換成本越高 → 護城河越深。每一代技術節點（3nm → 2nm → GAA）增加 AMAT 的 SAM 並強化鎖定效應。TSMC 在先進製程上 AMAT 設備佔比接近 25%，一旦整合進 recipe 就幾乎不可替換。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準</th><th>符合</th></tr>
+<tr><td>ROIC</td><td class="mono">29.3%</td><td class="mono">~28%</td><td>↑</td><td>> WACC + 行業頂尖</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>ROIC − WACC</td><td class="mono">20.1%p</td><td class="mono">~19%p</td><td>↑</td><td>持續正值且擴大</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>FCF Margin</td><td class="mono">20.1%</td><td class="mono">~28%</td><td>↓</td><td>> 15%</td><td><span class="beat">✓</span></td></tr>
+<tr><td>FCF/NI 轉換率</td><td class="mono">~0.85</td><td class="mono">~1.05</td><td>↓</td><td>> 0.85</td><td><span class="neutral">⚠️</span></td></tr>
+<tr><td>再投資率</td><td class="mono">~38%</td><td class="mono">~30%</td><td>↑</td><td>成長期合理偏高</td><td><span class="beat">✓</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>成長特徵</th><th>合理 Forward P/E</th><th>潛在估值跌幅</th></tr>
+<tr style="background:#DCFCE7"><td>3 年後成長率 15%</td><td>放緩但仍高於市場</td><td class="mono">25x</td><td>-26%（P/E 壓縮，EPS 成長部分抵消 → 淨 0%）</td></tr>
+<tr style="background:#FEF9C3"><td>3 年後成長率 10%</td><td>回歸市場平均</td><td class="mono">20x</td><td>-41%（EPS 成長部分抵消 → 淨 -20%）</td></tr>
+<tr style="background:#FEE2E2"><td>3 年後成長率 5%</td><td>成熟低成長</td><td class="mono">15x</td><td>-55%（淨 -40%）</td></tr>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>GM 49.0% vs FY2025 avg 48.7%，上升中</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>WFE 市佔 19%，持平</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>ASP 隨技術升級自然提高，無負面跡象</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR（差 >5%p）</td><td>EPS CAGR 20.5% vs Revenue CAGR ~10% → 差 10.5%p（回購 + margin expansion）</td><td><span class="miss">🔴</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI < 0.75 連 2 年</td><td>FCF/NI ~0.85-1.05，正常</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue > 5% 且上升</td><td>SBC/Rev ~2.1%，低且穩定</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代壓縮</td><td>WFE TAM 擴張中（$95B → $110B+ YoY）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數 3 年系統性下移</td><td>Semi equipment P/E 3 年擴張（14x → 34x）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex/FCF > 60%</td><td>Capex $2.26B / FCF $5.70B = 40%（含成長 capex）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新產能，3 年內收入下滑？</td><td>服務(AGS)業務提供 recurring base，不會歸零</td><td>⬜</td></tr>
+</table>
+<p><strong>亮燈數：1 個</strong> → <span class="signal-yellow">🟡 中度警戒</span>：EPS 成長顯著快於營收成長（10.5%p gap），需在 §3 說明。主因為 margin expansion + 回購，非盈餘操縱。§3 已驗證：buyback 佔 FCF <20%，非回購依賴型。</p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="signal-green">🟢 高確信長期成長</span> — Runway >10 年、有機 + 定價驅動、強化型護城河連動、ROIC 擴大、衰退信號僅 1 個（非結構性）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><span class="signal-green"><strong>🟢 AI 受益</strong></span></p>
+<ul>
+<li><strong>核心邏輯</strong>：AMAT 製造的是生產 AI 晶片的設備——AI 需求越大，對 AMAT 設備的需求越大。這是 AI 價值鏈中最直接的受益者之一。</li>
+<li><strong>AI 相關營收</strong>：先進邏輯（3nm/2nm/GAA）+ HBM DRAM + 先進封裝 → 估計佔 Semi Systems 營收 >40% 且快速上升。</li>
+<li><strong>公司 AI 策略</strong>：自研 AI 輔助製程優化工具（AIx platform），同時設備本身內嵌 AI 感測與控制。</li>
+<li><strong>過去 2 年變化</strong>：AI 相關設備訂單從 FY2023 的 ~15% 佔比提升至 FY2026E 的 >40%。</li>
+</ul>
+<p>評級分數：🟢 = <span class="mono">9</span> 分</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §3 ═══ -->
+<div class="section">
+<div class="section-title">§3｜護城河分析</div>
+<p><strong>評分：8 / 10</strong>（全球上市公司基準，最嚴格標準）</p>
+
+<p>§2.5 衰退信號偵測表亮燈 1 項（EPS > Revenue CAGR gap）。回應：差距主因為 margin expansion（Gross Margin 43% → 49%）和穩定回購（年 ~$1.3B），並非盈餘品質惡化。Revenue CAGR 在 CY2026 預期加速至 >15%，gap 將收窄。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>轉換成本（最強）</strong>：半導體製程中，設備與 recipe（製程配方）深度綁定。客戶一旦在某製程節點使用 AMAT 設備完成 qualification，更換成本極高（6-12 個月 re-qual + 產線停機損失）。TSMC 在 5nm/3nm 的 AMAT 設備佔比估計 ~25%。</li>
+<li><strong>規模優勢（強）</strong>：全球最大 WFE 供應商，年 R&D ~$3B（佔營收 ~11%），覆蓋沉積、蝕刻、CMP、離子植入、檢測等全品線。單一對手（LRCX、KLAC、TEL）均只覆蓋部分品線。</li>
+<li><strong>無形資產（中強）</strong>：數千項專利覆蓋 CVD/PVD/ALD 等核心沉積技術。但半導體設備行業專利戰相對溫和，主要壁壘是 know-how 而非法律保護。</li>
+<li><strong>網路效應（弱）</strong>：不具備傳統網路效應。但 AGS 服務業務有 installed base flywheel：裝機量越大 → 服務收入越穩定 → 客戶更傾向整廠採購。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>新進入者面臨 $3B+/年 R&D 門檻、10+ 年的客戶 qualification 累積、以及極端精密的機械/光學/材料科學交叉能力需求。中國大陸設備商（北方華創、中微半導體）僅在成熟製程局部追趕，先進製程差距仍為 2-3 個世代。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前 WFE 市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>AMAT</strong></td><td class="mono">~19%</td><td>持平</td><td>—</td><td>—</td></tr>
+<tr><td>ASML</td><td class="mono">~22%</td><td>↑（EUV 獨占）</td><td>EUV 壟斷驅動光刻支出佔比上升</td><td>ASML 吃所有光刻份額</td></tr>
+<tr><td>Lam Research</td><td class="mono">~14%</td><td>↑</td><td>etch + ALD 領域直接競爭</td><td>LRCX 在先進 etch 略有擴張</td></tr>
+<tr><td>Tokyo Electron</td><td class="mono">~15%</td><td>持平</td><td>日本政府補貼支持</td><td>TEL 在 coater/developer 穩定</td></tr>
+<tr><td>KLA</td><td class="mono">~8%</td><td>↑</td><td>檢測設備獨佔地位</td><td>KLAC 在自身利基穩固</td></tr>
+</table>
+
+<h3>護城河趨勢：穩定</h3>
+<p><strong>24 個月內最可能瓦解護城河的變化</strong>（按威脅程度）：</p>
+<ol>
+<li>ASML High-NA EUV 成功簡化多重圖案（multi-patterning），減少沉積步驟需求 → 壓縮 AMAT SAM</li>
+<li>中國設備商在成熟製程達到 70-80% 國產替代率 → AMAT 失去中國 legacy 市場</li>
+<li>Lam Research 在 ALD（原子層沉積）取得突破性技術優勢 → 侵蝕 AMAT 在先進沉積的份額</li>
+</ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §4 ═══ -->
+<div class="section">
+<div class="section-title">§4｜財務品質監測</div>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>主要對手比較</th></tr>
+<tr><td>FCF Margin</td><td class="mono">28.7%</td><td class="mono">27.6%</td><td class="mono">~24.7%</td><td>LRCX ~25%, KLAC ~30%, ASML ~25%</td></tr>
+<tr><td>EBITDA Margin</td><td class="mono">~32%</td><td class="mono">~31%</td><td class="mono">~31%</td><td>LRCX ~33%, KLAC ~42%</td></tr>
+<tr><td>ROIC − WACC</td><td class="mono">~19%p</td><td class="mono">~18%p</td><td class="mono">~20%p</td><td>LRCX ~66%p, KLAC ~46%p</td></tr>
+<tr><td>SBC / Revenue</td><td class="mono">1.8%</td><td class="mono">2.1%</td><td class="mono">~2.0%</td><td>LRCX ~3%, KLAC ~4%</td></tr>
+<tr><td>ROE</td><td class="mono">~42%</td><td class="mono">~40%</td><td class="mono">~43%</td><td>LRCX ~66%, KLAC ~70%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：LTM OCF $7.96B vs NI ~$7.1B → OCF/NI ≈ 1.12，正常（OCF > NI 為健康信號）。無盈餘操縱跡象。</li>
+<li><strong>AR vs 營收成長</strong>：Revenue -2.1% YoY（Q1），需監測 AR 是否逆向擴張。目前無異常。</li>
+<li><strong>存貨 vs 營收成長</strong>：半導體設備行業存貨週期較長（6-9 個月），存貨水位上升可能反映訂單增長而非積壓。</li>
+<li><strong>FCF 轉換率趨勢</strong>：FCF/NI 從 FY2023 ~1.05 降至 LTM ~0.80，主因 capex 增加（新廠建設），非結構性惡化。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><td>過去 3 年回購總額 vs FCF 總額</td><td class="mono">~$5.5B / $22B = 25%</td><td>回購佔 FCF 比例健康（遠低於 80% 警戒線）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td class="mono">原 20.5% → 剔除後 ~18%</td><td>差距 2.5%p，在合理範圍（< 5%p）</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td class="mono">~$190 avg vs $399.64</td><td>回購均價遠低於現價 → 資本配置得當</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td class="mono">~4%（FY23-FY25）</td><td>EPS CAGR 遠高於 Revenue CAGR 主因 margin expansion</td></tr>
+</table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §5 ═══ -->
+<div class="section">
+<div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+
+<h3>市場量化</h3>
+<table>
+<tr><td>TAM（WFE 全球市場）</td><td class="mono">$110B（CY2025），預計 CY2026 達 $130B+（+20%）</td></tr>
+<tr><td>CAGR</td><td class="mono">~12-15%（2025-2030，受 AI 驅動）</td></tr>
+<tr><td>當前滲透率</td><td>半導體 AI 應用佔 WFE 需求 ~30%，預計 2028 達 50%+</td></tr>
+<tr><td>供需狀態</td><td>偏緊：客戶 clean room 空間是瓶頸，設備交期 6-12 月</td></tr>
+</table>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游供應商</strong>：AMAT 是眾多精密零件供應商的最大客戶，議價力強。零件供應商替代性中等。</li>
+<li><strong>對下游客戶</strong>：前 5 大客戶佔營收 >50%（TSMC ~15-20%、Samsung ~10-15%、Intel ~10%）。客戶集中度高但轉換成本也高，議價力平衡。</li>
+<li><strong>地理風險</strong>：中國 30%（FY2025）→ 預計 <25%（FY2026E），韓國 ~20%，台灣 ~15%，美國 ~15%。地緣政治曝險主要集中在中國。</li>
+</ul>
+
+<h3>營收組成</h3>
+<table>
+<tr><th>業務段</th><th>FY2025 營收</th><th>佔比</th><th>YoY 成長</th></tr>
+<tr><td>Semiconductor Systems</td><td class="mono">~$20.0B</td><td class="mono">70.5%</td><td>+4%（含創紀錄 foundry + DRAM）</td></tr>
+<tr><td>Applied Global Services</td><td class="mono">~$6.4B</td><td class="mono">22.6%</td><td>+3%（創紀錄，轉向 recurring model）</td></tr>
+<tr><td>Display & Adjacent</td><td class="mono">~$2.0B</td><td class="mono">6.9%</td><td>-5%（OLED 週期低谷）</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<ul>
+<li><strong>每技術節點 SAM 增量</strong>：每個先進製程節點轉換（如 3nm → 2nm）增加 AMAT ~$1B SAM。</li>
+<li><strong>AGS ARPU（每台裝機設備年服務收入）</strong>：估計 ~$15-20K/台/年，裝機基數 >40 萬台，且轉向訂閱制。</li>
+<li><strong>設備 ASP 趨勢</strong>：先進沉積設備 ASP 隨層數增加而提升，GAA 製程設備 ASP 較 FinFET 高 20-30%。</li>
+</ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §6 ═══ -->
+<div class="section">
+<div class="section-title">§6｜公司治理與資本配置</div>
+
+<h4>1. 股東/股權結構</h4>
+<p>AMAT 為單一股權結構（one share one vote），無 dual-class 投票權。機構持股 ~83%（Vanguard ~9%, BlackRock ~8%）。創辦人已退出，目前無單一控股大股東。</p>
+
+<h4>2. 資本配置方向</h4>
+<table>
+<tr><th>項目</th><th>FY2025</th><th>優先順序</th></tr>
+<tr><td>Capex</td><td class="mono">~$2.0B</td><td>第一優先（新廠 + 研發設施）</td></tr>
+<tr><td>回購</td><td class="mono">~$4.5B</td><td>第二優先（$10B 新授權 2025 年 3 月）</td></tr>
+<tr><td>分紅</td><td class="mono">~$1.4B</td><td>第三優先（連 8 年增長，15% 增幅）</td></tr>
+</table>
+<p>資本配置紀律良好：先投資成長，剩餘 FCF 返還股東。回購佔 FCF ~25%，未過度槓桿。</p>
+
+<h4>3. 管理層薪酬結構</h4>
+<p>CEO Gary Dickerson FY2025 總薪酬 $29.6M：固定薪 $1.03M（3.5%）、股權激勵 $26.9M（90.8%）、其他 $1.7M（5.7%）。績效導向比例極高（>90% 為股權），與股東利益高度綁定。</p>
+
+<h4>4. 過去 12 個月重大內部人交易</h4>
+<table>
+<tr><th>日期</th><th>對象</th><th>買/賣</th><th>金額</th></tr>
+<tr><td>2025-04-03</td><td>CEO Gary Dickerson</td><td><span class="beat">買入</span></td><td>50,000 股 @ ~$137 = $6.87M</td></tr>
+<tr><td>近 6 個月</td><td>多名高管</td><td><span class="miss">賣出</span></td><td>3 筆（例行性 RSU 解鎖賣出）</td></tr>
+</table>
+<p>CEO 在股價 $137（52 週低點附近）大手筆買入 $6.87M，為強烈正面信號。近期賣出均為 RSU 解鎖例行交易。</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ §7 ═══ -->
+<div class="section">
+<div class="section-title">§7｜估值診斷（7.0–7.5）</div>
+
+<h3>7.0｜估值體系診斷</h3>
+<h4>A｜當前主流估值邏輯</h4>
+<table>
+<tr><th>類型</th><th>指標</th><th>當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E, EV/EBITDA</td><td><strong>✅ 主流</strong></td><td>AMAT 有穩定盈利，市場以 Forward P/E 為主要估值錨</td></tr>
+<tr><td>成長型</td><td>PEG</td><td>輔助</td><td>AI 敘事推動成長股定價邏輯</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>輔助</td><td>高 FCF 是品質溢價的來源</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：Forward P/E + AI 成長敘事溢價</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<p><strong>情境三（正在發生）</strong>：市場正將 AMAT 從「週期性 WFE 供應商」（歷史均值 P/E ~21x）重新定價為「AI 基礎設施結構性受益者」（當前 P/E 34x）。這一漂移已大幅完成。</p>
+
+<h4>C｜估值尺可能被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>若發生的影響</th></tr>
+<tr><td>AI capex 放緩</td><td>未發生，CY2026 guidance >20%</td><td>成長股邏輯失效，P/E 壓縮至 20-22x</td></tr>
+<tr><td>WFE 週期見頂</td><td>未見頂跡象</td><td>回歸週期股定價，P/E 12-18x</td></tr>
+<tr><td>AGS recurring 模型成熟</td><td>進行中（FY2026 起 AGS = 純 recurring）</td><td>支撐估值溢價，降低週期性折扣</td></tr>
+</table>
+<p><strong>估值體系診斷結論</strong>：<span class="signal-green">🟢 估值邏輯穩定</span>（已完成從週期股到 AI 成長股的重新定價，當前邏輯尚未面臨挑戰）</p>
+
+<h3>7.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Forward P/E（NTM）</td><td class="mono">33.7x</td><td class="mono">14x</td><td class="mono">21x</td><td class="mono">35x</td><td class="mono"><strong>94%</strong> = (33.7−14)/(35−14)×100%</td></tr>
+<tr><td>Trailing P/E</td><td class="mono">38x</td><td class="mono">11x</td><td class="mono">20x</td><td class="mono">42x</td><td class="mono">87%</td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">29x</td><td class="mono">10x</td><td class="mono">18x</td><td class="mono">30x</td><td class="mono">95%</td></tr>
+<tr><td>P/FCF</td><td class="mono">~45x</td><td class="mono">15x</td><td class="mono">22x</td><td class="mono">50x</td><td class="mono">86%</td></tr>
+<tr><td>P/S</td><td class="mono">11.5x</td><td class="mono">4x</td><td class="mono">7x</td><td class="mono">12x</td><td class="mono">94%</td></tr>
+</table>
+<p><strong>解讀</strong>：</p>
+<ol>
+<li><strong>過熱</strong>：所有估值指標均處於 >85th 歷史分位，接近或位於 5 年高點。</li>
+<li>上次 Forward P/E 位於 14x 時（2025 年 4-5 月），市場擔憂中國出口管制 + WFE 成長放緩。當前業務面與那時天差地別（AI capex 爆發）。</li>
+<li>推動因素：<strong>盈利修正（EPS 大幅上修 18-24%）× 市場情緒（AI narrative）</strong>，利率影響次要。</li>
+</ol>
+
+<h3>7.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td class="mono">33.7x</td><td>—</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3Y）</td><td class="mono">20.5%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（Non-GAAP，3Y）</td><td class="mono"><strong>1.64</strong></td><td>< 1 便宜 / 1-2 合理 / > 2 貴</td><td><span class="signal-yellow">合理</span></td></tr>
+<tr><td>PEG（GAAP，3Y）</td><td class="mono">1.68</td><td>同上</td><td><span class="signal-yellow">合理</span></td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td class="mono">12.1%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（5Y，Non-GAAP）</td><td class="mono"><strong>2.79</strong></td><td>同上</td><td><span class="signal-red">偏貴</span></td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td class="mono">1.64 → 2.79</td><td>差異大 = 近期成長不可持續</td><td>近期超高成長依賴 AI capex 集中釋放</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣</strong>：AMAT 位於「高成長 × 高估值」象限。3Y PEG 合理但 5Y PEG 偏貴，說明市場正為 AI 驅動的近期超高成長付出溢價，但這個成長率在 5 年視角不可持續。存在「估值陷阱」風險——若成長在 3 年後放緩，當前 P/E 無法被維持。</p>
+
+<h3>7.3｜Reverse DCF</h3>
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><td>當前市值</td><td class="mono">~$327B</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td class="mono">~$7.0B</td></tr>
+<tr><td>WACC</td><td class="mono">9.15%（10Y UST 4.17% + Beta 1.24 × ERP 4.12%）</td></tr>
+<tr><td>永續成長率</td><td class="mono">3%（半導體設備長期成長與 GDP+ 掛鉤）</td></tr>
+<tr><td>預測期</td><td class="mono">10 年</td></tr>
+</table>
+
+<h4>步驟二：隱含 FCF CAGR</h4>
+<p class="mono">使 DCF 現值 = $327B，所需 10 年 FCF CAGR ≈ <strong>16.5%</strong></p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>基準</th><th>數值</th><th>相對位置</th></tr>
+<tr><td>過去 5 年實際 FCF CAGR</td><td class="mono">~13%</td><td>隱含 16.5% 高於歷史 3.5%p</td></tr>
+<tr><td>分析師 EPS CAGR（§2）</td><td class="mono">20.5%</td><td>隱含 FCF CAGR 低於 EPS，尚在範圍內</td></tr>
+<tr><td>同業最快 FCF CAGR（LRCX）</td><td class="mono">~25%</td><td>隱含值遠低於最快同業</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 16.5% FCF CAGR 需要：Revenue 年增 ~12%（基於 FCF Margin 25% 不變）或 FCF Margin 從 25% 擴大至 30%。需 AI capex 持續 5+ 年高速成長。</p>
+<p><strong>隱含預期判斷</strong>：<span class="signal-yellow">🟡 隱含預期合理</span>（高於歷史但低於共識，前提是 AI capex 持續）</p>
+
+<h3>7.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr style="font-weight:700"><td>AMAT</td><td class="mono">$327B</td><td class="mono">33.7x</td><td class="mono">29x</td><td class="mono">1.64</td><td class="mono">~25%</td><td class="mono">20.5%</td><td class="mono">29%</td></tr>
+<tr><td>LRCX</td><td class="mono">$130B</td><td class="mono">32x</td><td class="mono">38x</td><td class="mono">1.80</td><td class="mono">~25%</td><td class="mono">18%</td><td class="mono">75%</td></tr>
+<tr><td>KLAC</td><td class="mono">$110B</td><td class="mono">30x</td><td class="mono">25x</td><td class="mono">2.00</td><td class="mono">~30%</td><td class="mono">15%</td><td class="mono">55%</td></tr>
+<tr><td>ASML</td><td class="mono">$340B</td><td class="mono">40x</td><td class="mono">35x</td><td class="mono">2.50</td><td class="mono">~25%</td><td class="mono">16%</td><td class="mono">40%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td class="mono">33x</td><td class="mono">32x</td><td class="mono">1.90</td><td class="mono">~25%</td><td class="mono">17%</td><td class="mono">50%</td></tr>
+</table>
+
+<p><strong>同業溢折價邏輯</strong>：</p>
+<ol>
+<li>AMAT Forward P/E 33.7x 約等於產業中位，PEG 1.64 為同業最低（最佳性價比），但 ROIC 29% 為同業最低。</li>
+<li>AMAT 的優勢在 EPS CAGR 最高（20.5%）+ 產品線最廣；劣勢在 ROIC 低於 LRCX 和 KLAC。</li>
+<li>若向產業 P/E 中位均值回歸（33x），影響 <2%，基本平盤。</li>
+</ol>
+
+<p><strong>最終橫向比較結論</strong>：<span class="signal-yellow">🥈 此標的為次優選</span> — AMAT 在 PEG 上最優，但 KLAC 的 ROIC + FCF Margin 組合更佳且估值更低。在 WFE 全面上行時 AMAT 最受益（最廣產品線），但在均值回歸情境中 KLAC 防禦性更強。</p>
+
+<h3>7.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（7.0）</td><td><span class="signal-green">🟢 穩定</span></td><td>已完成週期股→AI 成長股重新定價</td></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="signal-red">🔴 過熱</span></td><td>Forward P/E 94th 分位，接近 5Y 高點</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="signal-yellow">🟡 合理</span></td><td>3Y PEG 1.64 合理，但 5Y PEG 2.79 偏貴</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="signal-yellow">🟡 合理</span></td><td>隱含 16.5% FCF CAGR 高於歷史但低於共識</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="signal-yellow">🟡 合理溢價</span></td><td>P/E 平產業，PEG 最低，ROIC 最低</td></tr>
+</table>
+
+<p><strong>當前定價判斷</strong>：<span class="signal-red">🔴 明顯貴</span>（1 紅 + 3 黃 + 1 綠，歷史分位極端偏高，短期已 price-in 最樂觀情境）</p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河品質（§3）</td><td>8/10</td><td>+0x（行業基準）</td></tr>
+<tr><td>② 成長持續年數（§2.5A）</td><td>>10 年 🟢</td><td>+3x</td></tr>
+<tr><td>③ 成長品質（§2.5B）</td><td>有機 95% + 定價驅動</td><td>+2x</td></tr>
+<tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC−WACC 20%p，↑</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號（§2.5）</td><td>1 個亮燈</td><td>-1x</td></tr>
+<tr><td>⑦ 估值體系（§7.0）</td><td>穩定</td><td>+0x</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.17%</td><td>-1x（壓縮成長股倍數）</td></tr>
+<tr style="font-weight:700"><td>產業基準倍數</td><td class="mono">25x</td><td>調整後合理區間：<strong>25x–32x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價</strong>：高 $500 / 中位 $430 / 低 $380（n≈27）。<br>
+近期 Susquehanna 上調至 $500（2026-04-13）。共識偏樂觀，反映 AI 溢價。我認為 $430 中位合理但以 2-3 年視角計算已充分反映在當前股價。</p>
+
+<h4>長期合理倍數</h4>
+<p>§2.5 長期成長性 🟢 → 基準 5 年後 Forward P/E：<span class="mono"><strong>25x</strong></span></p>
+<p>v9.0 上行三引擎：Engine A 觸發（1.175），AI 🟢 疊加（1.10）<br>
+最終 v9.0 長期合理倍數 = 25x × 1.175 × 1.10 = <span class="mono"><strong>32.3x</strong></span></p>
+</div>
+
+</div><!-- end container -->
+
+<button class="print-btn" onclick="window.print()">🖨️ 列印為 PDF</button>
+
+</body>
+</html>
