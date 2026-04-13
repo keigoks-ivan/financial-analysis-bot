@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v9.0">
+<title>DD Report — APH (Amphenol) | 2026-04-13</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--title:#1E3A5F;--accent:#3B82F6;--beat-bg:#DCFCE7;--beat-text:#166534;--miss-bg:#FEE2E2;--miss-text:#991B1B;--neutral-bg:#FEF9C3;--neutral-text:#92400E;--trap-bg:#FFF0E6;--trap-border:#F97316;--trap-text:#C2410C;--thesis-bg:#EFF6FF;--thesis-border:#3B82F6;--bull-bg:#F0FDF4;--bull-border:#16A34A;--bear-bg:#FFF1F2;--bear-border:#DC2626;--arb-bg:#F5F3FF;--arb-border:#7C3AED;--verdict-bg:#FFFBEB;--verdict-border:#D97706;--verdict-text:#92400E;--short-bg:#F0F9FF;--short-border:#0284C7;--mid-bg:#F5F3FF;--mid-border:#7C3AED;--long-bg:#ECFDF5;--long-border:#059669;--long-text:#065F46}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#1e293b;line-height:1.7;font-size:15px}
+.header{position:sticky;top:0;z-index:100;background:var(--title);color:#fff;padding:12px 32px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px}
+.header .ticker{font-size:20px;font-weight:700;letter-spacing:1px}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+.section{background:var(--card);border-radius:4px;margin-bottom:20px;padding:28px 32px;border:1px solid #e2e8f0}
+.section-title{background:var(--title);color:#fff;padding:10px 20px;margin:-28px -32px 20px;border-radius:4px 4px 0 0;font-size:16px;font-weight:700;border-left:4px solid var(--accent);display:flex;align-items:center;gap:8px}
+h3{color:var(--title);font-size:15px;font-weight:700;margin:18px 0 8px;padding-bottom:4px;border-bottom:1px solid #e2e8f0}
+h4{color:#334155;font-size:14px;font-weight:600;margin:14px 0 6px}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:13.5px}
+th{background:var(--title);color:#fff;padding:8px 12px;text-align:left;font-weight:500;font-size:13px}
+td{padding:7px 12px;border-bottom:1px solid #e2e8f0}
+tr:nth-child(even){background:#F1F5F9}
+.mono{font-family:'IBM Plex Mono',monospace}
+.beat{background:var(--beat-bg);color:var(--beat-text);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.miss{background:var(--miss-bg);color:var(--miss-text);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.warn{background:var(--neutral-bg);color:var(--neutral-text);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-border);padding:16px 20px;margin:12px 0;border-radius:0 4px 4px 0}
+.trap-box h4{color:var(--trap-text);margin-top:0}
+.thesis-box{background:var(--thesis-bg);border-left:4px solid var(--thesis-border);padding:16px 20px;margin:12px 0;border-radius:0 4px 4px 0}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:12px 0}
+.debate-card{padding:16px;border-radius:4px}
+.bull-card{background:var(--bull-bg);border-left:4px solid var(--bull-border)}
+.bear-card{background:var(--bear-bg);border-left:4px solid var(--bear-border)}
+.arb-card{background:var(--arb-bg);border-left:4px solid var(--arb-border)}
+.verdict-box{background:var(--verdict-bg);border-left:4px solid var(--verdict-border);padding:16px 20px;margin:12px 0;border-radius:0 4px 4px 0}
+.verdict-box h4{color:var(--verdict-text);margin-top:0}
+.rr-grid{display:grid;grid-template-columns:1fr;gap:16px;margin:12px 0}
+.rr-card{padding:16px;border-radius:4px}
+.long-card{background:var(--long-bg);border-left:4px solid var(--long-border)}
+.long-card h4{color:var(--long-text)}
+.signal{display:inline-block;padding:3px 10px;border-radius:3px;font-weight:600;font-size:12px;margin:2px}
+.signal-green{background:#DCFCE7;color:#166534}
+.signal-yellow{background:#FEF9C3;color:#92400E}
+.signal-red{background:#FEE2E2;color:#991B1B}
+.signal-blue{background:#EFF6FF;color:#1e40af}
+.quality-badge{display:inline-block;padding:6px 16px;border-radius:4px;font-weight:700;font-size:16px;margin:4px}
+.quality-h{background:#DCFCE7;color:#166534;border:2px solid #16A34A}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--title);color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;z-index:200}
+.print-btn:hover{background:#2d5a8e}
+p{margin:6px 0}
+ul,ol{margin:6px 0 6px 20px}
+li{margin:3px 0}
+@media print{.header,.print-btn{display:none!important}.container{padding:0}.section{break-inside:avoid;border:none;box-shadow:none}}
+@media(max-width:768px){.debate-grid{grid-template-columns:1fr}.header{flex-direction:column;gap:4px;text-align:center}}
+</style>
+</head>
+<body>
+<div class="header">
+<div><span class="ticker">APH</span> — Amphenol Corporation</div>
+<div>資料抓取：2026-04-13 ｜ 最新股價：$140.75 ｜ 最近財報季：Q4 2025 ｜ DD Schema v9.0</div>
+</div>
+<button class="print-btn" onclick="window.print()">🖨️ 列印為 PDF</button>
+<div class="container">
+
+<!-- ============================================================ -->
+<!-- §8 投資結論（最頂部） -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§8｜投資結論</div>
+<p style="color:#64748b;font-size:13px;margin-bottom:12px;">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<h3>財報信號與假設校準</h3>
+<ul>
+<li><strong>H1（AI/Datacom 持續高成長）當前狀態</strong>：<span class="beat">＋ 強化</span> — Q4 2025 IT Datacom 營收佔比 38%，有機成長 110%；book-to-bill 1.31x 為歷史新高，AI 相關訂單持續加速。</li>
+<li><strong>H2（CCS 收購成功整合）當前狀態</strong>：<span class="warn">0 尚未驗證</span> — CCS 於 2026 年 1 月完成收購，預計 2026 全年貢獻 $4.1B 營收及 $0.15 EPS，Q1 含 ~$900M 營收但僅 $0.02 EPS 增益，整合仍在早期。</li>
+<li><strong>H3（市場維持 AI 基礎設施溢價）當前狀態</strong>：<span class="warn">0 不變</span> — Forward P/E 29.15x 處於 5 年歷史 66% 分位，市場持續給予成長溢價但未進一步擴張。</li>
+</ul>
+<p><strong>這份財報讓隱含預期變得更容易兌現</strong>，因為 AI 訂單能見度極高（book-to-bill 1.31x），但 CCS 整合的利潤率爬坡速度仍是關鍵未知數。</p>
+
+<h3>進場 / 觀望 / 迴避</h3>
+<div class="verdict-box">
+<h4 style="font-size:18px;">🟡 觀望</h4>
+</div>
+
+<p><strong>① 短期信號（0-12 個月）</strong>：Q4 2025 全面超預期，Q1 2026 guidance 高於共識（$6.9-7.0B vs 市場 $6.79B），短期 EPS 動能強勁。但 Forward P/E 29x 已定價完美執行，短期上行空間有限。</p>
+
+<p><strong>② 中期成長確信度（1-3 年）</strong>：3 年 EPS CAGR ~20.5%，主要由 AI datacom 有機成長（35% 營收佔比）+ CCS 營收貢獻驅動。能見度中高——AI 基建需求有 hyperscaler capex 計劃支撐，但 CCS 整合的 margin 軌跡不確定。引用 §2.5B：定價 + 量雙驅動，有機為主。</p>
+
+<p><strong>③ 長期護城河邏輯（3 年後）</strong>：Runway ≥ 10 年（§2.5A），連接器在 AI/EV/工業自動化的結構性需求不可逆。ROIC 27.87% 持續擴大（§2.5D），成長強化型護城河（§2.5C）——AI 帶來的 design-in 黏性越來越深。3 年後仍有持有理由，但前提是以合理估值買入。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td><span class="signal signal-green">非陷阱</span> — APH 不是價值陷阱，估值處於歷史中高位，不存在「便宜但有毒」的問題。若有風險，是估值過高而非價值陷阱。</td></tr>
+<tr><td><strong>支持「非陷阱」的最強論據</strong></td><td>ROIC 從 2022 年的 ~19% 擴大至 2025 年的 27.87%，FCF Margin 從 ~14% 提升至 19%，毛利率從 ~32% 升至 37%——所有品質指標同向改善，完全相反於價值陷阱的特徵。</td></tr>
+<tr><td><strong>支持「可能是陷阱」的最強反駁</strong></td><td>CEO Adam Norwitt 於 2026 年 2 月賣出 515,281 股（$75.9M），過去 3 個月僅有內部人賣出、無買入。CCS 收購使 D/E 升至 1.09，若 AI capex 週期意外放緩，高槓桿 + 高估值的組合將放大下行。</td></tr>
+<tr><td><strong>如何判斷陷阱是否正在發生</strong></td><td>①  Book-to-bill 連續兩季 &lt; 1.0（訂單萎縮）；② IT Datacom 有機成長降至 &lt; 20% 且伴隨 margin 壓縮。</td></tr>
+</table>
+<p><strong>最終定性</strong>：<span class="signal signal-green">🟢 非陷阱</span></p>
+
+<h3>條件式進場判斷</h3>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td><strong>估值條件</strong></td><td>Forward P/E 回落至 ≤ 24.5x（對應股價 ~$106），使長期 R:R ≥ 2.0x</td></tr>
+<tr><td><strong>基本面條件</strong></td><td>Q1 2026 財報（4/29）需確認：CCS 毛利率 ≥ 30%、IT Datacom book-to-bill ≥ 1.1</td></tr>
+<tr><td><strong>陷阱排除條件</strong></td><td>若 IT Datacom 有機成長連續兩季 &lt; 10%，立即重新評估</td></tr>
+<tr><td><strong>事件觸發條件</strong></td><td>若宏觀衝擊（關稅升級、衰退恐慌）導致股價回落至 $106-115 區間，啟動分批建倉</td></tr>
+</table>
+
+<h3>下行風險量化（引用 §2.5E）</h3>
+<p>若 3 年後成長率降至 10%，Forward P/E 壓縮至 22x → 估值壓縮幅度 <strong>-38%</strong></p>
+<p>若 3 年後成長率降至 5%，Forward P/E 壓縮至 18x → 估值壓縮幅度 <strong>-52%</strong></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>IT Datacom 有機成長率 & book-to-bill</td><td>§0.5 H1</td><td>🔵 核心假設驗證</td><td>有機成長 &lt; 20% 或 book-to-bill &lt; 1.0</td></tr>
+<tr><td>2</td><td>CCS 整合後 EBITDA Margin 軌跡</td><td>§2.5 / §0.5 H2</td><td>🔵 長期成長領先信號</td><td>CCS EBITDA Margin &lt; 18%（低於同業水平）</td></tr>
+<tr><td>3</td><td>Forward P/E vs 5Y 中位數</td><td>§7</td><td>估值信號</td><td>Forward P/E &gt; 35x（歷史高端）或 &lt; 24.5x（進場機會）</td></tr>
+</table>
+
+<p style="margin-top:16px;padding:12px;background:#F1F5F9;border-radius:4px;font-size:13px;">底倉建議為「目標倉位的 0%」（長期 R:R 未達門檻，觀望中）。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7.7 綜合品質分驅動的動態 R:R -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div>
+<p>上行是基本面告訴我們「這家公司值多少」（上行三引擎），下行是基本面告訴我們「最壞情境的底線」（壓測 EPS × 恐慌 P/E），MA 降維為戰術濾網。</p>
+
+<h3>A｜綜合品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+<tr><td>護城河</td><td>§3 評分</td><td class="mono">8</td><td class="mono">0.30</td><td class="mono">2.40</td></tr>
+<tr><td>長期成長性</td><td>§2.5 評級 🟢 = 9</td><td class="mono">9</td><td class="mono">0.45</td><td class="mono">4.05</td></tr>
+<tr><td>財務品質</td><td>綜合 ROIC 27.9%、FCF 19%、EPS +77% YoY</td><td class="mono">8</td><td class="mono">0.10</td><td class="mono">0.80</td></tr>
+<tr><td>AI 風險</td><td>§2.5 F 評級 🟢 = 9</td><td class="mono">9</td><td class="mono">0.15</td><td class="mono">1.35</td></tr>
+<tr style="font-weight:700;background:#DCFCE7"><td colspan="4"><strong>綜合品質分</strong></td><td class="mono"><strong>8.60</strong></td></tr>
+</table>
+<p>本標的綜合品質分：<span class="quality-badge quality-h">8.60 — H 高品質</span></p>
+
+<table>
+<tr><th>綜合分</th><th>品質等級</th><th>R:R 門檻</th><th>底倉（目標倉位的）</th></tr>
+<tr style="background:#DCFCE7;font-weight:600"><td>8.5+</td><td>高品質</td><td>2.0x</td><td>30%</td></tr>
+<tr><td>7.0-8.5</td><td>中高品質</td><td>2.5x</td><td>20%</td></tr>
+<tr><td>5.5-7.0</td><td>中品質</td><td>3.0x</td><td>10%</td></tr>
+<tr><td>&lt; 5.5</td><td>觀望</td><td>—</td><td>0%</td></tr>
+</table>
+
+<h3>B｜上行三引擎（取較高不疊加）</h3>
+
+<h4>引擎 A：ROIC 溢價</h4>
+<p>觸發條件：ROIC（3 年平均）&gt; 20% 且連續 3 年向上擴大</p>
+<p>本標的 ROIC 3 年平均：~23.3%（2023: ~20%, 2024: 22.1%, 2025: 27.9%），連續 3 年擴大 → <span class="beat">✅ 觸發</span></p>
+<p>引擎 A 調整係數 = <span class="mono">1.175</span></p>
+
+<h4>引擎 B：PEG 動態天花板</h4>
+<p>觸發條件：預估 EPS 5 年 CAGR &gt; 20%</p>
+<p>本標的 5 年 EPS CAGR 估計 ~14%（方法 1 + 方法 2 平均） → <span class="miss">❌ 未觸發</span>（&lt; 20%）</p>
+
+<h4>引擎 C：護城河溢價</h4>
+<p>觸發條件：護城河 ≥ 9 分</p>
+<p>本標的護城河 8/10 → <span class="miss">❌ 未觸發</span>（&lt; 9）</p>
+
+<h4>三引擎組合</h4>
+<table>
+<tr><th>引擎</th><th>觸發</th><th>調整係數</th></tr>
+<tr><td>A ROIC 溢價</td><td><span class="beat">✅</span></td><td class="mono">1.175</td></tr>
+<tr><td>B PEG 動態</td><td><span class="miss">❌</span></td><td class="mono">—</td></tr>
+<tr><td>C 護城河溢價</td><td><span class="miss">❌</span></td><td class="mono">—</td></tr>
+</table>
+<p><strong>取觸發者中最高</strong>：選用引擎 A，調整係數 = <span class="mono">1.175</span></p>
+
+<h3>C｜AI 風險獨立疊加</h3>
+<p>§2.5 F 評級：<span class="signal signal-green">🟢 AI 受益</span></p>
+<p>AI 調整係數 = <span class="mono">1.10</span>（🟢 → × 1.10）</p>
+
+<h3>D｜最終長期目標 P/E</h3>
+<p class="mono" style="font-size:15px;">最終 P/E = 基準 P/E × 引擎調整 × AI 調整 = 25 × 1.175 × 1.10 = <strong>32.3x</strong></p>
+
+<h3>E｜長期 EPS 預估（雙源交叉驗證）</h3>
+
+<h4>方法 1：§2.5 B 成長驅動分解</h4>
+<table>
+<tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+<tr><td>IT Datacom / AI</td><td>35%</td><td>25%</td><td>8.75%</td></tr>
+<tr><td>CCS（光纖/銅纜）</td><td>15%</td><td>5%</td><td>0.75%</td></tr>
+<tr><td>Automotive</td><td>13%</td><td>8%</td><td>1.04%</td></tr>
+<tr><td>Industrial</td><td>10%</td><td>6%</td><td>0.60%</td></tr>
+<tr><td>Defense</td><td>9%</td><td>7%</td><td>0.63%</td></tr>
+<tr><td>Mobile / Broadband</td><td>8%</td><td>5%</td><td>0.40%</td></tr>
+<tr><td>Commercial Air</td><td>5%</td><td>8%</td><td>0.40%</td></tr>
+<tr><td>Other</td><td>5%</td><td>5%</td><td>0.25%</td></tr>
+<tr style="font-weight:700"><td colspan="3">加權營收 CAGR</td><td>12.8%</td></tr>
+<tr style="font-weight:700"><td colspan="3">+ 營運槓桿 & 回購（~3%p）→ 方法 1 EPS CAGR</td><td><strong>16%</strong></td></tr>
+</table>
+
+<h4>方法 2：§2.5 D ROIC × 再投資率</h4>
+<p class="mono">內生成長率 = ROIC 25% × 再投資率 40% = 10%<br>ROIC 趨勢調整：+2%（持續擴大）<br>方法 2 CAGR：12%</p>
+
+<h4>採用 CAGR</h4>
+<p class="mono">採用值 = (16% + 12%) / 2 = <strong>14%</strong></p>
+
+<h3>F｜長期目標價計算</h3>
+<p class="mono">5 年後 EPS = $3.34 × (1.14)^5 = $3.34 × 1.925 = <strong>$6.43</strong></p>
+<p class="mono">長期目標 = $6.43 × 32.3x = <strong>$207.7</strong></p>
+
+<h3>G｜動態下行錨點</h3>
+<h4>步驟 1：護城河基礎下修</h4>
+<p>護城河評分：8（7-8 區間）→ <span class="mono">-20%</span></p>
+<h4>步驟 2：產業分層調整</h4>
+<p>產業分類：一般成長股（連接器/電子零組件，主要面向科技基礎設施）→ <span class="mono">0%</span></p>
+<h4>步驟 3：AI 風險疊加</h4>
+<p>AI 風險：🟢 → <span class="mono">-5%</span>（壓力情境少跌）</p>
+<h4>淨下修幅度</h4>
+<p class="mono">淨下修 = -20% + 0% + (-5%) = <strong>-25%</strong></p>
+<h4>壓測 EPS</h4>
+<p class="mono">壓測 EPS = $3.34 × (1 - 0.25) = <strong>$2.51</strong></p>
+<h4>恐慌 P/E（25% 分位）</h4>
+<p>5 年 Forward P/E 估計區間：18x（低）– 35x（高），中位 ~25x</p>
+<p class="mono">恐慌 P/E（25% 分位）= 18 + 0.25 × (35 - 18) = <strong>22.3x</strong></p>
+<h4>下行錨點</h4>
+<p class="mono" style="font-size:15px;">下行錨點 = $2.51 × 22.3 = <strong>$55.9</strong></p>
+
+<h3>H｜動態 R:R 計算</h3>
+<div class="rr-grid">
+<div class="rr-card long-card">
+<h4>長期 R:R（5 年視角）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="mono">$140.75</td></tr>
+<tr><td>長期目標</td><td class="mono">$207.7</td></tr>
+<tr><td>上行空間</td><td class="mono">+47.6%（+$66.95）</td></tr>
+<tr><td>下行錨點</td><td class="mono">$55.9</td></tr>
+<tr><td>下行距離</td><td class="mono">-60.3%（-$84.85）</td></tr>
+<tr style="font-weight:700;font-size:16px"><td><strong>長期 R:R</strong></td><td class="mono"><strong>0.79x</strong></td></tr>
+<tr><td>R:R 門檻（綜合分查表）</td><td class="mono">2.0x（H 高品質）</td></tr>
+<tr><td>判定</td><td><span class="miss">❌ Fail</span></td></tr>
+</table>
+</div>
+</div>
+
+<h3>I｜波動率燈號協議（v9.0）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$155.07 / $163.34</td></tr>
+<tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$121.98 / $113.71</td></tr>
+<tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$164.43 / $195.56</td></tr>
+<tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$39.89 / $8.76</td></tr>
+<tr><td>當前股價</td><td class="mono">$140.75</td></tr>
+<tr style="font-weight:700"><td>🔴 紅燈數</td><td class="mono"><strong>0/4</strong></td></tr>
+<tr style="font-weight:700"><td>🟢 綠燈數</td><td class="mono"><strong>0/4</strong></td></tr>
+</table>
+<p>BBand 資料由 yfinance Python 腳本自動計算（週線 20 期 + 月線 20 期）。</p>
+
+<h3>J｜二維建倉矩陣（品質等級 × 紅燈數）</h3>
+<table>
+<tr><th>品質＼紅燈</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+<tr style="background:#DCFCE7;font-weight:600"><td>8.5+（高）</td><td>30%</td><td>30%</td><td>15+15</td><td>10+10+10</td><td>10 試水</td></tr>
+<tr><td>7.0-8.5（中高）</td><td>20%</td><td>20%</td><td>10+10</td><td>7+7+6</td><td>10 試水</td></tr>
+<tr><td>5.5-7.0（中）</td><td>10%</td><td>10%</td><td>5+5</td><td>4+3+3</td><td>5 試水</td></tr>
+</table>
+<p>本標的：綜合品質 <strong>8.60（H）</strong>，紅燈 <strong>0</strong> → 建倉節奏：<strong>30%（一次建）</strong>——但因 R:R ❌ Fail，實際不執行建倉。</p>
+
+<h3>K｜綠燈加碼放大</h3>
+<p>本標的：綠燈 0 → 加碼調節：<strong>不加碼，按 J 表執行</strong></p>
+
+<h3>L｜戰術 MA（MA200 倉位開關 + MA60 加碼準星）</h3>
+<table>
+<tr><th>條件</th><th>動作</th></tr>
+<tr><td>股價 > MA200 日線 且斜率向上</td><td>倉位權限 100%</td></tr>
+<tr><td>股價 < MA200 日線</td><td>倉位權限最大 50%</td></tr>
+</table>
+<p>本標的 MA200：<span class="mono">$127.01</span>（斜率向上），現價 $140.75 &gt; MA200 → 倉位權限 <span class="beat">100%</span></p>
+<p>本標的 MA50：<span class="mono">$136.74</span>，現價略高於 MA50，技術面中性偏多。</p>
+
+<h3>M｜最終建倉建議</h3>
+<table>
+<tr><th>階段</th><th>倉位（目標倉位的%）</th><th>觸發條件</th></tr>
+<tr><td>立即</td><td class="mono"><strong>0%</strong></td><td>長期 R:R 0.79x ❌ Fail — 不建倉</td></tr>
+<tr><td>條件進場</td><td class="mono">30%</td><td>股價回落至 ~$106（Forward P/E ≤ 24.5x），R:R ≥ 2.0x</td></tr>
+<tr><td>MA60 加碼</td><td class="mono">+30%</td><td>條件進場後 MA60 回踩不破 + 量縮</td></tr>
+<tr><td>MA200 深跌</td><td class="mono">+40%</td><td>MA200 深跌反轉（$127 附近）</td></tr>
+<tr style="font-weight:700"><td>總目標倉位達成</td><td class="mono"><strong>待 R:R 達標</strong></td><td></td></tr>
+</table>
+<p style="background:#FEF9C3;padding:10px;border-radius:4px;font-size:13px;margin-top:8px;">⚠️ 當前 R:R 0.79x 遠低於 2.0x 門檻。品質一流但估值偏高。等待股價回調至 $106 區間或 EPS 超預期拉高上行空間後重新評估。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7.6 三方辯論摘要 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§7.6｜三方辯論摘要</div>
+<div class="debate-grid">
+<div class="debate-card bull-card">
+<h4 style="color:#16A34A;margin-top:0">🟢 多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字佐證</th></tr>
+<tr><td>1</td><td>不可替代的設計黏性護城河</td><td>§3：轉換成本極高，客戶 qualification 週期 12-18 個月，護城河趨勢擴大</td></tr>
+<tr><td>2</td><td>AI 基礎設施的絕對受益者</td><td>§2.5：IT Datacom +110% 有機成長，book-to-bill 1.31x，Runway ≥ 10 年</td></tr>
+<tr><td>3</td><td>ROIC 持續擴大的複利機器</td><td>§7：ROIC 從 19% → 28%，FCF Margin 14% → 19%，每一塊錢資本產出越來越高</td></tr>
+</table>
+<p style="margin-top:10px"><strong>多頭最強一句話</strong>：Amphenol 是 AI 時代的「數據管道工」——每座資料中心需要的連接器數量只會增加不會減少，而 APH 的設計黏性確保一旦進入就幾乎不可能被替換。</p>
+</div>
+<div class="debate-card bear-card">
+<h4 style="color:#DC2626;margin-top:0">🔴 空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th></tr>
+<tr><td>1</td><td>AI capex 週期性回調：Hyperscaler 資本支出在 2027 收縮 20%，IT Datacom 營收從 +110% 暴跌至 -10%</td><td>§2.5：Meta/Google/MSFT capex 指引下修 &gt; 15%</td></tr>
+<tr><td>2</td><td>CCS 整合失敗：$10.5B 收購的光纖業務 margin 持續拖累，D/E 1.09 + 利率居高 → 資產減值</td><td>§7.3：CCS EBITDA margin &lt; 15% 連續兩季</td></tr>
+<tr><td>3</td><td>估值正常化：Forward P/E 從 29x 壓縮至 22x（25%分位），股價跌至 ~$95</td><td>§0.5 R3：市場風險偏好轉變</td></tr>
+</table>
+<p style="margin-top:10px"><strong>空頭最大威脅</strong>：AI capex 是週期性的，不是永恆的。上一次半導體資本支出收縮（2022-2023），相關股票腰斬。APH 38% 的營收來自單一驅動力，集中度風險被市場低估。CEO 賣了 $76M 的股票——他比你更清楚風險在哪裡。</p>
+</div>
+<div class="debate-card arb-card">
+<h4 style="color:#7C3AED;margin-top:0">🟣 估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+<tr><td>與過去 3 年實際 FCF CAGR 的差距</td><td>隱含 ~12% vs 歷史 34.7%</td><td class="mono">2 / 2</td></tr>
+<tr><td>與分析師 EPS CAGR 共識的一致性</td><td>隱含 ~14% vs 共識 3Y ~20.5%</td><td class="mono">2 / 2</td></tr>
+<tr><td>與同業最快 FCF CAGR 的相對位置</td><td>隱含 ~12% vs 同業最快 ~15%</td><td class="mono">2 / 2</td></tr>
+<tr><td>達成條件的苛刻程度</td><td>需 AI 需求持續 + CCS 整合順利 + 利率不升</td><td class="mono">1 / 2</td></tr>
+<tr><td>歷史上類似公司是否曾持續達成此水準</td><td>APH 自身過去 10 年平均 FCF CAGR ~15%，有先例</td><td class="mono">2 / 2</td></tr>
+</table>
+<p style="margin-top:10px"><strong>隱含預期可信度評分：9 / 10</strong></p>
+<p><strong>仲裁員一句話</strong>：隱含的 FCF CAGR ~12% 遠低於歷史實際表現和分析師共識——數字告訴我上行故事是可信的。問題不在故事是否成立，而在 29x Forward P/E 是否已經完全定價了這個故事。答案是：大部分已定價，但安全邊際不足。</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<h4>我的裁決</h4>
+<table>
+<tr><td><strong>多頭最強論據</strong></td><td>AI 基礎設施不可逆需求 + 設計黏性護城河 + ROIC 持續擴大 = 長期複利機器</td></tr>
+<tr><td><strong>空頭最大威脅</strong></td><td>AI capex 週期性風險 + 38% 營收集中於單一驅動力 + CEO 大量賣股</td></tr>
+<tr><td><strong>估值仲裁評分</strong></td><td class="mono">9 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><span class="warn">觀望</span> — 品質一流，但 Forward P/E 29x 已充分定價成長故事。長期 R:R 0.79x 不滿足 2.0x 門檻。等待估值回調至合理水位。</td></tr>
+</table>
+</div>
+
+<h4>進入 §8 前的自我檢核</h4>
+<ul>
+<li>☑ 多頭論據中，「市場維持 AI 溢價」依賴催化劑持續——AI capex 週期逆轉即失效。</li>
+<li>☑ 空頭威脅中，AI capex 收縮在 MA200 觸發止損前就可能發生（基本面先於技術面惡化）。</li>
+<li>☑ 估值仲裁評分 9/10 但 Forward P/E 已在 66% 分位——高可信度不等於低風險。</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §0 序章 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+
+<h3>存在意義</h3>
+<p>Amphenol 解決的是<strong>電子系統之間「物理連接」</strong>的根本問題。從資料中心伺服器之間的高速光纖互連、F-35 戰鬥機的惡劣環境感測器佈線、到電動車電池管理系統的大電流連接——每一個電子信號從 A 傳遞到 B，都需要一個可靠的物理連接器。</p>
+<p>若 Amphenol 明天消失：</p>
+<ul>
+<li><strong>AI 資料中心</strong>：全球 hyperscaler 新建 AI 叢集時程延遲 12-18 個月（重新設計連接器規格 + qualification），直接拖慢 AI 模型訓練進度</li>
+<li><strong>國防系統</strong>：美軍 F-35、Javelin 飛彈等系統的維修零件斷供，影響國家安全</li>
+<li><strong>汽車產業</strong>：EV 電池連接器供應鏈斷裂，全球電動車產線停擺數月</li>
+</ul>
+<p>這不是一家可以被「軟體更新」繞過的公司。物理連接是電子世界最底層的基礎設施——<strong>比特再多，也需要原子來搬運</strong>。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能的路徑：</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：APH 在中國有顯著製造和營收佔比。若中美脫鉤加劇、關稅從 145% 進一步升級至全面禁運，中國營收（估計 15-20% 營收）直接歸零，且中國工廠需遷移——成本衝擊 + 營收損失雙重打擊。</li>
+<li><strong>技術替代風險</strong>：光子晶片（silicon photonics）的進步可能在 5-10 年內減少資料中心對傳統電銅連接器的依賴。若光互連成本大幅下降，APH 最高成長的 IT Datacom 業務面臨結構性縮減。但 APH 已通過 CCS 收購佈局光纖，部分對沖此風險。時間軸：5-10 年。</li>
+<li><strong>管理層失職</strong>：CCS $10.5B 收購失敗是最大單一風險——若整合不順（文化衝突、客戶流失、毛利率無法提升至 APH 水平），將拖累整體 ROIC、推高 D/E，且市場可能質疑管理層歷來優秀的併購紀錄。</li>
+<li><strong>價值陷阱路徑</strong>：此標的目前不具備典型價值陷阱特徵（估值不便宜、基本面不惡化）。若被迫選擇最可能的陷阱模式：<strong>隱性資本密集型</strong>——若 AI 連接器競爭加劇，APH 被迫大幅增加 R&D 和 Capex 來維持技術領先，目前 3-4% 的低資本密集度可能被打破。</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §0.5 投資論點錨定 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§0.5｜投資論點錨定</div>
+<div class="thesis-box">
+<p><strong>本節目的</strong>：在分析開始前，把「這筆投資在賭什麼」顯性化。</p>
+</div>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>3-5 年</td></tr>
+<tr><td><strong>主要驅動這個時間軸的理由</strong></td><td>AI 資料中心建設週期（2025-2030）是連接器需求的核心催化劑，CCS 整合利潤率爬坡需 2-3 年</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：AI capex 趨勢、CCS EBITDA margin 軌跡、ROIC 方向；噪音：單季毛利率波動、外匯影響、短期庫存調整</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>AI/Datacom 需求在 5 年內維持 20%+ CAGR，推動 IT Datacom 營收持續高雙位數成長</td><td>Hyperscaler capex 年增率、APH IT Datacom book-to-bill</td><td>每季財報（下次 2026/4/29）</td></tr>
+<tr><td>H2</td><td>CCS 收購在 2027 年底前將 EBITDA Margin 提升至 20%+，且貢獻 $0.40+ EPS</td><td>CCS 季度 EBITDA margin、交叉銷售營收</td><td>2026Q2-2027Q4</td></tr>
+<tr><td>H3</td><td>市場持續給予 APH 「AI 基礎設施」溢價，Forward P/E 維持在 25-32x 區間</td><td>Forward P/E 與同業比較、分析師評級變化</td><td>持續觀察</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>AI capex 週期性反轉——hyperscaler 資本支出下滑 &gt; 15%</td><td>H1</td><td>Meta/Google/MSFT/AMZN 季度 capex 指引</td><td>任兩家 YoY 下修 &gt; 15%</td></tr>
+<tr><td>R2</td><td>CCS 整合失敗——margin 拖累、客戶流失、品牌稀釋</td><td>H2</td><td>CCS EBITDA margin、CCS 客戶續約率</td><td>整合 12 個月後 EBITDA margin &lt; 15%</td></tr>
+<tr><td>R3</td><td>地緣關稅升級——中國市場營收歸零 + 工廠遷移成本</td><td>H1, H3</td><td>中美關稅政策、APH 中國營收占比</td><td>中國營收 YoY 下降 &gt; 30%</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>這個事件在 3-5 年持有期內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>它影響的是 H1 / H2 / H3 中的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>對該假設是 ＋強化 / 0 無關 / － 削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到重新評估的閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>Forward P/E ≤ 24.5x（~$106）+ H1 book-to-bill ≥ 1.1</td><td>建倉 30%（目標倉位），首次進場</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 均確認（AI 持續 + CCS margin 達標）</td><td>加碼至 60-100%，接近目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 觸發（hyperscaler capex 下修 &gt; 15%），或 Forward P/E &gt; 35x</td><td>減至 50%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 被推翻（IT Datacom 有機成長 &lt; 0%），或 CCS 資產減值</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §1 即時財報情報 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§1｜即時財報情報</div>
+<p style="color:#64748b;font-size:13px;">資料來源：Q4 2025 10-K / Earnings Call（2026/01/28 發布）</p>
+
+<h3>① 最新一季財報關鍵數字（Q4 2025）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td class="mono">$6.44B</td><td class="mono">~$6.3B</td><td><span class="beat">Beat</span></td><td class="mono">+49%</td></tr>
+<tr><td>EPS（Adj.）</td><td class="mono">$0.97</td><td class="mono">$0.94</td><td><span class="beat">Beat +$0.03</span></td><td class="mono">+56%</td></tr>
+<tr><td>FCF（全年）</td><td class="mono">$4.4B</td><td class="mono">—</td><td>—</td><td class="mono">+104%</td></tr>
+<tr><td>Gross Margin</td><td class="mono">33.76%</td><td class="mono">—</td><td>—</td><td class="mono">+170bp YoY</td></tr>
+<tr><td>Operating Margin（Adj.）</td><td class="mono">27.5%</td><td class="mono">—</td><td>—</td><td class="mono">+180bp YoY</td></tr>
+</table>
+<p><strong>全年 2025</strong>：Revenue $23.1B（+52%），Adj. EPS $3.34（+77%），FCF $4.4B（103% of NI）。</p>
+
+<h4>財報對 §0.5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>本季邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1</td><td><span class="beat">＋ 強化</span></td><td>IT Datacom +110% 有機成長，book-to-bill 1.31x 歷史新高</td></tr>
+<tr><td>H2</td><td><span class="warn">0 無關</span></td><td>CCS 收購於 Q4 後才完成（2026/1/12），本季尚無貢獻</td></tr>
+<tr><td>H3</td><td><span class="beat">＋ 強化</span></td><td>全面超預期 + 強勁指引 → 分析師共識上修，估值溢價維持</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：<strong>樂觀</strong>，語氣比 Q3 更自信。CEO Adam Norwitt 多次使用「record」「extraordinary」「exceptional」等字眼，前 5 分鐘連用 6 次「record」。</li>
+<li><strong>Forward Guidance</strong>：Q1 2026 指引 $6.9-7.0B 營收 + $0.91-0.93 EPS，均高於市場共識（$6.79B / $0.90），上調幅度 +2-3%。</li>
+<li><strong>刻意強調的主題</strong>：「AI-related demand」在整場 call 中出現 15+ 次；「CCS integration」和「fiber optic」被反覆提及——管理層試圖讓市場相信 APH 正從純連接器公司轉型為「AI 互連平台」。</li>
+<li><strong>刻意迴避的問題</strong>：對分析師追問「CCS 收購完成後的具體毛利率目標」回答模糊；對中國關稅影響的回答偏保守（「we have diversified manufacturing」但未給出具體遷移時間表）。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：AI 基建需求「far exceeds」目前產能，客戶預訂周期從 8 週拉長到 12-16 週——需求仍在加速而非見頂。</li>
+<li><strong>供給端</strong>：高速連接器和光纖產能緊缺，交期拉長；APH 正擴建產能但需時 6-12 個月。</li>
+<li><strong>競爭格局</strong>：APH 正在從 TE Connectivity 手中搶奪高速連接器市場份額，CCS 收購進一步拉開與 Molex 的差距。</li>
+<li><strong>總體經濟敏感度</strong>：管理層對非 AI 市場（auto, industrial）描述為「mixed but resilient」，暗示宏觀逆風存在但被 AI 尾風完全覆蓋。</li>
+<li><strong>對同業的連帶推論</strong>：APH 的 AI 訂單強勁 → 利好上游晶片封裝（如 AMAT）、光纖供應商（如 Corning），利空定位不在 AI 的傳統連接器公司。</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §2 核心門檻檢核 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§2｜核心門檻檢核</div>
+
+<h3>EPS CAGR 搜尋記錄</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基期 EPS（FY2025 確數，Adj.）</td><td class="mono">$3.34</td></tr>
+<tr><td>FY2026E（Zacks 共識，Adj. Non-GAAP，n≈20）</td><td class="mono">$4.32</td></tr>
+<tr><td>FY2027E（推估，~19% 成長）</td><td class="mono">~$5.14</td></tr>
+<tr><td>FY2028E（推估，~15% 成長）</td><td class="mono">~$5.91</td></tr>
+<tr><td>3 年 Non-GAAP CAGR</td><td class="mono">($5.91/$3.34)^(1/3) − 1 = <strong>20.9%</strong></td></tr>
+</table>
+<p>口徑差距：GAAP vs Non-GAAP 差距主要來自 SBC（$289M/年）+ CCS 收購相關攤銷。GAAP EPS ~$2.85（FY2025），GAAP CAGR 略高因攤銷逐年攤平。</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="beat">✓✓ 強</span></td><td>FY2025：$4.4B / $23.1B = <strong>19.0%</strong>，近 3 年趨勢 ↑</td></tr>
+<tr><td>正規化 FCF Margin【Munger 維度】</td><td>5 年均值 &gt; 15%；單年最低谷 &gt; 10%</td><td><span class="beat">✓ 合理</span></td><td>2021: 10.7% / 2022: 14.3% / 2023: 17.2% / 2024: 14.2% / 2025: 19.0%<br>5 年均值：<strong>15.1%</strong>，最低谷：10.7%（2021）<br>判斷：穩健向上，2021 受供應鏈影響偏低</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td><span class="beat">✓✓ 強</span></td><td>ROIC：<strong>27.87%</strong>，WACC：~9.5%，超額：+18.4%p</td></tr>
+<tr><td>ROIC 穩定性【Munger 維度】</td><td>過去 10 年 ≥ 70% 年份 ROIC &gt; 15%</td><td><span class="beat">✓✓ 強</span></td><td>估計 9/10 年達標（~90%），最低谷：2020 年 ~15%（COVID），趨勢：擴大</td></tr>
+<tr><td>毛利率定價能力【Munger 維度】</td><td>過去 10 年 ≥ 70% 年份持續改善</td><td><span class="beat">✓ 合理</span></td><td>10 年範圍：30.98% → 36.88%（FY2025）<br>改善年份：≥ 7/10，趨勢 ↑</td></tr>
+<tr><td>資本密集度【Munger 維度】</td><td>Capex / Revenue &lt; 5%</td><td><span class="beat">✓✓ 優</span></td><td>當前：~3.5%，近 3 年均值：3-4%，評級：低密集</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="beat">✓ 合理</span></td><td>Non-GAAP 3Y CAGR：<strong>20.9%</strong>（剛好達標）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="beat">✓ 合理</span></td><td>29.15 / 20.9% = <strong>1.39</strong>（引用 §7.2）</td></tr>
+<tr><td>負債安全性【Munger 維度】</td><td>D/E &lt; 0.7（低槓桿）</td><td><span class="miss">✗ 否</span></td><td>D/E：<strong>1.09</strong>（CCS 收購後升高），現金/Revenue：48%（$11.1B/$23.1B）<br>評級：偏高槓桿（但現金充裕）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="miss">✗ 否</span></td><td>現金 $11.1B vs 總債 $15.5B，覆蓋率 72%</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="beat">✓ 合理</span></td><td>8/10，趨勢擴大</td></tr>
+</table>
+<p><strong>最大財務弱點</strong>：CCS 收購後 D/E 升至 1.09，現金無法完全覆蓋總負債。Munger 三維評級：<span class="signal signal-green">🟢 三項全達標</span>（ROIC 穩定性 + 毛利率改善 + 低資本密集度）</p>
+
+<h3>Forward P/E 歷史分位快速估算</h3>
+<p>Forward P/E 29.15x，5 年估計區間 18x – 35x。分位 = (29.15 − 18) / (35 − 18) × 100% = <strong>66%</strong>（合理偏高區間）。無價值陷阱低估值觸發。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §2.5 長期成長性評估 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§2.5｜長期成長性評估</div>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（億美元）</td><td>~$910 億（2025 全球連接器市場）</td><td>來源：GMInsights / Fortune BI，2025 年</td></tr>
+<tr><td>估計可達 TAM</td><td>~$1,470 億（2032）</td><td>AI 互連 + EV + 工業 4.0 擴張，CAGR ~7%</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>~12%（#2，僅次 TEL ~15%）</td><td>CCS 收購後接近 15%，逼近 TEL</td></tr>
+<tr><td>若維持現有成長率，幾年達 30%</td><td>~8-10 年</td><td>有機 + 併購路徑可行</td></tr>
+<tr style="font-weight:700"><td>成長可持續年數估計</td><td colspan="2"><strong>≥ 10 年</strong>（AI + EV + 工業自動化三重結構性驅動）</td></tr>
+</table>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 成長來源</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>佔比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>定價提升、客戶深化、新市場滲透</td><td>~70%</td><td>FY2025 有機成長 38%（全年），IT Datacom 有機 +110%</td></tr>
+<tr><td>無機成長</td><td>併購貢獻營收</td><td>~30%</td><td>2025 含 5 筆收購，2026 CCS（$4.1B）為最大單筆</td></tr>
+</table>
+<p>CCS 收購後無機佔比暫時升高，但 APH 歷來的併購整合成功率極高（30+ 年平均每年 3-5 筆小併購），是 DNA 級能力而非一次性事件。</p>
+
+<h4>② 成長驅動結構</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>高速/AI 連接器 ASP 持續提升（400G → 800G → 1.6T），product mix 改善推動毛利率從 32% → 37%</td><td>擴大</td></tr>
+<tr><td>量驅動（Volume）</td><td>AI 資料中心數量增長 + EV 每車連接器用量增加（ICE 3K → EV 8K+ 個）</td><td>擴大</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>具體表現</th></tr>
+<tr style="background:#DCFCE7"><td><strong>強化型（最佳）</strong></td><td>APH 的 AI 連接器設計一旦被 hyperscaler 採用，就成為下一代伺服器的標準規格（design-in lock-in）。規模越大，客製化能力越強，轉換成本越高——成長正在加深護城河。</td></tr>
+</table>
+<p><strong>判斷：強化型</strong>。佐證：IT Datacom 營收從 2023 年的 ~20% 佔比升至 2025 年的 38%，同期毛利率從 ~32% 升至 ~37%——成長不是犧牲品質換來的，而是帶來了更高品質的營收。</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC</td><td class="mono">27.87%</td><td class="mono">~20%</td><td>↑</td><td>&gt; 15% & &gt; WACC</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>ROIC − WACC</td><td class="mono">+18.4%p</td><td class="mono">~+10%p</td><td>↑</td><td>持續正且擴大</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>FCF Margin</td><td class="mono">19.0%</td><td class="mono">~14%</td><td>↑</td><td>&gt; 15%</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td class="mono">103%</td><td class="mono">~100%</td><td>→</td><td>&gt; 85%</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>再投資率</td><td class="mono">~40%</td><td class="mono">~35%</td><td>↑</td><td>合理偏高</td><td><span class="beat">✓</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr style="background:#DCFCE7"><td>3 年後成長率降至 15%</td><td>22x</td><td>-24%</td></tr>
+<tr style="background:#FEF9C3"><td>3 年後成長率降至 10%</td><td>20x</td><td>-38%</td></tr>
+<tr style="background:#FEE2E2"><td>3 年後成長率降至 5%</td><td>18x</td><td>-52%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>Q3: +150bp, Q4: +170bp YoY — 持續改善</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>市佔 ~12% 穩定至擴大（CCS 後接近 15%）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>最近提價後銷量下滑？</td><td>否——高速連接器 ASP 提升同時 volume 增長</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR</td><td>EPS +77% vs Revenue +52%，差距 25%p — 主因營運槓桿非回購</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI 轉換率 &lt; 0.75</td><td>FCF/NI = 103% — 優異</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue &gt; 5% 且逐年上升</td><td>SBC/Revenue = 1.25% — 極低</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代技術壓縮</td><td>TAM CAGR +7%，AI 擴張加速</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數系統性下移</td><td>連接器產業因 AI 催化，估值倍數上移</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>Capex $810M / FCF $4.4B = 18% — 極低</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年內收入下滑？</td><td>部分是——高速連接器需持續 R&D 投入，但整體 capex 極低</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級</strong>：亮燈 0 個 → <span class="signal signal-green">🟢 低風險</span></p>
+<p><strong>長期成長性綜合評級</strong>：<span class="signal signal-green">🟢 高確信長期成長</span> — Runway ≥ 10 年、有機 + 定價驅動為主、護城河強化型、ROIC 擴大、衰退信號 0 個。</p>
+
+<h3>F｜AI 取代風險評級（v9.0）</h3>
+<p><span class="signal signal-green">🟢 AI 受益</span></p>
+<ul>
+<li><strong>核心業務因 AI 需求擴張</strong>：IT Datacom 佔營收 38%，100% 受益於 AI 資料中心建設需求。每座 AI 叢集需要的連接器數量是傳統伺服器的 3-5 倍。</li>
+<li><strong>AI 相關營收變化</strong>：IT Datacom 有機成長 110% YoY（Q4 2025），從 2023 年佔營收 ~20% 提升至 2025 年 38%。</li>
+<li><strong>公司 AI 策略</strong>：主動佈局——800G/1.6T 高速連接器開發、CCS 光纖收購補齊 AI 互連全鏈、liquid cooling 連接器產品線擴展。</li>
+</ul>
+<p>評級分數：🟢 = <strong>9 分</strong></p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §3 護城河分析 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§3｜護城河分析</div>
+<p><strong>評分：8 / 10</strong>（全球上市公司基準，最嚴格標準）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：有限。連接器不具備典型雙邊網路效應，但 Amphenol 的產品組合廣度（跨 25+ 子市場）創造了一種「生態系統效應」——OEM 客戶傾向選擇能覆蓋多種需求的供應商以簡化供應鏈管理。</li>
+<li><strong>無形資產</strong>：<strong>強</strong>。數千項專利（尤其高速互連）、軍規認證（MIL-SPEC）、醫療認證（FDA）等監管牌照形成硬壁壘。新進入者取得同等認證需 3-5 年。品牌溢價約 5-10%。</li>
+<li><strong>轉換成本</strong>：<strong>極強</strong>——這是 APH 最核心的護城河。連接器是客戶產品的「設計嵌入」元件（design-in），更換需要：① 12-18 個月的重新 qualification；② 重新設計 PCB 佈局；③ 重新通過 EMI/可靠性測試。對 F-35 等國防系統，更換連接器供應商實質上不可行。</li>
+<li><strong>規模優勢</strong>：<strong>強</strong>。全球 130+ 國家的製造和銷售網絡，覆蓋 25+ 終端市場。規模帶來的採購成本優勢（銅、塑膠、光纖原料）約 5-8%，且能為客戶提供「一站式」跨市場連接器解決方案。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼資本充足的對手無法跨越？</p>
+<ol>
+<li><strong>Qualification 時間壁壘</strong>：即使有充足資金，新供應商需 12-18 個月通過客戶 qualification，且成功率不保證。在 AI 高速連接器領域（400G+），qualification 更為嚴苛。</li>
+<li><strong>產品組合廣度</strong>：APH 覆蓋 25+ 子市場的 full-line 能力，需數十年的有機發展和併購積累，無法短期複製。</li>
+<li><strong>分散化管理模式</strong>：APH 的去中心化管理（130+ 獨立 BU）賦予每個事業單元接近創業公司的靈活性，同時享有大企業的規模和資源。這種組織能力是最難複製的護城河。</li>
+</ol>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>TE Connectivity</td><td>~15%</td><td>持平</td><td>汽車連接器龍頭地位</td><td>APH 在 AI 高速互連搶食 TEL 份額</td></tr>
+<tr><td>Molex（Koch）</td><td>~8%</td><td>持平</td><td>消費電子連接器</td><td>APH 規模持續拉開</td></tr>
+<tr><td>Luxshare（立訊）</td><td>~5%</td><td>擴大</td><td>中國市場 + Apple 供應鏈</td><td>Luxshare 在消費電子搶食低階市場</td></tr>
+<tr><td><strong>Amphenol</strong></td><td><strong>~12% → 15%</strong></td><td><strong>擴大</strong></td><td>—</td><td>CCS 收購後接近 TEL</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>擴大</strong>。24 個月內最可能的威脅（按程度排序）：</p>
+<ol>
+<li><strong>Silicon Photonics 成熟</strong>：若光子晶片成本大幅下降，減少對傳統電銅連接器的依賴。APH 已通過 CCS 收購佈局光纖，但轉型速度待觀察。</li>
+<li><strong>中國競爭者崛起</strong>：Luxshare 在中國政府支持下擴張，可能在中低階連接器市場形成價格壓力。</li>
+<li><strong>客戶垂直整合</strong>：Hyperscaler（Google、Meta）可能自研部分高速連接器標準，繞過 APH 的 design-in 優勢。目前尚無實質跡象。</li>
+</ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- §4 財務品質監測 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§4｜財務品質監測</div>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手（TEL）</th></tr>
+<tr><td>FCF Margin</td><td class="mono">17.2%</td><td class="mono">14.2%</td><td class="mono">19.0%</td><td class="mono">~12%</td></tr>
+<tr><td>EBITDA Margin</td><td class="mono">~24%</td><td class="mono">~25%</td><td class="mono">~27%</td><td class="mono">~22%</td></tr>
+<tr><td>ROIC − WACC</td><td class="mono">+10%p</td><td class="mono">+12%p</td><td class="mono">+18%p</td><td class="mono">+8%p</td></tr>
+<tr><td>SBC / Revenue</td><td class="mono">1.3%</td><td class="mono">1.3%</td><td class="mono">1.25%</td><td class="mono">~1.5%</td></tr>
+<tr><td>ROE</td><td class="mono">~25%</td><td class="mono">~27%</td><td class="mono">~37%</td><td class="mono">~20%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs. OCF 連動性</strong>：FCF/NI = 103%（FY2025），淨利與 OCF 高度連動，無盈餘操縱跡象。</li>
+<li><strong>AR 成長 vs. 營收成長</strong>：營收 +52% YoY，AR 成長大致同步——無異常膨脹。</li>
+<li><strong>存貨成長 vs. 營收成長</strong>：CCS 收購後存貨有短期跳升，但 turns 正常——無積壓風險。</li>
+<li><strong>FCF 轉換率趨勢</strong>：穩定 ~100% 以上，資本密集度極低（Capex/Rev 3-4%），品質優異。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總額 vs FCF</td><td>~$2.0B 回購 / $8.6B FCF = 23%</td><td>回購佔 FCF 比例低，保留大量現金用於併購</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>原 CAGR ~77% → 剔除回購後 ~72%</td><td>差距僅 5%p，EPS 成長主因有機+併購</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>回購均價 ~$130 vs 當前 $140.75</td><td>略低於當前價格，回購時機合理</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>3Y Revenue CAGR ~22%</td><td>EPS 成長高於 Revenue 成長，差距來自營運槓桿（margin 擴張）</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §5 產業格局 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+
+<h3>市場量化</h3>
+<ul>
+<li><strong>TAM</strong>：全球連接器市場 ~$910 億（2025），預計增至 $1,470 億（2032），CAGR ~7%</li>
+<li><strong>AI 互連子市場</strong>：估計 $150-200 億（2025），CAGR 20-25%（AI 資料中心為主要推動力）</li>
+<li><strong>滲透率</strong>：APH ~12% 全球市佔（CCS 收購後接近 15%），仍有大量整合空間</li>
+<li><strong>供需狀態</strong>：高速連接器（800G+）供不應求，交期 12-16 週；傳統連接器供需平衡</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游供應商</strong>：強——原材料（銅、塑膠、光纖）為大宗商品，APH 作為全球 Top 3 買家具議價力</li>
+<li><strong>對下游客戶</strong>：中至強——客戶分散（25+ 子市場、數千家客戶），最大客戶佔比 &lt; 5%，design-in lock-in 賦予定價能力。但 hyperscaler 客戶（Google、Meta、MSFT）議價力強。</li>
+<li><strong>地理分布曝險</strong>：中國製造佔比 ~20-25%，中美關稅升級為主要地緣風險。美洲 ~35%、歐洲 ~25%、亞太（含中國）~40%。</li>
+</ul>
+
+<h3>營收組成</h3>
+<table>
+<tr><th>業務段</th><th>佔比（2025E 含 CCS）</th><th>成長性</th></tr>
+<tr><td>IT Datacom / AI 互連</td><td>~35%</td><td>+110% 有機成長，AI 驅動</td></tr>
+<tr><td>CCS（光纖/銅纜，新增）</td><td>~15%</td><td>穩定中個位數成長</td></tr>
+<tr><td>Automotive / EV</td><td>~13%</td><td>+8-10%，EV 含量提升</td></tr>
+<tr><td>Industrial</td><td>~10%</td><td>+6-8%，工業自動化</td></tr>
+<tr><td>Defense / Military</td><td>~9%</td><td>+7%，穩定政府支出</td></tr>
+<tr><td>Mobile / Broadband</td><td>~8%</td><td>+5%，5G 升級</td></tr>
+<tr><td>Commercial Aerospace</td><td>~5%</td><td>+8%，航空復甦</td></tr>
+<tr><td>Other</td><td>~5%</td><td>+5%</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<p>連接器行業的核心 UE 指標是 <strong>content per platform</strong>（每個終端設備的連接器含量）：</p>
+<ul>
+<li><strong>AI 伺服器</strong>：~$800-1,200/台（vs 傳統伺服器 $200-400），content growth 3-5x</li>
+<li><strong>EV</strong>：~$600-800/車（vs ICE $200-300），content growth 2-3x</li>
+<li><strong>趨勢</strong>：所有主要終端市場的 content per platform 均在增加——這是 APH 營收成長的結構性底層驅動力，獨立於終端設備出貨量。</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §6 公司治理 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§6｜公司治理與資本配置</div>
+
+<h3>1. 股東/股權結構</h3>
+<ul>
+<li><strong>無 Dual-class 結構</strong>：一股一票，治理透明</li>
+<li><strong>機構持股</strong>：~90%，高度機構化（Vanguard ~9.5%、BlackRock ~7.5%、Capital Group ~5%）</li>
+<li><strong>管理層持股</strong>：CEO Adam Norwitt 持股市值估計 ~$300-400M（含股權激勵），利益綁定充足</li>
+</ul>
+
+<h3>2. 資本配置方向</h3>
+<ul>
+<li><strong>優先順序</strong>：① 有機成長投資（Capex 3-4% Revenue）→ ② 併購（FY2025 含 CCS = ~$11B+）→ ③ 分紅+回購（FY2025 $1.5B 返還股東）</li>
+<li><strong>APH 的獨特能力</strong>：30+ 年的 M&A 整合機器——平均每年 3-5 筆小併購，整合後 margin 提升至 APH 水平（通常 24-36 個月內）。CCS 是歷史上最大的一筆（$10.5B），規模存在整合風險。</li>
+</ul>
+
+<h3>3. 管理層薪酬結構</h3>
+<ul>
+<li><strong>CEO 總薪酬</strong>：$17.16M（2024 proxy）</li>
+<li><strong>結構</strong>：固定薪 ~8.8%（$1.51M）+ 績效獎金+股權激勵 ~91.2%（$15.65M）</li>
+<li><strong>評價</strong>：績效導向型薪酬結構，與股東利益高度綁定。SBC/Revenue 僅 1.25% 為同業最低水平之一。</li>
+</ul>
+
+<h3>4. 過去 12 個月重大內部人交易</h3>
+<table>
+<tr><th>日期</th><th>內部人</th><th>交易類型</th><th>數量</th><th>金額</th></tr>
+<tr><td>2026/02/12</td><td>CEO R. Adam Norwitt</td><td><span class="miss">賣出</span></td><td>515,281 股</td><td>$75.9M @ $147.27</td></tr>
+</table>
+<p><strong>⚠️ 注意</strong>：過去 3 個月僅有內部人賣出、無買入。CEO 大額賣出（$75.9M）值得關注，但考慮到：① 這是定期性的 10b5-1 計劃賣出；② CEO 仍持有大量股票（市值 $300M+）；③ APH 股價在 1 月創歷史新高後的正常減持——不構成強烈負面信號，但需持續監測。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7 估值診斷（7.0-7.5） -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">§7｜估值診斷（7.0 – 7.5）</div>
+
+<h3>7.0｜估值體系診斷</h3>
+<h4>A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>主流？</th><th>理由</th></tr>
+<tr style="background:#DCFCE7"><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>是</strong></td><td>APH 已進入穩定盈利階段，市場以 Forward P/E 和 EV/EBITDA 為主要定價</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>輔助</td><td>AI 故事使部分投資者用 PEG 框架衡量合理性</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>否</td><td>輕資產模式，P/B 不適用</td></tr>
+<tr><td>現金流型</td><td>P/FCF、DCF</td><td>輔助</td><td>高 FCF 品質使 DCF 具參考價值</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：盈利能力型（P/E 為核心），輔以成長型（PEG）</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<ul>
+<li><strong>情境三</strong>：市場正在從「工業連接器公司」重新定價為「AI 基礎設施平台」。Forward P/E 從歷史 ~25x 中位擴張至 29x，反映市場開始接受「AI 溢價」。此漂移<strong>正在進行中</strong>。</li>
+</ul>
+
+<p><strong>估值體系診斷結論</strong>：<span class="signal signal-green">🟢 估值邏輯穩定</span>（盈利能力型為主，AI 故事提供有限溢價空間，但尚未構成「升級」）</p>
+
+<h3>7.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td class="mono">38.3x</td><td class="mono">22x</td><td class="mono">30x</td><td class="mono">42x</td><td class="mono">82%</td></tr>
+<tr><td>Forward P/E（NTM）</td><td class="mono">29.2x</td><td class="mono">18x</td><td class="mono">25x</td><td class="mono">35x</td><td class="mono">66%</td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">23.2x</td><td class="mono">14x</td><td class="mono">19x</td><td class="mono">29x</td><td class="mono">61%</td></tr>
+<tr><td>P/FCF</td><td class="mono">37.0x</td><td class="mono">22x</td><td class="mono">30x</td><td class="mono">45x</td><td class="mono">65%</td></tr>
+<tr><td>P/S</td><td class="mono">7.5x</td><td class="mono">4x</td><td class="mono">5.5x</td><td class="mono">9x</td><td class="mono">70%</td></tr>
+</table>
+<p>分位計算公式：分位 = (當前值 − 5Y 低) / (5Y 高 − 5Y 低) × 100%</p>
+
+<p><strong>解讀</strong>：</p>
+<ol>
+<li><strong>當前估值情緒</strong>：合理偏高（Forward P/E 66%），尚未到過熱但安全邊際有限。</li>
+<li><strong>上次處於此分位</strong>：~2021 年末，當時營收僅 $10.9B（現 $23.1B），基本面已大幅改善。</li>
+<li><strong>推動因素</strong>：盈利修正權重最大——FY2025 EPS +77% 的超預期成長推升了估值中樞。</li>
+</ol>
+
+<h3>7.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td class="mono">29.2x</td><td>—</td><td>—</td></tr>
+<tr><td>Non-GAAP 3Y EPS CAGR</td><td class="mono">20.9%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（Non-GAAP，3Y）</td><td class="mono">1.39</td><td>&lt;1 便宜 / 1-2 合理 / &gt;2 貴</td><td><span class="signal signal-green">合理</span></td></tr>
+<tr><td>PEG（GAAP，3Y）</td><td class="mono">~1.60</td><td>同上</td><td><span class="signal signal-yellow">合理偏高</span></td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td class="mono">~14%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（5Y，Non-GAAP）</td><td class="mono">2.09</td><td>—</td><td><span class="signal signal-red">偏貴</span></td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td class="mono">1.39 vs 2.09</td><td>差異大 = 近期成長不可持續</td><td><span class="warn">⚠️ 近 3 年成長率高於長期可持續水平</span></td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：APH 位於「合理定價-高成長」象限的邊緣。3 年 PEG 1.39 具吸引力，但 5 年 PEG 2.09 暗示當前價格已定價了近期 AI 催化劑驅動的超高成長——一旦成長率回歸 ~15% 長期水平，估值將面臨均值回歸壓力。</p>
+
+<h3>7.3｜Reverse DCF</h3>
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td class="mono">$173B</td><td>搜尋確認</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td class="mono">$4.4B</td><td>§1</td></tr>
+<tr><td>WACC</td><td class="mono">9.5%</td><td>10Y UST 4.3% + Beta 1.15 × ERP 4.5%</td></tr>
+<tr><td>永續成長率</td><td class="mono">3.0%</td><td>成熟工業+科技混合型</td></tr>
+<tr><td>預測期</td><td class="mono">10 年</td><td>標準設定</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p class="mono">使 DCF 現值 = $173B，所需的前 10 年 FCF CAGR = <strong>~12%</strong></p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td class="mono">34.7%</td><td>隱含 12% <strong>遠低於</strong>歷史</td></tr>
+<tr><td>分析師共識 EPS CAGR（3Y）</td><td class="mono">20.9%</td><td>隱含 12% 低於共識</td></tr>
+<tr><td>同業最快 FCF CAGR（TEL）</td><td class="mono">~8%</td><td>隱含 12% 高於同業</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 CAGR 12% 需要：Revenue 年增 ~10%（假設 FCF Margin 維持 19%），或 FCF Margin 從 19% 緩慢擴大至 22%。考慮到 AI 需求和 CCS 營收貢獻，此條件<strong>合理</strong>。</p>
+<p><strong>隱含預期判斷</strong>：<span class="signal signal-yellow">🟡 隱含預期合理</span>（不算保守但也不激進——市場定價了 12% FCF CAGR，低於分析師共識但高於整體產業）</p>
+
+<h3>7.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr style="font-weight:700"><td>APH</td><td class="mono">$173B</td><td class="mono">29.2x</td><td class="mono">23.2x</td><td class="mono">1.39</td><td class="mono">19.0%</td><td class="mono">~21%</td><td class="mono">27.9%</td></tr>
+<tr><td>TE Connectivity</td><td class="mono">~$47B</td><td class="mono">19.0x</td><td class="mono">18.3x</td><td class="mono">2.1</td><td class="mono">~12%</td><td class="mono">~9%</td><td class="mono">~15%</td></tr>
+<tr><td>Hubbell</td><td class="mono">~$26B</td><td class="mono">~22x</td><td class="mono">19.7x</td><td class="mono">1.8</td><td class="mono">~14%</td><td class="mono">~12%</td><td class="mono">~18%</td></tr>
+<tr><td>Belden</td><td class="mono">~$5B</td><td class="mono">~16x</td><td class="mono">13.9x</td><td class="mono">1.5</td><td class="mono">~10%</td><td class="mono">~10%</td><td class="mono">~12%</td></tr>
+<tr><td>產業中位數</td><td class="mono">—</td><td class="mono">~20x</td><td class="mono">~18x</td><td class="mono">1.8</td><td class="mono">~13%</td><td class="mono">~10%</td><td class="mono">~15%</td></tr>
+</table>
+
+<p><strong>同業溢折價邏輯</strong>：</p>
+<ol>
+<li><strong>溢價幅度</strong>：APH Forward P/E 29x vs 產業中位 20x = +45% 溢價。</li>
+<li><strong>支撐因素</strong>：ROIC 27.9% vs 產業 15%（幾乎 2 倍）、EPS CAGR 21% vs 產業 10%（2 倍）、FCF Margin 19% vs 13%——三項均為同業最優，溢價有充分基本面支撐。</li>
+<li><strong>均值回歸方向</strong>：若估值向產業中位數回歸（20x），隱含 ~31% 下行。但基本面差距足夠大，完全回歸可能性低。</li>
+</ol>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>APH</th><th>最強競爭標的（TEL）</th></tr>
+<tr><td>上行空間最大</td><td>AI 故事兌現 → $207（+48%）</td><td>汽車 EV 復甦 → $250（+19%）</td></tr>
+<tr><td>下行最小</td><td>Forward P/E 從 29x 壓至 22x → -24%</td><td>Forward P/E 從 19x 壓至 15x → -21%</td></tr>
+<tr><td>綜合 R:R 最優</td><td>上行大但下行也大（R:R 0.79x）</td><td>上行有限但下行也小（R:R ~0.9x）</td></tr>
+</table>
+<p><strong>最終橫向比較結論</strong>：<span class="signal signal-yellow">🥈 此標的為次優選</span> — APH 品質遠優於同業，但估值溢價過高使短中期 R:R 不如 TEL（更便宜的定價）。長期來看 APH 仍是同主題首選，但需等待估值回調。</p>
+
+<h3>7.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（7.0）</td><td><span class="signal signal-green">🟢 穩定</span></td><td>盈利能力型為主，AI 故事提供有限溢價</td></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="signal signal-yellow">🟡 合理偏高</span></td><td>Forward P/E 66% 分位，非過熱但安全邊際不足</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="signal signal-green">🟢 合理</span></td><td>3Y PEG 1.39 合理，但 5Y PEG 2.09 偏貴</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="signal signal-yellow">🟡 合理</span></td><td>隱含 FCF CAGR 12% 合理但非保守</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="signal signal-yellow">🟡 合理溢價</span></td><td>+45% 溢價有基本面支撐但處於上緣</td></tr>
+</table>
+<p><strong>當前定價判斷</strong>：<span class="signal signal-yellow">🟡 公允定價</span> — 估值合理反映了 APH 的優異品質和 AI 催化劑，但未提供充足的安全邊際。</p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr>
+<tr><td>① 護城河品質（§3）</td><td>8/10</td><td>+2x（高於同業但未達頂級）</td></tr>
+<tr><td>② 成長可持續年數（§2.5A）</td><td>≥ 10 年（🟢）</td><td>+3x</td></tr>
+<tr><td>③ 成長品質（§2.5B）</td><td>有機 70% / 定價+量雙驅</td><td>+1x</td></tr>
+<tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC−WACC +18%p，趨勢擴大</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號（§2.5）</td><td>0 個亮燈</td><td>±0</td></tr>
+<tr><td>⑦ 估值體系方向（§7.0）</td><td>穩定</td><td>±0</td></tr>
+<tr><td>⑧ 當前利率環境</td><td>10Y UST 4.3%</td><td>-2x（高利率壓縮成長股倍數）</td></tr>
+<tr style="font-weight:700"><td>產業基準倍數</td><td>20x</td><td>調整後合理區間：<strong>26x – 30x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考</strong>：高 $210 / 中位 $169 / 低 $135（n=18 位）。中位 $169 對應 Forward P/E ~39x——我認為偏高，更認同 $140-170 區間。</p>
+
+<h4>長期合理倍數（v9.0）</h4>
+<p>§2.5 長期成長性評級：🟢 高確信長期成長 → 基準 Forward P/E = <strong>25x</strong></p>
+<p>v9.0 上行三引擎 + AI 調整詳見 §7.7。最終長期合理倍數：<strong>32.3x</strong></p>
+</div>
+
+</div><!-- container end -->
+</body>
+</html>
