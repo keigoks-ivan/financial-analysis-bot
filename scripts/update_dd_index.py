@@ -167,14 +167,14 @@ def build_rows(entries):
     for e in entries:
         rows.append(
             f'<tr class="searchable">\n'
-            f'  <td><strong>{e["ticker"]}</strong></td>\n'
+            f'  <td><a href="{e["href"]}" style="color:inherit;text-decoration:none;font-weight:700">{e["ticker"]}</a></td>\n'
             f'  <td>{e["date"]}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
             f'  <td>{quality_badge(e["quality"])}</td>\n'
             f'  <td>{rr_badge(e["rr_value"])}</td>\n'
             f'  <td>{red_light_display(e["red_lights"])}</td>\n'
             f'  <td>{trap_short(e["trap"])}</td>\n'
-            f'  <td><a href="{e["href"]}">查看 &rarr;</a></td>\n'
+            f'  <td class="comment-cell"></td>\n'
             f'</tr>'
         )
     return "\n".join(rows)
@@ -194,7 +194,7 @@ def update_index(entries):
         '            <th>R:R</th>\n'
         '            <th>紅燈</th>\n'
         '            <th>陷阱</th>\n'
-        '            <th></th>\n'
+        '            <th>備註</th>\n'
         '          </tr>\n'
         '        </thead>'
     )
@@ -236,6 +236,8 @@ def update_index(entries):
 .rl-2{color:#ea580c;font-weight:700}.rl-3{color:#dc2626;font-weight:700}
 .trap-ok{color:#059669;font-size:.82rem}.trap-watch{color:#d97706;font-size:.82rem}
 .trap-danger{color:#dc2626;font-weight:700;font-size:.82rem}
+.comment-cell{color:#64748b;font-size:.82rem}
+td a[href*="/dd/"]:hover{color:#3b82f6!important;text-decoration:underline!important}
 """
         new_html = new_html.replace("</style>", badge_css + "</style>", 1)
 
