@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v9.0">
+<title>DD Report — MRVL (Marvell Technology) | 2026-04-13</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8FAFC; --card: #FFFFFF; --title-blue: #1E3A5F; --accent: #3B82F6;
+  --row-alt: #F1F5F9; --green-bg: #DCFCE7; --green-txt: #166534;
+  --red-bg: #FEE2E2; --red-txt: #991B1B; --yellow-bg: #FEF9C3; --yellow-txt: #92400E;
+  --blue-bg: #EFF6FF; --trap-bg: #FFF0E6; --trap-border: #F97316; --trap-txt: #C2410C;
+  --bull-border: #16A34A; --bull-bg: #F0FDF4; --bear-border: #DC2626; --bear-bg: #FFF1F2;
+  --arb-border: #7C3AED; --arb-bg: #F5F3FF; --verdict-bg: #FFFBEB; --verdict-border: #D97706; --verdict-txt: #92400E;
+  --short-border: #0284C7; --short-bg: #F0F9FF;
+  --mid-border: #7C3AED; --mid-bg: #F5F3FF;
+  --long-border: #059669; --long-bg: #ECFDF5; --long-txt: #065F46;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:#1e293b; line-height:1.7; }
+.header-bar { position:sticky; top:0; z-index:100; background:var(--title-blue); color:#fff; padding:10px 24px; display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:14px; }
+.header-bar .ticker { font-size:20px; font-weight:700; }
+.container { max-width:1100px; margin:0 auto; padding:24px 16px; }
+.card { background:var(--card); border-radius:4px; padding:24px 28px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+h2 { color:var(--title-blue); border-left:4px solid var(--accent); padding-left:14px; margin-bottom:16px; font-size:20px; }
+h3 { color:var(--title-blue); margin:16px 0 10px; font-size:16px; }
+h4 { margin:12px 0 8px; font-size:15px; color:#334155; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+th { background:var(--title-blue); color:#fff; padding:8px 10px; text-align:left; font-weight:500; }
+td { padding:7px 10px; border-bottom:1px solid #e2e8f0; }
+tr:nth-child(even) td { background:var(--row-alt); }
+.badge { display:inline-block; padding:2px 10px; border-radius:3px; font-size:13px; font-weight:500; }
+.badge-green { background:var(--green-bg); color:var(--green-txt); }
+.badge-red { background:var(--red-bg); color:var(--red-txt); }
+.badge-yellow { background:var(--yellow-bg); color:var(--yellow-txt); }
+.badge-blue { background:var(--blue-bg); color:var(--title-blue); }
+.trap-box { background:var(--trap-bg); border-left:4px solid var(--trap-border); padding:16px 20px; margin:12px 0; }
+.trap-box h4 { color:var(--trap-txt); }
+.hypothesis-box { background:var(--blue-bg); border-left:4px solid var(--accent); padding:16px 20px; margin:12px 0; }
+.debate-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin:14px 0; }
+.debate-card { padding:16px; border-radius:4px; }
+.bull-card { background:var(--bull-bg); border-left:4px solid var(--bull-border); }
+.bear-card { background:var(--bear-bg); border-left:4px solid var(--bear-border); }
+.arb-card { background:var(--arb-bg); border-left:4px solid var(--arb-border); }
+.verdict-box { background:var(--verdict-bg); border-left:4px solid var(--verdict-border); padding:16px 20px; margin:14px 0; }
+.verdict-box h4 { color:var(--verdict-txt); }
+.rr-grid { display:grid; grid-template-columns:1fr; gap:14px; margin:14px 0; }
+.rr-card { padding:16px; border-radius:4px; }
+.long-card { background:var(--long-bg); border-left:4px solid var(--long-border); }
+.long-card h4 { color:var(--long-txt); }
+.mono { font-family:'IBM Plex Mono',monospace; }
+.print-btn { position:fixed; bottom:24px; right:24px; background:var(--accent); color:#fff; border:none; padding:10px 20px; border-radius:4px; cursor:pointer; font-size:14px; z-index:200; }
+.note { font-size:13px; color:#64748b; margin:6px 0; }
+p { margin:8px 0; }
+ul, ol { margin:8px 0 8px 20px; }
+li { margin:4px 0; }
+@media print { .header-bar, .print-btn { display:none; } body { background:#fff; } .card { box-shadow:none; break-inside:avoid; } }
+@media (max-width:800px) { .debate-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div><span class="ticker">MRVL</span> — Marvell Technology, Inc.</div>
+  <div>資料抓取：2026-04-13 ｜ 股價 $131.62 ｜ 最近財報：Q4 FY2026 (Feb 2026) ｜ DD Schema v9.0</div>
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+
+<p class="note" style="text-align:center; margin-bottom:18px;">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<!-- ==================== §8 投資結論 ==================== -->
+<div class="card">
+<h2>§8｜投資結論</h2>
+
+<h3>三層 R:R 引用（§7.7 F 綜合解讀）</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>綜合品質分</td><td><span class="badge badge-blue">8.00（中高品質 MH）</span></td></tr>
+<tr><td>長期 R:R</td><td><span class="mono">3.20x</span>（門檻 2.5x）→ <span class="badge badge-green">✅ Pass</span></td></tr>
+<tr><td>波動率紅燈</td><td><span class="badge badge-yellow">2/4（短期超熱）</span></td></tr>
+<tr><td>建倉節奏</td><td>10% + MA60 回踩 10%（目標倉位的 %）</td></tr>
+</table>
+
+<h3>財報信號與假設校準</h3>
+<ul>
+<li><strong>H1 當前狀態</strong>：<span class="badge badge-green">強化</span> — AI 資料中心 TAM 從 $75B 上修至 $94B by 2028，Marvell 18 個活躍 custom silicon 專案證實超大規模客戶正大幅擴增自研晶片。Q4 Data Center 營收 $1.651B 續創新高。</li>
+<li><strong>H2 當前狀態</strong>：<span class="badge badge-green">強化</span> — FY27 全年指引 >$11B（>30% YoY），FY28 目標 >$15B，custom silicon 業務翻倍。Celestial AI + XConn 收購完成，光學互連 + CXL 佈局到位。</li>
+<li><strong>H3 當前狀態</strong>：<span class="badge badge-green">強化</span> — Barclays 從 Hold 升至 Overweight（目標價 $150），股價突破歷史新高 $131.62，市場正在重新評估 MRVL 的 AI 估值倍數。Forward P/E 34.5x 仍低於 AVGO（27.7x forward 但市值 10 倍大）和 NVDA。</li>
+</ul>
+<p>這份財報讓隱含預期變得<strong>更容易兌現</strong>，理由是管理層上調 FY27/FY28 營收指引、data center 營收佔比攀升至 74%、non-GAAP operating margin 35.7% 展現營運槓桿。</p>
+
+<h3>最終裁決：<span class="badge badge-green" style="font-size:18px;">進場</span></h3>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q4 FY2026 全面 Beat（營收 $2.219B 超引導中位 $19M，Non-GAAP EPS $0.80 超引導 $0.10），Q1 FY27 指引 $2.4B（+8% QoQ）強勁。Barclays 升評催化股價突破新高。短期有 BB 2σ 超熱風險，但 AI 需求趨勢仍在加速。建議分批進場管理短期回撤風險。</p>
+
+<h4>② 中期成長確信度（1-3 年）</h4>
+<p>分析師共識 FY27-28 Non-GAAP EPS CAGR ~38%，驅動因素以<strong>量驅動</strong>為主（hyperscaler custom silicon 出貨量翻倍）+ <strong>定價維度</strong>（1.6T/2nm 升級週期帶來 ASP 提升）。能見度<strong>高</strong>：18 個活躍 custom silicon 專案提供未來 3 年營收能見度，FY28 $15B+ 指引已由管理層背書。</p>
+
+<h4>③ 長期護城河邏輯（3 年後）</h4>
+<p>Runway ≥ 10 年（AI 資料中心建設是多十年週期），ROIC 正從 6% 快速回升（營收槓桿 + 併購整合），護城河為<strong>強化型</strong>——更多 custom silicon design wins 帶來更深客戶綁定、更高轉換成本、更多 IP 複用。Celestial AI 光學互連技術建立第二層壁壘。</p>
+
+<div class="trap-box">
+<h4>⚠️ 這是價值陷阱嗎？</h4>
+<table>
+<tr><td style="width:40%;"><strong>最可能的價值陷阱模式</strong></td><td><span class="badge badge-green">非陷阱</span> — MRVL 當前估值並不便宜（Forward P/E 34.5x > 5Y 中位 32x），不符合「看起來便宜但實際惡化」的陷阱定義。</td></tr>
+<tr><td><strong>支持「非陷阱」的最強論據</strong></td><td>FY2026 營收 +42% YoY 至 $8.2B 歷史新高、Non-GAAP EPS +81% YoY、Data Center 營收 +46% YoY 超 $6B、管理層上修 FY27 至 $11B/FY28 至 $15B+、18 個 custom silicon 專案在手。FCF $1.58B 連續成長，FCF Margin 19.3% 維持健康。</td></tr>
+<tr><td><strong>支持「可能是陷阱」的最強反駁</strong></td><td>ROIC 僅 6%（遠低於 WACC），$20B+ goodwill 意味若 AI 支出放緩，可能面臨大額減損。SBC/Revenue 10% 稀釋真實每股價值。客戶集中度風險——Amazon 為最大 ASIC 客戶，若 Amazon 轉向自研或選用 AVGO，營收衝擊巨大。</td></tr>
+<tr><td><strong>持有期間判斷指標</strong></td><td>① Data Center 營收 QoQ 成長率若連續 2 季 < 5%，暗示 AI 支出放緩；② Custom silicon 專案數若從 18 個降至 12 個以下，暗示客戶流失。</td></tr>
+</table>
+<p><strong>最終定性：<span class="badge badge-green">🟢 非陷阱</span></strong></p>
+</div>
+
+<h3>條件式進場判斷</h3>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td>估值條件</td><td>Forward P/E ≤ 34.5x（當前水準即可入場，因 R:R 3.2x 已達標）；若回落至 ≤ 28x（FY27E 基礎 $107）為加碼甜蜜點</td></tr>
+<tr><td>基本面條件</td><td>Q1 FY27 財報需確認：① 營收 ≥ $2.35B（接近引導中位）；② Non-GAAP GM ≥ 58%；③ Data Center QoQ 成長持續</td></tr>
+<tr><td>陷阱排除條件</td><td>若以下信號出現，立即停損重評：① 任一主要 hyperscaler 終止 custom silicon 合約；② Goodwill 減損 > $2B；③ 季營收 QoQ 轉負且非季節性因素</td></tr>
+<tr><td>事件觸發加碼</td><td>① Amazon Trainium 4 出貨確認；② 1.6T 光學互連大規模量產；③ FY28 指引上修至 > $16B</td></tr>
+</table>
+
+<h3>下行風險量化（引用 §2.5E）</h3>
+<p>若 3 年後成長率降至 10%：Forward P/E 壓縮至 20x，估值跌幅 <strong>-47%</strong>（至 ~$70）</p>
+<p>若 3 年後成長率降至 5%：Forward P/E 壓縮至 15x，估值跌幅 <strong>-61%</strong>（至 ~$51）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Hyperscaler AI Capex 年增率</td><td>§0.5 H1</td><td>🔵 核心假設驗證信號</td><td>AMZN + MSFT + GOOG 合計 AI Capex YoY < 20%</td></tr>
+<tr><td>2</td><td>Custom Silicon 活躍專案數</td><td>§2.5 / §3</td><td>🔵 長期成長領先信號</td><td>從 18 個降至 < 12 個</td></tr>
+<tr><td>3</td><td>Forward P/E 分位</td><td>§7 / §1</td><td>短期估值信號</td><td>Forward P/E > 45x（5Y 80% 分位以上）</td></tr>
+</table>
+
+<p style="margin-top:16px; font-size:13px; color:#64748b;">底倉建議為目標倉位的 10%。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<!-- ==================== §7.7 綜合品質分驅動動態 R:R ==================== -->
+<div class="card">
+<h2>§7.7｜綜合品質分驅動的動態 R:R（v9.0）</h2>
+
+<h3>A｜綜合品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+<tr><td>護城河</td><td>§3 評分</td><td class="mono">7</td><td>0.30</td><td class="mono">2.10</td></tr>
+<tr><td>長期成長性</td><td>§2.5 🟢 = 9</td><td class="mono">9</td><td>0.45</td><td class="mono">4.05</td></tr>
+<tr><td>財務品質</td><td>綜合 ROIC/FCF/EPS</td><td class="mono">5</td><td>0.10</td><td class="mono">0.50</td></tr>
+<tr><td>AI 風險</td><td>§2.5F 🟢 = 9</td><td class="mono">9</td><td>0.15</td><td class="mono">1.35</td></tr>
+<tr style="font-weight:700;"><td colspan="4">綜合品質分</td><td class="mono" style="font-size:18px;">8.00</td></tr>
+</table>
+<p><strong>品質等級：中高品質 MH（7.0-8.5）</strong> → R:R 門檻 2.5x，底倉 20%（目標倉位的 20%）</p>
+
+<h3>B｜上行三引擎（取較高不疊加）</h3>
+
+<h4>引擎 A：ROIC 溢價</h4>
+<p>觸發條件：ROIC（3 年平均）> 20% 且連續 3 年向上擴大<br>
+本標的 ROIC 3 年平均 ~1%，遠低於 20%。<strong>❌ 未觸發</strong></p>
+
+<h4>引擎 B：PEG 動態天花板</h4>
+<p>觸發條件：預估 EPS 5 年 CAGR > 20%<br>
+本標的 5 年 CAGR 採用值 = 22%（詳見 §7.7 E）→ <strong>✅ 觸發</strong><br>
+PEG 天花板查表：中高品質（7.0-8.5）+ 成長 🟢 → PEG 天花板 = 2.0<br>
+目標 P/E = 22 × 2.0 = <strong>44x</strong></p>
+
+<h4>引擎 C：護城河溢價</h4>
+<p>觸發條件：護城河 ≥ 9 分<br>
+本標的護城河 = 7 分。<strong>❌ 未觸發</strong></p>
+
+<table>
+<tr><th>引擎</th><th>觸發</th><th>結果 P/E</th></tr>
+<tr><td>A ROIC 溢價</td><td>❌</td><td>—</td></tr>
+<tr><td>B PEG 動態</td><td>✅</td><td class="mono">44x</td></tr>
+<tr><td>C 護城河溢價</td><td>❌</td><td>—</td></tr>
+</table>
+<p><strong>取觸發者中最高：引擎 B，目標 P/E = 44x</strong></p>
+
+<h3>C｜AI 風險獨立疊加</h3>
+<p>§2.5 F 評級：<span class="badge badge-green">🟢 AI 受益</span> → AI 調整係數 = <strong>× 1.10</strong></p>
+
+<h3>D｜最終長期目標 P/E</h3>
+<p class="mono" style="font-size:16px;">最終 P/E = 44x × 1.10 = <strong>48.4x</strong></p>
+<p class="note">（基準 25x × 引擎 B 係數 1.76 × AI 1.10 = 48.4x）</p>
+
+<h3>E｜長期 EPS 預估（雙源交叉驗證）</h3>
+
+<h4>方法 1：§2.5 B 成長驅動分解</h4>
+<table>
+<tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+<tr><td>Data Center（AI custom silicon + 光學互連 + 存儲）</td><td>74%</td><td>28%</td><td>20.7%</td></tr>
+<tr><td>Communications & Other（企業網路 + 電信 + 消費 + 車用）</td><td>26%</td><td>8%</td><td>2.1%</td></tr>
+<tr style="font-weight:700;"><td colspan="3">合計營收 5 年 CAGR（方法 1）</td><td class="mono">22.8%</td></tr>
+</table>
+<p>加計營運槓桿（operating margin 從 35.7% 擴至 ~40%），EPS CAGR ≈ 26%</p>
+
+<h4>方法 2：§2.5 D ROIC × 再投資率</h4>
+<p>ROIC = 6%（因 goodwill 嚴重壓低，無法反映真實營運效率）<br>
+有機 ROIC（剔除 goodwill）估計 ≈ 18%<br>
+再投資率 ≈ 60%（R&D + Capex + M&A）<br>
+內生成長率 = 18% × 60% = 10.8%<br>
+ROIC 趨勢向上調整：+5%（營收規模效應）<br>
+<strong>方法 2 CAGR：15.8%</strong></p>
+
+<h4>採用 CAGR</h4>
+<p>方法 2 受 goodwill 扭曲嚴重，採用加權平均（方法 1 權重 70%）：<br>
+<strong>採用值 = 26% × 0.70 + 15.8% × 0.30 = 22.9% ≈ 22%</strong></p>
+
+<h3>F｜長期目標價計算</h3>
+<p class="mono">5 年後 EPS = $2.84 × (1.22)⁵ = $2.84 × 2.703 = <strong>$7.68</strong></p>
+<p class="mono">長期目標 = $7.68 × 48.4x = <strong>$371.71</strong></p>
+
+<h3>G｜動態下行錨點</h3>
+
+<h4>步驟 1：護城河基礎下修</h4>
+<p>護城河 7 分 → 7-8 區間 → 基礎下修 <strong>-20%</strong></p>
+
+<h4>步驟 2：產業分層調整</h4>
+<p>產業：半導體（週期股）→ <strong>+5%</strong></p>
+
+<h4>步驟 3：AI 風險疊加</h4>
+<p>AI 🟢 → <strong>-5%</strong>（壓力情境少跌）</p>
+
+<h4>淨下修幅度</h4>
+<p class="mono">淨下修 = -20% + 5% - 5% = <strong>-20%</strong></p>
+
+<h4>壓測 EPS</h4>
+<p class="mono">壓測 EPS = $2.84 × (1 - 0.20) = $2.84 × 0.80 = <strong>$2.27</strong></p>
+
+<h4>恐慌 P/E（25% 分位）</h4>
+<p>過去 5 年 Forward P/E 歷史：高 ~55x / 低 ~15x<br>
+25% 分位 = 15 + (55 - 15) × 0.25 = <strong>25.0x</strong></p>
+
+<h4>下行錨點</h4>
+<p class="mono" style="font-size:16px;">下行錨點 = $2.27 × 25.0 = <strong>$56.75</strong></p>
+
+<h3>H｜動態 R:R 計算</h3>
+<div class="rr-grid">
+<div class="rr-card long-card">
+<h4>長期 R:R（5 年視角）</h4>
+<table>
+<tr><td>現價</td><td class="mono">$131.62</td></tr>
+<tr><td>長期目標</td><td class="mono">$371.71</td></tr>
+<tr><td>上行空間</td><td class="mono" style="color:#166534;">+182.4%</td></tr>
+<tr><td>下行錨點</td><td class="mono">$56.75</td></tr>
+<tr><td>下行距離</td><td class="mono" style="color:#991B1B;">-56.9%</td></tr>
+<tr style="font-weight:700;"><td>長期 R:R</td><td class="mono" style="font-size:18px;">3.20x</td></tr>
+<tr><td>R:R 門檻（MH 查表）</td><td>2.5x</td></tr>
+<tr><td>判定</td><td><span class="badge badge-green">✅ Pass</span></td></tr>
+</table>
+</div>
+</div>
+
+<h3>I｜波動率燈號協議（v9.0）</h3>
+<p class="note">yfinance Python 計算結果（2026-04-13 執行）</p>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$120.45 / $135.37</td></tr>
+<tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$60.78 / $45.86</td></tr>
+<tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$120.55 / $138.41</td></tr>
+<tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$49.12 / $31.26</td></tr>
+<tr><td>當前股價</td><td class="mono">$131.62</td></tr>
+<tr style="font-weight:700;"><td>🔴 紅燈數</td><td class="mono" style="color:#991B1B;">2/4</td></tr>
+<tr style="font-weight:700;"><td>🟢 綠燈數</td><td class="mono">0/4</td></tr>
+</table>
+<p class="note">股價已突破週線 2σ 上軌（$120.45）及月線 2σ 上軌（$120.55），但尚未觸及 3σ。短期統計面偏熱，建議分批進場。</p>
+
+<h3>J｜二維建倉矩陣（品質等級 × 紅燈數）</h3>
+<p>品質等級：MH（7.0-8.5），紅燈數：2<br>
+查表：MH + 紅燈 2 → <strong>10+10</strong>（現在 10% + MA60 回踩 10%）</p>
+
+<h3>K｜綠燈加碼放大</h3>
+<p>綠燈 0 → <strong>不加碼</strong>，按 J 表執行。</p>
+
+<h3>L｜戰術 MA（MA200 倉位開關 + MA60 加碼準星）</h3>
+<table>
+<tr><td>MA200（200 日均線）</td><td class="mono">$86.68</td><td>股價 $131.62 > MA200，斜率向上</td><td><span class="badge badge-green">倉位權限 100%</span></td></tr>
+<tr><td>MA60（50 日均線代理）</td><td class="mono">$87.87</td><td>股價遠高於 MA60，尚未觸發回踩</td><td>加碼待觸發</td></tr>
+</table>
+
+<h3>M｜最終建倉建議</h3>
+<table>
+<tr><th>階段</th><th>倉位（目標倉位的 %）</th><th>觸發條件</th></tr>
+<tr><td>立即</td><td class="mono">10%</td><td>長期 R:R 3.2x ✅ Pass + 綜合分 8.00 MH 達標</td></tr>
+<tr><td>MA60 加碼</td><td class="mono">10%</td><td>MA60 回踩不破 + 量縮 + RSI < 60</td></tr>
+<tr><td>MA200 深跌</td><td class="mono">—</td><td>需重新評估基本面</td></tr>
+<tr style="font-weight:700;"><td>總目標倉位達成</td><td class="mono">20%</td><td>分 2 批建完</td></tr>
+</table>
+<p class="note">底倉建議為「目標倉位的 10%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<!-- ==================== §7.6 三方辯論 ==================== -->
+<div class="card">
+<h2>§7.6｜三方辯論摘要</h2>
+<div class="debate-grid">
+
+<div class="debate-card bull-card">
+<h4>🟢 多頭辯護人｜Charlie Munger</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr>
+<tr><td>1</td><td>Custom silicon 設計壁壘深不可破——18 個專案在手，每個專案 2-3 年開發週期，hyperscaler 轉換成本極高</td><td>§3：18 active projects, 3 年鎖定期</td></tr>
+<tr><td>2</td><td>Data Center TAM 從 $75B 上修至 $94B by 2028，MRVL 目標市佔從 13% → 20%，意味營收可達 $18.8B</td><td>§2.5A：TAM $94B, 47% XPU CAGR</td></tr>
+<tr><td>3</td><td>PEG 0.99 < 1.0，以 35% EPS CAGR 看當前 34.5x Forward P/E 不貴，同業 AVGO 27.7x 但 CAGR 僅 21%</td><td>§7.2：PEG 0.99</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：Marvell 是 AI 基礎設施 custom silicon 賽道中成長最快、PEG 最便宜的純 AI play，$94B TAM 只開發了 13%。</p>
+</div>
+
+<div class="debate-card bear-card">
+<h4>🔴 空頭檢察官｜Michael Burry</h4>
+<table>
+<tr><th>#</th><th>虧損情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>Hyperscaler AI Capex 放緩：若 AMZN/MSFT 下修 AI 資本支出 20%，MRVL Data Center 營收成長驟降，估值從 34.5x 壓至 20x</td><td>§2.5 R1：AI Capex YoY 降至 < 20%</td></tr>
+<tr><td>2</td><td>AVGO 搶單：Broadcom 佔 custom ASIC 60% 市場，若進一步擠壓 MRVL 至 10% 市佔，營收天花板提前到來</td><td>§7.3：隱含 CAGR 需 >18% 才辯護</td></tr>
+<tr><td>3</td><td>$20B+ goodwill 時間炸彈：若 AI 週期見頂導致 custom silicon 需求不如預期，大額減損將衝擊 EPS 和股東權益</td><td>§0.5 R3：Goodwill > 淨資產 50%</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：股價 $131.62 已高於所有分析師中位目標價 $115，BB 2 紅燈，若 Q1 FY27 miss expectations，回撤 30%+ 至 MA200（$87）輕而易舉。</p>
+</div>
+
+<div class="debate-card arb-card">
+<h4>🟣 估值仲裁員｜Aswath Damodaran</h4>
+<table>
+<tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+<tr><td>隱含 vs 歷史 FCF CAGR</td><td>隱含 18.5% vs 歷史 3Y 18.3%</td><td class="mono">2/2</td></tr>
+<tr><td>隱含 vs EPS CAGR 共識</td><td>隱含 18.5% vs 共識 35%</td><td class="mono">2/2</td></tr>
+<tr><td>隱含 vs 同業最快 CAGR</td><td>隱含 18.5% vs NVDA ~25%</td><td class="mono">2/2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>需 Revenue +22% CAGR 或 FCF Margin 擴張至 25%</td><td class="mono">1/2</td></tr>
+<tr><td>歷史先例</td><td>AVGO 在 2018-2023 曾持續 5 年 >20% FCF CAGR</td><td class="mono">1/2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：8/10</strong></p>
+<p><strong>仲裁員一句話</strong>：以 Reverse DCF 看，當前股價隱含的 18.5% FCF CAGR 低於分析師 EPS 共識，若共識兌現，當前定價確實偏保守——但股價已在短期內從 $50 暴漲至 $130，市場已先行定價了部分成長。</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<h4>我的裁決</h4>
+<table>
+<tr><td>多頭最強論據</td><td>PEG 0.99 + $94B TAM 僅 13% 滲透率 + 18 個 custom silicon 專案鎖定未來 3 年營收</td></tr>
+<tr><td>空頭最大威脅</td><td>股價已超過分析師中位目標價 $115（溢價 14%），BB 2 紅燈，短期下行風險顯著</td></tr>
+<tr><td>估值仲裁評分</td><td class="mono">8/10</td></tr>
+<tr style="font-weight:700;"><td>我的裁決</td><td><span class="badge badge-green">進場（分批）</span></td></tr>
+<tr><td>裁決理由</td><td>長期 R:R 3.2x 超過 2.5x 門檻，綜合品質分 8.0 確認中高品質。Reverse DCF 隱含預期合理，PEG < 1.0 提供估值支撐。但短期 BB 2 紅燈 + 超越分析師目標價，需用 10+10 分批策略管理時機風險。進場 10% 先行佈局，MA60 回踩再加 10%。</td></tr>
+</table>
+
+<h4>進入 §8 前的自我檢核</h4>
+<ul>
+<li>☑️ 多頭論據中的「$94B TAM 20% 市佔」有明確管理層指引和產業研究支撐，非「市場最終會認識到」的空洞催化劑。</li>
+<li>☑️ 空頭威脅中的 AI Capex 放緩和 AVGO 搶單屬於基本面惡化，會在 MA 系統觸發止損之前就反映在財報。需密切追蹤每季 Data Center 營收。</li>
+<li>☑️ 估值仲裁員評分 8/10 > 5，安全邊際足夠支撐進場。但短期超漲（超過目標價 14%）是合理擔憂，故分批而非滿倉。</li>
+</ul>
+</div>
+</div>
+
+<!-- ==================== §0 序章 ==================== -->
+<div class="card">
+<h2>§0｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Marvell 解決的核心痛點是<strong>「如何讓 AI 運算叢集內部的數據移動速度跟上處理速度」</strong>。當 NVIDIA GPU 和各家 hyperscaler 的自研 XPU 算力指數級增長時，晶片之間的互連頻寬成為真正的瓶頸。Marvell 提供三層解決方案：① custom silicon（ASIC 設計代工，如 Amazon Trainium 的核心 IP）、② optical interconnects（1.6T PAM DSP + silicon photonics，讓數據在機架間以光速傳輸）、③ CXL/PCIe switching（讓記憶體和加速器池化共享）。</p>
+<p>若 Marvell 明天消失：Amazon、Google、Microsoft 的下一代 AI 晶片設計進度將延遲 12-18 個月，因為這些 hyperscaler 缺乏 Marvell 的 SerDes、先進封裝整合和光學收發器 IP。全球 AI 資料中心的擴建計畫將被迫依賴 Broadcom 一家（壟斷定價），或退回效率低 2 倍的純銅互連方案。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p><strong>若要讓這筆投資在 3 年內虧損 50%+，最可能的路徑：</strong></p>
+<ul>
+<li><strong>地緣政治曝險</strong>：Marvell 晶片由 TSMC 代工（5nm/3nm），設計中心在美國加州和以色列。若台海衝突導致 TSMC 停產，Marvell 無替代產能，營收歸零。曝險等級：高（但全產業共同風險）。以色列設計中心也面臨地緣風險。</li>
+<li><strong>技術替代風險</strong>：若 hyperscaler 決定將 ASIC 設計完全內化（類似 Apple 自研 M 系列取代 Intel），Marvell 的 custom silicon 業務將被釜底抽薪。時間軸：3-5 年。但目前 hyperscaler 選擇外包而非自研的理由是效率（Marvell 可在 18 個月內完成一代設計）。</li>
+<li><strong>管理層失職</strong>：CEO Matt Murphy 在位 10 年，已帶領 Marvell 從 HDD 控制器公司轉型為 AI 基礎設施領導者。最大風險是過度收購——Celestial AI（$3.25B）和 XConn（$540M）的整合若失敗，$20B+ goodwill 面臨減損。</li>
+<li><strong>價值陷阱路徑</strong>：<strong>護城河侵蝕型</strong>最可能。若 Broadcom 利用其 60% 市佔持續壓低 custom ASIC 定價，而 MRVL 無法在光學互連上建立足夠差異化，則營收成長放緩 + 毛利率壓縮的雙殺可能發生。但這不是「便宜且惡化」的傳統陷阱——MRVL 並不便宜（Forward P/E 34.5x）。</li>
+</ul>
+</div>
+
+<!-- ==================== §0.5 投資論點錨定 ==================== -->
+<div class="card">
+<h2>§0.5｜投資論點錨定</h2>
+<div class="hypothesis-box">
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>2-3 年</strong></td></tr>
+<tr><td>主要驅動理由</td><td>AI 資料中心建設週期（2025-2028 為主力擴建期），custom silicon 設計 win 的營收兌現週期為 2-3 年</td></tr>
+<tr><td>訊號 vs 噪音</td><td>訊號：每季 Data Center 營收 + custom silicon 專案數 + FY28 $15B 指引兌現進度。噪音：短期股價波動、單季 gross margin ±1%、個別分析師升降評</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>Hyperscaler AI Capex 持續高速成長，custom silicon 取代通用 GPU 的趨勢加速，MRVL 的 $94B TAM 預測成立</td><td>AMZN + MSFT + GOOG 季度 AI Capex 加總 YoY > 30%</td><td>每季財報（最近：2026 Q2）</td></tr>
+<tr><td>H2</td><td>Marvell 能兌現 FY27 $11B / FY28 $15B+ 營收指引，custom silicon + 光學互連同步放量</td><td>季營收 run-rate trajectory（Q1 FY27 > $2.35B）、custom silicon 出貨量 QoQ 成長</td><td>Q1 FY27（2026 年 6 月報告）</td></tr>
+<tr><td>H3</td><td>市場願意給予 MRVL 接近 AVGO 的估值溢價（目前 MRVL Forward P/E 34.5x vs AVGO 27.7x，MRVL 成長更快但規模更小）</td><td>Forward P/E 穩定在 30x+ 且分析師目標價中位數上修至 > $140</td><td>未來 6-12 個月</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>AI Capex 週期見頂：若 hyperscaler 發現 AI 投資回報不如預期，大幅削減支出</td><td>H1</td><td>AMZN/MSFT/GOOG 合計 Capex QoQ 變化</td><td>連續 2 季 QoQ 下降</td></tr>
+<tr><td>R2</td><td>AVGO 市佔擠壓：Broadcom 60% 市佔 + 規模優勢，可能在價格和設計效率上持續壓制 MRVL</td><td>H2</td><td>MRVL custom silicon 專案數及新贏單數量</td><td>專案數從 18 降至 < 12</td></tr>
+<tr><td>R3</td><td>併購整合風險：Celestial AI（$3.25B）+ XConn（$540M）若整合不順，將拖累毛利率並增加 goodwill 減損風險</td><td>H2</td><td>併購後營運 margin 及 goodwill 減損測試</td><td>Non-GAAP GM < 55% 或 goodwill 減損 > $1B</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>2-3 年持有期內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（AI Capex）/ H2（營收兌現）/ H3（估值修復）？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到重新評估？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>長期 R:R > 2.5x（✅ 3.2x）+ 基本面確認 FY27 on track</td><td>建倉 10%（目標倉位），BB 紅燈 2 限制首批</td></tr>
+<tr><td>加碼</td><td>H1 + H2 均確認（Q1 FY27 Beat + FY27 指引維持）+ 股價回踩 MA60</td><td>加碼至 20%</td></tr>
+<tr><td>減碼</td><td>R1 或 R2 出現初步信號（AI Capex 放緩或 design win 流失）</td><td>減至 10%，重新評估</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（AI Capex YoY 轉負）或 H2 失敗（FY27 營收 miss > 10%）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</div>
+</div>
+
+<!-- ==================== §1 即時財報情報 ==================== -->
+<div class="card">
+<h2>§1｜即時財報情報</h2>
+<p class="note">資料來源：Q4 FY2026 (ended Feb 1, 2026) Earnings Release + Earnings Call Transcript</p>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>Q4 FY2026 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td class="mono">$2.219B</td><td>$2.20B</td><td><span class="badge badge-green">Beat $19M</span></td><td>+22%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td class="mono">$0.80</td><td>$0.70</td><td><span class="badge badge-green">Beat $0.10</span></td><td>+60%</td></tr>
+<tr><td>EPS（GAAP）</td><td class="mono">$0.46</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Gross Margin（Non-GAAP）</td><td class="mono">~60%</td><td>~59%</td><td><span class="badge badge-green">Beat</span></td><td>+200bps</td></tr>
+<tr><td>Operating Margin（Non-GAAP）</td><td class="mono">35.7%</td><td>—</td><td>—</td><td>Expanding</td></tr>
+<tr><td>Adjusted EBITDA</td><td class="mono">$885.2M (39.9%)</td><td>—</td><td>—</td><td>—</td></tr>
+</table>
+
+<p><strong>Full Year FY2026</strong>：Revenue $8.195B (+42% YoY)，GAAP EPS $3.07，Non-GAAP EPS $2.84 (+81% YoY)。Data Center 營收超 $6B (+46% YoY)。</p>
+
+<h4>財報對 §0.5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1</td><td><span class="badge badge-green">＋ 強化</span></td><td>Data Center 營收 $1.651B（Q4），全年 $6B+，custom silicon 翻倍</td></tr>
+<tr><td>H2</td><td><span class="badge badge-green">＋ 強化</span></td><td>FY27 指引 >$11B，FY28 >$15B，Q1 FY27 $2.4B，每季遞增至 Q4 >$3B</td></tr>
+<tr><td>H3</td><td><span class="badge badge-green">＋ 強化</span></td><td>Beat + 上調指引 + Barclays 升評至 Overweight/$150，催化估值重估</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：<strong>高度樂觀</strong>，較上季更加自信。CEO Matt Murphy 多次使用「record」「exceptional」「transformational」等措辭。"Fiscal 2026 was an exceptional year…revenue growing 42% year-over-year."</li>
+<li><strong>Forward Guidance</strong>：全面上調。FY27 從「strong growth」細化為 >$11B（>30% YoY），FY28 首次給出 >$15B 目標。Q1 FY27 引導 $2.4B（+8% QoQ）。市場共識此前約 $10B，上修 >10%。</li>
+<li><strong>刻意強調的主題</strong>：① 「full-stack interconnect」（從 DSP 到 silicon photonics 到 CXL 的完整堆疊）；② 「18 active custom silicon projects」；③ 「2nm interconnect solutions first-to-market」；④ Celestial AI 和 XConn 整合效益。</li>
+<li><strong>刻意迴避的問題</strong>：① 被追問具體 Amazon Trainium 4 時間表時轉向泛泛的「multiyear pipeline」；② 對 AVGO 競爭壓力未直接回應；③ goodwill 減損測試細節未提供。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：Hyperscaler AI Capex 持續不減，custom silicon 需求從「試水」轉為「規模化部署」。「Custom business doubled in FY2026」暗示 2-3 年前的 design win 正在進入量產收割期。</li>
+<li><strong>供給端</strong>：TSMC 先進製程仍緊缺，Marvell 確保了 2nm 產能。光學互連供不應求——「optical port demand doubling in 2026 and again in 2027」。</li>
+<li><strong>競爭格局</strong>：Marvell 強調 full-stack 差異化，暗示與 Broadcom 的競爭已從單品（ASIC）轉向生態（ASIC + interconnect + CXL）。</li>
+<li><strong>總體經濟敏感度</strong>：管理層未提及任何宏觀逆風。AI Capex 被視為獨立於經濟週期的結構性趨勢。</li>
+<li><strong>對同業推論</strong>：利好 TSMC（先進製程需求強勁）、光學元件供應商（Coherent、II-VI）。對 AVGO 中性——TAM 擴大使兩家都能成長，但 MRVL 在光學端更具差異化。</li>
+</ul>
+</div>
+
+<!-- ==================== §2 核心門檻檢核 ==================== -->
+<div class="card">
+<h2>§2｜核心門檻檢核</h2>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>> 15%</td><td><span class="badge badge-green">✓</span></td><td>TTM 19.3%（$1.58B/$8.195B），近 3 年趨勢：↑</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均值 > 15%；最低谷 > 10%</td><td><span class="badge badge-green">✓✓</span></td><td>FY22 20.2% / FY23 18.3% / FY24 18.8% / FY25 24.2% / FY26 19.3%<br>5 年均值：20.2%，最低谷：18.3%（FY23）<br>判斷：穩健，5 年均值遠超 15% 門檻</td></tr>
+<tr><td>ROIC（當前）</td><td>> 15%，高於 WACC</td><td><span class="badge badge-red">✗</span></td><td>ROIC ~6%，WACC ~10%，超額 -4%p<br>⚠️ ROIC 被 $20B+ goodwill 嚴重壓低</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥ 70% > 15%</td><td><span class="badge badge-red">✗</span></td><td>~3/10 年達標（30%），Inphi 收購後持續低於 15%<br>最低谷：FY23 約 -5%（淨虧損年）<br>趨勢：收窄→回升中</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年 ≥ 70% 改善</td><td><span class="badge badge-yellow">⚠️</span></td><td>改善年份：~5/10，當前 Non-GAAP GM ~60%，10 年前 ~50%<br>趨勢：↑（近 3 年持續改善）<br>注：GAAP GM 受併購攤銷壓低，Non-GAAP 更具代表性</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Revenue < 5%</td><td><span class="badge badge-green">✓✓</span></td><td>當前 3.8%（$310M/$8.2B），3 年均值 ~4.5%<br>評級：低密集（Fabless 模式）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>> 20%</td><td><span class="badge badge-green">✓✓</span></td><td>基期 FY26 Non-GAAP：$2.84<br>FY27E：$3.82（Non-GAAP，n=32）<br>FY28E：$5.44（Non-GAAP，n=25+）<br>FY29E：~$7.00（外推 +29%）<br>━━━━━━━━━━<br>Non-GAAP CAGR：35.0%<br>GAAP CAGR：無法準確計算（FY26 GAAP $3.07 含一次性利得）<br>口徑差距：Non-GAAP 剔除 SBC ~$750M + 併購攤銷 ~$500M<br>來源：Yahoo Finance / StockAnalysis / Bank of America</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="badge badge-green">✓✓</span></td><td>Forward P/E 34.5x / CAGR 35% = <strong>PEG 0.99</strong></td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E < 0.7；Cash/Rev 10-50%</td><td><span class="badge badge-green">✓</span></td><td>D/E：0.33（低槓桿），Cash/Revenue：33%（合理配置）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="badge badge-red">否</span></td><td>現金 $2.71B < 總負債 $4.47B（缺口 $1.76B）<br>但 FCF $1.58B/年可在 ~1 年內覆蓋缺口</td></tr>
+<tr><td>護城河強度</td><td>> 8 分，趨勢擴大</td><td><span class="badge badge-yellow">⚠️</span></td><td>7/10，趨勢擴大（見 §3）<br>未達 8 分門檻，但正在改善</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：ROIC 僅 6%，遠低於 WACC 10%，反映 $20B+ goodwill 對資本效率的結構性拖累。<br>
+<strong>Munger 三維評級</strong>：<span class="badge badge-red">🔴</span>（僅資本密集度達標，ROIC 穩定性和毛利率定價能力未達標）</p>
+
+<p class="note">⚠️ Munger 🔴 評級需特別說明：MRVL 的低 ROIC 主要因 2021 年 $10B Inphi 收購產生的 goodwill，而非營運效率低落。若以有機 ROIC（剔除 goodwill）計算，估計 ~18%，接近達標。此評級在 §3 護城河分析中會做進一步校正。</p>
+
+<p class="note">Forward P/E 歷史分位 49%（見 §7.1），未觸發價值陷阱初篩（需 ≤ 25%）。</p>
+</div>
+
+<!-- ==================== §2.5 長期成長性評估 ==================== -->
+<div class="card">
+<h2>§2.5｜長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>$33B（2024 AI 資料中心相關市場）</td><td>來源：Marvell Investor Day 2025</td></tr>
+<tr><td>估計可達 TAM</td><td>$94B by 2028</td><td>Custom XPU $40.8B + XPU attach $14.6B + interconnect + storage，25% 上修自先前 $75B</td></tr>
+<tr><td>當前市佔/滲透率</td><td>~13% of $33B ≈ $4.3B</td><td>FY26 Data Center 營收 ~$6B</td></tr>
+<tr><td>目標滲透率時間</td><td>2028 年達 20% of $94B ≈ $18.8B</td><td>需營收從 $8.2B 成長至 $18.8B in 3 年</td></tr>
+<tr style="font-weight:700;"><td>成長可持續年數</td><td colspan="2">≥ 10 年（AI 資料中心建設為多十年結構性趨勢，TAM 持續擴張至 2030+）</td></tr>
+</table>
+<p><strong>Runway 解讀</strong>：≥ 10 年，高確信長期複利，支撐高估值倍數溢價。</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>此標的占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~75%</td><td>Custom silicon design wins + 光學互連技術升級 + 存儲市場自然成長</td></tr>
+<tr><td>無機成長</td><td>~25%</td><td>Celestial AI（$3.25B）+ XConn（$540M）+ 先前 Inphi 收購尚在兌現</td></tr>
+</table>
+<p class="note">FY26 Revenue $8.2B 中，Celestial AI 和 XConn 於 Q4 完成收購，貢獻極少。FY27 開始會有更多無機貢獻。</p>
+
+<h4>② 成長驅動結構</h4>
+<table>
+<tr><th>類型</th><th>此標的判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>1.6T → 2nm 升級帶來 ASP 提升，silicon photonics vs 銅互連溢價</td><td>擴大</td></tr>
+<tr><td>量驅動（Volume）</td><td>Custom silicon 出貨量翻倍（FY26），hyperscaler 擴建量持續</td><td>擴大</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<p>判斷：<strong>強化型</strong>（最佳）。更多 custom silicon design wins → 更多 IP 複用（DSP、SerDes 等 IP block 跨客戶共享）→ 設計效率提升、成本攤薄 → 更具競爭力 → 更多 design wins。同時，光學互連 attach rate（光學元件與 XPU 的捆綁銷售比）隨規模擴大而增加。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>6%</td><td>~-2%</td><td>↑</td><td>> WACC</td><td><span class="badge badge-red">✗</span>（但快速改善中）</td></tr>
+<tr><td>ROIC − WACC</td><td>-4%p</td><td>~-12%p</td><td>↑ 收窄</td><td>持續正值</td><td><span class="badge badge-red">✗</span></td></tr>
+<tr><td>FCF Margin</td><td>19.3%</td><td>18.3%</td><td>↑</td><td>> 15%</td><td><span class="badge badge-green">✓</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td>~59%</td><td>—</td><td>→</td><td>> 85%</td><td><span class="badge badge-red">✗</span>（SBC + capex 拉低）</td></tr>
+<tr><td>Reinvestment Rate</td><td>~60%</td><td>~55%</td><td>↑</td><td>合理偏高</td><td><span class="badge badge-yellow">⚠️</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>成長特徵</th><th>合理 Forward P/E</th><th>潛在跌幅（from $131.62）</th></tr>
+<tr style="background:#DCFCE7;"><td>3 年後成長率降至 15%</td><td>成長放緩但仍高於市場</td><td>20x</td><td>-47%（目標 ~$70）</td></tr>
+<tr style="background:#FEF9C3;"><td>3 年後成長率降至 10%</td><td>回歸市場平均</td><td>17x</td><td>-53%（目標 ~$62）</td></tr>
+<tr style="background:#FEE2E2;"><td>3 年後成長率降至 5%</td><td>成熟期低成長</td><td>15x</td><td>-61%（目標 ~$51）</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>Non-GAAP GM 持續改善（Q3 50.7% → Q4 ~60%）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市佔縮減</td><td>Custom silicon 專案從 12 增至 18，市佔擴大中</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>1.6T 產品 ASP 提升伴隨出貨量增長</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 遠高於 Revenue CAGR</td><td>EPS +81% vs Revenue +42%，差距 39%p 來自營運槓桿</td><td><span class="badge badge-yellow">🔴</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI 轉換率 < 0.75</td><td>FCF $1.58B / GAAP NI $2.67B = 0.59</td><td><span class="badge badge-yellow">🔴</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue > 5% 且上升</td><td>FY25 10.4% → FY26 估 ~9%（下降中，但仍 > 5%）</td><td><span class="badge badge-yellow">🔴</span></td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>TAM 從 $75B 上修至 $94B</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值系統性下移</td><td>半導體估值 2025-2026 系統性上移</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF > 60%</td><td>Capex $310M / FCF $1.58B = 19.6%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年收入是否下滑</td><td>Fabless 模式，但需持續 R&D 投入維持 IP 領先</td><td>⬜</td></tr>
+</table>
+
+<p><strong>亮燈數：3 個 🔴</strong>（盈餘品質類別全亮）</p>
+<p class="note">說明：3 個亮燈均來自「盈餘品質」類，主因 Marvell 的 GAAP/Non-GAAP 差距大（SBC 高 + 併購攤銷），以及 EPS 成長遠快於營收成長（營運槓桿效應而非回購堆疊）。這些並非傳統意義上的「盈餘操縱」，而是高成長半導體公司的結構性特徵。</p>
+
+<div class="trap-box">
+<h4>價值陷阱風險評級</h4>
+<p>亮燈 3 個 → <span class="badge badge-red">🔴 高度警戒</span></p>
+<p>後續要求：§7 必須執行「便宜理由檢驗」，§8 必須正面回答價值陷阱問題。</p>
+<p class="note">校正說明：雖然數字層面亮燈 3 個，但均來自盈餘品質類別且有結構性解釋（SBC、營運槓桿）。MRVL 並不便宜（Forward P/E 34.5x，49% 分位），不符合「看似便宜但惡化」的價值陷阱模式。實際風險等級應降至 🟡 中度，但嚴格按規則保留 🔴 標記並在 §7/§8 完成檢驗。</p>
+</div>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="badge badge-green" style="font-size:16px;">🟢 高確信長期成長</span></p>
+<p>Runway ≥ 10 年 + 有機為主（75%）+ 定價 + 量雙驅動 + 護城河強化型 + ROIC 上升趨勢（從 -5% 快速回升至 6%，路徑指向 15%+）+ 衰退信號 3 個但均為結構性解釋而非實質惡化。</p>
+
+<h3>F｜AI 取代風險評級（v9.0）</h3>
+<p><span class="badge badge-green" style="font-size:16px;">🟢 AI 受益</span>（評級分數 = 9）</p>
+<ul>
+<li><strong>核心業務 vs AI 侵蝕</strong>：Data Center 佔營收 74%，100% 受益於 AI 擴建。Custom silicon（ASIC 設計）+ 光學互連 + CXL 均為 AI 基礎設施核心元件。</li>
+<li><strong>公司 AI 策略</strong>：自建 AI 相關產品（custom XPU 設計、1.6T PAM DSP、silicon photonics via Celestial AI 收購）。是 AI 基礎設施的「賣鏟人」。</li>
+<li><strong>過去 2 年 AI 營收變化</strong>：AI 相關營收從 FY24 ~$1.5B 目標 → FY25 實際 $2.5B+ → FY26 ~$5B+（翻倍成長）。</li>
+</ul>
+</div>
+
+<!-- ==================== §3 護城河分析 ==================== -->
+<div class="card">
+<h2>§3｜護城河分析</h2>
+
+<p><strong>評分：7/10</strong>（以全球上市公司為基準，採最嚴格標準）</p>
+<p class="note">§2.5 衰退信號 3 個亮燈均為「盈餘品質」類，非護城河侵蝕類。護城河侵蝕三項指標（GM、市佔、定價）全部未亮，確認護城河完整且擴張中。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：<strong>弱</strong>。半導體設計服務不具備直接網路效應。但 IP block 複用（同一 SerDes IP 跨多客戶使用）具有間接規模效應。</li>
+<li><strong>無形資產</strong>：<strong>中強</strong>。核心 IP 包含 PAM4/PAM6 DSP、112G/224G SerDes、silicon photonics（via Celestial AI），均為 2-3 年技術領先。2nm 互連方案首發市場。但半導體 IP 生命週期有限，需持續 R&D 維護。</li>
+<li><strong>轉換成本</strong>：<strong>強</strong>。Custom silicon 開發週期 18-24 個月，hyperscaler 投入大量工程資源與 Marvell 共同開發。一旦進入量產，更換供應商意味著重新設計晶片、重新驗證、重新投片——成本數億美元、時間 2-3 年。18 個活躍專案 = 18 條高黏性客戶綁定。</li>
+<li><strong>規模優勢</strong>：<strong>中</strong>。Marvell FY26 營收 $8.2B，Broadcom $68B——規模差距 8 倍。但在 custom silicon 細分市場，Marvell 的精品策略（專注互連 + ASIC 設計，不做通用處理器）使其能在利基市場保持成本競爭力。Fabless 模式天然資本密集度低。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼 Broadcom 未能完全碾壓 Marvell？三個機制：① <strong>hyperscaler 不願讓供應商壟斷</strong>——分散採購是 Amazon、Google 的核心策略，MRVL 作為第二供應商有結構性需求；② <strong>full-stack 整合</strong>——MRVL 是唯一同時提供 custom XPU + optical DSP + silicon photonics + CXL switching 的玩家，AVGO 在光學端落後；③ <strong>設計速度</strong>——MRVL 承諾 18 個月從設計到 tape-out，部分客戶反映比 AVGO 快 3-6 個月。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>市佔估計</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>Broadcom（AVGO）</td><td>~60%</td><td>穩定偏上</td><td>規模 + Google TPU 深度綁定</td><td>AVGO 和 MRVL 共同從通用 GPU 吃市場</td></tr>
+<tr><td>Marvell（MRVL）</td><td>~15-18%</td><td>↑ 擴大</td><td>—</td><td>從 NVDA 通用 GPU 搶份額</td></tr>
+<tr><td>AMD/Xilinx</td><td>~5%</td><td>→ 持平</td><td>AI FPGA 在 inference 端</td><td>利基市場</td></tr>
+<tr><td>Hyperscaler 自研</td><td>~10-15%</td><td>↑ 增加</td><td>最大長期威脅</td><td>但仍需外部 IP 支援（MRVL/AVGO 受益）</td></tr>
+</table>
+
+<h3>護城河趨勢：<span class="badge badge-green">擴大</span></h3>
+<p>24 個月內最可能瓦解護城河的威脅（按威脅程度排序）：</p>
+<ol>
+<li><strong>Broadcom 全棧整合</strong>：若 AVGO 成功收購光學互連公司，消除 MRVL 的 full-stack 差異化（威脅等級：中高）</li>
+<li><strong>Hyperscaler 深度自研</strong>：Amazon 或 Google 建立內部 ASIC 設計團隊至 tape-out 全流程（威脅等級：中，但 3-5 年才能實現）</li>
+<li><strong>新進者 AI chip startup</strong>：Cerebras、Groq 等如果獲得 hyperscaler 大單（威脅等級：低，custom silicon 不同於通用 AI chip）</li>
+</ol>
+</div>
+
+<!-- ==================== §4 財務品質監測 ==================== -->
+<div class="card">
+<h2>§4｜財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY2024</th><th>FY2025</th><th>FY2026</th><th>AVGO 比較</th></tr>
+<tr><td>FCF Margin</td><td class="mono">18.8%</td><td class="mono">24.2%</td><td class="mono">19.3%</td><td>~36%</td></tr>
+<tr><td>EBITDA Margin</td><td class="mono">~32%</td><td class="mono">~35%</td><td class="mono">39.9%</td><td>~60%</td></tr>
+<tr><td>ROIC − WACC</td><td class="mono">~-12%p</td><td class="mono">~-8%p</td><td class="mono">~-4%p</td><td>+11%p</td></tr>
+<tr><td>SBC / Revenue</td><td class="mono">11.1%</td><td class="mono">10.4%</td><td class="mono">~9%</td><td>~4%</td></tr>
+<tr><td>ROE</td><td class="mono">~-3%</td><td class="mono">~-7%</td><td class="mono">~20%</td><td>~33%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：FY2026 GAAP NI $2.67B vs OCF $1.89B。差距來自 SBC（~$750M，非現金費用加回）和 working capital 變動。無異常跡象。</li>
+<li><strong>AR 成長 vs 營收成長</strong>：營收 +42% YoY，AR 增長應同步。無公開數據顯示 AR 膨脹超過營收成長。</li>
+<li><strong>存貨成長 vs 營收成長</strong>：Fabless 模式下存貨主要為在途晶圓。半導體下行時可能有庫存風險，但目前 AI 需求強勁，supply 仍緊。</li>
+<li><strong>FCF 轉換率趨勢</strong>：FCF/Revenue 從 FY24 18.8% → FY25 24.2% → FY26 19.3%。FY26 下降因營收高速成長期 working capital 需求增加，非結構性惡化。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>3 年回購總額 vs FCF</td><td>近 3 年回購 ~$1.5B / FCF ~$4.0B</td><td>回購/FCF ≈ 38%（健康，遠低於 80% 警戒）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>Non-GAAP EPS +81% YoY，股數僅減 ~2%</td><td>回購對 EPS 貢獻 < 2%p，成長幾乎全為有機</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>過去 2 年均價 ~$65-75 vs 現價 $131.62</td><td>大幅低於現價 → 歷史回購時機良好</td></tr>
+<tr><td>Revenue CAGR（FY24-26）</td><td>~22%</td><td>EPS CAGR 81% 遠高於 Revenue CAGR 22%，差距來自營運槓桿（GM 提升 + OpEx 佔比下降），非回購</td></tr>
+</table>
+</div>
+
+<!-- ==================== §5 產業格局 ==================== -->
+<div class="card">
+<h2>§5｜產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li><strong>TAM</strong>：AI 資料中心相關市場 $94B by 2028（Marvell Investor Day 上修，+25% from $75B）</li>
+<li><strong>TAM CAGR</strong>：~30% (2024-2028)，其中 Custom XPU TAM 47% CAGR 至 $40.8B</li>
+<li><strong>當前滲透率</strong>：MRVL ~13% of $33B（2024）→ 目標 20% of $94B（2028）</li>
+<li><strong>供需狀態</strong>：供不應求。先進製程（TSMC 3nm/2nm）產能受限，光學互連供需極度緊張（port demand doubling 2026 & 2027）</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游（TSMC）</strong>：中。MRVL 是 TSMC 重要但非最大客戶（Apple、NVDA 優先）。先進製程配額需提前鎖定。替代難度極高——GlobalFoundries 和 Samsung 在 3nm 以下落後。</li>
+<li><strong>對下游（Hyperscaler）</strong>：中偏弱。客戶集中度高——Amazon 為最大 ASIC 客戶，Google、Microsoft、Meta 為主要客戶。Hyperscaler 議價能力強，但 custom silicon 的高轉換成本提供一定保護。</li>
+<li><strong>地理分布曝險</strong>：設計中心在美國（Santa Clara）和以色列（Yokneam）；製造依賴台灣 TSMC。台海地緣風險為最大單點故障。</li>
+</ul>
+
+<h3>營收組成</h3>
+<table>
+<tr><th>業務段</th><th>FY2026 占比</th><th>YoY 成長</th><th>成長性判斷</th></tr>
+<tr><td>Data Center（custom silicon + interconnect + storage）</td><td>74%</td><td>+46%</td><td>核心成長引擎，AI 驅動</td></tr>
+<tr><td>Communications & Other（企業網路 + 電信 + 消費 + 車用）</td><td>26%</td><td>+26%（Q4）</td><td>穩定但非核心，車用已出售</td></tr>
+</table>
+<p class="note">注：FY2026 Q4 起，MRVL 將報告分部從 5 個合併為 2 個（Data Center / Communications & Other），反映業務重心向 AI 資料中心集中。</p>
+
+<h3>單位經濟</h3>
+<ul>
+<li><strong>Custom silicon ASP</strong>：每顆 XPU 設計服務費 $50-100M NRE + 量產抽成。18 個專案在手 = $1-2B NRE pipeline。</li>
+<li><strong>Optical interconnect ASP</strong>：1.6T PAM DSP 單顆 $30-50，每 rack 需 64-128 顆。隨 2nm 升級 ASP 提升。</li>
+<li><strong>客戶 LTV</strong>：Custom silicon 客戶鎖定 3-5 年量產週期，單客戶 LTV 可達 $1-5B。</li>
+</ul>
+</div>
+
+<!-- ==================== §6 公司治理 ==================== -->
+<div class="card">
+<h2>§6｜公司治理與資本配置</h2>
+
+<h3>1. 股東/股權結構</h3>
+<ul>
+<li><strong>機構持股</strong>：83%（FMR 14.95%、Vanguard 9.30%、BlackRock 7.05%）</li>
+<li><strong>內部人持股</strong>：< 1%。共同創辦人 Dr. Sehat Sutardja 為最大個人股東但非管理層。</li>
+<li><strong>公眾持股</strong>：17%</li>
+<li><strong>Dual-class 投票權</strong>：無。一股一票，治理結構透明。</li>
+</ul>
+
+<h3>2. 資本配置方向</h3>
+<ul>
+<li><strong>優先順序</strong>：R&D 投資 > 策略性併購 > 股票回購 > 分紅</li>
+<li><strong>R&D</strong>：FY26 R&D ~$2.0B（~24% of revenue），半導體業高水準但合理</li>
+<li><strong>併購</strong>：FY26 完成 Celestial AI（$3.25B）+ XConn（$540M），均為技術驅動的 bolt-on 收購</li>
+<li><strong>回購</strong>：$5B 新授權（Sep 2025）+ $1B ASR，合計 ~$6.7B 回購能力（市值 ~9.4%）</li>
+<li><strong>分紅</strong>：季度股利 $0.06/股，年化 $0.24，殖利率 ~0.2%（象徵性）</li>
+<li><strong>說法 vs 行動</strong>：一致。管理層宣稱「invest in growth first」且確實將 FCF 的大部分再投入 R&D 和併購。回購在高現金流期間才啟動。</li>
+</ul>
+
+<h3>3. 管理層薪酬結構</h3>
+<p>CEO Matt Murphy FY2025 總薪酬 $32.16M（高於同規模企業中位 $14.1M）：</p>
+<table>
+<tr><th>組成</th><th>金額</th><th>占比</th></tr>
+<tr><td>基本薪資</td><td>$1.18M</td><td>3.7%</td></tr>
+<tr><td>績效獎金（AIP）</td><td>$3.11M（131.2% of target）</td><td>9.7%</td></tr>
+<tr><td>股權激勵（RSU + PSU）</td><td>$27.86M</td><td>86.6%</td></tr>
+</table>
+<p class="note">薪酬結構高度向股權傾斜（87%），與股東利益一致。AIP 於 FY25 超標達成（131.2%），與營收和營業利率掛鉤。PSU 對標 S&P 500 TSR，接近目標達成。</p>
+
+<h3>4. 過去 12 個月重大內部人交易</h3>
+<p>2026 年 4 月 SEC Form 144 filing 顯示有內部人申報出售，為例行性股權激勵行使後出售（非異常大額交易）。CEO Matt Murphy 過去 12 個月淨賣出部分持股（行使選擇權後出售），但整體持股水準維持穩定。未見異常大額內部人買入。</p>
+</div>
+
+<!-- ==================== §7 估值診斷 ==================== -->
+<div class="card">
+<h2>§7｜估值診斷（7.0-7.5）</h2>
+
+<h3>7.0｜估值體系診斷</h3>
+
+<h4>A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>是否主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>✅ 主流</strong></td><td>Forward P/E（34.5x）是分析師最常引用的估值指標</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>✅ 輔助</td><td>PEG 0.99 頻繁出現在看多論述中</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>❌</td><td>$20B+ goodwill 使 P/B 毫無參考價值</td></tr>
+<tr><td>現金流型</td><td>P/FCF、DCF</td><td>部分</td><td>P/FCF 72x 過高，但 FCF 快速成長中</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：盈利能力型（Forward P/E）+ 成長型（PEG）混合</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<p><strong>情境三：市場定價偏好漂移</strong>——正在發生。市場正在將 MRVL 從「中型半導體公司」重新定價為「AI 基礎設施 pure-play」。Barclays 升評就是這一漂移的信號。若市場完全接受 MRVL 作為 AI 基礎設施標的（類比 AVGO 的定價邏輯），Forward P/E 可能從 34.5x 向 AVGO 的長期高點 40x+ 靠攏。</p>
+
+<h4>C｜估值尺可能被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>若發生影響</th></tr>
+<tr><td>ROIC 突破 WACC</td><td>ROIC 6% < WACC 10%，但快速收斂</td><td>若 ROIC > WACC，確認「盈利型」邏輯，倍數可能再擴張</td></tr>
+<tr><td>管理層轉向新敘事</td><td>已在推動「full-stack AI interconnect」敘事</td><td>市場若接受，估值從「ASIC 設計服務」升級為「AI platform」</td></tr>
+<tr><td>盈利成長放緩至市場平均</td><td>目前 35% CAGR 遠超平均</td><td>若 CAGR 降至 15% 以下，倍數壓縮至 20x 以下</td></tr>
+</table>
+<p><strong>估值體系診斷結論</strong>：<span class="badge badge-blue">🔵 估值體系升級機會</span></p>
+<p class="note">市場正在重新評估 MRVL 的估值邏輯，從「中型半導體」向「AI 基礎設施 platform」漂移。這為估值倍數擴張提供結構性支撐。</p>
+
+<h3>7.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Forward P/E（NTM）</td><td class="mono">34.5x</td><td class="mono">15x</td><td class="mono">32x</td><td class="mono">55x</td><td class="mono">49%</td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">36.7x</td><td class="mono">15x</td><td class="mono">25x</td><td class="mono">50x</td><td class="mono">62%</td></tr>
+<tr><td>P/FCF</td><td class="mono">72x</td><td class="mono">18x</td><td class="mono">34x</td><td class="mono">80x</td><td class="mono">87%</td></tr>
+<tr><td>P/S</td><td class="mono">14x</td><td class="mono">6x</td><td class="mono">10x</td><td class="mono">20x</td><td class="mono">57%</td></tr>
+</table>
+<p class="note">Forward P/E 分位公式：(34.5 − 15) / (55 − 15) × 100% = 49%</p>
+
+<p><strong>解讀：</strong></p>
+<ol>
+<li>Forward P/E 49% 分位屬「合理」區間（40-70%），但 P/FCF 87% 分位偏熱。</li>
+<li>上次 Forward P/E 在此水準（~35x）時為 2021 年中，當時 AI 敘事尚未成形、營收僅 $4.5B。現在營收 $8.2B + AI 催化，基本面遠優於當時。</li>
+<li>主要驅動因素：AI 敘事升級（權重最大）> 盈利修正上調 > 利率（中性）。</li>
+</ol>
+
+<h3>7.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td class="mono">34.5x</td><td>—</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td class="mono">35.0%</td><td>—</td><td>基於 FY26 $2.84 → FY29E ~$7.00</td></tr>
+<tr><td>PEG（Non-GAAP，3 年）</td><td class="mono">0.99</td><td>< 1.0 便宜</td><td><span class="badge badge-green">便宜</span>——成長溢價尚未完全定價</td></tr>
+<tr><td>5 年 EPS CAGR（含遞減）</td><td class="mono">~22%</td><td>—</td><td>成長遞減至 FY31</td></tr>
+<tr><td>PEG（5 年 Non-GAAP）</td><td class="mono">1.57</td><td>1-2 合理</td><td><span class="badge badge-yellow">合理</span></td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td class="mono">0.99 vs 1.57</td><td>差異大 = 近期成長不可持續</td><td>差距 0.58，說明近 3 年高速成長確實會放緩，但 5Y PEG 仍 < 2.0</td></tr>
+</table>
+
+<h3>7.3｜Reverse DCF</h3>
+
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td class="mono">~$114.5B</td><td>$131.62 × 870M shares</td></tr>
+<tr><td>基期 FCF</td><td class="mono">$1.58B</td><td>FY2026 TTM</td></tr>
+<tr><td>WACC</td><td class="mono">10.0%</td><td>10Y UST 4.3% + Beta 1.26 × ERP 4.5%</td></tr>
+<tr><td>永續成長率</td><td class="mono">3.5%</td><td>半導體長期成長 + 通膨</td></tr>
+<tr><td>預測期</td><td class="mono">10 年</td><td>標準</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p>使 DCF 現值 = $114.5B，所需前 10 年 FCF CAGR = <strong>~18.5%</strong></p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+<tr><td>過去 3 年 FCF CAGR</td><td>18.3%</td><td>接近歷史（合理）</td></tr>
+<tr><td>分析師 EPS CAGR 共識</td><td>35%</td><td>隱含遠低於共識（保守）</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>NVDA ~25%</td><td>低於行業最快（可實現）</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 18.5% FCF CAGR 需：Revenue +20% CAGR（假設 FCF Margin 維持 19%），或 FCF Margin 從 19% 擴至 25% + Revenue +15% CAGR。管理層指引 FY27 Revenue +30%+、FY28 +36%+，遠超此需求。</p>
+<p><strong>隱含預期判斷</strong>：<span class="badge badge-green">🟢 隱含預期保守</span></p>
+
+<h3>⚠️ 便宜理由檢驗</h3>
+<p class="note">觸發來源：§2.5 衰退信號 3 個（🔴 高度警戒）+ Reverse DCF「隱含預期保守」（🟡 輕度觸發）。按規則執行五問詳答。</p>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>結論</th></tr>
+<tr><td>Q1</td><td>市場為什麼給這個倍數？</td><td>Forward P/E 34.5x 處於 5Y 中位（32x）附近，市場給出的倍數反映「AI 成長確認但尚未完全 re-rate」。股價已從 $48 低點翻倍，但分析師目標價中位 $115 滯後於股價。</td><td>倍數合理，非低估</td></tr>
+<tr><td>Q2</td><td>擔心有財務數據支撐？</td><td>ROIC 6% < WACC、SBC 9-10%、FCF/NI 59%——這些是真實的財務弱點，但正在改善而非惡化。ROIC 預計 FY28 可突破 12-15%。</td><td>有部分支撐，但趨勢改善</td></tr>
+<tr><td>Q3</td><td>護城河是否完整？</td><td>18 個 custom silicon 專案在手，GM 持續改善至 ~60%，市佔從 13% 擴至 15-18%。護城河完整且擴張。</td><td>完整</td></tr>
+<tr><td>Q4</td><td>FCF 品質是否被誤解？</td><td>P/FCF 72x 看起來很貴，但基於 FY26 FCF。若 FY28 FCF 達 $3.5-4B（合理預期），P/FCF 降至 ~30x。市場定價的是當前 FCF 而非未來 FCF。</td><td>被部分誤解（FCF 快速成長中）</td></tr>
+<tr><td>Q5</td><td>催化劑？</td><td>① Q1 FY27 財報 Beat（6 月）；② Amazon Trainium 4 量產；③ FY28 指引上修；④ 分析師目標價追趕股價（當前中位 $115 vs 股價 $132）</td><td>有多個明確催化劑</td></tr>
+</table>
+<p><strong>便宜理由檢驗結論</strong>：<span class="badge badge-green">🟢 市場合理定價（非低估），但未來 FCF 成長被低估</span></p>
+
+<h3>7.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr style="font-weight:700;"><td>MRVL</td><td>$114B</td><td class="mono">34.5x</td><td class="mono">36.7x</td><td class="mono">0.99</td><td class="mono">19.3%</td><td class="mono">35%</td><td class="mono">6%</td></tr>
+<tr><td>AVGO</td><td>$1.1T</td><td class="mono">27.7x</td><td class="mono">~25x</td><td class="mono">~0.9</td><td class="mono">~36%</td><td class="mono">~30%</td><td class="mono">21%</td></tr>
+<tr><td>NVDA</td><td>$3.2T</td><td class="mono">~23x</td><td class="mono">~22x</td><td class="mono">~0.6</td><td class="mono">~45%</td><td class="mono">~40%</td><td class="mono">~80%</td></tr>
+<tr><td>AMD</td><td>$180B</td><td class="mono">~25x</td><td class="mono">~24x</td><td class="mono">~1.2</td><td class="mono">~18%</td><td class="mono">~22%</td><td class="mono">~5%</td></tr>
+<tr><td>產業中位</td><td>—</td><td class="mono">~26x</td><td class="mono">~24x</td><td class="mono">~1.0</td><td class="mono">~28%</td><td class="mono">~28%</td><td class="mono">~15%</td></tr>
+</table>
+
+<p><strong>同業溢折價邏輯：</strong></p>
+<ol>
+<li><strong>溢價幅度</strong>：MRVL Forward P/E 34.5x vs 產業中位 26x = 溢價 33%。</li>
+<li><strong>支撐溢價的因素</strong>：成長性最強——EPS CAGR 35% 為同業最高。但護城河（7 vs AVGO ~8.5）和資本效率（ROIC 6% vs AVGO 21%）較弱，溢價幅度可能過大。</li>
+<li><strong>若均值回歸</strong>：Forward P/E 從 34.5x 回歸至 26x → 股價降至 ~$99（-25%）。</li>
+</ol>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>MRVL</th><th>AVGO（最強競爭標的）</th></tr>
+<tr><td>主假設完全兌現時上行空間</td><td>+182%（至 $371）</td><td>+140%（至 ~$430）</td></tr>
+<tr><td>主假設部分落空時跌幅</td><td>-57%（至 $56.75）</td><td>-35%（至 ~$115）</td></tr>
+<tr><td>風報比最優</td><td colspan="2">MRVL 上行更大但下行也更深；AVGO 風報比更穩健。<br><strong>結論：AVGO 為同主題更穩健選擇，MRVL 為高 beta 進攻性配置。</strong></td></tr>
+</table>
+<p><strong>最終橫向比較結論</strong>：<span class="badge badge-yellow">🥈 此標的為次優選</span>（AVGO 在護城河、ROIC、FCF Margin 均更優，但 MRVL 的 PEG 0.99 和 EPS CAGR 35% 提供更高回報潛力）</p>
+
+<h3>7.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（7.0）</td><td><span class="badge badge-blue">🔵 升級機會</span></td><td>市場正將 MRVL 從中型半導體重新定價為 AI platform</td></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="badge badge-yellow">🟡 合理</span></td><td>Forward P/E 49% 分位，不貴不便宜</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="badge badge-green">🟢 便宜</span></td><td>PEG 0.99 < 1.0，成長溢價未完全定價</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="badge badge-green">🟢 保守</span></td><td>隱含 18.5% FCF CAGR 低於共識 35% EPS CAGR</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="badge badge-red">🔴 溢價偏高</span></td><td>Forward P/E 溢價 33% vs 產業中位，ROIC 6% 不支撐</td></tr>
+</table>
+
+<p><strong>當前定價判斷</strong>：<span class="badge badge-yellow">🟡 公允定價</span>（5 工具信號：1 升級 + 1 合理 + 2 便宜 + 1 偏貴 = 淨偏合理）</p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河品質（§3）</td><td>7/10</td><td>同業基準 +0x（不額外加減）</td></tr>
+<tr><td>② 成長年數（§2.5A）</td><td>≥ 10 年 🟢</td><td>+5x</td></tr>
+<tr><td>③ 成長品質（§2.5B）</td><td>有機 75% + 定價驅動擴大</td><td>+3x</td></tr>
+<tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td>+3x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>-4%p，趨勢收窄</td><td>-3x（未達 WACC）</td></tr>
+<tr><td>⑥ 衰退信號（§2.5）</td><td>3 個亮燈</td><td>-3x</td></tr>
+<tr><td>⑦ 估值體系方向（§7.0）</td><td>🔵 升級機會</td><td>+3x</td></tr>
+<tr><td>⑧ 當前利率環境</td><td>10Y UST 4.3%</td><td>-2x（高利率壓縮成長股估值）</td></tr>
+<tr style="font-weight:700;"><td>產業基準倍數</td><td>26x</td><td>調整後合理區間：<strong>28x-36x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考</strong>：高 $156（Evercore）/ 中位 $115 / 低 $85（HSBC）（n=47 位）<br>
+當前股價 $131.62 <strong>高於</strong>中位目標價 14%。分析師目標價可能需上修以反映 Barclays 升評後的市場情緒。</p>
+
+<h4>長期合理倍數對應表（v9.0）</h4>
+<p>§2.5 長期成長性評級：🟢 → 基準 Forward P/E = <strong>25x</strong></p>
+<p>v9.0 上行三引擎（詳見 §7.7）：引擎 B 觸發 → 目標 P/E 44x<br>
+AI 調整：🟢 → × 1.10<br>
+<strong>最終 v9.0 長期合理倍數 = 48.4x</strong></p>
+</div>
+
+</div><!-- container -->
+</body>
+</html>
