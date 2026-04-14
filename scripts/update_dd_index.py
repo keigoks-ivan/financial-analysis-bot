@@ -31,8 +31,13 @@ BULL_SHORT_RE = re.compile(
 TAG_RE = re.compile(r'<[^>]+>')
 
 # Pattern to extract numeric quality score from §7.7 A table
+# Matches "綜合品質分" in a table row, then finds the first decimal number
+# after closing tags. Handles <strong>, <b>, colspan variants, extra <td> cells.
 QUALITY_SCORE_RE = re.compile(
-    r'綜合品質分</strong>\s*</td>\s*<td[^>]*>(?:[^<]*)<strong>([\d.]+)</strong>',
+    r'綜合品質分\s*(?:</(?:strong|b)>)?\s*</td>'
+    r'(?:\s*<td[^>]*>\s*</td>)*'           # skip empty <td></td> cells
+    r'\s*<td[^>]*>\s*(?:<(?:strong|b)[^>]*>)?\s*'
+    r'([\d]+\.[\d]+)',
     re.DOTALL,
 )
 
