@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Scan docs/dd/ for DD_*.html files, cross-reference INDEX.md for v9.0 metadata,
+Scan docs/dd/ for DD_*.html files, cross-reference INDEX.md for v9.x metadata,
 and update the deep research table in docs/research/index.html.
 
-v9.0 update: Only show v9.0 reports. Display verdict, quality grade, R:R,
-red lights, trap assessment from INDEX.md.
+v9.1 update: Show all v9.x reports with version column.
+Same ticker + same date + different versions can coexist.
 """
 import re
 from pathlib import Path
@@ -127,24 +127,25 @@ def extract_comment(path: Path, max_len: int = 60) -> str:
 
 
 def parse_index_md() -> dict:
-    """Parse INDEX.md and return a dict keyed by filename with v9.0 metadata."""
+    """Parse INDEX.md and return a dict keyed by filename with v9.x metadata."""
     data = {}
     if not INDEX_MD.exists():
         return data
     for line in INDEX_MD.read_text(encoding="utf-8").splitlines():
         line = line.strip()
-        if not line.startswith("|") or "v9.0" not in line:
+        if not line.startswith("|") or "v9" not in line:
             continue
         cols = [c.strip() for c in line.split("|")]
         # cols: ['', date, ticker, schema, verdict, trap, rr, filename, '']
         if len(cols) < 9:
             continue
         date, ticker, schema, verdict, trap, rr, filename = cols[1:8]
-        if schema != "v9.0":
+        if not schema.startswith("v9"):
             continue
         data[filename] = {
             "date": date,
             "ticker": ticker,
+            "schema": schema,
             "verdict": verdict,
             "trap": trap,
             "rr_raw": rr,
@@ -164,13 +165,14 @@ def parse_index_md() -> dict:
 
 
 def scan_v9_files(index_data: dict):
-    """Build entries list for v9.0 DDs only, enriched with INDEX.md metadata."""
+    """Build entries list for v9.x DDs, enriched with INDEX.md metadata."""
     entries = []
     for f in sorted(DD_DIR.glob("DD_*.html")):
         version = extract_version(f)
-        if version != "v9.0":
+        if not version.startswith("v9"):
             continue
-        m = re.match(r"DD_(.+)_(\d{4})(\d{2})(\d{2})\.html", f.name)
+        # Support both DD_TICKER_DATE.html and DD_TICKER_DATE_v2.html
+        m = re.match(r"DD_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
         if not m:
             continue
         ticker = m.group(1)
@@ -183,6 +185,7 @@ def scan_v9_files(index_data: dict):
         entries.append({
             "ticker": ticker,
             "date": date_str,
+            "version": version,
             "href": f"/dd/{f.name}",
             "verdict": md.get("verdict", "—"),
             "trap": md.get("trap", "—"),
@@ -195,8 +198,9 @@ def scan_v9_files(index_data: dict):
             "comment": comment,
         })
 
-    # Sort: date desc, then ticker asc
+    # Sort: date desc, then ticker asc, then version desc (v9.1 before v9.0)
     entries.sort(key=lambda e: e["ticker"])
+    entries.sort(key=lambda e: e["version"], reverse=True)
     entries.sort(key=lambda e: e["date"], reverse=True)
     return entries
 
@@ -345,6 +349,13 @@ def _sort_keys(e):
     }
 
 
+def version_badge(v: str) -> str:
+    v = v.strip()
+    if v == "v9.1":
+        return f'<span class="version-badge version-latest">{v}</span>'
+    return f'<span class="version-badge">{v}</span>'
+
+
 def build_rows(entries):
     rows = []
     for e in entries:
@@ -353,6 +364,7 @@ def build_rows(entries):
             f'<tr class="searchable"'
             f' data-ticker="{e["ticker"]}"'
             f' data-date="{e["date"]}"'
+            f' data-version="{e.get("version", "")}"'
             f' data-verdict="{sk["verdict"]}"'
             f' data-quality="{sk["quality"]}"'
             f' data-rr="{sk["rr"]}"'
@@ -363,6 +375,7 @@ def build_rows(entries):
             f'>\n'
             f'  <td><a href="{e["href"]}" class="ticker-link">{e["ticker"]}</a></td>\n'
             f'  <td class="date-cell">{e["date"]}</td>\n'
+            f'  <td>{version_badge(e.get("version", ""))}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
             f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""))}</td>\n'
             f'  <td>{rr_badge(e["rr_value"])}</td>\n'
@@ -385,6 +398,7 @@ def update_index(entries):
         '          <tr>\n'
         '            <th class="sortable" data-sort="ticker">公司</th>\n'
         '            <th class="sortable" data-sort="date">日期</th>\n'
+        '            <th class="sortable" data-sort="version">版本</th>\n'
         '            <th class="sortable" data-sort="verdict">建議</th>\n'
         '            <th class="sortable sorted-asc" data-sort="quality">品質</th>\n'
         '            <th class="sortable" data-sort="rr">R:R</th>\n'
@@ -441,6 +455,8 @@ def update_index(entries):
 .ud-up-strong{color:#059669}.ud-up{color:#059669}.ud-up-weak{color:#6b7280}.ud-negative{color:#dc2626}
 .ud-down-severe{color:#dc2626}.ud-down{color:#ea580c}.ud-down-mild{color:#d97706}.ud-na{color:#94a3b8}
 .comment-cell{color:#475569;font-size:.78rem;max-width:260px;line-height:1.45}
+.version-badge{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.7rem;font-family:'IBM Plex Mono',monospace;background:#f1f5f9;color:#64748b}
+.version-latest{background:#dbeafe;color:#1e40af;font-weight:600}
 td a.ticker-link{color:#1e293b;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
 td a.ticker-link:hover{color:#2563eb}
 td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem;white-space:nowrap}
@@ -454,7 +470,7 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 def main():
     index_data = parse_index_md()
     entries = scan_v9_files(index_data)
-    print(f"Found {len(entries)} v9.0 DD files:")
+    print(f"Found {len(entries)} v9.x DD files:")
     for e in entries:
         print(f"  {e['ticker']:8s} {e['date']}  {e['verdict']:4s}  {e['quality']:3s}  {e['rr_value']:6s}  {e['href']}")
 
