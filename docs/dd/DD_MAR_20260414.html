@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dd-schema-version" content="v9.0">
+    <title>DD Report - MAR (Marriott International) | 2026-04-14</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F8FAFC; --card: #FFFFFF; --title-blue: #1E3A5F; --accent: #3B82F6;
+            --green-bg: #DCFCE7; --green-text: #166534; --red-bg: #FEE2E2; --red-text: #991B1B;
+            --yellow-bg: #FEF9C3; --yellow-text: #92400E; --blue-bg: #EFF6FF; --blue-text: #1E3A5F;
+            --trap-bg: #FFF0E6; --trap-border: #F97316; --trap-text: #C2410C;
+            --row-alt: #F1F5F9; --bull-border: #16A34A; --bull-bg: #F0FDF4;
+            --bear-border: #DC2626; --bear-bg: #FFF1F2; --arb-border: #7C3AED; --arb-bg: #F5F3FF;
+            --verdict-bg: #FFFBEB; --verdict-border: #D97706; --verdict-text: #92400E;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); font-family: 'Noto Sans TC', sans-serif; color: #1a1a1a; line-height: 1.7; }
+        .header-bar {
+            position: sticky; top: 0; z-index: 100; background: var(--title-blue); color: white;
+            padding: 12px 32px; display: flex; justify-content: space-between; align-items: center;
+            font-family: 'IBM Plex Mono', monospace; font-size: 14px;
+        }
+        .header-bar .ticker { font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .section {
+            background: var(--card); border-radius: 4px; margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden;
+        }
+        .section-title {
+            background: var(--title-blue); color: white; padding: 14px 24px;
+            font-size: 17px; font-weight: 700; border-left: 4px solid var(--accent);
+        }
+        .section-body { padding: 24px; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        th { background: var(--title-blue); color: white; padding: 10px 12px; text-align: left; font-weight: 500; }
+        td { padding: 9px 12px; border-bottom: 1px solid #E2E8F0; }
+        tr:nth-child(even) td { background: var(--row-alt); }
+        .beat { background: var(--green-bg); color: var(--green-text); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 13px; }
+        .miss { background: var(--red-bg); color: var(--red-text); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 13px; }
+        .neutral { background: var(--yellow-bg); color: var(--yellow-text); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 13px; }
+        .signal-green { background: var(--green-bg); color: var(--green-text); padding: 4px 12px; border-radius: 3px; font-weight: 600; }
+        .signal-red { background: var(--red-bg); color: var(--red-text); padding: 4px 12px; border-radius: 3px; font-weight: 600; }
+        .signal-yellow { background: var(--yellow-bg); color: var(--yellow-text); padding: 4px 12px; border-radius: 3px; font-weight: 600; }
+        .signal-blue { background: var(--blue-bg); color: var(--blue-text); padding: 4px 12px; border-radius: 3px; font-weight: 600; }
+        .hypothesis-box { background: var(--blue-bg); border-left: 4px solid var(--accent); padding: 20px 24px; margin: 16px 0; }
+        .trap-box { background: var(--trap-bg); border-left: 4px solid var(--trap-border); padding: 20px 24px; margin: 16px 0; }
+        .trap-box h4 { color: var(--trap-text); margin-bottom: 8px; }
+        .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .debate-card { padding: 20px; border-radius: 4px; }
+        .bull-card { background: var(--bull-bg); border-left: 4px solid var(--bull-border); }
+        .bear-card { background: var(--bear-bg); border-left: 4px solid var(--bear-border); }
+        .arb-card { background: var(--arb-bg); border-left: 4px solid var(--arb-border); }
+        .verdict-box { background: var(--verdict-bg); border-left: 4px solid var(--verdict-border); padding: 20px 24px; margin: 16px 0; }
+        .verdict-box h4 { color: var(--verdict-text); }
+        .rr-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 16px 0; }
+        .rr-card { padding: 20px; border-radius: 4px; }
+        .rr-long { background: #ECFDF5; border-left: 4px solid #059669; }
+        h3 { color: var(--title-blue); margin: 20px 0 10px; font-size: 16px; }
+        h4 { margin: 14px 0 8px; font-size: 15px; }
+        p, li { font-size: 14px; margin-bottom: 8px; }
+        ul, ol { padding-left: 24px; }
+        strong { font-weight: 600; }
+        .mono { font-family: 'IBM Plex Mono', monospace; }
+        .print-btn {
+            position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: white;
+            border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;
+            font-family: 'Noto Sans TC', sans-serif; z-index: 100;
+        }
+        .print-btn:hover { background: #2563EB; }
+        .top-hint { background: var(--blue-bg); padding: 10px 16px; font-size: 13px; color: var(--blue-text); margin-bottom: 16px; border-radius: 4px; }
+        @media print {
+            .header-bar, .print-btn { display: none; }
+            .section { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+            body { background: white; }
+        }
+        @media (max-width: 900px) { .debate-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="header-bar">
+    <div><span class="ticker">MAR</span> &nbsp; Marriott International, Inc.</div>
+    <div>資料抓取: 2026-04-14 ｜ $354.55 ｜ 最近財報: FY2025 Q4 ｜ DD Schema v9.0</div>
+</div>
+
+<div class="container">
+
+<div class="top-hint">本結論基於以下完整分析得出，詳見各章節。</div>
+
+<!-- ═══════════════════════════════════════════════ §8 投資結論 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§8｜投資結論</div>
+<div class="section-body">
+
+<h3>財報信號與假設校準</h3>
+<ul>
+<li><strong>H1（全球旅遊需求持續正規化）</strong>：<span class="beat">＋ 強化</span> — FY2025 全球 RevPAR 成長 3.6%，國際市場 +6.1%，2026E guidance 1.5-2.5%，需求基底穩固。</li>
+<li><strong>H2（資產輕型模式持續產生高品質 Fee Revenue）</strong>：<span class="beat">＋ 強化</span> — 毛費用收入 $5.4B YoY +5%，610K 間 pipeline 創新高，net rooms +4.3%。</li>
+<li><strong>H3（估值不進一步擴張但維持溢價）</strong>：<span class="neutral">0 不變</span> — Forward PE 31x 處於 5 年 76% 分位，已充分反映品質溢價，進一步擴張空間有限。</li>
+</ul>
+<p>這份財報讓隱含預期變得<strong>略微更容易兌現</strong>，因為 pipeline 與 fee revenue 成長均達標，但 RevPAR 增速放緩至低單位數意味著估值上行空間有限。</p>
+
+<h3>觀望</h3>
+
+<p><strong>① 短期信號（0-12 個月）</strong><br>
+Q4 2025 收入 beat（$6.69B vs est $6.67B）但 EPS 略 miss（$2.58 vs $2.61），2026 guidance 中規中矩（adj EPS +13-15%）。RevPAR 成長正在正規化至 1.5-2.5%，短期催化劑有限。FIFA 世界盃帶來 30-35bps 增量，但已反映在 guidance 中。短期估值偏高，不具備進場吸引力。</p>
+
+<p><strong>② 中期成長確信度（1-3 年）</strong><br>
+EPS CAGR 共識 ~12%，驅動因素為 rooms growth（4-5%）+ RevPAR（2-3%）+ 費用槓桿 + 回購（~4%/年）。成長以有機量驅動為主，品質中等偏高。能見度：<strong>中</strong> — RevPAR 與宏觀經濟敏感度較高，若全球旅遊需求放緩將直接衝擊 fee revenue。</p>
+
+<p><strong>③ 長期護城河邏輯（3 年後）</strong><br>
+Marriott 擁有全球最大酒店系統（1.78M 間客房）+ Bonvoy 忠誠計劃（200M+ 會員）+ 30+ 品牌矩陣，護城河隨規模擴大而強化（§2.5C 強化型）。Runway ≥ 10 年（全球酒店市場 TAM $784B→$1.1T，Marriott 滲透率僅 3-4%）。ROIC 在資產輕型基礎上維持高水準。3 年後仍有持有理由，但當前估值已充分定價這些優勢。</p>
+
+<div class="trap-box">
+<h4>⚠️ 這是價值陷阱嗎？</h4>
+<table>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td><span class="signal-green">非陷阱</span> — MAR 交易在 5Y 高位附近，不存在低估值的前提條件。風險在於成長放緩導致估值壓縮，而非護城河侵蝕。</td></tr>
+<tr><td><strong>「非陷阱」最強論據</strong></td><td>FY2025 Gross Margin 20.3%（10Y 高位附近）、Net rooms growth +4.3%（加速）、FCF $2.267B YoY +14%、pipeline 610K 間創新高，所有護城河指標均在改善或穩定。</td></tr>
+<tr><td><strong>「可能是陷阱」最強反駁</strong></td><td>RevPAR 增速從 15%（2023）→ 4.3%（2024）→ 2-3%（2025-2026E）持續放緩，EPS CAGR ~12% 中有約 1/3 來自回購而非有機成長，當前 PE 31x 已隱含樂觀假設。</td></tr>
+<tr><td><strong>持有期間監測指標</strong></td><td>① RevPAR YoY 若連續 2 季轉負 → 估值壓縮觸發；② Pipeline 轉化率（signings vs openings）若持續低於 80% → 成長引擎放緩信號。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="signal-green">🟢 非陷阱</span></p>
+</div>
+
+<h3>條件式進場判斷</h3>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td>估值條件</td><td>Forward P/E 回落至 22x 以下（股價 ~$252），或 EV/EBITDA 回落至 15x 以下</td></tr>
+<tr><td>基本面條件</td><td>Q1 2026 需確認 RevPAR ≥ guidance 下限 1.5%、net rooms growth 維持 ≥ 4%</td></tr>
+<tr><td>陷阱排除條件</td><td>RevPAR 連續 2 季轉負 + Gross Margin 跌破 18% → 停損重評</td></tr>
+<tr><td>事件觸發條件</td><td>全球經濟衰退導致股價回落至 MA200（~$319）或以下時重新評估 R:R</td></tr>
+</table>
+
+<h3>下行風險量化（引用 §2.5E）</h3>
+<p>若 3 年後 EPS 成長率降至 10%，估值壓縮幅度為 <strong>-12.6%</strong><br>
+若 3 年後 EPS 成長率降至 5%，估值壓縮幅度為 <strong>-32.3%</strong></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估閾值</th></tr>
+<tr><td>1</td><td>全球 RevPAR YoY</td><td>§0.5 H1</td><td>🔵 核心假設驗證</td><td>連續 2 季 &lt; 0%</td></tr>
+<tr><td>2</td><td>Net rooms growth rate</td><td>§2.5 / §3</td><td>🔵 長期成長領先</td><td>&lt; 3% YoY</td></tr>
+<tr><td>3</td><td>Forward P/E 分位</td><td>§7 / §1</td><td>短期估值信號</td><td>回落至 ≤ 40% 分位（~24x）→ 重新評估進場</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §7.7 動態 R:R ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div>
+<div class="section-body">
+
+<h3>A｜綜合品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+<tr><td>護城河</td><td>§3 評分</td><td class="mono">8</td><td>0.30</td><td class="mono">2.40</td></tr>
+<tr><td>長期成長性</td><td>§2.5 評級 🟡 = 6</td><td class="mono">6</td><td>0.45</td><td class="mono">2.70</td></tr>
+<tr><td>財務品質</td><td>綜合 ROIC/FCF/EPS</td><td class="mono">7</td><td>0.10</td><td class="mono">0.70</td></tr>
+<tr><td>AI 風險</td><td>§2.5F 評級 🟢 = 9</td><td class="mono">9</td><td>0.15</td><td class="mono">1.35</td></tr>
+<tr><td colspan="4"><strong>綜合品質分</strong></td><td class="mono"><strong>7.15</strong></td></tr>
+</table>
+
+<p>本標的綜合品質分：<strong>7.15</strong>，品質等級：<span class="signal-yellow">MH（中高品質）</span></p>
+<p>R:R 門檻：<strong>2.5x</strong>｜底倉（目標倉位的）：<strong>20%</strong></p>
+
+<h3>B｜上行三引擎（取較高不疊加）</h3>
+
+<h4>引擎 A：ROIC 溢價</h4>
+<p>觸發條件：ROIC（3 年平均）> 20% 且連續 3 年向上擴大</p>
+<p>本標的觸發狀態：<span class="miss">❌</span> — Marriott 因負股東權益導致 ROIC 指標波動劇烈（11-16%），無法確認連續 3 年擴大。以營運資本口徑估算 ROIC ~15-18%，未穩定超過 20%。</p>
+
+<h4>引擎 B：PEG 動態天花板</h4>
+<p>觸發條件：預估 EPS 5 年 CAGR > 20%</p>
+<p>本標的觸發狀態：<span class="miss">❌</span> — 5 年 EPS CAGR 估計 ~12%，遠低於 20% 門檻。</p>
+
+<h4>引擎 C：護城河溢價</h4>
+<p>觸發條件：護城河 ≥ 9 分</p>
+<p>本標的觸發狀態：<span class="miss">❌</span> — 護城河評分 8/10，不足 9 分門檻。</p>
+
+<table>
+<tr><th>引擎</th><th>觸發</th><th>調整係數</th></tr>
+<tr><td>A ROIC 溢價</td><td>❌</td><td>—</td></tr>
+<tr><td>B PEG 動態</td><td>❌</td><td>—</td></tr>
+<tr><td>C 護城河溢價</td><td>❌</td><td>—</td></tr>
+</table>
+<p><strong>無引擎觸發</strong>，調整係數 = 1.00</p>
+
+<h3>C｜AI 風險獨立疊加</h3>
+<p>§2.5 F 評級：<span class="signal-green">🟢 AI 受益/免疫</span></p>
+<p>AI 調整係數 = <strong>× 1.10</strong></p>
+
+<h3>D｜最終長期目標 P/E</h3>
+<p class="mono">最終 P/E = 基準 P/E × 引擎調整 × AI 調整 = 20x × 1.00 × 1.10 = <strong>22.0x</strong></p>
+
+<h3>E｜長期 EPS 預估（雙源交叉驗證）</h3>
+
+<h4>方法 1：§2.5 B 成長驅動分解</h4>
+<table>
+<tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+<tr><td>Franchise fees</td><td>50%</td><td>7%（rooms growth + RevPAR）</td><td>3.50%</td></tr>
+<tr><td>Base management fees</td><td>31%</td><td>6%</td><td>1.86%</td></tr>
+<tr><td>Incentive management fees</td><td>12%</td><td>5%</td><td>0.60%</td></tr>
+<tr><td>Owned/Leased/Other</td><td>7%</td><td>3%</td><td>0.21%</td></tr>
+<tr><td colspan="3"><strong>合計 Net Revenue CAGR（方法 1）</strong></td><td class="mono"><strong>6.17%</strong></td></tr>
+</table>
+<p>加上營運槓桿 +1.5% + 回購效應 ~4% → 方法 1 EPS CAGR ≈ <strong>11.7%</strong></p>
+
+<h4>方法 2：ROIC × 再投資率</h4>
+<p class="mono">內生成長率 = ROIC × 再投資率 = 16% × 55% = 8.8%<br>
+加上回購效應 +4% → 方法 2 CAGR ≈ <strong>12.8%</strong></p>
+
+<h4>採用 CAGR</h4>
+<p class="mono">採用值 = (11.7% + 12.8%) / 2 = <strong>12.3%</strong></p>
+
+<h3>F｜長期目標價計算</h3>
+<p class="mono">5 年後 EPS = $10.02 × (1.123)^5 = $10.02 × 1.795 = <strong>$17.99</strong></p>
+<p class="mono">長期目標 = $17.99 × 22.0 = <strong>$395.78</strong></p>
+
+<h3>G｜動態下行錨點</h3>
+
+<h4>步驟 1：護城河基礎下修</h4>
+<p>護城河評分：8（7-8 區間）→ <strong>-20%</strong></p>
+
+<h4>步驟 2：產業分層調整</h4>
+<p>產業分類：一般消費/旅遊（非週期股亦非防禦股）→ <strong>0%</strong></p>
+
+<h4>步驟 3：AI 風險疊加</h4>
+<p>AI 風險 🟢 → <strong>-5%</strong>（壓力情境少跌）</p>
+
+<h4>淨下修幅度</h4>
+<p class="mono">淨下修 = -20% + 0% + (-5%) = <strong>-25%</strong></p>
+
+<h4>壓測 EPS</h4>
+<p class="mono">壓測 EPS = $10.02 × (1 − 0.25) = <strong>$7.52</strong></p>
+
+<h4>恐慌 P/E（25% 分位）</h4>
+<p>5 年 Forward P/E 區間：低 18x → 高 35x<br>
+25% 分位 = 18 + 0.25 × (35 − 18) = <strong>22.25x</strong></p>
+
+<h4>下行錨點</h4>
+<p class="mono">下行錨點 = $7.52 × 22.25 = <strong>$167.32</strong></p>
+
+<h3>H｜動態 R:R 計算</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="mono">$354.55</td></tr>
+<tr><td>長期目標</td><td class="mono">$395.78</td></tr>
+<tr><td>上行空間</td><td class="mono">11.63%</td></tr>
+<tr><td>下行錨點</td><td class="mono">$167.32</td></tr>
+<tr><td>下行距離</td><td class="mono">52.82%</td></tr>
+<tr><td><strong>長期 R:R</strong></td><td class="mono"><strong>0.22x</strong></td></tr>
+<tr><td>R:R 門檻（綜合分查表）</td><td class="mono">2.5x（MH 品質）</td></tr>
+<tr><td>判定</td><td><span class="signal-red">❌ Fail</span></td></tr>
+</table>
+
+<h3>I｜波動率燈號協議</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$361.06 / $378.88</td></tr>
+<tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$289.81 / $272.00</td></tr>
+<tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$348.58 / $382.01</td></tr>
+<tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$214.84 / $181.41</td></tr>
+<tr><td>當前股價</td><td class="mono">$359.56（yfinance live）</td></tr>
+<tr><td><strong>🔴 紅燈數</strong></td><td class="mono"><strong>1/4</strong>（月線 2σ 上軌突破）</td></tr>
+<tr><td><strong>🟢 綠燈數</strong></td><td class="mono"><strong>0/4</strong></td></tr>
+</table>
+
+<h3>J｜二維建倉矩陣（品質等級 × 紅燈數）</h3>
+<p>品質 MH + 紅燈 1 → 建倉節奏：<strong>20%</strong>（一次建倉）</p>
+<p><strong>但長期 R:R 0.22x 遠低於 2.5x 門檻，建倉計劃暫不啟動。</strong></p>
+
+<h3>K｜綠燈加碼放大</h3>
+<p>綠燈 0/4 → 不加碼，按 J 表執行。</p>
+
+<h3>L｜戰術 MA（MA200 倉位開關 + MA60 加碼準星）</h3>
+<table>
+<tr><th>條件</th><th>狀態</th></tr>
+<tr><td>MA200 日線</td><td class="mono">$319.17，股價 $354.55 在其上方，斜率向上 → 倉位權限 100%</td></tr>
+<tr><td>替代指標 MA50 日線</td><td class="mono">$321.38，股價在其上方（替代 MA60，非 MA60）</td></tr>
+</table>
+
+<h3>M｜最終建倉建議</h3>
+<table>
+<tr><th>階段</th><th>倉位（目標倉位的%）</th><th>觸發條件</th></tr>
+<tr><td>立即</td><td class="mono">0%</td><td>長期 R:R 0.22x &lt; 2.5x 門檻，不建倉</td></tr>
+<tr><td>回落進場</td><td class="mono">20%</td><td>股價回落至 ~$252（Forward PE ~22x），R:R 改善至 ≥ 2.5x</td></tr>
+<tr><td>深跌加碼</td><td class="mono">+20%</td><td>股價回落至 ~$230（Forward PE ~20x），重新評估後加碼</td></tr>
+<tr><td><strong>當前行動</strong></td><td class="mono"><strong>觀望，等待估值修正</strong></td><td></td></tr>
+</table>
+<p>註：底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §7.6 三方辯論 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§7.6｜三方辯論摘要</div>
+<div class="section-body">
+
+<div class="debate-grid">
+<div class="debate-card bull-card">
+<h4 style="color:#16A34A;">多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr>
+<tr><td>1</td><td>全球最大酒店系統 + Bonvoy 200M+ 會員形成不可複製的規模護城河</td><td>1.78M 間客房，60% 領先 Hilton（§3）</td></tr>
+<tr><td>2</td><td>資產輕型模式下 fee revenue 持續成長，pipeline 610K 間保證未來 5+ 年 rooms growth</td><td>Net rooms +4.3%，pipeline/system ratio 34%（§2.5）</td></tr>
+<tr><td>3</td><td>$4B+/年回購持續壓縮股本，加上 fee revenue 有機成長，EPS 複利引擎穩定</td><td>EPS CAGR ~12%，FCF $2.27B，回購/FCF ~176%（§4）</td></tr>
+</table>
+<p><strong>多頭最強一句話：</strong>Marriott 是全球最大、最優質的酒店特許經營平台，擁有自我強化的規模飛輪——每新增一間客房都讓 Bonvoy 更有價值，每個新會員都讓加盟商更願意選擇 Marriott。</p>
+</div>
+
+<div class="debate-card bear-card">
+<h4 style="color:#DC2626;">空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>全球經濟衰退導致 RevPAR 轉負 2-3 季，Fee revenue YoY 下滑 5-10%</td><td>RevPAR &lt; 0% 連續 2Q（§2.5）</td></tr>
+<tr><td>2</td><td>Forward PE 從 31x 壓縮至 20x 歷史中位數（-35%），回購無法對抗估值崩塌</td><td>PE 壓縮至 &lt; 22x（§7.3）</td></tr>
+<tr><td>3</td><td>Airbnb 加速侵蝕中端市場、政府差旅預算大幅削減</td><td>US RevPAR 連續 3Q 低於 0%（§0.5 R2）</td></tr>
+</table>
+<p><strong>空頭最大威脅：</strong>Marriott 交易在 5 年估值高位附近、12% EPS CAGR 中有 1/3 靠回購堆疊、RevPAR 增速已從 15% 降至 2%——任何經濟放緩都將暴露這架估值水位過高的機器。</p>
+</div>
+
+<div class="debate-card arb-card">
+<h4 style="color:#7C3AED;">估值仲裁員｜Damodaran 模式</h4>
+<table>
+<tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+<tr><td>與過去 3 年 FCF CAGR 差距</td><td>隱含 14-15% vs 歷史 7%</td><td>0.5 / 2</td></tr>
+<tr><td>與 EPS CAGR 共識一致性</td><td>隱含 ~15% vs 共識 12%</td><td>1.0 / 2</td></tr>
+<tr><td>與同業最快 FCF CAGR 位置</td><td>隱含 ~15% vs HLT ~12%</td><td>0.5 / 2</td></tr>
+<tr><td>達成條件苛刻度</td><td>需 RevPAR 穩定 + rooms growth 持續 + margin 不壓縮</td><td>1.0 / 2</td></tr>
+<tr><td>歷史先例</td><td>Pre-COVID Marriott 曾達成 ~10-12% FCF CAGR</td><td>1.0 / 2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：4.0 / 10</strong></p>
+<p><strong>仲裁員一句話：</strong>市場隱含 ~15% FCF CAGR 高於分析師共識和歷史實績，當前估值需要一切順利才能勉強辯護——這不是安全邊際充足的定價。</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<h4>我的裁決</h4>
+<table>
+<tr><td>多頭最強論據</td><td>全球最大酒店平台 + 自我強化的規模飛輪 + 資產輕型高 FCF 模式</td></tr>
+<tr><td>空頭最大威脅</td><td>RevPAR 減速 + 估值高位 + EPS 回購依賴 → 經濟放緩將暴露高估值風險</td></tr>
+<tr><td>估值仲裁評分</td><td class="mono">4.0 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>觀望</strong> — 優質企業在錯誤的價格。護城河和商業模式一流，但 Forward PE 31x 處於 76% 分位、R:R 0.22x 遠低於門檻。等待估值修正至 22x 以下。</td></tr>
+</table>
+<p><strong>自我檢核：</strong></p>
+<ul>
+<li>☑ 多頭論據中「規模飛輪持續」不依賴催化劑不明的假設，但估值擴張空間確實不清晰</li>
+<li>☑ 空頭威脅（經濟衰退）在 MA200 止損前可能已發生部分估值壓縮</li>
+<li>☑ 仲裁員評分 4/10 &lt; 5，安全邊際不足以支撐進場</li>
+</ul>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §0 序章 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+<div class="section-body">
+
+<h3>存在意義</h3>
+<p>Marriott 解決的核心痛點是：<strong>人類在異地需要可信賴的住宿體驗</strong>。商務旅行、觀光旅遊、家庭出遊——只要人類需要離開居住地，就需要一個品牌化的信任錨點來降低住宿選擇的不確定性。若 Marriott 明天消失，全球 1.78 億間客房不會物理消失，但 200M+ Bonvoy 會員將失去跨 30+ 品牌的一致性體驗承諾、積分體系和忠誠權益網絡。加盟商將失去全球最大的分銷與預訂平台，獨立酒店的入住率將顯著下滑。Marriott 本質上是一個<strong>信任中介 + 分銷壟斷平台</strong>。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓 MAR 在 3 年內虧損 50%，最可能路徑：</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：Marriott 的客房分布高度全球化（國際市場占 net rooms growth 的 70%）。若中美脫鉤加劇導致中國市場被迫剝離、或中東/歐洲地緣衝突壓制國際旅遊需求，國際 RevPAR 可能大幅下滑。但單一地區風險有限，因為沒有一個國家占 Marriott 系統超過 5%（除美國外）。</li>
+<li><strong>技術替代風險</strong>：Airbnb 和分散式住宿平台持續侵蝕中低端市場。若 AI 驅動的旅行規劃大幅降低品牌忠誠度（消費者不再靠品牌篩選，而是靠 AI 推薦最優選項），Marriott 的品牌溢價可能被壓縮。時間軸 5-10 年，短期影響有限。</li>
+<li><strong>管理層失職</strong>：過度回購（FY2025 回購超過 FCF）可能在經濟衰退時造成資產負債表壓力。若管理層在高位繼續以 30x+ PE 回購大量股份，經濟衰退期將面臨「高價回購 + 盈利下滑 + 負淨資產」的三重壓力。</li>
+<li><strong>價值陷阱路徑</strong>：<strong>非陷阱</strong>。MAR 交易在估值高位而非低位，不存在傳統價值陷阱的前提。但最接近的風險模式是<strong>盈餘品質型</strong>——EPS 成長中回購貢獻 ~4%，若去除回購，有機 EPS CAGR 僅 ~8%，市場可能在某個時點重新定價此差距。</li>
+</ul>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §0.5 投資論點錨定 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§0.5｜投資論點錨定</div>
+<div class="section-body">
+
+<div class="hypothesis-box">
+<h4>A｜持有期與時間軸宣告</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>3-5 年</td></tr>
+<tr><td>主要驅動理由</td><td>Marriott 是長期複利型資產，估值修復需時間；rooms growth pipeline 的兌現節點在 3-5 年</td></tr>
+<tr><td>訊號 vs 噪音</td><td>短期 RevPAR 季度波動是噪音；rooms growth pipeline 轉化率、fee revenue CAGR、回購品質是訊號</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h4>B｜三個核心假設</h4>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>全球旅遊需求在後疫情時代持續正規化，RevPAR 維持低單位數正成長</td><td>全球 RevPAR YoY ≥ 1%</td><td>每季財報</td></tr>
+<tr><td>H2</td><td>資產輕型模式下 pipeline 持續轉化為 net rooms growth ≥ 4%，推動 fee revenue 有機成長</td><td>Net rooms growth rate ≥ 4%</td><td>每半年，對照 pipeline 轉化率</td></tr>
+<tr><td>H3</td><td>估值不進一步擴張，但在品質溢價支撐下維持 Forward PE 25-30x 區間</td><td>Forward PE 維持在 22-33x</td><td>持續監測</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h4>C｜三個最可能推翻論點的風險</h4>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>全球經濟衰退壓制旅遊需求，RevPAR 轉負</td><td>H1</td><td>全球 RevPAR YoY</td><td>連續 2 季 &lt; 0%</td></tr>
+<tr><td>R2</td><td>Pipeline 轉化放緩或加盟商離心，rooms growth 降速</td><td>H2</td><td>Net rooms growth</td><td>&lt; 3% YoY</td></tr>
+<tr><td>R3</td><td>利率長期維持高位壓縮成長股估值倍數</td><td>H3</td><td>10Y UST</td><td>&gt; 5.5% 持續 6 個月</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h4>D｜邊際貢獻判斷框架</h4>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>3-5 年持有期，季度 RevPAR 波動為噪音，年度 rooms growth 為訊號</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（需求）/ H2（supply growth）/ H3（估值）中的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋ / 0 / —</td></tr>
+<tr><td>4. 閾值判斷？</td><td>RevPAR 連 2Q 轉負 = 重新評估；rooms growth &lt; 3% = 減碼</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h4>E｜可執行決策主線</h4>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>Forward PE ≤ 22x（~$252）+ RevPAR 正成長 + rooms growth ≥ 4%</td><td>建倉 20%（目標倉位）</td></tr>
+<tr><td>加碼</td><td>H1 + H2 均確認（RevPAR 穩定 + pipeline 加速）+ PE 回落至 20x</td><td>加碼至 40%</td></tr>
+<tr><td>減碼</td><td>R1 或 R2 出現（RevPAR 連 2Q &lt; 0% 或 rooms growth &lt; 3%）</td><td>減至 0%，重新評估</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（全球旅遊需求結構性下滑）或 Gross Margin 跌破 16%</td><td>清倉</td></tr>
+</table>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §1 即時財報 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§1｜即時財報情報</div>
+<div class="section-body">
+
+<h3>① 最新一季財報關鍵數字（Q4 FY2025）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td class="mono">$6.69B</td><td class="mono">$6.67B</td><td><span class="beat">Beat</span></td><td>+4.3%</td></tr>
+<tr><td>EPS（Adjusted）</td><td class="mono">$2.58</td><td class="mono">$2.61</td><td><span class="miss">Miss</span></td><td>+5.3%</td></tr>
+<tr><td>Adj EBITDA</td><td class="mono">$1,402M</td><td class="mono">—</td><td>—</td><td>+9%</td></tr>
+<tr><td>Gross Margin</td><td class="mono">19.94%</td><td>—</td><td>—</td><td>略降</td></tr>
+<tr><td>Operating Margin</td><td class="mono">15.81%</td><td>—</td><td>—</td><td>穩定</td></tr>
+</table>
+
+<p><strong>全年 FY2025 關鍵數字：</strong></p>
+<table>
+<tr><th>指標</th><th>FY2025</th><th>FY2024</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="mono">$26.186B</td><td class="mono">$25.1B</td><td>+4.3%</td></tr>
+<tr><td>GAAP Diluted EPS</td><td class="mono">$9.51</td><td class="mono">~$8.89</td><td>+7%</td></tr>
+<tr><td>Adjusted Diluted EPS</td><td class="mono">$10.02</td><td class="mono">~$9.36</td><td>+7%</td></tr>
+<tr><td>Adj EBITDA</td><td class="mono">$5.38B</td><td class="mono">$4.98B</td><td>+8%</td></tr>
+<tr><td>Gross Fee Revenue</td><td class="mono">$5.4B</td><td class="mono">$5.14B</td><td>+5%</td></tr>
+<tr><td>FCF</td><td class="mono">$2.267B</td><td class="mono">$1.989B</td><td>+14%</td></tr>
+<tr><td>Net Rooms Growth</td><td class="mono">+4.3%</td><td class="mono">+3.8%</td><td>加速</td></tr>
+</table>
+
+<h4>財報對 §0.5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1</td><td><span class="beat">＋</span></td><td>全球 RevPAR +3.6%（FY2025），國際 +6.1%，需求穩固</td></tr>
+<tr><td>H2</td><td><span class="beat">＋</span></td><td>Net rooms +4.3% 加速，pipeline 610K 創新高，1,200 份新簽約</td></tr>
+<tr><td>H3</td><td><span class="neutral">0</span></td><td>估值維持高位（Forward PE ~31x），未進一步擴張也未壓縮</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：<strong>樂觀偏謹慎</strong>。CEO Capuano 強調 pipeline 創新高、Bonvoy 會員持續成長，但對 RevPAR guidance 給出保守的 1.5-2.5% 區間。與上季相比語氣略為保守，反映 US&C RevPAR 在 Q4 因政府關門而受壓。</li>
+<li><strong>Forward Guidance</strong>：FY2026 adj EBITDA $5.8-5.9B（+8-10%），adj EPS +13-15%（$11.32-$11.57）。Guidance 中位數 $11.45 與共識 $11.44 幾乎完全一致。</li>
+<li><strong>刻意強調主題</strong>：AI 投資（$1.1B technology spending in 2026，1/3 用於數位轉型）、Bonvoy 信用卡費用 +35% 成長、midscale 品牌擴張。</li>
+<li><strong>刻意迴避問題</strong>：關於政府差旅預算削減的長期影響未正面量化；對 Greater China RevPAR 疲軟的結構性原因未深入展開。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：休閒旅遊持續強勁（RevPAR +3%），商務差旅平緩（US BT RevPAR 持平），Group RevPAR +2%。整體需求從疫後復甦轉為穩態低單位數成長。</li>
+<li><strong>供給端</strong>：Pipeline 創新高暗示加盟商對酒店投資 ROI 信心充足，但新房供給增加也意味著 RevPAR 上行壓力將被稀釋。</li>
+<li><strong>競爭格局</strong>：Marriott 持續以規模優勢吸引加盟商，signings 加速。Hilton 和 Hyatt 也在擴張，但 Marriott 的 pipeline 優勢（610K vs HLT ~480K）維持領先。</li>
+<li><strong>總體經濟敏感度</strong>：政府關門導致 government RevPAR -30%+，顯示 Marriott 對美國政府差旅有非忽略性曝險。FIFA 世界盃預期帶來 30-35bps 增量。</li>
+<li><strong>對同業推論</strong>：Marriott 的 RevPAR 正規化趨勢對 Hilton 和 Hyatt 有相似暗示——產業正進入穩態低成長期，估值倍數可能面臨壓力。</li>
+</ul>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §2 門檻檢核 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§2｜核心門檻檢核</div>
+<div class="section-body">
+
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前，總收入口徑）</td><td>&gt; 15%</td><td><span class="miss">✗</span></td><td>FCF $2.267B / Revenue $26.186B = <strong>8.7%</strong>。趨勢：↑（2024: 7.9% → 2025: 8.7%）<br>⚠️ 注意：Marriott 總收入含 $19.5B 成本報銷（pass-through），FCF/Fee Revenue ≈ <strong>42%</strong>（真實業務盈利能力極佳）</td></tr>
+<tr><td>正規化 FCF Margin【Munger 維度】</td><td>5 年均值 &gt; 15%；單年最低 &gt; 10%</td><td><span class="miss">✗</span></td><td>以總收入口徑：5 年均值 ~7.5%，最低谷 ~5%（2020 COVID）<br>以 Fee Revenue 口徑：5 年均值 ~38%，穩健<br>判斷：總收入口徑不適用於 asset-light franchise 模式</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% + &gt; WACC</td><td><span class="neutral">⚠️</span></td><td>報告值 ~16.08%（YCharts），WACC ~9.3%，超額 ~6.8%p<br>⚠️ 負股東權益（-$3.0B）導致 ROIC 計算不穩定</td></tr>
+<tr><td>ROIC 穩定性【Munger 維度】</td><td>10 年中 ≥ 70% 達標</td><td><span class="neutral">⚠️</span></td><td>數據波動極大（6-145%），因負權益干擾。以營運資本口徑估算：~7/10 年達標（70%）。趨勢：2020 低谷後恢復。樣本受 COVID 及 Starwood 收購影響</td></tr>
+<tr><td>毛利率定價能力【Munger 維度】</td><td>10 年 ≥ 70% 改善</td><td><span class="beat">✓</span></td><td>10 年前 ~14.7% → 當前 ~20.3%，改善年份 ~7/10（70%）。趨勢：↑</td></tr>
+<tr><td>資本密集度【Munger 維度】</td><td>Capex/Revenue &lt; 5%</td><td><span class="beat">✓✓</span></td><td>Capex/Revenue ~2%，極低密集度，asset-light 模式典範。評級：<strong>低密集</strong></td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="miss">✗</span></td><td>基期 FY2025 實際：$10.02（Adj）/ $9.51（GAAP）<br>FY2026E：$11.44（Adj，n≈26）<br>FY2027E：$12.78（Adj，n≈20）<br>FY2028E：$14.12（Zacks，n≈15）<br>━━━━━━━━━━<br>Non-GAAP CAGR：(14.12/10.02)^(1/3)−1 = <strong>12.1%</strong><br>GAAP CAGR（估）：~11%<br>口徑差距：~$0.51，來源：SBC + 重組費用<br>資料來源：Zacks, StockAnalysis, Yahoo Finance</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="miss">✗</span></td><td>Forward PE 31.0x / EPS CAGR 12.1% = PEG <strong>2.56</strong></td></tr>
+<tr><td>負債安全性【Munger 維度】</td><td>D/E &lt; 0.7</td><td><span class="miss">✗</span></td><td>D/E：<strong>負值</strong>（-524%，股東權益 -$3.0B）。總負債 $15.5B，現金 ~$0.5B<br>⚠️ 負權益是回購驅動，非經營虧損。Adj EBITDA/利息費用覆蓋率充足（~7x）<br>評級：高槓桿但可控</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="miss">✗</span></td><td>現金 ~$0.5B vs 總負債 $15.5B → 否。但 FCF $2.27B/年提供強大還款能力</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，擴大</td><td><span class="beat">✓</span></td><td>8/10，趨勢穩定偏擴大（Bonvoy 持續壯大、品牌矩陣持續擴張）</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：負股東權益導致傳統財務指標（D/E、ROIC）失真；EPS CAGR 12% 低於 20% 門檻，PEG 2.56 偏貴。<br>
+<strong>Munger 三維評級</strong>：<span class="signal-yellow">🟡 兩項達標</span>（毛利率定價能力 ✓ + 資本密集度 ✓，ROIC 穩定性因負權益難以確認）</p>
+
+<p><strong>價值陷阱初篩</strong>：Forward PE 31x 處於 76% 分位（> 25%），P/FCF 高位 → <strong>不觸發低估值四問</strong>。MAR 不存在低估值的前提條件。</p>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §2.5 長期成長性 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§2.5｜長期成長性評估</div>
+<div class="section-body">
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（億美元）</td><td>$7,848 億（2023 全球酒店市場）</td><td>來源：Cognitive Market Research，2023 年</td></tr>
+<tr><td>估計可達 TAM</td><td>$11,260 億（2030E）</td><td>CAGR 5.3%，擴張假設：midscale 品牌進入、新興市場滲透、luxury 深化</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>Marriott 系統 1.78M 間 / 全球酒店客房 ~17M 間 ≈ ~10.5% 市佔</td><td></td></tr>
+<tr><td>達 30% 滲透率年數</td><td>以 4% rooms growth：ln(0.3/0.105)/ln(1.04) ≈ 27 年</td><td>自然放緩極遠</td></tr>
+<tr><td><strong>成長可持續年數</strong></td><td><strong>≥ 10 年</strong></td><td>Pipeline 610K（34% 系統增量）+ TAM 5.3% CAGR + 滲透率僅 10%</td></tr>
+</table>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>此標的占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~90%</td><td>Rooms growth 以 franchise/management 簽約為主，近年無重大併購</td></tr>
+<tr><td>無機成長</td><td>~10%</td><td>2016 Starwood 收購已完全整合，近年以 brand conversions 為主</td></tr>
+</table>
+
+<h4>② 定價 vs 量驅動</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>ADR 持續提升，luxury/premium 占比提高帶動 mix 改善</td><td>穩定</td></tr>
+<tr><td>量驅動（Volume）</td><td>Net rooms growth 4.3%，pipeline 簽約加速</td><td>擴大</td></tr>
+</table>
+<p>成長以<strong>量驅動為主</strong>（rooms growth），定價貢獻穩定但放緩（RevPAR 從 15% 降至 2-3%）。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<p><strong>強化型（最佳）</strong>：每新增一間 Marriott 品牌客房，都擴大了 Bonvoy 忠誠計劃的覆蓋密度，增強會員黏性。更多會員回流又提升加盟商 ROI，吸引更多加盟簽約。這是典型的<strong>飛輪效應</strong>。</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>~16%</td><td>~15%</td><td>→ 穩定</td><td>&gt; WACC 9.3%</td><td>✓</td></tr>
+<tr><td>ROIC − WACC</td><td>~6.7%</td><td>~5.7%</td><td>↑ 略擴</td><td>持續正值</td><td>✓</td></tr>
+<tr><td>FCF Margin（Fee Revenue）</td><td>~42%</td><td>~38%</td><td>↑</td><td>&gt; 15%</td><td>✓</td></tr>
+<tr><td>FCF/NI 轉換率</td><td>$2.27B/$2.53B ≈ 90%</td><td>~85%</td><td>↑</td><td>&gt; 85%</td><td>✓</td></tr>
+<tr><td>再投資率</td><td>~55%</td><td>~50%</td><td>↑</td><td>有對應 ROIC</td><td>✓</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>成長特徵</th><th>合理 Forward P/E</th><th>潛在估值跌幅</th></tr>
+<tr><td style="background:#FEF9C3;">3 年後 EPS 成長 10%</td><td>成長略放緩</td><td>22x</td><td>-12.6%</td></tr>
+<tr><td style="background:#FEE2E2;">3 年後 EPS 成長 5%</td><td>成熟期低成長</td><td>17x</td><td>-32.3%</td></tr>
+<tr><td style="background:#FEE2E2;">3 年後 EPS 成長 3%</td><td>接近停滯</td><td>15x</td><td>-40.2%</td></tr>
+</table>
+<p>3 年後 EPS 以 12% CAGR 外推：$10.02 × 1.12³ = $14.08。上述跌幅基於此 EPS × 對應 PE vs 當前 $354.55。</p>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2Q YoY 下滑</td><td>Q3: 20.1% → Q4: 19.94%，但 YoY 持平</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>Net rooms +4.3%，市佔持續擴大</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>ADR 持續溫和提升，入住率穩定</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著 &gt; Revenue CAGR（差 &gt; 5%p）</td><td>EPS CAGR 12% vs Revenue CAGR 4.3%，差距 7.7%p（回購 + 槓桿）</td><td><span class="signal-red">🔴</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI 轉換率 &lt; 0.75（連 2 年）</td><td>FY2025: 90%，FY2024: ~85%</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue &gt; 5% 且逐年上升</td><td>SBC ~$205M / Revenue $26.2B = 0.8%</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>全球酒店 TAM CAGR 5.3%，持續擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值系統性下移</td><td>酒店 PE 近 3 年維持穩定偏高位</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex/FCF &gt; 60%</td><td>Capex/Revenue ~2%，Capex/FCF ~25%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年收入下滑</td><td>Asset-light model，不停止投資也無重大 capex</td><td>⬜</td></tr>
+</table>
+
+<p><strong>亮燈數：1 個</strong> 🔴（EPS CAGR 顯著高於 Revenue CAGR，差距 7.7%p 由回購驅動）</p>
+<p><strong>價值陷阱風險評級：</strong><span class="signal-yellow">🟡 中度警戒</span> — EPS 與 Revenue 成長差距需在 §3 護城河節驗證是否為結構性問題。</p>
+
+<p><strong>長期成長性綜合評級：</strong><span class="signal-yellow">🟡 中等可見度成長</span><br>
+Runway ≥ 10 年 ✓，有機 + 量驅動為主 ✓，護城河強化型 ✓，但 RevPAR 正規化至低單位數 + EPS 中回購占比偏高，整體可見度中等。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><span class="signal-green">🟢 AI 受益/免疫</span></p>
+<p><strong>證據：</strong></p>
+<ul>
+<li>核心業務是實體酒店管理與品牌特許，AI 無法取代人類的住宿需求</li>
+<li>AI 對 Marriott 是<strong>效率工具</strong>：$1.1B 技術投資中重點部署 AI（自動升房、自然語言搜尋、個人化推薦），減少前台人力成本、提升 Bonvoy 體驗</li>
+<li>CEO Capuano 將 AI 定位為「重新定義客戶獲取範式的機會」，而非威脅</li>
+<li>AI 可能改變旅行規劃方式（如 AI travel agent），但 Marriott 的品牌信任和忠誠計劃是 AI 推薦的<strong>受益方</strong>而非被替代方</li>
+</ul>
+<p>評級分數：<strong>9 分</strong></p>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §3 護城河 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§3｜護城河分析（報告核心）</div>
+<div class="section-body">
+
+<p><strong>評分：8 / 10</strong>（以全球上市公司為基準，採最嚴格標準）</p>
+
+<p><strong>§2.5 亮燈回應：</strong>EPS CAGR 與 Revenue CAGR 差距 7.7%p 主要由回購驅動（$3.8-4B/年）。這不是護城河侵蝕信號——Marriott 的 fee revenue 有機成長 5% 穩定，回購是 FCF 充裕後的資本回報選擇。Revenue CAGR 低是因為總收入中 75% 為 pass-through cost reimbursements（成長僅 3.7%），真正的業務收入（fee revenue）成長 5% 與 EPS 12% 的差距主要來自合理的營運槓桿 + 回購。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：<strong>強。</strong> Bonvoy 忠誠計劃擁有 200M+ 會員，是全球最大酒店忠誠計劃。會員密度帶來更高入住率 → 吸引更多加盟商 → 更多酒店覆蓋 → 吸引更多會員。飛輪效應的規模閾值已超越——Marriott 的 Bonvoy 會員數約為 Hilton Honors 的 1.3 倍。</li>
+<li><strong>無形資產</strong>：<strong>強。</strong> 30+ 品牌矩陣從 luxury（Ritz-Carlton, St. Regis）到 midscale（Four Points, City Express），覆蓋所有價位段。品牌溢價通過 ADR premium vs 獨立酒店可量化。Bonvoy 信用卡費用 2026E +35% 成長反映品牌變現能力持續增強。</li>
+<li><strong>轉換成本</strong>：<strong>中等。</strong> 加盟商的轉換成本極高——franchise 合約通常 20 年以上，更換品牌需要物理改造、重新培訓、系統切換。但消費者層面轉換成本較低（可在多個酒店品牌間切換），忠誠計劃是主要黏性來源。</li>
+<li><strong>規模優勢</strong>：<strong>強。</strong> 1.78M 間客房，比第二名 Hilton 多 60%。規模帶來分銷效率（Marriott.com 直訂占比高）、採購議價權、技術投資攤薄。每新增一間客房的邊際成本極低（asset-light）。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為何資本充足的對手無法跨越？<strong>時間壁壘 + 網路密度</strong>。Marriott 花了 97 年建立品牌矩陣，2016 Starwood 收購更是將差距拉大。新進者即使有資本，也無法在短期內建立 200M 會員的忠誠網絡——這需要數十年的覆蓋密度積累。Airbnb 雖然在分散式住宿有優勢，但在商務旅行和 group event 領域幾乎無法競爭。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>全球客房數</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>MAR</strong></td><td>1.78M</td><td>↑ 加速（+4.3%）</td><td>—</td><td>—</td></tr>
+<tr><td>Hilton (HLT)</td><td>~1.1M</td><td>↑（+4.5%）</td><td>品牌矩陣深化、loyalty 增強</td><td>MAR & HLT 都在吃獨立酒店</td></tr>
+<tr><td>IHG</td><td>~950K</td><td>↑（+3.5%）</td><td>midscale 品牌擴張</td><td>相對穩定</td></tr>
+<tr><td>Hyatt (H)</td><td>~340K</td><td>↑（+5%，收購驅動）</td><td>收購 Apple Leisure 擴大 all-inclusive</td><td>Hyatt 在 luxury/lifestyle 搶份額</td></tr>
+<tr><td>Airbnb</td><td>7M+ listings</td><td>↑</td><td>中低端住宿替代</td><td>侵蝕中低端市場，但不影響商務/luxury</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>穩定偏擴大</strong>。Pipeline 創新高 + Bonvoy 持續壯大 + midscale 品牌填補最後的價位段空白。</p>
+<p><strong>24 個月內最可能瓦解護城河的風險</strong>（按威脅排序）：</p>
+<ol>
+<li>AI travel agent 大幅降低品牌忠誠度的重要性（中等風險，3-5 年時間軸）</li>
+<li>全球經濟衰退導致加盟商破產潮，pipeline 簽約萎縮（低中風險）</li>
+<li>Hilton 或 Hyatt 大規模併購縮小規模差距（低風險）</li>
+</ol>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §4 財務品質 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§4｜財務品質監測</div>
+<div class="section-body">
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手比較</th></tr>
+<tr><td>FCF Margin（Total Rev）</td><td class="mono">~9.5%</td><td class="mono">7.9%</td><td class="mono">8.7%</td><td>HLT ~9%，H ~5%</td></tr>
+<tr><td>Gross Margin</td><td class="mono">~19.5%</td><td class="mono">~19.8%</td><td class="mono">20.3%</td><td>HLT ~22%，IHG ~25%</td></tr>
+<tr><td>Operating Margin</td><td class="mono">~15.5%</td><td class="mono">~15.7%</td><td class="mono">15.8%</td><td>HLT ~18%</td></tr>
+<tr><td>ROIC − WACC</td><td class="mono">~5.5%</td><td class="mono">~6.0%</td><td class="mono">~6.7%</td><td>HLT ~10%，H ~-6%</td></tr>
+<tr><td>SBC / Revenue</td><td class="mono">0.9%</td><td class="mono">~0.9%</td><td class="mono">~0.8%</td><td>HLT ~1.2%</td></tr>
+<tr><td>ROE</td><td class="mono">負權益</td><td class="mono">負權益</td><td class="mono">負權益</td><td>HLT 類似（負權益）</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF</strong>：OCF $2.70B vs NI ~$2.53B，OCF > NI，<span class="signal-green">正常</span>。無盈餘操縱跡象。</li>
+<li><strong>AR vs 營收成長</strong>：Revenue +4.3%，AR 成長大致同步，<span class="signal-green">正常</span>。</li>
+<li><strong>存貨</strong>：服務業無存貨問題，<span class="signal-green">不適用</span>。</li>
+<li><strong>FCF 轉換率</strong>：FCF/NI 從 ~85%（2024）→ 90%（2025），<span class="signal-green">改善中</span>。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>3 年回購 vs FCF</td><td>回購 ~$11.7B vs FCF ~$6.5B → 回購/FCF = 180%</td><td><span class="signal-red">⚠️ 超過 FCF，動用債務回購</span></td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>原 CAGR 12% → 剔除後 ~8%（差距 4%p）</td><td>差距 &lt; 5%p，<span class="signal-yellow">邊界但可接受</span></td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>3 年均價估 ~$220-260 vs 當前 $354.55</td><td><span class="signal-green">低於當前股價 → 回購歷史價格合理</span></td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>~4.5%</td><td>EPS 12% 遠高於 Revenue 4.5%，差距來自回購 4%p + 營運槓桿 3.5%p</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §5 產業格局 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+<div class="section-body">
+
+<h3>市場量化</h3>
+<ul>
+<li><strong>TAM</strong>：全球酒店市場 $784.8B（2023），CAGR 5.3%，預計 2030 年達 $1,126B</li>
+<li><strong>滲透率</strong>：Marriott ~10.5% 全球客房市佔（品牌酒店 vs 全球酒店總量）</li>
+<li><strong>供需</strong>：全球新酒店供給成長 ~3-4%/年，需求（RevPAR）成長 2-3%/年 → 供需基本平衡</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游（加盟商/業主）</strong>：Marriott 作為最大品牌方擁有強議價權，加盟商需要 Marriott 品牌獲取更高 ADR 和入住率。但加盟商數量龐大且分散，Marriott 無法單方面提高費率。Royalty rate amendment 在 2026 帶來增量（信用卡費用 +35%）。</li>
+<li><strong>對下游（旅客）</strong>：個人消費者分散，Bonvoy 忠誠計劃是主要黏性工具。企業客戶集中度較高（政府、大型企業差旅），有一定議價權。</li>
+<li><strong>地理分布</strong>：US&C 占系統 ~56%，國際 ~44%。國際成長更快（net rooms 中 70% 來自國際）。中國曝險 ~5%（Greater China RevPAR 疲軟）。</li>
+</ul>
+
+<h3>營收組成（Net Revenue，排除 cost reimbursements）</h3>
+<table>
+<tr><th>業務段</th><th>FY2025 Revenue</th><th>占比</th><th>YoY 成長</th></tr>
+<tr><td>Franchise fees</td><td class="mono">$3.33B</td><td>50%</td><td>+6.8%</td></tr>
+<tr><td>Base management fees</td><td class="mono">$2.11B</td><td>31%</td><td>+2.7%</td></tr>
+<tr><td>Incentive management fees (IMF)</td><td class="mono">~$0.8B</td><td>12%</td><td>+3%</td></tr>
+<tr><td>Owned/Leased/Other</td><td class="mono">$1.68B</td><td>7%（total rev 基礎）</td><td>+8.3%</td></tr>
+</table>
+<p><strong>注：</strong>Cost reimbursements $19.5B（占總收入 74.5%）為 pass-through，不計入業務收入分析。Net revenue 加總 ≈ $6.7B。業務段權重加總 = 100%（以 Net Revenue 為基準）。</p>
+
+<h3>單位經濟</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>趨勢</th></tr>
+<tr><td>Global RevPAR</td><td>+15%</td><td>+4.3%</td><td>+3.6%</td><td>↓ 正規化中</td></tr>
+<tr><td>US&C RevPAR</td><td>+5.5%</td><td>+4.1%</td><td>~flat Q4</td><td>↓</td></tr>
+<tr><td>International RevPAR</td><td>+25%+</td><td>+7.2%</td><td>+6.1%</td><td>↓ 但仍領先</td></tr>
+<tr><td>Fee Revenue per Room（粗估）</td><td>~$3,200</td><td>~$3,100</td><td>~$3,030</td><td>→ 穩定（客房數增加稀釋單位值）</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §6 治理 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§6｜公司治理與資本配置</div>
+<div class="section-body">
+
+<h3>1. 股東/股權結構</h3>
+<ul>
+<li><strong>Marriott 家族</strong>：J.W. Marriott III 持有 73.82M 股（27.86%），為最大個人股東。家族保持深度參與但<strong>無 dual-class 投票權</strong>——標準 one-share-one-vote 結構。</li>
+<li><strong>機構投資人</strong>：~65%（Vanguard、BlackRock、State Street 為前三大機構持股人）。</li>
+<li><strong>Public float</strong>：因持續回購而縮小，被動基金相對權重增加。</li>
+</ul>
+
+<h3>2. 資本配置方向</h3>
+<ul>
+<li><strong>優先順序</strong>：回購 >> 分紅 > Capex > 併購</li>
+<li>FY2025：回購 + 分紅合計 >$4B，FCF 僅 $2.27B → <strong>動用債務進行回購</strong></li>
+<li>Capex ~$0.5B（極低，asset-light 模式）</li>
+<li>技術投資 $1.1B（2026E），其中 1/3 用於 AI/digital transformation</li>
+<li>近年無重大併購（2016 Starwood 後策略轉向有機成長）</li>
+</ul>
+
+<h3>3. 管理層薪酬結構</h3>
+<table>
+<tr><th>組成</th><th>CEO（Capuano）</th><th>占比</th></tr>
+<tr><td>固定薪</td><td class="mono">$1.40M</td><td>6.4%</td></tr>
+<tr><td>績效獎金</td><td class="mono">$4.34M</td><td>19.8%</td></tr>
+<tr><td>股票期權</td><td class="mono">$3.88M</td><td>17.7%</td></tr>
+<tr><td>股權激勵（RSU）</td><td class="mono">$11.60M</td><td>52.9%</td></tr>
+<tr><td>其他</td><td class="mono">$0.72M</td><td>3.3%</td></tr>
+<tr><td><strong>Total</strong></td><td class="mono"><strong>$21.93M</strong></td><td>100%</td></tr>
+</table>
+<p>績效連結占比 ~90%（獎金 + 股權），與股東利益高度綁定。CEO/員工薪酬比 475x。CFO 總薪酬 $6.85M。</p>
+
+<h3>4. 過去 12 個月重大內部人交易</h3>
+<table>
+<tr><th>日期</th><th>內部人</th><th>動作</th><th>股數</th><th>金額</th></tr>
+<tr><td>2026-02-20</td><td>Rajeev Menon（APEC President）</td><td>賣出</td><td>3,492</td><td>$1.24M</td></tr>
+<tr><td>2026-02-17</td><td>未公開</td><td>計劃賣出</td><td>4,000</td><td>$1.44M</td></tr>
+<tr><td>2025-06-25</td><td>Rajeev Menon</td><td>賣出</td><td>2,500</td><td>$0.67M</td></tr>
+<tr><td>2025-02-21</td><td>Kathleen Oberg（CFO）</td><td>賣出</td><td>14,498</td><td>$4.03M</td></tr>
+</table>
+<p><strong>6 個月內：9 次賣出、0 次買入</strong>。賣出金額相對持股規模不大，多為計劃性 vesting 後出售。無異常大額拋售，但零買入值得關注。</p>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ §7 估值 ═══════════════════════════════════════════════ -->
+<div class="section">
+<div class="section-title">§7｜估值診斷（7.0–7.5）</div>
+<div class="section-body">
+
+<h3>7.0｜估值體系診斷：市場現在用哪把尺？</h3>
+
+<h4>A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>是否主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>✓ 主流</strong></td><td>Market 用 Forward PE ~31x 和 EV/EBITDA ~21x 定價 Marriott</td></tr>
+<tr><td>成長型</td><td>PEG</td><td>次要</td><td>PEG 2.56 偏高但市場仍接受，反映品質溢價</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>不適用</td><td>負權益，P/B 無意義</td></tr>
+<tr><td>現金流型</td><td>P/FCF、DCF</td><td>次要</td><td>P/FCF ~41x（total rev 口徑），部分機構投資人使用</td></tr>
+<tr><td>行業專屬</td><td>EV/Room</td><td>參考</td><td>EV/Room ~$53K，中等偏高</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：盈利能力型（P/E + EV/EBITDA）</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<p><strong>情境一（資產→盈利）</strong>：不適用，Marriott 已長期被盈利估值。</p>
+<p><strong>情境二（新度量衡）</strong>：Marriott 的 Bonvoy 會員數和信用卡收入（2026E +35%）可能成為新的估值維度。若市場開始以 EV/Bonvoy Member 定價（類似 EV/Subscriber），可能觸發重新定價。作廢條件：Bonvoy 會員活躍率下滑或信用卡費率被監管壓縮。</p>
+<p><strong>情境三（定價偏好漂移）</strong>：酒店業正從「疫後復甦高成長」敘事過渡到「穩態低成長品質資產」。這可能支撐估值維持高位但不再擴張。</p>
+
+<h4>C｜估值尺可能被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>影響</th></tr>
+<tr><td>Bonvoy 貨幣化加速</td><td>信用卡費收入 +35%，正在發生</td><td>可能支撐 SaaS-like recurring revenue 估值</td></tr>
+<tr><td>RevPAR 持續放緩至 0%</td><td>目前 1.5-2.5%E，尚未發生</td><td>若發生，成長估值失效，倍數壓縮</td></tr>
+<tr><td>全球經濟衰退</td><td>目前無跡象</td><td>RevPAR 轉負 → PE 壓縮至歷史低位 18-20x</td></tr>
+</table>
+<p><strong>估值體系診斷結論</strong>：<span class="signal-green">🟢 估值邏輯穩定</span>（P/E + EV/EBITDA 為主流，短期無漂移信號）</p>
+
+<h3>7.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td class="mono">35.3x</td><td class="mono">19.4x</td><td class="mono">28.0x</td><td class="mono">42.0x</td><td class="mono">70%</td></tr>
+<tr><td>Forward P/E（NTM）</td><td class="mono">31.0x</td><td class="mono">18.0x</td><td class="mono">25.0x</td><td class="mono">35.0x</td><td class="mono">76%</td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">20.8x</td><td class="mono">13.0x</td><td class="mono">18.0x</td><td class="mono">24.0x</td><td class="mono">71%</td></tr>
+<tr><td>P/FCF</td><td class="mono">~41x</td><td class="mono">~20x</td><td class="mono">~35x</td><td class="mono">~55x</td><td class="mono">60%</td></tr>
+<tr><td>P/S</td><td class="mono">~3.6x</td><td class="mono">~1.8x</td><td class="mono">~3.0x</td><td class="mono">~4.0x</td><td class="mono">82%</td></tr>
+</table>
+<p><strong>Forward P/E 分位公式</strong>：(31.0 − 18.0) / (35.0 − 18.0) × 100% = <strong>76%</strong></p>
+
+<p><strong>解讀：</strong></p>
+<ol>
+<li>當前估值情緒：<strong>偏高</strong>（Forward PE 76% 分位，接近但未達過熱區）</li>
+<li>上次此分位時（2021 初），RevPAR 正從 COVID 谷底反彈，市場定價強勁復甦預期。目前基本面更穩但成長已放緩。</li>
+<li>推動因素：<strong>盈利修正</strong>（EPS guidance +13-15%）為主 + 市場情緒（資產輕型模式獲避險溢價）。</li>
+</ol>
+
+<h3>7.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td class="mono">31.0x</td><td>—</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td class="mono">12.1%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（Non-GAAP，3Y）</td><td class="mono">2.56</td><td>&lt; 1 便宜 / 1-2 合理 / &gt; 2 貴</td><td><span class="signal-red">貴</span></td></tr>
+<tr><td>PEG（GAAP，3Y）</td><td class="mono">~2.8</td><td>同上</td><td><span class="signal-red">貴</span></td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td class="mono">~12%</td><td>—</td><td>Runway 長但 RevPAR 減速</td></tr>
+<tr><td>PEG（5Y，Non-GAAP）</td><td class="mono">~2.6</td><td>—</td><td>3Y 與 5Y 差異不大 → 成長穩定但非加速</td></tr>
+</table>
+<p><strong>PEG 結論</strong>：PEG > 2 在所有口徑下均偏貴。市場為 Marriott 的品質溢價（護城河 + asset-light + Bonvoy）支付了明顯高於公允的成長對價。結構性原因：Marriott 是稀缺的大型資產輕型酒店平台，scarcity premium 推高了 PEG。</p>
+
+<h3>7.3｜Reverse DCF：當前股價隱含了什麼？</h3>
+
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td class="mono">$93.84B</td><td>搜尋確認</td></tr>
+<tr><td>基期 FCF</td><td class="mono">$2.267B</td><td>FY2025 actual</td></tr>
+<tr><td>WACC</td><td class="mono">9.3%</td><td>10Y UST 4.3% + Beta 1.1 × ERP 4.5%</td></tr>
+<tr><td>永續成長率</td><td class="mono">3.0%</td><td>酒店業 long-term inflation + real growth</td></tr>
+<tr><td>預測期</td><td class="mono">10 年</td><td>標準</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p class="mono">使 DCF 現值 = 當前市值 $93.84B，所需前 10 年 FCF CAGR = <strong>~14.5%</strong></p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>位置</th></tr>
+<tr><td>過去 3 年 FCF CAGR</td><td class="mono">~7%（受 COVID 基期影響）</td><td>隱含值遠高於歷史</td></tr>
+<tr><td>分析師 EPS CAGR（§2）</td><td class="mono">12.1%</td><td>隱含值高於共識 2.4%p</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td class="mono">HLT ~12%</td><td>隱含值要求行業最快</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 CAGR 14.5% 需要以下條件同時成立：</p>
+<ul>
+<li>Revenue 年增 ~8%（基於 FCF Margin 維持 ~8.7%），需 rooms growth 加速至 5%+ 並維持 RevPAR 3%+</li>
+<li>或 FCF Margin 從 8.7% 擴大至 ~12%（需 fee revenue 佔比進一步提升 + 成本控制）</li>
+<li>此條件在 rooms growth 加速 + Bonvoy 信用卡費收入持續高增 + 技術降本的情境下才合理</li>
+</ul>
+
+<p><strong>隱含預期判斷</strong>：<span class="signal-yellow">🟡 隱含預期合理偏激進</span> — 隱含 14.5% FCF CAGR 高於所有可比基準，需要多個有利條件同時成立。不算瘋狂但缺乏安全邊際。</p>
+
+<h3>7.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>MAR</strong></td><td class="mono">$94B</td><td class="mono">31.0x</td><td class="mono">20.8x</td><td class="mono">2.56</td><td class="mono">8.7%</td><td class="mono">12.1%</td><td class="mono">~16%</td></tr>
+<tr><td>HLT</td><td class="mono">$70B</td><td class="mono">33.1x</td><td class="mono">~22x</td><td class="mono">~2.5</td><td class="mono">~9%</td><td class="mono">~13%</td><td class="mono">~25%</td></tr>
+<tr><td>H (Hyatt)</td><td class="mono">$18B</td><td class="mono">47.8x</td><td class="mono">~18x</td><td class="mono">~4.0</td><td class="mono">~5%</td><td class="mono">~10%</td><td class="mono">~3.5%</td></tr>
+<tr><td>IHG</td><td class="mono">$22B</td><td class="mono">24.2x</td><td class="mono">~16x</td><td class="mono">~2.0</td><td class="mono">~12%</td><td class="mono">~10%</td><td class="mono">~18%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td class="mono">~30x</td><td class="mono">~19x</td><td class="mono">~2.5</td><td class="mono">~8%</td><td class="mono">~11%</td><td class="mono">~15%</td></tr>
+</table>
+
+<p><strong>同業溢折價邏輯：</strong></p>
+<ol>
+<li>MAR Forward PE 31x vs 產業中位 ~30x，僅微溢價 3%。但 vs IHG（24x）有 28% 溢價。</li>
+<li>支撐溢價的因素：規模（全球最大）+ Bonvoy 規模效應 + pipeline 領先。但 ROIC 低於 HLT，成長率與 HLT 接近。</li>
+<li>若向 IHG 中位數均值回歸（PE 24x），股價 → ~$275（-22%）。</li>
+</ol>
+
+<p><strong>橫向風報比比較：</strong></p>
+<table>
+<tr><th>問題</th><th>MAR</th><th>IHG</th></tr>
+<tr><td>主假設兌現上行最大？</td><td>~12%（PE 已高，上行有限）</td><td>~30%（PE 較低，成長修復空間大）</td></tr>
+<tr><td>主假設落空跌幅最小？</td><td>~-35%（PE 壓縮空間大）</td><td>~-20%（PE 已較低）</td></tr>
+<tr><td>綜合風報比最優？</td><td>R:R ~0.2x</td><td>R:R ~1.5x</td></tr>
+</table>
+<p><strong>最終橫向比較結論</strong>：<span class="signal-yellow">🥈 此標的為次優選</span> — MAR 品質最優但估值最高，同主題中 IHG 可能提供更佳風報比。</p>
+
+<h3>7.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（7.0）</td><td><span class="signal-green">🟢 穩定</span></td><td>P/E + EV/EBITDA 主流定價，短期無漂移</td></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="signal-yellow">🟡 偏高</span></td><td>Forward PE 76% 分位，接近但未達過熱</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="signal-red">🔴 貴</span></td><td>PEG 2.56 > 2，所有口徑均偏貴</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="signal-yellow">🟡 合理偏激進</span></td><td>隱含 14.5% FCF CAGR 高於共識和歷史</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="signal-yellow">🟡 微溢價</span></td><td>vs 產業中位微溢價 3%，vs IHG 溢價 28%</td></tr>
+</table>
+
+<p><strong>當前定價判斷</strong>：<span class="signal-yellow">🟡 公允定價偏貴</span> — 品質溢價合理但成長不足以支撐進一步上行。</p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷</th><th>影響</th></tr>
+<tr><td>① 護城河（§3）</td><td>8/10</td><td>+2x vs 基準</td></tr>
+<tr><td>② 成長年數（§2.5A）</td><td>≥ 10 年 🟡</td><td>±0</td></tr>
+<tr><td>③ 成長品質（§2.5B）</td><td>量驅動為主</td><td>−1x</td></tr>
+<tr><td>④ 護城河連動（§2.5C）</td><td>強化型</td><td>+1x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC-WACC 6.7%，穩定</td><td>±0</td></tr>
+<tr><td>⑥ 衰退信號（§2.5）</td><td>1 個亮燈</td><td>−1x</td></tr>
+<tr><td>⑦ 估值體系（§7.0）</td><td>穩定</td><td>±0</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.3%</td><td>高利率對成長股溫和壓縮</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td><strong>20x</strong></td><td><strong>調整後：20x ∼ 23x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考</strong>：高 $345 / 中位 $282-302 / 低 $205（n≈26 位）<br>
+不認同中位數 $282-302，認為偏低。分歧點：分析師可能未充分反映 Bonvoy 信用卡費收入增量和 pipeline 加速。</p>
+
+<p><strong>本標的基準長期合理倍數</strong>：20x（引用 §2.5 🟡 中等可見度）<br>
+v9.0 三引擎均未觸發 → 調整係數 1.0<br>
+AI 🟢 → × 1.10<br>
+<strong>最終 v9.0 長期合理倍數 = 20 × 1.0 × 1.10 = 22.0x</strong></p>
+
+</div>
+</div>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>
