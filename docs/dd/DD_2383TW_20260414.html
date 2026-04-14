@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v9.0">
+<title>DD Report — 2383.TW 台光電 | 2026-04-14</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFF;--title:#1E3A5F;--accent:#3B82F6;--beat-bg:#DCFCE7;--beat-txt:#166534;--miss-bg:#FEE2E2;--miss-txt:#991B1B;--neutral-bg:#FEF9C3;--neutral-txt:#92400E;--trap-bg:#FFF0E6;--trap-border:#F97316;--trap-txt:#C2410C;--anchor-bg:#EFF6FF;--bull-bg:#F0FDF4;--bull-border:#16A34A;--bear-bg:#FFF1F2;--bear-border:#DC2626;--arb-bg:#F5F3FF;--arb-border:#7C3AED;--verdict-bg:#FFFBEB;--verdict-border:#D97706;--verdict-txt:#92400E;--short-bg:#F0F9FF;--short-border:#0284C7;--mid-bg:#F5F3FF;--mid-border:#7C3AED;--long-bg:#ECFDF5;--long-border:#059669;--long-txt:#065F46;--pass-bg:#DCFCE7;--pass-txt:#166534;--fail-bg:#FEE2E2;--fail-txt:#991B1B;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:#1E293B;line-height:1.7;font-size:15px;}
+.header{position:sticky;top:0;z-index:100;background:var(--title);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.header span{margin-right:20px;}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px 80px;}
+.section{background:var(--card);border-radius:6px;margin-bottom:20px;padding:28px 32px;border-left:4px solid var(--accent);}
+.section-title{color:var(--title);font-size:20px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #E2E8F0;}
+.section-subtitle{color:var(--title);font-size:16px;font-weight:600;margin:18px 0 10px;}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px;}
+th{background:var(--title);color:#fff;padding:8px 10px;text-align:left;font-weight:500;}
+td{padding:7px 10px;border-bottom:1px solid #E2E8F0;}
+tr:nth-child(even) td{background:#F1F5F9;}
+.beat{background:var(--beat-bg);color:var(--beat-txt);padding:2px 8px;border-radius:4px;font-weight:600;font-size:13px;}
+.miss{background:var(--miss-bg);color:var(--miss-txt);padding:2px 8px;border-radius:4px;font-weight:600;font-size:13px;}
+.neutral{background:var(--neutral-bg);color:var(--neutral-txt);padding:2px 8px;border-radius:4px;font-weight:600;font-size:13px;}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-border);padding:16px 20px;margin:14px 0;border-radius:0 6px 6px 0;}
+.trap-box h4{color:var(--trap-txt);margin-bottom:8px;}
+.anchor-box{background:var(--anchor-bg);border-left:4px solid var(--accent);padding:16px 20px;margin:14px 0;border-radius:0 6px 6px 0;}
+.anchor-box h4{color:var(--title);margin-bottom:8px;}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:16px 0;}
+.debate-card{padding:16px;border-radius:6px;}
+.bull-card{background:var(--bull-bg);border-left:4px solid var(--bull-border);}
+.bear-card{background:var(--bear-bg);border-left:4px solid var(--bear-border);}
+.arb-card{background:var(--arb-bg);border-left:4px solid var(--arb-border);}
+.verdict-card{background:var(--verdict-bg);border-left:4px solid var(--verdict-border);padding:16px 20px;margin:16px 0;border-radius:0 6px 6px 0;}
+.verdict-card h4{color:var(--verdict-txt);}
+.rr-grid{display:grid;grid-template-columns:1fr;gap:16px;margin:16px 0;}
+.rr-card{padding:16px;border-radius:6px;}
+.rr-long{background:var(--long-bg);border-left:4px solid var(--long-border);}
+.rr-long h4{color:var(--long-txt);}
+.pass{background:var(--pass-bg);color:var(--pass-txt);padding:4px 12px;border-radius:4px;font-weight:700;display:inline-block;}
+.fail{background:var(--fail-bg);color:var(--fail-txt);padding:4px 12px;border-radius:4px;font-weight:700;display:inline-block;}
+.signal{display:inline-block;padding:2px 10px;border-radius:4px;font-weight:600;font-size:13px;margin:2px;}
+.signal-green{background:#DCFCE7;color:#166534;}
+.signal-yellow{background:#FEF9C3;color:#92400E;}
+.signal-red{background:#FEE2E2;color:#991B1B;}
+.signal-blue{background:#EFF6FF;color:#1E3A5F;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.note{font-size:13px;color:#64748B;margin-top:6px;}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--title);color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;z-index:99;}
+@media print{.header,.print-btn{display:none!important;}.section{break-inside:avoid;}}
+@media(max-width:768px){.debate-grid{grid-template-columns:1fr;}}
+.quality-badge{display:inline-block;padding:4px 14px;border-radius:20px;font-weight:700;font-size:15px;margin:4px;}
+.quality-high{background:#DCFCE7;color:#166534;}
+.quality-mh{background:#EFF6FF;color:#1E3A5F;}
+.quality-m{background:#FEF9C3;color:#92400E;}
+.quality-w{background:#FEE2E2;color:#991B1B;}
+</style>
+</head>
+<body>
+<div class="header">
+<div>
+<span><strong>2383.TW 台光電</strong> — Elite Material Co., Ltd.</span>
+<span>資料抓取：2026-04-14</span>
+<span>最新股價：NT$3,605</span>
+<span>最近財報：FY2025（2026-03-12 法說會）</span>
+</div>
+<div>DD Schema v9.0</div>
+</div>
+
+<div class="container">
+
+<!-- ========== §8 投資結論 ========== -->
+<div class="section" id="s8">
+<div class="section-title">§8｜投資結論</div>
+<p class="note" style="margin-bottom:14px;">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<div class="anchor-box">
+<h4>v9.0 動態 R:R 核心指標（引用 §7.7）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>綜合品質分</td><td><span class="quality-badge quality-m">6.85 — 中品質 M</span></td></tr>
+<tr><td>長期目標價</td><td class="mono">NT$5,088</td></tr>
+<tr><td>下行錨點</td><td class="mono">NT$467</td></tr>
+<tr><td>上行空間</td><td class="mono">+41.1%</td></tr>
+<tr><td>下行距離</td><td class="mono">-87.0%</td></tr>
+<tr><td><strong>長期 R:R</strong></td><td class="mono"><strong>0.47x</strong></td></tr>
+<tr><td>R:R 門檻（M 查表）</td><td class="mono">3.00x</td></tr>
+<tr><td>判定</td><td><span class="fail">❌ Fail</span></td></tr>
+<tr><td>波動率紅燈</td><td class="mono">2/4</td></tr>
+<tr><td>建倉節奏</td><td>R:R 未達門檻，暫不建倉。等待回調至 NT$1,500 以下再評估。</td></tr>
+</table>
+</div>
+
+<div class="section-subtitle">財報信號與假設校準</div>
+<ul>
+<li><strong>H1（AI 伺服器 CCL 需求持續高增長）當前狀態</strong>：<span class="beat">強化</span> — FY2025 營收 943 億 YoY+46%，AI/Infra 佔比突破 65%，全產全銷態勢延續至 2026。</li>
+<li><strong>H2（高階材料 ASP 持續提升帶動毛利率擴張）當前狀態</strong>：<span class="beat">強化</span> — 毛利率從 2022 年 25.1% 升至 2025 年 29.8%，高速材料佔比持續攀升，M9 下一代材料預計 2026H2 量產。</li>
+<li><strong>H3（估值倍數從傳統材料股向 AI 供應鏈成長股重估）當前狀態</strong>：<span class="beat">強化</span> — PE 從 2022 年 11x 飆升至當前 TTM 86x，市場已充分給予 AI 溢價。但風險是 re-rating 已大幅完成，後續空間有限。</li>
+<li><strong>FY2025 全年財報讓隱含預期更容易兌現</strong>，但當前股價已充分反映 2027 年以後的成長預期，安全邊際極度薄弱。</li>
+</ul>
+
+<div class="section-subtitle">進場 / 觀望 / 迴避</div>
+<p><strong style="font-size:18px;color:var(--neutral-txt);background:var(--neutral-bg);padding:6px 16px;border-radius:4px;">觀望</strong></p>
+
+<p style="margin-top:12px;"><strong>① 短期信號（0~12 個月）</strong><br>
+FY2025 全面超預期，2026Q1 月營收維持高檔。但股價已從 52 週低點 447 飆升至 3,605（+706%），TTM PE 86x 為歷史極端值。短期回調風險極大，任何財報未達預期（毛利率、訂單指引）都可能觸發劇烈修正。紅燈 2/4 確認波動率過熱。</p>
+
+<p><strong>② 中期成長確信度（1~3 年）</strong><br>
+EPS CAGR 約 34%（FY2025→FY2028E），驅動力來自 AI 伺服器 CCL 規格升級（800G→1.6T 交換器）、產能擴張（2025 年底 580 萬張→2027 年 945 萬張）、高階材料 ASP 提升。成長可見度 <span class="signal signal-green">高</span>，但已完全被定價。Forward PE ~56x 對應 PEG 1.65 已接近合理上緣。</p>
+
+<p><strong>③ 長期護城河邏輯（3 年後）</strong><br>
+台光電在高速無鹵 CCL 市佔率全球第一，技術領先同業 1-2 個世代，客戶涵蓋 NVIDIA、AWS、Google ASIC。Runway 約 7 年（AI 基建成長期），ROIC 維持 30%+ 水平。護城河為「強化型」——規模越大，材料認證壁壘越高。但長期需留意：(1) 大陸 SYTECH 追趕速度、(2) CCL 作為材料商利潤天花板、(3) AI capex 週期反轉風險。</p>
+
+<div class="trap-box">
+<h4>這是價值陷阱嗎？</h4>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td><span class="beat">非陷阱</span> — 這不是價值陷阱議題（股價處於歷史極端高估區間），真正風險是成長股泡沫而非價值陷阱</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>ROIC 從 22% 回升至 34%，毛利率連續 4 年擴張（25%→30%），營收 CAGR 3 年 35%+ 全部有機成長，FCF/NI 轉換率受產能擴張壓抑但可理解</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>不適用（非低估值情境）。真正風險是：當前 PE 86x 已 price-in 2028 年以後的成長，一旦 AI capex 週期反轉或毛利率見頂，股價可能腰斬</td></tr>
+<tr><td><strong>如何判斷風險是否正在發生？</strong></td><td>(1) 月營收 YoY 增速降至 20% 以下（當前 34-46%）；(2) 毛利率連續 2 季低於 28%</td></tr>
+</table>
+<p style="margin-top:10px;"><strong>最終定性：</strong><span class="signal signal-green">🟢 非陷阱</span>（但高估值風險極大）</p>
+</div>
+
+<div class="section-subtitle">條件式進場判斷</div>
+<table>
+<tr><th>條件類型</th><th>具體內容</th></tr>
+<tr><td><strong>估值條件</strong></td><td>Forward PE 回落至 30x 以下（對應 FY2026E EPS 64 → 股價 NT$1,920 以下），或等待 2027 年 EPS 兌現 80 TWD 使 Forward PE 自然回落</td></tr>
+<tr><td><strong>基本面條件</strong></td><td>下一季財報需確認：(1) 毛利率維持 29%+；(2) AI/Infra 營收佔比持續擴大；(3) 新產能爬坡順利</td></tr>
+<tr><td><strong>陷阱排除條件</strong></td><td>不適用（非陷阱情境）。估值風險信號：Forward PE 持續 > 50x 且 EPS 上修動能停滯</td></tr>
+<tr><td><strong>事件觸發條件</strong></td><td>股價回調至 MA60（NT$2,296）附近，且基本面無惡化跡象時，可開始首次評估建倉</td></tr>
+</table>
+
+<div class="section-subtitle">下行風險量化（引用 §2.5E）</div>
+<p>若 3 年後成長率降至 10%，合理 PE 壓縮至 18x，估值壓縮幅度 <strong>-67%</strong>（從當前 3,605 至約 1,190）<br>
+若 3 年後成長率降至 5%，合理 PE 壓縮至 14x，估值壓縮幅度 <strong>-74%</strong>（從當前 3,605 至約 937）</p>
+
+<div class="section-subtitle">最關鍵監測指標</div>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>AI 伺服器 CCL 月營收 YoY 增速</td><td>§0.5 H1</td><td class="signal signal-blue">核心假設驗證信號</td><td>YoY < 20% 連續 2 個月</td></tr>
+<tr><td>2</td><td>毛利率趨勢</td><td>§2.5 / §3</td><td class="signal signal-blue">長期成長領先信號</td><td>連續 2 季 < 28%</td></tr>
+<tr><td>3</td><td>Forward PE vs. EPS 上修動能</td><td>§7 / §1</td><td>短期估值信號</td><td>Forward PE > 60x 且共識 EPS 停止上修</td></tr>
+</table>
+</div>
+
+<!-- ========== §7.7 綜合品質分驅動動態 R:R ========== -->
+<div class="section" id="s77">
+<div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div>
+
+<div class="section-subtitle">A｜綜合品質分計算</div>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+<tr><td>護城河</td><td>§3 評分</td><td class="mono">7</td><td class="mono">0.30</td><td class="mono">2.10</td></tr>
+<tr><td>長期成長性</td><td>§2.5 評級 🟡 = 6</td><td class="mono">6</td><td class="mono">0.45</td><td class="mono">2.70</td></tr>
+<tr><td>財務品質</td><td>綜合 ROIC 34%、FCF Margin 2.6%、EPS YoY +50%</td><td class="mono">7</td><td class="mono">0.10</td><td class="mono">0.70</td></tr>
+<tr><td>AI 風險</td><td>§2.5 F 評級 🟢 = 9</td><td class="mono">9</td><td class="mono">0.15</td><td class="mono">1.35</td></tr>
+<tr><td colspan="4"><strong>綜合品質分</strong></td><td class="mono"><strong>6.85</strong></td></tr>
+</table>
+<p><strong>判定分層</strong>：<span class="quality-badge quality-m">6.85 → 中品質 M（5.5-7.0）</span>，R:R 門檻 3.0x，底倉 10%（目標倉位的 10%）</p>
+
+<div class="section-subtitle">B｜上行三引擎（取較高不疊加）</div>
+<p><strong>引擎 A：ROIC 溢價</strong><br>
+觸發條件：ROIC 3 年平均 > 20% 且連續 3 年向上擴大<br>
+3 年平均 ROIC = (22.04 + 29.41 + 33.74) / 3 = 28.4%，且 22%→29%→34% 連續擴大<br>
+本標的觸發狀態：<span class="beat">✅ 觸發</span>，引擎 A 調整係數 = 1.175</p>
+
+<p><strong>引擎 B：PEG 動態天花板</strong><br>
+觸發條件：預估 EPS 5 年 CAGR > 20%<br>
+5 年 CAGR ≈ 25%（§7.7 E 計算）> 20%<br>
+PEG 天花板查表：中品質 M + 成長 🟡 → 其他 → PEG 天花板 = 1.5<br>
+目標 P/E = 25 × 1.5 = 37.5x → 調整係數 = 37.5 / 20 = 1.875<br>
+本標的觸發狀態：<span class="beat">✅ 觸發</span>，引擎 B 調整係數 = 1.875</p>
+
+<p><strong>引擎 C：護城河溢價</strong><br>
+觸發條件：護城河 ≥ 9 分<br>
+本標的護城河 = 7 分 < 9<br>
+本標的觸發狀態：<span class="miss">❌ 未觸發</span></p>
+
+<table>
+<tr><th>引擎</th><th>觸發</th><th>調整係數</th></tr>
+<tr><td>A ROIC 溢價</td><td><span class="beat">✅</span></td><td class="mono">1.175</td></tr>
+<tr><td>B PEG 動態</td><td><span class="beat">✅</span></td><td class="mono">1.875</td></tr>
+<tr><td>C 護城河溢價</td><td><span class="miss">❌</span></td><td class="mono">—</td></tr>
+</table>
+<p><strong>取觸發者中最高</strong>（不疊加）：選用引擎 B，調整係數 = 1.875</p>
+
+<div class="section-subtitle">C｜AI 風險獨立疊加</div>
+<p>§2.5 F 評級：<span class="signal signal-green">🟢 AI 受益</span> → AI 調整係數 = 1.10</p>
+
+<div class="section-subtitle">D｜最終長期目標 P/E</div>
+<p class="mono" style="font-size:16px;">最終 P/E = 基準 P/E × 引擎調整 × AI 調整 = 20 × 1.875 × 1.10 = <strong>41.25x ≈ 41x</strong></p>
+
+<div class="section-subtitle">E｜長期 EPS 預估（雙源交叉驗證）</div>
+<p><strong>方法 1：§2.5 B 成長驅動分解</strong></p>
+<table>
+<tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+<tr><td>基礎設施（AI Server + Switch）</td><td>70%</td><td>25%</td><td>17.5%</td></tr>
+<tr><td>手持裝置</td><td>18%</td><td>5%</td><td>0.9%</td></tr>
+<tr><td>車用 + 其他</td><td>12%</td><td>10%</td><td>1.2%</td></tr>
+<tr><td colspan="3"><strong>合計 5 年營收 CAGR</strong></td><td class="mono"><strong>19.6%</strong></td></tr>
+</table>
+<p>考慮營運槓桿（毛利率持續擴張 + 營運效率），EPS CAGR ≈ 營收 CAGR × 1.23 = <strong>24.1%</strong></p>
+
+<p><strong>方法 2：§2.5 D ROIC × 再投資率</strong><br>
+內生成長率 = ROIC × 再投資率 = 33.74% × 0.75 = 25.3%<br>
+ROIC 趨勢調整：+0%（已處高位，假設維持）<br>
+方法 2 CAGR：<strong>25.3%</strong></p>
+
+<p><strong>採用 CAGR = (24.1% + 25.3%) / 2 = 24.7% ≈ 25%</strong></p>
+
+<div class="section-subtitle">F｜長期目標價計算</div>
+<p class="mono">5 年後 EPS = 41.67 × (1.25)^5 = 41.67 × 3.052 = <strong>127.2 TWD</strong></p>
+<p class="mono" style="font-size:16px;">長期目標 = 127.2 × 41 = <strong>NT$5,215</strong></p>
+
+<div class="section-subtitle">G｜動態下行錨點</div>
+<table>
+<tr><th>步驟</th><th>項目</th><th>數值</th></tr>
+<tr><td>步驟 1</td><td>護城河基礎下修（7 分 → -20%）</td><td class="mono">-20%</td></tr>
+<tr><td>步驟 2</td><td>產業分層調整（週期股：電子材料/半導體供應鏈 → +5%）</td><td class="mono">+5%</td></tr>
+<tr><td>步驟 3</td><td>AI 風險疊加（🟢 → -5%）</td><td class="mono">-5%</td></tr>
+<tr><td></td><td><strong>淨下修幅度</strong></td><td class="mono"><strong>-20%</strong></td></tr>
+<tr><td></td><td>壓測 EPS = 41.67 × 0.80</td><td class="mono">33.34 TWD</td></tr>
+<tr><td></td><td>恐慌 P/E（25% 分位，基於 5Y 歷史 PE 低點 11.22~高點 40.15）</td><td class="mono">14x</td></tr>
+<tr><td></td><td><strong>下行錨點 = 33.34 × 14</strong></td><td class="mono"><strong>NT$467</strong></td></tr>
+</table>
+
+<div class="section-subtitle">H｜動態 R:R 計算</div>
+<div class="rr-grid">
+<div class="rr-card rr-long">
+<h4>長期 R:R（5 年視角）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="mono">NT$3,605</td></tr>
+<tr><td>長期目標</td><td class="mono">NT$5,215</td></tr>
+<tr><td>上行空間</td><td class="mono">+44.7%</td></tr>
+<tr><td>下行錨點</td><td class="mono">NT$467</td></tr>
+<tr><td>下行距離</td><td class="mono">-87.1%</td></tr>
+<tr><td><strong>長期 R:R</strong></td><td class="mono"><strong>0.51x</strong></td></tr>
+<tr><td>R:R 門檻（M 查表）</td><td class="mono">3.00x</td></tr>
+<tr><td>判定</td><td><span class="fail">❌ Fail — R:R 0.51x 遠低於 3.0x 門檻</span></td></tr>
+</table>
+<p class="note">核心問題：股價已從 52 週低點飆漲 706%，當前價位距下行錨點 87%，距長期目標僅 45%。風險報酬嚴重不對稱——向下空間遠大於向上空間。</p>
+</div>
+</div>
+
+<div class="section-subtitle">I｜波動率燈號協議（v9.0）</div>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">3,475 / 4,114</td></tr>
+<tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">921 / 283</td></tr>
+<tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">2,880 / 3,713</td></tr>
+<tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">N/A（負值）</td></tr>
+<tr><td>當前股價</td><td class="mono">NT$3,605</td></tr>
+<tr><td><strong>🔴 紅燈數</strong></td><td class="mono"><strong>2/4</strong>（突破週線 2σ + 月線 3σ）</td></tr>
+<tr><td><strong>🟢 綠燈數</strong></td><td class="mono"><strong>0/4</strong></td></tr>
+</table>
+
+<div class="section-subtitle">J｜二維建倉矩陣（品質 M × 紅燈 2）</div>
+<p>查表：中品質（5.5-7.0）× 紅燈 2 → <strong>5+5</strong>（現在 5% + MA60 回踩 5%）</p>
+<p>但因 R:R 0.51x 遠低於 3.0x 門檻，<strong>暫不建倉</strong>。</p>
+
+<div class="section-subtitle">K｜綠燈加碼放大</div>
+<p>綠燈 0 → 不加碼，按 J 表執行</p>
+
+<div class="section-subtitle">L｜戰術 MA</div>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>MA200</td><td class="mono">NT$1,552</td><td>股價 3,605 &gt; MA200，斜率向上 → 倉位權限 100%</td></tr>
+<tr><td>MA60</td><td class="mono">NT$2,296</td><td>股價遠高於 MA60（+57%），尚未回踩</td></tr>
+<tr><td>MA104w</td><td class="mono">NT$991</td><td>股價遠高於 MA104w（+264%）</td></tr>
+</table>
+
+<div class="section-subtitle">M｜最終建倉建議</div>
+<table>
+<tr><th>階段</th><th>倉位（目標倉位的%）</th><th>觸發條件</th></tr>
+<tr><td>立即</td><td class="mono">0%</td><td>R:R 0.51x 未達 3.0x 門檻，暫不建倉</td></tr>
+<tr><td>觀察區</td><td class="mono">5%</td><td>股價回調至 NT$1,500~2,000（Forward PE 23~31x），且基本面無惡化</td></tr>
+<tr><td>積極區</td><td class="mono">+5%</td><td>MA60 回踩不破 + 量縮 + R:R 重新達標</td></tr>
+<tr><td><strong>目前建議</strong></td><td class="mono"><strong>0%</strong></td><td><strong>觀望，等待估值修正</strong></td></tr>
+</table>
+<p class="note">底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<!-- ========== §7.6 三方辯論摘要 ========== -->
+<div class="section" id="s76">
+<div class="section-title">§7.6｜三方辯論摘要</div>
+
+<div class="debate-grid">
+<div class="debate-card bull-card">
+<h4 style="color:#16A34A;">多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr>
+<tr><td>1</td><td>高速 CCL 全球市佔率第一，技術領先同業 1-2 世代，客戶鎖定率極高</td><td>§3：NVIDIA、AWS、Google 均為客戶</td></tr>
+<tr><td>2</td><td>AI 伺服器驅動 CCL 規格持續升級，ASP 提升 + 量增雙引擎推動 EPS 爆發</td><td>§2.5：FY2025 EPS 41.67（+50% YoY）</td></tr>
+<tr><td>3</td><td>ROIC 34% 且持續擴大，再投資率高，內生成長引擎強勁</td><td>§4：ROIC 22%→34% 三年擴張</td></tr>
+</table>
+<p style="margin-top:10px;"><strong>多頭最強一句話</strong>：台光電是 AI 基建最上游的「軍火商」，每顆 AI 晶片都需要它的高速基材，技術壁壘 + 產能壁壘 = 不可繞過的咽喉點。</p>
+</div>
+
+<div class="debate-card bear-card">
+<h4 style="color:#DC2626;">空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>AI capex 週期反轉：雲端大廠縮減資本支出，CCL 需求急凍，產能利用率暴跌</td><td>§2.5：月營收 YoY < 10%</td></tr>
+<tr><td>2</td><td>估值正常化：TTM PE 86x → 歷史均值 20x 意味著 -77% 跌幅</td><td>§7.3：Forward PE > 50x 無 EPS 上修支撐</td></tr>
+<tr><td>3</td><td>大陸 SYTECH 追趕突破，價格戰壓縮毛利率 3-5%p</td><td>§3：毛利率 < 25%</td></tr>
+</table>
+<p style="margin-top:10px;"><strong>空頭最大威脅</strong>：這檔股票一年漲了 7 倍，PE 從 11x 飆到 86x。歷史上任何材料股維持 80x+ PE 超過 12 個月的案例幾乎不存在——不是基本面問題，是數學問題。</p>
+</div>
+
+<div class="debate-card arb-card">
+<h4 style="color:#7C3AED;">估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+<tr><td>Reverse DCF 隱含 CAGR vs 歷史</td><td>隱含 ~45% vs 歷史 3Y FCF CAGR ~17%</td><td class="mono">0/2</td></tr>
+<tr><td>vs 分析師共識</td><td>隱含 ~45% vs 共識 EPS CAGR ~34%</td><td class="mono">1/2</td></tr>
+<tr><td>vs 同業最快 CAGR</td><td>隱含 ~45% vs ITEQ ~36%</td><td class="mono">0/2</td></tr>
+<tr><td>達成條件苛刻度</td><td>需 AI capex 零週期性 + 市佔持續擴大 + 毛利率不回落</td><td class="mono">0/2</td></tr>
+<tr><td>歷史先例</td><td>台灣材料股從未持續維持 40%+ FCF CAGR 達 10 年</td><td class="mono">0/2</td></tr>
+</table>
+<p style="margin-top:10px;"><strong>隱含預期可信度評分：1/10</strong></p>
+<p><strong>仲裁員一句話</strong>：當前股價隱含的 FCF CAGR 約 45%，遠超分析師 EPS 共識 34% 和歷史實績。市場定價已將所有樂觀假設推至極限，任何邊際失望都將觸發劇烈回調。</p>
+</div>
+</div>
+
+<div class="verdict-card">
+<h4>我的裁決</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>AI 基建不可繞過的咽喉材料商，ROIC 34% 持續擴大，技術壁壘 1-2 代領先</td></tr>
+<tr><td>空頭最大威脅</td><td>TTM PE 86x 是材料股歷史極端值，AI capex 週期反轉 + 估值正常化 = 潛在 -70% 跌幅</td></tr>
+<tr><td>估值仲裁評分</td><td class="mono">1/10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><span class="neutral">觀望</span></td></tr>
+<tr><td>裁決理由</td><td>台光電是優質的 AI 供應鏈標的，基本面強勁。但當前估值已充分（甚至過度）反映了未來 3-5 年的成長前景。R:R 0.51x 遠低於 3.0x 門檻，波動率紅燈 2/4 確認過熱。即使長期看好，現在進場的風險報酬完全不對稱。等待估值修正至 Forward PE 25-30x 區間再考慮建倉。</td></tr>
+</table>
+<p style="margin-top:12px;"><strong>自我檢核</strong>：</p>
+<ul>
+<li>☑ 多頭論據無「市場最終會認識到」的催化劑假設——市場已經 fully re-rated</li>
+<li>☑ 空頭威脅（AI capex 反轉）可能在 MA 觸發止損前就已造成 -50% 跌幅</li>
+<li>☑ 仲裁員評分 1/10，安全邊際接近零</li>
+</ul>
+</div>
+</div>
+
+<!-- ========== §0 序章 ========== -->
+<div class="section" id="s0">
+<div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+
+<div class="section-subtitle">存在意義</div>
+<p>台光電解決的核心痛點是<strong>高速數位訊號傳輸的物理瓶頸</strong>。每一顆 AI 晶片（GPU、ASIC、網路晶片）的運算能力再強，若承載它的 PCB 基材無法以足夠低的訊號損耗傳輸資料，整個系統就會成為瓶頸。台光電的高速低損耗銅箔基板（CCL）是讓 AI 伺服器、800G/1.6T 交換器、衛星通訊等高頻設備得以運作的「神經系統底層」。若台光電明天消失，全球 AI 伺服器出貨將在數週內中斷——因為通過材料認證的替代供應商產能不足以填補缺口，而材料認證週期長達 12-18 個月。這不是「提升效率」，而是「沒有它就無法運作」的物理約束。</p>
+
+<div class="section-subtitle">逆向推演（Munger Inversion）</div>
+<p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能的路徑：</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：台光電主要生產基地位於台灣（桃園）與中國大陸（湖北黃石、廣東中山），同時擴建馬來西亞新廠。台海衝突或中美科技制裁升級將直接衝擊產能與客戶供應。大陸生產基地約佔總產能 40%，受兩岸關係影響較大。</li>
+<li><strong>技術替代風險</strong>：光學互連（Silicon Photonics）若在 2028-2030 年成熟商用化，可能繞過 CCL 的銅箔傳輸路徑，但短期（3-5 年）仍需要高速 CCL 作為過渡方案。真正威脅是大陸 SYTECH 等追趕者透過價格戰侵蝕市佔。</li>
+<li><strong>管理層失職</strong>：若產能擴張速度遠超需求（2027 年目標 945 萬張 vs. 2025 年底 580 萬張，增幅 63%），AI capex 週期一旦反轉，固定成本攤提將嚴重拖累毛利率。過度樂觀的資本支出是最大內部風險。</li>
+<li><strong>價值陷阱路徑</strong>：不適用——當前是極端高估值情境，非低估值。但「成長陷阱」路徑存在：市場假設 AI 需求線性外推，一旦 2027 年需求放緩，PE 從 80x 壓縮至 20x 將造成 -75% 跌幅（護城河侵蝕型 + 產業結構週期型混合）。</li>
+</ul>
+</div>
+
+<!-- ========== §0.5 投資論點錨定 ========== -->
+<div class="section" id="s05">
+<div class="section-title">§0.5｜投資論點錨定</div>
+
+<div class="anchor-box">
+<h4>A｜持有期與時間軸宣告</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>2-3 年</td></tr>
+<tr><td><strong>主要驅動</strong></td><td>AI 伺服器 CCL 規格升級週期（800G→1.6T→3.2T）與產能擴張兌現</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：季毛利率趨勢、AI/Infra 營收佔比、新產能爬坡率<br>噪音：單月營收波動、匯率短期影響</td></tr>
+</table>
+</div>
+
+<div class="anchor-box">
+<h4>B｜三個核心假設</h4>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>AI 伺服器 CCL 需求維持 30%+ CAGR 至 2028 年，未出現顯著週期性反轉</td><td>全球 AI server 出貨量 YoY、台光電月營收 YoY</td><td>每季法說會 + 每月營收</td></tr>
+<tr><td>H2</td><td>高階材料 ASP 持續提升（M9 材料量產），帶動毛利率擴張至 32%+</td><td>季毛利率、高速材料佔營收比重</td><td>2026Q3（M9 量產後首季）</td></tr>
+<tr><td>H3</td><td>估值倍數從傳統材料股（PE 15-20x）重估為 AI 成長股（PE 30-40x）後，不會大幅回撤</td><td>Forward PE 趨勢、分析師共識上修動能</td><td>持續追蹤</td></tr>
+</table>
+</div>
+
+<div class="anchor-box">
+<h4>C｜三個最可能推翻論點的風險</h4>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>AI capex 週期反轉，雲端大廠削減伺服器訂單</td><td>H1</td><td>NVIDIA DC 營收 QoQ、CSP capex guidance</td><td>任一主要 CSP 下修 capex > 15%</td></tr>
+<tr><td>R2</td><td>大陸 SYTECH 技術追趕成功，觸發高速 CCL 價格戰</td><td>H2</td><td>台光電季毛利率、SYTECH 高速 CCL 市佔</td><td>毛利率連續 2 季 < 27%</td></tr>
+<tr><td>R3</td><td>產能過度擴張導致利用率下滑，固定成本攤提拖累獲利</td><td>H1, H2</td><td>產能利用率、庫存天數</td><td>利用率 < 75%，庫存天數 > 60 天</td></tr>
+</table>
+</div>
+
+<div class="anchor-box">
+<h4>D｜邊際貢獻判斷框架</h4>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>此事件在 2-3 年持有期內是否有影響？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（AI 需求）/ H2（ASP/毛利率）/ H3（估值倍數）？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / −削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到上述 R1-R3 警戒閾值？</td></tr>
+</table>
+</div>
+
+<div class="anchor-box">
+<h4>E｜可執行決策主線預設</h4>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>Forward PE 回落至 25-30x（股價 ~NT$1,600-1,920）且 H1+H2 仍有效</td><td>建倉 10%（目標倉位的 10%）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1+H2 均確認（毛利率 > 30%、營收 YoY > 30%），且 Forward PE < 35x</td><td>加碼至 30%（目標倉位的 30%）</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 風險信號出現（CSP capex 下修），或 Forward PE > 60x</td><td>減至 5%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 被推翻（AI capex 週期確認反轉），或毛利率 < 25%</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</div>
+</div>
+
+<!-- ========== §1 即時財報情報 ========== -->
+<div class="section" id="s1">
+<div class="section-title">§1｜即時財報情報</div>
+<p class="note">資料來源：FY2025 全年財報（2026-03-12 法說會）+ Q4 2025 季度數據</p>
+
+<div class="section-subtitle">① 最新一季財報關鍵數字（Q4 2025）</div>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>YoY 成長</th><th>QoQ</th></tr>
+<tr><td>Revenue</td><td>NT$249 億</td><td>+34%</td><td>-0.9%</td></tr>
+<tr><td>EPS</td><td>NT$10.44</td><td>+28%</td><td>-6.7%</td></tr>
+<tr><td>Gross Margin</td><td>28.6%</td><td>+1.5%p</td><td>-1.5%p（季節性）</td></tr>
+<tr><td>Operating Margin</td><td>~19.6%</td><td>+1.3%p</td><td>-0.6%p</td></tr>
+</table>
+
+<p><strong>FY2025 全年摘要：</strong></p>
+<table>
+<tr><th>指標</th><th>FY2025 全年</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td>NT$943 億</td><td>+46.4%</td></tr>
+<tr><td>Net Income</td><td>NT$146.5 億</td><td>+52.9%</td></tr>
+<tr><td>EPS</td><td>NT$41.67</td><td>+49.8%</td></tr>
+<tr><td>Gross Margin</td><td>29.83%</td><td>+1.9%p</td></tr>
+<tr><td>Operating Margin</td><td>20.27%</td><td>+1.4%p</td></tr>
+<tr><td>FCF</td><td>NT$24.8 億</td><td>+77%（但受重大 capex 壓抑）</td></tr>
+</table>
+
+<p><strong>財報對假設的邊際貢獻：</strong></p>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1 AI 需求</td><td><span class="beat">＋ 強化</span></td><td>Infra 營收佔比突破 65%，全產全銷，2026 接單暢旺</td></tr>
+<tr><td>H2 ASP/毛利率</td><td><span class="beat">＋ 強化</span></td><td>毛利率 29.8% 創歷史新高，高速材料佔比持續攀升</td></tr>
+<tr><td>H3 估值重估</td><td><span class="beat">＋ 強化</span></td><td>市場已給予 AI 溢價，PE 從 11x → 86x 完成重估</td></tr>
+</table>
+
+<div class="section-subtitle">② Earnings Call 語氣解析（2026-03-12 法說會）</div>
+<ul>
+<li><strong>管理層基調</strong>：樂觀偏強——反覆強調「歷史新高」「全產全銷」，對 2026 年展望積極</li>
+<li><strong>Forward Guidance</strong>：2026 產能將擴充至 750 萬張（+29% vs 2025 年底 580 萬張），M9 下一代材料 2026H2 量產，1.6T 交換器材料已於 2026Q1 出貨</li>
+<li><strong>刻意強調的主題</strong>：AI 伺服器規格升級路徑（800G→1.6T→3.2T）、越南+馬來西亞海外佈局、在 NVIDIA 及 CSP ASIC 供應鏈中的核心地位</li>
+<li><strong>刻意迴避的問題</strong>：具體客戶名單與訂單金額、大陸 SYTECH 競爭壓力、FCF 因 capex 壓縮的具體改善時間表</li>
+</ul>
+
+<div class="section-subtitle">③ 產業隱含信號</div>
+<ul>
+<li><strong>需求端</strong>：AI 伺服器 CCL 需求遠超供給，高速材料 2024-2027 CAGR 40%。800G 交換器已全面出貨，1.6T 進入早期量產——需求端為「結構性供不應求」</li>
+<li><strong>供給端</strong>：台光電 + TUC + ITEQ 等台灣 CCL 廠產能擴張中，但認證壁壘限制了新進者的速度。供需平衡預計到 2027 年仍偏緊</li>
+<li><strong>競爭格局</strong>：高端市場台光電市佔第一且持續擴大，大陸 SYTECH 在中低端追趕但高速領域差距仍大。定價能力強——ASP 隨規格升級持續提升</li>
+<li><strong>總體經濟敏感度</strong>：美國關稅政策為潛在風險，但台光電主要供應鏈在亞洲內部（台灣→中國/東南亞→全球 OEM），直接關稅衝擊有限。利率環境偏中性</li>
+</ul>
+</div>
+
+<!-- ========== §2 核心門檻檢核 ========== -->
+<div class="section" id="s2">
+<div class="section-title">§2｜核心門檻檢核</div>
+
+<div class="section-subtitle">EPS CAGR 計算</div>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>基期 EPS（FY2025 確數）</td><td class="mono">NT$41.67</td><td>FY2025 年報</td></tr>
+<tr><td>FY2026E</td><td class="mono">NT$64（n=14 位分析師，含高盛 72.48）</td><td>Investing.com / 鉅亨網 / 高盛</td></tr>
+<tr><td>FY2027E</td><td class="mono">NT$80（n≈10）</td><td>本土法人 / 高盛</td></tr>
+<tr><td>FY2028E</td><td class="mono">NT$100（外推值）</td><td>基於 FY2027E × 1.25 成長率遞減</td></tr>
+<tr><td><strong>3 年 EPS CAGR</strong></td><td class="mono"><strong>33.8%</strong></td><td>(100/41.67)^(1/3) - 1</td></tr>
+</table>
+<p class="note">口徑說明：台灣上市公司不區分 GAAP/Non-GAAP，EPS 為稀釋後法定口徑。</p>
+
+<div class="section-subtitle">門檻檢核表</div>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="miss">✗</span></td><td>當前 2.63%，近 3 年趨勢：↑（從負值回升），但因產能擴張 capex 極大而壓抑</td></tr>
+<tr><td>正規化 FCF Margin（5 年均值）</td><td>5 年均 &gt; 15%</td><td><span class="miss">✗</span></td><td>5 年各年：4.0% / 2.6% / -0.9% / 2.2% / 2.6%<br>5 年均值：2.1%，最低谷：-0.9%（2023）<br>判斷：不穩定，capex 密集型</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td><span class="beat">✓✓</span></td><td>當前 ROIC：33.74%，WACC：8.34%，超額：25.4%p</td></tr>
+<tr><td>ROIC 穩定性（5 年）</td><td>≥ 70% 年份 ROIC &gt; 15%</td><td><span class="beat">✓✓</span></td><td>5/5 年達標（100%），最低谷：22.04%（2023），趨勢：擴大（5 年樣本）</td></tr>
+<tr><td>毛利率定價能力（5 年）</td><td>≥ 70% 年份持續改善</td><td><span class="beat">✓</span></td><td>改善年份：4/5（2022 下滑 1%p 後連續 3 年改善），當前 29.8%，5 年前 26.2%，趨勢：↑</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 10%</td><td><span class="miss">✗</span></td><td>當前：~14.8%（因產能擴張），近 3 年均值 ~12%，評級：高密集</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="beat">✓✓</span></td><td>33.8%（GAAP，FY2025→FY2028E）</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td><span class="beat">✓</span></td><td>Forward PE 56.3 / CAGR 33.8% = PEG 1.67</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7</td><td><span class="beat">✓</span></td><td>D/E：0.40，現金/Revenue：17.1%，評級：低槓桿</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="neutral">⚠️</span></td><td>現金 161 億 vs 總負債（含應付帳款等）偏高，但淨負債低</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8</td><td><span class="miss">✗</span></td><td>7/10（詳見 §3）</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：FCF Margin 極低（2.6%），因產能擴張的高 capex 持續壓抑自由現金流。<br>
+<strong>Munger 三維評級</strong>：<span class="signal signal-yellow">🟡 兩項達標</span>（ROIC 穩定性 ✓ + 毛利率定價能力 ✓ — 資本密集度 ✗）</p>
+
+<div class="section-subtitle">價值陷阱初篩</div>
+<p>Forward PE 56x 處於 5 年歷史 <strong>100% 分位</strong>（最高點），P/FCF 521x 同樣處於極端高位 → <strong>不觸發低估值四問</strong>（當前是高估值情境，非低估值）。</p>
+</div>
+
+<!-- ========== §2.5 長期成長性評估 ========== -->
+<div class="section" id="s25">
+<div class="section-title">§2.5｜長期成長性評估</div>
+
+<div class="section-subtitle">A｜成長跑道（Runway）估算</div>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（億美元）</td><td>AI Server CCL：$4.3 億（2025）<br>整體高速 CCL：$41 億</td><td>來源：OpenPR / FMI，2025 年</td></tr>
+<tr><td>估計可達 TAM（億美元）</td><td>AI Server CCL：$17.2 億（2032）<br>整體高速 CCL：$109 億（2035）</td><td>AI 伺服器規格升級 + 1.6T/3.2T 交換器 + 衛星通訊</td></tr>
+<tr><td>當前市佔/滲透率</td><td>全球高速 CCL 市佔約 15-18%（排名第一）</td><td>在 AI server CCL 細分市場佔比更高（~25-30%）</td></tr>
+<tr><td>若維持現有成長率，幾年達 30% 滲透率</td><td>~3-4 年（在 AI CCL 細分市場）</td><td>TAM 本身也在快速擴張</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>7 年</strong></td><td>AI 基建週期 + 規格升級路徑至 2032</td></tr>
+</table>
+<p><strong>Runway 解讀</strong>：7 年 → Runway 5-9 年，中等可見度，估值需對應可見度折扣。</p>
+
+<div class="section-subtitle">B｜成長品質判斷</div>
+<p><strong>① 成長來源：有機 vs 無機</strong></p>
+<table>
+<tr><th>類型</th><th>定義</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>ASP 提升 + 產能擴充 + 新客戶滲透</td><td><strong>100%</strong></td><td>台光電過去 5 年無重大併購，成長完全來自自身產品升級與產能擴張</td></tr>
+<tr><td>無機成長</td><td>併購貢獻</td><td>0%</td><td>無</td></tr>
+</table>
+
+<p><strong>② 成長驅動結構</strong></p>
+<table>
+<tr><th>類型</th><th>此標的判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>高速材料 ASP 持續提升，M9 材料單價高於 M7 30%+</td><td>擴大</td></tr>
+<tr><td>量驅動（Volume）</td><td>產能從 430 萬張→750 萬張→945 萬張</td><td>擴大</td></tr>
+</table>
+<p><strong>定價 + 量雙引擎並行</strong>——這是最優質的成長結構。</p>
+
+<div class="section-subtitle">C｜成長護城河連動評估</div>
+<p><strong>強化型</strong>（最佳）：規模擴大 → 材料認證成本被更多客戶分攤 → 更多客戶採用 → 更多數據反饋優化配方 → 技術壁壘進一步加深。AI 伺服器材料認證週期 12-18 個月，一旦通過認證即形成強轉換成本。</p>
+
+<div class="section-subtitle">D｜ROIC 與 FCF 的長期可維持性</div>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>33.74%</td><td>22.04%</td><td>↑</td><td>&gt; WACC</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>ROIC - WACC</td><td>25.4%p</td><td>13.7%p</td><td>↑</td><td>持續正值擴大</td><td><span class="beat">✓✓</span></td></tr>
+<tr><td>FCF Margin</td><td>2.63%</td><td>-0.95%</td><td>↑</td><td>&gt; 15%</td><td><span class="miss">✗</span></td></tr>
+<tr><td>FCF/NI 轉換率</td><td>16.9%</td><td>-7.1%</td><td>↑</td><td>&gt; 85%</td><td><span class="miss">✗</span></td></tr>
+<tr><td>再投資率</td><td>~75%</td><td>~85%</td><td>↓（改善中）</td><td>成長期合理偏高</td><td><span class="beat">✓</span></td></tr>
+</table>
+<p class="note">FCF Margin 與轉換率偏低是因為公司正處於大規模產能擴張期（2025-2027），capex 約佔營收 15%。預計 2028 年後 capex 趨緩，FCF 將大幅改善。</p>
+
+<div class="section-subtitle">E｜成長熄火情境壓力測試</div>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E</th><th>潛在估值跌幅</th></tr>
+<tr><td style="background:#DCFCE7;">3 年後成長率降至 15%</td><td>成長放緩但仍高於市場</td><td>18x</td><td>-68%（從 56x 壓縮）</td></tr>
+<tr><td style="background:#FEF9C3;">3 年後成長率降至 10%</td><td>回歸市場平均</td><td>15x</td><td>-73%</td></tr>
+<tr><td style="background:#FEE2E2;">3 年後成長率降至 5%</td><td>成熟期低成長</td><td>12x</td><td>-79%</td></tr>
+</table>
+<p class="note">由於當前 Forward PE 56x 處於極端高位，任何成長減速都將觸發劇烈估值壓縮。這是本標的最大風險。</p>
+
+<div class="section-subtitle">衰退信號偵測表</div>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>FY2025 四季 GM 均 YoY 上升</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>高速 CCL 市佔穩居第一，持續擴大</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>最近提價後銷量下滑？</td><td>ASP 提升同時量增，未見價量背離</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR</td><td>EPS YoY +50% vs Revenue YoY +46%，差距 4%p</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI 轉換率 &lt; 0.75 連續 2 年</td><td>2024: 14.6%，2025: 16.9%</td><td><span class="miss">🔴</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue &gt; 5% 且逐年上升</td><td>台灣公司 SBC 比例極低（&lt; 1%）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代</td><td>AI CCL TAM 以 20%+ CAGR 擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數 3 年系統性下移</td><td>CCL 產業估值倍數大幅上移（AI re-rating）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex 占 FCF &gt; 60%</td><td>Growth capex 占比大，maintenance capex 約 30% of total capex</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新產能，收入 3 年內下滑？</td><td>CCL 不需持續投資即可維持現有客戶（認證鎖定），但無法追上規格升級</td><td>⬜</td></tr>
+</table>
+
+<p><strong>亮燈數：1 個</strong>（FCF/NI 轉換率偏低）</p>
+<p><strong>價值陷阱風險評級</strong>：<span class="signal signal-yellow">🟡 中度警戒</span>——FCF/NI 轉換率偏低，但原因是成長性 capex 而非盈餘品質問題，§3 護城河節將正面回應。</p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="signal signal-yellow">🟡 中等可見度成長</span><br>
+Runway 7 年、100% 有機成長、定價+量雙驅動、護城河強化型、ROIC 擴大。但 FCF/NI 轉換率偏低（1 個衰退信號），且 AI capex 具有週期性風險，無法給予 🟢。</p>
+
+<div class="section-subtitle">F｜AI 取代風險評級（v9.0）</div>
+<p><strong>評級：<span class="signal signal-green">🟢 AI 受益</span></strong></p>
+<ul>
+<li><strong>核心業務 vs AI 侵蝕區域</strong>：台光電核心業務（高速 CCL）100% 受益於 AI 需求。AI 伺服器每台所需的高速 CCL 用量是傳統伺服器的 3-5 倍，規格越高 ASP 越高。</li>
+<li><strong>公司 AI 策略</strong>：自身不開發 AI，但作為 AI 基礎設施的關鍵材料供應商，直接受益於所有 AI 投資。</li>
+<li><strong>過去 2 年 AI 相關營收變化</strong>：AI/Infra 營收從 2022 年約 40% → 2025 年 65-70%，FY2025 營收 YoY +46% 幾乎全部由 AI 需求驅動。</li>
+</ul>
+<p><strong>評級分數</strong>：🟢 = 9 分</p>
+</div>
+
+<!-- ========== §3 護城河分析 ========== -->
+<div class="section" id="s3">
+<div class="section-title">§3｜護城河分析</div>
+<p><strong>評分：7/10</strong>（以全球上市公司為基準）</p>
+
+<p>§2.5 衰退信號偵測表 1 項亮燈（FCF/NI 轉換率低）。<strong>回應</strong>：這不是護城河侵蝕，而是成長期特有的現象——公司將大部分 OCF 投入產能擴張（2025 年 capex 約 139 億 vs FCF 24.8 億），預計 2028 年後 capex 趨緩，FCF 將大幅改善。ROIC 維持 34% 證明每一塊再投資的資本都在創造高回報。</p>
+
+<div class="section-subtitle">護城河來源</div>
+<ul>
+<li><strong>轉換成本（強）</strong>：高速 CCL 材料認證週期 12-18 個月，客戶更換供應商需重新走完認證流程，且涉及 PCB 廠、晶片廠的多層驗證。一旦通過認證，客戶粘性極高。NVIDIA、AWS、Google 等核心客戶均已深度綁定。</li>
+<li><strong>規模優勢（強）</strong>：全球高速 CCL 市佔第一，產能規模帶來材料研發成本分攤優勢。2027 年產能將達 945 萬張/月，遠超同業。規模越大，高速配方的良率與成本優勢越顯著。</li>
+<li><strong>無形資產（中強）</strong>：擁有上百種高速低損耗配方的 know-how，技術領先同業 1-2 個世代。M9 材料是 NVIDIA 下一代 Rubin 平台指定材料之一。但 CCL 不涉及專利壟斷，技術壁壘來自配方 know-how 和量產經驗的長期累積。</li>
+<li><strong>網路效應（弱）</strong>：CCL 是材料供應商，不具備直接網路效應。但存在間接鎖定效應：越多 PCB 廠和 OEM 使用台光電材料，下游設計就越以台光電規格為標準。</li>
+</ul>
+
+<div class="section-subtitle">競爭鴻溝</div>
+<p>資本充足的對手（如大陸 SYTECH，全球 CCL 第二大）難以跨越的原因：<br>
+(1) 高速低損耗配方需 10 年以上的累積和數千次實驗迭代，資本無法直接購買；<br>
+(2) 台光電在 NVIDIA/AWS/Google 供應鏈中的認證地位意味著替換成本極高；<br>
+(3) 台光電已進入 800G/1.6T 世代量產，而 SYTECH 仍在 400G 追趕，技術代差 1-2 年。<br>
+但護城河未達 8 分的原因：CCL 終究是材料行業，長期而言技術會擴散，且不具備品牌溢價或監管壁壘。</p>
+
+<div class="section-subtitle">市佔競爭表</div>
+<table>
+<tr><th>競爭對手</th><th>市佔估計</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>台光電 EMC</strong></td><td>~15-18%（高速第一）</td><td>擴大</td><td>—</td><td>台光電搶佔 SYTECH 高速市場</td></tr>
+<tr><td>SYTECH 生益科技</td><td>~18%（整體第二）</td><td>持平</td><td>價格戰 + 大陸政策支持</td><td>高速份額被台光電侵蝕</td></tr>
+<tr><td>Kingboard 建滔</td><td>~20%（整體第一，低端為主）</td><td>縮減（高端）</td><td>低端產能過剩</td><td>高端市場份額流失</td></tr>
+<tr><td>Nan Ya 南亞</td><td>~10%</td><td>持平</td><td>缺乏 AI 級材料</td><td>中低端穩定</td></tr>
+<tr><td>ITEQ 聯茂</td><td>~8%</td><td>擴大</td><td>高速追趕中</td><td>台光電的主要台灣同業競爭者</td></tr>
+<tr><td>TUC 台燿</td><td>~5%</td><td>擴大</td><td>高速材料進入量產</td><td>小幅搶佔中階市場</td></tr>
+</table>
+
+<div class="section-subtitle">護城河趨勢</div>
+<p><strong>擴大中</strong>——AI 伺服器規格升級加速了高速 CCL 的技術門檻提升，台光電的技術領先優勢在擴大而非縮減。</p>
+<p>24 個月內最可能瓦解護城河的變化（按威脅程度排序）：</p>
+<ol>
+<li>SYTECH 在 800G 級材料取得突破性進展，通過 NVIDIA 認證，引發價格戰（威脅度：中高）</li>
+<li>AI capex 週期急凍，需求急降導致產能利用率暴跌（威脅度：中）</li>
+<li>光學互連技術提前商用化，減少對高速 CCL 的依賴（威脅度：低，3 年內不太可能）</li>
+</ol>
+</div>
+
+<!-- ========== §4 財務品質監測 ========== -->
+<div class="section" id="s4">
+<div class="section-title">§4｜財務品質監測</div>
+
+<div class="section-subtitle">三年趨勢表</div>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>同業比較（ITEQ 6213）</th></tr>
+<tr><td>Gross Margin</td><td>27.4%</td><td>27.9%</td><td>29.8%</td><td>ITEQ ~24%</td></tr>
+<tr><td>Operating Margin</td><td>17.8%</td><td>18.9%</td><td>20.3%</td><td>ITEQ ~15%</td></tr>
+<tr><td>Net Margin</td><td>13.3%</td><td>14.9%</td><td>15.5%</td><td>ITEQ ~12%</td></tr>
+<tr><td>ROIC</td><td>22.0%</td><td>29.4%</td><td>33.7%</td><td>ITEQ ~18%</td></tr>
+<tr><td>ROE</td><td>22.5%</td><td>30.9%</td><td>34.2%</td><td>ITEQ ~22%</td></tr>
+<tr><td>FCF Margin</td><td>-0.9%</td><td>2.2%</td><td>2.6%</td><td>ITEQ ~5%</td></tr>
+<tr><td>D/E</td><td>0.38</td><td>0.49</td><td>0.40</td><td>ITEQ ~0.35</td></tr>
+</table>
+
+<div class="section-subtitle">獲利品質警訊</div>
+<ul>
+<li><strong>淨利 vs. OCF 連動性</strong>：OCF > 淨利（正常），但 FCF 因大量 capex 而遠低於淨利。2025 年 FCF/NI = 16.9%，顯著低於健康水位（>80%）。原因已知：成長性 capex，非盈餘操縱。</li>
+<li><strong>AR 成長 vs. 營收成長</strong>：應收帳款增速與營收增速大致匹配，未見異常膨脹。</li>
+<li><strong>存貨成長 vs. 營收成長</strong>：存貨略有增加，反映備貨需求。目前未見庫存積壓風險。</li>
+<li><strong>FCF 轉換率趨勢</strong>：因產能擴張而極低，預計 2028 年後顯著改善。</li>
+</ul>
+
+<div class="section-subtitle">回購品質評估</div>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs. FCF</td><td>台灣公司普遍不回購股票，以現金股利為主</td><td>不適用</td></tr>
+<tr><td>EPS CAGR vs Revenue CAGR</td><td>EPS 3Y CAGR 37% vs Revenue 3Y CAGR 35%</td><td>差距小，EPS 成長主要來自營運槓桿而非回購</td></tr>
+<tr><td>Revenue CAGR（3 年）</td><td>35%</td><td>高度一致——EPS 成長品質優良</td></tr>
+</table>
+<p><strong>財務品質評分：7/10</strong>（ROIC 優異、毛利率擴張，但 FCF 因 capex 壓抑，扣分）</p>
+</div>
+
+<!-- ========== §5 產業格局 ========== -->
+<div class="section" id="s5">
+<div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+
+<div class="section-subtitle">市場量化</div>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>整體 CCL TAM（2025）</td><td>~$183 億美元</td></tr>
+<tr><td>高速高頻 CCL TAM（2025）</td><td>~$41 億美元</td></tr>
+<tr><td>AI Server CCL（2025）</td><td>~$4.3 億美元</td></tr>
+<tr><td>高速 CCL CAGR（2025-2035）</td><td>~10.3%</td></tr>
+<tr><td>AI Server CCL CAGR（2025-2032）</td><td>~20.7%</td></tr>
+<tr><td>台光電市佔（高速 CCL）</td><td>~15-18%（第一名）</td></tr>
+<tr><td>供需狀態</td><td>高速 CCL 供不應求，至 2027 年仍偏緊</td></tr>
+</table>
+
+<div class="section-subtitle">議價權</div>
+<ul>
+<li><strong>對上游供應商</strong>：銅箔和玻纖布是主要原材料，供應商較分散。台光電作為大客戶有一定議價能力，但原材料價格波動仍影響毛利率。議價力：中等。</li>
+<li><strong>對下游客戶</strong>：下游為 PCB 大廠（如臻鼎、欣興），最終客戶為 NVIDIA、AWS、Google 等。高速材料的認證壁壘和供不應求格局賦予台光電強議價權。議價力：強。</li>
+<li><strong>地理分布曝險</strong>：生產基地分佈台灣（桃園）、中國（黃石、中山）、馬來西亞（新建）。台海風險和中美科技制裁是主要地緣政治曝險。</li>
+</ul>
+
+<div class="section-subtitle">營收組成（§5 產業格局 — 供 §7.7 B-1 引用）</div>
+<table>
+<tr><th>產品/應用</th><th>營收佔比（FY2025）</th><th>成長性</th></tr>
+<tr><td>基礎設施（AI Server + Switch + 衛星）</td><td><strong>65-70%</strong></td><td>AI server +50% YoY，Switch +40% YoY</td></tr>
+<tr><td>手持裝置（Smartphone PCB）</td><td>~21%</td><td>低單位數成長</td></tr>
+<tr><td>車用 + 其他</td><td>~12%</td><td>中單位數成長（EV/ADAS 驅動）</td></tr>
+</table>
+<p class="note">權重加總：70% + 18% + 12% = 100%（取 Infra 中位數 70%，手持裝置調整至 18%）</p>
+
+<div class="section-subtitle">單位經濟</div>
+<ul>
+<li><strong>ASP 趨勢</strong>：高速 CCL 每張 ASP 隨規格升級持續提升。從 400G 到 800G 交換器，CCL 單價提升約 30-50%；從 800G 到 1.6T，再提升 20-30%。</li>
+<li><strong>產能利用率</strong>：FY2025 接近 100%（全產全銷），預計 2026 年新產能爬坡後維持 85-90%。</li>
+<li><strong>單張 CCL 毛利</strong>：約 NT$800-1,200/張（高速）vs NT$200-400/張（傳統），高速產品毛利為傳統的 3-4 倍。</li>
+</ul>
+</div>
+
+<!-- ========== §6 公司治理 ========== -->
+<div class="section" id="s6">
+<div class="section-title">§6｜公司治理與資本配置</div>
+
+<div class="section-subtitle">股東/股權結構</div>
+<table>
+<tr><th>股東類型</th><th>持股比例</th><th>備註</th></tr>
+<tr><td>董監事合計</td><td>8.58%</td><td>最大法人股東：宇昌投資 7.65%（創辦人家族）</td></tr>
+<tr><td>外資合計</td><td>~27%</td><td>國際機構投資人持股穩定</td></tr>
+<tr><td>大戶（>1,000 張）</td><td>~59%</td><td>籌碼集中度高</td></tr>
+<tr><td>國泰人壽</td><td>5.13%</td><td>第二大法人股東</td></tr>
+</table>
+<p>台光電為台灣本土上市公司，無 dual-class 投票權結構。</p>
+
+<div class="section-subtitle">資本配置方向</div>
+<ol>
+<li><strong>Capex（最高優先）</strong>：FY2025 資本支出約 139 億元，佔營收 14.8%。2026-2027 年持續擴產（越南、馬來西亞新廠 + 中山/黃石擴線），是目前資本配置的第一優先。</li>
+<li><strong>分紅（中等優先）</strong>：FY2024 現金股利 16.58 元/股（配息率 60%），FY2025 預計配息約 20-22 元。公司維持穩定配息，但配息率因高 capex 需求而適度降低。</li>
+<li><strong>回購（不適用）</strong>：台灣公司普遍不進行庫藏股回購。</li>
+</ol>
+
+<div class="section-subtitle">管理層薪酬結構</div>
+<p><strong>數據限制</strong>：台灣上市公司薪酬揭露較有限，無法取得管理層固定薪 vs 績效獎金 vs 股權激勵的詳細比例。從年報觀察，董事酬勞與員工分紅比例合理，無異常高額薪酬。</p>
+
+<div class="section-subtitle">過去 12 個月重大內部人交易</div>
+<p>董監質押比例約 3.25%（2023 年底數據），比例極低。近期無重大內部人大額賣出訊號。<strong>數據限制</strong>：無法取得 2025-2026 年具體內部人交易明細。</p>
+</div>
+
+<!-- ========== §7 估值診斷 (7.0-7.5) ========== -->
+<div class="section" id="s7">
+<div class="section-title">§7｜估值診斷（7.0–7.5）</div>
+
+<div class="section-subtitle">7.0｜估值體系診斷：市場現在用哪把尺？</div>
+<p><strong>A｜當前主流估值邏輯識別</strong></p>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>是</strong></td><td>市場主要用 Forward PE 定價，結合 EPS 成長率</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>部分</td><td>PEG 被廣泛引用，但非主導</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>否</td><td>P/B 25.6x，市場完全不用 P/B 定價</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>否</td><td>P/FCF 521x，FCF 因 capex 扭曲，市場忽略此指標</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：P/E + PEG（成長型盈利估值），市場將台光電視為 AI 成長股而非傳統材料股。</p>
+
+<p><strong>B｜估值邏輯漂移偵測</strong></p>
+<ul>
+<li><strong>情境一（資產→盈利）</strong>：已發生且完成。台光電從 2022 年的材料股 PE 11x 重估為 AI 成長股 PE 56x+。</li>
+<li><strong>情境二（創造新度量衡）</strong>：不存在。P/E 和 PEG 已足夠。</li>
+<li><strong>情境三（定價偏好漂移）</strong>：<strong>已完成</strong>——AI 敘事已將整個 CCL 板塊從「低估值材料股」重估為「AI 基建成長股」。後續進一步 re-rating 的空間有限。</li>
+</ul>
+
+<p><strong>估值體系診斷結論</strong>：<span class="signal signal-yellow">🟡 估值邏輯模糊</span>——re-rating 已大幅完成（11x→86x），但當前估值是否可持續取決於 AI capex 週期能否線性外推。若 AI 需求見頂，估值邏輯將從「成長型」回歸「材料股盈利型」，PE 將大幅壓縮。</p>
+
+<div class="section-subtitle">7.1｜歷史估值分位（5 年框架）</div>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td class="mono">86.5</td><td class="mono">11.22</td><td class="mono">22.27</td><td class="mono">86.5*</td><td class="mono" style="background:#FEE2E2;">100%</td></tr>
+<tr><td>Forward P/E（NTM）</td><td class="mono">~56</td><td class="mono">~10</td><td class="mono">~16</td><td class="mono">~56*</td><td class="mono" style="background:#FEE2E2;">100%</td></tr>
+<tr><td>EV/EBITDA</td><td class="mono">61.6</td><td class="mono">8.38</td><td class="mono">15.15</td><td class="mono">61.6*</td><td class="mono" style="background:#FEE2E2;">100%</td></tr>
+<tr><td>P/S</td><td class="mono">13.70</td><td class="mono">1.47</td><td class="mono">3.16</td><td class="mono">13.70*</td><td class="mono" style="background:#FEE2E2;">100%</td></tr>
+<tr><td>P/B</td><td class="mono">25.61</td><td class="mono">2.58</td><td class="mono">4.87</td><td class="mono">25.61*</td><td class="mono" style="background:#FEE2E2;">100%</td></tr>
+</table>
+<p class="note">* 當前值即為 5 年高點。Forward P/E 分位公式：(56 - 10) / (56 - 10) × 100% = 100%</p>
+
+<p><strong>解讀：</strong></p>
+<ol>
+<li><strong>當前估值情緒</strong>：<span class="signal signal-red">極度過熱</span>（所有指標均處於 100% 分位，即 5 年歷史最高點）</li>
+<li><strong>上次處於此分位時</strong>：從未——這是首次達到此估值水平，2022 年 PE 11x 時台光電還是被市場忽視的傳統材料股</li>
+<li><strong>推動當前分位的主要因素</strong>：AI 敘事（權重最大）> 盈利加速修正 > 市場情緒</li>
+</ol>
+
+<div class="section-subtitle">7.2｜PEG 診斷</div>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E</td><td class="mono">56.3</td><td>（3,605 / 64）</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td class="mono">33.8%</td><td></td></tr>
+<tr><td>PEG（3 年）</td><td class="mono">1.67</td><td><span class="neutral">1~2 合理偏貴</span></td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td class="mono">25%</td><td></td></tr>
+<tr><td>PEG（5 年）</td><td class="mono">2.25</td><td><span class="miss">> 2 貴</span></td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td class="mono">0.58</td><td>差異大 = 近期高成長不可持續，5 年看轉貴</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：3 年 PEG 1.67 處於合理上緣，但 5 年 PEG 2.25 已進入「貴」區間。這反映了 AI 需求高增長是近期現象，長期成長率遞減後當前估值難以維持。存在「估值陷阱」——看似合理的 3 年 PEG 掩蓋了 5 年 PEG 偏貴的事實。</p>
+
+<div class="section-subtitle">7.3｜Reverse DCF：當前股價隱含了什麼？</div>
+<p><strong>固定參數：</strong></p>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>NT$1.29T</td><td>搜尋確認</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td>NT$2,478M</td><td>§1</td></tr>
+<tr><td>WACC</td><td>8.34%</td><td>Risk-free 1.8% + Beta 1.09 × ERP 6%</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>材料行業，保守設定</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<p><strong>反推隱含 FCF CAGR ≈ 45%</strong></p>
+
+<p><strong>可信度對照：</strong></p>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>~17%（含負值年份波動大）</td><td><span class="miss">隱含 45% 遠高於歷史</span></td></tr>
+<tr><td>分析師共識 EPS CAGR</td><td>33.8%</td><td><span class="miss">隱含 45% 高於共識 10%p+</span></td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>ITEQ ~30%</td><td><span class="miss">要求「超越行業最快」</span></td></tr>
+</table>
+
+<p><strong>兌現條件</strong>：隱含 CAGR 45% 需要 Revenue 年增 40%+（基於 FCF Margin 持續擴張至 8-10%）。此條件在 AI capex 持續線性增長 + 毛利率擴張至 35%+ + 產能利用率維持 90%+ 的情境下才可能成立。</p>
+
+<p><strong>隱含預期判斷</strong>：<span class="signal signal-red">🔴 隱含預期激進</span></p>
+
+<div class="section-subtitle">7.4｜同業估值比較</div>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>Gross Margin</th><th>EPS CAGR(3Y)</th><th>ROIC</th></tr>
+<tr style="font-weight:bold;"><td>台光電 2383</td><td>NT$1.29T</td><td>56</td><td>61.6</td><td>1.67</td><td>29.8%</td><td>34%</td><td>34%</td></tr>
+<tr><td>ITEQ 聯茂 6213</td><td>NT$~150B</td><td>~24</td><td>~18</td><td>0.67</td><td>~24%</td><td>36%</td><td>~18%</td></tr>
+<tr><td>TUC 台燿 6274</td><td>NT$~80B</td><td>~20</td><td>~15</td><td>0.80</td><td>~26%</td><td>25%</td><td>~15%</td></tr>
+<tr><td>Nan Ya 南亞 1303</td><td>NT$~280B</td><td>~15</td><td>~10</td><td>1.50</td><td>~18%</td><td>10%</td><td>~8%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td>~20</td><td>~14</td><td>~0.80</td><td>~24%</td><td>~25%</td><td>~15%</td></tr>
+</table>
+
+<p><strong>同業溢折價邏輯：</strong></p>
+<ol>
+<li><strong>溢價幅度</strong>：台光電 Forward PE 56x vs 產業中位 20x，溢價 180%。</li>
+<li><strong>支撐溢價的因素</strong>：市佔第一、ROIC 34%（同業 2 倍）、毛利率最高、AI 供應鏈核心地位。但 180% 的溢價是否合理？ITEQ 的 EPS CAGR 36% 甚至高於台光電的 34%，PE 卻只有 24x。</li>
+<li><strong>若估值向中位數回歸</strong>：PE 從 56x → 20x = <strong>-64% 跌幅</strong>。</li>
+</ol>
+
+<p><strong>最終橫向比較結論</strong>：<span class="signal signal-red">❌ 同主題有更佳標的</span>——ITEQ（6213）PEG 0.67、EPS CAGR 36%、PE 24x，風報比顯著優於台光電當前定位。</p>
+
+<div class="section-subtitle">7.5｜估值五角驗證與結論</div>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（7.0）</td><td><span class="signal signal-yellow">🟡 估值邏輯模糊</span></td><td>Re-rating 已完成，後續方向不確定</td></tr>
+<tr><td>歷史分位（7.1）</td><td><span class="signal signal-red">🔴 過熱</span></td><td>所有指標均處於 5 年 100% 分位</td></tr>
+<tr><td>PEG 診斷（7.2）</td><td><span class="signal signal-red">🔴 偏貴</span></td><td>5 年 PEG 2.25 > 2.0</td></tr>
+<tr><td>Reverse DCF（7.3）</td><td><span class="signal signal-red">🔴 隱含預期激進</span></td><td>隱含 FCF CAGR 45% 遠超歷史和共識</td></tr>
+<tr><td>同業相對（7.4）</td><td><span class="signal signal-red">🔴 溢價無支撐</span></td><td>ITEQ PEG 0.67 vs 台光電 1.67，同等成長率但估值差 2.3 倍</td></tr>
+</table>
+
+<p><strong>當前定價判斷</strong>：<span class="signal signal-red">🔴 明顯貴</span></p>
+
+<p><strong>估值倍數定錨</strong>：</p>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr>
+<tr><td>① 護城河品質（§3）</td><td>7/10</td><td>±0x（中等，不加不減）</td></tr>
+<tr><td>② 成長可持續年數（§2.5A）</td><td>7 年（🟡）</td><td>±0x（5-9 年區間）</td></tr>
+<tr><td>③ 成長品質（§2.5B）</td><td>100% 有機 + 定價驅動</td><td>+2x</td></tr>
+<tr><td>④ 成長護城河連動（§2.5C）</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>33.7%，持續擴大</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號（§2.5）</td><td>1 個亮燈</td><td>-1x</td></tr>
+<tr><td>⑦ 估值體系方向（§7.0）</td><td>🟡 模糊</td><td>-1x</td></tr>
+<tr><td>⑧ 當前利率環境</td><td>10Y UST ~4.3%</td><td>對成長股有一定壓縮效應</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td><strong>20x</strong></td><td><strong>調整後合理區間：20x ~ 24x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考</strong>：高 NT$3,600 / 中位 NT$3,035 / 低 NT$1,985（n=14 位）<br>
+中位目標價 3,035 低於當前股價 3,605，暗示分析師共識也認為股價已超出合理範圍。</p>
+
+<p><strong>長期合理倍數對應表</strong>：§2.5 🟡 中等可見度 → 基準 Forward P/E = 20x<br>
+<strong>本標的基準長期合理倍數</strong>：20x</p>
+
+<p><strong>v9.0 上行三引擎調整</strong>（詳見 §7.7）：引擎 B 觸發，最終長期 P/E = 41x<br>
+<strong>AI 風險調整</strong>：🟢 × 1.10 已包含在 §7.7 D 中</p>
+</div>
+
+</div><!-- container end -->
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
