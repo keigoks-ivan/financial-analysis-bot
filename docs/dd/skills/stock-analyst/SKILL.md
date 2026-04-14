@@ -384,13 +384,39 @@ HTML 必須在 §8 投資結論加註:
 
 ### 【EPS CAGR 強制搜尋協議】
 
-執行本節前，必須完成以下搜尋，禁止使用訓練資料估算：
+執行本節前，必須完成以下步驟取得 EPS 共識預估，禁止使用訓練資料估算：
 
-**步驟一：搜尋關鍵字**
+**步驟零（v9.0 新增）：yfinance 程式化抓取（最高優先）**
+
+在執行任何 web_search 之前，先用 Python yfinance 抓取即時共識預估。
+此資料源與 TradingView 同源（Refinitiv/LSEG），為即時共識中位數，
+可靠度遠高於 web_search 散落片段。
+
+```python
+import yfinance as yf
+t = yf.Ticker("TICKER")  # 替換為實際 ticker（台股用 "2383.TW" 格式）
+ee = t.earnings_estimate  # 欄位：avg, low, high, numberOfAnalysts, growth
+                          # 列：0q(本季), +1q(下季), 0y(今年), +1y(明年)
+```
+
+記錄以下數字（若 yfinance 成功取得）：
+- FY+1E（0y 列）：avg = __, n = __ 位分析師，YoY growth = __%
+- FY+2E（+1y 列）：avg = __, n = __ 位分析師，YoY growth = __%
+- 季度趨勢（0q, +1q）：用於交叉驗證年度數字合理性
+- EPS Trend（t.eps_trend）：觀察 7d/30d/60d/90d 修正方向（上修 or 下修）
+
+**yfinance 限制**：僅提供 FY+1 和 FY+2 兩年年度預估，無 FY+3。
+FY+3 處理方式：以 FY+2 的 growth 率遞減 30% 外推，標注「FY+2 遞減外推」。
+例：FY+2 growth = 55.6% → FY+3 growth = 55.6% × 0.70 = 38.9%。
+
+**若 yfinance 失敗**（網路不通或 ticker 不支援），退回步驟一的 web_search 流程。
+
+**步驟一（備援）：web_search 搜尋關鍵字**
+僅在 yfinance 失敗時執行。
 「[標的代碼] EPS analyst consensus estimate [FY+1 年份] [FY+2 年份] [FY+3 年份]」
 同時搜尋：「[標的代碼] earnings per share forecast [FY+1] [FY+2] [FY+3] Zacks」
 
-**步驟二：來源優先順序**
+**步驟二（備援）：來源優先順序**
 ① Zacks Research（區分 GAAP / Non-GAAP，記錄分析師覆蓋人數 n）
 ② StockAnalysis.com → Forecast 頁籤
 ③ Yahoo Finance → Analysis → EPS Trend
@@ -398,9 +424,9 @@ HTML 必須在 §8 投資結論加註:
 
 **步驟三：記錄數字**
 - 基期 EPS：最新完整財年實際值（已公布，標注 GAAP）
-- FY+1E：共識中位數（標注 GAAP 或 Non-GAAP，n=__ 位分析師）
-- FY+2E：共識中位數（標注口徑，n=__ 位分析師）
-- FY+3E：共識中位數（標注口徑，n=__ 位分析師；若無則標注外推）
+- FY+1E：共識中位數（標注來源 yfinance / Zacks / 其他，n=__ 位分析師）
+- FY+2E：共識中位數（標注來源，n=__ 位分析師）
+- FY+3E：共識中位數或遞減外推（標注來源或外推方法，n=__ 位分析師）
 
 **步驟四：計算**
 - GAAP CAGR    = (FY+3E GAAP    ÷ 基期 GAAP EPS)    ^ (1/3) − 1
@@ -408,6 +434,7 @@ HTML 必須在 §8 投資結論加註:
 
 **步驟五：口徑差距說明**
 說明 GAAP 與 Non-GAAP 的差距來源（SBC / 重組費用 / 攤銷 / 其他調整項）
+台灣上市公司不區分 GAAP/Non-GAAP，此步驟標注「不適用（台股法定口徑）」即可。
 
 ### 【Munger 護城河維度強制搜尋協議】
 
