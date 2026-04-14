@@ -30,6 +30,12 @@ BULL_SHORT_RE = re.compile(
 )
 TAG_RE = re.compile(r'<[^>]+>')
 
+# Pattern to extract numeric quality score from §7.7 A table
+QUALITY_SCORE_RE = re.compile(
+    r'綜合品質分</strong>\s*</td>\s*<td[^>]*>(?:[^<]*)<strong>([\d.]+)</strong>',
+    re.DOTALL,
+)
+
 # Patterns to extract upside / downside from §7.7 H table
 UPSIDE_RE = re.compile(
     r'<tr>\s*<td>上行空間</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
@@ -58,6 +64,16 @@ def extract_updown(path: Path) -> tuple[str, str]:
     except OSError:
         return ("", "")
     return (_extract_pct(text, UPSIDE_RE), _extract_pct(text, DOWNSIDE_RE))
+
+
+def extract_quality_score(path: Path) -> str:
+    """Extract numeric quality score (e.g. '8.60') from §7.7 A table."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+    m = QUALITY_SCORE_RE.search(text)
+    return m.group(1) if m else ""
 
 
 def extract_version(path: Path) -> str:
@@ -149,6 +165,7 @@ def scan_v9_files(index_data: dict):
         md = index_data.get(f.name, {})
         comment = extract_comment(f)
         upside, downside = extract_updown(f)
+        qscore = extract_quality_score(f)
         entries.append({
             "ticker": ticker,
             "date": date_str,
@@ -156,6 +173,7 @@ def scan_v9_files(index_data: dict):
             "verdict": md.get("verdict", "—"),
             "trap": md.get("trap", "—"),
             "quality": md.get("quality", "—"),
+            "quality_score": qscore,
             "rr_value": md.get("rr_value", "—"),
             "red_lights": md.get("red_lights", "—"),
             "upside": upside,
@@ -180,7 +198,7 @@ def verdict_badge(v: str) -> str:
     return v
 
 
-def quality_badge(q: str) -> str:
+def quality_badge(q: str, score: str = "") -> str:
     q = q.strip()
     labels = {"H": "H 高品質", "MH": "MH 中高", "M": "M 中品質", "W": "W 觀望"}
     colors = {
@@ -191,7 +209,8 @@ def quality_badge(q: str) -> str:
     }
     label = labels.get(q, q)
     cls = colors.get(q, "quality-m")
-    return f'<span class="quality-badge {cls}">{label}</span>'
+    score_str = f' <span class="quality-score">{score}</span>' if score else ""
+    return f'<span class="quality-badge {cls}">{label}</span>{score_str}'
 
 
 def rr_badge(rr: str) -> str:
@@ -265,6 +284,13 @@ def trap_short(t: str) -> str:
 
 def _sort_keys(e):
     """Compute numeric sort keys for data attributes."""
+    # Use negative quality_score for sort (higher score = sort first = lower number)
+    qs = e.get("quality_score", "")
+    try:
+        q_sort = -float(qs)  # negative so higher scores sort first (ascending)
+    except (ValueError, TypeError):
+        q_map_fallback = {"H": 1, "MH": 2, "M": 3, "W": 4}
+        q_sort = q_map_fallback.get(e.get("quality", "").strip(), 9)
     q_map = {"H": 1, "MH": 2, "M": 3, "W": 4}
     v_map = {"進場": 1, "觀望": 2, "迴避": 3}
     t_map = {}  # trap
@@ -295,7 +321,7 @@ def _sort_keys(e):
             return -999
 
     return {
-        "quality": q_map.get(e.get("quality", "").strip(), 9),
+        "quality": q_sort,
         "verdict": v_map.get(e.get("verdict", "").strip(), 9),
         "rr": rr_num,
         "rl": rl_num,
@@ -324,7 +350,7 @@ def build_rows(entries):
             f'  <td><a href="{e["href"]}" class="ticker-link">{e["ticker"]}</a></td>\n'
             f'  <td class="date-cell">{e["date"]}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
-            f'  <td>{quality_badge(e["quality"])}</td>\n'
+            f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""))}</td>\n'
             f'  <td>{rr_badge(e["rr_value"])}</td>\n'
             f'  <td class="updown-cell">{updown_badge(e["upside"], True)}</td>\n'
             f'  <td class="updown-cell">{updown_badge(e["downside"], False)}</td>\n'
@@ -386,6 +412,7 @@ def update_index(entries):
 .quality-mh{background:#ede9fe;color:#5b21b6}
 .quality-m{background:#f1f5f9;color:#475569}
 .quality-w{background:rgba(220,38,38,.07);color:#991b1b}
+.quality-score{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#64748b;margin-left:2px}
 .rr-pass{color:#059669;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
 .rr-mid{color:#d97706;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
 .rr-fail{color:#dc2626;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
