@@ -50,11 +50,12 @@ QUALITY_SCORE_RE = re.compile(
 )
 
 # Patterns to extract upside / downside from §7.7 H table
+# Handle <tr> with optional class/style attributes
 UPSIDE_RE = re.compile(
-    r'<tr>\s*<td>上行空間</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
+    r'<tr[^>]*>\s*<td[^>]*>上行空間</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
 )
 DOWNSIDE_RE = re.compile(
-    r'<tr>\s*<td>下行距離</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
+    r'<tr[^>]*>\s*<td[^>]*>下行距離</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
 )
 PCT_RE = re.compile(r'[+\-−]?\d+(?:\.\d+)?%')
 
