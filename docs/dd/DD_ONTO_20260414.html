@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="dd-schema-version" content="v9.0">
+    <title>DD Report - ONTO Innovation (ONTO) | 2026-04-14</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F8FAFC;
+            --card: #FFFFFF;
+            --title: #1E3A5F;
+            --accent: #3B82F6;
+            --row-alt: #F1F5F9;
+            --beat: #DCFCE7; --beat-text: #166534;
+            --miss: #FEE2E2; --miss-text: #991B1B;
+            --neutral: #FEF9C3; --neutral-text: #92400E;
+            --trap-bg: #FFF0E6; --trap-border: #F97316; --trap-text: #C2410C;
+            --hypo-bg: #EFF6FF; --hypo-border: #3B82F6; --hypo-text: #1E3A5F;
+            --bull-bg: #F0FDF4; --bull-border: #16A34A;
+            --bear-bg: #FFF1F2; --bear-border: #DC2626;
+            --arb-bg: #F5F3FF; --arb-border: #7C3AED;
+            --verdict-bg: #FFFBEB; --verdict-border: #D97706; --verdict-text: #92400E;
+            --short-border: #0284C7; --short-bg: #F0F9FF;
+            --mid-border: #7C3AED; --mid-bg: #F5F3FF;
+            --long-border: #059669; --long-bg: #ECFDF5; --long-text: #065F46;
+            --pass-bg: #DCFCE7; --pass-text: #166534;
+            --fail-bg: #FEE2E2; --fail-text: #991B1B;
+            --break-bg: #FEF3C7; --break-text: #92400E;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: #1a1a1a; line-height: 1.7; }
+        .header-bar { position: sticky; top: 0; z-index: 100; background: var(--title); color: #fff; padding: 12px 32px; display: flex; justify-content: space-between; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; }
+        .header-bar .ticker { font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .section { background: var(--card); border-radius: 4px; margin-bottom: 24px; padding: 28px 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+        .section-title { font-size: 20px; font-weight: 700; color: var(--title); border-left: 4px solid var(--accent); padding-left: 16px; margin-bottom: 20px; }
+        .section-subtitle { font-size: 16px; font-weight: 600; color: var(--title); margin: 18px 0 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+        th { background: var(--title); color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+        td { padding: 9px 12px; border-bottom: 1px solid #E2E8F0; }
+        tr:nth-child(even) td { background: var(--row-alt); }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 13px; font-weight: 600; }
+        .badge-beat { background: var(--beat); color: var(--beat-text); }
+        .badge-miss { background: var(--miss); color: var(--miss-text); }
+        .badge-neutral { background: var(--neutral); color: var(--neutral-text); }
+        .trap-box { background: var(--trap-bg); border-left: 4px solid var(--trap-border); padding: 16px 20px; margin: 14px 0; }
+        .trap-box .trap-title { color: var(--trap-text); font-weight: 700; margin-bottom: 8px; }
+        .hypo-box { background: var(--hypo-bg); border-left: 4px solid var(--hypo-border); padding: 16px 20px; margin: 14px 0; }
+        .hypo-box .hypo-title { color: var(--hypo-text); font-weight: 700; margin-bottom: 8px; }
+        .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+        .debate-card { padding: 18px; border-radius: 4px; }
+        .bull-card { background: var(--bull-bg); border-left: 4px solid var(--bull-border); }
+        .bear-card { background: var(--bear-bg); border-left: 4px solid var(--bear-border); }
+        .arb-card { background: var(--arb-bg); border-left: 4px solid var(--arb-border); }
+        .verdict-card { background: var(--verdict-bg); border-left: 4px solid var(--verdict-border); padding: 18px; margin: 16px 0; }
+        .verdict-card .verdict-title { color: var(--verdict-text); font-weight: 700; font-size: 16px; }
+        .rr-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 16px 0; }
+        .rr-card { padding: 18px; border-radius: 4px; }
+        .short-card { background: var(--short-bg); border-left: 4px solid var(--short-border); }
+        .mid-card { background: var(--mid-bg); border-left: 4px solid var(--mid-border); }
+        .long-card { background: var(--long-bg); border-left: 4px solid var(--long-border); }
+        .long-card .long-title { color: var(--long-text); }
+        .pass-badge { background: var(--pass-bg); color: var(--pass-text); padding: 4px 12px; border-radius: 3px; font-weight: 700; }
+        .fail-badge { background: var(--fail-bg); color: var(--fail-text); padding: 4px 12px; border-radius: 3px; font-weight: 700; }
+        .break-badge { background: var(--break-bg); color: var(--break-text); padding: 4px 12px; border-radius: 3px; font-weight: 700; }
+        .mono { font-family: 'IBM Plex Mono', monospace; }
+        .print-btn { position: fixed; bottom: 24px; right: 24px; background: var(--title); color: #fff; border: none; padding: 12px 20px; cursor: pointer; border-radius: 4px; font-size: 14px; z-index: 99; }
+        p { margin: 8px 0; }
+        ul, ol { margin: 8px 0 8px 20px; }
+        li { margin: 4px 0; }
+        @media print { .header-bar, .print-btn { display: none !important; } body { background: #fff; } .section { box-shadow: none; break-inside: avoid; } }
+        @media (max-width: 768px) { .debate-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="header-bar">
+        <div>
+            <span class="ticker">ONTO</span> &nbsp; Onto Innovation Inc.
+        </div>
+        <div>
+            資料抓取：2026-04-14 ｜ 最新股價：$252.61 ｜ DD Schema v9.0
+        </div>
+    </div>
+    <button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+    <div class="container">
+
+<!-- ============================================================ -->
+<!-- §8 投資結論 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§8｜投資結論</div>
+    <p style="font-size:13px;color:#64748B;">本結論基於以下完整分析得出，詳見各章節。</p>
+
+    <div class="section-subtitle">財報信號與假設校準</div>
+    <table>
+        <tr><th>假設</th><th>當前狀態</th><th>佐證</th></tr>
+        <tr><td><strong>H1</strong> 先進封裝 AI 需求持續 30%+ 成長</td><td><span class="badge badge-beat">＋ 強化</span></td><td>Q4 先進封裝營收 $150M 創新高，FY2025 全年 $500M+，管理層 FY2026 指引 >30% 成長；$240M VPA 簽約</td></tr>
+        <tr><td><strong>H2</strong> Dragonfly G5 打開新 SAM > $500M</td><td><span class="badge badge-beat">＋ 強化</span></td><td>G5 已獲 HBM4 客戶雙位數訂單，Q2 開始出貨；3Di 技術在 2 家 HBM 大廠獨家通過認證</td></tr>
+        <tr><td><strong>H3</strong> 估值從中型設備股 re-rate 至 AI 設備龍頭</td><td><span class="badge badge-neutral">0 不變</span></td><td>Forward P/E 38.7x 已高於 5 年平均 39.3x，re-rate 部分已反映但未過熱；需持續驗證 EPS 加速</td></tr>
+    </table>
+    <p>這份 Q4 財報讓隱含預期變得<strong>更容易兌現</strong>——backlog 翻倍至 ~2 季覆蓋、G5 拿下 HBM4 訂單、亞洲產能轉移順利（Q1'26 目標 60%），但股價已從 52 週低 $85.88 飆升 194%，短期估值偏高需分批進場而非追高。</p>
+
+    <div class="section-subtitle">進場 / 觀望 / 迴避</div>
+    <div class="hypo-box">
+        <div class="hypo-title" style="font-size:18px;">🟢 進場（分批建倉）</div>
+    </div>
+
+    <p><strong>① 短期信號（0-12 個月）</strong><br>
+    Q1'26 指引 $275-285M 營收（+3-7% QoQ），Q2 預期突破 $300M。EPS 共識 FY26E $5.69 代表 +15% YoY Non-GAAP 成長。短期動能強勁，但股價已在 52 週高點附近，BBand 週線觸及 2σ 上軌，建議分批而非一次滿倉。</p>
+
+    <p><strong>② 中期成長確信度（1-3 年）</strong><br>
+    Non-GAAP EPS CAGR（FY25→FY28）= 22.3%，驅動因子：先進封裝（HBM/chiplet）量驅動 60% + 先進節點（EUV 層）產品升級 25% + 軟體/服務高毛利占比提升 15%。能見度：<strong>中偏高</strong>，因 VPA 鎖定至 2027、backlog 覆蓋 ~2 季。</p>
+
+    <p><strong>③ 長期護城河邏輯（3 年後）</strong><br>
+    Runway 8-10 年（AI 封裝 + 面板級封裝 PLP + 先進節點持續微縮）。ROIC 可維持（FY25 約 7% GAAP 偏低但因 SBC/無形資產攤銷拖累，Non-GAAP 經濟 ROIC ~15%+）。護城河屬「強化型」——每安裝一台 Dragonfly，客戶的 recipe database 和校準數據形成轉換成本，且 3Di 技術形成先發優勢。</p>
+
+    <div class="trap-box">
+        <div class="trap-title">⚠️ 這是價值陷阱嗎？</div>
+        <table>
+            <tr><td><strong>最可能的價值陷阱模式？</strong></td><td><strong>非陷阱</strong>——估值並不便宜（Forward P/E 38.7x），價值陷阱風險不適用。主要風險是「成長不及預期導致估值壓縮」，屬高估值成長股的典型下行路徑，而非傳統價值陷阱。</td></tr>
+            <tr><td><strong>支持「非陷阱」的最強論據</strong></td><td>FCF Margin 從 FY21 的 20.7% 提升至 FY25 的 29.8%，Non-GAAP EPS 從 FY23 $3.73 → FY24 $5.34 → FY25 $4.94（因產品組合轉型，FY26E 反彈至 $5.69）。營收從 FY23 $816M → FY25 $1,005M，有機成長紮實。Gross Margin 穩定在 50-54%。</td></tr>
+            <tr><td><strong>支持「可能陷阱」的最強反駁</strong></td><td>GAAP ROIC 僅 ~7%，SBC 佔營收 ~2.7% 雖低但 GAAP 與 Non-GAAP 差距大（GAAP EPS $2.78 vs Non-GAAP $4.94，差距 $2.16 主因無形資產攤銷）。FY25 GAAP 毛利率 49.7% 較 FY21 的 54.4% 下滑，反映併購 Rudolph 的攤銷壓力。</td></tr>
+            <tr><td><strong>如何判斷陷阱是否發生？</strong></td><td>① 先進封裝季度營收連續 2 季 QoQ < 0%（需求放緩）；② Dragonfly G5 出貨量低於管理層指引 50% 以上（產品競爭力問題）</td></tr>
+        </table>
+        <p><strong>最終定性：</strong><span class="badge badge-beat">🟢 非陷阱</span></p>
+    </div>
+
+    <div class="section-subtitle">條件式進場判斷</div>
+    <table>
+        <tr><th>條件類型</th><th>具體內容</th></tr>
+        <tr><td><strong>估值條件</strong></td><td>Forward P/E 回落至 35x 以下（對應股價 ~$199），或 PEG < 1.5</td></tr>
+        <tr><td><strong>基本面條件</strong></td><td>Q1'26 財報確認營收 ≥ $275M + Non-GAAP GM ≥ 54% + 先進封裝營收 QoQ 正成長</td></tr>
+        <tr><td><strong>陷阱排除條件</strong></td><td>Dragonfly G5 出貨延遲超過 1 季、HBM 客戶 VPA 被取消或延後</td></tr>
+        <tr><td><strong>事件觸發條件</strong></td><td>G5 出貨確認 + 第二家主要 HBM 客戶 3Di 採用 → 加碼信號</td></tr>
+    </table>
+
+    <div class="section-subtitle">下行風險量化（引用 §2.5E）</div>
+    <p>若 3 年後成長率降至 10%：估值壓縮至 ~25x，對應股價 ~$178，跌幅約 <strong>-30%</strong><br>
+    若 3 年後成長率降至 5%：估值壓縮至 ~20x，對應股價 ~$127，跌幅約 <strong>-50%</strong></p>
+
+    <div class="section-subtitle">最關鍵監測指標</div>
+    <table>
+        <tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+        <tr><td>1</td><td>先進封裝季度營收 QoQ 成長率</td><td>§0.5 H1</td><td>🔵 核心假設驗證</td><td>連續 2 季 QoQ < 0%</td></tr>
+        <tr><td>2</td><td>Dragonfly G5 季度出貨量</td><td>§2.5 / §3</td><td>🔵 長期成長領先信號</td><td>低於管理層指引 30%+</td></tr>
+        <tr><td>3</td><td>Non-GAAP Gross Margin</td><td>§7 / §1</td><td>短期估值信號</td><td>跌破 52%（連續 2 季）</td></tr>
+    </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7.7 綜合品質分驅動動態 R:R -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§7.7｜綜合品質分驅動的動態 R:R（v9.0）</div>
+
+    <div class="section-subtitle">A｜綜合品質分計算</div>
+    <table>
+        <tr><th>維度</th><th>來源</th><th>分數</th><th>權重</th><th>加權貢獻</th></tr>
+        <tr><td>護城河</td><td>§3 評分</td><td class="mono">7</td><td>0.30</td><td class="mono">2.10</td></tr>
+        <tr><td>長期成長性</td><td>§2.5 評級 🟢 = 9</td><td class="mono">9</td><td>0.45</td><td class="mono">4.05</td></tr>
+        <tr><td>財務品質</td><td>綜合 ROIC/FCF/EPS</td><td class="mono">7</td><td>0.10</td><td class="mono">0.70</td></tr>
+        <tr><td>AI 風險</td><td>§2.5 F 評級 🟢 = 9</td><td class="mono">9</td><td>0.15</td><td class="mono">1.35</td></tr>
+        <tr><td colspan="3"><strong>綜合品質分</strong></td><td></td><td class="mono"><strong>8.20</strong></td></tr>
+    </table>
+    <table>
+        <tr><th>綜合分</th><th>品質等級</th><th>R:R 門檻</th><th>底倉（目標倉位的）</th></tr>
+        <tr style="background:var(--beat);"><td class="mono">8.20</td><td><strong>中高品質（MH）</strong></td><td class="mono">2.5x</td><td class="mono">20%</td></tr>
+    </table>
+
+    <div class="section-subtitle">B｜上行三引擎（取較高不疊加）</div>
+
+    <p><strong>引擎 A：ROIC 溢價</strong><br>
+    觸發條件：ROIC（3 年平均）> 20% 且連續 3 年向上擴大<br>
+    本標的：GAAP ROIC ~7%（受無形資產攤銷拖累），Non-GAAP 經濟 ROIC 約 15%，未連續 3 年擴大 → <span class="badge badge-miss">❌ 未觸發</span></p>
+
+    <p><strong>引擎 B：PEG 動態天花板</strong><br>
+    觸發條件：預估 EPS 5 年 CAGR > 20%<br>
+    Non-GAAP 5 年 CAGR 約 18%（FY25 $4.94 → FY30E ~$11.3，含 Runway 遞減）→ <span class="badge badge-miss">❌ 未觸發</span>（略低於 20% 門檻）</p>
+
+    <p><strong>引擎 C：護城河溢價</strong><br>
+    觸發條件：護城河 ≥ 9 分<br>
+    本標的護城河 7/10 → <span class="badge badge-miss">❌ 未觸發</span></p>
+
+    <table>
+        <tr><th>引擎</th><th>觸發</th><th>調整係數</th></tr>
+        <tr><td>A ROIC 溢價</td><td>❌</td><td>—</td></tr>
+        <tr><td>B PEG 動態</td><td>❌</td><td>—</td></tr>
+        <tr><td>C 護城河溢價</td><td>❌</td><td>—</td></tr>
+    </table>
+    <p><strong>無引擎觸發</strong>，調整係數 = 1.00（使用基準倍數）</p>
+
+    <div class="section-subtitle">C｜AI 風險獨立疊加</div>
+    <p>§2.5 F 評級：🟢（AI 直接受益）<br>
+    AI 調整係數 = <strong>× 1.10</strong></p>
+
+    <div class="section-subtitle">D｜最終長期目標 P/E</div>
+    <p>最終 P/E = 基準 P/E × 引擎調整 × AI 調整 = <span class="mono">20x × 1.00 × 1.10 = <strong>22.0x</strong></span></p>
+    <p>（基準 P/E = 20x，引用 §2.5 長期成長性 🟢 但 Runway 介於 8-10 年、取中間值，因 Runway 未達 10 年完整高確信門檻，採 🟡 基準 20x 加上 AI 溢價）</p>
+
+    <div class="section-subtitle">E｜長期 EPS 預估（雙源交叉驗證）</div>
+    <p><strong>方法 1：§2.5 B 成長驅動分解</strong></p>
+    <table>
+        <tr><th>業務段</th><th>營收占比（§5）</th><th>5 年 CAGR 假設</th><th>加權貢獻</th></tr>
+        <tr><td>先進封裝 + 特殊設備</td><td>52%</td><td>22%</td><td>11.4%</td></tr>
+        <tr><td>先進節點</td><td>25%</td><td>20%</td><td>5.0%</td></tr>
+        <tr><td>軟體與服務</td><td>23%</td><td>12%</td><td>2.8%</td></tr>
+        <tr><td colspan="2"><strong>合計 5 年 EPS CAGR（方法 1）</strong></td><td></td><td class="mono"><strong>19.2%</strong></td></tr>
+    </table>
+
+    <p><strong>方法 2：§2.5 D ROIC × 再投資率</strong><br>
+    內生成長率 = Non-GAAP ROIC 15% × 再投資率 55% = 8.3%<br>
+    市場擴張調整 + 份額提升：+8%<br>
+    方法 2 CAGR：<span class="mono"><strong>16.3%</strong></span></p>
+
+    <p><strong>採用 CAGR = (19.2% + 16.3%) / 2 = <span class="mono">17.8%</span></strong></p>
+
+    <div class="section-subtitle">F｜長期目標價計算</div>
+    <p>基期 EPS（Non-GAAP FY25）= $4.94<br>
+    5 年後 EPS = $4.94 × (1 + 17.8%)^5 = $4.94 × 2.276 = <span class="mono"><strong>$11.24</strong></span><br>
+    長期目標 = $11.24 × 22.0x = <span class="mono"><strong>$247.3</strong></span></p>
+
+    <div class="section-subtitle">G｜動態下行錨點</div>
+    <p><strong>步驟 1：護城河基礎下修</strong><br>
+    護城河 7/10 → 基礎下修 <span class="mono">-20%</span></p>
+    <p><strong>步驟 2：產業分層調整</strong><br>
+    半導體設備（週期股）→ 調整 <span class="mono">+5%</span></p>
+    <p><strong>步驟 3：AI 風險疊加</strong><br>
+    AI 🟢 → 調整 <span class="mono">-5%</span></p>
+    <p><strong>淨下修 = -20% + 5% - 5% = <span class="mono">-20%</span></strong></p>
+    <p>壓測 EPS = $4.94 × (1 - 20%) = <span class="mono"><strong>$3.95</strong></span></p>
+    <p>恐慌 P/E（25% 分位）= <span class="mono"><strong>28x</strong></span>（5 年 Forward P/E 低點約 20x，25% 分位 ≈ 20 + (55-20)×0.25 = 28.75x，取 28x）</p>
+    <p>下行錨點 = $3.95 × 28x = <span class="mono"><strong>$110.6</strong></span></p>
+
+    <div class="section-subtitle">H｜動態 R:R 計算</div>
+    <div class="long-card rr-card">
+        <table>
+            <tr><th>項目</th><th>數值</th></tr>
+            <tr><td>現價</td><td class="mono">$252.61</td></tr>
+            <tr><td>長期目標</td><td class="mono">$247.3</td></tr>
+            <tr><td>上行空間</td><td class="mono">-2.1%</td></tr>
+            <tr><td>下行錨點</td><td class="mono">$110.6</td></tr>
+            <tr><td>下行距離</td><td class="mono">-56.2%</td></tr>
+            <tr><td><strong>長期 R:R</strong></td><td class="mono"><strong>neg（上行空間為負）</strong></td></tr>
+            <tr><td>R:R 門檻（綜合分查表）</td><td class="mono">2.5x</td></tr>
+            <tr><td>判定</td><td><span class="fail-badge">❌ Fail</span></td></tr>
+        </table>
+    </div>
+    <p><strong>關鍵說明：</strong>當前股價 $252.61 已略高於 5 年長期目標 $247.3，R:R 為負值。這不代表 ONTO 基本面不佳，而是<strong>當前價格已充分反映了中期成長預期</strong>。若使用更激進的成長假設（CAGR 22%+），目標價可達 $300+，但在保守框架下，當前位置不適合大舉建倉，應等待回調。</p>
+
+    <div class="section-subtitle">I｜波動率燈號協議</div>
+    <table>
+        <tr><th>項目</th><th>數值</th></tr>
+        <tr><td>週線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$256.64 / $285.52</td></tr>
+        <tr><td>週線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$141.10 / $112.21</td></tr>
+        <tr><td>月線 BB 2σ 上軌 / 3σ 上軌</td><td class="mono">$249.39 / $294.97</td></tr>
+        <tr><td>月線 BB 2σ 下軌 / 3σ 下軌</td><td class="mono">$67.10 / $21.52</td></tr>
+        <tr><td>當前股價</td><td class="mono">$252.61</td></tr>
+        <tr><td><strong>🔴 紅燈數</strong></td><td class="mono"><strong>1/4</strong>（月線 BB 2σ 上軌突破）</td></tr>
+        <tr><td><strong>🟢 綠燈數</strong></td><td class="mono"><strong>0/4</strong></td></tr>
+    </table>
+
+    <div class="section-subtitle">J｜二維建倉矩陣</div>
+    <p>品質等級：MH（7.0-8.5），紅燈：1<br>
+    查表 → 建倉節奏：<strong>20%</strong>（一次建底倉 20%）</p>
+    <p>但因長期 R:R Fail（上行為負），<strong>底倉建議暫緩至股價回調至 $200-$210 區間</strong>。</p>
+
+    <div class="section-subtitle">K｜綠燈加碼放大</div>
+    <p>綠燈 0 → 不加碼，按 J 表執行</p>
+
+    <div class="section-subtitle">L｜戰術 MA</div>
+    <table>
+        <tr><th>條件</th><th>狀態</th><th>動作</th></tr>
+        <tr><td>股價 vs MA200（$152.96，斜率向上）</td><td>股價 > MA200 ✅</td><td>倉位權限 100%</td></tr>
+        <tr><td>股價 vs MA60（$211.27）</td><td>股價 > MA60</td><td>等待 MA60 回踩確認加碼</td></tr>
+    </table>
+
+    <div class="section-subtitle">M｜最終建倉建議</div>
+    <table>
+        <tr><th>階段</th><th>倉位（目標倉位的%）</th><th>觸發條件</th></tr>
+        <tr><td>等待</td><td>0%</td><td>當前 R:R 為負，不建議在 $252 建倉</td></tr>
+        <tr><td>底倉</td><td>20%</td><td>股價回落至 $200-$210（Forward P/E ~35x）+ MA60 回踩確認</td></tr>
+        <tr><td>加碼</td><td>+20%</td><td>Q1'26 財報確認營收 > $280M + G5 出貨順利</td></tr>
+        <tr><td>深跌加碼</td><td>+30%</td><td>股價跌至 MA200 ~$153 + 基本面未惡化（極端機會）</td></tr>
+        <tr><td><strong>總目標倉位達成</strong></td><td><strong>70%</strong></td><td></td></tr>
+    </table>
+    <p>註：底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7.6 三方辯論摘要 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§7.6｜三方辯論摘要</div>
+    <div class="debate-grid">
+        <div class="debate-card bull-card">
+            <h3 style="color:#16A34A;">🐂 多頭辯護人｜Charlie Munger</h3>
+            <table>
+                <tr><th>#</th><th>進場論據</th><th>佐證</th></tr>
+                <tr><td>1</td><td>先進封裝不可替代地位</td><td>§3：3Di 技術在 2 家 HBM 大廠獨家認證，Dragonfly 在 2D/3D bump 檢測市佔領先</td></tr>
+                <tr><td>2</td><td>AI 驅動的多年結構性成長</td><td>§2.5：先進封裝營收翻倍週期，FY26 指引 >30% 成長，$240M VPA 鎖定至 2027</td></tr>
+                <tr><td>3</td><td>FCF 品質持續改善</td><td>§4：FCF Margin 從 20.7%（FY21）→ 29.8%（FY25），FCF/NI = 2.19x（高品質現金轉換）</td></tr>
+            </table>
+            <p><strong>多頭最強一句話：</strong>ONTO 是 AI 先進封裝檢測的隱形冠軍，3Di 技術壁壘 + VPA 鎖定收入 = 確定性極高的多年複利機器。</p>
+        </div>
+        <div class="debate-card bear-card">
+            <h3 style="color:#DC2626;">🐻 空頭檢察官｜Michael Burry</h3>
+            <table>
+                <tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+                <tr><td>1</td><td>HBM 需求遇到 AI 投資週期回調，客戶延遲 capex</td><td>HBM 客戶季度 capex 指引下調 > 15%</td></tr>
+                <tr><td>2</td><td>股價已漲 194%（52 週低至今），估值 P/E 38.7x 壓縮至 25x</td><td>大盤修正 + 半導體去庫存同步發生</td></tr>
+                <tr><td>3</td><td>KLA 推出競品直接進入 bump 檢測市場，侵蝕 ONTO 份額</td><td>KLA 新品公告 + ONTO 客戶流失跡象</td></tr>
+            </table>
+            <p><strong>空頭最大威脅：</strong>AI capex 週期性回調 + $12.8B 市值對應 $1B 營收 = 12.5x P/S，一旦成長放緩至個位數，P/E 壓縮至 20-25x 可造成 40%+ 回撤。</p>
+        </div>
+        <div class="debate-card arb-card">
+            <h3 style="color:#7C3AED;">⚖️ 估值仲裁員｜Damodaran</h3>
+            <table>
+                <tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+                <tr><td>與過去 3 年實際 FCF CAGR 差距</td><td>隱含 15% vs 歷史 22%</td><td class="mono">2 / 2</td></tr>
+                <tr><td>與分析師 EPS CAGR 一致性</td><td>隱含 15% vs 共識 22.3%</td><td class="mono">2 / 2</td></tr>
+                <tr><td>與同業最快 FCF CAGR 相對位置</td><td>隱含 15% vs NVMI ~25%</td><td class="mono">2 / 2</td></tr>
+                <tr><td>達成條件苛刻程度</td><td>需先進封裝持續 20%+ 成長</td><td class="mono">1 / 2</td></tr>
+                <tr><td>歷史先例</td><td>KLA 在 2016-2021 達成類似成長</td><td class="mono">2 / 2</td></tr>
+            </table>
+            <p><strong>隱含預期可信度評分：9 / 10</strong></p>
+            <p><strong>仲裁員一句話：</strong>以 Reverse DCF 隱含的 15% FCF CAGR 衡量，ONTO 的隱含預期保守合理——問題不在預期能否兌現，而在當前股價已把大部分上行空間吃掉了。</p>
+        </div>
+    </div>
+    <div class="verdict-card">
+        <div class="verdict-title">裁決</div>
+        <table>
+            <tr><td><strong>多頭最強論據</strong></td><td>3Di 獨家認證 + AI 先進封裝結構性成長 + FCF 品質持續改善</td></tr>
+            <tr><td><strong>空頭最大威脅</strong></td><td>AI capex 週期回調 + 估值高位壓縮風險</td></tr>
+            <tr><td><strong>估值仲裁評分</strong></td><td class="mono">9 / 10</td></tr>
+            <tr><td><strong>我的裁決</strong></td><td><strong>進場（但分批，等回調建底倉）</strong></td></tr>
+            <tr><td><strong>裁決理由</strong></td><td>ONTO 基本面優秀——AI 先進封裝的結構性受益者，3Di 技術壁壘、G5 新品週期、FCF 品質均屬一流。Reverse DCF 隱含預期保守（9/10），但當前股價 $252.61 已在 52 週高點、月線 BB 觸及 2σ 上軌、長期 R:R 為負。建議等待 MA60 回踩（~$211）或 Forward P/E 回落至 35x 以下再建底倉 20%。</td></tr>
+        </table>
+        <p style="margin-top:12px;color:#64748B;font-size:13px;">
+        自我檢核：<br>
+        ☑ 多頭論據中，3Di 認證和 VPA 是已確認事實，非「市場最終會認識到」式假設<br>
+        ☑ 空頭 AI capex 回調風險短期存在但 VPA 提供 1-2 年緩衝<br>
+        ☑ 仲裁評分 9/10，安全邊際在等待回調後才足夠</p>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §0 序章 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
+
+    <div class="section-subtitle">存在意義</div>
+    <p>Onto Innovation 解決的核心問題是：<strong>當半導體製程微縮至奈米級、封裝架構從 2D 演進至 2.5D/3D 堆疊時，如何確保每一層、每一顆 bump、每一條互連線的物理尺寸和缺陷在容許範圍內？</strong></p>
+    <p>若 ONTO 明天消失，全球 HBM 生產線會立刻失去 3Di bump 高度量測能力——這是目前唯一通過兩家主要 HBM 製造商嚴格認證的技術。先進封裝良率將因缺乏即時回饋而暴跌，HBM4 的量產時程將被推遲 6-12 個月，直到替代方案完成認證。AI 晶片的算力擴張將因封裝瓶頸而減速。</p>
+    <p>ONTO 不製造晶片，但它確保製造晶片的人知道自己在做什麼——這是半導體製造鏈中「看見」的能力，是製造精密度的最後一道品質防線。</p>
+
+    <div class="section-subtitle">逆向推演（Munger Inversion）</div>
+    <p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能的路徑：</p>
+    <ul>
+        <li><strong>地緣政治曝險</strong>：ONTO 客戶集中於台灣（TSMC）、韓國（SK Hynix、Samsung）和中國。若台海衝突或韓國半導體出口管制升級，主要客戶 capex 凍結將直接衝擊 ONTO 訂單。亞洲製造轉移（目標 60% 出貨來自亞洲廠）也意味著地緣風險集中度提升。</li>
+        <li><strong>技術替代風險</strong>：KLA（$100B+ 市值、>10x ONTO 研發預算）若決定全力進攻 bump 檢測和先進封裝計量市場，以其規模優勢可能在 2-3 年內推出競品。ASML 光學計量或 Applied Materials 亦有能力跨界。時間軸：24-36 個月。</li>
+        <li><strong>管理層失職</strong>：ONTO 2019 年由 Rudolph + Nanometrics 合併而成，整合風險已基本消化。但 CEO Plisinski 若進行大型併購（公司有 ~$984M 現金），整合失敗可能吞噬 FCF。</li>
+        <li><strong>價值陷阱路徑</strong>：<strong>不適用</strong>——ONTO 的風險不是價值陷阱（估值不便宜），而是「成長股估值壓縮」：若 AI capex 週期性回調導致先進封裝成長從 30% 降至 10%，Forward P/E 從 38x 壓縮至 22-25x，對應 40-50% 跌幅。這是最現實的虧損路徑。</li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §0.5 投資論點錨定 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§0.5｜投資論點錨定</div>
+
+    <div class="hypo-box">
+        <div class="hypo-title">A｜持有期與時間軸宣告</div>
+        <table>
+            <tr><th>項目</th><th>填寫</th></tr>
+            <tr><td><strong>預設持有期</strong></td><td>18-24 個月</td></tr>
+            <tr><td><strong>主要驅動</strong></td><td>Dragonfly G5 產品週期（2026 H2 - 2027 全年出貨加速）+ HBM4 量產時程 + FY27E EPS $6.95 兌現</td></tr>
+            <tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：季度先進封裝營收趨勢、G5 出貨量、backlog 覆蓋率。噪音：單季毛利率波動（±100bps）、匯率影響、短期庫存調整</td></tr>
+        </table>
+    </div>
+
+    <div class="hypo-box">
+        <div class="hypo-title">B｜三個核心假設</div>
+        <table>
+            <tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+            <tr><td>H1</td><td>先進封裝 AI 需求（HBM/chiplet）驅動 ONTO 該業務段 FY26 營收成長 >30%</td><td>季度先進封裝營收 QoQ 趨勢、VPA 執行進度</td><td>FY26 Q2-Q3 財報（2026 年 8-11 月）</td></tr>
+            <tr><td>H2</td><td>Dragonfly G5 + 3Di 技術打開 >$500M 新 SAM，推動 FY27 營收突破 $1.3B</td><td>G5 季度出貨量、新客戶 Win Rate</td><td>FY27 Q1 財報（2027 年 2 月）</td></tr>
+            <tr><td>H3</td><td>市場逐步將 ONTO 從「中型半導體設備」re-rate 至「AI 封裝基礎設施」，估值從 P/E 35-40x 提升至 40-50x</td><td>Forward P/E 趨勢 vs 同業 NVMI/CAMT</td><td>持續觀察，預計 2027 年前</td></tr>
+        </table>
+    </div>
+
+    <div class="hypo-box">
+        <div class="hypo-title">C｜三個最可能推翻論點的風險</div>
+        <table>
+            <tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+            <tr><td>R1</td><td>AI capex 週期回調，HBM 擴產暫停或推遲</td><td>H1</td><td>HBM 客戶（SK Hynix/Samsung）季度 capex 指引</td><td>Capex 指引連續 2 季下調 >10%</td></tr>
+            <tr><td>R2</td><td>KLA 推出直接競品進入 bump 檢測市場</td><td>H2</td><td>KLA 產品公告、ONTO 新客戶 Win Rate</td><td>Win Rate 降至 50% 以下</td></tr>
+            <tr><td>R3</td><td>半導體設備整體估值壓縮（利率上升/地緣政治）</td><td>H3</td><td>SOX 指數 Forward P/E vs 歷史中位</td><td>SOX Forward P/E 跌破 20x</td></tr>
+        </table>
+    </div>
+
+    <div class="hypo-box">
+        <div class="hypo-title">D｜邊際貢獻判斷框架</div>
+        <table>
+            <tr><th>判斷步驟</th><th>問題</th></tr>
+            <tr><td>1. 時間軸匹配？</td><td>這個事件在 18-24 個月持有期內有影響嗎？</td></tr>
+            <tr><td>2. 假設關聯？</td><td>它影響的是 H1（AI 封裝需求）/ H2（G5 產品週期）/ H3（估值 re-rate）？</td></tr>
+            <tr><td>3. 邊際方向？</td><td>對該假設 ＋強化 / 0 無關 / －削弱？</td></tr>
+            <tr><td>4. 閾值判斷？</td><td>削弱程度是否達到 R1/R2/R3 的警戒閾值？</td></tr>
+        </table>
+    </div>
+
+    <div class="hypo-box">
+        <div class="hypo-title">E｜可執行決策主線預設</div>
+        <table>
+            <tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+            <tr><td><strong>進場</strong></td><td>股價回調至 $200-210（Forward P/E ~35x）+ 基本面確認 Q1'26 營收 ≥ $275M</td><td>建底倉 20%（目標倉位）</td></tr>
+            <tr><td><strong>加碼</strong></td><td>H1 + H2 均確認（先進封裝 QoQ 正成長 + G5 出貨順利）</td><td>加碼至 40%</td></tr>
+            <tr><td><strong>減碼</strong></td><td>R1 風險信號出現（HBM capex 連續下調），或 Forward P/E > 50x</td><td>減至 10%，重新評估</td></tr>
+            <tr><td><strong>撤退</strong></td><td>H1 被推翻（先進封裝營收連續 2 季 QoQ 下滑 >10%），或 KLA 推出直接競品</td><td>清倉，記錄推翻理由</td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §1 即時財報情報 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§1｜即時財報情報</div>
+    <p style="color:#64748B;font-size:13px;">資料來源：Q4 FY2025 財報（截至 2026-01-03），2026-02-19 發布</p>
+
+    <div class="section-subtitle">① 最新一季財報關鍵數字（Q4 FY2025）</div>
+    <table>
+        <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+        <tr><td>Revenue</td><td class="mono">$266.87M</td><td class="mono">$265.78M</td><td><span class="badge badge-beat">Beat</span></td><td>+1.1%</td></tr>
+        <tr><td>EPS（Non-GAAP）</td><td class="mono">$1.26</td><td class="mono">$1.27</td><td><span class="badge badge-miss">Miss $0.01</span></td><td>-10%</td></tr>
+        <tr><td>EPS（GAAP）</td><td class="mono">$0.21</td><td>—</td><td>—</td><td>-92%</td></tr>
+        <tr><td>Gross Margin（Non-GAAP）</td><td class="mono">54.6%</td><td>—</td><td>—</td><td>+50bps QoQ</td></tr>
+        <tr><td>Operating Margin（Non-GAAP）</td><td class="mono">25.2%</td><td>—</td><td>—</td><td>+410bps QoQ</td></tr>
+    </table>
+
+    <p><strong>財報對假設的邊際貢獻：</strong></p>
+    <table>
+        <tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+        <tr><td>H1</td><td><span class="badge badge-beat">＋</span></td><td>先進封裝 Q4 營收 ~$150M，FY25 全年 >$500M；$240M VPA 簽約；FY26 指引 >30% 成長</td></tr>
+        <tr><td>H2</td><td><span class="badge badge-beat">＋</span></td><td>Dragonfly G5 於 2026 年 3 月發布，HBM4 客戶已下雙位數訂單</td></tr>
+        <tr><td>H3</td><td><span class="badge badge-neutral">0</span></td><td>估值已提升但尚未達到 re-rate 水平</td></tr>
+    </table>
+
+    <div class="section-subtitle">② Earnings Call 語氣解析</div>
+    <ul>
+        <li><strong>管理層基調：樂觀</strong>——CEO Plisinski 多次使用「record」（record revenue、record backlog），語氣較上季明顯更自信。「We are uniquely positioned」「no one else has been qualified」等措辭反映高度信心。</li>
+        <li><strong>Forward Guidance：上調</strong>——Q1'26 營收指引 $275-285M 高於共識 $272M；Q2 預期突破 $300M；H2'26 預計高於 H1'26。全年營收隱含 $1.2B+（+20% YoY）。</li>
+        <li><strong>刻意強調</strong>：「advanced packaging」（出現 20+ 次）、「HBM」（15+ 次）、「Dragonfly G5」——希望市場理解 ONTO 是 AI 封裝基礎設施的關鍵供應商。</li>
+        <li><strong>刻意迴避</strong>：GAAP EPS 大幅下滑至 $0.21 的具體原因（主要是無形資產攤銷加速 + 重組費用），管理層快速切換至 Non-GAAP 敘事。</li>
+    </ul>
+
+    <div class="section-subtitle">③ 產業 Imply 萃取</div>
+    <ul>
+        <li><strong>需求端</strong>：HBM 客戶「擴產計畫加速」，backlog 翻倍（~2 季覆蓋）暗示客戶提前鎖定產能，需求緊迫。</li>
+        <li><strong>供給端</strong>：ONTO 亞洲產能目標 60%（Q1'26），暗示關稅/供應鏈本地化壓力推動設備商就近生產。</li>
+        <li><strong>競爭格局</strong>：管理層自信「no one else qualified」for 3Di，暗示技術壁壘至少維持 12-18 個月。</li>
+        <li><strong>總體經濟</strong>：未提及利率或宏觀逆風——AI 投資週期目前獨立於總體經濟。</li>
+        <li><strong>同業連帶</strong>：正面信號傳遞至 KLA（先進封裝整體需求強勁）、NVMI（計量需求擴大）、CAMT（封裝檢測需求）。</li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §2 核心門檻檢核 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§2｜核心門檻檢核</div>
+
+    <table>
+        <tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+        <tr><td>FCF Margin（當前）</td><td>> 15%</td><td><span class="badge badge-beat">✓✓</span></td><td>TTM FCF Margin = $299.8M / $1,005M = <strong>29.8%</strong>，趨勢 ↑</td></tr>
+        <tr><td>正規化 FCF Margin（5 年均值）</td><td>> 15%；谷底 > 10%</td><td><span class="badge badge-beat">✓✓</span></td><td>FY21: 20.7% / FY22: 11.8% / FY23: 18.3% / FY24: 21.7% / FY25: 29.8%<br>5 年均值：<strong>20.5%</strong>，最低谷：11.8%（FY22）<br>判斷：穩健，FY22 低谷因半導體下行週期</td></tr>
+        <tr><td>ROIC（當前）</td><td>> 15%，高於 WACC</td><td><span class="badge badge-neutral">⚠️</span></td><td>GAAP ROIC：<strong>~7%</strong>（受無形資產攤銷拖累）<br>Non-GAAP 經濟 ROIC：~15%<br>WACC ~9%，超額：GAAP -2%p / Non-GAAP +6%p</td></tr>
+        <tr><td>ROIC 穩定性（10 年）</td><td>≥ 70% 年份 > 15%</td><td><span class="badge badge-miss">✗</span></td><td>GAAP ROIC 受 2019 合併的無形資產攤銷嚴重拖累，過去 5 年僅 FY22 GAAP ROIC > 15%（~18%）<br>Non-GAAP 5 年約 3/5 達標。趨勢：收窄（FY22 高點後回落）</td></tr>
+        <tr><td>毛利率定價能力（10 年）</td><td>≥ 70% 改善</td><td><span class="badge badge-miss">✗</span></td><td>GAAP 毛利率：FY21 54.4% → FY22 53.6% → FY23 51.5% → FY24 52.2% → FY25 49.7%<br>改善年份：1/4（FY24），趨勢 ↓（因併購攤銷）<br>Non-GAAP 毛利率穩定 54-55%</td></tr>
+        <tr><td>資本密集度</td><td>Capex/Rev < 5%</td><td><span class="badge badge-beat">✓✓</span></td><td>FY25: $28.5M/$1,005M = <strong>2.8%</strong>，3 年均值 2.9%<br>評級：<strong>低密集</strong></td></tr>
+        <tr><td>EPS CAGR（3 年）</td><td>> 20%</td><td><span class="badge badge-beat">✓</span></td><td>基期 FY25 Non-GAAP：$4.94<br>FY26E：$5.69（n=8）<br>FY27E：$6.95（n=8）<br>FY28E：$9.05（n=5）<br>Non-GAAP CAGR：($9.05/$4.94)^(1/3) − 1 = <strong>22.3%</strong><br>GAAP 基期 $2.78，GAAP CAGR 估計 ~30%+（攤銷遞減）<br>口徑差距：$2.16/share，來源：無形資產攤銷 + SBC<br>資料來源：Zacks / StockAnalysis</td></tr>
+        <tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="badge badge-beat">✓</span></td><td>Forward P/E 38.75 / CAGR 22.3% = <strong>PEG 1.74</strong><br>（StockAnalysis 報 PEG 1.29，因使用不同 CAGR 基期）</td></tr>
+        <tr><td>負債安全性</td><td>D/E < 0.7</td><td><span class="badge badge-beat">✓✓</span></td><td>D/E：<strong>0.01</strong>，淨現金 $622M<br>現金/Revenue = $984M/$1,005M = <strong>97.9%</strong>（極高配置）<br>評級：<strong>極低槓桿</strong></td></tr>
+        <tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="badge badge-beat">✓✓</span></td><td>現金 $984M vs 負債 $14M → <strong>是</strong>（70x 覆蓋）</td></tr>
+        <tr><td>護城河強度</td><td>> 8，趨勢擴大</td><td><span class="badge badge-neutral">⚠️</span></td><td><strong>7/10</strong>，趨勢穩定偏擴大（見 §3）</td></tr>
+    </table>
+
+    <p><strong>最大財務弱點</strong>：GAAP ROIC 偏低（~7%），因 2019 合併的無形資產攤銷將持續至 2030 年代中期，壓制 GAAP 獲利能力表現。</p>
+    <p><strong>Munger 三維評級</strong>：<span class="badge badge-neutral">🟡 兩項達標</span>（資本密集度 ✓✓ + FCF Margin 穩定性 ✓✓ / ROIC ✗ / 毛利率 ✗）——護城河存在但 GAAP 獲利指標受會計處理影響失真。</p>
+
+    <div class="section-subtitle">⚠️ 價值陷阱初篩</div>
+    <p>Forward P/E 38.75x，5 年低 ~20x，5 年高 ~55x。分位 = (38.75-20)/(55-20) = <strong>54%</strong> → 非低估，不觸發價值陷阱初篩。</p>
+    <p><strong>初篩結論</strong>：估值處於中等分位（54%），<strong>不觸發</strong>低估值四問。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §2.5 長期成長性評估 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§2.5｜長期成長性評估</div>
+
+    <div class="section-subtitle">A｜成長跑道（Runway）</div>
+    <table>
+        <tr><th>維度</th><th>數據</th><th>推論</th></tr>
+        <tr><td>當前 TAM</td><td>$13B（半導體計量與檢測，2025）</td><td>MarketsandMarkets 2025 估計</td></tr>
+        <tr><td>估計可達 TAM</td><td>$17-20B</td><td>先進封裝檢測（+$3B）+ 面板級封裝（+$2B）+ 軟體分析（+$1B）</td></tr>
+        <tr><td>當前市佔 / 滲透率</td><td>~$1B / $13B = <strong>7.7%</strong></td><td>在整體市場份額小，但在 niche（bump 檢測、先進封裝計量）份額 40-60%</td></tr>
+        <tr><td>維持現有成長率達 30% 滲透</td><td>~8 年（以 18% CAGR）</td><td>即 2033-2034 年前有持續擴張空間</td></tr>
+        <tr><td><strong>Runway</strong></td><td colspan="2"><strong>8-10 年</strong>（AI 封裝 + PLP + 先進節點微縮提供持續動力）</td></tr>
+    </table>
+
+    <div class="section-subtitle">B｜成長品質判斷</div>
+    <p><strong>① 有機 vs 無機</strong></p>
+    <table>
+        <tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
+        <tr><td>有機成長</td><td><strong>95%</strong></td><td>2019 合併後無重大併購，FY23-FY25 營收成長全部來自有機</td></tr>
+        <tr><td>無機成長</td><td>5%</td><td>僅小型技術收購</td></tr>
+    </table>
+    <p><strong>② 定價 vs 量</strong></p>
+    <table>
+        <tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+        <tr><td>定價驅動</td><td>G5 ASP 提升（3x 吞吐量 → 更高單價）、軟體服務混合比提升</td><td>擴大</td></tr>
+        <tr><td>量驅動</td><td>HBM 擴產帶動設備安裝量成長</td><td>擴大</td></tr>
+    </table>
+
+    <div class="section-subtitle">C｜成長護城河連動評估</div>
+    <p><strong>強化型（最佳）</strong>：每安裝一台 Dragonfly 系統，客戶累積的 recipe database 和校準數據形成轉換成本。3Di 技術在 HBM 客戶的獨家認證創造先發優勢。安裝基數擴大 → 軟體/服務高毛利營收增長 → 整體 blended margin 提升。</p>
+
+    <div class="section-subtitle">D｜ROIC 與 FCF 的長期可維持性</div>
+    <table>
+        <tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+        <tr><td>ROIC（GAAP）</td><td>~7%</td><td>~18%（FY22）</td><td>↓</td><td>> WACC</td><td>⚠️</td></tr>
+        <tr><td>ROIC − WACC</td><td>-2%p（GAAP）</td><td>+9%p（FY22）</td><td>↓</td><td>正值且擴大</td><td>✗</td></tr>
+        <tr><td>FCF Margin</td><td>29.8%</td><td>11.8%（FY22）</td><td>↑</td><td>> 15%</td><td>✓✓</td></tr>
+        <tr><td>FCF / Net Income</td><td>2.19x</td><td>0.53x（FY22）</td><td>↑</td><td>> 0.85</td><td>✓✓</td></tr>
+        <tr><td>Reinvestment Rate</td><td>~10%（Capex/OCF）</td><td>~13%</td><td>↓</td><td>成長期合理</td><td>✓</td></tr>
+    </table>
+    <p><strong>說明</strong>：GAAP ROIC 偏低主因是分母（invested capital）包含 ~$1.5B 商譽+無形資產（2019 合併），而 Non-GAAP 經濟 ROIC（剔除無形資產攤銷後的 NOPAT / 有形投入資本）約 15%+，更反映真實經濟效益。FCF 品質極高（FCF/NI > 2x 表示大量非現金支出被加回）。</p>
+
+    <div class="section-subtitle">E｜成長熄火情境壓力測試</div>
+    <table>
+        <tr><th>情境</th><th>成長特徵</th><th>合理 Forward P/E</th><th>5 年後 EPS 假設</th><th>潛在估值</th><th>跌幅</th></tr>
+        <tr style="background:#DCFCE7;"><td>成長 15%</td><td>放緩但仍高於市場</td><td>25x</td><td>$9.93</td><td>$248</td><td>-2%</td></tr>
+        <tr style="background:#FEF9C3;"><td>成長 10%</td><td>回歸市場平均</td><td>20x</td><td>$7.96</td><td>$159</td><td>-37%</td></tr>
+        <tr style="background:#FEE2E2;"><td>成長 5%</td><td>成熟低成長</td><td>15x</td><td>$6.31</td><td>$95</td><td>-62%</td></tr>
+    </table>
+
+    <div class="section-subtitle">⚠️ 衰退信號偵測表</div>
+    <table>
+        <tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+        <tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>GAAP GM Q3 46.3% → Q4 46.4%（+10bps），Non-GAAP 穩定 54%+</td><td>⬜</td></tr>
+        <tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>先進封裝檢測市佔擴大（VPA + G5 新品）</td><td>⬜</td></tr>
+        <tr><td>護城河侵蝕</td><td>定價能力測試</td><td>G5 ASP 較 G3 提升，客戶接受度高</td><td>⬜</td></tr>
+        <tr><td>盈餘品質</td><td>EPS CAGR > Rev CAGR + 5%p</td><td>Non-GAAP EPS CAGR 22.3% vs Rev CAGR ~15%，差距 7%p</td><td><span class="badge badge-miss">🔴</span></td></tr>
+        <tr><td>盈餘品質</td><td>FCF/NI < 0.75（2 年）</td><td>FY24 1.06x，FY25 2.19x</td><td>⬜</td></tr>
+        <tr><td>盈餘品質</td><td>SBC/Rev > 5% 且上升</td><td>FY25 SBC $27.6M / $1,005M = 2.7%，穩定</td><td>⬜</td></tr>
+        <tr><td>產業衰退</td><td>TAM 萎縮</td><td>TAM CAGR 5-8%，AI 加速</td><td>⬜</td></tr>
+        <tr><td>產業衰退</td><td>產業估值 3 年下移</td><td>半導體設備 Forward P/E 近 3 年上移（AI 溢價）</td><td>⬜</td></tr>
+        <tr><td>隱性資本密集</td><td>Maintenance Capex / FCF > 60%</td><td>Capex $28.5M / FCF $299.8M = 9.5%</td><td>⬜</td></tr>
+        <tr><td>隱性資本密集</td><td>停止投資 3 年收入下滑？</td><td>需持續研發新品，但 R&D 在 OpEx 非 Capex</td><td>⬜</td></tr>
+    </table>
+
+    <p><strong>亮燈：1 個</strong>（盈餘品質：EPS CAGR vs Rev CAGR 差距 >5%p）</p>
+    <p><strong>說明</strong>：差距主因是 Non-GAAP operating leverage（營運槓桿效應），而非回購或一次性 margin 改善。FY25 回購金額極小（share count 基本不變 49.7M → 49.7M），差距來自固定成本攤薄效應。這是健康的營運槓桿，非盈餘品質問題。</p>
+
+    <p><strong>價值陷阱風險評級：</strong><span class="badge badge-beat">🟢 低風險</span>（1 個亮燈但有合理解釋）</p>
+
+    <p><strong>長期成長性綜合評級：</strong><span class="badge badge-beat">🟢 高確信長期成長</span></p>
+    <p>Runway 8-10 年、有機 95% + 定價/量雙驅動、護城河強化型、FCF Margin 持續擴大、衰退信號 1 個（已解釋為營運槓桿）</p>
+
+    <div class="section-subtitle">F｜AI 取代風險評級</div>
+    <div class="hypo-box">
+        <div class="hypo-title">🟢 AI 直接受益</div>
+        <p>ONTO 是 AI 基礎設施供應鏈的核心受益者——AI 晶片需要先進封裝（HBM、chiplet、CoWoS），先進封裝需要 ONTO 的檢測和計量設備。</p>
+        <ul>
+            <li><strong>直接受益業務占比</strong>：先進封裝 + 先進節點 = 營收 ~77%，全部因 AI 需求而加速</li>
+            <li><strong>AI 策略</strong>：公司將 AI/ML 整合至 Atlas 軟體平台，用於製程控制優化——AI 是產品功能增強工具，而非威脅</li>
+            <li><strong>過去 2 年 AI 相關營收證據</strong>：先進封裝檢測營收 FY24 翻倍、FY25 持續成長、FY26 指引 >30%</li>
+        </ul>
+        <p><strong>評級分數</strong>：🟢 = <strong>9 分</strong></p>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §3 護城河分析 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§3｜護城河分析</div>
+    <p><strong>評分：7 / 10</strong>（全球上市公司最嚴格基準）</p>
+
+    <div class="section-subtitle">護城河來源</div>
+    <ul>
+        <li><strong>網路效應</strong>：<strong>弱</strong>——設備業務不具備傳統網路效應。但 Atlas 軟體平台若在客戶間形成數據生態圈，可能出現弱網路效應（目前規模不足）。</li>
+        <li><strong>無形資產</strong>：<strong>中強</strong>——3Di 超音波技術專利（picosecond ultrasonics）在 HBM bump 高度量測領域具有獨家性。管理層聲稱「we're not aware of anyone else being qualified through the stringent tests」——雖然專利保護有限，但通過 2 家 HBM 大廠認證的先發優勢至少維持 12-18 個月。</li>
+        <li><strong>轉換成本</strong>：<strong>中強</strong>——半導體設備的轉換成本來自 recipe database（校準配方）、量測數據歷史、與 FAB MES 系統的整合。客戶替換設備需要 6-12 個月的重新認證，對良率敏感的先進封裝線尤其不願冒險。</li>
+        <li><strong>規模優勢</strong>：<strong>弱</strong>——ONTO 營收 $1B 對比 KLA $8B+、AMAT $27B+，規模劣勢明顯。研發預算是 KLA 的 1/8，在成本攤薄和產品覆蓋廣度上不具優勢。但在 niche 市場（bump 檢測、先進封裝計量）集中資源，形成局部規模效率。</li>
+    </ul>
+
+    <div class="section-subtitle">競爭鴻溝</div>
+    <p>3Di 技術（基於飛秒超音波的非接觸式微結構量測）需要 5+ 年的物理學研發積累和客戶現場認證數據。KLA 雖有資本實力，但其核心業務聚焦於晶圓級光學檢測（Gen5i 等），bump 檢測屬於不同技術路線（需要超音波而非光學）。短期內跨技術路線進攻的概率不高，但中長期不能排除。</p>
+
+    <div class="section-subtitle">市佔競爭表</div>
+    <table>
+        <tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+        <tr><td>KLA (KLAC)</td><td>~55% 整體市場</td><td>穩定</td><td>若進入 bump 檢測領域</td><td>互不侵犯（目前）</td></tr>
+        <tr><td>Nova (NVMI)</td><td>~10% 計量</td><td>擴大</td><td>先進節點光學計量重疊</td><td>ONTO 在封裝領先，NVMI 在先進節點競爭</td></tr>
+        <tr><td>Camtek (CAMT)</td><td>~5% 封裝檢測</td><td>擴大</td><td>2D 封裝檢測直接競爭</td><td>Camtek 在中階封裝成長，ONTO 守住高階</td></tr>
+        <tr><td>Applied Materials</td><td>~15% 整體</td><td>穩定</td><td>e-beam 檢測覆蓋範圍擴大</td><td>不同技術路線</td></tr>
+    </table>
+
+    <div class="section-subtitle">護城河趨勢</div>
+    <p><strong>穩定偏擴大</strong></p>
+    <p>24 個月內最可能瓦解護城河的變化（按威脅程度排序）：</p>
+    <ol>
+        <li><strong>KLA 推出 bump 檢測新品</strong>（概率 15-20%）：KLA 若收購小型超音波技術公司，可在 18-24 個月推出競品</li>
+        <li><strong>HBM 架構變化減少檢測需求</strong>（概率 <10%）：若 HBM5 採用不同的互連技術（如光學互連），bump 檢測需求可能下降</li>
+        <li><strong>中國本土設備替代</strong>（概率 10-15%）：中國客戶營收占比需監控</li>
+    </ol>
+</div>
+
+<!-- ============================================================ -->
+<!-- §4 財務品質監測 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§4｜財務品質監測</div>
+
+    <div class="section-subtitle">三年趨勢表</div>
+    <table>
+        <tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>主要對手比較</th></tr>
+        <tr><td>FCF Margin</td><td class="mono">18.3%</td><td class="mono">21.7%</td><td class="mono">29.8%</td><td>KLA ~28% / NVMI ~22%</td></tr>
+        <tr><td>EBITDA Margin（GAAP）</td><td class="mono">~20%</td><td class="mono">~25%</td><td class="mono">~21%</td><td>KLA ~40%</td></tr>
+        <tr><td>ROIC − WACC（GAAP）</td><td class="mono">~1%</td><td class="mono">~9%</td><td class="mono">~-2%</td><td>KLA ~25%</td></tr>
+        <tr><td>SBC / Revenue</td><td class="mono">3.1%</td><td class="mono">2.9%</td><td class="mono">2.7%</td><td>KLA ~3.5% / NVMI ~5%</td></tr>
+        <tr><td>ROE（GAAP）</td><td class="mono">5.5%</td><td class="mono">8.8%</td><td class="mono">5.7%</td><td>KLA ~80%（高槓桿）</td></tr>
+    </table>
+
+    <div class="section-subtitle">獲利品質警訊</div>
+    <ul>
+        <li><strong>淨利 vs OCF</strong>：FY25 OCF $328M vs NI $137M → OCF/NI = 2.4x。差距來自 $120M+ 的非現金支出（無形資產攤銷 + SBC + 折舊），現金獲利品質遠高於帳面。<span class="badge badge-beat">健康</span></li>
+        <li><strong>AR vs 營收成長</strong>：FY25 營收 +1.8% YoY，AR 變動與營收一致，無應收帳款膨脹跡象。<span class="badge badge-beat">健康</span></li>
+        <li><strong>存貨 vs 營收成長</strong>：需監控——backlog 翻倍可能帶動庫存增加，但管理層未提及庫存積壓。<span class="badge badge-neutral">需監控</span></li>
+        <li><strong>FCF 轉換率趨勢</strong>：FY21 163M → FY22 118M（↓週期性）→ FY23 149M → FY24 214M → FY25 300M。轉換率逐年改善，資本密集度下降。<span class="badge badge-beat">健康</span></li>
+    </ul>
+
+    <div class="section-subtitle">回購品質評估</div>
+    <table>
+        <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+        <tr><td>過去 3 年回購總額 vs FCF</td><td>回購極少（share count FY22 48.7M → FY25 49.7M，淨增加）</td><td>回購/FCF ≈ 0%（不依賴回購）</td></tr>
+        <tr><td>剔除回購 EPS CAGR</td><td>EPS CAGR 幾乎不變（share count 微增 2%）</td><td>EPS 成長全部來自營運</td></tr>
+        <tr><td>Revenue CAGR（FY22-FY25）</td><td>0% CAGR（FY22 $1,005M → FY25 $1,005M）</td><td>Non-GAAP EPS $4.49 → $4.94 = +3.2% CAGR（與 Rev 一致）</td></tr>
+    </table>
+    <p>EPS 成長不依賴回購，財務品質紮實。FY22-FY25 是半導體下行-復甦週期，EPS 穩定性反映營運韌性。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §5 產業格局 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§5｜產業格局、議價權與 Unit Economics</div>
+
+    <div class="section-subtitle">市場量化</div>
+    <table>
+        <tr><th>指標</th><th>數據</th></tr>
+        <tr><td>TAM（半導體計量與檢測，2025）</td><td>$13.0B</td></tr>
+        <tr><td>TAM CAGR（2025-2030）</td><td>5.4-7.2%</td></tr>
+        <tr><td>ONTO 營收 / TAM</td><td>~7.7%</td></tr>
+        <tr><td>供需狀態</td><td>偏緊（先進封裝設備供不應求，backlog 翻倍）</td></tr>
+    </table>
+
+    <div class="section-subtitle">議價權</div>
+    <ul>
+        <li><strong>對上游</strong>：中等——光學元件、感測器等由專業供應商提供，部分有替代來源但高精度元件替代週期長（6-12 個月）。</li>
+        <li><strong>對下游</strong>：<strong>強</strong>——客戶為全球前 5 大 HBM/邏輯廠商，單一客戶佔比可能 20%+（VPA $240M 暗示大客戶依賴）。但客戶轉換成本高，議價權偏向 ONTO。</li>
+        <li><strong>地理分布</strong>：亞洲（台灣、韓國、中國）佔營收 ~70%+，地緣政治風險集中。亞洲製造佈局（目標 60% 出貨）既是風險管理也是就近服務策略。</li>
+    </ul>
+
+    <div class="section-subtitle">營收組成</div>
+    <table>
+        <tr><th>業務段</th><th>營收占比（FY25）</th><th>成長性</th></tr>
+        <tr><td>先進封裝 + 特殊設備</td><td><strong>52%</strong>（~$523M）</td><td>FY26E +30%（AI/HBM 驅動）</td></tr>
+        <tr><td>先進節點</td><td><strong>25%</strong>（~$251M）</td><td>FY25 翻倍至 ~$300M（EUV 層增加）</td></tr>
+        <tr><td>軟體與服務</td><td><strong>23%</strong>（~$231M）</td><td>穩定 10-12% 成長，高毛利</td></tr>
+    </table>
+
+    <div class="section-subtitle">單位經濟</div>
+    <ul>
+        <li><strong>ASP</strong>：Dragonfly G5 系統 ASP 估計 $1-2M/台（較 G3 提升 20-30%）</li>
+        <li><strong>軟體服務 attach rate</strong>：每台設備帶動 ~$200-300K 年化軟體/服務收入</li>
+        <li><strong>安裝基數</strong>：全球超過 2,000 台系統，年化服務營收占比 ~23%</li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §6 公司治理 -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§6｜公司治理與資本配置</div>
+
+    <div class="section-subtitle">1. 股東/股權結構</div>
+    <ul>
+        <li><strong>內部人持股</strong>：~0.86%（偏低，但半導體設備行業常見）</li>
+        <li><strong>機構持股</strong>：BlackRock、Vanguard 為最大股東，機構合計 >90%</li>
+        <li><strong>CEO Plisinski 持股</strong>：168,505 股（~$42.6M @ $252.61），利益綁定中等</li>
+        <li><strong>無 dual-class 投票權結構</strong>，一股一票</li>
+    </ul>
+
+    <div class="section-subtitle">2. 資本配置方向</div>
+    <ul>
+        <li><strong>Capex</strong>：FY25 $28.5M（2.8% Revenue），以研發設施和亞洲製造擴張為主</li>
+        <li><strong>回購</strong>：極少——公司選擇保留現金（$984M），沒有積極回購計畫</li>
+        <li><strong>分紅</strong>：無股息</li>
+        <li><strong>優先順序</strong>：研發 > 有機擴張 > 保留現金 > 併購 > 回購/分紅</li>
+        <li><strong>評估</strong>：保守的資本配置策略，$984M 現金為彈藥庫（可能用於戰略併購或應對週期低谷），但也意味著資本效率不高（ROE 僅 5.7%）。</li>
+    </ul>
+
+    <div class="section-subtitle">3. 管理層薪酬結構</div>
+    <p>數據限制：無法從公開搜尋取得 FY25 代理聲明（Proxy Statement）的完整薪酬細節。根據 SEC Form 4 披露，CEO Plisinski 定期收到 PSU（績效股票單位）獎勵，並在歸屬時賣出部分股票支付稅款。SBC/Revenue 僅 2.7%，遠低於軟體同業（5-15%），管理層薪酬對股東稀釋影響可控。</p>
+
+    <div class="section-subtitle">4. 過去 12 個月重大內部人交易</div>
+    <ul>
+        <li><strong>CEO Plisinski</strong>：2025 年 5 月賣出 603 股（$59.1K），2026 年 3 月 PSU 歸屬相關稅務賣出</li>
+        <li>整體內部人交易以<strong>稅務驅動的小額賣出</strong>為主，未見異常大額拋售</li>
+        <li>未見內部人主動買入（中性信號——股價已高）</li>
+    </ul>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7 估值診斷（7.0-7.5） -->
+<!-- ============================================================ -->
+<div class="section">
+    <div class="section-title">§7｜估值診斷</div>
+
+    <div class="section-subtitle">7.0｜估值體系診斷</div>
+    <table>
+        <tr><th>估值邏輯類型</th><th>對應指標</th><th>當前主流？</th><th>理由</th></tr>
+        <tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>✅ 主流</strong></td><td>半導體設備業以 Forward P/E 為核心定價指標</td></tr>
+        <tr><td>成長型</td><td>PEG</td><td>✅ 輔助</td><td>AI 成長敘事推動 PEG 成為補充指標</td></tr>
+        <tr><td>現金流型</td><td>P/FCF</td><td>部分</td><td>FCF 品質高，機構投資者參考</td></tr>
+        <tr><td>行業專屬</td><td>EV/Backlog</td><td>新興</td><td>backlog 翻倍使 EV/Backlog 成為新關注點</td></tr>
+    </table>
+    <p><strong>當前主流邏輯</strong>：盈利能力型（Forward P/E）+ 成長型（PEG）雙軌定價</p>
+
+    <p><strong>估值邏輯漂移偵測</strong>：</p>
+    <ul>
+        <li><strong>情境三：市場定價偏好漂移</strong> ✅ 正在發生——ONTO 正從「中型半導體設備」re-rate 至「AI 封裝基礎設施」。若市場完全接受此定位，Forward P/E 可從 35-40x 提升至 NVMI 的 43x+ 水平。</li>
+    </ul>
+
+    <p><strong>估值體系診斷結論</strong>：<span class="badge" style="background:#EFF6FF;color:#1E3A5F;">🔵 估值體系升級機會</span></p>
+
+    <div class="section-subtitle">7.1｜歷史估值分位（5 年）</div>
+    <table>
+        <tr><th>指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+        <tr><td>Trailing P/E</td><td class="mono">90.87</td><td class="mono">18</td><td class="mono">40</td><td class="mono">100</td><td class="mono">89%</td></tr>
+        <tr><td>Forward P/E（NTM）</td><td class="mono">38.75</td><td class="mono">20</td><td class="mono">35</td><td class="mono">55</td><td class="mono">54%</td></tr>
+        <tr><td>EV/EBITDA</td><td class="mono">43.71</td><td class="mono">15</td><td class="mono">30</td><td class="mono">50</td><td class="mono">82%</td></tr>
+        <tr><td>P/FCF</td><td class="mono">41.91</td><td class="mono">15</td><td class="mono">35</td><td class="mono">60</td><td class="mono">60%</td></tr>
+        <tr><td>P/S</td><td class="mono">12.50</td><td class="mono">3</td><td class="mono">7</td><td class="mono">14</td><td class="mono">86%</td></tr>
+    </table>
+    <p><strong>Forward P/E 分位 = (38.75 − 20) / (55 − 20) × 100% = 54%</strong></p>
+    <p><strong>解讀</strong>：</p>
+    <ol>
+        <li>Forward P/E 54% 分位 → <strong>合理偏高</strong>，未到過熱但也非便宜</li>
+        <li>上次在此分位（2024 初）：EPS 正在加速，先進節點營收剛開始翻倍——當前情境類似（G5 週期開始）</li>
+        <li>推動因素：<strong>盈利修正</strong>（分析師上調 FY26/27E EPS）+ AI 市場情緒</li>
+    </ol>
+
+    <div class="section-subtitle">7.2｜PEG 診斷</div>
+    <table>
+        <tr><th>指標</th><th>數值</th><th>判斷</th><th>解讀</th></tr>
+        <tr><td>Forward P/E</td><td class="mono">38.75</td><td></td><td></td></tr>
+        <tr><td>Non-GAAP EPS CAGR（3 年）</td><td class="mono">22.3%</td><td></td><td></td></tr>
+        <tr><td>PEG（Non-GAAP，3 年）</td><td class="mono"><strong>1.74</strong></td><td>合理</td><td>偏高但在 1-2 區間</td></tr>
+        <tr><td>PEG（GAAP，3 年）</td><td class="mono">~1.2</td><td>便宜</td><td>GAAP EPS CAGR ~30%+ 因攤銷遞減</td></tr>
+        <tr><td>5 年 EPS CAGR（含遞減）</td><td class="mono">~17.8%</td><td></td><td></td></tr>
+        <tr><td>PEG（5 年，Non-GAAP）</td><td class="mono">2.18</td><td>偏貴</td><td>反映成長減速後估值承壓</td></tr>
+    </table>
+    <p><strong>3 年 vs 5 年 PEG 差異</strong>：1.74 vs 2.18，差異 +0.44 → 近期成長確信高於長期。5 年 PEG > 2 暗示若成長不能持續超過 3 年，當前估值偏貴。</p>
+
+    <div class="section-subtitle">7.3｜Reverse DCF</div>
+    <table>
+        <tr><th>參數</th><th>數值</th><th>來源</th></tr>
+        <tr><td>當前市值</td><td class="mono">$12.57B</td><td>搜尋確認</td></tr>
+        <tr><td>基期 FCF（FY25）</td><td class="mono">$299.8M</td><td>§4</td></tr>
+        <tr><td>WACC</td><td class="mono">9.0%</td><td>10Y UST 4.3% + Beta 1.35 × ERP 3.5%</td></tr>
+        <tr><td>永續成長率</td><td class="mono">3.5%</td><td>半導體設備高於 GDP 成長</td></tr>
+        <tr><td>預測期</td><td class="mono">10 年</td><td></td></tr>
+    </table>
+    <p><strong>反推隱含 FCF CAGR = ~15%</strong></p>
+    <table>
+        <tr><th>比較基準</th><th>數值</th><th>相對位置</th></tr>
+        <tr><td>過去 3 年實際 FCF CAGR</td><td class="mono">~22%</td><td>隱含 15% <strong>低於</strong>歷史</td></tr>
+        <tr><td>分析師 EPS CAGR</td><td class="mono">22.3%</td><td>隱含 15% <strong>低於</strong>共識</td></tr>
+        <tr><td>同業最快 FCF CAGR（NVMI）</td><td class="mono">~25%</td><td>不需「行業最快」</td></tr>
+    </table>
+    <p><strong>隱含預期判斷</strong>：<span class="badge badge-beat">🟢 隱含預期保守</span></p>
+    <p>兌現條件：Revenue 年增 ~13% + FCF Margin 維持 28%+ 即可——考慮到 G5 週期和先進封裝 >30% 指引，這是合理可達到的。</p>
+
+    <div class="section-subtitle">7.4｜同業估值比較</div>
+    <table>
+        <tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR</th><th>ROIC</th></tr>
+        <tr style="background:#EFF6FF;"><td><strong>ONTO</strong></td><td class="mono">$12.6B</td><td class="mono">38.75</td><td class="mono">43.7</td><td class="mono">1.74</td><td class="mono">29.8%</td><td class="mono">22.3%</td><td class="mono">~7%</td></tr>
+        <tr><td>KLA (KLAC)</td><td class="mono">$120B</td><td class="mono">36.0</td><td class="mono">38.7</td><td class="mono">2.42</td><td class="mono">~28%</td><td class="mono">~15%</td><td class="mono">~35%</td></tr>
+        <tr><td>Nova (NVMI)</td><td class="mono">$6B</td><td class="mono">43.7</td><td class="mono">~35</td><td class="mono">~1.5</td><td class="mono">~22%</td><td class="mono">~28%</td><td class="mono">~25%</td></tr>
+        <tr><td>Camtek (CAMT)</td><td class="mono">$4B</td><td class="mono">~30</td><td class="mono">~25</td><td class="mono">~1.3</td><td class="mono">~20%</td><td class="mono">~22%</td><td class="mono">~20%</td></tr>
+        <tr><td>產業中位</td><td></td><td class="mono">~36</td><td class="mono">~35</td><td class="mono">~1.7</td><td class="mono">~25%</td><td class="mono">~22%</td><td class="mono">~25%</td></tr>
+    </table>
+
+    <p><strong>同業溢折價邏輯</strong>：</p>
+    <ol>
+        <li>ONTO Forward P/E 38.75x vs 產業中位 36x → <strong>+8% 輕微溢價</strong></li>
+        <li>FCF Margin 29.8% 為同業最高，支撐小幅溢價；但 ROIC 7% 遠低於同業（KLA 35%、NVMI 25%），拖累溢價合理性</li>
+        <li>若估值回歸中位 36x → 股價 ~$204（-19%）</li>
+    </ol>
+
+    <p><strong>同主題橫向比較</strong>：</p>
+    <table>
+        <tr><th>問題</th><th>ONTO</th><th>最強競爭標的（NVMI）</th></tr>
+        <tr><td>假設兌現時上行最大</td><td>G5 + 3Di 壟斷 → EPS 加速至 $9+</td><td>先進節點計量需求加速</td></tr>
+        <tr><td>假設落空時跌幅最小</td><td>FCF Margin 29.8% + 淨現金提供底部支撐</td><td>ROIC 25% + 多元化客戶</td></tr>
+        <tr><td>綜合 R:R 最優</td><td colspan="2">ONTO PEG 1.74 vs NVMI ~1.5，NVMI 在 ROIC 和 PEG 上稍優</td></tr>
+    </table>
+    <p><strong>最終橫向比較結論</strong>：<span class="badge badge-neutral">🥈 此標的為次優選</span>（NVMI 在 ROIC 和 PEG 上略優，但 ONTO 在 AI 封裝 niche 的獨特性更強）</p>
+
+    <div class="section-subtitle">7.5｜估值五角驗證</div>
+    <table>
+        <tr><th>工具</th><th>訊號</th><th>依據</th></tr>
+        <tr><td>估值體系（7.0）</td><td><span class="badge" style="background:#EFF6FF;color:#1E3A5F;">🔵 升級機會</span></td><td>從中型設備 → AI 封裝基礎設施 re-rate 進行中</td></tr>
+        <tr><td>歷史分位（7.1）</td><td><span class="badge badge-neutral">🟡 合理</span></td><td>Forward P/E 54% 分位，合理偏高</td></tr>
+        <tr><td>PEG（7.2）</td><td><span class="badge badge-neutral">🟡 合理</span></td><td>3 年 PEG 1.74，5 年 PEG 2.18</td></tr>
+        <tr><td>Reverse DCF（7.3）</td><td><span class="badge badge-beat">🟢 保守</span></td><td>隱含 15% FCF CAGR，低於共識 22%</td></tr>
+        <tr><td>同業相對（7.4）</td><td><span class="badge badge-neutral">🟡 合理溢價</span></td><td>+8% vs 產業中位，FCF 支撐但 ROIC 拖累</td></tr>
+    </table>
+
+    <p><strong>當前定價判斷</strong>：<span class="badge badge-neutral">🟡 公允定價</span></p>
+
+    <p><strong>估值倍數定錨</strong>：</p>
+    <table>
+        <tr><th>因素</th><th>判斷</th><th>影響</th></tr>
+        <tr><td>① 護城河（§3）</td><td>7/10</td><td>vs 同業基準 +0x</td></tr>
+        <tr><td>② Runway（§2.5A）</td><td>8-10 年 🟢</td><td>+2x</td></tr>
+        <tr><td>③ 成長品質（§2.5B）</td><td>有機 95% / 定價+量雙驅動</td><td>+2x</td></tr>
+        <tr><td>④ 護城河連動（§2.5C）</td><td>強化型</td><td>+1x</td></tr>
+        <tr><td>⑤ ROIC（§2.5D）</td><td>GAAP -2%p，Non-GAAP +6%p</td><td>-1x</td></tr>
+        <tr><td>⑥ 衰退信號（§2.5）</td><td>1 個亮燈</td><td>-0x</td></tr>
+        <tr><td>⑦ 估值體系（§7.0）</td><td>升級機會</td><td>+2x</td></tr>
+        <tr><td>⑧ 利率環境</td><td>10Y UST 4.3%</td><td>對成長股估值有壓縮效應 -1x</td></tr>
+        <tr><td><strong>產業基準</strong></td><td><strong>30x</strong></td><td><strong>調整後合理區間：35x ~ 40x</strong></td></tr>
+    </table>
+
+    <p><strong>分析師目標價</strong>：高 $300 / 中位 $232 / 低 $160（n=8）<br>
+    當前股價 $252.61 高於中位目標 $232 約 9%——共識偏保守，但 $300 需要 H1+H2+H3 全部兌現。</p>
+
+    <p><strong>長期合理倍數</strong>：§2.5 長期成長性 🟢，Runway 8-10 年但未達完整 10 年門檻 → 採用 🟡 基準 <strong>20x</strong></p>
+    <p>v9.0 三引擎調整：無引擎觸發 → × 1.00<br>
+    AI 風險 🟢 → × 1.10<br>
+    <strong>最終 v9.0 長期合理倍數 = 20x × 1.00 × 1.10 = 22.0x</strong></p>
+</div>
+
+</div><!-- container -->
+</body>
+</html>
