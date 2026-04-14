@@ -19,14 +19,22 @@ META_RE = re.compile(
 )
 
 # Patterns to extract the bull one-liner from DD HTML (used as comment)
+# "多頭最強一句話" variants:
+#   1) ...一句話</strong>：text</p>       (strong before colon)
+#   2) ...一句話：</strong>text</p>       (strong after colon)
+#   3) ...一句話：text</p>               (no strong, e.g. bare <p> with style)
 BULL_ONELINER_RE = re.compile(
-    r'多頭最強一句話</strong>[：:]\s*(.*?)</p>', re.DOTALL
+    r'多頭最強一句話\s*(?:</(?:strong|b)>)?\s*[：:]\s*(?:</(?:strong|b)>)?\s*(.*?)</p>',
+    re.DOTALL,
 )
+# "多頭最強論據" in table cell — handle optional <strong>/<b> wrapping
 BULL_ARGUMENT_RE = re.compile(
-    r'多頭最強論據</td>\s*<td>(.*?)</td>', re.DOTALL
+    r'多頭最強論據\s*(?:</(?:strong|b)>)?\s*</td>\s*<td[^>]*>(.*?)</td>',
+    re.DOTALL,
 )
 BULL_SHORT_RE = re.compile(
-    r'多頭最強</(?:strong|td)>\s*</td>\s*<td>(.*?)</td>', re.DOTALL
+    r'多頭最強\s*(?:</(?:strong|b|td)>)\s*</td>\s*<td[^>]*>(.*?)</td>',
+    re.DOTALL,
 )
 TAG_RE = re.compile(r'<[^>]+>')
 
