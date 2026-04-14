@@ -406,8 +406,19 @@ ee = t.earnings_estimate  # 欄位：avg, low, high, numberOfAnalysts, growth
 - EPS Trend（t.eps_trend）：觀察 7d/30d/60d/90d 修正方向（上修 or 下修）
 
 **yfinance 限制**：僅提供 FY+1 和 FY+2 兩年年度預估，無 FY+3。
-FY+3 處理方式：以 FY+2 的 growth 率遞減 30% 外推，標注「FY+2 遞減外推」。
-例：FY+2 growth = 55.6% → FY+3 growth = 55.6% × 0.70 = 38.9%。
+
+**FY+3 推導方式（v9.0 邏輯分析法，禁止機械外推）**：
+FY+3 EPS 必須基於 §2.5 長期成長性分析推導，不得用「FY+2 growth × 0.7」等機械公式。
+具體步驟：
+1. 從 §2.5 A（成長跑道 Runway）判斷 3 年後所處的成長階段
+2. 從 §2.5 B（成長驅動結構）判斷定價 vs 量的貢獻是否遞減
+3. 從 §2.5 D（ROIC × 再投資率）計算內生成長率作為 FY+3 成長率的上限參考
+4. 綜合以上三點，給出 FY+3 YoY growth 的具體數值與一句話邏輯依據
+5. FY+3E = FY+2E × (1 + FY+3 growth)，標注「§2.5 邏輯推導」
+
+禁止出現「遞減外推」「線性外推」等無邏輯的描述。
+每個 FY+3 推導必須有具體的業務邏輯支撐（例如：「M9 材料全年貢獻 + 越南廠滿載」
+或「Azure AI 營收佔比從 15% 升至 25%」）。
 
 **若 yfinance 失敗**（網路不通或 ticker 不支援），退回步驟一的 web_search 流程。
 
