@@ -45,6 +45,12 @@ MOAT_SCORE_RE = re.compile(
     re.DOTALL,
 )
 
+# Pattern to extract 護城河趨勢 row, then search for trend keyword inside
+MOAT_TREND_ROW_RE = re.compile(
+    r'護城河趨勢.*?</tr>',
+    re.DOTALL,
+)
+
 # Pattern to extract 長期持有信心 (v10.0+): 高/中/低
 # Matches table row with 長期持有信心 and extracts the value cell
 CONFIDENCE_RE = re.compile(
@@ -73,6 +79,22 @@ def extract_moat_score(path: Path) -> str:
         return ""
     m = MOAT_SCORE_RE.search(text)
     return m.group(1) if m else ""
+
+
+def extract_moat_trend(path: Path) -> str:
+    """Extract moat trend (護城河趨勢) from §2 G or §9 table row."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+    m = MOAT_TREND_ROW_RE.search(text)
+    if not m:
+        return ""
+    row = TAG_RE.sub("", m.group(0))  # strip all HTML tags
+    for kw in ("穩定至加深", "加深", "擴大", "穩定至縮減", "縮減", "穩定"):
+        if kw in row:
+            return kw
+    return ""
 
 
 def extract_version(path: Path) -> str:
@@ -173,6 +195,7 @@ def scan_files(index_data: dict):
         comment = extract_comment(f)
         qscore = extract_quality_score(f)
         moat = extract_moat_score(f)
+        moat_trend = extract_moat_trend(f)
         confidence = extract_confidence(f)
         entries.append({
             "ticker": ticker,
@@ -184,6 +207,7 @@ def scan_files(index_data: dict):
             "quality": md.get("quality", "—"),
             "quality_score": qscore,
             "moat_score": moat,
+            "moat_trend": moat_trend,
             "confidence": confidence,
             "comment": comment,
         })
@@ -205,13 +229,14 @@ def verdict_badge(v: str) -> str:
     return v
 
 
-def quality_badge(q: str, score: str = "", moat: str = "") -> str:
+def quality_badge(q: str, score: str = "", moat: str = "", moat_trend: str = "") -> str:
     q = q.strip()
     labels = {"H": "H 高品質", "MH": "MH 中高", "M": "M 中品質", "W": "W 觀望", "A": "A 級", "B": "B 級"}
     colors = {"H": "quality-h", "MH": "quality-mh", "M": "quality-m", "W": "quality-w", "A": "quality-h", "B": "quality-mh"}
     label = labels.get(q, q)
     cls = colors.get(q, "quality-m")
-    moat_str = f' <span class="quality-score">🏰{moat}/10</span>' if moat else ""
+    trend_str = f"·{moat_trend}" if moat_trend else ""
+    moat_str = f' <span class="quality-score">{moat}/10{trend_str}</span>' if moat else ""
     return f'<span class="quality-badge {cls}">{label}</span>{moat_str}'
 
 
@@ -287,7 +312,7 @@ def build_rows(entries):
             f'  <td class="date-cell">{e["date"]}</td>\n'
             f'  <td>{version_badge(e.get("version", ""))}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
-            f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""), e.get("moat_score", ""))}</td>\n'
+            f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""), e.get("moat_score", ""), e.get("moat_trend", ""))}</td>\n'
             f'  <td>{trap_short(e["trap"])}</td>\n'
             f'  <td>{confidence_badge(e.get("confidence", ""))}</td>\n'
             f'  <td class="comment-cell">{e["comment"]}</td>\n'
