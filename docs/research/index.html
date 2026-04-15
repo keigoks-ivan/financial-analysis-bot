@@ -4,75 +4,135 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>研究報告 — InvestMQuest Research</title>
-  <meta name="description" content="深度個股研究報告 · 10-K / 10-Q 財報分析。買側 DD 框架、護城河評分、風報比診斷。">
+  <meta name="description" content="深度個股研究報告 · 買側 DD 框架、護城河評分、風報比診斷。">
   <meta property="og:title" content="研究報告 — InvestMQuest Research">
   <meta property="og:site_name" content="InvestMQuest Research">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
 :root{
-  --bg:#f8fafc;--bg-subtle:#f1f5f9;--bg-card:#ffffff;--bg-card-hover:#f8fafc;
-  --border:#e2e8f0;--border-light:#cbd5e1;
-  --text:#1e293b;--text-secondary:#475569;--text-muted:#94a3b8;
-  --accent:#2563eb;--accent-light:#1d4ed8;--accent-dim:rgba(37,99,235,.08);
-  --green:#059669;--green-dim:rgba(5,150,105,.08);--green-text:#065f46;
-  --red:#dc2626;--red-dim:rgba(220,38,38,.07);--red-text:#991b1b;
-  --amber:#d97706;--amber-dim:rgba(217,119,6,.08);--amber-text:#92400e;
-  --purple:#7c3aed;--purple-dim:rgba(124,58,237,.08);
+  --bg:#f8fafc;--bg-card:#ffffff;--bg-card-hover:#fafbfd;
+  --border:#e5e7eb;--border-light:#f3f4f6;
+  --text:#111827;--text-secondary:#4b5563;--text-muted:#9ca3af;
+  --accent:#2563eb;--accent-hover:#1d4ed8;
+  --green:#059669;--green-bg:rgba(5,150,105,.07);--green-text:#065f46;
+  --red:#dc2626;--red-bg:rgba(220,38,38,.06);--red-text:#991b1b;
+  --amber:#d97706;--amber-bg:rgba(217,119,6,.06);--amber-text:#92400e;
+  --blue-bg:rgba(37,99,235,.06);--blue-text:#1e40af;
+  --purple:#7c3aed;--purple-bg:rgba(124,58,237,.06);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.06);
+  --radius:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',system-ui,-apple-system,sans-serif;
      background:var(--bg);color:var(--text);line-height:1.65;font-size:14px;
      -webkit-font-smoothing:antialiased}
 a{color:var(--accent);text-decoration:none;transition:color .15s}
-a:hover{color:var(--accent-light)}
+a:hover{color:var(--accent-hover)}
 .container{max-width:1200px;margin:0 auto;padding:0 1.5rem}
 
 /* Header */
-header{background:#fff;border-bottom:1px solid var(--border);padding:.6rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+header{background:#fff;border-bottom:1px solid var(--border);padding:.65rem 0}
 .hdr-inner{display:flex;align-items:center;justify-content:space-between}
-header .logo{font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.02em}
+header .logo{font-size:1.15rem;font-weight:800;color:var(--text);letter-spacing:-.03em}
 header .logo span{color:var(--accent)}
-header nav a{color:var(--text-muted);margin-left:1.6rem;font-size:.82rem;font-weight:500;
-             padding-bottom:2px;border-bottom:2px solid transparent;transition:all .2s}
-header nav a:hover{color:var(--text);text-decoration:none}
-header nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
+header nav{display:flex;gap:.2rem}
+header nav a{color:var(--text-muted);font-size:.82rem;font-weight:500;padding:.4rem .7rem;
+             border-radius:6px;transition:all .15s}
+header nav a:hover{color:var(--text);background:var(--bg);text-decoration:none}
+header nav a.active{color:var(--accent);background:var(--blue-bg);font-weight:600}
 
-/* Page Header */
-.page-hdr{padding:2.5rem 0 2rem;border-bottom:1px solid var(--border);background:#fff}
-.page-hdr h1{font-size:1.65rem;font-weight:700;letter-spacing:-.03em;color:var(--text)}
-.page-hdr .sub{color:var(--text-secondary);font-size:.9rem;margin-top:.4rem;max-width:650px;line-height:1.6}
-.crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.5rem}
+/* Hero */
+.hero{padding:3rem 0 2.5rem;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%)}
+.hero h1{font-size:2rem;font-weight:800;letter-spacing:-.04em;color:var(--text)}
+.hero .sub{color:var(--text-secondary);font-size:.95rem;margin-top:.5rem;max-width:600px;line-height:1.7}
+.crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem}
 .crumb a{color:var(--text-muted)}
-.crumb a:hover{color:var(--accent-light)}
+.crumb a:hover{color:var(--accent)}
 
-/* Stat Bar */
-.stat-bar{display:flex;gap:1.5rem;margin-top:1.25rem;flex-wrap:wrap}
-.stat-item{display:flex;align-items:baseline;gap:.4rem}
-.stat-num{font-family:'IBM Plex Mono',monospace;font-size:1.35rem;font-weight:700;color:var(--text)}
-.stat-label{font-size:.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
-
-/* Card */
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;
-      box-shadow:0 1px 3px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.02)}
+/* Stat Cards */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:1.5rem}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;
+           text-align:center;transition:box-shadow .2s}
+.stat-card:hover{box-shadow:var(--shadow-md)}
+.stat-num{font-family:'IBM Plex Mono',monospace;font-size:1.8rem;font-weight:700;line-height:1.2}
+.stat-label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem;font-weight:500}
+.stat-card:nth-child(1) .stat-num{color:var(--text)}
+.stat-card:nth-child(2) .stat-num{color:var(--green)}
+.stat-card:nth-child(3) .stat-num{color:var(--amber)}
+.stat-card:nth-child(4) .stat-num{color:var(--red)}
 
 /* Section */
-.section{padding:2rem 0}
-.section-title{font-size:1rem;font-weight:700;margin-bottom:1rem;color:var(--text);
+.section{padding:2.5rem 0 2rem}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:1.2rem;color:var(--text);
                display:flex;align-items:center;gap:.6rem}
-.section-title .count{font-size:.78rem;font-weight:500;color:var(--text-muted);
-                      background:var(--bg-card);padding:.15rem .6rem;border-radius:20px;
+.section-title .count{font-size:.75rem;font-weight:600;color:var(--text-muted);
+                      background:#fff;padding:.2rem .7rem;border-radius:20px;
                       border:1px solid var(--border)}
 
 /* Search */
-.search-wrap{margin-bottom:1rem}
-.search-wrap input{width:100%;max-width:380px;padding:.55rem .9rem;
-                   border:1px solid var(--border);border-radius:8px;font-size:.85rem;
-                   background:#fff;color:var(--text);transition:all .2s;
-                   font-family:inherit}
+.search-wrap{margin-bottom:1.2rem}
+.search-wrap input{width:100%;max-width:400px;padding:.6rem 1rem .6rem 2.4rem;
+                   border:1px solid var(--border);border-radius:10px;font-size:.85rem;
+                   background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.44 1.74a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z'/%3E%3C/svg%3E") no-repeat .8rem center;
+                   color:var(--text);transition:all .2s;font-family:inherit}
 .search-wrap input::placeholder{color:var(--text-muted)}
-.search-wrap input:focus{outline:none;border-color:var(--accent);
-                         box-shadow:0 0 0 3px var(--accent-dim)}
+.search-wrap input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+/* Card */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+      overflow:hidden;box-shadow:var(--shadow-sm)}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th{padding:.75rem 1rem;text-align:left;font-weight:600;font-size:.7rem;
+   text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);
+   background:#fafbfc;border-bottom:1px solid var(--border);
+   position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;
+   transition:color .15s}
+th:hover{color:var(--text)}
+th.sorted-asc::after{content:' ↑';color:var(--accent)}
+th.sorted-desc::after{content:' ↓';color:var(--accent)}
+td{padding:.8rem 1rem;border-bottom:1px solid var(--border-light);vertical-align:middle}
+tbody tr{transition:background .12s}
+tbody tr:hover td{background:var(--bg-card-hover)}
+tbody tr:last-child td{border-bottom:none}
+
+/* Ticker */
+td a.ticker-link{color:var(--text);text-decoration:none;font-weight:700;font-size:.9rem;
+                 font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
+td a.ticker-link:hover{color:var(--accent)}
+td.date-cell{color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:.78rem;white-space:nowrap}
+
+/* Verdict Badges */
+.verdict-badge{display:inline-block;padding:.25rem .7rem;border-radius:6px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
+.verdict-buy{background:var(--green-bg);color:var(--green-text)}
+.verdict-lean-buy{background:rgba(5,150,105,.04);color:var(--green);border:1px solid rgba(5,150,105,.2)}
+.verdict-watch{background:var(--amber-bg);color:var(--amber-text)}
+.verdict-avoid{background:var(--red-bg);color:var(--red-text)}
+
+/* Version Badge */
+.version-badge{display:inline-block;padding:.15rem .5rem;border-radius:5px;font-size:.7rem;
+               font-family:'IBM Plex Mono',monospace;background:#f3f4f6;color:var(--text-muted)}
+.version-latest{background:var(--blue-bg);color:var(--blue-text);font-weight:600}
+
+/* Moat / Quality Score */
+.quality-score{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:600;color:var(--text-secondary)}
+
+/* Trap */
+.trap-ok{color:var(--green);font-size:.82rem;font-weight:500}
+.trap-watch{color:var(--amber);font-size:.82rem;font-weight:600}
+.trap-danger{color:var(--red);font-weight:700;font-size:.82rem}
+
+/* Confidence */
+.conf-high{color:var(--green);font-weight:700;font-size:.82rem}
+.conf-mid{color:var(--amber);font-weight:600;font-size:.82rem}
+.conf-low{color:var(--red);font-weight:600;font-size:.82rem}
+.conf-na{color:var(--text-muted);font-size:.82rem}
+
+/* Comment */
+.comment-cell{color:var(--text-secondary);font-size:.78rem;line-height:1.5;max-width:320px}
 
 /* Filter Bar */
 .filter-bar{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem;align-items:center}
@@ -82,64 +142,40 @@ header nav a.active{color:var(--accent);border-bottom-color:var(--accent)}
 .filter-btn{padding:.25rem .65rem;border:1px solid var(--border);border-radius:6px;
             background:transparent;font-size:.78rem;color:var(--text-secondary);cursor:pointer;
             transition:all .15s;font-family:inherit}
-.filter-btn:hover{border-color:var(--accent);color:var(--accent-light)}
+.filter-btn:hover{border-color:var(--accent);color:var(--accent)}
 .filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-/* Table */
-table{width:100%;border-collapse:collapse;font-size:.84rem}
-th{padding:.65rem .9rem;text-align:left;font-weight:600;font-size:.7rem;
-   text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);
-   background:#fff;border-bottom:2px solid var(--border);
-   position:sticky;top:0;z-index:2}
-td{padding:.7rem .9rem;border-bottom:1px solid var(--border);vertical-align:middle}
-tbody tr{transition:background .1s}
-tbody tr:hover td{background:var(--bg-card-hover)}
-tbody tr:last-child td{border-bottom:none}
-
-/* Ticker Link */
-td a.ticker-link{color:var(--text);text-decoration:none;font-weight:700;font-size:.88rem;
-                 font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;
-                 transition:color .15s}
-td a.ticker-link:hover{color:var(--accent);text-decoration:none}
-
 /* Tags */
-.tag{display:inline-block;padding:.15rem .5rem;border-radius:4px;
-     font-size:.7rem;font-weight:600;letter-spacing:.02em}
+.tag{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.7rem;font-weight:600}
 .tag-10q{background:#dbeafe;color:#1e40af}
 .tag-10k{background:#f3e8ff;color:#6b21a8}
-.tag-dd{background:var(--accent-dim);color:var(--accent-light)}
+.moat-badge{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.72rem;font-weight:600}
+.moat-wide{background:var(--green-bg);color:var(--green-text)}
+.moat-narrow{background:var(--amber-bg);color:var(--amber-text)}
+.moat-none{background:var(--red-bg);color:var(--red-text)}
 
-/* Moat Badges */
-.moat-badge{display:inline-block;padding:.2rem .6rem;border-radius:20px;
-            font-size:.72rem;font-weight:600}
-.moat-wide{background:var(--green-dim);color:var(--green-text)}
-.moat-narrow{background:var(--amber-dim);color:var(--amber-text)}
-.moat-none{background:var(--red-dim);color:var(--red-text)}
+/* Disclaimer */
+.disclaimer{margin:2rem 0;padding:1.2rem 1.5rem;background:#fff;border:1px solid var(--border);
+            border-radius:10px;font-size:.78rem;color:var(--text-muted);line-height:1.7}
+.disclaimer strong{color:var(--text-secondary)}
 
+/* Footer */
+footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-muted);
+       border-top:1px solid var(--border);margin-top:1rem}
 
-/* v10.0 Badge Styles */
-.verdict-badge{display:inline-block;padding:.2rem .6rem;border-radius:5px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
-.verdict-buy{background:rgba(5,150,105,.08);color:#059669}
-.verdict-watch{background:rgba(217,119,6,.08);color:#d97706}
-.verdict-avoid{background:rgba(220,38,38,.07);color:#dc2626}
-.quality-badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.72rem;font-weight:600}
-.quality-h{background:#dbeafe;color:#1e40af}
-.quality-mh{background:#ede9fe;color:#5b21b6}
-.quality-m{background:#f1f5f9;color:#475569}
-.quality-w{background:rgba(220,38,38,.07);color:#991b1b}
-.quality-score{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#64748b;margin-left:2px}
-.trap-ok{color:#059669;font-size:.8rem}.trap-watch{color:#d97706;font-size:.8rem}
-.trap-danger{color:#dc2626;font-weight:700;font-size:.8rem}
-.conf-high{color:#059669;font-weight:700;font-size:.82rem}
-.conf-mid{color:#d97706;font-weight:600;font-size:.82rem}
-.conf-low{color:#dc2626;font-weight:600;font-size:.82rem}
-.conf-na{color:#94a3b8;font-size:.82rem}
-.comment-cell{color:#475569;font-size:.78rem;line-height:1.45}
-.version-badge{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.7rem;font-family:'IBM Plex Mono',monospace;background:#f1f5f9;color:#64748b}
-.version-latest{background:#dbeafe;color:#1e40af;font-weight:600}
-td a.ticker-link{color:#1e293b;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
-td a.ticker-link:hover{color:#2563eb}
-td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem;white-space:nowrap}
+/* Mobile */
+@media(max-width:768px){
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .hero h1{font-size:1.5rem}
+  header nav{gap:0}
+  header nav a{font-size:.75rem;padding:.3rem .4rem}
+  .comment-cell{max-width:200px}
+}
+@media(max-width:480px){
+  .stat-row{grid-template-columns:1fr 1fr}
+  header nav a{font-size:.7rem}
+}
+
 </style>
 </head>
 <body>
@@ -158,16 +194,16 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
   </div>
 </header>
 
-<div class="page-hdr">
+<div class="hero">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> &rsaquo; 研究報告</div>
     <h1>研究報告</h1>
-    <p class="sub">買側深度研究（DD v9.0 框架）& AI 驅動財報分析。涵蓋美股與台股。</p>
-    <div class="stat-bar">
-      <div class="stat-item"><span class="stat-num" id="stat-total">—</span><span class="stat-label">研究報告</span></div>
-      <div class="stat-item"><span class="stat-num" id="stat-buy">—</span><span class="stat-label">進場</span></div>
-      <div class="stat-item"><span class="stat-num" id="stat-watch">—</span><span class="stat-label">觀望</span></div>
-      <div class="stat-item"><span class="stat-num" id="stat-avoid">—</span><span class="stat-label">迴避</span></div>
+    <p class="sub">買側深度研究（DD v11.0 框架）— 護城河評分、雙時距 R:R 診斷、基本面 Bear Case 壓測。涵蓋美股與台股。</p>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">研究報告</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-buy">—</div><div class="stat-label">進場 / 偏進場</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-watch">—</div><div class="stat-label">觀望</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-avoid">—</div><div class="stat-label">迴避</div></div>
     </div>
   </div>
 </div>
@@ -197,8 +233,8 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 <tr class="searchable" data-ticker="2330TW" data-date="2026-04-15" data-version="v11.0" data-verdict="9" data-quality="0" data-trap="1" data-confidence="1">
   <td><a href="/dd/DD_2330TW_20260415_v10.html" class="ticker-link" target="_blank" rel="noopener">2330TW</a></td>
   <td class="date-cell">2026-04-15</td>
-  <td><span class="version-badge">v11.0</span></td>
-  <td>觀望偏進場</td>
+  <td><span class="version-badge version-latest">v11.0</span></td>
+  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
   <td><span class="quality-score">9/10·加深</span></td>
   <td><span class="trap-ok">非陷阱</span></td>
   <td><span class="conf-high">高</span></td>
@@ -207,7 +243,7 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 <tr class="searchable" data-ticker="2383TW_v10" data-date="2026-04-15" data-version="v11.0" data-verdict="3" data-quality="0" data-trap="1" data-confidence="1">
   <td><a href="/dd/DD_2383TW_v10_20260415.html" class="ticker-link" target="_blank" rel="noopener">2383TW_v10</a></td>
   <td class="date-cell">2026-04-15</td>
-  <td><span class="version-badge">v11.0</span></td>
+  <td><span class="version-badge version-latest">v11.0</span></td>
   <td><span class="verdict-badge verdict-avoid">迴避</span></td>
   <td><span class="quality-score">8/10·加深</span></td>
   <td><span class="trap-ok">非陷阱</span></td>
@@ -217,8 +253,8 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 <tr class="searchable" data-ticker="LITE" data-date="2026-04-15" data-version="v11.0" data-verdict="9" data-quality="0" data-trap="1" data-confidence="1">
   <td><a href="/dd/DD_LITE_20260415.html" class="ticker-link" target="_blank" rel="noopener">LITE</a></td>
   <td class="date-cell">2026-04-15</td>
-  <td><span class="version-badge">v11.0</span></td>
-  <td>觀望偏進場</td>
+  <td><span class="version-badge version-latest">v11.0</span></td>
+  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
   <td><span class="quality-score">8/10·加深</span></td>
   <td><span class="trap-ok">非陷阱</span></td>
   <td><span class="conf-high">高</span></td>
@@ -227,7 +263,7 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 <tr class="searchable" data-ticker="STX" data-date="2026-04-15" data-version="v11.0" data-verdict="3" data-quality="0" data-trap="2" data-confidence="2">
   <td><a href="/dd/DD_STX_20260415.html" class="ticker-link" target="_blank" rel="noopener">STX</a></td>
   <td class="date-cell">2026-04-15</td>
-  <td><span class="version-badge">v11.0</span></td>
+  <td><span class="version-badge version-latest">v11.0</span></td>
   <td><span class="verdict-badge verdict-avoid">迴避</span></td>
   <td><span class="quality-score">7/10·穩定至加深</span></td>
   <td><span class="trap-watch">觀察期</span></td>
@@ -237,24 +273,13 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 <tr class="searchable" data-ticker="VRT" data-date="2026-04-15" data-version="v11.0" data-verdict="2" data-quality="0" data-trap="1" data-confidence="1">
   <td><a href="/dd/DD_VRT_20260415.html" class="ticker-link" target="_blank" rel="noopener">VRT</a></td>
   <td class="date-cell">2026-04-15</td>
-  <td><span class="version-badge">v11.0</span></td>
+  <td><span class="version-badge version-latest">v11.0</span></td>
   <td><span class="verdict-badge verdict-watch">觀望</span></td>
   <td><span class="quality-score">8/10·加深</span></td>
   <td><span class="trap-ok">非陷阱</span></td>
   <td><span class="conf-high">高</span></td>
   <td class="comment-cell"></td>
-</tr>
-<tr class="searchable" data-ticker="2330TW_v10" data-date="2026-04-15" data-version="v10.0" data-verdict="9" data-quality="9" data-trap="3" data-confidence="1">
-  <td><a href="/dd/DD_2330TW_v10_20260415.html" class="ticker-link" target="_blank" rel="noopener">2330TW_v10</a></td>
-  <td class="date-cell">2026-04-15</td>
-  <td><span class="version-badge version-latest">v10.0</span></td>
-  <td>—</td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td>—</td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 時代的「賣鏟人」壟斷者，用價值股價格買世界級成長股。</td>
-</tr>
-        </tbody>
+</tr>        </tbody>
       </table>
       </div>
     </div>
@@ -264,11 +289,9 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 <div class="section" id="earnings-reports">
   <div class="container">
     <h2 class="section-title">財報分析<span class="count" id="earnings-count">&nbsp;</span></h2>
-
     <div class="search-wrap">
       <input id="earnings-search" type="text" placeholder="搜尋 Ticker、報告類型…">
     </div>
-
     <div class="filter-bar">
       <div class="filter-group">
         <span class="filter-label">類型</span>
@@ -285,7 +308,6 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
         <button class="filter-btn" data-filter="moat" data-value="unrated">未評級</button>
       </div>
     </div>
-
     <div class="card">
       <div style="overflow-x:auto">
       <table>
@@ -332,14 +354,12 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 
 <footer>
   <div class="container">
-    &copy; 2026 InvestMQuest Research &middot;
-    由 AI 自動生成，僅供參考
+    &copy; 2026 InvestMQuest Research &middot; 由 AI 自動生成，僅供參考
   </div>
 </footer>
 
 <script>
 (function(){
-  /* ===== DD Table: Sort + Search ===== */
   var tbody = document.getElementById('dd-tbody');
   var ddSearch = document.getElementById('dd-search');
   var ddCount = document.getElementById('dd-count');
@@ -348,13 +368,12 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
   var statWatch = document.getElementById('stat-watch');
   var statAvoid = document.getElementById('stat-avoid');
 
-  // --- Stats ---
   function computeStats(){
     var rows = tbody.querySelectorAll('tr.searchable');
     var buy=0,watch=0,avoid=0;
     rows.forEach(function(r){
       var v = r.getAttribute('data-verdict');
-      if(v==='1') buy++; else if(v==='3') avoid++; else watch++;
+      if(v==='1'||v==='9') buy++; else if(v==='3') avoid++; else watch++;
     });
     if(statTotal) statTotal.textContent = rows.length;
     if(statBuy) statBuy.textContent = buy;
@@ -362,7 +381,6 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
     if(statAvoid) statAvoid.textContent = avoid;
   }
 
-  // --- Search / filter ---
   function renderDdCount(shown, total){
     if(ddCount) ddCount.textContent = total + ' 筆' + (shown !== total ? ' / 顯示 ' + shown : '');
   }
@@ -379,19 +397,13 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
   }
   if(ddSearch) ddSearch.addEventListener('input', filterDd);
 
-  // --- Sort ---
-  // Columns that sort ascending = better first (lower number = better)
-  var ascBetter = {quality:true, verdict:true, trap:true, rl:true, ticker:true, date:true, downside:true};
-  // Columns that sort descending = better first (higher number = better)
+  var currentSort = {key:'quality', asc:true};
   var descBetter = {rr:true, upside:true, version:true};
-
-  var currentSort = {key:'quality', asc:true}; // default
 
   function getVal(row, key){
     var v = row.getAttribute('data-' + key);
     if(key === 'ticker' || key === 'date') return v || '';
     if(key === 'version'){
-      // Parse "v9.1" → 9.1, "v10.0" → 10.0 for numeric sort
       var m = (v || '').match(/v?(\d+)\.?(\d*)/);
       return m ? parseFloat(m[1] + '.' + (m[2] || '0')) : 0;
     }
@@ -402,56 +414,40 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
     var rows = Array.from(tbody.querySelectorAll('tr.searchable'));
     rows.sort(function(a, b){
       var va = getVal(a, key), vb = getVal(b, key);
-      // string compare for ticker/date
       if(key === 'ticker' || key === 'date'){
         var cmp = va < vb ? -1 : va > vb ? 1 : 0;
         return asc ? cmp : -cmp;
       }
-      // numeric
       var diff = asc ? (va - vb) : (vb - va);
       if(diff !== 0) return diff;
-      // secondary sort: quality asc, then verdict asc
       var qa = parseFloat(a.getAttribute('data-quality'))||0;
       var qb = parseFloat(b.getAttribute('data-quality'))||0;
       if(qa !== qb) return qa - qb;
-      var da = parseFloat(a.getAttribute('data-verdict'))||0;
-      var db = parseFloat(b.getAttribute('data-verdict'))||0;
-      return da - db;
+      return 0;
     });
     rows.forEach(function(r){ tbody.appendChild(r); });
     currentSort = {key:key, asc:asc};
-
-    // Update header indicators
     document.querySelectorAll('#dd-reports th.sortable').forEach(function(th){
       th.classList.remove('sorted-asc','sorted-desc');
-      if(th.getAttribute('data-sort') === key){
-        th.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
-      }
+      if(th.getAttribute('data-sort') === key) th.classList.add(asc ? 'sorted-asc' : 'sorted-desc');
     });
   }
 
-  // Click handler
   document.querySelectorAll('#dd-reports th.sortable').forEach(function(th){
     th.addEventListener('click', function(){
       var key = th.getAttribute('data-sort');
-      // Determine default direction for this column
-      var defaultAsc = !descBetter[key]; // ascBetter → asc first, descBetter → desc first
-      if(currentSort.key === key){
-        // Toggle
-        sortTable(key, !currentSort.asc);
-      } else {
-        sortTable(key, defaultAsc);
-      }
-      filterDd(); // re-apply search filter after sort
+      var defaultAsc = !descBetter[key];
+      if(currentSort.key === key) sortTable(key, !currentSort.asc);
+      else sortTable(key, defaultAsc);
+      filterDd();
     });
   });
 
-  // Default sort: version desc (latest version first)
   sortTable('version', false);
   computeStats();
   filterDd();
 
-  /* ===== Earnings Table: Search + Filter ===== */
+  /* Earnings */
   var earningsSearch = document.getElementById('earnings-search');
   var earningsRows = document.querySelectorAll('#report-tbody tr.searchable');
   var earningsCount = document.getElementById('earnings-count');
@@ -480,9 +476,7 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
       var group = btn.getAttribute('data-filter');
       var val = btn.getAttribute('data-value');
       filters[group] = val;
-      btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){
-        b.classList.remove('active');
-      });
+      btn.parentElement.querySelectorAll('.filter-btn').forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
       filterEarnings();
     });

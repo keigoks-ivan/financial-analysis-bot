@@ -176,12 +176,12 @@ def scan_files(index_data: dict):
     entries = []
     for f in sorted(DD_DIR.glob("DD_*.html")):
         version = extract_version(f)
-        # Only show v10+ on the website
+        # Only show v11+ on the website
         try:
             major = int(version.lstrip("v").split(".")[0])
         except (ValueError, IndexError):
             continue
-        if major < 10:
+        if major < 11:
             continue
         m = re.match(r"DD_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
         if not m:
@@ -222,6 +222,8 @@ def verdict_badge(v: str) -> str:
     v = v.strip()
     if v == "進場":
         return '<span class="verdict-badge verdict-buy">進場</span>'
+    elif v == "觀望偏進場":
+        return '<span class="verdict-badge verdict-lean-buy">觀望偏進場</span>'
     elif v == "觀望":
         return '<span class="verdict-badge verdict-watch">觀望</span>'
     elif v == "迴避":
@@ -260,7 +262,7 @@ def trap_short(t: str) -> str:
 
 def version_badge(v: str) -> str:
     v = v.strip()
-    if v.startswith("v10") or v == "v9.2":
+    if v.startswith("v11"):
         return f'<span class="version-badge version-latest">{v}</span>'
     return f'<span class="version-badge">{v}</span>'
 
@@ -352,43 +354,14 @@ def update_index(entries):
         print(f"ERROR: Could not find <tbody id=\"dd-tbody\"> in {INDEX_HTML}")
         return False
 
-    # Inject/update badge CSS
-    badge_css = """
-/* v10.0 Badge Styles */
-.verdict-badge{display:inline-block;padding:.2rem .6rem;border-radius:5px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
-.verdict-buy{background:rgba(5,150,105,.08);color:#059669}
-.verdict-watch{background:rgba(217,119,6,.08);color:#d97706}
-.verdict-avoid{background:rgba(220,38,38,.07);color:#dc2626}
-.quality-badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.72rem;font-weight:600}
-.quality-h{background:#dbeafe;color:#1e40af}
-.quality-mh{background:#ede9fe;color:#5b21b6}
-.quality-m{background:#f1f5f9;color:#475569}
-.quality-w{background:rgba(220,38,38,.07);color:#991b1b}
-.quality-score{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#64748b;margin-left:2px}
-.trap-ok{color:#059669;font-size:.8rem}.trap-watch{color:#d97706;font-size:.8rem}
-.trap-danger{color:#dc2626;font-weight:700;font-size:.8rem}
-.conf-high{color:#059669;font-weight:700;font-size:.82rem}
-.conf-mid{color:#d97706;font-weight:600;font-size:.82rem}
-.conf-low{color:#dc2626;font-weight:600;font-size:.82rem}
-.conf-na{color:#94a3b8;font-size:.82rem}
-.comment-cell{color:#475569;font-size:.78rem;line-height:1.45}
-.version-badge{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.7rem;font-family:'IBM Plex Mono',monospace;background:#f1f5f9;color:#64748b}
-.version-latest{background:#dbeafe;color:#1e40af;font-weight:600}
-td a.ticker-link{color:#1e293b;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
-td a.ticker-link:hover{color:#2563eb}
-td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem;white-space:nowrap}
-"""
-    # Remove old badge CSS block and inject new one
+    # Remove legacy injected CSS blocks (styles are now in the HTML template)
     new_html = re.sub(
-        r'/\* v9\.0 Badge Styles \*/.*?(?=</style>)',
-        badge_css,
+        r'\n?/\* v(?:9|10)\.0 Badge Styles \*/.*?(?=</style>)',
+        '\n',
         new_html,
         count=1,
         flags=re.DOTALL,
     )
-    if "v10.0 Badge Styles" not in new_html:
-        # Fallback: just inject before </style>
-        new_html = new_html.replace("</style>", badge_css + "</style>", 1)
 
     INDEX_HTML.write_text(new_html, encoding="utf-8")
     return True
