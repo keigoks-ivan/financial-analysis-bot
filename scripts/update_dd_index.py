@@ -17,17 +17,15 @@ META_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
 )
 
-# Patterns to extract the bull one-liner from DD HTML (used as comment)
-BULL_ONELINER_RE = re.compile(
-    r'多頭最強一句話\s*(?:</(?:strong|b)>)?\s*[：:]\s*(?:</(?:strong|b)>)?\s*(.*?)</p>',
+# Pattern to extract §2 G "一句話說明" (balanced conclusion, not bull-only)
+# Matches <strong>一句話</strong>：text</p> or similar variants
+ONELINER_RE = re.compile(
+    r'一句話(?:</(?:strong|b)>)?\s*[：:]\s*(?:</(?:strong|b)>)?\s*(.*?)</p>',
     re.DOTALL,
 )
-BULL_ARGUMENT_RE = re.compile(
-    r'多頭最強論據\s*(?:</(?:strong|b)>)?\s*</td>\s*<td[^>]*>(.*?)</td>',
-    re.DOTALL,
-)
-BULL_SHORT_RE = re.compile(
-    r'多頭最強\s*(?:</(?:strong|b|td)>)\s*</td>\s*<td[^>]*>(.*?)</td>',
+# Fallback: extract from 裁決理由 table cell in §3
+VERDICT_REASON_RE = re.compile(
+    r'裁決理由\s*(?:</(?:strong|b|td)>)\s*</td>\s*<td[^>]*>(.*?)</td>',
     re.DOTALL,
 )
 TAG_RE = re.compile(r'<[^>]+>')
@@ -79,11 +77,9 @@ def extract_comment(path: Path, max_len: int = 500) -> str:
     except OSError:
         return ""
 
-    m = BULL_ONELINER_RE.search(text)
+    m = ONELINER_RE.search(text)
     if not m:
-        m = BULL_ARGUMENT_RE.search(text)
-    if not m:
-        m = BULL_SHORT_RE.search(text)
+        m = VERDICT_REASON_RE.search(text)
     if not m:
         return ""
 
