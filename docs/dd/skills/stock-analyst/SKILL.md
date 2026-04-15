@@ -1,6 +1,6 @@
 ---
 name: stock-analyst
-version: v10.1
+version: v10.0
 released: 2026-04-15
 description: "收到股票 ticker 後，執行完整買側深度研究（DD），整合品質分（護城河+成長持久性+體質檢核）、雙時距 PEG 估值（FY+1/FY+2）、W52/W104 下檔錨點、Bollinger 部位微調，輸出 HTML 報表。當用戶提及 ticker、個股分析、DD 報告、股票研究、估值分析時，必須觸發此技能。"
 ---
