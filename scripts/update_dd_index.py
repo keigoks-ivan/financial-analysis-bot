@@ -127,20 +127,22 @@ def extract_comment(path: Path, max_len: int = 60) -> str:
 
 
 def parse_index_md() -> dict:
-    """Parse INDEX.md and return a dict keyed by filename with v9.x metadata."""
+    """Parse INDEX.md and return a dict keyed by filename with v9.x/v10.x metadata."""
     data = {}
     if not INDEX_MD.exists():
         return data
     for line in INDEX_MD.read_text(encoding="utf-8").splitlines():
         line = line.strip()
-        if not line.startswith("|") or "v9" not in line:
+        if not line.startswith("|"):
+            continue
+        if "v9" not in line and "v10" not in line:
             continue
         cols = [c.strip() for c in line.split("|")]
         # cols: ['', date, ticker, schema, verdict, trap, rr, filename, '']
         if len(cols) < 9:
             continue
         date, ticker, schema, verdict, trap, rr, filename = cols[1:8]
-        if not schema.startswith("v9"):
+        if not (schema.startswith("v9") or schema.startswith("v10")):
             continue
         data[filename] = {
             "date": date,
@@ -169,10 +171,13 @@ def scan_v9_files(index_data: dict):
     entries = []
     for f in sorted(DD_DIR.glob("DD_*.html")):
         version = extract_version(f)
-        if not version.startswith("v9"):
+        if not (version.startswith("v9") or version.startswith("v10")):
             continue
-        # Support both DD_TICKER_DATE.html and DD_TICKER_DATE_v2.html
+        # Support: DD_TICKER_DATE.html, DD_TICKER_DATE_v2.html, DD_TICKER_v10_DATE.html
         m = re.match(r"DD_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
+        if not m:
+            # Try alternate pattern: DD_TICKER_vNN_DATE.html
+            m = re.match(r"DD_(.+?)_v\d+_(\d{4})(\d{2})(\d{2})\.html", f.name)
         if not m:
             continue
         ticker = m.group(1)
@@ -351,7 +356,7 @@ def _sort_keys(e):
 
 def version_badge(v: str) -> str:
     v = v.strip()
-    if v == "v9.1":
+    if v.startswith("v10") or v == "v9.2":
         return f'<span class="version-badge version-latest">{v}</span>'
     return f'<span class="version-badge">{v}</span>'
 
@@ -470,7 +475,7 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 def main():
     index_data = parse_index_md()
     entries = scan_v9_files(index_data)
-    print(f"Found {len(entries)} v9.x DD files:")
+    print(f"Found {len(entries)} v9.x/v10.x DD files:")
     for e in entries:
         print(f"  {e['ticker']:8s} {e['date']}  {e['verdict']:4s}  {e['quality']:3s}  {e['rr_value']:6s}  {e['href']}")
 
