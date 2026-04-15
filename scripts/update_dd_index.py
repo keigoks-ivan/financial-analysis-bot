@@ -142,7 +142,7 @@ def scan_files(index_data: dict):
     entries = []
     for f in sorted(DD_DIR.glob("DD_*.html")):
         version = extract_version(f)
-        if not (version.startswith("v9") or version.startswith("v10")):
+        if not version.startswith("v10"):
             continue
         m = re.match(r"DD_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
         if not m:
