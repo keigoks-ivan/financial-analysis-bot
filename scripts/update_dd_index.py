@@ -230,14 +230,10 @@ def verdict_badge(v: str) -> str:
 
 
 def quality_badge(q: str, score: str = "", moat: str = "", moat_trend: str = "") -> str:
-    q = q.strip()
-    labels = {"H": "H 高品質", "MH": "MH 中高", "M": "M 中品質", "W": "W 觀望", "A": "A 級", "B": "B 級"}
-    colors = {"H": "quality-h", "MH": "quality-mh", "M": "quality-m", "W": "quality-w", "A": "quality-h", "B": "quality-mh"}
-    label = labels.get(q, q)
-    cls = colors.get(q, "quality-m")
     trend_str = f"·{moat_trend}" if moat_trend else ""
-    moat_str = f' <span class="quality-score">{moat}/10{trend_str}</span>' if moat else ""
-    return f'<span class="quality-badge {cls}">{label}</span>{moat_str}'
+    if moat:
+        return f'<span class="quality-score">{moat}/10{trend_str}</span>'
+    return "—"
 
 
 def confidence_badge(c: str) -> str:
@@ -332,7 +328,7 @@ def update_index(entries):
         '            <th class="sortable" data-sort="date">日期</th>\n'
         '            <th class="sortable" data-sort="version">版本</th>\n'
         '            <th class="sortable" data-sort="verdict">建議</th>\n'
-        '            <th class="sortable sorted-asc" data-sort="quality">品質</th>\n'
+        '            <th class="sortable sorted-asc" data-sort="quality">護城河</th>\n'
         '            <th class="sortable" data-sort="trap">陷阱</th>\n'
         '            <th class="sortable" data-sort="confidence">長期持有</th>\n'
         '            <th>備註</th>\n'
