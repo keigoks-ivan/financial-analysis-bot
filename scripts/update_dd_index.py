@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """
-Scan docs/dd/ for DD_*.html files, cross-reference INDEX.md for v9.x metadata,
+Scan docs/dd/ for DD_*.html files, cross-reference INDEX.md for v9.x/v10.x metadata,
 and update the deep research table in docs/research/index.html.
 
-v9.1 update: Show all v9.x reports with version column.
-Same ticker + same date + different versions can coexist.
+v10.0 update: Remove R:R/上檔/下檔/紅燈 columns, add 長期持有信心 column.
 """
 import re
 from pathlib import Path
@@ -19,15 +18,10 @@ META_RE = re.compile(
 )
 
 # Patterns to extract the bull one-liner from DD HTML (used as comment)
-# "多頭最強一句話" variants:
-#   1) ...一句話</strong>：text</p>       (strong before colon)
-#   2) ...一句話：</strong>text</p>       (strong after colon)
-#   3) ...一句話：text</p>               (no strong, e.g. bare <p> with style)
 BULL_ONELINER_RE = re.compile(
     r'多頭最強一句話\s*(?:</(?:strong|b)>)?\s*[：:]\s*(?:</(?:strong|b)>)?\s*(.*?)</p>',
     re.DOTALL,
 )
-# "多頭最強論據" in table cell — handle optional <strong>/<b> wrapping
 BULL_ARGUMENT_RE = re.compile(
     r'多頭最強論據\s*(?:</(?:strong|b)>)?\s*</td>\s*<td[^>]*>(.*?)</td>',
     re.DOTALL,
@@ -38,50 +32,27 @@ BULL_SHORT_RE = re.compile(
 )
 TAG_RE = re.compile(r'<[^>]+>')
 
-# Pattern to extract numeric quality score from §7.7 A table
-# Matches "綜合品質分" in a table row, then finds the first decimal number
-# after closing tags. Handles <strong>, <b>, colspan variants, extra <td> cells.
+# Pattern to extract numeric quality score from §7.7 A / §2 B table
 QUALITY_SCORE_RE = re.compile(
     r'綜合品質分\s*(?:</(?:strong|b)>)?\s*</td>'
-    r'(?:\s*<td[^>]*>\s*</td>)*'           # skip empty <td></td> cells
+    r'(?:\s*<td[^>]*>\s*</td>)*'
     r'\s*<td[^>]*>\s*(?:<(?:strong|b)[^>]*>)?\s*'
     r'([\d]+\.[\d]+)',
     re.DOTALL,
 )
 
-# Patterns to extract upside / downside from §7.7 H table
-# Handle <tr> with optional class/style attributes
-UPSIDE_RE = re.compile(
-    r'<tr[^>]*>\s*<td[^>]*>上行空間</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
+# Pattern to extract 長期持有信心 (v10.0+): 高/中/低
+# Matches table row with 長期持有信心 and extracts the value cell
+CONFIDENCE_RE = re.compile(
+    r'長期持有信心\s*(?:</(?:strong|b)>)?\s*</td>'
+    r'(?:\s*<td[^>]*>.*?</td>)*?'  # skip intermediate cells (e.g. "綜合判斷")
+    r'\s*<td[^>]*>\s*(?:<[^>]*>)*\s*(高|中|低)',
+    re.DOTALL,
 )
-DOWNSIDE_RE = re.compile(
-    r'<tr[^>]*>\s*<td[^>]*>下行距離</td>\s*<td[^>]*>(.*?)</td>', re.DOTALL
-)
-PCT_RE = re.compile(r'[+\-−]?\d+(?:\.\d+)?%')
-
-
-def _extract_pct(html: str, pattern: re.Pattern) -> str:
-    """Extract a percentage value from HTML using the given pattern."""
-    m = pattern.search(html)
-    if not m:
-        return ""
-    raw = TAG_RE.sub("", m.group(1)).strip()
-    # Find the first percentage in the raw text
-    pm = PCT_RE.search(raw)
-    return pm.group(0).replace("−", "-") if pm else raw
-
-
-def extract_updown(path: Path) -> tuple[str, str]:
-    """Extract upside % and downside % from DD HTML §7.7 table."""
-    try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-    except OSError:
-        return ("", "")
-    return (_extract_pct(text, UPSIDE_RE), _extract_pct(text, DOWNSIDE_RE))
 
 
 def extract_quality_score(path: Path) -> str:
-    """Extract numeric quality score (e.g. '8.60') from §7.7 A table."""
+    """Extract numeric quality score (e.g. '8.60') from DD HTML."""
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
@@ -108,26 +79,32 @@ def extract_comment(path: Path, max_len: int = 60) -> str:
     except OSError:
         return ""
 
-    # Try "多頭最強一句話" paragraph first
     m = BULL_ONELINER_RE.search(text)
     if not m:
-        # Fallback to "多頭最強論據" table cell
         m = BULL_ARGUMENT_RE.search(text)
     if not m:
-        # Fallback to "多頭最強" short form
         m = BULL_SHORT_RE.search(text)
     if not m:
         return ""
 
     raw = TAG_RE.sub("", m.group(1)).strip()
-    # Truncate with ellipsis
     if len(raw) > max_len:
         raw = raw[:max_len].rstrip("，。、；") + "…"
     return raw
 
 
+def extract_confidence(path: Path) -> str:
+    """Extract 長期持有信心 (高/中/低) from DD HTML. v10.0+ only."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+    m = CONFIDENCE_RE.search(text)
+    return m.group(1) if m else ""
+
+
 def parse_index_md() -> dict:
-    """Parse INDEX.md and return a dict keyed by filename with v9.x/v10.x metadata."""
+    """Parse INDEX.md and return a dict keyed by filename with metadata."""
     data = {}
     if not INDEX_MD.exists():
         return data
@@ -153,30 +130,22 @@ def parse_index_md() -> dict:
             "rr_raw": rr,
             "filename": filename,
         }
-        # Parse R:R field: "H / 2.4x / 0"
+        # Parse R:R field for quality level
         rr_parts = [p.strip() for p in rr.split("/")]
-        if len(rr_parts) == 3:
+        if len(rr_parts) >= 1:
             data[filename]["quality"] = rr_parts[0]
-            data[filename]["rr_value"] = rr_parts[1]
-            data[filename]["red_lights"] = rr_parts[2]
-        else:
-            data[filename]["quality"] = rr
-            data[filename]["rr_value"] = ""
-            data[filename]["red_lights"] = ""
     return data
 
 
-def scan_v9_files(index_data: dict):
-    """Build entries list for v9.x DDs, enriched with INDEX.md metadata."""
+def scan_files(index_data: dict):
+    """Build entries list for v9.x/v10.x DDs, enriched with INDEX.md metadata."""
     entries = []
     for f in sorted(DD_DIR.glob("DD_*.html")):
         version = extract_version(f)
         if not (version.startswith("v9") or version.startswith("v10")):
             continue
-        # Support: DD_TICKER_DATE.html, DD_TICKER_DATE_v2.html, DD_TICKER_v10_DATE.html
         m = re.match(r"DD_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
         if not m:
-            # Try alternate pattern: DD_TICKER_vNN_DATE.html
             m = re.match(r"DD_(.+?)_v\d+_(\d{4})(\d{2})(\d{2})\.html", f.name)
         if not m:
             continue
@@ -185,8 +154,8 @@ def scan_v9_files(index_data: dict):
 
         md = index_data.get(f.name, {})
         comment = extract_comment(f)
-        upside, downside = extract_updown(f)
         qscore = extract_quality_score(f)
+        confidence = extract_confidence(f)
         entries.append({
             "ticker": ticker,
             "date": date_str,
@@ -196,14 +165,10 @@ def scan_v9_files(index_data: dict):
             "trap": md.get("trap", "—"),
             "quality": md.get("quality", "—"),
             "quality_score": qscore,
-            "rr_value": md.get("rr_value", "—"),
-            "red_lights": md.get("red_lights", "—"),
-            "upside": upside,
-            "downside": downside,
+            "confidence": confidence,
             "comment": comment,
         })
 
-    # Sort: date desc, then ticker asc, then version desc (v9.1 before v9.0)
     entries.sort(key=lambda e: e["ticker"])
     entries.sort(key=lambda e: e["version"], reverse=True)
     entries.sort(key=lambda e: e["date"], reverse=True)
@@ -223,75 +188,23 @@ def verdict_badge(v: str) -> str:
 
 def quality_badge(q: str, score: str = "") -> str:
     q = q.strip()
-    labels = {"H": "H 高品質", "MH": "MH 中高", "M": "M 中品質", "W": "W 觀望"}
-    colors = {
-        "H": "quality-h",
-        "MH": "quality-mh",
-        "M": "quality-m",
-        "W": "quality-w",
-    }
+    labels = {"H": "H 高品質", "MH": "MH 中高", "M": "M 中品質", "W": "W 觀望", "A": "A 級", "B": "B 級"}
+    colors = {"H": "quality-h", "MH": "quality-mh", "M": "quality-m", "W": "quality-w", "A": "quality-h", "B": "quality-mh"}
     label = labels.get(q, q)
     cls = colors.get(q, "quality-m")
     score_str = f' <span class="quality-score">{score}</span>' if score else ""
     return f'<span class="quality-badge {cls}">{label}</span>{score_str}'
 
 
-def rr_badge(rr: str) -> str:
-    rr = rr.strip()
-    if rr in ("neg", "—", ""):
-        return '<span class="rr-neg">neg</span>'
-    try:
-        val = float(rr.replace("x", ""))
-        if val >= 2.5:
-            return f'<span class="rr-pass">{rr}</span>'
-        elif val >= 1.0:
-            return f'<span class="rr-mid">{rr}</span>'
-        else:
-            return f'<span class="rr-fail">{rr}</span>'
-    except ValueError:
-        return rr
-
-
-def updown_badge(val: str, is_upside: bool = True) -> str:
-    """Format upside/downside percentage with color coding."""
-    val = val.strip()
-    if not val:
-        return '<span class="ud-na">—</span>'
-    # Parse numeric value
-    try:
-        num = float(val.replace("%", "").replace("+", "").replace("−", "-"))
-    except ValueError:
-        return f'<span class="ud-na">{val}</span>'
-    if is_upside:
-        if num >= 100:
-            cls = "ud-up-strong"
-        elif num >= 30:
-            cls = "ud-up"
-        elif num > 0:
-            cls = "ud-up-weak"
-        else:
-            cls = "ud-negative"
-    else:
-        # downside: higher magnitude = worse
-        if abs(num) >= 70:
-            cls = "ud-down-severe"
-        elif abs(num) >= 50:
-            cls = "ud-down"
-        else:
-            cls = "ud-down-mild"
-    return f'<span class="{cls}">{val}</span>'
-
-
-def red_light_display(r: str) -> str:
-    r = r.strip()
-    if r in ("0", ""):
-        return '<span class="rl-0">0</span>'
-    elif r == "1":
-        return '<span class="rl-1">1</span>'
-    elif r == "2":
-        return '<span class="rl-2">2</span>'
-    else:
-        return f'<span class="rl-3">{r}</span>'
+def confidence_badge(c: str) -> str:
+    c = c.strip()
+    if c == "高":
+        return '<span class="conf-high">高</span>'
+    elif c == "中":
+        return '<span class="conf-mid">中</span>'
+    elif c == "低":
+        return '<span class="conf-low">低</span>'
+    return '<span class="conf-na">—</span>'
 
 
 def trap_short(t: str) -> str:
@@ -305,18 +218,21 @@ def trap_short(t: str) -> str:
     return t
 
 
+def version_badge(v: str) -> str:
+    v = v.strip()
+    if v.startswith("v10") or v == "v9.2":
+        return f'<span class="version-badge version-latest">{v}</span>'
+    return f'<span class="version-badge">{v}</span>'
+
+
 def _sort_keys(e):
-    """Compute numeric sort keys for data attributes."""
-    # Use negative quality_score for sort (higher score = sort first = lower number)
     qs = e.get("quality_score", "")
     try:
-        q_sort = -float(qs)  # negative so higher scores sort first (ascending)
+        q_sort = -float(qs)
     except (ValueError, TypeError):
-        q_map_fallback = {"H": 1, "MH": 2, "M": 3, "W": 4}
+        q_map_fallback = {"H": 1, "MH": 2, "M": 3, "W": 4, "A": 0, "B": 2}
         q_sort = q_map_fallback.get(e.get("quality", "").strip(), 9)
-    q_map = {"H": 1, "MH": 2, "M": 3, "W": 4}
     v_map = {"進場": 1, "觀望": 2, "迴避": 3}
-    t_map = {}  # trap
     trap = e.get("trap", "")
     if "非陷阱" in trap:
         t_val = 1
@@ -324,41 +240,14 @@ def _sort_keys(e):
         t_val = 2
     else:
         t_val = 3
-
-    rr_raw = e.get("rr_value", "").strip()
-    try:
-        rr_num = float(rr_raw.replace("x", ""))
-    except (ValueError, AttributeError):
-        rr_num = -999
-
-    rl_raw = e.get("red_lights", "").strip()
-    try:
-        rl_num = int(rl_raw)
-    except (ValueError, AttributeError):
-        rl_num = 0
-
-    def _parse_pct(s):
-        try:
-            return float(s.strip().replace("%", "").replace("+", "").replace("−", "-"))
-        except (ValueError, AttributeError):
-            return -999
-
+    conf_map = {"高": 1, "中": 2, "低": 3}
+    conf_val = conf_map.get(e.get("confidence", "").strip(), 9)
     return {
         "quality": q_sort,
         "verdict": v_map.get(e.get("verdict", "").strip(), 9),
-        "rr": rr_num,
-        "rl": rl_num,
         "trap": t_val,
-        "upside": _parse_pct(e.get("upside", "")),
-        "downside": _parse_pct(e.get("downside", "")),
+        "confidence": conf_val,
     }
-
-
-def version_badge(v: str) -> str:
-    v = v.strip()
-    if v.startswith("v10") or v == "v9.2":
-        return f'<span class="version-badge version-latest">{v}</span>'
-    return f'<span class="version-badge">{v}</span>'
 
 
 def build_rows(entries):
@@ -372,22 +261,16 @@ def build_rows(entries):
             f' data-version="{e.get("version", "")}"'
             f' data-verdict="{sk["verdict"]}"'
             f' data-quality="{sk["quality"]}"'
-            f' data-rr="{sk["rr"]}"'
-            f' data-upside="{sk["upside"]}"'
-            f' data-downside="{sk["downside"]}"'
-            f' data-rl="{sk["rl"]}"'
             f' data-trap="{sk["trap"]}"'
+            f' data-confidence="{sk["confidence"]}"'
             f'>\n'
             f'  <td><a href="{e["href"]}" class="ticker-link">{e["ticker"]}</a></td>\n'
             f'  <td class="date-cell">{e["date"]}</td>\n'
             f'  <td>{version_badge(e.get("version", ""))}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
             f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""))}</td>\n'
-            f'  <td>{rr_badge(e["rr_value"])}</td>\n'
-            f'  <td class="updown-cell">{updown_badge(e["upside"], True)}</td>\n'
-            f'  <td class="updown-cell">{updown_badge(e["downside"], False)}</td>\n'
-            f'  <td>{red_light_display(e["red_lights"])}</td>\n'
             f'  <td>{trap_short(e["trap"])}</td>\n'
+            f'  <td>{confidence_badge(e.get("confidence", ""))}</td>\n'
             f'  <td class="comment-cell">{e["comment"]}</td>\n'
             f'</tr>'
         )
@@ -406,11 +289,8 @@ def update_index(entries):
         '            <th class="sortable" data-sort="version">版本</th>\n'
         '            <th class="sortable" data-sort="verdict">建議</th>\n'
         '            <th class="sortable sorted-asc" data-sort="quality">品質</th>\n'
-        '            <th class="sortable" data-sort="rr">R:R</th>\n'
-        '            <th class="sortable" data-sort="upside">上檔</th>\n'
-        '            <th class="sortable" data-sort="downside">下檔</th>\n'
-        '            <th class="sortable" data-sort="rl">紅燈</th>\n'
         '            <th class="sortable" data-sort="trap">陷阱</th>\n'
+        '            <th class="sortable" data-sort="confidence">長期持有</th>\n'
         '            <th>備註</th>\n'
         '          </tr>\n'
         '        </thead>'
@@ -432,10 +312,9 @@ def update_index(entries):
         print(f"ERROR: Could not find <tbody id=\"dd-tbody\"> in {INDEX_HTML}")
         return False
 
-    # Inject custom CSS for badges if not already present
-    if "verdict-badge" not in new_html:
-        badge_css = """
-/* v9.0 Badge Styles */
+    # Inject/update badge CSS
+    badge_css = """
+/* v10.0 Badge Styles */
 .verdict-badge{display:inline-block;padding:.2rem .6rem;border-radius:5px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
 .verdict-buy{background:rgba(5,150,105,.08);color:#059669}
 .verdict-watch{background:rgba(217,119,6,.08);color:#d97706}
@@ -446,19 +325,12 @@ def update_index(entries):
 .quality-m{background:#f1f5f9;color:#475569}
 .quality-w{background:rgba(220,38,38,.07);color:#991b1b}
 .quality-score{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;color:#64748b;margin-left:2px}
-.rr-pass{color:#059669;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rr-mid{color:#d97706;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rr-fail{color:#dc2626;font-weight:600;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rr-neg{color:#94a3b8;font-style:italic;font-family:'IBM Plex Mono',monospace;font-size:.85rem}
-.rl-0{color:#059669;font-weight:600;font-family:'IBM Plex Mono',monospace}
-.rl-1{color:#d97706;font-weight:600;font-family:'IBM Plex Mono',monospace}
-.rl-2{color:#ea580c;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.rl-3{color:#dc2626;font-weight:700;font-family:'IBM Plex Mono',monospace}
 .trap-ok{color:#059669;font-size:.8rem}.trap-watch{color:#d97706;font-size:.8rem}
 .trap-danger{color:#dc2626;font-weight:700;font-size:.8rem}
-.updown-cell{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;white-space:nowrap}
-.ud-up-strong{color:#059669}.ud-up{color:#059669}.ud-up-weak{color:#6b7280}.ud-negative{color:#dc2626}
-.ud-down-severe{color:#dc2626}.ud-down{color:#ea580c}.ud-down-mild{color:#d97706}.ud-na{color:#94a3b8}
+.conf-high{color:#059669;font-weight:700;font-size:.82rem}
+.conf-mid{color:#d97706;font-weight:600;font-size:.82rem}
+.conf-low{color:#dc2626;font-weight:600;font-size:.82rem}
+.conf-na{color:#94a3b8;font-size:.82rem}
 .comment-cell{color:#475569;font-size:.78rem;max-width:260px;line-height:1.45}
 .version-badge{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.7rem;font-family:'IBM Plex Mono',monospace;background:#f1f5f9;color:#64748b}
 .version-latest{background:#dbeafe;color:#1e40af;font-weight:600}
@@ -466,6 +338,16 @@ td a.ticker-link{color:#1e293b;text-decoration:none;font-weight:700;font-size:.8
 td a.ticker-link:hover{color:#2563eb}
 td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem;white-space:nowrap}
 """
+    # Remove old badge CSS block and inject new one
+    new_html = re.sub(
+        r'/\* v9\.0 Badge Styles \*/.*?(?=</style>)',
+        badge_css,
+        new_html,
+        count=1,
+        flags=re.DOTALL,
+    )
+    if "v10.0 Badge Styles" not in new_html:
+        # Fallback: just inject before </style>
         new_html = new_html.replace("</style>", badge_css + "</style>", 1)
 
     INDEX_HTML.write_text(new_html, encoding="utf-8")
@@ -474,10 +356,11 @@ td.date-cell{color:#94a3b8;font-family:'IBM Plex Mono',monospace;font-size:.8rem
 
 def main():
     index_data = parse_index_md()
-    entries = scan_v9_files(index_data)
+    entries = scan_files(index_data)
     print(f"Found {len(entries)} v9.x/v10.x DD files:")
     for e in entries:
-        print(f"  {e['ticker']:8s} {e['date']}  {e['verdict']:4s}  {e['quality']:3s}  {e['rr_value']:6s}  {e['href']}")
+        conf = e.get("confidence", "—") or "—"
+        print(f"  {e['ticker']:8s} {e['date']}  {e['verdict']:4s}  {e['quality']:3s}  conf={conf}  {e['href']}")
 
     if update_index(entries):
         print(f"\nUpdated {INDEX_HTML}")
