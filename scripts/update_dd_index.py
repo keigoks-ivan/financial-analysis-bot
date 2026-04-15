@@ -39,6 +39,12 @@ QUALITY_SCORE_RE = re.compile(
     re.DOTALL,
 )
 
+# Pattern to extract 護城河 score from §2 B table (§9 or §10 評分 row)
+MOAT_SCORE_RE = re.compile(
+    r'護城河\s*</td>\s*<td[^>]*>\s*§(?:9|10)\b[^<]*</td>\s*<td[^>]*>\s*(?:<[^>]+>)?\s*(\d+)',
+    re.DOTALL,
+)
+
 # Pattern to extract 長期持有信心 (v10.0+): 高/中/低
 # Matches table row with 長期持有信心 and extracts the value cell
 CONFIDENCE_RE = re.compile(
@@ -56,6 +62,16 @@ def extract_quality_score(path: Path) -> str:
     except OSError:
         return ""
     m = QUALITY_SCORE_RE.search(text)
+    return m.group(1) if m else ""
+
+
+def extract_moat_score(path: Path) -> str:
+    """Extract moat (護城河) score (e.g. '8') from §2 B / §9 in DD HTML."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+    m = MOAT_SCORE_RE.search(text)
     return m.group(1) if m else ""
 
 
@@ -156,6 +172,7 @@ def scan_files(index_data: dict):
         md = index_data.get(f.name, {})
         comment = extract_comment(f)
         qscore = extract_quality_score(f)
+        moat = extract_moat_score(f)
         confidence = extract_confidence(f)
         entries.append({
             "ticker": ticker,
@@ -166,6 +183,7 @@ def scan_files(index_data: dict):
             "trap": md.get("trap", "—"),
             "quality": md.get("quality", "—"),
             "quality_score": qscore,
+            "moat_score": moat,
             "confidence": confidence,
             "comment": comment,
         })
@@ -187,14 +205,14 @@ def verdict_badge(v: str) -> str:
     return v
 
 
-def quality_badge(q: str, score: str = "") -> str:
+def quality_badge(q: str, score: str = "", moat: str = "") -> str:
     q = q.strip()
     labels = {"H": "H 高品質", "MH": "MH 中高", "M": "M 中品質", "W": "W 觀望", "A": "A 級", "B": "B 級"}
     colors = {"H": "quality-h", "MH": "quality-mh", "M": "quality-m", "W": "quality-w", "A": "quality-h", "B": "quality-mh"}
     label = labels.get(q, q)
     cls = colors.get(q, "quality-m")
-    score_str = f' <span class="quality-score">{score}</span>' if score else ""
-    return f'<span class="quality-badge {cls}">{label}</span>{score_str}'
+    moat_str = f' <span class="quality-score">🏰{moat}/10</span>' if moat else ""
+    return f'<span class="quality-badge {cls}">{label}</span>{moat_str}'
 
 
 def confidence_badge(c: str) -> str:
@@ -269,7 +287,7 @@ def build_rows(entries):
             f'  <td class="date-cell">{e["date"]}</td>\n'
             f'  <td>{version_badge(e.get("version", ""))}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
-            f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""))}</td>\n'
+            f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""), e.get("moat_score", ""))}</td>\n'
             f'  <td>{trap_short(e["trap"])}</td>\n'
             f'  <td>{confidence_badge(e.get("confidence", ""))}</td>\n'
             f'  <td class="comment-cell">{e["comment"]}</td>\n'
