@@ -265,7 +265,7 @@ def build_rows(entries):
             f' data-trap="{sk["trap"]}"'
             f' data-confidence="{sk["confidence"]}"'
             f'>\n'
-            f'  <td><a href="{e["href"]}" class="ticker-link">{e["ticker"]}</a></td>\n'
+            f'  <td><a href="{e["href"]}" class="ticker-link" target="_blank" rel="noopener">{e["ticker"]}</a></td>\n'
             f'  <td class="date-cell">{e["date"]}</td>\n'
             f'  <td>{version_badge(e.get("version", ""))}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
