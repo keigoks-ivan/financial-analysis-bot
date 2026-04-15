@@ -72,7 +72,7 @@ def extract_version(path: Path) -> str:
         return ""
 
 
-def extract_comment(path: Path, max_len: int = 60) -> str:
+def extract_comment(path: Path, max_len: int = 500) -> str:
     """Extract the bull one-liner from DD HTML as a short comment."""
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -331,7 +331,7 @@ def update_index(entries):
 .conf-mid{color:#d97706;font-weight:600;font-size:.82rem}
 .conf-low{color:#dc2626;font-weight:600;font-size:.82rem}
 .conf-na{color:#94a3b8;font-size:.82rem}
-.comment-cell{color:#475569;font-size:.78rem;max-width:260px;line-height:1.45}
+.comment-cell{color:#475569;font-size:.78rem;line-height:1.45}
 .version-badge{display:inline-block;padding:.1rem .4rem;border-radius:3px;font-size:.7rem;font-family:'IBM Plex Mono',monospace;background:#f1f5f9;color:#64748b}
 .version-latest{background:#dbeafe;color:#1e40af;font-weight:600}
 td a.ticker-link{color:#1e293b;text-decoration:none;font-weight:700;font-size:.88rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;transition:color .15s}
