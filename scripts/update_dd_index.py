@@ -108,14 +108,14 @@ def parse_index_md() -> dict:
         line = line.strip()
         if not line.startswith("|"):
             continue
-        if "v9" not in line and "v10" not in line:
+        if not any(f"v{n}" in line for n in range(9, 20)):
             continue
         cols = [c.strip() for c in line.split("|")]
         # cols: ['', date, ticker, schema, verdict, trap, rr, filename, '']
         if len(cols) < 9:
             continue
         date, ticker, schema, verdict, trap, rr, filename = cols[1:8]
-        if not (schema.startswith("v9") or schema.startswith("v10")):
+        if not any(schema.startswith(f"v{n}") for n in range(9, 20)):
             continue
         data[filename] = {
             "date": date,
@@ -138,7 +138,12 @@ def scan_files(index_data: dict):
     entries = []
     for f in sorted(DD_DIR.glob("DD_*.html")):
         version = extract_version(f)
-        if not version.startswith("v10"):
+        # Only show v10+ on the website
+        try:
+            major = int(version.lstrip("v").split(".")[0])
+        except (ValueError, IndexError):
+            continue
+        if major < 10:
             continue
         m = re.match(r"DD_(.+?)_(\d{4})(\d{2})(\d{2})(?:_v\d+)?\.html", f.name)
         if not m:
