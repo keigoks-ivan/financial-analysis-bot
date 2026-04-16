@@ -338,7 +338,7 @@ def _sort_keys(e):
     except (ValueError, TypeError):
         q_map_fallback = {"H": 1, "MH": 2, "M": 3, "W": 4, "A": 0, "B": 2}
         q_sort = q_map_fallback.get(e.get("quality", "").strip(), 9)
-    v_map = {"進場": 1, "觀望": 2, "迴避": 3}
+    v_map = {"進場": 1, "觀望偏進場": 2, "觀望": 3, "迴避": 4}
     trap = e.get("trap", "")
     if "非陷阱" in trap:
         t_val = 1
@@ -405,8 +405,8 @@ def update_index(entries):
         '            <th class="sortable" data-sort="ticker">公司</th>\n'
         '            <th class="sortable" data-sort="date">日期</th>\n'
         '            <th class="sortable" data-sort="version">版本</th>\n'
-        '            <th class="sortable" data-sort="verdict">建議</th>\n'
-        '            <th class="sortable sorted-asc" data-sort="quality">護城河</th>\n'
+        '            <th class="sortable sorted-asc" data-sort="verdict">建議</th>\n'
+        '            <th class="sortable" data-sort="quality">護城河</th>\n'
         '            <th class="sortable" data-sort="upside1">FY+1 Upside</th>\n'
         '            <th class="sortable" data-sort="upside2">FY+2 Upside</th>\n'
         '            <th class="sortable" data-sort="trap">陷阱</th>\n'
