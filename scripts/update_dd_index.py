@@ -39,9 +39,10 @@ QUALITY_SCORE_RE = re.compile(
     re.DOTALL,
 )
 
-# Pattern to extract 護城河 score from §2 B table (§9 or §10 評分 row)
+# Pattern to extract 護城河 score from §12 B table (v10: §9/§10 評分, v11: §7 評分)
+# Accepts any section reference and decimal scores like "9.5".
 MOAT_SCORE_RE = re.compile(
-    r'護城河\s*</td>\s*<td[^>]*>\s*§(?:9|10)\b[^<]*</td>\s*<td[^>]*>\s*(?:<[^>]+>)?\s*(\d+)',
+    r'護城河\s*</td>\s*<td[^>]*>\s*§\d+\b[^<]*</td>\s*<td[^>]*>\s*(?:<[^>]+>\s*)*(\d+(?:\.\d+)?)',
     re.DOTALL,
 )
 
