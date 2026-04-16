@@ -11,17 +11,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
 :root{
-  --bg:#f8fafc;--bg-card:#ffffff;--bg-card-hover:#fafbfd;
-  --border:#e5e7eb;--border-light:#f3f4f6;
-  --text:#111827;--text-secondary:#4b5563;--text-muted:#9ca3af;
+  --bg:#f7f8fa;--bg-card:#ffffff;--bg-card-hover:#fbfcfd;
+  --border:#e5e7eb;--border-light:#eef0f3;
+  --text:#0f172a;--text-secondary:#475569;--text-muted:#94a3b8;
   --accent:#2563eb;--accent-hover:#1d4ed8;
-  --green:#059669;--green-bg:rgba(5,150,105,.07);--green-text:#065f46;
-  --red:#dc2626;--red-bg:rgba(220,38,38,.06);--red-text:#991b1b;
-  --amber:#d97706;--amber-bg:rgba(217,119,6,.06);--amber-text:#92400e;
+  --indigo:#6366f1;--indigo-bg:rgba(99,102,241,.07);--indigo-text:#4338ca;
+  --green:#0f766e;--green-bg:rgba(15,118,110,.06);--green-text:#115e59;
+  --red:#be123c;--red-bg:rgba(190,18,60,.05);--red-text:#9f1239;
+  --amber:#b45309;--amber-bg:rgba(180,83,9,.06);--amber-text:#7c2d12;
   --blue-bg:rgba(37,99,235,.06);--blue-text:#1e40af;
-  --purple:#7c3aed;--purple-bg:rgba(124,58,237,.06);
-  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:0 4px 12px rgba(0,0,0,.06);
+  --slate-bg:#f1f5f9;--slate-text:#64748b;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:0 4px 14px rgba(15,23,42,.07);
   --radius:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -59,9 +60,9 @@ header nav a.active{color:var(--accent);background:var(--blue-bg);font-weight:60
 .stat-num{font-family:'IBM Plex Mono',monospace;font-size:1.8rem;font-weight:700;line-height:1.2}
 .stat-label{font-size:.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.2rem;font-weight:500}
 .stat-card:nth-child(1) .stat-num{color:var(--text)}
-.stat-card:nth-child(2) .stat-num{color:var(--green)}
+.stat-card:nth-child(2) .stat-num{color:var(--accent)}
 .stat-card:nth-child(3) .stat-num{color:var(--amber)}
-.stat-card:nth-child(4) .stat-num{color:var(--red)}
+.stat-card:nth-child(4) .stat-num{color:var(--text-secondary)}
 
 /* Section */
 .section{padding:2.5rem 0 2rem}
@@ -105,12 +106,12 @@ td a.ticker-link{color:var(--text);text-decoration:none;font-weight:700;font-siz
 td a.ticker-link:hover{color:var(--accent)}
 td.date-cell{color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-size:.78rem;white-space:nowrap}
 
-/* Verdict Badges */
-.verdict-badge{display:inline-block;padding:.25rem .7rem;border-radius:6px;font-size:.75rem;font-weight:600;letter-spacing:.01em}
-.verdict-buy{background:var(--green-bg);color:var(--green-text)}
-.verdict-lean-buy{background:rgba(5,150,105,.04);color:var(--green);border:1px solid rgba(5,150,105,.2)}
-.verdict-watch{background:var(--amber-bg);color:var(--amber-text)}
-.verdict-avoid{background:var(--red-bg);color:var(--red-text)}
+/* Verdict Badges — cooler progression: blue → indigo → amber → slate */
+.verdict-badge{display:inline-block;padding:.25rem .7rem;border-radius:999px;font-size:.74rem;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+.verdict-buy{background:var(--accent);color:#fff}
+.verdict-lean-buy{background:var(--indigo-bg);color:var(--indigo-text);border:1px solid rgba(99,102,241,.22)}
+.verdict-watch{background:var(--amber-bg);color:var(--amber-text);border:1px solid rgba(180,83,9,.18)}
+.verdict-avoid{background:var(--slate-bg);color:var(--slate-text);border:1px solid var(--border)}
 
 /* Version Badge */
 .version-badge{display:inline-block;padding:.15rem .5rem;border-radius:5px;font-size:.7rem;
@@ -120,18 +121,21 @@ td.date-cell{color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-
 /* Moat / Quality Score */
 .quality-score{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:600;color:var(--text-secondary)}
 
-/* Upside */
-.upside-pos{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;color:var(--green)}
-.upside-neg{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:700;color:var(--red)}
+/* Upside — only color when signal is strong; small numbers stay neutral */
+.upside-pos{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;color:var(--green)}
+.upside-neg{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;color:var(--red)}
 .upside-zero{font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--text-muted)}
 
-/* Trap */
-.trap-ok{color:var(--green);font-size:.82rem;font-weight:500}
+/* Trap — 非陷阱 is the default, shown in neutral; only surface real warnings */
+.trap-ok{color:var(--text-muted);font-size:.82rem;font-weight:500}
+.trap-ok::before{content:'●';color:#cbd5e1;margin-right:.3em;font-size:.7em}
 .trap-watch{color:var(--amber);font-size:.82rem;font-weight:600}
+.trap-watch::before{content:'●';margin-right:.3em;font-size:.7em}
 .trap-danger{color:var(--red);font-weight:700;font-size:.82rem}
+.trap-danger::before{content:'●';margin-right:.3em;font-size:.7em}
 
-/* Confidence */
-.conf-high{color:var(--green);font-weight:700;font-size:.82rem}
+/* Confidence — 高 is default, neutral; only amber/red for caution */
+.conf-high{color:var(--text-secondary);font-weight:500;font-size:.82rem}
 .conf-mid{color:var(--amber);font-weight:600;font-size:.82rem}
 .conf-low{color:var(--red);font-weight:600;font-size:.82rem}
 .conf-na{color:var(--text-muted);font-size:.82rem}
