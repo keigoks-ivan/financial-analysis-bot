@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v11.0">
+<title>DD｜MU Micron Technology｜2026-04-16</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;
+  --muted:#64748B;--line:#E2E8F0;--row-alt:#F1F5F9;
+  --ok-bg:#DCFCE7;--ok-ink:#166534;--bad-bg:#FEE2E2;--bad-ink:#991B1B;
+  --warn-bg:#FEF9C3;--warn-ink:#92400E;--info-bg:#EFF6FF;--info-ink:#1E3A5F;
+  --trap-bg:#FFF0E6;--trap-line:#F97316;--trap-ink:#C2410C;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#0F172A;font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.7;font-size:15px}
+.mono,.num{font-family:"IBM Plex Mono",monospace}
+header.topbar{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:13.5px}
+header.topbar b{font-size:15px;letter-spacing:1px}
+header.topbar span{opacity:.9}
+main{max-width:1100px;margin:0 auto;padding:24px 20px 120px}
+h1{font-size:26px;margin:8px 0 4px;color:var(--ink)}
+h2{font-size:20px;margin:36px 0 12px;padding:10px 14px;background:var(--ink);color:#fff;border-left:4px solid var(--accent);border-radius:2px}
+h3{font-size:17px;margin:24px 0 8px;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:6px}
+h4{font-size:15px;margin:16px 0 6px;color:var(--ink)}
+p{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:14px;background:var(--card);box-shadow:0 1px 2px rgba(15,23,42,.06)}
+th{background:var(--ink);color:#fff;padding:9px 10px;text-align:left;font-weight:500;font-size:13.5px}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:var(--row-alt)}
+.card{background:var(--card);padding:16px 18px;border:1px solid var(--line);border-radius:4px;margin:12px 0}
+.hypothesis-box{background:var(--info-bg);border-left:4px solid var(--accent);padding:14px 18px;border-radius:2px;margin:14px 0}
+.hypothesis-box ul{margin:0;padding-left:18px}
+.hypothesis-box li{margin:6px 0}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-line);padding:14px 18px;border-radius:2px;margin:14px 0}
+.trap-box h4{color:var(--trap-ink);margin-top:0}
+.ok{background:var(--ok-bg);color:var(--ok-ink);padding:1px 7px;border-radius:3px;font-weight:500}
+.bad{background:var(--bad-bg);color:var(--bad-ink);padding:1px 7px;border-radius:3px;font-weight:500}
+.warn{background:var(--warn-bg);color:var(--warn-ink);padding:1px 7px;border-radius:3px;font-weight:500}
+.info{background:var(--info-bg);color:var(--info-ink);padding:1px 7px;border-radius:3px;font-weight:500}
+.note{color:var(--muted);font-size:13px;margin-top:6px}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:16px 0}
+.debate-card{padding:14px 16px;border-radius:4px;font-size:14px}
+.bull-card{background:#F0FDF4;border-left:4px solid #16A34A}
+.bear-card{background:#FFF1F2;border-left:4px solid #DC2626}
+.arb-card{background:#F5F3FF;border-left:4px solid #7C3AED}
+.verdict-card{background:#FFFBEB;border-left:4px solid #D97706;padding:14px 18px;border-radius:2px;margin:14px 0}
+.verdict-card h4{color:#92400E;margin-top:0}
+.rr-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.rr-card{padding:14px 16px;border-radius:4px}
+.rr-short{background:#F0F9FF;border-left:4px solid #0284C7}
+.rr-mid{background:#F5F3FF;border-left:4px solid #7C3AED}
+footer-btn,.print-btn{position:fixed;right:24px;bottom:24px;background:var(--ink);color:#fff;padding:10px 16px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:14px;box-shadow:0 2px 6px rgba(15,23,42,.2);z-index:20}
+.print-btn:hover{background:#2A4F80}
+@media print{header.topbar,.print-btn{display:none}body{background:#fff}main{max-width:100%;padding:0 10mm}h2{page-break-after:avoid}table{page-break-inside:avoid}}
+@media (max-width:780px){.debate-grid,.rr-grid{grid-template-columns:1fr}}
+.big-num{font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:700;color:var(--ink)}
+.inline-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:12px;font-weight:500;margin-right:4px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span><b>MU</b>｜Micron Technology, Inc.</span>
+  <span>資料抓取：2026-04-16｜股價：$456.23（4/15 close）</span>
+  <span>最近財報：Q2 FY2026 (2026-03-18)</span>
+  <span>DD Schema <b>v11.0</b></span>
+</header>
+<main>
+
+<h1>MU 買側深度研究（DD）｜v11.0</h1>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<!-- ============ §1 ============ -->
+<h2>§1｜投資結論（Executive Summary）</h2>
+
+<h3>結論 Dashboard</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>品質頂級（A 級 8.0 分）：</strong>護城河 5/10（寡占但高度商品化）+ 成長持久性 6/10（HBM runway 5-9 年但強週期性）+ 體質 +2.5（5/5 全過）</li>
+<li><strong>估值（🟡 公允至便宜）：</strong>Forward PE（FY+1）<span class="num">7.9x</span> 看似極低，但為典型「週期頂點 EPS × 壓縮倍數」現象；週期調整後合理 PE 10-12x。PEG 安全網因基期谷底效應失真（名義 PEG 0.06）</li>
+<li><strong>短期 ✅：</strong>FY+1 Non-GAAP EPS $57.80（+597% YoY），目標 <span class="num">$578</span> vs 現價 $456.23（+26.7%），R:R <span class="num">3.0x</span></li>
+<li><strong>中期 ✅：</strong>FY+2 EPS $98.16（+69.8%），目標 <span class="num">$982</span>（+115.2%）；Bear mid 已高於現價（下檔已被定價，R:R 無上限）</li>
+<li><strong>建議進場（循環感知）：</strong>底倉 25%（目標倉位的）× BB ×1.0 = <strong>25%</strong>。但因 memory cycle 下行風險模型難以完全捕捉，建議分批進場（1/3 現價、1/3 回檔至 $380、1/3 跌破 $300 加碼）</li>
+<li><strong>關鍵觀察：</strong>HBM3E/HBM4 2026 產能已全數 binding 綁定；CEO Mehrotra 近 6 月賣出 80K 股、CFO 賣 126K 股為最大雜訊—典型週期頂點內部人減碼訊號</li>
+<li><strong>長期持有信心：中</strong>（§12 G：HBM 結構性需求高確信，但 MU 作為 commoditized memory supplier，10 年複利能力受限於週期本質）｜<strong>陷阱定性：</strong>🟡 觀察期（非古典價值陷阱，但循環頂點風險真實存在）</li>
+</ul>
+</div>
+<p class="note"><strong>判定：進場</strong>（§12 E 雙 R:R 全通過）｜底倉 <strong>25%</strong>（目標倉位的）。</p>
+<p class="note">底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。memory cycle 標的建議不超過 10%。</p>
+
+<div class="trap-box">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答題）</h4>
+<table>
+<tr><th width="28%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非古典四類陷阱</strong>（護城河未侵蝕、盈餘品質健康、產業結構擴張、隱性 capex 雖高但與景氣同步）。但存在「第五類」風險：<strong>週期頂點錯覺陷阱</strong>—低 PE 來自高分母（EPS $57.8 為歷史峰值）而非低分子。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>Gross Margin 從 10 年中位 38.71% 升至 74.9% Non-GAAP，升 36pp 來自 HBM 結構性需求（Nvidia Blackwell 綁定、HBM4 全 2026 產能 binding）。HBM 市佔從 &lt;10% 升至 25-26%，這是真實市占擴張，不是會計操縱。FCF LTM $10.28B 與 Net Income 轉換率 &gt; 70%。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>Memory 過去 40 年五次週期每次都以供過於求終結。MU FY23 曾虧損 $5.8B，EPS 從 +$11（FY18 頂點）崩至 -$4.45（FY23 谷底）。CEO/CFO 2026 Q1 合計賣超 $46M 內部人股票，classic 頂點訊號。Capex $25B FY26（佔 revenue 23%）製造 2027-2028 巨大供給，若 AI HBM 需求放緩 10-15%，產業瞬間轉向過剩。</td></tr>
+<tr><td>持有期間如何判斷陷阱發生？</td><td><strong>領先指標 1</strong>：DRAM 現貨價（DDR5 16Gb）連續 2 月 MoM 下跌 &gt; 5%；<strong>領先指標 2</strong>：Earnings Call 管理層語氣從「sold out」轉為「demand normalizing」。任一觸發 → 減碼至 50%。</td></tr>
+</table>
+<p><strong>最終定性：<span class="warn">🟡 觀察期</span></strong>（non-classic trap, but cycle exposure material）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發閾值</th></tr>
+<tr><td>1</td><td>HBM 產能利用率與 binding 訂單覆蓋率（Earnings Call）</td><td>§3 H1</td><td><span class="info">🔵 核心假設驗證</span></td><td>若 2027 產能 binding 覆蓋率 &lt; 70% → H1 削弱</td></tr>
+<tr><td>2</td><td>DRAM ASP MoM 變化（TrendForce / DRAMeXchange）</td><td>§6 / §7</td><td><span class="info">🔵 長期成長領先信號</span></td><td>連續 2 月 &gt; -5% → 週期轉折警訊</td></tr>
+<tr><td>3</td><td>FY+2 EPS 共識 30 天修正方向</td><td>§11 / §4</td><td>短期估值信號</td><td>連續 30 天下修 &gt; 5% → 重估入場</td></tr>
+</table>
+
+<!-- ============ §2 ============ -->
+<h2>§2｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<div class="card">
+<p>Micron 解決的是 <strong>AI 運算時代「記憶體頻寬」這個比『算力』更稀缺的瓶頸</strong>。GPU 算力每 18 個月翻倍，但傳統 DDR5 記憶體頻寬僅能跟上一半速度 — 這個「記憶體牆（memory wall）」讓訓練 LLM 的瓶頸從 FLOPS 轉向 HBM 頻寬。Nvidia B200/B300 單顆 GPU 搭載 192GB HBM3E，下一代 Rubin 將用 HBM4 提升至 288GB，每顆 GPU 的 HBM 成本佔 BOM 達 40-60%。</p>
+<p>全球僅三家能量產 HBM（SK Hynix 62%、Samsung 13%、Micron 25%），且 HBM 產能擴張瓶頸是 DRAM wafer（每片 12 吋 wafer 做 HBM 只能做傳統 DRAM 30-40% 的 bit 產量）— 這讓 memory supply 成為 AI 全產業鏈中最結構性稀缺的節點。</p>
+<p>若 MU 明天消失：SK Hynix 和 Samsung 短期無法吸收 25% HBM 份額，AI 資料中心 GPU 出貨將延遲 9-12 個月，NVDA/AMD AI 產品交付全線受阻；美國失去唯一在地 leading-edge DRAM/HBM 產能，CHIPS Act 戰略意義受損。</p>
+</div>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓此投資在 3 年內虧損 ≥ 50%，最可能路徑：</p>
+<table>
+<tr><th width="22%">維度</th><th>情境</th></tr>
+<tr><td><strong>地緣政治曝險</strong></td><td>MU 生產主要在美國（Idaho、Virginia）、台灣、日本、新加坡、馬來西亞。新設 NY Clay Fab 依賴 CHIPS Act $6.1B 補貼，若 2027 美國政府政策翻轉、WTO 爭議讓補貼退回，NY Fab ROI 大幅受損。台海緊張不直接衝擊（MU 台廠較小）但影響下游 AI 客戶（TSMC）交付。</td></tr>
+<tr><td><strong>技術替代風險</strong></td><td>(1) CXL（Compute Express Link）標準化若讓 server RAM 走向 disaggregated memory pool，可能壓縮 HBM 溢價；(2) 3D DRAM stacking 被 Samsung 率先突破，MU 落後失去 HBM5 入場券；(3) Processing-in-Memory（PIM）若由競爭對手先量產，改變整個 memory/compute 分工架構。時間軸：2028-2030。</td></tr>
+<tr><td><strong>管理層失職</strong></td><td>FY26 Capex 從 $20B 上調至 $25B（+25%），若 2027 AI 需求放緩 15%，MU 變成產能過剩帶頭羊，單季 depreciation 吃掉獲利。CEO/CFO 2026 Q1 積極賣股（合計 $46M）顯示內部人對長期不如外界樂觀。</td></tr>
+<tr><td><strong>價值陷阱路徑</strong></td><td><strong>四選一：產業結構衰退（週期反轉版）</strong>。關鍵在於「這是多年期 AI 結構性需求」vs「這是一次性前期 buildout 需求」。若後者為真，2026 年底至 2027 年初 DRAM ASP 開始下滑，PE 壓縮 × EPS 下修雙殺，股價最快可回到 $150-200 區間（MA104w $166）。</td></tr>
+</table>
+
+<!-- ============ §3 ============ -->
+<h2>§3｜投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th width="22%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>12-18 個月</strong>（AI HBM supercycle 兌現期至 FY2027 peak）</td></tr>
+<tr><td>主要驅動理由</td><td>HBM4 全 2026 產能已 binding，催化期至 2027；超出此時點後，CXL/3D DRAM/週期反轉等結構性變數增加，信號雜訊比惡化，不宜超長期持有 memory cycle 標的</td></tr>
+<tr><td>訊號 vs 噪音</td><td>12-18 個月持有期：<strong>訊號</strong> = DRAM spot price、HBM 產能 binding 率、Q3-Q4 FY26 guidance；<strong>噪音</strong> = 單日技術面、CHIPS Act 政治雜訊、短期 macro 利率變動</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>HBM 需求在 2027 前保持供給受限，HBM3E/HBM4 ASP 不跌破當前 3-4× DDR5 溢價</td><td>DRAM 現貨價 YoY、HBM 產能 binding 覆蓋率、Nvidia/AMD 下一代 GPU 設計綁定</td><td>Q3 FY26 Earnings Call（2026-06）、Q4 FY26 Call（2026-09）</td></tr>
+<tr><td>H2</td><td>MU HBM 市佔從 25% 擴大至 28-32%，逼近 Samsung 的 HBM 份額，受益於 HBM3E 功耗優勢（低 30%）與 Nvidia 綁定</td><td>MU HBM revenue 季環比、Nvidia 供應商組成披露</td><td>每季度 Call + TrendForce 季度報告</td></tr>
+<tr><td>H3</td><td>市場接受 Memory「結構性 re-rate」敘事，願意給予 MU 10-12x Forward PE（歷史週期頂點下限），而非壓縮至 6-8x</td><td>Forward PE 維持 &gt; 10x、同業 SK Hynix 維持 &gt; 10x</td><td>未來 6 個月逐週</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>AI capex 超前 buildout 造成 2027 HBM 需求斷崖</td><td>H1</td><td>Hyperscaler capex guidance、Nvidia backlog</td><td>任一 hyperscaler 砍 2027 capex &gt; 15% YoY</td></tr>
+<tr><td>R2</td><td>Samsung HBM 良率突破，從 13% 市佔快速爬升至 25%，侵蝕 MU</td><td>H2</td><td>Samsung 季度 HBM 出貨量、TrendForce 市佔追蹤</td><td>Samsung 單季 HBM 份額 +5pp 以上</td></tr>
+<tr><td>R3</td><td>週期恐懼回潮，Forward PE 壓縮至 6-7x（歷史週期頂點下緣）</td><td>H3</td><td>Forward PE、同業估值</td><td>MU Forward PE &lt; 7.0x 且持續 2 週</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>（未來每個季度財報後，用此框架判斷新事件對 H1/H2/H3 的邊際影響，非直覺反應。）</p>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配</td><td>事件影響是否在 12-18 個月持有期內？</td></tr>
+<tr><td>2. 假設關聯</td><td>影響 H1（HBM 供需）/ H2（MU 市佔）/ H3（估值重估）哪一個？</td></tr>
+<tr><td>3. 邊際方向</td><td>＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷</td><td>削弱程度是否達重新評估閾值（見 §3 C）？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場（分批）</strong></td><td>現價 $456，BB 軌道之間；Forward PE 7.9x 低於歷史週期頂點多數期間</td><td>建倉 1/3（約 8% 目標倉位），首次進場</td></tr>
+<tr><td>加碼 1</td><td>回檔至 $380（MA60 附近）且 H1 + H2 無惡化</td><td>加碼至 16% 目標倉位</td></tr>
+<tr><td>加碼 2</td><td>跌破 $300（約 5.3x FY27 PE，深度折價）且供需基本面未破</td><td>加碼至 25%（滿倉目標倉位）</td></tr>
+<tr><td>減碼</td><td>R1 或 R2 警戒閾值觸發，或股價 &gt; $700 且 Forward PE &gt; 14x</td><td>減至 50% 目標倉位</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（HBM 產能 binding 率崩 &lt; 60%），或 DRAM spot 連續 2 月 MoM -5%</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<!-- ============ §4 ============ -->
+<h2>§4｜即時財報情報</h2>
+<p class="note">資料來源：Q2 FY2026 10-Q（財季截至 2026-02-26）、Earnings Call Transcript（2026-03-18）</p>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>Q2 FY26 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td>$23.9B</td><td>$18.7B (guide)</td><td><span class="ok">+28% Beat</span></td><td>+196%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$12.20</td><td>$8.60</td><td><span class="ok">+42% Beat</span></td><td>+539%（YearAgo $1.91）</td></tr>
+<tr><td>FCF</td><td>$5.5B</td><td>N/A</td><td><span class="ok">Record</span></td><td>+500%+</td></tr>
+<tr><td>Gross Margin (Non-GAAP)</td><td>74.9%</td><td>~68%</td><td><span class="ok">Beat</span></td><td>+26pp（Y/Y from 49%）</td></tr>
+<tr><td>DRAM Revenue</td><td>$18.8B（79% of total）</td><td>—</td><td><span class="ok">Record</span></td><td>+207%</td></tr>
+<tr><td>NAND Revenue</td><td>~$5.1B（21% of total）</td><td>—</td><td><span class="ok">DC NAND 2× QoQ</span></td><td>+150%+</td></tr>
+</table>
+
+<h4>Q3 FY26 Guidance（2026 Q3, report ~2026-06）</h4>
+<table>
+<tr><th>項目</th><th>Guide</th><th>共識對比</th></tr>
+<tr><td>Revenue</td><td>$33.5B ± $0.75B（+40% QoQ）</td><td>大幅高於共識 $26-28B</td></tr>
+<tr><td>Gross Margin (Non-GAAP)</td><td>~81%</td><td>大幅高於共識 75%</td></tr>
+<tr><td>EPS (Non-GAAP)</td><td>$19.15 ± $0.40</td><td>共識 $13-15</td></tr>
+</table>
+
+<h4>財報對 §3 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（HBM 供給受限）</td><td><span class="ok">＋強化</span></td><td>Guide GM 81% 隱含 HBM ASP 未回落，管理層明確說「industry supply constrained, conditions will remain very tight beyond 2026」</td></tr>
+<tr><td>H2（MU HBM 市佔擴大）</td><td><span class="ok">＋強化</span></td><td>DRAM +207% YoY 遠超大盤 +40-50%，隱含 MU HBM 份額加速擴張</td></tr>
+<tr><td>H3（估值 re-rate）</td><td><span class="warn">0 中性</span></td><td>EPS 修正方向強勁上修（30 天內 FY26E 從 $35 → $58），但市場反而在財報後股價從 $322 → $457 大幅反映；估值倍數未擴張（Forward PE 從 9x 壓至 7.9x），顯示市場仍以 peak-cycle 邏輯定價</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<div class="card">
+<ul>
+<li><strong>管理層基調：極度樂觀。</strong>CEO Mehrotra：「Micron is delivering record results... with HBM demand outpacing our significantly expanded capacity.」關鍵措辭：「sold out」「supply constrained beyond 2026」「binding contracts for entire 2026 HBM4 output」。</li>
+<li><strong>Forward Guidance：</strong>Q3 EPS $19.15 比共識 $13-15 高出 30-40%，是近 10 年 guide vs consensus 差距最大的一次。</li>
+<li><strong>刻意強調的主題：</strong>(1) HBM4 already fully booked for 2026；(2) data center NAND 連續創新高；(3) 淨現金位創歷史高點；(4) Free Cash Flow $5.5B 單季創紀錄。</li>
+<li><strong>刻意迴避的問題：</strong>分析師追問「2027-2028 產能計畫」時，管理層給出較模糊答案，僅強調「responding to customer binding」；追問「HBM ASP 是否見頂」時回以「remains strong」未給具體數字。此兩點暗示潛在週期反轉風險。</li>
+</ul>
+</div>
+
+<h3>③ 產業 Imply 萃取</h3>
+<div class="card">
+<ul>
+<li><strong>需求端：</strong>Hyperscaler HBM binding 延伸至 2026 全年，隱含 2026 AI capex 不會放緩。Nvidia、AMD、Marvell、AWS 內部 ASIC 皆為 HBM 客戶。</li>
+<li><strong>供給端：</strong>MU 將 FY26 Capex 從 $20B 調高至 $25B（+25%），新產能上線最快 2026 H2，這意味 <strong>2027 是供給拐點</strong>。若 SK Hynix + Samsung + MU 同步擴產，2027 底至 2028 初可能出現過剩。</li>
+<li><strong>競爭格局：</strong>Micron 從 HBM 後進者變成技術領先者之一（HBM3E 功耗低 30%），但 SK Hynix 仍握 60% 市佔主導地位。Samsung 因 HBM3E 良率問題暫時落後，但 HBM4 是翻身機會。</li>
+<li><strong>總體經濟敏感度：</strong>對 AI capex 極度敏感（正面），對 PC/手機需求敏感度降低（DRAM 消費電子占比已 &lt; 30%）。利率環境：成長股特性較弱，循環股特性強。</li>
+<li><strong>對同業連帶推論：</strong>(1) 記憶體供需確認緊張，利多 SK Hynix、Samsung memory 部門；(2) AI server 供應鏈（VRT、ANET、DELL）受益於 HBM 可得性改善；(3) 消費 DRAM 供給被擠壓，利多 PC/手機 OEM 傳導漲價權。</li>
+</ul>
+</div>
+
+<!-- ============ §5 ============ -->
+<h2>§5｜核心門檻檢核</h2>
+
+<h3>EPS CAGR 資料</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY25 基期 EPS（Actual）</td><td>GAAP $7.59 / Non-GAAP $8.29</td><td>10-K FY2025（Aug 2025）/ yfinance yearAgoEps</td></tr>
+<tr><td>FY26E EPS（0y）</td><td>$57.80（n=29）</td><td>yfinance（Refinitiv 共識），+597% YoY</td></tr>
+<tr><td>FY27E EPS（+1y）</td><td>$98.16（n=30）</td><td>yfinance 共識，+69.8% YoY</td></tr>
+<tr><td>FY28E EPS（§6 邏輯推導）</td><td>$108（+10%）</td><td>§6A Runway 5-9 年 + §6B 定價驅動高峰後放緩 + §6D ROIC 峰值後回落：假設 FY27 接近週期頂峰，FY28 小幅增長 +10%</td></tr>
+<tr><td>FY+1 EPS 修正趨勢（30 天）</td><td>$35.33 → $57.80（+63.6%）</td><td>yfinance eps_trend，大幅上修</td></tr>
+<tr><td>FY+1 EPS 修正趨勢（90 天）</td><td>$32.37 → $57.80（+78.5%）</td><td>3 個月內共識翻了近一倍</td></tr>
+</table>
+
+<p><strong>GAAP CAGR（3 年）</strong> = (108 / 7.59)^(1/3) − 1 = 14.23^(1/3) − 1 = <strong>142.3%</strong>（註：異常高，因 FY25 為週期谷底）</p>
+<p><strong>Non-GAAP CAGR（3 年）</strong> = (108 / 8.29)^(1/3) − 1 = 13.03^(1/3) − 1 = <strong>135.5%</strong></p>
+<p class="note">⚠️ 此 CAGR 為「週期谷底→頂點」的數字，不可作為長期可持續成長率。FY25 淨利僅 $7.59（深度復甦期），FY26-27 為 AI HBM 超級週期頂點。更保守的 2-year-forward CAGR（FY26→FY28）= (108/57.80)^(1/2) − 1 = <strong>36.7%</strong>，此數值更接近「橫跨頂峰」的實際成長。</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="ok">✅</span></td><td>Q2 FY26 FCF Margin ~23%；LTM ~15-20%</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%；谷底 &gt; 10%</td><td><span class="bad">❌</span></td><td>13 年 FCF Margin 中位 6.63%，谷底 -39.36%（2023）。5 年均值約 8-10%，深度週期性。<strong>評級：不穩定週期性</strong></td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且 &gt; WACC</td><td><span class="ok">✅</span></td><td>TTM ROIC 37.4%，遠超 WACC ~10%</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年中 ≥ 70% 達標</td><td><span class="bad">❌</span></td><td>10 年平均 ROIC 12.1%，5 年平均 6.71%。估約 4-5/10 年達標 &gt; 15%（2018, 2022, 2024, 2025, 2026），<strong>不達 70% 門檻</strong></td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年 ≥ 70% 改善年</td><td><span class="warn">🟡</span></td><td>10 年均 33.38%，當前 56% GAAP / 74.9% Non-GAAP。改善年份約 5-6/10（其餘 4-5 年週期性下滑）。<strong>評級：週期強化，結構中等</strong></td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 10% 尚可</td><td><span class="bad">❌</span></td><td>FY26 Capex $25B / Rev $109B = <strong>23%</strong>，典型資本密集產業</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td><span class="ok">✅</span>（形式上）</td><td>Non-GAAP CAGR 135.5%（技術符合）；更實用的 FY26-FY28 2-year CAGR 為 36.7%</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="ok">✅</span></td><td>PEG = 7.89 / 135 = 0.06（見 §11.2；極低但需調整解讀）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；Cash/Rev 10-50%</td><td><span class="ok">✅</span></td><td>D/E 0.15-0.21；Cash $14.6B / LTM Rev ~$55B = 26%；<strong>低槓桿</strong></td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="ok">✅</span></td><td>Cash $14.6B &gt; Debt $10.8B（淨現金 $5.83B / 每股 $5.17）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="bad">❌</span></td><td>見 §7：5/10（寡占但 commoditized）</td></tr>
+</table>
+
+<p><strong>最大財務弱點：</strong>極度資本密集（FY26 Capex 佔 Revenue 23%）+ ROIC 歷史不穩定（10 年間近半時間低於 WACC），循環本質結構性限制長期複利效率。</p>
+<p><strong>Munger 三維護城河評級：<span class="bad">🔴 一項達標（負債）</span></strong>。ROIC 穩定性、毛利率定價能力、資本密集度三者皆不達 Munger 標準。此為結構性商品化記憶體事業的本質，非個別管理失當。</p>
+
+<div class="trap-box">
+<h4>⚠️ 價值陷阱初篩：低估值四問</h4>
+<p>觸發條件：Forward PE（FY+1）7.89x 遠低於 5Y 歷史 &lt; 10% 分位（估算）；PEG 0.06 極低 → <strong>🔴 強制觸發</strong></p>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+<tr><td>Q1</td><td>過去 3 年 Gross Margin 趨勢？</td><td>2023: 22% → 2024: 41% → 2025: 45% → 2026Q2: 56% GAAP / 74.9% Non-GAAP，<strong>+34pp 大幅改善</strong></td><td><span class="ok">🟢 非陷阱</span></td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢？</td><td>HBM 市佔從 &lt;10%（2023）→ 25-26%（2026）；整體 DRAM 市佔 ~25% 穩定</td><td><span class="ok">🟢 非陷阱</span></td></tr>
+<tr><td>Q3</td><td>FCF 與淨利背離？</td><td>FY25 FCF $1.67B vs Net Income 約 $0.85B → FCF/NI ~2.0；Q2 FY26 FCF $5.5B vs NI ~$7B → FCF/NI 0.78（週期上行期正常 capex 擴張）</td><td><span class="ok">🟢 非陷阱</span></td></tr>
+<tr><td>Q4</td><td>分析師共識 EPS 方向？</td><td>FY26E 30 天內從 $35.33 升至 $57.80（+64%），90 天內 +78%。<strong>史詩級上修</strong></td><td><span class="ok">🟢 非陷阱</span></td></tr>
+</table>
+<p><strong>初篩結論：</strong>0 個 🔴。低估值<strong>非</strong>古典四類陷阱之一，而是典型「週期頂點 EPS × 壓縮倍數」現象。但這種現象本身是循環股特有的風險形態（peak earnings trap），仍需在後續章節正面處理。</p>
+</div>
+
+<!-- ============ §6 ============ -->
+<h2>§6｜長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（Memory total）</td><td>~$200B（2025）</td><td>DRAM $110B + NAND $70B + HBM $20B（IDC / TrendForce 2025）</td></tr>
+<tr><td>估計可達 TAM（2030）</td><td>~$350-400B</td><td>HBM 可達 $80-100B（佔 memory 25%）；AI server DRAM 消耗倍增；傳統 memory 低個位數成長</td></tr>
+<tr><td>當前市佔</td><td>HBM 25%；整體 DRAM ~24%；NAND ~11%</td><td>HBM 是 MU 最具結構性機會的區塊</td></tr>
+<tr><td>達 30% 滲透時點</td><td>HBM 份額有望在 2028 達 28-30%</td><td>HBM4 binding 已到 2026 全年，2027 HBM5 世代為關鍵競爭窗口</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>5-9 年中等可見度</strong></td><td>HBM 明確 runway 5-7 年，但週期性使長期複利受限</td></tr>
+</table>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機</td><td>~100%</td><td>MU 近 10 年無重大併購，唯一重大合作是與 Intel 的 IMFT JV（2018 拆分）。100% 內生成長</td></tr>
+<tr><td>無機</td><td>~0%</td><td>—</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價（Price）</td><td><strong>主導（~65-70% 的當前成長）</strong></td><td>HBM ASP 為 DDR5 的 3-4×，整體 ASP 顯著擴大；DRAM spot 2024-2025 翻倍</td></tr>
+<tr><td>量（Volume）</td><td>~30-35% 貢獻</td><td>bit shipment 年增 15-20%，HBM bit 量翻倍以上</td></tr>
+</table>
+<p class="note">⚠️ 定價主導是週期頂點的典型現象。下個週期反轉時，ASP 端會帶頭先下滑。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>此標的判斷</th></tr>
+<tr><td>強化型</td><td>部分符合 — HBM 先進封裝與 Nvidia 綁定產生「設計鎖定」，下一代 HBM4 入場券已取得</td></tr>
+<tr><td>中性型</td><td>—</td></tr>
+<tr><td>消耗型</td><td>部分符合 — 維持領先需 FY26 $25B capex（佔 revenue 23%）；若 cycle 轉弱，過剩產能立即變成 depreciation 負擔</td></tr>
+</table>
+<p><strong>結論：混合型（強化 + 消耗）</strong>。HBM 維度強化，但整體 memory 商品化本質仍要求巨額 capex 維持份額。</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>37.4%</td><td>-5% (FY23 谷底)</td><td>劇烈上升</td><td>&gt; WACC（~10%）</td><td><span class="ok">✅ 當前</span>但歷史不穩</td></tr>
+<tr><td>ROIC − WACC</td><td>+27pp</td><td>-15pp</td><td>擴大（週期上行）</td><td>持續擴大</td><td><span class="warn">🟡 週期性</span></td></tr>
+<tr><td>FCF Margin</td><td>~23%</td><td>-30%</td><td>強勁反彈</td><td>&gt; 15%</td><td><span class="ok">✅ 當前</span>但歷史中位 6.63%</td></tr>
+<tr><td>FCF/NI 轉換率</td><td>0.78</td><td>N/A（虧損）</td><td>週期改善</td><td>&gt; 85%（輕資本）</td><td><span class="warn">🟡</span>（記憶體業重資本特性）</td></tr>
+<tr><td>Reinvestment Rate</td><td>Capex/OCF ~70%</td><td>&gt; 100%</td><td>仍偏高</td><td>需對應 ROIC 擴大</td><td><span class="warn">🟡</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 Forward PE</th><th>潛在估值跌幅</th></tr>
+<tr><td>FY28 成長率降至 15%</td><td>AI HBM 高速增長延續但放緩</td><td>10-11x</td><td>股價從 $456 至 $900-1000 區間（假設 EPS 成長仍撐）— 實際是上漲</td></tr>
+<tr><td>FY28 成長率降至 10%</td><td>週期進入 late-innings</td><td><strong>8-9x（Bear PE 基準）</strong></td><td>取決於 EPS 水準；若 EPS 維持 $98，股價 $784-880；若 EPS 下修 10% 至 $88，股價 $700-790</td></tr>
+<tr><td>FY28 成長率降至 5%</td><td>週期近尾聲，接近下行前的頂點</td><td>6-7x</td><td>$50-60 normalized EPS × 7x = $350-420（顯著下跌）</td></tr>
+<tr><td><strong>極端週期反轉</strong></td><td>AI capex 砍 20%，DRAM 過剩</td><td>10x × trough EPS $15</td><td><strong>$150</strong>（W104 Low $61 為歷史參考）</td></tr>
+</table>
+
+<div class="trap-box">
+<h4>⚠️ 衰退信號偵測表</h4>
+<table>
+<tr><th>信號</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>Q2 FY26 GM Non-GAAP 74.9% vs Q2 FY25 37%，強勁擴大</td><td><span class="ok">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>核心市佔縮減</td><td>HBM 市佔擴大中</td><td><span class="ok">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>定價能力（提價後銷量）</td><td>HBM ASP 上升同時 volume 增長</td><td><span class="ok">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR（差 &gt; 5pp）</td><td>EPS CAGR 135% vs Revenue CAGR ~60% — 差距來自 margin 大幅擴張而非會計技巧</td><td><span class="warn">🟡 技術上符合但非會計因素</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連續 2 年</td><td>FY25 FCF/NI 2.0（FCF &gt; NI）；Q2 FY26 0.78（接近但仍健康，capex 期）</td><td><span class="ok">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue &gt; 5% 且上升</td><td>SBC/Rev ~1%（Q2 SBC ~$0.2B vs Rev $23.9B）</td><td><span class="ok">⬜</span></td></tr>
+<tr><td><strong>產業結構衰退</strong></td><td>TAM 萎縮或被替代</td><td>Memory TAM 擴張，AI 驅動。<strong>但 memory 週期本質帶週期衰退風險</strong></td><td><span class="warn">🟡 週期性非結構性</span></td></tr>
+<tr><td>產業估值倍數下移</td><td>3 年系統性下移</td><td>Memory 板塊 PE 近 2 年回升（SK Hynix 從 8x → 10x）</td><td><span class="ok">⬜</span></td></tr>
+<tr><td><strong>隱性資本密集</strong></td><td>Maintenance Capex/FCF &gt; 60%</td><td>Capex $25B / FCF $10B = 250%；但其中成長 Capex 約 $15B，maintenance ~$10B/$10B FCF = 100%<strong>🔴</strong></td><td><span class="bad">🔴</span></td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年內營收下滑？</td><td>是 — 半導體製程領先需持續投資，停擺 3 年會失去 HBM4 入場券</td><td><span class="bad">🔴</span></td></tr>
+</table>
+<p><strong>亮燈數：2 個 🔴 + 2 個 🟡 → <span class="warn">🟡 中度警戒</span></strong>（🔴 項目為「隱性資本密集」— 結構性的 memory 產業特性，不是 MU 個別管理問題）</p>
+</div>
+
+<h3>長期成長性綜合評級</h3>
+<p><strong><span class="warn">🟡 中等可見度成長</span></strong>：Runway 5-9 年（HBM 明確），但成長本質週期性強；資本密集為結構性限制。衰退信號 2 個 🔴（資本密集型，非會計或需求問題）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<table>
+<tr><th>評級</th><th>判斷</th></tr>
+<tr><td colspan="2"><strong><span class="ok">🟢 AI 直接受益者</span></strong>（9/10 分）</td></tr>
+<tr><td>佐證</td><td>(1) HBM 是 AI 基礎設施不可替代環節；(2) MU 核心業務（DRAM 79%、NAND 21%）100% 受益於 AI HBM + AI server 儲存需求；(3) 過去 2 年 HBM revenue 從 ~0 增至佔比 20%+；(4) 2026 HBM4 產能 100% binding，已提前綁定 AI 客戶</td></tr>
+<tr><td>公司 AI 策略</td><td>專注 HBM + 高階 data center DRAM，退出低毛利消費產品線（2025 Crucial 品牌重組、SSD 業務收縮）。策略清晰聚焦 AI 價值鏈</td></tr>
+</table>
+
+<!-- ============ §7 ============ -->
+<h2>§7｜護城河分析（報告核心）</h2>
+<p><strong>評分：5／10</strong>（寡占但商品化；HBM 領域有暫時領先但結構性限於 memory 產業本質）</p>
+
+<h3>護城河來源</h3>
+<table>
+<tr><th>類型</th><th>真實存在？</th><th>說明</th></tr>
+<tr><td>網路效應</td><td><span class="bad">否</span></td><td>Memory 為 commoditized product，不具網路效應</td></tr>
+<tr><td>無形資產</td><td><span class="warn">部分</span></td><td>(1) HBM3E 設計與 Nvidia qualification 是重要資產；(2) 1-gamma DRAM 節點技術領先；(3) 專利超過 50,000 項。但定價能力受限於產業供需，不能長期維持溢價</td></tr>
+<tr><td>轉換成本</td><td><span class="warn">部分</span></td><td>HBM 需與 GPU 共同設計認證，客戶一旦選定供應商短期不易切換；但下一代設計週期（2-3 年）可重新議價</td></tr>
+<tr><td>規模優勢</td><td><span class="warn">部分</span></td><td>DRAM 前三家（SK Hynix 34%、Samsung 33%、MU 24%）有寡占規模優勢，但同業相對規模差距可快速變動（Samsung HBM 因良率從領先跌到第三）</td></tr>
+</table>
+
+<h3>競爭鴻溝</h3>
+<p>新進入者無法跨越的關鍵：(1) DRAM leading-edge 製程研發需要 15-20 年累積（最後一家新進入者是 2000 年代的 ProMOS/Nanya）；(2) HBM TSV（Through-Silicon Via）+ 先進封裝需要兆元級 capex；(3) 客戶認證週期 12-18 個月，新進入者競爭已失去 2026-2028 window。但<strong>現有三強之間的相對位置可以快速變動</strong>（如 Samsung HBM3E 良率危機、MU 從後進者翻身到技術領先）— 這是 memory 產業寡占但不真正壟斷的本質。</p>
+
+<h3>市佔競爭表（HBM 市場）</h3>
+<table>
+<tr><th>公司</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>SK Hynix</td><td>60-62%</td><td>穩定</td><td>HBM4 技術領先；Nvidia 主供</td><td>市場領導者</td></tr>
+<tr><td>Samsung</td><td>13-34%（資料分歧；可能 13% HBM3E / 33% 整體 HBM）</td><td>下滑</td><td>HBM3E 良率問題，被 MU 搶單</td><td>被 MU 蠶食</td></tr>
+<tr><td><strong>Micron</strong></td><td>25-26%</td><td>快速上升</td><td>HBM3E 功耗優勢進入 Nvidia Blackwell；HBM4 已綁定</td><td>吃 Samsung 份額</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>短期擴大（HBM 維度）</strong>，中長期穩定（整體 memory 維度受制週期本質）。</p>
+
+<h3>24 個月內最可能瓦解護城河的變數</h3>
+<ol>
+<li><strong>Samsung HBM4 大突破</strong>：若 Samsung 2026 下半年良率追平、在 Nvidia Rubin 平台取得 &gt; 40% 訂單，MU 份額可能回落至 20% 以下</li>
+<li><strong>CXL 標準化分流需求</strong>：若 CXL 3.0 memory pooling 成熟，hyperscaler 改用 pooled DDR5 降低 HBM 依賴，HBM ASP 溢價壓縮</li>
+<li><strong>中國自主 HBM 突破</strong>：CXMT、Yangtze Memory 若在 2027 量產高階 HBM，中國市場（MU 曾佔約 11%）份額消失</li>
+</ol>
+
+<!-- ============ §8 ============ -->
+<h2>§8｜財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>FY2026E</th><th>主要對手比較</th></tr>
+<tr><td>FCF Margin</td><td>-30%（虧損）</td><td>0.4%</td><td>6%</td><td>~15-20%</td><td>SK Hynix ~15%；Samsung Memory ~10%；SNDK ~8%</td></tr>
+<tr><td>EBITDA Margin</td><td>-16%</td><td>33%</td><td>42%</td><td>~55%</td><td>SK Hynix ~45%；Samsung ~30%</td></tr>
+<tr><td>ROIC − WACC</td><td>-15pp</td><td>+5pp</td><td>+7pp</td><td>+27pp</td><td>SK Hynix +15pp；SNDK +3pp</td></tr>
+<tr><td>SBC / Revenue</td><td>3%</td><td>1.5%</td><td>1.2%</td><td>~1%</td><td>遠低於 tech 同業（典型 5-8%）</td></tr>
+<tr><td>ROE</td><td>-18%</td><td>3%</td><td>10%</td><td>~35%</td><td>優於 SK Hynix ~25%、Samsung ~15%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>項目</th><th>狀態</th><th>判斷</th></tr>
+<tr><td>淨利 vs OCF 連動性</td><td>OCF $30.65B LTM vs NI 約 $20B LTM → OCF &gt; NI</td><td><span class="ok">✅ 健康</span></td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>Q2 AR $8.2B vs 去年 $3.1B（+165%）vs Revenue +196%，<strong>AR 低於 Rev 增速</strong></td><td><span class="ok">✅ 健康</span></td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>Inventory $10.5B vs 去年 $9.1B（+15%）vs Revenue +196%，<strong>存貨消化快速</strong></td><td><span class="ok">✅ 健康</span>（sold out 模式）</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>FCF/NI 從 FY24 的 0.14 → FY25 1.96 → Q2 FY26 0.78（capex ramp 期）</td><td><span class="warn">🟡 週期性</span>（週期上行期 capex 擴張，本身非警訊）</td></tr>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總額</td><td>FY23 $425M（前次公告）；FY24-FY25 接近暫停</td><td>FY23 在 $55 股價回購；此後專注 capex</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>EPS 成長 100% 來自業務端，回購對 EPS 貢獻 &lt; 2%</td><td><span class="ok">✅ 非 EPS 堆疊</span></td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>FY23 均價 ~$55 vs 當前 $456 → 資本配置<strong>極佳</strong></td><td><span class="ok">✅ 少見的 good buy</span></td></tr>
+<tr><td>Revenue CAGR 同期</td><td>FY23-FY26 Rev CAGR ~60-70%，與 EPS CAGR 一致（非回購堆疊）</td><td><span class="ok">✅</span></td></tr>
+</table>
+<p>管理層宣布<strong>2026 下半年重啟 aggressive buyback</strong>（分析師評估），此時股價 $456 vs 預期 trough 價 $200-300，若在頂點回購將被視為資本配置失當。<strong>監測重點</strong>。</p>
+
+<!-- ============ §9 ============ -->
+<h2>§9｜產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>Total Memory TAM（2025）</td><td>~$200B</td></tr>
+<tr><td>DRAM TAM</td><td>~$110B（其中 HBM $20B）</td></tr>
+<tr><td>NAND TAM</td><td>~$70B</td></tr>
+<tr><td>Memory TAM CAGR (2025-2030)</td><td>12-15%（HBM 35-45% CAGR 拉動）</td></tr>
+<tr><td>2030 TAM 預估</td><td>$350-400B（HBM 升至 $80-100B）</td></tr>
+<tr><td>當前供需</td><td><strong>緊缺</strong>（HBM 完全 sold out，DDR5 緊張，NAND 部分緊張）</td></tr>
+</table>
+
+<h3>營收組成（MU）</h3>
+<table>
+<tr><th>業務段</th><th>FY2025</th><th>FY2026E</th><th>備註</th></tr>
+<tr><td>DRAM（含 HBM）</td><td>~70%</td><td>~79% (Q2 FY26)</td><td>HBM 單獨約 15-25% 且上升</td></tr>
+<tr><td>NAND</td><td>~28%</td><td>~21%</td><td>Data center NAND 為主要成長動能</td></tr>
+<tr><td>其他（包括 3D XPoint 遺留）</td><td>~2%</td><td>~0%</td><td>已退出</td></tr>
+</table>
+<p class="note">📌 QC-1 驗證：本節營收權重已列出，加總 = 100%。</p>
+
+<h3>議價權</h3>
+<table>
+<tr><th>對象</th><th>集中度</th><th>議價能力</th></tr>
+<tr><td>對上游（設備）</td><td>極高（ASML 獨佔 EUV；Applied Materials、LAM、Tokyo Electron 三家設備壟斷）</td><td><span class="bad">弱</span> — MU 為 price taker</td></tr>
+<tr><td>對下游（客戶）</td><td>HBM 客戶高度集中（Nvidia 約 50%、AMD 20%、Broadcom 10%、hyperscaler 自研 ASIC 20%）</td><td><span class="warn">中</span> — 供給緊張時強，供需平衡時弱</td></tr>
+<tr><td>地理分布</td><td>製造主要在美國、日本、新加坡、馬來西亞、台灣；美國佔比最大</td><td>低地緣政治風險（相對 TSMC）</td></tr>
+</table>
+
+<h3>Unit Economics</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>趨勢</th></tr>
+<tr><td>HBM ASP (per bit)</td><td>DDR5 的 3-4×</td><td>peak 2026 可能小幅下降但維持 2.5-3.5×</td></tr>
+<tr><td>Cost per bit（DRAM）</td><td>每年製程微縮降 -15 至 -20%</td><td>cost down 跑得比 ASP 下降慢 → margin 擴大</td></tr>
+<tr><td>DRAM bit 增速（wafer-adjusted）</td><td>年增 ~15-20%</td><td>HBM 每 wafer bit 僅為傳統 DRAM 30-40%，產業實質 bit 供給增速放緩至 10%</td></tr>
+<tr><td>FY26 gross profit per wafer</td><td>創歷史新高</td><td>HBM mix 拉高 blended margin</td></tr>
+</table>
+
+<!-- ============ §10 ============ -->
+<h2>§10｜公司治理與資本配置</h2>
+
+<h3>① 股東/股權結構</h3>
+<table>
+<tr><th>類別</th><th>持股</th><th>說明</th></tr>
+<tr><td>機構持股</td><td>~82%</td><td>Vanguard 9.5%、BlackRock 8.2%、State Street 4.5%</td></tr>
+<tr><td>內部人持股</td><td>&lt; 0.5%</td><td>CEO Sanjay Mehrotra 持股 &lt; 0.2%（職業經理人型態）</td></tr>
+<tr><td>股權結構</td><td>單一類別股票</td><td><span class="ok">無 dual-class，投票權平等</span></td></tr>
+</table>
+
+<h3>② 資本配置方向（FY26）</h3>
+<table>
+<tr><th>項目</th><th>FY26 金額</th><th>順位</th></tr>
+<tr><td>Capex</td><td>$25B（佔 revenue 23%）</td><td>1. 絕對優先</td></tr>
+<tr><td>R&D</td><td>~$3.2B（佔 revenue 3%）</td><td>2.</td></tr>
+<tr><td>回購</td><td>FY26 至今暫停；管理層預告下半年重啟</td><td>3.（需警戒頂點回購）</td></tr>
+<tr><td>分紅</td><td>~$0.66B（$0.15/股/季）</td><td>4. 股息率 0.13%，象徵性</td></tr>
+<tr><td>債務償還</td><td>淨現金狀態，無大規模償債壓力</td><td>5.</td></tr>
+</table>
+
+<h3>③ 管理層薪酬結構（最近 Proxy）</h3>
+<table>
+<tr><th>類別</th><th>比例</th><th>說明</th></tr>
+<tr><td>固定薪（Base）</td><td>~10%</td><td>CEO Base ~$1.2M</td></tr>
+<tr><td>現金獎金</td><td>~20%</td><td>與年度 EPS、revenue、market share 綁定</td></tr>
+<tr><td>股權激勵（PSU + RSU）</td><td>~70%</td><td>與 3 年相對 TSR（Total Shareholder Return）綁定；半導體 peer group</td></tr>
+</table>
+<p>CEO Mehrotra FY2024 總薪酬 ~$26M。PSU 結構合理，與長期股東回報對齊。</p>
+
+<h3>④ 過去 12 個月重大內部人交易</h3>
+<div class="trap-box">
+<table>
+<tr><th>人物</th><th>動作</th><th>股數</th><th>金額</th></tr>
+<tr><td>CEO Sanjay Mehrotra</td><td><strong>賣出 34 次</strong></td><td>80,000 股</td><td><strong>~$17.7M</strong></td></tr>
+<tr><td>CFO Mark J. Murphy</td><td><strong>賣出 6 次</strong></td><td>126,000 股</td><td><strong>~$28.4M</strong></td></tr>
+<tr><td>Teyin M Liu（VP）</td><td>買入 3 次</td><td>23,200 股</td><td>~$7.8M</td></tr>
+</table>
+<p><strong>⚠️ 紅旗警示：</strong>CEO + CFO 合計賣超 $46M，典型週期頂點內部人減碼型態。CEO 34 次交易集中在股價從 $200 漲到 $400+ 期間。雖為 10b5-1 plan 賣出（事先設定），但金額規模確實反映管理層對長期股價持續上升信心有限。</p>
+</div>
+
+<h3>SBC 評估</h3>
+<p>SBC/Revenue 約 1%（遠低於 tech 同業典型 5-8%）。對每股價值稀釋影響可忽略。此為 memory 產業 legacy manufacturing 特性，管理層激勵以現金 + PSU 為主而非大量選擇權。</p>
+
+<!-- ============ §11 ============ -->
+<h2>§11｜估值診斷</h2>
+
+<h3>11.0｜估值體系診斷</h3>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>是否為當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><strong>是（但以週期頂點 EPS 打折）</strong></td><td>市場給 7.9x Forward PE，遠低於同業 SaaS，反映週期折價</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>部分</td><td>PEG 極低（0.06）但因基期谷底失真</td></tr>
+<tr><td>資產重置型</td><td>P/B、替代成本</td><td>否</td><td>P/B ~4x，非重置成本估值</td></tr>
+<tr><td>現金流型</td><td>P/FCF、DCF</td><td>次要</td><td>P/FCF ~45x LTM 但 FCF 高度週期</td></tr>
+<tr><td>行業專屬</td><td>EV/bit production、EV/wafer</td><td>否</td><td>不常用</td></tr>
+</table>
+<p><strong>當前主流邏輯：</strong>週期折扣 P/E（peak EPS × 壓縮倍數）。</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<p><strong>情境一（資產 → 盈利）</strong>：不適用（MU 長期以盈利估值）。</p>
+<p><strong>情境二（新度量衡）</strong>：潛在機會 — 若市場接受「memory 週期已結構性延長（AI 驅動永久性需求）」敘事，Forward PE 可能 re-rate 至 12-15x。作廢條件：DRAM 現貨連續 2 月跌 &gt; 5%。</p>
+<p><strong>情境三（產業敘事）</strong>：半導體 AI 敘事正在發生，但 memory 被視為「中間層」— 不如純 AI compute（NVDA、AVGO）受益。若敘事從「AI compute only」擴展至「AI infrastructure including memory」，MU 有 re-rate 空間。</p>
+
+<h4>C｜估值尺被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>若發生</th></tr>
+<tr><td>MU ROIC 從週期性變結構性 &gt; 20%</td><td>暫時 37%，不確定能否維持</td><td>可能 re-rate 至盈利估值 12-15x</td></tr>
+<tr><td>管理層轉向新敘事（如 AI memory platform、recurring revenue）</td><td>尚無</td><td>敘事改變可能推動估值升級</td></tr>
+<tr><td>同業率先獲得高倍數</td><td>SK Hynix 為 10x、Samsung Memory ~8x（隱含）、SNDK 21x</td><td>SNDK 已是高倍數，但 MU 和 SK Hynix 未受帶動</td></tr>
+<tr><td>盈利成長放緩至市場平均</td><td>暫時 100%+ 成長，2027-2028 將面臨對比</td><td>成長股邏輯失效，估值壓縮至 5-7x</td></tr>
+</table>
+
+<p><strong>估值體系診斷結論：<span class="warn">🟡 估值邏輯模糊</span></strong>（市場游移於「AI 結構性受益」vs「週期頂點折價」兩種敘事之間）</p>
+
+<h3>11.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>~19x（基於 FY25 EPS $8.29 Non-GAAP + 過去 2 季 upgrade）</td><td>2.96（Nov-2018 trough，超出 5Y）；5Y 實際最低 ~6x</td><td>~22x</td><td>105x（2024 虧損前）</td><td>~20%</td></tr>
+<tr><td><strong>Forward P/E (NTM)</strong></td><td><strong>7.89x</strong></td><td>~6x（FY23 recovery 期間）</td><td>~15-18x</td><td>~30x（虧損年）</td><td><strong>~8%（極低）</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>~8x（Q2 FY26 LTM）</td><td>3.2x（Sep-2022）</td><td>8.7x</td><td>15.9x（Aug-2023）</td><td>~40%</td></tr>
+<tr><td>P/FCF</td><td>~45x（LTM FCF $10B）</td><td>5x（trough）</td><td>~20x</td><td>~100x+（虧損年）</td><td>~55%</td></tr>
+<tr><td>P/S</td><td>~6.5x（LTM Rev $60B）</td><td>1.5x</td><td>3.5x</td><td>6.5x</td><td>~95%（歷史高）</td></tr>
+</table>
+
+<p><strong>分位計算公式：</strong>Forward P/E 分位 = (7.89 − 6) / (30 − 6) × 100% = <strong>7.9%（極低）</strong></p>
+
+<h4>解讀（三個問題）</h4>
+<ol>
+<li><strong>當前估值情緒：</strong>Forward P/E 7.9x 看似極便宜（&lt; 10% 歷史分位），但 P/S 6.5x 接近歷史高點 — 揭示當前「分子高（股價創高）、分母更高（EPS 峰值）」的週期頂點畫像。</li>
+<li><strong>上次處於此分位：</strong>2018-2019 年 Forward PE 6-8x 時，MU 股價在 $35-55 區間；之後 2019 DRAM ASP 崩 50%，股價跌至 $30（-40%）。<strong>這是核心警訊參考點</strong>。</li>
+<li><strong>推動當前分位：</strong>(1) EPS 向上修正過快（30 天 +64%）讓 PE 分母大幅擴張；(2) 股價漲幅（6M +123%）追不上 EPS 修正；(3) 市場對週期持續性折價。</li>
+</ol>
+
+<h4>利率與估值對應</h4>
+<p>10Y UST 約 4.3%（2026 Q1）。以 WACC 10.5% 計算（Beta 1.5、ERP 5%、Rf 4.3% + debt premium），公允 Forward PE ≈ 1/(WACC - 3% 永續成長) = 1/7.5% = 13.3x。當前 7.9x 比利率隱含的公允低 40%，反映<strong>週期風險折扣</strong>。</p>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+1, $57.80）</td><td>7.89x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年, FY25-FY28）</td><td>135.5%</td><td>⚠️ 週期谷底 → 頂點 CAGR，不可持續</td></tr>
+<tr><td>PEG（3 年名義）</td><td>0.06</td><td>極低但失真</td></tr>
+<tr><td>2-year forward CAGR（FY26-FY28）</td><td>36.7%</td><td>跨頂峰更實際的速率</td></tr>
+<tr><td>PEG（2 年調整）</td><td>7.89 / 36.7 = 0.21</td><td>仍低但較有意義</td></tr>
+<tr><td>PEG（FY26-FY27 一年，+70%）</td><td>7.89 / 70 = 0.11</td><td>—</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點：</strong>所有 PEG 計算方式均顯示極低（0.06-0.21）。但這是典型的「週期頂點 EPS 吹大 CAGR 分母」現象，非真實的「被低估機會」— 循環股在週期頂峰的 PEG 固定很低。</p>
+
+<h3>11.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>市值</td><td>$514B</td><td>實際</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td>$1.67B（FY25 谷底）</td><td>不適合作基期</td></tr>
+<tr><td>標準化基期 FCF</td><td>使用 FY26E ~$20B（合理的標準化中位）</td><td>—</td></tr>
+<tr><td>WACC</td><td>10.5%</td><td>Rf 4.3% + Beta 1.5 × ERP 5% + debt premium</td></tr>
+<tr><td>永續成長率</td><td>2.5%</td><td>GDP 長期 + 少量 memory TAM 擴張</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>—</td></tr>
+</table>
+
+<p><strong>反推隱含 FCF CAGR：</strong>使 DCF 現值 = $514B，在 FCF 基期 $20B、WACC 10.5%、TV 2.5% 下，前 10 年 FCF CAGR 需 ~10-12%。</p>
+
+<p><strong>可信度對照：</strong></p>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>N/A（2023 虧損）</td><td>—</td></tr>
+<tr><td>5 年平均 FCF margin</td><td>~8-10%</td><td>若 revenue 維持 $100B+，即 $8-10B FCF — 低於 $20B</td></tr>
+<tr><td>分析師 EPS CAGR 共識</td><td>135%（3 年）、36.7%（2-year-forward）</td><td>短期超過 10%，長期需回到 &lt; 10%</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>SK Hynix ~15%</td><td>MU 隱含需跑贏 SK Hynix 少許</td></tr>
+</table>
+
+<p><strong>兌現條件：</strong>隱含 10-12% FCF CAGR 需要：(1) Revenue 從 $60B（FY25）→ $160B（FY35），+10%/年；(2) FCF Margin 維持 12-15%（高於歷史中位 6.63%）；(3) 週期波動顯著減緩，AI 結構性需求成為新 normal。</p>
+
+<p><strong>隱含預期判斷：<span class="warn">🟡 合理至偏激進</span></strong>（需要 AI memory 結構性成長 = 多年 CAGR 10-12% 同時 margin 不回到 cyclical 中位才能兌現）</p>
+
+<div class="trap-box">
+<h4>⚠️ 便宜理由檢驗（🔴 強制觸發：Forward PE &lt; 10% 分位）</h4>
+<table>
+<tr><th>#</th><th>問題</th><th>分析師答案</th><th>結論</th></tr>
+<tr><td>Q1</td><td>市場為什麼給這個低倍數？</td><td>典型週期頂點折價：EPS 高創但市場對持續性存疑。4 次 memory 過去週期（2018、2022）都在 peak EPS 後 12-18 月 EPS 崩跌 70%+</td><td><strong>理由合理</strong>（循環反映，非個別問題）</td></tr>
+<tr><td>Q2</td><td>這個擔心是否有財務數據支撐？</td><td>有 — Capex $25B FY26（23% of Rev）製造 2027-2028 產能，供給側確實有週期下行風險</td><td><strong>有支撐</strong></td></tr>
+<tr><td>Q3</td><td>護城河是否仍完整？</td><td>HBM 維度擴大，整體 memory 維持寡占 — 但護城河本身不足以免疫週期反轉</td><td><strong>完整但有限</strong></td></tr>
+<tr><td>Q4</td><td>FCF 品質是否被誤解？</td><td>當前 FCF 品質健康，轉換率正常；但 peak 階段的 FCF 本質不可持續（週期中位 FCF margin 為 6-8%）</td><td><strong>非被誤解，反而是週期性高峰</strong></td></tr>
+<tr><td>Q5</td><td>催化劑？</td><td>(1) 2026 下半年重啟大規模回購；(2) HBM4 產能 scale up；(3) 市場接受「AI memory 結構性需求」敘事</td><td><strong>有明確催化劑</strong>（但都已部分 priced in）</td></tr>
+</table>
+<p><strong>結論：<span class="warn">🟡 尚不確定</span></strong> — 便宜不是因為結構性惡化（非古典陷阱），而是市場合理定價週期風險。若 AI 結構性需求成真，當前估值仍有 60-100% 上行空間；若週期反轉，當前估值仍將承受 30-50% 壓力。</p>
+</div>
+
+<h3>11.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR (3Y)</th><th>ROIC</th></tr>
+<tr><td><strong>Micron (MU)</strong></td><td>$514B</td><td>7.9x</td><td>8x</td><td>0.06-0.21</td><td>~18% (LTM)</td><td>135% (trough-to-peak)</td><td>37.4%</td></tr>
+<tr><td>SK Hynix (HXSCL)</td><td>~$200B</td><td>~10x</td><td>7x</td><td>0.15</td><td>~15%</td><td>~80%（同週期）</td><td>~30%</td></tr>
+<tr><td>Samsung（Memory）</td><td>N/A（合併）</td><td>~8x（隱含）</td><td>~6x</td><td>低</td><td>~10%</td><td>~60%</td><td>~20%</td></tr>
+<tr><td>SanDisk (SNDK)</td><td>~$25B</td><td>21x</td><td>~12x</td><td>0.4-0.5</td><td>~8%</td><td>~45%</td><td>~15%</td></tr>
+<tr><td><strong>產業中位數</strong></td><td>—</td><td>~9x</td><td>~8x</td><td>0.3</td><td>~12%</td><td>70%</td><td>~25%</td></tr>
+</table>
+
+<h4>同業溢折價邏輯</h4>
+<ol>
+<li><strong>溢折價幅度：</strong>MU 相對 SK Hynix 折價 20%（7.9x vs 10x），相對 SNDK 折價 62%。</li>
+<li><strong>基本面支撐：</strong>MU ROIC 37% &gt; SK Hynix 30%；FCF margin 相似；EPS CAGR 對比模糊（不同基期）。技術上 MU 應 slight premium 或至少持平 SK Hynix。</li>
+<li><strong>均值回歸方向：</strong>若向產業中位數 9x 靠攏，MU 股價應 +14%（至 $520）；若向 SK Hynix 10x 靠攏，MU 應 +27%（至 $578）。這與 §12 E 短期目標 $578 吻合。</li>
+</ol>
+
+<h4>同主題橫向風報比</h4>
+<table>
+<tr><th>問題</th><th>MU</th><th>最強競爭標的</th></tr>
+<tr><td>主假設兌現上行空間最大？</td><td>+115%（中期）</td><td>SK Hynix 約 +50-80%（已漲較多）</td></tr>
+<tr><td>主假設落空跌幅最小？</td><td>-60%（至 $180 MA104w）</td><td>Samsung -30%（因多角化保護）</td></tr>
+<tr><td>風報比最優？</td><td>中上</td><td>SK Hynix 純度更高但已反映；MU 下行保護較弱但上行更高</td></tr>
+</table>
+
+<p><strong>最終橫向比較結論：<span class="warn">🥈 次優選</span></strong>（vs SK Hynix 為最純粹 HBM play；MU 因美國上市流動性 + AI 敘事 + 估值相對合理，為美股投資者的首選 memory 曝險）</p>
+
+<h3>11.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（11.0）</td><td><span class="warn">🟡 模糊</span></td><td>市場游移於「結構性 AI 受益」vs「週期頂點折價」兩敘事</td></tr>
+<tr><td>歷史分位（11.1）</td><td><span class="ok">🟢 便宜（Forward PE 8% 分位）</span></td><td>7.9x 遠低於 5Y 中位 15-18x；但 P/S 6.5x 歷史高點構成矛盾</td></tr>
+<tr><td>PEG 診斷（11.2）</td><td><span class="ok">🟢 便宜（但需謹慎解讀）</span></td><td>PEG 0.06-0.21 極低，但循環股基期效應</td></tr>
+<tr><td>Reverse DCF（11.3）</td><td><span class="warn">🟡 合理至激進</span></td><td>10-12% 長期 FCF CAGR 需週期結構性延長才能兌現</td></tr>
+<tr><td>同業相對（11.4）</td><td><span class="ok">🟢 相對折價</span></td><td>vs SK Hynix 折價 20%，技術基本面支撐持平或略高估值</td></tr>
+</table>
+
+<h4>v11.0 §12 D 交叉驗證</h4>
+<table>
+<tr><th>比較</th><th>結果</th></tr>
+<tr><td>當前 Forward PE 7.9x vs §12 D 合理 PE 10x</td><td>當前 FPE &lt; 合理 PE → <strong>+正面信號，上修一級</strong></td></tr>
+<tr><td>歷史分位 🟢 + PEG &lt; 1.0 + Forward PE &lt; 合理 PE</td><td>非泡沫，估值折扣支持進場</td></tr>
+</table>
+
+<p><strong>當前定價判斷：<span class="ok">🟢 合理至便宜</span></strong>（五角 4 綠 1 黃，估值具足夠安全邊際；但需認知「便宜」的理由是週期折價）</p>
+
+<h3>估值倍數定錨（長期合理倍數，for §12 G 長期展望）</h3>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對目標 PE 影響</th></tr>
+<tr><td>① 護城河（§7）</td><td>5/10</td><td>基準 -1x</td></tr>
+<tr><td>② Runway（§6A）</td><td>5-9 年 🟡</td><td>±0</td></tr>
+<tr><td>③ 成長品質（§6B）</td><td>定價 70% 驅動</td><td>±0（定價但非結構性）</td></tr>
+<tr><td>④ 護城河連動（§6C）</td><td>混合</td><td>±0</td></tr>
+<tr><td>⑤ ROIC 可維持性（§6D）</td><td>週期性強</td><td>-1x</td></tr>
+<tr><td>⑥ 衰退信號（§6 偵測表）</td><td>2 個 🔴（結構性）</td><td>-1x</td></tr>
+<tr><td>⑦ 估值體系方向（§11.0）</td><td>模糊</td><td>±0</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.3%</td><td>略壓縮成長股估值</td></tr>
+<tr><td>產業基準倍數</td><td><strong>12x</strong></td><td>MU memory peer group 基準</td></tr>
+<tr><td><strong>調整後合理區間</strong></td><td>—</td><td><strong>8-10x Forward PE</strong></td></tr>
+</table>
+
+<p><strong>本標的基準長期合理倍數：10x</strong>（§6 🟡 中等可見度成長）</p>
+
+<h4>v9.0 上行三引擎調整</h4>
+<table>
+<tr><th>引擎</th><th>條件</th><th>符合？</th><th>調整</th></tr>
+<tr><td>A｜ROIC 溢價</td><td>ROIC &gt; 20% 且 3 年擴大</td><td>當前 37% 但 3 年歷史波動 -5% → 37%，不算穩定擴大</td><td>×1.00（不觸發）</td></tr>
+<tr><td>B｜PEG 動態天花板</td><td>Year-5 前瞻成長率 &gt; 15%</td><td>FY28-FY30 估計 -10 to +5%（週期後期）</td><td>×1.00（不觸發）</td></tr>
+<tr><td>C｜護城河溢價</td><td>護城河 ≥ 9</td><td>5/10</td><td>×1.00（不觸發）</td></tr>
+</table>
+<p>三引擎均未觸發。</p>
+
+<h4>AI 風險獨立疊加</h4>
+<p>AI 評級 🟢 → ×1.10</p>
+
+<p><strong>最終長期合理倍數 = 10x × 1.00 × 1.10 = 11x</strong>（用於 §12 G 長期展望參考；§12 D 短中期用獨立 PEG 安全網）</p>
+
+<h3>分析師目標價參考</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>分析師目標價（高）</td><td>$934</td></tr>
+<tr><td>目標價（中位）</td><td>~$500-550（46 分析師）</td></tr>
+<tr><td>目標價（低）</td><td>$286</td></tr>
+<tr><td>平均共識</td><td>BUY</td></tr>
+</table>
+<p>共識中位 $500-550 大致與本 DD 短期目標 $578 接近。分歧點：部分分析師認為「AI memory supercycle」持續 3-5 年，給予 15-20x forward PE 激進目標（如 Beating the Tide 的 $934）；本 DD 採 10x 保守立場，反映週期不確定性。</p>
+
+<h3>投資結論（v11.0 完整版 — 本節為報告最終裁決）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態：強化。</strong>Q3 guide GM 81% 隱含 HBM ASP 未回落，管理層重申「supply constrained beyond 2026」。</li>
+<li><strong>H2 當前狀態：強化。</strong>DRAM +207% YoY 遠超大盤 +40-50%，MU HBM 市佔擴張加速中。</li>
+<li><strong>H3 當前狀態：不變。</strong>EPS 大幅上修但 PE 同步壓縮，估值 re-rate 尚未發生。</li>
+<li><strong>財報讓隱含預期更易兌現。</strong>共識 EPS 從 $32 → $58 升了 80%，即使 FY27 不再上修，當前估值已有安全邊際。</li>
+</ul>
+
+<h4>進場 / 觀望偏進場 / 觀望 / 迴避（§12 E 結果）</h4>
+<p><strong>判定：進場（循環感知）</strong>。短期 R:R 3.0x（PASS ≥ 2.0），中期 R:R ∞（下檔高於現價，PASS）。</p>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q3 FY26 Guide 大幅 beat（EPS $19.15 vs 共識 $13-15），Q4 guide 預期同向強勢。HBM4 訂單 binding 至 2026 全年。短期有強勁基本面支撐。<strong>短期進場訊號：強</strong>。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY+1 EPS 成長 +597%（回到週期高峰）、FY+2 +69.8%。驅動因素 70% 定價 + 30% 量。能見度：<strong>高</strong>（HBM binding 覆蓋 2026；2027 初 HBM4 ramp up）。</p>
+
+<h4>③ 長期持有信心（3-5 年, §12 G）</h4>
+<p>成長跑道：<strong>5-9 年中等</strong>；護城河趨勢：<strong>HBM 維度擴大，整體穩定</strong>；長期持有信心：<strong>中</strong>。Memory 本質循環，超過 2 年持有需要極強的結構性需求信念，當前尚未證實。</p>
+
+<h4>下行風險量化（§12 E Bear Case）</h4>
+<ul>
+<li>短期下檔 Bear Case $416 → -8.8% 下行空間</li>
+<li>中期下檔 Bear Case（含 W104 Low 參考）$61-180 區間 → 極端下行 -60% to -87%</li>
+<li>W52 Low $65.49（參考，極端週期反轉）</li>
+<li>W104 Low $61.39（歷史低點，僅 18 個月前）</li>
+<li>若 FY+1 EPS 下修 10%（至 $52），短期 Bear 目標 $416；R:R 降至 3.0x → 2.5x（仍 PASS）</li>
+</ul>
+
+<!-- ============ §12 ============ -->
+<h2>§12｜品質分驅動雙時距 R:R（v11.0）</h2>
+
+<h3>A｜體質檢核</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率趨勢（近 3 年未連續下滑 &gt;2%p）</td><td><span class="ok">✅ +0.5</span></td><td>GM 22%→41%→45%→56%（GAAP）+34pp</td></tr>
+<tr><td>2</td><td>FCF / NI ≥ 0.7</td><td><span class="ok">✅ +0.5</span></td><td>LTM FCF/NI ~0.78（capex 期正常）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未下修</td><td><span class="ok">✅ +0.5</span></td><td>$32.37 → $57.80（+78.6% 上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="ok">✅ +0.5</span></td><td>4 季全部 YoY +90% to +196%</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="ok">✅ +0.5</span></td><td>淨現金 +$5.83B，EBITDA LTM ~$30B，Net Debt/EBITDA = 負值</td></tr>
+</table>
+<p><strong>體質加減分 = +2.5（5/5 全過）</strong></p>
+
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th></tr>
+<tr><td>護城河</td><td>§7 評分</td><td>5/10</td></tr>
+<tr><td>成長持久性</td><td>§6 綜合（Runway 5-9 年 + 定價驅動 + AI 受益 🟢）</td><td>6/10</td></tr>
+</table>
+
+<p><strong>底分 = (5 + 6) / 2 = 5.5</strong></p>
+<p><strong>品質分 = min(5.5 + 2.5, 10) = 8.0</strong> → <strong><span class="ok">A 級</span>，底倉 25%（目標倉位的）</strong></p>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 (FY2026) EPS</td><td>$57.80</td><td>yfinance n=29</td></tr>
+<tr><td>FY+2 (FY2027) EPS</td><td>$98.16</td><td>yfinance n=30</td></tr>
+<tr><td>FY+2 成長率</td><td>+69.8%</td><td>($98.16 / $57.80) − 1</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>4.65x</td><td>$456.23 / $98.16</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>7.89x</td><td>$456.23 / $57.80</td></tr>
+</table>
+
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+
+<h4>步驟一：確認歷史錨點</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>5Y Forward P/E 中位數</td><td>~15x</td></tr>
+<tr><td>5Y Forward P/E 75th percentile</td><td>~20x</td></tr>
+<tr><td>5Y Forward P/E 歷史高點</td><td>~30x（虧損年份反映）</td></tr>
+<tr><td><strong>基礎值（75th）</strong></td><td><strong>20x</strong></td></tr>
+</table>
+
+<h4>步驟二：PEG 調節</h4>
+<p>PEG = 7.89 / 135.5 = 0.058</p>
+<table>
+<tr><th>PEG 區間</th><th>適用規則</th></tr>
+<tr><td>PEG &lt; 1.0</td><td>上浮至 min(75th × 1.2, 5Y 高) = min(24, 30) = <strong>24x</strong></td></tr>
+</table>
+
+<p>⚠️ <strong>循環股特別處理：</strong>按 PEG 安全網公式，合理 PE 上浮至 24x 會得到荒謬目標（FY+1 × 24x = $57.80 × 24 = $1,387）。這暴露了 PEG 模型對深度循環股的失效 — 當 EPS 處於週期頂點時，CAGR 分母被放大，PEG 失真。</p>
+
+<p><strong>循環感知覆寫：</strong>採用 <strong>10x（週期頂點可防禦倍數）</strong>，依據：</p>
+<ul>
+<li>同業 SK Hynix 當前 Forward PE ~10x（直接對標）</li>
+<li>MU 過去 5 次循環頂點 PE 區間為 6-12x（Bloomberg 歷史）</li>
+<li>§11.5 產業基準倍數 12x − 護城河 -1x − ROIC 週期性 -1x = 10x</li>
+<li>保守估計，避免週期折扣反映在 PE 之外</li>
+</ul>
+
+<h4>步驟三：品質溢價（不適用）</h4>
+<p>PEG 未下壓（未觸發），品質溢價不適用。但此處的覆寫（從 24x 改為 10x）已是反向的循環折扣。</p>
+
+<p><strong>合理 P/E = 10x</strong>（循環感知覆寫）</p>
+
+<h3>E｜雙時距目標價與 R:R</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td><strong>短期（1 年）</strong></td><td>$57.80 × 10 = $578</td><td><strong>$578</strong></td></tr>
+<tr><td><strong>中期（2 年）</strong></td><td>$98.16 × 10 = $982</td><td><strong>$982</strong></td></tr>
+</table>
+
+<h4>下檔錨點（基本面 Bear Case）</h4>
+<table>
+<tr><th>項目</th><th>短期（1 年）</th><th>中期（2 年）</th></tr>
+<tr><td>Bear PE（§6E：成長降至 10% 情境）</td><td>8x</td><td>8x</td></tr>
+<tr><td>Bear EPS（FY+1 × 0.9 / FY+2 × 0.9）</td><td>$52.02</td><td>$88.34</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td><strong>$416</strong></td><td><strong>$707</strong>（⚠️ 高於現價）</td></tr>
+</table>
+
+<h4>W52 / W104 參考（yfinance，不用於 R:R 計算）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$456.23</td></tr>
+<tr><td>W52 Low（參考）</td><td>$65.49</td></tr>
+<tr><td>W104 Low（參考）</td><td>$61.39</td></tr>
+<tr><td>MA104w（參考）</td><td>$166.43</td></tr>
+<tr><td><strong>短期下檔 = Bear 股價</strong></td><td><strong>$416</strong></td></tr>
+<tr><td><strong>中期下檔 = Bear 股價</strong></td><td><strong>$707</strong>（Bear &gt; 現價）</td></tr>
+</table>
+
+<p>⚠️ 中期 Bear Case $707 &gt; 現價 $456，即使在 FY+2 EPS 下修 10% 情境下，按 8x Bear PE 計算的股價仍高於當前 — 這強烈表明<strong>當前估值已提前反映週期折扣</strong>。</p>
+
+<h4>雙 R:R 計算</h4>
+<div class="rr-grid">
+<div class="rr-card rr-short">
+<h4>① 短期（1 年）</h4>
+<ul>
+<li>目標價 <strong>$578</strong></li>
+<li>上行空間 <strong>+26.7%</strong></li>
+<li>下檔錨點 $416（Bear）</li>
+<li>下行距離 -8.8%</li>
+<li><strong>R:R = 3.0x</strong> <span class="ok">✅ PASS（≥ 2.0）</span></li>
+</ul>
+</div>
+<div class="rr-card rr-mid">
+<h4>② 中期（2 年）</h4>
+<ul>
+<li>目標價 <strong>$982</strong></li>
+<li>上行空間 <strong>+115.2%</strong></li>
+<li>下檔錨點 $707（Bear &gt; 現價）</li>
+<li>下行距離 <strong>-（Bear 已高於現價，下檔已被定價）</strong></li>
+<li><strong>R:R = ∞</strong> <span class="ok">✅ PASS（極高）</span></li>
+</ul>
+</div>
+</div>
+
+<h4>判定（四級裁決，v11.0）</h4>
+<table>
+<tr><th>條件</th><th>結果</th></tr>
+<tr><td>短期 R:R ≥ 2.0 且 中期 R:R ≥ 2.0</td><td><span class="ok">✅ 雙 PASS</span></td></tr>
+<tr><td><strong>判定</strong></td><td><strong><span class="ok">進場（Enter）</span></strong></td></tr>
+</table>
+
+<p class="note">⚠️ <strong>循環感知修正：</strong>雖然 R:R 模型給出強勁 PASS，但 Bear Case 未完全反映「memory 週期反轉」極端情境（W52/W104 Low $65 vs 當前 $456 — 歷史上這種下跌可能重演）。建議採 <strong>分批進場策略</strong>，初始部位減半（12-13%），保留子彈應對週期黑天鵝。</p>
+
+<h3>F｜建倉建議（品質定基礎 × Bollinger 微調）</h3>
+
+<h4>Bollinger 位置（週線 20 週 2σ, yfinance 計算）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 SMA20</td><td>$366.51</td></tr>
+<tr><td>週線 Std Dev</td><td>$64.18</td></tr>
+<tr><td>週線 BB 上軌（2σ）</td><td>$494.87</td></tr>
+<tr><td>週線 BB 下軌（2σ）</td><td>$238.14</td></tr>
+<tr><td>現價</td><td>$456.23</td></tr>
+<tr><td><strong>現價位置</strong></td><td><strong>合理（軌道之間）</strong></td></tr>
+<tr><td><strong>部位調整係數</strong></td><td><strong>×1.0</strong></td></tr>
+</table>
+
+<h4>最終部位</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基礎部位（A 級）</td><td>25%</td></tr>
+<tr><td>Bollinger 調整</td><td>×1.0</td></tr>
+<tr><td><strong>最終建議部位</strong></td><td><strong>25%（目標倉位的）</strong></td></tr>
+<tr><td>循環感知分批建議</td><td>分 3 批：1/3 於現價 $456；1/3 於回檔 $380（-17%）；1/3 於深度回檔 $300（-34%）或跌破 MA60d</td></tr>
+</table>
+
+<p class="note">底倉 25% = <strong>目標倉位的 25%</strong>。Memory cycle 類股建議目標倉位 &lt; 10% / 組合。</p>
+
+<h3>G｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§6A</td><td>剩一半（HBM runway 5-7 年，整體 memory 週期反覆）</td></tr>
+<tr><td>護城河趨勢</td><td>§7</td><td>HBM 維度加深；整體 memory 穩定</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合判斷</td><td><strong><span class="warn">中</span></strong></td></tr>
+</table>
+<p><strong>一句話：</strong>MU 是 AI HBM 超級週期的核心受益者，但 memory 本質循環使其不適合超過 2-3 年 buy-and-hold — 適合 tactical sector allocation 而非 long-term compounding。</p>
+
+<!-- ============ §13 ============ -->
+<h2>§13｜三方辯論摘要</h2>
+
+<div class="debate-grid">
+<div class="debate-card bull-card">
+<h4>🐂 多頭辯護人｜Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th></tr>
+<tr><td>1</td><td><strong>護城河：</strong>HBM3E 功耗優勢 -30%、HBM4 全 2026 產能已綁定 Nvidia 綁定（§7）</td></tr>
+<tr><td>2</td><td><strong>成長：</strong>FY+1 EPS $57.80（+597% YoY），Q3 guide $19.15 遠超共識 $13-15（§6、§4）</td></tr>
+<tr><td>3</td><td><strong>估值：</strong>Forward PE 7.9x 歷史 &lt; 10% 分位；Bear Case 中期 $707 高於現價 → 下檔已被市場定價（§11、§12 E）</td></tr>
+</table>
+<p><strong>多頭最強一句話：</strong>「AI infrastructure 的 Oxide gate（不可或缺的 HBM）+ 市場給週期股最嚴厲折扣 = 最不 sexy 的 AI 大贏家，你買不到更便宜的 AI memory 曝險。」</p>
+</div>
+
+<div class="debate-card bear-card">
+<h4>🐻 空頭檢察官｜Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損情境</th></tr>
+<tr><td>1</td><td><strong>基本面惡化：</strong>Hyperscaler 2027 capex 集體砍 15%，HBM binding 退訂率 &gt; 10%，FY27 EPS 共識下修 30% 至 $70。股價跌至 $350（-23%）</td></tr>
+<tr><td>2</td><td><strong>估值壓縮：</strong>市場認清週期頂點，Forward PE 壓至 5x（歷史週期底部）。股價 $57.80 × 5x = $289（-37%）</td></tr>
+<tr><td>3</td><td><strong>催化劑觸發：</strong>DRAM spot 2026 Q4 突然崩 30%（類似 2018 年），CEO/CFO 持續減碼，2027 產能過剩 = 典型 MU cycle 模式。股價回到 MA104w $166 甚至 W52 Low $65 區間</td></tr>
+</table>
+<p><strong>空頭最大威脅：</strong>「memory 過去 40 年 5 次週期，每次都在 peak EPS 後 12-18 月崩跌 70%+。這不是『如果』的問題，是『什麼時候』。CEO 正在高位賣股 = 大錢已經在準備撤退。」</p>
+</div>
+
+<div class="debate-card arb-card">
+<h4>⚖️ 估值仲裁員｜Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>評分</th></tr>
+<tr><td>與過去 3 年實際 FCF CAGR 差距</td><td>隱含 10-12% vs 歷史 N/A（2023 虧損）：1/2</td></tr>
+<tr><td>與分析師 EPS CAGR 一致性</td><td>隱含 10-12% vs 共識 3-year CAGR 135%：2/2（目前共識遠超隱含，反映空間）</td></tr>
+<tr><td>與同業最快 FCF CAGR 相對位置</td><td>vs SK Hynix ~15%：1.5/2</td></tr>
+<tr><td>兌現條件苛刻度</td><td>需 AI memory 結構性 demand + margin 維持：1/2</td></tr>
+<tr><td>歷史上類似公司持續達成？</td><td>半導體設備/IC 設計有先例（TSMC、ASML），但 memory 無先例：0.5/2</td></tr>
+</table>
+<p><strong>隱含預期可信度：6/10</strong></p>
+<p><strong>仲裁員一句話：</strong>「Reverse DCF 的隱含 10-12% CAGR 在 memory 歷史上無先例，但 AI 需求也是 memory 歷史上的新變數。市場給的 7.9x Forward PE 在正常循環情境下是合理折扣；若 AI 確實結構性改變 memory cycle，這個折扣是過度的 — 但這個『如果』沒有歷史類比。」</p>
+</div>
+</div>
+
+<div class="verdict-card">
+<h4>【裁決】</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>估值折扣 + HBM 結構性綁定。Forward PE 7.9x + Bear mid $707 高於現價，下檔已被定價</td></tr>
+<tr><td>空頭最大威脅</td><td>Memory 40 年 5 次循環，每次 peak EPS 後 12-18 月崩 70%+。CEO/CFO 頂點賣股為核心警訊</td></tr>
+<tr><td>估值仲裁評分</td><td>6/10（合理偏樂觀）</td></tr>
+<tr><td><strong>裁決</strong></td><td><strong><span class="ok">進場（分批、循環感知）</span></strong></td></tr>
+<tr><td>理由</td><td>R:R 雙 PASS + 品質 A 級 + 估值 ＜ 10% 分位構成數字層面進場訊號。但考慮 memory 週期本質 + 內部人減碼警訊 + 模型難以完全捕捉週期黑天鵝，採分批建倉（1/3-1/3-1/3 vs 一次建滿），保留子彈應對 2027 週期下行風險。目標倉位建議 ≤ 10% 整個組合。</td></tr>
+</table>
+
+<h4>進入 §1 前自我檢核</h4>
+<ul>
+<li>☑️ 多頭論據是否依賴「市場會認識到」？<strong>部分依賴</strong>（H3 估值 re-rate 需市場接受 AI memory 結構性敘事），但非主論據；H1 + H2 基本面不依賴敘事改變</li>
+<li>☑️ 空頭威脅會否在 MA 止損前發生？<strong>可能</strong>（cycle 反轉通常 gradual，但 catalysts 可能急跌）— 故採 MA60d $404 + BB 下軌 $238 雙重止損參考</li>
+<li>☑️ 估值仲裁 &lt; 5 時是否有安全邊際？<strong>仲裁 6/10，合格</strong>；Bear Case 下行僅 -8.8%，安全邊際存在</li>
+</ul>
+</div>
+
+<!-- ============ Footer ============ -->
+<p class="note" style="margin-top:40px;text-align:center;color:var(--muted)">DD Schema v11.0｜本報告僅供研究參考，不構成投資建議</p>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
