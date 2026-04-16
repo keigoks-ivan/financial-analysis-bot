@@ -322,9 +322,9 @@ def _header(active: str = "") -> str:
         ("週報", "/weekly/"),
         ("回測", "/backtest/"),
         ("研究報告", "/research/"),
-        ("六狀態機", "/six-state/"),
         ("QGM 美股", "/qgm/"),
         ("QGM 台股", "/qgm-tw/"),
+        ("六狀態機", "/six-state/"),
     ]
     nav = " ".join(
         f'<a href="{url}" class="{"active" if active == lbl else ""}">{lbl}</a>'
