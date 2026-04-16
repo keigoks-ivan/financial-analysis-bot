@@ -61,9 +61,11 @@ CONFIDENCE_RE = re.compile(
     re.DOTALL,
 )
 
-# Anchor to §12 E 雙時距目標價與 R:R section (where FY+1 / FY+2 上行空間 live)
+# Anchor to §12 雙時距目標價與 R:R section (where FY+1 / FY+2 上行空間 live)
+# Accepts E|/D|/F| prefix variants (standard v11 uses E, some DDs use D or F).
+# Requires the section-letter prefix so inline prose mentioning 雙時距 R:R doesn't match.
 SECTION_E_ANCHOR_RE = re.compile(
-    r'(?:雙\s*R:R\s*計算|E\s*[\|｜]\s*雙時距目標價)',
+    r'(?:雙\s*R:R\s*計算|[A-F]\s*[\|｜]\s*雙時距(?:目標價|\s*R:R))',
 )
 # Percentage value with optional sign (supports full-width minus −, U+2212)
 PCT_RE = re.compile(r'([+\-−]?\d+(?:\.\d+)?)\s*%')
@@ -198,6 +200,8 @@ def parse_index_md() -> dict:
         date, ticker, schema, verdict, trap, rr, filename = cols[1:8]
         if not any(schema.startswith(f"v{n}") for n in range(9, 20)):
             continue
+        # col[8:] is the 備註 column; rejoin if it contains pipe chars
+        comment_raw = "|".join(cols[8:-1]).strip() if len(cols) > 9 else (cols[8].strip() if len(cols) > 8 else "")
         data[filename] = {
             "date": date,
             "ticker": ticker,
@@ -206,6 +210,7 @@ def parse_index_md() -> dict:
             "trap": trap,
             "rr_raw": rr,
             "filename": filename,
+            "comment": comment_raw,
         }
         # Parse R:R field for quality level
         rr_parts = [p.strip() for p in rr.split("/")]
@@ -235,7 +240,7 @@ def scan_files(index_data: dict):
         date_str = f"{m.group(2)}-{m.group(3)}-{m.group(4)}"
 
         md = index_data.get(f.name, {})
-        comment = extract_comment(f)
+        comment = extract_comment(f) or md.get("comment", "")
         qscore = extract_quality_score(f)
         moat = extract_moat_score(f)
         moat_trend = extract_moat_trend(f)
