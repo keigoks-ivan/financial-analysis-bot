@@ -4,7 +4,14 @@ Scan docs/dd/ for DD_*.html files, cross-reference INDEX.md for v9.x/v10.x metad
 and update the deep research table in docs/research/index.html.
 
 v10.0 update: Remove R:R/上檔/下檔/紅燈 columns, add 長期持有信心 column.
+
+Usage:
+  python scripts/update_dd_index.py                  # normal regenerate (upside = DD 快照)
+  python scripts/update_dd_index.py --refresh-prices # fetch yfinance and recompute upside
 """
+import argparse
+import datetime as dt
+import json
 import re
 from pathlib import Path
 
@@ -12,6 +19,7 @@ DOCS = Path(__file__).parent.parent / "docs"
 DD_DIR = DOCS / "dd"
 INDEX_HTML = DOCS / "research" / "index.html"
 INDEX_MD = DD_DIR / "INDEX.md"
+PRICE_CACHE = DOCS / "research" / "price_cache.json"
 
 META_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
@@ -182,6 +190,128 @@ def extract_upsides(path: Path):
     return fy1, fy2
 
 
+# Target-price patterns seen in v11 DDs (§12 E "雙時距目標價").
+# Prefixes: $ (US/general) or TWD (台股)
+_TARGET_NUM = r'([0-9][\d,]*(?:\.\d+)?)'
+TARGET_PATTERNS = [
+    # $ amount inside <strong> / <b> (with or without class)
+    re.compile(rf'<(?:strong|b)[^>]*>\s*\$\s*{_TARGET_NUM}\s*</(?:strong|b)>'),
+    # class="num|mono" wrapping a <strong>/<b>$amount</...> (STX / 2330.TW style)
+    re.compile(rf'class="(?:num|mono)"[^>]*>\s*<(?:strong|b)[^>]*>\s*\$\s*{_TARGET_NUM}\s*</(?:strong|b)>'),
+    # class="num|mono" span with $amount directly
+    re.compile(rf'<span[^>]*class="(?:num|mono)"[^>]*>\s*\$\s*{_TARGET_NUM}\s*</span>'),
+    # TWD amounts in <strong>/<b>
+    re.compile(rf'<(?:strong|b)[^>]*>\s*TWD\s*{_TARGET_NUM}\s*</(?:strong|b)>'),
+    # TWD inside class="mono|num" wrapper
+    re.compile(rf'class="(?:num|mono)"[^>]*>\s*<(?:strong|b)[^>]*>\s*TWD\s*{_TARGET_NUM}\s*</(?:strong|b)>'),
+]
+
+
+def extract_targets(path: Path):
+    """Extract (short_target, mid_target, currency) from §12 E.
+    Returns (None, None, '') if not found."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return None, None, ""
+    anchor = SECTION_E_ANCHOR_RE.search(text)
+    if not anchor:
+        return None, None, ""
+    scope = text[anchor.start():anchor.start() + 8000]
+    s_m = re.search(r'短期(?:\s*[（(][1１一][^）)]*[）)])?', scope)
+    if not s_m:
+        return None, None, ""
+    m_m = re.search(r'中期(?:\s*[（(][2２二][^）)]*[）)])?', scope[s_m.end():])
+    if not m_m:
+        return None, None, ""
+    mid_start_abs = s_m.end() + m_m.start()
+    short_win = scope[s_m.start():mid_start_abs]
+    after = scope[mid_start_abs:mid_start_abs + 2000]
+    cut = len(after)
+    for marker in ("Bear", "下檔", "W52", "項目"):
+        idx = after.find(marker)
+        if 0 < idx < cut:
+            cut = idx
+    mid_win = after[:cut]
+
+    def _find(win):
+        for pat in TARGET_PATTERNS:
+            hit = pat.search(win)
+            if hit:
+                val = float(hit.group(1).replace(",", ""))
+                cur = "TWD" if "TWD" in hit.group(0) else "USD"
+                return val, cur
+        return None, ""
+
+    s_val, s_cur = _find(short_win)
+    m_val, m_cur = _find(mid_win)
+    currency = s_cur or m_cur
+    return s_val, m_val, currency
+
+
+def normalize_ticker(raw: str) -> str:
+    """Convert row ticker (e.g. '2308TW', '2383TW_v10') to yfinance form ('2308.TW')."""
+    t = raw.strip()
+    # Strip _v10/_v11 suffixes
+    t = re.sub(r'_v\d+$', '', t)
+    # TW stock: 4-digit + TW → 4-digit.TW
+    m = re.match(r'^(\d{4,5})TW$', t)
+    if m:
+        return f"{m.group(1)}.TW"
+    # Already has dot suffix
+    if re.match(r'^\d{4,5}\.TW$', t):
+        return t
+    return t
+
+
+def load_price_cache() -> dict:
+    if PRICE_CACHE.exists():
+        try:
+            return json.loads(PRICE_CACHE.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def save_price_cache(data: dict) -> None:
+    PRICE_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    PRICE_CACHE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def fetch_prices(tickers: list) -> dict:
+    """Fetch current close price for each yfinance-normalized ticker.
+    Returns {ticker: price}. Missing / failed tickers are omitted."""
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("ERROR: yfinance not installed. Run: pip install yfinance")
+        return {}
+    result = {}
+    if not tickers:
+        return result
+    print(f"Fetching prices for {len(tickers)} tickers via yfinance...")
+    try:
+        data = yf.download(
+            tickers, period="5d", interval="1d", progress=False, group_by="ticker", auto_adjust=False
+        )
+    except Exception as e:
+        print(f"yfinance batch fetch failed: {e}")
+        return result
+    for t in tickers:
+        try:
+            if len(tickers) == 1:
+                closes = data["Close"].dropna()
+            else:
+                closes = data[t]["Close"].dropna()
+            if len(closes) == 0:
+                continue
+            result[t] = float(closes.iloc[-1])
+        except (KeyError, IndexError, AttributeError):
+            continue
+    print(f"Got {len(result)}/{len(tickers)} prices.")
+    return result
+
+
 def parse_index_md() -> dict:
     """Parse INDEX.md and return a dict keyed by filename with metadata."""
     data = {}
@@ -246,8 +376,13 @@ def scan_files(index_data: dict):
         moat_trend = extract_moat_trend(f)
         confidence = extract_confidence(f)
         upside1, upside2 = extract_upsides(f)
+        t1, t2, currency = extract_targets(f)
         entries.append({
             "ticker": ticker,
+            "ticker_yf": normalize_ticker(ticker),
+            "target1": t1,
+            "target2": t2,
+            "currency": currency,
             "date": date_str,
             "version": version,
             "href": f"/dd/{f.name}",
@@ -445,17 +580,75 @@ def update_index(entries):
         flags=re.DOTALL,
     )
 
+    # Stamp price-refresh timestamp from cache (if present)
+    cache = load_price_cache()
+    ts_raw = cache.get("refreshed_at", "")
+    ts_display = ts_raw.replace("T", " ")[:16] if ts_raw else "尚未刷新"
+    new_html = re.sub(
+        r'(<strong id="meta-refresh">)[^<]*(</strong>)',
+        rf'\g<1>{ts_display}\g<2>',
+        new_html,
+        count=1,
+    )
+
     INDEX_HTML.write_text(new_html, encoding="utf-8")
     return True
 
 
+def refresh_upsides(entries: list) -> int:
+    """Fetch current prices via yfinance and overwrite upside1/2 based on targets.
+    Returns count of rows actually refreshed."""
+    yf_tickers = sorted({
+        e["ticker_yf"] for e in entries
+        if e.get("ticker_yf") and (e.get("target1") or e.get("target2"))
+    })
+    prices = fetch_prices(yf_tickers)
+    refreshed = 0
+    missing = []
+    for e in entries:
+        yf_t = e.get("ticker_yf")
+        price = prices.get(yf_t)
+        if price is None or price == 0:
+            if e.get("target1") or e.get("target2"):
+                missing.append(e["ticker"])
+            continue
+        if e.get("target1"):
+            e["upside1"] = f"{(e['target1'] - price) / price * 100:.1f}"
+        if e.get("target2"):
+            e["upside2"] = f"{(e['target2'] - price) / price * 100:.1f}"
+        e["current_price"] = price
+        refreshed += 1
+    # persist to cache
+    cache = {
+        "refreshed_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "prices": {t: round(p, 4) for t, p in prices.items()},
+    }
+    save_price_cache(cache)
+    if missing:
+        print(f"Missing prices for {len(missing)} ticker(s): {', '.join(missing)}")
+    print(f"Refreshed upsides for {refreshed} row(s). Cache → {PRICE_CACHE}")
+    return refreshed
+
+
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--refresh-prices",
+        action="store_true",
+        help="Fetch current prices via yfinance and recompute upsides.",
+    )
+    args = parser.parse_args()
+
     index_data = parse_index_md()
     entries = scan_files(index_data)
     print(f"Found {len(entries)} v9.x/v10.x DD files:")
     for e in entries:
         conf = e.get("confidence", "—") or "—"
         print(f"  {e['ticker']:8s} {e['date']}  {e['verdict']:4s}  {e['quality']:3s}  conf={conf}  {e['href']}")
+
+    if args.refresh_prices:
+        print()
+        refresh_upsides(entries)
 
     if update_index(entries):
         print(f"\nUpdated {INDEX_HTML}")
