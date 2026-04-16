@@ -61,6 +61,13 @@ CONFIDENCE_RE = re.compile(
     re.DOTALL,
 )
 
+# Anchor to §12 E 雙時距目標價與 R:R section (where FY+1 / FY+2 上行空間 live)
+SECTION_E_ANCHOR_RE = re.compile(
+    r'(?:雙\s*R:R\s*計算|E\s*[\|｜]\s*雙時距目標價)',
+)
+# Percentage value with optional sign (supports full-width minus −, U+2212)
+PCT_RE = re.compile(r'([+\-−]?\d+(?:\.\d+)?)\s*%')
+
 
 def extract_quality_score(path: Path) -> str:
     """Extract numeric quality score (e.g. '8.60') from DD HTML."""
@@ -138,6 +145,41 @@ def extract_confidence(path: Path) -> str:
     return m.group(1) if m else ""
 
 
+def extract_upsides(path: Path):
+    """Extract (FY+1, FY+2) 上行空間 from §12 E as numeric strings, e.g. '75.1' / '-32.5'.
+    Handles three v11 layouts:
+      - list-style per timeframe (NVDA/AMZN): two 上行空間 occurrences, one % each.
+      - separate tables per timeframe (GOOGL/STX): two 上行空間 rows, one % each.
+      - single table with 2 value cells (MSFT): one 上行空間 row, two % values.
+    """
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return "", ""
+    anchor = SECTION_E_ANCHOR_RE.search(text)
+    if not anchor:
+        return "", ""
+    scope = text[anchor.start():anchor.start() + 8000]
+
+    end_markers = ("</tr>", "下行距離", "下檔", "<h2", "<h3")
+    upsides = []
+    for mm in re.finditer(r"上行空間", scope):
+        window = scope[mm.end():mm.end() + 400]
+        cut = len(window)
+        for marker in end_markers:
+            idx = window.find(marker)
+            if 0 < idx < cut:
+                cut = idx
+        for pct in PCT_RE.findall(window[:cut]):
+            upsides.append(pct.replace("−", "-"))
+        if len(upsides) >= 2:
+            break
+
+    fy1 = upsides[0] if len(upsides) >= 1 else ""
+    fy2 = upsides[1] if len(upsides) >= 2 else ""
+    return fy1, fy2
+
+
 def parse_index_md() -> dict:
     """Parse INDEX.md and return a dict keyed by filename with metadata."""
     data = {}
@@ -198,6 +240,7 @@ def scan_files(index_data: dict):
         moat = extract_moat_score(f)
         moat_trend = extract_moat_trend(f)
         confidence = extract_confidence(f)
+        upside1, upside2 = extract_upsides(f)
         entries.append({
             "ticker": ticker,
             "date": date_str,
@@ -210,6 +253,8 @@ def scan_files(index_data: dict):
             "moat_score": moat,
             "moat_trend": moat_trend,
             "confidence": confidence,
+            "upside1": upside1,
+            "upside2": upside2,
             "comment": comment,
         })
 
@@ -237,6 +282,24 @@ def quality_badge(q: str, score: str = "", moat: str = "", moat_trend: str = "")
     if moat:
         return f'<span class="quality-score">{moat}/10{trend_str}</span>'
     return "—"
+
+
+def upside_badge(v: str) -> str:
+    """Render upside as +/- percent with color styling."""
+    if not v:
+        return "—"
+    try:
+        f = float(v)
+    except ValueError:
+        return "—"
+    sign = "+" if f > 0 else ""  # negative number already carries '-'
+    if f > 0:
+        cls = "upside-pos"
+    elif f < 0:
+        cls = "upside-neg"
+    else:
+        cls = "upside-zero"
+    return f'<span class="{cls}">{sign}{f:.1f}%</span>'
 
 
 def confidence_badge(c: str) -> str:
@@ -297,6 +360,14 @@ def build_rows(entries):
     rows = []
     for e in entries:
         sk = _sort_keys(e)
+        try:
+            up1_val = float(e.get("upside1", "") or 0)
+        except ValueError:
+            up1_val = 0.0
+        try:
+            up2_val = float(e.get("upside2", "") or 0)
+        except ValueError:
+            up2_val = 0.0
         rows.append(
             f'<tr class="searchable"'
             f' data-ticker="{e["ticker"]}"'
@@ -304,6 +375,8 @@ def build_rows(entries):
             f' data-version="{e.get("version", "")}"'
             f' data-verdict="{sk["verdict"]}"'
             f' data-quality="{sk["quality"]}"'
+            f' data-upside1="{up1_val}"'
+            f' data-upside2="{up2_val}"'
             f' data-trap="{sk["trap"]}"'
             f' data-confidence="{sk["confidence"]}"'
             f'>\n'
@@ -312,6 +385,8 @@ def build_rows(entries):
             f'  <td>{version_badge(e.get("version", ""))}</td>\n'
             f'  <td>{verdict_badge(e["verdict"])}</td>\n'
             f'  <td>{quality_badge(e["quality"], e.get("quality_score", ""), e.get("moat_score", ""), e.get("moat_trend", ""))}</td>\n'
+            f'  <td>{upside_badge(e.get("upside1", ""))}</td>\n'
+            f'  <td>{upside_badge(e.get("upside2", ""))}</td>\n'
             f'  <td>{trap_short(e["trap"])}</td>\n'
             f'  <td>{confidence_badge(e.get("confidence", ""))}</td>\n'
             f'  <td class="comment-cell">{e["comment"]}</td>\n'
@@ -332,6 +407,8 @@ def update_index(entries):
         '            <th class="sortable" data-sort="version">版本</th>\n'
         '            <th class="sortable" data-sort="verdict">建議</th>\n'
         '            <th class="sortable sorted-asc" data-sort="quality">護城河</th>\n'
+        '            <th class="sortable" data-sort="upside1">FY+1 Upside</th>\n'
+        '            <th class="sortable" data-sort="upside2">FY+2 Upside</th>\n'
         '            <th class="sortable" data-sort="trap">陷阱</th>\n'
         '            <th class="sortable" data-sort="confidence">長期持有</th>\n'
         '            <th>備註</th>\n'
