@@ -1524,6 +1524,7 @@ HTML 必須包含所有章節的完整分析內容，不得摘要化。
 - 右下角固定「列印為 PDF」按鈕（window.print()）
 - @media print CSS：隱藏頁首與按鈕，確保列印版面整潔
 - 所有中文字型確保正常顯示
+- **章節目錄（TOC，v11.0+ 必備）**：container 內第一個元素必須是 `<nav class="dd-toc">`，列出 §1-§13 的錨點連結（pill 樣式橫排），點擊可跳至對應章節。每個章節主標題 `<h2>`（或 `<section>` 包覆者）必須有 `id="sec-N"`（N 為 1-13）。CSS 需加 `html{scroll-behavior:smooth}` 與 `h2[id^="sec-"]{scroll-margin-top:60px}`（避免錨點被 sticky header-bar 遮住）；列印時 TOC 隱藏（`@media print{.dd-toc{display:none}}`）。TOC 標籤文字範例：`§1 結論 / §2 序章 / §3 論點 / §4 財報 / §5 門檻 / §6 成長 / §7 護城河 / §8 財務 / §9 產業 / §10 治理 / §11 估值 / §12 R:R / §13 辯論`
 
 ### 輸出規格(Claude Code 本地環境)
 
