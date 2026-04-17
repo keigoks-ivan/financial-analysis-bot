@@ -537,7 +537,7 @@ def build_rows(entries):
 
 def build_weekly_review(entries):
     """Compute 3 lists for the Weekly Review panel:
-    - candidates: 建議 in {進場, 觀望偏進場} + 非陷阱 + 長期高信心, sorted by upside2 desc, top 10
+    - candidates: 建議 in {進場, 觀望偏進場} + 非陷阱 + 長期高信心, sorted by upside2 desc, top 15
     - downgrades: latest DD per ticker has worse verdict than previous DD
     - stale: latest DD per ticker older than 60 days
     Returns (candidates_html, downgrades_html, stale_html).
@@ -571,7 +571,7 @@ def build_weekly_review(entries):
            and e.get("confidence", "").strip() == "高"
     ]
     candidates.sort(key=up2_val, reverse=True)
-    candidates = candidates[:10]
+    candidates = candidates[:15]
 
     def up2_str(e):
         v = up2_val(e)
