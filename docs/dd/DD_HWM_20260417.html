@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v11.0">
+<title>DD Report — HWM (Howmet Aerospace) | v11.0 | 20260417</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F8FAFC; --card:#FFFFFF; --title:#1E3A5F; --accent:#3B82F6;
+  --row-alt:#F1F5F9; --green-bg:#DCFCE7; --green-text:#166534;
+  --red-bg:#FEE2E2; --red-text:#991B1B; --yellow-bg:#FEF9C3; --yellow-text:#92400E;
+  --blue-bg:#EFF6FF; --purple-bg:#F5F3FF; --teal-bg:#ECFDF5;
+  --warn-bg:#FFF0E6; --warn-border:#F97316; --warn-text:#C2410C;
+  --bull-border:#16A34A; --bull-bg:#F0FDF4;
+  --bear-border:#DC2626; --bear-bg:#FFF1F2;
+  --arb-border:#7C3AED; --arb-bg:#F5F3FF;
+  --verdict-bg:#FFFBEB; --verdict-border:#D97706; --verdict-text:#92400E;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); font-family:'Noto Sans TC',sans-serif; color:#1e293b; line-height:1.7; font-size:15px; }
+.header-bar { position:sticky; top:0; z-index:100; background:var(--title); color:#fff; padding:10px 32px; display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:13px; }
+.header-bar .left span { margin-right:24px; }
+.container { max-width:1200px; margin:0 auto; padding:24px 20px 80px; }
+.section { background:var(--card); border-radius:2px; margin-bottom:20px; padding:28px 32px; border-left:4px solid var(--accent); }
+.section-title { color:var(--title); font-size:20px; font-weight:700; margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid #e2e8f0; }
+.section-subtitle { color:var(--title); font-size:16px; font-weight:600; margin:18px 0 10px; }
+.section-sub3 { color:#334155; font-size:14.5px; font-weight:600; margin:14px 0 8px; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+th { background:var(--title); color:#fff; padding:10px 12px; text-align:left; font-weight:500; }
+td { padding:8px 12px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+tr:nth-child(even) td { background:var(--row-alt); }
+.mono { font-family:'IBM Plex Mono',monospace; }
+.badge-green { background:var(--green-bg); color:var(--green-text); padding:2px 10px; border-radius:2px; font-weight:600; font-size:13px; }
+.badge-red { background:var(--red-bg); color:var(--red-text); padding:2px 10px; border-radius:2px; font-weight:600; font-size:13px; }
+.badge-yellow { background:var(--yellow-bg); color:var(--yellow-text); padding:2px 10px; border-radius:2px; font-weight:600; font-size:13px; }
+.badge-blue { background:var(--blue-bg); color:var(--title); padding:2px 10px; border-radius:2px; font-weight:600; font-size:13px; }
+.warn-box { background:var(--warn-bg); border-left:4px solid var(--warn-border); padding:16px 20px; margin:14px 0; }
+.warn-box .warn-title { color:var(--warn-text); font-weight:700; font-size:15px; margin-bottom:6px; }
+.hypothesis-box { background:var(--blue-bg); border-left:4px solid var(--accent); padding:16px 20px; margin:14px 0; }
+.hypothesis-box ul { padding-left:20px; }
+.hypothesis-box li { margin:6px 0; }
+.note { color:#475569; font-size:13.5px; margin:8px 0; }
+.debate-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin:14px 0; }
+.debate-card { padding:18px; border-radius:2px; font-size:14px; }
+.debate-card h4 { font-size:15px; margin-bottom:10px; }
+.bull-card { background:var(--bull-bg); border-left:4px solid var(--bull-border); }
+.bear-card { background:var(--bear-bg); border-left:4px solid var(--bear-border); }
+.arb-card { background:var(--arb-bg); border-left:4px solid var(--arb-border); }
+.verdict-box { background:var(--verdict-bg); border-left:4px solid var(--verdict-border); padding:16px 20px; margin:14px 0; }
+.verdict-box .verdict-title { color:var(--verdict-text); font-weight:700; font-size:15px; margin-bottom:6px; }
+.rr-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:14px 0; }
+.rr-card { padding:18px; border-radius:2px; }
+.rr-short { background:#F0F9FF; border-left:4px solid #0284C7; }
+.rr-mid { background:#F5F3FF; border-left:4px solid #7C3AED; }
+p { margin:10px 0; }
+ul { padding-left:22px; margin:10px 0; }
+li { margin:4px 0; }
+.kpi { display:inline-block; padding:2px 8px; background:#e2e8f0; border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:13px; }
+.print-btn { position:fixed; bottom:30px; right:30px; background:var(--title); color:#fff; padding:10px 18px; border-radius:2px; cursor:pointer; font-size:13px; border:none; font-family:inherit; }
+@media print { .header-bar, .print-btn { display:none; } .section { page-break-inside:avoid; border-left:none; box-shadow:none; } body { background:#fff; } }
+</style>
+</head>
+<body>
+<div class="header-bar">
+  <div class="left">
+    <span><strong>HWM</strong> (Howmet Aerospace)</span>
+    <span>資料抓取 2026-04-17</span>
+    <span>現價 USD 247.60</span>
+    <span>最近財報季 Q4 FY2025</span>
+  </div>
+  <div class="right">DD Schema v11.0</div>
+</div>
+<div class="container">
+
+<!-- ==================== §1 ==================== -->
+<section class="section">
+<h2 class="section-title">§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節；完整推理見 §11.5。</p>
+
+<h3 class="section-subtitle">結論 Dashboard</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>品質 A 級（10.0 / 10 滿分）：</strong>護城河 9/10 + 成長持久性 9/10 + 體質 +2.5（5/5 全過）</li>
+<li><strong>估值 🔴 明顯貴：</strong>Forward PE 53.2x vs 合理 PE 30x，PEG 2.70（3Y CAGR 19.7%）</li>
+<li><strong>短期：</strong>FY+1 EPS $4.655（+23.5% YoY，共識 n=11），目標價 $139.65 vs 現價 $247.60，R:R −0.83x（負值）</li>
+<li><strong>中期：</strong>FY+2 目標 $168.81（FY+2 EPS $5.627），R:R −0.61x（負值）</li>
+<li><strong>建議：</strong>迴避/等待——現價隱含成長過度定價，建議等 FPE 回落至 ~35x（對應 $160-170）才重新評估</li>
+<li><strong>關鍵發現：</strong>Q4 2025 全面 BEAT（Adj EPS +42% YoY），Engines 單季 EBITDA margin 33.3% 歷史新高，LEAP 2020-vintage 引擎 2026 開始進入首次大修，MRO 量能 2030 年將增至四倍；但估值 EV/EBITDA 40.6x 處於產業 96.5 分位</li>
+<li><strong>長期持有信心：高</strong>（§12 G：商業航空 backlog 10+ 年 + 90% 引擎結構件市佔 + aftermarket 年金 20-30 年）｜<strong>陷阱定性：🟢 非陷阱</strong>（超貴不等於陷阱，基本面無惡化信號）</li>
+</ul>
+</div>
+<p class="note">判定：<strong>迴避</strong>（§12 E，僅因價格，非品質）｜底倉 0%（目標倉位的）。底倉 = 目標倉位的 X%；目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15%/檔）。等待條件：FPE 壓縮至 ≤35x 或股價回測 $160-180 區間時轉觀望偏進場並可建 15% 底倉。</p>
+
+<h3 class="section-subtitle">⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>——現況是「好公司＋貴價格」，非四類陷阱（護城河侵蝕／盈餘品質／產業衰退／隱性資本密集）</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>Q4 2025 Adj EPS $1.05（+42% YoY）超共識，Engine Products EBITDA margin 33.3%（+250bps YoY），ROIC 21%（產業中位 3.9%），FCF $1.43B（93% 轉換率），Net Debt/EBITDA 1.0x 歷史低點。所有 Munger 護城河維度皆擴大，CAGR 加速。產業 backlog（Airbus 9,031 / Boeing 6,719 架）賣到 2035+。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>唯一「陷阱風險」是估值陷阱類型——當前 EV/EBITDA 40.6x 為產業 96.5 分位，FPE 53.2x 近歷史高點。若 2027-2028 出現商業航空訂單下修（例如新平台發射延宕、RTX/GE 任一引擎再度出大型 AD），估值倍數可能壓縮 30-40%，即使 EPS 照走，股價仍會下修 25%+。</td></tr>
+<tr><td>持有期監測指標</td><td>① Engine Products YoY 成長率若跌破 10%（2025 為 +16%）→ 重估；② 商業航空月交付量 YoY 若連 3 月負成長 → 風險信號。</td></tr>
+</table>
+<p class="note">最終定性：<span class="badge-green">🟢 非陷阱</span>——品質面 0 紅燈，但估值面明顯過熱，屬「好公司暫時不適合進場」而非結構性陷阱。</p>
+
+<h3 class="section-subtitle">最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Forward P/E（FY+1 基準）</td><td>§11, §12 D</td><td>🔵 核心估值入場信號</td><td>FPE ≤ 35x（相當於股價 $163 左右）→ 轉觀望偏進場</td></tr>
+<tr><td>2</td><td>LEAP 引擎 shop visits YoY 增速</td><td>§6, §9</td><td>🔵 長期成長持久性信號</td><td>shop visits 年增速跌破 15%（2025 為 +27%）→ aftermarket 拐點</td></tr>
+<tr><td>3</td><td>Engine Products 季度營收 YoY</td><td>§4, §6B</td><td>短期基本面信號</td><td>連續 2 季 YoY &lt; 10% → 成長 momentum 轉弱，估值壓縮風險升高</td></tr>
+</table>
+</section>
+
+<!-- ==================== §12 ==================== -->
+<section class="section">
+<h2 class="section-title">§12｜品質分驅動雙時距 R:R（v11.0）</h2>
+
+<h3 class="section-subtitle">A｜體質檢核（加減分）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="badge-green">✅ +0.5</span></td><td>2023 28.1% → 2024 31.1% → 2025 34.2%（連續擴張）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge-green">✅ +0.5</span></td><td>FY25 FCF $1.43B / NI $1.51B = 0.95；3Y 均 0.90</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge-green">✅ +0.5</span></td><td>90 天前 $4.45 → 當前 $4.66（+4.7%，持續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge-green">✅ +0.5</span></td><td>Q1 +12%、Q2 +13%、Q3 +10%、Q4 +15%（四季全正）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge-green">✅ +0.5</span></td><td>FY25 Net Debt/EBITDA = 1.0x（歷史新低）</td></tr>
+</table>
+<p><strong>體質加減分 = +2.5</strong>（5 項全過）</p>
+
+<h3 class="section-subtitle">B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數（1-10）</th></tr>
+<tr><td>護城河</td><td>§7 評分</td><td><strong>9</strong>（90% 引擎結構件市佔 + 1,150+ 專利 + 設計鎖定）</td></tr>
+<tr><td>成長持久性</td><td>§6 綜合（跑道 10+ 年 + 定價+量雙驅動 + AI 🟢 免疫）</td><td><strong>9</strong></td></tr>
+</table>
+<p><strong>底分 = (9 + 9) / 2 = 9.0</strong></p>
+<p><strong>品質分 = min(9.0 + 2.5, 10) = 10.0</strong>（滿分）</p>
+<p><strong>品質等級：A 級</strong>（基礎部位 25% 目標倉位）</p>
+
+<h3 class="section-subtitle">C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026E）</td><td>$4.655</td><td>yfinance 共識 avg（n=11，low $4.50 / high $4.92）</td></tr>
+<tr><td>FY+2 EPS（FY2027E）</td><td>$5.627</td><td>yfinance 共識 avg（n=9，low $5.20 / high $5.90）</td></tr>
+<tr><td>FY+2 成長率</td><td>+20.9%</td><td>($5.627 / $4.655) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>53.2x</td><td>$247.60 / $4.655</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>44.0x</td><td>$247.60 / $5.627</td></tr>
+<tr><td>公司 FY2026 Guidance</td><td>$4.35-$4.55（midpoint $4.45）</td><td>2026/02/12 8-K；共識高於 guidance 上限</td></tr>
+</table>
+
+<h3 class="section-subtitle">D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+
+<h4 class="section-sub3">步驟一：歷史錨點（5Y Forward P/E）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>5Y Forward P/E 中位數</td><td>25x</td></tr>
+<tr><td>5Y Forward P/E 75th percentile</td><td>35x</td></tr>
+<tr><td>5Y Forward P/E 歷史高點</td><td>~52x（2025 Q3-Q4）</td></tr>
+<tr><td><strong>基礎值（= 75th）</strong></td><td><strong>35x</strong></td></tr>
+</table>
+<p class="note">註：HWM 自 Spin-off（2020/04）以來歷經大幅 re-rate；2020-2022 期間常在 15-25x，2023 後因 aerospace supercycle 爆發 re-rate 至 35-50x+。當前 53.2x 高於歷史 75th 約 50%。</p>
+
+<h4 class="section-sub3">步驟二：PEG 調節</h4>
+<p>PEG = 當前 FPE 53.2 ÷ 3Y EPS CAGR 19.7% = <strong>2.70</strong>（&gt; 2.0）</p>
+<table>
+<tr><th>PEG 區間</th><th>調整規則</th><th>是否適用</th></tr>
+<tr><td>PEG &lt; 1.0</td><td>上浮至 min(75th × 1.2, 歷史高點)</td><td>—</td></tr>
+<tr><td>1.0 ≤ PEG ≤ 2.0</td><td>維持 75th</td><td>—</td></tr>
+<tr><td><strong>PEG &gt; 2.0</strong></td><td><strong>下壓至中位數</strong></td><td><span class="badge-red">✅ 觸發</span></td></tr>
+</table>
+<p>調整後 P/E = <strong>25x</strong>（5Y 中位數）</p>
+
+<h4 class="section-sub3">步驟三：品質溢價（因步驟二觸發下壓，進行三條件檢核）</h4>
+<table>
+<tr><th>#</th><th>條件</th><th>結果</th></tr>
+<tr><td>①</td><td>品質等級 = A 級</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>②</td><td>當前 ROIC &gt; 5Y 平均 ROIC</td><td><span class="badge-green">✅</span>（21% vs 5Y 平均 ~15%）</td></tr>
+<tr><td>③</td><td>當前毛利率 &gt; 5Y 平均毛利率</td><td><span class="badge-green">✅</span>（34.2% vs 5Y 平均 ~29%）</td></tr>
+</table>
+<p>三條件全滿足 → 合理 P/E = (中位數 + 75th) / 2 = (25 + 35) / 2 = <strong>30x</strong></p>
+
+<p class="note">交叉檢核 §11.5 調整後合理區間（28-36x）：合理 P/E 30x 落在區間內 ✅</p>
+
+<h3 class="section-subtitle">E｜雙時距目標價與 R:R</h3>
+
+<h4 class="section-sub3">目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td><strong>短期（1 年）</strong></td><td>FY+1 EPS $4.655 × 合理 P/E 30</td><td>$139.65</td></tr>
+<tr><td><strong>中期（2 年）</strong></td><td>FY+2 EPS $5.627 × 合理 P/E 30</td><td>$168.81</td></tr>
+</table>
+
+<h4 class="section-sub3">下檔錨點（基本面 Bear Case）</h4>
+<p class="note">Bear PE（引用 §6E「成長降至 10%」情境）= 20x；Bear EPS = FY+1 × 0.9 = $4.19</p>
+<table>
+<tr><th>項目</th><th>短期（1 年）</th><th>中期（2 年）</th></tr>
+<tr><td>Bear PE（§6E）</td><td>20x</td><td>20x</td></tr>
+<tr><td>Bear EPS</td><td>$4.655 × 0.9 = $4.19</td><td>$5.627 × 0.9 = $5.064</td></tr>
+<tr><td><strong>Bear 股價（原始）</strong></td><td><strong>$83.80</strong></td><td><strong>$101.28</strong></td></tr>
+<tr><td>W52 Low 替代（Bear 股價 &lt; W52 Low）</td><td><strong>$117.80</strong>（採用）</td><td><strong>$117.80</strong>（採用）</td></tr>
+</table>
+
+<h4 class="section-sub3">W52 / W104 參考（yfinance）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$247.60</td></tr>
+<tr><td>W52 Low（參考）</td><td>$117.80（2025/04 前後）</td></tr>
+<tr><td>W52 High</td><td>$267.31</td></tr>
+<tr><td>W104 Low（參考）</td><td>$62.46（2024 春）</td></tr>
+<tr><td>W104 High</td><td>$267.31</td></tr>
+<tr><td>MA104w</td><td>$151.27</td></tr>
+<tr><td><strong>短期下檔</strong>（採用）</td><td><strong>$117.80</strong>（W52 Low，因 Bear 股價更保守）</td></tr>
+<tr><td><strong>中期下檔</strong>（採用）</td><td><strong>$117.80</strong>（同上）</td></tr>
+</table>
+
+<h4 class="section-sub3">雙 R:R 計算</h4>
+<div class="rr-grid">
+<div class="rr-card rr-short">
+<h4>① 短期（1 年）</h4>
+<ul>
+<li>目標價：$139.65</li>
+<li>上行空間：($139.65 − $247.60)/$247.60 = <strong>−43.6%</strong></li>
+<li>下檔錨點：$117.80</li>
+<li>下行距離：($247.60 − $117.80)/$247.60 = <strong>52.4%</strong></li>
+<li><strong>R:R = −43.6% / 52.4% = <span class="badge-red">−0.83x</span></strong></li>
+</ul>
+</div>
+<div class="rr-card rr-mid">
+<h4>② 中期（2 年）</h4>
+<ul>
+<li>目標價：$168.81</li>
+<li>上行空間：($168.81 − $247.60)/$247.60 = <strong>−31.8%</strong></li>
+<li>下檔錨點：$117.80</li>
+<li>下行距離：<strong>52.4%</strong></li>
+<li><strong>R:R = −31.8% / 52.4% = <span class="badge-red">−0.61x</span></strong></li>
+</ul>
+</div>
+</div>
+
+<h4 class="section-sub3">判定（四級裁決）</h4>
+<table>
+<tr><th>條件</th><th>結果</th></tr>
+<tr><td>短期 R:R ≥ 2.0 <strong>且</strong> 中期 R:R ≥ 2.0 → 進場</td><td>❌</td></tr>
+<tr><td>僅中期 R:R ≥ 2.0 → 觀望</td><td>❌</td></tr>
+<tr><td>中期 R:R ≥ 1.0 <strong>且</strong> 品質 A 級 <strong>且</strong> 長期信心高 → 觀望偏進場</td><td>❌（中期 R:R −0.61，未過 1.0）</td></tr>
+<tr><td><strong>都不過 → 迴避</strong></td><td><span class="badge-red">✅ 最終判定：迴避</span></td></tr>
+</table>
+<p class="note">重要說明：本案「迴避」純因價格過高、上行空間已被市場吃掉，不是品質判斷。品質分滿分 10（A 級）、長期持有信心高。待 FPE 回落至 ~35x（合理 P/E + 75th 緩衝）或股價回測 $160-180 區間時可轉「觀望偏進場」並建 15% 底倉。</p>
+
+<h3 class="section-subtitle">F｜建倉建議（品質定基礎 × Bollinger 微調）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 SMA20</td><td>$227.68</td></tr>
+<tr><td>週線 BB 上軌（2σ）</td><td>$268.47</td></tr>
+<tr><td>週線 BB 下軌（2σ）</td><td>$186.89</td></tr>
+<tr><td>現價位置</td><td><span class="badge-yellow">合理（軌道之間）</span></td></tr>
+<tr><td>部位調整係數</td><td>×1.0</td></tr>
+</table>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基礎部位（品質 A 級查表）</td><td>25%</td></tr>
+<tr><td>R:R 判定覆寫</td><td><strong>迴避 → 0%</strong></td></tr>
+<tr><td><strong>最終建議部位</strong></td><td><strong>0%（等待進場條件）</strong></td></tr>
+</table>
+<p class="note">進場條件：Forward P/E ≤ 35x（對應 FY+1 EPS $4.655 × 35 = ~$163）或 Bollinger 下軌突破後反彈（現 $186.89）。達成任一條件 → 品質 A 級 + Bollinger 偏宜（×1.5）→ 建議部位可達 25% × 1.5 = 37.5%（需回頭重算）。</p>
+
+<h3 class="section-subtitle">G｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§6A</td><td><strong>充裕</strong>（Airbus + Boeing backlog 10+ 年，LEAP MRO 2030 年量能 4x，2020-vintage 引擎 2026 進入首次大修）</td></tr>
+<tr><td>護城河趨勢</td><td>§7</td><td><strong>加深</strong>（Engine Products 市佔 90%+，EBITDA margin 從 2023 28% → 2025 33%，pricing 持續改善）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p class="note">一句話：商業航空 supercycle + aftermarket 年金特性讓 HWM 具備 10 年+ 結構性成長，值得抱 5 年+；唯一問題是「進場價」——本報告日現價明顯已預支未來 3 年成長，策略應為「Buy on dip」而非「Buy now」。</p>
+</section>
+
+<!-- ==================== §13 ==================== -->
+<section class="section">
+<h2 class="section-title">§13｜三方辯論摘要</h2>
+
+<div class="debate-grid">
+<div class="debate-card bull-card">
+<h4>多頭辯護人｜Munger 模式</h4>
+<table>
+<tr><th>#</th><th>論據</th></tr>
+<tr><td>1</td><td>護城河：90% 引擎結構件市佔 + 1,150+ 專利，單晶渦輪葉片、冷卻架構皆與 GE/RR/P&amp;W co-develop，設計鎖定 = 數十年年金（§7）</td></tr>
+<tr><td>2</td><td>成長：Engine Products 25% YoY EBITDA 成長、LEAP MRO 2030 量能 4x、商業航空 backlog 10+ 年（§6）</td></tr>
+<tr><td>3</td><td>體質：ROIC 21%（產業 3.9%）、FCF margin 17.3%、Net Debt/EBITDA 1.0x 歷史低、FY25 $700M 回購 + 20% 股利加發（§8, §10）</td></tr>
+</table>
+<p><strong>多頭最強一句</strong>：這是全球航空業「收過路費」的 toll-bridge，而且收費亭還在漲價——Engine Products margin 三年擴 500bps，pricing power 仍在放大。</p>
+</div>
+
+<div class="debate-card bear-card">
+<h4>空頭檢察官｜Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損路徑</th></tr>
+<tr><td>1</td><td>估值壓縮：當前 EV/EBITDA 40.6x 為產業 96.5 分位。若 multiple 回歸 5Y median（~18x），在 EPS 照走下股價仍可跌 45%+（§11.1, §11.3）</td></tr>
+<tr><td>2</td><td>供應鏈拐點：Airbus 已下修 A220 2026 月產從 14 → 12；若 Boeing 737 MAX 再度降速或 RTX GTF 再度出大問題，Fastening + Engine 雙重打擊（§9）</td></tr>
+<tr><td>3</td><td>基期太高：FY25 已是「記錄年」（revenue record、FCF record、margin record、Capex record），任何 margin 修正都會放大到股價（§11.0 估值邏輯下修風險）</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：歷史上 HWM 前身（Arconic/Alcoa 分拆）曾在 2019 疫情前也被視為「aerospace 長期贏家」，結果 2020 跌 70%。當前估值比當時更貴。</p>
+</div>
+
+<div class="debate-card arb-card">
+<h4>估值仲裁員｜Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>評分</th></tr>
+<tr><td>與歷史 FCF CAGR 差距</td><td>1/2（隱含 CAGR ~14% 略高於 3Y FCF CAGR 22%，基期問題）</td></tr>
+<tr><td>與共識 EPS CAGR 一致性</td><td>1/2（共識 3Y 19.7%，隱含 14% 接近但分析師偏樂觀）</td></tr>
+<tr><td>與同業最快 FCF CAGR 相對位置</td><td>1/2（TransDigm 歷年 FCF 複合 15-18%，HWM 隱含略低，合理）</td></tr>
+<tr><td>達成條件苛刻程度</td><td>1/2（需 Revenue 持續 10%+ 成長 ＋ FCF margin 20%+，非極端但要連續 10 年）</td></tr>
+<tr><td>歷史先例</td><td>1/2（TransDigm 是先例，但 HWM 是資本密集型，與 TDG 輕資產模式不同）</td></tr>
+</table>
+<p><strong>隱含預期可信度：5 / 10</strong></p>
+<p><strong>仲裁員一句</strong>：故事合理，價格激進。DCF 隱含要求「aerospace supercycle 10 年不停＋margin 持續擴張」，這不是 0% 概率，但也不是「價格留了安全邊際」。</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<div class="verdict-title">【裁決】</div>
+<table>
+<tr><td>多頭最強論據</td><td>全球 toll-bridge 護城河，Engine Products margin 仍在擴張</td></tr>
+<tr><td>空頭最大威脅</td><td>EV/EBITDA 40.6x 產業 96.5 分位，歷史經驗任何 margin 修正會放大至股價</td></tr>
+<tr><td>估值仲裁評分</td><td>5 / 10</td></tr>
+<tr><td><strong>裁決</strong></td><td><strong>迴避（等待合理進場價）</strong></td></tr>
+<tr><td>裁決理由</td><td>業務品質 A 級無疑慮，純粹是價格過貴。在 FPE 53x 且 PEG 2.7 的情況下，任何 EPS miss（即使 5%）都會同時觸發估值壓縮與盈餘下修的 double-whammy。紀律做法：建立 target price list（$170/$180/$190 三檔加碼位），等待 Bollinger 下軌突破或系統性 aerospace pullback 時建倉。</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== §2 ==================== -->
+<section class="section">
+<h2 class="section-title">§2｜序章：第一性原理 × 逆向思考</h2>
+
+<h3 class="section-subtitle">存在意義</h3>
+<p>Howmet 解決的不可逆痛點是「讓數噸金屬在 1,500°C 持續旋轉二十年不崩」。具體：單晶渦輪葉片（single-crystal turbine blades）將金屬晶界全部消除，使葉片能在燃氣溫度高於金屬熔點的環境下持續工作十萬小時以上。若 Howmet 明天消失，全球商業飛機引擎的整個關鍵熱路徑（hot section）以及 99% 的渦輪葉片補給鏈會斷——Rolls-Royce 的 Trent、GE 的 GE90/LEAP、P&amp;W 的 GTF 全線停機。這不是「提升效率」，是「飛得起來 vs 飛不起來」的差別。</p>
+
+<h3 class="section-subtitle">逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能路徑：</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：生產集中於 US/EU/墨西哥，中國子公司貢獻 &lt;5%；主要鈦/鎳合金供應來自俄羅斯、哈薩克、中國——鈦禁運或戰爭中斷是 tail risk 但 HWM 已建立雙源（ATI、Alcoa、VSMPO 替代）。</li>
+<li><strong>技術替代風險</strong>：增材製造（3D 列印）正在蠶食複雜鑄造市場，GE Aviation 已內製部分燃油噴嘴。10 年內金屬 3D 列印單晶葉片仍是 R&amp;D 階段（關鍵：柱狀晶/單晶結構 3D 列印良率 &lt;20%），不會是 2026-2030 威脅；但 2030+ 是關注點。</li>
+<li><strong>管理層失職</strong>：John Plant 2025 年薪 $70.5M（+68% YoY）且被授予 $45M 留任獎勵——薪酬異常膨脹、執行長年近 75、接班人計畫不透明，是治理最大紅旗。</li>
+<li><strong>價值陷阱路徑</strong>：四類陷阱中最可能的是「<strong>估值陷阱（非本框架的四大類）</strong>」——業務面健康但買太貴。若必選四類之一，最接近「隱性資本密集型」：Capex 從 2023 年 ~$260M 躍升至 2025 年 $453M（70% 在 Engine），若這是長期基本開銷而非一次性擴產，FCF margin 可能被高估。但目前 FCF 轉換率仍 93%，暫未惡化。</li>
+</ul>
+</section>
+
+<!-- ==================== §3 ==================== -->
+<section class="section">
+<h2 class="section-title">§3｜投資論點錨定</h2>
+
+<h3 class="section-subtitle">A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>3-5 年（aerospace supercycle 中段）</td></tr>
+<tr><td>主要驅動理由</td><td>Airbus/Boeing backlog 10+ 年 + LEAP 2020-vintage 首次大修週期 2026-2030，兩者交疊創造 5 年現金流爆發窗口</td></tr>
+<tr><td>時間軸決定的訊噪分野</td><td>持有期 3-5 年：護城河趨勢、ROIC、Engine 市佔為訊號；單季 EPS beat/miss 為噪音；估值進場點為訊號（現在錯過可等回檔）</td></tr>
+</table>
+
+<h3 class="section-subtitle">B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>商業航空 backlog 與 aftermarket 共振（供需緊缺 + LEAP 大修潮）維持 Engine Products 營收 2026-2029 CAGR ≥ 12%</td><td>Engine Products 季度營收 YoY、EBITDA margin</td><td>每季財報</td></tr>
+<tr><td>H2</td><td>Engine EBITDA margin 從 33% 推升至 35%+（pricing + mix 改善 + 學習曲線）</td><td>Engine 分部 EBITDA%、Adj EPS</td><td>FY2027 Q4</td></tr>
+<tr><td>H3</td><td>Forward P/E 在 3 年內可維持 35-45x 區間（不崩回 20x），以支撐估值不大幅壓縮</td><td>Forward P/E、EV/EBITDA、與 TDG/HEI 相對 spread</td><td>持續追蹤</td></tr>
+</table>
+
+<h3 class="section-subtitle">C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Boeing 737 MAX 再次出現生產危機（罷工、FAA 降速、品質事件）</td><td>H1</td><td>737 MAX 月交付量</td><td>連續 3 月 YoY 負成長</td></tr>
+<tr><td>R2</td><td>GTF/LEAP 任一引擎再爆大型 AD（類似 2023 GTF 粉末金屬事件），Airbus/Boeing 被迫降速</td><td>H1, H2</td><td>Airbus A320 月交付</td><td>連續 2 月月產 &lt; 55 架</td></tr>
+<tr><td>R3</td><td>成長股 multiple 系統性壓縮（10Y UST 升破 5.5% 或 macro hard landing）</td><td>H3</td><td>10Y UST、HWM 相對 S&amp;P 500 P/E premium</td><td>HWM FPE / S&amp;P FPE ratio 壓至 1.8x 以下（現 ~2.4x）</td></tr>
+</table>
+
+<h3 class="section-subtitle">D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配</td><td>事件影響是否落在 3-5 年持有期內？</td></tr>
+<tr><td>2. 假設關聯</td><td>影響 H1（需求）/ H2（margin）/ H3（估值）中哪一個？</td></tr>
+<tr><td>3. 邊際方向</td><td>＋強化 / 0 無關 / −削弱？</td></tr>
+<tr><td>4. 閾值判斷</td><td>是否觸發重新評估？（例：Engine 單季 YoY &lt; 10% = H1 削弱）</td></tr>
+</table>
+
+<h3 class="section-subtitle">E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>股價回測 $160-180（FPE ≤ 35x）且基本面無惡化</td><td>建倉 15-20%（目標倉位的）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 確認（Engine 連續 2 季 YoY &gt; 12% 且 margin 擴張）</td><td>加碼至 25% 目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R2（引擎 AD 事件）或 FPE 重返 &gt; 50x</td><td>減至 10%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 核心假設被推翻（Engine 連續 2 季 YoY &lt; 5%）</td><td>清倉</td></tr>
+</table>
+</section>
+
+<!-- ==================== §4 ==================== -->
+<section class="section">
+<h2 class="section-title">§4｜即時財報情報（Q4 FY2025）</h2>
+
+<h3 class="section-subtitle">① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>Q4 2025 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td>$2.2B</td><td>$2.15B</td><td><span class="badge-green">BEAT +2.3%</span></td><td>+15%</td></tr>
+<tr><td>Adjusted EPS</td><td>$1.05</td><td>$0.96</td><td><span class="badge-green">BEAT +9.4%</span></td><td>+42%</td></tr>
+<tr><td>Adj EBITDA margin</td><td>~30%</td><td>~27%</td><td><span class="badge-green">BEAT</span></td><td>+300bps</td></tr>
+<tr><td>FCF (FY25)</td><td>$1.43B</td><td>$1.35B</td><td><span class="badge-green">BEAT</span></td><td>+52%</td></tr>
+<tr><td>Gross Margin (FY25)</td><td>34.2%</td><td>—</td><td>—</td><td>+310bps</td></tr>
+<tr><td>Operating Margin (FY25)</td><td>25.6%</td><td>—</td><td>—</td><td>+350bps</td></tr>
+</table>
+
+<h3 class="section-subtitle">財報對 §3 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Engine 需求共振）</td><td><span class="badge-green">＋強化</span></td><td>Engine 全年 +16%、Gas Turbines +32%、Defense +20%，三向共振</td></tr>
+<tr><td>H2（Engine margin 擴張）</td><td><span class="badge-green">＋強化</span></td><td>Engine 分部 EBITDA margin 33.3%（+250bps YoY，記錄高點）</td></tr>
+<tr><td>H3（估值維持）</td><td><span class="badge-yellow">0 中性</span></td><td>財報後股價小幅上漲，但已逼近歷史新高 $267，未來 multiple 壓縮風險上升</td></tr>
+</table>
+
+<h3 class="section-subtitle">② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：樂觀偏強（與 Q3 比更自信）。John Plant 強調「record year across every metric」；FY2026 guidance revenue $9.0-9.2B（+10% vs 共識 $8.8B）代表公司對自己成長信心高於共識。</li>
+<li><strong>Forward Guidance</strong>：Q1 2026 EPS $1.09-1.11（共識 $1.08，略高於共識）；FY2026 EPS $4.35-4.55（共識 $4.45，midpoint 完美吻合）。但 yfinance 共識已上修到 $4.66，代表 sell-side 認為公司 guidance 偏保守（慣例）。</li>
+<li><strong>刻意強調的主題</strong>：① Engine Products 33.3% EBITDA margin 為 segment 新高；② Net Debt/EBITDA 1.0x 歷史低；③ $200M Q4 回購 + 20% 股利加發；④ LEAP spare parts 增長超 25%。</li>
+<li><strong>刻意迴避的問題</strong>：分析師追問「CEO John Plant（75 歲）的接班人計畫」與「$45M 留任獎勵背後的考量」，管理層僅回答「適當時機會公告」。</li>
+</ul>
+
+<h3 class="section-subtitle">③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：Commercial Aero +13%、Defense +20%、Gas Turbines +32%——三大終端同步擴張，代表不是單一客戶或單一平台的週期，是結構性需求。</li>
+<li><strong>供給端</strong>：$453M 記錄性 Capex 的 70% 在 Engine——HWM 本身認為 Engine 是最稀缺的供給瓶頸，正在加速擴產。這 imply 整個航空供應鏈的 engine hot section 仍供需緊張。</li>
+<li><strong>競爭格局</strong>：Engine Products 33.3% EBITDA margin 擴張，反映定價權仍在擴大。HWM 沒有提到「pricing pressure」或「market share loss」。</li>
+<li><strong>總體經濟敏感度</strong>：管理層未提及利率或經濟衰退擔憂。唯一提及「supply chain still in recovery」——對 Fastening Systems 是逆風（當前 OEM 拉貨節奏慢），對 Engine 反而是順風（aftermarket spare 需求急）。</li>
+<li><strong>同業推論</strong>：對 GE Aerospace、RTX（P&amp;W）、Safran 是強烈正面信號——HWM 的 Engine 業務榮景反映引擎 OEM 本身也在豐收；對 TransDigm 亦正面（aerospace aftermarket 年金增長）；對 Spirit AeroSystems（即將被 Boeing 併回）中性。</li>
+</ul>
+</section>
+
+<!-- ==================== §5 ==================== -->
+<section class="section">
+<h2 class="section-title">§5｜核心門檻檢核</h2>
+
+<h3 class="section-subtitle">EPS CAGR 計算（v9 邏輯外推）</h3>
+<ul>
+<li><strong>基期 EPS（FY2025 Adj）</strong>：$3.77（yfinance earnings_estimate yearAgoEps）</li>
+<li><strong>FY+1E（FY2026）</strong>：$4.655（yfinance 共識 avg，n=11，90 天前 $4.45 → 上修 4.7%）</li>
+<li><strong>FY+2E（FY2027）</strong>：$5.627（yfinance 共識 avg，n=9，YoY +20.9%）</li>
+<li><strong>FY+3E（FY2028，§6 邏輯推導）</strong>：$6.47（YoY +15%）。推導邏輯：① §6A Runway 充裕但 2028 已接近 backlog ramp 尾部；② §6B 定價仍可貢獻但 volume 成長遞減（Airbus/Boeing 月產到 2028 已達滿載）；③ §6D 內生成長率 ROIC 21% × reinvest rate 32% = 6.7% + 定價 8% ≈ 15%</li>
+<li><strong>3Y EPS CAGR</strong> = ($6.47 / $3.77)^(1/3) − 1 = <strong>19.7%</strong></li>
+<li><strong>口徑差距</strong>：HWM 以 Adj EPS 為主要口徑，GAAP 與 Non-GAAP 差距 &lt;5%（主要為重組費用與合併攤銷），CAGR 差距忽略不計。</li>
+</ul>
+
+<h3 class="section-subtitle">門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge-green">✅</span></td><td>當前 17.3%（$1.43B/$8.25B），3Y 趨勢 ↑（10.3% → 13.1% → 17.3%）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="badge-yellow">🟡</span></td><td>5Y 各年：10.4% / 9.5% / 10.3% / 13.1% / 17.3%；5Y 均 12.1%，最低谷 9.5%（2022）——未達 15% 門檻，但趨勢改善中</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td><span class="badge-green">✅</span></td><td>當前 ROIC 21.1%，WACC 估 ~9.5%，超額 +11.6%p</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10Y 中 ≥ 70% 年份 &gt; 15%</td><td><span class="badge-yellow">🟡</span></td><td>Spin-off 後 5 年樣本：2021 ~8% / 2022 ~11% / 2023 ~14% / 2024 ~17% / 2025 ~21%——達 15% 年數 2/5（40%），但擴大趨勢明確</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10Y 中 ≥ 70% 年份改善</td><td><span class="badge-green">✅</span></td><td>5 年改善年份 4/5（2021 → 25%、2022 27.5%、2023 28.1%、2024 31.1%、2025 34.2%）</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5% 優 / &lt; 10% 尚可</td><td><span class="badge-yellow">🟡</span></td><td>當前 5.5%，3Y 均 4.7% — 尚可（重資產製造業常態）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="badge-yellow">🟡</span></td><td>Adj CAGR 19.7%（接近門檻但未達）；FY+1 YoY +23.5%，FY+2 YoY +20.9%</td></tr>
+<tr><td>PEG（Adj）</td><td>&lt; 2</td><td><span class="badge-red">❌</span></td><td>PEG = 53.2/19.7 = 2.70（§11.2）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；Cash/Rev 10-50%</td><td><span class="badge-green">✅</span></td><td>D/E 0.60；Cash/Rev 9%（略低）；Net Debt/EBITDA 1.0x 記錄低點</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="badge-red">❌</span></td><td>Cash $743M vs Debt $3.2B（覆蓋 23%，但 EBITDA $2.4B 覆蓋能力強）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge-green">✅</span></td><td>9/10（§7），趨勢擴大</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：資本密集度（Capex 5.5%）+ 5Y FCF margin 均值僅 12.1%（2021-2022 疫情壓低基期）。</p>
+<p><strong>Munger 三維評級</strong>：<span class="badge-yellow">🟡</span> 兩項達標（毛利率改善 ✅、負債安全 ✅），ROIC 穩定性與資本密集度因 spin-off 後年限不足 + 重資產本質未達標。需在 §7 說明這是結構性（重資產製造）而非競爭力弱點。</p>
+
+<h3 class="section-subtitle">⚠️ 價值陷阱初篩：低估值四問</h3>
+<p class="note">觸發條件：Forward P/E 53.2x 在 5Y 歷史分位 ~95%；P/FCF 47x 在 ~90% 分位——<strong>未觸發低估值警戒</strong>（反而偏高估值警戒）。因此不執行低估值四問，改為在 §11 執行「估值體系升級合理性」的正向驗證。</p>
+</section>
+
+<!-- ==================== §6 ==================== -->
+<section class="section">
+<h2 class="section-title">§6｜長期成長性評估</h2>
+
+<h3 class="section-subtitle">A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（億美元）</td><td>~$90B（aerospace components + aftermarket）</td><td>IATA 2026 資料</td></tr>
+<tr><td>估計可達 TAM</td><td>~$130B（2030）</td><td>CAGR ~8% 至 2030</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>Engine structural 90%，Fastening ~35%，Forged Wheels ~70%</td><td>已近飽和的細分市場，成長靠量與 aftermarket</td></tr>
+<tr><td>若維持現有成長，幾年達 30% 總滲透率</td><td>不適用（Engine 已 90%）</td><td>成長非來自滲透率擴張，而是 installed base 累積 + aftermarket</td></tr>
+<tr><td><strong>成長可持續年數（Runway）</strong></td><td><strong>10+ 年</strong></td><td>LEAP 裝機量 2024-2030 將增 3x；shop visits 2030 將達 4x；backlog 10 年</td></tr>
+</table>
+<p>Runway 解讀：<span class="badge-green">🟢 高確信長期複利</span>——支撐高估值倍數。</p>
+
+<h3 class="section-subtitle">B｜成長品質判斷</h3>
+
+<h4 class="section-sub3">① 成長來源（有機 vs 無機）</h4>
+<table>
+<tr><th>類型</th><th>此標的佔比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~95%</td><td>近 3 年無重大併購；定價 + 量兼備</td></tr>
+<tr><td>無機成長</td><td>~5%</td><td>2025 小型 bolt-on 收購約 $100M</td></tr>
+</table>
+
+<h4 class="section-sub3">② 成長驅動結構（定價 vs 量）</h4>
+<table>
+<tr><th>類型</th><th>此標的判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動</td><td>Engine 每年 mid-single-digit % 提價 + mix shift（spare &gt; OE）</td><td>擴大</td></tr>
+<tr><td>量驅動</td><td>Airbus/Boeing 月產 2026-2027 仍在 ramp</td><td>穩定偏擴大</td></tr>
+</table>
+<p class="note">成長為「<strong>定價驅動為主 + 量驅動為輔</strong>」的優質組合，§9 中會進一步看到 aftermarket（高毛利）占比提升為 pricing 的真正來源。</p>
+
+<h3 class="section-subtitle">C｜成長護城河連動評估</h3>
+<p><strong>此標的屬於</strong>：<span class="badge-green">強化型（最佳）</span></p>
+<p>佐證：每新裝一台 LEAP/GTF，Howmet 就在該飛機的 20-30 年壽命中建立了 spare parts 獨佔權（因為飛機適航認證鎖定供應商變更需重新 FAA 認證，耗時 2-3 年 + 數百萬美金）。規模愈大 → 累積裝機量愈大 → aftermarket 年金愈大 → 邊際利潤率愈高。這正是 TransDigm 模式的「aerospace razor-razorblade」經濟。</p>
+
+<h3 class="section-subtitle">D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>標準</th><th>符合?</th></tr>
+<tr><td>ROIC</td><td>21.1%</td><td>11%</td><td>↑</td><td>產業頂尖且 &gt; WACC</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+11.6%p</td><td>+2%p</td><td>↑</td><td>正值擴大</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>FCF Margin</td><td>17.3%</td><td>10.3%</td><td>↑</td><td>&gt; 15%</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td>0.95</td><td>0.89</td><td>↑</td><td>&gt; 85%</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>~32%（Capex/FCF）</td><td>~25%</td><td>↑</td><td>合理偏高</td><td><span class="badge-yellow">🟡</span>（需觀察）</td></tr>
+</table>
+
+<h3 class="section-subtitle">E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>特徵</th><th>合理 Forward P/E</th><th>估值跌幅</th></tr>
+<tr><td>3 年後成長降至 15%</td><td>放緩但仍高於市場</td><td>28x</td><td>−47%（從 53.2 → 28）</td></tr>
+<tr><td>3 年後成長降至 10%（<strong>Bear Case 採用</strong>）</td><td>回歸市場平均</td><td><strong>20x</strong></td><td>−62%</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>成熟期低成長</td><td>14x</td><td>−74%</td></tr>
+</table>
+
+<h3 class="section-subtitle">⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號</th><th>指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季 YoY 下滑</td><td>每季皆 YoY 擴張</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>市佔縮減</td><td>Engine 穩定 90%</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>mid-single digit 提價 + 銷量同步擴張</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR ＞ Rev CAGR &gt;5%p</td><td>EPS 20% vs Rev 11%，差距 9%p</td><td><span class="badge-yellow">🟡</span>（margin + 回購驅動，非純靠回購）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75（連 2 年）</td><td>0.95（2025）/ 0.85（2024）</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且上升</td><td>~0.5%，持平</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>產業衰退</td><td>TAM 萎縮</td><td>aerospace TAM 擴張中</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>產業衰退</td><td>產業估值 3 年下移</td><td>產業 multiple 上移</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex/FCF &gt; 60%</td><td>~30%（另 70% 擴產性）</td><td><span class="badge-green">⬜</span></td></tr>
+<tr><td>隱性資本密集</td><td>停投資 3 年內收入下滑?</td><td>裝機量 2029+ 才會成熟</td><td><span class="badge-green">⬜</span></td></tr>
+</table>
+<p>亮燈數：<strong>1 個（盈餘品質中等警戒）</strong>——但差距來源是 margin 擴張（Engine EBITDA 28% → 33%，+500bps）+ 適度回購，不是純靠回購堆疊。</p>
+<p><strong>價值陷阱風險評級</strong>：<span class="badge-green">🟡 中度警戒（1 個亮燈）</span>——需在 §7 說明差距來源，無需觸發 §11 便宜理由檢驗（因估值已偏高而非便宜）。</p>
+
+<h3 class="section-subtitle">長期成長性綜合評級</h3>
+<p><span class="badge-green">🟢 高確信長期成長</span>——Runway 10+ 年、有機 + 定價驅動、強化型護城河、ROIC 擴大、衰退信號僅 1 個（且為正向過度樂觀標記）。</p>
+
+<h3 class="section-subtitle">F｜AI 取代風險評級（v9.0）</h3>
+<p><span class="badge-green">🟢 AI 受益或免疫（= 9 分）</span></p>
+<p>證據：① 核心業務（engine hot section、flight-critical fasteners、aluminum wheels）是物理性精密製造，AI 不能取代金屬冶金與高溫合金製造；② 反而 AI 數據中心需求推升航空 gas turbine（HWM 的 Industrial Gas Turbine 業務 2025 +32%）——AI 帶來電力需求 → 天然氣發電 → 工業渦輪需求；③ HWM 本身在內部採用 AI 改善製造良率與預測性維護。AI 對 HWM 是淨正面。</p>
+</section>
+
+<!-- ==================== §7 ==================== -->
+<section class="section">
+<h2 class="section-title">§7｜護城河分析</h2>
+<p><strong>評分：9 / 10</strong>（以全球上市公司為基準）</p>
+
+<h3 class="section-subtitle">護城河來源</h3>
+<ul>
+<li><strong>網路效應（弱）</strong>：無直接網路效應，但有「安裝基座效應」——累積裝機量愈大，spare parts 年金愈大。評分：6/10。</li>
+<li><strong>無形資產（強）</strong>：1,150+ granted/pending patents；單晶渦輪葉片配方與冷卻架構為核心 IP；與 GE/RR/P&amp;W 共同開發關係 20-30 年。評分：9/10。</li>
+<li><strong>轉換成本（極強）</strong>：飛機適航認證鎖定供應商變更需 2-3 年 + 數百萬美金 FAA 重新認證；每台引擎壽命 20-30 年 = 20-30 年 captive spare 市場。評分：10/10。</li>
+<li><strong>規模優勢（中強）</strong>：全球最大單晶葉片產能，但 P&amp;W 部分自產（vertical integration）；Safran 部分內製 LEAP 熱段。評分：7/10。</li>
+</ul>
+
+<h3 class="section-subtitle">競爭鴻溝</h3>
+<p>資本充足對手無法跨越的原因：① FAA 認證壁壘（2-3 年 + 數百萬美金 per part number）；② 冶金與製程 know-how 累積數十年；③ OEM 共同開發關係，新平台從設計階段就與 HWM 綁定（sticky by design）。PCP（Precision Castparts，現為 Berkshire 子公司）是唯一規模級對手，但 PCP 主攻 structural castings，HWM 在 engine hot section 的 single-crystal blade 仍具優勢。</p>
+
+<h3 class="section-subtitle">市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>HWM</td><td>Engine structural 90%</td><td>穩定</td><td>—</td><td>—</td></tr>
+<tr><td>Precision Castparts（BRK）</td><td>~60% 結構鑄件（airframe）</td><td>穩定</td><td>產能競合</td><td>各據山頭，無直接衝突</td></tr>
+<tr><td>GE / P&amp;W 自製</td><td>Engine 5-10%</td><td>略升</td><td>垂直整合</td><td>OEM 吃 HWM 一小部分</td></tr>
+<tr><td>Safran（自製熱段）</td><td>LEAP 部分</td><td>略升</td><td>LEAP 自製</td><td>HWM 仍供應 LEAP 關鍵件</td></tr>
+<tr><td>Doncasters / Consolidated Precision</td><td>&lt; 5%</td><td>穩定</td><td>低端</td><td>不影響 HWM 高端</td></tr>
+</table>
+
+<h3 class="section-subtitle">護城河趨勢</h3>
+<p><strong>擴大</strong>。證據：Engine Products EBITDA margin 2023 28% → 2024 30.7% → 2025 33.3%，定價權擴張、mix 改善同步進行。</p>
+
+<h3 class="section-subtitle">24 個月內最可能瓦解護城河的變化</h3>
+<ul>
+<li>1. 金屬 3D 列印單晶葉片突破（目前良率 &lt;20%，技術需至少 5 年）——<strong>低威脅</strong></li>
+<li>2. GE/P&amp;W/RR 垂直整合加速（2025 已小幅增加，但 ramp 慢）——<strong>中度威脅</strong></li>
+<li>3. 新世代引擎架構（Open Fan / CROR）若 2027+ 正式發射，HWM 需重新投入 R&amp;D——<strong>低威脅但需監控</strong></li>
+</ul>
+
+<p class="note">回應 §6 衰退信號 1 個亮燈：EPS CAGR 20% vs Rev CAGR 11% 的 9%p 差距，來源為 margin 擴張（Engine 28% → 33% + operating leverage）+ 適度回購（FY25 $700M），<strong>非純靠回購堆疊</strong>——回購 vs FCF 比例 49%（健康範圍）。結構性擴張非會計操縱。</p>
+</section>
+
+<!-- ==================== §8 ==================== -->
+<section class="section">
+<h2 class="section-title">§8｜財務品質監測</h2>
+
+<h3 class="section-subtitle">三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手（TDG）</th></tr>
+<tr><td>FCF Margin</td><td>10.3%</td><td>13.1%</td><td>17.3%</td><td>~22%（更輕資產）</td></tr>
+<tr><td>EBITDA Margin</td><td>23%</td><td>25.7%</td><td>29%</td><td>~52%</td></tr>
+<tr><td>ROIC − WACC</td><td>+4.5%p</td><td>+7.5%p</td><td>+11.6%p</td><td>+20%p+</td></tr>
+<tr><td>SBC / Revenue</td><td>0.5%</td><td>0.5%</td><td>~0.5%</td><td>&lt; 1%</td></tr>
+<tr><td>ROE</td><td>17%</td><td>24%</td><td>30%</td><td>N/A（負股東權益，槓桿過重）</td></tr>
+</table>
+
+<h3 class="section-subtitle">獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：OCF $1.88B vs NI $1.51B，OCF &gt; NI 為健康信號（無盈餘操縱跡象）。</li>
+<li><strong>AR vs Rev 成長</strong>：Revenue +11%，AR 增幅相近，無膨脹。</li>
+<li><strong>存貨 vs Rev 成長</strong>：Q4 存貨微幅低於年初，因 Capex 消耗材料 + 產出加速，健康。</li>
+<li><strong>FCF 轉換率趨勢</strong>：93% (2025) &gt; 85% (2024) &gt; 89% (2023)，持續改善。</li>
+</ul>
+
+<h3 class="section-subtitle">回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購 vs FCF</td><td>~$1.9B vs FCF 累計 $3.2B</td><td>回購/FCF = 59%（健康，遠低於 80% 警戒）</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>原 20% → 剔除後 ~16%</td><td>差距 4%p &lt; 5%p 警戒</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>2022-2024 回購均價約 $75-150，當前 $247</td><td>資本配置<strong>正確</strong>——歷史回購價遠低於當前股價</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>~14%</td><td>EPS 20% vs Rev 14%，差距由 margin 擴張 + 回購共同貢獻</td></tr>
+</table>
+
+<h3 class="section-subtitle">同業比較（對應 §11.4）</h3>
+<table>
+<tr><th>公司</th><th>ROIC</th><th>FCF Margin</th><th>Gross Margin</th><th>Net Debt/EBITDA</th></tr>
+<tr><td><strong>HWM</strong></td><td>21.1%</td><td>17.3%</td><td>34.2%</td><td>1.0x</td></tr>
+<tr><td>TransDigm (TDG)</td><td>~18%</td><td>22%</td><td>~62%</td><td>~5.5x</td></tr>
+<tr><td>GE Aerospace (GE)</td><td>~25%</td><td>~10%</td><td>~30%</td><td>~1.5x</td></tr>
+<tr><td>HEICO (HEI)</td><td>~15%</td><td>~16%</td><td>~40%</td><td>~1.8x</td></tr>
+<tr><td>RTX Corp</td><td>~10%</td><td>~7%</td><td>~19%</td><td>~2.5x</td></tr>
+</table>
+</section>
+
+<!-- ==================== §9 ==================== -->
+<section class="section">
+<h2 class="section-title">§9｜產業格局、議價權與 Unit Economics</h2>
+
+<h3 class="section-subtitle">市場量化</h3>
+<ul>
+<li><strong>TAM</strong>：全球 aerospace components + aftermarket 約 $90B（2025），預估 2030 達 $130B，CAGR ~8%</li>
+<li><strong>當前滲透</strong>：HWM 在 engine structural 已 90%，aftermarket 在累積 installed base</li>
+<li><strong>供需狀態</strong>：<strong>緊缺</strong>——Airbus 9,031 架 + Boeing 6,719 架 backlog，等同 10+ 年產能賣完</li>
+</ul>
+
+<h3 class="section-subtitle">議價權</h3>
+<ul>
+<li><strong>對上游（鈦、鎳、鋁合金供應商）</strong>：供應商集中度高（VSMPO、ATI、Allegheny），但 HWM 以長約綁定 + 多源確保供給；定價傳導良好。</li>
+<li><strong>對下游客戶</strong>：OEM 集中度高（Boeing/Airbus/Embraer、GE/RR/P&amp;W 合計貢獻 &gt;70% 營收），但因認證鎖定，客戶議價能力弱於表象；HWM 每年 mid-single digit 提價皆成功轉嫁。</li>
+<li><strong>地理曝險</strong>：主要生產地 US（75%）、EU（15%）、墨西哥（8%）、中國（&lt;5%）；關鍵原料鈦有俄國依賴但已多源化。</li>
+</ul>
+
+<h3 class="section-subtitle">營收組成（FY2025，供 §6 B 權重引用）</h3>
+<table>
+<tr><th>分部</th><th>2025 Revenue</th><th>占比</th><th>YoY</th><th>Adj EBITDA Margin</th></tr>
+<tr><td>Engine Products</td><td>$4.3B</td><td><strong>52%</strong></td><td>+16%</td><td>33.3%</td></tr>
+<tr><td>Fastening Systems</td><td>$1.7B</td><td><strong>21%</strong></td><td>+11%</td><td>~28%</td></tr>
+<tr><td>Engineered Structures</td><td>$1.25B</td><td><strong>15%</strong></td><td>+10%</td><td>~20%</td></tr>
+<tr><td>Forged Wheels</td><td>$1.0B</td><td><strong>12%</strong></td><td>−1%</td><td>~30%</td></tr>
+<tr><td><strong>合計</strong></td><td><strong>$8.25B</strong></td><td><strong>100%</strong></td><td>+11%</td><td>~29%（綜合）</td></tr>
+</table>
+
+<h3 class="section-subtitle">Unit Economics（Aerospace razor-razorblade）</h3>
+<ul>
+<li><strong>OE（原始裝機）收入</strong>：每架 A320neo / 737 MAX 約 $400-600k HWM 產品價值</li>
+<li><strong>Aftermarket LTV</strong>：每台 LEAP/GTF 裝機後 20-30 年 spare parts 累積 $2-3M 營收，毛利率約 45-55%（vs OE ~30%）</li>
+<li><strong>Installed base 動能</strong>：LEAP 裝機量 2024-2030 增 3x；shop visits 2030 增 4x；HWM 賣 OE 時以接近 cost 定價，aftermarket 是真正利潤來源</li>
+</ul>
+</section>
+
+<!-- ==================== §10 ==================== -->
+<section class="section">
+<h2 class="section-title">§10｜公司治理與資本配置</h2>
+
+<h3 class="section-subtitle">① 股東/股權結構</h3>
+<ul>
+<li>無 dual-class 投票權結構，一股一票。</li>
+<li>機構持股約 92%（Vanguard 11%、BlackRock 8%、State Street 5% 等被動為大宗）。</li>
+<li>CEO John Plant 個人持股 ~1.2M 股（~0.3%）+ 受限股 ~450k 股。</li>
+<li>Capital World Investors（主動基金）2026 Q1 減持約 1.2M 股（但仍持 3.5M+），未構成重大訊號。</li>
+</ul>
+
+<h3 class="section-subtitle">② 資本配置方向（2025 實際）</h3>
+<table>
+<tr><th>用途</th><th>金額</th><th>占 FCF 比重</th></tr>
+<tr><td>Capex（再投資）</td><td>$453M（記錄高）</td><td>32%</td></tr>
+<tr><td>股票回購</td><td>~$700M YTD 2025</td><td>49%</td></tr>
+<tr><td>股利</td><td>~$180M（$0.12/季，+20% YoY）</td><td>13%</td></tr>
+<tr><td>債務減少</td><td>$265M 減債 + $55M 特別股贖回</td><td>22%</td></tr>
+</table>
+<p class="note">資本配置優先順序清楚：再投資成長 → 大幅回購（歷史均價遠低現價，紀律良好）→ 穩定股利增長 → 債務優化。與公開 guidance 一致。</p>
+
+<h3 class="section-subtitle">③ 管理層薪酬結構</h3>
+<ul>
+<li><strong>CEO John Plant 2025 薪酬 $70.5M</strong>（+68% YoY）：其中 base salary ~$1.5M、annual incentive ~$5M、long-term equity ~$19M、<strong>$45M special retention RSU（一次性）</strong>——特別留任獎勵是主要增幅來源。</li>
+<li><strong>薪酬結構</strong>：long-term equity 佔 ~70%，與股價表現高度連動（績效 RSU 的 3 年相對 TSR 考核）——理論上激勵股東價值；但 CEO 年近 75 歲，$45M 留任獎勵可能延緩接班。</li>
+<li><strong>Say-on-Pay</strong>：2026 年 5/19 股東年會將進行薪酬顧問投票——關注通過率（2024 年通過率 ~92%，若 2026 掉至 &lt; 80% 為警訊）。</li>
+</ul>
+
+<h3 class="section-subtitle">④ 過去 12 個月重大內部人交易</h3>
+<ul>
+<li>2026/04：Director Joseph Cantie 獲授 155 股（例行補償，非市場買賣）。</li>
+<li>2025-2026：EVP/CAO Neil Marchuk 賣出 45,150 股，金額 ~$11.36M——屬常規持有分散化賣出（仍保留多數持股），<strong>非大規模內部人撤出</strong>。</li>
+<li>其他董事與高管無重大買進。整體判斷：內部人以「持有並預定分散賣出」為主，無強烈看多或看空訊號。</li>
+</ul>
+
+<p><strong>治理評分</strong>：<span class="badge-yellow">🟡 可接受但有關切</span>——資本配置紀律 A 級，但 CEO 年齡 + $45M 留任獎勵 + 不透明的接班計畫是關鍵風險。</p>
+</section>
+
+<!-- ==================== §11 ==================== -->
+<section class="section">
+<h2 class="section-title">§11｜估值診斷</h2>
+
+<h3 class="section-subtitle">11.0｜估值體系診斷</h3>
+
+<h4 class="section-sub3">A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>估值邏輯</th><th>對應指標</th><th>主流?</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td><span class="badge-green">✅ 主流</span></td><td>市場以 P/E、EV/EBITDA 定價 HWM</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>次要</td><td>PEG 2.70 顯示市場已 price in 高成長</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>非主流</td><td>P/B 18.4x，太高，市場不以此看</td></tr>
+<tr><td>現金流型</td><td>P/FCF、DCF</td><td>主流</td><td>P/FCF 69x；DCF 隱含 14% FCF CAGR</td></tr>
+<tr><td>行業專屬</td><td>EV/installed base value</td><td>部分</td><td>aerospace aftermarket 年金估值有用</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：盈利能力型 + 現金流型 + 成長型混合（aerospace supercycle 的「盈利加速」敘事）</p>
+
+<h4 class="section-sub3">B｜估值邏輯漂移偵測</h4>
+<ul>
+<li><strong>情境一（資產估值 → 盈利估值）</strong>：已完成（2020-2022 P/B 估值 → 2023-2025 P/E 估值），無進一步空間</li>
+<li><strong>情境二（新度量衡）</strong>：部分分析師開始用「installed base value」（裝機量 × LTV）估值，若主流化可支撐更高 multiple——<strong>作廢條件</strong>：若 LEAP shop visits 連 2 季不如預期，新指標失效</li>
+<li><strong>情境三（產業敘事轉變）</strong>：aerospace 從週期股 → 長期成長股敘事已建立 → 無進一步漂移空間</li>
+</ul>
+
+<h4 class="section-sub3">C｜估值尺被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前</th><th>影響</th></tr>
+<tr><td>ROIC/盈利突破</td><td>已突破，但邏輯用完</td><td>再升級空間小</td></tr>
+<tr><td>管理層新敘事</td><td>無重大轉向</td><td>中性</td></tr>
+<tr><td>同業率先獲高 multiple</td><td>TDG 41x（HWM 53x 已超過 TDG）</td><td>HWM 已領先定價，反向壓力</td></tr>
+<tr><td>盈利成長放緩</td><td>2028+ 可能放緩</td><td>multiple 壓縮風險</td></tr>
+</table>
+
+<p><strong>估值體系診斷結論</strong>：<span class="badge-red">🔴 估值邏輯面臨下修風險</span>——HWM FPE 已高於 TDG（aerospace 優質股標竿），且 PEG 2.70 表示成長股敘事已充分定價，無升級空間。</p>
+
+<h3 class="section-subtitle">11.1｜歷史估值分位（5 年）</h3>
+<table>
+<tr><th>估值指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>68.6x</td><td>14x</td><td>30x</td><td>70x</td><td>97%</td></tr>
+<tr><td>Forward P/E</td><td>53.2x（FY+1）</td><td>15x</td><td>25x</td><td>52x</td><td>95%+</td></tr>
+<tr><td>EV/EBITDA</td><td>40.6x</td><td>11.5x</td><td>17.7x</td><td>40.6x</td><td>100%</td></tr>
+<tr><td>P/FCF</td><td>69x</td><td>20x</td><td>40x</td><td>75x</td><td>90%</td></tr>
+<tr><td>P/S</td><td>12.0x</td><td>2.5x</td><td>6x</td><td>12.5x</td><td>95%+</td></tr>
+</table>
+<p>分位公式：(當前 − 5Y 低)/(5Y 高 − 5Y 低) × 100%。例：FPE 分位 = (53.2 − 15)/(52 − 15) × 100% = 103%（實際 capped 100%，現超過歷史高點）。</p>
+
+<h4 class="section-sub3">解讀</h4>
+<ol>
+<li><strong>估值情緒</strong>：🔴 過熱（FPE 分位 &gt; 90%，EV/EBITDA 100% 新高）</li>
+<li><strong>上次在此分位時的業務基本面差異</strong>：2025 Q3 末亦在此分位，但當時 FY2026 EPS 共識為 $4.23，現 $4.66（上修 10%），代表盈利 follow through 跟得上估值；然而 forward multiples 的容錯空間已被吃掉</li>
+<li><strong>推動當前分位的主要因素</strong>：（權重）盈利修正 40% + 市場情緒（aerospace 敘事）35% + 利率 25%（10Y UST 現 ~4.3%，從 5% 回落有幫助）</li>
+</ol>
+<p>相對大盤：S&amp;P 500 Forward P/E ~22x，HWM/SPX = 2.4x（歷史均 1.5x）——相對溢價處於歷史極端。</p>
+
+<h3 class="section-subtitle">11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+1）</td><td>53.2x</td><td>—</td><td>—</td></tr>
+<tr><td>Adj EPS CAGR 3 年</td><td>19.7%</td><td>—</td><td>—</td></tr>
+<tr><td><strong>PEG（3 年）</strong></td><td><strong>2.70</strong></td><td>&lt;1 便宜 / 1-2 合理 / &gt;2 貴</td><td><span class="badge-red">🔴 貴</span></td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~16%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>3.33</td><td>同上</td><td>🔴 更貴</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>2.70 → 3.33</td><td>差異擴大代表長期成長放緩</td><td>需警惕</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：HWM 處於「高品質 + 高成長 + 極貴」象限，類似 2021 年的 NVDA 或 2024 年的 PLTR——高確信故事但價格已充分定價，短期上行有限。</p>
+
+<h3 class="section-subtitle">11.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$99.3B</td><td>yfinance</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>$1.43B</td><td>10-K</td></tr>
+<tr><td>WACC</td><td>9.5%</td><td>10Y UST 4.3% + Beta 1.24 × ERP 4.2%</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>aerospace 長期成長</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>—</td></tr>
+</table>
+
+<p><strong>反推隱含 10 年 FCF CAGR</strong> ≈ <strong>14%</strong></p>
+
+<table>
+<tr><th>比較</th><th>數值</th><th>位置</th></tr>
+<tr><td>過去 3Y 實際 FCF CAGR</td><td>~22%</td><td>隱含 14% 低於歷史，但 3Y 基期太低</td></tr>
+<tr><td>共識 EPS CAGR（§5）</td><td>19.7%</td><td>FCF CAGR 隱含低於 EPS，合理</td></tr>
+<tr><td>同業最快 FCF CAGR（TDG）</td><td>~15%</td><td>HWM 隱含接近 TDG，要求級高端</td></tr>
+</table>
+
+<h4 class="section-sub3">兌現條件</h4>
+<p>隱含 14% FCF CAGR 需以下條件：</p>
+<ul>
+<li>Revenue 年增 10% 連續 10 年（FCF margin 從 17% 緩升至 22%）</li>
+<li>或 Revenue 8% + margin 擴至 25%</li>
+<li>合理前提：aerospace supercycle 不中斷，LEAP/GTF MRO 如期 ramp，HWM 維持 Engine 90% 市佔</li>
+</ul>
+
+<p><strong>隱含預期判斷</strong>：<span class="badge-yellow">🟡 隱含預期合理偏激進</span>——要求 aerospace supercycle 全程順利延續 10 年，容錯空間小。</p>
+
+<h3 class="section-subtitle">11.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>HWM</strong></td><td>$99.3B</td><td><strong>53.2x</strong></td><td><strong>40.6x</strong></td><td><strong>2.70</strong></td><td>17.3%</td><td>19.7%</td><td>21%</td></tr>
+<tr><td>TransDigm (TDG)</td><td>~$75B</td><td>41x</td><td>~22x</td><td>2.2</td><td>22%</td><td>~18%</td><td>18%</td></tr>
+<tr><td>GE Aerospace</td><td>~$200B</td><td>40x</td><td>~28x</td><td>1.8</td><td>~10%</td><td>~22%</td><td>25%</td></tr>
+<tr><td>HEICO (HEI)</td><td>~$30B</td><td>55x</td><td>~32x</td><td>2.8</td><td>16%</td><td>~20%</td><td>15%</td></tr>
+<tr><td>RTX</td><td>~$175B</td><td>22x</td><td>~14x</td><td>1.5</td><td>7%</td><td>~15%</td><td>10%</td></tr>
+<tr><td>產業中位</td><td>—</td><td>~40x</td><td>~22x</td><td>~2.0</td><td>~14%</td><td>~19%</td><td>~18%</td></tr>
+</table>
+
+<h4 class="section-sub3">同業溢折價邏輯</h4>
+<ol>
+<li><strong>溢價幅度</strong>：HWM FPE 53x vs 產業中位 40x，溢價 33%；vs TDG 41x，溢價 30%。</li>
+<li><strong>溢價是否有基本面支撐</strong>：ROIC 21% 居中高（低於 GE 25%，高於 TDG 18%）；FCF margin 17% 中等；成長 CAGR 中等——三項中沒有一項明顯優於對手，但估值已給最高 multiple。</li>
+<li><strong>向產業中位回歸</strong>：若 FPE 從 53 → 40（產業中位），股價變動 −24%。</li>
+</ol>
+
+<h4 class="section-sub3">同主題橫向風報比</h4>
+<table>
+<tr><th>問題</th><th>HWM</th><th>最強競爭（HEI / GE）</th></tr>
+<tr><td>主假設兌現時上行最大</td><td>中（已貴）</td><td>GE（規模大、MRO 獨立事業）</td></tr>
+<tr><td>主假設落空時跌幅最小</td><td>中（ROIC 高但估值高）</td><td>RTX（估值最低）</td></tr>
+<tr><td>綜合風報比最優</td><td>中等</td><td>GE 或 RTX（在風險調整基礎上）</td></tr>
+</table>
+<p><strong>結論</strong>：<span class="badge-yellow">🥈 次優選</span>——業務品質 A 級，但估值已把 aerospace supercycle 全部定價，在同業中風報比並非最佳。</p>
+
+<h3 class="section-subtitle">11.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（11.0）</td><td><span class="badge-red">🔴 下修風險</span></td><td>PEG 2.7 + 已高於 TDG 標竿，升級空間用完</td></tr>
+<tr><td>歷史分位（11.1）</td><td><span class="badge-red">🔴 過熱</span></td><td>FPE 95%+、EV/EBITDA 100% 分位</td></tr>
+<tr><td>PEG 診斷（11.2）</td><td><span class="badge-red">🔴 貴</span></td><td>PEG 2.70 &gt; 2.0 明顯偏高</td></tr>
+<tr><td>Reverse DCF（11.3）</td><td><span class="badge-yellow">🟡 合理偏激進</span></td><td>隱含 14% FCF CAGR 10 年，容錯小</td></tr>
+<tr><td>同業相對（11.4）</td><td><span class="badge-red">🔴 溢價無足夠支撐</span></td><td>vs TDG/產業中位溢價 30%+</td></tr>
+</table>
+
+<h4 class="section-sub3">§12 D 交叉驗證</h4>
+<p>當前 FPE 53.2x vs §12 D 合理 PE 30x → 比值 1.77x &gt; 1.5x 門檻 → <strong>負面信號，下修一級確認</strong>。歷史分位 🔴 不降權（PEG 2.7 &gt; 1.0，無降權條件）。</p>
+
+<p><strong>當前定價判斷</strong>：<span class="badge-red">🔴 明顯貴</span></p>
+
+<h4 class="section-sub3">估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河（§7）</td><td>9/10</td><td>+3x（產業基準上浮）</td></tr>
+<tr><td>② 成長可持續年數（§6A）</td><td>10+ 年（🟢）</td><td>+4x（高確信溢價）</td></tr>
+<tr><td>③ 成長品質（§6B）</td><td>有機 95% + 定價驅動</td><td>+2x</td></tr>
+<tr><td>④ 成長護城河連動（§6C）</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§6D）</td><td>21%，擴大</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號（§6 偵測）</td><td>1 個（非核心侵蝕）</td><td>0x</td></tr>
+<tr><td>⑦ 估值體系（§11.0）</td><td>下修風險</td><td>−3x</td></tr>
+<tr><td>⑧ 當前利率</td><td>10Y UST 4.3%，中性</td><td>0x</td></tr>
+<tr><td>產業基準 FPE</td><td>22x（S&amp;P 500 基礎）</td><td>—</td></tr>
+<tr><td><strong>調整後合理區間</strong></td><td>—</td><td><strong>28-36x</strong></td></tr>
+</table>
+
+<p><strong>長期合理倍數對應表（§6 綜合 = 🟢）</strong>：基準 25x</p>
+<ul>
+<li>引擎 A（ROIC 溢價，ROIC 21% &gt; 20% + 擴大）：× 1.175 = 29.4x</li>
+<li>引擎 B（PEG 動態，Year-5 成長率 &lt; 15%）：不適用</li>
+<li>引擎 C（護城河 9 分）：× 1.10 = 27.5x</li>
+<li>三引擎取較高：<strong>× 1.175 = 29.4x</strong></li>
+<li>AI 風險 🟢 × 1.10 = <strong>32.3x</strong></li>
+</ul>
+<p><strong>最終長期合理倍數：32x</strong>（§12 G 展望用；§12 D 的短中期合理 PE 30x 與此一致，且落在 28-36x 區間內）。</p>
+
+<h3 class="section-subtitle">分析師目標價</h3>
+<ul>
+<li>高 $315 / 中位 $277.52 / 低 $214.92（n=21）</li>
+<li>Moderate Buy（17 買、1 強買、4 持有）</li>
+<li><strong>分歧點</strong>：分析師中位價 $277.52 比本分析合理目標 $169 高 64%。差異來自分析師多用 40-50x FPE（類比 TDG），而本分析用 30x（PEG 安全網機制下壓）——分析師對「Multiple 維持」假設更樂觀。</li>
+</ul>
+
+<h3 class="section-subtitle">§11.5 投資結論（完整版）</h3>
+
+<h4 class="section-sub3">財報信號與假設校準</h4>
+<ul>
+<li><strong>H1（Engine 需求共振）</strong>：<span class="badge-green">強化</span>——Q4 Engine 單季 +16%，全年 +16%</li>
+<li><strong>H2（Margin 擴張至 35%+）</strong>：<span class="badge-green">強化</span>——Engine EBITDA 33.3%（記錄），距 35% 不遠</li>
+<li><strong>H3（FPE 維持 35-45x）</strong>：<span class="badge-red">削弱</span>——現 FPE 53x 已超過目標區間上緣，回歸風險加大</li>
+<li><strong>結論</strong>：這份財報讓 H1 + H2 的兌現更容易，但 H3（估值維持）更困難，因為市場已把 H1、H2 提前充分定價，上行 follow-through 空間壓縮。</li>
+</ul>
+
+<h4 class="section-sub3">判定：<span class="badge-red">迴避</span>（§12 E）</h4>
+<ul>
+<li>短期 R:R −0.83x，中期 R:R −0.61x — 雙 R:R 均為負</li>
+<li>不滿足觀望偏進場條件（中期 R:R 需 ≥ 1.0）</li>
+<li>→ 判定：<strong>迴避</strong>（純因價格，非品質）</li>
+</ul>
+
+<h4 class="section-sub3">① 短期信號（0-12 個月）</h4>
+<p>Q4 2025 全面 BEAT + 2026 guidance 高於共識 + Engine margin 擴張——<strong>短期基本面信號支持</strong>，但估值已預支。若 Q1 2026（5/7 發布）再次 BEAT，股價可能再創新高至 $280-300，但 R:R 負值擴大。</p>
+
+<h4 class="section-sub3">② 中期成長確信度（1-2 年）</h4>
+<p>FY+1 $4.655 / FY+2 $5.627 的驅動主要為定價 + LEAP aftermarket ramp。能見度 <strong>高</strong>——backlog 10+ 年、2020-vintage LEAP 在 2026-2027 進入首次大修、Boeing/Airbus 月產在 ramp。</p>
+
+<h4 class="section-sub3">③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道充裕 / 護城河加深 / <strong>長期持有信心：高</strong>。這是值得 5 年+ 抱的標的。</p>
+
+<h4 class="section-sub3">下行風險量化（Bear Case）</h4>
+<ul>
+<li>短期下檔（Bear $117.80 W52 Low 替代）：距現價 −52.4%</li>
+<li>中期下檔（同上）：−52.4%</li>
+<li>W52 Low $117.80（參考）/ W104 Low $62.46（參考）</li>
+<li>若 FY+1 EPS 下修 10% → 共識變 $4.19 → FPE 變 59x → 若同時觸發 multiple 壓縮至 30x，股價 → $126（−49%）</li>
+</ul>
+</section>
+
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
