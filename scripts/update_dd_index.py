@@ -535,6 +535,100 @@ def build_rows(entries):
     return "\n".join(rows)
 
 
+def build_weekly_review(entries):
+    """Compute 3 lists for the Weekly Review panel:
+    - candidates: 建議 in {進場, 觀望偏進場} + 非陷阱 + 長期高信心, sorted by upside2 desc, top 10
+    - downgrades: latest DD per ticker has worse verdict than previous DD
+    - stale: latest DD per ticker older than 60 days
+    Returns (candidates_html, downgrades_html, stale_html).
+    """
+    from datetime import date
+    v_map = {"進場": 1, "觀望偏進場": 2, "觀望": 3, "迴避": 4}
+    today = date.today()
+
+    # Dedupe to latest DD per ticker (by date desc; if tied, keep the one with newer version)
+    latest = {}
+    for e in entries:
+        t = e["ticker"]
+        if t not in latest or e["date"] > latest[t]["date"]:
+            latest[t] = e
+
+    def up2_val(e):
+        try:
+            return float(e.get("upside2", "") or -1e9)
+        except ValueError:
+            return -1e9
+
+    def link(e):
+        href = e.get("href", "#")
+        return f'<a href="{href}" target="_blank" rel="noopener">{e["ticker"]}</a>'
+
+    # 1) Candidates
+    candidates = [
+        e for e in latest.values()
+        if e.get("verdict", "").strip() in ("進場", "觀望偏進場")
+           and "非陷阱" in e.get("trap", "")
+           and e.get("confidence", "").strip() == "高"
+    ]
+    candidates.sort(key=up2_val, reverse=True)
+    candidates = candidates[:10]
+
+    def up2_str(e):
+        v = up2_val(e)
+        if v <= -1e8:
+            return '<span class="wr-empty">N/A</span>'
+        cls = "wr-up" if v >= 0 else "wr-down"
+        sign = "+" if v >= 0 else ""
+        return f'<span class="{cls}">{sign}{v:.1f}%</span>'
+
+    cands_html = "\n".join(
+        f'            <li>{link(e)} {up2_str(e)}</li>'
+        for e in candidates
+    ) or '            <li class="wr-empty">無符合條件的標的</li>'
+
+    # 2) Downgrades
+    by_ticker = {}
+    for e in entries:
+        by_ticker.setdefault(e["ticker"], []).append(e)
+    downgrades = []
+    for t, arr in by_ticker.items():
+        if len(arr) < 2:
+            continue
+        arr_sorted = sorted(arr, key=lambda x: x["date"], reverse=True)
+        cur, prev = arr_sorted[0], arr_sorted[1]
+        cur_rank = v_map.get(cur.get("verdict", "").strip(), 9)
+        prev_rank = v_map.get(prev.get("verdict", "").strip(), 9)
+        if cur_rank > prev_rank and cur_rank < 9 and prev_rank < 9:
+            downgrades.append({"entry": cur, "prev": prev, "diff": cur_rank - prev_rank})
+    downgrades.sort(key=lambda x: (-x["diff"], x["entry"]["date"]), reverse=False)
+    downgrades = sorted(downgrades, key=lambda x: (-x["diff"], x["entry"]["date"]))[:10]
+
+    downs_html = "\n".join(
+        f'            <li>{link(d["entry"])} <span class="wr-down">{d["prev"]["verdict"]} → {d["entry"]["verdict"]}</span></li>'
+        for d in downgrades
+    ) or '            <li class="wr-empty">近期無降級紀錄</li>'
+
+    # 3) Stale (> 60 days, latest per ticker)
+    stale = []
+    for t, e in latest.items():
+        try:
+            dt = date.fromisoformat(e["date"])
+        except (ValueError, KeyError, TypeError):
+            continue
+        days = (today - dt).days
+        if days > 60:
+            stale.append({"entry": e, "days": days})
+    stale.sort(key=lambda x: -x["days"])
+    stale = stale[:10]
+
+    stale_html = "\n".join(
+        f'            <li>{link(s["entry"])} <span class="wr-age">{s["days"]} 天</span></li>'
+        for s in stale
+    ) or '            <li class="wr-empty">所有 DD 均在 60 天內</li>'
+
+    return cands_html, downs_html, stale_html
+
+
 def update_index(entries):
     html = INDEX_HTML.read_text(encoding="utf-8")
 
@@ -589,6 +683,27 @@ def update_index(entries):
         rf'\g<1>{ts_display}\g<2>',
         new_html,
         count=1,
+    )
+
+    # Inject Weekly Review lists
+    cands_html, downs_html, stale_html = build_weekly_review(entries)
+    new_html = re.sub(
+        r'<!-- WR_CANDIDATES_START -->.*?<!-- WR_CANDIDATES_END -->',
+        f'<!-- WR_CANDIDATES_START -->\n{cands_html}\n            <!-- WR_CANDIDATES_END -->',
+        new_html,
+        flags=re.DOTALL,
+    )
+    new_html = re.sub(
+        r'<!-- WR_DOWNGRADES_START -->.*?<!-- WR_DOWNGRADES_END -->',
+        f'<!-- WR_DOWNGRADES_START -->\n{downs_html}\n            <!-- WR_DOWNGRADES_END -->',
+        new_html,
+        flags=re.DOTALL,
+    )
+    new_html = re.sub(
+        r'<!-- WR_STALE_START -->.*?<!-- WR_STALE_END -->',
+        f'<!-- WR_STALE_START -->\n{stale_html}\n            <!-- WR_STALE_END -->',
+        new_html,
+        flags=re.DOTALL,
     )
 
     INDEX_HTML.write_text(new_html, encoding="utf-8")
