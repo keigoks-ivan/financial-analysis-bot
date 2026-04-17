@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v11.0">
+<title>AMD 深度研究報告 | DD v11.0 | 2026-04-17</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #0F172A; margin: 0; padding: 0; line-height: 1.7; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 32px 28px 80px; }
+  .header { position: sticky; top: 0; z-index: 100; background: #1E3A5F; color: #fff; padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .header-left { font-weight: 700; letter-spacing: 0.5px; }
+  .header-right { font-family: 'IBM Plex Mono', monospace; font-size: 13px; opacity: 0.95; }
+  h1 { color: #1E3A5F; font-size: 30px; margin: 24px 0 4px; border-bottom: 3px solid #3B82F6; padding-bottom: 10px; }
+  h2 { color: #fff; background: #1E3A5F; padding: 14px 18px; margin: 40px 0 20px; font-size: 20px; border-left: 4px solid #3B82F6; }
+  h3 { color: #1E3A5F; font-size: 17px; margin: 26px 0 12px; border-left: 3px solid #60A5FA; padding-left: 10px; }
+  h4 { color: #1E40AF; font-size: 15px; margin: 18px 0 8px; }
+  .card { background: #FFFFFF; padding: 22px 26px; border-radius: 4px; border: 1px solid #E2E8F0; margin-bottom: 22px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0 18px; background: #fff; }
+  th { background: #1E3A5F; color: #fff; font-weight: 500; text-align: left; padding: 10px 12px; border: 1px solid #1E3A5F; }
+  td { padding: 9px 12px; border: 1px solid #E2E8F0; vertical-align: top; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 3px; font-size: 13px; font-weight: 500; }
+  .badge-green { background: #DCFCE7; color: #166534; }
+  .badge-red { background: #FEE2E2; color: #991B1B; }
+  .badge-yellow { background: #FEF9C3; color: #92400E; }
+  .badge-blue { background: #EFF6FF; color: #1E3A5F; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px 20px; margin: 16px 0; }
+  .hypothesis-box ul { padding-left: 20px; margin: 4px 0; }
+  .hypothesis-box li { margin: 6px 0; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 14px 20px; margin: 16px 0; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 16px 0; }
+  @media (max-width: 900px) { .debate-grid { grid-template-columns: 1fr; } }
+  .debate-card { padding: 14px 16px; border-radius: 4px; font-size: 14px; }
+  .bull-card { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .bear-card { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .arbiter-card { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .verdict-card { background: #FFFBEB; border-left: 4px solid #D97706; padding: 16px 20px; margin-top: 16px; }
+  .verdict-card h4 { color: #92400E; margin-top: 0; }
+  .checklist { background: #F8FAFC; padding: 12px 18px; border-radius: 3px; font-size: 13px; }
+  .note { color: #64748B; font-size: 13px; font-style: italic; margin-top: 8px; }
+  .print-btn { position: fixed; bottom: 30px; right: 30px; background: #1E3A5F; color: #fff; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; font-family: inherit; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  .print-btn:hover { background: #3B82F6; }
+  @media print {
+    .header, .print-btn { display: none; }
+    body { background: #fff; }
+    .card { border: 1px solid #ccc; break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">AMD · Advanced Micro Devices · DD 深度研究</div>
+  <div class="header-right">Schema v11.0 ｜ 抓取 2026-04-17 ｜ $278.26 ｜ Q4 2025 (最新財報)</div>
+</div>
+
+<div class="container">
+
+<h1>AMD｜深度研究報告 (v11.0)</h1>
+<p class="mono" style="color:#475569; font-size:13px;">報告日期 2026-04-17 ｜ 最新股價 $278.26 ｜ 市值 $453.7B ｜ 52W High $279.34 / Low $83.75 ｜ 最新財報：FY2025 Q4 (2026-02-03 發布)</p>
+
+<!-- =========== §1 投資結論 =========== -->
+<h2>§1 投資結論（Executive Summary）</h2>
+<div class="card">
+<p class="note">本結論基於以下完整分析得出，詳見各章節。完整推理與條件句見 §11.5 投資結論與 §12 雙時距 R:R。</p>
+
+<h3>結論 Dashboard</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>品質 A 級（10.0 分，上限）：</strong>護城河 7/10 + 成長持久性 8/10 + 體質加減分 +2.5（五項全過）</li>
+<li><strong>估值🟢合理至便宜：</strong>FY+2 Forward PE 25.7x vs 合理 PE 45x，PEG 0.49（3Y CAGR ≈ 52%）</li>
+<li><strong>短期🔴：</strong>FY+1 EPS 成長 60.4%，目標價 $301 vs 現價 $278，R:R 0.14x（Bear Case 下檔距離過深）</li>
+<li><strong>中期🟢：</strong>FY+2 目標 $487 vs 現價，R:R 2.51x（上行 75%）</li>
+<li><strong>建議觀望偏進場：</strong>品質 A + 長期高 + 中期 R:R ≥ 1.0，建議目標倉位的 15-20%，Bollinger ×0.5 微調後約 8-10%</li>
+<li><strong>同主題定位：</strong>AI 算力第二名挑戰者（NVDA 86%、AMD 8% 資料中心 GPU / EPYC 34% 伺服器 CPU 營收份額），OpenAI 6GW 供應合約是關鍵驗證</li>
+<li><strong>長期持有信心：高</strong>（§12 G，Runway ≥10 年 + MI400/MI500 路徑明確）｜<strong>陷阱定性：</strong>🟢 非陷阱</li>
+</ul>
+</div>
+<p class="note">判定：<strong>觀望偏進場</strong>（§12 E）｜底倉 15-20%（目標倉位的）× Bollinger 0.5 微調 = 8-10%。<br>底倉建議為目標倉位的 X%。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答）</h3>
+<table>
+<tr><th style="width:30%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>。AMD 不具備 4 種陷阱特徵：毛利率往上（44.5% → 50%）、市佔擴大（CPU 從 7% 到 34%）、FCF 轉換率 >1.0、EPS 共識上修（$10.25 → $10.83）</td></tr>
+<tr><td>支持「非陷阱」的最強論據</td><td>① Data Center Q4 營收 +39% YoY (＄5.4B)，MI350 量產 + Helios MI455X Q3 2026 出貨；② 2025 Non-GAAP EPS $4.17 → 2027E $10.83（2.6 倍），共識 n=42 且近 90 天連續上修；③ OpenAI 簽訂 6GW GPU 供應合約（2025/10），MI450 1GW 資料中心將於 H2 2026 啟動，業務能見度跨多年</td></tr>
+<tr><td>支持「可能是陷阱」的最強反駁</td><td>估值非陷阱，但存在「過度定價風險」：Trailing PE 106x，EV/EBITDA 66x，若 MI400 量產不如預期或 NVDA Blackwell/Rubin 繼續壓制毛利，PE 可能從 25x（FY+2）壓縮至 15-18x，短期下檔達 30-40%</td></tr>
+<tr><td>如何在持有期判斷陷阱發生</td><td>① Data Center 單季 YoY 成長降至 20% 以下連兩季（當前 39%）；② Instinct GPU 營收佔比（目標 3-5 年達 60%+）出現連兩季 QoQ 下滑；③ Non-GAAP 毛利率跌破 50%（Q4 2025 = 57%）</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge badge-green">🟢 非陷阱</span></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>章節</th><th>性質</th><th>重新評估閾值</th></tr>
+<tr><td>1</td><td>Instinct GPU 季度營收（MI350/MI400）</td><td>§3 H1</td><td>🔵 核心假設驗證</td><td>連兩季 QoQ 下滑或 YoY &lt; 30%</td></tr>
+<tr><td>2</td><td>Data Center 營業利益率（Q4 33%）</td><td>§6 / §7</td><td>🔵 長期成長領先信號</td><td>連兩季跌破 28%</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識 90 天修正方向</td><td>§11 / §4</td><td>短期估值/財報信號</td><td>連兩次財報後下修 &gt;5%</td></tr>
+</table>
+</div>
+
+<!-- =========== §2 序章 =========== -->
+<h2>§2 序章：第一性原理 × 逆向思考</h2>
+<div class="card">
+<h3>存在意義</h3>
+<p>AMD 存在的底層意義是：<strong>打破 x86 伺服器 CPU 單一供應商壟斷，並提供 NVIDIA 之外的第二條 AI 算力路徑</strong>。在 Intel 統治伺服器 CPU、NVIDIA 統治 AI GPU 的雙重壟斷結構下，超大型雲端業者與主權國家需要「可信的第二選項」來避免單一供應商定價權過度集中。AMD 的 EPYC 已迫使 Intel 在 2023-2024 調降 Xeon 定價 20-30%，MI300/MI400 正在對 NVDA H100/B100 價格曲線造成同等壓力。若 AMD 明天消失，超大型雲端每 watt 算力成本將由 NVDA 單獨定義，全球 AI Capex 結構將承擔 15-25% 的結構性溢價，OpenAI、Meta、Microsoft 等巨頭的多雲戰略會崩潰。這不是「提升效率」，而是「防止 AI 基礎設施被單極壟斷」的結構性對沖。</p>
+
+<h3>逆向推演（Munger Inversion）：3 年內虧 50% 的路徑</h3>
+<table>
+<tr><th>風險路徑</th><th>具體情境</th></tr>
+<tr><td>地緣政治曝險</td><td>AMD 依賴 TSMC N3/N2 代工；台海衝突或美國對中國出口管制進一步擴大（MI308 已受限），H2 2026 起「Chinese consumer」GPU 出口限制擴大，失去約 8-12% data center 營收</td></tr>
+<tr><td>技術替代風險</td><td>① NVDA Rubin/Vera Rubin 架構若在 2026-2027 維持 NVLink 整體成本優勢 → CUDA 護城河不變；② ASIC 化加速（TPU v7 / Meta MTIA / Amazon Trainium3）吃掉 AMD 爭取的 Hyperscaler 訂單；③ AMD ROCm 生態滯後於 CUDA 3-4 個世代</td></tr>
+<tr><td>管理層失職</td><td>Lisa Su 2025/8 售出 22.5 萬股 ($36.9M) 並將於 2027 退休的市場討論；Xilinx $49B 併購 3 年後仍未顯著變現（AECG Embedded 2024 營收 -33%）；若 MI400 Helios 出貨延後 6 個月或良率不足，執行力信心崩塌</td></tr>
+<tr><td>價值陷阱路徑</td><td>四選一：<strong>盈餘品質型</strong>。當前 Non-GAAP EPS 被 SBC 調整拉升（2024 SBC $1.41B，~4% of Revenue），若 Non-GAAP 持續擴大與 GAAP 差距，市場可能重新以 GAAP 評價（FY+1 GAAP EPS 遠低於 $6.69）</td></tr>
+</table>
+</div>
+
+<!-- =========== §3 投資論點錨定 =========== -->
+<h2>§3 投資論點錨定</h2>
+<div class="card">
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th style="width:30%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>24-36 個月（2028 年 MI500 + Zen 6 伺服器 CPU 雙引擎全面放量前）</td></tr>
+<tr><td>主要驅動理由</td><td>MI350 → MI400 (Q3 2026 Helios) → MI500 (2027) 三代產品週期，以及 OpenAI 6GW 合約 (2026H2 啟動) 的成長兌現節點</td></tr>
+<tr><td>訊號 vs 噪音</td><td>訊號：Data Center YoY、Instinct 單季營收、Hyperscaler 採購確認、Non-GAAP GM 趨勢<br>噪音：單季 Gaming/Embedded 波動、PC 出貨短期波動、短線 PE 分位</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<div class="hypothesis-box">
+<table>
+<tr><th>#</th><th>核心假設</th><th>驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>MI400 Helios 平台在 2026H2 放量，2027 年 AI GPU 年營收突破 $15B（2025 約 $6-8B）</td><td>Q3/Q4 2026 Data Center 營收 YoY、OpenAI 1GW MI450 資料中心啟用進度</td><td>2026Q3-Q4 財報</td></tr>
+<tr><td>H2</td><td>伺服器 CPU 營收份額從 34% 提升至 45%+，Zen 6 Venice (2nm) 維持 3 年領先 Intel 18A</td><td>Mercury Research 伺服器 CPU 份額季報、EPYC Turin/Venice 出貨量</td><td>每季 Mercury Research</td></tr>
+<tr><td>H3</td><td>市場將 AMD 從「半導體景氣股」重新分類為「AI 基礎設施複利股」，Forward PE 長期穩定於 40-45x</td><td>Forward PE 相對 NVDA 折價率從 50% 收斂至 25%</td><td>2027 年</td></tr>
+</table>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>MI400 Helios 量產延後或良率不足</td><td>H1</td><td>CES / Computex 新聞、AMD 財報口徑</td><td>Q3 2026 出貨延後至 Q1 2027</td></tr>
+<tr><td>R2</td><td>ASIC 化加速，Hyperscaler 自研 AI 晶片吃掉第二供應商訂單</td><td>H1, H3</td><td>Google TPU、Meta MTIA、Amazon Trainium 的 Capex 佔比</td><td>Top-4 Hyperscaler 的 ASIC 比例 &gt;30%</td></tr>
+<tr><td>R3</td><td>NVDA 針對性降價 + CUDA 生態鎖定 + Intel 18A 伺服器 CPU 反攻</td><td>H2, H3</td><td>NVDA Blackwell/Rubin ASP 變化、EPYC 營收份額</td><td>AMD 伺服器 CPU 份額連兩季停滯在 34%</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>每遇新事件（財報／新聞／產業數據），以下列四步判斷：<br>
+① 時間軸匹配：24-36 個月內有影響嗎？<br>
+② 假設關聯：影響 H1/H2/H3 哪一個？<br>
+③ 邊際方向：＋/0/－<br>
+④ 閾值判斷：是否達重新評估門檻？</p>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>股價回檔至 Bollinger 下軌 $174 以下，或 FY+2 Forward PE &lt; 22x</td><td>建倉至目標倉位 17.5%</td></tr>
+<tr><td>加碼</td><td>H1 驗證（MI400 出貨如期）+ H2 驗證（CPU 份額擴大）</td><td>加碼至目標倉位 100%</td></tr>
+<tr><td>減碼</td><td>R1 觸發（MI400 延後）或 Forward PE 突破 50x</td><td>減至 50%，重評</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（Data Center 連兩季 YoY &lt; 20%）或陷阱信號確認</td><td>清倉</td></tr>
+</table>
+</div>
+
+<!-- =========== §4 即時財報情報 =========== -->
+<h2>§4 即時財報情報（2025 Q4，2026-02-03 發布）</h2>
+<div class="card">
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>Q4 2025 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$10.3B</td><td>$9.7B</td><td><span class="badge badge-green">Beat</span></td><td>+34%</td></tr>
+<tr><td>EPS (Non-GAAP)</td><td>$1.53</td><td>$1.28</td><td><span class="badge badge-green">Beat</span></td><td>+40%</td></tr>
+<tr><td>FCF</td><td>$2.2B (估)</td><td>-</td><td>-</td><td>+90%</td></tr>
+<tr><td>Non-GAAP Gross Margin</td><td>57%</td><td>~54%</td><td><span class="badge badge-green">Beat</span></td><td>+290 bps</td></tr>
+<tr><td>Operating Margin (Non-GAAP)</td><td>28%</td><td>~25%</td><td><span class="badge badge-green">Beat</span></td><td>+400 bps</td></tr>
+</table>
+
+<h4>財報對 §3 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1 (MI400/AI GPU)</td><td><span class="badge badge-green">＋ 強化</span></td><td>Data Center +39% YoY 至 $5.4B，MI350 持續放量，Helios 2026Q3 出貨確認</td></tr>
+<tr><td>H2 (CPU 份額)</td><td><span class="badge badge-green">＋ 強化</span></td><td>EPYC Turin 滿足 Hyperscaler 需求，Client + Gaming 全年 +51% ($14.6B)</td></tr>
+<tr><td>H3 (估值重評)</td><td><span class="badge badge-yellow">0 中性</span></td><td>財報後股價已從 $180 衝至 $278，PE 擴張已部分反映</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：高度樂觀。Lisa Su 「tens of billions in annual AI revenue by 2027」，「Data Center 未來 3-5 年 &gt;60% CAGR」</li>
+<li><strong>Forward Guidance</strong>：Q1 2026 Revenue $9.8B ± $300M（含 MI308 對中國 $100M 出貨），市場預期 $9.2B → Beat</li>
+<li><strong>刻意強調</strong>：MI400 Helios 系列、OpenAI 6GW 合約、Zen 6 Venice（2nm，2026 同步 MI400）、ROCm 生態改善、「8 of the top 10 AI companies」使用 Instinct</li>
+<li><strong>刻意迴避</strong>：① Instinct GPU 單獨營收數字（僅說「record」）；② 毛利率長期上限（未給 2026 GM guidance）；③ MI308 中國業務的後續可持續性</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：AI 訓練 Capex 2026 仍加速，Hyperscaler backlog 擴大至 2027 年；企業 AI（inference）剛開始起量</li>
+<li><strong>供給端</strong>：TSMC N3/N2 與 CoWoS 仍為瓶頸，但 AMD 取得 MI400 2026H2 足量產能</li>
+<li><strong>競爭格局</strong>：AMD 定價保持高階（MI350 ~$20K），但對 NVDA H100/B100 仍有 15-25% 折讓；Intel 18A 伺服器 CPU 被延後壓力使 AMD EPYC 份額持續擴大</li>
+<li><strong>總體經濟敏感度</strong>：Data Center 需求對利率不敏感（Capex 已鎖定），但 Client PC / Gaming 可能受消費信心影響</li>
+<li><strong>對同業推論</strong>：利多 TSMC（代工量）、ASML、AMAT、AVGO（Ethernet switch）；中性於 NVDA（AI Capex 擴大但 AMD 分食份額）；利空於 Intel</li>
+</ul>
+</div>
+
+<!-- =========== §5 核心門檻檢核 =========== -->
+<h2>§5 核心門檻檢核</h2>
+<div class="card">
+
+<h3>EPS 共識預估（yfinance 即時抓取）</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>分析師數</th><th>YoY Growth</th><th>來源</th></tr>
+<tr><td>基期 FY2025 Non-GAAP EPS</td><td>$4.17</td><td>-</td><td>+26%</td><td>AMD Q4 2025 財報</td></tr>
+<tr><td>FY+1 (2026E)</td><td>$6.69</td><td>44</td><td>+60.4%</td><td>yfinance (Refinitiv/LSEG)</td></tr>
+<tr><td>FY+2 (2027E)</td><td>$10.83</td><td>42</td><td>+61.9%</td><td>yfinance</td></tr>
+<tr><td>FY+3 (2028E，§6 邏輯推導)</td><td>$15.16</td><td>少數覆蓋</td><td>+40% (估)</td><td>MI500 初期放量 + Data Center 60% CAGR × Instinct 佔比提升的延續期</td></tr>
+</table>
+<p><strong>FY+3 推導邏輯</strong>：從 §6 A，Runway ≥ 10 年；§6 B，定價驅動 + 量驅動雙引擎；§6 D，ROIC 逐年擴大至 15%+。管理層給 Data Center 3-5 年 60% CAGR，但 2028 年 Data Center 佔比將從 50% 增至 70%，加上 MI500 初期投產費用，整體成長率合理假設從 60% 放緩至 40%，故 FY+3 EPS = $10.83 × 1.40 = $15.16。</p>
+
+<h4>EPS 共識修正趨勢（90 天）</h4>
+<table>
+<tr><th>時點</th><th>0y (FY 2026)</th><th>+1y (FY 2027)</th></tr>
+<tr><td>當前</td><td>$6.690</td><td>$10.833</td></tr>
+<tr><td>7 天前</td><td>$6.662</td><td>$10.785</td></tr>
+<tr><td>30 天前</td><td>$6.637</td><td>$10.745</td></tr>
+<tr><td>60 天前</td><td>$6.619</td><td>$10.659</td></tr>
+<tr><td>90 天前</td><td>$6.568</td><td>$10.248</td></tr>
+</table>
+<p><strong>近 90 天連續上修，FY+2 上修 5.7%，FY+1 上修 1.9%</strong>。屬強力正面訊號。</p>
+
+<h3>CAGR 計算</h3>
+<p class="mono">GAAP CAGR：2025 GAAP EPS $2.65 → FY+3 估算 ~$9.5（非 Non-GAAP，含較大 SBC 稀釋），CAGR = (9.5/2.65)^(1/3) - 1 ≈ <strong>53.1%</strong><br>
+Non-GAAP CAGR：(15.16/4.17)^(1/3) - 1 = 3.636^0.333 - 1 ≈ <strong>53.7%</strong><br>
+口徑差距：2025 SBC $1.4B（約佔 Revenue 4%），主要為 RSU 與 Xilinx 併購產生的攤銷</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin (當前)</td><td>&gt; 15%</td><td><span class="badge badge-green">✅</span></td><td>TTM FCF $5.45B ÷ Revenue $34.6B = <strong>15.7%</strong>，近 3 年趨勢 ↑ (5% → 7% → 15.7%)</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt;15%、谷 &gt;10%</td><td><span class="badge badge-yellow">🟡</span></td><td>5Y 各年：13%/18%/7%/5%/15.7%，均值 11.7%，谷 5% (2023)。週期波動明顯</td></tr>
+<tr><td>ROIC (當前)</td><td>&gt; 15% 且 &gt; WACC</td><td><span class="badge badge-red">❌</span></td><td>當前 ROIC 5-6%，WACC 14-15%，ROE 7.1%。Xilinx 併購拖累 IC 基礎；預計 2026-2027 隨 AI 規模擴大將恢復至 12-15%</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥ 70% 年份 &gt; 15%</td><td><span class="badge badge-red">❌</span></td><td>達標年份 2/10 (30%)。2021 高峰 42%、2023 谷 0.6%。Xilinx 併購 (2022) 結構性扭曲</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年改善 ≥ 70%</td><td><span class="badge badge-green">✅</span></td><td>2020 44.5% → 2025 50%；改善 8/10 年 (80%)，趨勢 ↑</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Revenue &lt; 5%</td><td><span class="badge badge-green">✅</span></td><td>Fabless 模式，Capex/Revenue ~2%，低密集</td></tr>
+<tr><td>EPS CAGR (3Y)</td><td>&gt; 20%</td><td><span class="badge badge-green">✅</span></td><td>Non-GAAP CAGR <strong>53.7%</strong>，GAAP 53.1%</td></tr>
+<tr><td>PEG (Non-GAAP)</td><td>&lt; 2</td><td><span class="badge badge-green">✅</span></td><td>引用 §11.2：<strong>0.49</strong></td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7</td><td><span class="badge badge-green">✅</span></td><td>Debt $4.0B / Equity $63B = 0.06；Cash $10.55B &gt; Debt，Net Cash $6.5B</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="badge badge-green">✅</span></td><td>Cash $10.55B &gt; Debt $4.0B，淨現金 $6.5B</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge badge-yellow">🟡</span></td><td>§7 評 <strong>7/10</strong>，趨勢擴大 (GPU/CPU 雙軌同時突破中)</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：當前 ROIC 6% 低於 WACC 15%，是 Xilinx 併購商譽攤銷 + 近期投資密集造成，待 AI 規模化後有望修復但非必然；Munger 三維護城河評級：<span class="badge badge-yellow">🟡 兩項達標</span>（毛利率 ✅、資本密集 ✅、ROIC 穩定 ❌）</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p><strong>觸發狀態</strong>：Forward PE 25.46x 屬 5Y 歷史低位（後詳 §11.1，分位 ~15%）→ <span class="badge badge-yellow">🟡 輕度觸發</span></p>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號?</th></tr>
+<tr><td>Q1</td><td>過去 3 年 Gross Margin 趨勢</td><td>↑ 46% → 49% → 50% (+4%p)</td><td><span class="badge badge-green">✅ 無</span></td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢</td><td>擴大：伺服器 CPU 20% → 34%，Data Center GPU 0% → 8%</td><td><span class="badge badge-green">✅ 無</span></td></tr>
+<tr><td>Q3</td><td>FCF 與淨利背離</td><td>FCF/NI 近 3Y 均值 ~1.0（2025 TTM FCF $5.45B / NI $4.3B = 1.27）</td><td><span class="badge badge-green">✅ 無</span></td></tr>
+<tr><td>Q4</td><td>EPS 共識修正方向</td><td>過去 90 天連續上修，FY+2 +5.7%</td><td><span class="badge badge-green">✅ 無</span></td></tr>
+</table>
+<p><strong>初篩結論</strong>：0 個 🔴，<span class="badge badge-green">低估值為真實機會</span>，繼續深入分析。</p>
+</div>
+
+<!-- =========== §6 長期成長性 =========== -->
+<h2>§6 長期成長性評估</h2>
+<div class="card">
+
+<h3>A｜成長跑道 (Runway)</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 Data Center GPU TAM</td><td>~$120B (2025)</td><td>Precedence Research 數據</td></tr>
+<tr><td>估計可達 TAM (2035)</td><td>$228-500B</td><td>CAGR 14-25%，AI inference 拓展</td></tr>
+<tr><td>當前 AMD GPU 份額</td><td>8%</td><td>NVDA 86%、AMD 8%、Intel/客製化 6%</td></tr>
+<tr><td>當前 AMD 伺服器 CPU 份額</td><td>34% (營收)</td><td>2H 2025 數字 (Mercury Research)</td></tr>
+<tr><td>達 20% GPU 份額年數 (維持現率)</td><td>4-5 年</td><td>從 8% → 20% 需搶下 NVDA 流失的訂單</td></tr>
+<tr><td><strong>Runway</strong></td><td><strong>10-15 年</strong></td><td>GPU 份額擴大 + Instinct 產品迭代 + 伺服器 CPU 向 50% 份額逼近</td></tr>
+</table>
+<p><strong>Runway 等級</strong>：<span class="badge badge-green">🟢 ≥ 10 年</span>，支撐估值溢價</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>佔比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~85%</td><td>Xilinx 併購於 2022 完成，近 3 年成長主要來自 EPYC + Instinct 產品周期</td></tr>
+<tr><td>無機成長</td><td>~15%</td><td>Xilinx (2022, $49B)、Pensando (2022, $1.9B)、ZT Systems (2024, $4.9B)。但 Xilinx 帶來的 Embedded segment 2024 反而 -33%</td></tr>
+</table>
+
+<h4>② 定價 vs 量（引用 §9 營收權重）</h4>
+<table>
+<tr><th>業務段</th><th>2025 營收佔比</th><th>驅動力</th><th>趨勢</th></tr>
+<tr><td>Data Center (CPU + GPU)</td><td>$15-17B (~47%)</td><td><strong>量 + 定價並重</strong>：MI350 單價高、伺服器 CPU 單核價值提升</td><td>擴大</td></tr>
+<tr><td>Client (Consumer CPU)</td><td>$10.6B (~31%)</td><td><strong>量為主 + 產品組合升級</strong>：Ryzen 9000 ASP 提升 10-15%</td><td>擴大</td></tr>
+<tr><td>Gaming (Semi-custom + Radeon)</td><td>$3.9B (~11%)</td><td><strong>量為主</strong>：Semi-custom (PS5/Xbox) 尾聲</td><td>穩定</td></tr>
+<tr><td>Embedded (Xilinx)</td><td>$3.6B (~10%)</td><td><strong>量為主，週期性</strong>：客戶去庫存尾聲</td><td>觸底反彈</td></tr>
+<tr><td>合計</td><td>$34.6B = 100%</td><td>-</td><td>-</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<p><strong>屬於強化型</strong>：AMD Data Center 規模擴大 → ROCm 軟體投資加碼 → 推動 AI 生態第二選項 → 吸引更多 ISV 支援 → 反向強化 GPU 出貨。EPYC 規模擴大 → 系統廠 ODM 支援更廣 → 降低客戶轉換成本。<span class="badge badge-green">🟢 強化型</span></p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>達標?</th></tr>
+<tr><td>ROIC</td><td>5-6%</td><td>0.6% (2023)</td><td>↑ 恢復中</td><td><span class="badge badge-red">❌（目前）</span>但趨勢明確</td></tr>
+<tr><td>ROIC − WACC</td><td>-9%</td><td>-14%</td><td>↑ 收窄</td><td>2027 有望轉正</td></tr>
+<tr><td>FCF Margin</td><td>15.7%</td><td>7%</td><td>↑ 大幅擴大</td><td><span class="badge badge-green">✅</span></td></tr>
+<tr><td>FCF / Net Income</td><td>1.27</td><td>0.7</td><td>↑</td><td><span class="badge badge-green">✅</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>~60%</td><td>~75%</td><td>↓（合理）</td><td><span class="badge badge-green">✅</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應成長特徵</th><th>合理 Forward PE</th><th>估值跌幅（從當前 25.7x）</th></tr>
+<tr><td>3Y 後成長率降至 15%</td><td>放緩但仍高於市場</td><td>25x</td><td>-3%</td></tr>
+<tr><td>3Y 後成長率降至 10%</td><td>回歸市場均值 (Bear Case 基準)</td><td><strong>20x</strong></td><td>-22%</td></tr>
+<tr><td>3Y 後成長率降至 5%</td><td>成熟低成長</td><td>15x</td><td>-42%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季 YoY 下滑</td><td>Q4 2025 GM +290 bps YoY</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>伺服器 CPU 份額擴大，GPU 份額 0→8%</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量是否下滑</td><td>EPYC Turin、MI350 提價同時出貨擴大</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 遠高於 Revenue CAGR</td><td>EPS 54%、Revenue 34%，差距 20%p 主要是 margin leverage</td><td><span class="badge badge-yellow">🟡 觀察</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FCF/NI = 1.27</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue &gt; 5% 且遞升</td><td>SBC 2024 $1.41B / Rev $25.8B = 5.5%，2025 $1.5B / $34.6B = 4.3%（下降）</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>產業結構</td><td>TAM 萎縮</td><td>AI Data Center TAM CAGR 14-25%，擴張中</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>產業結構</td><td>產業估值倍數系統性下移</td><td>AI 半導體 PE 擴張中</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>隱性資本</td><td>Maintenance Capex / FCF &gt; 60%</td><td>Fabless，Maintenance Capex 佔 FCF &lt; 20%</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>隱性資本</td><td>停投資 3 年收入下滑</td><td>R&D 是核心，但非資本</td><td><span class="badge badge-green">⬜</span></td></tr>
+</table>
+<p><strong>亮燈數</strong>：0 實質 + 1 觀察 → <span class="badge badge-green">🟢 低風險，未見系統性惡化</span></p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p>AMD 核心業務為 AI 基礎設施（Data Center GPU + Server CPU + Xilinx FPGA），<strong>完全受益於 AI 擴張</strong>：<br>
+① Instinct MI350/MI400 為 AI 訓練/推論核心硬體；② EPYC 伺服器 CPU 是 AI 機房 Host 標配；③ Xilinx Versal FPGA 應用於 AI 推論加速；④ 管理層明確定位「AI Everywhere」戰略。<br>
+<strong>評級：<span class="badge badge-green">🟢 AI 受益</span>，分數 9/10</strong></p>
+
+<p><strong>長期成長性綜合評級：<span class="badge badge-green">🟢 高確信長期成長</span></strong>（Runway 10-15 年、護城河強化型、衰退信號 0 個、AI 受益）</p>
+</div>
+
+<!-- =========== §7 護城河 =========== -->
+<h2>§7 護城河分析（報告核心）</h2>
+<div class="card">
+<p><strong>評分：7/10</strong>（採最嚴格全球上市公司基準）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：弱到中。ROCm 生態尚未形成 CUDA 等級網路效應，但 EPYC 在 Hyperscaler 之間的「第二供應商」地位已建立規模閾值（Top 10 AI 公司 8 家使用 Instinct）</li>
+<li><strong>無形資產</strong>：中強。x86 架構長期授權 + 數千項 GPU/CPU 專利 + Xilinx FPGA 專利組合。Zen 架構 IPC 領先對手 2-3 世代</li>
+<li><strong>轉換成本</strong>：中。EPYC 從 Intel Xeon 切換需重新認證但相對容易（x86 相容）；Instinct GPU 需重寫 CUDA 代碼至 ROCm，轉換成本高（但對 AMD 是劣勢——從 NVDA 切過來難）</li>
+<li><strong>規模優勢</strong>：中強。Fabless 模式讓 R&D 集中於設計，TSMC 代工規模下 AMD 可分享 N3/N2 尖端製程。Capex 效率高於 Intel</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為何資本充足對手（Intel、NVDA、Google TPU）仍難完全跨越：<br>
+① <strong>對 Intel</strong>：AMD Zen 架構 + TSMC N3 vs Intel 18A 仍有 12-24 個月時間差；<br>
+② <strong>對 NVDA</strong>：CUDA 生態 10+ 年壁壘使 AMD 無法追趕，但 AMD 只需爭取「第二供應商」份額 (15-20%) 即可滿足資本市場；<br>
+③ <strong>對 ASIC（TPU/MTIA）</strong>：ASIC 只適用特定模型，通用 GPU 在模型多樣化時代仍是主流。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>當前份額 (其主戰場)</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>NVIDIA</td><td>86% Data Center GPU</td><td>微幅縮減</td><td>CUDA 生態 + NVLink + 開發者鎖定</td><td>AMD 吃 NVDA 第二供應份額</td></tr>
+<tr><td>Intel</td><td>62% 伺服器 CPU</td><td>快速縮減</td><td>18A 製程 + Gaudi 3 AI GPU</td><td>AMD 吃 Intel</td></tr>
+<tr><td>Google TPU / Amazon Trainium / Meta MTIA</td><td>ASIC (內部使用)</td><td>擴大中</td><td>自研 ASIC 省成本</td><td>同時吃 NVDA 與 AMD 潛在訂單</td></tr>
+</table>
+
+<h3>護城河趨勢：<span class="badge badge-green">擴大</span></h3>
+<p>EPYC 份額 2017→2025 從 2% 到 34%；Instinct 從 0 到 8%。但需留意：</p>
+
+<h3>24 個月內最可能瓦解護城河的變化（按威脅排序）</h3>
+<ol>
+<li><strong>Hyperscaler ASIC 化加速</strong>：若 Top-4 雲廠自研 ASIC 佔其 AI Capex 超過 30%，AMD 爭取的「第二供應商」空間壓縮</li>
+<li><strong>NVDA CUDA 鎖定深化</strong>：若 NVDA NVLink Switch / NVLink Fusion 進一步與其他硬體隔離，ROCm 生態建構更難</li>
+<li><strong>Intel 18A 伺服器 CPU 反攻</strong>：若 Intel Clearwater Forest 2026 年順利量產且效能接近 EPYC Turin</li>
+</ol>
+</div>
+
+<!-- =========== §8 財務品質 =========== -->
+<h2>§8 財務品質監測</h2>
+<div class="card">
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手比較（2025）</th></tr>
+<tr><td>FCF Margin</td><td>4.9%</td><td>9.3%</td><td>15.7%</td><td>NVDA ~47%、INTC ~-2%、AVGO ~40%</td></tr>
+<tr><td>EBITDA Margin</td><td>~15%</td><td>~18%</td><td>~22%</td><td>NVDA 62%、INTC 8%、AVGO 57%</td></tr>
+<tr><td>ROIC − WACC</td><td>-14%</td><td>-12%</td><td>-9%</td><td>NVDA +105%、INTC -10%、AVGO +15%</td></tr>
+<tr><td>SBC / Revenue</td><td>6.0%</td><td>5.5%</td><td>4.3%</td><td>NVDA 3.5%、INTC 3%、AVGO 6%</td></tr>
+<tr><td>ROE</td><td>0.6%</td><td>3.1%</td><td>7.1%</td><td>NVDA 119%、INTC -3%、AVGO 32%</td></tr>
+</table>
+<p class="note">對手組與 §11.4 一致：NVDA、INTC、AVGO（3 家直接競爭）。</p>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF</strong>：2025 OCF $7.7B、NI $4.3B，OCF/NI = 1.79，正常</li>
+<li><strong>AR 成長 vs 營收成長</strong>：Revenue +34%、AR 推估 +30%，正常</li>
+<li><strong>存貨成長 vs 營收成長</strong>：存貨 +25%，較 Revenue 低 → 健康</li>
+<li><strong>FCF 轉換率趨勢</strong>：FCF/NI 從 0.7 → 1.27，顯著改善</li>
+</ul>
+
+<h3>回購品質評估（價值陷阱防禦）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>3Y 回購總金額 vs FCF 總額</td><td>回購 ~$2.4B / FCF ~$9B = 27%</td><td><span class="badge badge-green">健康</span>，非靠回購堆疊 EPS</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>原 54% → 剔除後 ~48%（差距僅 6%p）</td><td><span class="badge badge-green">主要來自 Margin Leverage</span></td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>2023-2024 均價 ~$130，當前 $278</td><td><span class="badge badge-green">資本配置合理</span></td></tr>
+<tr><td>Revenue CAGR 同期</td><td>34% (2025 YoY)</td><td>EPS 成長 ~有機</td></tr>
+</table>
+</div>
+
+<!-- =========== §9 產業格局 =========== -->
+<h2>§9 產業格局、議價權與 Unit Economics</h2>
+<div class="card">
+
+<h3>市場量化</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>AI Data Center GPU TAM (2025)</td><td>~$120B</td></tr>
+<tr><td>2030 預估 TAM</td><td>$228B</td></tr>
+<tr><td>CAGR (2025-2030)</td><td>13.7%</td></tr>
+<tr><td>AI Capex 全球 (2025)</td><td>~$400B (含 CPU/GPU/Switch/Memory)</td></tr>
+<tr><td>2026 預估 AI Capex</td><td>~$550B (Top 4 Hyperscaler 領頭)</td></tr>
+<tr><td>供需狀態</td><td>緊缺（CoWoS、HBM、N3/N2 產能 2026 全年滿載）</td></tr>
+</table>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游供應商 (TSMC/Samsung/SK Hynix)</strong>：弱。TSMC 獨佔 N3/N2 先進製程，AMD 需 18-24 個月提前下訂；HBM3e/HBM4 由 SK Hynix + Samsung + Micron 三家供應</li>
+<li><strong>對下游客戶 (Hyperscaler)</strong>：中強。Top 4 客戶 (MSFT、Meta、Google、Amazon) 佔 Data Center 營收 50%+，但 AMD 作為「第二選項」議價權擴大中</li>
+<li><strong>地理分布</strong>：台積電代工 = 90%+ 產能集中台灣，封測 + HBM 集中韓國。地緣風險極高</li>
+</ul>
+
+<h3>營收組成（2025）</h3>
+<table>
+<tr><th>Segment</th><th>2025 Revenue</th><th>佔比</th><th>成長性</th></tr>
+<tr><td>Data Center</td><td>~$16.2B</td><td>47%</td><td>+94% YoY，未來 3-5Y CAGR 60%+</td></tr>
+<tr><td>Client</td><td>$10.6B</td><td>31%</td><td>+51% YoY，產品組合升級驅動</td></tr>
+<tr><td>Gaming</td><td>$3.9B</td><td>11%</td><td>+51% YoY，Semi-custom 尾聲</td></tr>
+<tr><td>Embedded (Xilinx)</td><td>$3.9B</td><td>11%</td><td>觸底反彈 +10% (估)</td></tr>
+<tr><td>合計</td><td>$34.6B</td><td>100%</td><td>+34% YoY</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<ul>
+<li><strong>EPYC Turin ASP</strong>：$7K-$15K/顆（9965 192-core $14,813），vs Intel 同等 $17,800，20-30% 折讓</li>
+<li><strong>MI350 ASP</strong>：~$15-20K，較 NVDA H100 $30K 折讓 30-40%，但相對產品成本毛利率仍 &gt;55%</li>
+<li><strong>MI455X (2026)</strong>：預估 ASP $25-30K，40 PFLOPS FP4 效能</li>
+</ul>
+</div>
+
+<!-- =========== §10 公司治理 =========== -->
+<h2>§10 公司治理與資本配置</h2>
+<div class="card">
+
+<h3>① 股東/股權結構</h3>
+<ul>
+<li><strong>單一股權結構</strong>，無雙重投票權</li>
+<li>機構持股：Vanguard 9.6%、BlackRock 8.1%、Fidelity 4.5%（合計 Top 10 機構 ~40%）</li>
+<li>內部人持股：~0.4%（Lisa Su 約 75 萬股 = $200M）</li>
+</ul>
+
+<h3>② 資本配置方向</h3>
+<table>
+<tr><th>項目</th><th>2025 金額</th><th>優先順序</th></tr>
+<tr><td>R&D</td><td>$7.1B (20% of Rev)</td><td><strong>最高</strong>，維持技術領先</td></tr>
+<tr><td>Capex</td><td>~$700M (2% of Rev)</td><td>低（Fabless）</td></tr>
+<tr><td>併購 (M&A)</td><td>ZT Systems $4.9B (2024)、Silo AI $665M (2024)</td><td>中</td></tr>
+<tr><td>回購</td><td>~$1B (2025)</td><td>低優先，視自由現金流</td></tr>
+<tr><td>分紅</td><td>0</td><td>不發放</td></tr>
+</table>
+
+<h3>③ 管理層薪酬結構</h3>
+<ul>
+<li>Lisa Su 2024 年 total compensation ~$30M，其中固定薪 $1.2M (4%)、績效獎金 ~$5M (17%)、股權激勵 ~$24M (79%)</li>
+<li>PSU (績效股) 佔股權激勵 80%，與 relative TSR 掛鉤，激勵結構合理</li>
+</ul>
+
+<h3>④ 過去 12 個月重大內部人交易</h3>
+<ul>
+<li><strong>CEO Lisa Su 2025/8/21 售 225,000 股，$36.9M</strong>（最大筆）</li>
+<li>CTO Mark Papermaster 2026/1/16 買 1,278 股 $275K（內部人少見買入）；2026/3/4 售 $606K</li>
+<li>EVP Forrest Norrod 2025/9/24 售 2,250 股 $371K</li>
+<li>近 3 月淨賣 ~$1.4M，無淨買入</li>
+<li><strong>判讀</strong>：賣出金額佔 Lisa Su 總持股 &lt;30%，屬合理多元化減持；無大規模內部人恐慌跡象</li>
+</ul>
+</div>
+
+<!-- =========== §11 估值診斷 =========== -->
+<h2>§11 估值診斷</h2>
+<div class="card">
+
+<h3>11.0｜估值體系診斷：市場現在用哪把尺？</h3>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>主流?</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>部分</td><td>Trailing P/E 106x 顯示 EPS 被低估</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td><strong>主流</strong></td><td>P/S 13x、PEG 0.5 更合理</td></tr>
+<tr><td>現金流型</td><td>P/FCF、DCF</td><td>次主流</td><td>P/FCF ~100x 仍高</td></tr>
+</table>
+
+<h4>估值邏輯漂移偵測</h4>
+<ul>
+<li><strong>情境一（資產→盈利）</strong>：適用。AMD ROIC 從 0.6% (2023) → 6% (2025)，持續恢復，2027 可能突破 WACC → 市場從「景氣股」切換至「複利股」，Forward PE 有望從 25x 擴張至 35-40x</li>
+<li><strong>情境二（新度量衡）</strong>：Instinct GPU 可能開始按「AI 算力 / 美元」或 Tokens/sec/$ 定價。作廢條件：若 Hyperscaler 停止 Benchmark 披露</li>
+<li><strong>情境三（定價偏好漂移）</strong>：AI 半導體已從 2023 周期股切換至 Secular Growth，AMD 作為「第二名受益股」正在升級</li>
+</ul>
+
+<p><strong>結論：<span class="badge badge-blue">🔵 估值體系升級機會</span></strong>（ROIC 突破 WACC + AI Secular 定價）</p>
+
+<h3>11.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>106x</td><td>25x</td><td>55x</td><td>1,145x (2023 谷底)</td><td>~7%</td></tr>
+<tr><td>Forward P/E (NTM)</td><td>25.46x</td><td>18x</td><td>32x</td><td>55x</td><td><strong>(25.46-18)/(55-18) = 20%</strong></td></tr>
+<tr><td>Forward P/E (FY+1 2026)</td><td>41.6x</td><td>22x</td><td>35x</td><td>60x</td><td>52%</td></tr>
+<tr><td>Forward P/E (FY+2 2027)</td><td>25.7x</td><td>18x</td><td>30x</td><td>45x</td><td>29%</td></tr>
+<tr><td>EV/EBITDA</td><td>66x</td><td>25x</td><td>45x</td><td>80x</td><td>75%</td></tr>
+<tr><td>P/FCF</td><td>~100x</td><td>40x</td><td>80x</td><td>150x</td><td>55%</td></tr>
+<tr><td>P/S</td><td>13x</td><td>4x</td><td>8x</td><td>15x</td><td>82%</td></tr>
+</table>
+
+<p><strong>解讀：</strong></p>
+<ol>
+<li>當前估值情緒：<strong>Forward PE (NTM) 分位 20%（便宜）</strong>，但 EV/EBITDA 與 P/S 偏高 → 顯示 EBITDA 尚未完全兌現但成長已被部分定價</li>
+<li>上次處於此分位（2021 年底）時，AMD Data Center 營收只有 $3.7B（當年 $16B 的 4 分之 1）；今天業務規模質量完全不同</li>
+<li>推動當前分位的主因：<strong>EPS 爆發式成長（FY+2 $10.83 vs 基期 $4.17 = 2.6 倍）</strong>，利率環境中性</li>
+</ol>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E (NTM)</td><td>25.46x</td><td>-</td><td>-</td></tr>
+<tr><td>Non-GAAP EPS CAGR (3Y)</td><td>53.7%</td><td>-</td><td>-</td></tr>
+<tr><td><strong>PEG (Non-GAAP, 3Y)</strong></td><td><strong>0.47</strong></td><td>&lt; 1 便宜</td><td><span class="badge badge-green">🟢 便宜</span></td></tr>
+<tr><td>PEG (GAAP, 3Y)</td><td>~0.5</td><td>&lt; 1 便宜</td><td><span class="badge badge-green">🟢 便宜</span></td></tr>
+<tr><td>5Y EPS CAGR (Runway 遞減)</td><td>~35%</td><td>-</td><td>-</td></tr>
+<tr><td>PEG (5Y, Non-GAAP)</td><td>0.73</td><td>-</td><td><span class="badge badge-green">🟢 便宜</span></td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：AMD 位於「低 PEG + 高成長」象限，屬結構性低估。主因市場對「AI 第二供應商」信心尚未完全建立，但 OpenAI 6GW 合約已提供重要驗證。</p>
+
+<h3>11.3｜Reverse DCF：當前股價隱含了什麼？</h3>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>當前市值</td><td>$453.7B</td></tr>
+<tr><td>基期 FCF (TTM 2025)</td><td>$5.45B</td></tr>
+<tr><td>WACC</td><td>14% (10Y UST 4.5% + Beta 1.96 × ERP 5%)</td></tr>
+<tr><td>永續成長率</td><td>3%</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+</table>
+<p>反推隱含前 10 年 FCF CAGR ≈ <strong>23%</strong>（DCF 現值 = $453.7B 所需）</p>
+
+<table>
+<tr><th>比較基準</th><th>數值</th><th>位置</th></tr>
+<tr><td>過去 3Y 實際 FCF CAGR</td><td>~60% (5 年谷底爆升)</td><td>高於歷史</td></tr>
+<tr><td>分析師共識 EPS CAGR (3Y)</td><td>54%</td><td>隱含遠低於共識</td></tr>
+<tr><td>同業最快 FCF CAGR (NVDA)</td><td>~80%</td><td>低於最快</td></tr>
+</table>
+<p><strong>隱含 CAGR 23% 的兌現條件</strong>：<br>
+- Revenue 年增 15-20% × 10 年（2025 $34.6B → 2035 $150-200B）<br>
+- 或 FCF Margin 從 15.7% 擴大至 25%<br>
+<strong>此條件合理性</strong>：Data Center +60% CAGR 3-5Y + 後續放緩至 15% 的情境下可達成。</p>
+<p><strong>結論：<span class="badge badge-green">🟢 隱含預期保守</span></strong></p>
+
+<h3>11.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR (3Y)</th><th>ROIC</th></tr>
+<tr><td><strong>AMD</strong></td><td>$454B</td><td>25.5x</td><td>66x</td><td>0.47</td><td>15.7%</td><td>54%</td><td>6%</td></tr>
+<tr><td>NVDA</td><td>$3.8T</td><td>30x</td><td>28x</td><td>0.68</td><td>47%</td><td>44%</td><td>110%</td></tr>
+<tr><td>INTC</td><td>$150B</td><td>35x</td><td>18x</td><td>N/A</td><td>-2%</td><td>負成長</td><td>-4%</td></tr>
+<tr><td>AVGO</td><td>$1.3T</td><td>28x</td><td>22x</td><td>0.95</td><td>40%</td><td>30%</td><td>20%</td></tr>
+<tr><td>產業中位數</td><td>-</td><td>29x</td><td>28x</td><td>0.68</td><td>25%</td><td>42%</td><td>30%</td></tr>
+</table>
+
+<h4>同業溢折價邏輯</h4>
+<ol>
+<li>AMD Forward PE 25.5x vs 中位 29x，折價 12%</li>
+<li>AMD 優勢：EPS CAGR 最高 (54% vs 42%)；劣勢：ROIC 最低 (6% vs 30%)</li>
+<li>若向中位均值回歸：股價 +12% （PE 25.5 → 29）</li>
+</ol>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>AMD</th><th>NVDA（最強對手）</th></tr>
+<tr><td>主假設兌現時上行空間</td><td>+75-100%（PEG 0.47→1.0）</td><td>+40-50%（PEG 0.68→1.0）</td></tr>
+<tr><td>主假設部分落空時跌幅</td><td>-30%（PE 25→18）</td><td>-25%（PE 30→22）</td></tr>
+<tr><td>風報比</td><td>2.5</td><td>1.8</td></tr>
+</table>
+<p><strong>橫向比較結論：<span class="badge badge-green">🥇 此標的為同主題最優選</span></strong>（PEG 最低、EPS CAGR 最高、上行空間最大）</p>
+
+<h3>11.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷 (11.0)</td><td><span class="badge badge-blue">🔵 升級機會</span></td><td>ROIC 恢復中 + AI Secular 定價</td></tr>
+<tr><td>歷史分位 (11.1)</td><td><span class="badge badge-green">🟢 便宜</span></td><td>Forward PE NTM 分位 20%</td></tr>
+<tr><td>PEG 診斷 (11.2)</td><td><span class="badge badge-green">🟢 便宜</span></td><td>PEG 0.47</td></tr>
+<tr><td>Reverse DCF (11.3)</td><td><span class="badge badge-green">🟢 保守</span></td><td>隱含 CAGR 23% &lt; 共識 54%</td></tr>
+<tr><td>同業相對 (11.4)</td><td><span class="badge badge-green">🟢 折價</span></td><td>PE 25.5x &lt; 中位 29x</td></tr>
+</table>
+
+<h4>§12 D 交叉驗證</h4>
+<table>
+<tr><th>當前 FPE (FY+2 25.7x) vs §12 D 合理 PE 45x</th><th>影響</th></tr>
+<tr><td>25.7x &lt; 45x</td><td>＋正面信號，保留 🟢 評級</td></tr>
+</table>
+
+<p><strong>當前定價判斷：<span class="badge badge-green">🟢 合理至便宜</span></strong></p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷</th><th>影響</th></tr>
+<tr><td>① 護城河品質 (§7)</td><td>7/10</td><td>基準 +0</td></tr>
+<tr><td>② 成長可持續年數 (§6A)</td><td>10-15 年 🟢</td><td>+3x</td></tr>
+<tr><td>③ 成長品質 (§6B)</td><td>定價+量雙驅動</td><td>+2x</td></tr>
+<tr><td>④ 成長護城河連動 (§6C)</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性 (§6D)</td><td>-9%→擴張中</td><td>+0（等 2027 轉正再調）</td></tr>
+<tr><td>⑥ 衰退信號數 (§6)</td><td>0 個</td><td>+0</td></tr>
+<tr><td>⑦ 估值體系 (§11.0)</td><td>升級機會</td><td>+3x</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.5%</td><td>中性</td></tr>
+<tr><td>產業基準倍數</td><td>半導體 30-35x</td><td>調整後合理區間 40-50x</td></tr>
+</table>
+
+<h4>分析師目標價參考</h4>
+<ul>
+<li>高 $365 / 中位 $289.35 / 低 $220 (n=46)</li>
+<li>認同共識中位偏保守：共識暗示 PE ~43x FY+1，與本報告 45x 接近</li>
+</ul>
+
+<h4>長期合理倍數對應表（v9.0）</h4>
+<table>
+<tr><th>§6 評級</th><th>5Y 後基準 FPE</th><th>適用</th></tr>
+<tr><td>🟢 高確信長期成長</td><td><strong>25x</strong></td><td>AMD 適用</td></tr>
+</table>
+<p><strong>本標的基準長期合理倍數：25x</strong></p>
+<p><strong>v9.0 上行三引擎調整</strong>：<br>
+引擎 A（ROIC 溢價）：當前 ROIC 6% &lt; 20%，不觸發<br>
+引擎 B（PEG 動態天花板）：PEG 0.47，A 級品質 → × 1.25<br>
+引擎 C（護城河 7/10）：&lt; 9，不觸發<br>
+三引擎取較高 = × 1.25<br>
+AI 風險 🟢 → × 1.10<br>
+<strong>最終長期合理倍數 = 25 × 1.25 × 1.10 = 34.4x</strong>（5 年後基準）</p>
+
+<div class="verdict-card">
+<h4>§11.5 完整投資結論（最終裁決）</h4>
+
+<p><strong>財報信號與假設校準</strong>：</p>
+<ul>
+<li>H1 MI400/AI GPU：<span class="badge badge-green">＋強化</span>（Data Center +39% YoY、OpenAI 6GW 合約確認）</li>
+<li>H2 CPU 份額：<span class="badge badge-green">＋強化</span>（34% 伺服器份額 + EPYC Turin 領先）</li>
+<li>H3 估值重評：<span class="badge badge-yellow">0 中性</span>（Q4 財報後股價已反映一部分 rerating）</li>
+<li>這份財報讓隱含預期「更容易兌現」，因 FY+2 EPS 共識連續上修至 $10.83</li>
+</ul>
+
+<p><strong>判定：<span class="badge badge-green">觀望偏進場</span></strong>（直接引用 §12 E）</p>
+<ul>
+<li>短期 R:R = 0.14x（未達 2.0）</li>
+<li>中期 R:R = 2.51x（≥ 2.0）</li>
+<li>品質 A 級 + 長期高 + 中期 R:R ≥ 1.0 → <strong>觀望偏進場</strong>（底倉 15-20% 目標倉位）</li>
+</ul>
+
+<p><strong>① 短期信號（0-12 個月）</strong>：Q1 2026 guidance $9.8B Beat 共識，MI350 持續放量。但股價已接近 52W 高點，短期 Bear Case 下檔達 57%，R:R 不利。</p>
+
+<p><strong>② 中期成長確信度（1-2 年）</strong>：FY+1 60.4% + FY+2 61.9% 成長主要來自 Data Center（定價 + 量雙驅動）與 Client（產品組合升級），能見度高。MI400 Helios 2026Q3 出貨、OpenAI 1GW 資料中心 H2 2026 啟動，為關鍵驗證節點。</p>
+
+<p><strong>③ 長期持有信心（3-5 年）</strong>：Runway 10-15 年（AI Data Center TAM CAGR 14-25%）+ 護城河擴大 → <strong>高</strong>。</p>
+
+<p><strong>下行風險量化（引用 §12 E Bear Case）</strong>：</p>
+<ul>
+<li>短期下檔（Bear 股價 $120.4）：距現價 -56.7%</li>
+<li>中期下檔（Bear 股價 $195）：距現價 -29.9%</li>
+<li>W52 Low $83.75（參考）、W104 Low $76.48（參考）</li>
+<li>若 FY+1 EPS 下修 10%，短期 R:R 降至負值</li>
+</ul>
+</div>
+</div>
+
+<!-- =========== §12 品質分 R:R =========== -->
+<h2>§12 品質分驅動雙時距 R:R（v11.0）</h2>
+<div class="card">
+
+<h3>A｜體質檢核</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3Y 未連續下滑 &gt; 2%p</td><td><span class="badge badge-green">✅ +0.5</span></td><td>GM 2023 46% → 2024 49% → 2025 50%（上升）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge badge-green">✅ +0.5</span></td><td>FCF/NI = 5.45/4.3 = 1.27</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識 90 天未連續下修</td><td><span class="badge badge-green">✅ +0.5</span></td><td>90 天連續上修 (6.57→6.69)</td></tr>
+<tr><td>4</td><td>近 4Q 營收 YoY 未全為負</td><td><span class="badge badge-green">✅ +0.5</span></td><td>近 4Q YoY +36%/+32%/+34%/+34%（全正）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge badge-green">✅ +0.5</span></td><td>Net Debt = -$6.5B (淨現金)，比率為負</td></tr>
+</table>
+<p><strong>體質加減分 = 5 × 0.5 = +2.5</strong></p>
+
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th></tr>
+<tr><td>護城河</td><td>§7</td><td><strong>7</strong></td></tr>
+<tr><td>成長持久性</td><td>§6 (Runway 10-15Y + 強化護城河 + AI 🟢 受益 + 衰退信號 0)</td><td><strong>8</strong></td></tr>
+</table>
+<p><strong>底分 = (7 + 8) / 2 = 7.5</strong><br>
+<strong>品質分 = min(7.5 + 2.5, 10) = 10.0</strong></p>
+
+<table>
+<tr><th>品質分</th><th>等級</th><th>底倉</th></tr>
+<tr><td>10.0</td><td><span class="badge badge-green"><strong>A 級</strong></span></td><td>目標倉位 25%</td></tr>
+</table>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS (2026)</td><td>$6.69</td><td>yfinance (n=44)</td></tr>
+<tr><td>FY+2 EPS (2027)</td><td>$10.83</td><td>yfinance (n=42)</td></tr>
+<tr><td>FY+2 成長率</td><td>61.9%</td><td>(10.83/6.69) - 1</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td><strong>25.7x</strong></td><td>$278.26 / $10.83</td></tr>
+<tr><td>當前 NTM Forward P/E (yfinance)</td><td>25.46x</td><td>-</td></tr>
+</table>
+
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+
+<h4>步驟一：歷史錨點</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>5Y Forward P/E 中位數</td><td>32x</td></tr>
+<tr><td>5Y Forward P/E 75th</td><td><strong>38x</strong></td></tr>
+<tr><td>5Y Forward P/E 高點</td><td>55x</td></tr>
+<tr><td>基礎值</td><td><strong>38x</strong></td></tr>
+</table>
+
+<h4>步驟二：PEG 調節</h4>
+<p>PEG = 25.46 ÷ 53.7 = <strong>0.47</strong>（&lt; 1.0）<br>
+→ 適用規則：上浮至 min(38 × 1.2, 55) = <strong>min(45.6, 55) = 45.6x</strong></p>
+
+<p><strong>合理 P/E = 45x</strong>（四捨五入）</p>
+
+<h3>E｜雙時距目標價與 R:R</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期 (1 年)</td><td>$6.69 × 45 = $301</td><td><strong>$301</strong></td></tr>
+<tr><td>中期 (2 年)</td><td>$10.83 × 45 = $487</td><td><strong>$487</strong></td></tr>
+</table>
+
+<h4>下檔錨點（基本面 Bear Case）</h4>
+<p>Bear PE 引用 §6 E「成長降至 10%」情境 = <strong>20x</strong>；Bear EPS = FY EPS × 0.9</p>
+<table>
+<tr><th>項目</th><th>短期 (1Y)</th><th>中期 (2Y)</th></tr>
+<tr><td>Bear PE</td><td>20x</td><td>20x</td></tr>
+<tr><td>Bear EPS</td><td>$6.69 × 0.9 = $6.02</td><td>$10.83 × 0.9 = $9.75</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td><strong>$120.4</strong></td><td><strong>$195.0</strong></td></tr>
+</table>
+
+<h4>W52 / W104 參考（yfinance，不用於 R:R）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$278.26</td></tr>
+<tr><td>W52 Low (參考)</td><td>$83.75</td></tr>
+<tr><td>W104 Low (參考)</td><td>$76.48</td></tr>
+</table>
+<p class="note">Bear 股價 ($120.4 / $195) 均高於 W52 Low ($83.75)，故採 Bear 股價作下檔。</p>
+
+<h4>雙 R:R 計算</h4>
+<table>
+<tr><th></th><th>短期 (1Y)</th><th>中期 (2Y)</th></tr>
+<tr><td>目標價</td><td>$301</td><td>$487</td></tr>
+<tr><td>上行空間</td><td>+8.2%</td><td>+75.0%</td></tr>
+<tr><td>下檔錨點</td><td>$120.4</td><td>$195.0</td></tr>
+<tr><td>下行距離</td><td>-56.7%</td><td>-29.9%</td></tr>
+<tr><td><strong>R:R</strong></td><td><span class="badge badge-red">0.14x</span></td><td><span class="badge badge-green">2.51x</span></td></tr>
+</table>
+
+<h4>判定（四級裁決）</h4>
+<ul>
+<li>短期 R:R 0.14 &lt; 2.0 → 不符進場</li>
+<li>中期 R:R 2.51 ≥ 2.0 → 符觀望</li>
+<li>中期 R:R ≥ 1.0 + 品質 A + 長期高 → <strong>符觀望偏進場</strong></li>
+</ul>
+<p><strong>本標的判定：<span class="badge badge-green">觀望偏進場</span></strong></p>
+
+<h3>F｜建倉建議（品質定基礎 × Bollinger 微調）</h3>
+
+<h4>Bollinger 位置（週線 2σ，Python 計算）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 SMA20</td><td>$217.91</td></tr>
+<tr><td>週線 BB 上軌 (2σ)</td><td>$261.74</td></tr>
+<tr><td>週線 BB 下軌 (2σ)</td><td>$174.07</td></tr>
+<tr><td>現價</td><td>$278.26</td></tr>
+<tr><td>位置判定</td><td><span class="badge badge-red">偏貴（上軌之上 $278 &gt; $261.74）</span></td></tr>
+<tr><td>部位調整係數</td><td>×0.5</td></tr>
+</table>
+
+<h4>最終部位</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基礎部位 (觀望偏進場)</td><td>17.5% (15-20% 中間)</td></tr>
+<tr><td>Bollinger 調整</td><td>×0.5</td></tr>
+<tr><td><strong>最終建議部位</strong></td><td><strong>約 8-10%（目標倉位的）</strong></td></tr>
+</table>
+<p class="note">底倉 = 目標倉位的 X%。目標倉位 = 你給此標的的最大組合佔比（典型範圍 8-15% / 檔）。</p>
+
+<h3>G｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§6 A</td><td><strong>充裕</strong>（Runway 10-15 年）</td></tr>
+<tr><td>護城河趨勢</td><td>§7</td><td><strong>加深</strong>（CPU/GPU 雙引擎）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><span class="badge badge-green"><strong>高</strong></span></td></tr>
+</table>
+<p><strong>一句話</strong>：AMD 為 AI 基礎設施第二供應商的結構性受益者，MI400/MI500/Zen 6 產品路徑明確，3-5 年複利能見度高，值得抱超過兩年，但需等估值回調或基本面再驗證後提高部位。</p>
+</div>
+
+<!-- =========== §13 三方辯論 =========== -->
+<h2>§13 三方辯論摘要</h2>
+<div class="card">
+<div class="debate-grid">
+
+<div class="debate-card bull-card">
+<h4>🟢 多頭辯護人｜Munger 模式</h4>
+<table>
+<tr><th>#</th><th>論據</th><th>數字</th></tr>
+<tr><td>1</td><td>護城河擴大</td><td>EPYC 份額 2%→34% (§7)</td></tr>
+<tr><td>2</td><td>成長引擎</td><td>3Y EPS CAGR 54%、Runway 10-15Y (§6)</td></tr>
+<tr><td>3</td><td>估值折讓</td><td>PEG 0.47、FY+2 PE 25.7x (§11)</td></tr>
+</table>
+<p><strong>最強一句</strong>：「AI 基礎設施是未來 10 年最大 Capex 主題，AMD 以 2.6 倍 EPS 爆發（2025→2027）卻只收 PEG 0.47 的估值，是市場對『第二供應商地位』的系統性低估。」</p>
+</div>
+
+<div class="debate-card bear-card">
+<h4>🔴 空頭檢察官｜Burry 模式</h4>
+<table>
+<tr><th>#</th><th>情境</th><th>章節</th></tr>
+<tr><td>1</td><td>MI400 量產延後 6 個月 + 良率不足 → FY+1 EPS 下修 15%，PE 壓縮至 18x → 股價 -45%</td><td>§6 / §3 R1</td></tr>
+<tr><td>2</td><td>ASIC 化加速 (Google TPU v7/Meta MTIA) → AMD Hyperscaler 訂單流失 → Data Center 成長降至 25%</td><td>§7 / §11.3</td></tr>
+<tr><td>3</td><td>NVDA Rubin 降價 30% 反擊 → Instinct ASP 被迫下調 → 毛利率從 57% 降至 50%</td><td>§3 R3</td></tr>
+</table>
+<p><strong>最大威脅</strong>：「AMD 當前 Trailing PE 106x 與 EV/EBITDA 66x 均處歷史高位，52W 高點附近；若任一假設未兌現，從 $278 跌至 $150 僅需 FY+2 EPS 下修 20% + PE 壓縮至 20x。」</p>
+</div>
+
+<div class="debate-card arbiter-card">
+<h4>🟣 估值仲裁員｜Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>評分</th></tr>
+<tr><td>vs 過去 3Y FCF CAGR (60%)</td><td>隱含 23% 極保守，2/2</td></tr>
+<tr><td>vs 分析師 EPS CAGR (54%)</td><td>隱含 23% &lt; 54%，2/2</td></tr>
+<tr><td>vs 同業最快 (NVDA 80%)</td><td>不需行業最快，2/2</td></tr>
+<tr><td>兌現條件苛刻度</td><td>只需 2026-2028 維持 20%+ 成長即可，2/2</td></tr>
+<tr><td>歷史先例</td><td>Xilinx、Broadcom 類似重估曾發生，1/2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：9/10</strong></p>
+<p><strong>一句話</strong>：「數字層面，當前估值隱含的 23% FCF CAGR 相對分析師共識 54% 屬明顯折讓，若僅需達成共識的一半水平即可支撐當前股價。」</p>
+</div>
+
+</div>
+
+<div class="verdict-card">
+<h4>你的裁決</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>PEG 0.47 + Runway 10-15Y + OpenAI 6GW 合約為 H1 提供結構性驗證</td></tr>
+<tr><td>空頭最大威脅</td><td>MI400 執行風險（量產延後/良率）+ NVDA 反擊降價</td></tr>
+<tr><td>估值仲裁評分</td><td>9 / 10</td></tr>
+<tr><td>我的裁決</td><td><span class="badge badge-green"><strong>觀望偏進場</strong></span></td></tr>
+<tr><td>裁決理由</td><td>品質 A 級 + 中期 R:R 2.51 + 長期信心高，但短期 Bear Case 下檔風險 57%（股價已至 52W 高附近，Bollinger 上軌之上）。建議建 8-10% 底倉（目標倉位的），等回檔至 $200-220 加碼至 17-20%。</td></tr>
+</table>
+</div>
+
+<div class="checklist">
+<h4>進入 §1 前的自我檢核</h4>
+<ul>
+<li>☑ 多頭論據依賴「市場重新認識」？否，PEG 0.47 + EPS 共識持續上修是硬指標</li>
+<li>☑ 空頭威脅在 MA 年線（~$160）之前發生？否，MA104w $161，目前股價已上漲至 $278，有相當緩衝</li>
+<li>☑ 估值仲裁 9/10 &gt; 5，具備安全邊際</li>
+</ul>
+</div>
+
+</div>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+</body>
+</html>
