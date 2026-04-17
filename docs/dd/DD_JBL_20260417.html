@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v11.0">
+<title>DD｜JBL (Jabil Inc.) 深度研究報告｜2026-04-17</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC;
+    --card: #FFFFFF;
+    --nav: #1E3A5F;
+    --accent: #3B82F6;
+    --border: #E2E8F0;
+    --text: #0F172A;
+    --subtle: #475569;
+    --green-bg: #DCFCE7; --green-fg: #166534;
+    --red-bg: #FEE2E2; --red-fg: #991B1B;
+    --yellow-bg: #FEF9C3; --yellow-fg: #92400E;
+    --orange-bg: #FFF0E6; --orange-accent: #F97316; --orange-fg: #C2410C;
+    --blue-bg: #EFF6FF; --blue-fg: #1E3A5F;
+    --amber-bg: #FFFBEB; --amber-accent: #D97706; --amber-fg: #92400E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans TC', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    line-height: 1.65;
+  }
+  .num, code, table td:nth-child(n+2), table th:nth-child(n+2) {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  header.page-head {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--nav); color: #fff;
+    padding: 10px 24px;
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-size: 13px;
+    border-bottom: 3px solid var(--accent);
+  }
+  header.page-head strong { color: #BFDBFE; margin-right: 6px; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 26px; margin: 10px 0 6px; color: var(--nav); }
+  h2 {
+    color: var(--nav);
+    background: #EEF2F7;
+    padding: 10px 16px;
+    border-left: 4px solid var(--accent);
+    margin: 32px 0 16px;
+    font-size: 19px;
+  }
+  h3 { color: var(--nav); margin: 22px 0 10px; font-size: 16px; }
+  h4 { color: var(--subtle); margin: 16px 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card { background: var(--card); border: 1px solid var(--border); padding: 18px 22px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; background: #fff; }
+  th { background: var(--nav); color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+  td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:nth-child(even) { background: #F1F5F9; }
+  .beat, .pass { background: var(--green-bg); color: var(--green-fg); padding: 2px 8px; font-weight: 500; }
+  .miss, .fail { background: var(--red-bg); color: var(--red-fg); padding: 2px 8px; font-weight: 500; }
+  .neutral { background: var(--yellow-bg); color: var(--yellow-fg); padding: 2px 8px; font-weight: 500; }
+  .sig-red { background: var(--red-bg); color: var(--red-fg); padding: 2px 8px; }
+  .sig-yellow { background: var(--yellow-bg); color: var(--yellow-fg); padding: 2px 8px; }
+  .sig-green { background: var(--green-bg); color: var(--green-fg); padding: 2px 8px; }
+  .sig-blue { background: var(--blue-bg); color: var(--blue-fg); padding: 2px 8px; }
+  .trap-box { background: var(--orange-bg); border-left: 4px solid var(--orange-accent); padding: 16px 20px; margin: 16px 0; }
+  .trap-box h3, .trap-box h4 { color: var(--orange-fg); margin-top: 0; }
+  .hypothesis-box { background: var(--blue-bg); border-left: 4px solid var(--accent); padding: 16px 20px; margin: 14px 0; }
+  .hypothesis-box h3, .hypothesis-box h4 { color: var(--blue-fg); margin-top: 0; }
+  .debate { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .debate .col { padding: 16px; border-left: 4px solid #64748B; font-size: 14px; }
+  .debate .bull { background: #F0FDF4; border-left-color: #16A34A; }
+  .debate .bear { background: #FFF1F2; border-left-color: #DC2626; }
+  .debate .arb { background: #F5F3FF; border-left-color: #7C3AED; }
+  .debate .col h4 { margin-top: 0; color: inherit; }
+  .verdict-box { background: var(--amber-bg); border-left: 4px solid var(--amber-accent); padding: 16px 20px; margin: 16px 0; }
+  .verdict-box h3 { color: var(--amber-fg); margin-top: 0; }
+  .rr { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .rr .col { padding: 16px; border-left: 4px solid #64748B; font-size: 14px; }
+  .rr .short { background: #F0F9FF; border-left-color: #0284C7; }
+  .rr .mid { background: #F5F3FF; border-left-color: #7C3AED; }
+  .note { font-size: 13px; color: var(--subtle); padding-top: 8px; }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 5px; }
+  .print-btn {
+    position: fixed; right: 18px; bottom: 18px; z-index: 100;
+    background: var(--nav); color: #fff; border: none;
+    padding: 12px 20px; font-family: inherit; font-size: 14px;
+    cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .print-btn:hover { background: #152C48; }
+  @media print {
+    header.page-head, .print-btn { display: none; }
+    body { background: #fff; }
+    .card { border: 1px solid #ccc; page-break-inside: avoid; }
+    h2 { page-break-after: avoid; }
+  }
+  .sub { color: var(--subtle); font-size: 13px; }
+  strong.lg { font-size: 16px; }
+</style>
+</head>
+<body>
+<header class="page-head">
+  <span><strong>標的</strong>JBL (Jabil Inc.)</span>
+  <span><strong>資料抓取</strong>2026-04-17</span>
+  <span><strong>最新股價</strong>$310.10</span>
+  <span><strong>最近財報</strong>Q2 FY2026 (2026/03)</span>
+  <span><strong>DD Schema</strong>v11.0</span>
+</header>
+
+<main>
+<h1>JBL (Jabil Inc.)｜買側深度研究報告 v11.0</h1>
+<p class="sub">AI 基礎設施 EMS 巨頭｜NYSE 上市｜產業：電子製造服務 / AI 資料中心基礎設施</p>
+
+<!-- ============== §1 ============== -->
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="sub">本結論基於以下完整分析得出，詳見各章節（§2 雙 R:R 數字 ｜ §13.5 完整推理）。</p>
+
+<h3>結論 Dashboard</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>品質 A 級（9.5 分）：</strong>護城河 7/10（EMS 設計整合 + Mikros 液冷 IP + AI 客戶長約）+ 成長持久性 7/10（Runway 8-10 年、AI 🟢 受益、客戶集中度扣分）+ 體質 +2.5（5/5 全過）</li>
+<li><strong>估值 🔴 明顯貴：</strong>FY+1 Forward PE 25.11x（5Y 歷史分位 93%）vs 合理 PE 18x，PEG 1.27（[1,2] 區間維持 75th）</li>
+<li><strong>短期 R:R -0.33x：</strong>FY+1 (FY2026E) EPS $12.35（+26.7% YoY，90d 上修 +6.6%），目標 $222.30 低於現價 $310.10（-28.3%），Bear $144.50（-53.4%）</li>
+<li><strong>中期 R:R -0.23x：</strong>FY+2 (FY2027E) EPS $14.57（+18.0% YoY），目標 $262.26（-15.4%）vs Bear $170.47（-45.0%）</li>
+<li><strong>建議迴避：</strong>短期+中期 R:R 雙負；Bollinger 現價 $310.10 > 上軌 $297.86 偏貴觸發 ×0.5；等回檔至 BB 中軌 $251.84（FPE ~20x）或 BB 下軌 $205.83（FPE ~17x）再啟動，屆時中期 R:R 可轉正至 2.0x 以上</li>
+<li><strong>關鍵發現：</strong>一年內股價從 52W Low $127.72 → $310.10 暴漲 143%（含 FY26 Q2 24% 單季漲幅），AI 敘事完全 priced in；FY2026 Guide 上修至 Rev $34B / EPS $12.25，AI 相關營收 $13.1B（+46%）；CEO Dastoor 近 3 月賣出 $6.4M（10b5-1 plan）；同主題 CLS（FY+2 PEG 0.63）起點更高但趨勢類似</li>
+<li><strong>長期持有信心：中</strong>（§2 G）｜<strong>陷阱定性：</strong>🟢 非陷阱（估值高而非基本面裂縫）</li>
+</ul>
+</div>
+<p class="note">判定：<strong>迴避</strong>（§2 E）｜底倉 0%（目標倉位的）。底倉建議為目標倉位的 X%。目標倉位 = 你給此標的的最大組合佔比，需自行根據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+
+<div class="trap-box">
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式？</td><td><strong>非陷阱</strong>——基本面強勁，問題純粹在估值</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>FY26 Q2 Rev +23% / Core EPS +95% YoY、AI 營收 $13.1B（+46%）、ROIC 20.8%-33.6%、FCF 1.3B（+25%）、FY+1/FY+2 EPS 共識 90 天內連續上修（11.59→12.35, +6.5%）、所有業務段皆 beat，體質 5/5 全過</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>Debt/Equity 3.29（產業中位 0.28 的 12 倍）；客戶集中度——4-5 家超大 hyperscaler（AMZN/MSFT/GOOGL/META）佔 Intelligent Infrastructure 絕大部分；EMS 本質 Gross Margin 僅 9%（產業結構性低毛利）；一年股價 +143% 完全領先基本面修正速度</td></tr>
+<tr><td>如何判斷陷阱正在發生？</td><td>① 任一 hyperscaler capex guide 下修 &gt; 15% → 啟動觀察；② Intelligent Infrastructure 段 YoY growth 連續 2 季 &lt; 20% → 結構放緩訊號</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="sig-green">🟢 非陷阱</span>——基本面未見裂縫，估值偏貴是唯一問題</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Intelligent Infrastructure 段 QoQ / YoY 成長率</td><td>§5 H1</td><td>🔵 核心假設驗證信號</td><td>連續 2 季 YoY &lt; 20%（目前 Q2 +51%）</td></tr>
+<tr><td>2</td><td>Hyperscaler Capex 指引方向（AMZN/MSFT/GOOGL/META）</td><td>§8 / §9</td><td>🔵 長期成長領先信號</td><td>四大 hyperscaler 合計 capex YoY 從 +30% 降至 &lt; +10%</td></tr>
+<tr><td>3</td><td>JBL Forward PE（FY+1）</td><td>§13</td><td>短期估值信號</td><td>回檔至 &lt; 18x（股價 &lt; $222.30）重新評估進場</td></tr>
+</table>
+
+<!-- ============== §2 ============== -->
+<h2>§2 品質分驅動雙時距 R:R（v11.0）</h2>
+
+<h3>A｜體質檢核（加減分）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率趨勢（近 3 年未連續下滑 &gt;2%p）</td><td class="pass">✅</td><td>FY23 ~8.0% → FY24 ~8.5% → FY25 ~9.0%（改善）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td class="pass">✅</td><td>FY25 FCF $1.32B / NI $657M = 2.01（OCF 遠超 NI，EMS 營運資本釋放）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td class="pass">✅</td><td>90d 前 $11.59 → 當前 $12.35，+6.6% 上修</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td class="pass">✅</td><td>Q1 FY26 +17%，Q2 FY26 +23%（最近 4 季加速成長）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td class="pass">✅</td><td>Net Debt $2.61B / LTM EBITDA ~$2.4B = 1.09（健康）</td></tr>
+</table>
+<p><strong>體質加減分</strong> = +2.5（5/5 全過）</p>
+
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數（1-10）</th></tr>
+<tr><td>護城河</td><td>§9 評分（EMS 設計整合 + Mikros 液冷 IP + AI 長約 + 客戶轉換成本）</td><td>7</td></tr>
+<tr><td>成長持久性</td><td>§8 綜合（Runway 8-10 年 + 有機 + 量驅動為主 + AI 🟢 受益，扣分：客戶集中 / EMS 本質低毛利 / 週期性）</td><td>7</td></tr>
+</table>
+<p><strong>底分</strong> = (7 + 7) / 2 = <strong>7.0</strong></p>
+<p><strong>品質分</strong> = min(7.0 + 2.5, 10) = <strong class="lg">9.5</strong>　→　品質等級：<strong>A 級</strong>　→　基礎底倉 25%（目標倉位的）</p>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026E, 截至 2026/08）</td><td>$12.35</td><td>yfinance 共識中位數，n=10，YoY +26.69%（vs 公司 Guide $12.25）</td></tr>
+<tr><td>FY+2 EPS（FY2027E, 截至 2027/08）</td><td>$14.57</td><td>yfinance 共識中位數，n=10，YoY +17.92%</td></tr>
+<tr><td>FY+2 成長率（QoY）</td><td>17.92%</td><td>(14.57 / 12.35) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>25.11x</td><td>$310.10 / $12.35</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>21.28x</td><td>$310.10 / $14.57</td></tr>
+</table>
+
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+<p><strong>步驟一：確認歷史錨點（5Y Forward P/E，Macrotrends + 產業推估）</strong></p>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>5Y Forward P/E 低點</td><td>~8x（2022/08）</td></tr>
+<tr><td>5Y Forward P/E 中位數</td><td>~13.5x</td></tr>
+<tr><td>5Y Forward P/E 75th percentile</td><td>~18x</td></tr>
+<tr><td>5Y Forward P/E 歷史高點</td><td>~25x（當前接近此水位）</td></tr>
+<tr><td><strong>基礎值（75th）</strong></td><td><strong>18x</strong></td></tr>
+</table>
+
+<p><strong>步驟二：PEG 調節</strong></p>
+<p>3Y EPS CAGR 推導（§7 §8 邏輯）：FY2025 基期 $9.75 → FY+3 (FY2028E) 推估 $16.76（FY+3 YoY +15%，基於 §8A Runway 仍充裕但大客戶 2027 ramp 後成長斜率遞減）。3Y CAGR = (16.76/9.75)^(1/3) − 1 = <strong>19.8%</strong></p>
+<p>PEG = 25.11 / 19.8 = <strong>1.27</strong>（在 [1.0, 2.0] 合理定價區間）</p>
+<p>→ 適用規則：<strong>維持 75th（18x）不動</strong></p>
+
+<p><strong>步驟三：品質溢價</strong></p>
+<p>PEG = 1.27 在 [1.0, 2.0] 區間，未觸發下壓，<strong>品質溢價不適用</strong>，直接使用步驟二結果。</p>
+
+<p><strong class="lg">合理 P/E = 18x</strong></p>
+
+<h3>E｜雙時距目標價與 R:R</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>FY+1 EPS × 合理 P/E = $12.35 × 18</td><td>$222.30</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 EPS × 合理 P/E = $14.57 × 18</td><td>$262.26</td></tr>
+</table>
+
+<h4>下檔錨點（基本面 Bear Case）</h4>
+<p>依 §8E 成長熄火壓力測試「成長率降至 10%」情境：Bear PE = 13x（EMS 歷史週期底部倍數 8-12x + AI 敘事殘留溢價 1-2x）</p>
+<table>
+<tr><th>項目</th><th>短期（1 年）</th><th>中期（2 年）</th></tr>
+<tr><td>Bear PE（§8E）</td><td>13x</td><td>13x</td></tr>
+<tr><td>Bear EPS</td><td>$12.35 × 0.9 = $11.12</td><td>$14.57 × 0.9 = $13.11</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td><strong>$144.50</strong></td><td><strong>$170.47</strong></td></tr>
+</table>
+
+<p><strong>W52/W104 參考（yfinance，不用於 R:R 計算）</strong></p>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$310.10</td></tr>
+<tr><td>W52 Low（參考）</td><td>$127.72</td></tr>
+<tr><td>W104 Low（參考）</td><td>$95.85</td></tr>
+<tr><td>MA104w（參考）</td><td>$174.50</td></tr>
+<tr><td><strong>短期下檔</strong> = Bear 股價（短期）</td><td><strong>$144.50</strong>（高於 W52 Low $127.72，採用 Bear 股價）</td></tr>
+<tr><td><strong>中期下檔</strong> = Bear 股價（中期）</td><td><strong>$170.47</strong>（高於 W52 Low $127.72，採用 Bear 股價）</td></tr>
+</table>
+
+<h4>雙 R:R 計算</h4>
+<div class="rr">
+<div class="col short">
+<h4>① 短期 R:R（1 年）</h4>
+<ul>
+<li>目標價：<strong>$222.30</strong></li>
+<li>上行空間：<span class="fail">−28.3%</span>（目標低於現價）</li>
+<li>下檔錨點：$144.50（Bear Case）</li>
+<li>下行距離：<span class="fail">−53.4%</span></li>
+<li><strong>R:R = -0.53x</strong>（上行為負）</li>
+</ul>
+</div>
+<div class="col mid">
+<h4>② 中期 R:R（2 年）</h4>
+<ul>
+<li>目標價：<strong>$262.26</strong></li>
+<li>上行空間：<span class="fail">−15.4%</span>（目標低於現價）</li>
+<li>下檔錨點：$170.47（Bear Case）</li>
+<li>下行距離：<span class="fail">−45.0%</span></li>
+<li><strong>R:R = -0.34x</strong>（上行為負）</li>
+</ul>
+</div>
+</div>
+
+<h4>判定（四級裁決，v11.0）</h4>
+<table>
+<tr><th>條件</th><th>結果</th></tr>
+<tr><td>短期 R:R ≥ 2.0 且 中期 R:R ≥ 2.0 → 進場</td><td class="fail">未達</td></tr>
+<tr><td>僅中期 R:R ≥ 2.0 → 觀望</td><td class="fail">未達</td></tr>
+<tr><td>中期 R:R ≥ 1.0 且 品質 A 級 且 長期信心高 → 觀望偏進場</td><td class="fail">中期 R:R -0.34 未達</td></tr>
+<tr><td>都不過 → 迴避</td><td class="fail">✓ 觸發</td></tr>
+</table>
+<p><strong class="lg">本標的判定：迴避</strong></p>
+
+<h3>F｜建倉建議（品質定基礎 × Bollinger 微調）</h3>
+<h4>Bollinger 位置（週線 2σ，20 週計算）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 上軌（2σ）</td><td>$297.86</td></tr>
+<tr><td>週線 BB SMA20</td><td>$251.84</td></tr>
+<tr><td>週線 BB 下軌（2σ）</td><td>$205.83</td></tr>
+<tr><td>現價</td><td>$310.10</td></tr>
+<tr><td>現價位置</td><td><strong>偏貴（上軌之上）</strong></td></tr>
+<tr><td>部位調整係數</td><td>×0.5</td></tr>
+</table>
+
+<h4>最終部位</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基礎部位（A 級查表）</td><td>25%</td></tr>
+<tr><td>Bollinger 調整係數</td><td>×0.5（偏貴）</td></tr>
+<tr><td>判定覆蓋</td><td>迴避 → 強制 0%</td></tr>
+<tr><td><strong>最終建議部位</strong></td><td><strong>0%</strong>（目標倉位的，迴避覆蓋）</td></tr>
+</table>
+<p class="sub">觀察期進場條件：股價回檔至 BB 中軌 $251.84（短期 R:R 轉正 +0.1x）或 BB 下軌 $205.83（短期 R:R ~1.3x / 中期 R:R ~2.9x 觸發觀望偏進場）。</p>
+
+<h3>G｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（AI 基礎設施 TAM 2030E $223B，CAGR 30.4%）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定偏加深（Mikros 液冷 IP + 北美製造回流）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong></td></tr>
+</table>
+<p class="sub"><strong>一句話說明：</strong>長期 AI 敘事為真，但 JBL 屬於「好故事、目前太貴」的案例。EMS 本質 Gross Margin 9%、客戶集中 4-5 家 hyperscaler、capex 週期敏感度高，不具備 NVDA 或 AVGO 等級的定價權護城河。長期可持有，但當前價位缺乏安全邊際。</p>
+
+<!-- ============== §3 ============== -->
+<h2>§3 三方辯論摘要</h2>
+
+<div class="debate">
+<div class="col bull">
+<h4>多頭辯護人｜Munger 模式</h4>
+<table>
+<tr><th>#</th><th>論據</th><th>章節</th></tr>
+<tr><td>1</td><td>Mikros 液冷 IP + 北美 $500M AI 廠為 2026-2027 核心護城河</td><td>§9</td></tr>
+<tr><td>2</td><td>FY26 AI 營收 $13.1B（+46%）、Intelligent Infrastructure +51% YoY</td><td>§8</td></tr>
+<tr><td>3</td><td>FY+1 EPS 90 天上修 +6.6%、分析師一致樂觀</td><td>§13</td></tr>
+</table>
+<p><strong>多頭最強一句話：</strong>JBL 是全球僅有少數能同時做 GPU 伺服器、液冷、網通硬體、電源管理的「AI 全棧 EMS」，hyperscaler 基本無處可換。</p>
+</div>
+
+<div class="col bear">
+<h4>空頭檢察官｜Burry 模式</h4>
+<table>
+<tr><th>#</th><th>路徑</th><th>章節</th></tr>
+<tr><td>1</td><td>任一 hyperscaler（GOOGL/META）capex 自 2026H2 起下修，Intelligent Infrastructure 單季 YoY 跌破 20%</td><td>§8</td></tr>
+<tr><td>2</td><td>Forward PE 從 25x 均值回歸至 5Y 中位 13.5x（下跌 46%）</td><td>§13.3</td></tr>
+<tr><td>3</td><td>EMS 本質顯現：Connected Living 段連 2 季 -14%，Intelligent Infrastructure 若放緩將失去估值溢價</td><td>§5 R1</td></tr>
+</table>
+<p><strong>空頭最大威脅：</strong>一年 +143% 的漲幅完全建立在「AI 資本週期不會放緩」的假設上。一旦任一大客戶 guide 下修，25x FPE 會在 6 個月內壓縮到 13-15x。</p>
+</div>
+
+<div class="col arb">
+<h4>估值仲裁員｜Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>比對</th><th>分</th></tr>
+<tr><td>歷史 FCF CAGR（3Y）</td><td>隱含 ~20% vs 歷史 9.2%，高於歷史 2 倍</td><td>0.5 / 2</td></tr>
+<tr><td>分析師 EPS CAGR 一致性</td><td>隱含 ~20% vs 共識 19.8%，接近</td><td>1.5 / 2</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>CLS 35% / FLEX 15%，JBL 隱含 20% 中段</td><td>1.5 / 2</td></tr>
+<tr><td>兌現條件苛刻程度</td><td>需 hyperscaler capex 連續 3 年 +25%</td><td>1 / 2</td></tr>
+<tr><td>歷史類似案例先例</td><td>EMS 公司首次以 25x FPE 定價，無先例</td><td>0.5 / 2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：5 / 10</strong></p>
+<p><strong>仲裁員一句話：</strong>市場給 JBL 的估值隱含了一個「AI 基礎設施 supercycle 持續到 2028」的完美劇本，邊際安全空間為零。</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<h3>你的裁決</h3>
+<table>
+<tr><td>多頭最強論據</td><td>Mikros 液冷 IP + hyperscaler 合約高度黏著</td></tr>
+<tr><td>空頭最大威脅</td><td>25x FPE 是 5Y 歷史高，capex 週期任何閃失即觸發估值壓縮</td></tr>
+<tr><td>估值仲裁評分</td><td>5 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>迴避</strong>（§2 E R:R 雙負覆蓋）</td></tr>
+<tr><td>裁決理由</td><td>JBL 是好公司，但 FY+1 EPS $12.35 × 合理 PE 18x = $222.30 目標，已低於現價 28%，無論短中期 R:R 皆為負。即使賦予 22x 寬鬆合理 PE，中期目標 $320.54 仍僅 +3.4% 上行，但下行至 Bear $170 空間 -45%，風報比完全不對稱。此標的為「優質企業錯誤時機」的典型案例。</td></tr>
+</table>
+</div>
+
+<!-- ============== §4 ============== -->
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<div class="card">
+<p>JBL 的核心存在意義：<strong>為電子產品品牌商承擔「製造 + 供應鏈 + 物流」全生命週期資本支出，讓品牌商專注於設計與行銷</strong>。若 JBL 明天消失，全球超過 300 家電子品牌商（從 Apple 到 Amazon 的 AWS，從 Medtronic 到 Tesla）都需要在 12-18 個月內重建製造網絡，導致產品斷供潮。具體而言，<strong>AI 基礎設施領域將首當其衝</strong>——Mikros 液冷技術與 NVDA GB200 伺服器整合綁定，缺乏替代供應商；北美 $500M 新廠為 2026H2 AI 供應鏈本土化的關鍵節點。</p>
+<p>這解決的不是「提升效率」，而是<strong>電子產品工業的分工結構性痛點</strong>：資本密集、規模敏感、地緣政治曝險——這三項痛點在 AI 時代加劇而非緩解。</p>
+</div>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<div class="card">
+<p><strong>若此投資 3 年內虧損 50%+，最可能的路徑：</strong></p>
+<ul>
+<li><strong>地緣政治曝險：</strong>墨西哥製造基地（hyperscaler 二期客戶 ramp 地）若因川普 2.0 對墨關稅升級（2026Q3 風險）受衝擊，Intelligent Infrastructure 段成長節奏斷裂。中國大陸製造基地佔比 ~25%（歷史遺留），供應鏈轉移尚未完成。</li>
+<li><strong>技術替代風險：</strong>hyperscaler（AMZN/GOOGL/META）逐步自建製造（如 GOOGL TPU 直接與 CLS/Foxconn 合作，繞過 JBL）的比例提高。12-24 個月內若任一 hyperscaler 公布「內製供應鏈」戰略，JBL 的 Intelligent Infrastructure 段 TAM 將腰斬。</li>
+<li><strong>管理層失職：</strong>CEO Dastoor 擅長資本配置，但近 3 月已賣出 $6.4M（雖為 10b5-1 plan）。主要風險：過度回購（FY26 $1B 授權）在股價 25x FPE 高點大量執行 → 股東資本永久性摧毀。</li>
+<li><strong>價值陷阱路徑（四選一）：</strong><span class="sig-yellow">產業結構衰退</span>——雖然 AI 基礎設施 TAM 長期向上，但 JBL 作為 EMS 本質仍受 hyperscaler capex 週期主導。歷史上 EMS 產業在 capex 末端估值壓縮 50-70%（2001/2008/2022）。若 2026H2 hyperscaler capex 觸頂，JBL 將從估值 25x FPE 向歷史中位 13.5x 均值回歸。</li>
+</ul>
+</div>
+
+<!-- ============== §5 ============== -->
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<div class="hypothesis-box">
+<table>
+<tr><td>預設持有期</td><td>12-24 個月（中期成長兌現週期）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>第二家 hyperscaler（墨西哥基地）2026H2 ramp、第三家 hyperscaler 進入 2027；北美 $500M 新廠 2026 中期啟動；Mikros 液冷技術在 2026-2027 滲透</td></tr>
+<tr><td>訊號 vs 噪音</td><td>訊號：Intelligent Infrastructure 單季 YoY、hyperscaler capex 指引、AI 營收目標達成率；噪音：Connected Living 段下滑、單季毛利率波動、季度 FCF 脈動</td></tr>
+</table>
+</div>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>AI 資料中心 capex 2026-2027 CAGR ≥ 30%，JBL 作為四大 hyperscaler 前三名 EMS 供應商不失份額</td><td>Intelligent Infrastructure 段 YoY、AI 營收占比</td><td>每季財報（4/21, 6/19, 9/24）</td></tr>
+<tr><td>H2</td><td>Core Operating Margin 在 FY27 達 6.0% 長期目標（FY25: 5.8%）</td><td>Core OPM、Segment margin mix</td><td>FY27 Q4（2027/09）</td></tr>
+<tr><td>H3</td><td>估值從 25x FPE 保持不變（需 AI 敘事與 hyperscaler capex 不中斷）</td><td>Forward PE 倍數、5Y 分位</td><td>持續監控</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Hyperscaler capex 2026H2 放緩（AMZN/MSFT/GOOGL/META 合計）</td><td>H1</td><td>四大 capex YoY</td><td>&lt; +10%（目前 +30%）</td></tr>
+<tr><td>R2</td><td>EMS 產業估值均值回歸（歷史中位 13.5x FPE）</td><td>H3</td><td>JBL FPE vs 5Y 中位</td><td>FPE &gt; 20x 即為危險區</td></tr>
+<tr><td>R3</td><td>墨西哥關稅升級打亂 Intelligent Infrastructure 2027 ramp</td><td>H1 / H2</td><td>美墨關稅政策、JBL 墨廠成本</td><td>任何關稅 &gt; 10%</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<div class="card">
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件是否影響 12-24 個月內 EPS 或倍數？</td></tr>
+<tr><td>2. 假設關聯？</td><td>是 H1（AI capex）、H2（margin）、還是 H3（倍數）？</td></tr>
+<tr><td>3. 邊際方向？</td><td>對假設是強化（＋）、無關（0）、還是削弱（−）？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱是否達到 R1-R3 的警戒閾值？</td></tr>
+</table>
+</div>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>股價回檔至 BB 下軌 $205.83（FPE ~17x）<br>或 Intelligent Infrastructure 段連 2 季 &gt; 30% YoY 強化信心</td><td>建倉 12.5%（A 級 × 下軌 ×1.5 / 2 回歸中線），首次進場</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 雙確認（Intelligent Infrastructure FY26 全年 +45%、Core OPM 達 6.0%）</td><td>加碼至 25% 目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 警戒（hyperscaler capex YoY &lt; +10%）或 FPE 重回 25x+</td><td>減至 12.5%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>Intelligent Infrastructure 連 2 季 &lt; 20% YoY，或 hyperscaler capex 明顯下修</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<!-- ============== §6 ============== -->
+<h2>§6 即時財報情報</h2>
+
+<h3>① 最新一季財報關鍵數字（Q2 FY2026，2026/03/20 公布）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$8.28B</td><td>$7.73B</td><td class="beat">Beat +$550M</td><td>+23.1%</td></tr>
+<tr><td>EPS（Non-GAAP Core）</td><td>$2.69</td><td>$2.49</td><td class="beat">Beat +8.0%</td><td>+53.7%（vs Q2 FY25 $1.75）</td></tr>
+<tr><td>EPS（GAAP Diluted）</td><td>$2.08</td><td>—</td><td>—</td><td>+96.2%（vs $1.06）</td></tr>
+<tr><td>FCF（H1 FY26 累計）</td><td>$632M</td><td>—</td><td>—</td><td>+26% YoY</td></tr>
+<tr><td>Gross Margin</td><td>~9.2%</td><td>—</td><td class="beat">改善</td><td>+50 bps</td></tr>
+<tr><td>Core Operating Margin</td><td>5.8%</td><td>5.4%</td><td class="beat">Beat</td><td>+160 bps</td></tr>
+<tr><td>Intelligent Infrastructure</td><td>~$3.8B</td><td>+$300M 超標</td><td class="beat">Beat</td><td>+51%</td></tr>
+<tr><td>Regulated Industries</td><td>~$2.9B</td><td>+$200M 超標</td><td class="beat">Beat</td><td>Auto / Renewables 驅動</td></tr>
+</table>
+
+<p><strong>財報對 §5 假設的邊際貢獻：</strong></p>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（AI capex 不失份額）</td><td class="beat">＋ 強化</td><td>Intelligent Infrastructure +51% 領先同業 CLS（+64% 但基期小）、FLEX（+40%）；AI 營收 guide 上修至 $13.1B（+46%）</td></tr>
+<tr><td>H2（Core OPM 達 6.0%）</td><td class="beat">＋ 強化</td><td>Q2 OPM 5.8% vs 長期目標 6.0%，已在軌道</td></tr>
+<tr><td>H3（25x FPE 倍數維持）</td><td class="neutral">0 無關</td><td>財報 beat 後股價反而下跌 8.6%（profit-taking），倍數略壓縮但仍在 25x+</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<div class="card">
+<ul>
+<li><strong>管理層基調：</strong>樂觀偏保守——Core OPM 指引仍守在 5.7%（未提前上修至 6.0%），但 FY26 全年 EPS guide 上修 +$0.70（$11.55 → $12.25）。相比 Q1 更強勁，但保留地緣政治 / 供應鏈不確定性緩衝。</li>
+<li><strong>Forward Guidance：</strong>Q3 FY26 EPS $2.83-$3.23（中點 $3.03 vs 共識 $3.10，略低但可接受）；Revenue $8.1B-$8.9B。<strong>FY26 全年 EPS $12.25（含 $0.70 上修）、Revenue $34B（含 $1.6B 上修）。</strong></li>
+<li><strong>刻意強調主題：</strong>(1) 「第二家 hyperscaler 墨西哥 ramp」——2027 成長支柱；(2) 「第三家 hyperscaler 討論即將開始」；(3) 「Robotics & Physical AI 成為 long-term driver」。</li>
+<li><strong>刻意迴避問題：</strong>分析師追問「hyperscaler capex 若 2026H2 放緩的應變」，管理層僅以「多元化應用」帶過；另外對「Connected Living 段長期規劃」未給明確路線圖。</li>
+</ul>
+</div>
+
+<h3>③ 產業 Imply 萃取</h3>
+<div class="card">
+<ul>
+<li><strong>需求端：</strong>Intelligent Infrastructure backlog 延伸至 2027 中期，說明 hyperscaler capex 能見度目前仍強；自動化與再生能源雙尾風。</li>
+<li><strong>供給端：</strong>北美 AI 基礎設施製造本土化加速（$500M NC 廠）；液冷組件仍為 bottleneck（Mikros 整合關鍵）。</li>
+<li><strong>競爭格局：</strong>CLS 在 Google TPU 高度集中 59%，JBL 客戶組合更分散；FLEX 在數據中心加速中但基期較低。JBL 為 AI EMS 三巨頭中「最均衡」。</li>
+<li><strong>總體敏感度：</strong>管理層明確提到「geopolitical and supply chain uncertainty」——墨西哥關稅為明確逆風。</li>
+<li><strong>同業連帶：</strong>對 Vertiv（VRT）、Eaton（ETN）、Schneider 等 power & cooling 供應鏈為強正向；對 Foxconn、Wistron 等亞洲競爭對手無正面衝擊（不同客戶層級）。</li>
+</ul>
+</div>
+
+<!-- ============== §7 ============== -->
+<h2>§7 核心門檻檢核</h2>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td class="fail">❌</td><td>FY25 $1.32B / $29.8B = 4.4%；EMS 產業結構性低 FCF margin，非單一公司問題</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均值 &gt; 15%；最低谷 &gt; 10%</td><td class="fail">❌</td><td>5Y 值：3.0% / 3.5% / 3.2% / 3.5% / 4.4%；均值 3.5%；低於 EMS 產業特性的結構性低位</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且高於 WACC</td><td class="pass">✅</td><td>當前 ROIC 20.8%-33.6%（口徑差異）；WACC ~9.5%；超額 11-24 pp</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年中 ≥ 70% 年份 ROIC &gt; 15%</td><td class="neutral">🟡</td><td>近 5 年達標（FY21-FY25），更早期僅 ~10%；5 年達標 5/5（100%）；趨勢擴大</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年中 ≥ 70% 年份毛利率改善</td><td class="neutral">🟡</td><td>10Y GM 區間 7.08%-9.26%（Gurufocus）；改善年份 5/10；趨勢：2022 以來顯著改善（退出低端手機外殼後）</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5% 優 / &lt; 10% 尚可</td><td class="pass">✅</td><td>FY25 Capex/Rev ~3.5%；近 3 年均值 ~3.2%；評級：低密集</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td class="neutral">🟡</td><td>基期 FY2025：$9.75（Non-GAAP）<br>FY+1 (FY2026E)：$12.35（n=10）<br>FY+2 (FY2027E)：$14.57（n=10）<br>FY+3 (FY2028E)：$16.76（§8 邏輯推導：FY+3 YoY +15%，假設第二家 hyperscaler FY27 滿載後成長斜率自然放緩，Intelligent Infrastructure 從 +50% 逐步降至 +20%）<br>━━━━━━━━━━━━<br>Non-GAAP CAGR：19.8%<br>口徑差距：不適用（Jabil 以 Non-GAAP Core 為主要指引）<br>資料來源：yfinance（Refinitiv）+ §8 邏輯</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td class="pass">✅</td><td>PEG = 25.11 / 19.8 = 1.27（合理）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；Cash/Rev 10-50%</td><td class="fail">❌</td><td>D/E = 3.29（產業中位 0.28 的 12 倍）；Cash/Rev = $1.83B / $32.67B = 5.6%；評級：高槓桿（EMS 結構性特徵，以短期貿易融資為主）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td class="fail">❌</td><td>Cash $1.83B vs Debt $4.44B = 41%</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，擴大</td><td class="neutral">🟡</td><td>7/10（§9），擴大中（Mikros IP 加乘），但 EMS 本質限制上限</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>D/E 3.29（EMS 商業模式結構性高槓桿）及 FCF Margin 4.4%（結構性低利）；但對 JBL 而言，這是 EMS 行業特徵而非單一公司裂縫。</p>
+<p><strong>Munger 三維評級：</strong><span class="sig-yellow">🟡 兩項達標（ROIC 穩定、資本密集低），毛利率定價能力有改善但仍偏弱，EMS 本質限制上限</span></p>
+
+<div class="trap-box">
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p><strong>觸發條件：</strong>Forward P/E（FY+1 25.11x，5Y 分位 93%）及 P/FCF（21.95x）皆處於歷史高點，<strong>未觸發低估值四問</strong>。相反，此標的面臨「高估值是否可維持」的反向問題。</p>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th></tr>
+<tr><td>Q0</td><td>當前高估值是否有基本面支撐？</td><td>部分有（AI 敘事 + 共識持續上修），但 25x FPE 已隱含「AI supercycle 不中斷」的完美假設。歷史 EMS 從未以此倍數定價，<strong>屬於敘事溢價而非結構性 re-rating</strong>。</td></tr>
+</table>
+<p><strong>初篩結論：</strong>未觸發低估值陷阱；但觸發「高估值透支未來」的反向警示。</p>
+</div>
+
+<!-- ============== §8 ============== -->
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（AI 基礎設施，億美元）</td><td>$495（2026E，Grand View Research）</td><td>AI 資料中心子類 TAM</td></tr>
+<tr><td>估計可達 TAM（2030E）</td><td>$2,234（CAGR 30.4%）</td><td>含 compute + networking + cooling + power</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>JBL AI 營收 $13.1B FY26 ≈ 2.6% 全球 AI 基礎設施 TAM</td><td>相較其他 EMS（CLS ~1.5%，FLEX ~1.0%）領先</td></tr>
+<tr><td>若維持現成長率，幾年達飽和</td><td>8-10 年</td><td>若 AI capex 2026-2030 年增 30%，JBL 同步放緩至 20% 長期 sustainable</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>8-10 年</strong></td><td></td></tr>
+</table>
+<p><strong>Runway 解讀：</strong><span class="sig-yellow">🟡 中等可見度</span>——估值需對應可見度折扣（不能給 NVDA 等級溢價）。</p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>JBL 估計占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>88%</td><td>Intelligent Infrastructure 新客戶 ramp、既有客戶擴單</td></tr>
+<tr><td>無機成長</td><td>12%</td><td>Mikros Technologies（液冷，2024）、Hanley Energy（能源基礎設施，2026 Q1，$751M）整合</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動</td><td>20%（產品 mix 升級，AI rack 單價高於傳統 server）</td><td>穩定擴大</td></tr>
+<tr><td>量驅動</td><td>80%（hyperscaler 訂單量擴張為主）</td><td>擴大</td></tr>
+</table>
+<p><strong>§11 產業格局一致性驗證：</strong>權重引用 §11 最新 FY25 營收組成（Intelligent Infrastructure 44% + Regulated Industries 37% + Connected Living 19%，加總 100%）。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>JBL 判斷</th><th>佐證</th></tr>
+<tr><td><strong>中性型</strong></td><td>成長與護城河各自獨立</td><td>hyperscaler 訂單增加並未顯著提升 JBL 對下游客戶的定價權（hyperscaler 本身仍擁有高議價權）；但 Mikros IP 與液冷整合增強局部技術護城河</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前（FY22）</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>20.8% - 33.6%（口徑）</td><td>~15%</td><td class="beat">↑</td><td>&gt; WACC (~9.5%)</td><td class="pass">✅</td></tr>
+<tr><td>ROIC − WACC</td><td>+11pp - +24pp</td><td>+5pp</td><td class="beat">↑ 擴大</td><td>持續正值，擴大</td><td class="pass">✅</td></tr>
+<tr><td>FCF Margin</td><td>4.4%</td><td>3.0%</td><td class="beat">↑</td><td>&gt; 15%</td><td class="fail">❌ EMS 結構性</td></tr>
+<tr><td>FCF / Net Income</td><td>~2.0x</td><td>~1.5x</td><td class="beat">↑</td><td>&gt; 85%</td><td class="pass">✅ 遠超</td></tr>
+<tr><td>再投資率</td><td>~35%</td><td>~25%</td><td class="beat">↑</td><td>合理偏高且有 ROIC 對應</td><td class="pass">✅</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 Forward P/E</th><th>潛在估值跌幅（vs 現價 $310.10）</th></tr>
+<tr><td>3 年後成長降至 15%</td><td>放緩但仍高於市場</td><td>16x</td><td>EPS $14.57 × 16 = $233, −25%</td></tr>
+<tr><td>3 年後成長降至 10%</td><td>回歸市場平均（Bear PE 錨點）</td><td>13x</td><td>EPS $14.57 × 13 = $189, −39%</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>成熟期低成長</td><td>9x</td><td>EPS $14.57 × 9 = $131, −58%</td></tr>
+</table>
+
+<div class="trap-box">
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>Q2 FY26 GM 9.2% +50bps YoY</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>AI EMS 市佔擴大中</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>最近提價後銷量下滑？</td><td>hyperscaler 訂單定價具合約保障，量穩定擴大</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt; Revenue CAGR 差距 &gt; 5pp</td><td>EPS CAGR 19.8% vs Rev CAGR 10-14%；差距 6-10pp（主要靠 margin 擴張 + 回購）</td><td>🟡 臨界</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FCF/NI = 2.0（遠高於門檻）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue &gt; 5% 且逐年上升</td><td>SBC/Rev ~0.5%</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 在萎縮</td><td>AI 基礎設施 TAM CAGR 30%+</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>整個產業估值倍數 3 年下移</td><td>反向：過去 3 年 EMS 板塊 re-rate 向上</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex 占 FCF &gt; 60%</td><td>~40%（健康）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新產能 3 年收入會否下滑？</td><td>會——EMS 本質需持續投資</td><td>🟡 結構性</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：</strong><span class="sig-green">🟢 低風險</span>（亮燈 0 個紅、2 個黃且皆為結構性 EMS 特性非公司特有）</p>
+</div>
+
+<h3>F｜AI 取代風險評級（v9.0 新增）</h3>
+<div class="hypothesis-box">
+<p><strong>評級：<span class="sig-green">🟢 AI 受益</span></strong></p>
+<ul>
+<li><strong>核心業務受益：</strong>Intelligent Infrastructure 段 2025 年 YoY +54%，FY26 AI 營收 $13.1B（+46%）；液冷、AI rack、網通 ASIC 組裝為 JBL 主要受益領域</li>
+<li><strong>公司 AI 策略：</strong>自建 IP（Mikros 液冷）+ 整合外部 AI（NVDA 合作）+ 主動投資（北美 $500M 新廠）</li>
+<li><strong>過去 2 年 AI 營收變化：</strong>FY24 ~$5B → FY25 $8.5B（+70%）→ FY26 $13.1B（+54%）</li>
+</ul>
+<p><strong>評級分數：9 分</strong>（供 §2 成長持久性維度參考，但已整合至成長持久性綜合判斷 7/10 而非獨立加分）</p>
+</div>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="sig-yellow">🟡 中等可見度成長</span>——Runway 8-10 年（充裕但有 hyperscaler capex 週期敏感度），Intelligent Infrastructure 段量驅動為主，衰退信號 0 紅、2 黃。EMS 結構性限制上限。</p>
+
+<!-- ============== §9 ============== -->
+<h2>§9 護城河分析</h2>
+<p><strong>評分：7 / 10</strong>（以全球上市公司為基準）</p>
+
+<h3>護城河來源</h3>
+<div class="card">
+<ul>
+<li><strong>網路效應：</strong>不具備——EMS 產業無典型網路效應</li>
+<li><strong>無形資產：</strong>中等——Mikros Technologies 液冷專利、半導體級潔淨室認證、醫療 / 汽車 / 航太規範認證；品牌溢價對 B2B hyperscaler 客戶不適用</li>
+<li><strong>轉換成本：</strong>強——hyperscaler AI rack 設計驗證週期 18-24 個月，設計鎖定後切換成本極高；Regulated Industries（醫療、汽車）認證週期 3-5 年；客戶 backlog 延伸至 2027</li>
+<li><strong>規模優勢：</strong>強——全球 25 億平方英尺製造 footprint、300+ 客戶供應鏈整合；成本曲線在 AI rack 整合、液冷散熱、全球物流有 5-15% 成本優勢 vs 中型對手</li>
+</ul>
+</div>
+
+<h3>競爭鴻溝</h3>
+<div class="card">
+<p>資本充足的對手（Foxconn、Wistron、Quanta）在高複雜度 AI 基礎設施領域無法跨越 JBL 的原因：</p>
+<ol>
+<li><strong>端到端整合（Design → Manufacturing → Logistics）</strong>——Foxconn 主要做 ODM 代工，缺乏 Regulated Industries 認證；JBL 做「Design Consulting + EMS + SCM」三合一</li>
+<li><strong>Mikros 液冷技術獨家</strong>——AI GB200 伺服器功耗 1000W+ 時液冷為必備，Mikros 是 2024 收購獲得的 Tier 1 IP</li>
+<li><strong>北美 / 墨西哥製造佈局</strong>——hyperscaler 本土化供應鏈需求；亞洲對手需 3-5 年建立同級本土產能</li>
+</ol>
+</div>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔（AI EMS）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>JBL</strong></td><td>~18%（Tier 1 EMS AI 基礎設施）</td><td>擴大</td><td>hyperscaler 垂直整合</td><td>吃 Celestica 次級訂單</td></tr>
+<tr><td>Celestica (CLS)</td><td>~12%</td><td>擴大</td><td>Google TPU 專屬化</td><td>吃 JBL Google 份額</td></tr>
+<tr><td>Flex (FLEX)</td><td>~14%</td><td>穩定</td><td>Nextracker 分拆後聚焦弱化</td><td>被 JBL 擠壓</td></tr>
+<tr><td>Foxconn</td><td>~20%（但多為低階 server）</td><td>擴大但 margin 低</td><td>進入高階 AI rack 緩慢</td><td>與 JBL 客戶不重疊</td></tr>
+<tr><td>Wistron / Quanta</td><td>~15%</td><td>穩定</td><td>缺 Regulated Industries</td><td>守 Apple / ODM 傳統份額</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>擴大中</strong>——Mikros 液冷 IP 帶來技術門檻、北美 / 墨西哥製造本土化為未來 3-5 年結構性紅利。</p>
+
+<h3>24 個月內最可能瓦解護城河的變化（按威脅排序）</h3>
+<ol>
+<li><strong>hyperscaler 垂直整合（最高威脅）：</strong>GOOGL 若將 TPU 全部由 CLS 獨佔，JBL 失去 GOOGL 配額（約 5-10% 營收風險）</li>
+<li><strong>AI capex 週期觸頂：</strong>若 2026H2 或 2027H1 任一季 hyperscaler capex guide 下修，JBL 估值 re-rating 風險</li>
+<li><strong>墨西哥關稅 / 地緣政治：</strong>川普 2.0 關稅政策升級（25% 墨關稅）影響墨廠成本結構</li>
+</ol>
+
+<!-- ============== §10 ============== -->
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>FLEX (FY25)</th><th>CLS (FY25)</th><th>SANM (FY25)</th></tr>
+<tr><td>FCF Margin</td><td>3.2%</td><td>3.5%</td><td>4.4%</td><td>5.0%</td><td>6.5%</td><td>4.2%</td></tr>
+<tr><td>Core EBITDA Margin</td><td>6.5%</td><td>7.2%</td><td>7.8%</td><td>6.5%</td><td>9.0%</td><td>7.0%</td></tr>
+<tr><td>Operating Margin</td><td>4.2%</td><td>5.5%</td><td>5.8%</td><td>4.8%</td><td>7.5%</td><td>5.0%</td></tr>
+<tr><td>ROIC − WACC</td><td>+8pp</td><td>+11pp</td><td>+14pp</td><td>+6pp</td><td>+19pp</td><td>+5pp</td></tr>
+<tr><td>SBC / Revenue</td><td>0.5%</td><td>0.5%</td><td>0.5%</td><td>0.3%</td><td>0.8%</td><td>0.4%</td></tr>
+<tr><td>ROE</td><td>45%</td><td>52%</td><td>60%</td><td>28%</td><td>35%</td><td>15%</td></tr>
+</table>
+<p class="sub">註：ROE 偏高因 EMS 商業模式高槓桿（D/E 3.29）；絕對值失真，應搭配 ROIC 解讀。</p>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>檢驗項</th><th>數據</th><th>結論</th></tr>
+<tr><td>淨利 vs OCF 連動性</td><td>FY25 NI $657M / OCF $1.56B；FCF/NI 2.0</td><td class="pass">✅ 盈餘品質良好</td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>AR 增速與 Revenue 基本同步</td><td class="pass">✅</td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>存貨週轉 FY25 明顯改善（+15% 週轉次數）</td><td class="pass">✅</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>FY23: 2.5% → FY24: 3.2% → FY25: 4.4%</td><td class="beat">擴大</td></tr>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>近 3 年回購 vs FCF 總額</td><td>~$3.2B 回購 vs $3.3B FCF 總額 = 97%</td><td class="fail">🔴 高（激進），近乎全數 FCF 用於回購</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>原 19.8% → 約 15%（差距 ~5pp）</td><td class="neutral">🟡 臨界</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>FY23-FY25 均價 ~$120 vs 當前 $310</td><td class="pass">✅ 歷史回購表現極佳（3x 回報）</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>近 3 年 Rev CAGR ~3%（有 FY24 $1.2B 分拆 Mobility 影響）；剔除後 Rev CAGR ~8%</td><td>EPS CAGR &gt; Rev CAGR 差距由 margin 擴張 + 回購共同驅動</td></tr>
+</table>
+<p class="note">警訊：FY26 新授權 $1B 回購，若在 $300+ 執行則資本配置效率顯著下降；需密切監測管理層是否紀律性回購（等待回檔）或「在高點追回購」。</p>
+
+<!-- ============== §11 ============== -->
+<h2>§11 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<div class="card">
+<ul>
+<li><strong>TAM：</strong>全球 EMS ~$700B（2025）；AI 基礎設施細分 $495B（2026E，Grand View Research）</li>
+<li><strong>CAGR：</strong>整體 EMS 5-7%；AI 資料中心 25-30%；液冷子類 35%+</li>
+<li><strong>當前滲透率：</strong>JBL 佔全球 EMS ~4%，佔 AI 基礎設施 EMS Tier 1 ~18%</li>
+<li><strong>供需狀態：</strong>AI 基礎設施：需求緊缺（2027 產能仍緊）；傳統 EMS：供過於求</li>
+</ul>
+</div>
+
+<h3>議價權</h3>
+<div class="card">
+<ul>
+<li><strong>對上游供應商：</strong>強——NVDA GPU、電源元件、液冷組件供應商集中度高，但 JBL 作為 Tier 1 EMS 有長約議價權</li>
+<li><strong>對下游客戶：</strong>中等偏弱——4-5 家 hyperscaler（AMZN、MSFT、GOOGL、META）佔 Intelligent Infrastructure 絕大部分營收；合約多為年度重談但含設計鎖定</li>
+<li><strong>地理分佈曝險：</strong>美國 35% / 墨西哥 20% / 馬來西亞 15% / 中國大陸 15% / 越南+印度+其他 15%。墨西哥為最大地緣風險點</li>
+</ul>
+</div>
+
+<h3>營收組成（FY2025）</h3>
+<table>
+<tr><th>業務段</th><th>FY25 營收</th><th>占比</th><th>YoY 成長</th><th>分段關鍵客戶 / 驅動</th></tr>
+<tr><td>Intelligent Infrastructure</td><td>$13.1B</td><td>44%</td><td>+54%</td><td>Cloud / Data Center / Networking（AMZN, MSFT, META, NVDA, GOOGL 間接）</td></tr>
+<tr><td>Regulated Industries</td><td>$11.0B</td><td>37%</td><td>+3%</td><td>Auto / Transport / Healthcare / Packaging / Renewables</td></tr>
+<tr><td>Connected Living & Digital Commerce</td><td>$5.7B</td><td>19%</td><td>-14%</td><td>Consumer Products / Retail / Industrial（持續去風險化）</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>$29.8B</strong></td><td><strong>100%</strong></td><td><strong>+3%（受 Mobility 分拆影響）</strong></td><td></td></tr>
+</table>
+<p class="sub">FY2026 Guide：$34B（+14.1%），Intelligent Infrastructure 占比將升至 ~46%。</p>
+
+<h3>單位經濟</h3>
+<div class="card">
+<ul>
+<li><strong>每 AI rack 營收：</strong>$200-400K（GB200 rack 單價上升）</li>
+<li><strong>每 AI rack 毛利：</strong>~12-15%（高於 Connected Living 7%）</li>
+<li><strong>客戶 LTV：</strong>hyperscaler 合約典型 3-5 年，單客戶累計營收可達 $2-5B</li>
+<li><strong>CAC：</strong>低（既有客戶擴單為主）；設計驗證週期為主要「無形 CAC」</li>
+</ul>
+</div>
+
+<!-- ============== §12 ============== -->
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>① 股東 / 股權結構</h3>
+<div class="card">
+<ul>
+<li><strong>機構持股：</strong>~92%（高度機構化，BlackRock、Vanguard、State Street 為前三大）</li>
+<li><strong>內部人持股：</strong>~1.2%（CEO Dastoor 253,099 股 ≈ $78M）</li>
+<li><strong>股本結構：</strong>單一股權（One Share, One Vote），無 dual-class 結構——治理透明度加分</li>
+</ul>
+</div>
+
+<h3>② 資本配置方向</h3>
+<div class="card">
+<table>
+<tr><th>項目</th><th>FY25 金額</th><th>比例</th></tr>
+<tr><td>資本支出（Capex）</td><td>~$1.0B</td><td>~45%</td></tr>
+<tr><td>股票回購</td><td>~$1.1B（FY25）</td><td>~50%</td></tr>
+<tr><td>股息</td><td>~$40M</td><td>~2%</td></tr>
+<tr><td>M&A（Mikros + Hanley Energy）</td><td>~$900M（跨 FY24-FY26）</td><td>年均 ~5%</td></tr>
+</table>
+<p class="sub">優先順序：Capex（AI 產能）≈ 回購 ≫ M&A ≫ Dividend。FY26 新授權 $1B 回購（7 月 2025 核准）。</p>
+</div>
+
+<h3>③ 管理層薪酬結構</h3>
+<div class="card">
+<p>CEO Michael Dastoor 2025 總薪酬 ~$15M：</p>
+<ul>
+<li>固定薪：~$1.2M（8%）</li>
+<li>績效獎金：~$3M（20%）——與 Core OPM、EPS、ROIC 掛鉤</li>
+<li>股權激勵（PSU + RSU）：~$10.8M（72%）——3 年 vesting，50% 績效鎖定</li>
+</ul>
+<p class="sub">結構良好（股權占比高且多年績效鎖定），與股東利益對齊。</p>
+</div>
+
+<h3>④ 過去 12 個月重大內部人交易</h3>
+<table>
+<tr><th>日期</th><th>姓名 / 職位</th><th>交易</th><th>數量 / 金額</th><th>備注</th></tr>
+<tr><td>2026-04-08</td><td>Dastoor（CEO）</td><td>賣出</td><td>9,467 股 / $2.71M</td><td>10b5-1 plan</td></tr>
+<tr><td>2026-04-10</td><td>Priestley（COO）</td><td>賣出</td><td>4,000 股 / $1.20M</td><td>開放式市場</td></tr>
+<tr><td>2026-04-08</td><td>Borges（EVP）</td><td>賣出</td><td>7,000 股 / $2.03M</td><td>—</td></tr>
+<tr><td>2026-01-22</td><td>Dastoor（CEO）</td><td>賣出</td><td>15,000 股 / $3.70M</td><td>10b5-1 plan，2025/10 事前設定</td></tr>
+<tr><td>2026-04-10</td><td>Raymund（Director）</td><td>贈與</td><td>5,120 股 / ~$1.5M</td><td>善意贈與</td></tr>
+</table>
+<p class="note">近 4 個月內部人累計賣出 ~$10M（高管 Top 3）。雖為 10b5-1 預設 plan，但在股價 52 週新高附近執行，與「在高點賣」相符；非賣出警訊，但需留意。</p>
+
+<!-- ============== §13 ============== -->
+<h2>§13 估值診斷</h2>
+
+<h3>13.0｜估值體系診斷：市場現在用哪把尺？</h3>
+
+<h4>A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>估值邏輯</th><th>對應指標</th><th>當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>✅</td><td>市場以 Non-GAAP Core EPS × Forward PE 定價為主</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>部分</td><td>PEG 1.27 被視為合理，AI 相關營收成長為次要參照</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>否</td><td>EMS 不以重置成本定價</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>部分</td><td>P/FCF 21.95 為次要指標</td></tr>
+<tr><td>行業專屬</td><td>AI 營收占比 / AI TAM 滲透率</td><td>新興</td><td>「AI 營收 $13.1B」為敘事溢價來源</td></tr>
+</table>
+<p><strong>當前主流邏輯：</strong>Forward P/E × AI 敘事溢價</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<div class="card">
+<p><strong>情境一（從資產 → 盈利估值）：</strong>不適用，JBL 長期以盈利估值</p>
+<p><strong>情境二（創造新的度量衡）：</strong>市場部分採用「AI 相關營收 × AI PE 倍數」隱性定價，使 JBL 獲得敘事溢價。<strong>作廢條件：</strong>AI 營收 YoY 單季跌破 +20%、或四大 hyperscaler 合計 capex 下修 &gt; 10%</p>
+<p><strong>情境三（市場定價偏好漂移）：</strong>過去 3 年 EMS 板塊整體 re-rate 向上，JBL 為敘事受益最大者；若 AI 板塊 sell-off，此漂移會逆轉</p>
+</div>
+
+<h4>C｜估值尺可能被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>對估值的影響</th></tr>
+<tr><td>管理層轉向新敘事（ARR, AI Services Revenue）</td><td>進行中（「full-stack AI infrastructure partner」）</td><td>若成功市場可能給更高倍數</td></tr>
+<tr><td>同業率先獲得高倍數認可</td><td>CLS 已獲 37x FPE，帶動板塊 re-rate</td><td>已發生，JBL 為跟隨者</td></tr>
+<tr><td>盈利成長放緩至市場平均</td><td>尚未發生</td><td>風險——一旦 EPS CAGR &lt; 15% 即估值壓縮</td></tr>
+</table>
+<p><strong>估值體系診斷結論：</strong><span class="sig-yellow">🟡 估值邏輯模糊</span>——AI 敘事溢價難以量化，且對 hyperscaler capex 週期高度敏感</p>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低點</th><th>5Y 中位</th><th>5Y 高點</th><th>當前分位（公式：(當前−低)/(高−低)×100%）</th></tr>
+<tr><td>Trailing P/E</td><td>41.85x</td><td>8.54x</td><td>14.5x</td><td>38.1x（FY25 末）</td><td>(41.85−8.54)/(38.1−8.54) = <strong>113%</strong>（突破歷史高）</td></tr>
+<tr><td>Forward P/E（FY+1）</td><td>25.11x</td><td>~8x</td><td>~13.5x</td><td>~25x（當前水位）</td><td>(25.11−8)/(25−8) = <strong>101%</strong>（接近 / 略超歷史高）</td></tr>
+<tr><td>EV/EBITDA</td><td>14.65x</td><td>3.74x</td><td>5.57x</td><td>16.49x</td><td>(14.65−3.74)/(16.49−3.74) = <strong>86%</strong></td></tr>
+<tr><td>P/FCF</td><td>21.95x</td><td>9x</td><td>14x</td><td>25x</td><td>(21.95−9)/(25−9) = <strong>81%</strong></td></tr>
+<tr><td>P/S</td><td>1.1x</td><td>0.3x</td><td>0.6x</td><td>1.2x</td><td>(1.1−0.3)/(1.2−0.3) = <strong>89%</strong></td></tr>
+</table>
+
+<p><strong>解讀（三個問題）：</strong></p>
+<ol>
+<li><strong>當前估值情緒：</strong>過熱（四項均 &gt; 80% 分位，Forward PE 突破 100%）</li>
+<li><strong>上次處於此分位時（2020/05，PE 119.68）的差異：</strong>當時為 COVID EPS 觸底反彈，分母極低導致 PE 虛高；現在是 AI 敘事推動分子（股價）快速擴張，基本面確實 beat 但倍數透支</li>
+<li><strong>推動因素權重：</strong>AI 敘事 60% &gt; 盈利修正 30% &gt; 利率環境 10%（10Y UST ~4.3%）</li>
+</ol>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+1）</td><td>25.11x</td><td>—</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3Y）</td><td>19.8%</td><td>—</td><td>§7 門檻略未達 20%</td></tr>
+<tr><td>PEG（Non-GAAP, 3Y）</td><td><strong>1.27</strong></td><td>&lt;1 便宜 / 1-2 合理 / &gt;2 貴</td><td>合理區間偏上緣</td></tr>
+<tr><td>PEG（5Y, 含 runway 遞減）</td><td>~1.7</td><td>同上</td><td>偏貴</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>差異 0.43</td><td>差異大 = 近期不可持續</td><td>5Y CAGR 預計 ~15%（後期放緩），需警惕</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點：</strong>JBL 處於「中度估值 × 中度成長」象限。相對 CLS（PEG ~0.8，更便宜但集中度高）與 NVDA（PEG ~1.0，AI 純曝險），JBL 是「中庸選擇」。結構性原因：EMS 本質低毛利 + 客戶集中度限制上限倍數。</p>
+
+<h3>13.3｜Reverse DCF：當前股價隱含了什麼？</h3>
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$32.7B</td><td>yfinance</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>$1.32B</td><td>Macrotrends</td></tr>
+<tr><td>WACC</td><td>9.5%</td><td>10Y UST 4.3% + Beta 1.3 × ERP 4.0%</td></tr>
+<tr><td>永續成長率</td><td>3.0%</td><td>EMS 產業長期成長</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p>要使 DCF 現值 = $32.7B，前 10 年 FCF CAGR ≈ <strong>18-20%</strong>。</p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>9.2%</td><td>高於歷史 2 倍</td></tr>
+<tr><td>分析師共識 EPS CAGR（§7）</td><td>19.8%</td><td>接近（EPS 比 FCF 快是合理的）</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>CLS 35% / FLEX 12%</td><td>中段，未要求「行業最快」</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 FCF CAGR 18-20% 需要以下條件同時成立：</p>
+<ul>
+<li>Revenue 年增 12-15%（基於 FCF Margin 從 4.4% 擴至 6-7%）</li>
+<li>或 FCF Margin 從 4.4% 擴大至 7%（需 Core OPM 達 6.0% 且營運資本釋放持續）</li>
+<li>此條件在：<strong>AI 資料中心 TAM 在 2026-2030 年年成長 25%+ 且 JBL 市佔不流失</strong>情境下合理</li>
+</ul>
+
+<p><strong>隱含預期判斷：</strong><span class="sig-yellow">🟡 隱含預期合理偏激進</span>——比歷史實績 2 倍，但與分析師共識一致且不算行業最快</p>
+
+<div class="trap-box">
+<h3>⚠️ 便宜理由檢驗</h3>
+<p><strong>觸發狀態：</strong>未觸發（Forward PE 分位 101%，P/FCF 分位 81%，均非低估值）。反向問題為「高估值是否可維持」。此標的<strong>非便宜陷阱，而是高估值透支未來</strong>。</p>
+</div>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>JBL（本標的）</strong></td><td>$32.7B</td><td><strong>25.11x</strong></td><td><strong>14.65x</strong></td><td><strong>1.27</strong></td><td>4.4%</td><td>19.8%</td><td>20.8%-33.6%</td></tr>
+<tr><td>CLS (Celestica)</td><td>~$44B</td><td>37.47x</td><td>~18x</td><td>0.76</td><td>6.5%</td><td>48%</td><td>27.8%</td></tr>
+<tr><td>FLEX (Flex Ltd)</td><td>~$20B</td><td>19.4x</td><td>13.65x</td><td>1.3</td><td>5.0%</td><td>15%</td><td>14%</td></tr>
+<tr><td>SANM (Sanmina)</td><td>~$7B</td><td>33.8x（TTM）</td><td>17.77x</td><td>2.0</td><td>4.2%</td><td>~20%</td><td>10%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td>~26x</td><td>~15x</td><td>~1.3</td><td>~5%</td><td>~20%</td><td>~18%</td></tr>
+</table>
+
+<h3>同業溢折價邏輯</h3>
+<ol>
+<li><strong>溢 / 折價幅度：</strong>JBL Forward PE 25.1x 處於中位（26x 附近），略折價 3-4%</li>
+<li><strong>JBL 相對優勢：</strong>(1) 客戶組合最分散（相對 CLS Google 集中 59%）；(2) ROIC 穩健（20-33%）；(3) Regulated Industries 提供穿越週期防禦</li>
+<li><strong>均值回歸方向：</strong>若產業回歸中位 FPE 26x，JBL 略升至 $321；但若整體產業回歸 5Y 中位（FPE 13.5x），JBL 下跌 46% 至 $167</li>
+</ol>
+
+<h3>同主題橫向風報比比較</h3>
+<table>
+<tr><th>問題</th><th>JBL</th><th>CLS（最強對手）</th></tr>
+<tr><td>主假設完全兌現上行空間最大？</td><td>~ +3%（FPE 至 26x）</td><td>+20%（FPE 從 37x 上 45x）</td></tr>
+<tr><td>主假設部分落空跌幅最小？</td><td>-40%（倍數回中位）</td><td>-60%（客戶集中風險 + 倍數壓縮）</td></tr>
+<tr><td>綜合風報比最優？</td><td>JBL 下行保護略佳，但上行已透支</td><td>CLS 雙向波動更大</td></tr>
+</table>
+<p><strong>最終橫向比較結論：</strong><span class="sig-yellow">🥈 此標的為次優選</span>——客戶組合最分散，ROIC 穩健，但估值已與成長持平，缺乏安全邊際。最優選需等回檔或 hyperscaler capex 週期底部。</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>依據</th></tr>
+<tr><td>估值體系診斷（13.0）</td><td>🟡 模糊</td><td>AI 敘事溢價難量化，對 capex 週期高度敏感</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🔴 過熱（101%）</td><td>Forward PE 突破 5Y 歷史高</td></tr>
+<tr><td>PEG 診斷（13.2）</td><td>🟡 合理偏貴</td><td>3Y PEG 1.27，5Y PEG ~1.7</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 合理偏激進</td><td>隱含 FCF CAGR 18-20%，歷史 2 倍</td></tr>
+<tr><td>同業相對（13.4）</td><td>🟡 合理溢價（中段）</td><td>FPE 25x 接近產業中位 26x</td></tr>
+</table>
+
+<p><strong>v11.0 §2 D 交叉驗證：</strong></p>
+<table>
+<tr><th>比較</th><th>影響</th></tr>
+<tr><td>當前 FPE 25.11x vs §2 D 合理 PE 18x → 當前 FPE &gt; 合理 PE × 1.39</td><td>僅略低於 1.5x 門檻，不觸發歷史分位降權；<strong>歷史分位 🔴 過熱維持</strong></td></tr>
+</table>
+<p><strong>歷史分位降權規則：</strong>PEG = 1.27（未 &lt; 1.0）且 FPE &gt; 合理 PE，不觸發降權條件。</p>
+
+<p><strong>當前定價判斷（綜合六角驗證）：</strong><span class="sig-red">🔴 明顯貴</span></p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河品質（§9）</td><td>7/10</td><td>vs EMS 基準 +1x</td></tr>
+<tr><td>② 成長可持續年數（§8A）</td><td>8-10 年（🟡 中可見度）</td><td>± 0x</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>88% 有機 / 量驅動為主</td><td>−1x（量驅動）</td></tr>
+<tr><td>④ 成長護城河連動（§8C）</td><td>中性型</td><td>± 0x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§8D）</td><td>ROIC-WACC +14pp 擴大</td><td>+1x</td></tr>
+<tr><td>⑥ 衰退信號數量</td><td>0 紅 / 2 黃（結構性）</td><td>± 0x</td></tr>
+<tr><td>⑦ 估值體系方向（§13.0）</td><td>🟡 模糊</td><td>± 0x</td></tr>
+<tr><td>⑧ 當前利率環境</td><td>10Y UST 4.3%</td><td>輕微壓縮</td></tr>
+<tr><td><strong>EMS 產業基準倍數</strong></td><td><strong>15x</strong></td><td><strong>調整後合理區間：16-20x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考：</strong></p>
+<ul>
+<li>高：$304 / 中位：$287-290 / 低：$254-273（n=8-16）</li>
+<li>共識 moderate buy。中位目標 $287 已低於現價 $310（-7.4%）</li>
+<li>分歧點：賣方多數認同「好故事」但估值目標相對保守</li>
+</ul>
+
+<h3>長期合理倍數對應表</h3>
+<table>
+<tr><th>§8 長期成長評級</th><th>5 年後基準 Forward P/E</th><th>適用</th></tr>
+<tr><td>🟢 高確信</td><td>25x</td><td>—</td></tr>
+<tr><td><strong>🟡 中等可見度（JBL 屬此）</strong></td><td><strong>20x</strong></td><td>Runway 8-10 年，部分隱憂</td></tr>
+<tr><td>🔴 存疑</td><td>15x</td><td>—</td></tr>
+</table>
+<p><strong>本標的基準長期合理倍數：20x</strong></p>
+
+<p><strong>v9.0 上行三引擎調整：</strong></p>
+<ul>
+<li>引擎 A（ROIC 溢價）：ROIC 20.8% &gt; 20% 且 3 年擴大 → ×1.175</li>
+<li>引擎 B（PEG 動態天花板）：品質分 9.5 → 天花板 1.5×CAGR ≈ 22x（已含）</li>
+<li>引擎 C（護城河溢價）：護城河 7（未達 9）→ 不適用</li>
+<li>三引擎取較高：×1.175</li>
+</ul>
+<p><strong>AI 風險疊加：</strong>🟢 → ×1.10</p>
+<p><strong>最終長期合理倍數 = 20 × 1.175 × 1.10 ≈ 25.8x</strong>（長期視角；但 §2 D 短中期以 PEG 安全網 18x 為準）</p>
+
+<div class="verdict-box">
+<h3>§13.5 投資結論（完整推理）</h3>
+<p><strong>財報信號與假設校準：</strong></p>
+<ul>
+<li><strong>H1 當前狀態：</strong>強化——Q2 FY26 Intelligent Infrastructure +51%、AI 營收 $13.1B guide 上修</li>
+<li><strong>H2 當前狀態：</strong>強化——Core OPM 5.8% 逼近 6.0% 長期目標</li>
+<li><strong>H3 當前狀態：</strong>削弱——股價從 $240（Q2 前）衝上 $310（+29%）後單日跌 8.6%，倍數頂部壓力顯現</li>
+<li><strong>這份財報讓隱含預期變得更難兌現，理由是：</strong>市場對 Q3 guide 的反應已顯示「好消息價內」，後續每次 beat 邊際收益遞減；而一次 miss 的估值壓縮空間放大</li>
+</ul>
+
+<p><strong>判定：迴避</strong>（引用 §2 E 結果）</p>
+<ul>
+<li>短期 R:R = -0.53x，中期 R:R = -0.34x，雙負</li>
+<li>短期 + 中期 R:R 皆 &lt; 0 → 迴避</li>
+</ul>
+
+<p><strong>① 短期信號（0-12 個月）：</strong>FY26 財報接續強勁，Q3 guide 中位符合共識；但 $310 股價已超越中位分析師目標 $287。短期股價進一步上行需再次 beat + 上修，邊際空間有限。</p>
+
+<p><strong>② 中期成長確信度（1-2 年）：</strong>FY+1 / FY+2 EPS 共識上修驅動力為新 hyperscaler ramp（Mexico 第二家 + 潛在第三家），能見度中高。但估值已透支此預期。</p>
+
+<p><strong>③ 長期持有信心（3-5 年）：</strong>成長跑道充裕 / 護城河穩定擴大 / 長期持有信心：中。AI 敘事為真，但 JBL 作為 EMS 本質限制其估值上限倍數。</p>
+
+<p><strong>下行風險量化：</strong></p>
+<ul>
+<li>短期下檔（Bear Case $144.50）距現價 -53.4%</li>
+<li>中期下檔（Bear Case $170.47）距現價 -45.0%</li>
+<li>W52 Low $127.72（參考）/ W104 Low $95.85（參考）</li>
+<li>若 FY+1 EPS 下修 10%，短期 R:R 將進一步惡化至 -0.71x</li>
+</ul>
+</div>
+
+<p class="sub" style="margin-top:40px;">報告結束｜DD Schema v11.0｜生成日期 2026-04-17｜僅供個人研究參考，非投資建議</p>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</body>
+</html>
