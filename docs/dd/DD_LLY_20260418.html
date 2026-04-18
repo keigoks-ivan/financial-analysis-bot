@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.0">
+<title>LLY 深度研究報告 ｜ 2026-04-18 ｜ v12.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { font-family: "Noto Sans TC", sans-serif; background: #F8FAFC; color: #0F172A; margin: 0; padding: 20px; line-height: 1.6; font-size: 14px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header { background: #1E3A5F; color: #fff; padding: 16px 24px; border-left: 4px solid #3B82F6; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+  h1 { color: #1E3A5F; margin: 24px 0 12px; font-size: 26px; }
+  h2 { color: #1E3A5F; background: #E2E8F0; padding: 10px 16px; border-left: 4px solid #3B82F6; margin: 28px 0 16px; font-size: 20px; }
+  h3 { color: #1E3A5F; margin-top: 20px; font-size: 16px; }
+  h4 { color: #1E3A5F; margin-top: 16px; font-size: 15px; }
+  .card { background: #fff; padding: 16px 20px; border: 1px solid #E2E8F0; margin: 12px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; background: #fff; font-size: 13px; }
+  th, td { border: 1px solid #E2E8F0; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #1E3A5F; color: #fff; }
+  tbody tr:nth-child(even) { background: #F1F5F9; }
+  .pass { background: #DCFCE7; color: #166534; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+  .fail { background: #FEE2E2; color: #991B1B; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+  .warn { background: #FEF9C3; color: #92400E; padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 14px 18px; margin: 12px 0; }
+  .warn-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 14px 18px; margin: 12px 0; color: #C2410C; }
+  .warn-box h4 { color: #C2410C; margin-top: 0; }
+  .verdict-box { background: #FFFBEB; border-left: 4px solid #D97706; padding: 14px 18px; margin: 12px 0; color: #92400E; }
+  .bull-card { background: #F0FDF4; border-left: 4px solid #16A34A; padding: 14px 18px; margin: 12px 0; }
+  .bear-card { background: #FFF1F2; border-left: 4px solid #DC2626; padding: 14px 18px; margin: 12px 0; }
+  .arb-card { background: #F5F3FF; border-left: 4px solid #7C3AED; padding: 14px 18px; margin: 12px 0; }
+  .short-card { background: #F0F9FF; border-left: 4px solid #0284C7; padding: 14px 18px; margin: 12px 0; }
+  .mid-card { background: #F5F3FF; border-left: 4px solid #7C3AED; padding: 14px 18px; margin: 12px 0; }
+  .long-card { background: #ECFDF5; border-left: 4px solid #059669; padding: 14px 18px; margin: 12px 0; color: #065F46; }
+  .assumption-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 14px 18px; margin: 12px 0; }
+  .sig-big { font-size: 22px; font-weight: 700; color: #1E3A5F; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; background: #1E3A5F; color: #fff; border: none; cursor: pointer; font-family: inherit; }
+  .note { font-size: 12px; color: #64748B; }
+  .num { font-family: "IBM Plex Mono", monospace; }
+  @media print { header { position: static !important; } .print-btn { display: none; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div><strong>LLY</strong> ｜ Eli Lilly and Company ｜ DD Schema <strong>v12.0</strong></div>
+  <div>資料抓取：2026-04-18 ｜ 最新股價 $927.03 ｜ 最近財報季 Q4 FY2025 ｜ yfinance + 7 次 web_search</header>
+</header>
+
+<button class="print-btn" onclick="window.print()">列印 PDF</button>
+
+<!-- ============== §1 投資結論 ============== -->
+<h2 id="sec-1">§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節（§2-§13）。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信 ｜ §9 護城河趨勢「加深」｜ §8 F AI 風險 🟢（AI 驅動藥物發現為受益方）｜（GLP-1 超級週期 TAM 2030 年 $150B，LLY 口服 + 注射 + 三重激動劑三線領先）</li>
+<li><strong>品質 S 級（護城河 A→S 級經估值燈升格）：</strong>護城河 9/10（§9）｜體質 veto 1 項不過（FCF/NI 0.29，capex 週期解釋）｜等級調整：A → <strong>S（估值燈 🟢 +1 級）</strong></li>
+<li><strong>估值燈 🟢 便宜：</strong>Fwd PE 27.1x（FY+1），5Y 分位 19%（(27.1−18)/(65−18)=19%），PEG 0.93｜盲點 1 救援：不需觸發（本燈 🟢 不在 🟠 救援範圍）</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 $879.62（斜率 +4.89%）/ W104 $855.07（斜率 +3.79%）/ W250 $583.63（斜率 +7.59%）｜盲點 2 救援：不適用</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 SPX，現價 7,126 vs W104 6,092（+17% 在線上）</li>
+<li><strong>參考 R:R：</strong>短期 0.95x / 中期 1.63x｜壓力測試通過率 <span class="fail">0/4</span>（資訊性，不主導裁決，但觸發 QC-29 降一級）</li>
+<li><strong>綜合訊號：<span class="sig-big">A</span></strong>（取自 §2 H）｜判定理由：原 A+ 但 QC-29 壓力測試 0/4 通過 → 降 1 級至 A。核心候選但非滿格訊號</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟢 非陷阱</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜<strong>A = 核心候選</strong>（當前）｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warn-box">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答題）</h4>
+<table>
+<tr><th style="width:28%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>——毛利率穩定 ~83%、GLP-1 市佔擴大至 60%+、分析師 EPS 近 90 天淨上修（$32.87→$34.24）、Revenue CAGR 與 EPS CAGR 同步加速</td></tr>
+<tr><td>支持「不是陷阱」的最強論據</td><td>FY2025 實際 Revenue $65.18B（+44.7% YoY）、Net Income $20.64B（+95% YoY）、Gross Margin 83.0%；2026 guidance $80-83B（+25% 中點）；ROIC 從 2023 谷底 10.5% 恢復至 2024 年 23.7%；FY+1/+2 共識 EPS $34.24/$42.11（29 位分析師覆蓋）；Pfizer danuglipron 退出口服 GLP-1 競賽，競爭格局顯著改善</td></tr>
+<tr><td>支持「可能是陷阱」的最強反駁</td><td>(1) FCF/NI 0.29（遠低於 0.7 門檻）——$50B 製造業擴張計畫持續至 2027；(2) <strong>2026-04-15 FDA 要求 orforglipron 補充肝毒性與心血管長期安全資料</strong>，股價 3 日下挫 3%（$955→$905）；(3) Trump MFN 協議 + Medicaid 降價 + DTC 價格戰，2026 guidance 提及 low-to-mid teens% ASP 壓縮；(4) QC-30 同業溢價：LLY Fwd PE 27x vs NVO 12x = <strong>125% 溢價</strong>，收斂風險列入 R4</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否發生</td><td>① Q1 2026 財報（2026-04-30）毛利率是否跌破 80%（目前 ~83%）；② Mounjaro/Zepbound 季度 YoY 若連 2 季 &lt; 25%（目前 +110%/+122%）；③ FDA 對 orforglipron 補充安全資料要求若升級為 black-box warning（目前僅為 post-marketing 要求）</td></tr>
+</table>
+<p><strong>最終定性：🟢 非陷阱</strong>（QC-30 溢價列入監測，不構成陷阱判定）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估閾值</th></tr>
+<tr><td>1</td><td>Orforglipron (Foundayo) FDA 補充安全資料後續（肝毒性 / MACE post-marketing）</td><td>§5 H2 / R2</td><td>🔵 核心假設驗證（上次新增）</td><td>若 FDA 2026H2 要求加註 black-box warning 或 MACE HR > 1.2 → 削弱口服 GLP-1 獨占論點</td></tr>
+<tr><td>2</td><td>NVO 月度處方量 YoY + 同業 Fwd PE 收斂（QC-30 新增）</td><td>§5 R1 / R4</td><td>🔵 長期成長領先 + 溢價收斂</td><td>NVO YoY 轉正連續 3 個月 <strong>或</strong> NVO Fwd PE 升至 18x+ → LLY 相對溢價壓縮 40%+</td></tr>
+<tr><td>3</td><td>Q1 2026 財報（2026-04-30）毛利率 + FY+1 EPS guidance 維護</td><td>§6 / §13</td><td>短期估值信號</td><td>毛利率 QoQ &lt; 80% 或 guidance 下修 &gt; 3% → FY+1 EPS 共識動搖</td></tr>
+</table>
+
+<!-- ============== §2 v12.0 四層判定 ============== -->
+<h2 id="sec-2">§2｜產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.0）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway ≥ 10 年 + GLP-1 TAM 超級週期 + 護城河強化型）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（tirzepatide + orforglipron + retatrutide 三線領先對手 3-5 年）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢（藥物發現 AI 化為受益方：Lilly AI 平台 TuringMoleculesNet 加速化合物篩選）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話判斷</td><td>GLP-1 TAM 從 2025 $50B 擴張至 2030 $150B（3x 擴張），LLY 市佔 60%+ 且壟斷口服與三重激動劑路徑</td></tr>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="pass">✅</span></td><td>2022 76.3% → 2023 79.3% → 2024 81.3% → 2025 83.0%，持續改善</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="fail">❌</span></td><td>FY2025 FCF $5.96B / NI $20.64B = <strong>0.29</strong>（$50B capex 週期壓制，2027 後預期恢復）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="pass">✅</span></td><td>0y: 90d 前 $32.87 → current $34.24（淨上修 +4.2%）；+1y: $40.67 → $42.11（+3.5%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="pass">✅</span></td><td>Q1 +45% / Q2 +38% / Q3 +42% / Q4 +45%（全部正成長且加速）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="pass">✅</span></td><td>Net Debt $35.2B / EBITDA $32B ≈ 1.1x（槓桿健康）</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = 1 項不過 → <strong>等級不變</strong>（0-2 項不過 = 不變）</p>
+
+<h3>B｜品質等級</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>9 / 10</strong>（GLP-1 技術代差 3-5 年、$50B 製造屏障、FDA 臨床 know-how 累積）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級</td></tr>
+<tr><td>體質 veto 調整</td><td>不過 1 項（FCF/NI），0-2 項範圍內，不降級</td></tr>
+<tr><td><strong>調整後等級（§2 B 基礎）</strong></td><td><strong>⭐ A 級</strong>（底倉 25%）</td></tr>
+</table>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（2026）</td><td>$34.24</td><td>yfinance earnings_estimate 0y，n=29 位分析師</td></tr>
+<tr><td>FY+2 EPS（2027）</td><td>$42.11</td><td>yfinance earnings_estimate +1y，n=29</td></tr>
+<tr><td>FY+2 成長率</td><td>23.0%</td><td>($42.11/$34.24)−1</td></tr>
+<tr><td>當前股價</td><td>$927.03</td><td>2026-04-17 收盤</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td><strong>27.07x</strong></td><td>$927.03 / $34.24</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>22.02x</td><td>$927.03 / $42.11（= yfinance forwardPE 22.02x）</td></tr>
+</table>
+
+<h3>D｜估值燈（v12.0 取代 R:R 裁決）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY+1）</td><td>27.07x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>~18x（2022Q3 低點）~ ~65x（2023-2024 高峰）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>(27.07 − 18) / (65 − 18) = <strong>19%</strong>（低位）</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>29.0%（基期 FY2025 $22.95 → FY+3E $49.27，見 §7）</td></tr>
+<tr><td>PEG</td><td>27.07 / 29.0 = <strong>0.93</strong></td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟢 便宜</strong>（分位 19% &lt; 30% <strong>且</strong> PEG 0.93 &lt; 1.0，雙條件皆符合）</td></tr>
+<tr><td>套用規則</td><td>等級 <strong>+1</strong>（A → S）</td></tr>
+</table>
+<p><strong>估值燈調整後等級</strong>：A 級 → <strong>S 級</strong></p>
+
+<h3>E｜R:R 與 Bear Case（參考用）</h3>
+
+<h4>參考目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>FY+1 EPS $34.24 × 合理 PE 40x（§13.5 基準 25x × 1.175 ROIC 引擎 × 1.10 AI × 1.15 moat 溢價 ≈ 37.3x，取分析師共識中位 $1,215 對應 35.5x 倍數，折衷取 40x）</td><td>$1,370</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 EPS $42.11 × 合理 PE 40x</td><td>$1,684</td></tr>
+<tr><td>分析師共識中位</td><td>n=29 分析師，中位 $1,215（高 $1,500 / 低 $850）</td><td>$1,215</td></tr>
+</table>
+
+<h4>Bear Case</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（§8 E 成長熄火至 10%）</td><td>15x</td><td>15x</td></tr>
+<tr><td>Bear EPS（FY EPS × 0.9）</td><td>$30.82</td><td>$37.90</td></tr>
+<tr><td>Bear 股價</td><td><strong>$462</strong></td><td><strong>$569</strong></td></tr>
+<tr><td>下行距離</td><td>50.2%</td><td>38.6%</td></tr>
+<tr><td>上行距離（至合理目標）</td><td>47.8%（$927→$1,370）</td><td>81.7%（$927→$1,684）</td></tr>
+<tr><td><strong>R:R</strong></td><td><strong>0.95x</strong>（上行 $443 / 下行 $465）</td><td><strong>1.63x</strong>（上行 $757 / 下行 $358，以中期 Bear $569）</td></tr>
+</table>
+<p class="note">W52 Low $623.78（參考）、W104 Low $622.32（參考）。Bear $462 低於雙 W Low，屬保守測試。</p>
+
+<h4>R:R 壓力測試（QC-29 v12.0 新增）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th><th>通過（≥2.0）</th></tr>
+<tr><td>Base</td><td>上述報告假設</td><td class="num">0.95x</td><td class="num">1.63x</td><td><span class="fail">❌ / ❌</span></td></tr>
+<tr><td>壓力 A</td><td>3Y EPS CAGR −10%（29% → 19%）→ EPS 下修 10%</td><td class="num">0.66x</td><td class="num">1.15x</td><td><span class="fail">❌ / ❌</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（40x → 32x）</td><td class="num">0.36x</td><td class="num">0.83x</td><td><span class="fail">❌ / ❌</span></td></tr>
+<tr><td>壓力 C（<strong>QC-30 同業溢價收斂</strong>）</td><td>合理 PE 收斂 50% 至 (40 + 17) / 2 = 28.5x</td><td class="num">0.15x</td><td class="num">0.52x</td><td><span class="fail">❌ / ❌</span></td></tr>
+</table>
+<p><strong>壓力測試通過率</strong> = <span class="fail">0 / 4</span>（無任一情境 R:R ≥ 2.0）</p>
+<p class="note">⚠️ <strong>QC-29 觸發：通過率 0/4 &lt; 75% → §2 H 綜合訊號降 1 級</strong>（A+ → A）。R:R 低迷的根本原因：現價 $927 經歷 W52 低點 $623→W52 高點 $1,134 大漲 82% 後，分析師共識目標 $1,215 僅餘 31% 上行空間，Bear $462 下行空間 50%。這是「品質頂尖 + 估值仍合理，但短中期 R:R 數學不優」的典型情境——不是基本面問題，是股價漲多後 R:R 自動壓縮。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$927.03</td></tr>
+<tr><td>W52 / 斜率（13w）</td><td>$879.62 / <strong>+4.89%</strong></td></tr>
+<tr><td>W104 / 斜率（13w）</td><td>$855.07 / <strong>+3.79%</strong></td></tr>
+<tr><td>W250 / 斜率（13w）</td><td>$583.63 / <strong>+7.59%</strong></td></tr>
+<tr><td>序位關係</td><td>現價 $927 &gt; W52 $880 &gt; W104 $855 &gt; W250 $584</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>✅ 強勢進場</strong>（四條件全過：價 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率 +7.59% &gt; 3%）</td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>× 1.0</strong></td></tr>
+<tr><td>盲點 2 救援</td><td>不適用（MA 狀態非 ❌ 失效）</td></tr>
+</table>
+
+<h4>QC-22 股價漂移檢查</h4>
+<p>4 週前均價 $915.00 vs 現價 $927.03 = <strong>+1.32%</strong>（無漂移警示）。</p>
+
+<h4>QC-24 近 5 交易日 intraday 警示</h4>
+<table>
+<tr><th>日期</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>備註</th></tr>
+<tr><td>2026-04-14</td><td>925.00</td><td>939.93</td><td>915.04</td><td>922.50</td><td>正常</td></tr>
+<tr><td>2026-04-15</td><td>923.50</td><td>930.00</td><td>888.03</td><td>905.03</td><td><strong>盤中低 888 vs 收 905，High-Close 2.7%</strong>（FDA orforglipron 安全資料要求消息）</td></tr>
+<tr><td>2026-04-16</td><td>911.67</td><td>920.00</td><td>898.15</td><td>903.99</td><td>延續承壓</td></tr>
+<tr><td>2026-04-17</td><td>917.80</td><td>929.99</td><td>917.80</td><td>927.03</td><td>強勢反彈 +2.6%</td></tr>
+</table>
+<p class="note">無「衝高回落 shooting star（High-Close &gt; 5%）」或「gap up 收紅 K」。4/15 屬新聞事件型下跌，已於 4/17 反彈收復。</p>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td>7,126.06</td></tr>
+<tr><td>大盤 W104</td><td>6,092.49</td></tr>
+<tr><td>現價 vs W104</td><td>+17.0% 在 W104 之上</td></tr>
+<tr><td>系統性風險</td><td>否</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈（v12.0 核心輸出）</h3>
+
+<table>
+<tr><th>維度</th><th>值（供 PM skill 讀取）</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td><strong>S</strong>（A 級 + 估值燈 🟢 升 1 級）</td></tr>
+<tr><td>gate（§2 D）</td><td><strong>🟢 便宜</strong></td></tr>
+<tr><td>ma_status（§2 F）</td><td><strong>✅ 強勢進場</strong></td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td><strong>正常</strong></td></tr>
+<tr><td>trap（§1 定性）</td><td><strong>🟢 非陷阱</strong></td></tr>
+</table>
+
+<h4>判定邏輯</h4>
+<ol>
+<li>拒絕檢核：trap 🟢、gate 🟢、MA ✅、quality 非拒絕 → 不觸發</li>
+<li>高強度檢核：quality S + gate 🟢 + MA ✅ + trap 🟢 + 大盤正常 → <strong>A+ 初判</strong></li>
+<li>QC-29 壓力測試通過率 <span class="fail">0/4 &lt; 75%</span> → <strong>降 1 級至 A</strong></li>
+</ol>
+
+<div class="hypothesis-box">
+<h4>本標的綜合訊號</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="sig-big">A</span>（A+ 降級至 A）</strong></td></tr>
+</table>
+<p>判定理由：品質 S 級 + 估值燈 🟢 + MA ✅ + trap 🟢 + 大盤正常，初判 A+。但 R:R 壓力測試 0/4 通過（QC-29）觸發降 1 級至 A。<strong>訊號語意</strong>：核心候選，PM skill 層面視為標準核心持倉候選。</p>
+</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8 A</td><td>充裕（GLP-1 TAM 2030 $150B、腫瘤 Verzenio 持續放量、神經 Kisunla Ph3）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（Pfizer 退賽 + Roche/Amgen 落後 2-3 年）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p>一句話：🟢 順風，A→S 級護城河 9/10，GLP-1 三線領先（tirzepatide 注射 + orforglipron 口服 + retatrutide 三重激動劑）。估值燈 🟢 便宜（PEG 0.93）+ Pure MA ✅ 強勢，時機良好但 R:R 壓力測試偏弱。觀察點：2026-04-30 Q1 財報毛利率、FDA orforglipron 補充安全資料後續、QC-30 NVO 溢價是否收斂。</p>
+
+<!-- ============== §3 三方辯論 ============== -->
+<h2 id="sec-3">§3｜三方辯論摘要</h2>
+
+<div class="bull-card">
+<h4>【多頭辯護人｜Charlie Munger 模式】</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字佐證</th><th>引用章節</th></tr>
+<tr><td>1</td><td>護城河（9/10）：GLP-1 技術代差 3-5 年，Pfizer danuglipron 已退賽，Novo 市佔 Q4 −7.6% YoY 連續流失</td><td>Mounjaro +110% / Zepbound +122% YoY；NVO 連裁員 9,000 人</td><td>§9</td></tr>
+<tr><td>2</td><td>成長（🟢 高確信）：Foundayo（orforglipron）2026-04-01 FDA 批准，為史上首個「不限時間食物」口服 GLP-1；retatrutide TRIUMPH-4 減重 28.7%</td><td>FY+1 EPS +41%（$24.21→$34.24）、FY+2 +23%；Goldman 估 orforglipron 2031 $16B</td><td>§8</td></tr>
+<tr><td>3</td><td>估值（🟢 便宜）：Fwd PE 5Y 分位 19%、PEG 0.93、FPE 27x vs 分析師共識目標對應 35x（中位 $1,215）</td><td>5Y Fwd PE 中位數 ~35x，當前 27x 相當於 22% 折扣</td><td>§13</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「Pfizer 出清後，口服 + 注射 + 三重激動劑三線全佔，5Y 分位 19% 買世界第一市值藥廠——用合理價買偉大公司。」</p>
+</div>
+
+<div class="bear-card">
+<h4>【空頭檢察官｜Michael Burry 模式】</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th><th>對應風險</th></tr>
+<tr><td>1</td><td>基本面：FDA orforglipron 補充安全資料升級為 black-box warning（肝毒性 signal 擴大），商業上市斜率下修 50%</td><td>Foundayo 2026H2 處方量 &lt; $2B（原預期 $3B）</td><td>§5 R2</td></tr>
+<tr><td>2</td><td>估值：<strong>QC-30 同業溢價收斂</strong> — NVO Fwd PE 從 12x 追升至 18x（CagriSema 改良版成功），LLY 溢價由 125% 壓縮至 50%，隱含 LLY Fwd PE 由 27x 降至 21x</td><td>NVO 月處方量 YoY 轉正 + LLY 毛利率 QoQ &lt; 80%</td><td>§5 R1 / R4 / §13.3</td></tr>
+<tr><td>3</td><td>催化劑：Trump MFN 協議 2026H2 落地 + 新 CMS 降價強制 → 美國 GLP-1 ASP 下降 25%（目前指引 low-to-mid teens%）</td><td>US realized price QoQ &lt; 指引下限</td><td>§5 R3</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「QC-30 收斂是 LLY 的結構性脆弱點——NVO 只要不死、LLY 就永遠背著 125% 溢價。一旦 CagriSema 2028 上市療效 20%+ 追平 tirzepatide，5Y 分位的安全邊際可能從 19% 變回 50%。」</p>
+</div>
+
+<div class="arb-card">
+<h4>【估值仲裁員｜Aswath Damodaran 模式】</h4>
+<table>
+<tr><th>評分維度</th><th>數字比對</th><th>評分（各 0-2 分）</th></tr>
+<tr><td>隱含 FCF CAGR vs 歷史 3Y 實際</td><td>Reverse DCF 隱含 15% vs 歷史 $3-6B 恢復期</td><td>1.5 / 2</td></tr>
+<tr><td>與分析師 EPS CAGR 共識一致性</td><td>隱含 15% vs 共識 29%（隱含比共識保守）</td><td>2.0 / 2</td></tr>
+<tr><td>與同業最快 FCF CAGR 相對位置</td><td>NVO ~8%, LLY 隱含 15% → 高於 NVO 但 runway 夠長</td><td>1.5 / 2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>只需 GLP-1 2030 TAM $100B + LLY 55% 份額（目前 60%）</td><td>1.5 / 2</td></tr>
+<tr><td>歷史上類似公司是否達成</td><td>Novo 1990s-2000s 胰島素曾達此水準；Gilead 2014-2016 HCV 類似（但後者失速）</td><td>1.0 / 2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：7.5 / 10</strong>（中高，隱含 CAGR 15% 低於共識 29%，安全邊際明顯，但 Gilead HCV 先例提醒「需持續創新」）</p>
+<p><strong>仲裁員一句話</strong>：「Reverse DCF 隱含 FCF CAGR 只要 15% 即可辯護當前股價，分析師共識 29% EPS CAGR 有 14 個百分點緩衝。但若 $50B capex 延續至 2028+，FCF 認列可能再延 1-2 年。」</p>
+</div>
+
+<div class="verdict-box">
+<h4>【裁決】</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>估值分位 19% × 競爭格局 Pfizer 退賽後結構性改善 × GLP-1 三線領先</td></tr>
+<tr><td>空頭最大威脅</td><td>QC-30 同業溢價收斂 — NVO 若成功追趕，125% 溢價系統性壓縮</td></tr>
+<tr><td>估值仲裁評分</td><td>7.5 / 10</td></tr>
+<tr><td>我的裁決</td><td><strong>進場（A 級訊號）</strong>——基本面 + 估值 + MA 三軸均支持，但 R:R 壓力測試偏弱意味不宜追高</td></tr>
+<tr><td>裁決理由</td><td>品質頂尖（S 級）+ 估值 🟢（PEG 0.93、分位 19%）+ MA ✅ 強勢，構成 v12.0 A+ 滿格訊號，但 QC-29 壓力測試 0/4 通過降 1 級至 A。QC-30 NVO 溢價收斂為主要結構性風險但尚未觸發閾值（NVO 處方量仍負成長）。FDA orforglipron 安全資料屬中性事件（股價 4/17 已反彈）。建議以目前 $900-930 區間進場，若 Q1 2026 財報（2026-04-30）毛利率破 80% 則觸發重新評估。</td></tr>
+</table>
+<p><strong>自我攻擊測試</strong>：反駁點 1 = QC-30 收斂若在 18 個月內發生，A 級訊號可能不足以對抗系統性估值壓縮 → 已在 §2 E 壓力 C 情境明確量化（合理 PE 從 40x 降至 28.5x，R:R 剩 0.15x）；反駁點 2 = Foundayo 肝毒性若從 signal 擴至 label warning，會動搖口服 GLP-1 長期敘事 → 已列為監測指標 #1。反駁回應：A 級訊號已內含這兩項風險，倉位大小應由 PM skill 在了解組合其他持倉後決定。</p>
+</div>
+
+<!-- ============== §4 序章 ============== -->
+<h2 id="sec-4">§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<div class="card">
+<p>Eli Lilly 解決的是人類史上最頑固的慢性病——肥胖、糖尿病與代謝症候群。其 GIP/GLP-1 雙重激動劑 tirzepatide 將「可治療的肥胖」從行為矯正命題（過去 50 年失敗）轉為「每週一針、24% 減重」的藥理解決方案。2026 年 4 月新增口服 GLP-1 Foundayo（orforglipron）後，LLY 成為全球唯一同時擁有注射 + 口服 + 三重激動劑三線 GLP-1 的公司。若明天消失：</p>
+<ul>
+<li>全球 8 億肥胖人口失去目前療效最佳選項（Zepbound 減重 20-22% vs Wegovy 14%）；</li>
+<li>美國 3,800 萬糖尿病患者一線 GLP-1 治療缺口（Novo 產能 90 天內無法吸收）；</li>
+<li>首個口服 GLP-1 優勢（2026-04 FDA 批准 Foundayo）消失，口服市場倒退 2-3 年；</li>
+<li>Alzheimer Kisunla、腫瘤 Verzenio 臨床標準失去。</li>
+</ul>
+<p>不同於一般藥廠的「替代性存在」，LLY 在 GLP-1 技術路徑享有 3-5 年臨床代差（retatrutide 三重激動劑減重 26-28.7%，NVO 2027-2028 才能追上），此代差來自 40 年 incretin 科學累積與 $50B 現行產能投資。</p>
+</div>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<table>
+<tr><th style="width:22%">風險路徑</th><th>具體情境</th><th>時間軸</th></tr>
+<tr><td><strong>地緣政治曝險</strong></td><td>Trump MFN 2026H2 擴大至 Medicare Part D、中國/印度原料藥關稅、愛爾蘭 Kinsale 廠稅務爭議重啟</td><td>6-18 個月</td></tr>
+<tr><td><strong>技術替代風險</strong></td><td>(a) gene editing 永久性代謝重塑（CRISPR Therapeutics 5-8 年）；(b) 小分子 GLP-1 generic（orforglipron 專利 2037）；(c) NVO CagriSema 改良版 Ph3 成功</td><td>3-10 年</td></tr>
+<tr><td><strong>管理層失職</strong></td><td>$50B capex + $15B 回購同步推進，若 GLP-1 需求放緩 30%，產能過剩壓縮毛利 500-800bp</td><td>2-4 年</td></tr>
+<tr><td><strong>價值陷阱路徑</strong></td><td><strong>隱性資本密集型</strong>——capex 從 2024 $8.4B → 2025 $10.8B → 2026E $12-15B，若 pharma 被重新歸類為類似半導體的高 capex 行業，Fwd PE 倍數可能下壓 30-40%</td><td>3-5 年</td></tr>
+</table>
+
+<!-- ============== §5 投資論點錨定 ============== -->
+<h2 id="sec-5">§5｜投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th style="width:25%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>36 個月（3 年）</td></tr>
+<tr><td>驅動時間軸理由</td><td>① Foundayo（orforglipron）2026-2028 全球滲透；② retatrutide TRIUMPH 全系列 Ph3 讀出（2026H2-2027 各 trial）；③ $50B capex 週期 2027 年產能上線推 FCF 拐點</td></tr>
+<tr><td>訊號 vs 噪音</td><td>訊號：GLP-1 市佔、毛利率結構、Foundayo 斜率、retatrutide TRIUMPH 頂線；噪音：單季 EPS beat/miss 幅度、分析師單一目標價調整</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<div class="assumption-box">
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td><strong>H1</strong></td><td>GLP-1 obesity + diabetes TAM 2030 達 $150B（上修自 $100B），LLY 市佔 &gt; 55%（注射 + 口服 + 三重激動劑組合）</td><td>LLY GLP-1 組合 2027 營收 &gt; $50B、市佔 ≥ 55%</td><td>2027Q4 年報</td></tr>
+<tr><td><strong>H2</strong></td><td>Orforglipron（Foundayo）成為口服 GLP-1 主導產品；retatrutide 打開 25-30% 減重上段市場</td><td>Foundayo 首年（2026）全球銷售 &gt; $3B；TRIUMPH-5 頂線減重 ≥ 24%</td><td>2026Q4-2027Q1</td></tr>
+<tr><td><strong>H3</strong></td><td>Forward P/E 從當前 27x（5Y 分位 19%）修復至 35-40x，隨 EPS CAGR 29% 兌現，<strong>同業溢價（QC-30）不收斂超過 50%</strong></td><td>Fwd PE 分位於 FY+2 回到 50% 以上（對應 ~40x）</td><td>12-24 個月</td></tr>
+</table>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Novo CagriSema 改良版 Ph3 成功追平 tirzepatide（減重 20%+）</td><td>H1</td><td>NVO 月處方量 YoY</td><td>由目前 −15% 轉正且連續 3 個月</td></tr>
+<tr><td>R2</td><td>Foundayo 上市後 FDA 肝毒性 post-marketing 升級為 black-box warning；retatrutide TRIUMPH-5 療效 &lt; 20% 減重或 MACE 安全信號</td><td>H2</td><td>FDA label 升級、TRIUMPH-5 頂線</td><td>label 加 box warning 或減重 &lt; 20% 或 MACE HR &gt; 1.2</td></tr>
+<tr><td>R3</td><td>Trump MFN + Medicaid 降價 + DTC 價格戰三重疊加使美國 GLP-1 ASP 下降 &gt; 20%</td><td>H3</td><td>毛利率 QoQ、US realized price</td><td>毛利率單季 &lt; 80%（目前 ~83%）</td></tr>
+<tr><td><strong>R4（QC-30 新增）</strong></td><td><strong>同業溢價收斂：LLY Fwd PE 27x vs NVO 12x = 125% 溢價，NVO 業務翻身或 CMS 強制降價使溢價壓縮 50%+</strong></td><td>H3</td><td>LLY Fwd PE / NVO Fwd PE ratio、NVO 季營收 YoY</td><td>LLY / NVO Fwd PE 比值 &lt; 1.5（目前 2.25）或 NVO 季營收 YoY 轉正</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件是否在 36 個月內影響 LLY 現金流或估值倍數？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（GLP-1 TAM/份額）/ H2（口服 + 三重激動劑）/ H3（估值修復 + QC-30 溢價）？</td></tr>
+<tr><td>3. 邊際方向？</td><td>+強化 / 0 無關 / −削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>是否達到 §5 C 警戒閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>估值 🟢 + MA ✅ + Q1 2026 毛利率維持 ≥ 80%</td><td>A 級訊號建倉，PM skill 決定具體 %</td></tr>
+<tr><td>加碼</td><td>TRIUMPH-5 頂線 ≥ 24% 減重、Foundayo 2026H2 處方量 &gt; $3B 年化、NVO Fwd PE 升至 15x+（QC-30 溢價收斂但上行版本）</td><td>PM skill 基於 H1+H2 雙重驗證判斷</td></tr>
+<tr><td>減碼</td><td>R4（QC-30 收斂）觸發：NVO YoY 轉正 3 個月 或 LLY/NVO Fwd PE 比 &lt; 1.5；或毛利率跌破 80%</td><td>PM skill 重新評估溢價支撐</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（LLY GLP-1 市佔 &lt; 50%）或 FDA black-box warning 或陷阱信號確認</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<!-- ============== §6 即時財報情報 ============== -->
+<h2 id="sec-6">§6｜即時財報情報</h2>
+
+<h3>① 最新一季財報（Q4 FY2025，已報）+ Q1 FY2026 展望</h3>
+<p>Q1 FY2026 財報排定 2026-04-30 公布（報告日 4/18 尚未出）。此處引用最近 Q4 FY2025 實績，並列 Q1 2026 共識。</p>
+<table>
+<tr><th>指標</th><th>Q4 FY2025 實際</th><th>Q4 FY2025 預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$19.30B</td><td>$17.96B</td><td><span class="pass">Beat +7.5%</span></td><td>+45%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$7.54</td><td>$7.20</td><td><span class="pass">Beat +4.7%</span></td><td>+108%</td></tr>
+<tr><td>Mounjaro</td><td>$6.50B</td><td>—</td><td>—</td><td>+110%</td></tr>
+<tr><td>Zepbound</td><td>$3.60B</td><td>—</td><td>—</td><td>+122%</td></tr>
+<tr><td>Gross Margin</td><td>83.0%</td><td>—</td><td>—</td><td>+2pp</td></tr>
+<tr><td>Operating Margin</td><td>45.6%</td><td>—</td><td>—</td><td>+8pp</td></tr>
+</table>
+<p>Q1 FY2026 共識（2026-04-30 公布）：Revenue $17.6B、EPS $7.33（yfinance 0q avg $7.00）。</p>
+
+<h4>財報對 §5 假設的邊際貢獻（Q4 FY2025 延續）</h4>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（GLP-1 TAM × 份額）</td><td><span class="pass">＋強化</span></td><td>Mounjaro +110% / Zepbound +122% 遠高於 TAM 成長；NVO Q4 −7.6% YoY</td></tr>
+<tr><td>H2（pipeline 兌現）</td><td><span class="pass">＋強化</span></td><td>orforglipron ACHIEVE-1/2/3 全成功，Foundayo 2026-04-01 獲批；TRIUMPH-4 減重 28.7%</td></tr>
+<tr><td>H3（估值修復）</td><td><span class="pass">＋強化</span></td><td>2026 guidance $80-83B，FY+1 共識 EPS 上修至 $34.24；PEG 0.93</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析（Q4 FY2025）</h3>
+<ul>
+<li><strong>管理層基調</strong>：<span class="pass">樂觀</span>——Ricks 反覆強調「orforglipron 是 blockbuster 候選，retatrutide 目標 25%+ 減重改寫市場上段」。與 Q3 語氣（謹慎 on capex）轉積極。</li>
+<li><strong>Forward Guidance</strong>：2026 revenue $80-83B（中點 $81.5B vs 共識 $77.62B，上修 5%），EPS $33.50-35（中點 $34.25 vs 共識 $33.12）</li>
+<li><strong>刻意強調</strong>：「全球製造業擴張 on track」、「orforglipron priority review」、「TRIUMPH program 創造 GLP-1 上段市場」</li>
+<li><strong>刻意迴避</strong>：MFN 協議具體 ASP 壓縮幅度、CMS IRA 對 GLP-1 的可能納入、Trulicity MDL 進展（1,521 件訴訟）</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：Zepbound 供應端解綁後，真實需求遠超預期（Q4 +122%）；DTC 通路（LillyDirect）佔 Zepbound 銷售 22%</li>
+<li><strong>供給端</strong>：$50B capex 計畫提前 6 個月達產能里程碑；2027 年 Indianapolis + Raleigh + LEO Pharma (Ireland) 同步上線</li>
+<li><strong>競爭格局</strong>：Pfizer danuglipron 2026Q1 退出是重大利空對手；Roche CT-388 Ph2 進度落後；Amgen MariTide 減重 19% 不如 tirzepatide 22-24%</li>
+<li><strong>總體經濟敏感度</strong>：Beta 0.5 低敏感；真正敏感的是藥價政策（Trump MFN + IRA）、保險 formulary（CVS 短暫 formulary hitch 未影響）</li>
+</ul>
+
+<!-- ============== §7 核心門檻檢核 ============== -->
+<h2 id="sec-7">§7｜核心門檻檢核</h2>
+
+<h3>EPS 共識預估（yfinance 優先）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>基期 EPS（FY2025 Non-GAAP）</td><td>$22.95</td><td>Diluted EPS 實際值</td></tr>
+<tr><td>FY+1E（2026）</td><td>$34.24（n=29）</td><td>yfinance earnings_estimate 0y avg；90d trend: $32.87 → $34.24（上修）</td></tr>
+<tr><td>FY+2E（2027）</td><td>$42.11（n=29）</td><td>yfinance +1y avg</td></tr>
+<tr><td>FY+3E（2028，§8 邏輯推導）</td><td>$49.27</td><td>FY+2 × (1 + 17%)；基於 §8 A Runway ≥ 10 年但 2028 起 Foundayo/retatrutide 滲透率成熟期放緩至 17%</td></tr>
+<tr><td><strong>GAAP 3Y CAGR</strong></td><td><strong>29.0%</strong></td><td>($49.27/$22.95)^(1/3) − 1</td></tr>
+</table>
+
+<h3>Munger 護城河維度搜尋結果</h3>
+<table>
+<tr><th>項目</th><th>5 年數值</th><th>均值 / 趨勢</th></tr>
+<tr><td>FCF Margin（年度）</td><td>2021 22% / 2022 10% / 2023 −12% / 2024 0.9% / 2025 9.1%</td><td>5 年均值 6%，谷底 2023 −12%（capex 循環高點），2025 恢復</td></tr>
+<tr><td>ROIC（10 年）</td><td>2016 28% / 2018 26% / 2020 32% / 2022 18% / 2023 10.5% / 2024 23.7% / 2025E 28%+</td><td>10 年平均 23%，達標年 7/10（70%）</td></tr>
+<tr><td>Gross Margin（10 年）</td><td>2016 74% / 2020 78% / 2022 76% / 2024 81% / 2025 83%</td><td>改善年 7/10，當前 83% 創 10 年高</td></tr>
+<tr><td>Capex / Revenue（近 3 年）</td><td>2023 13% / 2024 16% / 2025 16.6%</td><td>高資本密集期（GLP-1 產能擴張），2027 後預期下降</td></tr>
+<tr><td>D/E 與現金 / Revenue</td><td>D/E 1.60，現金 $7.27B / Revenue $65.18B = 11.2%</td><td>槓桿偏高但可控，現金配置合理</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="fail">✗ 暫不達</span></td><td>9.1%（capex 週期）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt; 15%；谷底 &gt; 10%</td><td><span class="fail">✗</span></td><td>5Y 均 6%，谷底 −12%（2023）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td><span class="pass">✓</span></td><td>23.7%（2024），WACC ~8.5%，超額 +15pp</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10Y 中 ≥ 70% 達標</td><td><span class="pass">✓ 合理</span></td><td>7/10 年達標（70%），谷底 2023 10.5%，趨勢擴大</td></tr>
+<tr><td>Gross Margin 定價能力【Munger】</td><td>10Y 中 ≥ 70% 改善</td><td><span class="pass">✓✓ 強</span></td><td>改善年 7/10，當前 83% 創 10 年新高</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5% 優 / &lt; 10% 尚可</td><td><span class="fail">✗ 高</span></td><td>16.6%（GLP-1 週期），2027 後預期回落</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td><span class="pass">✓✓ 強</span></td><td>3Y CAGR <strong>29.0%</strong>；資料：yfinance n=29</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="pass">✓✓ 強</span></td><td>PEG 0.93（§13.2）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7 低；現金/Rev 10-50%</td><td><span class="warn">⚠️ 適中</span></td><td>D/E 1.60（高），現金/Rev 11.2%（合理）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="fail">否</span></td><td>現金 $7.27B &lt; 總債 $42.5B</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，擴大</td><td><span class="pass">✓</span></td><td>9/10，擴大中</td></tr>
+</table>
+<p><strong>最大財務弱點</strong>：FCF/NI 0.29（資本週期性壓制）；<strong>Munger 三維評級 🟡（定價能力 ✓ / ROIC ✓ / 資本密集 ✗）</strong>。</p>
+
+<h3>⚠️ 價值陷阱初篩（輕度觸發，分位 19% 位於 10%-25% 區間）</h3>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+<tr><td>Q1</td><td>3 年 Gross Margin 趨勢？</td><td>79.3% → 81.3% → 83.0% 連續上升</td><td><span class="pass">🟢</span></td></tr>
+<tr><td>Q2</td><td>3 年市佔率趨勢？</td><td>GLP-1 份額 50% → 60%+ 擴大（NVO 流失中）</td><td><span class="pass">🟢</span></td></tr>
+<tr><td>Q3</td><td>FCF 與淨利背離？</td><td>FCF/NI 3Y 均 0.20（低），但屬 capex 週期解釋</td><td><span class="warn">🟡（可解釋）</span></td></tr>
+<tr><td>Q4</td><td>分析師共識 EPS 方向？</td><td>近 90 天：$32.87 → $34.24（+4.2% 上修）</td><td><span class="pass">🟢</span></td></tr>
+</table>
+<p><strong>初篩結論：0 個 🔴（1 個 🟡 可解釋）</strong>——低估值為真實機會，非價值陷阱。</p>
+
+<!-- ============== §8 長期成長性 ============== -->
+<h2 id="sec-8">§8｜長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（GLP-1 obesity + T2D）</td><td>$50B（2025）</td><td>BofA、Goldman 估計</td></tr>
+<tr><td>可達 TAM 2030</td><td>$150B</td><td>obesity 滲透率從 2% → 10%，T2D 一線用藥</td></tr>
+<tr><td>當前 LLY 市佔</td><td>60%+</td><td>GLP-1 收入 vs 全市場；NVO 35-40%</td></tr>
+<tr><td>達 30% 滲透率時間</td><td>2030-2032</td><td>若量產可跟上</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>10+ 年</strong></td><td>obesity 本身是終身慢性病；腫瘤 Verzenio + 神經 Kisunla 接棒下一波</td></tr>
+</table>
+
+<h3>B｜成長品質</h3>
+<p><strong>① 有機 vs 無機</strong>：有機 95%+（GLP-1 為自研 incretin 科學累積），無機貢獻 &lt; 5%（2024 小型 Morphic Holding 併購）</p>
+<p><strong>② 定價 vs 量</strong>：量驅動為主（Zepbound 處方量 +120% vs 提價 +5%），未來 MFN 協議可能使 ASP 下降 low-to-mid teens%</p>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型</strong>——GLP-1 營收擴大 → $50B capex 投入 → 規模壁壘與臨床代差擴大 → retatrutide / orforglipron 下一代加速 → 正循環</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>符合？</th></tr>
+<tr><td>ROIC</td><td>23.7%（2024）</td><td>18%（2022）</td><td>↑</td><td><span class="pass">✓</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+15pp</td><td>+10pp</td><td>↑ 擴大</td><td><span class="pass">✓</span></td></tr>
+<tr><td>FCF Margin</td><td>9.1%</td><td>10%</td><td>→（capex）</td><td><span class="fail">✗ 暫</span></td></tr>
+<tr><td>FCF / NI</td><td>0.29</td><td>0.50</td><td>↓</td><td><span class="fail">✗ 週期性</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>高（$50B capex）</td><td>低</td><td>↑</td><td>合理（成長期）</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應成長特徵</th><th>合理 Forward P/E</th><th>潛在跌幅</th></tr>
+<tr><td>3 年後降至 15%</td><td>成長放緩但高於市場</td><td>25x</td><td>從 40x → 25x，−38%</td></tr>
+<tr><td>3 年後降至 10%</td><td>回歸市場平均</td><td><strong>15x</strong>（§2 E Bear）</td><td>−63%</td></tr>
+<tr><td>3 年後降至 5%</td><td>成熟期低成長</td><td>10x</td><td>−75%</td></tr>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>連續改善中</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市佔縮減（12M）</td><td>擴大中 50→60%</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑？</td><td>量反加速</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR vs Rev CAGR 差 &gt; 5pp</td><td>EPS +108% vs Rev +45%（差 63pp）</td><td><strong>🔴</strong>（但為毛利擴張而非回購）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>0.20 / 0.29（連 3 年）</td><td><strong>🔴</strong>（capex 週期）</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且升</td><td>~1.5%（低）</td><td>⬜</td></tr>
+<tr><td>產業衰退</td><td>TAM 萎縮？</td><td>擴張 3x 至 2030</td><td>⬜</td></tr>
+<tr><td>產業衰退</td><td>行業倍數系統下移？</td><td>pharma 平均下修但 GLP-1 子產業上修</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint Capex/FCF &gt; 60%</td><td>~50%（可控）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停投資 3 年內 Rev 下滑？</td><td>否（專利保護至 2037）</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：🟡 中度警戒（2 個亮燈但均可解釋：盈餘品質亮燈源自毛利擴張 + capex 週期，非結構性）</strong></p>
+
+<p><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway 10+ 年 + 有機 95% + 護城河強化型 + ROIC 擴大，雖 2 個衰退信號但屬週期性而非結構性）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益</strong>——LLY AI 平台 TuringMoleculesNet 加速分子篩選，retatrutide 從 IND 到 Ph3 僅 5 年（傳統需 7-9 年）。Verzenio 次代 CDK4/6 抑制劑使用 AI 結構預測。AI 是藥物發現的賦能者而非威脅者。</p>
+
+<!-- ============== §9 護城河分析 ============== -->
+<h2 id="sec-9">§9｜護城河分析</h2>
+
+<p><strong>評分：9/10</strong>（未達 10 = S 級頂級，因生物製藥存在專利到期風險——orforglipron 2037、tirzepatide 2036-2039，專利懸崖雖遠但非永久）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應（弱）</strong>：醫生處方慣性、DTC 平台 LillyDirect 2025 營收 $3B（直接 DTC 通路）</li>
+<li><strong>無形資產（強）</strong>：40 年 incretin 科學專利組合、FDA 臨床 know-how、品牌（Humulin 100 年延續）</li>
+<li><strong>轉換成本（中強）</strong>：GLP-1 終身服藥慣性、從 Mounjaro → Zepbound 換藥 &lt; 5%</li>
+<li><strong>規模優勢（極強）</strong>：$50B capex 是 NVO 的 3 倍，專屬產能壟斷；retatrutide + orforglipron 雙管線全球臨床網絡</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為何 Novo $100B 市值無法追上：(1) NVO 去年裁員 9,000 人以應對 Ozempic/Wegovy 市佔流失，R&D 受限；(2) CagriSema 改良版減重 22% 仍不及 retatrutide 26-29%；(3) Pfizer danuglipron 2026Q1 退出，Roche/Amgen 落後 2-3 年；(4) LLY 口服 GLP-1 Foundayo 領先 NVO amycretin 約 24 個月。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>Novo Nordisk</td><td>~35%</td><td>↓ 50%→35%</td><td>Ozempic/Wegovy (已推 CagriSema)</td><td>LLY 吃 NVO</td></tr>
+<tr><td>Pfizer</td><td>0%</td><td>danuglipron 退出</td><td>GIPR 拮抗劑 phase 2</td><td>退出</td></tr>
+<tr><td>Amgen</td><td>~2%（早期）</td><td>新進</td><td>MariTide 減重 19%</td><td>LLY 占優</td></tr>
+<tr><td>Roche</td><td>~1%（Ph2）</td><td>新進</td><td>CT-388 Ph2</td><td>LLY 占優</td></tr>
+</table>
+
+<h3>護城河趨勢：加深（Pfizer 退賽 + Foundayo 獲批 + retatrutide 領先）</h3>
+
+<h3>24 個月內威脅（QC-23 三級分類）</h3>
+<ul>
+<li>🟡 點對點：NVO CagriSema 改良版 Ph3 2027 讀出；Roche CT-388 Ph3 啟動</li>
+<li>🟡 點對點：Amgen MariTide Ph3 2026H2；AstraZeneca AZD5004 小分子 GLP-1</li>
+<li>🔴 生態攻擊：無（Pfizer 退出、NVO 孤軍難敵）</li>
+<li>⛔ 架構替代：無（短中期）</li>
+</ul>
+
+<!-- ============== §10 財務品質 ============== -->
+<h2 id="sec-10">§10｜財務品質監測</h2>
+
+<h3>三年趨勢</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>對手（NVO 2025）</th></tr>
+<tr><td>FCF Margin</td><td>−12%</td><td>0.9%</td><td>9.1%</td><td>~28%</td></tr>
+<tr><td>EBITDA Margin</td><td>38%</td><td>42%</td><td>49%</td><td>~45%</td></tr>
+<tr><td>ROIC − WACC</td><td>+2pp</td><td>+15pp</td><td>+20pp</td><td>+18pp</td></tr>
+<tr><td>SBC / Revenue</td><td>2.0%</td><td>1.7%</td><td>1.5%</td><td>0.8%</td></tr>
+<tr><td>ROE</td><td>49%</td><td>75%</td><td>78%</td><td>72%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li>NI $20.64B vs OCF $16.81B：OCF/NI = 0.81（健康）</li>
+<li>AR vs 營收：AR +38% vs Rev +45%（合理）</li>
+<li>存貨：+52% vs 營收 +45%（略高，為 GLP-1 產能備料）</li>
+<li>FCF 轉換率：0.29（低，capex 週期）</li>
+</ul>
+
+<h3>回購品質</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>3Y 回購 vs FCF</td><td>回購 $7B / FCF $3B（負值，靠發債）</td><td>⚠️ 融資型回購</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>29% → ~28%（差 1pp，低稀釋）</td><td>正面</td></tr>
+<tr><td>回購均價 vs 現價</td><td>$650 vs $927</td><td>正面（低於現價買回）</td></tr>
+<tr><td>Revenue CAGR</td><td>20%+（過去 3 年均）</td><td>驅動主要來自 Rev</td></tr>
+</table>
+
+<!-- ============== §11 產業格局 ============== -->
+<h2 id="sec-11">§11｜產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<p>GLP-1 TAM：2025 $50B → 2030 $150B（CAGR 24%）。美國 obesity 滲透率 2% → 10%（4 億肥胖人口）。供需：<strong>緊缺</strong>（LLY + NVO 全球產能 2028 前無法滿足潛在需求）。</p>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游</strong>：peptide API 全球 3 大供應商（LLY 自有 + CDMO Evonik、Bachem）；集中度中等</li>
+<li><strong>對下游</strong>：PBM（CVS/ESI/OptumRx）集中度極高 → 壓價；但臨床優勢 + 供不應求反向抵銷</li>
+<li><strong>地理</strong>：生產地 Indianapolis / North Carolina / Ireland / Italy（分散良好）</li>
+</ul>
+
+<h3>營收組成（2025）</h3>
+<table>
+<tr><th>業務段</th><th>營收</th><th>佔比</th><th>YoY</th></tr>
+<tr><td>Incretin（Mounjaro + Zepbound）</td><td>~$35B</td><td>54%</td><td>+115%</td></tr>
+<tr><td>Oncology（Verzenio + Retevmo）</td><td>~$7B</td><td>11%</td><td>+35%</td></tr>
+<tr><td>Immunology（Taltz + Olumiant）</td><td>~$5B</td><td>8%</td><td>+8%</td></tr>
+<tr><td>Neuroscience（Kisunla + Emgality）</td><td>~$3B</td><td>5%</td><td>+50%</td></tr>
+<tr><td>Diabetes（legacy Humalog + Trulicity）</td><td>~$8B</td><td>12%</td><td>−18%</td></tr>
+<tr><td>其他</td><td>~$7B</td><td>11%</td><td>+5%</td></tr>
+<tr><th>合計</th><th>$65.18B</th><th>100%</th><th>+44.7%</th></tr>
+</table>
+
+<h3>Unit Economics</h3>
+<p>Zepbound 每月零售 $1,086（降至 DTC $499），處方填 refill 續貼率 50%+（終身服藥屬性）；CAC ~$200（DTC 廣告）；LTV 5-10 年 × $6,000/年 = $30,000-60,000/病患。</p>
+
+<!-- ============== §12 公司治理 ============== -->
+<h2 id="sec-12">§12｜公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>機構持股 84.6%（Vanguard 8.9%、BlackRock 8.1%、State Street 4.2%）</li>
+<li>內部人持股 0.17%（CEO David Ricks + 高管團隊）</li>
+<li>Lilly Endowment 獨立基金會持股 3.8%（獨立治理）</li>
+<li>近 12 個月重大內部人交易：2025Q3 Ricks 賣出 $45M（exercise option），屬 10b5-1 預定計畫，非 bearish signal</li>
+</ul>
+
+<h3>資本配置軌跡</h3>
+<ul>
+<li>2023-2025 Capex $22B（$50B 計畫前半）</li>
+<li>2023-2025 回購 $7B（融資型，發債支持）</li>
+<li>2023-2025 股息 $12B</li>
+<li>M&A：Morphic Holding $3.2B（2024）、DICE Therapeutics $2.4B（2023）</li>
+<li>優先順序：Capex &gt; 股息 &gt; 回購 &gt; M&A（管理層明確表述）</li>
+</ul>
+
+<h3>管理層薪酬</h3>
+<p>CEO Ricks 2024 總薪酬 $25M（固定 $1.6M + 現金獎金 $4M + 股權 $19M）。股權激勵佔 76%，高度對齊股東。</p>
+
+<h3>SBC 稀釋</h3>
+<p>SBC/Rev 1.5%（低於同業 3%）；每股稀釋 &lt; 0.5% 年化。</p>
+
+<h3>QC-19 重大事件檢查</h3>
+<ul>
+<li><strong>M&A</strong>：無超過市值 5%（$40B+）的併購</li>
+<li><strong>集體訴訟</strong>：Trulicity MDL 1,521 件（成熟期），預估 settlement $1-3B；另有 Zepbound/Mounjaro 胃輕癱集體訴訟早期階段（~200 件）</li>
+<li><strong>FDA</strong>：2026-04-15 FDA 要求 orforglipron 補充肝毒性 + MACE post-marketing 資料（非 warning letter）；2025Q4 另有 Indianapolis 廠 483 form 輕度缺失已整改</li>
+<li><strong>CEO/CFO 離職</strong>：無</li>
+<li><strong>SEC 調查</strong>：無</li>
+</ul>
+<p><strong>綜合：🟡 觀察期</strong>（FDA orforglipron post-marketing + MDL 進展為中性-輕負面事件，非重大陷阱信號）</p>
+
+<!-- ============== §13 估值診斷 ============== -->
+<h2 id="sec-13">§13｜估值診斷</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<tr><th>估值邏輯</th><th>對應指標</th><th>當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E, EV/EBITDA</td><td><strong>是</strong></td><td>市場用 Fwd PE 35-40x 主框架</td></tr>
+<tr><td>成長型</td><td>PEG, EV/Rev</td><td>輔助</td><td>PEG 0.93 支撐便宜判斷</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>否</td><td>不適用</td></tr>
+<tr><td>現金流型</td><td>P/FCF, DCF</td><td>次要</td><td>capex 週期使 FCF 短期失真</td></tr>
+</table>
+<p><strong>估值體系診斷：🟢 估值邏輯穩定</strong>（主流 Fwd PE，一致性高）</p>
+
+<h3>13.1｜歷史估值分位（5 年）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>40.3x</td><td>25x</td><td>65x</td><td>228x</td><td>8%</td></tr>
+<tr><td><strong>Forward P/E</strong></td><td><strong>27.07x</strong></td><td>18x</td><td>35x</td><td>65x</td><td><strong>19%</strong>（公式：(27.07−18)/(65−18)×100%=19.3%）</td></tr>
+<tr><td>EV/EBITDA</td><td>27.3x</td><td>18x</td><td>32x</td><td>58x</td><td>23%</td></tr>
+<tr><td>P/FCF</td><td>139x（capex 失真）</td><td>35x</td><td>60x</td><td>200x+</td><td>n/a</td></tr>
+<tr><td>P/S</td><td>12.7x</td><td>7x</td><td>14x</td><td>22x</td><td>38%</td></tr>
+</table>
+<p>解讀：(1) 估值情緒：便宜（分位 19%）；(2) 上次處於此分位為 2022Q3（市值 $280B，Mounjaro 未核准）vs 現在（$830B、Mounjaro + Zepbound 年銷 $40B+、Foundayo 剛上市）；(3) 推動分位下移的主因：EPS 分母大幅擴張（FY2022 $6.57 → FY2025 $22.95）。</p>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E（FY+1）</td><td>27.07x</td><td>合理</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td>29.0%</td><td>強勁</td></tr>
+<tr><td><strong>PEG（3 年）</strong></td><td><strong>0.93</strong></td><td><span class="pass">🟢 便宜</span>（&lt; 1.0）</td></tr>
+<tr><td>5Y EPS CAGR（含遞減）</td><td>~22%</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>1.23</td><td>合理</td></tr>
+<tr><td>3Y vs 5Y 差</td><td>0.30</td><td>正常遞減（合理）</td></tr>
+</table>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>當前市值</td><td>$829.7B</td></tr>
+<tr><td>基期 FCF（2025）</td><td>$5.96B（週期低點）；正規化 $15B（假設 2028 產能上線）</td></tr>
+<tr><td>WACC</td><td>8.2%（10Y UST 4.4% + Beta 0.504 × ERP 6% + 債務權重調整）</td></tr>
+<tr><td>永續成長率</td><td>3.0%</td></tr>
+</table>
+<p><strong>隱含 10Y FCF CAGR</strong>：約 <strong>15%</strong>（辯護當前 $830B）。相對於分析師共識 EPS CAGR 29%，為保守偏見（分析師預期比市場定價更樂觀 14pp）。</p>
+<p><strong>Reverse DCF 隱含預期：🟢 保守</strong>。</p>
+
+<h3>⚠️ 便宜理由檢驗（強制，分位 &lt; 25%）</h3>
+<table>
+<tr><th>#</th><th>問題</th><th>答案</th><th>結論</th></tr>
+<tr><td>Q1</td><td>市場為何給低倍數？</td><td>(1) GLP-1 政策風險（MFN、IRA）；(2) Pfizer/Roche 追趕論（部分已消解）；(3) $50B capex 壓制 FCF</td><td>有合理擔憂但部分已消解</td></tr>
+<tr><td>Q2</td><td>擔心有財務數據支撐？</td><td>FCF/NI 0.29 支持 capex 擔憂；但毛利 83% + ROIC 24% 反向支撐品質</td><td>部分有、部分過度</td></tr>
+<tr><td>Q3</td><td>護城河完整？</td><td>9/10，加深中，Pfizer 退賽 + Foundayo 獲批擴大</td><td>完整</td></tr>
+<tr><td>Q4</td><td>FCF 品質被誤解？</td><td>是——capex 計入當期 FCF，但 2027-2028 產能上線將轉正</td><td>被誤解</td></tr>
+<tr><td>Q5</td><td>重新定價催化劑？</td><td>(1) 2026Q4 retatrutide TRIUMPH-5 頂線；(2) Foundayo 2026H2 全球 $3B+；(3) 2027 capex 拐點；(4) MFN 塵埃落定</td><td>多個明確催化劑</td></tr>
+</table>
+<p><strong>便宜理由檢驗結論：🟢 市場誤判</strong>（主要擔憂 capex + 政策已部分 price-in，Pfizer 退賽為未充分定價的 positive）</p>
+
+<h3>13.4｜同業估值比較 + QC-30 溢價收斂情境</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>LLY</strong></td><td>$829.7B</td><td><strong>27.07x</strong></td><td>27.3x</td><td>0.93</td><td>9%（週期）</td><td>29%</td><td>23.7%</td></tr>
+<tr><td>Novo Nordisk (NVO)</td><td>$310B</td><td><strong>12.0x</strong></td><td>10.5x</td><td>0.80</td><td>28%</td><td>15%</td><td>42%</td></tr>
+<tr><td>Merck (MRK)</td><td>$195B</td><td>11.14x</td><td>7.5x</td><td>1.80</td><td>25%</td><td>6%</td><td>20%</td></tr>
+<tr><td>Pfizer (PFE)</td><td>$155B</td><td>8.33x</td><td>7.0x</td><td>2.50</td><td>18%</td><td>3%</td><td>8%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td><strong>11.8x</strong></td><td>~10x</td><td>1.30</td><td>22%</td><td>9%</td><td>21%</td></tr>
+</table>
+
+<div class="warn-box">
+<h4>QC-30 同業溢價收斂壓測（v12.0 新增，LLY 為觸發案例）</h4>
+<p><strong>LLY Fwd PE 27.07x vs NVO 12.0x = <span class="sig-big">+125%</span> 溢價</strong>，遠超「中位數 50%」閾值（溢價 = 27.07/12 − 1）。vs 產業中位 11.8x = +129%。必須執行收斂情境。</p>
+
+<table>
+<tr><th>情境</th><th>假設</th><th>計算</th><th>結果股價</th><th>下行空間</th></tr>
+<tr><td>A：對手追趕</td><td>LLY Fwd PE 不變 27x，NVO Fwd PE 升至 18x（CagriSema 成功追趕）</td><td>LLY 市值 $830B 不變</td><td>$927（不變）</td><td>0%（相對上行空間被壓縮，LLY 無 upside catalyst）</td></tr>
+<tr><td><strong>B：LLY 收斂 50% 至中點</strong></td><td>LLY Fwd PE 收斂 50% 至 (LLY 27.07 + NVO 12.0) / 2 = <strong>19.53x</strong></td><td>FY+1 EPS $34.24 × 19.53x</td><td><strong>$669</strong></td><td><strong>−27.9%</strong>（替代 Bear Case）</td></tr>
+<tr><td>C：完全收斂至產業中位</td><td>LLY Fwd PE 降至 11.8x 產業中位</td><td>$34.24 × 11.8x</td><td>$404</td><td>−56.4%（極端情境）</td></tr>
+</table>
+
+<p><strong>Scenario B 作為替代 Bear Case</strong>：</p>
+<table>
+<tr><th>Bear 來源</th><th>Bear 股價</th><th>保守者</th></tr>
+<tr><td>§8 E 成長熄火（PE 15x × EPS 0.9）</td><td>$462</td><td>✓ 取此（更保守）</td></tr>
+<tr><td>QC-30 Scenario B（PE 19.53x × EPS 1.0）</td><td>$669</td><td></td></tr>
+</table>
+<p>主 Bear 維持 $462（§8 E 成長熄火情境比 QC-30 收斂更保守）。<strong>QC-30 Scenario B $669 則納入 §2 E R:R 壓力測試情境 C 計算</strong>（已執行）。</p>
+
+<p><strong>R4 風險列入 §5 C</strong>：LLY 相對同業溢價 125%，收斂風險設為 Priority 風險（已更新 §5 C 風險表）。</p>
+</div>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>一句話</th></tr>
+<tr><td>估值體系（13.0）</td><td>🟢 穩定</td><td>Fwd PE 主流邏輯穩固</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟢 便宜</td><td>5Y 分位 19%，接近谷底</td></tr>
+<tr><td>PEG（13.2）</td><td>🟢 便宜</td><td>PEG 0.93 &lt; 1.0</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟢 保守</td><td>隱含 CAGR 15% vs 共識 29%</td></tr>
+<tr><td>同業相對（13.4）</td><td>🔴 溢價無支撐</td><td>+125% vs NVO（QC-30 觸發）</td></tr>
+</table>
+
+<p><strong>§2 D 交叉驗證</strong>：當前 Fwd PE 27.07x vs §2 D 合理 PE（40x） → 當前 &lt; 合理 → 上修一級（🟡→🟢 強化便宜）。</p>
+
+<p><strong>當前定價判斷：🟢 合理至便宜</strong>（四綠一紅，QC-30 溢價為結構性風險但不改變當前便宜判定——主要由絕對估值支撐）</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對目標 PE 影響</th></tr>
+<tr><td>① 護城河（§9）</td><td>9/10</td><td>基準 +5x</td></tr>
+<tr><td>② Runway（§8A）</td><td>10+ 年 🟢</td><td>+5x</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>有機 95% + 量驅動</td><td>+0x</td></tr>
+<tr><td>④ 護城河連動（§8C）</td><td>強化型</td><td>+3x</td></tr>
+<tr><td>⑤ ROIC（§8D）</td><td>24%，擴大</td><td>+3x</td></tr>
+<tr><td>⑥ 衰退信號（§8）</td><td>2 個週期性</td><td>−1x</td></tr>
+<tr><td>⑦ 估值體系（§13.0）</td><td>穩定</td><td>+0x</td></tr>
+<tr><td>⑧ 利率</td><td>10Y UST 4.4%</td><td>−2x</td></tr>
+<tr><td><strong>產業基準</strong></td><td><strong>25x</strong></td><td><strong>合理區間 38-42x</strong></td></tr>
+</table>
+
+<p>長期合理倍數 = 25x × 1.175（ROIC 引擎）× 1.10（AI 🟢）= <strong>32.3x 基礎</strong>。加上護城河 9 級 × 1.10 = <strong>35.5x</strong>。對應分析師共識目標 $1,215（35.5x × $34.24）。</p>
+
+<h3>分析師目標價</h3>
+<ul>
+<li>中位 $1,215（n=29），高 $1,500，低 $850</li>
+<li>摩根士丹利 Overweight 維持 2026-04</li>
+<li>認同共識：當前報告採用 $1,215-1,370 作為短中期目標價</li>
+</ul>
+
+<h3>投資結論（v11.0 完整版）</h3>
+<ul>
+<li><strong>H1 當前狀態</strong>：<span class="pass">強化</span>——Q4 GLP-1 市佔擴至 60%，Pfizer 退賽、NVO 裁員 9,000</li>
+<li><strong>H2 當前狀態</strong>：<span class="pass">強化</span>——Foundayo 2026-04-01 獲批，retatrutide TRIUMPH-4 減重 28.7%</li>
+<li><strong>H3 當前狀態</strong>：<span class="pass">強化</span>——Fwd PE 27x（5Y 分位 19%）、PEG 0.93；但 <span class="warn">QC-30 R4 新增監測</span></li>
+<li>這份財報讓隱含預期變得更容易兌現（分析師共識 29% vs 隱含 15%），但 QC-30 同業溢價需警覺。</li>
+</ul>
+
+<p><strong>綜合訊號</strong>（取自 §2 H）：<span class="sig-big">A</span>（品質 S + 估值 🟢 + MA ✅ + trap 🟢 + 大盤正常 = A+ 初判；QC-29 壓力測試 0/4 降 1 級至 A）</p>
+<ul>
+<li>護城河 9/10 → A 級（體質 veto 不變）→ 估值 🟢 升級至 <strong>S 級</strong></li>
+<li>估值燈 🟢（Fwd PE 分位 19%、PEG 0.93）</li>
+<li>Pure MA ✅ 強勢進場</li>
+<li>大盤 ✅ 正常</li>
+<li>中期參考 R:R 1.63x（資訊性，壓力測試 0/4 通過為警示）</li>
+<li>倉位 % 由 PM skill 決定</li>
+</ul>
+
+<h3>下行風險量化</h3>
+<ul>
+<li>短期下檔 Bear $462：現價距離 −50.2%</li>
+<li>中期下檔 Bear $569：現價距離 −38.6%</li>
+<li>W52 Low $623.78 / W104 Low $622.32（參考）</li>
+<li><strong>QC-30 替代 Bear $669（Scenario B）</strong>：現價距離 −27.9%</li>
+<li>若 FY+1 EPS 下修 10%，短期 R:R 將降至 0.66x</li>
+</ul>
+
+<!-- ============== 版本修訂紀錄 ============== -->
+<h2 id="version">版本修訂紀錄</h2>
+<div class="card">
+<table>
+<tr><th>日期</th><th>Schema</th><th>變更摘要</th></tr>
+<tr><td>2026-04-12</td><td>v11.0</td><td>LLY 首份 v11.0 DD：進場、A 級、R:R 短期 5.2x / 中期 3.5x</td></tr>
+<tr><td>2026-04-13</td><td>v11.0</td><td>Q4 FY2025 財報 beat 後更新，H3 強化</td></tr>
+<tr><td>2026-04-16</td><td>v11.0</td><td>補充 Foundayo 上市、Pfizer 退賽、MDL 1,521 件</td></tr>
+<tr><td><strong>2026-04-18</strong></td><td><strong>v12.0</strong></td><td><strong>本次升級：</strong>(1) §2 重構為產業風向燈 + 體質 veto + 估值燈 + Pure MA + 大盤豁免五層；(2) 廢除「建議倉位 %」，改輸出綜合訊號 A+/A/B/C/X；(3) §13.4 新增 QC-30 同業溢價收斂情境（Scenario A/B/C），Scenario B $669 納入 R:R 壓力測試；(4) §2 E R:R 壓力測試 0/4 觸發 QC-29 降級（A+ → A）；(5) 新增 R4 風險（QC-30 溢價收斂）；(6) Apr 15 FDA orforglipron 補充安全資料消息已吸收；(7) 確認 Pfizer danuglipron 退出使競爭格局結構性改善。</td></tr>
+</table>
+</div>
+
+<!-- ============== 假設驗證對照 ============== -->
+<h2 id="assumption-check">假設驗證對照（QC-17 強制區塊）</h2>
+<div class="assumption-box">
+<table>
+<tr><th>項目</th><th>上次狀態（2026-04-16 v11.0）</th><th>本次狀態（2026-04-18 v12.0）</th><th>邊際變化</th></tr>
+<tr><td>H1 (GLP-1 TAM × LLY 份額)</td><td>GLP-1 2030 $100B、LLY 份額 55%</td><td>TAM 上修至 $150B；LLY 市佔 60%+（Pfizer 退賽加速）</td><td><strong>強化</strong></td></tr>
+<tr><td>H2 (pipeline 兌現)</td><td>orforglipron ACHIEVE 全過、Foundayo 2026 即將上市；retatrutide TRIUMPH-5 2026H2</td><td>Foundayo 2026-04-01 正式獲批 + FDA 要求補充安全資料；TRIUMPH-5 仍 2026H2</td><td><strong>強化 + 中性小插曲</strong></td></tr>
+<tr><td>H3 (估值修復)</td><td>Fwd PE 26x（5Y 分位 11%）修復至 40-50x</td><td>Fwd PE 27.07x（5Y 分位 19%）；目標 35-40x；<strong>新增 QC-30 溢價收斂約束條件</strong></td><td><strong>維持，但加 R4 警示</strong></td></tr>
+<tr><td>R1 是否觸發</td><td>未觸發（NVO YoY −15%）</td><td>未觸發，且 Pfizer danuglipron 退出使局勢更佳</td><td>風險減弱</td></tr>
+<tr><td>R2 是否觸發</td><td>未觸發（Foundayo 即將獲批）</td><td>Foundayo 已獲批；<strong>FDA 2026-04-15 要求補充肝毒性 + MACE post-marketing 資料</strong>，屬 post-marketing 層級非 warning letter</td><td>部分觸發（初期信號）</td></tr>
+<tr><td>R3 是否觸發</td><td>未觸發（毛利 80% 穩定）</td><td>未觸發（毛利 83% 再創高）；MFN 仍在談判</td><td>未觸發</td></tr>
+<tr><td><strong>R4（QC-30 新增）</strong></td><td>—（v11.0 無此風險）</td><td>新增：LLY Fwd PE 27x vs NVO 12x = 125% 溢價，列入 R:R 壓力測試情境 C</td><td><strong>新增</strong></td></tr>
+<tr><td>裁決變化</td><td>進場、A 級、建議底倉 25%</td><td>v12.0：綜合訊號 A（由 A+ 降 1 級，原因：QC-29 壓力測試 0/4 通過）</td><td>新事實：① Foundayo 獲批 + 安全資料要求；② Pfizer 退賽；③ QC-30 同業溢價凸顯；④ v12.0 新 framework 不含倉位 %</td></tr>
+</table>
+</div>
+
+<p class="note">報告生成：2026-04-18 ｜ Schema v12.0 ｜ 資料來源：yfinance + Zacks + StockAnalysis + Macrotrends + FDA / Lilly investor relations + TradingView</p>
+
+</div>
+</body>
+</html>

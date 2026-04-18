@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD_TSLA_20260418 | Tesla, Inc. 深度研究報告 v12.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#1E293B;line-height:1.7;padding:20px}
+.container{max-width:1280px;margin:0 auto}
+header{background:#1E3A5F;color:#fff;padding:24px 32px;border-left:6px solid #3B82F6;margin-bottom:24px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+header h1{font-size:24px;letter-spacing:.5px;margin-right:16px}
+header .meta{font-family:'IBM Plex Mono',monospace;font-size:13px;opacity:.92;display:flex;flex-wrap:wrap;gap:14px}
+header .schema{background:#3B82F6;color:#fff;font-size:12px;padding:3px 10px;border-radius:4px;font-family:'IBM Plex Mono',monospace}
+section{background:#fff;padding:28px 32px;margin-bottom:22px;border-left:4px solid #3B82F6;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+section h2{color:#1E3A5F;font-size:22px;border-bottom:2px solid #E2E8F0;padding-bottom:10px;margin-bottom:18px;background:linear-gradient(to right,#EFF6FF,transparent);padding-left:10px}
+section h3{color:#1E3A5F;font-size:18px;margin:22px 0 10px;padding-left:10px;border-left:3px solid #3B82F6}
+section h4{color:#334155;font-size:15px;margin:16px 0 8px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+th{background:#1E3A5F;color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+td{padding:9px 12px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tbody tr:nth-child(even){background:#F1F5F9}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:13px}
+.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:500;font-family:'IBM Plex Mono',monospace}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-yellow{background:#FEF9C3;color:#92400E}
+.badge-blue{background:#EFF6FF;color:#1E40AF}
+.badge-orange{background:#FFEDD5;color:#C2410C}
+.badge-purple{background:#F5F3FF;color:#6D28D9}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.hypothesis-box ul{padding-left:20px}
+.hypothesis-box li{margin:8px 0;line-height:1.8}
+.warning-box{background:#FFF0E6;border-left:4px solid #F97316;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.warning-box strong{color:#C2410C}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:16px 0}
+.debate-card{padding:14px 16px;border-left:4px solid;border-radius:0 4px 4px 0;font-size:14px}
+.debate-bull{background:#F0FDF4;border-color:#16A34A}
+.debate-bear{background:#FFF1F2;border-color:#DC2626}
+.debate-valu{background:#F5F3FF;border-color:#7C3AED}
+.debate-card h4{margin-top:0;font-size:14px}
+.verdict-box{background:#FFFBEB;border-left:4px solid #D97706;padding:14px 20px;margin:12px 0;color:#92400E;border-radius:0 4px 4px 0}
+.check-list{background:#F8FAFC;padding:12px 18px;margin:10px 0;border-radius:4px;font-size:13px}
+.rr-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.rr-card{padding:14px 16px;border-left:4px solid;border-radius:0 4px 4px 0;font-size:14px}
+.rr-short{background:#F0F9FF;border-color:#0284C7}
+.rr-mid{background:#F5F3FF;border-color:#7C3AED}
+.rr-long{background:#ECFDF5;border-color:#059669;color:#065F46}
+.note{font-size:12px;color:#64748B;margin-top:6px;font-style:italic}
+.print-btn{position:fixed;bottom:30px;right:30px;background:#1E3A5F;color:#fff;border:none;padding:10px 18px;border-radius:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.toc{background:#F1F5F9;padding:14px 20px;margin-bottom:20px;font-size:13px}
+.toc a{color:#1E3A5F;text-decoration:none;margin-right:14px}
+.big-signal{display:inline-block;padding:6px 16px;background:#FEE2E2;color:#991B1B;font-size:24px;font-weight:700;border-radius:6px;font-family:'IBM Plex Mono',monospace}
+.big-signal.a-plus{background:#DCFCE7;color:#166534}
+.big-signal.a-grade{background:#DCFCE7;color:#166534}
+.big-signal.b-grade{background:#FEF9C3;color:#92400E}
+.big-signal.c-grade{background:#FFEDD5;color:#C2410C}
+@media print{header,.print-btn,.toc{display:none}body{padding:0;background:#fff}section{box-shadow:none;border-left:2px solid #3B82F6;page-break-inside:avoid}}
+@media (max-width:900px){.debate-grid,.rr-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>TSLA · Tesla, Inc. · v12.0 DD</h1>
+<div class="meta">
+<span>資料抓取 2026-04-18</span>
+<span>現價 $400.62</span>
+<span>最近財報 FY2025 10-K (2026-01-29)</span>
+<span>yfinance + 14 web searches</span>
+<span class="schema">Schema v12.0</span>
+</div>
+</header>
+
+<div class="toc">
+<strong>章節目錄：</strong>
+<a href="#s1">§1 結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報情報</a>
+<a href="#s7">§7 門檻檢核</a>
+<a href="#s8">§8 長期成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務品質</a>
+<a href="#s11">§11 產業格局</a>
+<a href="#s12">§12 公司治理</a>
+<a href="#s13">§13 估值診斷</a>
+<a href="#revisions">版本修訂</a>
+</div>
+
+<!-- §1 -->
+<section id="s1">
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。完整推理過程見 §13.5 投資結論。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡 中性：</strong>§8 長期成長性 🟡 中等可見度｜§9 護城河趨勢 <span class="badge badge-yellow">侵蝕</span>（BYD/Xiaomi 中國、歐洲份額流失）｜§8 F AI 風險 🟡（FSD/Optimus 受益，但執行風險高）｜一句話：「EV 核心市場份額流失，AI/Robotics 轉型中，結果未定」。</li>
+<li><strong>品質 B 級：</strong>護城河 7/10（§9）｜體質 veto <span class="badge badge-yellow">2 項不過</span>（GM 結構性壓縮 + EPS 共識 90 天下修）｜等級調整：B（7 分）→ 不變 B。</li>
+<li><strong>估值燈 🔴 過熱：</strong>Fwd PE FY+1 197x，5Y 分位 ~85%，PEG 3-Y 3.87x（Non-GAAP 50% CAGR 是 FY0→FY+3 快速回復，實質偏高）｜盲點 1 救援：<span class="badge badge-red">否</span>（§8 🟡、PEG > 2.0、AI 風險 🟡）。<strong>套用規則：直接拒絕 0%</strong>。</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 $382 / W104 $327 / W250 $277（斜率 +3.46%）｜現價 > 全三線、W250 斜率剛超 +3% 門檻｜盲點 2 救援：不適用（未觸發 ❌）。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 SPX，現價 7,126 vs W104 6,092（高出 17%）。</li>
+<li><strong>參考 R:R：</strong>短期 -0.12x（目標低於現價）／中期 0.85x｜壓力測試通過率 <span class="badge badge-red">0/4</span>（資訊性，不主導裁決）。</li>
+<li><strong>綜合訊號：<span class="big-signal">X</span></strong>（取自 §2 H）｜判定理由：估值燈 🔴 過熱觸發「直接拒絕」機制；PEG > 2.5、5Y 分位 &gt; 85%，即使 MA ✅ 強勢也無法救援。</li>
+<li><strong>長期持有信心：中</strong>（§2 I）｜<strong>陷阱定性：</strong><span class="badge badge-yellow">🟡 觀察期</span>（多項侵蝕信號：中國 Jan26 Model Y 跌至第 20 名、Q1 2026 交車 miss 3.8%、164K 庫存、GM 從 29% → 18%）。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warning-box">
+<strong>⚠️ QC-22 入場窗口警示：</strong>近 4 週股價 +11.3% 漂移（$359.83 → $400.62，4/15 單日 +7.6%），與 Musk 重申 Cybercab 2026Q2 量產、Optimus Gen3 factory 1,000 台部署有關。此價位的估值燈已進入🔴 過熱區；即便偏好長期樂觀，建議等 Pure MA 進入「🟢 最佳進場」或回測 BB 中軌 $417 以下（實際應等 $340 BB 下軌）再行動。
+</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>產業結構衰退型 + 敘事溢價壓縮型</strong>混合：(1) 核心汽車業 TAM 增速放緩、中國份額被 BYD + Xiaomi 侵蝕；(2) 市場目前以 AI/Robotics 平台倍數（Fwd PE ~200x）定價 Tesla 而非汽車業（15-25x），若 AI 敘事兌現延遲，PE 可能從 200x → 50x 收斂，下行空間可達 70%。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>(1) 能源儲存業務 2025 Rev $12.77B（+27% YoY）、2026 預計 $4.96B deferred rev 認列（2x vs 2025）；(2) Optimus Gen3 已部署 1,000+ 台於工廠，FSD v14.3 在 Austin Robotaxi 12 輛 unsupervised 運營；(3) 資產負債表堅固：Cash $16.5B、D/E 0.18、FCF $6.22B（2025 YoY +74%）；(4) Musk 2018 pay package $55B 已獲 Delaware Supreme Court 於 2025/12 恢復，「Musk 離職」尾部風險大幅降低。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>(1) Q1 2026 交車 358,023 vs 共識 372K（miss 3.8%），Model Y 一月在中國跌至第 20 名（Xiaomi YU7 以 37,869 vs Tesla 16,845 雙倍勝出）；(2) 庫存 164K 創新高，JPMorgan 4/10 警告「 $145 target、60% 下行」；(3) 汽車 GM 從 2021 年 29.3% 壓到 2025 年 17.8%（每車毛利 $15,492 → $7,555，-51%），BYD/Xiaomi 價格競爭持續；(4) 分析師 EPS 共識 FY+1 過去 90 天從 $2.17 下修至 $2.03（-6.5%），動能向下；(5) NHTSA FSD 調查 2026/3/6 deadline 已過，升級至 engineering analysis，2.88M 車輛 58 起事故在案；(6) Robotaxi 車隊規模 Waymo 500K paid rides/week × 10 城，Tesla 僅 Austin 12 輛 unsupervised——產能差距 250x。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生</td><td>① Cybercab 月產能 (Target 2026Q4 &gt; 5,000 台，否則 H2 嚴重受損)；② Forward PE 6 個月內 vs NVDA/GOOGL 相對位置（若 Tesla PE 溢價收斂 &gt; 30%，敘事壓力顯現）；③ 中國月銷 Model Y 排名（若連續 2 季未進前 10，量能惡化）。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge badge-yellow" style="font-size:14px">🟡 觀察期</span>（不是非陷阱——衰退信號 4 個🔴；不是高風險陷阱——AI/Robotics 敘事與 Energy segment 仍在兌現中）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Cybercab 量產 + Austin Robotaxi 擴城</td><td>§5 H1/H2</td><td><span class="badge badge-blue">🔵 核心假設驗證</span></td><td>2026/12 Cybercab &lt; 3,000 台/月，或 Robotaxi 仍僅 Austin；2027/6 不能達 5+ 城市</td></tr>
+<tr><td>2</td><td>汽車 GM（ex-credit）+ Q1 2026 財報（4/22 公布）</td><td>§8 / §6</td><td><span class="badge badge-blue">🔵 長期成長領先信號</span></td><td>Q1 2026 汽車 GM 跌破 15%；或 FY2026 全年 guidance 大幅下修</td></tr>
+<tr><td>3</td><td>中國 Model Y/3 月銷排名 vs Xiaomi/BYD</td><td>§9 / §11</td><td>短期競爭信號</td><td>連續 2 季未進中國 EV 銷量前 10；或 Europe YoY &lt; -20%</td></tr>
+</table>
+</section>
+
+<!-- §2 -->
+<section id="s2">
+<h2>§2｜四層判定（v12.0）：產業風向 × 品質 × 估值燈 × Pure MA</h2>
+
+<h3>§2 0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="badge badge-yellow">🟡 中等可見度</span>（Runway 5-9 年，汽車部分飽和；AI/Robotics 可見度低）</td></tr>
+<tr><td>§9 護城河趨勢</td><td><span class="badge badge-red">侵蝕</span>（中國份額流失、歐洲 YoY 負成長、GM 3 年壓縮 10pp）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="badge badge-yellow">🟡</span>（FSD/Robotaxi/Optimus 受益但執行風險；Waymo 領先車隊 42x）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="badge badge-yellow">🟡 中性偏逆風</span></strong></td></tr>
+<tr><td>一句話判斷</td><td>「EV 核心市場競爭激化（BYD + Xiaomi），AI/Robotics 有受益 optionality 但執行節奏遠慢於 Waymo。能源儲存業務是亮點。」</td></tr>
+</table>
+<p class="note">產業風向燈 🟡 → 盲點 1 + 盲點 2 救援機制**不啟動**；嚴格套用 Gate。</p>
+
+<h3>§2 A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td><span class="badge badge-red">❌</span></td><td>2021 25.3% → 2022 25.6% → 2024 17.9% → 2025 18.0%（整體從高峰壓 7pp，勉強趨穩）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge badge-green">✅</span></td><td>2025 FCF $6.22B / NI $3.79B = 1.64（資本密集但 NI 被折舊壓低）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge badge-red">❌</span></td><td>FY+1: 90d $2.17 → 60d $2.08 → 30d $2.09 → 7d $2.06 → current $2.03（連續下修 -6.5%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge badge-green">✅</span></td><td>2025 Q4 Rev YoY +28%、Q3 +12%、Q2 +16%、Q1 -9%（僅 Q1 負）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge badge-green">✅</span></td><td>Cash $16.5B − Debt $14.7B = 淨現金 $1.8B；EBITDA 約 $10.7B → Net Debt/EBITDA ≈ -0.17（淨現金）</td></tr>
+</table>
+<p><strong>體質 veto 結果：2 項不過 → 0-2 項區間 → 等級不變</strong></p>
+
+<h3>§2 B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>7 / 10</strong>（品牌、充電網、製造規模尚在；但定價能力、中國份額流失）</td></tr>
+<tr><td>護城河原始等級</td><td><span class="badge badge-green">B 級</span>（7-8 分區間）</td></tr>
+<tr><td>體質 veto 調整</td><td>2 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>B 級</strong></td></tr>
+<tr><td>底倉（參考）</td><td>15%（目標倉位的）</td></tr>
+</table>
+
+<h3>§2 C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（2026）</td><td>$2.03</td><td>yfinance earnings_estimate 0y avg, n=34</td></tr>
+<tr><td>FY+2 EPS（2027）</td><td>$2.75</td><td>yfinance earnings_estimate +1y avg, n=33</td></tr>
+<tr><td>FY+2 成長率</td><td>+35.8%</td><td>(2.75 / 2.03) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>197.3x</td><td>$400.62 / $2.03</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>145.5x</td><td>$400.62 / $2.75</td></tr>
+</table>
+
+<h3>§2 D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY+1，全文統一口徑）</td><td>197.3x</td></tr>
+<tr><td>5Y Fwd PE 範圍（估算）</td><td>~35x ~ 250x（2022 年底谷底 35x，2025 年底至今 200x+）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><strong>~85%</strong>（近歷史高端，2025-2026 估值透支）</td></tr>
+<tr><td>3Y EPS CAGR（§7，FY0→FY+3）</td><td>基期 $1.08 → FY+3E $3.71，CAGR 50.9%（低基期回復）</td></tr>
+<tr><td>3Y EPS CAGR（Forward，FY+1→FY+3）</td><td>(3.71/2.03)^(1/2)−1 = 35%（更合理口徑）</td></tr>
+<tr><td>PEG（FY+1 PE / FY+1→FY+3 CAGR）</td><td><strong>5.6x</strong>（嚴苛口徑）</td></tr>
+<tr><td>PEG（FY+1 PE / FY0→FY+3 CAGR）</td><td><strong>3.87x</strong>（寬鬆口徑，低基期偏誤）</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong><span class="badge badge-red" style="font-size:14px">🔴 過熱</span></strong>（分位 &gt; 85% 且 PEG &gt; 2.5，兩條件同時觸發）</td></tr>
+<tr><td><strong>套用規則</strong></td><td><strong>直接拒絕（0%）</strong></td></tr>
+</table>
+
+<h4>盲點 1 救援檢查（不適用）</h4>
+<table>
+<tr><th>條件</th><th>門檻</th><th>本案狀態</th></tr>
+<tr><td>① §8 長期成長性綜合評級</td><td>🟢 高確信</td><td>🟡 <span class="badge badge-red">❌</span></td></tr>
+<tr><td>② PEG</td><td>&lt; 2.0</td><td>3.87 / 5.6 <span class="badge badge-red">❌</span></td></tr>
+<tr><td>③ §8 F AI 風險</td><td>🟢 AI 受益</td><td>🟡 <span class="badge badge-red">❌</span></td></tr>
+</table>
+<p><strong>救援結果：三條件全未滿足 → 維持 🔴 過熱，直接拒絕。</strong></p>
+<p><strong>估值燈調整後等級：B → 拒絕（gate 🔴 override）</strong></p>
+
+<h3>§2 E｜R:R 與 Bear Case（參考用，不主導裁決）</h3>
+<h4>參考目標價（資訊，非裁決）</h4>
+<p>長期合理倍數依 §13.5 計算：基準 20x（§8 🟡 中等可見度）× AI 調整 0.9（🟡）≈ 18x。即便給 AI 平台溢價取 1.1x（=22x），仍與現價 197x 差距巨大。</p>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th><th>vs 現價 $400.62</th></tr>
+<tr><td>短期（1 年）</td><td>FY+1 $2.03 × 合理 PE 22x</td><td>$44.66</td><td>-88.8%（上行空間為負）</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 $2.75 × 合理 PE 22x</td><td>$60.50</td><td>-84.9%（上行空間為負）</td></tr>
+<tr><td>敘事延續情境（PE 150x 維持）</td><td>FY+2 $2.75 × 150x</td><td>$412.50</td><td>+3.0%（幾乎零空間）</td></tr>
+</table>
+<p class="note"><strong>QC-21 數學假象檢查：</strong>下行距離極大（-88.8%），R:R 不失效但 upside 為負。</p>
+
+<h4>Bear Case</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE</td><td>40x（§8E「成長降至 10%」情境）</td><td>40x</td></tr>
+<tr><td>Bear EPS</td><td>$2.03 × 0.9 = $1.83</td><td>$2.75 × 0.9 = $2.48</td></tr>
+<tr><td>Bear 股價</td><td>$73.20</td><td>$99.00</td></tr>
+<tr><td>參考：W52 Low / W104 Low</td><td colspan="2">$284.95 / $168.29</td></tr>
+</table>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th><th>Pass ≥ 2.0?</th></tr>
+<tr><td>Base</td><td>合理 PE 22x</td><td>(44.66-400.62)/(400.62-73.20) = -1.09</td><td>(60.50-400.62)/(400.62-99.00) = -1.13</td><td><span class="badge badge-red">✗</span></td></tr>
+<tr><td>壓力 A</td><td>EPS 成長 −10%</td><td>負</td><td>負</td><td><span class="badge badge-red">✗</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE 壓縮 −20% (→17.6x)</td><td>負</td><td>負</td><td><span class="badge badge-red">✗</span></td></tr>
+<tr><td>壓力 C</td><td>敘事 PE 150x 維持</td><td>(412-400)/(400-73) = 0.037</td><td>(412-400)/(400-99) = 0.04</td><td><span class="badge badge-red">✗</span></td></tr>
+</table>
+<p><strong>壓力測試通過率：0/4</strong>｜所有情境 R:R 均 &lt; 2.0。僅在「敘事 PE 持續維持」情境才勉強不虧。此數字僅作參考，最終倉位由 §2 H 決定。</p>
+
+<h3>§2 F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$400.62</td></tr>
+<tr><td>W52 / 斜率</td><td>$382.04 / +6.62%</td></tr>
+<tr><td>W104 / 斜率</td><td>$326.79 / +9.06%</td></tr>
+<tr><td>W250 / 斜率（13 週）</td><td>$277.10 / +3.46%（剛超 +3% 正向門檻）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="badge badge-green">✅ 強勢進場</span></strong>（現價 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率正）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+<tr><td>Bollinger 20 週</td><td>上 $492 / 中 $417 / 下 $341</td></tr>
+<tr><td>近 5 日 intraday 檢查（QC-24）</td><td>4/15 Open $367 → High $394 → Close $392（無衝高回落）；4/16 Open $394 → High $394 → Close $389（-1.3%，輕微回落但 &lt; 5% 閾值）；無 shooting star 或 gap up 收紅 K</td></tr>
+</table>
+<p class="note">W250 斜率僅 +3.46%，貼近「持平」分界。若下週走弱，MA 可能降為 🟡 減半進場。盲點 2 不適用（未觸發 ❌ 系統失效）。</p>
+
+<h3>§2 G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td>7,126.06</td></tr>
+<tr><td>大盤 W104</td><td>6,092.49</td></tr>
+<tr><td>系統性風險</td><td>否（SPX 高於 W104 17%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>§2 H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>B 級</td></tr>
+<tr><td>gate（§2 D）</td><td><span class="badge badge-red">🔴 過熱</span></td></tr>
+<tr><td>ma_status（§2 F）</td><td><span class="badge badge-green">✅ 強勢進場</span></td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td><span class="badge badge-yellow">🟡 觀察期</span></td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="big-signal">X</span></strong></td></tr>
+</table>
+<p><strong>判定理由：</strong>估值燈 gate 🔴 過熱觸發步驟 1 拒絕檢核 → 直接輸出 <strong>X（迴避）</strong>。即使 MA ✅ 強勢、大盤正常，Fwd PE 197x + PEG 3.87 超過所有合理閾值；盲點 1 救援三條件全部不過（§8 🟡、PEG &gt; 2.0、AI 🟡）。B 級品質 + 🟡 陷阱觀察 + 🔴 估值 = 典型「好故事好公司、但壞價格」的迴避訊號。</p>
+
+<h3>§2 I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>汽車段落接近飽和（中國、美國、歐洲滲透率持續上升但份額流失），AI/Robotics 跑道充裕（Optimus TAM 萬億級 if successful）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td><span class="badge badge-red">侵蝕</span>（汽車製造規模優勢被中國廠追上，品牌溢價在中國消失；FSD 數據護城河 vs Waymo HD map + Xiaomi ecosystem 競爭加劇）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td><strong>綜合</strong></td><td><strong>中</strong>（AI/Robotics optionality 高但執行節奏慢於 Waymo；汽車核心業務護城河侵蝕中）</td></tr>
+</table>
+<p><strong>一句話（≤ 120 字）：</strong>🟡 中性偏逆風，B 級護城河 7/10，中國份額流失 + 汽車 GM 從 29% 壓到 18%。估值燈 🔴 過熱（PEG 3.87）即使 MA ✅ 強勢也拒絕，等 Cybercab 月產 &gt; 5K + Robotaxi 擴至 5 城且 PE 回落到 80x（股價 ~$220）再評估。</p>
+</section>
+
+<!-- §3 -->
+<section id="s3">
+<h2>§3｜三方辯論摘要</h2>
+<div class="debate-grid">
+
+<div class="debate-card debate-bull">
+<h4>多頭辯護人（Munger 模式）</h4>
+<table>
+<tr><th>#</th><th>論據</th><th>佐證</th></tr>
+<tr><td>1</td><td>Energy segment 護城河（Megapack）</td><td>2025 Rev $12.77B (+27%)、2026 deferred rev $4.96B (+2x)、43.5 GWh 12 個月部署</td></tr>
+<tr><td>2</td><td>AI / Robotics 平台優勢（FSD + Optimus）</td><td>Optimus Gen3 1,000+ 台工廠部署；FSD v14.3 已上線，Austin 12 輛 unsupervised Robotaxi 運營中</td></tr>
+<tr><td>3</td><td>資產負債表堅固</td><td>Cash $16.5B、淨現金 $1.8B、FCF $6.22B（2025 +74% YoY）、Tornetta 訴訟 Musk $55B pay 恢復</td></tr>
+</table>
+<p><strong>最強一句話：</strong>Tesla 不是汽車公司，而是 Energy + Robotics + AI 平台。2025 Energy 增速 27% 是汽車段的 5 倍；Optimus 若 2027 百萬級量產，將是史上最大工業革命。</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h4>空頭檢察官（Burry 模式）</h4>
+<table>
+<tr><th>#</th><th>情境</th><th>指標</th></tr>
+<tr><td>1</td><td>汽車 GM 繼續壓縮 + 中國份額崩塌</td><td>Xiaomi YU7 Jan 2026 中國 SUV 冠軍（37,869 台，Tesla Model Y 跌至 20 名 / 16,845 台）；Q1 2026 deliveries 358K miss 14K（-3.8%）；JPMorgan $145 PT (-64%)</td></tr>
+<tr><td>2</td><td>估值壓縮：PE 從 197x → 50x</td><td>若 AI 敘事跳票（Cybercab 延 12 個月 / Robotaxi 不能擴城），估值體系切換至汽車業 15-25x 倍數 → 下行 70%</td></tr>
+<tr><td>3</td><td>NHTSA FSD engineering analysis 升級 → 強制召回</td><td>58 起事故、2.88M 車輛、3/6 deadline 已過；若 NHTSA 強制 FSD 軟硬體召回，AI 敘事直接被否定</td></tr>
+</table>
+<p><strong>最大威脅：</strong>Q1 2026 財報（4/22）若 GM 再跌 + Guidance 下修 + Robotaxi 擴城延遲，可能觸發「戴維斯雙殺」——EPS 下修 + PE 壓縮疊加，-50% 在 6 個月內。</p>
+</div>
+
+<div class="debate-card debate-valu">
+<h4>估值仲裁員（Damodaran 模式）</h4>
+<table>
+<tr><th>維度</th><th>比對</th><th>分</th></tr>
+<tr><td>過去 3 年 FCF CAGR</td><td>隱含 DCF ~45% vs 歷史 -1% (2022→2025)</td><td>0 / 2</td></tr>
+<tr><td>共識 EPS CAGR（§7）</td><td>隱含 50% vs 共識 3Y 35%</td><td>1 / 2</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>隱含 50% vs NVDA ~60% / GOOGL 25%</td><td>1 / 2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>需 Cybercab 百萬級 + Optimus 百萬級 + Robotaxi 擴至 50 城同步兌現</td><td>0 / 2</td></tr>
+<tr><td>歷史類似公司達成</td><td>無任何汽車公司曾維持 35%+ EPS CAGR 超過 5 年</td><td>0 / 2</td></tr>
+</table>
+<p><strong>可信度：2 / 10</strong>｜一句話：「當前股價 $400 隱含『三大 AI 平台同時成功』的樂觀劇本；任一分項落空都會觸發 -40%+ 重新定價。」</p>
+</div>
+
+</div>
+
+<div class="verdict-box">
+<h4>你的裁決（進入 §1 前）</h4>
+<table>
+<tr><td>多頭最強論據</td><td>Energy 業務 + AI/Robotics optionality（Optimus 1,000+ 部署 + FSD v14.3 + Robotaxi unsupervised）</td></tr>
+<tr><td>空頭最大威脅</td><td>Q1 2026 交車 miss + 164K 庫存 + 中國份額崩（Model Y 跌至第 20 名）+ JPMorgan $145 target → PE 壓縮 70%</td></tr>
+<tr><td>估值仲裁評分</td><td>2 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>迴避（X 訊號）</strong></td></tr>
+<tr><td>裁決理由</td><td>此為「v12.0 機械拒絕」的經典案例——Fwd PE 197x × PEG 3.87x 同時 &gt; 所有合理閾值，gate 🔴 觸發直接拒絕；即使 MA ✅ 強勢、Energy + AI optionality 真實存在，當前股價已完全預期「三個 100% 成功劇本疊加」，容錯空間為 0。等 Fwd PE 回到 80x（股價 ~$220）或任一核心假設（Cybercab、Robotaxi、Optimus）有實質兌現訊號再評估。</td></tr>
+</table>
+</div>
+
+<div class="check-list">
+<strong>§3 自我攻擊裁決（QC-13）：</strong><br>
+反駁 1：「Tesla 過去 5 年 Fwd PE 長期 100-200x，市場接受，不是 overvalued」→ 回應：過去 5 年的 200x 搭配 EPS YoY +50%~+100% 的成長；現在是 EPS YoY +36%（且 90 天下修 -6.5%）+ GM 壓縮 + 份額流失——基本面 deterioration 中，估值不應維持。<br>
+反駁 2：「Energy + Optimus 的 TAM 足以撐起 $2T 市值」→ 回應：成立，但前提是執行節奏；目前 Optimus 「1,000 台工廠部署」 vs 百萬級 target 差 3 個數量級，Robotaxi 12 輛 vs Waymo 2,000 台差 167x。<br>
+反駁 3：「MA ✅ 強勢代表市場不同意你的空頭觀點」→ 回應：MA 是落後指標；W250 斜率 +3.46% 剛超門檻，下週可能就轉弱。技術面不否定估值面的拒絕。
+</div>
+
+<div class="check-list">
+<strong>自我檢核：</strong><br>
+☑ 多頭論據不依賴「市場最終會認識到」——Energy 已在 $12.77B 兌現中<br>
+☑ 空頭威脅在 MA ✅ 強勢下尚未觸發停損——需要等 MA 降級或估值進一步惡化<br>
+☑ 估值仲裁 2/10 強烈支持迴避裁決<br>
+</div>
+</section>
+
+<!-- §4 -->
+<section id="s4">
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Tesla 解決「個人移動從化石燃料轉向電力 + 自動化」這個不可逆的產業轉型痛點。但本質上有三個不同業務綑綁在一起：(1) 電動車製造（中國競爭、規模報酬邊際遞減，護城河壓縮中）；(2) 能源儲存（Megapack，電網級 BESS，護城河加深中，27% 成長）；(3) 物理 AI 平台（FSD + Robotaxi + Optimus，TAM 萬億級但執行 &lt; 對手）。若 Tesla 明天消失，美國 EV 市場將被 GM/Ford 補位（2 年補齊）、全球電網儲存由 CATL/BYD 補位（18 個月補齊）、但 Optimus 類物理 AI 可能後退 3-5 年——這是唯一真正「不可替代」的價值。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能路徑：</p>
+<ul>
+<li><strong>地緣政治曝險：</strong>上海廠佔全球產能 35%+，若中美貿易戰升級（稀土管制 / 先進晶片禁運）或 Tesla 成為 Musk 政治立場的人質，可能失去中國市場 + 上海廠產能。</li>
+<li><strong>技術替代風險：</strong>(1) Waymo HD map + 商業化 Robotaxi 500K rides/week 已領先，Tesla FSD Unsupervised 僅 12 車；(2) Xiaomi ecosystem 整合（手機 × 車 × 家電）創造「裝置化」競爭維度，Tesla 不擅長；(3) BYD 刀片電池 + 全棧垂直整合已複製 Tesla 早期優勢。</li>
+<li><strong>管理層失職：</strong>Musk 個人政治活動佔用時間（X、xAI、Neuralink、DOGE），品牌左翼流失、右翼未完全接受；董事會監督已被 Tornetta 訴訟證明由 Musk 控制（雖 Delaware 2025/12 反轉判決）。</li>
+<li><strong>價值陷阱路徑：</strong><strong>產業結構衰退 + 敘事溢價壓縮混合型</strong>。汽車部分已從 29% GM 下滑至 18%，1.5 年內可能再下降到 15% 以下（JPMorgan 模型）；AI 敘事溢價若延遲兌現，PE 從 200x 壓至 50x（汽車業基準）即觸發 70% 下行。</li>
+</ul>
+</section>
+
+<!-- §5 -->
+<section id="s5">
+<h2>§5｜投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>3 年（2026-2029）</td></tr>
+<tr><td>主要驅動時間軸理由</td><td>AI/Robotics 敘事三大催化劑的驗證窗口：Cybercab 2026/4 量產啟動、Optimus Gen3 2026-2027 規模化、Robotaxi 2026-2027 擴城。此期間若全部兌現 → 敘事持續；若 ≥ 2 項延遲 → PE 向汽車業收斂。</td></tr>
+<tr><td>時間軸決定什麼變數是訊號</td><td>📈 訊號：Cybercab 月產能、Robotaxi 城市數、Optimus 工廠部署數、FSD miles/disengagement、Energy deployment GWh<br>🔇 噪音：短期交車週波動、Musk 個人推文、FOMC 利率決議（除非影響長期 PE 體系）</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<div class="hypothesis-box">
+<table>
+<tr><th>#</th><th>核心假設</th><th>驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>Robotaxi 商業化：Tesla 2027 年底前於 5+ 美國城市部署無人監督 Robotaxi 服務，達 $2B+ ARR</td><td>城市運營數、月度 rides、Robotaxi 營收 run rate</td><td>2026 Q4 - 2027 Q2 季報</td></tr>
+<tr><td>H2</td><td>Cybercab + Optimus 量產：Cybercab 2026 Q4 前月產能 &gt; 5,000；Optimus Gen3 2026 底 &gt; 5,000 台工廠部署 → 2027 &gt; 50,000/季</td><td>月產能、訂單 backlog、單位毛利率</td><td>2026 Q4 - 2027 Q4</td></tr>
+<tr><td>H3</td><td>敘事溢價延續：市場維持以 AI/Robotics 平台倍數（Fwd PE &gt; 100x）而非汽車業倍數（15-25x）定價</td><td>Fwd PE 分位、vs NVDA/GOOGL 相對倍數、EV/Revenue 維持 &gt; 10x</td><td>每月監測</td></tr>
+</table>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Robotaxi 監管延遲或技術未達標（NHTSA FSD engineering analysis 升級 → 召回 / 州政府介入）</td><td>H1</td><td>NHTSA safety incidents、state permit 撤銷</td><td>單季 ≥ 3 起事故 / 2 州撤 permit / NHTSA 強制召回</td></tr>
+<tr><td>R2</td><td>Cybercab / Optimus 量產延期 &gt; 12 個月（類似 Cybertruck 2019→2024 的前科）</td><td>H2</td><td>財報 guidance 更新、工廠進度、CFO 用詞</td><td>任一次管理層推遲「significant production」</td></tr>
+<tr><td>R3</td><td>估值體系切換至汽車業 15-25x 倍數（AI 敘事跳票）</td><td>H3</td><td>Fwd PE 6 個月變動、vs NVDA 相對倍數</td><td>Fwd PE 6 個月內從 200x → &lt; 80x</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<ol>
+<li>時間軸匹配？3 年內有影響嗎？</li>
+<li>假設關聯？影響 H1（Robotaxi）/ H2（Cybercab+Optimus）/ H3（敘事溢價）哪一個？</li>
+<li>邊際方向？＋強化 / 0 無關 / − 削弱</li>
+<li>閾值判斷？是否達到重估門檻？</li>
+</ol>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>Fwd PE 回落至 ≤ 80x（股價 &lt; $220）且 H1/H2 有一項兌現（Robotaxi 擴至 3 城 或 Cybercab 月產 &gt; 3K）</td><td>建倉，訊號進入 A/B 級</td></tr>
+<tr><td>加碼</td><td>H1 + H2 同時確認（Robotaxi &gt; 5 城 + Cybercab 月產 &gt; 10K）且 Fwd PE &lt; 60x</td><td>加碼至目標倉位</td></tr>
+<tr><td>減碼</td><td>R3 觸發（Fwd PE 跌破 60x 非因 EPS 上修）或 R1/R2 之一出現</td><td>減至一半</td></tr>
+<tr><td>撤退</td><td>H1 或 H2 確認推翻（Cybercab 延 2 年 + Robotaxi 停滯 2 季）或陷阱信號 ≥ 3 個</td><td>清倉</td></tr>
+</table>
+</section>
+
+<!-- §6 -->
+<section id="s6">
+<h2>§6｜即時財報情報</h2>
+<p class="note"><strong>注意：</strong>Q1 2026 財報將於 2026/4/22 盤後公布（本 DD 日期為 4/18）；以下引用最新已公布財報為 FY2025 Q4（2026/1/29 公布）+ Q1 2026 初步交車數據（4/2 公布）。</p>
+
+<h3>① FY2025 Q4 + Q1 2026 交車摘要</h3>
+<table>
+<tr><th>指標</th><th>Q4 2025 實際</th><th>Q4 2025 共識</th><th>Q1 2026 預覽</th></tr>
+<tr><td>交車量</td><td>484,507（+7% YoY）</td><td>487K</td><td><strong>358,023</strong>（vs 共識 372K，miss -3.8%；vs 生產 408K，超產 50K）</td></tr>
+<tr><td>總營收</td><td>$25.71B（+2% YoY）</td><td>$25.2B</td><td>FY+1 全年共識 $102.3B (+7.9% YoY)</td></tr>
+<tr><td>Non-GAAP EPS</td><td>$0.73 （miss $0.76）</td><td>$0.76</td><td>FY+1 全年共識 $2.03</td></tr>
+<tr><td>Automotive GM（ex-credit）</td><td>18.3%</td><td>17.5%</td><td>2026 Q1 預計承壓（164K 庫存）</td></tr>
+<tr><td>Energy Storage Deployment</td><td>14.2 GWh（Q4 新高）</td><td>-</td><td>2025 全年 46.7 GWh +49% YoY</td></tr>
+<tr><td>FCF（FY2025 全年）</td><td>$6.22B（+74% YoY）</td><td>-</td><td>2026 預計承壓（庫存去化成本）</td></tr>
+</table>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>本季邊際</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Robotaxi 商業化）</td><td><span class="badge badge-yellow">0 中性</span></td><td>Austin unsupervised 達 12 輛（Nov 2025 宣稱 60 輛 target 未達）；FSD v14.3 改善 reaction time 20%；但遠未擴城</td></tr>
+<tr><td>H2（Cybercab + Optimus 量產）</td><td><span class="badge badge-green">+ 輕度強化</span></td><td>Optimus Gen3 1,000+ 台工廠部署已兌現；Cybercab 2026 Q4 量產進度依 Musk 公開聲明「on track」</td></tr>
+<tr><td>H3（敘事溢價）</td><td><span class="badge badge-red">− 削弱</span></td><td>JPMorgan 4/10 再度警告 $145 PT (-64% 下行)；Q1 交車 miss 3.8% 已被 consensus 部分反映，但庫存 164K 持續成為 overhang</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析（Q4 2025）</h3>
+<ul>
+<li><strong>管理層基調：</strong>AI 優先，汽車本業節奏放緩。Musk 重申 Cybercab 2026 Q2 量產啟動，Robotaxi 2026 擴至「multiple cities」。但對 FY2026 交車 guidance 未給具體數字。</li>
+<li><strong>Forward Guidance：</strong>2026 capex $12-15B（vs 2025 $11.34B）繼續高投資；Energy deployment 2026 應再倍增；汽車業務「peak affordability」策略（暗示持續降價）。</li>
+<li><strong>刻意強調：</strong>"Physical AI"、"Optimus"、"Cybercab"、"Robotaxi"、"Energy" 等詞出現頻率壓倒 "Model Y"、"Model 3"、"price"。</li>
+<li><strong>刻意迴避：</strong>中國市場 Xiaomi 競爭、Model Y 降至中國第 20 名、歐洲 YoY 份額流失、具體 FY2026 交車數字。</li>
+</ul>
+
+<h3>③ 產業 Imply</h3>
+<ul>
+<li><strong>需求端：</strong>全球 EV 滲透率放緩（US 從 7.8% 停滯，Europe tariff 生效後價差不夠），新能源車轉向 PHEV（Toyota cut 2026 target 1.5M → 1M）。</li>
+<li><strong>供給端：</strong>中國本土產能過剩（「barring selling below cost」法規），Xiaomi YU7 pre-order 100K 在 15 天內。</li>
+<li><strong>競爭格局：</strong>Tesla 美國仍是 #1（Model Y 仍最暢銷 SUV），但中國份額被 BYD/Xiaomi 蠶食；歐洲 BYD 5 月起超越 Tesla 兩大 EV 市場。</li>
+<li><strong>連帶推論：</strong>Megapack TAM 爆發 → CATL / Fluence 受益。Optimus 類人形 → 帶動 robotaxi 零組件 supply chain。</li>
+</ul>
+</section>
+
+<!-- §7 -->
+<section id="s7">
+<h2>§7｜核心門檻檢核</h2>
+
+<h3>EPS CAGR 強制搜尋結果</h3>
+<p>yfinance earnings_estimate（來源：Refinitiv/LSEG，同 TradingView 同源）：</p>
+<ul class="mono">
+<li>基期 FY2025 GAAP EPS: <strong>$1.08</strong>（actual，已公布 2026/1/29）</li>
+<li>FY+1E (2026): $2.03（n=34 位分析師，YoY +88%——低基期反彈）</li>
+<li>FY+2E (2027): $2.75（n=33 位分析師，YoY +36%）</li>
+<li>FY+3E (2028) 邏輯推導（§8 依據）：<strong>$3.71</strong>（YoY +35%）——依據：Optimus 2027-2028 大規模量產 + Robotaxi 擴至 10+ 城市 + Energy 維持 25% CAGR，3 項皆為高階情境假設；若兌現延遲，FY+3 可能降至 $3.20</li>
+</ul>
+<p>計算：</p>
+<ul class="mono">
+<li>GAAP 3Y CAGR (FY0 → FY+3) = (3.71/1.08)^(1/3) − 1 = <strong>50.9%</strong>（低基期扭曲）</li>
+<li>Forward 3Y CAGR (FY+1 → FY+3) = (3.71/2.03)^(1/2) − 1 = <strong>35.2%</strong>（更合理）</li>
+<li>口徑差距：FY2025 GAAP $1.08 vs Non-GAAP $2.04（差 $0.96，主要 SBC + 訴訟費 + 重組）</li>
+</ul>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge badge-red">❌</span></td><td>2025 FCF $6.22B / Rev $94.83B = 6.56%（資本密集）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%</td><td><span class="badge badge-red">❌</span></td><td>2021-25: 13.2% / 9.3% / 5.4% / 3.7% / 6.6%，均值 7.6%，最低 3.7%（2024）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，高於 WACC</td><td><span class="badge badge-red">❌</span></td><td>TTM ROIC 3.34%（5Y 均 16%，下滑 -66%）；WACC 約 10% → 超額為負</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年內 ≥ 70% 年份 ROIC &gt; 15%</td><td><span class="badge badge-red">❌</span></td><td>2021-23 高峰 20%+，但 2024-25 跌破 10%；達標年份 3/10 = 30%</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年 ≥ 70% 年份改善</td><td><span class="badge badge-red">❌</span></td><td>GM 2021 25.3% → 2025 18%（-7.3pp），連續 3 年下滑，改善年份 3/10 = 30%</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%（優）/ &lt; 10%（尚可）</td><td><span class="badge badge-yellow">🟡</span></td><td>2025 Capex $8.53B / Rev $94.83B = 9.0%（尚可）；未來 Cybercab / Optimus 工廠可能推到 12%+</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="badge badge-green">✅</span></td><td>Forward 3Y CAGR 35.2%（口徑 GAAP，資料 yfinance）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="badge badge-red">❌</span></td><td>Fwd PE 197x / 35% = <strong>5.6</strong>（遠超閾值）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7</td><td><span class="badge badge-green">✅</span></td><td>D/E = $14.72B / $82.14B = 0.18（極低槓桿）；現金/Rev = 17.4%</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge badge-green">✅</span></td><td>Cash $16.5B &gt; Debt $14.7B（淨現金 $1.8B）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge badge-red">❌</span></td><td>7/10，趨勢「侵蝕」（§9）</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>汽車 GM 3 年壓縮 10pp（29% → 18%），ROIC 從 20%+ 摔至 3.3%，基本面數字層面不支持 Fwd PE 200x。</p>
+<p><strong>Munger 三維評級：</strong><span class="badge badge-red" style="font-size:14px">🔴 一項或以下達標</span>（ROIC 穩定性 ❌、毛利率定價 ❌、資本密集 🟡）</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p>Fwd PE 分位 ~85%（高端）、P/FCF 分位極高，**不觸發低估值陷阱**（此為相反問題——高估值陷阱）。</p>
+
+<h3>⚠️ 高估值陷阱檢核（反向）</h3>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+<tr><td>Q1</td><td>過去 3 年 GM 趨勢</td><td>29% → 20% → 18%，-11pp</td><td><span class="badge badge-red">🔴（&gt; 2pp 下滑）</span></td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢（中國）</td><td>2023 ~12% → 2025 ~8% → 2026 Jan Model Y 跌至第 20 名</td><td><span class="badge badge-red">🔴 縮減</span></td></tr>
+<tr><td>Q3</td><td>FCF / Net Income</td><td>2025 = 1.64（近 3 年均 1.3x，OK）</td><td><span class="badge badge-green">✅ &gt; 0.7</span></td></tr>
+<tr><td>Q4</td><td>分析師共識 EPS 方向（近 90 天）</td><td>FY+1: $2.17 → $2.03（-6.5%）</td><td><span class="badge badge-red">🔴 持續下修</span></td></tr>
+</table>
+<p><strong>結論：3/4 🔴 — 高度懷疑陷阱</strong>，§1 已確認 🟡 觀察期。</p>
+</section>
+
+<!-- §8 -->
+<section id="s8">
+<h2>§8｜長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>汽車 TAM（2026 全球 EV）</td><td>~$1.2T（新車 + 售後）</td><td>BNEF：BEV 2026 市場份額 6%（從 2025 7.8% 下降）</td></tr>
+<tr><td>能源儲存 TAM</td><td>2030 預估 $300B（CAGR ~30%）</td><td>電網化 BESS 全球剛起步；Tesla Megapack 市佔 ~20%</td></tr>
+<tr><td>Robotaxi TAM</td><td>2030 預估 $800B（McKinsey）</td><td>當前 &lt; $1B，全球僅 Waymo + Baidu + Tesla 運營</td></tr>
+<tr><td>Optimus TAM</td><td>2035+ 預估 $10T（Ark Invest）</td><td>極高不確定性；執行依賴 FSD AI 成熟度</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>EV 全球 #1-2（與 BYD 交替）；中國 &lt;10%；Energy #1</td><td>-</td></tr>
+<tr><td>30% 滲透率所需年數</td><td>汽車 &gt; 10 年；Energy 10-15 年</td><td>-</td></tr>
+<tr><td><strong>成長可持續年數</strong></td><td><strong>5-9 年（汽車段）+ 10+ 年（Energy + AI，若兌現）</strong></td><td>混合情境</td></tr>
+</table>
+<p><strong>Runway 解讀：</strong>🟡 中等可見度（汽車業達飽和 vs AI/Robotics 極高不確定）</p>
+
+<h3>B｜成長品質</h3>
+<h4>① 有機 vs 無機</h4>
+<p>Tesla 100% 有機成長（未做主要併購）；2025 Rev $94.83B 全來自內部業務。</p>
+
+<h4>② 定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>占比</th><th>趨勢</th></tr>
+<tr><td>定價驅動</td><td>負貢獻（近 3 年多次降價）</td><td>縮減（GM 29% → 18%）</td></tr>
+<tr><td>量驅動</td><td>主要驅動（交車 +7%、Energy GWh +49%）</td><td>穩定</td></tr>
+<tr><td>Segment Mix</td><td>Energy 從 2023 8% → 2025 13.5% rev 占比</td><td>擴大</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>消耗型 + 強化型混合：</strong>汽車段為消耗型（為維持成長降價、犧牲毛利），Energy + AI 為強化型（規模優勢 + 數據飛輪）。整體偏消耗型，符合 §9 護城河侵蝕趨勢。</p>
+
+<h3>D｜ROIC 與 FCF 可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合?</th></tr>
+<tr><td>ROIC</td><td>3.34%</td><td>20.3%（2022）</td><td>↓ -84%</td><td>&gt; WACC 10%</td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>ROIC − WACC</td><td>-6.66%</td><td>+10%</td><td>↓</td><td>持續正</td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>FCF Margin</td><td>6.56%</td><td>9.3%</td><td>↓</td><td>&gt; 15%</td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>FCF / NI</td><td>1.64x</td><td>0.60x</td><td>↑（NI 壓低）</td><td>&gt; 0.85</td><td><span class="badge badge-green">✅</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>138%</td><td>~60%</td><td>↑</td><td>成長期合理</td><td><span class="badge badge-yellow">🟡</span></td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>成長特徵</th><th>合理 Fwd PE</th><th>股價（基於 FY+1 EPS $2.03）</th><th>跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>放緩但高於市場</td><td>40x</td><td>$81.20</td><td>-79.7%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>回歸市場平均</td><td>25x</td><td>$50.75</td><td>-87.3%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>成熟期</td><td>18x</td><td>$36.54</td><td>-90.9%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測</h3>
+<table>
+<tr><th>信號類型</th><th>指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>2023-25 連續下滑</td><td><span class="badge badge-red">🔴</span></td></tr>
+<tr><td>護城河侵蝕</td><td>中國市佔縮減</td><td>Model Y Jan26 跌至第 20</td><td><span class="badge badge-red">🔴</span></td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>2024-25 多次降價仍難拉需求，Q1 2026 miss</td><td><span class="badge badge-red">🔴</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Rev CAGR</td><td>FY+1 EPS +88%（低基期）vs Rev +7.9%</td><td><span class="badge badge-yellow">⚠️</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75</td><td>FCF/NI 1.64（正向）</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5%</td><td>2025 SBC ~$2B / Rev $94.8B = 2.1%</td><td><span class="badge badge-green">⬜</span></td></tr>
+<tr><td>產業結構</td><td>TAM 萎縮</td><td>EV 滲透率 2026 預降至 6%</td><td><span class="badge badge-red">🔴</span></td></tr>
+<tr><td>產業結構</td><td>估值倍數 3 年下移</td><td>汽車業 PE 15-25x，Tesla 維持 150-200x 壓力大</td><td><span class="badge badge-yellow">⚠️</span></td></tr>
+<tr><td>資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>Capex $8.53B / FCF $6.22B = 137%（含 growth capex）</td><td><span class="badge badge-red">🔴</span></td></tr>
+<tr><td>資本密集</td><td>停投資 3 年 Rev 下滑?</td><td>是（EV 產品需持續更新）</td><td><span class="badge badge-red">🔴</span></td></tr>
+</table>
+<p><strong>亮燈 6 個 🔴 + 2 個 ⚠️：⛔ 極高風險級別</strong>，但考慮 Energy + Optimus 的 optionality，實際運作在 🔴→⛔ 之間。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="badge badge-yellow" style="font-size:14px">🟡 中等可見度成長</span>（Runway 5-9 年汽車；Energy + AI 可見度低；衰退信號 6 個偏高）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p>Tesla 是 AI 受益方（FSD + Robotaxi + Optimus 都是 AI 應用）但執行風險高：</p>
+<ul>
+<li>核心業務 ~87% 來自汽車銷售，AI 未來佔比 &gt; 50% 前提是 Optimus + Robotaxi 兌現</li>
+<li>當前 AI 業務（Robotaxi + Optimus）營收占比 &lt; 1%</li>
+<li>vs Waymo：Tesla Robotaxi 落後 18-24 個月 + fleet 小 167x</li>
+<li>vs Xiaomi：ecosystem 整合（手機/車/家電）創造新 AI 競爭維度，Tesla 未佈局</li>
+</ul>
+<p><strong>評級：<span class="badge badge-yellow" style="font-size:14px">🟡 中等不確定</span></strong>（AI 受益但執行落後 + 競爭壓力）｜對應分數 6</p>
+</section>
+
+<!-- §9 -->
+<section id="s9">
+<h2>§9｜護城河分析</h2>
+<p><strong>評分：7 / 10</strong>（以全球上市公司為基準）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong>Supercharger 網絡是 Tesla 車主的高黏性護城河，但已向其他車廠開放，邊際優勢稀釋。FSD 數據飛輪（數十億里程）護城河存在但 Waymo HD map 策略證明可替代。</li>
+<li><strong>無形資產：</strong>品牌溢價在美國仍高（Model Y 是 2025 全球最暢銷 SUV），但中國已崩潰（Model Y 跌至第 20）。專利組合可觀但未成 FSD 訴訟武器。</li>
+<li><strong>轉換成本：</strong>中低——EV 車主可簡單換成 BYD/Xiaomi/GM/Ford，Supercharger 開放後幾乎無轉換壁壘。</li>
+<li><strong>規模優勢：</strong>Gigafactory × 6 規模經濟真實存在，但 BYD 規模更大（2025 1.86M NEV）；成本優勢在中國被 BYD 反向壓制。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼資本充足對手（BYD、Xiaomi、GM）仍無法完全取代：</p>
+<ul>
+<li>美國：Supercharger 網絡 + 品牌忠誠度（西岸藍州除外），短期仍難替代</li>
+<li>Energy Megapack：5 MWh × 4 的 Megablock 設計領先；中國 CATL / Fluence 在追趕但落後 12-18 個月</li>
+<li>Optimus（if successful）：物理 AI 訓練資料 + 人形 BOM 整合獨家，Boston Dynamics + Figure 落後 12 個月</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>BYD</td><td>全球 NEV #1（含 PHEV），BEV 與 Tesla 交替</td><td>擴大（中國 + 歐洲）</td><td>刀片電池成本優勢、全棧垂直整合</td><td>BYD 吃 Tesla 中國 + 歐洲</td></tr>
+<tr><td>Xiaomi</td><td>中國 EV 新勢力 #2（2025 SU7 258K、2026 預計 550K）</td><td>快速擴大（Jan 2026 YU7 中國 SUV 冠軍）</td><td>裝置化 ecosystem 整合、年輕消費者</td><td>Xiaomi 吃 Tesla 中國 Model Y 份額</td></tr>
+<tr><td>Waymo</td><td>Robotaxi 全球 #1（10 城、500K rides/week、2,000 車）</td><td>擴大（London 2026）</td><td>HD map + Tier 1 L4 技術，Tesla Robotaxi 差 167x fleet size</td><td>Waymo 鎖定 Robotaxi 先發優勢</td></tr>
+<tr><td>GM / Ford</td><td>美國 EV #2-4</td><td>放緩（Toyota cut target、Ford 砍 F-150 Lightning）</td><td>hybrid pivot 接收傳統客戶</td><td>Hybrid 吃 BEV 整體份額</td></tr>
+<tr><td>NVDA / GOOGL</td><td>AI 平台龍頭</td><td>擴大</td><td>AI 基礎設施 + Waymo Robotaxi</td><td>NVDA 吃「AI 敘事」溢價</td></tr>
+</table>
+
+<h3>護城河趨勢：<span class="badge badge-red">侵蝕</span></h3>
+<p>24 個月內最可能瓦解護城河的變化（QC-23 分級）：</p>
+<table>
+<tr><th>威脅</th><th>分級</th><th>影響</th></tr>
+<tr><td>Xiaomi YU7/SU7 在中國持續蠶食 Model Y/3 份額</td><td>🔴 生態攻擊（ecosystem 裝置化）</td><td>護城河 −1 分</td></tr>
+<tr><td>Waymo Robotaxi 擴至 &gt; 20 城，Tesla Robotaxi 仍限 Austin</td><td>🔴 生態攻擊（Tier 1 L4 先發鎖定）</td><td>護城河 −1 分（已 embed 在 7 分內）</td></tr>
+<tr><td>NHTSA 強制 FSD 召回（engineering analysis 升級中）</td><td>⛔ 架構替代（FSD 敘事根本否定）</td><td>若發生，護城河 −2 分 + §1 陷阱定性 → 🔴 高風險</td></tr>
+<tr><td>BYD 刀片電池技術出口 → 歐洲成本優勢延伸</td><td>🟡 點對點（單一產品）</td><td>不扣分但持續壓縮 GM</td></tr>
+</table>
+<p><strong>QC-23 觸發：1 個 🔴 已 embed（護城河原為 8 → 降至 7）；1 個 ⛔ 潛在威脅（NHTSA 結果未定）</strong></p>
+</section>
+
+<!-- §10 -->
+<section id="s10">
+<h2>§10｜財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手（BYD 2025）</th></tr>
+<tr><td>FCF Margin</td><td>5.4%</td><td>3.7%</td><td>6.6%</td><td>~6% (BYD)</td></tr>
+<tr><td>EBITDA Margin</td><td>14.4%</td><td>13.0%</td><td>11.2%</td><td>~10-12%</td></tr>
+<tr><td>ROIC − WACC</td><td>+6%</td><td>-4%</td><td>-6.7%</td><td>+1-2%（BYD）</td></tr>
+<tr><td>SBC / Revenue</td><td>2.1%</td><td>2.0%</td><td>2.1%</td><td>&lt; 1%</td></tr>
+<tr><td>ROE</td><td>23.1%</td><td>10.4%</td><td>4.9%</td><td>~10-12%（BYD）</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>NI vs OCF 連動：</strong>2025 NI $3.79B vs OCF $14.75B，FCF/NI = 1.64。NI 受折舊 + 重組壓低，OCF 相對強健——不是盈餘操縱，但反映折舊壓力。</li>
+<li><strong>AR 成長 vs 營收：</strong>2025 AR 成長緩和，OK。</li>
+<li><strong>存貨成長 vs 營收：</strong>🔴 嚴重警訊——164K 庫存新高，2026 Q1 超產 50K 未賣。</li>
+<li><strong>FCF 轉換率：</strong>Capex 從 2022 $7.17B → 2024 $11.34B → 2025 $8.53B（放緩），FCF 轉正 +74%；但 2026 Cybercab 工廠 + Optimus 工廠將再推高 Capex。</li>
+</ul>
+
+<h3>QC-26 Margin 結構性測試</h3>
+<p>2024-25 GM 從 17.9% → 18.0%（穩住但未回升），vs 2021 25.3% 高點 -7.3pp 壓縮。</p>
+<ul>
+<li>同業同期：BYD GM 2025 ~20%、Toyota EV 部分 GM 5-8%（新晉）、GM/Ford EV 仍虧損</li>
+<li>產品 mix 變化：低價 Model 3/Y 佔比 95%+，S/X 已於 2026/4/1 停產</li>
+<li>同業用相似技術 margin：BYD 20% &gt; Tesla 18%，但 BYD 垂直整合（刀片電池）給予成本優勢</li>
+</ul>
+<p><strong>結論：結構性質變 + 一次性稀釋混合</strong>——護城河 −0.5 分（已 embed 在 7 分內），§1 陷阱定性已降為 🟡 觀察期。</p>
+
+<h3>回購品質</h3>
+<p>Tesla 歷史上無大規模回購，EPS 變動主要來自 NI 本身波動。2025 EPS $1.08 從 2024 $2.04 掉一半，非回購相關。</p>
+</section>
+
+<!-- §11 -->
+<section id="s11">
+<h2>§11｜產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li><strong>EV TAM 2026：</strong>全球 ~$1.2T，CAGR 12%（從 2025 15% 下降），BNEF BEV 份額 2026 預計 6%（vs 2025 7.8%）</li>
+<li><strong>Energy Storage TAM：</strong>2030E $300B，CAGR ~30%</li>
+<li><strong>Robotaxi TAM：</strong>2030E $800B，當前 &lt; $1B</li>
+<li><strong>Optimus TAM：</strong>2035E $10T (Ark Invest estimate)，極高不確定性</li>
+<li><strong>供需：</strong>EV 過剩（164K Tesla 庫存）；Energy 緊缺（$4.96B deferred rev）；Robotaxi 緊缺</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游：</strong>電池供應商 CATL/Panasonic/LG 集中度高；Tesla 試圖垂直整合（4680 電池自產）減少依賴；稀土材料仍受中國控制</li>
+<li><strong>對下游：</strong>B2C 零售，無單一大客戶集中風險；但依賴銷售補貼（美國 $7,500 tax credit 2025 底到期 = 強大需求刺激消失）</li>
+<li><strong>地理曝險：</strong>上海廠 35% 全球產能（中美貿易風險）、柏林廠（歐盟 tariff + BYD 競爭）、Austin 廠（Cybercab / Optimus 核心）</li>
+</ul>
+
+<h3>營收組成（2025 FY）</h3>
+<table>
+<tr><th>業務段</th><th>2025 Rev</th><th>占比</th><th>YoY 成長</th></tr>
+<tr><td>汽車銷售</td><td>$75B</td><td>79.1%</td><td>-7%</td></tr>
+<tr><td>Energy Storage + Solar</td><td>$12.77B</td><td>13.5%</td><td>+27%</td></tr>
+<tr><td>Services + other</td><td>$7B</td><td>7.4%</td><td>+15%</td></tr>
+<tr><td><strong>總計</strong></td><td>$94.83B</td><td>100%</td><td>-2.9%</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<ul>
+<li><strong>汽車每車毛利：</strong>$15,492（2022）→ $7,555（2025）= -51%</li>
+<li><strong>Megapack 每 kWh 毛利率：</strong>~20%（競爭壓力但仍優於汽車）</li>
+<li><strong>FSD ARR：</strong>FSD subscription $99/月 + FSD 買斷 $8,000，2025 估計 FSD 相關 rev ~$1B（&lt; 2% 總營收）</li>
+</ul>
+</section>
+
+<!-- §12 -->
+<section id="s12">
+<h2>§12｜公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>Musk 持股 ~13%（Tornetta 訴訟 Delaware 2025/12 恢復 $55B pay package 後，可能再增至 ~18%）</li>
+<li>機構持股 44.7%（Vanguard、BlackRock 前 2 大）</li>
+<li>內部人持股 11.1%</li>
+<li>近期內部人交易：2025 年 Musk 未有大額出售；董事 Robyn Denholm 等持續小量行權</li>
+</ul>
+
+<h3>資本配置軌跡</h3>
+<ul>
+<li>2025 Capex $8.53B（ -25% vs 2024 $11.34B）——汽車擴產已放緩</li>
+<li>2026 guidance Capex $12-15B——押注 Cybercab + Optimus + FSD 晶片</li>
+<li>無回購歷史（Tesla 未回購股票）</li>
+<li>無股息</li>
+<li>說法與行動一致：Musk 多次強調「AI investing is the best capital allocation」，實際 capex 向 Cybercab/Optimus 傾斜</li>
+</ul>
+
+<h3>管理層薪酬</h3>
+<ul>
+<li>Musk：2018 pay package $55B（Delaware 2025/12 恢復），2025 股東大會投票通過「重新授予」</li>
+<li>CFO Taneja（2023 晉升）：基本薪 + RSU（未公開具體比例）</li>
+<li>激勵對齊強：Musk 無固定薪，100% 股權激勵（績效掛鉤市值里程碑）</li>
+</ul>
+
+<h3>QC-19 重大事件掃描（近 12 個月）</h3>
+<table>
+<tr><th>事件類型</th><th>結果</th><th>對 DD 影響</th></tr>
+<tr><td>併購</td><td>無重大併購（2024-2026）</td><td>-</td></tr>
+<tr><td>Musk pay package 訴訟</td><td>2025/12 Delaware Supreme Court 恢復 $55B（罰 $1）</td><td>「Musk 離職」尾部風險降低；但也確認董事會由 Musk 控制（治理負面 signal）</td></tr>
+<tr><td>NHTSA FSD 調查</td><td>升級至 engineering analysis（recall 前最後階段），2026/3/6 deadline 已過，2.88M 車輛、58 起事故</td><td>⛔ 潛在風險——若強制召回，Robotaxi 敘事直接被否定（§9 QC-23 ⛔ 架構替代）</td></tr>
+<tr><td>Cybertruck autopilot 訴訟</td><td>2026/3 Texas 車主訴訟 $1M+（Cybertruck 自駕撞橋）；訴狀指控「Musk negligent retention」</td><td>集體訴訟 tail risk 升高</td></tr>
+<tr><td>SEC 調查</td><td>無新增重大案件</td><td>-</td></tr>
+<tr><td>CEO/CFO 異動</td><td>無</td><td>-</td></tr>
+<tr><td>主要客戶流失</td><td>中國市場 Model Y 跌至第 20 名；歐洲兩大 EV 市場被 BYD 超車</td><td>§8 成長假設需下修（已 embed）</td></tr>
+</table>
+<p>結論：<strong>🟡 觀察期</strong>——NHTSA FSD 與 Cybertruck 訴訟為潛在 tail risk；Musk pay package 恢復為中性偏正（去除離職風險但確認治理問題）。</p>
+</section>
+
+<!-- §13 -->
+<section id="s13">
+<h2>§13｜估值診斷</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<tr><th>邏輯類型</th><th>指標</th><th>主流?</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E</td><td>部分</td><td>Trail PE 371x 近乎無意義；Fwd PE 197x 仍遠超汽車業 15-25x</td></tr>
+<tr><td>成長型</td><td>PEG</td><td>否</td><td>PEG 3.87-5.6 遠超 2.0 合理區間</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>否</td><td>P/FCF = $1,503B / $6.22B = 241x（極端）</td></tr>
+<tr><td>行業專屬</td><td>EV/Revenue、AI 平台倍數</td><td><strong>✅ 目前主流</strong></td><td>市場以 EV/Rev 16x（vs NVDA 23x / GOOGL 7x）+ AI optionality 倍數定價</td></tr>
+</table>
+<p><strong>當前主流邏輯：AI/Robotics 平台倍數（EV/Rev 16x + Optionality premium）。</strong>這把尺的「作廢條件」：Cybercab 延遲 &gt; 12 個月、Robotaxi 2027 仍限 Austin、Optimus 2027 未能 10K/季。</p>
+
+<h4>估值尺可能被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>狀態</th><th>影響</th></tr>
+<tr><td>AI 敘事跳票</td><td>NHTSA engineering analysis + Q1 交車 miss 3.8%</td><td>🔴 已部分浮現，PE 可能從 200x 壓至 50x</td></tr>
+<tr><td>Cybercab 首次延遲公告</td><td>未發生（but 4/22 財報將是關鍵）</td><td>🔴 若宣布，EV/Rev 16x → 8x</td></tr>
+<tr><td>汽車業估值系統下移</td><td>已發生（legacy auto pivot to hybrid）</td><td>🔴 Tesla PE 維持高位壓力增大</td></tr>
+</table>
+<p><strong>估值體系診斷：<span class="badge badge-red" style="font-size:14px">🔴 估值邏輯面臨下修風險</span></strong></p>
+
+<h3>13.1｜歷史估值分位</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Trailing P/E</td><td>371x</td><td>34.8x (Dec 2022)</td><td>~100x</td><td>399x (Dec 2025)</td><td>~92%</td></tr>
+<tr><td>Forward P/E（NTM/FY+1）</td><td>197x</td><td>~35x</td><td>~90x</td><td>~250x</td><td><strong>~85%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>140x</td><td>~20x</td><td>~60x</td><td>~180x</td><td>~80%</td></tr>
+<tr><td>P/FCF</td><td>241x</td><td>~50x</td><td>~120x</td><td>~300x</td><td>~76%</td></tr>
+<tr><td>P/S</td><td>15.9x</td><td>~5x</td><td>~8x</td><td>~16x</td><td>~99%</td></tr>
+</table>
+<p><strong>計算公式：</strong>分位 = (197 − 35) / (250 − 35) × 100% = 75.3% → 保守估 85%（近期接近 5Y 高點）</p>
+<p><strong>解讀：</strong></p>
+<ol>
+<li>當前估值情緒：<span class="badge badge-red">過熱</span>（&gt; 85% 分位）</li>
+<li>上次高分位時（2021）基本面：GM 25%+、ROIC 20%+、EPS +75% YoY。<strong>現在（2025）：GM 18%、ROIC 3.3%、EPS FY0 下滑 47%</strong>——基本面嚴重退化，估值仍在高點。</li>
+<li>推動當前分位主因：AI/Robotics 敘事 &gt;&gt; 基本面改善。Musk 12/2024 pay package 恢復 + Optimus Gen3 1,000 台部署是 2025-2026 敘事助推。</li>
+</ol>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E (FY+1)</td><td>197x</td><td>-</td></tr>
+<tr><td>Non-GAAP EPS CAGR (3Y, FY+1→FY+3)</td><td>35.2%</td><td>-</td></tr>
+<tr><td><strong>PEG (Non-GAAP, 3Y Forward)</strong></td><td><strong>5.60</strong></td><td><span class="badge badge-red">🔴 貴</span></td></tr>
+<tr><td>Non-GAAP EPS CAGR (FY0→FY+3，低基期)</td><td>50.9%</td><td>低基期扭曲</td></tr>
+<tr><td><strong>PEG (Non-GAAP, FY0→FY+3)</strong></td><td><strong>3.87</strong></td><td><span class="badge badge-red">🔴 貴</span></td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~25%（估）</td><td>隨成長放緩</td></tr>
+<tr><td>PEG (5Y)</td><td>7.9</td><td><span class="badge badge-red">🔴 貴</span></td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>3-5x</td><td>近期成長不可持續信號</td></tr>
+</table>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$1,503B</td><td>$400.62 × 3.75B shares</td></tr>
+<tr><td>基期 FCF</td><td>$6.22B</td><td>FY2025</td></tr>
+<tr><td>WACC</td><td>10.2%</td><td>10Y UST 4.3% + Beta 1.92 × ERP 5.5% + Tesla risk premium 1%</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>高於 GDP（AI/Robotics 長期 optionality）</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+<p><strong>反推 10 年 FCF CAGR：~45%</strong>（以 DCF 現值 = $1,503B 解出）</p>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含相對</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>-1% (2022-2025)</td><td><strong>遠高於歷史</strong></td></tr>
+<tr><td>共識 EPS CAGR</td><td>35%</td><td>隱含 FCF CAGR 需高於 EPS CAGR</td></tr>
+<tr><td>同業最快 FCF CAGR（NVDA）</td><td>~60%</td><td>需接近 AI 龍頭水準</td></tr>
+</table>
+<p><strong>兌現條件：</strong>需 Rev 年增 ~30% 且 FCF Margin 從 6.6% → 20% 同步擴大；此條件在「Cybercab + Robotaxi + Optimus 三項 100% 成功」劇本才合理。</p>
+<p><strong>隱含預期判斷：<span class="badge badge-red" style="font-size:14px">🔴 激進</span></strong></p>
+
+<h3>⚠️ 便宜理由檢驗（反向：昂貴理由檢驗）</h3>
+<p>此處不適用傳統便宜理由檢驗（Tesla 是昂貴而非便宜）。反向檢驗：「昂貴是否合理」？</p>
+<table>
+<tr><th>#</th><th>問題</th><th>答案</th><th>結論</th></tr>
+<tr><td>Q1</td><td>市場為何給這個高倍數？</td><td>AI/Robotics 平台期望 + Musk 名人效應 + Optimus/Cybercab 潛力</td><td>理由存在但過度樂觀</td></tr>
+<tr><td>Q2</td><td>基本面數據支撐？</td><td>否——GM 壓縮、ROIC 崩、中國份額流失、Q1 交車 miss</td><td>無支撐</td></tr>
+<tr><td>Q3</td><td>護城河完整？</td><td>侵蝕中（§9）</td><td>已侵蝕</td></tr>
+<tr><td>Q4</td><td>FCF 品質？</td><td>2025 FCF +74% 是低基期回復，非結構性改善</td><td>不穩定</td></tr>
+<tr><td>Q5</td><td>催化劑能維持高估值？</td><td>Cybercab / Robotaxi / Optimus 三項必須同時成功</td><td>條件苛刻</td></tr>
+</table>
+<p><strong>結論：<span class="badge badge-red" style="font-size:14px">🔴 昂貴有理（若樂觀劇本）， 但機率低</span></strong></p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>3Y EPS CAGR</th><th>ROIC</th></tr>
+<tr><td><strong>TSLA</strong></td><td>$1,503B</td><td><strong>197x</strong></td><td><strong>140x</strong></td><td><strong>5.6</strong></td><td>6.6%</td><td>35%</td><td>3.3%</td></tr>
+<tr><td>BYD</td><td>$130B</td><td>18x</td><td>8x</td><td>0.9</td><td>6%</td><td>20%</td><td>~8%</td></tr>
+<tr><td>Toyota</td><td>$280B</td><td>10x</td><td>6x</td><td>1.2</td><td>8%</td><td>8%</td><td>~7%</td></tr>
+<tr><td>NVDA（AI 平台對照）</td><td>$3,800B</td><td>33x</td><td>25x</td><td>0.8</td><td>48%</td><td>40%</td><td>70%</td></tr>
+<tr><td>GOOGL</td><td>$2,200B</td><td>22x</td><td>14x</td><td>1.3</td><td>21%</td><td>17%</td><td>28%</td></tr>
+<tr><td>產業中位（汽車）</td><td>-</td><td>~15x</td><td>~7x</td><td>~1.0</td><td>~7%</td><td>~14%</td><td>~7%</td></tr>
+<tr><td>產業中位（AI 平台）</td><td>-</td><td>~28x</td><td>~20x</td><td>~1.0</td><td>~35%</td><td>~28%</td><td>~50%</td></tr>
+</table>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>Tesla Fwd PE 197x vs AI 平台中位 28x = <strong>603% 溢價</strong>（極端），vs 汽車業 15x = <strong>1,213% 溢價</strong>。</p>
+<table>
+<tr><th>情境</th><th>假設</th><th>TSLA 股價</th></tr>
+<tr><td>A：溢價收斂 50% 向 AI 平台中位</td><td>TSLA PE → (197+28)/2 = 112x</td><td>$227（-43%）</td></tr>
+<tr><td>B：溢價收斂至汽車業中位</td><td>TSLA PE → 25x</td><td>$50.75（-87%）</td></tr>
+</table>
+<p><strong>替代 Bear Case（取 B 與 §8E 保守者）：$50.75</strong></p>
+<p>§1 標註：相對同業溢價 603%~1,213%，收斂風險列為 R4（補充於 §5 C）</p>
+
+<h4>橫向風報比</h4>
+<table>
+<tr><th>問題</th><th>Tesla</th><th>最強對手（NVDA）</th></tr>
+<tr><td>主假設兌現，上行空間</td><td>+100%（PE 維持 200x + EPS +50%）</td><td>+50%（已高位）</td></tr>
+<tr><td>主假設落空，跌幅</td><td>-70% ~ -87%</td><td>-30%（AI 需求仍強）</td></tr>
+<tr><td>風報比</td><td>+1.3 / -1.25</td><td>+1.7 / -1.0</td></tr>
+</table>
+<p><strong>橫向比較結論：<span class="badge badge-red">❌ 同主題有更佳標的（NVDA / GOOGL）</span></strong></p>
+
+<h3>13.5｜估值五角驗證</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>依據</th></tr>
+<tr><td>估值體系（13.0）</td><td><span class="badge badge-red">🔴 下修風險</span></td><td>AI 敘事 vs 汽車基本面 gap</td></tr>
+<tr><td>歷史分位（13.1）</td><td><span class="badge badge-red">🔴 過熱</span></td><td>Fwd PE 85% 分位</td></tr>
+<tr><td>PEG（13.2）</td><td><span class="badge badge-red">🔴 貴</span></td><td>5.6 遠超 2.0</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td><span class="badge badge-red">🔴 激進</span></td><td>隱含 FCF CAGR 45%</td></tr>
+<tr><td>同業（13.4）</td><td><span class="badge badge-red">🔴 溢價無支撐</span></td><td>vs AI 平台 603%、汽車 1213%</td></tr>
+</table>
+<p><strong>§2 D 交叉驗證：</strong>當前 Fwd PE 197x vs §2 D 合理 PE（22x）= 高出 795%，觸發「下修一級」，但估值燈已 🔴 最低等級。</p>
+<p><strong>歷史分位降權規則：</strong>PEG &gt; 2.0，不適用降權。</p>
+<p><strong>當前定價判斷：<span class="badge badge-red" style="font-size:14px">🔴 明顯貴</span></strong>（五角全紅）</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>判斷</th><th>調整</th></tr>
+<tr><td>① 護城河（§9）</td><td>7/10</td><td>相對基準 −2x</td></tr>
+<tr><td>② Runway（§8A）</td><td>🟡 5-9 年</td><td>±0</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>量驅動 + 消耗型</td><td>−2x</td></tr>
+<tr><td>④ 成長護城河連動</td><td>消耗型（汽車）</td><td>−1x</td></tr>
+<tr><td>⑤ ROIC 可維持性</td><td>ROIC − WACC = -6.7%</td><td>−3x</td></tr>
+<tr><td>⑥ 衰退信號</td><td>6 個 🔴</td><td>−3x</td></tr>
+<tr><td>⑦ 估值體系方向</td><td>🔴 下修</td><td>−2x</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.3%（仍高）</td><td>−1x</td></tr>
+<tr><td>AI 平台產業基準</td><td>28x</td><td>調整後：18-22x</td></tr>
+</table>
+
+<h3>長期合理倍數對應表</h3>
+<table>
+<tr><th>§8 評級</th><th>5Y 基準 Fwd PE</th></tr>
+<tr><td>🟡 中等（本案）</td><td><strong>20x</strong></td></tr>
+</table>
+<p>基準倍數：20x × AI 調整 0.9（🟡）= <strong>18x</strong>（即便 Energy / Optimus optionality 給溢價 1.1x = 19.8x ≈ 20x）</p>
+
+<h3>分析師目標價共識</h3>
+<ul>
+<li>共識中位：$394-402（近持平現價）</li>
+<li>高：$600（Wedbush 2026/3/27）</li>
+<li>低：$24.86（GLJ Research 2026/3/30）+ $145（JPMorgan 4/6）</li>
+<li>評級分布：13 buy / 11 hold / 6 sell（n=30）</li>
+<li>分歧點：Bulls 重視 AI/Robotics 平台期權；Bears 重視汽車基本面 + 估值壓縮風險</li>
+</ul>
+
+<h3>投資結論（v11.0 完整版）</h3>
+<p><strong>財報信號與假設校準：</strong></p>
+<ul>
+<li>H1 當前狀態：<span class="badge badge-yellow">0 不變</span>（Austin 僅 12 輛 unsupervised，遠未達 5 城 target）</li>
+<li>H2 當前狀態：<span class="badge badge-green">+ 輕度強化</span>（Optimus 1,000+ 工廠部署；Cybercab 2026 Q4 量產 on track）</li>
+<li>H3 當前狀態：<span class="badge badge-red">− 削弱</span>（Q1 交車 miss + 164K 庫存 + JPMorgan $145 PT）</li>
+<li>Q1 2026 財報讓隱含預期變得<strong>更困難兌現</strong>，理由：庫存 164K + 中國份額流失 + GM 壓縮風險</li>
+</ul>
+<p><strong>綜合訊號輸出：</strong></p>
+<ul>
+<li>護城河等級：B (7/10) → 調整後：B</li>
+<li>估值燈：🔴 過熱（Fwd PE 5Y 分位 85%，PEG 5.6）</li>
+<li>Pure MA 狀態：✅ 強勢進場</li>
+<li>大盤豁免：正常</li>
+<li><strong>綜合訊號：<span class="big-signal">X</span></strong>（gate 🔴 拒絕）</li>
+<li>中期參考 R:R：負值（資訊性，不主導）</li>
+</ul>
+<p><strong>長期持有信心：中</strong>｜Energy + AI optionality 存在，但執行節奏 &lt; 競爭對手，且估值透支樂觀劇本。等 Fwd PE 回到 80x（股價 ~$220）或 Cybercab/Robotaxi 任一實質兌現再進場。</p>
+</section>
+
+<!-- 版本修訂紀錄 -->
+<section id="revisions">
+<h2>版本修訂紀錄</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>變更摘要</th></tr>
+<tr><td>v12.0</td><td>2026-04-18</td><td>首次套用 v12.0 schema：綜合訊號燈 X（取代 v11 具體倉位 %）。gate 🔴 觸發「直接拒絕」。三軸：B/🔴/✅。新增 QC-22 股價漂移警示（4 週 +11.3%）、QC-25 Beta 雙源驗證（yfinance 1.92 vs TradingView 1.63，差 16% &lt; 30%）、QC-26 Margin 結構性測試（汽車 GM 29% → 18%，結構性質變已 embed 至護城河 7 分）、QC-29 R:R 壓力測試 0/4 過關、QC-30 同業溢價收斂壓測（603%~1213% 溢價）。產業風向燈 🟡 中性偏逆風 (首次定義)。</td></tr>
+<tr><td>v11.2</td><td>2026-04-17</td><td>v11 版 DD（先前）：裁決「迴避」、品質 A 級、中期 R:R 為負、trap 🟡 觀察期。Forward PE 191x，PEG 10.3。與 v12 差異：v12 將護城河降至 7（B 級）以反映 Xiaomi/BYD 競爭更充分，估值燈 🔴 觸發拒絕 gate 更簡潔。</td></tr>
+</table>
+
+<h3>【假設驗證對照】（QC-17）</h3>
+<table>
+<tr><th>項目</th><th>上次狀態（2026-04-17）</th><th>本次狀態（2026-04-18）</th><th>邊際變化</th></tr>
+<tr><td>H1（Robotaxi 商業化 - 原本 10+ 城市 / $5B ARR）</td><td>輕度強化（500+ 車隊、Bay Area + Austin 雙城）</td><td>0 不變（Austin 12 輛 unsupervised；本次 DD 收緊假設門檻至 5+ 城市 / $2B ARR）</td><td><strong>削弱</strong>（原 H1 目標 $5B ARR 過於樂觀，本次重構）</td></tr>
+<tr><td>H2（Cybercab + Optimus 量產）</td><td>強化（Cybercab 2026/4、Optimus Gen3 2026H2、$20B Capex）</td><td>+ 輕度強化（Optimus 1,000+ 部署已兌現；Cybercab 2026 Q4 on track）</td><td>強化（Optimus 實際部署略超預期）</td></tr>
+<tr><td>H3（敘事溢價延續）</td><td>0 中性（Fwd PE 191x）</td><td>− 削弱（Fwd PE 197x 但 Q1 交車 miss + JPMorgan $145 PT 持續壓力）</td><td><strong>削弱</strong></td></tr>
+<tr><td>R1（Robotaxi 監管）</td><td>未觸發</td><td>接近觸發（NHTSA engineering analysis 升級，2026/3/6 deadline 已過）</td><td>🔴 風險升高（原「單季 3 起事故」未達，但 NHTSA 調查本身已是重大 overhang）</td></tr>
+<tr><td>R2（Cybercab 延期 &gt; 12 月）</td><td>未觸發</td><td>未觸發（Musk 4/22 財報 guidance 前 on track）</td><td>不變</td></tr>
+<tr><td>R3（估值切換至汽車業）</td><td>未觸發</td><td>未觸發但信號出現（JPMorgan $145 target = 65 x Fwd FY+1 = 汽車業倍數）</td><td>警戒升高</td></tr>
+<tr><td>裁決變化</td><td>迴避</td><td>迴避（X 訊號）</td><td>不變，但驅動邏輯更明確（v12 gate 🔴 機械拒絕，非綜合判斷）</td></tr>
+</table>
+<p class="note">3 個最關鍵新事實（vs 上次）：<br>
+① 中國 Jan 2026 Model Y 跌至第 20 名（Xiaomi YU7 37,869 vs Tesla 16,845，2x 勝出）——此為上次 DD 未見的產業結構信號<br>
+② JPMorgan 2026/4/10 $145 PT 重申，Q1 交車 358K miss 3.8%、164K 庫存新高——構成 R3 警戒前提<br>
+③ NHTSA FSD engineering analysis 2026/3/6 deadline 已過，2.88M 車輛調查中——R1 監管風險升級</p>
+</section>
+
+<footer style="text-align:center;padding:30px;color:#64748B;font-size:12px;margin-top:30px">
+<p>DD_TSLA_20260418 · Schema v12.0 · Tesla, Inc. (NASDAQ:TSLA) · 深度研究報告</p>
+<p>本報告僅供投資研究參考，不構成投資建議。倉位決策由 portfolio-manager skill 依組合狀態決定。</p>
+</footer>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
