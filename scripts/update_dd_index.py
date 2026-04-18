@@ -126,8 +126,12 @@ def extract_version(path: Path) -> str:
         return ""
 
 
-def extract_comment(path: Path, max_len: int = 500) -> str:
-    """Extract the bull one-liner from DD HTML as a short comment."""
+def extract_comment(path: Path, max_len: int = 180) -> str:
+    """Extract the bull one-liner from DD HTML as a short comment.
+
+    v12.0 policy: 備註欄限 180 字（約 3 句話），超過以第一個 '。' 後截斷或加 '…'。
+    改 500 → 180 是因為用戶回饋網站備註過長，閱讀不友善。
+    """
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
     except OSError:
@@ -141,7 +145,13 @@ def extract_comment(path: Path, max_len: int = 500) -> str:
 
     raw = TAG_RE.sub("", m.group(1)).strip()
     if len(raw) > max_len:
-        raw = raw[:max_len].rstrip("，。、；") + "…"
+        # 優先在句號切斷（保留完整句），fallback 硬截
+        cut = raw[:max_len]
+        last_period = max(cut.rfind("。"), cut.rfind("."))
+        if last_period > max_len * 0.5:  # 若找到句號且位置不會太短
+            raw = cut[:last_period + 1]
+        else:
+            raw = cut.rstrip("，。、；,.:;") + "…"
     return raw
 
 
