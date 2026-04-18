@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD Report - MPWR｜Monolithic Power Systems｜2026-04-18</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#F8FAFC; --card:#FFFFFF; --ink:#1E3A5F; --accent:#3B82F6; --line:#E2E8F0; --altrow:#F1F5F9; --muted:#64748B; }
+* { box-sizing: border-box; }
+body { margin:0; padding:0; background:var(--bg); color:#0F172A; font-family:'Noto Sans TC', system-ui, sans-serif; line-height:1.65; }
+.num, .mono { font-family:'IBM Plex Mono', monospace; }
+header.fixed { position:sticky; top:0; z-index:10; background:var(--ink); color:#fff; padding:10px 24px; display:flex; justify-content:space-between; align-items:center; font-size:14px; flex-wrap:wrap; gap:8px; }
+header.fixed .ticker { font-weight:700; font-size:18px; }
+header.fixed .meta { opacity:0.92; font-family:'IBM Plex Mono', monospace; }
+main { max-width:1200px; margin:0 auto; padding:24px; }
+h1 { color:var(--ink); font-size:28px; margin:8px 0 4px; }
+h2 { background:var(--ink); color:#fff; padding:10px 14px; border-left:4px solid var(--accent); margin:40px 0 16px; font-size:20px; border-radius:2px; }
+h3 { color:var(--ink); font-size:17px; margin:24px 0 10px; border-bottom:2px solid var(--line); padding-bottom:4px; }
+h4 { color:var(--ink); font-size:15px; margin:18px 0 8px; }
+.card { background:var(--card); padding:18px 22px; border:1px solid var(--line); border-radius:4px; margin-bottom:18px; }
+table { width:100%; border-collapse:collapse; margin:10px 0 18px; font-size:14px; background:#fff; }
+thead th { background:var(--ink); color:#fff; padding:9px 10px; text-align:left; font-weight:500; }
+tbody td { padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+tbody tr:nth-child(even) td { background:var(--altrow); }
+.beat, .pass, .green { background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:3px; font-weight:500; }
+.miss, .fail, .red { background:#FEE2E2; color:#991B1B; padding:2px 8px; border-radius:3px; font-weight:500; }
+.neutral, .yellow { background:#FEF9C3; color:#92400E; padding:2px 8px; border-radius:3px; font-weight:500; }
+.blue { background:#EFF6FF; color:#1E40AF; padding:2px 8px; border-radius:3px; font-weight:500; }
+.warn { background:#FFF0E6; border-left:4px solid #F97316; padding:14px 16px; margin:16px 0; }
+.warn h4 { color:#C2410C; margin-top:0; }
+.hypothesis-box { background:#EFF6FF; border-left:4px solid #3B82F6; padding:14px 18px; margin:14px 0; color:var(--ink); }
+.hypothesis-box ul { margin:6px 0; padding-left:20px; }
+.hypothesis-box li { margin:6px 0; }
+.note { color:var(--muted); font-size:13px; margin:8px 0; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:14px 0; }
+.debate { padding:14px 16px; border-radius:4px; }
+.debate h4 { margin-top:0; }
+.bull { background:#F0FDF4; border-left:4px solid #16A34A; }
+.bear { background:#FFF1F2; border-left:4px solid #DC2626; }
+.arb { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.rrgrid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin:14px 0; }
+.rrst { background:#F0F9FF; border-left:4px solid #0284C7; padding:14px 16px; border-radius:4px; }
+.rrmd { background:#F5F3FF; border-left:4px solid #7C3AED; padding:14px 16px; border-radius:4px; }
+.verdict { background:#FFFBEB; border-left:4px solid #D97706; padding:14px 18px; margin:18px 0; color:#92400E; }
+.tag-A { background:#DCFCE7; color:#166534; padding:3px 10px; border-radius:4px; font-weight:600; }
+.tag-B { background:#FEF9C3; color:#92400E; padding:3px 10px; border-radius:4px; font-weight:600; }
+.tag-F { background:#FEE2E2; color:#991B1B; padding:3px 10px; border-radius:4px; font-weight:600; }
+.tag-S { background:#F5F3FF; color:#6D28D9; padding:3px 10px; border-radius:4px; font-weight:600; }
+.tag-X { background:#FEE2E2; color:#991B1B; padding:3px 10px; border-radius:4px; font-weight:700; font-size:16px; }
+button.print-btn { position:fixed; right:22px; bottom:22px; background:var(--ink); color:#fff; border:none; padding:10px 18px; border-radius:24px; cursor:pointer; font-family:inherit; box-shadow:0 4px 10px rgba(0,0,0,0.15); z-index:50; }
+@media print { header.fixed, button.print-btn { display:none; } main { max-width:none; } h2 { page-break-after:avoid; } }
+</style>
+</head>
+<body>
+<header class="fixed">
+<div><span class="ticker">MPWR</span>｜Monolithic Power Systems｜Nasdaq</div>
+<div class="meta">Data: 2026-04-18｜Price: $1,468.35｜DD Schema v12.0</div>
+</header>
+<main>
+
+<h1>MPWR｜Monolithic Power Systems — 買側 DD v12.0</h1>
+<p class="note">資料抓取時間：2026-04-18（基於 2026-04-17 收盤）｜最新股價：$1,468.35｜最近財報季：FY2025 Q4（2026-02 公佈）｜下次財報：2026-05-01｜yfinance 批量採集 + 8 次 web_search 補漏｜報告生成：2026-04-18</p>
+
+<div class="warn">
+<h4>⚠️ QC-22 股價漂移警示：近 4 週 +36.9%（追高風險極高）</h4>
+<p>4 週前均價 $1,072.93 → 現價 $1,468.35，drift +36.9%（>20% 極端漂移）。本次 DD 撰寫期間適逢 KeyCorp 10/23 Rubin 70% 市佔升評余波 + 4 月分析師上修連鎖反應，入場窗口已大幅關閉。建議等待 Pure MA 狀態回測 Bollinger 中軌 ($1,088) 或 W52 均線 ($912) 再行動，不宜現價追擊。</p>
+</div>
+
+<!-- ============ §1 投資結論 ============ -->
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。§1 為一頁式摘要，完整推理過程見 §13.5 投資結論。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信｜§9 護城河趨勢 穩定（有裂縫但未瓦解）｜§8 F AI 風險 🟢 受益｜AI 基礎設施超級週期，Vera Rubin 2026H2 放量 + Enterprise Data 50%+ 成長下限。</li>
+<li><strong>品質 B 級：</strong>護城河 7/10（§9，BCD 製程+48V 架構獨家，但 Infineon/Renesas 吃掉 Blackwell 60-70% 份額為結構裂縫，QC-23 🔴 生態攻擊 -1 分）｜體質 veto 1 項不過｜等級調整：B → B（不變）</li>
+<li><strong>估值燈 🔴 過熱：</strong>Fwd PE (FY+1) 68.07x（5Y 分位 53%），PEG 3.18（> 2.5 觸發拒絕）｜盲點 1 救援 **不啟動**（PEG ≥ 2.0 不符）</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 $912 / W104 $815 / W250 $614（斜率 +7.4%）｜現價 $1,468 > W52 > W104 > W250 完美多頭排列｜盲點 2 救援：不適用</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 現價 $7,126 vs W104 $6,092（未破線，系統性風險無）</li>
+<li><strong>參考 R:R：</strong>短期 -0.68x / 中期 +0.26x｜壓力測試通過率 0/4（資訊性，不主導裁決；現價已高於任何合理 P/E × FY+2 EPS 目標）</li>
+<li><strong>綜合訊號：<span class="tag-X">X</span></strong>（取自 §2 H）｜判定理由：估值燈 🔴 過熱（PEG 3.18，訊號燈規則「直接拒絕 0%」）+ QC-19 集體訴訟 lead plaintiff 已過 + QC-22 股價漂移 +36.9%，三重警示疊加。</li>
+<li><strong>長期持有信心：高</strong>（§2 I，產業 🟢 + 護城河 7）｜<strong>陷阱定性：</strong>🟡 觀察期（基本面未瓦解但估值極端 + 訴訟懸而未決）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜<strong>X = 迴避／清倉</strong>。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<thead><tr><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr><td>最可能的價值陷阱模式是哪一種？</td><td><strong>非陷阱（但具備「成長股 de-rating 風險」特徵）</strong>——護城河存在結構裂縫但未瓦解，真正風險是「估值倍數伸展過度」與「集體訴訟懸而未決」兩個因素疊加。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>FY2025 Q4 Rev $751M（+20.8% YoY，雙 BEAT），全年 Rev $2.79B (+26.4%)，Enterprise Data +122% YoY 單季，管理層 2026 Enterprise Data 成長下限從 30-40% 上修至 **50%+**。GAAP GM 55.2%、ROIC 25.6%、FCF Margin 23.8%、Net Cash $1.08B、Automotive +36% YoY。KeyCorp 10/23 升評 + Rubin 70% 份額重奪 = MPWR 未失去客戶。Vicor 在 hyperscale 被 MPWR 擠出即為護城河仍然有效的證據。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>① NVDA B200 allocation 2025 中被砍（Edgewater 7 月報告後股價 -20%），Renesas 取 B200、Infineon 60-70% GB200 份額 = 結構性裂縫確立。② 現價 $1,468 = 52W Low $496 的 2.96 倍，14 個月內漲 +196%，完全透支 Rubin 2026H2 兌現。③ Gross Law Firm 集體訴訟進行中（2024/2/8 - 2024/11/8 購股人，lead plaintiff deadline 2025/4/7 已過，案號 25-cv-00220），指控 VRM 產品品質問題 + 管理層誤導陳述 = QC-19 重大事件。④ CEO + 高管近 60 天淨賣出 $255M+（insider 拋售高度集中在 2 月財報後）。⑤ PEG 3.18 歷史極端。</td></tr>
+<tr><td>如何判斷陷阱是否正在發生？</td><td>① Enterprise Data 單季 YoY 連續 2 季 &lt; +30% → H1 失敗；② Rubin design win 在 2026 Q2-Q3 供應鏈報告中出現「MPWR 未入選 VR200」新聞 → 護城河侵蝕；③ 集體訴訟進展至 class certification stage 且涉及更大賠償金額。</td></tr>
+</tbody>
+</table>
+<p><strong>最終定性：<span class="neutral">🟡 觀察期</span></strong></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Enterprise Data 段季度營收 YoY &amp; 2026 全年 Rev guidance</td><td>§5 H1 / §6</td><td>🔵 核心假設驗證（AI 受益幅度）</td><td>連續 2 季 YoY &lt; +30%；或 2026 全年 Rev guidance 下修至 $3.2B 以下</td></tr>
+<tr><td>2</td><td>Rubin VR200 / R200 HGX 份額確認（供應鏈追蹤）</td><td>§9 / §11</td><td>🔵 護城河恢復信號 vs 侵蝕信號</td><td>KeyCorp 70% 份額預測在 2026 Q3 供應鏈報告中降至 &lt; 50%</td></tr>
+<tr><td>3</td><td>Fwd PE 5Y 分位 + PEG</td><td>§13.1 / §2 D</td><td>估值修復信號（進場窗）</td><td>Fwd PE 落回 45x 以下（5Y 分位 &lt; 25%）或 PEG &lt; 2.0</td></tr>
+</tbody>
+</table>
+
+<!-- ============ §2 四層判定 ============ -->
+<h2>§2｜產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.0）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway 10+ 年，AI 資料中心電力密度 10x → 48V 架構剛起步）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（BCD+48V+Silicon Carbide 整合獨家，但 Blackwell B200 份額被 Renesas 搶走為結構裂縫；Vera Rubin 70% 份額重奪為恢復訊號）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（核心業務直接受惠 GPU 功率密度提升需求）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>AI 資料中心從 12V → 48V → 400V 架構遷移，MPWR 具備橫跨 VRM/PMIC 的垂直整合能力，產業 TAM 5 年 5x；但 B200 世代暴露「單一客戶依賴 + 品質控制」雙重風險。</td></tr>
+</tbody>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<thead><tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="pass">✅</span></td><td>GAAP GM 2023 56.1% / 2024 55.3% / 2025 55.2%（-0.9pp 累積，未達 2pp 閾值）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="pass">✅</span></td><td>FY2025 FCF $663M / GAAP NI $621M = 1.07（fabless-lite）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="pass">✅</span></td><td>FY+1 90d 前 $20.86 → 現 $21.57（+3.4% 上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="pass">✅</span></td><td>Q1-Q4 2025 YoY 全部 +20~+25%（Q4 +20.8%）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="pass">✅</span></td><td>Total Debt $20M / Cash $1.10B → Net Cash $1.08B（零槓桿）</td></tr>
+</tbody>
+</table>
+<p><strong>體質 veto 結果</strong> = 0 項不過 → 等級不變</p>
+
+<h3>B｜品質等級（護城河單一決定，5 級制）</h3>
+
+<h4>護城河 §9 評分說明</h4>
+<p>§9 給 8（BCD 製程獨家 +48V 架構 +Silicon Carbide 整合 +設計深度鎖定），但 QC-23 觸發 🔴 生態攻擊（Infineon + Renesas 聯手對 Blackwell B200/GB200 生態攻擊，取得 60-70% 份額）→ 護城河 **−1 分 = 7**。</p>
+
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河分數（§9）</td><td>原始 8，經 QC-23 🔴 調整後 <strong>7</strong>/10</td></tr>
+<tr><td>護城河原始等級（依 7 分）</td><td>✅ B 級（7-8 分）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong><span class="tag-B">B 級</span></strong></td></tr>
+<tr><td><strong>底倉（參考）</strong></td><td><strong>15%（目標倉位的）</strong>（實際倉位由 PM skill 決定）</td></tr>
+</tbody>
+</table>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY+1 EPS（FY2026E Non-GAAP）</td><td>$21.57</td><td>yfinance 即時共識（n=15，90d 上修 +3.4%）</td></tr>
+<tr><td>FY+2 EPS（FY2027E Non-GAAP）</td><td>$25.92</td><td>yfinance 即時共識（n=15，90d 上修 +5.1%）</td></tr>
+<tr><td>FY+2 成長率</td><td>+20.2%</td><td>(25.92 / 21.57) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>68.07x</td><td>$1,468.35 ÷ $21.57</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>56.65x</td><td>$1,468.35 ÷ $25.92</td></tr>
+<tr><td>3Y EPS CAGR（基期 FY25 Non-GAAP $17.77 → FY+2 $25.92）</td><td>約 21.4%</td><td>(25.92 / 17.77)^(1/2) - 1</td></tr>
+</tbody>
+</table>
+
+<h3>D｜估值燈（v12.0 核心裁決）</h3>
+
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前 Fwd PE（FY+1）</td><td>68.07x</td></tr>
+<tr><td>5Y Fwd PE 範圍（低～高）</td><td>27x ~ 104x（2022 Q4 低，2021 Q3 高；中位數 56.48x）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>(68.07 − 27) / (104 − 27) = <strong>53%</strong></td></tr>
+<tr><td>3Y EPS CAGR</td><td>21.4%</td></tr>
+<tr><td>PEG</td><td>68.07 / 21.4 = <strong>3.18</strong></td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong><span class="red">🔴 過熱</span></strong>（分位 53% 🟡 合理，但 PEG 3.18 &gt; 2.5 觸發 🔴，取較嚴者）</td></tr>
+<tr><td><strong>套用規則</strong></td><td><strong>直接拒絕（0%）</strong></td></tr>
+</tbody>
+</table>
+
+<h4>🛡️ 盲點 1 救援檢查</h4>
+<table>
+<thead><tr><th>條件</th><th>門檻</th><th>是否滿足</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信</td><td><span class="pass">✅ 滿足</span></td></tr>
+<tr><td>PEG &lt; 2.0</td><td>&lt; 2.0</td><td><span class="fail">❌ 不滿足（PEG 3.18）</span></td></tr>
+<tr><td>§8 F AI 風險評級</td><td>🟢 AI 受益</td><td><span class="pass">✅ 滿足</span></td></tr>
+</tbody>
+</table>
+<p><strong>盲點 1 救援：不啟動</strong>（PEG 3.18 ≥ 2.0 硬條件失敗，即使產業風向 🟢 也不救）。估值燈維持 🔴 過熱。</p>
+
+<p><strong>估值燈調整後等級：B → 拒絕（gate 🔴 直接拒絕）</strong></p>
+
+<h3>E｜R:R 與 Bear Case（參考用，不主導裁決）</h3>
+
+<h4>參考目標價（資訊，非裁決）</h4>
+<p>合理 P/E 參考：§13.5 長期基準 25x（§8 🟢 高確信）× 三引擎較高者（引擎 C 護城河 7 分僅 × 1.0）× AI 調整 × 1.10 = <strong>27.5x</strong>。此為 5 年後成熟期倍數，短中期市場定價可能仍維持 50-60x 過渡區間。</p>
+<p>為估 R:R 參考，採用「短中期過渡合理 P/E = 45x」（接近 5Y 分位 25% 處），此為「估值均值回歸」情境下的公允中樞。</p>
+
+<table>
+<thead><tr><th>時距</th><th>計算</th><th>目標價</th></tr></thead>
+<tbody>
+<tr><td>短期（1 年）</td><td>FY+1 EPS $21.57 × 45x</td><td class="mono"><strong>$971</strong></td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 EPS $25.92 × 45x</td><td class="mono"><strong>$1,167</strong></td></tr>
+</tbody>
+</table>
+
+<h4>Bear Case（基本面惡化情境，§8E 成長降至 10%）</h4>
+<table>
+<thead><tr><th>項目</th><th>短期</th><th>中期</th></tr></thead>
+<tbody>
+<tr><td>Bear PE（成長熄火 → 降至 25x）</td><td>25x</td><td>25x</td></tr>
+<tr><td>Bear EPS（FY × 0.9）</td><td>$19.41</td><td>$23.33</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td class="mono"><strong>$485</strong></td><td class="mono"><strong>$583</strong></td></tr>
+</tbody>
+</table>
+<p class="note">W52/W104 參考：現價 $1,468.35｜W52 Low $579.32｜W104 Low $472.52。Bear 股價 $485 接近 W104 Low。</p>
+
+<h4>雙 R:R 計算</h4>
+<div class="rrgrid">
+<div class="rrst">
+<h4>① 短期（1 年）</h4>
+<table>
+<tbody>
+<tr><td>目標價</td><td class="mono">$971</td></tr>
+<tr><td>上行空間</td><td class="mono"><span class="miss">−33.9%</span></td></tr>
+<tr><td>下檔錨點（Bear）</td><td class="mono">$485</td></tr>
+<tr><td>下行距離</td><td class="mono">−67.0%</td></tr>
+<tr><td><strong>R:R</strong></td><td class="mono"><strong>−0.51x</strong></td></tr>
+</tbody>
+</table>
+<p class="note"><span class="miss">短期目標價遠低於現價，上行空間為負。</span></p>
+</div>
+<div class="rrmd">
+<h4>② 中期（2 年）</h4>
+<table>
+<tbody>
+<tr><td>目標價</td><td class="mono">$1,167</td></tr>
+<tr><td>上行空間</td><td class="mono"><span class="miss">−20.5%</span></td></tr>
+<tr><td>下檔錨點（Bear）</td><td class="mono">$583</td></tr>
+<tr><td>下行距離</td><td class="mono">−60.3%</td></tr>
+<tr><td><strong>R:R</strong></td><td class="mono"><strong>−0.34x</strong></td></tr>
+</tbody>
+</table>
+<p class="note"><span class="miss">中期目標價仍低於現價。</span></p>
+</div>
+</div>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>合理 P/E 45x, FY+1 $21.57, FY+2 $25.92</td><td>-0.51x</td><td>-0.34x</td></tr>
+<tr><td>壓力 A</td><td>成長率 -10% → FY+1 $19.41, FY+2 $22.75</td><td>-0.64x</td><td>-0.49x</td></tr>
+<tr><td>壓力 B</td><td>合理 P/E -20% = 36x</td><td>-0.73x</td><td>-0.57x</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（ADI 30x 中位 → MPWR 應收斂至 40x）</td><td>-0.77x</td><td>-0.64x</td></tr>
+</tbody>
+</table>
+<p><strong>壓力測試通過率 = 0/4</strong>（全部情境 R:R 皆為負，遠未達 ≥ 2.0）</p>
+<p class="note">現價已完全超越任何合理 P/E × FY EPS 目標。即使中期 R:R 為資訊性指標，此數字仍強烈建議「不進場」。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$1,468.35</td></tr>
+<tr><td>W52 SMA / 斜率</td><td>$911.71 / +17.99%</td></tr>
+<tr><td>W104 SMA / 斜率</td><td>$815.25 / +8.08%</td></tr>
+<tr><td>W250 SMA / 斜率（13 週變化）</td><td>$614.12 / <strong>+7.42%</strong>（&gt; +3% 強正）</td></tr>
+<tr><td>價格排列</td><td>現價 $1,468 &gt; W52 $912 &gt; W104 $815 &gt; W250 $614（完美多頭）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="pass">✅ 強勢進場</span></strong>（四條件皆滿足 + W250 斜率 &gt; +3%）</td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>× 1.0</strong></td></tr>
+</tbody>
+</table>
+<p class="note">盲點 2 救援不適用（狀態非 ❌ 系統失效）。</p>
+
+<div class="warn">
+<h4>QC-24 Intraday 訊號檢查（近 5 交易日）</h4>
+<table>
+<thead><tr><th>日期</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>盤中回落</th><th>訊號</th></tr></thead>
+<tbody>
+<tr><td>2026-04-13</td><td>$1,336.41</td><td>$1,377.25</td><td>$1,332.04</td><td>$1,372.23</td><td>(1377-1372)/1377 = 0.4%</td><td>正常</td></tr>
+<tr><td>2026-04-14</td><td>$1,372.49</td><td>$1,378.55</td><td>$1,349.01</td><td>$1,363.42</td><td>1.1%</td><td>正常</td></tr>
+<tr><td>2026-04-15</td><td>$1,345.72</td><td>$1,362.25</td><td>$1,329.46</td><td>$1,353.00</td><td>0.7%</td><td>正常</td></tr>
+<tr><td>2026-04-16</td><td>$1,365.62</td><td>$1,405.14</td><td>$1,353.55</td><td>$1,402.81</td><td>0.2%</td><td>Gap up +2.8%, 收紅 K</td></tr>
+<tr><td>2026-04-17</td><td>$1,437.62</td><td>$1,479.23</td><td>$1,420.34</td><td>$1,468.35</td><td>0.7%</td><td>Gap up +2.5%, 收紅 K 但觸 52W 高</td></tr>
+</tbody>
+</table>
+<p>無 shooting star 或 gap up 收黑 K 警示；但連兩日創新高 + 急漲斜率（4/13 $1,372 → 4/17 $1,468 = +7.0% 一週），屬「動能末段拉高」型態，應提高警覺（非 QC-24 🔴 警示，但 QC-22 已警告）。</p>
+</div>
+
+<h3>G｜大盤豁免層（系統性風險）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>SPX 現價</td><td>$7,126.06</td></tr>
+<tr><td>SPX W104</td><td>$6,092.49</td></tr>
+<tr><td>系統性風險（破 W104）</td><td><span class="pass">否</span></td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</tbody>
+</table>
+
+<h3>H｜綜合訊號燈（v12.0 最終裁決）</h3>
+
+<h4>訊號燈判定邏輯（依序評估）</h4>
+<table>
+<thead><tr><th>步驟</th><th>條件</th><th>本標的結果</th></tr></thead>
+<tbody>
+<tr><td>1. 拒絕檢核</td><td>trap 🔴 或 gate 🔴 或 MA ❌ 或 quality 拒絕</td><td><strong class="red">✅ 命中（gate 🔴 過熱）→ 輸出 X</strong></td></tr>
+<tr><td>2. 高強度</td><td>（未執行）</td><td>—</td></tr>
+<tr><td>3. 中高強度</td><td>（未執行）</td><td>—</td></tr>
+<tr><td>4. 衛星級</td><td>（未執行）</td><td>—</td></tr>
+<tr><td>5. 觀察級</td><td>（未執行）</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>五個訊號維度（傳遞至 PM skill）</h4>
+<table>
+<thead><tr><th>維度</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier（§2 B 調整後）</td><td><span class="tag-B">B</span></td></tr>
+<tr><td>gate（§2 D）</td><td><span class="red">🔴</span></td></tr>
+<tr><td>ma_status（§2 F）</td><td><span class="pass">✅</span> 強勢進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td><span class="neutral">🟡</span> 觀察期</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong class="tag-X">X</strong></td></tr>
+</tbody>
+</table>
+<p>判定理由（一句話）：估值燈 🔴 過熱（PEG 3.18 超 2.5 硬閾值，訊號燈規則「直接拒絕」）——即使 MA ✅ 強勢、品質 B、大盤正常，估值燈一票否決。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（AI 電力密度 10x，48V→400V 架構在 S 曲線前段）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定（Blackwell 代有裂縫但 Rubin 代 70% 份額奪回）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</tbody>
+</table>
+<p><strong>一句話說明（≤ 120 字）：</strong>🟢 順風產業，B 級護城河 7/10（Blackwell 代裂縫後 Rubin 代 70% 份額恢復）。估值燈 🔴 過熱（PEG 3.18）+ Pure MA ✅ 強勢但 4 週 +37% 極端追高。等 $900 以下或 PEG &lt; 2.0 再進場；集體訴訟進展為關鍵負面監測點。</p>
+
+<!-- ============ §3 三方辯論 ============ -->
+<h2>§3｜三方辯論摘要</h2>
+
+<div class="grid3">
+<div class="debate bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>護城河恢復：KeyCorp 預測 MPWR 拿下 Rubin VR200/R200 HGX 70% 份額，年化 $420M 新增 Rev + $4+ EPS（§9）</td><td>2026 Rev +$100M，2027 +$420M</td></tr>
+<tr><td>2</td><td>Enterprise Data 2026 成長下限從 30-40% 上修至 50%+（管理層 Q4 call 明確 guide），Q4 單季 YoY +122%（§8）</td><td>50%+ floor guide</td></tr>
+<tr><td>3</td><td>Vicor 在 hyperscale 被 MPWR 擠出 = 護城河對第三方仍然有效；BCD+48V 整合獨家（§13）</td><td>Vicor designed-out</td></tr>
+</tbody>
+</table>
+<p><strong>多頭最強一句話：</strong>「Rubin 70% 份額是 MPWR 對 Blackwell 失利後的『工程反擊』，證明 MPWR 在下一代架構有技術護城河——2027 $4+ EPS 增量是實打實的。」</p>
+</div>
+
+<div class="debate bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<thead><tr><th>#</th><th>虧損情境</th><th>對應風險</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>估值均值回歸：PEG 從 3.18 修正至 2.0（同業中位），對應 Fwd PE 從 68x → 43x = 股價 $928（-37%）</td><td>§13.3 (估值壓縮)</td></tr>
+<tr><td>2</td><td>Rubin 70% 份額預測被打臉：2026 Q3 供應鏈報告若傳出 Infineon/TI 搶占 VR200 部分份額，KeyCorp 增量 $420M 縮水一半 → 股價 -25%</td><td>§5 R1 (NVDA 依賴)</td></tr>
+<tr><td>3</td><td>集體訴訟 class certification 通過 + 和解金 $500M+，市場對管理層誠信重新定價 + 過去 3 年 SBC 稀釋揭露</td><td>§12 治理 + QC-19</td></tr>
+</tbody>
+</table>
+<p><strong>空頭最大威脅：</strong>「4 週 +37% 的拉高來自單一分析師（KeyCorp）預測——這個數字會被 2026 Q2 供應鏈實況測試，不會是 2026 Q4 Rubin 量產，測試在未來 3-6 個月內就會揭曉。」</p>
+</div>
+
+<div class="debate arb">
+<h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<thead><tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr></thead>
+<tbody>
+<tr><td>vs 過去 3 年實際 FCF CAGR</td><td>隱含 28% vs 歷史 35% (FCF $188M 2022 → $663M 2025)</td><td>1/2（需維持歷史水準）</td></tr>
+<tr><td>vs 分析師 EPS CAGR 共識</td><td>隱含 28% vs 共識 21.4% → 高於</td><td>0/2（隱含激進）</td></tr>
+<tr><td>vs 同業最快 FCF CAGR</td><td>MPWR 28% vs ADI ~15%，確實產業最快</td><td>1/2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>需 Enterprise Data 2026 +50% +Rubin 70% +Automotive +30% 三者齊發</td><td>1/2</td></tr>
+<tr><td>歷史類似公司持續達成？</td><td>NVDA 2016-2021 曾達 30%+ FCF CAGR，但 MPWR 規模為其 1/10，持續性存疑</td><td>1/2</td></tr>
+</tbody>
+</table>
+<p><strong>隱含預期可信度評分：4 / 10</strong></p>
+<p><strong>仲裁員一句話：</strong>「市場隱含 FCF CAGR 28% 需要『Blackwell 失利完全翻盤 + Rubin 大獲全勝』——這是 1/3 機率的樂觀情境。」</p>
+</div>
+</div>
+
+<div class="verdict">
+<h4>【你的裁決】</h4>
+<table>
+<tbody>
+<tr><td>多頭最強論據</td><td>Rubin 70% 份額預測（KeyCorp 10/23 升評）+ 2026 Enterprise Data 50%+ floor</td></tr>
+<tr><td>空頭最大威脅</td><td>PEG 3.18 歷史極端 + 4 週 +37% 極端追高 + 集體訴訟懸而未決</td></tr>
+<tr><td>估值仲裁評分</td><td>4 / 10（隱含預期激進）</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong class="tag-X">迴避（綜合訊號 X）</strong></td></tr>
+<tr><td>裁決理由</td><td>三個獨立維度同時亮紅：① 估值燈 🔴（PEG 3.18 超硬閾值）；② QC-22 股價 4 週 +37% 極端漂移；③ QC-19 集體訴訟 lead plaintiff 已過但未結案。即使產業 🟢 順風 + MA ✅ 強勢，任一條件觸發「拒絕」即為 X。等估值燈回到 🟡（PEG &lt; 2.5，對應股價 ~$1,150）再評估。</td></tr>
+</tbody>
+</table>
+<p><strong>QC-13 自我攻擊裁決測試：</strong></p>
+<ul>
+<li><strong>反駁 1：</strong>「Rubin 70% 份額若在 Q2 財報中被管理層確認，PEG 3.18 會變合理。」→ 回應：KeyCorp 估值模型已含此假設；管理層尚未在 Q4 call 中引用此數字，屬賣方預測非公司 guide，未兌現前不應前瞻估值。</li>
+<li><strong>反駁 2：</strong>「集體訴訟是 2024 年舊事，市場已定價。」→ 回應：lead plaintiff deadline 已於 2025/4/7 過，案件 25-cv-00220 進入 discovery，若 2026 H2 進展至 class certification，CEO 誠信將被重新定價。</li>
+<li><strong>反駁 3：</strong>「+37% drift 僅為 catch-up，還未追上 NVDA 同期漲幅。」→ 回應：MPWR 是 NVDA 供應商 beta 2.0x，不應用 NVDA 漲幅當錨；應用基本面 FY+1 $21.57 × 合理 PE 45x = $971 當錨。</li>
+</ul>
+<p>三個反駁皆可駁回，維持迴避裁決。</p>
+</div>
+
+<!-- ============ §4 序章 ============ -->
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>MPWR 解決的是「電力密度不可能三角」——AI GPU 功耗從 H100 700W → Blackwell 1200W → Rubin 2000W+，若繼續用傳統 12V 輸電架構，銅纜需要加粗 4 倍、熱損耗升 16 倍、散熱成本指數增加。MPWR 用 48V/400V DC 架構 + 矽整合變壓器，把資料中心電源轉換效率從 89% 提升到 98%——這 9% 差距在 100MW 超算集群上 = 每年節省 $8M 電費 + 散熱成本。若 MPWR 明天消失，Infineon / Renesas / TI 三家可以補位，但 BCD 製程 + 48V 垂直整合的成本曲線 MPWR 領先競爭對手 2-3 年。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若此投資在 3 年內虧損 50%+，最可能路徑：</p>
+<ul>
+<li><strong>地緣政治曝險：</strong>MPWR fabless-lite 架構依賴 TSMC + 中國成都封裝廠，若中美關稅全面對 AI 加徵 20%+ 關稅，MPWR 毛利率從 55% 壓縮至 48%（-7pp）。發生機率中。</li>
+<li><strong>技術替代風險：</strong>若 NVDA 未來採用「板級整合電源」（Board-level integrated power），Vicor 或 Delta 的模組方案反超 MPWR 的晶片方案——2027-2028 可能性。</li>
+<li><strong>管理層失職：</strong>CEO Michael Hsing 已 78 歲；若其退休引發關鍵工程團隊流失（如 VRM 核心 RD），護城河能否傳承存疑。近 60 天 insider 賣壓 $255M+ 是信號。</li>
+<li><strong>價值陷阱路徑：</strong>最可能是「盈餘品質型」——過度依賴 2 家客戶（NVDA + 1 家 hyperscaler 合計 > 35% Rev），若 NVDA 下一代（Rubin 後 Post-Rubin）再度切換供應商，2028 年營收可能腰斬。</li>
+</ul>
+
+<!-- ============ §5 論點錨定 ============ -->
+<h2>§5｜投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<thead><tr><th>項目</th><th>填寫</th></tr></thead>
+<tbody>
+<tr><td>預設持有期</td><td>24-36 個月（2-3 年）</td></tr>
+<tr><td>主要驅動</td><td>Rubin 2026H2 放量兌現 + Enterprise Data 50%+ 兌現 + 估值倍數可能回落至 40-50x</td></tr>
+<tr><td>訊號 / 噪音</td><td>單季 EPS Beat 為噪音；Rubin design win 確認 / Enterprise Data 每季 YoY 成長 / 非 NVDA 客戶多元化為訊號</td></tr>
+</tbody>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td>Enterprise Data 2026-2028 維持 40%+ 年成長（管理層 floor 50% 為 upside），支撐總 Rev CAGR 22%+</td><td>季度 Enterprise Data YoY ≥ 40%</td><td>2026 Q2-Q4 財報</td></tr>
+<tr><td>H2</td><td>Rubin VR200/R200 HGX 平台 MPWR 拿下 &gt; 50% 份額（KeyCorp 預測 70%，保守 50%），2027 全年貢獻增量 &gt; $200M Rev</td><td>2026 Q3-Q4 供應鏈報告（Edgewater / Morgan Stanley）+ 管理層財報引用</td><td>2026 H2</td></tr>
+<tr><td>H3</td><td>估值倍數均值回歸：Fwd PE 從 68x 修正至 45-55x 區間，不進一步擴張至 80x+</td><td>FPE 分位 &lt; 70%；PEG &lt; 2.5</td><td>持續監測</td></tr>
+</tbody>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>Rubin 份額再度失守（&lt; 50%）— KeyCorp 70% 預測未兌現</td><td>H1, H2</td><td>Edgewater / Morgan Stanley 供應鏈追蹤 + 下一次財報 call 管理層措辭</td><td>2026 H2 出現「MPWR VR200 not selected」或管理層 2027 Rev guide 低於共識 10%</td></tr>
+<tr><td>R2</td><td>估值進一步擴張後均值回歸：PEG 從 3.18 急修至 1.5 （下修 53%）</td><td>H3</td><td>5Y FPE 分位</td><td>FPE 跌破 55x（分位 &lt; 50%，一次性下修 &gt; 15%）</td></tr>
+<tr><td>R3</td><td>集體訴訟 class certification 通過，和解金 $300M+ 或觸發 CEO 離職</td><td>H3 + 治理</td><td>案號 25-cv-00220 法庭進展</td><td>2026 H2 若進入 discovery 階段發現新證據</td></tr>
+</tbody>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>時間軸匹配：</strong>事件影響是否延伸至 2028 年？單季 guidance miss 為噪音。</li>
+<li><strong>假設關聯：</strong>是 H1 / H2 / H3 中哪一個？</li>
+<li><strong>邊際方向：</strong>+ / 0 / −</li>
+<li><strong>閾值判斷：</strong>是否達到重新評估觸發條件</li>
+</ul>
+</div>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td><strong>進場</strong></td><td>股價跌至 $900 以下（接近 W52 SMA）+ PEG &lt; 2.5 + H2 Rubin 份額獲管理層或 2 份供應鏈報告確認</td><td>建倉 15%（B 級目標倉位）</td></tr>
+<tr><td><strong>加碼</strong></td><td>股價跌至 $650（W250 區間）+ H1 + H2 均確認</td><td>加碼至 100% 目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 觸發（Rubin 份額 &lt; 50%）或 FPE 衝上 80x</td><td>減至 50% 目標倉位</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 被推翻（Enterprise Data YoY 連 2 季 &lt; 30%）或 R3 觸發（class certification + CEO 離職）</td><td>清倉，記錄護城河與治理雙重瓦解</td></tr>
+</tbody>
+</table>
+
+<!-- ============ §6 財報 ============ -->
+<h2>§6｜即時財報情報</h2>
+
+<h3>① 最新一季財報關鍵數字（FY2025 Q4，2026-02 公佈）</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$751.2M</td><td>$740M</td><td><span class="pass">BEAT +1.5%</span></td><td>+20.8%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$4.79</td><td>$4.74</td><td><span class="pass">BEAT +1.1%</span></td><td>+18.6%</td></tr>
+<tr><td>FCF</td><td>~$180M</td><td>—</td><td>—</td><td>+15%</td></tr>
+<tr><td>Gross Margin (GAAP)</td><td>55.2%</td><td>55.0%</td><td><span class="pass">BEAT</span></td><td>-0.1pp</td></tr>
+<tr><td>Operating Margin (GAAP)</td><td>26.6%</td><td>25.5%</td><td><span class="pass">BEAT</span></td><td>+0.3pp</td></tr>
+</tbody>
+</table>
+
+<p><strong>財報對 §5 假設的邊際貢獻：</strong></p>
+<table>
+<thead><tr><th>假設</th><th>邊際方向</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（Enterprise Data +40%+）</td><td><span class="pass">＋</span></td><td>Q4 Enterprise Data +122% YoY，2026 floor 從 30-40% 上修至 50%+</td></tr>
+<tr><td>H2（Rubin &gt; 50% 份額）</td><td><span class="neutral">0</span></td><td>管理層未直接提 VR200；但 Q4 call 提「next-gen platforms design progress on track」</td></tr>
+<tr><td>H3（估值倍數 45-55x）</td><td><span class="miss">−</span></td><td>財報後股價 2 個月再漲 +30%，Fwd PE 從 50x 擴至 68x，H3 被推翻</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>樂觀。CEO/CFO 反覆強調「Enterprise Data floor 50%+」「Automotive ramping」「multiple hyperscaler customers」。</li>
+<li><strong>Forward Guidance：</strong>Q1 2026 Rev $770-790M（中點 +16.5% YoY，vs 共識 $770M 中性略上），GM 54.9-55.5%。</li>
+<li><strong>刻意強調：</strong>「floor」一詞出現 5+ 次（vs 上季 0 次），管理層在 manage down expectations 後給出 floor — 這是 setup for beat 的經典用詞。</li>
+<li><strong>刻意迴避：</strong>① 分析師追問 Blackwell B200 2025 流失的 $$ 規模，CFO 僅稱 "we don't provide customer-level breakdowns"；② 未主動提及 Rubin VR200 份額（KeyCorp 70% 預測）。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>Q4 Automotive +36% YoY，Enterprise Data +122%，Communications +40%，Consumer +15%。需求全面強，供不應求。</li>
+<li><strong>供給端：</strong>TSMC 產能「adequate」但 2026 packaging 會是 bottleneck；管理層指示 "we have committed wafer allocations through Q3 2026"。</li>
+<li><strong>競爭格局：</strong>定價「stable」，未出現削價。Renesas/Infineon 在 B200 分走份額，但 MPWR 在 hyperscaler ASIC + Rubin 上補位。</li>
+<li><strong>對同業推論：</strong>ADI / MCHP Automotive 也應受惠（MPWR +36% → ADI 可能 +15-20%）；Vicor 對 Rubin 失敗 = Vicor 股價 FY2026 承壓。</li>
+</ul>
+
+<h3>QC-27 Revenue vs OI 增長率 Divergence</h3>
+<p>Q4 Rev +20.8% YoY vs OI +22.4% YoY → divergence -1.6%（OI 成長快於 Rev，margin 擴張）。判斷：<span class="pass">&lt; 0% 無警示</span>。</p>
+
+<!-- ============ §7 門檻檢核 ============ -->
+<h2>§7｜核心門檻檢核</h2>
+
+<h3>EPS CAGR 計算</h3>
+<ul>
+<li>基期 FY2025 實際 EPS（Non-GAAP）：$17.77</li>
+<li>FY+1E（FY2026）：$21.57（n=15，yfinance，90d 上修 +3.4%）</li>
+<li>FY+2E（FY2027）：$25.92（n=15，yfinance，90d 上修 +5.1%）</li>
+<li>FY+3E（推導）：依 §8A Runway 10+ 年 + §8B 定價驅動擴大 + §8D ROIC 26% → FY+3 成長率 +18%（Rubin 放量後成長趨緩），FY+3 EPS = $25.92 × 1.18 = $30.59</li>
+<li><strong>3Y Non-GAAP CAGR = (30.59 / 17.77)^(1/3) − 1 = 19.9%</strong></li>
+<li><strong>GAAP CAGR（基期 FY25 GAAP $12.86）= 需同步加 SBC 回沖，GAAP CAGR 約 18%</strong></li>
+</ul>
+
+<h3>門檻檢核表</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td>✓✓</td><td>FY2025 FCF $663M / Rev $2.79B = 23.8%，近 3 年趨勢 ↑（21%→22%→23.8%）</td></tr>
+<tr><td>正規化 FCF Margin（5Y）</td><td>均值 &gt; 15%；谷 &gt; 10%</td><td>✓✓</td><td>2021 36% / 2022 10.5% / 2023 32% / 2024 22% / 2025 23.8%；均值 24.9%，谷 10.5%（2022 供應鏈成本）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td>✓✓</td><td>25.6%，WACC 約 9%（Beta 1.96）→ 超額 16.6pp</td></tr>
+<tr><td>ROIC 穩定性（10Y）</td><td>≥ 70% 年份 &gt; 15%</td><td>✓✓</td><td>2016-2025 皆 &gt; 15%（10/10 達標 100%），最低 17%（2016），趨勢擴大</td></tr>
+<tr><td>毛利率定價能力（10Y）</td><td>改善年 ≥ 70%</td><td>✓</td><td>從 2016 的 54.8% → 2025 的 55.2%，改善 8/10 年；近 3 年略下滑（55.3%→55.3%→55.2%）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5% 優</td><td>✓✓</td><td>$175M / $2.79B = 6.3%（低密集）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td>⚠️</td><td>Non-GAAP 19.9%（略低 20% 標準）；GAAP 18%；差距來自 SBC 與無形資產攤銷</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="red">✗</span></td><td>3.18（§13.2）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7 低槓桿</td><td>✓✓</td><td>D/E = 20M / 3,531M = 0.006，幾近無負債</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td>✓✓</td><td>Cash $1.10B &gt;&gt; Debt $20M，覆蓋 55 倍</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分擴大</td><td>⚠️</td><td>§9 評分 7（原始 8 - QC-23 🔴 1 分 = 7）</td></tr>
+</tbody>
+</table>
+<p><strong>Munger 三維評級：🟢 三項全達標</strong>（ROIC 穩定 10/10 + 毛利率改善 8/10 + 資本密集 6.3%）。最大財務弱點：<strong>PEG 3.18 為門檻唯一 ✗ 項，反映估值已完全定價未來 3 年成長</strong>。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p>當前 FPE 分位 53%（非低估值），不觸發四問。但 PEG 3.18 在「高估值」光譜的另一極端——需 §13 「便宜理由檢驗」反向執行「貴的理由檢驗」。</p>
+
+<!-- ============ §8 長期成長性 ============ -->
+<h2>§8｜長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+<tbody>
+<tr><td>當前 TAM（Power Management IC）</td><td>$500-600B（2025）</td><td>含 PMIC、VRM、DC-DC、Modules（Gartner 2025）</td></tr>
+<tr><td>可達 TAM</td><td>$800B+（2030）</td><td>AI 資料中心電源 TAM 5 年 2x（從 $50B → $120B）</td></tr>
+<tr><td>當前 MPWR 市佔</td><td>~0.55% 總 TAM；AI 電源細分 ~15%</td><td>$2.79B / $500B；AI Enterprise 段估計 15-20%</td></tr>
+<tr><td>若 5% CAGR 維持，達 30% 滲透率需幾年</td><td>20+ 年</td><td>TAM 尚未達飽和的前段</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>10+ 年</strong></td><td>🟢 高確信</td></tr>
+</tbody>
+</table>
+
+<h3>B｜成長品質</h3>
+<p><strong>① 有機 vs 無機：</strong>MPWR 近 5 年無併購，100% 有機成長。</p>
+<p><strong>② 定價 vs 量：</strong>混合。AI 業務主要是量驅動（新 GPU 平台 design win 帶來量），但 400V 高壓產品 ASP 高於 48V 4x，產品 mix 升級帶來 ASP +20%/year。</p>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型</strong>：MPWR 在 Rubin VR200 上取得 70% 份額（KeyCorp）= 量成長帶來規模效應 + 產線學習曲線，使下一代 Post-Rubin 更有競爭力。BCD 製程每代累積工藝 know-how 不易被 Infineon/Renesas 複製。</p>
+
+<h3>D｜ROIC × FCF 可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>2025</th><th>2022</th><th>趨勢</th><th>門檻</th><th>符合</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>25.6%</td><td>18%</td><td>↑</td><td>&gt; WACC 9%</td><td>✓✓</td></tr>
+<tr><td>ROIC − WACC</td><td>16.6pp</td><td>9pp</td><td>↑</td><td>擴大</td><td>✓✓</td></tr>
+<tr><td>FCF Margin</td><td>23.8%</td><td>10.5%</td><td>↑</td><td>&gt; 15%</td><td>✓✓</td></tr>
+<tr><td>FCF/NI 轉換</td><td>1.07</td><td>0.43</td><td>↑</td><td>&gt; 0.85</td><td>✓✓</td></tr>
+<tr><td>再投資率</td><td>~28%</td><td>~35%</td><td>↓</td><td>成長期合理</td><td>✓</td></tr>
+</tbody>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<thead><tr><th>情境</th><th>特徵</th><th>合理 FPE</th><th>潛在跌幅</th></tr></thead>
+<tbody>
+<tr><td>3 年後成長降至 15%</td><td>成長放緩但高於市場</td><td>35x</td><td>-48%（至 $755）</td></tr>
+<tr><td>3 年後成長降至 10%</td><td>回歸市場平均</td><td>25x</td><td>-63%（至 $540）</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>成熟期低成長</td><td>18x</td><td>-73%（至 $388）</td></tr>
+</tbody>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號</th><th>指標</th><th>數據</th><th>亮燈？</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>Q1-Q4 2025 GM 55.4% / 55.0% / 55.1% / 55.2%</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>B200 份額 -50% 但 Rubin 70% 回補，總體未縮</td><td>🔴（嚴格）</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑？</td><td>ASP +20%/y 銷量亦 +20% (Rev +26%)</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 高於 Rev CAGR &gt; 5pp</td><td>EPS 20% vs Rev 26%：EPS 低於 Rev</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75</td><td>1.07</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 上升</td><td>$210M / $2.79B = 7.5%（高但穩定）</td><td>🟡（接近警示）</td></tr>
+<tr><td>產業衰退</td><td>TAM 萎縮</td><td>AI 電源 TAM 5Y 2x</td><td>⬜</td></tr>
+<tr><td>產業衰退</td><td>產業估值 3Y 下移</td><td>ADI FPE 從 30x→28x 微降，MPWR 從 50x→68x 升</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint Capex/FCF &gt; 60%</td><td>Capex $175M / FCF $663M = 26%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年內 Rev 下滑？</td><td>fabless-lite，投資彈性高</td><td>⬜</td></tr>
+</tbody>
+</table>
+<p>共 1 🔴（護城河「核心市場市佔縮減」嚴格判定為 B200 失守） + 1 🟡 → <strong>🟡 中度警戒</strong>。§9 必須正面回應 B200 份額流失是否為結構惡化。</p>
+
+<p><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway 10+ 年 + 有機定價驅動 + 護城河強化型 + ROIC 擴大；B200 失守為一代 specific，Rubin 份額恢復證明護城河未瓦解）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益</strong>：核心業務（AI 資料中心電源管理）直接因 AI GPU 功耗升級擴張。MPWR 本身就是 AI 基礎設施的必需零件。Enterprise Data 占 2025 Rev ~30%（估計），Q4 +122% YoY。</p>
+
+<!-- ============ §9 護城河 ============ -->
+<h2>§9｜護城河分析</h2>
+
+<h3>護城河原始評分：8 / 10</h3>
+<h3>QC-23 調整後：7 / 10（🔴 生態攻擊 −1 分）</h3>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong>弱。硬體 IC 不具網路效應。</li>
+<li><strong>無形資產：</strong>強。BCD（Bipolar-CMOS-DMOS）製程 20 年 know-how 領先 TI/Infineon 2-3 年；專利 1,000+ 件（2025 10-K）；48V→400V 架構先行者優勢。</li>
+<li><strong>轉換成本：</strong>中高。GPU/ASIC 設計鎖定（design-in）後，切換供應商需重新驗證 12-18 個月 + 性能回退 5-10%；Blackwell B200 僅因品質問題才被切換。</li>
+<li><strong>規模優勢：</strong>強。fabless-lite 模式下每 $1 Capex 產生 $4 Rev（vs TI $1.5），成本曲線已下沉。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>資本充足的對手（TI $200B 市值、Infineon $40B）為何無法跨越：① BCD 製程工藝 know-how 屬 tacit knowledge，非 CapEx 可購買；② MPWR 專注度（95% 營收為 power IC），TI 為混合訊號大廠 power 僅佔 40%；③ 48V 先行者優勢 → 客戶工程團隊已建立 MPWR 技術協作關係。</p>
+
+<h3>QC-23 競爭威脅 3 級分類</h3>
+<table>
+<thead><tr><th>威脅</th><th>等級</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>Infineon + Renesas 聯手取得 Blackwell B200 60-70% 份額</td><td>🔴 生態攻擊</td><td>護城河 −1 分</td></tr>
+<tr><td>TI 在傳統 12V 汽車 power 段持續點對點競爭</td><td>🟡 點對點</td><td>不扣分</td></tr>
+<tr><td>Vicor 在 hyperscale 被 MPWR 擠出</td><td>🟡 點對點（MPWR 勝）</td><td>加分印證護城河</td></tr>
+</tbody>
+</table>
+
+<h3>市佔競爭表（AI 資料中心電源）</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰吃誰</th></tr></thead>
+<tbody>
+<tr><td>MPWR</td><td>~40%（整體 AI 電源）</td><td>Blackwell 代 ↓，Rubin 代 ↑</td><td>品質控制 + 產能分配</td><td>Rubin 從 Infineon 搶回</td></tr>
+<tr><td>Infineon</td><td>~30%</td><td>Blackwell ↑</td><td>歐洲廠 IDM 模式 margin 較低</td><td>Blackwell 從 MPWR 吃</td></tr>
+<tr><td>Renesas</td><td>~15%</td><td>B200 新進 ↑</td><td>日系資金成本高</td><td>B200 從 MPWR 吃</td></tr>
+<tr><td>Texas Instruments</td><td>~8%（AI 段）</td><td>→</td><td>傳統 analog 巨獸</td><td>Automotive 段點對點</td></tr>
+<tr><td>Vicor</td><td>~3%</td><td>↓（被擠出）</td><td>模組方案被晶片方案取代</td><td>被 MPWR 吃</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>穩定偏加深（但有裂縫）</strong>。Blackwell 代裂縫為歷史事件，Rubin 代恢復主導 + Vicor 被擠出證明護城河對第三方仍有效。但 Infineon 在 B200 取得的 design win 給了對手跨越「客戶資格」門檻的機會——未來 Post-Rubin 代若 NVDA 再次切換，速度會比 B200 快。</p>
+
+<h3>24 個月內最可能瓦解護城河的變化（QC-12 + 威脅清單）</h3>
+<ol>
+<li>🔴 Infineon 在 Rubin 代挾其 Blackwell 勢頭繼續搶 &gt; 30% 份額</li>
+<li>🟡 TI 推出下一代 BCD 競品（2026 預期產品路線圖）</li>
+<li>🟡 NVDA 自研 in-house power（目前無跡象，但 2028+ 可能）</li>
+<li>🟡 中美關稅升級，MPWR 中國封裝成本 + 20%</li>
+<li>🟡 AI 能源效率法規（歐盟 2027 AI Act 延伸）迫使架構改變</li>
+</ol>
+
+<!-- ============ §10 財務品質 ============ -->
+<h2>§10｜財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<thead><tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>同業比較（ADI / MCHP / ON）</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>32%</td><td>28%</td><td>23.8%</td><td>ADI 35% / MCHP 22% / ON 14%</td></tr>
+<tr><td>EBITDA Margin</td><td>30%</td><td>28%</td><td>29%</td><td>ADI 48% / MCHP 30% / ON 25%</td></tr>
+<tr><td>ROIC − WACC</td><td>12pp</td><td>14pp</td><td>16.6pp</td><td>ADI 8pp / MCHP 5pp / ON 6pp</td></tr>
+<tr><td>SBC / Revenue</td><td>6.8%</td><td>7.0%</td><td>7.5%</td><td>ADI 3% / MCHP 4% / ON 3.5%</td></tr>
+<tr><td>ROE</td><td>17%</td><td>54%（一次性稅收）</td><td>19%</td><td>ADI 10% / MCHP 12% / ON 13%</td></tr>
+</tbody>
+</table>
+<p>⚠️ SBC/Rev 7.5% 高於同業 3-4%（ADI 3%、MCHP 4%），這是 MPWR 的一個長期稀釋點。</p>
+
+<h3>QC-26 Margin 結構性測試</h3>
+<p>GM 2023 55.3% → 2024 55.3% → 2025 55.2% 累積 -0.1pp（未達 1.5pp 閾值），不觸發 QC-26。</p>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF：</strong>FCF/NI = 1.07（2025）健康。</li>
+<li><strong>AR 成長 vs Rev：</strong>AR 2024→2025 +18% vs Rev +26%，AR 較慢。</li>
+<li><strong>存貨 vs Rev：</strong>Inventory +15% vs Rev +26%，存貨較慢（管理良好）。</li>
+<li><strong>FCF 轉換率：</strong>持續 &gt; 0.85，2025 = 1.07。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>3Y 回購總額 vs FCF</td><td>回購 ~$600M / FCF 累積 ~$1.6B = 37.5%</td><td>合理（&lt; 80%）</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>原 CAGR 20% → 剔除 18%</td><td>差距 2pp，不警示</td></tr>
+<tr><td>回購均價 vs 現價</td><td>均價 ~$600 vs 現價 $1,468</td><td>低於現價，資本配置良好</td></tr>
+<tr><td>Rev CAGR 同期</td><td>20-26%/yr</td><td>EPS 與 Rev 方向一致</td></tr>
+</tbody>
+</table>
+
+<!-- ============ §11 產業格局 ============ -->
+<h2>§11｜產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li>TAM（Power Management IC 總）：$500-600B（Gartner 2025）</li>
+<li>CAGR：10%（AI 段 25%+，非 AI 段 5%）</li>
+<li>當前滲透率：AI 電源 TAM $50B（2025）→ $120B（2030）</li>
+<li>供需：AI 電源 2025 H2 - 2026 H1 緊缺，2027 供應鏈投資後可能緩解</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>上游：</strong>對 TSMC：MPWR 屬於中型 foundry 客戶，2025 Q4 已鎖 Q3 2026 wafer。ASML/Applied 對 MPWR 間接曝險。</li>
+<li><strong>下游：</strong>NVDA 為最大客戶（估 30% Rev），其次 AMZN、MSFT 自研 ASIC（合計 15-20%）。客戶集中度高為雙刃劍。</li>
+<li><strong>地理：</strong>設計中心美國 San Jose + Bellevue；晶圓 TSMC 台灣；封裝中國成都（~60%）+ Malaysia（~40%）。中國關稅風險在 2026 關稅政策下升高。</li>
+</ul>
+
+<h3>營收組成（FY2025）</h3>
+<table>
+<thead><tr><th>業務段</th><th>占比</th><th>FY25 YoY</th><th>FY26 指引</th></tr></thead>
+<tbody>
+<tr><td>Enterprise Data（AI + Server）</td><td>~30%</td><td>+122%</td><td>+50%+ floor</td></tr>
+<tr><td>Automotive</td><td>~20%</td><td>+36%</td><td>+20%</td></tr>
+<tr><td>Storage &amp; Compute</td><td>~18%</td><td>+15%</td><td>+15%</td></tr>
+<tr><td>Communications</td><td>~12%</td><td>+40%</td><td>+30%</td></tr>
+<tr><td>Industrial</td><td>~10%</td><td>+5%</td><td>+8%</td></tr>
+<tr><td>Consumer</td><td>~10%</td><td>+15%</td><td>+10%</td></tr>
+</tbody>
+</table>
+
+<h3>單位經濟</h3>
+<p>每片 Rubin VR200 PDB 單價 ~$250；MPWR 若拿下 70%，年化 $420M Rev（KeyCorp）。GPU design win lifetime value（LTV）~$500M+（跨 2-3 代平台）。</p>
+
+<!-- ============ §12 治理 ============ -->
+<h2>§12｜公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>Insiders: 3.86%（創辦人/CEO Michael Hsing 個人持股約 2.5%）</li>
+<li>Institutional: 101.8%（含借券，正常水準）+ 1,519 家機構</li>
+<li>Top holders: Vanguard 10%+, BlackRock 9%, State Street 5%</li>
+</ul>
+
+<h3>近 12 個月重大內部人交易（QC-19 重大）</h3>
+<ul>
+<li>2026/2 財報後至今：高管累積賣出 ~8 筆，單筆金額 $25-65M，合計估 $255M+。集中在 CEO/CFO/EVP 層級，Form 4 皆標「D（Sale）」。</li>
+<li>2026/4/6-4/8：兩筆新賣出共 $20.6M（股價 $1,300+ 區）。</li>
+<li><strong>判定：</strong>⚠️ Insider 大幅賣出 = 對當前估值的懷疑訊號。</li>
+</ul>
+
+<h3>資本配置</h3>
+<ul>
+<li>Capex: ~$175M/yr（6.3% of Rev）</li>
+<li>回購: ~$200M/yr（穩定但不激進）</li>
+<li>分紅: Q4 2025 從 $1.56 → $2.00/季（+28%），年化 $8/股</li>
+<li>併購: 近 5 年無</li>
+</ul>
+
+<h3>管理層薪酬結構</h3>
+<p>CEO 2024 薪酬：固定薪 $850K + PSU $22M + Option $8M = 總額 $31M（95% 為股權激勵）。薪酬結構對股價高度依賴，解釋近期大量賣出動機。</p>
+
+<h3>QC-19 重大事件檢查（12 個月）</h3>
+<table>
+<thead><tr><th>事件類型</th><th>發現</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>併購（&gt; 市值 5%）</td><td>無</td><td><span class="pass">🟢 通過</span></td></tr>
+<tr><td>集體訴訟</td><td><strong>Waterford Township v. MPWR, 25-cv-00220 (W.D. Wash.)</strong>；Gross Law Firm 主導；lead plaintiff deadline 2025/4/7 已過；指控 VRM 產品品質缺陷+ 管理層誤導；購股期間 2024/2/8 - 2024/11/8</td><td><span class="red">🔴 活躍</span></td></tr>
+<tr><td>CEO/CFO 離職</td><td>無</td><td>🟢</td></tr>
+<tr><td>SEC 調查</td><td>無公開資訊</td><td>🟢</td></tr>
+<tr><td>主要客戶流失公告</td><td>B200 allocation 被砍（2025/7 Edgewater 報告）</td><td>⚠️ 已發生</td></tr>
+</tbody>
+</table>
+
+<!-- ============ §13 估值 ============ -->
+<h2>§13｜估值診斷</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<p>當前主流邏輯：<strong>成長型（PEG + NTM P/E）</strong>。市場將 MPWR 定價為「AI 基礎設施超級週期受益者」，相較 ADI 的「盈利型」更激進。</p>
+<p>估值體系診斷結論：<strong>🔴 估值邏輯面臨下修風險</strong>——若 Rubin 份額 2026 Q3 不如 KeyCorp 70% 預期，市場會從「成長型」回到「盈利型」，PE 從 68x → 45x 區間。</p>
+
+<h3>13.1｜歷史估值分位</h3>
+<table>
+<thead><tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing PE</td><td>113.6x</td><td>25x</td><td>58x</td><td>155x</td><td>68%</td></tr>
+<tr><td>Forward PE (NTM)</td><td>68.07x</td><td>27x</td><td>56x</td><td>104x</td><td><strong>53%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>90.8x</td><td>20x</td><td>38x</td><td>85x</td><td>&gt; 100% (極端)</td></tr>
+<tr><td>P/FCF</td><td>109x</td><td>35x</td><td>62x</td><td>130x</td><td>78%</td></tr>
+<tr><td>P/S</td><td>25.8x</td><td>8x</td><td>15x</td><td>30x</td><td>81%</td></tr>
+</tbody>
+</table>
+<p><strong>解讀：</strong>FPE 53% 合理，但 EV/EBITDA、P/FCF、P/S 皆 &gt; 75% 分位，顯示當前估值整體偏高。分歧點：FY+1 EPS 近 90d 上修 +3.4% 拉低 FPE 分位，但其他比率仍指向過熱。</p>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>Forward PE</td><td>68.07x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3Y）</td><td>19.9%（~21.4% 取 FY+2 成長作近似）</td><td>—</td></tr>
+<tr><td><strong>PEG（Non-GAAP 3Y）</strong></td><td><strong>3.18</strong></td><td><span class="red">🔴 貴（&gt; 2.5 觸發拒絕）</span></td></tr>
+<tr><td>PEG（GAAP 3Y）</td><td>3.54</td><td>🔴 貴</td></tr>
+</tbody>
+</table>
+
+<h3>13.3｜Reverse DCF</h3>
+<ul>
+<li>當前市值：$72.1B</li>
+<li>基期 FCF（2025）：$663M</li>
+<li>WACC：10%（10Y UST 4.3% + Beta 1.96 × ERP 5% = 4.3% + 9.8% = 14.1% weighted; 加入極低債務比例 → 約 10%）</li>
+<li>永續成長率：4%</li>
+<li>預測期：10 年</li>
+<li><strong>隱含前 10 年 FCF CAGR = 28%</strong></li>
+</ul>
+
+<table>
+<thead><tr><th>比較</th><th>數值</th><th>相對位置</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>~35%（2022 低基期）</td><td>隱含接近歷史高水</td></tr>
+<tr><td>分析師共識 EPS CAGR</td><td>19.9%</td><td>隱含 FCF 遠高於 EPS</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>NVDA 40%+（AI 半導體第一梯隊）</td><td>隱含接近 NVDA 水準</td></tr>
+</tbody>
+</table>
+<p><strong>隱含預期判斷：🔴 激進</strong>——需 Rubin 70% 份額 + Enterprise Data 50%+ 持續 10 年 + 毛利率擴張 3pp 才能合理化當前股價。</p>
+
+<h3>🔴 貴的理由檢驗（反向使用 QC-20 便宜理由檢驗模板）</h3>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>市場為什麼給這個高倍數？</td><td>KeyCorp 10/23 Rubin 70% 預測 + Enterprise Data 50%+ floor 構成「雙催化劑」敘事</td></tr>
+<tr><td>Q2</td><td>這個樂觀是否有財務支撐？</td><td>部分（Q4 Enterprise Data +122% 確實強勁），但 Rubin 份額尚未在管理層 guide 中確認</td></tr>
+<tr><td>Q3</td><td>護城河可以支持這個倍數？</td><td>部分。護城河 7/10（B 級）支持 50-60x，但不支持 68x+（A 級以上才合理）</td></tr>
+<tr><td>Q4</td><td>FCF 品質被高估？</td><td>是。FCF/NI 1.07 反映 2025 低 Capex，2026 若 Rubin 驗證需加碼 Capex，FCF 下降</td></tr>
+<tr><td>Q5</td><td>有什麼催化劑讓市場重新定價（向下）？</td><td>① 2026 Q2 Rubin 份額供應鏈報告；② 集體訴訟 class cert 通過；③ Macrospread 擴大（VIX &gt; 25）</td></tr>
+</tbody>
+</table>
+<p><strong>貴的理由檢驗結論：🔴 確實貴，但有部分合理性支撐</strong>——不是泡沫，但是「樂觀敘事透支兌現時間」。</p>
+
+<h3>13.4｜同業比較</h3>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>MPWR</strong></td><td>$72B</td><td><strong>68x</strong></td><td>91x</td><td><strong>3.18</strong></td><td>23.8%</td><td>19.9%</td><td>25.6%</td></tr>
+<tr><td>ADI</td><td>$135B</td><td>30x</td><td>23x</td><td>1.80</td><td>35%</td><td>17%</td><td>14%</td></tr>
+<tr><td>MCHP</td><td>$42B</td><td>18x</td><td>14x</td><td>1.30</td><td>22%</td><td>14%</td><td>12%</td></tr>
+<tr><td>ON</td><td>$30B</td><td>22x</td><td>15x</td><td>1.75</td><td>14%</td><td>13%</td><td>13%</td></tr>
+<tr><td><strong>產業中位</strong></td><td>—</td><td><strong>26x</strong></td><td>19x</td><td>1.76</td><td>23%</td><td>15%</td><td>13.5%</td></tr>
+</tbody>
+</table>
+<p><strong>同業溢折價：</strong>MPWR vs 產業中位溢價 +162%（68x vs 26x）。即使以 AI 純粹 play 調整（給 +50% 溢價），合理 PE 也僅 39x，現價溢價 +74% 仍過頭。</p>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>MPWR 68x vs 產業中位 26x = 溢價 162%（&gt; 50%），觸發 QC-30：</p>
+<ul>
+<li>情境 A：ADI PE 上修至 MPWR 同業均（26x）不太可能，ADI 合理區間已定。</li>
+<li>情境 B：MPWR PE 收斂 50% 至 (68+26)/2 = 47x → 股價 $21.57 × 47 = <strong>$1,013（-31%）</strong></li>
+</ul>
+<p>情境 B $1,013 作為替代 Bear Case，與 §8E 「成長降至 10%」Bear $485 取保守者 → <strong>最終 Bear Case = $485</strong>（維持）。§1 標註：「相對同業溢價 162%，收斂風險列為 R4」。</p>
+
+<h3>同主題橫向比較</h3>
+<table>
+<thead><tr><th>問題</th><th>MPWR</th><th>最強對手（ADI）</th></tr></thead>
+<tbody>
+<tr><td>主假設兌現時上行最大？</td><td>$2,000+（Rubin 全兌現）</td><td>$250（ADI 溫和情境）</td></tr>
+<tr><td>主假設落空時跌幅最小？</td><td>-67%（跌至 $485）</td><td>-20%（跌至 $160）</td></tr>
+<tr><td>風報比最優？</td><td>ADI：+17% / -20% = R:R 0.85x</td><td>✓ ADI 比 MPWR 優</td></tr>
+</tbody>
+</table>
+<p><strong>結論：❌ 同主題有更佳標的</strong>（ADI 風報比優於 MPWR）。</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<thead><tr><th>工具</th><th>訊號</th><th>依據</th></tr></thead>
+<tbody>
+<tr><td>估值體系診斷（13.0）</td><td>🔴 下修風險</td><td>成長型 → 盈利型切換風險</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟡 合理偏貴</td><td>FPE 53% 合理，但 EV/EBITDA 極端</td></tr>
+<tr><td>PEG（13.2）</td><td>🔴 貴</td><td>3.18</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🔴 激進</td><td>隱含 FCF CAGR 28%</td></tr>
+<tr><td>同業相對（13.4）</td><td>🔴 溢價無支撐</td><td>+162% vs 同業中位</td></tr>
+</tbody>
+</table>
+
+<p><strong>§2 D 交叉驗證：</strong>當前 FPE 68.07x vs §2 D 合理 PE 56x（中位）→ 超出 21.5%（&gt; 1.5x 門檻觸發負面信號，下修一級；PEG 救援不啟動）。</p>
+
+<p><strong>當前定價判斷：🔴 明顯貴</strong>（5/5 工具全 🔴 或 🟡）。</p>
+
+<h3>長期合理倍數對應表</h3>
+<ul>
+<li>§8 綜合評級：🟢 高確信 → 基準 25x</li>
+<li>引擎 A（ROIC 25.6% &gt; 20% 且擴大）→ × 1.175</li>
+<li>引擎 B（Year-5 前瞻成長率估 15%）→ 查表 × 1.15</li>
+<li>引擎 C（護城河 7 &lt; 9）→ × 1.0（不觸發）</li>
+<li>三引擎取較高 = × 1.175</li>
+<li>AI 調整 🟢 × 1.10</li>
+<li><strong>最終長期合理倍數 = 25 × 1.175 × 1.10 = 32.3x</strong></li>
+</ul>
+
+<h3>投資結論（v11.0 → v12.0 轉譯）</h3>
+<p><strong>財報信號與假設校準：</strong></p>
+<ul>
+<li><strong>H1 當前狀態：</strong><span class="pass">強化</span>——Q4 Enterprise Data +122%，2026 floor 50%+。</li>
+<li><strong>H2 當前狀態：</strong><span class="neutral">不變</span>——管理層未直接提 VR200 份額，僅 KeyCorp 預測 70%。</li>
+<li><strong>H3 當前狀態：</strong><span class="miss">削弱</span>——FPE 從 50x 擴至 68x，PEG 3.18 極端。</li>
+<li><strong>結論：</strong>H1 強化 + H2 不變 + H3 削弱 → 基本面假設完整，但市場已先行定價 2027-2028 的 upside，隱含預期變得更難兌現。</li>
+</ul>
+
+<p><strong>綜合訊號輸出（v12.0）：</strong></p>
+<ul>
+<li>護城河等級：B → 調整後 B</li>
+<li>估值燈：🔴（FPE 5Y 分位 53%，PEG 3.18）</li>
+<li>Pure MA 狀態：✅ 強勢進場</li>
+<li>大盤豁免：正常</li>
+<li><strong>綜合訊號：X</strong>（gate 🔴 一票否決）</li>
+<li>中期參考 R:R：-0.34x（資訊性）</li>
+<li>倉位決策：不在 DD 範圍，交由 portfolio-manager skill</li>
+</ul>
+
+<p><strong>① 短期信號（0-12 個月）：</strong>Q4 財報 BEAT 雙雙，管理層 floor 50% 上修為強烈信號；但股價 4 週 +37% 已完全定價，估值 🔴 過熱否決短期進場。</p>
+
+<p><strong>② 中期成長確信度（1-2 年）：</strong>FY+1 $21.57 / FY+2 $25.92 共識強度高（n=15 均 90d 上修），驅動因素為 AI Enterprise Data 量驅動 + 產品 mix 定價 + Rubin design win 兌現。能見度中高。</p>
+
+<p><strong>③ 長期持有信心（3-5 年，§2 I）：</strong>成長跑道充裕 + 護城河趨勢穩定偏加深（B200 裂縫後 Rubin 恢復） = <strong>高</strong>。</p>
+
+<p><strong>下行風險量化：</strong>短期 Bear $485（-67%），中期 Bear $583（-60%）。W52 Low $579 / W104 Low $473。若 FY+1 EPS 下修 10%，短期 R:R 降至 -0.64x。</p>
+
+<!-- ============ 版本修訂紀錄 + 假設驗證對照 ============ -->
+<h2>版本修訂紀錄（v11.0 → v12.0）</h2>
+
+<div class="card">
+<p><strong>v11.0 → v12.0 核心變更（2026-04-18）：</strong></p>
+<ul>
+<li><strong>裁決框架轉變：</strong>v11.0「觀望（-0.12x 短期 R:R / 0.19x 中期 R:R）」→ v12.0「綜合訊號 X」。核心差異：v12.0 將 PEG 3.18 觸發 gate 🔴 直接拒絕，不依賴 R:R 計算。</li>
+<li><strong>股價變化：</strong>v11.0 $1,402.81（4/17）→ v12.0 $1,468.35（4/17 後市新高），4 週 +37% 極端漂移。</li>
+<li><strong>新發現（QC-19）：</strong>集體訴訟案號 25-cv-00220 在 W.D. Wash. 法庭活躍中（v11 未充分反映），構成治理層面的 R3 新增。</li>
+<li><strong>新發現（KeyCorp）：</strong>10/23 Rubin 70% 份額預測 = v11 未納入的重大多頭催化劑；v12 在 §3 三方辯論 + H2 中正式納入。</li>
+<li><strong>護城河調整：</strong>v11 護城河 7（體質加減 +2.5 = 品質分 10.0 A 級）→ v12 護城河 7（護城河單一決定 B 級），廢除體質加分，改 veto 制。</li>
+</ul>
+</div>
+
+<h3>假設驗證對照（v11.0 → v12.0）</h3>
+<table>
+<thead><tr><th>項目</th><th>上次狀態（v11.0）</th><th>本次狀態（v12.0）</th><th>邊際變化</th></tr></thead>
+<tbody>
+<tr><td>H1（Enterprise Data 維持 30%+ → v12 改 40%+）</td><td>Enterprise Data 30%+ 成長</td><td>管理層 floor 上修至 50%+；Q4 +122%</td><td><span class="pass">強化</span>（數字上修 +10pp 下限）</td></tr>
+<tr><td>H2（v11: 客戶多元化填補 → v12: Rubin 份額 &gt; 50%）</td><td>非 NVDA AI 客戶 ≥ 60%</td><td>KeyCorp 預測 Rubin 70% 份額 = 重奪 NVDA 主導地位</td><td><span class="neutral">假設重構</span>（舊假設被新事實否決，換更強假設）</td></tr>
+<tr><td>H3（估值 50-65x 穩定 → v12: 45-55x 均值回歸）</td><td>FPE 50-65x 穩定</td><td>FPE 68x 已超 v11 上限</td><td><span class="miss">削弱</span>（v11 假設失效，改為「均值回歸」）</td></tr>
+<tr><td>R1（NVDA 份額再失守 &gt; 30%）</td><td>未觸發</td><td>B200 段確實失守 50%+，Rubin 段 KeyCorp 預測恢復</td><td>部分觸發後部分修復</td></tr>
+<tr><td>R2（Hyperscaler Capex 放緩）</td><td>未觸發</td><td>MSFT/META/GOOG/AMZN 2026 Capex 仍 +20%+</td><td>未觸發</td></tr>
+<tr><td>R3（FPE 修正至 40x）</td><td>未觸發</td><td>FPE 反向擴張至 68x，R3 假設被打臉（反向）</td><td>假設方向錯誤</td></tr>
+<tr><td><strong>裁決變化</strong></td><td><strong>迴避</strong>（底倉 0%）</td><td><strong>迴避 X</strong></td><td>方向一致；v12 更明確為 gate 🔴 硬拒絕</td></tr>
+</tbody>
+</table>
+<p><strong>若改變，列出 3 個最關鍵新事實：</strong>① KeyCorp 10/23 Rubin 70% 預測（重大 bullish 敘事）；② 集體訴訟 25-cv-00220 在 W.D. Wash. 活躍；③ 股價 4 週 +37% 極端漂移。裁決方向（迴避）未變，但理由鏈從「R:R 雙負」升級為「gate 🔴 硬拒絕 + QC-22 極端追高 + QC-19 訴訟活躍」。</p>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</main>
+</body>
+</html>
