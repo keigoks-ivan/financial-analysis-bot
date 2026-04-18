@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD｜Rockwell Automation (ROK) — v12.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+h2[id^="sec-"]{scroll-margin-top:60px}
+body{font-family:"Noto Sans TC",sans-serif;background:#F8FAFC;color:#0F172A;margin:0;padding:0;line-height:1.7}
+.mono,table,.num{font-family:"IBM Plex Mono",monospace}
+.header-bar{position:sticky;top:0;z-index:100;background:#1E3A5F;color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:13px;border-bottom:3px solid #3B82F6}
+.header-bar .meta span{margin-right:18px}
+.container{max-width:1180px;margin:0 auto;padding:30px 28px 80px}
+h1{font-size:28px;color:#1E3A5F;border-bottom:3px solid #3B82F6;padding-bottom:12px;margin-top:0}
+h2{font-size:22px;color:#1E3A5F;background:#EFF6FF;border-left:4px solid #3B82F6;padding:10px 14px;margin-top:36px}
+h3{font-size:17px;color:#1E3A5F;margin-top:24px;border-bottom:1px dashed #CBD5E1;padding-bottom:5px}
+h4{font-size:15px;color:#334155;margin-top:18px}
+section{background:#fff;padding:20px 26px;margin-top:16px;border:1px solid #E2E8F0;border-radius:4px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0}
+th{background:#1E3A5F;color:#fff;text-align:left;padding:8px 10px;font-weight:500}
+td{padding:7px 10px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.badge{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:500;margin-right:4px}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-yellow{background:#FEF9C3;color:#92400E}
+.badge-orange{background:#FED7AA;color:#C2410C}
+.badge-blue{background:#EFF6FF;color:#1E40AF}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:12px 18px;margin:12px 0}
+.hypothesis-box h3,.hypothesis-box h4{color:#1E3A5F;border:none;margin-top:8px}
+.trap-box{background:#FFF0E6;border-left:4px solid #F97316;padding:12px 18px;margin:12px 0}
+.trap-box h3,.trap-box h4{color:#C2410C;border:none}
+.note{font-size:12px;color:#64748B;margin-top:6px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:12px 0}
+.debate-card{padding:14px 18px;border-radius:3px}
+.debate-long{background:#F0FDF4;border-left:4px solid #16A34A}
+.debate-short{background:#FFF1F2;border-left:4px solid #DC2626}
+.debate-valuation{background:#F5F3FF;border-left:4px solid #7C3AED}
+.verdict-box{background:#FFFBEB;border-left:4px solid #D97706;padding:12px 18px;margin:14px 0}
+.verdict-box h3{color:#92400E;border:none}
+.check-box{background:#F8FAFC;padding:10px 14px;border-radius:3px;font-size:13px;margin-top:10px}
+.dd-toc{background:#fff;border:1px solid #E2E8F0;border-radius:6px;padding:10px 14px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:6px}
+.dd-toc a{display:inline-block;padding:4px 10px;background:#EFF6FF;color:#1E40AF;text-decoration:none;border-radius:999px;font-size:12px;border:1px solid #BFDBFE}
+.dd-toc a:hover{background:#3B82F6;color:#fff}
+.print-btn{position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;padding:10px 18px;border:none;border-radius:3px;cursor:pointer;font-family:"Noto Sans TC";font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.15);z-index:90}
+.print-btn:hover{background:#0F2A4F}
+ul,ol{padding-left:22px;margin:8px 0}
+li{margin-bottom:5px}
+.history-box{background:#F1F5F9;border-left:4px solid #64748B;padding:12px 18px;margin:12px 0}
+@media print{
+ .header-bar{position:static}
+ .print-btn{display:none}
+ .dd-toc{display:none}
+ body{background:#fff}
+ section{border:none;padding:10px 0}
+}
+</style>
+</head>
+<body>
+<div class="header-bar">
+<div class="meta">
+<span><strong>ROK</strong>｜Rockwell Automation</span>
+<span>資料抓取：2026-04-18</span>
+<span>最新股價：$415.73</span>
+<span>Q1 FY2026（2026-02-05 公布，Q2 FY26 將於 2026-05-05 公布）</span>
+</div>
+<div>DD Schema v12.0</div>
+</div>
+
+<div class="container">
+<nav class="dd-toc">
+<a href="#sec-1">§1 結論</a>
+<a href="#sec-2">§2 四層判定</a>
+<a href="#sec-3">§3 三方辯論</a>
+<a href="#sec-4">§4 序章</a>
+<a href="#sec-5">§5 論點</a>
+<a href="#sec-6">§6 財報</a>
+<a href="#sec-7">§7 門檻</a>
+<a href="#sec-8">§8 成長</a>
+<a href="#sec-9">§9 護城河</a>
+<a href="#sec-10">§10 財務</a>
+<a href="#sec-11">§11 產業</a>
+<a href="#sec-12">§12 治理</a>
+<a href="#sec-13">§13 估值</a>
+</nav>
+
+<h1>Rockwell Automation (ROK)｜買側深度研究 v12.0</h1>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。<br>執行日期：2026-04-18｜市場：NYSE｜產業：工業自動化／製造業電氣化｜資料源：yfinance 批量 + 7 web_search</p>
+
+<!-- ==================== §1 ==================== -->
+<section>
+<h2 id="sec-1">§1｜投資結論（Executive Summary）</h2>
+<p class="note">本節為一頁式摘要，讓讀者一目了然。完整推理過程見 §13.5 投資結論。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡 中性：</strong>§8 長期成長性 🟡 中等可見度 ｜ §9 護城河趨勢 穩定（北美 PLC 龍頭但 OPC-UA + Siemens 生態進攻）｜ §8 F AI 風險 🟡（Logix AI 有 TAM，但工程端 Siemens SIMATIC AX 領先）｜ 一句話：reshoring capex supercycle ($1.4T 規劃中) 是 tailwind，但 ROK 有機成長被 Siemens 分食</li>
+<li><strong>品質 B 級：</strong>護城河 7/10（§9）｜體質 veto 0 項不過（5/5 全過：GM、FCF/NI、EPS 共識、營收、D/E 全綠）｜等級調整：B → B（不變）</li>
+<li><strong>估值燈 🟠 偏貴：</strong>Fwd PE (FY+1) 30.3x，5Y 分位 ~56%，PEG 2.24（> 2.0）｜盲點 1 救援：否（§8 🟡 非 🟢，條件不滿足）</li>
+<li><strong>Pure MA 狀態 🟡 減半進場：</strong>現價 $415.73 &gt; W52 $357.20 &gt; W104 $310.93 &gt; W250 $284.26，但 W250 斜率 +2.62%（&lt; 3% 持平）→ 減半進場｜盲點 2 救援：不適用（非 ❌）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 SPX 7126.06 vs W104 6092.49（溢 +17%），系統性風險：否</li>
+<li><strong>參考 R:R：</strong>短期 -0.75x / 中期 -0.61x｜壓力測試通過率 0/4（資訊性，不主導裁決；Bear case $186 現價 $416 = 上行空間對 PE 20x 的長期合理全部為負）</li>
+<li><strong>綜合訊號：<span style="font-size:20px">C</span></strong>（取自 §2 H）｜判定理由：品質 B 級 + gate 🟠（半倉）+ MA 🟡 減半（半倉）= 兩項減半訊號並存 → 觀察池 C 級</li>
+<li><strong>長期持有信心：中</strong>（§2 I：TAM 5Y CAGR ~6%、reshoring tailwind 但 ROK 市佔被 Siemens 20% 壓住、軟體 ARR 7% 低於同業）｜<strong>陷阱定性：🟡 觀察期</strong>（估值透支 + 有機成長僅 2-3%，盈餘品質型陷阱風險未解除）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜<strong>C = 觀察池，不納入新進</strong>｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="trap-box">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th style="width:30%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>盈餘品質型（潛伏）</strong>——EPS CAGR（13.5% 3Y）長期高於 Revenue CAGR（~6%）的差距依賴 buyback + margin 槓桿。FY21-25 累計回購 $6.23B / 28.6% 股本已完成，未來 EPS 增速若失去回購支撐，將向 Revenue 增速收斂。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>Q1 FY26 有機 +10%（Intelligent Devices +10%、Software &amp; Control +14%、Lifecycle +7%）大幅超越 FY25 全年 +1%，顯示有機引擎已重啟。FCF $1.36B（+113% YoY），FCF Margin 16.3%（5Y 新高），ROIC 18.4%（重回 10Y 高點），Segment margin 20.7%（+360bps YoY）全面改善。FY26 EPS guide 上修至 $11.40-$12.20，顯示管理層信心。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>(1) 有機 +10% 的基期是 Q1 FY25 極弱（-12% YoY），基期效應稀釋。(2) 管理層 FY26 全年僅 guide 有機 2-6%，隱含 Q2-Q4 有機回落至 0-4%。(3) Siemens 全球 PLC 市佔 20%+ vs ROK 北美（全球 ~10-12%），Siemens SIMATIC AX（AI 代碼生成）技術領先 12-18 個月。(4) 中國 FY25 -9%，印度/東南亞補齊速度不夠。(5) 當前 Fwd PE 30.3x、PEG 2.24 定價的是「10%+ 有機成長 + 軟體 ARR 加速」雙引擎，任一未達都觸發 estatement。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生</td><td>(1) FY26 Q2 報告（2026-05-05）：若有機成長跌至 &lt; 5% 且 Q2-Q4 guide 未上修 → 🔴；(2) Software ARR 揭露時間表：若 FY26 10-K 仍不揭露具體 Software ARR 絕對值 → 🔴 管理層刻意迴避；(3) 中國 + Asia Emerging 合計 2 季仍為負 → H2 削弱。</td></tr>
+</table>
+<p style="text-align:center"><strong>最終定性：<span class="badge badge-yellow">🟡 觀察期</span></strong>（基本面尚未惡化，但估值透支程度已逼近盈餘品質型陷阱警戒）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Segment 有機成長（FY26 Q2-Q4）</td><td>§5 H2</td><td><span class="badge badge-blue">🔵 核心假設驗證</span></td><td>Q2（5/5）有機 &lt; 5% 且 FY26 全年 guide 未上修 → H2 削弱；≥ 8% → H2 強化</td></tr>
+<tr><td>2</td><td>Software ARR 揭露與 Logix AI 採用節奏</td><td>§5 H1</td><td><span class="badge badge-blue">🔵 長期成長領先</span></td><td>FY26 10-K（2026-11）是否揭露 Software ARR &gt; $600M 且 YoY &gt; 20% → H1 強化；若仍只說「mid-teens organic」不揭露絕對值 → H1 削弱</td></tr>
+<tr><td>3</td><td>Fwd PE 回落到 25x（股價 ≈ $343）+ PEG &lt; 1.8</td><td>§2 D / §13</td><td>進場觸發</td><td>股價跌回 $343 且 FY26/27 EPS 共識穩定 → gate 🟠 升級為 🟡，C → B；若跌至 $280 且 Bear case 仍站穩 → 加碼窗口</td></tr>
+</table>
+</section>
+
+<!-- ==================== §2 ==================== -->
+<section>
+<h2 id="sec-2">§2｜四層判定（v12.0：產業風向 × 品質 × 估值燈 × Pure MA）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="badge badge-yellow">🟡 中等可見度</span></td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（北美 PLC 裝機基礎穩固，但 Siemens 生態攻擊持續）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="badge badge-yellow">🟡 中等不確定</span>（Logix AI 有 TAM，但工程端 Siemens SIMATIC AX 領先 12-18 個月）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="badge badge-yellow">🟡 中性</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>北美 reshoring capex supercycle（$1.4T 規劃中，半導體 + EV 電池 + 資料中心三引擎）是 tailwind，但 ROK 有機成長被 Siemens 20% 全球市佔分食，「量的順風」不等於「結構性 re-rate」</td></tr>
+</table>
+<p class="note">🟡 中性意味著：盲點 1（估值救援）與盲點 2（V 型救援）機制皆<strong>不啟動</strong>；護城河評分天花板不受影響，但估值燈嚴格套用 Gate。</p>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2pp</td><td><span class="badge badge-green">✅</span></td><td>FY23 48.8% → FY24 46.6% → FY25 48.1%（近 3 年趨勢 U 型，未連續下滑）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge badge-green">✅</span></td><td>FY25：$1,358M / $869M = 1.56；5 年均值 ~0.95</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge badge-green">✅</span></td><td>EPS trend (yfinance)：90d 前 $11.99 → 60d $12.09 → 30d $12.12 → 當前 $12.14（持續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge badge-green">✅</span></td><td>Q2 FY25 -9% → Q3 FY25 -4% → Q4 FY25 +1% → Q1 FY26 +12%（已轉正）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge badge-green">✅</span></td><td>Total Debt $3.647B − Cash $0.468B = Net Debt $3.18B；EBITDA ~$1.73B → Net Debt / EBITDA ≈ 1.84x</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = 0 項不過 → 等級不變</p>
+
+<h3>B｜品質等級（護城河單一決定，5 級制）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td>7 / 10</td></tr>
+<tr><td>護城河原始等級</td><td>✅ B 級（7-8 護城河對應區間）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>✅ B 級</strong></td></tr>
+<tr><td><strong>底倉（目標倉位 %）</strong></td><td><strong>15%</strong>（B 級預設，但後續 gate 🟠 + MA 🟡 再打折）</td></tr>
+</table>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026E）</td><td class="mono">$12.14</td><td>yfinance 共識，n=27 analysts，YoY +15.3%</td></tr>
+<tr><td>FY+2 EPS（FY2027E）</td><td class="mono">$13.74</td><td>yfinance 共識，n=27 analysts，YoY +13.2%</td></tr>
+<tr><td>FY+3 EPS（FY2028E 推導）</td><td class="mono">$15.39</td><td>$13.74 × 1.12（§8 邏輯：reshoring tailwind 遞減至 +12%）</td></tr>
+<tr><td>3Y EPS CAGR</td><td class="mono">13.5%</td><td>($15.39 / $10.53)^(1/3) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td class="mono">30.3x</td><td>$415.73 ÷ $13.74（yfinance forwardPE 30.25x）</td></tr>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE</td><td>30.3x</td></tr>
+<tr><td>5Y Fwd PE 範圍（低 ~ 高）</td><td>~18x ~ ~40x（5Y 均 ~31.9x，Macrotrends）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>(30.3 − 18) / (40 − 18) = <strong>56%</strong>（中間段）</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>13.5%</td></tr>
+<tr><td>PEG</td><td><strong>2.24</strong>（30.3 ÷ 13.5）</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong><span class="badge badge-orange">🟠 偏貴</span></strong></td></tr>
+<tr><td>判定邏輯</td><td>分位 56% → 🟡，但 PEG 2.24 落在 2.0-2.5 區間 → 🟠；取<strong>較嚴</strong>的一個 → 🟠 偏貴</td></tr>
+<tr><td>盲點 1 救援判斷</td><td>§8 🟡（非 🟢）→ <strong>條件不滿足，救援不啟動</strong></td></tr>
+<tr><td><strong>套用規則</strong></td><td><strong>× 0.5</strong>（半倉進場）</td></tr>
+</table>
+<p><strong>估值燈調整後等級</strong>：B → B × 0.5（等級不動，倉位 modifier ×0.5）</p>
+
+<h3>E｜R:R 與 Bear Case（參考用，不主導裁決）</h3>
+
+<h4>合理 P/E 定錨（引用 §13.5）</h4>
+<p>B 級護城河（7/10）+ §8 🟡 中等可見度 → 基準 Forward P/E <strong>20x</strong>（長期合理倍數表）。<br>三引擎：ROIC 18.4% 未達 20% → 引擎 A 不觸發；PEG 2.24 &gt; 2.0 → 引擎 B 不觸發；護城河 7 &lt; 9 → 引擎 C 不觸發。AI 調整 🟡 × 0.9。<br>最終長期合理倍數 = 20x × 1.0 × 0.9 = <strong>18x</strong>（長期參考）。短期 R:R 採 20x（較寬鬆）。</p>
+
+<h4>參考目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>$12.14 × 20x</td><td class="mono">$242.80</td></tr>
+<tr><td>中期（2 年）</td><td>$13.74 × 20x</td><td class="mono">$274.80</td></tr>
+</table>
+
+<h4>Bear Case（基本面惡化情境）</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（§8E 成長降至 10% 情境）</td><td>17x</td><td>17x</td></tr>
+<tr><td>Bear EPS（FY × 0.9）</td><td>$12.14 × 0.9 = $10.93</td><td>$13.74 × 0.9 = $12.37</td></tr>
+<tr><td>Bear 股價</td><td class="mono">$185.80</td><td class="mono">$210.25</td></tr>
+</table>
+
+<h4>R:R 計算與壓力測試（QC-29）</h4>
+<p class="note">⚠️ 注意：目標價（$243 / $275）<strong>均低於現價 $415.73</strong>，表示 §2 E 合理 PE 20x 觀點下當前估值全面透支。R:R 方向性為<strong>負值</strong>——上行空間為負（QC-3 警示條件）。</p>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr>
+<tr><td>Base</td><td>報告假設（FY+1 EPS $12.14，合理 PE 20x，Bear PE 17x）</td><td class="mono">-0.75x（負）</td><td class="mono">-0.61x（負）</td></tr>
+<tr><td>壓力 A</td><td>3Y CAGR −10%（13.5% → 3.5%），目標 PE 不變</td><td class="mono">-0.68x</td><td class="mono">-0.55x</td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（20x → 16x），Bear PE 14x</td><td class="mono">-0.83x</td><td class="mono">-0.72x</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（ROK 30.3x 向 Siemens 17x / ETN 23x 均值 20x 收斂）</td><td class="mono">-0.88x</td><td class="mono">-0.75x</td></tr>
+</table>
+<p><strong>壓力測試通過率</strong> = <strong>0/4</strong>（所有情境 R:R 均為負，壓力測試全部不過）。</p>
+<p class="note">R:R 全面為負的意義：當前股價 $415.73 隱含市場給的不是 20x 合理 PE，而是 30x+ 估值體系升級預期（詳見 §13.0）。若此預期不兌現，下行空間顯著。QC-22 股價漂移檢查：4 週均價 $382.06 → 現價 $415.73 漂移 +8.8%（&lt; 10%，未觸發警示）；但距 52W 高 $438.72 僅 5% = ⚠️ 近高警示。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="mono">$415.73</td></tr>
+<tr><td>W52 / 斜率</td><td>$357.20 / +9.84%（強正）</td></tr>
+<tr><td>W104 / 斜率</td><td>$310.93 / +4.85%（正）</td></tr>
+<tr><td>W250 / 斜率（13 週變化）</td><td>$284.26 / <strong>+2.62%</strong>（持平區間 -3% 至 +3%）</td></tr>
+<tr><td>多空排列</td><td>現價 $415.73 &gt; W52 $357.20 &gt; W104 $310.93 &gt; W250 $284.26 ✅</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="badge badge-yellow">🟡 減半進場</span></strong></td></tr>
+<tr><td>判定邏輯</td><td>四條件全過但 W250 斜率 +2.62% 在持平區間（|13 週變化| &lt; 3%）→ 🟡 減半進場</td></tr>
+<tr><td>盲點 2 救援</td><td>不適用（狀態非 ❌ 系統失效）</td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>× 0.5</strong></td></tr>
+</table>
+<p class="note">近 5 交易日 OHLC（QC-24 intraday 檢查）：4/13 開 398 高 408 低 394 收 408（接近日高）；4/14 開 411 高 412 低 404 收 405（日內回落）；4/15 開 404 低 395 收 397（日內跌）；4/16 開 398 低 397 收 403；4/17 開 409 高 419 低 407 收 416。<strong>無重大 intraday 警示</strong>（無單日 close-vs-high &gt; 5%、無 gap up 收紅 K &gt; 5%）。</p>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td class="mono">7,126.06</td></tr>
+<tr><td>大盤 W104</td><td class="mono">6,092.49</td></tr>
+<tr><td>系統性風險（破 W104）</td><td><span class="badge badge-green">否</span>（溢 +16.97%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td><strong>B</strong></td></tr>
+<tr><td>gate（§2 D）</td><td><strong>🟠 偏貴</strong></td></tr>
+<tr><td>ma_status（§2 F）</td><td><strong>🟡 減半進場</strong></td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td><strong>正常</strong></td></tr>
+<tr><td>trap（§1 定性）</td><td><strong>🟡 觀察期</strong></td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong style="font-size:20px">C</strong></td></tr>
+</table>
+<p><strong>判定理由</strong>：品質 B 級基底（非拒絕）→ 不觸發 X；B 級無法達到 A+/A；gate 🟠（×0.5）+ MA 🟡 減半（×0.5）+ trap 🟡 → 3 個減半/觀察訊號並存 → <strong>C 觀察池</strong>（Step 5「多項訊號減半」）。</p>
+<p class="note">PM 層面語意：C 級 = watchlist 觀察池，不納入新進倉位。等待 gate 升級（Fwd PE 回 25x 以下或 PEG &lt; 1.8）或 MA 升級（W250 斜率明確轉正 &gt; 3%）任一條件出現，再評估升級至 B 級衛星候選。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>剩一半（全球工業自動化 TAM $238B，CAGR 6%，但 ROK 全球市佔僅 10-12% 且被 Siemens 分食）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定（北美 Allen-Bradley 裝機基礎牢固，但 OPC-UA + AI 時代可能結構性侵蝕）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong></td></tr>
+</table>
+<p><strong>一句話說明</strong>：🟡 中性，B 級護城河 7/10，北美 PLC 龍頭但全球被 Siemens 20% 市佔壓制。估值燈 🟠 偏貴（PEG 2.24）+ Pure MA 🟡 減半進場，盲點 1 救援不觸發。建議等 FY26 Q2（5/5）有機成長驗證 + Fwd PE 回 25x 以下。</p>
+</section>
+
+<!-- ==================== §3 ==================== -->
+<section>
+<h2 id="sec-3">§3｜三方辯論摘要</h2>
+<div class="three-col">
+<div class="debate-card debate-long">
+<h3>多頭辯護人｜Munger 模式</h3>
+<ol>
+<li><strong>護城河（§9）：</strong>Allen-Bradley 裝機基礎 + FactoryTalk 軟體鎖定在北美 90% 汽車 + 食品 + 半導體工廠是 20-30 年 rip-and-replace 成本的真實壁壘；Q1 FY26 segment margin 20.7%（+360bps）證明定價權。</li>
+<li><strong>成長（§8）：</strong>reshoring supercycle $1.4T 規劃中，半導體 capex 2026 $145B、EV battery + data center 同步擴產，ROK 北美市佔龍頭直接受益，Q1 FY26 有機 +10% 證明引擎重啟。</li>
+<li><strong>估值（§13）：</strong>Fwd PE 30.3x 接近 5Y 均值 31.9x，並未處於歷史極端區間；FCF $1.36B（+113%）+ FCF Margin 16.3%（5Y 新高）+ 總 ARR +7% 支撐 cash quality。</li>
+</ol>
+<p><strong>多頭最強一句話</strong>：「北美製造業 20 年最大資本支出週期剛啟動，ROK 是唯一純做工廠自動化的美股 large-cap 純 play。」</p>
+</div>
+<div class="debate-card debate-short">
+<h3>空頭檢察官｜Burry 模式</h3>
+<ol>
+<li><strong>基本面惡化（§8）：</strong>管理層 FY26 全年僅 guide 有機 2-6%，Q1 +10% 的基期效應（Q1 FY25 -12% YoY）被系統性放大；H2 有機恢復至 3-4% 將觸發市場預期重設。</li>
+<li><strong>估值壓縮（§13.3）：</strong>Reverse DCF 隱含 FCF CAGR ~15%，對比過去 5 年實際 FCF CAGR 僅 ~5%（$1,141M → $1,358M），預期過度激進。PEG 2.24 + Fwd PE 30.3x 雙高，任一 EPS miss 觸發 PE 壓縮至 23x（5Y 中位）= $282（-32%）。</li>
+<li><strong>競爭催化（§5 R1）：</strong>Siemens SIMATIC AX（AI 代碼生成）領先 12-18 個月 + OPC-UA over TSN 標準化進度加速，greenfield 工廠選擇 ROK 比例正在下滑。Schneider Electric EcoStruxure 資料中心業務直接搶奪 ROK data center 新增訂單。</li>
+</ol>
+<p><strong>空頭最大威脅</strong>：「PEG 2.24 + 有機成長 FY26 guide 僅 2-6% + Siemens AI 工程端領先 = 高估值撞上成長放緩 = 盈餘品質型陷阱教科書案例。」</p>
+</div>
+<div class="debate-card debate-valuation">
+<h3>估值仲裁員｜Damodaran 模式</h3>
+<table>
+<tr><th>維度</th><th>數字</th><th>分</th></tr>
+<tr><td>vs 過去 3 年實際 FCF CAGR</td><td>隱含 ~15% vs 實際 ~6%</td><td>0.5 / 2</td></tr>
+<tr><td>vs 分析師 EPS CAGR 共識</td><td>隱含 15% vs 共識 13.5%</td><td>1.5 / 2</td></tr>
+<tr><td>vs 同業最快 FCF CAGR</td><td>Siemens ~5%、ETN ~10%</td><td>1.0 / 2</td></tr>
+<tr><td>達成條件苛刻度</td><td>需 reshoring + 軟體 ARR + margin expansion 三引擎同時</td><td>0.5 / 2</td></tr>
+<tr><td>歷史先例</td><td>ROK 過去 10 年僅 2017-18 + 2023 兩次達成 15%+ FCF CAGR</td><td>0.5 / 2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：4 / 10</strong></p>
+<p><strong>仲裁員一句話</strong>：「當前股價隱含了『reshoring + 軟體 ARR + margin expansion』三引擎同時兌現，歷史上僅在 2017-18 達成 1 次，可信度偏低。」</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<h3>【你的裁決】</h3>
+<table>
+<tr><th style="width:30%">項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>北美製造業 reshoring capex supercycle（$1.4T）+ ROK 北美龍頭地位 = tailwind 真實存在，Q1 FY26 有機 +10% 有初步驗證</td></tr>
+<tr><td>空頭最大威脅</td><td>PEG 2.24 + FY26 全年 guide 僅 2-6% 有機 + Siemens AI 工程端領先 = 高估值撞上成長放緩的盈餘品質型陷阱警訊</td></tr>
+<tr><td>估值仲裁評分</td><td>4 / 10（隱含預期激進）</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>觀望（final_signal C）</strong></td></tr>
+<tr><td>裁決理由</td><td>B 級護城河 + 體質全過（5/5）確認基本面無惡化（非 X 級迴避），但估值燈 🟠 + MA 🟡 減半 + 估值仲裁 4/10 顯示當前股價透支已明顯。等 FY26 Q2（5/5）驗證有機成長是否可維持，並等 Fwd PE 回 25x（~$343）或 Bollinger 下軌 $352 再啟動進場窗口。</td></tr>
+</table>
+<div class="check-box">
+<strong>自我檢核（QC-13 自我攻擊測試）：</strong>
+<ul>
+<li>☑ 多頭論據中，Q1 FY26 有機 +10% 是否依賴「市場最終會認識到」假設？——不依賴，數字已公布；但基期效應（Q1 FY25 -12%）稀釋了訊號強度。</li>
+<li>☑ 空頭威脅中，PEG 2.24 壓縮是否在 MA ❌（W250 跌破）前已發生？——是，估值壓縮通常領先 MA 系統，因此 MA 減半已是先行訊號。</li>
+<li>☑ 估值仲裁評分 4/10（&lt; 5）時是否足夠安全邊際？——否，這正是裁決為 C 而非 B 的關鍵。</li>
+</ul>
+</div>
+</div>
+</section>
+
+<!-- ==================== §4 ==================== -->
+<section>
+<h2 id="sec-4">§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>A｜存在意義</h3>
+<p>Rockwell Automation 解決的核心痛點是<strong>「讓實體工廠的機器與流程能被可程式化控制，並且永不停機」</strong>。具體而言：(1) 提供 PLC（例如 Allen-Bradley ControlLogix）作為工廠的「中樞神經系統」，將物理動作轉化為可編程、可重現的指令；(2) 透過 FactoryTalk 軟體層將不同世代機台、不同廠商設備整合為統一視圖；(3) 提供 Lifecycle Services（retrofit、預測維護、網安）確保工廠 20-30 年壽命週期的連續運作；(4) PlantPAx 分散式控制系統（DCS）處理製程業（oil &amp; gas、化工、生技製藥）的連續製程控制，與 discrete automation 組成完整產品線。</p>
+<p>若 ROK 明天消失，北美製造業（尤其汽車、食品飲料、石油天然氣、半導體）將面臨立即的備件短缺——全球有數百萬台 Allen-Bradley PLC 在運行，Siemens 與 Schneider 的替代品雖存在但需要重寫 ladder logic、改動 EtherNet/IP 拓撲、重新訓練工程師。短期（6-12 個月）北美汽車與食品廠產能可能被迫下修 5-15%，直到完成 rip-and-replace 專案。這個「沉沒切換成本」就是 ROK 護城河的物質基礎。</p>
+
+<h3>B｜逆向推演（Munger Inversion）</h3>
+<ul>
+<li><strong>地緣政治曝險：</strong>ROK ~55% 營收來自北美、~25% 歐洲、~20% 亞洲。直接曝險不如 TSM 或 NVDA 極端。但中國 FY25 -9%，若中美製造業脫鉤加速、中國本土 Inovance/Supcon 加速取代、歐洲 20% 敞口也可能受 CPI 電子關稅波及。</li>
+<li><strong>技術替代風險：</strong>(1) OPC-UA over TSN 若取代 EtherNet/IP，ROK 封閉協議護城河瓦解；(2) Hyperscaler「Cloud-to-PLC」直連讓 FactoryTalk 中介層可有可無；(3) AI Agent 直接生成 ladder logic 並透過 OPC-UA 部署到任何廠商 PLC。時間軸 3-7 年。</li>
+<li><strong>管理層失職：</strong>Blake Moret 自 2016 年接任 CEO，雙頭銜（Chairman+CEO，治理🟡）。$6.23B buyback 已在高價區完成，未來資本配置錯誤風險放大。</li>
+<li><strong>價值陷阱路徑：</strong>最可能是<strong>「盈餘品質型」</strong>——FY21-25 Revenue CAGR ~6%、EPS CAGR ~10%、Buyback retire 28.6% 股本，若無機併購與 buyback 放緩，EPS 成長將向 Revenue 收斂。</li>
+</ul>
+</section>
+
+<!-- ==================== §5 ==================== -->
+<section>
+<h2 id="sec-5">§5｜投資論點錨定</h2>
+
+<div class="hypothesis-box">
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th style="width:30%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>2-3 年（若進場）</td></tr>
+<tr><td>主要驅動時間軸</td><td>「軟體-定義-自動化」（SDA）與 Industrial AI re-rating 催化劑需 FY26-FY27 EPS 兌現才能評估</td></tr>
+<tr><td>訊號 vs 噪音</td><td>訊號：Segment organic growth、Software ARR 揭露、Gross margin 變化、Net debt / EBITDA 趨勢｜噪音：單季 bookings 波動、大單 announcement、管理層對宏觀的措辭變化、任何回購新聞</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>工業 AI / SDA 敘事推動 ROK 軟體 ARR 明顯加速，FactoryTalk + Logix AI 合計 ARR 在 FY27 揭露時 &gt; $600M</td><td>管理層是否主動揭露 Software ARR；若有，年增速 &gt; 20%</td><td>FY26 10-K（2026-11）或 FY27 Q1 earnings</td></tr>
+<tr><td>H2</td><td>北美 reshoring + 半導體/EV battery capex 推動 Intelligent Devices + Lifecycle segment organic growth FY26 全年維持 ≥ 6%</td><td>Segment 有機成長、Semiconductor/EV 終端市場營收揭露</td><td>FY26 Q2（2026-05）+ FY26 Q3（2026-08）+ FY26 Q4（2026-11）</td></tr>
+<tr><td>H3</td><td>Forward P/E 維持 28-32x 區間穩定（即估值不發生大幅壓縮），對應成長與 margin 正面兌現的雙引擎支撐</td><td>Forward P/E 5Y 分位、EV/EBITDA 相對 Siemens / Schneider 的溢價率</td><td>分段驗證，每季財報後重估</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>OPC-UA + Siemens SIMATIC AX 成為 AI 時代工廠網路事實標準，ROK EtherNet/IP 封閉生態被「去平台化」</td><td>H1</td><td>Siemens SIMATIC AX 對 Logix 的 win rate；greenfield 工廠選擇比例</td><td>IoT Analytics 調查顯示 greenfield 選擇 ROK 比例 3 年內從 35% 降至 &lt;25%</td></tr>
+<tr><td>R2</td><td>中國市場持續萎縮（FY25 -9%）且未能在印度 / 東南亞補齊，Asia 20% 敞口結構性下滑</td><td>H2</td><td>中國與 Asia Emerging 區域營收 YoY</td><td>連續 2 年中國 &lt; -5%，Asia 整體 &lt; +5%</td></tr>
+<tr><td>R3</td><td>利率環境逆轉（10Y UST &gt; 5%）觸發工業股板塊估值壓縮，Fwd PE 跌至 22x 以下（-28%）</td><td>H3</td><td>10Y UST 殖利率、XLI Forward P/E</td><td>10Y UST 突破 5% 且 XLI Fwd PE 從 22x 跌至 18x</td></tr>
+<tr><td>R4 (QC-30)</td><td>ROK 相對 Siemens（P/E 17x）、ETN（23x）溢價過大，同業收斂觸發股價下修</td><td>H3</td><td>ROK / Siemens PE 比值（當前 ~1.8x）</td><td>若同業估值上修至 22x 均值或 ROK 下修至 25x，都收斂 50% 以上</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>每當新事件出現，用以下框架判斷對論點影響：(1) 時間軸匹配？(2) 影響 H1/H2/H3 哪個？(3) ＋強化 / 0 無關 / －削弱？(4) 是否達到重新評估閾值？</p>
+</div>
+
+<div class="hypothesis-box">
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動（轉達 PM skill）</th></tr>
+<tr><td>進場</td><td>Forward PE ≤ 25x（~$343）且 FY26 Q2/Q3 有機 ≥ 6%；<strong>或</strong> Bollinger 下軌 $352 反彈</td><td>signal 升級至 B（衛星候選）</td></tr>
+<tr><td>加碼</td><td>H1 + H2 均確認（Software ARR 揭露 + 有機持續 ≥ 6%）</td><td>signal 升級至 A</td></tr>
+<tr><td>減碼</td><td>Forward PE &gt; 38x（~$522）<strong>或</strong> R1/R3 任一觸發</td><td>signal 降至 X</td></tr>
+<tr><td>撤退</td><td>H1 推翻（Software 成長停滯 &lt; 10%）+ H2 推翻（有機 &lt; 2% 連 2 季）</td><td>signal X，清倉</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ==================== §6 ==================== -->
+<section>
+<h2 id="sec-6">§6｜即時財報情報</h2>
+<p class="note">資料源：Q1 FY2026 earnings release（2026-02-05）、earnings call transcript、FY25 10-K、Q2 FY26 預期（將於 2026-05-05 公布）</p>
+
+<h3>① Q1 FY2026 關鍵數字（已公布）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="mono">$2,105M</td><td class="mono">~$2,020M</td><td><span class="badge badge-green">Beat +4.2%</span></td><td>+12.0%（有機 +10%）</td></tr>
+<tr><td>Adjusted EPS</td><td class="mono">$2.75</td><td class="mono">$2.51</td><td><span class="badge badge-green">Beat +9.6%</span></td><td>+50.3%（vs $1.83）</td></tr>
+<tr><td>Net Income</td><td class="mono">$305M</td><td class="mono">-</td><td>-</td><td>+115%（vs $142M）</td></tr>
+<tr><td>FCF</td><td class="mono">$170M</td><td class="mono">-</td><td>-</td><td>由 Q1 FY25 小幅負值轉正</td></tr>
+<tr><td>Segment Margin</td><td class="mono">20.7%</td><td class="mono">~19.6%</td><td><span class="badge badge-green">Beat</span></td><td>+360 bps</td></tr>
+<tr><td>Total ARR YoY</td><td class="mono">+7%</td><td class="mono">-</td><td>-</td><td>低於軟體同業 15-25% 的水準</td></tr>
+</table>
+
+<h3>② Q2 FY2026 預期（2026-05-05 將公布）</h3>
+<table>
+<tr><th>指標</th><th>管理層 guide</th><th>分析師共識（yfinance）</th><th>隱含成長</th></tr>
+<tr><td>Revenue</td><td>mid-single digit growth</td><td class="mono">$2,158M（+7.9% YoY）</td><td>Q1 +12% 減速至 +8%</td></tr>
+<tr><td>Adjusted EPS</td><td>~$2.85（低個位數 sequential）</td><td class="mono">$2.88（+17.6% YoY）</td><td>稅率逆風 ~$0.10（17% → 20%）</td></tr>
+<tr><td>Segment margin expansion</td><td>&lt; 100 bps YoY</td><td>-</td><td>margin 擴張減速</td></tr>
+</table>
+<p class="note"><strong>關鍵觀察點</strong>：Q1 的 +10% 有機是否可持續？管理層 FY26 全年 guide 2-6% 隱含 Q2-Q4 平均有機 ~3-4%。若 Q2 有機低於 5% 且 FY 全年未上修 → H2 削弱。</p>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>Q1 FY26 方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（軟體 ARR 加速）</td><td><span class="badge badge-yellow">0 不變</span></td><td>管理層仍未主動揭露 Software ARR 絕對值或 Logix AI 營收佔比。總 ARR +7% 低於軟體同業 15-25% 水準。</td></tr>
+<tr><td>H2（Segment 有機 ≥ 6%）</td><td><span class="badge badge-green">＋強化（暫時）</span></td><td>Q1 有機 +10%，但基期效應（Q1 FY25 -12%）稀釋訊號強度；管理層 FY26 全年 guide 僅 2-6% 隱含後三季減速。</td></tr>
+<tr><td>H3（估值穩定）</td><td><span class="badge badge-red">－削弱</span></td><td>財報後股價從 $355 推升至 $416（+17%），Fwd PE 從 29x 推至 30x，溢價擴大而非收斂；Barclays 4/1 下調目標價 $450→$400，Wells Fargo 4/1 下調 $410→$360，估值壓力已累積。</td></tr>
+</table>
+
+<h3>③ Earnings Call 語氣與產業 Imply</h3>
+<ul>
+<li><strong>管理層基調：</strong>樂觀偏謹慎。Moret 3 次強調「above-expected」，但 Q&amp;A 多次提到「macro caution」「CapEx release delayed to back half」。</li>
+<li><strong>刻意強調：</strong>data center / semi / EV battery 訂單加速、Clearpath Robotics 整合、AI-at-the-edge（未揭露 ARR）。</li>
+<li><strong>刻意迴避：</strong>Software segment ARR 絕對值、中國具體營收、OPC-UA vs EtherNet/IP 的競爭劣勢。</li>
+<li><strong>產業 Imply：</strong>北美 capex 週期在 H2 FY26 有復甦跡象；供應鏈 normalized；競爭格局對 Siemens / Schneider 的威脅刻意不提。</li>
+<li><strong>同業連帶：</strong>Emerson（process）、Eaton（power）、Siemens Digital Industries、Keysight 半導體測試應有類似 backlog 累積。</li>
+</ul>
+
+<h3>④ QC-27 Revenue vs OI 增長率 Divergence</h3>
+<table>
+<tr><th>項目</th><th>Q1 FY26</th></tr>
+<tr><td>Revenue YoY</td><td>+12.0%</td></tr>
+<tr><td>Operating Income YoY</td><td>+26.1% (FY25 Q1 OI ~$346M → Q1 FY26 OI ~$436M，based on 20.7% segment margin on $2,105M)</td></tr>
+<tr><td>Divergence</td><td>-14.1%（OI 快於 Revenue → margin 擴張）</td></tr>
+<tr><td>判斷</td><td>&lt; 0%，正面訊號（margin 擴張）</td></tr>
+</table>
+</section>
+
+<!-- ==================== §7 ==================== -->
+<section>
+<h2 id="sec-7">§7｜核心門檻檢核</h2>
+
+<h3>【EPS 共識（yfinance）】</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>基期 EPS (FY25 Adj)</td><td class="mono">$10.53</td><td>FY25 10-K</td></tr>
+<tr><td>FY+1E（FY2026，0y）</td><td class="mono">$12.14</td><td>yfinance，n=27，YoY +15.3%</td></tr>
+<tr><td>FY+2E（FY2027，+1y）</td><td class="mono">$13.74</td><td>yfinance，n=27，YoY +13.2%</td></tr>
+<tr><td>FY+3E（FY2028，§8 邏輯推導）</td><td class="mono">$15.39</td><td>FY+2 × 1.12（reshoring tailwind 遞減 + 軟體 ARR 累積貢獻 + buyback 尾端）</td></tr>
+<tr><td>3Y Adj EPS CAGR</td><td class="mono">13.5%</td><td>($15.39 / $10.53)^(1/3) − 1</td></tr>
+<tr><td>EPS trend 修正方向</td><td>持續上修</td><td>90d 前 $11.99 → 當前 $12.14（+1.3%）</td></tr>
+</table>
+
+<h3>【Munger 護城河維度】</h3>
+
+<h4>FCF Margin 歷史（5 年）</h4>
+<table>
+<tr><th>年度</th><th>Revenue</th><th>FCF</th><th>FCF Margin</th></tr>
+<tr><td>FY2021</td><td class="mono">$7.00B</td><td class="mono">$1,141M</td><td class="mono">16.3%</td></tr>
+<tr><td>FY2022</td><td class="mono">$7.76B</td><td class="mono">$682M</td><td class="mono">8.8%</td></tr>
+<tr><td>FY2023</td><td class="mono">$9.06B</td><td class="mono">$1,214M</td><td class="mono">13.4%</td></tr>
+<tr><td>FY2024</td><td class="mono">$8.26B</td><td class="mono">$639M</td><td class="mono">7.7%</td></tr>
+<tr><td>FY2025</td><td class="mono">$8.34B</td><td class="mono">$1,358M</td><td class="mono">16.3%</td></tr>
+<tr><td><strong>5Y avg</strong></td><td></td><td></td><td class="mono"><strong>12.5%</strong></td></tr>
+<tr><td><strong>5Y min</strong></td><td></td><td></td><td class="mono"><strong>7.7% (FY2024)</strong></td></tr>
+</table>
+
+<h4>ROIC 歷史（10 年代表值）</h4>
+<table>
+<tr><th>FY</th><th>ROIC</th><th>超 WACC (~9.5%)？</th></tr>
+<tr><td>2021</td><td class="mono">~15.0%</td><td>+5.5pp</td></tr>
+<tr><td>2022</td><td class="mono">16.8%</td><td>+7.3pp</td></tr>
+<tr><td>2023</td><td class="mono">18.5%</td><td>+9.0pp</td></tr>
+<tr><td>2024</td><td class="mono">~11.0%</td><td>+1.5pp（低谷）</td></tr>
+<tr><td>2025</td><td class="mono">18.4%</td><td>+8.9pp</td></tr>
+<tr><td><strong>10Y 均</strong></td><td class="mono">~15%</td><td>長期超 WACC ~6pp</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td>✅</td><td>16.3%（FY25）</td></tr>
+<tr><td>正規化 FCF Margin（Munger）</td><td>5Y 均 &gt; 15%；最低谷 &gt; 10%</td><td>⚠️ 勉強過 / ❌</td><td>5Y 均 12.5%（未達），最低 7.7%（未達）。判斷：<strong>有週期波動</strong></td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td>✅</td><td>18.4%，WACC 9.5%，超額 +8.9pp</td></tr>
+<tr><td>ROIC 穩定性（Munger）</td><td>10 年中 ≥ 70% 年份 &gt; 15%</td><td>⚠️ 6/10 年達標</td><td>FY24 低谷 ~11%；趨勢持平</td></tr>
+<tr><td>毛利率定價能力（Munger）</td><td>10 年中 ≥ 70% 年份持續改善</td><td>⚠️ 6/10</td><td>當前 48.1%，10 年前 42-43%；改善但非連續</td></tr>
+<tr><td>資本密集度（Munger）</td><td>Capex/Rev &lt; 5%（優）</td><td>✅</td><td>FY25 2.2%（$186M / $8.34B）；3Y 均 ~2.3%。低密集</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td>❌</td><td>基期 $10.53，FY+3E $15.39，3Y CAGR 13.5%（未達 20%）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td>❌</td><td>2.24（30.3 ÷ 13.5）</td></tr>
+<tr><td>負債安全性（Munger）</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td>⚠️ 部分</td><td>D/E = 3.647 / 3.654 = 1.0（偏高）；現金/Rev = 468/8342 = 5.6%（低配置）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td>❌</td><td>Cash $468M &lt; Debt $3,647M</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td>⚠️</td><td>7/10，趨勢穩定</td></tr>
+</table>
+<p><strong>最大財務弱點</strong>：正規化 FCF Margin 5Y 均僅 12.5%（FY24 低谷 7.7%）顯示週期性波動明顯。<br><strong>Munger 三維評級</strong>：<span class="badge badge-yellow">🟡 兩項達標</span>（Capex/Rev 低密集 + ROIC 當前達標；但 ROIC 穩定性 + 毛利率連續改善 + FCF Margin 正規化均不足）</p>
+
+<h3>⚠️ 價值陷阱初篩（Fwd PE 分位 56% &gt; 25%，未觸發強制四問）</h3>
+<p>Forward P/E 分位 56% 不在 25% 以下，P/FCF 34.4x 當前也非歷史低點，因此<strong>不觸發四問</strong>。但估值燈 🟠 偏貴本身已是警訊，盈餘品質風險見 §1 陷阱定性。</p>
+</section>
+
+<!-- ==================== §8 ==================== -->
+<section>
+<h2 id="sec-8">§8｜長期成長性評估</h2>
+
+<h3>A｜成長跑道 Runway</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（2026）</td><td>全球工業自動化 $238B；Mordor Intelligence</td><td>Smart factory + reshoring 驅動</td></tr>
+<tr><td>可達 TAM（2031E）</td><td>~$320-350B</td><td>CAGR 6%（政府 reshoring 補貼 + energy efficiency mandates）</td></tr>
+<tr><td>ROK 當前市佔</td><td>全球 10-12%（北美 ~30% 龍頭，歐 ~8%，亞 ~5%）</td><td>北美龍頭 + 全球 Top 3（Siemens 20% / ABB / Schneider）</td></tr>
+<tr><td>若維持現有成長率到 30% 滲透</td><td>N/A（分散市場，無單一滲透門檻）</td><td>Runway 關鍵在於市佔 defense + 軟體 ARR 加速</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>5-9 年</strong></td><td>中等可見度：tailwind 明確但競爭切入</td></tr>
+</table>
+
+<h3>B｜成長品質</h3>
+<table>
+<tr><th>類型</th><th>佔比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~60-70%（5Y 平均）</td><td>FY25 有機 +1%；FY26 Q1 有機 +10%（基期效應）</td></tr>
+<tr><td>無機成長</td><td>~30-40%</td><td>Clearpath Robotics、ICS、Plex 多筆併購；併購貢獻 FY26 ~3-4pp</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>中性型</strong>：reshoring tailwind 帶來的量增成長未必強化護城河（greenfield 工廠可能選 Siemens）。Software 部分 (FactoryTalk) 具備<strong>強化型</strong>特徵（粘性增加），但佔比低（&lt; 20%）。</p>
+
+<h3>D｜ROIC 與 FCF 可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>符合？</th></tr>
+<tr><td>ROIC</td><td>18.4%</td><td>16.8%</td><td>↑</td><td>✅</td></tr>
+<tr><td>ROIC − WACC</td><td>+8.9pp</td><td>+7.3pp</td><td>↑</td><td>✅</td></tr>
+<tr><td>FCF Margin</td><td>16.3%</td><td>13.4%</td><td>↑（但 U 型）</td><td>⚠️</td></tr>
+<tr><td>FCF / NI 轉換率</td><td>1.56</td><td>1.27</td><td>↑</td><td>✅</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>合理 Fwd P/E 壓縮至</th><th>潛在跌幅</th></tr>
+<tr><td>3 年後成長 15%</td><td>25x</td><td>-17%（vs 當前 30.3x）</td></tr>
+<tr><td>3 年後成長 10%</td><td>20x</td><td>-34%</td></tr>
+<tr><td>3 年後成長 5%</td><td>15x</td><td>-50%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測</h3>
+<table>
+<tr><th>信號類型</th><th>指標</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>⬜（Q1 FY26 +220bps 擴張）</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>⬜（北美穩定）</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 遠高於 Rev CAGR（&gt; 5pp）</td><td>🔴（5Y：EPS ~10% vs Rev ~6%，buyback +4pp 差距）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75（2 年）</td><td>⬜（FY25 1.56）</td></tr>
+<tr><td>產業衰退</td><td>TAM 萎縮 or 替代技術壓縮</td><td>⬜（TAM 擴張 6%）</td></tr>
+</table>
+<p><strong>價值陷阱風險評級</strong>：1 個 🔴 → <span class="badge badge-yellow">🟡 中度警戒</span>（盈餘品質型陷阱信號已浮現，§9 需正面回應）</p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="badge badge-yellow">🟡 中等可見度</span>（Runway 5-9 年，衰退信號 1 個）</p>
+
+<h3>F｜AI 取代風險</h3>
+<p><strong>評級：<span class="badge badge-yellow">🟡 中等不確定</span></strong>（6 分）。Logix AI 是護城河轉化機會，但 Siemens SIMATIC AX（AI 代碼生成）領先 12-18 個月，工程端可能被 OPC-UA + AI Agent 平台化侵蝕。FactoryTalk 軟體層有中長期 ARR 機會，但管理層揭露速度偏慢。</p>
+</section>
+
+<!-- ==================== §9 ==================== -->
+<section>
+<h2 id="sec-9">§9｜護城河分析</h2>
+<p><strong>評分：7 / 10</strong></p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>轉換成本（強）：</strong>Allen-Bradley ladder logic 在北美 90% 汽車/食品/石化工廠運作，rip-and-replace 需要重寫 + 重訓 + 改拓撲，成本極高。FactoryTalk HMI/MES 層進一步鎖定。這是 ROK 最主要護城河。</li>
+<li><strong>規模優勢（中）：</strong>北美 distributor 網絡（Allen-Bradley + Rockwell 雙品牌）+ FSR 全球服務據點 + Lifecycle Services recurring revenue ~35-40% 營收。但全球規模不及 Siemens。</li>
+<li><strong>無形資產（中）：</strong>Allen-Bradley 品牌在北美工業 OEM 具極高辨識度；專利組合中等；無監管牌照。</li>
+<li><strong>網路效應（弱）：</strong>FactoryTalk 有開發者生態，但不如 Siemens TIA Portal 完整；第三方 ISV 生態薄弱。</li>
+</ul>
+
+<h3>競爭鴻溝（為什麼資本充足對手仍無法跨越）</h3>
+<p>最關鍵的是「裝機基礎 × 切換成本」：北美工廠 20-30 年壽命週期中，更換 PLC 需要全線停產 6-12 個月，多數工廠僅在 greenfield 擴廠時才考慮切換。Siemens 在歐洲優勢也是同樣邏輯的鏡像。但 ROK 的劣勢是：greenfield 工廠（尤其是半導體 fab、EV battery、data center）愈來愈多選擇 Siemens 或 Schneider，因為它們有更開放的 OPC-UA 生態。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>Siemens Digital Industries</td><td>全球 PLC ~20%（歐洲龍頭）</td><td>擴大</td><td>SIMATIC AX（AI）、OPC-UA 生態、data center 新訂單</td><td>Siemens 吃 ROK greenfield；ROK 守北美 brownfield</td></tr>
+<tr><td>Schneider Electric (SIEGY 母公司 SU.PA)</td><td>全球 ~10-12%</td><td>穩定偏擴大</td><td>EcoStruxure 平台、data center 配電整合</td><td>Schneider 吃 ROK 在 data center 的地盤</td></tr>
+<tr><td>Emerson (EMR)</td><td>Process automation 領域龍頭</td><td>穩定</td><td>DeltaV DCS vs PlantPAx</td><td>雙方在製程業 oil &amp; gas 平行競爭，未見大幅轉移</td></tr>
+<tr><td>Eaton (ETN)</td><td>主攻 power management，非直接競爭</td><td>-</td><td>data center 電氣化受益更直接</td><td>非 PLC 直接對手，但搶食自動化板塊資金</td></tr>
+<tr><td>ABB</td><td>全球 ~10%</td><td>穩定</td><td>Robotics + process</td><td>與 ROK 地盤重疊較少</td></tr>
+<tr><td>中國 Inovance/Supcon</td><td>中國本土 40%+</td><td>擴大</td><td>ROK 中國市場被本土化取代</td><td>吃 ROK 中國的舊地盤</td></tr>
+</table>
+
+<h3>24 個月威脅分級（QC-23）</h3>
+<table>
+<tr><th>威脅</th><th>等級</th><th>影響</th></tr>
+<tr><td>Siemens 全球 PLC 市佔從 20% 擴至 22-23%（單一產品對單一產品）</td><td>🟡 點對點</td><td>護城河不扣分</td></tr>
+<tr><td>Siemens SIMATIC AX + OPC-UA 生態 + Xcelerator 平台組合攻擊 greenfield</td><td>🔴 生態攻擊</td><td><strong>護城河 -1 分（從 8 降為 7）</strong></td></tr>
+<tr><td>Hyperscaler（AWS/Azure）推 Cloud-to-PLC 直連（3-5 年時間軸）</td><td>🔴 生態攻擊（潛在）</td><td>未觸發，但追蹤中</td></tr>
+</table>
+<p class="note">基準護城河為 8 分（強勁裝機基礎 + 有限軟體生態），QC-23 Siemens 生態攻擊扣 -1 分 → <strong>最終 7 分</strong>。</p>
+
+<h3>護城河趨勢：穩定</h3>
+<p>北美 brownfield 裝機基礎穩固，greenfield 與中國被切分。整體趨勢穩定但不擴大。</p>
+</section>
+
+<!-- ==================== §10 ==================== -->
+<section>
+<h2 id="sec-10">§10｜財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>Siemens（同業）</th><th>ETN</th></tr>
+<tr><td>Revenue</td><td class="mono">$9.06B</td><td class="mono">$8.26B</td><td class="mono">$8.34B</td><td class="mono">~$88B（全公司）</td><td class="mono">$25.1B</td></tr>
+<tr><td>FCF Margin</td><td>13.4%</td><td>7.7%</td><td>16.3%</td><td>~10%</td><td>~13%</td></tr>
+<tr><td>EBITDA Margin</td><td>~22%</td><td>~15%</td><td>~21%</td><td>~15% (DI only)</td><td>~22%</td></tr>
+<tr><td>ROIC − WACC</td><td>+9.0pp</td><td>+1.5pp</td><td>+8.9pp</td><td>+4pp</td><td>+7pp</td></tr>
+<tr><td>SBC / Revenue</td><td>~1.4%</td><td>~1.7%</td><td>~1.5%</td><td>~0.5%</td><td>~1.0%</td></tr>
+<tr><td>ROE</td><td>~30%</td><td>~27%</td><td>~24%</td><td>~15%</td><td>~25%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF：</strong>FY25 OCF $1,544M vs NI $869M = 1.78x，OCF 大幅領先 NI（無盈餘操縱跡象）。</li>
+<li><strong>AR vs Revenue 成長：</strong>FY25 AR 略升 ~3% vs Revenue +1%，未顯著膨脹。</li>
+<li><strong>存貨 vs Revenue：</strong>FY25 存貨下降，反而顯示去庫存完成。</li>
+<li><strong>FCF 轉換率：</strong>FY25 FCF/NI = 1.56，優秀（行業標準 &gt; 0.85）。</li>
+</ul>
+
+<h3>回購品質評估（盈餘品質陷阱防禦）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總額 vs FCF 總額</td><td>~$1.5B buyback / $3.2B FCF = 47%</td><td>合理區間（&lt; 80% 警戒）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>原 10% → 剔除後 ~6%</td><td>差距 ~4pp，接近警戒線</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>均價 ~$280 vs 當前 $416</td><td>回購於低價區完成（資本配置 OK）</td></tr>
+<tr><td>Revenue CAGR（5Y）</td><td>~6%</td><td>EPS CAGR ~10% 遠高於 Rev CAGR，差距由 margin + buyback 貢獻</td></tr>
+</table>
+<p class="note">QC-28 絕對成長 vs 相對成長（vs Siemens DI）：ROK Q1 FY26 Rev +12% vs Siemens DI 近季 +5-7%；絕對美元新增 ROK ~$225M vs Siemens DI ~$500M（Siemens 規模較大）。ROK 成長速度較快但絕對規模明顯較小，規模優勢差距穩定。</p>
+</section>
+
+<!-- ==================== §11 ==================== -->
+<section>
+<h2 id="sec-11">§11｜產業格局、議價權、Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li>全球工業自動化 TAM：2026 $238B / 2031E $320-350B / CAGR 6%（Mordor Intelligence）</li>
+<li>PLC 細分市場：2025 Siemens 20%+、ROK 北美 30%+（全球 10-12%）、Schneider 10%、ABB 10%</li>
+<li>需求狀態：reshoring capex 緊缺段（半導體 + EV + data center）；process automation 穩定</li>
+<li>Capex Supercycle：美國 2025-2026 宣布製造業投資 $1.4T（Brookfield / Global X）；半導體 capex 2026E $145B（eetimes）</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游：</strong>供應商分散（半導體元件、電子零件、機械），集中度低，ROK 議價能力中等。</li>
+<li><strong>對下游（客戶）：</strong>OEM 終端客戶集中度低（汽車 Top 3、食品飲料 P&amp;G/Kraft Heinz、石油 Shell/Exxon）；switching cost 保護。</li>
+<li><strong>地理曝險：</strong>北美 ~55%、歐 ~25%、亞 ~20%（中國 ~10%）。生產地分散，地緣風險中等。</li>
+</ul>
+
+<h3>營收組成（FY25）</h3>
+<table>
+<tr><th>業務段</th><th>營收佔比</th><th>Q1 FY26 有機成長</th><th>備註</th></tr>
+<tr><td>Intelligent Devices（PLC、I/O、電機驅動）</td><td>~43%</td><td>+10%</td><td>Discrete automation 主力</td></tr>
+<tr><td>Software &amp; Control（FactoryTalk、Logix）</td><td>~27%</td><td>+14%</td><td>軟體 + ARR 增長引擎</td></tr>
+<tr><td>Lifecycle Services（維護、retrofit）</td><td>~30%</td><td>+7%</td><td>Recurring + 粘性</td></tr>
+</table>
+
+<h3>Unit Economics</h3>
+<ul>
+<li>Recurring Revenue：~35-40%（Lifecycle Services + Software subscription + support）</li>
+<li>Total ARR：Q1 FY26 +7% YoY（低於軟體同業 15-25%）</li>
+<li>Gross Margin：48.1%（FY25，改善）</li>
+<li>Segment Margin：20.7%（Q1 FY26，+360bps）</li>
+</ul>
+</section>
+
+<!-- ==================== §12 ==================== -->
+<section>
+<h2 id="sec-12">§12｜公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>機構持股 88.6%（高）；內部人持股 0.2%（低）</li>
+<li>Top holders: Vanguard ~10%、BlackRock ~8%、State Street ~5%</li>
+<li>無 dual-class 股權結構</li>
+</ul>
+
+<h3>資本配置軌跡（FY21-FY25）</h3>
+<table>
+<tr><th>用途</th><th>累計金額</th><th>佔 FCF</th></tr>
+<tr><td>Capex</td><td>~$900M</td><td>~18%</td></tr>
+<tr><td>M&amp;A（Clearpath、ICS、Plex、Fiix）</td><td>~$3.5B</td><td>~70%</td></tr>
+<tr><td>Buyback（累計 ~28.6% 股本）</td><td>~$6.2B</td><td>~124%（跨期 + debt-funded）</td></tr>
+<tr><td>Dividend</td><td>~$2.3B</td><td>~46%</td></tr>
+</table>
+
+<h3>管理層薪酬</h3>
+<ul>
+<li>CEO Blake Moret FY24 總薪酬 $16.4M（固定薪 20% / 績效獎金 30% / 股權激勵 50%）</li>
+<li>CEO/median employee ratio: 306×（業界相對高）</li>
+<li>雙頭銜（Chairman + CEO）自 2023 起，治理標記 🟡</li>
+</ul>
+
+<h3>過去 12 個月重大事件（QC-19）</h3>
+<ul>
+<li>🟢 無併購金額 &gt; 市值 5%（$2.3B 以上）</li>
+<li>🟢 無集體訴訟 / 證券詐欺訴訟</li>
+<li>🟢 無 SEC 調查或財報重編</li>
+<li>🟢 無 CEO / CFO 離職</li>
+<li>🟢 無主要客戶流失公告</li>
+<li>⚠️ 分析師下修：Barclays 4/1 $450→$400、Wells Fargo 4/1 $410→$360、Goldman Sachs 4/7 $458→$448（估值擔憂為主）</li>
+</ul>
+</section>
+
+<!-- ==================== §13 ==================== -->
+<section>
+<h2 id="sec-13">§13｜估值診斷</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<p><strong>當前主流估值邏輯</strong>：<strong>盈利能力型 + 成長型混合</strong>（P/E + PEG 為主，EV/EBITDA 次之）</p>
+<table>
+<tr><th>情境</th><th>判斷</th></tr>
+<tr><td>情境一：從資產估值 → 盈利估值</td><td>已完成（ROE 持續 &gt; 20%，市場用 P/E 定價）</td></tr>
+<tr><td>情境二：新度量衡（ARR/Software）</td><td><strong>潛在</strong>——若管理層揭露 Software ARR &gt; $600M，市場可能接受新指標（參考 CDNS、SNPS 軟體估值邏輯）。作廢條件：ARR 揭露但增速 &lt; 15%。</td></tr>
+<tr><td>情境三：定價偏好漂移</td><td>部分發生——reshoring 敘事讓市場給工業股 premium；但隨 capex 兌現節奏而分化</td></tr>
+</table>
+<p><strong>估值體系診斷結論：<span class="badge badge-yellow">🟡 估值邏輯模糊</span></strong>（市場在盈利估值 vs 軟體 ARR 估值之間搖擺，未形成明確主流）</p>
+
+<h3>13.1｜歷史估值分位（5Y）</h3>
+<table>
+<tr><th>估值指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>47.6x</td><td>20x</td><td>27x</td><td>50x</td><td>92%</td></tr>
+<tr><td>Forward P/E (NTM)</td><td>30.3x</td><td>~18x</td><td>~23x</td><td>~40x</td><td>56%</td></tr>
+<tr><td>EV/EBITDA</td><td>26.9x</td><td>~10x</td><td>~14x</td><td>~30x</td><td>85%</td></tr>
+<tr><td>P/FCF</td><td>34.4x</td><td>~20x</td><td>~28x</td><td>~55x</td><td>41%</td></tr>
+<tr><td>P/S</td><td>5.6x</td><td>~2.8x</td><td>~3.8x</td><td>~6.5x</td><td>76%</td></tr>
+</table>
+<p><strong>解讀：</strong>(1) 情緒：多數指標（Trailing PE、EV/EBITDA、P/S）在 75%+ 分位，市場情緒接近過熱；(2) 上次分位 90%+（2021）對應基期是 COVID 低谷 EPS，本次對應是 reshoring 期待——差異：當前成長能見度中等而非高；(3) 推動因素：利率下行 + AI 敘事 + reshoring，後兩者佔主導。</p>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Fwd P/E</td><td>30.3x</td><td>-</td></tr>
+<tr><td>3Y EPS CAGR</td><td>13.5%</td><td>-</td></tr>
+<tr><td>PEG（3Y）</td><td><strong>2.24</strong></td><td>&gt; 2 貴</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~11%</td><td>-</td></tr>
+<tr><td>PEG（5Y）</td><td><strong>2.75</strong></td><td>&gt; 2 貴</td></tr>
+</table>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>當前市值</td><td>$46.74B</td></tr>
+<tr><td>基期 FCF</td><td>$1.36B</td></tr>
+<tr><td>WACC</td><td>9.5%（10Y UST 4.2% + Beta 1.54 × ERP 5% = 11.9%，保守用 9.5%）</td></tr>
+<tr><td>永續成長率</td><td>3%</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+</table>
+<p>DCF 反推：若以當前市值 $46.7B、WACC 9.5%、永續 3% 計算，前 10 年所需 FCF CAGR ≈ <strong>12-14%</strong>。<br>可信度：過去 5 年 FCF CAGR 僅 ~6%、分析師 EPS CAGR 共識 13.5%、同業最快（ETN）~10%。隱含 CAGR 偏激進。<br><strong>隱含預期判斷：<span class="badge badge-red">🔴 激進</span></strong>。</p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>ROK</strong></td><td>$46.7B</td><td><strong>30.3x</strong></td><td><strong>26.9x</strong></td><td><strong>2.24</strong></td><td>16.3%</td><td>13.5%</td><td>18.4%</td></tr>
+<tr><td>SIEGY (Siemens ADR)</td><td>~$205B</td><td>~17x</td><td>~14x</td><td>1.5</td><td>~10%</td><td>~11%</td><td>~12%</td></tr>
+<tr><td>EMR</td><td>~$80B</td><td>~22x</td><td>~17x</td><td>1.9</td><td>~18%</td><td>~11%</td><td>~15%</td></tr>
+<tr><td>ETN</td><td>~$110B</td><td>~23x</td><td>~17x</td><td>1.8</td><td>~13%</td><td>~13%</td><td>~18%</td></tr>
+<tr><td>HON</td><td>~$140B</td><td>~19x</td><td>~14x</td><td>1.8</td><td>~15%</td><td>~10%</td><td>~22%</td></tr>
+<tr><td><strong>產業中位數</strong></td><td>-</td><td><strong>~21x</strong></td><td>~16x</td><td>1.8</td><td>~14%</td><td>~12%</td><td>~17%</td></tr>
+</table>
+<p><strong>同業溢折價邏輯：</strong>(1) ROK Fwd PE 30.3x vs 產業中位 21x 溢價 44%；(2) 護城河（7）稍低於 HON（~8）、ETN（~7-8），成長性（13.5%）略高於同業均（~12%），ROIC 18.4% 在 ETN、HON 之間——難以單一論點支撐 44% 溢價；(3) 若向中位數 21x 收斂，股價變動 -31%。</p>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>ROK Fwd PE 30.3x vs 同業中位 21x = <strong>44% 溢價</strong>（未達 50% 門檻，但接近）。</p>
+<table>
+<tr><th>情境</th><th>計算</th><th>結果</th></tr>
+<tr><td>A：ROK 不變，同業 PE 上修至 ROK 水準</td><td>不合理（ROK 無法帶動 Siemens 80% re-rate）</td><td>可能性極低</td></tr>
+<tr><td>B：ROK PE 收斂 50% 至 (30.3 + 21) / 2 = 25.7x</td><td>股價 13.74 × 25.7 = $353</td><td><strong>替代 Bear $353</strong></td></tr>
+</table>
+<p>與基本面 Bear $186 取保守者 → 仍以基本面 Bear $186（§2 E）。</p>
+
+<h3>橫向比較結論</h3>
+<table>
+<tr><th>問題</th><th>ROK</th><th>最強競爭標的（ETN）</th></tr>
+<tr><td>主假設兌現時上行最大</td><td>~+20%（至 $495 analyst high）</td><td>ETN 受益 data center electrification 同樣可觀</td></tr>
+<tr><td>主假設落空時跌幅最小</td><td>-35%（至 $280 底）</td><td>ETN 類似範圍但 PE 較合理緩衝</td></tr>
+<tr><td>風報比最優</td><td>❌ ROK 非最優</td><td>ETN / EMR 估值更合理</td></tr>
+</table>
+<p><strong>橫向結論：<span class="badge badge-red">❌ 同主題有更佳標的</span></strong>（EMR Fwd PE 22x、ETN 23x 估值更具吸引力）</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>依據</th></tr>
+<tr><td>估值體系（13.0）</td><td><span class="badge badge-yellow">🟡 邏輯模糊</span></td><td>盈利估值 vs ARR 估值搖擺</td></tr>
+<tr><td>歷史分位（13.1）</td><td><span class="badge badge-yellow">🟡 合理偏高</span></td><td>Fwd PE 分位 56%，但 EV/EBITDA 85% 過熱</td></tr>
+<tr><td>PEG（13.2）</td><td><span class="badge badge-red">🔴 貴</span></td><td>PEG 2.24 &gt; 2</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td><span class="badge badge-red">🔴 激進</span></td><td>隱含 FCF CAGR 12-14% vs 歷史 ~6%</td></tr>
+<tr><td>同業（13.4）</td><td><span class="badge badge-red">🔴 溢價無支撐</span></td><td>+44% 溢價</td></tr>
+</table>
+<p>§2 D 交叉驗證：合理 PE 18x（§2 E 計算）vs 當前 Fwd PE 30.3x，當前 &gt; 合理 × 1.5（18 × 1.5 = 27）→ 下修一級。</p>
+<p><strong>當前定價判斷：<span class="badge badge-red">🔴 明顯貴</span></strong></p>
+
+<h3>長期合理倍數對應表</h3>
+<table>
+<tr><th>§8 評級</th><th>基準 Fwd PE</th></tr>
+<tr><td>🟢 高確信</td><td>25x</td></tr>
+<tr><td><strong>🟡 中等可見度（ROK）</strong></td><td><strong>20x（base）</strong></td></tr>
+<tr><td>🔴 存疑</td><td>15x</td></tr>
+</table>
+<p>引擎 A（ROIC 溢價）：ROIC 18.4% &lt; 20% → 不觸發<br>引擎 B（PEG 天花板）：PEG 2.24 &gt; 2 → 不觸發<br>引擎 C（護城河溢價）：7 &lt; 9 → 不觸發<br>AI 調整 🟡 × 0.9<br><strong>最終長期合理倍數 = 20 × 1.0 × 0.9 = 18x</strong></p>
+
+<h3>分析師目標價參考</h3>
+<ul>
+<li>共識中位：$421.57（yfinance）、$414.64（MarketBeat 14 analysts）、$416.85（TradingView）</li>
+<li>高：$495 / 低：$248</li>
+<li>最近下修：Barclays $450→$400（4/1）、Wells Fargo $410→$360（4/1）、Goldman Sachs $458→$448（4/7）</li>
+<li>與共識差異：本 DD 的合理 PE 18x（長期）對應 $247，遠低於共識中位 $421，分歧點在於長期合理 PE 假設（DD 偏保守）。</li>
+</ul>
+
+<h3>投資結論（v12.0 綜合訊號）</h3>
+<p><strong>財報信號與假設校準：</strong></p>
+<ul>
+<li>H1（軟體 ARR）：Q1 FY26 Total ARR +7%，管理層仍未揭露絕對值 → <strong>不變（待 FY26 10-K 驗證）</strong></li>
+<li>H2（有機成長 ≥ 6%）：Q1 FY26 有機 +10% → <strong>暫時強化</strong>，但基期效應稀釋，待 Q2-Q4 驗證</li>
+<li>H3（估值穩定）：Fwd PE 從 29x 推至 30x，分析師下修目標價 → <strong>削弱</strong></li>
+<li>這份財報讓隱含預期<strong>更難兌現</strong>（高估值 + Q2-Q4 有機減速風險）</li>
+</ul>
+
+<p><strong>綜合訊號輸出：</strong></p>
+<ul>
+<li>護城河等級：B（7/10）→ 調整後：B</li>
+<li>估值燈：🟠 偏貴（Fwd PE 分位 56%、PEG 2.24）</li>
+<li>Pure MA 狀態：🟡 減半進場</li>
+<li>大盤豁免：正常（SPX 未破 W104）</li>
+<li><strong>綜合訊號：C（觀察池）</strong></li>
+<li>中期參考 R:R：-0.61x（資訊性）</li>
+<li>訊號語意：C = watchlist 觀察池，不納入新進</li>
+</ul>
+
+<p><strong>Beta 雙來源驗證（QC-25）：</strong>yfinance 1.54 vs TradingView 0.95，差距 &gt; 50%。WACC 計算採保守（較高值 1.54）。差異反映 ROK 同時具備工業週期性（高 Beta）與大型股防禦性（低 Beta）特徵。</p>
+
+<p><strong>下行風險量化：</strong></p>
+<ul>
+<li>短期 Bear Case $186 → 距現價 -55%</li>
+<li>中期 Bear Case $210 → 距現價 -49%</li>
+<li>W52 Low $244.63（參考）/ W104 Low $223.68（參考）</li>
+<li>若 FY+1 EPS 下修 10%，Bear EPS $10.93，配合 Bear PE 17x → $185.8（短期 R:R -0.74x）</li>
+</ul>
+</section>
+
+<!-- ==================== 版本修訂紀錄 ==================== -->
+<section>
+<h2 id="sec-version">版本修訂紀錄</h2>
+<div class="history-box">
+<p><strong>v12.0（2026-04-18）</strong></p>
+<ul>
+<li>升級至 v12.0 schema：廢除單一「最終倉位 %」輸出，改為 A+/A/B/C/X 訊號燈。</li>
+<li>§2 重構為「產業風向 × 品質 × 估值燈 × Pure MA」四層判定。</li>
+<li>護城河單一決定品質等級，7/10 → B 級（v11.0 為 A 級，因綜合分 + 體質加分）。</li>
+<li>新增 QC-22~30 九條規則（股價漂移、競爭威脅分級、intraday、Beta 雙源、margin 結構性測試、Rev vs OI divergence、絕對 vs 相對成長、R:R 壓力測試、同業溢價收斂）。</li>
+<li>估值燈 🟠 偏貴（PEG 2.24、盲點 1 救援不啟動）+ Pure MA 🟡 減半 = 綜合訊號 C（v11 判「迴避」）。</li>
+<li>較 v11：裁決從「迴避」微調為「C 觀察池」——基本面無惡化（體質 veto 0/5 全過），但估值 + MA 兩項減半訊號並存 → 觀望等待窗口。</li>
+</ul>
+<p><strong>v11.0（2026-04-17）</strong></p>
+<ul>
+<li>首次 ROK v11.0 DD。品質分 9.0（A 級），估值 🔴 明顯貴，短期 R:R -0.54x，中期 R:R -0.36x。裁決「迴避」。</li>
+</ul>
+</div>
+
+<h3>假設驗證對照（v11 → v12）</h3>
+<table>
+<tr><th>項目</th><th>上次狀態（v11，2026-04-17）</th><th>本次狀態（v12，2026-04-18）</th><th>邊際變化</th></tr>
+<tr><td>H1（Software ARR 加速）</td><td>未揭露，0 不變</td><td>Total ARR Q1 +7%，仍未揭露 Software ARR 絕對值</td><td>不變（1 日間隔無新訊息）</td></tr>
+<tr><td>H2（Segment organic growth 回到 6%+）</td><td>Q1 FY26 有機 +10%（強化）</td><td>同 Q1 FY26，但管理層 FY 全年 guide 2-6% 暗示 Q2-Q4 減速</td><td>略為削弱（guide 解讀更謹慎）</td></tr>
+<tr><td>H3（估值壓縮 &lt; 25%）</td><td>Fwd PE 33.2x，溢價放大（削弱）</td><td>Fwd PE 30.3x，分析師 4/1 下修目標價</td><td>強化（估值已小幅回落）</td></tr>
+<tr><td>R1 是否觸發</td><td>未觸發</td><td>未觸發，但 Siemens SIMATIC AX 威脅等級定為 🔴 生態攻擊（QC-23）</td><td>同樣未觸發，但正式列入扣分</td></tr>
+<tr><td>R2 是否觸發</td><td>未觸發（中國 -9% 已反映）</td><td>未觸發，中國維持「stabilizing but not recovering」</td><td>不變</td></tr>
+<tr><td>R3 是否觸發</td><td>未觸發</td><td>未觸發（10Y UST ~4.2%），但分析師下修目標價是初期訊號</td><td>初期訊號浮現</td></tr>
+<tr><td>裁決變化</td><td>迴避（倉位 0%）</td><td>C 觀察池（不納入新進）</td><td>微調：基本面無惡化，但估值 + MA 兩項減半。v12 取消「迴避」絕對化，改為 C 的 watchlist 語意。三個關鍵新事實：(1) 股價從 $402 升至 $416（+3.3%），Fwd PE 從 33x 降至 30.3x（基期效應）；(2) 分析師群體目標價下修（Barclays $400、Wells $360）；(3) MA 升級為🟡 減半（W250 斜率持平而非負值）。</td></tr>
+</table>
+</section>
+
+<!-- Print -->
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</div>
+</body>
+</html>
