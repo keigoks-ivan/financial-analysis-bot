@@ -382,6 +382,22 @@ def scan_files(index_data: dict):
 
         md = index_data.get(f.name, {})
         comment = extract_comment(f) or md.get("comment", "")
+        # v12.0 policy: 無論來源為何（DD HTML §2 I 或 INDEX.md fallback），
+        # 備註統一套用 120 字上限 + 句號切斷邏輯。
+        # 原先 fallback 到 INDEX.md 的 8-bullet Dashboard 會漏掉截斷（例如 UBER v12）。
+        if comment:
+            # 先移除 <br> / <br/> 等換行 tag，替換為「；」保留語意分隔
+            comment_flat = re.sub(r'<br\s*/?>', '；', comment)
+            comment_flat = re.sub(r'<[^>]+>', '', comment_flat).strip()
+            if len(comment_flat) > 120:
+                cut = comment_flat[:120]
+                last_period = max(cut.rfind("。"), cut.rfind("."), cut.rfind("；"))
+                if last_period > 60:
+                    comment = cut[:last_period + 1]
+                else:
+                    comment = cut.rstrip("，。、；,.:;") + "…"
+            else:
+                comment = comment_flat
         qscore = extract_quality_score(f)
         moat = extract_moat_score(f)
         moat_trend = extract_moat_trend(f)
