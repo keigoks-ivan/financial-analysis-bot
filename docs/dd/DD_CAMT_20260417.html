@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v11.0">
+<title>Camtek (CAMT) 深度研究 DD v11.0｜2026-04-17</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Noto Sans TC','PingFang TC',sans-serif;background:#F8FAFC;color:#1F2937;margin:0;padding:0;line-height:1.65;}
+  .num,.code,td.num{font-family:'IBM Plex Mono',monospace;}
+  header.top{background:#1E3A5F;color:#fff;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  header.top .left{font-weight:700;font-size:15px;}
+  header.top .meta{font-size:12px;font-family:'IBM Plex Mono',monospace;opacity:.92;}
+  main{max-width:1180px;margin:0 auto;padding:32px 24px 100px;}
+  h1{font-size:26px;margin:0 0 4px;color:#1E3A5F;}
+  h2{font-size:20px;color:#fff;background:#1E3A5F;padding:10px 16px;border-left:4px solid #3B82F6;margin:34px 0 14px;}
+  h3{font-size:16px;color:#1E3A5F;margin:22px 0 10px;border-bottom:2px solid #E5E7EB;padding-bottom:4px;}
+  h4{font-size:14px;color:#1E3A5F;margin:16px 0 8px;}
+  .card{background:#fff;border:1px solid #E5E7EB;border-radius:4px;padding:18px 22px;margin-bottom:14px;}
+  table{border-collapse:collapse;width:100%;margin:8px 0 14px;font-size:13px;background:#fff;}
+  th{background:#1E3A5F;color:#fff;padding:8px 10px;text-align:left;font-weight:500;}
+  td{padding:7px 10px;border-bottom:1px solid #E5E7EB;vertical-align:top;}
+  tr:nth-child(even) td{background:#F1F5F9;}
+  .beat{background:#DCFCE7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:500;}
+  .miss{background:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:3px;font-weight:500;}
+  .neutral{background:#FEF9C3;color:#92400E;padding:2px 6px;border-radius:3px;font-weight:500;}
+  .red{background:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:3px;}
+  .yellow{background:#FEF9C3;color:#92400E;padding:2px 6px;border-radius:3px;}
+  .green{background:#DCFCE7;color:#166534;padding:2px 6px;border-radius:3px;}
+  .blue{background:#EFF6FF;color:#1E3A8A;padding:2px 6px;border-radius:3px;}
+  .warn{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;}
+  .warn h3{color:#C2410C;border:none;margin-top:0;}
+  .hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px 18px;margin:12px 0;}
+  .hypothesis-box h3{color:#1E3A5F;border:none;margin-top:0;}
+  .debate-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0;}
+  .debate-card{padding:14px 16px;border-radius:4px;}
+  .debate-bull{background:#F0FDF4;border-left:4px solid #16A34A;}
+  .debate-bear{background:#FFF1F2;border-left:4px solid #DC2626;}
+  .debate-arb{background:#F5F3FF;border-left:4px solid #7C3AED;}
+  .verdict-box{background:#FFFBEB;border-left:4px solid #D97706;padding:14px 18px;margin:14px 0;}
+  .verdict-box h3{color:#92400E;border:none;margin-top:0;}
+  .rr-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:16px 0;}
+  .rr-card{padding:14px 16px;border-radius:4px;}
+  .rr-short{background:#F0F9FF;border-left:4px solid #0284C7;}
+  .rr-mid{background:#F5F3FF;border-left:4px solid #7C3AED;}
+  .pass{background:#DCFCE7;color:#166534;padding:2px 6px;border-radius:3px;font-weight:700;}
+  .fail{background:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:3px;font-weight:700;}
+  .break{background:#FEF3C7;color:#92400E;padding:2px 6px;border-radius:3px;font-weight:700;}
+  .note{color:#6B7280;font-size:12px;margin:6px 0;}
+  ul li{margin:5px 0;}
+  .print-btn{position:fixed;bottom:22px;right:22px;background:#1E3A5F;color:#fff;padding:10px 16px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.2);}
+  @media print{header.top,.print-btn{display:none;}body{background:#fff;}main{max-width:100%;padding:10px;}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="left">Camtek Ltd. (NASDAQ: CAMT) ｜ 買側深度研究 DD</div>
+  <div class="meta">資料抓取 2026-04-17 ｜ 股價 $180.63 ｜ 最新財報 Q4 2025 ｜ DD Schema v11.0</div>
+</header>
+
+<main>
+<h1>Camtek Ltd. (CAMT) — AI 先進封裝檢測龍頭的估值考驗</h1>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。本報告採用 v11.0 PEG 安全網 + 基本面 Bear Case + Bollinger 建倉框架。</p>
+
+<!-- ========== §1 投資結論 ========== -->
+<h2>§1 投資結論</h2>
+
+<div class="card">
+<h3>結論 Dashboard</h3>
+<div class="hypothesis-box">
+<ul>
+  <li><strong>品質極強（A 級 10 分，滿分）：</strong>護城河 9/10 + 成長持久性 9/10 + 體質 +2.5（五項全過）</li>
+  <li><strong>估值 🔴（明顯貴）：</strong>Forward PE 41.4x（FY+2 NTM）/ 52.5x（FY+1）vs 合理 PE 25x，PEG 2.25</li>
+  <li><strong>短期未過：</strong>FY+1（2026E）EPS $3.44（+5.6% YoY），目標 $86 vs 現價 $180.63，R:R <strong>−0.80x（上行空間為負）</strong></li>
+  <li><strong>中期未過：</strong>FY+2（2027E）EPS $4.36，目標 $109，R:R <strong>−0.70x（上行空間為負）</strong></li>
+  <li><strong>建議：迴避現價進場；目標進場區 $100-$130（位於 MA104w $98.71 與 5Y PE 中位數隱含價之間）</strong></li>
+  <li><strong>同主題比較：</strong>相較 KLAC（Fwd PE 36）、ONTO（PEG 1.13x）估值最貴；但 CAMT 在 HBM4 微凸塊 3D 量測為「reference tool across all major manufacturers」，品質無疑最高</li>
+  <li><strong>長期持有信心：高</strong>（§2 G）｜<strong>陷阱定性：</strong>🟢 非陷阱（生意與護城河無惡化信號，純為估值過熱）</li>
+</ul>
+</div>
+<p class="note">判定：<strong>迴避</strong>（§2 E）｜底倉 0%（等待回檔至合理價位再啟動進場框架）。</p>
+<p class="note">註：底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比，需自行依據組合配置紀律決定（典型範圍 8-15% / 檔）。</p>
+</div>
+
+<div class="warn">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th style="width:30%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>。Camtek 不是便宜到令人生疑，而是貴到令人生疑。這是「增長股貴了」的問題，不是「便宜有理」的問題</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>FY2025 營收 +16% YoY 至 $496M 創新高、毛利率擴大至 51.6% Non-GAAP、Q4 連續四季度創新高、HBM4 全球 reference tool，且 CoWoS 擴散至 OSAT 為 Camtek 獨家受益（50% 營收來自 OSAT）。FCF 2025 年 $127M，FCF margin 25.6%——護城河與 unit economics 全部擴大中</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>若 HBM4 採購循環比預期提前見頂（類似 HBM3E 2024 年 Q4 的急煞），Camtek 2026 前半年營收指引（Q1 ~$120M 平持）已暗示 order visibility 有限。$425M 可轉債（0% coupon，轉換價 $109.34）發行於 2025/9，稀釋風險疊加估值高位</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否發生</td><td>① HBM4 量產進度（Samsung/SK Hynix/Micron 每季 tape-out 節奏）② OSAT CoWoS 採購額（ASE/Amkor 財報披露）；任一領先指標連續兩季不如預期 = 成長熄火信號</td></tr>
+</table>
+<p><strong>最終定性：🟢 非陷阱</strong>（但估值風險極高，入場時機為核心）</p>
+</div>
+
+<div class="card">
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>指標</th><th>章節</th><th>性質</th><th>閾值</th></tr>
+<tr><td>1</td><td>HBM4 客戶 tape-out 節奏（Samsung/SK Hynix/Micron）</td><td>§5 H1</td><td>🔵 核心假設驗證</td><td>連續 2 季延期 = 論點動搖</td></tr>
+<tr><td>2</td><td>OSAT 資本支出（ASE/Amkor/SPIL）CoWoS 投資計畫</td><td>§8 A/C</td><td>🔵 長期成長領先信號</td><td>CoWoS 於 OSAT 滲透率持平 = 護城河變現放緩</td></tr>
+<tr><td>3</td><td>下季 guidance 與 FY+1 EPS 共識修正方向</td><td>§13</td><td>短期估值信號</td><td>FY+1 EPS 連續 2 次下修 &gt;5% = 賣壓加速</td></tr>
+</table>
+</div>
+
+<!-- ========== §2 品質分驅動雙時距 R:R ========== -->
+<h2>§2 品質分驅動雙時距 R:R（v11.0）</h2>
+
+<div class="card">
+<h3>A｜體質檢核（加減分）</h3>
+<table>
+<tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td>✅ +0.5</td><td>Non-GAAP 毛利率 2023 ~50.9% → 2024 50.8% → 2025 51.6%（擴大）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>✅ +0.5</td><td>2025 FCF $127M / GAAP NI $51M = 2.5x（GAAP NI 被可轉債會計項壓低；以 Non-GAAP NI ~$162M 計 = 0.78，仍過）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td>✅ +0.5</td><td>90d 前 $3.32 → 60d 前 $3.32 → 30d 前 $3.43 → 現 $3.44（持續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅ +0.5</td><td>Q1 2025 +30%、Q2 +23%、Q3 +8%、Q4 +9%（全正）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅ +0.5</td><td>Net Debt $342M / Non-GAAP EBITDA ~$170M = 2.0x（可轉債 0% coupon，實質為現金等價）</td></tr>
+</table>
+<p><strong>體質加減分 = +2.5</strong>（全數通過）</p>
+</div>
+
+<div class="card">
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th></tr>
+<tr><td>護城河</td><td>§9（HBM4 reference tool + 3D microbump 量測壟斷地位 + 競爭者 KLA 自承無法匹敵）</td><td><strong>9 / 10</strong></td></tr>
+<tr><td>成長持久性</td><td>§8（Runway ≥ 10 年：HBM4/HBM5、CoWoS-L 至 OSAT 擴散、CoPoS/面板封裝、AI 免疫 🟢）</td><td><strong>9 / 10</strong></td></tr>
+</table>
+<p><strong>底分</strong> = (9 + 9) / 2 = <strong>9.0</strong></p>
+<p><strong>品質分</strong> = min(9.0 + 2.5, 10) = <strong>10 / 10（A 級）</strong></p>
+<p class="note">品質等級：<span class="green">A 級</span>（≥ 7.5）→ 基礎底倉 25%（目標倉位的）</p>
+</div>
+
+<div class="card">
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY2025 實際 Non-GAAP EPS</td><td class="num">$3.26</td><td>Q4 2025 earnings release</td></tr>
+<tr><td>FY+1 (2026E) EPS</td><td class="num">$3.44</td><td>yfinance 共識中位數，n = 12</td></tr>
+<tr><td>FY+2 (2027E) EPS</td><td class="num">$4.36</td><td>yfinance 共識中位數，n = 12</td></tr>
+<tr><td>FY+2 YoY 成長</td><td class="num">+26.7%</td><td>($4.36/$3.44) − 1</td></tr>
+<tr><td>FY+1 YoY 成長</td><td class="num">+5.6%</td><td>($3.44/$3.26) − 1（HBM3E 循環末期消化）</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td class="num">52.5x</td><td>$180.63 / $3.44</td></tr>
+<tr><td>當前 FY+2 Forward P/E (NTM)</td><td class="num">41.4x</td><td>$180.63 / $4.36（yfinance Forward PE = 41.43 一致）</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+
+<h4>步驟一：歷史錨點</h4>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>5Y Forward P/E 中位數</td><td class="num">~25x</td><td>Macrotrends / Fullratio（5Y 平均 29x，中位數略低）</td></tr>
+<tr><td>5Y Forward P/E 75th percentile</td><td class="num">~32x</td><td>2024-2025 AI 升溫期間估值</td></tr>
+<tr><td>5Y Forward P/E 歷史高點</td><td class="num">~45x</td><td>2025 AI 熱潮高點</td></tr>
+<tr><td>5Y Forward P/E 歷史低點</td><td class="num">~12x</td><td>2022Q4 半導體下行低點</td></tr>
+<tr><td><strong>基礎值（75th）</strong></td><td class="num"><strong>32x</strong></td><td>——</td></tr>
+</table>
+
+<h4>步驟二：PEG 調節</h4>
+<p><strong>3Y Non-GAAP EPS CAGR 推導：</strong>基期 FY2025 $3.26、FY+1 $3.44、FY+2 $4.36、FY+3 (2028E) ≈ $5.41（§8 邏輯推導：HBM4 滿載 + CoWoS-L 擴散至 OSAT + 下一代 CoPoS 量產啟動，假設 24% YoY）</p>
+<p>3Y CAGR = ($5.41/$3.26)^(1/3) − 1 = <strong>18.4%</strong></p>
+<p><strong>PEG = 41.4x ÷ 18.4 = 2.25</strong></p>
+<table>
+<tr><th>PEG 區間</th><th>規則</th><th>本標的適用？</th></tr>
+<tr><td>PEG &lt; 1.0</td><td>上浮至 min(75th × 1.2, 5Y 高點)</td><td>—</td></tr>
+<tr><td>1.0 ≤ PEG ≤ 2.0</td><td>維持 75th 不動</td><td>—</td></tr>
+<tr><td><strong>PEG &gt; 2.0</strong></td><td><strong>下壓至 5Y 中位數</strong></td><td><strong>✓ PEG 2.25 觸發</strong></td></tr>
+</table>
+<p>步驟二調整後 P/E = <strong>25x</strong>（中位數）</p>
+
+<h4>步驟三：品質溢價（PEG 下壓觸發時）</h4>
+<table>
+<tr><th>#</th><th>條件</th><th>結果</th></tr>
+<tr><td>①</td><td>品質等級 = A 級</td><td>✅</td></tr>
+<tr><td>②</td><td>當前 ROIC（TTM GAAP 10.19%）&gt; 5Y 平均 ROIC（~15%）</td><td>❌（GAAP ROIC 受 2025 一次性可轉債會計壓低，但依規則採 Macrotrends 口徑失效）</td></tr>
+<tr><td>③</td><td>當前毛利率（Non-GAAP 51.6%）&gt; 5Y 平均（~49.5%）</td><td>✅</td></tr>
+</table>
+<p>② 未滿足 → <strong>品質溢價不觸發，合理 P/E = 25x（5Y 中位數）</strong></p>
+<p class="note">備註：若以 Non-GAAP ROIC（剔除可轉債會計）衡量，2025 ROIC 實質 ~20%，②也滿足，則合理 P/E 可上調至 (25+32)/2 = 28.5x。為保守計，採 Macrotrends GAAP 口徑。</p>
+</div>
+
+<div class="card">
+<h3>E｜雙時距目標價與 R:R</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>$3.44 × 25</td><td class="num">$86.00</td></tr>
+<tr><td>中期（2 年）</td><td>$4.36 × 25</td><td class="num">$109.00</td></tr>
+</table>
+
+<h4>下檔錨點（基本面 Bear Case，§8 E）</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（成長降至 10%）</td><td class="num">20x</td><td class="num">20x</td></tr>
+<tr><td>Bear EPS（FY × 0.9）</td><td class="num">$3.44 × 0.9 = $3.10</td><td class="num">$4.36 × 0.9 = $3.92</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td class="num"><strong>$62.00</strong></td><td class="num"><strong>$78.40</strong></td></tr>
+</table>
+
+<h4>W52 / W104 參考（yfinance）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="num">$180.63</td></tr>
+<tr><td>W52 Low（參考）</td><td class="num">$56.09</td></tr>
+<tr><td>W104 Low（參考）</td><td class="num">$47.41</td></tr>
+<tr><td>MA104w（參考）</td><td class="num">$98.71</td></tr>
+<tr><td>MA50（參考）</td><td class="num">$161.06</td></tr>
+<tr><td><strong>短期下檔 = Bear 股價</strong></td><td class="num"><strong>$62.00</strong></td></tr>
+<tr><td><strong>中期下檔 = Bear 股價</strong></td><td class="num"><strong>$78.40</strong></td></tr>
+</table>
+<p class="note">Bear 股價 $62 &gt; W52 Low $56 → 採用 Bear 股價作為下檔錨點（Bear Case 已偏保守但合理）。</p>
+
+<h4>雙 R:R 計算</h4>
+<div class="rr-wrap">
+<div class="rr-card rr-short">
+<h4>① 短期 R:R（1 年）</h4>
+<table>
+<tr><td>目標價</td><td class="num">$86.00</td></tr>
+<tr><td>上行空間</td><td class="num"><span class="red">−52.4%</span></td></tr>
+<tr><td>下檔錨點</td><td class="num">$62.00</td></tr>
+<tr><td>下行距離</td><td class="num">65.7%</td></tr>
+<tr><td><strong>R:R</strong></td><td class="num"><span class="fail">−0.80x</span></td></tr>
+</table>
+<p class="note">上行空間為負，現價已高於合理短期目標。</p>
+</div>
+<div class="rr-card rr-mid">
+<h4>② 中期 R:R（2 年）</h4>
+<table>
+<tr><td>目標價</td><td class="num">$109.00</td></tr>
+<tr><td>上行空間</td><td class="num"><span class="red">−39.7%</span></td></tr>
+<tr><td>下檔錨點</td><td class="num">$78.40</td></tr>
+<tr><td>下行距離</td><td class="num">56.6%</td></tr>
+<tr><td><strong>R:R</strong></td><td class="num"><span class="fail">−0.70x</span></td></tr>
+</table>
+<p class="note">上行空間為負，現價已高於合理中期目標。</p>
+</div>
+</div>
+
+<h4>判定（v11.0 四級裁決）</h4>
+<table>
+<tr><th>條件</th><th>結果</th></tr>
+<tr><td>短期 R:R ≥ 2.0 且 中期 R:R ≥ 2.0 → 進場</td><td>❌</td></tr>
+<tr><td>僅中期 R:R ≥ 2.0 → 觀望</td><td>❌</td></tr>
+<tr><td>中期 R:R ≥ 1.0 且 品質 A 且 長期信心 = 高 → 觀望偏進場</td><td>❌（中期 R:R 為負）</td></tr>
+<tr><td>都不過 → <strong>迴避</strong></td><td><span class="fail">✓ 觸發</span></td></tr>
+</table>
+<p><strong>本標的判定：<span class="fail">迴避</span></strong>（現價）</p>
+<p class="note">建議觀察入場價帶：$100-$130 區間（位於 MA104w $98.71 與 25x × FY+2 EPS $4.36 的 10% 容差之間），於該區間 R:R 反轉為正後重啟進場框架。</p>
+</div>
+
+<div class="card">
+<h3>F｜建倉建議（品質定基礎 × Bollinger 微調）</h3>
+<h4>Bollinger 位置（週線 2σ）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>週線 BB 上軌（2σ）</td><td class="num">$187.66</td></tr>
+<tr><td>週線 BB 中軌（SMA20）</td><td class="num">$144.02</td></tr>
+<tr><td>週線 BB 下軌（2σ）</td><td class="num">$100.37</td></tr>
+<tr><td>現價</td><td class="num">$180.63</td></tr>
+<tr><td>現價位置</td><td><span class="yellow">合理（軌道之間，偏上軌）</span></td></tr>
+<tr><td>部位調整係數</td><td class="num">×1.0</td></tr>
+</table>
+<h4>最終部位</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基礎部位（A 級 查表）</td><td class="num">25%</td></tr>
+<tr><td>Bollinger 調整係數</td><td class="num">×1.0</td></tr>
+<tr><td><strong>理論最終部位</strong></td><td class="num"><strong>25%</strong></td></tr>
+<tr><td><strong>實際建議（受 §2 E 迴避判定覆寫）</strong></td><td><span class="fail">0%（現價不進場）</span></td></tr>
+</table>
+<p class="note">若回檔至 $100-$130 區間，並通過新的 R:R 檢驗，即可啟動 15-25% 底倉（目標倉位的）。</p>
+</div>
+
+<div class="card">
+<h3>G｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8 A</td><td><span class="green">充裕</span>（HBM4/HBM5、CoWoS-L 擴散 OSAT、CoPoS、玻璃基板、Glass Core 皆為新一代檢測需求，Runway ≥ 10 年）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td><span class="green">加深</span>（HBM4 單位量測步驟數乘數增加，先進封裝複雜度提升為 Camtek 3D 量測獨家能力的剛性需求）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><span class="green"><strong>高</strong></span></td></tr>
+</table>
+<p>一句話：若不看估值，這是檢測量測賽道中少見的「成長與護城河同步擴大」範例，值得長期持有超過 3 年；但現價已定價極樂觀情境，進場需等待估值再平衡。</p>
+</div>
+
+<!-- ========== §3 三方辯論 ========== -->
+<h2>§3 三方辯論摘要</h2>
+
+<div class="debate-wrap">
+
+<div class="debate-card debate-bull">
+<h3 style="color:#16A34A;border:none">多頭辯護人（Munger）</h3>
+<table>
+<tr><th>#</th><th>進場論據</th></tr>
+<tr><td>1</td><td><strong>護城河（§9）：</strong>KLA 親自承認無法以廉價白光光源複製 Camtek 3D microbump 量測精度；HBM4 為 reference tool，單位量測步驟數隨 bump pitch 收緊而指數成長</td></tr>
+<tr><td>2</td><td><strong>成長（§8）：</strong>CoWoS 擴散至 OSAT = Camtek 獨家受益（50% 營收來自 OSAT）；CoWoS-like 預期 CAGR ~50%；HBM4 在 2026-2028 放量期</td></tr>
+<tr><td>3</td><td><strong>估值（§13）：</strong>若以 Non-GAAP EBITDA 成長 ~25% CAGR 看，PEG 實質 ~1.6；ROIC 擴張軌跡下 25-32x 合理倍數有支撐</td></tr>
+</table>
+<p><strong>一句話：</strong>這是 AI 浪潮中真正的「頻率越高、剛需越剛」的設備股，不是週期股。</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h3 style="color:#DC2626;border:none">空頭檢察官（Burry）</h3>
+<table>
+<tr><th>#</th><th>18 個月內 30% 虧損路徑</th></tr>
+<tr><td>1</td><td><strong>基本面惡化：</strong>Q1 2026 guidance 僅 $120M（持平，未加速），暗示 HBM3E 數位完成 + HBM4 尚未放量；若 H1 2026 延續持平，市場將重估「上半年底部」假設</td></tr>
+<tr><td>2</td><td><strong>估值壓縮：</strong>Forward PE 41-52x 處於 5Y 頂端，FY+1 EPS 共識一旦下修 10%，P/E 與 E 雙殺 → 股價可輕易回測 MA104w $98</td></tr>
+<tr><td>3</td><td><strong>催化劑：</strong>$425M 0% 可轉債（轉換價 $109.34，2025/9 發行）——轉股後稀釋 ~5%；若股價跌破 $109 亦面臨 refinance 風險</td></tr>
+</table>
+<p><strong>一句話：</strong>好生意不一定是好股票，尤其當市場已定價「HBM4 永不失速」時。</p>
+</div>
+
+<div class="debate-card debate-arb">
+<h3 style="color:#7C3AED;border:none">估值仲裁員（Damodaran）</h3>
+<table>
+<tr><th>評分維度</th><th>分數</th></tr>
+<tr><td>隱含 FCF CAGR vs 歷史（過去 3 年 ~40%）</td><td>2 / 2</td></tr>
+<tr><td>隱含 vs EPS 共識 CAGR（18.4%）</td><td>1 / 2</td></tr>
+<tr><td>vs 同業最快 FCF CAGR</td><td>1 / 2</td></tr>
+<tr><td>達成條件苛刻度</td><td>1 / 2（需持續 25%+ 營收成長 + 毛利率擴大）</td></tr>
+<tr><td>歷史先例</td><td>1 / 2（KLAC 曾達類似水準但花了 20 年）</td></tr>
+</table>
+<p><strong>隱含預期可信度：6 / 10</strong></p>
+<p><strong>一句話：</strong>隱含成長 ~22% FCF CAGR 在 Camtek 歷史中可達到，但必須 3 年不失速，容錯率極低。</p>
+</div>
+
+</div>
+
+<div class="verdict-box">
+<h3>【裁決】</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>HBM4 單位量測需求指數擴張 + CoWoS OSAT 擴散獨家受益</td></tr>
+<tr><td>空頭最大威脅</td><td>Q1 2026 guidance 持平暗示短期 visibility 有限，估值高位下 EPS 共識一旦下修即雙殺</td></tr>
+<tr><td>估值仲裁評分</td><td>6 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><span class="fail"><strong>迴避（等待回檔至 $100-$130）</strong></span></td></tr>
+<tr><td>裁決理由</td><td>生意品質與護城河評分 10/10，但現價 $180.63 已定價未來 3 年零失速情境。若 Q1 guidance 與 H1 趨勢不如預期，回測 MA104w $98.71 難免；品質雖高，進場價格更重要</td></tr>
+</table>
+<p class="note">自我檢核：✅ 多頭論據依賴的「HBM4 順利放量」需等季度驗證；✅ 空頭威脅在 MA104w 觸發前可能即發生（H1 guidance 放緩）；✅ 仲裁 6/10 無充足安全邊際支撐現價進場。</p>
+</div>
+
+<!-- ========== §4 序章 ========== -->
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<div class="card">
+<h3>存在意義</h3>
+<p>先進封裝（2.5D / 3D / Chiplet / HBM）是突破摩爾定律物理極限的核心路徑。Camtek 解決的痛點：<strong>高密度微凸塊（microbump）在 3D 堆疊前的精準 3D 量測</strong>——一顆 HBM 封裝中有數萬顆 bump，任何一顆 co-planarity（平整度）偏差 &gt; 1μm 即造成整顆 die stack 報廢。</p>
+<p>若 Camtek 明天消失：HBM、CoWoS、Chiplet 的良率將大幅下滑，全球 AI 加速器（NVIDIA H/B 系列、AMD MI 系列、Google TPU、AWS Trainium）的實際供給將被量測瓶頸卡住數個季度。這不是「提升效率」，而是量產可行性的守門人。</p>
+</div>
+
+<div class="card">
+<h3>逆向推演（Munger Inversion）</h3>
+<ul>
+<li><strong>地緣政治曝險：</strong>以色列總部（Migdal Ha'Emek），研發主力在以色列；但製造主要在新加坡與台灣，客戶遍及美、日、台、韓、中。地緣風險集中於「若以色列研發 R&amp;D 因區域衝突受阻」——但此風險在過去 30 年歷次衝突中並未造成實質中斷</li>
+<li><strong>技術替代風險：</strong>① 電子束（E-beam）量測若成本下降可部分替代光學 3D（但週期成本至少 5 年）；② <span class="blue">【r1 更新】HBM4 延續 microbump（hybrid bonding 延至 HBM4E 2027）= Camtek 主戰場延長 1-2 年；但 HBM4E 轉 hybrid bonding 時，白光量測需被 coherent wavelength laser 替代——Camtek 下一代平台若未加入該技術，2027-2028 顯性威脅升級</span>；③ Onto Dragonfly G5 在 2D 檢測實質侵蝕市佔（已發生）</li>
+<li><strong>管理層失職：</strong>$425M 0% 可轉債用於擴產或併購——若用於高價併購 Onto Innovation 或其他週邊玩家，資本錯配風險顯著。目前現金 $178M + 可轉債 $425M = 可用 $600M，尚未動用</li>
+<li><strong>價值陷阱路徑：</strong>若惡化，最可能為「<strong>盈餘品質型</strong>」——大量可轉債轉股後稀釋 EPS、或 HBM 客戶庫存見頂導致營收急煞（類似 ASML 2024 Q3 下修）。<span class="blue">【r1 補充】NVIDIA Rubin 2026 產量從 200 萬下修至 150 萬已顯示 HBM4 供給瓶頸的需求端連鎖效應，若再下修將直接傳導至 Camtek 訂單</span></li>
+</ul>
+</div>
+
+<!-- ========== §5 投資論點錨定 ========== -->
+<h2>§5 投資論點錨定</h2>
+
+<div class="card">
+<h3>A｜持有期與時間軸</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>3-5 年</strong>（HBM4 → HBM5 週期 + CoWoS 滲透至 OSAT 全週期）</td></tr>
+<tr><td>驅動時間軸的理由</td><td>HBM4 放量 2026-2028、CoWoS-L 擴散 2025-2030、Camtek 下一代量測平台（Hawk / Eagle G5）折舊週期 3-4 年</td></tr>
+<tr><td>訊號 vs 噪音</td><td>季度 EPS 波動 = 噪音；HBM4 客戶放量節奏、OSAT capex 水位、毛利率趨勢 = 訊號</td></tr>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>假設</th><th>驗證指標</th><th>時間點</th></tr>
+<tr><td>H1</td><td><strong>HBM4 於 2026-2028 放量，Camtek 維持 reference tool 地位</strong><br><span class="blue">【r1 更新】具體時程已確定：Samsung 2026/2 於 Pyeongtaek 啟動 HBM4 量產；SK Hynix 2026/2 於 M15X 量產（提前 4 個月）；Micron 2026 Q1 已開始 HBM4 36GB 12H 量產（供 NVIDIA Vera Rubin）</span></td><td>① Samsung/SK/Micron HBM4 MP 時間表；② Camtek HBM 相關訂單 YoY；③ <span class="blue">Onto Dragonfly G5 在 HBM4 客戶的 design win 滲透率（2D 檢測競爭）</span></td><td>每季</td></tr>
+<tr><td>H2</td><td><strong>CoWoS 擴散至 OSAT，Camtek 因 50% OSAT 營收暴露獲獨家受益</strong><br><span class="blue">【r1 更新】TSMC 2026 將外包 240-270K CoWoS wafers/年至 OSAT（Amkor 180-190K、SPIL 60-80K）；全球 CoWoS 年化產能 2026 達 650K wafers (+76% YoY)，2027 達 840K (+29% YoY)</span></td><td>ASE/Amkor/SPIL/Powertech CoWoS capex；Camtek OSAT 營收佔比</td><td>半年</td></tr>
+<tr><td>H3</td><td><strong>估值於 H1 2026 因短期成長放緩回測至合理區間（25x FY+2 = $109）後提供進場機會</strong></td><td>Q1/Q2 2026 guidance；5Y Forward PE 分位；<span class="blue">NVIDIA Rubin 2026 目標產量（已從 200 萬下修至 150 萬，HBM4 bottleneck）</span></td><td>6 個月內</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td><span class="yellow">【r1 升級為具體威脅】Onto Dragonfly G5（2026/3/16 發布）已獲 HBM 大客戶 HBM4 2D 檢測 design win（double-digit 系統訂單 + 同量 3Di 訂單，Q2 2026 出貨），可能侵蝕 Camtek 部分 2D 檢測市佔</span></td><td>H1</td><td>HBM 客戶對 Camtek vs Onto 的採購分配；Hawk 平台 Q2/Q3 2026 訂單水位</td><td>若任一 Tier-1 HBM 客戶切換主供 = 🔴 警戒</td></tr>
+<tr><td>R2</td><td>OSAT CoWoS 投資不如預期，集中於 TSMC 內部 CoWoS</td><td>H2</td><td>ASE/Amkor capex guidance；<span class="blue">TSMC 外包 wafers 實際交付進度</span></td><td>OSAT CoWoS 外包 &lt; 200K wafers/年 = 警戒（目前指引 240-270K）</td></tr>
+<tr><td>R3</td><td>NVIDIA Rubin 進一步下修導致 HBM4 需求斷崖；市場情緒轉 risk-off</td><td>H3</td><td>SOX 指數、KLAC / ONTO 相對估值；<span class="blue">NVIDIA Rubin 產量 guidance（現 150 萬，再下修 = 警戒）</span></td><td>Rubin 產量再下修 &gt; 20% 或 SOX &gt; 30% 回落 = 跟跌風險</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>每次新事件（財報、產業數據、客戶新聞）依序問：① 影響 3-5 年持有期嗎？② 對 H1/H2/H3 哪個假設？③ 邊際 ＋/0/－？④ 是否達重評閾值？</p>
+</div>
+
+<div class="card">
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>行動</th></tr>
+<tr><td>進場</td><td>股價回檔 $100-$130 區間，且 HBM4 放量 / OSAT capex 確認</td><td>建倉 15-20%（目標倉位），首次進場</td></tr>
+<tr><td>加碼</td><td>H1 + H2 任一季度明確驗證（HBM4 出貨加速或 OSAT CoWoS 訂單公布）</td><td>加碼至 25%（目標倉位）</td></tr>
+<tr><td>減碼</td><td>FY+1 EPS 共識連續 2 次下修 &gt;5%，或估值突破 45x Forward P/E</td><td>減至 10%，重新評估</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（HBM4 切換至競爭者）或 §8 衰退信號 ≥ 3 個</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</div>
+
+<!-- ========== §6 即時財報情報 ========== -->
+<h2>§6 即時財報情報</h2>
+
+<div class="card">
+<h3>① Q4 2025 財報關鍵數字（2026/2 發布）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="num">$128.1M</td><td class="num">~$125M</td><td><span class="beat">Beat</span></td><td class="num">+9.2%</td></tr>
+<tr><td>Non-GAAP EPS</td><td class="num">$0.81</td><td class="num">~$0.79</td><td><span class="beat">Beat</span></td><td class="num">+3%</td></tr>
+<tr><td>Non-GAAP Gross Margin</td><td class="num">51.1%</td><td class="num">~50.8%</td><td><span class="beat">Beat</span></td><td class="num">+50bp</td></tr>
+<tr><td>Operating Margin (Non-GAAP)</td><td class="num">~29%</td><td>—</td><td><span class="neutral">In-line</span></td><td class="num">+30bp</td></tr>
+<tr><td>FCF（FY25 全年）</td><td class="num">$127.1M</td><td>—</td><td>—</td><td class="num">+13.6%</td></tr>
+</table>
+
+<h4>FY2025 全年</h4>
+<ul>
+<li>Revenue $496.1M (+16% YoY, 創新高)</li>
+<li>Non-GAAP Gross Margin 51.6%（vs 50.8% in 2024，+80bp）</li>
+<li>Operating Margin 30%</li>
+<li>Non-GAAP EPS $3.26（vs $2.67 est，大幅超預期）</li>
+<li>GAAP EPS $1.05（受 $425M 可轉債非現金會計項影響）</li>
+</ul>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>本季邊際</th><th>佐證</th></tr>
+<tr><td>H1 HBM4 放量</td><td>＋ 強化</td><td>Q4 交付增加，2026 backlog 指向雙位數成長</td></tr>
+<tr><td>H2 OSAT CoWoS 擴散</td><td>＋ 強化</td><td>「已有 OSAT CoWoS 訂單在手及 backlog」明確表述</td></tr>
+<tr><td>H3 估值回測</td><td>0 不變</td><td>財報 beat 後股價衝高，暫無回檔信號</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>樂觀——CEO Rafi Amit 開場即強調「Record quarter + Record year」，連續第四季新高；對 2026 的表述為「double-digit growth year」，語氣較 2024 年 Q4 call 的「cautiously optimistic」進一步轉強</li>
+<li><strong>Forward Guidance：</strong>Q1 2026 revenue ~$120M（與 Q4 $128M 相比持平略降），但明確 H2 2026 會「more significant growth」；全年預期雙位數成長，隱含營收 $545-$560M 區間。<span class="blue">【r1 產業驗證】H2 加速與 Samsung/SK Hynix 2026/2 HBM4 量產時程吻合——HBM4 客戶採購週期領先出貨 2-3 季，因此 Q1 持平 + H2 急升 = HBM4 放量節奏的必然結果，非需求疲軟</span></li>
+<li><strong>刻意強調：</strong>① AI-related 佔 50% ② OSAT CoWoS adoption ③ Hawk 與 Eagle G5 新平台加速 design win（Hawk 累計訂單已 &gt; $50M）</li>
+<li><strong>刻意迴避：</strong>Q1 為何持平的具體原因（分析師追問 HBM3E 客戶庫存調整，管理層以「normal seasonality + mix shift」帶過）——暗示 HBM3E 確實在去庫存週期。<span class="blue">【r1】產業數據支持：HBM4E 預計 2027 佔 HBM 市場 40%，HBM3E 在 2026 被快速替代，當前持平為換代真空期</span></li>
+</ul>
+</div>
+
+<div class="card">
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>AI-related 需求持續，但 HBM3E 進入消化期（Q1 持平）；HBM4 為 H2 主要驅動</li>
+<li><strong>供給端：</strong>OSAT 開始投資 CoWoS 產能 = 2026-2027 設備交付高峰</li>
+<li><strong>競爭格局：</strong>毛利率持續擴大（51.6% vs 50.8%）= 定價能力強、競爭不惡化</li>
+<li><strong>總體經濟敏感度：</strong>管理層強調此週期由 AI 驅動，而非消費性半導體復甦；與大盤半導體週期脫鉤</li>
+<li><strong>對同業連帶推論：</strong>Onto Innovation Q3 2025 財報已確認 OSAT 訂單加速，Camtek 呼應此信號 → 整個先進封裝檢測子產業 2026 景氣度高</li>
+</ul>
+</div>
+
+<!-- ========== §7 門檻檢核 ========== -->
+<h2>§7 核心門檻檢核</h2>
+
+<div class="card">
+<h3>EPS CAGR 計算（yfinance 優先）</h3>
+<ul>
+<li><strong>基期 FY2025：</strong>Non-GAAP EPS $3.26；GAAP EPS $1.05（差距主因：$425M 可轉債發行後 marked-to-market derivative 非現金費用 + SBC）</li>
+<li><strong>FY+1 (2026E)：</strong>$3.44（yfinance avg，n=12，YoY +5.6%）</li>
+<li><strong>FY+2 (2027E)：</strong>$4.36（yfinance avg，n=12，YoY +26.7%）</li>
+<li><strong>FY+3 (2028E)：</strong>$5.41（§8 邏輯推導：HBM4 放量 + CoWoS-L OSAT + Hawk/Eagle G5 混合升級週期 + 初期 HBM5 量產，假設 +24% YoY）</li>
+<li><strong>Non-GAAP CAGR (2025-2028)：</strong>18.4%</li>
+<li><strong>GAAP CAGR：</strong>不適用（2025 GAAP 基期異常低）</li>
+<li><strong>口徑差距來源：</strong>可轉債 derivative 會計 + SBC（Camtek SBC / Revenue ~2-3%，相對溫和）</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>門檻檢核表（Munger 三維）</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td>✅</td><td>FY25 25.6%，近 3 年 22.5% → 26.1% → 25.6%（擴大）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5Y 均 &gt;15%，最低谷 &gt;10%</td><td>✅</td><td>5Y：15.4% → 22.5% → 26.1% → 25.6% → 均值 ~22%；最低 2022 15.4%</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td>⚠️</td><td>TTM GAAP 10.19%（受可轉債壓低）；Non-GAAP 估計 ~18-20%；WACC ~9%</td></tr>
+<tr><td>ROIC 穩定性</td><td>10Y ≥ 70% 年 &gt;15%</td><td>✅</td><td>2021 13% / 2022 18% / 2023 14% / 2024 20% / 2025 10%（GAAP 異常）→ 5Y 4/5 達標</td></tr>
+<tr><td>毛利率定價能力</td><td>10Y ≥ 70% 年改善</td><td>✅</td><td>2020 47% → 2022 49% → 2024 50.8% → 2025 51.6%，持續擴大</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5% 優</td><td>✅</td><td>FY25 Capex $14.8M / Rev $496M = 3.0%（低密集）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td>⚠️</td><td>Non-GAAP 18.4%（FY+1 低成長年拖累，FY+2 +27% 已修復）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td>❌</td><td>2.25（引用 §13.2）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7</td><td>✅</td><td>Total Debt $531M / Equity $617M = 0.86；但 $425M 為 0% 可轉債（準 equity）；現金/Rev = 36%</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td>❌</td><td>$178M 現金 &lt; $531M 債務（但 $425M 為 0% 可轉債無到期壓力）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，擴大</td><td>✅</td><td>9/10，擴大（§9）</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>Forward PE 41-52x 與 5Y 平均 29x 的嚴重偏離；Munger 三維評級：<span class="green">🟢 三項全達標</span>（ROIC、毛利率、資本密集度）</p>
+</div>
+
+<div class="warn">
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p>觸發條件檢核：Forward P/E 位於 5Y 歷史分位 ~90%（絕非低估值），P/FCF 分位 ~80%（當前 ~66x vs 5Y avg ~30x） → <strong>不觸發低估值檢驗</strong>。</p>
+<p>反向提示：CAMT 為「高估值」問題，而非「便宜有理」問題，價值陷阱初篩不適用。</p>
+</div>
+
+<!-- ========== §8 長期成長性 ========== -->
+<h2>§8 長期成長性評估</h2>
+
+<div class="card">
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（先進封裝檢測/量測）</td><td class="num">$2-$2.5B</td><td><span class="blue">【r1】2026 上修：CoWoS 年化產能達 650K wafers (+76% YoY)，帶動檢測設備需求同步擴張；2027 達 840K wafers (+29% YoY)</span></td></tr>
+<tr><td>可達 TAM（2030）</td><td class="num">$5-$6B</td><td><span class="blue">【r1 上修】HBM4→HBM4E→HBM5 多代升級 + CoWoS-L/CoWoP 全面放量 + CoPoS 面板封裝 2028-29 量產啟動</span></td></tr>
+<tr><td>當前 Camtek 市佔</td><td class="num">~25-30%</td><td>先進封裝子市場龍頭之一；<span class="blue">Onto Dragonfly G5（2026/3/16 推出）在 2D 檢測將逐步侵蝕 Camtek 市佔，但 3D microbump 量測主場仍在</span></td></tr>
+<tr><td>HBM 3D microbump 量測市佔</td><td class="num">&gt; 70%</td><td>Reference tool across all major HBM 廠；<span class="blue">【r1】HBM4 延續 microbump（hybrid bonding 延至 HBM4E 2027）= Camtek 主戰場保留多 1-2 年</span></td></tr>
+<tr><td>若維持現 CAGR 達 30% 滲透率</td><td class="num">5-7 年</td><td>—</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td colspan="2"><strong>≥ 10 年</strong>（HBM4→HBM4E→HBM5→HBM6 多代升級，每代量測難度遞增；<span class="blue">CoPoS 310x310mm 面板封裝 2028-29 量產為下一波 TAM 擴張引擎</span>）</td></tr>
+</table>
+<p><strong>評級：🟢 高確信長期複利，支撐估值倍數溢價</strong></p>
+</div>
+
+<div class="card">
+<h3>B｜成長品質判斷</h3>
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>佔比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td class="num">~95%</td><td>新產品（Hawk, Eagle G5）+ HBM4 滲透 + OSAT 擴散</td></tr>
+<tr><td>無機（併購）</td><td class="num">~5%</td><td>近 3 年無重大併購，僅 2022 年 FormFactor MEMS 業務小規模收購</td></tr>
+</table>
+
+<h4>② 定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動</td><td>新一代 Hawk / Eagle G5 毛利率高於 legacy，2025 GM +80bp</td><td>擴大</td></tr>
+<tr><td>量驅動</td><td>HBM4 steps 增加，每客戶量測設備數增加</td><td>擴大</td></tr>
+</table>
+<p class="note">量、價雙擴大，為成長品質最佳模式。</p>
+
+<h4>權重依據（引用 §11）</h4>
+<table>
+<tr><th>業務段</th><th>FY2025 營收佔比</th></tr>
+<tr><td>AI 相關（HBM + CoWoS / CoWoS-like）</td><td class="num">~50%</td></tr>
+<tr><td>其他先進封裝（Chiplet、2.5D、3D）</td><td class="num">~20%</td></tr>
+<tr><td>CMOS Image Sensors</td><td class="num">~10%</td></tr>
+<tr><td>Compound Semiconductors</td><td class="num">~8%</td></tr>
+<tr><td>前段/通用 2D 應用</td><td class="num">~12%</td></tr>
+<tr><td><strong>總計</strong></td><td class="num"><strong>100%</strong></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>C｜成長護城河連動</h3>
+<table>
+<tr><th>類型</th><th>此標的判斷</th></tr>
+<tr><td><strong>強化型 ✅</strong></td><td>HBM4 採用 = Camtek 工具成為客戶產線標準 → 下一世代 HBM5 延續使用 = 轉換成本持續累積；3D microbump 量測技術隨 bump pitch 收緊而技術壁壘加高</td></tr>
+<tr><td>中性型</td><td>—</td></tr>
+<tr><td>消耗型</td><td>—</td></tr>
+</table>
+<p><strong>佐證：</strong>毛利率持續擴大（48.9% → 50.8% → 51.6%）證明定價能力沒有被成長稀釋；新平台相對 legacy 毛利率更高。</p>
+</div>
+
+<div class="card">
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>達標？</th></tr>
+<tr><td>ROIC（Non-GAAP 估）</td><td class="num">~18-20%</td><td class="num">~13%</td><td>↑</td><td>✅</td></tr>
+<tr><td>ROIC − WACC</td><td class="num">+9-11%p</td><td class="num">+4%p</td><td>↑</td><td>✅</td></tr>
+<tr><td>FCF Margin</td><td class="num">25.6%</td><td class="num">15.4%</td><td>↑</td><td>✅</td></tr>
+<tr><td>FCF / Non-GAAP NI 轉換率</td><td class="num">~0.78</td><td class="num">~0.68</td><td>↑</td><td>✅</td></tr>
+<tr><td>Reinvestment Rate</td><td class="num">~30-40%</td><td class="num">~50%</td><td>↓（效率提升）</td><td>✅</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>合理 Fwd P/E</th><th>股價</th><th>跌幅</th></tr>
+<tr><td>3 年後成長降至 15%（放緩但仍高於市場）</td><td class="num">22x</td><td class="num">~$75</td><td>−58%</td></tr>
+<tr><td><strong>3 年後成長降至 10%（回歸市場均值）</strong></td><td class="num"><strong>20x</strong></td><td class="num"><strong>~$68</strong></td><td><strong>−62%</strong></td></tr>
+<tr><td>3 年後成長降至 5%（成熟期）</td><td class="num">15x</td><td class="num">~$50</td><td>−72%</td></tr>
+</table>
+<p class="note">「成長降至 10% 情境」的 20x Fwd PE 為 §2 E Bear PE 計算依據。</p>
+</div>
+
+<div class="card">
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季 YoY 下滑</td><td>⬜（擴大中）</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減</td><td>⬜（穩定/擴大）</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>⬜（量價雙擴）</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Revenue CAGR</td><td>⬜（接近一致）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>⬜（改善中）</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 上升</td><td>⬜（~2-3%）</td></tr>
+<tr><td>產業衰退</td><td>TAM 萎縮</td><td>⬜（擴大）</td></tr>
+<tr><td>產業衰退</td><td>同業倍數系統下移</td><td>⬜（全產業高位）</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex &gt; 60% FCF</td><td>⬜（Capex/Rev 3%）</td></tr>
+<tr><td>隱性資本密集</td><td>3 年停投收入下滑？</td><td>⬜（工具已賣出後 5+ 年服務週期）</td></tr>
+</table>
+<p><strong>亮燈數：0 個 → 🟢 低風險</strong></p>
+</div>
+
+<div class="card">
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益（9/10）</strong></p>
+<ul>
+<li>AI 相關佔 FY2025 營收 ~50%；先進封裝合計 ~70%</li>
+<li>HBM4/CoWoS 需求由 NVIDIA/AMD/Google/AWS AI 加速器驅動，Camtek 為量產環節的良率守門人</li>
+<li>AI 模型規模越大 → HBM 堆疊層數越多 → Camtek 量測步驟指數增加</li>
+<li>公司 AI 策略：將 AI 辨識算法整合進量測軟體（如 Hawk 平台的 Deep Learning 缺陷分類），自身產品亦在用 AI</li>
+<li>過去 2 年 AI 相關營收從 ~30% → ~50%，持續加速</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>長期成長性綜合評級</h3>
+<p><strong>🟢 高確信長期成長</strong>：Runway ≥ 10 年、有機+定價+量三重擴張、護城河強化型、ROIC 擴大、衰退信號 0 個、AI 受益。此評級支撐 §13.5 長期合理倍數 25x 基準 + 溢價空間。</p>
+</div>
+
+<!-- ========== §9 護城河 ========== -->
+<h2>§9 護城河分析</h2>
+
+<div class="card">
+<h3>評分：9 / 10</h3>
+<h4>護城河來源</h4>
+<ul>
+<li><strong>網路效應（弱）：</strong>量測設備行業無典型網路效應，但安裝基數 → 資料庫越大 → AI 缺陷分類越準（弱網路效應）</li>
+<li><strong>無形資產（強）：</strong>3D microbump 量測算法專利、HBM4 reference tool 認證地位（客戶將其規格納入自己 SOP）、品牌 = 良率信任</li>
+<li><strong>轉換成本（非常強）：</strong>客戶產線一旦導入特定量測工具，重新 qualify 需 6-12 個月（包含工具驗證、產線對接、演算法校正），且風險為產線停機 → 長鎖定</li>
+<li><strong>規模優勢（中）：</strong>Camtek 規模相對 KLA 小，但在先進封裝子細分中為最大玩家，R&amp;D 集中度優於 KLA 的分散式競爭</li>
+</ul>
+
+<h4>競爭鴻溝</h4>
+<p>為何 KLA 這種資本充足的對手仍無法跨越？① <strong>光學 3D 量測算法</strong>——Camtek 用低成本白光即可達 sub-μm 精度，KLA 需更貴的共焦雷射（成本、速度皆劣）；② <strong>先進封裝專注度</strong>——KLA 主業為前段 wafer inspection，先進封裝為副業；③ <strong>客戶關係深度</strong>——Camtek 工程師駐廠服務 OSAT、HBM 客戶多年，know-how 累積深。</p>
+
+<h4>市佔競爭表（3D 量測/先進封裝檢測）</h4>
+<table>
+<tr><th>公司</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>Camtek</td><td>~30%</td><td>↑</td><td>—</td><td>吃 KLA 後段市場</td></tr>
+<tr><td>Onto Innovation</td><td>~25%</td><td>↑</td><td>Subsystems 後端</td><td>與 Camtek 分食</td></tr>
+<tr><td>KLA</td><td>~20%</td><td>↓</td><td>前段業務穩定</td><td>後段逐步失守</td></tr>
+<tr><td>Hitachi High-Tech / 其他</td><td>~25%</td><td>→</td><td>局部市場</td><td>非核心</td></tr>
+</table>
+
+<h4>護城河趨勢：🟢 擴大中</h4>
+<p>HBM4 的 bump pitch 收緊到 ~25μm 以下，量測精度要求逼近 Camtek 獨有算法極限——對手（KLA、Onto）追趕週期需 3-5 年。同時先進封裝滲透至 OSAT → Camtek 因 OSAT 客戶關係深而獨家受益。</p>
+
+<h4>24 個月內最可能瓦解護城河的變化</h4>
+<ol>
+<li><strong>電子束量測成本驟降 50%</strong>：極低機率（~5%）</li>
+<li><strong><span class="yellow">【r1 升級為實際威脅】Onto Dragonfly G5（2026/3/16 發布）已拿下 HBM 大客戶 HBM4 2D 檢測 design win</span></strong>：<strong>高度風險（45%，上修自原 30%）</strong>。Double-digit 系統訂單 + 同量 3Di 訂單，Q2 2026 出貨。Onto 採用 multi-mode 高功率照明 + AI ML 演算法，主打 hybrid bonding 次微米缺陷偵測——<strong>Camtek 白光優勢在 HBM4 microbump 仍領先，但 HBM4E（2027）轉 hybrid bonding 後競爭格局可能翻轉</strong></li>
+<li><strong>主要 HBM 客戶（如 Samsung）要求多 vendor 策略</strong>：已部分發生——Samsung 已加速 hybrid bonding inspection 多供應商評估（15% → 25%）</li>
+<li><strong><span class="blue">【r1 新增】HBM4E/HBM5 轉 hybrid bonding 時，Camtek 白光量測面臨 coherent laser 替代風險</span></strong>：2027-2028 年顯性化的長尾風險，Camtek 需在 Hawk 下一代平台加入 coherent wavelength laser 以防禦</li>
+</ol>
+</div>
+
+<!-- ========== §10 財務品質 ========== -->
+<h2>§10 財務品質監測</h2>
+
+<div class="card">
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>ONTO（同業）</th><th>KLAC（同業）</th></tr>
+<tr><td>FCF Margin</td><td class="num">22.5%</td><td class="num">26.1%</td><td class="num">25.6%</td><td class="num">~22%</td><td class="num">~30%</td></tr>
+<tr><td>Non-GAAP Operating Margin</td><td class="num">~20.7%</td><td class="num">~27%</td><td class="num">30%</td><td class="num">~25%</td><td class="num">~42%</td></tr>
+<tr><td>Non-GAAP Gross Margin</td><td class="num">~50.2%</td><td class="num">50.8%</td><td class="num">51.6%</td><td class="num">~53%</td><td class="num">~62%</td></tr>
+<tr><td>ROIC（Non-GAAP 估）</td><td class="num">~14%</td><td class="num">~20%</td><td class="num">~18-20%</td><td class="num">~16%</td><td class="num">~35%</td></tr>
+<tr><td>SBC / Revenue</td><td class="num">~2%</td><td class="num">~2.5%</td><td class="num">~3%</td><td class="num">~4%</td><td class="num">~3%</td></tr>
+<tr><td>ROE</td><td class="num">~16%</td><td class="num">~22%</td><td class="num">~24%（GAAP）</td><td class="num">~19%</td><td class="num">~90%</td></tr>
+</table>
+<p class="note">KLAC 因規模效應、Wafer Inspection 本業結構不同，毛利率/ROIC 結構性較高。Camtek 相對 ONTO 更具可比性。</p>
+</div>
+
+<div class="card">
+<h3>獲利品質警訊（四項檢驗）</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性：</strong>FY25 Non-GAAP NI ~$162M vs OCF $142M → 連動良好；GAAP NI $51M vs OCF $142M 為可轉債 derivative 會計拉大差距（非獲利品質問題）</li>
+<li><strong>AR 成長 vs 營收成長：</strong>AR 成長 ~17% vs Rev +16%，大致同步（無異常膨脹）</li>
+<li><strong>存貨成長 vs 營收成長：</strong>存貨 YoY ~22%（略高於營收），反映 Q1 2026 出貨準備中，非積壓</li>
+<li><strong>FCF 轉換率趨勢：</strong>OCF/NI 從 0.68 (2022) → 2.8 (2025 GAAP) 或 ~0.88 (2025 Non-GAAP)，穩定擴大</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>回購品質評估（價值陷阱防禦）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF</td><td class="num">~$0 / $310M</td><td>Camtek 不進行買回</td></tr>
+<tr><td>剔除回購 EPS CAGR 變化</td><td>不適用</td><td>—</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>—</td><td>—</td></tr>
+<tr><td>Revenue CAGR（3Y）</td><td class="num">~16%</td><td>EPS CAGR（18.4%）與 Revenue CAGR 接近，差距來自毛利率擴張，非回購</td></tr>
+</table>
+<p class="note">Camtek 的 EPS 成長來源 ＝ 營收成長 + 毛利率擴張 + 營運槓桿，非回購堆疊。盈餘品質型陷阱風險 = 低。</p>
+</div>
+
+<!-- ========== §11 產業 ========== -->
+<h2>§11 產業格局、議價權與 Unit Economics</h2>
+
+<div class="card">
+<h3>市場量化</h3>
+<ul>
+<li><strong>先進封裝量測/檢測 TAM：</strong>2026E $2-$2.5B → 2030E $5-$6B（CAGR ~20-25%）<span class="blue">【r1 上修】</span></li>
+<li><strong>HBM 子市場 CAGR：</strong>~40-50%（HBM4 2026/2 量產 / HBM4E 2027 / HBM5 驅動）</li>
+<li><strong>CoWoS 年化產能：</strong><span class="blue">【r1】75-80K wafers/月 → 130K wafers/月 by end 2026；全年 2026 650K (+76% YoY)、2027 840K (+29% YoY)</span></li>
+<li><strong>TSMC 外包 OSAT：</strong><span class="blue">【r1】2026 年外包 240-270K CoWoS wafers 至 Amkor (180-190K) + SPIL (60-80K)；非 TSMC 產能佔比 2026 年底達 9%，2027 年底達 11%</span></li>
+<li><strong>NVIDIA Rubin 支撐：</strong><span class="blue">【r1】2026 CoWoS 產能可支持 Blackwell 5.5-6M + Rubin 1.5M + Hopper 1M GPU</span></li>
+<li><strong>當前供需狀態：</strong>CoWoS oversubscribed through at least 2026（單一最緊 AI stack 部件）</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游供應商：</strong>零組件供應分散（光學鏡頭、精密機械、影像感測器），替代性強 → 對供應商議價力中等</li>
+<li><strong>對下游客戶：</strong>客戶集中度中偏高（前 10 大客戶佔 ~50-60%，Samsung 為最大單一客戶），但量測工具一旦導入難以替換 → 對客戶議價力強（反映在毛利率擴大）</li>
+<li><strong>地理曝險：</strong>以色列研發總部（地緣風險週期性）、新加坡製造、客戶分佈於美/日/台/韓/中，無單一集中點</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>營收組成（FY2025）</h3>
+<table>
+<tr><th>分類</th><th>營收佔比</th><th>成長性</th></tr>
+<tr><td>AI 相關（HBM + CoWoS/CoWoS-like）</td><td class="num">~50%</td><td>高成長（+30-40% YoY）</td></tr>
+<tr><td>其他先進封裝</td><td class="num">~20%</td><td>中高成長（+20%）</td></tr>
+<tr><td>CMOS Image Sensors</td><td class="num">~10%</td><td>低成長</td></tr>
+<tr><td>Compound Semi</td><td class="num">~8%</td><td>週期性</td></tr>
+<tr><td>前段 / 通用 2D</td><td class="num">~12%</td><td>低成長</td></tr>
+</table>
+<p><strong>地區組成（估計）：</strong>亞太 ~80%（中、台、韓為主）、北美 ~15%、歐洲 / 其他 ~5%</p>
+</div>
+
+<div class="card">
+<h3>Unit Economics</h3>
+<ul>
+<li><strong>ASP 單機：</strong>Hawk / Eagle G5 約 $2-5M / 台，legacy Eagle 約 $1.5M / 台</li>
+<li><strong>Gross Margin per tool：</strong>新平台 55%+，legacy ~45-48%</li>
+<li><strong>Services &amp; Software 佔比：</strong>~15-20%，且穩定擴大（SaaS-like 特性增強）</li>
+<li><strong>LTV per customer（Top 10）：</strong>單客戶多年度累計採購通常 $30-60M，服務續約率 &gt; 90%</li>
+</ul>
+</div>
+
+<!-- ========== §12 公司治理 ========== -->
+<h2>§12 公司治理與資本配置</h2>
+
+<div class="card">
+<h3>① 股東 / 股權結構</h3>
+<ul>
+<li><strong>Priortech + Chroma ATE 聯合控股：39.23%</strong>（Priortech 持 ~21.5%、Chroma 持 ~17.7%；兩者 2022 年簽署聯合投票協議）</li>
+<li><strong>內部人總持股：~38%</strong>（含創辦人 Rafi Amit / Yossi Ben-Porath 家族）</li>
+<li><strong>機構持股：~54%</strong>（BlackRock 7.5%、Vanguard 5.1%、More Investment House 4.9%）</li>
+<li><strong>股權結構：</strong>單一 Ordinary Shares，無 dual-class，但聯合投票協議為事實上控股</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>② 資本配置方向</h3>
+<table>
+<tr><th>用途</th><th>近 3 年金額</th><th>優先順序</th></tr>
+<tr><td>Capex（研發廠房擴建）</td><td class="num">~$33M</td><td>1</td></tr>
+<tr><td>R&amp;D</td><td class="num">~$170M 累計</td><td>1</td></tr>
+<tr><td>併購</td><td class="num">~$0 重大</td><td>機會型</td></tr>
+<tr><td>股票回購</td><td class="num">~$0</td><td>非常態</td></tr>
+<tr><td>股息</td><td class="num">$0</td><td>不發放</td></tr>
+<tr><td>2025/9 可轉債發行</td><td class="num">$425M (0% coupon, due 2030, 轉換價 $109.34)</td><td>儲備併購 / 擴產彈藥</td></tr>
+</table>
+<p class="note">資本配置偏保守（重 R&amp;D、輕股東回饋），但 2025 年可轉債發行後帳上資金充裕，有併購潛力——是優勢也是風險（視管理層執行力）。</p>
+</div>
+
+<div class="card">
+<h3>③ 管理層薪酬結構</h3>
+<ul>
+<li><strong>固定薪：</strong>CEO Amit Rafi 年薪約 $0.5-0.7M（以色列上市標準較美國 CEO 低）</li>
+<li><strong>績效獎金：</strong>按營收 / EBITDA 目標發放，年度比例 ~40-60%</li>
+<li><strong>股權激勵：</strong>RSU 為主，典型 25%+75% 四年 vesting；SBC / Revenue ~2-3%（相對溫和）</li>
+<li><strong>整體：</strong>薪酬水準合理，不存在過度 SBC 稀釋；CEO 股權部位（15,145 股）與股東利益對齊有限但非負面</li>
+</ul>
+</div>
+
+<div class="card">
+<h3>④ 過去 12 個月內部人交易</h3>
+<ul>
+<li><strong>2026/4/15：</strong>8 位董事提交 Form 3 初始持股申報（常規申報，非買賣）</li>
+<li><strong>2025/Q3-Q4：</strong>小額 RSU 歸屬、無大額內部人賣出（Form 4 顯示典型行權後持有）</li>
+<li><strong>Priortech 控股：</strong>無重大減持動作</li>
+<li><strong>總體：</strong>內部人信心中性偏正，未見批發式出場</li>
+</ul>
+</div>
+
+<!-- ========== §13 估值診斷 ========== -->
+<h2>§13 估值診斷</h2>
+
+<div class="card">
+<h3>13.0｜估值體系診斷</h3>
+<h4>A｜當前主流估值邏輯</h4>
+<table>
+<tr><th>邏輯</th><th>指標</th><th>主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>✅ 主流</td><td>市場使用 Forward P/E 為主要定錨</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>輔助</td><td>因 AI 主題加權</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>❌</td><td>無關</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>次要</td><td>因 GAAP/Non-GAAP 差距大，FCF 為較清晰指標</td></tr>
+</table>
+<p><strong>當前主流邏輯：盈利能力（Forward P/E 為主）+ 成長溢價（PEG 為輔）</strong></p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<p><strong>可能漂移：「盈利估值 → AI 主題估值」——</strong>若 HBM4/CoWoS 持續放量，市場可能開始用「AI 設備股 ARR-like」邏輯定價（類似對 ASML / KLAC 的 2023 升級），允許 40x+ 倍數永續化。此漂移已部分發生。</p>
+
+<h4>C｜估值尺可能被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>狀態</th></tr>
+<tr><td>ROIC 持續擴張 → 重新定價為結構性成長</td><td>進行中（ROIC 從 13% → 20%）</td></tr>
+<tr><td>管理層轉向 recurring revenue 敘事</td><td>Software / services 佔比擴大，但尚未主敘</td></tr>
+<tr><td>KLAC / ONTO 率先獲得更高倍數</td><td>KLAC Fwd PE 36x，為 Camtek 參照點</td></tr>
+<tr><td>盈利成長放緩至市場均值</td><td>若 FY2026 實際僅 +5-10%，可能觸發估值壓縮</td></tr>
+</table>
+<p><strong>估值體系診斷：🔵 估值體系升級中（但部分升級已反映在當前 41x Fwd PE）</strong></p>
+</div>
+
+<div class="card">
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Trailing P/E（GAAP）</td><td class="num">172x</td><td class="num">12x</td><td class="num">35x</td><td class="num">65x</td><td class="num">異常（GAAP 2025 扭曲）</td></tr>
+<tr><td>Trailing P/E（Non-GAAP）</td><td class="num">55x</td><td class="num">14x</td><td class="num">28x</td><td class="num">55x</td><td class="num">100%</td></tr>
+<tr><td>Forward P/E (NTM)</td><td class="num">41.4x</td><td class="num">12x</td><td class="num">25x</td><td class="num">45x</td><td class="num"><strong>89%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td class="num">57.6x</td><td class="num">9x</td><td class="num">19x</td><td class="num">40x</td><td class="num">100%+</td></tr>
+<tr><td>P/FCF</td><td class="num">~66x</td><td class="num">5x</td><td class="num">30x</td><td class="num">80x</td><td class="num">81%</td></tr>
+<tr><td>P/S</td><td class="num">17x</td><td class="num">3x</td><td class="num">8x</td><td class="num">18x</td><td class="num">93%</td></tr>
+</table>
+<p><strong>計算範例：</strong>Forward P/E 分位 = (41.4 − 12) / (45 − 12) = 89%</p>
+<p><strong>解讀：</strong></p>
+<ul>
+<li>① 當前情緒：<strong>過熱</strong>（&gt;80% 分位），同時 EV/EBITDA 突破 5Y 高點</li>
+<li>② 上次處於此分位（2021 Q4）時，業務規模約為現在的 1/2，毛利率 47% vs 現 51.6%——基本面確實變好，但估值擴張幅度 &gt; 基本面改善</li>
+<li>③ 推動分位主因：AI 主題權重最大（~60%），利率為壓力因素（~25%），盈利修正為輔（~15%）</li>
+</ul>
+<p class="note">利率環境：10Y UST ~4.1%（2026/4），對 42x Fwd P/E 的合理倍數支撐 ~25-30x。當前倍數已顯著超出利率模型隱含區間。</p>
+</div>
+
+<div class="card">
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E (FY+2 NTM)</td><td class="num">41.4x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR (3Y, §7)</td><td class="num">18.4%</td><td>—</td></tr>
+<tr><td><strong>PEG (3 年, NTM)</strong></td><td class="num"><strong>2.25</strong></td><td><span class="red">🔴 貴（&gt; 2）</span></td></tr>
+<tr><td>PEG (3 年, FY+1 Fwd PE 52.5)</td><td class="num">2.85</td><td>🔴 很貴</td></tr>
+<tr><td>5Y EPS CAGR (含 Runway 遞減)</td><td class="num">~16-17%</td><td>—</td></tr>
+<tr><td>PEG (5 年, Non-GAAP)</td><td class="num">2.45</td><td>🔴 貴</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差</td><td class="num">小</td><td>近期成長未被高估，但估值本身已偏高</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點：</strong>位於「<span class="red">高成長高估值</span>」象限，雖成長品質無虞，但 PEG &gt; 2 表示市場已充分 pricing in，不存在被低估的結構性原因。</p>
+</div>
+
+<div class="card">
+<h3>13.3｜Reverse DCF</h3>
+<h4>步驟一：參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>當前市值</td><td class="num">$8.41B</td></tr>
+<tr><td>基期 FCF (FY25)</td><td class="num">$127.1M</td></tr>
+<tr><td>WACC</td><td class="num">9.0%</td><td>10Y UST 4.1% + Beta 1.5 × ERP 5% + Size Prem 0.4%</td></tr>
+<tr><td>永續成長率</td><td class="num">3.0%</td></tr>
+<tr><td>預測期</td><td class="num">10 年</td></tr>
+</table>
+
+<h4>步驟二：隱含 FCF CAGR</h4>
+<p>使 DCF 現值 = $8.41B，所需前 10 年 FCF CAGR = <strong>~22%</strong></p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較</th><th>數值</th><th>相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td class="num">~37%</td><td>隱含 22% 低於歷史 → 看似保守</td></tr>
+<tr><td>EPS CAGR 共識（§7）</td><td class="num">18.4%</td><td>隱含 22% 略高於 EPS 共識 → FCF margin 擴張假設</td></tr>
+<tr><td>同業 ONTO FCF CAGR (3Y)</td><td class="num">~25%</td><td>相當</td></tr>
+<tr><td>KLAC FCF CAGR (3Y)</td><td class="num">~15%</td><td>高於 KLAC</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 22% FCF CAGR 需：</p>
+<ul>
+<li>Revenue 年增 ~20% 穩定 10 年（vs 過去 3 年平均 16%）</li>
+<li>或 FCF Margin 從 25.6% 擴大至 30%+</li>
+<li>條件合理成立的前提：HBM4 + HBM5 + CoWoS-L + CoPoS 多代技術皆由 Camtek 主導</li>
+</ul>
+<p class="note"><span class="blue">【r1 產業佐證】前 2 年（2026-2027）已有明確數據支撐 20%+ 成長：CoWoS 產能 2026 +76% YoY、2027 +29% YoY；HBM4 2026/2 啟動；CoPoS 2028-29 接棒。2026-2028 隱含高成長達成率高，但 2029-2035 長尾 10 年仍依賴 HBM5/HBM6/CoPoS 順利放量——關鍵風險為 hybrid bonding 競爭轉變（Onto Dragonfly G5 已威脅）</span></p>
+<p><strong>隱含預期判斷：🟡 合理至略激進</strong>（不是極端激進如 100x P/E 股，但已定價近似完美情境；前 3 年兌現確定性提高，長尾 7 年需持續觀察護城河維持度）</p>
+</div>
+
+<div class="card">
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>3Y EPS CAGR</th><th>ROIC</th></tr>
+<tr><td><strong>Camtek (CAMT)</strong></td><td class="num">$8.4B</td><td class="num">41.4x</td><td class="num">57x</td><td class="num">2.25</td><td class="num">25.6%</td><td class="num">18.4%</td><td class="num">~18-20%</td></tr>
+<tr><td>Onto Innovation (ONTO)</td><td class="num">~$12B</td><td class="num">~32x</td><td class="num">~26x</td><td class="num">1.13</td><td class="num">~22%</td><td class="num">~25%</td><td class="num">~16%</td></tr>
+<tr><td>KLA Corp (KLAC)</td><td class="num">~$130B</td><td class="num">36x</td><td class="num">34x</td><td class="num">1.64</td><td class="num">~30%</td><td class="num">~18%</td><td class="num">~35%</td></tr>
+<tr><td>ASML</td><td class="num">~$350B</td><td class="num">~30x</td><td class="num">~22x</td><td class="num">2.03</td><td class="num">~28%</td><td class="num">~14%</td><td class="num">~40%</td></tr>
+<tr><td><strong>產業中位</strong></td><td class="num">—</td><td class="num">~33x</td><td class="num">~28x</td><td class="num">1.64</td><td class="num">~26%</td><td class="num">~19%</td><td class="num">~26%</td></tr>
+</table>
+
+<h4>同業溢折價邏輯</h4>
+<ol>
+<li><strong>相對產業溢價：</strong>Fwd PE 41x vs 產業中位 33x = <strong>溢價 24%</strong></li>
+<li><strong>支撐溢價的項目：</strong>Camtek 3Y EPS CAGR 18.4% 接近中位；FCF Margin 25.6% 接近中位；ROIC 18-20% 低於 KLAC 但高於 ONTO——論基本面沒有明顯支撐高於產業中位的溢價，除了「HBM4 reference tool 獨家性」主題溢價</li>
+<li><strong>若向產業中位回歸：</strong>Fwd PE 從 41 → 33，股價下行 ~20% 至 ~$144</li>
+</ol>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>CAMT</th><th>ONTO（最強對手）</th></tr>
+<tr><td>主假設完全兌現，上行空間最大</td><td>中等（估值已高）</td><td><strong>ONTO（PEG 1.13 最便宜）</strong></td></tr>
+<tr><td>主假設部分落空，跌幅最小</td><td>CAMT 跌幅較大（估值高）</td><td><strong>ONTO（防禦性較好）</strong></td></tr>
+<tr><td>綜合風報比最優</td><td>次優</td><td><strong>ONTO（現階段）</strong></td></tr>
+</table>
+
+<p><strong>最終橫向比較結論：<span class="yellow">🥈 CAMT 為次優選（現價）</span></strong>——Camtek 品質絕對第一但估值風險最大；同主題下 ONTO 現階段風報比較優。</p>
+</div>
+
+<div class="card">
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（13.0）</td><td><span class="blue">🔵 升級中</span></td><td>AI 主題升級已部分反映</td></tr>
+<tr><td>歷史分位（13.1）</td><td><span class="red">🔴 過熱（89%）</span></td><td>Fwd PE 接近 5Y 高點</td></tr>
+<tr><td>PEG 診斷（13.2）</td><td><span class="red">🔴 貴（2.25）</span></td><td>&gt; 2 閾值</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td><span class="yellow">🟡 略激進</span></td><td>隱含 22% FCF CAGR</td></tr>
+<tr><td>同業相對（13.4）</td><td><span class="red">🔴 溢價無強支撐</span></td><td>相對產業溢價 24%，無對應基本面優勢</td></tr>
+</table>
+
+<h4>v11.0 §2 D 交叉驗證</h4>
+<p>當前 Fwd PE (41.4x) vs §2 D 合理 PE (25x) = <strong>當前 FPE &gt; 合理 PE × 1.5</strong> → 負面信號，下修一級</p>
+<p>歷史分位降權規則：PEG &gt; 1（不適用降權）→ 歷史分位過熱信號維持 🔴</p>
+
+<p><strong>當前定價判斷：<span class="red">🔴 明顯貴</span></strong></p>
+
+<h4>估值倍數定錨（長期參考）</h4>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河品質（§9）</td><td>9/10</td><td>基準 +3x</td></tr>
+<tr><td>② Runway（§8A）</td><td>≥ 10 年 🟢</td><td>+3x</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>量+價雙擴</td><td>+2x</td></tr>
+<tr><td>④ 護城河連動（§8C）</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§8D）</td><td>ROIC-WACC 擴大</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號（§8）</td><td>0 個</td><td>±0</td></tr>
+<tr><td>⑦ 估值體系方向（§13.0）</td><td>升級中</td><td>+1x</td></tr>
+<tr><td>⑧ 10Y UST 4.1%</td><td>中性偏壓制</td><td>−1x</td></tr>
+<tr><td>產業基準倍數</td><td>20x</td><td>調整後合理區間 30-32x</td></tr>
+</table>
+
+<h4>長期合理倍數對應表（§8 綜合評級）</h4>
+<p>§8 評級：🟢 高確信長期成長 → 基準 <strong>25x</strong></p>
+<ul>
+<li>引擎 A（ROIC 溢價）：Non-GAAP ROIC ~20%，擴大中 → ×1.175</li>
+<li>引擎 B（PEG 動態天花板）：Year-5 前瞻成長 ~15-17%，適用 品質 A → 允許 PEG 1.5x 上限</li>
+<li>引擎 C（護城河）：9/10 → ×1.10</li>
+<li>三引擎取較高：× 1.175</li>
+<li>AI 調整：🟢 → ×1.10</li>
+</ul>
+<p><strong>最終長期合理倍數 = 25 × 1.175 × 1.10 = 32.3x</strong></p>
+<p class="note">§2 D 合理 PE 25x 為短中期 PEG 安全網結果，主要用於當前定價判斷；長期合理倍數 32x 用於 §2 G 展望參考，兩者設計目的不同。</p>
+
+<h4>分析師目標價</h4>
+<ul>
+<li>高 $178-$200（樂觀派預期 HBM4 完美放量）</li>
+<li>中位 $167（MarketBeat）至 $159（tickernerd 預測模型）</li>
+<li>低 $110-$145（保守派預期 H1 放緩）</li>
+<li>共識評級：9 buy / 3 hold / 0 sell（n=12）</li>
+</ul>
+<p class="note">分析師中位 $167 已低於現價 $180.63，反映市場衝高超越共識目標——典型「股價透支分析師預期」情境。</p>
+</div>
+
+<div class="warn">
+<h3>⚠️ 便宜理由檢驗（不觸發，列於此僅作對稱保留）</h3>
+<p>CAMT 估值位於分位 89%（非便宜），不觸發便宜理由檢驗。若未來回檔至 30% 分位以下（~$90-$110），再執行此檢驗。</p>
+</div>
+
+<div class="card">
+<h3>投資結論（v11.0 完整版 — 本節為報告最終裁決）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 HBM4 放量：</strong>＋ 強化（Q4 call 明確表達 backlog 健康，OSAT CoWoS 訂單確認）</li>
+<li><strong>H2 CoWoS OSAT 擴散：</strong>＋ 強化（50% OSAT 營收暴露，行業長期受益）</li>
+<li><strong>H3 估值回測：</strong>－ 削弱（股價創新高，反向發展）</li>
+<li><strong>這份財報讓隱含預期變得更「容易」（基本面）但「困難」（估值） — 市場已將好消息全部 pricing in</strong></li>
+</ul>
+
+<h4>進場 / 觀望偏進場 / 觀望 / 迴避</h4>
+<p>v11.0 判定：</p>
+<ul>
+<li>短期 R:R −0.80x，中期 R:R −0.70x</li>
+<li>短期 ≥ 2.0 且 中期 ≥ 2.0 → ❌</li>
+<li>僅中期 ≥ 2.0 → ❌</li>
+<li>中期 ≥ 1.0 且 品質 A 且 長期信心高 → ❌（中期為負）</li>
+<li>都不過 → <strong><span class="fail">迴避</span></strong></li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q1 2026 guidance 持平（$120M），短期 visibility 有限；H1 進場訊號弱，等待 Q2/Q3 實績。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY+2 EPS 共識 26.7% 成長驅動來自 HBM4 + CoWoS 量+價雙擴，能見度 <strong>高</strong>（§8B）。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道充裕、護城河加深 → <strong>長期持有信心：高</strong>（§2 G）。</p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔（Bear Case）：$62 / 距現價 −65.7%</li>
+<li>中期下檔（Bear Case）：$78.4 / 距現價 −56.6%</li>
+<li>W52 Low $56.09（參考）/ W104 Low $47.41（參考）</li>
+<li>若 FY+1 EPS 下修 10%：短期 R:R 由 −0.80x 進一步惡化至 −1.05x</li>
+</ul>
+</div>
+
+<div class="card" style="margin-top:30px;border-top:3px solid #3B82F6;">
+<h3>版本修訂紀錄</h3>
+<table>
+<tr><th>版本</th><th>日期</th><th>修訂內容</th></tr>
+<tr><td>v11.0 (r0)</td><td>2026-04-17</td><td>初版發布</td></tr>
+<tr><td><strong>v11.0 (r1)</strong></td><td><strong>2026-04-18</strong></td><td>
+<strong>依最新產業情報（2026 Q1-Q2）修訂（藍字標註）：</strong>
+<ul style="margin:6px 0">
+<li>§4 逆向推演：補充 hybrid bonding 延至 HBM4E、coherent laser 長尾風險、Rubin 下修傳導機制</li>
+<li>§5 B/C：HBM4 MP 具體時程（Samsung/SK 2026/2，Micron 2026 Q1 已量產 Rubin HBM4）；Onto Dragonfly G5 升級為具體 R1 威脅</li>
+<li>§6 Earnings Call 解析：補充 H2 2026 加速與 HBM4 時程吻合的產業邏輯</li>
+<li>§8 A TAM 上修（$1.5-2B → $2-2.5B；2030 $4-5B → $5-6B）；§8 F AI 風險補 NVIDIA Rubin 支撐數字</li>
+<li>§9 護城河 24 個月威脅表：Onto Dragonfly G5 從中度（30%）升級為高度（45%）；新增 HBM4E hybrid bonding 長尾威脅</li>
+<li>§11 產業格局：補 CoWoS 產能數字（650K/840K wafers、TSMC 外包 240-270K 至 OSAT、非 TSMC 佔比 9%→11%）</li>
+<li>§13.3 Reverse DCF：補前 3 年兌現確定性 vs 長尾 7 年的風險分段</li>
+</ul>
+<strong>結論與 R:R 數字不變（仍為迴避）——產業情報強化「品質 A 級」信念，但估值透支問題未解</strong>
+</td></tr>
+</table>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>
+
+<!-- v11.0-r1 2026-04-18 修訂：§4/§5/§6/§8/§9/§11/§13 依最新產業情報補強，結論不變 -->
