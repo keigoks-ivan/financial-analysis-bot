@@ -126,11 +126,12 @@ def extract_version(path: Path) -> str:
         return ""
 
 
-def extract_comment(path: Path, max_len: int = 180) -> str:
+def extract_comment(path: Path, max_len: int = 120) -> str:
     """Extract the bull one-liner from DD HTML as a short comment.
 
-    v12.0 policy: 備註欄限 180 字（約 3 句話），超過以第一個 '。' 後截斷或加 '…'。
-    改 500 → 180 是因為用戶回饋網站備註過長，閱讀不友善。
+    v12.0 policy: 備註欄限 120 字（約 1-2 句話），超過以第一個 '。' 後截斷或加 '…'。
+    CJK 字 120 個約等於視覺寬度 240 字元，適合表格單格 1.5 行顯示。
+    歷史：500 (v11) → 180 (v12.0 initial) → 120 (v12.0 tighter)
     """
     try:
         text = path.read_text(encoding="utf-8", errors="ignore")
