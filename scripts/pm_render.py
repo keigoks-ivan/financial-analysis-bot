@@ -181,6 +181,7 @@ def update_research_page(d):
     text = path.read_text()
     holdings_new = render_holdings_marker(d)
     actions_new = render_actions_marker(d)
+    last_run = datetime.now(tz=timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M %Z")
 
     text = re.sub(
         r"<!-- PM_HOLDINGS_START -->.*?<!-- PM_HOLDINGS_END -->",
@@ -190,6 +191,11 @@ def update_research_page(d):
     text = re.sub(
         r"<!-- PM_ACTIONS_START -->.*?<!-- PM_ACTIONS_END -->",
         f"<!-- PM_ACTIONS_START -->\n{actions_new}\n<!-- PM_ACTIONS_END -->",
+        text, flags=re.DOTALL,
+    )
+    text = re.sub(
+        r"<!-- PM_LAST_RUN_START -->.*?<!-- PM_LAST_RUN_END -->",
+        f"<!-- PM_LAST_RUN_START -->{last_run}<!-- PM_LAST_RUN_END -->",
         text, flags=re.DOTALL,
     )
     path.write_text(text)
