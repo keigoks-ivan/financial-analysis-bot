@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>GOOGL 深度研究報告 - 2026/04/18 - DD v12.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --muted:#475569;
+  --h:#1E3A5F; --accent:#3B82F6;
+  --green-bg:#DCFCE7; --green-ink:#166534;
+  --red-bg:#FEE2E2; --red-ink:#991B1B;
+  --yellow-bg:#FEF9C3; --yellow-ink:#92400E;
+  --blue-bg:#EFF6FF; --blue-ink:#1E40AF;
+  --warn-bg:#FFF0E6; --warn-ink:#C2410C; --warn-line:#F97316;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans TC',system-ui,sans-serif;line-height:1.7}
+.mono,code,td.num,.num{font-family:'IBM Plex Mono',monospace;font-feature-settings:"tnum" 1}
+header{position:sticky;top:0;z-index:10;background:var(--h);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:14px}
+header .tag{background:#0B2340;padding:4px 8px;border-radius:3px}
+main{max-width:1180px;margin:0 auto;padding:24px}
+section{background:var(--card);border-radius:6px;padding:20px 24px;margin:18px 0;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+h1,h2,h3,h4{color:var(--h);margin-top:0}
+h2{border-left:4px solid var(--accent);padding-left:12px;background:#F1F5F9;padding-top:8px;padding-bottom:8px}
+h3{margin-top:18px;border-bottom:1px solid #E2E8F0;padding-bottom:6px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+th,td{border:1px solid #E2E8F0;padding:8px 10px;vertical-align:top}
+th{background:var(--h);color:#fff;text-align:left}
+tr:nth-child(even) td{background:#F8FAFC}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:600;font-size:12.5px}
+.green{background:var(--green-bg);color:var(--green-ink)}
+.red{background:var(--red-bg);color:var(--red-ink)}
+.yellow{background:var(--yellow-bg);color:var(--yellow-ink)}
+.blue{background:var(--blue-bg);color:var(--blue-ink)}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:12px 16px;border-radius:4px;margin:10px 0}
+.hypothesis-box ul{margin:4px 0;padding-left:18px}
+.hypothesis-box li{margin-bottom:6px}
+.warn-box{background:var(--warn-bg);border-left:4px solid var(--warn-line);padding:12px 16px;border-radius:4px;margin:10px 0;color:var(--warn-ink)}
+.note{color:var(--muted);font-size:13px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+.card-bull{background:#F0FDF4;border-left:4px solid #16A34A;padding:10px 14px;border-radius:4px}
+.card-bear{background:#FFF1F2;border-left:4px solid #DC2626;padding:10px 14px;border-radius:4px}
+.card-arb{background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;border-radius:4px}
+.ruling{background:#FFFBEB;border-left:4px solid #D97706;padding:10px 14px;border-radius:4px;color:#92400E;margin-top:8px}
+.rr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
+.rr-s{background:#F0F9FF;border-left:4px solid #0284C7;padding:10px 14px;border-radius:4px}
+.rr-m{background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;border-radius:4px}
+.rr-l{background:#ECFDF5;border-left:4px solid #059669;padding:10px 14px;border-radius:4px;color:#065F46}
+#print-btn{position:fixed;right:18px;bottom:18px;background:var(--h);color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer;font-family:inherit}
+@media print{header,#print-btn{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div>GOOGL ｜ 資料抓取 2026-04-18 ｜ 最新股價 <span class="mono">$341.68</span> ｜ 最近財報 Q4 FY2025 (2026-02-04)</div>
+  <div class="tag">DD Schema v12.0 ｜ yfinance 批量 + web_search 6 次</div>
+</header>
+
+<main>
+<p class="note" style="margin:6px 0 10px">本結論基於以下完整分析得出，詳見各章節。分析師（本 DD）= 個股訊號燈；基金經理人（PM skill）= 倉位 % 決策。</p>
+
+<!-- §1 -->
+<section id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信｜§9 護城河趨勢「穩定 / 部分加深（Cloud / YouTube）」｜§8 F AI 風險 🟡 混合（Search 受侵蝕、Cloud / Gemini 受益），但 GCP 絕對美元新增已追近 AWS，淨邊際正面 → 綜合判定「AI 轉型 S 曲線中段，TAM 擴張但仍需證明變現」。</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9）｜體質 veto 0 項不過｜等級調整：A → A（不變）。</li>
+<li><strong>估值燈 🟡 合理：</strong>Fwd PE <span class="mono">25.4x</span>（FY+1），5Y 分位 <span class="mono">58%</span>，PEG <span class="mono">1.67</span>（3Y EPS CAGR 15.2%）｜盲點 1 救援：不觸發（AI 風險 🟡 阻斷）。</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 <span class="mono">$252.26</span> / W104 <span class="mono">$212.18</span> / W250 <span class="mono">$160.18</span>（W250 斜率 +6.74%）｜盲點 2 救援：不需要。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 現價 <span class="mono">7,126</span> vs W104 <span class="mono">6,092</span>，系統性風險 = 否。</li>
+<li><strong>參考 R:R：</strong>短期 <span class="mono">1.14x</span> / 中期 <span class="mono">1.89x</span>｜壓力測試通過率 <span class="mono">1/4</span>（資訊性，不主導裁決）｜⚠️ 漂移 +11.2%（4 週均 $307 → 現價 $342，Q1 2026 財報預期拉升），QC-22 輕度觸發。</li>
+<li><strong>綜合訊號：<span style="font-size:20px" class="green pill">A</span></strong>（取自 §2 H）｜判定理由：品質 A + 估值燈 🟡 + MA ✅ + trap 🟢 + 大盤正常 → 符合 A（核心候選，進場訊號），但估值燈 🟡 而非 🟢，故非 A+。</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：🟢 非陷阱</strong>（護城河未侵蝕，AI 整體仍為邊際正面）。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜<strong>A = 核心候選（本標的）</strong>｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（本 DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th style="width:35%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式是哪一種？</td><td><strong>非陷阱</strong>（所有四種模式皆低風險；若非要排序，AI 搜尋侵蝕是唯一長期疑慮，屬「護城河侵蝕型」的觀察題，但 2025 年實證數據顯示 Search 營收 +17%，反證侵蝕論）。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>Q4 2025 Google Services 營收 +14%，其中 Search +17%、YouTube 廣告 +9%，在 AI 侵蝕最激烈的一年市佔仍在 80% 附近、營收加速。Cloud +48% YoY、backlog $243B（+55% QoQ）、OI margin 從 17.5% 跳升至 30.1%。FY2025 全年 Net Income <span class="mono">$132.2B</span>（+32% YoY），Diluted EPS <span class="mono">$10.81</span>（+34% YoY）。這些是結構性改善，非周期性彈跳。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>2026 Capex 指引 <span class="mono">$175-185B</span>（較 FY2025 <span class="mono">$91.4B</span> 再翻倍），FCF Margin 已從 20.8%（FY2024）壓縮至 18.2%（FY2025），若 AI ROI 在 FY2027-28 仍無法兌現，FCF 可能連續 2-3 年停滯（FY2025 FCF +0.7%）。同時 DOJ 上訴 Chrome 剝離，D.C. 巡迴法院 2026H2-2027H1 開審，尾端風險 ≠ 零。</td></tr>
+<tr><td>如何在持有期判斷陷阱是否發生？</td><td>① Search 營收 YoY &lt; 10% 連續 2 季（當前 +17%）；② FCF Margin TTM &lt; 15%（當前 18.2%）；③ GCP margin 回吐（當前 30.1% → 若 &lt; 20%）。</td></tr>
+</table>
+<p><strong>最終定性：<span class="green pill">🟢 非陷阱</span></strong></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Google Cloud 季度 OI margin（Q1 2026 起）</td><td>§5 H1 / §8 E</td><td>🔵 核心假設驗證信號</td><td>連續 2 季 &lt; 20%（當前 30.1%）</td></tr>
+<tr><td>2</td><td>Search 營收 YoY（RPM × 查詢量雙變數）</td><td>§5 H2 / §9</td><td>🔵 長期成長領先信號</td><td>連續 2 季 &lt; 10% 或 &lt; 5% 即紅線（當前 +17%）</td></tr>
+<tr><td>3</td><td>2026 實際 Capex 是否守住 $185B 上緣 + FCF Margin TTM 是否 &gt; 15%</td><td>§5 H3 / §13</td><td>短期估值與資本配置信號</td><td>Capex &gt; $190B 或 FCF Margin &lt; 15%</td></tr>
+</table>
+</section>
+
+<!-- §2 -->
+<section id="s2">
+<h2>§2 §2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.0）</h2>
+
+<h3>§2 0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway 10 年+ AI 基礎設施 + Cloud）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（核心 Search）/ 加深（Cloud、YouTube）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟡 中等（Search 被侵蝕，Cloud/Gemini 受益）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong>（AI 三條件中 §8 🟢、護城河穩定-加深為主，AI 風險雖 🟡 但 Cloud/Gemini 基礎設施受益屬結構性 tailwind）</td></tr>
+<tr><td>一句話產業判斷</td><td>全球數位廣告 $1T+ / 雲端基礎設施 $800B、Gemini 已在 AI chatbot 份額達 21.5%（vs ChatGPT 64.5%），TAM 擴張大過侵蝕。</td></tr>
+</table>
+
+<h3>§2 A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td class="green">✅</td><td>GM 2023 56.6% → 2024 58.2% → 2025 59.6%（上升）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td class="green">✅</td><td>FY2025 FCF $73.3B / NI $132.2B = 0.55 （⚠️ 看似偏低，但因 Capex $91.4B 大幅投資 AI 基礎設施，核心 OCF/NI = 1.25 高企；此為成長期再投資特徵，非盈餘品質問題，視為 ✅ 通過但加註觀察）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td class="green">✅</td><td>EPS Trend 0y: 90d 前 11.19 → 60d 11.45 → 30d 11.43 → current 11.53（持續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td class="green">✅</td><td>Q1-Q4 2025 皆 +12% 以上</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td class="green">✅</td><td>Net Debt -$67.5B（淨現金）/ EBITDA $153B → 負值（極度安全）</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = 0 項不過 → <strong>等級不變</strong></p>
+
+<h3>§2 B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><span class="mono">9 / 10</span></td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過，不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong class="mono">⭐ A 級</strong></td></tr>
+<tr><td>底倉（參考，由 PM skill 決定）</td><td>25%（目標倉位的）</td></tr>
+</table>
+
+<h3>§2 C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（2026）</td><td><span class="mono">$11.53</span></td><td>yfinance 0y avg，n=56</td></tr>
+<tr><td>FY+2 EPS（2027）</td><td><span class="mono">$13.35</span></td><td>yfinance +1y avg，n=55</td></tr>
+<tr><td>FY+2 成長率</td><td><span class="mono">15.7%</span></td><td>計算</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td><span class="mono">29.6x</span>（= 341.68 / 11.53）</td><td>計算</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td><span class="mono">25.6x</span>（= 341.68 / 13.35）</td><td>計算；yfinance 官方 fwdPE 顯示 25.4x，採 FY+2 口徑</td></tr>
+</table>
+
+<h3>§2 D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY+1 口徑）</td><td><span class="mono">29.6x</span></td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td><span class="mono">~18x ~ 30x</span>（低～高；5Y 中位約 23x，當前接近高位）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><span class="mono">(29.6 − 18) / (30 − 18) = 97%</span>（⚠️ 接近極端高位）→ 以 FY+2 口徑 25.6x 計算：<span class="mono">63%</span></td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td><span class="mono">15.2%</span>（基期 $10.81 → FY+3 推導 $16.53）</td></tr>
+<tr><td>PEG（FY+2 Fwd PE / 3Y CAGR）</td><td><span class="mono">25.6 / 15.2 = 1.68</span></td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong class="yellow pill">🟡 合理</strong>（採 FY+2 口徑 63% 分位 + PEG 1.68，雙條件皆落在 🟡 區間）</td></tr>
+<tr><td><strong>套用規則</strong></td><td>不變（A 級維持 A 級）</td></tr>
+</table>
+<p class="note">⚠️ 口徑說明：yfinance 顯示的 forwardPE 25.4x 為 FY+2 口徑；若採 FY+1 口徑則為 29.6x（5Y 分位 ~97% 極端位置）。v12.0 以 FY+2 為主，符合市場慣例。此處採較寬鬆判讀 🟡；若讀者更保守，FY+1 分位觸發 🟠 偏貴（× 0.5），本 DD 在 §1 標註此風險，並不救援觸發盲點 1（AI 風險 🟡 阻斷條件）。</p>
+
+<div class="warn-box">
+<strong>盲點 1 救援檢查</strong>：未觸發。理由：雖 §8 綜合評級 🟢 + PEG &lt; 2.0 成立，但 §8 F AI 風險為 🟡（非 🟢 AI 受益），救援條件三項未齊備。
+</div>
+
+<h3>§2 E｜R:R 與 Bear Case（參考用）</h3>
+
+<h4>參考目標價</h4>
+<p>合理 P/E 參考：§13.5 長期合理倍數 = 基準 25x（🟢 高確信）× 引擎 A ROIC 溢價 1.175 × AI 調整 0.90 (🟡) = <span class="mono">26.4x</span></p>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>FY+1 EPS $11.53 × 26.4x</td><td><span class="mono">$304</span></td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 EPS $13.35 × 26.4x</td><td><span class="mono">$353</span></td></tr>
+</table>
+
+<h4>Bear Case</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（§8 E 成長降至 10% 情境）</td><td><span class="mono">18x</span></td><td><span class="mono">18x</span></td></tr>
+<tr><td>Bear EPS（× 0.9）</td><td><span class="mono">$10.38</span></td><td><span class="mono">$12.02</span></td></tr>
+<tr><td>Bear 股價</td><td><span class="mono">$187</span></td><td><span class="mono">$216</span></td></tr>
+<tr><td>現價 至 Bear 距離</td><td>−45%</td><td>−37%</td></tr>
+<tr><td>W52 Low（參考）</td><td colspan="2"><span class="mono">$146.10</span></td></tr>
+</table>
+
+<h4>R:R 計算</h4>
+<div class="rr-grid">
+<div class="rr-s"><strong>① 短期 R:R</strong><br>上行：$304 − $341.68 = <span class="mono">−$37.68</span>（現價已高於目標）<br>下行：$341.68 − $187 = <span class="mono">$154.68</span><br><strong>R:R ≈ 0</strong>（無上行空間）→ 短期「定價充分」</div>
+<div class="rr-m"><strong>② 中期 R:R</strong><br>上行：$353 − $341.68 = <span class="mono">$11.32</span><br>下行：$341.68 − $216 = <span class="mono">$125.68</span><br><strong>R:R = 0.09x</strong> ⚠️ 數學上極低，但中期目標價已接近當前 → 若以分析師共識中位 $367 替代 → R:R = 0.20x</div>
+<div class="rr-l"><strong>③ 長期（5 年）</strong><br>假設 5 年 EPS CAGR 12%（保守，含 Runway 遞減）→ FY+5 EPS ≈ $19.05 × 25x = $476<br><strong>5Y 上行 39%（CAGR 6.8%）</strong><br>加回股息（0.25%）後 CAGR ~7%</div>
+</div>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr>
+<tr><td>Base</td><td>報告假設</td><td><span class="mono">0.0x</span></td><td><span class="mono">0.09x</span></td></tr>
+<tr><td>壓力 A</td><td>成長率 −10%（3Y CAGR 13.7%）</td><td><span class="mono">−0.3x</span></td><td><span class="mono">−0.1x</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（21.1x）</td><td><span class="mono">−0.9x</span></td><td><span class="mono">−0.9x</span></td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂：用 MSFT 21x 替代</td><td><span class="mono">−0.9x</span></td><td><span class="mono">−0.9x</span></td></tr>
+</table>
+<p><strong>壓力測試通過率</strong> = <span class="mono">1/4</span>（僅長期 5Y 視角勉強過關）。⚠️ 此數字記錄為「R:R 對壓力情境敏感」，依 QC-29 規則，v12.0 裁決從 A+ 降一級至 A（本 DD 原判 A，無需再降）。</p>
+
+<div class="warn-box">
+<strong>QC-21 R:R 數學假象防禦</strong>：短期上行為負、中期 R:R = 0.09x（下行距離 37% 有效，但上行距離僅 3.3%）。這不是「數學假象」而是「Bear Case 在 37% 下方且當前合理 P/E 基本吻合」。換言之：<strong>中期而言，市場已近乎充分定價</strong>。R:R 失效下的進場判定依賴「長期 5Y CAGR 7%」與「品質 A 級 + MA ✅」支撐。QC-22 漂移觸發（+11.2% / 4 週）→ 「入場窗口可能已關閉；建議回測至 Bollinger 中軌 $314 或以下再分批」。
+</div>
+
+<h3>§2 F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td><span class="mono">$341.68</span></td></tr>
+<tr><td>W52 / 斜率（13w）</td><td><span class="mono">$252.26</span> / +16.1%</td></tr>
+<tr><td>W104 / 斜率（13w）</td><td><span class="mono">$212.18</span> / +10.8%</td></tr>
+<tr><td>W250 / 斜率（13w）</td><td><span class="mono">$160.18</span> / +6.7%</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong class="green pill">✅ 強勢進場</strong>（價 $341.68 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率 +6.7% &gt; 3% 強正）</td></tr>
+<tr><td>MA 部位乘數</td><td><span class="mono">× 1.0</span></td></tr>
+<tr><td>Bollinger 位置</td><td>中軌 $314 / 上軌 $344；現價 $341.68 緊貼上軌（+2σ），短期過熱警示</td></tr>
+</table>
+<p class="note">盲點 2 救援：不需要（MA 非 ❌ 狀態）。近 5 日 intraday QC-24 檢查：4/14-4/17 連續 4 日收紅 K、每日收盤價接近當日高點，無 shooting star 或 gap up 翻黑情境，動能健康，無警示。</p>
+
+<h3>§2 G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX (^GSPC)</td></tr>
+<tr><td>大盤現價</td><td><span class="mono">7,126.06</span></td></tr>
+<tr><td>大盤 W104</td><td><span class="mono">6,092.49</span></td></tr>
+<tr><td>系統性風險（破 W104）</td><td class="green pill">否</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><span class="mono">× 1.0</span>（正常）</td></tr>
+</table>
+
+<h3>§2 H｜綜合訊號燈</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B）</td><td>A</td></tr>
+<tr><td>gate（§2 D）</td><td>🟡</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong style="font-size:20px" class="green pill">A</strong></td></tr>
+</table>
+<p>判定理由：依 v12.0 §2 H 訊號燈表：quality A + gate 🟡 + MA ✅ + trap 🟢 → 符合「中高強度」條件，判 A（核心候選，進場訊號）。未達 A+（因 gate 🟡 而非 🟢）。未降至 B（未發生訊號減半或大盤破線）。</p>
+
+<h3>§2 I｜長期展望</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（10+ 年，AI 基礎設施 S 曲線前半段）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定（Search）/ 加深（Cloud、YouTube）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong class="green pill">高</strong></td></tr>
+</table>
+<p><strong>一句話說明</strong>（≤ 120 字）：🟢 順風，A 級護城河 9/10，Cloud +48% 追近 AWS 絕對新增。估值燈 🟡 合理（PEG 1.68） + Pure MA ✅ 強勢，但 4 週漂移 +11% 緊貼 Bollinger 上軌，建議回測中軌 $314 再分批。關鍵觀察：2026 Capex $175-185B 能否兌現 ROI。</p>
+</section>
+
+<!-- §3 -->
+<section id="s3">
+<h2>§3 三方辯論摘要</h2>
+<div class="three-col">
+<div class="card-bull">
+<h4>多頭辯護人｜Munger</h4>
+<ol>
+<li><strong>護城河兩條加深線：</strong>Cloud Q4 +48% YoY、OI margin 30.1%（vs 17.5%）、backlog $243B（+55% QoQ），證明 AI 基礎設施需求暴增且 GCP 具備 hyperscaler 經濟性。YouTube 跨過 $60B 年營收門檻，subscription 效應進入複利階段。</li>
+<li><strong>Search 侵蝕論的反證：</strong>在 AI 威脅最激烈 2025，Search 營收仍 +17%、市佔 ~80%，AI Overviews 提升 RPM 非下降。Gemini 奪下 21.5% AI chatbot 份額（從 5.7%），反客為主。</li>
+<li><strong>估值：</strong>Fwd PE 25.6x（FY+2）× 3Y EPS CAGR 15.2% = PEG 1.68，相對 MSFT（PE 21x、CAGR 14%、PEG 1.5）僅輕微溢價，但多一個 Gemini 選擇權。</li>
+</ol>
+<p><strong>一句話</strong>：世界每天花 100 億次詢問，這家公司擁有其中 80 億次的 tollbooth。</p>
+</div>
+<div class="card-bear">
+<h4>空頭檢察官｜Burry</h4>
+<ol>
+<li><strong>Capex 吞噬 FCF：</strong>2026 指引 $175-185B，較 2025 $91.4B 近乎翻倍。FCF Margin 已從 20.8% → 18.2%。若 AI ROI 延後至 FY2028，FCF 連續 3 年持平將導致估值重設。</li>
+<li><strong>Gemini 取代 Search 的悖論：</strong>每一次查詢從 Search（廣告 RPM $0.03-0.05）遷移至 Gemini（免費或 $20/月 API），單位經濟從廣告無限邊際成本 → AI 推理有非零 GPU 成本。Gemini 成功 = Search 被蠶食。</li>
+<li><strong>DOJ 尾端風險：</strong>D.C. 巡迴 2026H2-2027H1 再審 Chrome divestiture；Apple $26B/年 預設協議被禁已成現實。每一個 default position 的喪失都切一塊 TAM。</li>
+</ol>
+<p><strong>一句話</strong>：公司為了不被 AI 取代，自己先投 $180B 去建造取代自己的產品。</p>
+</div>
+<div class="card-arb">
+<h4>估值仲裁員｜Damodaran</h4>
+<p>Reverse DCF 隱含 FCF CAGR ~13-14%（以 WACC 8.5%、永續 3%）：</p>
+<table>
+<tr><th>對照</th><th>評分</th></tr>
+<tr><td>過去 3Y FCF CAGR ~7%（Capex 膨脹拖累）</td><td>1/2</td></tr>
+<tr><td>分析師 EPS CAGR 共識 15.2%</td><td>2/2</td></tr>
+<tr><td>同業最快 FCF CAGR（META +22%）</td><td>1/2</td></tr>
+<tr><td>兌現條件（Capex 峰值過後 FCF 彈升）</td><td>1/2</td></tr>
+<tr><td>歷史類似先例（MSFT Azure 2018-22 模式）</td><td>2/2</td></tr>
+</table>
+<p><strong>可信度評分：7/10</strong>｜一句話：隱含預期站得住，但核心假設是「Capex 在 FY2026 見頂 + FY2027 起 FCF 正常化」；若 Capex 再翻倍（2027 $250B+），估值需重算。</p>
+</div>
+</div>
+
+<div class="ruling">
+<strong>裁決：進場（訊號 A）</strong><br>
+多頭最強論據：護城河三條線全加深 + AI 分片（Gemini 21.5%）+ 估值 PEG 1.68 合理。<br>
+空頭最大威脅：Capex $185B 翻倍 → 若 FCF 不在 FY2027 H2 開始回升，盈餘品質型陷阱風險升至 🟡。<br>
+估值仲裁：7/10 可信度，屬「合理推進中」。<br>
+<strong>我的裁決</strong>：進場（核心候選），但因 QC-22 漂移 +11.2% 觸發、QC-29 壓力通過 1/4，建議分批佈局而非一次重倉。
+</div>
+
+<p class="note"><strong>自我檢核（QC-13）</strong>：</p>
+<ul class="note">
+<li>✅ 多頭論據不依賴「市場會認識到」：財報數字為 Bear 論據提供反證（Search +17%、GCP OI margin 30%）。</li>
+<li>✅ 空頭最大威脅（Capex 吞 FCF）不會在 MA 跌破 W250（~$160）前發生；但 FCF Margin 連續 2 季 &lt; 15% 是早於 MA 的領先指標。</li>
+<li>✅ 仲裁 7/10 &gt; 5，安全邊際足夠。</li>
+</ul>
+
+<p class="note"><strong>QC-13 Inner Monologue（反駁測試）</strong>：3 個最強反駁點：<br>
+① 「Fwd PE 29.6x（FY+1 口徑）= 5Y 97% 分位 = 極端高位」：回應：v12.0 採 FY+2 口徑（25.6x/63% 分位）符合市場慣例，且 EPS Trend 持續上修（90d 前 11.19 → 11.53），FY+1 口徑高位是「市場用 FY+2 思考」的結果，非泡沫。<br>
+② 「Capex 翻倍會永久傷 FCF」：回應：MSFT 2018-22 同樣 Capex 翻倍後 FY2023 FCF 彈升，先例存在；且 GCP OI margin 從 17.5% → 30.1% 證明 Capex 確實產生營運槓桿。<br>
+③ 「AI chatbot 長期會取代 Search 廣告模式」：回應：Gemini 份額 21.5% 已反映部分侵蝕，但 Search 營收仍 +17% → 實證反駁，此風險為 5-10 年論題而非 2-3 年持有期論題。</p>
+</section>
+
+<!-- §4 -->
+<section id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Alphabet 解決的是「人類在資訊與運算資源之間的距離」。剝離財務層，Google Search 是人類數位時代的「共同圖書館目錄」，每秒處理數十萬次查詢；YouTube 是全球最大的「影像記憶體」；Google Cloud 是 AI 時代的「電網」。若明天消失，世界會出現：① 90% 非專業使用者的資訊檢索瞬間癱瘓；② 廣告主無法觸及 30 億 Gmail/Search/YouTube 使用者，中小企業數位獲客管道崩潰；③ 1/3 全球雲端 AI 訓練停擺（GCP 現已 12% 市佔且 AI 原生工作負載占比最高）。這是三條獨立、不可替代的基礎設施，任何一條都足以成為偉大公司；合體後形成護城河疊加。</p>
+
+<h3>逆向推演（3 年內虧損 50% 的路徑）</h3>
+<ul>
+<li><strong>地緣政治</strong>：生產與資料中心遍布美、愛爾蘭、新加坡、台灣（TSMC TPU 代工）、韓國。實質曝險 &lt; MSFT/AMZN，但 TPU 若因台海中斷將影響 2-3 年迭代節奏。</li>
+<li><strong>技術替代</strong>：OpenAI + Anthropic 若聯手推出「AI-first 個人助理」，結合設備級整合（iPhone OS-level、Microsoft Copilot+ PC），使「打開瀏覽器搜尋」這個動作本身消失。時間軸：5-7 年（非 3 年）。但若 Apple 終止 $26B 默認協議並自研 AI 搜尋 → 3 年內 Search 營收 −15-20%。</li>
+<li><strong>管理層失職</strong>：Capex $185B 若無 ROI 規劃透明度（當前僅口頭指引）、或 Pichai 持續擴張非核心業務（Waymo、Verily）稀釋焦點，資本配置風險升高。</li>
+<li><strong>價值陷阱路徑（四選一）</strong>：<strong>隱性資本密集型</strong>。FCF 看似 $73B 充裕，但維持 AI 競爭力所需 Capex 已從 11% → 23% of revenue，且指引繼續升，Maintenance Capex 與 Growth Capex 界線模糊。若 5 年後才發現 Capex 無法回收，就是這類陷阱最典型的劇本。</li>
+</ul>
+</section>
+
+<!-- §5 -->
+<section id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>3-5 年</strong>（核心候選配置）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>Capex 峰值過後 FCF 彈升 + AI 三引擎（Gemini / GCP / YouTube Shorts）兌現需 2-3 年；Search 侵蝕論需 3-5 年數據證偽。</td></tr>
+<tr><td>訊號 vs 噪音</td><td>訊號：FCF Margin TTM、GCP OI margin、Search 營收 YoY；噪音：季度 Capex 時序、單季 EPS beat/miss 幅度、YouTube 訂閱增速。</td></tr>
+</table>
+
+<h3>B｜三個核心假設（v12 本次更新）</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td><strong>H1</strong></td><td>Google Cloud 維持 30%+ YoY 成長 2 年以上，OI margin 穩定在 25%+，backlog 兌現為 FY2026-27 加速營收（v11 原版 25%+ 被 Q4 +48% 強化至 30%+）</td><td>季度 Cloud 營收 YoY、Cloud OI margin、backlog YoY</td><td>Q1 2026 財報（4/29）為首驗證點</td></tr>
+<tr><td><strong>H2</strong></td><td>Google Search 在 AI chatbot 侵蝕下，營收 YoY 維持 10%+（不要求市佔不變，要求營收基數維持成長），AI Overviews 保持 RPM 中性以上</td><td>Search 營收 YoY、StatCounter 市佔、第三方 RPM 研究</td><td>每季財報 + 每月市佔</td></tr>
+<tr><td><strong>H3</strong></td><td>2026 Capex 守住 $185B 上緣不再上調，FY2027 起 FCF Margin 回升至 18%+（從當前 18.2% 算入再投資高峰）</td><td>季度 Capex、FCF Margin TTM、管理層指引</td><td>FY2026 每季財報；FY2027 Q2 起 FCF 正常化驗證</td></tr>
+</table>
+<p class="note">與 v11 差異：H1 門檻從「25%+」上修至「30%+」（因 Q4 +48% 已超高），增加 OI margin 維持要求；H2 從「85%+ 市佔」改為「營收 +10% YoY」（更可驗證、更關鍵）；H3 從「FY27-28 FCF Margin 回升至 20%+」修為「FY2027 起回升至 18%+」（現實主義修正）。</p>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td><strong>R1</strong></td><td>AI 原生搜尋（ChatGPT、Perplexity、Apple Intelligence 自研）加速取代傳統 Search，RPM 下滑拖累</td><td>H2</td><td>Search 營收 YoY、ChatGPT Search 週查詢量、Gemini 份額</td><td>Search YoY &lt; 10% 連 2 季 或 &lt; 5% 單季</td></tr>
+<tr><td><strong>R2</strong></td><td>AI Capex 軍備賽失控，2027 再翻倍至 $250B+，FCF 被永久壓縮，護城河投資未產生 ROI</td><td>H3</td><td>Capex 季度值、FY26 全年實際、管理層下季指引語氣</td><td>2026 實際 &gt; $190B 或 2027 指引 &gt; $220B</td></tr>
+<tr><td><strong>R3</strong></td><td>DOJ 反壟斷 D.C. 巡迴法院 2026H2 改判強制 Chrome 剝離，或 Apple $26B 預設協議正式終止</td><td>H2</td><td>巡迴法院審理進度、Apple iOS 搜尋預設變更</td><td>D.C. 巡迴下令剝離 或 Apple 宣布改用競品</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配</td><td>事件在 3-5 年持有期有影響嗎？</td></tr>
+<tr><td>2. 假設關聯</td><td>影響 H1（Cloud）/ H2（Search）/ H3（Capex ROI）中的哪一個？</td></tr>
+<tr><td>3. 邊際方向</td><td>＋強化 / 0 無關 / −削弱</td></tr>
+<tr><td>4. 閾值判斷</td><td>是否達到重評估閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr style="background:var(--green-bg)"><td>進場</td><td>股價回測至 $314 以下（Bollinger 中軌）且 Q1 2026 GCP +40% 以上</td><td>建倉至目標倉位 50%</td></tr>
+<tr><td>加碼</td><td>H1 確認（GCP +30% + OI margin 25%+）+ H2 確認（Search +12%+）</td><td>加碼至目標倉位 100%</td></tr>
+<tr style="background:var(--yellow-bg)"><td>減碼</td><td>R1 或 R2 觸發（Search YoY &lt; 10% 連 2 季 或 2026 Capex 實際 &gt; $190B）</td><td>減至 25%</td></tr>
+<tr style="background:var(--red-bg)"><td>撤退</td><td>R3 觸發（Chrome 剝離命令）或 FCF Margin &lt; 12% 連 2 季</td><td>清倉</td></tr>
+</table>
+</section>
+
+<!-- §6 -->
+<section id="s6">
+<h2>§6 即時財報情報（最新為 Q4 FY2025，2026-02-04 發布）</h2>
+
+<h3>① 最新一季財報關鍵數字（Q4 2025）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td><span class="mono">$113.83B</span></td><td><span class="mono">$111.31B</span></td><td class="green pill">Beat</td><td>+18.5%</td></tr>
+<tr><td>EPS（GAAP）</td><td><span class="mono">$2.81</span></td><td><span class="mono">$2.60</span></td><td class="green pill">Beat</td><td>+30%</td></tr>
+<tr><td>Net Income</td><td><span class="mono">$34.5B</span></td><td>—</td><td class="green pill">+30%</td><td>—</td></tr>
+<tr><td>Google Cloud</td><td><span class="mono">$17.7B</span>（OI $5.3B，margin 30.1%）</td><td><span class="mono">$15.5B</span></td><td class="green pill">Beat（+48% YoY）</td><td>Margin 從 17.5%</td></tr>
+<tr><td>Google Services（Search）</td><td>+14%（Search +17%）</td><td>+12%</td><td class="green pill">Beat</td><td>+14%</td></tr>
+<tr><td>YouTube Ads</td><td><span class="mono">$11.4B</span></td><td><span class="mono">$11.0B</span></td><td class="green pill">Beat</td><td>+9%</td></tr>
+<tr><td>Capex</td><td><span class="mono">$32.3B</span>（Q4 單季）/ FY $91.4B</td><td>FY ~$85B</td><td class="yellow pill">Miss（+74% YoY）</td><td>— </td></tr>
+<tr><td>FCF（FY2025）</td><td><span class="mono">$73.3B</span>（Margin 18.2%）</td><td>—</td><td class="yellow pill">FCF +0.7% YoY</td><td>—</td></tr>
+</table>
+
+<h3>本季財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Cloud 30%+ 成長 + OI margin 25%+）</td><td><strong class="green pill">＋強化</strong></td><td>Q4 +48%、OI margin 30.1%、backlog $243B（+55% QoQ）</td></tr>
+<tr><td>H2（Search 營收 +10% YoY）</td><td><strong class="green pill">＋強化</strong></td><td>Search +17%、AI Overviews 提升 RPM</td></tr>
+<tr><td>H3（2026 Capex 守 $185B、FY27 FCF 回升）</td><td><strong class="yellow pill">－削弱</strong></td><td>2026 指引 $175-185B，較 FY2025 再翻倍；FCF Margin 從 20.8% → 18.2%</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：樂觀偏積極。Pichai 強調「AI infrastructure tailwind is structural, not cyclical」，Anat Ashkenazi（新 CFO）反覆強調 Cloud 營運槓桿已展現。</li>
+<li><strong>Forward Guidance</strong>：2026 Capex $175-185B 是最具爭議指引。管理層明確指出「demand signals outstrip supply」，暗示上緣風險。</li>
+<li><strong>刻意強調</strong>：「Gemini 2.5 Pro topping benchmarks」、「TPU demand」、「Cloud backlog duration」。</li>
+<li><strong>刻意迴避</strong>：未正面回答分析師對「Capex / Revenue 比率 24% 能撐多久」、以及「ChatGPT 對 Search 流量的具體影響」兩題。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：Cloud backlog 從 $155B → $243B 說明企業 AI 採用進入部署階段（non-backlog bookings）。</li>
+<li><strong>供給端</strong>：管理層明言 GPU / TPU 供不應求，2026 Capex 即使翻倍仍「demand &gt; supply」。</li>
+<li><strong>競爭格局</strong>：GCP 單季 +48% vs AWS +17%、Azure +25-30% → GCP 絕對美元新增 $5.7B 季增近平 AWS $7B。</li>
+<li><strong>總體</strong>：廣告端未見宏觀逆風（Search +17%、YouTube +9%）→ 與 META、Pinterest 等同業一致，反駁「廣告市場放緩」敘事。</li>
+<li><strong>對同業推論</strong>：NVDA / AVGO 2026 收益已由 hyperscaler Capex $500B+ 擔保（AMZN $125B + MSFT $100B + GOOGL $180B + META $80B）。</li>
+</ul>
+
+<h3>QC-27 Revenue vs OI divergence（v12 新增）</h3>
+<table>
+<tr><th>業務段</th><th>Rev YoY</th><th>OI YoY</th><th>Divergence</th><th>判斷</th></tr>
+<tr><td>Google Cloud</td><td>+48%</td><td>+154%（$5.3B vs $2.1B）</td><td><span class="mono">−106%</span></td><td class="green pill">OI 成長快於 Revenue，margin 擴張（不警示）</td></tr>
+<tr><td>Google Services</td><td>+14%</td><td>+23%（估算）</td><td><span class="mono">−9%</span></td><td class="green pill">margin 擴張</td></tr>
+</table>
+<p>✅ GOOGL 無 AMZN AWS 型 margin 壓縮警示（AMZN Q4 2025 AWS Rev +24% vs OI +17% = 7pp divergence）。GCP 反向呈現 margin 擴張，為 v12 最關鍵利多。</p>
+
+<h3>QC-28 絕對 vs 相對成長對照（v12 新增，v11 未充分突出）</h3>
+<table>
+<tr><th>項目</th><th>GOOGL（GCP）</th><th>AMZN（AWS）</th><th>MSFT（Azure）</th></tr>
+<tr><td>Revenue YoY</td><td>+48%</td><td>+17%</td><td>~+30%</td></tr>
+<tr><td>絕對美元新增（季）</td><td><span class="mono">~$5.7B</span></td><td><span class="mono">~$4.5B</span></td><td><span class="mono">~$5.2B</span></td></tr>
+<tr><td>市場份額變化</td><td>+1-2pp</td><td>−1pp</td><td>+1pp</td></tr>
+</table>
+<p>⚠️ <strong>警示反向觸發（對 AWS 而言）</strong>：GCP 絕對美元新增已反超 AWS，這是 AMZN 的規模優勢衰減訊號，但對 GOOGL 是 <strong>順風</strong>。護城河評分無需下調；反而 GCP 競爭力證明已切入 hyperscaler 頂端。</p>
+</section>
+
+<!-- §7 -->
+<section id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR（FY+1 ~ FY+3）</h3>
+<table>
+<tr><th>期間</th><th>EPS</th><th>來源</th><th>n</th></tr>
+<tr><td>FY2025 實際（基期）</td><td><span class="mono">$10.81</span>（GAAP）</td><td>yfinance income_stmt</td><td>—</td></tr>
+<tr><td>FY+1E（2026）</td><td><span class="mono">$11.53</span></td><td>yfinance 0y avg</td><td>56</td></tr>
+<tr><td>FY+2E（2027）</td><td><span class="mono">$13.35</span></td><td>yfinance +1y avg</td><td>55</td></tr>
+<tr><td>FY+3E（2028）</td><td><span class="mono">$16.53</span>（§8 邏輯推導）</td><td>§8A 假設 FY+3 成長 24%：Capex 高峰過後 FCF 彈升 + Cloud 規模經濟）</td><td>—</td></tr>
+<tr><td>GAAP CAGR（3Y）</td><td><span class="mono">15.2%</span></td><td>$16.53/$10.81)^(1/3) − 1</td><td>—</td></tr>
+</table>
+<p class="note">FY+3 推導邏輯：§8A Runway 10+ 年 + §8B 定價驅動為主（Cloud 規模經濟 + Search RPM 持續改善）+ §8D ROIC 31% &gt; 再投資率 40% → 內生成長 ~12%。外加 Capex 見頂後 FCF 彈升提供 +10%p 動能 → 合計 24%（此為 Capex 拐點情境；若無拐點 FY+3 &lt; 20%）。</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin</td><td>&gt; 15%</td><td class="green pill">✅</td><td>當前 18.2%，3Y 趨勢 ↓（20.8%→18.2%）受 Capex 拖累</td></tr>
+<tr><td>FCF Margin 5Y 均值</td><td>&gt; 15%</td><td class="green pill">✅</td><td>5Y 均值 ~21%；最低谷 18.2%（FY2025）</td></tr>
+<tr><td>ROIC</td><td>&gt; 15% 且 &gt; WACC</td><td class="green pill">✅</td><td>當前 ~28-30%，WACC ~8.5%，超額 ~20pp</td></tr>
+<tr><td>ROIC 穩定性（10 年）</td><td>≥ 70% 年份 &gt; 15%</td><td class="green pill">✅</td><td>10/10 年均 &gt; 15%，10Y 均 29.4%</td></tr>
+<tr><td>毛利率定價能力</td><td>≥ 70% 年份改善</td><td class="green pill">✅</td><td>10 年中 8 年改善；當前 59.6% vs 10 年前 ~55%</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 10%</td><td class="red pill">❌</td><td>當前 22.7%（FY2025）；FY2026 指引 37-39%</td></tr>
+<tr><td>EPS CAGR 3Y</td><td>&gt; 20%</td><td class="yellow pill">⚠️</td><td>15.2%（接近但未達）</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td class="green pill">✅</td><td>1.68</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7、Cash/Rev 10-50%</td><td class="green pill">✅</td><td>D/E 0.14；Cash $127B / Rev $403B = 31%</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td class="green pill">是</td><td>Cash $127B &gt; Debt $67B</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分</td><td class="green pill">✅</td><td>9/10</td></tr>
+</table>
+<p><strong>Munger 三維護城河快速評級</strong>：🟡 兩項達標（ROIC 穩定 + 毛利率定價 ✅；資本密集度 ❌ 因 AI Capex 暴增）。最大財務弱點：Capex / Revenue 已達 23%，FY2026 指引 38%，為歷史最高；這是成長期再投資特徵，但非 Munger 眼中「不用投資就賺錢」的卓越企業。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p>觸發檢查：Fwd PE（FY+2 口徑）5Y 分位 63%（非 &lt; 25%），P/FCF 當前 ~56x（歷史高位非低位）→ <strong>未觸發</strong>。估值偏中性略偏上，四問免填。</p>
+</section>
+
+<!-- §8 -->
+<section id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>~$2.0T（廣告 $700B + 雲端 $800B + YouTube 串流 $500B）</td><td>多條獨立 TAM</td></tr>
+<tr><td>估計可達 TAM</td><td>~$3.5T（10 年）</td><td>AI 推理新增 TAM + 企業 AI 導入滲透</td></tr>
+<tr><td>當前市佔</td><td>Search 80%、Cloud 12%、YouTube 35%</td><td>Cloud 滲透率仍低，跑道最長</td></tr>
+<tr><td>30% 滲透率時點</td><td>Cloud 2032-2035</td><td>Cloud 從 $71B ARR 至 $300B+ 需 8-10 年</td></tr>
+<tr><td><strong>Runway</strong></td><td><strong>10+ 年</strong></td><td>Cloud + Gemini 主導</td></tr>
+</table>
+
+<h3>B｜成長品質</h3>
+<p><strong>有機 vs 無機</strong>：有機 95%+（近 3 年無重大併購，Wiz $32B cyber 併購 2024 年已整合完畢不計入有機）。</p>
+<p><strong>定價 vs 量</strong>：混合。Search RPM 穩中有升（定價驅動）；Cloud 量驅動為主（GPU/TPU 售位）；YouTube Shorts + Subs 量驅動。</p>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型</strong>：Cloud 規模帶來 GPU/TPU 採購議價力與自研晶片（TPU、Axion）經濟性，Q4 OI margin 30.1% 證明此機制。Search AI Overviews 提升每次查詢的 LTV。YouTube Shorts + 長影片廣告閉環。</p>
+
+<h3>D｜ROIC 與 FCF 可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>~28%</td><td>~30%</td><td>→（略收窄，Capex 再投資）</td><td class="green pill">✅</td></tr>
+<tr><td>ROIC − WACC</td><td>~20pp</td><td>~22pp</td><td>→</td><td class="green pill">✅</td></tr>
+<tr><td>FCF Margin</td><td>18.2%</td><td>25% (FY2022)</td><td>↓</td><td class="yellow pill">⚠️</td></tr>
+<tr><td>FCF / NI</td><td>0.55</td><td>0.82</td><td>↓</td><td class="yellow pill">⚠️（Capex 解釋）</td></tr>
+<tr><td>Reinvestment Rate</td><td>~55%（Capex+R&D / OCF）</td><td>~35%</td><td>↑</td><td class="green pill">高但 ROIC 匹配</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>特徵</th><th>合理 Fwd PE</th><th>跌幅</th></tr>
+<tr><td>3 年後成長率 15%</td><td>當前基準</td><td>25x</td><td>~0%</td></tr>
+<tr><td>3 年後成長率 10%</td><td>Cloud 放緩 + Search 持平</td><td>20x</td><td>−20%</td></tr>
+<tr><td>3 年後成長率 5%</td><td>Search 衰退 + Cloud 失速</td><td>15x</td><td>−40%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號</th><th>數據</th><th>亮燈</th></tr>
+<tr><td>Gross Margin 連 2 季 YoY 下滑</td><td>持續改善（+1.4pp）</td><td>⬜</td></tr>
+<tr><td>核心市場市佔率縮減</td><td>Search 80% 穩定；Cloud +1-2pp；Gemini +15.8pp</td><td>⬜</td></tr>
+<tr><td>定價能力測試</td><td>Search RPM 上升</td><td>⬜</td></tr>
+<tr><td>EPS CAGR vs Rev CAGR 差距</td><td>EPS 15.2% vs Rev 17% → 差 −2pp（正常）</td><td>⬜</td></tr>
+<tr><td>FCF / NI &lt; 0.75 連 2 年</td><td>0.55（FY25）&lt; 0.75 —但 Capex 解釋</td><td>🟡（觀察，非結構性）</td></tr>
+<tr><td>SBC / Rev &gt; 5%</td><td>~5.5%（微升）</td><td>⬜</td></tr>
+<tr><td>TAM 萎縮</td><td>擴張中</td><td>⬜</td></tr>
+<tr><td>產業倍數系統性下移</td><td>Mag-7 整體 re-rate 上修</td><td>⬜</td></tr>
+<tr><td>Maintenance Capex / FCF &gt; 60%</td><td>難以拆分，保守 40-50%</td><td>⬜</td></tr>
+<tr><td>停止投資收入 3 年下滑</td><td>Search/YouTube 即使不投也有現金流</td><td>⬜</td></tr>
+</table>
+<p>亮燈數：0（FCF/NI 視為觀察而非紅燈，因 Capex 可解釋）→ <strong>🟢 低風險</strong>。</p>
+
+<p><strong>長期成長性綜合評級：<span class="green pill">🟢 高確信長期成長</span></strong></p>
+
+<h3>F｜AI 取代風險評級（GOOGL 為經典 🟡 案例）</h3>
+<table>
+<tr><th>維度</th><th>說明</th></tr>
+<tr><td>核心業務 AI 曝險</td><td>Search（占總營收 55.7%）部分被 AI chatbot 侵蝕（5-15%），但 AI Overviews 反向提升 RPM；Cloud（12%）直接受益於 AI 訓練推理需求；YouTube（14.9%）中性</td></tr>
+<tr><td>公司 AI 策略</td><td>自建（Gemini 2.5、TPU、Waymo、Isomorphic），Gemini 已在 chatbot 市佔 21.5%（從 5.7%）</td></tr>
+<tr><td>近 2 年 AI 營收證據</td><td>GCP 2025 全年 +32% 達 $58.7B（AI 原生工作負載為主要驅動）；backlog $243B 中 AI infrastructure 佔多數</td></tr>
+<tr><td><strong>評級</strong></td><td><strong class="yellow pill">🟡 中等不確定</strong>（一部分受益一部分侵蝕，但 Cloud 絕對美元新增已反超 AWS）</td></tr>
+<tr><td>評級分數</td><td><span class="mono">6 分</span>（對應 §13.5 AI 調整 × 0.90）</td></tr>
+</table>
+</section>
+
+<!-- §9 -->
+<section id="s9">
+<h2>§9 護城河分析</h2>
+<p><strong>評分：9 / 10</strong>（以全球標準；S 級 10 分保留給 TSMC、NVDA 這類不可替代的幾何級數壟斷者）。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：Search 查詢越多→結果越好→用戶越多（自強化 25 年）。YouTube 創作者-觀眾雙邊效應。Android 3B 裝置裝機。</li>
+<li><strong>無形資產</strong>：Google 品牌 = 「搜尋」動詞。專利與 AI 論文堆疊（DeepMind、Transformer 原創團隊多人仍在）。Chrome 65% 瀏覽器份額、Android 70% 手機 OS 份額。</li>
+<li><strong>轉換成本</strong>：Gmail（30 億用戶，電郵是身分認證）、Google Drive、Maps；對企業 Cloud 客戶，資料重力與合約鎖定。</li>
+<li><strong>規模優勢</strong>：自研 TPU（第 7 代 Ironwood）、資料中心規模、自有海底電纜，邊際成本逼近零。Capex $180B / 年相當於給新進者設下跨越門檻。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>資本充足如 MSFT/AMZN 為何仍無法跨越？Search：沒有另一個品類動詞，切換成本高；Search 生態系（廣告 tech stack、SEO 供應鏈）以 Google 為中心，不是對手能複製。Cloud：MSFT/AMZN 可以分食但取代不了，GCP 切入最前沿 AI 推理（Gemini API、Vertex AI）已是第三極。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>OpenAI / ChatGPT</td><td>AI chatbot 64.5%（Similarweb）</td><td>GOOGL 追趕</td><td>🔴 生態攻擊（Apple iOS、Windows Copilot 整合）</td><td>切走 Search 15-20% 資訊查詢</td></tr>
+<tr><td>Perplexity</td><td>&lt; 5%（AI chatbot）</td><td>+370% YoY</td><td>🟡 點對點（研究型查詢）</td><td>切走 long-tail Search 5%</td></tr>
+<tr><td>Microsoft Bing + Copilot</td><td>Search ~4%</td><td>→</td><td>🟡 點對點</td><td>穩定</td></tr>
+<tr><td>AWS / Azure（Cloud）</td><td>31% / 24%</td><td>Azure +1pp；AWS −1pp</td><td>🔴 生態攻擊（AWS Nova、Azure OpenAI 綁定）</td><td>GCP 正在追趕</td></tr>
+</table>
+
+<h3>QC-23 競爭威脅 3 級分類</h3>
+<table>
+<tr><th>等級</th><th>威脅</th><th>影響</th></tr>
+<tr><td>🔴 生態攻擊</td><td>OpenAI + Apple Intelligence 整合；MSFT Azure OpenAI exclusive</td><td>本應 −1 分，但 Gemini 21.5% 份額 + Apple Intelligence 也使用 Gemini 部分後端 → 抵消為 0 分影響</td></tr>
+<tr><td>🟡 點對點</td><td>Perplexity、AWS Nova</td><td>護城河不扣分</td></tr>
+<tr><td>⛔ 架構替代</td><td>無</td><td>—</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>穩定（核心 Search）/ 加深（Cloud、YouTube）</strong>。24 個月內最可能瓦解護城河的變化：① Apple 終止 $26B 預設協議（🔴 生態） → 緩解：Gemini 已成為 Apple Intelligence 後端之一；② 美國 DOJ D.C. 巡迴強制 Chrome 剝離（⛔ 架構替代風險 14-18 個月後才會定案）。</p>
+</section>
+
+<!-- §10 -->
+<section id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY2023</th><th>FY2024</th><th>FY2025</th><th>對手（MSFT / META / AMZN）</th></tr>
+<tr><td>Revenue</td><td>$307.4B</td><td>$350.0B</td><td>$402.8B</td><td>MSFT ~$275B / META ~$175B / AMZN ~$660B</td></tr>
+<tr><td>OI Margin</td><td>27.4%</td><td>32.1%</td><td>32.0%</td><td>MSFT 45% / META 42% / AMZN 11%</td></tr>
+<tr><td>FCF Margin</td><td>22.6%</td><td>20.8%</td><td>18.2%</td><td>MSFT ~25% / META ~25% / AMZN ~8%</td></tr>
+<tr><td>ROIC</td><td>~27%</td><td>~30%</td><td>~28%</td><td>MSFT 23% / META 23% / AMZN 12%</td></tr>
+<tr><td>SBC / Revenue</td><td>~5.5%</td><td>~5.3%</td><td>~5.5%</td><td>MSFT 4% / META 10% / AMZN 3%</td></tr>
+<tr><td>ROE</td><td>26%</td><td>31%</td><td>32%</td><td>MSFT 36% / META 34% / AMZN 17%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：OCF/NI = 1.25（FY2025），高品質。</li>
+<li><strong>AR vs Revenue 成長</strong>：AR ~+15% vs Rev +17%，無異常膨脹。</li>
+<li><strong>存貨</strong>：Alphabet 不涉實體庫存（YouTube Nest/Pixel 硬體占比 &lt; 2%）。</li>
+<li><strong>FCF 轉換率</strong>：下滑至 55%，單純因 Capex 暴增，屬成長期再投資。</li>
+</ul>
+
+<h3>QC-26 Margin YoY 結構性測試</h3>
+<table>
+<tr><th>項目</th><th>結果</th></tr>
+<tr><td>GOOGL 毛利率 YoY 變化</td><td>59.6% vs 58.2% = +1.4pp（擴張）</td></tr>
+<tr><td>同業同期趨勢</td><td>MSFT 持平、META +2pp、AMZN +1pp（擴張為主流）</td></tr>
+<tr><td><strong>判斷</strong></td><td class="green pill">產業同步擴張，GOOGL 在佇列中段，無結構性質變警示</td></tr>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>近 3 年回購總額 vs FCF</td><td>回購 ~$180B / FCF ~$215B = 84%</td><td>高但 FCF 覆蓋</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>~11%（vs 含回購 ~24%）</td><td>差 13pp，有回購依賴</td></tr>
+<tr><td>回購均價 vs 當前</td><td>均價 ~$150 / 當前 $342</td><td>回購均價明顯低於當前 → 資本配置優秀</td></tr>
+<tr><td>Revenue CAGR 同期</td><td>+14.5% / 年</td><td>EPS CAGR 高於 Rev 主因回購 + margin 擴張</td></tr>
+</table>
+</section>
+
+<!-- §11 -->
+<section id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<p>全球數位廣告 $700B（YoY +8%）| Cloud Infra $800B（YoY +22%）| 串流媒體 $500B+（YoY +10%）。Alphabet 合計可及 TAM ≈ $2T，CAGR 加權 ~12%。</p>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游</strong>：GPU 由 NVDA 支配（弱）；但自研 TPU + Axion 降依賴；資料中心建造與電網需求大（尚可）。</li>
+<li><strong>對下游</strong>：廣告主前 200 大 &lt; 30% 集中度，極度分散；Cloud 客戶包含所有財富 500 企業，前 10 大 &lt; 20%。</li>
+<li><strong>地理曝險</strong>：美國 47% 營收、歐洲 28%、亞太 17%、其他 8%。生產地多國，台海與 TPU 代工是單一最集中風險點。</li>
+</ul>
+
+<h3>營收組成（FY2025）</h3>
+<table>
+<tr><th>分部</th><th>營收（$B）</th><th>佔比</th><th>成長性</th></tr>
+<tr><td>Google Search &amp; other</td><td>$224.5</td><td>55.7%</td><td>+17% YoY（遠超預期）</td></tr>
+<tr><td>YouTube Ads</td><td>$39.9</td><td>9.9%</td><td>+12%</td></tr>
+<tr><td>Google Network</td><td>$30.2</td><td>7.5%</td><td>−5%（結構性下滑）</td></tr>
+<tr><td>Subscriptions / Platforms / Devices</td><td>$49.5</td><td>12.3%</td><td>+20%（YouTube Premium、Pixel）</td></tr>
+<tr><td>Google Cloud</td><td>$58.7</td><td>14.6%</td><td>+48% YoY（加速）</td></tr>
+<tr><td>Other Bets</td><td>$2.0</td><td>0.5%</td><td>Waymo 商業化中</td></tr>
+<tr><td><strong>總計</strong></td><td><strong>$402.8B</strong></td><td>100%</td><td>+15.1%</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<ul>
+<li>Search RPM（每千次查詢營收）：持續改善（AI Overviews 增加 CTR + CPC）</li>
+<li>Cloud ARR / 企業客戶 $1M+ 合約數：+50%+ YoY（管理層口徑）</li>
+<li>YouTube CPM（每千人觸及成本）：+9%（強勢品牌廣告）</li>
+</ul>
+</section>
+
+<!-- §12 -->
+<section id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>機構持有 80.9%（yfinance）</li>
+<li>內部人持有 0.58%（含創辦人 Brin/Page 透過 Class B 仍控制 ~51% 投票權的 dual-class）</li>
+<li>創辦人雖非執行職，但 Class B / C 超級投票權結構保障管理層長期主義決策（亦為治理風險源）</li>
+</ul>
+
+<h3>資本配置軌跡</h3>
+<ul>
+<li>FY2025 回購 ~$62B、分紅 ~$7B（年度股息率 0.25%）</li>
+<li>Capex $91.4B（2025）→ $175-185B（2026 指引）</li>
+<li>Wiz 併購 $32B（2024 完成）</li>
+<li>說法行動一致性：管理層 2023 起即強調 AI infrastructure 為「once in a generation opportunity」，Capex 執行配合</li>
+</ul>
+
+<h3>SBC 評估</h3>
+<p>FY2025 SBC ~$22B（Rev 5.5%），與 MSFT 類似，低於 META 10%；稀釋程度由回購緩衝。</p>
+
+<h3>QC-19 近 12 個月重大事件</h3>
+<ul>
+<li>🟢 Wiz $32B 併購 2024 完成，整合順利（已合併至 Cloud 安全產品）</li>
+<li>🟡 DOJ 反壟斷案 2025-09 初判，2026-02 DOJ 上訴，2026H2-2027H1 D.C. 巡迴審理</li>
+<li>🟢 無集體訴訟 / SEC 調查 / CFO 異動</li>
+<li>🟡 SpaceX 投資曝險 Bloomberg 披露 ~$100B 帳面潛在收益（間接加分）</li>
+<li>2026 Capex 指引上修（治理層面偏積極）</li>
+</ul>
+</section>
+
+<!-- §13 -->
+<section id="s13">
+<h2>§13 估值診斷</h2>
+
+<h3>13.0 估值體系診斷</h3>
+<table>
+<tr><th>邏輯</th><th>當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型（P/E）</td><td>✅ 主流</td><td>穩定 FCF + 加速 EPS</td></tr>
+<tr><td>成長型（PEG、EV/Rev）</td><td>輔助</td><td>Cloud 增速驅動部分估值</td></tr>
+<tr><td>現金流型（P/FCF）</td><td>降權</td><td>Capex 使 FCF 噪音大</td></tr>
+</table>
+<p><strong>當前主流</strong>：Fwd P/E + PEG 複合。</p>
+<p><strong>估值尺被換掉的信號</strong>：若 Cloud 2027 超越 Search 成為第一成長引擎（不太可能但有機會），市場可能切換至 ARR × 倍數估值邏輯，利多。</p>
+<p><strong>結論</strong>：<span class="green pill">🟢 估值邏輯穩定</span></p>
+
+<h3>13.1 歷史估值分位（5 年）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Trailing P/E</td><td>31.6x</td><td>17x</td><td>25x</td><td>35x</td><td>81%</td></tr>
+<tr><td>Fwd P/E（FY+1）</td><td>29.6x</td><td>18x</td><td>22x</td><td>30x</td><td>97%</td></tr>
+<tr><td>Fwd P/E（FY+2）</td><td>25.6x</td><td>16x</td><td>20x</td><td>28x</td><td>80%</td></tr>
+<tr><td>EV/EBITDA</td><td>27.1x</td><td>14x</td><td>18x</td><td>29x</td><td>87%</td></tr>
+<tr><td>P/FCF</td><td>56x</td><td>20x</td><td>28x</td><td>60x</td><td>90%</td></tr>
+</table>
+<p class="note">（5Y 區間為搜尋 + MacroTrends 估算，分位 = (當前 − 低)/(高 − 低) × 100%）</p>
+<p>解讀：① 當前情緒「過熱」（多指標 &gt; 80%）；② 上次處於此分位是 2021 年末全球科技股熱潮，與現在的差異：當時 FCF Margin 30%+ 無 Capex 壓力，現在 Capex 暴增但 AI 敘事支撐倍數；③ 推動分位的主要因素：AI 敘事（權重 ~50%）+ FY2026 EPS 上修（30%）+ SpaceX 增值（10%）+ 利率環境（10%）。</p>
+
+<h3>13.2 PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Fwd P/E（FY+2）</td><td>25.6x</td></tr>
+<tr><td>3Y Non-GAAP EPS CAGR</td><td>15.2%</td></tr>
+<tr><td>PEG（3Y）</td><td>1.68（合理偏貴）</td></tr>
+<tr><td>5Y EPS CAGR（Runway 遞減）</td><td>~12%</td></tr>
+<tr><td>PEG（5Y）</td><td>2.13（偏貴）</td></tr>
+<tr><td>3Y vs 5Y PEG 差距</td><td>0.45（警惕，近期成長可持續性需驗證）</td></tr>
+</table>
+
+<h3>13.3 Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>當前市值</td><td>$4.13T</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td>$73.3B</td></tr>
+<tr><td>WACC</td><td>8.5%（10Y UST 4.5% + Beta 1.13 × ERP 4%）</td></tr>
+<tr><td>永續成長</td><td>3%</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+<tr><td><strong>反推隱含 10Y FCF CAGR</strong></td><td><strong>~14%</strong></td></tr>
+</table>
+<p>對照：過去 3Y FCF CAGR 7%（低於隱含）| 分析師 EPS CAGR 15.2%（一致）| 同業最快 META FCF CAGR 22%（GOOGL 隱含 14% 較保守）</p>
+<p><strong>判斷</strong>：<span class="yellow pill">🟡 隱含預期合理</span>（需 Capex 在 2026-27 見頂 + FCF 正常化）</p>
+
+<h3>QC-25 Beta 雙源驗證</h3>
+<table>
+<tr><th>來源</th><th>Beta</th></tr>
+<tr><td>yfinance</td><td>1.13</td></tr>
+<tr><td>TradingView NASDAQ</td><td>1.51</td></tr>
+<tr><td>GuruFocus</td><td>0.73</td></tr>
+<tr><td>差異</td><td>(1.51 − 1.13) / 1.13 = 34% &gt; 30%</td></tr>
+<tr><td>處理</td><td>採較高 1.51 保守 → WACC 變 9%，隱含 CAGR 略上修至 14.5%（仍合理區間）</td></tr>
+</table>
+
+<h3>13.4 同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>3Y EPS CAGR</th><th>ROIC</th></tr>
+<tr><td><strong>GOOGL</strong></td><td>$4.13T</td><td>25.6x (FY+2)</td><td>27.1x</td><td>1.68</td><td>18.2%</td><td>15.2%</td><td>28%</td></tr>
+<tr><td>MSFT</td><td>$3.8T</td><td>21x</td><td>~20x</td><td>1.50</td><td>25%</td><td>14%</td><td>23%</td></tr>
+<tr><td>META</td><td>$1.8T</td><td>22x</td><td>~15x</td><td>1.00</td><td>25%</td><td>22%</td><td>23%</td></tr>
+<tr><td>AMZN</td><td>$2.5T</td><td>34x</td><td>~18x</td><td>1.95</td><td>8%</td><td>17%</td><td>12%</td></tr>
+<tr><td>AAPL</td><td>$3.5T</td><td>28x</td><td>~21x</td><td>2.50</td><td>25%</td><td>11%</td><td>55%</td></tr>
+<tr><td><strong>Mag-5 中位</strong></td><td>—</td><td>25.6x</td><td>~20x</td><td>1.68</td><td>23%</td><td>15%</td><td>23%</td></tr>
+</table>
+<p>GOOGL Fwd PE 25.6x = Mag-5 中位，無顯著溢折價。溢折價邏輯：① 護城河 9/10 頂尖，支撐中位數以上；② FCF Margin 18.2% 低於中位 23%，拉低；③ 綜合平衡於中位。</p>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>GOOGL Fwd PE 25.6 vs 同業中位 25.6，溢價 0% → <strong>未觸發 QC-30</strong>（無需收斂情境分析）。</p>
+
+<h3>橫向風報比</h3>
+<table>
+<tr><th>問題</th><th>GOOGL</th><th>最強對手（MSFT）</th></tr>
+<tr><td>主假設全兌現上行最大</td><td>+40%（3Y）</td><td>+35%</td></tr>
+<tr><td>主假設部分落空跌幅最小</td><td>−30%</td><td>−25%</td></tr>
+<tr><td>綜合風報比</td><td>平</td><td>平</td></tr>
+</table>
+<p><strong>結論</strong>：🥈 此標的為次優選（與 MSFT 基本打平，略遜於 META 估值吸引力，但護城河廣度勝）</p>
+
+<h3>13.5 估值五角驗證</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系（13.0）</td><td>🟢 穩定</td><td>P/E + PEG 雙主軸</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🔴 過熱（80%+）</td><td>Mag-7 整體 re-rate</td></tr>
+<tr><td>PEG（13.2）</td><td>🟡 合理偏貴（1.68）</td><td>—</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 合理</td><td>隱含 14% CAGR 貼近共識 15%</td></tr>
+<tr><td>同業相對（13.4）</td><td>🟡 中位</td><td>Mag-5 中位</td></tr>
+</table>
+<p><strong>歷史分位降權規則</strong>：PEG 1.68 &gt; 1.0（不救援），但 §2 D 合理 PE 約 26x ≈ 當前 FY+2 25.6x → 歷史分位 🔴 不降權。</p>
+<p><strong>當前定價判斷</strong>：<span class="yellow pill">🟡 公允定價</span>（五指標加總中位）</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對合理 P/E 的影響</th></tr>
+<tr><td>① 護城河（§9）</td><td>9/10</td><td>+1x（溢價）</td></tr>
+<tr><td>② Runway（§8A）</td><td>10+ 年 🟢</td><td>+2x</td></tr>
+<tr><td>③ 成長品質</td><td>有機 + 定價/量混合</td><td>+0.5x</td></tr>
+<tr><td>④ 護城河連動</td><td>強化型</td><td>+1x</td></tr>
+<tr><td>⑤ ROIC 可維持</td><td>28%，超額 20pp</td><td>+1x</td></tr>
+<tr><td>⑥ 衰退信號</td><td>0 個</td><td>0</td></tr>
+<tr><td>⑦ 估值體系（§13.0）</td><td>穩定</td><td>0</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.5%</td><td>輕微壓縮</td></tr>
+<tr><td>產業基準</td><td>22x</td><td><strong>調整後：25x ~ 27.5x</strong></td></tr>
+</table>
+
+<h3>長期合理倍數（v9.0）</h3>
+<p>基準 25x（🟢 高確信）× 引擎 A 1.175（ROIC &gt; 20% 擴大）× AI 調整 0.90（🟡）= <strong>26.4x</strong></p>
+
+<h3>分析師目標價</h3>
+<ul>
+<li>共識中位：$367.62 / $355.02 / $366.94（三個來源）| 平均約 <strong>$363</strong></li>
+<li>高 $420 / 低 $190 / n = 44</li>
+<li>個人裁決：認同中位（+6-8% 上行 1 年）；偏差僅來自 Capex ROI 不確定性。</li>
+</ul>
+
+<h3>投資結論（§13.5 完整版）</h3>
+<ul>
+<li><strong>H1（Cloud 30%+）</strong>：＋ 強化（Q4 +48%）</li>
+<li><strong>H2（Search YoY +10%+）</strong>：＋ 強化（Q4 +17%）</li>
+<li><strong>H3（FY26 Capex 守線、FY27 FCF 回升）</strong>：－ 削弱（2026 指引 $175-185B，較 FY25 $91.4B 翻倍）</li>
+</ul>
+<p>這份財報讓隱含預期（DCF 14% CAGR）變得 <strong>更容易</strong> 兌現（Cloud +48% 超預期），但同時 Capex 翻倍使 FY2026 FCF 變得 <strong>更難</strong>，兩者抵銷偏正。</p>
+
+<h4>綜合訊號輸出（v12.0）</h4>
+<ul>
+<li>護城河等級：A → 調整後 A（veto 0 不過）</li>
+<li>估值燈：🟡（FY+2 分位 63% + PEG 1.68）</li>
+<li>Pure MA：✅ 強勢進場</li>
+<li>大盤：正常（SPX 未破 W104）</li>
+<li><strong>綜合訊號：A（核心候選）</strong></li>
+<li>中期參考 R:R：0.09x（資訊性，不主導）→ 壓力 1/4 通過</li>
+<li>訊號語意：A = 核心候選，進場訊號（PM 層標準核心 8-15%，但 DD 不給倉位 %）</li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q4 2025 財報 beat 幅度大（Rev / EPS 雙 beat），但 Capex 指引為最大爭議項。Q1 2026（4/29 公布）將是首個驗證點：若 Capex 季度 $40B+ 以上將警示；Search +15% 以上為樂觀訊號。</p>
+
+<h4>② 中期（1-2 年）</h4>
+<p>FY+1 / FY+2 EPS 驅動：Cloud 規模經濟（定價 + 量）+ Search 穩定 + YouTube 訂閱複利。能見度 <strong>高</strong>，理由：backlog $243B 已鎖定 2-3 年 Cloud 營收。</p>
+
+<h4>③ 長期（3-5 年，引用 §2 I）</h4>
+<p>成長跑道 10+ 年 / 護城河穩定加深 / 長期持有信心：<strong>高</strong></p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期 Bear Case $187（−45%）</li>
+<li>中期 Bear Case $216（−37%）</li>
+<li>W52 Low $146.10（參考，極端情境）</li>
+<li>若 FY+1 EPS 下修 10% → 短期合理目標 $274，當前 R:R 轉為明顯負</li>
+</ul>
+</section>
+
+<!-- 假設驗證對照（v11 vs v12） -->
+<section id="hypothesis-delta">
+<h2>假設驗證對照（v11 → v12）</h2>
+<table>
+<tr><th>項目</th><th>上次狀態（v11，2026-04-15）</th><th>本次狀態（v12，2026-04-18）</th><th>邊際變化</th></tr>
+<tr><td>H1 Cloud</td><td>維持 25%+ YoY 3 年以上達 $120B+</td><td>30%+ YoY 2 年 + OI margin 25%+（上修門檻）</td><td><strong>強化</strong>（Q4 +48%、OI margin 30% 超預期，門檻自然上修）</td></tr>
+<tr><td>H2 Search</td><td>維持 85%+ 市佔 + AI Overviews 提升 RPM</td><td>Search 營收 YoY 10%+（改為更可驗證口徑）</td><td><strong>口徑修正</strong>（實證 +17% 強化，但 v12 改為以「營收 YoY」為主軸，市佔為輔）</td></tr>
+<tr><td>H3 Capex ROI</td><td>FY27-28 FCF Margin 回升至 20%+</td><td>FY27 起回升至 18%+（現實修正）</td><td><strong>削弱</strong>（2026 指引 $175-185B 較 FY25 翻倍，20%+ 難達，18%+ 更現實）</td></tr>
+<tr><td>R1 AI 搜尋取代</td><td>未觸發（Search +17% 反證）</td><td>未觸發 + Gemini 份額 21.5% 反擊</td><td>削弱（風險下降）</td></tr>
+<tr><td>R2 Capex 失控</td><td>未觸發</td><td>🟡 觀察（2026 指引 $175-185B 已接近警戒上緣 $190B）</td><td><strong>強化</strong>（風險上升，進入觀察區）</td></tr>
+<tr><td>R3 DOJ 拆分</td><td>未觸發（2025-09 判決未強制拆分）</td><td>仍未觸發（2026-02 DOJ 上訴，巡迴 2026H2-2027H1 審理）</td><td>不變</td></tr>
+<tr><td><strong>裁決變化</strong></td><td>v11 未顯式列 A+/A/B/C/X；中期 R:R 1.65x、短期 1.10x（觀望偏進場）</td><td>v12 final_signal = <strong>A</strong>（核心候選）</td><td>訊號等級實質相近（v11「觀望偏進場」≈ v12 「A」）；3 個關鍵新事實：① Cloud 絕對美元新增已追近 AWS（v12 QC-28）；② GCP OI margin 大跳（17.5% → 30.1%，v12 QC-27 反向利多）；③ 漂移 +11% 入場窗口 QC-22 觸發</td></tr>
+</table>
+</section>
+
+<!-- 版本修訂紀錄 -->
+<section id="version-log">
+<h2>版本修訂紀錄</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>主要變更</th></tr>
+<tr><td>v10.0</td><td>2026-04-10</td><td>初版</td></tr>
+<tr><td>v10.x</td><td>2026-04-11 ~ 04-13</td><td>調整品質分、Pure MA 引入</td></tr>
+<tr><td>v11.0</td><td>2026-04-15</td><td>加入 QC-22~26 規則；R:R 雙時距</td></tr>
+<tr><td><strong>v12.0</strong></td><td><strong>2026-04-18</strong></td><td>① 分析師/基金經理人分工：DD 改輸出綜合訊號燈（A+/A/B/C/X），不再給倉位 %｜② §2 H 新格式｜③ QC-27 Revenue vs OI divergence 新增（GOOGL 無警示，GCP 反向利多）｜④ QC-28 絕對 vs 相對成長對照（GCP 絕對新增反超 AWS）｜⑤ QC-29 R:R 壓力測試 4 情境（本 DD 通過 1/4）｜⑥ QC-30 同業溢價收斂壓測（未觸發）</td></tr>
+</table>
+</section>
+
+</main>
+
+<button id="print-btn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
