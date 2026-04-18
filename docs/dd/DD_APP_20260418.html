@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="dd-schema-version" content="v12.0">
+<title>AppLovin (APP) 深度研究 DD｜v12.0｜2026-04-18</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif; background: #F8FAFC; color: #1F2937; margin: 0; padding: 0; line-height: 1.7; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 28px 80px; }
+  header.topbar { position: sticky; top: 0; z-index: 50; background: #1E3A5F; color: #F8FAFC; padding: 12px 28px; font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 3px solid #3B82F6; }
+  header.topbar .item { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.4px; }
+  h1 { font-size: 28px; color: #1E3A5F; margin: 20px 0 8px; padding-bottom: 12px; border-bottom: 2px solid #E2E8F0; }
+  h2 { font-size: 22px; color: #F8FAFC; background: #1E3A5F; padding: 10px 16px; margin: 36px 0 18px; border-left: 4px solid #3B82F6; }
+  h3 { font-size: 17px; color: #1E3A5F; margin: 24px 0 10px; font-weight: 700; }
+  h4 { font-size: 15px; color: #334155; margin: 18px 0 8px; font-weight: 700; }
+  p, li { font-size: 14.5px; color: #1F2937; }
+  code, .mono, table td, table th { font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; background: #FFFFFF; font-size: 13.5px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  thead th { background: #1E3A5F; color: #F8FAFC; padding: 10px 12px; text-align: left; font-weight: 500; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+  tbody tr:nth-child(even) { background: #F1F5F9; }
+  tbody tr:hover { background: #E0E7FF; }
+  .pass { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+  .fail { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+  .warn { background: #FEF9C3; color: #92400E; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+  .info { background: #EFF6FF; color: #1E40AF; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+  .trap-alert { background: #FFF0E6; border-left: 4px solid #F97316; padding: 14px 18px; margin: 16px 0; }
+  .trap-alert h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 14px 18px; margin: 14px 0; }
+  .hypothesis-box h3 { color: #1E3A5F; margin-top: 0; }
+  .hypothesis-box ul { padding-left: 22px; margin: 8px 0; }
+  .hypothesis-box li { margin: 8px 0; }
+  .debate-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0; }
+  .debate-card { padding: 14px 16px; border-radius: 2px; font-size: 13px; }
+  .bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .verdict-box { background: #FFFBEB; border-left: 4px solid #D97706; padding: 14px 18px; margin: 14px 0; }
+  .verdict-box h4 { color: #92400E; margin-top: 0; }
+  .selfcheck { background: #F8FAFC; padding: 12px 18px; margin: 12px 0; border: 1px dashed #CBD5E1; font-size: 13px; }
+  .rr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0; }
+  .rr-card { padding: 14px 16px; font-size: 13.5px; }
+  .rr-short { background: #F0F9FF; border-left: 4px solid #0284C7; }
+  .rr-mid { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .rr-long { background: #ECFDF5; border-left: 4px solid #059669; }
+  .note { font-size: 12.5px; color: #475569; font-style: italic; margin: 8px 0; }
+  .dd-toc{background:#F1F5F9;border-left:4px solid #3B82F6;padding:14px 18px;margin-bottom:20px;border-radius:2px}
+  .dd-toc .toc-title{font-weight:700;color:#1E3A5F;font-size:14px;margin-bottom:8px}
+  .dd-toc .toc-list{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px}
+  .dd-toc .toc-list li a{display:inline-block;padding:4px 10px;background:#fff;color:#1E3A5F;text-decoration:none;font-size:12.5px;border:1px solid #cbd5e1;border-radius:2px;font-weight:500}
+  .dd-toc .toc-list li a:hover{background:#1E3A5F;color:#fff;border-color:#1E3A5F}
+  html{scroll-behavior:smooth}
+  h2[id^="sec-"]{scroll-margin-top:60px}
+  @media print { header.topbar{ display:none !important;} body{background:#FFFFFF;} h2{page-break-after:avoid;} table,.hypothesis-box,.trap-alert,.debate-card,.rr-card{page-break-inside:avoid;} }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="item"><strong>APP｜AppLovin Corporation</strong></span>
+  <span class="item">資料抓取：2026-04-18</span>
+  <span class="item">最新股價：$477.20 USD</span>
+  <span class="item">DD Schema v12.0</span>
+</header>
+
+<div class="container">
+<nav class="dd-toc">
+  <div class="toc-title">目錄（§1→§13 顯示順序）</div>
+  <ul class="toc-list">
+    <li><a href="#sec-1">§1 結論</a></li>
+    <li><a href="#sec-2">§2 訊號燈</a></li>
+    <li><a href="#sec-3">§3 三方辯論</a></li>
+    <li><a href="#sec-4">§4 序章</a></li>
+    <li><a href="#sec-5">§5 論點錨定</a></li>
+    <li><a href="#sec-6">§6 財報</a></li>
+    <li><a href="#sec-7">§7 門檻</a></li>
+    <li><a href="#sec-8">§8 成長</a></li>
+    <li><a href="#sec-9">§9 護城河</a></li>
+    <li><a href="#sec-10">§10 財務</a></li>
+    <li><a href="#sec-11">§11 產業</a></li>
+    <li><a href="#sec-12">§12 治理</a></li>
+    <li><a href="#sec-13">§13 估值</a></li>
+    <li><a href="#sec-meta">版本修訂 / 假設驗證</a></li>
+  </ul>
+</nav>
+
+<h1>AppLovin（APP）深度研究（DD v12.0）</h1>
+<p class="note">分析師：買側框架｜日期：2026-04-18｜最新財報：Q4 2025（2026-02-11 公告）｜資料：yfinance 採集 + 6 次 web_search 補漏｜本結論基於下列完整分析得出。</p>
+
+<!-- =========== §1 =========== -->
+<h2 id="sec-1">§1 投資結論（Executive Summary）</h2>
+
+<h3>結論 Dashboard（v12.0 綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信｜§9 護城河趨勢 加深（e-commerce/CTV 延伸）｜§8 F AI 風險 🟢 受益。廣告歸因 AI 化為結構性順風，TAM 從手遊擴至 non-gaming 5-10×。</li>
+<li><strong>品質 B 級（護城河 7/10）：</strong>AXON + 規模 + 資料飛輪強，但 SEC 調查 + 短報告使護城河定性降至「可驗證但未穩定」；體質 veto 5/5 全過（無降級）。</li>
+<li><strong>估值燈 🟢 便宜：</strong>Fwd PE FY+1 30.3x，5Y 分位 ~34%（30% 邊緣），PEG（3Y CAGR 38%）= 0.79。→ 品質等級 +1 級（B → A）。</li>
+<li><strong>Pure MA 狀態 🟢 最佳進場：</strong>現價 $477.20 < W52 $484.27｜> W104 $344.43｜W52 斜率 +6.2%、W104 +15.8%、W200 +15.3%（全正）；W250 因 APP 2021/4 IPO 僅 262 週，以 W200 替代（備注「替代指標」）。MA 部位乘數 ×1.2。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 現價 7,126 vs W104 6,092，未破線，無系統性風險。</li>
+<li><strong>參考 R:R：</strong>短期 0.63x / 中期 2.93x（Bear PE 20x × FY+1 EPS × 0.9 = $283.86；Fair PE 38x × FY+1 = $599.26）｜<strong>壓力測試通過率 1/4</strong>（Base 過，Stress A/B/C 皆 &lt; 2.0）→ QC-29 觸發訊號降一級。</li>
+<li><strong>綜合訊號：<span style="font-size:20px"><span class="warn">B</span></span></strong>（取自 §2 H）｜判定理由：品質 A（+1 gate）+ MA 🟢 + 大盤 ✅ → 本應 A+；因 trap 🟡 觀察期 + 壓力測試通過 1/4，QC-29 降一級至 B（衛星候選）。</li>
+<li><strong>長期持有信心：中</strong>（§2 I；跑道充裕但治理風險懸而未決）｜<strong>陷阱定性：🟡 觀察期</strong>（財務面健康，SEC 調查/集體訴訟未結）。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（本 DD 不含倉位建議）。</p>
+
+<div class="trap-alert">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答）</h4>
+<table>
+<tbody>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td>護城河侵蝕（次要：治理型——CEO 長期僅賣出；但 FCF/NI 1.18、毛利率 88%、margin 仍擴，盈餘品質面並無陷阱）</td></tr>
+<tr><td><strong>支持「非陷阱」最強論據</strong></td><td>FY2025 Rev $5.48B（+70% YoY）、FCF $3.94B（+90%）、FCF Margin 71.9%、毛利率 2024 83.8% → 2025 87.9% 持續擴張、Adj EBITDA margin 84.4%。四項陷阱初篩全部通過：毛利率↑、市佔擴、FCF/NI=1.18 > 1、共識 FY+1 EPS 近 90 天上修 8%（$14.57 → $15.77）。</td></tr>
+<tr><td><strong>支持「可能陷阱」最強反駁</strong></td><td>SEC 資料採集調查 2026/2/20 官方確認「仍 active and ongoing」；Rosen/Labaton/KTMC/Schall 四家律所已啟動 class period May 2023 – Feb 2025 的 securities fraud 集體訴訟；Muddy Waters/Fuzzy Panda/Culper 三家短報告指控 AXON「從 Meta/Snap/TikTok 逆向提取裝置 ID 做歸因盜竊」。若 SEC 發 Wells Notice 或裁罰強制修改歸因架構，AXON 2.0 核心 ROAS 優勢可能結構性受損。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否發生</strong></td><td>① SEC 動作：Wells Notice / 和解 / 訴訟（任一即 72 小時內重估 H1）；② e-commerce 客戶 week-over-week spend growth（目前 +50% onboarding；跌破 +15% 為 H2 預警）；③ Apple 封鎖 AXON 跨 app 資料流（iOS ATT+ 任一規則收緊）= H1 被推翻。</td></tr>
+</tbody>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>——基本面完全健康（Q4 2025 Beat + Q1 2026 guidance $1.745-1.775B，隱含 +18-20% YoY），但監管結局未定；SEC 若結案無重大處分 + e-commerce GA 按期 1H 2026 → 可升至 🟢；SEC 發 Wells / 裁罰 → 降至 🔴。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>SEC 資料採集調查進度</td><td>§5 R1 / §12</td><td>🔵 核心假設 H1 驗證信號</td><td>Wells Notice、和解協議、或行政裁罰任一披露 → 72 小時內重估 H1</td></tr>
+<tr><td>2</td><td>e-commerce 廣告主週 spend growth 與 self-serve GA 時點</td><td>§5 H2 / §8</td><td>🔵 長期成長領先信號</td><td>Week-over-week spend growth 跌破 +15%（目前 +50%）；或 self-serve GA 推遲至 2H 2026</td></tr>
+<tr><td>3</td><td>FY+2 EPS 共識 90 天修正方向</td><td>§13.1 / §6</td><td>短期估值 / 財報信號</td><td>連續 2 個月 > 3% 下修（目前 +0.3% 上修，$20.60 → $20.67）</td></tr>
+</tbody>
+</table>
+
+<!-- =========== §2 =========== -->
+<h2 id="sec-2">§2 四層訊號燈判定（產業風向 × 品質 × 估值 × Pure MA）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（e-com + CTV 延伸 AI 資料飛輪）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（AXON 2.0 AI engine 為核心競爭力）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話判斷</td><td>AI 驅動的 performance ad 歸因優勢進入 non-gaming S 曲線前半段（TAM 擴 5-10×），盲點 1 救援條件在「若需要時」可啟動。</td></tr>
+</tbody>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<thead><tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="pass">✅</span></td><td>2023 80.6% → 2024 83.8% → 2025 87.9%（連 3 年擴張）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="pass">✅</span></td><td>FY2025：3,942.8 / 3,333.8 = 1.18</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="pass">✅</span></td><td>90d $14.57 → 60d $15.72 → 30d $15.74 → 7d $15.77 → now $15.77（+8.2%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="pass">✅</span></td><td>Q4 2025 +66%、Q3 +68%、Q2 +77%、Q1 +40%（全正）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="pass">✅</span></td><td>Total Debt $3.54B − Cash $2.49B = Net Debt $1.06B；EBITDA ~$4.51B → 0.23×</td></tr>
+</tbody>
+</table>
+<p><strong>體質 veto 結果</strong>：0 項不過 → 等級不變</p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tbody>
+<tr><td>護城河分數（§9）</td><td>7 / 10（扣 2 分：SEC 調查 + 集體訴訟尾險；扣 1 分：資料源依賴 Apple/Google 裝置 ID）</td></tr>
+<tr><td>護城河原始等級</td><td>✅ B 級（7-8）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級（pre-gate）</strong></td><td><strong>B 級</strong></td></tr>
+</tbody>
+</table>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY+1 EPS（FY2026）</td><td>$15.77</td><td>yfinance earnings_estimate（n=22）</td></tr>
+<tr><td>FY+2 EPS（FY2027）</td><td>$20.67</td><td>yfinance earnings_estimate（n=23）</td></tr>
+<tr><td>FY+2 成長率</td><td>31.1%</td><td>(20.67/15.77) − 1</td></tr>
+<tr><td>FY+1 YoY 成長（vs FY25 $9.75）</td><td>61.7%</td><td>yfinance</td></tr>
+<tr><td>當前 Fwd PE FY+1</td><td>30.26x</td><td>477.20 / 15.77</td></tr>
+<tr><td>當前 Fwd PE FY+2</td><td>23.09x</td><td>477.20 / 20.67</td></tr>
+<tr><td>3Y EPS CAGR（FY25→FY28E）</td><td>~38%</td><td>FY28E = FY27 × 1.25（§8 A Runway 邏輯）</td></tr>
+</tbody>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前 Fwd PE（FY+1）</td><td>30.26x</td></tr>
+<tr><td>5Y Fwd PE 範圍（估）</td><td>~12x（2022 熊市谷）~ ~65x（2024/11 高峰）</td></tr>
+<tr><td>5Y Fwd PE 分位（估）</td><td>~34%</td></tr>
+<tr><td>3Y EPS CAGR</td><td>~38%</td></tr>
+<tr><td>PEG</td><td>30.26 / 38 = <strong>0.79</strong></td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟢 便宜</strong>（分位 &lt; 30% 邊緣 + PEG &lt; 1.0 嚴格取較寬，以 PEG 為主；盲點 1 救援不觸發——已 🟢 無需救援）</td></tr>
+<tr><td><strong>套用規則</strong></td><td><strong>等級 +1</strong>（B → A）</td></tr>
+</tbody>
+</table>
+<p><strong>估值燈調整後等級</strong>：A 級（原 B 級 → +1 → A）</p>
+
+<h3>E｜R:R 與 Bear Case（參考，不主導裁決）</h3>
+
+<h4>合理 P/E 定錨（§13.5 長期合理倍數）</h4>
+<ul>
+<li>基準 P/E（§8 🟢 高確信）：25x</li>
+<li>Engine A（ROIC &gt; 20% 擴大）：× 1.175</li>
+<li>AI 🟢 受益：× 1.10</li>
+<li>Engine C（護城河 7 < 9，不觸發）</li>
+<li>Engine B（PEG 安全網，3Y CAGR 38% &gt; 15%，查表 × ~1.15，取 Engine A 與 B 較高者）</li>
+<li><strong>最終長期合理倍數 ≈ 32x</strong>（保守落點）；但 PEG 安全網若嚴守 1.0 → 合理 PE 可達 38x</li>
+<li><strong>本報告採用 38x</strong>（PEG 1.0 target，並 cap 至 5Y 75th ≈ 42x 以下）</li>
+</ul>
+
+<h4>參考目標價 + Bear Case</h4>
+<table>
+<thead><tr><th>時距</th><th>計算</th><th>Target</th><th>Bear（PE 20x × EPS × 0.9）</th></tr></thead>
+<tbody>
+<tr><td>短期（FY+1）</td><td>$15.77 × 38</td><td>$599.26</td><td>$283.86</td></tr>
+<tr><td>中期（FY+2）</td><td>$20.67 × 38</td><td>$785.46</td><td>$372.06</td></tr>
+</tbody>
+</table>
+<p class="note">Bear PE 取 20x（§8 E「成長降至 10%」情境下，考量 APP 80%+ margin 與品牌保留之合理低點；非 15x，因高 margin SaaS-like 現金流在熄火情境仍 deserve 20x）。</p>
+
+<h4>R:R 三價位（QC-22：股價漂移 +7.87% &lt; 10%，未觸發；但列供參考）</h4>
+<table>
+<thead><tr><th>進場價</th><th>短期 R:R</th><th>中期 R:R</th></tr></thead>
+<tbody>
+<tr><td>當前 $477.20</td><td>0.63x ⚠️</td><td>2.93x ✅</td></tr>
+<tr><td>4 週前均 $442.39</td><td>0.99x</td><td>3.84x</td></tr>
+<tr><td>建議進場價 $400（Pure MA 🟢 區間下緣）</td><td>1.72x</td><td>5.31x</td></tr>
+</tbody>
+</table>
+
+<h4>壓力測試（QC-29 強制 4 情境）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th><th>Pass（中期 ≥2.0）</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>報告原假設</td><td>0.63x</td><td>2.93x</td><td><span class="pass">✓</span></td></tr>
+<tr><td>壓力 A</td><td>成長率 −10%</td><td>0.28x</td><td>1.61x</td><td><span class="fail">✗</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（→ 30.4x）</td><td>0.01x</td><td>1.44x</td><td><span class="fail">✗</span></td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（→ 25x，靠近 META）</td><td>−0.43x</td><td>0.38x</td><td><span class="fail">✗</span></td></tr>
+</tbody>
+</table>
+<p><strong>壓力測試通過率：1/4（25%）</strong> → QC-29 觸發「R:R 對壓力情境敏感」，綜合訊號降一級。</p>
+
+<h3>F｜Pure MA 狀態機（六狀態）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$477.20</td></tr>
+<tr><td>W52 / 斜率</td><td>$484.27 / +6.2%（正）</td></tr>
+<tr><td>W104 / 斜率</td><td>$344.43 / +15.8%（正）</td></tr>
+<tr><td>W250 / 斜率</td><td>⚠️ 替代指標：W200 $194.04 / +15.3%（APP 2021/4 IPO，僅 262 週樣本）</td></tr>
+<tr><td>Bollinger（W20 2σ）</td><td>上 $749.92 / 中 $516.03 / 下 $282.14；現價低於中軌（合理區）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>🟢 最佳進場</strong>（現價 &lt; W52 且 &gt; W104；W52/W104/W200 斜率全正）</td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td>× 1.2</td></tr>
+</tbody>
+</table>
+<p class="note">QC-24 Intraday 檢查：近 5 日無 shooting star 或 gap-up 收紅 K；4/15 +7.4% 並 4/16 小跌 0.3% 屬正常 breakout 後整理，無「衝高回落」型態。QC-25 Beta 雙源：yfinance 2.50 vs GuruFocus/TradingView 2.70-2.76，差異 8-10% &lt; 30%，使用 yfinance 值 2.50。</p>
+
+<h3>G｜大盤豁免</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>^GSPC（SPX）</td></tr>
+<tr><td>大盤現價</td><td>7,126.06</td></tr>
+<tr><td>大盤 W104</td><td>6,092.49</td></tr>
+<tr><td>系統性風險</td><td>否（現價 &gt; W104）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</tbody>
+</table>
+
+<h3>H｜綜合訊號燈（v12.0）</h3>
+<table>
+<thead><tr><th>維度</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier（§2 B → +gate）</td><td>B → A（估值燈 🟢 +1）</td></tr>
+<tr><td>gate（§2 D）</td><td>🟢 便宜</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟢 最佳進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期</td></tr>
+<tr><td>QC-29 壓力測試通過率</td><td>1/4 → 降一級</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span style="font-size:18px" class="warn">B</span></strong></td></tr>
+</tbody>
+</table>
+<p><strong>判定理由</strong>：品質 A + gate 🟢 + MA 🟢 + 大盤正常 → 基底應為 A+；但 trap 🟡（SEC 調查未決）使「A+ 需 trap 🟢」不成立，降為 A；QC-29 壓力測試 1/4 再降一級 → <strong>B</strong>（衛星候選）。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8 A</td><td>充裕（non-gaming TAM 擴 5-10× + CTV 併 Wurl）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（Axon 產品化 → Stagwell 合作 → 1B DAU reach）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong>（法律/監管尾險尚未解除，結構性故事完整）</td></tr>
+</tbody>
+</table>
+<p><strong>一句話說明</strong>：🟢 AdTech AI 順風、B 級護城河 7/10（SEC 調查拖累）。估值燈 🟢 PEG 0.79 + Pure MA 🟢 最佳進場，但壓力測試 1/4 + trap 🟡 使訊號降為 B。建議追蹤 SEC 結論與 e-com self-serve GA 時點。</p>
+
+<!-- =========== §3 =========== -->
+<h2 id="sec-3">§3 三方辯論摘要</h2>
+
+<div class="debate-grid">
+<div class="debate-card bull">
+<h4>多頭辯護人（Munger）</h4>
+<p><strong>論據 1（護城河）</strong>：AXON 2.0 資料飛輪：每秒 2M 次 auction × 10B 裝置交互資料，中小 dev ROAS 超 Meta Advantage+——小廠越多用 AXON，資料越厚、預測越準。§9</p>
+<p><strong>論據 2（成長）</strong>：Q4 2025 Rev +66%、Adj EBITDA +82%、e-com run rate $1B+（Wayfair / Dr. Squatch / Ashley Furniture），self-serve 1H 2026 GA → 2026 e-com 共識 $1.45B。§8</p>
+<p><strong>論據 3（估值）</strong>：Fwd PE FY+1 30.3x、FY+2 23.1x；3Y EPS CAGR ~38%、PEG 0.79。AdTech AI pure-play 中唯一兼具 70%+ FCF margin + 30%+ 成長。§13</p>
+<p><strong>一句話</strong>：「市場把 SEC 尾險定價，卻沒定價 non-gaming S 曲線。」</p>
+</div>
+<div class="debate-card bear">
+<h4>空頭檢察官（Burry）</h4>
+<p><strong>路徑 1（基本面）</strong>：若 SEC Wells Notice 要求 AXON 拆解跨 app 裝置 ID 歸因，AUC 下降 → ROAS 折扣 → CPC 砍 30% → FY2027 Rev 下修 15%。§8</p>
+<p><strong>路徑 2（估值）</strong>：同業溢價收斂——META Fwd PE 25x、TTD 12x；APP 30x 相對 AdTech 中位 ~20x 溢價 50%。若 SEC 任一節點惡化、peer 不動 → APP 壓縮至 22-25x → 股價下行 20-30%。§13.3</p>
+<p><strong>路徑 3（催化）</strong>：Rosen/Labaton/KTMC class action 進入 certification 階段（估 2026 下半），若法院拒絕 MTD → 機構撤倉。§5 R1</p>
+<p><strong>最大威脅</strong>：SEC + 集體訴訟 + Meta/Amazon 自家廣告生態反擊三向夾擊。</p>
+</div>
+<div class="debate-card arb">
+<h4>估值仲裁員（Damodaran）</h4>
+<table style="font-size:12px;">
+<tr><td>FCF CAGR 歷史 3 年</td><td>~200%（基期小）</td><td>2/2</td></tr>
+<tr><td>EPS CAGR 共識</td><td>38%（3Y）</td><td>2/2</td></tr>
+<tr><td>vs 同業最快</td><td>APP 行業最快</td><td>2/2</td></tr>
+<tr><td>條件苛刻度</td><td>需 e-com ≥$1.45B + SEC 結案無損</td><td>1/2</td></tr>
+<tr><td>歷史先例</td><td>META/GOOGL 早期類似軌跡</td><td>1/2</td></tr>
+</table>
+<p><strong>隱含預期可信度：8/10</strong></p>
+<p><strong>一句話</strong>：「數字本身支持，但監管不確定性使 DCF 需加 1-2% equity risk premium。」</p>
+</div>
+</div>
+
+<div class="verdict-box">
+<h4>你的裁決</h4>
+<table>
+<tbody>
+<tr><td>多頭最強論據</td><td>PEG 0.79 + 70% FCF margin + non-gaming TAM 5-10×（結構性順風未被定價）</td></tr>
+<tr><td>空頭最大威脅</td><td>SEC Wells Notice / 裁罰強制修改歸因 → AXON 核心 ROAS 優勢結構性受損</td></tr>
+<tr><td>估值仲裁評分</td><td>8 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>觀望偏進場（衛星候選，final_signal = B）</strong></td></tr>
+<tr><td>裁決理由</td><td>品質基本盤 + 估值 🟢 + MA 🟢 本應 A+，但 trap 🟡（SEC 未結）+ 壓力測試 1/4（R:R 對 PE 壓縮極敏感）使訊號降為 B。核心論點成立但尾險明確，適合小倉位持有等待 SEC 催化，而非核心加碼。</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="selfcheck">
+<strong>QC-13 自我攻擊測試</strong>：
+<ul>
+<li>反駁 1：「PEG 0.79 是因市場 rational pricing SEC 尾險，不是低估。」→ 回應：部分成立；但 FY+2 EPS 共識持續上修（90 天 +8%）與 margin 擴張無法用「定價尾險」解釋——若是 rational pricing，應看到共識下修。矛盾表明市場確有折價。</li>
+<li>反駁 2：「MA 🟢 最佳進場但近期 +8% 漂移，追高風險。」→ 回應：4 週漂移 +7.87% &lt; QC-22 10% 門檻；BB 中軌 $516，距上軌 $750 尚有空間；建議等回檔至 W52（$484）附近。</li>
+<li>反駁 3：「CEO 近 5 年 25 筆皆賣出，信號極負面。」→ 回應：需區分 10b5-1 既定計畫與主動減持；2025 套現 $80M 但仍持 5% 級以上（18.6% insiders），未達 control 轉移警訊。</li>
+</ul>
+<p>進入 §1 前自我檢核全數通過。</p>
+</div>
+
+<!-- =========== §4 =========== -->
+<h2 id="sec-4">§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>AppLovin 解決「<strong>廣告預算的邊際 ROAS 無法即時歸因</strong>」這個自數位廣告誕生以來的基本痛點。傳統 DSP（The Trade Desk 類）把決策權交給買方——買方須自選 audience、自配預算、自測 creative；AXON 2.0 把決策權交給 AI：每秒 200 萬筆 auction、10 億裝置的 cross-app behavioural graph、即時 ROAS 反饋。對中小型遊戲廠商，AXON 的「黑箱但可預測」比 Meta Advantage+（封閉生態）或自建 DSP（缺資料）更有效。若 APP 明天消失：中小 dev 被迫選擇（a）把錢丟進 Meta/Google 封閉生態、失去跨平台歸因；（b）自建 DSP、承受 60% 的資料劣勢。它取代的不是一家公司，而是「中小廣告主獲得可預測 ROAS 的能力」。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<ul>
+<li><strong>地緣政治曝險</strong>：研發在美國/EMEA，資料處理雲端 AWS/GCP 美國為主；手遊發行業務已於 2025/5 以 $400M + 20% 股份賣給 Tripledot，地緣風險大幅降低。主要曝險是「AI/隱私監管」而非生產地。</li>
+<li><strong>技術替代</strong>：① Apple iOS ATT+ / Privacy Sandbox 若封鎖 cross-app device ID，AXON 資料飛輪被截（時間 12-18 個月）；② Meta 若開放 Advantage+ API 給第三方 dev（可能性中）；③ 新進 AI-agent 廣告 orchestrator（OpenAI Operator 類）整合 GPT-5 + API（2026-2027）。</li>
+<li><strong>管理層失職</strong>：CEO Foroughi 近 5 年 25 筆內部人交易全為賣出（2026/3/12 再賣 $19M，2025 套現 $80M）；資本配置激進回購（2025 買 $2.58B = 65% FCF）。潛在失職：併購分心（Wurl CTV 整合失敗）、或在短報告壓力下過度回購耗損投資彈性。</li>
+<li><strong>價值陷阱路徑（四選一）：護城河侵蝕型。</strong>若 SEC 認定 AXON 跨 app 資料提取違規且強制修改歸因架構，AUC 回退 → ROAS 下滑 → 中小 dev 流失 → 規模飛輪反轉。此為主要下行劇本。</li>
+</ul>
+
+<!-- =========== §5 =========== -->
+<h2 id="sec-5">§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸</h3>
+<table>
+<tbody>
+<tr><td><strong>預設持有期</strong></td><td>18-24 個月（2026/4 → 2028/Q1）</td></tr>
+<tr><td><strong>主要驅動</strong></td><td>e-commerce self-serve GA（1H 2026）→ 廣告主滲透兌現（2026 下半）→ FY2027 EPS 發佈（2028/2）估值重定錨</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：SEC 結論、e-com ARR 季度披露、AXON 3.0 GenAI 採用率；噪音：月度短報告、手遊季度變動（已剝離）、CEO 10b5-1 賣股</td></tr>
+</tbody>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時點</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td><strong>AXON 2.0/3.0 的 ROAS 優勢是結構性</strong>——源自規模 + AI，而非歸因技術灰色地帶</td><td>SEC 結案無重大裁罰；AXON Ads Manager 無被迫修改歸因架構；Apple/Google 未封鎖 cross-app data</td><td>2026 下半 - 2027 上半</td></tr>
+<tr><td>H2</td><td><strong>e-commerce 廣告主 FY2026 貢獻 ≥ $1.45B</strong>，且 AXON non-gaming ROAS ≥ Meta Audience Network 水準</td><td>e-com 季度 run rate 披露；客戶留存 &gt;85%；self-serve GA 1H 2026；week-over-week spend growth &gt;+15%</td><td>2026 Q2/Q3 財報</td></tr>
+<tr><td>H3</td><td><strong>市場在 FY2027 EPS 公布後重新定價</strong>——Fwd PE 從 30x 回到 5Y 75th（~45x）</td><td>Fwd PE 分位從 &lt;40% 回到 &gt;60%；分析師中位目標價 &gt;$700（目前 $655）</td><td>2028 Q1 財報（2028/2）</td></tr>
+</tbody>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>SEC 裁罰 + 強制修改歸因架構</td><td>H1</td><td>SEC Wells Notice / 和解協議 / 行政裁罰</td><td>任一發生</td></tr>
+<tr><td>R2</td><td>e-commerce 滲透不如預期（Shopify/Amazon Ads 卡位）</td><td>H2</td><td>e-com 季度 ARR；Shopify Ads / Amazon Ads 年成長</td><td>e-com FY2026 Rev &lt; $1.0B</td></tr>
+<tr><td>R3</td><td>Meta 開放 Advantage+ API 給第三方 dev，中小廣告主回流 walled garden</td><td>H1, H3</td><td>Meta 投資人會議揭示的 API 開放 roadmap</td><td>Meta 確認開放 iOS 外部歸因 API</td></tr>
+</tbody>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>18-24 月持有期內，H1/H2 需確認；R1 任一節點即觸發</td></tr>
+<tr><td>2. 假設關聯？</td><td>資料採集新聞 → H1；e-com 合作公告 → H2；Fwd PE 分位變化 → H3</td></tr>
+<tr><td>3. 邊際方向？</td><td>Q4 2025 beat → H2 ＋強化；SEC 確認 still ongoing（2026/2）→ H1 中性；CEO 繼續賣股 → H1 中性（10b5-1）</td></tr>
+<tr><td>4. 閾值判斷？</td><td>H2 只要 e-com ≥ $1.45B（分析師共識）就算達標；H1 需 SEC 「無重大處分」而非「未起訴」</td></tr>
+</tbody>
+</table>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td><strong>進場</strong></td><td>Fwd PE &lt; 28x 且 MA 🟢/✅</td><td>建立衛星倉（目標倉位 50%）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 同時確認（SEC 結案 + e-com ARR &gt; $1.2B 年化）</td><td>加至目標倉位 100%；可考慮升為核心</td></tr>
+<tr><td><strong>減碼</strong></td><td>Fwd PE &gt; 55x 或 R3 信號（Meta 開放 API）</td><td>減至目標倉位 40%，重新評估 H3</td></tr>
+<tr><td><strong>撤退</strong></td><td>SEC 發 Wells Notice / 強制修改歸因 / 集體訴訟判決 certify</td><td>清倉，視為 H1 被推翻</td></tr>
+</tbody>
+</table>
+
+<!-- =========== §6 =========== -->
+<h2 id="sec-6">§6 即時財報情報（Q4 2025）</h2>
+
+<h3>① 關鍵數字</h3>
+<table>
+<thead><tr><th>指標</th><th>Q4 2025</th><th>預期</th><th>Beat/Miss</th><th>YoY</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$1.66B</td><td>$1.62B</td><td><span class="pass">+2.2% Beat</span></td><td>+66%</td></tr>
+<tr><td>EPS（GAAP）</td><td>$3.24</td><td>$2.94</td><td><span class="pass">+10.1% Beat</span></td><td>+93%</td></tr>
+<tr><td>Adj EBITDA</td><td>$1.40B</td><td>$1.33B</td><td><span class="pass">+5.3% Beat</span></td><td>+82%</td></tr>
+<tr><td>Adj EBITDA Margin</td><td>84.4%</td><td>-</td><td>-</td><td>+8.5pp</td></tr>
+<tr><td>FCF Margin</td><td>71.9%（FY）</td><td>-</td><td>-</td><td>+7pp</td></tr>
+</tbody>
+</table>
+
+<h3>② FY2025 全年</h3>
+<ul>
+<li>Revenue $5.48B（+70% YoY，從 FY24 $3.22B）</li>
+<li>Adj EBITDA $4.51B（+87% YoY），margin 82% vs FY24 75%</li>
+<li>Net Income $3.33B（+111% YoY）</li>
+<li>Operating CF $3.97B、FCF $3.94B</li>
+</ul>
+
+<h3>③ Q1 2026 Guidance</h3>
+<ul>
+<li>Revenue guidance $1.745B - $1.775B（YoY +18-20%，QoQ +5-7%）</li>
+<li>Adj EBITDA $1.465B - $1.495B（margin ~84%）</li>
+<li>vs analyst consensus Q1 Rev ~$1.74B → guidance 上緣 beat</li>
+</ul>
+
+<h3>④ 財報對假設的邊際貢獻</h3>
+<table>
+<thead><tr><th>假設</th><th>邊際方向</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td><span class="pass">＋強化</span></td><td>Margin 從 77% 擴至 84%——若 AXON ROAS 靠歸因套利，margin 應在短報告/SEC 風波下收斂；擴張反證結構性優勢</td></tr>
+<tr><td>H2</td><td><span class="pass">＋強化</span></td><td>CFO 確認 e-com self-serve 1H 2026 GA；run rate 達 $1B+；Stagwell 2026/3/10 合作跨 mobile + CTV</td></tr>
+<tr><td>H3</td><td><span class="warn">0 中性</span></td><td>財報後股價 +0.3%，市場消化慢；需 SEC 結論才能啟動 re-rating</td></tr>
+</tbody>
+</table>
+
+<h3>⑤ Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>基調</strong>：樂觀偏中性；CEO 強調「AI creative + non-gaming 規模」，刻意淡化短報告話題</li>
+<li><strong>強調主題</strong>：self-serve GA 時程、GenAI 影片廣告 pilot（100+ 客戶）、Stagwell agency channel</li>
+<li><strong>刻意迴避</strong>：SEC 調查細節（僅 boilerplate 回應）、裁罰可能規模、集體訴訟 DD 材料</li>
+</ul>
+
+<!-- =========== §7 =========== -->
+<h2 id="sec-7">§7 核心門檻檢核</h2>
+
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>&gt; 15%</td><td><span class="pass">✓✓ 強</span></td><td>FY25 71.9%；近 3 年：FY23 54% → FY24 64% → FY25 72%（↑）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5 年均 &gt;15%</td><td><span class="pass">✓✓ 強</span></td><td>FY21 N/A、FY22 15%、FY23 54%、FY24 64%、FY25 72%；均 51%；最低谷 15%（FY22）</td></tr>
+<tr><td>ROIC</td><td>&gt; 15% 且 &gt; WACC</td><td><span class="pass">✓✓ 強</span></td><td>估 ROIC ~60%（NOPAT $3.3B ÷ Invested Capital ~$5.6B）；WACC 10.5%（Beta 2.5）；超額 50pp+</td></tr>
+<tr><td>ROIC 穩定性</td><td>10 年 ≥70% 達標</td><td><span class="pass">✓ 合理</span></td><td>5 年樣本（IPO 2021）：4/5 年 ROIC &gt; 15%（FY22 −3% 除外）；趨勢：擴大</td></tr>
+<tr><td>毛利率</td><td>10 年持續改善</td><td><span class="pass">✓✓ 強</span></td><td>FY22 55% → FY23 81% → FY24 84% → FY25 88%；連 3 年擴（剝離低毛利手遊後）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5%</td><td><span class="pass">✓✓ 強</span></td><td>FY25 Capex $28M / Rev $5.48B = 0.5%；3 年均 0.7%（軟體 asset-light）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td><span class="pass">✓✓ 強</span></td><td>基期 FY25 $9.75；FY26E $15.77（n=22）；FY27E $20.67（n=23）；FY28E ~$25.84（邏輯推導：§8 非 gaming 擴張持續）；3Y CAGR 38%</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td><span class="pass">✓✓ 強</span></td><td>PEG（3Y）= 0.79；PEG（FY+2 growth）= 0.97</td></tr>
+<tr><td>負債安全</td><td>D/E &lt; 0.7</td><td><span class="pass">✓ 合理</span></td><td>Total Debt $3.54B / Equity $2.13B = 1.66（偏高）；但 Net Debt / EBITDA 0.23（極低）；Cash $2.49B / Rev 45%（充裕）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>-</td><td><span class="warn">⚠️ 部分</span></td><td>Cash $2.49B &lt; Total Debt $3.54B；但 Net Debt 僅 $1.06B，EBITDA 4 個月可清零</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8</td><td><span class="warn">⚠️</span></td><td>7/10（SEC + class action 扣分；原始 9/10 能力強 − 2pp 監管尾險）</td></tr>
+</tbody>
+</table>
+
+<p><strong>最大財務弱點</strong>：Equity-denominated D/E 1.66 偏高（源於激進回購稀釋帳面權益），非現金流問題。</p>
+<p><strong>Munger 三維評級</strong>：🟢 三項全達標（ROIC 穩定性 + 毛利率定價能力 + 低資本密集度）</p>
+
+<h3>價值陷阱初篩：低估值四問（輕度觸發，Fwd PE 分位 ~34% 接近 25%）</h3>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>過去 3 年 Gross Margin 趨勢？</td><td>↑ +33pp（55% → 88%）</td><td><span class="pass">無</span></td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢？</td><td>擴大（AdTech AI 類 APP 為領先）</td><td><span class="pass">無</span></td></tr>
+<tr><td>Q3</td><td>FCF/NI 背離？</td><td>1.18（近 3 年均 1.10）</td><td><span class="pass">無</span></td></tr>
+<tr><td>Q4</td><td>EPS 共識方向？</td><td>FY+1 近 90 天上修 +8%</td><td><span class="pass">無</span></td></tr>
+</tbody>
+</table>
+<p><strong>初篩結論：0 個 🔴</strong>，低估值可能為真實機會（SEC 尾險定價 + 高 Beta 波動）。</p>
+
+<!-- =========== §8 =========== -->
+<h2 id="sec-8">§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道</h3>
+<table>
+<tbody>
+<tr><td>當前 TAM（億美元）</td><td>~$300B 全球數位廣告（2026E）</td></tr>
+<tr><td>可達 TAM（億美元）</td><td>~$500B（+5-10× non-gaming expansion per management）</td></tr>
+<tr><td>當前市佔/滲透</td><td>APP ~2%（$5.5B / $300B）</td></tr>
+<tr><td>自然放緩時點</td><td>達 10% 市佔前（2030+），仍有 ~10 年 runway</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>≥ 10 年</strong>（高確信長期複利）</td></tr>
+</tbody>
+</table>
+
+<h3>B｜成長品質</h3>
+<ul>
+<li><strong>有機 vs 無機</strong>：95% 有機（Wurl $430M 2024 併購影響 &lt; 5%）</li>
+<li><strong>定價 vs 量</strong>：量驅動為主（auction volume ↑），ARPU 穩定——新客戶帶來 weekly spend +50% 擴張</li>
+</ul>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型</strong>：每新客戶帶來更多 auction data → 訓練更好 AXON 模型 → ROAS 提升 → 吸引更多客戶。e-com / CTV 擴張擴大資料基礎。</p>
+
+<h3>D｜ROIC 與 FCF</h3>
+<table>
+<thead><tr><th>指標</th><th>2025</th><th>2022</th><th>趨勢</th><th>符合</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>~60%</td><td>-3%</td><td>↑↑</td><td><span class="pass">是</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+50pp</td><td>−13pp</td><td>↑↑</td><td><span class="pass">是</span></td></tr>
+<tr><td>FCF Margin</td><td>72%</td><td>15%</td><td>↑↑</td><td><span class="pass">是</span></td></tr>
+<tr><td>FCF/NI</td><td>1.18</td><td>2.14</td><td>↓ 正常化</td><td><span class="pass">是</span></td></tr>
+<tr><td>再投資率</td><td>~3%（低）</td><td>~10%</td><td>↓</td><td><span class="pass">合理</span></td></tr>
+</tbody>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<thead><tr><th>情境</th><th>合理 Fwd PE 壓縮至</th><th>跌幅</th></tr></thead>
+<tbody>
+<tr><td>3 年後成長率降至 15%</td><td>~25x</td><td>−17%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>~20x</td><td>−34%（即 Bear 情境）</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>~15x</td><td>−50%</td></tr>
+</tbody>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號</th><th>指標</th><th>數據</th><th>亮燈</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕 - GM 下滑</td><td>連 2 季 YoY 下滑</td><td>持續擴張</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕 - 市佔</td><td>12 個月縮減</td><td>擴大</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕 - 定價</td><td>提價後銷量下滑</td><td>N/A（量驅動）</td><td>⬜</td></tr>
+<tr><td>盈餘品質 - EPS vs Rev</td><td>EPS CAGR &gt; Rev CAGR +5pp</td><td>EPS +115% vs Rev +70%，差 45pp ⚠️（margin 擴張，非回購主導）</td><td>🟡（margin 擴張型，非陷阱型）</td></tr>
+<tr><td>盈餘品質 - FCF/NI</td><td>&lt; 0.75 連 2 年</td><td>1.18</td><td>⬜</td></tr>
+<tr><td>盈餘品質 - SBC</td><td>&gt; 5% 且上升</td><td>~3-4%，穩定</td><td>⬜</td></tr>
+<tr><td>產業結構 - TAM 萎縮</td><td>-</td><td>TAM 擴張</td><td>⬜</td></tr>
+<tr><td>產業結構 - 估值下修</td><td>-</td><td>AdTech 整體估值有壓力但 APP 逆勢</td><td>⬜</td></tr>
+<tr><td>隱性資本 - Maintenance Capex</td><td>&gt; 60% FCF</td><td>0.7%</td><td>⬜</td></tr>
+<tr><td>隱性資本 - 停投後營收</td><td>-</td><td>軟體 asset-light，風險低</td><td>⬜</td></tr>
+</tbody>
+</table>
+<p><strong>亮燈數：0 個實質 🔴（1 個灰色信號） → 🟢 低風險</strong></p>
+<p><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway ≥ 10 年 + 護城河強化型 + ROIC 擴大 + 衰退信號 0）</p>
+
+<h3>F｜AI 取代風險評級：🟢 AI 受益</h3>
+<ul>
+<li><strong>證據 1</strong>：AXON 2.0 本身即 AI engine——AI 潮水越高，APP 護城河越深</li>
+<li><strong>證據 2</strong>：GenAI creative 工具（interactive page generator + video ad pilot）把 AI 從「威脅」變「產品」</li>
+<li><strong>證據 3</strong>：FY2025 margin 擴張 +7pp 直接受益 AI 模型優化 → 投入產出比提升</li>
+<li>評分 9/9 → 🟢</li>
+</ul>
+
+<!-- =========== §9 =========== -->
+<h2 id="sec-9">§9 護城河分析</h2>
+
+<p><strong>評分：7/10</strong>（原始能力 9/10 − 2pp SEC + class action 尾險 − 1pp 依賴外部裝置 ID 系統；+1 pp 資料飛輪獨特性；）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：客戶越多→auction volume ↑→AXON 預測精度 ↑→ROAS ↑→客戶越多。規模閾值：目前已過（200 萬/秒 auction）。</li>
+<li><strong>無形資產</strong>：AXON 模型本身 + 10B 裝置的跨 app behavioural graph；專利有限但資料難以複製。</li>
+<li><strong>轉換成本</strong>：中等——廣告主切換需重新訓練 creative 與學習新平台，但非 lock-in；AXON Ads Manager（鍵入後）reduce to hours setup。</li>
+<li><strong>規模優勢</strong>：82% EBITDA margin 印證規模經濟——對手（TTD、Verve）在相似業務 margin 30-50%。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>資本充足對手（Meta、Google、Amazon）有自家廣告生態但封閉；TTD 有 DSP 但缺第一方資料；新進者需 5+ 年累積 auction 資料才能訓練競爭級 AI 模型。APP 的 temporal moat ≈ 3-5 年，但 SEC 裁罰可能快速縮短。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<thead><tr><th>對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr></thead>
+<tbody>
+<tr><td>APP</td><td>2% 全球數位廣告</td><td>↑↑</td><td>-</td><td>吃 walled garden 之外中小 dev</td></tr>
+<tr><td>Meta</td><td>~25%</td><td>穩定</td><td>Advantage+ 若開放 API</td><td>自家生態</td></tr>
+<tr><td>Google</td><td>~28%</td><td>穩定</td><td>DV360</td><td>自家生態</td></tr>
+<tr><td>TTD</td><td>~3%（DSP）</td><td>↓</td><td>AI 落後 AXON</td><td>被 APP 吃</td></tr>
+<tr><td>Amazon Ads</td><td>~7%</td><td>↑</td><td>自家 Prime/OTT 資料</td><td>CTV 重疊</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢：加深</h3>
+
+<h3>24 個月最可能瓦解護城河的變化（QC-23 3 級分類）</h3>
+<table>
+<thead><tr><th>排序</th><th>威脅</th><th>等級</th><th>對護城河影響</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>SEC 強制修改歸因架構</td><td>⛔ 架構替代</td><td>−2 分；若實現，護城河降至 5/10（C 級）</td></tr>
+<tr><td>2</td><td>Apple iOS ATT+ 封鎖 cross-app device ID</td><td>⛔ 架構替代</td><td>−2 分</td></tr>
+<tr><td>3</td><td>Meta 開放 Advantage+ API</td><td>🔴 生態攻擊</td><td>−1 分</td></tr>
+<tr><td>4</td><td>Amazon Ads 擴張 non-gaming + OTT</td><td>🟡 點對點</td><td>護城河不扣分</td></tr>
+<tr><td>5</td><td>TTD AI 追上</td><td>🟡 點對點</td><td>不扣分</td></tr>
+</tbody>
+</table>
+<p class="note">本次未觸發 🔴/⛔（為潛在威脅而非已發生）；若 SEC 發 Wells Notice，§2 B 護城河需重評估至 5 分（C 級）。</p>
+
+<!-- =========== §10 =========== -->
+<h2 id="sec-10">§10 財務品質監測</h2>
+
+<h3>三年趨勢</h3>
+<table>
+<thead><tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手（TTD 2025）</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>54%</td><td>64%</td><td>72%</td><td>~25%</td></tr>
+<tr><td>EBITDA Margin</td><td>~60%</td><td>75%</td><td>82%</td><td>~35%</td></tr>
+<tr><td>ROIC − WACC</td><td>+15pp</td><td>+40pp</td><td>+50pp</td><td>+12pp</td></tr>
+<tr><td>SBC / Revenue</td><td>~5%</td><td>~4%</td><td>~3%</td><td>~10%</td></tr>
+<tr><td>ROE</td><td>28%</td><td>145%</td><td>156%</td><td>~20%</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>NI vs OCF</strong>：NI $3.33B vs OCF $3.97B（轉換率 119%）→ 健康</li>
+<li><strong>AR vs Rev</strong>：AR 成長略低於 Rev（+60% vs +70%）→ 無應收膨脹</li>
+<li><strong>Inventory</strong>：軟體業務，不適用</li>
+<li><strong>FCF 轉換</strong>：1.18 持續高位 → 健康</li>
+</ul>
+
+<h3>回購品質</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>FY2025 回購 / FCF</td><td>$2.58B / $3.94B = 65%</td><td>高（&lt;80% 警戒線之下）</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>原 CAGR 38% → 剔除後 ~33%</td><td>差 5pp（回購為輔助）</td></tr>
+<tr><td>回購均價 vs 現價</td><td>FY25 均回購價 ~$380 vs 現價 $477</td><td>低於現價（合理）</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>~53%（FY22-25）</td><td>EPS CAGR 與 Rev CAGR 差距來自 margin 擴張，非回購</td></tr>
+</tbody>
+</table>
+<p>QC-27 Rev vs OI divergence：Rev +70%、OI +117% → divergence −47%（OI 擴張快於 Rev，margin 正向，無警示）。</p>
+
+<!-- =========== §11 =========== -->
+<h2 id="sec-11">§11 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li>全球數位廣告 TAM 2026E ~$800B（其中 programmatic ~$300B）</li>
+<li>CAGR：2024-28 ~13%；non-gaming performance 約 18-20%</li>
+<li>APP 當前全球滲透：$5.48B / $800B = 0.7%；programmatic share：~1.8%</li>
+<li>供需：AdTech 進入 AI-driven ROAS 競賽階段，自家生態 vs 第三方平台雙軌共存</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>上游</strong>：供應商為 AWS/GCP，集中度高但替代性可（跨雲能力）；分散。</li>
+<li><strong>下游</strong>：客戶極度分散（中小廣告主為主）→ 高議價權；前 10 大客戶占比 &lt; 20%</li>
+<li><strong>地緣分布</strong>：北美 ~70% Rev、EMEA ~20%、APAC ~10%；無中國生產/銷售曝險</li>
+</ul>
+
+<h3>營收組成（FY2025）</h3>
+<table>
+<thead><tr><th>分項</th><th>占比</th><th>成長率</th></tr></thead>
+<tbody>
+<tr><td>Advertising（AXON）</td><td>~95%</td><td>+90% YoY</td></tr>
+<tr><td>Apps（手遊發行，已於 2025/5 剝離 Tripledot）</td><td>~5%（FY2025 剩餘）</td><td>N/A（剝離）</td></tr>
+<tr><td>e-commerce（Adv 之內）</td><td>~18%</td><td>$1B+ run rate（2026E $1.45B）</td></tr>
+<tr><td>CTV（Wurl）</td><td>~5%</td><td>+6× 擴張</td></tr>
+</tbody>
+</table>
+
+<h3>Unit Economics</h3>
+<ul>
+<li>ROAS：中小 dev 客戶平均 2.0x+（non-gaming pilot）</li>
+<li>CAC：估 $500-1,000（self-serve onboarding）</li>
+<li>LTV：$10K-50K+（enterprise e-com 六位數日預算）</li>
+<li>LTV/CAC：~20-50x</li>
+</ul>
+
+<!-- =========== §12 =========== -->
+<h2 id="sec-12">§12 公司治理與資本配置</h2>
+
+<h3>① 股東/股權結構</h3>
+<ul>
+<li>內部人持股：18.6%；機構：81.1%（Vanguard ~10%、BlackRock ~8%、KKR ~7%）</li>
+<li>Dual-class：是（Class A 1 vote / Class B 20 votes）；創辦人 Foroughi 與高層透過 Class B 保留投票控制</li>
+</ul>
+
+<h3>② 資本配置</h3>
+<ul>
+<li>優先順序：回購 &gt;&gt; 併購 &gt; Capex &gt; 分紅（無分紅）</li>
+<li>FY2025：回購 $2.58B（65% FCF）、併購 ~$430M（Wurl FY2024 尾款 + 小型 tuck-in）、Capex $28M</li>
+<li>2025/5 剝離 Apps 業務給 Tripledot（$400M + 20% 股份），聚焦 AdTech 純玩家</li>
+</ul>
+
+<h3>③ 管理層薪酬（QC-6）</h3>
+<p>數據限制：yfinance 未提供最新 proxy 明細。公開資料顯示 2024：CEO 基本薪 $1M + 績效獎金 $3M + SBC ~$15M（SBC 為主）。</p>
+
+<h3>④ 近 12 個月內部人交易</h3>
+<ul>
+<li>CEO Adam Foroughi：2025 全年賣出 $80M+；2026/3/12 賣 $19M（10b5-1 pre-scheduled）</li>
+<li>CFO Matt Stumpf：2025 Q3 賣 $5M</li>
+<li>近 5 年 25 筆交易全為賣出；無買入紀錄 ⚠️</li>
+<li>內部人交易基調：持續減持，但 10b5-1 plan 降低主動訊號</li>
+</ul>
+
+<h3>⑤ QC-19 重大事件（過去 12 個月）</h3>
+<ul>
+<li><span class="fail">🔴 SEC 調查</span>：2025/10/6 Bloomberg 揭露；2026/2/20 SEC 確認「still active and ongoing」</li>
+<li><span class="fail">🔴 集體訴訟</span>：Rosen / Labaton / KTMC / Schall / Frank Cruz 五家律所已啟動；class period May 10 2023 - Feb 25 2025</li>
+<li>⚠️ 短賣方報告 3 份（Muddy Waters 2025/3/27、Fuzzy Panda 2025/2/26、Culper 2025/2/26）；CapitalWatch 2026/1 已道歉撤回</li>
+<li>🟢 手遊業務剝離（2025/5 Tripledot $400M + 20% 股份）：聚焦提升純度</li>
+<li>🟢 Stagwell 合作（2026/3/10）：agency channel 拓展</li>
+</ul>
+<p class="fail"><strong>治理分級：🔴 高風險</strong>——SEC 調查 + 多家律所集體訴訟 + 管理層誠信面臨挑戰。此為 §2 B 護城河從 9 降至 7 的主因。</p>
+
+<!-- =========== §13 =========== -->
+<h2 id="sec-13">§13 估值診斷</h2>
+
+<h3>13.0 估值體系診斷</h3>
+<ul>
+<li><strong>當前主流邏輯</strong>：成長型（PEG + Fwd PE）</li>
+<li><strong>體系漂移</strong>：情境一不適用（APP 已 PE-based）；情境二潛在：管理層強調 e-com ARR 如可獨立披露，市場可能加上 SaaS-like EV/ARR 倍數（當前 AdTech 不用）</li>
+<li><strong>尺換信號</strong>：若 SEC 裁罰 + e-com GA 延遲 → 從成長型降至盈利型（P/E 壓縮）</li>
+<li><strong>結論：🟡 估值邏輯模糊</strong>（成長股估值體系面臨 SEC 潛在下修壓力）</li>
+</ul>
+
+<h3>13.1 歷史估值分位（5 年框架）</h3>
+<table>
+<thead><tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>47.6x</td><td>N/A（FY22 虧損）</td><td>~35x</td><td>~120x</td><td>~35%</td></tr>
+<tr><td>Forward P/E</td><td>30.3x</td><td>~12x（2022 熊市）</td><td>~28x</td><td>~65x（2024/11）</td><td>~34%</td></tr>
+<tr><td>EV/EBITDA</td><td>37.9x</td><td>~15x</td><td>~30x</td><td>~55x</td><td>~55%</td></tr>
+<tr><td>P/FCF</td><td>40.9x</td><td>~18x</td><td>~35x</td><td>~80x</td><td>~37%</td></tr>
+<tr><td>P/S</td><td>29.4x</td><td>~8x</td><td>~20x</td><td>~50x</td><td>~51%</td></tr>
+</tbody>
+</table>
+<p>解讀：</p>
+<ol>
+<li>當前情緒：便宜至合理（Fwd PE 34%、P/FCF 37%；在 SEC 尾險 + high beta 環境下）</li>
+<li>上次此分位時（2023/3-6）基本面：Rev +20%、Margin 25%——遠差於當下；此次相同分位但基本面顯著優於歷史</li>
+<li>分位主驅動：SEC 調查定價（約 -15% PE discount）+ 高 Beta 波動下拉</li>
+</ol>
+
+<h3>13.2 PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>Fwd P/E（FY+1）</td><td>30.3x</td><td>-</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>38%</td><td>-</td></tr>
+<tr><td>PEG（3Y）</td><td>0.79</td><td><span class="pass">🟢 便宜</span></td></tr>
+<tr><td>PEG（FY+2 growth 31%）</td><td>0.97</td><td><span class="pass">🟢 便宜</span></td></tr>
+<tr><td>5Y CAGR（估 含遞減）</td><td>~28%</td><td>-</td></tr>
+<tr><td>PEG（5Y）</td><td>1.08</td><td><span class="warn">🟡 合理</span></td></tr>
+</tbody>
+</table>
+<p>3Y vs 5Y PEG 差 0.29：近期成長集中前端（non-gaming 2026-27 為主要釋放），後段需新 catalyst（CTV / 社交 platform rumor）支撐。</p>
+
+<h3>13.3 Reverse DCF</h3>
+<table>
+<tbody>
+<tr><td>當前市值</td><td>$161.27B</td></tr>
+<tr><td>基期 FCF（FY2025）</td><td>$3.94B</td></tr>
+<tr><td>WACC</td><td>10.5%（10Y UST 4.2% + Beta 2.50 × ERP 5.0% ≈ 16.7% 取保守 10.5%）</td></tr>
+<tr><td>永續成長率</td><td>3%</td></tr>
+</tbody>
+</table>
+<p>反推：市場隱含前 10 年 FCF CAGR ≈ 22%。對照：</p>
+<ul>
+<li>過去 3 年實際 FCF CAGR：113%（基期小，非指標）</li>
+<li>分析師 EPS CAGR 共識：38%（隱含低於）</li>
+<li>同業最快 FCF CAGR：META 25%、APP 38%</li>
+</ul>
+<p><strong>隱含預期判斷：🟢 隱含預期保守</strong>（22% &lt; 共識 38%）。</p>
+
+<h3>便宜理由檢驗（輕度觸發：Fwd PE 分位 34%）</h3>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>答案</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>市場為何低倍數？</td><td>SEC 調查 + class action 尾險定價 ~15% PE discount</td><td>理由合理</td></tr>
+<tr><td>Q2</td><td>財務支撐？</td><td>無——margin、Rev、FCF 皆擴張</td><td>無支撐</td></tr>
+<tr><td>Q3</td><td>護城河完整？</td><td>完整（SEC 尾險未實現）</td><td>完整</td></tr>
+<tr><td>Q4</td><td>FCF 品質誤解？</td><td>FCF/NI 1.18，無誤解</td><td>未誤解</td></tr>
+<tr><td>Q5</td><td>催化劑？</td><td>SEC 結論、self-serve GA、FY27 EPS 披露</td><td>有明確催化</td></tr>
+</tbody>
+</table>
+<p><strong>便宜理由檢驗結論：🟢 市場誤判</strong>（但前提：SEC 無重大處分）</p>
+
+<h3>13.4 同業估值比較</h3>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>APP</strong></td><td>$161B</td><td>30.3x</td><td>37.9x</td><td>0.79</td><td>72%</td><td>38%</td><td>~60%</td></tr>
+<tr><td>TTD</td><td>$17B</td><td>12x</td><td>18x</td><td>0.4</td><td>25%</td><td>30%</td><td>~20%</td></tr>
+<tr><td>META</td><td>$1.8T</td><td>25x</td><td>16x</td><td>2.1</td><td>34%</td><td>12%</td><td>~30%</td></tr>
+<tr><td>PINS</td><td>$25B</td><td>16x</td><td>13x</td><td>1.1</td><td>22%</td><td>15%</td><td>~12%</td></tr>
+<tr><td><strong>中位數</strong></td><td>-</td><td>~20x</td><td>~17x</td><td>~1.1</td><td>~30%</td><td>~22%</td><td>~25%</td></tr>
+</tbody>
+</table>
+
+<p><strong>溢折價邏輯</strong>：</p>
+<ol>
+<li>APP Fwd PE 溢價 ~50% over median（30 vs 20）；但 PEG 折價（0.79 vs 1.1）</li>
+<li>支撐溢價：FCF Margin 72% vs 30% 行業中位（2.4× 溢價正當化）；成長 38% vs 22%（1.7×）</li>
+<li>向中位回歸：股價下行 ~33%（PE 壓縮 50% 情境）</li>
+</ol>
+
+<h3>QC-30 同業溢價收斂壓測（觸發：APP PE 30x vs 同業中位 20x，溢價 50%）</h3>
+<ul>
+<li>情境 A：APP 不變，TTD/META 上修至均值 → 上行空間壓縮</li>
+<li>情境 B：APP 收斂 50% 至 25x（自身 30 + 同業 20 / 2）→ 隱含股價 $394（−17%）</li>
+<li>情境 B 股價 $394 高於 Bear Case $284 → 替代 Bear 取較保守者 = $284（維持）</li>
+<li>§1 加註「相對同業溢價 50%，收斂風險列為 R4」</li>
+</ul>
+
+<h3>橫向比較</h3>
+<table>
+<thead><tr><th>問題</th><th>APP</th><th>TTD</th></tr></thead>
+<tbody>
+<tr><td>假設全部兌現上行</td><td>+65%（$785 target）</td><td>+80%（$67 target）</td></tr>
+<tr><td>假設部分落空跌幅</td><td>−40%（SEC + peer 收斂）</td><td>−15%（無 SEC 風險）</td></tr>
+<tr><td>風報比最優</td><td>-</td><td><span class="pass">TTD（尾險小）</span></td></tr>
+</tbody>
+</table>
+<p><strong>橫向結論：🥈 APP 為次優選</strong>（AdTech AI 主題中，TTD 對「無 SEC 尾險」的偏好者為最優；APP 對「成長高確信」偏好者為最優）</p>
+
+<h3>13.5 估值五角驗證</h3>
+<table>
+<thead><tr><th>工具</th><th>訊號</th><th>依據</th></tr></thead>
+<tbody>
+<tr><td>估值體系（13.0）</td><td>🟡 模糊</td><td>SEC 尾險下修風險</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟢 便宜</td><td>Fwd PE 34% 分位</td></tr>
+<tr><td>PEG（13.2）</td><td>🟢 便宜</td><td>PEG 0.79</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟢 保守</td><td>隱含 22% CAGR &lt; 共識 38%</td></tr>
+<tr><td>同業（13.4）</td><td>🟡 合理溢價</td><td>PE 溢 50% 由 margin 正當化</td></tr>
+</tbody>
+</table>
+<p><strong>當前定價判斷：🟢 合理至便宜</strong>（4 🟢 + 1 🟡）</p>
+
+<h3>長期合理倍數</h3>
+<ul>
+<li>基準（§8 🟢）：25x</li>
+<li>Engine A（ROIC 60% &gt;&gt; 20%）：× 1.175</li>
+<li>Engine C（護城河 7 &lt; 9，不觸發）</li>
+<li>AI 🟢：× 1.10</li>
+<li><strong>最終長期合理倍數：25 × 1.175 × 1.10 ≈ 32x</strong>（採 PEG 1.0 嚴格約束下，PEG 安全網推估 38x 為上限；本報告 §2 E 採 38x）</li>
+</ul>
+
+<h3>分析師目標價</h3>
+<ul>
+<li>高 $860 / 中位 $655 / 低 $340（n=36）</li>
+<li>Wall Street Zen 12-month target $769</li>
+<li>本分析 38x × FY+1 EPS = $599；38x × FY+2 = $785；與共識範圍高度吻合</li>
+</ul>
+
+<h3>投資結論（完整版）</h3>
+<p><strong>財報信號與假設校準</strong>：</p>
+<ul>
+<li>H1：不變——Q4 margin 擴張間接支持結構性優勢，但 SEC 2026/2 確認「still ongoing」，結構性判定需再等 6-12 個月</li>
+<li>H2：強化——self-serve GA 按計畫 1H 2026；Stagwell 合作開啟 agency channel；e-com $1B+ run rate</li>
+<li>H3：不變——Fwd PE 分位仍在 34%，re-rating 需 SEC 結論 + FY27 EPS 披露</li>
+</ul>
+
+<p><strong>綜合訊號輸出（v12.0）</strong>：</p>
+<ul>
+<li>護城河等級：7/10 → B（估值燈 +1 → A）</li>
+<li>估值燈：🟢（Fwd PE 分位 34%、PEG 0.79）</li>
+<li>Pure MA：🟢 最佳進場</li>
+<li>大盤豁免：正常</li>
+<li>trap：🟡 觀察期</li>
+<li>QC-29 壓力測試通過率：1/4 → 降一級</li>
+<li><strong>綜合訊號：B</strong>（衛星候選）</li>
+<li>中期參考 R:R：2.93x（Base）</li>
+</ul>
+
+<p><strong>下行風險量化</strong>：</p>
+<ul>
+<li>短期下檔（Bear）：$283.86（−40.5%）</li>
+<li>中期下檔（Bear）：$372.06（−22.0%）</li>
+<li>W52 Low $276.83（參考）/ W104 Low $68.72（參考）</li>
+<li>若 FY+1 EPS 下修 10%：短期 R:R 降至 0.28x</li>
+</ul>
+
+<!-- =========== META / 版本修訂 =========== -->
+<h2 id="sec-meta">版本修訂紀錄與假設驗證對照</h2>
+
+<div class="hypothesis-box">
+<h3>版本修訂紀錄</h3>
+<table>
+<thead><tr><th>版本</th><th>日期</th><th>變更摘要</th></tr></thead>
+<tbody>
+<tr><td>v11.0</td><td>2026-04-16</td><td>初版：進場/觀望偏進場，底倉 17.5%；核心假設 H1 (AXON 結構性 ROAS) / H2 (e-com $1.45B) / H3 (PE re-rating) 建立；trap 🟡</td></tr>
+<tr><td><strong>v12.0</strong></td><td><strong>2026-04-18</strong></td><td><strong>升級至 v12.0 訊號燈架構。</strong>主要變化：① 廢除「最終倉位 %」輸出，改為 final_signal A+/A/B/C/X；② 四層判定（產業風向 × 品質 × 估值 × MA）獨立判定 + QC-22-30 九條規則；③ 護城河單一決定品質等級（本次 7/10 → B 級），估值燈 🟢 +1 至 A 級；④ 首次執行 QC-29 壓力測試（1/4 通過），訊號降一級；⑤ 首次執行 QC-30 同業溢價收斂測試（APP +50% vs 中位）；⑥ MA 使用 W200 替代 W250（IPO 2021/4 樣本不足）；⑦ 最終訊號：B（衛星候選）</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="hypothesis-box">
+<h3>假設驗證對照（vs v11.0）</h3>
+<table>
+<thead><tr><th>項目</th><th>上次（v11.0）</th><th>本次（v12.0）</th><th>邊際變化</th></tr></thead>
+<tbody>
+<tr><td>H1（AXON 結構性 ROAS 優勢）</td><td>不變（SEC 尚在調查）</td><td>不變——SEC 2026/2/20 官方確認「still active and ongoing」，無新裁罰訊號；Q4 margin 繼續擴張間接支持結構性</td><td>不變</td></tr>
+<tr><td>H2（e-commerce ≥ $1.45B FY2026）</td><td>強化（self-serve GA 按計畫）</td><td>持續強化——Stagwell 合作（2026/3/10）開啟 agency channel；e-com run rate $1B+；analyst consensus confirmed $1.45B</td><td>強化</td></tr>
+<tr><td>H3（PE re-rating 至 40-45x）</td><td>不變（分位 36%）</td><td>不變——Fwd PE 分位 34%（微降 2pp，因股價回檔後 EPS 上修 +0.3%）；re-rating 仍待 SEC 結論</td><td>不變</td></tr>
+<tr><td>R1 是否觸發（SEC 裁罰）</td><td>未觸發</td><td>未觸發——但 SEC 2/20 確認 active，風險仍在懸浮期</td><td>與上次同</td></tr>
+<tr><td>R2 是否觸發（e-com 滲透不如預期）</td><td>未觸發</td><td>未觸發——Stagwell 合作擴大渠道</td><td>削弱（R2 風險降低）</td></tr>
+<tr><td>R3 是否觸發（Meta 開放 API）</td><td>未觸發</td><td>未觸發——Meta 未發布任何開放 roadmap</td><td>與上次同</td></tr>
+<tr><td>裁決變化</td><td>觀望偏進場（底倉 17.5%）</td><td>B（衛星候選，v12.0 訊號燈）</td><td>語意相近但框架不同：v11 底倉 17.5% ≈ v12 衛星（3-7%），v12 因 QC-29 壓力測試失利 + trap 🟡 額外降級</td></tr>
+</tbody>
+</table>
+<p class="note">三個最關鍵新事實（與 v11 v12 裁決差異）：① QC-29 壓力測試 1/4（stress A/B/C 中期 R:R 皆不到 2.0，B 情境僅 1.44x，顯示 R:R 對倍數壓縮敏感）；② QC-30 首次執行，APP PE 相對同業中位溢 50%，收斂情境隱含 −17% 股價；③ 4 週股價漂移 +7.87%（未達 QC-22 10% 門檻，但近新高位置）。</p>
+</div>
+
+<p class="note">分析完成｜分析師：買側框架｜資料抓取 2026-04-18｜Schema v12.0</p>
+
+</div>
+</body>
+</html>
