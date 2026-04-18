@@ -87,10 +87,26 @@ def render_html(d):
     if not risks_html:
         risks_html = "• 無特別風險警示"
 
+    rationale_html = ""
+    if d.get("selection_rationale"):
+        sr = d["selection_rationale"]
+        bullets = []
+        if sr.get("inclusion_criteria"):
+            bullets.append(f'<li><strong>篩選標準：</strong>{sr["inclusion_criteria"]}</li>')
+        if sr.get("universe_size"):
+            bullets.append(f'<li><strong>候選池：</strong>{sr["universe_size"]}</li>')
+        if sr.get("why_these"):
+            bullets.append(f'<li><strong>為何選這幾檔：</strong>{sr["why_these"]}</li>')
+        if sr.get("why_reject"):
+            bullets.append(f'<li><strong>主要排除原因：</strong>{sr["why_reject"]}</li>')
+        if sr.get("sizing_logic"):
+            bullets.append(f'<li><strong>權重邏輯：</strong>{sr["sizing_logic"]}</li>')
+        rationale_html = f'<h2>§4 選擇邏輯</h2><ul>{"".join(bullets)}</ul>'
+
     overrides_html = ""
     if d.get("overrides"):
         items = [f'<li><strong>{o["level"]}</strong> {o["ticker"]}: {o["reason"]} (解除條件：{o.get("reversal","—")})</li>' for o in d["overrides"]]
-        overrides_html = f'<h2>§4 Override 清單</h2><ul>{"".join(items)}</ul>'
+        overrides_html = f'<h2>§5 Override 清單</h2><ul>{"".join(items)}</ul>'
 
     return f"""<!DOCTYPE html>
 <html lang="zh-Hant"><head><meta charset="UTF-8"><title>PM 儀表 {date}</title>
@@ -116,6 +132,7 @@ a{{color:#1E3A5F}}
 <ul>{actions_html}</ul>
 <h2>§3 風險備註</h2>
 <p class="muted">{risks_html}</p>
+{rationale_html}
 {overrides_html}
 <p class="muted" style="margin-top:20px">PM Skill v1.0 · <a href="/research/">回研究首頁</a></p>
 </body></html>
