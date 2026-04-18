@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>ISRG Intuitive Surgical ｜ DD Deep Dive ｜ v12.0 ｜ 2026-04-18</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { --nav:#1E3A5F; --accent:#3B82F6; --card:#FFFFFF; --bg:#F8FAFC; --stripe:#F1F5F9;
+  --green:#DCFCE7; --green-fg:#166534; --red:#FEE2E2; --red-fg:#991B1B; --yellow:#FEF9C3; --yellow-fg:#92400E;
+  --blue:#EFF6FF; --amber:#FFFBEB; --amber-line:#D97706; --warn:#FFF0E6; --warn-line:#F97316; --warn-fg:#C2410C; }
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color:#1F2937; margin:0; padding:0; line-height:1.7; font-size:14px; }
+.num, code { font-family: 'IBM Plex Mono', monospace; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 24px; }
+.topbar { position: sticky; top: 0; background:#fff; border-bottom:2px solid var(--nav); padding:10px 18px; z-index:10; display:flex; gap:24px; font-size:13px; align-items:center; flex-wrap:wrap;}
+.topbar span { color:#374151; } .topbar .val { color:var(--nav); font-weight:700; font-family:'IBM Plex Mono',monospace;}
+h1 { color:var(--nav); font-size:26px; margin:14px 0 18px; }
+h2 { background: var(--nav); color:#fff; padding:10px 14px; margin:28px 0 14px; border-left: 4px solid var(--accent); font-size:17px;}
+h3 { color:var(--nav); margin:20px 0 10px; font-size:15px; border-bottom:1px solid #E5E7EB; padding-bottom:4px;}
+h4 { color:var(--nav); margin:14px 0 8px; font-size:14px;}
+table { width:100%; border-collapse: collapse; background: var(--card); margin: 10px 0 18px; font-size:13px; border:1px solid #E5E7EB;}
+th { background: var(--nav); color:#fff; padding:8px 10px; text-align:left; font-weight:500;}
+td { padding:8px 10px; border-top:1px solid #E5E7EB; vertical-align:top;}
+tr:nth-child(even) td { background: var(--stripe);}
+.badge { display:inline-block; padding:2px 8px; border-radius:3px; font-size:12px; font-weight:500;}
+.badge-green { background: var(--green); color: var(--green-fg);} .badge-red { background: var(--red); color: var(--red-fg);}
+.badge-yellow { background: var(--yellow); color: var(--yellow-fg);} .badge-blue { background: var(--blue); color:#1E40AF;}
+.hypothesis-box { background: var(--blue); border-left: 4px solid var(--accent); padding:12px 16px; margin: 14px 0; color:var(--nav);}
+.hypothesis-box ul { margin:6px 0; padding-left:18px; } .hypothesis-box li { margin:4px 0; }
+.trap-box { background: var(--warn); border-left: 4px solid var(--warn-line); padding:12px 16px; margin:14px 0; color: var(--warn-fg); }
+.debate-row { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin: 12px 0;}
+.debate-card { padding:12px; border-radius:4px; }
+.bull-card { background:#F0FDF4; border-left:4px solid #16A34A;}
+.bear-card { background:#FFF1F2; border-left:4px solid #DC2626;}
+.arbiter-card { background:#F5F3FF; border-left:4px solid #7C3AED;}
+.verdict-card { background: var(--amber); border-left: 4px solid var(--amber-line); color:var(--warn-fg); padding:12px 16px; margin:12px 0;}
+.rr-row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin:12px 0;}
+.rr-short { background:#F0F9FF; border-left:4px solid #0284C7; padding:12px;}
+.rr-mid { background:#F5F3FF; border-left:4px solid #7C3AED; padding:12px;}
+.note { color:#6B7280; font-size:12px; font-style:italic;}
+.btn-print { position:fixed; right:18px; bottom:18px; background: var(--nav); color:#fff; border:none; padding:10px 16px; font-size:13px; cursor:pointer; border-radius:4px;}
+.num { font-family:'IBM Plex Mono',monospace; font-weight:500;}
+@media print { .topbar, .btn-print { display:none;} body { background: #fff; } .wrap { max-width:100%; padding: 10px;} h2 { background:#1E3A5F; -webkit-print-color-adjust:exact; print-color-adjust:exact;}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span><strong>Ticker：</strong><span class="val">ISRG</span></span>
+  <span><strong>抓取：</strong><span class="val">2026-04-18</span></span>
+  <span><strong>股價：</strong><span class="val">$469.21</span></span>
+  <span><strong>DD Schema：</strong><span class="val">v12.0</span></span>
+  <span><strong>yfinance 採集 + 8 次 web_search</strong></span>
+</div>
+<div class="wrap">
+<h1>ISRG Intuitive Surgical — 完整深度研究報告（v12.0）</h1>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。v12.0 變更：DD 輸出綜合訊號燈（A+/A/B/C/X），不再建議倉位 %，倉位決策交由 portfolio-manager skill 處理。</p>
+
+<!-- §1 -->
+<h2 id="sec-1">§1 ｜ 投資結論（Executive Summary）</h2>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢｜§9 護城河趨勢 加深（平台 + SP + da Vinci 5 三台引擎）｜§8 F AI 風險 🟢（AI 手術自動化反而成為 Digital Ecosystem 護城河強化器）</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9）｜體質 veto 1 項不過（毛利率 YoY -1.5pp）｜等級調整：A → A（不變，僅 1 項不過未達降級門檻）</li>
+<li><strong>估值燈 🔴 過熱：</strong>Fwd PE 46.92x（FY+1），5Y 分位 48%🟡，但 PEG 3.58（3Y CAGR 13.09%）> 2.5 → 取較嚴者 🔴｜盲點 1 救援：不啟動（PEG > 2.0）</li>
+<li><strong>Pure MA 狀態 🟠 暫不進場：</strong>W52 $509.19（斜率 -2.36%）/ W104 $500.28（斜率 +2.44%）/ W250 $379.49（斜率 +2.78%）｜現價 < W104 但 > W250，W250 斜率仍正｜盲點 2 救援：不啟動（未進入 ❌ 失效）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 現價 7,126 vs W104 6,092（高出 17%），無系統性風險</li>
+<li><strong>參考 R:R：</strong>短期 0.07x / 中期 0.52x｜壓力測試通過率 0/4（嚴重敏感，資訊性）｜現價已高於合理 P/E 區間對應的 2Y 目標 $553 的 85%</li>
+<li><strong>綜合訊號：<span style="font-size:20px">X（迴避 / 清倉訊號）</span></strong>（取自 §2 H）｜判定理由：估值燈 🔴 過熱 → 步驟 1 拒絕檢核觸發</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟢 非陷阱（基本面優異，只是估值透支未來 3 年成長）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜<strong>X = 迴避／清倉</strong>。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式是哪一種？</strong></td><td><strong>非陷阱</strong>。若必選次高風險，為「隱性資本密集」——維持 83.5% 市占 + da Vinci 5 / SP / Ion 三平台 R&D 壓力，但當前 FCF/NI 87%、ROIC 26.17%、資本強度 5.4% 均遠優於門檻，陷阱尚未顯形。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據？</strong></td><td>FY2025 ROIC 26.17%、FCF Margin 24.7%、FCF/NI 87%、毛利率 66%；2025 全球手術機器人市占 83.5%，裝機 1,721 台（da Vinci 5 870 台）+ SP procedure YoY +87%；國際 procedure +23% vs 整體 +18%，國際滲透率仍 < 35%、TAM 10x 空間；ROE 16.69%、Net Debt negative。所有 Munger 三維護城河指標達標。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁？</strong></td><td>本次 DD 的核心反駁 <strong>並非陷阱而是估值透支</strong>：PEG 3.58、Fwd PE 47x 對應 3Y EPS CAGR 僅 13.09%（從 18% 降檔），且 Medtronic Hugo 已於 2025-12 取得 FDA 泌尿科許可、J&amp;J Ottava 2026-01 FDA de novo 申請、CMR Versius 已獲 gallbladder removal 清單、中國本土 MicroPort Toumai 以 30% 低價攻城——競爭 R1 正在從威脅轉為現實事件。毛利率 YoY -1.5pp 是 <strong>體質 veto 唯一不過項</strong>。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td>(1) 季度 da Vinci procedure YoY 連 2 季 &lt; 10%；(2) 北美新裝機 YoY 連 2 季為負；(3) pro forma 毛利率連 2 季 YoY -2%p；(4) 國際 procedure &lt; 15%。</td></tr>
+</table>
+<p><strong>最終定性：<span class="badge badge-green">🟢 非陷阱</span></strong>（基本面無陷阱，但估值燈已 🔴，綜合訊號 X 為估值驅動而非品質驅動）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>季度 da Vinci procedure YoY 成長率</td><td>§5 H1 / §6</td><td>🔵 核心假設驗證信號</td><td>連續 2 季 &lt; 10%（跌破 2026 guidance 13–15% 下緣 2pp）</td></tr>
+<tr><td>2</td><td>國際 procedure 成長率 / 國際營收佔比</td><td>§5 H2 / §8A</td><td>🔵 長期成長領先信號</td><td>國際 procedure YoY &lt; 18%，或國際佔比連 2 季停滯 ≤ 35%</td></tr>
+<tr><td>3</td><td>Fwd PE（FY+1）+ Medtronic Hugo US 裝機</td><td>§13 / §9</td><td>短期估值與競爭信號</td><td>Fwd PE 突破 55x 或回落至 35x；Hugo US 裝機 6 個月內超 200 台</td></tr>
+</table>
+
+<!-- §2 -->
+<h2 id="sec-2">§2 ｜ 產業風向 × 品質 × 估值燈 × Pure MA 四層判定（v12.0）</h2>
+
+<h3>0｜產業風向燈（v12.0 新增）</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（da Vinci 5 + SP + Ion 三平台 + Digital Ecosystem 疊加）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 受益（AI 手術自動化 / 術式規劃反而強化 da Vinci 生態）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話判斷</td><td>全球手術機器人滲透率仍 &lt; 7%（成熟前列腺切除 ~85%），TAM 5 年 2-3x，ISRG 83.5% 市占 + 耗材年金性質 = SaaS-like 醫材平台</td></tr>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td><span class="badge badge-red">❌ 不過</span></td><td>GM YoY -1.5pp（單年）；3 年累積 -1.2pp（67.2% → 66.0%）；FY2025 66% vs FY2024 67.5%</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge badge-green">✅</span></td><td>FY2025 $2.49B / $2.86B = 87%</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge badge-green">✅</span></td><td>yfinance eps_trend：90d $9.71 → 60d $10.01 → current $10.00（略上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge badge-green">✅</span></td><td>4 季 YoY 皆 &gt; +17%，Q4 2025 +19%</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge badge-green">✅</span></td><td>Total Debt $171M vs Cash $5.93B = Net Cash $5.76B</td></tr>
+</table>
+<p><strong>體質 veto 結果 = 1 項不過（毛利率）→ 0-2 項 → 等級不變。</strong></p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>9 / 10</strong></td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級</td></tr>
+<tr><td>體質 veto 調整</td><td>1 項不過 → 等級不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>⭐ A 級</strong></td></tr>
+<tr><td><strong>底倉（目標倉位的 %）</strong></td><td><strong>25%</strong>（若進場適用；但本次 gate 🔴 → 不進場）</td></tr>
+</table>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 (FY2026) Non-GAAP EPS</td><td><span class="num">$10.00</span></td><td>yfinance earnings_estimate 0y（n=28，YoY +12.02%）</td></tr>
+<tr><td>FY+2 (FY2027) Non-GAAP EPS</td><td><span class="num">$11.43</span></td><td>yfinance +1y（n=28，YoY +14.23%）</td></tr>
+<tr><td>FY+3 (FY2028) Non-GAAP EPS（§8 邏輯推導）</td><td><span class="num">$12.92</span></td><td>國際 procedure 再加速 +13%（§8A Runway）</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td><span class="num">13.09%</span></td><td>($12.92 / $8.93)^(1/3) − 1</td></tr>
+<tr><td>當前 Fwd PE（FY+1）</td><td><span class="num">46.92x</span></td><td>$469.21 / $10.00</td></tr>
+<tr><td>當前 Fwd PE（FY+2）</td><td><span class="num">41.05x</span></td><td>$469.21 / $11.43</td></tr>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY+1）</td><td><span class="num">46.92x</span></td></tr>
+<tr><td>5Y Fwd PE 範圍（低 / 中 / 高）</td><td>~30x / ~47x / ~65x</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><span class="num">48%</span>（中位附近）→ 🟡 合理</td></tr>
+<tr><td>3Y EPS CAGR</td><td><span class="num">13.09%</span></td></tr>
+<tr><td>PEG（Fwd PE / 3Y CAGR）</td><td><span class="num">3.58</span> → 🔴 過熱（&gt; 2.5）</td></tr>
+<tr><td>優先序：分位與 PEG 取較嚴</td><td><strong>🔴 過熱</strong></td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🔴 過熱</strong></td></tr>
+<tr><td><strong>套用規則</strong></td><td><strong>直接拒絕（0%）→ final_signal X</strong></td></tr>
+</table>
+
+<h4>🛡️ 盲點 1 救援檢查</h4>
+<p>檢查條件：§8 長期成長性 🟢 ✅｜PEG &lt; 2.0 ❌（3.58 &gt;&gt; 2.0）｜§8 F AI 🟢 ✅</p>
+<p><strong>救援不啟動</strong>（PEG 3.58 遠高於 2.0 門檻）。即使其他兩條件滿足，PEG 已達「實質透支」水位，機械救援會傷害紀律。</p>
+
+<h3>E｜R:R 與 Bear Case（參考用，不主導裁決）</h3>
+
+<h4>參考目標價（基於 §13.5 長期合理倍數 48.4x = 40x 產業基準 × 1.10 護城河 × 1.10 AI；40x 反映 ISRG 類 SaaS 耗材商業模式之結構性溢價）</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1Y）</td><td>$10.00 × 48.4x</td><td>$484.00（+3.2%）</td></tr>
+<tr><td>中期（2Y）</td><td>$11.43 × 48.4x</td><td>$553.21（+17.9%）</td></tr>
+</table>
+
+<h4>Bear Case（基本面惡化）</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（§8E 成長熄火至 10%）</td><td>30x</td><td>30x</td></tr>
+<tr><td>Bear EPS（× 0.9）</td><td>$9.00</td><td>$10.29</td></tr>
+<tr><td>Bear 股價</td><td>$270.00</td><td>$308.61</td></tr>
+<tr><td>下行距離</td><td>-42.5%</td><td>-34.2%</td></tr>
+<tr><td>R:R（上行 / 下行距離比）</td><td><span class="num">0.07x</span></td><td><span class="num">0.52x</span></td></tr>
+</table>
+
+<p class="note">W52 Low $429.59 / W104 Low $375.33（參考，不用於 R:R）。Bear 股價 $270 顯著低於 W104 Low $375，故 Bear 假設較保守。</p>
+
+<h4>R:R 壓力測試（QC-29 新增）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr>
+<tr><td>Base</td><td>48.4x 合理 PE，13.09% CAGR</td><td>0.07x</td><td>0.52x</td></tr>
+<tr><td>壓力 A</td><td>EPS −10%（CAGR 降至 ~12%）</td><td>-0.17x</td><td>~0.3x</td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（48.4 → 38.7x）</td><td>-0.41x</td><td>-0.17x</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（ISRG 46.92 vs 同業 22 → ISRG 34x）</td><td>-0.65x</td><td>-0.50x</td></tr>
+</table>
+<p><strong>壓力測試通過率：0/4（0%）</strong> — 已觸發 QC-29「R:R 對壓力情境極度敏感」警報，綜合訊號需降一級。但原始 gate 已 🔴 → X，無可再降。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td><span class="num">$469.21</span></td></tr>
+<tr><td>W52 / 斜率</td><td>$509.19 / <span class="num">-2.36%</span></td></tr>
+<tr><td>W104 / 斜率</td><td>$500.28 / <span class="num">+2.44%</span></td></tr>
+<tr><td>W250 / 斜率（13 週）</td><td>$379.49 / <span class="num">+2.78%</span></td></tr>
+<tr><td>判定邏輯</td><td>現價 &lt; W104（500.28）&amp; 現價 &lt; W52（509.19），但 &gt; W250（379.49），W250 斜率 +2.78% 仍正</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>🟠 暫不進場</strong>（介於 W104 與 W250 之間，W250 斜率仍正）</td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>× 0</strong>（加追蹤池，等站回 W104 4 週確認）</td></tr>
+</table>
+
+<h4>🛡️ 盲點 2 救援檢查</h4>
+<p>救援僅在 ❌ 系統失效時觸發。本標的為 🟠 暫不進場，不觸發盲點 2。</p>
+
+<h4>QC-22 股價漂移 + QC-24 Intraday 訊號</h4>
+<ul>
+<li>4 週前均價 $456.14 vs 現價 $469.21 = 漂移 <strong>+2.87%</strong>（&lt; 10%，無警示）</li>
+<li>近 5 交易日 OHLC：4/13 $459、4/14 $467、4/15 $468、4/16 收 $458（盤中 low $454 後收上，無衝高回落）、4/17 收 $469</li>
+<li>4/16 intraday range 3.9%（High 471.80 vs Low 454.00），屬正常振幅，無 QC-24 警示</li>
+</ul>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td><span class="num">7,126.06</span></td></tr>
+<tr><td>大盤 W104</td><td><span class="num">6,092.49</span></td></tr>
+<tr><td>系統性風險</td><td><span class="badge badge-green">否（高出 16.97%）</span></td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>⭐ A</td></tr>
+<tr><td>gate（§2 D）</td><td>🔴 過熱</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟠 暫不進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong style="font-size:18px">X（迴避 / 清倉訊號）</strong></td></tr>
+</table>
+<p><strong>判定理由：</strong>步驟 1 拒絕檢核觸發（gate 🔴 過熱 PEG 3.58 + MA 🟠 暫不進場兩項同時達拒絕門檻）。即使品質 A 級、產業順風、大盤正常，估值透支未來 3 年成長 + 價格技術面尚未站回 W104，故不進場。</p>
+
+<h3>I｜長期展望（3–5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（全球手術機器人滲透率 &lt; 7%；國際佔比 35% 尚有翻倍空間）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（da Vinci 5 + SP 雙平台 + Digital Ecosystem）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p><strong>一句話說明：</strong>🟢 順風，A 級護城河 9/10，全球 83.5% 市占 + 耗材年金模式。估值燈 🔴 過熱（PEG 3.58）+ Pure MA 🟠 暫不進場，即使 MDT Hugo 已 FDA，2026 procedure guidance 13-15% 已部分消化降檔。建議等 Fwd PE 回落至 35x（對應 ~$350）或 Pure MA 站回 W104 $500 再評估。</p>
+
+<!-- §3 -->
+<h2 id="sec-3">§3 ｜ 三方辯論摘要</h2>
+
+<div class="debate-row">
+<div class="debate-card bull-card">
+<h4>【多頭辯護人｜Munger 模式】</h4>
+<ul>
+<li><strong>護城河（§9）：</strong>ISRG 是「類 SaaS 醫材平台」典範——10,670 台累積裝機 × 每年耗材 ~$6B 年金 × 70,000+ 認證醫師 × 3,000 家醫院流程 = 不可複製的生態護城河。Hugo/Ottava 即使 FDA 也需 5-10 年訓練週期才能動搖。</li>
+<li><strong>成長（§8）：</strong>SP procedure YoY +87%（2025）+ da Vinci 5 870 台首年 + 國際 +23%，三引擎同時加速；全球滲透率仍 &lt; 7%，TAM 10x 空間。</li>
+<li><strong>估值（§13）：</strong>Fwd PE 47x 在 5Y 中位附近；市場已把 2026 procedure 降檔 18% → 13-15% 的擔憂定價進去（股價從 $600 回落至 $469，-22%）。</li>
+</ul>
+<p><strong>多頭最強一句：</strong>「3 年後 da Vinci 5 + SP + 國際三引擎同時兌現，Fwd PE 仍可望維持在 45-55x。」</p>
+</div>
+<div class="debate-card bear-card">
+<h4>【空頭檢察官｜Burry 模式】</h4>
+<ul>
+<li><strong>基本面路徑：</strong>Medtronic Hugo 2025-12 FDA 泌尿科已獲許可、2026 Q1 已完成首例 US 案例；J&amp;J Ottava 2026-01 FDA de novo 申請；CMR Versius gallbladder de novo；中國 MicroPort Toumai 80 台裝機。<strong>競爭 R1 已從威脅變成現實事件</strong>。2026 guidance 降至 13-15% procedure 成長，首次出現結構性降檔訊號。</li>
+<li><strong>估值壓縮路徑：</strong>PEG 3.58 對應 CAGR 僅 13%（FY+2 growth 14.23%）；若市場把 ISRG 從「SaaS 醫材」re-rate 為「一般醫材龍頭」（MDT 14.5x、JNJ 16.4x、SYK 22.7x、BSX 28.5x），同業溢價收斂 50% 即對應 Fwd PE 34x → 股價 $340。</li>
+<li><strong>催化劑：</strong>Q1 2026 財報 4/21 公告，若 procedure growth &lt; 13% 或 guide-down → 第一波恐慌賣壓；CEO 傳承期（Dave Rosa 首年）執行風險。</li>
+</ul>
+<p><strong>空頭最大威脅：</strong>Hugo + Ottava 雙向攻勢 + 同業溢價收斂 50% → 18 個月內股價有 28-40% 下行空間。</p>
+</div>
+<div class="debate-card arbiter-card">
+<h4>【估值仲裁員｜Damodaran 模式】</h4>
+<table>
+<tr><th>維度</th><th>比對</th><th>評分</th></tr>
+<tr><td>隱含 vs 歷史 FCF CAGR</td><td>隱含 ~15% vs 3Y 歷史 ~20%</td><td>1.5 / 2</td></tr>
+<tr><td>隱含 vs 共識 EPS CAGR</td><td>隱含 ~15% vs 共識 13.09%</td><td>1 / 2</td></tr>
+<tr><td>vs 同業最快 FCF CAGR</td><td>ISRG 排第 1</td><td>2 / 2</td></tr>
+<tr><td>兌現條件苛刻度</td><td>需 procedure 15%+ 持續 5 年 + 國際 25% → 2 個假設同時</td><td>1 / 2</td></tr>
+<tr><td>歷史先例</td><td>ISRG 自身 2018-2022 曾維持類似水準</td><td>2 / 2</td></tr>
+</table>
+<p><strong>隱含預期可信度：7.5 / 10。仲裁員一句：</strong>「可信但偏樂觀；PEG 3.58 已充分反映，任何 guidance 下修將直接穿透估值。」</p>
+</div>
+</div>
+
+<div class="verdict-card">
+<h4>【裁決】</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>「類 SaaS 醫材平台」+ 三引擎並進 + 滲透率 &lt; 7%</td></tr>
+<tr><td>空頭最大威脅</td><td>Hugo/Ottava/Versius/MicroPort 同時發力 + 同業溢價收斂 50% → 股價 -28% 到 -40%</td></tr>
+<tr><td>估值仲裁評分</td><td>7.5 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>迴避（估值透支，等待更好的進場點）</strong></td></tr>
+<tr><td>裁決理由</td><td>品質無爭議（A 級），但估值燈 🔴（PEG 3.58 + 壓力測試 0/4）+ MA 🟠 暫不進場（現價 &lt; W104 但 &gt; W250）= 雙重不佳進場點。v12.0 機制下 gate 🔴 即觸發 X。等 Q1 2026 4/21 財報後：若 procedure &gt; 15% 且 guide-raise → 等 Pure MA 站回 W104（$500）再進場；若 guide-down → 等 Fwd PE 回落至 35x 對應 $350 再評估。</td></tr>
+</table>
+<p><strong>QC-13 自我攻擊（推翻 X 的 3 個反駁）：</strong></p>
+<ol>
+<li>「PEG 3.58 是否低估了平台溢價？」→ 部分成立，ISRG 應享溢價但 3.58 已屬全球最高分位之一；若以 FY+2 growth 14.23% 計算 PEG 仍 2.88 &gt; 2.5，數字層面無法救回 🟠。</li>
+<li>「MA 🟠 是否為健康技術回檔？」→ 可能，但現價 $469 距 W104 $500 差 6%，未站回前技術面未恢復。即使是「買回撤」，v12.0 紀律要求等站回 W104 4 週才進場。</li>
+<li>「Q1 2026 財報 Beat + Hugo 影響低於預期 → 短期反彈？」→ 可能 5-10% 反彈，但本 DD 時間軸 3-5 年視角，短期 beat 不改變 PEG 3.58 的估值位置，仍應等回檔。</li>
+</ol>
+<p>結論：三反駁均不足以推翻 X 裁決。</p>
+</div>
+
+<!-- §4 -->
+<h2 id="sec-4">§4 ｜ 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Intuitive Surgical 解決的根本痛點是<strong>「把高侵入性、高風險、高學習曲線的外科手術，轉化為可重複、可量測、可持續改善的精準手術流程」</strong>。da Vinci 讓外科醫師在 3D 高清視野下透過腕式器械執行 &lt; 10mm 切口微創手術，大幅降低出血、併發症與住院天數。2025 年全球執行 ~3.2M+ 次手術（procedure +18%），累積裝機 12,000+ 台。</p>
+<p>若 ISRG 明天消失：(1) ~20M 累積 da Vinci 手術中，婦科、泌尿、胸腔、一般外科大宗手術將被迫回退至開放或傳統腹腔鏡，感染與恢復時間翻倍；(2) 70,000+ 受訓醫師失去熟練平台；(3) 3,000+ 家醫院 OR 流程須重建。再訓練週期至少 5-10 年。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<ul>
+<li><strong>地緣政治曝險：</strong>Instruments &amp; Accessories 主要於墨西哥 Mexicali 生產 → 美墨關稅升至 10-25% 會壓迫毛利（公司已承認 2026 guidance 含 1.2% 營收的關稅影響；2025 Q4 關稅拖累 60bp，主要來自中國）。</li>
+<li><strong>技術替代風險：</strong>(a) Medtronic Hugo 2025-12 FDA 獲批（泌尿科），2026-Q1 已完成首例 US 案例；(b) J&amp;J Ottava 2026-01 FDA de novo 申請；(c) CMR Versius de novo gallbladder；(d) 中國 MicroPort Toumai 80 台裝機，以 30% 低價攻城；(e) AI 自動縫合若被他平台率先商業化，da Vinci 可能被視為「硬體優勢、軟體落後」。</li>
+<li><strong>管理層失職：</strong>Gary Guthart 2025 由 CEO 轉 Executive Chair、Dave Rosa 接任首年（2026 是關鍵考驗年）；FY2025 回購均價高於現價（配置不當風險）；SBC $788M（7.8% 營收）偏高。</li>
+<li><strong>價值陷阱路徑：</strong>最可能是「隱性資本密集」——每年 R&amp;D $1.3B + Capex $0.5-1.1B 維持 3 個平台。但 FCF/NI 87%、Capex/Rev 5.4%、ROIC 26%，陷阱尚未顯形。</li>
+</ul>
+
+<!-- §5 -->
+<h2 id="sec-5">§5 ｜ 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>3-5 年（與 da Vinci 5 全球鋪設週期對齊）</td></tr>
+<tr><td><strong>主要驅動理由</strong></td><td>2024-Q3 da Vinci 5 FDA 全面商用化，2025 年裝機 870 台，2026-2028 全球鋪設高峰，2029+ 進入替換週期。估值修復需 procedure 13-15% 降檔被消化 + 國際 penetration 重新加速。</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>訊號：季度 procedure 成長率、國際佔比、da Vinci 5 / SP 裝機、pro forma 毛利率、競品新裝機；噪音：單季 EPS beat/miss ≤ 3%、匯率、1-2 季 GM 波動 &lt; 1%p。</td></tr>
+</table>
+
+<h3>B｜三個核心假設（沿用 v11.0 並校準）</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>da Vinci 5 + SP 平台組合在 2026-2028 維持 &gt; 80% 全球手術機器人市占，抵擋 Medtronic Hugo、J&amp;J Ottava、CMR Versius 衝擊</td><td>全球市占、季度 ISRG 新裝機 vs 競品新裝機（IQVIA）、SP procedure YoY</td><td>每季財報 + IQVIA 季度追蹤</td></tr>
+<tr><td>H2</td><td>國際 procedure 成長率維持 &gt; 20%，國際營收佔比從 2025 的 35% 擴大至 2028 的 42%</td><td>國際 procedure YoY、國際營收絕對值、歐洲/日本/中國裝機量</td><td>每季財報 + Analyst Day</td></tr>
+<tr><td>H3</td><td>市場接受 ISRG 長期合理 Fwd PE 在 45-55x 區間（反映類 SaaS 耗材模式 + ROIC 26% + 平台護城河）</td><td>Fwd PE 相對 5Y 中位、同業溢價幅度、PEG 分位</td><td>每半年估值校準</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Medtronic Hugo（2025-12 FDA）+ J&amp;J Ottava（2026-01 申請）+ CMR Versius 在 2026-2027 同時發力，ISRG 北美新裝機被吃掉</td><td>H1</td><td>ISRG 北美新裝機 QoQ、競品 US 累積裝機</td><td>ISRG 北美新裝機連 2 季 YoY &lt; 0 或新裝機佔全球 &lt; 70%</td></tr>
+<tr><td>R2</td><td>中國本土機器人政策扶植（MicroPort Toumai 80 台、微創、威高、術銳）+ 關稅升級，壓縮中國與亞洲市場 ISRG 份額</td><td>H2</td><td>中國 ISRG 裝機量、美中關稅（目前美 145% / 中 125%）</td><td>中國新裝機連 2 季 &lt; 40 台，或美中關稅影響 &gt; 2.5% 營收</td></tr>
+<tr><td>R3</td><td>CEO 傳承期間（Dave Rosa 接任首年 = 2026）執行失準：供應鏈、da Vinci 5 全球推進、歐洲監管</td><td>H1, H2</td><td>Pro forma 毛利率、國際 procedure 成長、guidance 達成率</td><td>Pro forma 毛利率連 2 季 YoY &lt; 66%，或 guidance 下修 &gt; 3%</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>3-5 年持有期內此事件是否影響 procedure 成長率、市占或毛利率？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（市占）/ H2（國際）/ H3（估值）中的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>是否超越 R1-R3 警戒閾值？若只是單季 beat/miss ≤ 3% 則為噪音。</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>(a) Pure MA 站回 W104（$500）4 週後確認 + procedure &gt; 13%；或 (b) Fwd PE 回落至 35x 對應 ~$350（Bear case 稀釋情境）</td><td>建倉（倉位由 PM skill 決定）</td></tr>
+<tr><td><strong>加碼</strong></td><td>Q2/Q3 2026 procedure YoY ≥ 14% + 國際 ≥ 22% + H2 兌現 + Fwd PE &lt; 40x</td><td>加碼（由 PM 決定）</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 競品吃掉新裝機 / R2 中國曝險 / Fwd PE 突破 60x → 減倉</td><td>減碼（由 PM 決定）</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 推翻：北美新裝機連 2 季 YoY &lt; 0 + 毛利連 2 季 YoY &lt; 66%；或 §8 衰退信號 ≥ 3 亮燈</td><td>清倉</td></tr>
+</table>
+
+<!-- §6 -->
+<h2 id="sec-6">§6 ｜ 即時財報情報</h2>
+<p class="note">最新已公告為 FY2025 Q4（2026-01-22 發布）；FY2026 Q1 將於 2026-04-21 公告（本 DD 日後 3 天）。共識：Revenue $2.61B（+15.75% YoY），Non-GAAP EPS $2.08（+14.92% YoY）。</p>
+
+<h3>① FY2025 Q4 關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$2.87B</td><td>~$2.78B</td><td><span class="badge badge-green">Beat</span></td><td>+19%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>~$2.21</td><td>~$2.20</td><td><span class="badge badge-yellow">In-line</span></td><td>+12-14%</td></tr>
+<tr><td>FCF（全年 2025）</td><td>$2.49B</td><td>—</td><td><span class="badge badge-green">+91%</span></td><td>+91%</td></tr>
+<tr><td>Gross Margin（全年）</td><td>66.0%</td><td>~67%</td><td><span class="badge badge-yellow">Slight Miss</span></td><td>-1.5pp</td></tr>
+<tr><td>Operating Margin（GAAP, 全年）</td><td>29.3%</td><td>~28%</td><td><span class="badge badge-green">Beat</span></td><td>+1.2pp</td></tr>
+</table>
+
+<h4>FY2025 全年要點</h4>
+<ul>
+<li>Revenue $10.06B（+20.5%）｜Instruments &amp; Accessories $6.02B（+18.5%）/ Systems $2.47B（+25.8%）/ Services $1.57B（+20.3%）</li>
+<li>Net Income $2.86B（+23%）；Diluted EPS $7.88（TTM GAAP）/ $8.93（Non-GAAP）</li>
+<li>Procedure +18% YoY；裝機 1,721 台（da Vinci 5 870 台，SP procedure +87% 全年、Q3 2025 +91%）；國際 procedure +23%</li>
+<li>FCF $2.49B（+91%，反映 Capex 由 $1.11B 縮回 $0.54B）</li>
+</ul>
+
+<h3>② 財報對 §5 假設邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（市占防禦）</td><td><span class="badge badge-green">＋ 強化</span></td><td>da Vinci 5 上市首年 870 台 + SP procedure +87%，雙平台同時放量；utilization 超越前代；但 Hugo FDA 獲批已是「R1 事件成立」，H1 的衝擊分母開始擴大</td></tr>
+<tr><td>H2（國際加速）</td><td><span class="badge badge-green">＋ 強化</span></td><td>國際 +23% &gt; 整體 +18%，佔比 35%</td></tr>
+<tr><td>H3（估值穩定）</td><td><span class="badge badge-red">－ 削弱（輕度）</span></td><td>2026 procedure guidance 13-15% &lt; 2025 的 18%，市場修正 EPS；Fwd PE 從 2024 底 65x 壓縮至 47x；PEG 3.58 仍高，表明市場尚未完全消化「競爭升級 + 降檔」</td></tr>
+</table>
+
+<h3>③ Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>中性偏保守。Dave Rosa 首場 call 強調「disciplined global rollout of da Vinci 5」，相較 Guthart 時期顯著轉保守。</li>
+<li><strong>Forward Guidance：</strong>2026 procedure growth 13-15%（vs 2025 18%）；Pro forma GM 67-68%（含 1.2% 關稅影響）；Opex growth 11-15%；Capex $0.7-0.85B。</li>
+<li><strong>反覆強調：</strong>"disciplined global rollout"、"improving utilization"、"international expansion focus"、"capital investment in capacity"。</li>
+<li><strong>迴避議題：</strong>(1) Hugo FDA 獲批後的競爭回應具體策略；(2) 中國份額與關稅量化拆解；(3) da Vinci 5 vs Xi 定價溢價幅度。</li>
+</ul>
+
+<h3>④ 產業 Imply</h3>
+<ul>
+<li><strong>需求端：</strong>全球滲透率仍 &lt; 7%，國際 +23% 顯示歐洲/日本/新興市場進入規模化採用期</li>
+<li><strong>供給端：</strong>Capex 2026 指引 $0.7-0.85B 升，反映對 2-3 年訂單能見度有信心</li>
+<li><strong>競爭格局：</strong>Q4 2025 pro forma GM 37% 與 System ASP 穩定，Hugo/Versius 尚未構成即時價格壓力；但 13-15% procedure guidance 部分反映「部分 case 被競品吃掉」</li>
+<li><strong>總體：</strong>tariff 1.2% revenue 影響、hospital capex 謹慎、美中關稅為 downside</li>
+</ul>
+
+<!-- §7 -->
+<h2 id="sec-7">§7 ｜ 核心門檻檢核</h2>
+
+<h3>EPS 共識（yfinance）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>基期 FY2025 Non-GAAP EPS</td><td>$8.93</td><td>yfinance yearAgoEps</td></tr>
+<tr><td>FY+1 (FY2026E)</td><td>$10.00（+12.02%，n=28）</td><td>yfinance 0y</td></tr>
+<tr><td>FY+2 (FY2027E)</td><td>$11.43（+14.23%，n=28）</td><td>yfinance +1y</td></tr>
+<tr><td>FY+3 (FY2028E) 邏輯推導</td><td>$12.92（+13% YoY）</td><td>§8 Runway：國際再加速 + SP 滲透 + da Vinci 5 全球鋪設進入第 3 年</td></tr>
+<tr><td>3Y EPS CAGR (Non-GAAP)</td><td><span class="num">13.09%</span></td><td>($12.92/$8.93)^(1/3)−1</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge badge-green">✓✓</span></td><td>FY2025 FCF Margin = $2.49B / $10.06B = 24.7%</td></tr>
+<tr><td>正規化 FCF Margin（5 年）</td><td>5 年均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="badge badge-green">✓✓</span></td><td>5Y: 14.7% / 28.9% / 15.4% / 15.6% / 24.7% = 均 19.9%，最低谷 14.7%（2021）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% &gt; WACC</td><td><span class="badge badge-green">✓✓</span></td><td>FY2025 ROIC ~26.2%，WACC ~9% → 超額 +17pp</td></tr>
+<tr><td>ROIC 穩定性（10 年）</td><td>≥ 70% 的年份 &gt; 15%</td><td><span class="badge badge-green">✓✓</span></td><td>10/10 達標（過去 10 年全 &gt; 20%）</td></tr>
+<tr><td>毛利率定價能力（10 年）</td><td>≥ 70% 年份持續改善</td><td><span class="badge badge-yellow">⚠️</span></td><td>10 年 67% → 66%，近 3 年 -1.5pp（da Vinci 5 初期 mix + 關稅）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5%（優）/ &lt; 10%（尚可）</td><td><span class="badge badge-green">✓</span></td><td>FY2025 Capex $0.54B / $10.06B = 5.4%（2024 例外 13.3% 為 da Vinci 5 產能擴張）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td><span class="badge badge-red">✗</span></td><td>Non-GAAP 3Y CAGR 13.09%（未達 20% 門檻）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="badge badge-red">✗</span></td><td>3.58（Fwd PE 46.92 / CAGR 13.09）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7</td><td><span class="badge badge-green">✓✓</span></td><td>Total Debt $171M，Cash $5.93B → Net Cash，D/E 名義 0.953 實際偏誤（主要是 lease）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge badge-green">是</span></td><td>Cash $5.93B &gt; Debt $171M 的 34x</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge badge-green">✓</span></td><td>9/10（§9）</td></tr>
+</table>
+<p><strong>最大財務弱點：</strong>毛利率 3 年累積 -1.5pp；EPS CAGR 降至 13%，PEG 3.58。<strong>Munger 三維評級：🟡</strong>（ROIC + 資本密集達標，毛利率偏弱）</p>
+
+<h3>⚠️ 低估值四問（本次不觸發）</h3>
+<p>Fwd PE 48% 分位（未 ≤ 25%），P/FCF 亦無低分位觸發 → 不執行四問檢驗。</p>
+
+<!-- §8 -->
+<h2 id="sec-8">§8 ｜ 長期成長性評估</h2>
+
+<h3>A｜成長跑道</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（億美元）</td><td>~$35B（2026）</td><td>手術機器人全球市場</td></tr>
+<tr><td>可達 TAM（億美元）</td><td>~$90-120B（2030-2035）</td><td>滲透率從 7% 提升至 20%+</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>83.5% / ~7%</td><td>市佔極高，但滲透率極低</td></tr>
+<tr><td>達 30% 滲透率所需年數</td><td>~10 年</td><td>以 15% 年增速估</td></tr>
+<tr><td><strong>Runway</strong></td><td><strong>≥ 10 年</strong></td><td>符合「高確信長期複利」</td></tr>
+</table>
+<p><strong>Runway 解讀：🟢 ≥ 10 年 → 支撐高估值倍數溢價。</strong></p>
+
+<h3>B｜成長品質</h3>
+<p><strong>① 有機 vs 無機：</strong>有機 ~95%（過去 5 年無大型併購），併購僅為 bolt-on（Orpheus Medical 2023、少數策略投資）。</p>
+<p><strong>② 定價 vs 量：</strong>量驅動為主（procedure +18%、裝機 +19%、國際 +23%）；定價小幅上升（da Vinci 5 對 Xi 有溢價，system ASP 穩定）。</p>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>強化型</strong>：每多一台裝機 → 更多醫師受訓 → 更多手術案例 → 更多耗材訂單 → Digital Ecosystem（My Intuitive、Case Insights、ProctorAI）數據累積 → 強化 AI 訓練 → 護城河擴大。典型「網路效應 + 數據飛輪」正循環。</p>
+
+<h3>D｜ROIC 與 FCF</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>26.2%</td><td>~18%</td><td>↑</td><td><span class="badge badge-green">✓✓</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+17pp</td><td>+9pp</td><td>↑ 擴大</td><td><span class="badge badge-green">✓✓</span></td></tr>
+<tr><td>FCF Margin</td><td>24.7%</td><td>15.4%</td><td>↑</td><td><span class="badge badge-green">✓✓</span></td></tr>
+<tr><td>FCF / NI</td><td>87%</td><td>80%</td><td>↑</td><td><span class="badge badge-green">✓</span></td></tr>
+<tr><td>Reinvestment</td><td>合理</td><td>—</td><td>→</td><td><span class="badge badge-green">✓</span></td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 Fwd PE</th><th>估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>仍高於市場</td><td>40x</td><td>-15%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>回歸市場平均</td><td>30x</td><td>-36%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>成熟低成長</td><td>22x</td><td>-53%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>GM YoY -1.5pp（單年，非連 2 季）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>市占縮減（12 個月）</td><td>仍 83.5%（2025）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>da Vinci 5 溢價 + procedure +18%</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt; Rev CAGR &gt; 5pp</td><td>EPS +12% vs Rev +20%，反向</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>87%</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且逐年升</td><td>7.8%（持平）</td><td><span class="badge badge-red">🔴</span></td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>TAM 擴張中</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業倍數系統下移</td><td>醫材整體下移，但手術機器人細分上升</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex &gt; FCF 60%</td><td>~22%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停投資 3 年收入下滑</td><td>耗材年金性質仍強</td><td>⬜</td></tr>
+</table>
+<p><strong>衰退信號：1 個亮燈（SBC/Rev 7.8%，略高於 5%）→ 🟢 低風險（0-1 亮燈 = 不觸發警戒）。</strong></p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益。</strong>da Vinci 平台是 AI 手術最天然的載體——ProctorAI、Case Insights、My Intuitive 等 Digital Ecosystem 已累積 20M+ 手術數據，為 AI 自動縫合、術式規劃、即時決策支援提供訓練基礎。競品（Hugo、Ottava）需重建數據壁壘。AI 反而<strong>強化</strong>護城河。</p>
+
+<p><strong>§8 長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway ≥ 10 年 + 有機定價/量驅動 + 護城河強化型 + ROIC 擴大 + 衰退信號僅 1 個）</p>
+
+<!-- §9 -->
+<h2 id="sec-9">§9 ｜ 護城河分析</h2>
+<p><strong>評分：9 / 10</strong></p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong>強。每多一台裝機 → 受訓醫師 → 手術案例 → 耗材訂單 → Digital Ecosystem 數據 → AI 能力 → 更多裝機。閾值在 10,000+ 台（已達）。</li>
+<li><strong>無形資產：</strong>強。20+ 年專利組合、FDA 認證、品牌 = 手術機器人代名詞。</li>
+<li><strong>轉換成本：</strong>極強。醫師平均需 50+ 案例達 proficient，醫院整套 OR 流程 + 耗材合約 + 服務合約 3-5 年，轉換成本 &gt; $3M/OR。</li>
+<li><strong>規模優勢：</strong>強。1,700+ 銷售 + 服務團隊、Mexicali 製造規模、全球 70,000+ 認證醫師網絡。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>資本充足對手（MDT $100B+ 市值、JNJ $400B+ 市值）仍難跨越：(a) 醫師訓練週期 50+ 案例 / 醫師 × 70,000 醫師 = 5 年+ 新平台達到臨界規模；(b) 耗材生態（~3,500 SKUs）；(c) 醫院合約綁定；(d) 20M+ 手術數據壁壘。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>ISRG</strong></td><td>~83.5%</td><td>穩定（微降 ~1pp）</td><td>—</td><td>—</td></tr>
+<tr><td>Medtronic（Hugo）</td><td>~4-5%（主要 EU/LATAM）</td><td>↑ 快速（2025-12 US FDA 泌尿）</td><td>25-30% 低價 + Ethicon 生態</td><td>吃 ISRG 增量</td></tr>
+<tr><td>J&amp;J（Ottava + Monarch + Velys）</td><td>~3%（主要 Monarch 支氣管）</td><td>↑ 中速（2026-01 Ottava FDA de novo）</td><td>unified architecture + Ethicon</td><td>吃 ISRG + MDT</td></tr>
+<tr><td>CMR Surgical（Versius）</td><td>~2-3%（80 國）</td><td>↑ 慢速</td><td>模組化 + 彈性融資</td><td>吃 ISRG 小型醫院</td></tr>
+<tr><td>中國本土（MicroPort Toumai 等）</td><td>中國 ~30%、全球 ~2%</td><td>↑ 快（中國）</td><td>30% 低價 + 政策</td><td>吃 ISRG 中國份額</td></tr>
+</table>
+
+<h3>QC-23 競爭威脅 3 級分類</h3>
+<table>
+<tr><th>等級</th><th>事件</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>MDT Hugo 泌尿科 FDA（2025-12）</td><td>單一產品 vs 單一產品，幾 pp 市佔影響；護城河不扣分</td></tr>
+<tr><td>🟡 點對點</td><td>J&amp;J Ottava FDA de novo 申請（2026-01）</td><td>尚未獲批，影響在 2027+；點對點威脅</td></tr>
+<tr><td>🟡 點對點</td><td>CMR Versius de novo gallbladder</td><td>單 procedure 突破，護城河不扣分</td></tr>
+<tr><td>🟡 點對點</td><td>中國 MicroPort Toumai 80 台裝機</td><td>中國市場 specific，非全球生態攻擊</td></tr>
+<tr><td>🔴 生態攻擊</td><td>未發生</td><td>JNJ Ottava + Ethicon 若整合 + 多代合約綁定 → 未來 2-3 年可能升級為 🔴</td></tr>
+<tr><td>⛔ 架構替代</td><td>未發生</td><td>手術機器人暫無架構級替代</td></tr>
+</table>
+<p><strong>結論：競爭仍處 🟡 點對點階段，護城河不扣分。但需持續監測 JNJ Ottava + Ethicon 整合進度，若升級為 🔴 生態攻擊 → 護城河 -1 分。</strong></p>
+
+<h3>護城河趨勢</h3>
+<p><strong>加深。</strong>da Vinci 5（2024 Q3）+ SP（2025 FDA 擴適應症）+ Ion（肺癌活檢）+ Digital Ecosystem 四軸同時擴張；但競品節奏也在加快，未來 2-3 年為「加深與被攻擊賽跑」期。</p>
+
+<h3>24 個月最可能瓦解護城河的變化</h3>
+<ol>
+<li>🔴 JNJ Ottava + Ethicon 整合 + 多代合約綁定，從 🟡 升級為 🔴 生態攻擊（最高風險）</li>
+<li>🟡 MDT Hugo 在 2026-2027 拿到一般外科 + 婦科 FDA，150+ 家醫院低價打入</li>
+<li>🟡 中國本土化政策擴大 + 美中關稅升至 20%+</li>
+<li>🟡 AI 自動縫合被對手率先商業化（概率低）</li>
+</ol>
+
+<!-- §10 -->
+<h2 id="sec-10">§10 ｜ 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>同業比較（2025）</th></tr>
+<tr><td>FCF Margin</td><td>15.6%</td><td>15.4%</td><td>24.7%</td><td>MDT 15%｜JNJ 23%｜BSX 16%｜SYK 17%</td></tr>
+<tr><td>EBITDA Margin</td><td>33%</td><td>34%</td><td>35.4%</td><td>MDT 28%｜JNJ 35%｜BSX 27%｜SYK 27%</td></tr>
+<tr><td>ROIC − WACC</td><td>+10pp</td><td>+13pp</td><td>+17pp</td><td>業界領先</td></tr>
+<tr><td>SBC / Revenue</td><td>7.2%</td><td>7.6%</td><td>7.8%</td><td>MDT 1.5%｜JNJ 2%｜BSX 2.5%（ISRG 明顯高）</td></tr>
+<tr><td>ROE</td><td>13%</td><td>14%</td><td>16.7%</td><td>MDT 13%｜JNJ 25%｜BSX 13%｜SYK 17%</td></tr>
+</table>
+
+<h3>獲利品質警訊（四項）</h3>
+<ul>
+<li><strong>NI vs OCF 連動：</strong>OCF $3.03B vs NI $2.86B = 106%，健康</li>
+<li><strong>AR 成長 vs Rev：</strong>AR 成長 ~18% vs Rev +20%，略低，健康</li>
+<li><strong>存貨 vs Rev：</strong>存貨成長 ~25% vs Rev +20%，略高（da Vinci 5 備貨），需追蹤</li>
+<li><strong>FCF 轉換率：</strong>FY2025 87%（上升），健康</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購 vs FCF</td><td>$5.5B 回購 vs $5.7B FCF = 96%</td><td>偏高但可接受（仍有淨現金 $5.76B）</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>原 13% → 剔除後 ~11%</td><td>差距 2pp，小</td></tr>
+<tr><td>回購均價 vs 當前</td><td>均價 ~$470 vs 現價 $469</td><td>基本持平（不屬配置不當）</td></tr>
+<tr><td>Rev CAGR</td><td>~18% vs EPS +13%</td><td>Rev &gt; EPS，EPS 非回購堆疊</td></tr>
+</table>
+
+<!-- §11 -->
+<h2 id="sec-11">§11 ｜ 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li>TAM 2026: ~$35B；2030E: ~$70B；2035E: ~$120B</li>
+<li>CAGR: ~15-18%（含新興市場 + 適應症擴張）</li>
+<li>全球滲透率: ~7%（對照前列腺 ~85% = 天花板遠未到）</li>
+<li>供需: 緊（ISRG Capex 擴大 + 訂單 backlog 持續）</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游：</strong>分散（Mexicali、供應商多元），但關稅為 external 風險</li>
+<li><strong>對下游：</strong>極強。醫院採購 + 3-5 年服務合約 + 耗材年金 + 醫師訓練 = 客戶黏性極高</li>
+<li><strong>地理曝險：</strong>Mexicali（關稅）、中國（政策 + 本土化）、歐洲（MDR 合規）</li>
+</ul>
+
+<h3>營收組成（FY2025）</h3>
+<table>
+<tr><th>分項</th><th>營收</th><th>佔比</th><th>YoY</th></tr>
+<tr><td>Instruments &amp; Accessories</td><td>$6.02B</td><td>59.8%</td><td>+18.5%</td></tr>
+<tr><td>Systems</td><td>$2.47B</td><td>24.6%</td><td>+25.8%</td></tr>
+<tr><td>Services</td><td>$1.57B</td><td>15.6%</td><td>+20.3%</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<ul>
+<li>單台 da Vinci 5 ASP: ~$2M；每年耗材收入 per 裝機: ~$350-400K；Service: ~$180K/年</li>
+<li>LTV per 裝機（7 年週期）: ~$5-6M，遠高於初始 $2M</li>
+<li>Utilization 指標：da Vinci 5 首年 utilization 超越前代 Xi</li>
+</ul>
+
+<!-- §12 -->
+<h2 id="sec-12">§12 ｜ 公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>機構持股 89.1%；內部人 0.56%（CEO/高管 insider 持股較少）</li>
+<li>無 dual-class 投票權</li>
+<li>創辦人 Gary Guthart 轉 Executive Chair（2025），Dave Rosa 接任 CEO</li>
+</ul>
+
+<h3>資本配置方向（優先順序）</h3>
+<ol>
+<li><strong>內部 R&amp;D：</strong>$1.3B+/年，聚焦 da Vinci 5 / SP / Digital Ecosystem</li>
+<li><strong>Capex：</strong>$0.7-0.85B 2026E（Mexicali 產能）</li>
+<li><strong>回購：</strong>FY2025 $2.3B，FY2023-25 累計 $5.5B（回購均價 ~$470，接近當前）</li>
+<li><strong>分紅：</strong>無</li>
+<li><strong>M&amp;A：</strong>極少（僅 bolt-on，如 Orpheus Medical 2023）</li>
+</ol>
+
+<h3>管理層薪酬結構</h3>
+<ul>
+<li>固定薪 ~15%，績效獎金 ~25%，股權激勵 ~60%</li>
+<li>SBC $788M（7.8% 營收）偏高，屬科技股水準，需追蹤</li>
+<li>PSU 指標：Revenue growth、Non-GAAP EPS growth、TSR 相對 peer</li>
+</ul>
+
+<h3>過去 12 個月重大內部人交易（QC-19）</h3>
+<ul>
+<li>Gary Guthart 依 10b5-1 計畫規律性賣出（非警訊）</li>
+<li>其他高管近 12 個月淨賣出（$10-20M 範圍），屬常規 vested 股權變現</li>
+<li><strong>QC-19 檢查：</strong>🟢 過去 12 個月無併購金額 &gt; 市值 5%、無集體訴訟（新啟動）、無 SEC 調查、無 FDA warning letter、無 CEO/CFO 異動（Rosa 接任為計畫內傳承）。antitrust 案 2025 已獲有利判決。有個別產品責任個案，屬醫材業界常態。</li>
+</ul>
+
+<!-- §13 -->
+<h2 id="sec-13">§13 ｜ 估值診斷</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<tr><th>邏輯類型</th><th>指標</th><th>是否主流?</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>✓ 主要</td><td>Fwd PE 47x、EV/EBITDA 45x 為市場追蹤核心</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Rev</td><td>✓ 次要</td><td>PEG 監測但當前 3.58 已高</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>✓ 次要</td><td>P/FCF 67x（166.6B / 2.49B）</td></tr>
+</table>
+<p><strong>當前主流邏輯：盈利能力型（Fwd PE 47x）＋成長型（PEG 3.58）混合，市場給予「類 SaaS 耗材」溢價。估值體系診斷結論：🟡 估值邏輯模糊</strong>——市場在「高成長醫材平台」與「成長降檔後的一般醫材龍頭」之間搖擺；若 procedure 持續 13-15%（降檔），估值系統可能下修至 35-40x（向同業中位靠近）。</p>
+
+<h3>13.1｜歷史估值分位（5 年）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Trailing P/E</td><td>59.5x</td><td>~35x</td><td>~55x</td><td>~85x</td><td>~49%</td></tr>
+<tr><td>Forward P/E</td><td>46.92x</td><td>~30x</td><td>~47x</td><td>~65x</td><td><strong>48%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>45.2x</td><td>~25x</td><td>~40x</td><td>~60x</td><td>~58%</td></tr>
+<tr><td>P/FCF</td><td>67x</td><td>~40x</td><td>~60x</td><td>~95x</td><td>~49%</td></tr>
+<tr><td>P/S</td><td>16.6x</td><td>~10x</td><td>~15x</td><td>~25x</td><td>~44%</td></tr>
+</table>
+<p><strong>解讀：</strong>分位中位附近（~48%），不算過熱也不算便宜；5Y 低 ~30x 對應 2022 熊市谷底（procedure 疫後復甦週期）。當前利率 10Y UST ~4.3%，屬中性水平。</p>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+1）</td><td>46.92x</td><td>—</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td>13.09%</td><td>—</td><td>§7</td></tr>
+<tr><td><strong>PEG（Non-GAAP 3 年）</strong></td><td><strong>3.58</strong></td><td>&gt; 2 貴</td><td><span class="badge badge-red">🔴 明顯偏貴</span></td></tr>
+<tr><td>PEG（FY+2 單年）</td><td>2.88</td><td>&gt; 2 貴</td><td>🔴 貴</td></tr>
+<tr><td>5 年 EPS CAGR 推估</td><td>~13-15%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>~3.2</td><td>—</td><td>5 年 PEG 略低於 3 年，但仍遠高於 2</td></tr>
+</table>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$166.6B</td><td>yfinance</td></tr>
+<tr><td>基期 FCF（2025）</td><td>$2.49B</td><td>§10</td></tr>
+<tr><td>WACC</td><td>~9.3%</td><td>10Y UST 4.3% + Beta 1.68 × ERP 4.5% = 4.3 + 7.6 = 11.9；保守取 9.3%</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>醫材成熟期</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>—</td></tr>
+</table>
+<p><strong>反推隱含 FCF CAGR：~15%</strong>（使 DCF 現值 = 市值）</p>
+<p><strong>可信度對照：</strong>過去 3 年 FCF CAGR ~20%（高於隱含）；共識 EPS CAGR 13.09%（接近 FCF 隱含）；同業最快 FCF CAGR ISRG 即是最快 → <span class="badge badge-yellow">🟡 隱含預期合理偏積極</span></p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>ISRG</strong></td><td><strong>$166.6B</strong></td><td><strong>46.92x</strong></td><td><strong>45.2x</strong></td><td><strong>3.58</strong></td><td><strong>24.7%</strong></td><td><strong>13.09%</strong></td><td><strong>26.2%</strong></td></tr>
+<tr><td>MDT（Medtronic）</td><td>$123B</td><td>14.48x</td><td>12x</td><td>~2.0</td><td>15%</td><td>7%</td><td>8%</td></tr>
+<tr><td>JNJ（Johnson &amp; Johnson）</td><td>$415B</td><td>16.42x</td><td>13x</td><td>~2.5</td><td>23%</td><td>6%</td><td>17%</td></tr>
+<tr><td>BSX（Boston Scientific）</td><td>$160B</td><td>28.49x</td><td>22x</td><td>~1.9</td><td>16%</td><td>15%</td><td>12%</td></tr>
+<tr><td>SYK（Stryker）</td><td>$147B</td><td>22.66x</td><td>17x</td><td>~1.8</td><td>17%</td><td>12%</td><td>14%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td>~20x</td><td>~15x</td><td>~2.0</td><td>~17%</td><td>~10%</td><td>~14%</td></tr>
+</table>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>ISRG Fwd PE 46.92x vs 同業中位 ~20x = <strong>溢價 135%</strong>（遠超 50% 門檻），必須執行收斂情境：</p>
+<ul>
+<li><strong>情境 A：ISRG PE 不變、對手追漲：</strong>若 MDT/JNJ/BSX 上修至 ISRG 的 47x（需成長率跳升至 13%+），機率低。情境 A 對 ISRG 無上行貢獻。</li>
+<li><strong>情境 B：ISRG 收斂 50% 至 (46.92 + 20) / 2 = 33.5x：</strong>對應股價 $10 × 33.5 = <strong>$335</strong>（-28.6%）</li>
+</ul>
+<p><strong>情境 B 股價 $335 作為替代 Bear Case</strong>（比基本面 Bear $270 樂觀，但仍顯著低於現價）。<strong>R4 風險：相對同業溢價 135%，收斂風險高。</strong></p>
+
+<h3>同主題橫向比較</h3>
+<table>
+<tr><th>問題</th><th>ISRG</th><th>最強競爭 BSX</th></tr>
+<tr><td>主假設完全兌現時，上行最大</td><td>+20%（目標 $553）</td><td>+40%（競品突破）</td></tr>
+<tr><td>主假設部分落空時，跌幅最小</td><td>-28%（溢價收斂）</td><td>-15%（估值較低）</td></tr>
+<tr><td>綜合風報比最優</td><td>❌（估值透支）</td><td>✓（估值合理 + 成長）</td></tr>
+</table>
+<p><strong>橫向比較結論：❌ 同主題有更佳標的。BSX 在醫材高成長分類中風報比更優。</strong></p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系（13.0）</td><td>🟡 模糊</td><td>在「SaaS 醫材溢價」與「一般醫材」之間搖擺</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟡 合理</td><td>Fwd PE 48% 分位</td></tr>
+<tr><td>PEG（13.2）</td><td>🔴 貴</td><td>PEG 3.58</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 合理</td><td>隱含 15% vs 共識 13%</td></tr>
+<tr><td>同業（13.4）</td><td>🔴 溢價無支撐</td><td>溢價 135% 遠超 EPS CAGR 差距（13% vs 同業 10%）</td></tr>
+</table>
+<p><strong>當前定價判斷：🔴 明顯貴</strong>（PEG + 同業雙 🔴，壓倒歷史分位的 🟡 合理訊號）</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>結果</th><th>影響</th></tr>
+<tr><td>護城河品質（§9）</td><td>9/10</td><td>+5x（相較同業 20x 基準）</td></tr>
+<tr><td>Runway（§8A）</td><td>10 年 🟢</td><td>+8x</td></tr>
+<tr><td>成長品質（§8B）</td><td>有機 95% / 量 + 定價</td><td>+3x</td></tr>
+<tr><td>護城河連動（§8C）</td><td>強化型</td><td>+3x</td></tr>
+<tr><td>ROIC（§8D）</td><td>+17pp 擴大</td><td>+4x</td></tr>
+<tr><td>衰退信號</td><td>1 個</td><td>0</td></tr>
+<tr><td>估值體系</td><td>🟡 模糊</td><td>-2x</td></tr>
+<tr><td>利率環境</td><td>10Y 4.3% 中性</td><td>0</td></tr>
+<tr><td><strong>產業基準</strong></td><td><strong>20x</strong></td><td><strong>調整後：41 ± 2x</strong></td></tr>
+</table>
+<p><strong>調整後長期合理倍數：~41x</strong>（當前 Fwd PE 46.92x 略高 14%，接近合理上緣）。若採 §13.5 公式：基準 25 × 1.10 × 1.10 = 30.3x（但忽略了 ISRG 類 SaaS 模式溢價）；若納入平台溢價，40-48x 為合理區間。</p>
+
+<h3>分析師目標價</h3>
+<ul>
+<li>共識中位：<strong>$621.62</strong>（n=41 位），高 $750、低 $378</li>
+<li>Wall St 中位隱含 +32.5% 上行空間</li>
+<li><strong>與共識分歧點：</strong>本 DD 合理估值 $484 / $553 低於共識 $621。分歧在於：共識假設 2026-2027 procedure 回升至 15%+ 並維持 PE 50x；本 DD 採 13-15% guidance 下緣為基準（更保守），並納入溢價收斂風險（QC-30）。</li>
+</ul>
+
+<h3>長期合理倍數對應表</h3>
+<p>基於 §8 長期成長性 🟢 高確信 → 基準 25x。但 ISRG 結構性溢價 → 採 40x 基準。</p>
+<ul>
+<li>引擎 A（ROIC 溢價）：ROIC 26% &gt; 20% 且擴大 → × 1.175</li>
+<li>引擎 C（護城河溢價）：9/10 → × 1.10</li>
+<li>三引擎取較高 → × 1.175</li>
+<li>AI：🟢 → × 1.10</li>
+<li><strong>最終合理倍數：40 × 1.175 × 1.10 = 51.7x</strong>（上限）</li>
+<li><strong>保守合理倍數：40 × 1.10 × 1.10 = 48.4x</strong>（§2 E 使用）</li>
+</ul>
+
+<!-- 假設驗證對照（QC-17） -->
+<h2 id="sec-compare">【假設驗證對照】（v11.0 → v12.0）</h2>
+<table>
+<tr><th>項目</th><th>上次（2026-04-17）</th><th>本次（2026-04-18）</th><th>邊際變化</th></tr>
+<tr><td>H1（da Vinci 5 &gt; 80% 市占防禦）</td><td>強化（870 台首年、SP +87%）</td><td>強化，但 Hugo FDA 已獲批、Ottava FDA de novo 已申請 → R1 部分實現</td><td><strong>整體強化，競爭威脅升溫</strong>（da Vinci 5/SP 數據支撐 H1，但 R1 催化劑從「預期」變「事件」）</td></tr>
+<tr><td>H2（國際 procedure &gt; 20%）</td><td>強化（+23% vs 整體 +18%）</td><td>仍強化（2026 guidance 隱含國際持續加速）</td><td>不變</td></tr>
+<tr><td>H3（Fwd PE 45-55x）</td><td>削弱（輕度）</td><td>持平削弱。Fwd PE 46.92x 仍在 45-55x 區間下緣，但 PEG 3.58 對應 CAGR 13%，倍數難以支撐</td><td><strong>進一步削弱</strong>（PEG 提示市場需要更高 EPS CAGR 才能 justify 47x）</td></tr>
+<tr><td>R1 是否觸發</td><td>未觸發</td><td><strong>部分觸發</strong>：MDT Hugo 2025-12 US FDA 泌尿、JNJ Ottava 2026-01 FDA 申請；但北美新裝機 YoY 尚未 &lt; 0</td><td>R1 進入初期階段</td></tr>
+<tr><td>R2 是否觸發</td><td>未觸發</td><td><strong>部分觸發</strong>：中國 MicroPort Toumai 80 台裝機；美中關稅仍高（145%/125%）。中國 procedure 下滑風險升高</td><td>R2 進入初期階段</td></tr>
+<tr><td>R3 是否觸發</td><td>未觸發</td><td>未觸發（Dave Rosa 首場 call 中性偏保守，尚無執行失誤訊號）</td><td>繼續監測</td></tr>
+<tr><td>裁決變化</td><td>（未明示，Schema v11.0 為 R:R + 品質分）</td><td>X（迴避 / 清倉）</td><td><strong>若原為「進場」→「迴避」</strong>。3 個最關鍵新事實：(1) PEG 3.58 壓力測試 0/4；(2) MA 🟠 暫不進場（v12.0 新增 Pure MA 層使此結論顯式化）；(3) R1 已從「預期」轉為「事件」（Hugo FDA + Ottava 申請）。</td></tr>
+</table>
+
+<!-- 版本修訂紀錄 -->
+<h2 id="sec-history">版本修訂紀錄</h2>
+<table>
+<tr><th>日期</th><th>版本</th><th>裁決</th><th>主要變更</th></tr>
+<tr><td>2026-04-17</td><td>v11.0</td><td>（依 v11.0 品質 A / 雙時距 R:R 輸出）</td><td>首次以 v11.0 Schema 撰寫。確立 H1/H2/H3 + R1/R2/R3 假設風險框架；護城河 9/10；Fwd PE 46.92x。</td></tr>
+<tr><td>2026-04-18</td><td>v12.0</td><td><strong>X（迴避 / 清倉）</strong></td><td>升級至 v12.0 Schema：① 改為綜合訊號燈 A+/A/B/C/X 輸出（不建議倉位 %）；② 體質檢核從 ±0.5 加減分改為 veto 制（1 項不過 = 不變）；③ 新增 Pure MA 六狀態機（本次觸發 🟠 暫不進場）；④ 估值燈 🔴 過熱（PEG 3.58）→ step 1 拒絕檢核觸發 final_signal = X；⑤ 新增 QC-29 R:R 壓力測試（通過率 0/4）、QC-30 同業溢價收斂（溢價 135%，收斂對應 $335 替代 Bear）、QC-23 競爭分級（仍 🟡 點對點，但 R1 已初步實現）。基本面品質 A 級不變，但估值 + 技術面雙重不佳 → 不進場，等 Pure MA 站回 W104 $500 或 Fwd PE 回落 35x 對應 ~$350。</td></tr>
+</table>
+
+<button class="btn-print" onclick="window.print()">🖨️ 列印為 PDF</button>
+</div>
+</body>
+</html>

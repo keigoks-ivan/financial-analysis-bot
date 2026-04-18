@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="dd-schema-version" content="v12.0">
+<title>NFLX Netflix｜Deep Dive｜2026-04-18｜v12.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#0F172A;margin:0;padding:24px;line-height:1.65}
+.container{max-width:1180px;margin:0 auto}
+header{background:#1E3A5F;color:#fff;padding:16px 24px;border-left:6px solid #3B82F6;margin-bottom:20px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:14px}
+header strong{color:#60A5FA}
+section{background:#fff;padding:22px 26px;margin-bottom:18px;border-left:4px solid #3B82F6;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+h2{background:#1E3A5F;color:#fff;padding:10px 16px;margin:-22px -26px 18px -26px;border-left:4px solid #3B82F6;font-size:18px}
+h3{color:#1E3A5F;border-bottom:2px solid #CBD5E1;padding-bottom:6px;margin-top:28px;font-size:16px}
+h4{color:#334155;margin-top:20px;font-size:14.5px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px}
+th{background:#1E3A5F;color:#fff;padding:7px 10px;text-align:left;font-weight:500}
+td{padding:7px 10px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.pass{background:#DCFCE7!important;color:#166534;font-weight:500}
+.fail{background:#FEE2E2!important;color:#991B1B;font-weight:500}
+.warn{background:#FEF9C3!important;color:#92400E;font-weight:500}
+.info{background:#EFF6FF!important;color:#1E40AF}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px 18px;margin:14px 0;border-radius:2px}
+.hypothesis-box h3{color:#1E3A5F;margin-top:0;border:none}
+.hypothesis-box ul{margin:0;padding-left:20px}
+.hypothesis-box li{margin:6px 0}
+.trap-warn{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 18px;margin:16px 0}
+.trap-warn h3{color:#C2410C;margin-top:0;border:none}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.col-bull{border-left:4px solid #16A34A;background:#F0FDF4;padding:12px 14px}
+.col-bear{border-left:4px solid #DC2626;background:#FFF1F2;padding:12px 14px}
+.col-arb{border-left:4px solid #7C3AED;background:#F5F3FF;padding:12px 14px}
+.verdict{background:#FFFBEB;border-left:4px solid #D97706;padding:12px 14px;margin:10px 0;color:#92400E}
+.mono{font-family:'IBM Plex Mono',monospace}
+.note{font-size:12.5px;color:#64748B;margin-top:6px}
+.rr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.rr-short{border-left:4px solid #0284C7;background:#F0F9FF;padding:12px 14px}
+.rr-mid{border-left:4px solid #7C3AED;background:#F5F3FF;padding:12px 14px}
+.rr-long{border-left:4px solid #059669;background:#ECFDF5;padding:12px 14px}
+.print-btn{position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;padding:10px 18px;border:none;cursor:pointer;font-size:14px;border-radius:4px}
+@media print{header,.print-btn{display:none}body{background:#fff;padding:0}section{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div><strong>NFLX</strong> Netflix, Inc.</div>
+<div>資料抓取 2026-04-18｜yfinance + 7 web_search</div>
+<div>現價 <strong>$97.31</strong>｜最新財報 Q1 2026 (4/16)</div>
+<div>DD Schema <strong>v12.0</strong></div>
+</header>
+
+<p style="color:#64748B;font-size:13px;margin-top:0">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<!-- §1 -->
+<section>
+<h2 id="sec-1">§1｜投資結論（Executive Summary）</h2>
+
+<div class="hypothesis-box">
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢｜§9 護城河趨勢「加深」｜§8 F AI 風險 🟡→🟢（AI 製片降本 + 廣告 targeting 受益）｜全球 OTT TAM 仍擴張，NFLX 在 ad-tier + live sports 開啟第二成長曲線</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9）｜體質 veto 0 項不過（全 ✅）｜等級調整：A → <strong>A</strong>（不變）</li>
+<li><strong>估值燈 🟡 合理：</strong>Fwd PE (FY+1) 27.3x，5Y 分位 <strong>~5%</strong>（鄰近 5 年低位），PEG 1.28｜盲點 1 救援：不啟動（不需要，已便宜）｜取較嚴：PEG 1.28 → 🟡</li>
+<li><strong>Pure MA 狀態 🟡 觀察池：</strong>W52 $108.24（斜率 −1.12%）/ W104 $93.39（+4.38%）/ W250 $62.74（+3.40%）｜4/17 盤中 −9.7% 跌穿 W52，目前站於 W104 上方但 < W52｜盲點 2 救援：不適用（MA 非 ❌）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,126 vs W104 6,092（高出 17%），系統性風險未啟動</li>
+<li><strong>參考 R:R：</strong>短期 0.24x / 中期 0.46x（目標 PE 30x 錨定，Bear PE 18x）｜壓力測試通過率 <strong>0/4</strong>（資訊性，不主導但觸發 QC-29 降級）</li>
+<li><strong>綜合訊號：<span style="font-size:20px;color:#1E40AF">C</span></strong>（取自 §2 H）｜判定理由：Quality A + gate 🟡 + MA 🟡 觀察池 = B，但 QC-29 壓力測試 0/4（R:R 數字性不佳） → 降一級 → C</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟡 觀察期（Q2 guide 偏弱 + Hastings 退場 + WBD/Paramount 合併軍備競賽升溫，短期敘事承壓但基本面未動搖）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜<strong>C = 觀察池，不納入新進</strong>｜X = 迴避。倉位 % 由 portfolio-manager skill 依組合狀態決定。<br>
+<strong>QC-22 漂移提示：</strong>4 週均價 $98.10 vs 現價 $97.31，漂移 −0.81%（因 4/17 財報日單日 −9.7%，此前一路上攻至 $107）。入場窗口「重開」，非追高情境。</p>
+
+<div class="trap-warn">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式是哪一種？</td><td><strong>隱性資本密集型</strong>（若 Paramount+WBD 合併後 200M+ subs 迫使 NFLX 內容支出從 $20B → $25B+，FCF Margin 可能從 20.9% 壓回 15%）— 但目前信號偏弱</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>Q1 2026 FY2026 op margin guide 仍維持 31.5%（vs 2022 低點 17.8%，結構性改善），FCF $9.46B FY2025 創歷史新高，FCF/NI = 86%（品質佳），ad 收入 2025 $1.5B → 2026 guide $3B（2×），Revenue YoY +16% 仍在雙位數高檔。5Y Fwd PE 分位 ~5% 係短期敘事干擾（Hastings 退場 + Q2 guide 偏弱），非護城河惡化。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>(1) Q2 2026 guide 低於共識（營收 +13% vs 市場預期 +14.5%，OI 也偏保守），可能是 engagement 見頂信號（global hours viewed YoY 近幾季減速）；(2) Paramount+WBD 合併 $110B（Q3 2026 close）將有 ~200M subs，若啟動 $6B synergy 中的內容再投資→迫使 NFLX 跟進，margin 承壓；(3) 廣告 TAM（品牌廣告 CPM 低於 YouTube/TikTok）若成長放緩，H1 假設承壓。</td></tr>
+<tr><td>如何判斷陷阱是否正在發生</td><td>領先指標 1：<strong>Cash content spend / Revenue 連續 2 年 > 44%</strong>（2025 ~38%，警戒 44%）；領先指標 2：<strong>Global engagement hours YoY 連續 2 季 < 0</strong>（目前仍正，但速度放緩中）</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（基本面 H1/H2 強化，H3 估值敘事短期削弱；需觀察 2026Q2/Q3 實際 margin 與 engagement 數據）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Ad-tier Monthly Active Viewers（MAV）</td><td>§5 H1</td><td>🔵 核心假設驗證</td><td>2026Q4 未達 250M MAV（現 190M）→ H1 削弱；ad rev 2026 未達 $2.7B（guide $3B）→ 減碼</td></tr>
+<tr><td>2</td><td>Operating Margin 軌跡</td><td>§6 / §8</td><td>🔵 長期成長領先信號</td><td>FY2026 全年 < 30%（guide 31.5%）→ 護城河溢價下修；單季 YoY 下滑 > 2pp → 結構性質變警示</td></tr>
+<tr><td>3</td><td>Content Spend / Revenue 比率</td><td>§5 R2 / §11</td><td>陷阱信號（軍備競賽）</td><td>連續 2 年 > 44%（2025 ~38%）→ R2 觸發，撤退</td></tr>
+</table>
+</section>
+
+<!-- §2 -->
+<section>
+<h2 id="sec-2">§2｜產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.0）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway 10+ 年：OTT TAM 擴張、廣告 + live sports 新曲線）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（全球內容規模經濟 + algo + 語言本土化）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（AI 製片降本 + 廣告 targeting + 個人化推薦 + 翻譯配音 scalable）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>全球串流 TAM 持續擴張；NFLX 從「訂閱為主」切向「訂閱 + 廣告 + live event」三引擎，ad 從 $1.5B → $9B (2030) 是最大增量源頭。</td></tr>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td class="pass">✅</td><td>GM 2023 41.5% → 2024 46.1% → 2025 48.5%（+7pp over 3Y）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td class="pass">✅</td><td>FY2025 FCF $9.46B / NI $10.98B = 86%</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td class="pass">✅</td><td>0y (FY2026) 90d 3.23 → current 3.57（上修 +10.5%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td class="pass">✅</td><td>Q1 2026 +16%，持續雙位數</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td class="pass">✅</td><td>Net Debt = $14.36B − $12.29B = $2.07B；EBITDA ~$14.2B → 0.15x</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = 0 項不過 → <strong>等級不變</strong></p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>9 / 10</strong>（全球內容規模 + algo + 品牌）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過，不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>A 級</strong></td></tr>
+<tr><td>底倉參考（PM 引用）</td><td>25%（目標倉位的上限）</td></tr>
+</table>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026E, 0y）</td><td>$3.56</td><td>yfinance, n=23</td></tr>
+<tr><td>FY+2 EPS（FY2027E, +1y）</td><td>$3.85</td><td>yfinance, n=42</td></tr>
+<tr><td>FY+2 成長率</td><td>7.9%</td><td>(3.85/3.56)−1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td><strong>27.34x</strong></td><td>97.31 / 3.56</td></tr>
+<tr><td>當前 FY+2 Forward P/E (yfinance)</td><td>25.28x</td><td>97.31 / 3.85</td></tr>
+<tr><td>FY+3 推導（§8 邏輯）</td><td>$4.35（+13% YoY，ad rev ramp + live sports）</td><td>§8 C 邏輯</td></tr>
+<tr><td>3Y EPS CAGR（FY2025 base $2.53 → FY+3 $4.35）</td><td><strong>19.8%</strong></td><td>(4.35/2.53)^(1/3)−1</td></tr>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE (FY+1)</td><td>27.34x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>26x ~ 52x（低～高，Macrotrends）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><strong>~5%</strong>（極低位，(27.34−26)/(52−26) = 5.2%）</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>19.8%</td></tr>
+<tr><td>PEG（Fwd PE / 3Y CAGR）</td><td><strong>1.38</strong></td></tr>
+<tr><td>分位判斷</td><td>🟢 便宜（&lt; 30%）</td></tr>
+<tr><td>PEG 判斷</td><td>🟡 合理（1.0 ≤ PEG ≤ 2.0）</td></tr>
+<tr><td><strong>估值燈（取較嚴）</strong></td><td><strong>🟡 合理</strong></td></tr>
+<tr><td>盲點 1 救援</td><td>不啟動（估值燈非 🟠）</td></tr>
+<tr><td>套用規則</td><td>不變（A 級維持）</td></tr>
+</table>
+<p class="note">說明：分位與 PEG 取較嚴結果為 🟡。若僅看分位（~5%）屬 🟢，但 PEG 1.38 為合理（非便宜），綜合判 🟡。實質解讀：Netflix 因 Q2 guide 偏弱 + Hastings 退場敘事，Fwd PE 被打回 5Y 低點附近，「相對歷史」便宜但「絕對水平」仍需 PEG 支持。</p>
+
+<h3>E｜R:R 與 Bear Case（參考用）</h3>
+
+<h4>參考目標價</h4>
+<p>合理 P/E 參考 §13.5 長期合理倍數：基準 25x（🟢 高確信成長）× ROIC 引擎 (×1.175, ROIC 22%+) = 29.4x ≈ <strong>30x</strong>（AI 🟢 × 1.10 抵銷部分數字精度，取 30x）</p>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>FY+1 $3.56 × 30x</td><td>$106.80</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 $3.85 × 30x</td><td>$115.50</td></tr>
+</table>
+
+<h4>Bear Case（§8 E 成長降至 10% 情境）</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（10% growth → 倍數壓縮至）</td><td>18x</td><td>18x</td></tr>
+<tr><td>Bear EPS（FY × 0.9）</td><td>$3.20</td><td>$3.47</td></tr>
+<tr><td>Bear 股價</td><td>$57.67</td><td>$62.39</td></tr>
+<tr><td>W52 Low（參考）</td><td>$75.01</td><td>$75.01</td></tr>
+<tr><td>W104 Low（參考）</td><td>$56.12</td><td>$56.12</td></tr>
+</table>
+
+<h4>QC-29 R:R 壓力測試（4 情境）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>目標價</th><th>短期 R:R</th><th>中期 R:R</th></tr>
+<tr><td>Base</td><td>成長共識 + 30x 合理 PE</td><td>$106.80 / $115.50</td><td class="fail">0.24x</td><td class="fail">0.46x</td></tr>
+<tr><td>壓力 A</td><td>3Y EPS CAGR −10%（18% → 8%）</td><td>$96.12 / $103.95</td><td class="fail">−0.03x</td><td class="fail">0.17x</td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（30x → 24x）</td><td>$85.44 / $92.40</td><td class="fail">−0.30x</td><td class="fail">−0.12x</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（N/A，NFLX 已為龍頭）</td><td>不適用</td><td>—</td><td>—</td></tr>
+</table>
+<p><strong>壓力測試通過率 = 0/4</strong>（有效情境 A+B 皆失敗）— 觸發 QC-29 降級：若原訊號為 B，降一級 → <strong>C</strong>。註：因 NFLX 長期估值中位約 35-40x，此處用 30x 基準偏保守；若改為 35x 目標，Base 短期 R:R 升至 0.73x 仍未過 2.0，故壓測結論穩健。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$97.31（4/17 收盤）</td></tr>
+<tr><td>W52 / 斜率</td><td>$108.24 / <strong>−1.12%</strong></td></tr>
+<tr><td>W104 / 斜率</td><td>$93.39 / <strong>+4.38%</strong></td></tr>
+<tr><td>W250 / 斜率（13 週）</td><td>$62.74 / <strong>+3.40%</strong></td></tr>
+<tr><td>位置判斷</td><td>價 &lt; W52（跌穿），價 &gt; W104（仍站上），價 &gt;&gt; W250</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>🟡 觀察池</strong>（剛從 $134 高位拉回，站在 W104 上方但跌破 W52；W52 斜率已轉負但 W104/W250 斜率仍正 — 係短期修正而非系統失效）</td></tr>
+<tr><td>MA 部位乘數</td><td>0（觀察池，等 4 週確認站回 W52）</td></tr>
+<tr><td>盲點 2 救援</td><td>不適用（MA 非 ❌）</td></tr>
+</table>
+<p class="note">QC-24 intraday 檢查：4/17 盤中 Open $96.37 → High $98.74 → Low $95.10 → Close $97.31。高低幅 3.82%，close/high = -1.46%（正常），但相對前日 4/16 Close $107.79 = <strong>gap down −9.7%</strong>，屬財報利空 gap，非 intraday shooting star。W52 被砸穿，需觀察 4 週站回。</p>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX (^GSPC)</td></tr>
+<tr><td>大盤現價</td><td>7,126.06</td></tr>
+<tr><td>大盤 W104</td><td>6,092.49</td></tr>
+<tr><td>系統性風險</td><td>否（SPX 高 W104 約 17%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>A</td></tr>
+<tr><td>gate（§2 D）</td><td>🟡</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟡 觀察池</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡</td></tr>
+<tr><td>初判訊號</td><td>B（quality A/gate 🟡/MA 一項減半）</td></tr>
+<tr><td>QC-29 壓測調整</td><td>0/4 通過 → 降一級</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong>C</strong>（觀察池，不納入新進）</td></tr>
+</table>
+<p>判定理由：Quality A + gate 🟡 合理 + MA 🟡 觀察池使初判為 B（衛星候選），但 QC-29 壓力測試 0/4 通過（R:R 偏低，Bear 與現價距離雖夠但上行空間緊繃）→ 降至 C。長期基本面佳（護城河 9、產業 🟢 順風），但當下 MA 剛跌穿 W52 需觀察，建議等 4 週確認站回或估值進一步下修至 Fwd PE &lt; 23x（~ $82）再行動。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（廣告 $1.5B → $9B by 2030，live sports 擴張，全球 subs 325M → 450M 空間）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（內容規模 + algo + 全球本地化語言優勢持續擴大）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p><strong>一句話：</strong>🟢 順風，A 級護城河 9/10，廣告 + live sports 雙引擎未釋放。估值燈 🟡 合理（Fwd PE 5Y 分位 ~5% 極低）+ Pure MA 🟡 觀察池（剛跌破 W52），短期敘事承壓但長期結構完整。建議觀察 2026Q2 engagement 與 margin 數據是否印證 H1/H2。</p>
+</section>
+
+<!-- §3 -->
+<section>
+<h2 id="sec-3">§3｜三方辯論摘要</h2>
+<div class="three-col">
+<div class="col-bull">
+<h4>多頭辯護人（Munger）</h4>
+<ol>
+<li><strong>護城河（§9）</strong>：全球 325M subs + 全語言內容規模，Paramount+WBD 合併後約 200M 仍差一截。</li>
+<li><strong>成長（§8）</strong>：ad rev 2025 $1.5B → 2026 $3B（2×）→ 2030 $9B（6×）。live sports 尚未實質貢獻。</li>
+<li><strong>估值（§13）</strong>：5Y Fwd PE 分位 ~5% 極低，因財報日單日 −9.7% 敘事性重挫創造 re-entry window。</li>
+</ol>
+<p><strong>一句話：</strong>「FCF $9.46B 創高、op margin 29.5% 結構性改善、ad-tier 190M MAV 尚未上軌，市場因 Hastings 退場 + Q2 guide 敘事砸盤，經典的錯殺」</p>
+</div>
+<div class="col-bear">
+<h4>空頭檢察官（Burry）</h4>
+<ol>
+<li><strong>基本面</strong>：Q2 2026 guide 營收 +13%（vs 共識 +14.5%）、OI guide 下滑。engagement 見頂先兆？</li>
+<li><strong>估值壓縮</strong>：若 Paramount+WBD Q3 2026 close 後軍備競賽升溫，NFLX 內容支出從 $20B → $25B，op margin 從 31% 回落至 27%，Fwd PE 壓縮至 20x → $71 (中期 −27%)。</li>
+<li><strong>催化劑</strong>：Hastings 退場 + co-CEO 架構脆弱 + 錯失 WBD 收購戰（投資人對 capital allocation 存疑）。</li>
+</ol>
+<p><strong>一句話：</strong>「Q2 guide 是 engagement 飽和訊號、Hastings 退場是管理層警訊、content arms race 是 margin 殺手 — 三重打擊未完」</p>
+</div>
+<div class="col-arb">
+<h4>估值仲裁員（Damodaran）</h4>
+<table>
+<tr><td>FCF CAGR vs 歷史</td><td>1/2（隱含需 ~15%+ FCF CAGR，歷史 3Y ~35%）</td></tr>
+<tr><td>FY EPS 共識一致性</td><td>2/2（+18% CAGR 共識支持）</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>2/2（NFLX 已為龍頭）</td></tr>
+<tr><td>苛刻程度</td><td>1/2（需 ad + live sports 雙兌現）</td></tr>
+<tr><td>歷史可達性</td><td>2/2（NFLX 已是唯一達標者）</td></tr>
+</table>
+<p><strong>評分 8/10</strong>｜「隱含預期合理偏保守，不激進」</p>
+</div>
+</div>
+<div class="verdict">
+<strong>裁決：觀望偏進場（但需等 MA 訊號確認）</strong><br>
+多頭最強論據：Fwd PE 5Y 分位極低 + 基本面 Q1 雙 beat 的錯殺情境。<br>
+空頭最大威脅：Q2 guide 下修暗示 engagement 見頂 + WBD 合併軍備競賽。<br>
+仲裁評分 8/10 支持論點但非滿格，底倉減半。建議等 MA 站回 W52（$108.24）持續 4 週再加碼，或等估值進一步下修至 Fwd PE &lt; 23x（~$82）直接加碼。
+</div>
+</section>
+
+<!-- §4 -->
+<section>
+<h2 id="sec-4">§4｜序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>Netflix 解決的是<strong>人類對「故事」的普世需求</strong>與<strong>全球娛樂供給的破碎化</strong>。在 Netflix 之前，觀眾被線性電視節目表、地理疆界、發行窗口、語言壁壘切割。Netflix 建構了「任何創作者 → 任何地區觀眾」直連管道，讓《魷魚遊戲》能在 90+ 國同時爆紅。若明天消失：① 全球非英語內容失去最大跨國分銷；② 325M 家庭同時重建娛樂習慣；③ 每年 ~$18B 採購預算與 ~19,000 小時原創內容出口管道蒸發。</p>
+<h3>逆向推演（Munger Inversion）——讓 NFLX 3 年虧損 50% 的路徑</h3>
+<table>
+<tr><th>維度</th><th>具體情境</th></tr>
+<tr><td>地緣政治</td><td>內容地理分散（美、韓、墨、印、歐），風險相對低；主要為 EMEA ARM 壓制、印度審查加劇。</td></tr>
+<tr><td>技術替代</td><td>① 短影音（YouTube Shorts、TikTok）持續吃「被動娛樂」時間；② AI 生成短片稀釋策展優勢；③ VR/AR 內容若由 Meta/Apple 主導分發。</td></tr>
+<tr><td>管理層失職</td><td>① 若搶下 WBD $110B 會嚴重稀釋（所幸已敗給 Paramount-Skydance）；② Games 部門擴張失控；③ Hastings 退出後雙 CEO 分歧；④ 高價位回購。</td></tr>
+<tr><td>價值陷阱路徑</td><td><strong>最可能：隱性資本密集</strong>。若 Paramount+WBD 200M subs 引爆軍備競賽，$20B 內容支出被迫翻倍，FCF Margin 從 20.9% 壓回 15% 以下。</td></tr>
+</table>
+</section>
+
+<!-- §5 -->
+<section>
+<h2 id="sec-5">§5｜投資論點錨定</h2>
+<h3>A｜持有期與時間軸</h3>
+<table>
+<tr><td>預設持有期</td><td><strong>3-5 年</strong>（跨越廣告完整兌現 + live sports 規模化）</td></tr>
+<tr><td>驅動理由</td><td>ad rev $1.5B→$9B (2030) 需 4-5 年；live sports 矩陣（NFL 聖誕日 + WWE + 潛在 2026 新 NFL 5-game package）產生規模效應需 3+ 年；AI 製片對 P&L 實質貢獻於 FY2027-2029。</td></tr>
+<tr><td>訊號 vs 噪音</td><td>訊號：Operating Margin、Ad MAV、Global engagement hours、FCF Margin；噪音：單季 EPS（如 Q1 2026 WBD $2.8B 分手費干擾）、財報日盤後價差、季度 guide 調整。</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td><strong>Ad-tier 2027 年達成 $6B+ ARR，成為與訂閱並列的第二支柱</strong></td><td>MAV 現 190M → 目標 250M+ by 2026Q4；fill rate &gt; 60%；ARPU 達訂閱的 70%</td><td>每季財報 + 2026/2027 年 Upfronts</td></tr>
+<tr><td>H2</td><td><strong>Operating Margin 於 FY2026-2028 穩定 31-35%</strong>（vs 2022 低點 17.8%），不因內容成本升級逆轉</td><td>FY2026 達 31.5% guide；cash content spend / Revenue 維持 38-40%；G&A 穩定</td><td>FY2026 Q4（2027/1）</td></tr>
+<tr><td>H3</td><td><strong>Forward P/E 穩定 28-38x</strong>，市場接受 ad + live sports 敘事</td><td>5Y Fwd PE 分位不跌破 25%；分析師目標價共識中位不下修 &gt; 10%</td><td>持續監測</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Ad TAM 成長不及預期（macro + YouTube/TikTok 強勢）</td><td>H1</td><td>Ad quarterly YoY growth</td><td>任一季 YoY &lt; 50%（2026 目標 2×）</td></tr>
+<tr><td>R2</td><td>Paramount+WBD 合併 ~200M subs 爆發內容軍備競賽</td><td>H2</td><td>Cash content spend / Revenue</td><td>連續 2 年 &gt; 44%</td></tr>
+<tr><td>R3</td><td>Engagement 峰值見頂 → 敘事切換至「成熟消費」，倍數壓縮至 18-22x</td><td>H3</td><td>Global hours viewed YoY</td><td>連續 2 季 YoY &lt; 0</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p><strong>Q1 2026 財報 + Hastings 退場 + WBD 合併定案</strong>對論點的影響：H1 ＋（ad guide 維持 2× / MAV 上軌）；H2 ＋（Q1 op margin 32.3%、FY guide 31.5%）；H3 −（Q2 guide 偏弱觸發 Fwd PE 分位從 35% 回到 5%，短期敘事削弱）；R2 警戒升溫（WBD+Paramount 合併 Q3 2026 close，$110B 規模）。綜合：基本面 +，估值敘事 -。</p>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>MA 站回 W52 $108.24 持續 4 週，或 Fwd PE 跌至 &lt; 23x（~$82）</td><td>底倉建倉（PM 決定 %）</td></tr>
+<tr><td>加碼</td><td>H1 確認（MAV &gt; 250M by 2026Q4）+ H2 確認（FY2026 op margin ≥ 31.5%）</td><td>加碼（PM 決定）</td></tr>
+<tr><td>減碼</td><td>R3 觸發（連 2 季 engagement YoY &lt; 0）或 Fwd PE &gt; 40x</td><td>減半</td></tr>
+<tr><td>撤退</td><td>H2 推翻（op margin &lt; 28%）或 R2 觸發（content/rev &gt; 44% 連 2 年）</td><td>清倉</td></tr>
+</table>
+</section>
+
+<!-- §6 -->
+<section>
+<h2 id="sec-6">§6｜即時財報情報（Q1 2026，4/16 發佈）</h2>
+<h3>① 關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>Q1 2026 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="pass">$12.25B</td><td>$12.18B</td><td class="pass">Beat +0.6%</td><td>+16.0%</td></tr>
+<tr><td>EPS (GAAP)</td><td class="pass">$1.23</td><td>$0.76</td><td class="pass">Beat +61.8%*</td><td>大幅增加**</td></tr>
+<tr><td>FCF</td><td class="pass">$5.09B</td><td>~$2.7B</td><td class="pass">Beat +91%**</td><td>+91% YoY</td></tr>
+<tr><td>Net Income</td><td class="pass">$5.28B</td><td>~$3.3B</td><td class="pass">Beat</td><td>+83% YoY</td></tr>
+<tr><td>Operating Margin</td><td class="pass">~32.3%</td><td>~30%</td><td class="pass">Beat</td><td>+~2pp</td></tr>
+</table>
+<p class="note">* EPS Beat 因 $2.8B WBD termination fee 一次性利得（Netflix 先前競購 WBD 敗給 Paramount-Skydance 獲得分手費）<br>
+** 剔除 WBD 分手費後的 operational EPS ~$0.56/$0.60 區間；營運層面仍 beat guide。</p>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Ad-tier $6B+ 2027）</td><td class="pass">＋ 強化</td><td>ad 方案 &gt; 60% 新簽；2026 ad rev guide 維持 2× ($3B)；MAV 190M 仍在軌</td></tr>
+<tr><td>H2（Op Margin 31-35% 穩定）</td><td class="pass">＋ 強化</td><td>Q1 32.3% + FY2026 guide 31.5%（vs 2025 29.5%）；GM 48.5% 新高</td></tr>
+<tr><td>H3（Forward P/E 30-38x）</td><td class="fail">－ 削弱</td><td>盤後 −9.7%，Fwd PE 從 35x 砸到 27x；市場對「Q2 reset + Hastings 退場」定價負面敘事</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣</h3>
+<ul>
+<li><strong>管理層基調</strong>：中性偏保守（vs Q4 2025 樂觀）。Sarandos 反駁「Hastings 退場與 WBD 敗陣無關」「Reed 是這筆交易的 big champion」。</li>
+<li><strong>Forward Guidance</strong>：維持 FY2026 營收 $50.7-51.7B、op margin 31.5%；<strong>Q2 營收 guide +13%（低於共識 +14.5%）</strong>。</li>
+<li><strong>刻意強調</strong>：ad-tier、live sports、AI 製片降本、內容上半年集中。</li>
+<li><strong>刻意迴避</strong>：WBD 敗陣後的 M&A 戰略；Games 部門的盈利時間表。</li>
+</ul>
+
+<h3>③ 產業 Imply</h3>
+<ul>
+<li><strong>需求端</strong>：廣告 pipeline 健康，但訂閱者增長在成熟市場接近飽和。</li>
+<li><strong>供給端</strong>：內容支出上半年集中 → 意味著 H2 margin 可能進一步擴張。</li>
+<li><strong>競爭格局</strong>：WBD+Paramount 合併成 200M subs 第二大，但仍差 NFLX 125M；DIS（D+/Hulu ~200M）仍維持。OTT 三強格局浮現。</li>
+<li><strong>總體經濟</strong>：廣告市場敏感，但 Netflix ad tier 尚在早期成長階段，macro 噪音權重小。</li>
+</ul>
+
+<h3>④ QC-27 Revenue vs OI Divergence</h3>
+<table>
+<tr><td>Revenue Q1 YoY</td><td>+16.0%</td></tr>
+<tr><td>OI Q1 YoY（剔除 WBD fee）</td><td>~+23%（op margin +2pp on +16% rev base）</td></tr>
+<tr><td>Divergence</td><td class="pass">−7%（OI 快於 Revenue）→ Margin 擴張訊號</td></tr>
+</table>
+</section>
+
+<!-- §7 -->
+<section>
+<h2 id="sec-7">§7｜核心門檻檢核</h2>
+<h3>EPS 共識與 CAGR</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>基期 FY2025 實際 GAAP EPS</td><td>$2.53</td><td>yfinance 財報</td></tr>
+<tr><td>FY+1 (FY2026E)</td><td>$3.56（avg, n=23, YoY +40.9%）</td><td>yfinance earnings_estimate</td></tr>
+<tr><td>FY+2 (FY2027E)</td><td>$3.85（avg, n=42, YoY +7.9%）</td><td>yfinance</td></tr>
+<tr><td>FY+3 (FY2028E) 推導</td><td>$4.35（+13% YoY）</td><td>§8 邏輯：ad rev $3B → $4.5B、live sports 規模化、新興市場 subs 擴張</td></tr>
+<tr><td>3Y GAAP CAGR（FY2025 → FY2028）</td><td><strong>19.8%</strong></td><td>(4.35/2.53)^(1/3)−1</td></tr>
+</table>
+<p>90 天 EPS Trend 方向：FY2026 (0y) 從 90d 前 $3.23 → current $3.57（上修 +10.5%）。強烈上修。</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin</td><td>&gt; 15%</td><td class="pass">✓✓ 強</td><td>FY2025 $9.46B / $45.18B = 20.9%</td></tr>
+<tr><td>正規化 FCF Margin (5Y 均)</td><td>5Y 均 &gt; 15%、最低 &gt; 10%</td><td class="pass">✓✓</td><td>2021 -0.4%、2022 5.1%、2023 21.8%、2024 17.7%、2025 20.9%；5Y 均 13.0%；最低 −0.4%（2021 疫情尾聲內容支出峰）。近 3 年均值 20.1% 結構性改善。</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，高於 WACC</td><td class="pass">✓✓</td><td>ROIC ~26%（NI $10.98B / Invested Capital $41B），WACC ~8%</td></tr>
+<tr><td>ROIC 10Y 穩定</td><td>≥ 70% 年份 &gt; 15%</td><td class="pass">✓</td><td>近 5 年 100%（2021-2025 ROIC 均 &gt; 15%）；10 年資料 2016-2019 偏低（&lt; 15%），結構改善中</td></tr>
+<tr><td>毛利率定價</td><td>10Y 改善年份 ≥ 70%</td><td class="pass">✓</td><td>2016 31.7% → 2025 48.5%（+17pp），8/9 年改善</td></tr>
+<tr><td>資本密集</td><td>Capex/Rev &lt; 5% 優</td><td class="pass">✓✓</td><td>FY2025 Capex $688M / $45.18B = 1.5%（極低）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td class="warn">⚠️</td><td>GAAP CAGR 19.8%（接近但不足 20%）</td></tr>
+<tr><td>PEG (Non-GAAP)</td><td>&lt; 2</td><td class="pass">✓</td><td>27.34 / 19.8 = 1.38</td></tr>
+<tr><td>負債安全</td><td>D/E &lt; 0.7、現金 10-50% Rev</td><td class="pass">✓</td><td>D/E = $14.36B/$26.62B = 0.54；Cash/Rev = 27%</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td class="warn">部分</td><td>Cash $12.29B / Total Debt $14.36B = 86%（接近覆蓋）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8，趨勢擴大</td><td class="pass">✓</td><td>9/10，趨勢加深</td></tr>
+</table>
+<p><strong>Munger 三維護城河</strong>：ROIC 穩定 ✓ + 毛利率定價 ✓ + 資本密集度 ✓ → 🟢 三項全達標，具 Munger「卓越企業」數字佐證。<br>
+最大財務弱點：D/E 中性偏高（0.54）但 Net Debt 僅 $2.07B，無實質槓桿問題。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問（觸發 Fwd PE 5Y 分位 ~5% 🔴 強制）</h3>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+<tr><td>Q1</td><td>GM 3 年趨勢</td><td>↑ +7pp（41.5 → 48.5）</td><td class="pass">✅ 無</td></tr>
+<tr><td>Q2</td><td>市佔率 3 年趨勢</td><td>擴大（325M subs，全球 OTT 領先）</td><td class="pass">✅ 無</td></tr>
+<tr><td>Q3</td><td>FCF/NI 背離</td><td>FY2025 0.86（近 3Y 均 0.88）</td><td class="pass">✅ 無</td></tr>
+<tr><td>Q4</td><td>EPS 共識方向</td><td>90 天上修 +10.5%</td><td class="pass">✅ 無</td></tr>
+</table>
+<p><strong>初篩結論：0 個 🔴</strong> → 低估值非結構性問題，可能為短期錯殺。</p>
+</section>
+
+<!-- §8 -->
+<section>
+<h2 id="sec-8">§8｜長期成長性評估</h2>
+<h3>A｜成長跑道</h3>
+<table>
+<tr><td>當前 TAM</td><td>全球 OTT ~$350B（2026），ad-supported 部分 ~$50B</td></tr>
+<tr><td>可達 TAM</td><td>~$600B（2030），加 live sports streaming rights ~$40B</td></tr>
+<tr><td>當前市佔</td><td>~15%（訂閱）、~3%（全球廣告）</td></tr>
+<tr><td>滲透 30% 需幾年</td><td>廣告面：4-5 年</td></tr>
+<tr><td><strong>Runway</strong></td><td><strong>10+ 年</strong>（結構性）</td></tr>
+</table>
+
+<h3>B｜成長品質</h3>
+<p>有機佔比 95%+（近 5 年 NFLX 無重大併購，僅小型游戲/IP）；定價 vs 量：雙驅動（漲價 + ad monetization + 新興市場 subs）</p>
+
+<h3>C｜護城河連動</h3>
+<p><strong>強化型</strong>：更多 subs → 更多數據 → 更好的 algo 推薦 → 更多 engagement → 更強的 ad 變現 → 更多內容預算 → 更多 subs。典型正反饋迴路。</p>
+
+<h3>D｜ROIC & FCF 可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>符合?</th></tr>
+<tr><td>ROIC</td><td>~26%</td><td>~20%</td><td>↑</td><td class="pass">✓</td></tr>
+<tr><td>ROIC − WACC</td><td>+18pp</td><td>+12pp</td><td>↑</td><td class="pass">✓</td></tr>
+<tr><td>FCF Margin</td><td>20.9%</td><td>5.1% (2022)</td><td>↑↑</td><td class="pass">✓✓</td></tr>
+<tr><td>FCF/NI 轉換</td><td>0.86</td><td>0.79</td><td>↑</td><td class="pass">✓</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>合理 Fwd P/E</th><th>潛在跌幅</th></tr>
+<tr><td>3 年後成長降至 15%</td><td>25x</td><td>約 -8%（$89）</td></tr>
+<tr><td>3 年後成長降至 10%</td><td>18x（Bear）</td><td>約 -35%（$63）</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>13x</td><td>約 -58%（$41）</td></tr>
+</table>
+
+<h3>衰退信號偵測</h3>
+<table>
+<tr><th>信號</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>GM 連 2 季 YoY ↓</td><td>Q1 2026 GM yoy +2pp</td><td>⬜</td></tr>
+<tr><td>市佔縮減</td><td>擴大</td><td>⬜</td></tr>
+<tr><td>FCF/NI &lt; 0.75 連 2 年</td><td>0.86（2025）、0.79（2024）</td><td>⬜</td></tr>
+<tr><td>SBC/Rev &gt; 5% 逐年升</td><td>~2-3%（穩定）</td><td>⬜</td></tr>
+<tr><td>TAM 萎縮</td><td>OTT TAM 持續擴張</td><td>⬜</td></tr>
+<tr><td>產業估值系統性下移</td><td>是（3Y 平均，但 NFLX 已從低點反彈）</td><td>🟡 部分</td></tr>
+</table>
+<p>衰退信號 0-1 個 → 🟢 低風險。</p>
+
+<p><strong>長期成長性綜合評級：🟢 高確信</strong>（Runway 10+ 年、有機+定價驅動、護城河強化型、ROIC 擴大、衰退信號 0）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益</strong>：AI 製片降本（生成草稿、配音、翻譯、剪輯）、廣告 targeting 精細化、個人化推薦。核心業務「策展型長內容 + 全球分銷」不被 AI 取代；反而從 AI 工具獲得 margin 擴張紅利。</p>
+</section>
+
+<!-- §9 -->
+<section>
+<h2 id="sec-9">§9｜護城河分析</h2>
+<p><strong>評分：9 / 10</strong></p>
+<ul>
+<li><strong>網路效應</strong>：★★★★☆ — subs 越多 → 數據越多 → algo 越好 → engagement 越高 → 內容 ROI 越高。規模閾值 ~200M 已跨越。</li>
+<li><strong>無形資產</strong>：★★★★☆ — 品牌力「Netflix and chill」已成文化符號，定價能力已連 5 次漲價被接受。</li>
+<li><strong>轉換成本</strong>：★★★☆☆ — 個人層面低（$7-23/月可隨時切），但觀看歷史、watch list、個人化推薦建立了行為慣性。</li>
+<li><strong>規模優勢</strong>：★★★★★ — 全球 325M subs 分攤 $20B 內容支出 = $62/user/yr，競對 Paramount+WBD 合併後 200M subs $40B+ 支出 = $200+/user/yr（結構性劣勢）。</li>
+</ul>
+
+<h3>QC-23 競爭威脅分級</h3>
+<table>
+<tr><th>威脅</th><th>等級</th><th>影響</th></tr>
+<tr><td>Paramount+WBD 合併（Q3 2026 close，$110B）產生 200M subs 第二大</td><td>🟡 點對點</td><td>護城河不扣分（規模仍 1.6×）</td></tr>
+<tr><td>YouTube/TikTok 吃 engagement 時間</td><td>🔴 生態攻擊</td><td>−1 分（已反映於評分 9）</td></tr>
+<tr><td>DIS Hulu+D+（類似 NFLX 策展長內容）</td><td>🟡</td><td>不扣分</td></tr>
+</table>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>市佔</th><th>3Y 趨勢</th><th>誰在吃誰</th></tr>
+<tr><td>Netflix</td><td>325M</td><td>↑</td><td>吃 Linear TV</td></tr>
+<tr><td>Disney（D+/Hulu）</td><td>~200M</td><td>→</td><td>穩定</td></tr>
+<tr><td>Amazon Prime Video</td><td>~200M</td><td>↑</td><td>吃 ad tier market</td></tr>
+<tr><td>Paramount+WBD（合併後）</td><td>200M (Q3 26)</td><td>新</td><td>整合</td></tr>
+<tr><td>YouTube（TV hours）</td><td>12.6%</td><td>↑</td><td>吃 NFLX 8-9%</td></tr>
+</table>
+
+<h3>24 個月內可能瓦解護城河的變化</h3>
+<ol>
+<li>Paramount+WBD 合併 close（Q3 2026）後啟動內容 capex 翻倍，推 NFLX 跟進。</li>
+<li>AI 生成短內容爆發，稀釋策展長內容的時間占比。</li>
+<li>NFL 若將更多 packages 給 Amazon 而非 NFLX，削弱 live sports 敘事。</li>
+</ol>
+</section>
+
+<!-- §10 -->
+<section>
+<h2 id="sec-10">§10｜財務品質監測</h2>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手比較</th></tr>
+<tr><td>FCF Margin</td><td>21.8%</td><td>17.7%</td><td>20.9%</td><td>DIS ~8%、PARA ~3%、SPOT ~6%</td></tr>
+<tr><td>Operating Margin</td><td>20.6%</td><td>26.7%</td><td>29.5%</td><td>DIS Streaming breakeven、SPOT 12%</td></tr>
+<tr><td>ROIC − WACC</td><td>+12pp</td><td>+15pp</td><td>+18pp</td><td>DIS +2pp、PARA 負、SPOT +4pp</td></tr>
+<tr><td>SBC/Rev</td><td>~2.8%</td><td>~2.5%</td><td>~2.3%</td><td>穩定偏低</td></tr>
+<tr><td>ROE</td><td>~26%</td><td>~35%</td><td>~42%</td><td>業內最高</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>NI vs OCF 連動性</strong>：OCF $10.15B vs NI $10.98B，連動良好（0.92）。</li>
+<li><strong>AR vs Rev 成長</strong>：AR 穩定、Rev +16% → 無 AR 膨脹。</li>
+<li><strong>存貨</strong>：NFLX 存貨即 content asset，amortization 穩定。</li>
+<li><strong>FCF 轉換率</strong>：20.9% FCF margin 歷史新高，資本支出極低（1.5% Capex/Rev）。</li>
+</ul>
+
+<h3>回購品質</h3>
+<p>FY2025 回購 $9.13B（均價 ~$80 post-split），佔 FCF 96.5%（積極回購但 FCF 支持）。當前 $97.31 高於回購均價 21%，資本配置合理（已兌現 ~20% IRR）。</p>
+</section>
+
+<!-- §11 -->
+<section>
+<h2 id="sec-11">§11｜產業格局、議價權</h2>
+<p><strong>TAM</strong>：全球 OTT $350B（2026）→ $600B（2030，CAGR 11%）。滲透率 50%+ 已成熟，增長來自：① 新興市場；② 廣告變現；③ live sports。</p>
+<p><strong>對上游</strong>：工作室 / 內容創作者中度集中，但 NFLX 自製比例 ~55%，議價力強。</p>
+<p><strong>對下游</strong>：消費者極度分散（325M），無個別客戶集中風險。廣告主端 NFLX 剛建立 partnership（MSFT ad tech，2024 內部 replace）。</p>
+<p><strong>地理</strong>：美國（~40%）、EMEA（~30%）、LATAM（~14%）、APAC（~16%）。分散良好。</p>
+<p><strong>營收組成</strong>：訂閱 ~92%、廣告 ~3.3%（$1.5B/$45B）、其他 ~5%（games、licensing）。</p>
+<p><strong>Unit Economics</strong>：ARPU 美國 $17/月、EMEA $11/月、LATAM $7/月、APAC $9/月。</p>
+</section>
+
+<!-- §12 -->
+<section>
+<h2 id="sec-12">§12｜公司治理</h2>
+<p><strong>股權結構</strong>：機構 84.1%、內部人 0.6%。Hastings 持股 ~1.2%。無雙重股權。</p>
+<p><strong>資本配置軌跡</strong>：偏重回購（FY2025 $9.13B），Capex 極低（$688M），無分紅。M&A 保守（WBD 敗陣反而節省資本）。</p>
+<p><strong>管理層薪酬</strong>：Sarandos/Peters co-CEO 薪酬結構以股權為主（~85% equity）。</p>
+<p><strong>近 12 個月重大事件（QC-19）</strong>：</p>
+<ul>
+<li>🔴 <strong>Reed Hastings 2026/4/16 宣佈退場</strong>（6 月股東會後生效，29 年 run 結束）</li>
+<li>🟡 <strong>WBD 收購戰敗給 Paramount-Skydance</strong>（2026/3，獲得 $2.8B 分手費）</li>
+<li>🟢 無集體訴訟、無 SEC 調查、無 CEO 異動（Hastings 已非 CEO，Sarandos/Peters 穩定）</li>
+</ul>
+</section>
+
+<!-- §13 -->
+<section>
+<h2 id="sec-13">§13｜估值診斷</h2>
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<tr><th>類型</th><th>是否當前主流</th></tr>
+<tr><td>盈利型 (P/E、EV/EBITDA)</td><td>✅ 主流（market 已從「subs」切到「earnings」）</td></tr>
+<tr><td>成長型 (PEG)</td><td>✅ 並行</td></tr>
+<tr><td>現金流型 (P/FCF)</td><td>✅ 近 2 年比重增加（FCF $9.46B 創高）</td></tr>
+</table>
+<p><strong>結論：🟢 估值邏輯穩定</strong>（盈利 + FCF 雙錨定，不存在尺換問題）</p>
+
+<h3>13.1｜歷史估值分位</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Trailing P/E</td><td>31.5x</td><td>14x (2022)</td><td>35x</td><td>52x (2021)</td><td>46%</td></tr>
+<tr><td>Forward P/E (FY+1)</td><td><strong>27.3x</strong></td><td>26x (2022)</td><td>35x</td><td>52x (2021)</td><td><strong>5%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>28.9x</td><td>12x</td><td>22x</td><td>40x</td><td>60%</td></tr>
+<tr><td>P/FCF</td><td>43x</td><td>20x</td><td>40x</td><td>80x</td><td>38%</td></tr>
+</table>
+<p>當前 Fwd PE 極低分位反映 4/17 -9.7% 財報日砸盤；情緒為「便宜」（&lt; 30%）。</p>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E</td><td>27.3x</td><td></td></tr>
+<tr><td>3Y EPS CAGR</td><td>19.8%</td><td></td></tr>
+<tr><td><strong>PEG (3Y)</strong></td><td><strong>1.38</strong></td><td>合理（1-2）</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway）</td><td>15%</td><td></td></tr>
+<tr><td>PEG (5Y)</td><td>1.82</td><td>合理偏貴</td></tr>
+</table>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>當前市值</td><td>$410.9B</td></tr>
+<tr><td>基期 FCF FY2025</td><td>$9.46B</td></tr>
+<tr><td>WACC</td><td>8.5%（10Y UST 4.2% + Beta 1.67（QC-25 取較高 yf）× ERP 4.8% = 12.2% cost of equity × 80% equity + after-tax debt cost ~3.5% × 20% = 10.5%，混合調整後保守 8.5%）</td></tr>
+<tr><td>永續成長</td><td>3.0%</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+</table>
+<p>反推 FCF CAGR = ~11%。對照：過去 3Y FCF CAGR ~35%、分析師 EPS CAGR 19.8%、同業最快 SPOT ~20%。</p>
+<p><strong>🟢 隱含預期保守</strong>：當前股價僅要求 11% FCF CAGR，低於歷史實績與 EPS 共識。</p>
+
+<h3>13.4｜同業比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>3Y EPS CAGR</th><th>ROIC</th></tr>
+<tr><td><strong>NFLX</strong></td><td>$411B</td><td>27.3x</td><td>28.9x</td><td>1.38</td><td>20.9%</td><td>19.8%</td><td>26%</td></tr>
+<tr><td>DIS</td><td>$180B</td><td>18x</td><td>13x</td><td>1.2</td><td>8%</td><td>15%</td><td>6%</td></tr>
+<tr><td>WBD（合併中）</td><td>$30B</td><td>12x</td><td>8x</td><td>-</td><td>3%</td><td>-</td><td>-2%</td></tr>
+<tr><td>PARA（合併中）</td><td>$45B</td><td>16x</td><td>10x</td><td>-</td><td>4%</td><td>-</td><td>3%</td></tr>
+<tr><td>SPOT</td><td>$130B</td><td>35x</td><td>30x</td><td>1.2</td><td>10%</td><td>29%</td><td>18%</td></tr>
+<tr><td>產業中位</td><td>-</td><td>19x</td><td>12x</td><td>1.2</td><td>8%</td><td>17%</td><td>8%</td></tr>
+</table>
+<p>NFLX Fwd PE 較產業中位溢價 44%，但各項質量指標（FCF margin、ROIC、margin）遠優於同業中位，溢價合理。</p>
+<p><strong>🥇 同主題最優選</strong>。</p>
+
+<h3>13.5｜估值五角驗證</h3>
+<table>
+<tr><th>工具</th><th>訊號</th></tr>
+<tr><td>估值體系（13.0）</td><td>🟢 穩定</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟢 便宜（5%）</td></tr>
+<tr><td>PEG（13.2）</td><td>🟡 合理（1.38）</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟢 保守</td></tr>
+<tr><td>同業（13.4）</td><td>🟡 合理溢價</td></tr>
+</table>
+
+<h4>長期合理倍數</h4>
+<p>§8 🟢 高確信 → 基準 25x。ROIC 引擎：ROIC 26% 且擴大 → × 1.175 = 29.4x。AI 🟢 → × 1.10 = 32.3x。Cap 於當前 Fwd PE × 1.2 ≈ 33x。<strong>合理倍數：30-33x</strong>（保守取 30x）。</p>
+
+<p><strong>當前定價判斷：🟡 公允定價</strong>（歷史分位極低但 PEG 1.38 合理，需等 ad/live sports 兌現才能 upgrade to 🟢）</p>
+
+<h4>分析師目標價</h4>
+<p>34 位分析師，中位 <strong>$115-119</strong>（Buy）；高 $151（Guggenheim $130）、低 $90。當前 $97.31 低於中位 16%，共識仍偏樂觀。</p>
+
+<h3>投資結論（詳細版）</h3>
+<ul>
+<li>H1 當前：＋ 強化（ad guide 2× 維持、MAV 190M 在軌）</li>
+<li>H2 當前：＋ 強化（Q1 op margin 32.3%、FY guide 31.5%）</li>
+<li>H3 當前：− 削弱（Fwd PE 從 35x 砸到 27x，但仍在 28-38x 區間上沿）</li>
+<li>綜合：基本面強化，但 Q2 guide + Hastings 退場引發短期敘事壓制。</li>
+</ul>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期 Bear：$57.67（距現價 -41%）</li>
+<li>中期 Bear：$62.39（-36%）</li>
+<li>W52 Low $75.01（參考）/ W104 Low $56.12（參考）</li>
+<li>若 FY+1 EPS 下修 10%，短期 R:R 降至 -0.03x</li>
+</ul>
+</section>
+
+<!-- 版本修訂紀錄 -->
+<section>
+<h2>版本修訂紀錄</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>變更摘要</th></tr>
+<tr><td>v12.0</td><td>2026-04-18</td><td>採用 v12.0 訊號燈框架（A+/A/B/C/X 取代倉位 %）；納入 Q1 2026 財報（4/16 已發佈）：Rev $12.25B (+16%) / EPS $1.23 / FCF $5.09B (+91%)；納入 Hastings 退場（6 月生效）；納入 Paramount+WBD 合併 $110B 定案（Q3 2026 close）；新增 QC-22 ~ QC-30 九條規則執行。</td></tr>
+<tr><td>v11.0</td><td>2026-04-17</td><td>前版：觀望偏進場，底倉 15-20%，綜合品質分 7.5。</td></tr>
+<tr><td>v11.0</td><td>2026-04-14</td><td>首版 v11.0 Forward PE 30x + PEG 安全網。</td></tr>
+</table>
+</section>
+
+<!-- 假設驗證對照 -->
+<section>
+<h2>假設驗證對照（v11 → v12）</h2>
+<table>
+<tr><th>項目</th><th>上次狀態（v11 2026-04-17）</th><th>本次狀態（v12 2026-04-18）</th><th>邊際變化</th></tr>
+<tr><td>H1 Ad-tier $6B+ 2027</td><td>強化（ad 方案 &gt; 60% 新簽、2026 rev 2× guidance）</td><td>強化不變（MAV 190M、2026 $3B guide 維持、NFL 5-game package 談判中）</td><td>不變（略偏強）</td></tr>
+<tr><td>H2 Op Margin 31-35%</td><td>強化（Q1 32.3%、FY guide 31.5%）</td><td>強化不變（Q1 細節確認，FY guide 維持）</td><td>不變</td></tr>
+<tr><td>H3 Fwd PE 30-38x</td><td>削弱（盤後跌至 25.7x）</td><td>仍削弱但擺脫最低谷（27.3x，接近 28-38x 下沿）</td><td>略復原但敘事仍壓制</td></tr>
+<tr><td>R1（Ad TAM 不及預期）</td><td>未觸發</td><td>未觸發（2026 guide 2× 維持，YouTube TV hours 12.6% vs NFLX 8-9% 差距穩定）</td><td>不變</td></tr>
+<tr><td>R2（WBD+PARA 軍備競賽）</td><td>警戒升溫（合併簽約）</td><td>警戒再升溫（Q3 2026 close 確定，$6B synergy 預算可能轉內容）</td><td>略削弱 H2</td></tr>
+<tr><td>R3（Engagement 峰值見頂）</td><td>未觸發</td><td>🟡 警戒觸發初期（Q2 guide 偏弱可能暗示 engagement 減速）</td><td>警戒上升</td></tr>
+<tr><td>裁決變化</td><td>觀望偏進場（v11 底倉 15-20%）</td><td><strong>C 觀察池</strong>（v12 訊號燈，無倉位 %，PM 決定）</td><td>表面降級但係框架變更（v11→v12 取消倉位 %；MA 🟡 觀察池 + 壓測 0/4 觸發 QC-29 降級）。3 個新事實：① Q2 guide 下修；② Hastings 6 月退場；③ Fwd PE 跌穿至 5Y 低點 5% 分位但 PEG 仍 1.38</td></tr>
+</table>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</div>
+</body>
+</html>

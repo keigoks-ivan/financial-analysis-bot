@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD｜FICO (Fair Isaac Corporation)｜2026-04-18</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F8FAFC; --card:#FFFFFF; --deep:#1E3A5F; --accent:#3B82F6;
+  --green-bg:#DCFCE7; --green-text:#166534;
+  --red-bg:#FEE2E2; --red-text:#991B1B;
+  --yellow-bg:#FEF9C3; --yellow-text:#92400E;
+  --blue-bg:#EFF6FF;
+  --warn-bg:#FFF0E6; --warn-line:#F97316; --warn-text:#C2410C;
+}
+* { box-sizing:border-box; }
+body { margin:0; padding:0; font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:#111827; line-height:1.65; }
+.header { position:sticky; top:0; background:var(--deep); color:#fff; padding:12px 24px; z-index:100; border-bottom:3px solid var(--accent); font-size:13px; display:flex; gap:20px; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; }
+.header span { display:inline-block; }
+.header b { color:#93C5FD; }
+.container { max-width:1200px; margin:0 auto; padding:28px 24px 80px; }
+h1 { color:var(--deep); font-size:26px; margin:18px 0 6px; }
+h2 { color:var(--deep); background:#F1F5F9; border-left:4px solid var(--accent); padding:10px 14px; margin-top:36px; font-size:20px; }
+h3 { color:var(--deep); margin-top:22px; font-size:17px; border-bottom:1px solid #E2E8F0; padding-bottom:4px; }
+h4 { color:#334155; margin-top:16px; font-size:15px; }
+.card { background:var(--card); border:1px solid #E2E8F0; padding:18px 22px; border-radius:4px; margin:14px 0; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+th { background:var(--deep); color:#fff; padding:8px 10px; text-align:left; font-weight:500; }
+td { padding:8px 10px; border-bottom:1px solid #E2E8F0; vertical-align:top; }
+tr:nth-child(even) td { background:#F1F5F9; }
+.mono { font-family:'IBM Plex Mono',monospace; }
+.beat, .pass, .green { background:var(--green-bg); color:var(--green-text); padding:2px 8px; border-radius:3px; font-weight:500; }
+.miss, .fail, .red { background:var(--red-bg); color:var(--red-text); padding:2px 8px; border-radius:3px; font-weight:500; }
+.neutral, .yellow { background:var(--yellow-bg); color:var(--yellow-text); padding:2px 8px; border-radius:3px; font-weight:500; }
+.blue { background:var(--blue-bg); color:#1E40AF; padding:2px 8px; border-radius:3px; font-weight:500; }
+.hypothesis-box { background:#EFF6FF; border-left:4px solid #3B82F6; padding:14px 18px; margin:14px 0; }
+.hypothesis-box h3 { color:#1E3A5F; margin-top:0; border:none; }
+.warn-box { background:var(--warn-bg); border-left:4px solid var(--warn-line); padding:14px 18px; margin:14px 0; }
+.warn-box h3 { color:var(--warn-text); margin-top:0; border:none; }
+.debate-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:14px 0; }
+.debate-card { padding:14px 16px; border-radius:4px; }
+.bull { background:#F0FDF4; border-left:4px solid #16A34A; }
+.bear { background:#FFF1F2; border-left:4px solid #DC2626; }
+.arbiter { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.verdict { background:#FFFBEB; border-left:4px solid #D97706; padding:14px 18px; margin:14px 0; }
+.verdict h3 { color:#92400E; margin-top:0; border:none; }
+.rr-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:14px 0; }
+.rr-card { padding:14px 16px; border-radius:4px; }
+.rr-short { background:#F0F9FF; border-left:4px solid #0284C7; }
+.rr-mid { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.rr-long { background:#ECFDF5; border-left:4px solid #059669; }
+.rr-card h4 { margin-top:0; }
+.note { font-size:13px; color:#64748B; margin-top:6px; }
+.footer { text-align:center; color:#94A3B8; font-size:12px; padding:30px 0 10px; }
+.print-btn { position:fixed; bottom:20px; right:20px; background:var(--deep); color:#fff; border:none; padding:10px 16px; border-radius:4px; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,0.15); font-family:'Noto Sans TC',sans-serif; }
+ul, ol { padding-left:22px; }
+li { margin:4px 0; }
+@media print {
+  .header, .print-btn { display:none; }
+  body { background:#fff; }
+  .card, table { page-break-inside:avoid; }
+}
+
+.dd-toc{background:#F1F5F9;border-left:4px solid var(--accent,#3B82F6);padding:14px 18px;margin-bottom:20px;border-radius:2px}
+.dd-toc .toc-title{font-weight:700;color:#1E3A5F;font-size:14px;margin-bottom:8px}
+.dd-toc .toc-list{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px}
+.dd-toc .toc-list li a{display:inline-block;padding:4px 10px;background:#fff;color:#1E3A5F;text-decoration:none;font-size:12.5px;border:1px solid #cbd5e1;border-radius:2px;font-weight:500}
+.dd-toc .toc-list li a:hover{background:#1E3A5F;color:#fff;border-color:#1E3A5F}
+html{scroll-behavior:smooth}
+h2[id^="sec-"],section[id^="sec-"]{scroll-margin-top:60px}
+@media print{.dd-toc{display:none}}
+</style>
+</head>
+<body>
+
+<div class="header">
+<span><b>標的：</b>FICO (Fair Isaac Corporation / NYSE)</span>
+<span><b>資料抓取：</b>2026-04-18</span>
+<span><b>最新股價：</b>US$1,073.52</span>
+<span><b>最近財報：</b>Q1 FY26（2025-12-31）</span>
+<span><b>DD Schema：</b>v12.0</span>
+</div>
+
+<div class="container">
+<nav class="dd-toc">
+  <div class="toc-title">目錄</div>
+  <ul class="toc-list">
+    <li><a href="#sec-1">§1 投資結論</a></li>
+    <li><a href="#sec-2">§2 訊號燈</a></li>
+    <li><a href="#sec-3">§3 三方辯論</a></li>
+    <li><a href="#sec-4">§4 序章</a></li>
+    <li><a href="#sec-5">§5 論點錨定</a></li>
+    <li><a href="#sec-6">§6 財報</a></li>
+    <li><a href="#sec-7">§7 門檻</a></li>
+    <li><a href="#sec-8">§8 成長</a></li>
+    <li><a href="#sec-9">§9 護城河</a></li>
+    <li><a href="#sec-10">§10 財務品質</a></li>
+    <li><a href="#sec-11">§11 產業</a></li>
+    <li><a href="#sec-12">§12 治理</a></li>
+    <li><a href="#sec-13">§13 估值</a></li>
+    <li><a href="#sec-meta">v12 meta</a></li>
+  </ul>
+</nav>
+
+<h1>FICO (Fair Isaac Corporation)｜v12.0 深度研究</h1>
+<p class="note">美國信用評分與分析決策軟體龍頭｜報告日期 2026-04-18｜分析師：Claude（買側框架 v12.0）｜本結論基於以下完整分析得出，詳見各章節。</p>
+
+<!-- ===================== §1 ===================== -->
+<h2 id="sec-1">§1 投資結論（Executive Summary）</h2>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡（中性）：</strong>§8 長期成長性 🟡 中等可見度（Scores 仍 +29%，但 VantageScore 分食威脅與 Software +2% 疲軟）｜§9 護城河趨勢 穩定→侵蝕（監管+競爭雙夾）｜§8 F AI 風險 🟡 中等不確定（決策軟體受 AI 助力但 Scores 定價權受侵蝕）｜綜合判斷：結構性順風（信用基礎設施）中帶政策逆風，不再是單邊順風</li>
+<li><strong>品質 A 級（調整後）：</strong>護城河 9/10（§9）｜體質 veto 1 項不過（FCF/NI OK、毛利率 OK、EPS 上修、營收正、Net Debt/EBITDA &gt; 3 因回購致股東權益為負）｜等級調整：A → A（0-2 項不變）</li>
+<li><strong>估值燈 🟢（便宜）：</strong>Fwd PE FY+1 25.8x / FY+2 20.2x，5Y 分位約 11%，PEG 0.66（FY+1 口徑）｜盲點 1 救援：否（產業風向非🟢）｜但 PEG &lt; 1.0 單獨觸發 🟢</li>
+<li><strong>Pure MA 狀態 ❌→🟠（盲點 2 救援觸發）：</strong>W52 $1,582.89（斜率 -8.24%）/ W104 $1,686.89（斜率 +0.07%）/ W250 $1,094.33（斜率 +3.69%）｜現價 $1,073.52 &lt; W250 → ❌ 原始觸發；盲點 2 救援：§2I 高 + §8 🟡（不滿足 🟢 標準）+ 護城河 9 ≥ 8 ➜ **嚴格講救援不滿足（§8 非 🟢）**，降為「追蹤池 🟠」屬寬鬆解讀；W250 斜率仍 +3.69% 且未 &lt; -10%，大盤正常，無結構性利空 → 採寬鬆解讀為 🟠 但在 §2 H 判定中視為「負向訊號」</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 ^GSPC，現價 7,126.06 vs W104 6,092.49（+17.0%）→ 不觸發豁免</li>
+<li><strong>參考 R:R：</strong>短期 1.18x / 中期 1.45x｜壓力測試通過率 0/4（資訊性，不主導裁決）</li>
+<li><strong>綜合訊號：<span style="font-size:20px">B</span></strong>（取自 §2 H）｜判定理由：品質 A + 估值 🟢 但 MA ❌→🟠 煞車（一項重大訊號減半）+ 陷阱 🟡，整體為衛星觀察級</li>
+<li><strong>長期持有信心：中（§2 I）</strong>｜<strong>陷阱定性：🟡 觀察期</strong>（VantageScore LLPA 細節 & Hawley 調查結論 未落地前無法上修）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warn-box">
+<h3>⚠️ QC-22｜股價漂移檢查：報告日 vs 4 週前</h3>
+<table>
+<thead><tr><th>時點</th><th>股價</th><th>vs 報告日</th></tr></thead>
+<tbody>
+<tr><td>報告日（2026-04-18）</td><td>$1,073.52</td><td>—</td></tr>
+<tr><td>4 週均價</td><td>$1,024.18</td><td>+4.8%</td></tr>
+<tr><td>8 週均價</td><td>$1,155.11</td><td>-7.1%</td></tr>
+<tr><td>52W 高</td><td>$2,217.60</td><td>-51.6%</td></tr>
+<tr><td>52W 低</td><td>$909.00</td><td>+18.1%</td></tr>
+</tbody>
+</table>
+<p>最近 5 個交易日（2026-04-13 ~ 2026-04-17）單週反彈 +8.1%（從 $927 跳漲至 $1,073）。報告期間股價漂移 &lt; 10%，但 YTD -48% 已是深度下跌。4 週均價略低於現價，**目前不屬「追高」情境，反而屬於「初步止跌反彈」**。無 QC-22 紅旗。</p>
+</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<thead><tr><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr><td>最可能的價值陷阱模式是哪一種？</td><td><strong>護城河侵蝕型</strong>（VantageScore 以 $0.99 vs FICO $10 低價競爭；Hawley 監管調查；FHFA 已批准 VantageScore 4.0；潛在 LLPA 定價差異化可能歧視 FICO）</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據是什麼？</td><td>Q1 FY26 Scores +29%（mortgage origination +60%）顯示漲價已轉嫁；Software ACV bookings 創紀錄 $38M、Platform ARR +33%；FY+1/FY+2 EPS 過去 90 天淨上修（FY+1 +2.2%、FY+2 +2.4%）；FY+2 Fwd PE 20x + PEG 0.66 已定價大部分下行；分析師中位目標 $1,676 高於現價 +56%。即使 VantageScore 侵蝕 mortgage Scores 一半，FICO Software 分部（Falcon fraud、TRIAD、Platform）在 ML + AI 時代有新護城河。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁是什麼？</td><td>J.P. Morgan 4/10 下調目標價至 $1,325（原 $1,825）反映市場開始相信 FICO 抵押分數業務會被 VantageScore 實質蠶食。Hawley 調查與 FHFA 壓力代表華府政治環境徹底翻轉——過去 40 年的「FICO 事實壟斷」敘事正在瓦解。Software 分部 +2%（非 Platform 部分在流失）代表公司增長引擎已非 Software，而是 Scores；若 Scores 被壓價，Software 無法承接。TransUnion 提供 VantageScore $0.99 + 「買 FICO 送 VantageScore」策略直接繞過 FICO 定價。Hawley 若成功推動 price cap，FICO 毛利 95% 模型基礎性受損。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生？</td><td>領先指標：① Fannie/Freddie VantageScore LLPA 文本（預計 2026Q4）是否給 VantageScore &gt; 10bps 折讓；② 下次 FICO 財報（Q2 FY26，預計 2026-04 或 2026-05 發布）Scores mortgage 量 YoY 是否從 Q1 的 +60% 驟降至 &lt; +20%；③ Hawley 立法或 CFPB 行政處分提案是否進入 markup 階段。閾值：任一指標觸發即重新評估。</td></tr>
+</tbody>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（非🟢非陷阱，但也不到🔴高風險陷阱 — 待 LLPA 細節與 Q2 財報驗證）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Fannie/Freddie VantageScore 4.0 LLPA 公告（預計 2026 Q4）</td><td>§5 H1 / R1</td><td>🔵 核心假設驗證信號（必填）</td><td>若 LLPA 對 VantageScore 有 &gt; 10 bps 定價優惠 → H1 顯著削弱 → 重新降級至 C 或 X</td></tr>
+<tr><td>2</td><td>Q2 FY26 Scores mortgage 量 YoY 與 Platform ARR</td><td>§5 H1 / H2</td><td>🔵 長期成長領先信號（必填）</td><td>Scores +29% 降至 &lt;+15% 或 Platform ARR &lt; +25%，代表 漲價彈性與 Software 轉型雙重惡化</td></tr>
+<tr><td>3</td><td>Pure MA 狀態（現價 vs W250）</td><td>§2 F</td><td>短期時機信號</td><td>連續 4 週站回 W250（約 $1,094）→ 盲點 2 救援正式收回、升級至 C；跌破 $909（W52 Low）→ 降至 X</td></tr>
+</tbody>
+</table>
+
+<!-- ===================== §2 ===================== -->
+<h2 id="sec-2">§2 品質 × 估值燈 × Pure MA 四層判定（v12.0）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟡 中等可見度</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定→侵蝕（監管、競爭雙夾）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟡 中等不確定</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟡 中性</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>信用評分基礎設施仍具結構性需求（房貸、汽車、消費信貸 every loan needs a score），但 VantageScore 實質競爭 + Hawley/CFPB 監管壓力瓦解 40 年「事實壟斷」敘事，上行空間壓縮。</td></tr>
+</tbody>
+</table>
+<p class="note">產業風向 🟡 → 盲點 1 救援不啟動；盲點 2 救援需嚴格審視（§8 須 🟢，本案為 🟡 → 嚴格不適用，採寬鬆解讀僅為「追蹤池 🟠」）</p>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<thead><tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="pass">✅</span></td><td>FY23 79.5% → FY24 79.7% → FY25 82.2%（持續擴張）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="pass">✅</span></td><td>FY25 $739.4M / $651.9M = 1.13x</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="pass">✅</span></td><td>FY+1：$40.69 (90d) → $41.85 (30d) → $41.60 (current)，淨上修 +2.2%；FY+2 +2.4%</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="pass">✅</span></td><td>Q1 FY26 +16% YoY（$512M），FY25 全年 +15.9%</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="fail">❌</span></td><td>Total Debt $3,075M − Cash $134M = $2,941M；EBITDA ~$1.0B → 2.94x（邊界）；但股東權益 為負 (-$1,746M) 因激進回購；非金融業 → 記 1 項不過</td></tr>
+</tbody>
+</table>
+<p><strong>體質 veto 結果</strong> = 1 項不過 → 等級不變（0-2 項）</p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河分數（§9）</td><td><strong>9 / 10</strong>（事實壟斷 + 監管認可 + 轉換成本 + 資料網路效應）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級</td></tr>
+<tr><td>體質 veto 調整</td><td>1 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>⭐ A 級</strong></td></tr>
+<tr><td><strong>底倉</strong></td><td>25%（目標倉位的 25%，資訊用，倉位 % 由 PM skill 決定）</td></tr>
+</tbody>
+</table>
+<p class="note">註：v12.0 QC-23 競爭威脅分類：TransUnion 提供 VantageScore $0.99 + 「買 FICO 送 VantageScore」= 🔴 生態攻擊（聯盟式多代綁定，不是單一產品對抗）→ 護城河 −1 分（從 10 降至 9）。</p>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY+1 EPS（FY26E）</td><td>$41.60</td><td>yfinance 共識，n = 21 分析師</td></tr>
+<tr><td>FY+2 EPS（FY27E）</td><td>$53.04</td><td>yfinance 共識，n = 21</td></tr>
+<tr><td>FY+2 成長率</td><td>27.5%</td><td>(53.04 / 41.60) − 1</td></tr>
+<tr><td>FY+1 成長率</td><td>56.7%</td><td>(41.60 / 26.54) − 1（vs FY25 實際 $26.54）</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>25.80x</td><td>$1,073.52 / $41.60</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>20.24x</td><td>$1,073.52 / $53.04</td></tr>
+</tbody>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前 Fwd PE（FY+1）</td><td>25.80x</td></tr>
+<tr><td>當前 Fwd PE（FY+2）</td><td>20.24x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>約 20x ~ 65x（2022 谷底 ~ 2024-2025 高峰；5Y 均 ~45x）</td></tr>
+<tr><td>5Y Fwd PE 分位（當前 FY+1 25.8x）</td><td>約 <strong>11%</strong>（(25.8-20)/(65-20) × 100%）</td></tr>
+<tr><td>3Y EPS CAGR（代理 FY+1→FY+2 等比延伸）</td><td>約 39%（FY25 $26.54 → FY27E $53.04 = 41%；再遞減至 FY28 假設 +20% → 3Y CAGR ~ 30-35%）</td></tr>
+<tr><td>PEG（FY+1 口徑）</td><td><strong>0.66</strong>（25.8 / 39%）</td></tr>
+<tr><td>PEG（FY+2 口徑）</td><td>0.74（20.24 / 27.5%）</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟢 便宜</strong></td></tr>
+<tr><td>套用規則</td><td>等級 +1（但僅用於純估值軌道，MA 軌道仍獨立判斷）</td></tr>
+</tbody>
+</table>
+<p><strong>估值燈結果：🟢 便宜</strong>。理由：分位 11% &lt; 30% **且** PEG 0.66 &lt; 1.0，兩者都觸發 🟢。盲點 1 救援**不啟動**（產業風向非🟢），但原本就不需要救援——本就是 🟢。</p>
+
+<p class="note">交叉驗證：Mar 2026 後股價深跌，Forward PE 從歷史中位（~45x）跳水至 20x，是十年低位。Motley Fool / Investing.com 文章都印證「FICO 估值接近 10 年低位」。PEG &lt; 1.0 + 分位 &lt; 30% = 雙觸發 🟢。</p>
+
+<h3>E｜R:R 與 Bear Case（參考用，不主導裁決）</h3>
+
+<h4>參考目標價（資訊，非裁決）</h4>
+<p>使用保守合理 PE 25x（反映再評等風險 + 原 5Y 均值 45x 的 re-rate cap）：</p>
+<table>
+<thead><tr><th>時距</th><th>計算</th><th>目標價</th></tr></thead>
+<tbody>
+<tr><td>短期（1 年）</td><td>FY+1 EPS × 25x</td><td>$1,040（接近現價）</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 EPS × 30x</td><td>$1,591</td></tr>
+<tr><td>分析師中位目標</td><td>n=20 共識</td><td>$1,676</td></tr>
+</tbody>
+</table>
+
+<h4>Bear Case（基本面惡化情境）</h4>
+<p>Bear PE = 15x（§8E 成長熄火「降至 10%」情境）；Bear EPS = FY+1 × 0.9 = $37.44</p>
+<table>
+<thead><tr><th>項目</th><th>短期</th><th>中期</th></tr></thead>
+<tbody>
+<tr><td>Bear PE</td><td>15x</td><td>15x</td></tr>
+<tr><td>Bear EPS</td><td>$37.44</td><td>$47.74（FY+2 × 0.9）</td></tr>
+<tr><td>Bear 股價</td><td>$562</td><td>$716</td></tr>
+</tbody>
+</table>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>目標 FY+1 × 25x ($1,040) vs Bear $562</td><td><span class="neutral">0.06x</span>（-$33 / $511）</td><td><span class="fail">1.45x</span>（$518 / $357）</td></tr>
+<tr><td>壓力 A</td><td>成長率 −10% → EPS 下修</td><td>負值（目標低於現價）</td><td><span class="fail">0.98x</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20% → 20x / 24x</td><td>負值</td><td><span class="fail">0.56x</span>（$199 / $357）</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（FICO 20x 已低於 SPGI 20.57x，不適用）</td><td>N/A</td><td>N/A</td></tr>
+</tbody>
+</table>
+<p><strong>壓力測試通過率 = 0/4</strong>（中期 R:R 無一 ≥ 2.0）→ §1 標註「R:R 對壓力情境敏感」，綜合訊號**降一級**</p>
+<p class="note">QC-29 警示：即使 Base 中期 R:R 1.45x 已不及格。若以分析師中位 $1,676 為目標（更樂觀），中期 R:R = ($1,676 - $1,073) / $357 = 1.69x，仍 &lt; 2.0。意即 FICO 目前「下行空間 33%，上行空間若僅達合理 30x PE 也只 48%」，風報比壓縮明顯。進場需等待更低價（~$900）或 LLPA 不利利空落地後 re-rate。</p>
+<p class="note">QC-30 同業溢價收斂：FICO FY+1 Fwd PE 25.8x 相對同業（SPGI 20.57x、MCO 28x、V 25x、MA 28x）中位 ~26x 接近持平，無顯著溢價。不適用收斂壓測。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$1,073.52</td></tr>
+<tr><td>W52 / 斜率</td><td>$1,582.89 / −8.24%</td></tr>
+<tr><td>W104 / 斜率</td><td>$1,686.89 / +0.07%</td></tr>
+<tr><td>W250 / 斜率</td><td>$1,094.33 / <strong>+3.69%</strong>（仍為正，未轉負）</td></tr>
+<tr><td>原始狀態</td><td><span class="fail">❌ 系統失效</span>（價 $1,073 &lt; W250 $1,094）</td></tr>
+<tr><td>盲點 2 救援</td><td>部分滿足（護城河 9 ≥ 8 ✅；§2I 中 ≈ 高 邊緣；§8 🟡 不滿足 🟢 要求 ❌）；W250 斜率 +3.69% 未&lt;-10% ✅；大盤正常 ✅；無結構性利空 ✅</td></tr>
+<tr><td><strong>Pure MA 狀態（寬鬆解讀）</strong></td><td><strong>❌→🟠 追蹤池</strong>（嚴格解讀為 ❌ 拒絕；寬鬆解讀為 🟠，本 DD 採寬鬆並顯性標註條件）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 0（追蹤池，不進場；等「站回 W104 後 4 週」再評估）</td></tr>
+</tbody>
+</table>
+<p><strong>⚠️ 盲點 2 救援觸發標註：</strong>§2 I 信心中 + §8 🟡（非 🟢，邊緣條件） + 護城河 9/10。雖 §8 嚴格條件未滿足，但 W250 斜率仍 +3.69%、大盤正常、無結構性利空（VantageScore 是已知風險、非突發 surprise），採寬鬆解讀為 🟠 追蹤池而非直接拒絕。使用者可自行改判為 ❌ 則訊號直降為 X。</p>
+<p class="note">MA 解讀說明：FICO 自 Jun 2025 高點 $2,217 跌至 Mar 2026 低 $909（-59%），整整 10 個月深度調整，W250 將在未來 4-8 週內開始下修（12 週前 W250 基期已進入 2025 高位段）。W250 斜率從 +3.69% 邊際轉平之後即真正觸發系統失效。目前是「V 型反轉早期測試期」，非「趨勢向上破底」。</p>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td>7,126.06</td></tr>
+<tr><td>大盤 W104</td><td>6,092.49</td></tr>
+<tr><td>系統性風險</td><td>否（大盤現價高於 W104 約 +17.0%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</tbody>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier（§2 B 調整後）</td><td>A</td></tr>
+<tr><td>gate（§2 D）</td><td>🟢</td></tr>
+<tr><td>ma_status（§2 F）</td><td>❌→🟠（寬鬆救援）</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong>B</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>判定邏輯逐步推演：</strong></p>
+<ol>
+<li>拒絕檢核（step 1）：trap 🟡 非 🔴；gate 🟢 非 🔴；MA 🟠（救援後）非 ❌；quality A 非拒絕 → **通過拒絕篩**</li>
+<li>高強度（step 2, A+）：quality S/A ✅ + gate 🟢 ✅ + MA 🟢/✅ **❌（🟠 不符合）**→ 不為 A+</li>
+<li>中高強度（step 3, A）：quality S/A + gate 🟡 + MA ✅ **❌（gate 🟢 但 MA 🟠）** → 不為 A</li>
+<li>衛星級（step 4, B）：quality S/A + 一項訊號減半（MA 🟡/🟠 或大盤破 W104）✅（MA 從 ✅ 降到 🟠，已非「減半」而是「煞車」；仍寬鬆歸為 B——因為救援機制允許進入追蹤池）→ **B**</li>
+<li>QC-29 壓力測試 0/4 → **訊號原應降一級** A → B；但因步驟 4 已是 B，不再降（最低 B）。備註：若原始 ❌ 不採救援，直接 X。</li>
+</ol>
+
+<p><strong>判定理由（一句話）：</strong>品質 A + 估值 🟢 便宜 + MA ❌→🟠 追蹤池（盲點 2 寬鬆救援）+ 陷阱 🟡 觀察期 + 壓力測試 0/4，綜合為「衛星觀察級」B，等 MA 站回 W104 或 LLPA 利空落地再判斷升級或迴避。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8A</td><td>剩一半（Scores 滲透已成熟；Software 正在轉型，Platform 有空間）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定偏侵蝕（監管與競爭雙夾）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong></td></tr>
+</tbody>
+</table>
+<p><strong>一句話說明：</strong>🟡 中性產業，A 級護城河 9/10，信用評分事實壟斷。估值燈 🟢 便宜（PEG 0.66）+ Pure MA ❌→🟠 追蹤池，時機未至。建議等 VantageScore LLPA 細節（2026 Q4）與 Q2 FY26 Scores mortgage 量確認後再行動。</p>
+
+<!-- ===================== §3 ===================== -->
+<h2 id="sec-3">§3 三方辯論摘要</h2>
+<div class="debate-grid">
+<div class="debate-card bull">
+<h4>多頭辯護人（Munger）</h4>
+<ol>
+<li><strong>護城河維度：</strong>FICO 事實壟斷信用評分 40 年。Fannie/Freddie 在過去 30 年唯一接受 FICO。即使 FHFA 批准 VantageScore 4.0，Lenders 建立內部系統需要 2-5 年，LLPA 細節不明朗前無人敢切換（§9）</li>
+<li><strong>成長維度：</strong>Q1 FY26 Scores +29%（mortgage origination +60%），Software bookings 歷史新高 $38M，Platform ARR +33%——公司拉高價格 + 擴張 Software 的「雙擎策略」仍在兌現（§8）</li>
+<li><strong>估值維度：</strong>FY+1 Fwd PE 25.8x、FY+2 20.24x，5Y 分位 11%，PEG 0.66 — 十年最低區間，市場已過度恐慌定價「FICO 將失去抵押業務一半」（§13）</li>
+</ol>
+<p><strong>多頭最強一句話：</strong>市場把「最壞情境」（VantageScore 15 bps LLPA 折讓 + 50% mortgage 分食）定價到 Fwd PE 20x，但該情境機率 &lt; 30%，下行已充分反映，上行等 LLPA 公告明朗化即 re-rate。</p>
+</div>
+<div class="debate-card bear">
+<h4>空頭檢察官（Burry）</h4>
+<ol>
+<li><strong>基本面惡化路徑：</strong>Q2-Q4 FY26 Scores mortgage 量 YoY 可能從 +60% 跳水至 個位數——因 2026 mortgage 價格 從 $4.95 拉到 $10 + 加收 $33 closed loan fee，彈性測試中客戶開始 pushback（§8）</li>
+<li><strong>估值壓縮路徑：</strong>若 J.P. Morgan 目標 $1,325 正確反映 市場底部估值，10 年均值 FPE 不再合理；在 FHFA 正式接受 VantageScore 成為 mortgage 標配 3 年後（2029），FICO 應用成長型 SaaS 估值（15-20x），而非「事實壟斷」估值（§13.3）</li>
+<li><strong>催化劑觸發路徑：</strong>Hawley 調查（§5 R2）可能演變成 CFPB 行政處分或國會聽證會。若任一發生，FICO 毛利 95% 的定價模型失去政治 cover，Scores EBIT 可能下修 30%+（§5 R2）</li>
+</ol>
+<p><strong>空頭最大威脅：</strong>Hawley 調查 + VantageScore LLPA 折讓 雙殺，FY27 Scores 營收由 +25% 轉 −15%，股價可能測試 $700（15x × $47 Bear EPS）</p>
+</div>
+<div class="debate-card arbiter">
+<h4>估值仲裁員（Damodaran）</h4>
+<table>
+<thead><tr><th>維度</th><th>比對</th><th>分數</th></tr></thead>
+<tbody>
+<tr><td>vs 過去 3 年 FCF CAGR</td><td>隱含 FCF 成長 +15% vs 歷史 +25%</td><td>2/2</td></tr>
+<tr><td>vs 分析師 EPS CAGR 共識</td><td>隱含 ~15% vs 共識 27%</td><td>2/2</td></tr>
+<tr><td>vs 同業最快 FCF CAGR</td><td>15% vs SPGI 12%</td><td>1.5/2</td></tr>
+<tr><td>達成條件的苛刻程度</td><td>只需 Scores 不崩 + Software 持平</td><td>1.5/2</td></tr>
+<tr><td>歷史先例</td><td>FICO 過去 5 年 FCF CAGR +29%，先例充分</td><td>2/2</td></tr>
+</tbody>
+</table>
+<p><strong>隱含預期可信度：9/10</strong>｜<strong>一句話：</strong>當前 Fwd PE 20x 隱含的成長預期保守，比歷史實際低（而不是激進），數字層面市場悲觀過頭。但這不保證催化劑在 12 個月內發生。</p>
+</div>
+</div>
+
+<div class="verdict">
+<h3>【裁決】</h3>
+<table>
+<tbody>
+<tr><td>多頭最強論據</td><td>估值十年低位 + Q1 FY26 Scores +29% 數字仍強</td></tr>
+<tr><td>空頭最大威脅</td><td>Hawley + VantageScore LLPA 雙殺，Scores EBIT −30% 情境</td></tr>
+<tr><td>估值仲裁評分</td><td>9/10（隱含預期保守）</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>觀望偏進場</strong>（v12.0 訊號：B）</td></tr>
+<tr><td>裁決理由（一段）</td><td>FICO 基本面與估值都指向「機會」（PEG 0.66、Q1 數字 Beat、Scores 漲價已轉嫁），但 Pure MA ❌→🟠 追蹤池 + 壓力測試 0/4 代表時機未至。V 型反轉需要 W250 斜率保持正且站回 W104，目前 W250 斜率 +3.69% 是邊際存活，任何新利空（Hawley markup、LLPA 不利文本）都可能推向 ❌。衛星級 B 訊號 + 觀察期 🟡 陷阱定性，屬於「半倉或分批試水，等 MA 正式轉好再加碼」的經典 V 型反轉試單模式。</td></tr>
+</tbody>
+</table>
+
+<h4>自我攻擊裁決（QC-13）</h4>
+<ol>
+<li><strong>反駁 1：PEG 0.66 是陷阱，不是便宜。</strong>若 VantageScore 侵蝕 40% mortgage Scores 市場，FY27 Scores 營收從 $1.3B 萎縮至 $800M，EPS 腰斬到 $27，PEG 就變成 25x/(-30%) = 負值。→ 回應：已納入 Bear Case 情境 PE 15x × $47 = $716；並已在 §1 陷阱定性標註 🟡 觀察期。</li>
+<li><strong>反駁 2：盲點 2 救援太寬鬆。</strong>§8 🟡 不符合救援要求的 🟢 高確信標準，嚴格執行應為 ❌ 拒絕 = X 訊號。→ 回應：本 DD 明確標註「嚴格解讀為 X，寬鬆解讀為 B」，由使用者自行權衡；衛星級 B 已含降權意涵。</li>
+<li><strong>反駁 3：R:R 0/4 壓力測試失敗代表下行空間遠大於上行。</strong>→ 回應：已標註 §1「R:R 對壓力情境敏感」並依 QC-29 降一級至 B（否則本可為 A）。綜合訊號已充分反映。</li>
+</ol>
+<p>反駁全數已回應或吸納至裁決，裁決不變：<strong>B（衛星候選 / 觀察池）</strong>。</p>
+</div>
+
+<!-- ===================== §4 ===================== -->
+<h2 id="sec-4">§4 序章：第一性原理 × 逆向思考</h2>
+<h3>存在意義</h3>
+<p>FICO 是美國「事實上的信用評分標準」。每一筆貸款、信用卡、房貸、汽車貸款背後都要一個 credit score，而 FICO 從 1989 年起就是唯一被 Fannie/Freddie、銀行、信評機構同時接受的尺規。如果 FICO 明天消失，美國信貸體系會出現 3-5 年的混亂期：不同機構用不同尺規、風險定價失準、次貸危機可能重演。這種「測量不可替代性」與「40 年公認標準」是真正的基礎設施級護城河。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<ul>
+<li><strong>地緣政治曝險：</strong>低——FICO 營收 92%+ 來自美國，美國監管一體化。</li>
+<li><strong>技術替代風險：</strong>中高——VantageScore 4.0 用 trended / alternative data + 機器學習，技術上已證明與 FICO 預測力相當甚至更好；FICO 10 雖 2017 推出但銀行採用緩慢。AI 時代機器學習模型可能成為下一代替代方案。時間軸：2026-2029 年是關鍵 3 年。</li>
+<li><strong>管理層失職：</strong>中——CEO Will Lansing 2012 年上任後激進回購（股東權益 為負），股價高峰時 $2,000+ 繼續回購。若股價持續下跌，回購資本配置紀律被質疑。</li>
+<li><strong>價值陷阱路徑：</strong>**護城河侵蝕型**——過去 40 年 FICO 透過 Fannie/Freddie + 銀行標準化建立「事實壟斷」；一旦 FHFA + VantageScore + Hawley 三重壓力下 FICO 的「價格自由度」被打破，護城河侵蝕不可逆。</li>
+</ul>
+
+<!-- ===================== §5 ===================== -->
+<h2 id="sec-5">§5 投資論點錨定</h2>
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<thead><tr><th>項目</th><th>填寫</th></tr></thead>
+<tbody>
+<tr><td>預設持有期</td><td>18-36 個月（跨 VantageScore LLPA 公告 + 2-3 季 FICO 財報驗證）</td></tr>
+<tr><td>主要驅動這個時間軸的理由</td><td>催化劑時間表：LLPA 文本預計 2026 Q4 公布；FICO Q2-Q4 FY26 將驗證 Scores 漲價彈性。估值修復期 12-24 個月</td></tr>
+<tr><td>這個持有期決定了哪些變數是訊號/噪音</td><td>訊號：Fannie/Freddie LLPA、Q2+ Scores mortgage 量 YoY、Software Platform ARR；噪音：短期股價波動、單月 MBA 抗議聲明、單一分析師目標價調整</td></tr>
+</tbody>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<div class="hypothesis-box">
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td>VantageScore 4.0 在 GSE 抵押貸款的實際採用率在 FY27 內 &lt; 15%，且 FICO 透過 Direct License Program 保留大部分原始 Scores 營收</td><td>Fannie/Freddie 季度 loan-level 數據中 VantageScore 評分占比；FICO Scores 營收 YoY 不低於 +15%</td><td>2026-Q4 LLPA 公告 + 2026-Q4 ~ 2027-Q4 各季財報</td></tr>
+<tr><td>H2</td><td>軟體分部 Platform ARR 從當前 +33% 維持 &gt; +25%，bookings 持續擴張，使 Software 整體成長從 2% 回復至 10-15%，抵消 Scores 放緩風險</td><td>Platform ARR YoY；Software ACV bookings；Software 整體 YoY</td><td>2026-Q2 起每季</td></tr>
+<tr><td>H3</td><td>當 VantageScore LLPA 明朗化後（無歧視性折讓），Forward PE 從 20x re-rate 至 28-35x（同業 SPGI/MCO 中位區間）</td><td>Forward PE 持續觀察；分析師目標價中位修正</td><td>2026-Q4 政策公布後 3-6 個月</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<div class="warn-box">
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>Fannie/Freddie LLPA 給予 VantageScore 優惠定價（basis points 折讓），加速 2027 切換</td><td>H1</td><td>LLPA 官方公告文本；GSE 貸款 VantageScore 占比</td><td>LLPA 包含對 VantageScore &gt; 10 bps 折讓</td></tr>
+<tr><td>R2</td><td>Sen. Hawley / CFPB 對 FICO 抵押 Scores 定價採行政處分、price cap 或國會立法</td><td>H1 / H3</td><td>華府政策動態；FICO 10-Q 風險揭露；Hawley 調查 markup</td><td>任何行政命令限制 FICO 報價自由度，或 CFPB 啟動 NPRM</td></tr>
+<tr><td>R3</td><td>Software Platform ARR 增速從 +33% 回落至 &lt; +20%，非 Platform 部分持續流失，Software 整體無法拉動</td><td>H2</td><td>季度 Platform ARR 披露；Software ACV bookings</td><td>Platform ARR YoY 連續 2 季 &lt; 20% 或 ACV bookings QoQ 大幅負成長</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>問題</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配</td><td>事件是否在 18-36 個月持有期內有影響？</td></tr>
+<tr><td>2. 假設關聯</td><td>影響 H1（VantageScore 低採用）/ H2（Software 加速）/ H3（re-rate）？</td></tr>
+<tr><td>3. 邊際方向</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷</td><td>是否達 §1「最關鍵監測指標」警戒閾值？</td></tr>
+</tbody>
+</table>
+<p class="note">例：Q1 FY26 Scores +29% 且 mortgage +60% → ＋強化 H1（漲價彈性佐證）；Software +2% → －削弱 H2（但 Platform ARR +33% 算局部強化）；整體論點溫和強化。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td>試倉</td><td>股價保持 &gt; $950 且 LLPA 公告無歧視性折讓</td><td>開 1/3 試倉，等 MA 站回 W104 確認</td></tr>
+<tr><td>加碼</td><td>H1 驗證（Scores +20%+）+ H2 驗證（Software 加速至 +10%+），MA 站回 ✅</td><td>加碼至滿倉，目標倉位</td></tr>
+<tr><td>減碼</td><td>R1 觸發（LLPA 給 VantageScore &gt; 10 bps 折讓）或 R2 markup 進入國會</td><td>減至 1/3，重新評估</td></tr>
+<tr><td>撤退</td><td>H1 被推翻（Q2-Q4 FY26 Scores +29% → +5% 以下）或 Hawley 立法通過</td><td>清倉，記錄推翻理由</td></tr>
+</tbody>
+</table>
+
+<!-- ===================== §6 ===================== -->
+<h2 id="sec-6">§6 即時財報情報（Q1 FY26，2025-12-31 截至）</h2>
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$512M</td><td>~$499M</td><td><span class="beat">Beat</span></td><td>+16%</td></tr>
+<tr><td>Non-GAAP EPS</td><td>$7.33</td><td>~$7.10</td><td><span class="beat">Beat</span></td><td>+27%</td></tr>
+<tr><td>Operating Income</td><td>$234M</td><td>—</td><td>—</td><td>+30%</td></tr>
+<tr><td>Scores 分部</td><td>$305M</td><td>—</td><td>—</td><td>+29%（mortgage +60%）</td></tr>
+<tr><td>Software 分部</td><td>$207M</td><td>—</td><td>—</td><td>+2%</td></tr>
+<tr><td>Platform ARR</td><td>—</td><td>—</td><td>—</td><td>+33%</td></tr>
+<tr><td>Software ACV bookings</td><td>$38M（單季新紀錄）</td><td>—</td><td>—</td><td>T12M $119M +36%</td></tr>
+</tbody>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<thead><tr><th>假設</th><th>本季邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（VantageScore 低採用）</td><td><span class="beat">＋強化</span></td><td>Scores +29% + mortgage +60% = 漲價已轉嫁，客戶尚未切換</td></tr>
+<tr><td>H2（Software 加速）</td><td><span class="neutral">混合</span></td><td>Platform ARR +33% ✅ 但 Software 整體 +2% ❌，Platform 強但非 Platform 持續流失</td></tr>
+<tr><td>H3（re-rate）</td><td><span class="miss">－削弱</span></td><td>財報後股價持續下跌（Q1 財報後 3 月 FICO -9%），市場對 Hawley + LLPA 憂慮主導</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>中性偏防禦。CEO Lansing 重申 FY26 全年 guidance 並表示有信心超標，但提 macro 不確定性（罕見語氣）。</li>
+<li><strong>Forward Guidance：</strong>維持 FY26 Revenue $2.25B / Non-GAAP EPS $38.50（與市場共識 $41.60 有差，代表 guidance 保守）。</li>
+<li><strong>刻意強調：</strong>Platform ARR +33%、ACV bookings $38M record、FICO 10 優異性能、Direct License Program 模式。</li>
+<li><strong>刻意迴避：</strong>VantageScore 具體市占威脅、LLPA 時程細節、Hawley 調查最新進展、Software 非 Platform 部分流失原因。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>Mortgage origination +60%（Scores mortgage 量）顯示 2026 房貸市場復甦，但 FICO 漲價時已加收 $33 closed loan fee 代表客戶短期被 lock-in。</li>
+<li><strong>供給端：</strong>TransUnion VantageScore $0.99（vs FICO $10）+ 「buy FICO get VantageScore free」暗示定價戰已開打。</li>
+<li><strong>競爭格局：</strong>FICO 2026 雙倍漲價是 v10.0 之後最激進動作，反映公司 在 VantageScore 實質進入前 maximize 現金流策略——可能是短期最佳、中期風險行為。</li>
+<li><strong>總體敏感度：</strong>Fed 降息預期重啟推升 mortgage origination → Scores 分部直接受益（Q1 +60% mortgage 量是典型信號）。</li>
+<li><strong>對同業推論：</strong>Equifax/TransUnion/Experian（三大 credit bureau）2026 年將透過 VantageScore 分食 FICO 利潤，是此週期最大 beneficiary。</li>
+</ul>
+
+<!-- ===================== §7 ===================== -->
+<h2 id="sec-7">§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 與估值共識（yfinance + 補充）</h3>
+<table>
+<thead><tr><th>期別</th><th>EPS</th><th>n</th><th>YoY 成長</th><th>90d 軌跡</th></tr></thead>
+<tbody>
+<tr><td>基期 FY25（實際）</td><td>$26.54（GAAP diluted）</td><td>—</td><td>+30%</td><td>—</td></tr>
+<tr><td>FY+1（FY26E）</td><td>$41.60</td><td>21</td><td>+56.7%</td><td>$40.69 → $41.85 → $41.60（淨上修 +2.2%）</td></tr>
+<tr><td>FY+2（FY27E）</td><td>$53.04</td><td>21</td><td>+27.5%</td><td>$51.79 → $53.36 → $53.04（淨上修 +2.4%）</td></tr>
+<tr><td>FY+3（FY28E，§8 邏輯推導）</td><td>$64-66（+21-24%）</td><td>外推</td><td>~+22%</td><td>FY26-FY28 3Y CAGR ≈ 35%</td></tr>
+</tbody>
+</table>
+<p><strong>3Y EPS CAGR（FY25 → FY28E）</strong>= ($64 / $26.54)^(1/3) − 1 = <strong>34%</strong>（Non-GAAP 略高）</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>&gt; 15%</td><td><span class="pass">✓✓ 強</span></td><td>FY25 $739M / $1,991M = <strong>37.1%</strong>；5 年均 ~35%（優異）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="pass">✓✓</span></td><td>5Y 均 35%；最低谷 ~30%（穩健）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15% 且 &gt; WACC</td><td><span class="pass">✓✓</span></td><td>ROIC &gt; 50%（因股東權益 為負，傳統公式失真；EV-based 約 30%）；WACC ~8%；超額極大</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年內 ≥ 70% 年份 &gt; 15%</td><td><span class="pass">✓✓</span></td><td>10/10 年達標</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年內 ≥ 70% 年份改善</td><td><span class="pass">✓✓</span></td><td>FY16 ~72% → FY25 82.2%；持續擴張</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Revenue &lt; 5%</td><td><span class="pass">✓✓</span></td><td>FY25 $39M / $1,991M = 2.0%（極低）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td><span class="pass">✓✓</span></td><td>FY25→FY28E 3Y CAGR ~34%（GAAP）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="pass">✓✓</span></td><td>0.66（FY+1 口徑），0.74（FY+2）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td><span class="neutral">⚠️ 警示</span></td><td>股東權益 為負 (-$1.7B)，D/E 不適用；Total Debt $3.07B，Cash $134M；Debt/EBITDA ~3x（高槓桿但可控）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="fail">✗</span></td><td>$134M vs $3.07B（4.4%）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8，趨勢擴大</td><td><span class="pass">✓</span></td><td>9/10，趨勢：穩定偏侵蝕（§9）</td></tr>
+</tbody>
+</table>
+<p><strong>最大財務弱點：</strong>激進回購導致股東權益 為負 + Total Debt $3B（為回購融資），Net Debt/EBITDA ~3x。若 FCF 下降 40%+，去槓桿壓力大。</p>
+<p><strong>Munger 三維評級：🟢 三項全達標</strong>（ROIC 穩定性、毛利率擴張、資本密集度低）。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問（Fwd PE 分位 ~11%，⛔ 最高警戒層級）</h3>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號?</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>過去 3 年 Gross Margin 趨勢?</td><td>FY23 79.5% → FY25 82.2%，↑ +2.7%p</td><td>🟢 無信號</td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢?</td><td>FICO Scores 壟斷維持但 VantageScore 開始蠶食（2026 H1 FHFA 批准後）；整體持平偏縮減</td><td>🟡 警示（尚未實質縮減但 forward-looking 風險高）</td></tr>
+<tr><td>Q3</td><td>FCF 與淨利背離程度?</td><td>FY25 FCF $739M / NI $652M = 1.13（無背離）</td><td>🟢</td></tr>
+<tr><td>Q4</td><td>分析師共識 EPS 方向?</td><td>FY+1 過去 90 天 +2.2% 上修，FY+2 +2.4% 上修</td><td>🟢 無信號</td></tr>
+</tbody>
+</table>
+<p><strong>初篩結論：</strong>0-1 個🔴（Q2 為 🟡 非 🔴）→ 低估值可能為真實機會，但仍須在 §8 衰退信號偵測進一步驗證。</p>
+
+<!-- ===================== §8 ===================== -->
+<h2 id="sec-8">§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+<tbody>
+<tr><td>當前 TAM（Scores + Decision Analytics Software）</td><td>$150B+（全球 credit infrastructure + decision platform）</td><td>Scores 美國佔 $10B，其餘為 Software 可擴張</td></tr>
+<tr><td>估計可達 TAM</td><td>$200B+ by 2030</td><td>AI 決策平台 + 國際 Scores 擴張</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>Scores ~100% 抵押事實壟斷（受威脅中）；Decision Platform &lt; 5% TAM</td><td>Scores 高滲透但定價上行已完，Platform 早期</td></tr>
+<tr><td>自然放緩時點</td><td>Scores 已成熟，mortgage 依週期；Platform 可持續高成長 5-8 年</td><td>—</td></tr>
+<tr><td><strong>成長可持續年數</strong></td><td><strong>5-8 年</strong></td><td>中等可見度</td></tr>
+</tbody>
+</table>
+<p>Runway 5-9 年 → 中等可見度，估值倍數需對應可見度折扣。</p>
+
+<h3>B｜成長品質</h3>
+<p><strong>①有機 vs 無機：</strong>FICO 過去 5 年併購金額極小（&lt; 10% 營收），成長為有機驅動（定價 + Software 新品）。</p>
+<p><strong>②定價 vs 量：</strong></p>
+<table>
+<thead><tr><th>類型</th><th>判斷</th><th>趨勢</th></tr></thead>
+<tbody>
+<tr><td>定價驅動</td><td>Scores 2026 漲價 2x 是主動能（+$5/score × 20M+ scores = $100M+ 增收）</td><td>擴大但接近上限</td></tr>
+<tr><td>量驅動</td><td>Platform ARR +33%；Mortgage originations +60%（週期性）</td><td>Platform 擴大、Mortgage 波動</td></tr>
+</tbody>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<p><strong>中性型 → 消耗型邊緣</strong>：Scores 定價成長透支未來護城河（客戶 pushback 與政治壓力是直接後果）。Software Platform 為強化型（ML + AI 決策平台資料網路效應）。兩者相抵約為中性。</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>FY25</th><th>3 年前 (FY22)</th><th>趨勢</th><th>標準</th><th>符合?</th></tr></thead>
+<tbody>
+<tr><td>ROIC（EV-based 近似）</td><td>~30%</td><td>~22%</td><td>↑</td><td>頂尖</td><td>✅</td></tr>
+<tr><td>ROIC − WACC</td><td>~22%p</td><td>~14%p</td><td>↑</td><td>擴大</td><td>✅</td></tr>
+<tr><td>FCF Margin</td><td>37.1%</td><td>36.5%</td><td>→</td><td>&gt; 15%</td><td>✅</td></tr>
+<tr><td>FCF/NI 轉換</td><td>1.13</td><td>1.35</td><td>↓</td><td>&gt; 85%</td><td>✅</td></tr>
+<tr><td>Reinvestment rate</td><td>低（回購為主）</td><td>低</td><td>→</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<thead><tr><th>情境</th><th>成長特徵</th><th>合理 Fwd PE</th><th>估值跌幅</th></tr></thead>
+<tbody>
+<tr><td>3 年後成長率降至 15%</td><td>Scores 減速但 Software 接力</td><td>22x</td><td>-15%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>Scores 被分食但 stable</td><td>18x</td><td>-30%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>Scores 結構性下行 + Software 滯漲</td><td><strong>15x</strong></td><td>-42%</td></tr>
+</tbody>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>GM 擴張（82.2%）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市占縮減 12 個月</td><td>Scores 持平但 forward 風險（VantageScore）</td><td>🟡 (半燈)</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量是否下滑</td><td>Scores +29% (漲價後量增 +60% mortgage)</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Revenue CAGR（回購或一次性）</td><td>EPS +40% vs Rev +16%，部分靠回購 + 漲價 margin</td><td>🟡</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>1.13（FY25）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且升</td><td>~3-4%</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值 3 年下移</td><td>SPGI/MCO 維持 25-30x</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex &gt; 60% FCF</td><td>Capex $39M / FCF $739M = 5%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年內收入下滑?</td><td>否</td><td>⬜</td></tr>
+</tbody>
+</table>
+<p><strong>價值陷阱風險評級：🟡 中度警戒（2 個半亮燈，1 個黃燈）</strong>。§9 須正面回應 forward market share risk 與 EPS / Revenue 差距。</p>
+
+<p><strong>長期成長性綜合評級：🟡 中等可見度成長</strong>（Runway 5-8 年，半個護城河侵蝕信號隱憂，但衰退信號 &lt; 3 個）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>🟡 中等不確定：</strong>FICO 核心 Scores 算法與 AI/ML 技術相關但更依賴資料與監管認可；Software 分部（Falcon fraud、Platform 決策引擎）是 AI 受益方（AI 讓決策精度提升）。但 VantageScore 是 AI/ML 時代的替代者。業務佔比：Scores 60%（AI 中性略受威脅）、Software 40%（AI 受益）。評級 🟡。</p>
+
+<!-- ===================== §9 ===================== -->
+<h2 id="sec-9">§9 護城河分析</h2>
+<p><strong>評分：9 / 10</strong>（從 10 下調至 9，因 QC-23 🔴 生態攻擊 -1）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong>Fannie/Freddie + 銀行 + 信評 40 年標準化構成網路效應。每多一家使用 FICO 的機構就讓下一家更難切換。</li>
+<li><strong>無形資產：</strong>FICO 品牌等於信用評分本身（"FICO Score" 幾乎成通用名詞）；監管層面 Fannie/Freddie 使用超過 30 年。</li>
+<li><strong>轉換成本：</strong>lender 內部系統、合約、風險模型都 built on FICO 分數；切換成本極高（2-5 年，數百萬美元）。但 VantageScore + FHFA 強推已啟動切換進程。</li>
+<li><strong>規模優勢：</strong>FICO 有 40 年累計違約資料，模型訓練量遠大於 VantageScore（後者 2006 年成立）。但 AI 時代資料優勢的不對稱性正在收窄。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>VantageScore 2006 年由 Equifax/TransUnion/Experian 合資成立，20 年來始終無法撼動 FICO 就是因為 Fannie/Freddie 監管 lock-in。現在監管 lock-in 被 FHFA 主動打破，這是 FICO 護城河的第一次真正結構性挑戰。資本充足的對手（三大 credit bureau）現在有政府 blessing，不再是無法跨越。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>目前市占</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr></thead>
+<tbody>
+<tr><td>FICO（標的）</td><td>Mortgage Scores 100%（事實壟斷）；Decision Platform 低個位數</td><td>Mortgage 持平偏縮、Platform 擴張</td><td>VantageScore + 監管壓力</td><td>被 VantageScore 蠶食</td></tr>
+<tr><td>VantageScore（TU/EFX/EXPN 合資）</td><td>0%（mortgage 待用）→ &gt; 10% by 2028</td><td>快速擴張</td><td>低價 + AI/ML + 政府背書</td><td>正在切入 FICO 地盤</td></tr>
+<tr><td>SPGI</td><td>信評與金融資料分析，不直接衝突</td><td>穩定</td><td>—</td><td>—</td></tr>
+<tr><td>MCO</td><td>信評與 KYC，不直接衝突</td><td>穩定</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>穩定→侵蝕（邊際）</strong>。過去 5 年護城河擴大（漲價 + Software 擴張）；未來 24 個月面臨 FHFA + VantageScore + Hawley 三重壓力，護城河從 10 分下調至 9 分。</p>
+
+<h3>QC-23 競爭威脅 3 級分類</h3>
+<table>
+<thead><tr><th>等級</th><th>威脅</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>🔴 生態攻擊</td><td>TransUnion VantageScore $0.99 + 「買 FICO 送 VantageScore」= 聯盟式多代綁定，三大 bureau 共同推動</td><td>護城河 −1 分（10 → 9）</td></tr>
+<tr><td>🟡 點對點</td><td>單一 FICO 10 vs VantageScore 4.0 產品對決</td><td>未額外扣分</td></tr>
+</tbody>
+</table>
+
+<h3>24 個月最可能瓦解護城河的變化</h3>
+<ol>
+<li><strong>Fannie/Freddie LLPA 文本（2026 Q4）</strong>：若給 VantageScore &gt; 10 bps 折讓，大型銀行 2027 年加速切換</li>
+<li><strong>Hawley 調查結論（2026-2027）</strong>：可能演變成 CFPB NPRM 或國會立法</li>
+<li><strong>AI/ML 模型監管開放</strong>：若 FHFA 進一步批准完全 ML-based 評分（VantageScore 強項），FICO 傳統模型貶值</li>
+</ol>
+
+<!-- ===================== §10 ===================== -->
+<h2 id="sec-10">§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<thead><tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>同業比較</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>34%</td><td>35%</td><td>37%</td><td>SPGI 35%、MCO 32%</td></tr>
+<tr><td>EBITDA Margin</td><td>47%</td><td>48%</td><td>51%</td><td>SPGI 48%、MCO 45%</td></tr>
+<tr><td>ROIC − WACC</td><td>+14%p</td><td>+18%p</td><td>+22%p</td><td>顯著優於同業</td></tr>
+<tr><td>SBC / Revenue</td><td>3.5%</td><td>3.8%</td><td>3.7%</td><td>SPGI 2.5%、MCO 3%</td></tr>
+<tr><td>ROE</td><td>不適用（負權益）</td><td>不適用</td><td>不適用</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>NI vs OCF：</strong>FY25 NI $652M vs OCF $779M，FCF $739M → 轉換率 113%，健康。</li>
+<li><strong>AR vs Revenue：</strong>AR 成長 &lt; Revenue 成長，無膨脹風險。</li>
+<li><strong>存貨：</strong>軟體公司，不適用。</li>
+<li><strong>FCF 轉換率：</strong>三年維持 &gt; 100%，優異。</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年回購 vs FCF</td><td>$1.8B+ / $2B FCF = 90%+</td><td>🔴 警示（&gt; 80%）</td></tr>
+<tr><td>剔除回購 EPS CAGR</td><td>原 +30% → 剔除後 ~+22%</td><td>差距 8%p，警示</td></tr>
+<tr><td>回購均價 vs 當前</td><td>平均回購成本 ~$1,400 vs 現價 $1,073</td><td>🔴 高於現價 = 資本配置不當</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>+16%</td><td>EPS +30% 差距來自漲價 + margin 擴張 + 回購</td></tr>
+</tbody>
+</table>
+<p><strong>回購品質判斷：</strong>FY22-FY25 高位回購（均價 $1,400），現股價 $1,073 代表 -23% 每股實值虧損。管理層資本配置受質疑，但過去 10 年長期效果仍正（2015 $80 → 2026 $1,073，+13x）。</p>
+
+<!-- ===================== §11 ===================== -->
+<h2 id="sec-11">§11 產業格局</h2>
+
+<p><strong>市場量化：</strong>Scores TAM（美國）$10B+；全球 Decision Platform TAM $150B+；CAGR 8-12%；滲透率：Scores 95%+ US mortgage，Decision Platform &lt; 5% global。</p>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游（credit bureau）：</strong>FICO Direct License Program 2025 年啟動，直接向 lender 授權，繞過 bureau；但 bureau 仍是主要通路。</li>
+<li><strong>對下游（lender/bank）：</strong>過去極高（漲價 2x 客戶仍買單）；未來 2-3 年因 VantageScore 替代選項出現而削弱。</li>
+<li><strong>地理分布：</strong>92% 美國營收，集中度極高（優勢：規模；劣勢：政治集中）。</li>
+</ul>
+
+<h3>營收組成</h3>
+<table>
+<thead><tr><th>分部</th><th>FY25 營收</th><th>占比</th><th>YoY 成長</th></tr></thead>
+<tbody>
+<tr><td>Scores</td><td>$1,085M</td><td>55%</td><td>+33%</td></tr>
+<tr><td>Software</td><td>$906M</td><td>45%</td><td>+2%</td></tr>
+<tr><td><strong>總計</strong></td><td><strong>$1,991M</strong></td><td><strong>100%</strong></td><td><strong>+16%</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>單位經濟：</strong>Scores 單價 FY26 $10（從 $4.95 翻倍）+ $33 closed loan fee；Software ARPA 高（Platform ACV $38M 單季 bookings）。</p>
+
+<!-- ===================== §12 ===================== -->
+<h2 id="sec-12">§12 公司治理</h2>
+
+<h3>股東 / 股權結構</h3>
+<ul>
+<li>機構持股 91%（極高，受機構動向影響大）</li>
+<li>內部人持股 2.7%</li>
+<li>CEO William Lansing（2012-），Chairman Alex Lintner</li>
+<li>無 dual-class 結構，一股一票</li>
+</ul>
+
+<h3>資本配置軌跡</h3>
+<table>
+<thead><tr><th>類別</th><th>近 3 年累計</th><th>優先序</th></tr></thead>
+<tbody>
+<tr><td>Capex</td><td>~$100M（極低）</td><td>最末</td></tr>
+<tr><td>回購</td><td>~$1.8B</td><td>最優先</td></tr>
+<tr><td>分紅</td><td>$0（無股息）</td><td>無</td></tr>
+<tr><td>併購</td><td>&lt; $50M</td><td>極低</td></tr>
+</tbody>
+</table>
+<p>極度偏向回購，過去 10 年股東回報主要來自 EPS 增長 + 股價倍數擴張；近期高位回購 ($1,400 均價 vs $1,073 現價) 顯現紀律問題。2026-02 新授權 $1B 回購計畫，市場略有質疑。</p>
+
+<h3>管理層薪酬</h3>
+<p>CEO Lansing FY25 總薪酬 ~$20M（固定 $1M + 績效獎 $4M + RSU/PSU ~$15M），績效與股價高度掛鉤。數據限制：具體 比例需查 14A proxy。</p>
+
+<h3>過去 12 個月重大內部人交易</h3>
+<ul>
+<li>CEO Lansing 2025-H2 執行大額 RSU 歸屬 + 賣出（約 $30-40M，10b5-1 預設交易，非主動看空）</li>
+<li>2026 Q1 股價大跌期間無顯著內部人買入（負面信號）</li>
+</ul>
+
+<h3>QC-19 自身重大事件</h3>
+<ul>
+<li>🟡 <strong>Sen. Josh Hawley 調查</strong>（2025-10 啟動，持續中）：針對 FICO 抵押 Scores 定價</li>
+<li>🟡 <strong>2026-02 新回購授權 $1B</strong>：在股價 $1,200 區間啟動</li>
+<li>🟢 過去 12 個月無 M&A 金額 &gt; 市值 5%、無集體訴訟、無管理層異動或重大 SEC 調查</li>
+</ul>
+
+<!-- ===================== §13 ===================== -->
+<h2 id="sec-13">§13 估值診斷</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<p><strong>當前主流：盈利型（P/E）+ 部分成長型（PEG）。</strong>FICO 歷來被歸為高品質基礎設施型成長股，過去 5 年 Fwd PE 在 30-60x 區間交易。2026 年 Q1 起市場敘事轉向「護城河侵蝕風險」，PE 被 de-rate 至 20-25x 區間，接近信評同業（SPGI 20.57x、MCO 28x）而非科技成長股（50x+）。</p>
+
+<p><strong>估值體系診斷結論：🟡 估值邏輯模糊</strong>——市場在「信用基礎設施同業估值（20-30x）」vs「成長型 SaaS 估值（30-50x）」之間搖擺，視 VantageScore LLPA 結論而定。</p>
+
+<h3>13.1｜歷史估值分位（5 年）</h3>
+<table>
+<thead><tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>40.5x</td><td>25x</td><td>45x</td><td>75x</td><td>31%</td></tr>
+<tr><td>Forward P/E（FY+1）</td><td>25.80x</td><td>20x</td><td>45x</td><td>65x</td><td><strong>13%</strong></td></tr>
+<tr><td>Forward P/E（FY+2）</td><td>20.24x</td><td>18x</td><td>37x</td><td>55x</td><td><strong>6%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>28.36x</td><td>22x</td><td>40x</td><td>55x</td><td>19%</td></tr>
+<tr><td>P/FCF</td><td>34x</td><td>28x</td><td>45x</td><td>65x</td><td>16%</td></tr>
+</tbody>
+</table>
+<p><strong>解讀：</strong>(1) 當前估值情緒：便宜（分位 &lt; 30%，Fwd PE 尤其 &lt; 15%）；(2) 上次處於此分位是 2022 Q4（Fed 加息恐慌期）；(3) 推動當前分位主要因素是盈利修正預期（Hawley + VantageScore）而非利率。</p>
+<p>利率環境：10Y UST ~4.2%（2026-04）。公允倍數區間 35-45x，當前 25.8x 顯著低於。</p>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>Forward P/E（FY+1）</td><td>25.80x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年）</td><td>~39%（FY25→FY28 代理）</td><td>—</td></tr>
+<tr><td>PEG（3 年 Non-GAAP）</td><td><strong>0.66</strong></td><td>🟢 明顯便宜</td></tr>
+<tr><td>PEG（GAAP 3 年）</td><td>0.74</td><td>🟢 便宜</td></tr>
+<tr><td>5 年 EPS CAGR（含遞減）</td><td>~25%</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>1.03</td><td>🟡 合理</td></tr>
+</tbody>
+</table>
+<p>3Y vs 5Y PEG 差異明顯（0.66 vs 1.03），反映近 2 年漲價彈性可能不可持續。</p>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<thead><tr><th>參數</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前市值</td><td>$25.47B</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>$739M</td></tr>
+<tr><td>WACC</td><td>8.5%（10Y UST 4.2% + Beta 1.38 × ERP 4.5% = 10.4%，取保守 8.5% 因穩定性）</td></tr>
+<tr><td>永續成長率</td><td>3.5%</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+</tbody>
+</table>
+<p>隱含前 10 年 FCF CAGR ≈ <strong>12-14%</strong>，顯著低於歷史 FCF CAGR 29% 與分析師 EPS CAGR 共識 34%。</p>
+
+<p><strong>隱含預期判斷：🟢 隱含預期保守</strong>——市場只需 FICO 維持一半的歷史成長速度就能辯護當前市值。</p>
+
+<h3>便宜理由檢驗（⛔ 最高警戒：Fwd PE 5Y 分位 &lt; 10%）</h3>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>回答</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>市場為何給這麼低倍數?</td><td>VantageScore 4.0 + FHFA 開放 + Hawley 調查三重政治/競爭壓力</td><td>理由部分合理</td></tr>
+<tr><td>Q2</td><td>有財務數據支撐?</td><td>Q1 FY26 Scores +29% + mortgage +60% 實際數據強烈反駁市場擔憂</td><td>無充分支撐</td></tr>
+<tr><td>Q3</td><td>護城河是否完整?</td><td>仍完整但從 10 下調至 9（QC-23 🔴 生態攻擊 -1 分）</td><td>輕微侵蝕</td></tr>
+<tr><td>Q4</td><td>FCF 品質是否被誤解?</td><td>FCF Margin 37%、轉換率 113%，極佳</td><td>被誤解</td></tr>
+<tr><td>Q5</td><td>重新定價催化劑?</td><td>LLPA 無歧視性折讓（2026 Q4）、Q2-Q4 FY26 財報驗證漲價彈性</td><td>有明確催化劑</td></tr>
+</tbody>
+</table>
+<p><strong>便宜理由檢驗結論：🟢 市場誤判（或 🟡 尚不確定）</strong>——市場過度定價悲觀情境，但催化劑時間不確定，建議走觀察期 🟡。</p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>FICO</strong></td><td>$25.5B</td><td>25.80x</td><td>28.4x</td><td><strong>0.66</strong></td><td>37%</td><td>34%</td><td>30%</td></tr>
+<tr><td>SPGI</td><td>~$140B</td><td>20.57x</td><td>22x</td><td>1.6</td><td>35%</td><td>12%</td><td>15%</td></tr>
+<tr><td>MCO</td><td>~$90B</td><td>28x</td><td>25x</td><td>2.3</td><td>32%</td><td>12%</td><td>20%</td></tr>
+<tr><td>V</td><td>~$550B</td><td>25x</td><td>18x</td><td>2.0</td><td>50%</td><td>12%</td><td>30%</td></tr>
+<tr><td>MA</td><td>~$500B</td><td>28x</td><td>22x</td><td>2.1</td><td>45%</td><td>13%</td><td>40%</td></tr>
+<tr><td>產業中位</td><td>—</td><td>~26x</td><td>~23x</td><td>~2.0</td><td>~40%</td><td>~12%</td><td>~27%</td></tr>
+</tbody>
+</table>
+<p><strong>同業分析：</strong>(1) FICO Fwd PE 25.80x 與同業中位 26x 接近持平，不再溢價（歷史上常 溢價 50%+）。(2) PEG 0.66 遠優於同業 2.0+，代表成長性最強但估值已收斂。(3) 若 re-rate 至歷史溢價 (30-35x)，股價上升空間 30-35%。</p>
+
+<p><strong>QC-30 同業溢價收斂壓測：不適用</strong>（FICO 當前已接近同業中位，無溢價可收斂）。</p>
+
+<h3>13.5｜估值五角驗證</h3>
+<table>
+<thead><tr><th>工具</th><th>訊號</th><th>依據</th></tr></thead>
+<tbody>
+<tr><td>13.0 估值體系</td><td>🟡 模糊</td><td>在基礎設施與成長 SaaS 間搖擺</td></tr>
+<tr><td>13.1 歷史分位</td><td>🟢 便宜</td><td>Fwd PE 分位 13%</td></tr>
+<tr><td>13.2 PEG</td><td>🟢 便宜</td><td>0.66</td></tr>
+<tr><td>13.3 Reverse DCF</td><td>🟢 保守</td><td>隱含 12-14% vs 歷史 29%</td></tr>
+<tr><td>13.4 同業相對</td><td>🟡 合理</td><td>與同業持平，歷史溢價消失</td></tr>
+</tbody>
+</table>
+
+<p><strong>v12.0 §2 D 交叉驗證：</strong>§2 D 估值燈為 🟢（PEG 0.66 + 分位 11%）。歷史分位 🟢 便宜與 §2 D 🟢 一致，無需調整。</p>
+
+<p><strong>當前定價判斷：🟢 合理至便宜</strong>（但有政治/競爭風險 overhang 壓抑估值）</p>
+
+<h3>估值倍數定錨（長期）</h3>
+<table>
+<thead><tr><th>因素</th><th>判斷</th><th>對目標 P/E 影響</th></tr></thead>
+<tbody>
+<tr><td>護城河品質</td><td>9/10</td><td>+5x</td></tr>
+<tr><td>成長跑道</td><td>5-8 年 🟡</td><td>±0</td></tr>
+<tr><td>成長品質</td><td>定價驅動（擴大但接近上限）</td><td>+2x</td></tr>
+<tr><td>護城河連動</td><td>中性→消耗邊緣</td><td>-2x</td></tr>
+<tr><td>ROIC 可維持性</td><td>+22%p 擴大</td><td>+3x</td></tr>
+<tr><td>衰退信號</td><td>2 個黃燈</td><td>-2x</td></tr>
+<tr><td>估值體系方向</td><td>模糊</td><td>±0</td></tr>
+<tr><td>利率環境</td><td>10Y 4.2%</td><td>±0</td></tr>
+<tr><td>產業基準倍數</td><td>25x（SaaS + credit infra 平均）</td><td><strong>調整後 31x（區間 27-35x）</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>分析師目標價參考：</strong>中位 $1,676 / 高 $2,400 / 低 $1,032（n=20）。認同中位 $1,676（對應 Fwd PE 28-30x，合理）。若 LLPA 2026 Q4 不利，下修至 $1,325（J.P. Morgan 目標）。</p>
+
+<h3>長期合理倍數（v9.0+ 框架）</h3>
+<p>§8 🟡 中等可見度 → 基準 20x；引擎 B（PEG &lt; 1.0 + 品質 A）→ × 1.2 → 24x；AI 調整 🟡 × 0.9 → <strong>22x</strong>。</p>
+<p>對應 5 年後 EPS $64-66 → 5 年後股價目標 $1,400-1,450（含風險折扣）。</p>
+
+<!-- ===================== v12 meta ===================== -->
+<h2 id="sec-meta">v12.0 meta｜假設驗證對照 × 版本修訂紀錄</h2>
+
+<h3>假設驗證對照（vs 上次 DD 2026-04-16）</h3>
+<table>
+<thead><tr><th>項目</th><th>上次狀態（04-16）</th><th>本次狀態（04-18）</th><th>邊際變化</th></tr></thead>
+<tbody>
+<tr><td>H1（VantageScore 低採用）</td><td>＋強化（Scores +29%）</td><td>維持＋強化；但股價深跌反映市場悲觀定價加劇</td><td>不變（事實面強化，敘事面惡化）</td></tr>
+<tr><td>H2（Software 加速）</td><td>－削弱（Software +2%）</td><td>混合（Platform ARR +33% 創新高、Software 整體仍 +2%）</td><td>邊際強化（Platform 仍在）</td></tr>
+<tr><td>H3（re-rate）</td><td>不變（股價盤整 $1,030）</td><td>－削弱（股價 -48% YTD、J.P. Morgan 降目標 $1,325）</td><td>削弱</td></tr>
+<tr><td>R1 是否觸發</td><td>未觸發（LLPA 未公布）</td><td>未觸發（仍等 2026 Q4 文本）</td><td>引用：LLPA 預計「no earlier than late 2026」</td></tr>
+<tr><td>R2 是否觸發</td><td>未觸發</td><td>未觸發，但調查持續</td><td>引用：Hawley 4/10 後續無 markup 公告</td></tr>
+<tr><td>R3 是否觸發</td><td>未觸發（Platform ARR +16%）</td><td>明顯改善（Platform ARR +33%）</td><td>邊際強化</td></tr>
+<tr><td>裁決變化</td><td>v11.0（未記錄具體裁決）</td><td>v12.0 → B（衛星觀察級）</td><td>3 個最關鍵新事實：(1) 股價已從 $1,030 → $1,073 後微反彈，但 YTD -48% 形成 MA 技術破壞，Pure MA ❌→🟠；(2) Platform ARR 從 +16% 上修至 +33%，H2 邊際強化；(3) 5 年 PE 分位從當時約 21% 進一步跳水至 13%，PEG 從 0.74 降至 0.66。</td></tr>
+</tbody>
+</table>
+
+<h3>版本修訂紀錄</h3>
+<table>
+<thead><tr><th>日期</th><th>版本</th><th>主要變更</th></tr></thead>
+<tbody>
+<tr><td>2026-04-16</td><td>v11.0</td><td>首版：Scores +29%、Software +2%；建議觀望偏進場；R:R 3.2x 中期</td></tr>
+<tr><td><strong>2026-04-18</strong></td><td><strong>v12.0</strong></td><td><strong>v11→v12 升級</strong>：(1) §2 改為四層判定（品質 × 估值燈 × Pure MA × 大盤豁免）；(2) 新增 Pure MA 六狀態機 + 盲點 2 救援（本案 ❌→🟠 寬鬆救援）；(3) 新增 QC-22 股價漂移檢查（-48% YTD 已納入）；(4) QC-23 競爭威脅分類：TransUnion + VantageScore + bureau 聯盟 = 🔴 生態攻擊，護城河 −1 分（10→9）；(5) QC-29 壓力測試通過率 0/4，綜合訊號降一級；(6) QC-30 同業溢價收斂不適用；(7) 最終訊號 <strong>B（衛星觀察級）</strong>，倉位 % 由 PM skill 決定；(8) 陷阱定性維持 🟡 觀察期；(9) 長期持有信心由「中」維持。</td></tr>
+</tbody>
+</table>
+
+<p class="footer">DD Schema v12.0 ｜ 2026-04-18 ｜ Claude（買側框架）｜ 分析師 / 基金經理人分工：本報告為分析師產出，倉位 % 由 portfolio-manager skill 決定</p>
+
+<button class="print-btn" onclick="window.print()">列印 PDF</button>
+</div>
+</body>
+</html>
