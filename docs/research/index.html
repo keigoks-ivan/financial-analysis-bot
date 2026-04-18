@@ -151,6 +151,13 @@ td.date-cell{color:var(--text-muted);font-family:'IBM Plex Mono',monospace;font-
 .verdict-lean-buy{background:var(--indigo-bg);color:var(--indigo-text);border:1px solid rgba(99,102,241,.22)}
 .verdict-watch{background:var(--amber-bg);color:var(--amber-text);border:1px solid rgba(180,83,9,.18)}
 .verdict-avoid{background:var(--slate-bg);color:var(--slate-text);border:1px solid var(--border)}
+.verdict-ok{color:#059669;font-weight:700;font-size:.95rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.verdict-watch-buy{color:#0284C7;font-weight:700;font-size:.95rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.verdict-hold{color:#D97706;font-weight:700;font-size:.95rem;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.trap-high{color:var(--red);font-weight:700;font-size:.82rem}
+.trap-high::before{content:'●';margin-right:.3em;font-size:.7em}
+td.num-cell{font-family:'IBM Plex Mono',monospace;font-size:.82rem;color:var(--text-secondary);white-space:nowrap}
+td.num-cell:first-child,table thead th{letter-spacing:.02em}
 
 /* Version Badge */
 .version-badge{display:inline-block;padding:.15rem .5rem;border-radius:5px;font-size:.7rem;
@@ -341,889 +348,302 @@ footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-mute
       </div>
     </div>
 
+    <div class="insight-box" style="background:#EFF6FF;border-left:4px solid #3B82F6;padding:16px 20px;margin:0 0 18px 0;border-radius:6px">
+      <h3 style="margin:0 0 10px 0;color:#1E3A5F;font-size:15px">關鍵觀察（v12.0 · 2026-04-18 · 26 檔）</h3>
+      <ul style="margin:4px 0;padding-left:22px;font-size:13.5px;line-height:1.7">
+        <li><strong>A+ 三檔共通特徵：</strong>S 級護城河 + 估值便宜（5Y 分位 ≤ 20%）+ MA 強勢（<strong>2330.TW</strong> 是 FY+2 PE 16.98x 的超便宜半導體）</li>
+        <li><strong>X 陣營分兩類：</strong>
+          <ul style="margin:4px 0;padding-left:22px">
+            <li>估值 gate 🔴 拒絕：<strong>TSLA、AMAT、LRCX、MPWR、2383.TW</strong>（都漲太高）</li>
+            <li>MA 煞車拒絕：<strong>BSX、MELI、RMS、UBER</strong>（基本面 OK 但技術時點差）</li>
+          </ul>
+        </li>
+        <li><strong>PEG 最便宜前 5：</strong>MU 0.11 / AVGO 0.45-0.71 / AMD 0.50 / NVDA 0.59 / UBER 0.69</li>
+        <li><strong>5Y 分位最便宜前 5：</strong>BSX ~0% / NVDA ~10-12% / MU 12% / UBER 14.9% / MSFT 15%</li>
+      </ul>
+      <p style="margin:10px 0 0 0;font-size:12px;color:#64748b">訊號分布：A+ 3 / A 6 / B 6 / C 2 / X 9｜完整 schema 請點 ticker 檢閱個別 DD</p>
+    </div>
+
     <div class="search-wrap">
-      <input id="dd-search" type="text" placeholder="搜尋 Ticker、備註…">
+      <input id="dd-search" type="text" placeholder="搜尋 Ticker…">
     </div>
     <div class="card">
       <div style="overflow-x:auto">
       <table>
         <thead>
           <tr>
-            <th class="sortable" data-sort="ticker">公司</th>
-            <th class="sortable" data-sort="date">日期</th>
-            <th class="sortable" data-sort="verdict">建議</th>
-            <th class="sortable" data-sort="moat">護城河</th>
-            <th class="sortable" data-sort="upside1">FY+1 Upside</th>
-            <th class="sortable sorted-desc" data-sort="upside2">FY+2 Upside</th>
-            <th class="sortable" data-sort="trap">陷阱</th>
-            <th class="sortable" data-sort="confidence">長期持有</th>
-            <th>備註</th>
+            <th>Ticker</th>
+            <th>訊號</th>
+            <th>陷阱</th>
+            <th title="護城河等級 / 估值燈 / MA 狀態">三軸</th>
+            <th>Fwd PE</th>
+            <th>5Y 分位</th>
+            <th>PEG</th>
+            <th title="QC-29 R:R 壓力測試通過率">壓測</th>
           </tr>
         </thead>
-        <tbody id="dd-tbody">
-<tr class="searchable" data-ticker="2330TW" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_2330TW_20260418.html" class="ticker-link" target="_blank" rel="noopener">2330TW</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A+</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「這是全球 AI 革命唯一的單點供應商，且你能以 17x PE 買到 22% 成長——這不該存在。」</td>
+        <tbody id="dd-tbody-v12">
+<tr class="searchable" data-ticker="2330TW" data-signal="A+" data-trap="🟢">
+  <td><a href="/dd/DD_2330TW_20260418.html" class="ticker-link" target="_blank" rel="noopener">2330.TW</a></td>
+  <td><span class="verdict-ok"><strong>A+</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">S/🟢/✅</td>
+  <td class="num-cell">16.98x (FY+2)</td>
+  <td class="num-cell">~40-49%</td>
+  <td class="num-cell">0.73</td>
+  <td class="num-cell">1/3</td>
 </tr>
-<tr class="searchable" data-ticker="2383TW" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="2" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_2383TW_20260418.html" class="ticker-link" target="_blank" rel="noopener">2383TW</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「AI 基建十年長牛中的獨家材料供應商，EPS 3 年 CAGR 55%，現在不買，3 年後看回來一定會後悔。」</td>
-</tr>
-<tr class="searchable" data-ticker="AMAT" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_AMAT_20260418.html" class="ticker-link" target="_blank" rel="noopener">AMAT</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 基建賣鏟者，WFE 超級週期仍在上行
-品質 S 級：護城河 10/10（§9，WFE reference tool 地位、Kinex hybrid bonding + Semiverse 獨家、工程 knowhow 壟斷）｜體質 ve…</td>
-</tr>
-<tr class="searchable" data-ticker="AMD" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_AMD_20260418.html" class="ticker-link" target="_blank" rel="noopener">AMD</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 基礎設施超級週期 + 反 NVDA 單極結構對沖需求，TAM 2027 &gt;$500B。
-品質 A 級：護城河 9/10（§9，v12.0 單一決定）｜體質 veto 0 項不過（GM 趨勢 ✅ / FCF/NI 1.</td>
-</tr>
-<tr class="searchable" data-ticker="AMZN" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_AMZN_20260418.html" class="ticker-link" target="_blank" rel="noopener">AMZN</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>B</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">🟢 順風 S 級護城河 10/10（AWS + 物流 + Prime 三支柱）。估值燈 🟡 合理 + Pure MA 🟡 減半（近 4 週 +11.6% 漂移追高風險升溫）。</td>
-</tr>
-<tr class="searchable" data-ticker="ANET" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="2" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_ANET_20260418.html" class="ticker-link" target="_blank" rel="noopener">ANET</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>B</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「Ethernet 是 AI 網路的最終贏家（Ullal 語），而 ANET 是全球唯一同時擁有高階晶片採購、EOS 軟體、Cloud Titan 深度整合的純 Ethernet 系統商，NVDA 做 GPU bundling 只能吃 AI…</td>
-</tr>
-<tr class="searchable" data-ticker="APH" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_APH_20260418.html" class="ticker-link" target="_blank" rel="noopener">APH</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>B</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">在 AI 超級週期中同時擁有 hyperscaler design-in + 銅/光纖雙腳 + 跨行業分散的互連龍頭，護城河持續擴大而非被侵蝕。</td>
-</tr>
-<tr class="searchable" data-ticker="ASML" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
+<tr class="searchable" data-ticker="ASML" data-signal="A+" data-trap="🟢">
   <td><a href="/dd/DD_ASML_20260418.html" class="ticker-link" target="_blank" rel="noopener">ASML</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A+</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 算力曲線仍在加速，TSMC 2026 capex €56B 歷史新高直接灌向 ASML。
-      品質 S 級：護城河 10/10（§9，EUV 全球獨家、High-NA 更是一家供應）｜體質 veto 0 項不過｜等級調整：S …</td>
+  <td><span class="verdict-ok"><strong>A+</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">S/🟢/✅</td>
+  <td class="num-cell">30.5x</td>
+  <td class="num-cell">18%</td>
+  <td class="num-cell">1.26</td>
+  <td class="num-cell">3/4</td>
 </tr>
-<tr class="searchable" data-ticker="AVGO" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_AVGO_20260418.html" class="ticker-link" target="_blank" rel="noopener">AVGO</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">Hyperscaler 內化 ASIC 設計的「管道稅」收取者——Hock Tan 已綁 2030 年 AI $120B 獎勵條款作為自身激勵，且 OpenAI 10GW 合約延續至 2029，3-5 年視角下除非台海風險或 NVIDIA …</td>
-</tr>
-<tr class="searchable" data-ticker="BSX" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="2" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_BSX_20260418.html" class="ticker-link" target="_blank" rel="noopener">BSX</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">3-5 年視角 BSX 仍是全球前 3 大介入醫材龍頭，但其護城河不如 Hermès 或 Edwards Lifesciences 那般不可動搖。</td>
-</tr>
-<tr class="searchable" data-ticker="CRDO" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="2" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_CRDO_20260418.html" class="ticker-link" target="_blank" rel="noopener">CRDO</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>B</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">AI 連接超級週期不變，但 CRDO 在此週期中的**份額競爭結構性惡化**。
-品質 B 級：護城河 5/10（§9，原 7 分，QC-23 ⛔ 架構替代 −2，QC-23 🔴 生態攻擊 −1，體質 veto 1 項不過，不影響等級）｜等級…</td>
-</tr>
-<tr class="searchable" data-ticker="GOOGL" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_GOOGL_20260418.html" class="ticker-link" target="_blank" rel="noopener">GOOGL</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">世界每天花 100 億次詢問，這家公司擁有其中 80 億次的 tollbooth。</td>
-</tr>
-<tr class="searchable" data-ticker="KLAC" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_KLAC_20260418.html" class="ticker-link" target="_blank" rel="noopener">KLAC</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>B</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「process control 是半導體 WFE 的唯一 dupoly → monopoly 演化，護城河深度已到 Munger 最愛的那種『年年配現金、對手砸再多錢都追不上』等級。」</td>
-</tr>
-<tr class="searchable" data-ticker="LLY" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_LLY_20260418.html" class="ticker-link" target="_blank" rel="noopener">LLY</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">🟢 順風，A→S 級護城河 9/10，GLP-1 三線領先（tirzepatide 注射 + orforglipron 口服 + retatrutide 三重激動劑）。估值燈 🟢 便宜（PEG 0.</td>
-</tr>
-<tr class="searchable" data-ticker="LRCX" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_LRCX_20260418.html" class="ticker-link" target="_blank" rel="noopener">LRCX</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">這是 WFE 寡占中最具 HBM/先進封裝槓桿的一家，未來 5 年 EPS 會翻一倍，買入並閉眼持有。</td>
-</tr>
-<tr class="searchable" data-ticker="MELI" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_MELI_20260418.html" class="ticker-link" target="_blank" rel="noopener">MELI</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X（MA煞車）</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">拉美唯一 marketplace + fintech + logistics 三位一體飛輪，護城河 9/10、巴西巿占 30%→35%、Credit portfolio +92% 同時 NPL 4.4% 歷史低。</td>
-</tr>
-<tr class="searchable" data-ticker="META" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_META_20260418.html" class="ticker-link" target="_blank" rel="noopener">META</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「全球數位廣告雙巨頭之一，AI 從威脅轉為實質 $60B ROI 引擎，護城河 2026 年仍在擴張中。」</td>
-</tr>
-<tr class="searchable" data-ticker="MPWR" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="2" data-moat="0" data-upside1="-33.9" data-upside2="-20.5" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_MPWR_20260418.html" class="ticker-link" target="_blank" rel="noopener">MPWR</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td><span class="upside-neg">-33.9%</span></td>
-  <td><span class="upside-neg">-20.5%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「Rubin 70% 份額是 MPWR 對 Blackwell 失利後的『工程反擊』，證明 MPWR 在下一代架構有技術護城河——2027 $4+ EPS 增量是實打實的。」</td>
-</tr>
-<tr class="searchable" data-ticker="MRVL" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
+<tr class="searchable" data-ticker="MRVL" data-signal="A+" data-trap="🟢">
   <td><a href="/dd/DD_MRVL_20260418.html" class="ticker-link" target="_blank" rel="noopener">MRVL</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A+</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「這是 AI 世代的 custom silicon IP 機庫，FY28 前沒人能複製 MRVL 的 18 socket 佈局。」</td>
+  <td><span class="verdict-ok"><strong>A+</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">A/🟢/✅</td>
+  <td class="num-cell">25.77x (FY+2)</td>
+  <td class="num-cell">20%</td>
+  <td class="num-cell">0.72</td>
+  <td class="num-cell">1/4</td>
 </tr>
-<tr class="searchable" data-ticker="MSFT" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_MSFT_20260418.html" class="ticker-link" target="_blank" rel="noopener">MSFT</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>B</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">🟢 順風，A 級護城河 9/10，Azure/Copilot/AI Infra 三軸齊發。估值燈 🟢 便宜（PEG 1.4）+ Pure MA 🟠 暫不，進場時機未到但估值已到位。</td>
-</tr>
-<tr class="searchable" data-ticker="MU" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="3">
-  <td><a href="/dd/DD_MU_20260418.html" class="ticker-link" target="_blank" rel="noopener">MU</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>C</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-low">低</span></td>
-  <td class="comment-cell">「AI memory supercycle 才進入第 2 年（2024-2030），Micron 雖在 HBM4 Rubin 設計略退，但 DRAM 整體供需仍緊，FY27 EPS $101 即使打折 30% 後現價 PE 仍僅 6.</td>
-</tr>
-<tr class="searchable" data-ticker="NVDA" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
+<tr class="searchable" data-ticker="NVDA" data-signal="A" data-trap="🟢">
   <td><a href="/dd/DD_NVDA_20260418.html" class="ticker-link" target="_blank" rel="noopener">NVDA</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>A</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「你在用同業折價買一家 FCF margin 44.8%、ROIC 100%+、營收年成長 65% 的 AI 基礎設施龍頭——這種定價只會存在於市場預期錯誤的窗口。」</td>
+  <td><span class="verdict-ok"><strong>A</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">S/🟢/✅</td>
+  <td class="num-cell">24.18x</td>
+  <td class="num-cell">~10-12%</td>
+  <td class="num-cell">0.59</td>
+  <td class="num-cell">2/3</td>
 </tr>
-<tr class="searchable" data-ticker="ONTO" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
+<tr class="searchable" data-ticker="GOOGL" data-signal="A" data-trap="🟢">
+  <td><a href="/dd/DD_GOOGL_20260418.html" class="ticker-link" target="_blank" rel="noopener">GOOGL</a></td>
+  <td><span class="verdict-ok"><strong>A</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">A/🟡/✅</td>
+  <td class="num-cell">25.6x (FY+2)</td>
+  <td class="num-cell">63%</td>
+  <td class="num-cell">1.68</td>
+  <td class="num-cell">1/4</td>
+</tr>
+<tr class="searchable" data-ticker="META" data-signal="A" data-trap="🟢">
+  <td><a href="/dd/DD_META_20260418.html" class="ticker-link" target="_blank" rel="noopener">META</a></td>
+  <td><span class="verdict-ok"><strong>A</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">A/🟡/✅</td>
+  <td class="num-cell">23.3x</td>
+  <td class="num-cell">75%→救援</td>
+  <td class="num-cell">1.28</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="LLY" data-signal="A" data-trap="🟢">
+  <td><a href="/dd/DD_LLY_20260418.html" class="ticker-link" target="_blank" rel="noopener">LLY</a></td>
+  <td><span class="verdict-ok"><strong>A</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">S/🟢/✅</td>
+  <td class="num-cell">27.07x</td>
+  <td class="num-cell">19%</td>
+  <td class="num-cell">0.93</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="AMD" data-signal="A" data-trap="🟢">
+  <td><a href="/dd/DD_AMD_20260418.html" class="ticker-link" target="_blank" rel="noopener">AMD</a></td>
+  <td><span class="verdict-ok"><strong>A</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">A/🟡/✅</td>
+  <td class="num-cell">41.6x (25.4x FY+2)</td>
+  <td class="num-cell">35%</td>
+  <td class="num-cell">0.50</td>
+  <td class="num-cell">2/4</td>
+</tr>
+<tr class="searchable" data-ticker="AVGO" data-signal="A" data-trap="🟢">
+  <td><a href="/dd/DD_AVGO_20260418.html" class="ticker-link" target="_blank" rel="noopener">AVGO</a></td>
+  <td><span class="verdict-ok"><strong>A</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">A/🟡/✅</td>
+  <td class="num-cell">22.4x (NTM)</td>
+  <td class="num-cell">~40%</td>
+  <td class="num-cell">0.45-0.71</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="MSFT" data-signal="B" data-trap="🟢">
+  <td><a href="/dd/DD_MSFT_20260418.html" class="ticker-link" target="_blank" rel="noopener">MSFT</a></td>
+  <td><span class="verdict-watch-buy"><strong>B</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">A/🟢/🟠</td>
+  <td class="num-cell">22.4x (FY+2)</td>
+  <td class="num-cell">15%</td>
+  <td class="num-cell">1.40</td>
+  <td class="num-cell">3/3</td>
+</tr>
+<tr class="searchable" data-ticker="AMZN" data-signal="B" data-trap="🟡">
+  <td><a href="/dd/DD_AMZN_20260418.html" class="ticker-link" target="_blank" rel="noopener">AMZN</a></td>
+  <td><span class="verdict-watch-buy"><strong>B</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">S/🟡/🟡</td>
+  <td class="num-cell">32.3x</td>
+  <td class="num-cell">32%</td>
+  <td class="num-cell">1.64</td>
+  <td class="num-cell">1/3</td>
+</tr>
+<tr class="searchable" data-ticker="ANET" data-signal="B" data-trap="🟢">
+  <td><a href="/dd/DD_ANET_20260418.html" class="ticker-link" target="_blank" rel="noopener">ANET</a></td>
+  <td><span class="verdict-watch-buy"><strong>B</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">B/🟡/✅</td>
+  <td class="num-cell">38.26x</td>
+  <td class="num-cell">49%</td>
+  <td class="num-cell">1.81</td>
+  <td class="num-cell">1/4</td>
+</tr>
+<tr class="searchable" data-ticker="APH" data-signal="B" data-trap="🟡">
+  <td><a href="/dd/DD_APH_20260418.html" class="ticker-link" target="_blank" rel="noopener">APH</a></td>
+  <td><span class="verdict-watch-buy"><strong>B</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">A/🟡/✅</td>
+  <td class="num-cell">29.1x (FY+2)</td>
+  <td class="num-cell">44%</td>
+  <td class="num-cell">1.38</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="CRDO" data-signal="B" data-trap="🟡">
+  <td><a href="/dd/DD_CRDO_20260418.html" class="ticker-link" target="_blank" rel="noopener">CRDO</a></td>
+  <td><span class="verdict-watch-buy"><strong>B</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">B/🟢/✅</td>
+  <td class="num-cell">48.5x</td>
+  <td class="num-cell">16%</td>
+  <td class="num-cell">0.88</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="KLAC" data-signal="B" data-trap="🟡">
+  <td><a href="/dd/DD_KLAC_20260418.html" class="ticker-link" target="_blank" rel="noopener">KLAC</a></td>
+  <td><span class="verdict-watch-buy"><strong>B</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">S/🟠/✅</td>
+  <td class="num-cell">37.2x</td>
+  <td class="num-cell">97%</td>
+  <td class="num-cell">1.68</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="MU" data-signal="C" data-trap="🟡">
+  <td><a href="/dd/DD_MU_20260418.html" class="ticker-link" target="_blank" rel="noopener">MU</a></td>
+  <td><span class="verdict-hold"><strong>C</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">C/🟢/✅</td>
+  <td class="num-cell">7.85x</td>
+  <td class="num-cell">12%</td>
+  <td class="num-cell">0.11</td>
+  <td class="num-cell">1/4</td>
+</tr>
+<tr class="searchable" data-ticker="ONTO" data-signal="C" data-trap="🟡">
   <td><a href="/dd/DD_ONTO_20260418.html" class="ticker-link" target="_blank" rel="noopener">ONTO</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>C</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">🟢 順風，A 級護城河 9/10，HBM4 reference tool + Dragonfly G5 qualified 2.5D。；</td>
+  <td><span class="verdict-hold"><strong>C</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">A/🟡/🟡</td>
+  <td class="num-cell">42.1x</td>
+  <td class="num-cell">77%</td>
+  <td class="num-cell">1.42</td>
+  <td class="num-cell">0/4</td>
 </tr>
-<tr class="searchable" data-ticker="RMS" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="9" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_RMS_20260418.html" class="ticker-link" target="_blank" rel="noopener">RMS</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">3-5 年視角 Hermès 仍是最值得持有的奢侈品 compound machine，但 MA 給出了「現在不是最佳進場時機」的訊號，等待技術面回穩後再行動。</td>
-</tr>
-<tr class="searchable" data-ticker="TSLA" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="2" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="2" data-confidence="2">
+<tr class="searchable" data-ticker="TSLA" data-signal="X" data-trap="🟡">
   <td><a href="/dd/DD_TSLA_20260418.html" class="ticker-link" target="_blank" rel="noopener">TSLA</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">「EV 核心市場份額流失，AI/Robotics 轉型中，結果未定」。
-品質 B 級：護城河 7/10（§9）｜體質 veto 2 項不過（GM 結構性壓縮 + EPS 共識 90 天下修）｜等級調整：B（7 分）→ 不變 B。</td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">B/🔴/✅</td>
+  <td class="num-cell">197.3x</td>
+  <td class="num-cell">85%</td>
+  <td class="num-cell">5.60</td>
+  <td class="num-cell">0/4</td>
 </tr>
-<tr class="searchable" data-ticker="UBER" data-date="2026-04-18" data-version="v12.0" data-verdict="9" data-quality="0" data-moat="0" data-upside1="0.0" data-upside2="0.0" data-trap="1" data-confidence="1">
+<tr class="searchable" data-ticker="AMAT" data-signal="X" data-trap="🟡">
+  <td><a href="/dd/DD_AMAT_20260418.html" class="ticker-link" target="_blank" rel="noopener">AMAT</a></td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">S/🔴/✅</td>
+  <td class="num-cell">35.9x</td>
+  <td class="num-cell">99%</td>
+  <td class="num-cell">1.55</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="LRCX" data-signal="X" data-trap="🟡">
+  <td><a href="/dd/DD_LRCX_20260418.html" class="ticker-link" target="_blank" rel="noopener">LRCX</a></td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">A/🔴/✅</td>
+  <td class="num-cell">37.5x</td>
+  <td class="num-cell">98%</td>
+  <td class="num-cell">1.41</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="MPWR" data-signal="X" data-trap="🟡">
+  <td><a href="/dd/DD_MPWR_20260418.html" class="ticker-link" target="_blank" rel="noopener">MPWR</a></td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">B/🔴/✅</td>
+  <td class="num-cell">68.07x</td>
+  <td class="num-cell">53%</td>
+  <td class="num-cell">3.18</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="2383TW" data-signal="X" data-trap="🟡">
+  <td><a href="/dd/DD_2383TW_20260418.html" class="ticker-link" target="_blank" rel="noopener">2383.TW</a></td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">B/🔴/✅</td>
+  <td class="num-cell">49.3x</td>
+  <td class="num-cell">~98%</td>
+  <td class="num-cell">0.89</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="BSX" data-signal="X" data-trap="🟡">
+  <td><a href="/dd/DD_BSX_20260418.html" class="ticker-link" target="_blank" rel="noopener">BSX</a></td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">B/🟢/❌</td>
+  <td class="num-cell">16.47x</td>
+  <td class="num-cell">~0%</td>
+  <td class="num-cell">1.28</td>
+  <td class="num-cell">1/4</td>
+</tr>
+<tr class="searchable" data-ticker="MELI" data-signal="X" data-trap="🟢">
+  <td><a href="/dd/DD_MELI_20260418.html" class="ticker-link" target="_blank" rel="noopener">MELI</a></td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">S/🟢/🟠</td>
+  <td class="num-cell">37.15x</td>
+  <td class="num-cell">22.8%</td>
+  <td class="num-cell">0.93</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="RMS" data-signal="X" data-trap="🟡">
+  <td><a href="/dd/DD_RMS_20260418.html" class="ticker-link" target="_blank" rel="noopener">RMS</a></td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-watch">🟡 觀察期</span></td>
+  <td class="num-cell">S/🟠/❌</td>
+  <td class="num-cell">33.01x</td>
+  <td class="num-cell">~10%</td>
+  <td class="num-cell">3.0</td>
+  <td class="num-cell">0/4</td>
+</tr>
+<tr class="searchable" data-ticker="UBER" data-signal="X" data-trap="🟢">
   <td><a href="/dd/DD_UBER_20260418.html" class="ticker-link" target="_blank" rel="noopener">UBER</a></td>
-  <td class="date-cell">2026-04-18</td>
-  <td>X</td>
-  <td>—</td>
-  <td>—</td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">- 產業風向燈 🟢 順風：§8 🟢 高確信（Runway ≥10 年，AV 擴 TAM）｜§9 護城河「加深」｜AI 🟡 中等（Tesla/Waymo 繞過風險未實現）；</td>
+  <td><span class="verdict-avoid"><strong>X</strong></span></td>
+  <td><span class="trap-ok">🟢 非陷阱</span></td>
+  <td class="num-cell">A/🟢/🟠</td>
+  <td class="num-cell">17.97x</td>
+  <td class="num-cell">14.9%</td>
+  <td class="num-cell">0.69</td>
+  <td class="num-cell">2/4</td>
 </tr>
-<tr class="searchable" data-ticker="2330TW" data-date="2026-04-17" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="9" data-upside1="16.1" data-upside2="43.49" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_2330TW_20260417.html" class="ticker-link" target="_blank" rel="noopener">2330TW</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-pos">+16.1%</span></td>
-  <td><span class="upside-pos">+43.5%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">TSMC 是當前 AI 基礎建設週期裡結構性最優的載體，值得抱超過 5 年——即使短期 R:R 不吸引，長期複利（ROIC 35% + 再投資 50%）給予近 17-18% 的內生回報，遠優於現金或大盤指數。</td>
-</tr>
-<tr class="searchable" data-ticker="AMD" data-date="2026-04-17" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="7" data-upside1="8.2" data-upside2="75.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_AMD_20260417.html" class="ticker-link" target="_blank" rel="noopener">AMD</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">7/10·擴大</span></td>
-  <td><span class="upside-pos">+8.2%</span></td>
-  <td><span class="upside-pos">+75.0%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AMD 為 AI 基礎設施第二供應商的結構性受益者，MI400/MI500/Zen 6 產品路徑明確，3-5 年複利能見度高，值得抱超過兩年，但需等估值回調或基本面再驗證後提高部位。</td>
-</tr>
-<tr class="searchable" data-ticker="BSX" data-date="2026-04-17" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="9" data-upside1="58.2" data-upside2="78.4" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_BSX_20260417.html" class="ticker-link" target="_blank" rel="noopener">BSX</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-pos">+58.2%</span></td>
-  <td><span class="upside-pos">+78.4%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">BSX 是極少數「TAM 擴張 × 產品領先 × 現金轉換良好 × 估值已修復至 5Y 低」四項齊全的大型成長股；除非 Champion trial 完全失敗或 PFA 市占崩潰，否則值得抱超過兩年。</td>
-</tr>
-<tr class="searchable" data-ticker="CAMT" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="9" data-upside1="-52.4" data-upside2="-39.7" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_CAMT_20260417.html" class="ticker-link" target="_blank" rel="noopener">CAMT</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td><span class="upside-neg">-52.4%</span></td>
-  <td><span class="upside-neg">-39.7%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">若不看估值，這是檢測量測賽道中少見的「成長與護城河同步擴大」範例，值得長期持有超過 3 年；但現價已定價極樂觀情境，進場需等待估值再平衡。</td>
-</tr>
-<tr class="searchable" data-ticker="CLS" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="6" data-upside1="-15.4" data-upside2="21.8" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_CLS_20260417.html" class="ticker-link" target="_blank" rel="noopener">CLS</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">6/10·加深</span></td>
-  <td><span class="upside-neg">-15.4%</span></td>
-  <td><span class="upside-pos">+21.8%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">CLS 是 AI 基建的「水電工」——NVDA 設計晶片，CLS 組裝進機架；AI CapEx 到 2028 可見 $1T，水電工不可替代。</td>
-</tr>
-<tr class="searchable" data-ticker="COHR" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7.5" data-upside1="-42.9" data-upside2="-20.5" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_COHR_20260417.html" class="ticker-link" target="_blank" rel="noopener">COHR</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7.5/10·加深</span></td>
-  <td><span class="upside-neg">-42.9%</span></td>
-  <td><span class="upside-neg">-20.5%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「買地段不買便宜房」——這是 AI 光模組時代的 NVDA 供應鏈核心。</td>
-</tr>
-<tr class="searchable" data-ticker="CRDO" data-date="2026-04-17" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="7" data-upside1="75.5" data-upside2="164.3" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_CRDO_20260417.html" class="ticker-link" target="_blank" rel="noopener">CRDO</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">7/10·擴大</span></td>
-  <td><span class="upside-pos">+75.5%</span></td>
-  <td><span class="upside-pos">+164.3%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">CRDO 是 AI infra 「看不見但不可替代」的連接層龍頭，SerDes IP 深度 + AEC 規模先行 + 客戶集中度正化解三軸共振；好公司 + 相對合理價格，值得抱超過兩年。</td>
-</tr>
-<tr class="searchable" data-ticker="DELL" data-date="2026-04-17" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="7.0" data-upside1="19.5" data-upside2="36.2" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_DELL_20260417.html" class="ticker-link" target="_blank" rel="noopener">DELL</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">7.0/10·穩定</span></td>
-  <td><span class="upside-pos">+19.5%</span></td>
-  <td><span class="upside-pos">+36.2%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 基礎架構至少 5-8 年高成長跑道，Dell 憑藉全球供應鏈、企業客戶關係與 Michael Dell 45% 股權利益一致性，是最少受代工毛利競爭衝擊的 OEM 龍頭，值得長期持有，但短期已反映較多利多。</td>
-</tr>
-<tr class="searchable" data-ticker="FN" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="6" data-upside1="-47.5" data-upside2="-36.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_FN_20260417.html" class="ticker-link" target="_blank" rel="noopener">FN</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">6/10·穩定</span></td>
-  <td><span class="upside-neg">-47.5%</span></td>
-  <td><span class="upside-neg">-36.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">FN 是 AI optical 浪潮的隱形冠軍，長期值得持有，但目前市場已 price off 數年完美兌現，現價進場風險報酬比極不對稱。</td>
-</tr>
-<tr class="searchable" data-ticker="GEV" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-39.7" data-upside2="-6.9" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_GEV_20260417.html" class="ticker-link" target="_blank" rel="noopener">GEV</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10·擴大</span></td>
-  <td><span class="upside-neg">-39.7%</span></td>
-  <td><span class="upside-neg">-6.9%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">GEV 是「三十年一遇能源 super-cycle」中位置最有利的卡位者，技術深度（H 級燃氣輪機 ＋ HVDC ＋ 控制軟體）與 backlog 規模均為產業最強，長期 5-10 年值得作為核心持倉，但當前估值已透支 2028 全數兌現劇…</td>
-</tr>
-<tr class="searchable" data-ticker="HWM" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="9" data-upside1="-43.6" data-upside2="-31.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_HWM_20260417.html" class="ticker-link" target="_blank" rel="noopener">HWM</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td><span class="upside-neg">-43.6%</span></td>
-  <td><span class="upside-neg">-31.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">商業航空 supercycle + aftermarket 年金特性讓 HWM 具備 10 年+ 結構性成長，值得抱 5 年+；</td>
-</tr>
-<tr class="searchable" data-ticker="ISRG" data-date="2026-04-17" data-version="v11.0" data-verdict="3" data-quality="0" data-moat="9" data-upside1="9.3" data-upside2="24.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_ISRG_20260417.html" class="ticker-link" target="_blank" rel="noopener">ISRG</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-watch">觀望</span></td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td><span class="upside-pos">+9.3%</span></td>
-  <td><span class="upside-pos">+24.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">全球手術機器人的絕對龍頭（83.5% 市占）+ razor-blade 模式 + ROIC 26% + 國際滲透仍在早期，具備長期複利基礎；競品帶來的市占壓力是「擠壓成長速度」而非「取代王者」——抱超過 2 年的機率報酬仍優於持有醫材平均。</td>
-</tr>
-<tr class="searchable" data-ticker="JBL" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-28.3" data-upside2="-15.4" data-trap="1" data-confidence="2">
-  <td><a href="/dd/DD_JBL_20260417.html" class="ticker-link" target="_blank" rel="noopener">JBL</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10·加深</span></td>
-  <td><span class="upside-neg">-28.3%</span></td>
-  <td><span class="upside-neg">-15.4%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">JBL 是全球僅有少數能同時做 GPU 伺服器、液冷、網通硬體、電源管理的「AI 全棧 EMS」，hyperscaler 基本無處可換。</td>
-</tr>
-<tr class="searchable" data-ticker="KEYS" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="-32.5" data-upside2="-21.7" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_KEYS_20260417.html" class="ticker-link" target="_blank" rel="noopener">KEYS</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·加深</span></td>
-  <td><span class="upside-neg">-32.5%</span></td>
-  <td><span class="upside-neg">-21.7%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">KEYS 是 T&M 行業寡頭，AI 與 6G 雙主線撐起 10 年+ 成長跑道，Spirent 併購完成 + $1.5B buyback 雙重催化。</td>
-</tr>
-<tr class="searchable" data-ticker="MELI" data-date="2026-04-17" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="9" data-upside1="37.1" data-upside2="91.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_MELI_20260417.html" class="ticker-link" target="_blank" rel="noopener">MELI</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-pos">+37.1%</span></td>
-  <td><span class="upside-pos">+91.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">MELI 是拉美 12 國「電商 + fintech + advertising + logistics」唯一綜合性贏家，5-10 年複利潛能在於從當前 11% 電商滲透率 → 25%+ 的結構性紅利 + Mercado Pago cred…</td>
-</tr>
-<tr class="searchable" data-ticker="MPWR" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-7.7" data-upside2="10.9" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_MPWR_20260417.html" class="ticker-link" target="_blank" rel="noopener">MPWR</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10·穩定</span></td>
-  <td><span class="upside-neg">-7.7%</span></td>
-  <td><span class="upside-pos">+10.9%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">這是一家擁有 48V 架構定價權 + ROIC 26% + Net Cash 結構的優質 AI 電源管理平台；長期 5 年視角下，即使失去 NVDA 部分份額，AMD/ASIC/Custom Silicon 第二曲線仍支撐成長持續性。</td>
-</tr>
-<tr class="searchable" data-ticker="MRVL" data-date="2026-04-17" data-version="v11.0" data-verdict="3" data-quality="0" data-moat="7" data-upside1="9.1" data-upside2="54.4" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_MRVL_20260417.html" class="ticker-link" target="_blank" rel="noopener">MRVL</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-watch">觀望</span></td>
-  <td><span class="quality-score">7/10·穩定</span></td>
-  <td><span class="upside-pos">+9.1%</span></td>
-  <td><span class="upside-pos">+54.4%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">MRVL 是 AVGO 之外唯一具備 full-stack AI infra IP 能力（custom ASIC + optical DSP + DCI + AEC）的 hyperscaler 級合作夥伴，且管理層首次給出 FY28 明確 …</td>
-</tr>
-<tr class="searchable" data-ticker="NET" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-26.2" data-upside2="-5.2" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_NET_20260417.html" class="ticker-link" target="_blank" rel="noopener">NET</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10·加深</span></td>
-  <td><span class="upside-neg">-26.2%</span></td>
-  <td><span class="upside-neg">-5.2%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「Cloudflare 是這個世代唯一由開發者愛戴、企業買單、政府使用的網路基礎層，在 agentic AI 時代的槓桿效應被市場低估。」</td>
-</tr>
-<tr class="searchable" data-ticker="NFLX" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="22.4" data-upside2="25.3" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_NFLX_20260417.html" class="ticker-link" target="_blank" rel="noopener">NFLX</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·擴大</span></td>
-  <td><span class="upside-pos">+22.4%</span></td>
-  <td><span class="upside-pos">+25.3%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">好公司目前估值未到「便宜」，但基本面仍是全球串流唯一兼具 margin + ROIC + Runway 的標的，值得等回檔進場長期持有 3-5 年。</td>
-</tr>
-<tr class="searchable" data-ticker="ONTO" data-date="2026-04-17" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="7" data-upside1="15.4" data-upside2="49.2" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_ONTO_20260417.html" class="ticker-link" target="_blank" rel="noopener">ONTO</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">7/10·擴大</span></td>
-  <td><span class="upside-pos">+15.4%</span></td>
-  <td><span class="upside-pos">+49.2%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「市場定價的 FCF CAGR 18% 是 reasonable 的假設，既非激進也未給 bargain——公允定價。」</td>
-</tr>
-<tr class="searchable" data-ticker="ORCL" data-date="2026-04-17" data-version="v11.0" data-verdict="3" data-quality="2" data-moat="7" data-upside1="21.1" data-upside2="29.5" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_ORCL_20260417.html" class="ticker-link" target="_blank" rel="noopener">ORCL</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-watch">觀望</span></td>
-  <td><span class="quality-score">7/10·加深</span></td>
-  <td><span class="upside-pos">+21.1%</span></td>
-  <td><span class="upside-pos">+29.5%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">Oracle 在 AI 基建爆發期已經拿下「enterprise 第二雲」地位，RPO $553B 是護城河的量化證據；即便近 18 個月財務數字因 capex 與新債承壓，長期現金流正常化後的 ROIC 有望重回 15%+ 區間，值得抱超…</td>
-</tr>
-<tr class="searchable" data-ticker="RMS" data-date="2026-04-17" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="10" data-upside1="23.1" data-upside2="42.4" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_RMS_20260417.html" class="ticker-link" target="_blank" rel="noopener">RMS</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">10/10·加深</span></td>
-  <td><span class="upside-pos">+23.1%</span></td>
-  <td><span class="upside-pos">+42.4%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">Hermès 是極少數在奢侈品產業長期 beta（全球超高淨值人口成長）× 自身 alpha（Birkin 配貨制 + 工匠垂直整合）雙引擎驅動的標的，5 年以上持有值得在估值回落至 5Y 分位 < 20% 時分批建滿。</td>
-</tr>
-<tr class="searchable" data-ticker="ROK" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-24.7" data-upside2="-14.8" data-trap="1" data-confidence="2">
-  <td><a href="/dd/DD_ROK_20260417.html" class="ticker-link" target="_blank" rel="noopener">ROK</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10·縮減</span></td>
-  <td><span class="upside-neg">-24.7%</span></td>
-  <td><span class="upside-neg">-14.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">「$6.23B buyback 完成 + ROIC 18.4% + 現金流歷史新高，這是一流公司在偶爾的週期低谷後重回正軌，現價 $402 只是為了這個『確定的複利』付出的入場費。」</td>
-</tr>
-<tr class="searchable" data-ticker="TSLA" data-date="2026-04-17" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-60.9" data-upside2="-47.0" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_TSLA_20260417.html" class="ticker-link" target="_blank" rel="noopener">TSLA</a></td>
-  <td class="date-cell">2026-04-17</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10</span></td>
-  <td><span class="upside-neg">-60.9%</span></td>
-  <td><span class="upside-neg">-47.0%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">Tesla 是 binary option 型投資——若 Robotaxi + Optimus + Cybercab 三項同時兌現，5 年內 5 倍空間；若任一失敗，3 年內 −60% 至 −80% 重估至汽車業 PE。</td>
-</tr>
-<tr class="searchable" data-ticker="2308TW" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-36.5" data-upside2="-7.5" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_2308TW_20260416.html" class="ticker-link" target="_blank" rel="noopener">2308TW</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10·擴大</span></td>
-  <td><span class="upside-neg">-36.5%</span></td>
-  <td><span class="upside-neg">-7.5%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">Delta 是 AI 基建黃金十年中兼具規模、技術、品牌、現金配置紀律的全球第一名，47x FPE 對應 42% EPS CAGR 的 PEG 1.14 並不貴——貴的是沒有這種成長率的同業。</td>
-</tr>
-<tr class="searchable" data-ticker="AMAT" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="-38.2" data-upside2="-21.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_AMAT_20260416.html" class="ticker-link" target="_blank" rel="noopener">AMAT</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·加深</span></td>
-  <td><span class="upside-neg">-38.2%</span></td>
-  <td><span class="upside-neg">-21.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 基建的賣鏟者裡，AMAT 是唯一同時擁有最廣技術覆蓋（deposition / etch / CMP / ion implant / thermal）＋最高 ROIC＋最積極資本返還的「完美複合體」。</td>
-</tr>
-<tr class="searchable" data-ticker="AMZN" data-date="2026-04-16" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="9" data-upside1="24.9" data-upside2="52.6" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_AMZN_20260416.html" class="ticker-link" target="_blank" rel="noopener">AMZN</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td><span class="upside-pos">+24.9%</span></td>
-  <td><span class="upside-pos">+52.6%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AMZN 是少數同時具備「雲端 AI 受益 + 零售規模不可複製 + 廣告第三勢力崛起」的三引擎複合體，即使 e-commerce 面臨 Temu/Shopify 競爭，AWS + Ads 合計貢獻 2025 年 76% 的營業利潤，以資本…</td>
-</tr>
-<tr class="searchable" data-ticker="ANET" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="9" data-upside1="-12.8" data-upside2="5.1" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_ANET_20260416.html" class="ticker-link" target="_blank" rel="noopener">ANET</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td><span class="upside-neg">-12.8%</span></td>
-  <td><span class="upside-pos">+5.1%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 網路基建龍頭 + EOS 軟體差異化 + 淨現金 $10B + ROIC &gt;100%，是 3-5 年視角可複利 15-20% 的標的——好公司在錯誤的價格仍是錯誤的投資。</td>
-</tr>
-<tr class="searchable" data-ticker="APH" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="9" data-upside1="-10.0" data-upside2="5.7" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_APH_20260416.html" class="ticker-link" target="_blank" rel="noopener">APH</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-neg">-10.0%</span></td>
-  <td><span class="upside-pos">+5.7%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">APH 是互連賽道的「Munger 式去中心化執行典範」，5 年視角下品質與成長雙重複利可期，但當前估值已 priced in 多年成長，紀律性的進場時機應等待回檔。</td>
-</tr>
-<tr class="searchable" data-ticker="APP" data-date="2026-04-16" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="7" data-upside1="71.1" data-upside2="123.6" data-trap="2" data-confidence="1">
-  <td><a href="/dd/DD_APP_20260416.html" class="ticker-link" target="_blank" rel="noopener">APP</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">7/10·擴大</span></td>
-  <td><span class="upside-pos">+71.1%</span></td>
-  <td><span class="upside-pos">+123.6%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">APP 是「AI-native black-box DSP」唯一規模化案例，只要 SEC 調查結案無重大罰則（base case 機率 &gt;70%），此標的值得抱超過兩年。</td>
-</tr>
-<tr class="searchable" data-ticker="ASML" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="10" data-upside1="-18.1" data-upside2="5.5" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_ASML_20260416.html" class="ticker-link" target="_blank" rel="noopener">ASML</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">10/10·擴大</span></td>
-  <td><span class="upside-neg">-18.1%</span></td>
-  <td><span class="upside-pos">+5.5%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「沒有 ASML 就沒有 AI，你無法買到比這更接近必需品的 compounder。」</td>
-</tr>
-<tr class="searchable" data-ticker="AVGO" data-date="2026-04-16" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="9" data-upside1="3.4" data-upside2="63.3" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_AVGO_20260416.html" class="ticker-link" target="_blank" rel="noopener">AVGO</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-pos">+3.4%</span></td>
-  <td><span class="upside-pos">+63.3%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AVGO 是 AI 基礎設施時代最典型的 "picks-and-shovels 寡佔 + 軟體黏性" 複利機器，在 Hock Tan 2030 $120B AI 目標的 CEO 激勵綁定下，5 年複利區間（FY26 → FY30）Non-G…</td>
-</tr>
-<tr class="searchable" data-ticker="CRM" data-date="2026-04-16" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="7.5" data-upside1="123.0" data-upside2="152.3" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_CRM_20260416.html" class="ticker-link" target="_blank" rel="noopener">CRM</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">7.5/10·穩定</span></td>
-  <td><span class="upside-pos">+123.0%</span></td>
-  <td><span class="upside-pos">+152.3%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">「CRM 今天的估值 pricing in 『公司零成長』，但公司正以 10%+ 營收 + margin 擴張前進，+ Agentforce $800M ARR 證明 AI 是幫手不是敵人。」</td>
-</tr>
-<tr class="searchable" data-ticker="CRWD" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="9" data-upside1="-17.3" data-upside2="5.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_CRWD_20260416.html" class="ticker-link" target="_blank" rel="noopener">CRWD</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-neg">-17.3%</span></td>
-  <td><span class="upside-pos">+5.0%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">這家公司值得抱 5 年以上，唯一的問題是進場價。當前 $411 對應 2031 年預期報酬只有 −4% 至 +5%，但若能在 $340 以下建倉，報酬區間可提升至 +10–20% 年化。這是「質好但價貴」的教科書案例。</td>
-</tr>
-<tr class="searchable" data-ticker="ETN" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="-15.0" data-upside2="-1.1" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_ETN_20260416.html" class="ticker-link" target="_blank" rel="noopener">ETN</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·加深</span></td>
-  <td><span class="upside-neg">-15.0%</span></td>
-  <td><span class="upside-neg">-1.1%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">ETN 是北美 electrification + AI 資料中心 megatrend 的「賣鏟人之王」，17 年連續股利成長、ROIC 擴大、Mobility 分拆後純度進一步提升；</td>
-</tr>
-<tr class="searchable" data-ticker="FICO" data-date="2026-04-16" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="8.0" data-upside1="21.4" data-upside2="54.4" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_FICO_20260416.html" class="ticker-link" target="_blank" rel="noopener">FICO</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">8.0/10·擴大</span></td>
-  <td><span class="upside-pos">+21.4%</span></td>
-  <td><span class="upside-pos">+54.4%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">FICO 值得抱 3-5 年的前提是相信 Platform SaaS 能在 2027-2028 接棒 Scores mortgage 可能的減速；</td>
-</tr>
-<tr class="searchable" data-ticker="KLAC" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="9" data-upside1="-43.3" data-upside2="-25.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_KLAC_20260416.html" class="ticker-link" target="_blank" rel="noopener">KLAC</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td><span class="upside-neg">-43.3%</span></td>
-  <td><span class="upside-neg">-25.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 需要 process control，KLA 是唯一能做到 2nm 的公司——5 年後它一定比現在更重要，也一定更賺錢。</td>
-</tr>
-<tr class="searchable" data-ticker="LLY" data-date="2026-04-16" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="9" data-upside1="72.1" data-upside2="108.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_LLY_20260416.html" class="ticker-link" target="_blank" rel="noopener">LLY</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-pos">+72.1%</span></td>
-  <td><span class="upside-pos">+108.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">一家 10 年 Runway × 27% CAGR × 32% ROIC × 9/10 護城河的公司，竟在 5 年 11% 分位以 26x Forward PE 交易——這是 Munger 所謂「fat pitch」。</td>
-</tr>
-<tr class="searchable" data-ticker="LRCX" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="9" data-upside1="-43.6" data-upside2="-24.6" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_LRCX_20260416.html" class="ticker-link" target="_blank" rel="noopener">LRCX</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">9/10·擴大</span></td>
-  <td><span class="upside-neg">-43.6%</span></td>
-  <td><span class="upside-neg">-24.6%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「這是半導體製造的『隱形冠軍』——每一顆 AI 晶片的誕生都少不了它。91% 漲幅後還漲，市場知道它值得。」</td>
-</tr>
-<tr class="searchable" data-ticker="META" data-date="2026-04-16" data-version="v11.0" data-verdict="3" data-quality="0" data-moat="9" data-upside1="1.2" data-upside2="17.3" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_META_20260416.html" class="ticker-link" target="_blank" rel="noopener">META</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-watch">觀望</span></td>
-  <td><span class="quality-score">9/10·加深</span></td>
-  <td><span class="upside-pos">+1.2%</span></td>
-  <td><span class="upside-pos">+17.3%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">META 同時擁有「現金牛廣告事業」+「最具規模的 AI 基礎設施」+「Llama 開源生態的話語權」+「dual-class 賦予 Zuckerberg 長期投資彈性」，五年複利前景優於同業。</td>
-</tr>
-<tr class="searchable" data-ticker="MU" data-date="2026-04-16" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="5" data-upside1="26.7" data-upside2="115.2" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_MU_20260416.html" class="ticker-link" target="_blank" rel="noopener">MU</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">5/10·擴大</span></td>
-  <td><span class="upside-pos">+26.7%</span></td>
-  <td><span class="upside-pos">+115.2%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">MU 是 AI HBM 超級週期的核心受益者，但 memory 本質循環使其不適合超過 2-3 年 buy-and-hold — 適合 tactical sector allocation 而非 long-term compounding。</td>
-</tr>
-<tr class="searchable" data-ticker="NVDA" data-date="2026-04-16" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="9.5" data-upside1="75.1" data-upside2="134.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_NVDA_20260416.html" class="ticker-link" target="_blank" rel="noopener">NVDA</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">9.5/10·擴大</span></td>
-  <td><span class="upside-pos">+75.1%</span></td>
-  <td><span class="upside-pos">+134.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">AI 超級週期是 30 年一遇的技術典範轉移，NVDA 是基礎設施層的絕對龍頭、CUDA 生態難以複製——值得抱 5 年以上，前提是每季監測 Data Center QoQ 與 Gross Margin 兩項核心指標。</td>
-</tr>
-<tr class="searchable" data-ticker="PLTR" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="-16.3" data-upside2="17.5" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_PLTR_20260416.html" class="ticker-link" target="_blank" rel="noopener">PLTR</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·擴大</span></td>
-  <td><span class="upside-neg">-16.3%</span></td>
-  <td><span class="upside-pos">+17.5%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">PLTR 是 AI 時代「企業與政府 operating system」的結構性贏家，10+ 年 runway + 強化型護城河 + Rule of 40 127 為歷史罕見——值得長抱超過 5 年，但不值得以當前 Forward PE 1…</td>
-</tr>
-<tr class="searchable" data-ticker="TER" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8.0" data-upside1="-43.4" data-upside2="-24.7" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_TER_20260416.html" class="ticker-link" target="_blank" rel="noopener">TER</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8.0/10·加深</span></td>
-  <td><span class="upside-neg">-43.4%</span></td>
-  <td><span class="upside-neg">-24.7%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「全世界只有兩家公司能測 AI GPU，且其中一家還兼具物理 AI 限肢——買不到就是買不到。」</td>
-</tr>
-<tr class="searchable" data-ticker="UBER" data-date="2026-04-16" data-version="v11.0" data-verdict="1" data-quality="0" data-moat="8" data-upside1="57.0" data-upside2="102.2" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_UBER_20260416.html" class="ticker-link" target="_blank" rel="noopener">UBER</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-buy">進場</span></td>
-  <td><span class="quality-score">8/10·擴大</span></td>
-  <td><span class="upside-pos">+57.0%</span></td>
-  <td><span class="upside-pos">+102.2%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">Uber 是少數「全球網絡 + 跨類別會員 + AV 分發層」三重護城河同時存在的平台型公司，當前估值折價是「AV 不確定」情緒壓抑而非基本面惡化——好公司在好價格。</td>
-</tr>
-<tr class="searchable" data-ticker="VIK" data-date="2026-04-16" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="-1.07" data-upside2="23.3" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_VIK_20260416.html" class="ticker-link" target="_blank" rel="noopener">VIK</a></td>
-  <td class="date-cell">2026-04-16</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·擴大</span></td>
-  <td><span class="upside-neg">-1.1%</span></td>
-  <td><span class="upside-pos">+23.3%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">「Cruise 業的 LVMH——品牌 + demographic + ROIC 三位一體，過去 12 個月漲 119% 不是泡沫，是市場終於認識到這是 cruise 業 best-in-class 該有的價格。」</td>
-</tr>
-<tr class="searchable" data-ticker="2383TW_v10" data-date="2026-04-15" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="-50.0" data-upside2="0.0" data-trap="1" data-confidence="9">
-  <td><a href="/dd/DD_2383TW_v10_20260415.html" class="ticker-link" target="_blank" rel="noopener">2383TW_v10</a></td>
-  <td class="date-cell">2026-04-15</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·擴大</span></td>
-  <td><span class="upside-neg">-50.0%</span></td>
-  <td>—</td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-na">—</span></td>
-  <td class="comment-cell">台光電在高階 CCL 的壟斷地位堪比 TSMC 在先進製程的地位，而 PEG 僅 0.9x，這是以合理價格買入一家 ROIC 30%+ 且護城河正在擴大的世界級企業。</td>
-</tr>
-<tr class="searchable" data-ticker="GOOGL" data-date="2026-04-15" data-version="v11.0" data-verdict="3" data-quality="0" data-moat="8" data-upside1="-14.2" data-upside2="0.04" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_GOOGL_20260415.html" class="ticker-link" target="_blank" rel="noopener">GOOGL</a></td>
-  <td class="date-cell">2026-04-15</td>
-  <td><span class="verdict-badge verdict-watch">觀望</span></td>
-  <td><span class="quality-score">8/10·擴大</span></td>
-  <td><span class="upside-neg">-14.2%</span></td>
-  <td><span class="upside-pos">+0.0%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">Alphabet 是唯一同時擁有「全球最大廣告平台 + 第三大雲端 + 領先 AI 研發」三重護城河的公司——$4T 市值仍然低估了 Cloud 從 $58.7B 長到 $200B+ 的價值。</td>
-</tr>
-<tr class="searchable" data-ticker="LITE" data-date="2026-04-15" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="8" data-upside1="-55.0" data-upside2="-7.8" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_LITE_20260415.html" class="ticker-link" target="_blank" rel="noopener">LITE</a></td>
-  <td class="date-cell">2026-04-15</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">8/10·加深</span></td>
-  <td><span class="upside-neg">-55.0%</span></td>
-  <td><span class="upside-neg">-7.8%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">NVIDIA 不會拿 $2B 投資一家護城河正在侵蝕的公司——這是光學超級週期的最核心供應商，產能已鎖死，唯一的問題是你願不願意付合理溢價上車。</td>
-</tr>
-<tr class="searchable" data-ticker="MSFT" data-date="2026-04-15" data-version="v11.0" data-verdict="2" data-quality="0" data-moat="8" data-upside1="13.8" data-upside2="28.2" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_MSFT_20260415.html" class="ticker-link" target="_blank" rel="noopener">MSFT</a></td>
-  <td class="date-cell">2026-04-15</td>
-  <td><span class="verdict-badge verdict-lean-buy">觀望偏進場</span></td>
-  <td><span class="quality-score">8/10·擴大</span></td>
-  <td><span class="upside-pos">+13.8%</span></td>
-  <td><span class="upside-pos">+28.2%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">Microsoft 正以 5 年來最便宜的估值，站在 AI 時代最大的企業 IT 平台遷移浪潮的核心位置。</td>
-</tr>
-<tr class="searchable" data-ticker="STX" data-date="2026-04-15" data-version="v11.0" data-verdict="4" data-quality="0" data-moat="7" data-upside1="-48.8" data-upside2="-21.7" data-trap="2" data-confidence="2">
-  <td><a href="/dd/DD_STX_20260415.html" class="ticker-link" target="_blank" rel="noopener">STX</a></td>
-  <td class="date-cell">2026-04-15</td>
-  <td><span class="verdict-badge verdict-avoid">迴避</span></td>
-  <td><span class="quality-score">7/10·穩定至加深</span></td>
-  <td><span class="upside-neg">-48.8%</span></td>
-  <td><span class="upside-neg">-21.7%</span></td>
-  <td><span class="trap-watch">觀察期</span></td>
-  <td><span class="conf-mid">中</span></td>
-  <td class="comment-cell">Seagate 是全球 AI 基礎設施唯一的大容量存儲雙寡占受益者，HAMR 技術使其在未來 3 年擁有超越歷史的定價能力與利潤率擴張空間，PEG 0.57 說明市場仍低估成長的持續性。</td>
-</tr>
-<tr class="searchable" data-ticker="VRT" data-date="2026-04-15" data-version="v11.0" data-verdict="3" data-quality="0" data-moat="8" data-upside1="6.4" data-upside2="53.0" data-trap="1" data-confidence="1">
-  <td><a href="/dd/DD_VRT_20260415.html" class="ticker-link" target="_blank" rel="noopener">VRT</a></td>
-  <td class="date-cell">2026-04-15</td>
-  <td><span class="verdict-badge verdict-watch">觀望</span></td>
-  <td><span class="quality-score">8/10·加深</span></td>
-  <td><span class="upside-pos">+6.4%</span></td>
-  <td><span class="upside-pos">+53.0%</span></td>
-  <td><span class="trap-ok">非陷阱</span></td>
-  <td><span class="conf-high">高</span></td>
-  <td class="comment-cell">- 品質頂級（A 級 10.0 分）：護城河 8/10 + 成長持久性 10/10 + 體質 +2.0；- 估值接近合理：FPE 38.4x vs 合理 PE 41x，但 R:R 不達標；</td>
-</tr>        </tbody>
+        </tbody>
       </table>
       </div>
     </div>
