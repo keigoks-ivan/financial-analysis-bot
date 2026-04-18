@@ -4,4 +4,4 @@
 
 | 日期 | NAV | 現金% | 核心檔數 | 衛星檔數 | 主要動作 | Override | 檔名 | 備註 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| 2026-04-18 | proposal | 5核心 | 0衛星 | PM_20260418.html | 首次新組合提案：5 檔 core 集中在 AI infra + 電商 + 醫療，0 檔 satellite（池內無 B 訊號），cash 28%。AMZN 初建位 12%（L1 override，目標 15%）。 |
+| 2026-04-18 | proposal | 5核心 | 3衛星 | PM_20260418.html | 新 v12 DDs 讓 UBER/MELI 轉 X（MA 煞車追蹤池），重新洗牌：NVDA/LLY 為雙核心錨，補入 CRDO/AMZN/DELL，衛星選 AVGO/2330/ONTO 半導體製造主題。 |
