@@ -15,3 +15,4 @@
 | 日期 | 主題 | 涵蓋 ticker | 深度分布 | Phase | 🟡 比例 | 鮮度 | 檔名 | 備註 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | 2026-04-19 | 先進封裝（Advanced Packaging）| 10 | 4🔴 / 4🟡 / 2🟢 | I → II 轉換期 | 18% | tech 🟢 / market 🟢 / judgment 🟢 | ID_AdvancedPackaging_20260419.html | 首篇；CoWoS / SoIC / CoPoS / hybrid bonding 四主軸 |
+| 2026-04-19 | AI 加速器需求（AI Accelerator Demand）🔴 母題 | 12 | 5🔴 / 5🟡 / 2🟢 | Phase II（訓練→推論混合期）| 19% | tech 🟢 / market 🟢 / judgment 🟢 | ID_AIAcceleratorDemand_20260419.html | 母題 Root ID；涵蓋 NVDA / AVGO / AMD / MRVL / 2330 / ASML / GOOGL / META / MSFT / AMZN / CRDO / ANET；3 條非共識：ASIC 份額 35-40%（vs 共識 20-25%）、2027 非峰值為轉折、電力永久瓶頸重塑 FLOPS/W 競爭 |
