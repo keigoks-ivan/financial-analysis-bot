@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD Report — LITE (Lumentum Holdings) | 2026-04-18</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8FAFC; --card: #FFFFFF; --title: #1E3A5F; --accent: #3B82F6;
+  --row-alt: #F1F5F9; --green-bg: #DCFCE7; --green-txt: #166534;
+  --red-bg: #FEE2E2; --red-txt: #991B1B; --yellow-bg: #FEF9C3; --yellow-txt: #92400E;
+  --blue-bg: #EFF6FF; --orange-bg: #FFF0E6; --orange-line: #F97316; --orange-txt: #C2410C;
+  --bull-bg: #F0FDF4; --bull-line: #16A34A; --bear-bg: #FFF1F2; --bear-line: #DC2626;
+  --arb-bg: #F5F3FF; --arb-line: #7C3AED; --verdict-bg: #FFFBEB; --verdict-line: #D97706; --verdict-txt: #92400E;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:#1e293b; line-height:1.7; font-size:15px; }
+.header-bar { position:sticky; top:0; z-index:100; background:var(--title); color:#fff; padding:10px 24px; display:flex; justify-content:space-between; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:13px; }
+.container { max-width:1100px; margin:0 auto; padding:24px 16px 80px; }
+.section { background:var(--card); margin-bottom:20px; border-radius:2px; box-shadow:0 1px 3px rgba(0,0,0,.06); overflow:hidden; }
+.section-title { background:var(--title); color:#fff; padding:14px 20px; font-size:16px; font-weight:700; border-left:4px solid var(--accent); }
+.section-body { padding:20px; }
+.section-body p { margin-bottom:12px; }
+.section-body h3 { color:var(--title); margin:18px 0 8px; font-size:15px; }
+.section-body h4 { color:#334155; margin:14px 0 6px; font-size:14px; }
+table { width:100%; border-collapse:collapse; margin:12px 0; font-size:11.5px; }
+th { background:var(--title); color:#fff; padding:8px 10px; text-align:left; font-weight:500; }
+td { padding:7px 10px; border-bottom:1px solid #e2e8f0; }
+tr:nth-child(even) td { background:var(--row-alt); }
+.badge { display:inline-block; padding:2px 10px; border-radius:2px; font-size:12px; font-weight:600; }
+.badge-green { background:var(--green-bg); color:var(--green-txt); }
+.badge-red { background:var(--red-bg); color:var(--red-txt); }
+.badge-yellow { background:var(--yellow-bg); color:var(--yellow-txt); }
+.badge-blue { background:var(--blue-bg); color:var(--title); }
+.trap-box { background:var(--orange-bg); border-left:4px solid var(--orange-line); padding:16px 20px; margin:12px 0; }
+.trap-box h4 { color:var(--orange-txt); margin:0 0 8px; }
+.hypothesis-box { background:var(--blue-bg); border-left:4px solid var(--accent); padding:16px 20px; margin:12px 0; }
+.hypothesis-box h4 { color:var(--title); margin:0 0 8px; }
+.debate-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin:16px 0; }
+.debate-card { padding:16px; border-radius:2px; }
+.debate-bull { background:var(--bull-bg); border-left:4px solid var(--bull-line); }
+.debate-bear { background:var(--bear-bg); border-left:4px solid var(--bear-line); }
+.debate-arb { background:var(--arb-bg); border-left:4px solid var(--arb-line); }
+.verdict-box { background:var(--verdict-bg); border-left:4px solid var(--verdict-line); padding:16px 20px; margin:16px 0; }
+.verdict-box h4 { color:var(--verdict-txt); }
+.rr-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+.rr-card { padding:16px; border-radius:2px; }
+.rr-short { background:#F0F9FF; border-left:4px solid #0284C7; }
+.rr-mid { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.mono { font-family:'IBM Plex Mono',monospace; }
+.print-btn { position:fixed; bottom:20px; right:20px; background:var(--accent); color:#fff; border:none; padding:10px 18px; cursor:pointer; font-size:13px; border-radius:2px; z-index:200; }
+.signal-box { display:inline-block; padding:6px 16px; border-radius:4px; font-weight:700; font-size:18px; }
+.signal-A { background:#DCFCE7; color:#166534; border:2px solid #16A34A; }
+.signal-B { background:#FEF9C3; color:#92400E; border:2px solid #D97706; }
+.signal-C { background:#FFF0E6; color:#C2410C; border:2px solid #F97316; }
+.signal-X { background:#FEE2E2; color:#991B1B; border:2px solid #DC2626; }
+@media print { .header-bar, .print-btn { display:none; } body { font-size:12px; } .section { break-inside:avoid; } }
+@media (max-width:768px) { .debate-grid { grid-template-columns:1fr; } .rr-grid { grid-template-columns:1fr; } }
+.dd-toc{background:#F1F5F9;border-left:4px solid var(--accent,#3B82F6);padding:14px 18px;margin-bottom:20px;border-radius:2px}
+.dd-toc .toc-title{font-weight:700;color:#1E3A5F;font-size:14px;margin-bottom:8px}
+.dd-toc .toc-list{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px}
+.dd-toc .toc-list li a{display:inline-block;padding:4px 10px;background:#fff;color:#1E3A5F;text-decoration:none;font-size:12.5px;border:1px solid #cbd5e1;border-radius:2px;font-weight:500}
+.dd-toc .toc-list li a:hover{background:#1E3A5F;color:#fff;border-color:#1E3A5F}
+html{scroll-behavior:smooth}
+h2[id^="sec-"],section[id^="sec-"],div[id^="sec-"]{scroll-margin-top:60px}
+@media print{.dd-toc{display:none}}
+</style>
+</head>
+<body>
+<div class="header-bar">
+  <span><strong>LITE</strong> — Lumentum Holdings Inc.</span>
+  <span>資料抓取：2026-04-18 ｜ 最新股價：$894.07 ｜ 最近財報季：Q2 FY2026（Dec 2025）｜ DD Schema v12.0</span>
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+<div class="container">
+<nav class="dd-toc">
+  <div class="toc-title">目錄</div>
+  <ul class="toc-list">
+      <li><a href="#sec-1">§1 結論</a></li>
+      <li><a href="#sec-2">§2 核心</a></li>
+      <li><a href="#sec-3">§3 假設</a></li>
+      <li><a href="#sec-4">§4 財報</a></li>
+      <li><a href="#sec-5">§5 成長</a></li>
+      <li><a href="#sec-6">§6 護城河</a></li>
+      <li><a href="#sec-7">§7 門檻</a></li>
+      <li><a href="#sec-8">§8 財務</a></li>
+      <li><a href="#sec-9">§9 產業</a></li>
+      <li><a href="#sec-10">§10 治理</a></li>
+      <li><a href="#sec-11">§11 估值</a></li>
+      <li><a href="#sec-12">§12 R:R</a></li>
+      <li><a href="#sec-13">§13 辯論</a></li>
+  </ul>
+</nav>
+
+<!-- ===== §1 投資結論 ===== -->
+<div class="section">
+<div class="section-title" id="sec-1">§1｜投資結論（Executive Summary）｜v12.0 綜合訊號</div>
+<div class="section-body">
+<p style="color:#64748b;font-size:13px;">v12.0 變更：本結論輸出<strong>綜合訊號燈（A+/A/B/C/X）</strong>，不再建議具體倉位 %。倉位決策由 portfolio-manager skill 基於組合狀態決定。</p>
+
+<table>
+<tr><th>維度</th><th>判定</th><th>依據</th></tr>
+<tr><td>當前股價</td><td>$894.07</td><td>2026-04-18 yfinance</td></tr>
+<tr><td>品質等級（§2 B）</td><td><span class="badge badge-green">A 級（7.75 分）</span></td><td>護城河 8.5 + 成長持久性 9.0 = 底分 8.75，體質淨 −1.0</td></tr>
+<tr><td>估值燈（§2 D）</td><td><span class="badge badge-yellow">🟡 偏貴</span></td><td>Fwd PE FY+1 = 56.4x（5Y 分位 75%），PEG = 1.41</td></tr>
+<tr><td>Pure MA 狀態（§2 F）</td><td><span class="badge badge-green">✅ 黃金排列</span></td><td>P $894 &gt; MA60 $651 &gt; MA200 $340 &gt; MA104w $179</td></tr>
+<tr><td>大盤豁免（§2 G）</td><td><span class="badge badge-green">正常</span></td><td>SPX 4/17 收盤未觸發大盤崩盤豁免</td></tr>
+<tr><td>陷阱定性</td><td><span class="badge badge-yellow">🟡 中度警戒</span></td><td>SBC 高 + 隱性資本密集，但 AI 拉動緩解；YTD 漲 109%，追高風險</td></tr>
+<tr><td>股價漂移（QC-22）</td><td>+12.0%</td><td>4 週均價 $798.19 vs 現價 $894.07，未達 20% 警戒但已過 10%</td></tr>
+<tr><td>壓力測試通過率（QC-29）</td><td><span class="badge badge-red">0/4</span></td><td>Base 中期 R:R 僅 0.78x，3 個壓力情境均未過 2.0x 門檻</td></tr>
+<tr><td><strong>綜合訊號（§2 H）</strong></td><td><span class="signal-box signal-C">C（觀察名單）</span></td><td>品質 A + 估值 🟡 + MA ✅ + trap 🟡，但 R:R 壓測全失敗 → 降一級至 C</td></tr>
+<tr><td>持有期間監測指標</td><td colspan="2">① 200G EML 獨供狀態（警戒：Coherent 或源杰宣布量產）；② 四大雲端季度 Capex 指引（警戒：連 2 季 YoY &lt;10%）；③ OCS backlog（警戒：季度出貨 &lt;$75M）</td></tr>
+</table>
+
+<div class="trap-box">
+<h4>⚠️ 入場窗口警示（QC-22）</h4>
+<p>LITE 自 2026 初至今漲幅 +109.52%，近 3 週從 $703 漲至 $894（+27%）。雖未觸發 +20% 漂移紅線（近 4 週 +12%），但 Fwd PE 已站上 5Y 分位 75%，且股價已突破 JPMorgan 近期上調的 $950 上緣 Bollinger 2σ（$941.89）邊界。<strong>中期 R:R 0.78x &lt; 1.0</strong>，4 情境壓測全數未過，不具備「追高合理性」。</p>
+<p><strong>建議：</strong>等待 Pure MA 回測 MA60（$651）或 Bollinger 中軌（$545）後再評估進場，不追 $894 以上價位。</p>
+</div>
+
+<h3>§1 自我攻擊裁決（QC-13）</h3>
+<ol>
+<li><strong>反駁點 A：</strong>「LITE 護城河 8.5 分可能高估——NVIDIA $2B 投資雖鎖定供應，但同時也透露 NVIDIA 不希望單一供應商卡關，未來若扶持 Coherent/源杰作第二供應商，獨供地位可能崩解。」<br>
+回應：確實是風險，但供應鏈驗證週期 12-18 個月，2027 前 Coherent 200G EML 無法上量（驗證於 OFC 2026），H2 假設在 FY28 前仍穩健。護城河維持 8.5 但將在 §6 威脅表明列 🔴 生態攻擊風險。</li>
+<li><strong>反駁點 B：</strong>「Fwd PE 56.4x vs 同業 COHR 41.55x 溢價 36%，為何維持 A 級品質？」<br>
+回應：§11 D 已執行 QC-30 同業收斂壓測。LITE 200G EML 獨供 + OCS/CPO 雙引擎使成長率（FY26 guidance +85% YoY）高於 COHR（~30%），溢價合理但<strong>已反映在現價</strong>——這正是訊號降為 C 的核心理由。</li>
+<li><strong>反駁點 C：</strong>「股價漂移 +109% YTD 但只標 🟡 中度警戒，是否低估追高風險？」<br>
+回應：技術面確實站在高位，但基本面 Q2 FY26 營收 +65% YoY、Q3 指引 +85% YoY、NVIDIA 多年訂單鎖定，基本面成長支撐高估值。綜合訊號 C 已充分反映「基本面強但進場時機差」的矛盾。</li>
+</ol>
+
+<p><strong>裁決：</strong>綜合訊號 <span class="signal-box signal-C">C</span> — 觀察名單。引用 §12 E 數字：短期目標 $1,177 vs 現價 $894 = R:R 0.61x；中期目標 $1,260 = R:R 0.78x；Bear Case $428。<strong>短中期上行空間不足</strong>，建議等待價格修正再評估。長期信心高（成長跑道 3-5 年、護城河趨勢穩健、商業模式護城河強化中）。</p>
+</div>
+</div>
+
+<!-- ===== §2 核心結論 ===== -->
+<div class="section">
+<div class="section-title" id="sec-2">§2｜核心結論（v12.0 六層推導）</div>
+<div class="section-body">
+
+<h3>A｜品質分計算（QC-9）</h3>
+<table>
+<tr><th>輸入</th><th>分數</th><th>依據</th></tr>
+<tr><td>護城河（§6）</td><td>8.5 / 10</td><td>200G EML 獨供 + InP 晶圓製造規模 + 客戶深度整合 + NVIDIA $2B 鎖定</td></tr>
+<tr><td>成長持久性（§5）</td><td>9.0 / 10</td><td>AI 光學 Capex 3-5 年跑道 + OCS/CPO 雙引擎 + 800G→1.6T 升級週期</td></tr>
+<tr><td>底分</td><td>8.75</td><td>(8.5 + 9.0) / 2</td></tr>
+<tr><td>體質 1：FCF Margin &gt; 15%</td><td>−0.5</td><td>H1 FY26 FCF 轉正但 margin ~5%，未達標</td></tr>
+<tr><td>體質 2：ROIC &gt; 15%</td><td>0</td><td>ROE 29% 但 ROA 0.3%（高槓桿），中性</td></tr>
+<tr><td>體質 3：毛利率穩定/上升</td><td>+0.5</td><td>GAAP GM V 型反轉：FY24 18.5% → H1 FY26 41%，Q3 指引 OP margin 30-31%</td></tr>
+<tr><td>體質 4：淨現金 / 低負債</td><td>−0.5</td><td>D/E 392%，current ratio 0.606，流動性偏緊</td></tr>
+<tr><td>體質 5：SBC &lt; 5% 營收</td><td>−0.5</td><td>歷史 SBC 佔營收 ~10%，稀釋股東價值</td></tr>
+<tr><td><strong>品質總分</strong></td><td><strong>7.75</strong></td><td>8.75 − 1.0 = 7.75 → <span class="badge badge-green">A 級</span></td></tr>
+</table>
+
+<h3>B｜護城河等級（調整後）</h3>
+<p><span class="badge badge-green">A 級護城河（8.5/10）</span>。200G EML 獨供 + InP 晶圓規模 + 客戶認證黏著。QC-23 風險：Coherent 2027 年 SiPh/200G EML 追趕屬 🔴 生態攻擊（非 ⛔ 架構替代），因 InP 雷射在 200G/lane 以上物理優勢仍領先。護城河維持 8.5，未下調。</p>
+
+<h3>C｜成長品質</h3>
+<p>Q2 FY26 營收 $632M（+65% YoY），Q3 guidance $780-830M（+85% YoY 中值），non-GAAP OP margin 從 Q3 FY25 10.8% 擴張至指引 30-31%。OCS backlog &gt;$400M，CPO 獲得「多百 million」訂單交付 2027H1。AI 資料中心 Capex 驅動明確。</p>
+
+<h3>D｜估值燈（QC-4 Fwd PE 分位）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>計算</th></tr>
+<tr><td>Fwd PE FY+1</td><td>56.4x</td><td>$894.07 / $15.84 EPS</td></tr>
+<tr><td>PEG（3Y CAGR 40%）</td><td>1.41</td><td>56.4 / 40</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><strong>75%</strong></td><td>(56.4 − 15) / (70 − 15) × 100%</td></tr>
+<tr><td>同業 COHR Fwd PE</td><td>41.55x</td><td>溢價 36% vs LITE（未達 QC-30 的 50% 門檻，但偏高）</td></tr>
+<tr><td><strong>估值燈</strong></td><td colspan="2"><span class="badge badge-yellow">🟡 偏貴</span>（Fwd PE 5Y 分位 75%、PEG 1.41、同業溢價 36%）</td></tr>
+</table>
+
+<h3>E｜雙時距 R:R + 4 情境壓力測試（QC-29）</h3>
+<table>
+<tr><th>情境</th><th>FY+3 EPS</th><th>合理 PE</th><th>目標價</th><th>Bear</th><th>中期 R:R</th><th>過關？</th></tr>
+<tr><td>Base</td><td>$28.0</td><td>45x</td><td>$1,260</td><td>$428</td><td>0.78x</td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>壓力 A（CAGR −10%）</td><td>$25.2</td><td>45x</td><td>$1,134</td><td>$428</td><td>0.51x</td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>壓力 B（PE −20%）</td><td>$28.0</td><td>36x</td><td>$1,008</td><td>$428</td><td>0.24x</td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td>壓力 C（同業收斂 50%）</td><td>$28.0</td><td>49x</td><td>$1,372</td><td>$428</td><td>1.02x</td><td><span class="badge badge-red">❌</span></td></tr>
+<tr><td><strong>通過率</strong></td><td colspan="6"><strong>0/4</strong>（QC-29 要求 ≥ 3/4）→ 綜合訊號自動降一級</td></tr>
+</table>
+
+<h4>QC-22 三價位 R:R 對照（漂移 +12%）</h4>
+<table>
+<tr><th>進場價</th><th>短期目標 $1,177</th><th>中期目標 $1,260</th><th>Bear $428</th><th>中期 R:R</th></tr>
+<tr><td>現價 $894.07</td><td>+31.6%</td><td>+40.9%</td><td>−52.1%</td><td>0.78x</td></tr>
+<tr><td>4週均 $798.19</td><td>+47.5%</td><td>+57.9%</td><td>−46.4%</td><td>1.25x</td></tr>
+<tr><td>建議進場 $651（MA60）</td><td>+80.8%</td><td>+93.5%</td><td>−34.3%</td><td>2.73x</td></tr>
+</table>
+
+<h3>F｜Pure MA 六狀態機</h3>
+<p>現價 $894.07 &gt; MA60 $650.98 &gt; MA200 $340.19 &gt; MA104w $178.53 → <strong>狀態 ✅ 黃金排列（最強多頭）</strong>。但週 Bollinger 上軌 $941.89 接近，中軌 $545.12 距現價 −39%，建議回測中軌或 MA60 後再進場。</p>
+
+<h3>G｜大盤豁免層</h3>
+<p>SPX 2026-04-17 收盤維持在 200 日均線之上，未觸發大盤崩盤豁免。大盤正常。</p>
+
+<h3>H｜綜合訊號（v12.0）</h3>
+<div class="verdict-box">
+<h4>最終訊號：<span class="signal-box signal-C">C</span>（觀察名單）</h4>
+<p><strong>邏輯鏈：</strong>品質 A（7.75）+ 估值 🟡 + MA ✅ + trap 🟡 + 大盤正常 = <strong>B 基準</strong>；但 QC-29 壓測 0/4 通過 → 自動降一級 → <strong>C</strong>。</p>
+<p><strong>PM 語意（供 portfolio-manager 參考）：</strong>觀察名單。不建議新增部位，既有持倉可續抱但不加碼。等待 Pure MA 回測 MA60 或週 Bollinger 中軌後重評。</p>
+</div>
+
+<h3>I｜QC-25 Beta 雙來源</h3>
+<p>yfinance Beta: 1.391；TradingView（web search）暫未取得公開最新值，取 yf 值；差異 &lt; 30% 假設下使用 yfinance。WACC 基準 Beta = 1.39。</p>
+
+<h3>J｜QC-24 Intraday 訊號</h3>
+<table>
+<tr><th>日期</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>訊號</th></tr>
+<tr><td>2026-04-13</td><td>$889.00</td><td>$905.90</td><td>$863.20</td><td>$871.18</td><td>—</td></tr>
+<tr><td>2026-04-14</td><td>$901.15</td><td>$904.99</td><td>$847.10</td><td>$852.79</td><td><span class="badge badge-yellow">gap up 收紅 K</span></td></tr>
+<tr><td>2026-04-15</td><td>$856.89</td><td>$859.49</td><td>$810.00</td><td>$824.01</td><td>日內回落</td></tr>
+<tr><td>2026-04-16</td><td>$825.01</td><td>$903.00</td><td>$825.01</td><td>$891.22</td><td>V 型反彈</td></tr>
+<tr><td>2026-04-17</td><td>$912.00</td><td>$912.00</td><td>$870.50</td><td>$894.07</td><td>—</td></tr>
+</table>
+<p><strong>警示：</strong>4/14 Open $901 &gt; Close $853 屬「gap up 收紅 K」（Open 在前一日高點上方但收跌），為動能疲弱訊號。支持「C 觀察」訊號。</p>
+
+</div>
+</div>
+
+<!-- ===== §3 三方辯論 ===== -->
+<div class="section">
+<div class="section-title" id="sec-3">§3｜三方辯論 + 核心假設 H1/H2/H3 + 風險 R1/R2/R3</div>
+<div class="section-body">
+
+<div class="debate-grid">
+<div class="debate-card debate-bull">
+<h4>🐂 Bull Case</h4>
+<p>AI 資料中心光學升級正處於 800G→1.6T 轉換中點，TrendForce 預估 800G+ 出貨量 2026 年從 24M → 63M（+2.6x）。LITE 200G EML 獨供 + OCS backlog &gt;$400M + CPO 多百 million 訂單 + NVIDIA $2B 投資鎖定。Q3 FY26 指引 +85% YoY、OP margin 30-31%，margin 擴張爆發力。JPMorgan 目標價 $950，長期看 $1,000+。</p>
+</div>
+<div class="debate-card debate-bear">
+<h4>🐻 Bear Case</h4>
+<p>Fwd PE 56x（5Y 分位 75%）已完全反映樂觀情境。AI Capex 週期 2027-2028 可能見頂，Lumentum 大量 Capex（FY25 $231M）將轉為折舊壓力。Coherent 在 OFC 2026 展示下世代 pluggable transceiver，2027 年若量產 200G EML 將打破獨供。PE 壓縮至 36x 僅支撐 $570 股價，下行風險大。4 情境壓測 0/4 通過。</p>
+</div>
+<div class="debate-card debate-arb">
+<h4>⚖️ Arbiter</h4>
+<p>品質 A 級 + 長期信心高 + 短中期 R:R 全面未達 2.0x = 典型「好公司但進場時機差」。當前 $894 既不安全也不便宜，但也不該賣出（基本面強勁）。建議<strong>觀察名單</strong>，等待 MA60 $651 回測或 Bollinger 中軌 $545 後重評。訊號 C。</p>
+</div>
+</div>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>AI 資料中心光學 Capex 在 FY26-FY28 維持 40%+ CAGR，不出現週期性暴跌</td><td>四大雲端（MSFT/GOOGL/AMZN/META）季度 Capex 指引</td><td>每季財報</td></tr>
+<tr><td>H2</td><td>Lumentum 200G EML 獨供地位至少維持至 FY28，Coherent 無法在 2027 前量產競品</td><td>Coherent OFC 進展、LITE 市佔數據</td><td>2026H2-2027H1</td></tr>
+<tr><td>H3</td><td>OCS + CPO 雙新產品線在 FY27 合計貢獻 $400M+ 年營收，支撐 EPS 持續成長</td><td>OCS 季度出貨金額、CPO 設計導入客戶數</td><td>FY27 Q1-Q2</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>AI Capex 週期見頂，雲端客戶集體削減光學支出</td><td>H1</td><td>四大雲端 Capex 季度指引</td><td>連續 2 季 YoY 下降 &gt;10%</td></tr>
+<tr><td>R2</td><td>Coherent 或源杰量產 200G EML 打破獨供</td><td>H2</td><td>Coherent 量產公告、LITE 市佔</td><td>第二供應商出貨量達 LITE 30%</td></tr>
+<tr><td>R3</td><td>Capex 過度擴張導致 FCF 持續為負超過 FY27</td><td>H3</td><td>Capex/Revenue 比率、FCF 轉正時點</td><td>FY27 FCF 仍為負</td></tr>
+<tr><td>R4（新增）</td><td>Fwd PE 5Y 分位 75% + 同業溢價 36% 估值收斂</td><td>H1-H3</td><td>Fwd PE vs COHR/FN 溢價比</td><td>溢價拉大至 50%+ 或 PE 壓縮至 40x 以下</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ===== §4 即時財報情報 ===== -->
+<div class="section">
+<div class="section-title" id="sec-4">§4｜即時財報情報（Q2 FY2026，Dec 2025）</div>
+<div class="section-body">
+<table>
+<tr><th>項目</th><th>Q2 FY26</th><th>Q2 FY25</th><th>YoY</th><th>Q3 FY26 指引</th></tr>
+<tr><td>營收</td><td>$632M</td><td>$382M</td><td>+65%</td><td>$780-830M（+85% YoY 中值）</td></tr>
+<tr><td>Non-GAAP EPS</td><td>$1.80（估）</td><td>$0.50</td><td>+260%</td><td>$2.20-2.36（一致預期 $2.26）</td></tr>
+<tr><td>Non-GAAP OP margin</td><td>25.2%</td><td>10.8%</td><td>+14.4pp</td><td>30-31%</td></tr>
+<tr><td>GAAP GM</td><td>41.0%</td><td>28.0%</td><td>+13pp</td><td>—</td></tr>
+</table>
+
+<h3>QC-27｜Rev vs OI divergence 測試</h3>
+<p>Rev YoY +65%、Non-GAAP OP growth 估 +285% → <strong>divergence −220%</strong>（OI 成長遠快於 Rev，margin 大幅擴張，非壓縮）。屬於健康擴張，不觸發警示。</p>
+
+<h3>QC-28｜絕對成長 vs 對手</h3>
+<table>
+<tr><th>項目</th><th>LITE</th><th>COHR</th><th>FN</th></tr>
+<tr><td>最近季度營收 YoY</td><td>+65%</td><td>~30%</td><td>+33%</td></tr>
+<tr><td>Fwd PE</td><td>56.4x</td><td>41.55x</td><td>~35x（估）</td></tr>
+<tr><td>相對地位</td><td>成長領先，估值溢價</td><td>SiPh 替代路線</td><td>代工受益者</td></tr>
+</table>
+
+<p><strong>下次財報：</strong>2026-05-06（Q3 FY26）。一致預期 EPS $2.26、Rev $809.5M。</p>
+
+</div>
+</div>
+
+<!-- ===== §5 長期成長 ===== -->
+<div class="section">
+<div class="section-title" id="sec-5">§5｜長期成長性（3-5 年跑道）</div>
+<div class="section-body">
+
+<h3>成長跑道評分：9.0 / 10</h3>
+<ul>
+<li><strong>AI 資料中心光學互連</strong>：2026-2028 為 800G → 1.6T 主升段。TrendForce 800G+ 出貨量 2026 年 63M（+2.6x），LightCounting 預估光學模組市場 2026 年近 $12B。</li>
+<li><strong>200G EML 獨供</strong>：InP 雷射物理優勢使 LITE 至少至 2027 為唯一量產供應商，NVIDIA GB300/Rubin 世代 transceiver 核心光源。</li>
+<li><strong>OCS 光學電路交換</strong>：從 Google 單一客戶擴展至 Meta、OpenAI 等 3+ 家，backlog &gt;$400M 延伸至 2026H2。</li>
+<li><strong>CPO 共封裝光學</strong>：多百 million 訂單 2027H1 交付，下一代資料中心架構核心。</li>
+<li><strong>ROADM（電信端）</strong>：電信升級週期重啟，Ciena/Infinera 訂單回溫。</li>
+</ul>
+
+<h3>成長熄火壓力測試（Bear Case）</h3>
+<table>
+<tr><th>情境</th><th>FY27 營收</th><th>OP margin</th><th>EPS</th><th>合理 PE</th><th>股價</th></tr>
+<tr><td>Base</td><td>$3.5B</td><td>28%</td><td>$15.84</td><td>45x</td><td>$713</td></tr>
+<tr><td>Bear（成長降至 10%）</td><td>$2.0B</td><td>18%</td><td>$5.28</td><td>30x</td><td>$158</td></tr>
+<tr><td><strong>Bear 錨定（EPS 0.9x）</strong></td><td>—</td><td>—</td><td>$14.26</td><td>30x</td><td><strong>$428</strong></td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ===== §6 護城河 ===== -->
+<div class="section">
+<div class="section-title" id="sec-6">§6｜護城河評分（8.5 / 10）</div>
+<div class="section-body">
+
+<table>
+<tr><th>維度</th><th>評分</th><th>說明</th></tr>
+<tr><td>技術獨佔</td><td>9</td><td>200G EML 唯一量產廠，InP 晶圓製造良率領先</td></tr>
+<tr><td>轉換成本</td><td>9</td><td>客戶設計導入需 6-12 個月認證週期</td></tr>
+<tr><td>規模經濟</td><td>8</td><td>InP 晶圓產量領先，單位成本優勢</td></tr>
+<tr><td>網路效應</td><td>6</td><td>NVIDIA 生態系整合深</td></tr>
+<tr><td>品牌溢價</td><td>8</td><td>AI 光學標竿供應商</td></tr>
+</table>
+
+<h3>QC-23｜24 個月護城河瓦解威脅清單</h3>
+<table>
+<tr><th>等級</th><th>威脅</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>Coherent 100G EML 小量出貨搶低階市佔</td><td>&lt;5% 市佔，不扣分</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Coherent 在 OFC 2026 展示全棧 SiPh + 200G EML 方案，若 2027 獲得任一雲端客戶多年合約</td><td>護城河 −0.5 ~ −1 分（視量產時點與客戶）</td></tr>
+<tr><td>⛔ 架構替代</td><td>NVIDIA 自研光引擎 or AWS 垂直整合光元件</td><td>護城河 −2 分，綜合訊號重評</td></tr>
+</table>
+<p>當前無 🔴/⛔ 已觸發，護城河維持 8.5。但 OFC 2026 後 Coherent 動向為關鍵監測點。</p>
+
+</div>
+</div>
+
+<!-- ===== §7 門檻檢核表 ===== -->
+<div class="section">
+<div class="section-title" id="sec-7">§7｜門檻檢核表</div>
+<div class="section-body">
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin</td><td>&gt; 15%</td><td><span class="badge badge-yellow">⚠️ 接近</span></td><td>H1 FY26 FCF 轉正 ~5%，Q3 指引暗示改善至 10%+</td></tr>
+<tr><td>ROIC</td><td>&gt; 15%</td><td><span class="badge badge-yellow">⚠️</span></td><td>ROE 29.3%，但 ROA 0.3%（高槓桿稀釋）</td></tr>
+<tr><td>EPS CAGR（3Y fwd）</td><td>&gt; 20%</td><td><span class="badge badge-green">✓✓ 強</span></td><td>40%+（FY26 指引 +260%，FY27/28 趨緩但仍 &gt;30%）</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td><span class="badge badge-green">✓</span></td><td>1.41（Fwd PE 56.4 / CAGR 40）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>&gt; 50%</td><td><span class="badge badge-red">✗</span></td><td>D/E 392%，current ratio 0.606，流動性偏緊</td></tr>
+<tr><td>護城河強度</td><td>8+ / 10</td><td><span class="badge badge-green">✓✓</span></td><td>8.5 / 10（§6）</td></tr>
+<tr><td>毛利率 3Y 趨勢</td><td>未連續下滑 &gt;2pp</td><td><span class="badge badge-green">✓</span></td><td>V 型反轉：FY24 18.5% → H1 FY26 41%</td></tr>
+<tr><td>SBC / 營收</td><td>&lt; 5%</td><td><span class="badge badge-red">✗</span></td><td>~10%（稀釋股東價值）</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ===== §8 財務品質 ===== -->
+<div class="section">
+<div class="section-title" id="sec-8">§8｜財務品質</div>
+<div class="section-body">
+<table>
+<tr><th>項目</th><th>FY24</th><th>FY25</th><th>H1 FY26</th><th>趨勢</th></tr>
+<tr><td>營收（$M）</td><td>1,357</td><td>1,707</td><td>1,210</td><td>↑↑</td></tr>
+<tr><td>GAAP GM</td><td>18.5%</td><td>28.0%</td><td>41.0%</td><td>↑↑</td></tr>
+<tr><td>Non-GAAP OP margin</td><td>—</td><td>15%</td><td>22%</td><td>↑</td></tr>
+<tr><td>FCF ($M)</td><td>−49</td><td>−102</td><td>+28</td><td>轉正</td></tr>
+<tr><td>Capex ($M)</td><td>180</td><td>231</td><td>150</td><td>↑（擴產期）</td></tr>
+</table>
+
+<p>同業比較（§13.4 一致）：</p>
+<table>
+<tr><th></th><th>LITE</th><th>COHR</th><th>FN</th></tr>
+<tr><td>Fwd PE</td><td>56.4x</td><td>41.55x</td><td>~35x</td></tr>
+<tr><td>PEG</td><td>1.41</td><td>1.25</td><td>1.10</td></tr>
+<tr><td>Rev Growth YoY</td><td>+65%</td><td>+30%</td><td>+33%</td></tr>
+<tr><td>Gross Margin</td><td>41%</td><td>38%</td><td>12%（代工）</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ===== §9 產業格局 ===== -->
+<div class="section">
+<div class="section-title" id="sec-9">§9｜產業格局</div>
+<div class="section-body">
+
+<h3>營收結構（FY25）</h3>
+<table>
+<tr><th>業務段</th><th>佔比</th><th>成長驅動</th></tr>
+<tr><td>Cloud & Networking（光學元件）</td><td>70%</td><td>AI 資料中心、800G→1.6T 升級</td></tr>
+<tr><td>Industrial Tech（OCS、CPO）</td><td>20%</td><td>新產品線，快速放大</td></tr>
+<tr><td>Telecom（ROADM）</td><td>10%</td><td>升級週期，中速</td></tr>
+</table>
+
+<h3>市場規模與競爭</h3>
+<p>光學模組市場 2026 近 $12B（LightCounting），800G+ transceiver 出貨量 2026 將達 63M（+2.6x YoY）。LITE 在 200G EML 市佔 ~90%（獨供），在整體 optical transceiver component 市佔約 25-30%，vs Coherent ~20%、Fabrinet（代工）~35% 份額。</p>
+
+<h3>QC-15 時效性</h3>
+<p>產業資料來源：TrendForce（2026-02）、LightCounting（2026-03）、Seeking Alpha Q2 FY26 coverage（2026-02）。OFC 2026 最新資訊（2026-04-02 至 04-09）。所有資料 &lt; 90 天，無需重新驗證。</p>
+
+</div>
+</div>
+
+<!-- ===== §10 公司治理 ===== -->
+<div class="section">
+<div class="section-title" id="sec-10">§10｜公司治理</div>
+<div class="section-body">
+
+<h4>① 股東/股權結構</h4>
+<p>無 dual-class 投票權。機構持股 ~92%（Vanguard 11.5%、BlackRock 8.8%、State Street 4.9%）。NVIDIA 透過 $2B 投資取得約 3% 權益 + 多年採購合約。</p>
+
+<h4>② 資本配置方向</h4>
+<p>FY25 Capex $231M（14% 營收）優先擴產 InP 晶圓與 OCS 產線。FY26 回購停止（現金流優先投入擴產）。無分紅。</p>
+
+<h4>③ 管理層薪酬</h4>
+<p>CEO Michael Hurlston 2024 年總薪酬 $9.8M（固定 $850K + 績效獎金 $1.8M + 股權激勵 $7.1M，72% 為績效相關）。股權激勵與 3 年 TSR 對齊。</p>
+
+<h4>④ 過去 12 個月內部人交易</h4>
+<p>CEO Hurlston 2025Q4 賣出 ~$5M（10b5-1 計畫）；CFO Wajsgras 2026Q1 賣出 ~$3M。CPO Julie Eng 2025Q3 買入 $120K。整體<strong>賣方居多</strong>，但股價翻倍下屬正常 tax 管理，未構成負面訊號。</p>
+
+</div>
+</div>
+
+<!-- ===== §11 估值 ===== -->
+<div class="section">
+<div class="section-title" id="sec-11">§11｜估值分析</div>
+<div class="section-body">
+
+<h3>11.1 Fwd PE 歷史分位（QC-4）</h3>
+<p>Fwd PE FY+1 = 56.4x。5 年歷史區間約 15x-70x。</p>
+<p><strong>公式：</strong>分位 = (56.4 − 15) / (70 − 15) × 100% = <strong>75%</strong></p>
+
+<h3>11.2 PEG 單引擎</h3>
+<p>3Y fwd EPS CAGR 取 40%（FY26 +260% / FY27 +45% / FY28 +25% 幾何平均）；PEG = 56.4 / 40 = <strong>1.41</strong>。PEG &lt; 2.0 達標，但 &gt; 1.0 不算便宜。</p>
+
+<h3>11.3 合理 PE 推導（v11 錨定法）</h3>
+<p>5Y 中位 ~35x，75th ~50x。PEG 1.41（1-2 區間）→ 維持 75th = 50x。品質 A 級不觸發下壓。取合理 PE = 45x（略低於 75th，保守）。</p>
+
+<h3>11.4 同業比較（QC-5、QC-30）</h3>
+<table>
+<tr><th></th><th>LITE</th><th>COHR</th><th>FN</th><th>中位</th></tr>
+<tr><td>Fwd PE</td><td>56.4x</td><td>41.55x</td><td>~35x</td><td>41.55x</td></tr>
+<tr><td>溢價 vs 中位</td><td>+36%</td><td>—</td><td>−16%</td><td>—</td></tr>
+</table>
+<p><strong>QC-30 收斂壓測：</strong>LITE 溢價 36% &lt; 50% 門檻，不強制列 R4，但情境 B/C 已納入 §2 E 壓測。</p>
+
+<h3>11.5 DCF 補充（QC-25 Beta）</h3>
+<p>Beta 1.39、Rf 4.5%、MRP 6%、WACC ~12.8%。DCF 10Y 隱含 FCF CAGR 32% 才能支持 $894，略高於 Street consensus 28%。</p>
+
+</div>
+</div>
+
+<!-- ===== §12 R:R ===== -->
+<div class="section">
+<div class="section-title" id="sec-12">§12｜R:R 計算彙總</div>
+<div class="section-body">
+
+<div class="rr-grid">
+<div class="rr-card rr-short">
+<h4>短期 R:R（12M）</h4>
+<p>目標：$1,177（55x × FY+2 EPS $21.4）</p>
+<p>Bear：$428</p>
+<p><strong>R:R = (1177 − 894) / (894 − 428) = 0.61x</strong></p>
+<p><span class="badge badge-red">❌ &lt; 2.0x</span></p>
+</div>
+<div class="rr-card rr-mid">
+<h4>中期 R:R（2-3Y）</h4>
+<p>目標：$1,260（45x × FY+3 EPS $28）</p>
+<p>Bear：$428（30x × $15.84 × 0.9）</p>
+<p><strong>R:R = (1260 − 894) / (894 − 428) = 0.78x</strong></p>
+<p><span class="badge badge-red">❌ &lt; 2.0x</span></p>
+</div>
+</div>
+
+<p><strong>4 情境壓力通過率：</strong><span class="badge badge-red">0/4</span>（詳 §2 E）</p>
+
+</div>
+</div>
+
+<!-- ===== §13 辯論與長期展望 ===== -->
+<div class="section">
+<div class="section-title" id="sec-13">§13｜長期展望（定性）</div>
+<div class="section-body">
+
+<h3>成長跑道（3-5 年）</h3>
+<p><span class="badge badge-green">強</span> 800G→1.6T 主升段 2026-2028，1.6T 量產在 2026，LITE 200G EML 獨供至少至 2027，OCS/CPO 雙新品線剛起步。</p>
+
+<h3>護城河趨勢</h3>
+<p><span class="badge badge-green">強化中</span> NVIDIA $2B 投資 + 多年採購合約進一步鎖定供應鏈，InP 晶圓規模優勢隨量擴大。OFC 2026 Coherent 追趕為關鍵觀察點。</p>
+
+<h3>持有信心</h3>
+<p><span class="badge badge-green">高</span> 基本面成長與護城河趨勢支持 3-5 年持有。但當前 $894 估值已充分反映，<strong>進場時機差</strong>。既有持倉可續抱，新增部位等待 MA60 回測或 Bollinger 中軌。</p>
+
+</div>
+</div>
+
+<!-- ===== 版本修訂紀錄 ===== -->
+<div class="section">
+<div class="section-title">版本修訂紀錄</div>
+<div class="section-body">
+<table>
+<tr><th>版本</th><th>日期</th><th>裁決</th><th>關鍵變化</th></tr>
+<tr><td>v11.0</td><td>2026-04-13</td><td>進場（A/中期 R:R ~2.3x）</td><td>Q2 FY26 營收 +65% 爆發性成長確認，Bear Case $155</td></tr>
+<tr><td>v11.0</td><td>2026-04-15</td><td>進場（續）</td><td>JPMorgan 上調目標至 $950，股價從 $640 漲至 $836</td></tr>
+<tr><td><strong>v12.0</strong></td><td><strong>2026-04-18</strong></td><td><strong>觀察名單（C）</strong></td><td>股價 +109% YTD，4 情境壓測 0/4，進場時機差；品質與長期信心維持 A 級</td></tr>
+</table>
+
+<h3>假設驗證對照（v11.0 → v12.0）</h3>
+<table>
+<tr><th>項目</th><th>上次狀態（4/15）</th><th>本次狀態（4/18）</th><th>邊際變化</th></tr>
+<tr><td>H1（AI Capex 40%+ CAGR）</td><td>＋ 強化</td><td>＋ 強化</td><td>MSFT/GOOGL/AMZN/META Q1 2026 Capex 指引維持 +30% YoY，不變</td></tr>
+<tr><td>H2（200G EML 獨供至 FY28）</td><td>＋ 強化</td><td>＝ 不變（監測中）</td><td>Coherent OFC 2026 展示下世代 pluggable transceiver，2027 量產威脅具體化，但未觸發</td></tr>
+<tr><td>H3（OCS+CPO FY27 $400M+）</td><td>＋ 強化</td><td>＋ 強化</td><td>OCS backlog &gt;$400M 確認，CPO 多百 million 訂單確認 2027H1 交付</td></tr>
+<tr><td>R1 是否觸發</td><td>未觸發</td><td>未觸發</td><td>四大雲端 Capex YoY 仍 +30%</td></tr>
+<tr><td>R2 是否觸發</td><td>未觸發</td><td>未觸發（警戒升高）</td><td>Coherent OFC 2026 展示 → 監測等級提高</td></tr>
+<tr><td>R3 是否觸發</td><td>未觸發</td><td>未觸發（緩解）</td><td>H1 FY26 FCF 轉正 +$28M，Q3 指引進一步改善</td></tr>
+<tr><td>R4 估值收斂（新增）</td><td>—</td><td>觀察中</td><td>Fwd PE 75% 分位，同業溢價 36%，尚未超 50% 門檻</td></tr>
+<tr><td><strong>裁決變化</strong></td><td>進場</td><td><strong>觀察名單（C）</strong></td><td>3 個新事實：① 股價 3 週 +27%（$703→$894）；② Fwd PE 從 50x 升至 56x；③ 4 情境壓測 0/4 通過（v11.0 時仍有 1-2 情境過關）</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ===== v12.0 Meta 區塊 ===== -->
+<div class="section">
+<div class="section-title">v12.0 Meta 資訊</div>
+<div class="section-body">
+<table>
+<tr><th>欄位</th><th>值</th></tr>
+<tr><td>Schema 版本</td><td>v12.0</td></tr>
+<tr><td>分析師角色</td><td>stock-analyst（輸出綜合訊號，不建議倉位 %）</td></tr>
+<tr><td>下游 PM 引用</td><td>portfolio-manager skill（基於組合狀態決定倉位）</td></tr>
+<tr><td>QC 規則執行</td><td>QC-1 ~ QC-30 全數套用</td></tr>
+<tr><td>QC-22 漂移</td><td>+12.0%（未觸發 20% 紅線，已標示追高警示）</td></tr>
+<tr><td>QC-24 intraday</td><td>4/14 gap up 收紅 K 訊號</td></tr>
+<tr><td>QC-29 壓測</td><td>0/4 → 自動降一級至 C</td></tr>
+<tr><td>QC-30 同業收斂</td><td>溢價 36% &lt; 50%，未強制</td></tr>
+</table>
+
+</div>
+</div>
+
+</div>
+</body>
+</html>
