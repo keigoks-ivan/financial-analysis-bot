@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>使用說明 — InvestMQuest Research</title>
+<meta name="description" content="如何呼喚 skill / SOP：個股 DD / 產業 DD / 組合複盤 / Flagship 更新的完整指令清單">
+<style>
+body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.7}
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:.75rem 0;position:sticky;top:0;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto;padding:0 1.5rem}
+header .logo{font-size:1.1rem;font-weight:800;letter-spacing:-.02em}
+header nav{display:flex;gap:.3rem}
+header nav a{color:rgba(255,255,255,.75);padding:.4rem .7rem;border-radius:6px;text-decoration:none;font-size:.8rem;font-weight:500}
+header nav a:hover{background:rgba(255,255,255,.1);color:#fff}
+header nav a.active{background:rgba(59,130,246,.18);color:#fff;font-weight:600}
+.container{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 3rem}
+.crumb{font-size:.78rem;color:#6B7280;margin-bottom:.6rem}
+.crumb a{color:#6B7280;text-decoration:none}
+
+h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0}
+.sub{color:#64748B;font-size:.95rem;margin-top:.5rem;max-width:760px;line-height:1.65}
+
+.skill-card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin:18px 0;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.03)}
+.skill-head{padding:14px 20px;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;gap:14px}
+.skill-head.blue{background:linear-gradient(90deg,#DBEAFE 0%,#fff 60%)}
+.skill-head.purple{background:linear-gradient(90deg,#EDE9FE 0%,#fff 60%)}
+.skill-head.green{background:linear-gradient(90deg,#DCFCE7 0%,#fff 60%)}
+.skill-head.amber{background:linear-gradient(90deg,#FEF3C7 0%,#fff 60%)}
+.skill-icon{font-size:24px}
+.skill-title{flex:1}
+.skill-title h2{margin:0;font-size:16.5px;font-weight:700}
+.skill-title h2.blue{color:#1E3A5F}
+.skill-title h2.purple{color:#4C1D95}
+.skill-title h2.green{color:#166534}
+.skill-title h2.amber{color:#713F12}
+.skill-title .sub{color:#6B7280;font-size:11.5px;margin-top:2px}
+.skill-meta{font-size:11px;color:#94A3B8;font-family:'IBM Plex Mono',monospace}
+
+.skill-body{padding:16px 22px}
+.skill-body table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0;background:transparent}
+.skill-body th{background:#F9FAFB;color:#374151;padding:8px 10px;text-align:left;font-weight:600;font-size:11.5px;letter-spacing:.3px;text-transform:uppercase;border-bottom:1px solid #E5E7EB}
+.skill-body td{padding:10px;border-bottom:1px solid #F3F4F6;vertical-align:top}
+.skill-body td code{background:#F3F4F6;padding:2px 7px;border-radius:4px;font-size:11.5px;color:#4C1D95;font-family:'IBM Plex Mono',monospace}
+.skill-body tr:last-child td{border-bottom:none}
+
+.example{background:#F9FAFB;border-left:3px solid #7C3AED;padding:10px 14px;margin:10px 0;border-radius:4px;font-size:12.5px}
+.example strong{color:#4C1D95}
+.example .you{color:#16A34A;font-weight:600}
+.example .bot{color:#7C3AED;font-weight:600}
+
+.quick-ref{background:#F5F3FF;border:1px solid #C4B5FD;border-radius:10px;padding:18px 22px;margin:22px 0}
+.quick-ref h2{margin:0 0 12px;color:#4C1D95;font-size:17px}
+
+.qr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-top:10px}
+.qr-item{background:#fff;border:1px solid #C4B5FD;border-radius:6px;padding:10px 12px}
+.qr-item .qr-intent{font-size:10.5px;color:#6B21A8;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.qr-item .qr-phrase{color:#1E1B4B;font-size:13px;font-weight:600;margin:4px 0}
+.qr-item .qr-phrase code{background:#EDE9FE;padding:2px 7px;border-radius:4px;font-size:12px;color:#4C1D95}
+.qr-item .qr-note{font-size:11px;color:#6B7280}
+
+.tips{background:#FEF9C3;border-left:4px solid #EAB308;padding:12px 16px;margin:18px 0;border-radius:4px;color:#713F12;font-size:12.5px}
+
+.footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#6B7280;font-size:.78rem;text-align:center}
+
+.flow{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#4B5563;padding:10px;background:#F9FAFB;border-radius:6px;font-family:'IBM Plex Mono',monospace}
+.flow .step{padding:3px 0;padding-left:14px;position:relative}
+.flow .step::before{content:'→';position:absolute;left:0;color:#7C3AED;font-weight:700}
+.flow .step:first-child::before{content:'▸';color:#16A34A}
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr-inner">
+    <div class="logo">InvestMQuest Research</div>
+    <nav>
+      <a href="/">首頁</a>
+      <a href="/research/">個股 DD</a>
+      <a href="/id/">產業深度</a>
+      <a href="/id/theses.html">⭐ 八大非共識</a>
+      <a href="/pm/">PM 複盤</a>
+      <a href="/how-to.html" class="active">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <div class="crumb"><a href="/">首頁</a> &rsaquo; 使用說明</div>
+  <h1>使用說明 — 如何呼喚 skill / SOP</h1>
+  <p class="sub">本站研究內容由 3 套 Claude skill（stock-analyst / industry-analyst / portfolio-manager）+ 多份 SOP 協作產出。本頁列出<strong>每個研究工作流對應的觸發指令</strong>，讓你知道「想要 X，該說什麼」。</p>
+
+  <!-- ========== 四個 skill 與 flagship 更新 ========== -->
+
+  <!-- Stock Analyst -->
+  <div class="skill-card">
+    <div class="skill-head blue">
+      <div class="skill-icon">📊</div>
+      <div class="skill-title">
+        <h2 class="blue">stock-analyst · 個股 DD</h2>
+        <div class="sub">v12.0 買側深度研究，輸出綜合訊號燈（A+/A/B/C/X）</div>
+      </div>
+      <div class="skill-meta">~/skills/stock-analyst/</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>研究單一股票</td>
+          <td><code>研究 NVDA</code><br><code>幫我做 2330 DD</code></td>
+          <td>docs/dd/DD_{ticker}_{date}.html（13 章完整 DD）</td>
+        </tr>
+        <tr>
+          <td>刷新既有 DD</td>
+          <td><code>再做一次 TSLA DD</code><br><code>刷新 AVGO</code></td>
+          <td>新日期 DD，舊版保留；自動比對前版</td>
+        </tr>
+        <tr>
+          <td>批次研究</td>
+          <td><code>研究 NVDA / AMD / AVGO</code></td>
+          <td>三份獨立 DD + 附一段比較</td>
+        </tr>
+        <tr>
+          <td>特定層面深挖</td>
+          <td><code>幫我看 AMAT 的護城河</code></td>
+          <td>專章分析（非全篇 DD）</td>
+        </tr>
+      </table>
+
+      <div class="example">
+        <span class="you">你：</span> 「研究 BESI」<br>
+        <span class="bot">Claude：</span> WebSearch 最新財報 → 查 AMAT 持股狀態 → 讀 docs/id/ 找對應產業背景（ID_AdvancedPackaging / ID_HBM）→ 寫 DD_BESI_{date}.html → push
+      </div>
+    </div>
+  </div>
+
+  <!-- Industry Analyst -->
+  <div class="skill-card">
+    <div class="skill-head purple">
+      <div class="skill-icon">🔷</div>
+      <div class="skill-title">
+        <h2 class="purple">industry-analyst · 產業 DD（Industry DD / ID）</h2>
+        <div class="sub">v1.4 跨多檔個股共用的產業研究，含 7 Gates pre-publish check</div>
+      </div>
+      <div class="skill-meta">~/skills/industry-analyst/</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>建新產業 DD</td>
+          <td><code>研究 {主題} 產業</code><br><code>研究 GLP-1</code><br><code>研究玻璃基板封裝</code></td>
+          <td>docs/id/ID_{Topic}_{date}.html（14 章 ID）+ §11 關聯個股清單</td>
+        </tr>
+        <tr>
+          <td>刷新既有 ID</td>
+          <td><code>刷新 ID_HBM</code><br><code>更新 AI Accelerator Demand</code></td>
+          <td>新版 ID，v1.x → v1.(x+1)</td>
+        </tr>
+        <tr>
+          <td>局部補丁</td>
+          <td><code>更新 ID_AP 的 §4 TAM</code></td>
+          <td>只重寫該段（skill v1.4 支援）</td>
+        </tr>
+        <tr>
+          <td>建新 Flagship</td>
+          <td><code>建 {產業} flagship</code>（需 ≥ 5 份 ID）</td>
+          <td>docs/id/theses-{category}.html + 啟用 Library tab</td>
+        </tr>
+      </table>
+
+      <div class="tips"><strong>⚡ v1.4 七道 Gate</strong>：發布前自動跑 core ticker financials &lt; 60 天 / event thesis &lt; 14 天 / cross-ID 一致 / catalyst 標示 / unit glossary / layer 分層 / sub-topic value-add。任一必備 Gate fail 直接阻斷。</div>
+
+      <div class="example">
+        <span class="you">你：</span> 「研究 EV 電池」<br>
+        <span class="bot">Claude：</span> Step 1-4 資料蒐集（T1 Tesla Battery Day + CATL / BYD IR）→ Step 5-7 判斷層 / Insight Synthesis → Step 8 QC + Step 8.5 Gates → 產出 ID_EVBattery_{date}.html + INDEX 更新 + push
+      </div>
+    </div>
+  </div>
+
+  <!-- Portfolio Manager -->
+  <div class="skill-card">
+    <div class="skill-head green">
+      <div class="skill-icon">🏛️</div>
+      <div class="skill-title">
+        <h2 class="green">portfolio-manager · 組合複盤（PM）</h2>
+        <div class="sub">中長期成長股 core (≤5) + satellite (≤3) + cash 現金殘差；v1.1 加 ID 曝險聚合</div>
+      </div>
+      <div class="skill-meta">~/skills/portfolio-manager/</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>週度組合複盤</td>
+          <td><code>基金經理人週度複盤</code><br><code>PM 複盤</code></td>
+          <td>docs/pm/PM_{date}.html（9 章 + §7.5 ID 曝險矩陣）</td>
+        </tr>
+        <tr>
+          <td>Rebalance 提案</td>
+          <td><code>重跑 PM 提案</code><br><code>調整配置</code></td>
+          <td>新版 PM 報告，含賣 / 減 / 加 / 新進 / 維持</td>
+        </tr>
+        <tr>
+          <td>現金部位建議</td>
+          <td><code>現在應該留多少現金</code></td>
+          <td>基於 DD + PM 規則的殘差式建議</td>
+        </tr>
+        <tr>
+          <td>單一 ticker 決策</td>
+          <td><code>NVDA 要不要加碼</code></td>
+          <td>引用既有 DD + 組合 context 的 L1-L4 override 分析</td>
+        </tr>
+      </table>
+
+      <div class="example">
+        <span class="you">你：</span> 「重跑週度複盤」<br>
+        <span class="bot">Claude：</span> 讀 portfolio/prices.json 當日收盤 → 掃 docs/dd/INDEX.md 最新 DD → 跑個股矩陣 + 組合檢核 + ID 曝險聚合 → 產 PM_{date}.html + push
+      </div>
+    </div>
+  </div>
+
+  <!-- Flagship Update -->
+  <div class="skill-card">
+    <div class="skill-head amber">
+      <div class="skill-icon">⭐</div>
+      <div class="skill-title">
+        <h2 class="amber">Flagship 更新 · 八大非共識</h2>
+        <div class="sub">四種觸發節奏：A 事件補丁 / B 季度 refresh / C 擴充 / D 重寫</div>
+      </div>
+      <div class="skill-meta">docs/id/theses.html</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="20%">觸發</th><th width="32%">使用場景</th><th width="28%">指令範例</th><th>cadence</th></tr>
+        <tr>
+          <td><strong>A</strong> 事件補丁</td>
+          <td>某條 thesis 被 event 打臉或強化（新財報、重大簽約、yield 翻車）</td>
+          <td><code>更新 flagship 第 X 條 thesis（{原因}）</code></td>
+          <td>2-4 週 / 次</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong> 季度 refresh</td>
+          <td>每 90 天主幹全面校正（對齊 Q 報季節）</td>
+          <td><code>季度 refresh flagship</code></td>
+          <td>每 90 天（主幹）</td>
+        </tr>
+        <tr>
+          <td><strong>C</strong> 擴充新條</td>
+          <td>建完新 ID 有 cross-cutting insight</td>
+          <td><code>flagship 加第 9 條（{主題}）</code></td>
+          <td>每 2-3 季</td>
+        </tr>
+        <tr>
+          <td><strong>D</strong> 整版重寫</td>
+          <td>&gt; 3 條 thesis 被打臉 或 A 補丁 &gt; 2/月 持續</td>
+          <td><code>flagship v2.0 重寫</code></td>
+          <td>每 18-24 月</td>
+        </tr>
+      </table>
+
+      <div class="tips"><strong>⚡ Status Bar 看燈號</strong>：/id/theses.html 頂部自動顯示 🟢 Fresh（&lt;60 天）/ 🟡 Approaching（60-90 天）/ 🟠 B refresh 已到期（90-120 天）/ 🔴 Overdue（&gt;120 天）。看到黃 / 橘 / 紅 就呼喚 B refresh。</div>
+
+      <div class="example">
+        <span class="you">你：</span>（2026-07 底）「季度 refresh flagship」<br>
+        <span class="bot">Claude：</span> 讀 pre_publish_check.md 跑 7 Gates → Gate 1 檢查 NVDA/AVGO/MU 等 Q 報 → Gate 2 掃 event thesis → 更新每條 thesis 的 consensus / ours / evidence → 更新 Status bar 日期 → v1.0.1 → v1.1.0 → push
+      </div>
+    </div>
+  </div>
+
+  <!-- 建新 Flagship -->
+  <div class="skill-card">
+    <div class="skill-head amber">
+      <div class="skill-icon">🆕</div>
+      <div class="skill-title">
+        <h2 class="amber">建新產業 Flagship（生技 / 能源 / 雲端等）</h2>
+        <div class="sub">需先累積 ≥ 5 份該產業 ID 且有 cross-cutting insight</div>
+      </div>
+      <div class="skill-meta">flagship_build_protocol.md</div>
+    </div>
+    <div class="skill-body">
+      <p>當某產業累積 5 份以上 ID + 有 cross-cutting insight 時可建 flagship。步驟：</p>
+
+      <div class="flow">
+        <div class="step">先確認有 5+ 份對應產業 ID（如生技類已建 GLP-1、CAR-T、醫材、數位健康、基因治療 5 份）</div>
+        <div class="step">你：「建生技 flagship」</div>
+        <div class="step">Claude 跑 flagship_build_protocol.md 的 7 段建置結構（Library / Status / Hero / TOC / Layers / Synthesis / Portfolio）</div>
+        <div class="step">產出 docs/id/theses-biotech.html</div>
+        <div class="step">回 docs/id/theses.html 把對應 tab 從 grey 改為 active</div>
+        <div class="step">git push</div>
+      </div>
+
+      <div class="example">
+        <span class="you">你：</span>（累積 5 份生技 ID 後）「建生技 flagship」<br>
+        <span class="bot">Claude：</span> 掃 5 份 ID 找 cross-cutting thesis（至少 3 條出現在 ≥ 2 份）→ 生技特有 Layer 分法（需求 / 技術 / 臨床 / 政策）→ 填 7 段模板 → 啟用 Library tab
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Skill 之間的整合 ========== -->
+  <div class="skill-card">
+    <div class="skill-head" style="background:linear-gradient(90deg,#F1F5F9 0%,#fff 60%)">
+      <div class="skill-icon">🔗</div>
+      <div class="skill-title">
+        <h2 style="color:#0F172A">Skill 之間的整合關係</h2>
+        <div class="sub">三套 skill 如何協作</div>
+      </div>
+    </div>
+    <div class="skill-body">
+      <div class="flow">
+        <div class="step">industry-analyst 產 ID → §11 列關聯個股</div>
+        <div class="step">stock-analyst 建 DD 時自動掃 docs/id/INDEX.md → 命中 ID 則 §9/§11 引用（不重寫產業通論）</div>
+        <div class="step">portfolio-manager 複盤時掃 docs/id/INDEX.md → 計算組合的 ID 曝險矩陣（§7.5）</div>
+        <div class="step">多份 ID 累積 5+ → 建 flagship（跨 ID synthesis）</div>
+        <div class="step">flagship 的 thesis 被 event 打臉 → A 補丁；90 天 → B refresh</div>
+      </div>
+      <p style="margin-top:12px;font-size:12.5px;color:#6B7280">三套 skill 共用 <code>docs/dd/INDEX.md</code>、<code>docs/id/INDEX.md</code> 和 <code>references/</code> 作為單一事實源。任何一處更新會透過索引檔自動傳導。</p>
+    </div>
+  </div>
+
+  <!-- ========== Quick Reference ========== -->
+  <div class="quick-ref">
+    <h2>🚀 Quick Reference — 常用指令速查</h2>
+    <div class="qr-grid">
+      <div class="qr-item">
+        <div class="qr-intent">想研究單一股票</div>
+        <div class="qr-phrase"><code>研究 {ticker}</code></div>
+        <div class="qr-note">例：研究 NVDA / 研究 2330</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">想研究產業</div>
+        <div class="qr-phrase"><code>研究 {主題} 產業</code></div>
+        <div class="qr-note">例：研究 AI ASIC 產業 / 研究 GLP-1</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">組合週度複盤</div>
+        <div class="qr-phrase"><code>PM 複盤</code> 或 <code>基金經理人複盤</code></div>
+        <div class="qr-note">每週六建議執行一次</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">Flagship 事件補丁（A）</div>
+        <div class="qr-phrase"><code>更新 flagship 第 X 條</code></div>
+        <div class="qr-note">例：第 2 條、第 7 條</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">Flagship 季度 refresh（B）</div>
+        <div class="qr-phrase"><code>季度 refresh flagship</code></div>
+        <div class="qr-note">每 90 天，Status Bar 轉黃 / 橘就該做</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">建新產業 flagship</div>
+        <div class="qr-phrase"><code>建 {產業} flagship</code></div>
+        <div class="qr-note">需先有 5+ 份 ID 累積</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">刷新個股 DD</div>
+        <div class="qr-phrase"><code>再做一次 {ticker} DD</code></div>
+        <div class="qr-note">自動比對舊版差異</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">刷新產業 ID</div>
+        <div class="qr-phrase"><code>刷新 ID_{Topic}</code></div>
+        <div class="qr-note">會跑 skill v1.4 Gates 檢查</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 進階：建議工作流 ========== -->
+  <div class="skill-card">
+    <div class="skill-head" style="background:linear-gradient(90deg,#E0E7FF 0%,#fff 60%)">
+      <div class="skill-icon">📅</div>
+      <div class="skill-title">
+        <h2 style="color:#4338CA">建議工作流（週 / 月 / 季 節奏）</h2>
+        <div class="sub">讓 skill 運轉有規律</div>
+      </div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="18%">節奏</th><th width="32%">任務</th><th>觸發指令</th></tr>
+        <tr>
+          <td><strong>每週六</strong></td>
+          <td>PM 複盤 + ID 曝險檢查</td>
+          <td><code>基金經理人週度複盤</code></td>
+        </tr>
+        <tr>
+          <td><strong>重大財報後</strong></td>
+          <td>該 ticker 的 DD + 相關 flagship thesis 檢查</td>
+          <td><code>刷新 {ticker} DD</code> + <code>更新 flagship 第 X 條</code></td>
+        </tr>
+        <tr>
+          <td><strong>每月</strong></td>
+          <td>掃 docs/id/INDEX.md 檢查 🟡/🔴 stale 狀態</td>
+          <td><code>幫我看哪些 ID 該 refresh 了</code></td>
+        </tr>
+        <tr>
+          <td><strong>每季</strong></td>
+          <td>Flagship B refresh（Status Bar 轉黃時）</td>
+          <td><code>季度 refresh flagship</code></td>
+        </tr>
+        <tr>
+          <td><strong>每半年</strong></td>
+          <td>新產業 ID 擴充（看當下市場熱點）</td>
+          <td><code>研究 {新主題}</code></td>
+        </tr>
+        <tr>
+          <td><strong>每年</strong></td>
+          <td>Flagship 是否該進 v2（觀察 A 補丁頻率）</td>
+          <td><code>評估 flagship 是否需要 v2.0 重寫</code></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== Troubleshooting ========== -->
+  <div class="skill-card">
+    <div class="skill-head" style="background:linear-gradient(90deg,#FEE2E2 0%,#fff 60%)">
+      <div class="skill-icon">🔧</div>
+      <div class="skill-title">
+        <h2 style="color:#991B1B">常見情境 / Troubleshooting</h2>
+      </div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="42%">情境</th><th>怎麼做</th></tr>
+        <tr>
+          <td>我不確定該跑哪個 skill</td>
+          <td>describe 想要什麼結果即可（「我想知道 NVDA 現在該不該加倉」 → Claude 自動判斷該跑 PM / DD / ID）</td>
+        </tr>
+        <tr>
+          <td>Skill 執行到一半卡住</td>
+          <td>說「繼續」或「接下去」即可續跑；也可以說「換用 B 方案」讓 Claude 改路徑</td>
+        </tr>
+        <tr>
+          <td>數據跑出來感覺過時</td>
+          <td>說「這個數字有更新嗎」→ Claude 重跑 WebSearch；或直接呼叫 B refresh</td>
+        </tr>
+        <tr>
+          <td>想同時跑多個產業研究</td>
+          <td>說「批次跑 ID_XX、ID_YY、ID_ZZ」但注意品質可能略降（參考：一個一個跑最穩）</td>
+        </tr>
+        <tr>
+          <td>發布前要確認沒錯</td>
+          <td>skill v1.4 會自動跑 7 Gates；若想手動 peer review 說「讓我看草稿，還不要 push」</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="tips" style="margin-top:18px">
+    <strong>💡 最重要一句</strong>：你不需要記所有指令。描述想要的結果即可，Claude 會判斷該跑哪個 skill。這頁只是列出「最精準的指令」方便你想要精準控制時用。
+  </div>
+</div>
+
+<div class="footer">
+  InvestMQuest Research · 使用說明 v1.0 · 2026-04-19<br>
+  Skill 版本：stock-analyst v12.0 · industry-analyst v1.4 · portfolio-manager v1.1
+</div>
+</body>
+</html>
