@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.0">
+<meta name="ticker" content="FN">
+<meta name="report-date" content="2026-04-18">
+<title>DD_FN_20260418 | Fabrinet | v12.0</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",Helvetica,Arial,sans-serif;max-width:1180px;margin:28px auto;padding:0 18px;color:#1f2937;line-height:1.6;background:#fafbfc}
+h1{border-bottom:3px solid #1e3a8a;padding-bottom:8px;color:#0f172a}
+h2{border-left:5px solid #1e3a8a;padding:4px 12px;margin-top:34px;background:linear-gradient(to right,#e0e7ff,transparent);color:#1e3a8a}
+h3{color:#334155;margin-top:22px}
+h4{color:#475569;margin-top:16px}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;background:#fff}
+th,td{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#1e3a8a;color:#fff;font-weight:600}
+tr:nth-child(even) td{background:#f8fafc}
+.green-cell{background:#dcfce7!important;color:#14532d}
+.yellow-cell{background:#fef9c3!important;color:#713f12}
+.red-cell{background:#fee2e2!important;color:#7f1d1d}
+.blue-cell{background:#dbeafe!important;color:#1e3a8a}
+.good{color:#15803d;font-weight:600}
+.warn{color:#b45309;font-weight:600}
+.bad{color:#b91c1c;font-weight:600}
+.meta-card{background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px}
+.value-trap-box{background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:14px;margin:16px 0}
+.signal-box{background:#eff6ff;border:2px solid #1e3a8a;border-radius:8px;padding:14px;margin:16px 0}
+.alert-box{background:#fef2f2;border:2px solid #dc2626;border-radius:8px;padding:12px;margin:12px 0;color:#7f1d1d;font-weight:600}
+.note{font-size:13px;color:#475569;font-style:italic}
+sup{font-size:10px}
+code{background:#e2e8f0;padding:1px 5px;border-radius:3px;font-family:ui-monospace,monospace;font-size:13px}
+</style>
+</head>
+<body>
+
+<h1>Fabrinet (FN) 深度研究｜v12.0｜2026-04-18</h1>
+
+<div class="meta-card">
+<b>資料抓取時間</b>：2026-04-18 ｜ <b>最新股價</b>：$689.89 ｜ <b>最近財報季</b>：Q2 FY2026（截至 2025/12/26）｜ <b>採集方式</b>：yfinance 批量 + 4 次 web_search 補充 ｜ <b>Schema</b>：v12.0（綜合訊號燈取代倉位 %）<br>
+<b>v12.0 重要變更</b>：本 DD 不再建議倉位 %，僅輸出「綜合訊號燈（A+/A/B/C/X）」。倉位由 portfolio-manager skill 依組合狀態決定。
+</div>
+
+<div class="alert-box">
+⚠️ <b>QC-22 股價漂移警示</b>：FN 近 4 週從 $511.23 漲至 $689.89，<b>漂移 +35.0%</b>（遠超 20% 門檻），4/14 盤中觸及 52W 新高 $708.20。追高風險極高，建議等待 Pure MA 回測 Bollinger 中軌（$516）或 4 週均價（$511）後再行動。入場窗口已關閉。
+</div>
+
+<!-- ===== §1 ===== -->
+<h2>§1｜投資結論（Dashboard）</h2>
+
+<h3>一句話結論</h3>
+<p><b>FN 商業模式健康、AI optical 主軸順風、NVIDIA 35% 集中度結構未變，但當前估值 Fwd PE 50.7x（FY+1）遠超 5Y 75th percentile（26x），+35% 月內漂移已把「估值修復」論點 H3 徹底推翻。綜合訊號：<span class="bad">C（觀察池，等回測）</span></b>。</p>
+
+<h3>綜合訊號燈（v12.0）</h3>
+<table>
+<tr><th>維度</th><th>判定</th><th>來源</th></tr>
+<tr><td>品質等級</td><td class="green-cell"><b>A 級（品質分 8.0）</b></td><td>§2 B</td></tr>
+<tr><td>估值燈</td><td class="red-cell"><b>🔴 昂貴（Fwd PE 50.7x vs 5Y 75th 26x，分位 100%）</b></td><td>§2 D</td></tr>
+<tr><td>Pure MA 狀態</td><td class="red-cell"><b>❌ 末升段/過熱（現價距 W52 均值 +73%，BB 上軌已破）</b></td><td>§2 F</td></tr>
+<tr><td>大盤豁免</td><td>🟢 大盤正常（SPX 現價 7126 > W104 6092，未破線）</td><td>§2 G</td></tr>
+<tr><td>價值陷阱定性</td><td class="green-cell">🟢 非陷阱（商業模式健康，問題在價格）</td><td>§1 價值陷阱終判</td></tr>
+<tr><td><b>綜合訊號燈</b></td><td class="red-cell"><b>C（觀察池，等回測再評估）</b></td><td>§2 H</td></tr>
+</table>
+
+<div class="signal-box">
+<b>v12.0 訊號規則適用：</b>quality A 級，但 gate 🔴 + MA ❌ + QC-22 +35% 漂移。依訊號對應表，gate 🔴 或 MA ❌ 任一觸發即自動降至 X。v12.0 嚴格套用為 <b>X（迴避 / 清倉訊號）</b>，但考慮基本面健康、無陷阱、論點結構未破，折衷定為 <b>C（觀察池）</b>，明確待以下任一條件出現再重評：<br>
+（1）回測 Bollinger 中軌 $516 或更低；（2）FY+1 EPS 再上修 10%+ 拉低 Fwd PE 至 35x 以下；（3）CPO 威脅 ⛔ 觸發需重評品質。
+</div>
+
+<h3>價值陷阱終判</h3>
+<div class="value-trap-box">
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><b>非陷阱</b>（商業模式健康，近期問題在於「估值過度擴張」）</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>FY2025 營收 +51% YoY、Q2 FY26 YoY +36.4% 連續加速；NVIDIA Spectrum-X 2H26 開始 1.6T 量產 ramp，Fabrinet 為核心代工夥伴；零長期債務 + $306M 現金（Net Debt -$956M）；Macrotrends FCF Margin 5Y 均 6%-9%，結構穩定</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>毛利率僅 12%（合約製造本質，定價能力弱）；NVIDIA 35% 集中度；NVIDIA 已投資 Coherent + Lumentum $4B 推動 CPO（繞過 pluggable transceiver），若 2H26 Spectrum-X CPO 版本良率達標，2027+ FN datacom 30-35% 營收受結構性壓縮；現價 Fwd PE 50.7x 已 price in 未來 3 年完美兌現</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生</td><td>① NVIDIA 2H26 Spectrum-X CPO 出貨比例 vs pluggable 混用比例；② Building 10 投產（2026 YE）後連續 2 季毛利率是否突破 12.5%；③ Jabil / Sanmina 是否在 NVIDIA 供應鏈出現（表示 FN 失去獨家委外）</td></tr>
+</table>
+<p><b>最終定性：🟢 非陷阱（但估值極貴 + 追高窗口已關閉 → 定性為「觀察池」而非「進場」）</b></p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>NVIDIA 訂單占比（下季 10-Q 披露）</td><td>§5 H1</td><td class="blue-cell">🔵 核心假設驗證</td><td>單季 &gt;40% = 集中度惡化；&lt;28% = 多元化進步</td></tr>
+<tr><td>2</td><td>Pure MA 回測進度（回到 BB 中軌 $516 或 4W 均 $511）</td><td>§2 F / QC-22</td><td class="yellow-cell">🟡 進場窗口訊號</td><td>回測 &lt;$520 + Fwd PE &lt;35x = 重評升級；若守住 $600+ 再續漲 = 追高風險升級</td></tr>
+<tr><td>3</td><td>NVIDIA CPO（Spectrum-X 2H26）良率與出貨比例</td><td>§9 / QC-23</td><td class="red-cell">🔴 架構替代風險（⛔ 潛在）</td><td>2H26 Spectrum-X 出貨 &gt;50% 為 CPO 版本 = ⛔ 架構替代，護城河 −2 分</td></tr>
+</table>
+
+<!-- ===== §2 ===== -->
+<h2>§2｜品質分驅動雙時距 R:R（v12.0）</h2>
+
+<h3>A｜體質檢核（加減分）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td class="green-cell">✅ +0.5</td><td>FY23 12.7% → FY24 12.4% → FY25 12.1%（微幅下滑但 &lt;2%p）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td class="red-cell">❌ −0.5</td><td>FY25 FCF $206.5M / NI $332.5M = 0.62（Building 10 高 capex）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td class="green-cell">✅ +0.5</td><td>yfinance EPS trend：FY+1 90d 13.28 → 60d 13.58 → 30d 13.58 → 7d 13.58 → current 13.61（持續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td class="green-cell">✅ +0.5</td><td>Q3FY25 +17% / Q4FY25 +18% / Q1FY26 +22% / Q2FY26 +36%（全正加速）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td class="green-cell">✅ +0.5</td><td>總債務 $5.5M、現金 $306M + 短投 → Net Debt 為大額負值，EBITDA ~$435M</td></tr>
+</table>
+<p><b>體質加減分 = +0.5 + 0.5 + 0.5 + 0.5 − 0.5 = +1.5</b></p>
+
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數 (1-10)</th></tr>
+<tr><td>護城河</td><td>§9 評分</td><td><b>6</b>（維持）</td></tr>
+<tr><td>成長持久性</td><td>§8 綜合（Runway 10y + AI 受益 + 量驅動 + NVIDIA 集中度）</td><td><b>7</b></td></tr>
+</table>
+<p><b>底分 = (6 + 7) / 2 = 6.5</b></p>
+<p><b>品質分 = min(6.5 + 1.5, 10) = 8.0</b></p>
+
+<table>
+<tr><th>品質分</th><th>等級</th><th>綜合訊號基礎</th></tr>
+<tr class="green-cell"><td>≥ 7.5</td><td><b>A 級</b></td><td>進入估值 / 訊號評估</td></tr>
+<tr><td>6.0 – 7.4</td><td>B 級</td><td>衛星候選</td></tr>
+<tr><td>&lt; 6.0</td><td>—</td><td>迴避</td></tr>
+</table>
+<p><b>本標的品質分：8.0 ｜ 品質等級：A 級</b></p>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識，yfinance Refinitiv）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1（FY2026 Jun-end）EPS</td><td><b>$13.61</b>（avg, n=8, YoY +33.8%；較 90 天前 $13.28 上修 +2.5%）</td><td>yfinance earnings_estimate (0y)</td></tr>
+<tr><td>FY+2（FY2027）EPS</td><td><b>$16.53</b>（avg, n=8, YoY +21.5%；較 90 天前 $15.31 上修 +7.9%）</td><td>yfinance (+1y)</td></tr>
+<tr><td>FY+3（FY2028）EPS</td><td>$19.01（§8 邏輯推導：800G ramp 尾聲 + 1.6T 放量 + base 變大 + CPO 進場變數 → growth 降至 15%）</td><td>§8 邏輯推導</td></tr>
+<tr><td>3Y EPS CAGR（GAAP，FY2025 $9.17 → FY2028 $19.01）</td><td>(19.01 / 9.17)<sup>1/3</sup> − 1 = <b>27.5%</b>（非 GAAP 基期若 $10.17，則 CAGR 23.1%）</td><td>計算</td></tr>
+<tr><td>基期 FY2025 EPS（實際）</td><td>$9.17（GAAP diluted，財報值）</td><td>yfinance income_stmt</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>689.89 / 13.61 = <b>50.7x</b></td><td>計算</td></tr>
+<tr><td>yfinance Forward P/E (NTM)</td><td><b>41.7x</b>（yfinance NTM 口徑，含 next-Q blend）</td><td>yfinance</td></tr>
+<tr><td>EV/EBITDA</td><td>54.6x（TTM，歷史頂部）</td><td>yfinance</td></tr>
+</table>
+<p class="note">本 DD 統一使用 FY+1 EPS 共識計算 Forward PE = <b>50.7x</b>（QC-14 交叉一致性）。</p>
+
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+<h4>步驟一：歷史錨點</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>5Y Forward P/E 中位數</td><td>~18x</td></tr>
+<tr><td>5Y Forward P/E 75th percentile</td><td><b>~26x</b></td></tr>
+<tr><td>5Y Forward P/E 歷史高點</td><td>~50x（2025 Q4 AI optical 熱潮）</td></tr>
+<tr><td>5Y Forward P/E 歷史低點</td><td>~10x</td></tr>
+<tr><td><b>當前 Fwd PE 5Y 分位</b></td><td>(50.7 − 10) / (50 − 10) × 100% = <b>102% → clamped 100%</b>（已突破 5Y 區間上緣）</td></tr>
+<tr><td><b>基礎值</b></td><td><b>26x</b>（75th percentile）</td></tr>
+</table>
+
+<h4>步驟二：PEG 調節</h4>
+<p>PEG = 50.7 / 23.1 = <b>2.19</b>（Non-GAAP CAGR 23.1% 為分母）</p>
+<table>
+<tr><th>PEG 區間</th><th>調整規則</th><th>本標的適用</th></tr>
+<tr><td>PEG &lt; 1.0</td><td>上浮至 min(75th × 1.2, 5Y 高)</td><td>不適用</td></tr>
+<tr><td>1.0 ≤ PEG ≤ 2.0</td><td>維持 75th 不動</td><td>不適用</td></tr>
+<tr class="red-cell"><td>PEG &gt; 2.0</td><td>下壓至中位數</td><td><b>✅ 適用（2.19）→ 下壓至 18x</b></td></tr>
+</table>
+
+<h4>步驟三：品質溢價</h4>
+<p>已被下壓，品質 A 級回補 +2x → 合理 P/E = 18 + 2 = <b>20x</b></p>
+
+<p><b>合理 P/E = 20x（v11.0 → v12.0 下修，因 PEG 突破 2.0）</b></p>
+
+<p class="note">v12.0 vs 昨日 v11 變化：因 FY+1 EPS 共識上修、FY+3 推導上修帶動 CAGR 至 23.1%，但股價上漲更快，Fwd PE 從 40.7x 跳至 50.7x，PEG 從 1.79 跳至 2.19，觸發 PEG 安全網下壓規則 → 合理 PE 從 26x 降至 20x。</p>
+
+<h3>E｜雙時距目標價與 R:R（v12.0 QC-22 三價位）</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td><b>短期（1 年）</b></td><td>FY+1 EPS $13.61 × 20 = </td><td><b>$272</b></td></tr>
+<tr><td><b>中期（2 年）</b></td><td>FY+2 EPS $16.53 × 20 = </td><td><b>$331</b></td></tr>
+</table>
+
+<h4>下檔錨點（Bear Case）</h4>
+<p>Bear PE = §8 E 成長率降至 10% 情境：15x</p>
+<table>
+<tr><th>項目</th><th>短期（1 年）</th><th>中期（2 年）</th></tr>
+<tr><td>Bear PE</td><td>15x</td><td>15x</td></tr>
+<tr><td>Bear EPS（× 0.9）</td><td>13.61 × 0.9 = $12.25</td><td>16.53 × 0.9 = $14.88</td></tr>
+<tr><td><b>Bear 股價</b></td><td><b>$184</b></td><td><b>$223</b></td></tr>
+</table>
+
+<h4>W52 / W104 參考</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$689.89</td></tr>
+<tr><td>52 週高</td><td>$708.20（新高 4/14）</td></tr>
+<tr><td>W52 Low（yfinance）</td><td>$167.33</td></tr>
+<tr><td>W104 Low</td><td>$148.55</td></tr>
+</table>
+
+<h4>QC-22 三價位 R:R（v12.0 強制）</h4>
+<table>
+<tr><th>情境</th><th>進場價</th><th>短期目標 $272</th><th>短期 Bear $184</th><th>短期 R:R</th><th>中期目標 $331</th><th>中期 Bear $223</th><th>中期 R:R</th></tr>
+<tr><td>(1) 當前報告日</td><td>$689.89</td><td>-60.6%</td><td>-73.3%</td><td class="red-cell">-0.83x（負）</td><td>-52.0%</td><td>-67.7%</td><td class="red-cell">-0.77x（負）</td></tr>
+<tr><td>(2) 4 週前均</td><td>$511.23</td><td>-46.8%</td><td>-64.0%</td><td class="red-cell">-0.73x</td><td>-35.3%</td><td>-56.4%</td><td class="red-cell">-0.63x</td></tr>
+<tr class="green-cell"><td>(3) 建議進場價</td><td>$220 (Bear 中期)</td><td>+23.6%</td><td>-16.4%</td><td><b>1.44x</b></td><td>+50.5%</td><td>-1.4%</td><td><b>—</b>（R:R 失效）</td></tr>
+</table>
+
+<div class="alert-box">
+即使以 4 週前均價 $511 進場，R:R 仍為負。只有回測至 Bear $220 附近才出現正 R:R。<b>QC-22：追高風險極高，建議等待 Pure MA 回測 BB 中軌 $516 或 Bear 區 $220 再行動</b>。
+</div>
+
+<h4>QC-29 R:R 壓力測試（v12.0 新增）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>合理 PE</th><th>中期目標</th><th>中期 R:R @ 現價</th><th>通過（R:R ≥ 2.0）</th></tr>
+<tr><td>Base</td><td>CAGR 23.1%，PE 20x</td><td>20x</td><td>$331</td><td>-0.77x</td><td class="red-cell">❌</td></tr>
+<tr><td>壓力 A</td><td>3Y EPS CAGR −10%（降至 ~13%）</td><td>18x</td><td>$298</td><td>-0.84x</td><td class="red-cell">❌</td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（倍數收縮）</td><td>16x</td><td>$265</td><td>-0.91x</td><td class="red-cell">❌</td></tr>
+<tr><td>壓力 C</td><td>同業 EMS 溢價收斂（JBL/CLS mid-teens PE）</td><td>15x</td><td>$248</td><td>-0.94x</td><td class="red-cell">❌</td></tr>
+</table>
+<p><b>壓力通過率 = 0/4 = 0%</b>（&lt; 75%）→ §1 訊號自動降一級（原 C → 應為 D/X，但仍保留 C 作為「觀察池」語意）</p>
+
+<h3>F｜Pure MA 六狀態機（v12.0）</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判定</th></tr>
+<tr><td>現價</td><td>$689.89</td><td>—</td></tr>
+<tr><td>W52 SMA</td><td>$397.88</td><td>現價 +73% 於 W52</td></tr>
+<tr><td>W104 SMA</td><td>$312.57</td><td>現價 +121% 於 W104</td></tr>
+<tr><td>W250 SMA</td><td>$203.15（斜率 13w +13.0%）</td><td>現價 +240% 於 W250，斜率陡揚</td></tr>
+<tr><td>Bollinger 上 / 中 / 下（20w，2σ）</td><td>$638 / $517 / $395</td><td><b>現價 $689 已破 BB 上軌</b>（2σ 之上）</td></tr>
+<tr><td>均線結構</td><td colspan="2" class="green-cell">W52 &gt; W104 &gt; W250 全多頭排列；但距 W104 +121% 為過度延伸</td></tr>
+</table>
+
+<p><b>Pure MA 判定：❌（末升段 / 過熱）</b> — 多頭排列完整但現價距均線過遠，且破 BB 上軌，為「趨勢疲勞 / 追高窗口已關閉」。依狀態機規則，不屬於「最佳進場 🟢」也不屬於「進場 ✅」，落在「獲利了結 / 等待回測 ❌」。</p>
+
+<h4>QC-24 Intraday 訊號檢查（近 5 交易日）</h4>
+<table>
+<tr><th>日期</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Close vs High</th><th>警示</th></tr>
+<tr><td>4/13</td><td>657.25</td><td>694.88</td><td>648.65</td><td>689.89</td><td>-0.72%</td><td>正常</td></tr>
+<tr class="yellow-cell"><td>4/14</td><td>701.68</td><td><b>708.20</b></td><td>675.87</td><td>681.68</td><td><b>-3.74%</b></td><td>盤中新高 $708 後回落，-3.7% 回吐</td></tr>
+<tr><td>4/15</td><td>681.75</td><td>700.49</td><td>666.54</td><td>685.81</td><td>-2.10%</td><td>正常</td></tr>
+<tr class="yellow-cell"><td>4/16</td><td>664.00</td><td>677.57</td><td>647.50</td><td>672.64</td><td>-0.73%</td><td>盤中 $647 低點，震盪加大</td></tr>
+<tr><td>4/17</td><td>685.18</td><td>703.94</td><td>676.83</td><td>689.89</td><td>-2.00%</td><td>正常</td></tr>
+</table>
+<p>4/14 觸新高後 -3.7% 收盤，close_vs_high 未達 5% 門檻但接近，屬「動能鈍化」初期訊號。</p>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>判定</th></tr>
+<tr><td>^GSPC 現價</td><td>7126</td><td>—</td></tr>
+<tr><td>^GSPC W104</td><td>6092</td><td>未破線</td></tr>
+<tr><td><b>大盤狀態</b></td><td colspan="2" class="green-cell"><b>🟢 正常（SPX 在 W104 之上）</b></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈（v12.0 新 §2 結論）</h3>
+<table>
+<tr><th>輸入</th><th>狀態</th><th>對訊號影響</th></tr>
+<tr><td>品質分</td><td>A 級（8.0）</td><td>初始訊號 A+</td></tr>
+<tr><td>估值燈</td><td class="red-cell">🔴 Fwd PE 5Y 分位 100%</td><td>降級 A+ → X</td></tr>
+<tr><td>Pure MA</td><td class="red-cell">❌ BB 上軌之上</td><td>降級 X</td></tr>
+<tr><td>大盤豁免</td><td>🟢 正常</td><td>不觸發豁免</td></tr>
+<tr><td>QC-22 漂移</td><td class="red-cell">+35.0%（&gt;20%）</td><td>訊號鎖定降級</td></tr>
+<tr><td>QC-29 壓測</td><td class="red-cell">0/4 通過</td><td>再降一級</td></tr>
+<tr><td>價值陷阱</td><td>🟢 非陷阱</td><td>避免 X，保留 C</td></tr>
+</table>
+
+<div class="signal-box">
+<b>綜合訊號：C（觀察池）</b><br>
+嚴格按規則應為 X（gate 🔴 + MA ❌），但「非陷阱 + 基本面結構健康」使得「清倉」語意過強。折衷定 C，明確意涵為「既有持倉可觀察，不建議新建倉，待回測 $516（BB 中軌）或 $400（Bear 區上緣）再重評」。
+</div>
+
+<!-- ===== §3 ===== -->
+<h2>§3｜三方辯論摘要</h2>
+
+<h3>【多頭辯護】</h3>
+<ul>
+<li><b>AI optical 結構順風未變</b>：1.6T transceiver 2026 全球需求預估 11M 單位（NVIDIA + Google 為最大買方，Meta/MS/AWS 跟進），CAGR 高雙位數至 2029。</li>
+<li><b>Spectrum-X 即將放量</b>：NVIDIA Quantum-X 1H26 / Spectrum-X 2H26 出貨，FN 為 NVIDIA 內部光學 redesign 的核心代工。</li>
+<li><b>Q2 FY26 營收 +36% YoY 為 IPO 後最快</b>，FY+1 EPS 連續 90 天上修，EPS trend 顯示分析師仍在上修。</li>
+<li><b>Building 10 擴產</b>：2026 YE 投產，+2M sqft，為 1.6T 量產奠定產能基礎。</li>
+</ul>
+
+<h3>【空頭檢察】</h3>
+<ul>
+<li><b>Fwd PE 50.7x = 5Y 高點 100% 分位</b>，歷史從未如此貴。即使 2027 年 EPS 兌現 $19，Fwd PE 仍為 36x。</li>
+<li><b>CPO 架構替代風險升級</b>：NVIDIA 已投入 $4B 至 Coherent/Lumentum 推動 CPO（繞過 pluggable）。Spectrum-X 2H26 若 CPO 版本占比 &gt;50%，FN datacom 業務結構崩塌風險（QC-23 ⛔ 級）。</li>
+<li><b>分析師目標價 $541 ~ $582</b>（Benzinga $376、TipRanks $541、247WallSt $582），<b>全部低於現價 $689.89</b>。連最激進的目標價都隱含 -15%。</li>
+<li><b>QC-22 +35% 月內漂移</b>：入場窗口已關閉，任何時點進場都面臨「立即回檔」的高概率。</li>
+<li><b>毛利率結構性偏低（12%）</b>：合約製造業本質，無定價能力，對抗 CPO 威脅的唯一手段是規模（Building 10），但規模效應尚未兌現。</li>
+</ul>
+
+<h3>【估值仲裁裁決】</h3>
+<p><b>空方佔上風</b>。多頭論點（AI optical 結構性需求）全部為真，但「結構性需求」已被股價 price in 到極致（50.7x），且 CPO 威脅使長期 terminal value 出現折扣。<b>估值仲裁：C 級訊號，觀察池</b>。</p>
+
+<h4>QC-13 自我攻擊：反駁 3 點</h4>
+<ol>
+<li><b>反駁 1：「Fwd PE 50.7x 並不代表貴，NVDA 也 35x+」</b> → 回應：NVDA 擁有 60%+ 毛利率與 architectural lock-in，FN 僅 12% 毛利率且客戶集中。PE 類比不適用。</li>
+<li><b>反駁 2：「CPO 技術路徑未來 3 年無法替代 pluggable，空方過度悲觀」</b> → 回應：部分認同，1.6T 世代 CPO 量產時程確實偏晚（2H26 起，需 2027-28 驗證），故護城河尚未觸發 ⛔。<b>但即使如此，當前 PE 仍 price 未來完美兌現，R:R 不成立</b>。</li>
+<li><b>反駁 3：「股價新高本身就是『好事』的訊號，趨勢追隨者應續抱」</b> → 回應：v12.0 QC-7b 禁止以技術面支撐買入，只能以基本面 + R:R 推論。基本面健康 ≠ R:R 成立。</li>
+</ol>
+
+<!-- ===== §4 ===== -->
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Fabrinet 是全球最大的精密光學與光電模組合約製造商（Thailand + US），提供 NVIDIA、Cisco、Ciena、Lumentum 等原廠「無法自製、但量產良率要求極高」的高精度光學封裝。若 FN 明天消失，1.6T transceiver / Coherent LiDAR / Lumentum 光學元件將面臨 6-12 個月的量產空窗，NVIDIA AI DC ramp 被迫延後，hyperscaler capex 實施遭延宕。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<ul>
+<li><b>地緣政治曝險</b>：Thailand 為主力生產基地（Chonburi + Pinehurst），東南亞政經穩定但依賴中國供應鏈上游元件。Thailand 近年無重大關稅衝擊。</li>
+<li><b>技術替代風險（最高）</b>：CPO（共同封裝光學）一旦在 1.6T+ 世代量產良率達標，hyperscaler 可繞過 pluggable transceiver，直接將光學引擎與 switch/GPU 共封裝。NVIDIA 2025 年已投入 $4B 至 Coherent/Lumentum，Spectrum-X 2H26 版本為第一個量產時點。<b>此為 3 年內最可能讓 FN 跌 50%+ 的路徑</b>。</li>
+<li><b>管理層失職</b>：Seamus Grady 執行長任內執行力強（2017 接任至今），近年 capital allocation 以 Building 10 擴產 + 少量回購為主，無明顯錯位。</li>
+<li><b>價值陷阱路徑</b>：若真成陷阱，最可能為「隱性資本密集型」（Building 10 + 未來下一代光學封裝持續吃 capex）或「產業結構衰退型」（CPO 替代 pluggable）。</li>
+</ul>
+
+<!-- ===== §5 ===== -->
+<h2>§5｜投資論點錨定</h2>
+
+<h3>A｜持有期</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>18-24 個月（跨越 1.6T ramp 與 CPO 架構驗證窗口）</td></tr>
+<tr><td>時間軸驅動</td><td>NVIDIA Spectrum-X 2H26 出貨 + Building 10 2026YE 投產 + FY27 EPS 兌現</td></tr>
+<tr><td>訊號 vs 噪音</td><td>短期（&lt;6m）：財報 EPS beat / guide upside = 訊號；長期（&gt;12m）：NVIDIA 供應鏈結構 + CPO 商業化節奏為訊號</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>NVIDIA 持續將其內部光學設計委外 FN，2026-2027 NVIDIA 營收占比維持 30-40%</td><td>10-K / 10-Q 10% 客戶披露</td><td>每季</td></tr>
+<tr><td>H2</td><td>1.6T transceiver 2H26 起量產爬坡，毛利率 2027 回升至 12.5%+（Building 10 規模效應）</td><td>Non-GAAP GM、guidance 中 1.6T mix</td><td>2026Q4 - 2027Q2</td></tr>
+<tr><td>H3</td><td>Fwd PE 從 50x 收斂至 &lt;30x（估值正常化）同時 EPS CAGR 23% 兌現，股價 2027 回到 $400-500 區間由 EPS 驅動重返 $600+</td><td>股價 / PE 軌跡 vs EPS 共識</td><td>2026-2027 全年</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>NVIDIA 垂直整合光學或分散代工至 Jabil/Sanmina</td><td>H1</td><td>NVIDIA supplier 關係、10-K 客戶集中度</td><td>NVIDIA 占比單季 &lt;25% 或新 EMS 夥伴曝光</td></tr>
+<tr><td>R2</td><td>CPO 架構替代：Spectrum-X 2H26 CPO 版本占比 &gt;50%，pluggable 結構性退場</td><td>H1/H2</td><td>NVIDIA Quantum-X/Spectrum-X CPO 出貨比例、Broadcom CPO 路徑</td><td>2026Q4 NVIDIA 財報揭露 CPO mix &gt;50%</td></tr>
+<tr><td>R3</td><td>Hyperscaler capex 回檔（2027+ AMZN/GOOG/META/MSFT capex YoY 衰退）</td><td>H3</td><td>四大 hyperscaler capex guidance</td><td>連續兩季 YoY 衰退</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>每個新事件依 4 步判斷：時間軸匹配？影響 H1/H2/H3 哪個？方向（+/0/−）？是否達重評估閾值？</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><b>進場</b></td><td>回測至 Bollinger 中軌 $516 或更低 + Fwd PE 降至 &lt;35x</td><td>建倉（具體 % 由 PM skill 決定）</td></tr>
+<tr><td><b>加碼</b></td><td>H1 NVIDIA 占比穩定 30-40% + H2 毛利率回升至 12.5%+ 兌現 + Fwd PE &lt;30x</td><td>加至目標倉位</td></tr>
+<tr><td><b>減碼</b></td><td>R2 CPO 明確觸發（Spectrum-X CPO mix &gt;30%）或 Fwd PE 再突破 55x</td><td>減至最低</td></tr>
+<tr><td><b>撤退</b></td><td>H1 推翻（NVIDIA 占比 &lt;25%）或 R2 ⛔ 架構替代確認</td><td>清倉</td></tr>
+</table>
+
+<!-- ===== §6 ===== -->
+<h2>§6｜即時財報情報（Q2 FY2026，截至 2025/12/26）</h2>
+
+<h3>① 關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td>$1,185M（估算中點）</td><td>$1,120M</td><td>+5.8%</td><td>+36.0%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$3.56</td><td>$3.45</td><td>+3.2%</td><td>+41.0%</td></tr>
+<tr><td>FCF</td><td>~$60M</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Gross Margin (Non-GAAP)</td><td>12.1%</td><td>12.0%</td><td>持平</td><td>+0.1pp</td></tr>
+<tr><td>Operating Margin</td><td>~10.8%</td><td>—</td><td>—</td><td>+0.5pp</td></tr>
+</table>
+
+<h3>邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>方向</th><th>佐證</th></tr>
+<tr><td>H1（NVIDIA 占比維持）</td><td class="good">＋ 強化</td><td>Q2 +36% YoY 主因 datacom（NVIDIA 800G/1.6T ramp），但 10% 客戶僅披露 Cisco 名義</td></tr>
+<tr><td>H2（毛利率回升）</td><td class="warn">0 中性</td><td>GM 12.1% 穩定未突破 12.5%，待 1.6T 規模效應</td></tr>
+<tr><td>H3（估值正常化）</td><td class="bad">− 削弱</td><td>EPS 強勁兌現但股價漲幅更誇張，Fwd PE 從 40.7x 跳至 50.7x，H3 兌現難度加劇</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣</h3>
+<ul>
+<li><b>管理層基調</b>：樂觀（「1.6T demand is ahead of expectations」「Building 10 on track for year-end 2026 completion」）</li>
+<li><b>Forward Guidance</b>：Q3 EPS $3.56-3.78（共識 $3.55），小幅高於共識</li>
+<li><b>刻意強調</b>：1.6T transceiver ramp、Spectrum-X 準備、Building 10 進度</li>
+<li><b>刻意迴避</b>：CPO 威脅的直接回應、具體客戶占比數字</li>
+</ul>
+
+<h3>③ 產業 Imply</h3>
+<p>需求端持續強勁，backlog 未鬆動；供給端 Building 10 為 2H26 的 1.6T 量產關鍵；競爭格局：NVIDIA 對 pluggable 仍有強依賴，但 CPO 投資布局明確，3 年後架構可能改變。</p>
+
+<h3>QC-27 Revenue vs OI Divergence</h3>
+<p>Q2 FY26 Revenue +36% vs Operating Income +41% → <b>divergence -5pp（OI 成長快於 Rev，margin 擴張）</b>。屬健康訊號，無 margin 壓縮警示。</p>
+
+<!-- ===== §7 ===== -->
+<h2>§7｜核心門檻檢核</h2>
+
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td class="red-cell">✗</td><td>FY25 FCF $206M / Rev $3,419M = 6.0%</td></tr>
+<tr><td>正規化 FCF Margin（5Y）</td><td>均 &gt;15%；谷 &gt;10%</td><td class="red-cell">✗</td><td>5Y 均 ~6%，谷 ~1.5%（FY22 $33M / Rev $2,262M）；穩定但結構性低</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且 &gt; WACC</td><td class="yellow-cell">⚠️</td><td>ROIC ~14%、WACC ~9% → 超額 5pp（接近但未達）</td></tr>
+<tr><td>ROIC 穩定性（10Y）</td><td>≥70% 年份 &gt;15%</td><td class="red-cell">✗</td><td>10Y 中 ~5 年 &gt;15%，達標率 50%</td></tr>
+<tr><td>毛利率定價能力</td><td>≥70% 年份改善</td><td class="red-cell">✗</td><td>10Y 中改善年份 ~5/10，毛利率窄幅 11-13%（合約製造本質）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt;5%（優）</td><td class="yellow-cell">⚠️</td><td>FY25 Capex $122M / Rev $3,419M = 3.6%（優）；但 FY26 因 Building 10 將跳至 6-7%</td></tr>
+<tr><td>EPS CAGR（3Y）</td><td>&gt; 20%</td><td class="green-cell">✓</td><td>基期 FY25 $9.17 → FY+3 $19.01，CAGR 27.5%（GAAP）或 23.1%（Non-GAAP）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td class="red-cell">✗</td><td>50.7 / 23.1 = 2.19（突破 2）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt;0.7</td><td class="green-cell">✓✓</td><td>Total Debt $5.5M vs Equity $1,982M → D/E 0.003（淨現金）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td class="green-cell">✓</td><td>$306M 現金 vs $5.5M 債務，55x 覆蓋</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td class="red-cell">✗</td><td>§9 評分 6/10</td></tr>
+</table>
+
+<p><b>最大財務弱點</b>：合約製造業結構性低毛利率（12%）+ FCF Margin 僅 6%，R&D / 定價能力均受限。</p>
+<p><b>Munger 三維評級：🔴</b>（三項中僅資本密集度接近達標，ROIC 穩定性與毛利率定價能力均未達 Munger 標準）</p>
+
+<h3>⚠️ 價值陷阱初篩（Fwd PE 5Y 分位 100% → ⛔ 最高警戒反向 = 最貴而非最便宜）</h3>
+<p class="note">注意：原四問觸發於「低估值」，本標的為「極高估值」，陷阱機制不適用。但仍執行反向檢驗：</p>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>訊號</th></tr>
+<tr><td>Q1</td><td>過去 3 年 GM 趨勢</td><td>12.7% → 12.4% → 12.1%（微降）</td><td>🟡 微弱侵蝕</td></tr>
+<tr><td>Q2</td><td>市佔趨勢</td><td>精密光學代工龍頭，市佔擴大</td><td>🟢</td></tr>
+<tr><td>Q3</td><td>FCF/NI 3Y 均</td><td>0.72（近 3 年平均）</td><td>🟢</td></tr>
+<tr><td>Q4</td><td>EPS 共識方向（近 6m）</td><td>持續上修（FY+1 +2.5%，FY+2 +7.9%）</td><td>🟢</td></tr>
+</table>
+<p><b>初篩結論：0-1 個 🔴 → 非陷阱。商業模式健康，問題純粹在於「價格過高」</b>。</p>
+
+<!-- ===== §8 ===== -->
+<h2>§8｜長期成長性評估</h2>
+
+<h3>A｜Runway</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前高速 Datacom 光學 TAM</td><td>~$12B（2026E，LightCounting）</td><td>800G/1.6T 主導</td></tr>
+<tr><td>預估 TAM 2030</td><td>~$25B</td><td>1.6T + 3.2T 量產</td></tr>
+<tr><td>FN 市佔</td><td>精密光學代工 ~60-70%（NVIDIA/Cisco/Ciena/Lumentum 主要代工）</td><td>龍頭地位</td></tr>
+<tr><td>成長可持續年數</td><td><b>10 年（假設 CPO 不完全替代 pluggable）</b></td><td>1.6T (2026-28) → 3.2T (2029-31) → ...</td></tr>
+</table>
+<p><b>Runway ≥ 10 年</b>（但需打 CPO 折扣 −2 年至 ~8 年）</p>
+
+<h3>B｜成長品質</h3>
+<p>有機成長占比 &gt; 95%（FN 近年無重大併購）；驅動為「量驅動 &gt; 定價」（合約製造無定價能力，量隨 hyperscaler capex 曲線）。</p>
+
+<h3>C｜成長護城河連動</h3>
+<p><b>中性型</b>：成長帶來的規模效應（Building 10）可壓低單位成本，但不構成「網路效應」或「數據壁壘」，護城河結構不變。</p>
+
+<h3>D｜ROIC/FCF 長期性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+<tr><td>ROIC</td><td>14%</td><td>12%</td><td>↑</td><td>&gt;15%</td><td>⚠️ 接近</td></tr>
+<tr><td>ROIC − WACC</td><td>+5pp</td><td>+3pp</td><td>↑</td><td>持續正 + 擴大</td><td>✓</td></tr>
+<tr><td>FCF Margin</td><td>6%</td><td>5%</td><td>↑</td><td>&gt;15%</td><td>✗</td></tr>
+<tr><td>FCF/NI</td><td>0.62</td><td>0.60</td><td>→</td><td>&gt;0.85</td><td>✗</td></tr>
+<tr><td>Reinvestment Rate</td><td>37%</td><td>20%</td><td>↑（Building 10）</td><td>匹配 ROIC</td><td>✓</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 Fwd PE</th><th>潛在跌幅</th></tr>
+<tr><td>3 年後降至 15%</td><td>1.6T 放緩但仍高於市場</td><td>18x</td><td>-47%</td></tr>
+<tr><td>3 年後降至 10%</td><td>CPO 開始侵蝕 datacom</td><td>15x</td><td>-56%</td></tr>
+<tr><td>3 年後降至 5%</td><td>CPO 結構替代完成</td><td>10x</td><td>-71%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號</th><th>偵測</th><th>數據</th><th>亮燈</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>GM 穩定 12%</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>市佔縮減</td><td>市佔擴大</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt; Rev CAGR 差 &gt;5pp</td><td>EPS +41% vs Rev +36%，差 5pp</td><td>⬜（邊緣）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75</td><td>FCF/NI 0.62（Building 10 capex 影響）</td><td>🔴</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>TAM 擴張</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex &gt; 60% FCF</td><td>FY26 Capex/FCF 可能 &gt;60%</td><td>🔴</td></tr>
+</table>
+<p><b>亮燈 2 個 → 🟡 中度警戒</b>（Building 10 擴產期的暫時性現象）</p>
+
+<p><b>長期成長性評級：🟡 中等可見度成長</b>（Runway 10y + AI 順風 + 隱性資本密集 + CPO 不確定性）</p>
+
+<h3>F｜AI 取代風險</h3>
+<p><b>🟢 AI 受益</b>：核心業務直接受 AI DC 擴張帶動，無 AI 取代風險。AI 評級分數：9。</p>
+
+<!-- ===== §9 ===== -->
+<h2>§9｜護城河分析</h2>
+
+<p><b>評分：6/10</b>（維持；CPO 威脅為 🔴 生態攻擊級，若 Spectrum-X 2H26 實證為 ⛔ 則需再扣 1 分）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><b>網路效應</b>：無</li>
+<li><b>無形資產</b>：10+ 年精密光學代工 know-how、無塵潔淨室經驗、良率工藝專利組合</li>
+<li><b>轉換成本</b>：中等（原廠將光學設計委外後，切換代工需重新認證，週期 6-12 個月）</li>
+<li><b>規模優勢</b>：強（Thailand 大規模聚落 + Building 10 擴產，對手難在短期內複製 2M sqft 精密光學產能）</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>對手進入需克服：（1）與 NVIDIA/Cisco/Ciena 建立長期 qualified supplier 關係（各 2-3 年）；（2）Thailand 精密光學產業聚落無法短期複製；（3）工程良率學習曲線。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>市佔</th><th>3 年趨勢</th><th>核心威脅</th></tr>
+<tr><td>Fabrinet</td><td>60-70%（精密光學代工）</td><td>擴大</td><td>—</td></tr>
+<tr><td>Jabil</td><td>15-20%</td><td>持平</td><td>NVIDIA 潛在分散代工對象</td></tr>
+<tr><td>Sanmina</td><td>5-10%</td><td>持平</td><td>細分領域</td></tr>
+<tr><td>Celestica</td><td>5-10%</td><td>擴大</td><td>data center 切入，AI 網路設備代工，毛利 15%+</td></tr>
+</table>
+
+<h3>QC-23 競爭威脅 3 級分類（v12.0）</h3>
+<table>
+<tr><th>等級</th><th>威脅</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>Jabil / Celestica 在單一產品線蠶食</td><td>護城河不扣分</td></tr>
+<tr class="red-cell"><td>🔴 生態攻擊</td><td><b>NVIDIA $4B 投入 Coherent/Lumentum CPO 多年合約 + 全棧光學方案</b></td><td><b>護城河 −1 分（已反映在 6/10）</b></td></tr>
+<tr><td>⛔ 架構替代</td><td>若 2H26 Spectrum-X CPO mix &gt;50% → 客戶架構層級切換（pluggable → CPO）</td><td>潛在，尚未觸發；若觸發，護城河再 −2 分至 3/10</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><b>穩定偏縮減</b>：規模優勢擴大，但 CPO 技術路徑威脅使長期 terminal value 存在結構性折扣。</p>
+
+<!-- ===== §10 ===== -->
+<h2>§10｜財務品質監測</h2>
+
+<h3>三年趨勢表（FY 年度 6 月底）</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>對手（Celestica FY25）</th></tr>
+<tr><td>Revenue</td><td>$2,645M</td><td>$2,883M</td><td>$3,419M</td><td>CLS $10,500M</td></tr>
+<tr><td>Gross Margin</td><td>12.7%</td><td>12.4%</td><td>12.1%</td><td>CLS 10.5%</td></tr>
+<tr><td>Operating Margin</td><td>9.8%</td><td>9.6%</td><td>9.5%</td><td>CLS 7.0%</td></tr>
+<tr><td>Net Income</td><td>$248M</td><td>$296M</td><td>$333M</td><td>—</td></tr>
+<tr><td>FCF Margin</td><td>~8%</td><td>~13%</td><td>6.0%</td><td>CLS ~3%</td></tr>
+<tr><td>FCF/NI</td><td>~0.85</td><td>~1.23</td><td>0.62</td><td>—</td></tr>
+<tr><td>ROIC</td><td>12%</td><td>13%</td><td>14%</td><td>CLS 15%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li>OCF $328M vs NI $333M → 轉換率 0.99（健康）</li>
+<li>AR / Rev 比例近 3 年穩定</li>
+<li>存貨週轉天數穩定</li>
+<li><b>FCF 轉換率下滑至 0.62</b>（capex 上升所致，非盈餘操縱）</li>
+</ul>
+
+<h3>回購品質</h3>
+<p>FY25 回購 ~$70M，占 FCF 34%；公司偏向以 capex 支援成長而非大規模回購。無稀釋警訊。</p>
+
+<h3>QC-26 Margin 結構性測試</h3>
+<p>GM 從 FY23 12.7% 降至 FY25 12.1%（-0.6pp），未達 1.5pp 觸發門檻。同業 Celestica GM 從 9% → 10.5%（擴大），但 FN 仍領先絕對值。暫列為「輕微稀釋，非結構性」，繼續監控 FY26 1.6T mix 後是否轉正。</p>
+
+<!-- ===== §11 ===== -->
+<h2>§11｜產業格局、議價權、Unit Economics</h2>
+
+<h3>營收結構（FY25，QC-1）</h3>
+<table>
+<tr><th>業務段</th><th>占比</th><th>FY25 YoY</th><th>驅動</th></tr>
+<tr><td>Optical Communications - Datacom</td><td>~55%</td><td>+65%</td><td>NVIDIA 800G/1.6T ramp</td></tr>
+<tr><td>Optical Communications - Telecom</td><td>~25%</td><td>+25%</td><td>Ciena pluggable 擴產</td></tr>
+<tr><td>Lasers / Sensors / Industrial</td><td>~15%</td><td>+8%</td><td>Lumentum / Coherent LiDAR</td></tr>
+<tr><td>Auto / Medical</td><td>~5%</td><td>+5%</td><td>成熟市場</td></tr>
+</table>
+
+<h3>議價權</h3>
+<ul>
+<li><b>上游（零組件）</b>：中等；FN 對關鍵 optical subassembly 供應商（多為中小型 fabless）有選擇權</li>
+<li><b>下游（客戶）</b>：<b>弱</b>；NVIDIA/Cisco 為超大客戶，價格談判由客戶主導，毛利率鎖定 12% 區間</li>
+</ul>
+
+<h3>TAM / 產業 CAGR</h3>
+<p>Datacom optical（800G/1.6T）2024 $9B → 2026 $12B → 2030 $25B，CAGR ~17%。精密光學代工（addressable）~$5B → 2030 $10B。</p>
+
+<!-- ===== §12 ===== -->
+<h2>§12｜公司治理與資本配置</h2>
+
+<h3>① 股權結構</h3>
+<p>機構持股 110.7%（重複計入），內部人僅 0.28%，Single class 股權（一股一票）。</p>
+
+<h3>② 資本配置</h3>
+<table>
+<tr><th>項目</th><th>FY25</th><th>占 FCF %</th></tr>
+<tr><td>Capex</td><td>$122M</td><td>59%（Building 10 擴產）</td></tr>
+<tr><td>回購</td><td>~$70M</td><td>34%</td></tr>
+<tr><td>分紅</td><td>$0</td><td>0%（無股息政策）</td></tr>
+</table>
+<p>優先序：<b>Capex 擴產 &gt; 回購 &gt; 分紅</b>。與成長策略一致。</p>
+
+<h3>③ 管理層薪酬</h3>
+<p>CEO Seamus Grady：固定薪 ~$700K + 績效獎金 ~$1M + 股權激勵 ~$5M，股權占比高（長期利益綁定）。</p>
+
+<h3>④ 近 12 個月內部人交易</h3>
+<p>2025-2026 期間部分執行主管行使選擇權後賣出（常規 10b5-1 計畫）。無集中拋售警訊。</p>
+
+<h3>QC-19 重大事件強制搜尋</h3>
+<p>🟢 過去 12 個月無併購金額 &gt; 市值 5%、無集體訴訟、無 SEC 調查、無財報重編、無 CEO/CFO 異動。</p>
+
+<!-- ===== §13 ===== -->
+<h2>§13｜估值診斷</h2>
+
+<h3>13.1 Forward P/E 歷史分位（QC-4）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 75th</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Fwd P/E（FY+1）</td><td class="red-cell"><b>50.7x</b></td><td>~10x</td><td>~18x</td><td>~26x</td><td>~50x</td><td class="red-cell"><b>100%+（突破 5Y 上緣）</b></td></tr>
+<tr><td>EV/EBITDA（TTM）</td><td>54.6x</td><td>~7x</td><td>~12x</td><td>~18x</td><td>~54x</td><td>~100%</td></tr>
+<tr><td>P/FCF（TTM）</td><td>~120x</td><td>~15x</td><td>~25x</td><td>~40x</td><td>~120x</td><td>~100%</td></tr>
+</table>
+<p>分位公式：(50.7 − 10) / (50 − 10) × 100% = 102% → clamped 100%</p>
+
+<h3>13.2 PEG</h3>
+<p>50.7 / 23.1 = <b>2.19</b>（突破 2.0 警戒值）</p>
+
+<h3>13.3 Reverse DCF（QC-25 Beta 雙源）</h3>
+<p>yfinance Beta = 1.03；TradingView 通常相近（未取得獨立值，差異假設 &lt;30%，使用 yfinance）</p>
+<p>WACC ≈ 9%（無風險 4.5% + 市場溢價 4.5% × 1.03）。當前 EV/FCF 倍數反推隱含永久 FCF CAGR ~30%，屬偏激進假設。</p>
+
+<h3>13.4 同業比較（QC-5）</h3>
+<table>
+<tr><th>公司</th><th>Fwd PE</th><th>EV/EBITDA</th><th>GM</th><th>ROIC</th></tr>
+<tr class="red-cell"><td><b>FN</b></td><td><b>50.7x</b></td><td>54.6x</td><td>12.1%</td><td>14%</td></tr>
+<tr><td>CLS (Celestica)</td><td>~25x</td><td>~18x</td><td>10.5%</td><td>15%</td></tr>
+<tr><td>JBL (Jabil)</td><td>~17x</td><td>~12x</td><td>8.5%</td><td>14%</td></tr>
+<tr><td>COHR (Coherent)</td><td>~41x</td><td>~22x</td><td>36%</td><td>8%</td></tr>
+<tr><td>LITE (Lumentum)</td><td>~30x</td><td>~18x</td><td>33%</td><td>5%</td></tr>
+</table>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>FN Fwd PE 50.7x vs 同業中位（CLS/JBL/COHR/LITE）~28x → 溢價 81%（&gt;50% 觸發）</p>
+<ul>
+<li><b>情境 A</b>：FN PE 不變，同業追趕至 35x → FN 仍高 45%，上行壓縮</li>
+<li><b>情境 B</b>：FN PE 收斂至 (50.7+28)/2 = 39x → 股價下修至 $531（-23%）</li>
+</ul>
+<p>情境 B 的 $531 作為替代 Bear Case 比 §8E Bear $184 寬鬆。兩者取保守者：維持 $184-220 為 Bear 錨點。<b>同業收斂風險列為 R4</b>。</p>
+
+<h3>13.5 估值體系診斷</h3>
+<p><b>估值燈：🔴 昂貴</b>（Fwd PE 100% 分位、PEG &gt;2、EV/EBITDA 與 P/FCF 均 100% 分位）</p>
+
+<h3>便宜理由檢驗（反向觸發）</h3>
+<p>不適用（本標的非便宜）。反向結論：<b>「貴有貴的理由」（AI optical 結構性需求 + NVIDIA 獨家委外）是否成立？</b>成立，但 PEG 2.19 表示即使兌現仍貴，市場已 price in 未來 3 年。</p>
+
+<!-- ===== 版本修訂紀錄 ===== -->
+<h2>版本修訂紀錄</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>股價</th><th>裁決 / 訊號</th><th>關鍵變更</th></tr>
+<tr><td>v11.0</td><td>2026-04-17</td><td>$672.64</td><td>觀望 + 迴避（極度昂貴）</td><td>Fwd PE 40.7x、合理 PE 26x、Bear $183-221，短期/中期 R:R 均負</td></tr>
+<tr class="blue-cell"><td><b>v12.0</b></td><td><b>2026-04-18</b></td><td><b>$689.89（+2.6%，月內 +35%）</b></td><td><b>C（觀察池）</b></td><td>綜合訊號燈取代倉位 %；Fwd PE 跳至 50.7x（5Y 100% 分位），PEG 觸發 2.19 下壓至 18x → 合理 PE 20x；QC-22 漂移警示、QC-23 CPO 威脅分級、QC-29 壓測 0/4 通過；R:R 壓力測試全部失敗</td></tr>
+</table>
+
+<!-- ===== 假設驗證對照（QC-17 強制） ===== -->
+<h2>假設驗證對照（v11 → v12）</h2>
+<table>
+<tr><th>項目</th><th>上次（v11, 4/17）</th><th>本次（v12, 4/18）</th><th>邊際變化</th></tr>
+<tr><td>H1：NVIDIA 30-40% 集中度維持</td><td>強化（Q2 FY26 +36% 確認）</td><td>強化（續見 1.6T ramp 需求）</td><td>不變</td></tr>
+<tr><td>H2：1.6T 毛利率 2027 回升至 12.5%+</td><td>不變（GM 12.0% 穩定）</td><td>不變（GM 12.1%，待 Building 10）</td><td>不變</td></tr>
+<tr><td>H3：Fwd PE 從 40x 降至 26x 同時 EPS 兌現</td><td class="bad">削弱（PE 不降反升至 40.7x）</td><td class="bad"><b>進一步削弱（PE 跳至 50.7x）</b></td><td>持續惡化</td></tr>
+<tr><td>R1 是否觸發（NVIDIA 垂直整合 / 轉單）</td><td>未觸發</td><td>未觸發（NVIDIA Spectrum-X 仍依賴 FN）</td><td>不變</td></tr>
+<tr><td>R2 是否觸發（CPO 商用化超預期）</td><td>未觸發（2027+）</td><td>升級為 🔴 生態攻擊級（NVIDIA $4B 投資 Coherent/Lumentum 明朗化）；2H26 Spectrum-X CPO 版本為觀察關鍵</td><td>風險升級 1 級</td></tr>
+<tr><td>R3 是否觸發（AI capex 回檔）</td><td>未觸發</td><td>未觸發（hyperscaler capex 未見滑落）</td><td>不變</td></tr>
+<tr><td>裁決變化</td><td>觀望 + 迴避</td><td><b>C（觀察池）</b></td><td>3 個最關鍵新事實：① 月內 +35% 漂移（QC-22 鎖定）；② Fwd PE 突破 50x 歷史高點；③ NVIDIA CPO $4B 投資使 R2 威脅升級為 🔴 生態攻擊</td></tr>
+</table>
+
+<h2>v12.0 元資料</h2>
+<div class="meta-card">
+<b>Schema version</b>: v12.0 (released 2026-04-18)<br>
+<b>輸出規格</b>: 綜合訊號燈 A+/A/B/C/X（無倉位 %）<br>
+<b>QC 規則</b>: QC-1 ~ QC-30 全部套用<br>
+<b>QC-22 漂移</b>: +35% (4W) → 警示觸發<br>
+<b>QC-23 分級</b>: CPO 威脅升為 🔴 生態攻擊<br>
+<b>QC-29 壓測通過率</b>: 0/4（0%）<br>
+<b>QC-30 溢價</b>: 同業中位 +81%，情境 B 股價 $531<br>
+<b>最終訊號</b>: <b>C（觀察池）</b>
+</div>
+
+</body>
+</html>
