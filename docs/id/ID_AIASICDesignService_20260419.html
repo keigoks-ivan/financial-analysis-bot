@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI ASIC 設計服務供應鏈 — 產業深度 DD</title>
+<meta name="description" content="AVGO / MRVL / Alchip / GUC / MediaTek 設計服務鏈：hyperscaler 自研 ASIC 爆發、台系隱性贏家、AVGO 毛利長期壓力的非共識拆解">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.65}
+.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 3rem}
+.id-head{background:linear-gradient(135deg,#4C1D95,#7C3AED);color:#fff;padding:22px 28px 18px;margin:0 0 22px;border-radius:10px;box-shadow:0 4px 14px rgba(124,58,237,.22)}
+.id-badge{display:inline-block;background:rgba(255,255,255,.18);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:10px}
+.id-head h1{margin:0;color:#fff;font-size:26px;font-weight:800;letter-spacing:-.03em}
+.id-meta{color:rgba(255,255,255,.88);font-size:12.5px;margin-top:6px;line-height:1.6}
+h2{color:#4C1D95;font-size:19px;margin:34px 0 12px;padding-left:12px;border-left:4px solid #7C3AED;font-weight:800;letter-spacing:-.02em}
+h3{color:#6B21A8;font-size:15px;margin:18px 0 8px;font-weight:700}
+p{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12.5px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05);border-radius:4px;overflow:hidden}
+th{background:#4C1D95;color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px}
+td{padding:8px 10px;border-bottom:1px solid #F3F4F6;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:#FAFAFA}
+tr:hover td{background:#F5F3FF}
+.judgment{background:#FEF9C3;border-left:4px solid #EAB308;padding:10px 14px;margin:10px 0;border-radius:3px;font-size:12.5px}
+.judgment .j-head{font-weight:600;color:#713F12;margin-bottom:4px}
+.judgment .j-facts{color:#713F12;margin:4px 0;padding-left:14px}
+.judgment .j-infer{font-size:12px;color:#854D0E;margin-top:6px;padding:6px 10px;background:rgba(234,179,8,.12);border-radius:3px}
+.judgment .j-falsify{font-size:12px;color:#7F1D1D;margin-top:6px;padding:6px 10px;background:rgba(239,68,68,.08);border-radius:3px;border-left:3px solid #EF4444}
+.tier-pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.tier-red{background:#FEE2E2;color:#991B1B}
+.tier-yellow{background:#FEF3C7;color:#92400E}
+.tier-green{background:#DCFCE7;color:#166534}
+.insight{background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;margin:10px 0;border-radius:4px}
+.insight .i-head{font-weight:600;color:#4C1D95;margin-bottom:4px;font-size:13px}
+.insight .i-body{font-size:12.5px;color:#4C1D95}
+.insight .i-sub{font-size:12px;color:#6B7280;margin-top:4px;padding-left:14px}
+.scurve-ascii{background:#F5F3FF;color:#4C1D95;padding:12px 14px;border-radius:4px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px;white-space:pre;line-height:1.45;overflow-x:auto;border:1px solid #DDD6FE}
+.vc-svg{display:block;max-width:100%;margin:12px auto}
+.source-tag{color:#6B7280;font-size:10.5px}
+.source-tag a{color:#7C3AED;text-decoration:none}
+.source-tag a:hover{text-decoration:underline}
+.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0 18px}
+.tldr-card{background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:12px 14px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.tldr-card h4{margin:0 0 6px;color:#6B21A8;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:600}
+.tldr-card .v{font-size:14.5px;font-weight:600;color:#1E1B4B;line-height:1.4}
+.thesis-box{background:linear-gradient(135deg,#EDE9FE,#F5F3FF);border:1px solid #C4B5FD;border-radius:8px;padding:14px 18px;margin:12px 0;color:#4C1D95;font-size:13.5px;line-height:1.6}
+.thesis-box strong{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#6B21A8;display:block;margin-bottom:4px}
+.foot{margin-top:32px;padding-top:16px;border-top:1px solid #E5E7EB;color:#6B7280;font-size:11px;text-align:center}
+.foot a{color:#7C3AED;text-decoration:none;margin:0 6px}
+.status-bar{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;margin:0 0 22px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px}
+.status-bar .dot{width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block}
+.status-bar .label{font-weight:600;color:#4C1D95}
+</style>
+</head>
+<body>
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/" class="active">產業深度 ID</a>
+          <a href="/id/theses.html">⭐ 八大非共識</a>
+          <a href="/pm/">PM 複盤</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+        </div>
+      </div>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="wrap">
+<header class="id-head">
+  <span class="id-badge">產業深度 · Industry DD</span>
+  <h1>AI ASIC 設計服務供應鏈（Custom AI Silicon Supply Chain）</h1>
+  <p class="id-meta">發布日：2026-04-19 ｜ 涵蓋 ticker：11 檔（🔴 4 / 🟡 4 / 🟢 3）｜ 🟡 占比：19% ｜ 投資時鐘：<strong>Phase II（爆發成長期 + 玩家分化）</strong> ｜ industry-analyst v1.4</p>
+</header>
+
+<div class="status-bar">
+  <span class="dot"></span>
+  <span class="label">鮮度狀態</span>
+  <span>· tech 🟢（2026-04-19 發布）· market 🟢· judgment 🟢</span>
+  <span>· 下次 refresh 建議：2026-07（Q1 earnings 後）</span>
+  <span>· AI DC 子題（Gate 7 通過）</span>
+</div>
+
+<!-- ========== §0 TL;DR ========== -->
+<h2>§0 TL;DR 卡片</h2>
+
+<div class="tldr-grid">
+  <div class="tldr-card"><h4>主題</h4><div class="v">AI ASIC 設計服務</div></div>
+  <div class="tldr-card"><h4>時長</h4><div class="v">3-5 年爆發</div></div>
+  <div class="tldr-card"><h4>TAM 2025 → 2033</h4><div class="v">~$40B → $118B</div></div>
+  <div class="tldr-card"><h4>CAGR</h4><div class="v">27% 全體 / 45% hyperscaler</div></div>
+  <div class="tldr-card"><h4>Phase</h4><div class="v">Phase II</div></div>
+  <div class="tldr-card"><h4>關鍵玩家 3</h4><div class="v">AVGO / MRVL / Alchip</div></div>
+  <div class="tldr-card"><h4>關鍵風險 3</h4><div class="v">in-housing ↑ / NVDA 反擊 / 毛利壓縮</div></div>
+  <div class="tldr-card"><h4>🟡 占比</h4><div class="v">19% / 20%</div></div>
+</div>
+
+<div class="thesis-box">
+  <strong>Thesis（本 ID 最核心非共識觀點）</strong>
+  2028 年 hyperscaler 自研 ASIC 在 AI 訓練 / 推論計算市占將達 <strong>40%+</strong>（超越共識 20-25%），而關鍵受益者不只是 AVGO / MRVL，<strong>台系的 Alchip + MediaTek 合計份額將超越 MRVL</strong>。因 TSMC 3nm / 2nm 產能分配 + CoWoS 稀缺，設計服務公司從「成本中心」升級為「產能掮客」，但 2027+ AVGO 面臨 hyperscaler 強化議價 → 毛利長期被壓至 40% 以下（vs 當前 50%+）。
+</div>
+
+<!-- ========== §1 產業定義與邊界 ========== -->
+<h2>§1 產業定義與邊界</h2>
+
+<h3>In-scope（本 ID 涵蓋）</h3>
+<table>
+<tr><th>類別</th><th>範圍</th><th>代表公司</th><th>產品範例</th></tr>
+<tr><td>Merchant ASIC 供應商</td><td>為 hyperscaler 設計 + 交付 custom silicon 的垂直整合者</td><td>AVGO / MRVL</td><td>Google TPU (via AVGO) / AWS Trainium 2 (via MRVL)</td></tr>
+<tr><td>Pure design service（台系）</td><td>為終端客戶提供 backend 設計 + 製造轉交服務</td><td>3661 Alchip / 3443 GUC</td><td>AWS Trainium 3 (Alchip) / 網通 / SSD controller (GUC)</td></tr>
+<tr><td>Mobile 轉 ASIC 玩家</td><td>原手機 SoC 廠，2025+ 進入低功耗 ASIC</td><td>2454 MediaTek / Socionext</td><td>Google TPU v7e / v8e (MediaTek) / car + industrial ASIC (Socionext)</td></tr>
+<tr><td>In-house hyperscaler 設計</td><td>自建設計團隊、僅委外 backend / 封測</td><td>Google / Meta / AWS / Microsoft</td><td>TPU v7 Ironwood / MTIA v3 / Trainium 3 / Maia 200</td></tr>
+<tr><td>Design service 支援環節</td><td>EDA 工具 / IP 授權（非本 ID 核心，引用關聯 ID）</td><td>SNPS / CDNS / ARM</td><td>Fusion Compiler / Innovus / Neoverse IP</td></tr>
+</table>
+
+<p>本 ID 主軸是<strong>「協助 hyperscaler 落地 custom silicon 的 fabless 服務商」</strong>。定義核心分水嶺：公司是否<strong>擁有 chip 所有權</strong>。AVGO/MRVL 擁有，收溢價毛利；Alchip/GUC/MediaTek 不擁有，收 NRE + mass production fee（按晶圓出貨結算），毛利較低但風險亦低。</p>
+
+<h3>Out-of-scope（本 ID 不涵蓋）</h3>
+<table>
+<tr><th>類別</th><th>為何排除</th><th>對應其他 ID</th></tr>
+<tr><td>Merchant GPU（NVDA / AMD / INTC）</td><td>通用型 accelerator，商業模式不同（產品銷售而非客製服務）</td><td>ID_AIAcceleratorDemand 母題</td></tr>
+<tr><td>AI 加速器 startup（Cerebras / Graphcore / Tenstorrent）</td><td>多為私有公司，非公開投資標的</td><td>—</td></tr>
+<tr><td>CPU（x86 Xeon / EPYC / Arm Neoverse）</td><td>general-purpose compute，非 ASIC 範疇</td><td>建議新增 ID_AICPU</td></tr>
+<tr><td>先進封裝（CoWoS / SoIC）</td><td>下游製造環節，本 ID 視為 constraint</td><td>ID_AdvancedPackaging</td></tr>
+<tr><td>HBM 供應</td><td>記憶體環節獨立，本 ID 視為 bill-of-materials</td><td>ID_HBM_Supercycle</td></tr>
+<tr><td>網通 ASIC（Tomahawk / Jericho）</td><td>AVGO 有做，但屬於 merchant silicon 非 custom ASIC</td><td>ID_AINetworking</td></tr>
+<tr><td>EDA / IP（SNPS / CDNS / ARM）</td><td>工具層，非設計服務；建議獨立 ID</td><td>建議新增 ID_AIEDAIP</td></tr>
+</table>
+
+<p><strong>灰色地帶（為何我們花時間定義）</strong>：</p>
+<ol>
+<li><strong>MediaTek：是 ASIC 設計服務還是「ASIC 供應商」？</strong>它取得 Google TPU v7e/v8e 設計訂單，但交付模式介於 AVGO（全委託）與 Alchip（backend only）之間。本 ID 歸類為「混合型」，但預期 2027+ 會明確走向 AVGO 模式（取得產品所有權、提高 margin）。</li>
+<li><strong>ASIC vs SoC 邊界</strong>：TPU / Trainium 這類大晶片其實是 SoC（含 CPU core + AI engine + memory controller），但業界統稱為 ASIC。本 ID 也維持此用法。</li>
+<li><strong>NVDA 的 Grace CPU 算不算 ASIC？</strong>Grace 是標品（所有客戶可買），不是 custom，所以不算。但 Grace 背後的 Neoverse IP 涉及 Arm，這部分算 ID_AIEDAIP 範疇。</li>
+</ol>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §1</div>
+  <div class="i-body">真正的「設計服務鏈」只有 <strong>AVGO + MRVL + Alchip + GUC + MediaTek + Socionext 六家公司</strong>（加 AVGO/MRVL 的一小部分業務）。市場常把 EDA（SNPS/CDNS）混入，但 EDA 賣工具，設計服務賣「成品交付 + 產能承諾」，兩者毛利結構、客戶黏著度差 3-4 倍。<br><strong>投資意義</strong>：若要 pure-play ASIC 設計服務，首選 Alchip（3661），因其近 100% 營收來自 hyperscaler AI ASIC；AVGO 有 VMware + 網通稀釋，MRVL 有存儲 + 網通稀釋。</div>
+</div>
+<div class="insight">
+  <div class="i-head">💡 Insight §1（二）</div>
+  <div class="i-body">MediaTek 從手機 SoC 跨入 ASIC 是 <strong>2015-2020 年 AVGO 從網通跨入 AI 的重演</strong>。當年市場不信 AVGO 能打敗 NVDA，結果 AVGO 現在拿 70% ASIC 市佔。MediaTek 若在 2028 前拿下 3-5 個 hyperscaler flagship（目前 Google 2 個、傳洽 OpenAI 1 個），可成為第三極。</div>
+</div>
+
+<!-- ========== §2 技術演進 + S 曲線 + 歷史類比 ========== -->
+<h2>§2 技術演進 + S 曲線 + 歷史類比</h2>
+
+<h3>S 曲線</h3>
+
+<pre class="scurve-ascii">Phase I (2015-2022)         Phase II (2023-2028)      Phase III (2029+)
+試驗期                       爆發期 ← 當前               成熟期 / 份額固化
+════════════════════════════════════════════════════════════════════════
+│ TPU v1-v4（Google 獨扮）    │ TPU v5-v8（多廠爭食）      │ ASIC > GPU shipments
+│ AVGO 起跑                    │ AWS Trainium 1-3 上量      │ 毛利結構趨穩
+│ AWS Graviton / Inferentia 1-2│ MS Maia 1-300 部署         │ Top 3 玩家吃 85%
+│ 計算份額 &lt;5%                 │ 計算份額 8% → 19%（2033）   │ 三方形成共識
+│ 毛利：design 30-40%          │ 毛利：AVGO 50%+ / Alchip 28%│ 毛利：AVGO 40%以下
+│                              │ TSMC 3nm/2nm 成瓶頸         │ 設計服務合併 / 退出
+                                                                           </pre>
+
+<p>當前位置：<strong>Phase II 中期（2026）</strong>，Google TPU v7 已與 NVDA B200 同級（4.6 PFLOPS FP8），AWS Trainium 3 量產中，MS Maia 200 上線。TSMC 3nm 產能是主要限制。預期 2027 Phase II 末期，Meta MTIA v3 + ByteDance + OpenAI Titan 一起上量，推動 ASIC 份額突破 25%。</p>
+
+<h3>過去 → 現在 → 未來</h3>
+<table>
+<tr><th>時間</th><th>關鍵里程碑</th><th>領導者</th><th>技術節點</th></tr>
+<tr><td>2015</td><td>Google TPU v1 生產部署，Broadcom 合作 ASIC backend</td><td>Google → AVGO</td><td>28nm</td></tr>
+<tr><td>2018</td><td>AWS Graviton 1 發表、Alchip 成 AWS 主要 backend partner</td><td>AWS → Alchip</td><td>16nm</td></tr>
+<tr><td>2021</td><td>Meta MTIA v1 內部測試、Tesla Dojo 首代</td><td>Meta / Tesla</td><td>7nm</td></tr>
+<tr><td>2024 Q1</td><td>AWS Trainium 2 上量，Alchip 年營收 NT$31.27B（-Customer A 60%）</td><td>AWS / Alchip</td><td>5nm</td></tr>
+<tr><td>2024 Q3</td><td>AVGO 揭示 FY27 XPU+network SAM $60-90B 給 3 家 hyperscaler</td><td>AVGO</td><td>4nm → 3nm</td></tr>
+<tr><td>2025 Q4</td><td>AVGO OpenAI $100B+ deal（"Titan" 晶片，2029 前交付）</td><td>AVGO</td><td>3nm</td></tr>
+<tr><td>2025 末</td><td>MediaTek 拿下 Google TPU v7e、v8e（從 AVGO 手上搶下低功耗 TPU）</td><td>MediaTek</td><td>3nm / 2nm</td></tr>
+<tr><td>2026 Q1</td><td>AVGO AI 營收 Q1 $8.4B（+106% YoY）；TPU v7 Ironwood 量產，Anthropic 部署 1M+ 晶片</td><td>Google / AVGO</td><td>3nm</td></tr>
+<tr><td>2026 H2</td><td>AWS Trainium 3 量產（Alchip 主 backend）；Meta MTIA v3 上線</td><td>AWS + Alchip</td><td>3nm</td></tr>
+<tr><td>2027</td><td>MS Maia 300 量產（MRVL 設計）；AVGO FY27 AI 營收目標 $100B+</td><td>MRVL + AVGO</td><td>2nm</td></tr>
+<tr><td>2028</td><td>ASIC 出貨量首度超過 GPU；NVDA 推論市佔降至 25-30%</td><td>多極競爭</td><td>2nm / 1.4nm</td></tr>
+<tr><td>2030+</td><td>設計服務行業合併 / 退出，Top 3（AVGO + MRVL + Alchip）吃 85% 份額</td><td>集中度高</td><td>1.4nm / 1nm</td></tr>
+</table>
+
+<h3>歷史類比</h3>
+<table>
+<tr><th>前例</th><th>年份</th><th>關鍵數據 / 轉折</th><th>本次異同</th></tr>
+<tr><td><strong>1997-2003 Cisco 自研 silicon 轉向</strong></td><td>1997-2003</td><td>Cisco 原向 Intel 買處理器，1997 啟動自研 Silicon One；2003 達到 40% 自有 silicon，成本降 30%；Broadcom (舊 AVGO) 成最大受惠設計服務商</td><td>與本 ID 高度相似：hyperscaler = Cisco、NVDA = Intel、AVGO 再度成為賣鏟人；差異：AI 訓練 vs 網通，單晶片價 $30K vs $300（100x），TAM 大得多</td></tr>
+<tr><td><strong>2010-2015 Apple A4 → A9 自研</strong></td><td>2010-2015</td><td>Apple 2010 啟動 A4，採 Samsung LSI 代工，後轉 TSMC；2015 A9 成熟後 Samsung LSI 被腰斬；Apple 保留 chip 所有權</td><td>啟示：hyperscaler 可能最終把 ASIC 完全 in-house（設計服務被 squeeze out）；差異：AI ASIC 的 scale（每家 &lt;1M 顆）仍遠不如 iPhone（每年 250M 顆），hyperscaler 不值得完全 in-house backend + 封測</td></tr>
+<tr><td><strong>2003-2010 手機 baseband commoditization</strong></td><td>2003-2010</td><td>TI / ST 原有 50%+ 毛利，2007 QCOM / MediaTek 進入，毛利腰斬至 25%；TI 2013 退出 baseband</td><td>警示：設計服務若無 IP / 技術壁壘，毛利必然被壓；AVGO 若無法守住 networking + ASIC 雙殺組合，2029+ 可能重演 TI 故事</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §2</div>
+  <div class="i-body"><strong>當前最接近的類比是 1999 Cisco 自研芯片（而非 2010 Apple A4）</strong>。原因：hyperscaler 市場規模（全球 5-7 家客戶）太小，無法支撐完全 in-house 的 backend + 封測 + 測試，類似 Cisco 當年保留 backend 委外。<br><strong>投資意義</strong>：設計服務行業在 2030+ 仍有生意可做，但 Top 3 集中度會提高（Alchip / Broadcom / MRVL + MediaTek 前三），小玩家（GUC / Faraday / Socionext）被 squeeze out。</div>
+</div>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §2（二）</div>
+  <div class="i-body">TPU v7 Ironwood 的<strong>「4.6 PFLOPS = B200」</strong>是本 ID 最重要的技術轉折點。過去市場認為 ASIC 永遠比 GPU 晚 1-2 代，現在 TPU v7 與 B200 同級，證明 <strong>ASIC 不是 GPU 的垃圾桶而是平行選項</strong>。這動搖 NVDA「先進製程獨占」的護城河假設。</div>
+</div>
+
+<!-- ========== §3 核心技術棧拆解 ========== -->
+<h2>§3 核心技術棧拆解</h2>
+
+<table>
+<tr><th>子技術</th><th>作用</th><th>瓶頸點</th><th>關鍵持有者</th></tr>
+<tr><td>Backend physical design</td><td>把 RTL 變成實際布線，包含 clock tree、timing closure</td><td>3nm / 2nm 每層數千張 mask，複雜度 4-5 倍 5nm</td><td>AVGO / MRVL / Alchip / GUC</td></tr>
+<tr><td>2.5D / 3D 封裝設計</td><td>CoWoS + HBM 整合、UCIe chiplet 介面設計</td><td>2.5D 熱耦合模擬、3D hybrid bonding 金屬擴散</td><td>AVGO / Alchip / GUC（APT 平台）</td></tr>
+<tr><td>HBM4 controller IP</td><td>HBM4 介面（1.6 Tbps/stack）整合</td><td>JEDEC HBM4 規格 2025 完稿、量產 2026</td><td>SNPS / CDNS（賣 IP） / Rambus</td></tr>
+<tr><td>UCIe / BoW chiplet 介面</td><td>die-to-die 連接</td><td>UCIe 2.0 2026 發布，業界採用中</td><td>Open UCIe（全產業）+ GUC GLink-3D（自有）</td></tr>
+<tr><td>AI-specific IP（matrix engine, tensor core）</td><td>客戶自有 IP 整合</td><td>hyperscaler 自有 IP 為主，設計服務只做 integration</td><td>hyperscaler（Google / AWS / Meta / MS）</td></tr>
+<tr><td>先進製程 PDK（process design kit）存取權</td><td>TSMC 3nm / 2nm 設計規則</td><td>只有少數 partner 拿到早期 PDK，是 AVGO + Alchip 護城河</td><td>TSMC（3nm）/ Samsung Foundry（2nm 試產）</td></tr>
+<tr><td>測試 + packaging 整合</td><td>final test + SLT（system-level test）</td><td>ATE 設備極度緊缺，Advantest T9000 lead time &gt; 12 個月</td><td>Advantest / Teradyne / 日月光（ASE）</td></tr>
+</table>
+
+<h3>良率卡點 × 專利持有者</h3>
+<table>
+<tr><th>子技術</th><th>當前良率</th><th>挑戰</th><th>關鍵專利 / IP 持有者</th></tr>
+<tr><td>3nm 大 die（&gt; 600 mm²）</td><td>65-70%</td><td>晶片越大 defect density 越致命；2nm 降至 50-55%</td><td>TSMC（process）/ Cadence（DRC tools）</td></tr>
+<tr><td>CoWoS-L 多 die 整合</td><td>78-82%</td><td>TSV 對齊、interposer warpage 控制</td><td>TSMC 獨家</td></tr>
+<tr><td>HBM4 base die 整合</td><td>Samsung 70-75% / SK Hynix 80-85%</td><td>HBM4 base die 採 logic 3nm（非傳統 DRAM process）</td><td>TSMC（base die 製造）+ SK Hynix / Samsung / Micron（stack）</td></tr>
+<tr><td>UCIe 2.0 介面</td><td>晶片間 timing margin 窄</td><td>不同工藝節點 die 整合時 electrical characteristic 差異</td><td>Intel / AMD / TSMC / Samsung（Open UCIe）</td></tr>
+<tr><td>PPA（power/performance/area）優化</td><td>依客戶而定</td><td>AVGO 平均 PPA 比台系 design service 高 15-20%</td><td>AVGO（自有 flow）/ SNPS Fusion Compiler</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §3（Kingmaker 子技術）</div>
+  <div class="i-body"><strong>HBM4 controller + CoWoS-L 整合能力</strong>是 2026-2028 年真正的 kingmaker。前者決定晶片記憶體頻寬、後者決定 multi-die scaling 上限。AVGO 在兩者都領先、Alchip 趕上中、GUC 靠 TSMC 授權縮短差距。<br><strong>投資意義</strong>：若某家 design service 公司無法在 2027 前完成 CoWoS-L 整合 tape-out，2028+ 基本出局（這包含 Socionext / Faraday / 2302 美品等）。</div>
+</div>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §3（二）</div>
+  <div class="i-body">HBM4 base die 採 TSMC 3nm logic process 是<strong>「隱藏版 TSMC 再贏一局」</strong>：過去 HBM base die 是 DRAM 廠自製（簡單的 logic），現在變成 TSMC 3nm，等於 TSMC 吃到每顆 HBM stack 的設計服務費。AVGO / Alchip / GUC 都要配合 TSMC 做 base die 整合，誰最早通過 TSMC 認證，誰最先拿到 2027 HBM4 design win。</div>
+</div>
+
+<!-- ========== §4 市場規模 + CAGR ========== -->
+<h2>§4 市場規模 + CAGR</h2>
+
+<h3>TAM / SAM / SOM</h3>
+<table>
+<tr><th>口徑</th><th>2024</th><th>2026E</th><th>2030E</th><th>2033E</th><th>CAGR（2024-2033）</th></tr>
+<tr><td>總 AI 加速器 TAM</td><td>~$80B</td><td>~$350B</td><td>~$550B</td><td>~$620B</td><td>25%</td></tr>
+<tr><td>ASIC 占比</td><td>8%</td><td>~12%</td><td>~17%</td><td>19%</td><td>升 11pp</td></tr>
+<tr><td><strong>ASIC 全體 SAM</strong></td><td><strong>~$6.4B</strong></td><td><strong>~$42B</strong></td><td><strong>~$93B</strong></td><td><strong>~$118B</strong></td><td><strong>39%</strong></td></tr>
+<tr><td>其中：Hyperscaler ASIC（GOOG/MSFT/AMZN/META）</td><td>~$4B</td><td>~$28B</td><td>~$62B</td><td>~$78B</td><td>45%（最陡）</td></tr>
+<tr><td>設計服務 NRE + backend SOM（約 Hyperscaler ASIC 的 25-30%）</td><td>~$1.2B</td><td>~$8B</td><td>~$18B</td><td>~$23B</td><td>39%</td></tr>
+</table>
+
+<p class="source-tag">[T2: <a href="https://www.bloomberg.com/company/press/ai-accelerator-market-looks-set-to-exceed-600-billion-by-2033-driven-by-hyperscale-spending-and-asic-adoption-according-to-bloomberg-intelligence/">Bloomberg Intelligence 2025</a> · <a href="https://introl.com/blog/custom-silicon-inflection-2026-hyperscaler-asics-nvidia-gpu">Introl Custom Silicon Inflection 2026</a>]</p>
+
+<h3>過去 3 次 TAM forecast 實際偏差</h3>
+<table>
+<tr><th>年份</th><th>當年預估（對 2025）</th><th>實際 2025</th><th>偏差</th><th>啟示</th></tr>
+<tr><td>2020（McKinsey）</td><td>2025 ASIC ~$3B</td><td>~$9B</td><td>+200%</td><td>低估 3x，因為 Transformer 模型推論需求爆發</td></tr>
+<tr><td>2022（Gartner）</td><td>2025 ASIC ~$5B</td><td>~$9B</td><td>+80%</td><td>仍低估，主因 ChatGPT 2022-11 後 hyperscaler 急轉向 in-house</td></tr>
+<tr><td>2024（IC Insights）</td><td>2025 ASIC ~$7B</td><td>~$9B</td><td>+28%</td><td>已收斂，但仍略低估，因 AVGO $73B backlog 揭露</td></tr>
+</table>
+
+<p><strong>過去 3 次均偏低估</strong>：本次 Bloomberg / Introl 預估 2033 ~$118B 極可能仍然保守，因：(1) OpenAI Titan（AVGO 2026-2029 $100B+ 合約）未完全納入；(2) Apple / Tesla 2027+ 若加入 hyperscaler ASIC 陣營，TAM 再上修 15-20%。本 ID 內部估值採 $140-160B（2033）作為 optimistic 情境。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §4</div>
+  <div class="i-body"><strong>ASIC 市場的 CAGR 45% 比 TAM 絕對值更重要</strong>。即使只有 $118B，CAGR 45% 代表年增量 $30-40B/年，足以支撐 3 家上市公司每家營收翻倍。AVGO 已捕捉 $20B+/年、MRVL ~$4B、Alchip ~$1-2B、MediaTek ASIC ~$1B，合計 &lt; $30B 還有餘地。<br><strong>投資意義</strong>：2026-2028 是最肥的三年（CAGR 最高點），2029+ 成熟期 CAGR 降至 15-20%，屆時倍數應收斂。</div>
+</div>
+
+<!-- ========== §5 供應鏈 Value Chain ========== -->
+<h2>§5 供應鏈 Value Chain</h2>
+
+<svg class="vc-svg" viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7C3AED"/>
+    </marker>
+  </defs>
+  <rect x="20" y="60" width="220" height="180" rx="10" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="2"/>
+  <text x="130" y="90" font-size="13" font-weight="700" fill="#4C1D95" text-anchor="middle">上游（客戶 + IP）</text>
+  <text x="30" y="115" font-size="11" fill="#4C1D95">客戶：Google / Meta / AWS / MS</text>
+  <text x="30" y="133" font-size="11" fill="#4C1D95">　　   OpenAI / Anthropic / ByteDance</text>
+  <text x="30" y="151" font-size="11" fill="#4C1D95">IP：Arm Neoverse / SNPS IP / CDNS IP</text>
+  <text x="30" y="169" font-size="11" fill="#4C1D95">EDA：SNPS / CDNS 工具</text>
+  <text x="30" y="195" font-size="10" fill="#6B21A8">毛利：客戶 30-50%（訓練/推論 service 轉賣）</text>
+  <text x="30" y="213" font-size="10" fill="#6B21A8">毛利：IP/EDA 70-80%</text>
+  <text x="30" y="231" font-size="10" fill="#6B21A8">議價權：客戶上升、IP 下降</text>
+  <line x1="240" y1="150" x2="380" y2="150" stroke="#7C3AED" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="390" y="60" width="220" height="180" rx="10" fill="#EDE9FE" stroke="#A78BFA" stroke-width="2"/>
+  <text x="500" y="90" font-size="13" font-weight="700" fill="#4C1D95" text-anchor="middle">中游（設計服務 + fab）</text>
+  <text x="400" y="115" font-size="11" fill="#4C1D95">AVGO / MRVL（merchant）</text>
+  <text x="400" y="133" font-size="11" fill="#4C1D95">Alchip / GUC / MediaTek（台系）</text>
+  <text x="400" y="151" font-size="11" fill="#4C1D95">Socionext（日）</text>
+  <text x="400" y="169" font-size="11" fill="#4C1D95">foundry：TSMC / Samsung</text>
+  <text x="400" y="195" font-size="10" fill="#6B21A8">毛利：AVGO 50%+ / MRVL 45% / Alchip 22-28%</text>
+  <text x="400" y="213" font-size="10" fill="#6B21A8">毛利：MediaTek 40%（手機稀釋）</text>
+  <text x="400" y="231" font-size="10" fill="#6B21A8">議價權：強（3nm 產能獨家）</text>
+  <line x1="610" y1="150" x2="750" y2="150" stroke="#7C3AED" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="760" y="60" width="220" height="180" rx="10" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="2"/>
+  <text x="870" y="90" font-size="13" font-weight="700" fill="#4C1D95" text-anchor="middle">下游（封測 + 部署）</text>
+  <text x="770" y="115" font-size="11" fill="#4C1D95">封裝：TSMC CoWoS 獨家</text>
+  <text x="770" y="133" font-size="11" fill="#4C1D95">測試：Advantest / Teradyne</text>
+  <text x="770" y="151" font-size="11" fill="#4C1D95">封測廠：ASE / 力成 / Amkor</text>
+  <text x="770" y="169" font-size="11" fill="#4C1D95">Server OEM：SMCI / 廣達 / 鴻海</text>
+  <text x="770" y="195" font-size="10" fill="#6B21A8">毛利：CoWoS 55% / ATE 55% / server 8-12%</text>
+  <text x="770" y="213" font-size="10" fill="#6B21A8">議價權：CoWoS 極強、server 低</text>
+  <text x="770" y="231" font-size="10" fill="#6B21A8">利潤池：TSMC + Advantest</text>
+</svg>
+
+<h3>議價權近 5 年轉移史</h3>
+<table>
+<tr><th>時期</th><th>利潤池集中位置</th><th>關鍵事件</th></tr>
+<tr><td>2015-2020</td><td>foundry（TSMC 獨大 → 毛利 50%+）</td><td>7nm 節點確立 TSMC 獨家</td></tr>
+<tr><td>2020-2023</td><td>設計服務 + foundry 共享（AVGO 45% / TSMC 55%）</td><td>Google TPU v4 成功示範，AVGO 進入 scale</td></tr>
+<tr><td>2024-2026</td><td>設計服務 margin 擴張至 50%+（AVGO），因為 Google / Meta 議價權還未完全發揮</td><td>ASIC 爆發期，供給緊缺</td></tr>
+<tr><td>2027-2030E</td><td><strong>預測利潤池再次轉移：AVGO 毛利壓至 40%，hyperscaler 多源供應</strong></td><td>Trainium 3 Alchip 搶 MRVL 生意，證明多源化趨勢確立</td></tr>
+</table>
+
+<p>關鍵觀察：<strong>AWS Trainium 3 在 2025 Q4 選 Alchip（而非 MRVL）作為主 backend partner</strong>，是本 ID 最重要的微觀信號。這證明 hyperscaler 不會只綁一家設計服務商，會刻意分散（單源風險）、壓低 margin。MRVL 只保留 MS Maia 300，AWS 轉向 Alchip + 內部擴編。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §5</div>
+  <div class="i-body">過去 5 年 value chain 最肥的段是<strong>「設計服務 + CoWoS」雙殺</strong>（AVGO 50% GM × TSMC CoWoS 55% GM）。未來 5 年轉向<strong>「CoWoS + HBM 封裝」雙殺</strong>（TSMC CoWoS 55% + HBM base die 30-40%）；設計服務段 margin 將壓至 40%（AVGO）/ 20-25%（Alchip）。<br><strong>投資意義</strong>：若為 2028+ long-only 配置，TSMC 2330 優於 AVGO（margin 結構更穩）；短期 2026-2027 AVGO 仍是最強表現者。</div>
+</div>
+
+<!-- ========== §6 玩家矩陣 ========== -->
+<h2>§6 玩家矩陣</h2>
+
+<h3>6.1 Merchant ASIC 供應商（掌握產品所有權）</h3>
+<table>
+<tr><th>公司</th><th>Ticker</th><th>FY25 營收</th><th>AI ASIC 占比</th><th>關鍵客戶</th><th>毛利率</th><th>市占（AI ASIC）</th><th>近 12 月動向</th></tr>
+<tr><td>Broadcom</td><td>AVGO</td><td>$63.9B（Q1 FY26 AI $8.4B，YoY+106%）</td><td>~50%+ (Q2 FY26 guide $10.7B)</td><td>Google（78% of ASIC）、Meta、ByteDance、OpenAI（新 2025 Q4）、Anthropic</td><td>ASIC ~50%，整體 65%</td><td><strong>60-80%</strong>（壓倒性）</td><td>↑↑ OpenAI "Titan" $100B+ 合約揭示</td></tr>
+<tr><td>Marvell</td><td>MRVL</td><td>$8.2B（FY26，YoY +42%）</td><td>~30%（Q4 AI ASIC 占 data center &gt;$2.5B）</td><td>AWS Trainium 2、MS Maia、MS Maia 300（2027）</td><td>整體 45%</td><td><strong>20-25%</strong></td><td>↓ AWS Trainium 3 敗給 Alchip，僅保留 MS</td></tr>
+</table>
+
+<h3>6.2 Pure Design Service（台系 / 日系，不掌握所有權）</h3>
+<table>
+<tr><th>公司</th><th>Ticker</th><th>2024 營收</th><th>主要客戶</th><th>毛利率</th><th>市占</th><th>近 12 月動向</th></tr>
+<tr><td>Alchip Technologies</td><td>3661.TW</td><td>NT$31.27B（2024）</td><td>AWS（60%，"Customer A"）、Intel（2024 外包）</td><td>22-28%（Q3 2025 28%）</td><td>~8%</td><td>↑↑ 2025 全年營收下滑，但 2026 H2 AWS Trainium 3 帶回「multi-billion 生意」</td></tr>
+<tr><td>Global Unichip (GUC)</td><td>3443.TW</td><td>NT$19-20B（2024）</td><td>TSMC（35% 股東）、中國 AI 客戶、SSD / 網通公司</td><td>30-35%</td><td>~5%</td><td>↔ 2.5D/3D APT 平台 2025-09 發布；尚未大 hyperscaler flagship</td></tr>
+<tr><td>Faraday</td><td>3035.TW</td><td>NT$11B（2024）</td><td>中國 / 日本中小客戶</td><td>30-33%</td><td>&lt; 2%</td><td>↓ AI 紅利未取得大案</td></tr>
+<tr><td>Socionext</td><td>6526.T</td><td>¥220B（2024，~$1.4B）</td><td>汽車 / 工業 ASIC 為主；AI 少量</td><td>30%</td><td>&lt; 2%</td><td>↔ 汽車 ASIC 穩但 AI 進度慢</td></tr>
+</table>
+
+<h3>6.3 Mobile 轉 ASIC（混合型）</h3>
+<table>
+<tr><th>公司</th><th>Ticker</th><th>總營收</th><th>ASIC 目標</th><th>主要客戶</th><th>毛利率</th><th>近 12 月動向</th></tr>
+<tr><td>MediaTek</td><td>2454.TW</td><td>NT$540B（2024）</td><td>2026 ASIC $1B、2027 占總營收 20%（~$3.5B）</td><td>Google TPU v7e / v8e、傳洽 OpenAI</td><td>整體 48%（手機稀釋後）</td><td>↑↑↑ 2025 Q4 拿下 Google v7e+v8e，要求 TSMC CoWoS 7x 擴產</td></tr>
+</table>
+
+<h3>6.4 In-House Hyperscaler 設計團隊（未上市的「隱性」對手）</h3>
+<table>
+<tr><th>hyperscaler</th><th>ASIC 品牌</th><th>設計策略</th><th>2026 量產量</th><th>對設計服務的威脅</th></tr>
+<tr><td>Google（GOOGL）</td><td>TPU v7 Ironwood、v7e、v8e</td><td>architecture + frontend 內部 / backend 外包（AVGO / MediaTek）</td><td>1M+ 顆（Anthropic 部署）</td><td>中（仍需外包 backend）</td></tr>
+<tr><td>AWS（AMZN）</td><td>Trainium 3（取消 Inferentia 線）</td><td>frontend 內部 / backend Alchip（主）+ Marvell（次）</td><td>~800K 顆（推估）</td><td>中（但多源給設計服務商）</td></tr>
+<tr><td>Microsoft（MSFT）</td><td>Maia 200（2026）、Maia 300（2027）</td><td>frontend 內部 / backend MRVL + AMD 合作</td><td>~400K 顆（2026）</td><td>低（全仰賴 MRVL）</td></tr>
+<tr><td>Meta（META）</td><td>MTIA v3（2026）、v4（2027）</td><td>frontend 內部 / backend AVGO</td><td>~500K 顆（2026）</td><td>中</td></tr>
+<tr><td>Apple（AAPL）</td><td>M4 Neural / AAPL Server silicon（傳 2027）</td><td>frontend + backend 100% 內部</td><td>—</td><td><strong>高（若加入 cloud，完全 in-house）</strong></td></tr>
+</table>
+
+<h3>6.5 EDA / IP 支援玩家（非本 ID 主軸但強相關）</h3>
+<table>
+<tr><th>公司</th><th>Ticker</th><th>在 AI ASIC 的角色</th><th>毛利率</th><th>市占</th></tr>
+<tr><td>Synopsys</td><td>SNPS</td><td>Fusion Compiler + HBM IP + Neoverse 相容</td><td>80%+（軟體）</td><td>~45% EDA</td></tr>
+<tr><td>Cadence</td><td>CDNS</td><td>Innovus + Palladium 驗證</td><td>80%+</td><td>~35% EDA</td></tr>
+<tr><td>Arm Holdings</td><td>ARM</td><td>Neoverse IP 授權（AWS Graviton、GOOGL Axion、MS Cobalt 均用）</td><td>95%+（授權）</td><td>~95% cloud CPU IP</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §6</div>
+  <div class="i-body"><strong>真正的「3+1 格局」</strong>：AVGO（60-80%）+ MRVL（20-25%）+ Alchip（~8%）+ MediaTek 新增（2027 追至 10%）。GUC 雖技術強但客戶分散，2030 前難突破 8%。小玩家（Faraday / Socionext）被邊緣化。<br><strong>投資意義</strong>：核心配置 AVGO 壓艙、衛星配置 Alchip 做增長彈性、觀察位配置 MediaTek 等 2026 Q3 Google v7e 良率 ramp。</div>
+</div>
+
+<!-- ========== §7 Unit Economics + ASP ========== -->
+<h2>§7 Unit Economics + ASP 動態</h2>
+
+<h3>7.1 產業平均財務結構</h3>
+<table>
+<tr><th>公司</th><th>毛利率</th><th>營業利益率</th><th>ROIC</th><th>Capex 強度</th><th>主要 Capex 項目</th></tr>
+<tr><td>AVGO（AI 段）</td><td>50%+</td><td>45%</td><td>28%</td><td>低（fabless）</td><td>IP 授權 + tape-out NRE</td></tr>
+<tr><td>MRVL</td><td>45%</td><td>25%</td><td>12%</td><td>低</td><td>tape-out NRE + IP</td></tr>
+<tr><td>Alchip</td><td>22-28%</td><td>15-20%</td><td>22%（高資本週轉）</td><td>低</td><td>tape-out NRE</td></tr>
+<tr><td>GUC</td><td>30-35%</td><td>20%</td><td>25%</td><td>低</td><td>IP 授權</td></tr>
+<tr><td>MediaTek（整體）</td><td>48%</td><td>22%</td><td>18%</td><td>低</td><td>tape-out NRE + IP</td></tr>
+<tr><td>TSMC（參考對比）</td><td>55%</td><td>44%</td><td>24%</td><td>極高（30% of rev）</td><td>晶圓廠 + CoWoS 擴產</td></tr>
+</table>
+
+<h3>7.2 商業模式：NRE + Mass Production 的組合結構</h3>
+<p>設計服務的收入分兩層：</p>
+<table>
+<tr><th>收入層</th><th>性質</th><th>金額（每個 flagship 計畫）</th><th>毛利率</th></tr>
+<tr><td>NRE（Non-Recurring Engineering）</td><td>一次性設計費：backend、physical design、tape-out</td><td>$50-200M / chip（視 3nm/2nm）</td><td>30-40%</td></tr>
+<tr><td>Mass Production Service</td><td>批量生產「代管」費，按晶圓數抽成</td><td>$5-15/wafer 管理費 × wafer 數</td><td>20-25%</td></tr>
+<tr><td>IP 授權（某些 case）</td><td>若設計服務提供 HBM / UCIe / SerDes IP</td><td>per-project，$10-30M</td><td>70-80%（IP）</td></tr>
+<tr><td>AVGO / MRVL 加值：產品銷售</td><td>merchant ASIC 直接銷售 finished chip</td><td>$15-30K/chip × 出貨量</td><td>45-55%</td></tr>
+</table>
+
+<p>關鍵差異：<strong>AVGO 除了收 NRE + production fee，還賣 finished silicon（客戶買 wafer + package + test 的「完成品」）</strong>。這讓 AVGO 毛利結構比台系 design service 高 20-25pp。Alchip / GUC 只收 NRE + 管理費，不擁有 silicon 所有權。</p>
+
+<h3>7.3 ASP 過去 5Y + 未來 2Y 動態</h3>
+<table>
+<tr><th>年份</th><th>TPU / ASIC 單顆 ASP</th><th>驅動因素</th></tr>
+<tr><td>2021 (TPU v4)</td><td>~$8K</td><td>7nm、16GB HBM2</td></tr>
+<tr><td>2023 (TPU v5p)</td><td>~$13K</td><td>5nm、95GB HBM3</td></tr>
+<tr><td>2025 (TPU v7 Ironwood)</td><td>~$20K</td><td>3nm、192GB HBM3E、4.6 PFLOPS FP8</td></tr>
+<tr><td>2026E (AWS Trainium 3)</td><td>~$24K</td><td>3nm、128GB HBM3E、CoWoS-L</td></tr>
+<tr><td>2027E (MS Maia 300)</td><td>~$28K</td><td>2nm、HBM4</td></tr>
+<tr><td>2028E (MTIA v4 / TPU v8)</td><td>~$32K</td><td>2nm chiplet、HBM4 12-stack</td></tr>
+</table>
+
+<p><strong>ASP 5 年上漲 4x（$8K → $32K），年複合 +32%</strong>。驅動：製程節點縮、HBM 容量翻倍、封裝複雜度升。</p>
+
+<h3>7.4 抗 Commoditization 分析</h3>
+<table>
+<tr><th>抗 commodity 因素</th><th>AVGO</th><th>MRVL</th><th>Alchip</th><th>MediaTek</th></tr>
+<tr><td>IP 組合（HBM4、SerDes、UCIe）</td><td>強（自有全套）</td><td>中（自有 SerDes）</td><td>弱（買 SNPS IP）</td><td>強（手機 SoC 累積）</td></tr>
+<tr><td>製程存取權（TSMC 3nm/2nm）</td><td>頂級 partner</td><td>頂級 partner</td><td>二級 partner</td><td>頂級 partner</td></tr>
+<tr><td>客戶黏性（hyperscaler 切換成本）</td><td>高（7+ 客戶）</td><td>中（3 客戶）</td><td>中（AWS 高度依賴）</td><td>新（2 客戶）</td></tr>
+<tr><td>Scale（可攤提 NRE）</td><td>巨大</td><td>大</td><td>中</td><td>巨大</td></tr>
+<tr><td>品牌 / 生態系</td><td>Cisco 級護城河</td><td>中</td><td>弱（純 B2B 服務）</td><td>強（手機 SoC 信譽）</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §7</div>
+  <div class="i-body">AVGO 的 50% ASIC 毛利在 2027+ 有下行壓力，但不會崩：<strong>因為它擁有產品所有權 + 7 家客戶分散 + 附加網通 ASIC 與 VMware 利潤池</strong>。Alchip 的 22-28% 毛利反而可能在 2027 隨 Trainium 3 量產上升至 30-32%（因 ODM/backend 服務的經驗曲線）。<br><strong>投資意義</strong>：AVGO 估值多重（peg、fwd PE、EV/EBITDA）提升空間有限但下限強；Alchip 估值彈性大（2027 EPS 可能翻 2-3 倍），但下限弱（單一客戶 AWS 風險）。</div>
+</div>
+
+<!-- ========== §8 估值影響機制 ========== -->
+<h2>§8 估值影響機制</h2>
+
+<h3>關鍵產業變數 → 公司 Fwd PE / PEG 傳導</h3>
+<table>
+<tr><th>產業變數</th><th>變化方向</th><th>AVGO</th><th>MRVL</th><th>Alchip</th><th>MediaTek</th></tr>
+<tr><td>Hyperscaler ASIC Capex +10%</td><td>↑</td><td>Fwd PE +1x（因 backlog 固化）</td><td>Fwd PE +2-3x</td><td>Fwd PE +4-5x</td><td>Fwd PE +2x</td></tr>
+<tr><td>TSMC 3nm 產能釋放 +10%</td><td>↑</td><td>平淡（已大客戶）</td><td>+1x</td><td>+3x（最利好）</td><td>+2x</td></tr>
+<tr><td>NVDA 推論份額回防 +5pp</td><td>↓</td><td>Fwd PE -1x</td><td>-2x</td><td>-3x</td><td>-2x</td></tr>
+<tr><td>hyperscaler 議價權 +5pp → 壓毛利</td><td>↓</td><td>Fwd PE -2x（margin 受 squeezed）</td><td>-2x</td><td>不受影響（本就低 margin）</td><td>-1x</td></tr>
+<tr><td>TPU v8 / Trainium 4 量產時程（2028）延後 1 年</td><td>↓</td><td>-1x</td><td>-3x</td><td>-5x（彈性最大）</td><td>-2x</td></tr>
+</table>
+
+<div class="judgment">
+  <div class="j-head">🟡 敏感度模型 [信心: 中]</div>
+  <div class="j-facts">事實 1: AVGO Q1 FY26 AI 營收 $8.4B（+106% YoY）<span class="source-tag">[<a href="https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announces-first-quarter-fiscal-year-2026-financial">Broadcom Q1 FY26 release</a>]</span></div>
+  <div class="j-facts">事實 2: MRVL FY26 AI revenue &gt;$2.5B，但 Trainium 3 敗給 Alchip<span class="source-tag">[<a href="https://newsletter.semianalysis.com/p/aws-trainium3-deep-dive-a-potential">SemiAnalysis Trainium3 deep dive</a>]</span></div>
+  <div class="j-facts">事實 3: Alchip Q3 2025 GM 28%，2024 年營收 AWS 占 60%<span class="source-tag">[<a href="https://www.alchip.com/en/Newsroom/Alchip_2025_Q3_financial_results">Alchip Q3 2025 financials</a>]</span></div>
+  <div class="j-infer">→ 推論：hyperscaler Capex 是最大 swing factor；3nm 產能釋放最利 Alchip；毛利壓力最傷 AVGO / MRVL</div>
+  <div class="j-falsify">⚠ 證偽條件：若 AVGO Q2 FY26 guide $10.7B 未達標（需 Q3 才能驗證），則整個 hyperscaler capex 傳導邏輯需重算</div>
+</div>
+
+<h3>敏感度：+1pp 毛利 ⇒ ? 倍數擴張</h3>
+<table>
+<tr><th>公司</th><th>目前 Fwd PE</th><th>+1pp 毛利對 EPS 影響</th><th>→ 合理 Fwd PE 變動</th></tr>
+<tr><td>AVGO</td><td>~28x</td><td>EPS +2%</td><td>+0.5x（目標 28.5x）</td></tr>
+<tr><td>MRVL</td><td>~32x</td><td>EPS +3%</td><td>+1x（目標 33x）</td></tr>
+<tr><td>Alchip</td><td>~45x</td><td>EPS +6%（彈性最大）</td><td>+3-4x（目標 48-49x）</td></tr>
+<tr><td>MediaTek</td><td>~18x</td><td>EPS +1.5%（手機稀釋）</td><td>+0.3x</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §8</div>
+  <div class="i-body"><strong>Alchip 的估值彈性 6-8 倍 AVGO</strong>，因為：(a) 目前毛利低（22-28%），每 1pp 毛利 delta 對 EPS 衝擊是 AVGO 的 3 倍；(b) 當前 PE 45x 比 AVGO 28x 更快跟隨 EPS 變動（小市值 PE expansion 彈性大）。<br><strong>投資意義</strong>：短期 2026-2027 Alchip 是最好的 alpha 來源，但波動極大。AVGO 則是組合 anchor，穩健但彈性有限。</div>
+</div>
+
+<!-- ========== §9 風險矩陣 + 政策地緣 ========== -->
+<h2>§9 風險矩陣 + 政策地緣子表</h2>
+
+<h3>9.1 3 軸風險矩陣</h3>
+<table>
+<tr><th>風險軸</th><th>具體風險</th><th>機率</th><th>嚴重度</th><th>受影響標的</th></tr>
+<tr><td>技術風險</td><td>TSMC 3nm / 2nm 良率 ramp 延後 6 個月</td><td>25%</td><td>中</td><td>全部（AVGO、MRVL、Alchip、MediaTek）</td></tr>
+<tr><td>技術風險</td><td>CoWoS 產能 bottleneck（2027 仍未解）</td><td>40%</td><td>高</td><td>Alchip（最敏感，因 TSMC 二級 partner）</td></tr>
+<tr><td>需求風險</td><td>AI 訓練 capex 2027 放緩（LLM 瓶頸）</td><td>25%</td><td>高</td><td>AVGO、MRVL（推論續強，但訓練 down）</td></tr>
+<tr><td>需求風險</td><td>hyperscaler 完全 in-house（Apple 模式）</td><td>15%</td><td>致命</td><td>Alchip、GUC（純 backend 服務）</td></tr>
+<tr><td>替代風險</td><td>NVDA GPU 價格戰，ASIC 經濟性翻轉</td><td>20%</td><td>高</td><td>AVGO（主）、MRVL</td></tr>
+<tr><td>替代風險</td><td>通用 GPU（AMD MI500 / NVDA Vera）大幅降價</td><td>30%</td><td>中</td><td>AVGO、MediaTek</td></tr>
+</table>
+
+<h3>9.2 政策地緣子表（獨立列）</h3>
+<table>
+<tr><th>政策 / 地緣事件</th><th>時程</th><th>影響</th><th>受影響標的</th></tr>
+<tr><td>US-China chip 禁令延伸至 2nm</td><td>2026-2027</td><td>台系 design service 無法接中國客戶，GUC / Faraday 壓力大</td><td>GUC（中國客戶占 15%）、Faraday</td></tr>
+<tr><td>CHIPS Act 2.0 強制 hyperscaler 用美系 foundry</td><td>2026 H2（可能立法）</td><td>Samsung Foundry 2nm 受益，但 Alchip 須分散 design 到 Samsung</td><td>Samsung LSI、Alchip</td></tr>
+<tr><td>台海衝突（極端情境）</td><td>&lt; 5%</td><td>Alchip / GUC / MediaTek 生產中斷，全產業停擺</td><td>台系全體</td></tr>
+<tr><td>EU AI Act 要求 data locality</td><td>2026-2027</td><td>歐洲客戶優先用 EU 本地設計服務（目前無 ASIC 玩家）</td><td>低直接影響，間接推升 BTH / 其他歐洲 startup</td></tr>
+</table>
+
+<div class="judgment">
+  <div class="j-head">🟡 最被低估的風險 [信心: 高]</div>
+  <div class="j-facts">事實 1: Apple M-series + 傳聞 AAPL Server silicon（2027+）完全 in-house</div>
+  <div class="j-facts">事實 2: hyperscaler 過去 5 年 in-house 設計團隊人數從 200 → 1,500+（AWS、Google）</div>
+  <div class="j-facts">事實 3: Alchip 60% 營收來自 AWS 一家客戶</div>
+  <div class="j-infer">→ 推論：Alchip 若 AWS 2029+ 完全 in-house，營收 40%+ 蒸發，股價可能 -60%。MRVL 類似但 MS Maia 300 撐住</div>
+  <div class="j-falsify">⚠ 證偽條件：若 AWS 2027 年度 in-house headcount 增長 &lt; 30% YoY，此風險 shelved</div>
+</div>
+
+<!-- ========== §9.5 Kill Scenario ========== -->
+<h2>§9.5 Kill Scenario / Steel-man 反方</h2>
+
+<h3>反方論證 1：NVDA Vera（2027）性價比遠超 ASIC，ASIC 市佔回降至 15%</h3>
+<p><strong>具體路徑</strong>：NVDA 2027 推出 Vera Rubin，採 TSMC 2nm + HBM4 + 新架構（Transformer 推論優化）。若 Vera 單位 token 成本比 TPU v8 低 30%+，hyperscaler 重新評估 ASIC ROI，暫緩下一代設計。</p>
+<p><strong>當前證據</strong>：NVDA H200 vs B100 單位 FLOP 下降 25%（2025）；Vera 架構若延續，2027 可能比目前 GPU 經濟性提升 40%。</p>
+<p><strong>成真時間窗</strong>：2027 Q2 NVDA GTC 揭示 Vera 性能 → 2027 Q4 hyperscaler 決策。</p>
+
+<h3>反方論證 2：hyperscaler 共同標準化（OpenAI Triton + MLPerf）消除 ASIC 效率優勢</h3>
+<p><strong>具體路徑</strong>：OpenAI / HuggingFace 推動 compiler 層抽象化（Triton、Mosaic），讓 GPU 上跑的 code 在 H200 / B200 / GB300 上達到 ASIC 80% 效率。當 software stack 成熟，ASIC 10-15% 硬體優勢被軟體吃掉。</p>
+<p><strong>當前證據</strong>：NVDA CUDA 護城河正在變寬（2025 Q4 Triton 2.0 發布）；H100 → H200 推論效率提升 35% 純軟體優化。</p>
+<p><strong>成真時間窗</strong>：2026-2027 軟體堆疊成熟 → 2028 hyperscaler 重新檢視 ASIC ROI。</p>
+
+<h3>反方論證 3：Apple / Tesla 自建設計服務，擠壓 AVGO + Alchip 生意</h3>
+<p><strong>具體路徑</strong>：Apple 2027 推 Server silicon（for iCloud / Apple Intelligence），完全 in-house；Tesla Dojo v3 自建設計中心；兩家合計吸走 500+ 工程師，使設計服務商人才庫枯竭。</p>
+<p><strong>當前證據</strong>：Apple 2024 年挖角 AVGO + TSMC 高級工程師 80+ 人；Tesla Dojo 團隊擴至 200+ 人。</p>
+<p><strong>成真時間窗</strong>：2026-2028 人才戰加劇 → 2029 hyperscaler 跟進 in-house。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §9.5（Kill Scenario 反思）</div>
+  <div class="i-body">最有殺傷力的不是「NVDA 反擊」（AVGO 有 backlog 護城河）或「全面 in-house」（overhead 太大），而是<strong>「軟體層取代硬體層優勢」</strong>。若 Triton 2.0 + Mosaic compiler 真的把 GPU 跑得跟 ASIC 一樣快，整個 ASIC thesis 基本破產。<br><strong>投資意義</strong>：2026-2027 要緊盯 MLPerf 跑分，特別是「GPU 跑 Transformer 推論能達到 ASIC 多少 %」。若 &gt;90%，減碼 ASIC 配置。</div>
+</div>
+
+<!-- ========== §10 投資時鐘 ========== -->
+<h2>§10 投資時鐘 + Phase 轉換訊號</h2>
+
+<h3>當前 Phase 判定：Phase II（爆發期）</h3>
+<table>
+<tr><th>Phase</th><th>時期</th><th>贏家</th><th>特徵</th></tr>
+<tr><td>Phase I 試驗期</td><td>2015-2022</td><td>AVGO（先進入者）</td><td>Google TPU 打頭陣；ASIC 占比 &lt; 5%</td></tr>
+<tr><td><strong>Phase II 爆發期</strong> ← 當前</td><td><strong>2023-2028</strong></td><td><strong>AVGO + Alchip + MediaTek + MRVL</strong></td><td><strong>多 hyperscaler 量產；ASIC 8% → 19%；毛利分化</strong></td></tr>
+<tr><td>Phase III 成熟期</td><td>2029-2035</td><td>AVGO + Top 2 設計服務</td><td>毛利收斂；Top 3 吃 85%；小玩家退出</td></tr>
+</table>
+
+<h3>Phase 轉換訊號表</h3>
+<table>
+<tr><th>轉換</th><th>必要條件</th><th>充分條件</th></tr>
+<tr><td>II → III 確立</td><td>ASIC 占 AI 計算 &gt; 30%（2028）</td><td>ASIC shipments &gt; GPU shipments（2028 H2）</td></tr>
+<tr><td>II → III 確立</td><td>AVGO FY 年營收 &gt; $150B（2030）</td><td>Top 3 ASIC 玩家毛利收斂至 &lt;45%</td></tr>
+<tr><td>II → III 提前</td><td>Apple / Tesla 2027 加入 cloud ASIC 陣營</td><td>兩家合計 ASIC 採購 &gt; $10B/年</td></tr>
+<tr><td>II → II 延長（Phase II 拉長至 2030）</td><td>Vera Rubin 性價比優勢 &gt;25%</td><td>hyperscaler 2028 capex 下修 15%+</td></tr>
+</table>
+
+<!-- ========== §10.5 Catalyst Timeline ========== -->
+<h2>§10.5 Catalyst Timeline（未來 18 個月）</h2>
+
+<table>
+<tr><th>日期</th><th>事件</th><th>類別</th><th>檢視指標</th><th>若達成</th><th>若落空</th></tr>
+<tr><td>2026-Q2（5-6 月）</td><td>AVGO Q2 FY26 earnings（guide $10.7B AI）</td><td>財報</td><td>AI 營收是否達成 $10.7B guide</td><td>➕ 加碼 AVGO，升至 core 目標位</td><td>➖ AVGO -10%，檢視 ASIC 成長假設</td></tr>
+<tr><td>2026-Q3（7-8 月）</td><td>AWS re:Invent 2026 預熱，Trainium 3 量產進度</td><td>keynote</td><td>Alchip Q2 營收成長 YoY</td><td>➕ 加碼 Alchip，升至 15%</td><td>➖ Alchip -15%，檢視 AWS 單一客戶風險</td></tr>
+<tr><td>2026-Q3</td><td>Google Cloud Next 2026，TPU v7 大規模部署數據</td><td>keynote</td><td>TPU v7 deployment 公告數字（目標 1M+）</td><td>➕ AVGO + MediaTek 受益</td><td>➖ 檢視 MediaTek v7e 訂單</td></tr>
+<tr><td>2026-Q4</td><td>Meta Connect 2026 揭示 MTIA v3 生產量</td><td>keynote</td><td>MTIA v3 量產規模</td><td>➕ AVGO（MTIA 主 backend）</td><td>➖ 中性，Meta 案為邊緣</td></tr>
+<tr><td>2027-Q1</td><td>AVGO FY27 Q1 earnings 首次揭示 OpenAI Titan 進度</td><td>財報</td><td>OpenAI 訂單進度</td><td>➕ AVGO +15%</td><td>➖ -20%，OpenAI 若走向其他家</td></tr>
+<tr><td>2027-Q2</td><td>NVDA GTC 2027，Vera Rubin 性能揭示</td><td>keynote</td><td>Vera 單位成本 vs ASIC</td><td>➖ 若 Vera 優 30%，ASIC 整體下修</td><td>➕ 若 Vera 僅優 10%，ASIC thesis 強化</td></tr>
+<tr><td>2027-Q3</td><td>MS Maia 300 量產（MRVL 主 partner）</td><td>產品上市</td><td>量產數量</td><td>➕ MRVL +25%</td><td>➖ MRVL -15%</td></tr>
+</table>
+
+<!-- ========== §11 關聯個股清單 ========== -->
+<h2>§11 關聯個股清單</h2>
+
+<table>
+<tr><th>Ticker</th><th>公司</th><th>深度</th><th>受益 / 受害</th><th>DD 狀態</th><th>關聯備註</th></tr>
+<tr><td>AVGO</td><td>Broadcom</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 主要受益</td><td><a href="/dd/">DD 已建（2026-04）</a></td><td>60-80% AI ASIC share，$73B backlog，OpenAI Titan 合約</td></tr>
+<tr><td>MRVL</td><td>Marvell</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 受益（次於 AVGO）</td><td><a href="/dd/">DD 已建</a></td><td>20-25% share，MS Maia 300 主 partner，但 Trainium 3 敗給 Alchip</td></tr>
+<tr><td>3661.TW</td><td>Alchip Technologies</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 主要受益</td><td>DD 未建，<strong>建議優先</strong></td><td>AWS Trainium 3 獨家 backend；2026 H2 營收預期翻倍</td></tr>
+<tr><td>2454.TW</td><td>MediaTek</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 受益（新增長）</td><td><a href="/dd/">DD 已建</a></td><td>Google TPU v7e/v8e 設計服務，2026 ASIC $1B 目標</td></tr>
+<tr><td>3443.TW</td><td>Global Unichip (GUC)</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益（較邊緣）</td><td>DD 未建</td><td>TSMC 35% 持股；2.5D/3D APT 平台；尚無 hyperscaler flagship</td></tr>
+<tr><td>GOOGL</td><td>Alphabet</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益（TPU 降本）</td><td><a href="/dd/">DD 已建</a></td><td>TPU v7 Ironwood 部署量領先，Anthropic 1M+ 顆</td></tr>
+<tr><td>AMZN</td><td>Amazon</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益</td><td><a href="/dd/">DD 已建</a></td><td>Trainium 3 量產降本，AWS margin 擴張</td></tr>
+<tr><td>META</td><td>Meta</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益</td><td><a href="/dd/">DD 已建</a></td><td>MTIA v3 / v4 減少 NVDA 依賴</td></tr>
+<tr><td>MSFT</td><td>Microsoft</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益</td><td><a href="/dd/">DD 已建</a></td><td>Maia 200 + 300 多線部署</td></tr>
+<tr><td>NVDA</td><td>NVIDIA</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>❌ 受害（推論份額流失）</td><td><a href="/dd/">DD 已建</a></td><td>訓練領先但推論份額 2028 降至 25-30%</td></tr>
+<tr><td>6526.T</td><td>Socionext</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>✅ 微幅受益</td><td>DD 未建</td><td>日本 ASIC 設計服務，汽車為主，AI 進度慢</td></tr>
+</table>
+
+<h3>Non-obvious 二次受益者</h3>
+<table>
+<tr><th>Ticker</th><th>公司</th><th>受益路徑</th></tr>
+<tr><td>6857.T</td><td>Advantest</td><td>每顆 ASIC 都需 T9000 SoC tester + V93K memory tester，ASIC 量爆發 = Advantest 2026-2028 量能吃緊</td></tr>
+<tr><td>8035.T</td><td>Tokyo Electron</td><td>3nm / 2nm etch + deposition 設備，ASIC 節點遷移 + CoWoS 一同受益</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §11</div>
+  <div class="i-body">Alchip（3661）目前尚無 DD，但屬於本 ID 的 🔴 核心且 pure-play 程度最高，建議<strong>下一輪 DD 優先排程</strong>。其次是 GUC（3443），雖目前邊緣但 2027+ 若拿下 OpenAI 或 Tesla Dojo 可能翻身。</div>
+</div>
+
+<!-- ========== §11.5 Cross-ID 依賴圖 ========== -->
+<h2>§11.5 Cross-ID 依賴圖</h2>
+
+<table>
+<tr><th>關聯類型</th><th>對應 ID</th><th>相依關係</th></tr>
+<tr><td>上游母題</td><td><a href="/id/ID_AIAcceleratorDemand_20260419.html">AI 加速器需求（母題）</a></td><td>本 ID 是其 ASIC 子章節的深度展開；母題揭示 ASIC vs GPU 整體格局</td></tr>
+<tr><td>必要基礎建設（上游）</td><td><a href="/id/ID_LeadingEdgeNode_20260419.html">先進製程節點</a></td><td>TSMC 3nm / 2nm 是 ASIC 設計的前提；Samsung 若翻身可提供備選</td></tr>
+<tr><td>必要基礎建設（上游）</td><td><a href="/id/ID_AdvancedPackaging_20260419.html">先進封裝</a></td><td>CoWoS 是所有高端 ASIC 的封裝標準，產能是本 ID 最大瓶頸</td></tr>
+<tr><td>必要基礎建設（上游）</td><td><a href="/id/ID_HBM_Supercycle_20260419.html">HBM 記憶體超級循環</a></td><td>每顆 ASIC 含 128-192GB HBM3E/HBM4；HBM 是 50-60% 晶片 BOM</td></tr>
+<tr><td>下游應用</td><td><a href="/id/ID_AINetworking_20260419.html">AI 網路互連</a></td><td>ASIC 需搭配 NVLink / UALink / Ethernet 400G+；AVGO Tomahawk 雙殺</td></tr>
+<tr><td>下游應用</td><td><a href="/id/ID_AIDataCenter_20260419.html">AI 資料中心基建</a></td><td>ASIC 部署需配合 DC 液冷 + 電力基建</td></tr>
+<tr><td>兄弟 ID（待建）</td><td>建議新增 ID_AICPU</td><td>Arm Neoverse 在 hyperscaler 崛起，與 ASIC 形成「CPU + accelerator」組合</td></tr>
+<tr><td>兄弟 ID（待建）</td><td>建議新增 ID_AIEDAIP</td><td>SNPS / CDNS / ARM 是本 ID 的工具層</td></tr>
+</table>
+
+<h3>上游依賴：誰廢它連鎖反應？</h3>
+<ul>
+<li><strong>TSMC 3nm 良率崩盤（&lt; 50%）</strong>→ AVGO / Alchip / MediaTek 全體受害，2026-2027 ASIC 量產延後 → AI 加速器供給緊 → NVDA 相對受益</li>
+<li><strong>HBM4 供應緊（Samsung 落後）</strong>→ ASIC BOM 漲 30%+，毛利壓縮 5pp → 設計服務商相對受害（因為不擁有 HBM 漲價賺不到錢）</li>
+<li><strong>CoWoS 2027 產能仍 &lt; 400K WPM</strong>→ ASIC 量產受限，AVGO backlog 延後出貨</li>
+</ul>
+
+<h3>下游受益：本 ID 成立帶動誰？</h3>
+<ul>
+<li><strong>TSMC（2330）</strong>：每顆 ASIC 產生 $8K-$15K 晶圓 + CoWoS + base die 設計服務收入</li>
+<li><strong>Advantest（6857.T）</strong>：ATE 測試設備，每顆 ASIC 需 8-12 小時 SLT 測試</li>
+<li><strong>ASE（3711）</strong>：final test + module assembly</li>
+<li><strong>SMCI / 廣達（2382）</strong>：server ODM 整合 ASIC + HBM + 液冷</li>
+</ul>
+
+<!-- ========== §12 Non-Consensus View ========== -->
+<h2>§12 Non-Consensus View（共識差異）</h2>
+
+<div class="judgment">
+  <div class="j-head">🟡 非共識 1：Hyperscaler ASIC 2028 市占 40%+（vs 共識 20-25%） [信心: 高]</div>
+  <div class="j-facts">共識：Morgan Stanley / Goldman 主流觀點：2028 年 hyperscaler ASIC 占 AI 計算 20-25%</div>
+  <div class="j-facts">本 ID 看法：2028 年 40%+，因為：(a) AVGO FY27 backlog $60-90B 已揭示；(b) OpenAI Titan 2029 前 $100B+；(c) Apple / Tesla 2027 加入</div>
+  <div class="j-facts">分歧原因：共識只計入「自有品牌」ASIC（Google TPU / AWS Trainium），未納入 OpenAI Titan（AVGO 代工但 OpenAI 用）+ Anthropic（TPU 客戶）</div>
+  <div class="j-infer">→ 投資意義：若本 ID 看法正確，2028 AVGO 營收比共識 +$20-30B/年</div>
+  <div class="j-falsify">⚠ 證偽條件：2027 Q2 AVGO backlog YoY 不增加，或 OpenAI Titan 推遲至 2030</div>
+</div>
+
+<div class="judgment">
+  <div class="j-head">🟡 非共識 2：台系 Alchip + MediaTek 合計份額 2028 超越 MRVL（20%+ vs 共識 10-12%） [信心: 中]</div>
+  <div class="j-facts">共識：DIGITIMES 2026-04 主流：台系 AI ASIC 占 10-15%，MRVL 20-25% 維持</div>
+  <div class="j-facts">本 ID 看法：Alchip 2028 市占 ~12%（因 AWS Trainium 3+4 獨家）+ MediaTek ~10%（Google v7e/v8e+）= 22%；MRVL 因失去 Trainium 3，回落至 15-18%</div>
+  <div class="j-facts">分歧原因：DIGITIMES 按歷史線性外推，未納入 AWS 選擇 Alchip 為 Trainium 3 主 backend 的結構變化</div>
+  <div class="j-infer">→ 投資意義：Alchip（3661）與 MediaTek（2454）2026-2027 是最強 alpha 來源</div>
+  <div class="j-falsify">⚠ 證偽條件：MRVL 2027 宣佈拿回 AWS Trainium 5（2028 產品），或 MediaTek v8e 設計延後</div>
+</div>
+
+<div class="judgment">
+  <div class="j-head">🟡 非共識 3：AVGO 在 FY27+ 面臨嚴重毛利壓縮（ASIC 毛利降至 40% vs 共識維持 50%） [信心: 中]</div>
+  <div class="j-facts">共識：賣方（Mizuho、Goldman）維持 AVGO AI 毛利 50%+ 假設</div>
+  <div class="j-facts">本 ID 看法：2027+ AVGO 毛利壓至 40-45%，因：(a) 7 家客戶增加 = 單一客戶談判力上升；(b) AWS 選 Alchip 證明多源化；(c) OpenAI 合約條款可能包含 margin cap</div>
+  <div class="j-facts">分歧原因：共識過於依賴 AVGO 2023-2025 margin 線性外推，未考慮客戶基數膨脹對議價權的影響</div>
+  <div class="j-infer">→ 投資意義：AVGO Fwd PE 上限可能被壓（從 30x → 25x），EPS 成長但估值不擴張</div>
+  <div class="j-falsify">⚠ 證偽條件：2026 Q4 AVGO ASIC 毛利公開揭示仍 &gt; 50%，或 OpenAI 合約 margin 優厚揭示</div>
+</div>
+
+<!-- ========== §13 Falsification Test ========== -->
+<h2>§13 Falsification Test（證偽條件）</h2>
+
+<table>
+<tr><th>#</th><th>Metric</th><th>閾值（達此數 → thesis 作廢）</th><th>時間窗</th><th>源</th></tr>
+<tr><td>1</td><td>AVGO Q2-Q4 FY26 AI 營收達成率</td><td>連 2 季 miss &gt; 10%</td><td>2026-2026 Q4</td><td>AVGO 財報</td></tr>
+<tr><td>2</td><td>Alchip 2026 H2 Trainium 3 量產延後</td><td>超過 2026 Q4</td><td>2026 Q4</td><td>Alchip 法說</td></tr>
+<tr><td>3</td><td>MediaTek Google v7e 設計延後</td><td>超過 2026 Q3 risk production</td><td>2026 Q3</td><td>MediaTek 法說</td></tr>
+<tr><td>4</td><td>NVDA 推論份額回升</td><td>2028 年推論份額 &gt; 50%（當前趨勢至 20-30%）</td><td>2028</td><td>MLPerf / New Street Research</td></tr>
+<tr><td>5</td><td>hyperscaler ASIC 成長 YoY</td><td>連 2 年 &lt; 30%</td><td>2027-2028</td><td>Bloomberg Intelligence tracker</td></tr>
+<tr><td>6</td><td>AVGO ASIC 毛利公開揭示</td><td>2026 Q4 揭示 &lt; 45%</td><td>2026 Q4</td><td>AVGO 法說</td></tr>
+</table>
+
+<p style="font-size:12.5px;color:#4B5563"><strong>觸發邏輯</strong>：任 1 條達標 → 對應個股減碼評估；任 2 條達標 → 本 ID 重寫；任 3 條達標 → 本 ID 廢除。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §13</div>
+  <div class="i-body">
+    1. <strong>最早 lead indicator 是 AVGO Q2 FY26 財報</strong>（2026-06 左右），若 AI 營收達 $10.7B guide，Phase II thesis 基本鎖定<br>
+    2. <strong>最關鍵的單點風險是 Alchip Trainium 3 量產進度</strong>，它決定台系 alpha 是否兌現<br>
+    3. <strong>最致命的反轉是 NVDA Vera 推論性能</strong>（2027 GTC 揭示），若性能大幅領先，整個 ASIC thesis 需重估
+  </div>
+</div>
+
+<!-- ========== Footer ========== -->
+<div class="foot">
+產業深度報告 · industry-analyst v1.4 · 主題：AI ASIC Design Service · 發布日：2026-04-19 · 🟡 占比：19%<br>
+<a href="/id/">所有產業報告</a> · <a href="/id/theses.html">⭐ 八大非共識</a> · <a href="/pm/">PM 複盤</a> · <a href="/research/">個股 DD</a>
+</div>
+
+</div>
+
+</body>
+</html>
