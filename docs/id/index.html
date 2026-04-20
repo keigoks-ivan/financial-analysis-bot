@@ -6,7 +6,8 @@
 <title>產業深度報告 — InvestMQuest Research</title>
 <meta name="description" content="跨多檔個股共用的產業深度研究（Industry DD），按產業類別整理">
 <style>
-body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.65}
+*{box-sizing:border-box}
+body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.65;-webkit-text-size-adjust:100%}
 header{background:linear-gradient(135deg,#4C1D95 0%,#7C3AED 100%);color:#fff;padding:.75rem 0;position:sticky;top:0;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .hdr-inner{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:0 1.5rem}
 header .logo{font-size:1.1rem;font-weight:800;letter-spacing:-.02em}
@@ -21,47 +22,99 @@ h1{color:#4C1D95;font-size:2rem;font-weight:800;letter-spacing:-.03em;margin:0}
 .sub{color:#6B7280;font-size:.95rem;margin-top:.5rem;max-width:760px;line-height:1.6}
 .sub code{background:#EDE9FE;padding:1px 7px;border-radius:3px;font-size:12px;color:#6B21A8}
 
-.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin:22px 0 8px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:22px 0 8px}
 .stats-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:14px 18px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .stats-card .label{color:#6B21A8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
 .stats-card .value{color:#1E1B4B;font-size:22px;font-weight:700;font-family:'IBM Plex Mono',ui-monospace,monospace}
 .stats-card .desc{color:#6B7280;font-size:11.5px;margin-top:3px}
 
-.category{margin-top:36px;border:1px solid #E5E7EB;border-radius:12px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.03);overflow:hidden}
-.cat-head{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid #E5E7EB;background:linear-gradient(90deg,#F5F3FF,#fff)}
-.cat-head .left{display:flex;align-items:center;gap:12px}
+.category{margin-top:28px;border:1px solid #E5E7EB;border-radius:12px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.03);overflow:hidden}
+.cat-head{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid #E5E7EB;background:linear-gradient(90deg,#F5F3FF,#fff);gap:10px;flex-wrap:wrap}
+.cat-head .left{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .cat-head h2{margin:0;color:#4C1D95;font-size:17px;font-weight:700}
 .cat-head .cat-icon{font-size:22px}
 .cat-head .count{background:#EDE9FE;color:#6B21A8;padding:3px 12px;border-radius:20px;font-size:11.5px;font-weight:600}
 .cat-head .hint{color:#94A3B8;font-size:11.5px}
 
-.cat-body{padding:12px 22px 22px}
-.cat-body table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
-.cat-body th{background:transparent;color:#6B7280;font-weight:500;text-align:left;padding:8px 8px;border-bottom:1px solid #E5E7EB;font-size:11.5px;letter-spacing:.3px;text-transform:uppercase}
-.cat-body td{padding:10px 8px;border-bottom:1px solid #F3F4F6;vertical-align:top}
-.cat-body tr:last-child td{border-bottom:none}
-.cat-body tr:hover{background:#FAFAFA}
-.cat-body a{color:#7C3AED;text-decoration:none;font-weight:500}
-.cat-body a:hover{text-decoration:underline}
-.root-badge{background:#7C3AED;color:#fff;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600;margin-left:4px}
-.phase-pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.cat-body{padding:14px 18px 18px}
+
+/* === 卡片版主題（取代 table） === */
+.topic-list{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.topic-card{background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:14px 16px;transition:border-color .15s,box-shadow .15s}
+.topic-card:hover{border-color:#C4B5FD;box-shadow:0 2px 10px rgba(124,58,237,.08)}
+.topic-card.is-parent{background:linear-gradient(180deg,#FAF5FF,#fff);border-color:#DDD6FE}
+
+.topic-head{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.topic-num{flex:0 0 auto;background:#EDE9FE;color:#6B21A8;font-weight:700;font-size:12px;width:26px;height:26px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.topic-title{flex:1 1 auto;min-width:0;font-size:15.5px;font-weight:700;color:#4C1D95;text-decoration:none;line-height:1.4;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+.topic-title:hover{color:#7C3AED;text-decoration:underline}
+.topic-title .arrow{font-size:13px;opacity:.55;font-weight:500}
+.root-badge{background:#7C3AED;color:#fff;padding:1px 7px;border-radius:3px;font-size:10px;font-weight:600}
+
+.topic-tags{color:#6B7280;font-size:12px;margin:4px 0 0 36px;line-height:1.5}
+.topic-meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:8px 0 0 36px;font-size:11.5px;color:#6B7280}
+.topic-meta .chip{display:inline-flex;align-items:center;gap:4px;background:#F3F4F6;padding:2px 8px;border-radius:10px;color:#4B5563;font-weight:500}
+.phase-pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:600}
 .phase-I{background:#DCFCE7;color:#166534}
 .phase-II{background:#FEF3C7;color:#92400E}
 .phase-III{background:#FEE2E2;color:#991B1B}
 
-.suggest{background:#F5F3FF;border:1px dashed #C4B5FD;border-radius:6px;padding:10px 14px;margin-top:10px;color:#6B21A8;font-size:12.5px}
+.topic-thesis{margin:9px 0 0 36px;padding:8px 12px;background:#FAFAF9;border-left:3px solid #C4B5FD;border-radius:0 6px 6px 0;font-size:12px;color:#4B5563;line-height:1.55}
+.topic-thesis::before{content:"非共識";display:block;font-size:9.5px;color:#7C3AED;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+
+/* === 子題（沿用 parent 卡片內巢狀） === */
+.children{margin:12px 0 0 22px;padding-left:14px;border-left:2px dashed #DDD6FE;display:flex;flex-direction:column;gap:8px}
+.child-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:11px 13px}
+.child-card .topic-head{align-items:flex-start}
+.child-card .topic-num{background:#F5F3FF;color:#7C3AED;width:22px;height:22px;font-size:11px}
+.child-card .topic-title{font-size:14px}
+.child-card .topic-tags,.child-card .topic-meta,.child-card .topic-thesis{margin-left:32px}
+.child-card .topic-thesis{font-size:11.5px}
+.child-tag{display:inline-block;background:#F5F3FF;color:#7C3AED;font-size:10px;font-weight:600;padding:1px 7px;border-radius:3px;margin-left:4px;letter-spacing:.3px}
+
+.suggest{background:#F5F3FF;border:1px dashed #C4B5FD;border-radius:6px;padding:12px 16px;margin-top:14px;color:#6B21A8;font-size:12.5px;line-height:1.7}
 .suggest strong{color:#4C1D95}
-.suggest code{background:#EDE9FE;padding:1px 6px;border-radius:3px;color:#6B21A8;font-size:11.5px}
+.suggest code{background:#EDE9FE;padding:2px 7px;border-radius:3px;color:#6B21A8;font-size:11.5px;font-weight:600}
+.suggest ul{margin:8px 0 0;padding-left:18px}
+.suggest ul li{margin-bottom:8px;color:#4C1D95}
+.suggest ul li:last-child{margin-bottom:0}
 
 .empty-state{text-align:center;padding:24px 20px;color:#94A3B8;font-size:12.5px}
 .empty-state .eco{font-size:26px;margin-bottom:6px}
 
-.footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#6B7280;font-size:.78rem;text-align:center}
+.footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#6B7280;font-size:.78rem;text-align:center;padding-left:1rem;padding-right:1rem}
 
 .phase-legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:14px 0 6px}
 .phase-legend .pc{background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:10px 12px}
 .phase-legend .pc h4{margin:0 0 4px 0;color:#6B21A8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
 .phase-legend .pc p{margin:0;font-size:11.5px;color:#6B7280;line-height:1.5}
+
+/* === Mobile === */
+@media(max-width:640px){
+  .container{padding:1.2rem 1rem 2.5rem}
+  h1{font-size:1.5rem}
+  .sub{font-size:.88rem}
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
+  .stats-card{padding:10px 12px}
+  .stats-card .value{font-size:18px}
+  .stats-card .desc{font-size:10.5px}
+  .stats-card .label{font-size:10px}
+  .cat-head{padding:12px 14px}
+  .cat-head h2{font-size:15px}
+  .cat-head .hint{display:none}
+  .cat-body{padding:12px 12px 14px}
+  .topic-card{padding:12px 12px}
+  .topic-title{font-size:14.5px}
+  .topic-tags,.topic-meta,.topic-thesis{margin-left:0;margin-top:8px}
+  .topic-num{width:24px;height:24px;font-size:11px}
+  .children{margin-left:8px;padding-left:10px}
+  .child-card{padding:10px 11px}
+  .child-card .topic-tags,.child-card .topic-meta,.child-card .topic-thesis{margin-left:0}
+  .phase-legend{grid-template-columns:1fr}
+  .suggest{padding:10px 12px;font-size:12px}
+  .suggest ul{padding-left:16px}
+  .suggest ul li{margin-bottom:10px}
+}
 </style>
 </head>
 <body>
@@ -230,116 +283,180 @@ h1{color:#4C1D95;font-size:2rem;font-weight:800;letter-spacing:-.03em;margin:0}
       <span class="hint">AI Accelerator / 封裝 / 記憶體 / 製程 / 互連</span>
     </div>
     <div class="cat-body">
-      <table>
-        <tr>
-          <th width="5%">#</th>
-          <th width="28%">主題</th>
-          <th width="18%">涵蓋</th>
-          <th width="18%">Phase</th>
-          <th width="8%">鮮度</th>
-          <th>3 條 Non-Consensus 摘要</th>
-          <th width="8%"></th>
-        </tr>
-        <tr style="background:#FAF5FF">
-          <td><strong>1</strong></td>
-          <td><strong>AI 加速器需求</strong><span class="root-badge">母題</span><br><span style="font-size:11px;color:#6B7280">GPU / ASIC / 推論 / 電力</span></td>
-          <td>12 檔<br><span style="font-size:11px;color:#6B7280">5🔴 / 5🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-II">II 訓→推</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">ASIC 份額 35-40%（vs 共識 20-25%）、2027 非峰值為轉折、電力永久瓶頸重塑 FLOPS/W</td>
-          <td><a href="/id/ID_AIAcceleratorDemand_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>2</strong></td>
-          <td><strong>先進封裝</strong><br><span style="font-size:11px;color:#6B7280">CoWoS / SoIC / CoPoS / Hybrid Bonding</span></td>
-          <td>10 檔<br><span style="font-size:11px;color:#6B7280">4🔴 / 4🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-I">I → II</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">BESI 應類比 ASML、Rubin Ultra 退讓揭 CoWoS-L 壽命縮短、ASE AP 是量非質</td>
-          <td><a href="/id/ID_AdvancedPackaging_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>3</strong></td>
-          <td><strong>HBM 記憶體超級循環</strong><br><span style="font-size:11px;color:#6B7280">HBM3E / HBM4 / HBM4E</span></td>
-          <td>7 檔<br><span style="font-size:11px;color:#6B7280">3🔴 / 2🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-II">II 擴產</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">Samsung HBM4 35% 份額（vs 共識 25%）、HBM 脫離 DRAM 週期不會 2028 crash、TSMC 隱性贏家</td>
-          <td><a href="/id/ID_HBM_Supercycle_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>4</strong></td>
-          <td><strong>先進製程節點</strong><br><span style="font-size:11px;color:#6B7280">3nm / 2nm / A16 / 14A</span></td>
-          <td>9 檔<br><span style="font-size:11px;color:#6B7280">4🔴 / 3🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-II">II 2nm 爆發</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">Samsung 2nm 15%+ 市佔（vs 共識 7-10%）、Intel 18A 2026 無外部客戶、TSMC A16 backside power 護城河</td>
-          <td><a href="/id/ID_LeadingEdgeNode_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>5</strong></td>
-          <td><strong>AI 網路互連</strong><br><span style="font-size:11px;color:#6B7280">NVLink / UALink / Ethernet / CPO</span></td>
-          <td>9 檔<br><span style="font-size:11px;color:#6B7280">4🔴 / 3🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-II">II Ethernet 逆襲</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">Scale-up/out 非 zero-sum、UALink 商用 2027+（非 2026）、CRDO + ALAB 稀缺被低估</td>
-          <td><a href="/id/ID_AINetworking_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>6</strong></td>
-          <td><strong>AI 資料中心基建</strong><br><span style="font-size:11px;color:#6B7280">液冷 / 電力 / 氣渦輪 / SMR / 變壓器</span></td>
-          <td>7 檔<br><span style="font-size:11px;color:#6B7280">3🔴 / 2🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-II">II 基建 + 電力瓶頸</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">VRT 比 NVDA 更安全 AI pure play、GEV gas turbine 2030+ 主力、ETN Boyd 是結構轉型</td>
-          <td><a href="/id/ID_AIDataCenter_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>7</strong></td>
-          <td><strong>矽光子 / CPO</strong><br><span style="font-size:11px;color:#6B7280">Silicon Photonics / Co-Packaged Optics</span></td>
-          <td>8 檔<br><span style="font-size:11px;color:#6B7280">3🔴 / 3🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-I">I 首批量產</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">CPO 2026 H2 已商用（比共識早 2-3 年）、Pluggable + CPO 並存（LITE/COHR 不淘汰）、TSMC COUPE 重演 CoWoS</td>
-          <td><a href="/id/ID_SiliconPhotonicsCPO_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>8</strong></td>
-          <td><strong>Data Center 液冷</strong><br><span style="font-size:11px;color:#6B7280">Direct-to-chip / Immersion / CDU</span></td>
-          <td>8 檔<br><span style="font-size:11px;color:#6B7280">3🔴 / 3🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-II">II 滲透擴張</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">CDU 是真正瓶頸（非冷板）、Immersion 2028+ 超越 DTC、Asetek 是被低估 AI 液冷 pure play</td>
-          <td><a href="/id/ID_LiquidCooling_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>9</strong></td>
-          <td><strong>AI DC 變壓器</strong><br><span style="font-size:11px;color:#6B7280">Power Transformers · LPT / GSU / 800V DC SST</span></td>
-          <td>9 檔<br><span style="font-size:11px;color:#6B7280">4🔴 / 3🟡 / 2🟢</span></td>
-          <td><span class="phase-pill phase-II">II 5 年 lead time + SST</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">變壓器 5 年 lead time 比晶片更硬、Eaton 800V DC SST 被低估的 AI co-design、GEV Prolec 是被忽略的 transformer pure play</td>
-          <td><a href="/id/ID_Transformers_20260419.html">開啟 →</a></td>
-        </tr>
-        <tr>
-          <td><strong>10</strong></td>
-          <td><strong>AI ASIC 設計服務供應鏈</strong><br><span style="font-size:11px;color:#6B7280">Custom AI Silicon · AVGO / MRVL / Alchip / MediaTek</span></td>
-          <td>11 檔<br><span style="font-size:11px;color:#6B7280">4🔴 / 4🟡 / 3🟢</span></td>
-          <td><span class="phase-pill phase-II">II 爆發 + 玩家分化</span></td>
-          <td>🟢🟢🟢</td>
-          <td style="font-size:11.5px">Hyperscaler ASIC 2028 市占 40%+（共識 25%）、台系 Alchip + MediaTek 2028 合計超越 MRVL、AVGO 2027+ 毛利壓縮至 40-45%</td>
-          <td><a href="/id/ID_AIASICDesignService_20260419.html">開啟 →</a></td>
-        </tr>
-      </table>
+      <div class="topic-list">
+
+        <!-- 1. AI 加速器需求（母題） + 子：ASIC 設計服務 -->
+        <div class="topic-card is-parent">
+          <div class="topic-head">
+            <span class="topic-num">1</span>
+            <a class="topic-title" href="/id/ID_AIAcceleratorDemand_20260419.html">AI 加速器需求 <span class="root-badge">母題</span> <span class="arrow">→</span></a>
+          </div>
+          <div class="topic-tags">GPU / ASIC / 推論 / 電力</div>
+          <div class="topic-meta">
+            <span class="chip">📊 12 檔</span>
+            <span class="chip">5🔴 / 5🟡 / 2🟢</span>
+            <span class="phase-pill phase-II">II 訓→推</span>
+            <span class="chip">🟢🟢🟢 鮮度</span>
+          </div>
+          <div class="topic-thesis">ASIC 份額 35-40%（vs 共識 20-25%）、2027 非峰值為轉折、電力永久瓶頸重塑 FLOPS/W</div>
+
+          <div class="children">
+            <div class="topic-card child-card">
+              <div class="topic-head">
+                <span class="topic-num">10</span>
+                <a class="topic-title" href="/id/ID_AIASICDesignService_20260419.html">AI ASIC 設計服務供應鏈 <span class="child-tag">子題</span> <span class="arrow">→</span></a>
+              </div>
+              <div class="topic-tags">Custom AI Silicon · AVGO / MRVL / Alchip / MediaTek</div>
+              <div class="topic-meta">
+                <span class="chip">📊 11 檔</span>
+                <span class="chip">4🔴 / 4🟡 / 3🟢</span>
+                <span class="phase-pill phase-II">II 爆發 + 玩家分化</span>
+              </div>
+              <div class="topic-thesis">Hyperscaler ASIC 2028 市占 40%+（共識 25%）、台系 Alchip + MediaTek 2028 合計超越 MRVL、AVGO 2027+ 毛利壓縮至 40-45%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. 先進封裝 -->
+        <div class="topic-card">
+          <div class="topic-head">
+            <span class="topic-num">2</span>
+            <a class="topic-title" href="/id/ID_AdvancedPackaging_20260419.html">先進封裝 <span class="arrow">→</span></a>
+          </div>
+          <div class="topic-tags">CoWoS / SoIC / CoPoS / Hybrid Bonding</div>
+          <div class="topic-meta">
+            <span class="chip">📊 10 檔</span>
+            <span class="chip">4🔴 / 4🟡 / 2🟢</span>
+            <span class="phase-pill phase-I">I → II</span>
+            <span class="chip">🟢🟢🟢 鮮度</span>
+          </div>
+          <div class="topic-thesis">BESI 應類比 ASML、Rubin Ultra 退讓揭 CoWoS-L 壽命縮短、ASE AP 是量非質</div>
+        </div>
+
+        <!-- 3. HBM 超級循環 -->
+        <div class="topic-card">
+          <div class="topic-head">
+            <span class="topic-num">3</span>
+            <a class="topic-title" href="/id/ID_HBM_Supercycle_20260419.html">HBM 記憶體超級循環 <span class="arrow">→</span></a>
+          </div>
+          <div class="topic-tags">HBM3E / HBM4 / HBM4E</div>
+          <div class="topic-meta">
+            <span class="chip">📊 7 檔</span>
+            <span class="chip">3🔴 / 2🟡 / 2🟢</span>
+            <span class="phase-pill phase-II">II 擴產</span>
+            <span class="chip">🟢🟢🟢 鮮度</span>
+          </div>
+          <div class="topic-thesis">Samsung HBM4 35% 份額（vs 共識 25%）、HBM 脫離 DRAM 週期不會 2028 crash、TSMC 隱性贏家</div>
+        </div>
+
+        <!-- 4. 先進製程節點 -->
+        <div class="topic-card">
+          <div class="topic-head">
+            <span class="topic-num">4</span>
+            <a class="topic-title" href="/id/ID_LeadingEdgeNode_20260419.html">先進製程節點 <span class="arrow">→</span></a>
+          </div>
+          <div class="topic-tags">3nm / 2nm / A16 / 14A</div>
+          <div class="topic-meta">
+            <span class="chip">📊 9 檔</span>
+            <span class="chip">4🔴 / 3🟡 / 2🟢</span>
+            <span class="phase-pill phase-II">II 2nm 爆發</span>
+            <span class="chip">🟢🟢🟢 鮮度</span>
+          </div>
+          <div class="topic-thesis">Samsung 2nm 15%+ 市佔（vs 共識 7-10%）、Intel 18A 2026 無外部客戶、TSMC A16 backside power 護城河</div>
+        </div>
+
+        <!-- 5. AI 網路互連 + 子：矽光子 CPO -->
+        <div class="topic-card is-parent">
+          <div class="topic-head">
+            <span class="topic-num">5</span>
+            <a class="topic-title" href="/id/ID_AINetworking_20260419.html">AI 網路互連 <span class="arrow">→</span></a>
+          </div>
+          <div class="topic-tags">NVLink / UALink / Ethernet / CPO</div>
+          <div class="topic-meta">
+            <span class="chip">📊 9 檔</span>
+            <span class="chip">4🔴 / 3🟡 / 2🟢</span>
+            <span class="phase-pill phase-II">II Ethernet 逆襲</span>
+            <span class="chip">🟢🟢🟢 鮮度</span>
+          </div>
+          <div class="topic-thesis">Scale-up/out 非 zero-sum、UALink 商用 2027+（非 2026）、CRDO + ALAB 稀缺被低估</div>
+
+          <div class="children">
+            <div class="topic-card child-card">
+              <div class="topic-head">
+                <span class="topic-num">7</span>
+                <a class="topic-title" href="/id/ID_SiliconPhotonicsCPO_20260419.html">矽光子 / CPO <span class="child-tag">子題</span> <span class="arrow">→</span></a>
+              </div>
+              <div class="topic-tags">Silicon Photonics / Co-Packaged Optics</div>
+              <div class="topic-meta">
+                <span class="chip">📊 8 檔</span>
+                <span class="chip">3🔴 / 3🟡 / 2🟢</span>
+                <span class="phase-pill phase-I">I 首批量產</span>
+              </div>
+              <div class="topic-thesis">CPO 2026 H2 已商用（比共識早 2-3 年）、Pluggable + CPO 並存（LITE/COHR 不淘汰）、TSMC COUPE 重演 CoWoS</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. AI 資料中心基建 + 子：液冷、變壓器 -->
+        <div class="topic-card is-parent">
+          <div class="topic-head">
+            <span class="topic-num">6</span>
+            <a class="topic-title" href="/id/ID_AIDataCenter_20260419.html">AI 資料中心基建 <span class="arrow">→</span></a>
+          </div>
+          <div class="topic-tags">液冷 / 電力 / 氣渦輪 / SMR / 變壓器</div>
+          <div class="topic-meta">
+            <span class="chip">📊 7 檔</span>
+            <span class="chip">3🔴 / 2🟡 / 2🟢</span>
+            <span class="phase-pill phase-II">II 基建 + 電力瓶頸</span>
+            <span class="chip">🟢🟢🟢 鮮度</span>
+          </div>
+          <div class="topic-thesis">VRT 比 NVDA 更安全 AI pure play、GEV gas turbine 2030+ 主力、ETN Boyd 是結構轉型</div>
+
+          <div class="children">
+            <div class="topic-card child-card">
+              <div class="topic-head">
+                <span class="topic-num">8</span>
+                <a class="topic-title" href="/id/ID_LiquidCooling_20260419.html">Data Center 液冷 <span class="child-tag">子題</span> <span class="arrow">→</span></a>
+              </div>
+              <div class="topic-tags">Direct-to-chip / Immersion / CDU</div>
+              <div class="topic-meta">
+                <span class="chip">📊 8 檔</span>
+                <span class="chip">3🔴 / 3🟡 / 2🟢</span>
+                <span class="phase-pill phase-II">II 滲透擴張</span>
+              </div>
+              <div class="topic-thesis">CDU 是真正瓶頸（非冷板）、Immersion 2028+ 超越 DTC、Asetek 是被低估 AI 液冷 pure play</div>
+            </div>
+
+            <div class="topic-card child-card">
+              <div class="topic-head">
+                <span class="topic-num">9</span>
+                <a class="topic-title" href="/id/ID_Transformers_20260419.html">AI DC 變壓器 <span class="child-tag">子題</span> <span class="arrow">→</span></a>
+              </div>
+              <div class="topic-tags">Power Transformers · LPT / GSU / 800V DC SST</div>
+              <div class="topic-meta">
+                <span class="chip">📊 9 檔</span>
+                <span class="chip">4🔴 / 3🟡 / 2🟢</span>
+                <span class="phase-pill phase-II">II 5 年 lead time + SST</span>
+              </div>
+              <div class="topic-thesis">變壓器 5 年 lead time 比晶片更硬、Eaton 800V DC SST 被低估的 AI co-design、GEV Prolec 是被忽略的 transformer pure play</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
 
       <div class="suggest">
-        <strong>📋 本類別建議補建（2330 / NVDA / AVGO 等持倉組合相關）：</strong><br>
-        <code>研究 AI 伺服器 Server ODM</code>（SMCI / 2382 廣達 / 2317 鴻海 / 3231 緯創 / 2376 技嘉 / Dell / HPE；GB200 份額重洗牌）·
-        <code>研究 AI EDA + IP</code>（Synopsys / Cadence / Arm；Arm Neoverse 2027 cloud CPU 30%+、3D-IC 工具獨占）·
-        <code>研究 AI 測試設備 ATE</code>（Advantest 6857.T / Teradyne；HBM/CoWoS 測試瓶頸）·
-        <code>研究 China Decoupling（出口管制）</code> ·
-        <code>研究 Foundry Geography（Arizona / Japan 擴產）</code> ·
-        <code>研究 Quantum Computing</code>
+        <strong>📋 本類別建議補建（2330 / NVDA / AVGO 等持倉組合相關）：</strong>
+        <ul style="margin:8px 0 0;padding-left:18px;line-height:1.85">
+          <li><code>研究 AI 伺服器 Server ODM</code><br><span style="color:#4B5563">SMCI · 2382 廣達 · 2317 鴻海 · 3231 緯創 · 2376 技嘉 · Dell · HPE · 2356 英業達 · 3711 日月光 ODM 線</span><br><span style="font-size:11px;color:#94A3B8">GB200 / GB300 份額重洗牌、白牌 vs OEM 利潤分配</span></li>
+          <li><code>研究 AI EDA + IP</code><br><span style="color:#4B5563">SNPS · CDNS · ARM · 3035 智原 · 6643 M31 · 創意電子 3443</span><br><span style="font-size:11px;color:#94A3B8">Arm Neoverse 2027 cloud CPU 30%+、3D-IC EDA 工具獨占</span></li>
+          <li><code>研究 AI 測試設備 ATE</code><br><span style="color:#4B5563">Advantest 6857.T · Teradyne TER · 3680 家登 · Cohu COHU · 6515 穎崴</span><br><span style="font-size:11px;color:#94A3B8">HBM stacking 測試 / CoWoS Probe Card 瓶頸</span></li>
+          <li><code>研究 China Decoupling（出口管制）</code><br><span style="color:#4B5563">SMIC 0981.HK · CXMT · YMTC · 華為 Ascend · 寒武紀 688256 · NAURA 002371 · AMEC 688012</span><br><span style="font-size:11px;color:#94A3B8">中國本土 AI 算力替代 + 設備國產化進度</span></li>
+          <li><code>研究 Foundry Geography（Arizona / Japan / Germany 擴產）</code><br><span style="color:#4B5563">TSM AZ Fab 21 · JASM 熊本 · TSMC Dresden · Intel Ohio · Samsung Taylor TX</span><br><span style="font-size:11px;color:#94A3B8">CHIPS Act 補貼分配、客戶結構重塑</span></li>
+          <li><code>研究 Quantum Computing</code><br><span style="color:#4B5563">IBM · GOOGL Willow · IONQ · RGTI · QBTS · QUBT · Honeywell QTM</span><br><span style="font-size:11px;color:#94A3B8">2027 fault-tolerant milestone、實質商用化分歧</span></li>
+          <li><code>研究 邊緣 AI / 端側推論</code><br><span style="color:#4B5563">QCOM · AAPL Neural Engine · 3711 日月光 SiP · 2454 聯發科 · ARM IP · NVDA Jetson</span><br><span style="font-size:11px;color:#94A3B8">手機/PC NPU 滲透曲線、隱私訴求驅動端側</span></li>
+          <li><code>研究 AI 資料儲存（SSD / NVMe）</code><br><span style="color:#4B5563">MU · WDC · STX · Kioxia · Samsung 005930 · Solidigm</span><br><span style="font-size:11px;color:#94A3B8">eSSD QLC 取代 HDD、HBM 排擠 DRAM 普通市場</span></li>
+        </ul>
       </div>
     </div>
   </div>
