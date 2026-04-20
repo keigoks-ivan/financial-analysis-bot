@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>巢狀版型對照 Preview</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:24px;font-size:14px;line-height:1.6}
+h1{color:#4C1D95;font-size:1.5rem;margin:0 0 4px}
+.intro{color:#6B7280;font-size:13px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:24px;max-width:1400px;margin:0 auto}
+.demo{background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden}
+.demo-head{background:linear-gradient(135deg,#4C1D95,#7C3AED);color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center}
+.demo-head h2{margin:0;font-size:14px;font-weight:700}
+.demo-head .tag{background:rgba(255,255,255,.2);padding:2px 8px;border-radius:10px;font-size:10.5px}
+.demo-body{padding:14px 16px}
+
+/* common topic styling */
+.t-title{color:#4C1D95;font-weight:700;font-size:14px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.t-title:hover{color:#7C3AED;text-decoration:underline}
+.t-tags{color:#6B7280;font-size:11.5px;margin-top:3px}
+.t-meta{font-size:11px;color:#6B7280;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.phase{background:#FEF3C7;color:#92400E;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:600}
+.thesis{font-size:11.5px;color:#4B5563;background:#FAFAF9;border-left:3px solid #C4B5FD;padding:6px 10px;border-radius:0 4px 4px 0;margin-top:6px;line-height:1.5}
+
+/* ============ 方案 1+2: Accordion + Chip ============ */
+.v12 .parent{background:linear-gradient(180deg,#FAF5FF,#fff);border:1px solid #DDD6FE;border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.v12 .child-chips{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.v12 .chip-label{font-size:10.5px;color:#7C3AED;font-weight:600;letter-spacing:.3px}
+.v12 .chip{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #C4B5FD;color:#6B21A8;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;text-decoration:none;cursor:pointer}
+.v12 .chip:hover{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.v12 .chip .arrow{font-size:9px;opacity:.7}
+.v12 .toggle{float:right;background:none;border:1px solid #DDD6FE;color:#7C3AED;font-size:11px;padding:2px 8px;border-radius:6px;cursor:pointer}
+.v12 .children-detail{display:none;margin-top:10px;padding:10px;background:rgba(255,255,255,.7);border:1px dashed #C4B5FD;border-radius:8px}
+.v12 .children-detail.open{display:block}
+.v12 .child-card{padding:8px 10px;border-bottom:1px solid #F3F4F6}
+.v12 .child-card:last-child{border:none}
+
+/* ============ 方案 3: 單行密集列表 ============ */
+.v3 ul{list-style:none;margin:0;padding:0}
+.v3 li{padding:7px 10px;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;gap:10px;font-size:12.5px}
+.v3 li:hover{background:#FAF5FF}
+.v3 li:last-child{border:none}
+.v3 .row-num{flex:0 0 24px;color:#94A3B8;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px}
+.v3 .row-title{flex:1;color:#4C1D95;text-decoration:none;font-weight:600}
+.v3 .row-title:hover{text-decoration:underline}
+.v3 .indent{color:#C4B5FD;font-family:monospace;margin-right:4px}
+.v3 .row-meta{font-size:10.5px;color:#6B7280;display:flex;gap:6px;align-items:center}
+.v3 .root-tag{background:#7C3AED;color:#fff;padding:0 5px;border-radius:3px;font-size:9px;font-weight:600}
+
+/* ============ 方案 4: Tabs ============ */
+.v4 .tabs{display:flex;gap:4px;border-bottom:1px solid #E5E7EB;margin-bottom:10px;overflow-x:auto}
+.v4 .tab{background:none;border:none;color:#6B7280;padding:7px 12px;cursor:pointer;font-size:12px;font-weight:600;border-bottom:2px solid transparent;white-space:nowrap;font-family:inherit}
+.v4 .tab.active{color:#7C3AED;border-bottom-color:#7C3AED}
+.v4 .tab:hover{color:#4C1D95}
+.v4 .panel{display:none}
+.v4 .panel.active{display:block}
+.v4 .child-tag{background:#EDE9FE;color:#6B21A8;font-size:9.5px;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle}
+
+@media(max-width:640px){
+  body{padding:14px}
+  .grid{grid-template-columns:1fr;gap:16px}
+}
+</style>
+</head>
+<body>
+
+<h1>巢狀版型對照 Preview</h1>
+<div class="intro">範例：「AI 資料中心基建（母題）」 + 子題「Data Center 液冷 / AI DC 變壓器」。實際資料同 /id/ 頁。</div>
+
+<div class="grid">
+
+  <!-- ============ 方案 1+2 ============ -->
+  <div class="demo v12">
+    <div class="demo-head">
+      <h2>方案 1+2 · Accordion + Chip（推薦）</h2>
+      <span class="tag">折疊 + 子題膠囊</span>
+    </div>
+    <div class="demo-body">
+      <div class="parent">
+        <button class="toggle" onclick="this.nextElementSibling.nextElementSibling.classList.toggle('open');this.textContent=this.nextElementSibling.nextElementSibling.classList.contains('open')?'收起 ▴':'展開 2 子題 ▾'">展開 2 子題 ▾</button>
+        <a class="t-title" href="#">AI 資料中心基建 →</a>
+        <div class="t-tags">液冷 / 電力 / 氣渦輪 / SMR / 變壓器</div>
+        <div class="t-meta"><span>📊 7 檔</span><span class="phase">II 基建 + 電力瓶頸</span><span>🟢🟢🟢</span></div>
+        <div class="thesis">VRT 比 NVDA 更安全 AI pure play、GEV gas turbine 2030+ 主力</div>
+
+        <div class="child-chips">
+          <span class="chip-label">↳ 子題：</span>
+          <a class="chip" href="#">Data Center 液冷 <span class="arrow">→</span></a>
+          <a class="chip" href="#">AI DC 變壓器 <span class="arrow">→</span></a>
+        </div>
+
+        <div class="children-detail">
+          <div class="child-card">
+            <a class="t-title" href="#" style="font-size:13px">Data Center 液冷 →</a>
+            <div class="t-tags">DTC / Immersion / CDU</div>
+            <div class="thesis">CDU 是真正瓶頸（非冷板）、Asetek 是被低估 AI 液冷 pure play</div>
+          </div>
+          <div class="child-card">
+            <a class="t-title" href="#" style="font-size:13px">AI DC 變壓器 →</a>
+            <div class="t-tags">LPT / GSU / 800V DC SST</div>
+            <div class="thesis">變壓器 5 年 lead time 比晶片更硬、Eaton 800V DC SST 被低估</div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#94A3B8;margin-top:8px">✅ 預設只看到 chip，點「展開」才出現詳細卡片<br>✅ chip 也是直接連結，可以直接跳到子題報告<br>⚠️ 多一個互動元件</div>
+    </div>
+  </div>
+
+  <!-- ============ 方案 3 ============ -->
+  <div class="demo v3">
+    <div class="demo-head">
+      <h2>方案 3 · 單行密集列表</h2>
+      <span class="tag">最壓縮</span>
+    </div>
+    <div class="demo-body">
+      <ul>
+        <li><span class="row-num">1</span><a class="row-title" href="#">AI 加速器需求 <span class="root-tag">母題</span></a><span class="row-meta"><span class="phase">II 訓→推</span>12 檔</span></li>
+        <li><span class="row-num">10</span><a class="row-title" href="#"><span class="indent">└─</span>AI ASIC 設計服務供應鏈</a><span class="row-meta"><span class="phase">II 爆發</span>11 檔</span></li>
+        <li><span class="row-num">2</span><a class="row-title" href="#">先進封裝</a><span class="row-meta"><span class="phase">I → II</span>10 檔</span></li>
+        <li><span class="row-num">3</span><a class="row-title" href="#">HBM 超級循環</a><span class="row-meta"><span class="phase">II 擴產</span>7 檔</span></li>
+        <li><span class="row-num">4</span><a class="row-title" href="#">先進製程節點</a><span class="row-meta"><span class="phase">II 2nm</span>9 檔</span></li>
+        <li><span class="row-num">5</span><a class="row-title" href="#">AI 網路互連</a><span class="row-meta"><span class="phase">II Ethernet</span>9 檔</span></li>
+        <li><span class="row-num">7</span><a class="row-title" href="#"><span class="indent">└─</span>矽光子 / CPO</a><span class="row-meta"><span class="phase">I 量產</span>8 檔</span></li>
+        <li><span class="row-num">6</span><a class="row-title" href="#">AI 資料中心基建</a><span class="row-meta"><span class="phase">II 電力</span>7 檔</span></li>
+        <li><span class="row-num">8</span><a class="row-title" href="#"><span class="indent">└─</span>Data Center 液冷</a><span class="row-meta"><span class="phase">II 滲透</span>8 檔</span></li>
+        <li><span class="row-num">9</span><a class="row-title" href="#"><span class="indent">└─</span>AI DC 變壓器</a><span class="row-meta"><span class="phase">II SST</span>9 檔</span></li>
+      </ul>
+      <div style="font-size:11px;color:#94A3B8;margin-top:10px">✅ 一頁看完 10 個主題<br>✅ 像檔案總管，巢狀關係一目了然<br>⚠️ 失去「非共識摘要」資訊密度，要點進去才看得到</div>
+    </div>
+  </div>
+
+  <!-- ============ 方案 4 ============ -->
+  <div class="demo v4">
+    <div class="demo-head">
+      <h2>方案 4 · Tabs 切換</h2>
+      <span class="tag">桌機友善</span>
+    </div>
+    <div class="demo-body">
+      <div style="background:linear-gradient(180deg,#FAF5FF,#fff);border:1px solid #DDD6FE;border-radius:10px;padding:12px 14px">
+        <div class="tabs">
+          <button class="tab active" onclick="document.querySelectorAll('.v4 .tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.querySelectorAll('.v4 .panel').forEach(p=>p.classList.remove('active'));document.getElementById('p-parent').classList.add('active')">AI 資料中心基建</button>
+          <button class="tab" onclick="document.querySelectorAll('.v4 .tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.querySelectorAll('.v4 .panel').forEach(p=>p.classList.remove('active'));document.getElementById('p-cool').classList.add('active')">液冷<span class="child-tag">子</span></button>
+          <button class="tab" onclick="document.querySelectorAll('.v4 .tab').forEach(t=>t.classList.remove('active'));this.classList.add('active');document.querySelectorAll('.v4 .panel').forEach(p=>p.classList.remove('active'));document.getElementById('p-tx').classList.add('active')">變壓器<span class="child-tag">子</span></button>
+        </div>
+
+        <div id="p-parent" class="panel active">
+          <a class="t-title" href="#">AI 資料中心基建 →</a>
+          <div class="t-tags">液冷 / 電力 / 氣渦輪 / SMR / 變壓器</div>
+          <div class="t-meta"><span>📊 7 檔</span><span class="phase">II 基建 + 電力瓶頸</span></div>
+          <div class="thesis">VRT 比 NVDA 更安全 AI pure play、GEV gas turbine 2030+ 主力</div>
+        </div>
+
+        <div id="p-cool" class="panel">
+          <a class="t-title" href="#">Data Center 液冷 →</a>
+          <div class="t-tags">DTC / Immersion / CDU</div>
+          <div class="t-meta"><span>📊 8 檔</span><span class="phase">II 滲透擴張</span></div>
+          <div class="thesis">CDU 是真正瓶頸（非冷板）、Asetek 是被低估 AI 液冷 pure play</div>
+        </div>
+
+        <div id="p-tx" class="panel">
+          <a class="t-title" href="#">AI DC 變壓器 →</a>
+          <div class="t-tags">LPT / GSU / 800V DC SST</div>
+          <div class="t-meta"><span>📊 9 檔</span><span class="phase">II 5 年 lead time</span></div>
+          <div class="thesis">變壓器 5 年 lead time 比晶片更硬、Eaton 800V DC SST 被低估</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#94A3B8;margin-top:10px">✅ 母題與子題並列為 tab，視覺對等<br>✅ 一次只看一個主題，版面定高<br>⚠️ 手機 tab 會橫向 scroll，子題會被「藏」起來</div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
