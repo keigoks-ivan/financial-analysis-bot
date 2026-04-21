@@ -7,7 +7,7 @@ date: 2026-04-19
 
 # industry-analyst skill v1.0
 
-## 【六大原則（v1.4 事件/結構 thesis 分類）】
+## 【六大原則（v1.5，2026-04-21 基於 ID_Transformers peer review 強化）】
 
 1. **完整 AND 洞見**：本 skill 追求**兩者同時達成**，不是 trade-off。每章先寫完整到「讀者讀完能當教科書用」，再在最後提煉 💡 Insight（市場沒看到的角度）。完整度 × 洞見 = 這份 ID 的價值。
 2. **Insight-first（最後一哩）**：每章的終點是 💡 Insight Bullet，不是數據清單。但 insight 必須建立在完整數據之上 — 若章節內容太薄，insight 會變主觀意見。
@@ -341,18 +341,20 @@ financial-analysis-bot/
 - 未過直接返工，不落稿
 - 特別檢查：§12 Non-Consensus 是否真的非共識、§9.5 反方是否夠硬、§10.5 Catalyst 日期是否具體
 
-### Step 8.5 — Pre-Publish Gate Check（v1.4 新增，阻斷式）
+### Step 8.5 — Pre-Publish Gate Check（v1.5，9 條 Gate）
 
-讀取 `pre_publish_check.md` 的 7 條 Gate，逐條跑阻斷檢查：
-- Gate 1 核心 ticker financials < 60 天
-- Gate 2 Event-triggered thesis < 14 天
-- Gate 3 Cross-ID reconciliation（共用 ticker / 事實一致）
-- Gate 4 Catalyst & Falsification 狀態標示
-- Gate 5 Unit & scope consistency
-- Gate 6 Cross-ID layer disambiguation（switch vs chip-level）
-- Gate 7 Sub-topic ID value-add rule（子題 vs 母題）
+讀取 `pre_publish_check.md` 的 9 條 Gate，逐條跑阻斷檢查：
+- Gate 1 [阻斷] 核心 ticker financials < 60 天
+- Gate 2 [阻斷] Event-triggered thesis < 14 天
+- **Gate 2.1 [阻斷, v1.5 新增] Thesis Cornerstone Fact Verification** — 「獨家 / 首家 / 唯一」類 claim 必須獨立 WebSearch 驗證 ecosystem 玩家，避免重演 Eaton 獨家 800V DC 類錯誤
+- Gate 3 [阻斷] Cross-ID reconciliation（共用 ticker / 事實一致）
+- **Gate 3.1 [warning, v1.5 新增] Cross-ID Thesis Bias Detection** — 跨 ID 同 ticker 定性偏差 red flag 檢查
+- Gate 4 [warning] Catalyst & Falsification 狀態標示
+- Gate 5 [warning] Unit & scope consistency
+- Gate 6 [warning] Cross-ID layer disambiguation（switch vs chip-level）
+- Gate 7 [warning] Sub-topic ID value-add rule（子題 vs 母題）
 
-任一必備 Gate (1/2/3) fail → 阻斷發布 + 列修正項；必備 Gate 全過、重要 Gate (4-7) 有 fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記錄 pass/fail 明細。
+任一阻斷 Gate (1/2/2.1/3) fail → 阻斷發布 + 列修正項；阻斷 Gate 全過、warning Gate (3.1/4/5/6/7) 有 fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記錄 pass/fail 明細。
 
 ### Step 9 — 產出 HTML + INDEX
 - 寫入 `docs/id/ID_{Theme_CamelCase}_{YYYYMMDD}.html`
