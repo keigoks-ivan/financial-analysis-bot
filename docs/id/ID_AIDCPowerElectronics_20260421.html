@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI DC 電力電子 / 800V DC — 產業深度 DD</title>
+<meta name="description" content="Delta 800V HVDC + NVDA co-develop / Vertiv $15B backlog / 54V → 800V 架構轉型：AI 資料中心電力電子深度解析">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.65}
+.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 3rem}
+.id-head{background:linear-gradient(135deg,#4C1D95,#7C3AED);color:#fff;padding:22px 28px 18px;margin:0 0 22px;border-radius:10px;box-shadow:0 4px 14px rgba(124,58,237,.22)}
+.id-badge{display:inline-block;background:rgba(255,255,255,.18);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:10px}
+.id-head h1{margin:0;color:#fff;font-size:26px;font-weight:800;letter-spacing:-.03em}
+.id-meta{color:rgba(255,255,255,.88);font-size:12.5px;margin-top:6px;line-height:1.6}
+h2{color:#4C1D95;font-size:19px;margin:34px 0 12px;padding-left:12px;border-left:4px solid #7C3AED;font-weight:800;letter-spacing:-.02em}
+h3{color:#6B21A8;font-size:15px;margin:18px 0 8px;font-weight:700}
+p{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12.5px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.05);border-radius:4px;overflow:hidden}
+th{background:#4C1D95;color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px}
+td{padding:8px 10px;border-bottom:1px solid #F3F4F6;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:nth-child(even) td{background:#FAFAFA}
+tr:hover td{background:#F5F3FF}
+.judgment{background:#FEF9C3;border-left:4px solid #EAB308;padding:10px 14px;margin:10px 0;border-radius:3px;font-size:12.5px}
+.judgment .j-head{font-weight:600;color:#713F12;margin-bottom:4px}
+.judgment .j-facts{color:#713F12;margin:4px 0;padding-left:14px}
+.judgment .j-infer{font-size:12px;color:#854D0E;margin-top:6px;padding:6px 10px;background:rgba(234,179,8,.12);border-radius:3px}
+.judgment .j-falsify{font-size:12px;color:#7F1D1D;margin-top:6px;padding:6px 10px;background:rgba(239,68,68,.08);border-radius:3px;border-left:3px solid #EF4444}
+.tier-pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600}
+.tier-red{background:#FEE2E2;color:#991B1B}
+.tier-yellow{background:#FEF3C7;color:#92400E}
+.tier-green{background:#DCFCE7;color:#166534}
+.insight{background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;margin:10px 0;border-radius:4px}
+.insight .i-head{font-weight:600;color:#4C1D95;margin-bottom:4px;font-size:13px}
+.insight .i-body{font-size:12.5px;color:#4C1D95}
+.scurve-ascii{background:#F5F3FF;color:#4C1D95;padding:12px 14px;border-radius:4px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11.5px;white-space:pre;line-height:1.45;overflow-x:auto;border:1px solid #DDD6FE}
+.vc-svg{display:block;max-width:100%;margin:12px auto}
+.source-tag{color:#6B7280;font-size:10.5px}
+.source-tag a{color:#7C3AED;text-decoration:none}
+.tldr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0 18px}
+.tldr-card{background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:12px 14px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.tldr-card h4{margin:0 0 6px;color:#6B21A8;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:600}
+.tldr-card .v{font-size:14.5px;font-weight:600;color:#1E1B4B;line-height:1.4}
+.thesis-box{background:linear-gradient(135deg,#EDE9FE,#F5F3FF);border:1px solid #C4B5FD;border-radius:8px;padding:14px 18px;margin:12px 0;color:#4C1D95;font-size:13.5px;line-height:1.6}
+.thesis-box strong{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:#6B21A8;display:block;margin-bottom:4px}
+.foot{margin-top:32px;padding-top:16px;border-top:1px solid #E5E7EB;color:#6B7280;font-size:11px;text-align:center}
+.foot a{color:#7C3AED;text-decoration:none;margin:0 6px}
+.status-bar{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;margin:0 0 22px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px}
+.status-bar .dot{width:10px;height:10px;border-radius:50%;background:#10B981;display:inline-block}
+.status-bar .label{font-weight:600;color:#4C1D95}
+</style>
+</head>
+<body>
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/" class="active">產業深度 ID</a>
+          <a href="/id/theses.html">⭐ 八大非共識</a>
+          <a href="/pm/">PM 複盤</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+        </div>
+      </div>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="wrap">
+<header class="id-head">
+  <span class="id-badge">產業深度 · Industry DD · AI DC 基建子題</span>
+  <h1>AI DC 電力電子 / Server PSU / 800V DC 架構</h1>
+  <p class="id-meta">發布日：2026-04-21 ｜ 涵蓋 ticker：11 檔（🔴 4 / 🟡 4 / 🟢 3）｜ 🟡 占比：19% ｜ 投資時鐘：<strong>Phase II（54V → 800V 架構轉型期）</strong> ｜ industry-analyst v1.4</p>
+</header>
+
+<div class="status-bar">
+  <span class="dot"></span>
+  <span class="label">鮮度狀態</span>
+  <span>· tech 🟢 · market 🟢 · judgment 🟢</span>
+  <span>· 下次 refresh：2026-Q4（NVDA Rubin 揭示後）</span>
+  <span>· 深化 AI DC 母題電力章節</span>
+</div>
+
+<!-- ========== §0 TL;DR ========== -->
+<h2>§0 TL;DR 卡片</h2>
+
+<div class="tldr-grid">
+  <div class="tldr-card"><h4>主題</h4><div class="v">AI DC 電力電子</div></div>
+  <div class="tldr-card"><h4>時長</h4><div class="v">2025-2030（800V 轉型）</div></div>
+  <div class="tldr-card"><h4>Server PSU TAM 2026 → 2035</h4><div class="v">$3.75B → $6.55B</div></div>
+  <div class="tldr-card"><h4>AI PSU CAGR</h4><div class="v">21.5%（2024-2031）</div></div>
+  <div class="tldr-card"><h4>Phase</h4><div class="v">II 轉型</div></div>
+  <div class="tldr-card"><h4>關鍵玩家 3</h4><div class="v">Delta / Vertiv / Eaton</div></div>
+  <div class="tldr-card"><h4>關鍵風險 3</h4><div class="v">54V 延壽 / 低價廠搶單 / NVDA 800V 推遲</div></div>
+  <div class="tldr-card"><h4>🟡 占比</h4><div class="v">19% / 20%</div></div>
+</div>
+
+<div class="thesis-box">
+  <strong>Thesis（本 ID 核心非共識）</strong>
+  NVDA 2026-Q1 發布「800V HVDC Architecture」，宣告 2027 Kyber rack-scale 全面切換，這不是單純的技術升級 —— 是<strong>電力電子產業的「7nm 代際轉換」</strong>。54V 架構 2027 起被淘汰，server PSU ASP 從 $2K → $3K+（+40%）。市場把 Delta、Vertiv 當一般 AI 受惠股，但真正的結構性論點是：(1) NVDA 把電力電子變成「co-develop 生態」、(2) 800V 認證 2 年以上 lead time，Delta 已領先 18-24 個月、(3) 2308 是<strong>「電力電子界的 TSMC」</strong>—— 每一顆 NVDA B200/GB300/Rubin 都要搭 Delta 認證的 PSU。
+</div>
+
+<!-- §1 產業定義與邊界 -->
+<h2>§1 產業定義與邊界</h2>
+
+<h3>In-scope</h3>
+<table>
+<tr><th>類別</th><th>範圍</th><th>代表玩家</th><th>產品範例</th></tr>
+<tr><td>Server PSU（電源供應器）</td><td>AC-DC 將市電轉為 DC 到 server</td><td>Delta / Lite-On / Chicony / Acbel</td><td>3kW / 5.5kW / 8kW CRPS（GB200）</td></tr>
+<tr><td>Rack-level Power Shelf</td><td>機櫃整層 power 模組</td><td>Delta 72kW AC-DC / 90kW DC-DC shelf</td><td>NVDA GB300 / Kyber 架構</td></tr>
+<tr><td>800V HVDC 整機方案</td><td>端到端 400-480Vac → 800Vdc → 50Vdc</td><td>Delta（領先）/ Vertiv MGX / Eaton / Schneider</td><td>NVDA Rubin 2027 量產標配</td></tr>
+<tr><td>UPS（不斷電系統）</td><td>中小型 DC-scale UPS</td><td>Vertiv / Eaton / Schneider APC / ABB</td><td>2-3MW 集中式 UPS</td></tr>
+<tr><td>PDU / Busway</td><td>機櫃內 + 機櫃間電力分配</td><td>Vertiv / Eaton / nVent / Legrand</td><td>高密度 PDU（300-400A）</td></tr>
+<tr><td>Power 半導體（GaN / SiC）</td><td>800V HVDC 需高壓 GaN/SiC MOSFET</td><td>Navitas / Onsemi / Infineon / STMicro</td><td>GaNFast 2kV / 1.2kV SiC</td></tr>
+<tr><td>Reference IC（Power controller）</td><td>800V 系統控制 + protection</td><td>TI / ADI</td><td>TI 800V reference design</td></tr>
+</table>
+
+<h3>Out-of-scope</h3>
+<table>
+<tr><th>類別</th><th>為何排除</th><th>對應其他 ID</th></tr>
+<tr><td>高壓變壓器（LPT / GSU）</td><td>電力系統級，DC side 之外</td><td><a href="/id/ID_Transformers_20260419.html">ID_Transformers</a></td></tr>
+<tr><td>氣渦輪 / SMR / renewable</td><td>發電端</td><td>ID_AIDataCenter / SMR 待建</td></tr>
+<tr><td>液冷 CDU / 冷板</td><td>thermal 而非 electrical</td><td><a href="/id/ID_LiquidCooling_20260419.html">ID_LiquidCooling</a></td></tr>
+<tr><td>晶片內 VRM（SoC voltage regulator）</td><td>晶片層 power，非機箱 / rack 層</td><td>—（偏窄）</td></tr>
+<tr><td>消費端 USB-PD / 筆電充電</td><td>消費市場，非 DC</td><td>—</td></tr>
+</table>
+
+<h3>灰色地帶</h3>
+<ol>
+<li><strong>「Power 半導體（GaN/SiC）」算不算 power electronics？</strong>算，因為 800V 架構需 GaN / SiC；但本 ID 主軸是「系統整合」而非半導體，將 Navitas / Onsemi 列為 supporting 輔助角色。</li>
+<li><strong>Rack-level 整合 vs Server 整合</strong>：800V 架構把電力管理從 server 內部上移到 rack / row 級，這是本 ID 的核心結構轉變。</li>
+<li><strong>NVDA co-develop partner 算不算「獨家」？</strong>不是獨家，但 2-3 年 lead time 讓 Delta / Vertiv 領先 2 年，實質性壟斷 2027-2028 首批認證產品。</li>
+</ol>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §1</div>
+  <div class="i-body">市場常把 Delta 當「電源公司」、Vertiv 當「UPS 公司」，實際上兩者在 AI DC 產業<strong>已升級為「rack-level 整合方案商」</strong>。差別在於：做組件賣 3-5x BOM ASP 、做方案賣 2-3x system ASP。Delta 2024 還是元件廠，2026 已是方案廠。估值倍數應 re-rate 2-3x。<br><strong>投資意義</strong>：Delta / Vertiv 估值的參照系不再是傳統電源 / UPS 公司（PE 15-20x），而應對標先進 rack infra 玩家（PE 30-40x）。</div>
+</div>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §1（二）</div>
+  <div class="i-body">NVDA 800V HVDC 不是「選配」而是「必配」。從 2027 Kyber 世代開始，所有 1MW+ rack 都必須用 800V；54V 架構將被淘汰。Delta 2025-10 已在 OCP 展示 72kW + 90kW 整機方案，量產認證 2026 Q4，<strong>首批出貨 2027 H1</strong>。</div>
+</div>
+
+<!-- §2 技術演進 + S 曲線 + 歷史類比 -->
+<h2>§2 技術演進 + S 曲線 + 歷史類比</h2>
+
+<h3>S 曲線</h3>
+
+<pre class="scurve-ascii">Phase I (2015-2024)         Phase II (2025-2030)     Phase III (2031+)
+12V / 48V / 54V 時代       800V HVDC 轉型期 ← 當前    800V 標配 + 3D 整合
+════════════════════════════════════════════════════════════════════════
+│ rack 密度 10-30kW         │ rack 密度 120-150kW     │ rack 密度 300kW+
+│ server PSU 1.5-3kW        │ server PSU 5.5-8kW      │ rack power shelf 主導
+│ 集中 UPS 2-3MW            │ UPS 降至備援，rack DC 大 │ DC 直供 → UPS 縮減 50%
+│ Delta / Vertiv 傳統 IT    │ NVDA co-develop 啟動     │ Delta rack-level 認證
+│ 系統 ASP $2K/rack PSU     │ ASP $3K → $5K            │ ASP $5K+ 方案
+│ 競爭者多 Top 10 ~60%      │ Delta + Vertiv 40%+      │ 認證壁壘壟斷
+│ GM 20-25%                 │ GM 25-32%（Delta 升）    │ GM 35%+（mix shift）
+                                                                           </pre>
+
+<p>當前位置：<strong>Phase II 中期（2026-Q2）</strong>。NVDA 2026-Q1 發表 800V HVDC 白皮書，Delta 10 月份營收 +48% YoY 為先行指標。首批商業化 rack（NVDA Rubin）2027 量產。</p>
+
+<h3>過去 → 現在 → 未來</h3>
+<table>
+<tr><th>時間</th><th>里程碑</th><th>主角</th></tr>
+<tr><td>2013</td><td>Google OCP 定義 12.5V DC rack bus（最早 DC 化）</td><td>Google / OCP</td></tr>
+<tr><td>2019</td><td>48V 架構在 AI server 普及（Tesla V100）</td><td>NVDA / Delta</td></tr>
+<tr><td>2023</td><td>54V 架構成熟（GB200 rack power shelf）</td><td>NVDA / Delta</td></tr>
+<tr><td>2024-Q3</td><td>Delta 揭 800V 原型（OCP）</td><td>Delta</td></tr>
+<tr><td>2025-03 GTC</td><td>NVDA 首次公開 800V HVDC vision；Delta 同場展</td><td>NVDA + Delta</td></tr>
+<tr><td>2025-10 OCP</td><td>Delta 72kW AC-DC + 90kW DC-DC shelf 公開 spec；Vertiv MGX 800V 架構</td><td>Delta / Vertiv</td></tr>
+<tr><td><strong>2026-03 GTC</strong></td><td><strong>NVDA 發表 "800V HVDC Architecture" 白皮書，宣告 2027 Kyber 全切換；Delta / Vertiv / Eaton / Schneider / ABB / Navitas / TI / Flex 同時宣告 co-develop</strong></td><td><strong>NVDA + 8 partners</strong></td></tr>
+<tr><td>2026-Q4</td><td>首批 800V rack 認證完成；Vertiv Q4 2025 backlog $15B（+109% YoY）</td><td>Vertiv / Delta</td></tr>
+<tr><td>2027 H1</td><td>NVDA Rubin rack-scale 量產，800V 商用</td><td>NVDA / Delta / Vertiv</td></tr>
+<tr><td>2027-2028</td><td>hyperscaler 全面從 54V 轉 800V；54V PSU 庫存消化</td><td>全體</td></tr>
+<tr><td>2030</td><td>800V 成為 DC 標配；rack 密度 300kW+</td><td>全體</td></tr>
+</table>
+
+<h3>歷史類比</h3>
+<table>
+<tr><th>前例</th><th>年份</th><th>關鍵數據</th><th>本次異同</th></tr>
+<tr><td><strong>2010-2015 Google DC 12V bus 定義</strong></td><td>2010-2015</td><td>OCP Open Compute 12V rack power 2011 定義後，5 年內傳統 UPS + rack PSU 架構被淘汰；Delta / Emerson（Vertiv 前身）受益最大</td><td>高相似度：NVDA 800V 如同 Google 12V 的「新生代 spec」；差異：AI era 的 rack 密度 10x 跨度更大</td></tr>
+<tr><td><strong>2018-2023 EV 800V 系統</strong></td><td>2018-2023</td><td>Porsche Taycan 2019 首發 800V；Hyundai / Kia / Audi 跟進；2023 年成 EV 高端標配</td><td>類似架構轉型：電壓加倍降低電流、縮小 cable、提效率；NVDA 800V DC 是同技術在資料中心落地</td></tr>
+<tr><td><strong>2015-2020 Delta 從電源 → 系統轉型</strong></td><td>2015-2020</td><td>Delta 從 NB 電源供應商（~NT$200B 營收）轉 data center 整合方案（NT$400B+）；5 年內股價 3x</td><td>Delta 第 2 次轉型：2025-2030 從 server PSU → rack system；可能重演 3x 的倍數擴張</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §2</div>
+  <div class="i-body"><strong>EV 800V 類比最精準</strong>：兩者都是「電壓加倍但 power 翻倍、電流不變」的工程解法。EV 的 Porsche 從 2019 首發到 2023 普及花 4 年；AI DC 的 NVDA 從 2026 發表到 2027 商用只花 1.5 年（壓縮版）。這代表電力電子廠商的營收轉換速度會很快，<strong>2027 就是 Delta 第二波業績爆發</strong>。</div>
+</div>
+
+<!-- §3 核心技術棧 -->
+<h2>§3 核心技術棧拆解</h2>
+
+<table>
+<tr><th>子技術</th><th>作用</th><th>瓶頸</th><th>關鍵持有者</th></tr>
+<tr><td>AC-DC 前端（72kW）</td><td>400-480Vac 工業三相轉 800Vdc</td><td>高壓功率密度 + 效率</td><td>Delta（領先）/ Vertiv / Eaton</td></tr>
+<tr><td>DC-DC 後端（90kW）</td><td>800Vdc 轉 50Vdc 給 server</td><td>等級極高（效率 98.5%）</td><td>Delta（98.5%）</td></tr>
+<tr><td>GaN / SiC power stage</td><td>高壓 switching 元件</td><td>2kV GaN 良率 + 壽命</td><td>Navitas / Onsemi / Infineon</td></tr>
+<tr><td>Digital power controller</td><td>system-level 控制</td><td>firmware + protection</td><td>TI / ADI / Microchip</td></tr>
+<tr><td>冷卻整合（PSU + 液冷）</td><td>PSU 需搭 rack 液冷</td><td>兩者 thermal 界面</td><td>Delta（PSU + CDU 一家做）</td></tr>
+<tr><td>安全 / 絕緣（800V 人身保護）</td><td>IEC 62368 / UL 認證</td><td>dielectric strength</td><td>TE Connectivity / Legrand</td></tr>
+<tr><td>Power 監控 + 資料上傳</td><td>rack-level power telemetry</td><td>軟體 + 標準化</td><td>Vertiv（IntelliSlot）/ Schneider EcoStruxure</td></tr>
+</table>
+
+<h3>良率 × 專利</h3>
+<table>
+<tr><th>技術</th><th>當前狀態</th><th>挑戰</th><th>關鍵 IP</th></tr>
+<tr><td>72kW AC-DC shelf</td><td>Delta 量產認證中</td><td>效率 98% 要求高</td><td>Delta 自有專利組合</td></tr>
+<tr><td>90kW DC-DC shelf</td><td>Delta 領先</td><td>98.5% 效率 + 功率密度</td><td>Delta 自有</td></tr>
+<tr><td>2kV GaN</td><td>Navitas 2025-Q4 tape-out</td><td>高壓下可靠度</td><td>Navitas（GaNFast）</td></tr>
+<tr><td>800V DC rack busway</td><td>Vertiv MGX reference</td><td>機械 + 熱 + electrical 整合</td><td>Vertiv 自有</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §3（Kingmaker）</div>
+  <div class="i-body"><strong>真正的 kingmaker 是「系統整合 know-how」，而非單一元件</strong>。Delta 之所以領先不是因為 GaN 技術比 Navitas 強，而是因為能把 AC-DC + DC-DC + 冷卻 + 監控<strong>組合成 rack 一體方案</strong>。NVDA 要的是 1 個交鑰匙方案，而不是 20 個元件。<br><strong>投資意義</strong>：壓 Delta / Vertiv 比壓 Navitas / TI 更有 upside，因為系統整合的護城河比單一元件深。</div>
+</div>
+
+<!-- §4 市場規模 -->
+<h2>§4 市場規模 + CAGR</h2>
+
+<h3>TAM / SAM / SOM</h3>
+<table>
+<tr><th>口徑</th><th>2024</th><th>2026E</th><th>2028E</th><th>2030E</th><th>CAGR</th></tr>
+<tr><td>Server PSU 全體 TAM</td><td>~$3.5B</td><td>~$3.75B</td><td>~$4.5B</td><td>~$5.5B</td><td>~7%</td></tr>
+<tr><td>AI server PSU（高密度）</td><td>~$0.8B</td><td>~$1.5B</td><td>~$3.0B</td><td>~$4.5B</td><td><strong>~30%</strong></td></tr>
+<tr><td>Rack-level power shelf（新類別）</td><td>~$0.1B</td><td>~$0.6B</td><td>~$2.0B</td><td>~$3.5B</td><td><strong>~65%</strong></td></tr>
+<tr><td>UPS + PDU（DC-scale）</td><td>~$15B</td><td>~$19B</td><td>~$25B</td><td>~$32B</td><td>~14%</td></tr>
+<tr><td>Power 半導體（GaN+SiC for 800V DC）</td><td>~$0.2B</td><td>~$0.6B</td><td>~$1.5B</td><td>~$3B</td><td><strong>~55%</strong></td></tr>
+<tr><td><strong>Total AI DC 電力電子 SAM</strong></td><td><strong>~$20B</strong></td><td><strong>~$25B</strong></td><td><strong>~$36B</strong></td><td><strong>~$48B</strong></td><td><strong>~16%</strong></td></tr>
+</table>
+
+<p class="source-tag">[T2: <a href="https://www.yolegroup.com/press-release/artificial-intelligence-ai-surge-pushes-data-center-psu-market-to-14-billion/">Yole Group AI DC PSU</a> · <a href="https://www.intelmarketresearch.com/server-power-supply-market-22899">IMR Server PSU 2026-2032</a>]</p>
+
+<h3>TAM forecast 偏差</h3>
+<table>
+<tr><th>年份</th><th>預估（對 2026）</th><th>實際</th><th>偏差</th></tr>
+<tr><td>2022</td><td>2026 AI server PSU ~$0.8B</td><td>~$1.5B</td><td>+88%</td></tr>
+<tr><td>2024</td><td>2026 Rack shelf ~$0.3B</td><td>~$0.6B</td><td>+100%</td></tr>
+<tr><td>2025</td><td>2026 Total ~$22B</td><td>~$25B</td><td>+14%</td></tr>
+</table>
+
+<p><strong>過去預估均低估</strong>。本次 2030 SAM $48B 可能仍保守（未完全納入 NVDA Rubin + Kyber 世代 rack 密度爆發）。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §4</div>
+  <div class="i-body">注意「Rack-level power shelf」是<strong>全新類別</strong>（CAGR 65%，2024 &lt; $0.1B → 2030 $3.5B），等於 6 年 35x 成長。這是 Delta / Vertiv 2027+ 最大的增長引擎，而且幾乎沒有競爭者（認證壁壘 + NVDA co-develop 鎖定）。<br><strong>投資意義</strong>：Delta data center 業務 2025 約 NT$200B 左右，2030 可能成長到 NT$500-600B。</div>
+</div>
+
+<!-- §5 Value Chain -->
+<h2>§5 供應鏈 Value Chain</h2>
+
+<svg class="vc-svg" viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7C3AED"/>
+    </marker>
+  </defs>
+  <rect x="20" y="50" width="220" height="190" rx="10" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="2"/>
+  <text x="130" y="78" font-size="13" font-weight="700" fill="#4C1D95" text-anchor="middle">上游（元件 + IP）</text>
+  <text x="30" y="105" font-size="11" fill="#4C1D95">GaN / SiC：Navitas / Onsemi</text>
+  <text x="30" y="122" font-size="11" fill="#4C1D95">　　　　　Infineon / STMicro</text>
+  <text x="30" y="139" font-size="11" fill="#4C1D95">Control IC：TI / ADI</text>
+  <text x="30" y="156" font-size="11" fill="#4C1D95">Magnetics：TDK / Murata</text>
+  <text x="30" y="175" font-size="11" fill="#4C1D95">Connectors：TE / Molex</text>
+  <text x="30" y="205" font-size="10" fill="#6B21A8">毛利：元件 40-55%</text>
+  <text x="30" y="222" font-size="10" fill="#6B21A8">競爭：多家，偏 commodity</text>
+  <line x1="240" y1="150" x2="380" y2="150" stroke="#7C3AED" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="390" y="50" width="220" height="190" rx="10" fill="#EDE9FE" stroke="#A78BFA" stroke-width="2"/>
+  <text x="500" y="78" font-size="13" font-weight="700" fill="#4C1D95" text-anchor="middle">中游（整合方案商）</text>
+  <text x="400" y="105" font-size="11" fill="#4C1D95"><tspan font-weight="700">Delta（2308，龍頭）</tspan></text>
+  <text x="400" y="122" font-size="11" fill="#4C1D95"><tspan font-weight="700">Vertiv（VRT，美系領頭）</tspan></text>
+  <text x="400" y="139" font-size="11" fill="#4C1D95">Eaton（ETN）/ Schneider</text>
+  <text x="400" y="156" font-size="11" fill="#4C1D95">Lite-On（2301）/ Chicony（6230）</text>
+  <text x="400" y="175" font-size="11" fill="#4C1D95">ABB / FLEX</text>
+  <text x="400" y="205" font-size="10" fill="#6B21A8">毛利：Delta 25-30%</text>
+  <text x="400" y="222" font-size="10" fill="#6B21A8">Vertiv 34%+ / Eaton 35%</text>
+  <line x1="610" y1="150" x2="750" y2="150" stroke="#7C3AED" stroke-width="2" marker-end="url(#arr)"/>
+  <rect x="760" y="50" width="220" height="190" rx="10" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="2"/>
+  <text x="870" y="78" font-size="13" font-weight="700" fill="#4C1D95" text-anchor="middle">下游（NVDA + hyperscaler）</text>
+  <text x="770" y="105" font-size="11" fill="#4C1D95">NVDA（co-develop spec）</text>
+  <text x="770" y="122" font-size="11" fill="#4C1D95">Server ODM：</text>
+  <text x="770" y="139" font-size="11" fill="#4C1D95">　廣達 / 鴻海 / 緯創 / SMCI</text>
+  <text x="770" y="156" font-size="11" fill="#4C1D95">Hyperscaler：</text>
+  <text x="770" y="175" font-size="11" fill="#4C1D95">　AWS / MS / Google / Meta</text>
+  <text x="770" y="205" font-size="10" fill="#6B21A8">毛利：NVDA 74% / ODM 8-10%</text>
+  <text x="770" y="222" font-size="10" fill="#6B21A8">議價：NVDA 極強</text>
+</svg>
+
+<h3>議價權近 5 年轉移史</h3>
+<table>
+<tr><th>時期</th><th>利潤池</th><th>事件</th></tr>
+<tr><td>2015-2020</td><td>元件商 + 組裝廠，傳統 PC PSU 競爭激烈 GM 10-15%</td><td>Delta 轉型啟動</td></tr>
+<tr><td>2020-2024</td><td>Delta / Vertiv 開始 system 升級，GM 20-25%</td><td>48V / 54V 架構普及</td></tr>
+<tr><td>2025-2028</td><td><strong>整合方案商利潤池擴大（Delta / Vertiv GM 25-35%），元件商被壓</strong></td><td>NVDA co-develop；800V 認證壁壘</td></tr>
+<tr><td>2029-2032E</td><td><strong>認證壟斷確立，Top 3 吃 70% 份額；GaN/SiC 價值被壓回 commodity</strong></td><td>產業成熟</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §5</div>
+  <div class="i-body">Value chain 未來 5 年<strong>利潤池明確向「整合方案商」集中</strong>：Delta / Vertiv / Eaton 合吃全產業 60%+ 的利潤，而 GaN / SiC 元件商（Navitas / Onsemi / Infineon）因供過於求 margin 被壓回 25%。Vertiv 的 Q4 2025 book-to-bill 2.9x + $15B backlog 是這個論點的活證據。<br><strong>投資意義</strong>：若選系統整合商（Delta + Vertiv），押 2 家就夠；Power 半導體（Navitas 等）是 b2b beta 玩法，風險報酬比不如整合商。</div>
+</div>
+
+<!-- §6 玩家矩陣 -->
+<h2>§6 玩家矩陣</h2>
+
+<h3>6.1 整合方案商（主戰場，🔴 核心）</h3>
+<table>
+<tr><th>公司</th><th>Ticker</th><th>主力產品</th><th>主要客戶</th><th>毛利</th><th>市占（AI PSU）</th><th>近 12 月</th></tr>
+<tr><td><strong>Delta Electronics</strong></td><td>2308.TW</td><td>Server PSU / 72kW + 90kW shelf / CDU</td><td>NVDA（co-develop）/ 廣達 / 鴻海 / Supermicro</td><td>~28-30%</td><td><strong>~35%</strong></td><td>↑↑↑ 10 月 rev +48% YoY；2025 獲利創新高</td></tr>
+<tr><td><strong>Vertiv</strong></td><td>VRT</td><td>800V MGX reference / UPS / PDU</td><td>NVDA / hyperscaler</td><td>~34%</td><td><strong>~25%</strong> (整機方案)</td><td>↑↑ Q4 orders +252% YoY / backlog $15B</td></tr>
+<tr><td>Eaton</td><td>ETN</td><td>800V DC SST / UPS</td><td>多元（包含 industrial）</td><td>~35%</td><td>~10%</td><td>↑ Boyd 收購 2024 強化 thermal</td></tr>
+<tr><td>Schneider Electric</td><td>SU.PA</td><td>APC UPS / 800V reference</td><td>enterprise + cloud</td><td>~40%</td><td>~8%</td><td>↑ EcoStruxure AI</td></tr>
+</table>
+
+<h3>6.2 PSU 專攻（台系二線，🟡 次要）</h3>
+<table>
+<tr><th>公司</th><th>Ticker</th><th>AI server PSU 占比</th><th>主客戶</th><th>毛利</th><th>市占</th><th>動向</th></tr>
+<tr><td>Lite-On Technology</td><td>2301.TW</td><td>~15% 營收</td><td>廣達 / 鴻海 / AWS</td><td>~15-18%</td><td>~15%</td><td>↑ AI server 追趕 Delta</td></tr>
+<tr><td>Chicony Power</td><td>6230.TW</td><td>~20% 營收</td><td>Supermicro / Dell</td><td>~14-17%</td><td>~10%</td><td>↑ 但規模小</td></tr>
+<tr><td>Acbel Polytech</td><td>6105.TW</td><td>~30% 營收</td><td>多元 OEM</td><td>~15%</td><td>~5%</td><td>↔ 邊緣</td></tr>
+<tr><td>FLEX（整機代工）</td><td>FLEX</td><td>~8% 營收</td><td>NVDA（800V partner 之一）</td><td>~7%</td><td>~5%</td><td>↑ NVDA 2026 直接簽約</td></tr>
+</table>
+
+<h3>6.3 Power 半導體（🟢 邊緣，支援角色）</h3>
+<table>
+<tr><th>公司</th><th>Ticker</th><th>在 800V 的角色</th><th>近 12 月</th></tr>
+<tr><td>Navitas</td><td>NVTS</td><td>NVDA 揭示 next-gen 800V 合作 partner；2kV GaN</td><td>↑ 2025-Q4 NVDA 宣告小市值 3x 反彈</td></tr>
+<tr><td>Onsemi</td><td>ON</td><td>SiC MOSFET 供應</td><td>↔ EV 逆風但 AI 補回</td></tr>
+<tr><td>Infineon</td><td>IFX.DE</td><td>SiC + CoolMOS</td><td>↔ 汽車偏弱但 AI 段成長</td></tr>
+<tr><td>TI</td><td>TXN</td><td>2026-03 揭示 "complete 800 VDC power architecture with NVIDIA"</td><td>↑ AI 戰略加強</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §6</div>
+  <div class="i-body"><strong>真正「2+2」格局</strong>：Delta + Vertiv（整機方案，60% 份額）+ Eaton + Schneider（二線，20%）。台系二線（Lite-On / Chicony / Acbel）合計 30% 份額但毛利只有 Delta 的一半，代表 Delta 領先不是單純技術，而是 NVDA co-develop 帶來的認證溢價。<br><strong>投資意義</strong>：2308 + VRT 是「must-own」；2301 / 6230 / 6105 是「可做衛星配置」但報酬率低；Navitas / Onsemi 是「beta 玩法」風險大。</div>
+</div>
+
+<!-- §7 Unit Economics -->
+<h2>§7 Unit Economics + ASP 動態</h2>
+
+<h3>7.1 各環節財務結構</h3>
+<table>
+<tr><th>公司</th><th>毛利</th><th>營業利益</th><th>ROIC</th><th>Capex 強度</th></tr>
+<tr><td>Delta 2308</td><td>~28-30%</td><td>~14%</td><td>~18%</td><td>中（5-7% of rev）</td></tr>
+<tr><td>Vertiv</td><td>~34%</td><td>~17%</td><td>~22%</td><td>中（4-5%）</td></tr>
+<tr><td>Eaton</td><td>~35%</td><td>~20%</td><td>~16%</td><td>中</td></tr>
+<tr><td>Schneider</td><td>~40%</td><td>~18%</td><td>~14%</td><td>中</td></tr>
+<tr><td>Lite-On 2301</td><td>~15-18%</td><td>~6%</td><td>~8%</td><td>低</td></tr>
+<tr><td>Chicony 6230</td><td>~14-17%</td><td>~5%</td><td>~7%</td><td>低</td></tr>
+</table>
+
+<h3>7.2 ASP 動態（5Y 歷史 + 2Y 預估）</h3>
+<table>
+<tr><th>年份</th><th>Server PSU 單台 ASP</th><th>Rack power shelf ASP</th><th>架構</th></tr>
+<tr><td>2021</td><td>~$800</td><td>N/A</td><td>12V / 48V</td></tr>
+<tr><td>2023</td><td>~$1,500</td><td>~$8,000</td><td>48V / 54V</td></tr>
+<tr><td>2025</td><td>~$2,000</td><td>~$12,000</td><td>54V 成熟</td></tr>
+<tr><td>2026E</td><td>~$2,400</td><td>~$15,000</td><td>54V 末 + 800V 試產</td></tr>
+<tr><td>2027E</td><td>~$2,800</td><td>~$22,000</td><td>800V 量產</td></tr>
+<tr><td>2028E</td><td>~$3,200</td><td>~$28,000</td><td>800V 主流</td></tr>
+</table>
+
+<p><strong>5 年 PSU ASP 翻 3-4x，rack shelf ASP 翻 3.5x</strong>。原因：密度爆炸 + 高壓元件成本 + 整機方案 premium。</p>
+
+<h3>7.3 抗 Commoditization</h3>
+<table>
+<tr><th>因素</th><th>Delta</th><th>Vertiv</th><th>Lite-On / Chicony</th></tr>
+<tr><td>NVDA co-develop</td><td>✓（2 年領先）</td><td>✓（MGX reference）</td><td>✗</td></tr>
+<tr><td>IP 組合</td><td>強（50+ patents on 800V）</td><td>強（MGX / UPS）</td><td>弱</td></tr>
+<tr><td>Scale</td><td>最大</td><td>第二大</td><td>較小</td></tr>
+<tr><td>客戶黏性（認證）</td><td>18-24 月切換成本</td><td>12 月</td><td>6 月</td></tr>
+<tr><td>品牌溢價</td><td>高</td><td>高</td><td>無</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §7</div>
+  <div class="i-body">Delta 的 28-30% 毛利看似普通，但<strong>比 Lite-On / Chicony 的 15% 高 2x</strong>——這個「毛利差」正是 NVDA co-develop 認證的溢價。2027 800V 量產後，Delta 毛利可能再升至 32-35%（rack shelf mix shift）；Lite-On / Chicony 則維持 15-18%（依附）。<br><strong>投資意義</strong>：2308 vs 2301 / 6230 的股價 PE 差距應該進一步擴大（2308 向 VRT 看齊，2301 / 6230 停留在傳統電源公司 PE）。</div>
+</div>
+
+<!-- §8 估值影響機制 -->
+<h2>§8 估值影響機制</h2>
+
+<table>
+<tr><th>產業變數</th><th>方向</th><th>2308</th><th>VRT</th><th>ETN</th><th>2301</th></tr>
+<tr><td>NVDA 800V 2027 如期量產</td><td>↑</td><td>+3-4x</td><td>+4-5x</td><td>+2x</td><td>+1x</td></tr>
+<tr><td>Vertiv Q2 2026 book-to-bill &gt; 2.5x</td><td>↑</td><td>+1x</td><td>+4x（最敏感）</td><td>+1x</td><td>中性</td></tr>
+<tr><td>hyperscaler AI capex 2027 +30%</td><td>↑</td><td>+3x</td><td>+3x</td><td>+2x</td><td>+1x</td></tr>
+<tr><td>Delta 800V 認證延後 6 個月</td><td>↓</td><td>-4x（最敏感）</td><td>-2x</td><td>-1x</td><td>+1x（搶單）</td></tr>
+<tr><td>54V 庫存消化緩慢</td><td>↓</td><td>-2x（雙產線）</td><td>-1x</td><td>中性</td><td>-2x</td></tr>
+<tr><td>Lite-On / Chicony 搶下 AWS 單</td><td>↓</td><td>-2x</td><td>-1x</td><td>中性</td><td>+3x</td></tr>
+</table>
+
+<div class="judgment">
+  <div class="j-head">🟡 敏感度模型 [信心: 中-高]</div>
+  <div class="j-facts">事實 1: Delta 2025-10 營收 NT$57.4B +48% YoY<span class="source-tag">[<a href="https://www.investing.com/news/stock-market-news/delta-electronics-october-revenue-hits-record-high-on-ai-power-demand-93CH-4344998">Investing.com 2025-11</a>]</span></div>
+  <div class="j-facts">事實 2: Vertiv Q4 2025 book-to-bill 2.9x、backlog $15B (+109% YoY)<span class="source-tag">[<a href="https://markets.financialcontent.com/wral/article/finterra-2026-2-11-the-architecture-of-ai-a-deep-dive-into-vertiv-holdings-vrt-following-record-2026-results">FinancialContent 2026-02</a>]</span></div>
+  <div class="j-facts">事實 3: NVDA 2026-03 "800V HVDC" 白皮書 + 8 家 partner 公告</div>
+  <div class="j-infer">→ 推論：Delta + Vertiv 2026-2027 營收成長可視度極高，估值 re-rate（2308 從 PE 20x → 30x）有 50% upside</div>
+  <div class="j-falsify">⚠ 證偽：2027 Q1 NVDA Rubin 延後；或 Delta 800V 認證 2026 Q4 未通過</div>
+</div>
+
+<!-- §9 風險矩陣 -->
+<h2>§9 風險矩陣 + 政策地緣</h2>
+
+<h3>9.1 3 軸風險</h3>
+<table>
+<tr><th>風險</th><th>機率</th><th>嚴重度</th><th>受影響</th></tr>
+<tr><td>技術：Delta 800V 認證延後 6 個月</td><td>20%</td><td>高</td><td>Delta 主，Vertiv 次</td></tr>
+<tr><td>技術：2kV GaN 良率 2027 仍 &lt; 60%</td><td>25%</td><td>中</td><td>全體（但 Delta 可替用 SiC）</td></tr>
+<tr><td>需求：NVDA Rubin 2027 延後</td><td>20%</td><td>高</td><td>全體</td></tr>
+<tr><td>需求：AI capex 2027 H2 放緩</td><td>25%</td><td>中</td><td>Delta / Vertiv 訂單</td></tr>
+<tr><td>競爭：Lite-On / Chicony 突破 NVDA 認證</td><td>15%</td><td>中</td><td>Delta / Vertiv 溢價壓縮</td></tr>
+<tr><td>替代：新興液冷整合方案</td><td>15%</td><td>中</td><td>Delta 液冷 / Vertiv</td></tr>
+</table>
+
+<h3>9.2 政策地緣</h3>
+<table>
+<tr><th>事件</th><th>時程</th><th>影響</th></tr>
+<tr><td>台海風險 / Delta 生產中斷</td><td>&lt; 5%</td><td>Delta 印度 / 泰國廠備援（但產能少）</td></tr>
+<tr><td>US 對中 AI chip 出口 → 連帶電力電子</td><td>2026-2027</td><td>中國市場受限，但 AI DC 主戰場在美 / 歐 / 日</td></tr>
+<tr><td>歐盟 AI Act 資料中心能效標準</td><td>2026-2028</td><td>Delta / Vertiv 800V 高效率方案受益</td></tr>
+</table>
+
+<div class="judgment">
+  <div class="j-head">🟡 最低估風險 [信心: 中]</div>
+  <div class="j-facts">事實：台系 PSU 產業集中度高，Delta 一家若 800V 認證延後將影響全 NVDA 訂單</div>
+  <div class="j-infer">→ 單點 concentration 風險，Vertiv 作為 rack-level 方案替代者在美系端有緩衝</div>
+  <div class="j-falsify">⚠ Delta 2026 Q4 法說若揭示 800V 認證進度 delay，需減碼</div>
+</div>
+
+<!-- §9.5 Kill Scenario -->
+<h2>§9.5 Kill Scenario / Steel-man 反方</h2>
+
+<h3>反方 1：54V 架構延壽，800V 推遲到 2029</h3>
+<p><strong>路徑</strong>：NVDA 2027 Rubin 首發選擇保守，繼續用 54V；hyperscaler 不急於轉型，因為 ROI 不明顯。Delta 2027-2028 預期的 800V 出貨大量延後。</p>
+<p><strong>成真時窗</strong>：2026 Q4 NVDA Rubin spec 揭示。</p>
+
+<h3>反方 2：NVDA 把 800V 設計「公開」，Taiwan 二線廠一起吃</h3>
+<p><strong>路徑</strong>：NVDA 2026-2027 推動 OCP 開放 800V 規格，Lite-On / Chicony / Acbel 追上，Delta 先發優勢壓縮為 12 月。</p>
+<p><strong>當前證據</strong>：NVDA 2026-03 已公開部分白皮書。</p>
+
+<h3>反方 3：AI 資料中心成長 2027 H2 遇瓶頸</h3>
+<p><strong>路徑</strong>：hyperscaler capex 2027 H2 放緩（類似 2022 半導體 cycle 短暫回調）；Delta / Vertiv 訂單 2028 YoY 僅 +15%。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §9.5</div>
+  <div class="i-body">最有殺傷力的是反方 2（NVDA 開放規格）—— 因為 Delta 的溢價建立在「認證壁壘 + 先發 2 年」上，若規格被開源會壓縮溢價 30-40%。但 NVDA 目前的策略是「co-develop 式開放」而非 100% 公開，中度風險。2026-Q4 NVDA OCP 議程是關鍵觀察窗。</div>
+</div>
+
+<!-- §10 投資時鐘 -->
+<h2>§10 投資時鐘 + Phase 轉換訊號</h2>
+
+<h3>當前 Phase：Phase II（54V → 800V 轉型期）</h3>
+<table>
+<tr><th>Phase</th><th>時期</th><th>贏家</th></tr>
+<tr><td>I 12V/48V 時代</td><td>2015-2024</td><td>Delta（傳統廠轉型）</td></tr>
+<tr><td><strong>II 轉型期（當前）</strong></td><td><strong>2025-2030</strong></td><td><strong>Delta + Vertiv + Eaton</strong></td></tr>
+<tr><td>III 800V 標配</td><td>2031+</td><td>Top 3 集中度高</td></tr>
+</table>
+
+<h3>Phase 轉換訊號</h3>
+<table>
+<tr><th>轉換</th><th>必要</th><th>充分</th></tr>
+<tr><td>I → II 確立</td><td>NVDA Kyber rack 量產（2027）</td><td>Delta 月出貨 800V shelf &gt; 5K</td></tr>
+<tr><td>II → III</td><td>全球 80% AI rack &gt; 100kW</td><td>54V 庫存全部消化</td></tr>
+<tr><td>II 提前</td><td>Apple / Tesla AI DC 加入 800V 陣營</td><td>Hyperscaler PO 2027 超 $20B</td></tr>
+</table>
+
+<!-- §10.5 Catalyst Timeline -->
+<h2>§10.5 Catalyst Timeline（未來 18 個月）</h2>
+
+<table>
+<tr><th>日期</th><th>事件</th><th>類別</th><th>檢視</th><th>若達成</th><th>若落空</th></tr>
+<tr><td>2026-Q2</td><td>Delta Q1 財報 + 800V 認證進度</td><td>財報</td><td>rev +40% YoY ; shelf 進度</td><td>➕ 2308 +15%</td><td>➖ -10%</td></tr>
+<tr><td>2026-Q2</td><td>Vertiv Q1 財報 / book-to-bill</td><td>財報</td><td>book-to-bill &gt; 2.5x</td><td>➕ VRT +15%</td><td>➖ -15%</td></tr>
+<tr><td>2026-Q3</td><td>OCP Global Summit 2026</td><td>keynote</td><td>Delta / Vertiv 新產品發布</td><td>➕ 共振</td><td>➖ 中性</td></tr>
+<tr><td>2026-Q4</td><td>NVDA GTC 2026 / Rubin + Kyber spec 揭示</td><td>keynote</td><td>Rubin 2027 確認 / Kyber 密度</td><td>➕ 板塊全體 re-rate</td><td>➖ 時程推遲</td></tr>
+<tr><td>2026-Q4</td><td>Delta 800V 72kW / 90kW shelf 認證完成</td><td>產品</td><td>NVDA certification</td><td>➕ 2308 +20%</td><td>➖ -25%</td></tr>
+<tr><td>2027-Q1</td><td>NVDA Kyber rack 首批出貨</td><td>產品</td><td>量產啟動</td><td>➕ 全體共振</td><td>➖ thesis 延後</td></tr>
+<tr><td>2027-Q3</td><td>全球 AI rack 100kW+ 滲透率</td><td>data</td><td>&gt; 30% AI rack 用 800V</td><td>➕ II → III 確立</td><td>➖ 拉長 Phase II</td></tr>
+</table>
+
+<!-- §11 關聯個股清單 -->
+<h2>§11 關聯個股清單</h2>
+
+<table>
+<tr><th>Ticker</th><th>公司</th><th>深度</th><th>受益 / 受害</th><th>DD 狀態</th><th>備註</th></tr>
+<tr><td>2308.TW</td><td>Delta Electronics</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 最大受益</td><td>DD 未建，建議優先</td><td>800V 領先 18-24 月；NVDA co-develop；PSU + CDU 雙業務</td></tr>
+<tr><td>VRT</td><td>Vertiv Holdings</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 最大受益</td><td><a href="/dd/">DD 已建</a></td><td>$15B backlog；MGX 800V reference</td></tr>
+<tr><td>ETN</td><td>Eaton</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 受益</td><td><a href="/dd/">DD 已建</a></td><td>800V DC SST + thermal (Boyd 2024 併購)</td></tr>
+<tr><td>SU.PA</td><td>Schneider Electric</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>✅ 受益</td><td>DD 未建</td><td>APC UPS 龍頭 + 800V partner</td></tr>
+<tr><td>2301.TW</td><td>Lite-On Technology</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益（但低毛利）</td><td>DD 未建</td><td>PSU 二線，追趕 Delta</td></tr>
+<tr><td>6230.TW</td><td>Chicony Power</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益（但低毛利）</td><td>DD 未建</td><td>Supermicro / Dell 主</td></tr>
+<tr><td>FLEX</td><td>Flex Ltd</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益</td><td>DD 未建</td><td>NVDA 2026 直接 partner</td></tr>
+<tr><td>6105.TW</td><td>Acbel Polytech</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>✅ 受益（邊緣）</td><td>DD 未建</td><td>PSU 三線</td></tr>
+<tr><td>NVTS</td><td>Navitas Semiconductor</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>✅ 間接</td><td>DD 未建</td><td>2kV GaN，NVDA partner</td></tr>
+<tr><td>ON</td><td>Onsemi</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>✅ 間接</td><td>DD 未建</td><td>SiC MOSFET</td></tr>
+<tr><td>TXN</td><td>Texas Instruments</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>✅ 間接</td><td>DD 未建</td><td>800V reference design + controllers</td></tr>
+</table>
+
+<h3>Non-obvious 二次受益</h3>
+<table>
+<tr><th>Ticker</th><th>公司</th><th>路徑</th></tr>
+<tr><td>TDK (6762.T)</td><td>TDK</td><td>800V 磁性元件（transformer + inductor）供應 Delta / Vertiv</td></tr>
+<tr><td>TEL (6758.T)</td><td>Sony</td><td>高壓 insulator / connector（TE 競爭對手）</td></tr>
+</table>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §11</div>
+  <div class="i-body">本 ID 新建 DD 優先順序：<strong>2308 Delta（台股主角）→ 2301 Lite-On（次選）→ Schneider SU.PA</strong>。Delta 是「must」，因為它是本產業唯一 pure-play 台股龍頭 + NVDA co-develop 關鍵角色。</div>
+</div>
+
+<!-- §11.5 Cross-ID -->
+<h2>§11.5 Cross-ID 依賴圖</h2>
+
+<table>
+<tr><th>關聯</th><th>對應 ID</th><th>依賴</th></tr>
+<tr><td>母題</td><td><a href="/id/ID_AIDataCenter_20260419.html">AI 資料中心基建</a></td><td>本 ID 是母題「電力」章節的深度展開；觸發母題 2308 從 🟡 升 🔴</td></tr>
+<tr><td>兄弟子題</td><td><a href="/id/ID_Transformers_20260419.html">變壓器</a></td><td>SST（solid state transformer）是 800V DC 上游，Eaton 雙受益</td></tr>
+<tr><td>兄弟子題</td><td><a href="/id/ID_LiquidCooling_20260419.html">液冷</a></td><td>Delta CDU 是此 ID + 液冷 ID 共同受益；每 1MW rack 需電力 + 液冷雙系統</td></tr>
+<tr><td>上游驅動</td><td><a href="/id/ID_AIAcceleratorDemand_20260419.html">AI 加速器需求（母題）</a></td><td>NVDA Rubin / Kyber 決定 800V 量產時程</td></tr>
+<tr><td>下游配套</td><td><a href="/id/ID_AINetworking_20260419.html">AI 網路互連</a></td><td>Rack 內 power + network 整合，Delta / Vertiv 同時做</td></tr>
+</table>
+
+<h3>上游 / 下游連鎖</h3>
+<ul>
+<li><strong>上游崩盤</strong>：NVDA Rubin 2027 延後 → Delta / Vertiv 800V 訂單全延 6-12 月</li>
+<li><strong>下游拉動</strong>：hyperscaler AI capex 超預期 → 全產業 re-rate 共振</li>
+</ul>
+
+<!-- §12 Non-Consensus -->
+<h2>§12 Non-Consensus View</h2>
+
+<div class="judgment">
+  <div class="j-head">🟡 非共識 1：Delta 是「電力電子界的 TSMC」[信心: 中-高]</div>
+  <div class="j-facts">共識：Delta 被歸類為「Taiwan 電源廠」，PE 20-22x，估值對標傳統電源公司</div>
+  <div class="j-facts">本 ID：NVDA co-develop + 800V 認證 2 年壁壘 + 60+ hyperscaler 認證 = 實質性壟斷（類 TSMC 在 3nm 的地位）</div>
+  <div class="j-facts">分歧：共識只看 P&amp;L「電源業務毛利 20%」，未納入 rack-shelf mix shift 帶來 35% mix GM</div>
+  <div class="j-infer">→ Delta 2027-2028 合理 PE 30-40x（類 Vertiv），目前 ~22x，upside 40-80%</div>
+  <div class="j-falsify">⚠ NVDA 2026-Q4 未認證 Delta 800V shelf；或 AWS 自選 Lite-On</div>
+</div>
+
+<div class="judgment">
+  <div class="j-head">🟡 非共識 2：Vertiv 的 $15B backlog 不是「銷售達成」而是「mix-shift 啟動」[信心: 高]</div>
+  <div class="j-facts">共識：VRT backlog +109% YoY 被視為一次性訂單爆發</div>
+  <div class="j-facts">本 ID：backlog 中 rack-level 整合方案占比 2024 &lt; 20% → 2025 Q4 &gt; 40%，單位毛利 2x 傳統 UPS</div>
+  <div class="j-facts">分歧：共識只看 top-line growth，未看 mix shift 帶動 margin expansion 2026 GM 可突破 37%</div>
+  <div class="j-infer">→ Vertiv 2026-2027 EPS 超預期 15-20%，市場要到 2026 H1 財報才追認</div>
+  <div class="j-falsify">⚠ Vertiv 2026 Q1-Q2 GM 未突破 35%</div>
+</div>
+
+<div class="judgment">
+  <div class="j-head">🟡 非共識 3：800V 轉型壓力將淘汰台系二線（Chicony / Acbel）[信心: 中]</div>
+  <div class="j-facts">共識：Lite-On / Chicony / Acbel 都會跟著 AI server 升級受益</div>
+  <div class="j-facts">本 ID：800V 認證 18-24 月 lead time + NVDA co-develop 只找 Delta + FLEX，二線廠 2027 訂單 YoY 可能負成長</div>
+  <div class="j-facts">分歧：共識把二線當「delta 小一號」，實際上是兩個不同商業模式（元件 vs 方案）</div>
+  <div class="j-infer">→ 2027+ 減碼 Chicony（6230）+ Acbel（6105），壓 Delta 2308</div>
+  <div class="j-falsify">⚠ Lite-On 2026 Q4 取得 NVDA 800V 認證</div>
+</div>
+
+<!-- §13 Falsification Test -->
+<h2>§13 Falsification Test</h2>
+
+<table>
+<tr><th>#</th><th>Metric</th><th>閾值</th><th>時間窗</th><th>源</th></tr>
+<tr><td>1</td><td>Delta 月營收 YoY</td><td>連 2 季 &lt; +20%</td><td>2026 Q3-Q4</td><td>Delta IR</td></tr>
+<tr><td>2</td><td>Vertiv book-to-bill</td><td>&lt; 1.5x 連 2 季</td><td>2026 H2</td><td>Vertiv 財報</td></tr>
+<tr><td>3</td><td>NVDA Rubin 量產時程</td><td>推遲超過 2027 Q3</td><td>2026 Q4 GTC</td><td>NVDA keynote</td></tr>
+<tr><td>4</td><td>Delta 800V 認證</td><td>2026 Q4 前未通過</td><td>2026 Q4</td><td>Delta 法說</td></tr>
+<tr><td>5</td><td>AI server PSU 市占（Delta）</td><td>跌破 30%</td><td>2027-2028</td><td>IHS / IDC</td></tr>
+<tr><td>6</td><td>NVDA OCP 規格開放程度</td><td>2027 Q1 前完全開源 800V 規格</td><td>2026 Q4</td><td>NVDA OCP keynote</td></tr>
+</table>
+
+<p style="font-size:12.5px;color:#4B5563"><strong>觸發邏輯</strong>：任 1 條 → 減碼；任 2 條 → 本 ID 重寫；任 3 條 → 廢除。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §13</div>
+  <div class="i-body">
+    1. <strong>Lead indicator 是 Delta 月營收</strong>（每月 10 日發布）—— 最即時，可早於財報 2-3 個月觀察<br>
+    2. <strong>最大 single catalyst 是 2026-Q4 NVDA GTC + Delta 認證雙事件同時</strong>，若都 pass 則 thesis 鎖定，股價 re-rate<br>
+    3. <strong>最致命風險是 NVDA 完全開源規格</strong>，直接打破 Delta 護城河
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="foot">
+產業深度報告 · industry-analyst v1.4 · 主題：AI DC Power Electronics / 800V DC · 發布日：2026-04-21 · 🟡 占比：19%<br>
+<a href="/id/">所有產業報告</a> · <a href="/id/theses.html">⭐ 八大非共識</a> · <a href="/pm/">PM 複盤</a> · <a href="/research/">個股 DD</a>
+</div>
+
+</div>
+
+</body>
+</html>
