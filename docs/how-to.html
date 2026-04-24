@@ -136,7 +136,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 <div class="container">
   <div class="crumb"><a href="/">首頁</a> &rsaquo; 使用說明</div>
   <h1>使用說明 — 如何呼喚 skill / SOP</h1>
-  <p class="sub">本站研究內容由 3 套 Claude skill（stock-analyst / industry-analyst / portfolio-manager）+ 多份 SOP 協作產出。本頁列出<strong>每個研究工作流對應的觸發指令</strong>，讓你知道「想要 X，該說什麼」。</p>
+  <p class="sub">本站研究內容由 4 套 Claude skill（stock-analyst / industry-analyst / portfolio-manager / geopolitics-dd）+ 多份 SOP 協作產出。本頁列出<strong>每個研究工作流對應的觸發指令</strong>，讓你知道「想要 X，該說什麼」。</p>
 
   <!-- ========== 四個 skill 與 flagship 更新 ========== -->
 
@@ -188,7 +188,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
       <div class="skill-icon">🔷</div>
       <div class="skill-title">
         <h2 class="purple">industry-analyst · 產業 DD（Industry DD / ID）</h2>
-        <div class="sub">v1.4 跨多檔個股共用的產業研究，含 7 Gates pre-publish check</div>
+        <div class="sub">v1.5 跨多檔個股共用的產業研究，含 9 Gates pre-publish check + Thesis Cornerstone 驗證 + 母題/子題結構</div>
       </div>
       <div class="skill-meta">~/skills/industry-analyst/</div>
     </div>
@@ -196,9 +196,14 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
       <table>
         <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
         <tr>
-          <td>建新產業 DD</td>
+          <td>建新產業母題 DD</td>
           <td><code>研究 {主題} 產業</code><br><code>研究 GLP-1</code><br><code>研究玻璃基板封裝</code></td>
           <td>docs/id/ID_{Topic}_{date}.html（14 章 ID）+ §11 關聯個股清單</td>
+        </tr>
+        <tr>
+          <td>建子題 DD（母題下分支）</td>
+          <td><code>{母題} 的 {子題名}</code><br><code>資安 SaaS M2 AI × 資安雙刃劍</code></td>
+          <td>子題 ID + cross-ID 依賴圖（§11.5）自動關聯母題與兄弟</td>
         </tr>
         <tr>
           <td>刷新既有 ID</td>
@@ -208,7 +213,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         <tr>
           <td>局部補丁</td>
           <td><code>更新 ID_AP 的 §4 TAM</code></td>
-          <td>只重寫該段（skill v1.4 支援）</td>
+          <td>只重寫該段（skill v1.5 支援）</td>
         </tr>
         <tr>
           <td>建新 Flagship</td>
@@ -217,11 +222,50 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         </tr>
       </table>
 
-      <div class="tips"><strong>⚡ v1.4 七道 Gate</strong>：發布前自動跑 core ticker financials &lt; 60 天 / event thesis &lt; 14 天 / cross-ID 一致 / catalyst 標示 / unit glossary / layer 分層 / sub-topic value-add。任一必備 Gate fail 直接阻斷。</div>
+      <div class="tips"><strong>⚡ v1.5 九道 Gate</strong>：發布前自動跑 (1) core ticker financials &lt; 60 天、(2) event thesis &lt; 14 天、(2.1) <strong>Thesis Cornerstone Fact Verification</strong>（獨家 / 首家 / 唯一 類 claim 必須獨立驗證）、(3) cross-ID 一致、(3.1) cross-ID thesis bias 偵測、(4) catalyst 標示、(5) unit glossary、(6) layer 分層、(7) sub-topic value-add。阻斷 Gate（1/2/2.1/3）任一 fail 直接阻斷。</div>
 
       <div class="example">
-        <span class="you">你：</span> 「研究 EV 電池」<br>
-        <span class="bot">Claude：</span> Step 1-4 資料蒐集（T1 Tesla Battery Day + CATL / BYD IR）→ Step 5-7 判斷層 / Insight Synthesis → Step 8 QC + Step 8.5 Gates → 產出 ID_EVBattery_{date}.html + INDEX 更新 + push
+        <span class="you">你：</span> 「研究 AI Agent / Agentic AI 平台」<br>
+        <span class="bot">Claude：</span> 4 個 research agents 並行（Horizontal 平台 / Vertical 內嵌 / Framework+Infra / Pure-play 新創）→ 14 章 HTML 含 Thesis Box + Kill Scenario + Falsification Test → INDEX 掛載 → push
+      </div>
+    </div>
+  </div>
+
+  <!-- Geopolitics DD -->
+  <div class="skill-card">
+    <div class="skill-head" style="background:linear-gradient(90deg,#FEE2E2 0%,#fff 60%)">
+      <div class="skill-icon">🌏</div>
+      <div class="skill-title">
+        <h2 style="color:#991B1B">geopolitics-dd · 地緣政治深度研究</h2>
+        <div class="sub">v1.0 跨域研究 — 母議題 Master overview + N 子議題 + 三線預警儀表板（經濟/軍事/政治 × D-180/D-30/D-7）+ 情境 × 產業投資決策矩陣</div>
+      </div>
+      <div class="skill-meta">~/skills/geopolitics-dd/</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>建地緣政治母議題</td>
+          <td><code>研究 {地緣議題}</code><br><code>地緣政治研究 中台衝突</code></td>
+          <td>docs/geo/Master_{Topic}_{date}.html + N 子議題 HTML</td>
+        </tr>
+        <tr>
+          <td>戰爭 / 衝突機率分析</td>
+          <td><code>中台動武機率</code><br><code>俄烏停火情境</code></td>
+          <td>情境機率樹 + 三線預警 + 產業投資含義</td>
+        </tr>
+        <tr>
+          <td>投資組合地緣壓測</td>
+          <td><code>{情境} 對持倉的影響</code></td>
+          <td>情境 × 產業投資決策矩陣（buy / short / hedge）</td>
+        </tr>
+      </table>
+
+      <div class="tips"><strong>⚡ 涵蓋議題</strong>：中台動武、俄烏、中東、朝鮮半島、南海、印巴邊境、拉美政變。每個議題含 D-180 / D-30 / D-7 三線預警（經濟層 / 軍事層 / 政治層），可隨時間更新偵測信號。</div>
+
+      <div class="example">
+        <span class="you">你：</span> 「研究中台衝突地緣政治」<br>
+        <span class="bot">Claude：</span> 拆 N 子議題（軍事準備 / 經濟脫鉤 / 政治決策 / 半導體供應鏈 / 第三方介入）→ 三線預警儀表板 → 情境 × 產業矩陣（TSM / 半導體 / 航運 / 國防 / RE）→ Master HTML + push
       </div>
     </div>
   </div>
@@ -351,18 +395,19 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
       <div class="skill-icon">🔗</div>
       <div class="skill-title">
         <h2 style="color:#0F172A">Skill 之間的整合關係</h2>
-        <div class="sub">三套 skill 如何協作</div>
+        <div class="sub">四套 skill 如何協作</div>
       </div>
     </div>
     <div class="skill-body">
       <div class="flow">
-        <div class="step">industry-analyst 產 ID → §11 列關聯個股</div>
+        <div class="step">industry-analyst 產 ID → §11 列關聯個股、§11.5 cross-ID 依賴圖</div>
         <div class="step">stock-analyst 建 DD 時自動掃 docs/id/INDEX.md → 命中 ID 則 §9/§11 引用（不重寫產業通論）</div>
         <div class="step">portfolio-manager 複盤時掃 docs/id/INDEX.md → 計算組合的 ID 曝險矩陣（§7.5）</div>
+        <div class="step">geopolitics-dd 產生情境 → industry-analyst 可建對應產業風險 ID；portfolio-manager 拿情境 × 產業矩陣做組合壓測</div>
         <div class="step">多份 ID 累積 5+ → 建 flagship（跨 ID synthesis）</div>
         <div class="step">flagship 的 thesis 被 event 打臉 → A 補丁；90 天 → B refresh</div>
       </div>
-      <p style="margin-top:12px;font-size:12.5px;color:#6B7280">三套 skill 共用 <code>docs/dd/INDEX.md</code>、<code>docs/id/INDEX.md</code> 和 <code>references/</code> 作為單一事實源。任何一處更新會透過索引檔自動傳導。</p>
+      <p style="margin-top:12px;font-size:12.5px;color:#6B7280">四套 skill 共用 <code>docs/dd/INDEX.md</code>、<code>docs/id/INDEX.md</code> 和 <code>references/</code> 作為單一事實源。任何一處更新會透過索引檔自動傳導。</p>
     </div>
   </div>
 
@@ -376,9 +421,19 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         <div class="qr-note">例：研究 NVDA / 研究 2330</div>
       </div>
       <div class="qr-item">
-        <div class="qr-intent">想研究產業</div>
+        <div class="qr-intent">想研究產業（母題）</div>
         <div class="qr-phrase"><code>研究 {主題} 產業</code></div>
-        <div class="qr-note">例：研究 AI ASIC 產業 / 研究 GLP-1</div>
+        <div class="qr-note">例：研究 AI ASIC 產業 / 研究 GLP-1 / 研究 Agentic AI 平台</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">想研究產業子題</div>
+        <div class="qr-phrase"><code>{母題} 的 {子題名}</code></div>
+        <div class="qr-note">例：資安 SaaS M2 AI × 資安的雙刃劍</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">想研究地緣政治</div>
+        <div class="qr-phrase"><code>研究 {地緣議題}</code></div>
+        <div class="qr-note">例：研究中台衝突 / 俄烏停火情境</div>
       </div>
       <div class="qr-item">
         <div class="qr-intent">組合週度複盤</div>
@@ -500,8 +555,8 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 </div>
 
 <div class="footer">
-  InvestMQuest Research · 使用說明 v1.0 · 2026-04-19<br>
-  Skill 版本：stock-analyst v12.0 · industry-analyst v1.4 · portfolio-manager v1.1
+  InvestMQuest Research · 使用說明 v1.1 · 2026-04-24<br>
+  Skill 版本：stock-analyst v12.0 · industry-analyst v1.5 · portfolio-manager v1.1 · geopolitics-dd v1.0
 </div>
 </body>
 </html>
