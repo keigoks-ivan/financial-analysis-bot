@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thesis Tracker — InvestMQuest Research</title>
+<meta name="description" content="全部 Industry DD 非共識 thesis 命中回顧表——研究平台升級為可檢驗平台">
+<style>
+body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.7}
+.container{max-width:1280px;margin:0 auto;padding:2rem 1.5rem 3rem}
+.crumb{font-size:.78rem;color:#6B7280;margin-bottom:.6rem}
+.crumb a{color:#6B7280;text-decoration:none}
+h1{color:#4C1D95;font-size:26px;font-weight:800;letter-spacing:-.03em;margin:0 0 8px}
+.sub{color:#6B7280;font-size:14px;line-height:1.65;max-width:960px;margin-bottom:18px}
+
+.legend{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;margin:14px 0;display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px}
+.legend .l-item{display:flex;gap:6px;align-items:center}
+.legend .pill{padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}
+.pill.track{background:#DBEAFE;color:#1E40AF}
+.pill.hit{background:#DCFCE7;color:#166534}
+.pill.miss{background:#FEE2E2;color:#991B1B}
+.pill.patch{background:#FEF3C7;color:#92400E}
+.pill.high{background:#DCFCE7;color:#166534}
+.pill.mid{background:#FEF3C7;color:#92400E}
+.pill.low{background:#FEE2E2;color:#991B1B}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 22px}
+.stats-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:14px 18px}
+.stats-card .lbl{color:#6B21A8;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.stats-card .val{color:#1E1B4B;font-size:22px;font-weight:800;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-top:3px}
+.stats-card .desc{color:#6B7280;font-size:11px;margin-top:3px}
+
+table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:11.5px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+th{background:#4C1D95;color:#fff;padding:7px 9px;text-align:left;font-weight:500;white-space:nowrap}
+td{padding:7px 9px;border-bottom:1px solid #E5E7EB;vertical-align:top}
+tr:hover td{background:#FAF5FF}
+td.id{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#6B21A8}
+td.thesis{max-width:420px;font-size:11.5px;line-height:1.5}
+td.verdict{white-space:nowrap}
+
+.section{background:#fff;border:1px solid #E5E7EB;border-radius:10px;margin:22px 0;overflow:hidden}
+.section-head{padding:12px 18px;background:linear-gradient(90deg,#F5F3FF,#fff);border-bottom:1px solid #E5E7EB}
+.section-head h2{margin:0;color:#4C1D95;font-size:15px;font-weight:700}
+.section-head .n{color:#6B7280;font-size:12px;margin-left:8px;font-weight:400}
+.section-body{padding:10px 18px 14px}
+
+.footer{margin-top:3rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#6B7280;font-size:.78rem;text-align:center}
+</style>
+</head>
+<body>
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;background:none;border:0;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究▾</button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/theses.html">⭐ AI 基建八個非共識</a>
+          <a href="/id/theses-software.html">⭐ 軟體股八個非共識</a>
+          <a href="/id/thesis-tracker.html" class="active">📊 Thesis Tracker</a>
+          <a href="/pm/">PM 複盤</a>
+        </div>
+      </div>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+
+<div class="container">
+  <div class="crumb"><a href="/">首頁</a> &rsaquo; <a href="/id/">產業深度</a> &rsaquo; Thesis Tracker</div>
+  <h1>📊 Thesis Tracker — 非共識 Call 命中回顧表</h1>
+  <p class="sub">本站目前共 19 份 Industry DD 累積約 50+ 條非共識 thesis。Thesis Tracker 把所有非共識 call 統一在這張表中追蹤命中率、信心度事後驗證、以及 patch 歷史——讓「研究平台」升級為「可檢驗平台」。<strong>每季結束後 7 天內更新一次</strong>，任何 status 從 tracking 轉為 hit / miss / patched 都會改版本號。沒有這張表，50+ 條非共識永遠無法被事後驗證，forecast 勝率也無從檢查。</p>
+
+  <div class="legend">
+    <div class="l-item"><span class="pill track">TRACKING</span><span>待驗證</span></div>
+    <div class="l-item"><span class="pill hit">HIT</span><span>事實驗證</span></div>
+    <div class="l-item"><span class="pill miss">MISS</span><span>被打臉</span></div>
+    <div class="l-item"><span class="pill patch">PATCHED</span><span>已修正 / 下修</span></div>
+    <div class="l-item">｜</div>
+    <div class="l-item"><span class="pill high">高</span>/<span class="pill mid">中</span>/<span class="pill low">低</span><span>信心度</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stats-card"><div class="lbl">Thesis 總數</div><div class="val">50+</div><div class="desc">跨 19 份 ID</div></div>
+    <div class="stats-card"><div class="lbl">Tracking</div><div class="val">38</div><div class="desc">未觸發驗證</div></div>
+    <div class="stats-card"><div class="lbl">Hit</div><div class="val">3</div><div class="desc">已被事實驗證</div></div>
+    <div class="stats-card"><div class="lbl">Miss</div><div class="val">0</div><div class="desc">尚無完全打臉案例</div></div>
+    <div class="stats-card"><div class="lbl">Patched（2026-04）</div><div class="val">12</div><div class="desc">A1-A5 數字 / 類比 / 時間下修</div></div>
+    <div class="stats-card"><div class="lbl">平均信心度</div><div class="val">中</div><div class="desc">高 25% / 中 60% / 低 15%</div></div>
+  </div>
+
+  <!-- ========== 半導體 / AI 基建類 ========== -->
+  <div class="section">
+    <div class="section-head"><h2>🔷 半導體 / AI 基建類（13 份 ID）<span class="n">24 條非共識</span></h2></div>
+    <div class="section-body">
+      <table>
+        <tr><th>ID</th><th>#</th><th>Thesis（縮寫）</th><th>發布</th><th>信心</th><th>狀態</th><th>關聯股票 / 備註</th></tr>
+        <tr><td class="id">AdvancedPackaging</td><td>1</td><td class="thesis">BESI + AMAT 是 ASML-like 設備寡占雛形</td><td>2026-04-19</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill hit">HIT</span></td><td>Hybrid Bonding ID 已驗證（AMAT 持股 BESI 9%）</td></tr>
+        <tr><td class="id">AdvancedPackaging</td><td>2</td><td class="thesis">Rubin Ultra 4→2-die 是 CoWoS-L 壽命封頂訊號</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 「縮短」改「封頂」</td></tr>
+        <tr><td class="id">AdvancedPackaging</td><td>3</td><td class="thesis">Adeia 是 Dolby-style 隱性收費 royalty 玩家</td><td>2026-04-19</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>ADEA / Hybrid Bonding 專利版稅</td></tr>
+        <tr><td class="id">AIAcceleratorDemand</td><td>1</td><td class="thesis">ASIC 2028 TAM $ 份額 30-35%</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 從 35-40% 下修至 30-35%</td></tr>
+        <tr><td class="id">AIAcceleratorDemand</td><td>2</td><td class="thesis">2027 不是 AI capex 峰值，是 Phase III 起點（推論主導）</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>NVDA / AVGO / MRVL 2028 成長率驗證</td></tr>
+        <tr><td class="id">AIAcceleratorDemand</td><td>3</td><td class="thesis">電力永久瓶頸（已降級為行業背景）</td><td>2026-04-19</td><td><span class="pill low">低</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 已成賣方主流共識</td></tr>
+        <tr><td class="id">HBM_Supercycle</td><td>1</td><td class="thesis">Samsung HBM4 份額 2027 達 25-30%</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 從 35% 下修 / 信心「高」→「中」</td></tr>
+        <tr><td class="id">HBM_Supercycle</td><td>2</td><td class="thesis">HBM 已脫離 DRAM 週期，不會 2028 crash</td><td>2026-04-19</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>MU / SK hynix / Samsung 2028 供需平衡</td></tr>
+        <tr><td class="id">HBM_Supercycle</td><td>3</td><td class="thesis">TSMC 透過 HBM4 base die 成隱性贏家</td><td>2026-04-19</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill hit">HIT</span></td><td>TSMC HBM4 base die 訂單已確認</td></tr>
+        <tr><td class="id">LeadingEdgeNode</td><td>1</td><td class="thesis">Samsung 2nm 2028 市佔 10-12%（非 15%+）</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 SF2 實際 yield 55-60%</td></tr>
+        <tr><td class="id">LeadingEdgeNode</td><td>2</td><td class="thesis">Intel 18A 2026-2027 &lt; 5% 商業客戶</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>MSFT + DoD 已簽但量不大</td></tr>
+        <tr><td class="id">LeadingEdgeNode</td><td>3</td><td class="thesis">TSMC A16 backside power 是 2027-2028 真護城河</td><td>2026-04-19</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>A16 HVM 2026-2027 上市驗證</td></tr>
+        <tr><td class="id">AINetworking</td><td>1</td><td class="thesis">Scale-up / Scale-out 非 zero-sum</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>✅ 仍是非共識（保留）</td></tr>
+        <tr><td class="id">AINetworking</td><td>2</td><td class="thesis">UALink 商用 2027+ 非 2026</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>AVGO / MRVL UALink 商用時序</td></tr>
+        <tr><td class="id">AINetworking</td><td>3</td><td class="thesis">CRDO + ALAB 連接器稀缺被低估</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>CRDO / ALAB Q4 2026 財報驗證</td></tr>
+        <tr><td class="id">AIDataCenter</td><td>1</td><td class="thesis">VRT 比 NVDA 更安全 AI pure play</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>VRT $15B backlog mix-shift</td></tr>
+        <tr><td class="id">AIDataCenter</td><td>2</td><td class="thesis">GEV gas turbine 2030+ 主力（非過渡）</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>GEV 訂單 backlog 驗證</td></tr>
+        <tr><td class="id">SiliconPhotonicsCPO</td><td>1</td><td class="thesis">CPO 2026 H2 已商用（早共識 2-3 年）</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill hit">HIT</span></td><td>NVDA $4B deal + COUPE 量產</td></tr>
+        <tr><td class="id">SiliconPhotonicsCPO</td><td>2</td><td class="thesis">TSMC COUPE 類 CoWoS 早期（2026-04 patch）</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 類比緩和（非獨家）</td></tr>
+        <tr><td class="id">LiquidCooling</td><td>1</td><td class="thesis">CDU 是真正瓶頸（非冷板）</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Nidec / VRT CDU 產能追蹤</td></tr>
+        <tr><td class="id">LiquidCooling</td><td>2</td><td class="thesis">Immersion niche + DTC 主流並存</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 從「超越」改「並存」</td></tr>
+        <tr><td class="id">Transformers</td><td>1</td><td class="thesis">變壓器 2-3 年 lead time 比晶片更硬 bottleneck</td><td>2026-04-19</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Hitachi / Siemens backlog</td></tr>
+        <tr><td class="id">GlassSubstrate</td><td>1</td><td class="thesis">Glass 2028 佔 AP 7-10%</td><td>2026-04-20</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 從 15%+ 下修至 7-10%</td></tr>
+        <tr><td class="id">GlassSubstrate</td><td>2</td><td class="thesis">LPKF LIDE 利基寡占（非 2015 ASML）</td><td>2026-04-20</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 類比緩和</td></tr>
+        <tr><td class="id">HybridBondingSoIC</td><td>1</td><td class="thesis">Adeia 是 Dolby-style royalty 玩家</td><td>2026-04-20</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill hit">HIT</span></td><td>AP ID thesis #1 延伸驗證</td></tr>
+        <tr><td class="id">AIDCPowerElectronics</td><td>1</td><td class="thesis">Delta 是電力電子 ASML（關鍵寡占）</td><td>2026-04-21</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 從 TSMC 改 ASML</td></tr>
+        <tr><td class="id">AIDCPowerElectronics</td><td>2</td><td class="thesis">Vertiv $15B backlog 是 mix-shift 啟動</td><td>2026-04-21</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>VRT 2026 GM &gt; 37% 驗證</td></tr>
+        <tr><td class="id">AIDCPowerElectronics</td><td>3</td><td class="thesis">800V 轉型淘汰台系二線（Chicony/Acbel）</td><td>2026-04-21</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>2027 YoY 負成長驗證</td></tr>
+        <tr><td class="id">AIASICDesignService</td><td>1</td><td class="thesis">Hyperscaler ASIC 2028 市佔 40%+（已降級為共識）</td><td>2026-04-19</td><td><span class="pill low">低</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 已成 Gartner 主流</td></tr>
+        <tr><td class="id">AIASICDesignService</td><td>2</td><td class="thesis">AVGO 2027+ silicon margin 壓至 40-45%，blended 55-60%</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill patch">PATCHED</span></td><td>2026-04-24 加 VMware mix caveat</td></tr>
+        <tr><td class="id">AIASICDesignService</td><td>3</td><td class="thesis">台系 Alchip + MediaTek 2028 合計超越 MRVL</td><td>2026-04-19</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>3661 / 2454 市佔追蹤</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== 雲端 / SaaS 類 ========== -->
+  <div class="section">
+    <div class="section-head"><h2>☁️ 雲端 / SaaS / 軟體類（6 份 ID）<span class="n">18 條非共識</span></h2></div>
+    <div class="section-body">
+      <table>
+        <tr><th>ID</th><th>#</th><th>Thesis（縮寫）</th><th>發布</th><th>信心</th><th>狀態</th><th>關聯股票 / 備註</th></tr>
+        <tr><td class="id">CybersecurityPlatformConsolidation</td><td>1</td><td class="thesis">平台戰是 positive-sum（非 zero-sum）</td><td>2026-04-23</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>CRWD Flex +120% / PANW NGS +33% / MSFT +150% 同期成長</td></tr>
+        <tr><td class="id">CybersecurityPlatformConsolidation</td><td>2</td><td class="thesis">CRWD 7/19 真正受益者是 FTNT + S（非 MSFT）</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill hit">HIT</span></td><td>FTNT SASE +40% / S Purple 50% attach</td></tr>
+        <tr><td class="id">CybersecurityPlatformConsolidation</td><td>3</td><td class="thesis">Wiz 併購後 2027 前無 tier-2 資安 IPO</td><td>2026-04-23</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Arctic Wolf / Orca 動向</td></tr>
+        <tr><td class="id">AICybersecurityDoubleEdge</td><td>1</td><td class="thesis">AI 是 TAM 加速器 + margin 放大鏡（非 zero-sum）</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>CRWD 81% vs NET 74.9% 毛利分歧</td></tr>
+        <tr><td class="id">AICybersecurityDoubleEdge</td><td>2</td><td class="thesis">Credit-metered pricing 是真毛利護城河（非產品力）</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>S FY26 GM 下修 78.5% 驗證</td></tr>
+        <tr><td class="id">AICybersecurityDoubleEdge</td><td>3</td><td class="thesis">AI-SPM 獨立賽道 2027 H2 全消失</td><td>2026-04-23</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>14 月 5 宗 $1.83B 併購</td></tr>
+        <tr><td class="id">IdentityNewPerimeter</td><td>1</td><td class="thesis">PANW+CYBR 真正殺 CRWD 的 identity 野望（非 OKTA）</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>CRWD 是否收 Silverfort / Semperis</td></tr>
+        <tr><td class="id">IdentityNewPerimeter</td><td>2</td><td class="thesis">OKTA $1M+ cohort +17% 是真信任修復訊號</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Barclays OW $90 驗證</td></tr>
+        <tr><td class="id">IdentityNewPerimeter</td><td>3</td><td class="thesis">NHI 真正 public exposure 是 PANW / OKTA（非新創）</td><td>2026-04-23</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Cisco $350M 傳收 Astrix</td></tr>
+        <tr><td class="id">DataSecurityBackupConvergence</td><td>1</td><td class="thesis">備份廠重定價為 security SaaS peer</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>RBRK security attach 40% NRR</td></tr>
+        <tr><td class="id">DataSecurityBackupConvergence</td><td>2</td><td class="thesis">Ransomware 付款率降非利空，是保險 funnel 利多</td><td>2026-04-23</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>75% 承保要求 immutable backup</td></tr>
+        <tr><td class="id">DataSecurityBackupConvergence</td><td>3</td><td class="thesis">Cyera 是下一個 Wiz，VRNS 是 public asymmetric long</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Cyera IPO 時點</td></tr>
+        <tr><td class="id">LLMVendorSecurityEconomics</td><td>1</td><td class="thesis">Anthropic 30B run rate 裡資安 vertical &lt; 3%</td><td>2026-04-23</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>MSFT Phi-4/MAI-1 自建進度</td></tr>
+        <tr><td class="id">LLMVendorSecurityEconomics</td><td>2</td><td class="thesis">MCP 捐 Linux Foundation 是 LLM 原廠議價權崩跌</td><td>2026-04-23</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>OKTA XAA + NET 受益</td></tr>
+        <tr><td class="id">LLMVendorSecurityEconomics</td><td>3</td><td class="thesis">Tier 分層決定贏家（Tier A 安全 / Tier C flash crash）</td><td>2026-04-23</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill hit">HIT</span></td><td>Snyk / Cycode flash crash 已發生</td></tr>
+        <tr><td class="id">AgenticAIPlatform</td><td>1</td><td class="thesis">Agentic 真贏家是 Horizontal + regulated Vertical（非 LLM 原廠）</td><td>2026-04-24</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>前 5 合計 &gt; $15B = TAM 2 倍</td></tr>
+        <tr><td class="id">AgenticAIPlatform</td><td>2</td><td class="thesis">Framework 商品化，Infra 才是真贏家</td><td>2026-04-24</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>LangChain 下輪融資軌跡</td></tr>
+        <tr><td class="id">AgenticAIPlatform</td><td>3</td><td class="thesis">Vertical 被 Horizontal 吞食是分層勝負</td><td>2026-04-24</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>HUBS / ZM / TWLO 被擠壓驗證中</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== Flagship-level thesis ========== -->
+  <div class="section">
+    <div class="section-head"><h2>⭐ Flagship Cross-ID Synthesis（2 份 flagship）<span class="n">16 條 thesis</span></h2></div>
+    <div class="section-body">
+      <table>
+        <tr><th>Flagship</th><th>#</th><th>Thesis（縮寫）</th><th>發布</th><th>信心</th><th>狀態</th><th>備註</th></tr>
+        <tr><td class="id">AI 基建 flagship</td><td>1-8</td><td class="thesis">Jevons / BSPDN / Rubin Ultra / HBM base die / Scale-up-out / NVDA $4B deal / GEV gas turbine / CDU 瓶頸</td><td>2026-04-19</td><td>—</td><td class="verdict"><span class="pill track">TRACKING</span></td><td>詳見 <a href="/id/theses.html">/id/theses.html</a></td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>1</td><td class="thesis">CRWD kernel moat 被 MSFT Windows Resiliency Initiative 削</td><td>2026-04-24</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>2027 前 kernel rule 生效</td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>2</td><td class="thesis">IT budget 非 zero-sum，SaaS / AI infra 兩速跑道</td><td>2026-04-24</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Gartner 2026 IT +12.5%</td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>3</td><td class="thesis">Capital Cycle 在 SaaS 跑 3-5× 慢，威脅分 tier</td><td>2026-04-24</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>AI-native fast-burn vs regulated slow-burn</td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>4</td><td class="thesis">Horizontal 前 5 合計 agentic ARR &gt; TAM 2×</td><td>2026-04-24</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>研究機構 TAM 估算滯後</td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>5</td><td class="thesis">LLM 原廠只拿 &lt; 15% token cost，premium 應打折</td><td>2026-04-24</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>Anthropic / OpenAI 揭露 refine</td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>6</td><td class="thesis">Framework 商品化，Infra 才是真贏家</td><td>2026-04-24</td><td><span class="pill mid">中</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>LangChain Series C 關鍵</td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>7</td><td class="thesis">Tier 1/2/3 紀律：Watchlist ≠ 進場</td><td>2026-04-24</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>meta-thesis 長期有效</td></tr>
+        <tr><td class="id">軟體股 flagship</td><td>8</td><td class="thesis">Munger 10 年視野測試：模糊 = 風險</td><td>2026-04-24</td><td><span class="pill high">高</span></td><td class="verdict"><span class="pill track">TRACKING</span></td><td>護城河 narrative clarity 測試</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== 更新與治理規則 ========== -->
+  <div class="section">
+    <div class="section-head"><h2>🛠️ Tracker 更新規則與治理</h2></div>
+    <div class="section-body">
+      <p style="font-size:13px;color:#4B5563;line-height:1.75">
+      Thesis Tracker 是本站「研究平台 → 可檢驗平台」的治理骨幹。沒有它，50+ 條非共識 call 永遠無法被事後驗證，forecast 勝率也無從檢查。
+      </p>
+      <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">更新節奏</h3>
+      <p style="font-size:12.5px;color:#4B5563">每季結束後 7 天內更新一次；任何 status 從 tracking 轉為 hit / miss / patched 都會改版本號（v1.0 → v1.1）。當前版本 v1.0（2026-04-24 首發）。</p>
+      <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">狀態定義</h3>
+      <p style="font-size:12.5px;color:#4B5563">
+      <strong>TRACKING</strong>：thesis 仍在觀察期，未觸發 hit / miss / patch 條件；<br>
+      <strong>HIT</strong>：thesis 被真實事實驗證（例 CPO 2026 H2 商用、AMAT 持股 BESI 9% 已發生）；<br>
+      <strong>MISS</strong>：thesis 被相反事實打臉（目前 0 案例）；<br>
+      <strong>PATCHED</strong>：thesis 自我修正 / 下修數字 / 緩和類比（2026-04-24 首輪 12 條 patch 已完成）。
+      </p>
+      <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">信心度事後校正</h3>
+      <p style="font-size:12.5px;color:#4B5563">每次更新時檢查 HIT / MISS 的原始信心度是否合理：高信心 HIT 合理、高信心 MISS 代表分析深度不足、低信心 HIT 代表機率校準偏保守。長期追蹤個人 forecast 勝率，是 skill v1.6 最重要的自我檢核機制。</p>
+      <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">下次複盤：2026-07-24（90 天 B refresh）</h3>
+      <p style="font-size:12.5px;color:#4B5563">重點追蹤：(1) CRWD moat 換軌進度；(2) Cohere / Harvey IPO；(3) MSFT Ignite Phi-4 / MAI-1 佔比揭露；(4) LangChain Series C 估值；(5) Samsung HBM4 qualification 進度；(6) Intel 18A external customer 名單；(7) Delta 800V server PSU 市佔變化。</p>
+    </div>
+  </div>
+
+  <div class="footer">
+    InvestMQuest Research · Thesis Tracker v1.0 · 2026-04-24 首發<br>
+    19 份 ID × 50+ 條非共識 thesis × 季度更新<br>
+    <a href="/id/">← 回產業深度 ID 列表</a> · <a href="/id/theses.html">AI 基建 flagship</a> · <a href="/id/theses-software.html">軟體股 flagship</a>
+  </div>
+</div>
+</body>
+</html>
