@@ -581,6 +581,120 @@ HTML 生成後輸出：
 
 ---
 
+## 【2026-04-24 改進 spec 執行細則（Batch 2 + 3 併入）】
+
+以下規則依 `~/Documents/ID_improvement_spec.md` 加入，為 v1.7 強化項（編號延續 QC-I23 之後）。
+
+### QC-I24｜敘述為主 表格為輔（v1.6 強化，來自使用者 feedback）
+章節整體敘述比例 ≥ 50%；每張表格必須「前言 1-2 句 + 後解讀 2-3 句」。小資料（≤ 5 項）必須改寫為 prose。違反 → QC-I24 fail 返工。見六大原則第 4 條。
+
+### QC-I25｜Phase 統一定義（B3，v1.7 新增）
+跨 ID Phase 判定必須使用統一四階段定義，不得自創子 Phase 描述：
+
+| Phase | 統一定義 |
+|:---|:---|
+| Phase I | CAPEX 爆發，設備商先兌現 |
+| Phase II | 技術採用加速 + 玩家格局已定 + multiple expansion 窗口 |
+| Phase III | 下游擴產，封測 / 系統整合商利潤集中 |
+| Phase IV | 商品化，利潤池消退 |
+
+每份 ID §10 只能選一個，不得用「Phase II 擴產 + 電力瓶頸」這種自創複合描述。違反 → QC-I25 fail。
+
+### QC-I26｜時間點強制標注（B4，v1.7 新增）
+所有帶數字的 thesis 必須標 **YYYY-MM** 或明確年份。禁止「2028+」「未來幾年」「中期」這種模糊時點。違反 → QC-I26 fail 返工。
+
+### QC-I27｜Kill Scenario 量化強化（B5，v1.7 新增）
+§9.5 每條反方必須補三項量化資訊：
+- 量化 EPS / margin 影響（例「-15% EPS」「-200bps margin」）
+- 對應 falsification 事件日期（例「2027-Q2 財報」）
+- 最壞情境 drawdown 估計（例「股價 -35%」）
+
+缺任一 → QC-I27 fail。
+
+### QC-I28｜歷史類比配反例（B6，v1.7 新增）
+§2 每個 bullish 類比必須配一個反例類比，避免自我確認偏差：
+- AI 需求類比 → 2000-2002 光纖過度建設
+- 800V 轉型類比 → 3D TV 標準失敗
+- ASIC 替代 → Itanium / GPGPU 早期商業化失敗
+
+每章至少列 1 正類比 + 1 反類比。
+
+### QC-I29｜信心度分布強制校正（B2，v1.7 新增）
+- 全 ID「高」信心非共識 ≤ 30%
+- 「高」信心必須有多個獨立 data source 支持
+- 單一 data source 最多標「中」
+- Event-triggered thesis 的信心度上限「中」（因為事實可能變動快）
+
+違反 → QC-I29 fail 返工校正。
+
+### QC-I30｜非共識三欄式強制格式（B1，v1.7 新增）
+§12 每條 thesis 必須呈現三欄結構：
+```
+共識：X（來源）
+我的觀點：Y（來源）
+差異：Z%（是否顯著非共識？）
+```
+
+如果「共識」與「我的觀點」差異 &lt; 5% 或方向相同 → 不算非共識，應降級或剔除（見 A5 原則）。
+
+### Gate 2.2：非共識數字三檔 base/bull/bear（D5，v1.7 新增，阻斷級）
+所有量化 thesis 必須給三檔情境：
+- **Bear**：悲觀情境下的數字
+- **Base**：中位估計（本 ID 主張）
+- **Bull**：樂觀情境
+
+例：ASIC 2028 TAM $ 份額 = Bear 25% / Base 30-35% / Bull 45%。
+
+避免單點估計造成的過度精確感。發布前 Gate 2.2 檢查 §12 每條 thesis 是否具備三檔——缺 → 阻斷發布。
+
+### QC-I31｜DD 引用格式範本（C1，v1.7 新增）
+stock-analyst 引用 ID 時標準化 4 欄範本：
+```
+【產業背景：ID_XXX】
+核心 thesis（1 句）：...
+本股在此 ID 定位：🔴 核心受益 / 🟡 次要 / 🟢 邊緣
+對本股最關鍵非共識：...
+證偽條件：...
+```
+避免 ID 引用段落膨脹。ID 必須在 §11 關聯個股清單提供每檔「一句話定位」供 DD 抽取使用。
+
+### QC-I32｜結構性 loser 清單必備（C2，v1.7 新增）
+每份 ID §11 或獨立小節必須列 2-3 檔「結構性 loser」，讓空方 DD 也能引用。例：
+- AI Accelerator ID → Intel Gaudi（雙面夾殺）
+- 電力電子 ID → Chicony / Acbel
+- HBM → 普通 DDR5 純 play
+
+缺失 → QC-I32 fail。
+
+### QC-I33｜Non-obvious 二次受益者 ≥ 3 檔（C3 擴充，v1.7 新增）
+原 v1.0 §11 要求 1-2 檔 non-obvious，v1.7 上調至 ≥ 3 檔。候選名單：
+- TE Connectivity (TEL)、AMAT、KLAC、MKSI、Advantest (6857.T)、Tokyo Electron (8035.T)
+- 每份 ID 至少識別其中 1-2 檔並說明其間接受益路徑
+
+### QC-I34｜Cross-geography 標記（C5，v1.7 新增）
+§6 玩家矩陣必須包含 ≥ 2 檔非美股（日股 / 韓股 / 台股 / 歐股），即使沒有獨立 DD 也需在 ID 內標明「定位 + 曝險」。Advantest、Tokyo Electron、BESI、SK Hynix、Samsung 為優先。
+
+### QC-I35｜Cross-ID 反向告警（D2，v1.7 新增）
+§11.5 Cross-ID 依賴圖必須包含「反向告警」：
+- 上游依賴：誰失效會推翻本 ID
+- 下游受益：本 ID 推翻會連帶拖垮誰
+- **反向（新增）**：子題失效是否會推翻母題（例：800V 認證延遲推翻 AI DC 母題 VRT thesis）
+
+### QC-I36｜12 個月複盤排程（D3，v1.7 新增）
+每份 ID 發布日 + 12 個月必跑一次全面複盤（例 2026-04-19 ID → 2027-04-19 複盤），追蹤：
+- Catalyst 兌現率
+- Thesis 命中 / miss / patched 比例
+- 關聯股票表現 vs 大盤
+- Patch 記錄回顧
+
+未跑 → `docs/id/thesis-tracker.html` 該行標 🔴 stale-12mo。
+
+---
+
 ## 【版本歷史】
 
 - **v1.0（2026-04-19）**：初版。11 章 schema；🟡 規則；QC-I1-I6；stock-analyst 整合鉤子。
+- **v1.1-v1.4（2026-04-19 → 2026-04-21）**：八份 peer review 累積改進；QC-I7-I23；14 章 schema；Insight-first；事件型 vs 結構型 thesis 分類；9 Gate pre-publish check。
+- **v1.5（2026-04-21）**：基於 ID_Transformers 教訓；Gate 2.1 Thesis Cornerstone Fact Verification + Gate 3.1 Cross-ID Thesis Bias Detection。
+- **v1.6（2026-04-24）**：敘述主導反轉（原則 4 從 Tables-heavy 改為 Narrative-led）；QC-I15 最低敘述段落數全面調高；QC-I24 強制每表格「前言 + 後解讀」；敘述比例 &lt; 30% → 50-60%。
+- **v1.7（2026-04-24）**：依 `~/Documents/ID_improvement_spec.md` Batch 2 + 3 執行；QC-I25-I36（Phase 統一 / 時間點標注 / Kill Scenario 量化 / 歷史類比反例 / 信心度分布 / 三欄式 / DD 引用範本 / loser 清單 / non-obvious 擴充 / cross-geography / 反向告警 / 12 月複盤）；Gate 2.2（base/bull/bear 三檔）。
