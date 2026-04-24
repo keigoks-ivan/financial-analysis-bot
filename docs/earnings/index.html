@@ -30,11 +30,34 @@ a:hover{color:var(--accent-hover)}
 
 /* Hero */
 .hero{padding:3rem 0 2.5rem;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%)}
+.hero .eyebrow{display:inline-block;padding:.28rem .75rem;background:#eff6ff;
+               color:var(--accent);border-radius:999px;font-size:.68rem;font-weight:600;
+               letter-spacing:.1em;margin-bottom:.9rem;text-transform:uppercase;
+               font-family:'IBM Plex Mono',monospace}
 .hero h1{font-size:2rem;font-weight:800;letter-spacing:-.04em;color:var(--text)}
 .hero .sub{color:var(--text-secondary);font-size:.95rem;margin-top:.5rem;max-width:680px;line-height:1.7}
 .crumb{font-size:.78rem;color:var(--text-muted);margin-bottom:.6rem}
 .crumb a{color:var(--text-muted)}
 .crumb a:hover{color:var(--accent)}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;
+           margin:-1rem 0 2.5rem}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);
+           border-radius:10px;padding:.95rem 1.1rem .85rem;
+           position:relative;overflow:hidden;transition:all .15s}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+                   background:var(--border-light)}
+.stat-card:hover{box-shadow:var(--shadow-md);border-color:#d1d5db}
+.stat-card.c-reports::before{background:var(--accent)}
+.stat-card.c-companies::before{background:#6366f1}
+.stat-card.c-latest::before{background:#0f766e}
+.stat-num{font-family:'IBM Plex Mono',monospace;font-size:1.55rem;font-weight:700;
+          line-height:1.1;letter-spacing:-.02em;color:var(--text)}
+.stat-sub{font-size:.68rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;
+          margin-top:.15rem;letter-spacing:.01em}
+.stat-label{font-size:.68rem;color:var(--text-muted);letter-spacing:.07em;
+            margin-top:.5rem;font-weight:600;text-transform:uppercase}
 
 /* Section */
 .section{padding:2.5rem 0 2rem}
@@ -45,27 +68,51 @@ a:hover{color:var(--accent-hover)}
                       border:1px solid var(--border)}
 
 /* Reports list */
-.reports{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem}
+.reports{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.65rem}
 .reports li{margin:0}
 .reports a{
-  display:block;background:var(--bg-card);border:1px solid var(--border);
-  border-radius:var(--radius);padding:1.1rem 1.25rem;
-  color:var(--text);text-decoration:none;
+  display:grid;grid-template-columns:1fr auto;gap:.85rem 1.5rem;align-items:start;
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.15rem 1.35rem 1.1rem;
+  color:var(--text);text-decoration:none;position:relative;overflow:hidden;
   transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;
+}
+.reports a::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--accent);transform:scaleY(0);transform-origin:top;
+  transition:transform .2s ease;
 }
 .reports a:hover{
   border-color:#d1d5db;text-decoration:none;
   box-shadow:var(--shadow-md);transform:translateY(-1px);
 }
+.reports a:hover::before{transform:scaleY(1)}
 .reports a:hover .date{color:var(--accent)}
 .reports .date{
-  font-size:1rem;font-weight:600;color:var(--text);
-  margin-bottom:.3rem;letter-spacing:-.005em;
-  transition:color .15s ease;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:1.02rem;font-weight:600;color:var(--text);
+  letter-spacing:-.005em;transition:color .15s ease;
 }
 .reports .takeaway{
-  font-size:.82rem;color:var(--text-secondary);
-  line-height:1.6;
+  font-size:.87rem;color:var(--text-secondary);
+  line-height:1.65;grid-column:1 / -1;margin-top:.15rem;
+}
+.reports .meta{
+  display:flex;align-items:center;gap:.45rem;flex-shrink:0;
+  font-family:'IBM Plex Mono',monospace;
+}
+.reports .weekday{
+  display:inline-block;padding:.18rem .55rem;border-radius:4px;
+  font-size:.68rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  background:#f1f5f9;color:var(--text-secondary);
+}
+.reports .companies{
+  font-size:.72rem;color:var(--text-muted);font-weight:500;
+}
+.reports .latest-tag{
+  display:inline-block;padding:.14rem .5rem;border-radius:4px;
+  font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--accent);color:#fff;
 }
 
 /* Empty state — shown when no reports exist. Delete this div when you add a <li>. */
@@ -87,8 +134,11 @@ footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-mute
 /* Mobile */
 @media(max-width:768px){
   .hero h1{font-size:1.5rem}
-  .reports a{padding:.95rem 1rem}
-  .reports .date{font-size:.92rem}
+  .stats-row{grid-template-columns:1fr;gap:.5rem}
+  .reports a{grid-template-columns:1fr;gap:.5rem;padding:1rem 1.15rem}
+  .reports .meta{order:-1}
+  .reports .date{font-size:.95rem}
+  .reports .takeaway{font-size:.84rem}
   header nav{gap:0}
 }
   </style>
@@ -160,6 +210,7 @@ footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-mute
 <div class="hero">
   <div class="container">
     <div class="crumb"><a href="/">首頁</a> &rsaquo; 財報分析</div>
+    <span class="eyebrow">Earnings Season · Daily</span>
     <h1>財報分析</h1>
     <p class="sub">美股每日財報深度分析 — $50B+ 公司、產業趨勢、贏家輸家、矛盾追蹤。每逢財報日更新。</p>
   </div>
@@ -167,6 +218,25 @@ footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-mute
 
 <div class="section" id="earnings-reports">
   <div class="container">
+
+    <div class="stats-row">
+      <div class="stat-card c-reports">
+        <div class="stat-num" data-stat="reports">—</div>
+        <div class="stat-sub">已發布</div>
+        <div class="stat-label">報告數</div>
+      </div>
+      <div class="stat-card c-companies">
+        <div class="stat-num" data-stat="companies">—</div>
+        <div class="stat-sub">累計分析</div>
+        <div class="stat-label">$50B+ 公司次數</div>
+      </div>
+      <div class="stat-card c-latest">
+        <div class="stat-num" data-stat="latest" style="font-size:1.15rem;padding-top:.18rem">—</div>
+        <div class="stat-sub" data-stat="latest-weekday">&nbsp;</div>
+        <div class="stat-label">最新報告</div>
+      </div>
+    </div>
+
     <h2 class="section-title">深度分析報告</h2>
 
     <ul class="reports">
@@ -174,17 +244,29 @@ footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-mute
   ADDING A NEW REPORT:
   Copy the block below INSIDE the <ul class="reports"> above, update the fields, and
   (first time) delete the <div class="empty-state"> sibling element once you have ≥ 1 report.
+  Newest report goes at the TOP (descending date order). The .latest-tag span on the
+  FIRST <li> is optional — remove it from the previously-first entry when adding a newer one.
 
   <li>
     <a href="earnings_YYYY-MM-DD.html">
-      <div class="date">Month DD, YYYY · Day · N companies</div>
+      <div class="date">Month DD, YYYY</div>
+      <div class="meta">
+        <span class="latest-tag">Latest</span>
+        <span class="weekday">Day</span>
+        <span class="companies">N companies</span>
+      </div>
       <div class="takeaway">Short summary · Key theme · Another theme</div>
     </a>
   </li>
 -->
       <li>
         <a href="earnings_2026-04-23.html">
-          <div class="date">April 23, 2026 · Thu · 15 companies</div>
+          <div class="date">April 23, 2026</div>
+          <div class="meta">
+            <span class="latest-tag">Latest</span>
+            <span class="weekday">Thu</span>
+            <span class="companies">15 companies</span>
+          </div>
           <div class="takeaway">INTC blowout · Gas-fired AI power thesis · Beat-but-no-raise 被懲罰</div>
         </a>
       </li>
@@ -209,5 +291,44 @@ footer{padding:1.5rem 0;text-align:center;font-size:.75rem;color:var(--text-mute
   </div>
 </footer>
 
+<script>
+(function(){
+  // Auto-compute stats row from the <ul class="reports"> DOM so push-earnings
+  // doesn't need to update hardcoded numbers.
+  var items = document.querySelectorAll('.reports > li');
+  var reports = items.length;
+  var companies = 0;
+  var latestHref = null;
+  items.forEach(function(li){
+    var comp = li.querySelector('.companies');
+    if(comp){
+      var m = comp.textContent.match(/(\d+)/);
+      if(m) companies += parseInt(m[1], 10);
+    }
+    if(!latestHref){
+      var a = li.querySelector('a[href]');
+      if(a) latestHref = a.getAttribute('href');
+    }
+  });
+  var set = function(key, val){
+    var el = document.querySelector('[data-stat="' + key + '"]');
+    if(el) el.textContent = val;
+  };
+  set('reports', reports || '0');
+  set('companies', companies || '0');
+  if(latestHref){
+    var m = latestHref.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(m){
+      set('latest', m[1] + '-' + m[2] + '-' + m[3]);
+      var d = new Date(+m[1], +m[2]-1, +m[3]);
+      var wd = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      set('latest-weekday', wd);
+    }
+  } else {
+    set('latest', '—');
+    set('latest-weekday', '尚無');
+  }
+})();
+</script>
 </body>
 </html>

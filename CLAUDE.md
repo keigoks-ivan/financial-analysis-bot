@@ -35,15 +35,24 @@ For each missing `earnings_YYYY-MM-DD.html`:
 For each missing report, produce:
 
 ```html
-  <li>
-    <a href="earnings_YYYY-MM-DD.html">
-      <div class="date">Month DD, YYYY · Day · N companies</div>
-      <div class="takeaway">TAKEAWAY</div>
-    </a>
-  </li>
+      <li>
+        <a href="earnings_YYYY-MM-DD.html">
+          <div class="date">Month DD, YYYY</div>
+          <div class="meta">
+            <span class="latest-tag">Latest</span>
+            <span class="weekday">Day</span>
+            <span class="companies">N companies</span>
+          </div>
+          <div class="takeaway">TAKEAWAY</div>
+        </a>
+      </li>
 ```
 
-Indent with 2 spaces (matches the surrounding `<ul>` context at 4-space depth inside `<div class="container">`).
+Rules:
+
+- Indent the `<li>` at 6 spaces (it sits inside `<ul class="reports">` which is at 4-space indent inside `<div class="container">`).
+- Include `<span class="latest-tag">Latest</span>` **only on the newest entry** (the first `<li>` after sort). When adding a report that becomes the new latest, remove `latest-tag` from the previously-first `<li>`.
+- The top stats row (報告數 / 累計公司 / 最新) is **auto-computed by inline JS** on page load — do NOT hardcode or edit any stat numbers.
 
 ### Step 6 — Merge + sort the list
 
