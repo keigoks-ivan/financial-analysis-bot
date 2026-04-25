@@ -6,3 +6,4 @@
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | 2026-04-18 | proposal | 5核心 | 3衛星 | PM_20260418.html | 新 v12 DDs 讓 UBER/MELI 轉 X（MA 煞車追蹤池），重新洗牌：NVDA/LLY 為雙核心錨，補入 CRDO/AMZN/DELL，衛星選 AVGO/2330/ONTO 半導體製造主題。 |
 | 2026-04-22 | proposal | 5核心 | 3衛星 | PM_20260422.html | 2026-04-18 批次 v12 DDs 刷新候選池，原提案中 CRDO/AMZN 降為 B/觀察期、UBER/MELI 轉 X。新配置轉向 S-tier 半導體 + AI leader 結構：NVDA/2330/LLY/ASML/MRVL 雙錨點，衛星 AVGO/ETN/GOOGL 增加 sector 多元化。 |
+| 2026-04-25 | proposal | 10% | 5/5 核心 | 3/3 衛星 | 維持 8 檔（無賣減加）| L1×4（LRCX/VRT/GEV/TXN sizing 0%）| PM_20260425.html | 4/25 4 檔財報 v12 DD 重評：LRCX 唯一 A 級但因核心衛星滿 + 半導體 65% 集中度，列 watchlist 凍結；VRT/GEV/TXN 因主題重疊或 QC-22 追高警示凍結。下週 4/29 GOOGL + 4/30 LLY Q1 財報為關鍵驗證點。 |
