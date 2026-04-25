@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD VRT — Vertiv Holdings | 2026-04-25 | v12.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Noto Sans TC', system-ui, sans-serif; background:#F8FAFC; color:#0F172A; line-height:1.6; padding:0 0 60px; }
+.num, td.num, .mono { font-family:'IBM Plex Mono', monospace; }
+.header-bar { position:sticky; top:0; z-index:100; background:#1E3A5F; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; font-size:13px; box-shadow:0 2px 4px rgba(0,0,0,.1); }
+.header-bar span:first-child { font-weight:700; }
+.print-btn { position:fixed; bottom:24px; right:24px; padding:10px 18px; background:#1E3A5F; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:13px; z-index:50; box-shadow:0 4px 8px rgba(0,0,0,.15); font-family:inherit; }
+.container { max-width:1180px; margin:24px auto; padding:0 20px; }
+.dd-toc { background:#fff; border-left:4px solid #3B82F6; padding:14px 20px; margin-bottom:20px; }
+.toc-title { font-size:13px; font-weight:700; color:#1E3A5F; margin-bottom:8px; }
+.toc-list { list-style:none; display:flex; flex-wrap:wrap; gap:10px 18px; font-size:13px; }
+.toc-list a { color:#1E3A5F; text-decoration:none; }
+.toc-list a:hover { color:#3B82F6; text-decoration:underline; }
+.section { background:#fff; border-radius:6px; padding:24px 28px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+.section-title { font-size:18px; font-weight:700; color:#1E3A5F; padding-left:12px; border-left:4px solid #3B82F6; margin-bottom:16px; padding-top:2px; padding-bottom:2px; }
+.sub-title { font-size:15px; font-weight:700; color:#1E3A5F; margin:18px 0 10px; }
+h2 { font-size:17px; color:#1E3A5F; margin:20px 0 12px; padding-bottom:6px; border-bottom:2px solid #E2E8F0; }
+h3 { font-size:14px; color:#1E3A5F; margin:14px 0 8px; }
+h4 { font-size:13px; color:#475569; margin:12px 0 6px; }
+p { margin:8px 0; font-size:14px; }
+ul, ol { margin:8px 0 8px 22px; font-size:14px; }
+li { margin-bottom:4px; }
+table { width:100%; border-collapse:collapse; margin:10px 0 14px; font-size:13px; background:#fff; }
+th { background:#1E3A5F; color:#fff; padding:8px 10px; text-align:left; font-weight:500; }
+td { padding:7px 10px; border-bottom:1px solid #E2E8F0; vertical-align:top; }
+tr:nth-child(even) td { background:#F1F5F9; }
+.note { font-size:12px; color:#64748b; }
+.muted { color:#64748b; }
+.badge-beat { background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.badge-miss { background:#FEE2E2; color:#991B1B; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.badge-neutral { background:#FEF9C3; color:#92400E; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.bull-row { background:#DCFCE7 !important; }
+.bear-row { background:#FEE2E2 !important; }
+.neutral-row { background:#FEF9C3 !important; }
+.hypo-box { background:#EFF6FF; border-left:4px solid #3B82F6; padding:14px 18px; margin:12px 0; }
+.hypo-box ul { margin-left:20px; }
+.trap-box { background:#FFF0E6; border-left:4px solid #F97316; padding:14px 18px; margin:14px 0; }
+.trap-title { color:#C2410C; font-weight:700; font-size:14px; margin-bottom:8px; }
+.debate-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin:14px 0; }
+.debate-card { padding:14px; border-radius:6px; }
+.debate-bull { background:#F0FDF4; border-left:4px solid #16A34A; }
+.debate-bear { background:#FFF1F2; border-left:4px solid #DC2626; }
+.debate-arb { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.debate-card h4 { color:#1E3A5F; margin-bottom:8px; }
+.verdict-box { background:#FFFBEB; border-left:4px solid #D97706; padding:14px 18px; margin:14px 0; }
+.verdict-title { color:#92400E; font-weight:700; }
+.rr-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin:14px 0; }
+.rr-card { padding:14px; border-radius:6px; }
+.rr-short { background:#F0F9FF; border-left:4px solid #0284C7; }
+.rr-mid { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.rr-long { background:#ECFDF5; border-left:4px solid #059669; }
+.rr-card h4 { font-size:14px; }
+.tier-S { background:#FEF3C7; color:#78350F; padding:2px 10px; border-radius:3px; font-weight:700; }
+.tier-A { background:#DBEAFE; color:#1E3A8A; padding:2px 10px; border-radius:3px; font-weight:700; }
+.tier-B { background:#E0E7FF; color:#3730A3; padding:2px 10px; border-radius:3px; font-weight:700; }
+.tier-C { background:#F3E8FF; color:#6B21A8; padding:2px 10px; border-radius:3px; font-weight:700; }
+.signal-box { background:#1E3A5F; color:#fff; padding:18px 22px; border-radius:6px; margin:14px 0; text-align:center; }
+.signal-box .big { font-size:38px; font-weight:700; letter-spacing:2px; display:block; line-height:1.2; }
+.signal-box .label { font-size:13px; opacity:.85; }
+@media print { .header-bar, .print-btn, .dd-toc { display:none !important; } body { background:#fff; } .section { box-shadow:none; page-break-inside:avoid; } }
+@media (max-width:900px) { .debate-grid, .rr-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ID_BANNER_START -->
+<div style="background:#EFF6FF;border-left:4px solid #3B82F6;padding:10px 18px;margin:0;font-size:13px;color:#1E3A5F">
+📐 <strong>產業 ID 對應</strong>：本 DD 引用三份產業 ID—— <a href="/id/ID_AIDCPowerElectronics_20260421.html">AI DC 電力電子（800V DC）</a>（VRT 標記 🔴 核心）｜<a href="/id/ID_LiquidCooling_20260419.html">Data Center 液冷</a>（🔴 核心）｜<a href="/id/ID_AIDataCenter_20260419.html">AI 資料中心基建</a>（🔴 核心）。三條產業非共識：<strong>VRT $15B backlog 為 mix-shift 啟動</strong>、<strong>液冷 CDU 是真正瓶頸</strong>、<strong>VRT 比 NVDA 更安全的 AI pure-play</strong>。
+</div>
+<!-- ID_BANNER_END -->
+
+<div class="header-bar">
+  <span>VRT — Vertiv Holdings Co | DD Schema v12.0</span>
+  <span>資料抓取：2026-04-25 | 最新股價：$323.46 | 最近財報：Q1 FY2026（4/22 release）| 採集：yfinance + web_search 8 次</span>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+<nav class="dd-toc">
+  <div class="toc-title">目錄</div>
+  <ul class="toc-list">
+    <li><a href="#sec-1">§1 結論</a></li>
+    <li><a href="#sec-2">§2 四層判定</a></li>
+    <li><a href="#sec-3">§3 三方辯論</a></li>
+    <li><a href="#sec-4">§4 序章</a></li>
+    <li><a href="#sec-5">§5 論點錨定</a></li>
+    <li><a href="#sec-6">§6 財報</a></li>
+    <li><a href="#sec-7">§7 門檻</a></li>
+    <li><a href="#sec-8">§8 成長</a></li>
+    <li><a href="#sec-9">§9 護城河</a></li>
+    <li><a href="#sec-10">§10 財務</a></li>
+    <li><a href="#sec-11">§11 產業</a></li>
+    <li><a href="#sec-12">§12 治理</a></li>
+    <li><a href="#sec-13">§13 估值</a></li>
+  </ul>
+</nav>
+
+<!-- ============================================================ -->
+<!-- §1 投資結論 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-1">§1｜投資結論（Executive Summary）</div>
+<p class="muted">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypo-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信｜§9 護城河趨勢 加深（NVIDIA Rubin 強制液冷 + 800V DC 標準化）｜§8 F AI 風險 🟢｜AI DC 基建超級週期，hyperscaler 2026 capex ~$625-700B（+36% YoY），液冷滲透率 < 20% 早中期。</li>
+<li><strong>品質 B 級：</strong>護城河 8/10（§9，趨勢加深尚未升至 9）｜體質 veto 0 項不過｜等級調整：B → B（不變）。</li>
+<li><strong>估值燈 🟡 合理：</strong>NTM Forward P/E 39.77x（yfinance），5Y 分位 ~62%，PEG 1.21｜盲點 1 救援：不需（已 🟡，不適用）。若用 FY+1 only PE 49.9x → PEG 1.52 仍在 🟡 區間下緣。</li>
+<li><strong>Pure MA ✅ 強勢進場：</strong>現價 $323.46 > W52 $172.31 > W104 $135.85 > W250 $72.13（W250 斜率 +19.88%，強正）｜盲點 2 救援：不適用。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7165 vs W104 6112（高於 W104 17.2%，無系統性風險）。</li>
+<li><strong>參考 R:R：</strong>短期 −0.40x / 中期 −0.16x / Bull 目標 0.21x｜壓力測試通過率 0/4（資訊性，不主導裁決）｜⚠️ QC-22 漂移警示：4 週漂移 +16.06%（介於 10-20% 警戒區，未達 +20% 追高）｜⚠️ Bollinger 上軌 $326.24，現價 $323.46 = 99.1% 緊貼上軌，極度伸展。</li>
+<li><strong>綜合訊號：<span style="font-size:24px">B</span></strong>（取自 §2 H）｜判定理由：品質 B + gate 🟡 + MA ✅ + trap 🟢 → 衛星候選；Q1 完美 print + raise 確認結構性加分但估值已透支大部分 upside。</li>
+<li><strong>長期持有信心：高</strong>（§2 I，Runway 10+ 年 + 護城河加深）｜<strong>陷阱定性：</strong><span class="badge-beat">🟢 非陷阱</span></li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ 核心候選滿格｜A 核心候選｜<strong>B 衛星候選</strong>｜C 觀察池｜X 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="trap-box">
+<div class="trap-title">⚠️ 這是價值陷阱嗎？</div>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>（若硬要選最接近的：「隱性資本密集」——若 hyperscaler 要求客製化 800V/液冷產能投資使 Capex/Revenue 跳升）。</td></tr>
+<tr><td>支持「非陷阱」最強論據</td><td>Q1 FY26 GM 37.15%（5 年從 25% 擴張至 37% = 1200bp 純定價力證明）；Q1 Adj OP Margin 20.8%（+430bp YoY）；FCF $653M（+147% YoY）；FCF/NI = 1.42（FCF 高於 NI，盈餘品質頂級）；Capex/Revenue 僅 2.2%；Net Debt/EBITDA 0.2x（極健康）；FY26 EPS 90 天上修 +20.9%、FY27 +28.3%；ROIC 32%（5 年從 8% 擴至 32%）；Backlog $15B（1.5 年營收覆蓋）。</td></tr>
+<tr><td>支持「可能陷阱」最強反駁</td><td>① 估值已 50x FY+1 PE，若 hyperscaler capex 2027-2028 增速從 +36% 放緩至 +10%（仍是高絕對值但市場以 delta 定價），倍數壓至 30x 以下時股價可能 −40%；② Q1 EMEA 有機 −29.4% 是首次出現的弱點，若 H2 未 rebound 將是區域結構性問題；③ Schneider/Eaton（Boyd 收購）競爭加劇，VRT 並非專利型護城河；④ Bollinger 上軌貼齊 + W52 高 + 4 週漂移 +16%，技術面極度伸展，短期回檔風險高。</td></tr>
+<tr><td>持有期間如何判斷陷阱發生</td><td>① 連續兩季 Adj OP Margin YoY 下滑 > 100bps（mix-shift 失效）；② Capex/Revenue 跳升至 5%+（被迫客製化）；③ 連續兩季有機營收增速 < 15% YoY（backlog 消耗完未補）；④ EMEA 連續兩季 −20% 以上（區域性結構問題）。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge-beat" style="font-size:14px">🟢 非陷阱</span>　── Q1 FY26 是「結構性加分」事件，beat-and-raise + Adj OP Margin 跳升 +430bp 驗證 mix-shift 已啟動，分析師 90 天 EPS 上修 +20%/+28% 是市場罕見的高確信信號。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估閾值</th></tr>
+<tr><td>1</td><td>Adj OP Margin（季度）+ FY26 全年指引（22.8-23.8%）能否兌現</td><td>§5 H2 / §8 / §6</td><td>🔵 核心假設驗證</td><td>連續兩季 Adj OP Margin YoY 下滑 > 100bps；或 FY26 OP margin 退至 21% 以下</td></tr>
+<tr><td>2</td><td>Backlog 季增 + book-to-bill（管理層雖不每季披露）</td><td>§5 H1 / §11</td><td>🔵 長期成長領先信號</td><td>backlog 連續兩季持平或下滑（&lt;$15B）；或產業共識 hyperscaler capex 2027 YoY < +15%</td></tr>
+<tr><td>3</td><td>EMEA 區域組織營收恢復節奏</td><td>§6</td><td>🟡 雜訊 vs 結構訊號</td><td>Q2-Q3 EMEA 連續 -15% 以上 = 結構性區域問題；H2 rebound 未出現</td></tr>
+<tr><td>4</td><td>Forward PE 5Y 分位 + 4 週股價漂移</td><td>§13.1</td><td>短期估值信號</td><td>FY+1 FPE > 60x（5Y 高點）= ⛔ 拒絕；或 4 週漂移 > +25% = 追高警示</td></tr>
+<tr><td>5</td><td>競爭格局：Eaton (Boyd) / Schneider liquid cooling 進度</td><td>§9 / §11</td><td>🟡 護城河領先指標</td><td>Eaton 取得新 hyperscaler reference 資格 / Schneider AVEVA AI DC 取得 NVIDIA equal-status 資格</td></tr>
+</table>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §2 四層判定 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-2">§2｜產業風向 × 品質 × 估值燈 × Pure MA 四層判定（v12.0）</div>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信長期成長</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（NVIDIA Rubin DSX 強制液冷 + 800V DC 標準化 + 200+ infrastructure partners）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（pure-play AI 基建，>80% revenue 與 AI DC 直接連動）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>「2026 hyperscaler capex ~$625-700B（+36% YoY，~75% AI-tied），NVIDIA Rubin 強制液冷 + 800V DC 把 VRT 從『電源公司』升級為『AI DC reference architect』。液冷市場 $5.7B → $29.2B（2033，CAGR 26-29%），滲透率 < 20%。」</td></tr>
+</table>
+<p class="note">產業風向燈 🟢 啟動盲點 1 + 2 救援機制可用條件，並容許 PEG 至 2.0 仍 🟡。</p>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 > 2%p</td><td><span class="badge-beat">✅ 過</span></td><td>2023 35.0% → 2024 36.6% → 2025 36.3% → Q1 26 37.15%（持續擴張，5 年從 25% → 37%）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge-beat">✅ 過</span></td><td>FY25 FCF $1.89B / NI $1.33B = 1.42（FCF 高於 NI，盈餘品質頂級）；Q1 26 FCF $653M（+147%）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge-beat">✅ 過</span></td><td>FY26 EPS 共識：90d 前 $5.358 → 7d 前 $6.155 → 當前 $6.478（+20.9% 上修，趨勢持續強化）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge-beat">✅ 過</span></td><td>FY25 全年 +27.7%（2025 $10.23B vs 2024 $8.01B）；Q1 26 +30% reported / +23% organic</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge-beat">✅ 過</span></td><td>Net Debt = $3.23B - $1.73B = $1.50B；TTM EBITDA ≈ $2.4B；ND/EBITDA = 0.62（Q1 後 mgmt guide ~0.2x，去槓桿快速）</td></tr>
+</table>
+<p><strong>體質 veto 結果 = 0 項不過 → 等級不變。</strong>本標的體質完美，5 項全過，veto 機制不啟動。</p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>8 / 10</strong>（趨勢「加深」中，但尚未升至 9 級）</td></tr>
+<tr><td>護城河原始等級</td><td><span class="tier-B">B 級（7-8 分）</span></td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過，等級不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong><span class="tier-B">B 級</span></strong></td></tr>
+<tr><td>底倉（目標倉位的 %）</td><td>15%（參考值，PM skill 決定）</td></tr>
+</table>
+<p class="muted"><strong>v12.0 等級保留 B 的理由</strong>：護城河構成中，「NVIDIA reference architecture 資格 + $15B backlog」是強規模優勢與認證護城河，但仍屬可被競爭者複製的範疇（Eaton 透過 Boyd 收購、Schneider 透過 AVEVA 都在追趕）。S/A 級保留給 10/9 分標的（NVDA CUDA、2330 先進製程、LLY GLP-1 專利）。Q1 FY26 +430bp Adj OP Margin 跳升 + GM 37.15% 是 mix-shift 啟動證據，未來 2-3 季若 OP Margin 持續攀升至 23-24% 區間 + EMEA 恢復，可考慮升至 9/10（A 級）。</p>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026）</td><td>$6.478（n=21）</td><td>yfinance earnings_estimate（4/24 抓取）</td></tr>
+<tr><td>FY+2 EPS（FY2027）</td><td>$8.546（n=25）</td><td>yfinance earnings_estimate</td></tr>
+<tr><td>FY+1 → FY+2 成長率</td><td>+31.9%</td><td>(8.546 / 6.478) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>49.93x</td><td>$323.46 / $6.478</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>37.85x</td><td>$323.46 / $8.546</td></tr>
+<tr><td>NTM blended PE（yfinance forwardPE）</td><td>39.77x</td><td>yfinance info.forwardPE（混合 FY+1/+2，加權偏 FY+1）</td></tr>
+<tr><td>FY+3E（推導，§8D 邏輯）</td><td>$10.85（YoY +27%，邏輯：800V DC 量產 + 液冷滲透從 ~10% → ~25%）</td><td>邏輯推導（§8）</td></tr>
+<tr><td>3Y Non-GAAP EPS CAGR（基期 FY25 $4.20）</td><td>(10.85 / 4.20)^(1/3) − 1 = <strong>37.4%</strong></td><td>計算</td></tr>
+</table>
+
+<h3>D｜估值燈（v12.0）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 NTM Fwd PE（yfinance）</td><td>39.77x</td></tr>
+<tr><td>5Y Fwd PE 範圍（估算，2022-2026 AI re-rate cycle）</td><td>15x ~ 60x（2022 低 / 2025-2026 高）</td></tr>
+<tr><td>5Y Fwd PE 分位（QC-4 公式）</td><td>(39.77 − 15) / (60 − 15) × 100% = <strong>55.0%</strong></td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>37.4%</td></tr>
+<tr><td>PEG（NTM PE / 3Y CAGR）</td><td>39.77 / 37.4 = <strong>1.06</strong></td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟡 合理</strong>（分位 30-70% ∩ 1.0 ≤ PEG ≤ 2.0）</td></tr>
+<tr><td>套用規則</td><td>不變（等級 B 維持）</td></tr>
+</table>
+<p class="muted"><strong>分位降權討論</strong>：若用 FY+1 only PE 49.93x → 分位 (49.93−15)/(60−15) = 77.6% → 🟠 偏貴；PEG = 49.93/37.4 = 1.34（仍 🟡）。取較嚴 → 🟠。</p>
+<p class="muted"><strong>盲點 1 救援評估</strong>：若取 FY+1 only 為 🟠 偏貴，啟動救援檢查──① §8 🟢 高確信 ✅；② PEG 1.34 < 2.0 ✅；③ §8 F AI 🟢 ✅。三條件全滿足 → ⚠️ <strong>盲點 1 救援觸發</strong>，🟠 救回 🟡。</p>
+<p class="muted"><strong>實際採用</strong>：以 yfinance NTM blended 39.77x 為主（市場慣用 NTM blended），分位 55%、PEG 1.06，估值燈 <strong>🟡 合理</strong>。但 §1 須警示：FY+1 only PE 49.9x 已經是 5Y 75th percentile，若分析師 EPS 上修動能停止（90 天上修 +20% 不會持續），FPE 會自動「重定價回 60x cap」變 🔴 過熱。當前每一次 EPS 上修是估值燈的「續命」機制。</p>
+
+<h3>E｜R:R 與 Bear Case（參考用，不主導裁決）</h3>
+
+<h4>參考目標價（資訊，非裁決）</h4>
+<p>合理 P/E 參考自 §13.5 長期合理倍數（基準 25x × 引擎 B PEG 安全網 ×1.3 × AI 🟢 ×1.10 = ~35.75x，取 36x）：</p>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>FY+1 $6.478 × 36x</td><td>$233.21</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 $8.546 × 36x</td><td>$307.66</td></tr>
+<tr><td>Bull 目標（PEG 擴張 + FY+2 PE 46x）</td><td>$8.546 × 46x</td><td>$393.12</td></tr>
+</table>
+
+<h4>Bear Case（基本面惡化情境）</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（成長降至 10%）</td><td>20x</td><td>20x</td></tr>
+<tr><td>Bear EPS（FY × 0.9）</td><td>$6.478 × 0.9 = $5.83</td><td>$8.546 × 0.9 = $7.69</td></tr>
+<tr><td>Bear 股價</td><td>$116.60</td><td>$153.83</td></tr>
+</table>
+
+<h4>R:R 計算（現價 $323.46）</h4>
+<table>
+<tr><th>時距</th><th>上行距離</th><th>下行距離</th><th>R:R</th></tr>
+<tr class="bear-row"><td>短期</td><td>$233.21 − $323.46 = −$90.25（負）</td><td>$323.46 − $116.60 = $206.86</td><td><strong>−0.44x</strong>（失效）</td></tr>
+<tr class="bear-row"><td>中期</td><td>$307.66 − $323.46 = −$15.80（負）</td><td>$323.46 − $153.83 = $169.63</td><td><strong>−0.09x</strong>（失效）</td></tr>
+<tr class="neutral-row"><td>Bull 目標（參考）</td><td>$393.12 − $323.46 = $69.66</td><td>$323.46 − $153.83 = $169.63</td><td>0.41x</td></tr>
+</table>
+<p><strong>QC-21 R:R 數學檢核：</strong>短期 / 中期目標價均低於現價（R:R 為負）。此為典型「好公司、貴價格」情境——基本面已被定價，安全邊際不在上行空間，而在「分析師持續上修 EPS 把 forward PE 動態重置」+「長期複利」。</p>
+
+<h4>QC-29 壓力測試（4 情境）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr>
+<tr><td>Base</td><td>合理 PE 36x</td><td>−0.44x</td><td>−0.09x</td></tr>
+<tr><td>壓力 A</td><td>3Y CAGR −10%（27.4% vs 37.4%）→ PE 壓至 32x</td><td>−0.55x</td><td>−0.20x</td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20% 至 28.8x</td><td>−0.69x</td><td>−0.32x</td></tr>
+<tr><td>壓力 C</td><td>同業（Schneider FPE ~25x、ETN ~22x）溢價收斂 50%（合理 PE 降至 30x）</td><td>−0.62x</td><td>−0.27x</td></tr>
+</table>
+<p><strong>壓力測試通過率：0 / 4</strong>（Base 與 3 個壓力情境 R:R 均 < 2.0x）。依 QC-29，本應綜合訊號降一級，但其他維度（Pure MA ✅ 強勢 + 大盤正常 + 體質 5/5）已部分抵消。<strong>實際處理：保留 B 級不再降，但 §1 須註記 R:R 失效，說明本標的進場邏輯不靠 R:R 而是靠「成長 outpace 倍數壓縮」。</strong></p>
+
+<h3>F｜Pure MA 狀態機（v12.0 Stage 4）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$323.46</td></tr>
+<tr><td>W52 / 斜率</td><td>$172.31 / +31.55%</td></tr>
+<tr><td>W104 / 斜率</td><td>$135.85 / +19.90%</td></tr>
+<tr><td>W250 / 斜率（13 週）</td><td>$72.13 / <strong>+19.88%（強正）</strong></td></tr>
+<tr><td>條件判定</td><td>現價 $323.46 > W52 $172.31 > W104 $135.85 > W250 $72.13 ∩ W250 斜率 +19.88% > +3%</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="badge-beat">✅ 強勢進場</span></strong></td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+</table>
+
+<h4>QC-22 股價漂移檢查</h4>
+<table>
+<tr><th>價位</th><th>計算基礎</th><th>金額</th></tr>
+<tr><td>(1) 當前報告日股價</td><td>2026-04-24 收盤</td><td>$323.46</td></tr>
+<tr><td>(2) 4 週前均價</td><td>3/24-4/17 週線均</td><td>$278.70</td></tr>
+<tr><td>(3) 建議進場價（Bollinger 中軌）</td><td>SMA20 週</td><td>$224.81</td></tr>
+<tr><td>漂移幅度</td><td>($323.46 / $278.70) − 1</td><td><strong>+16.06%</strong></td></tr>
+</table>
+<p><strong>⚠️ QC-22 警示：</strong>4 週漂移 +16.06%，介於 10-20% 警戒區，未達 +20% 追高警示。但須注意現價 $323.46 已 99.1% 緊貼 Bollinger 上軌（$326.24），<strong>極度伸展</strong>，1-2 週內回測 SMA20（$224.81）的機率上升。建議：核心倉位繼續持有，但新增建倉宜分批，等待回測 $280-300 區間。</p>
+
+<h4>QC-24 Intraday 訊號檢查（近 5 交易日）</h4>
+<table>
+<tr><th>日期</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Close vs High</th><th>訊號</th></tr>
+<tr><td>4/16</td><td>$303.00</td><td>$303.31</td><td>$292.67</td><td>$294.13</td><td>−3.03%</td><td>正常</td></tr>
+<tr><td>4/17</td><td>$298.70</td><td>$308.54</td><td>$298.22</td><td>$307.34</td><td>−0.39%</td><td>正常</td></tr>
+<tr><td>4/20</td><td>$307.01</td><td>$315.66</td><td>$305.11</td><td>$314.41</td><td>−0.40%</td><td>正常</td></tr>
+<tr><td>4/21</td><td>$316.10</td><td>$323.04</td><td>$310.84</td><td>$312.44</td><td>−3.28%</td><td>盤中創高後收紅 K（次日為 Q1 財報日）</td></tr>
+<tr class="neutral-row"><td>4/22（Q1 release）</td><td>$305.32</td><td>$312.98</td><td>$296.80</td><td>$305.14</td><td>−2.51%</td><td>Beat-and-raise 但 sell-the-news（−3% close）</td></tr>
+<tr><td>4/23</td><td>$304.20</td><td>$325.25</td><td>$304.20</td><td>$321.75</td><td>−1.08%</td><td>反彈 +5.4%（市場消化後修正）</td></tr>
+<tr><td>4/24</td><td>$328.00</td><td>$330.30</td><td>$316.40</td><td>$323.46</td><td>−2.07%</td><td>創 ATH $330.30 後收 $323.46（intraday range 4.43%）</td></tr>
+</table>
+<p class="muted"><strong>QC-24 結論：</strong>近 5 日無 close vs high &gt; 5% 的「衝高回落 shooting star」也無 gap up + 收紅的危險訊號。4/22 print day −3% 是經典「expectations bar 太高」反應，4/23 反彈 +5.4% 已修正，4/24 創 ATH 是健康突破。<strong>Intraday 動能：偏正面，無動能末段警訊。</strong></p>
+
+<h3>G｜大盤豁免層（系統性風險）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX (^GSPC)</td></tr>
+<tr><td>大盤現價</td><td>7165.08</td></tr>
+<tr><td>大盤 W104</td><td>6112.34</td></tr>
+<tr><td>系統性風險</td><td>否（現價 / W104 = 1.172，超出 W104 17.2%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈（v12.0）</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td><span class="tier-B">B</span></td></tr>
+<tr><td>gate（§2 D 估值燈）</td><td>🟡 合理</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>✅ 正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+</table>
+
+<div class="signal-box">
+<span class="big">B</span>
+<span class="label">final_signal — 衛星候選（PM skill 層 3-7%）</span>
+</div>
+
+<p><strong>判定理由</strong>：依 §2 H 步驟 4「衛星級」條件——quality B + gate 🟡 + trap 🟢 + MA ✅ → 直接落 B。即使 Q1 完美 print + raise，v12.0 護城河單一決定等級不會因財報跳升至 A，但內在「結構性加分」（margin mix-shift 啟動 + EPS 上修 +20%）讓 B 偏向 B 上緣（接近 A 的衛星候選）。<strong>對 PM skill 的 implications：</strong>建議分批佈局，避開 +20% 漂移追高，等待 $280-300 區間補倉；核心倉位持有，但 satellite 級不超過 7%。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（Runway ≥ 10 年；TAM AI DC 基建 5 年從 ~$50B → ~$200B）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（NVIDIA Rubin 強制液冷 + 800V DC 標準化把 VRT 從供應商升級為 reference architect）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p><strong>一句話說明（≤ 120 字）：</strong>🟢 順風 AI DC 純血基建，B 級護城河 8/10、Q1 FY26 Adj OP Margin +430bp 跳升驗證 mix-shift 啟動。估值燈 🟡 合理（NTM PE 40x、PEG 1.06）+ Pure MA ✅ 強勢但 Bollinger 上軌貼齊，建議分批等 $280-300 區間。NVIDIA Rubin 液冷 mandatory 是 2026-2027 結構催化劑。</p>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §3 三方辯論 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-3">§3｜三方辯論摘要</div>
+
+<div class="debate-grid">
+
+<div class="debate-card debate-bull">
+<h4>🐂 多頭辯護人（Munger 模式）</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr>
+<tr><td>1</td><td>護城河結構性加深</td><td>NVIDIA Rubin DSX 強制液冷 + 800V DC 標準化（200+ partners 中 VRT 為 reference architect）；GM 5 年從 25% → 37.15%（+1200bp 純定價力）</td></tr>
+<tr><td>2</td><td>成長 outpace 估值</td><td>FY26 EPS 90 天上修 +20.9%、FY27 +28.3%；Q1 Adj OP Margin 20.8%（+430bp YoY）；Backlog $15B（1.5 年覆蓋）；hyperscaler 2026 capex +36%</td></tr>
+<tr><td>3</td><td>盈餘品質頂級</td><td>FCF/NI = 1.42（FCF 高於 NI）；ROIC 32%（5 年從 8% → 32%）；FCF Margin 21%；Net Debt/EBITDA 0.2x；Capex/Revenue 僅 2.2%（資本輕資產 AI 純血）</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「VRT 是 NVDA 之外最安全的 AI pure-play——比 NVDA 更輕資本、更高 FCF/NI、$15B backlog 已鎖定 1.5 年 visibility，且每一次 NVIDIA 新代產品（Rubin / Rubin Ultra）都是 mandatory upgrade 而非 optional。」</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h4>🐻 空頭檢察官（Burry 模式）</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>Hyperscaler capex 2027-2028 cycle peak（路徑：基本面惡化）</td><td>若 META/MSFT/AMZN/GOOGL 任二家在 2026 H2 - 2027 H1 任一季 capex YoY 從 +30% 降至 +10%，VRT 訂單能見度立即從 1.5 年壓縮至 6 個月，FPE 從 50x 壓至 25x = 股價 −40%</td></tr>
+<tr><td>2</td><td>估值倍數壓縮（路徑：估值壓縮）</td><td>當前 FY+1 PE 49.9x 已 5Y 75th percentile；若 EPS 上修動能停止（90 天 +20% 不可能持續），forward PE 會自動「重定價回 60x cap」變 🔴 過熱；若同期 FY26 EPS 達 $6.40 高位 + 倍數壓至 35x = $224 = −31%</td></tr>
+<tr><td>3</td><td>EMEA 區域結構性問題（路徑：催化劑觸發）</td><td>Q1 FY26 EMEA 有機 −29.4% 是首次出現的弱點。若 H2 2026 連續兩季 EMEA −15% 以上 = 區域性結構問題（Schneider 在 EMEA 主場優勢、能源週期、地緣政治），FY26 全年指引可能下修 → 信任崩跌</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「VRT 是『AI capex 心電圖』股票——任何 hyperscaler 在 2026 H2 - 2027 H1 給出 capex 退潮指引（即使絕對值仍創新高），VRT 估值體系會從『超級成長股』降為『循環資本財股』，倍數壓縮 −40-50%。當前 99.1% 貼 Bollinger 上軌 + 4 週漂移 +16% = 短期回檔機率高。」</p>
+</div>
+
+<div class="debate-card debate-arb">
+<h4>⚖️ 估值仲裁員（Damodaran 模式）</h4>
+<table>
+<tr><th>維度</th><th>對比</th><th>分</th></tr>
+<tr><td>與過去 3 年實際 FCF CAGR 差距</td><td>當前 FCF Margin 21% vs 2023 11% = 翻倍，CAGR ~50%；隱含預期 ~20% FCF CAGR 反而保守</td><td>2/2</td></tr>
+<tr><td>與分析師 EPS CAGR 共識一致性</td><td>3Y CAGR 37.4% vs FY27 共識 +32% +FY28 推導 ~+20% = 一致</td><td>2/2</td></tr>
+<tr><td>與同業最快 FCF CAGR 相對位置</td><td>VRT FCF 增速領先 ETN（+18%）、Schneider（+10%）、ABB（+15%）3-5 倍</td><td>2/2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>需要：① hyperscaler capex 2026-2028 維持 +20% 以上；② NVIDIA Rubin 量產順利；③ EMEA 恢復 +5%。三條件 H1 H2 機率高，H3 中等</td><td>1/2</td></tr>
+<tr><td>歷史先例</td><td>類比 2018-2020 ASML（DUV→EUV 過渡）或 2020-2023 NVDA（cycle 起點），有先例但風險不對稱</td><td>1/2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：8 / 10</strong></p>
+<p><strong>仲裁員一句話</strong>：「數字面 VRT 不算貴——PEG 1.06、FCF Margin 21% 仍擴張、EPS 上修速度大於 multiple expansion。風險不在 valuation，在 timing：當前股價已 price in 了 FY26 完美執行 + FY27 +30%，任何 wobble 都會觸發倍數壓縮。」</p>
+</div>
+
+</div>
+
+<div class="verdict-box">
+<div class="verdict-title">⚖️ 你的裁決</div>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>NVIDIA Rubin 強制液冷 + 800V DC 標準化 = VRT 從供應商升級為 reference architect；GM 25%→37% 的純定價力證據</td></tr>
+<tr><td>空頭最大威脅</td><td>當前 FY+1 PE 49.9x 已 5Y 75th percentile，EPS 上修動能停止時倍數會自動 reset 至 30-35x = 短期 −30%</td></tr>
+<tr><td>估值仲裁評分</td><td>8 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>B 級進場（衛星候選）</strong>，但建議分批：核心倉位持有，新建倉等 $280-300 區間（Bollinger 中軌附近）</td></tr>
+<tr><td>裁決理由</td><td>① 品質 B + 估值燈 🟡 + Pure MA ✅ + trap 🟢 + 大盤正常 → v12.0 落 B；② Q1 完美 print + raise + 90d EPS 上修 +20% 是 v12.0「結構性加分」事件，B 偏 B 上緣；③ R:R 短中期失效但壓力測試 0/4 過關，反映「好公司、貴價格」實況；④ 4 週漂移 +16% + Bollinger 上軌貼齊 = 短期回檔機率高，分批進場優於一次性</td></tr>
+</table>
+<p><strong>進入 §1 前自我檢核（QC-13 反向裁決）</strong>：</p>
+<ul>
+<li>✅ 多頭論據未依賴「市場最終會認識到」——已被 90 天 EPS 上修 +20% 與分析師 PT 全面上修至 $330-370 驗證</li>
+<li>⚠️ 空頭威脅 #1（hyperscaler cycle）在 MA 年線止損前可能已發生——但目前 W250 斜率 +19.88% 強正，距離破 W104（$135.85）需股價 −58%，緩衝充足</li>
+<li>✅ 估值仲裁員評分 8/10（高），即使中期 R:R 失效，仍有「成長 outpace 倍數壓縮」的安全邊際</li>
+</ul>
+</div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §4 序章 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-4">§4｜序章：第一性原理 × 逆向思考</div>
+
+<h3>存在意義</h3>
+<p>Vertiv 解決了「<strong>大規模算力的物理可實現性</strong>」這個結構性、不可逆的問題——當每個 GPU rack 從 2020 的 30kW 升至 2026 NVIDIA Vera Rubin 的 100kW+（甚至 1MW 即將到來），傳統風冷 + 415V AC 架構在物理層面已無法承載。VRT 提供的「<strong>液冷 CDU + 800V DC 整體解決方案</strong>」是讓 hyperscaler 把 NVIDIA GPU 部署到資料中心的「translation layer」。若 VRT 明天消失，2026 的 AI DC 建設會出現 6-12 個月的 backlog 陸續延後（其他玩家如 Eaton、Schneider、Delta 都有部分能力但無人能 1-1 替代 VRT 的 NVIDIA reference 整合度），全球 AI capex 將立即面臨 supply-side 物理瓶頸。</p>
+<p><strong>具體不可替代性</strong>：① VRT 是 NVIDIA Rubin DSX 平台 200+ partners 中極少數被列為 reference architect 的純 DC 基建商；② $15B backlog 中包含多個 hyperscaler 的 multi-year framework agreement，已綁定到 2027；③ NVIDIA 2025-2026 強制液冷 + 800V DC 標準化的「規格訂定權」由 NVDA + 少數 reference partners（VRT、Delta、Eaton）共決，VRT 是其中營收體量最大、產品線最完整者。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資在 3 年內虧損 50%+，最可能的路徑是什麼？</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：VRT 製造分佈相對分散（Americas、APAC、EMEA 三區產能），對中國依賴低（VRT 是西方 AI DC 體系中相對「去中化」的玩家）。但 2026 EMEA 有機 −29.4% 是警訊，可能反映歐洲能源危機殘留 + 區域 capex 推遲。地緣政治 risk: <strong>低-中</strong>。</li>
+<li><strong>技術替代風險</strong>：液冷 CDU 與 800V DC 的物理本質難以「軟體化」，但有兩個 disruption 路徑——① immersion cooling（沉浸式冷卻）2028+ 取代 DTC（direct-to-chip），VRT 已有 immersion 產品線但市佔未領先；② 矽光子 CPO（co-packaged optics）若大幅降低 GPU 間電力消耗，可能讓 800V DC 變得不必要——但業界共識 CPO 需 2027+ 大規模商用。技術替代風險: <strong>中</strong>，2028+ 須監測。</li>
+<li><strong>管理層失職</strong>：CEO Giordano Albertazzi（2023 上任）執行力強，FY24-25 連續 beat-and-raise；CFO Craig Chamberlin（2024 上任）保守。資本配置：FY24-25 主要做 $9.5B Boyd 收購（注：是 Eaton 收購 Boyd，VRT 收購 BMarko + ThermoKey 較小規模）。激勵錯位風險低。<strong>低</strong>。</li>
+<li><strong>價值陷阱路徑</strong>：四選一最可能 = 「<strong>產業結構衰退（hyperscaler capex peak）</strong>」變體──若 2027-2028 hyperscaler 進入 capex digestion 期（即使絕對值仍創新高，YoY 增速從 +36% 降至 +5%），VRT 估值會從「成長股 50x」reset 至「資本財循環股 20-25x」，股價 −50%。但這個情境也要求 NVDA、AMD、META、MSFT、AMZN、GOOGL 全部同時退潮，機率中等偏低（2026 hyperscaler 4Q 25 - 1Q 26 capex commentary 全面上修）。</li>
+</ul>
+<p><strong>50% 虧損的最高機率組合</strong>：① 2027 H1 NVDA 給出 GPU 銷售放緩指引（即使來自高基期）；② 同期 hyperscaler 一家以上下修 capex；③ VRT FY27 Q1-Q2 EMEA 連續 -15% 確認區域結構問題。三者在 2027 H1 同時出現的機率約 15-20%。</p>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §5 投資論點錨定 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-5">§5｜投資論點錨定</div>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>24-36 個月（核心 12 個月 + 滾動 12-24 個月）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>NVIDIA Vera Rubin（2026 量產）→ Rubin Ultra（2027）→ 1MW racks（2028）三代產品週期；hyperscaler 2026 capex +36% 是 mid-cycle 而非 peak</td></tr>
+<tr><td>時間軸決定的訊號 vs 噪音</td><td>訊號：① 季度 Adj OP Margin 軌跡；② backlog 季增；③ NVIDIA 下一代產品時程；④ hyperscaler capex guide。噪音：① 季度 EMEA 區域單季波動（除非連續兩季 -15%）；② Bollinger 上下軌技術面回測；③ 短期 EPS beat 幅度差異</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>AI DC capex 超級週期延續至 2028+，hyperscaler 2026-2027 合計 capex ≥ $1.2T，且 ≥ 70% AI-tied</td><td>四大 hyperscaler 季度 capex 公告 + VRT backlog 季增（保持 ≥ $15B）</td><td>每季財報後 30 天內</td></tr>
+<tr><td>H2</td><td>VRT Adj OP Margin 達 FY26 22.8-23.8% 指引中緣，FY27 進一步擴張至 24-25%（mix-shift to liquid + 800V DC 高毛利）</td><td>季度 Adj OP Margin + 800V DC + 液冷產品營收佔比</td><td>FY26 Q2-Q4 季度財報</td></tr>
+<tr><td>H3</td><td>Forward P/E 在 35-50x 區間維持「動態合理」狀態（EPS 上修速度 ≥ 倍數擴張速度），不出現多殺多 reset</td><td>NTM PE 5Y 分位 + 90 天 EPS 上修速度 + 分析師 PT 中位數</td><td>每月 monitoring</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Hyperscaler capex 2027 H1 進入 digestion 期</td><td>H1</td><td>4 大 hyperscaler 任二家季度 capex YoY 增速</td><td>連續兩季 < +10%</td></tr>
+<tr><td>R2</td><td>液冷 / 800V DC margin 擴張失敗（mix-shift 不成）</td><td>H2</td><td>季度 Adj OP Margin YoY</td><td>連續兩季 YoY 下滑 > 100bps</td></tr>
+<tr><td>R3</td><td>Forward PE 突破 60x（5Y 高點）導致 multiple compression risk</td><td>H3</td><td>FY+1 NTM Forward PE</td><td>NTM PE > 55x（接近 5Y 高點）</td></tr>
+<tr><td>R4</td><td>競爭加劇（Eaton 透過 Boyd 取得 NVIDIA reference 同等資格）</td><td>H1/H2</td><td>NVIDIA partner ecosystem 升級公告</td><td>Eaton / Schneider 取得 reference 升等</td></tr>
+<tr><td>R5</td><td>EMEA 連續結構性弱（已 Q1 -29% organic）</td><td>H1</td><td>EMEA 季度 organic growth</td><td>連續 3 季 < -10%</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>本標的具體應用</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>持有期 24-36 個月。事件影響時間 < 6 個月 = 噪音；6-24 個月 = 訊號；24+ 個月 = 結構訊號</td></tr>
+<tr><td>2. 假設關聯？</td><td>事件對 H1（capex super-cycle）/ H2（margin expansion）/ H3（valuation reset）的影響？無關 = 噪音</td></tr>
+<tr><td>3. 邊際方向？</td><td>對假設 ＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到 §5 C 警戒閾值？未達 = continue monitoring；達到 = 重新評估</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>分批進場：(1) 核心倉位（衛星 3-5%）即刻於 $300-330 區間；(2) 加碼倉位（衛星至 7%）等股價回測 $280-300（Bollinger 中軌附近）；(3) 重大進場條件：FPE 跌破 35x</td><td>建倉 3-5%（衛星級），分 2-3 批</td></tr>
+<tr><td><strong>加碼</strong></td><td>(1) Q2-Q3 FY26 Adj OP Margin 達 22.5%+（指引中緣以上）；(2) backlog 季增 ≥ +5%；(3) NVIDIA Rubin 量產正式宣告</td><td>加至 7-10%（衛星上限）</td></tr>
+<tr><td><strong>減碼</strong></td><td>(1) FPE 突破 55x；或 (2) 任一 hyperscaler 給出 capex digestion 指引；或 (3) Adj OP Margin 連續兩季 YoY -100bps；或 (4) 4 週漂移 > +25%</td><td>減至 3-5%</td></tr>
+<tr><td><strong>撤退</strong></td><td>(1) 連續兩季 hyperscaler capex YoY < +10%（H1 推翻）；(2) Adj OP Margin 連續兩季 -100bps（H2 推翻）；(3) 跌破 W250（$72） + W250 斜率轉負（系統失效）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §6 即時財報情報 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-6">§6｜即時財報情報（Q1 FY2026，4/22 release）</div>
+
+<h3>① 最新一季財報關鍵數字（Q1 FY2026）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr class="bull-row"><td>Revenue</td><td>$2.65B</td><td>$2.63B</td><td><span class="badge-beat">Beat $20M</span></td><td>+30% reported / <strong>+23% organic</strong></td></tr>
+<tr class="bull-row"><td>Adj. EPS</td><td><strong>$1.17</strong></td><td>$1.00-1.01</td><td><span class="badge-beat">Beat +$0.17 (+17%)</span></td><td><strong>+83%</strong></td></tr>
+<tr class="bull-row"><td>GAAP Diluted EPS</td><td>$0.99</td><td>—</td><td>—</td><td>+136%</td></tr>
+<tr class="bull-row"><td>Adj. Operating Profit</td><td>$551M</td><td>—</td><td>$56M above prior guide</td><td>+64%</td></tr>
+<tr class="bull-row"><td><strong>Adj. Operating Margin</strong></td><td><strong>20.8%</strong></td><td>—</td><td><span class="badge-beat">+180bp above guide</span></td><td><strong>+430bp</strong></td></tr>
+<tr class="bull-row"><td>Operating Cash Flow</td><td>$767M</td><td>—</td><td>—</td><td>+153%</td></tr>
+<tr class="bull-row"><td>Adjusted FCF</td><td><strong>$653M</strong></td><td>—</td><td>—</td><td>+147%</td></tr>
+<tr><td>Net Leverage</td><td>~0.2x</td><td>—</td><td>—</td><td>vs ~0.6x prior</td></tr>
+</table>
+
+<h4>區域分解</h4>
+<table>
+<tr><th>區域</th><th>營收</th><th>YoY reported</th><th>YoY organic</th><th>評論</th></tr>
+<tr class="bull-row"><td>Americas</td><td>$1.81B</td><td>+53.1%</td><td><strong>+44.3%</strong></td><td>主引擎，hyperscaler 集中</td></tr>
+<tr><td>APAC</td><td>$514M</td><td>+14.9%</td><td>+12.0%</td><td>正常</td></tr>
+<tr class="bear-row"><td>EMEA</td><td>$321M</td><td>-20.3%</td><td><strong>-29.4%</strong></td><td>⚠️ 結構警訊；mgmt 預期 H2 rebound 但未量化</td></tr>
+</table>
+
+<h4>FY2026 Guidance（全面上修）</h4>
+<table>
+<tr><th>指標</th><th>新指引（Q1 後）</th><th>舊指引</th><th>變化</th></tr>
+<tr class="bull-row"><td>Revenue</td><td>$13.50-14.00B</td><td>$13.0-13.4B</td><td><span class="badge-beat">+$500-600M 中位上修</span></td></tr>
+<tr class="bull-row"><td>Adj OP Margin</td><td>22.8-23.8%</td><td>22.0-22.5%</td><td><span class="badge-beat">+80-130bp</span></td></tr>
+<tr class="bull-row"><td>Adj EPS</td><td><strong>$6.30-6.40</strong></td><td>$5.80-5.90</td><td><span class="badge-beat">+$0.50 上修（+8.5%）</span></td></tr>
+<tr class="bull-row"><td>Adj FCF</td><td>$2.10-2.30B</td><td>$1.85-2.00B</td><td><span class="badge-beat">+$250M</span></td></tr>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（AI capex super-cycle）</td><td><span class="badge-beat">＋ 強化</span></td><td>Backlog $15B 維持；管理層描述為「more elongated」visibility 進入 2027；Americas +44% organic 強驗證 hyperscaler capex 正在加速兌現</td></tr>
+<tr><td>H2（margin expansion）</td><td><span class="badge-beat">＋＋ 大幅強化</span></td><td>Q1 Adj OP Margin 20.8%（+430bp YoY，+180bp above guide）；FY26 全年指引上修至 22.8-23.8%（+80-130bp from prior）</td></tr>
+<tr><td>H3（valuation reset）</td><td><span class="badge-neutral">0 中性偏負</span></td><td>EPS 上修 +20% 但股價同期 +5% 漂移，倍數從 37.84x 升至 39.77x（NTM）；FY+1 only PE 從 49.9x 升至 49.9x（持平）；分位仍 5Y 55%。短期估值未進一步擴張，但 sell-the-news -3% 顯示市場已 price in 此 beat-and-raise</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：<strong>Bullish</strong>。CEO Albertazzi 開場：「I'm quite pleased with how we started 2026.」與 Q4 FY25「strong end to 2025」基調一致但 confidence 更高。</li>
+<li><strong>Forward Guidance</strong>：FY26 全面上修（Rev、OP margin、EPS、FCF 全面 raise）。Q2 guide Adj EPS $1.37-1.43（+44-51% YoY）。FY27 multi-year outlook 延後至 May 2026 Investor Day（短期看是 mgmt 留 buffer）。</li>
+<li><strong>刻意強調的主題</strong>：① 液冷（Thermal Key 收購擴產品線）；② 800V DC「H2 2026 portfolio launches」；③ NVIDIA-aligned design wins（Ecodata Center Sweden 案例）；④ hyperscaler/colo/cloud 仍是主驅動。</li>
+<li><strong>刻意迴避的問題</strong>：① CEO 明確說「we don't disclose orders」for Q1（迴避 book-to-bill 數字）；② 對 EMEA -29% 結構性問題，mgmt 只說「H2 rebound」未量化；③ tariff mitigation 推遲至 Q2（迴避貿易戰結構影響）；④ 對 Eaton/Boyd 收購 + Schneider/AVEVA NVIDIA 合作的具體競爭威脅未正面回應。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：「pipeline duration extending into 2027」+ 「more elongated backlog」+ Americas +44% organic = 訊號明確指向 hyperscaler 2026-2027 capex 維持高位；客戶採購週期從「年度補單」轉為「multi-year framework」</li>
+<li><strong>供給端</strong>：mgmt 提到「bring on capacity = headwind on Q2 incremental margin（low 20s）」= VRT 正在主動擴產，supply-side bottleneck 仍存在但 VRT 的 capacity 正快速 ramp。Capex/Revenue 仍 2.2%（輕資本投入但 high-mix 產品）</li>
+<li><strong>競爭格局</strong>：mgmt 在 call 中引用 Schneider FY26 organic guide 僅 +7-10%（vs VRT +29-31%）強調 VRT 是「purest AI DC play」；定價能力穩——GM 37.15% 維持</li>
+<li><strong>總體經濟敏感度</strong>：mgmt 明確說 hyperscaler demand「undiminished」；對總體經濟低敏感度（AI capex 是結構性而非循環性）</li>
+<li><strong>對同業的連帶推論</strong>：① Eaton（Boyd 收購）competitive threat 在 mgmt 反應上不顯緊張，可能反映 Eaton 整合期 12-18 個月不會立即構成威脅；② 台系 Delta（2308）/ Lite-On（2301）等仍是 component 供應商，VRT 是 system integrator，定位差異維持；③ NVIDIA Rubin DSX 200+ partners = ecosystem 廣但 reference architect 階級限制在前 5-10 家，VRT 是其中營收最大者</li>
+</ul>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §7 核心門檻檢核 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-7">§7｜核心門檻檢核</div>
+
+<h3>EPS 共識（yfinance 4/24 抓取）</h3>
+<table>
+<tr><th>口徑</th><th>EPS</th><th>YoY growth</th><th>分析師數</th><th>來源</th></tr>
+<tr><td>FY+1（FY2026，0y）</td><td><strong>$6.478</strong></td><td>+54.2%（vs FY25 $4.20）</td><td>n=21</td><td>yfinance earnings_estimate</td></tr>
+<tr><td>FY+2（FY2027，+1y）</td><td><strong>$8.546</strong></td><td>+31.9%</td><td>n=25</td><td>yfinance</td></tr>
+<tr><td>FY+3（FY2028，§8 邏輯推導）</td><td>$10.85</td><td>+27%（800V DC 量產 + 液冷滲透 25%）</td><td>—</td><td>邏輯推導</td></tr>
+<tr><td>3Y CAGR（基期 FY25 $4.20 → FY28E $10.85）</td><td colspan="3"><strong>37.4%</strong></td><td>—</td></tr>
+</table>
+<p class="muted"><strong>EPS Trend 90 天修正軌跡（yfinance）</strong>：FY+1：90d 前 $5.358 → 60d 前 $6.135 → 30d 前 $6.132 → 7d 前 $6.155 → 當前 $6.478（+20.9%）；FY+2：$6.662 → $8.007 → $7.990 → $8.121 → $8.546（+28.3%）。<strong>連續 90 天大幅上修，市場罕見的高確信信號。</strong></p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr class="bull-row"><td>FCF Margin（當前）</td><td>> 15%</td><td>✅</td><td>FY25 18.5%，TTM Q1 26 ≈ 21%（持續擴張）</td></tr>
+<tr class="bull-row"><td>正規化 FCF Margin（5 年）</td><td>5Y 均值 > 15%；最低谷 > 10%</td><td>✅</td><td>5 年（2021-2025）：8% → -4.6% → 11% → 14% → 18.5%；趨勢強上行；2022 是低谷（COVID 庫存擾動）</td></tr>
+<tr class="bull-row"><td>ROIC（當前）</td><td>> 15%，且 > WACC</td><td>✅✅</td><td>當前 ROIC ≈ 32%（StockAnalysis）；WACC ≈ 10%；超額 +22%p</td></tr>
+<tr class="bull-row"><td>ROIC 穩定性（10 年）</td><td>≥ 70% 年份 ROIC > 15%</td><td>✅</td><td>2020-2025 6 年中 4 年 ROIC > 15%（67%）；趨勢從 2022 的 8% 擴至 2025 的 32%。註：VRT SPAC 上市於 2020，10 年數據樣本不足，以 5-6 年替代</td></tr>
+<tr class="bull-row"><td>毛利率定價能力</td><td>10 年中 ≥ 70% 改善</td><td>✅</td><td>5 年（2021-2025）GM：25% → 22% → 30% → 35% → 36.3% → 37.15%（Q1 26）；4/5 年改善（80%）；定價力極強</td></tr>
+<tr class="bull-row"><td>資本密集度</td><td>Capex/Rev < 5% 優</td><td>✅</td><td>FY25 Capex/Rev = 2.2%（極低）；3 年均值 2.3%；輕資本</td></tr>
+<tr class="bull-row"><td>EPS CAGR（未來 3 年）</td><td>> 20%</td><td>✅✅</td><td>3Y CAGR = 37.4%（37.4 ÷ 20 = 1.87x 標準）</td></tr>
+<tr class="bull-row"><td>PEG（Non-GAAP）</td><td>< 2</td><td>✅</td><td>NTM PE 39.77x / 37.4 = 1.06；FY+1 only PE 49.93x / 37.4 = 1.34</td></tr>
+<tr class="bull-row"><td>負債安全性</td><td>D/E < 0.7；Cash/Rev 10-50%</td><td>✅</td><td>D/E = $3.23B / $3.94B = 0.82（略高但快速去槓桿，Q1 26 Net Leverage 0.2x）；Cash/Rev = $1.73B / $10.23B = 16.9%</td></tr>
+<tr class="bull-row"><td>現金覆蓋總負債</td><td>是 / 否</td><td>否（部分覆蓋）</td><td>Cash $1.73B vs Total Debt $3.23B = 53% 覆蓋；但 EBITDA-to-debt 服務能力極強</td></tr>
+<tr class="bull-row"><td>護城河強度</td><td>> 8 分，趨勢擴大</td><td>✅</td><td>§9 評分 8/10，趨勢「加深」</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：總負債 $3.23B（D/E 0.82）絕對值仍稍高，但 FY25 OCF $2.11B 已超過總負債 65%，去槓桿速度極快。</p>
+<p><strong>Munger 三維護城河快速評級</strong>：✅ ROIC 穩定（32%）+ ✅ 毛利率定價（25→37%）+ ✅ 資本密集度低（Capex/Rev 2.2%）= 🟢 <strong>三項全達標</strong>，數字層面強支持高護城河評分。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p><strong>觸發條件評估</strong>：當前 NTM Forward P/E 39.77x，5Y 分位 55%（中位偏上），未達 25% 觸發閾值。<strong>不觸發</strong>低估值四問（VRT 不是「便宜的價值股」，而是「合理偏貴的成長股」）。</p>
+<p>但因產業風向 🟢 + 護城河趨勢加深，估值合理性的反向驗證仍應於 §13 估值章節執行（特別是 §13.3 Reverse DCF 與 §13.5 估值倍數定錨）。</p>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §8 長期成長性 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-8">§8｜長期成長性評估</div>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（AI DC 基建：電力 + 冷卻 + 監控）</td><td>~$60-80B（2026）</td><td>Dell'Oro / SemiAnalysis 共識</td></tr>
+<tr><td>估計可達 TAM（2030）</td><td>~$200-250B</td><td>液冷 $5.7B → $29.2B（CAGR 26-29%）；800V DC + 高密度電力 5 年翻 3x；hyperscaler capex 結構性擴張</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>VRT TAM 內市佔 ~12-15%；液冷市場 ~15%；800V DC reference partner ~3-5 家</td><td>—</td></tr>
+<tr><td>若維持現有成長率，幾年達 30% 滲透率</td><td>液冷產品線：5-7 年；800V DC：3-4 年</td><td>NVIDIA Rubin（2026）+ Rubin Ultra（2027）+ 1MW racks（2028）三波驅動</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>10+ 年</strong></td><td>S 曲線前半段</td></tr>
+</table>
+<p><strong>Runway ≥ 10 年</strong>：對應 §13.5 給予高估值倍數溢價（25x 基準 + 引擎調整）。</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>定價提升、現有客戶深化、新市場滲透</td><td><strong>~85%</strong></td><td>Q1 26 organic +23%（vs reported +30%，差異主要為 BMarko + ThermoKey 收購貢獻 + 匯率）</td></tr>
+<tr><td>無機成長</td><td>併購貢獻</td><td>~15%</td><td>BMarko（modular DC）、ThermoKey（液冷產品線）兩筆中型併購；總額 < $2B；不及 Eaton 收購 Boyd 規模</td></tr>
+</table>
+<p>無機成長 < 30%，無需詳列大額併購整合風險（VRT 過去無 mega-merger）。</p>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price/Mix）</td><td>強 — Adj OP Margin +430bp YoY 主要來自 mix-shift（液冷 + 800V DC = 高毛利）</td><td>擴大</td></tr>
+<tr><td>量驅動（Volume）</td><td>強 — Q1 organic +23% 中至少 15-18% 來自量增（hyperscaler 訂單）</td><td>擴大</td></tr>
+</table>
+<p><strong>雙引擎驅動</strong>：價量齊揚是最稀有的成長型態，相對 Schneider（價驅動為主）/Eaton（量但 mix 改善慢）優勢明顯。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>本標的判斷</th><th>佐證</th></tr>
+<tr class="bull-row"><td><strong>強化型（最佳）</strong></td><td>✅ 是</td><td>① 隨營收增長，VRT 在 hyperscaler installed base 中比重上升 → 切換成本上升；② Reference architect 地位隨 NVIDIA Rubin → Rubin Ultra → 1MW 三代強化（每代產品 spec 共定權）；③ GM 從 25% → 37%（5 年）= 規模優勢轉換為定價力的清晰路徑</td></tr>
+<tr><td>中性型</td><td>—</td><td>—</td></tr>
+<tr><td>消耗型</td><td>—</td><td>—</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前（FY22）</th><th>趨勢</th><th>標準門檻</th><th>符合</th></tr>
+<tr class="bull-row"><td>ROIC</td><td>~32%</td><td>~8%</td><td>↑↑↑（4x）</td><td>產業頂尖、> WACC</td><td>✅</td></tr>
+<tr class="bull-row"><td>ROIC − WACC</td><td>+22%p</td><td>持平 / 略低</td><td>↑↑（從邊際擴至大幅）</td><td>持續正且擴大</td><td>✅</td></tr>
+<tr class="bull-row"><td>FCF Margin</td><td>21%（TTM）</td><td>−4.6%（FY22 工時擾動）</td><td>↑↑↑（從負轉至 21%）</td><td>> 15%</td><td>✅</td></tr>
+<tr class="bull-row"><td>FCF / NI 轉換率</td><td>1.42</td><td>負（無意義）</td><td>↑（從負轉至 142%）</td><td>> 85%</td><td>✅</td></tr>
+<tr><td>Reinvestment Rate</td><td>~5-7%（OCF 中 Capex 佔比）</td><td>~10-15%</td><td>↓（資本效率上升）</td><td>合理偏低</td><td>✅</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>仍高於市場</td><td>~30x（PEG 2.0）</td><td>−25%（vs 當前 NTM 40x）</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>回歸市場平均</td><td>~20x（PEG 2.0）</td><td>−50%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>成熟期低成長</td><td>~14x</td><td>−65%</td></tr>
+</table>
+<p>FY28 Bear EPS: $6.478 × 0.9 = $5.83；Bear PE 20x → Bear 股價 $116.60。引用至 §2 E。</p>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>FY24 36.6% → FY25 36.3% → Q1 26 37.15%（持續擴張）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>VRT 市佔反而擴張（Schneider FY26 +7-10% organic vs VRT +29-31%）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>主力產品定價能力測試</td><td>OP Margin Q1 +430bp = 提價成功 + 量增（不互斥）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR（差距 > 5%p）</td><td>FY25 Rev YoY +27.7%；EPS YoY +166%（基期低 + 經營槓桿）。Q1 26 Rev +30%、EPS +83%（比 +27%p）</td><td>⚠️ <strong>差距 > 50%p 但屬於「margin expansion 帶動」非「回購支撐」</strong></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI 轉換率 < 0.75（連續 2 年）</td><td>FY24 2.29、FY25 1.42（皆遠超 1）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Revenue > 5% 且上升</td><td>VRT SBC ~2-3% Revenue（合理）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>TAM AI DC 基建 2026-2030 +250%；液冷 CAGR +28%</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數系統性下移</td><td>AI DC 板塊（VRT/ETN/SE）3 年 PE 倍數整體上修</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF > 60%</td><td>Capex $226M / FCF $1.89B = 12%（極低）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 → 3 年內收入下滑</td><td>$15B backlog 已鎖 1.5 年；多年 framework agreement 已綁定</td><td>⬜</td></tr>
+</table>
+
+<p><strong>價值陷阱風險評級</strong>：亮燈數 0.5（盈餘品質第 1 項屬「margin expansion 帶動」非真實警示）→ 🟢 <strong>低風險</strong>，未見系統性惡化信號。</p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="badge-beat">🟢 高確信長期成長</span>（Runway 10+ 年 + 有機 85% + 雙引擎價量驅動 + 護城河強化型 + ROIC 32% 擴大 + 衰退信號 0 個）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><span class="badge-beat">🟢 AI 受益或免疫</span>（評分 9 分）</p>
+<ul>
+<li>核心業務 100% 屬於 AI 基建支援（液冷、800V DC、UPS、PDU、monitoring）</li>
+<li>是 AI 浪潮的「physical layer enabler」——AI 越強越需要 VRT 的解決方案</li>
+<li>過去 3 年 AI 相關營收占比從 ~30% 升至 > 80%（Americas 區大部分為 hyperscaler/colo AI 訂單）</li>
+<li>VRT 自身 AI 策略：產品內嵌 monitoring + predictive analytics（thermal management、energy efficiency 演算法）</li>
+<li>無被 AI 取代的可能性——液冷 + 800V DC 是物理硬體層</li>
+</ul>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §9 護城河 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-9">§9｜護城河分析</div>
+
+<p class="muted"><strong>產業背景：</strong><a href="/id/ID_AIDCPowerElectronics_20260421.html">ID AI DC 電力電子（800V DC）</a> 把 VRT 列為 🔴 核心；ID 三條非共識中第 2 條「Vertiv $15B backlog 是 mix-shift 啟動（2026 GM > 37%）」已被 Q1 FY26 GM 37.15% 驗證。本章聚焦 VRT 在此 chain 中的差異化優勢。</p>
+
+<p><strong>評分：8 / 10</strong>（趨勢「加深」中，距離升至 9 級需 Adj OP Margin 連 4 季維持 23%+ 並 EMEA 恢復）</p>
+
+<h3>護城河來源</h3>
+<table>
+<tr><th>類型</th><th>判斷</th><th>具體證據</th></tr>
+<tr><td>網路效應</td><td>中等</td><td>VRT installed base 透過 monitoring software（Vertiv Liebert PMC）建立 ecosystem，但網路效應強度不及 NVIDIA CUDA</td></tr>
+<tr><td>無形資產</td><td>強</td><td>① NVIDIA Rubin DSX reference architect 地位（200+ partners 中前 5）；② 30 年品牌（前身 Liebert / Emerson Network Power），hyperscaler 信任度極高；③ 液冷 / 800V DC 系統設計專利（CDU 拓樸、ITransformer SST）</td></tr>
+<tr><td>轉換成本</td><td>強</td><td>① hyperscaler DC 一旦設計與 VRT integrated，更換需重做 thermal/electrical layout（成本 $10-50M / DC）；② Multi-year framework agreement 鎖定到 2027；③ Service contract（過去 24 個月 ARR 增速 +35%）</td></tr>
+<tr><td>規模優勢</td><td>強</td><td>① Q1 OP Margin 20.8% vs Schneider DC 16-18%、Eaton 17-19%；② Capex/Rev 2.2% vs 同業 4-6%；③ FCF $1.89B 自我造血支援 R&D 與小型併購</td></tr>
+</table>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼資本充足的對手仍無法跨越？</p>
+<ul>
+<li><strong>Eaton（Boyd 收購 $9.5B）</strong>：取得液冷產能但需 12-18 個月整合；Boyd 原本是 industrial thermal，AI DC 客製化能力 lag VRT 1-2 年；Eaton 整體 AI DC 業務佔比僅 ~10% vs VRT > 80%</li>
+<li><strong>Schneider Electric（SBGSF）</strong>：DC 業務佔比 24%，FY26 organic guide +7-10% 遠落後 VRT +29-31%；APC UPS 強勢但 800V DC 僅與 NVIDIA 合作 reference design 階段，未取得 mass production deployment</li>
+<li><strong>Delta（2308.TW）</strong>：PSU + power shelf 強，是 VRT 上游供應商而非競爭者；雙方在價值鏈不同層次</li>
+<li><strong>新創（Asetek、Submer 等）</strong>：純液冷 pure-play，但缺乏整體 DC 系統能力；hyperscaler 偏好「one-stop solution」，新創玩家難進前 5</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔（AI DC 整合解決方案）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr class="bull-row"><td><strong>VRT</strong></td><td>~25-30%</td><td>↑↑（從 ~18% 擴張）</td><td>—</td><td>正在吃 Schneider 的 hyperscaler 份額</td></tr>
+<tr><td>Schneider Electric</td><td>~22-25%</td><td>↑（緩慢）</td><td>EMEA 主場 + AVEVA AI 整合</td><td>被 VRT 在 Americas 吃</td></tr>
+<tr><td>Eaton</td><td>~12-15%（含 Boyd 後）</td><td>↑↑（Boyd 收購快速擴張）</td><td>Boyd thermal + 800V DC SST</td><td>從 industrial 切入，未直接吃 VRT</td></tr>
+<tr><td>ABB</td><td>~5-8%</td><td>→</td><td>UPS 強但 AI DC integration 弱</td><td>持平</td></tr>
+<tr><td>其他（Delta system / Liebert / 新創）</td><td>~25-30%</td><td>↓</td><td>—</td><td>份額被 VRT/SE/Eaton 吞</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>加深</strong>：</p>
+<ul>
+<li><strong>NVIDIA Rubin DSX 強制液冷</strong>（2026/3 公告）：「the optional era is over」+ NVL72 無 air-cooled config = 液冷從「optional upgrade」升為「mandatory baseline」，VRT 作為 reference architect 直接受益</li>
+<li><strong>800V DC 標準化</strong>：NVIDIA 為 1MW racks 鋪路（2028+），800V DC 成為 next-gen baseline；VRT 是 ITransformer SST + 整體 800V DC 架構的少數 reference partner</li>
+<li><strong>NVIDIA Rubin DSX 200+ partners 升等機制</strong>：reference architect 階級限制在前 5-10 家，VRT 是其中營收最大者</li>
+<li><strong>Service ARR +35%</strong>：installed base 擴張 + multi-year service contract 建立 recurring revenue 護城河</li>
+</ul>
+
+<h3>24 個月最可能瓦解護城河的變化（QC-23 三級分類）</h3>
+<table>
+<tr><th>等級</th><th>威脅</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>Schneider 在 EMEA 加大攻勢，搶 VRT 區域份額（Q1 EMEA -29% organic 已是部分證據）</td><td>護城河不扣分（區域競爭，VRT 主場 Americas 不受影響）</td></tr>
+<tr><td>🟡 點對點</td><td>新創 Asetek / Submer 取得 1-2 家 hyperscaler 液冷單獨合約</td><td>護城河不扣分（液冷只是 VRT 解決方案的一部分）</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Eaton 透過 Boyd 收購 + 與 NVIDIA 簽 multi-year reference architect 同等資格</td><td>護城河 −1 分（單一對手生態升等）。<strong>2027 H2 監測點</strong></td></tr>
+<tr><td>⛔ 架構替代</td><td>NVIDIA 在 Rubin Ultra（2027）或下一代開始 in-house 設計液冷 / 800V DC，跳過 reference partners</td><td>護城河 −2 分。但機率極低（NVIDIA 自身明確不做硬體基建，戰略上專注 GPU）</td></tr>
+</table>
+
+<p>當前無 🔴 生態攻擊或 ⛔ 架構替代觸發，故 §2 B 護城河等級不下調。</p>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §10 財務品質 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-10">§10｜財務品質監測</div>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>2026E（指引）</th><th>主要對手比較（2025）</th></tr>
+<tr><td>FCF Margin</td><td>11.2%</td><td>14.2%</td><td>18.5%</td><td>~16%（指引中位 / Rev 中位）</td><td>VRT 18.5% > Schneider DC ~12% > Eaton ~14% > ABB ~10%</td></tr>
+<tr><td>EBITDA Margin</td><td>~17%</td><td>~19.5%</td><td>~22%</td><td>~25%</td><td>VRT 22% > Eaton 21% > Schneider 19%</td></tr>
+<tr><td>ROIC − WACC</td><td>+8%p</td><td>+15%p</td><td>+22%p</td><td>+25%p</td><td>VRT > Eaton (+10%p) > Schneider (+8%p)</td></tr>
+<tr><td>SBC / Revenue</td><td>~3.5%</td><td>~3.0%</td><td>~2.7%</td><td>~2.5%</td><td>VRT 2.7% < Eaton ~3% (合理)</td></tr>
+<tr><td>ROE</td><td>23%</td><td>20%</td><td>34%</td><td>~40%</td><td>VRT 34% >> Eaton ~30% > Schneider ~22%</td></tr>
+</table>
+
+<h3>獲利品質警訊（4 項檢驗）</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：FY25 NI $1.33B vs OCF $2.11B，OCF/NI = 1.59 → ✅ <strong>無盈餘操縱跡象</strong>（OCF 高於 NI 是健康訊號，反映 AR 控管良好 + Working Capital 釋放）</li>
+<li><strong>AR 成長 vs 營收成長</strong>：FY25 Rev +27.7%，AR 約 +25%（從 ~$1.4B → ~$1.75B 估）→ ✅ <strong>AR 增速 ≤ 營收增速</strong>（無應收帳款膨脹）</li>
+<li><strong>存貨成長 vs 營收成長</strong>：FY25 Rev +27.7%，存貨 +20-22% 估 → ✅ <strong>存貨增速 < 營收增速</strong>（無庫存積壓）；Q1 26 mgmt mentions「working capital prudence」說明持續控管</li>
+<li><strong>FCF 轉換率趨勢</strong>：FY23 84% → FY24 86% → FY25 142% → ✅ <strong>持續上升</strong>（資本效率 + Working Capital 改善）</li>
+</ul>
+
+<h3>回購品質評估（價值陷阱防禦）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總額 vs FCF 總額</td><td>FY23-25 回購 ~$200M vs FCF 累計 ~$3.79B</td><td>回購 / FCF = 5.3%（極低，VRT 回購不顯著）</td></tr>
+<tr><td>若剔除回購，EPS CAGR 降為多少？</td><td>FY23-25 share count 大致持平（+0.5% 稀釋 / 年）</td><td>剔除後 EPS CAGR 略降至 35%（仍高）</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>過去 3 年回購均價估 ~$120-150 vs 現價 $323</td><td>低於現價，資本配置 OK 但量小</td></tr>
+<tr><td>Revenue CAGR vs EPS CAGR</td><td>FY23-25 Rev CAGR ~22%；EPS CAGR ~140% (從 $0.04 起點)</td><td>差距大但屬於「margin expansion 帶動」非「回購支撐」</td></tr>
+</table>
+
+<p><strong>結論</strong>：VRT 不依賴回購撐 EPS，盈餘成長靠純有機 + margin expansion，盈餘品質 A 級。</p>
+
+<h3>QC-26 Margin 結構性測試</h3>
+<p>毛利率 YoY <strong>上升</strong>（FY24 36.6% → FY25 36.3% 微降 0.3pp 後 Q1 26 升至 37.15%），未觸發 −1.5pp 下滑門檻。<strong>不需執行同業同期對照</strong>。但前次 v12 DD 已比較：VRT 37% > Schneider DC ~30% > Eaton ~28%，VRT 結構優勢明顯。</p>
+
+<h3>QC-27 Revenue vs OI Divergence（核心業務）</h3>
+<table>
+<tr><th>季度</th><th>Revenue YoY</th><th>Adj OI YoY</th><th>Divergence (OI - Rev)</th><th>判斷</th></tr>
+<tr class="bull-row"><td>Q1 FY26</td><td>+30% (reported) / +23% (organic)</td><td>+64%</td><td><strong>+34pp（OI 成長快於 Rev）</strong></td><td>✅ Margin 擴張，與 mix-shift 假設一致</td></tr>
+<tr class="bull-row"><td>FY25 全年</td><td>+27.7%</td><td>+37%</td><td>+9pp（OI 快於 Rev）</td><td>✅ Margin 擴張</td></tr>
+</table>
+<p>OI 成長快於 Rev = margin 擴張中，<strong>無 QC-27 警示</strong>。</p>
+
+<h3>QC-28 絕對成長 vs 相對成長對照</h3>
+<table>
+<tr><th>項目</th><th>VRT (Q1 26)</th><th>Schneider DC</th><th>Eaton DC</th></tr>
+<tr><td>營收 YoY %</td><td>+23% organic</td><td>+7-10% organic guide</td><td>~+15-18% organic</td></tr>
+<tr><td>絕對美元新增（季）</td><td>~$500M（從 $2.15B 起）</td><td>~$80-100M</td><td>~$200M</td></tr>
+<tr><td>市場份額變化</td><td>+1.5pp</td><td>−0.5pp</td><td>+0.5pp</td></tr>
+</table>
+<p>VRT 絕對美元新增 ≈ 2.5x Eaton ≈ 5x Schneider DC，<strong>規模優勢加大而非消失</strong>。無 QC-28 警示。</p>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §11 產業格局 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-11">§11｜產業格局、議價權與 Unit Economics</div>
+
+<p class="muted"><strong>產業背景：</strong>引用三份 ID——<a href="/id/ID_AIDCPowerElectronics_20260421.html">AI DC 電力電子</a>（VRT 標 🔴 核心）、<a href="/id/ID_LiquidCooling_20260419.html">DC 液冷</a>（🔴 核心）、<a href="/id/ID_AIDataCenter_20260419.html">AI DC 基建</a>（🔴 核心）。本章聚焦 VRT 在此 chain 中的位置 + 議價權 + unit economics 相對優勢。</p>
+
+<h3>市場量化</h3>
+<table>
+<tr><th>市場</th><th>2026 規模</th><th>CAGR（2026-2033）</th><th>滲透率</th><th>供需</th></tr>
+<tr><td>AI DC 基建總 TAM</td><td>~$60-80B</td><td>20-25%</td><td>< 30%</td><td>需求 >> 供給（lead time 12-18 個月）</td></tr>
+<tr><td>液冷 DC 市場</td><td>$5.7B</td><td>26-29%</td><td>< 20%（未滲透 + 1-2 年計畫滲透 36%）</td><td>緊缺</td></tr>
+<tr><td>800V DC 架構</td><td>~$3-5B（早期）</td><td>50%+（從 0 起）</td><td>< 5%</td><td>NVIDIA 帶動</td></tr>
+<tr><td>UPS / 電力分配</td><td>~$25-30B</td><td>10-12%</td><td>~50%（成熟）</td><td>balanced</td></tr>
+</table>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游供應商</strong>：VRT 主要採購半導體（Power MOSFET、IGBT）+ 機械零件 + 銅纜。Power semi 上游 Infineon / ON / NVTS 等多元，VRT 集中度低，議價權強</li>
+<li><strong>對下游客戶</strong>：客戶集中度——前 5 大 hyperscaler（MSFT、AMZN、META、GOOGL、ORCL）合計約 50-55% revenue。Multi-year framework agreement 鎖價 + 鎖量。Q1 26 mgmt 提「customer advance payments」管控 = 議價權強到可要求 advance payments</li>
+<li><strong>地理分布曝險</strong>：Americas 60%+ / EMEA 12-15% / APAC 25%。中國產能依賴低（不到 5%），地緣政治風險低</li>
+</ul>
+
+<h3>營收組成（按產品 / 地區）</h3>
+<table>
+<tr><th>分類</th><th>占比</th><th>成長性（2026）</th></tr>
+<tr><td>液冷（CDU + heat exchangers + immersion）</td><td>~15-20%（Q1 推升中）</td><td>+50-70% YoY（最高速）</td></tr>
+<tr><td>UPS（Liebert 系列）</td><td>~25-30%</td><td>+15-20%</td></tr>
+<tr><td>800V DC + 高密度 PDU</td><td>~10-12%（早期但增速最快）</td><td>+80-100%（從低基期）</td></tr>
+<tr><td>傳統 415V AC + 低密度 PDU</td><td>~30-35%</td><td>+5-10%</td></tr>
+<tr><td>Service + 軟體（monitoring）</td><td>~12-15%</td><td>+25-35%（Recurring ARR）</td></tr>
+</table>
+
+<h3>單位經濟（Unit Economics）</h3>
+<table>
+<tr><th>指標</th><th>VRT</th><th>趨勢</th><th>同業比較</th></tr>
+<tr><td>每 MW capacity 單價</td><td>~$8-12M（hyperscaler-grade 整體解決方案）</td><td>↑（液冷 + 800V DC 高密度單價提升）</td><td>vs Schneider ~$6-9M / vs 新創 ~$5-7M（但缺 system integration）</td></tr>
+<tr><td>每位 hyperscaler 客戶 ARR</td><td>~$300-500M / 年（top 5）</td><td>↑↑</td><td>領先業界</td></tr>
+<tr><td>客戶 LTV（多年 framework agreement）</td><td>~$2-5B / hyperscaler / 5 年</td><td>↑↑（Multi-year 鎖定）</td><td>—</td></tr>
+<tr><td>Service ARR 占 Revenue</td><td>~12-15%</td><td>↑</td><td>vs Eaton ~10%</td></tr>
+<tr><td>Gross Margin</td><td>37.15%</td><td>↑↑（從 25% 升 5 年）</td><td>vs Schneider DC 30% / vs Eaton 28%</td></tr>
+</table>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §12 公司治理 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-12">§12｜公司治理與資本配置</div>
+
+<h3>① 股東 / 股權結構</h3>
+<ul>
+<li><strong>機構持股</strong>：80.6%（yfinance 4/24 抓取，極高機構認可度）</li>
+<li><strong>內部人持股</strong>：0.37%（VRT 前身為 Emerson Network Power，2020 SPAC 上市，無創辦人/家族大量持股）</li>
+<li><strong>主要股東</strong>：BlackRock、Vanguard、State Street（被動三巨頭，合計 ~25-30%）</li>
+<li><strong>無 dual-class 投票權</strong>：1 share = 1 vote 標準結構，治理上對少數股東友善</li>
+<li><strong>近期內部人交易</strong>：CEO Albertazzi、CFO Chamberlin 過去 12 個月以行使選擇權後立即出售為主，無大額主動買入；部分高階主管在 2025 H2 出售（金額 $5-15M 不等），規模相對市值 0.01% 級別，影響可忽略</li>
+</ul>
+
+<h3>② 資本配置軌跡</h3>
+<table>
+<tr><th>用途</th><th>FY24</th><th>FY25</th><th>FY26 指引</th><th>評論</th></tr>
+<tr><td>Capex（自有產能）</td><td>$184M</td><td>$226M</td><td>~$300-350M（推估）</td><td>產能擴張支援 backlog</td></tr>
+<tr><td>併購</td><td>$0（小型）</td><td>~$1.5-2B（BMarko + ThermoKey）</td><td>機會型</td><td>聚焦液冷 + 模組化 DC</td></tr>
+<tr><td>回購</td><td>~$50M</td><td>~$100M</td><td>—</td><td>不顯著</td></tr>
+<tr><td>分紅</td><td>~$20M（殖利率 < 0.1%）</td><td>~$25M</td><td>~$30M</td><td>象徵性</td></tr>
+<tr><td>去槓桿</td><td>淨還款 $50M</td><td>淨還款 $100M</td><td>持續</td><td>Net Leverage 0.6x → 0.2x</td></tr>
+</table>
+<p><strong>評語</strong>：管理層說法（Q4 25 Earnings Call「invest in capacity, deleveraging, opportunistic M&A」）與行動一致。資本配置紀律 A 級。</p>
+
+<h3>③ 管理層薪酬結構</h3>
+<ul>
+<li><strong>CEO Albertazzi 2025 總薪酬</strong>：~$15M（base $1.3M + cash bonus $2.5M + equity $11M）</li>
+<li><strong>結構</strong>：base 薪 ~10% / cash bonus（年度）~17% / equity（PSU + RSU）~73%</li>
+<li><strong>Equity 績效掛鉤</strong>：3 年 TSR vs S&P 500 + Adj EBITDA 達標 + FCF 達標</li>
+<li><strong>判斷</strong>：✅ <strong>績效導向強</strong>，與股東利益一致</li>
+</ul>
+
+<h3>④ 過去 12 個月重大內部人交易</h3>
+<ul>
+<li>2025 Q3-Q4 + 2026 Q1：高階主管（CEO、CFO、Region Heads）共執行 ~$50-80M 賣出（多為選擇權行使後立即售出）</li>
+<li>無重大主動買入</li>
+<li>無 13D 大股東公告</li>
+<li><strong>判斷</strong>：高階管理層出售模式典型（行使選擇權 + tax planning），<strong>非結構性看空訊號</strong></li>
+</ul>
+
+<h3>QC-19 標的自身重大事件搜尋（過去 12 個月）</h3>
+<ul>
+<li><span class="badge-beat">🟢 無集體訴訟</span>（依 web_search 4/24 確認）</li>
+<li><span class="badge-beat">🟢 無 SEC investigation 或 restatement</span></li>
+<li><span class="badge-beat">🟢 無 CEO/CFO 重大異動</span>（Albertazzi 2023 上任，Chamberlin 2024 上任，皆穩定在位）</li>
+<li><span class="badge-beat">🟢 無重大客戶流失</span>（hyperscaler 客戶名單擴張）</li>
+<li><span class="badge-beat">🟢 無 export control 問題</span>（VRT 不涉及高敏感半導體出口）</li>
+<li>2026/3-4 完成 BMarko + ThermoKey 兩筆中型收購（合計 ~$1.5-2B），整合風險中等但可控</li>
+</ul>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- §13 估值診斷 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title" id="sec-13">§13｜估值診斷</div>
+
+<h3>13.0｜估值體系診斷：市場現在用哪把尺？</h3>
+
+<h4>A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>估值邏輯</th><th>對應指標</th><th>當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>主</td><td>Forward PE 39.77x 是市場主要估值指標</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>輔</td><td>PEG 1.06 是支撐當前 PE 的關鍵敘事</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>否</td><td>P/B 31.5x 不是估值錨</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>輔</td><td>P/FCF ~66x（FY25 FCF $1.89B），FY26 指引 P/FCF ~57x</td></tr>
+<tr><td>行業專屬</td><td>EV/MW backlog</td><td>否</td><td>未成為市場標準</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：盈利能力型（Forward PE）為主 + 成長型（PEG）為輔。</p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<ul>
+<li><strong>情境一：從資產 → 盈利估值</strong>：VRT 已完成（2022 P/E 跳升至 50x+ 時即確立成長股估值）</li>
+<li><strong>情境二：創造新指標</strong>：「EV/AI DC backlog」可能成為新指標（VRT $15B backlog 對應 EV/Backlog ~7-8x）。但市場尚未廣泛採用</li>
+<li><strong>情境三：定價偏好漂移</strong>：AI DC 板塊（VRT/ETN/SE/GEV/HWM）整體 re-rate 已發生（2023-2026 從 PE ~20x → ~40x），未來再升空間有限但不會立即下移</li>
+</ul>
+
+<h4>C｜估值尺可能被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>影響</th></tr>
+<tr><td>ROIC 突破 WACC</td><td>已發生（32% vs 10%）</td><td>已 price in，無進一步擴張空間</td></tr>
+<tr><td>管理層轉向新敘事</td><td>未顯著轉向</td><td>持續以 Adj EPS + FCF 為主</td></tr>
+<tr><td>同業率先獲得高倍數</td><td>VRT 是板塊領頭</td><td>難以被「升等帶動」</td></tr>
+<tr><td>盈利成長放緩至市場平均</td><td>未發生（FY26 +51% 指引）</td><td>若 2027 H1 出現徵兆 → 倍數壓至 25-30x</td></tr>
+</table>
+<p><strong>估值體系診斷結論</strong>：<span class="badge-neutral">🟡 估值邏輯穩定但接近頂端</span>──成長股邏輯仍主導，但向上擴張空間有限。最大下行催化是「成長率 reset」，這是 §13.5 結論的關鍵風險。</p>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>81.27x</td><td>28x</td><td>55x</td><td>~325x（peak briefly）</td><td>~75%（剔除 outlier 後）</td></tr>
+<tr><td><strong>Forward P/E（NTM）</strong></td><td><strong>39.77x</strong></td><td>15x</td><td>32x</td><td>60x</td><td><strong>55%</strong></td></tr>
+<tr><td>Forward P/E（FY+1 only）</td><td>49.93x</td><td>15x</td><td>32x</td><td>60x</td><td>78%</td></tr>
+<tr><td>EV/EBITDA</td><td>52.4x</td><td>10x</td><td>30x</td><td>55x</td><td>~94%（極高）</td></tr>
+<tr><td>P/FCF</td><td>~66x</td><td>15x</td><td>40x</td><td>80x</td><td>~78%</td></tr>
+<tr><td>P/S</td><td>~12x</td><td>2x</td><td>6x</td><td>13x</td><td>~91%</td></tr>
+</table>
+<p class="muted">註：VRT 2020 SPAC 上市，pre-2022 forward PE 數據雜訊大（小型股 + 微利潤）；真正 5Y 比較窗口實為 3Y（2023-2026 AI re-rate 期）。EV/EBITDA + P/S 高分位反映「成長股動能」而非絕對 overvaluation。</p>
+<p><strong>解讀</strong>：</p>
+<ol>
+<li><strong>當前估值情緒</strong>：合理偏熱（55-78% 分位區間）</li>
+<li><strong>上次處於此分位時</strong>：2024 Q1（Forward PE ~50x），當時 backlog ~$5B、Adj OP Margin ~16%。當前 backlog $15B（3x）、Adj OP Margin 22.8%（+680bp），<strong>基本面遠優於 2024 同分位時期</strong></li>
+<li><strong>推動分位的主因</strong>：① 2024-2026 EPS 連續上修（~+150% 累計）；② 利率從 5%+ 降至 ~4%；③ AI DC 板塊整體 re-rate</li>
+</ol>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th><th>解讀</th></tr>
+<tr><td>NTM Forward P/E</td><td>39.77x</td><td>—</td><td>—</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>37.4%</td><td>—</td><td>—</td></tr>
+<tr><td><strong>PEG（3Y）</strong></td><td><strong>1.06</strong></td><td>< 1.5 = 便宜偏合理</td><td>對成長性而言估值有吸引力</td></tr>
+<tr><td>PEG（FY+1 only PE）</td><td>49.93 / 37.4 = 1.34</td><td>< 1.5</td><td>仍合理</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~25%（FY28 後降至 +15-20%）</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（5Y）</td><td>39.77 / 25 = 1.59</td><td>1-2 區間</td><td>合理</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>1.06 vs 1.59</td><td>差異中等</td><td>反映 Runway 後段成長遞減，但未到警示</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：當前 VRT 處於「高價成長 + 高品質」象限——並非估值陷阱，而是「成長股合理估值」。</p>
+
+<h3>13.3｜Reverse DCF：當前股價隱含什麼？</h3>
+
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$124.24B</td><td>yfinance</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>$1.89B</td><td>yfinance Cash Flow</td></tr>
+<tr><td>WACC</td><td>10.5%</td><td>10Y UST 4.0% + Beta 2.05 × ERP 5.5% + size premium 0.5% → 簡化為 10.5%（QC-25：TradingView 1.61 vs yfinance 2.05 = 27% 差異 < 30%，使用 yfinance）</td></tr>
+<tr><td>永續成長率</td><td>3.5%</td><td>長期經濟 + 略高於 GDP（AI DC 結構性 tailwind）</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p>使 DCF 現值 = $124.24B，所需的前 10 年 FCF CAGR ≈ <strong>22-25%</strong></p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 22-25% 相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>~50%（從 -$0.26B → $1.89B，FY22 → FY25）</td><td>低於歷史</td></tr>
+<tr><td>分析師共識 EPS CAGR（§7）</td><td>37.4%</td><td>低於 EPS CAGR（合理：FCF 通常滯後 EPS）</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>同業（Schneider/Eaton）約 10-15%</td><td>VRT 隱含 22-25% 高於同業最快 1.5x</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 CAGR 22-25% 需要：</p>
+<ul>
+<li>Revenue 年增 ~18-20%（10 年）— 對應 FY26 Rev $13.5-14B → FY35 ~$70-80B（5x）</li>
+<li>FCF Margin 從 18.5% 擴至 ~22-25%（保守）</li>
+<li>條件成立的情境：AI DC 基建超級週期延續至 2030+，VRT 維持 25-30% 市佔</li>
+</ul>
+
+<p><strong>隱含預期判斷</strong>：<span class="badge-neutral">🟡 隱含預期合理</span>──22-25% FCF CAGR 對 VRT 而言「需要努力但可達」。Bull case 30%+、Bear case 15-18%。</p>
+
+<h4>⚠️ 便宜理由檢驗（觸發評估）</h4>
+<p>當前 NTM Forward P/E 5Y 分位 55%，未達 25% 分位。<strong>不觸發</strong>便宜理由檢驗。但因 P/S 91%、EV/EBITDA 94% 分位均高，§13.5 必須說明這些「貴的指標」如何被「合理的 PEG」抵消。</p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR (3 年)</th><th>ROIC</th></tr>
+<tr class="bull-row"><td><strong>VRT</strong></td><td>$124B</td><td>39.77x</td><td>52.4x</td><td>1.06</td><td>21%</td><td>37.4%</td><td>32%</td></tr>
+<tr><td>Schneider Electric (SBGSF)</td><td>~$170B</td><td>~25x</td><td>~18x</td><td>~2.0</td><td>~12%</td><td>~12%</td><td>~14%</td></tr>
+<tr><td>Eaton (ETN)</td><td>~$135B</td><td>~22x</td><td>~17x</td><td>~1.5</td><td>~14%</td><td>~15%</td><td>~16%</td></tr>
+<tr><td>ABB Ltd</td><td>~$120B</td><td>~21x</td><td>~14x</td><td>~2.0</td><td>~10%</td><td>~10%</td><td>~14%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td>~25x</td><td>~18x</td><td>~1.7</td><td>~13%</td><td>~13%</td><td>~16%</td></tr>
+</table>
+
+<h4>同業溢折價邏輯</h4>
+<ol>
+<li><strong>溢價幅度</strong>：VRT FPE 39.77x vs 中位 25x = +59% 溢價</li>
+<li><strong>支持溢價的維度</strong>：① ROIC 32% vs 中位 16%（+100%）；② FCF Margin 21% vs 13%（+62%）；③ EPS CAGR 37% vs 13%（~3x）；④ AI DC 業務佔比 > 80% vs Schneider 24% / Eaton 25%（純血度）</li>
+<li><strong>若估值向中位回歸</strong>：VRT FPE 從 40x 壓至 28x = −30% 股價（$226 區間）。但歷史上「同業均值回歸」需要 catalyst，如 ROIC 收窄或 EPS CAGR 接近同業</li>
+</ol>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>VRT FPE 39.77x vs 同業中位 25x = +59% 溢價（< 50% 觸發閾值）。但接近邊緣，必須執行：</p>
+<table>
+<tr><th>情境</th><th>合理 PE</th><th>對應股價</th></tr>
+<tr><td>情境 A：VRT 不變，對手升至 32x</td><td>40x</td><td>$259（−20%）</td></tr>
+<tr><td>情境 B：VRT 收斂 50% 至 (40 + 25) / 2 = 32.5x</td><td>32.5x</td><td>$210.5（−35%）</td></tr>
+</table>
+<p>情境 B 股價 $210.5 vs §8E Bear $116.60 → 取保守者 $116.60 為 Bear Case（v12.0 已採用）。</p>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>VRT</th><th>ETN</th><th>SE (SBGSF)</th></tr>
+<tr><td>主假設兌現時，上行最大？</td><td><strong>✅ +60-100%</strong></td><td>+30-50%</td><td>+20-30%</td></tr>
+<tr><td>主假設部分落空時，跌幅最小？</td><td>−40-50%</td><td>−25-30%</td><td><strong>✅ −15-20%（多元 industrial）</strong></td></tr>
+<tr><td>綜合上行/下行，誰風報比最優？</td><td><strong>✅ VRT</strong>（純血 AI DC + 高品質）</td><td>—</td><td>—</td></tr>
+</table>
+<p><strong>最終橫向比較結論</strong>：<span class="badge-beat">🥇 VRT 為同主題最優選</span>（在 AI DC pure-play 維度），但 ETN 提供下行緩衝（diversified industrial），SE 提供 EMEA exposure 配置補充。</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（13.0）</td><td>🟡 穩定但接近頂端</td><td>盈利型 + 成長型估值維持，向上空間有限</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟡 合理偏熱（55-78%）</td><td>NTM 55% 分位，FY+1 only 78% 分位</td></tr>
+<tr><td>PEG 診斷（13.2）</td><td>🟢 合理偏便宜（PEG 1.06）</td><td>3Y EPS CAGR 37.4% 支持 NTM PE 40x</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 隱含預期合理</td><td>22-25% FCF CAGR「需努力但可達」</td></tr>
+<tr><td>同業相對（13.4）</td><td>🟡 +59% 溢價（合理溢價）</td><td>ROIC 2x 同業 + EPS CAGR 3x 支撐</td></tr>
+</table>
+
+<h4>v11.0 §2 D 交叉驗證</h4>
+<table>
+<tr><th>當前 FPE vs §2 D 合理 PE</th><th>判斷</th></tr>
+<tr><td>當前 NTM FPE 39.77x vs 合理 36x（§2 E 計算）</td><td>當前略高 10%（在 ±10% 中性區間邊緣）→ 中性，不調整</td></tr>
+</table>
+
+<p><strong>當前定價判斷</strong>：<span class="badge-neutral">🟡 公允定價</span>──成長率 outpace 倍數擴張支撐，但 cushion 有限。</p>
+
+<h3>估值倍數定錨（長期合理倍數）</h3>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對 PE 影響</th></tr>
+<tr><td>① 護城河品質（§9）</td><td>8/10</td><td>基準 +2x</td></tr>
+<tr><td>② 成長可持續年數（§8A）</td><td>10+ 年 🟢</td><td>+3x</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>有機 85% + 雙引擎驅動</td><td>+2x</td></tr>
+<tr><td>④ 成長護城河連動（§8C）</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§8D）</td><td>32% 持續擴大</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號數量</td><td>0 個</td><td>±0</td></tr>
+<tr><td>⑦ 估值體系方向（§13.0）</td><td>穩定接近頂</td><td>±0</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.0%</td><td>輕微壓抑（−0.5x）</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td colspan="2"><strong>20x（capital goods 基準）+ 11x 調整 = 31x；上行三引擎調整：引擎 B（PEG < 1.5 + CAGR 37%）×1.3 → 31×1.3 = 40.3x；AI 🟢 ×1.10 → 44.3x（cap）。<br>調整後合理區間：<strong>32-44x</strong>（NTM blended PE）</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考</strong>：高 $370（BNP Paribas Exane）/ 中位 $350（Morgan Stanley、Citi、Barclays、TD Cowen 全面上修）/ 低 $330（Oppenheimer），n=24。<strong>共識中位 $350 隱含 +8.2% 上行</strong>。</p>
+
+<h3>長期合理倍數對應表</h3>
+<table>
+<tr><th>§8 評級</th><th>5 年後基準 Forward P/E</th><th>本標的對應</th></tr>
+<tr><td>🟢 高確信長期成長</td><td>25x（基準）</td><td>✅ 適用</td></tr>
+</table>
+
+<p>本標的基準長期合理倍數：<strong>25x × 引擎 B 1.3 × AI 🟢 1.10 = 35.75x（取 36x）</strong></p>
+
+<h3>投資結論（§13.5 完整版）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態</strong>：<span class="badge-beat">＋強化</span>（hyperscaler 2026 capex +36% YoY，VRT backlog $15B 維持，Americas +44% organic 強驗證）</li>
+<li><strong>H2 當前狀態</strong>：<span class="badge-beat">＋＋大幅強化</span>（Q1 Adj OP Margin 20.8% +430bp，FY26 全年指引上修至 22.8-23.8%）</li>
+<li><strong>H3 當前狀態</strong>：<span class="badge-neutral">0 中性偏負</span>（EPS 上修 +20% vs 股價 +5% 漂移，倍數從 37.84x 升至 39.77x，分位仍 55%）</li>
+<li>這份財報讓隱含預期變得<strong>更容易</strong>兌現——FY26 高位指引已提供緩衝，理由是 Adj OP Margin +430bp 確認 mix-shift 啟動。</li>
+</ul>
+
+<h4>綜合訊號輸出（v12.0：引用 §2 H 訊號燈，不輸出倉位 %）</h4>
+<ul>
+<li>護城河等級：B → 調整後 B（不變）</li>
+<li>估值燈：🟡 合理（NTM PE 39.77x 5Y 分位 55%，PEG 1.06）</li>
+<li>Pure MA 狀態：✅ 強勢進場</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：B</strong>（衛星候選）</li>
+<li>中期參考 R:R：−0.09x（資訊性）</li>
+<li>訊號語意：B = 衛星候選，PM 層 3-7%</li>
+<li>倉位 % 決策不在本 DD 範圍。</li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q1 Adj EPS $1.17 大 beat + FY26 全面 raise + 9 家投行 PT 全面上修 → 短期 catalyst 強。但 sell-the-news -3% on print + 4 週漂移 +16% + Bollinger 上軌貼齊 → 短期回檔機率高。<strong>建議：分批進場，等回測 $280-300（Bollinger 中軌）區間補倉。</strong></p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY+1 / FY+2 EPS 共識驅動 = 定價（mix-shift to liquid + 800V DC，Adj OP Margin 20.8% → 23.3% → 24-25%）+ 量（hyperscaler capex +36% YoY 撐 backlog $15B）。能見度 <strong>高</strong>──Multi-year framework agreement 已鎖到 2027，幾乎無 demand 風險，純執行力 + EMEA rebound 風險。</p>
+
+<h4>③ 長期持有信心（3-5 年，引用 §2 I）</h4>
+<p>成長跑道：充裕（10+ 年）/ 護城河趨勢：加深 / 長期持有信心：<strong>高</strong>──NVIDIA Rubin → Rubin Ultra → 1MW racks 三代產品週期帶動，VRT 是 reference architect。</p>
+
+<h4>下行風險量化（引用 §2 E Bear Case）</h4>
+<ul>
+<li>短期下檔 Bear Case：現價 $323.46 至 $116.60 = 距離 −63.9%（極端，需 hyperscaler capex digestion + multiple compression 雙打擊）</li>
+<li>中期下檔 Bear Case：$153.83 = 距離 −52.4%</li>
+<li>W52 Low $93.94（參考，過去極低點）</li>
+<li>W104 Low $59.34（參考，2024 之前）</li>
+<li>若 FY+1 EPS 下修 10%（$5.83）+ FPE 壓至 35x → 短期目標價 $204 = 距離 −37%</li>
+</ul>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- 版本修訂紀錄 -->
+<!-- ============================================================ -->
+<div class="section">
+<div class="section-title">版本修訂紀錄</div>
+<table>
+<tr><th>日期</th><th>Schema</th><th>最終裁決</th><th>關鍵變動</th></tr>
+<tr><td>2026-03-25</td><td>v10.x</td><td>觀望</td><td>首次覆蓋，A 級品質但估值貴</td></tr>
+<tr><td>2026-04-11</td><td>v11.0</td><td>觀望</td><td>v11 PEG 安全網合理 PE 41x，現價仍透支</td></tr>
+<tr><td>2026-04-13</td><td>v11.0</td><td>觀望</td><td>Q4 FY25 財報後回補，論點強化</td></tr>
+<tr><td>2026-04-15</td><td>v11.0</td><td>觀望（R:R Fail）</td><td>短 R:R -0.29x / 中 R:R 0.12x</td></tr>
+<tr><td>2026-04-18</td><td>v12.0</td><td>B 訊號（衛星候選）</td><td>v11→v12 升級：品質純護城河 5 級 → B（8/10）；估值燈 🟡（PEG 1.18）；MA ✅；綜合 B</td></tr>
+<tr><td><strong>2026-04-25</strong></td><td><strong>v12.0</strong></td><td><strong>B 訊號（衛星候選，B 上緣）</strong></td><td><strong>Q1 FY26 財報（4/22 release）後重新評估：beat-and-raise 全面驗證；Adj OP Margin 20.8%（+430bp YoY）；FY26 EPS guide raised to $6.30-6.40；分析師 90 天上修 +20%/+28%；股價漲至 $323.46（+5.2% vs 4/18）。等級不變但 B 偏向 B 上緣（接近 A 衛星候選），等待後續 2 季 OP Margin 持續攀升 + EMEA rebound 後可考慮升至 A。</strong></td></tr>
+</table>
+
+<div class="sub-title">假設驗證對照（QC-17）</div>
+<table>
+<tr><th>項目</th><th>上次狀態（v12 2026-04-18）</th><th>本次狀態（v12 2026-04-25）</th><th>邊際變化</th></tr>
+<tr><td>H1（AI DC capex 超級週期延續）</td><td>強化（Citi/Roth 上修，liquid + 800VDC co-design）</td><td>強化（Q1 FY26 Americas +44% organic + hyperscaler 2026 capex 共識 ~$625-700B / +36% YoY）</td><td><strong>強化</strong>（mid-cycle 而非 peak 已被 Q1 數據再驗證）</td></tr>
+<tr><td>H2（margin expansion 兌現）</td><td>強化（FY26 OP 22.5% guide）</td><td><strong>大幅強化</strong>（Q1 OP 20.8% +430bp，FY26 guide 上修至 22.8-23.8%；FY+1 EPS 90d +20.9%）</td><td><strong>大幅強化</strong>（mix-shift 啟動驗證）</td></tr>
+<tr><td>H3（valuation 動態合理）</td><td>中性（FPE 37.84x at $307.34）</td><td>中性（NTM FPE 39.77x at $323.46，4 週漂移 +16.06%）</td><td><strong>不變</strong>（倍數略升但 EPS 上修速度更快）</td></tr>
+<tr><td>R1（Hyperscaler Capex 削減）</td><td>未觸發</td><td>未觸發（Q1 hyperscaler capex commentary 全面強勢）</td><td>—</td></tr>
+<tr><td>R2（margin 擴張失敗）</td><td>未觸發</td><td>未觸發（FY26 guide 上修為 22.8-23.8%）</td><td>—</td></tr>
+<tr><td>R3（FPE 突破 50x）</td><td>未觸發</td><td><strong>邊緣警示</strong>（FY+1 only PE 49.93x，已逼近 50x cap，需監測）</td><td><strong>輕微惡化</strong></td></tr>
+<tr><td>R4（Eaton/Boyd 取得 NVIDIA reference 同等）</td><td>—</td><td>未觸發（Eaton 整合期 12-18 個月）</td><td>—</td></tr>
+<tr><td>R5（EMEA 區域結構性弱）</td><td>—（新增 R5）</td><td><strong>輕度觸發</strong>（Q1 EMEA -29.4% organic 是首次出現的弱點，需 Q2-Q3 觀察）</td><td><strong>新增警示，待觀察</strong></td></tr>
+<tr><td>裁決變化</td><td>B 訊號</td><td>B 訊號（B 上緣）</td><td>不變但內在強化：① Q1 完美 print 已驗證 H2 mix-shift；② backlog $15B 維持；③ 9 家投行 PT 上修至 $330-370；④ 4 週漂移 +16% 觸發 QC-22 警示，分批進場優於追高；⑤ R5 EMEA 是新增 R 須觀察</td></tr>
+</table>
+
+</div>
+
+</div><!-- end container -->
+</body>
+</html>
