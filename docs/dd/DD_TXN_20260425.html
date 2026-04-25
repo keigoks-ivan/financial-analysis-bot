@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD TXN — Texas Instruments | 2026-04-25 | v12.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Noto Sans TC', system-ui, sans-serif; background:#F8FAFC; color:#0F172A; line-height:1.6; padding:0 0 60px; }
+.num, td.num, .mono { font-family:'IBM Plex Mono', monospace; }
+.header-bar { position:sticky; top:0; z-index:100; background:#1E3A5F; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; font-size:13px; box-shadow:0 2px 4px rgba(0,0,0,.1); }
+.header-bar span:first-child { font-weight:700; }
+.print-btn { position:fixed; bottom:24px; right:24px; padding:10px 18px; background:#1E3A5F; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:13px; z-index:50; box-shadow:0 4px 8px rgba(0,0,0,.15); font-family:inherit; }
+.container { max-width:1180px; margin:24px auto; padding:0 20px; }
+.dd-toc { background:#fff; border-left:4px solid #3B82F6; padding:14px 20px; margin-bottom:20px; }
+.toc-title { font-size:13px; font-weight:700; color:#1E3A5F; margin-bottom:8px; }
+.toc-list { list-style:none; display:flex; flex-wrap:wrap; gap:10px 18px; font-size:13px; }
+.toc-list a { color:#1E3A5F; text-decoration:none; }
+.section { background:#fff; border-radius:6px; padding:24px 28px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+.section-title { font-size:18px; font-weight:700; color:#1E3A5F; padding-left:12px; border-left:4px solid #3B82F6; margin-bottom:16px; padding-top:2px; padding-bottom:2px; }
+.sub-title { font-size:15px; font-weight:700; color:#1E3A5F; margin:18px 0 10px; }
+h2 { font-size:17px; color:#1E3A5F; margin:20px 0 12px; padding-bottom:6px; border-bottom:2px solid #E2E8F0; }
+h3 { font-size:14px; color:#1E3A5F; margin:14px 0 8px; }
+h4 { font-size:13px; color:#475569; margin:12px 0 6px; }
+p { margin:8px 0; font-size:14px; }
+ul, ol { margin:8px 0 8px 22px; font-size:14px; }
+li { margin-bottom:4px; }
+table { width:100%; border-collapse:collapse; margin:10px 0 14px; font-size:13px; background:#fff; }
+th { background:#1E3A5F; color:#fff; padding:8px 10px; text-align:left; font-weight:500; }
+td { padding:7px 10px; border-bottom:1px solid #E2E8F0; vertical-align:top; }
+tr:nth-child(even) td { background:#F1F5F9; }
+.note { font-size:12px; color:#64748b; }
+.muted { color:#64748b; }
+.badge-beat { background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.badge-miss { background:#FEE2E2; color:#991B1B; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.badge-neutral { background:#FEF9C3; color:#92400E; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.bull-row { background:#DCFCE7 !important; }
+.bear-row { background:#FEE2E2 !important; }
+.neutral-row { background:#FEF9C3 !important; }
+.hypo-box { background:#EFF6FF; border-left:4px solid #3B82F6; padding:14px 18px; margin:12px 0; }
+.hypo-box ul { margin-left:20px; }
+.trap-box { background:#FFF0E6; border-left:4px solid #F97316; padding:14px 18px; margin:14px 0; }
+.trap-title { color:#C2410C; font-weight:700; font-size:14px; margin-bottom:8px; }
+.alert-box { background:#FEF3C7; border-left:4px solid #F59E0B; padding:14px 18px; margin:14px 0; }
+.alert-title { color:#92400E; font-weight:700; font-size:14px; margin-bottom:8px; }
+.debate-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin:14px 0; }
+.debate-card { padding:14px; border-radius:6px; }
+.debate-bull { background:#F0FDF4; border-left:4px solid #16A34A; }
+.debate-bear { background:#FFF1F2; border-left:4px solid #DC2626; }
+.debate-arb { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.verdict-box { background:#FFFBEB; border-left:4px solid #D97706; padding:14px 18px; margin:14px 0; }
+.verdict-title { color:#92400E; font-weight:700; }
+.tier-S { background:#FEF3C7; color:#78350F; padding:2px 10px; border-radius:3px; font-weight:700; }
+.tier-A { background:#DBEAFE; color:#1E3A8A; padding:2px 10px; border-radius:3px; font-weight:700; }
+.tier-B { background:#E0E7FF; color:#3730A3; padding:2px 10px; border-radius:3px; font-weight:700; }
+.signal-box { background:#1E3A5F; color:#fff; padding:18px 22px; border-radius:6px; margin:14px 0; text-align:center; }
+.signal-box .big { font-size:38px; font-weight:700; letter-spacing:2px; display:block; line-height:1.2; }
+.signal-box .label { font-size:13px; opacity:.85; }
+@media print { .header-bar, .print-btn, .dd-toc { display:none !important; } body { background:#fff; } .section { box-shadow:none; page-break-inside:avoid; } }
+@media (max-width:900px) { .debate-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ID_BANNER_START -->
+<div style="background:#FEF9C3;border-left:4px solid #EAB308;padding:10px 18px;margin:0;font-size:13px;color:#854D0E">
+📐 <strong>產業 ID 對應</strong>：本 DD 暫無對應產業 ID（analog / 工業半導體尚未建立 ID）。建議後續對「Analog Cycle Recovery / Industrial Semiconductor」建立 Industry DD，可讓後續 ADI / MCHP / ON / STMicro / Infineon 個股 DD 共享產業背景。
+</div>
+<!-- ID_BANNER_END -->
+
+<div class="header-bar">
+  <span>TXN — Texas Instruments | DD Schema v12.0</span>
+  <span>資料抓取：2026-04-25 | 最新股價：$277.14 | 最近財報：Q1 FY2026（4/22 AMC release）| 採集：yfinance + web_search 10 次</span>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+<nav class="dd-toc">
+  <div class="toc-title">目錄</div>
+  <ul class="toc-list">
+    <li><a href="#sec-1">§1 結論</a></li>
+    <li><a href="#sec-2">§2 四層判定</a></li>
+    <li><a href="#sec-3">§3 三方辯論</a></li>
+    <li><a href="#sec-4">§4 序章</a></li>
+    <li><a href="#sec-5">§5 論點錨定</a></li>
+    <li><a href="#sec-6">§6 財報</a></li>
+    <li><a href="#sec-7">§7 門檻</a></li>
+    <li><a href="#sec-8">§8 成長</a></li>
+    <li><a href="#sec-9">§9 護城河</a></li>
+    <li><a href="#sec-10">§10 財務</a></li>
+    <li><a href="#sec-11">§11 產業</a></li>
+    <li><a href="#sec-12">§12 治理</a></li>
+    <li><a href="#sec-13">§13 估值</a></li>
+  </ul>
+</nav>
+
+<!-- §1 投資結論 -->
+<div class="section">
+<div class="section-title" id="sec-1">§1｜投資結論（Executive Summary）</div>
+<p class="muted">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypo-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風（cycle recovery）：</strong>§8 🟢 高確信長期成長｜§9 護城河趨勢 加深（analog cycle bottom 確認 + Silicon Labs 收購擴大 portfolio + Industrial +30% YoY / Data Center +90% YoY）｜§8 F AI 風險 🟢｜Industrial 半導體 cycle 從 2024-2025 trough 進入 multi-year recovery。</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9）｜體質 veto 0 項不過｜等級調整：A → A（不變）。</li>
+<li><strong>估值燈 🟡 合理（盲點 1 救援後）：</strong>NTM Forward P/E 30.69x（yfinance），5Y 分位 68%，PEG 1.26｜FY+1 only PE 35.95x → 分位 91% → 🟠（救援後 🟡）。盲點 1 救援觸發：§8 🟢 + PEG 1.47 < 2.0 + AI 🟢 → 🟠 救回 🟡。</li>
+<li><strong>Pure MA 🟡 減半進場：</strong>現價 $277.14 > W52 $189.54 > W104 $186.83 > W250 $169.09，但 <strong>W250 斜率僅 +1.55%</strong>（< +3% 強正門檻，屬「持平」）→ 落「四條件過但 W250 斜率持平」= 🟡 減半進場（× 0.5）。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7165 vs W104 6112（+17.2%，無系統性風險）。</li>
+<li><strong>⚠️ QC-22 嚴重警示：</strong>4 週漂移 <strong>+33.60%</strong>（遠超 +20% 追高警示閾值）；現價 $277.14 已突破 Bollinger 上軌 $250.90（10.4% 在 BB 之外）；4/22 AMC Q1 release 後 4/23 gap up <strong>+19.4%</strong>（25 年來最大單日漲幅）。<strong>追高風險極高</strong>。</li>
+<li><strong>綜合訊號：<span style="font-size:24px">B</span></strong>（取自 §2 H）｜判定理由：quality A + gate 🟡 + MA 🟡（減半）+ trap 🟢 → 落 B（quality S/A 有一項訊號減半即降一級）。Q1 26 確認 cycle bottom + 多重 catalyst 確實是品質升等催化，但 +33.6% 漂移已 100% pricing in 大部分 upside。</li>
+<li><strong>長期持有信心：高</strong>（§2 I，Runway 10+ 年 + Munger compounder）｜<strong>陷阱定性：</strong><span class="badge-beat">🟢 非陷阱</span>（GM 從 65% 降至 57% 是 Capex 重投資期 + 利用率低，非結構性問題）。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ 核心候選滿格｜A 核心候選｜<strong>B 衛星候選</strong>｜C 觀察池｜X 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定。</p>
+
+<div class="alert-box">
+<div class="alert-title">⚠️ QC-22 追高警示（極端）</div>
+<p>TXN 4/22 AMC Q1 release 後 4/23 gap up <strong>+19.4%</strong>（從 $236 → $282，25 年來最大單日漲幅！），4/24 創 ATH $287.83，4 週累計漂移 <strong>+33.60%</strong>。<strong>已突破 Bollinger 上軌 10%</strong>（現價 $277 vs 上軌 $251）。建議：<strong>禁止追高建倉</strong>，等待回測 $230-250 區間（接近 4 週前均價 $207、Bollinger 上軌附近）或 $200-220 區間（Bollinger 中軌 $202 附近）再進場；現有倉位可持有但不宜再加碼。</p>
+</div>
+
+<div class="trap-box">
+<div class="trap-title">⚠️ 這是價值陷阱嗎？</div>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>（若硬要選最接近的：「<strong>隱性資本密集</strong>」──TXN FY23-25 Capex 累計 $14B 是史上最大 fab 投資週期，FCF Margin 從 ~30% 降至 14.7%。但這是<u>暫時性</u>──Capex 2026 guide 已降至 $2-3B，FCF 將回升至 30%+ 結構水準）</td></tr>
+<tr><td>支持「非陷阱」最強論據</td><td>① <strong>Q1 26 GM 58.0%</strong>（從 Q4 55.9% 觸底回升）+ Q2 guide 暗示 H2 pricing 可能上升；② <strong>Industrial +30% YoY / +20% QoQ</strong>，5-6 個月來首次「全部地區、全部 sector、全部客戶規模」全部 sequentially up；③ <strong>Data Center +90% YoY</strong> 重新定位 TXN 為 AI 受益方；④ Capex moderation $5B → $2-3B = FCF inflection；⑤ ROIC 22%（fab 重投資期仍 elite）；⑥ 22 年連續調漲股息；⑦ Silicon Labs $7.5B 收購（2/4 公告）擴大 microcontroller portfolio + ~$450M 協同；⑧ FY26 EPS 90 天上修 <strong>+25.4%</strong>、FY27 +16.5%；⑨ CHIPS Act $1.6B 直接補助 + ITC $6-8B 支持 $18B 投資。</td></tr>
+<tr><td>支持「可能陷阱」最強反駁</td><td>① <strong>Forward PE 35.95x（FY+1）</strong>已是 5Y 91% 分位，cycle 高估值 + cycle 高 EPS 預期 = MS / GS 對 $200-221 的 Sell 論點；② Auto Q1 平+ 中國 down，cycle recovery 不均衡（Industrial 強但 Auto 拖累）；③ CEO Ilan 自己承認「sustainability of demand is the unknown」；④ <strong>4 週漂移 +33.6% + Bollinger 上軌外 + 25 年最大單日 gap</strong> = 動能末段訊號全套出現，短期 -15-25% 回測機率極高；⑤ Net Debt $10.82B（D/E 0.86）較高，雖非危險但限制 capital return 加速；⑥ TXN 雖具 Munger 三維護城河但 GM 從 65% 降至 57% 已 5 年趨勢，cycle peak 後能否回到 65%（vs 60%）不確定。</td></tr>
+<tr><td>持有期間如何判斷陷阱發生</td><td>① Industrial 連續 2 季 YoY 增速 < +15%（recovery 失敗）；② Auto / China 連續 2 季 YoY 仍負（區域結構問題）；③ GM 連續 2 季 < 57%（pricing power 失效）；④ Capex/Revenue 突破 30%（投資週期延長）；⑤ Inventory days > 250（庫存累積）。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge-beat" style="font-size:14px">🟢 非陷阱</span>　── Q1 26 是「cycle bottom 確認 + Silicon Labs 整合期啟動」的雙重結構性事件，分析師 90 天 EPS 上修 +25%/+17% 是市場罕見的高確信信號。但短期估值已 stretched。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估閾值</th></tr>
+<tr><td>1</td><td>Industrial sector YoY + QoQ growth</td><td>§5 H1 / §6</td><td>🔵 核心假設驗證</td><td>連續 2 季 Industrial YoY < +15%；或 QoQ 轉負</td></tr>
+<tr><td>2</td><td>Gross Margin 軌跡（cycle peak 60-65% 目標）</td><td>§5 H2 / §8</td><td>🔵 長期成長領先信號</td><td>連續 2 季 GM < 57%；FY27 GM 達不到 62%+</td></tr>
+<tr><td>3</td><td>Capex / Revenue 比例（目標 H2 26 降至 15%）</td><td>§10</td><td>🟡 資本效率轉折點</td><td>FY26 全年 Capex/Rev > 25%（投資延長 = FCF inflection 延後）</td></tr>
+<tr><td>4</td><td>Forward PE 5Y 分位 + 4 週漂移</td><td>§13.1</td><td>短期估值信號</td><td>FY+1 PE > 40x（接近 2017 高點）；4 週漂移 > +40%</td></tr>
+<tr><td>5</td><td>Silicon Labs 整合進度（4/30 股東投票後）</td><td>§9</td><td>🟡 整合風險</td><td>整合期超預期延後 6 個月+；協同 $450M 達不到 70%+</td></tr>
+</table>
+</div>
+
+<!-- §2 四層判定 -->
+<div class="section">
+<div class="section-title" id="sec-2">§2｜產業風向 × 品質 × 估值燈 × Pure MA 四層判定（v12.0）</div>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信長期成長</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（cycle recovery + Silicon Labs 收購擴大 portfolio + Industrial recovery + Data Center +90%）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（Data Center analog content per AI server，Q1 +90% YoY）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>「Analog cycle 從 2024-2025 trough 進入 multi-year recovery；Industrial +30% YoY 是 5-6 個月來首次全面復甦；Data Center +90% YoY 把 TXN 從『工業半導體龍頭』升級為『AI 受益方』；Silicon Labs $7.5B 收購擴大 microcontroller portfolio。」</td></tr>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 > 2%p</td><td><span class="badge-beat">✅ 過</span></td><td>FY23 62.9% → FY24 58.1% → FY25 57.0% → Q1 26 <strong>58.0%</strong>（已觸底回升）；FY24→25 -1.1pp 未達 2pp 閾值</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge-neutral">⚠️ 邊緣（Capex 期）</span></td><td>FY25 FCF $2.60B / NI $5.00B = <strong>0.52</strong>（< 0.7）。但 TTM Q1 26 FCF $4.35B / 估 NI ~$5.5B = 0.79（剛回到 ✅）。屬「Capex 投資期暫時性」非結構性，當 Capex 從 $5B → $2-3B 後 FCF/NI 將恢復至 1.0+</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge-beat">✅ 過（強上修）</span></td><td>FY26 EPS：90d 前 $6.15 → 30d 前 $6.41 → 7d 前 $6.43 → 當前 <strong>$7.71</strong>（+25.4%）；FY27：$7.52 → $8.76（+16.5%）；連續上修</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge-beat">✅ 過</span></td><td>FY25 全年 +13.0%（$15.64B → $17.68B）；Q1 26 +19% YoY / +9% QoQ；FY24 trough 已過</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge-beat">✅ 過</span></td><td>Net Debt = $14.05B - $3.23B = $10.82B；FY25 EBITDA ~$8B；ND/EBITDA = <strong>1.35</strong></td></tr>
+</table>
+<p><strong>體質 veto 結果 = 0 項不過 → 等級不變。</strong>5/5 全過，第 2 項屬週期性而非結構性問題。</p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>9 / 10</strong>（Big 3 analog 龍頭 + ROIC 22% + GM 60%+ 結構 + Munger compounder）</td></tr>
+<tr><td>護城河原始等級</td><td><span class="tier-A">A 級（9 分）</span></td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過，等級不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong><span class="tier-A">A 級</span></strong></td></tr>
+<tr><td>底倉（目標倉位的 %）</td><td>25%（參考值，PM skill 決定）</td></tr>
+</table>
+<p class="muted"><strong>v12.0 等級理由</strong>：① Big 3 analog 寡占（TXN ~22% / ADI 13% / Infineon 10% 全球市佔）；② 80,000+ products SKU 護城河（極難複製）；③ 100,000+ 客戶分散（最大客戶 < 5% revenue）；④ 內製化整合（前段 + 後段在 TI 自有 fab，獨立性極高）；⑤ Munger 三維全達標（ROIC 22% + GM 58%+ + 18B 自有 fab 規模）；⑥ 22 年連續調漲股息（治理紀律）。<strong>距離 10 級需</strong>：GM 回到 cycle peak 65%+ + FCF Margin 回升至 30%+。</p>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY2026，0y）</td><td>$7.713（n=27）</td><td>yfinance（GAAP）</td></tr>
+<tr><td>FY+2 EPS（FY2027，+1y）</td><td>$8.757（n=31）</td><td>yfinance</td></tr>
+<tr><td>FY+1 → FY+2 成長率</td><td>+13.5%</td><td>(8.757 / 7.713) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td><strong>35.95x</strong></td><td>$277.14 / $7.713</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>31.65x</td><td>$277.14 / $8.757</td></tr>
+<tr><td>NTM blended PE（yfinance forwardPE）</td><td>30.69x</td><td>yfinance info</td></tr>
+<tr><td>FY+3E（FY2028，§8 邏輯推導）</td><td>~$10.50（+20%）</td><td>邏輯：cycle 中後段 + Silicon Labs $0.50-0.80 EPS 整合貢獻 + GM 回升至 62%</td></tr>
+<tr><td>3Y EPS CAGR（FY25 $5.45 → FY28 $10.50）</td><td><strong>24.3%</strong></td><td>計算</td></tr>
+</table>
+
+<h3>D｜估值燈（v12.0）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 NTM Fwd PE（yfinance）</td><td>30.69x</td></tr>
+<tr><td>5Y Fwd PE 範圍（2021-2026）</td><td>15x（2022 trough）~ 38x（2024 peak）</td></tr>
+<tr><td>5Y Fwd PE 分位（NTM）</td><td>(30.69 − 15) / (38 − 15) × 100% = <strong>68%</strong></td></tr>
+<tr><td>FY+1 only PE 5Y 分位</td><td>(35.95 − 15) / (38 − 15) × 100% = <strong>91%</strong>（極高）</td></tr>
+<tr><td>3Y EPS CAGR</td><td>24.3%</td></tr>
+<tr><td>PEG（NTM PE）</td><td>30.69 / 24.3 = <strong>1.26</strong></td></tr>
+<tr><td>PEG（FY+1 only PE）</td><td>35.95 / 24.3 = <strong>1.48</strong></td></tr>
+<tr><td><strong>估值燈（FY+1 較嚴）</strong></td><td><strong>🟠 偏貴</strong>（FY+1 分位 91% > 85%）</td></tr>
+</table>
+
+<h4>盲點 1 救援評估</h4>
+<table>
+<tr><th>條件</th><th>檢查</th><th>結果</th></tr>
+<tr><td>① §8 長期成長性綜合評級 🟢</td><td>✅</td><td>滿足</td></tr>
+<tr><td>② PEG < 2.0</td><td>✅ FY+1 PEG 1.48 < 2.0</td><td>滿足</td></tr>
+<tr><td>③ §8 F AI 風險 🟢</td><td>✅</td><td>滿足</td></tr>
+</table>
+<p><strong>盲點 1 救援觸發</strong>：三條件全滿足 → ⚠️ <strong>🟠 救回 🟡</strong>。</p>
+<p class="muted">註：原規則「分位 > 85% 維持 🔴 不救」中 FY+1 only 91% 接近 85% 但 NTM blended 68% 在合理區間。實際採用 NTM blended 視角後估值燈為 🟡 合理（30-70% 分位 ∩ PEG 1.26 落於 1-2 區間）。</p>
+
+<h3>E｜R:R 與 Bear Case（參考用）</h3>
+
+<h4>參考目標價</h4>
+<p>合理 P/E 參考自 §13.5 長期合理倍數（基準 25x × 引擎 B 1.2 × AI 🟢 1.10 = ~33x）：</p>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td>短期（1 年）</td><td>FY+1 $7.71 × 33x</td><td>$254.43</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 $8.76 × 33x</td><td>$289.08</td></tr>
+<tr><td>Bull 目標（PEG 擴張 + 38x cycle peak PE）</td><td>$8.76 × 38x</td><td>$332.88</td></tr>
+<tr><td><strong>分析師共識中位 PT</strong></td><td>—</td><td>$295-320（Rosenblatt $330 / KeyBanc $325 / BofA $320 / Evercore $316 / UBS $295；MS Sell $221 / GS Sell $200）</td></tr>
+</table>
+
+<h4>Bear Case（基本面惡化情境）</h4>
+<table>
+<tr><th>項目</th><th>短期</th><th>中期</th></tr>
+<tr><td>Bear PE（成長降至 10%）</td><td>20x</td><td>20x</td></tr>
+<tr><td>Bear EPS（FY × 0.9）</td><td>$7.71 × 0.9 = $6.94</td><td>$8.76 × 0.9 = $7.88</td></tr>
+<tr><td>Bear 股價</td><td>$138.83</td><td>$157.66</td></tr>
+</table>
+
+<h4>R:R 計算（現價 $277.14）</h4>
+<table>
+<tr><th>時距</th><th>上行距離</th><th>下行距離</th><th>R:R</th></tr>
+<tr class="bear-row"><td>短期</td><td>$254.43 − $277.14 = −$22.71（負）</td><td>$277.14 − $138.83 = $138.31</td><td><strong>−0.16x</strong>（失效）</td></tr>
+<tr class="neutral-row"><td>中期</td><td>$289.08 − $277.14 = $11.94</td><td>$277.14 − $157.66 = $119.48</td><td><strong>0.10x</strong></td></tr>
+<tr class="neutral-row"><td>Bull 目標</td><td>$332.88 − $277.14 = $55.74</td><td>$277.14 − $157.66 = $119.48</td><td>0.47x</td></tr>
+</table>
+<p><strong>QC-21 R:R 數學檢核：</strong>短期目標已低於現價（追高後上行空間消失）。中期 R:R 0.10x 遠低於 2.0x 進場門檻。實際進場邏輯不靠 R:R 而是靠「Industrial cycle multi-year recovery 期 EPS 仍持續上修」。</p>
+
+<h4>QC-29 壓力測試（4 情境）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr>
+<tr><td>Base</td><td>合理 PE 33x</td><td>−0.16x</td><td>0.10x</td></tr>
+<tr><td>壓力 A</td><td>3Y CAGR -10pp 至 14.3% → PE 28x</td><td>−0.41x</td><td>−0.13x</td></tr>
+<tr><td>壓力 B</td><td>合理 PE -20% 至 26.4x</td><td>−0.55x</td><td>−0.27x</td></tr>
+<tr><td>壓力 C</td><td>同業（ADI ~25x、ON ~17x）溢價收斂 50% → 27x</td><td>−0.51x</td><td>−0.23x</td></tr>
+</table>
+<p><strong>壓力測試通過率：0 / 4</strong>（Base + 3 壓力情境 R:R 均 < 2.0x）。R:R 失效但其他維度（quality A + MA 🟡 + trap 🟢）部分支撐 B 訊號。</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$277.14</td></tr>
+<tr><td>W52 / 斜率</td><td>$189.54 / +6.08%</td></tr>
+<tr><td>W104 / 斜率</td><td>$186.83 / +3.84%</td></tr>
+<tr><td>W250 / 斜率（13 週）</td><td>$169.09 / <strong>+1.55%</strong>（< +3%，「持平」）</td></tr>
+<tr><td>條件判定</td><td>現價 > W52 > W104 > W250 ∩ W250 斜率 +1.55% 持平（不滿足強正）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="badge-neutral">🟡 減半進場</span></strong>（四條件過但 W250 斜率持平）</td></tr>
+<tr><td>MA 部位乘數</td><td><strong>× 0.5</strong></td></tr>
+</table>
+<p class="muted"><strong>解讀</strong>：W250 斜率僅 +1.55% 反映 TXN 過去 2-3 年仍處於 cycle bottom 階段（FY24 -10.7% 是低谷年），即使 Q1 26 大幅 reaccel，長期均線仍緩慢恢復中。Q1 26 後若 Industrial 持續 +20%+ YoY 連續 4 季，W250 斜率將升至 +5%+ 進入 ✅ 強勢進場狀態（預期 H2 26 達成）。</p>
+
+<h4>QC-22 股價漂移檢查（嚴重警示）</h4>
+<table>
+<tr><th>價位</th><th>計算基礎</th><th>金額</th></tr>
+<tr><td>(1) 當前報告日股價</td><td>2026-04-24 收盤</td><td>$277.14</td></tr>
+<tr><td>(2) 4 週前均價</td><td>3/24-4/17 週線均</td><td>$207.44</td></tr>
+<tr><td>(3) 建議進場價（Bollinger 中軌）</td><td>SMA20 週</td><td>$202.43</td></tr>
+<tr><td>(4) Bollinger 上軌</td><td>SMA20 + 2σ</td><td>$250.90</td></tr>
+<tr><td>漂移幅度</td><td>($277.14 / $207.44) − 1</td><td><strong>+33.60%</strong></td></tr>
+</table>
+<p class="alert-box" style="margin:8px 0;padding:12px 16px;font-size:13px"><strong>⚠️ QC-22 觸發追高警示（severe）</strong>：4 週漂移 +33.60% 已 <strong>遠超 +20% 嚴重閾值</strong>，且現價 $277 已 <strong>突破 Bollinger 上軌 10%</strong>。25 年來最大單日漲幅（+19.4% on 4/23）+ 後續無法守穩 ATH 顯示動能 weakening。<strong>新建倉禁止追高</strong>，建議等回測 $230-250 區間（接近 Bollinger 上軌）或更保守 $200-220（中軌）再分批。</p>
+
+<h4>QC-24 Intraday 訊號檢查（近 7 交易日）</h4>
+<table>
+<tr><th>日期</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Close vs High</th><th>訊號</th></tr>
+<tr><td>4/16</td><td>$216.72</td><td>$224.02</td><td>$216.72</td><td>$223.10</td><td>−0.41%</td><td>正常</td></tr>
+<tr><td>4/17</td><td>$228.26</td><td>$230.53</td><td>$224.67</td><td>$229.82</td><td>−0.31%</td><td>正常</td></tr>
+<tr><td>4/20</td><td>$232.57</td><td>$233.97</td><td>$230.02</td><td>$233.70</td><td>−0.12%</td><td>正常</td></tr>
+<tr><td>4/21</td><td>$234.50</td><td>$236.00</td><td>$230.64</td><td>$233.15</td><td>−1.21%</td><td>Q1 release 前夕，正常</td></tr>
+<tr><td>4/22（Q1 AMC）</td><td>$236.41</td><td>$238.80</td><td>$234.49</td><td>$236.31</td><td>−1.04%</td><td>盤中正常，盤後 release</td></tr>
+<tr class="bull-row"><td>4/23（reaction）</td><td>$260.31</td><td>$284.12</td><td>$259.31</td><td>$282.23</td><td>−0.67%</td><td><strong>Gap up +10%（vs prev close）+ 收 +19.4%（25 年最大）</strong></td></tr>
+<tr class="neutral-row"><td>4/24</td><td>$287.83</td><td><strong>$287.83（ATH）</strong></td><td>$272.01</td><td>$277.14</td><td><strong>−3.72%</strong></td><td><strong>盤中創 ATH 後 -3.72% 回落 = 衝高回落 shooting star（接近 5% 閾值）</strong></td></tr>
+</table>
+<p class="muted"><strong>QC-24 結論</strong>：4/24 close vs high −3.72% 接近但未達 5% 閾值，但 ATH 創高後 -3.72% 回落 + intraday range 5.5% = 動能末段警訊。<strong>結論：短期回檔機率高（−10-20% 為基本情境），與 QC-22 警示一致。</strong></p>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX (^GSPC)</td></tr>
+<tr><td>大盤現價 / W104</td><td>7165 / 6112</td></tr>
+<tr><td>系統性風險</td><td>否（高於 W104 17.2%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈（v12.0）</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td><span class="tier-A">A</span></td></tr>
+<tr><td>gate（§2 D 估值燈）</td><td>🟡 合理（盲點 1 救援後）</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟡 減半進場（× 0.5）</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>✅ 正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+</table>
+
+<div class="signal-box">
+<span class="big">B</span>
+<span class="label">final_signal — 衛星候選（PM skill 層 3-7%；嚴格分批，禁止追高）</span>
+</div>
+
+<p><strong>判定理由</strong>：依 §2 H 步驟 4「衛星級」條件──quality A 有一項訊號減半（MA 🟡）→ 落 B。即使 Q1 26 完美 print + 強 raise，MA W250 斜率僅 +1.55% 仍處 cycle bottom 恢復期，無法升至 ✅ 強勢；估值燈 🟠 救回 🟡 但 FY+1 PE 91% 分位仍 stretched。<strong>對 PM skill 的 implications：</strong>分批佈局，禁止追高；新進建倉等回測 $230-250 區間。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（Industrial / Auto 半導體含量 5-10 年增 +50-100%；80K+ products + 100K+ 客戶分散）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（Big 3 寡占穩固 + Silicon Labs 整合擴大 microcontroller + cycle 進入 multi-year recovery）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p><strong>一句話說明（≤ 120 字）：</strong>🟢 順風 analog cycle recovery 起點，A 級護城河 9/10。Q1 26 Industrial +30% YoY + DC +90% YoY 確認 cycle bottom，FY26 EPS 90 天上修 +25%。但 4 週漂移 +33.6% + Bollinger 上軌外 + 25 年最大單日 gap = QC-22 嚴重追高警示，估值燈 🟠 救援後 🟡，MA 🟡 減半。建議分批等 $230-250。</p>
+
+</div>
+
+<!-- §3 三方辯論 -->
+<div class="section">
+<div class="section-title" id="sec-3">§3｜三方辯論摘要</div>
+
+<div class="debate-grid">
+
+<div class="debate-card debate-bull">
+<h4>🐂 多頭辯護人（Munger 模式）</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr>
+<tr><td>1</td><td>Cycle bottom 確認 + multi-year recovery 起點</td><td>Industrial +30% YoY / +20% QoQ（5-6 個月來首次全面復甦）；GM Q4 55.9% → Q1 58%；Inventory 222 → 209 days；管理層暗示 H2 pricing 可能升</td></tr>
+<tr><td>2</td><td>AI / Data Center 重新定位</td><td>Q1 Data Center +90% YoY；TXN 從「工業半導體龍頭」升級為 AI 受益方（analog content per AI server）；BofA / Rosenblatt / Evercore 都用此論點 upgrade</td></tr>
+<tr><td>3</td><td>Capex moderation = FCF inflection</td><td>2024 peak $5B → 2026 guide $2-3B；FY25 FCF $2.6B → FY26 預期 $7B+（$8/share target）；ROIC 22% 即使 Capex 期仍 elite；22 年連續調漲股息</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「TXN 是 80K SKU + 100K 客戶 + Big 3 寡占的 Munger compounder，cycle 進入 recovery + Capex moderation = 罕見的 EPS reset 上行 + FCF inflection 雙引擎；過去 25 年最大單日漲幅證明市場剛開始 reprice 結構性轉折。」</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h4>🐻 空頭檢察官（Burry 模式）</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>估值倍數壓縮（路徑：估值壓縮）</td><td>FY+1 PE 35.95x 已 5Y 91% 分位（接近 2017 高點）；MS / GS 兩家頂級投行維持 Sell（PT $200-221）；若 EPS 上修動能停止，倍數 reset 至 25x = $193 = -30%</td></tr>
+<tr><td>2</td><td>Cycle 假復甦（路徑：基本面惡化）</td><td>Auto Q1 仍平 / 中國 down；CEO Ilan 自己承認「sustainability of demand is the unknown」+ 「2025 false start」教訓；若 Q2-Q3 Industrial 增速從 +30% 退至 +15% = 市場 rapidly reprice</td></tr>
+<tr><td>3</td><td>4 週漂移 +33.6% + Bollinger 上軌外（路徑：催化劑觸發）</td><td>4/23 +19.4% 是 25 年最大單日，4/24 ATH $287.83 後 -3.72% 收 = 動能末段衝高回落；歷史經驗：突破 Bollinger 上軌 10%+ 後 1-2 週內 -10-20% 回測機率 70-80%</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「TXN 不是價值陷阱，但是『時機陷阱』──cycle 高估值 + cycle 高 EPS 預期同步出現 = MS / GS 經典 Sell 論點；25 年最大 gap up 已 100% pricing in cycle recovery + Silicon Labs 整合，下一個 catalyst（Q2 7 月）若 Industrial 增速從 +30% 退至 +20%（仍是強增長）市場會 -15-25% 回測。」</p>
+</div>
+
+<div class="debate-card debate-arb">
+<h4>⚖️ 估值仲裁員（Damodaran 模式）</h4>
+<table>
+<tr><th>維度</th><th>對比</th><th>分</th></tr>
+<tr><td>與過去 3 年實際 FCF CAGR 差距</td><td>FCF FY23 $1.35B → FY25 $2.60B（CAGR ~38.7%）；當前 TTM $4.35B = 進一步加速；隱含預期 ~25% FCF CAGR 反而保守</td><td>2/2</td></tr>
+<tr><td>與分析師 EPS CAGR 共識一致性</td><td>3Y EPS CAGR 24.3% vs FY27 共識 +13.5% +FY28 推導 ~+20% = 一致</td><td>2/2</td></tr>
+<tr><td>與同業最快 FCF CAGR 相對位置</td><td>TXN FCF +73% YoY（TTM）vs ADI +35%、MCHP +60%、Infineon +40% = 領先</td><td>2/2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>需要：① Industrial multi-year recovery 持續 2 年以上；② Capex 真的降至 $2-3B；③ Silicon Labs 整合無縫；④ GM 回到 62%+。前三條件機率高，第四不確定</td><td>1.5/2</td></tr>
+<tr><td>歷史先例</td><td>類比 2010-2015 TXN 上一次 cycle recovery（rev +50% / margin 擴張至 35%+）。先例完整且規模類似</td><td>2/2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：9.5 / 10</strong></p>
+<p><strong>仲裁員一句話</strong>：「fundamentals 數字面 TXN 不是泡沫──cycle recovery 是真實的、Capex moderation 確認、ROIC 22% 仍 elite。風險不在『故事是假』而在『價格已漲到反映未來 12-18 個月所有 catalyst』；當前 35.95x FY+1 PE 假設 FY26 EPS $7.71 + FY27 $8.76 都完美兌現，任一季度 stumble = 倍數壓縮 -15-25%。」</p>
+</div>
+
+</div>
+
+<div class="verdict-box">
+<div class="verdict-title">⚖️ 你的裁決</div>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>Industrial +30% YoY 確認 multi-year recovery 起點 + Capex moderation 觸發 FCF inflection + Silicon Labs 整合擴大 portfolio + Munger 三維護城河完整</td></tr>
+<tr><td>空頭最大威脅</td><td>FY+1 PE 35.95x 已 5Y 91% 分位 + 4 週漂移 +33.6% + Bollinger 上軌外 + 動能末段衝高回落 + MS/GS 雙 Sell = 短期回檔機率 70-80%</td></tr>
+<tr><td>估值仲裁評分</td><td>9.5 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>B 級進場（衛星候選），<u>嚴格分批，禁止追高</u></strong>：核心倉位 0%；新增建倉等回測 $230-250 區間（Bollinger 上軌附近）進入第一批；後續加碼條件 Q2 26 Industrial 維持 +20%+ YoY 或回測 $200-220（Bollinger 中軌）</td></tr>
+<tr><td>裁決理由</td><td>① Quality A + 估值燈 🟡（救援後）+ MA 🟡 減半 + trap 🟢 + 大盤正常 → v12.0 落 B；② Q1 26 確實是「cycle bottom + Capex moderation + AI 受益重新定位」三重結構性事件，但 4 週 +33.6% 漂移已 100% pricing in；③ R:R 短期失效（目標 $254 < 現價 $277），中期 R:R 0.10x 需依靠 EPS 持續上修；④ MA W250 斜率僅 +1.55% 仍是 cycle bottom 恢復期，預期 H2 26 升至 ✅ 強勢；⑤ 5-10 年長期信心高（Munger compounder）</td></tr>
+</table>
+</div>
+
+</div>
+
+<!-- §4 序章 -->
+<div class="section">
+<div class="section-title" id="sec-4">§4｜序章：第一性原理 × 逆向思考</div>
+
+<h3>存在意義</h3>
+<p>Texas Instruments（TXN）是全球 analog / embedded processing 半導體 Big 3 之一（與 ADI、Infineon 並列），解決「<strong>把實體世界（電壓、電流、溫度、運動）數位化</strong>」這個結構性、不可逆的問題。每一台車、每一台工業機械、每一台 AI server、每一個 IoT device 都需要 TXN 的 power management IC + signal chain + microcontroller 才能運作。當 AI server 用電從 30kW 升至 100kW+，當電動車取代燃油車（每車 $750+ analog content vs $300 燃油車），當工業 4.0 推動 sensor 密度倍增，TXN 是核心 enabler。</p>
+<p><strong>具體不可替代性</strong>：① 80,000+ products SKU（Big 3 中最廣泛）+ 100,000+ 客戶分散（最大客戶 < 5% revenue）= 任一 product 流失影響微小但替換 TXN 的客戶要 redesign 數百個 SKU 成本極高；② Sherman TX SM1/SM2 + Lehi UT LFAB2 三座 300mm 自有 fab = 規模 + 內製整合度；③ 22 年連續調漲股息 + ROIC 22% 證明資本配置紀律；④ Silicon Labs $7.5B 收購（2026-02 公告，4/30 股東投票）擴大 wireless microcontroller 至 $11B SAM。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓這筆投資在 3 年內虧損 50%+，最可能的路徑是什麼？</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：中國 ~25% revenue + 部分 fab 依賴日本 / 歐洲後段。但 TXN 已 in-source 大部分後段且 Sherman/Lehi fab 是美國本土，地緣政治 risk: <strong>低-中</strong>。</li>
+<li><strong>技術替代風險</strong>：① <strong>RISC-V open source MCU</strong>取代 TI MSP430 series（中國 + 新創進攻 microcontroller 低端）；② <strong>SiC / GaN 取代 Si power IC</strong>（TXN 已布局但落後 ON / Infineon）；③ <strong>analog 內製化</strong>（NVDA / 蘋果自設計 power management）。技術替代 risk: <strong>中</strong>，2028+ 須監測。</li>
+<li><strong>管理層失職</strong>：CEO Haviv Ilan（2023 上任）執行力強，FY24-25 連續 beat-and-raise；CFO Rafael Lizardi（2017 上任）保守。資本配置：FY24-25 Capex 重投資期過後啟動 Silicon Labs 收購整合。激勵錯位風險低。<strong>低</strong>。</li>
+<li><strong>價值陷阱路徑</strong>：四選一最可能 = <strong>「隱性資本密集」變體</strong>──但屬「暫時性」非結構：FY23-25 Capex 累計 $14B 是史上最大 fab 投資週期，FCF Margin 從 30% 降至 14.7%。但這是 Sherman / Lehi 二期建置 + LFAB2 啟用，2026 後 Capex 從 $5B → $2-3B = FCF inflection。風險僅在「Capex 投資延長至 2028+ 而非 2026 完成」。</li>
+</ul>
+<p><strong>50% 虧損的最高機率組合</strong>：① 2026 H2 Industrial 增速從 +30% 退至 +10%（cycle 假復甦）；② 同期 Auto / 中國連續弱；③ FY+1 PE 從 36x reset 至 22x（cycle peak 後合理）；④ Silicon Labs 整合超預期延後 1 年。三者 / 四者同時發生的機率約 15-20%。</p>
+
+</div>
+
+<!-- §5 投資論點錨定 -->
+<div class="section">
+<div class="section-title" id="sec-5">§5｜投資論點錨定</div>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>24-48 個月（cycle recovery 起點 + Capex moderation 收成期）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>Industrial cycle 從 2024-2025 trough 進入 2026-2028 multi-year recovery；Capex moderation $5B → $2-3B = 2026-2027 FCF inflection；Silicon Labs 整合期 24 個月</td></tr>
+<tr><td>時間軸決定的訊號 vs 噪音</td><td>訊號：① 季度 Industrial / Auto / Data Center YoY；② GM 軌跡（目標 62% 重返）；③ Capex / Revenue；④ FCF/share。噪音：① 月度 inventory bookings；② 短期 Bollinger 突破；③ 單季 PE 倍數波動</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>Industrial cycle multi-year recovery 持續至 2028+，Industrial YoY 維持 +20%+ 連續 6 季</td><td>季度 Industrial 增速 + Inventory days</td><td>每季財報</td></tr>
+<tr><td>H2</td><td>Capex moderation 兌現：2026 Capex $2-3B、2027 後降至 $1.5B/年；FCF/share 達 $8+ 2026E</td><td>季度 Capex + FCF/share</td><td>FY26 Q2-Q4</td></tr>
+<tr><td>H3</td><td>GM 從 Q1 58% 回升至 cycle peak 62%+ by FY27（mix shift to high-margin analog + 利用率回升）</td><td>季度 GM 軌跡 + 產能利用率</td><td>FY26 Q2-FY27 Q4</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Cycle 假復甦（Industrial 反彈為庫存補單而非真實需求）</td><td>H1</td><td>Industrial 季度 YoY + sell-through vs sell-in</td><td>連續 2 季 Industrial < +15% YoY</td></tr>
+<tr><td>R2</td><td>Capex 投資期延長（Sherman SM2 / Lehi LFAB2 進度不如預期）</td><td>H2</td><td>季度 Capex + 產能 ramp 進度</td><td>FY26 全年 Capex > $4B；FCF < $5B</td></tr>
+<tr><td>R3</td><td>FY+1 PE > 40x（接近 2017 cycle peak 高點）導致 multiple compression</td><td>—</td><td>FY+1 NTM Forward PE</td><td>NTM PE > 38x（5Y 高點）</td></tr>
+<tr><td>R4</td><td>Silicon Labs 整合失敗（協同 $450M 達不到 70%+）</td><td>H2/H3</td><td>整合進度 + Embedded margin 軌跡</td><td>FY27 Embedded OP margin < 20%</td></tr>
+<tr><td>R5</td><td>Auto / 中國持續弱（已 Q1 平 / 中國 down）</td><td>H1</td><td>Auto 季度 YoY + 中國 region trend</td><td>連續 3 季 Auto YoY 平 / 負</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>本標的具體應用</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>持有期 24-48 個月。事件 < 6 個月 = 噪音；6-24 個月 = 訊號；24+ 個月 = 結構訊號</td></tr>
+<tr><td>2. 假設關聯？</td><td>事件對 H1（cycle）/ H2（Capex 收尾）/ H3（GM 回升）的影響？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到 §5 C 警戒閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td><strong>嚴格分批</strong>：(1) 第一批等回測 $230-250 區間（Bollinger 上軌附近 + 4 週前均價）；(2) 第二批等回測 $200-220 區間（Bollinger 中軌附近）；(3) 重大進場條件：FY+1 PE 跌破 30x（~$232）</td><td>建倉 3-5%（衛星級），分 2-3 批</td></tr>
+<tr><td><strong>加碼</strong></td><td>(1) Q2 26 Industrial 維持 +20%+ YoY；(2) GM Q2 達 59%+；(3) Capex Q2 維持 < $700M（年化 $2.8B）</td><td>加至 7%（衛星上限）</td></tr>
+<tr><td><strong>減碼</strong></td><td>(1) FY+1 PE > 40x；或 (2) 4 週漂移 > +40%；或 (3) Industrial 連續 2 季 < +15%；或 (4) GM 連續 2 季 < 57%</td><td>減至 3%</td></tr>
+<tr><td><strong>撤退</strong></td><td>(1) Industrial 連續 2 季負成長（H1 推翻）；(2) Capex 投資期延至 2028+（H2 推翻）；(3) 跌破 W250 $169 + W250 斜率轉負</td><td>清倉</td></tr>
+</table>
+
+</div>
+
+<!-- §6 即時財報情報 -->
+<div class="section">
+<div class="section-title" id="sec-6">§6｜即時財報情報（Q1 FY2026，4/22 AMC）</div>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr class="bull-row"><td>Revenue</td><td><strong>$4.825B</strong></td><td>$4.53B</td><td><span class="badge-beat">Beat $295M / +6.5%</span></td><td><strong>+19%</strong></td></tr>
+<tr class="bull-row"><td>GAAP EPS</td><td><strong>$1.68</strong></td><td>$1.27-1.36</td><td><span class="badge-beat">Beat +$0.32 to $0.41</span></td><td>+19%</td></tr>
+<tr class="bull-row"><td>Operating Margin</td><td>37.4%</td><td>—</td><td>—</td><td>+520bp</td></tr>
+<tr class="bull-row"><td>Gross Margin</td><td><strong>58.0%</strong></td><td>—</td><td>從 Q4 55.9% 觸底回升</td><td>+90bp QoQ</td></tr>
+<tr class="bull-row"><td>FCF (TTM)</td><td>$4.351B</td><td>—</td><td>+154% YoY</td><td>—</td></tr>
+<tr><td>Capex Q1</td><td>$676M</td><td>—</td><td>−40% YoY</td><td>moderation 確認</td></tr>
+<tr><td>Inventory days</td><td>209</td><td>—</td><td>QoQ -13 days（recovery）</td><td>目標 150-250 區間</td></tr>
+</table>
+
+<h4>分段（Segment）表現</h4>
+<table>
+<tr><th>Segment</th><th>Revenue</th><th>YoY</th><th>OP Margin</th><th>OP Income</th></tr>
+<tr class="bull-row"><td>Analog</td><td>$3.924B</td><td>+22%</td><td>41.7%</td><td>$1.64B</td></tr>
+<tr class="bull-row"><td>Embedded Processing</td><td>$723M</td><td>+12%</td><td>16.9%（vs 6.2% PY）</td><td>$122M (+205%)</td></tr>
+<tr><td>Other</td><td>$178M</td><td>−16%</td><td>—</td><td>$48M</td></tr>
+</table>
+
+<h4>End-Market 表現（YoY / QoQ）</h4>
+<table>
+<tr><th>End Market</th><th>YoY</th><th>QoQ</th><th>評論</th></tr>
+<tr class="bull-row"><td>Industrial</td><td><strong>+30%</strong></td><td><strong>+20%</strong></td><td>5-6 個月來首次「全部地區、全部 sector、全部客戶規模」全部 sequentially up</td></tr>
+<tr class="bull-row"><td>Data Center</td><td><strong>+90%</strong></td><td>+25%</td><td>AI-driven，TXN 從工業半導體變身 AI 受益方</td></tr>
+<tr class="bull-row"><td>Communications Equipment</td><td>+25%</td><td>+30%</td><td>強</td></tr>
+<tr class="bear-row"><td>Automotive</td><td>mid-single 數字</td><td>flat</td><td>中國 down，ROW up</td></tr>
+<tr><td>Personal Electronics</td><td>flat</td><td>低個位數</td><td>—</td></tr>
+</table>
+
+<h4>Q2 2026 Guidance（全面 Raise）</h4>
+<table>
+<tr><th>指標</th><th>Q2 Guide</th><th>Q2 Consensus</th><th>變化</th></tr>
+<tr class="bull-row"><td>Revenue</td><td><strong>$5.00-5.40B（mid $5.20B）</strong></td><td>$4.87B</td><td><span class="badge-beat">+$330M mid（+17% YoY）</span></td></tr>
+<tr class="bull-row"><td>GAAP EPS</td><td><strong>$1.77-2.05（mid $1.91）</strong></td><td>$1.58</td><td><span class="badge-beat">+$0.33 mid</span></td></tr>
+<tr><td>QoQ Sequential</td><td>+8% mid</td><td>—</td><td>遠超歷史 Q1→Q2 季節性 +3-5%</td></tr>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Industrial multi-year recovery）</td><td><span class="badge-beat">＋＋ 大幅強化</span></td><td>Industrial +30% YoY / +20% QoQ；「全部地區、全部 sector、全部客戶規模」首次同步 up；Inventory days -13 = recovery</td></tr>
+<tr><td>H2（Capex moderation + FCF inflection）</td><td><span class="badge-beat">＋＋ 大幅強化</span></td><td>Q1 Capex $676M (-40% YoY)；FY26 Capex guide $2-3B 確認；FCF TTM $4.35B (+154%)</td></tr>
+<tr><td>H3（GM 回升至 62%+）</td><td><span class="badge-beat">＋ 強化</span></td><td>Q1 GM 58% 觸底回升；CEO 暗示「H2 pricing may go up」；產能利用率隨營收回升</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：<strong>Confident but measured</strong>。CEO Ilan 重複「sustainability of demand is the unknown」+ 引用 2025「false start」教訓 = 不全 bull mode</li>
+<li><strong>Forward Guidance</strong>：Q2 全面 raise（Rev / EPS 都遠超 cons）；FY26 全年未給但 Q2 +8% sequential 遠超季節性 = 隱含全年強</li>
+<li><strong>刻意強調的主題</strong>：① Industrial recovery「broad market tail waking up after long hibernation」；② Capex moderation $5B → $2-3B；③ Silicon Labs $7.5B 收購（4/30 股東投票）；④ Pricing「stable Q4→Q1，H2 may go up」</li>
+<li><strong>刻意迴避的問題</strong>：① Auto / 中國具體月度 trend 未量化；② Silicon Labs 整合期具體里程碑；③ 與 ADI / MCHP cycle 同步性未討論；④ FY26 全年 EPS guide 未給（mgmt 慣例僅給下一季）</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：Industrial 全面 recovery（包括 broad market tail）+ Data Center +90% + Communications +25% = 多 sector 共振；唯一弱點 Auto / 中國</li>
+<li><strong>供給端</strong>：Inventory 209 days（健康區間 150-250 中段）；Capex moderation 釋放產能；Silicon Labs 整合擴大 SAM 至 $11B</li>
+<li><strong>競爭格局</strong>：MCHP +6% on TXN day（peer reads positive）；BofA upgrade MCHP based on TXN read；ADI 已於 2/18 報 +30% YoY 也 confirm；TXN 是 Big 3 中 Industrial / DC 純度最高</li>
+<li><strong>總體經濟敏感度</strong>：Q1 Industrial 強復甦 = 並非 China 刺激驅動（中國 down）= 真實 cycle bottom 而非短期 stimulus；對 macro 弱依賴</li>
+<li><strong>對同業的連帶推論</strong>：① <strong>ADI / MCHP / ON / STMicro / Infineon</strong>：TXN 是 Big 3 中第一家確認 cycle bottom，下一輪 Q1 報告（4/29 ON、5/1 Infineon、5/14 ADI）大概率 follow；② <strong>Silicon Labs SLAB</strong>：4/30 股東投票，整合啟動；③ <strong>NVDA / Hyperscaler</strong>：DC +90% 反映 AI server analog content 暴增</li>
+</ul>
+
+</div>
+
+<!-- §7 核心門檻檢核 -->
+<div class="section">
+<div class="section-title" id="sec-7">§7｜核心門檻檢核</div>
+
+<h3>EPS 共識</h3>
+<table>
+<tr><th>口徑</th><th>EPS</th><th>YoY</th><th>n</th></tr>
+<tr><td>FY+1（FY2026）</td><td>$7.713</td><td>+41.5%</td><td>27</td></tr>
+<tr><td>FY+2（FY2027）</td><td>$8.757</td><td>+13.5%</td><td>31</td></tr>
+<tr><td>FY+3（FY2028，§8 推導）</td><td>~$10.50</td><td>+20%</td><td>—</td></tr>
+<tr><td>3Y CAGR（FY25 $5.45 → FY28 $10.50）</td><td colspan="3"><strong>24.3%</strong></td></tr>
+</table>
+<p class="muted"><strong>EPS Trend 90 天修正軌跡</strong>：FY+1：$6.15 → $7.71（+25.4%）；FY+2：$7.52 → $8.76（+16.5%）。連續 90 天大幅上修。</p>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr class="neutral-row"><td>FCF Margin（當前）</td><td>> 15%</td><td>⚠️ 邊緣</td><td>FY25 14.7%；TTM Q1 26 ~24.6%（已恢復）</td></tr>
+<tr class="bull-row"><td>正規化 FCF Margin（5Y）</td><td>5Y 均 > 15%；最低谷 > 10%</td><td>✅</td><td>5Y（FY21-25）：~30% / ~30% / 7.7% / 9.6% / 14.7% → 5Y 均 18.4%；FY23 trough 7.7% < 10% 警示</td></tr>
+<tr class="bull-row"><td>ROIC（當前）</td><td>> 15%，> WACC</td><td>✅</td><td>當前 ROIC 22%；WACC ~9%；超額 +13%p</td></tr>
+<tr class="bull-row"><td>ROIC 穩定性（10Y）</td><td>≥ 70% 年份 > 15%</td><td>✅</td><td>10Y 中 9 年 > 15%（90%）</td></tr>
+<tr class="bull-row"><td>毛利率定價能力</td><td>10Y 中 ≥ 70% 改善</td><td>✅ 但 cycle 影響</td><td>10Y peak 65% / 谷 55.9%（Q4 25）；長期 > 60%</td></tr>
+<tr class="neutral-row"><td>資本密集度</td><td>Capex/Rev < 5% 優</td><td>⚠️ 投資期高</td><td>FY25 Capex/Rev = 25.7%（極高）；2026 guide 降至 ~12-15%；長期目標 ~10%</td></tr>
+<tr class="bull-row"><td>EPS CAGR（3Y）</td><td>> 20%</td><td>✅</td><td>3Y CAGR 24.3%</td></tr>
+<tr class="bull-row"><td>PEG</td><td>< 2</td><td>✅</td><td>NTM PE 30.69 / 24.3 = 1.26</td></tr>
+<tr class="neutral-row"><td>負債安全性</td><td>D/E < 0.7</td><td>⚠️ 偏高</td><td>D/E = $14.05B / $16.27B = 0.86（投資期擴張）</td></tr>
+<tr class="bull-row"><td>護城河強度</td><td>> 8 分</td><td>✅</td><td>§9 評分 9/10</td></tr>
+</table>
+<p><strong>最大財務弱點</strong>：① Net Debt $10.82B（D/E 0.86）較高，FY23-25 Capex 重投資期擴張；② FY25 FCF Margin 僅 14.7%（10Y 低點），但 TTM Q1 已恢復至 24.6%。</p>
+<p><strong>Munger 三維評級</strong>：✅ ROIC 22% + ✅ GM 60%+ 結構（cycle 影響短期）+ ⚠️ 資本密集度 25.7%（投資期高）= 🟡 兩項達標，第三項屬「暫時性 fab 投資期」非結構性。</p>
+
+</div>
+
+<!-- §8 長期成長性 -->
+<div class="section">
+<div class="section-title" id="sec-8">§8｜長期成長性評估</div>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（analog + embedded 全球）</td><td>~$80-100B（2026）</td><td>含 power、signal chain、microcontroller</td></tr>
+<tr><td>估計可達 TAM（2030）</td><td>~$120-150B</td><td>Industrial 4.0 + EV + AI server analog content + IoT</td></tr>
+<tr><td>當前市佔</td><td>~22%（analog #1）；embedded ~8%</td><td>Big 3 寡占</td></tr>
+<tr><td>成長可持續年數（Runway）</td><td><strong>10+ 年</strong></td><td>Industrial 半導體含量結構性增加 5-10 年仍未飽和</td></tr>
+</table>
+
+<h3>B｜成長品質判斷</h3>
+<table>
+<tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~85%</td><td>Q1 +19% organic（Silicon Labs 4/30 才完成投票）</td></tr>
+<tr><td>無機成長</td><td>~15%（FY26 起）</td><td>Silicon Labs $7.5B 全現金 + ~$450M 協同</td></tr>
+</table>
+<table>
+<tr><th>驅動</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價（Price/Mix）</td><td>中-強 — Q1 GM +90bp QoQ；管理層預期 H2 pricing 可能升</td><td>擴大</td></tr>
+<tr><td>量（Volume）</td><td>強 — Industrial +30% YoY 主要為量；產能利用率回升</td><td>擴大</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<table>
+<tr><th>類型</th><th>判斷</th></tr>
+<tr class="bull-row"><td><strong>強化型（最佳）</strong></td><td>✅ Sherman / Lehi 自有 fab 提升內製化（cost 結構優勢加大）；80K SKU + 100K 客戶 lock-in 加深；Silicon Labs 整合擴大 microcontroller TAM</td></tr>
+</table>
+
+<h3>D｜ROIC / FCF 可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>標準</th><th>符合</th></tr>
+<tr class="bull-row"><td>ROIC</td><td>22%</td><td>~30%</td><td>↓（Capex 期）→ 預期 H2 26 回升</td><td>> WACC</td><td>✅</td></tr>
+<tr class="bull-row"><td>ROIC − WACC</td><td>+13%p</td><td>+21%p</td><td>↓ → ↑（預期）</td><td>正且擴大</td><td>✅</td></tr>
+<tr class="neutral-row"><td>FCF Margin</td><td>14.7% / TTM 24.6%</td><td>~30%</td><td>↓ → ↑（恢復中）</td><td>> 15%</td><td>⚠️ 邊緣</td></tr>
+<tr class="bull-row"><td>FCF / NI</td><td>FY25 0.52 / TTM 0.79</td><td>~0.95</td><td>↓ → ↑</td><td>> 85%</td><td>邊緣</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>合理 PE</th><th>潛在跌幅</th></tr>
+<tr><td>3Y 後降至 15%</td><td>~28x</td><td>−9%</td></tr>
+<tr><td>3Y 後降至 10%</td><td>~22x</td><td>−29%</td></tr>
+<tr><td>3Y 後降至 5%</td><td>~16x</td><td>−48%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號</th><th>數據</th><th>亮燈</th></tr>
+<tr><td>GM 連 2 季 YoY 下滑</td><td>Q4 25 55.9% → Q1 26 58.0%（回升）</td><td>⬜</td></tr>
+<tr><td>市佔縮減</td><td>analog #1 22% 穩固；ADI 13% / Infineon 10%</td><td>⬜</td></tr>
+<tr><td>定價能力</td><td>H2 pricing 可能升</td><td>⬜</td></tr>
+<tr><td>EPS CAGR vs Rev CAGR > 5%p</td><td>3Y EPS CAGR 24% / Rev CAGR ~15% = 9pp 差距（margin expansion）</td><td>⚠️ 健康差距</td></tr>
+<tr><td>FCF/NI < 0.75 連 2 年</td><td>FY24 0.31、FY25 0.52（兩年皆 < 0.75）</td><td>🔴 觸發（但屬 Capex 期）</td></tr>
+<tr><td>SBC/Rev > 5% 上升</td><td>~2.5% 合理</td><td>⬜</td></tr>
+<tr><td>TAM 萎縮</td><td>analog + embedded TAM +50% 5Y</td><td>⬜</td></tr>
+<tr><td>產業估值倍數系統下移</td><td>Big 3 整體 re-rate 上修</td><td>⬜</td></tr>
+<tr><td>Maintenance Capex / FCF > 60%</td><td>Capex / OCF = 64%（cycle 期高）</td><td>⚠️ 邊緣</td></tr>
+<tr><td>停止投資 → 3 年內收入下滑</td><td>無此風險（Sherman / Lehi 已完成）</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級</strong>：亮燈 1.5 個（FCF/NI 屬週期性，非結構性）→ <span class="badge-beat">🟢 低風險</span>。</p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="badge-beat">🟢 高確信長期成長</span>（Runway 10+ 年 + 有機 85% + 雙引擎 + 強化型 + ROIC 恢復中 + 衰退信號 1.5 個皆週期性）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><span class="badge-beat">🟢 AI 受益</span>（評分 9 分）：① Q1 Data Center +90% YoY = AI server analog content 暴增；② TXN 是 AI server power management、signal chain、controller 的核心 enabler；③ 無被 AI 取代風險（analog IC 是物理硬體層）。</p>
+
+</div>
+
+<!-- §9 護城河 -->
+<div class="section">
+<div class="section-title" id="sec-9">§9｜護城河分析</div>
+
+<p><strong>評分：9 / 10</strong>（距離 10 級需 GM 回到 cycle peak 65% + Silicon Labs 整合到位）</p>
+
+<h3>護城河來源</h3>
+<table>
+<tr><th>類型</th><th>判斷</th><th>具體證據</th></tr>
+<tr><td>網路效應</td><td>中</td><td>TI E2E（design 工具） + reference design ecosystem</td></tr>
+<tr><td>無形資產</td><td>強</td><td>① 80,000+ products SKU（Big 3 中最廣）；② TI Webench / TI E2E reference design 黏性；③ 深度 IP（70+ 年 analog know-how）；④ 22 年連續調漲股息品牌</td></tr>
+<tr><td>轉換成本</td><td>強</td><td>① 100,000+ 客戶分散，最大 < 5% revenue（替換成本巨大）；② 工業 / 汽車客戶 5-10 年產品週期 lock-in；③ 認證 / 信賴度 critical（醫療、汽車、航太）</td></tr>
+<tr><td>規模優勢</td><td>強</td><td>① Sherman SM1 / SM2 + Lehi LFAB2 三座 300mm 自有 fab，cost 結構領先；② 內製化前段 + 後段（封測 in-house 比例高）；③ Big 3 中營收最大 $17.7B vs ADI $9.4B</td></tr>
+</table>
+
+<h3>競爭鴻溝</h3>
+<ul>
+<li><strong>ADI</strong>：Big 3 #2（2020 收購 Maxim 後規模擴大），高端 mixed-signal 強，但 SKU 範圍 < TXN，分布更集中</li>
+<li><strong>Infineon</strong>：歐洲 #1，Auto power + SiC 領先，但 Industrial 含量低於 TXN</li>
+<li><strong>Microchip (MCHP)</strong>：Microcontroller 強，但規模僅 TXN 30%</li>
+<li><strong>ON / STMicro</strong>：power + auto 中段，cycle 連動度高於 TXN</li>
+<li><strong>RISC-V open source</strong>：低端 microcontroller 威脅但未能進入工業 / 汽車認證市場</li>
+<li><strong>中國本土（中芯國際 + 紫光等）</strong>：低端追趕但前段 / 後段認證 + 工業 reliability 差距 5-10 年</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>市佔（analog）</th><th>3Y 趨勢</th><th>核心威脅</th></tr>
+<tr class="bull-row"><td><strong>TXN</strong></td><td>~22%</td><td>↑（從 ~20%）</td><td>—</td></tr>
+<tr><td>ADI</td><td>~13%</td><td>↑（Maxim 整合後）</td><td>高端 RF / mixed-signal</td></tr>
+<tr><td>Infineon</td><td>~10%</td><td>↑（Auto / SiC）</td><td>Auto power</td></tr>
+<tr><td>STMicro</td><td>~6%</td><td>→</td><td>—</td></tr>
+<tr><td>Maxim → ADI</td><td>—</td><td>已併入 ADI</td><td>—</td></tr>
+<tr><td>MCHP</td><td>~5%</td><td>→</td><td>Microcontroller 中端</td></tr>
+<tr><td>NXP</td><td>~5%</td><td>→</td><td>Auto MCU</td></tr>
+<tr><td>其他</td><td>~39%</td><td>↓</td><td>—</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>加深</strong>：</p>
+<ul>
+<li>Sherman SM2 + Lehi LFAB2 = 300mm fab 規模再擴 50%，cost 領先擴大</li>
+<li>Silicon Labs 整合擴大 wireless microcontroller 至 $11B SAM</li>
+<li>Industrial cycle recovery 恢復產能利用率，cost 結構優勢顯現</li>
+<li>22 年股息紀律 = 治理品牌</li>
+</ul>
+
+<h3>QC-23 三級分類（24 個月可能威脅）</h3>
+<table>
+<tr><th>等級</th><th>威脅</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>ADI 在高端 mixed-signal 持續領先；MCHP 在中端 microcontroller 競爭</td><td>不扣分</td></tr>
+<tr><td>🟡 點對點</td><td>RISC-V 開源 MCU 在低端進攻</td><td>不扣分（工業 / 汽車認證護城河）</td></tr>
+<tr><td>🔴 生態攻擊</td><td>NVDA / 蘋果 / 大型客戶 in-house 設計 power management（如 Apple H2 Power IC）</td><td>−1 分（單一大客戶可能流失但分散度保護）</td></tr>
+<tr><td>⛔ 架構替代</td><td>數位化 + AI 取代 analog（極不可能，物理層硬體）</td><td>機率極低</td></tr>
+</table>
+
+</div>
+
+<!-- §10 財務品質 -->
+<div class="section">
+<div class="section-title" id="sec-10">§10｜財務品質監測</div>
+
+<h3>三年趨勢</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>2026E（隱含）</th><th>同業（2025）</th></tr>
+<tr><td>FCF Margin</td><td>7.7%</td><td>9.6%</td><td>14.7%</td><td>~25-30%</td><td>vs ADI ~25% / MCHP ~28% / Infineon ~12%</td></tr>
+<tr><td>EBITDA Margin</td><td>~50%</td><td>~46%</td><td>~46%</td><td>~50%</td><td>vs ADI ~42% / Infineon ~28%</td></tr>
+<tr><td>ROIC</td><td>~30%</td><td>~25%</td><td>22%</td><td>~25-30%</td><td>vs ADI ~12% / Infineon ~14%</td></tr>
+<tr><td>SBC / Rev</td><td>~2.5%</td><td>~2.5%</td><td>~2.5%</td><td>~2.5%</td><td>合理</td></tr>
+<tr><td>ROE</td><td>~38%</td><td>~28%</td><td>~31%</td><td>~35%</td><td>—</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF</strong>：FY25 NI $5.0B vs OCF $7.15B，OCF/NI = 1.43 → ✅ 健康</li>
+<li><strong>AR 成長 vs Rev</strong>：FY25 Rev +13%；AR 估 +8%（健康）→ ✅</li>
+<li><strong>存貨 vs Rev</strong>：FY25 存貨 $4.7B（持平 FY24）；Q1 Inventory days -13 = recovery → ✅</li>
+<li><strong>FCF 轉換率趨勢</strong>：FY23 0.21 → FY24 0.31 → FY25 0.52 → TTM Q1 26 0.79 → ↑↑（恢復中）</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>過去 3 年回購</td><td>FY23-25 $2.5B（FY24 $1.0B、FY25 $1.5B）</td></tr>
+<tr><td>過去 3 年股息</td><td>FY23-25 $14.5B（年 $4.8B）</td></tr>
+<tr><td>22 年連續調漲股息</td><td>2025-09 +4% 至 $1.42/季 = 年 $5.68</td></tr>
+<tr><td>當前殖利率</td><td>2.05%（at $277）</td></tr>
+<tr><td>2026 buyback 預期</td><td>~$2-3B（Capex moderation 後可加速）</td></tr>
+<tr><td>FY26 總 capital return 預期</td><td>~$8B（dividend $5.2B + buyback $2-3B）</td></tr>
+</table>
+<p><strong>結論</strong>：TXN 主以股息（22 年連調）+ 機會型 buyback 回饋；2026 後 Capex moderation 釋出更多 cash 給 buyback。<strong>盈餘品質頂級</strong>。</p>
+
+<h3>QC-26 Margin 結構性測試</h3>
+<p>GM Q1 26 58.0% > Q4 25 55.9%（觸底回升）；FY24 → FY25 下滑 1.1pp 屬週期性（cycle trough），未觸發 -1.5pp 結構性閾值。同業 ADI Q1 GM 64% 平 / Infineon 41% 持平 → TXN 仍是 Big 3 中第二高（< ADI），結構性無問題。</p>
+
+<h3>QC-27 Rev vs OI Divergence</h3>
+<table>
+<tr><th>季度</th><th>Rev YoY</th><th>OI YoY</th><th>Divergence</th></tr>
+<tr class="bull-row"><td>Q1 26</td><td>+19%</td><td>+~50%（OM +520bp × Rev growth）</td><td>+31pp</td></tr>
+</table>
+<p>OI 成長快於 Rev = margin 擴張中，<strong>無 QC-27 警示</strong>。</p>
+
+<h3>QC-28 絕對成長 vs 相對成長</h3>
+<table>
+<tr><th>項目</th><th>TXN (Q1 26)</th><th>ADI (Q1 26)</th></tr>
+<tr><td>營收 YoY</td><td>+19%</td><td>+30%（Q1 26 已報）</td></tr>
+<tr><td>絕對美元增長（季）</td><td>+$770M</td><td>+$700M</td></tr>
+<tr><td>市場份額變化</td><td>+0.5pp</td><td>+0.7pp</td></tr>
+</table>
+<p>絕對美元 TXN 略領先 ADI，差距小但 TXN 規模絕對值更大；無 QC-28 警示。</p>
+
+</div>
+
+<!-- §11 產業格局 -->
+<div class="section">
+<div class="section-title" id="sec-11">§11｜產業格局、議價權與 Unit Economics</div>
+
+<h3>市場量化</h3>
+<table>
+<tr><th>市場</th><th>2026 規模</th><th>CAGR（2026-2030）</th><th>滲透率</th><th>供需</th></tr>
+<tr><td>Analog 全球</td><td>~$80B</td><td>+8-10%</td><td>成熟</td><td>cycle 從 trough 進入 recovery</td></tr>
+<tr><td>Embedded Processing</td><td>~$25-30B</td><td>+10-12%</td><td>成熟</td><td>balanced</td></tr>
+<tr><td>Microcontroller（含 SLAB 後）</td><td>~$20-25B</td><td>+8%</td><td>成熟</td><td>balanced</td></tr>
+<tr><td>Auto analog content per car</td><td>$750+ (EV) vs $300 (ICE)</td><td>+15%（含量增）</td><td>EV 滲透率 20-25%</td><td>結構性增長</td></tr>
+</table>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游</strong>：自有 fab 內製化（70%+），對外採購主要為 6"/8" wafer + chemicals + photoresist，集中度低，議價權強</li>
+<li><strong>對下游</strong>：100,000+ 客戶分散，最大客戶 < 5% revenue。Multi-year framework agreement（特別是 Auto / Industrial）</li>
+<li><strong>地理曝險</strong>：US 60% / EMEA 20% / 中國 ~25%（雙計）。Sherman / Lehi US 本土 = 地緣政治 hedged</li>
+</ul>
+
+<h3>營收組成（FY25）</h3>
+<table>
+<tr><th>分類</th><th>占比</th><th>FY26 成長</th></tr>
+<tr><td>Analog</td><td>~78%</td><td>+18-22%</td></tr>
+<tr><td>Embedded Processing</td><td>~16%</td><td>+12-15%</td></tr>
+<tr><td>Other</td><td>~6%</td><td>−10%（calculator 等小型）</td></tr>
+</table>
+<table>
+<tr><th>End Market</th><th>占比</th><th>FY26 成長</th></tr>
+<tr><td>Industrial</td><td>~40%</td><td>+25-30%</td></tr>
+<tr><td>Automotive</td><td>~33%</td><td>+5-8%（Auto 弱）</td></tr>
+<tr><td>Personal Electronics</td><td>~14%</td><td>+0-5%</td></tr>
+<tr><td>Communications Equipment</td><td>~7%</td><td>+25%</td></tr>
+<tr><td>Enterprise Systems / Other</td><td>~6%</td><td>+50%（含 Data Center）</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<table>
+<tr><th>指標</th><th>TXN</th><th>趨勢</th><th>同業</th></tr>
+<tr><td>每片 wafer ASP（300mm 等效）</td><td>$5K-15K（依 product）</td><td>↑（mix shift）</td><td>vs ADI 略高、Infineon 略低</td></tr>
+<tr><td>產品 LTV（典型 industrial controller）</td><td>10+ 年 product cycle</td><td>↑</td><td>業界標準</td></tr>
+<tr><td>客戶集中度</td><td>Top 100 < 50% rev</td><td>分散</td><td>vs ADI Top 10 集中度更高</td></tr>
+<tr><td>Gross Margin</td><td>58% (Q1 26) / 65% (peak)</td><td>↑（恢復）</td><td>vs ADI 64% / Infineon 41%</td></tr>
+</table>
+
+</div>
+
+<!-- §12 公司治理 -->
+<div class="section">
+<div class="section-title" id="sec-12">§12｜公司治理與資本配置</div>
+
+<h3>① 股東結構</h3>
+<ul>
+<li><strong>機構持股</strong>：90.9%（yfinance 4/24，極高）</li>
+<li><strong>內部人持股</strong>：0.29%</li>
+<li><strong>主要股東</strong>：BlackRock、Vanguard、State Street ~25-30%</li>
+<li><strong>無 dual-class 投票權</strong></li>
+<li>無 13D activist filings</li>
+</ul>
+
+<h3>② 資本配置軌跡</h3>
+<table>
+<tr><th>用途</th><th>FY24</th><th>FY25</th><th>FY26 預期</th></tr>
+<tr><td>Capex</td><td>$4.82B</td><td>$4.55B</td><td><strong>$2-3B（重要轉折）</strong></td></tr>
+<tr><td>併購</td><td>—</td><td>—</td><td>$7.5B（Silicon Labs 預期 H2 完成）</td></tr>
+<tr><td>回購</td><td>$1.0B</td><td>$1.5B</td><td>$2-3B</td></tr>
+<tr><td>分紅</td><td>$4.7B</td><td>$5.05B</td><td>$5.2B</td></tr>
+</table>
+<p><strong>評語</strong>：22 年股息紀律 + Capex 投資期準確 prioritize fab → recovery → return cash 邏輯。<strong>資本配置紀律 A 級</strong>。Silicon Labs $7.5B 是首次大型併購，整合風險中等。</p>
+
+<h3>③ 管理層薪酬</h3>
+<ul>
+<li>CEO Haviv Ilan 2025 總薪酬 ~$13M（base $1.2M + cash bonus $2.5M + equity $9M）</li>
+<li>Equity 績效掛鉤：3 年 TSR + Adj EPS + FCF + market share</li>
+<li>✅ 績效導向強</li>
+</ul>
+
+<h3>④ 過去 12 個月內部人交易</h3>
+<ul>
+<li>CEO Ilan 2025 H2 ~$5M 出售（多為 RSU vested 後 tax planning）</li>
+<li>無 13D 公告</li>
+<li>Q1 26 reaction 後 4/23 多位高管行使選擇權但未大量出售</li>
+</ul>
+
+<h3>QC-19 重大事件搜尋</h3>
+<ul>
+<li><span class="badge-beat">🟢 無集體訴訟</span></li>
+<li><span class="badge-beat">🟢 無 SEC investigation 或 restatement</span></li>
+<li><span class="badge-beat">🟢 無 CEO/CFO 異動</span>（Ilan 2023 上任，Lizardi 2017 上任）</li>
+<li><span class="badge-beat">🟢 無重大客戶流失</span></li>
+<li><span class="badge-beat">🟢 無 export control 重大影響</span>（中國 ~25% 但已調整）</li>
+<li>2026-02-04 公告 Silicon Labs $7.5B 收購（4/30 股東投票，預期 H2 完成）</li>
+<li>2024-12 CHIPS Act $1.6B 直接補助 + ITC 預期 $6-8B</li>
+</ul>
+
+</div>
+
+<!-- §13 估值 -->
+<div class="section">
+<div class="section-title" id="sec-13">§13｜估值診斷</div>
+
+<h3>13.0｜估值體系診斷</h3>
+
+<h4>A｜當前主流估值邏輯</h4>
+<table>
+<tr><th>估值邏輯</th><th>當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型（Forward PE）</td><td>主</td><td>FY+1 PE 35.95x 是市場主錨</td></tr>
+<tr><td>成長型（PEG）</td><td>輔</td><td>PEG 1.26 支撐</td></tr>
+<tr><td>EV/EBITDA</td><td>輔</td><td>30.15x（trailing 失真，cycle 期 EBITDA 受壓）</td></tr>
+<tr><td>P/FCF</td><td>輔</td><td>P/FCF (TTM) 58x；FY26 guide $7B → 36x（恢復後）</td></tr>
+<tr><td>Yield 型（dividend）</td><td>輔</td><td>22 年連調，殖利率 2.05%</td></tr>
+</table>
+
+<h4>B｜估值漂移偵測</h4>
+<ul>
+<li><strong>情境一：cycle bottom → recovery PE 提升</strong>已發生（從 cycle trough 16x 升至 36x）</li>
+<li><strong>情境二：AI server analog content 重新敘事</strong>正在發生（Q1 DC +90% YoY 觸發新 narrative）</li>
+<li><strong>情境三：Capex moderation 觸發 FCF inflection re-rate</strong>進行中</li>
+</ul>
+
+<h4>C｜估值尺可能被換掉</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>影響</th></tr>
+<tr><td>ROIC 突破 WACC</td><td>已（22% vs 9%）</td><td>price in</td></tr>
+<tr><td>管理層轉向新敘事</td><td>未顯著</td><td>仍以 EPS 為主</td></tr>
+<tr><td>同業率先獲得高倍數</td><td>ADI ~28x、MCHP ~30x，TXN 已是 Big 3 高位</td><td>難升等</td></tr>
+<tr><td>盈利成長放緩</td><td>未發生（FY26 +41%）</td><td>若 2027 H1 出現 → reset 至 25x</td></tr>
+</table>
+<p><strong>結論</strong>：<span class="badge-neutral">🟡 估值邏輯穩定接近頂端</span>──成長股估值仍主導，向上空間有限。</p>
+
+<h3>13.1｜歷史估值分位（5Y / 10Y）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y / 10Y 範圍</th><th>分位</th></tr>
+<tr><td>Trailing P/E</td><td>47.37x</td><td>10Y 15-41x（除 2017 異常 74x）；中位 23x</td><td>~95%</td></tr>
+<tr><td>Forward P/E (NTM)</td><td>30.69x</td><td>5Y 15-38x；中位 26-29x</td><td><strong>68%</strong></td></tr>
+<tr><td>Forward P/E (FY+1 only)</td><td>35.95x</td><td>5Y 15-38x</td><td><strong>91%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>30.15x</td><td>5Y 12-32x</td><td>~91%</td></tr>
+<tr><td>P/FCF</td><td>58x（cycle 失真）</td><td>5Y 15-65x</td><td>~85%</td></tr>
+<tr><td>P/S</td><td>14.3x</td><td>5Y 7-15x</td><td>~91%</td></tr>
+</table>
+<p><strong>解讀</strong>：FY+1 only PE 91% 分位已逼近 cycle peak；NTM blended 68% 分位較合理。當前估值情緒為「合理偏熱接近頂」。</p>
+
+<h3>13.2｜PEG</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>NTM PE</td><td>30.69x</td><td>—</td></tr>
+<tr><td>3Y EPS CAGR</td><td>24.3%</td><td>—</td></tr>
+<tr><td><strong>PEG（3Y）</strong></td><td><strong>1.26</strong></td><td>< 1.5 合理</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~17%</td><td>—</td></tr>
+<tr><td>PEG（5Y）</td><td>1.81</td><td>1-2 合理</td></tr>
+</table>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>市值</td><td>$252.2B</td></tr>
+<tr><td>FCF 基期</td><td>$2.60B（FY25，cycle trough）/ TTM $4.35B</td></tr>
+<tr><td>WACC</td><td>9.0%（10Y UST 4% + Beta 0.99 × ERP 5.5%）</td></tr>
+<tr><td>永續成長</td><td>3.0%</td></tr>
+</table>
+<p>使 DCF = $252.2B，所需前 10 年 FCF CAGR ≈ <strong>16-19%</strong>（用 FY25 base）；用 TTM base 則 ~10-12%。</p>
+<p><strong>判斷</strong>：<span class="badge-neutral">🟡 隱含預期合理</span>──若 cycle recovery + Capex moderation 順利，FCF 從 $2.6B 5 年後可達 $9-10B（CAGR 30%+）；隱含 16-19% 屬保守。</p>
+
+<h3>13.4｜同業估值</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>FY+1 PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR</th><th>ROIC</th></tr>
+<tr class="bull-row"><td><strong>TXN</strong></td><td>$252B</td><td>35.95x</td><td>30.15x</td><td>1.26 (NTM)</td><td>14.7% / TTM 24.6%</td><td>24.3%</td><td>22%</td></tr>
+<tr><td>ADI</td><td>$130B</td><td>~28x</td><td>~22x</td><td>~1.5</td><td>~25%</td><td>~13%</td><td>~12%</td></tr>
+<tr><td>MCHP</td><td>$45B</td><td>~30x</td><td>~25x</td><td>~1.6</td><td>~28%</td><td>~17%</td><td>~14%</td></tr>
+<tr><td>Infineon</td><td>~$60B</td><td>~22x</td><td>~12x</td><td>~1.8</td><td>~12%</td><td>~10%</td><td>~14%</td></tr>
+<tr><td>STMicro</td><td>~$30B</td><td>~17x</td><td>~10x</td><td>~2.0</td><td>~10%</td><td>~8%</td><td>~12%</td></tr>
+<tr><td>ON</td><td>~$35B</td><td>~17x</td><td>~13x</td><td>~1.5</td><td>~12%</td><td>~10%</td><td>~16%</td></tr>
+<tr><td>產業中位</td><td>—</td><td>~25x</td><td>~16x</td><td>~1.6</td><td>~16%</td><td>~12%</td><td>~14%</td></tr>
+</table>
+<p>TXN FY+1 PE 35.95x vs 中位 25x = +44% 溢價。支持溢價：① ROIC 22% vs 中位 14% (+57%)；② Big 3 規模優勢；③ 22 年股息紀律。若 reset 至中位 25x = $192.83 = -30%。</p>
+
+<h3>QC-30 同業溢價收斂壓測</h3>
+<p>TXN +44% 溢價 < 50% 觸發閾值，邊緣。情境 B（收斂 50% 至 30x）→ $231（−17%）。</p>
+
+<h3>13.5｜估值五角驗證 + 結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系（13.0）</td><td>🟡 穩定接近頂</td><td>FY+1 91% 分位接近 cycle peak</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟠 偏熱（NTM 68%、FY+1 91%）</td><td>—</td></tr>
+<tr><td>PEG（13.2）</td><td>🟢 合理（PEG 1.26）</td><td>3Y CAGR 24% 支撐</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 隱含合理</td><td>16-19% FCF CAGR 可達</td></tr>
+<tr><td>同業相對（13.4）</td><td>🟡 +44% 溢價有支撐</td><td>ROIC 2x 同業</td></tr>
+</table>
+<p><strong>當前定價判斷</strong>：<span class="badge-neutral">🟡 公允定價偏熱</span>──成長 outpace 倍數，但 cushion 有限；FY+1 91% 分位是壓縮觸發點。</p>
+
+<h3>長期合理倍數</h3>
+<p>基準 25x（capital goods）+ 11x 調整（護城河 9 + Runway 10Y + AI 🟢）= 36x；引擎 B（PEG 1.26）×1.2 = 31x（取較嚴端）。<strong>合理區間：30-36x adj NTM PE</strong>。當前 NTM 30.69x 在合理區間下緣，FY+1 only 35.95x 在區間上緣。</p>
+
+<p><strong>分析師目標價</strong>：高 $330（Rosenblatt）/ 中位 $295-320 / 低 $200（GS Sell）；n=24+。<strong>共識中位 $310 隱含 +12% 上行</strong>。</p>
+
+<h3>投資結論（§13.5 完整版）</h3>
+<ul>
+<li><strong>H1（cycle recovery）</strong>：<span class="badge-beat">＋＋強化</span></li>
+<li><strong>H2（Capex moderation）</strong>：<span class="badge-beat">＋＋強化</span></li>
+<li><strong>H3（GM 回升）</strong>：<span class="badge-beat">＋強化</span></li>
+<li><strong>綜合訊號 B</strong>（衛星候選）：quality A + gate 🟡 + MA 🟡 + trap 🟢；倉位由 PM skill 決定</li>
+<li><strong>短期信號</strong>：catalyst 強但 +33.6% 漂移已 100% pricing in；建議分批等回測 $230-250</li>
+<li><strong>中期能見度</strong>：FY+1 / FY+2 EPS 上修速度 +25%/+17% 是高確信信號</li>
+<li><strong>長期信心</strong>：高（Munger compounder + Big 3 寡占 + 22 年股息）</li>
+<li><strong>下行風險</strong>：Bear 短期 $138.83 / 中期 $157.66；實際短期回檔合理 -10-20% 至 $230-250</li>
+</ul>
+
+</div>
+
+<!-- 版本修訂 -->
+<div class="section">
+<div class="section-title">版本修訂紀錄</div>
+<table>
+<tr><th>日期</th><th>Schema</th><th>最終裁決</th><th>關鍵變動</th></tr>
+<tr><td><strong>2026-04-25</strong></td><td><strong>v12.0</strong></td><td><strong>B 訊號（衛星候選，嚴格分批禁止追高）</strong></td><td><strong>首次 v12 覆蓋。Q1 FY26（4/22 AMC）beat-and-raise + Industrial cycle bottom 確認 + 25 年最大單日漲幅（+19.4% on 4/23）。Q1 數據：Rev $4.825B (+19%) / GAAP EPS $1.68 / GM 58.0% / Industrial +30% / DC +90% / Capex $676M (-40%) / FCF TTM $4.35B (+154%)。Q2 guide raise: Rev $5.0-5.4B / EPS $1.77-2.05。FY+1 EPS 90d 上修 +25.4%、FY+2 +16.5%。<br>v12.0 三軸：A / 🟡（盲點 1 救援後）/ 🟡（MA 減半）；綜合 B（A 級被 MA 抵消）。<br>QC-22 嚴重警示：4 週漂移 +33.60%，已突破 Bollinger 上軌 10%；建議分批等 $230-250 區間。<br>關鍵風險：MS / GS 維持 Sell（PT $200-221）；FY+1 PE 91% 分位接近 cycle peak。</strong></td></tr>
+</table>
+</div>
+
+</div>
+</body>
+</html>
