@@ -117,6 +117,8 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
           <a href="/earnings/">財報分析</a>
           <a href="/weekly/">週報</a>
           <a href="/six-state/">六狀態機</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
         </div>
       </div>
       <div class="imq-dd">
@@ -125,6 +127,8 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
           <a href="/backtest/">量化回測</a>
           <a href="/qgm/">QGM 美股</a>
           <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
         </div>
       </div>
       <a href="/how-to.html" class="active">📘 使用說明</a>
@@ -554,6 +558,67 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
   </div>
 </div>
 
+
+<!-- ========== 自動更新頁面 ========== -->
+<div class="skill-card">
+  <div class="skill-head" style="background:linear-gradient(90deg,#D1FAE5 0%,#fff 60%)">
+    <div class="skill-icon">🤖</div>
+    <div class="skill-title">
+      <h2 style="color:#065F46">自動更新頁面 — Markets / Sectors / Screener</h2>
+      <div class="sub">GitHub Actions 定時排程，無需人工介入；亦可手動觸發</div>
+    </div>
+    <div class="skill-meta">scripts/ + .github/workflows/</div>
+  </div>
+  <div class="skill-body">
+    <table>
+      <tr><th width="18%">頁面</th><th width="20%">網址</th><th width="26%">更新內容</th><th width="18%">排程</th><th>手動觸發</th></tr>
+      <tr>
+        <td><strong>Markets</strong></td>
+        <td><code>/markets.html</code></td>
+        <td>28 個全球指數 level、YTD、RS + Trend（benchmark VT）</td>
+        <td>每週六 08:00 TW（00:00 UTC）</td>
+        <td rowspan="2">GitHub → Actions → <em>Weekly Market Update</em> → Run workflow</td>
+      </tr>
+      <tr>
+        <td><strong>Sectors</strong></td>
+        <td><code>/sectors.html</code></td>
+        <td>美股 23 檔板塊 ETF price、YTD、PE、AUM</td>
+        <td>每週六 08:00 TW（同上）</td>
+      </tr>
+      <tr>
+        <td><strong>Screener 美股</strong></td>
+        <td><code>/screener.html</code></td>
+        <td>QGM 選股清單（latest.json + fundamentals.json）</td>
+        <td>每日 06:30 TW（22:30 UTC 前日）</td>
+        <td>GitHub → Actions → <em>Daily Screener US</em> → Run workflow</td>
+      </tr>
+      <tr>
+        <td><strong>Screener 台股</strong></td>
+        <td><code>/screener-tw.html</code></td>
+        <td>QGM 台股選股清單（tw_latest.json + tw_fundamentals.json）</td>
+        <td>每日 07:00 TW（23:00 UTC 前日）</td>
+        <td>GitHub → Actions → <em>Daily Screener TW</em> → Run workflow</td>
+      </tr>
+    </table>
+
+    <div class="tips" style="margin-top:12px"><strong>⚡ 手動觸發步驟</strong>：GitHub repo 頁面 → 上方 <strong>Actions</strong> tab → 左側選對應 workflow → 右側 <strong>Run workflow</strong> 按鈕 → 選 <code>main</code> branch → <strong>Run workflow</strong>。約 1-3 分鐘後 commit 自動推上 main，頁面即更新。</div>
+
+    <div class="tips" style="margin-top:8px"><strong>⚡ 腳本位置</strong>：
+      <code>scripts/update_markets.py</code>（Markets + Sectors）、
+      <code>scripts/screener.py</code>（美股）、
+      <code>scripts/screener_tw.py</code>（台股）。
+      資料寫入 <code>docs/markets.html</code>、<code>docs/sectors.html</code>、<code>docs/screener/latest.json</code> 等，GitHub Actions 自動 commit + push。
+    </div>
+
+    <div class="tips" style="margin-top:8px"><strong>⚡ 不更新的欄位</strong>：PE、PB、PEG、EPS 成長率、展望、P/NAV 等基本面敘述欄位需人工維護，腳本只更新量化市場數據。</div>
+
+    <div class="example">
+      <span class="you">你：</span>（想立刻刷新 Markets 數據）<br>
+      <span class="bot">做法：</span> GitHub → Actions → Weekly Market Update → Run workflow；或在本地執行 <code>python scripts/update_markets.py</code>（需已安裝 yfinance）
+    </div>
+  </div>
+</div>
+
 <!-- ========== Skill 版本 Changelog (D4, 2026-04-24) ========== -->
 <div class="skill-card">
   <div class="skill-head" style="background:linear-gradient(90deg,#EDE9FE 0%,#fff 60%)">
@@ -585,7 +650,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 </div>
 
 <div class="footer">
-  InvestMQuest Research · 使用說明 v1.2 · 2026-04-24<br>
+  InvestMQuest Research · 使用說明 v1.3 · 2026-04-25<br>
   Skill 版本：stock-analyst v12.0 · <strong>industry-analyst v1.7</strong> · portfolio-manager v1.1 · geopolitics-dd v1.0
 </div>
 </body>
