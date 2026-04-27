@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>TPR｜Tapestry Inc. 深度研究報告 v12.1</title>
+<meta name="dd-schema-version" content="v12.1">
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "TPR",
+  "schema": "v12.1",
+  "date": "2026-04-27",
+  "price_at_dd": 145.89,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期（時尚動能 mean reversion 風險）",
+  "moat": "B",
+  "val": "🔴",
+  "ma": "✅",
+  "fpe_fy2": 20.23,
+  "pct_5y": 95,
+  "peg_fy2": 1.83,
+  "upside_short_pct": -33.2,
+  "upside_mid_pct": -25.9,
+  "stress": {"pass": 5, "total": 5},
+  "moat_score": 6,
+  "growth_durability": 6,
+  "quality_score": 8.5,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "verdict": "觀望（估值🔴 + 時尚動能風險）",
+  "oneliner": "Coach Gen Z 復興 + 中國 +34% 結構轉變真實，FY+1 EPS YoY +27%，但現價 FPE 20x 為 5Y 95+ 分位（5Y 均 11.5），時尚動能 mean reversion 風險，落 B。"
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1F2937; margin: 0; padding: 0; line-height: 1.7; }
+  .header-bar { position: sticky; top: 0; background: #1E3A5F; color: #fff; padding: 10px 24px; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .header-bar .meta { font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  .header-bar .meta strong { color: #93C5FD; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 28px; color: #1E3A5F; margin: 16px 0 4px; }
+  h2 { font-size: 22px; color: #fff; background: #1E3A5F; padding: 10px 16px; border-left: 4px solid #3B82F6; margin: 36px 0 16px; scroll-margin-top: 60px; }
+  h2[id^="sec-"] { scroll-margin-top: 60px; }
+  h3 { font-size: 18px; color: #1E3A5F; margin: 24px 0 12px; border-bottom: 2px solid #E5E7EB; padding-bottom: 6px; }
+  h4 { font-size: 16px; color: #1E3A5F; margin: 20px 0 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; background: #fff; font-size: 14px; }
+  th { background: #1E3A5F; color: #fff; padding: 10px; text-align: left; font-weight: 500; }
+  td { padding: 10px; border-bottom: 1px solid #E5E7EB; vertical-align: top; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  .badge-green { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-red { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-yellow { background: #FEF9C3; color: #92400E; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-blue { background: #EFF6FF; color: #1E40AF; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-orange { background: #FFEDD5; color: #C2410C; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px; margin: 16px 0; }
+  .hypothesis-box h3 { color: #1E3A5F; border: none; margin-top: 0; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 16px; margin: 16px 0; }
+  .warning-box h3 { color: #C2410C; border: none; margin-top: 0; }
+  .scenario-bull { background: #DCFCE7; }
+  .scenario-base { background: #FEF9C3; }
+  .scenario-bear { background: #FEE2E2; }
+  .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .debate-card { padding: 16px; border-radius: 4px; }
+  .debate-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .debate-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .debate-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .verdict-box { background: #FFFBEB; border-left: 4px solid #D97706; padding: 16px; margin: 16px 0; }
+  .verdict-box h3 { color: #92400E; border: none; margin-top: 0; }
+  .note { font-size: 13px; color: #6B7280; margin-top: 8px; }
+  .print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #fff; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+  .print-btn:hover { background: #2563EB; }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  .dd-toc { background: #fff; border: 1px solid #E5E7EB; padding: 12px; margin: 12px 0 24px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { background: #EFF6FF; color: #1E3A5F; padding: 4px 10px; border-radius: 12px; text-decoration: none; font-size: 13px; }
+  .dd-toc a:hover { background: #DBEAFE; }
+  @media print {
+    .header-bar, .print-btn, .dd-toc { display: none !important; }
+    body { background: #fff; }
+    .container { max-width: 100%; padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div><strong>TPR</strong> ｜ Tapestry, Inc.（Coach + Kate Spade + Stuart Weitzman）</div>
+  <div class="meta">資料抓取：<strong>2026-04-27</strong> ｜ 最新股價：<strong>$145.89</strong> ｜ Schema <strong>v12.1</strong></div>
+</div>
+
+<div class="container">
+
+<nav class="dd-toc">
+  <a href="#sec-1">§1 結論</a>
+  <a href="#sec-12">§12 R:R</a>
+  <a href="#sec-13">§13 辯論</a>
+  <a href="#sec-2">§2 序章</a>
+  <a href="#sec-3">§3 論點</a>
+  <a href="#sec-4">§4 財報</a>
+  <a href="#sec-5">§5 門檻</a>
+  <a href="#sec-6">§6 成長</a>
+  <a href="#sec-7">§7 護城河</a>
+  <a href="#sec-8">§8 財務</a>
+  <a href="#sec-9">§9 產業</a>
+  <a href="#sec-10">§10 治理</a>
+  <a href="#sec-11">§11 估值</a>
+</nav>
+
+<h1>Tapestry, Inc.（TPR）— 完整 DD v12.1</h1>
+<p class="note">資料抓取時間：2026-04-27（美東時間）｜ 最新股價：$145.89｜ 最近財報季：Q2 FY2026（quarter ended 2026-01，2026-02-05 公告）｜ 1 年 +119% 動能</p>
+
+<!-- ============ §1 ============ -->
+<h2 id="sec-1">§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<h3>結論 Dashboard</h3>
+<div class="hypothesis-box">
+<ul>
+  <li><strong>品質 A 級（8.5 分）：</strong>護城河 6/10（Coach 在「accessible luxury」前 11% 市佔 + Gen Z 真實復興 + 中國 +34% 高速擴張，但時尚品牌本質非永久壁壘）+ 成長持久性 6/10（Runway 5-7 年）+ 體質 +2.5（5/5 全過）</li>
+  <li><strong>估值 🔴（FPE FY+2 20.23x，5Y 95+ 分位）：</strong>5Y 平均 FPE 11.48，當前嚴重高於均值；PEG（1Y growth）1.83 落 1-2 區間維持 75th，但 5Y 75th 僅 ~14-15x，現價對應的 mean reversion 風險顯著</li>
+  <li><strong>短期（1Y）：</strong>FY+1（FY26）EPS $6.50（YoY +27.4%），目標價 $97.50 vs 現價 $145.89，<span class="badge-red">短期 R:R −0.61x</span></li>
+  <li><strong>中期（2Y）：</strong>FY+2（FY27）EPS $7.21（YoY +11%）、目標 $108.15 vs 現價，<span class="badge-red">中期 R:R −0.47x</span></li>
+  <li><strong>建議：</strong>觀望（不新進）。已持倉者部分獲利了結至目標倉位 30-50%（保留尾段參與動能），新進者等回檔至 BB 中軌 $140 附近且 Q3 FY26（5/8 公告）GM 確認穩定後再評估。</li>
+  <li><strong>同主題比較：</strong>vs Capri Holdings（CPRI，深陷 Michael Kors 衰退）、LVMH（高級奢侈品但已龐大）、Hermès（極端溢價）。TPR 是「accessible luxury 動能股」純度最高，但動能消耗後 mean reversion 最大。</li>
+  <li><strong>長期持有信心：中</strong>（§12 G Coach 復興真實但時尚品牌週期難以超過 5 年；Kate Spade 仍在拖累；中國成長 sustainable 但 LVMH/Hermès 滲透壓力升級）｜<strong>陷阱定性：</strong><span class="badge-yellow">🟡 觀察期</span> — 非典型陷阱（FPE 高非低），時尚動能 mean reversion 風險</li>
+</ul>
+</div>
+<p class="note">判定：<strong>觀望</strong>（§12 E 短期 R:R &lt; 2 且中期 R:R &lt; 2，且雙時距 R:R 皆為負）｜底倉 0%（暫不建倉）；已持倉者建議降至目標倉位 30-50%。</p>
+<p class="note">底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比（典型 8-15%/檔）。</p>
+
+<div class="warning-box">
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式？</td><td><strong>非典型「便宜陷阱」，反方向是「動能溢價陷阱」</strong>。FPE 20x 已大幅高於 5Y 均 11.48x，市場定價假設 Coach Gen Z 復興 + 中國高速擴張可永久持續。歷史上時尚品牌的 hot moment 通常 3-5 年（Coach 自身 2010-2013 也曾擁有相同 narrative，最終週期反轉）。風險不是「便宜變更便宜」而是「貴變回正常」。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據？</td><td>(1) Coach Q2 FY26 +25% YoY，新增 2.9M 客戶（Gen Z 主導），Tabby/Brooklyn hobo 為當代 it-bag；(2) 中國市場 +34% YoY 結構性擴張至 Tier 2-3 城市；(3) FY26 guide 上調至 EPS $6.40-6.45（隱含 +25% YoY）；(4) FCF $1.42B 強勁、ROIC 5Y 平均 18.5%；(5) 體質 5/5 全過。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁？</td><td>(1) 5Y 平均 FPE 11.48，現價 20.23x 已透支 +76% 歷史均值；(2) Beta 1.61 高消費敏感性，遇消費降級立即被棄；(3) Kate Spade 持續衰退（FY26 高個位數負成長）拖累，公司 36% 營收非 Coach；(4) FTC 阻擋 Capri 併購後策略真空，無 inorganic 成長路徑；(5) 時尚 it-bag 通常 3-5 年週期，Tabby 已熱賣 2 年；(6) Beta 1.61 + 高估值在消費衰退期是雙重打擊。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生？</td><td>領先指標：(1) <strong>Coach 同店銷售（comparable sales）</strong>：管理層公布的 Coach 同店或 organic growth 連 2 季 &lt; 10% 即動能轉折信號；(2) <strong>北美營收 YoY</strong>：北美是最敏感的消費信號，連 1 季轉負為高風險；(3) <strong>Greater China YoY</strong>：從 +34% 降至 &lt; 15% = 中國競爭加劇 / 消費放緩。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge-yellow">🟡 觀察期</span> — 動能真實但估值已透支多年完美執行；非典型陷阱形態。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Coach 同店或 organic growth（季度）</td><td>§3 H1 / §4</td><td>🔵 核心假設驗證信號</td><td>連 2 季 &lt; 10% = 動能轉折；&lt; 5% = thesis 失敗</td></tr>
+<tr><td>2</td><td>Greater China revenue YoY</td><td>§3 H2 / §6</td><td>🔵 結構性成長確認</td><td>連 1 季 &lt; 15% = 中國成長放緩</td></tr>
+<tr><td>3</td><td>Forward P/E vs 5Y 均（11.48x）</td><td>§11.1</td><td>估值修復信號</td><td>FPE &lt; 15x = 進入合理進場區間</td></tr>
+</table>
+
+<!-- ============ §12 ============ -->
+<h2 id="sec-12">§12 品質分驅動雙時距 R:R（v11.0/v12.1）</h2>
+
+<h3>A｜體質檢核（加減分）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td><span class="badge-green">✅ +0.5</span></td><td>GM TTM 76.0%，FY24 ~73%、FY25 ~74%、FY26 H1 ~76%（持續擴張，Coach 高 mix 效應）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge-green">✅ +0.5</span></td><td>TTM FCF $1.42B / TTM NI ~$520M = 2.7x（正常化後 ~1.3x，皆 &gt; 0.7）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge-green">✅ +0.5</span></td><td>FY26 共識：90 天前 $5.65 → 60 天 $6.50 → 當前 $6.50（Q2 FY26 beat & raise 後 +15%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge-green">✅ +0.5</span></td><td>Q2 FY26 +14%、Q1 FY26 +6%、Q4 FY25 +6%、Q3 FY25 +3%（全季正成長）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge-green">✅ +0.5</span></td><td>Total Debt $3.94B − Cash $1.08B = Net Debt $2.86B；TTM EBITDA ~$1.7B；ND/EBITDA = 1.68x</td></tr>
+</table>
+<p><strong>體質加減分 = +2.5</strong>（5/5 全過）</p>
+<p class="note">⚠️ 警示：毛利率擴張、EPS 上修、營收成長三項皆受惠於 Coach 動能週期。下個時尚週期反轉時這些項目可能瞬間翻轉。</p>
+
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數（1-10）</th><th>說明</th></tr>
+<tr><td>護城河</td><td>§7 評分</td><td>6</td><td>Coach 品牌（accessible luxury 11% 市佔）+ vertically integrated retail + 80+ 年品牌歷史，但時尚品牌本質非永久</td></tr>
+<tr><td>成長持久性</td><td>§6 綜合（Runway + 品質 + AI 影響）</td><td>6</td><td>Runway 5-7 年（Coach 全球擴張 + Gen Z 第一波）+ AI 中性</td></tr>
+</table>
+<p><strong>底分</strong> = (6 + 6) / 2 = <strong>6.0</strong></p>
+<p><strong>品質分</strong> = min(6.0 + 2.5, 10) = <strong>8.5</strong></p>
+<p class="note">⚠️ <strong>分析師判斷介入：</strong>體質滿分受惠週期反彈，正規化體質應視為 +1.5（毛利率擴張 + EPS 上修週期性）。<strong>正規化品質分 = 7.5（A 級下緣）</strong>。本報告以 8.5 為對外結論，但決策時以 7.5 認知。</p>
+
+<table>
+<tr><th>品質分</th><th>等級</th><th>底倉（目標倉位的%）</th></tr>
+<tr><td>≥ 7.5</td><td><strong>A 級</strong></td><td>25%</td></tr>
+</table>
+<p>本標的品質分：<strong>8.5</strong>，品質等級：<strong>A 級</strong></p>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY26，6 月年結）</td><td>$6.50</td><td>yfinance 共識（n=21 分析師），YoY +27.4%</td></tr>
+<tr><td>FY+2 EPS（FY27）</td><td>$7.21</td><td>yfinance 共識（n=21），YoY +11.0%</td></tr>
+<tr><td>FY+2 成長率</td><td>+11.0%</td><td>(7.21 / 6.50) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>22.45x</td><td>$145.89 ÷ $6.50</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>20.23x</td><td>$145.89 ÷ $7.21</td></tr>
+</table>
+
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+
+<h4>步驟一：歷史錨點</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>5Y Forward P/E 平均</td><td>11.48x（StockAnalysis 來源）</td></tr>
+<tr><td>5Y Forward P/E 中位數</td><td>~10x（估計）</td></tr>
+<tr><td>5Y Forward P/E 75th percentile</td><td>~14-15x（估計，採 14x 偏保守）</td></tr>
+<tr><td>5Y Forward P/E 高點</td><td>~20x（當前）</td></tr>
+<tr><td><strong>基礎值（75th）</strong></td><td><strong>14x</strong></td></tr>
+</table>
+
+<h4>步驟二：PEG 調節</h4>
+<p>PEG（FY+2 base，1Y growth） = 20.23 ÷ 11.0 = <strong>1.84</strong>（合理區間 1-2）</p>
+<p>PEG（3Y CAGR base） = 20.23 ÷ 15.8 = <strong>1.28</strong>（合理偏便宜）</p>
+
+<table>
+<tr><th>PEG 區間</th><th>調整規則</th><th>本標的適用</th></tr>
+<tr><td>1.0 ≤ PEG ≤ 2.0</td><td>維持 75th 不動</td><td>PEG 1.84 落此區間，維持 14x</td></tr>
+</table>
+
+<h4>步驟三：品質溢價</h4>
+<p>步驟二未下壓（PEG 1-2），品質溢價不適用（v11.0 規則）。</p>
+
+<h4>分析師判斷介入</h4>
+<p>採 <strong>15x</strong> 為合理 PE：(1) 品質 A 級下緣（正規化 7.5）+ AI 中性 = 略加 0.5x；(2) Coach 動能真實貢獻 +0.5x；(3) 但 Beta 1.61 高消費敏感性 −0.5x。淨採 15x（與 75th + 1x 的中間值相當）。</p>
+
+<p><strong>合理 P/E = 15x</strong>（5Y 75th = 14x，加 1x 反映當前動能與品質）</p>
+
+<h3>E｜雙時距目標價與 R:R</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td><strong>短期（1年）</strong></td><td>FY+1 EPS × 合理 P/E = $6.50 × 15</td><td>$97.50</td></tr>
+<tr><td><strong>中期（2年）</strong></td><td>FY+2 EPS × 合理 P/E = $7.21 × 15</td><td>$108.15</td></tr>
+</table>
+<p class="note">合理 PE 15x 反映 5Y 75th 區間，與分析師中位 PT $135 存在 22% 的差距——分析師多採當前 PE 22x 對未來 EPS 推估，但本報告採 mean-reversion 框架。若市場願維持當前 22x 估值，短期目標可達 $143、中期 $159（接近現價），但這假設估值不修復。</p>
+
+<h4>下檔錨點（基本面 Bear Case，§6E）</h4>
+<table>
+<tr><th>項目</th><th>短期（1年）</th><th>中期（2年）</th></tr>
+<tr><td>Bear PE（成長率回到 5%、§6E）</td><td>10x</td><td>10x</td></tr>
+<tr><td>Bear EPS（FY+1 共識 × 0.85，反映消費降級 + Coach 動能轉折）</td><td>$6.50 × 0.85 = $5.53</td><td>$7.21 × 0.75 = $5.41</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td><strong>$55</strong></td><td><strong>$54</strong></td></tr>
+</table>
+
+<p><strong>W52/W104 參考</strong>（yfinance）：</p>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$145.89</td></tr>
+<tr><td>W52 Low（參考）</td><td>$67.22</td></tr>
+<tr><td>W104 Low（參考）</td><td>$34.10（2024 Capri 案破局時期極端低點）</td></tr>
+<tr><td>W52 High</td><td>$161.97</td></tr>
+</table>
+<p class="note">Bear 股價 $55 接近 W52 Low $67，Bear case 略保守於 W52 Low。若採 W52 Low 作下檔（v11.0 規則），下檔錨點為 $67.22。</p>
+
+<h4>雙 R:R 計算（採 W52 Low $67.22 為下檔，較 Bear $55 更務實）</h4>
+<table>
+<tr><th></th><th>短期（1年）</th><th>中期（2年）</th></tr>
+<tr><td>目標價</td><td>$97.50</td><td>$108.15</td></tr>
+<tr><td>上行空間</td><td>−33.2%</td><td>−25.9%</td></tr>
+<tr><td>下檔錨點（W52 Low）</td><td>$67.22</td><td>$67.22</td></tr>
+<tr><td>下行距離</td><td>−53.9%</td><td>−53.9%</td></tr>
+<tr><td><strong>R:R</strong></td><td><span class="badge-red">−0.61x（深負）</span></td><td><span class="badge-red">−0.47x（深負）</span></td></tr>
+</table>
+
+<h4>判定（v11.0 四級裁決）</h4>
+<table>
+<tr><th>條件</th><th>結果</th></tr>
+<tr><td>短期 R:R ≥ 2.0 且中期 R:R ≥ 2.0</td><td>❌ 不過</td></tr>
+<tr><td>僅中期 R:R ≥ 2.0</td><td>❌ 不過</td></tr>
+<tr><td>中期 R:R ≥ 1.0 且品質 A 級且長期持有信心 = 高</td><td>❌ 不過（中期 −0.47x，長期信心 = 中）</td></tr>
+<tr><td>都不過</td><td>✅ → <strong>觀望（時機+估值雙不過）</strong></td></tr>
+</table>
+<p><strong>本標的判定：觀望</strong>（時機與估值皆不過；signal grade 對映 §QC-31 = <strong>B 觀望</strong>，因 thesis 完整但估值🔴極端，非 thesis 失敗）</p>
+
+<h3>F｜建倉建議（品質定基礎 × Bollinger 微調）</h3>
+
+<h4>Bollinger 位置（週線 2σ，20 週 SMA）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>20 週 SMA</td><td>$140.19</td></tr>
+<tr><td>週線 BB 上軌（2σ）</td><td>$161.99</td></tr>
+<tr><td>週線 BB 下軌（2σ）</td><td>$118.40</td></tr>
+<tr><td>現價</td><td>$145.89</td></tr>
+<tr><td>現價位置</td><td><span class="badge-yellow">合理（軌道之間，略高於中軌 +4%）</span></td></tr>
+<tr><td>部位調整係數</td><td>×1.0</td></tr>
+</table>
+
+<h4>最終部位</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基礎部位（A 級查表）</td><td>25%</td></tr>
+<tr><td>Bollinger 調整係數</td><td>×1.0</td></tr>
+<tr><td><strong>原機械式建議</strong></td><td>25%</td></tr>
+<tr><td><strong>分析師最終覆寫</strong></td><td><strong>0%（觀望，符合 §12 E 雙負 R:R）</strong></td></tr>
+</table>
+<p class="note">分析師覆寫理由：§12 E 短中期 R:R 雙深負（−0.61 / −0.47），目標價（合理 PE × FY EPS）皆顯著低於現價。已持倉者建議獲利了結至目標倉位 30-50%（保留尾段 + 紀律出脫部分高估值風險）。</p>
+
+<h3>G｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§6A</td><td>剩一半（accessible luxury TAM CAGR 6.8%，Coach 已 11% 市佔，自然空間有限；中國 Tier 2-3 + Gen Z 為主要剩餘空間）</td></tr>
+<tr><td>護城河趨勢</td><td>§7</td><td>穩定（Coach 動能擴張中，但時尚品牌本質非永久壁壘）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合判斷</td><td><strong>中</strong></td></tr>
+</table>
+<p>一句話：<strong>TPR / Coach 是 2024-2026 fashion 復興的最佳代表，但時尚品牌的「火紅期」歷史上很少持續超過 5 年。</strong>當前估值已 priced in Coach + 中國雙引擎連續強勁，缺乏 margin of safety 抗 Gen Z 興趣轉移、消費降級、或 Capri-style 對手反撲。</p>
+
+<!-- ============ §13 ============ -->
+<h2 id="sec-13">§13 三方辯論摘要</h2>
+
+<div class="debate-grid">
+  <div class="debate-card debate-bull">
+    <h3>多頭辯護人｜Charlie Munger 模式</h3>
+    <table>
+    <tr><th>#</th><th>進場論據</th></tr>
+    <tr><td>1</td><td><strong>Coach 品牌復興真實</strong>：Q2 FY26 +25% YoY，新增 2.9M 客戶，Tabby/Brooklyn 成為 Gen Z 一致認可 it-bags。Coach 美股稀缺的「真實品牌動能」，與 LULU、ON 一系列消費 quality compounders 並列。</td></tr>
+    <tr><td>2</td><td><strong>中國 +34% 結構性擴張</strong>：Tier 2-3 城市渗透 + Gen Z 認知差異化 vs LVMH/Hermès 高端，「accessible luxury」是中國中產階層真實 sweet spot，未來 5 年成長空間明確。</td></tr>
+    <tr><td>3</td><td><strong>體質滿分 + 雙位數成長 + Beta 已 priced in</strong>：5/5 體質檢核全過、ROIC 5Y 平均 18.5%、FCF $1.42B 強勁、Net Debt/EBITDA 1.68x 健康、FY26 EPS YoY +27%。在標普 500 平均 +5% EPS 成長環境中，TPR 是稀缺的高成長 + 高品質 + 已被定價認可的標的。</td></tr>
+    </table>
+    <p><strong>多頭最強一句話：</strong>「Coach 是美國時尚史上最少有的『二度復興品牌』，60 歲品牌靠 Tabby 重新獲得 Gen Z 認證——這種品牌再生力是 LVMH 也夢寐以求的。」</p>
+  </div>
+
+  <div class="debate-card debate-bear">
+    <h3>空頭檢察官｜Michael Burry 模式</h3>
+    <table>
+    <tr><th>#</th><th>虧損觸發情境</th></tr>
+    <tr><td>1</td><td><strong>It-bag 週期反轉</strong>（基本面）：歷史上 Tabby 級別 it-bag 平均壽命 3-5 年。Tabby 自 2024 紅至今已 2 年。當下一個 hot bag 出現時，Coach 同店銷售即從 +25% 切換至 0% 在 3-6 個月內，FY27 EPS $7.21 下修至 $5.50，市場立即重估 PE 從 22x 至 14x，股價 $146 → $77（−47%）。</td></tr>
+    <tr><td>2</td><td><strong>消費降級 + Beta 1.61 雙重打擊</strong>（估值壓縮）：accessible luxury 是消費降級首先放棄的支出（人們會買 Coach 但不會買 LV，但會放棄 Coach 改買 Walmart）。若 2026 H2 消費衰退，Beta 1.61 意味跌幅是市場 1.6 倍。</td></tr>
+    <tr><td>3</td><td><strong>FTC 阻擋 Capri 後策略真空</strong>（催化劑觸發）：管理層 2 年無 inorganic 成長路徑，純靠 Coach 有機。Kate Spade 持續衰退（FY26 高個位數負成長），Stuart Weitzman 微小無關。一旦 Coach 動能退潮，沒有第二引擎接力。</td></tr>
+    </table>
+    <p><strong>空頭最大威脅：</strong>「2010-2013 Coach 也曾擁有相同 narrative：Gen X 復興、中國高速、估值 PE 18x。後續 5 年股價跌 60%、品牌淪為 outlet 折扣商，2017 才靠收購 Kate Spade、改名 Tapestry 重啟。歷史不會原樣重複，但會押韻——20x FPE 給時尚動能股是教科書級別的買貴賣便宜。」</p>
+  </div>
+
+  <div class="debate-card debate-arb">
+    <h3>估值仲裁員｜Aswath Damodaran 模式</h3>
+    <table>
+    <tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+    <tr><td>與過去 3 年實際 FCF CAGR 差距</td><td>FY23-25 FCF CAGR ~12% vs 隱含 18%，略高</td><td>1/2</td></tr>
+    <tr><td>與分析師 EPS CAGR 共識一致性</td><td>3Y CAGR 15.8% 隱含 ≈ 共識 14-15%</td><td>2/2</td></tr>
+    <tr><td>與同業最快 FCF CAGR 相對位置</td><td>vs LVMH (~10%)、Hermès（~15%）、CPRI（負）。SoTPR 中等偏快</td><td>2/2</td></tr>
+    <tr><td>達成條件苛刻程度</td><td>需 Coach 動能持續 5+ 年、中國 +20%/年連續、Kate Spade 至少 stabilize</td><td>0/2</td></tr>
+    <tr><td>歷史類似公司持續達成此水準</td><td>時尚品牌 5+ 年連續強勢的紀錄極少（Hermès 是例外，Coach 自身過去無此先例）</td><td>0/2</td></tr>
+    </table>
+    <p><strong>隱含預期可信度評分：5/10</strong></p>
+    <p><strong>仲裁員一句話：</strong>「市場給 TPR 20x FPE 對應的隱含預期是『時尚動能可持續 5 年以上』。在時尚產業歷史上這幾乎沒先例，可信度 5/10——一半合理（短期 thesis 強），一半不合理（時間維度過長）。」</p>
+  </div>
+</div>
+
+<div class="verdict-box">
+<h3>你的裁決</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>Coach 真實品牌復興 + 中國結構性 +34%</td></tr>
+<tr><td>空頭最大威脅</td><td>It-bag 週期反轉歷史教科書性 + 消費降級 + Beta 1.61</td></tr>
+<tr><td>估值仲裁評分</td><td>5 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>觀望</strong>（不新進，已持倉者降至目標倉位 30-50%）</td></tr>
+<tr><td>裁決理由</td><td>多頭 narrative 在「現在這 6 個月」全部成立，但無法支撐 18 個月以上持有；空頭 it-bag 週期歷史教科書性極強，2010-2013 Coach 自身就是先例。仲裁評分 5/10 表示這不是市場誤判，而是市場在合理範圍內 priced in 一個樂觀情境。風險報酬不對稱：上行空間負（短中期目標皆低於現價），下行空間 −50%。在這種雙負 R:R 下，新進是賭運氣，已持倉部分獲利保護才是紀律。</td></tr>
+</table>
+<p><strong>進入 §1 前的自我檢核</strong></p>
+<ul>
+<li>☑ 多頭論據是否依賴「市場最終認識到」？— 否（市場已完全認識，PE 已 priced in 動能）</li>
+<li>☑ 空頭威脅在 MA 觸發止損前是否已發生？— 是，Coach 同店銷售轉折通常領先股價 1-2 季</li>
+<li>☑ 仲裁員評分 5/10 還有安全邊際？— 沒有，且 R:R 雙負</li>
+</ul>
+</div>
+
+<!-- ============ §2 ============ -->
+<h2 id="sec-2">§2 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Tapestry 解決的是<strong>「中產階層想消費 luxury 卻負擔不起 LVMH 等高奢品牌」</strong>這個結構性 gap。Coach（成立 1941）是「accessible luxury」這個品類的<strong>定義者</strong>——以 $200-$500 的價格，提供真皮工藝、品牌敘事、社交資本，與 LV $2000+ Speedy 形成階層替代品。</p>
+
+<p>具體貢獻：(1) Coach 在「accessible luxury」前 11% 市佔（FTC 認定），與 Michael Kors（9%）合計超過 20%；(2) Tabby 系列（$400）成為 Gen Z 第一波接觸高奢的入門品；(3) 中國市場為 Tier 2-3 中產階層提供 LV 的替代品；(4) Kate Spade（whimsical, $200-$300）服務 Gen Y/Millennial 女性。</p>
+
+<p>若 Tapestry 明天消失：Coach 客群會分流至 Michael Kors、Tory Burch 或 outlet；這個 gap 會被填補但需 1-2 年。Tapestry 不是不可替代，但「accessible luxury 定義者」的位置有 2-3 年的執行優勢。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓 TPR 投資在 3 年內虧損 50% 以上，最可能路徑：</p>
+
+<ul>
+<li><strong>地緣政治曝險：</strong>美中關稅升級直接衝擊 Coach 中國業務（占營收約 20%+）。FY26 已 embed 高個位數關稅影響至 Kate Spade。判斷：⚠️ 中等。</li>
+<li><strong>技術替代風險：</strong>(1) <strong>It-bag 週期</strong>是 #1 風險——Tabby 後的下個 hot bag 可能不在 Coach 名下；(2) 二手轉售市場（The RealReal、Rebag）削弱新品銷售；(3) 中國本土品牌（如 Songmont、Zhang Boran）抬升威脅。判斷：⚠️ <strong>高風險</strong>，3-5 年內必發生。</li>
+<li><strong>管理層失職：</strong>CEO Joanne Crevoiserat（前 Abercrombie CFO 背景）執行 Coach 復興有功，但 FTC 阻擋 Capri 後策略真空，無 inorganic 成長路徑。判斷：⚠️ 低-中等。</li>
+<li><strong>價值陷阱路徑：</strong><strong>「動能溢價陷阱」（非典型）</strong>。FPE 20x vs 5Y 均 11.5x，市場已 priced 5+ 年完美執行，當任一條件（Coach 動能 / 中國成長 / Kate Spade 止血）失敗，估值立即從 20x 修正至 14-15x。<strong>不是「便宜 → 更便宜」陷阱，而是「貴 → 正常」mean reversion 陷阱</strong>。</li>
+</ul>
+
+<!-- ============ §3 ============ -->
+<h2 id="sec-3">§3 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>6-18 個月（cyclical / momentum）</td></tr>
+<tr><td><strong>主要驅動這個時間軸的理由</strong></td><td>Coach 動能 + 中國擴張 + 估值修復都需要 12-18 個月驗證或反轉。It-bag 週期歷史 3-5 年，Tabby 已紅 2 年，FY27 H2 為關鍵測試點。</td></tr>
+<tr><td><strong>這個持有期決定了哪些變數是訊號、哪些是噪音</strong></td><td>訊號：Coach 同店銷售、Greater China YoY、FY26 EPS guide raise。噪音：Stuart Weitzman 動向、單季 outperform 5%、FX 短期波動。</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td><strong>Coach 動能可持續至 FY27 H2</strong>（Tabby 不老化、Brooklyn 接棒、Gen Z 復購率穩定）</td><td>Coach 季度 organic growth、新客戶數、復購率</td><td>每季 earnings call</td></tr>
+<tr><td>H2</td><td><strong>中國 +20% 以上連續至 FY27</strong>（Tier 2-3 滲透 + Gen Z 認知 vs 本土品牌）</td><td>Greater China revenue YoY、店鋪數</td><td>每季</td></tr>
+<tr><td>H3</td><td><strong>市場願維持 18-22x Forward PE</strong>（不出現 mean reversion 至 5Y 均 11.5x）</td><td>Forward P/E 變動、相對 LVMH/Hermès 估值差</td><td>持續</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Coach 同店成長放緩 / It-bag 週期反轉</td><td>H1</td><td>Coach 季度 organic growth</td><td>連 2 季 &lt; 10% = 動能轉折</td></tr>
+<tr><td>R2</td><td>中國消費降級 / 本土品牌反撲</td><td>H2</td><td>Greater China YoY</td><td>連 1 季 &lt; 15%</td></tr>
+<tr><td>R3</td><td>消費衰退 / 美中關稅升級</td><td>H1 + H3</td><td>北美營收、tariff guidance</td><td>北美 YoY 轉負 = 高風險</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在 6-18 個月內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1 / H2 / H3 哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>+ 強化 / 0 無關 / − 削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到重新評估閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>估值：FPE FY+1 ≤ 15x（即股價回檔至 ~$98）；基本面：Coach 同店維持 ≥ 15%</td><td>建倉至目標倉位 25%（A 級底倉）</td></tr>
+<tr><td><strong>加碼</strong></td><td>FPE ≤ 13x + 中國 +25%+ 連續 2 季</td><td>加碼至目標倉位 100%</td></tr>
+<tr><td><strong>減碼（已持倉者）</strong></td><td>當前情境：估值 🔴 + 雙負 R:R</td><td>降至目標倉位 30-50%（保留尾段）</td></tr>
+<tr><td><strong>撤退</strong></td><td>R1 確認（Coach 同店連 2 季 &lt; 10%）或 R2 + R3 同時觸發</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<!-- ============ §4 ============ -->
+<h2 id="sec-4">§4 即時財報情報</h2>
+<p>資料來源：Q2 FY2026 Earnings Release（公告 2026-02-05）；Q3 FY2026 公告排程 2026-05-08</p>
+
+<h3>① 最新一季財報關鍵數字（Q2 FY26）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$2.5B（pro forma +18%）</td><td>~$2.36B</td><td><span class="badge-green">Beat +6%</span></td><td>+14%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$2.69</td><td>$2.22</td><td><span class="badge-green">Beat +21.2%</span></td><td>+34%</td></tr>
+<tr><td>Coach Revenue YoY</td><td>+25%</td><td>—</td><td>強勁</td><td>+25%</td></tr>
+<tr><td>Greater China YoY</td><td>+34%</td><td>—</td><td>強勁</td><td>+34%</td></tr>
+<tr><td>Adjusted Operating Margin Expansion</td><td>+390 bps</td><td>—</td><td>強勁</td><td>—</td></tr>
+<tr><td>FY26 EPS Guidance</td><td>$6.40 - $6.45（raised from $5.45-5.60）</td><td>—</td><td>顯著上修</td><td>+25%+</td></tr>
+</table>
+
+<h3>本季財報對 §3 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Coach 動能）</td><td><span class="badge-green">+ 強化</span></td><td>Coach +25% YoY、新增 2.9M 客戶（Gen Z 主導）</td></tr>
+<tr><td>H2（中國 +20%）</td><td><span class="badge-green">+ 強化</span></td><td>Greater China +34% YoY，遠超期待</td></tr>
+<tr><td>H3（估值維持）</td><td><span class="badge-green">+ 強化</span></td><td>Q2 後股價 +10%，市場接受 EPS 上修</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>樂觀（CEO Joanne Crevoiserat 連續強調「customer acquisition」、「brand momentum」、「Gen Z」）。語氣與 Q1 FY26 相比顯著加強。</li>
+<li><strong>Forward Guidance：</strong>FY26 revenue 上調至 $7.75B+（pro forma +15%），EPS 從 $5.45-5.60 上修至 $6.40-6.45。</li>
+<li><strong>刻意強調的主題：</strong>(1) 「Gen Z customer acquisition」（重複多次）；(2) 「China outperformance」；(3) 「Coach brand strategy」（craftsmanship + emotional storytelling）；(4) 「accessible luxury」品類定義者。</li>
+<li><strong>刻意迴避的問題：</strong>(1) Tabby 生命週期（被分析師問及但未直接回答）；(2) Kate Spade 反轉時間表（持續 deflect）；(3) Stuart Weitzman 戰略地位（避而不談）。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>accessible luxury 在 Gen Z 與中國中產為強需求，但 Q2 是節日季高基期，Q3-Q4 將測試非節日穩定性。</li>
+<li><strong>供給端：</strong>Coach 工廠仍在越南與中國，關稅影響 high-single-digit revenue（embedded in guidance），管理層稱已大致 absorbed。</li>
+<li><strong>競爭格局：</strong>Coach 的 Q2 +25% 暗示 Michael Kors、Tory Burch 等對手正在被分流；CPRI 同期 Michael Kors 持續衰退印證此論。</li>
+<li><strong>總體經濟敏感度：</strong>管理層提及「ongoing macro uncertainty」，但仍上調 guide，反映品牌動能足夠 outweigh macro 雜音。</li>
+<li><strong>對同業的連帶推論：</strong>對 CPRI（Capri）負面（Michael Kors 失血）；對 LVMH 中性（accessible luxury 不直接競爭）；對 Tory Burch（私）負面。</li>
+</ul>
+
+<!-- ============ §5 ============ -->
+<h2 id="sec-5">§5 核心門檻檢核</h2>
+
+<h3>EPS 共識（yfinance 步驟零）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>備注</th></tr>
+<tr><td>FY+1（FY26，6 月年結）</td><td>$6.50</td><td>n=21 分析師，YoY +27.4%（base $5.10）</td></tr>
+<tr><td>FY+2（FY27）</td><td>$7.21</td><td>n=21，YoY +11.0%</td></tr>
+<tr><td>本季（0q，Q3 FY26）</td><td>$1.28</td><td>n=18</td></tr>
+<tr><td>下季（+1q，Q4 FY26）</td><td>$1.16</td><td>n=18</td></tr>
+</table>
+
+<h3>EPS Trend 修正方向（最近 90 天）</h3>
+<table>
+<tr><th>期間</th><th>當前</th><th>30 天前</th><th>60 天前</th><th>90 天前</th><th>方向</th></tr>
+<tr><td>0y（FY26）</td><td>$6.50</td><td>$6.49</td><td>$6.50</td><td>$5.65</td><td><span class="badge-green">↑ 90 天 +15%</span></td></tr>
+<tr><td>+1y（FY27）</td><td>$7.21</td><td>$7.21</td><td>$7.19</td><td>$6.28</td><td><span class="badge-green">↑ 90 天 +15%</span></td></tr>
+</table>
+
+<h3>FY+3 推導（v9.0 邏輯分析法）</h3>
+<p>FY28（FY+3）EPS 推導：</p>
+<ol>
+<li><strong>§6 A 成長跑道：</strong>FY28 為 Coach 動能持續第 4-5 年（自 2024 算起），歷史時尚 it-bag 週期上限 3-5 年，FY28 高機率出現邊際放緩。</li>
+<li><strong>§6 B 成長驅動：</strong>定價（accessible luxury 不易再升級）+ 量（中國 + Gen Z 自然滲透），雙引擎都顯著減速。</li>
+<li><strong>§6 D ROIC × 再投資率：</strong>內生成長率上限 ~12-15%（ROIC 18% × 再投資率 80%）。</li>
+<li><strong>綜合：</strong>FY28 YoY +8%（從 FY27 +11% 邊際放緩，反映 it-bag 週期成熟）→ FY28 EPS = $7.21 × 1.08 = <strong>$7.79</strong>。</li>
+</ol>
+
+<h3>EPS CAGR 計算</h3>
+<ul>
+<li>基期：FY25 EPS = $5.10（Non-GAAP，yfinance yearAgoEps）</li>
+<li>FY28E EPS = $7.79</li>
+<li><strong>3 年 CAGR = (7.79 / 5.10)^(1/3) − 1 = 15.2%</strong>（Non-GAAP）</li>
+</ul>
+
+<h3>口徑差距說明</h3>
+<p>TPR Q2 FY26：GAAP EPS 約 $2.50（受 Capri 案結束殘餘費用）vs Non-GAAP $2.69，差距 ~7-8%。年化口徑差距 ~10-15%（受 SBC、acquisition-related amortization 影響）。</p>
+
+<h3>Munger 護城河維度數據</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge-green">✅</span></td><td>TTM FCF $1.42B / TTM Revenue ~$7.5B = 18.9%</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5 年均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="badge-yellow">🟡</span></td><td>5 年均 ~15-17%，但 FY20 COVID 期間最低谷 ~5%。判斷：<strong>有週期波動，當前處於高峰</strong></td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td><span class="badge-green">✅</span></td><td>TTM ROE 55.3%（受負股東權益拉高）；ROIC ~22%，WACC ~10%，超額 +12pp</td></tr>
+<tr><td>ROIC 穩定性</td><td>10 年中 ≥ 70% 年份 ROIC &gt; 15%</td><td><span class="badge-green">✅</span></td><td>5 年平均 ROIC 18.5%（Macrotrends），10 年中約 7-8 年 &gt; 15%（除 FY20 COVID）</td></tr>
+<tr><td>毛利率定價能力</td><td>10 年中 ≥ 70% 年份毛利率持續改善</td><td><span class="badge-green">✅</span></td><td>10 年改善 7+ 年（從 ~70% 至 76%），長期 GM 結構性提升</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5% 優、&lt; 10% 尚可</td><td><span class="badge-green">✅</span></td><td>Capex / Revenue ~3-4%（vertically integrated retail，輕資本）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="badge-yellow">🟡</span></td><td>3Y CAGR 15.2%（接近但不過 20% 門檻）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="badge-green">✅</span></td><td>PEG (FY+2 1Y growth) 1.83；PEG (3Y CAGR) 1.28</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7、現金/Rev 10-50%</td><td><span class="badge-yellow">🟡</span></td><td>Total Debt $3.94B vs Equity $556M = D/E 7.09（極高，受 Capri 案 break-fee + buyback 拖累），但 Net Debt/EBITDA 1.68x 仍合理；Cash/Rev 14.4%</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge-red">否</span></td><td>$1.08B vs $3.94B（不覆蓋，但 Net Debt/EBITDA 1.68x 仍可控）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge-yellow">🟡</span></td><td>§7 評為 6/10，趨勢擴大但時尚品牌本質非 8+ 分護城河</td></tr>
+</table>
+
+<p><strong>最大財務弱點：</strong>D/E 7.09（受 Capri 案 break-fee 與大規模 buyback 推升的 Equity 縮水），Net Debt/EBITDA 1.68x 雖可控但無 cushion 應對下行週期。</p>
+<p><strong>Munger 三維評級：</strong><span class="badge-green">🟢 三項全達標</span>（資本密集 ✅、ROIC 穩定 ✅、毛利率定價 ✅）— 數字層面支持 6+ 護城河評分，§7 7-8 分區間合理。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p>觸發條件：FPE FY+2 20.23x，相對 5Y 均 11.48 為 95+ 分位。<strong>不觸發低估值四問</strong>（無「低估值」前提，反而「高估值四問」更適切）。</p>
+<p>反向警示：FPE 5Y 95+ 分位 + Beta 1.61 + 1 年 +119% = 「高估值四問」場景，需在 §11 確認估值非泡沫。</p>
+
+<!-- ============ §6 ============ -->
+<h2 id="sec-6">§6 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（Luxury Handbags 2024）</td><td>$30.24B</td><td>—</td></tr>
+<tr><td>估計可達 TAM（2033）</td><td>$54.66B</td><td>CAGR 6.8%</td></tr>
+<tr><td>Coach 當前市佔（accessible luxury）</td><td>~11%</td><td>FTC 認定（前 2 大）</td></tr>
+<tr><td>Coach 整體 handbag 市佔</td><td>~5-6%</td><td>含高奢品牌</td></tr>
+<tr><td>若維持 +10%/年成長，自然放緩</td><td>2028-2030</td><td>滲透 15% accessible luxury 即接近頂</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>5-7 年</strong></td><td>主要靠 Coach 國際擴張 + 中國 Tier 2-3 + Gen Z 第一波</td></tr>
+</table>
+<p><strong>Runway 解讀：5-9 年中等可見度（中等）</strong> → §11.5 估值溢價中性。</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~100%</td><td>Capri 併購 2024 失敗後純有機</td></tr>
+<tr><td>無機成長</td><td>0%</td><td>—</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>SNDK 判斷</th><th>趨勢</th></tr>
+<tr><td>定價（AUR）</td><td>Coach AUR +mid-single-digit YoY（產品 mix 升級至 $400+ Tabby）</td><td>持續但 cap 在 $500</td></tr>
+<tr><td>量（Volume）</td><td>新客戶 +2.9M、復購率提升、中國店鋪擴張</td><td>主要驅動，FY27 起放緩</td></tr>
+</table>
+<p>定價 + 量雙驅動，但定價已接近 accessible luxury 上限，FY27 後將更依賴量。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>判斷</th></tr>
+<tr><td>強化型（最佳）</td><td>部分。Coach 動能擴大規模優勢與品牌資本</td></tr>
+<tr><td>中性型</td><td>主要。時尚品牌的成長有 momentum 但非永久壁壘</td></tr>
+<tr><td>消耗型</td><td>無</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>~22%</td><td>~16%</td><td>↑ 上升</td><td>產業頂尖，&gt; WACC</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+12pp</td><td>+6pp</td><td>↑ 擴大</td><td>持續正值</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>FCF Margin</td><td>18.9%</td><td>~12-14%</td><td>↑ 擴大</td><td>&gt; 15%</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td>2.7x（受 NI 偏低拉高）</td><td>~1.0-1.2x</td><td>↑ 暫高</td><td>&gt; 85%</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>Capex 3-4% Rev</td><td>同類</td><td>→</td><td>合理偏低</td><td><span class="badge-green">✅</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E</th><th>潛在估值跌幅</th></tr>
+<tr class="scenario-bull"><td>FY28 後成長率 15%</td><td>Coach + 中國雙引擎持續</td><td>17x</td><td>−16%</td></tr>
+<tr class="scenario-base"><td>FY28 後成長率 10%</td><td>Coach 動能放緩，中國穩定</td><td>14x</td><td>−31%</td></tr>
+<tr class="scenario-bear"><td>FY28 後成長率 5%</td><td>It-bag 週期反轉 + 中國競爭加劇</td><td>10x</td><td>−51%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>近 4 季 GM 持續擴張</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>Coach 11% accessible luxury 穩定/微升</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>主力產品提價後銷量是否下滑</td><td>AUR 上升 + Volume 上升</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt; Revenue CAGR + 5pp</td><td>EPS CAGR 27% vs Rev CAGR 14%（差距 13pp，主因 buyback + GM 擴張）</td><td><span class="badge-yellow">🟡</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI &lt; 0.75 連 2 年</td><td>FCF/NI &gt; 1，正常</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev &gt; 5% 上升</td><td>SBC / Rev ~1.5%，未顯著</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代</td><td>Luxury handbag CAGR 6.8%，無萎縮</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數系統下移</td><td>Luxury 估值穩定（LVMH ~22x、Hermès ~50x）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>Capex 占 FCF ~25%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新店後 3 年內收入下滑</td><td>有可能（中國擴張依賴新店）</td><td><span class="badge-yellow">🟡</span></td></tr>
+</table>
+
+<p><strong>價值陷阱風險評級：</strong><span class="badge-yellow">🟡 中度警戒</span>（2 個 🟡，皆與「動能週期可能反轉」相關）。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="badge-yellow">🟡 中等可見度成長</span>：Runway 5-7 年、定價 + 量雙驅動但接近上限、護城河中性、ROIC 擴大但週期性、衰退信號 2 個 🟡。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><span class="badge-green">🟢 AI 受益或免疫</span></p>
+<ul>
+<li><strong>業務占比 vs AI 受益區域：</strong>Tapestry 是實體 luxury goods，與 AI 無直接競爭關係。</li>
+<li><strong>AI 策略：</strong>Coach 已部署 AI personalization、digital marketing tools，且 Gen Z 透過 AI/social media 認知品牌（受益）。</li>
+<li><strong>AI 風險評級分數：9 分</strong>。</li>
+</ul>
+
+<!-- ============ §7 ============ -->
+<h2 id="sec-7">§7 護城河分析</h2>
+<p><strong>評分：6 / 10</strong></p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong>不存在。Luxury 是個體消費，無 user-side network effect。但有 social proof（Tabby 在 Gen Z 圈的「身分認同」效應）。</li>
+<li><strong>無形資產：</strong>主要。Coach 80+ 年品牌資產 + 「accessible luxury 定義者」地位 + 工藝認知。但時尚品牌資產是<strong>動態的</strong>，不像 Hermès 等高奢品牌的不可替代性。</li>
+<li><strong>轉換成本：</strong>低。客戶可在 Coach、Michael Kors、Tory Burch 之間自由切換，無 lock-in。</li>
+<li><strong>規模優勢：</strong>中等。Coach 全球 1000+ 家直營店，DTC ~70%，毛利率 76% 反映規模效應。但 Capri 規模也類似（M.K. + Versace + Jimmy Choo），規模並非絕對護城河。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<ul>
+<li><strong>品牌動能：</strong>當下 Coach Gen Z 認可 + Tabby/Brooklyn it-bag 地位，是<strong>時間限定優勢</strong>，2-3 年內若無法刷新會褪色。</li>
+<li><strong>中國 distribution：</strong>200+ 中國店鋪 + Tier 2-3 滲透先發優勢，本土品牌（Songmont 等）需 3-5 年追上。</li>
+<li><strong>Vertically integrated retail：</strong>DTC 70% 提供毛利率與資料優勢。</li>
+</ul>
+
+<h3>市佔競爭表（Accessible Luxury Handbag 市佔）</h3>
+<table>
+<tr><th>競爭對手</th><th>市佔（accessible luxury）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>Coach（TPR）</strong></td><td>~11%</td><td>↑ 上升</td><td>Tabby 後的下一個 it-bag</td><td>Coach 蠶食 Michael Kors</td></tr>
+<tr><td>Michael Kors（CPRI）</td><td>~9%</td><td>↓ 衰退</td><td>持續品牌 fatigue</td><td>被 Coach 蠶食</td></tr>
+<tr><td>Kate Spade（TPR）</td><td>~3-4%</td><td>↓ 衰退</td><td>持續高個位數負成長</td><td>內部失血</td></tr>
+<tr><td>Tory Burch（私）</td><td>~5%</td><td>持平</td><td>市場份額穩定</td><td>—</td></tr>
+<tr><td>其他（中國本土等）</td><td>~70%（碎片化）</td><td>↑</td><td>本土品牌反撲</td><td>蠶食外資</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><span class="badge-green">擴大中（短期動能驅動）</span> 但長期穩定（時尚品牌本質）</p>
+<p>24 個月內最可能威脅護城河：</p>
+<ol>
+<li><strong>It-bag 週期反轉</strong>（高威脅）— Tabby 已紅 2 年，下一個 hot bag 可能在 LV、Bottega 或 Prada。</li>
+<li><strong>中國本土品牌反撲</strong>（中威脅）— Songmont、Zhang Boran 等中國設計師品牌興起。</li>
+<li><strong>消費降級</strong>（中威脅）— accessible luxury 是降級首先放棄的支出（用戶會放棄 Coach 但繼續買 LV，因為 LV 是 status；放棄 Coach 並非降級至 Walmart，而是放棄不必要消費）。</li>
+</ol>
+
+<!-- ============ §8 ============ -->
+<h2 id="sec-8">§8 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY24</th><th>FY25</th><th>FY26E</th><th>同業對比（FY26E）</th></tr>
+<tr><td>FCF Margin</td><td>~14%</td><td>~17%</td><td>~19%</td><td>LVMH ~18%、CPRI ~6%、Hermès ~25%</td></tr>
+<tr><td>EBITDA Margin</td><td>~21%</td><td>~22%</td><td>~24%</td><td>LVMH ~28%、CPRI ~12%、Hermès ~42%</td></tr>
+<tr><td>ROIC − WACC</td><td>+8pp</td><td>+10pp</td><td>+12pp</td><td>LVMH +12pp、CPRI 0pp、Hermès +20pp</td></tr>
+<tr><td>SBC / Revenue</td><td>~1.5%</td><td>~1.5%</td><td>~1.5%</td><td>低，正常</td></tr>
+<tr><td>ROE</td><td>~28%</td><td>~35%</td><td>55.3%（受負股本拉高）</td><td>LVMH ~22%、CPRI ~−15%、Hermès ~28%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>項目</th><th>檢驗</th><th>判斷</th></tr>
+<tr><td>淨利 vs OCF 連動性</td><td>TTM OCF $1.78B vs NI ~$520M（高轉換率）</td><td><span class="badge-green">健康</span></td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>正常範圍</td><td><span class="badge-green">健康</span></td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>存貨控管嚴格，Q2 inventory turnover 健康</td><td><span class="badge-green">健康</span></td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>持續改善</td><td><span class="badge-green">健康</span></td></tr>
+</table>
+
+<h3>回購品質評估（價值陷阱防禦）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF</td><td>FY24-26 回購 ~$3.5B（含 Capri 案破局後 $2B 加速 buyback）vs FCF ~$3.5B</td><td><span class="badge-yellow">100% 警示，但 Capri-related 一次性</span></td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>原 27% → 剔除後 ~18-20%（差距 7-9pp）</td><td><span class="badge-yellow">🟡 部分依賴 buyback</span></td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>FY24-25 buyback 均價 ~$45-65 vs 現價 $146</td><td><span class="badge-green">執行優秀，buyback 在低點</span></td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>FY23-26 Rev CAGR ~10%，EPS CAGR 27%（GM + buyback 雙效）</td><td>合理</td></tr>
+</table>
+
+<!-- ============ §9 ============ -->
+<h2 id="sec-9">§9 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li><strong>Luxury Handbag TAM（2024）：</strong>$30.24B</li>
+<li><strong>2033 預估：</strong>$54.66B（CAGR 6.8%）</li>
+<li><strong>Tapestry 占 luxury handbag：</strong>~5-6%（含 Coach + Kate Spade + Stuart Weitzman）</li>
+<li><strong>Coach 占 accessible luxury：</strong>11%（FTC 認定）</li>
+<li><strong>供需狀態：</strong>需求穩定增長，無供需失衡</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游（皮革供應、製造）：</strong>強。Coach 在越南、中國有規模生產合作關係。</li>
+<li><strong>對下游（消費者）：</strong>中等。accessible luxury 客群品牌偏好不固定，可在 Coach、M.K.、Tory Burch 之間切換。Coach 當前 it-bag 地位提供 2-3 年議價窗口。</li>
+<li><strong>地理曝險：</strong>北美 60%、Greater China 20%+、歐洲 ~10%、其他 ~10%。中國集中度較高，地緣政治風險中等。</li>
+</ul>
+
+<h3>營收組成（FY26E）</h3>
+<table>
+<tr><th>類別</th><th>占比</th><th>成長性</th></tr>
+<tr><td>Coach（含全球）</td><td>~78%</td><td>+25% YoY（核心引擎）</td></tr>
+<tr><td>Kate Spade</td><td>~17%</td><td>−high single-digit YoY（拖累）</td></tr>
+<tr><td>Stuart Weitzman</td><td>~5%</td><td>~持平</td></tr>
+</table>
+<p>地理：北美 60%、Greater China 20%+、Europe 10%、Other Asia 8%。</p>
+
+<h3>單位經濟</h3>
+<ul>
+<li><strong>Coach AUR（average unit retail）：</strong>$300-500（accessible luxury 上緣）</li>
+<li><strong>Coach gross margin：</strong>~78%（高於 Kate Spade ~70%）</li>
+<li><strong>新客戶 acquisition cost vs LTV：</strong>Q2 FY26 新增 3.7M 客戶，acquisition cost 低（IG/TikTok organic）+ Gen Z 復購率提升 → LTV/CAC 持續改善</li>
+<li><strong>趨勢：</strong>產品 mix 升級 + Gen Z 客群擴張，unit economics 健康</li>
+</ul>
+
+<!-- ============ §10 ============ -->
+<h2 id="sec-10">§10 公司治理與資本配置</h2>
+
+<h3>1. 股東 / 股權結構</h3>
+<ul>
+<li><strong>無 Dual-class 股權結構</strong>，普通股 1 股 1 票</li>
+<li><strong>Top 機構持股：</strong>Vanguard ~12%、BlackRock ~9%、State Street ~5%、其他主動基金</li>
+<li><strong>Insider 持股：</strong>~1%（CEO Joanne Crevoiserat ~0.2%、其他高管 ~0.5%）</li>
+<li><strong>結構評價：</strong>標準大型零售消費治理，無控股股東風險</li>
+</ul>
+
+<h3>2. 資本配置方向</h3>
+<ul>
+<li><strong>Capex：</strong>~$200-250M / 年（3-4% Rev），主要用於門市、IT、digital</li>
+<li><strong>R&D / Marketing：</strong>~$700M / 年（marketing 為主，Coach 品牌投資）</li>
+<li><strong>Buyback：</strong>FY24-26 累計 ~$3.5B，包含 Capri 案破局後加速 $2B（4Q24-1Q25）</li>
+<li><strong>Dividend：</strong>~$300M / 年（殖利率 1.1%、Payout 58%）</li>
+<li><strong>Debt repayment：</strong>FY26 持續減債，從 $7B+（Capri pre-deal）降至 $3.94B</li>
+<li><strong>優先順序：</strong>「Buyback（過去 12 個月） → De-leverage → Dividend → Capex」，標準成熟消費品牌資本配置</li>
+</ul>
+
+<h3>3. 管理層薪酬結構</h3>
+<ul>
+<li><strong>CEO Joanne Crevoiserat：</strong>2020 上任，前 CFO 升任，背景含 Abercrombie & Fitch CFO</li>
+<li><strong>薪酬結構：</strong>固定薪 ~10%、年度績效獎金 ~25%、長期股權激勵（PSU + RSU）~65%</li>
+<li><strong>績效指標：</strong>EPS、Revenue、TSR、ESG metrics</li>
+<li><strong>評價：</strong>股權激勵占比高（65%），與股東利益對齊</li>
+</ul>
+
+<h3>4. 過去 12 個月內部人交易</h3>
+<ul>
+<li><strong>主要為例行 RSU vesting sell-to-cover 與 10b5-1 plan sales</strong></li>
+<li><strong>CEO Crevoiserat 過去 12 個月有零售規模拋售</strong>（在 $130-150 區間，符合 RSU 兌現週期）</li>
+<li><strong>無大規模 insider buying signal</strong></li>
+<li>數據限制：詳細 Form 4 需 SEC EDGAR 逐筆查詢</li>
+</ul>
+
+<h3>SBC 評估</h3>
+<ul>
+<li>SBC / Revenue ~1.5%（年化 ~$110M），低稀釋率</li>
+<li>趨勢：穩定，未過度稀釋</li>
+</ul>
+
+<!-- ============ §11 ============ -->
+<h2 id="sec-11">§11 估值診斷</h2>
+
+<h3>11.0｜估值體系診斷</h3>
+
+<h4>A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>類型</th><th>對應指標</th><th>是否為當前主流？</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>是（主流）</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>部分</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>否</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>是</td></tr>
+<tr><td>行業專屬</td><td>Comparable Sales、AUR、Customer Acquisition</td><td>是（產業內）</td></tr>
+</table>
+<p><strong>當前主流邏輯：盈利能力 + 動能型混合，市場給「美股稀缺成長性消費品牌」溢價</strong></p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<ul>
+<li><strong>情境一：盈利估值升級至「luxury 平台」估值？</strong> 部分。市場已給 TPR 對標 LVMH（FPE 22x）的 multiples，反映 Coach 動能升級至「真實 luxury 品牌」。</li>
+<li><strong>情境二：新指標？</strong> 「Gen Z customer acquisition」與「China YoY」可能成為新 KPI。</li>
+<li><strong>情境三：定價邏輯轉變？</strong> 已部分發生（FPE 從 5Y 均 11.5 升至 20+），但持續性需驗證。</li>
+</ul>
+
+<h4>C｜估值尺被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>影響</th></tr>
+<tr><td>Coach 同店銷售連 2 季 &lt; 10%</td><td>未發生</td><td>− 估值立即從 20x 修正至 14-15x</td></tr>
+<tr><td>中國 YoY 跌至 single-digit</td><td>未發生</td><td>− 估值修正</td></tr>
+<tr><td>美國消費衰退</td><td>潛在風險</td><td>− Beta 1.61 雙重打擊</td></tr>
+<tr><td>同業 Hermès / LVMH 估值下修</td><td>未發生</td><td>− 帶動板塊重估</td></tr>
+</table>
+
+<p><strong>結論：</strong><span class="badge-yellow">🟡 估值邏輯模糊（升級 vs mean reversion 之間）</span></p>
+
+<h3>11.1｜歷史估值分位</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>56.55x（受 NI 受 break-fee 拖累拉高）</td><td>5x</td><td>13x</td><td>57x</td><td>99%</td></tr>
+<tr><td>Forward P/E（FY+1）</td><td>22.45x</td><td>5x</td><td>11x</td><td>22x</td><td>~99%</td></tr>
+<tr><td>Forward P/E（FY+2）</td><td>20.23x</td><td>5x</td><td>10x</td><td>20x</td><td>~99%</td></tr>
+<tr><td>EV/EBITDA</td><td>17.87x</td><td>4x</td><td>10x</td><td>18x</td><td>~96%</td></tr>
+<tr><td>P/FCF</td><td>20.99x（mkt cap / TTM FCF）</td><td>5x</td><td>11x</td><td>21x</td><td>~99%</td></tr>
+<tr><td>P/S</td><td>3.97x</td><td>0.5x</td><td>1.7x</td><td>4x</td><td>~99%</td></tr>
+</table>
+
+<h4>分位計算公式</h4>
+<p>Forward P/E（FY+2）分位 = (20.23 − 5) / (20 − 5) × 100% = <strong>~99%</strong>（5Y 範圍內幾乎頂部）</p>
+
+<h4>解讀</h4>
+<ol>
+<li><strong>當前估值情緒：</strong>對 TPR 自身史上而言<strong>處於 5Y 絕對頂部</strong>。</li>
+<li><strong>上次處於此分位時：</strong>2010-2013 Coach 全盛期 + 中國高速擴張。隨後 4 年股價跌 60%。</li>
+<li><strong>推動因素：</strong>EPS 上修（占 50%）+ 動能 narrative re-rating（占 30%）+ Capri 案結束 buyback 推升（占 20%）。</li>
+</ol>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+2）</td><td>20.23x</td><td>—</td></tr>
+<tr><td>3 年 EPS CAGR（Non-GAAP，§5）</td><td>15.2%</td><td>—</td></tr>
+<tr><td>PEG（Non-GAAP，3 年）</td><td>1.33</td><td><span class="badge-yellow">🟡 合理</span></td></tr>
+<tr><td>PEG（FY+2 1Y growth）</td><td>1.84</td><td><span class="badge-yellow">🟡 合理偏貴</span></td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td>~10%</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>2.02</td><td><span class="badge-orange">🟠 偏貴</span></td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>0.69</td><td>近期成長加速但長期遞減</td></tr>
+</table>
+
+<p><strong>Price-to-Growth 矩陣落點：</strong>右上偏右（高估值 + 中等成長）。屬「公允定價偏貴」象限——成長率合理但已大幅 priced in。</p>
+
+<h3>11.3｜Reverse DCF</h3>
+
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$29.86B</td><td>$145.89 × 202.5M shares</td></tr>
+<tr><td>基期 FCF（TTM）</td><td>$1.42B</td><td>yfinance</td></tr>
+<tr><td>WACC</td><td>10.5%</td><td>10Y UST 4.2% + Beta 1.61 × ERP 5.5% − 0.7%（規模折扣）</td></tr>
+<tr><td>永續成長率</td><td>2.5%</td><td>長期 GDP + 通膨</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p>使 DCF 現值 = $29.86B，所需前 10 年 FCF CAGR ≈ <strong>13-15%</strong>。</p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>位置</th></tr>
+<tr><td>過去 5 年實際 FCF CAGR</td><td>~10%</td><td>隱含略高於歷史</td></tr>
+<tr><td>分析師 EPS CAGR 共識</td><td>15.2%（3 年）</td><td>隱含 ≈ 共識</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>Hermès ~15%、LVMH ~10%</td><td>合理 / 略高</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 13-15% 10 年 FCF CAGR 需要：</p>
+<ul>
+<li>Revenue 年增 8-10%（accessible luxury TAM 增速 6.8%，需取得份額或量價齊升）</li>
+<li>FCF Margin 維持 18-20%（不再有 Coach 動能週期反轉）</li>
+<li><strong>需 Coach 動能維持 + 中國穩定成長 + Kate Spade 至少 stabilize 三條件</strong></li>
+</ul>
+
+<p><strong>隱含預期判斷：</strong><span class="badge-yellow">🟡 隱含預期合理</span>（與分析師共識一致，但需多重驗證且時間維度長）。</p>
+
+<h3>⚠️ 高估值警示（反向觸發）</h3>
+<p>5Y 95+ 分位 + 1 年 +119% + Beta 1.61 = 「動能溢價陷阱」高度警示場景。雖非標準「便宜理由檢驗」（FPE 高非低），但需逆向自問：</p>
+<table>
+<tr><th>#</th><th>問題</th><th>分析師答案</th></tr>
+<tr><td>Q1</td><td>市場為什麼給這個高倍數？</td><td>Coach 真實復興 + Gen Z 認可 + 中國高速 + buyback；narrative 完整</td></tr>
+<tr><td>Q2</td><td>歷史上類似 narrative 持續多久？</td><td>2010-2013 Coach 自身先例：4 年後股價跌 60%</td></tr>
+<tr><td>Q3</td><td>下個 catalyst 是什麼？</td><td>沒有特別正面催化（Capri 案結束、guide 已上修）；負面催化：Coach 動能轉折、消費衰退</td></tr>
+<tr><td>Q4</td><td>同業有更便宜選擇？</td><td>LVMH FPE 22x（更穩定、更全球）、CPRI FPE ~25x（高估但有反轉空間）；TPR 在 luxury 中相對 attractive 但絕對水平已高</td></tr>
+</table>
+
+<h3>11.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR</th><th>ROIC</th></tr>
+<tr><td><strong>TPR</strong></td><td>$29.9B</td><td>20.23x</td><td>17.87x</td><td>1.33</td><td>18.9%</td><td>15.2%</td><td>~22%</td></tr>
+<tr><td>LVMH（MC.PA）</td><td>~$330B</td><td>~22x</td><td>~14x</td><td>2.0</td><td>~18%</td><td>~10%</td><td>~14%</td></tr>
+<tr><td>Hermès（RMS.PA）</td><td>~$285B</td><td>~50x</td><td>~30x</td><td>3.5</td><td>~25%</td><td>~14%</td><td>~28%</td></tr>
+<tr><td>Capri Holdings（CPRI）</td><td>~$2B</td><td>~25x</td><td>~12x</td><td>—</td><td>~6%</td><td>—（負）</td><td>~0%</td></tr>
+<tr><td><strong>產業中位數</strong></td><td>—</td><td>~22x</td><td>~16x</td><td>~2.0</td><td>~17%</td><td>~12%</td><td>~16%</td></tr>
+</table>
+
+<h4>同業溢折價邏輯</h4>
+<ol>
+<li><strong>溢折價幅度：</strong>TPR FPE 20.23x vs 中位 22x，<strong>折價 −8%</strong>（接近中位）；但 vs 自身 5Y 均 11.48x，<strong>溢價 +76%</strong>。</li>
+<li><strong>支撐溢價：</strong>(1) Coach 真實動能（短期最強）；(2) 體質滿分；(3) Gen Z + 中國雙引擎。</li>
+<li><strong>若估值向自身 5Y 均回歸：</strong>FPE 從 20x → 12x = 股價 $146 → $87（−40%）。</li>
+</ol>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>TPR</th><th>LVMH</th><th>Hermès</th></tr>
+<tr><td>主假設兌現上行最大者？</td><td>+25%</td><td>+15%</td><td>+10%</td></tr>
+<tr><td>主假設部分落空跌幅最小者？</td><td>−50%</td><td>−25%</td><td>−15%</td></tr>
+<tr><td>綜合不對稱性，風報比最優者？</td><td>0.50x</td><td>0.60x</td><td>0.67x</td></tr>
+</table>
+
+<p><strong>最終橫向比較結論：</strong><span class="badge-orange">❌ 同主題有更佳標的</span> — Hermès 為 luxury 風報比最優，TPR 在絕對成長 narrative 強，但下行不對稱性最高。</p>
+
+<h3>11.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（11.0）</td><td><span class="badge-yellow">🟡 模糊</span></td><td>升級 vs mean reversion 之間</td></tr>
+<tr><td>歷史分位（11.1）</td><td><span class="badge-red">🔴 過熱（5Y 99 分位）</span></td><td>FPE 史上最高區間</td></tr>
+<tr><td>PEG 診斷（11.2）</td><td><span class="badge-yellow">🟡 合理偏貴</span></td><td>3Y CAGR PEG 1.33；5Y PEG 2.02</td></tr>
+<tr><td>Reverse DCF（11.3）</td><td><span class="badge-yellow">🟡 合理</span></td><td>隱含 13-15% 10Y CAGR ≈ 共識</td></tr>
+<tr><td>同業相對（11.4）</td><td><span class="badge-yellow">🟡 合理（vs LVMH）</span></td><td>但溢價 +76% vs 自身 5Y 均</td></tr>
+</table>
+
+<h4>v11.0 §12 D 交叉驗證</h4>
+<table>
+<tr><th>當前 FPE vs §12 D 合理 P/E</th><th>影響</th></tr>
+<tr><td>當前 FPE（FY+2）20.23x vs 合理 PE 15x，比值 1.35（&gt; 1.5 接近）</td><td>當前嚴重高於合理，負面信號</td></tr>
+</table>
+
+<p><strong>歷史分位降權規則：</strong>PEG (3Y) 1.33 不 &lt; 1.0，且 FPE &gt; 合理 PE 35%，🔴 過熱信號維持，無降權。</p>
+
+<p><strong>當前定價判斷：</strong><span class="badge-red">🔴 明顯貴</span></p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr>
+<tr><td>① 護城河品質（§7）</td><td>6/10</td><td>±0</td></tr>
+<tr><td>② 成長可持續年數（§6A）</td><td>5-7 年（🟡）</td><td>±0</td></tr>
+<tr><td>③ 成長品質（§6B）</td><td>定價 + 量但接近上限</td><td>±0</td></tr>
+<tr><td>④ 成長護城河連動（§6C）</td><td>中性</td><td>±0</td></tr>
+<tr><td>⑤ ROIC 可維持性（§6D）</td><td>擴大但週期性</td><td>+0.5x</td></tr>
+<tr><td>⑥ 衰退信號（§6 偵測表）</td><td>2 個 🟡</td><td>−0.5x</td></tr>
+<tr><td>⑦ 估值體系（§11.0）</td><td>模糊</td><td>±0</td></tr>
+<tr><td>⑧ 利率環境（10Y UST 4.2% + Beta 1.61）</td><td>不利</td><td>−1x</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td><strong>15x</strong></td><td><strong>調整後合理區間：13-16x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考：</strong></p>
+<ul>
+<li>高 $185 / 中位 $135 / 低 $90（n=20+ 位分析師）</li>
+<li><strong>是否認同共識中位？</strong>不完全。共識中位 $135 接近本報告中期目標 $108 但略高。本報告採 mean reversion 框架，分析師多採當前 PE 投射 → 共識較樂觀。</li>
+</ul>
+
+<h4>長期合理倍數對應表</h4>
+<table>
+<tr><th>§6 長期成長性評級</th><th>5 年後基準 Forward P/E</th></tr>
+<tr><td><strong>🟡 中等可見度</strong></td><td><strong>20x</strong></td></tr>
+</table>
+<p><strong>本標的基準長期合理倍數：20x</strong></p>
+
+<p><strong>v9.0 上行三引擎調整：</strong></p>
+<ul>
+<li>引擎 A（ROIC 溢價）：ROIC ~22% &gt; 20% → × 1.175</li>
+<li>引擎 B（PEG）：Year-5 成長率 ~10% &lt; 15% → 不適用</li>
+<li>引擎 C（護城河）：6 &lt; 9 → 不適用</li>
+<li>取較高：× 1.175</li>
+</ul>
+
+<p><strong>AI 風險獨立疊加：</strong>🟢 → × 1.10</p>
+
+<p><strong>最終長期合理倍數 = 20 × 1.175 × 1.10 = <span class="num">25.85x</span></strong>（5 年後 mature mid-cycle）</p>
+
+<p class="note">⚠️ 注意：5 年後 mid-cycle FPE 25x 看似支持當前 22x，但這是「5 年後達到 mature 狀態」的合理估值。當前是「mid-cycle 早期」，理論 FPE 應為 mid-cycle 25x × discount = 15-17x。當前 20x 已透支 mid-cycle 估值。</p>
+
+<h3>投資結論（v11.0 完整版）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態：</strong><span class="badge-green">+ 強化</span>（Coach +25% YoY 驗證動能）</li>
+<li><strong>H2 當前狀態：</strong><span class="badge-green">+ 強化</span>（中國 +34% 大幅超期待）</li>
+<li><strong>H3 當前狀態：</strong><span class="badge-yellow">0 中性</span>（市場已給 20x，無進一步升級空間）</li>
+<li><strong>結論：H1、H2 強化，H3 已 priced in 完全，估值再升空間有限。</strong></li>
+</ul>
+
+<h4>進場 / 觀望偏進場 / 觀望 / 迴避</h4>
+<ul>
+<li>短期 R:R −0.61x，中期 R:R −0.47x</li>
+<li>都不過 + 雙負 → <strong>觀望</strong></li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q3 FY26（5/8 公告）GM 與 Coach organic growth 是首要驗證點。若 Coach 同店 +20%+ 且 GM 76%+ 維持，動能延續；若 &lt; 15% 即動能轉折信號。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY+2 EPS $7.21 共識成長率 +11%，從 FY+1 +27% 顯著減速。能見度<strong>中等</strong>。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道：5-7 年 / 護城河趨勢：穩定 / <strong>長期持有信心：中</strong></p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔（Bear $55，採 W52 Low $67.22）：現價 → $67，距離 −53.9%</li>
+<li>中期下檔（同上）：−53.9%</li>
+<li>W52 Low $67.22 / W104 Low $34.10（2024 Capri 案破局極端低點）</li>
+<li>若 FY+1 EPS 下修 10%，短期 R:R 將降至 −0.66x（更差）</li>
+</ul>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+
+</body>
+</html>
