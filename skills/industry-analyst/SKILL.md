@@ -371,6 +371,21 @@ financial-analysis-bot/
 - 若 `docs/research/index.html` 有「產業深度」tab，更新 markers
 - `git add + commit + push`（依 MEMORY feedback）
 
+### Step 9.5 — Tier Matrix 健康度檢查（v1.7+ 新增）
+
+**完稿後必跑**：`python3 scripts/check_tier_matrix.py --inject-html`
+
+此步驟做兩件事：
+1. **掃描差距**：偵測新 ID 中出現但未列入 `docs/id/tier_matrix.html` 的 ticker（≥ 2 份 ID 為 signal threshold）
+2. **更新 alert**：自動把健康度 banner 注入 `/research/index.html`（已發財報但 DD 未更新下方）+ `/id/index.html`（已建 ID 總數 flash card 上方）
+
+**輸出處理**：
+- 若返回「✅ 與 ID / DD 同步」 → 無需動作
+- 若返回「🆕 N 檔新 ticker」 → **必須在回給 user 的訊息中提示**：「本次 ID 新增 X 檔 ticker（A、B、C），是否評估加入 Tier Matrix？建議 PM 級 3 軸打分後決定 Tier。」
+- 若返回「⏰ 半衰期警示」 → 提示 user 已超過 53 天，建議完整 review
+
+此步驟與 Step 9 的 commit 一起 push（同 commit 涵蓋 ID 新增 + alert 更新）。
+
 ---
 
 ## 【QC-I 規則（14 條，v1.1 Insight-first）】
