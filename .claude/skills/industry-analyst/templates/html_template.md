@@ -16,6 +16,20 @@
 <meta name="id-theme" content="{THEME}">
 <meta name="id-publish-date" content="{YYYY-MM-DD}">
 <title>產業深度 — {THEME}（{YYYY-MM-DD}）</title>
+<script id="id-meta" type="application/json">
+{
+  "theme": "{THEME}",
+  "skill_version": "v1.0",
+  "id_version": "v1.0",
+  "publish_date": "{YYYY-MM-DD}",
+  "thesis_type": "structural",
+  "ai_exposure": "🟡",
+  "oneliner": "{≤200 字，本 ID 核心 thesis 一句話 — 不可截斷}",
+  "related_tickers": [
+    {"ticker": "{TICKER}", "role": "{角色描述}", "depth": "🔴", "beneficiary": true}
+  ]
+}
+</script>
 <style>{SHARED_STYLES}</style>
 </head><body>
 

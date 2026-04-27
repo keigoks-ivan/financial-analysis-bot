@@ -226,6 +226,36 @@ Ticker: Eaton (ETN)
 
 ---
 
+## Gate 8 [必備 / 阻斷 · v1.6 新增]｜id-meta JSON 區塊存在且通過 strict 驗證
+
+**規則**：每份 ID HTML 的 `<head>` 內必含 `<script id="id-meta" type="application/json">{...}</script>`，且該 JSON 通過 `scripts/validate_id_meta.py` strict 驗證（必填欄位齊全、enum 值合法、`oneliner` ≤ 200 chars、`related_tickers` 結構正確）。
+
+**為何新增（v1.6, 2026-04-27）**：
+2026-04-27 連 11 份新 ID（AerospaceMetals / CommercialAerospace / DefenseAerospaceUpgrade / EdgeAI / FoundryGeography / HeavyMachineryMining / HumanoidIndustrialRobotics / IndustrialAutomation / ProductivityCopilot / TokenEconomics / GlobalLuxury）漏了 id-meta 區塊，CI `Validate DD + ID metadata` workflow strict gate 全部 fail，使用者收到連續失敗信件。根因：`templates/html_template.md` 骨架未列 id-meta，QC-I14.5 只在 QC 列表（事後檢核），缺乏 pre-publish blocking gate。本 Gate 把 id-meta 從「QC 提醒」升格為「阻斷式 publish gate」。
+
+**檢查步驟**：
+1. 執行 `python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{YYYYMMDD}.html`
+2. exit code != 0 → **阻斷發布**，列出缺漏 / 違規欄位
+3. 常見 fail：
+   - 沒有 `<script id="id-meta">` 區塊（漏寫）
+   - `oneliner` 超過 200 chars（沒裁切，把 §0 整段塞進去）
+   - `ai_exposure` 用了預設 🟡 但語意上應該是 🟢/🔴（warning，不阻斷；發布前人工調整）
+   - `related_tickers` 為空陣列且非 cross-cutting 主題
+
+**典型 fail 情境**：
+- skill 從 html_template 複製骨架但忘記填 id-meta JSON 內容 → block
+- backfill 工具產的 oneliner 是 §0 截斷段 → block（length > 200）
+
+**輸出格式**：
+```
+## Gate 8: id-meta JSON Validation
+$ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
+{exit code, errors}
+✅ PASS / ❌ FAIL — {缺漏欄位列表}
+```
+
+---
+
 ## 輸出格式：pre_publish_report.md
 
 每次 gate check 產出一份報告：

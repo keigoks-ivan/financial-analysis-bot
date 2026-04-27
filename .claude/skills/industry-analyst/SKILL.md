@@ -341,9 +341,9 @@ financial-analysis-bot/
 - 未過直接返工，不落稿
 - 特別檢查：§12 Non-Consensus 是否真的非共識、§9.5 反方是否夠硬、§10.5 Catalyst 日期是否具體
 
-### Step 8.5 — Pre-Publish Gate Check（v1.5，9 條 Gate）
+### Step 8.5 — Pre-Publish Gate Check（v1.6，10 條 Gate）
 
-讀取 `pre_publish_check.md` 的 9 條 Gate，逐條跑阻斷檢查：
+讀取 `pre_publish_check.md` 的 10 條 Gate，逐條跑阻斷檢查：
 - Gate 1 [阻斷] 核心 ticker financials < 60 天
 - Gate 2 [阻斷] Event-triggered thesis < 14 天
 - **Gate 2.1 [阻斷, v1.5 新增] Thesis Cornerstone Fact Verification** — 「獨家 / 首家 / 唯一」類 claim 必須獨立 WebSearch 驗證 ecosystem 玩家，避免重演 Eaton 獨家 800V DC 類錯誤
@@ -353,16 +353,19 @@ financial-analysis-bot/
 - Gate 5 [warning] Unit & scope consistency
 - Gate 6 [warning] Cross-ID layer disambiguation（switch vs chip-level）
 - Gate 7 [warning] Sub-topic ID value-add rule（子題 vs 母題）
+- **Gate 8 [阻斷, v1.6 新增] id-meta JSON validation** — `python3 scripts/validate_id_meta.py docs/id/ID_X.html` 必須 exit 0（避免 CI strict gate 連坐被擋）
 
-任一阻斷 Gate (1/2/2.1/3) fail → 阻斷發布 + 列修正項；阻斷 Gate 全過、warning Gate (3.1/4/5/6/7) 有 fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記錄 pass/fail 明細。
+任一阻斷 Gate (1/2/2.1/3/8) fail → 阻斷發布 + 列修正項；阻斷 Gate 全過、warning Gate (3.1/4/5/6/7) 有 fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記錄 pass/fail 明細。
 
 ### Step 9 — 產出 HTML + INDEX
 - 寫入 `docs/id/ID_{Theme_CamelCase}_{YYYYMMDD}.html`
+- **`<head>` 必含 `<script id="id-meta" type="application/json">{...}</script>`**（在 `<title>` 之後、`<style>` 之前）— 這是下游消費者（stock-analyst §11、CI validator、未來 sector index）的 SSOT。完整欄位定義見 QC-I14.5；範例骨架見 `templates/html_template.md`。**漏寫此區塊 → CI `Validate DD + ID metadata` workflow strict gate fail，整 push 連坐被擋**
 - append `docs/id/INDEX.md` 一行
 - 更新 `docs/id/index.html` 列表
 - 若 `docs/research/index.html` 有「產業深度」tab，更新 markers
 - **重新生成 DD ↔ ID 對應表**：執行 `python3 scripts/id_dd_mapping.py`（若該腳本存在）
 - **回補現有 DD 的 ID banner**：執行 `python3 scripts/retrofit_dd_id_banner.py`（若該腳本存在）→ 新 ID 的覆蓋 ticker 會自動在其 DD 頂部顯示連結
+- **本地最後驗證**：`python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{YYYYMMDD}.html`（exit 0 才能 commit）
 - `git add + commit + push`（依 MEMORY feedback）
 
 ---
