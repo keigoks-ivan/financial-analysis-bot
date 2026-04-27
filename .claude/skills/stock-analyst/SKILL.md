@@ -2143,7 +2143,7 @@ HTML 必須包含所有章節的完整分析內容，不得摘要化。
 
 - 檔名格式：`DD_[標的代碼]_[YYYYMMDD].html`
 - 使用 Write 工具輸出至 `docs/dd/`(相對於專案根目錄 `financial-analysis-bot/`)
-- **輸出完成後,必須執行以下三步驟,不得省略**:
+- **輸出完成後,必須執行以下四步驟,不得省略**:
   1. **更新 INDEX.md**（v12.0 格式）:使用 Edit 工具 append 一行到 `docs/dd/INDEX.md`,格式為(8 欄):
      `| YYYY-MM-DD | TICKER | v12.0 | 綜合訊號 | 陷阱定性 | 等級/估值燈/MA | DD_TICKER_YYYYMMDD.html | 備註 |`
      - 第 1 欄:報告日期(YYYY-MM-DD)
@@ -2182,3 +2182,11 @@ HTML 必須包含所有章節的完整分析內容，不得摘要化。
      ```
      🔗 首頁同步欄位的狀態取自上方第 2 步的執行結果。
      這是 terminal 允許輸出的**唯一**文字,章節內容仍然嚴禁在對話框顯示。
+
+  4. **Tier Matrix 健康度檢查**（v12.1+ 新增）：執行 `python3 scripts/check_tier_matrix.py --inject-html`。
+     此步驟會：
+     - 比對 DD 變化（訊號、信心、verdict）vs Tier Matrix 中該 ticker 的目前 Tier
+     - 自動更新 `/research/index.html` + `/id/index.html` 的健康度 banner
+     - 若 DD 訊號 / 信心發生變化（A → B、信心高 → 中等），且該 ticker 已在 Tier Matrix 中
+       → **必須在 terminal 摘要末尾加註提示**：「⚠️ TICKER 在 Tier Matrix 目前為 Tier X，本次 DD 訊號變化（XXX）可能觸發 Tier 重評，請檢查 tier_matrix.html」
+     - 若該 ticker 不在 Tier Matrix（新建 DD）→ 提示「TICKER 為新 ticker，建議納入 Tier Matrix 評估」
