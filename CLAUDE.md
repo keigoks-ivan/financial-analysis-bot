@@ -121,3 +121,4 @@ Live: https://research.investmquest.com/earnings/
 - Do not edit nav on other pages (they already link to `/earnings/`).
 - Do not open a PR. This is a direct push to `main`, same as existing `publish_dd.sh` flow.
 - Do not amend commits once pushed. If a mistake is found, make a new commit.
+
