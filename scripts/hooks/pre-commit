@@ -1,0 +1,55 @@
+#!/bin/sh
+# Auto-installed pre-commit hook (2026-04-27)
+# Mirrors .github/workflows/validate_dd_meta.yml strict gate locally —
+# blocks commits that would fail CI for dd-meta / id-meta JSON validation.
+#
+# Triggers only when staged files touch docs/dd/DD_*.html, docs/id/ID_*.html,
+# or the validators themselves (so unrelated commits aren't slowed).
+#
+# To bypass in emergency: git commit --no-verify
+
+set -e
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+
+NEEDS_DD=$(echo "$STAGED" | grep -E '^(docs/dd/DD_.*\.html|scripts/validate_dd_meta\.py)$' || true)
+NEEDS_ID=$(echo "$STAGED" | grep -E '^(docs/id/ID_.*\.html|scripts/validate_id_meta\.py)$' || true)
+
+if [ -z "$NEEDS_DD" ] && [ -z "$NEEDS_ID" ]; then
+  exit 0
+fi
+
+FAIL=0
+
+if [ -n "$NEEDS_DD" ]; then
+  echo "→ pre-commit: validating dd-meta (staged DD files detected)"
+  if ! python3 scripts/validate_dd_meta.py > /tmp/_dd_validate.log 2>&1; then
+    echo ""
+    echo "❌ dd-meta validation FAILED — commit blocked."
+    echo "   Tail of validator output:"
+    tail -25 /tmp/_dd_validate.log | sed 's/^/   /'
+    echo ""
+    echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
+    FAIL=1
+  fi
+fi
+
+if [ -n "$NEEDS_ID" ]; then
+  echo "→ pre-commit: validating id-meta (staged ID files detected)"
+  if ! python3 scripts/validate_id_meta.py > /tmp/_id_validate.log 2>&1; then
+    echo ""
+    echo "❌ id-meta validation FAILED — commit blocked."
+    echo "   Tail of validator output:"
+    tail -25 /tmp/_id_validate.log | sed 's/^/   /'
+    echo ""
+    echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
+    FAIL=1
+  fi
+fi
+
+if [ "$FAIL" -ne 0 ]; then
+  exit 1
+fi
+
+echo "✅ pre-commit: dd/id-meta validation passed"
+exit 0
