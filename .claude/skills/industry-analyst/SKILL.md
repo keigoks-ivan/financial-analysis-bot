@@ -473,6 +473,89 @@ ID 不同章節的半衰期不同，必須分開判斷：
 - `docs/id/INDEX.md` 每行加「🆕 最新段刷新日」欄；超半衰期的層級以 🟡🟠🔴 標示
 - `docs/id/index.html` 首頁列表對超半衰期的 ID 加視覺警示（邊框變色）
 
+---
+
+### QC-I14.5｜【v1.8+ 必備】id-meta JSON 結構化區塊
+
+**根因解決**：取代散落 individual meta tags 的反向 parse 困難。每份 ID HTML 的 `<head>` 內必含
+`<script id="id-meta" type="application/json">{...}</script>`，作為下游消費者
+（stock-analyst skill §11 自動引用、未來 sector index page、自訂分析腳本）的 SSOT。
+
+**生成位置**：在 `<title>` 之後、第一個 `<style>` 之前，與既有 `<meta name="id-*">` tags 並存
+（meta tags 可保留作為向後相容；新工具一律讀 JSON）。
+
+**必填欄位**：
+
+| 欄位 | 型別 | 說明 |
+|:---|:---|:---|
+| `theme` | string | 產業主題（e.g. `"AI EDA + IP"`、`"HBM 供需循環"`） |
+| `skill_version` | string | 建立時 industry-analyst skill 版本（`"v1.8"` 等） |
+| `id_version` | string | 此 ID 自身版本（`"v1.0"` for 初版，更新後 `v1.1` etc） |
+| `publish_date` | string | `"YYYY-MM-DD"` |
+| `thesis_type` | enum | `"structural"` / `"event-triggered"` / `"mixed"`（QC-I22 半衰期判定） |
+| `ai_exposure` | enum | `"🟢"` 直接受益 / `"🟡"` 部分受益 / `"🔴"` 中性或受害 |
+| `oneliner` | string | ≤ 200 chars，本 ID 的核心 thesis 一句話 |
+| `related_tickers` | array | 關聯個股清單；每項 `{ticker, role, depth, beneficiary}` |
+
+**選填欄位**（補充用，不強制）：
+
+| 欄位 | 型別 | 說明 |
+|:---|:---|:---|
+| `tam_usd_2030` | number | 2030 TAM in billion USD |
+| `cagr_pct_5y` | number | 5Y CAGR % |
+| `growth_phase` | enum | `"early"` / `"mid"` / `"late"` / `"declining"` |
+| `value_chain_position` | enum | `"upstream"` / `"midstream"` / `"downstream"` / `"cross-tier"` |
+| `industry_structure` | enum | `"monopoly"` / `"duopoly"` / `"oligopoly"` / `"fragmented"` |
+| `sections_refreshed` | object | `{"technical": "YYYY-MM-DD", "market": "YYYY-MM-DD", "judgment": "YYYY-MM-DD"}` |
+| `sister_ids` | array | 兄弟 ID HTML 檔名列表 |
+
+**`related_tickers` 物件 schema**：
+
+```json
+{
+  "ticker": "AVGO",
+  "role": "AI ASIC 設計 + 網通 silicon photonics",
+  "depth": "🔴",
+  "beneficiary": true
+}
+```
+
+- `depth`: 🔴 核心受益（核心業務直接相關）/ 🟡 中度（部分業務相關）/ 🟢 輕度（衍生效應）
+- `beneficiary`: `true` 受益 / `false` 受害
+
+**範例**（AI EDA + IP）：
+
+```html
+<script id="id-meta" type="application/json">
+{
+  "theme": "AI EDA + IP",
+  "skill_version": "v1.8",
+  "id_version": "v1.0",
+  "publish_date": "2026-04-27",
+  "thesis_type": "structural",
+  "ai_exposure": "🟢",
+  "oneliner": "AI 晶片設計爆發推動 EDA + IP 需求結構性向上，SNPS/CDNS 雙寡占受益顯著，AI-native EDA tooling 為下一個複利層。",
+  "related_tickers": [
+    {"ticker": "SNPS", "role": "EDA 雙寡占 + ARC IP", "depth": "🔴", "beneficiary": true},
+    {"ticker": "CDNS", "role": "EDA 雙寡占 + Tensilica IP", "depth": "🔴", "beneficiary": true},
+    {"ticker": "ARM", "role": "CPU IP 通用授權", "depth": "🟡", "beneficiary": true}
+  ],
+  "tam_usd_2030": 25.0,
+  "cagr_pct_5y": 14.5,
+  "growth_phase": "mid",
+  "value_chain_position": "upstream",
+  "industry_structure": "duopoly"
+}
+</script>
+```
+
+**驗證**：寫完 ID HTML 後，重點是 JSON 可解析 + 必填欄位齊全。執行
+`python scripts/validate_id_meta.py` 驗證。CI 也會自動跑。
+
+**為什麼需要 id-meta**：DD plan A 的相同邏輯——避免下游消費者反向 parse HTML
+內文（每次 skill template 改寫就崩）。stock-analyst skill §11 可直接從 id-meta 的
+`related_tickers` array 自動 join 公司 DD ↔ 產業 ID，無需手動維護。
+
 **使用者觸發更新**：
 - 「更新 ID_XX 的 §4 TAM」→ 只重跑該章節，更新 market-refreshed
 - 「更新 ID_XX 全部」→ 全面重跑，所有 refresh 日期一致

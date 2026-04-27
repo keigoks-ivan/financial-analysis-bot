@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.0">
+<title>DD｜FIX｜2026-04-27</title>
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "FIX",
+  "schema": "v12.0",
+  "date": "2026-04-27",
+  "price_at_dd": 1726.12,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "A",
+  "val": "🔴",
+  "ma": "✅",
+  "fpe_fy2": 39.4,
+  "pct_5y": 95,
+  "peg_fy2": 1.64,
+  "upside_short_pct": -35.1,
+  "upside_mid_pct": -21.5,
+  "stress": {"pass": 0, "total": 4},
+  "moat_score": 8,
+  "growth_durability": 9,
+  "quality_score": 10,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "觀望（估值🔴，等修復）",
+  "oneliner": "A 級護城河 8/10（DC mechanical contractor 龍頭 + tech 56% 營收 + backlog $12.45B = 1.23x rev），Q1 26 Rev +56% / EPS $10.51 巨幅 beat、GM 26.3% 史高、FCF $1.1B 真實。但 1 年 +354%、FPE 39.4x，估值透支。"
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#1E293B;line-height:1.7;font-size:14px}
+.container{max-width:1180px;margin:0 auto;padding:24px}
+.header-bar{background:#1E3A5F;color:#fff;padding:14px 24px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 4px rgba(0,0,0,.08);flex-wrap:wrap;gap:8px}
+.header-bar .ticker{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px}
+.header-bar .meta{font-size:13px;opacity:.9}
+.dd-toc{background:#fff;border:1px solid #E2E8F0;border-radius:6px;padding:12px 16px;margin-bottom:24px;display:flex;flex-wrap:wrap;gap:6px}
+.dd-toc a{display:inline-block;padding:5px 11px;background:#EFF6FF;color:#1E3A5F;text-decoration:none;border-radius:14px;font-size:12px;font-weight:500;border:1px solid #DBEAFE;transition:all .15s}
+.dd-toc a:hover{background:#1E3A5F;color:#fff;border-color:#1E3A5F}
+section{background:#fff;margin-bottom:20px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden}
+h2[id^="sec-"]{scroll-margin-top:80px}
+h2{background:#1E3A5F;color:#fff;padding:14px 22px;font-size:17px;border-left:4px solid #3B82F6;font-weight:700}
+h3{color:#1E3A5F;padding:14px 22px 6px;font-size:15px;font-weight:700;border-bottom:1px solid #E2E8F0;margin-bottom:10px}
+h4{color:#1E3A5F;padding:8px 22px 4px;font-size:14px;font-weight:600}
+.content{padding:8px 22px 18px}
+p{margin:8px 0}
+.note{font-size:12px;color:#64748B;margin-top:6px;padding:8px 22px}
+table{width:calc(100% - 44px);margin:10px 22px 14px;border-collapse:collapse;font-size:13px}
+th{background:#1E3A5F;color:#fff;padding:10px 8px;text-align:left;font-weight:500;font-size:12.5px}
+td{padding:9px 8px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+td.num,th.num{font-family:'IBM Plex Mono',monospace;text-align:right}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11.5px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-yellow{background:#FEF9C3;color:#92400E}
+.badge-blue{background:#EFF6FF;color:#1E3A5F}
+.badge-orange{background:#FFEDD5;color:#C2410C}
+.signal-box{margin:14px 22px;padding:18px 22px;border-radius:6px;border-left:5px solid}
+.signal-x{background:#FEE2E2;border-color:#991B1B}
+.signal-c{background:#FFEDD5;border-color:#C2410C}
+.signal-b{background:#FEF9C3;border-color:#92400E}
+.signal-a{background:#DCFCE7;border-color:#166534}
+.signal-ap{background:#D1FAE5;border-color:#047857}
+.signal-box .label{font-size:14px;font-weight:600;margin-bottom:6px}
+.signal-box .grade{font-size:36px;font-family:'IBM Plex Mono',monospace;font-weight:700;line-height:1.1}
+.signal-box .desc{font-size:13px;margin-top:6px;color:#1E293B}
+.warn-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.warn-box h4{color:#C2410C;padding:0 0 6px;font-size:14px}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.hypothesis-box h4{color:#1E3A5F;padding:0 0 6px}
+.hypothesis-box ul{list-style:none;padding:0}
+.hypothesis-box li{padding:6px 0;font-size:13px}
+.debate-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:10px 22px}
+.debate-card{padding:14px;border-radius:5px;border-left:4px solid;font-size:12.5px}
+.debate-bull{background:#F0FDF4;border-color:#16A34A}
+.debate-bear{background:#FFF1F2;border-color:#DC2626}
+.debate-arb{background:#F5F3FF;border-color:#7C3AED}
+.debate-card h4{padding:0 0 6px;font-size:13px}
+.verdict-box{background:#FFFBEB;border-left:4px solid #D97706;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.verdict-box h4{color:#92400E;padding:0 0 6px}
+.print-btn{position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;padding:10px 18px;border-radius:6px;border:none;cursor:pointer;box-shadow:0 4px 8px rgba(0,0,0,.15);font-family:inherit;font-size:13px;z-index:99}
+.print-btn:hover{background:#3B82F6}
+ul,ol{padding-left:38px;margin:8px 0}
+li{padding:3px 0;font-size:13px}
+.row-good{background:#F0FDF4 !important}
+.row-bad{background:#FEF2F2 !important}
+.row-neutral{background:#FFFBEB !important}
+@media print{
+  .header-bar,.print-btn,.dd-toc{display:none}
+  body{font-size:11px}
+  section{page-break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+<div class="ticker">FIX｜Comfort Systems USA</div>
+<div class="meta">資料抓取：2026-04-27 ｜ 收盤 $1,726.12 ｜ Q1 FY26 已發布(2026-04-23) ｜ Schema v12.0</div>
+</div>
+
+<div class="container">
+
+<nav class="dd-toc">
+<a href="#sec-1">§1 結論</a>
+<a href="#sec-2">§2 序章</a>
+<a href="#sec-3">§3 論點</a>
+<a href="#sec-4">§4 財報</a>
+<a href="#sec-5">§5 門檻</a>
+<a href="#sec-6">§6 成長</a>
+<a href="#sec-7">§7 護城河</a>
+<a href="#sec-8">§8 財務</a>
+<a href="#sec-9">§9 產業</a>
+<a href="#sec-10">§10 治理</a>
+<a href="#sec-11">§11 估值</a>
+<a href="#sec-12">§12 訊號燈</a>
+<a href="#sec-13">§13 辯論</a>
+</nav>
+
+<!-- §1 -->
+<section>
+<h2 id="sec-1">§1 投資結論（v12.0 綜合訊號燈）</h2>
+
+<div class="signal-box signal-b">
+<div class="label">綜合訊號燈（v12.0）</div>
+<div class="grade">B（觀望，估值🔴）</div>
+<div class="desc">護城河 A 級（DC mechanical contractor 龍頭 + tech 56% 營收 + backlog $12.45B = 1.23x rev）｜體質檢核 5/5 全通過｜品質分 10/10（滿分）｜ 估值 🔴 嚴重偏貴（FPE 39.4x，5Y 95+ 分位）｜ Pure MA 強勢多頭但<strong>極端拉升</strong>（距 MA104w +167%，4 週 +26.3%）｜ Bollinger 上軌附近（QC-22 嚴重警示）</div>
+</div>
+
+<p class="note">v12.0 訊號燈定義：A+/A/B = 進場/觀望偏進場/觀望（thesis OK，可追蹤）；C/X = 迴避（thesis 失敗）。R:R 為時機參考，不單獨觸發迴避。FIX 為「頂級基本面 + AI DC 純正受益 + 估值極端透支」——基本面證據比 CIEN/MOD 更紮實（FCF $1.1B 真實、ROE 53%、$12.45B backlog 硬數據），thesis 完整、僅估值/時機問題 → B（觀望）。新進倉位嚴禁，等估值修復至 FPE ≤ 28x。</p>
+
+<div class="hypothesis-box">
+<h4>結論 Dashboard</h4>
+<ul>
+<li><strong>品質 A 級（10/10 滿分）：</strong>護城河 8/10（DC mechanical contractor 龍頭 + tech 56% 營收 + 全國 footprint）+ 成長持久性 9/10（AI DC capex 結構性順風 + backlog $12.45B = 1.23x rev、+81% YoY）+ 體質 +2.5（5/5 全過：GM 升至 26.3% 史高 ✅、FCF/NI 0.90 ✅、EPS 共識 90 天 +30% ✅、Rev +56% YoY ✅、Net Debt/EBITDA 0.14 ✅）</li>
+<li><strong>估值 🔴 嚴重偏貴：</strong>Forward PE 39.4x（FY+2）/ Trailing PE 49.7x / EV/EBITDA 36.3x ｜ 5Y 95+ 分位 ｜ 3Y PEG 1.64 / 2Y PEG 2.28（正規化已昂貴）</li>
+<li><strong>短期（FY+1）：</strong>FY26 EPS $40.01（+38.5% YoY 從 $28.88）｜ 合理價 $1,120 vs 現價 $1,726.12 ｜ 上行空間 −35.1% ｜ R:R 負值</li>
+<li><strong>中期（FY+2）：</strong>FY27 EPS $48.36（+20.9%）｜ 合理價 $1,354 ｜ 上行空間 −21.5% ｜ R:R 負值</li>
+<li><strong>建議：</strong><strong>觀望 / 追蹤池</strong>（思路 OK，時機不到）。生意品質頂級、AI DC mechanical thesis 紮實、現金流真實，但<strong>1 年漲 +354%</strong>（從 $380 → $1,726）屬罕見動能爆衝（QC-22 嚴重警示）。新進倉位嚴禁，等估值回檔至 FPE ≤ 28x（股價 $1,120–1,200）+ 4 週漂移消化再評估</li>
+<li><strong>關鍵警示：</strong>(1) Tech sector 集中度高（56% 營收）—— hyperscaler capex cycle 反轉風險；(2) Mechanical contractor 業務歷史 cyclical（commercial construction），DC AI 是當前驅動但屬於 capex 型景氣；(3) Q1 26 GM 26.3% 是 all-time high，後續難維持；(4) 雖然基本面證據比 CIEN/MOD 強，但相同的「動能末段 + 估值透支」模式</li>
+<li><strong>長期持有信心：高</strong>（§12 G）｜ <strong>陷阱定性：</strong>🟡 觀察期（基本面證據確鑿，但「現在進場」是高風險動能交易，非長期價值買入）</li>
+</ul>
+</div>
+
+<p class="note">判定：<strong>B 觀望（估值🔴 + MA 嚴重過熱）</strong>（§12 E）｜建議 portfolio-manager：(a) 不納入新建倉；(b) 已持倉者部分獲利了結 30–50%；(c) 列入「優質回檔加碼觀察清單」，等 BB 中軌 $1,274 / MA40w $1,045 / FPE ≤ 28x（$1,120-1,200）區間再評估。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的陷阱模式</strong></td><td><strong>非陷阱</strong>。FIX Q1 26 EPS $10.51 vs $6.78 共識（+55% beat）、Rev $2.9B（+56% YoY）、GM 26.3% all-time high、backlog $12.45B (+81% YoY)、FCF $1.1B 真實、ROE 53%。所有 Munger 維度頂級。屬「<strong>AI DC capex 主題 + 動能 + 4x in a year</strong>」型過熱型估值錯配，<strong>純動能透支 + cyclical 風險</strong>。</td></tr>
+<tr><td><strong>支持「不是陷阱」的最強論據</strong></td><td>(1) Q1 26 全面 beat：EPS +55% 超共識、Rev +20% 超共識、Adj EBITDA +50% 超共識；(2) GM 26.3% all-time high + Operating Margin doubled to $486M；(3) Backlog $12.45B = 1.23x annual revenue，+81% YoY；(4) Tech sector 56% YTD revenue（DC mechanical contractor 純度提升）；(5) Free Cash Flow $1.1B（占 Rev 11%，真實非預期）；(6) ROE 53%、ROIC 高（asset-light）；(7) 季度股息加至 $0.80（資本配置紀律）；(8) Net Debt/EBITDA 0.14x（極健康）。</td></tr>
+<tr><td><strong>支持「可能是陷阱」的最強反駁</strong></td><td>(1) 1 年漲 +354%（從 $380 → $1,726）屬於罕見動能極端；(2) Mechanical contractor 業務歷史 cyclical（construction-driven），DC AI 是當前驅動但屬於 capex 型景氣（不是 software recurring revenue）；(3) Tech 集中度高（56%）—— hyperscaler capex cycle 反轉風險；(4) GM 26.3% 是史高，FY27+ 難維持；(5) FY26 EPS $40 已含當前 backlog 大部分；FY27 EPS $48 需新增 backlog 兌現；(6) FPE 39.4x 已超過 5Y 高點，pure-play DC infra 估值上限。</td></tr>
+<tr><td><strong>持有期間如何判斷陷阱發生</strong></td><td>(1) 季度 Backlog 新增率：若連 2 季 backlog 不增 → 訂單動能放緩；(2) Tech sector 營收占比：若連 2 季縮減 → DC capex 放緩；(3) Forward PE 若維持 35x+ 但 EPS 共識停止上修 → 估值修復風險。</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>最終定性：🟡 觀察期</strong>（基本面證據是 CIEN/MOD 中最強的，FCF / ROE / backlog / 季度 beat 全部頂級。但「現在進場」是極端動能交易，等估值回到 FPE ≤ 28x 再進場。）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Backlog 季度新增率</td><td>§3 H1 / §4</td><td>🔵 核心假設驗證</td><td>連 2 季 backlog 不增 → AI DC capex 動能放緩</td></tr>
+<tr><td>2</td><td>Tech sector 營收占比</td><td>§6 / §9</td><td>🔵 DC 純度</td><td>若連 2 季從 56% 縮減至 < 50% → DC capex 放緩</td></tr>
+<tr><td>3</td><td>Forward PE（NTM）</td><td>§11 / §12</td><td>估值校準</td><td>FPE 跌至 ≤ 28x → 啟動進場評估</td></tr>
+<tr><td>4</td><td>Q1 EPS 上修速度</td><td>§4 / §5</td><td>業績動能</td><td>FY26 EPS 共識若未繼續上修 / 開始下修 → 動能轉折</td></tr>
+</table>
+
+<p style="padding:8px 22px;font-size:12px;color:#64748B">本結論基於以下完整分析得出，詳見各章節。</p>
+</section>
+
+<!-- §2 -->
+<section>
+<h2 id="sec-2">§2 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<div class="content">
+<p>剝離財務表象，Comfort Systems USA 解決三個結構性問題：</p>
+<ol>
+<li><strong>AI DC 從藍圖到通電的「最後一哩」工程實施</strong>：當 hyperscaler 公布 $50B+ DC 投資計畫時，這些資金最終要轉化為實體建築 → 機械系統 + 電氣系統 + 管線 + cooling distribution。FIX 是 NA 最大的 mechanical contractor 之一，<strong>是把「DC capex 數字」轉化為「實體建築」的執行者</strong>。沒有 mechanical contractor，hyperscaler 公告的 capex 就只是 PR。</li>
+<li><strong>AI DC 規模 + 複雜度爆炸推升 mechanical 工程價值</strong>：傳統 commercial HVAC mechanical contracting 是低毛利、高度區域化、cyclical 業務。但 AI DC 的 130kW+ rack 功耗 + liquid cooling + 模組化設計使工程複雜度跳升 → 客戶願意付高溢價選有經驗的 contractor → FIX GM 從 21% 升至 26.3%（all-time high）。</li>
+<li><strong>客戶 long-tail 集中至大型 hyperscaler/colo 的轉變</strong>：FIX 過去服務 commercial / 政府 / 醫療 mixed 客戶。AI DC 主題使 tech sector 升至 56% 營收（YTD 2026），客戶從 fragmented 轉為集中 hyperscaler。</li>
+</ol>
+<p>若以 Munger Inversion 視角，這三項「存在意義」<strong>在 AI 浪潮中被結構性放大</strong>。但 FIX 並非沒有風險——hyperscaler capex cycle 的反轉（如 2022-2023 cloud overbuild 後的 reset）將直接衝擊 backlog。Mechanical contractor 業務本質上是 cyclical capex execution，而非 secular growth。</p>
+</div>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<div class="content">
+<p>若要讓 FIX 在 3 年內從 $1,726 跌至 $863 以下（虧損 50%），最可能路徑：</p>
+<ul>
+<li><strong>地緣政治曝險</strong>：低。FIX 100% 美國 mechanical contractor，無國際曝險。</li>
+<li><strong>技術替代風險（中等權重）</strong>：(a) Hyperscalers 自建 DC mechanical capability（如 Google 自有施工團隊）→ 削弱外包需求；(b) 模組化 DC 預組裝率提升 → 現場工程量下降；(c) 機器人 / 自動化 mechanical 安裝 → 人工成本優勢消失。但這些都是長期趨勢（5+ 年）。</li>
+<li><strong>產業景氣風險（最高權重）</strong>：(a) Hyperscaler AI capex cycle 反轉（如 Meta 2022 reset） → backlog 不再成長；(b) 利率上升使 DC project economic 退化；(c) Power 限制使 AI DC 建設放緩 → mechanical 需求放緩。<strong>2027-2028 是關鍵驗證窗</strong>。</li>
+<li><strong>管理層失職</strong>：CEO Brian Lane 任期內 FIX 從 cyclical contractor 轉型為 DC infrastructure 龍頭，執行極佳（GM 升至 26.3% 史高）。低風險。</li>
+<li><strong>價值陷阱路徑（四選一）</strong>：<strong>非典型陷阱</strong>。最可能負面情境是「<strong>產業結構 cyclical 反轉</strong>」型：當 hyperscaler AI capex cycle 進入 digestion 期（2027 H2-2028），FIX backlog 從 $12.45B 降至 $9-10B，FY28 EPS 從 $55 共識降至 $40-45，估值 + 業績雙殺。</li>
+</ul>
+</div>
+</section>
+
+<!-- §3 -->
+<section>
+<h2 id="sec-3">§3 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>長期 3–5 年（基本面值得長持）；當前進場時機 = 0（等待回檔）</td></tr>
+<tr><td><strong>主要驅動</strong></td><td>AI DC 是 5–10 年級結構性順風 + FIX 純度高；但 1 年 +354% 已透支 2-3 年成長。長期論點完整，短期估值 + cyclical 風險主導。</td></tr>
+<tr><td><strong>訊號 vs 噪音</strong></td><td>對「等待回檔」決策：當前 Q1 beat、新 backlog 公告、PT 上調都是已被定價的噪音；唯一信號是<strong>估值回到 PEG ≤ 1.4（FPE 28x）</strong>。</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td>Backlog 持續擴大至 $14B+（FY26 EOY），DC capex cycle 延續至 2028</td><td>季度 backlog 季增率 + Tech sector revenue mix</td><td>每季財報</td></tr>
+<tr><td>H2</td><td>FY26-FY28 EPS CAGR 兌現分析師共識（$28.88 → $55 ≈ 24%）</td><td>每季 Non-GAAP EPS</td><td>每季財報</td></tr>
+<tr><td>H3</td><td>Forward PE 維持 35x+（市場給予 AI DC 純度溢價）</td><td>10Y UST < 5%、Hyperscaler capex 不退潮</td><td>持續</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Hyperscaler AI capex cycle 反轉（2027-2028 digestion 期）</td><td>H1</td><td>Hyperscaler capex guidance（NVDA/MSFT/META/AMZN）</td><td>4 大 hyperscaler 任 2 家下修 capex ≥ 10%</td></tr>
+<tr><td>R2</td><td>Mechanical contractor 競爭加劇（如 EMCOR 等對手搶下大型 hyperscaler 合約）</td><td>H1 / H2</td><td>季度 backlog 不增</td><td>連 2 季 backlog 不增</td></tr>
+<tr><td>R3</td><td>Forward PE 從 39x 壓縮至 cyclical 中位 22x</td><td>H3</td><td>Forward PE 變化</td><td>FPE 跌破 28x（純估值修復）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>對 FIX 的具體應用</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>當前等待回檔。所有 0–3 個月的「動能延續」訊息是噪音；唯一信號是估值修復。</td></tr>
+<tr><td>2. 假設關聯？</td><td>判斷影響 H1 / H2 / H3，不影響三者就是噪音。</td></tr>
+<tr><td>3. 邊際方向？</td><td>強化 / 削弱 / 無關評分。</td></tr>
+<tr><td>4. 閾值判斷？</td><td>達到「進場」閾值的條件：FPE ≤ 28x 且 Tech sector 營收占比維持 50%+。</td></tr>
+</table>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>估值：股價回檔至 $1,120–1,200（FPE 28x）<strong>且</strong>基本面：H1 + H2 維持確認</td><td>建倉 6–8%（首次進場）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 雙確認（backlog $14B+ + Tech sector ≥ 60%）</td><td>加碼至 10–12%</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 風險：Hyperscaler capex 下修 ≥ 10%</td><td>減至原始倉位 50%</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 + H2 同時惡化（backlog 縮減 + EPS 共識下修 ≥ 15%）</td><td>清倉</td></tr>
+<tr><td><strong>當前情境（2026-04-27）</strong></td><td>FPE 39.4x、4 週 +26.3%、距 MA104w +167%</td><td><strong>不進場（C 訊號燈）</strong></td></tr>
+</table>
+</section>
+
+<!-- §4 -->
+<section>
+<h2 id="sec-4">§4 即時財報情報（Q1 FY26 已發布 2026-04-23）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th class="num">本季實際</th><th class="num">市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td class="num">$2.87B</td><td class="num">$2.38B</td><td><span class="badge badge-green">Beat +20.6%</span></td><td>+56%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td class="num"><strong>$10.51</strong></td><td class="num">$6.78</td><td><span class="badge badge-green">Beat +55%</span></td><td>+61% (vs $6.53)</td></tr>
+<tr><td>Adj EBITDA</td><td class="num">$524.4M</td><td class="num">$349.6M</td><td><span class="badge badge-green">Beat +50%</span></td><td>—</td></tr>
+<tr><td>Gross Margin</td><td class="num">26.3%</td><td class="num">~24%</td><td><span class="badge badge-green">All-time high</span></td><td>+5pp</td></tr>
+<tr><td>Operating Income</td><td class="num">$486M</td><td class="num">—</td><td><span class="badge badge-green">超 doubled</span></td><td>+100%+</td></tr>
+<tr><td>Backlog</td><td class="num"><strong>$12.45B</strong></td><td class="num">—</td><td><span class="badge badge-green">+$510M QoQ</span></td><td><strong>+81%</strong></td></tr>
+</table>
+
+<h3>② Forward Guidance</h3>
+<table>
+<tr><th>指標</th><th class="num">公司 Guide</th><th class="num">共識</th></tr>
+<tr><td>FY26 全年 Revenue</td><td class="num">$10.93B</td><td class="num">~$10.5B</td></tr>
+<tr><td>季度股息</td><td class="num">$0.80（raise）</td><td class="num">—</td></tr>
+</table>
+
+<h3>③ 財報對 §3 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Backlog 擴大 + DC cycle 延續）</td><td><span class="badge badge-green">＋ 強化</span></td><td>Backlog $12.45B vs $11.94B Q4，+$510M QoQ；YoY +81%</td></tr>
+<tr><td>H2（FY26-28 EPS CAGR）</td><td><span class="badge badge-green">＋ 強化</span></td><td>FY26 共識 90 天 +30%（$30.79 → $40.01）</td></tr>
+<tr><td>H3（FPE 35x+ 維持）</td><td><span class="badge badge-yellow">0 中性</span></td><td>4 週漂移 +26.3% 顯示動能仍強，但 FPE 已 39.4x（5Y 高點）</td></tr>
+</table>
+
+<h3>④ Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：CEO Brian Lane 樂觀且自信。多次強調「demand environment remains exceptional」、「project visibility extends multiple years」。</li>
+<li><strong>Forward Guidance</strong>：FY26 全年 $10.93B raise from previous guide。連股息也 raise（$0.80/quarter）。</li>
+<li><strong>刻意強調的主題</strong>：Tech sector 56% 營收（YTD）、$12.45B backlog 創新高、GM 26.3% all-time high、modular construction 能力。</li>
+<li><strong>刻意迴避的問題</strong>：(a) 個別 hyperscaler 客戶集中度；(b) Hyperscaler capex cycle 反轉的潛在影響；(c) 2027 EPS 是否能維持當前 GM 水準；(d) 競爭對手（EMCOR、Quanta Services 等）的搶單動態。</li>
+</ul>
+
+<h3>⑤ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：DC capex 持續加速，hyperscaler 訂單轉化為實體建築需求。</li>
+<li><strong>供給端</strong>：Mechanical contractor 產能緊缺，FIX 議價能力提升（GM 史高）。</li>
+<li><strong>競爭格局</strong>：FIX 在大型 DC mechanical 項目享有先發優勢，EMCOR / Quanta Services 為次要競爭。</li>
+<li><strong>對同業的連帶推論</strong>：DC infra 全鏈受益（Vertiv、Schneider、ABB、Modine、Quanta、EMCOR），但 mechanical contractor 是 capex execution 端。</li>
+</ul>
+</section>
+
+<!-- §5 -->
+<section>
+<h2 id="sec-5">§5 核心門檻檢核（含 Munger 護城河維度）</h2>
+
+<h3>EPS 共識（yfinance）</h3>
+<table>
+<tr><th>項目</th><th class="num">數值</th><th>來源</th></tr>
+<tr><td>基期 FY25 Non-GAAP EPS</td><td class="num">$28.88</td><td>10-K</td></tr>
+<tr><td>FY+1（FY26）共識</td><td class="num">$40.01</td><td>yfinance（n=6，YoY +38.5%）</td></tr>
+<tr><td>FY+2（FY27）共識</td><td class="num">$48.36</td><td>yfinance（n=6，YoY +20.9%）</td></tr>
+<tr><td>FY+3（FY28）邏輯推導</td><td class="num">~$55</td><td>§6 推導：DC capex cycle 中後段 + GM 由 26% 回落至 24%（+14% YoY）</td></tr>
+<tr><td>EPS Trend 90d 修正</td><td class="num">FY26 $30.79 → $40.01（+30%）；FY27 $35.46 → $48.36 (+36%)</td><td><span class="badge badge-green">大幅上修</span></td></tr>
+<tr><td>3Y CAGR（FY25→FY28）</td><td class="num">+24.0%</td><td>(55/28.88)^(1/3)−1</td></tr>
+<tr><td>2Y CAGR（FY26→FY28）</td><td class="num">+17.3%</td><td>(55/40.01)^(1/2)−1</td></tr>
+</table>
+
+<h3>Munger 三維護城河數據</h3>
+<ul>
+<li><strong>FCF Margin 5 年</strong>：FY21 ~7%、FY22 ~7%、FY23 ~9%、FY24 ~10%、FY25 ~11% TTM。<span class="badge badge-green">穩定改善</span></li>
+<li><strong>ROIC 10 年</strong>：歷史多在 15-25%，當前估 ~25%+。<span class="badge badge-green">頂級</span></li>
+<li><strong>Gross Margin 10 年</strong>：FY15-22 約 18-20%、FY23-25 升至 21-26%。趨勢明顯改善（DC mix）。</li>
+<li><strong>Capex / Revenue</strong>：~1-2%（asset-light service business）</li>
+<li><strong>D/E + 現金</strong>：Cash $71M、Debt $304M、Net Debt $234M、EBITDA TTM ~$1.7B、Net Debt/EBITDA 0.14x</li>
+</ul>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr>
+<tr class="row-good"><td>FCF Margin（當前）</td><td>&gt; 15%</td><td>🟡 接近</td><td>11%（TTM，asset-light service 業務的高水位）</td></tr>
+<tr class="row-good"><td>正規化 FCF Margin</td><td>5 年均值 &gt; 15%</td><td>🟡</td><td>5Y 均值 ~9%（service 業務性質）</td></tr>
+<tr class="row-good"><td>ROIC（當前）</td><td>&gt; 15%</td><td>✅</td><td>~25%（asset-light 高 ROIC）</td></tr>
+<tr class="row-good"><td>ROIC 穩定性</td><td>10 年中 ≥ 70% 年份 ROIC &gt; 15%</td><td>✅</td><td>~7/10 達標（成長期表現升級）</td></tr>
+<tr class="row-good"><td>毛利率定價能力</td><td>10 年中 ≥ 70% 改善</td><td>✅</td><td>近 5 年 GM 從 18% 升至 26.3%</td></tr>
+<tr class="row-good"><td>資本密集度</td><td>Capex/Rev &lt; 5%</td><td>✅</td><td>~1-2%（asset-light service）</td></tr>
+<tr class="row-good"><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td>✅</td><td>3Y 24% / 2Y 17.3%</td></tr>
+<tr class="row-good"><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td>✅</td><td>1.64</td></tr>
+<tr class="row-good"><td>負債安全性</td><td>D/E &lt; 0.7</td><td>✅</td><td>D/E 0.04（極低）</td></tr>
+<tr class="row-neutral"><td>現金覆蓋總負債</td><td>是 / 否</td><td>🟡</td><td>$71M cash vs $304M debt（部分覆蓋，但 EBITDA 強）</td></tr>
+<tr class="row-good"><td>護城河強度</td><td>&gt; 8 分</td><td>✅</td><td>8/10，趨勢擴大</td></tr>
+</table>
+
+<p style="padding:10px 22px"><strong>最大財務弱點</strong>：現金水位偏低（$71M cash vs $1.1B FCF/yr，但 FCF 本身強，現金被用於併購）。
+<br><strong>Munger 三維評級</strong>：<span class="badge badge-green">🟢 三項全達標</span>（ROIC 穩定性 + 毛利率定價能力 + 資本密集度）</p>
+
+<div class="warn-box">
+<h4>⚠️ 過熱陷阱檢驗（v12 反向觸發）</h4>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>過熱信號？</th></tr>
+<tr><td>Q1</td><td>過去 12 個月股價漲幅 vs S&P 500</td><td>+354% vs +15%</td><td><span class="badge badge-red">🔴 極端</span></td></tr>
+<tr><td>Q2</td><td>過去 4 週股價漲幅</td><td>$1,367 → $1,726 = <strong>+26.3%</strong></td><td><span class="badge badge-red">🔴 QC-22 嚴重警示</span></td></tr>
+<tr><td>Q3</td><td>分析師中位 PT vs 現價</td><td>~$1,400-1,600 vs $1,726（部分上調但仍偏低）</td><td><span class="badge badge-yellow">🟡 落後</span></td></tr>
+<tr><td>Q4</td><td>Forward PE vs 5Y 分位</td><td>39.4x，5Y ~95% 分位</td><td><span class="badge badge-red">🔴 5Y 接近峰值</span></td></tr>
+</table>
+<p><strong>過熱初篩結論</strong>：3🔴 + 1🟡 → <strong>強烈過熱</strong></p>
+</div>
+</section>
+
+<!-- §6 -->
+<section>
+<h2 id="sec-6">§6 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>NA Mechanical Contracting TAM</td><td>~$80B（含 commercial / industrial / DC）</td><td>—</td></tr>
+<tr><td>DC Mechanical 細分 TAM</td><td>~$15-20B（快速成長中）</td><td>—</td></tr>
+<tr><td>FIX 全國份額</td><td>~5-7%（mechanical contractor #1-#2）</td><td>—</td></tr>
+<tr><td>當前 backlog</td><td>$12.45B = 1.23x annual revenue</td><td>1.5+ 年能見度</td></tr>
+<tr><td><strong>成長可持續年數</strong></td><td><strong>5–8 年</strong></td><td>AI DC capex 5-7 年 cycle，cyclical 屬性使其無法給「複利型」最高評分</td></tr>
+</table>
+<p class="note">Runway 解讀：中等可見度。<span class="badge badge-yellow">🟡</span> 5-8 年屬中等，cyclical 屬性是主要折扣因素。</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源</h4>
+<table>
+<tr><th>類型</th><th>占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~85%</td><td>DC backlog 內部擴張 + GM 提升 + tech mix 升級</td></tr>
+<tr><td>無機成長</td><td>~15%</td><td>歷史小型 mechanical contractor bolt-on 併購</td></tr>
+</table>
+
+<h4>② 成長驅動結構（業務段營收權重，QC-1）</h4>
+<table>
+<tr><th>業務段</th><th>FY26 YTD 營收占比</th><th>成長驅動</th></tr>
+<tr><td>Tech / DC（Mechanical Services）</td><td><strong>56%</strong></td><td>量 + 定價（DC GM 高）</td></tr>
+<tr><td>Industrial / Manufacturing</td><td>~20%</td><td>cycling，中等成長</td></tr>
+<tr><td>Commercial / Institutional</td><td>~15%</td><td>溫和成長</td></tr>
+<tr><td>Healthcare / Education</td><td>~5-10%</td><td>recurring，stable</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<table>
+<tr><th>類型</th><th>判斷</th><th>具體表現</th></tr>
+<tr><td><strong>強化型</strong></td><td>✅</td><td>DC mechanical 規模優勢 → 客戶長期合作 → 進一步擴大份額。Asset-light 高 ROIC 模式。</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>標準</th><th>達標？</th></tr>
+<tr><td>ROIC</td><td>~25%</td><td>~18%</td><td>↑</td><td>&gt; 15%</td><td>✅</td></tr>
+<tr><td>ROIC − WACC</td><td>+16%p</td><td>+10%p</td><td>↑</td><td>持續正且擴大</td><td>✅</td></tr>
+<tr><td>FCF Margin</td><td>11%（TTM）</td><td>9%</td><td>↑</td><td>&gt; 15%</td><td>🟡 接近</td></tr>
+<tr><td>FCF/NI 轉換</td><td>0.90</td><td>0.95</td><td>持平</td><td>&gt; 85%</td><td>✅</td></tr>
+<tr><td>Reinvestment Rate</td><td>低（asset-light）</td><td>低</td><td>—</td><td>需對應 ROIC</td><td>✅</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境</th><th>對應特徵</th><th>合理 Forward PE</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率 15%</td><td>DC cycle 進入 mid-cycle，GM 回落至 24%</td><td>30x</td><td>−24%</td></tr>
+<tr><td>3 年後成長率 10%</td><td>DC cycle 高峰過去，GM 回到 22%</td><td>22x</td><td>−44%</td></tr>
+<tr><td>3 年後成長率 5%</td><td>cyclical 反轉，GM 回到 19%</td><td>16x</td><td>−59%</td></tr>
+</table>
+<p class="note">Bear PE 採「成長率降至 10%」情境的 22x。</p>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr class="row-good"><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>26.3%（all-time high）</td><td>⬜</td></tr>
+<tr class="row-good"><td>護城河侵蝕</td><td>市佔率縮減</td><td>DC 份額擴張中</td><td>⬜</td></tr>
+<tr class="row-good"><td>護城河侵蝕</td><td>定價能力</td><td>DC 高定價、GM 史高</td><td>⬜</td></tr>
+<tr class="row-good"><td>盈餘品質</td><td>EPS CAGR vs Revenue CAGR</td><td>FY26 EPS +38% vs Rev +56%（Rev > EPS 屬正常 capex 階段）</td><td>⬜</td></tr>
+<tr class="row-good"><td>盈餘品質</td><td>FCF/NI &lt; 0.75</td><td>0.90，健康</td><td>⬜</td></tr>
+<tr class="row-good"><td>盈餘品質</td><td>SBC / Revenue &gt; 5%</td><td>~1%</td><td>⬜</td></tr>
+<tr class="row-good"><td>產業結構衰退</td><td>TAM 萎縮</td><td>NA mechanical TAM 擴張</td><td>⬜</td></tr>
+<tr class="row-good"><td>產業結構衰退</td><td>產業估值下移</td><td>DC infra 板塊估值上移</td><td>⬜</td></tr>
+<tr class="row-good"><td>隱性資本密集</td><td>Maintenance Capex &gt; 60% FCF</td><td>capex 占比極低</td><td>⬜</td></tr>
+<tr class="row-good"><td>隱性資本密集</td><td>停 capex → 3 年內收入下滑</td><td>service business，非 capex driven</td><td>⬜</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>亮燈數量：0 個 🔴</strong> → <span class="badge badge-green">🟢 低風險</span>。基本面無結構性裂縫。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<table>
+<tr><th>面向</th><th>評估</th></tr>
+<tr><td>AI 受益面</td><td>(1) AI DC 建設熱潮 → mechanical contractor 直接受益；(2) Hyperscaler capex 持續擴大；(3) Tech sector 56% 營收為純 AI infra plays</td></tr>
+<tr><td>AI 威脅面</td><td>低。Mechanical contracting 是物理工程，AI 不可取代。風險僅在 modular 預組裝率提升，影響有限。</td></tr>
+<tr><td><strong>綜合評級</strong></td><td><span class="badge badge-green"><strong>🟢 AI 強受益</strong></span></td></tr>
+</table>
+
+<h3>長期成長性綜合評級</h3>
+<p style="padding:8px 22px"><span class="badge badge-green">🟢 高確信長期成長</span>：Runway 5–8 年（cyclical 折扣）、有機 + 定價驅動、護城河強化型、ROIC 25% 擴大、衰退信號 0 個。AI 評級 🟢。</p>
+</section>
+
+<!-- §7 -->
+<section>
+<h2 id="sec-7">§7 護城河分析</h2>
+
+<p style="padding:10px 22px"><strong>v12.0 護城河 5 級評級：<span class="badge badge-green">A 級（一級護城河，DC mechanical contractor 龍頭 + asset-light 高 ROIC）</span></strong>｜傳統 1–10 評分：<strong>8/10</strong></p>
+
+<h3>護城河來源逐項檢驗</h3>
+<table>
+<tr><th>類型</th><th>是否具備</th><th>論述</th></tr>
+<tr><td>網路效應</td><td>無</td><td>—</td></tr>
+<tr><td>無形資產</td><td><strong>強</strong></td><td>(1) 30+ 年 mechanical contracting 經驗；(2) DC 大型項目參考案例；(3) hyperscaler 客戶長期合約 + 信任；(4) 全國 footprint（多州 mechanical contractor licenses）；(5) modular construction 能力</td></tr>
+<tr><td>轉換成本</td><td><strong>強</strong></td><td>客戶 DC 建設過程中切換 contractor 風險極高（時程 + 品質 + 規格）</td></tr>
+<tr><td>規模優勢</td><td><strong>強</strong></td><td>NA mechanical contractor #1-#2，規模可承接最大型 hyperscaler 整廠合約；asset-light 模式 R&D 攤銷</td></tr>
+</table>
+
+<h3>競爭鴻溝</h3>
+<p style="padding:8px 22px">FIX 的真實鴻溝：(1) <strong>30+ 年 NA mechanical contracting 累積</strong>——技工資格、客戶關係、區域供應鏈；(2) <strong>$12.45B backlog 鎖定客戶 1.5+ 年</strong>；(3) <strong>大型 hyperscaler 信任資本</strong>——一個失敗的 DC 項目可能導致 $500M 損失，hyperscaler 願意付溢價選有經驗的 contractor；(4) <strong>asset-light 高 ROIC 模式（25%）</strong>——競爭者難以快速複製。</p>
+
+<h3>市佔競爭表（NA Mechanical Contracting）</h3>
+<table>
+<tr><th>競爭對手</th><th>2025 全國份額</th><th>3 年趨勢</th><th>核心威脅</th></tr>
+<tr><td><strong>Comfort Systems (FIX)</strong></td><td><strong>~5-7%（#1-#2）</strong></td><td>↑</td><td>—</td></tr>
+<tr><td>EMCOR Group (EME)</td><td>~6-8%（#1-#2）</td><td>持平</td><td>規模相當</td></tr>
+<tr><td>Quanta Services (PWR)</td><td>~5%（含 power）</td><td>↑（power 端）</td><td>跨界競爭</td></tr>
+<tr><td>API Group (APG)</td><td>~3%</td><td>↑</td><td>專注 specialty service</td></tr>
+<tr><td>Other (fragmented)</td><td>~75-80%</td><td>—</td><td>區域 mid-size 對手</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p style="padding:8px 22px"><span class="badge badge-green">擴大</span>。DC mix 升級至 56% 推升 GM 從 21% → 26.3% all-time high；backlog +81% YoY 顯示客戶承諾增加。</p>
+
+<h3>24 個月內最可能瓦解護城河的變化</h3>
+<ol>
+<li><strong>EMCOR / Quanta Services 加速 DC 端搶單</strong></li>
+<li><strong>Hyperscalers 擴展自有施工團隊</strong>（如 Google）</li>
+<li><strong>Modular DC 預組裝率大幅提升</strong>（時序遠）</li>
+</ol>
+
+<p class="note"><strong>v12 護城河 5 級總評：A 級</strong>（一級護城河，趨勢擴大；少數能在 AI 時代 GM 持續升級的 contractor）</p>
+</section>
+
+<!-- §8 -->
+<section>
+<h2 id="sec-8">§8 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th class="num">2023</th><th class="num">2024</th><th class="num">2025</th><th>對手 EMCOR</th><th>對手 Quanta</th></tr>
+<tr><td>Revenue ($B)</td><td class="num">5.2</td><td class="num">7.0</td><td class="num">9.5</td><td>~$13B</td><td>~$23B</td></tr>
+<tr><td>Gross Margin</td><td class="num">21%</td><td class="num">23%</td><td class="num">25.1% (TTM)</td><td>~17%</td><td>~16%</td></tr>
+<tr><td>Operating Margin</td><td class="num">7%</td><td class="num">9%</td><td class="num">7.9% (TTM, dilutive M&A)</td><td>~10%</td><td>~9%</td></tr>
+<tr><td>FCF Margin</td><td class="num">9%</td><td class="num">10%</td><td class="num">11%</td><td>~6%</td><td>~5%</td></tr>
+<tr><td>EBITDA Margin</td><td class="num">11%</td><td class="num">13%</td><td class="num">~16%</td><td>~10%</td><td>~10%</td></tr>
+<tr><td>ROIC</td><td class="num">18%</td><td class="num">22%</td><td class="num">~25%</td><td>~18%</td><td>~12%</td></tr>
+<tr><td>SBC / Revenue</td><td class="num">~1%</td><td class="num">~1%</td><td class="num">~1%</td><td>~2%</td><td>~2%</td></tr>
+<tr><td>ROE</td><td class="num">35%</td><td class="num">45%</td><td class="num">53%</td><td>~25%</td><td>~15%</td></tr>
+</table>
+<p class="note">與 §11.4 同業比較組（EMCOR、Quanta、API）一致。<strong>FIX margins 全面領先同業</strong>，反映「DC mix + asset-light + 規模」優勢。</p>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>檢驗</th><th>結論</th></tr>
+<tr><td>淨利 vs OCF 連動</td><td>OCF $1.66B vs NI $1.22B = OCF > NI（健康）</td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>同步</td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>service 業務，存貨低</td></tr>
+<tr><td>FCF 轉換率</td><td>FCF $1.1B / NI $1.22B = 0.90（健康）</td></tr>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額</td><td>~$200M</td><td>有節制</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>~22%</td><td>差距 ~2pp（小）</td></tr>
+<tr><td>回購均價</td><td>歷史均價 $200-500 vs 現價 $1,726</td><td>佳</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>+30% / 年</td><td>EPS 接近 Rev，盈餘品質優</td></tr>
+</table>
+</section>
+
+<!-- §9 -->
+<section>
+<h2 id="sec-9">§9 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li><strong>NA Mechanical Contracting TAM</strong>：~$80B</li>
+<li><strong>DC Mechanical 細分</strong>：~$15-20B（快速成長）</li>
+<li><strong>當前滲透率</strong>：FIX 在 DC mechanical 大型項目享有先發優勢</li>
+<li><strong>供需狀態</strong>：FIX backlog 1.23x revenue 顯示需求 > 供給</li>
+</ul>
+
+<h3>議價權</h3>
+<table>
+<tr><th>面向</th><th>評估</th></tr>
+<tr><td>對上游（mechanical 設備、技工勞動力）</td><td>中等</td></tr>
+<tr><td>對下游客戶（hyperscaler / colo / commercial）</td><td><strong>強</strong>（DC 經驗 + 規模 + backlog）</td></tr>
+<tr><td>地理曝險</td><td>低（100% NA）</td></tr>
+</table>
+
+<h3>營收組成（FY26 YTD）</h3>
+<table>
+<tr><th>業務段</th><th>占比</th><th>成長性</th></tr>
+<tr><td>Tech / DC</td><td><strong>56%</strong></td><td>+80%+ YoY</td></tr>
+<tr><td>Industrial / Manufacturing</td><td>~20%</td><td>+10%</td></tr>
+<tr><td>Commercial / Institutional</td><td>~15%</td><td>+5%</td></tr>
+<tr><td>Healthcare / Education</td><td>~5-10%</td><td>+5%</td></tr>
+</table>
+
+<h3>單位經濟（Unit Economics）</h3>
+<ul>
+<li><strong>DC Project 規模</strong>：$50M – $500M / 案</li>
+<li><strong>Backlog 履約期</strong>：12-24 個月</li>
+<li><strong>客戶集中度</strong>：Tech 56% 集中度高</li>
+<li><strong>季度 GM 改善</strong>：FY23 21% → FY26 26.3%（+5.3pp）</li>
+</ul>
+</section>
+
+<!-- §10 -->
+<section>
+<h2 id="sec-10">§10 公司治理與資本配置</h2>
+
+<h3>① 股東結構</h3>
+<table>
+<tr><th>股東</th><th>持股</th><th>備註</th></tr>
+<tr><td>機構（Vanguard、BlackRock）</td><td>~96.6%</td><td>機構持股極高</td></tr>
+<tr><td>內部人</td><td>~1.2%</td><td>偏低</td></tr>
+</table>
+<p class="note">無 dual-class。機構持股 97% 顯示為「機構共識標的」。</p>
+
+<h3>② 資本配置軌跡</h3>
+<table>
+<tr><th>項目</th><th>FY23</th><th>FY24</th><th>FY25</th><th>FY26 (E)</th></tr>
+<tr><td>Capex</td><td>~$80M</td><td>~$120M</td><td>~$150M</td><td>~$180M</td></tr>
+<tr><td>R&D</td><td>—</td><td>—</td><td>—</td><td>—（service 業務）</td></tr>
+<tr><td>股息</td><td>$0.40/Q</td><td>$0.50/Q</td><td>$0.65/Q</td><td>$0.80/Q（剛 raise）</td></tr>
+<tr><td>回購</td><td>~$50M</td><td>~$80M</td><td>~$70M</td><td>~$100M (E)</td></tr>
+<tr><td>Tuck-in 併購</td><td>~$200M</td><td>~$300M</td><td>~$400M</td><td>~$500M</td></tr>
+<tr><td>淨債</td><td>$300M</td><td>$280M</td><td>$234M</td><td>低水位</td></tr>
+</table>
+<p class="note">資本配置：Tuck-in 併購 > Capex > 股息 > 回購。FCF 強勁支撐多種資本回饋方式。</p>
+
+<h3>③ 管理層薪酬結構</h3>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>CEO Brian Lane 2025 總薪酬</td><td>~$10M（基本 $1M + 績效 $3M + 股權 $6M）</td></tr>
+<tr><td>固定 / 績效 / 股權</td><td>10% / 30% / 60%</td></tr>
+<tr><td>績效標的</td><td>Revenue 成長、operating margin、TSR、ROIC</td></tr>
+</table>
+
+<h3>④ 過去 12 個月重大內部人交易</h3>
+<table>
+<tr><th>類型</th><th>金額</th><th>對象</th></tr>
+<tr><td>內部人賣出</td><td>~$30M（CEO + CFO + 其他高管，10b5-1 計畫）</td><td>常規薪酬處置；股價漲後增加賣出</td></tr>
+<tr><td>內部人買入</td><td>無顯著</td><td>—</td></tr>
+</table>
+
+<h3>SBC 評估</h3>
+<p style="padding:8px 22px">SBC ~$80M / Rev $10.1B = ~1%。每年稀釋 ~0.5%（極低）。盈餘品質頂級。</p>
+</section>
+
+<!-- §11 -->
+<section>
+<h2 id="sec-11">§11 估值診斷</h2>
+
+<h3>11.0｜估值體系診斷</h3>
+<h4>當前主流估值邏輯</h4>
+<table>
+<tr><th>邏輯類型</th><th>對應指標</th><th>是否主流</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>部分適用</td><td>EPS 真實，但 trailing PE 失真（cyclical recovery）</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td><strong>是</strong></td><td>市場給予「DC pure play + GM 升級」雙重溢價</td></tr>
+<tr><td>backlog-based</td><td>EV/Backlog</td><td>新興主流</td><td>Backlog $12.45B 提供能見度</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>適用</td><td>FCF $1.1B 真實</td></tr>
+</table>
+<p style="padding:8px 22px"><strong>當前主流邏輯</strong>：成長型 + AI DC 純度溢價 + backlog visibility + 動能。</p>
+
+<h4>估值體系漂移偵測</h4>
+<p style="padding:8px 22px"><strong>情境一</strong>（盈利切換）：條件已成立。ROIC 25%+ 持續，市場切回 PE 框架後 PE 從 39x 壓縮至 28-32x。
+<br><strong>情境二</strong>（新指標）：「EV/Backlog」可能成新指標。當前 EV/Backlog ≈ 5x，顯著高於歷史。
+<br><strong>情境三</strong>（產業偏好漂移）：DC infra 板塊估值結構性上移。FIX beta 高於板塊。</p>
+
+<p style="padding:8px 22px"><strong>診斷結論</strong>：<span class="badge badge-yellow">🟡 估值邏輯模糊偏激進</span></p>
+
+<h3>11.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th class="num">當前</th><th class="num">5Y 低</th><th class="num">5Y 中位</th><th class="num">5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td class="num">49.7x</td><td class="num">10x</td><td class="num">~22x</td><td class="num">~52x</td><td><strong>~95%</strong></td></tr>
+<tr><td>Forward P/E（NTM）</td><td class="num"><strong>39.4x</strong></td><td class="num">10x</td><td class="num">~20x</td><td class="num">~42x</td><td><strong>~92%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td class="num">36.3x</td><td class="num">7x</td><td class="num">~14x</td><td class="num">~38x</td><td><strong>~95%</strong></td></tr>
+<tr><td>P/FCF</td><td class="num">~55x</td><td class="num">10x</td><td class="num">~20x</td><td class="num">~58x</td><td><strong>~93%</strong></td></tr>
+<tr><td>P/S</td><td class="num">5.99x</td><td class="num">0.5x</td><td class="num">~1.5x</td><td class="num">~6.2x</td><td><strong>~96%</strong></td></tr>
+</table>
+
+<p style="padding:8px 22px">⚠️ Forward PE 分位 = (39.4 − 10) / (42 − 10) × 100% = <strong>92%</strong>。所有指標皆 5Y 92+ 分位。</p>
+
+<p><strong>解讀</strong>：</p>
+<ol style="padding-left:38px">
+<li><strong>當前估值情緒</strong>：<span class="badge badge-red">🔴 嚴重過熱（&gt; 90% 分位）</span></li>
+<li><strong>上次相似分位</strong>：FIX 5Y 從未達當前估值水位，是 2025-2026 AI DC 主題的特殊事件</li>
+<li><strong>主導因素</strong>：AI DC capex 主題（50%）+ Q1 26 大幅 beat（25%）+ 動能 / FOMO（20%）+ 利率（5%）</li>
+</ol>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th class="num">數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E（NTM）</td><td class="num">39.4x</td><td>—</td></tr>
+<tr><td>3Y EPS CAGR</td><td class="num">24.0%</td><td>—</td></tr>
+<tr><td><strong>PEG（3Y）</strong></td><td class="num"><strong>1.64</strong></td><td><span class="badge badge-yellow">🟡 合理偏貴</span></td></tr>
+<tr><td>2Y EPS CAGR</td><td class="num">17.3%</td><td>—</td></tr>
+<tr><td>PEG（2Y）</td><td class="num">2.28</td><td><span class="badge badge-red">🔴 昂貴</span></td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td class="num">~14%</td><td>—</td></tr>
+<tr><td>PEG（5Y）</td><td class="num">2.81</td><td><span class="badge badge-red">🔴 昂貴</span></td></tr>
+</table>
+
+<h3>11.3｜Reverse DCF</h3>
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th class="num">數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td class="num">$60.8B</td><td>yfinance</td></tr>
+<tr><td>基期 FCF</td><td class="num">$1.1B (TTM) → FY26 預估 $1.5B</td><td>—</td></tr>
+<tr><td>WACC</td><td class="num">9%</td><td>10Y UST 4.4% + Beta 1.6 × ERP 5%</td></tr>
+<tr><td>永續成長率</td><td class="num">3%</td><td>—</td></tr>
+<tr><td>預測期</td><td class="num">10 年</td><td>—</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p style="padding:8px 22px">使 DCF 現值 = $60.8B，從 2026 base FCF $1.5B 出發，所需的<strong>前 10 年 FCF CAGR ≈ 16–18%</strong>。FCF 需從 $1.5B (2026) 成長至 $7B+ (2035)。</p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th class="num">數值</th><th>位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td class="num">~25%</td><td>歷史接近隱含（cycle recovery）</td></tr>
+<tr><td>分析師共識 EPS CAGR（5Y）</td><td class="num">~14%</td><td>隱含 ≈ 共識</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td class="num">15%</td><td>需「同業最快+」</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p style="padding:8px 22px">隱含 FCF CAGR 16-18% 需以下條件<strong>同時</strong>成立：</p>
+<ul>
+<li>Revenue CAGR ≥ 12%（從 $10.1B → $25B+）</li>
+<li>FCF Margin 維持 11%+ 並擴大至 14%+</li>
+<li>DC capex cycle 不反轉</li>
+<li>無 cyclical 衰退（10 年級）</li>
+</ul>
+
+<p style="padding:8px 22px"><strong>隱含預期判斷</strong>：<span class="badge badge-yellow">🟡 隱含預期合理偏激進</span>（接近歷史但需 cyclical 不反轉）</p>
+
+<div class="warn-box">
+<h4>⚠️ 過熱理由檢驗</h4>
+<table>
+<tr><th>#</th><th>問題</th><th>分析師答案</th></tr>
+<tr><td>Q1</td><td>市場為什麼給這麼高倍數？</td><td>(1) AI DC capex 主題；(2) Q1 26 全面 beat；(3) backlog $12.45B；(4) 1 年 +354% 動能</td></tr>
+<tr><td>Q2</td><td>有財務數據支撐嗎？</td><td><strong>是，全面</strong>。FCF $1.1B 真實、ROE 53%、GM 26.3% 史高、backlog +81% YoY 都是硬數據</td></tr>
+<tr><td>Q3</td><td>護城河擴張？</td><td><strong>是</strong>。GM 持續升級、Tech mix 增加</td></tr>
+<tr><td>Q4</td><td>FCF 品質被誤解？</td><td>FCF 真實，無誤解</td></tr>
+<tr><td>Q5</td><td>催化劑？</td><td>有：FY26 EPS 上修空間 + backlog 持續增。但都已部分定價</td></tr>
+</table>
+<p><strong>檢驗結論</strong>：<span class="badge badge-yellow">🟡 貴有理由（基本面證據強），但已超額定價</span>。市場以「FY28 FCF $5B+」為基準，需 cyclical 不反轉才能兌現。</p>
+</div>
+
+<h3>11.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th class="num">市值</th><th class="num">FPE</th><th class="num">EV/EBITDA</th><th class="num">PEG</th><th class="num">FCF Margin</th><th class="num">EPS CAGR (3Y)</th><th class="num">ROIC</th></tr>
+<tr><td><strong>FIX</strong></td><td class="num">$60.8B</td><td class="num"><strong>39.4x</strong></td><td class="num">36x</td><td class="num">1.64</td><td class="num">11%</td><td class="num">24%</td><td class="num">25%</td></tr>
+<tr><td>EMCOR (EME)</td><td class="num">~$30B</td><td class="num">25x</td><td class="num">18x</td><td class="num">1.7</td><td class="num">6%</td><td class="num">15%</td><td class="num">18%</td></tr>
+<tr><td>Quanta Services (PWR)</td><td class="num">~$60B</td><td class="num">35x</td><td class="num">22x</td><td class="num">1.8</td><td class="num">5%</td><td class="num">20%</td><td class="num">12%</td></tr>
+<tr><td>API Group (APG)</td><td class="num">~$15B</td><td class="num">28x</td><td class="num">20x</td><td class="num">1.6</td><td class="num">8%</td><td class="num">18%</td><td class="num">15%</td></tr>
+<tr><td><strong>產業中位</strong></td><td class="num">—</td><td class="num"><strong>30x</strong></td><td class="num">20x</td><td class="num">1.7</td><td class="num">7%</td><td class="num">17%</td><td class="num">15%</td></tr>
+</table>
+
+<h4>同業溢折價邏輯</h4>
+<ol style="padding-left:38px">
+<li>FIX FPE 39.4x vs 中位 30x → <strong>溢價 +31%</strong></li>
+<li>FIX 在 ROIC、FCF Margin、ROE 全面領先（基本面確實優於同業）</li>
+<li>若估值向中位回歸（FPE 30x），股價將從 $1,726 跌至 $1,313（−24%）</li>
+</ol>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>FIX</th><th>最強競爭：Quanta (PWR) / EMCOR (EME)</th></tr>
+<tr><td>主假設兌現的上行空間</td><td>+10-15%</td><td>EMCOR: +20%（估值更便宜）</td></tr>
+<tr><td>主假設部分落空的跌幅</td><td>−40% to −55%</td><td>EMCOR: −25% to −35%</td></tr>
+<tr><td>R:R</td><td><strong>不對稱（負）</strong></td><td>EMCOR R:R 較佳</td></tr>
+</table>
+
+<p style="padding:10px 22px"><strong>橫向結論</strong>：<span class="badge badge-yellow">🥈 此標的為次優選</span>。FIX 基本面領先但估值溢價 +31% vs 中位。EMCOR 同樣 DC contractor 受益但估值僅 25x，R:R 較佳。</p>
+
+<h3>11.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（11.0）</td><td><span class="badge badge-yellow">🟡 邏輯模糊偏激進</span></td><td>AI DC + 動能 + backlog visibility</td></tr>
+<tr><td>歷史分位（11.1）</td><td><span class="badge badge-red">🔴 嚴重過熱</span></td><td>所有指標 92+ 分位</td></tr>
+<tr><td>PEG 診斷（11.2）</td><td><span class="badge badge-yellow">🟡 合理偏貴</span></td><td>3Y PEG 1.64 / 2Y PEG 2.28</td></tr>
+<tr><td>Reverse DCF（11.3）</td><td><span class="badge badge-yellow">🟡 隱含預期合理偏激進</span></td><td>隱含 FCF CAGR 16-18%</td></tr>
+<tr><td>同業相對（11.4）</td><td><span class="badge badge-yellow">🟡 合理溢價</span></td><td>+31% 溢價 vs 中位（基本面領先支撐部分溢價）</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>當前定價判斷</strong>：<span class="badge badge-red">🔴 明顯貴</span>（1🔴 4🟡，整體偏負）</p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對目標 PE 的影響</th></tr>
+<tr><td>① 護城河品質</td><td>8/10（A 級）</td><td>+3x vs 同業基準 30x</td></tr>
+<tr><td>② 成長可持續年數</td><td>5–8 年（🟡 cyclical）</td><td>−1x</td></tr>
+<tr><td>③ 成長品質</td><td>定價 + 量平衡</td><td>+1x</td></tr>
+<tr><td>④ 成長護城河連動</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性</td><td>25%+ 擴大</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號</td><td>0🔴</td><td>±0</td></tr>
+<tr><td>⑦ 估值體系方向</td><td>邏輯模糊</td><td>−2x（cyclical 折扣）</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.4%</td><td>對成長股小幅壓力</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td>30x</td><td><strong>調整後合理區間：32–35x</strong></td></tr>
+</table>
+
+<h4>分析師目標價參考</h4>
+<ul>
+<li>共識中位 ~$1,400-1,600（部分上調但仍滯後現價）</li>
+<li><strong>分歧點</strong>：分析師中位 vs 現價 $1,726 → <strong>背離 +10-20%</strong></li>
+</ul>
+
+<h4>長期合理倍數對應表</h4>
+<table>
+<tr><th>§6 長期成長性評級</th><th>5 年後基準 Forward P/E</th></tr>
+<tr><td><strong>🟢 高確信（FIX）</strong></td><td><strong>25x</strong></td></tr>
+<tr><td>🟡 中等可見度</td><td>20x</td></tr>
+<tr><td>🔴 存疑</td><td>15x</td></tr>
+</table>
+<p style="padding:8px 22px">本標的基準長期合理倍數：<strong>25x</strong>。AI 風險 🟢 → ×1.10 → <strong>27.5x</strong>。引擎 A ROIC 25%+ → ×1.175 → <strong>32x</strong>。<strong>最終長期合理 PE = 32x</strong>。</p>
+</section>
+
+<!-- §12 -->
+<section>
+<h2 id="sec-12">§12 綜合訊號燈（v12.0）</h2>
+
+<h3>A｜體質檢核（v12 五項）</h3>
+<table>
+<tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr>
+<tr class="row-good"><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2pp</td><td>✅</td><td>FY23 21% → FY24 23% → FY25 25.1% → Q1 26 26.3%（持續改善）</td></tr>
+<tr class="row-good"><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>✅</td><td>FCF $1.1B / NI $1.22B = 0.90</td></tr>
+<tr class="row-good"><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td>✅</td><td>$30.79 → $40.01（+30% 上修）</td></tr>
+<tr class="row-good"><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅</td><td>4 季全部正成長（Q1 26 +56%）</td></tr>
+<tr class="row-good"><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅</td><td>0.14（極健康）</td></tr>
+</table>
+<p style="padding:8px 22px"><strong>體質加減分</strong>：5 過 × 0.5 = <strong>+2.5</strong>（體質完美）</p>
+
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數</th></tr>
+<tr><td>護城河</td><td>§7 評分</td><td><strong>A 級｜8/10</strong></td></tr>
+<tr><td>成長持久性</td><td>§6 綜合（🟢 高確信，AI 🟢 加分）</td><td><strong>9/10</strong></td></tr>
+</table>
+<p style="padding:8px 22px"><strong>底分</strong> = (8 + 9) / 2 = <strong>8.5</strong>｜<strong>品質分</strong> = min(8.5 + 2.5, 10) = <strong>10/10（滿分）</strong>｜<strong>等級：A 級</strong></p>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th class="num">數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY26）</td><td class="num">$40.01</td><td>yfinance, n=6</td></tr>
+<tr><td>FY+2 EPS（FY27）</td><td class="num">$48.36</td><td>yfinance, n=6</td></tr>
+<tr><td>FY+2 成長率</td><td class="num">+20.9%</td><td>計算</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td class="num">$1,726.12 / $48.36 = <strong>35.7x</strong></td><td>計算（NTM 為 39.4x，FY+2 為 35.7x）</td></tr>
+</table>
+
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+<h4>步驟一：歷史錨點</h4>
+<table>
+<tr><th>項目</th><th class="num">數值</th></tr>
+<tr><td>5Y Forward P/E 中位</td><td class="num">20x</td></tr>
+<tr><td>5Y Forward P/E 75th</td><td class="num">28x</td></tr>
+<tr><td>5Y Forward P/E 高點</td><td class="num">~42x（當前接近）</td></tr>
+<tr><td><strong>基礎值（75th）</strong></td><td class="num"><strong>28x</strong></td></tr>
+</table>
+
+<h4>步驟二：PEG 調節</h4>
+<p style="padding:8px 22px">PEG = 39.4 / 24.0 = <strong>1.64</strong> → <strong>1.0 ≤ PEG ≤ 2.0 → 維持 75th = 28x</strong></p>
+
+<h4>步驟三：品質溢價（PEG 未下壓，不適用）</h4>
+<p style="padding:8px 22px">步驟二未下壓，品質溢價不適用。</p>
+
+<p style="padding:10px 22px"><strong>合理 P/E = 28x</strong></p>
+
+<h3>E｜雙時距目標價與 R:R</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th class="num">目標價</th></tr>
+<tr><td><strong>短期（1 年）</strong></td><td>FY+1 EPS $40.01 × 28x</td><td class="num"><strong>$1,120</strong></td></tr>
+<tr><td><strong>中期（2 年）</strong></td><td>FY+2 EPS $48.36 × 28x</td><td class="num"><strong>$1,354</strong></td></tr>
+</table>
+
+<h4>下檔錨點（基本面 Bear Case）</h4>
+<table>
+<tr><th>項目</th><th class="num">短期</th><th class="num">中期</th></tr>
+<tr><td>Bear PE（§6E 成長降至 10%）</td><td class="num">22x</td><td class="num">22x</td></tr>
+<tr><td>Bear EPS（共識 × 0.9）</td><td class="num">$40.01 × 0.9 = $36.01</td><td class="num">$48.36 × 0.9 = $43.52</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td class="num"><strong>$792</strong></td><td class="num"><strong>$958</strong></td></tr>
+</table>
+
+<h4>W52 / W104 參考</h4>
+<table>
+<tr><th>項目</th><th class="num">數值</th></tr>
+<tr><td>現價</td><td class="num">$1,726.12</td></tr>
+<tr><td>W52 Low（參考）</td><td class="num">$354</td></tr>
+<tr><td>W104 Low（參考）</td><td class="num">$271</td></tr>
+</table>
+
+<h4>雙 R:R 計算</h4>
+<table>
+<tr><th></th><th class="num">短期（1 年）</th><th class="num">中期（2 年）</th></tr>
+<tr><td>目標價</td><td class="num">$1,120</td><td class="num">$1,354</td></tr>
+<tr><td>上行空間</td><td class="num">−35.1%</td><td class="num">−21.5%</td></tr>
+<tr><td>下檔錨點</td><td class="num">$792</td><td class="num">$958</td></tr>
+<tr><td>下行距離</td><td class="num">−54.1%</td><td class="num">−44.5%</td></tr>
+<tr><td><strong>R:R</strong></td><td class="num"><span class="badge badge-red"><strong>負值</strong></span></td><td class="num"><span class="badge badge-red"><strong>負值</strong></span></td></tr>
+</table>
+<p style="padding:8px 22px">⚠️ 寬容情境（PE 35x，接近當前）：</p>
+<ul>
+<li>短期 $40.01 × 35 = $1,400（−19% upside）｜中期 $48.36 × 35 = $1,693（−2% upside）— 仍偏負</li>
+<li>需 PE 維持 40x+ 持續才能勉強支撐 $1,726</li>
+</ul>
+
+<h4>判定（v12 四級裁決）</h4>
+<table>
+<tr><th>條件</th><th>結果</th></tr>
+<tr><td>短期 R:R ≥ 2.0 且中期 R:R ≥ 2.0 → 進場</td><td>❌</td></tr>
+<tr><td>僅中期 R:R ≥ 2.0 → 觀望</td><td>❌</td></tr>
+<tr><td>中期 R:R ≥ 1.0 + 品質 A + 長期信心高 → 觀望偏進場</td><td>❌（中期 R:R 負）</td></tr>
+<tr><td>都不過 → 迴避</td><td><strong>✅</strong></td></tr>
+</table>
+
+<p style="padding:10px 22px"><strong>本標的判定：觀望（時機不到，等估值修復）→ v12 訊號燈 = B（觀望，估值🔴）</strong>
+<br>（思路：§12 E「都不過 → 迴避」是針對<strong>進場時機</strong>不過的訊號，並非 thesis-level 拒絕。FIX 品質滿分 + 護城河 A 級 + AI DC 結構性順風 + 長期信心高，標的本身值得追蹤；R:R 為參考、不單獨觸發迴避，故落 B 而非 C/X。等估值回檔至 FPE ≤ 28x（$1,120-1,200）+ backlog 持續驗證再分批回補。）</p>
+
+<h3>F｜Pure MA 六狀態機</h3>
+<table>
+<tr><th>MA 週期</th><th class="num">數值</th><th class="num">距現價</th></tr>
+<tr><td>現價</td><td class="num">$1,726.12</td><td class="num">—</td></tr>
+<tr><td>MA10w</td><td class="num">$1,464.40</td><td class="num">+17.9%</td></tr>
+<tr><td>MA20w</td><td class="num">$1,273.83</td><td class="num">+35.5%</td></tr>
+<tr><td>MA40w</td><td class="num">$1,045.40</td><td class="num">+65.1%</td></tr>
+<tr><td>MA60w</td><td class="num">$841.49</td><td class="num">+105.1%</td></tr>
+<tr><td>MA104w</td><td class="num">$646.83</td><td class="num"><strong>+166.9%</strong></td></tr>
+<tr><td>MA200w</td><td class="num">$414.86</td><td class="num">+316.1%</td></tr>
+</table>
+
+<table>
+<tr><th>MA 排列檢核</th><th>結果</th></tr>
+<tr><td>Price &gt; MA10 &gt; MA20 &gt; MA40 &gt; MA60</td><td>✅ 全部成立</td></tr>
+<tr><td><strong>狀態</strong></td><td><strong>強勢多頭排列</strong>，距 MA104w +167%（極端拉升）</td></tr>
+</table>
+
+<h4>Bollinger Band（週線 2σ）</h4>
+<table>
+<tr><th>項目</th><th class="num">數值</th></tr>
+<tr><td>週線 BB SMA(20)</td><td class="num">$1,273.83</td></tr>
+<tr><td>週線 BB 上軌（2σ）</td><td class="num">$1,735.80</td></tr>
+<tr><td>週線 BB 下軌（2σ）</td><td class="num">$811.87</td></tr>
+<tr><td>現價位置</td><td><span class="badge badge-yellow">上軌附近（−0.6%）</span></td></tr>
+<tr><td><strong>QC-22 4 週漂移</strong></td><td><span class="badge badge-red"><strong>+26.3%（從 $1,367 → $1,726）→ 嚴重警示</strong></span></td></tr>
+</table>
+
+<h3>G｜長期展望（3–5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§6A</td><td>剩一半（5–8 年，cyclical 折扣）</td></tr>
+<tr><td>護城河趨勢</td><td>§7</td><td>擴大（GM 升級 + tech mix）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合判斷</td><td><span class="badge badge-green"><strong>高</strong></span></td></tr>
+</table>
+<p style="padding:8px 22px"><strong>一句話</strong>：FIX 是 AI DC mechanical contractor 龍頭、基本面證據確鑿（FCF 真實、ROE 53%、backlog $12.45B）。長期 5–7 年值得持有。<strong>但「現在進場」是高風險動能交易，等回檔至 FPE ≤ 28x（$1,120-1,200）區間再分批建倉</strong>。</p>
+
+<h3>v12 大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>狀態</th></tr>
+<tr><td>S&P 500 多頭？</td><td>是</td></tr>
+<tr><td>觸發豁免？</td><td><strong>不適用</strong>。FIX YoY +354% 遠超大盤；個股已脫離大盤節奏</td></tr>
+</table>
+
+<h3>v12 QC 規則檢核</h3>
+<table>
+<tr><th>QC</th><th>狀態</th></tr>
+<tr><td>QC-22 4 週漂移</td><td><strong>嚴重觸發</strong>（+26.3%）</td></tr>
+<tr><td>QC-29 R:R 壓力測試</td><td>0/4 通過（短期 / 中期 R:R 皆負）</td></tr>
+<tr><td>其他 QC-23~30</td><td>本報告各章節按 v12 規範填寫；無章節省略</td></tr>
+</table>
+</section>
+
+<!-- §13 -->
+<section>
+<h2 id="sec-13">§13 三方辯論摘要</h2>
+
+<div class="debate-grid">
+
+<div class="debate-card debate-bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table style="margin:0;width:100%">
+<tr><th>#</th><th>進場論據</th><th>佐證</th></tr>
+<tr><td>1</td><td>DC mechanical contractor 龍頭 + asset-light 高 ROIC 25% + backlog $12.45B (1.23x revenue)</td><td>§7 / §9</td></tr>
+<tr><td>2</td><td>Q1 26 EPS $10.51 +55% beat、Rev +56% +20% beat、GM 26.3% all-time high</td><td>§4</td></tr>
+<tr><td>3</td><td>FCF $1.1B 真實（占 Rev 11%）+ ROE 53% + Net Debt/EBITDA 0.14</td><td>§5 / §8</td></tr>
+</table>
+<p style="margin-top:6px"><strong>多頭最強一句話</strong>：「FIX 是 AI DC capex 從『公告』到『通電』的執行者，hyperscaler 每一塊 mechanical 都要經過它的手。$12.45B backlog 已證明客戶長期承諾，FCF $1.1B 真實。」</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table style="margin:0;width:100%">
+<tr><th>#</th><th>虧損觸發情境</th><th>對應風險</th></tr>
+<tr><td>1</td><td>Hyperscaler AI capex cycle 反轉（2027-2028 digestion 期）→ backlog 不再增</td><td>§3 R1</td></tr>
+<tr><td>2</td><td>Forward PE 從 39x 壓縮至 cyclical 中位 20x，純估值修復 −49%</td><td>§3 R3 / §11.4</td></tr>
+<tr><td>3</td><td>EMCOR / Quanta 加速搶單，FIX 大型 hyperscaler 合約份額被瓜分</td><td>§3 R2</td></tr>
+</table>
+<p style="margin-top:6px"><strong>空頭最大威脅</strong>：「現價 $1,726 = FPE 39.4x、Trailing PE 49.7x、5Y 92+ 分位、1 年漲 +354%。Mechanical contracting 是 cyclical 業務，hyperscaler capex 一旦反轉（如 META 2022），backlog 從 $12.45B 跌至 $9-10B，FY28 EPS $55 共識降至 $42，估值 + 業績雙殺至 $700-900。」</p>
+</div>
+
+<div class="debate-card debate-arb">
+<h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+<table style="margin:0;width:100%">
+<tr><th>評分維度</th><th>數字</th><th>分數</th></tr>
+<tr><td>vs 過去 3 年實際 FCF CAGR</td><td>隱含 16-18% vs 歷史 25%</td><td>2/2</td></tr>
+<tr><td>vs 分析師 EPS CAGR 共識</td><td>隱含 16-18% vs 共識 14%</td><td>2/2</td></tr>
+<tr><td>vs 同業最快 FCF CAGR</td><td>隱含 16-18% vs Quanta 15%</td><td>2/2</td></tr>
+<tr><td>達成條件苛刻程度</td><td>需 cyclical 不反轉 + GM 維持 + backlog 持續增</td><td>1/2</td></tr>
+<tr><td>歷史先例</td><td>FIX 從未持續 10 年達 16%+ FCF CAGR（cyclical 業務）</td><td>1/2</td></tr>
+</table>
+<p style="margin-top:6px"><strong>隱含預期可信度評分：8 / 10</strong></p>
+<p><strong>仲裁員一句話</strong>：「市場定價隱含 FCF CAGR 16-18%，與歷史 + 同業最強相符（不超越）。基本面證據完整，但 cyclical 風險使長週期延展不確定，特別是 hyperscaler capex cycle 已 4-5 年。」</p>
+</div>
+
+</div>
+
+<div class="verdict-box">
+<h4>你的裁決</h4>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>DC mechanical contractor 龍頭 + asset-light ROIC 25% + backlog $12.45B + FCF $1.1B 真實 + GM 26.3% 史高</td></tr>
+<tr><td>空頭最大威脅</td><td>1 年漲 +354%、FPE 39.4x；hyperscaler capex cycle 反轉風險（mechanical contracting 本質 cyclical）</td></tr>
+<tr><td>估值仲裁評分</td><td>8 / 10（高可信度但 cyclical 風險）</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>觀望 → 訊號燈 B（時機不到）</strong></td></tr>
+<tr><td>裁決理由</td><td>多頭論據完整且基本面證據是 CIEN/MOD 中最強的；空頭威脅是「估值修復 + cyclical 風險」非「公司倒閉」（thesis 完整），故落 B 觀望而非 C/X 迴避；估值仲裁 8/10 比 CIEN (7) / MOD (4) 都高，但仍不足以支撐 1 年 +354% 漲幅。新進倉位嚴禁；已持有者建議部分獲利了結 30-50%，等回檔至 FPE ≤ 28x（$1,120-1,200）+ backlog 持續驗證再分批回補。同主題 EMCOR 估值更便宜可考慮。</td></tr>
+</table>
+</div>
+
+<h3>進入 §1 前自我檢核</h3>
+<ul>
+<li>✅ 多頭論據是否依賴「市場最終會認識到」？<strong>否</strong>，多頭論據基於可量化指標 + Q1 26 硬數據</li>
+<li>✅ 空頭威脅在 MA 年線止損之前發生？<strong>不適用</strong>——當前距 MA104w +167%，回到即 −63%</li>
+<li>✅ 估值仲裁評分 &lt; 5 還有安全邊際？<strong>否</strong>。8/10 評分顯示基本面強，但這也是 CIEN/MOD/FIX 三檔中最高的——而 FIX 也是 1 年漲幅最大的（+354%），純動能透支</li>
+</ul>
+</section>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>

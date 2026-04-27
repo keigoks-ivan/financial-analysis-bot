@@ -1,0 +1,44 @@
+name: Validate DD + ID metadata
+
+# Strict gate: any v12 DD with missing/invalid dd-meta JSON fails the build.
+# All 58 existing v12 DDs (as of 2026-04-27) pass strict; new DDs from
+# stock-analyst skill v12.1+ emit dd-meta automatically.
+#
+# Tooling for fixing failures:
+#   - python scripts/validate_dd_meta.py --report   # diagnose locally
+#   - python scripts/backfill_dd_meta.py            # add missing blocks
+#   - python scripts/enrich_dd_meta.py              # fill missing fields
+#
+# Schema definition: scripts/validate_dd_meta.py (REQUIRED_FIELDS, ENUM_FIELDS).
+
+on:
+  pull_request:
+    paths:
+      - 'docs/dd/DD_*.html'
+      - 'docs/id/ID_*.html'
+      - 'scripts/validate_dd_meta.py'
+      - 'scripts/validate_id_meta.py'
+      - '.github/workflows/validate_dd_meta.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/dd/DD_*.html'
+      - 'docs/id/ID_*.html'
+      - 'scripts/validate_dd_meta.py'
+      - 'scripts/validate_id_meta.py'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      # No third-party deps — validators are stdlib only.
+      - name: Validate dd-meta JSON blocks (strict)
+        run: python scripts/validate_dd_meta.py
+      - name: Validate id-meta JSON blocks (strict)
+        run: python scripts/validate_id_meta.py

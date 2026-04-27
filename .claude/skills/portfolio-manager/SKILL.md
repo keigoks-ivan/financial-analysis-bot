@@ -255,11 +255,20 @@ HTML §8 必須列本 PM 歷史 override 次數與確認率，供自省。若 `d
 
 1. **讀 config** → portfolio state（若無 YAML，互動式收集一次）
 2. **讀 `docs/dd/INDEX.md`** → 建 ticker → 最新 DD 索引
-3. **Layer 2 相容層解析**：
-   - 解析 INDEX.md 第 3 欄（版本字串）
-   - v11.x → `compat/schema_v11.md` 映射
-   - v12.x → `compat/schema_v12.md` 映射
+3. **Layer 2 相容層解析**（v12.1+ 優先讀 dd-meta JSON）：
+   - 對每檔 holding / watchlist 的最新 DD HTML：
+     - **優先 1**：讀 `<script id="dd-meta" type="application/json">{...}</script>`，
+       直接 json.loads 取結構化欄位（signal, moat, val, ma, trap, fpe_fy2,
+       pct_5y, peg_fy2, upside_short_pct, upside_mid_pct, stress, moat_score,
+       quality_score, ai_risk, long_term_confidence, verdict 等 23 欄）。
+       **此為解 v12.1+ DD 的唯一推薦來源**——絕對不要從 HTML 內文 regex 反解
+     - **優先 2**（legacy fallback）：v12.0 部分 backfilled DD 可能 dd-meta
+       不完整（缺 moat_score / quality_score / upside_short_pct 等）。對缺漏
+       欄位 fallback 到 INDEX.md 第 6 欄（`護城河/估值燈/MA`）+ INDEX.md 備註欄
+     - **優先 3**（v11.x DD）：解析 INDEX.md 第 3 欄版本字串，套 `compat/schema_v11.md`
    - 產出每檔 holding / watchlist 的中性訊號層物件
+   - 對 dd-meta 解析失敗的 v12 DD，標註 `dd_meta_status: degraded`
+     並在 PM HTML §7 風險敘述提示「DD metadata 不完整，需重跑 stock-analyst」
 4. **yfinance 批次 refresh**：
    - 所有 holdings + watchlist + benchmark 當日收盤
    - benchmark 的 W104 / W250 週均值（判斷 benchmark_regime）

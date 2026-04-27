@@ -25,6 +25,208 @@ META_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
 )
 
+# === dd-meta JSON (v12.0+ canonical, plan-A "lasting fix") ====================
+# DD HTML emits a <script id="dd-meta" type="application/json">{...}</script>
+# block in <head> with structured fields. Script reads JSON when present;
+# falls back to regex extractors below for legacy DDs without it.
+DD_META_RE = re.compile(
+    r'<script\s+id="dd-meta"\s+type="application/json"\s*>(.*?)</script>',
+    re.DOTALL,
+)
+
+
+def extract_dd_meta_json(text: str):
+    """Return parsed dd-meta dict if present and valid JSON, else None."""
+    m = DD_META_RE.search(text)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(1).strip())
+    except json.JSONDecodeError as e:
+        print(f"  WARN: dd-meta JSON parse error: {e}")
+        return None
+
+
+# === v12 extractors (regex fallback for DDs without dd-meta JSON) ===============
+# Signal-light (A+/A/B/C/X) — universal anchor first ("綜合訊號：" prefix +
+# any tag wrapping the letter), then fallback to class-based for newer
+# layouts (INTC/RMBS) that don't use the 綜合訊號：prefix.
+SIGNAL_INLINE_RE = re.compile(
+    r'綜合訊號[^<]{0,40}<[^>]+>\s*([ABCSX][+]?)\s*[<｜|]'
+)
+SIGNAL_BOX_RE = re.compile(
+    r'class="(?:grade|big|signal-huge|signal-letter|dashboard-signal|big-signal|signal-big|signal-x|signal-a|signal-b|signal-c)"'
+    r'[^>]*>\s*([ABCSX][+]?)\s*[<｜|]?',
+)
+SIGNAL_LIGHT_RE = SIGNAL_INLINE_RE  # legacy alias, prefer extract_signal_light()
+
+# FY+2 / NTM Forward P/E — try in order of specificity:
+#   A) Newer v12 (INTC/RMBS): "當前 FY+2 Forward P/E</td><td...>$X / $Y = <strong>57x</strong>"
+#   B) Older v12 (TXN/LRCX/VRT/GEV): "NTM Forward P/E 30.69x" narrative
+#   C) Older v12 alt: "當前 NTM Fwd PE</td><td>30.69x</td>" table cell
+FPE_FY2_STRONG_RE = re.compile(
+    r'當前\s*FY\+2\s*Forward\s*P/E\s*</td>\s*<td[^>]*>[^<]{0,200}?'
+    r'<strong>\s*(\d+(?:\.\d+)?)\s*x',
+)
+FPE_NTM_NARRATIVE_RE = re.compile(
+    r'NTM\s*Forward\s*P/E\s*(?:[（(][^）)]*[）)])?\s*~?\s*(\d+(?:\.\d+)?)'
+    # Allow optional range tail "-100x" or "～30x"; just match the first number.
+    r'(?:\s*[\-－—~～]\s*\d+(?:\.\d+)?)?\s*x?',
+    re.IGNORECASE,
+)
+FPE_NTM_TABLE_RE = re.compile(
+    r'當前\s*NTM\s*Fwd\s*PE\s*(?:[（(][^）)]*[）)])?\s*</td>\s*<td[^>]*>\s*'
+    r'(?:<[^>]*>\s*)?(\d+(?:\.\d+)?)\s*x',
+    re.IGNORECASE,
+)
+
+# 5Y 分位 — multiple anchor variants:
+#   A) "5Y 分位 89%" (older v12, clean)
+#   B) "5Y 95+ 分位" / "5Y 歷史 95+ 分位" (newer v12, narrative)
+#   C) "5Y ~95% 分位" (newer v12 alt)
+PCT_5Y_TABLE_RE = re.compile(
+    r'5Y\s*分位\s*~?\s*(\d+(?:\.\d+)?)\+?\s*%'
+)
+PCT_5Y_NARRATIVE_RE = re.compile(
+    r'5Y(?:\s*[一-鿿]{0,4})?\s*~?\s*(\d+(?:\.\d+)?)\s*[%＋+]?\s*分位'
+)
+
+# PEG (FY+2) — pick first PEG value mentioned in §2 Dashboard (older) or §12 D (newer).
+# We restrict to anchors near "估值燈" / "PEG" labels to avoid grabbing prose mentions.
+PEG_RE_V12 = re.compile(
+    r'PEG\s*(?:[（(]\s*(?:FY\+?[12]|3Y|2Y|Non-GAAP)[^）)]*[）)]\s*)?'
+    r'(?:[<:：=]?\s*)?(\d+\.\d+)'
+)
+
+# Stress: "壓力測試通過率：0 / 4" or variants
+STRESS_RE = re.compile(
+    r'壓力測試\s*(?:通過率)?\s*[:：]?\s*(\d+)\s*/\s*(\d+)'
+)
+
+# Triax field in INDEX.md rr column for v12 entries: "A/🔴/✅", "S/🟢/✅", "C/🔴/-".
+# Letters are S/A/B/C (護城河等級); emojis cover val + MA.
+TRIAX_RE_V12 = re.compile(
+    r'^\s*([SABCX]|拒絕)\s*/\s*([🟢🟡🟠🔴])\s*/\s*([✅🟡🟠❌🟢🔴]|-|—)\s*$'
+)
+
+# Mid-term (FY+2) upside, multiple layouts:
+#   1) "上行空間  ...  -40.2%" (newer v12, §12 E table)
+#   2) "中期 ... $277.20 − $267.78 = $9.42" (older v12, compute upside%)
+#   3) Comment fallback: "+18% upside" or similar in INDEX.md last column
+UPSIDE_PCT_RE = re.compile(r'上行空間.*?([+\-−]?\d+(?:\.\d+)?)\s*%', re.DOTALL)
+
+
+def extract_signal_light(text: str) -> str:
+    """Return one of A+/A/B/C/X, empty if not found.
+
+    Tries universal "綜合訊號：<tag>X</tag>" anchor first, falls back to
+    class-based pattern for newer DDs (INTC/RMBS) that wrap the letter
+    in <div class="grade">X</div> without the 綜合訊號 prefix.
+    """
+    for pat in (SIGNAL_INLINE_RE, SIGNAL_BOX_RE):
+        m = pat.search(text)
+        if m:
+            sig = m.group(1).strip()
+            if sig in {"A+", "A", "B", "C", "X", "S"}:
+                return sig
+    return ""
+
+
+def extract_fpe_fy2(text: str) -> str:
+    """Return FY+2 (or NTM as fallback) Forward P/E like '45.1', empty if not found.
+
+    Priority order:
+      1) <strong>X.Yx</strong> in §12 C 當前 FY+2 Forward P/E table cell (newer v12)
+      2) "NTM Forward P/E X.Yx" narrative form (older v12 §1 Dashboard)
+      3) "當前 NTM Fwd PE</td><td>X.Yx" table cell form
+    """
+    for pat in (FPE_FY2_STRONG_RE, FPE_NTM_NARRATIVE_RE, FPE_NTM_TABLE_RE):
+        m = pat.search(text)
+        if m:
+            return m.group(1)
+    return ""
+
+
+def extract_5y_pct(text: str) -> str:
+    """Return 5Y 分位 percentile, e.g. '89' (no % sign), empty if not found.
+
+    Priority order:
+      1) "5Y 分位 89%" clean table form (older v12)
+      2) "5Y [歷史] 95+ 分位" narrative form (newer v12, 0-4 CJK chars between)
+    """
+    m = PCT_5Y_TABLE_RE.search(text)
+    if m:
+        return m.group(1)
+    m = PCT_5Y_NARRATIVE_RE.search(text)
+    return m.group(1) if m else ""
+
+
+def extract_peg_v12(text: str) -> str:
+    """Return PEG value, e.g. '1.09'. Picks first PEG match within the first
+    occurrence of 估值燈 + 1500 chars window so prose mentions don't hijack."""
+    anchor = text.find("估值燈")
+    if anchor < 0:
+        anchor = 0
+    window = text[anchor:anchor + 3000]
+    m = PEG_RE_V12.search(window)
+    if m:
+        return m.group(1)
+    # Last-ditch: any PEG value anywhere
+    m = PEG_RE_V12.search(text)
+    return m.group(1) if m else ""
+
+
+def extract_stress_v12(text: str):
+    """Return (passed, total) ints, or (0, 4) if not found."""
+    m = STRESS_RE.search(text)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    return 0, 4  # default for newer DDs that may not have QC-29 section
+
+
+def extract_upside_fy2(text: str, index_comment: str = "") -> str:
+    """Return FY+2 upside as numeric string, e.g. '-40.2' or '18.0'.
+    Tries §12 E mid-term (上行空間), then INDEX.md comment fallback."""
+    # Path 1: existing extract_upsides() logic — second 上行空間 hit is mid-term
+    anchor = SECTION_E_ANCHOR_RE.search(text)
+    if anchor:
+        scope = text[anchor.start():anchor.start() + 8000]
+        end_markers = ("</tr>", "下行距離", "下檔", "<h2", "<h3")
+        upsides = []
+        for mm in re.finditer(r"上行空間", scope):
+            window = scope[mm.end():mm.end() + 400]
+            cut = len(window)
+            for marker in end_markers:
+                idx = window.find(marker)
+                if 0 < idx < cut:
+                    cut = idx
+            for pct in PCT_RE.findall(window[:cut]):
+                upsides.append(pct.replace("−", "-"))
+            if len(upsides) >= 2:
+                break
+        if len(upsides) >= 2:
+            return upsides[1]
+    # Path 2: parse INDEX.md comment for "+XX% upside" pattern (older v12 fallback)
+    m = re.search(r'隱含\s*([+\-−]?\d+(?:\.\d+)?)\s*%\s*upside', index_comment)
+    if m:
+        return m.group(1).replace("−", "-")
+    return ""
+
+
+def parse_triax(rr_raw: str):
+    """Parse v12 INDEX.md rr column 'A/🔴/✅' → ('A', '🔴', '✅')."""
+    m = TRIAX_RE_V12.match(rr_raw.strip())
+    if m:
+        moat = m.group(1)
+        if moat == "拒絕":
+            moat = "X"
+        return moat, m.group(2), m.group(3)
+    return "", "", ""
+
+
+# === end v12 extractors =======================================================
+
+
 # Pattern to extract §2 G "一句話說明" (balanced conclusion, not bull-only)
 # Matches <strong>一句話</strong>：text</p> or similar variants
 ONELINER_RE = re.compile(
@@ -562,6 +764,250 @@ def build_rows(entries):
     return "\n".join(rows)
 
 
+# === v12 row builder (additive append-only mode) =============================
+
+# Maps for v12 cell rendering
+_SIGNAL_RANK = {"A+": 5, "A": 4, "B": 3, "C": 2, "X": 1, "S": 5}
+_TRAP_RANK = {"🟢": 3, "🟡": 2, "🔴": 1}
+_MOAT_QUALITY = {"S": 4, "A": 3, "B": 2, "C": 1, "X": 0}
+_VERDICT_CSS = {
+    "A+": "verdict-ok",
+    "A": "verdict-ok",
+    "B": "verdict-watch-buy",
+    "C": "verdict-hold",
+    "X": "verdict-avoid",
+    "S": "verdict-ok",
+}
+_TRAP_CSS = {"🟢": ("trap-ok", "🟢 非陷阱"), "🟡": ("trap-watch", "🟡 觀察期"), "🔴": ("trap-danger", "🔴 高風險")}
+
+
+def _verdict_to_signal(verdict_raw: str) -> str:
+    """Map INDEX.md verdict column → v12 signal letter (fallback when DD HTML
+    extraction fails). Heuristic — treat first letter / keyword as signal."""
+    v = verdict_raw.strip()
+    if not v:
+        return ""
+    # Direct letter — covers "B", "A+", "C" etc.
+    head = v[:2] if v[:2] == "A+" else v[:1]
+    if head in {"A+", "A", "B", "C", "X", "S"}:
+        return head
+    # Keyword mapping for full Chinese verdict
+    if "強進場" in v: return "A+"
+    if "拒絕" in v or "迴避" in v: return "C"
+    if "MA煞車" in v or "追蹤池" in v: return "C"
+    if "進場" in v: return "A"
+    if "試倉" in v: return "B"
+    return ""
+
+
+def build_row_v12(entry: dict) -> str:
+    """Render one v12 row (data-* attrs + 9 td cells) matching the hand-curated
+    schema in docs/research/index.html. Missing fields render as '?' or 0."""
+    sig = entry.get("signal", "") or "?"
+    trap_emoji = entry.get("trap_emoji", "") or "?"
+    moat = entry.get("moat", "") or "?"
+    val_emoji = entry.get("val_emoji", "") or "?"
+    ma_state = entry.get("ma_state", "") or "?"
+    fpe = entry.get("fpe", "")
+    pct = entry.get("pct", "")
+    peg = entry.get("peg", "")
+    upside = entry.get("upside", "")
+    sp, st = entry.get("stress_pass", 0), entry.get("stress_total", 4)
+
+    # Numeric data attrs (for sorting); fallback to 0 when empty.
+    rank = _SIGNAL_RANK.get(sig, 0)
+    trap_rank = _TRAP_RANK.get(trap_emoji, 0)
+    quality = _MOAT_QUALITY.get(moat, 0)
+    try:
+        fpe_num = float(fpe) if fpe else 0.0
+    except ValueError:
+        fpe_num = 0.0
+    try:
+        pct_num = float(pct) if pct else 0.0
+    except ValueError:
+        pct_num = 0.0
+    try:
+        peg_num = float(peg) if peg else 0.0
+    except ValueError:
+        peg_num = 0.0
+    try:
+        up_num = float(upside) if upside else 0.0
+    except ValueError:
+        up_num = 0.0
+    stress_frac = sp / st if st else 0.0
+
+    # CSS classes
+    verdict_cls = _VERDICT_CSS.get(sig, "verdict-hold")
+    trap_cls, trap_label = _TRAP_CSS.get(trap_emoji, ("trap-watch", trap_emoji))
+
+    # Upside cell color (matches hand-curated convention)
+    if up_num >= 30:
+        u_color = "#166534"  # deep green
+    elif up_num >= 0:
+        u_color = "#15803D"  # green
+    else:
+        u_color = "#991B1B"  # red
+    up_sign = "+" if up_num > 0 else ""
+    up_cell_text = f"{up_sign}{up_num:.0f}%" if upside else "?"
+
+    # Cell display values (fallback strings when missing)
+    fpe_disp = f"{fpe}x" if fpe else "?"
+    pct_disp = f"{pct}%" if pct else "?"
+    peg_disp = f"{peg}" if peg else "?"
+    triax_disp = f"{moat}/{val_emoji}/{ma_state}"
+    stress_disp = f"{sp}/{st}"
+
+    return (
+        f'<tr class="searchable" data-ticker="{entry["ticker"]}"'
+        f' data-signal="{sig}" data-trap="{trap_emoji}"'
+        f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
+        f' data-fpe="{fpe_num}" data-pct="{pct_num}" data-peg="{peg_num}"'
+        f' data-upside="{up_num}" data-stress="{stress_frac}">\n'
+        f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
+        f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
+        f'<td><span class="{trap_cls}">{trap_label}</span></td>'
+        f'<td class="num-cell">{triax_disp}</td>'
+        f'<td class="num-cell">{fpe_disp}</td>'
+        f'<td class="num-cell">{pct_disp}</td>'
+        f'<td class="num-cell">{peg_disp}</td>'
+        f'<td class="num-cell" style="color:{u_color};font-weight:600">{up_cell_text}</td>'
+        f'<td class="num-cell">{stress_disp}</td>\n'
+        f'</tr>'
+    )
+
+
+def collect_v12_entries():
+    """Walk INDEX.md + DD HTMLs and produce per-row v12 entries.
+
+    Per-DD priority for field extraction:
+      1) <script id="dd-meta" type="application/json"> block in DD HTML head
+         (canonical, plan-A lasting fix; v12.1+ DDs emit this).
+      2) INDEX.md rr_raw column (triax: moat / val / ma).
+      3) Regex extractors over DD HTML body (legacy fallback).
+
+    Only includes DDs where INDEX.md schema starts with 'v12'.
+    """
+    index_data = parse_index_md()
+    entries = []
+    for fname, md in index_data.items():
+        if not md["schema"].startswith("v12"):
+            continue
+        path = DD_DIR / fname
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+
+        # Priority 1: dd-meta JSON block (canonical) ---------------------------
+        meta = extract_dd_meta_json(text)
+        if meta:
+            stress = meta.get("stress", {}) or {}
+            entry = {
+                "ticker": meta.get("ticker") or md["ticker"],
+                "filename": fname,
+                "href": f"/dd/{fname}",
+                "date": meta.get("date") or md["date"],
+                "signal": meta.get("signal", ""),
+                "trap_emoji": meta.get("trap", "") or (md["trap"][:1] if md["trap"] else ""),
+                "moat": meta.get("moat", ""),
+                "val_emoji": meta.get("val", ""),
+                "ma_state": meta.get("ma", ""),
+                "fpe": str(meta["fpe_fy2"]) if meta.get("fpe_fy2") is not None else "",
+                "pct": str(meta["pct_5y"]) if meta.get("pct_5y") is not None else "",
+                "peg": str(meta["peg_fy2"]) if meta.get("peg_fy2") is not None else "",
+                "upside": str(meta["upside_mid_pct"]) if meta.get("upside_mid_pct") is not None else "",
+                "stress_pass": int(stress.get("pass", 0)),
+                "stress_total": int(stress.get("total", 4) or 4),
+            }
+            entries.append(entry)
+            continue
+
+        # Priority 2 + 3: legacy regex fallback --------------------------------
+        moat, val_emoji, ma_state = parse_triax(md["rr_raw"])
+        sig = extract_signal_light(text) or _verdict_to_signal(md["verdict"])
+        sp, st = extract_stress_v12(text)
+        entries.append({
+            "ticker": md["ticker"],
+            "filename": fname,
+            "href": f"/dd/{fname}",
+            "date": md["date"],
+            "signal": sig,
+            "trap_emoji": md["trap"][:1] if md["trap"] else "",
+            "moat": moat,
+            "val_emoji": val_emoji,
+            "ma_state": ma_state,
+            "fpe": extract_fpe_fy2(text),
+            "pct": extract_5y_pct(text),
+            "peg": extract_peg_v12(text),
+            "upside": extract_upside_fy2(text, md.get("comment", "")),
+            "stress_pass": sp,
+            "stress_total": st,
+        })
+    # Latest DD per ticker only (date desc)
+    latest = {}
+    for e in entries:
+        t = e["ticker"]
+        if t not in latest or e["date"] > latest[t]["date"]:
+            latest[t] = e
+    return list(latest.values())
+
+
+def _ticker_key(t: str) -> str:
+    """Normalize ticker for de-dup comparison: strip dot/underscore so
+    '2330.TW' == '2330TW', 'BRK.B' == 'BRKB'. Hand-curated rows historically
+    drop the dot for TW/JP/HK tickers."""
+    return t.replace(".", "").replace("_", "").upper()
+
+
+def _sort_v12_entries(entries: list) -> list:
+    """Sort v12 entries for the research index table.
+
+    Order (highest priority first):
+      1) signal rank descending (A+ → X)
+      2) trap rank descending (🟢 → 🔴)
+      3) upside_mid_pct descending (positive upside first)
+      4) date descending (newest first)
+    """
+    def key(e):
+        sig_rank = _SIGNAL_RANK.get(e.get("signal", ""), 0)
+        trap_rank = _TRAP_RANK.get(e.get("trap_emoji", ""), 0)
+        try:
+            upside = float(e.get("upside") or 0)
+        except (ValueError, TypeError):
+            upside = 0.0
+        date = e.get("date", "")
+        # Negate values so default ascending sort yields desc order
+        return (-sig_rank, -trap_rank, -upside, date)
+    return sorted(entries, key=key, reverse=False)
+
+
+def update_index_v12_full(html: str) -> tuple:
+    """Full regenerate of v12 tbody from collect_v12_entries() (dd-meta SSOT).
+
+    Replaces every row in <tbody id="dd-tbody-v12"> with freshly-built rows
+    sorted by signal rank → trap rank → upside → date. Any manual HTML
+    tweaks to existing rows are OVERWRITTEN — dd-meta JSON is the single
+    source of truth, so corrections must be made there (not in row HTML).
+
+    Returns (new_html, row_count).
+    """
+    tbody_re = re.compile(
+        r'(<tbody id="dd-tbody-v12">)(.*?)(</tbody>)', re.DOTALL
+    )
+    m = tbody_re.search(html)
+    if not m:
+        return html, 0
+    open_tag, _, close_tag = m.group(1), m.group(2), m.group(3)
+
+    entries = _sort_v12_entries(collect_v12_entries())
+    rows = "\n".join(build_row_v12(e) for e in entries)
+    new_block = open_tag + "\n" + rows + "\n" + close_tag
+    new_html = html[:m.start()] + new_block + html[m.end():]
+    return new_html, len(entries)
+
+
+# === end v12 row builder =====================================================
+
+
 def build_weekly_review(entries):
     """Compute 3 lists for the Weekly Review panel:
     - candidates: 建議 in {進場, 觀望偏進場} + 非陷阱 + 長期高信心, sorted by upside2 desc, top 15
@@ -656,50 +1102,101 @@ def build_weekly_review(entries):
     return cands_html, downs_html, stale_html
 
 
-def update_index(entries):
+def build_outdated_dd_banner() -> str:
+    """Build banner HTML reminding which DDs need re-run because the ticker
+    has reported earnings after the DD date. Returns empty string if none.
+    """
+    try:
+        from find_outdated_dds import find_outdated
+    except ImportError:
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).parent))
+        from find_outdated_dds import find_outdated  # type: ignore
+    rows = find_outdated()
+    if not rows:
+        return ""  # auto-hide when caught up
+    chips = "\n      ".join(
+        f'<span style="background:rgba(255,255,255,.2);padding:4px 10px;border-radius:4px;font-family:\'IBM Plex Mono\',monospace;font-weight:600">'
+        f'{r["ticker"]} <span style="opacity:.75;font-weight:400;font-size:12px">({r["earnings_date"][5:]})</span></span>'
+        for r in rows
+    )
+    return (
+        '<div style="background:linear-gradient(90deg,#B45309,#D97706);color:#fff;padding:14px 0;margin:0 0 20px 0">\n'
+        '  <div class="container">\n'
+        '    <div style="font-size:14px;font-weight:600;margin-bottom:8px">\n'
+        f'      ⚠️ 已發財報但 DD 未更新（{len(rows)} 檔）— 提醒重跑\n'
+        '    </div>\n'
+        '    <div style="font-size:13px;display:flex;flex-wrap:wrap;gap:6px">\n'
+        f'      {chips}\n'
+        '    </div>\n'
+        '  </div>\n'
+        '</div>'
+    )
+
+
+def update_index(entries, dry_run: bool = False):
     html = INDEX_HTML.read_text(encoding="utf-8")
+    original_html = html
 
-    # Replace thead
-    new_thead = (
-        '<thead>\n'
-        '          <tr>\n'
-        '            <th class="sortable" data-sort="ticker">公司</th>\n'
-        '            <th class="sortable" data-sort="date">日期</th>\n'
-        '            <th class="sortable" data-sort="verdict">建議</th>\n'
-        '            <th class="sortable" data-sort="moat">護城河</th>\n'
-        '            <th class="sortable" data-sort="upside1">FY+1 Upside</th>\n'
-        '            <th class="sortable sorted-desc" data-sort="upside2">FY+2 Upside</th>\n'
-        '            <th class="sortable" data-sort="trap">陷阱</th>\n'
-        '            <th class="sortable" data-sort="confidence">長期持有</th>\n'
-        '            <th>備註</th>\n'
-        '          </tr>\n'
-        '        </thead>'
-    )
-    html = re.sub(
-        r'<thead>.*?</thead>',
-        new_thead,
-        html,
-        count=1,
-        flags=re.DOTALL,
-    )
+    # v12 mode: page uses <tbody id="dd-tbody-v12"> with rows that include
+    # sortable data-* attrs (data-signal / data-fpe / data-pct / data-peg /
+    # data-upside / data-stress) — schema incompatible with v11 build_rows().
+    # Strategy: APPEND-ONLY. Add rows for v12 DDs not yet in the table; never
+    # overwrite existing hand-curated rows so QA tweaks survive.
+    v12_mode = '<tbody id="dd-tbody-v12">' in html
+    if v12_mode:
+        new_html, row_count = update_index_v12_full(html)
+        print(
+            f"v12 mode: regenerated dd-tbody-v12 from dd-meta JSON "
+            f"({row_count} row(s) total — full overwrite)."
+        )
+        # Note: thead, CSS cleanup, and v11 build_rows() stay disabled in v12 mode.
+        # WR_STALE / timestamp updates below still run.
+    else:
+        # Legacy v11.x path: regenerate thead + tbody from entries
+        new_thead = (
+            '<thead>\n'
+            '          <tr>\n'
+            '            <th class="sortable" data-sort="ticker">公司</th>\n'
+            '            <th class="sortable" data-sort="date">日期</th>\n'
+            '            <th class="sortable" data-sort="verdict">建議</th>\n'
+            '            <th class="sortable" data-sort="moat">護城河</th>\n'
+            '            <th class="sortable" data-sort="upside1">FY+1 Upside</th>\n'
+            '            <th class="sortable sorted-desc" data-sort="upside2">FY+2 Upside</th>\n'
+            '            <th class="sortable" data-sort="trap">陷阱</th>\n'
+            '            <th class="sortable" data-sort="confidence">長期持有</th>\n'
+            '            <th>備註</th>\n'
+            '          </tr>\n'
+            '        </thead>'
+        )
+        html = re.sub(
+            r'<thead>.*?</thead>',
+            new_thead,
+            html,
+            count=1,
+            flags=re.DOTALL,
+        )
 
-    # Replace tbody
-    pattern = r'(<tbody id="dd-tbody">)\n?.*?(\s*</tbody>)'
-    replacement = r'\1\n' + build_rows(entries) + r'\2'
-    new_html, count = re.subn(pattern, replacement, html, flags=re.DOTALL)
+        # Replace tbody
+        pattern = r'(<tbody id="dd-tbody">)\n?.*?(\s*</tbody>)'
+        replacement = r'\1\n' + build_rows(entries) + r'\2'
+        new_html, count = re.subn(pattern, replacement, html, flags=re.DOTALL)
 
-    if count == 0:
-        print(f"ERROR: Could not find <tbody id=\"dd-tbody\"> in {INDEX_HTML}")
-        return False
+        if count == 0:
+            print(
+                f"ERROR: Could not find <tbody id=\"dd-tbody\"> nor "
+                f"<tbody id=\"dd-tbody-v12\"> in {INDEX_HTML}"
+            )
+            return False
 
-    # Remove legacy injected CSS blocks (styles are now in the HTML template)
-    new_html = re.sub(
-        r'\n?/\* v(?:9|10)\.0 Badge Styles \*/.*?(?=</style>)',
-        '\n',
-        new_html,
-        count=1,
-        flags=re.DOTALL,
-    )
+        # Remove legacy injected CSS blocks (styles are now in the HTML template)
+        new_html = re.sub(
+            r'\n?/\* v(?:9|10)\.0 Badge Styles \*/.*?(?=</style>)',
+            '\n',
+            new_html,
+            count=1,
+            flags=re.DOTALL,
+        )
 
     # Stamp price-refresh timestamp from cache (if present)
     cache = load_price_cache()
@@ -710,6 +1207,14 @@ def update_index(entries):
         rf'\g<1>{ts_display}\g<2>',
         new_html,
         count=1,
+    )
+
+    # Inject outdated-DD reminder banner (auto-cancels when DD is re-run post-earnings)
+    new_html = re.sub(
+        r'<!-- OUTDATED_DDS_BANNER_START -->.*?<!-- OUTDATED_DDS_BANNER_END -->',
+        f'<!-- OUTDATED_DDS_BANNER_START -->\n{build_outdated_dd_banner()}\n<!-- OUTDATED_DDS_BANNER_END -->',
+        new_html,
+        flags=re.DOTALL,
     )
 
     # Inject Weekly Review lists
@@ -732,6 +1237,31 @@ def update_index(entries):
         new_html,
         flags=re.DOTALL,
     )
+
+    if dry_run:
+        # Print unified diff and skip the write
+        import difflib
+        diff = list(difflib.unified_diff(
+            original_html.splitlines(keepends=False),
+            new_html.splitlines(keepends=False),
+            fromfile="docs/research/index.html (current)",
+            tofile="docs/research/index.html (after regen)",
+            n=2,
+        ))
+        if diff:
+            print()
+            print("=" * 70)
+            print("DRY RUN — diff preview (no files written)")
+            print("=" * 70)
+            for line in diff[:200]:
+                print(line)
+            if len(diff) > 200:
+                print(f"... ({len(diff) - 200} more lines truncated)")
+            print("=" * 70)
+            print(f"Total diff lines: {len(diff)}. Run without --dry-run to apply.")
+        else:
+            print("DRY RUN: no changes (file would be written identically).")
+        return True
 
     INDEX_HTML.write_text(new_html, encoding="utf-8")
     return True
@@ -779,6 +1309,11 @@ def main():
         action="store_true",
         help="Fetch current prices via yfinance and recompute upsides.",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show unified diff of changes without writing the file.",
+    )
     args = parser.parse_args()
 
     index_data = parse_index_md()
@@ -792,8 +1327,11 @@ def main():
         print()
         refresh_upsides(entries)
 
-    if update_index(entries):
-        print(f"\nUpdated {INDEX_HTML}")
+    if update_index(entries, dry_run=args.dry_run):
+        if args.dry_run:
+            print(f"\n(dry-run; no file written)")
+        else:
+            print(f"\nUpdated {INDEX_HTML}")
     else:
         print("\nFailed to update index.html")
 

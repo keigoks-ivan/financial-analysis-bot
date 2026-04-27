@@ -1,6 +1,64 @@
 # DD v12.x → 中性訊號層映射
 
-## 來源欄位（INDEX.md v12 格式，8 欄，與 v11 相同結構）
+## 【v12.1+ 推薦】從 dd-meta JSON 直接讀
+
+每份 v12 DD HTML 的 `<head>` 內必含 `<script id="dd-meta" type="application/json">{...}</script>`。
+PM skill 執行時應直接 parse 此 JSON，**不要從 HTML 內文 regex 反解**（會碎、會錯）。
+
+讀取程式碼：
+
+```python
+import json, re
+text = open(f"docs/dd/{filename}").read()
+m = re.search(r'<script id="dd-meta"[^>]*>(.*?)</script>', text, re.DOTALL)
+meta = json.loads(m.group(1).strip())
+# meta 直接就是中性訊號層物件，欄位定義見：
+#   /Users/ivanchang/financial-analysis-bot/scripts/validate_dd_meta.py
+```
+
+### dd-meta JSON ↔ 中性訊號層欄位對應
+
+| 中性訊號層 | dd-meta key | 備註 |
+|:---|:---|:---|
+| `quality_tier` | `moat` | S / A / B / C / X（v12 用 X 取代「拒絕」） |
+| `gate` | `val` | 估值燈 🟢🟡🟠🔴；嚴重度 = max(val, ma) |
+| `trap` | `trap` | 🟢🟡🔴 |
+| `ma_status` | `ma` | ✅🟡🟠❌- |
+| `final_signal` | `signal` | A+/A/B/C/X |
+| `short_target_upside_pct` | `upside_short_pct` | DD 撰寫時的短期 R:R 上行 % |
+| `mid_target_upside_pct` | `upside_mid_pct` | 中期 R:R 上行 % |
+| `forward_pe_fy2` | `fpe_fy2` | FY+2 Forward P/E |
+| `valuation_percentile_5y` | `pct_5y` | 5Y 估值分位 0-100 |
+| `peg_fy2` | `peg_fy2` | FY+2 PEG |
+| `stress_pass_total` | `stress` | `{pass, total}` 物件 |
+| `quality_score` | `quality_score` | 品質分 1-10（含體質 +/-） |
+| `moat_score` | `moat_score` | 護城河分 1-10 |
+| `growth_durability` | `growth_durability` | 成長持久性 1-10 |
+| `ai_risk` | `ai_risk` | 🟢🟡🔴 |
+| `long_term_confidence` | `long_term_confidence` | 高/中/低 |
+| `verdict_text` | `verdict` | INDEX.md 裁決文字 |
+| `oneliner` | `oneliner` | ≤ 200 字總結 |
+| `price_at_dd` | `price_at_dd` | DD 撰寫日收盤 |
+
+PM 撰寫 §3/§4/§5 時，**直接引用 dd-meta 欄位**（例：「短期 R:R upside −68.4% / 中期 −40.2%（取自 dd-meta upside_short_pct/mid_pct）」）。
+不要再從 HTML 內文 regex 撈這些值——dd-meta 才是 SSOT。
+
+### dd-meta 不完整或缺漏處理
+
+部分 v12.0 DD 是腳本 backfill 出來的（見 `scripts/backfill_dd_meta.py`），
+dd-meta 缺漏：`moat_score` / `growth_durability` / `quality_score` /
+`upside_short_pct` / `ai_risk` / `long_term_confidence` / `price_at_dd`。
+
+PM 處理流程：
+1. 缺漏的欄位 fallback 至 INDEX.md（見下方 v12.0 legacy 映射表）
+2. 在中性訊號層物件加註 `dd_meta_status: "degraded"`
+3. PM HTML §7 風險敘述列出哪幾檔需重跑 stock-analyst 補完整 dd-meta
+
+驗證所有 DD 的 dd-meta 完整性：`python scripts/validate_dd_meta.py`（見 CI gate）
+
+---
+
+## 【legacy v12.0 fallback】INDEX.md 8 欄解析
 
 ```
 | 日期 | Ticker | 版本 | 最終建議 | 陷阱 | 品質/估值燈/MA | 檔名 | 備註 |
