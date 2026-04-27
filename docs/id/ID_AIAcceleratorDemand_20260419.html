@@ -125,7 +125,7 @@ li{margin:3px 0}
 <header class="id-head">
   <span class="id-badge">產業深度 · Industry DD · 母題 Root ID</span>
   <h1>AI 加速器需求（AI Accelerator Demand）</h1>
-  <p class="id-meta">發布日：2026-04-19（patched 2026-04-19 v1.0.1）｜ 涵蓋 ticker：12 檔（5🔴 / 5🟡 / 2🟢）｜ 🟡 占比：19% ｜ 投資時鐘：<strong>Phase II 訓練 → 推論混合期</strong> ｜ industry-analyst v1.3</p>
+  <p class="id-meta">發布日：2026-04-19（patched v1.1 @ 2026-04-27 — 整合 TSMC 官方 2026 symposium 供給端 anchor：CoWoS 內 compute transistor 2024→2029 +48X、HBM bandwidth +34X、node pair SoC N7→A14+A14）｜ 涵蓋 ticker：12 檔（5🔴 / 5🟡 / 2🟢）｜ 🟡 占比：19% ｜ 投資時鐘：<strong>Phase II 訓練 → 推論混合期</strong> ｜ industry-analyst v1.3</p>
 </header>
 
 <!-- ========== §0 TL;DR ========== -->
@@ -242,6 +242,39 @@ AI 加速器採用率（廣義：含 ASIC）
     1. <strong>當前時點類比 1998-1999 網際網路</strong>：基建 boom 進入白熱化，runway 仍有 3-5 年才見頂；市場錯估「何時見頂」類似當年 Cisco 早 2 年拋售的投資人後悔<br>
     2. <strong>手機 SoC 類比告訴我們 ASIC 替代需 5-7 年</strong>：Apple A4 → 完全自研花 2010-2017；NVIDIA → ASIC 替代週期也類似，意味 2028-2030 是拐點<br>
     3. <strong>加密礦機類比驗證 ASIC 效率優勢</strong>：當應用標準化（Transformer 推論）到一定程度，ASIC 效率可達 GPU 的 3-10x，這也是 TPU Ironwood、MTIA 的核心賣點
+  </div>
+</div>
+
+<h3>★ TSMC 官方 2026 symposium：供給端的 +48X / +34X anchor</h3>
+<p>本 ID 過去討論 AI 算力成長都從 demand 端切入（hyperscaler capex、token 吞吐量、模型訓練 FLOPS 推算）。symposium 提供了第一個來自 supply side 的 anchor：<strong>2024 → 2029 一個 CoWoS 內 compute transistor 數量 +48X、HBM bandwidth +34X</strong>。這意味即使需求端線性成長，TSMC 供給端的 capability scaling 是 5 年放大 30-50 倍 — 真正會變的是「單一 GPU/chip 的算力」，不只是「GPU 數量」。</p>
+
+<figure style="margin:14px 0;text-align:center">
+  <img src="/id/assets/symposium2026/p-12.png" alt="System Integration Scales AI Compute（一個 CoWoS 內 +48X transistor）" style="max-width:100%;border:1px solid #DDD6FE;border-radius:6px;box-shadow:0 2px 8px rgba(76,29,149,.12)">
+  <figcaption style="font-size:11.5px;color:#6B7280;margin-top:6px">一個 CoWoS 內 compute transistor 演進：2024 1X (SoC N7) → 2025 1.8X (SoC N5) → 2026 4.6X (SoIC N3P+N4) → 2027 9.5X (SoIC N2P+N3P) → 2028 14X (SoIC N2P+N2P) → 2029 &gt;48X (SoIC A14+A14)</figcaption>
+</figure>
+
+<h4>1）Node pair 路徑：拼接設計從「兩顆同代」變成「跨代不同節點」</h4>
+<p>TSMC 揭示的 node pair 路徑非常具體：2024 用單一 SoC N7、2025 SoC N5（單一 die）；2026 起進入 SoIC chiplet 拼接時代，用 N3P + N4（compute die N3P + I/O die N4，跨代拼接）；2027 N2P + N3P；2028 N2P + N2P（同代）；2029 A14 + A14（同代且最先進）。這個路徑揭露了 chiplet 設計哲學的兩個轉折：<strong>2026-2027 是「跨代拼接」（compute die 用最先進節點，I/O die 用一代之前）以攤平 wafer cost；2028 起轉成「同代雙拼」（兩顆 die 都用當代最先進節點）以追求 power efficiency 與通量極限</strong>。</p>
+<p>對 AI 加速器設計者的意義是：2026-2027 的 chiplet 設計可以容忍 N4 / N3P 等「next-to-leading」節點處理 I/O / SerDes / memory controller，這降低了 NRE cost；2028 起為了把 power efficiency 推到極限，必須兩顆都上 leading-edge — <strong>NRE 成本從 2026 的「混搭」上修到 2028 的「全 leading-edge」，這把 ASIC 設計門檻拉高，反而對 NVDA / AVGO 等大型客戶有利（小型 ASIC startup 撐不住雙 leading-edge die NRE）</strong>。</p>
+
+<h4>2）+48X 是「單顆 GPU 算力」，不是「GPU 出貨量」 — Jevons 悖論的供給端鏡像</h4>
+<p>本 ID v1.0.1 thesis 強調 Jevons 悖論（推論 token 成本 286x 下降反而擴大 TAM）。TSMC 的 +48X anchor 是同一現象的供給端鏡像：<strong>2024 一顆訓練 GPU 的 compute transistor count = 1X，2029 一顆訓練 GPU = 48X+</strong>。這意味即使 hyperscaler 採購 GPU 數量不變，2029 的單一 fleet 的總算力 = 2024 的 48 倍。對 demand-side TAM model 的影響：</p>
+
+<ul>
+<li><strong>token 成本下降來源</strong>：原以為主要來自 ASIC 替代 + 軟體優化，TSMC 揭示 supply-side hardware scaling 本身就貢獻 30-50X 成本下降空間。</li>
+<li><strong>capex 並非線性增加</strong>：如果 hyperscaler 想維持 token 通量定額成長，可以「採購數量持平、單顆算力升級」，這把 NVDA / AVGO 的 ASP 上行空間放大（單顆價格從 2024 $30K 可能到 2029 $80K-$150K，但 hyperscaler 的算力收益 +48X 完全 absorb）。</li>
+<li><strong>2029 不會是 capex 高原</strong>：本 ID Kill Scenario 反方擔心 capex 在 2027 H2 見頂後消化期；TSMC roadmap 暗示 2028-2029 即使單位數量不增加，單位 ASP 上修足以維持產業 revenue 成長。</li>
+</ul>
+
+<h4>3）2029 跳級 +48X 對應 A14-on-A14 + 14-reticle CoWoS — 這也是 NVDA Feynman 與後續 ASIC 的硬體規格 anchor</h4>
+<p>把這份 roadmap 與本 ID §6 的 NVDA Rubin / Feynman 路徑對齊：Rubin（2026 Q4 sample, 2027 Q1 volume）= SoIC N3P+N4 階段（4.6X）；Rubin Ultra（2027 Q2-Q3）= SoIC N2P+N3P（9.5X）；2028 Feynman 預期 = SoIC N2P+N2P（14X）；2029 後 Feynman Ultra / 下一代 = SoIC A14+A14（&gt;48X）。<strong>NVDA 自己沒揭示 Feynman 之後的 chip 規格，但 TSMC roadmap 直接告訴市場 2029 後 NVDA 會落在 A14-on-A14 SoIC 14-reticle CoWoS 規格上</strong>。這對應 LeadingEdgeNode ID 的 A13 / A14 IP migration 邏輯 — NVDA 在 2028-2029 的 design TCO 會因 A14→A13 backward-compatible IP 而砍半，這個跨 ID 的 thesis chain 第一次完整成立。</p>
+
+<div class="insight">
+  <div class="i-head">💡 Insight §2.5（symposium 對 AI 算力 thesis 的三個強化）</div>
+  <div class="i-body">
+    1. <strong>Supply-side anchor +48X / +34X</strong>：過去本 ID 從 demand 端推 TAM，現在有 TSMC 官方供給端 anchor — 2024-2029 單顆 chip compute transistor +48X、HBM BW +34X，這直接對應「token 成本 286x 下降」的供給端來源<br>
+    2. <strong>2028 起 chiplet 從跨代混搭轉同代雙 leading-edge</strong>：NRE cost 上修把 ASIC 設計門檻拉高 → NVDA / AVGO 等大客戶結構性受益，小型 ASIC startup（Groq / Cerebras）難以跟進<br>
+    3. <strong>NVDA 2029+ Feynman 規格被 TSMC 直接劇透</strong>：A14-on-A14 SoIC + 14-reticle CoWoS + HBM5/5E 24 顆，這把 NVDA 2028-2029 的硬體 TAM 上限明確化（vs 過去市場只能推估）
   </div>
 </div>
 
