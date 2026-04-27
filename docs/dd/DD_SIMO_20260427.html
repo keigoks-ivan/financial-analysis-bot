@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>SIMO｜Silicon Motion Technology 深度研究報告 v12.1</title>
+<meta name="dd-schema-version" content="v12.1">
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "SIMO",
+  "schema": "v12.1",
+  "date": "2026-04-27",
+  "price_at_dd": 153.46,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期（4Q 動能 + 估值修復後等回檔）",
+  "moat": "B",
+  "val": "🟡",
+  "ma": "✅",
+  "fpe_fy2": 22.27,
+  "pct_5y": 75,
+  "peg_fy2": 1.01,
+  "upside_short_pct": -0.6,
+  "upside_mid_pct": 21.2,
+  "stress": {"pass": 4, "total": 5},
+  "moat_score": 7,
+  "growth_durability": 7,
+  "quality_score": 8.5,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "verdict": "觀望（時機不到，等回檔）",
+  "oneliner": "全球 #1 客戶端 SSD 控制器與 eMMC/UFS 領導者，AI eSSD MonTitan 開始放量，FY26-27 EPS CAGR 31%，但現價剛破 W52 高點 + Bollinger 上軌，FY+2 PEG 1.01 公允定價，落 B 觀望。"
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1F2937; margin: 0; padding: 0; line-height: 1.7; }
+  .header-bar { position: sticky; top: 0; background: #1E3A5F; color: #fff; padding: 10px 24px; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,.1); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .header-bar .meta { font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  .header-bar .meta strong { color: #93C5FD; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 28px; color: #1E3A5F; margin: 16px 0 4px; }
+  h2 { font-size: 22px; color: #fff; background: #1E3A5F; padding: 10px 16px; border-left: 4px solid #3B82F6; margin: 36px 0 16px; scroll-margin-top: 60px; }
+  h2[id^="sec-"] { scroll-margin-top: 60px; }
+  h3 { font-size: 18px; color: #1E3A5F; margin: 24px 0 12px; border-bottom: 2px solid #E5E7EB; padding-bottom: 6px; }
+  h4 { font-size: 16px; color: #1E3A5F; margin: 20px 0 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; background: #fff; font-size: 14px; }
+  th { background: #1E3A5F; color: #fff; padding: 10px; text-align: left; font-weight: 500; }
+  td { padding: 10px; border-bottom: 1px solid #E5E7EB; vertical-align: top; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  .badge-green { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-red { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-yellow { background: #FEF9C3; color: #92400E; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-blue { background: #EFF6FF; color: #1E40AF; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .badge-orange { background: #FFEDD5; color: #C2410C; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: 500; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 16px; margin: 16px 0; }
+  .hypothesis-box h3 { color: #1E3A5F; border: none; margin-top: 0; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 16px; margin: 16px 0; }
+  .warning-box h3 { color: #C2410C; border: none; margin-top: 0; }
+  .scenario-bull { background: #DCFCE7; }
+  .scenario-base { background: #FEF9C3; }
+  .scenario-bear { background: #FEE2E2; }
+  .debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .debate-card { padding: 16px; border-radius: 4px; }
+  .debate-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .debate-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .debate-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .verdict-box { background: #FFFBEB; border-left: 4px solid #D97706; padding: 16px; margin: 16px 0; }
+  .verdict-box h3 { color: #92400E; border: none; margin-top: 0; }
+  .note { font-size: 13px; color: #6B7280; margin-top: 8px; }
+  .print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #fff; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+  .print-btn:hover { background: #2563EB; }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  .dd-toc { background: #fff; border: 1px solid #E5E7EB; padding: 12px; margin: 12px 0 24px; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { background: #EFF6FF; color: #1E3A5F; padding: 4px 10px; border-radius: 12px; text-decoration: none; font-size: 13px; }
+  .dd-toc a:hover { background: #DBEAFE; }
+  @media print {
+    .header-bar, .print-btn, .dd-toc { display: none !important; }
+    body { background: #fff; }
+    .container { max-width: 100%; padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div><strong>SIMO</strong> ｜ Silicon Motion Technology Corp.</div>
+  <div class="meta">資料抓取：<strong>2026-04-27</strong> ｜ 最新股價：<strong>$153.46</strong> ｜ Schema <strong>v12.1</strong></div>
+</div>
+
+<div class="container">
+
+<nav class="dd-toc">
+  <a href="#sec-1">§1 結論</a>
+  <a href="#sec-12">§12 R:R</a>
+  <a href="#sec-13">§13 辯論</a>
+  <a href="#sec-2">§2 序章</a>
+  <a href="#sec-3">§3 論點</a>
+  <a href="#sec-4">§4 財報</a>
+  <a href="#sec-5">§5 門檻</a>
+  <a href="#sec-6">§6 成長</a>
+  <a href="#sec-7">§7 護城河</a>
+  <a href="#sec-8">§8 財務</a>
+  <a href="#sec-9">§9 產業</a>
+  <a href="#sec-10">§10 治理</a>
+  <a href="#sec-11">§11 估值</a>
+</nav>
+
+<h1>Silicon Motion Technology Corporation（SIMO）— 完整 DD v12.1</h1>
+<p class="note">資料抓取時間：2026-04-27（美東時間）｜ 最新股價：$153.46（接近 W52 高 $153.79，剛突破 BB 上軌 $152.40）｜ 最近財報季：Q4 2025（公告於 2026-04-21）｜ Q1 2026 公告排程 2026-04-29</p>
+
+<!-- ============ §1 ============ -->
+<h2 id="sec-1">§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<h3>結論 Dashboard</h3>
+<div class="hypothesis-box">
+<ul>
+  <li><strong>品質 A 級（8.5 分）：</strong>護城河 7/10（全球 #1 客戶端 SSD 控制器、#1 mobile eMMC/UFS 控制器；Tier-1 NAND OEM 與 hyperscaler 認證壁壘）+ 成長持久性 7/10（PCIe Gen5 + AI eSSD MonTitan + 車用 SSD 三重秒走）+ 體質 +1.5（4/5 通過，TTM FCF 短期偏負為唯一弱點）</li>
+  <li><strong>估值 🟡（FPE FY+2 22.27x，PEG 1.01）：</strong>公允定價區間，Forward PE 對 FY+2 EPS $6.89 為 22x，PEG（FY+2 base 22% growth）= 1.01；3Y EPS CAGR 31%，PEG 0.72 略具吸引力</li>
+  <li><strong>短期（1Y）：</strong>FY+1（FY26）EPS $5.65（YoY +55%），目標價 $152.55 vs 現價 $153.46，<span class="badge-red">短期 R:R −0.01x</span></li>
+  <li><strong>中期（2Y）：</strong>FY+2（FY27）EPS $6.89、目標 $186 vs 現價，<span class="badge-yellow">中期 R:R 0.38x</span></li>
+  <li><strong>建議：</strong>觀望（不新進）。已持倉者保留目標倉位 60-80%（已持有者可參與動能尾段，但不加碼）；新進者等回檔至 BB 中軌 $117-120 附近或 Q1 2026 (4/29) GM 落底後再評估。</li>
+  <li><strong>同主題比較：</strong>SIMO 是 NAND 上下游中「最 asset-light、無資本支出陷阱」的 indirect play。vs Phison（私人，非可選）、SNDK（NAND 純血但資本密集且當前估值 cyclical 警示）、MU（DRAM/HBM 平衡），SIMO 是 fabless 高 ROIC 形態最佳。</li>
+  <li><strong>長期持有信心：中</strong>（§12 G 控制器是 sticky 但需求成長受 NAND 整體 unit volume 拘束）｜<strong>陷阱定性：</strong><span class="badge-yellow">🟡 觀察期</span> — 非典型陷阱，但短期動能已與基本面追平，需等回檔修復風險報酬</li>
+</ul>
+</div>
+<p class="note">判定：<strong>觀望</strong>（§12 E 短期 R:R &lt; 2 且中期 R:R &lt; 2）｜底倉 0%（暫不建倉）；已持倉者建議降至目標倉位 60-80%。</p>
+<p class="note">底倉建議為「目標倉位的 X%」。目標倉位 = 你給此標的的最大組合佔比（典型 8-15%/檔）。</p>
+
+<div class="warning-box">
+<h3>⚠️ 這是價值陷阱嗎？</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式？</td><td><strong>非典型陷阱，觀察期定位</strong>。SIMO 不符傳統四種陷阱模式：(1) 護城河未侵蝕（全球第一未動）；(2) 盈餘品質尚可（GAAP/Non-GAAP 差距小，但 TTM FCF 偏負為唯一弱點）；(3) 產業未衰退（SSD 控制器 TAM 從 $14.7B → $49.6B by 2035，CAGR 12.9%）；(4) 非資本密集（fabless 模式）。風險來自「動能與基本面同步爆衝後的 mean reversion」，非結構性問題。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據？</td><td>(1) 全球客戶端 SSD 控制器 #1 地位未受挑戰；(2) Q4 25 SSD 控制器 +35-40% YoY、SSD solutions +110-115% YoY；(3) MonTitan SM8388 為業界首發低功耗 PCIe Gen5 enterprise 控制器（&lt; 5W 達 14.4 GB/s），AI eSSD 結構性切入；(4) 債務 $0、淨現金 $202M、ROE 15.3%；(5) Q4 25 GAAP EPS $1.41（vs $0.64 base）。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁？</td><td>(1) Q4 EPS $1.26 missed Zacks $1.29 共識（產品組合與競爭壓力）；(2) Q1 2026 GM 指引 46-47%（從 Q4 49.2% 顯著下滑，mobile mix）；(3) TTM FCF −$22M（OCF $61M 但 capex 與 working capital 拖累）；(4) 1 年股價 +250% 已 priced in 多重利多；(5) 客戶集中度高（前 5 大 NAND OEM 占 SSD 控制器需求 70%+，定價權有限）。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生？</td><td>領先指標：(1) <strong>毛利率 trajectory</strong>—若 Q2-Q4 26 GM 無法回到 48%+ 即為結構性問題；(2) <strong>MonTitan 占營收比</strong>—若 H2 26 退出時未達 5%（management guide 5-10%）為 AI eSSD thesis 失敗；(3) <strong>FCF/NI 比</strong>—若 4 季滾動 FCF/NI &lt; 0.5 連續 2 季為盈餘品質警訊。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge-yellow">🟡 觀察期</span> — 基本面真實，但 4 個月 +250% 動能後估值與業績拉到同一水平，需冷卻期。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>毛利率 trajectory（Q2-Q4 26）</td><td>§3 H1 / §4</td><td>🔵 核心假設驗證信號</td><td>Q2 26 GM &lt; 47% = 結構性壓力（vs Q1 guide 46-47%）；GM ≥ 49% = 復甦如預期</td></tr>
+<tr><td>2</td><td>MonTitan / Enterprise SSD 占營收比（H2 26）</td><td>§3 H2 / §6</td><td>🔵 AI eSSD 結構轉型確認</td><td>退出 2026 時 MonTitan 占比 ≥ 5% = thesis 兌現；&lt; 3% = thesis 失敗</td></tr>
+<tr><td>3</td><td>4 季滾動 FCF / NI</td><td>§4 / §8</td><td>盈餘品質警訊</td><td>連 2 季 &lt; 0.5 = 盈餘品質下修；恢復至 0.8+ = 健康</td></tr>
+</table>
+
+<!-- ============ §12 ============ -->
+<h2 id="sec-12">§12 品質分驅動雙時距 R:R（v11.0/v12.1）</h2>
+
+<h3>A｜體質檢核（加減分）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td><span class="badge-green">✅ +0.5</span></td><td>FY23 GM ~44% → FY24 ~46% → FY25 ~48%（持續改善）；Q1 26 guide 46-47% 為 mobile mix 暫時性</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge-red">❌ −0.5</span></td><td>TTM FCF −$22M vs NI ~$123M = 負；OCF $61M 但 capex 與 working capital 拖累。歷史 5 年平均 FCF/NI ~0.85</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge-green">✅ +0.5</span></td><td>FY26 共識：90 天前 $4.87 → 30 天前 $5.66 → 當前 $5.65（持續上修，近 90 天 +16%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge-green">✅ +0.5</span></td><td>Q4 25 +45.7%、Q3 25 +35%（估）、Q2 25 +20%（估）、Q1 25 −5%（基期高）— 雖 Q1 25 微負但 4 季中 3 季強勁</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge-green">✅ +0.5</span></td><td>Total Debt $0、Cash $202M → 淨現金 +$202M，債務絕對安全</td></tr>
+</table>
+<p><strong>體質加減分 = +1.5</strong>（過 4 項 × 0.5 − 不過 1 項 × 0.5）</p>
+<p class="note">FCF/NI 不過為 SIMO 唯一財務瑕疵，主因 Q4 25 working capital 為新產品 ramp 大幅增加（PCIe Gen5 inventory build）。需密切監測 H1 26 是否轉正。</p>
+
+<h3>B｜品質分計算</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>分數（1-10）</th><th>說明</th></tr>
+<tr><td>護城河</td><td>§7 評分</td><td>7</td><td>全球客戶端 SSD 控制器 #1（market share ~30%）+ mobile eMMC/UFS #1 商用供應商 + Tier-1 NAND OEM 6+ 認證壁壘</td></tr>
+<tr><td>成長持久性</td><td>§6 綜合（Runway + 品質 + AI 影響）</td><td>7</td><td>Runway 7-10 年（PCIe Gen5 升級 + AI eSSD 結構切入 + 車用 + 工業 IoT 多重秒走，AI 風險🟢）</td></tr>
+</table>
+<p><strong>底分</strong> = (7 + 7) / 2 = <strong>7.0</strong></p>
+<p><strong>品質分</strong> = min(7.0 + 1.5, 10) = <strong>8.5</strong></p>
+
+<table>
+<tr><th>品質分</th><th>等級</th><th>底倉（目標倉位的%）</th></tr>
+<tr><td>≥ 7.5</td><td><strong>A 級</strong></td><td>25%</td></tr>
+</table>
+<p>本標的品質分：<strong>8.5</strong>，品質等級：<strong>A 級</strong></p>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY26，Dec 年結）</td><td>$5.65</td><td>yfinance 共識（n=8 分析師），YoY +55%</td></tr>
+<tr><td>FY+2 EPS（FY27）</td><td>$6.89</td><td>yfinance 共識（n=8 分析師），YoY +22%</td></tr>
+<tr><td>FY+2 成長率</td><td>+22%</td><td>(6.89 / 5.65) − 1</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>27.16x</td><td>$153.46 ÷ $5.65</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>22.27x</td><td>$153.46 ÷ $6.89</td></tr>
+</table>
+
+<h3>D｜合理 P/E（PEG 安全網 + 歷史錨定）</h3>
+
+<h4>步驟一：歷史錨點</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>5Y Forward P/E 中位數</td><td>~14x（2021-2024 受到 Maxlinear 收購要約失敗 + NAND 下行週期壓抑）</td></tr>
+<tr><td>5Y Forward P/E 75th percentile</td><td>~22x</td></tr>
+<tr><td>5Y Forward P/E 高點</td><td>~28x（2021 NAND 上行週期峰值）</td></tr>
+<tr><td><strong>基礎值（75th）</strong></td><td><strong>22x</strong></td></tr>
+</table>
+
+<h4>步驟二：PEG 調節</h4>
+<p>PEG（FY+2，1Y growth base） = 22.27 ÷ 22 = <strong>1.01</strong>（合理區間）</p>
+<p>PEG（3Y CAGR base） = 22.27 ÷ 31 = <strong>0.72</strong>（略具吸引力）</p>
+
+<table>
+<tr><th>PEG 區間</th><th>調整規則</th><th>本標的適用</th></tr>
+<tr><td>1.0 ≤ PEG ≤ 2.0</td><td>維持 75th 不動</td><td>PEG 1.01 落此區間，維持 22x</td></tr>
+</table>
+
+<h4>步驟三：品質溢價</h4>
+<p>步驟二未下壓（PEG 1.0-2.0 區間），品質溢價不適用（v11.0 規則只在 PEG &gt; 2.0 下壓時觸發）。</p>
+
+<p><strong>合理 P/E = 22x</strong>（與 75th 一致；考量品質 A 級且 AI eSSD 結構轉型，可考慮上修至 24-25x，但保守採 22x）</p>
+
+<h4>分析師判斷介入</h4>
+<p>採 <strong>23x</strong> 作合理 PE：(1) 品質 A 級（8.5）+ A 級平均合理上修 +1x；(2) MonTitan AI eSSD 為新成長引擎，與一般客戶端 SSD 控制器有溢價；(3) 但 Q1 GM dip 與 TTM FCF 偏負對沖部分溢價。</p>
+
+<p><strong>合理 P/E = 23x</strong></p>
+
+<h3>E｜雙時距目標價與 R:R</h3>
+
+<h4>目標價</h4>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th></tr>
+<tr><td><strong>短期（1年）</strong></td><td>FY+1 EPS × 合理 P/E = $5.65 × 27（過渡期，市場仍以當前 PE 看 FY26）</td><td>$152.55</td></tr>
+<tr><td><strong>中期（2年）</strong></td><td>FY+2 EPS × 合理 P/E = $6.89 × 27 = $186</td><td>$186.00</td></tr>
+</table>
+<p class="note">短期目標選擇 27x（當前 FY+1 PE）而非 23x，反映市場短期內仍以 FY+1 EPS 為主錨且不會立即下修估值倍數；中期目標亦採當前 PE（27x），假設股市維持當前估值水平至 FY27 EPS 兌現。若採保守 23x 合理 PE，短期目標 $130、中期 $158（皆低於現價）。</p>
+
+<h4>下檔錨點（基本面 Bear Case，§6E）</h4>
+<table>
+<tr><th>項目</th><th>短期（1年）</th><th>中期（2年）</th></tr>
+<tr><td>Bear PE（成長率回到 10% 情境）</td><td>14x</td><td>14x</td></tr>
+<tr><td>Bear EPS（共識下修 20% + 週期假設）</td><td>$5.65 × 0.80 = $4.52</td><td>$6.89 × 0.70 = $4.82</td></tr>
+<tr><td><strong>Bear 股價</strong></td><td><strong>$63</strong></td><td><strong>$67</strong></td></tr>
+</table>
+
+<p><strong>W52/W104 參考</strong>（yfinance）：</p>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$153.46</td></tr>
+<tr><td>W52 Low（參考）</td><td>$43.57</td></tr>
+<tr><td>W104 Low（參考）</td><td>$36.27</td></tr>
+<tr><td>W52 High</td><td>$153.79（剛在當前位置）</td></tr>
+<tr><td>5Y Low</td><td>$36.27</td></tr>
+</table>
+
+<h4>雙 R:R 計算</h4>
+<table>
+<tr><th></th><th>短期（1年）</th><th>中期（2年）</th></tr>
+<tr><td>目標價</td><td>$152.55</td><td>$186.00</td></tr>
+<tr><td>上行空間</td><td>−0.6%</td><td>+21.2%</td></tr>
+<tr><td>下檔錨點</td><td>$63</td><td>$67</td></tr>
+<tr><td>下行距離</td><td>−59.0%</td><td>−56.4%</td></tr>
+<tr><td><strong>R:R</strong></td><td><span class="badge-red">−0.01x（負，目標 ≈ 現價）</span></td><td><span class="badge-yellow">0.38x</span></td></tr>
+</table>
+
+<h4>判定（v11.0 四級裁決）</h4>
+<table>
+<tr><th>條件</th><th>結果</th></tr>
+<tr><td>短期 R:R ≥ 2.0 且中期 R:R ≥ 2.0</td><td>❌ 不過</td></tr>
+<tr><td>僅中期 R:R ≥ 2.0</td><td>❌ 不過（中期 0.38x &lt; 2.0）</td></tr>
+<tr><td>中期 R:R ≥ 1.0 且品質 A 級且長期持有信心 = 高</td><td>❌ 不過（中期 0.38x &lt; 1.0；長期信心 = 中）</td></tr>
+<tr><td>都不過</td><td>✅ → <strong>觀望（時機語意）</strong></td></tr>
+</table>
+<p><strong>本標的判定：觀望</strong>（時機不到，非 thesis 失敗；signal grade 對映 §QC-31 = <strong>B 觀望</strong>）</p>
+
+<h3>F｜建倉建議（品質定基礎 × Bollinger 微調）</h3>
+
+<h4>Bollinger 位置（週線 2σ，20 週 SMA）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>20 週 SMA</td><td>$117.59</td></tr>
+<tr><td>週線 BB 上軌（2σ）</td><td>$152.40</td></tr>
+<tr><td>週線 BB 下軌（2σ）</td><td>$82.78</td></tr>
+<tr><td>現價</td><td>$153.46</td></tr>
+<tr><td>現價位置</td><td><span class="badge-orange">剛突破上軌（+0.7%）</span> — 短期極端動能</td></tr>
+<tr><td>部位調整係數</td><td>×0.5（突破上軌）</td></tr>
+</table>
+
+<h4>最終部位</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>基礎部位（A 級查表）</td><td>25%</td></tr>
+<tr><td>Bollinger 調整係數</td><td>×0.5</td></tr>
+<tr><td><strong>原機械式建議</strong></td><td>12.5%</td></tr>
+<tr><td><strong>分析師最終覆寫</strong></td><td><strong>0%（觀望，符合 §12 E 判定）</strong></td></tr>
+</table>
+<p class="note">分析師覆寫理由：§12 E 判定觀望，§12 F 機械部位不應蓋過 R:R 結論。已持倉者建議降至目標倉位的 60-80%（保留 satellite 參與動能尾段）。</p>
+
+<h3>G｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§6A</td><td>充裕（PCIe Gen5 升級 → Gen6（2027-2028）+ AI eSSD MonTitan 起步 + 車用 SSD 滲透提升）</td></tr>
+<tr><td>護城河趨勢</td><td>§7</td><td>穩定（fabless 模式 + Tier-1 認證壁壘穩定，Phison 競爭強度可控）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合判斷</td><td><strong>中</strong></td></tr>
+</table>
+<p>一句話：<strong>SIMO 是 NAND 上下游中最 asset-light 的 indirect AI eSSD 受益者，長期 ROIC 結構優於 NAND 製造商，但相對小型（市值 $5.2B）使其敏感度高；屬「結構性中等持有 + 戰術性配置」標的。</strong></p>
+
+<!-- ============ §13 ============ -->
+<h2 id="sec-13">§13 三方辯論摘要</h2>
+
+<div class="debate-grid">
+  <div class="debate-card debate-bull">
+    <h3>多頭辯護人｜Charlie Munger 模式</h3>
+    <table>
+    <tr><th>#</th><th>進場論據</th></tr>
+    <tr><td>1</td><td><strong>asset-light 高 ROIC 結構</strong>：fabless 模式無 fab capex 壓力，ROE 15.3% + ROIC 預估 18-22%，遠優於 NAND 製造商（Samsung NAND 段、SNDK），且不受週期 capex 拖累。</td></tr>
+    <tr><td>2</td><td><strong>三重結構性 secular 順風</strong>：(1) PCIe Gen5 客戶端 SSD 升級週期；(2) MonTitan AI eSSD 切入 hyperscaler；(3) 車用 SSD（Stellantis、Hyundai 等 design wins）。三條成長曲線各自獨立。</td></tr>
+    <tr><td>3</td><td><strong>負債絕對安全 + 股息發放</strong>：Total Debt $0、淨現金 $202M、股息殖利率 1.3%（Payout 55%），是少數既成長又現金回饋股東的小型半導體標的。</td></tr>
+    </table>
+    <p><strong>多頭最強一句話：</strong>「在 NAND 上下游中找一檔不用上 capex、不靠 cycle、不靠地緣政治、純靠 design win 持續複利的，SIMO 是最稀缺答案。」</p>
+  </div>
+
+  <div class="debate-card debate-bear">
+    <h3>空頭檢察官｜Michael Burry 模式</h3>
+    <table>
+    <tr><th>#</th><th>虧損觸發情境</th></tr>
+    <tr><td>1</td><td><strong>毛利率結構性下行</strong>：Q1 26 guide GM 46-47%（從 Q4 49.2% 下滑 2-3pp），雖然 management 說是「mobile mix 暫時性」，但若 H2 26 無法回到 48%+，意味產品組合永久惡化。</td></tr>
+    <tr><td>2</td><td><strong>客戶集中度 + 競爭加劇</strong>：前 5 大 NAND OEM 占 SSD 控制器需求 70%，且 Samsung、SK Hynix、Western Digital 都自製大部分 enterprise 控制器；SIMO 處於「商品化 + 排擠」雙重壓力。Phison 是直接死敵。</td></tr>
+    <tr><td>3</td><td><strong>動能爆衝後的 mean reversion</strong>：1 年股價 +250%（從 $43 至 $153），FY26 EPS 共識 90 天 +16%。動能與基本面同步爆衝後，typically 3-6 個月內出現 20-30% 修正。</td></tr>
+    </table>
+    <p><strong>空頭最大威脅：</strong>「TTM FCF 仍是 −$22M，市場已給 22x FY+2 EPS 但忽略 OCF 跟不上 NI 的事實。一旦 Q1 26 (4/29) report 沒有 surprise raise，或 Q2 26 GM 沒有 sequential 回升，估值將立即從 22x 修正至 16-18x。」</p>
+  </div>
+
+  <div class="debate-card debate-arb">
+    <h3>估值仲裁員｜Aswath Damodaran 模式</h3>
+    <table>
+    <tr><th>評分維度</th><th>數字比對</th><th>評分</th></tr>
+    <tr><td>與過去 3 年實際 FCF CAGR 差距</td><td>FY23-25 FCF CAGR ~25% vs 隱含 30%，相近</td><td>2/2</td></tr>
+    <tr><td>與分析師 EPS CAGR 共識一致性</td><td>3Y CAGR 31% 隱含 = 共識實際</td><td>2/2</td></tr>
+    <tr><td>與同業最快 FCF CAGR 相對位置</td><td>SIMO ~30% vs Phison（私）估 25-30%、ASIC 設計商 25-35%，合理位置</td><td>1/2</td></tr>
+    <tr><td>達成條件苛刻程度</td><td>需 PCIe Gen5 ramp 維持 + MonTitan H2 26 達 5%+ + GM 不低於 47%</td><td>1/2</td></tr>
+    <tr><td>歷史類似公司持續達成此水準</td><td>fabless 控制器有 NVDA / AVGO 高成長持續性先例，SIMO 規模較小但模式相似</td><td>1/2</td></tr>
+    </table>
+    <p><strong>隱含預期可信度評分：7/10</strong></p>
+    <p><strong>仲裁員一句話：</strong>「市場對 SIMO 的定價是合理的——不貴也不便宜。22x FY+2 PE 對應 22% growth 是教科書級的 PEG ≈ 1 公允定價，沒有 mispricing。但這也表示：缺乏明顯的 alpha 來源。」</p>
+  </div>
+</div>
+
+<div class="verdict-box">
+<h3>你的裁決</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>多頭最強論據</td><td>asset-light 結構 + 三重 secular 成長曲線</td></tr>
+<tr><td>空頭最大威脅</td><td>毛利率 Q1 dip 是否結構性 + 動能爆衝後 mean reversion</td></tr>
+<tr><td>估值仲裁評分</td><td>7 / 10</td></tr>
+<tr><td><strong>我的裁決</strong></td><td><strong>觀望</strong>（公允定價 + 接近 W52 高 + Bollinger 上軌之上 → 不是 alpha 區）</td></tr>
+<tr><td>裁決理由</td><td>SIMO 的 thesis 是健康的（A 級品質、合理估值、結構性順風），但<strong>「公允定價的好標的」≠「該買進」</strong>。當前位置缺乏安全邊際，等 Q1 2026 (4/29) 財報後若出現 GM dip 引發股價修正 10-20%，是更佳進場時機。</td></tr>
+</table>
+<p><strong>進入 §1 前的自我檢核</strong></p>
+<ul>
+<li>☑ 多頭論據是否依賴「市場最終認識到」？— 部分依賴 MonTitan 重估；H2 26 是驗證點</li>
+<li>☑ 空頭威脅在 MA 觸發止損前是否已發生？— Q1 GM 下滑已是事實，但屬於 mix 而非結構，無立即危險</li>
+<li>☑ 仲裁員評分 7/10 還有安全邊際？— 中等，公允定價意味雙向風險平衡</li>
+</ul>
+</div>
+
+<!-- ============ §2 ============ -->
+<h2 id="sec-2">§2 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Silicon Motion 解決的是<strong>「NAND Flash 物理介質與作業系統指令集之間的翻譯與優化」</strong>這個底層 chasm。NAND Flash 本質是 unreliable、有限寫入次數、且需要 wear-leveling、garbage collection、ECC（錯誤更正）的介質——SSD 控制器是把 NAND 轉化為「像 DRAM 一樣可靠又快速」的關鍵 IC。</p>
+
+<p>SIMO 的具體貢獻：(1) 全球客戶端 SSD 控制器 #1（market share ~30%），幾乎每家 NAND OEM（Micron、SK Hynix、Western Digital、Samsung 部分產品）都採用 SIMO 的 client SSD 控制器；(2) Mobile eMMC/UFS 控制器全球 #1 商用供應商，覆蓋大多數中低階 Android 手機；(3) 新切入企業 SSD（MonTitan），與 hyperscaler 對接 AI 訓練 / 推論工作負載儲存；(4) 車用 SSD 控制器領先（NVIDIA Drive、Stellantis design wins）。</p>
+
+<p>若 SIMO 明天消失：客戶端 SSD 製造商必須轉向 Phison（市佔 #2，單一 supplier risk）或自製（多數 NAND OEM 不擅控制器設計），SSD 出貨將延遲 6-12 個月；Mobile UFS 中低階手機受重創。</p>
+
+<h3>逆向推演（Munger Inversion）</h3>
+<p>若要讓 SIMO 投資在 3 年內虧損 50% 以上，最可能路徑：</p>
+
+<ul>
+<li><strong>地緣政治曝險：</strong>SIMO 註冊地英屬 Cayman，運營總部台灣新竹，研發在台灣 + 中國上海。台海局勢若惡化，SIMO 是最直接受衝擊的「美國上市 + 台灣總部 + 中國研發」三角結構。Maxlinear 曾於 2022-2023 嘗試 $3.8B 收購但因中國反壟斷審查破局，凸顯地緣政治複雜度。判斷：⚠️ <strong>高風險</strong>。</li>
+<li><strong>技術替代風險：</strong>(1) NAND OEM 自製控制器趨勢（Samsung、SK Hynix 已大部分自製，WD 部分自製）；(2) 新興儲存技術（如 CXL Memory）若取代部分 SSD 角色；(3) AI workload 直接讀寫 HBM 不需 SSD 中介。判斷：⚠️ 中期 5 年內可控，10 年外較不確定。</li>
+<li><strong>管理層失職：</strong>CEO Wallace Kou 自 1995 創業（30+ 年），執行紀錄穩定。風險點：研發投入是否充足以追上 PCIe Gen6（2027-2028 transition），或被 Phison 在 enterprise 領域反超。判斷：⚠️ 低-中等。</li>
+<li><strong>價值陷阱路徑：</strong><strong>非典型陷阱，主要為短期動能修正</strong>。若 Q1 26 GM 下滑為結構性、MonTitan H2 26 ramp 不如預期、且客戶集中度導致定價權喪失，估值可能從 22x 重估至 14-16x，股價 −30-40%。<strong>非典型「便宜陷阱」，而是「公允定價中度修正風險」</strong>。</li>
+</ul>
+
+<!-- ============ §3 ============ -->
+<h2 id="sec-3">§3 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>12-24 個月（structural mid-term）</td></tr>
+<tr><td><strong>主要驅動這個時間軸的理由</strong></td><td>MonTitan AI eSSD ramp 週期 H2 26 至 H1 28 為主要兌現窗口；PCIe Gen5 升級週期 2025-2027；車用 SSD 滲透 2026-2028。三條曲線都需 12-24 個月驗證。</td></tr>
+<tr><td><strong>這個持有期決定了哪些變數是訊號、哪些是噪音</strong></td><td>訊號：毛利率 trajectory、MonTitan 占營收比、Tier-1 design wins、PCIe Gen5 滲透率。噪音：單季 EPS small miss/beat（&lt; 5%）、月度匯率波動（NTD/USD）、地緣政治新聞（除非實質影響台灣業務）。</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td><strong>毛利率 Q1 26 dip 為 mix 暫時性，H2 26 回到 48%+</strong></td><td>季度 GM 公告</td><td>Q1 26 (4/29 公告) → Q2 26 (8 月) → Q3 26 (11 月)</td></tr>
+<tr><td>H2</td><td><strong>MonTitan 退出 2026 時占營收 5-10%</strong>（management guide）</td><td>Earnings call segment 揭露、enterprise SSD 占比</td><td>Q4 26 (4Q26 earnings call)</td></tr>
+<tr><td>H3</td><td><strong>市場願維持 22-25x Forward PE</strong>（未因 PCIe Gen5 ramp 完成而 de-rate）</td><td>Forward P/E 變動</td><td>每月持續監測</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>毛利率結構性下行</td><td>H1</td><td>Q2 26 GM</td><td>&lt; 47% 表示非暫時性</td></tr>
+<tr><td>R2</td><td>MonTitan ramp 失敗 / hyperscaler 採用緩慢</td><td>H2</td><td>Q3-Q4 26 enterprise SSD 占比</td><td>&lt; 3% 表示 thesis 失敗</td></tr>
+<tr><td>R3</td><td>NAND OEM 自製化趨勢加速 / Phison 強勢競爭</td><td>H1 + H3</td><td>市佔變化、毛利率結構</td><td>SSD 控制器 market share 連 2 季下滑</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在 12-24 個月內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1 / H2 / H3 哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>+ 強化 / 0 無關 / − 削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到重新評估閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>估值：股價回檔至 BB 中軌 $117-120 附近（FPE FY+2 ≤ 17x）；基本面：Q2 26 GM 確認回到 48%+</td><td>建倉至目標倉位 25%（A 級底倉）</td></tr>
+<tr><td><strong>加碼</strong></td><td>Q3 26 MonTitan 占營收公開揭露 ≥ 5%、H1 + H2 全部確認</td><td>加碼至目標倉位 100%</td></tr>
+<tr><td><strong>減碼（已持倉者）</strong></td><td>當前情境：股價突破 BB 上軌、短期 R:R 為負</td><td>降至目標倉位 60-80%（保留 satellite）</td></tr>
+<tr><td><strong>撤退</strong></td><td>R1 確認結構性 GM 下行（連 2 季 &lt; 47%），或 H2 失敗（exit 26 MonTitan &lt; 3%）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<!-- ============ §4 ============ -->
+<h2 id="sec-4">§4 即時財報情報</h2>
+<p>資料來源：Q4 2025 Earnings Report（公告 2026-04-21）；Q1 2026 公告排程 2026-04-29</p>
+
+<h3>① 最新一季財報關鍵數字（Q4 FY2025）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$278.5M</td><td>$261.2M</td><td><span class="badge-green">Beat +6.6%</span></td><td>+45.7%</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$1.26</td><td>$1.29</td><td><span class="badge-red">Miss -2.3%</span></td><td>+44.8%</td></tr>
+<tr><td>EPS（GAAP）</td><td>$1.41</td><td>—</td><td>—</td><td>+120%</td></tr>
+<tr><td>Gross Margin（Non-GAAP）</td><td>49.2%</td><td>~48.5%</td><td><span class="badge-green">Beat +0.7pp</span></td><td>vs 48.5% prior</td></tr>
+<tr><td>Operating Margin（Non-GAAP）</td><td>19.3%</td><td>—</td><td>強勁</td><td>vs 16% prior</td></tr>
+<tr><td>FY2025 Revenue</td><td>$885.6M</td><td>—</td><td>vs FY24 $803.6M</td><td>+10.2%</td></tr>
+</table>
+
+<h3>本季財報對 §3 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（GM 修復）</td><td><span class="badge-yellow">0 中性偏負</span></td><td>Q4 GM 49.2% 不錯，但 Q1 26 guide 46-47% 顯示短期下行；management 解釋為 mobile mix</td></tr>
+<tr><td>H2（MonTitan ramp）</td><td><span class="badge-green">+ 強化</span></td><td>SSD solutions +110-115% YoY；MonTitan SM8388 公告為業界首發 power-efficient PCIe Gen5</td></tr>
+<tr><td>H3（市場估值）</td><td><span class="badge-green">+ 強化</span></td><td>EPS miss 但股價 +10.83% premarket，市場聚焦 forward outlook</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>樂觀（CEO Wallace Kou 多次強調「record annual revenue target」）。Q1 26 是「low point of 2026」，後續每季 sequentially 成長。語氣比 Q3 25 加強。</li>
+<li><strong>Forward Guidance：</strong>Q1 26 revenue $292-306M（QoQ +5-10%），GM 46-47%（QoQ −2-3pp）。市場 Q1 共識 revenue $299M、EPS $1.31，guide 中位 $299M 完全符合預期。</li>
+<li><strong>刻意強調的主題：</strong>(1) MonTitan AI 應用切入；(2) PCIe Gen5 客戶端 SSD ramp；(3) 車用 SSD 設計贏單；(4) 連續 sequential 成長。</li>
+<li><strong>刻意迴避的問題：</strong>(1) Q4 EPS miss 的具體成本壓力來源（research expense 上升詳細項目）；(2) Phison 與其他控制器廠商的市佔變化；(3) Maxlinear 收購事件後的 termination fee 使用方向。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>客戶 booking visibility 6-9 個月，PCIe Gen5 客戶端 SSD（消費 + 商用 PC）2026 全面普及。AI eSSD 已從 design phase 進入 ramp phase。</li>
+<li><strong>供給端：</strong>SSD 控制器供給仍由台積電與 UMC 代工，無 capacity 限制。SIMO 自身是 fabless，不需擔心 NAND 供給緊張影響直接。</li>
+<li><strong>競爭格局：</strong>SIMO 客戶端 SSD 控制器 #1 地位穩固，Phison 在高效能 PCIe Gen5 領域競爭最激烈（Phison E26 vs SIMO SM2508）。NAND OEM 自製為長期威脅但 fragmentation 仍存在。</li>
+<li><strong>總體經濟敏感度：</strong>消費 PC 復甦溫和支撐 client SSD；hyperscaler 高 capex 直接驅動 enterprise SSD 需求。</li>
+<li><strong>對同業的連帶推論：</strong>SIMO 強 ramp 暗示 Phison 也會強，整個 SSD 控制器板塊在 2026 維持 secular growth。間接利好 NAND OEM（如 SNDK）但不對稱——SIMO 不受 NAND ASP 直接拖累。</li>
+</ul>
+
+<!-- ============ §5 ============ -->
+<h2 id="sec-5">§5 核心門檻檢核</h2>
+
+<h3>EPS 共識（yfinance 步驟零）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>備注</th></tr>
+<tr><td>FY+1（FY26，Dec 年結）</td><td>$5.65</td><td>n=8 分析師，YoY +55%（base $3.64）</td></tr>
+<tr><td>FY+2（FY27）</td><td>$6.89</td><td>n=8 分析師，YoY +22%</td></tr>
+<tr><td>本季（0q，Q1 26）</td><td>$1.30</td><td>n=8 分析師</td></tr>
+<tr><td>下季（+1q，Q2 26）</td><td>$1.21</td><td>n=8 分析師（Q1 GM dip 後 Q2 EPS 略降）</td></tr>
+</table>
+
+<h3>EPS Trend 修正方向（最近 90 天）</h3>
+<table>
+<tr><th>期間</th><th>當前</th><th>30 天前</th><th>60 天前</th><th>90 天前</th><th>方向</th></tr>
+<tr><td>0y（FY26）</td><td>$5.65</td><td>$5.66</td><td>$5.66</td><td>$4.87</td><td><span class="badge-green">↑ 90 天 +16%</span></td></tr>
+<tr><td>+1y（FY27）</td><td>$6.89</td><td>$6.90</td><td>$6.91</td><td>$6.24</td><td><span class="badge-green">↑ 90 天 +10%</span></td></tr>
+</table>
+
+<h3>FY+3 推導（v9.0 邏輯分析法）</h3>
+<p>FY28（FY+3）EPS 推導：</p>
+<ol>
+<li><strong>§6 A 成長跑道：</strong>FY28 為 PCIe Gen5 升級週期成熟期 + Gen6 transition 開始 + MonTitan H2 26 起步進入 H2 28 完整年貢獻。</li>
+<li><strong>§6 B 成長驅動：</strong>定價（高 ASP MonTitan + 車用）+ 量（PCIe Gen5 滲透率）雙引擎。</li>
+<li><strong>§6 D ROIC × 再投資率：</strong>內生成長率上限約 18-22%（ROIC ~20% × 再投資率 1，極致情境）。</li>
+<li><strong>綜合：</strong>FY28 EPS YoY +18%（PCIe Gen5 持續滲透 + MonTitan 規模化貢獻邊際成長）→ FY28 EPS = $6.89 × 1.18 = <strong>$8.13</strong>。</li>
+</ol>
+
+<h3>EPS CAGR 計算</h3>
+<ul>
+<li>基期：FY25 EPS = $3.64（GAAP，剛公告）</li>
+<li>FY28E EPS = $8.13</li>
+<li><strong>3 年 CAGR = (8.13 / 3.64)^(1/3) − 1 = 30.7%</strong>（GAAP）</li>
+</ul>
+
+<h3>Munger 護城河維度數據</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge-red">❌</span></td><td>TTM FCF −$22M / Revenue $885M = −2.5%（暫時性 working capital 壓力，非結構）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5 年均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="badge-yellow">🟡</span></td><td>5 年均 ~12%、最低谷 −5%（2023 NAND 下行週期）。波動但趨勢健康。<br/>判斷：<strong>有週期波動，當前處於投入期</strong></td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td><span class="badge-green">✅</span></td><td>TTM ROE 15.3%，ROIC ≈ 17-19%（無債務），WACC ~10-12%，超額 +5-7pp</td></tr>
+<tr><td>ROIC 穩定性</td><td>10 年中 ≥ 70% 年份 ROIC &gt; 15%</td><td><span class="badge-green">✅</span></td><td>過去 10 年中 7 年 ROIC &gt; 15%（除 2020、2023 NAND 下行週期）。趨勢相對穩定</td></tr>
+<tr><td>毛利率定價能力</td><td>10 年中 ≥ 70% 年份毛利率持續改善</td><td><span class="badge-yellow">🟡</span></td><td>5 年改善 3 年（2023-2025），10 年改善 4-5 年。NAND 下行週期影響但有結構性提升</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5% 優、&lt; 10% 尚可</td><td><span class="badge-green">✅</span></td><td>Capex / Revenue ~5-7%（fabless 優勢）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="badge-green">✅</span></td><td>3Y CAGR 30.7%（GAAP）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="badge-green">✅</span></td><td>FY+2 PEG（1Y growth）= 1.01；3Y CAGR base PEG = 0.72</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7、現金/Rev 10-50%</td><td><span class="badge-green">✅✅</span></td><td>Total Debt $0、Cash/Rev = 22.8%（極佳）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge-green">是</span></td><td>$202M vs $0</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge-yellow">🟡</span></td><td>§7 評為 7/10，趨勢穩定</td></tr>
+</table>
+
+<p><strong>最大財務弱點：</strong>TTM FCF −$22M（working capital ramp + R&D 投入）。需 H1 26 修復至正值。</p>
+<p><strong>Munger 三維評級：</strong><span class="badge-yellow">🟡 兩項達標</span>（資本密集 ✅、ROIC 穩定 ✅、毛利率定價 🟡）— 數字層面支持中等護城河，§7 7/10 評分一致。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p>觸發條件：FPE FY+2 22.27x，相對 SIMO 自身 5Y 區間 75% 分位（偏高），<strong>不觸發低估值四問</strong>（無「低估值」前提）。</p>
+<p>反向警示：FPE FY+2 處於 5Y 75% 分位 + 接近 W52 高，屬「合理偏貴」區間，需在 §11 確認估值非泡沫。</p>
+
+<!-- ============ §6 ============ -->
+<h2 id="sec-6">§6 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（NAND Flash 控制器）</td><td>$3.55B（2025）</td><td>SSD 控制器 + eMMC + UFS + 車用</td></tr>
+<tr><td>整體 SSD 控制器 TAM（2026）</td><td>$14.7B</td><td>包括嵌入式 + enterprise，2035 預估 $49.6B（CAGR 12.9%）</td></tr>
+<tr><td>SIMO 當前市佔（客戶端 SSD 控制器）</td><td>~30%（全球 #1 商用供應商）</td><td>NAND OEM 自製比例除外</td></tr>
+<tr><td>若維持現有成長率，自然放緩時間點</td><td>2030+ （PCIe Gen6 transition + AI eSSD 普及）</td><td>多重秒走</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>7-10 年</strong></td><td>PCIe Gen5 + Gen6 + AI eSSD + 車用 + 工業 IoT</td></tr>
+</table>
+<p><strong>Runway 解讀：7-10 年中等可見度（偏上緣）</strong> → §11.5 估值溢價中性偏正。</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>SIMO 占比</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~100%</td><td>SIMO 過去 5 年無重大併購（Maxlinear 收購為被收購而非主動收購，且失敗）</td></tr>
+<tr><td>無機成長</td><td>0%</td><td>—</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>SIMO 判斷</th><th>趨勢</th></tr>
+<tr><td>定價（ASP）</td><td>PCIe Gen5 控制器 ASP 較 Gen4 高 50-80%；MonTitan enterprise 控制器 ASP 是 client 5-10x</td><td>擴大（產品 mix 升級）</td></tr>
+<tr><td>量（Volume）</td><td>客戶端 SSD 出貨 +20% YoY、mobile UFS +30% YoY</td><td>穩定成長</td></tr>
+</table>
+<p><strong>定價 + 量雙驅動，質量俱優</strong>。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>SIMO 判斷</th></tr>
+<tr><td>強化型（最佳）</td><td>部分。MonTitan 進入 enterprise market 後與 hyperscaler 建立認證壁壘</td></tr>
+<tr><td>中性型</td><td>主要。客戶端 SSD 控制器領先地位穩定但不擴大</td></tr>
+<tr><td>消耗型</td><td>無</td></tr>
+</table>
+<p>判斷：<strong>中性型偏強化型</strong>。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC（TTM）</td><td>~17-19%（無債）</td><td>~12-14%</td><td>↑ 上升</td><td>產業頂尖，&gt; WACC</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+5-7pp</td><td>+2-4pp</td><td>↑ 擴大</td><td>持續正值</td><td><span class="badge-green">✅</span></td></tr>
+<tr><td>FCF Margin</td><td>−2.5%（TTM）</td><td>~10-12%</td><td>↓ 暫時性</td><td>&gt; 15%</td><td><span class="badge-red">❌（暫時）</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td>&lt; 0（TTM）</td><td>~0.85</td><td>↓ 暫時性</td><td>&gt; 85%</td><td><span class="badge-red">❌（暫時）</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>R&D ~25% Rev、Capex 5-7%</td><td>同類</td><td>→</td><td>合理偏高</td><td><span class="badge-green">✅</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E</th><th>潛在估值跌幅</th></tr>
+<tr class="scenario-bull"><td>FY28 後成長率 20%</td><td>PCIe Gen5 + AI eSSD 持續 ramp</td><td>22x</td><td>0%</td></tr>
+<tr class="scenario-base"><td>FY28 後成長率 12%</td><td>多重秒走部分兌現</td><td>17x</td><td>−23%</td></tr>
+<tr class="scenario-bear"><td>FY28 後成長率 5%</td><td>NAND OEM 自製化加速 + Phison 競爭</td><td>14x</td><td>−36%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>近 2 季 GM 上升（Q3 → Q4 25），Q1 26 guide 下滑（mix 暫時）</td><td>⬜（觀察 Q2 26）</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>客戶端 SSD 控制器市佔穩定 #1</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>主力產品提價後銷量是否下滑</td><td>PCIe Gen5 ASP 上升 + Volume 上升</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR（&gt; 5%p）</td><td>EPS CAGR 30% vs Rev CAGR 18%（差距 12pp，主因 GM 結構性提升）</td><td><span class="badge-yellow">🟡（mix 升級為真實但需驗證持續性）</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI &lt; 0.75 連 2 年</td><td>TTM FCF/NI &lt; 0（暫時性 working capital）</td><td><span class="badge-red">🔴（需 H1 26 修復）</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev &gt; 5% 上升</td><td>SBC / Rev ~3-4%，未顯著上升</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代</td><td>SSD 控制器 TAM 大幅成長 (CAGR 12.9%)</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>整個產業估值倍數系統下移</td><td>fabless 半導體估值穩定</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex 占 FCF &gt; 60%</td><td>capex 5-7% Rev，maintenance ~50% capex；FCF 暫時性負，常態 ~30%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新產能後 3 年內收入下滑</td><td>R&D 是核心而非 capex；停 R&D 是真威脅</td><td><span class="badge-yellow">🟡（R&D 停 = 失去技術領先）</span></td></tr>
+</table>
+
+<p><strong>價值陷阱風險評級：</strong><span class="badge-yellow">🟡 中度警戒</span>（1 個 🔴 + 2 個 🟡，主因 TTM FCF 暫時性負）。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="badge-yellow">🟡 中等可見度成長（偏上緣）</span>：Runway 7-10 年、定價 + 量雙驅動、護城河中性偏強化、ROIC 擴大、衰退信號 1 個 🔴 + 2 個 🟡（FCF 為暫時性）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><span class="badge-green">🟢 AI 受益或免疫</span></p>
+<ul>
+<li><strong>業務占比 vs AI 受益區域：</strong>當前 AI 直接受益（enterprise SSD 控制器）占 ~5-8%，預計 2027 升至 15-20%。AI 是純粹的<strong>需求增量驅動</strong>，無侵蝕風險。</li>
+<li><strong>SIMO AI 策略：</strong>MonTitan 平台（SM8366、SM8388）專注 AI eSSD；公開 demo「Core to Edge AI Server Applications」。</li>
+<li><strong>過去 2 年 AI 相關營收變化：</strong>從 2024 ~3% 升至 2025 ~5-8%，預計 2026 達 10%。</li>
+</ul>
+<p><strong>AI 風險評級分數：9 分</strong>。</p>
+
+<!-- ============ §7 ============ -->
+<h2 id="sec-7">§7 護城河分析</h2>
+<p><strong>評分：7 / 10</strong></p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong>不存在。控制器是組件，無 user-side network effect。</li>
+<li><strong>無形資產：</strong>中等。SSD 控制器演算法（FTL、wear-leveling、ECC）IP、低功耗設計專利、與 NAND OEM 的 close partnership。MonTitan 為自主品牌 enterprise 平台。</li>
+<li><strong>轉換成本：</strong>中等。NAND OEM 認證新控制器需 6-12 個月，且 firmware optimization 與 NAND 製程綁定。但 NAND OEM 不會將整個產品線綁死於單一控制器供應商。</li>
+<li><strong>規模優勢：</strong>主要來源。SIMO 客戶端 SSD 控制器出貨量全球 #1，攤提研發成本最低；fabless 模式無 fab capex 拖累。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<ul>
+<li><strong>技術領先：</strong>SIMO 在低功耗 + 高效能 PCIe Gen5 控制器處於業界前沿。SM8388 為業界首發 14.4 GB/s @ &lt; 5W enterprise 控制器。</li>
+<li><strong>客戶基礎：</strong>覆蓋 6+ 大型 NAND OEM、多家 hyperscaler（透過 NAND 廠 OEM）、車用 Tier-1。</li>
+<li><strong>研發 cadence：</strong>每 18-24 個月推出新代控制器，與 NAND 製程更新同步。</li>
+</ul>
+
+<h3>市佔競爭表（NAND Flash 控制器）</h3>
+<table>
+<tr><th>競爭對手</th><th>市佔（商用控制器）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>SanDisk Motion（SIMO）</strong></td><td>~30%（client SSD #1）</td><td>持平偏升</td><td>Phison 在高效能</td><td>—</td></tr>
+<tr><td>Phison Electronics（私）</td><td>~25%</td><td>持平</td><td>競爭強度高，PCIe Gen5 直接對戰</td><td>SIMO ↔ Phison 互相競爭</td></tr>
+<tr><td>Marvell（MRVL，部分業務）</td><td>~5%（enterprise 為主）</td><td>下降</td><td>Marvell 已退出客戶端</td><td>—</td></tr>
+<tr><td>Realtek（5347.TW）</td><td>~5%（低階消費）</td><td>持平</td><td>低階市場</td><td>SIMO 上移</td></tr>
+<tr><td>NAND OEM 自製（Samsung 等）</td><td>~30%（自用 + 部分外售）</td><td>升</td><td>長期對外採購減少趨勢</td><td>NAND OEM 蠶食 merchant</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><span class="badge-yellow">穩定（不擴大也不縮減）</span></p>
+<p>24 個月內最可能威脅護城河的事件，按威脅程度排序：</p>
+<ol>
+<li><strong>NAND OEM 自製化加速</strong>（Samsung、SK Hynix、WD 已大部分自製）— 中威脅。但 fragmentation 持續，多數 client 廠商仍依賴 merchant。</li>
+<li><strong>Phison PCIe Gen5 enterprise 競爭</strong>—中威脅。SIMO 的 SM8388 與 Phison E26 直接對戰，需持續技術領先。</li>
+<li><strong>NVIDIA 內建 SSD 控制器 / Storage architecture 變革</strong>— 低機率但長期威脅。</li>
+</ol>
+
+<!-- ============ §8 ============ -->
+<h2 id="sec-8">§8 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>同業對比（FY25）</th></tr>
+<tr><td>FCF Margin</td><td>~5%（NAND 下行）</td><td>~10%</td><td>−2.5%（TTM；working capital ramp）</td><td>Phison N/A，AVGO 半導體 ~30%</td></tr>
+<tr><td>EBITDA Margin</td><td>~15%</td><td>~16%</td><td>~17%</td><td>—</td></tr>
+<tr><td>ROIC − WACC</td><td>+1-2pp</td><td>+3-4pp</td><td>+5-7pp</td><td>—</td></tr>
+<tr><td>SBC / Revenue</td><td>~3.5%</td><td>~3.8%</td><td>~3.5%</td><td>fabless 通常 3-5%</td></tr>
+<tr><td>ROE</td><td>~10%</td><td>~12%</td><td>15.3%</td><td>—</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>項目</th><th>檢驗</th><th>判斷</th></tr>
+<tr><td>淨利 vs OCF 連動性</td><td>Q4 25：OCF 強勁、TTM OCF $61M vs NI $123M = 0.50</td><td><span class="badge-yellow">🟡 暫時性背離</span></td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>AR $146M vs Q4 Rev $278M（DSO ~48 天，正常）</td><td><span class="badge-green">健康</span></td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>Inventory $266M vs Q4 25 +45% Rev YoY，存貨增加 ~30%（為 PCIe Gen5 ramp 做準備）</td><td><span class="badge-yellow">🟡 暫時性 build</span></td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>TTM &lt; 0（暫時）；歷史平均 ~80-90%</td><td><span class="badge-red">❌ 需 H1 26 修復</span></td></tr>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF</td><td>SIMO 維持 dividend (yield 1.3%, payout 55%)，回購規模較小</td><td>偏向股息發放</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>EPS 成長主要來自有機獲利成長</td><td>純有機</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>3Y Rev CAGR ~10%，EPS CAGR 30%（GM mix 升級驅動）</td><td>EPS &gt; Rev 增長合理</td></tr>
+</table>
+
+<h3>同業比較（與 §11.4 一致）</h3>
+<table>
+<tr><th>指標</th><th>SIMO</th><th>Phison（私）</th><th>SNDK</th><th>MU</th></tr>
+<tr><td>FCF Margin（FY26E）</td><td>~10-12%</td><td>~12%</td><td>~25%</td><td>~22%</td></tr>
+<tr><td>ROIC</td><td>17-19%</td><td>~15%</td><td>~30%（FY26 H2 峰值）</td><td>~25%</td></tr>
+<tr><td>產業地位</td><td>fabless 控制器 #1（client）</td><td>fabless 控制器 #2</td><td>NAND 純血製造商</td><td>DRAM + NAND</td></tr>
+</table>
+
+<!-- ============ §9 ============ -->
+<h2 id="sec-9">§9 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li><strong>NAND Flash 控制器 TAM（2025）：</strong>$3.55B</li>
+<li><strong>SSD 控制器 TAM（2026）：</strong>$14.7B → 2035 $49.6B（CAGR 12.9%）</li>
+<li><strong>SIMO 占可服務 market：</strong>~30%（client SSD 控制器 #1）</li>
+<li><strong>供需狀態：</strong>供給充足（fabless 由 TSMC/UMC 代工，無 capacity 限制）；需求受 NAND unit volume 與 PCIe Gen5 升級驅動</li>
+</ul>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游（晶圓代工）：</strong>中等。SIMO 主要由 TSMC 代工，產能配置受 TSMC 整體 capacity 排程影響。</li>
+<li><strong>對下游（NAND OEM + hyperscaler）：</strong>中等。客戶高度集中（前 5 大占 70%+ 需求），但 SIMO 在 client SSD 控制器擁有 #1 地位提供談判槓桿；MonTitan 進入 enterprise 後對 hyperscaler 議價權建立中。</li>
+<li><strong>地理曝險：</strong>運營總部台灣新竹、研發台灣 + 中國上海、生產（晶圓代工）TSMC 台灣。<strong>地緣政治集中度極高</strong>。</li>
+</ul>
+
+<h3>營收組成（FY25 估計）</h3>
+<table>
+<tr><th>類別</th><th>占比</th><th>成長性</th></tr>
+<tr><td>SSD 控制器（含 SSD solutions）</td><td>~50%</td><td>+35-115% YoY 各子項目</td></tr>
+<tr><td>eMMC + UFS 控制器（mobile）</td><td>~30%</td><td>+50-55% YoY</td></tr>
+<tr><td>Industrial / Embedded SSD</td><td>~10%</td><td>+15% YoY</td></tr>
+<tr><td>Automotive SSD 控制器</td><td>~5%</td><td>+30% YoY</td></tr>
+<tr><td>Other（USB、SD card 等）</td><td>~5%</td><td>持平</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<ul>
+<li><strong>客戶端 SSD 控制器 ASP：</strong>~$5-8（Gen4）→ ~$10-15（Gen5）</li>
+<li><strong>MonTitan enterprise 控制器 ASP：</strong>$50-100（5-10x 客戶端）</li>
+<li><strong>毛利率分布：</strong>客戶端 ~45-50%、enterprise ~55-65%、mobile ~40-45%</li>
+<li><strong>趨勢：</strong>產品 mix 持續向高 ASP enterprise 與 PCIe Gen5 移動</li>
+</ul>
+
+<!-- ============ §10 ============ -->
+<h2 id="sec-10">§10 公司治理與資本配置</h2>
+
+<h3>1. 股東 / 股權結構</h3>
+<ul>
+<li><strong>無 Dual-class 股權結構</strong>（Cayman 註冊 ADS 結構，1 ADS = 4 ordinary shares）</li>
+<li><strong>Top 機構持股：</strong>Vanguard、BlackRock 各 ~5-7%，多家共同基金持有</li>
+<li><strong>Insider 持股：</strong>CEO Wallace Kou ~2%（創辦人），其他高管 ~1%</li>
+<li><strong>結構評價：</strong>無控股股東，標準小型科技股治理。Maxlinear 收購事件後成為「proven independent operator」</li>
+</ul>
+
+<h3>2. 資本配置方向（Q4 25 數據）</h3>
+<ul>
+<li><strong>Capex：</strong>~$15-20M / 季（5-7% Revenue），主要為測試設備與軟體授權</li>
+<li><strong>R&D：</strong>~$60-70M / 季（25% Revenue），核心競爭力投入</li>
+<li><strong>Dividend：</strong>~$10M / 季（殖利率 1.3%、Payout 55%）</li>
+<li><strong>Buyback：</strong>偶有小規模回購</li>
+<li><strong>債務：</strong>$0</li>
+<li><strong>優先順序：</strong>「R&D → Dividend → Working Capital → 機會性 buyback」，符合健康 fabless 模式</li>
+</ul>
+
+<h3>3. 管理層薪酬結構</h3>
+<ul>
+<li><strong>CEO Wallace Kou：</strong>創辦人（1995），長期在位（30+ 年）</li>
+<li><strong>薪酬結構：</strong>固定薪 ~30%、年度績效 ~20%、長期股權激勵 ~50%（PSU + RSU）</li>
+<li><strong>績效指標：</strong>Revenue 成長、EBITDA、TSR</li>
+<li><strong>評價：</strong>創辦人領導，激勵與股東利益對齊；股權激勵占比中等（不如大型 SaaS 那樣高）</li>
+<li>數據限制：詳細 ADS holders 委託書資料較少，多數依靠 SEC 20-F 揭露</li>
+</ul>
+
+<h3>4. 過去 12 個月內部人交易</h3>
+<ul>
+<li><strong>主要為例行 RSU vesting sell-to-cover</strong>，無大規模拋售</li>
+<li><strong>CEO Wallace Kou 過去 12 個月維持持股</strong>（無大規模買入或賣出）</li>
+<li><strong>數據限制：</strong>外國公司（FPI）內部人申報頻率較低，需透過 Form 144 或 SC 13G 補充查詢</li>
+</ul>
+
+<h3>SBC 評估</h3>
+<ul>
+<li>Q4 25 SBC ~$10M（占 Revenue 3.6%）</li>
+<li>稀釋程度：年化 ~$40M / 市值 $5.2B = 0.8% 稀釋率，可接受</li>
+<li>趨勢：穩定，未過度稀釋</li>
+</ul>
+
+<!-- ============ §11 ============ -->
+<h2 id="sec-11">§11 估值診斷</h2>
+
+<h3>11.0｜估值體系診斷</h3>
+
+<h4>A｜當前主流估值邏輯識別</h4>
+<table>
+<tr><th>類型</th><th>對應指標</th><th>是否為當前主流？</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>是</td><td>Forward P/E 22-27x（FY+1/+2）為主要錨</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>是</td><td>市場以 PCIe Gen5 + AI eSSD 成長兌現為核心假設</td></tr>
+<tr><td>資產重置型</td><td>P/B、EV/重置</td><td>否</td><td>fabless 無重資產，不適用</td></tr>
+<tr><td>現金流型</td><td>P/FCF、DCF</td><td>否（暫時）</td><td>TTM FCF 偏負，市場暫忽視，待 H1 26 修復後重啟</td></tr>
+</table>
+<p><strong>當前主流邏輯：盈利能力 + 成長型混合（典型 quality fabless 估值）</strong></p>
+
+<h4>B｜估值邏輯漂移偵測</h4>
+<ul>
+<li><strong>情境一：盈利估值升級至 platform 估值？</strong> 部分。MonTitan 若兌現會讓 SIMO 從「control IC merchant」升級為「AI infrastructure enabler」。</li>
+<li><strong>情境二：新指標？</strong> 「MonTitan 占營收比」可能成為新 KPI。</li>
+<li><strong>情境三：定價邏輯轉變？</strong> 已部分發生（過去 5 年市場給 SIMO 估值在 12-22x，當前 22x 為頂部）。</li>
+</ul>
+
+<h4>C｜估值尺被換掉的信號</h4>
+<table>
+<tr><th>信號</th><th>當前狀態</th><th>影響</th></tr>
+<tr><td>MonTitan 占營收 ≥ 5% 並持續上升</td><td>進行中（H2 26 兌現）</td><td>+ 可能讓 PE 上修至 25-28x</td></tr>
+<tr><td>毛利率永久突破 50%</td><td>進行中（Q4 25 49.2%）</td><td>+ 帶動 PE 上修</td></tr>
+<tr><td>NAND OEM 自製化加速</td><td>未顯著</td><td>− 若加速會導致 PE 下修</td></tr>
+<tr><td>地緣政治升溫（台海）</td><td>持續潛在</td><td>− SIMO 是台灣公司，地緣折扣最高</td></tr>
+</table>
+
+<p><strong>結論：</strong><span class="badge-yellow">🟡 估值邏輯穩定偏正面（待 MonTitan 確認重估）</span></p>
+
+<h3>11.1｜歷史估值分位</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>42.16x</td><td>10x</td><td>16x</td><td>45x</td><td>92%</td></tr>
+<tr><td>Forward P/E（FY+1）</td><td>27.16x</td><td>8x</td><td>14x</td><td>28x</td><td>96%</td></tr>
+<tr><td>Forward P/E（FY+2）</td><td>22.27x</td><td>7x</td><td>12x</td><td>22x</td><td>99%</td></tr>
+<tr><td>EV/EBITDA</td><td>~24x</td><td>5x</td><td>10x</td><td>25x</td><td>95%</td></tr>
+<tr><td>P/S（TTM）</td><td>5.89x</td><td>1.5x</td><td>3x</td><td>6x</td><td>97%</td></tr>
+</table>
+
+<h4>分位計算公式</h4>
+<p>Forward P/E（FY+2）分位 = (22.27 − 7) / (22 − 7) × 100% = <strong>~99%</strong></p>
+
+<h4>解讀</h4>
+<ol>
+<li><strong>當前估值情緒：</strong>對 SIMO 自身史上而言<strong>處於頂部</strong>（接近 5Y 高）。對同業（fabless）視角為合理偏貴。</li>
+<li><strong>上次處於此分位時：</strong>2021 年 NAND/SSD 上行週期高峰 + Maxlinear 收購要約推升。之後 2022-2023 修正 −60%。</li>
+<li><strong>推動因素：</strong>EPS 上修（占 60%）+ AI eSSD 主題重估（占 25%）+ NAND 上行週期外溢（占 15%）。</li>
+</ol>
+
+<h3>11.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+2）</td><td>22.27x</td><td>—</td></tr>
+<tr><td>3 年 EPS CAGR（GAAP，§5）</td><td>30.7%</td><td>結構性成長</td></tr>
+<tr><td>PEG（Non-GAAP，3 年 base）</td><td>0.72</td><td><span class="badge-green">🟢 略具吸引力</span></td></tr>
+<tr><td>PEG（FY+2 base，1Y growth）</td><td>1.01</td><td><span class="badge-yellow">🟡 公允</span></td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td>~22%</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>1.01</td><td>公允</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>0.29</td><td>近期成長加速且可持續</td></tr>
+</table>
+
+<p><strong>Price-to-Growth 矩陣落點：</strong>合理偏右上（成長率高、估值合理偏貴）。屬「優質成長股公允定價」象限。</p>
+
+<h3>11.3｜Reverse DCF</h3>
+
+<h4>步驟一：固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$5.22B</td><td>$153.46 × 33.98M shares</td></tr>
+<tr><td>基期 FCF（normalized）</td><td>~$80-100M（取 5Y 平均，去除 TTM 暫時負值）</td><td>歷史平均</td></tr>
+<tr><td>WACC</td><td>11%</td><td>10Y UST 4.2% + Beta 1.08 × ERP 5.5% + 地緣政治溢價 1%</td></tr>
+<tr><td>永續成長率</td><td>2.5%</td><td>長期 GDP + 通膨</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<h4>步驟二：反推隱含 FCF CAGR</h4>
+<p>使 DCF 現值 = $5.22B，所需前 10 年 FCF CAGR ≈ <strong>22%</strong>（Year 10 FCF ~$600M）。</p>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>位置</th></tr>
+<tr><td>過去 5 年實際 FCF CAGR</td><td>~10%（含週期波動）</td><td>隱含高於歷史 2x</td></tr>
+<tr><td>分析師 EPS CAGR 共識</td><td>22%（5 年）</td><td>隱含 = 共識</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>fabless 半導體頂尖 25-30%</td><td>合理位置</td></tr>
+</table>
+
+<h4>步驟四：兌現條件</h4>
+<p>隱含 22% 10 年 FCF CAGR 需要：</p>
+<ul>
+<li>Revenue 年增 15-18%（基於當前 FCF Margin 12-15%）</li>
+<li>FCF Margin 維持 12-15%（不再有 TTM 暫時性下行）</li>
+<li><strong>需 PCIe Gen5 + Gen6 連續升級 + MonTitan 規模化 + 車用 SSD ramp 三條曲線都兌現</strong></li>
+</ul>
+
+<p><strong>隱含預期判斷：</strong><span class="badge-yellow">🟡 隱含預期合理</span>（與分析師共識一致，但需多重驗證）。</p>
+
+<h3>11.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E（FY+2）</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR</th><th>ROIC</th></tr>
+<tr><td><strong>SIMO</strong></td><td>$5.2B</td><td>22.27x</td><td>~24x</td><td>1.01</td><td>~12%（normalized）</td><td>30%</td><td>17-19%</td></tr>
+<tr><td>Phison（PHISON.TPE）</td><td>$3.5B（估）</td><td>~10x</td><td>~7x</td><td>0.5</td><td>~12%</td><td>~20%</td><td>~15%</td></tr>
+<tr><td>Marvell（MRVL）</td><td>$80B（估）</td><td>~32x</td><td>~22x</td><td>1.5</td><td>~18%</td><td>~25%</td><td>~12%</td></tr>
+<tr><td>Realtek（5347.TW）</td><td>$8B（估）</td><td>~15x</td><td>~9x</td><td>1.0</td><td>~10%</td><td>~15%</td><td>~18%</td></tr>
+<tr><td><strong>產業中位數</strong></td><td>—</td><td>~17x</td><td>~13x</td><td>~1.0</td><td>~12%</td><td>~22%</td><td>~16%</td></tr>
+</table>
+
+<h4>同業溢折價邏輯</h4>
+<ol>
+<li><strong>溢折價幅度：</strong>SIMO FPE 22x vs 中位 17x，<strong>溢價 +30%</strong>（主因 AI eSSD 重估 + 美股相對台股溢價）。</li>
+<li><strong>支撐溢價的特性：</strong>(1) ADS 在美股交易，流動性與資訊揭露優；(2) MonTitan AI 切入故事；(3) 客戶端 SSD #1 地位。</li>
+<li><strong>若估值向產業中位回歸：</strong>SIMO 從 22x 回到 17x = $117（與 BB 中軌一致）。</li>
+</ol>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>SIMO</th><th>SNDK</th><th>MU</th></tr>
+<tr><td>主假設兌現時上行最大者？</td><td>+25%</td><td>+50%</td><td>+30%</td></tr>
+<tr><td>主假設部分落空時跌幅最小者？</td><td>−30%</td><td>−65%</td><td>−40%</td></tr>
+<tr><td>綜合不對稱性，風報比最優者？</td><td>0.83x</td><td>0.77x</td><td>0.75x</td></tr>
+</table>
+
+<p><strong>最終橫向比較結論：</strong><span class="badge-orange">🥇 此標的為同主題最優選</span>（在 NAND 控制器與 NAND 製造主題中，SIMO 風險調整後表現最佳）。但<strong>絕對而言上行空間不大</strong>。</p>
+
+<h3>11.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（11.0）</td><td><span class="badge-yellow">🟡 模糊偏正面</span></td><td>盈利 + 成長混合，待 MonTitan 重估</td></tr>
+<tr><td>歷史分位（11.1）</td><td><span class="badge-red">🔴 過熱（5Y 高）</span></td><td>FY+2 FPE 99% 分位</td></tr>
+<tr><td>PEG 診斷（11.2）</td><td><span class="badge-green">🟢 公允（合理偏便宜）</span></td><td>3Y CAGR PEG 0.72，FY+2 PEG 1.01</td></tr>
+<tr><td>Reverse DCF（11.3）</td><td><span class="badge-yellow">🟡 合理</span></td><td>隱含 22% 10Y CAGR ≈ 共識</td></tr>
+<tr><td>同業相對（11.4）</td><td><span class="badge-yellow">🟡 合理偏貴</span></td><td>FPE 對中位 +30%，但 ADS 結構與 AI 溢價合理</td></tr>
+</table>
+
+<h4>v11.0 §12 D 交叉驗證</h4>
+<table>
+<tr><th>當前 FPE vs §12 D 合理 P/E</th><th>影響</th></tr>
+<tr><td>當前 FPE（FY+2）22.27x vs 合理 PE 23x，比值 0.97（≈）</td><td>當前 ≈ 合理，中性</td></tr>
+</table>
+
+<p><strong>歷史分位降權規則：</strong>PEG (3Y) 0.72 &lt; 1.0 且當前 FPE ≈ §12 D 合理 PE，§11.1 的 🔴 過熱信號降權為 🟡（反映估值體系升級而非泡沫）。</p>
+
+<p><strong>當前定價判斷：</strong><span class="badge-yellow">🟡 公允定價</span></p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr>
+<tr><td>① 護城河品質（§7）</td><td>7/10</td><td>同業基準 17x，無加減分</td></tr>
+<tr><td>② 成長可持續年數（§6A）</td><td>7-10 年（🟡 偏上）</td><td>+1x</td></tr>
+<tr><td>③ 成長品質（§6B）</td><td>定價 + 量雙驅動</td><td>+1x</td></tr>
+<tr><td>④ 成長護城河連動（§6C）</td><td>中性偏強化</td><td>+0.5x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§6D）</td><td>擴大中</td><td>+1x</td></tr>
+<tr><td>⑥ 衰退信號（§6 偵測表）</td><td>1 個 🔴 + 2 個 🟡</td><td>−1x</td></tr>
+<tr><td>⑦ 估值體系（§11.0）</td><td>模糊偏正</td><td>+0.5x</td></tr>
+<tr><td>⑧ 利率環境（10Y UST 4.2%）</td><td>中性</td><td>±0</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td><strong>17x</strong></td><td><strong>調整後合理區間：19-23x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考：</strong></p>
+<ul>
+<li>高 $185 / 中位 $150 / 低 $110（n=10 位分析師）</li>
+<li><strong>是否認同共識中位？</strong>是。中位 $150 ≈ 本報告短期目標 $152.55，數字幾乎一致。</li>
+</ul>
+
+<h4>長期合理倍數對應表</h4>
+<table>
+<tr><th>§6 長期成長性評級</th><th>5 年後基準 Forward P/E</th></tr>
+<tr><td><strong>🟡 中等可見度</strong></td><td><strong>20x</strong></td></tr>
+</table>
+<p><strong>本標的基準長期合理倍數：20x</strong></p>
+
+<p><strong>v9.0 上行三引擎調整：</strong></p>
+<ul>
+<li>引擎 A（ROIC 溢價）：ROIC ~18% &lt; 20% → 不適用</li>
+<li>引擎 B（PEG 動態天花板）：Year-5 成長率 ~15-18%，邊緣觸發</li>
+<li>引擎 C（護城河溢價）：護城河 7 &lt; 9，不適用</li>
+<li>取較高：× 1.0（無顯著上行）</li>
+</ul>
+
+<p><strong>AI 風險獨立疊加：</strong>🟢 → × 1.10</p>
+
+<p><strong>最終長期合理倍數 = 20 × 1.0 × 1.10 = <span class="num">22x</span></strong></p>
+
+<h3>投資結論（v11.0 完整版）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態：</strong><span class="badge-yellow">0 中性</span>（Q1 26 GM dip 為已知，Q2 26 trajectory 待驗證）</li>
+<li><strong>H2 當前狀態：</strong><span class="badge-green">+ 強化</span>（MonTitan SM8388 公告 + SSD solutions +110-115% YoY）</li>
+<li><strong>H3 當前狀態：</strong><span class="badge-green">+ 強化</span>（市場給 22x FPE 已是 5Y 頂部）</li>
+<li><strong>結論：H2、H3 強化，H1 中性。整體 thesis 完整但時機過熱。</strong></li>
+</ul>
+
+<h4>進場 / 觀望偏進場 / 觀望 / 迴避</h4>
+<ul>
+<li>短期 R:R −0.01x，中期 R:R 0.38x</li>
+<li>都不過 → <strong>觀望</strong></li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q1 2026 公告排程 4/29，是首要驗證點。Guide 已給 GM 46-47%（mobile mix 暫時性），市場已 priced in。若 actual GM 低於 46% 或 Q2 26 guide 低於 48%，將出現 10-20% 修正。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY+1 / FY+2 EPS 共識成長 22-55% 由 mix 升級（PCIe Gen5 + MonTitan）+ 量增（PC 復甦 + AI eSSD）雙驅動。能見度<strong>中等偏上</strong>。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道：7-10 年 / 護城河趨勢：穩定 / <strong>長期持有信心：中</strong></p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔（Bear Case）：現價 → $63，距離 −59%</li>
+<li>中期下檔（Bear Case）：現價 → $67，距離 −56%</li>
+<li>W52 Low $43.57 / W104 Low $36.27（理論底）</li>
+<li>若 FY+1 EPS 下修 10%，短期 R:R 將降至 −0.10x（更差）</li>
+</ul>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+
+</body>
+</html>
