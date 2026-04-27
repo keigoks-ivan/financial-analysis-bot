@@ -22,28 +22,34 @@ fi
 FAIL=0
 
 if [ -n "$NEEDS_DD" ]; then
-  echo "→ pre-commit: validating dd-meta (staged DD files detected)"
-  if ! python3 scripts/validate_dd_meta.py > /tmp/_dd_validate.log 2>&1; then
-    echo ""
-    echo "❌ dd-meta validation FAILED — commit blocked."
-    echo "   Tail of validator output:"
-    tail -25 /tmp/_dd_validate.log | sed 's/^/   /'
-    echo ""
-    echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
-    FAIL=1
+  STAGED_DD=$(echo "$STAGED" | grep -E '^docs/dd/DD_.*\.html$' || true)
+  echo "→ pre-commit: validating dd-meta (staged DD files only)"
+  if [ -n "$STAGED_DD" ]; then
+    if ! python3 scripts/validate_dd_meta.py $STAGED_DD > /tmp/_dd_validate.log 2>&1; then
+      echo ""
+      echo "❌ dd-meta validation FAILED — commit blocked."
+      echo "   Tail of validator output:"
+      tail -25 /tmp/_dd_validate.log | sed 's/^/   /'
+      echo ""
+      echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
+      FAIL=1
+    fi
   fi
 fi
 
 if [ -n "$NEEDS_ID" ]; then
-  echo "→ pre-commit: validating id-meta (staged ID files detected)"
-  if ! python3 scripts/validate_id_meta.py > /tmp/_id_validate.log 2>&1; then
-    echo ""
-    echo "❌ id-meta validation FAILED — commit blocked."
-    echo "   Tail of validator output:"
-    tail -25 /tmp/_id_validate.log | sed 's/^/   /'
-    echo ""
-    echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
-    FAIL=1
+  STAGED_ID=$(echo "$STAGED" | grep -E '^docs/id/ID_.*\.html$' || true)
+  echo "→ pre-commit: validating id-meta (staged ID files only)"
+  if [ -n "$STAGED_ID" ]; then
+    if ! python3 scripts/validate_id_meta.py $STAGED_ID > /tmp/_id_validate.log 2>&1; then
+      echo ""
+      echo "❌ id-meta validation FAILED — commit blocked."
+      echo "   Tail of validator output:"
+      tail -25 /tmp/_id_validate.log | sed 's/^/   /'
+      echo ""
+      echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
+      FAIL=1
+    fi
   fi
 fi
 
