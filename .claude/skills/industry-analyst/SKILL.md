@@ -527,6 +527,45 @@ ID 不同章節的半衰期不同，必須分開判斷：
 | `sections_refreshed` | object | `{"technical": "YYYY-MM-DD", "market": "YYYY-MM-DD", "judgment": "YYYY-MM-DD"}` |
 | `sister_ids` | array | 兄弟 ID HTML 檔名列表 |
 
+> #### 🚫 **嚴禁複合 enum 值 / 自創字串 / 加修飾詞**（CI strict gate 阻斷）
+>
+> Validator 嚴格匹配上面的 enum 字串集合。**禁止以下實際發生過的錯誤**：
+>
+> | ❌ 違規寫法 | ✅ 正確寫法 | 說明 |
+> |:---|:---|:---|
+> | `"thesis_type": "structural+event"` | `"mixed"` | 用 `mixed` 表達雙重屬性，不要 `+` 拼接 |
+> | `"growth_phase": "mature_diverging"` | `"late"` | mature 對應 `late`；diverging 是敘事細節，不放 metadata |
+> | `"growth_phase": "structural_supercycle_expansion"` | `"mid"` 或 `"early"` | 自創長字串一律映射到四選一 |
+> | `"growth_phase": "consolidation"` | `"late"` | consolidation 屬於 mature 後期 |
+> | `"value_chain_position": "concentrate-to-shelf"` | `"cross-tier"` | 跨多段價值鏈一律 `cross-tier` |
+> | `"value_chain_position": "upstream_commodity"` | `"upstream"` | 不要加修飾詞 |
+> | `"value_chain_position": "intermediation"` | `"cross-tier"` | 銀行業中介性質 = 跨上下游 |
+> | `"industry_structure": "oligopoly+disruption"` | `"oligopoly"` | disruption 是動態描述，不放結構 enum |
+> | `"industry_structure": "regional_oligopoly"` | `"oligopoly"` | 地區性質寫進 oneliner，不加修飾 |
+>
+> **規則**：metadata 是給 validator + 下游 parser 讀的「分類標籤」，不是給人讀的「敘事描述」。複雜的二元性、地區屬性、disruption 動態，都寫進 §1 / §2 章節內文裡，metadata 只保留 enum 主分類。
+>
+> #### 🚫 **`oneliner` 嚴格 ≤ 200 chars**（包含中英文混合）
+>
+> Validator hard cap 200 字元。實際發生過 308 / 468 / 483 / 614 字元 violation——LLM 容易把整段 thesis 塞進 oneliner。**正確做法**：
+>
+> 1. oneliner 只放 3–5 個關鍵數字錨點 + 1 個結論動詞
+> 2. 詳細論述全部留給 §1 投資論點 / §11 兄弟 ID 章節
+> 3. 寫完後用 `len(d['oneliner'])` 自測；若 > 180 立刻精簡（留 20 char buffer 應付下游 emoji / 全形字元計算差異）
+>
+> 範例（180 chars 內）：「銅 2026 預期 \$11K–13K（Citi \$13K / GS \$10.7K / MS 600kt deficit「20 年最嚴」）；三引擎共振：AI DC + Grid + EV；Anglo-Teck \$53B + Codelco \$40B 響應。」
+
+#### 寫完後自我驗證（不可省略）
+
+Write 完 ID HTML 後**立即執行**（在報告 terminal 摘要之前）：
+
+```bash
+python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{YYYYMMDD}.html
+```
+
+- exit code 0 → 繼續輸出 terminal 摘要
+- exit code != 0 → 讀取錯誤訊息，用 Edit 工具修正 id-meta JSON，重跑 validator，直到 exit 0 才宣告完成。**不允許帶錯誤推 commit**（CI strict gate 會擋）
+
 **`related_tickers` 物件 schema**：
 
 ```json
