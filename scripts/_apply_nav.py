@@ -9,7 +9,7 @@ Strategy:
 import re
 from pathlib import Path
 
-ROOT = Path("/Users/ivanchang/Desktop/financial-analysis-bot/docs")
+ROOT = Path(__file__).resolve().parent.parent / "docs"
 
 NAV_STYLE = """<style>
 .imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
@@ -64,9 +64,10 @@ def build_nav(active):
         <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
           <a href="/research/"{cls("dd")}>個股 DD</a>
-          <a href="/id/"{cls("id")}>產業深度 ID</a>
-          <a href="/id/theses.html"{cls("theses")}>⭐ 八大非共識</a>
           <a href="/pm/"{cls("pm")}>PM 複盤</a>
+          <a href="/id/"{cls("id")}>產業深度 ID</a>
+          <a href="/id/theses.html"{cls("theses")}>⭐ 九大非共識</a>
+          <a href="/id/tier_matrix.html"{cls("tier")}>🎯 Tier Matrix</a>
         </div>
       </div>
       <div class="imq-dd{grp_cls("market")}">
@@ -74,6 +75,9 @@ def build_nav(active):
         <div class="imq-dd-menu">
           <a href="/briefing/"{cls("brief")}>每日簡報</a>
           <a href="/weekly/"{cls("week")}>週報</a>
+          <a href="/earnings/"{cls("earn")}>財報分析</a>
+          <a href="/markets.html"{cls("markets")}>Markets</a>
+          <a href="/sectors.html"{cls("sectors")}>Sectors</a>
           <a href="/six-state/"{cls("six")}>六狀態機</a>
         </div>
       </div>
