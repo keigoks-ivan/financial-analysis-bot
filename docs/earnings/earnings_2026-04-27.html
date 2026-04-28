@@ -8,391 +8,113 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #ffffff;
-    --bg-subtle: #fafaf9;
-    --surface: #ffffff;
-    --surface-2: #f7f7f5;
-    --border: #e5e5e2;
-    --border-strong: #1a1a1a;
-    --text: #1a1a1a;
-    --text-muted: #666;
-    --text-dim: #999;
-    --accent: #2563eb;
-    --green: #15803d;
-    --green-bg: #f0fdf4;
-    --red: #b91c1c;
-    --red-bg: #fef2f2;
-    --amber: #b45309;
-    --amber-bg: #fffbeb;
-    --orange: #c2410c;
-    --orange-bg: #fff7ed;
-    --radius: 8px;
-  }
-
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: var(--text);
-    background: var(--bg);
-    line-height: 1.7;
-    font-size: 15px;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* ─── Navigation ──────────────────────────────────────── */
-  .imq-nav {
-    background: #ffffff;
-    border-bottom: 1px solid var(--border);
-    padding: 14px 32px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
-    font-size: 13px;
-  }
-  .imq-nav .imq-brand {
-    font-weight: 700;
-    color: var(--text);
-    text-decoration: none;
-    font-size: 14px;
-    letter-spacing: -0.01em;
-  }
-  .imq-nav .imq-brand:hover { color: var(--accent); }
-  .imq-nav a {
-    color: var(--text-muted);
-    text-decoration: none;
-    padding: 4px 0;
-  }
-  .imq-nav a:hover { color: var(--text); }
-  .imq-nav a.active { color: var(--text); font-weight: 500; }
-  .imq-dd {
-    position: relative;
-  }
-  .imq-dd-label {
-    color: var(--text-muted);
-    cursor: pointer;
-    user-select: none;
-  }
-  .imq-dd-label::after {
-    content: '▾';
-    font-size: 10px;
-    margin-left: 2px;
-  }
-  .imq-dd:hover .imq-dd-label,
-  .imq-dd.active .imq-dd-label { color: var(--text); font-weight: 500; }
-  .imq-dd-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: -12px;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px 0;
-    min-width: 160px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    z-index: 100;
-    margin-top: 6px;
-  }
-  .imq-dd:hover .imq-dd-menu { display: block; }
-  .imq-dd-menu a {
-    display: block;
-    padding: 6px 16px;
-    white-space: nowrap;
-  }
-
-  /* ─── Container ──────────────────────────────────────── */
-  .container {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 48px 32px 80px;
-  }
-
-  .breadcrumb {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 24px;
-  }
-  .breadcrumb a {
-    color: var(--text-muted);
-    text-decoration: none;
-  }
-  .breadcrumb a:hover { color: var(--accent); }
-
-  /* ─── Header ─────────────────────────────────────────── */
-  .report-header {
-    border-bottom: 2px solid var(--border-strong);
-    padding-bottom: 24px;
-    margin-bottom: 40px;
-  }
-  .report-header h1 {
-    font-size: 32px;
-    font-weight: 700;
-    margin: 0 0 8px;
-    letter-spacing: -0.02em;
-  }
-  .report-meta {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-  }
-  .report-lede {
-    font-size: 15px;
-    color: var(--text);
-    background: var(--surface-2);
-    padding: 16px 20px;
-    border-radius: var(--radius);
-    border-left: 3px solid var(--accent);
-    margin: 16px 0 0;
-  }
-
-  /* ─── TOC ──────────────────────────────────────────── */
-  .toc {
-    background: var(--surface-2);
-    border-radius: var(--radius);
-    padding: 20px 24px;
-    margin-bottom: 48px;
-    border: 1px solid var(--border);
-  }
-  .toc-title {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-  }
-  .toc ol {
-    margin: 0;
-    padding-left: 20px;
-    columns: 2;
-    column-gap: 32px;
-    font-size: 14px;
-  }
-  .toc li { margin: 4px 0; }
-  .toc a { color: var(--text); text-decoration: none; }
-  .toc a:hover { color: var(--accent); }
-
-  /* ─── Sections ──────────────────────────────────────── */
-  h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 56px 0 20px;
-    letter-spacing: -0.01em;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-  h3 {
-    font-size: 17px;
-    font-weight: 600;
-    margin: 32px 0 14px;
-    letter-spacing: -0.01em;
-  }
-  h4 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 20px 0 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-  }
-  p { margin: 12px 0; }
-  strong { font-weight: 600; color: var(--text); }
-
-  ul, ol {
-    padding-left: 20px;
-  }
-  li { margin: 6px 0; }
-
-  /* ─── Tables ──────────────────────────────────────── */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 16px 0 24px;
-    font-size: 14px;
-  }
-  th {
-    background: var(--surface-2);
-    color: var(--text-muted);
-    text-align: left;
-    padding: 10px 14px;
-    border-bottom: 2px solid var(--border-strong);
-    font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  td {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-  }
-  tr:hover td { background: var(--bg-subtle); }
-  td code, th code {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-  }
-
-  /* ─── Company Card ──────────────────────────────────── */
-  .company-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px 28px;
-    margin: 24px 0;
-  }
-  .company-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .company-header .ticker {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text);
-    font-family: 'IBM Plex Mono', monospace;
-    letter-spacing: -0.02em;
-  }
-  .company-header .meta-right {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-  .company-card table { font-size: 13.5px; }
-
-  /* ─── Status tags ──────────────────────────────────── */
-  .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-family: 'IBM Plex Mono', monospace;
-  }
-  .tag.beat { background: var(--green-bg); color: var(--green); }
-  .tag.miss { background: var(--red-bg); color: var(--red); }
-  .tag.inline { background: var(--amber-bg); color: var(--amber); }
-  .tag.raise { background: var(--green-bg); color: var(--green); }
-  .tag.maintain { background: var(--amber-bg); color: var(--amber); }
-  .tag.lower { background: var(--red-bg); color: var(--red); }
-
-  .stock-move {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: 'IBM Plex Mono', monospace;
-  }
-  .stock-move.up { background: var(--green-bg); color: var(--green); }
-  .stock-move.down { background: var(--red-bg); color: var(--red); }
-
-  /* ─── Winners / Losers rows ──────────────────────────── */
-  .winner-row td:first-child {
-    border-left: 3px solid var(--green);
-    color: var(--green);
-    font-weight: 600;
-    font-family: 'IBM Plex Mono', monospace;
-  }
-  .loser-row td:first-child {
-    border-left: 3px solid var(--red);
-    color: var(--red);
-    font-weight: 600;
-    font-family: 'IBM Plex Mono', monospace;
-  }
-
-  /* ─── Contradictions ──────────────────────────────── */
-  .contradiction {
-    background: var(--orange-bg);
-    border-left: 3px solid var(--orange);
-    padding: 18px 22px;
-    margin: 20px 0;
-    border-radius: 0 var(--radius) var(--radius) 0;
-  }
-  .contradiction h4 {
-    color: var(--orange);
-    margin: 0 0 8px;
-    font-size: 14px;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-  .contradiction p { margin: 8px 0; font-size: 14px; }
-  .contradiction .implication {
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(194, 65, 12, 0.2);
-    font-weight: 500;
-  }
-
-  /* ─── Summary items ────────────────────────────────── */
-  .summary-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .summary-list li {
-    background: var(--surface-2);
-    border-left: 3px solid var(--accent);
-    padding: 14px 20px;
-    margin: 10px 0;
-    border-radius: 0 var(--radius) var(--radius) 0;
-    font-size: 14.5px;
-  }
-  .summary-list li strong:first-child {
-    color: var(--accent);
-  }
-
-  /* ─── Disclaimer ──────────────────────────────────── */
-  .disclaimer {
-    margin-top: 80px;
-    padding: 20px 24px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 13px;
-    color: var(--text-muted);
-  }
-  .disclaimer strong { color: var(--text); }
-
-  footer {
-    margin-top: 40px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
-    text-align: center;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    color: var(--text-dim);
-  }
-  footer a { color: var(--accent); text-decoration: none; }
-
-  /* ─── Mobile ──────────────────────────────────────── */
-  @media (max-width: 720px) {
-    .container { padding: 32px 20px 60px; }
-    .report-header h1 { font-size: 26px; }
-    .toc ol { columns: 1; }
-    .company-header { flex-direction: column; align-items: flex-start; }
-    table { font-size: 13px; }
-    th, td { padding: 8px 10px; }
-  }
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #fafaf9;
+  --surface: #ffffff;
+  --surface-2: #f7f7f5;
+  --border: #e5e5e2;
+  --border-strong: #1a1a1a;
+  --text: #1a1a1a;
+  --text-muted: #666;
+  --text-dim: #999;
+  --accent: #2563eb;
+  --green: #15803d;
+  --green-bg: #f0fdf4;
+  --red: #b91c1c;
+  --red-bg: #fef2f2;
+  --amber: #b45309;
+  --amber-bg: #fffbeb;
+  --orange: #c2410c;
+  --orange-bg: #fff7ed;
+  --radius: 8px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 15px; line-height: 1.7; }
+.imq-nav { display: flex; align-items: center; gap: 24px; padding: 16px 32px; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 14px; flex-wrap: wrap; }
+.imq-brand { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 15px; color: var(--text); text-decoration: none; letter-spacing: -0.01em; margin-right: 16px; }
+.imq-nav a { color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
+.imq-nav a:hover { color: var(--text); }
+.imq-dd { position: relative; }
+.imq-dd-label { color: var(--text-muted); cursor: pointer; user-select: none; }
+.imq-dd:hover .imq-dd-label, .imq-dd.active .imq-dd-label { color: var(--text); }
+.imq-dd-menu { position: absolute; top: 100%; left: 0; margin-top: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 0; min-width: 180px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); display: none; z-index: 100; }
+.imq-dd:hover .imq-dd-menu { display: block; }
+.imq-dd-menu a { display: block; padding: 8px 16px; font-size: 13px; }
+.imq-dd-menu a.active { color: var(--accent); font-weight: 500; }
+.container { max-width: 880px; margin: 0 auto; padding: 40px 32px 80px; }
+.breadcrumb { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-dim); margin-bottom: 32px; letter-spacing: 0.02em; }
+.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--text); }
+.report-header { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 2px solid var(--border-strong); }
+.report-header h1 { font-size: 32px; font-weight: 700; margin: 0 0 12px; letter-spacing: -0.02em; line-height: 1.3; }
+.report-meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 24px; }
+.report-lede { background: var(--surface-2); border-left: 3px solid var(--accent); padding: 20px 24px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 14.5px; color: var(--text); }
+.report-lede strong { color: var(--text); }
+.toc { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 48px; }
+.toc-title { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin: 0 0 12px; }
+.toc ol { margin: 0; padding-left: 20px; font-size: 14px; }
+.toc ol li { margin-bottom: 4px; }
+.toc a { color: var(--text); text-decoration: none; }
+.toc a:hover { color: var(--accent); }
+section { margin-bottom: 56px; }
+h2 { font-size: 22px; font-weight: 700; margin: 0 0 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); letter-spacing: -0.01em; }
+h3 { font-size: 17px; font-weight: 600; margin: 32px 0 16px; letter-spacing: -0.01em; }
+h4 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin: 20px 0 10px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
+th { text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); padding: 10px 12px; border-bottom: 1px solid var(--border-strong); font-weight: 500; }
+td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:hover { background: var(--surface-2); }
+.company-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 24px; background: var(--surface); }
+.company-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.ticker { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.meta-right { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); }
+.company-card ul { margin: 8px 0 16px; padding-left: 20px; }
+.company-card li { margin-bottom: 6px; line-height: 1.65; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; }
+.tag.beat { background: var(--green-bg); color: var(--green); }
+.tag.miss { background: var(--red-bg); color: var(--red); }
+.tag.inline { background: var(--amber-bg); color: var(--amber); }
+.tag.raise { background: var(--green-bg); color: var(--green); }
+.tag.maintain { background: var(--amber-bg); color: var(--amber); }
+.tag.lower { background: var(--red-bg); color: var(--red); }
+.stock-move { display: inline-block; padding: 2px 8px; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; }
+.stock-move.up { background: var(--green-bg); color: var(--green); }
+.stock-move.down { background: var(--red-bg); color: var(--red); }
+.stock-move.flat { background: var(--amber-bg); color: var(--amber); }
+.winner-row td:first-child { border-left: 3px solid var(--green); padding-left: 12px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+.loser-row td:first-child { border-left: 3px solid var(--red); padding-left: 12px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+.sell-news-row td:first-child { border-left: 3px solid var(--orange); padding-left: 12px; font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+.contradiction { background: var(--orange-bg); border-left: 3px solid var(--orange); padding: 16px 20px; border-radius: 0 var(--radius) var(--radius) 0; margin-bottom: 16px; }
+.contradiction h4 { margin: 0 0 8px; color: var(--orange); font-size: 13px; text-transform: none; letter-spacing: 0; font-family: 'Inter', 'Noto Sans TC', sans-serif; font-weight: 600; }
+.contradiction p { margin: 0 0 8px; font-size: 14px; line-height: 1.65; }
+.contradiction p:last-child { margin-bottom: 0; }
+.implication { font-size: 13.5px !important; color: var(--text-muted); padding-top: 8px; border-top: 1px dashed rgba(194, 65, 12, 0.25); }
+.summary-list { list-style: none; padding: 0; margin: 0; }
+.summary-list li { background: var(--surface-2); border-left: 3px solid var(--accent); padding: 16px 20px; border-radius: 0 var(--radius) var(--radius) 0; margin-bottom: 12px; line-height: 1.7; }
+.summary-list li strong { color: var(--text); }
+.disclaimer { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin: 56px 0 24px; font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+.disclaimer strong { color: var(--text); }
+footer { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); padding: 24px 0; border-top: 1px solid var(--border); letter-spacing: 0.02em; }
+footer a { color: var(--text-muted); text-decoration: none; }
+footer a:hover { color: var(--text); }
+.note-box { background: var(--surface-2); border-left: 3px solid var(--text-muted); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) 0; margin: 12px 0; font-size: 13.5px; color: var(--text-muted); }
+@media (max-width: 720px) {
+  .container { padding: 24px 16px 60px; }
+  .imq-nav { padding: 12px 16px; gap: 16px; font-size: 13px; overflow-x: auto; flex-wrap: nowrap; white-space: nowrap; }
+  .report-header h1 { font-size: 24px; }
+  .company-card { padding: 18px 18px; }
+  .ticker { font-size: 17px; }
+  table { font-size: 13px; }
+  th, td { padding: 8px; }
+}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════ Navigation ═══════════════════════════ -->
 <nav class="imq-nav">
   <a href="/" class="imq-brand">InvestMQuest. Research</a>
   <a href="/">首頁</a>
-
   <div class="imq-dd">
     <span class="imq-dd-label">研究</span>
     <div class="imq-dd-menu">
@@ -402,7 +124,6 @@
       <a href="/pm/">PM 複盤</a>
     </div>
   </div>
-
   <div class="imq-dd active">
     <span class="imq-dd-label">市場</span>
     <div class="imq-dd-menu">
@@ -412,7 +133,6 @@
       <a href="/six-state/">六狀態機</a>
     </div>
   </div>
-
   <div class="imq-dd">
     <span class="imq-dd-label">工具</span>
     <div class="imq-dd-menu">
@@ -421,252 +141,445 @@
       <a href="/qgm-tw/">QGM 台股</a>
     </div>
   </div>
-
   <a href="/how-to.html">📘 使用說明</a>
 </nav>
 
-<!-- ═══════════════════════════ Report ═══════════════════════════ -->
 <div class="container">
-<div class="breadcrumb"><a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-04-27</div>
+
+<div class="breadcrumb">
+  <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-04-27
+</div>
 
 <header class="report-header">
   <h1>美股 4/27 財報日深度分析</h1>
-  <div class="report-meta">3 companies analyzed · $50B+ market cap · Monday BMO+AMC</div>
+  <div class="report-meta">5 companies analyzed · 3 家 $50B+ 自動 + 2 家用戶指定（CLS、RMBS）· Mag7 重磅週開場日</div>
   <div class="report-lede">
-    <strong>核心發現：</strong>Verizon 13年來首次Q1 postpaid phone正成長（+55K vs -289K去年），record adj EBITDA $13.4B，raise EPS guidance至+5-6%——convergence策略（wireless+broadband bundling）終於生效；
-    Cadence revenue +19%、record backlog $8.0B、raise revenue outlook——AI-driven EDA demand加速，AgentStack/agentic AI成為chip design新範式；
-    Celestica adj EPS $2.16 beat、raise 2026 outlook至$10.15 EPS——hyperscaler AI infrastructure orders持續爆發，新增CPO Ethernet switch program（2027 ramp）。
+    <strong>核心發現：</strong>本日呈現極罕見的「Beat + Raise = Sell the News」全面爆發，AI infrastructure 鏈兩家盤後重挫。
+    <strong>RMBS -10.58% 至 $126.37、CLS -8.11% 至 $388.01：</strong>兩家都 beat + raise，但 RMBS CEO Seraphin 親自坦承「SOCAMM2 short run dollar content 很低、財務影響今年不顯著」即時點破市場想像；CLS 把全年營收一口拉到 $19B（+12% raise）卻仍跌 — YTD 漲幅已 priced in 完美。
+    <strong>VZ +1.5% 收 $47.72 是當天最 cleanest 贏家：</strong>EPS $1.28 beat $0.07、Revenue miss $490M 仍被 forgive，CEO Schulman 稱「轉型 not only progressing, it is gaining momentum」、全年 EPS 指引 4-5% → 5-6%。
+    <strong>CDNS 盤後 +2.8%（盤中收 $333.60）：</strong>Backlog $8B 創新高 + revenue raise，但 CFO Wall 解釋 Hexagon 整合拖累 EPS $0.28 主因是「30% 股票 + 70% 現金支付，現金的 lost interest income 是稀釋主因」。
+    <strong>跨日 implication：</strong>AI 二線供應商 valuation reset 已開始，4/29 Mag7（MSFT/META/GOOGL/AMZN）capex 必須超預期才能撐住整鏈估值；若僅維持，AI 概念股的 valuation reset 可能延伸。
   </div>
 </header>
 
 <div class="toc">
   <div class="toc-title">Table of Contents</div>
   <ol>
-    <li><a href="#s1">各公司財報重點（3 家）</a></li>
-    <li><a href="#s2">產業與子產業趨勢</a></li>
-    <li><a href="#s3">贏家與輸家</a></li>
-    <li><a href="#s4">互相矛盾與不合邏輯之處</a></li>
-    <li><a href="#s5">總結</a></li>
+    <li><a href="#sec1">§1 各公司財報重點（5 家）</a></li>
+    <li><a href="#sec2">§2 產業與子產業趨勢</a></li>
+    <li><a href="#sec3">§3 贏家、輸家與 Sell the News</a></li>
+    <li><a href="#sec4">§4 矛盾與不合邏輯之處</a></li>
+    <li><a href="#sec5">§5 總結</a></li>
   </ol>
 </div>
 
-<h2 id="s1">§1 ｜各公司財報重點整理</h2>
+<section id="sec1">
+<h2>§1 各公司財報重點</h2>
 
 <div class="company-card">
   <div class="company-header">
     <span class="ticker">VZ · Verizon Communications</span>
-    <span class="meta-right">$175B · 盤前 · <span class="stock-move up">+3.6%</span></span>
+    <span class="meta-right">$200B · 盤前 · <span class="stock-move up">+1.5% 收 $47.72</span> (盤中曾 +4.5%)</span>
   </div>
   <table>
     <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
     <tbody>
-      <tr><td>Adj. EPS</td><td>$1.28</td><td>$1.21</td><td>+7.6% · <span class="tag beat">BEAT +5.8%</span></td></tr>
-      <tr><td>Revenue</td><td>$34.4B</td><td>$34.8B</td><td>+2.9% · <span class="tag miss">MISS $400M</span></td></tr>
-      <tr><td>Wireless Service Revenue</td><td>$20.6B</td><td>—</td><td>-1%（customer credits + promo amort）</td></tr>
-      <tr><td>Mobility+Broadband Service Rev</td><td>$22.9B</td><td>—</td><td>+1.6%（-80bp network outage impact）</td></tr>
-      <tr><td>Postpaid Phone Net Adds</td><td><strong>+55K</strong></td><td>-88K</td><td><strong>首次Q1正成長since 2013 · +344K swing</strong></td></tr>
-      <tr><td>Prepaid Net Adds</td><td>+115K</td><td>—</td><td>Visible + Total Wireless 驅動</td></tr>
-      <tr><td>Broadband Net Adds</td><td>+341K</td><td>—</td><td>FWA 214K + Fiber 127K</td></tr>
-      <tr><td>Consumer Postpaid Churn</td><td>0.90%</td><td>—</td><td>-5bp seq · March &lt;0.85%</td></tr>
-      <tr><td>Adj. EBITDA</td><td>$13.4B</td><td>—</td><td>+6.7% · <strong>all-time record</strong></td></tr>
-      <tr><td>Adj. EBITDA margin</td><td>—</td><td>—</td><td>expanding</td></tr>
-      <tr><td>Share buybacks</td><td>$2.5B</td><td>—</td><td>—</td></tr>
-      <tr><td>全年 Adj EPS 指引</td><td>+5% to +6%</td><td>原 +3-5%</td><td><span class="tag raise">RAISE</span></td></tr>
-      <tr><td>Postpaid phone adds 指引</td><td>upper half 750K-1M</td><td>—</td><td><span class="tag raise">RAISE</span></td></tr>
+      <tr><td>Adjusted EPS</td><td>$1.28</td><td>$1.21</td><td>+7.6% · <span class="tag beat">BEAT +5.8%</span> 自 2021 以來最強季度成長</td></tr>
+      <tr><td>GAAP Diluted EPS</td><td>$1.20</td><td>$1.19</td><td>· <span class="tag beat">BEAT</span></td></tr>
+      <tr><td>Revenue</td><td>$34.4B</td><td>$34.82B</td><td>+2.9% · <span class="tag miss">MISS -1.2%</span> (-$420M)</td></tr>
+      <tr><td>Mobility & Broadband Service Rev</td><td>$22.9B</td><td>—</td><td>+1.6%（含 1 月網路中斷 80bp 拖累）</td></tr>
+      <tr><td>Postpaid Phone Net Adds</td><td>+55,000</td><td>—</td><td>13 年來首次 Q1 正成長 · YoY 改善 +344k</td></tr>
+      <tr><td>Broadband Net Adds</td><td>+341,000</td><td>—</td><td>FWA +214k / Fiber +127k · 總用戶 16.8M</td></tr>
+      <tr><td>Free Cash Flow</td><td>$3.8B</td><td>—</td><td>+4% YoY</td></tr>
+      <tr><td>Adj EBITDA Margin</td><td>38.9%</td><td>—</td><td>歷史新高</td></tr>
+      <tr><td>2026 Adj EPS Guidance</td><td>+5% to +6%</td><td>+4% to +5%</td><td><span class="tag raise">RAISE</span></td></tr>
+      <tr><td>2026 FCF Guidance</td><td>≥$21.5B (+7% or more)</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
     </tbody>
   </table>
+
   <h4>關鍵細節</h4>
   <ul>
-    <li><strong>13年來首次Q1 postpaid phone正成長（+55K）</strong>——市場預期 -88K，actual swing +344K。這是VZ的turnaround moment。</li>
-    <li><strong>Revenue miss $400M</strong>——wireless service revenue -1%，因January network outage的customer credits + elevated promotional amortization。管理層稱Q1是full-year low point。</li>
-    <li><strong>Record adj. EBITDA $13.4B（+6.7%）</strong>——profitability在revenue miss的情況下仍創新高，signaling cost discipline + mix improvement。</li>
-    <li><strong>Raise EPS guidance 從 +3-5% 至 +5-6%</strong>——在revenue miss的同時raise guidance，market reaction +3.6%。「Raise is alpha」鐵律再驗證。</li>
-    <li><strong>Convergence策略奏效：</strong>wireless+broadband bundling降低churn（0.90%→March&lt;0.85%）、提高ARPU（durable recurring revenue mix↑）。</li>
-    <li>Broadband +341K net adds（FWA 214K + Fiber 127K）——total broadband subs 16.8M。</li>
-    <li>CEO：「We are purposely shifting our mix towards durable recurring service revenues and away from low-margin, highly promotional activity.」</li>
-    <li>Share buybacks $2.5B completed。</li>
-    <li><strong>對比4/22 T（AT&T）：</strong>T postpaid +324K、fiber +261K、maintain guidance。VZ postpaid +55K 數字小於T但是VZ的inflection point（去年Q1 -289K），market更excited about VZ的trajectory change。</li>
+    <li>Q1 收購 Frontier 1/20 closing，總負債從 $143.6B 跳到 $172.5B（+$28.9B），但 CFO Skiadas 表示已償還 Frontier 一半債務、預計年底還清</li>
+    <li>Consumer Postpaid Churn 0.90%（QoQ -5bp），3 月底進一步降至 <0.85% — 核心訂閱經濟改善訊號</li>
+    <li>Q1 acquisition / retention 支出 QoQ -35% — 用更少行銷費換更多用戶</li>
+    <li>Capex Q1 $4.2B，全年指引維持 $16.0-16.5B；Q1 buyback $2.5B、全年計畫至少 $3B</li>
+    <li>Frontier 整合目標：>$1B run-rate cost synergies by 2028，$5B 全年 opex 節省</li>
+    <li>Convergence (mobility + fiber) 流失率比 standalone 低 30%</li>
   </ul>
-  <h4>Earnings Call 重點</h4>
+
+  <h4>Earnings Call 重點（Transcript 實際引述）</h4>
   <ul>
-    <li>管理層強調「quality of revenue improving」——降低promotional dependency，提高customer lifetime value。</li>
-    <li>January network outage impact quantified：-80bp on mobility+broadband service revenue。</li>
-    <li>Q1 expected to be low point for service revenue growth；H2 acceleration forecast。</li>
-    <li>myPlan flexible pricing + bundling with home broadband是churn improvement的primary driver。</li>
-    <li>FWA（Fixed Wireless Access）持續替代cable broadband——214K Q1 net adds。</li>
-    <li>Business segment revenue +5%——enterprise demand stable。</li>
+    <li>CEO Dan Schulman 開場：「first-quarter results show its turnaround『is not only progressing, it is gaining momentum』」</li>
+    <li>CFO Tony Skiadas：「first time since 2013 we generated positive first quarter total postpaid phone net additions」、「new-to-Verizon 比例提升 150 基點」</li>
+    <li>分析師 John Hodulik (UBS) 詢問 cost cutting，CFO Skiadas 回應：「我們在 EBITDA 看到顯著進展...EBITDA 將比 adjusted EPS 成長更快，因為 Frontier interest expense 約 $1B + depreciation 約 $1.5B」</li>
+    <li>分析師 Sebastiano Petti (JPM) 追問 FWA 8-9M subs by 2028 目標是否仍在，並問 buyback $2.5B 是否暗示更多。Skiadas 回應：「$3B 的目標『is appropriate at this time』」— 暗示不會加碼</li>
+    <li>分析師 Michael Ng (Goldman) 問 upgrade rates，Skiadas：「we were able to absorb about 6% higher upgrade volumes year-over-year, being more surgical with retention offers」、「the rate of growth in upgrades has slowed the last couple of months」</li>
+    <li>消費者 postpaid phone net losses 35,000，CFO 解釋為「higher mix of new-to-Verizon gross adds」— 相比去年改善 321,000</li>
+  </ul>
+
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li>盤中 +1.5% 收 $47.72，盤中曾達 +4.5%；盤前 Investing.com 報導一度 +3.64% 至 $47.13</li>
+    <li>Motley Fool 解讀：「Verizon 的 adjusted profit 比預期高 $0.07，但 sales 比預期少 $490M。stronger-than-expected margins paved the way for an earnings beat」</li>
+    <li>市場 forgive revenue miss 的關鍵：13 年來首次 Q1 正成長 + 全年 EPS 指引 raise + EBITDA margin 歷史新高同步出現</li>
   </ul>
 </div>
 
 <div class="company-card">
   <div class="company-header">
     <span class="ticker">CDNS · Cadence Design Systems</span>
-    <span class="meta-right">$82B · 盤後 · <span class="stock-move down">TBD</span></span>
+    <span class="meta-right">$92B · 盤後 · <span class="stock-move up">盤後 +2.8%</span> (盤中收 $333.60 +0.2%)</span>
   </div>
   <table>
     <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
     <tbody>
-      <tr><td>Non-GAAP EPS</td><td>$1.96</td><td>$1.89-1.95</td><td>+23% · <span class="tag beat">BEAT</span></td></tr>
-      <tr><td>Revenue</td><td>$1.474B</td><td>$1.447B</td><td>+19% · <span class="tag beat">BEAT 1.9%</span></td></tr>
-      <tr><td>GAAP EPS</td><td>$1.23</td><td>—</td><td>+23%</td></tr>
-      <tr><td>Gross profit</td><td>$1.26B</td><td>—</td><td>+17%</td></tr>
-      <tr><td>OP income</td><td>$431M</td><td>—</td><td>+19%</td></tr>
-      <tr><td>Backlog</td><td><strong>$8.0B</strong></td><td>—</td><td><strong>record</strong></td></tr>
-      <tr><td>Next 12-month RPO</td><td>$4.0B</td><td>—</td><td>strong forward visibility</td></tr>
-      <tr><td>OCF</td><td>$356M</td><td>—</td><td>-27%（timing）</td></tr>
-      <tr><td>2026 Revenue outlook</td><td>$6.125-6.225B</td><td>$6.0-6.1B（原）</td><td><span class="tag raise">RAISE</span></td></tr>
+      <tr><td>Non-GAAP EPS</td><td>$1.96</td><td>$1.89</td><td>· <span class="tag beat">BEAT +3.7%</span></td></tr>
+      <tr><td>GAAP Diluted EPS</td><td>$1.23</td><td>—</td><td>+23.0% YoY</td></tr>
+      <tr><td>Revenue</td><td>$1.474B</td><td>$1.4473B</td><td>+18.7% · <span class="tag beat">BEAT</span></td></tr>
+      <tr><td>Backlog (季末)</td><td>$8.0B</td><td>—</td><td><strong>歷史新高</strong>（前次 $7.8B）</td></tr>
+      <tr><td>RPO 12-month</td><td>$4.0B</td><td>—</td><td>~70% 已落袋</td></tr>
+      <tr><td>Non-GAAP Operating Margin</td><td>44.7%</td><td>—</td><td>+90bp QoQ</td></tr>
+      <tr><td>Billings</td><td>$1.49B</td><td>—</td><td>+21.4% YoY</td></tr>
+      <tr><td>FY26 Revenue Guidance</td><td>$6.125-$6.225B (+17%)</td><td>$5.9-$6.0B (前次)</td><td><span class="tag raise">RAISE</span> 中點 +2.4%</td></tr>
+      <tr><td>FY26 Non-GAAP EPS</td><td>$7.85-$7.95</td><td>$8.05-$8.15 (前次)</td><td><span class="tag lower">LOWER</span> Hexagon 拖累 $0.28</td></tr>
+      <tr><td>Q2 Revenue Guidance</td><td>$1.555-$1.595B</td><td>—</td><td>QoQ 持續加速</td></tr>
+      <tr><td>Q2 Non-GAAP EPS</td><td>$2.02-$2.08</td><td>$1.78</td><td><span class="tag raise">RAISE</span> 大幅高於街口</td></tr>
     </tbody>
   </table>
+
   <h4>關鍵細節</h4>
   <ul>
-    <li><strong>Record backlog $8.0B + next 12-month RPO $4.0B</strong>——forward revenue visibility極強。AI-driven chip design demand是primary driver。</li>
-    <li><strong>Revenue +19% 是broad-based strength across all businesses</strong>——Functional Verification、Digital IC、Custom IC、System Design全部成長。</li>
-    <li><strong>Raise 2026 revenue outlook 至 $6.125-6.225B</strong>——management confidence in AI-driven demand sustainability。</li>
-    <li><strong>AgentStack launch</strong>——agentic AI full-flow platform integrating ChipStack、ViraStack、InnoStack Super Agents。CEO Devgan：「Cadence is leading the agentic AI transformation in semiconductor and system design.」</li>
-    <li>OCF -27% YoY 是timing effect（不是structural問題）。CapEx +112% 反映investments in infrastructure。</li>
-    <li>Cash $1.41B（-49%）——收購（Beta CAE Systems $3B+ in 2024）消耗。</li>
-    <li><strong>AI chip complexity↑→ EDA TAM↑</strong>：2nm/3nm design complexity、3D packaging、multi-die systems全部需要更多EDA tools。</li>
-    <li>對比4/22 LRCX（semi equipment supercycle）：LRCX是hardware端、CDNS是software端——兩者同時strong確認semiconductor ecosystem demand across全 value chain。</li>
+    <li>Hexagon Design & Engineering 整合：FY26 預計貢獻營收 $160M，dilutive 約 $0.28；Q1 已貢獻 $20M revenue 但僅 $0.01 EPS dilution</li>
+    <li>CFO Wall 解釋稀釋主因：「30% 用股票 + 70% 用現金支付，現金部分的 lost interest income 是稀釋的主要原因」</li>
+    <li>Hexagon margin impact 在 5-10% 區間，Cadence organic incremental margin 接近 60%</li>
+    <li>新發表 AgentStack（agentic AI 全流程平台），整合 ChipStack / ViraStack / InnoStack Super Agents — EDA 業界首個</li>
+    <li>FY26 計畫用約 50% FCF 做 buyback；2025 全年已 buyback $925M</li>
+    <li>Q1 Operating Cash Flow $355.8M，年化目標 $1.875-1.975B</li>
+  </ul>
+
+  <h4>Earnings Call 重點（Transcript 實際引述）</h4>
+  <ul>
+    <li>CEO Anirudh Devgan：「Cadence delivered one of the best Q1s in the company's history」、「record backlog of $8 billion was ahead of plan, reflecting customer confidence in Cadence's AI-driven portfolio」</li>
+    <li>CEO Devgan 談 Hexagon：「strengthens Cadence's position in structural and multi-body dynamics, helping address what I call the『sim to real gap』」、physical AI 將驅動更多 silicon design 需求</li>
+    <li>分析師 Jason Celino (KeyBanc) 追問 operating margin 下調原因，CFO Wall 回應：「primarily the impact of including the Hexagon Design and Engineering business...財務上 2026 是 integration year，guide 包含 acquired cost base、financing impact、acquisition-related integration costs 和 near-term dilution」</li>
+    <li>CFO Wall 進一步：「我預期 2026 年和 2027 年 Hexagon 會走和 Beta 收購一樣的軌跡 — 24 年有 dilutive impact，25 年 margins improved dramatically as we got the synergies」</li>
+    <li>分析師 Vivek Arya (BofA) 詢問 EDA simulation 競爭策略（vs Synopsys-Ansys），CEO Devgan 強調已投入 $5B+ 五年整合，垂直整合 go-to-market 是策略主軸</li>
+    <li>CFO Wall：「我們的 2026 outlook 假設 export control regulations remain substantially similar」— 對地緣風險的明確聲明</li>
+    <li>2026 renewals「lighter than 2025」但歷史上輕 renewal 年仍會強成長因為 add-on activity</li>
+  </ul>
+
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li>盤中 $333.60 +0.2%；盤後 +2.8%（GuruFocus 報導，未公布具體盤後收盤價）</li>
+    <li>GuruFocus 評論：「Q1 results contributing to a positive market reaction. P/E 82.93x indicating a high valuation relative to earnings」</li>
+    <li>Quiver Quantitative 標題雖為「Stock Falls on Q1 2026 Earnings」但實際指 GAAP 數字相對前期 — 盤後反應是正面 +2.8%</li>
   </ul>
 </div>
 
 <div class="company-card">
   <div class="company-header">
-    <span class="ticker">CLS · Celestica</span>
-    <span class="meta-right">$47B · 盤後 · <span class="stock-move up">TBD</span></span>
+    <span class="ticker">PSA · Public Storage</span>
+    <span class="meta-right">$53B · 盤後 · <span class="stock-move flat">盤中 -0.91% 收 $305.48 / 盤後 $306.01 (+0.17%)</span></span>
   </div>
   <table>
     <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
     <tbody>
-      <tr><td>Adj. EPS</td><td>$2.16</td><td>$2.08</td><td>+73% · <span class="tag beat">BEAT 3.8%</span></td></tr>
-      <tr><td>Revenue</td><td>~$4.0B</td><td>$3.85-4.15B guide</td><td>+53% · <span class="tag beat">IN RANGE</span></td></tr>
-      <tr><td>CCS segment</td><td>—</td><td>—</td><td>Hyperscaler-driven acceleration</td></tr>
-      <tr><td>ATS segment</td><td>—</td><td>—</td><td>margin improving</td></tr>
-      <tr><td>2026 Adj EPS outlook</td><td>$10.15</td><td>prior lower</td><td><span class="tag raise">RAISE</span></td></tr>
-      <tr><td>2027 outlook</td><td>strengthening</td><td>—</td><td><span class="tag raise">POSITIVE</span></td></tr>
+      <tr><td>Core FFO/share</td><td>$4.22</td><td>$4.12</td><td>+2.4% · <span class="tag beat">BEAT +2.4%</span></td></tr>
+      <tr><td>Net Income/share</td><td>$2.71</td><td>$2.42</td><td>+32.8% (含 $41.7M FX gain)</td></tr>
+      <tr><td>Revenue</td><td>$1.22B</td><td>$1.21B</td><td>+3.4% · <span class="tag beat">BEAT</span></td></tr>
+      <tr><td>Self-Storage NOI</td><td>$822.4M</td><td>—</td><td>+2.6%</td></tr>
+      <tr><td>Same-Store NOI Margin</td><td>77.1%</td><td>—</td><td>+40bp YoY</td></tr>
+      <tr><td>Total Debt</td><td>$10.1B</td><td>—</td><td>3.3% 加權平均利率</td></tr>
+      <tr><td>2026 Same-Store NOI Growth Guidance</td><td>(3.9)% to (0.5)%</td><td>—</td><td><span class="tag maintain">MAINTAIN</span> 仍預期同店 NOI 衰退</td></tr>
+      <tr><td>2026 Core FFO Guidance</td><td>$16.35-$17.00</td><td>$16.90 (consensus)</td><td><span class="tag maintain">MAINTAIN</span> 中點低於街口</td></tr>
     </tbody>
   </table>
+
   <h4>關鍵細節</h4>
   <ul>
-    <li><strong>Raise 2026 full-year adj EPS outlook 至 $10.15</strong>——hyperscaler AI infrastructure orders持續超預期。</li>
-    <li><strong>CPO（Co-Packaged Optics）Ethernet switch program win</strong>——1.6T switch silicon + liquid cooling for AI scale-out networks。2027 production ramp。這是next-gen networking architecture的重要 design win。</li>
-    <li><strong>CCS segment acceleration</strong>——hyperscaler customers（MSFT/GOOGL/META/AMZN）的CapEx translation into CLS orders。</li>
-    <li>ATS segment（A&D、Industrial、HealthTech）margin也在improve。</li>
-    <li>2027 outlook「strengthening from 90 days ago」——new program wins + better customer forecast visibility。</li>
-    <li>Amended credit facility to $2.5B——scale of business growing fast enough to need more liquidity。</li>
-    <li><strong>AI infrastructure value chain延伸：</strong>chip design（CDNS）→ chip manufacturing（LRCX/TXN/INTC）→ power（GEV/NEE）→ networking（CLS CPO switch）→ cooling（VRT）→ construction（FIX/URI）。CLS的CPO win補全了「networking」這一環。</li>
+    <li>Net income +32.8% 大部分來自 Euro-denominated debt 的 FX gain $41.7M — 一次性、不可重複</li>
+    <li>Core FFO +2.4% 才是真正的可持續成長指標</li>
+    <li>Same-store NOI growth 全年指引 (3.9)% to (0.5)% — 自助倉儲行業仍在 down-cycle</li>
+    <li>Same-store revenue 持平、occupancy 微升、operating cost 下降 — 純粹成本管控撐獲利率</li>
+    <li><strong>3/16 公告 NSA（National Storage Affiliates）合併：</strong>全股票交易，企業價值 $10.5B、0.14 PSA shares per NSA share、488 個 NSA 物業全資 + 313 個 JV、預計 Q3 2026 close、$110-130M 協同效益、長期 FFO accretion $0.35-0.50</li>
+    <li>Q1 自有 3,176 個美國設施 + 國際擴張</li>
+  </ul>
+
+  <h4>Earnings Call 重點</h4>
+  <div class="note-box">
+    PSA 的 Q1 2026 conference call 排程在 4/28 11:00 a.m. CT（次日早上）。本報告引述限於 4/27 盤後發布的 press release 內容，完整 transcript 將於 4/28 後發布。
+  </div>
+  <ul>
+    <li>CEO Tom Boyle (press release)：「Public Storage's first quarter results reflect differentiated strategies that continue to drive our performance」</li>
+    <li>CEO Boyle 對 NSA 合併：「We are excited about the announcement of our acquisition of National Storage Affiliates and its ability to drive per share earnings growth. The pending acquisition will build upon our leading platform, which we expect to enhance customer experience, unlock operating upside, and jump start our Value Creation Engine」</li>
+    <li>4/20 Barclays 已將目標價從 $347 提至 $352，給予 Buy 評級</li>
+    <li>2/17 公告把總部從 Glendale, CA 搬到 Frisco, TX，伴隨 CEO 換血計畫提升 margin、earnings、shareholder returns</li>
+  </ul>
+
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li>盤中收 $305.48 -0.91%（Morningstar 數據）；盤後 $306.01 +0.17%（同 Morningstar，GuruFocus 數據顯示 +0.35% 至 $306.55，略有差異）</li>
+    <li>GuruFocus 評論：「The reaffirmation of its full-year core FFO guidance at $16.35, which is below the consensus estimate of $16.90, raises some concerns regarding future growth prospects」</li>
+    <li>市場「沒驚喜也沒驚嚇」反應 — 同店 NOI 全年指引仍預期負成長壓制估值，但 NSA 合併與結構性 FFO accretion ($0.35-0.50) 提供長期催化</li>
   </ul>
 </div>
 
-<h2 id="s2">§2 ｜產業與子產業趨勢及 Implications</h2>
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">CLS · Celestica（用戶指定加入）</span>
+    <span class="meta-right">$47B · 盤後 · <span class="stock-move down">盤後 -8.11% 至 $388.01</span></span>
+  </div>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Adjusted EPS (non-GAAP)</td><td>$2.16</td><td>$2.08</td><td>+80% · <span class="tag beat">BEAT 高於 guidance 上緣 $2.15</span></td></tr>
+      <tr><td>GAAP EPS</td><td>$1.83</td><td>—</td><td>+147% (vs $0.74)</td></tr>
+      <tr><td>Revenue</td><td>$4.05B</td><td>$4.05B</td><td>+53% · <span class="tag inline">in-line</span> guidance 中點</td></tr>
+      <tr><td>Adj Operating Margin</td><td>8.0%</td><td>7.8% (中點)</td><td>+90bp YoY · 高於指引</td></tr>
+      <tr><td>CCS Segment Revenue</td><td>~$3.24B (80%)</td><td>—</td><td>Communications + Enterprise 大幅成長</td></tr>
+      <tr><td>HPS (Hardware Platform Solutions)</td><td>~$1.7B (42%)</td><td>—</td><td>+63% YoY</td></tr>
+      <tr><td>Operating Cash Flow</td><td>$356.3M</td><td>—</td><td>強勁</td></tr>
+      <tr><td>Net Earnings</td><td>$212.3M</td><td>—</td><td>+146% YoY</td></tr>
+      <tr><td>2026 Revenue Guidance</td><td>$19.0B</td><td>$17.0B (前次)</td><td><span class="tag raise">RAISE +$2.0B (+12%)</span></td></tr>
+      <tr><td>2026 Adj EPS Guidance</td><td>$10.15</td><td>$8.75 (前次)</td><td><span class="tag raise">RAISE +$1.40 (+16%)</span></td></tr>
+      <tr><td>FY26 FCF Guidance</td><td>$500M</td><td>$500M (前次)</td><td><span class="tag maintain">MAINTAIN</span> 不變</td></tr>
+      <tr><td>Q2 Revenue Guidance</td><td>$4.15-$4.45B</td><td>—</td><td>QoQ 仍加速</td></tr>
+    </tbody>
+  </table>
 
-<h3>電信 — Convergence策略的turnaround moment（VZ vs T）</h3>
-<p><strong>趨勢：VZ 13年來首次Q1 postpaid正成長，T 持續postpaid strong。US telecom duopoly都在winning。</strong></p>
-<p>VZ的+55K postpaid（vs去年-289K）和T的+324K postpaid（4/22報告）顯示wireless market不再是zero-sum——bundling（wireless+broadband）在growing the pie。VZ的strategy shift「from promotional activity to customer lifetime value」正在deliver：churn 0.90%→&lt;0.85%、record EBITDA。</p>
-<p><strong>Implication：</strong></p>
-<ul>
-  <li>T-Mobile（TMUS，尚未報告）是check——如果三家carrier都positive net adds，代表wireless market在expand（不是搶客）。</li>
-  <li>FWA（VZ 214K、T 200K+）正在系統性替代cable broadband——這對CMCSA（4/23 broadband -65K）和CHTR是structural headwind。</li>
-  <li>VZ raise guidance但revenue miss——market不在乎top-line shortfall因為quality of revenue在improve。這驗證「raise is alpha」但也加了一個nuance：raise + quality story &gt; beat without raise。</li>
-</ul>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>本日最大 raise</strong>：全年營收指引在 Q1 完成後直接從 $17B 拉到 $19B，幅度 +12%</li>
+    <li>新增 design/manufacturing 訂單：與 hyperscaler 合作 1.6 Terabit CPO Ethernet switch（co-packaged optics + liquid cooling），2027 量產</li>
+    <li>4/27 同步公告：amended senior secured credit agreement，總額度提升至約 $2.5B，「to align available liquidity with the growing scale of our business」</li>
+    <li>Tariff 影響：管理層明確聲明關稅可全數轉嫁給客戶，不影響 adj operating earnings</li>
+    <li>Capex Q1 $229.5M，term loans 餘額 $719.3M</li>
+    <li><strong>FCF 指引維持不變</strong>是市場最不喜歡的訊號 — 大幅 raise revenue/EPS 但 FCF 不動，意味全部 incremental 利潤被 capex 吃掉</li>
+  </ul>
 
-<h3>EDA/半導體設計 — AI chip complexity驅動EDA TAM explosion（CDNS）</h3>
-<p><strong>趨勢：Cadence revenue +19%、record backlog $8.0B、raise outlook。</strong></p>
-<p>AI chip design complexity正在exponentially增加：2nm/3nm advanced nodes、3D packaging（chiplets）、multi-die systems、power management optimization。每一個trend都需要更多EDA tools和simulation capacity。</p>
-<p><strong>與本週半導體supply chain的交叉驗證：</strong></p>
-<ul>
-  <li>4/22 LRCX：semi equipment +37%（hardware manufacturing端）</li>
-  <li>4/22 TXN：analog/embedded industrial recovery +18% QoQ</li>
-  <li>4/23 INTC：Foundry +16%、DC +22%（chip production端）</li>
-  <li>4/27 CDNS：EDA +19%、record backlog（chip design端）</li>
-</ul>
-<p><strong>Implication：</strong>半導體ecosystem的每一層——design（CDNS/SNPS）→ equipment（LRCX/AMAT）→ manufacturing（TSMC/INTC）→ analog/power（TXN/ADI）——都在同時加速。這不是single-point signal，而是full-stack confirmation of AI-driven semiconductor supercycle。AgentStack/agentic AI在chip design的adoption是next-gen productivity multiplier。</li>
-</ul>
+  <h4>Earnings Call 重點</h4>
+  <div class="note-box">
+    CLS 的 Q1 2026 conference call 排程在 4/28 8:00 a.m. ET（次日早上）。本報告引述限於 4/27 盤後發布的 press release 與已公開內容；完整 transcript 將於 4/28 後發布。
+  </div>
+  <ul>
+    <li>CEO Rob Mionis (press release)：「Celestica delivered a strong first quarter to begin 2026, achieving revenue of $4.05 billion and adjusted EPS (non-GAAP) of $2.16. Our solid results included adjusted operating margin of 8.0%, a new milestone for the company」</li>
+    <li>CEO Mionis：「We continue to see accelerating growth from our CCS customer base, alongside increasing profitability in both our CCS and ATS segments. Driven by this momentum, we are raising our 2026 annual outlook to $19B revenue and $10.15 adjusted EPS」</li>
+    <li>1.6T CPO Ethernet switch 訂單描述：「optimized for AI scale out networks, will utilize 1.6 Terabit switch silicon, leveraging co-packaged optical interconnects, and liquid cooling technology. The HPS program is expected to begin ramping production in 2027」</li>
+    <li>Q4 2025 transcript（前一季）的 historical context：CEO Mionis 曾稱「Enterprise End Market 預期 high teens % 成長，由 next generation AI ML hyperscaler compute program 驅動」、CFO Mandeep Chawla 確認「program 在 Q1 加速成長」</li>
+  </ul>
 
-<h3>AI Infrastructure 服務 — Hyperscaler CapEx正在translate into contract manufacturer revenue（CLS）</h3>
-<p><strong>趨勢：CLS revenue +53%、raise EPS outlook至$10.15、CPO Ethernet switch win。</strong></p>
-<p>CLS的acceleration直接反映hyperscaler CapEx conversion：MSFT/GOOGL/META/AMZN的$50B+/quarter CapEx正在flowing through to server/networking/infrastructure manufacturers。</p>
-<p><strong>CPO（Co-Packaged Optics）是key signal：</strong>1.6T switch silicon + liquid cooling for AI scale-out networks。這是next-gen data center networking的architecture shift——optical transceivers integrated directly onto switch packages，reducing power consumption and latency。2027 ramp意味著hyperscalers已經在planning next-gen network architectures 2-3 years out。</p>
-<p><strong>Implication：</strong>AI infrastructure supply chain在本週完成了full circle mapping：CDNS（design）→ LRCX/INTC（make chips）→ GEV/NEE（power）→ VRT（cooling）→ CLS（servers/networking）→ FIX/URI（build）→ KMI（gas pipeline）。每一環都在accelerating。CLS的CPO win特別重要——它意味著networking architecture正在shift，current-gen transceivers（II-VI/Coherent等）可能face disruption。</p>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li>盤後 -8.11% 至 $388.01（Benzinga 「12 Information Technology Stocks Moving In Monday's After-Market Session」報導）</li>
+    <li>市場 sell-off 主因（Benzinga 整理）：股價 YTD 已大幅上漲 + 估值已 priced in 完美 + FCF guidance 不變顯示 capex 吃掉所有 incremental 利潤</li>
+    <li>實際股價反應與基本面 RAISE 完全脫鉤 — 是當天「Beat + Raise = Sell the News」的最強訊號</li>
+  </ul>
+</div>
 
-<h2 id="s3">§3 ｜贏家與輸家</h2>
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">RMBS · Rambus（用戶指定加入）</span>
+    <span class="meta-right">$17B · 盤後 · <span class="stock-move down">盤後 -10.58% 至 $126.37 (本日最大跌幅)</span></span>
+  </div>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>GAAP EPS</td><td>$0.55</td><td>—</td><td>—</td></tr>
+      <tr><td>Adj EPS</td><td>~$0.63</td><td>$0.61-$0.64</td><td><span class="tag beat">小幅 BEAT</span></td></tr>
+      <tr><td>GAAP Revenue</td><td>$180.2M</td><td>$179.94M</td><td>· <span class="tag beat">BEAT</span> 在 guidance 中點以上</td></tr>
+      <tr><td>Product Revenue</td><td>$88.0M</td><td>—</td><td>+15% YoY · 強勁</td></tr>
+      <tr><td>Licensing Billings</td><td>$70.8M</td><td>—</td><td>持平 — 無成長</td></tr>
+      <tr><td>Contract & Other Revenue</td><td>$22.6M</td><td>—</td><td>—</td></tr>
+      <tr><td>Cash from Ops</td><td>$83.2M</td><td>—</td><td>強勁現金生成</td></tr>
+      <tr><td>Cash + Securities</td><td>$786.1M</td><td>—</td><td>balance sheet 充裕</td></tr>
+      <tr><td>Q2 Product Revenue Guidance</td><td>$95-101M</td><td>—</td><td><span class="tag raise">RAISE</span> +8-15% QoQ</td></tr>
+      <tr><td>Q2 Licensing Billings Guidance</td><td>$76-82M</td><td>—</td><td>—</td></tr>
+      <tr><td>Net Margin</td><td>32.6%</td><td>—</td><td>高利潤率商業模式</td></tr>
+    </tbody>
+  </table>
 
-<h3>贏家</h3>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li>Q1 推出 LPDDR5X SOCAMM2 server module chipset — 業界首個 SOCAMM2 server memory chipset，鎖定 AI data center</li>
+    <li>同時推出業界最快 HBM4E 記憶體控制器 IP — HBM4E 為 2027 NVIDIA Rubin / AMD MI400 世代核心</li>
+    <li>Product revenue +15% YoY，licensing 持平 — 公司結構性轉向 product-led（毛利率較低但成長快）</li>
+    <li>Net margin 32.6% + 高 ROE 反映 IP-driven 商業模式溢價</li>
+    <li>2/12 Victor Peng（前 Xilinx CEO、現任 AMD 高層）加入董事會 — IP 整合、AMD 合作潛在催化</li>
+  </ul>
+
+  <h4>Earnings Call 重點（Transcript 實際引述 — 這段是本日最重要的訊號）</h4>
+  <ul>
+    <li>CEO Luc Seraphin 開場：「Rambus opened 2026 with a solid first quarter, delivering financial results in line with guidance and generating strong cash from operations」（注意：用 "in line"，沒用 "ahead"）</li>
+    <li>CEO Seraphin 對 AI 趨勢：「The growth of AI inference and agentic workloads in the data center continues to drive demand for higher memory bandwidth, efficient data movement, and scalable connectivity」</li>
+    <li><strong>關鍵爆雷：</strong>分析師 Sebastian (代 Mehdi 提問) 詢問 SOCAMM2 chipset 何時開始貢獻 revenue，CEO Seraphin 直接回應：「<strong>Now, in the short run for the SOCAMM2 on LPDDR5X, you know, as I said, the volumes and the content, the dollar content is gonna be very low. That's a very interesting and strategic stepping stone for us...I don't think that the financial impact is gonna be significant this year, just given the volumes</strong>」</li>
+    <li>CEO 解釋 SOCAMM2 結構：「one SPD hub and two types of voltage regulators. Three voltage regulators in total, but two types. One 12-amp regulator and two 3-amp regulators」</li>
+    <li>CEO 進一步：「It allows us to engage with other AI players in the industry, and we're working on next generation as well」— 暗示真正催化在下一代</li>
+    <li>HBM4E 描述：「the industry's fastest HBM4E memory controller IP, setting a new benchmark for AI accelerator memory throughput」</li>
+    <li>另發表 Ultra Ethernet 用 network security engine 保護分散式 AI clusters</li>
+  </ul>
+
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li>盤後 -10.58% 至 $126.37（Benzinga 「12 Information Technology Stocks Moving In Monday's After-Market Session」報導，市值剩 $17B）</li>
+    <li>下跌主因（直接從 transcript 推斷）：CEO Seraphin 親自降溫 SOCAMM2 短期財務影響 — 市場原本期待這是 AI memory 大訂單的近期催化，CEO 卻明說「dollar content 很低、財務影響今年不顯著」</li>
+    <li>Daily Political 評論：「Q1 results slightly beat Street expectations...Positive Sentiment: Product/strategy catalyst: SOCAMM2 AI memory launch...can support higher valuation multiples if adoption scales」— 但 CEO 表示 adoption 不會在 2026 scale 顯示</li>
+    <li>本日最大 % 跌幅，是「期待 vs 實際」落差最極端的案例</li>
+  </ul>
+</div>
+
+</section>
+
+<section id="sec2">
+<h2>§2 產業與子產業趨勢</h2>
+
+<h3>2.1 AI Infrastructure 估值反映過度的初步訊號</h3>
+<p>本日 4 家 AI infrastructure 公司全部 beat（CDNS、CLS、RMBS 數據強勁；VZ 為傳統 telecom 但 EPS beat），但只有 CDNS 和 VZ 上漲。CLS 和 RMBS 都在盤後重挫 8-10%，原因都不是「業績不夠好」，而是「估值已 priced in 完美，市場對 raise 的預期更高」。</p>
+
 <table>
-  <thead><tr><th style="width:140px;">公司</th><th>原因</th></tr></thead>
+  <thead><tr><th>環節</th><th>公司</th><th>基本面訊號</th><th>股價反應</th></tr></thead>
   <tbody>
-    <tr class="winner-row"><td>VZ</td><td>EPS beat 5.8%、raise guidance至+5-6%。13年來首次Q1 postpaid正成長（+55K）。Record EBITDA $13.4B。Revenue miss但market不在乎——quality+raise+turnaround story。Stock +3.6%。<strong>當日最大winner。</strong></td></tr>
-    <tr class="winner-row"><td>CDNS</td><td>EPS beat、revenue +19%、record backlog $8.0B、raise outlook。AI-driven EDA demand across全spectrum。AgentStack launch。</td></tr>
-    <tr class="winner-row"><td>CLS</td><td>EPS beat 3.8%、raise 2026 outlook至$10.15、CPO Ethernet switch design win。Hyperscaler CapEx直接受益者。2027 outlook strengthening。</td></tr>
+    <tr><td>EDA Design</td><td>CDNS ($92B)</td><td>Backlog $8B 創新高、FY26 Revenue raise +17%</td><td>盤後 +2.8% (估值未過度)</td></tr>
+    <tr><td>Memory IP</td><td>RMBS ($17B)</td><td>Q2 product revenue +11% QoQ、HBM4E IP</td><td>盤後 -10.58% (CEO 自降溫)</td></tr>
+    <tr><td>EMS / Manufacturing</td><td>CLS ($47B)</td><td>FY26 revenue $17B → $19B (+12%)</td><td>盤後 -8.11% (FCF 不變)</td></tr>
+    <tr><td>Telecom + AI native</td><td>VZ ($200B)</td><td>EPS guidance 4-5% → 5-6%</td><td>+1.5% (估值合理)</td></tr>
   </tbody>
 </table>
 
-<h3>輸家</h3>
+<p><strong>Cross-day 驗證：</strong>4/22 ELV、4/24 INTC 的 hyperscaler 訊號至此完全 confirm — AI 基礎建設 chain 訂單真實，但估值反映已過度。問題從「需求是否真實」轉為「股價是否還有上行空間」。</p>
+
+<p><strong>Implication：</strong>當 design / memory / manufacturing 全部加速但僅 CDNS 上漲，意味著市場對 AI infrastructure 鏈的「raise 預期」已經很高，beat + raise 不再是 sufficient condition。對投資組合的含義：AI infrastructure 二線供應商現在是 super-priced-in 狀態，risk-reward 反而不如 VZ / CDNS 這類「估值未過度反映預期」的標的。</p>
+
+<h3>2.2 REIT 行業：結構性 vs 週期性的分歧（PSA 案例）</h3>
+<p>本日只有 PSA 一家 REIT 報告（VTR、AMT 等不到 $50B 門檻被排除）。PSA 雖 Core FFO beat $0.10，但全年 same-store NOI 指引仍預期 (3.9)% to (0.5)% 衰退、Core FFO 中點 $16.675 低於街口 $16.90，反映自助倉儲行業仍在 down-cycle。NSA 合併（Q3 2026 close）為長期催化但短期股價反應平淡。</p>
+
+<p><strong>Implication：</strong>對台灣投資人在思考 REIT 配置：在當前環境下「demographic-driven」（如老年照護、senior housing）比「rate-cycle-driven」（self-storage 等利率下行）是更好的長期 anchor。PSA 須等利率明確下行 + 同店 NOI 轉正才會有 re-rating 動力。</p>
+
+<h3>2.3 Telecom 業：Frontier 整合驗證 + AI native 轉型（VZ 樣本）</h3>
+<p>VZ 是傳統電信業的轉型樣本：</p>
+<ul>
+  <li>Postpaid phone 13 年來首次 Q1 正成長 — 證明 wireless competitive equilibrium 改善</li>
+  <li>Frontier convergence 模型：mobility + fiber 流失率比 standalone 低 30%</li>
+  <li>啟動「AI-native」轉型 + 與 Anthropic、Google 合作</li>
+</ul>
+
+<p><strong>Cross-day signaling：</strong>VZ 對 Mag7 週的市場意義 — 大型藍籌 telecom 都能 raise 全年 EPS，意味著消費者付費意願在「中位數」其實沒崩。但 VZ 上漲的核心是「估值合理」、不是「結果驚艷」 — 過去 6 個月已下跌約 8%，此次 EPS raise 是低 base 反彈。</p>
+
+</section>
+
+<section id="sec3">
+<h2>§3 贏家、輸家與 Sell the News</h2>
+
+<h3>贏家（基本面 + 股價同步正向）</h3>
 <table>
-  <thead><tr><th style="width:140px;">公司</th><th>原因</th></tr></thead>
+  <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
   <tbody>
-    <tr><td colspan="2" style="text-align:center;color:var(--text-muted);font-style:italic;">4/27 無明確輸家——三家公司均beat或raise。VZ revenue miss但stock仍漲。</td></tr>
+    <tr class="winner-row"><td>VZ</td><td><strong>盤中 +1.5% 收 $47.72（盤中曾 +4.5%）。</strong>Adj EPS $1.28 vs $1.21（+5.8%）、13 年來首次 Q1 postpaid phone 正成長、全年 EPS 指引從 4-5% → 5-6%。CEO Schulman 親口稱「turnaround is not only progressing, it is gaining momentum」。當天最 cleanest 贏家 — 真正示範了「Beat is default, Raise is alpha」並能 forgive $490M revenue miss。</td></tr>
+    <tr class="winner-row"><td>CDNS</td><td><strong>盤後 +2.8%（盤中收 $333.60 +0.2%）。</strong>EPS $1.96 vs $1.89（+3.7%）、Backlog $8.0B 創歷史新高、FY26 revenue 指引 raise +17%、Q2 EPS guidance $2.02-$2.08 大幅高於街口 $1.78。雖 Hexagon 整合拖累 EPS $0.28，但市場 forgive 因為 backlog 透露真實需求 + 「organic incremental margin 接近 60%」（CFO Wall 引述）。</td></tr>
   </tbody>
 </table>
 
-<h2 id="s4">§4 ｜互相矛盾與不合邏輯之處</h2>
+<h3>輸家（Sell the News：Beat + Raise 但股價跌）</h3>
+<table>
+  <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+  <tbody>
+    <tr class="sell-news-row"><td>RMBS</td><td><strong>盤後 -10.58% 至 $126.37（本日最大 % 跌幅）。</strong>EPS 小幅 beat + Q2 product revenue raise +11% QoQ，但市場 cut。<strong>核心原因從 transcript 直接看到</strong>：CEO Seraphin 在 Q&A 親自坦承「SOCAMM2 short run dollar content is gonna be very low...I don't think that the financial impact is gonna be significant this year」。市場原本期待 SOCAMM2 是 AI memory 大訂單的近期催化，CEO 卻親自降溫。licensing billings 持平無成長進一步加深疑慮。AI memory tier 二線供應商 valuation reset。</td></tr>
+    <tr class="sell-news-row"><td>CLS</td><td><strong>盤後 -8.11% 至 $388.01。</strong>儘管 revenue +53% YoY、adj EPS $2.16 高於 guidance 上緣、FY26 revenue 一次拉 +12% / EPS 拉 +16%，市場仍跌。<strong>核心原因</strong>：(1) FCF guidance $500M 不變，意味著 capex 吃掉所有 incremental 利潤；(2) YTD 股價已大幅上漲，估值已 priced in 完美 raise；(3) revenue 落在 guidance 中點而非超 guidance 上緣 — 「raise 不夠驚喜」。AI infrastructure 二線供應商 valuation reset 第一槍。</td></tr>
+  </tbody>
+</table>
+
+<h3>中性（基本面正向但股價平淡）</h3>
+<table>
+  <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+  <tbody>
+    <tr><td style="font-family: 'IBM Plex Mono', monospace; font-weight: 600;">PSA</td><td><strong>盤中 -0.91% 收 $305.48 / 盤後 +0.17% 至 $306.01。</strong>Core FFO $4.22 雖 beat $0.10，但 same-store NOI 全年指引 (3.9)% to (0.5)% 仍維持衰退、Core FFO 全年中點 $16.675 低於街口 $16.90。Net Income beat 主要靠 $41.7M FX gain（一次性）。NSA 合併是長期催化但 Q3 2026 才 close。GuruFocus 評論：「raises some concerns regarding future growth prospects」。</td></tr>
+  </tbody>
+</table>
+
+<p><strong>關鍵觀察：</strong>本日的真實主題不是「贏家對輸家」，而是「Beat + Raise = Sell the News」。AI infrastructure 鏈兩家（CLS、RMBS）全部 beat + raise 卻盤後重挫，與 VZ / CDNS 的 clean 上漲形成鮮明對比。差別在於 <strong>YTD 漲幅是否已 priced in 完美 + raise 是否超出市場「對 raise 的預期」</strong> — VZ / CDNS 估值未過度反映完美，beat + raise 就是上漲；CLS / RMBS YTD 已大漲，beat + raise 變成 sell event。</p>
+
+</section>
+
+<section id="sec4">
+<h2>§4 矛盾與不合邏輯之處</h2>
 
 <div class="contradiction">
-  <h4>矛盾 1：VZ revenue miss $400M 但 stock +3.6% 且 raise guidance</h4>
-  <p>Revenue $34.4B miss $34.8B estimate by $400M。Wireless service revenue -1% YoY。但同時EPS beat 5.8%、record EBITDA、raise guidance。Stock +3.6%。</p>
-  <p class="implication">→ <strong>Implication：</strong>Market正在re-rate「revenue miss + guidance raise」的combination。VZ的case顯示：如果management能demonstrate revenue quality improvement（lower churn + higher ARPU + lower acquisition cost），top-line miss可以被forgive。這與本週IBM（beat + maintain = -6%）和NOW（beat + lower = -15%）形成直接對比——guidance direction的signaling power已經完全override revenue/EPS beat/miss。</p>
+  <h4>矛盾 1（本日最大矛盾）：RMBS Q2 product revenue +11% QoQ 但盤後 -10.58% — CEO 自我降溫殺掉股價</h4>
+  <p>RMBS Q1 EPS 小幅 beat、Q2 product revenue guidance $95-101M（中點 $98M vs Q1 $88M = +11% QoQ），看起來都是 raise 訊號。但盤後跌 -10.58% 至 $126.37。</p>
+  <p>邏輯問題：CEO Seraphin 在 Q&A 親自說「SOCAMM2 short run dollar content is very low...financial impact is not significant this year」。這個自我降溫殺掉了市場原本對 SOCAMM2 是 AI memory 近期大催化的期待。market cap $17B 對應 forward 30x+ EV/EBITDA 的估值已 priced in HBM4E 2027 故事，但 2027 才有的故事不能 justify 2026 估值。licensing billings 持平更加深疑慮。</p>
+  <p class="implication">→ <strong>Implication：</strong>當 CEO 在 transcript 親自降低市場對某產品的預期，即使其他指標 beat，市場仍會 sell。這提醒：對於 priced-in-perfection 的 AI 概念股，閱讀 transcript 中 CEO 對「短期影響」的措辭，比 headline beat 更重要。</p>
 </div>
 
 <div class="contradiction">
-  <h4>矛盾 2：VZ postpaid +55K vs T postpaid +324K——VZ gets more credit</h4>
-  <p>AT&T在4/22報告postpaid +324K，stock +2%。VZ在4/27報告postpaid +55K（6x smaller），stock +3.6%。</p>
-  <p class="implication">→ <strong>Implication：</strong>Market rewards trajectory change more than absolute performance。VZ的+55K是從-289K翻正的inflection point（delta +344K），而T的+324K是持續表現（delta smaller）。<strong>投資者price的不是「who adds more」而是「who is improving faster」。</strong>這是growth investing的核心邏輯——acceleration matters more than level。</p>
+  <h4>矛盾 2：CLS 全年 revenue +12% raise / EPS +16% raise，但 FCF guidance $500M 完全不變 — Capex 吃掉所有 incremental</h4>
+  <p>CLS FY26 revenue 從 $17B 拉到 $19B（+$2B / +12%），adj EPS 從 $8.75 拉到 $10.15（+$1.40 / +16%），但 FCF guidance 維持 $500M 不變。Q1 capex $229.5M 已是歷史最高之一。同日宣布 senior secured credit agreement 升級至 $2.5B「to align available liquidity with the growing scale」。</p>
+  <p>邏輯問題：當 revenue + earnings 同步大幅 raise，FCF 應該至少同比例增長。FCF 不變意味著 capex 同步大幅上升。市場直接看穿這個邏輯：股價跌 8.11%。</p>
+  <p class="implication">→ <strong>Implication：</strong>CLS 與其他 AI capex 軍備競賽公司一樣面臨 trade-off — 必須持續投資產能才能拿到 hyperscaler 訂單。若 hyperscaler capex 在 2027 放緩，CLS 的 FCF 兌現可能成為痛點。短期是 raise，長期是 capex commitment 風險。建議追蹤指標：未來 2 季 capex/revenue 比率與 hyperscaler 客戶集中度。</p>
 </div>
 
 <div class="contradiction">
-  <h4>矛盾 3：CDNS OCF -27% 但 raise outlook</h4>
-  <p>Cadence operating cash flow $356M，-27% YoY。CapEx +112%。Cash -49%（from Beta CAE acquisition）。但management raise revenue outlook並cite record backlog $8.0B。</p>
-  <p class="implication">→ <strong>Implication：</strong>EDA的subscription model意味著revenue recognition和cash collection有timing differences。Record backlog $8.0B提供了strong forward visibility——OCF decline是cash timing not business deterioration。但投資者需要monitor consecutive quarters的OCF trend。如果Q2不recover，就需要deeper investigation。</p>
+  <h4>矛盾 3：CDNS Revenue Raise + EPS Lower — 整合年的代價但市場 forgive</h4>
+  <p>CDNS 同時 raise FY26 revenue（$5.95B → $6.175B 中點，+3.8%）與 lower FY26 non-GAAP EPS（$8.10 → $7.90 中點，-2.5%）。Hexagon design/engineering 整合預計拖累 EPS $0.28（佔 EPS 指引 ~3.5%）。但盤後 +2.8%。</p>
+  <p>邏輯問題：營收成長加速但 EPS 下調，市場通常會 punish。但 CFO Wall 在 transcript 解釋稀釋主因是「30% 股票 + 70% 現金支付，現金的 lost interest income 是 dilution 主因」 — 這是技術性、可預期的 dilution。加上 Q2 EPS guidance $2.02-$2.08 大幅高於街口 $1.78，意味 H1 仍很強。</p>
+  <p class="implication">→ <strong>Implication：</strong>「Raise revenue + Lower EPS」這種組合的市場反應，取決於 Lower EPS 的原因是否「technical / temporary」。CDNS 的 Hexagon dilution 屬此類，市場 forgive。RMBS 也是 raise revenue 但 CEO 講的話讓市場質疑核心成長邏輯，市場就 punish。差別在 transcript 中管理層的 framing。</p>
 </div>
 
 <div class="contradiction">
-  <h4>矛盾 4：VZ FWA +214K broadband adds vs CMCSA broadband -65K（4/23）</h4>
-  <p>Verizon FWA（5G home internet）在Q1增加214K subscribers。同時4/23 Comcast broadband失去65K subscribers。VZ的broadband gain和CMCSA的broadband loss是同一個trend的兩面。</p>
-  <p class="implication">→ <strong>Implication：</strong>FWA正在系統性替代cable broadband。VZ + T的combined FWA net adds（估計400K+/quarter）正在超過cable broadband的total subscriber loss。Cable operators（CMCSA/CHTR）的broadband monopoly正在被5G erode——這是structural shift not cyclical。CMCSA的defense strategy（wireless bundling 435K net adds）本身就是證明cable operators需要「counter-attack」telecom的broadband invasion。</p>
+  <h4>矛盾 4：VZ Beat-Raise vs Revenue Miss — 「Beat is default, Raise is alpha」教科書再現</h4>
+  <p>VZ EPS beat $0.07，全年 EPS 指引從 4-5% raise 至 5-6%，但 revenue $34.4B miss 預期 $34.82B 約 $490M。市場 forgive revenue miss、盤中 +1.5%（盤前一度 +3.9%）。</p>
+  <p>邏輯問題：Frontier acquisition 1/20 closed 應大幅貢獻 Q1 收入（Frontier 過去年化 ~$5.7B），但合併營收只有 +2.9%，意味著 organic mobility/broadband 仍很弱。Mobility/broadband service revenue +1.6% 含 80bp 網路中斷拖累 — 真實 organic +2.4% 仍低於 2-3% guidance range 下緣。</p>
+  <p class="implication">→ <strong>Implication：</strong>VZ 的真實故事是 cost cutting + buyback driven EPS beat（acquisition 支出 -35%、$2.5B Q1 buyback、總目標 $5B opex 節省）。Top-line 沒復甦，但市場已習慣大型 telecom「靠 capital allocation 變 EPS 機器」，加上 13 年來首次 Q1 正成長的 narrative 撐起股價。對長期持有者是雙刃劍 — 護城河仍弱，全靠 financial engineering 與 narrative。</p>
 </div>
 
 <div class="contradiction">
-  <h4>矛盾 5：本週所有AI infrastructure公司都beat+raise，但nobody提中東 geopolitical risk對supply chain的potential影響</h4>
-  <p>CDNS raise outlook、CLS raise outlook、LRCX raise Q3 guidance、INTC raise Q2 guidance、GEV raise revenue+EPS、NEE raise CapEx。所有AI infrastructure名字都在accelerating。但同時本週NOW/HON/SLB/SAP都因中東衝突受到material P&L impact。</p>
-  <p class="implication">→ <strong>Implication：</strong>AI infrastructure supply chain目前看起來immune to geopolitical disruption——但如果中東衝突escalate到影響semiconductor shipping routes（Strait of Hormuz→Red Sea→TSMC shipping）或能源供應，immunity會被tested。目前沒有任何AI infrastructure company在earnings call discuss這個risk——這可能是blind spot。</p>
+  <h4>矛盾 5：PSA Net Income +33% 但 Core FFO 只 +2.4% — FX 美化 vs 真實 cash earnings</h4>
+  <p>PSA net income/share $2.71 vs $2.04（+32.8%），但 Core FFO/share $4.22 vs $4.12（+2.4%）。落差主因：$41.7M Euro debt 的 FX gain 進到 net income，但不進 Core FFO。</p>
+  <p>邏輯問題：媒體標題「PSA 淨利潤大增 33%」會讓散戶誤判，但同店 NOI 只 +2.6%、全年同店 NOI 指引仍預期負成長。真實的可持續 cash earning 只成長 2.4%。GuruFocus 直接點出這個落差：「reaffirmation of full-year core FFO guidance at $16.35, which is below the consensus estimate of $16.90, raises some concerns regarding future growth prospects」。</p>
+  <p class="implication">→ <strong>Implication：</strong>對 REIT 的分析必須以 Core FFO 為錨，而非 GAAP net income。PSA 的 FX gain 是非經常性「會計收益」，無法重複。當前美元若反彈，Q2/Q3 可能反向出現 FX 損失。NSA 合併（Q3 2026 close）才是真正可期待的長期 FFO accretion catalyst（$0.35-0.50/share）。</p>
 </div>
 
-<h2 id="s5">§5 ｜總結</h2>
+<div class="contradiction">
+  <h4>矛盾 6：Mag7 重磅週前的「估值消化」訊號 — Beat 不再是 alpha</h4>
+  <p>本日 5 家公司中 4 家 beat，但只有 2 家股價漲。這個 hit rate 大幅低於過去 4 個季度的歷史平均。CLS YTD 漲幅大、RMBS YTD 漲幅大 — 兩家盤後都重挫。VZ YTD 仍負、CDNS YTD 上漲合理 — 兩家上漲。</p>
+  <p>邏輯問題：當 4/29 MSFT/META/GOOGL/AMZN、4/30 AAPL 將公布財報，市場已 priced in「完美 + perfect raise」。如果他們 capex guidance 沒有大幅上修（高於 $300B+ 全年總額），AI infrastructure 鏈的 valuation reset 可能加深。本日 4 家 beat 中只有 2 家漲，是這個 setup 的早期警訊。</p>
+  <p class="implication">→ <strong>Implication：</strong>對投資組合的 actionable insight：在 AI 概念股已 priced in 完美的階段，「beat 不再是 alpha，super raise + 估值合理 才是 alpha」。VZ 反而因為估值未 priced in 完美而 clean 上漲，是當下最值得學習的 risk-reward 樣本。Mag7 重磅週後的 portfolio 配置應降低 priced-in-perfection 的 AI 二線供應商部位，提升 estimably-undervalued cyclicals + structural plays。</p>
+</div>
 
-<h3>4/27 的核心發現</h3>
+</section>
+
+<section id="sec5">
+<h2>§5 總結（核心發現）</h2>
 
 <ul class="summary-list">
-  <li><strong>1. Verizon的turnaround是本週telecom sector的highlight。</strong>13年來首次Q1 postpaid正成長、record EBITDA、raise guidance。Convergence策略（wireless+broadband bundling）正在deliver——lower churn、higher ARPU、better revenue quality。Revenue miss but guidance raise = stock +3.6%，再次驗證「Raise is alpha」鐵律。</li>
 
-  <li><strong>2. EDA（CDNS）確認半導體ecosystem全stack acceleration。</strong>Revenue +19%、record backlog $8.0B、raise outlook。結合本週LRCX（equipment +37%）、TXN（analog recovery +18%）、INTC（foundry +16%）——從chip design到chip manufacturing到analog/power，每一層都在加速。AgentStack/agentic AI在chip design是next frontier。</li>
+<li><strong>1. 本日最重要的 meta-signal：「Beat + Raise = Sell the News」首次大規模顯現。</strong>CLS（盤後 -8.11%）、RMBS（盤後 -10.58%）兩家 AI infrastructure 二線供應商都 beat + raise 卻盤後重挫。差別在 VZ（+1.5%）和 CDNS（盤後 +2.8%）漲，因為估值未 priced in 完美。對 4/29 Mag7（MSFT/META/GOOGL/AMZN）是極大警訊：若他們的 capex guidance 不夠驚喜，AI 概念股 valuation reset 可能加深。</li>
 
-  <li><strong>3. AI infrastructure supply chain在4/27完成full-circle mapping。</strong>CDNS（design）+ CLS（networking/servers）補全了本週的picture：LRCX/INTC（make）→ GEV/NEE（power）→ VRT（cooling）→ CLS（build servers/switches）→ FIX/URI（physical construction）→ KMI（gas pipeline）。CLS的CPO Ethernet switch win意味著networking architecture也在shift。</li>
+<li><strong>2. RMBS 盤後 -10.58% 是「閱讀 transcript 比 headline 重要」的最強教材。</strong>Headline 看 EPS beat + Q2 product revenue +11% QoQ，是不錯的數據。但 CEO Seraphin 在 Q&A 親口說「SOCAMM2 short run dollar content is very low...financial impact is not significant this year」 — 這句話直接殺掉股價。Lesson：對於 priced-in-perfection 的 AI 概念股，CEO 對「短期影響」的措辭比 headline beat 更重要。Investing.com 直接把 RMBS 的標題寫成「Q1 2026 misses EPS, revenue forecasts」雖然技術上不對（小 beat），但反映市場真實感受。</li>
 
-  <li><strong>4. FWA vs Cable broadband是emerging structural war。</strong>VZ FWA +214K + T FWA 200K+ = combined 400K+/quarter正在侵蝕cable broadband。CMCSA broadband -65K（4/23）。Cable operators必須用wireless bundling反攻（CMCSA wireless +435K）。5G home internet是carrier的新growth vector和cable的existential threat。</li>
+<li><strong>3. CLS FY26 revenue $17B → $19B 是當天最大 raise，但 FCF guidance 不變直接被市場看穿。</strong>大幅 raise revenue + EPS 但 FCF $500M 不動，意味著 capex 吃掉所有 incremental 成長。同日還宣布 credit agreement 升至 $2.5B「to align available liquidity with the growing scale」 — 這是「我們需要更多錢繼續擴產」的訊號。當 hyperscaler capex 飽和時，CLS 的 FCF 兌現會成為痛點。建議追蹤未來 2 季 capex/revenue 比率。</li>
 
-  <li><strong>5. 本週的meta-conclusion：AI infrastructure is the unifying theme。</strong>4/21-27整週，across 50+ companies，AI infrastructure相關公司（INTC/LRCX/TXN/GEV/NEE/VRT/KMI/FIX/URI/CDNS/CLS/TEL）全部beat或raise。Non-AI companies則mixed（NOW -15%、LMT -6%、SLB organic -7%）。Market正在systematically reward AI supply chain exposure和punish non-AI weakness。</li>
+<li><strong>4. VZ +1.5% 是真正的「Beat is default, Raise is alpha」教科書 — 但前提是估值合理。</strong>Adj EPS beat $0.07、全年 EPS guidance 從 4-5% → 5-6%、revenue miss $490M 也被 forgive，盤中 +1.5%（一度 +4.5%）。VZ YTD 仍下跌約 8% 估值仍合理是 setup 之所以 work 的關鍵。CEO Schulman 親口稱「turnaround is not only progressing, it is gaining momentum」+ 13 年來首次 Q1 正成長的 narrative 撐起股價。估值，永遠是 risk-reward 的核心錨點。</li>
 
-  <li><strong>6. 「Beat is default, Raise is alpha」——整週鐵律final confirmation。</strong>本週raise guidance的公司stock reaction：RTX +3%、PM +2-3%、BSX +3%、UNH +5-7%、VZ +3.6%、CDNS/CLS TBD but expected positive。Maintain的：IBM -6%、VRT -5.7%、GE -2%、NOC -7%、MMM -1.8%、HCA -2-3%。Lower的：NOW -15%、MCO -2%、DHI -2%。Pattern is 100% consistent。</li>
+<li><strong>5. CDNS 是「Raise revenue + Lower EPS」這個棘手組合的市場反應教材。</strong>當 lower EPS 的原因是「technical / temporary」（CDNS 的 Hexagon 30% 股票 + 70% 現金支付的 lost interest income），市場 forgive。當 lower EPS 來自核心成長放緩或 CEO 自降溫（RMBS 模式），市場 punish。差別在 transcript 中管理層的 framing。CDNS Q2 EPS guidance $2.02-$2.08 大幅高於街口 $1.78，說明 H1 仍很強，整合年只是會計性陣痛。</li>
+
+<li><strong>6. PSA 是「結構性 vs 週期性 REIT」當下的弱例 — 自助倉儲還在 down-cycle。</strong>Core FFO +2.4% 微正、全年同店 NOI 仍預期 (3.9)% to (0.5)% 衰退、全年 FFO 中點 $16.675 低於街口 $16.90。Net Income +33% 多靠 FX gain（一次性）。NSA 合併（Q3 2026 close、$10.5B、預計 FFO accretion $0.35-0.50）才是真正可期待的長期 catalyst。對 REIT 配置：demographic-driven（senior housing）比 rate-cycle-driven（self-storage）有更好的長期 anchor。</li>
+
+<li><strong>7. AI Infrastructure 軍備競賽的 FCF 警訊已經出現了 — CLS 是第一案例。</strong>CLS 大幅 raise revenue + EPS 但 FCF 不變、capex 持續高位、credit agreement 加碼。這是 supply chain 廠商必須面對的 trade-off — 短期接訂單必須擴產，長期 ROIC 取決於 hyperscaler capex 持續性。建議追蹤指標：CLS / 台積電 / Vertiv 的 capex/revenue 比率。當 incremental capex 速度超越 incremental margin 速度，市場會 sell — CLS 已示範。</li>
+
+<li><strong>8. 投資組合 actionable insights：本日教會我們的事。</strong>(1) 當 YTD 漲幅大時，無論 beat 多大都是 sell setup；(2) 估值合理（VZ / CDNS）的 standard 標的比 priced-in-perfection 的 AI 概念股有更好 risk-reward；(3) Transcript 中 CEO 對「短期影響」的措辭比 headline beat 更重要（RMBS 案例）；(4) 「Raise revenue + Lower EPS」的 implication 取決於 Lower 的原因（CDNS 通過、RMBS 不通過）；(5) FCF guidance 是大幅 raise 時的照妖鏡（CLS 案例）。在 Mag7 重磅週前，這些 lessons 比任何單一公司的數據都重要。</li>
+
 </ul>
+
+</section>
+
 <div class="disclaimer">
-  <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
-  僅供參考，<strong>不構成任何投資建議</strong>。
-  投資涉及風險，投資人應自行判斷並諮詢專業顧問。
-  過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+<strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+僅供參考，<strong>不構成任何投資建議</strong>。
+投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
 </div>
 
 <footer>
-  © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+© 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
 </footer>
 
 </div>
