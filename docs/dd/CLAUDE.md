@@ -78,6 +78,19 @@ Master copy:`docs/dd/skills/stock-analyst/SKILL.md`(版本控制 source of truth
 - `web_generator.py` 是完整網站重建腳本,DD 流程**不使用它**(避免拖累其他頁面生成)
 - 若同步腳本失敗,必須在 terminal 摘要的「🔗 首頁同步」欄位明確標示失敗,並提示使用者手動執行
 
+### `/research/` 頁雙層自動面板（2026-04-29 起）
+
+`update_dd_index.py` 末尾會額外注入兩塊到 `docs/research/index.html`：
+
+1. **`<!-- DD_AUTO_STATS_START/END -->`**：取代舊版手寫的 insight-box。內容由 `scripts/aggregate_dd_stats.py` 從所有 dd-meta JSON 聚合產生，包括訊號分布 / 最近 8 檔 DD / PEG Top 5 / 5Y 分位 Top 5 / 中期 Upside Top 5 / X 陣營分類。**全自動，無需 LLM**。
+
+2. **`<!-- DD_STALE_FRESH_START/END -->`**：取代舊版的 OUTDATED_DDS_BANNER 邏輯（雖然舊 banner 仍保留在頁首作為輕量提示）。`scripts/check_dd_earnings_freshness.py` 用 yfinance 抓 EPS Surprise + 股價變動，分級 🔴 重跑 / 🟡 輕量 / 🟢 跳過。
+   - 快取 6 小時（`docs/research/.freshness_cache.json`），跑一次 yfinance 約 30-60 秒
+   - DD 重跑後對應 ticker 自動從清單消失（filter 比對 dd_date ≥ edate）
+   - 強制刷新：`python3 scripts/check_dd_earnings_freshness.py --no-cache`
+
+**LLM 行為規則**：禁止手動編輯這兩個 marker 之間的內容；要改顯示邏輯，改腳本。**editorial commentary（哪檔升核心、為何降級）放 `/pm/`，不放 `/research/`**。
+
 ## Skill 升級流程(v7 → v8 → v9 → ...)
 
 當需要升級 skill 版本時,遵循以下固定流程:

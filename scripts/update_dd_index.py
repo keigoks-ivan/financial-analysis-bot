@@ -1238,6 +1238,53 @@ def update_index(entries, dry_run: bool = False):
         flags=re.DOTALL,
     )
 
+    # Inject DD auto-stats panel (replaces former hand-curated insight-box)
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(Path(__file__).parent))
+        from aggregate_dd_stats import load_records as _load_recs, render as _render_stats
+        stats_html = _render_stats(_load_recs())
+        new_html = re.sub(
+            r'<!-- DD_AUTO_STATS_START -->.*?<!-- DD_AUTO_STATS_END -->',
+            f'<!-- DD_AUTO_STATS_START -->\n    {stats_html}\n    <!-- DD_AUTO_STATS_END -->',
+            new_html,
+            flags=re.DOTALL,
+        )
+        print("DD_AUTO_STATS injected.")
+    except Exception as e:
+        print(f"WARN: DD_AUTO_STATS injection skipped — {e}")
+
+    # Inject DD freshness panel (yfinance scan, cached 6h)
+    try:
+        from check_dd_earnings_freshness import (
+            load_records as _frload,
+            scan_all as _frscan,
+            load_cache as _frload_cache,
+            save_cache as _frsave_cache,
+            filter_cached_against_current as _frfilter,
+            render_html as _frrender,
+        )
+        fr_records = _frload()
+        cached, age = _frload_cache()
+        if cached is not None:
+            stale_list = _frfilter(cached, fr_records)
+            print(f"DD_STALE_FRESH: using cache ({len(cached)}→{len(stale_list)} after filter, age={int(age)}s)")
+        else:
+            print(f"DD_STALE_FRESH: scanning {len(fr_records)} tickers via yfinance (cache miss/expired)...")
+            stale_list = _frscan(fr_records, progress=False)
+            _frsave_cache(stale_list)
+            print(f"DD_STALE_FRESH: cached {len(stale_list)} stale entries")
+        fresh_html = _frrender(stale_list)
+        new_html = re.sub(
+            r'<!-- DD_STALE_FRESH_START -->.*?<!-- DD_STALE_FRESH_END -->',
+            f'<!-- DD_STALE_FRESH_START -->\n    {fresh_html}\n    <!-- DD_STALE_FRESH_END -->',
+            new_html,
+            flags=re.DOTALL,
+        )
+        print("DD_STALE_FRESH injected.")
+    except Exception as e:
+        print(f"WARN: DD_STALE_FRESH injection skipped — {e}")
+
     if dry_run:
         # Print unified diff and skip the write
         import difflib
