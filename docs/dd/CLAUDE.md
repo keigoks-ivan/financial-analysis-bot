@@ -91,6 +91,14 @@ Master copy:`docs/dd/skills/stock-analyst/SKILL.md`(版本控制 source of truth
 
 **LLM 行為規則**：禁止手動編輯這兩個 marker 之間的內容；要改顯示邏輯，改腳本。**editorial commentary（哪檔升核心、為何降級）放 `/pm/`，不放 `/research/`**。
 
+## Git staging 紀律（主 agent + 子 agent 共通）
+
+- **禁止 `git add .` / `git add -A` / `git add *`**。永遠用具名 stage：`git add path/to/file1 path/to/file2 ...`
+- **永遠不 stage `docs/id/ID_*.html`** 除非這次任務的明確 scope 就是寫該 ID 報告。其他流程（DD / scripts / panel 改動）即使看到該檔 untracked 也別碰，那是 industry-analyst skill 的 in-progress 工作
+- **永遠不 stage `docs/research/.freshness_cache.json`**（已加入 .gitignore，但提醒）
+- 子 agent 接到 commit task 時，prompt 必須白紙黑字列出**這次允許 stage 的檔案清單**，並要求子 agent 用 `git add` 具名而非萬用字元
+- 違反此規則的後果：把 schema 不合規的檔案（典型如 oneliner > 200 chars 的舊 ID）一起帶進 commit，導致 GitHub Actions validate workflow 紅燈
+
 ## Skill 升級流程(v7 → v8 → v9 → ...)
 
 當需要升級 skill 版本時,遵循以下固定流程:
