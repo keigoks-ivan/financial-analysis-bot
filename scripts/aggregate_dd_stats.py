@@ -184,7 +184,7 @@ def render(records):
       </div>
     </div>
 
-    <div class="stats-cell">
+    <div class="stats-cell stats-cell-stacked">
       <div class="stats-label">最近 DD 更新（最新 {len(latest)} 檔）</div>
       <ul>{latest_lis}</ul>
     </div>

@@ -1209,14 +1209,6 @@ def update_index(entries, dry_run: bool = False):
         count=1,
     )
 
-    # Inject outdated-DD reminder banner (auto-cancels when DD is re-run post-earnings)
-    new_html = re.sub(
-        r'<!-- OUTDATED_DDS_BANNER_START -->.*?<!-- OUTDATED_DDS_BANNER_END -->',
-        f'<!-- OUTDATED_DDS_BANNER_START -->\n{build_outdated_dd_banner()}\n<!-- OUTDATED_DDS_BANNER_END -->',
-        new_html,
-        flags=re.DOTALL,
-    )
-
     # Inject Weekly Review lists
     cands_html, downs_html, stale_html = build_weekly_review(entries)
     new_html = re.sub(
