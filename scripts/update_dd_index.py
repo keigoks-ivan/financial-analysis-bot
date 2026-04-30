@@ -115,6 +115,13 @@ TRIAX_RE_V12 = re.compile(
 #   3) Comment fallback: "+18% upside" or similar in INDEX.md last column
 UPSIDE_PCT_RE = re.compile(r'上行空間.*?([+\-−]?\d+(?:\.\d+)?)\s*%', re.DOTALL)
 
+# Long-term (5Y) upside — §2 E ③ 長期 R:R card: "<td>上行</td><td>+106%（5Y 累計）</td>"
+# Also handles rr-long block containing "上行" row with a percentage.
+UPSIDE_5Y_RE = re.compile(
+    r'rr-long.*?<td>上行</td>\s*<td>\s*([+\-−]?\d+(?:\.\d+)?)\s*%',
+    re.DOTALL,
+)
+
 
 def extract_signal_light(text: str) -> str:
     """Return one of A+/A/B/C/X, empty if not found.
@@ -812,6 +819,7 @@ def build_row_v12(entry: dict) -> str:
     pct = entry.get("pct", "")
     peg = entry.get("peg", "")
     upside = entry.get("upside", "")
+    upside_5y = entry.get("upside_5y", "")
     sp, st = entry.get("stress_pass", 0), entry.get("stress_total", 4)
 
     # Numeric data attrs (for sorting); fallback to 0 when empty.
@@ -834,6 +842,10 @@ def build_row_v12(entry: dict) -> str:
         up_num = float(upside) if upside else 0.0
     except ValueError:
         up_num = 0.0
+    try:
+        up5y_num = float(upside_5y) if upside_5y else None
+    except ValueError:
+        up5y_num = None
     stress_frac = sp / st if st else 0.0
 
     # CSS classes
@@ -850,6 +862,20 @@ def build_row_v12(entry: dict) -> str:
     up_sign = "+" if up_num > 0 else ""
     up_cell_text = f"{up_sign}{up_num:.0f}%" if upside else "?"
 
+    # 5Y upside cell
+    if up5y_num is not None:
+        u5y_sign = "+" if up5y_num > 0 else ""
+        if up5y_num >= 50:
+            u5y_color = "#166534"
+        elif up5y_num >= 0:
+            u5y_color = "#15803D"
+        else:
+            u5y_color = "#991B1B"
+        up5y_cell_text = f"{u5y_sign}{up5y_num:.0f}%"
+    else:
+        u5y_color = ""
+        up5y_cell_text = "—"
+
     # Cell display values (fallback strings when missing)
     fpe_disp = f"{fpe}x" if fpe else "?"
     pct_disp = f"{pct}%" if pct else "?"
@@ -857,12 +883,15 @@ def build_row_v12(entry: dict) -> str:
     triax_disp = f"{moat}/{val_emoji}/{ma_state}"
     stress_disp = f"{sp}/{st}"
 
+    up5y_style = f"color:{u5y_color};font-weight:600" if u5y_color else "color:#94A3B8"
+    up5y_num_attr = f"{up5y_num:.0f}" if up5y_num is not None else "0"
+
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
         f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
         f' data-fpe="{fpe_num}" data-pct="{pct_num}" data-peg="{peg_num}"'
-        f' data-upside="{up_num}" data-stress="{stress_frac}">\n'
+        f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-stress="{stress_frac}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
         f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
@@ -871,6 +900,7 @@ def build_row_v12(entry: dict) -> str:
         f'<td class="num-cell">{pct_disp}</td>'
         f'<td class="num-cell">{peg_disp}</td>'
         f'<td class="num-cell" style="color:{u_color};font-weight:600">{up_cell_text}</td>'
+        f'<td class="num-cell" style="{up5y_style}">{up5y_cell_text}</td>'
         f'<td class="num-cell">{stress_disp}</td>\n'
         f'</tr>'
     )
@@ -915,6 +945,7 @@ def collect_v12_entries():
                 "pct": str(meta["pct_5y"]) if meta.get("pct_5y") is not None else "",
                 "peg": str(meta["peg_fy2"]) if meta.get("peg_fy2") is not None else "",
                 "upside": str(meta["upside_mid_pct"]) if meta.get("upside_mid_pct") is not None else "",
+                "upside_5y": str(int(meta["upside_5y_pct"])) if meta.get("upside_5y_pct") is not None else "",
                 "stress_pass": int(stress.get("pass", 0)),
                 "stress_total": int(stress.get("total", 4) or 4),
             }
@@ -925,6 +956,9 @@ def collect_v12_entries():
         moat, val_emoji, ma_state = parse_triax(md["rr_raw"])
         sig = extract_signal_light(text) or _verdict_to_signal(md["verdict"])
         sp, st = extract_stress_v12(text)
+        # 5Y upside: regex fallback from rr-long block
+        m5y = UPSIDE_5Y_RE.search(text)
+        upside_5y_fallback = m5y.group(1).replace("−", "-") if m5y else ""
         entries.append({
             "ticker": md["ticker"],
             "filename": fname,
@@ -939,6 +973,7 @@ def collect_v12_entries():
             "pct": extract_5y_pct(text),
             "peg": extract_peg_v12(text),
             "upside": extract_upside_fy2(text, md.get("comment", "")),
+            "upside_5y": upside_5y_fallback,
             "stress_pass": sp,
             "stress_total": st,
         })
