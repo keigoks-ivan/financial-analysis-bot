@@ -1,7 +1,15 @@
 #!/bin/sh
-# Auto-installed pre-commit hook (2026-04-27)
+# Auto-installed pre-commit hook (2026-04-27, updated 2026-04-30)
 # Mirrors .github/workflows/validate_dd_meta.yml strict gate locally —
 # blocks commits that would fail CI for dd-meta / id-meta JSON validation.
+#
+# Modes:
+#   - Default (staged-only): when only DD/ID files staged, lint just those
+#     files (efficient, single-file commits don't slow down).
+#   - Full-sweep: when validator script itself is staged (rule upgrade),
+#     lint ALL DD/ID files in repo to force historical-debt cleanup at
+#     rule-upgrade time. This prevents the "Boomer Travel" pattern where
+#     pre-existing files quietly violate new rules.
 #
 # Triggers only when staged files touch docs/dd/DD_*.html, docs/id/ID_*.html,
 # or the validators themselves (so unrelated commits aren't slowed).
@@ -12,44 +20,63 @@ set -e
 
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 
-NEEDS_DD=$(echo "$STAGED" | grep -E '^(docs/dd/DD_.*\.html|scripts/validate_dd_meta\.py)$' || true)
-NEEDS_ID=$(echo "$STAGED" | grep -E '^(docs/id/ID_.*\.html|scripts/validate_id_meta\.py)$' || true)
+STAGED_DD=$(echo "$STAGED" | grep -E '^docs/dd/DD_.*\.html$' || true)
+STAGED_ID=$(echo "$STAGED" | grep -E '^docs/id/ID_.*\.html$' || true)
+DD_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_dd_meta\.py$' || true)
+ID_VALIDATOR_CHANGED=$(echo "$STAGED" | grep -E '^scripts/validate_id_meta\.py$' || true)
 
-if [ -z "$NEEDS_DD" ] && [ -z "$NEEDS_ID" ]; then
+# Bail early if nothing relevant in scope
+if [ -z "$STAGED_DD" ] && [ -z "$STAGED_ID" ] && [ -z "$DD_VALIDATOR_CHANGED" ] && [ -z "$ID_VALIDATOR_CHANGED" ]; then
   exit 0
 fi
 
 FAIL=0
 
-if [ -n "$NEEDS_DD" ]; then
-  STAGED_DD=$(echo "$STAGED" | grep -E '^docs/dd/DD_.*\.html$' || true)
-  echo "→ pre-commit: validating dd-meta (staged DD files only)"
-  if [ -n "$STAGED_DD" ]; then
-    if ! python3 scripts/validate_dd_meta.py $STAGED_DD > /tmp/_dd_validate.log 2>&1; then
-      echo ""
-      echo "❌ dd-meta validation FAILED — commit blocked."
-      echo "   Tail of validator output:"
-      tail -25 /tmp/_dd_validate.log | sed 's/^/   /'
-      echo ""
-      echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
-      FAIL=1
-    fi
+# DD path: validator changed → full sweep; else staged only
+TARGETS_DD=""
+MODE_DD=""
+if [ -n "$DD_VALIDATOR_CHANGED" ]; then
+  TARGETS_DD=$(find docs/dd -maxdepth 1 -name 'DD_*.html' 2>/dev/null)
+  MODE_DD="full sweep (validator changed — clearing historical debt)"
+elif [ -n "$STAGED_DD" ]; then
+  TARGETS_DD="$STAGED_DD"
+  MODE_DD="staged only"
+fi
+
+if [ -n "$TARGETS_DD" ]; then
+  echo "→ pre-commit: validating dd-meta — $MODE_DD"
+  if ! python3 scripts/validate_dd_meta.py $TARGETS_DD > /tmp/_dd_validate.log 2>&1; then
+    echo ""
+    echo "❌ dd-meta validation FAILED — commit blocked."
+    echo "   Tail of validator output:"
+    tail -25 /tmp/_dd_validate.log | sed 's/^/   /'
+    echo ""
+    echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
+    FAIL=1
   fi
 fi
 
-if [ -n "$NEEDS_ID" ]; then
-  STAGED_ID=$(echo "$STAGED" | grep -E '^docs/id/ID_.*\.html$' || true)
-  echo "→ pre-commit: validating id-meta (staged ID files only)"
-  if [ -n "$STAGED_ID" ]; then
-    if ! python3 scripts/validate_id_meta.py $STAGED_ID > /tmp/_id_validate.log 2>&1; then
-      echo ""
-      echo "❌ id-meta validation FAILED — commit blocked."
-      echo "   Tail of validator output:"
-      tail -25 /tmp/_id_validate.log | sed 's/^/   /'
-      echo ""
-      echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
-      FAIL=1
-    fi
+# ID path: validator changed → full sweep; else staged only
+TARGETS_ID=""
+MODE_ID=""
+if [ -n "$ID_VALIDATOR_CHANGED" ]; then
+  TARGETS_ID=$(find docs/id -maxdepth 1 -name 'ID_*.html' 2>/dev/null)
+  MODE_ID="full sweep (validator changed — clearing historical debt)"
+elif [ -n "$STAGED_ID" ]; then
+  TARGETS_ID="$STAGED_ID"
+  MODE_ID="staged only"
+fi
+
+if [ -n "$TARGETS_ID" ]; then
+  echo "→ pre-commit: validating id-meta — $MODE_ID"
+  if ! python3 scripts/validate_id_meta.py $TARGETS_ID > /tmp/_id_validate.log 2>&1; then
+    echo ""
+    echo "❌ id-meta validation FAILED — commit blocked."
+    echo "   Tail of validator output:"
+    tail -25 /tmp/_id_validate.log | sed 's/^/   /'
+    echo ""
+    echo "   Fix locally then retry. Bypass with --no-verify only if intentional."
+    FAIL=1
   fi
 fi
 
