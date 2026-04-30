@@ -366,10 +366,68 @@ financial-analysis-bot/
 
 ### Step 9 — 產出 HTML + INDEX
 - 寫入 `docs/id/ID_{Theme_CamelCase}_{YYYYMMDD}.html`
+- **id-meta JSON 必填 `mega` + `sub_group`**（v1.8 新增，見 Step 9.6 / QC-I37 / `docs/id/taxonomy.md`）
 - append `docs/id/INDEX.md` 一行
-- 更新 `docs/id/index.html` 列表
+- 更新 `docs/id/index.html` 列表（**依 mega + sub_group 自動插入到對應 anchor，見 Step 9.6**）
 - 若 `docs/research/index.html` 有「產業深度」tab，更新 markers
 - `git add + commit + push`（依 MEMORY feedback）
+
+### Step 9.6 — Taxonomy 對齊 + 自動插入到 index.html（v1.8 新增）
+
+每份新 ID 必須在 id-meta JSON 內 declare `mega` + `sub_group`，從 `docs/id/taxonomy.md` 表 1（15 大類別）+ 表 2（子群組）的 controlled vocabulary 選擇，**禁止自由發揮**。
+
+**Taxonomy 速查（完整版見 `docs/id/taxonomy.md`）**：
+
+| `mega` 標籤 | data-cat | 中文標題 |
+|:---|:---|:---|
+| `semi` | semi | 半導體 / AI 基建 |
+| `bio` | bio | 生技 / 醫療 |
+| `cloud` | cloud | 雲端 / SaaS / 軟體 |
+| `energy` | energy | 能源 / 電動車 / 新能源 |
+| `consumer` | consumer | 消費 / 零售 / 精品 |
+| `finance` | finance | 金融 / 保險 / FinTech |
+| `industrial` | industrial | 工業 / 航太 / 自動化 |
+| `staples` | consumer (legacy) | 必選消費 / 飲料 / 個護 |
+| `reits` | reits | REITs / 數位基建房東 |
+| `space` | space | 太空經濟 / 衛星 / 低軌道 |
+| `housing` | housing | 住房 / 房貸 / Builders |
+| `transport` | transport | 運輸 / 物流 / 航運 / 旅遊 |
+| `materials` | materials | 材料 / 礦業 / 特殊化學 |
+| `agri` | agri | 農業 / 食品 / 大宗商品 |
+| `macro` | macro | 跨域 / 地緣 / 其他 |
+
+`sub_group` 必須是 `mega` 對應的子群組（taxonomy.md 表 2 完整列表）。例如 `mega=semi` 可選 sub_group：`compute_demand` / `memory` / `storage` / `networking` / `dc_infra` / `advanced_packaging` / `foundry_process` / `equipment_test` / `eda_ip` / `edge_ai` / `emerging_compute`（11 個）。
+
+**id-meta JSON 範例（v1.8）**：
+
+```json
+{
+  "theme": "Memory Supercycle Master DRAM + NAND",
+  "mega": "semi",
+  "sub_group": "memory",
+  "skill_version": "v1.8",
+  ...
+}
+```
+
+**index.html 自動插入規則**：
+
+1. 讀新 ID 的 id-meta JSON，取 `mega` + `sub_group`
+2. 在 `docs/id/index.html` 找對應 anchor：
+   - 若 sub_group 已有 inline anchor `<!-- subgroup-anchor: {mega}.{sub_group} -->` ... `<!-- subgroup-anchor-end: ... -->` → 在 `<!-- subgroup-anchor-end: -->` 之前插入新 article 卡片
+   - 若沒有 inline anchor（mega 只有 mega-anchor scaffolding 還沒 expand）→ 在 mega 內依 controlled vocabulary 順序插入新 article 卡片，並建立 `<!-- subgroup-anchor: {mega}.{sub_group} -->` ... `<!-- subgroup-anchor-end: -->` 包覆
+3. 卡片格式：標準 `<article class="topic-card" ...>` 結構（standalone / parent / child 視 ID 性質而定）
+4. **禁止**自行發明新 mega 或新 sub_group — 若主題真的不適合任何現有 sub_group，先更新 `taxonomy.md` 表 2，再加新 anchor，再插入
+
+**新 sub_group 流程**：
+1. 用戶確認需要新 sub_group → 編輯 `taxonomy.md` 表 2（加一行 sub_group 描述 + 邏輯）
+2. 在對應 cat-body 內加 `<!-- subgroup-anchor: {mega}.{new_sub} --> <!-- subgroup-anchor-end: -->` 一對 anchor
+3. 之後新 ID 即可自動歸位
+
+**已有 mega-anchor scaffolding 的 cat-body**：
+本 v1.8 改造把 13 個非 semi 的 cat-body 都加上 `<!-- mega-anchor: {cat_id} ... -->` 列出該 mega 所有 sub_groups 的 list；新 ID 需要時可在該 mega-anchor 之後建立對應 inline subgroup-anchor 並插入。
+
+**驗證**：`scripts/validate_id_meta.py` v1.8 會檢查 id-meta 必填 `mega` + `sub_group`，且 `sub_group` 必須屬於 `mega` 的合法子群組（白名單見 taxonomy.md）。違反 → push 失敗。
 
 ### Step 9.5 — Tier Matrix 健康度檢查（v1.7+ 新增）
 
@@ -742,6 +800,20 @@ stock-analyst 引用 ID 時標準化 4 欄範本：
 
 未跑 → `docs/id/thesis-tracker.html` 該行標 🔴 stale-12mo。
 
+### QC-I37｜Mega + Sub-group 強制分類（v1.8 新增）
+
+每份 ID 的 id-meta JSON 必須有 `mega` 與 `sub_group` 欄位，且：
+- `mega` 必須是 `docs/id/taxonomy.md` 表 1 列出的 15 個 mega 之一（白名單：semi / bio / cloud / energy / consumer / finance / industrial / staples / reits / space / housing / transport / materials / agri / macro）
+- `sub_group` 必須是 taxonomy.md 表 2 為該 mega 列出的合法子群組之一
+- 違反 → `validate_id_meta.py` v1.8 拒絕 commit / push
+
+**目的**：每份 ID 自動歸位到 `docs/id/index.html` 對應 `<!-- subgroup-anchor: {mega}.{sub_group} -->` 之後，未來任何主題（不限 AI/半導體）都能正確排序，不會讓首頁列表變亂。
+
+**禁止行為**：
+- 自由發明新 mega（如 `mega: "ai_apps"`）→ 用 `cloud` 並選對應 sub_group
+- 自由發明新 sub_group（如 `sub_group: "fancy_new_thing"`）→ 先更新 taxonomy.md + 在 index.html 加 anchor，再 commit
+- 跨多個 mega（一份 ID 同時屬 bio + staples）→ 只能選一個主 mega（通常選「下游受影響」端，例如 GLP1RestaurantImpact 主 mega = staples 而非 bio）
+
 ---
 
 ## 【版本歷史】
@@ -751,3 +823,4 @@ stock-analyst 引用 ID 時標準化 4 欄範本：
 - **v1.5（2026-04-21）**：基於 ID_Transformers 教訓；Gate 2.1 Thesis Cornerstone Fact Verification + Gate 3.1 Cross-ID Thesis Bias Detection。
 - **v1.6（2026-04-24）**：敘述主導反轉（原則 4 從 Tables-heavy 改為 Narrative-led）；QC-I15 最低敘述段落數全面調高；QC-I24 強制每表格「前言 + 後解讀」；敘述比例 &lt; 30% → 50-60%。
 - **v1.7（2026-04-24）**：依 `~/Documents/ID_improvement_spec.md` Batch 2 + 3 執行；QC-I25-I36（Phase 統一 / 時間點標注 / Kill Scenario 量化 / 歷史類比反例 / 信心度分布 / 三欄式 / DD 引用範本 / loser 清單 / non-obvious 擴充 / cross-geography / 反向告警 / 12 月複盤）；Gate 2.2（base/bull/bear 三檔）。
+- **v1.8（2026-04-30）**：完整 taxonomy 系統（`docs/id/taxonomy.md`）+ 15 mega × 80+ sub_group 控制詞表；id-meta JSON 必填 `mega` + `sub_group`；`docs/id/index.html` 加 anchor scaffolding，新 ID 自動依 sub_group 插入對應位置；QC-I37 + Step 9.6 自動分類 + 插入規則。解決「新 ID 累積後 index 順序變亂」問題。重排 cat-semi 11 sub_groups（HBM 從 standalone 改為 memory.HBM 子題）。
