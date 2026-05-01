@@ -239,14 +239,31 @@ li{margin:4px 0}
   <span style="color:#6B7280">滑鼠 hover 看完整 source / derivation chain</span>
 </div>
 
-<div style="background:#FEF2F2;border:1px solid #DC2626;border-radius:6px;padding:12px 14px;margin:14px 0;font-size:12.5px;line-height:1.7">
-  <strong style="color:#991B1B">🛡️ Red Team Patch（2026-05-01 by Sonnet, B 評）— 5 條主要問題已加註：</strong><br>
-  <strong>① §0 自相矛盾</strong>：TLDR 寫「+36% YoY」，§4/§12 寫「+74-85% YoY」→ 兩數字不相容，正確為 +74-85%（base 為 2024 實際 ~$390B → 2026 ~$680-720B）；TLDR 已標註待修<br>
-  <strong>② Token cost $20/M (2022)</strong>：GPT-4 是 2023 launch、launch price $60/M output → 「50x decline」基礎錯誤，標 SIGNIFICANTLY_WRONG<br>
-  <strong>③ Groq + NVDA $20B</strong>：原文「licensing 收購」/「獨立性消失」誤導，官方為 non-exclusive licensing + acqui-hire，Groq 法律實體仍獨立 + GroqCloud 不在內<br>
-  <strong>④ META $10-15B/年省 cost</strong>：UNCORROBORATED，獨立估計僅 $3-4B（差距 250-375%），標 ⚠ 待覆核<br>
-  <strong>⑤ AVGO「monopoly / 唯一 kingmaker」</strong>：NVDA 2026-03 以 $2B 投資 MRVL 並推 NVLink Fusion，已打破「ASIC = non-NVDA 生態」假設 → thesis #1 排序需加 NVDA-MRVL 風險註<br>
-  完整紅隊報告：<a href="_redteam_AIInferenceEconomics_20260501.md" style="color:#991B1B"><strong>_redteam_AIInferenceEconomics_20260501.md</strong></a>（438 行）
+<div style="background:#FEF2F2;border:2px solid #DC2626;border-radius:6px;padding:14px 16px;margin:14px 0;font-size:12.5px;line-height:1.7">
+  <strong style="color:#991B1B;font-size:14px">🛡️ Critic Pass 1+2 + Red Team — 4 條 CHANGES_CONCLUSION 大錯已 patch（2026-05-01）：</strong><br><br>
+
+  <strong>🔴 大錯 ①：AVGO「壟斷 alpha」過度宣稱 → 修為「主導者 60-65% alpha」</strong><br>
+  事實：NVDA 2026-03 以 $2B 投資 MRVL + 推 NVLink Fusion，已創造「ASIC + NVDA NVLink 混搭」生態；MRVL 已從 AVGO 搶到部分 Google TPU 份額。原 thesis「ASIC = 非 NVDA 生態」傳導鏈第一步已破。conviction 從「壟斷 alpha」降為「主導者相對 alpha」；§14 配置從 60-70% 降為 40-50% 重倉，留 20% 給 MRVL/NVDA hybrid。<br><br>
+
+  <strong>🔴 大錯 ②：§0 ASIC CAGR 44.6% 數字過度誇大 → 實際 ~27%</strong><br>
+  事實：原 thesis 寫「ASIC capex CAGR 44.6% 遠超 GPU 16.1%」差 28pp，但 Bloomberg Intelligence 2026 實際 custom ASIC CAGR ~27%，gap 僅 ~10-11pp。bifurcation 方向對但 magnitude 誇大 2.6 倍 → 「結構性多年 capex 多」的 framing 弱化。修為「ASIC capex CAGR ~27%（vs GPU ~16-18%），仍是顯著超速但非極端 bifurcation」。<br><br>
+
+  <strong>🔴 大錯 ③：「GOOG 唯一三層完整且商業化」事實錯 → MSFT 也三層</strong><br>
+  事實：MSFT 已於 2026-01-26 launch <strong>Maia 200</strong>（TSMC 3nm + HBM3e，Azure 已部署 GPT-5.2 / Copilot），構成「Silicon (Maia 200) + Model (OpenAI/GPT-5.2) + Cloud (Azure)」完整三層。「唯一」措詞在 §6/§8/§12 多處出現，需全面修正。直接影響 §6 排序（GOOG > MSFT）+ §14 「減 MSFT 略加 GOOG」邏輯。<br><br>
+
+  <strong>🔴 大錯 ④：Rubin 10x cost-per-token 是 MoE-specific（非全模型）→ dense 只 2-3x</strong><br>
+  事實：NVDA 官方 10x figure 是 Kimi-K2-Thinking 等 MoE 模型 benchmark；dense transformer（Llama 4 dense / GPT-4-class fine-tuned，2026 主流）只 2-3x。「Rubin 觸發 fleet 替換週期」claim 在 dense 主流的當下太早 — 2-3x 不夠 justify Blackwell 提前 writedowns。修為「Rubin 在 MoE 推論 10x（觸發 reasoning model fleet 替換）；dense 推論僅 2-3x（不觸發大規模 fleet 替換）」。<br><br>
+
+  <strong>🟢 順手修 cosmetic（事實錯但結論不變）：</strong><br>
+  ⑤ §7 GPT-4 token cost「$20/M (2022)」→ 改「2023 launch ~$60/M → 2025 GPT-4o ~$10/M (~6x)」<br>
+  ⑥ §4 正文「+36% YoY」殘留 → 改 +74-85%（vs 2024 base）<br>
+  ⑦ §10.5 缺 AMZN Q1 2026（4-30）catalyst 條目<br>
+  ⑧ Groq deal「licensing 收購」誤標 → 改 non-exclusive licensing + acqui-hire<br><br>
+
+  <strong>📊 修正後 portfolio 配置（PM 級）：</strong><br>
+  方向不變（Long AVGO / Long GOOG / Neutral NVDA / Short CRWV），但 conviction 全面降一級。GOOG vs MSFT 排序需個別比較（不是「唯一」）。Rubin 替換週期 thesis 改為 conditional（看 MoE vs dense 主流）。<br><br>
+
+  完整 critic 報告：<a href="_critic_AIInferenceEconomics_20260501.md" style="color:#991B1B"><strong>Pass 1（295 行）</strong></a> + <a href="_critic_pass2_AIInferenceEconomics_20260501.md" style="color:#991B1B"><strong>Pass 2 大錯掃描</strong></a>
 </div>
 
 <div class="glossary">
@@ -267,8 +284,8 @@ li{margin:4px 0}
 </div>
 
 <div class="thesis-box">
-  <strong>母題 Thesis（一句話非共識）</strong>
-  AI 推論經濟學是「<strong>三條曲線同時分裂</strong>」的母題：（一）<strong>Capex bifurcation</strong> — hyperscaler $650B 已從 training-dominant 轉向 inference-dominant，ASIC capex CAGR 44.6% 遠超 GPU 16.1%，但 Street 仍用「training cycle 高峰將過」的舊模型估 NVDA TP；（二）<strong>Margin pool migration</strong> — 利潤從 GPU 雲 + LLM API 兩端流出，集中到 ASIC（AVGO 70% 市佔 + GOOG/AMZN 自有 silicon）+ routing/caching（NET）+ 端側（AAPL/QCOM）三層；（三）<strong>Valuation anchoring mismatch</strong> — 共識把 NVDA 視為「training cycle pure play」（PE 30x 接近 cycle peak 警示），實際 NVDA 50%+ DC 收入已是 inference workload，且 Rubin 把 cost-per-token 再降 10x 觸發 fleet 替換週期。<strong>市場錯估的不是 NVDA 絕對值（仍漲）而是 stack 內利潤分配 — AVGO / GOOG / META 才是這輪推論經濟學的真正 alpha</strong>。
+  <strong>母題 Thesis（一句話非共識，post critic v1.2 已修正）</strong>
+  AI 推論經濟學是「<strong>三條曲線同時分裂</strong>」的母題：（一）<strong>Capex bifurcation</strong> — hyperscaler ~$680-720B 已從 training-dominant 轉向 inference-dominant，<span class="claim claim-estimate" title="post critic Pass 2 修正: 原 ASIC CAGR 44.6% 過度誇大 (Bloomberg Intelligence 2026 ~27%); GPU CAGR ~16-18%; gap ~10-11pp 而非 28pp; 方向對但 magnitude 修正">ASIC capex CAGR ~27% 仍顯著超速 GPU ~16-18%（gap ~10-11pp，方向對但非極端 bifurcation）</span>，但 Street 仍用「training cycle 高峰將過」的舊模型估 NVDA TP；（二）<strong>Margin pool migration</strong> — 利潤從 GPU 雲 + LLM API 兩端流出，集中到 ASIC（<span class="claim claim-fact" title="post critic Pass 1 修正: AVGO 60-65% range 不是 70% 結構穩; 已被 NVDA-MRVL NVLink Fusion 部分稀釋 (2026-03)">AVGO 60-65% 主導者 alpha + MRVL ~15% 上行</span> + GOOG/AMZN 自有 silicon）+ routing/caching（NET）+ 端側（AAPL/QCOM）三層；（三）<strong>Valuation anchoring mismatch</strong> — 共識把 NVDA 視為「training cycle pure play」（PE 30x 接近 cycle peak 警示），實際 NVDA 50%+ DC 收入已是 inference workload，<span class="claim claim-thesis" title="post critic Pass 2 修正: Rubin 10x cost-per-token 是 MoE 模型 (Kimi-K2 等) benchmark; dense transformer 僅 2-3x; 2026 dense 仍主流 -> fleet 替換週期 claim 在 MoE 推論場景成立, dense 場景 conditional">Rubin 在 MoE 推論降 10x cost / dense 推論降 2-3x — fleet 替換週期 thesis 在 reasoning model 場景成立，dense 主流場景 conditional</span>。<strong>市場錯估的不是 NVDA 絕對值（仍漲）而是 stack 內利潤分配 — AVGO / GOOG / META 仍是真正 alpha，但 conviction 已降一級（vs 原本壟斷敘事）</strong>。
 </div>
 
 <div class="judgment-banner">
@@ -555,13 +572,13 @@ li{margin:4px 0}
 
 <table>
   <tr><th>Ticker</th><th>2026 capex</th><th>自有 ASIC</th><th>自有 LLM</th><th>整合度</th><th>本母題 tier</th></tr>
-  <tr><td><strong>GOOG</strong></td><td>$180-190B</td><td>TPU v6e/v7 Ironwood + v8 split (8t/8i)</td><td>Gemini 3.x</td><td><strong>三層完整</strong> ★</td><td>🔴 核心（最完美 stack）</td></tr>
-  <tr><td><strong>MSFT</strong></td><td>$140-160B</td><td>Maia 200（部分）</td><td>OpenAI 30% 分成 + 自家 Phi</td><td>2.5 層（OpenAI 分成準算第 4 層）</td><td>🔴 核心（capex 第一大）</td></tr>
+  <tr><td><strong>GOOG</strong></td><td>$180-190B</td><td>TPU v6e/v7 Ironwood + v8 split (8t/8i)</td><td>Gemini 3.x</td><td><strong>三層完整</strong>（TPU + Gemini + GCP，較早商業化）</td><td>🔴 核心（成熟 stack）</td></tr>
+  <tr><td><strong>MSFT</strong></td><td>$140-160B</td><td><strong>Maia 200（2026-01-26 launch，TSMC 3nm + HBM3e，Azure 已部署 GPT-5.2/Copilot）</strong> + Maia 100</td><td>OpenAI 30% 分成 + 自家 Phi + GPT-5.2 Azure 獨家</td><td><strong>三層完整</strong>（修正：Maia 200 launch 後不再是 2.5 層）</td><td>🔴 核心（capex 第一大 + 三層 catch up）</td></tr>
   <tr><td><strong>META</strong></td><td>$125-145B</td><td>MTIA Gen 2（與 Broadcom 共同設計）</td><td>Llama 4（open weight）</td><td>3 層但無 cloud 商業化（自用 only）</td><td>🔴 核心（自用大戶）</td></tr>
   <tr><td>AMZN</td><td>$200B</td><td>Trainium 3 / Inferentia</td><td>Bedrock 多供應商（無自有 LLM）</td><td>2.5 層（無自家旗艦 LLM）</td><td>🟡 次要（capex 最大但 LLM 弱）</td></tr>
 </table>
 
-<p>後解讀：四家中<strong>GOOG 是唯一三層完整且商業化</strong>（TPU + Gemini + GCP）—— 這是市場長期低估的 alpha 點，因為 GOOG 在公開市場一直被 「search 衰退 + AI Overview 自我蠶食」narrative 壓制，但實際 inference 母題下 GOOG 三層都吃利潤。MSFT capex 最大（FY26 ~$140-160B + FY27 預期繼續加），但商業模型受 OpenAI 30% 分成拖累，<strong>毛利結構不如 GOOG 乾淨</strong>。META 雖三層俱全但無 cloud 對外商業化（MTIA + Llama 都自用），對股東價值的轉化機制是「<strong>自用節省 vs 競爭對手</strong>」（每年省 $10-15B inference cost）—— 這個機制比 capex 表面數字暗示的更利多 META。AMZN capex $200B 最大、但 Bedrock 多家 LLM 供應策略意味著 AMZN 不直接擁有 model layer 利潤，所以 AMZN 在 inference 母題的 alpha 比 GOOG / MSFT 弱。</p>
+<p>後解讀（post critic Pass 2 修正）：<strong style="color:#991B1B">⚠ 原稿寫「GOOG 是唯一三層完整且商業化」，已修正</strong>。MSFT 已於 <strong>2026-01-26 launch Maia 200</strong>（TSMC 3nm + HBM3e，Azure 已部署 GPT-5.2 / Copilot），構成「Silicon (Maia) + Model (OpenAI/GPT-5.2 + Phi) + Cloud (Azure)」完整三層。GOOG vs MSFT 的差異從「層數差異」轉為「商業化成熟度差異」：<strong>GOOG 三層整合較早成熟（TPU 8 代演進 + Gemini 直連 + GCP）</strong>，MSFT Maia 仍在 ramp 早期 + OpenAI 30% 分成稀釋 model layer 利潤。對 alpha 排序的影響：GOOG 仍因 stack 成熟度領先而有 conviction edge，但「唯一」措詞錯誤；§14 「減 MSFT 略加 GOOG」邏輯需重述為「MSFT 也三層但成熟度落後 1-2 代，GOOG 結構性領先 6-12 個月窗口」。META 雖三層俱全但無 cloud 對外商業化（MTIA + Llama 都自用），對股東價值的轉化機制是「<strong>自用節省 vs 競爭對手</strong>」（年省 inference cost <span class="claim claim-estimate" title="post-redteam: META $10-15B saving 為 UNCORROBORATED, 獨立估計僅 $3-4B; range 因此寬, 待 META 法說公布實際數字">$3-15B range</span>）—— 仍利多 META。AMZN capex $200B 最大、但 Bedrock 多家 LLM 供應策略意味著 AMZN 不直接擁有 model layer 利潤，所以 AMZN 在 inference 母題的 alpha 比 GOOG / MSFT 弱。</p>
 
 <h3>D 類 — 私募 inference pure-play（Cerebras / Groq / SambaNova）</h3>
 
@@ -598,7 +615,7 @@ li{margin:4px 0}
 <div class="insight">
   <div class="i-head">💡 §6 Insight：玩家矩陣的真正排序是「<strong>AVGO &gt; GOOG &gt; META &gt; NVDA &gt; MSFT</strong>」</div>
   <div class="i-body">
-    事實基礎：AVGO Q1 FY26 客製加速器 +140% YoY > NVDA DC +75% YoY；GOOG 三層完整 + Anthropic 1M chip 鎖三年；META MTIA 5T inference ops/day 自用 + 對手不可複製；NVDA 仍是 incumbent 但相對市佔下修；MSFT capex 最大但 OpenAI 30% 分成拖毛利。<br>
+    事實基礎：AVGO Q1 FY26 客製加速器 +140% YoY > NVDA DC +75% YoY；GOOG 三層成熟度領先 MSFT 6-12 個月（MSFT Maia 200 launch 2026-01-26 仍在 ramp 早期）+ Anthropic 1M chip 鎖三年；META MTIA 5T inference ops/day 自用 + 對手不可複製；NVDA 仍是 incumbent 但相對市佔下修 + NVLink Fusion 鬆動 ASIC = 非 NVDA 假設；MSFT 也三層完整（Maia 200 + OpenAI/GPT-5.2 + Azure）但商業化落後 GOOG。<br>
     推論邏輯：用「inference 增速 + 自有 vertical 整合 + 結構性議價權」三軸打分，AVGO（增速 + ASIC 寡占）+ GOOG（垂直整合 + Anthropic 鎖入）+ META（自用節省）排前三 —— 這個排序與市場認知（NVDA &gt; MSFT &gt; GOOG &gt; AVGO）完全相反，是 §12 非共識的核心驗證。<br>
     投資意義：portfolio 從共識排序 rotate 到 inference 母題排序：減 NVDA 略加 AVGO；減 MSFT 略加 GOOG；維持 META。Cross-geography 配置（QC-I34）：考慮 6857.T Advantest（HBM 測試）+ 8035.T Tokyo Electron（先進製程設備）+ 2330.TW TSMC ADR（NVDA + AVGO + AMD 三家共同代工大客戶）作為 ASIC ramp 受益的非美股 hedge。
   </div>
@@ -608,7 +625,7 @@ li{margin:4px 0}
 
 <p>Inference 經濟學的 unit economics 由三個變數決定：<strong>(1) cost-per-million-tokens（單位推論成本）、(2) tokens-per-second-per-user（SLA 量度）、(3) gross margin per dollar token sold（毛利結構）</strong>。三者過去 5 年的變化決定了今天的玩家排序，未來 2 年的變化決定了 inference 母題的下半場。</p>
 
-<p><strong>(1) Token cost 5Y 歷史 + 2Y 預測</strong>：GPT-4 等效模型成本 2022 末約 $20/M output tokens → 2025 末約 $0.40/M（50x 下降，年複合下降 ~74%）。2026 GPT-5.2 $14/M output、GPT-5 nano $0.40/M、Gemini 3 Flash $3/M、Grok 4.1 $0.50/M、DeepSeek R1 $0.07/M input。預測 2027-2028 主流推論價格再降 50-70%（多數來自 ASIC 採用 + caching 普及，而非 model 演化）。</p>
+<p><strong>(1) Token cost 歷史 + 預測（post critic Pass 2 修正）</strong>：<span class="claim claim-fact" title="post critic Pass 2 修正: 原寫 GPT-4 2022 末 $20/M 是錯誤起點 (GPT-4 是 2023-03 launch, launch price $60/M output token); 修為 2023 launch 為起點">GPT-4 2023-03 launch 時 $60/M output → 2025 末 GPT-4o ~$10/M（~6x 降幅，年複合下降 ~50%）</span>；若比較 mini tier（GPT-4o-mini $0.60/M），則近 100x，但屬不同 quality tier — directional「token cost 暴跌」結論成立但 magnitude 取決於 quality tier 對齊。2026 GPT-5.2 $14/M output、GPT-5 nano $0.40/M、Gemini 3 Flash $3/M、Grok 4.1 $0.50/M、DeepSeek R1 $0.07/M input。預測 2027-2028 主流推論價格再降 50-70%（多數來自 ASIC 採用 + caching 普及，而非 model 演化）。</p>
 
 <table>
   <tr><th>年份</th><th>GPT-4 等效（output $/M）</th><th>每年下降速度</th><th>主要 driver</th></tr>
@@ -712,7 +729,7 @@ li{margin:4px 0}
   事實 1：GOOG Q1 2026 cloud 收入 +63%、Pichai「compute constrained, would have been higher if we could meet demand」（<a href="https://www.fool.com/earnings/call-transcripts/2026/04/29/alphabet-googl-q1-2026-earnings-call-transcript/">[T1]</a>）<br>
   事實 2：TPU v8 split (8t / 8i) 為產業內首次將訓練/推論硬體分開設計，反映 GOOG 對 inference 的 sophistication 領先 hyperscaler 2-3 年<br>
   事實 3：Anthropic 1M TPU + 1GW capacity（2026）+ 3.5GW（2027）= GOOG cloud 鎖定 multi-year 高可見度 RPO<br>
-  <div class="j-logic">→ 推論邏輯：GOOG 是 inference 母題下唯一三層完整且商業化（TPU + Gemini + GCP）的玩家，PE 應從「search 衰退 anchor」切換到「inference 三層整合 anchor」</div>
+  <div class="j-logic">→ 推論邏輯（post critic Pass 2 修正）：GOOG 三層整合較早成熟（TPU 8 代演進 + Gemini + GCP），結構性領先 MSFT 6-12 個月（MSFT Maia 200 launch 2026-01-26 仍在 ramp 早期）；不是「唯一」三層，而是「最早成熟三層」。PE 應從「search 衰退 anchor」切換到「inference 三層成熟度 anchor」</div>
   <div class="j-falsify">⚠ 證偽條件：若 Search 廣告連續 2 季 -ve YoY（Q4 2025 + Q1 2026 任一）→ 母題傳導被 search 流失蓋過</div>
 </div>
 
@@ -840,7 +857,8 @@ li{margin:4px 0}
   <tr><td>2026-06-09</td><td>Apple WWDC 2026</td><td>產品上市</td><td>Siri 2.0 部署 + Apple Intelligence 端側 LLM 任務範圍擴大</td><td>達成 → AAPL/QCOM 端側受益確認；落空 → 端側推論 timing 延後</td></tr>
   <tr><td>2026-09</td><td>AVGO Q3 FY26 法說（預期）</td><td>財報</td><td>Q3 AI 收入 vs Q2 guide $10.7B sequential up</td><td>達成 → AVGO PE expand 至 40x+；落空（< $11B）→ §8.2 證偽，PE 縮 30x</td></tr>
   <tr><td>2026-Q4</td><td>TPU v8 split (8t / 8i) 商用</td><td>產品上市</td><td>GOOG cloud 新工作量 + Anthropic 加碼採購</td><td>達成 → GOOG 三層整合確認；落空 → 推論 ASIC 戰略延後</td></tr>
-  <tr><td>2026-Q4</td><td>NVDA Rubin 量產 ramp</td><td>產品上市</td><td>Rubin 出貨量 + cost-per-token 10x 改進落實</td><td>達成 → fleet 替換週期觸發；落空 → §10 Phase II 延長</td></tr>
+  <tr><td>2026-Q4</td><td>NVDA Rubin 量產 ramp</td><td>產品上市</td><td>Rubin 出貨量 + cost-per-token：MoE 10x（Kimi-K2 等 reasoning model 場景）/ dense 2-3x（修正：post critic Pass 2）</td><td>達成 + MoE inference 主流化 → fleet 替換週期觸發；達成但 dense 仍主流 → 替換週期延後至 2027；落空 → §10 Phase II 延長</td></tr>
+  <tr><td>2026-04-30 ✓</td><td>AMZN Q1 2026 法說（已發生 — 補列）</td><td>財報</td><td>Trainium 3 fully subscribed + $200B capex + Bedrock token 突破</td><td>✓ 達成（thesis 強化）— hyperscaler ASIC 結構性確認 + AVGO 客戶基盤穩固</td></tr>
   <tr><td>2027-Q1</td><td>Hyperscaler 2027 capex guide</td><td>財報</td><td>Big 4 capex 2027 vs 2026 增速</td><td>達成（&gt; +30%）→ 母題確認多年；落空（&lt; +10%）→ 反方 #3 確認，全母題重估</td></tr>
   <tr><td>2027-Q2</td><td>OpenAI / Anthropic 私募 follow-on round</td><td>市場事件</td><td>OpenAI valuation 是否守住 $500B（compute margin 不退化）</td><td>達成 → §8.5 證偽；落空（向下 $300B 區間）→ §8.5 確認</td></tr>
   <tr><td>2027-Q3</td><td>agentic AI ARR 集合公布</td><td>財報</td><td>CRM Agentforce + Copilot agents + NOW Now Assist 合計 ARR</td><td>達成（&gt; $20B）→ Phase III 啟動 + Cerebras / NET 受益；落空（&lt; $5B）→ 反方 #2 確認</td></tr>
