@@ -1,5 +1,32 @@
 # Repo-wide instructions
 
+## Decision-time critic：思考產業 thesis 動部位前必先 spawn
+
+當用戶討論以下任一情境，**必須先 spawn `industry-thesis-critic` sub-agent** 對相關 ID 跑冷讀，再給投資建議。這是 Boris verify-app pattern 在投資決策的翻譯 — 寫 ID 的 agent 與驗 thesis 的 agent 不同。
+
+**觸發情境**（任一即觸發）：
+- 「考慮加倉 / 減倉 / 新進 / 退出 X 產業 theme」
+- 「{theme} thesis 還活著嗎」
+- 「該不該對 {industry} 增加 / 降低曝險」
+- 「{ID 主題} 現在還能 act 嗎」
+- 用戶提及具體 ID 主題並表達決策意圖（不是純資訊查詢）
+
+**Spawn 方式**：
+```
+Agent({
+  description: "Cold review {theme} thesis",
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  prompt: "You are operating as the industry-thesis-critic sub-agent. Read spec at /Users/ivanchang/.claude/agents/industry-thesis-critic.md. ID: {path}. Intent: {user 意圖}. Save report to docs/id/_critic_{Theme}_{YYYYMMDD}.md."
+})
+```
+
+**不觸發**（僅資訊查詢）：
+- 「ID_X 寫了什麼」/「{theme} 是什麼」/「介紹一下 {industry}」 — 純解釋型問題，直接回答即可
+- 寫稿過程中（that's a separate write-time critic, P2 未實作）
+
+**例外**：用戶明確說「不用跑 critic」/「我自己看就好」可跳過。
+
 ## Site composition：research.investmquest.com 由四個 repo 組成
 
 公開站 `https://research.investmquest.com/` 的最終 `docs/` 內容並非全部來自本 repo，而是由四個獨立 repo 共同產生，各自擁有 `docs/` 子路徑的不同部分。任何「整站樣板/頁首/頁尾統一」這類任務，第一步要先判斷該頁路徑屬於哪個 repo，再去對應 repo 改 generator template，而不是只改本 repo `docs/` 內檔案（會被外部 cron 覆蓋）。

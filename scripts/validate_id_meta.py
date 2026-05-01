@@ -48,6 +48,11 @@ ENUM_FIELDS = {
     "growth_phase": {"early", "mid", "late", "declining"},
     "value_chain_position": {"upstream", "midstream", "downstream", "cross-tier"},
     "industry_structure": {"monopoly", "duopoly", "oligopoly", "fragmented"},
+    # v1.9: quality_tier — determines which retrofit mechanisms apply
+    # Q0 Flagship: full FET + thesis-trace + redteam (≥30 verified T1)
+    # Q1 Standard: FET required, thesis-trace warning, redteam light (≥10 T1)
+    # Q2 Quick:    FET warning only, no thesis-trace, no redteam (≥5 T1)
+    "quality_tier": {"Q0", "Q1", "Q2"},
 }
 
 # v1.8 taxonomy — mega 大類別 × sub_group 子群組（白名單）
