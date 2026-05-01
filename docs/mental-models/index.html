@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>心智模型 Mental Models — InvestMQuest Research</title>
+  <meta name="description" content="Charlie Munger 心智模型 Latticework：心理學偏誤、微觀經濟、數學統計、工程物理、生物學五大領域 20 個核心模型，互動心智圖呈現，含投資與商業實例。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+:root{
+  --bg:#f7f8fa;--bg-soft:#fafbfc;--card:#ffffff;
+  --border:#e5e7eb;--border-soft:#eef0f3;
+  --text:#0f172a;--text-sec:#475569;--muted:#94a3b8;
+  --accent:#2563eb;--accent-hover:#1d4ed8;--accent-soft:#eff6ff;
+  --indigo:#6366f1;--amber:#b45309;--teal:#0f766e;--purple:#7c3aed;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.04);
+  --shadow-md:0 4px 14px rgba(15,23,42,.07);
+  --shadow-lg:0 8px 24px rgba(15,23,42,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+     background:var(--bg);color:var(--text);line-height:1.65;font-size:14px;
+     min-height:100vh;display:flex;flex-direction:column;
+     -webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .15s}
+a:hover{color:var(--accent-hover)}
+.container{max-width:1120px;margin:0 auto;padding:0 1.5rem;width:100%}
+
+/* Header — dark unified across site */
+header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);
+       padding:.75rem 0;box-shadow:0 1px 3px rgba(0,0,0,.12);
+       position:sticky;top:0;z-index:10}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between}
+header .logo{font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:-.02em}
+header .logo span{color:#3b82f6}
+header nav{display:flex;gap:.15rem;flex-wrap:wrap}
+header nav a{color:rgba(255,255,255,.65);font-size:.8rem;font-weight:500;padding:.4rem .7rem;
+             border-radius:6px;transition:all .15s;border-bottom:2px solid transparent}
+header nav a:hover{color:#fff;text-decoration:none;background:rgba(255,255,255,.06)}
+header nav a.active{color:#fff;background:rgba(59,130,246,.18);font-weight:600}
+
+/* Hero */
+.hero{padding:3rem 0 2.5rem;background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);
+      border-bottom:1px solid var(--border-soft);text-align:center}
+.hero .eyebrow{display:inline-block;padding:.3rem .75rem;background:var(--accent-soft);
+               color:var(--accent);border-radius:999px;font-size:.7rem;font-weight:600;
+               margin-bottom:1.1rem;letter-spacing:.04em;text-transform:uppercase}
+.hero h1{font-size:2.2rem;font-weight:800;letter-spacing:-.03em;color:var(--text);margin-bottom:.75rem}
+.hero .munger-quote{max-width:680px;margin:0 auto .5rem;font-size:.9rem;color:var(--text-sec);
+                    font-style:italic;line-height:1.7;padding:0 1rem}
+.hero .munger-attr{font-size:.78rem;color:var(--muted);font-style:normal;margin-top:.4rem}
+
+/* Markmap section */
+.mm-section{padding:2rem 0 1.5rem}
+.mm-section h2{font-size:1.2rem;font-weight:700;margin-bottom:1rem;color:var(--text)}
+.markmap-wrap{width:100%;height:75vh;min-height:520px;border:1px solid var(--border);
+              border-radius:10px;overflow:hidden;background:#fff;
+              box-shadow:var(--shadow-md)}
+
+/* About section */
+.about-section{padding:2rem 0 1.5rem}
+.about-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;margin-top:1.25rem}
+.about-card{background:var(--card);border:1px solid var(--border);border-radius:10px;
+            padding:1.25rem 1.4rem;box-shadow:var(--shadow-sm)}
+.about-card h3{font-size:.95rem;font-weight:700;margin-bottom:.5rem;color:var(--text)}
+.about-card p{font-size:.82rem;color:var(--text-sec);line-height:1.65}
+.domain-list{list-style:none;padding:0;margin:.6rem 0 0}
+.domain-list li{font-size:.81rem;color:var(--text-sec);padding:.2rem 0;
+               border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between}
+.domain-list li:last-child{border-bottom:none}
+.domain-list .cnt{font-size:.75rem;color:var(--muted);font-weight:500}
+
+/* Disclaimer & Footer */
+.disclaimer{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;
+            padding:.9rem 1.15rem;font-size:.76rem;color:#78350f;margin:2rem 0 1.5rem;
+            line-height:1.65}
+.disclaimer strong{font-weight:600;color:#713f12}
+footer{background:#fff;border-top:1px solid var(--border);color:var(--muted);
+       text-align:center;padding:1.4rem 0;font-size:.76rem}
+footer a{color:var(--muted)}
+
+/* Responsive */
+@media(max-width:768px){
+  .hero{padding:2rem 0 1.75rem}
+  .hero h1{font-size:1.65rem}
+  .markmap-wrap{height:60vh;min-height:400px}
+  .hdr-inner{flex-direction:column;gap:.6rem}
+  header nav{justify-content:center;gap:.2rem 0}
+  header nav a{font-size:.76rem;padding:.35rem .5rem}
+}
+  </style>
+</head>
+<body>
+
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/theses.html">⭐ 九大非共識</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <a href="/mental-models/" class="active">🧠 心智模型</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<section class="hero">
+  <div class="container">
+    <span class="eyebrow">思考工具網 · Munger Latticework</span>
+    <h1>心智模型 Mental Models</h1>
+    <p class="munger-quote">"To the man with only a hammer, every problem looks like a nail. You need a latticework of mental models."</p>
+    <p class="munger-attr">— Charlie Munger</p>
+  </div>
+</section>
+
+<section class="mm-section">
+  <div class="container">
+    <h2>互動心智圖 — 20 個核心模型</h2>
+    <div class="markmap-wrap">
+      <div class="markmap"></div>
+    </div>
+  </div>
+</section>
+
+<section class="about-section">
+  <div class="container">
+    <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:.5rem">關於本頁</h2>
+    <p style="font-size:.85rem;color:var(--text-sec);max-width:760px;line-height:1.7">
+      本頁整理 Charlie Munger 在《Poor Charlie's Almanack》與多場演講中反覆強調的「思考工具網（Latticework of Mental Models）」。
+      20 個模型跨五大領域，每個模型附具體投資/商業案例，並標注相互關聯的模型，幫助識別現實中的複合效應。
+      P2 計畫擴充至約 100 個模型，涵蓋更多領域（法律、歷史、化學、哲學）。
+    </p>
+    <div class="about-grid">
+      <div class="about-card">
+        <h3>五大領域分類</h3>
+        <ul class="domain-list">
+          <li>心理學 Psychology <span class="cnt">10 個（含 1 meta）</span></li>
+          <li>微觀經濟 Microeconomics <span class="cnt">4 個</span></li>
+          <li>數學/統計 Math &amp; Statistics <span class="cnt">3 個</span></li>
+          <li>工程/物理 Engineering &amp; Physics <span class="cnt">2 個</span></li>
+          <li>生物學 Biology <span class="cnt">1 個</span></li>
+        </ul>
+      </div>
+      <div class="about-card">
+        <h3>如何使用</h3>
+        <p>在心智圖上點擊節點可展開/收合分支。滾輪縮放，拖曳平移。每個模型節點下有定義、Munger 名言、具體案例與關聯模型。遇到投資決策時，掃描心理學類偏誤（警惕 Lollapalooza），再用微觀經濟類模型評估護城河強度。</p>
+      </div>
+      <div class="about-card">
+        <h3>未來規劃（P2）</h3>
+        <p>計畫擴充至約 100 個模型，新增：歷史/法律（Second-order effects, Inversion）、化學（Catalysts, Phase transitions）、哲學（Occam's Razor, First Principles）與更多心理學偏誤（Sunk cost, Envy, Social comparison）。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>
+    本網站所有內容均由 AI 自動生成，僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+  </div>
+</div>
+
+<footer>
+  <div class="container">
+    &copy; 2026 InvestMQuest Research &middot;
+    由 AI 自動生成，僅供參考
+  </div>
+</footer>
+
+<script type="text/template">
+# 心智模型 Latticework
+
+## 心理學 Psychology
+
+### 激勵偏誤 / Incentive-caused Bias
+- 人的行為受個人激勵機制支配，利益驅動下判斷扭曲且難以察覺
+- "Never, ever, think about something else when you should be thinking about the power of incentives." — Munger
+- Wells Fargo 銷售獎勵制度 → 員工偽開 350 萬假帳戶，管理層激勵設計是根因
+- 分析師報告通常對客戶股票偏多，因為承銷佣金激勵扭曲研究客觀性
+- ↔ 關聯：確認偏誤、社會認同
+
+### 社會認同 / Social Proof
+- 不確定情況下，人傾向模仿多數人行為，認為「大眾選擇」即正確選擇
+- "The social proof situation is very, very powerful." — Munger（1994 USC Law School Speech）
+- 2000 年科技泡沫：每個人都買網路股，散戶「從眾」推高估值至荒謬水準
+- Bitcoin 2021 ATH 前：社交媒體 FOMO 引爆零售買盤，機構反向出貨
+- ↔ 關聯：可得性錯估、喜好傾向
+
+### 權威偏誤 / Authority-misinfluence
+- 過度信賴有頭銜或聲望的人，不加批判地接受其判斷
+- 飛行員副機長即使發現機長操作錯誤也不敢出言糾正 → 飛安事故
+- Boeing 737 MAX MCAS：工程師對管理層決策不敢強力反對，釀成兩次空難
+- ARK Invest Cathie Wood：媒體權威光環使散戶在 2021 高點大量追買 ARKK
+- ↔ 關聯：社會認同、喜好傾向
+
+### 喜好傾向 / Liking-Loving Tendency
+- 偏愛喜歡的人、品牌或想法，並在評估中系統性高估其優點、忽略缺點
+- "We ignore the faults of those we like." — Munger
+- 投資人因喜愛 Elon Musk 而忽略 Tesla 估值過高、執行風險的警訊
+- 波克夏持有 Coca-Cola：Munger 坦承對品牌的「喜愛」使他在 2000 年代高估值時未賣出
+- ↔ 關聯：確認偏誤、權威偏誤
+
+### 互惠傾向 / Reciprocity Tendency
+- 收到好意後產生強烈回報衝動，即使原始好意成本極低，回報代價可能極高
+- Amazon Prime 30 天免費試用 → 高轉換率，因用戶已「享受」服務產生互惠心理
+- 投資銀行請客戶打高爾夫球、吃飯 → 客戶因互惠感將 IPO 承銷業務回報給銀行
+- ↔ 關聯：喜好傾向、激勵偏誤
+
+### 確認偏誤 / Confirmation Bias
+- 傾向搜尋、解讀、偏好能確認既有信念的資訊，忽視矛盾證據
+- "What the human mind does with a conclusion it has reached is to try to confirm it." — Munger
+- 投資人持有某股後，開始只讀看多報告、過濾空方論點，導致無法及時停損
+- LTCM 決策層確信自己的模型，忽略 1997–98 亞洲金融危機與俄羅斯違約的警訊
+- ↔ 關聯：激勵偏誤、可得性錯估
+
+### 喪失過度反應 / Deprival Super-reaction（Loss Aversion）
+- 失去某物的痛苦遠超得到同等物品的快樂，損失厭惡驅動非理性決策
+- SVB 存款人一旦聽到擠兌消息，非理性大量提款（損失恐懼大於收益期望）
+- 散戶持有虧損部位不賣（不想「確認損失」），對抗心理帳戶的 disposition effect
+- ↔ 關聯：對比錯誤反應、確認偏誤
+
+### 可得性錯估 / Availability Misweighing
+- 對容易想起的事件（通常是生動、近期、媒體密集報導的）高估其發生機率
+- 2001 年 9/11 後，航空旅客大減、轉搭開車 → 實際上開車死亡率遠高於飛行
+- 媒體重複播放 FTX 崩潰 → 散戶過度高估加密貨幣全面失敗機率，錯過 BTC 低點佈局
+- ↔ 關聯：確認偏誤、對比錯誤反應
+
+### 對比錯誤反應 / Contrast Misreaction
+- 判斷時依賴相對比較而非絕對標準，前後對比框架顯著影響決策
+- 房仲先帶看高價爛房，再帶看目標房 → 目標房顯得便宜（對比效應）
+- 股市急跌 30% 後反彈 10%，投資人感覺「便宜」，卻忽略原始估值仍高
+- ↔ 關聯：喪失過度反應、可得性錯估
+
+### ※ Meta：多模型共振 / Lollapalooza Effect
+- 多個心理偏誤同時作用並相互強化，產生遠超單一偏誤的極端結果
+- "Lollapalooza effects come when multiple factors combine to push hard in the same direction." — Munger
+- Tupperware Party：社會認同 + 互惠 + 喜好傾向 + 稀缺性 → 多重偏誤共振，主婦超額購買
+- AA 戒酒協會：互惠 + 社會認同 + 宗教/承諾 → 多機制疊加使戒酒成功率顯著提升
+- FTX 崩潰：激勵偏誤 + 確認偏誤 + 社會認同（名人背書）→ 百億詐欺長期未被識破
+- ↔ 關聯：所有心理學模型的共振
+
+## 微觀經濟 Microeconomics
+
+### 規模優勢 / Scale Advantages
+- 隨產量規模擴大，單位成本下降，形成對小競爭者難以跨越的成本護城河
+- Costco：超大量採購議價 → 低毛利率仍獲利 → 規模優勢使小型倉儲超市無法競爭
+- Amazon FBA：倉儲 + 物流網路邊際成本隨規模遞減，第三方賣家收入反補基礎設施費用
+- ↔ 關聯：護城河、複利
+
+### 護城河 / Economic Moats
+- 企業長期維持高於資本成本的超額報酬的競爭壁壘（品牌、網路效應、成本優勢、轉換成本）
+- See's Candies：品牌情感護城河 → 波克夏 1972 年以 3 倍帳面買入，之後 50 年近零資本需求複利
+- GEICO：汽車保險低成本直銷模式 → 成本優勢護城河，費率始終低於同業
+- ↔ 關聯：規模優勢、競爭毀滅
+
+### 競爭毀滅 / Competitive Destruction
+- 長期而言，超額利潤吸引競爭者，技術顛覆與資本湧入侵蝕護城河，迫使企業不斷創新
+- Kodak：膠卷護城河被數位攝影競爭毀滅，儘管自己發明了數位相機卻未能轉型
+- Nokia：手機硬體護城河被 iPhone 的 App Store 生態系完全顛覆，市佔率從 40% 歸零
+- ↔ 關聯：護城河、均值回歸
+
+### 市場先生 / Mr. Market
+- 市場每天提供一個報價，但你不必接受。市場是服務你的工具，而非你應該跟隨的指引
+- 2020 年 3 月 COVID 崩盤：市場先生恐慌報出 Amazon 最低 $1,626（高峰腰斬）→ 事後漲回 $3,700+
+- 2022 年科技股熊市：Meta 跌至 $88，市場先生極度悲觀，Munger 本人買入（Daily Journal Q1 2023）
+- ↔ 關聯：喪失過度反應、安全邊際
+
+## 數學/統計 Math & Statistics
+
+### 複利 / Compound Interest
+- 收益再投入後持續以指數成長，時間是複利最關鍵的變數
+- "The first rule of compounding: Never interrupt it unnecessarily." — Munger
+- 波克夏從 1965–2023 年，年化報酬約 19.8%，使 $1 成為 $43,000，而標普 500 同期約 $247
+- See's Candies 1972 年以 $25M 買入，到 2024 年累計稅前貢獻超過 $2.1B → 複利示範
+- ↔ 關聯：安全邊際、規模優勢
+
+### 貝氏更新 / Bayesian Updating
+- 先依據既有信念（先驗）建立假設，隨新資訊到來持續修正機率估計，而非固執原始看法
+- 2016 年：波克夏從不碰航空股（先驗：航空是爛生意），後來更新看法 → 2016 買入四大航空股
+- 藥廠臨床試驗：Phase 2 成功後更新 Phase 3 成功機率；市場通常反應不足，形成不對稱報酬
+- ↔ 關聯：確認偏誤（貝氏的對立面）、競爭毀滅
+
+### 均值回歸 / Mean Regression
+- 極端表現往往向長期均值靠攏；高超額利潤吸引競爭，低谷後資本撤退帶來復甦
+- 2000 年科技泡沫後：PE 100x+ 回歸歷史均值 15–20x，前十年明星股進入「失落十年」
+- 能源股循環：油價高企 → 大量資本湧入 → 供給過剩 → 油價崩跌 → 資本撤退 → 均值回歸
+- ↔ 關聯：市場先生、競爭毀滅
+
+## 工程/物理 Engineering & Physics
+
+### 安全邊際 / Margin of Safety
+- 買入時要求充裕的估值折扣作為緩衝，抵禦錯誤假設、不可預見事件與估算偏差
+- 波克夏買入 BNSF 時，以遠低於重置成本的價格買入鐵路資產
+- 2022 年 Meta 跌至 $88 時，自由現金流收益率超過 15%，安全邊際極厚 → 反彈至 $500+
+- ↔ 關聯：市場先生、複利
+
+### 冗餘設計 / Backup Systems & Redundancy
+- 關鍵系統設置備援，單點失敗不造成全體失效；投資中體現為多元分散與壓力測試
+- Boeing 737 MAX MCAS 沒有冗餘感測器設計，單一 AoA 感測器失效即觸發自動俯衝 → 兩次墜機
+- LTCM 槓桿 25x+、無流動性緩衝：1998 年俄羅斯違約 → 單一風險點觸發全面瓦解
+- ↔ 關聯：安全邊際、均值回歸
+
+## 生物學 Biology
+
+### 紅皇后效應 / Red Queen Effect（Natural Selection）
+- 為了維持生存優勢，必須不斷演化奔跑，因為競爭者同樣在進化；靜止等同退步
+- Netflix：DVD 時代霸主 → 串流 → 原創內容 → 廣告訂閱；每階段不跑就死
+- Intel：製程領先優勢被 TSMC 追上（紅皇后），若不加速 18A/20A 路線圖，代工與設計業務雙失
+- Costco 持續壓低毛利率（2023 年約 12%）而非提高，確保競爭者永遠追不上其價格優勢
+- ↔ 關聯：競爭毀滅、冗餘設計
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/markmap-autoloader@0.18"></script>
+
+</body>
+</html>
