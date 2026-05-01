@@ -357,6 +357,64 @@ financial-analysis-bot/
 
 任一阻斷 Gate (1/2/2.1/3/8) fail → 阻斷發布 + 列修正項；阻斷 Gate 全過、warning Gate (3.1/4/5/6/7) 有 fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記錄 pass/fail 明細。
 
+### Step 8.7 — Mandatory Critic Gate（v1.9，2026-05-01 新增）
+
+寫好 ID HTML 草稿後（暫存於 `/tmp/` 或 staging path），**必須**呼叫 `industry-thesis-critic` sub-agent 跑 cold review，找出 conclusion-changing 大錯。
+
+**為什麼加這一步**：Step 8.5 的 Gate 都是「機械正確性」（id-meta valid、cornerstone fact 14d 內、source 不在黑名單等）— 抓不到「推理錯誤 / thesis 與外部現實不符」。Step 8.7 引入跨模型（Sonnet）冷讀者抓真正的 thesis-level 大錯。Pilot 在既有 4 份 ID 上找到平均 1-4 條 CHANGES_CONCLUSION 大錯，證明 Step 8.5 不夠。
+
+**呼叫方式**：
+
+```
+Agent({
+  description: "Pre-publish critic gate on {Theme}",
+  subagent_type: "general-purpose",
+  model: "sonnet",  // 必須 Sonnet — 與寫稿者（Opus）跨模型，避免 echo chamber
+  prompt: """
+You are operating as the industry-thesis-critic sub-agent.
+Read spec at /Users/ivanchang/.claude/agents/industry-thesis-critic.md.
+
+ID file path: {staging path}
+User's intent: 「pre-publish gate check — 即將 publish，找出 conclusion-changing 大錯」
+
+Run all 6 items + Item 6.5 CONCLUSION_IMPACT triage.
+Save report to /tmp/_prepub_critic_{Theme}_{date}.md.
+
+After saving, return brief summary with COUNTS by tier:
+- 🔴 CHANGES_CONCLUSION: N
+- 🟡 PARTIAL_IMPACT: M
+- 🟢 COSMETIC: K
+
+Highest priority issues (top 3 by CONCLUSION_IMPACT).
+"""
+})
+```
+
+對 Q0 Flagship ID 必須再跑 Pass 2（focused 大錯掃描，prompt 同 id-review skill Step 3）。
+
+**Gate 判定**：
+
+| Quality Tier | 0 🔴 | ≥1 🔴 |
+|---|---|---|
+| **Q0 Flagship** | ✅ Pass | 🔴 **BLOCKING** — 必須先在 industry-analyst 內修，重跑 critic 直到 0 🔴 才放行 Step 9 |
+| **Q1 Standard** | ✅ Pass | ⚠ **WARNING** — 給 user 看 critic findings，user 選擇 ship 或 fix |
+| **Q2 Quick** | ✅ Pass | ⚠ **WARNING** | 同 Q1 |
+
+**WARNING 模式下 user 選 fix**：
+- 進入 id-review skill 的 patch 流程（mode (a) user-in-the-loop）
+- 改完後重跑 Step 8.7 → 進 Step 9 publish
+- 改完後若仍有 🔴 → 再次 WARNING 給 user
+
+**BLOCKING 模式下**：
+- industry-analyst skill 必須回到 Step 5（判斷層）/ Step 6（§11）/ Step 7（§12-§13 synthesis）修正
+- 修正完成重跑 Step 8.5 + Step 8.7（這次只跑 Pass 1 即可，因為大錯已修）
+- 重跑 critic 仍有 🔴 → 重複，最多 3 輪。3 輪仍未過 → 告訴 user「critic 持續找到大錯，建議重新研究」
+
+**事實基礎**（為何這個 gate 有效）：
+- Pilot Pass 1 critic 在 ID_AdvancedPackaging（既有 publish）找到 Thesis #2 cornerstone fact BROKEN（Rubin Ultra 4-tile 設計與 ID 寫法不符）— 這是寫稿時 self-review 抓不到的
+- Pilot Pass 2 在 ID_AIInferenceEconomics 找到 3 條 Pass 1 沒抓到的大錯（ASIC CAGR 44.6% 過度誇大 / GOOG「唯一三層」MSFT 已 launch Maia 200 / Rubin 10x MoE-specific）
+- 跨模型（Sonnet）+ 沒有寫作 context = cold reader 視角，這是寫稿者（Opus）做不到的
+
 ### Step 9 — 產出 HTML + INDEX
 - 寫入 `docs/id/ID_{Theme_CamelCase}_{YYYYMMDD}.html`
 - **`<head>` 必含 `<script id="id-meta" type="application/json">{...}</script>`**（在 `<title>` 之後、`<style>` 之前）— 這是下游消費者（stock-analyst §11、CI validator、未來 sector index）的 SSOT。完整欄位定義見 QC-I14.5；範例骨架見 `templates/html_template.md`。**漏寫此區塊 → CI `Validate DD + ID metadata` workflow strict gate fail，整 push 連坐被擋**
