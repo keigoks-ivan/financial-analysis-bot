@@ -1,11 +1,11 @@
 ---
 name: industry-analyst
 description: 建立「產業深度報告（Industry DD / ID）」— 一份跨多檔個股共用的產業研究文件。輸入產業主題（如「玻璃基板封裝」「HBM 供需循環」「GLP-1 治療藍圖」），skill 執行 WebSearch / WebFetch 多輪研究，輸出一份 11 章節、表格為主 + 敘述為輔、含 S 曲線與 value chain 圖示的 HTML 報告；並把對應個股登記於 §11 關聯清單，供 stock-analyst（公司 DD）自動讀取引用。觸發：使用者提到「產業研究 / sector DD / 產業報告 / industry landscape / 產業藍圖」或具體主題（玻璃基板、HBM、CoWoS、AI ASIC、GLP-1、核融合、玻璃纖維基板等）且尚未要求做個股 DD。
-version: v1.0
-date: 2026-04-19
+version: v1.11
+date: 2026-05-02
 ---
 
-# industry-analyst skill v1.0
+# industry-analyst skill v1.11
 
 ## 【六大原則（v1.5，2026-04-21 基於 ID_Transformers peer review 強化）】
 
@@ -77,7 +77,7 @@ financial-analysis-bot/
 
 | § | 標題 | 類型 | 核心輸出（標★為 insight-forcing 欄位）|
 |:---|:---|:---|:---|
-| §0 | TL;DR 卡片 | 數據 | 主題 / 時長 / 規模 / 關鍵玩家 3 / 關鍵風險 3 / 今日 Phase + ★**一句 Thesis（本 ID 最核心的非共識觀點）**|
+| §0 | TL;DR 卡片 | 數據 | 主題 / 時長 / 規模 / 關鍵玩家 3 / 關鍵風險 3 / 今日 Phase + ★**一句 Thesis（本 ID 最核心的非共識觀點，必須帶 [I:] 或 [X:] tag — QC-I24）**|
 | §1 | 產業定義與邊界 | 數據 | in-scope vs out-of-scope 表 + ★**灰色地帶**（邊界爭議本身常是 insight 來源）|
 | §2 | 技術演進 + S 曲線 + **歷史類比** | 數據 | S 曲線 + 過去→現在→未來 + ★**2-3 個歷史類比**（前例轉折：誰被錯估、本次異同）|
 | §3 | 核心技術棧拆解 | 數據 | 子技術 × 良率卡點 × 專利持有者；★**哪個子技術成為 kingmaker**|
@@ -92,8 +92,8 @@ financial-analysis-bot/
 | **§10.5** | **Catalyst Timeline** | 數據+判斷 | ★**未來 18 個月日期表**：事件 × 檢視指標 × 若達成 / 若落空的動作|
 | §11 | 關聯個股清單 | 數據 | ticker × 深度 🔴🟡🟢 × 受益 / 受害 × DD 連結 + ★**1-2 檔 non-obvious 二次受益者**|
 | **§11.5** | **Cross-ID 依賴圖** | 數據 | ★上游依賴（誰廢它連鎖反應）+ 下游受益（本 ID 成立帶動誰）+ 兄弟 ID|
-| **§12** | **Non-Consensus View（共識差異）** | 判斷（🟡） | ★**3 條本 ID vs 市場共識的具體分歧**：共識說什麼 / 本 ID 看法 / 分歧原因；本章是 insight 核心|
-| **§13** | **Falsification Test（證偽條件）** | 數據 | ★**3-5 條具體 metric + 閾值**：若達該值，本 ID thesis 作廢；為 PM 層提供停損觸發條件|
+| **§12** | **Non-Consensus View（共識差異）** | 判斷（🟡） | ★**3 條本 ID vs 市場共識的具體分歧**：共識說什麼 / 本 ID 看法 / 分歧原因；每條 thesis 必須以 [F:] cornerstone fact + [X: base/bull/bear] 三情境呈現（QC-I26）；本章是 insight 核心|
+| **§13** | **Falsification Test（證偽條件）** | 數據 | ★**3-5 條具體 metric + base/bull/bear 三情境閾值**（QC-I26）：bear 閾值即 thesis 作廢點，必須是真 falsification 不是 strawman；數字使用 range（QC-I25）；為 PM 層提供停損觸發條件|
 
 ### §0-§7（數據層）硬性規則
 
@@ -139,6 +139,126 @@ financial-analysis-bot/
 - 整篇 🟡 bullet 比例上限 20%（QC-I1）
 - 信心度 [低] 的 🟡 bullet 不被 stock-analyst 引用為 DD 論點
 - **所有 🟡 必須有證偽條件**（QC-I11）；沒寫 = 未完成
+
+---
+
+## 【Claim Taxonomy v1（v1.10 新增，2026-05-01）】
+
+**為什麼加**：Step 8.7 critic gate 已抓「事實對不對」，但 pilot 在 ID_AIInferenceEconomics 找到的 4 條 SIGNIFICANTLY_WRONG 大多屬於這三類，是 pre-publish gate 與 cold-read critic 都不容易抓的：
+
+1. **單一情境被當必然**（"Rubin Ultra 2027 量產 → thesis 成立"，沒列 if 落後 / if 提前）
+2. **Spurious specificity**（"Samsung HBM4 yield 78.3%"，實際是 ~75-80% 區間）
+3. **意見偽裝事實**（infer 結論寫得像 fact，沒揭露推論鏈）
+
+Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓 reader / critic 一眼看出這是事實還是推論還是情境預測。
+
+### 4-class（不允許第 5 類）
+
+```
+🟢 [F: T1: ...]                                  事實 — 有可驗證 source（T1/T2 + 日期）
+🟡 [I: A→B]                                      推論 — 寫明事實鏈與結論連結
+🔵 [X: base 很可能 / bull 可能 / bear 不太可能]   情境預測 — 三情境並列，詞彙級機率
+⚪ [A: ...]                                      假設 — 顯式承認的 prior
+```
+
+**意見類（[O:]）刻意拿掉**：避免「意見」變 hand-wave 借口。任何 opinion 必須改寫為 [I: A→B] 揭露推論鏈，否則就是 [A:]（顯式假設）。沒有第三條路。
+
+### 機率用詞彙級（不寫精準百分比）
+
+| 詞彙 | 對應機率區間 |
+|---|---|
+| 幾乎確定 / near-certain | > 90%（限現場已發生 + 1 步衍生）|
+| 很可能 / likely | > 60% |
+| 可能 / possible | 30-60% |
+| 不太可能 / unlikely | < 30% |
+| 幾乎不可能 / near-impossible | < 10% |
+
+**禁止**：寫精準百分比（"60% 機率" / "25% / 15%" / "70% chance"），這本身是 spurious specificity 的高階版（QC-I25 阻擋）。
+
+### Tier-aware enforcement（Q0/Q1/Q2 強度不同）
+
+| Tier | Tag 強制範圍 |
+|:---|:---|
+| **Q0 Flagship** | 全文：§0 thesis、§2 forecast、§4 TAM、§6 變動方向、§8-§13 全部判斷層 |
+| **Q1 Standard** | §0 thesis、§9.5 Kill、§10 phase、§10.5 catalyst、§12 Non-Consensus、§13 Falsification |
+| **Q2 Quick** | §12 Non-Consensus、§13 Falsification |
+
+**所有 tier 都強制三段帶 tag**：§0 一句 Thesis、§12 任一 thesis、§13 任一 metric forecast。
+
+### 寫稿時的 inline 標記範例
+
+```
+✅ 對：
+🔵 [X: base 很可能 — Rubin Ultra 2027 H2 量產（§10.5 catalyst #3）；
+       bull 可能 — 2027 H1 提前（NVDA GTC commentary）；
+       bear 不太可能 — 2028 延後（CoWoS 良率惡化超出 §13 metric #2）]
+       → §12 thesis #1 在 base/bull 都成立；bear 情境本 thesis 失效
+
+❌ 錯：
+「Rubin Ultra 2027 H2 量產，本 thesis 成立」
+（→ 單一情境當必然，缺 base/bull/bear；違反 QC-I26）
+
+❌ 錯：
+「Rubin Ultra 60% 機率 2027 H2 量產，25% 提前，15% 延後」
+（→ 精準機率違反 spurious specificity 禁令；違反 QC-I25）
+
+❌ 錯：
+「Samsung HBM4 yield 已達 78.3%」
+（除非 T1 直接公告該確切值；否則應為 "~75-80%" 或 "~8 成"；違反 QC-I25）
+
+✅ 對：
+🟡 [I: ASIC TAM CAGR 推論
+       事實 1: Hyperscaler capex 2024-2026 三年 CAGR ~35%（GOOG/MSFT/META 法說 [T1]）
+       事實 2: 內製 ASIC 占 capex 比重 從 ~15% → ~25%（SemiAnalysis 2026-Q1 [T3-A]）
+       → 本 ID 推論：ASIC 細分 CAGR 應在 ~25-35% 區間
+       ⚠ 證偽：若 hyperscaler capex 連兩季 < 20% YoY，本推論 invalid]
+```
+
+### 與既有 🟡 judgment bullet 的關係
+
+舊規定 §8-§13 的 🟡 bullet 結構（事實 1/事實 2/→ 推論/⚠ 證偽條件）**仍然保留**。新加的 [F:]/[I:]/[X:]/[A:] tag 是**前綴 inline marker**，不取代 🟡 bullet 結構：
+
+- 一條 🟡 bullet 通常 = 一個 [I:] tag 包整段推論
+- §13 metric 表的每格通常 = 一個 [X:] tag（含 base/bull/bear 三情境閾值）
+- §0 一句 Thesis = 一個 [I:] 或 [X:] tag
+
+### v1.0-v1.9 與 v1.10 共存策略（機會主義升級）
+
+舊 ID（v1.0-v1.9 寫稿的 80 份）**不主動 batch retrofit** — 80 份 × 1.5-3h = 120-200h，不可承受成本。新 tag 只 apply 於 v1.10 起新寫的 ID 與「大改」的 ID。
+
+**判定「大改」(= 升 v1.10) vs 「小修」(= 保留 v1.0 結構) 的規則**：
+
+| 情境 | 升 v1.10？ | 做法 |
+|:---|:---|:---|
+| 寫全新主題 ID | ✅ 強制 | 走完整 Step 1-9 v1.10 流程 |
+| user 要求「重寫 ID_X」/「全面更新」/ thesis 大方向變更 | ✅ 強制 | 視為新 ID，重跑 Step 1-9，產出 v1.10 |
+| user 在 PM 決策重度引用某舊 ID（要加大 theme 配置）| 🟡 建議升 | 手動 retrofit 該份 1-1.5h，值得；ROI 高 |
+| user 跑 id-review 修大錯 | 🟢 機會主義 | critic 改動到的段落「順手」手動加 v1.10 tag（不是全文 retrofit）；每份增量 ~10-15 min |
+| user 只問資訊（「ID_X 寫了什麼」）| ❌ 不升 | 一字不動 |
+| 自動化 patch（未來 cron 級 refresh）| ❌ 不升 | 視為小修，保留 v1.0 結構 |
+
+**為什麼採機會主義而非全面 retrofit**：
+1. 80 份舊 ID 中，PM 真正重度引用的 < 20 份（80/20 法則）
+2. 機會主義讓「最重要的舊 ID」逐漸升 v1.10，60+ 份 long-tail 永遠停在 v1.0 也無妨
+3. 兩年內新 ID 自然取代舊 ID，舊 ID 退場時不需 retrofit cost
+
+**reader 端共存體感**：
+- 同一份 INDEX.md 看到不同格式 ID，新 ID 帶 tag、舊 ID 不帶
+- v1.10 ID 開頭加 banner 解釋 4-class 與機率詞彙；舊 ID 沒 banner = 默認 v1.0 結構
+- 視覺不一致期 ~6-12 個月，可接受
+
+**reader banner（v1.10 ID 必加）**：
+
+```html
+<div style="background:#EEF2FF;border-left:4px solid #6366F1;padding:10px 14px;margin:12px 0;font-size:12.5px;line-height:1.6">
+  <strong style="color:#3730A3">📐 Claim Taxonomy v1（v1.10+）</strong>：本 ID 在 §0/§9.5/§10/§10.5/§12/§13 使用 4 類 inline tag 揭露 claim 性質：
+  <strong>[F:]</strong> 事實（有 source）｜
+  <strong>[I:]</strong> 推論（A→B 揭露）｜
+  <strong>[X:]</strong> 情境預測（base/bull/bear 三情境，詞彙級機率）｜
+  <strong>[A:]</strong> 顯式假設。
+  數字以 range / ~xxx 呈現（除非 T1 公告精準值）；機率用「很可能 / 可能 / 不太可能」非百分比。
+</div>
+```
 
 ---
 
@@ -255,6 +375,28 @@ financial-analysis-bot/
 - 僅 T3/T4 單一來源 → 在章節末加 ⚠️ 註：「此事實僅 T3 來源，無 T1/T2 交叉驗證」
 - T1 投資人簡報的頁碼 / slide 編號必須寫出來（方便日後回溯）
 
+**Evidence pool 引用**（v1.11 新增，2026-05-02）：
+
+引用 `evidence/` 目錄內的 PDF / 法說會 transcript 時用：
+
+```html
+<span class="source-tag">[evidence: <a href="evidence/ir_decks/NVDA_2026Q1_earnings.pdf">NVDA_2026Q1_earnings.pdf p.23</a>]</span>
+```
+
+對 transcript 用行號代替 page：
+
+```html
+<span class="source-tag">[evidence: transcripts/txt/TSM_2025Q4_call.txt L.412-428]</span>
+```
+
+`evidence/` 在本地 `.gitignore`（不公開），但寫進 HTML 方便 `id-review` / `industry-thesis-critic` 回查。若 manifest 內 `fetched_from` 是可公開 URL，加 fallback link：
+
+```html
+<span class="source-tag">[evidence: NVDA_2026Q1_earnings.pdf p.23 · <a href="https://www.sec.gov/...">SEC EDGAR</a>]</span>
+```
+
+詳見 `SEMI_EVIDENCE_SPEC.md` §7。
+
 ### 常見來源搜尋捷徑
 
 | 主題 | 首選 T1 來源 |
@@ -273,12 +415,44 @@ financial-analysis-bot/
 
 收到主題後按此順序執行，每步產出中間結果（不中斷）：
 
+### Step 0 — Evidence Prefetch（v1.11 新增，2026-05-02）
+
+寫稿前先撈本地 evidence pool（投資人日 deck / 法說會 transcript / 技術論文），避免每章重複 WebSearch 抓不到 PDF。詳見 `SEMI_EVIDENCE_SPEC.md`。
+
+**Phase 0a — 候選 ticker（~10 秒）**：
+
+接到主題後列出 candidate ticker（10-15 家寬鬆名單，比最終 §11 list 寬）。對每家：
+- 若 ticker **在** `evidence/tickers.json`：列入 fetch 隊列
+- 若 ticker **不在**：auto-discover（CIK via EDGAR company-tickers JSON、ir_url 試 5 種 pattern + HEAD 200）→ 列出來給 user confirm 一次 → confirm 後 append `tickers.json` → 列入隊列
+- 若 auto-discover 失敗：列入 missing 清單，請 user 手動補
+
+**Phase 0b — Fast fetchers（~2 分鐘，平行）**：
+
+呼叫 `scripts/evidence/orchestrator.py` 的 `fetch_for_id_session(candidate_tickers, topic_keywords)`：
+- 對每家 ticker：`grep_manifest(ticker, days=30)` 有 hit → skip；否則跑 Tier 1（EDGAR 8-K + EX-99 過去 90 天）+ Tier 2（IR 雙頁面爬）
+- 對主題 keywords 跑 Tier 3（arXiv 過去 180 天）
+
+**Phase 0c — Slow transcripts（背景非阻塞）**：
+
+對 top 3-5 ticker（ID 主題最相關）的最近一場 earnings call 或 investor day webcast 跑 `youtube_transcript`，背景跑、不卡 Phase 1 寫稿。20-40 分鐘完成後可被 §10 / §11 / §12 引用。
+
+**Phase 0 結束時的 deliverable**：
+
+1. 列「missing 清單」給 user：哪些 ticker 抓不到、哪些 webcast 沒 PDF deck，請 user 補 upload 到 `evidence/inbox/`
+2. 列已 fetch 完成的 evidence count（e.g.「NVDA: 2 EDGAR + 1 IR deck，TSM: 0 EDGAR + 6 IR deck」）
+3. 進入 Step 1 開始研究
+
+**例外：單家 ID**：若主題只關 1 家公司（如 ASML High-NA EUV 專題），prefetch 退化成單家撈，Phase 0a/0b/0c 合併為一次跑完。
+
+**離線 fallback**：若 `evidence/` 目錄不存在或 orchestrator 不可用（新機器尚未 setup），跳過 Step 0 直接進 Step 1，不阻斷 ID 寫稿。Step 1+ 仍走 WebSearch / WebFetch 原路徑。
+
 ### Step 1 — 主題界定（2 輪 WebSearch）
 - Search 1：`{主題} technology overview 2026` → 技術輪廓
 - Search 2：`{主題} market size forecast` → 規模錨點
 - 產出：§0 TL;DR 卡片 + §1 邊界表的草稿
 
 ### Step 2 — 技術深挖（3-5 輪，優先抓 T1 簡報）
+- **先讀本地 evidence**（v1.11）：`grep_manifest(tags=[主題 keywords])` 撈 `evidence/ir_decks/` + `evidence/tech_papers/` + `evidence/transcripts/` 相關檔，先 `Read` 完再決定要 WebSearch 補什麼 — 投資人日 deck 與會議論文這層 PDF 多在本地，不要重複 WebFetch
 - **先試**：`{主流玩家} investor day 2026 slides filetype:pdf` / `{玩家} technology keynote deck`
 - 若主題是半導體：`{公司} GTC 2026 keynote`、`{公司} technology symposium 2026`、`TSMC OIP 2026`
 - 若主題是生技：`{公司} R&D day presentation`、`ADA 2026 abstract {藥物}`
@@ -288,7 +462,7 @@ financial-analysis-bot/
 
 ### Step 3 — 市場與供應鏈（3-5 輪）
 - `{主題} market size TAM 2030 SEMI report` / `Yole {主題}` / `IC Insights {主題}`
-- 回頭掃 Step 2 抓到的 IR deck 找 TAM 圖
+- 回頭掃 Step 2 抓到的 IR deck **+ `evidence/ir_decks/` + `evidence/industry_research/`（user-uploaded Yole / SemiAnalysis 等付費深度）+ `evidence/broker_reports/`** 找 TAM 圖（v1.11）
 - `{主題} supply chain value chain`
 - `{主題} margin structure`
 - 產出：§4 TAM/SAM/SOM、§5 value chain SVG、§7 unit economics
@@ -315,6 +489,7 @@ financial-analysis-bot/
 - 所有 🟡 bullet 必須標事實鍊 + **證偽條件**（QC-I11）
 
 ### Step 6 — §11 關聯個股清單 + §11.5 Cross-ID
+- **先讀 ticker-level evidence**（v1.11）：對 §6 玩家矩陣每家 ticker 跑 `grep_manifest(ticker=X)` → 對 hits 用 `Read` tool 讀取（PDF / .htm / .txt 都支援，PDF 分頁 ≤20）。重點抽：營收 segment mix（決定 §11 影響深度 🔴🟡🟢）、capacity / capex 數字、management commentary。Citation 用 `[evidence: <path> p.<N>]` 格式
 - 從 §6 玩家矩陣抓出「有公開股票 + 本產業曝險 > 10% revenue」的公司
 - 對每檔：評定影響深度
   - 🔴 核心：營收 >40% 依賴此產業 OR 技術領導者
@@ -443,7 +618,7 @@ Highest priority issues (top 3 by CONCLUSION_IMPACT).
 
 ---
 
-## 【QC-I 規則（14 條，v1.1 Insight-first）】
+## 【QC-I 規則（v1.10 含 Claim Taxonomy）】
 
 ### QC-I1｜🟡 判斷比例 ≤ 20%
 全篇 bullet 中 🟡 bullet 數量 / 總 bullet 數量 ≤ 0.20；超過強制返工。
@@ -693,6 +868,67 @@ python3 scripts/validate_id_meta.py docs/id/ID_{Theme}_{YYYYMMDD}.html
 
 ---
 
+### QC-I24｜Claim Taxonomy 標記強制（v1.10 新增）
+
+依 Tier-aware enforcement 表（Q0 全文 / Q1 §0+§9.5+§10+§10.5+§12+§13 / Q2 §12+§13），強制章節的 claim 必須有 4 類 tag 之一（[F:] / [I:] / [X:] / [A:]）。檢查方式：
+
+- **§12 每條 thesis** 至少 1 個 [F:]（cornerstone fact）+ 1 個 [I:] 或 [X:]（推論 / 情境）
+- **§13 每條 falsification metric** 至少 1 個 [X:]（base/bull/bear 三情境的閾值）
+- **§0 一句 Thesis** 至少 1 個 [I:] 或 [X:]
+- **§10.5 catalyst** 每條 expected 結果至少 1 個 [X:]（達成 / 落空 / 部分）
+- **§9.5 Kill scenario** 每條至少 1 個 [I:]（揭露 kill 機制的推論鏈，避免 strawman）
+
+缺 tag = 視為 [O:] 意見類 = QC-I24 fail，返工。
+
+**bull case**：tag 雖然會增加報告「視覺密度」，但這是 reader 端可立即識別 claim type 的代價；且 v1.10 起新 ID 開頭的 banner 會解釋 4-class 含義，learning curve 一次性。
+
+### QC-I25｜Spurious Specificity 禁令（v1.10 新增）
+
+**禁止精準數字**（除非 source 直接公告該確切值）：
+
+| 類別 | ❌ 禁止 | ✅ 允許 |
+|:---|:---|:---|
+| 市佔（估算）| "62.7%" / "78.3%" | "~70%" / "60-65%" / "~6 成" |
+| 預估時間 | "2027-09-15" / "2027 Q3 中旬" | "2027 H2" / "2027 Q3-Q4" |
+| 預估 TAM | "$53.7B" | "~$50B" / "$50-60B" |
+| 預估良率 | "yield 78.3%" | "~80%" / "yield 7-8 成" |
+| 機率 | "60% 機率" / "p=0.6" | 詞彙級「很可能」 |
+| Multiple | "5.3x EPS" | "~5x" / "4-6x" |
+
+**例外（保留精準數字）**：
+- T1 source 直接公告該確切值（如 10-K 揭露 "Q4 revenue $63.2B" / NVDA 法說 "Blackwell GB200 unit price $40K"）→ 保留 + 必須帶 [F: T1: ...] tag 並引 source
+- 過去歷史已實現的數字（"FY24 Q3 revenue $18.5B"，from 10-K）→ 保留
+- 行業標準規格（"HBM3E 8-Hi stack"、"3nm node"）→ 保留
+
+**判斷原則**：
+> **這個精準數字是 source 公告的、還是分析師估算的？**
+>
+> - 公告 → 保留 + [F:] tag + 引 T1/T2 source
+> - 估算 → 必須改 range 或 ~xxx；且通常該 claim 應該是 [I:] 或 [X:] 類
+
+**抓 spurious specificity 的自我檢核**：寫完一段後，回頭找所有兩位 / 三位有效數字的非整數，每個都問自己「這是 published source 還是我估的」。估的就改 range。
+
+### QC-I26｜多情境強制（v1.10 新增）
+
+§12 / §13 / §10.5 / §0 thesis 涉及 forecast 的 claim 必須以 [X:] 標記呈現 base / bull / bear 三情境：
+
+- **base**（很可能 / 主基準）：本 ID 預設情境
+- **bull**（可能 / 偏多 alternate）：thesis 強化情境
+- **bear**（不太可能 / 偏空 alternate）：thesis 弱化或失效情境
+
+**bear 情境必須是 §13 falsification metric 的真實 trigger**，不是 strawman（避免 ID_AIInferenceEconomics critic 抓到的「kill scenario 是 strawman」類錯誤 — 列了「外星人入侵」級別的 bear，等於沒列）。
+
+**bear 情境 sanity check**：
+1. bear 情境的觸發點，是否真的對應 §13 至少 1 條 falsification metric？
+2. bear 若成真，§12 該 thesis 是否真的 invalid？（不是「conviction 微降」而是「方向變」）
+3. bear 機率有沒有低於 10%（near-impossible）？若有 → 你列的可能是 strawman，重列
+
+單一情境呈現（"X 將發生 → thesis 成立"）= QC-I26 fail，返工。
+
+「兩情境」（只有 base + bear，缺 bull）= QC-I26 fail。bull 情境是 thesis-strength 的天花板，缺它會 cap 對 conviction 的調校。
+
+---
+
 ## 【整合點：stock-analyst 讀取 ID】
 
 stock-analyst skill 執行 DD 時，應在**護城河分析 / 競爭格局 / 產業演進**章節前先執行：
@@ -775,4 +1011,6 @@ HTML 生成後輸出：
 
 ## 【版本歷史】
 
+- **v1.11（2026-05-02）**：新增 Step 0 — Evidence Prefetch（呼叫 `scripts/evidence/orchestrator.py` 的 `fetch_for_id_session()`，撈 EDGAR 8-K + EX-99 + IR deck + arXiv paper 到 `evidence/`，YouTube webcast 背景跑 whisper 轉文字）。Step 2 / 3 / 6 加 hook：寫稿前先 `grep_manifest` + `Read` 本地 evidence，避免 WebFetch 對 PDF / 音訊無解的限制。引用規範新增 `[evidence: <path> p.<N>]` tag。源於 `SEMI_EVIDENCE_SPEC.md` 設計：補強 ID 的 primary-source 比例（投資人日 deck、法說會 transcript、技術論文）。離線 fallback：`evidence/` 不存在或 orchestrator 不可用時跳過 Step 0，原 WebSearch / WebFetch 路徑繼續可用。**白名單擴充**：`evidence/tickers.json` v1 收 10 家半導體（NVDA/TSM/ASML/AMD/AVGO/INTC/MU/AMAT/LRCX/KLAC），新 ticker 寫 ID 時 auto-discover + user confirm 後 append。
+- **v1.10（2026-05-01）**：Claim Taxonomy v1（4-class [F:]/[I:]/[X:]/[A:]）+ 詞彙級機率 + tier-aware enforcement（Q0 全文 / Q1 §0+§9.5+§10+§10.5+§12+§13 / Q2 §12+§13）。新增 QC-I24（taxonomy 標記強制）、QC-I25（spurious specificity 禁令）、QC-I26（多情境強制：base/bull/bear，bear 必須對應 §13 真 trigger 不是 strawman）。§0/§12/§13 schema 描述同步引用 tag 要求。**v1.0-v1.9 共存策略**：機會主義升級（不主動 batch retrofit 80 份；新主題 / user 要求重寫 / PM 重度引用 → 升 v1.10；id-review 修大錯時順手加 tag；純資訊查詢不動）。v1.10 ID 必加 reader banner 解釋 4-class。critic spec（industry-thesis-critic.md）與 id-review skill 在本版**未升** — taxonomy enforcement 暫為 self-check（QC-I24/25/26 寫稿者自跑），observation period 跑 3-5 份 v1.10 ID 後再決定是否 cascade 改 critic（加 version-gate）。
 - **v1.0（2026-04-19）**：初版。11 章 schema；🟡 規則；QC-I1-I6；stock-analyst 整合鉤子。
