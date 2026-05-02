@@ -1,11 +1,11 @@
 ---
 name: id-review
 description: 對既有產業 DD（Industry DD / ID）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID**（那是 industry-analyst skill）；**也被 industry-analyst Step 8.7 強制呼叫**做新 ID 寫稿後的 mandatory critic gate。
-version: v1.0
-date: 2026-05-01
+version: v1.1
+date: 2026-05-02
 ---
 
-# id-review skill v1.0
+# id-review skill v1.1
 
 ## 【角色定位】
 
@@ -47,6 +47,119 @@ date: 2026-05-01
 
 ## 【Step-by-Step 流程】
 
+### Step 0：累積上限偵測（v1.1 新增）
+
+每次 skill invocation 開始時，**先**執行本步驟，再決定走 patch flow 或 consolidation flow。
+
+**讀 ID 檔，count：**
+- `"🔴 大錯"` 或 `"🔴 Decision-time patch"` 標記數（N_patches）
+- `§0 critic banner block` 總字元長度（banner_chars）
+- `id-meta.id_version`（例如 v1.3）
+
+**觸發 consolidation 條件（任一即觸發）：**
+
+| 條件 | 閾值 |
+|---|---|
+| patch 標記累積（N_patches） | ≥ 5 個 |
+| banner block 總字元（banner_chars） | > 2000 字 |
+| id-meta.id_version | ≥ v1.5 |
+
+**判定邏輯：**
+- 全部未滿足 → 正常進 **Step 1**（patch flow）
+- 任一條件滿足 → 問 user 確認：
+
+  > 「本 ID 累積 patch 已達 cap（{N_patches} 標記 / {banner_chars} 字 / id_version {V}）。建議先 consolidate v2 再做新 patch。確認進 consolidation flow？(yes / no — no 則繼續疊 patch)」
+
+  - **yes** → 跳到 **Step C1**（consolidation flow），不進 Step 1-7
+  - **no** → 繼續 **Step 1-7**（user 接受 banner 變長）
+
+---
+
+### Step C1：列出 banner 內所有 patch 條目給 user 預覽
+
+從 §0 banner 解析出每個 `"🔴 大錯 ①/②/..."` 或 `"🔴 Decision-time patch"` 條目，顯示成 numbered list：
+
+```
+目前 banner 累積：
+  #1: {Pass 1 大錯 ①} — {one-line summary} → 影響章節：§X
+  #2: {Pass 1 大錯 ②} — ... → 影響章節：§Y
+  #3: {Pass 2 ...} → ...
+  ...
+準備併入對應章節，§0 banner 清空為單行 v2 marker。
+```
+
+### Step C2：對每條 patch 提議併入位置 + user 確認
+
+對每條 patch：
+- 從 patch 內容辨識它影響哪個章節（patch 文字常自帶 `"§6/§11/§14"` 等提示）
+- 顯示：
+
+  ```
+  Consolidation #{i}/{N}：
+    原 banner 文字：{exact text}
+    建議併入：§{X} 的 {paragraph hint}
+    併入方式：{inline 加入 / 取代 / append}
+
+  確認？(yes / 改成 §Y / skip — 此條留 banner)
+  ```
+
+- user 回應對應動作：
+  - `yes` → 記錄 merge plan
+  - `改成 §Y` → 用 user 指定章節
+  - `skip` → 不併入該條（留 banner）
+
+### Step C3：執行 merge
+
+對每條 `yes` / `改成 X` 的條目：
+- 用 Edit 工具把 patch 內容寫到目標章節的合適位置（保留 inline mark 如「(post-Pass-3)」作為 audit trail）
+- 從 §0 banner 對應條目刪除
+
+### Step C4：§0 banner 清空 + 寫 v2 marker
+
+把 §0 banner 整個 block 替換為單行：
+
+```html
+<div style="background:#F0FDF4;border:2px solid #16A34A;border-radius:6px;padding:10px 14px;margin:14px 0;font-size:12.5px">
+  <strong style="color:#15803D">✅ v2 consolidated {YYYY-MM-DD}</strong>：過往 Pass 1-{N} patch 已整合進對應章節；修改歷程見 git log。<a href="_consolidation_{date}.md">consolidation manifest</a>
+</div>
+```
+
+Optional：寫一份 `docs/id/_consolidation_{Theme}_{date}.md` 列出每條 patch 從哪移到哪（audit trail，不上 git，本地保留）。
+
+### Step C5：bump id-meta + 加欄位
+
+更新 ID 內 `<script id="id-meta">` JSON：
+- `id_version`: vX.Y → v2.0（or v3.0 if 已是 v2.x）
+- 新增 `consolidation_date`: "{YYYY-MM-DD}"
+- 新增 `consolidation_count`: incrementing（首次 1）
+- `sections_refreshed.judgment`: 今日
+
+### Step C6：validator + commit + push
+
+```bash
+python3 scripts/validate_id_meta.py docs/id/ID_X.html
+```
+
+validator 通過 → commit message 格式：
+
+```
+Consolidate ID_{Theme} v{old} → v2.0 (Pass 1-{N} integrated)
+
+Past patches integrated into native chapters:
+- {patch #1} → §X
+- {patch #2} → §Y
+...
+
+§0 banner cleared to v2 marker. id-meta.id_version bumped.
+Audit manifest at docs/id/_consolidation_{Theme}_{date}.md (local only).
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+```
+
+push 到 main（直接 push，不開 PR）。
+
+---
+
 ### Step 1：定位 ID 檔案
 
 從用戶輸入辨識 target ID：
@@ -56,7 +169,19 @@ date: 2026-05-01
 
 若找到多份（同主題不同日期）→ 用最新一份；若找不到 → 告訴用戶「沒找到」並列 `docs/id/` 中相近主題候選。
 
-### Step 2：跑 critic Pass 1
+### Step 2：input mode dispatch + 跑 critic Pass 1
+
+**先判斷 Mode，再 spawn critic（或跳過）：**
+
+| Mode | 觸發條件 | 行為 |
+|---|---|---|
+| **A** — 預設，full critic spawn | 用戶說「改 ID_X」/「review ID_X」，沒有附具體 feedback | Spawn critic Pass 1，generic prompt（現有行為） |
+| **B** — user-feedback-driven | 用戶給了具體意見，如「我覺得 §Y 有 Z 問題」 | Spawn critic Pass 1，framing：validate user's points + find additional blindspots |
+| **C** — existing-report | 用戶說「我已經有 critic report 在 docs/id/_critic_X.md，直接用它」 | 不 spawn，直接讀現有 report，跳到 Step 4 |
+
+User 可以混用（如「Mode B + skip Pass 2」—— 若用戶說「feedback 已很完整，不用跑第二輪」可跳過 Step 3）。
+
+#### Mode A（預設）— Full critic spawn
 
 Spawn `industry-thesis-critic` sub-agent（必用 Sonnet 跨模型）：
 
@@ -86,6 +211,33 @@ After saving, return brief summary:
 ```
 
 時長：~15-20 分鐘。讀回 brief summary。
+
+#### Mode B（NEW）— User-feedback-driven
+
+在 Mode A prompt 基礎上，在 `User's intent` 後插入以下 framing block：
+
+```
+User has provided the following peer-review points (already done their analysis):
+  1. {point 1 with their reasoning}
+  2. ...
+
+Your job: independently validate or refute each point (don't just rubber-stamp).
+Then run the standard 6-item checklist + look for ADDITIONAL blindspots user missed.
+In your report, structure as:
+  - Independent assessment of user's N points (agree/disagree/partial + why)
+  - Additional blindspots not caught by user
+  - Standard verdict + 6-item findings
+```
+
+其餘（save path、brief summary 格式）與 Mode A 完全相同。
+
+#### Mode C（NEW）— 直接使用現有 critic report
+
+- 不 spawn sub-agent
+- 用 Read 工具讀 `docs/id/_critic_{Theme}_{date}.md`（user 指定路徑）
+- 提取 findings 清單（🔴/🟡/🟢 條目）
+- 直接跳到 **Step 4（彙整）**
+- 注意：若 Mode C 只提供了 Pass 1 findings，Step 3（Pass 2）tier 規則仍適用 — Q0 仍需補跑 Pass 2，除非 user 明確說「skip Pass 2」
 
 ### Step 3：條件性跑 Pass 2（Q0 必跑 / Q1+ 視情況）
 
@@ -183,7 +335,20 @@ Patch {N}/{total}: {finding title}
 
 ### Step 6：寫 critic banner + 更新 id-meta
 
-所有 patch 完成後，在 ID 文件頂部插入或更新 critic banner（標準格式）：
+所有 patch 完成後，在 ID 文件頂部插入或更新 critic banner（標準格式）。
+
+**Banner 寫法規則（v1.1 明確化）：**
+
+| 情境 | 行為 |
+|---|---|
+| 首次 review（Pass 1） | 新建 banner block |
+| 同次 session 內 Pass 2/3 findings | 整合進同一 banner block 的子條（不開新 block） |
+| 跨 session 後續 Pass（新的 invocation） | 在現有 banner 內新增子節，如 `🔴 Decision-time patch (Pass N, YYYY-MM-DD)`；不開新 block |
+| banner 達到累積上限 | 不再疊新 banner → 見 Step 0（consolidation 觸發條件） |
+
+原則：**同一個 ID 永遠只有一個 §0 banner block，**多次 pass 的 findings 疊加在同一 block 內。何時停止疊加由 Step 0 的 cap 規則控制。
+
+**Banner 標準格式（保持不變）：**
 
 ```html
 <div style="background:#FEF2F2;border:2px solid #DC2626;border-radius:6px;padding:14px 16px;margin:14px 0;font-size:12.5px;line-height:1.7">
@@ -341,9 +506,10 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 
 ## 【後續升級】
 
-- v1.1：跑熟後降為 mode (b) auto-patch 大錯
-- v1.2：加 cron 排程模式（weekly 自動跑所有 Q0 ID 的 critic，產 alert 但不 patch）
-- v1.3：跨 ID 一致性 reconcile（critic 找到 cross-ID 數字差異時，自動 patch 兩份 ID 的數字）
+- v1.1（current，2026-05-02）：加 Step 2 input mode dispatch (A/B/C) + Step 0/C1-C6 consolidation phase + Step 6 banner 寫法明確化（append vs rewrite）。觸發來源：2026-05-02 ID_AIInferenceEconomics 手動 patch 暴露 3 個 gap + 1 個缺漏概念（banner 累積 / consolidation）
+- v1.2：原 v1.1 內容 — 跑熟後降為 mode (b) auto-patch 大錯
+- v1.3：加 cron 排程模式（weekly 自動跑所有 Q0 ID 的 critic，產 alert 但不 patch）
+- v1.4：跨 ID 一致性 reconcile（critic 找到 cross-ID 數字差異時，自動 patch 兩份 ID 的數字）
 - v2.0：擴展為 `dd-review`（同樣模式但對 stock-analyst 的 DD 而非 ID）
 
 ---
@@ -356,3 +522,4 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 4. **Banner 不可省**：所有 patch 完成必須在 ID 頂部寫 critic banner（記錄修正歷程）
 5. **commit 訊息要結構化**：列大錯/cosmetic 分類 + portfolio implication
 6. **失敗不靜默**：validator fail / critic 找不到章節 / user skip 全部 → 都明確告訴 user
+7. **Banner 累積上限**：≥5 patch 標記、>2000 字、或 id_version ≥v1.5 → 進 consolidation flow（Step 0 → C1-C6），不再疊新 patch；此規則不可繞過
