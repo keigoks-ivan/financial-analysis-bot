@@ -197,7 +197,7 @@ Read spec at /Users/ivanchang/.claude/agents/industry-thesis-critic.md.
 ID file path: {absolute path to docs/id/ID_X.html}
 User's intent: {如「驗證這份 ID 哪些段落需要改」/「考慮加倉前體檢」}
 
-Run all 6 items + Item 6.5 CONCLUSION_IMPACT triage.
+Run all 7 items + Item 6.5 CONCLUSION_IMPACT triage（Item 7 = thesis box sync, agent v1.3 加）.
 Save report to /Users/ivanchang/financial-analysis-bot/docs/id/_critic_{Theme}_{YYYYMMDD}.md.
 
 After saving, return brief summary:
@@ -222,11 +222,11 @@ User has provided the following peer-review points (already done their analysis)
   2. ...
 
 Your job: independently validate or refute each point (don't just rubber-stamp).
-Then run the standard 6-item checklist + look for ADDITIONAL blindspots user missed.
+Then run the standard 7-item checklist + look for ADDITIONAL blindspots user missed.
 In your report, structure as:
   - Independent assessment of user's N points (agree/disagree/partial + why)
   - Additional blindspots not caught by user
-  - Standard verdict + 6-item findings
+  - Standard verdict + 7-item findings (含 Item 7 thesis box sync)
 ```
 
 其餘（save path、brief summary 格式）與 Mode A 完全相同。
@@ -373,6 +373,21 @@ Patch {N}/{total}: {finding title}
 - `id_version`: bump（v1.0 → v1.1 → v1.2 ...）
 - `sections_refreshed.judgment`: 今日日期
 - `sections_refreshed.market`: 今日（若 Pass 2 有更動 market 段）
+
+### Step 6.5：Thesis box alignment check（mandatory before commit — v1.2 加）
+
+Step 6 的 critic banner 與 id-meta version bump 完成後，**回頭讀 `<div class="thesis-box">` 整段「本 ID 一句 Thesis（非共識）」**，逐句對照 Step 5 patch list 判斷：
+
+1. thesis 開頭主軸句是否仍對？
+2. (1)(2)(3) bullet 的 cornerstone fact 是否被本次 patch falsify 或修正？需加 inline `（critic YYYY-MM-DD 修：...）` 註？
+3. thesis 末段 PE / conviction / alpha gap 結論句是否反映了 §11 ranking + §12 / §13 / §8 judgment card 變化？特別注意：
+   - **個股 conviction tier 變化**（high → mid 等）— 不能只在 §11 / §8 寫，thesis box 也要點名
+   - **PE / multiple 從 uniform → tiered**（如真 monopoly vs 雙寡占分層）— 不能只在 §12 寫
+   - **cornerstone consensus framing 過時**（如「共識 $X」是 stale sell-side bear case）— 引述的非共識 gap 數字要改
+
+若需更新，立即回 Step 5 patch 工具補一輪（thesis box 也是 critic banner 區塊外的另一個編輯目標）。若確認不需更新，commit message 明文標 `thesis box reviewed, no update needed` 留 audit trail。
+
+**為什麼是 mandatory**：歷史踩坑（2026-05-02 WFE v1.1 → v1.2 補丁）— 內文章節 patch 完整但 thesis box 漏掉 ASML conviction 降級 + PE 分層，被 user 質問才補 v1.2。Thesis box 是 PM / cross-ID / 讀者第一眼引用的「結論段」，頭尾不同步是 ID review 最容易踩的盲點。Item 7（critic agent 端）+ Step 6.5（skill 端）構成雙層保險。
 
 ### Step 7：驗證 + commit + push
 
