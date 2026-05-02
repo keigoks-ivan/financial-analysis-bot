@@ -1,11 +1,11 @@
 ---
 name: industry-analyst
 description: 建立「產業深度報告（Industry DD / ID）」— 一份跨多檔個股共用的產業研究文件。輸入產業主題（如「玻璃基板封裝」「HBM 供需循環」「GLP-1 治療藍圖」），skill 執行 WebSearch / WebFetch 多輪研究，輸出一份 11 章節、表格為主 + 敘述為輔、含 S 曲線與 value chain 圖示的 HTML 報告；並把對應個股登記於 §11 關聯清單，供 stock-analyst（公司 DD）自動讀取引用。觸發：使用者提到「產業研究 / sector DD / 產業報告 / industry landscape / 產業藍圖」或具體主題（玻璃基板、HBM、CoWoS、AI ASIC、GLP-1、核融合、玻璃纖維基板等）且尚未要求做個股 DD。
-version: v1.11
+version: v1.12
 date: 2026-05-02
 ---
 
-# industry-analyst skill v1.11
+# industry-analyst skill v1.12
 
 ## 【六大原則（v1.5，2026-04-21 基於 ID_Transformers peer review 強化）】
 
@@ -375,28 +375,6 @@ Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓
 - 僅 T3/T4 單一來源 → 在章節末加 ⚠️ 註：「此事實僅 T3 來源，無 T1/T2 交叉驗證」
 - T1 投資人簡報的頁碼 / slide 編號必須寫出來（方便日後回溯）
 
-**Evidence pool 引用**（v1.11 新增，2026-05-02）：
-
-引用 `evidence/` 目錄內的 PDF / 法說會 transcript 時用：
-
-```html
-<span class="source-tag">[evidence: <a href="evidence/ir_decks/NVDA_2026Q1_earnings.pdf">NVDA_2026Q1_earnings.pdf p.23</a>]</span>
-```
-
-對 transcript 用行號代替 page：
-
-```html
-<span class="source-tag">[evidence: transcripts/txt/TSM_2025Q4_call.txt L.412-428]</span>
-```
-
-`evidence/` 在本地 `.gitignore`（不公開），但寫進 HTML 方便 `id-review` / `industry-thesis-critic` 回查。若 manifest 內 `fetched_from` 是可公開 URL，加 fallback link：
-
-```html
-<span class="source-tag">[evidence: NVDA_2026Q1_earnings.pdf p.23 · <a href="https://www.sec.gov/...">SEC EDGAR</a>]</span>
-```
-
-詳見 `SEMI_EVIDENCE_SPEC.md` §7。
-
 ### 常見來源搜尋捷徑
 
 | 主題 | 首選 T1 來源 |
@@ -415,36 +393,7 @@ Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓
 
 收到主題後按此順序執行，每步產出中間結果（不中斷）：
 
-### Step 0 — Evidence Prefetch（v1.11 新增，2026-05-02）
-
-寫稿前先撈本地 evidence pool（投資人日 deck / 法說會 transcript / 技術論文），避免每章重複 WebSearch 抓不到 PDF。詳見 `SEMI_EVIDENCE_SPEC.md`。
-
-**Phase 0a — 候選 ticker（~10 秒）**：
-
-接到主題後列出 candidate ticker（10-15 家寬鬆名單，比最終 §11 list 寬）。對每家：
-- 若 ticker **在** `evidence/tickers.json`：列入 fetch 隊列
-- 若 ticker **不在**：auto-discover（CIK via EDGAR company-tickers JSON、ir_url 試 5 種 pattern + HEAD 200）→ 列出來給 user confirm 一次 → confirm 後 append `tickers.json` → 列入隊列
-- 若 auto-discover 失敗：列入 missing 清單，請 user 手動補
-
-**Phase 0b — Fast fetchers（~2 分鐘，平行）**：
-
-呼叫 `scripts/evidence/orchestrator.py` 的 `fetch_for_id_session(candidate_tickers, topic_keywords)`：
-- 對每家 ticker：`grep_manifest(ticker, days=30)` 有 hit → skip；否則跑 Tier 1（EDGAR 8-K + EX-99 過去 90 天）+ Tier 2（IR 雙頁面爬）
-- 對主題 keywords 跑 Tier 3（arXiv 過去 180 天）
-
-**Phase 0c — Slow transcripts（背景非阻塞）**：
-
-對 top 3-5 ticker（ID 主題最相關）的最近一場 earnings call 或 investor day webcast 跑 `youtube_transcript`，背景跑、不卡 Phase 1 寫稿。20-40 分鐘完成後可被 §10 / §11 / §12 引用。
-
-**Phase 0 結束時的 deliverable**：
-
-1. 列「missing 清單」給 user：哪些 ticker 抓不到、哪些 webcast 沒 PDF deck，請 user 補 upload 到 `evidence/inbox/`
-2. 列已 fetch 完成的 evidence count（e.g.「NVDA: 2 EDGAR + 1 IR deck，TSM: 0 EDGAR + 6 IR deck」）
-3. 進入 Step 1 開始研究
-
-**例外：單家 ID**：若主題只關 1 家公司（如 ASML High-NA EUV 專題），prefetch 退化成單家撈，Phase 0a/0b/0c 合併為一次跑完。
-
-**離線 fallback**：若 `evidence/` 目錄不存在或 orchestrator 不可用（新機器尚未 setup），跳過 Step 0 直接進 Step 1，不阻斷 ID 寫稿。Step 1+ 仍走 WebSearch / WebFetch 原路徑。
+> **歷史筆記（v1.12，2026-05-02）**：v1.11 曾在此插入 Step 0 Evidence Prefetch，呼叫 `scripts/evidence/orchestrator.py` 自動撈 EDGAR + IR + arXiv。同日跑「2026-2027 HBM4 供需循環」ID 驗證時失敗 — 自動 fetcher 拿到的（EDGAR press release、arXiv tangential paper、IR archive 1994-2020 噪音）跟 ID 真正需要的（SK Hynix / Samsung Korean IR、付費 SemiAnalysis / Yole 報告、投資人日 deck PDF、法說會 Q&A 音訊）結構性錯位。設計假設「primary-source 內容能用自動 scrape 拿到」被證偽，因此 v1.12 移除 Step 0 與相關 hook，回到純 WebSearch / WebFetch 流程。詳見 `SEMI_EVIDENCE_SPEC.md` DEPRECATED 標頭與其 lessons-learned 段落。
 
 ### Step 1 — 主題界定（2 輪 WebSearch）
 - Search 1：`{主題} technology overview 2026` → 技術輪廓
@@ -452,7 +401,6 @@ Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓
 - 產出：§0 TL;DR 卡片 + §1 邊界表的草稿
 
 ### Step 2 — 技術深挖（3-5 輪，優先抓 T1 簡報）
-- **先讀本地 evidence**（v1.11）：`grep_manifest(tags=[主題 keywords])` 撈 `evidence/ir_decks/` + `evidence/tech_papers/` + `evidence/transcripts/` 相關檔，先 `Read` 完再決定要 WebSearch 補什麼 — 投資人日 deck 與會議論文這層 PDF 多在本地，不要重複 WebFetch
 - **先試**：`{主流玩家} investor day 2026 slides filetype:pdf` / `{玩家} technology keynote deck`
 - 若主題是半導體：`{公司} GTC 2026 keynote`、`{公司} technology symposium 2026`、`TSMC OIP 2026`
 - 若主題是生技：`{公司} R&D day presentation`、`ADA 2026 abstract {藥物}`
@@ -462,7 +410,7 @@ Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓
 
 ### Step 3 — 市場與供應鏈（3-5 輪）
 - `{主題} market size TAM 2030 SEMI report` / `Yole {主題}` / `IC Insights {主題}`
-- 回頭掃 Step 2 抓到的 IR deck **+ `evidence/ir_decks/` + `evidence/industry_research/`（user-uploaded Yole / SemiAnalysis 等付費深度）+ `evidence/broker_reports/`** 找 TAM 圖（v1.11）
+- 回頭掃 Step 2 抓到的 IR deck 找 TAM 圖
 - `{主題} supply chain value chain`
 - `{主題} margin structure`
 - 產出：§4 TAM/SAM/SOM、§5 value chain SVG、§7 unit economics
@@ -489,7 +437,6 @@ Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓
 - 所有 🟡 bullet 必須標事實鍊 + **證偽條件**（QC-I11）
 
 ### Step 6 — §11 關聯個股清單 + §11.5 Cross-ID
-- **先讀 ticker-level evidence**（v1.11）：對 §6 玩家矩陣每家 ticker 跑 `grep_manifest(ticker=X)` → 對 hits 用 `Read` tool 讀取（PDF / .htm / .txt 都支援，PDF 分頁 ≤20）。重點抽：營收 segment mix（決定 §11 影響深度 🔴🟡🟢）、capacity / capex 數字、management commentary。Citation 用 `[evidence: <path> p.<N>]` 格式
 - 從 §6 玩家矩陣抓出「有公開股票 + 本產業曝險 > 10% revenue」的公司
 - 對每檔：評定影響深度
   - 🔴 核心：營收 >40% 依賴此產業 OR 技術領導者
@@ -1011,6 +958,7 @@ HTML 生成後輸出：
 
 ## 【版本歷史】
 
-- **v1.11（2026-05-02）**：新增 Step 0 — Evidence Prefetch（呼叫 `scripts/evidence/orchestrator.py` 的 `fetch_for_id_session()`，撈 EDGAR 8-K + EX-99 + IR deck + arXiv paper 到 `evidence/`，YouTube webcast 背景跑 whisper 轉文字）。Step 2 / 3 / 6 加 hook：寫稿前先 `grep_manifest` + `Read` 本地 evidence，避免 WebFetch 對 PDF / 音訊無解的限制。引用規範新增 `[evidence: <path> p.<N>]` tag。源於 `SEMI_EVIDENCE_SPEC.md` 設計：補強 ID 的 primary-source 比例（投資人日 deck、法說會 transcript、技術論文）。離線 fallback：`evidence/` 不存在或 orchestrator 不可用時跳過 Step 0，原 WebSearch / WebFetch 路徑繼續可用。**白名單擴充**：`evidence/tickers.json` v1 收 10 家半導體（NVDA/TSM/ASML/AMD/AVGO/INTC/MU/AMAT/LRCX/KLAC），新 ticker 寫 ID 時 auto-discover + user confirm 後 append。
+- **v1.12（2026-05-02，post-HBM4 validation）**：**revert v1.11 evidence pool hooks**。同日跑「2026-2027 HBM4 供需循環」ID 端到端驗證，發現自動 fetcher 拿到的（EDGAR press release ≈ WebFetch 已能讀；arXiv paper 多為 PIM tangential；IR archive 1994-2020 噪音 ~800 個）跟 ID 真正需要的（SK Hynix / Samsung Korean IR primary、付費 SemiAnalysis / Yole 報告、投資人日 deck PDF、法說會 Q&A 音訊）結構性錯位。違反我自己 spec 設計階段的判斷：「真要讓 /id/ 升級瓶頸是付費訂閱不是 RSS pipeline」。本次 revert 移除 Step 0 / Step 2/3/6 的 evidence read hook、引用規範裡 `[evidence:]` tag 段落 — 回到純 WebSearch / WebFetch 流程。**保留**：`scripts/evidence/` fetcher dead code（無害）、`SEMI_EVIDENCE_SPEC.md`（標 DEPRECATED + lessons-learned）、`scripts/evidence/get_whisper_model.sh`（手動轉錄場合仍可用）。Lesson：別把「自動化好玩」誤當成「自動化有用」。
+- **v1.11（2026-05-02，**已 revert，見 v1.12**）**：新增 Step 0 — Evidence Prefetch（呼叫 `scripts/evidence/orchestrator.py`）+ Step 2/3/6 evidence-read hook + `[evidence:]` citation tag。源於 `SEMI_EVIDENCE_SPEC.md` 設計：補強 ID 的 primary-source 比例。同日驗證失敗，v1.12 移除。
 - **v1.10（2026-05-01）**：Claim Taxonomy v1（4-class [F:]/[I:]/[X:]/[A:]）+ 詞彙級機率 + tier-aware enforcement（Q0 全文 / Q1 §0+§9.5+§10+§10.5+§12+§13 / Q2 §12+§13）。新增 QC-I24（taxonomy 標記強制）、QC-I25（spurious specificity 禁令）、QC-I26（多情境強制：base/bull/bear，bear 必須對應 §13 真 trigger 不是 strawman）。§0/§12/§13 schema 描述同步引用 tag 要求。**v1.0-v1.9 共存策略**：機會主義升級（不主動 batch retrofit 80 份；新主題 / user 要求重寫 / PM 重度引用 → 升 v1.10；id-review 修大錯時順手加 tag；純資訊查詢不動）。v1.10 ID 必加 reader banner 解釋 4-class。critic spec（industry-thesis-critic.md）與 id-review skill 在本版**未升** — taxonomy enforcement 暫為 self-check（QC-I24/25/26 寫稿者自跑），observation period 跑 3-5 份 v1.10 ID 後再決定是否 cascade 改 critic（加 version-gate）。
 - **v1.0（2026-04-19）**：初版。11 章 schema；🟡 規則；QC-I1-I6；stock-analyst 整合鉤子。
