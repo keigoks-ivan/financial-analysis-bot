@@ -5,25 +5,32 @@ Fetches primary-source PDFs, earnings decks, arXiv papers, and YouTube transcrip
 ## Install Prerequisites
 
 ```bash
-# Python packages
-pip install requests beautifulsoup4 arxiv
+# Python packages (use pip3 if `pip` is not on PATH)
+pip3 install requests beautifulsoup4 arxiv
 
 # yt-dlp (YouTube audio download)
 brew install yt-dlp
 
 # whisper.cpp (local speech-to-text)
 brew install whisper-cpp
-
-# Download Whisper models (run once after install)
-# Models are stored in $(brew --prefix whisper-cpp)/share/whisper.cpp/models/
-
-# Option A: multilingual (recommended — works for both English and Chinese earnings calls)
-cd "$(brew --prefix whisper-cpp)/share/whisper.cpp/models"
-bash download-ggml-model.sh medium
-
-# Option B: English-only (~1.5x faster, use for NVDA/AMD/ASML/etc.)
-bash download-ggml-model.sh medium.en
 ```
+
+### Whisper model
+
+The brew `whisper-cpp` formula (≥ 1.8.x) **no longer ships** the `download-ggml-model.sh` helper or pre-staged model files. Use the bundled helper script in this repo, which downloads from HuggingFace into `~/.local/share/whisper.cpp/models/` (where `youtube_transcript.py` looks):
+
+```bash
+# Default: medium (multilingual, ~1.5 GB) — works for TSMC/SK Hynix Chinese/Korean calls
+bash scripts/evidence/get_whisper_model.sh
+
+# Or explicit:
+bash scripts/evidence/get_whisper_model.sh medium       # multilingual (default)
+bash scripts/evidence/get_whisper_model.sh medium.en    # English-only, ~1.5x faster
+bash scripts/evidence/get_whisper_model.sh base.en      # ~150 MB, lower quality
+bash scripts/evidence/get_whisper_model.sh large-v3     # ~3 GB, best quality
+```
+
+The script is idempotent: re-running with an existing model is a no-op.
 
 ## Modules
 
@@ -120,7 +127,8 @@ One JSON line per downloaded file:
 - `medium` (multilingual): best for TSMC, SK Hynix calls with Chinese/Korean content
 - `medium.en` (English-only): 1.5x faster; use for NVDA, AMD, ASML, Intel
 - Runtime on Apple Silicon M-series: ~20-40 min per 1 hour of audio
-- Models are large (~1.5 GB each); stored locally by brew, not in this repo
+- Models are large (~1.5 GB each); stored in `~/.local/share/whisper.cpp/models/`, **not** in this repo (brew `whisper-cpp` ≥ 1.8.x ships only the binary, no models)
+- `youtube_transcript.py` searches `/opt/homebrew/share/whisper.cpp/models/`, `/usr/local/share/whisper.cpp/models/`, and `~/.local/share/whisper.cpp/models/` in that order
 
 ## Rate Limits
 
