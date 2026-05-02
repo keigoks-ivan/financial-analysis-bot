@@ -5,6 +5,50 @@
 
 ---
 
+> # 🚫 DEPRECATED — 2026-05-02 同日 revert（保留作 lessons-learned）
+>
+> 本 spec v1.0 設計後同日交付 v1.11 實作，並用「2026-2027 HBM4 供需循環」ID 做端到端驗證。**驗證失敗**，並於同日 revert（industry-analyst skill v1.12）。
+>
+> ## 失敗模式
+>
+> Phase 0 prefetch 產出 820 manifest 條目 / 1.2 GB 磁碟，但**只有 ~26 條對 ID 寫稿可用**。高訊號來源（SK Hynix / Samsung Korean IR primary、付費 SemiAnalysis / Yole 報告、投資人日 deck PDF、法說會 Q&A 音訊）**結構性無法被自動 fetcher 拿到**：
+>
+> - SK Hynix / Samsung：韓股 IR 站結構不同，無 KRX adapter
+> - MU / AVGO / AMAT：IR 站 Cloudflare 擋 bot
+> - NVDA / TSM 投資人日 deck：JS-rendered，沒在 quarterly results 頁面靜態列出
+> - 付費深度（SemiAnalysis、Yole、TechInsights、券商）：永遠在 paywall 後
+> - 法說會 Q&A：webcast 沒 PDF transcript、audio 要 yt-dlp + whisper 個別跑
+>
+> 反過來，自動 fetcher **拿得到的**是 EDGAR press release（WebFetch 已能讀，零增值）+ arXiv paper（HBM 主題下多為 PIM tangential，非產業數字）+ IR archive 1994-2020 噪音（無關當前 thesis）。
+>
+> ## 設計層教訓
+>
+> 我在 spec 階段自己寫過：「真要讓 /id/ 半導體大項升級，瓶頸不是 RSS pipeline，是付費訂閱（SemiAnalysis $500/年）+ PDF 攝取管線 + 法說會 transcript pull」。但同 spec 之後仍然把實作重點放在「自動化 RSS / IR / arXiv fetcher」— **違反自己當時的判斷**。
+>
+> Lesson：「automatable」≠「valuable」。對 ID 這種 monthly 級深度產出，瓶頸是**內容可達性**（付費 / 反爬），不是**索引速度**（RSS poll）。
+>
+> ## 保留下的部分
+>
+> - `scripts/evidence/` fetcher dead code：留著無害，未來若改純手動觸發或 narrow scope 仍可重用
+> - `scripts/evidence/get_whisper_model.sh`：whisper.cpp 環境裝置仍可用於手動轉錄場合
+> - 本 spec：留作 lessons-learned，避免重蹈
+>
+> ## 何時可能取消 deprecated
+>
+> 三條 narrow 子題若有特定價值再 reactivate 對應子模組（不是整個 evidence pool）：
+>
+> 1. **arXiv-only fetcher** 寫高度技術導向 ID（玻璃基板、HBM thermal）時拉相關 paper 仍有用 — 可獨立呼叫
+> 2. **EDGAR-only fetcher** 寫 US-listed only ID 且 thesis 鎖在季度數字時 — 可獨立呼叫，但 WebFetch 多半夠用
+> 3. **YouTube transcript** 對單一已知 webcast URL 手動觸發 — 一次性使用，不入 manifest 系統
+>
+> 整個 orchestrator + manifest + tickers.json + Phase 0 自動化框架不重啟。
+>
+> ---
+>
+> 以下是原 spec 內容，仍代表 2026-05-02 設計時的思考過程。
+
+---
+
 ## 0. 背景與動機
 
 ### 現況問題

@@ -1,5 +1,14 @@
 # scripts/evidence — Evidence Pool Fetchers
 
+> **🚫 DEPRECATED 2026-05-02** — `industry-analyst` skill v1.12 reverted the v1.11 evidence-pool hooks after same-day end-to-end validation failed. The fetchers below are kept as **dead code** (not invoked from any skill). Full post-mortem in `SEMI_EVIDENCE_SPEC.md` deprecation banner.
+>
+> **Standalone modules that are still occasionally useful**:
+> - `arxiv_fetcher.py` — pull recent papers for a topic keyword. Can be called manually for narrow tech-deep ID work.
+> - `get_whisper_model.sh` — bootstrap whisper.cpp model on a fresh machine. Independent of the rest.
+> - `youtube_transcript.py` — transcribe a single known webcast URL when needed. Independent of manifest system.
+>
+> **Don't use the orchestrator / manifest / tickers.json system for new ID work** — that's what failed validation.
+
 Fetches primary-source PDFs, earnings decks, arXiv papers, and YouTube transcripts for the `evidence/` directory, which backs the `/id/` Industry DD writing workflow.
 
 ## Install Prerequisites
