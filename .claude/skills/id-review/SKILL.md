@@ -374,9 +374,13 @@ Patch {N}/{total}: {finding title}
 - `sections_refreshed.judgment`: 今日日期
 - `sections_refreshed.market`: 今日（若 Pass 2 有更動 market 段）
 
-### Step 6.5：Thesis box alignment check（mandatory before commit — v1.2 加）
+### Step 6.5：Thesis box alignment + Body repetition sweep（mandatory before commit — v1.2 加 thesis box，v1.3 加 body sweep）
 
-Step 6 的 critic banner 與 id-meta version bump 完成後，**回頭讀 `<div class="thesis-box">` 整段「本 ID 一句 Thesis（非共識）」**，逐句對照 Step 5 patch list 判斷：
+Step 6 的 critic banner 與 id-meta version bump 完成後，做**兩個 sub-step** 才進 Step 7 commit：
+
+#### Step 6.5a — Thesis box sync check
+
+**回頭讀 `<div class="thesis-box">` 整段「本 ID 一句 Thesis（非共識）」**，逐句對照 Step 5 patch list 判斷：
 
 1. thesis 開頭主軸句是否仍對？
 2. (1)(2)(3) bullet 的 cornerstone fact 是否被本次 patch falsify 或修正？需加 inline `（critic YYYY-MM-DD 修：...）` 註？
@@ -385,9 +389,25 @@ Step 6 的 critic banner 與 id-meta version bump 完成後，**回頭讀 `<div 
    - **PE / multiple 從 uniform → tiered**（如真 monopoly vs 雙寡占分層）— 不能只在 §12 寫
    - **cornerstone consensus framing 過時**（如「共識 $X」是 stale sell-side bear case）— 引述的非共識 gap 數字要改
 
-若需更新，立即回 Step 5 patch 工具補一輪（thesis box 也是 critic banner 區塊外的另一個編輯目標）。若確認不需更新，commit message 明文標 `thesis box reviewed, no update needed` 留 audit trail。
+#### Step 6.5b — Body repetition sweep（v1.3 加 — 2026-05-03 踩坑教訓）
 
-**為什麼是 mandatory**：歷史踩坑（2026-05-02 WFE v1.1 → v1.2 補丁）— 內文章節 patch 完整但 thesis box 漏掉 ASML conviction 降級 + PE 分層，被 user 質問才補 v1.2。Thesis box 是 PM / cross-ID / 讀者第一眼引用的「結論段」，頭尾不同步是 ID review 最容易踩的盲點。Item 7（critic agent 端）+ Step 6.5（skill 端）構成雙層保險。
+Thesis box 改完後，**grep 全 HTML 找重複 thesis 級數字的 inline 出現**。常見重複位置：
+
+- **§3 S-curve / 技術演進表 + 階段描述**：常 echo thesis 的 PE / margin / share 數字
+- **§5 value chain table / 利潤池表 + 對應 insight box**：常重述 thesis 的 margin 預測
+- **§6 player table / 個股矩陣**：「最近數據」「conviction」欄常 echo thesis 的數字
+- **§4 TAM 註 / §10.5 catalyst 表**：常以 thesis 級數字（如「$100B 合約」）作 anchor
+- **§9.5 反方論證 / §9 風險矩陣**：與 thesis 同類的 framing 也要重檢
+
+**Sweep 方法**：用 `grep -nE "(關鍵數字1|關鍵數字2|stale framing 字樣)" docs/id/ID_X.html` 找所有獨立出現位置；每個獨立 stale 出現都需 inline 加修正註（`（critic YYYY-MM-DD 修：...）`）或 strikethrough + replace，**不能只靠 banner 的 narrative explanation cover**。
+
+若任一 sub-step 發現需更新，回 Step 5 patch 工具補一輪。若確認不需更新，commit message 明文標 `thesis box + body sweep reviewed, no update needed` 留 audit trail。
+
+**為什麼兩個 sub-step 都是 mandatory**：歷史踩坑兩次：
+1. **2026-05-02 WFE v1.1 → v1.2**：內文章節 patch 完但 thesis box 漏掉 ASML conviction 降級 + PE 分層，user 質問才補 → 催生 6.5a。
+2. **2026-05-03 ASIC Design Service v1.2 → inline backfill**：thesis box / banner / NC card 都修了，但 §3 S-curve、§5 value chain、§6 player table 6 處 inline stale 字樣漏改，user 質問「已經改完了嗎」才補 → 催生 6.5b。
+
+Thesis box 是讀者第一眼結論段；body sections 是讀者滾動細節時看到的內容 — 兩者必須同步，否則 reader 滾動到中段仍讀到舊 stale claims。Item 7（critic agent 端）+ Step 6.5（skill 端）構成雙層保險，6.5a + 6.5b 構成完整 sync 流程。
 
 ### Step 7：驗證 + commit + push
 
