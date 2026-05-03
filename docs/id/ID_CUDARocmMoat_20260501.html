@@ -14,7 +14,7 @@
   "mega": "semi",
   "sub_group": "compute_demand",
   "ai_exposure": "🟢",
-  "oneliner": "ROCm 7.2 (Mar 2026) vLLM/llama.cpp 出箱 parity + MI355X MLPerf 6.0 single-digit % of B200；CUDA 19 年 6M 開發者 moat 開始裂；NCCL+NVLink 仍獨家；PyTorch/Pallas 抽象層才是真贏家",
+  "oneliner": "ROCm 7.2 (Mar 2026) vLLM 出箱 parity (llama.cpp/Ollama 社群維護)；MI355X MLPerf 6.0 部分情境超越 B200 (Llama 2 70B 119%, critic 2026-05-03 修)；CUDA 19 年 6M 開發者 moat 開始裂；NCCL+NVLink 仍獨家；PyTorch/Pallas 抽象層才是真贏家",
   "related_tickers": [
     {"ticker": "NVDA", "role": "CUDA / cuDNN / NCCL / TensorRT-LLM / Nsight 19 年 6M 開發者護城河", "depth": "🔴", "beneficiary": true},
     {"ticker": "AMD", "role": "ROCm 7.2 達 vLLM 出箱 parity；Meta 6GW + OpenAI 6GW + Oracle 131K MI355X", "depth": "🔴", "beneficiary": true},
@@ -25,7 +25,7 @@
     {"ticker": "AMZN", "role": "AWS Neuron SDK 2.28 + Trainium 3 + NKI 開源 (Apache 2.0)", "depth": "🟡", "beneficiary": true},
     {"ticker": "AVGO", "role": "Google TPU + Meta MTIA backend partner = JAX 生態受益", "depth": "🟡", "beneficiary": true},
     {"ticker": "ORCL", "role": "OCI 131,072 MI355X cluster - ROCm 規模化驗證", "depth": "🟢", "beneficiary": true},
-    {"ticker": "Anthropic（pre-IPO）", "role": "Claude Code CUDA→ROCm 30min port - 加速去 NVDA 化工具", "depth": "🟢", "beneficiary": true},
+    {"ticker": "Anthropic（pre-IPO）", "role": "Claude Code CUDA→ROCm 30min port（demo 規模；production 移植仍 3-6 個月）- LLM-driven migration 信號", "depth": "🟢", "beneficiary": true},
     {"ticker": "Hugging Face（pre-IPO）", "role": "Transformers / Diffusers - 跨後端 model hub 中立化推手", "depth": "🟢", "beneficiary": true}
   ],
   "tam_usd_2030": 30.0,
@@ -40,7 +40,7 @@
 <meta name="id-skill-version" content="v1.8">
 <meta name="id-publish-date" content="2026-05-01">
 <meta name="id-sections-refreshed" content='{"technical":"2026-05-01","market":"2026-05-01","judgment":"2026-05-01"}'>
-<meta name="description" content="CUDA / ROCm 軟體護城河子題：NVDA · AMD · INTC · 開源 framework 生態（PyTorch / JAX）2026 H1 真實狀態拆解。ROCm 7.2 vLLM 出箱 parity + MI355X MLPerf 6.0 within single-digit % of B200；NCCL+NVLink 仍獨家；PyTorch/Pallas 才是真贏家。">
+<meta name="description" content="CUDA / ROCm 軟體護城河子題：NVDA · AMD · INTC · 開源 framework 生態（PyTorch / JAX）2026 H1 真實狀態拆解。ROCm 7.2 vLLM 出箱 parity + MI355X MLPerf 6.0 部分情境超越 B200；NCCL+NVLink 仍獨家；PyTorch/Pallas 才是真贏家。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -97,28 +97,62 @@ tr:hover td{background:#F5F3FF}
 <div class="id-head">
 <span class="id-badge">產業深度 · Industry DD · Sub-Topic</span>
 <h1>CUDA / ROCm 軟體護城河子題：NVDA · AMD · INTC · 開源 framework 生態</h1>
-<p class="id-meta">發布日：2026-05-01｜涵蓋 ticker：11 檔（🔴 4 / 🟡 4 / 🟢 3）｜🟡 占比：18%｜投資時鐘：<strong>Phase II 中（CUDA moat 開始裂；ROCm 7.2 達 vLLM/llama.cpp 出箱 parity；framework abstraction 向上吸收）</strong>｜母題：ID_AIAcceleratorDemand_20260419｜industry-analyst v1.8</p>
+<p class="id-meta">發布日：2026-05-01（patched v1.1 @ 2026-05-03 — critic Pass 1 + user peer-review 整合：「OpenAI 10% stake」→ warrant 協議 9 處 inline 修正、MLPerf 6.0「single-digit %」→ MI355X 部分情境領先 B200、ROCm 7.2 parity scope 收緊至 vLLM-only、AMD Q1 FY26 May 5 catalyst 補入 §10.5 + thesis box rewrite + body repetition sweep）｜涵蓋 ticker：11 檔（🔴 4 / 🟡 4 / 🟢 3）｜🟡 占比：18%｜投資時鐘：<strong>Phase II 中（CUDA moat 開始裂；ROCm 7.2 達 vLLM 出箱 parity；framework abstraction 向上吸收）</strong>｜母題：ID_AIAcceleratorDemand_20260419｜industry-analyst v1.8</p>
 </div>
 
 <h2>§0 TL;DR</h2>
 <div class="tldr-grid">
   <div class="tldr-card"><h4>主題定位</h4><div class="v">AI 加速器軟體護城河 4 大層拆解（kernel / lib / framework / orchestration）；CUDA vs ROCm vs oneAPI vs Neuron / XLA</div></div>
-  <div class="tldr-card"><h4>2026 H1 軟體狀態</h4><div class="v">CUDA 4.5-6M 開發者 / 19 年生態｜ROCm 7.2 (Mar 2026) vLLM 出箱 parity｜MLPerf 6.0 MI355X within single-digit % of B200</div></div>
+  <div class="tldr-card"><h4>2026 H1 軟體狀態</h4><div class="v">CUDA 4.5-6M 開發者 / 19 年生態｜ROCm 7.2 (Mar 2026) vLLM 出箱 parity（critic 修：llama.cpp/Ollama 為社群 ROCm 支援、非官方全 parity）｜<strong>MLPerf 6.0 MI355X 部分情境超越 B200</strong>（critic 2026-05-03 修：Llama 2 70B Interactive 達 119% B200、GPT-OSS-120B 111-115% — 原「single-digit % gap」conservative understatement）</div></div>
   <div class="tldr-card"><h4>客戶 switching cost</h4><div class="v">production 移植 3-6 個月工程時間；toy example 30min（Claude Code）；NCCL→RCCL 仍有 3-4x 性能落差（小訊息）</div></div>
-  <div class="tldr-card"><h4>關鍵 customer wins</h4><div class="v">Meta-AMD 6GW (H2 2026 1GW) / OpenAI-AMD 10% stake + 6GW / Oracle 131,072 MI355X / MSFT MI300X 已 production</div></div>
+  <div class="tldr-card"><h4>關鍵 customer wins</h4><div class="v">Meta-AMD 6GW (H2 2026 1GW deployment, multi-year to 2030) / <strong>OpenAI-AMD 6GW warrant 協議</strong>（critic 2026-05-03 修：原「10% stake」shorthand 誤導；實為 AMD 給 OpenAI ~160M shares warrants @ $0.01/share，依 GPU 購買 milestones + AMD 股價達標 vesting，不是 $25-30B 現金股權）/ Oracle 131,072 MI355X / MSFT MI300X 已 production</div></div>
   <div class="tldr-card"><h4>核心風險</h4><div class="v">NCCL+NVLink scale-out 訓練 NVDA 仍獨家；TensorRT-LLM / FlashAttention 3 仍 CUDA-only；ROCm 7.2 是 vLLM-only parity（不是全棧）</div></div>
   <div class="tldr-card"><h4>下一里程碑</h4><div class="v">ROCm 8.0 (2026 H2)；MI400 ramp Q4 2026；NCCL 替代品 (MSCCL++ / UCCL) 進入產品線；JAX/Pallas pure-play 大規模採用</div></div>
 </div>
 
 <div class="cornerstone">
-<div class="c-head">★ 一句 Thesis（本 ID 最核心的非共識觀點）</div>
-<div class="c-body">市場把 NVDA 護城河繼續定位為「CUDA 不可跨越的 19 年生態」，但這個 narrative 在 2026 H1 已**部分失效**：① ROCm 7.2 (2026 March) 達 vLLM/llama.cpp/Ollama 出箱 CUDA parity，② MI355X MLPerf 6.0 inference within single-digit % of B200（部分情境 35% 領先），③ 大型 model 訓練客戶（Meta 6GW / OpenAI 6GW / Oracle 131K cluster）已超過「實驗階段」進入 production，④ Claude Code 自動化 CUDA→ROCm 端口（toy 30 min，但信號）。<strong>真正不可取代的不是 CUDA 是 NCCL + NVLink scale-out 訓練生態</strong>；CUDA 在 inference 已開始裂，在 training 仍硬。同時 PyTorch (META) + JAX/Pallas (GOOGL) + Neuron NKI (AMZN) 三大 abstraction 層在向上吸收 hardware-level 差異，<strong>2027-2028 真正贏家是 framework owner，不是 GPU vendor</strong>。</div>
+<div class="c-head">★ 一句 Thesis（本 ID 最核心的非共識觀點 — v1.1 critic 修）</div>
+<div class="c-body">市場把 NVDA 護城河繼續定位為「CUDA 不可跨越的 19 年生態」，但這個 narrative 在 2026 H1 已**部分失效**：① ROCm 7.2 (2026 March) 達 vLLM 出箱 CUDA parity（critic 修：llama.cpp / Ollama 為社群 ROCm 支援，非官方全 parity），② <strong>MI355X MLPerf 6.0 部分情境超越 B200</strong>（critic 修：Llama 2 70B Interactive 達 119% B200 / GPT-OSS-120B 111-115%；原「single-digit % of B200」conservatively 低估），③ 大型 model 客戶 production 規模 commitment 已揭露：<strong>Meta-AMD 6GW（H2 2026 1GW，multi-year to 2030 deployment）+ OpenAI-AMD 6GW warrant 協議（critic 修：原 shorthand「10% stake」誤導 — 實為 AMD 給 OpenAI ~160M shares warrants @ $0.01/share，依 GPU 購買 milestones + AMD 股價達標 vesting，是 reverse incentive 不是 cash stake）+ Oracle 131K cluster</strong>，④ Claude Code 自動化 CUDA→ROCm 端口（toy 30 min，但信號 — production 移植仍 3-6 個月）。<strong>真正不可取代的不是 CUDA 是 NCCL + NVLink scale-out 訓練生態</strong>；CUDA 在 inference 已開始裂，在 training 仍硬。同時 PyTorch (META) + JAX/Pallas (GOOGL) + Neuron NKI (AMZN) 三大 abstraction 層在向上吸收 hardware-level 差異，<strong>2027-2028 真正贏家是 framework owner，不是 GPU vendor</strong>。</div>
+</div>
+
+<div style="background:#FEF2F2;border:2px solid #DC2626;border-radius:6px;padding:14px 16px;margin:14px 0;font-size:12.5px;line-height:1.7">
+  <strong style="color:#991B1B;font-size:14px">🛡️ Critic Pass 1 (industry-thesis-critic v1.4 7-item with Item 7a + 7b body sweep + user peer-review 整合) — 1 大錯 + 4 partial + 3 cosmetic（2026-05-03）：</strong><br><br>
+
+  <strong>🔴 大錯 ①：「OpenAI 10% stake」shorthand 誤導（user 點 2 partial sustained on right grounds）</strong><br>
+  事實：用戶質疑「OpenAI 取得 AMD 10% 股權需 $25-30B 現金、財務不可能」— 結論方向對，但 mechanism 錯。實際結構（per AMD 8-K 2025-10-06、OpenAI 官方公告）：AMD 給 OpenAI **performance-based warrants for up to 160M AMD shares @ $0.01/share exercise price（essentially 免費 cashless）**，分批 vesting：(a) 第一批 upon delivery of first 1 GW MI450 GPUs，(b) 全部 vesting 條件 = OpenAI 累計購買 6 GW AMD GPUs + AMD 股價達標 up to $600/share 最終批次。**這是 AMD 用股票補貼 OpenAI 的 GPU 採購承諾（reverse incentive），不是 OpenAI 的資本投資**。Direction（OpenAI / AMD 商業綁定）正確，但「stake」字樣讓 PM 誤判為 $25-30B 資本投資 → mischaracterizes 關係 durability。9 處 inline 出現全部需替換為「6GW warrant 協議（~10% AMD shares）」。<br>
+  Source：[AMD 8-K 2025-10-06 warrant agreement](https://ir.amd.com/financial-information/sec-filings/content/0001193125-25-230895/d28189d8k.htm) | [TechCrunch warrant 結構解釋](https://techcrunch.com/2025/10/07/wall-street-analysts-explain-how-amds-own-stock-will-pay-for-openais-billions-in-chip-purchases/)<br><br>
+
+  <strong>🟡 大錯 ②：MLPerf 6.0「single-digit % of B200」conservative 低估（critic 獨立發現，非 user 質疑）</strong><br>
+  事實：原 thesis 描述「MI355X within single-digit % of B200」實際**理解偏低**。MLPerf 6.0 結果（2026-04 release）顯示 MI355X 在 Llama 2 70B Interactive 達 119% B200（領先 19%）、GPT-OSS-120B 達 111-115% B200（領先 11-15%）、text-to-video 93% B200。應改為「MI355X 在 LLM inference 部分情境超越 B200，整體 inference parity 已達 / 部分超越」。This is conservative error — directional 正確（AMD 進入 inference 競爭層）但 magnitude 顯著低估 thesis 強度。<br><br>
+
+  <strong>🟡 大錯 ③：ROCm 7.2 parity scope 在 thesis box / oneliner 過度擴張（critic 獨立發現）</strong><br>
+  事實：原 thesis box / oneliner 寫「ROCm 7.2 vLLM/llama.cpp/Ollama 出箱 parity」— 但實際只有 vLLM 是官方 ROCm CI 確認 parity（93% test groups passing as of mid-Jan 2026）；llama.cpp 與 Ollama 雖支援 ROCm 但屬社群維護、未達官方 production parity。§0 TLDR card 已正確 flag「ROCm 7.2 是 vLLM-only parity（不是全棧）」— 但 thesis box / oneliner 不一致，違反了 Item 7a thesis box sync 原則。<br><br>
+
+  <strong>🟡 大錯 ④：§10.5 漏列 AMD Q1 FY26 earnings (May 5, 4 days post-publish) — 最 imminent binary catalyst</strong><br>
+  事實：AMD Q1 FY26 earnings 2026-05-05 揭曉（4 天後），是本 thesis 最 imminent 的 binary test：DC segment 收入 + MI355X ramp commentary + Meta/OpenAI 交付時程 + GM 方向。原 §10.5 表格首列為 2026-05-20 NVDA Q1 FY27，跳過了 4 天前的 AMD Q1 — 這是 latent catalyst miss。應補入。<br><br>
+
+  <strong>🟡 大錯 ⑤：AMZN Trainium 3 「nearly fully subscribed」(2026-04-29) 漏入（latent pre-publish miss）</strong><br>
+  事實：AMZN Q1 2026 earnings (2026-04-29，發布前 2 天) — Andy Jassy 確認 Trainium 3 已近滿訂；Anthropic AWS RPO $38B 揭露。這驗證 Thesis 3（cross-vendor abstraction）方向，但 ID v1.0 沒納入。<br><br>
+
+  <strong>🟢 cosmetic 修：</strong><br>
+  ⑥ id-meta line 28 Anthropic role：Claude Code 30min port 加「demo 規模」qualifier（與 §0 TLDR + 一句 thesis 一致）<br>
+  ⑦ §7 Insight 2 headline「不是 toy」與 body「demo 規模」tension — 統一改為「toy 規模 — LLM-driven migration 加速信號」<br>
+  ⑧ §2 timeline「2026 H1」row MLPerf 措辭與 P1 對齊<br><br>
+
+  <strong>📊 Critic 對 user 3 點的最終裁決：</strong><br>
+  • <strong>User 點 1（6 GW 物理不可能）— NOT SUSTAINED</strong>：用戶把 5 年 multi-year deployment program 誤讀為 single-cluster point-in-time。Meta 6 GW = 2026-2030 跨年部署、首批 1 GW H2 2026（~1.4M GPUs，data center campus rack-scale across 12 個月），不是單一 cluster。比較對象應是 1 GW 首批，不是 6 GW 整體 program。ID 的「(H2 2026 1GW)」qualifier 實際正確 — 用戶沒注意到這個 hedge。<br>
+  • <strong>User 點 2（OpenAI 10% stake 不可能）— PARTIALLY SUSTAINED on wrong grounds</strong>：用戶結論對（不是 cash stake）但 reasoning 錯（不是「financially impossible」是「never happened in that form」）。真實結構是 warrant 不是 stake，這是 conclusion-changing 大錯。<br>
+  • <strong>User 點 3（Claude Code 30min 過度樂觀）— NOT SUSTAINED</strong>：ID body 已正確區分「toy 30min vs production 3-6 個月」（§0 TLDR + 一句 thesis 都有 hedge）。用戶質疑的是 framing 而非數據錯誤；critic 同意 §7 Insight 2 headline tension 屬 cosmetic。<br><br>
+
+  <strong>📊 Verdict：THESIS_AT_RISK → INTACT after C1 + 4 partial patches</strong>。Macro thesis（CUDA inference moat 開始裂、NCCL+NVLink 仍真 moat、framework owner 2027-2028 真贏家）方向 confirmed by independently verified data（Meta 6GW deal、OpenAI warrant 結構、MLPerf 6.0 actually 對 AMD 比 thesis 描述還更強）。但「OpenAI 10% stake」terminology 9 處需 line-by-line patch（這是 v1.4 Step 6.5b body sweep 規則設計時要抓的 case）。<br><br>
+
+  完整 critic 報告：<a href="_critic_CUDARocmMoat_20260503_decision.md">_critic_CUDARocmMoat_20260503_decision.md</a>
 </div>
 
 <div class="cornerstone" style="border-color:#EAB308;background:#FFFBEB">
-<div class="c-head" style="color:#92400E">★ 三條核心 Thesis</div>
+<div class="c-head" style="color:#92400E">★ 三條核心 Thesis（v1.1 critic 修）</div>
 <div class="c-body">
-1. <strong>CUDA inference moat 已開始裂；2026 是分水嶺</strong> <span class="thesis-tag tag-event">[event-triggered]</span> — ROCm 7.2 (Mar 2026) vLLM/llama.cpp/Ollama 出箱 parity；MI355X MLPerf 6.0 single-digit % of B200；Meta-AMD 6GW + OpenAI 10% stake = production 規模驗證。<br>
+1. <strong>CUDA inference moat 已開始裂；2026 是分水嶺</strong> <span class="thesis-tag tag-event">[event-triggered]</span> — ROCm 7.2 (Mar 2026) vLLM 出箱 parity（critic 修：llama.cpp/Ollama 為社群維護非官方 parity）；<strong>MI355X MLPerf 6.0 部分情境超越 B200</strong>（critic 修：原「single-digit %」實低估）；Meta-AMD 6GW（H2 2026 1GW）+ <strong>OpenAI 6GW warrant 協議（~10% AMD shares warrants vesting on milestones）</strong> = production 規模驗證。<br>
 2. <strong>真正不可取代的不是 CUDA 是 NCCL + NVLink + scale-out</strong> <span class="thesis-tag tag-structural">[structural]</span> — multi-GPU 訓練的 collective communication 仍 NVDA 獨家；MSCCL++ / UCCL 替代品仍未上產品線；Rubin / Rubin Ultra NVL144 / 288 規格繼續拉開 scale-out 差距。<br>
 3. <strong>PyTorch / JAX / Pallas / Neuron NKI 抽象層才是 2027-2028 真贏家</strong> <span class="thesis-tag tag-structural">[structural]</span> — framework abstraction 向上吸收 hardware-level；CUDA / ROCm / XPU / Neuron 變 swappable backend；META (PyTorch) + GOOGL (JAX/XLA/Pallas) + AMZN (NKI Apache 2.0) 已主導抽象層。
 </div>
@@ -201,7 +235,7 @@ tr:hover td{background:#F5F3FF}
 <tr><td>2015-2020</td><td>PyTorch (2016) / TF 主流；cuDNN/NCCL 標準</td><td>所有 ML framework 默認 CUDA</td><td>AMD GCN GPU 軟體幾乎無</td></tr>
 <tr><td>2021-2023</td><td>ROCm 1.0-5.x；Triton 起步；JAX/XLA 推開</td><td>ROCm 仍實驗階段；hyperscaler ASIC 軟體分歧</td><td>NVDA H100 量產 + CUDA 12.x</td></tr>
 <tr><td>2024-2025</td><td>ROCm 6.x；vLLM 普及；MI300X 推出</td><td>ROCm 部分 parity；MI300X 已 inference 可用</td><td>NVDA 80% share 但 challenger 進場</td></tr>
-<tr><td><strong>2026 H1（今）</strong></td><td><strong>ROCm 7.2 (Mar 2026) vLLM 出箱 parity；MI355X MLPerf 6.0 single-digit % of B200；Meta 6GW + OpenAI 10% stake</strong></td><td><strong>inference 移植正式 production-ready；training 仍 NVDA 主導</strong></td><td><strong>NVDA share 開始降至 75-78%；AMD 進入 production scale</strong></td></tr>
+<tr><td><strong>2026 H1（今）</strong></td><td><strong>ROCm 7.2 (Mar 2026) vLLM 出箱 parity；MI355X MLPerf 6.0 部分情境超越 B200（critic 修：Llama 2 70B 119% B200、GPT-OSS-120B 111-115%）；Meta 6GW (H2 2026 1GW) + <s>OpenAI 10% stake</s> OpenAI 6GW warrant 協議（~10% AMD shares warrants）</strong></td><td><strong>inference 移植正式 production-ready；training 仍 NVDA 主導</strong></td><td><strong>NVDA share 開始降至 75-78%；AMD 進入 production scale</strong></td></tr>
 <tr><td>2026 H2 - 2027</td><td>ROCm 8.0；MI400 ramp；MSCCL++ 替代 NCCL；NKI 開源生態擴張</td><td>NCCL alternative 進入產品；framework 抽象層完整</td><td>NVDA share 70-75%；AMD/Trainium/TPU 各佔 5-10%</td></tr>
 <tr><td>2028+</td><td>Pallas / NKI / SYCL 跨 vendor 標準化；CUDA 持續 evolve（Blackwell + 軟體優化）</td><td>2 個世代並存：CUDA legacy + abstraction layer</td><td>NVDA 仍 50%+，但 GPU 成 commodity 趨勢</td></tr>
 </table>
@@ -220,7 +254,7 @@ tr:hover td{background:#F5F3FF}
 <div class="i-head">💡 §2 Insight</div>
 <div class="i-body">
 <strong>1. ROCm 7.2 達 vLLM 出箱 parity 的時程比 2024 預期快 12-18 個月</strong><br>
-<span class="i-sub">事實：2024 SemiAnalysis 預估 ROCm parity 要 2027-2028；實際 2026 March 達 vLLM/llama.cpp/Ollama parity。</span><br>
+<span class="i-sub">事實：2024 SemiAnalysis 預估 ROCm parity 要 2027-2028；實際 2026 March 達 <strong>vLLM 官方 parity</strong>（critic 2026-05-03 修：llama.cpp / Ollama 雖有 ROCm 支援但屬社群維護，非官方全 parity；本句原文擴張為三者全 parity 稍 overstate）。</span><br>
 <span class="i-sub">推論：AMD 軟體投入 + Meta/OpenAI 客戶 commit 加速了 ecosystem 成熟；本 ID 對 ROCm 8.0 (2026 H2) 樂觀。</span><br>
 <span class="i-sub">投資意義：AMD 軟體 moat 進度比 Street 模型快 12-18 個月；2027 EPS 模型可能需要上修 15-20%（更多 customer wins）。</span>
 </div>
@@ -424,7 +458,7 @@ tr:hover td{background:#F5F3FF}
 <div class="i-head">💡 §5 Insight 2</div>
 <div class="i-body">
 <strong>AMD 軟體生態的真正進步不在 ROCm 本身，是「進入 Meta / OpenAI / Oracle production」</strong><br>
-<span class="i-sub">事實：Meta 6GW (1GW H2 2026)、OpenAI 10% stake + 6GW、Oracle 131K MI355X cluster。</span><br>
+<span class="i-sub">事實：Meta 6GW (1GW H2 2026, multi-year to 2030)、OpenAI 6GW warrant 協議（critic 2026-05-03 修：~160M AMD shares warrants @ $0.01/share，依 GPU milestones + 股價達標 vesting；不是 $25-30B 現金 stake）、Oracle 131K MI355X cluster。</span><br>
 <span class="i-sub">推論：Production 級客戶 commitment 反向驅動軟體 maturity（feedback loop）；如同 ARM 進入 AWS Graviton 後 ecosystem 速成熟。</span><br>
 <span class="i-sub">投資意義：AMD 的關鍵 catalyst 不是 ROCm 8.0 release，是「Meta 6GW deployment ramp 順利 + Q4 2026 earnings」。</span>
 </div>
@@ -436,7 +470,7 @@ tr:hover td{background:#F5F3FF}
 <table>
 <tr><th>玩家</th><th>核心軟體棧</th><th>2026 H1 客戶 / wins</th><th>moat 強度</th><th>2027-2028 路線</th></tr>
 <tr><td><strong>NVDA</strong></td><td>CUDA 12.x / cuDNN 9.x / NCCL / TensorRT-LLM / Triton Inf Server / Dynamo</td><td>OpenAI / Anthropic / xAI / 全 hyperscaler / 5,000+ 大客戶</td><td>★★★★★ 訓練；★★★ inference</td><td>Rubin / Rubin Ultra 軟體 + Blackwell 持續優化；NVLink 5.0 / NCCL v3</td></tr>
-<tr><td><strong>AMD</strong></td><td>ROCm 7.2 / HIP / MIOpen / RCCL / vLLM ROCm fork</td><td>Meta 6GW / OpenAI 10% stake / Oracle 131K MI355X / Microsoft Azure ND MI300X</td><td>★★★ inference parity；★★ training（仍 1-2 年落後）</td><td>ROCm 8.0 (2026 H2)；MI400 ramp Q4 2026；MIOpen 4.x feature parity</td></tr>
+<tr><td><strong>AMD</strong></td><td>ROCm 7.2 / HIP / MIOpen / RCCL / vLLM ROCm fork</td><td>Meta 6GW (H2 2026 1GW) / <s>OpenAI 10% stake</s> <strong>OpenAI 6GW warrant（~10% AMD shares warrants）</strong> / Oracle 131K MI355X / Microsoft Azure ND MI300X</td><td>★★★ inference parity（部分情境超越 B200, critic 修）；★★ training（仍 1-2 年落後）</td><td>ROCm 8.0 (2026 H2)；MI400 ramp Q4 2026；MIOpen 4.x feature parity</td></tr>
 <tr><td><strong>INTC</strong></td><td>oneAPI / SYCL / IPEX / Gaudi 3 SDK</td><td>少數 enterprise + Intel cloud；無大型 hyperscaler 訓練</td><td>★★ niche；★ in production</td><td>Gaudi 4 (2027) + oneAPI 2026；EMIB-T 客戶軟體 + 18A foundry 客戶軟體生態</td></tr>
 <tr><td><strong>AWS Neuron / NKI</strong></td><td>Neuron SDK 2.28 / NKI 開源（Apache 2.0）</td><td>Trainium 1/2/3 內部 + 部分 startup（如 Anthropic）</td><td>★★★ in AWS；★★ cross-vendor 野心</td><td>Trainium 3 ramp + NKI 推 PyTorch / JAX cross-vendor 標準</td></tr>
 <tr><td><strong>GOOGL JAX / Pallas / XLA</strong></td><td>JAX / Pallas / XLA / TPU SDK</td><td>Google 內部 + Anthropic（Claude）+ 部分 startup</td><td>★★★★ in TPU；★★ in cross-vendor</td><td>Pallas 跨 vendor 擴展（Triton-on-AMD 已支援）</td></tr>
@@ -528,7 +562,7 @@ tr:hover td{background:#F5F3FF}
 <div class="insight">
 <div class="i-head">💡 §7 Insight 2</div>
 <div class="i-body">
-<strong>Claude Code 30 分鐘 CUDA→ROCm 移植不是 toy — 是 LLM-driven migration 的時代信號</strong><br>
+<strong>Claude Code 30 分鐘 CUDA→ROCm 移植（toy 規模）— LLM-driven migration 的時代信號（critic 2026-05-03 修：headline 與 body「demo 規模」對齊；production 移植仍 3-6 個月）</strong><br>
 <span class="i-sub">事實：Anthropic Claude Code 在 30 分鐘內完成 CUDA backend → ROCm 移植（demo 規模）；不需 translation layer。</span><br>
 <span class="i-sub">推論：LLM-driven migration tooling 的進步會把「困難客戶」也部分自動化；2-3 年後 multi-node training 移植可能從 6-12 個月降至 2-3 個月。</span><br>
 <span class="i-sub">投資意義：NVDA 的 software moat 不再是「19 年積累 vs 對手 5 年」，而是「19 年 vs LLM-accelerated 1 年」；moat 的「時間維度」被壓縮。</span>
@@ -598,7 +632,7 @@ tr:hover td{background:#F5F3FF}
 <div class="judgment">
 <div class="j-head">🟡 Kill Scenario 2：Meta / OpenAI 大規模回流到 NVDA（2027 Q1）[信心: 低]</div>
 <div class="j-facts">具體路徑：① 2026 H2 AMD MI400 性能不如預期；② Meta 1GW MI355X deployment 出現問題；③ OpenAI 推遲下單 AMD；④ 都回流 NVDA Rubin Ultra。</div>
-<div class="j-infer">當前證據：① MI355X MLPerf 6.0 表現好；② Meta 持續 commit；③ OpenAI 已給 10% stake。低 likelihood。</div>
+<div class="j-infer">當前證據：① MI355X MLPerf 6.0 部分情境超越 B200（critic 修）；② Meta 持續 commit 6GW；③ OpenAI 已簽 6GW warrant 協議（critic 修：~10% AMD shares warrants @ $0.01/share，依 milestones vesting，是 reverse incentive 不是 cash stake）。低 likelihood。</div>
 <div class="j-falsify">成真時間窗：2026 H2 - 2027 H1。若觸發 → AMD AI revenue $30B 目標完全錯失；NVDA 估值 +30%。</div>
 </div>
 
@@ -643,12 +677,13 @@ tr:hover td{background:#F5F3FF}
 <h2>§10.5 Catalyst Timeline（未來 18 個月）</h2>
 <table>
 <tr><th>日期</th><th>事件</th><th>檢視指標</th><th>達成 / 落空對應</th></tr>
+<tr style="background:#FEF2F2"><td><strong>2026-05-05</strong></td><td><strong>AMD Q1 FY26 earnings（critic 2026-05-03 補入 — 4 days post-publish, 最 imminent binary catalyst）</strong></td><td>DC AI revenue 金額；MI350/355X ramp 細節；Meta/OpenAI 交付時程；GM 方向</td><td>達成（&gt;$5B DC，H2 deploy 確認）→ AMD +2x；落空（DC &lt;$4.5B 或 Meta/OpenAI 訂單延後）→ -2x</td></tr>
 <tr><td><strong>2026-05-20</strong></td><td>NVDA Q1 FY27 earnings</td><td>軟體 revenue 揭露；客戶集中度</td><td>達成（軟體營收強）→ +1x；落空 → -1x</td></tr>
 <tr><td><strong>2026 Q3</strong></td><td>ROCm 8.0 release</td><td>training parity 進度；MIOpen 4.x</td><td>達成 → AMD +2x；落空 → -1x</td></tr>
 <tr><td><strong>2026 Q3-Q4</strong></td><td>Meta 6GW 第 1GW MI355X deployment 完成</td><td>實際 throughput；軟體穩定性</td><td>達成 → AMD +3x；落空 → -2x</td></tr>
 <tr><td><strong>2026 Q4</strong></td><td>AMD Q4 earnings：MI400 ramp + 客戶 commitment 細節</td><td>AI revenue Q-on-Q +30%+</td><td>達成 → AMD +2x；落空 → -1x</td></tr>
 <tr><td><strong>2027 Q1</strong></td><td>NVDA GTC 2027：CUDA 13 / cuDNN 10 揭曉</td><td>新一代軟體性能 vs ROCm 8</td><td>達成（領先 2-3x）→ NVDA +2x；落空 → -1x</td></tr>
-<tr><td><strong>2027 Q1</strong></td><td>OpenAI 6GW AMD supply 開始 ramp</td><td>OpenAI 訓練分配</td><td>達成 → AMD +2x；落空 → -2x（10% stake 估值問題）</td></tr>
+<tr><td><strong>2027 Q1</strong></td><td>OpenAI 6GW AMD supply 開始 ramp</td><td>OpenAI 訓練分配 + warrant vesting milestones（critic 修）</td><td>達成 → AMD +2x；落空 → -2x（warrant vesting 未達 milestone，AMD-OpenAI 戰略對齊鬆動）</td></tr>
 <tr><td><strong>2027 Q2-Q3</strong></td><td>MSCCL++ / UCCL production release</td><td>NCCL alternative 性能</td><td>達成 → AMD +1x，NVDA -1x</td></tr>
 <tr><td><strong>2027 H2</strong></td><td>Anthropic Trainium / TPU 訓練分配揭露</td><td>frontier training NVDA share</td><td>Anthropic &gt;30% off-CUDA → NVDA -1x</td></tr>
 </table>
@@ -659,12 +694,12 @@ tr:hover td{background:#F5F3FF}
 <table>
 <tr><th>Ticker</th><th>深度</th><th>角色</th><th>2026 受益度</th><th>DD link</th></tr>
 <tr><td>NVDA</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>CUDA 19 年 6M 開發者 / NCCL+NVLink 仍獨家 / TensorRT-LLM 領先</td><td>核心受益（vs 軟體 moat 風險平衡）</td><td>DD 已建（多份）</td></tr>
-<tr><td>AMD</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>ROCm 7.2 vLLM parity；Meta 6GW + OpenAI 10% stake + Oracle 131K MI355X</td><td>核心受益（catch-up alpha）</td><td>DD 已建</td></tr>
+<tr><td>AMD</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>ROCm 7.2 vLLM parity；Meta 6GW (H2 2026 1GW) + <s>OpenAI 10% stake</s> <strong>OpenAI 6GW warrant（~10% AMD shares warrants）</strong> + Oracle 131K MI355X</td><td>核心受益（catch-up alpha）</td><td>DD 已建</td></tr>
 <tr><td>META</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>PyTorch 母公司 + ROCm 6GW 客戶 = 跨平台加速去 NVDA 化關鍵推手</td><td>核心受益（abstraction governance + cost saving）</td><td>DD 已建</td></tr>
 <tr><td>GOOGL</td><td><span class="tier-pill tier-red">🔴 核心</span></td><td>JAX / XLA / Pallas / TPU 全棧自主軟體 = NVDA 之外完整替代生態</td><td>核心受益（vertical 整合）</td><td>DD 已建</td></tr>
 <tr><td>INTC</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>oneAPI / SYCL / IPEX / Gaudi 3 - 生態追趕但客戶基數小</td><td>次要受益（仍 niche）</td><td>DD 已建</td></tr>
 <tr><td>MSFT</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>MSCCL++ 替代 NCCL（小訊息 3.8x）+ Azure ROCm production</td><td>次要受益（隱性 NCCL 競爭者）</td><td>DD 已建</td></tr>
-<tr><td>AMZN</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>AWS Neuron SDK 2.28 + Trainium 3 + NKI 開源 (Apache 2.0)</td><td>次要受益（cross-vendor 野心）</td><td>DD 已建</td></tr>
+<tr><td>AMZN</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>AWS Neuron SDK 2.28 + Trainium 3 + NKI 開源 (Apache 2.0)；<strong>2026-04-29 Q1 法說：Trainium 3 已近滿訂、Anthropic AWS RPO $38B（critic 2026-05-03 補 — 驗證 Thesis 3 cross-vendor 真實性）</strong></td><td>次要受益（cross-vendor 野心 — 已從 ambition 轉 production validated）</td><td>DD 已建</td></tr>
 <tr><td>AVGO</td><td><span class="tier-pill tier-yellow">🟡 次要</span></td><td>Google TPU + Meta MTIA backend partner = JAX 生態受益</td><td>次要（軟體生態間接）</td><td>DD 已建</td></tr>
 <tr><td>ORCL</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>OCI 131,072 MI355X cluster - ROCm 規模化驗證</td><td>邊緣受益</td><td>DD 未建</td></tr>
 <tr><td>Anthropic（pre-IPO）</td><td><span class="tier-pill tier-green">🟢 邊緣</span></td><td>Claude Code CUDA→ROCm 30min port + Trainium 主要客戶</td><td>邊緣（私募）</td><td>DD 未建</td></tr>
@@ -696,7 +731,7 @@ tr:hover td{background:#F5F3FF}
 <div class="j-head">🟡 Thesis 1：CUDA inference moat 已開始裂；2026 H1 是分水嶺 [信心: 高] <span class="thesis-tag tag-event">[event-triggered]</span></div>
 <div class="j-facts">
 共識：① Bernstein 2025-Q4：「CUDA 19 年 ecosystem 不可動搖，至少 5-7 年才會見到 share 顯著流失」；② Goldman 2025-Q3：「ROCm 仍 2-3 年落後，AMD inference share 2026 不會超過 8-10%」。<br>
-本 ID 看法：ROCm 7.2 (Mar 2026) 達 vLLM/llama.cpp/Ollama 出箱 parity；MI355X MLPerf 6.0 single-digit % of B200；Meta 6GW + OpenAI 10% stake + Oracle 131K = production scale 驗證。CUDA 在 inference 已開始裂；training 仍硬。<br>
+本 ID 看法（v1.1 critic 修）：ROCm 7.2 (Mar 2026) 達 <strong>vLLM 出箱 parity</strong>（critic 修：llama.cpp/Ollama 社群維護，非官方全 parity）；<strong>MI355X MLPerf 6.0 部分情境超越 B200</strong>（critic 修：Llama 2 70B 119% / GPT-OSS-120B 111-115%；原「single-digit %」低估）；Meta 6GW (H2 2026 1GW, multi-year) + <strong>OpenAI 6GW warrant 協議（~10% AMD shares warrants vesting on milestones, critic 修：原 shorthand「10% stake」誤導）</strong> + Oracle 131K = production scale 驗證。CUDA 在 inference 已開始裂；training 仍硬。<br>
 分歧原因：共識停留在 2024-2025 「ROCm 仍 lab」narrative；本 ID 已追蹤到 2026 H1 production deployment 進度。
 </div>
 <div class="j-infer">→ 推論：NVDA inference share 2027 Q1 預估降至 70-75%；AMD 升至 12-15%；其他（ASIC / Trainium / TPU）8-10%。</div>
