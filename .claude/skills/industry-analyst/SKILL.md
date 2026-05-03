@@ -1,8 +1,8 @@
 ---
 name: industry-analyst
 description: 建立「產業深度報告（Industry DD / ID）」— 一份跨多檔個股共用的產業研究文件。輸入產業主題（如「玻璃基板封裝」「HBM 供需循環」「GLP-1 治療藍圖」），skill 執行 WebSearch / WebFetch 多輪研究，輸出一份 11 章節、表格為主 + 敘述為輔、含 S 曲線與 value chain 圖示的 HTML 報告；並把對應個股登記於 §11 關聯清單，供 stock-analyst（公司 DD）自動讀取引用。觸發：使用者提到「產業研究 / sector DD / 產業報告 / industry landscape / 產業藍圖」或具體主題（玻璃基板、HBM、CoWoS、AI ASIC、GLP-1、核融合、玻璃纖維基板等）且尚未要求做個股 DD。
-version: v1.12
-date: 2026-05-02
+version: v1.13
+date: 2026-05-03
 ---
 
 # industry-analyst skill v1.12
@@ -78,6 +78,7 @@ financial-analysis-bot/
 | § | 標題 | 類型 | 核心輸出（標★為 insight-forcing 欄位）|
 |:---|:---|:---|:---|
 | §0 | TL;DR 卡片 | 數據 | 主題 / 時長 / 規模 / 關鍵玩家 3 / 關鍵風險 3 / 今日 Phase + ★**一句 Thesis（本 ID 最核心的非共識觀點，必須帶 [I:] 或 [X:] tag — QC-I24）**|
+| **§0.7** | **Portfolio Implication（PM 級行動結論）** | 判斷（🟡）| ★**PM 直接可用的行動結論**：thesis 方向 / 個股 conviction tier / 新監測點 / multiple-cycle 風險 / entry 時機 + j-logic 四行動（①②③④）；conviction pill（high/mid/low）反映 §11/§8 sizing 信心 — **必填，不可省略**|
 | §1 | 產業定義與邊界 | 數據 | in-scope vs out-of-scope 表 + ★**灰色地帶**（邊界爭議本身常是 insight 來源）|
 | §2 | 技術演進 + S 曲線 + **歷史類比** | 數據 | S 曲線 + 過去→現在→未來 + ★**2-3 個歷史類比**（前例轉折：誰被錯估、本次異同）|
 | §3 | 核心技術棧拆解 | 數據 | 子技術 × 良率卡點 × 專利持有者；★**哪個子技術成為 kingmaker**|
@@ -458,6 +459,43 @@ Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓
   - 範例（是）：「NVIDIA 單季 DC revenue YoY < +15% 連續 2 季（閾值從 +50% 腰斬）」✅
 - **每章回頭補 💡 Insight Bullet**（QC-I10）
 
+### Step 7.5 — §0.7 PM Implication（**mandatory**，基於 §11/§8/§13）
+
+在 §12/§13 synthesis 完成後、QC 前，**必須**撰寫 §0.7 Portfolio Implication 綠色判斷卡。
+
+**為什麼在此步驟**：§11 conviction tier、§8 估值敏感度、§13 falsification metric 都已完成，構成 PM 行動結論所需的全部素材。§0.7 是把 §11/§8/§13 的分析層壓縮為「PM 今天能做什麼決定」的橋接段。
+
+**必含五 bullet + j-logic（缺任一 = 未完成，Gate 9 阻斷）**：
+
+| bullet | 內容來源 | 禁止空話 |
+|:---|:---|:---|
+| **thesis 方向** | §12 Non-Consensus 三條 thesis 的綜合方向 | 禁止「待觀察」「暫不明朗」等無行動涵義 |
+| **個股 conviction tier 變化** | §11 🔴🟡🟢 標記 + 是否有跨 ID sync 註記 | 必須點名 ticker（不寫「部分核心股」等模糊）|
+| **關鍵新監測點** | §13 F-N rows + §10.5 catalyst 中投資人最應盯的 ≤ 3 點 | 必須可量化（metric + 閾值，非描述性） |
+| **multiple/估值/週期定位風險** | §8 de-rating window 判斷卡 + §10 Phase 位置 | 必須含當前 Phase 與下個 Phase 轉換條件 |
+| **Entry 時機** | §10.5 catalyst 日期 + §13 falsification 閾值距離 | 必須給「現在 / 等 catalyst X / 等回調 Y%」其中一個 |
+
+**conviction pill**：`high`（§11 ≥ 2 個 🔴 且 §13 falsification 距離 > 2 sigma）/ `mid`（≥ 1 🔴 + 至少 1 條 kill 未排除）/ `low`（thesis AT_RISK 或 BROKEN 跡象明顯）。
+
+**j-logic 行動**：四行動 ①②③④，格式為「動詞 + 具體標的（ticker）+ 觸發條件或時機」。
+
+**HTML 樣板**（放置於 `<div class="insight">💡 3 條核心 insight</div>` 之後、`<h2>§1 產業定義與邊界</h2>` 之前）：
+
+```html
+<h2>§0.7 Portfolio Implication（PM 級行動結論）</h2>
+<div class="judgment-card" style="background:#F0FDF4;border-left:4px solid #16A34A">
+  <div class="j-head">📊 <strong>Portfolio Implication（PM 級行動結論）</strong> <span class="j-conf high">conviction：{{conviction_level}}</span></div>
+  <ul class="j-facts" style="color:#14532D">
+    <li><strong>thesis 方向</strong>：{{保持 / 強化 / 降級 — 說明}}</li>
+    <li><strong>個股 conviction tier 變化</strong>：{{ticker A 從 X → Y；ticker B …；含 cross-ID sync 註記若有}}</li>
+    <li><strong>關鍵新監測點</strong>：{{新加入 §13 falsification metric / §10.5 catalyst / risk matrix row 等}}</li>
+    <li><strong>multiple / 估值 / 週期定位風險</strong>：{{de-rating window / cycle-peak proximity / 現價 vs entry 區間}}</li>
+    <li><strong>Entry 時機</strong>：{{現在追高 / 等 sector correction X% / 等具體 catalyst}}</li>
+  </ul>
+  <div class="j-logic" style="background:rgba(22,163,74,.1);color:#14532D">→ PM 級行動：① {{action 1}}；② {{action 2}}；③ {{action 3}}；④ {{action 4}}</div>
+</div>
+```
+
 ### Step 8 — QC 檢核（QC-I1 ~ QC-I23）
 - 跑 QC-I1 ~ QC-I14（下述）
 - 未過直接返工，不落稿
@@ -476,8 +514,9 @@ Claim taxonomy 強制寫稿者**自己在 inline tag 揭露 claim 性質**，讓
 - Gate 6 [warning] Cross-ID layer disambiguation（switch vs chip-level）
 - Gate 7 [warning] Sub-topic ID value-add rule（子題 vs 母題）
 - **Gate 8 [阻斷, v1.6 新增] id-meta JSON validation** — `python3 scripts/validate_id_meta.py docs/id/ID_X.html` 必須 exit 0（避免 CI strict gate 連坐被擋）
+- **Gate 9 [阻斷, v1.7 新增] §0.7 PM Implication 存在性 + conviction 一致性** — §0.7 綠色 judgment-card 必須存在、含五條 bullet 及四行動 j-logic；conviction pill 需與 §11 🔴 數量/§8 de-rating 一致
 
-任一阻斷 Gate (1/2/2.1/3/8) fail → 阻斷發布 + 列修正項；阻斷 Gate 全過、warning Gate (3.1/4/5/6/7) 有 fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記錄 pass/fail 明細。
+任一阻斷 Gate (1/2/2.1/3/8/9) fail → 阻斷發布 + 列修正項；阻斷 Gate 全過、warning Gate (3.1/4/5/6/7) 有 fail → 允許發布但輸出 warning。輸出 `pre_publish_report.md` 記錄 pass/fail 明細。
 
 ### Step 8.7 — Mandatory Critic Gate（v1.9，2026-05-01 新增）
 

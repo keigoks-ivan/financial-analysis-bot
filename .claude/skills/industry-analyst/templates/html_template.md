@@ -109,6 +109,36 @@ tr:hover td{background:#FAF5FF}
   <div class="tldr-card"><h4>關鍵風險</h4><div class="v">{一句話}</div></div>
   <div class="tldr-card"><h4>今日 Phase</h4><div class="v">Phase {I/II/III}</div></div>
 </div>
+
+<!-- thesis box + insight prelude 放在此處（§0 TL;DR 卡片之後） -->
+<!-- ... thesis-box div ... -->
+<!-- ... <div class="insight">💡 3 條核心 insight</div> ... -->
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     §0.7 Portfolio Implication（PM 級行動結論）— MANDATORY
+     必須放在 §0 insight prelude 之後、§1 之前
+     以 §11 conviction tier + §8 de-rating + §13 falsification
+     三個已完成的判斷層為素材，由 industry-analyst Step 7.5 填寫
+     ═══════════════════════════════════════════════════════════ -->
+<section id="s0-7">
+<h2>§0.7 Portfolio Implication（PM 級行動結論）</h2>
+<div class="judgment-card" style="background:#F0FDF4;border-left:4px solid #16A34A">
+  <div class="j-head">📊 <strong>Portfolio Implication（PM 級行動結論）</strong> <span class="j-conf high">conviction：{{conviction_level}}</span></div>
+  <!-- conviction_level: high / mid / low
+       high = §11 ≥2 🔴 + §13 falsification 距離 > 2 sigma
+       mid  = ≥1 🔴 + ≥1 kill scenario 未排除
+       low  = thesis AT_RISK 或 BROKEN 跡象明顯 -->
+  <ul class="j-facts" style="color:#14532D">
+    <li><strong>thesis 方向</strong>：{{保持 / 強化 / 降級 — 一句說明；引用 §12 哪條 NC thesis 的 INTACT/AT_RISK 判斷}}</li>
+    <li><strong>個股 conviction tier 變化</strong>：{{ticker A 從 X → Y；ticker B 維持 Z；若有 cross-ID sync 加 (cross-ID: ID_X)}}</li>
+    <li><strong>關鍵新監測點</strong>：{{≤ 3 條可量化 metric，引用 §13 F-N row 或 §10.5 catalyst；格式「metric ≥/≤ threshold by YYYY-QX」}}</li>
+    <li><strong>multiple / 估值 / 週期定位風險</strong>：{{de-rating window 估計（§8 判斷卡）+ cycle phase（§10 今日 Phase）+ 現價 vs 入場區間}}</li>
+    <li><strong>Entry 時機</strong>：{{現在追高 OK / 等 catalyst [具體事件 + 日期] / 等 sector correction [X%] / 等 §13 F-N 未觸發確認}}</li>
+  </ul>
+  <div class="j-logic" style="background:rgba(22,163,74,.1);color:#14532D">→ PM 級行動：① {{action 1 — 動詞 + ticker + 條件}}；② {{action 2}}；③ {{action 3}}；④ {{action 4}}</div>
+</div>
 </section>
 ```
 

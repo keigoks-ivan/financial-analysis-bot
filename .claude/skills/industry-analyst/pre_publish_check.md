@@ -1,8 +1,11 @@
-# industry-analyst v1.5 — Pre-Publish Gate Check（9 Gates）
+# industry-analyst v1.7 — Pre-Publish Gate Check（10 Gates）
 
 每份 Industry DD 發布前必跑。Step 8.5 讀取本檔並逐條檢查。
 
-v1.5（2026-04-21）相對 v1.4 的差異：新增 Gate 2.1（Thesis Cornerstone Fact Verification）+ Gate 3.1（Cross-ID Thesis Bias Detection），針對 ID_Transformers v1.4 首作發現的「Eaton 獨家性錯誤」（thesis-level event refresh 漏洞）與 cross-ID 共同偏差問題加強防禦。
+v1.7（2026-05-03）相對 v1.6 的差異：新增 Gate 9（§0.7 PM Implication Existence + Conviction Consistency），要求每份 ID 必含 §0.7 綠色 PM 行動結論段，conviction pill 需與 §11/§8 一致。觸發自 2026-05-03 ID_AIDataCenter v1.1 patch（commit f1c450b）——user 要求把臨時加入的 PM Implication block 升格為所有 ID 的標準必填段。
+
+v1.6（2026-04-27）：新增 Gate 8（id-meta JSON Validation）。
+v1.5（2026-04-21）：新增 Gate 2.1（Thesis Cornerstone Fact Verification）+ Gate 3.1（Cross-ID Thesis Bias Detection）。
 
 ---
 
@@ -256,6 +259,63 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 
 ---
 
+## Gate 9 [必備 / 阻斷 · v1.7 新增]｜§0.7 PM Implication 存在 + conviction 一致性
+
+**規則**：每份 ID HTML 的 §0 與 §1 之間必須存在 `<h2>§0.7 Portfolio Implication（PM 級行動結論）</h2>` 及對應的綠色 `judgment-card`（`background:#F0FDF4;border-left:4px solid #16A34A`），且內容必須通過以下一致性查驗。
+
+**為何新增（v1.7, 2026-05-03）**：
+2026-05-03 ID_AIDataCenter v1.1 patch 由 user 臨時加入綠色 PM Implication block（commit f1c450b），user 認可並要求改為每份 ID 的標準段落。核心理由：§11 conviction tier / §8 de-rating window / §13 falsification metric 這三個判斷層完成後，PM 的行動結論必須在同一文件明文化——否則讀者得自己從三個不同章節拼湊，增加誤讀風險。
+
+**檢查步驟**：
+
+1. **存在性查驗**（阻斷）
+   - HTML 中搜尋 `§0.7 Portfolio Implication`（或 `id="s0-7"`）
+   - 搜尋 `background:#F0FDF4` + `border-left:4px solid #16A34A`
+   - 缺任一 → **阻斷發布**：「§0.7 PM Implication section missing」
+
+2. **五 bullet 完整性**（阻斷）
+   - 確認存在以下五個 `<strong>` 標籤的 bullet：
+     - `thesis 方向`
+     - `個股 conviction tier 變化`
+     - `關鍵新監測點`
+     - `multiple / 估值 / 週期定位風險`（允許近似詞）
+     - `Entry 時機`
+   - 任一 bullet 缺失 → 阻斷
+
+3. **j-logic 四行動**（阻斷）
+   - 確認 `.j-logic` div 存在，且包含 `①`、`②`、`③`、`④` 四個行動符號
+   - 缺少任一符號 → 阻斷
+
+4. **conviction pill 一致性**（warning）
+   - 讀取 `<span class="j-conf">` 內的 conviction 值（high/mid/low）
+   - 對比 §11 🔴 ticker 數量：
+     - ≥ 2 個 🔴 且 §12 verdict 傾向 INTACT → 預期 `high`；若標 `low` → warning
+     - 0 個 🔴 → 預期 `low`；若標 `high` → warning
+   - Conviction 不一致 → warning（不阻斷，但必須在 report 說明）
+
+5. **ticker 點名查驗**（warning）
+   - `個股 conviction tier 變化` bullet 中必須出現至少一個 ticker symbol（大寫英文字母組合，如 NVDA、AVGO、TSMC）
+   - 若只寫「部分核心股」「相關個股」等泛語 → warning
+
+**典型 fail 情境**：
+- 整份 ID 缺 §0.7（舊格式或未跑 Step 7.5）→ 阻斷
+- §0.7 只有 3 條 bullet，漏寫 Entry 時機 → 阻斷
+- j-logic 只列 ①②③，沒有 ④ → 阻斷
+- conviction 標 `high` 但 §11 無任何 🔴 ticker → warning
+
+**輸出格式**：
+```
+## Gate 9: §0.7 PM Implication Existence + Conviction Consistency
+§0.7 block exists: ✅ / ❌ MISSING
+Five bullets: ✅ all present / ❌ missing: {bullet names}
+j-logic 4 actions: ✅ / ❌ missing: {①②③④ which absent}
+Conviction consistency: ✅ / ⚠ {explain mismatch}
+Ticker name-check: ✅ / ⚠ {no ticker found}
+→ Gate 9: ✅ PASS / ❌ BLOCKED / ⚠ WARNED
+```
+
+---
+
 ## 輸出格式：pre_publish_report.md
 
 每次 gate check 產出一份報告：
@@ -276,6 +336,16 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 
 ...
 
+## Gate 8: id-meta JSON Validation
+✅ PASS / ❌ FAIL — {缺漏欄位列表}
+
+## Gate 9: §0.7 PM Implication Existence + Conviction Consistency
+§0.7 block exists: ✅ / ❌ MISSING
+Five bullets: ✅ all present / ❌ missing: {bullet names}
+j-logic 4 actions: ✅ / ❌ missing: {①②③④ which absent}
+Conviction consistency: ✅ / ⚠ {explain mismatch}
+→ Gate 9: ✅ PASS / ❌ BLOCKED / ⚠ WARNED
+
 ## Final Status
 ✅ ALL GATES PASS - 允許發布
 ⚠ WARNINGS (4, 5, 6, 7): {list}
@@ -287,3 +357,5 @@ $ python3 scripts/validate_id_meta.py docs/id/ID_XXX_YYYYMMDD.html
 ## 版本歷史
 - v1.0（2026-04-19）：基於 8 份 ID peer review 累積建立。核心 Gate 1/2/3 阻斷式，Gate 4-7 warning。
 - v1.5（2026-04-21）：基於 ID_Transformers v1.4 peer review 發現新增 2 個 gate。Gate 2.1 Thesis Cornerstone Fact Verification（阻斷）— 針對「獨家 / 首家 / 唯一」類 claim 必須獨立 WebSearch 驗證 ecosystem 玩家；Gate 3.1 Cross-ID Thesis Bias Detection（warning）— 跨 ID 同 ticker 的「定性偏差」要 red flag 並獨立驗證。
+- v1.6（2026-04-27）：新增 Gate 8（id-meta JSON 必要區塊 + strict validator）。
+- v1.7（2026-05-03）：新增 Gate 9（§0.7 PM Implication 存在 + conviction 一致性）— 源自 ID_AIDataCenter v1.1 patch。
