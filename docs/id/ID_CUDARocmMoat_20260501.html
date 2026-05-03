@@ -97,7 +97,7 @@ tr:hover td{background:#F5F3FF}
 <div class="id-head">
 <span class="id-badge">產業深度 · Industry DD · Sub-Topic</span>
 <h1>CUDA / ROCm 軟體護城河子題：NVDA · AMD · INTC · 開源 framework 生態</h1>
-<p class="id-meta">發布日：2026-05-01（patched v1.1 @ 2026-05-03 — critic Pass 1 + user peer-review 整合：「OpenAI 10% stake」→ warrant 協議 9 處 inline 修正、MLPerf 6.0「single-digit %」→ MI355X 部分情境領先 B200、ROCm 7.2 parity scope 收緊至 vLLM-only、AMD Q1 FY26 May 5 catalyst 補入 §10.5 + thesis box rewrite + body repetition sweep）｜涵蓋 ticker：11 檔（🔴 4 / 🟡 4 / 🟢 3）｜🟡 占比：18%｜投資時鐘：<strong>Phase II 中（CUDA moat 開始裂；ROCm 7.2 達 vLLM 出箱 parity；framework abstraction 向上吸收）</strong>｜母題：ID_AIAcceleratorDemand_20260419｜industry-analyst v1.8</p>
+<p class="id-meta">發布日：2026-05-01（patched v1.1 @ 2026-05-03 critic Pass 1；patched v1.2 @ 2026-05-03 加 §10.6 inference TAM 三段式拆解 framework + §13 F-7/F-8 bucket-specific falsification + §12 NC#1 caveat — 防 zero-sum 框架誤讀）｜涵蓋 ticker：11 檔（🔴 4 / 🟡 4 / 🟢 3）｜🟡 占比：18%｜投資時鐘：<strong>Phase II 中（CUDA moat 開始裂；ROCm 7.2 達 vLLM 出箱 parity；framework abstraction 向上吸收）</strong>｜母題：ID_AIAcceleratorDemand_20260419｜industry-analyst v1.8</p>
 </div>
 
 <h2>§0 TL;DR</h2>
@@ -688,6 +688,27 @@ tr:hover td{background:#F5F3FF}
 <tr><td><strong>2027 H2</strong></td><td>Anthropic Trainium / TPU 訓練分配揭露</td><td>frontier training NVDA share</td><td>Anthropic &gt;30% off-CUDA → NVDA -1x</td></tr>
 </table>
 
+<h2>§10.6 Inference TAM 三段式拆解（v1.1 critic 修補 — 防止 zero-sum 框架誤讀）</h2>
+
+<p>讀者常把「AMD 進入 inference 20% share」與「ASIC 整體取代 NVDA 40-50%」當成同一件事來算（zero-sum），這會嚴重誤判競爭結構。實際上 inference 市場可結構性拆成 <strong>3 個獨立 bucket</strong>，三家終局並行而非互斥：</p>
+
+<table>
+<tr><th>Bucket</th><th>2028E TAM 占比</th><th>客戶範例</th><th>主要勝出者</th><th>為什麼這個 bucket 屬於它</th></tr>
+<tr><td><strong>A: Hyperscaler captive cloud-native</strong></td><td><strong>35-45%</strong></td><td>Google Search / Meta Ads / Azure OpenAI hosting / AWS Bedrock 內部 inference workload</td><td><strong>Hyperscaler ASIC（Google TPU / AWS Trainium / Azure Maia）</strong></td><td>First-party silicon = cost-controllable + margin-protected + captive。對 hyperscaler 來說，自家 ASIC 是 strategic mandatory choice。<strong>AMD 在這個 bucket 沒有 entry</strong> — hyperscaler 不會買 AMD GPU 跑自己的 inference workload</td></tr>
+<tr><td><strong>B: External model + on-prem enterprise</strong></td><td><strong>25-30%</strong></td><td>OpenAI 自家 inference infra（不只 Azure hosting）/ Anthropic Claude API / Cohere / xAI 推論 / Mistral / 各大 SaaS 自託管 / 金融 / 醫療 enterprise on-prem</td><td><strong>AMD ROCm（先於 ASIC 吃下這塊）</strong></td><td>這些客戶要 multi-cloud + on-prem 可移植性。ASIC 是 hyperscaler-locked-in（用 TPU 就只能 GCP；用 Trainium 就只能 AWS），他們明確要 commodity GPU 形式。<strong>OpenAI 6GW warrant 協議正是 capital structure 證據</strong> — OpenAI 拿到 ~10% AMD warrants 條件就是「買 6 GW AMD GPU」，明擺著是規避 hyperscaler ASIC 鎖定的策略選擇</td></tr>
+<tr><td><strong>C: NVDA commodity GPU layer</strong></td><td><strong>25-30%</strong></td><td>NVDA H100 / B200 / GB300 仍主導的 mainstream cloud inference + research lab + 中小型 AI 公司</td><td><strong>NVDA</strong></td><td>純 commodity GPU 競爭層；CUDA 生態 + TensorRT-LLM + FlashAttention 3 等 CUDA-only 軟體仍提供 30-50% 性能優勢；對 small / cost-sensitive workload，NVDA 仍是 default</td></tr>
+</table>
+
+<div class="insight">
+<div class="i-head">💡 §10.6 三段式拆解的投資意涵</div>
+<div class="i-body">
+<strong>三家 endpoints 並行不互斥</strong>：NVDA 25-30% (commodity) + AMD 25-30% (external + on-prem) + Hyperscaler ASIC 35-45% (captive cloud)<br>
+<span class="i-sub">事實：三個 bucket 客戶基數結構性不同（hyperscaler captive vs external multi-cloud needs vs commodity small），不會互換。</span><br>
+<span class="i-sub">推論：原報告「AMD 20% share」與「ASIC 取代 NVDA 40-50%」其實是兩個不同 bucket — AMD 進入的是 Bucket B；ASIC 吃的是 Bucket A captive；NVDA 在 Bucket C 仍守。</span><br>
+<span class="i-sub">投資意義：long basket 應分 bucket 獨立計算，避免重複扣減。NVDA 在 inference 即使 share 跌至 25-30%，仍是巨大絕對營收（2030 inference TAM ~$200B × 25-30% = $50-60B）。AMD upside 主要看 Bucket B 滲透率（即「外部 model 公司 + on-prem enterprise」），不是搶 hyperscaler 自家的 inference。</span>
+</div>
+</div>
+
 <h2>§11 關聯個股清單</h2>
 
 <h3>表 11.1：核心 / 次要 / 邊緣 ticker</h3>
@@ -734,8 +755,8 @@ tr:hover td{background:#F5F3FF}
 本 ID 看法（v1.1 critic 修）：ROCm 7.2 (Mar 2026) 達 <strong>vLLM 出箱 parity</strong>（critic 修：llama.cpp/Ollama 社群維護，非官方全 parity）；<strong>MI355X MLPerf 6.0 部分情境超越 B200</strong>（critic 修：Llama 2 70B 119% / GPT-OSS-120B 111-115%；原「single-digit %」低估）；Meta 6GW (H2 2026 1GW, multi-year) + <strong>OpenAI 6GW warrant 協議（~10% AMD shares warrants vesting on milestones, critic 修：原 shorthand「10% stake」誤導）</strong> + Oracle 131K = production scale 驗證。CUDA 在 inference 已開始裂；training 仍硬。<br>
 分歧原因：共識停留在 2024-2025 「ROCm 仍 lab」narrative；本 ID 已追蹤到 2026 H1 production deployment 進度。
 </div>
-<div class="j-infer">→ 推論：NVDA inference share 2027 Q1 預估降至 70-75%；AMD 升至 12-15%；其他（ASIC / Trainium / TPU）8-10%。</div>
-<div class="j-falsify">⚠ 證偽條件：若 2026 Q3 NVDA share 仍 ≥ 85%（無 share loss），本論點需下修；若 NVDA 公開揭露 inference share 數據顯示 stable，論點 stall。</div>
+<div class="j-infer">→ 推論：NVDA inference share 2027 Q1 預估降至 70-75%；AMD 升至 12-15%；其他（ASIC / Trainium / TPU）8-10%。<br><strong>⚠ critic 2026-05-03 修補（防 zero-sum 誤讀）：上述 share 數字是 2027 Q1 過渡期 snapshot。長期 2028E 應拆 3 個 bucket（詳 §10.6）：Bucket A Hyperscaler captive 35-45%（ASIC 主導 — AMD 不進入此 bucket）+ Bucket B external model + on-prem 25-30%（AMD 主導）+ Bucket C commodity GPU 25-30%（NVDA 守住）。讀者應分 bucket 計算，避免把「AMD 進入 inference 20%」與「ASIC 取代 NVDA 40-50%」當成同一件事重複扣減 NVDA share。</strong></div>
+<div class="j-falsify">⚠ 證偽條件：若 2026 Q3 NVDA share 仍 ≥ 85%（無 share loss），本論點需下修；若 NVDA 公開揭露 inference share 數據顯示 stable，論點 stall。Bucket-specific 證偽見 §13 F-7 (Bucket A) + F-8 (Bucket B)。</div>
 </div>
 
 <div class="judgment">
@@ -769,6 +790,8 @@ tr:hover td{background:#F5F3FF}
 <tr><td>ROCm 訓練 parity 達標</td><td>仍 1-2 年落後</td><td>2028 Q1 仍未達 cuDNN 9.x equivalent</td><td>2028 Q1</td><td>AMD 永遠停在 inference share 20%；無法 reach training</td></tr>
 <tr><td>Meta 6GW 1GW deployment 順利</td><td>計畫中（H2 2026）</td><td>2026 Q4 deployment 推遲 ≥ 6 個月</td><td>2026 Q4</td><td>AMD ecosystem ramp 整體推遲；Thesis 1 stall</td></tr>
 <tr><td>PyTorch backend-neutral default</td><td>仍 CUDA default</td><td>2028 仍 CUDA default（無 backend-neutral）</td><td>2028</td><td>本 ID Thesis 3 部分失敗；framework governance 影響弱於預期</td></tr>
+<tr style="background:#F0FDF4"><td><strong>F-7: Bucket A ASIC ramp 訊號</strong>（critic 2026-05-03 加 — §10.6 三段式拆解配套）</td><td>Bedrock / Azure OpenAI / Vertex AI 對外公告 inference per-token cost</td><td>6 個月內 per-token cost 降幅 &lt; 15%（vs 預期 &gt;30%，且不是 NVDA 降價驅動）</td><td>2026-Q4（AWS re:Invent + Azure Ignite + Google Cloud Next）</td><td>Bucket A 35-45% TAM 中 ASIC ramp 失敗；Hyperscaler captive thesis 推遲；NVDA 在 Bucket A 反而續守</td></tr>
+<tr style="background:#F0FDF4"><td><strong>F-8: Bucket B AMD non-hyperscaler share 訊號</strong>（critic 2026-05-03 加）</td><td>AMD FY27 DC AI revenue 中「非 Big 4 hyperscaler」占比（從 Meta + OpenAI + Oracle + Tier 2 推算）</td><td>2027 全年非 Big 4 hyperscaler revenue 占比 &lt; 25%（vs 預期 ≥40%）</td><td>2027 Q4 earnings + 客戶揭露</td><td>Bucket B 25-30% TAM 中 AMD 主導力 weak — 外部 model 公司可能轉用其他替代（Hyperscaler 可移植 ASIC stack 或 NVDA 降價挽回）；AMD ROCm thesis 縮小至 only-Meta-and-OpenAI-locked-in</td></tr>
 </table>
 
 <h2>頁尾</h2>
