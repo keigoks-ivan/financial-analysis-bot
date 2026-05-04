@@ -2510,15 +2510,6 @@ def generate_mental_models() -> None:
             label_y = r + 18
 
             new_badge = ""
-            if is_new:
-                new_badge = (
-                    f'<g transform="translate({r - 4},{-r - 2})">'
-                    f'<rect x="-3" y="-7" width="22" height="11" rx="2" fill="#dc2626"/>'
-                    f'<text x="8" y="1" text-anchor="middle" '
-                    f'style="font-family:\'IBM Plex Mono\',monospace;font-size:7px;font-weight:700;'
-                    f'letter-spacing:.08em;fill:#fff">NEW</text>'
-                    f'</g>'
-                )
 
             flagship_inner = ""
             if flagship:
@@ -2608,7 +2599,7 @@ def generate_mental_models() -> None:
                 is_new = m.get('isNew', False)
                 pos_id = f'{d["roman"]}.{str(i + 1).zfill(2)}'
                 flagship_badge = f'<span class="matrix-cell-flagship">★</span>' if flagship else ''
-                new_badge = f'<span class="matrix-cell-new">NEW</span>' if is_new else ''
+                new_badge = ''
                 cell_border_top = f'border-top:3px solid {d["color"]}'
                 cells_html += (
                     f'<button class="matrix-cell" data-cell-id="{m["id"]}" data-cell-d="{d_key}" '
@@ -3052,7 +3043,7 @@ a:hover{{color:var(--imq-accent-hover)}}
     var m = getModel(id);
     if (!m) return;
     var d = DISCIPLINES[m.d];
-    var newBadge = m.isNew ? '<span class="panel-tag-new">NEW</span>' : '';
+    var newBadge = '';
     var flagshipBadge = m.flagship ? '<span class="panel-tag-flagship">★ FLAGSHIP</span>' : '';
 
     var casesHtml = (m.cases || []).map(function(c, i) {{
