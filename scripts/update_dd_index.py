@@ -808,7 +808,7 @@ def _verdict_to_signal(verdict_raw: str) -> str:
 
 
 def build_row_v12(entry: dict) -> str:
-    """Render one v12 row (data-* attrs + 9 td cells) matching the hand-curated
+    """Render one v12 row (data-* attrs + 10 td cells) matching the hand-curated
     schema in docs/research/index.html. Missing fields render as '?' or 0."""
     sig = entry.get("signal", "") or "?"
     trap_emoji = entry.get("trap_emoji", "") or "?"
@@ -886,6 +886,8 @@ def build_row_v12(entry: dict) -> str:
     up5y_style = f"color:{u5y_color};font-weight:600" if u5y_color else "color:#94A3B8"
     up5y_num_attr = f"{up5y_num:.0f}" if up5y_num is not None else "0"
 
+    date_disp = entry.get("date") or "—"
+
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
@@ -893,6 +895,7 @@ def build_row_v12(entry: dict) -> str:
         f' data-fpe="{fpe_num}" data-pct="{pct_num}" data-peg="{peg_num}"'
         f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-stress="{stress_frac}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
+        f'<td class="num-cell">{date_disp}</td>'
         f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
         f'<td class="num-cell">{triax_disp}</td>'
