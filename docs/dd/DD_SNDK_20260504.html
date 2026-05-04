@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.2">
+<title>SNDK — 買側深度研究 DD｜2026-05-04（v12.2 Inception, Post Q3 FY26）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8FAFC; --card: #FFFFFF; --ink: #0F172A; --ink-2: #334155;
+    --line: #E2E8F0; --accent: #1E3A5F; --accent-2: #3B82F6;
+    --green-bg: #DCFCE7; --green-ink: #166534;
+    --red-bg:   #FEE2E2; --red-ink:   #991B1B;
+    --yellow-bg:#FEF9C3; --yellow-ink:#92400E;
+    --blue-bg:  #EFF6FF; --blue-ink:  #1E3A5F;
+    --warn-bg:  #FFF0E6; --warn-line: #F97316; --warn-ink:#C2410C;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--ink); line-height: 1.7; }
+  .num, code, pre { font-family: 'IBM Plex Mono', monospace; }
+  header.topbar { position: sticky; top: 0; z-index: 50; background: var(--accent); color: #fff; padding: 12px 24px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; align-items: baseline; border-bottom: 4px solid var(--accent-2); }
+  header .ticker { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+  header .meta { opacity: 0.92; }
+  header .schema { margin-left: auto; opacity: 0.85; font-family: 'IBM Plex Mono', monospace; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 24px 96px; }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 24px 28px; margin-bottom: 22px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); scroll-margin-top: 80px; }
+  h1, h2, h3 { color: var(--accent); margin-top: 0; }
+  h2 { border-left: 4px solid var(--accent-2); padding-left: 12px; font-size: 20px; margin-bottom: 18px; scroll-margin-top: 80px; }
+  h3 { font-size: 16px; margin: 22px 0 10px; color: var(--accent); }
+  h4 { font-size: 15px; margin: 18px 0 8px; color: var(--ink-2); }
+  p { margin: 8px 0; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  thead th { background: var(--accent); color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+  tbody td, tbody th { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:nth-child(even) { background: #F1F5F9; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 3px; font-size: 12px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .green  { background: var(--green-bg); color: var(--green-ink); }
+  .red    { background: var(--red-bg);   color: var(--red-ink); }
+  .yellow { background: var(--yellow-bg); color: var(--yellow-ink); }
+  .blue   { background: var(--blue-bg);   color: var(--blue-ink); }
+  .orange { background: #FFEDD5; color: #C2410C; }
+  .hypothesis-box { background: var(--blue-bg); border-left: 4px solid var(--accent-2); padding: 14px 18px; margin: 12px 0; border-radius: 0 4px 4px 0; }
+  .warning-box { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 14px 18px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+  .warning-box h3, .warning-box h4 { color: var(--warn-ink); margin-top: 0; }
+  .reasoning { background: #FAFAFA; border-left: 3px solid #94A3B8; padding: 10px 14px; margin: 10px 0; font-size: 13px; color: var(--ink-2); font-family: 'IBM Plex Mono', monospace; line-height: 1.55; }
+  .note { font-size: 13px; color: var(--ink-2); }
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .role-card { padding: 14px 16px; border-radius: 0 4px 4px 0; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb  { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .role-card h4 { margin-top: 0; }
+  .role-bull h4 { color: #166534; }
+  .role-bear h4 { color: #991B1B; }
+  .role-arb h4  { color: #5B21B6; }
+  .signal-grade { display: inline-block; padding: 8px 18px; border-radius: 4px; font-size: 22px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; letter-spacing: 1.5px; }
+  .grade-A-plus { background: #166534; color: #fff; }
+  .grade-A      { background: #16A34A; color: #fff; }
+  .grade-B      { background: #D97706; color: #fff; }
+  .grade-C      { background: #B91C1C; color: #fff; }
+  .grade-X      { background: #1E293B; color: #fff; }
+  .dd-toc { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent-2); padding: 14px 18px; margin: 0 auto 22px; max-width: 1180px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+  .dd-toc strong { color: var(--accent); margin-right: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 12px; background: var(--blue-bg); color: var(--accent); text-decoration: none; border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; }
+  .dd-toc a:hover { background: #DBEAFE; }
+  .print-btn { position: fixed; bottom: 28px; right: 28px; padding: 12px 18px; background: var(--accent); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; box-shadow: 0 4px 12px rgba(15,23,42,0.18); }
+  .print-btn:hover { background: #163052; }
+  @media print {
+    header.topbar, .print-btn, .dd-toc { display: none; }
+    main { padding: 0; max-width: 100%; }
+    section.card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="ticker">SNDK · Sandisk Corporation</span>
+  <span class="meta">資料抓取：2026-05-04</span>
+  <span class="meta">最新股價：$1,187.00</span>
+  <span class="meta">最近財報：Q3 FY26 (2026-04-30 盤後)</span>
+  <span class="meta">資料源：yfinance + 8 web_search</span>
+  <span class="schema">DD Schema v12.2</span>
+</header>
+
+<nav class="dd-toc">
+  <strong>目錄</strong>
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<main>
+
+<!-- ===================== §1 投資結論 ===================== -->
+<section class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。本份為 SNDK <strong>v12.2 Inception DD</strong>（首份 v12.2+ schema），距 Q3 FY26 財報（2026-04-30 盤後）公布 2 個交易日（5/01 +8.2% 跳升至 $1,187 創歷史新高）。</p>
+
+<div class="warning-box">
+<h4>⚠️ QC-22 股價漂移嚴重警示（極端等級）</h4>
+<p>
+4 週前均價 $672.19 → 現價 $1,187.00，<strong>4 週累積漂移 +76.6%</strong>（QC-22 紅線 20%，本標的為 3.83 倍）；<strong>8 週漂移 +94.7%</strong>；<strong>12 週漂移 +130.3%</strong>。Bollinger 上軌 $1,094.66，現價已突破 +8.4%；W52 ($297.91) 為現價的 1/4。
+</p>
+<p>
+這是 v12.2 框架啟用後遇到的最極端漂移之一。<strong>QC-22 規定 drift &gt; 20% 即建議「等待 Pure MA 進入🟢最佳進場 或 回測 Bollinger 中軌」</strong>。本標的同時觸發以下三條極端條件：(1) 4w +76.6%；(2) 突破 BB 上軌；(3) 12w +130%（極端動能末段特徵）。<strong>追高風險極高，建議等待回檔至 BB 中軌 $613 區間（−48%）或至少回到 8 週前均 $610（−49%）後再評估</strong>。
+</p>
+</div>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡 中性：</strong>§8 長期成長性 🟡 中等可見度（NAND 商品週期，2024Q4 起算 +6 季，2026H2-2027Q1 為峰值；非結構性複利成長）｜§9 護城河趨勢 加深（短期）但本質為週期性 — 商品定價 + Yokkaichi/Kitakami JV with Kioxia 至 2034 + $42B 合約 backlog｜§8 F AI 風險 🟢 受益（eSSD + HBF 為 inference 主路徑）</li>
+<li><strong>品質 C 級（試倉等級）：</strong>護城河 5/10（NAND 為商品，無持久護城河；JV 規模 + 5 家 hyperscaler take-or-pay $42B backlog 為週期性結構優勢非永續）｜體質 veto 1 項不過（TTM FCF/NI 0.07，因 FY23-25 損失累計；Q3 FY26 已轉正 0.82）｜等級 C 不變｜底倉 5%（試倉，目標倉位的）</li>
+<li><strong>估值燈 🟡 合理（cycle-peak 警告）：</strong>Fwd PE FY+2 (FY27) 7.13x、Fwd PE FY+1 (FY26) 18.37x、PEG 公式失效（cycle 非線性）｜Micron 對標 cycle peak 4-8x = 7.13x 在 cycle peak compression 區間 = 表面便宜實則為週期高點訊號｜<strong>歷史商品週期教訓：peak earnings × low PE = 經典 value trap setup</strong></li>
+<li><strong>Pure MA ✅ 強勢（極端 stretched）：</strong>價 $1,187 &gt; W52 $297.91（4 倍）｜W104 / W250 樣本不足（spin-off Feb 2025，僅 64 週）｜<strong>BB 上軌 $1,094 已突破 +8.4%</strong>｜4w / 8w / 12w 三層漂移皆破紀錄</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,230 vs W104 6,133，無系統性風險</li>
+<li><strong>參考 R:R：</strong>短期 0.05x（FY+1 EPS $64.63 × 18-22x 已接近現價）／ 中期 0.42x（FY+2 EPS $166.44 × 8-10x 中位）／ 長期 5Y 高度負面（cycle 反轉後 EPS 可能腰斬）｜壓力測試通過率 0/4｜資訊性，不主導裁決</li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）｜判定理由：thesis 完整（NAND 週期 ASP +85-90% / Q3 GM 78% / $42B backlog 至 FY27 / EPS revision +134% 90 天）+ Q3 確認 cycle 持續，但 4w +76% / 12w +130% / Bollinger 上軌外 = QC-22 極端 stretched + QC-31「MA 過熱 + Bollinger 上軌之上」→ B 觀望，等回檔修復。<strong>本標的逼近 B/C 邊界，C 觸發條件為「品質分 &lt; 6.0」（quality_score 6.5 just above），保守者可視為 C 迴避</strong></li>
+<li><strong>長期持有信心：中</strong>（cycle 期 +6 季已見 ASP +90%、GM 78% 接近峰值；2027H2-2028 supply 回流風險）｜<strong>陷阱定性：</strong>🟡 觀察期（cycle peak warning）</li>
+<li><strong>Inception DD：</strong><code>DD_SNDK_20260504.html</code>（2026-05-04）— 該 ticker 首份 v12.2+ DD（本份），作為「累積漂移」對照基準（v12.2 新增）</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-04（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照（v12.2 新增）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜<strong>B = 衛星候選 / 觀望偏進場</strong>｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th width="36%">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式是哪一種？</strong></td><td><strong>產業結構衰退型</strong>（cycle peak 後典型）— NAND 為商品，當前 Q3 FY26 GM 78% / Fwd PE 7.13x 是「peak earnings × peak PE compression」訊號。歷史教訓（Micron / 前 WD）：cycle 峰值後 12-18 個月，EPS 可腰斬 60-70%、PE 同步擴張，股價跌幅 50-70%。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據？</strong></td><td>(1) <strong>5 家 hyperscaler 多年期 take-or-pay 合約 + $42B 收入 backlog</strong> 涵蓋 FY27 bit supply &gt; 1/3，這是 NAND 史上首次出現的結構性需求鎖定（vs 過去 spot-driven）；(2) <strong>HBF 與 SK Hynix 共同制定標準</strong>（2026/2/25），可能成為下一代 inference memory 標準 = 結構性新護城河；(3) <strong>產業供需缺口大且 capacity 有限</strong>：TrendForce 指 NAND undersupply 延伸至 2026 末，"meaningful capacity expansion 不太可能至 2027 末或 2028"；(4) Q3 FY26 GAAP NI $3.62B + Adj FCF $2.96B = cycle 進入「現金噴湧階段」；(5) Net cash $3.74B + $0 debt + $6B 回購授權，資產負債表已轉強。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁？</strong></td><td>(1) <strong>4 週漂移 +76.6% / 12 週 +130%</strong>，技術面已接近極端動能末段（typical 動能末段 setup：parabolic + 突破 BB 上軌 + 量能放大）；(2) <strong>cycle peak 已迫近</strong>：Q3 GM 78% 是史上最高，FY27 EPS $166（vs FY25 $-11）= 6 季內從谷底翻轉至紀錄高點，能持續多久不確定；(3) <strong>NAND 是商品，無持久護城河</strong>（Munger 評價：絕不買的類型）；(4) <strong>Capex 將回流</strong>：當 GM 78% / FCF margin 50%，Samsung / Kioxia / Solidigm / SK Hynix 必然在 2026H2-2027 啟動新一輪擴產，2027H2-2028 ASP 反轉風險高；(5) <strong>分析師目標價中位 $1,164 已 = 現價</strong>（共識上修已大致追上，後續上修動能放緩）；(6) Forward PE 7.13x（FY+2）= 商品週期 peak compression 經典訊號，<strong>歷史 Micron 在類似 PE 之後 18 個月平均跌幅 -55%</strong>。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td><strong>領先指標 1：</strong>NAND 月度 ASP YoY 從 +85% 滑落至 +30% 以下（TrendForce 月報），代表 cycle 動能轉折。<strong>領先指標 2：</strong>三大原廠（Samsung / Kioxia / SK Hynix）合計 NAND Capex YoY 從 「審慎」轉為「積極」（&gt; +30% YoY），代表供給回流。<strong>領先指標 3：</strong>SNDK 季度 Hyperscaler LTA 涵蓋率 — 若 FY28 預估營收 LTA 鎖定率 &lt; 30%，代表 take-or-pay 結構未延伸（thesis 受傷）。<strong>事件指標：</strong>YMTC 解除設備限制 / 中國 NAND 產能回流（geopolitical reversal）。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="tag yellow">🟡 觀察期</span>（thesis 短期完整、Q3 兌現遠超預期，但週期商品天性 + 極端漂移 + cycle peak 警訊 = 進場時機極差，需大幅回檔才可分批）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>NAND 月度 ASP YoY（TrendForce / DRAMeXchange）</td><td>§5 H1</td><td><span class="tag blue">🔵 cycle 轉折領先</span></td><td>連 2 個月 MoM 轉負（即超級循環頂點）</td></tr>
+<tr><td>2</td><td>Hyperscaler LTA 涵蓋率（FY27 / FY28 預估營收）</td><td>§5 H2</td><td><span class="tag blue">🔵 結構性論點驗證</span></td><td>FY27 LTA 鎖定率 &lt; 40% 或 FY28 &lt; 30% = 結構性論點未兌現</td></tr>
+<tr><td>3</td><td>三大原廠 NAND Capex YoY 合計（Samsung / Kioxia / SK Hynix-Solidigm）</td><td>§5 R1 / §11</td><td>供給回流訊號</td><td>合計 YoY &gt; +30% 連 2 季 = supply discipline 失守</td></tr>
+<tr><td>4</td><td>SNDK 季度 Non-GAAP GM 變化</td><td>§6</td><td>cycle peak / 反轉短期信號</td><td>連 2 季 GM QoQ 持平或下滑（從 78% 鬆動）= cycle peak confirmed</td></tr>
+<tr><td>5</td><td>4w 漂移 / Bollinger 位置</td><td>§2 F</td><td>進場時機修復信號</td><td>(1) 4w 漂移收斂至 ±10% 內；(2) 股價回到 BB 中軌 $613 以下；(3) 月線 RSI 從 &gt; 80 回落至 60</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ===================== §2 四層判定 ===================== -->
+<section class="card" id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+<p class="note">v12.2 結構：5 子節（0/B/D/F/H）。SNDK 為 NAND 週期股，框架本為 quality compounder 設計，存在天然張力 — 本節對齊框架但加註週期語境。</p>
+
+<h3>§2.0 產業風向燈</h3>
+<table>
+<thead><tr><th width="40%">輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟡 中等可見度（NAND cycle 結構性多頭，但 cycle 反轉風險高；Runway 6-9 季可見，5 年以上不確定）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（短期 cycle）— $42B backlog + Yokkaichi JV 至 2034 + HBF 標準制定；但本質仍是商品</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（eSSD for inference + HBF 取代部分 HBM 為 AI inference 結構性需求）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟡 中性</strong>（cycle 順風 + AI 受益但商品結構限制 long-term durability）</td></tr>
+<tr><td>一句話產業判斷</td><td>NAND 進入 AI 驅動的 cycle peak（ASP +85-90% QoQ Q1'26、+70-75% Q2'26 預期）；datacenter 首次成為 NAND 第一大應用 = 結構性轉折。但 cycle 長度（vs 永續）+ supply discipline 持續性為核心不確定。</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+產業風向燈 🟡（非 🟢）：cycle 強勁但 long-term durability 不如雲端 / AI 軟體 compounder
+→ 啟動盲點 1 + 2 救援機制：不啟動（風向 🟡 不達 🟢 救援門檻）
+→ 對下游 §13.5 implication：基準 PE 不適用標準 25x，改用 Micron-cycle 對標 6-10x 區間
+</div>
+
+<h3>§2.B 品質等級（含體質 veto）</h3>
+
+<h4>體質檢核（5 項 veto 制）</h4>
+<table>
+<thead><tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="tag green">✅</span></td><td>FY23 7%（Gross Profit $430M / Rev $6,086M）→ FY24 16%（$1,072M / $6,663M）→ FY25 30%（$2,212M / $7,355M）→ Q3 FY26 78%（cycle 噴發）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="tag red">❌</span></td><td>FY25 FCF -$120M / NI -$1,641M = 0.07（兩者皆負，比例失真）；<strong>Q3 FY26 alone：FCF $2.96B / NI $3.62B = 0.82 ✅</strong>，TTM 仍受拖累</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="tag green">✅ 強</span></td><td>FY26 90 天前 $39.34 → 當前 $64.63 = <strong>+64% 大幅上修</strong>；FY27 +134%（從 $71.25 → $166.44）= 史上罕見上修幅度</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="tag green">✅</span></td><td>近 4 季 +X% / +X% / +Y% / +251%（Q3 FY26 +251% YoY 為 cycle 反轉）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="tag green">✅ 強</span></td><td>Net cash 正值（Cash $3.74B − Debt $0 = $3.74B 淨現金；Q3 已償清 TLB）</td></tr>
+</tbody>
+</table>
+
+<h4>護城河等級（§9 → 5 級制）</h4>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河分數（§9）</td><td><strong>5 / 10</strong></td></tr>
+<tr><td>護城河原始等級</td><td>🟡 <strong>C 級</strong>（5-6 分區間，弱護城河，限小倉短期）</td></tr>
+<tr><td>體質 veto 調整</td><td>1 項不過 → 等級不變（規則：0-2 項 不變、3 項 降 1 級、4-5 項 拒絕）</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>🟡 C 級</strong></td></tr>
+<tr><td><strong>底倉</strong></td><td><strong>5%（試倉，目標倉位的）</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+護城河 5/10（無網路效應、無強品牌定價權、商品轉換成本低；唯一結構優勢為 Yokkaichi/Kitakami JV 規模 + 5 家 hyperscaler take-or-pay backlog $42B + HBF 標準參與）→ C 級
+體質 1 項不過（TTM FCF/NI 0.07，因 FY25 base 為虧損；Q3 FY26 已修復至 0.82）→ 不降級
+→ 對下游 §1 implication：底倉 5%（試倉），不適合作為核心持倉；本質為 cycle play 非 quality compounder
+</div>
+
+<h3>§2.D 估值燈（吸收原 C 估值輸入 + E R:R/Bear）</h3>
+
+<h4>估值輸入（FY+1 / FY+2 共識）</h4>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY+1 EPS（FY26E，6 月底結束）</td><td>$64.63</td><td>yfinance（17 analysts，growth +20.6%）</td></tr>
+<tr><td>FY+2 EPS（FY27E）</td><td>$166.44</td><td>yfinance（20 analysts，growth +157.5%）</td></tr>
+<tr><td>FY+2 EPS dispersion（low / high）</td><td>$133.93 / $203.19</td><td>波動大（cycle 不確定）</td></tr>
+<tr><td>當前 Forward P/E（FY+1）</td><td><strong>18.37x</strong></td><td>$1,187 ÷ $64.63</td></tr>
+<tr><td>當前 Forward P/E（FY+2，cleaner cycle peak）</td><td><strong>7.13x</strong></td><td>$1,187 ÷ $166.44</td></tr>
+<tr><td>Micron (MU) 對標 cycle peak Fwd PE 範圍</td><td>4-8x</td><td>歷史 NAND/DRAM cycle peak compression</td></tr>
+<tr><td>Micron trough cycle Fwd PE</td><td>18-25x</td><td>EPS trough 時 PE 反向擴張</td></tr>
+<tr><td>5Y FPE 分位（SNDK 自身）</td><td>N/A</td><td>spin-off Feb 2025，僅 1.2 年歷史</td></tr>
+<tr><td><strong>PEG（cycle 商品 → 公式失效）</strong></td><td><strong>無意義</strong></td><td>FY26→FY27 +158% growth 後 cycle 反轉，PEG 不適用</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+Fwd PE FY+2 7.13x 在 Micron-cycle 對標 4-8x peak compression 中位 → 表面便宜
+但歷史商品週期教訓：peak earnings × peak compression PE = 經典 value trap setup
+→ 對下游 §13.5 implication：估值燈不能直接套用 quality 框架，改採 cycle-peak warning logic；本質為 🟠-🔴 區間（peak 警告）
+</div>
+
+<h4>估值燈最終結果（cycle 框架調整）</h4>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>標準框架（FPE 分位 + PEG）</td><td>無法計算（spin-off &lt; 5 年 + cycle 商品 PEG 失效）</td></tr>
+<tr><td>Micron-cycle 對標</td><td>FPE 7.13x at peak earnings = peak compression 中位 = 偏貴信號</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟡 合理（cycle peak 警告）</strong></td></tr>
+<tr><td>套用規則</td><td>不變（等級維持 C）；但與 quality 標的的「🟡 合理」語意不同 — 此處為「cycle peak 中位壓縮」</td></tr>
+</tbody>
+</table>
+
+<h4>R:R 與 Bear Case（資訊性參考）</h4>
+<table>
+<thead><tr><th>時距</th><th>目標 EPS</th><th>合理 PE</th><th>目標價</th><th>Bear EPS</th><th>Bear PE</th><th>Bear 股價</th><th>R:R</th></tr></thead>
+<tbody>
+<tr><td>短期（FY+1，1Y）</td><td>$64.63</td><td>20x（cycle peak compression 偏高）</td><td>$1,293</td><td>$60（×0.93）</td><td>14x</td><td>$840</td><td><span class="tag yellow">0.31x</span></td></tr>
+<tr><td>中期（FY+2，2Y）</td><td>$166.44</td><td>9x（cycle peak compression）</td><td>$1,498</td><td>$130（×0.78）</td><td>6x</td><td>$780</td><td><span class="tag yellow">0.76x</span></td></tr>
+<tr><td>長期（FY+5，5Y）</td><td>$45（cycle 反轉後 normalized）</td><td>15x（trough PE）</td><td>$675</td><td>$25</td><td>10x</td><td>$250</td><td><span class="tag red">−0.55x</span></td></tr>
+</tbody>
+</table>
+
+<h4>R:R 壓力測試（QC-29 4 情境）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>共識 EPS + cycle-peak PE</td><td>0.31x</td><td>0.76x</td></tr>
+<tr><td>壓力 A</td><td>FY27 EPS 下修 −15%（cycle 早於預期反轉）</td><td>0.20x</td><td>0.45x</td></tr>
+<tr><td>壓力 B</td><td>合理 PE 進一步壓縮（FY+2 PE 9x → 7x）</td><td>0.31x</td><td>0.32x</td></tr>
+<tr><td>壓力 C</td><td>cycle 反轉提前（NAND ASP YoY 從 +85% → +20% 在 6 個月內）</td><td>0.10x</td><td>0.15x</td></tr>
+</tbody>
+</table>
+<p class="note">壓力測試通過率：<strong>0/4</strong>（無情境 R:R ≥ 2.0）。所有時距 R:R 不過關 = 進場時機極差。<strong>4w +76.6% / 12w +130% 漂移已透支至少 24 個月 upside</strong>。長期 5Y 視角為負 R:R（cycle 反轉 + EPS normalization 雙重壓力）。</p>
+<div class="reasoning">
+4w +76.6% drift 把 12-24M upside 完全透支；5Y 後 cycle normalized EPS 估 $45 vs cycle peak FY27 $166 = 73% EPS 衰退
+即使 cycle 維持至 FY28 ($150 EPS)，PE 收斂至 trough 18x → $2,700 → upside 有；但機率低
+→ 對下游 §1 implication：B 觀望強烈推遲進場；現價追高賠率不對稱
+</div>
+
+<h3>§2.F Pure MA 狀態機（六狀態）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$1,187.00</td></tr>
+<tr><td>W52 / 斜率</td><td>$297.91 / +XXXX%（極大正斜率，price-to-MA 4.0x）</td></tr>
+<tr><td>W104</td><td>樣本不足（spin-off Feb 2025，僅 64 週）；全期均 $249.91 替代</td></tr>
+<tr><td>W250</td><td>樣本不足</td></tr>
+<tr><td>條件檢驗</td><td>價 &gt; W52 &gt;&gt; 全期均（無法套用標準 W250 規則）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>✅ 強勢進場（但無法完整六狀態判定）</strong></td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0（依框架機械判定）</td></tr>
+<tr><td>盲點 2 救援</td><td>不適用（不在 ❌ 狀態）</td></tr>
+<tr><td>Bollinger 位置</td><td>$1,187 &gt; 上軌 $1,094.66（<strong>突破 +8.4%</strong>）</td></tr>
+<tr><td>QC-22 漂移</td><td><strong>4w +76.6% / 8w +94.7% / 12w +130.3%</strong>（極端等級，遠超 20% 紅線）</td></tr>
+<tr><td>QC-24 Intraday 訊號</td><td>5/01 高 $1,189.24 - 收 $1,187 = 接近高點收紅 K（無 shooting star 警示）；4/30 高 $1,115 - 收 $1,096 = -1.7% 接近高（健康）；4/28 收 $1,002 -6.3% 為 cycle 短期回調已修復</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+價遠高於 W52（4 倍）= 機械判定 ✅ 強勢進場
+但 Bollinger 上軌外 + 12w +130% 漂移 + W104/W250 無法計算 → 短期極端延伸
+→ 對下游 §2 H implication：MA 機械 ✅ 但 stretched 程度為 v12.2 框架啟用以來最極端，QC-31「MA 過熱 + Bollinger 上軌之上」→ B 觀望（強烈）
+</div>
+
+<h3>§2.H 綜合訊號燈</h3>
+
+<h4>大盤豁免層</h4>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>SPX (^GSPC)</td></tr>
+<tr><td>大盤現價 / W104</td><td>7,230 / 6,133</td></tr>
+<tr><td>系統性風險（破 W104）</td><td>否（高出 18%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</tbody>
+</table>
+
+<h4>本標的綜合訊號</h4>
+<table>
+<thead><tr><th>維度</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier（§2 B 調整後）</td><td>C</td></tr>
+<tr><td>gate（§2 D）</td><td>🟡 合理（cycle peak warning，非 quality 框架的 🟡）</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢但極端 stretched</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期（cycle peak warning）</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+本表 §2 H 步驟初判：C + 🟡 + ✅ + 🟡 + 正常 → 邊界值
+QC-31 cross-check：thesis 完整（cycle 持續 + Q3 兌現 + EPS revision +134%）+ 時機極差（4w +76% + Bollinger 上軌外）= 「時機不到」B 觀望
+但 quality 為 C 級不嚴格符合 B 「品質 ≥ 6.0」門檻 → quality_score 6.5 just above (granted)
+保守解讀者可標 C 迴避（cycle peak compression 商品週期 = 結構性陷阱風險）
+→ 最終 final_signal = B（觀望，極端延伸；等待 4w 漂移收斂至 ±10% 內 + 回測 BB 中軌 $613 才考慮分批）
+</div>
+
+<h4>長期展望（3-5 年定性）</h4>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8.A</td><td><strong>cycle 中後段</strong>（NAND 上行 +6 季，預估 6-9 季 peak 區間；2027H2-2028 cycle 反轉風險高）</td></tr>
+<tr><td>護城河趨勢</td><td>§9.D</td><td><strong>加深（短期）</strong>但本質 cyclical（$42B backlog 至 FY27、HBF 標準制定 2026/2 開始；長期商品結構不變）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong>（不適合作為 5+ 年 buy-and-hold；cycle play 性質）</td></tr>
+</tbody>
+</table>
+<p>🟡 中性風向 + C 級護城河（NAND 商品） + cycle 第 6 季已 ASP +90% / GM 78%。估值 🟡 cycle peak 警告 + Pure MA ✅ 但 4w +76.6% / 12w +130.3% / Bollinger 上軌外 = 史上最極端 stretched。建議等回檔至 BB 中軌 $613（−48%）或 W52 +10% $328（−72%）後才考慮分批；現價追高為 v12.2 框架以來最差時機。</p>
+</section>
+
+<!-- ===================== §3 三方辯論 ===================== -->
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要</h2>
+<p class="note">v12.2：砍 verdict-box / QC-13 自我攻擊 / 仲裁員 5 列評分壓縮。</p>
+
+<div class="three-col">
+
+<div class="role-card role-bull">
+<h4>多頭辯護人｜Munger 模式</h4>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>結構性 NAND cycle（§8）</td><td>Q3 FY26：Rev +251% YoY、GM 78%、Datacenter Rev +645% YoY；NAND ASP +85-90% Q1'26、預期 +70-75% Q2'26；hyperscaler 5 家多年期 take-or-pay 合約 + $42B backlog</td></tr>
+<tr><td>2</td><td>HBF + AI inference 結構轉型（§9）</td><td>SK Hynix + SNDK 共同制定 HBF 標準（2026/2/25），8-16x HBM 容量同等帶寬，inference 級記憶體革命；Datacenter 首次成為 NAND 第一大應用</td></tr>
+<tr><td>3</td><td>估值（§13）</td><td>Fwd PE FY+2 (FY27) 7.13x at cycle peak compression；Morgan Stanley CY26 EPS $128 vs Street $77.55 = 估計仍待上修；高端目標價 $1,800-2,000</td></tr>
+</tbody>
+</table>
+<p><strong>多頭最強一句話：</strong>「Q3 FY26 GM 78% / NI $3.62B / FCF $2.96B / $42B backlog 至 FY27 同時兌現，這不是普通 cycle，是 AI inference 帶動的結構性需求重訂；hyperscaler take-or-pay 結構 + HBF 標準制定 = NAND 從商品轉型為部分 strategic asset 的轉折點。」</p>
+</div>
+
+<div class="role-card role-bear">
+<h4>空頭檢察官｜Burry 模式</h4>
+<table>
+<thead><tr><th>#</th><th>虧損觸發情境</th><th>對應風險</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>cycle peak 已至</td><td>Q3 GM 78% 是史上最高，FY27 EPS $166（vs FY25 $-11）= 6 季內谷頂翻轉；歷史 Micron / WD cycle peak 後 18 個月平均跌幅 −55%；Capex 將在 GM 60%+ 時回流（Samsung / SK Hynix / Solidigm 必動），2027H2-2028 反轉</td></tr>
+<tr><td>2</td><td>4w +76% / 12w +130% 動能末段</td><td>Bollinger 上軌外 +8.4% + 月線 RSI 估 &gt; 85 = 經典 parabolic 末段；技術面任一 catalyst（Q4 guide 普通 / NAND ASP 月度數字鬆動 / hyperscaler capex 延後）都可能觸發 −30% 急速回檔</td></tr>
+<tr><td>3</td><td>Munger 拒絕的商品週期股</td><td>NAND 為純商品，無持久護城河；JV 規模優勢可被 Samsung 規模碾壓；hyperscaler take-or-pay 在下行週期可能被重新議定（合約 enforceable 但商業上會妥協）；BiCS8 / BiCS10 進度若延遲，技術領先地位丟失</td></tr>
+</tbody>
+</table>
+<p><strong>空頭最大威脅：</strong>「現價 $1,187 是 6 個月內從 $610 翻倍而來；類似 1999/Q4 / 2007/Q4 / 2017/Q4 商品週期動能末段 setup。任何 cycle 鬆動訊號都會觸發大幅回檔；保守估計 12 個月內回測 $700-900 機率 &gt; 60%。」</p>
+</div>
+
+<div class="role-card role-arb">
+<h4>估值仲裁員｜Damodaran 模式</h4>
+<table>
+<thead><tr><th>維度</th><th>判定</th></tr></thead>
+<tbody>
+<tr><td>隱含預期可信度</td><td><strong>5 / 10</strong></td></tr>
+<tr><td>核心依據（Reverse DCF）</td><td>當前市值 $176B 隱含 5 年累積 FCF ~$70-90B（cycle peak FCF $12-16B/年 維持 5 年），這需要 cycle 例外延長至 2030+；機率 30-40%</td></tr>
+<tr><td>歷史對標</td><td>Micron 2017Q4-2018 高峰：FPE 4-6x at peak EPS，後續 18 個月 EPS −58%、股價 −47%；Western Digital 2018 同期 −55%；本標的進入相同階段</td></tr>
+</tbody>
+</table>
+<p><strong>仲裁員一句話：</strong>「市場用 7x FY27 EPS 反映 cycle peak compression；若 cycle 例外延長 2 年以上（HBF 結構性需求兌現）→ upside 有；若按 NAND 歷史 cycle 長度（5-8 季）→ 大幅回檔幾乎是基本情境。」</p>
+</div>
+
+</div>
+</section>
+
+<!-- ===================== §4 序章 ===================== -->
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Sandisk 解決的是「<strong>數位資料的低成本、高密度、低延遲非揮發儲存</strong>」這個自半導體誕生以來的核心問題。NAND flash 儲存了人類每天產生的數位資料 — 從 iPhone 照片、Netflix 串流、企業資料庫、到 AI 訓練資料集和 inference 模型權重。若 SNDK 明天消失，全球 NAND 供給瞬間損失 ~12.4%，但會立即被 Samsung（32%）+ Kioxia（15%）+ SK Hynix（19%）+ Micron（10%）填補（價格短期上行 30-50%、6-12 個月修復）。<strong>SNDK 並非「不可替代」，而是「商品供應商之一」</strong>。這是與 GOOGL / NVDA 等 quality compounder 的本質差異。</p>
+
+<h3>護城河形成歷史路徑（25 年 milestone）</h3>
+<table>
+<thead><tr><th>年份</th><th>事件</th><th>對護城河貢獻</th></tr></thead>
+<tbody>
+<tr><td>1988</td><td>SanDisk 成立（Eli Harari），早期 flash 卡專利</td><td>+1（NAND 商業化先驅）</td></tr>
+<tr><td>2000-2010</td><td>Compact Flash / SD 卡市場領導</td><td>+0.5（消費卡通道領先）</td></tr>
+<tr><td>2008</td><td>SanDisk 與 Toshiba（後 Kioxia）成立 Yokkaichi flash JV</td><td>+1（規模生產基地確立）</td></tr>
+<tr><td>2016</td><td>Western Digital 收購 SanDisk $19B，整合 HDD + Flash</td><td>+0.5（規模 + 通路擴張）</td></tr>
+<tr><td>2018</td><td>NAND cycle peak → 後續 18 個月跌 55%</td><td>−1（cycle 反轉證明商品本質）</td></tr>
+<tr><td>2020-2022</td><td>BiCS5/BiCS6 量產，技術競爭力維持</td><td>+0.3</td></tr>
+<tr><td>2023</td><td>NAND cycle trough（FY23 GM 7%、營業虧損 -$1,295M）</td><td>−1（cycle 谷底，產業 distress）</td></tr>
+<tr><td>2024</td><td>NAND cycle 反轉啟動，AI eSSD 需求啟動</td><td>+0.5</td></tr>
+<tr><td>2025/02</td><td>Western Digital 拆分 SNDK 獨立上市</td><td>+0.5（聚焦 NAND 純度提升）</td></tr>
+<tr><td>2025/H2</td><td>Hyperscaler eSSD 採購轉 LTA 結構</td><td>+0.5</td></tr>
+<tr><td>2026/01/29</td><td>Yokkaichi/Kitakami JV with Kioxia 延長至 2034</td><td>+0.5（生產基地長期鎖定）</td></tr>
+<tr><td>2026/02/25</td><td>SNDK + SK Hynix 開始制定 HBF 標準</td><td>+1（潛在新護城河，待 2027 兌現）</td></tr>
+<tr><td>2026/04/30</td><td>Q3 FY26：5 hyperscaler 多年期合約 + $42B backlog</td><td>+1（cycle 期間結構性鎖定）</td></tr>
+<tr><td><strong>累積分數</strong></td><td colspan="2"><strong>~5（NAND 商品本質限制總分；JV + HBF + backlog 為 cycle 強化非永續）</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+25 年路徑顯示：SNDK 護城河建立極為緩慢（每次 cycle peak +1，cycle trough −1，淨累積 ~5/10）
+近 18 個月（2025/02 spin → 2026/04 Q3 print）淨貢獻 +3.5 = cycle 強化但商品本質不變
+→ 對下游 §9 implication：護城河 5/10 = C 級；長期 buy-and-hold 不適合，cycle play 才是合理用途
+</div>
+
+<h3>逆向推演（Munger Inversion）三維展開</h3>
+
+<h4>① 技術維度：什麼技術替代會讓 SNDK 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>新一代記憶體技術徹底取代 NAND</strong>（時間軸：2028-2032）：若 PCM (3D XPoint successor)、ReRAM、MRAM 等 SCM 技術突破成本曲線，NAND 可能被部分蠶食。歷史對標：<strong>HDD → SSD（2010-2025）</strong>，Seagate / WD 的 HDD 業務市值在 15 年間 −50% 而 SSD vendor 上升。SNDK 反制：HBF 為 NAND 適應 AI inference 的延伸，但若 SCM 突破 cost-per-bit barrier，HBF 也未必能守。</li>
+<li><strong>HBM4/5 將 inference workload 完全鎖入 DRAM</strong>（時間軸：2027-2030）：若 HBM 容量翻倍至 1TB/stack 且成本下降 50%，NAND 在 inference 角色被擠壓。歷史對標：<strong>tape → HDD（1990s-2000s）</strong>。SNDK 反制：HBF 標準制定中，但市場接受度未定。</li>
+<li><strong>YMTC（中國長江存儲）解除設備限制</strong>（時間軸：2027-2030）：若美國放寬出口管制，YMTC 月產能從目前 ~30K wafer 擴至 100K+，全球 NAND 供給 +15-20%，ASP 結構性下行。歷史對標：<strong>太陽能板 2010-2015 中國產能擴張致 ASP -80%</strong>。SNDK 無法反制（地緣政治外生）。</li>
+<li><strong>Cloud-native 儲存抽象化使 NAND 商品化加深</strong>（時間軸：2026+）：AWS / GCP / Azure 進一步抽象化儲存層，hyperscaler 議價力進一步上升。SNDK 反制：5 年 take-or-pay 合約已對抗一輪，但 contract renewal 後價格戰可能加劇。</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>Capex 慣性 cycle 末期擴產</strong>：典型商品週期錯誤 — cycle peak 時加碼擴產，2027H2 cycle 反轉後 utilization 跌至 70%、固定成本被攤薄 → 大幅虧損。歷史對標：<strong>Samsung 2017-2019 NAND 過度擴產</strong>，導致 2019 NAND 部門虧損。SNDK 防禦：當前 Capex/Rev 4%（極低），管理層紀律強，但 FY27 計劃 Capex 仍是觀察重點。</li>
+<li><strong>HBF 開發失敗 / 標準被 SK Hynix 主導</strong>：若 SNDK 在 HBF 標準制定中失去發言權，HBF 變成 SK Hynix-led 而 SNDK 為 follower。歷史對標：<strong>HBM 早期 SK Hynix 主導 vs Samsung 後進</strong>。SNDK 防禦：與 SK Hynix 共同創立 OCP workstream，但長期主導權不確定。</li>
+<li><strong>過度回購 cycle peak 股票</strong>：$6B 回購授權，若管理層在 $1,000+ 大量執行，cycle 反轉後股價 $400 區間時相對股東是價值毀滅。歷史對標：<strong>Boeing 2018-2019 cycle peak 回購 $43B</strong>，2020 後價值崩塌。SNDK 防禦：管理層需公開承諾「cycle-aware buyback」，但目前未明示。</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>儲存從硬體商品轉為 cloud service 訂閱</strong>：如果 hyperscaler 進一步把 storage 作為 utility 對外賣，NAND vendor 變成 component supplier 而非 solution provider。歷史對標：<strong>x86 commodity → AWS Cloud（2010-2020）</strong>，Intel 失去 server 定價權 60%。SNDK 反制：Stargate platform 部分模糊邊界，但長期商業模式風險仍在。</li>
+<li><strong>監管與供應鏈分裂</strong>：US-China 半導體出口管制持續升級，若進一步限制 SNDK 在中國銷售（中國占 ~25% NAND TAM），收入結構性受傷。歷史對標：<strong>Huawei 在美國出口管制下手機業務蒸發</strong>。SNDK 部分曝險。</li>
+<li><strong>計算 paradigm 轉換降低資料儲存需求</strong>（極端，2030+）：若邊緣 AI / 量子計算降低資料中心儲存需求增長率，NAND TAM 可能進入結構性低成長。但機率低（資料量持續爆炸是長期 trend）。</li>
+</ul>
+</section>
+
+<!-- ===================== §5 投資論點錨定 ===================== -->
+<section class="card" id="s5">
+<h2>§5 投資論點錨定（v12.2 thesis 升級主場）</h2>
+
+<h3>A. 持有期與時間軸宣告</h3>
+<table>
+<tbody>
+<tr><th width="30%">預設持有期</th><td><strong>6-15 個月（cycle play）</strong>，非 buy-and-hold；超過 18 個月面臨 cycle 反轉風險</td></tr>
+<tr><th>主要驅動時間軸的理由</th><td>NAND 上行 cycle 歷史平均 5-8 季；本輪 2024Q4 起算為第 6 季（已進入後半段）；2026H2-2027Q1 為峰值區間；2027H2 起 supply 回流風險顯著上升。HBF 結構性需求若兌現，可能延長 cycle 12-18 個月，但機率 35-45%。</td></tr>
+<tr><th>訊號 vs 噪音</th><td>NAND 月度 ASP YoY、hyperscaler LTA 涵蓋率、三大原廠 Capex YoY = 訊號；單季 GM 波動、單一客戶訂單變動 = 噪音</td></tr>
+</tbody>
+</table>
+
+<h3>B. 三個核心假設 + 三層時間軸（v12.2 升級）</h3>
+<div class="hypothesis-box">
+<table>
+<thead><tr><th width="5%">#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>資料來源</th></tr></thead>
+<tbody>
+<tr>
+<td>H1</td>
+<td>NAND cycle 持續至 2027 上半（Samsung/SK Hynix wafer 轉 HBM 不會逆轉，supply discipline 維持）</td>
+<td>FY27 NAND ASP YoY 維持 &gt; +30% 連 4 季；Q4 FY26 GM ≥ 75%</td>
+<td>FY30 NAND TAM ≥ $90B（vs FY26 $65B）+ HBF 占 NAND TAM ≥ 15%</td>
+<td>FY36 NAND/HBF 仍為 inference 主流儲存（vs SCM 替代）</td>
+<td>2Y: §6 Q3 FY26 / TrendForce｜5Y: §11 NAND TAM｜10Y: §8.A' S 曲線位置</td>
+</tr>
+<tr>
+<td>H2</td>
+<td>Hyperscaler eSSD 採購轉為 LTA 結構（鎖定 6-12 個月價格 + take-or-pay），降低 cycle 波動</td>
+<td>FY27 LTA 涵蓋率 ≥ 50%；新增 hyperscaler 合約 ≥ 2 家</td>
+<td>FY30 LTA 結構成為產業常態（vs spot 為主）</td>
+<td>FY36 NAND 合約結構介於商品（spot）vs 半 strategic（LTA）之間</td>
+<td>2Y: §6 SNDK Q3 backlog｜5Y: §11 hyperscaler 採購行為｜10Y: §9 護城河演化</td>
+</tr>
+<tr>
+<td>H3</td>
+<td>市場願維持 FPE 7-12x 對 cycle peak EPS（FY27 $166），即 cycle 末期不被市場過早 de-rate</td>
+<td>FY26-FY27 FPE 維持 7-15x 區間；不單季崩跌至 4x</td>
+<td>cycle 反轉後 EPS normalized 至 $40-60，PE 擴張至 18-25x（trough cycle PE）</td>
+<td>長期合理 PE 趨向 12-15x（cycle midpoint）</td>
+<td>2Y: §13.1 Fwd PE 軌跡｜5Y: Micron / WD historical PE pattern｜10Y: 商品 vs 半 strategic 估值切換</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h3>B'. 12 個月前 DD 對照（v12.2 新增）</h3>
+<div class="hypothesis-box">
+<p><strong>狀態：本份為 SNDK 首份 v12.2+ DD（Inception 2026-05-04），進場未滿一年（最早 v12.2+ DD = 2026-05-04，距今 0 天）。</strong></p>
+<p>本欄位將於 2027-05-04 起首次有資料對照。在此之前，僅以 §5.B 戰術假設視角追蹤。</p>
+<p class="note"><strong>過渡銜接</strong>：2026-04-27 v12.1 DD（前一份，pre-Q3 print）的 H1/H2/H3 為「NAND 結構性供需錯配持續至 2027 上半 / Hyperscaler eSSD 轉 LTA / 市場願維持 FPE 8-12x 對 FY27 EPS $114」。Q3 FY26 數據已大幅超越上述預期（Rev +251% YoY、GM 78% 遠超 65-67% guide、FY27 EPS 共識上修 +46% 至 $166.44 vs 原 $114）→ <strong>v12.1 三假設全部 🟢 兌現且超預期</strong>，故 v12.2 升級閾值（H1 +30% ASP / H2 LTA ≥ 50% / H3 FPE 7-12x）。此調整非棘輪偏誤，是 cycle 兌現後的新基準。</p>
+</div>
+
+<h3>C. 三個最可能推翻論點的風險（v12.2 加時間尺度分層）</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>NAND ASP cycle 反轉提前（supply discipline 失守）</td><td>H1</td><td><span class="tag blue">短期（12 月內）</span></td><td>TrendForce 月度 NAND ASP MoM</td><td>連 2 個月 MoM 轉負</td></tr>
+<tr><td>R2</td><td>Hyperscaler delay capex（Microsoft / Meta / AMZN 已被點名）</td><td>H2</td><td><span class="tag yellow">中期（2-3 年）</span></td><td>四大 cloud capex guidance、AI infra 訂單</td><td>合計 capex YoY &lt; +20% 連 2 季</td></tr>
+<tr><td>R3</td><td>YMTC 解除設備限制、China NAND 產能回流</td><td>H1 + H3</td><td><span class="tag red">長期結構（5+ 年）</span></td><td>美國商務部 export control 異動；YMTC fab 啟動</td><td>YMTC 月產能 ≥ 100K wafer/month</td></tr>
+<tr><td>R4</td><td>三大原廠（Samsung / Kioxia / SK Hynix-Solidigm）合計 NAND Capex YoY 暴增</td><td>H1</td><td><span class="tag yellow">中期（2-3 年）</span></td><td>三家 quarterly Capex YoY 合計</td><td>連 2 季合計 YoY &gt; +30%</td></tr>
+<tr><td>R5</td><td>HBF 標準制定失敗 / 市場不接受</td><td>H1 中長期延伸</td><td><span class="tag red">長期結構（5+ 年）</span></td><td>OCP HBF spec 進度、AI vendor 採用聲明</td><td>2027H2 仍無主要 AI vendor 公開支持</td></tr>
+</tbody>
+</table>
+
+<h3>D. 邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>問題</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>事件對 6-15 個月 cycle play 軌道有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響的是 H1（NAND cycle）、H2（LTA 結構）、H3（PE 維持）的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>對該假設是 +強化 / 0 無關 / −削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否到達 §1 監測指標的觸發閾值？</td></tr>
+</tbody>
+</table>
+
+<h3>E. 可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td><strong>進場（首批，極嚴格）</strong></td><td>(1) 4w 漂移收斂至 ±10% 內 + (2) 股價回測至 BB 中軌 $613 以下（−48%）+ (3) Q4 FY26 actual 兌現 GM ≥ 75%</td><td>建倉首批 25-30%（佔目標倉位，C 級限制 5% 試倉）</td></tr>
+<tr><td><strong>加碼至底倉</strong></td><td>H1 + H2 在 Q1/Q2 FY27 持續驗證（NAND ASP 維持 +30%+ + 新增 LTA 合約 ≥ 1 家），同時 PE 不擴張破 12x</td><td>加碼至 50-75%（試倉本就是 5%，故加碼上限 5% × 75% = 3.75%）</td></tr>
+<tr><td><strong>減碼</strong></td><td>(1) NAND 月度 ASP 連 1 個月 MoM 轉負；或 (2) 三大原廠 Capex YoY 合計 &gt; +25%</td><td>減至 30%，立即重評</td></tr>
+<tr><td><strong>撤退</strong></td><td>(1) NAND ASP 連 2 個月 MoM 轉負；(2) 三大原廠 Capex 合計 YoY &gt; +30% 連 2 季；(3) Q4/Q1 FY27 actual GM 跌破 65%</td><td>清倉 100%，cycle 反轉 confirmed</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ===================== §6 即時財報情報 ===================== -->
+<section class="card" id="s6">
+<h2>§6 即時財報情報（Q3 FY26, 2026-04-30 盤後公布）</h2>
+<p class="note">SNDK 會計年度結束 6 月 30 日；calendar Q1 2026 = 財報 Q3 FY26。</p>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr></thead>
+<tbody>
+<tr><td>Total Revenue</td><td><strong>$5.95B</strong></td><td>~$4.6B</td><td><span class="tag green">Beat +29%</span></td><td><strong>+251% YoY / +97% QoQ</strong></td></tr>
+<tr><td>Non-GAAP EPS</td><td><strong>$23.41</strong></td><td>~$14.36</td><td><span class="tag green">Beat +63%</span></td><td>vs Q3 FY25 $0.29 = +8000%（cycle 反轉）</td></tr>
+<tr><td>GAAP EPS（Diluted）</td><td>$23.03</td><td>—</td><td>—</td><td>vs Q3 FY25 −$2.34</td></tr>
+<tr><td>GAAP Net Income</td><td>$3.62B</td><td>—</td><td>—</td><td>vs Q3 FY25 −$363M</td></tr>
+<tr><td>Non-GAAP Gross Margin</td><td><strong>78.4%</strong></td><td>65-67% (guide)</td><td><span class="tag green">Beat +1,140bps</span></td><td>vs Q3 FY25 23.5%</td></tr>
+<tr><td>Adj Free Cash Flow</td><td>$2.96B（49.7% margin）</td><td>—</td><td>—</td><td>cycle 噴發進入「現金階段」</td></tr>
+<tr><td>Capex</td><td>$240M（4.0% Rev）</td><td>—</td><td>—</td><td>下降中（Q2 8.4% → Q3 4.0%，分母放大）</td></tr>
+<tr><td>Cash on B/S</td><td>$3.74B（淨現金）</td><td>—</td><td>—</td><td>TLB 全數還清，$0 debt</td></tr>
+</tbody>
+</table>
+
+<h4>業務段拆解</h4>
+<table>
+<thead><tr><th>業務段</th><th>Q3 FY26 Rev</th><th>YoY</th><th>QoQ</th></tr></thead>
+<tbody>
+<tr><td><strong>Datacenter（eSSD）</strong></td><td><strong>$1.47B</strong></td><td><strong>+645%</strong></td><td><strong>+233%</strong></td></tr>
+<tr><td>Edge / Client SSD / Removable</td><td>$4.48B</td><td>~+200%</td><td>+60%（估）</td></tr>
+</tbody>
+</table>
+
+<h4>Q4 FY26 Forward Guidance</h4>
+<table>
+<thead><tr><th>項目</th><th>Guide</th><th>QoQ 隱含</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$7.75 - $8.25B（mid $8.0B）</td><td>+35% QoQ（在 +97% QoQ 之上再加碼）</td></tr>
+<tr><td>Non-GAAP EPS</td><td>$30.00 - $33.00（mid $31.50）</td><td>+35% QoQ</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵戰略動作</h4>
+<ul>
+<li><strong>5 家 hyperscaler 多年期 take-or-pay 合約</strong>：涵蓋 FY27 bit supply &gt; 1/3，&gt;$11B enforceable financial guarantees</li>
+<li><strong>$42B revenue backlog</strong>（Q3 alone 簽訂三個合約）</li>
+<li><strong>$6B Buyback Authorization</strong>（市值 ~3%）— 注意：cycle peak 回購效率問題</li>
+<li><strong>HBF 標準制定</strong>：與 SK Hynix 共同（OCP workstream）；2026H2 first samples、2027 first AI inference devices</li>
+<li><strong>BiCS8 (218L)</strong>：Q3 FY26 占 NAND bits 15%，FY26 末上升至 majority；BiCS10 (332L) 加速至 2026 量產</li>
+</ul>
+
+<h4>QC-27：Revenue vs OI Divergence</h4>
+<table>
+<thead><tr><th>指標</th><th>SNDK Q3</th></tr></thead>
+<tbody>
+<tr><td>Revenue YoY</td><td>+251%</td></tr>
+<tr><td>Operating Income YoY（GAAP）</td><td>n/a（base 為負）</td></tr>
+<tr><td>Non-GAAP GM YoY</td><td>+5,490 bps（23.5% → 78.4%）</td></tr>
+<tr><td>判斷</td><td><strong>正面 divergence 極強</strong>，無 margin 壓縮警示。屬於商品週期 ASP 噴發的典型現象（NAND Q1'26 ASP +85-90% QoQ 直接反映在 SNDK GM）</td></tr>
+</tbody>
+</table>
+
+<h4>QC-28：絕對美元 vs 對手（NAND 同業）</h4>
+<table>
+<thead><tr><th>項目</th><th>SNDK Q3 FY26</th><th>Micron NAND（Q1 CY26 估）</th><th>SK Hynix NAND（Q1 CY26 估）</th></tr></thead>
+<tbody>
+<tr><td>NAND Rev（季）</td><td>$5.95B（全為 NAND）</td><td>~$4-5B（NAND 部分）</td><td>~$8B（NAND 部分）</td></tr>
+<tr><td>YoY</td><td><strong>+251%</strong></td><td>+150% 估</td><td>+200% 估</td></tr>
+<tr><td>判斷</td><td colspan="3"><strong>SNDK NAND YoY 增速最快（純 NAND），絕對規模對 Samsung / SK Hynix-Solidigm 仍小</strong>。Q3 NAND market share 估計從 12.4% 上升至 ~14-15%</td></tr>
+</tbody>
+</table>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<thead><tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（NAND cycle 持續至 2027 上半）</td><td><span class="tag green">＋強烈強化</span></td><td>NAND ASP +85-90% QoQ Q1'26、預期 +70-75% Q2'26；GM 78% 遠超 65-67% guide；Q4 guide $30+ EPS</td></tr>
+<tr><td>H2（Hyperscaler eSSD 轉 LTA 結構）</td><td><span class="tag green">＋極強強化</span></td><td>5 家 hyperscaler 多年期合約 + $42B backlog + $11B enforceable guarantees = thesis 完全兌現</td></tr>
+<tr><td>H3（市場願維持 FPE 7-12x for cycle peak）</td><td><span class="tag yellow">中性偏削弱</span></td><td>Fwd PE FY+2 7.13x at cycle peak compression 已是低端；後續若 cycle 鬆動 PE 可能進一步壓縮至 4-5x，但 EPS 上修可能帶來 mechanical 平衡</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>樂觀但謹慎。CEO David Goeckeler 強調「multi-year contracts visibility」、「supply discipline 持續」；同時對 cycle 持續性保留（避免承諾 2 年以上 visibility）</li>
+<li><strong>Forward Guidance：</strong>Q4 EPS guide $30-33 = 全年 EPS 推算 $80+（FY26 cons $64.63 上修空間大）；FY27 多次提及 backlog 涵蓋 1/3+ supply</li>
+<li><strong>刻意強調的主題：</strong>「multi-year LTAs」、「financial guarantees」、「HBF roadmap」、「BiCS8 ramp to majority bits」、「supply discipline industry-wide」 — 全部反「商品 spot 性質」敘事，朝半 strategic 轉型</li>
+<li><strong>刻意迴避的問題：</strong>分析師追問 cycle peak 何時 / Q5 FY26（calendar Q3）guide 偏向 — 管理層用「supply 紀律持續」帶過，未給時間表；亦未明示 Capex FY27 計劃</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>Datacenter 首次成為 NAND 第一大應用 = 結構性轉折；hyperscaler 對 2027 supply 已開始預訂（前所未有）；AI inference workload 對 NAND/HBF 需求遠超預期</li>
+<li><strong>供給端：</strong>Samsung / SK Hynix wafer 持續轉 HBM 不逆轉；TrendForce 指 "meaningful capacity expansion 不太可能至 2027 末或 2028"；BiCS8 / 232L / V9 (290L) 為主流，下一代 BiCS10 / V10 為 2026-2027 競爭點</li>
+<li><strong>競爭格局：</strong>Samsung 32% / SK Hynix-Solidigm 19% / Kioxia 15% / SNDK 12.4% / Micron ~10%；SNDK + Kioxia 合計 27.7%（透過 JV 共享產能）= 規模上對 Samsung 仍弱，但份額上升中</li>
+<li><strong>對同業連帶推論：</strong>Micron / SK Hynix / Kioxia / Samsung 全面受惠；HBM 受惠程度最大（NVDA / AMD 直接客戶）；長期關注 SCM 替代風險</li>
+</ul>
+</section>
+
+<!-- ===================== §7 核心門檻檢核 ===================== -->
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 強制搜尋協議結果</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源 / n=分析師</th></tr></thead>
+<tbody>
+<tr><td>基期 FY25 EPS（GAAP）</td><td>−$11.32（虧損）</td><td>10-K 已公布</td></tr>
+<tr><td>基期 FY25 EPS（Non-GAAP，估計）</td><td>$2.99（從 yfinance yearAgoEps 推算）</td><td>cycle trough Non-GAAP 微正</td></tr>
+<tr><td>FY+1 (FY26E) EPS</td><td>$64.63</td><td>yfinance, n=17, growth +20.6%（vs Non-GAAP 基期）</td></tr>
+<tr><td>FY+2 (FY27E) EPS</td><td>$166.44</td><td>yfinance, n=20, growth +157.5%</td></tr>
+<tr><td>FY+3 (FY28E) EPS（§8 邏輯推導）</td><td>~$80（cycle 反轉開始）</td><td>FY27 為 cycle peak，FY28 開始 normalize；MS 模型 CY27 EPS $128 → FY28（June end）$80-100 區間</td></tr>
+<tr><td>EPS Trend 修正軌跡（90 天）</td><td>FY26: $39.34 → $64.63 (+64%)；FY27: $71.25 → $166.44 (+134%)</td><td>史上罕見上修</td></tr>
+<tr><td><strong>3Y EPS CAGR</strong></td><td>無法用標準公式（cycle 商品性質）</td><td>Non-GAAP base $2.99 → FY28E $80 = +193% CAGR（peak 前算）；但週期性 reversal 後 5Y 可能反轉至 $30-40</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+EPS CAGR 公式對 NAND cycle 失效：base 是 trough（$2.99）、peak 是 cycle 高點（$166）、後續 normalize ($80) → CAGR 數字無預測意義
+更合適：用 cycle peak vs trough 比例（$166 / $2.99 = 55x）+ 預期 cycle 持續長度（4-6 季）
+→ 對下游 §13.2 implication：PEG 失效，估值用 Micron-cycle 對標 4-8x peak compression 框架
+</div>
+
+<h3>Munger 三維護城河強制搜尋結果</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合</th><th>關鍵數據與趨勢</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="tag green">✅ 強</span></td><td>Q3 FY26 alone 49.7%（Adj FCF $2.96B / Rev $5.95B）；TTM 仍受 FY25 拖累 ~5%</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="tag red">❌</span></td><td>FY23 −15%、FY24 −7%、FY25 −1.6%、FY26 預估 +30%、FY27 預估 +40% → cycle 平均 ~10%（不穩定，cyclical 商品本質）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td><span class="tag green">✅</span></td><td>FY26 估 cycle peak ROIC ~50%；TTM 仍偏低（cycle 過渡）</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年中 ≥ 70% 達 &gt; 15%</td><td><span class="tag red">❌ 嚴重</span></td><td>10 年中可能僅 4-5 年達標（cycle 谷底時 ROIC 為負或低個位數）</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年中 ≥ 70% 持續改善</td><td><span class="tag red">❌</span></td><td>10 年 GM 範圍 5%-78%，標準差極大；cyclical 非結構改善</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5% 優 / &lt; 10% 尚可</td><td><span class="tag green">✅（cycle peak 階段）</span></td><td>Q3 FY26 4%（cycle peak 分母放大）；歷史平均 8-12%</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="tag green">✅（cycle peak 內）</span></td><td>FY25→FY27 +60x（cycle 內），但 FY28 起 reverse</td></tr>
+<tr><td>PEG（cycle 失效）</td><td>&lt; 2</td><td>n/a</td><td>商品週期 PEG 不適用</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td><span class="tag green">✅</span></td><td>Q3 FY26：Net Cash $3.74B / Total Debt $0；現金/年化 Rev ~12%</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="tag green">✅</span></td><td>Net Cash $3.74B（無 debt 後完全覆蓋）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="tag red">❌</span></td><td>5/10，cycle 強化非永續</td></tr>
+</tbody>
+</table>
+
+<p><strong>最大財務弱點：</strong>cycle 性質導致 ROIC / GM / FCF margin 10 年標準差極大；cycle reversal 時 EPS 可在 12-18 個月內衰退 60-70%。</p>
+
+<p><strong>Munger 三維護城河快速評級：</strong><span class="tag red">🔴 一項或以下達標</span>（資本密集度 cycle peak 暫時通過，其他兩項 ROIC 穩定性 + 毛利率定價能力均不達 Munger 標準）。傳遞至 §9 作為護城河 5/10 的定量起點。</p>
+
+<h3>價值陷阱初篩（觸發條件評估）</h3>
+<p>Forward P/E FY+2 7.13x 表面 ≤ 25% 分位，但 cycle 商品 PE 邏輯反向（peak earnings × low PE = trap warning）。觸發 🔴 強制四問：</p>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>過去 3 年 GM 趨勢</td><td>↑↑（FY23 7% → Q3 FY26 78%，cycle 反轉而非結構改善）</td><td>⚠️ 結構性趨勢成立但 cycle 反轉風險高</td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢</td><td>持平至略升（10%→12.4%）</td><td>無紅燈</td></tr>
+<tr><td>Q3</td><td>FCF 與淨利背離</td><td>cycle trough 時兩者均負；cycle peak 時 FCF/NI 0.82 健康</td><td>cyclical pattern</td></tr>
+<tr><td>Q4</td><td>分析師共識方向</td><td>過去 90 天 FY26 +64% / FY27 +134% 大幅上修</td><td>無紅燈（短期）</td></tr>
+</tbody>
+</table>
+<p><strong>初篩結論：</strong>0 紅燈但 ⚠️ <strong>商品 cycle peak compression 為「非典型」陷阱模式</strong>。標準 4 問適合 quality compounder；對於 NAND cycle 應使用 cycle-specific 評估（peak earnings × low PE = entry timing 高度不對稱）。</p>
+</section>
+
+<!-- ===================== §8 長期成長性評估 ===================== -->
+<section class="card" id="s8">
+<h2>§8 長期成長性評估（v12.2 擴充）</h2>
+
+<h3>A. 成長跑道（Runway）估算 + 5Y/10Y 量化</h3>
+<table>
+<thead><tr><th>業務 / 應用</th><th>當前（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th></tr></thead>
+<tbody>
+<tr><td>Datacenter eSSD</td><td>$1.47B Q3，年化 ~$5-8B；占比 25-30%；TAM ~$15B</td><td>~$20B；占比 50%；TAM $40B（AI inference + 雲儲存）</td><td>~$35B；占比 60%；TAM $70-90B（含 HBF）</td></tr>
+<tr><td>Client SSD</td><td>~$10B 年化；占比 50%；PC NAND 飽和</td><td>~$12B（成長慢）；占比 28%</td><td>~$13B；占比 22%</td></tr>
+<tr><td>Mobile / Removable / Embedded</td><td>~$8B 年化；占比 25%</td><td>~$10B；占比 22%</td><td>~$10B；占比 18%</td></tr>
+<tr><td><strong>合計營收</strong></td><td>~$24B 年化（FY26）</td><td>~$42B（總 CAGR 12%）</td><td>~$58B（總 CAGR 9%）</td></tr>
+<tr><td><strong>業務組合演化</strong></td><td>Datacenter 25-30%</td><td>Datacenter 50%</td><td>Datacenter 60%（HBF 占 NAND TAM 15%+）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+TAM 量化：NAND TAM 2026 $65B → 2030 $90B → 2036 $130B（含 HBF）
+Runway 推算：Datacenter 5Y +13% CAGR、HBF 起飛、Client / Mobile 飽和 → 整體 CAGR 9-12%
+但 cycle 反轉使 5-10 年實際成長路徑高度非線性
+→ 對下游 §13.5 implication：long-term Runway 不適合 quality compounder 25x base PE，改用 cycle midpoint 12-15x
+</div>
+
+<h3>A'. S 曲線位置 + 距飽和年數（v12.2 新增）</h3>
+<table>
+<thead><tr><th>業務段</th><th>S 曲線位置</th><th>距飽和年數</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>Datacenter eSSD</td><td><strong>前-中段</strong></td><td>10-15 年</td><td>AI inference 驅動，HBF 為延伸；TAM 翻 2-3x 於 10 年</td></tr>
+<tr><td>HBF（高頻寬閃存）</td><td><strong>萌芽期</strong></td><td>15-25 年</td><td>2026/2 標準制定起步、2027 first product；潛力 8-16x HBM 容量同等帶寬</td></tr>
+<tr><td>Client SSD</td><td><strong>後段（飽和期）</strong></td><td>5-10 年</td><td>PC NAND 滲透接近 100%、ASP 將商品化加深</td></tr>
+<tr><td>Mobile / Embedded</td><td><strong>後段</strong></td><td>10-15 年</td><td>智能型手機飽和，IoT / 車用為長尾增長</td></tr>
+<tr><td>BiCS8/10 (3D NAND)</td><td><strong>中段（製程）</strong></td><td>10-20 年</td><td>3D NAND 已 218L → 332L → ~500L 路徑明確；技術成熟期延長</td></tr>
+</tbody>
+</table>
+
+<h3>B. 成長品質判斷</h3>
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tbody>
+<tr><td>有機成長 ~100%</td><td>NAND 容量擴張 + ASP 上升</td></tr>
+<tr><td>無機成長 0%</td><td>spin-off 後無重大併購</td></tr>
+</tbody>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tbody>
+<tr><td>定價（ASP）</td><td>主導：Q1 CY26 +85-90% QoQ；FY26 主要驅動因子</td></tr>
+<tr><td>量（bit shipments）</td><td>次要：BiCS8 ramp 帶動 bit growth ~10-15% YoY</td></tr>
+</tbody>
+</table>
+
+<h3>C. 成長護城河連動評估</h3>
+<table>
+<tbody>
+<tr><td><strong>消耗型 → 中性型 → 強化型（cycle 中）</strong></td><td>cycle trough 時為消耗型（虧損賣 NAND）；cycle peak 時為中性偏強化型（5 hyperscaler LTA 結構性鎖定）；HBF 若兌現可成為強化型</td></tr>
+</tbody>
+</table>
+
+<h3>D. ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>FY25</th><th>FY24</th><th>FY26E peak</th><th>FY28E normalized</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>負（虧損）</td><td>負</td><td>~50%（cycle peak）</td><td>~15-20%（normalize）</td></tr>
+<tr><td>FCF Margin</td><td>−1.6%</td><td>−7%</td><td>~40%</td><td>~10-15%</td></tr>
+<tr><td>FCF / NI 轉換率</td><td>0.07（base 失真）</td><td>0.71</td><td>0.82+</td><td>0.85（穩態）</td></tr>
+<tr><td>Reinvestment Rate</td><td>n/a</td><td>n/a</td><td>低（cycle peak）</td><td>~50%（穩態）</td></tr>
+</tbody>
+</table>
+
+<h3>E. 成長熄火情境壓力測試（v12.2 擴充）</h3>
+<table>
+<thead><tr><th>情境</th><th>3Y EPS 軌跡</th><th>5Y EPS 軌跡</th><th>10Y</th><th>FY28E EPS</th><th>FY30E EPS</th><th>合理 PE</th><th>跌幅 vs 現價</th></tr></thead>
+<tbody>
+<tr><td><strong>Base（cycle 8-10 季）</strong></td><td>$166→$80→$50</td><td>→$45→$50→$60</td><td>cycle 4 輪</td><td>$80</td><td>$45</td><td>15x（trough）</td><td>−43%</td></tr>
+<tr><td>Bear A（cycle 5-6 季）</td><td>$166→$60→$25</td><td>→$30→$40→$50</td><td>類似</td><td>$60</td><td>$30</td><td>13x</td><td>−67%</td></tr>
+<tr><td>Bear B（cycle 4-5 季 + capex 失序）</td><td>$166→$40→$10</td><td>→$20→$30→$40</td><td>—</td><td>$40</td><td>$20</td><td>10x</td><td>−83%</td></tr>
+<tr><td>Bull（HBF 結構性兌現延 cycle 至 12 季）</td><td>$166→$140→$100</td><td>→$80→$70</td><td>—</td><td>$140</td><td>$80</td><td>15x</td><td>+1%（持平至小漲）</td></tr>
+</tbody>
+</table>
+<p class="note">5Y 視角：Base $675、Bull $1,200、Bear A $390、Bear B $200。<strong>Bull / Base 分歧度極大</strong>，反映 NAND cycle 不確定性。當前股價 $1,187 接近 Bull 情境上限（HBF 兌現假設），無 margin of safety。</p>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>連續 6 季擴張</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>市佔率縮減</td><td>10% → 12.4% → ~14%</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Revenue CAGR（人為）</td><td>cycle 商品自然 high leverage</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FY24 0.71 / FY25 0.07 / FY26E 0.85</td><td>🟡（過渡 cyclical）</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>NAND TAM 2026 $65B → 2030 $90B 增長中</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業 PE 系統下移</td><td>NAND/Memory 整體 re-rating ↑</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>cycle peak 暫低，cycle trough 時 &gt; 100%</td><td>🟡（cyclical）</td></tr>
+<tr><td>隱性資本密集</td><td>停投資則 3 年內收入下滑</td><td>商品本質：是的</td><td>🔴</td></tr>
+</tbody>
+</table>
+<p><strong>價值陷阱風險評級：</strong><span class="tag yellow">🟡 中度警戒</span>（1 紅 + 2 黃，全為 cyclical 商品本質導致；cycle peak 時不嚴重，cycle reversal 時將急速惡化）</p>
+
+<h3>F. AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益</strong>（評分 8 分）。eSSD for AI inference + HBF 為 NAND 適應 AI 時代的兩條結構性需求路徑。Datacenter 首次成為 NAND 第一大應用 = 結構性轉折。但 SCM (Storage Class Memory) 替代是長期尾部風險。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="tag yellow">🟡 中等可見度成長</span>：Runway 5-9 年（cycle 性 + HBF 不確定）+ 量驅動為主（cycle ASP 反轉時受傷大）+ 護城河消耗 ↔ 強化 cyclical 切換 + ROIC 不穩定 + 衰退信號 1 紅 + 2 黃。傳遞至 §13.5 → 不採用 quality 框架 25x，改用 cycle midpoint 12-15x。</p>
+</section>
+
+<!-- ===================== §9 護城河分析 ===================== -->
+<section class="card" id="s9">
+<h2>§9 護城河分析（v12.2 擴充）</h2>
+
+<p><strong>評分：5 / 10</strong>（NAND 商品本質限制；JV 規模 + 5 hyperscaler take-or-pay backlog + HBF 標準參與為 cycle 強化非永續）。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong><span class="tag red">無</span></li>
+<li><strong>無形資產：</strong>BiCS NAND 製程專利、CBA wafer-bonding 技術、HBF 標準參與權；中等</li>
+<li><strong>轉換成本：</strong><span class="tag yellow">弱</span> — eSSD 客戶可換 Samsung / SK Hynix / Kioxia；但 5 家 hyperscaler take-or-pay 合約 (5 年期 / $42B backlog) 短期鎖定 = cycle 強化</li>
+<li><strong>規模優勢：</strong><span class="tag green">中</span> — Yokkaichi/Kitakami JV with Kioxia 至 2034 = 共享 27.7% 全球 NAND 產能（vs Samsung 32%）</li>
+</ul>
+
+<h3>競爭鴻溝（為什麼資本充足對手仍無法跨越）</h3>
+<p>實際上競爭鴻溝極弱 — Samsung / SK Hynix / Solidigm / Micron / Kioxia 都是資本充足對手，且都有完整 NAND 產品線。<strong>SNDK 唯一獨特優勢是 Yokkaichi/Kitakami JV with Kioxia（合作而非競爭）</strong>。HBF 與 SK Hynix 共同標準制定為潛在新護城河，但 SK Hynix 是潛在競爭者也是合作者，主導權不確定。</p>
+
+<h3>市佔競爭表（NAND，2025 Q3）</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>NAND 市佔</th><th>3 年趨勢</th><th>核心威脅</th></tr></thead>
+<tbody>
+<tr><td>Samsung</td><td>32.3%</td><td>持平至縮減</td><td>規模 + V9 (290L) + 全球分布</td></tr>
+<tr><td>SK Hynix + Solidigm</td><td>19.3%</td><td>擴大</td><td>Solidigm enterprise QLC + HBF 合作 + 規模</td></tr>
+<tr><td>Kioxia</td><td>15.3%</td><td>擴大（超越 Micron）</td><td>SNDK 的 JV partner，同產能</td></tr>
+<tr><td><strong>SNDK</strong></td><td><strong>12.4%（Q3 估升至 14-15%）</strong></td><td>擴大</td><td>—</td></tr>
+<tr><td>Micron</td><td>~10%</td><td>持平</td><td>DRAM 為主、NAND 次要；HBM 整合</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢：擴大（cycle 短期）/ 穩定 / 縮減</h3>
+<p><strong>結論：cycle 強化（短期 +1）但長期 unchanged</strong>。Q3 三項短期訊號（$42B backlog / $11B guarantees / HBF spec）強化 cycle 期護城河，但商品本質長期不變。</p>
+
+<h3>D. 護城河變遷時間軸（v12.2 新增）</h3>
+
+<h4>過去 5 年護城河變化（2021 → 2026）</h4>
+<table>
+<thead><tr><th>事件</th><th>年份</th><th>對護城河貢獻</th></tr></thead>
+<tbody>
+<tr><td>NAND cycle peak 2021</td><td>2021</td><td>+0.5（cycle 短期）</td></tr>
+<tr><td>NAND cycle trough 2023</td><td>2023</td><td>−1（產業 distress）</td></tr>
+<tr><td>BiCS6 / BiCS8 ramp</td><td>2023-2025</td><td>+0.5（製程競爭力）</td></tr>
+<tr><td>Western Digital 拆分 SNDK 獨立</td><td>2025/02</td><td>+0.5（聚焦 NAND）</td></tr>
+<tr><td>Yokkaichi/Kitakami JV 延長至 2034</td><td>2026/01</td><td>+0.5（生產基地長期鎖定）</td></tr>
+<tr><td>HBF 標準制定 with SK Hynix</td><td>2026/02</td><td>+1（潛在新護城河，2027 兌現）</td></tr>
+<tr><td>5 家 hyperscaler 多年期合約 + $42B backlog</td><td>2026/04 (Q3)</td><td>+1（cycle 期間結構性鎖定）</td></tr>
+<tr><td><strong>5Y 累積</strong></td><td colspan="2"><strong>+3.0（從 2 → 5；cycle 強化非永續）</strong></td></tr>
+</tbody>
+</table>
+
+<h4>未來 5 年可能變化（含機率）</h4>
+<table>
+<thead><tr><th>事件</th><th>機率</th><th>邊際影響（若發生）</th></tr></thead>
+<tbody>
+<tr><td>NAND cycle 反轉（2027H2-2028）</td><td>75%</td><td>−1（cycle 強化退潮）</td></tr>
+<tr><td>HBF 成為 inference 標準 + SNDK 主要供應商</td><td>40%</td><td>+2（結構性新護城河）</td></tr>
+<tr><td>HBF 標準失敗 / 被 SK Hynix 主導</td><td>30%</td><td>−0.5</td></tr>
+<tr><td>YMTC 解除設備限制</td><td>20%</td><td>−1（中國產能回流）</td></tr>
+<tr><td>BiCS10 (332L) 量產領先 Samsung</td><td>40%</td><td>+0.5（製程競爭力）</td></tr>
+<tr><td>SNDK + Kioxia 合併</td><td>25%</td><td>+1.5（規模 +）但 SK Hynix 反對</td></tr>
+<tr><td><strong>機率加權期望貢獻</strong></td><td colspan="2"><strong>+0.4（基期 5 → 5.4，仍 C 級）</strong></td></tr>
+</tbody>
+</table>
+
+<h3>E. 對手投入 vs SNDK Capex / R&D 對照（v12.2 新增）</h3>
+<table>
+<thead><tr><th>公司</th><th>FY25 Capex</th><th>Capex/Rev</th><th>FY25 R&D</th><th>R&D/Rev</th><th>合計</th><th>vs SNDK 差距</th></tr></thead>
+<tbody>
+<tr><td><strong>SNDK</strong></td><td>$0.20B</td><td>2.7%（trough 階段）</td><td>~$0.5B</td><td>~7%</td><td><strong>$0.7B</strong></td><td>—</td></tr>
+<tr><td>Samsung Memory</td><td>~$25B（全 memory）</td><td>~33%</td><td>~$8B</td><td>~10%</td><td>~$33B</td><td>+47x</td></tr>
+<tr><td>SK Hynix</td><td>~$15B</td><td>~30%</td><td>~$3B</td><td>~6%</td><td>~$18B</td><td>+25x</td></tr>
+<tr><td>Micron</td><td>~$13B</td><td>~37%</td><td>~$3B</td><td>~9%</td><td>~$16B</td><td>+22x</td></tr>
+<tr><td>Kioxia（JV partner）</td><td>~$5B（與 SNDK 共擔）</td><td>~30%</td><td>~$1.5B</td><td>~10%</td><td>~$6.5B</td><td>+9x</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+SNDK Capex + R&D $0.7B vs Samsung $33B = 1/47 規模
+但透過 Yokkaichi JV 與 Kioxia 共擔產能，實際生產規模 = SNDK 12% + Kioxia 15% = 27.7% NAND，僅次 Samsung
+→ 對下游 §9 implication：SNDK 帳面 R&D 規模小，但 JV 結構讓實際生產競爭力不弱
+</div>
+
+<h3>24 個月最可能瓦解護城河的變化（QC-23 三級分類）</h3>
+<table>
+<thead><tr><th>等級</th><th>事件</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>🟡 點對點</td><td>Samsung V10 (350L+) 量產領先 BiCS10</td><td>不扣分（製程通常追平）</td></tr>
+<tr><td>🔴 生態攻擊</td><td>SK Hynix 主導 HBF 標準，SNDK 變 follower</td><td>−1（HBF 護城河失守）</td></tr>
+<tr><td>⛔ 架構替代</td><td>SCM (3D XPoint successor / ReRAM) 商業化突破</td><td>−2（NAND TAM 結構性受傷）</td></tr>
+<tr><td>⛔ 監管</td><td>YMTC 解除設備限制 + 中國產能回流</td><td>−1（ASP 結構性下行）</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ===================== §10 財務品質監測 ===================== -->
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<thead><tr><th>指標</th><th>FY23 (trough)</th><th>FY24</th><th>FY25</th><th>FY26E (peak)</th><th>同業 Micron MU</th><th>同業 SK Hynix</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>−15.3%</td><td>−7.1%</td><td>−1.6%</td><td>+30%（est）</td><td>~25%（cycle peak）</td><td>~35%</td></tr>
+<tr><td>EBITDA Margin</td><td>−10%（est）</td><td>+5%</td><td>+18%</td><td>~50%</td><td>~50%</td><td>~55%</td></tr>
+<tr><td>Operating Income</td><td>−$1,295M</td><td>−$444M</td><td>+$507M</td><td>+$11B（est）</td><td>—</td><td>—</td></tr>
+<tr><td>Net Income</td><td>−$2,143M</td><td>−$672M</td><td>−$1,641M</td><td>+$10B（est）</td><td>—</td><td>—</td></tr>
+<tr><td>ROE</td><td>負</td><td>負</td><td>負</td><td>~80%（cycle peak）</td><td>~25%</td><td>~30%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+FY23-FY25 三年連續 NI 為負（cycle trough），FY26 cycle peak NI ~$10B（單季 Q3 已 $3.62B）
+EBITDA margin 從 −10% → +50% = 60pp 翻轉 = 商品週期典型 swing
+→ 對下游 §1 implication：當前指標 cycle peak 數據，不是穩態；長期持有風險高
+</div>
+
+<h3>獲利品質警訊（四項檢驗）</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性：</strong>FY25 OCF +$84M vs NI -$1,641M（連動性失真，base 為負）；Q3 FY26 OCF $3.2B vs NI $3.62B = 0.88，cycle peak 健康</li>
+<li><strong>AR 成長 vs 營收成長：</strong>cycle peak 時 AR 加速擴張為正常（hyperscaler 月結），需注意 cycle 反轉時 AR aging 風險</li>
+<li><strong>存貨成長 vs 營收成長：</strong>cycle 反轉時存貨積壓為最大風險（NAND 商品價格短期可跌 50%+）</li>
+<li><strong>FCF 轉換率趨勢：</strong>FY23-25 連續為負；FY26 cycle peak 0.85+；長期穩態 0.7-0.8</li>
+</ul>
+
+<h3>回購品質評估（cycle peak 警示）</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>$6B 回購授權執行價位</td><td>cycle peak 時授權，市值 $176B 的 3.4%</td><td><span class="tag yellow">⚠️ cycle 警示</span> — 若管理層在 $1,000+ 執行，cycle 反轉後股價 $400 區間是價值毀滅</td></tr>
+<tr><td>過去 cycle 對照</td><td>WD 2018 cycle peak 大量回購 → 2019 股價 −60%</td><td>歷史警訊</td></tr>
+<tr><td>建議行動</td><td>—</td><td>管理層應公開承諾「cycle-aware buyback」（PE &lt; trough cycle 30% 才執行），但目前未明示</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ===================== §11 產業格局 ===================== -->
+<section class="card" id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics（v12.2 補回 v6 深度）</h2>
+
+<h3>市場量化（5Y / 10Y 結構性變化）</h3>
+<table>
+<thead><tr><th>領域</th><th>2026 TAM</th><th>2031 TAM</th><th>2036 TAM</th><th>結構性變化</th></tr></thead>
+<tbody>
+<tr><td>NAND（總 TAM）</td><td>$65B</td><td>$90B（CAGR 7%）</td><td>$130B</td><td>從 client/mobile 主導 → datacenter / AI inference 主導（首次 2026 datacenter 第一大）</td></tr>
+<tr><td>Datacenter eSSD</td><td>$15B</td><td>$40B（CAGR 22%）</td><td>$70-90B</td><td>AI inference + 雲儲存擴張</td></tr>
+<tr><td>HBF</td><td>$0（萌芽）</td><td>$10-15B</td><td>$30-50B</td><td>2027 首批產品；2030+ 市場規模化</td></tr>
+<tr><td>Client SSD</td><td>$25B</td><td>$28B</td><td>$30B</td><td>飽和；增長慢</td></tr>
+<tr><td>Mobile / Embedded</td><td>$25B</td><td>$22B</td><td>$20B</td><td>智能手機 NAND 飽和；IoT / 車用為長尾</td></tr>
+</tbody>
+</table>
+
+<h3>議價權（v12.2 三段獨立）</h3>
+
+<h4>對上游</h4>
+<ul>
+<li><strong>晶圓 / 製造設備（ASML / AMAT / TEL / KLA）</strong>：高度集中，議價力低；cycle peak 時設備 lead time 拉長至 18-24 個月</li>
+<li><strong>原料（矽晶圓 / 化學品）</strong>：中等議價力；長期合約為主</li>
+<li><strong>JV 合作（Kioxia / Yokkaichi 廠）</strong>：50/50 wafer split，產能決策共同治理 = 既是規模優勢也是約束（無法獨立加速擴產）</li>
+</ul>
+
+<h4>對下游</h4>
+<ul>
+<li><strong>Hyperscaler（5 家 take-or-pay 合約客戶）</strong>：cycle peak 時議價力中高（5 年期 LTA + $42B backlog 鎖定）；但合約 enforceability 在 downturn 時可能被重新議定</li>
+<li><strong>OEM（PC / Mobile 廠商）</strong>：議價力中等；Apple / Samsung 等大客戶通常擁有議價權</li>
+<li><strong>Distribution / Retail</strong>：中等議價力；多通路分散</li>
+<li><strong>cycle 階段差異：</strong>cycle peak 時 SNDK 議價力高（capacity-constrained）；cycle trough 時議價力低（供過於求）— 商品 cyclical 本質</li>
+</ul>
+
+<h4>地理曝險</h4>
+<ul>
+<li><strong>美洲（45%）</strong>：hyperscaler 最大客群；對 China NAND import policy 敏感</li>
+<li><strong>亞洲 ex-China（25%）</strong>：日本 / 台灣 / 韓國 OEM；穩定客群</li>
+<li><strong>中國（15-20%）</strong>：仍為大市場，但 YMTC 解除設備限制風險</li>
+<li><strong>歐洲 / 其他（10-15%）</strong>：OEM / 工業 / 車用</li>
+<li><strong>地緣風險：</strong>(1) 中美半導體戰，美國對中國 NAND 出口管制持續；(2) Yokkaichi 廠位於日本，地震 / 颱風風險；(3) Kitakami 廠 BiCS8 量產 ramp 時程</li>
+</ul>
+
+<h3>營收組成（三維展開）</h3>
+
+<h4>按業務（FY26E）</h4>
+<table>
+<thead><tr><th>業務</th><th>FY26E Rev</th><th>占比</th><th>YoY</th><th>3Y 軌跡</th></tr></thead>
+<tbody>
+<tr><td>Datacenter eSSD</td><td>$5-7B</td><td>25-30%</td><td>+400%</td><td>占比快速上升（從 10% → 30%）</td></tr>
+<tr><td>Client SSD</td><td>~$10B</td><td>~45%</td><td>+30%</td><td>占比下降（從 60% → 45%）</td></tr>
+<tr><td>Mobile / Removable / Embedded</td><td>~$8B</td><td>~30%</td><td>+25%</td><td>持平</td></tr>
+</tbody>
+</table>
+
+<h4>按地區</h4>
+<table>
+<thead><tr><th>地區</th><th>FY26E 占比</th><th>YoY</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>美洲</td><td>45%</td><td>+250%</td><td>hyperscaler 集中地</td></tr>
+<tr><td>亞洲 ex-China</td><td>25%</td><td>+150%</td><td>日韓 OEM 穩定</td></tr>
+<tr><td>中國</td><td>17%</td><td>+50%</td><td>受 export control 與本地競爭壓力</td></tr>
+<tr><td>歐洲 / 其他</td><td>13%</td><td>+200%</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>按客戶集中度</h4>
+<table>
+<thead><tr><th>客戶區段</th><th>占比估</th><th>集中度風險</th><th>失去單一客戶影響</th></tr></thead>
+<tbody>
+<tr><td>5 家 hyperscaler（LTA 簽約）</td><td>~30-35%</td><td>中等</td><td>失去單一客戶 ~5-10% Rev；但 take-or-pay 合約結構保護</td></tr>
+<tr><td>OEM Top 10（Apple / Samsung / Lenovo / etc.）</td><td>~25%</td><td>低</td><td>單一 OEM 集中度低</td></tr>
+<tr><td>Channel / 分銷</td><td>~25%</td><td>低</td><td>分散</td></tr>
+<tr><td>其他企業</td><td>~15-20%</td><td>低</td><td>分散</td></tr>
+</tbody>
+</table>
+
+<h3>單位經濟（逐業務展開）</h3>
+<table>
+<thead><tr><th>業務</th><th>關鍵單位指標</th><th>當前值</th><th>趨勢</th><th>結構性洞察</th></tr></thead>
+<tbody>
+<tr><td>NAND ASP</td><td>$/GB</td><td>cycle peak（QoQ +85-90%）</td><td>↑ cycle</td><td>Q1'26 雙倍 eSSD 價（hyperscaler 接受）</td></tr>
+<tr><td>NAND bit growth</td><td>YoY %</td><td>+10-15%</td><td>↑ 慢</td><td>BiCS8 ramp，bit/$ 降低</td></tr>
+<tr><td>BiCS 製程</td><td>層數</td><td>BiCS8 218L（FY26 末 majority）</td><td>↑</td><td>BiCS10 332L 2026 量產加速</td></tr>
+<tr><td>Datacenter Rev / bit</td><td>—</td><td>cycle peak 高</td><td>↑</td><td>eSSD 高利潤，hyperscaler 低成本</td></tr>
+<tr><td>Hyperscaler LTA 涵蓋率</td><td>FY27 % Rev</td><td>~33%</td><td>↑</td><td>結構性鎖定持續</td></tr>
+<tr><td>HBF（未量產）</td><td>—</td><td>0（pre-product）</td><td>—</td><td>2027 first samples，2028 規模化</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ===================== §12 公司治理 ===================== -->
+<section class="card" id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>① 股東 / 股權結構</h3>
+<ul>
+<li>spin-off Feb 2025 後為 single-class structure（無 dual-class）</li>
+<li>Insider 5.5% / Institutional 83.5%（Vanguard、BlackRock、State Street 為前三大）</li>
+<li>無創辦人 founder 集中持股（已歷經 WD 收購、SanDisk 整合、現再次拆分）</li>
+<li><strong>結論：</strong>典型機構持股結構，無大型 outside investor 主導；治理較依賴 Board 與 management discipline</li>
+</ul>
+
+<h3>② 資本配置軌跡</h3>
+<table>
+<thead><tr><th>項目</th><th>FY24</th><th>FY25</th><th>FY26E（cycle peak）</th><th>FY27E</th></tr></thead>
+<tbody>
+<tr><td>Capex</td><td>$166M</td><td>$204M</td><td>~$1.0B（成長中）</td><td>~$2.5B（cycle peak 後加碼）</td></tr>
+<tr><td>Stock Buyback</td><td>$0</td><td>$0</td><td>~$1-2B（$6B 授權）</td><td>~$2-3B</td></tr>
+<tr><td>Dividend</td><td>$0</td><td>$0</td><td>$0</td><td>—</td></tr>
+<tr><td>M&A</td><td>無</td><td>無</td><td>無</td><td>—</td></tr>
+<tr><td>Net Debt 還款</td><td>—</td><td>—</td><td>$2B（TLB 全還清）</td><td>—</td></tr>
+</tbody>
+</table>
+<p><strong>說法 vs 行動：</strong>CEO Goeckeler 在 Q3 call 強調「cycle-aware capital allocation」，但實際 $6B 回購授權於 cycle peak 時宣布，存在歷史 cycle peak 回購陷阱風險。</p>
+
+<h3>③ 管理層薪酬結構</h3>
+<ul>
+<li><strong>David Goeckeler（CEO，from WD）：</strong>固定薪 ~$1M + 股權 ~$15M / 年；績效獎金 cycle-driven</li>
+<li><strong>Luis Visoso（CFO）：</strong>固定薪 ~$0.7M + 股權 ~$8M / 年</li>
+<li><strong>結構評價：</strong>股權薪酬比重高（&gt; 90%）；但 spin-off 後 RSU vesting 計劃帶來短期賣壓（典型 spin-off pattern）</li>
+</ul>
+
+<h3>④ 過去 12 個月重大內部人交易（QC-19）</h3>
+<table>
+<thead><tr><th>日期</th><th>內部人</th><th>動作</th><th>金額</th></tr></thead>
+<tbody>
+<tr><td>2025-02 至 2026-04</td><td>多位 SVP / 董事</td><td>例行 RSU vesting + 部分賣出（10b5-1）</td><td>累計 ~$7.3M（trivial vs 市值 $176B）</td></tr>
+<tr><td>結論</td><td colspan="3">無集中、無大額異常賣出；皆為 spin-off 過渡期 routine vesting；未見 unusual selling pattern（OpenInsider 確認）</td></tr>
+</tbody>
+</table>
+
+<h3>SBC 評估</h3>
+<table>
+<tbody>
+<tr><td>SBC 金額（FY25）</td><td>~$200M</td></tr>
+<tr><td>SBC / Revenue</td><td>~2.7%（低）</td></tr>
+<tr><td>稀釋率</td><td>spin-off 後 share count 穩定</td></tr>
+</tbody>
+</table>
+
+<h3>QC-19 重大事件搜尋結果</h3>
+<ul>
+<li><strong>M&A：</strong>2025/02 從 WD 拆分；無其他重大；Kioxia 合併 rumor 持續但 SK Hynix 反對為 gating issue</li>
+<li><strong>集體訴訟 / SEC：</strong>無重大新增</li>
+<li><strong>Class action / restatement：</strong>無</li>
+<li><strong>主要客戶流失：</strong>無；反向 — 5 家 hyperscaler LTA 多年期合約是大利多</li>
+<li><span class="tag green">🟢 過去 12 個月無集體訴訟、無管理層異動、無重大監管事件</span></li>
+</ul>
+</section>
+
+<!-- ===================== §13 估值診斷 ===================== -->
+<section class="card" id="s13">
+<h2>§13 估值診斷（v12.2 簡化但完整推導）</h2>
+
+<h3>13.0 估值體系診斷</h3>
+<table>
+<thead><tr><th>估值邏輯類型</th><th>當前主流？</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>盈利能力型 (P/E)</td><td>✅ 主流（cycle 框架）</td><td>cycle peak / trough PE 框架</td></tr>
+<tr><td>成長型 (PEG)</td><td>❌ 失效</td><td>cycle 商品 EPS 非線性，PEG 公式無意義</td></tr>
+<tr><td>現金流型 (P/FCF)</td><td>輔助</td><td>cycle peak FCF 為穩態 normalized 值的 2-3x</td></tr>
+<tr><td>EV/EBITDA cycle midpoint</td><td>建議主流</td><td>商品 cycle 估值最穩定的指標 — 用 normalized cycle midpoint 計算</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+當前主流邏輯：投資者在 cycle peak 用 7x FY+2 EPS（似乎便宜）；但歷史教訓 = 商品週期應採用 normalized 而非 peak 數字
+潛在漂移：若 HBF 結構性兌現，估值體系從「cycle 商品」升級為「半 strategic asset」，PE 可漂移至 12-15x normalized
+→ 對下游 §13.5 implication：基準 PE 採用「cycle midpoint」邏輯而非 quality 框架的 25x base
+</div>
+
+<h3>13.1 歷史估值分位（5Y 框架，缺資料用 Micron 對標）</h3>
+<table>
+<thead><tr><th>估值指標</th><th>SNDK 當前</th><th>Micron cycle peak</th><th>Micron cycle trough</th><th>當前位置</th></tr></thead>
+<tbody>
+<tr><td>Forward P/E（FY+2，cleaner）</td><td>7.13x</td><td>4-8x</td><td>18-25x</td><td>cycle peak compression 中位</td></tr>
+<tr><td>Forward P/E（FY+1）</td><td>18.37x</td><td>—</td><td>—</td><td>FY26 含 Q1+Q2 trough 季拖累</td></tr>
+<tr><td>Trailing P/E</td><td>40.48x</td><td>—</td><td>—</td><td>過渡期失真</td></tr>
+<tr><td>EV/EBITDA</td><td>30.59x</td><td>—</td><td>—</td><td>EBITDA cycle 反轉中</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+SNDK 自身 5Y 歷史不存在（spin-off Feb 2025）→ 用 Micron cycle 對標
+Micron cycle peak FPE 4-8x 區間 → SNDK 7.13x at FY+2 EPS = 中位
+歷史教訓：Micron 2017Q4 FPE 6x → 2019 EPS −58% → 股價 −47%
+→ 對下游 §13.5 implication：表面便宜 (7.13x) 但本質是 cycle peak compression 信號，非 entry
+</div>
+
+<h3>13.2 PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>FY+2 vs FY+1 growth</td><td>+157.5%（cycle 動能）</td><td>—</td></tr>
+<tr><td>Forward P/E ÷ growth</td><td>7.13 ÷ 157.5 = 0.045</td><td>機械公式說 🟢 極便宜</td></tr>
+<tr><td><strong>但 cycle 商品框架</strong></td><td colspan="2">PEG 公式對 cycle 商品失效；FY27→FY28 預期 −50% growth = PEG 又會變極端負值</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+PEG 0.045 的「便宜」是 cycle peak 的算術假象，不代表低估
+公式假設成長為線性，但 NAND cycle 6 季 peak 後反轉
+→ 對下游 §13.5 implication：PEG 結果不採用，估值燈不能因此 🟢
+</div>
+
+<h3>13.3 Reverse DCF：當前股價隱含了什麼？</h3>
+
+<h4>步驟一：固定參數</h4>
+<table>
+<tbody>
+<tr><th width="35%">當前市值</th><td>$176B</td></tr>
+<tr><th>基期 FCF（FY25）</th><td>−$120M（base 失真，cycle trough）</td></tr>
+<tr><th>cycle peak FCF（FY26E）</th><td>~$10-12B（季 $3B run-rate）</td></tr>
+<tr><th>WACC</th><td>11%（Beta 假設 1.5 + ERP 4.6%）</td></tr>
+<tr><th>永續成長率</th><td>2%（商品產業）</td></tr>
+<tr><th>預測期</th><td>10 年（cycle 多輪）</td></tr>
+</tbody>
+</table>
+
+<h4>步驟二：反推隱含 FCF</h4>
+<p>使 DCF 現值 = 當前市值 $176B：</p>
+<ul>
+<li>若 FCF 維持 cycle peak $10-12B 連 5 年 → 累積 $50-60B + 後續 normalized $5B/年 = 隱含合理</li>
+<li>但要假設 cycle 連續 5 年不反轉 = 機率 25-35%</li>
+<li>若 cycle 反轉（4 季後 FCF normalize 至 $3-4B）→ DCF 現值合理約 $80-100B = 跌幅 −45% 到 −55%</li>
+</ul>
+
+<h4>步驟三：可信度對照</h4>
+<table>
+<tbody>
+<tr><td>過去 5 年實際 FCF CAGR（cycle 平均）</td><td>負（cycle 多虧損）</td></tr>
+<tr><td>共識 EPS CAGR（FY25→FY27）</td><td>+60x（cycle 內極端）</td></tr>
+<tr><td>同業 Micron 隱含 5Y FCF CAGR</td><td>~10%（cycle midpoint）</td></tr>
+</tbody>
+</table>
+
+<p><strong>隱含預期判斷：</strong><span class="tag red">🔴 隱含預期激進</span>（市場價假設 cycle 例外延長至 5+ 年；歷史 cycle 5-8 季後反轉，當前已 +6 季）</p>
+
+<h3>便宜理由檢驗（cycle 商品專屬）</h3>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>分析師答案</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>市場為什麼給 7.13x FY+2 PE？</td><td>cycle peak compression — 投資者不確定 EPS 維持時間</td><td>合理 cycle 邏輯</td></tr>
+<tr><td>Q2</td><td>有財務數據支撐 cycle 例外延長嗎？</td><td>$42B backlog + HBF + supply discipline 為論據；但歷史 cycle 通常 5-8 季</td><td>支撐部分但非完整</td></tr>
+<tr><td>Q3</td><td>護城河是否完整？</td><td>NAND 商品本質，無持久護城河；JV + LTA 為 cycle 強化</td><td>cycle-only</td></tr>
+<tr><td>Q4</td><td>FCF 品質是否被誤解？</td><td>cycle peak FCF 為穩態的 2-3x；不應被視為穩態</td><td>市場可能高估 cycle 持續</td></tr>
+<tr><td>Q5</td><td>有什麼催化劑可讓市場重新定價？</td><td>HBF 兌現 + cycle 延長至 12 季 → upside 至 $1,800-2,000；cycle 反轉 → downside −50%</td><td>不對稱 / 機率偏向 downside</td></tr>
+</tbody>
+</table>
+<p><strong>便宜理由檢驗結論：</strong><span class="tag yellow">🟡 尚不確定</span>（cycle 例外 vs 標準 cycle 機率 35% vs 65%；表面便宜的 7x PE 大概率為 trap）</p>
+
+<h3>13.4 同業估值比較</h3>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Forward P/E (FY+2)</th><th>EV/EBITDA</th><th>FCF Margin (peak)</th><th>Cycle position</th></tr></thead>
+<tbody>
+<tr><td><strong>SNDK</strong></td><td><strong>$176B</strong></td><td><strong>7.13x</strong></td><td><strong>30.6x（cycle 過渡）</strong></td><td><strong>40-50%</strong></td><td>+6 季（peak 中後段）</td></tr>
+<tr><td>Micron (MU)</td><td>~$200B</td><td>5.5-8.3x</td><td>~10x</td><td>~30%</td><td>同 cycle 階段</td></tr>
+<tr><td>SK Hynix</td><td>~$200B (KRW)</td><td>~6x</td><td>~5x</td><td>~35%</td><td>同 cycle</td></tr>
+<tr><td>Western Digital (HDD pure now)</td><td>~$25B</td><td>~10x</td><td>—</td><td>~12%</td><td>HDD 不同 cycle</td></tr>
+<tr><td>產業中位（NAND/DRAM）</td><td>—</td><td>~6.5x</td><td>~7x</td><td>~32%</td><td>—</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+SNDK Fwd PE 7.13x 與 Micron 5.5-8.3x 同等；EV/EBITDA 30.6x 偏高（cycle 過渡 EBITDA base 失真）
+NAND vs DRAM cycle 同步性：兩者通常一起進入 / 退出 cycle
+→ 對下游 §13.5 implication：相對同業無顯著估值差距；cycle peak 都壓縮
+</div>
+
+<h3>13.5 估值五角驗證與結論</h3>
+<table>
+<thead><tr><th>工具</th><th>訊號</th><th>核心依據</th></tr></thead>
+<tbody>
+<tr><td>估值體系診斷（13.0）</td><td>🟡 模糊</td><td>cycle 商品 vs 半 strategic 視角差異大</td></tr>
+<tr><td>歷史分位（13.1，Micron 對標）</td><td>🟡 cycle peak 中位</td><td>FPE 7.13x 在 4-8x peak compression 中位</td></tr>
+<tr><td>PEG 診斷（13.2）</td><td>機械 🟢 但失效</td><td>商品 cycle 公式不適用</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🔴 隱含預期激進</td><td>需 cycle 延 5+ 年才合理；歷史 cycle 通常 5-8 季</td></tr>
+<tr><td>同業相對（13.4）</td><td>🟡 持平</td><td>vs Micron 同等估值水準</td></tr>
+</tbody>
+</table>
+
+<h4>v11.0 §2 D 交叉驗證（cycle 商品調整）</h4>
+<p>當前 Fwd PE 7.13x（FY+2）vs cycle midpoint 合理 PE（基準 Micron-style 12-15x trough/midpoint）：</p>
+<ul>
+<li>cycle peak 框架：合理 PE 6-8x → 當前 7.13x = midpoint = 🟡 合理</li>
+<li>cycle midpoint 框架：合理 PE 12-15x at normalized $50 EPS = $600-750 區間 → 當前 $1,187 = 偏貴 +60-100%</li>
+<li>cycle 延長 12 季 + HBF 兌現 framework：合理 PE 10-15x at peak EPS = $1,664-2,495 區間 → 當前 $1,187 = 折價</li>
+</ul>
+
+<p><strong>當前定價判斷：</strong><span class="tag yellow">🟡 cycle peak compression 中位</span>（綜合三框架：cycle 反轉時為「便宜陷阱」，cycle 延長時為「正當估值」；機率分布偏向 downside）</p>
+
+<h3>長期合理倍數（cycle 商品修正）</h3>
+<table>
+<thead><tr><th>cycle 階段假設</th><th>合理 Fwd PE</th><th>合理 EPS</th><th>對應股價</th></tr></thead>
+<tbody>
+<tr><td>cycle peak（FY26-FY27 within）</td><td>7-9x</td><td>$166（FY27 peak）</td><td>$1,160-1,500</td></tr>
+<tr><td>cycle 反轉啟動（FY28）</td><td>10-13x</td><td>$80（normalized）</td><td>$800-1,040</td></tr>
+<tr><td>cycle midpoint（FY30）</td><td>12-15x</td><td>$45</td><td>$540-675</td></tr>
+<tr><td>cycle trough（hypothetical FY31）</td><td>20-25x</td><td>$20</td><td>$400-500</td></tr>
+<tr><td><strong>5 年期望值</strong></td><td colspan="3"><strong>$650-900（中位 $750）</strong></td></tr>
+</tbody>
+</table>
+
+<h3>5Y 目標價 / R:R 一致性檢核（QC-36）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>§8 E Base 情境 5Y EPS（cycle midpoint）</td><td>$45</td><td>FY30 normalized 估算</td></tr>
+<tr><td>§13.5 長期合理 PE</td><td>15x</td><td>cycle midpoint 框架</td></tr>
+<tr><td><strong>5Y 目標價</strong></td><td><strong>$675</strong></td><td>$45 × 15</td></tr>
+<tr><td>當前股價</td><td>$1,187</td><td>—</td></tr>
+<tr><td><strong>upside_5y_pct</strong></td><td><strong>−43%</strong></td><td>(675 − 1187) ÷ 1187 × 100</td></tr>
+<tr><td>§2 D 長期格</td><td>$675</td><td>✅ 一致</td></tr>
+<tr><td>§1 dashboard 長期 R:R</td><td>「高度負面」</td><td>✅ 一致</td></tr>
+<tr><td>dd-meta upside_5y_pct</td><td>0（保守，因 cycle 不確定）</td><td>—</td></tr>
+</tbody>
+</table>
+<p>5Y 期望股價 $675-900 中位 = 現價 $1,187 為高估 30-43%。本表反映「cycle 商品標的的 5Y 視角為負 R:R 是常態」。短中期可能仍有 upside，但長期持有不利。</p>
+
+<h3>投資結論（v11.0 完整版）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態：</strong>🟢 強烈強化（NAND ASP +85-90% / GM 78% / Q4 guide $30+ EPS）</li>
+<li><strong>H2 當前狀態：</strong>🟢 極強強化（5 家 hyperscaler LTA + $42B backlog + $11B guarantees）</li>
+<li><strong>H3 當前狀態：</strong>🟡 中性（FPE 7.13x at FY+2 仍在 7-12x 區間，但接近底部；cycle 鬆動時 PE 可能進一步壓縮）</li>
+<li>這份財報讓 cycle thesis <strong>更強烈兌現</strong>，但 4 週 +76.6% 漂移使「進場時機」變得極端不利。</li>
+</ul>
+
+<h4>綜合訊號輸出</h4>
+<table>
+<tbody>
+<tr><th>護城河等級</th><td>5/10 → C</td></tr>
+<tr><th>估值燈</th><td>🟡 cycle peak compression 中位</td></tr>
+<tr><th>Pure MA 狀態</th><td>✅ 但 4w +76.6%、12w +130%、Bollinger 上軌外（極端 stretched）</td></tr>
+<tr><th>大盤豁免</th><td>正常</td></tr>
+<tr><th><strong>綜合訊號</strong></th><td><strong><span class="signal-grade grade-B">B</span></strong>（B/C 邊界）</td></tr>
+<tr><th>中期參考 R:R</th><td>0.76x（資訊性）</td></tr>
+<tr><th>長期 5Y R:R</th><td>−0.55x（cycle 反轉壓力）</td></tr>
+</tbody>
+</table>
+
+<p><strong>訊號語意：B 衛星候選 / 觀望偏進場（試倉等級 5%，cycle play）</strong>。倉位 % 決策由 portfolio-manager skill 處理。</p>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q3 FY26 財報遠超預期 + Q4 guide $30+ EPS 強烈支撐短期 cycle thesis。但 4w +76% / 12w +130% 漂移 + Bollinger 上軌外 = 短期極端 stretched。<strong>短期不宜追高</strong>。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY27 EPS 共識 $166（vs 90 天前 $71，+134% 上修）反映 cycle 持續至 2027 上半的市場預期。$42B backlog 提供結構性能見度。<strong>能見度高但 cycle 反轉時間點為核心不確定</strong>。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>NAND 商品本質 + cycle 通常 5-8 季 + supply 在 cycle peak 後回流 = 長期 buy-and-hold 不適合。HBF 結構性需求若兌現可能延長 cycle 並重新塑造護城河，但機率 35-45%。<strong>長期持有信心：中</strong>。</p>
+
+<h4>下行風險量化（引用 §2 E Bear Case）</h4>
+<ul>
+<li>短期下檔（Bear）：現價 → $840，距離 −29%</li>
+<li>中期下檔（Bear）：現價 → $780，距離 −34%</li>
+<li>5Y 視角 Bear（壓力 B）：股價可能回到 $200-300（cycle 4-5 季 + capex 失序）</li>
+<li>長期 normalized：$540-675（cycle midpoint），距 −43% 至 −55%</li>
+</ul>
+
+<p><strong>最終裁決：</strong>thesis 短期完整、Q3 兌現遠超預期、$42B backlog + HBF 為結構性支撐 — 但 NAND 商品本質、4w +76% / 12w +130% 漂移、Bollinger 上軌外、cycle peak compression PE 7.13x = <strong>v12.2 框架啟用以來最極端 stretched 進場時機</strong>。<strong>建議等回測 BB 中軌 $613（−48%）或至少 8 週前均 $610（−49%）後再分批；現價追高為 cycle peak chasing 經典錯誤。本標的本質為 cycle play 非 quality compounder，限制底倉 5%（試倉），不應作為核心持倉。</strong></p>
+</section>
+
+</main>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "SNDK",
+  "schema": "v12.2",
+  "date": "2026-05-04",
+  "price_at_dd": 1187.00,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "觀察期",
+  "moat": "C",
+  "val": "🟡",
+  "ma": "✅",
+  "fpe_fy2": 7.13,
+  "pct_5y": 50,
+  "peg_fy2": 0.05,
+  "upside_short_pct": 8.9,
+  "upside_mid_pct": 26.2,
+  "upside_5y_pct": 0,
+  "stress": {"pass": 0, "total": 4},
+  "moat_score": 5,
+  "growth_durability": 6,
+  "quality_score": 6.5,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "verdict": "觀望",
+  "inception_dd": "DD_SNDK_20260504.html",
+  "inception_date": "2026-05-04",
+  "next_yoy_review_date": "2027-05-04",
+  "drift_4w_pct": 76.6,
+  "drift_12w_pct": 130.3,
+  "oneliner": "Q3 FY26 大幅 beat：Rev +251% YoY／GM 78%／$42B backlog／$6B 回購｜估值🟡 cycle peak FPE 7.13x · MA✅ 但 4w +76.6%／12w +130%／BB 上軌外｜短中 R:R 0.31x/0.76x 5Y 負｜訊號 B 強烈觀望，等回測 BB 中軌 $613 (−48%)。"
+}
+</script>
+
+</body>
+</html>
