@@ -3237,7 +3237,7 @@ a:hover{{color:var(--imq-accent-hover)}}
     var my = (e.clientY - rect.top) / rect.height;
     var oldZ = view.zoom;
     var factor = e.deltaY < 0 ? 1.12 : 1/1.12;
-    var newZ = Math.max(0.4, Math.min(4, oldZ * factor));
+    var newZ = Math.max(1, Math.min(2, oldZ * factor));
     var oldW = VB_W / oldZ, oldH = VB_H / oldZ;
     var newW = VB_W / newZ, newH = VB_H / newZ;
     view.x += (oldW - newW) * mx;
