@@ -129,8 +129,21 @@ fetch('INDEX.md').then(r => r.text()).then(text => {
   }
   tbody.innerHTML = rows.reverse().map(line => {
     const cols = line.split('|').map(c => c.trim()).filter(Boolean);
-    if (cols.length < 6) return '';
-    const [date, mode, core, sat, file, note] = cols;
+    let date, mode, core, sat, file, note;
+    if (cols.length >= 9) {
+      // v1.0 SKILL spec: date | NAV | cash% | core | sat | action | override | file | note
+      date = cols[0];
+      mode = (cols[1] === 'proposal' || cols[1] === 'review') ? cols[1] : 'proposal';
+      core = cols[3];
+      sat = cols[4];
+      file = cols[7];
+      note = cols[8];
+    } else if (cols.length >= 6) {
+      // legacy: date | mode | core | sat | file | note
+      [date, mode, core, sat, file, note] = cols;
+    } else {
+      return '';
+    }
     const badge = mode === 'proposal'
       ? '<span class="badge badge-proposal">提案</span>'
       : '<span class="badge badge-review">複盤</span>';
