@@ -10,6 +10,8 @@ web_generator.py — 靜態網站生成器
 網址：https://research.investmquest.com
 """
 
+from __future__ import annotations
+
 import os
 import re
 import json
@@ -2297,6 +2299,8 @@ def build_site() -> None:
     # 首頁 + 研究報告頁（在讀取內容並解析護城河之後生成，確保護城河等級已填入）
     generate_index(notion_reports)
     generate_research(notion_reports)
+    print("[Web] 生成心智模型頁面...")
+    generate_mental_models()
 
     # 個別公司頁面
     for ticker, co_data in companies_data.items():
@@ -2338,5 +2342,1251 @@ def build_site() -> None:
     )
 
 
+def generate_mental_models() -> None:
+    """
+    Production generator for docs/mental-models/index.html.
+    Renders the full Latticework page (Network View + Matrix View) as a static
+    page with inline JS, using server-side SVG/HTML and embedded JSON data.
+    """
+    import math
+    import json as json_mod
+    from mental_models_data import DISCIPLINES, MODELS
+
+    # ── Position formula (verbatim from DirectionA_Network.jsx:15-41) ─────────
+    W, H = 1240, 820
+    cx, cy = W * 0.42, H * 0.5  # 520.8, 410.0
+
+    CLUSTERS = {
+        "psych": {"ax": cx - 320, "ay": cy - 30,  "spread": 230},
+        "micro": {"ax": cx + 280, "ay": cy - 200, "spread": 170},
+        "math":  {"ax": cx + 320, "ay": cy + 90,  "spread": 170},
+        "eng":   {"ax": cx - 30,  "ay": cy + 280, "spread": 150},
+        "bio":   {"ax": cx + 200, "ay": cy + 290, "spread": 100},
+    }
+
+    def compute_positions(models, disciplines):
+        p = {}
+        for d_key in disciplines:
+            lst = [m for m in models if m["d"] == d_key]
+            c = CLUSTERS[d_key]
+            for i, m in enumerate(lst):
+                angle = (i / len(lst)) * math.pi * 2 - math.pi / 2
+                r = c["spread"] * (0.55 + 0.45 * ((i * 1.7) % 1))
+                p[m["id"]] = {"x": c["ax"] + math.cos(angle) * r,
+                              "y": c["ay"] + math.sin(angle) * r}
+        p["m10"] = {"x": cx, "y": cy}  # flagship pin to centre
+        return p
+
+    def compute_edges(models, positions):
+        seen, out = set(), []
+        for m in models:
+            for r in m["related"]:
+                key = "-".join(sorted([m["id"], r]))
+                if key not in seen and r in positions:
+                    seen.add(key)
+                    out.append({"a": m["id"], "b": r})
+        return out
+
+    positions = compute_positions(MODELS, DISCIPLINES)
+    edges = compute_edges(MODELS, positions)
+
+    # ── IMQ Nav (verbatim from docs/mental-models/index.html lines 33-306) ───
+    IMQ_NAV_CSS = """
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}"""
+
+    IMQ_NAV_HTML = """<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/theses.html">⭐ 九大非共識</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/" class="active">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>"""
+
+    # ── SVG: cluster labels ───────────────────────────────────────────────────
+    def render_cluster_labels(models, disciplines, positions):
+        parts = []
+        for d_key, d in disciplines.items():
+            lst = [m for m in models if m["d"] == d_key]
+            xs = [positions[m["id"]]["x"] for m in lst]
+            ys = [positions[m["id"]]["y"] for m in lst]
+            label_x = sum(xs) / len(xs)
+            min_y = min(ys)
+            parts.append(
+                f'<g class="cluster-label" data-d="{d_key}">'
+                f'<text x="{label_x:.2f}" y="{min_y - 32:.2f}" text-anchor="middle" '
+                f'style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;font-weight:700;'
+                f'letter-spacing:.18em;text-transform:uppercase;fill:{d["color"]}">'
+                f'{d["roman"]} · {d["en"]}</text>'
+                f'<text x="{label_x:.2f}" y="{min_y - 16:.2f}" text-anchor="middle" '
+                f'style="font-family:\'Inter\',\'Noto Sans TC\',sans-serif;font-size:13px;font-weight:600;fill:#0f172a">'
+                f'{d["zh"]} <tspan fill="#94a3b8" font-weight="400">· {d["count"]}</tspan></text>'
+                f'</g>'
+            )
+        return "\n    ".join(parts)
+
+    # ── SVG: edges ────────────────────────────────────────────────────────────
+    def render_edges(edges, positions):
+        parts = []
+        for e in edges:
+            pa = positions[e["a"]]
+            pb = positions[e["b"]]
+            parts.append(
+                f'<line class="edge" data-a="{e["a"]}" data-b="{e["b"]}" '
+                f'x1="{pa["x"]:.2f}" y1="{pa["y"]:.2f}" '
+                f'x2="{pb["x"]:.2f}" y2="{pb["y"]:.2f}" '
+                f'stroke="#cbd5e1" stroke-width="0.5" stroke-dasharray="2 3" '
+                f'style="transition:all .2s"/>'
+            )
+        return "\n    ".join(parts)
+
+    # ── SVG: nodes ────────────────────────────────────────────────────────────
+    def render_nodes(models, disciplines, positions):
+        parts = []
+        for m in models:
+            p = positions[m["id"]]
+            d = disciplines[m["d"]]
+            flagship = m.get("flagship", False)
+            is_new = m.get("isNew", False)
+            r = 26 if flagship else 12
+            related_str = ",".join(m["related"])
+            glyph = "⚡" if flagship else d["glyph"]
+            label_y = r + 18
+
+            new_badge = ""
+            if is_new:
+                new_badge = (
+                    f'<g transform="translate({r - 4},{-r - 2})">'
+                    f'<rect x="-3" y="-7" width="22" height="11" rx="2" fill="#dc2626"/>'
+                    f'<text x="8" y="1" text-anchor="middle" '
+                    f'style="font-family:\'IBM Plex Mono\',monospace;font-size:7px;font-weight:700;'
+                    f'letter-spacing:.08em;fill:#fff">NEW</text>'
+                    f'</g>'
+                )
+
+            flagship_inner = ""
+            if flagship:
+                flagship_inner = f'<circle r="{r - 7}" fill="#fff" opacity="0.18"/>'
+
+            parts.append(
+                f'<g class="node{" flagship" if flagship else ""}" '
+                f'data-id="{m["id"]}" data-d="{m["d"]}" data-related="{related_str}" '
+                f'transform="translate({p["x"]:.2f},{p["y"]:.2f})" '
+                f'style="cursor:pointer;transition:all .2s">'
+                f'<circle r="{r}" fill="{d["color"]}" fill-opacity="{"0.95" if flagship else "0.85"}"/>'
+                f'{flagship_inner}'
+                f'<text class="glyph" text-anchor="middle" dy="{5 if flagship else 4}" '
+                f'style="font-family:\'IBM Plex Mono\',monospace;font-weight:700;'
+                f'fill:#fff;pointer-events:none">{glyph}</text>'
+                f'<text x="0" y="{label_y}" text-anchor="middle" class="node-label" '
+                f'style="font-family:\'Inter\',\'Noto Sans TC\',sans-serif;'
+                f'fill:#475569;pointer-events:none">{m["zh"]}</text>'
+                f'{new_badge}'
+                f'</g>'
+            )
+        return "\n    ".join(parts)
+
+    cluster_labels_svg = render_cluster_labels(MODELS, DISCIPLINES, positions)
+    edges_svg = render_edges(edges, positions)
+    nodes_svg = render_nodes(MODELS, DISCIPLINES, positions)
+
+    m10_pos = positions["m10"]
+
+    # ── JSON data embed ───────────────────────────────────────────────────────
+    json_data = json_mod.dumps({"models": MODELS, "disciplines": DISCIPLINES}, ensure_ascii=False)
+
+    # ── Filter chips HTML ─────────────────────────────────────────────────────
+    filter_chips = '<button class="filter-chip active" data-filter="all" style="color:#475569;border-color:#e5e7eb">全部</button>\n'
+    for d_key, d in DISCIPLINES.items():
+        filter_chips += (
+            f'<button class="filter-chip" data-filter="{d_key}" '
+            f'style="color:{d["color"]};border-color:#e5e7eb">'
+            f'<span>{d["glyph"]}</span>{d["zh"]}</button>\n'
+        )
+
+    # ── Legend items ──────────────────────────────────────────────────────────
+    legend_items = ""
+    for d_key, d in DISCIPLINES.items():
+        legend_items += (
+            f'<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">'
+            f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
+            f'background:{d["color"]};flex-shrink:0"></span>'
+            f'<span style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;'
+            f'font-weight:700;color:{d["color"]};letter-spacing:.1em">{d["roman"]}</span>'
+            f'<span style="font-size:10px;color:#475569">{d["zh"]}</span>'
+            f'</div>\n'
+        )
+
+    # ── Matrix: server-side band rendering ───────────────────────────────────
+    def esc(s):
+        if not s:
+            return ''
+        return (str(s)
+                .replace('&', '&amp;')
+                .replace('<', '&lt;')
+                .replace('>', '&gt;')
+                .replace('"', '&quot;'))
+
+    def render_matrix_bands(models, disciplines):
+        bands_html = ''
+        for d_key, d in disciplines.items():
+            lst = [m for m in models if m['d'] == d_key]
+            # Group rail
+            band_rule_style = (
+                f'background:linear-gradient(to right,{d["color"]}33,transparent)'
+            )
+            rail = (
+                f'<div class="matrix-band-rail">'
+                f'<span class="matrix-band-glyph" style="background:{d["color"]}">{esc(d["glyph"])}</span>'
+                f'<div>'
+                f'<div class="matrix-band-group-label" style="color:{d["color"]}">GROUP {d["roman"]} · {esc(d["en"].upper())}</div>'
+                f'<div class="matrix-band-zh">{esc(d["zh"])} <span class="matrix-band-zh-count">· {d["count"]} models</span></div>'
+                f'</div>'
+                f'<div class="matrix-band-rule" style="{band_rule_style}"></div>'
+                f'</div>'
+            )
+            # Cells
+            cells_html = ''
+            for i, m in enumerate(lst):
+                flagship = m.get('flagship', False)
+                is_new = m.get('isNew', False)
+                pos_id = f'{d["roman"]}.{str(i + 1).zfill(2)}'
+                flagship_badge = f'<span class="matrix-cell-flagship">★</span>' if flagship else ''
+                new_badge = f'<span class="matrix-cell-new">NEW</span>' if is_new else ''
+                cell_border_top = f'border-top:3px solid {d["color"]}'
+                cells_html += (
+                    f'<button class="matrix-cell" data-cell-id="{m["id"]}" data-cell-d="{d_key}" '
+                    f'style="{cell_border_top}" '
+                    f'data-disc-color="{d["color"]}" data-disc-tint="{d["tint"]}">'
+                    f'<div class="matrix-cell-top">'
+                    f'<span class="matrix-cell-id">{esc(pos_id)}</span>'
+                    f'<div class="matrix-cell-badges">{flagship_badge}{new_badge}</div>'
+                    f'</div>'
+                    f'<div class="matrix-cell-zh">{esc(m["zh"])}</div>'
+                    f'<div class="matrix-cell-en">{esc(m["en"])}</div>'
+                    f'<hr class="matrix-cell-divider">'
+                    f'<div class="matrix-cell-tag" style="color:{d["color"]}">{esc(m["tag"])}</div>'
+                    f'</button>'
+                )
+            bands_html += (
+                f'<div class="matrix-band">'
+                f'{rail}'
+                f'<div class="matrix-cells">{cells_html}</div>'
+                f'</div>'
+            )
+        return bands_html
+
+    matrix_bands_html = render_matrix_bands(MODELS, DISCIPLINES)
+
+    html = f"""<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>心智模型 Latticework · Network + Matrix — InvestMQuest Research</title>
+  <meta name="description" content="Munger Latticework 30 心智模型 — Network View + Matrix View">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+/* ── Token system (verbatim from colors_and_type.css) ── */
+:root {{
+  --imq-bg:           #f7f8fa;
+  --imq-bg-soft:      #fafbfc;
+  --imq-card:         #ffffff;
+  --imq-border:       #e5e7eb;
+  --imq-border-soft:  #eef0f3;
+  --imq-text:         #0f172a;
+  --imq-text-sec:     #475569;
+  --imq-text-muted:   #94a3b8;
+  --imq-accent:       #2563eb;
+  --imq-accent-hover: #1d4ed8;
+  --imq-indigo-deep:  #534AB7;
+  --imq-green:        #0F6E56;
+  --imq-brand:        #1a56db;
+  --imq-amber:        #B45309;
+  --imq-rose:         #C0392B;
+  --imq-shadow-sm:    0 1px 2px rgba(15,23,42,.04);
+  --imq-shadow-md:    0 4px 14px rgba(15,23,42,.07);
+  --imq-shadow-lg:    0 8px 24px rgba(15,23,42,.08);
+  --imq-r-sm:   4px;
+  --imq-r-md:   6px;
+  --imq-r-lg:   8px;
+  --imq-r-xl:   10px;
+  --imq-r-2xl:  12px;
+  --imq-r-pill: 999px;
+  --imq-font-sans: 'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --imq-font-mono: 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:var(--imq-font-sans);background:var(--imq-bg);color:var(--imq-text);line-height:1.65;font-size:14px;min-height:100vh;-webkit-font-smoothing:antialiased}}
+a{{color:var(--imq-accent);text-decoration:none;transition:color .15s}}
+a:hover{{color:var(--imq-accent-hover)}}
+
+/* IMQ Nav */
+{IMQ_NAV_CSS}
+
+/* ── Top chrome ── */
+.top-chrome{{padding:20px 28px 14px;border-bottom:1px solid var(--imq-border-soft);background:var(--imq-card);display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}}
+.top-eyebrow{{font-family:var(--imq-font-mono);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--imq-accent);margin-bottom:6px}}
+.top-title{{margin:0;font-size:28px;font-weight:800;letter-spacing:-.03em}}
+.top-title em{{font-style:italic;font-weight:500;color:#64748b}}
+.top-sub{{font-size:12px;color:#64748b;margin-top:4px}}
+.top-controls{{display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-end}}
+
+/* ── Filter chips ── */
+.filter-chip{{
+  padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:600;letter-spacing:.05em;
+  background:#fff;border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
+  cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s
+}}
+.filter-chip.active{{color:#fff !important;border-color:currentColor}}
+.filter-chip span{{font-size:11px}}
+
+/* ── Lollapalooza button ── */
+.lolla-btn{{
+  padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:700;letter-spacing:.08em;
+  background:#fff;color:#0f172a;border:1px solid #0f172a;border-radius:var(--imq-r-pill);
+  cursor:pointer;margin-left:8px;transition:all .15s
+}}
+.lolla-btn.active{{background:#0f172a;color:#fff}}
+.view-reset-btn{{
+  padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:600;letter-spacing:.05em;
+  background:#fff;color:#475569;border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
+  cursor:pointer;transition:all .15s
+}}
+.view-reset-btn:hover{{color:#0f172a;border-color:#0f172a}}
+
+/* ── Main layout ── */
+.main-grid{{display:grid;grid-template-columns:1fr 380px;min-height:820px}}
+.canvas-col{{position:relative;border:1px solid var(--imq-border);background:transparent}}
+.detail-col{{background:var(--imq-card);padding:24px 24px 32px;overflow:auto;max-height:900px}}
+
+/* ── SVG node states ── */
+.node{{cursor:pointer;transition:opacity .2s}}
+.node.dimmed{{opacity:.28}}
+.node.filtered-out{{opacity:.12}}
+.node circle{{transition:r .15s,fill-opacity .15s}}
+.node .glyph{{font-size:12px;transition:font-size .15s}}
+.node .node-label{{font-size:13.5px;font-weight:500;transition:font-size .15s,font-weight .15s,fill .15s}}
+.node.flagship .glyph{{font-size:17px}}
+.node.flagship .node-label{{font-size:16px;font-weight:700}}
+.node.hovered:not(.flagship) circle,.node.selected:not(.flagship) circle{{r:18}}
+.node.hovered:not(.flagship) .glyph,.node.selected:not(.flagship) .glyph{{font-size:16px}}
+.node.hovered:not(.flagship) .node-label,.node.selected:not(.flagship) .node-label{{font-size:17px;font-weight:700;fill:#0f172a}}
+.node.flagship.hovered circle,.node.flagship.selected circle{{r:32}}
+.node.flagship.hovered .glyph,.node.flagship.selected .glyph{{font-size:22px}}
+.node.flagship.hovered .node-label,.node.flagship.selected .node-label{{font-size:20px;fill:#0f172a}}
+.edge{{transition:stroke .2s,stroke-width .2s,stroke-dasharray .2s,opacity .2s}}
+.edge.active{{stroke:#0f172a !important;stroke-width:1.4px !important;stroke-dasharray:0 !important}}
+.edge.dimmed{{opacity:.15}}
+.edge.filtered-out{{opacity:.05}}
+
+/* ── Detail panel ── */
+.panel-discipline-badge{{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:#fff;font-family:var(--imq-font-mono);font-size:14px;font-weight:700}}
+.panel-tag-new{{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.12em;padding:1px 6px;background:#dc2626;color:#fff;border-radius:3px}}
+.panel-tag-flagship{{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.12em;padding:1px 6px;background:#fbbf24;color:#0f172a;border-radius:3px}}
+.panel-id-tag{{font-family:var(--imq-font-mono);font-size:11px;color:#94a3b8;letter-spacing:.04em}}
+.panel-zh{{margin:4px 0 2px;font-size:28px;font-weight:800;letter-spacing:-.03em}}
+.panel-en{{font-size:13px;font-style:italic;color:#64748b;font-weight:500}}
+.panel-body{{margin-top:18px;padding:12px 14px;border-left:3px solid;border-radius:4px;font-size:13px;line-height:1.6;color:#1e293b}}
+.panel-quote{{margin:18px 0 0;padding:0 0 0 12px;border-left:2px solid var(--imq-border);font-size:12px;line-height:1.6;color:#475569;font-style:italic}}
+.panel-section-label{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px;margin-top:22px}}
+.case-row{{display:flex;gap:8px;padding:7px 0;font-size:12.5px;line-height:1.55}}
+.case-row + .case-row{{border-top:1px dashed var(--imq-border-soft)}}
+.case-num{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;min-width:18px}}
+.related-chips{{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}}
+.related-chip{{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--imq-font-sans);border:1px solid;transition:opacity .15s}}
+.related-chip:hover{{opacity:.8}}
+.ask-box{{margin-top:22px;padding:14px;background:#0f172a;color:#fff;border-radius:8px}}
+.ask-label{{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.18em;color:#fbbf24;margin-bottom:6px}}
+.ask-text{{font-size:13px;line-height:1.55}}
+
+/* ── Legend ── */
+.legend-box{{position:absolute;bottom:16px;left:24px;background:#fff;border:1px solid var(--imq-border);border-radius:8px;padding:10px 14px;font-size:11px;box-shadow:var(--imq-shadow-sm)}}
+.legend-title{{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.15em;color:#94a3b8;margin-bottom:8px}}
+.legend-row{{display:flex;align-items:center;gap:6px;margin-bottom:4px}}
+
+/* ── Lollapalooza meter ── */
+.lolla-meter{{position:absolute;bottom:16px;right:24px;background:#0f172a;color:#fff;border-radius:10px;padding:14px 18px;min-width:280px;box-shadow:0 8px 24px rgba(15,23,42,.18);display:none}}
+.lolla-meter.visible{{display:block}}
+.lolla-meter-label{{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.18em;color:#fbbf24;margin-bottom:6px}}
+.lolla-count-row{{display:flex;align-items:baseline;gap:8px}}
+.lolla-count{{font-family:var(--imq-font-mono);font-size:32px;font-weight:700;line-height:1}}
+.lolla-count-sub{{font-size:11px;color:#94a3b8}}
+.lolla-verdict{{margin-top:8px;font-size:11px;line-height:1.5}}
+.lolla-picks{{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px}}
+.lolla-pick-chip{{font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}}
+
+/* ── Matrix view ── */
+.matrix-section{{background:var(--imq-bg)}}
+.matrix-section-divider{{max-width:1140px;margin:0 auto;padding:48px 32px 0}}
+.matrix-eyebrow{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.22em;color:var(--imq-accent);margin-bottom:8px}}
+.matrix-section-title{{margin:0 0 6px;font-size:28px;font-weight:800;letter-spacing:-.03em}}
+.matrix-section-sub{{margin:0 0 24px;font-size:13px;color:#64748b;max-width:680px}}
+.matrix-wrap{{max-width:1240px;margin:0 auto;padding:0 32px 48px}}
+.matrix-inner{{background:#fff;border:1px solid var(--imq-border);border-radius:12px;overflow:hidden;box-shadow:var(--imq-shadow-sm)}}
+.matrix-toolbar{{padding:14px 20px;background:#fafbfc;border-bottom:1px solid #eef0f3;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}}
+.matrix-toolbar-label{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;color:#94a3b8}}
+.matrix-lolla-btn{{padding:6px 12px;font-size:11px;font-family:var(--imq-font-mono);font-weight:700;letter-spacing:.1em;background:#fff;color:#0f172a;border:1px solid #0f172a;border-radius:6px;cursor:pointer;transition:all .15s}}
+.matrix-lolla-btn.active{{background:#0f172a;color:#fbbf24;border-color:#0f172a}}
+.matrix-lolla-strip{{background:#0f172a;color:#fff;padding:14px 32px;display:none;align-items:center;gap:24px;flex-wrap:wrap}}
+.matrix-lolla-strip.visible{{display:flex}}
+.matrix-lolla-strip-count-label{{font-family:var(--imq-font-mono);font-size:9px;letter-spacing:.2em;color:#fbbf24;margin-bottom:2px}}
+.matrix-lolla-strip-count{{font-family:var(--imq-font-mono);font-size:26px;font-weight:700;line-height:1}}
+.matrix-lolla-bar-track{{height:6px;background:#1e293b;border-radius:3px;overflow:hidden;margin-bottom:4px}}
+.matrix-lolla-bar-fill{{height:100%;border-radius:3px;transition:all .25s;background:#3b82f6}}
+.matrix-lolla-status{{font-family:var(--imq-font-mono);font-size:11px;color:#cbd5e1}}
+.matrix-lolla-pills{{display:flex;flex-wrap:wrap;gap:4px;max-width:380px}}
+.matrix-lolla-pill{{font-size:10px;padding:3px 8px;border-radius:999px;background:#1e293b;border:1px solid #334155;color:#fff}}
+.matrix-bands{{padding:28px 32px 40px}}
+.matrix-band{{margin-bottom:22px}}
+.matrix-band-rail{{display:flex;align-items:center;gap:14px;margin-bottom:10px}}
+.matrix-band-glyph{{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;color:#fff;font-family:var(--imq-font-mono);font-weight:700;font-size:14px;border-radius:4px;flex-shrink:0}}
+.matrix-band-group-label{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:2px}}
+.matrix-band-zh{{font-size:16px;font-weight:700;letter-spacing:-.02em}}
+.matrix-band-zh-count{{color:#94a3b8;font-weight:400;font-size:13px}}
+.matrix-band-rule{{flex:1;height:1px}}
+.matrix-cells{{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}}
+.matrix-cell{{text-align:left;background:#fff;border:1px solid #e5e7eb;border-radius:4px;padding:10px 12px 12px;cursor:pointer;position:relative;transition:background .15s,border-color .15s;font-family:inherit;width:100%}}
+.matrix-cell:hover{{border-color:currentColor}}
+.matrix-cell-top{{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}}
+.matrix-cell-id{{font-family:var(--imq-font-mono);font-size:10px;font-weight:600;letter-spacing:.05em;color:#94a3b8}}
+.matrix-cell-badges{{display:flex;gap:3px;align-items:center}}
+.matrix-cell-flagship{{font-size:9px;color:#fbbf24}}
+.matrix-cell-new{{font-family:var(--imq-font-mono);font-size:7px;font-weight:700;letter-spacing:.1em;padding:1px 4px;background:#dc2626;color:#fff;border-radius:2px}}
+.matrix-cell-zh{{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.15;color:#0f172a}}
+.matrix-cell-en{{font-size:10px;color:#64748b;font-style:italic;margin-top:2px;font-family:'Inter',sans-serif}}
+.matrix-cell-divider{{height:0;border:none;border-top:1px dashed #eef0f3;margin:8px 0 0}}
+.matrix-cell-tag{{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding-top:6px}}
+/* picked state */
+.matrix-cell.picked .matrix-cell-id{{color:rgba(255,255,255,.75)}}
+.matrix-cell.picked .matrix-cell-zh{{color:#fff}}
+.matrix-cell.picked .matrix-cell-en{{color:rgba(255,255,255,.8)}}
+.matrix-cell.picked .matrix-cell-divider{{border-top-color:rgba(255,255,255,.2)}}
+.matrix-cell.picked .matrix-cell-tag{{color:rgba(255,255,255,.7)}}
+.matrix-cell.picked .matrix-cell-flagship{{color:#fff}}
+/* Matrix modal */
+.matrix-modal{{position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:32px}}
+.matrix-modal[hidden],.matrix-modal[style*="display:none"]{{display:none!important}}
+.matrix-modal-box{{background:#fff;max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.3);position:relative}}
+.matrix-modal-header{{padding:26px 32px 22px;border-bottom:3px solid transparent}}
+.matrix-modal-header-top{{display:flex;justify-content:space-between;align-items:flex-start}}
+.matrix-modal-discipline-row{{display:flex;align-items:center;gap:8px;margin-bottom:8px}}
+.matrix-modal-disc-badge{{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;color:#fff;font-family:var(--imq-font-mono);font-weight:700;font-size:12px;border-radius:3px;flex-shrink:0}}
+.matrix-modal-disc-label{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.2em}}
+.matrix-modal-tag-label{{font-family:var(--imq-font-mono);font-size:10px;color:#94a3b8;letter-spacing:.1em}}
+.matrix-modal-zh{{margin:0 0 2px;font-size:32px;font-weight:800;letter-spacing:-.03em}}
+.matrix-modal-en{{font-size:14px;font-style:italic;color:#64748b}}
+.matrix-modal-close{{background:transparent;border:1px solid #e5e7eb;width:32px;height:32px;border-radius:6px;font-size:16px;cursor:pointer;color:#475569;flex-shrink:0;display:flex;align-items:center;justify-content:center}}
+.matrix-modal-body{{padding:24px 32px 32px}}
+.matrix-modal-desc{{margin:0 0 16px;font-size:14px;line-height:1.65;color:#1e293b;padding:12px 16px;border-left:3px solid transparent;border-radius:4px}}
+.matrix-modal-quote{{margin:0 0 24px;padding:12px 16px;border-left:3px solid transparent;font-size:13px;font-style:italic;color:#475569;line-height:1.55;background:#f9fafb}}
+.matrix-modal-grid{{display:grid;grid-template-columns:1fr 280px;gap:28px}}
+@media(max-width:680px){{.matrix-modal-grid{{grid-template-columns:1fr}}}}
+.matrix-modal-section-label{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px}}
+.matrix-modal-case{{display:flex;gap:8px;padding:6px 0;font-size:12.5px;line-height:1.55}}
+.matrix-modal-case+.matrix-modal-case{{border-top:1px dashed #eef0f3}}
+.matrix-modal-case-num{{font-family:var(--imq-font-mono);font-size:10px;font-weight:700;min-width:18px}}
+.matrix-modal-related-chips{{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}}
+.matrix-modal-related-chip{{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--imq-font-sans);border:1px solid;transition:opacity .15s;background:transparent}}
+.matrix-modal-related-chip:hover{{opacity:.8}}
+.matrix-modal-ask{{padding:12px 14px;background:#0f172a;color:#fff;border-radius:6px}}
+.matrix-modal-ask-label{{font-family:var(--imq-font-mono);font-size:9px;font-weight:700;letter-spacing:.18em;color:#fbbf24;margin-bottom:6px}}
+.matrix-modal-ask-text{{font-size:12.5px;line-height:1.55}}
+  </style>
+</head>
+<body>
+
+{IMQ_NAV_HTML}
+
+<!-- Top chrome -->
+<div class="top-chrome">
+  <div>
+    <div class="top-eyebrow">MUNGER LATTICEWORK · 30 MODELS · NETWORK VIEW</div>
+    <h1 class="top-title">心智模型 <em>Mental Models</em></h1>
+    <div class="top-sub">跨學科框架網絡 · hover 節點高亮鄰居 · 點擊查看詳情</div>
+  </div>
+  <div class="top-controls">
+    {filter_chips}
+    <button class="view-reset-btn" id="viewResetBtn" title="重置視圖（拖移背景平移、滾輪縮放、雙擊背景重置）">⟲ 重置視圖</button>
+    <button class="lolla-btn" id="lollaToggle">⚡ LOLLAPALOOZA</button>
+  </div>
+</div>
+
+<!-- Main 2-col grid -->
+<div class="main-grid">
+  <!-- Left: SVG canvas -->
+  <div class="canvas-col">
+    <svg id="networkSvg" viewBox="0 0 {W} {H + 110}" style="width:100%;height:auto;display:block;background:transparent">
+      <defs>
+        <pattern id="latticeGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#eef0f3" stroke-width="0.5"/>
+        </pattern>
+        <radialGradient id="lollaGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#534AB7" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#534AB7" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="{W}" height="{H + 110}" fill="url(#latticeGrid)"/>
+
+      <!-- Cluster labels -->
+      <g id="clusterLabels">
+    {cluster_labels_svg}
+      </g>
+
+      <!-- Lollapalooza glow -->
+      <circle cx="{m10_pos["x"]:.2f}" cy="{m10_pos["y"]:.2f}" r="120" fill="url(#lollaGlow)"/>
+
+      <!-- Edges -->
+      <g id="edgesGroup">
+    {edges_svg}
+      </g>
+
+      <!-- Nodes -->
+      <g id="nodesGroup">
+    {nodes_svg}
+      </g>
+    </svg>
+
+    <!-- Legend -->
+    <div class="legend-box">
+      <div class="legend-title">圖例 · LEGEND</div>
+      {legend_items}
+      <div class="legend-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--imq-border-soft)">
+        <span style="display:inline-block;width:18px;height:0;border-top:1.4px solid #0f172a"></span>
+        <span style="font-size:10px;color:#475569">關聯邊</span>
+      </div>
+      <div class="legend-row">
+        <span style="font-size:13px">⚡</span>
+        <span style="font-size:10px;color:#475569">Lollapalooza 中樞</span>
+      </div>
+    </div>
+
+    <!-- Lollapalooza meter -->
+    <div class="lolla-meter" id="lollaMeter">
+      <div class="lolla-meter-label">⚡ LOLLAPALOOZA · 共振計</div>
+      <div class="lolla-count-row">
+        <span class="lolla-count" id="lollaCount">0</span>
+        <span class="lolla-count-sub">個偏誤同向</span>
+      </div>
+      <div class="lolla-verdict" id="lollaVerdict">點選 2+ 個節點觀察共振強度。</div>
+      <div class="lolla-picks" id="lollaPicks"></div>
+    </div>
+  </div>
+
+  <!-- Right: detail panel -->
+  <aside class="detail-col" id="detailPanel">
+    <!-- rendered by JS -->
+  </aside>
+</div>
+
+<!-- Embedded data -->
+<script id="mental-models-data" type="application/json">
+{json_data}
+</script>
+
+<script>
+(function() {{
+  // ── Data ──────────────────────────────────────────────────────────────────
+  var raw = JSON.parse(document.getElementById('mental-models-data').textContent);
+  var MODELS = raw.models;
+  var DISCIPLINES = raw.disciplines;
+  function getModel(id) {{ return MODELS.find(function(m){{return m.id===id}}); }}
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  var selectedId = 'm10';
+  var hoveredId = null;
+  var filter = 'all';
+  var lollaMode = false;
+  var lollaPicks = new Set();
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  var svg = document.getElementById('networkSvg');
+  var detailPanel = document.getElementById('detailPanel');
+  var lollaToggle = document.getElementById('lollaToggle');
+  var lollaMeter = document.getElementById('lollaMeter');
+  var lollaCountEl = document.getElementById('lollaCount');
+  var lollaVerdictEl = document.getElementById('lollaVerdict');
+  var lollaPicksEl = document.getElementById('lollaPicks');
+  var filterChips = document.querySelectorAll('.filter-chip');
+  var clusterLabels = document.querySelectorAll('.cluster-label');
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function getNeighbors(id) {{
+    var m = getModel(id);
+    if (!m) return new Set([]);
+    var s = new Set([id]);
+    (m.related || []).forEach(function(r){{ s.add(r); }});
+    return s;
+  }}
+
+  function allNodes() {{ return svg.querySelectorAll('.node'); }}
+  function allEdges() {{ return svg.querySelectorAll('.edge'); }}
+
+  // ── Hover logic ───────────────────────────────────────────────────────────
+  function applyHoverState(activeId) {{
+    var neighbors = getNeighbors(activeId);
+    allNodes().forEach(function(node) {{
+      var nid = node.getAttribute('data-id');
+      node.classList.toggle('dimmed', !neighbors.has(nid));
+      node.classList.toggle('hovered', nid === activeId);
+    }});
+    allEdges().forEach(function(edge) {{
+      var a = edge.getAttribute('data-a');
+      var b = edge.getAttribute('data-b');
+      var active = neighbors.has(a) && neighbors.has(b);
+      edge.classList.toggle('active', active);
+      edge.classList.toggle('dimmed', !active);
+    }});
+  }}
+
+  function clearHoverState() {{
+    allNodes().forEach(function(n){{ n.classList.remove('dimmed'); n.classList.remove('hovered'); }});
+    allEdges().forEach(function(e){{ e.classList.remove('active','dimmed'); }});
+  }}
+
+  // ── Filter logic ──────────────────────────────────────────────────────────
+  function applyFilter(f) {{
+    allNodes().forEach(function(node) {{
+      var d = node.getAttribute('data-d');
+      var out = (f !== 'all' && d !== f);
+      node.classList.toggle('filtered-out', out);
+    }});
+    allEdges().forEach(function(edge) {{
+      var a = edge.getAttribute('data-a');
+      var b = edge.getAttribute('data-b');
+      var ma = getModel(a), mb = getModel(b);
+      var visible = (f === 'all' || (ma && ma.d === f) || (mb && mb.d === f));
+      edge.classList.toggle('filtered-out', !visible);
+    }});
+    // Cluster labels
+    clusterLabels.forEach(function(label) {{
+      var d = label.getAttribute('data-d');
+      label.style.opacity = (f === 'all' || f === d) ? '1' : '0.2';
+    }});
+  }}
+
+  // ── Lollapalooza meter ────────────────────────────────────────────────────
+  function updateLollaMeter() {{
+    var count = lollaPicks.size;
+    lollaCountEl.textContent = count;
+    var verdict = '';
+    if (count === 0) verdict = '點選 2+ 個節點觀察共振強度。';
+    else if (count === 1) verdict = '單一偏誤 — 一般風險。';
+    else if (count === 2) verdict = '雙偏誤疊加 — 注意。';
+    else if (count < 5) verdict = '⚠ 三+ 偏誤同向 — Munger 警報。';
+    else verdict = '⚠⚠ 多模型共振 — 災難級風險（FTX / 泡沫）。';
+    lollaVerdictEl.textContent = verdict;
+    lollaVerdictEl.style.color = count >= 3 ? '#fca5a5' : '#cbd5e1';
+
+    lollaPicksEl.innerHTML = '';
+    lollaPicks.forEach(function(id) {{
+      var m = getModel(id);
+      if (!m) return;
+      var chip = document.createElement('span');
+      chip.className = 'lolla-pick-chip';
+      chip.textContent = m.zh;
+      lollaPicksEl.appendChild(chip);
+    }});
+  }}
+
+  // ── Right panel render ────────────────────────────────────────────────────
+  function renderPanel(id) {{
+    var m = getModel(id);
+    if (!m) return;
+    var d = DISCIPLINES[m.d];
+    var newBadge = m.isNew ? '<span class="panel-tag-new">NEW</span>' : '';
+    var flagshipBadge = m.flagship ? '<span class="panel-tag-flagship">★ FLAGSHIP</span>' : '';
+
+    var casesHtml = (m.cases || []).map(function(c, i) {{
+      return '<div class="case-row">'
+        + '<span class="case-num" style="color:' + d.color + '">' + String(i+1).padStart(2,'0') + '</span>'
+        + '<span style="color:#1e293b">' + escHtml(c) + '</span>'
+        + '</div>';
+    }}).join('');
+
+    var relatedHtml = (m.related || []).map(function(rid) {{
+      var r = getModel(rid);
+      if (!r) return '';
+      var rd = DISCIPLINES[r.d];
+      return '<button class="related-chip" data-related-id="' + rid + '" '
+        + 'style="background:' + rd.tint + ';color:' + rd.color + ';border-color:' + rd.color + '33">'
+        + '<span style="font-family:var(--imq-font-mono)">' + escHtml(rd.glyph) + '</span>'
+        + escHtml(r.zh)
+        + '</button>';
+    }}).join('');
+
+    detailPanel.innerHTML = '<div>'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
+      + '<span class="panel-discipline-badge" style="background:' + d.color + '">' + escHtml(d.glyph) + '</span>'
+      + '<span style="font-family:var(--imq-font-mono);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:' + d.color + '">' + escHtml(d.zh) + ' · ' + escHtml(d.en) + '</span>'
+      + newBadge + flagshipBadge
+      + '</div>'
+      + '<div class="panel-id-tag">' + escHtml(m.id.toUpperCase()) + ' · ' + escHtml(m.tag) + '</div>'
+      + '<h2 class="panel-zh">' + escHtml(m.zh) + '</h2>'
+      + '<div class="panel-en">' + escHtml(m.en) + '</div>'
+      + '<div class="panel-body" style="background:' + d.tint + ';border-left-color:' + d.color + '">' + escHtml(m.body) + '</div>'
+      + '<blockquote class="panel-quote">' + escHtml(m.quote) + '</blockquote>'
+      + '<div class="panel-section-label">投資實例 · CASES</div>'
+      + casesHtml
+      + '<div class="panel-section-label">關聯模型 · RELATED</div>'
+      + '<div class="related-chips">' + relatedHtml + '</div>'
+      + '<div class="ask-box"><div class="ask-label">? 問自己 · ASK YOURSELF</div>'
+      + '<div class="ask-text">' + escHtml(m.ask) + '</div></div>'
+      + '</div>';
+
+    // wire up related chip clicks
+    detailPanel.querySelectorAll('.related-chip').forEach(function(btn) {{
+      btn.addEventListener('click', function() {{
+        var rid = btn.getAttribute('data-related-id');
+        selectNode(rid);
+      }});
+    }});
+  }}
+
+  function escHtml(s) {{
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }}
+
+  // ── Select node ───────────────────────────────────────────────────────────
+  function selectNode(id) {{
+    selectedId = id;
+    allNodes().forEach(function(node) {{
+      node.classList.toggle('selected', node.getAttribute('data-id') === id);
+    }});
+    renderPanel(id);
+  }}
+
+  // ── Node events ───────────────────────────────────────────────────────────
+  allNodes().forEach(function(node) {{
+    var id = node.getAttribute('data-id');
+
+    node.addEventListener('mouseenter', function() {{
+      hoveredId = id;
+      applyHoverState(id);
+    }});
+
+    node.addEventListener('mouseleave', function() {{
+      hoveredId = null;
+      clearHoverState();
+    }});
+
+    node.addEventListener('click', function() {{
+      if (lollaMode) {{
+        if (lollaPicks.has(id)) {{
+          lollaPicks.delete(id);
+          node.querySelector('circle').style.strokeWidth = '';
+          node.querySelector('circle').style.stroke = '';
+        }} else {{
+          lollaPicks.add(id);
+          node.querySelector('circle').style.stroke = '#0f172a';
+          node.querySelector('circle').style.strokeWidth = '2';
+        }}
+        updateLollaMeter();
+      }} else {{
+        selectNode(id);
+      }}
+    }});
+  }});
+
+  // ── Filter chips ──────────────────────────────────────────────────────────
+  filterChips.forEach(function(chip) {{
+    chip.addEventListener('click', function() {{
+      filter = chip.getAttribute('data-filter');
+      filterChips.forEach(function(c) {{
+        c.classList.remove('active');
+        // reset inline color applied by active state
+        var f = c.getAttribute('data-filter');
+        var disc = DISCIPLINES[f];
+        c.style.background = '';
+        if (disc) c.style.color = disc.color;
+        else c.style.color = '#475569';
+      }});
+      chip.classList.add('active');
+      // set active background
+      var activeDisc = DISCIPLINES[filter];
+      if (activeDisc) {{
+        chip.style.background = activeDisc.color;
+        chip.style.color = '#fff';
+      }} else {{
+        chip.style.background = '#475569';
+        chip.style.color = '#fff';
+      }}
+      applyFilter(filter);
+    }});
+  }});
+
+  // ── Lollapalooza toggle ───────────────────────────────────────────────────
+  lollaToggle.addEventListener('click', function() {{
+    lollaMode = !lollaMode;
+    lollaPicks.clear();
+    // reset any ring strokes
+    allNodes().forEach(function(node) {{
+      var circle = node.querySelector('circle');
+      if (circle) {{ circle.style.stroke = ''; circle.style.strokeWidth = ''; }}
+    }});
+    lollaToggle.classList.toggle('active', lollaMode);
+    lollaToggle.textContent = lollaMode ? '✓ LOLLAPALOOZA' : '⚡ LOLLAPALOOZA';
+    lollaMeter.classList.toggle('visible', lollaMode);
+    if (lollaMode) updateLollaMeter();
+  }});
+
+  // ── Pan & Zoom ────────────────────────────────────────────────────────────
+  var VB_W = {W};
+  var VB_H = {H} + 110;
+  var view = {{ x: 0, y: 0, zoom: 1 }};
+  var drag = {{ active: false, sx: 0, sy: 0, px: 0, py: 0, moved: false }};
+
+  function applyView() {{
+    var w = VB_W / view.zoom;
+    var h = VB_H / view.zoom;
+    svg.setAttribute('viewBox', view.x + ' ' + view.y + ' ' + w + ' ' + h);
+  }}
+  function resetView() {{ view.x = 0; view.y = 0; view.zoom = 1; applyView(); }}
+
+  svg.style.cursor = 'grab';
+  svg.style.touchAction = 'none';
+
+  svg.addEventListener('mousedown', function(e) {{
+    if (e.target.closest('.node')) return;
+    drag.active = true;
+    drag.moved = false;
+    drag.sx = e.clientX; drag.sy = e.clientY;
+    drag.px = view.x; drag.py = view.y;
+    svg.style.cursor = 'grabbing';
+    e.preventDefault();
+  }});
+  window.addEventListener('mousemove', function(e) {{
+    if (!drag.active) return;
+    var rect = svg.getBoundingClientRect();
+    var sx = (VB_W / view.zoom) / rect.width;
+    var sy = (VB_H / view.zoom) / rect.height;
+    var dx = (e.clientX - drag.sx) * sx;
+    var dy = (e.clientY - drag.sy) * sy;
+    if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
+    view.x = drag.px - dx;
+    view.y = drag.py - dy;
+    applyView();
+  }});
+  window.addEventListener('mouseup', function() {{
+    if (drag.active) {{ drag.active = false; svg.style.cursor = 'grab'; }}
+  }});
+
+  svg.addEventListener('wheel', function(e) {{
+    e.preventDefault();
+    var rect = svg.getBoundingClientRect();
+    var mx = (e.clientX - rect.left) / rect.width;
+    var my = (e.clientY - rect.top) / rect.height;
+    var oldZ = view.zoom;
+    var factor = e.deltaY < 0 ? 1.12 : 1/1.12;
+    var newZ = Math.max(0.4, Math.min(4, oldZ * factor));
+    var oldW = VB_W / oldZ, oldH = VB_H / oldZ;
+    var newW = VB_W / newZ, newH = VB_H / newZ;
+    view.x += (oldW - newW) * mx;
+    view.y += (oldH - newH) * my;
+    view.zoom = newZ;
+    applyView();
+  }}, {{ passive: false }});
+
+  // Double-click on background = reset view
+  svg.addEventListener('dblclick', function(e) {{
+    if (e.target.closest('.node')) return;
+    resetView();
+  }});
+
+  // Reset button
+  var resetBtn = document.getElementById('viewResetBtn');
+  if (resetBtn) resetBtn.addEventListener('click', resetView);
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  renderPanel(selectedId);
+  selectNode(selectedId);
+}})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     II · MATRIX VIEW  (Phase 2 — Direction C Periodic Table)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section class="matrix-section">
+
+  <!-- Section divider -->
+  <div class="matrix-section-divider">
+    <div class="matrix-eyebrow">II · MATRIX VIEW</div>
+    <h2 class="matrix-section-title">Tier Matrix · 元素表式呈現</h2>
+    <p class="matrix-section-sub">同樣 30 個模型，按學科分組成五個橫帶；點擊單元格開啟完整定義；啟用 Lollapalooza 可同時挑選多個觀察共振。</p>
+  </div>
+
+  <div class="matrix-wrap">
+    <div class="matrix-inner">
+
+      <!-- Toolbar -->
+      <div class="matrix-toolbar">
+        <span class="matrix-toolbar-label">30 ELEMENTS · 5 GROUPS · 點擊任一格查看完整內容</span>
+        <button class="matrix-lolla-btn" id="matrixLollaBtn">⚡ LOLLAPALOOZA</button>
+      </div>
+
+      <!-- Lollapalooza readout strip (hidden until picker active) -->
+      <div class="matrix-lolla-strip" id="matrixLollaStrip">
+        <div>
+          <div class="matrix-lolla-strip-count-label">RESONANCE</div>
+          <div class="matrix-lolla-strip-count" id="matrixLollaCount">0</div>
+        </div>
+        <div style="flex:1;min-width:160px">
+          <div class="matrix-lolla-bar-track">
+            <div class="matrix-lolla-bar-fill" id="matrixLollaBarFill" style="width:0%"></div>
+          </div>
+          <div class="matrix-lolla-status" id="matrixLollaStatus">點選多個元素 → 觀察偏誤共振強度</div>
+        </div>
+        <div class="matrix-lolla-pills" id="matrixLollaPills"></div>
+      </div>
+
+      <!-- 5 Discipline bands (server-side rendered) -->
+      <div class="matrix-bands">
+{matrix_bands_html}
+      </div>
+
+    </div><!-- /.matrix-inner -->
+  </div><!-- /.matrix-wrap -->
+
+</section>
+
+<!-- Matrix modal (single instance, hidden by default) -->
+<div class="matrix-modal" id="matrixModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="matrixModalZh">
+  <div class="matrix-modal-box" id="matrixModalBox">
+    <div class="matrix-modal-header" id="matrixModalHeader">
+      <div class="matrix-modal-header-top">
+        <div>
+          <div class="matrix-modal-discipline-row" id="matrixModalDisciplineRow"></div>
+          <h2 class="matrix-modal-zh" id="matrixModalZh"></h2>
+          <div class="matrix-modal-en" id="matrixModalEn"></div>
+        </div>
+        <button class="matrix-modal-close" id="matrixModalClose" aria-label="關閉">×</button>
+      </div>
+    </div>
+    <div class="matrix-modal-body">
+      <p class="matrix-modal-desc" id="matrixModalDesc"></p>
+      <blockquote class="matrix-modal-quote" id="matrixModalQuote"></blockquote>
+      <div class="matrix-modal-grid">
+        <div>
+          <div class="matrix-modal-section-label">投資實例 · CASES</div>
+          <div id="matrixModalCases"></div>
+        </div>
+        <div>
+          <div class="matrix-modal-section-label">關聯模型 · RELATED</div>
+          <div class="matrix-modal-related-chips" id="matrixModalRelated"></div>
+          <div class="matrix-modal-ask" id="matrixModalAsk">
+            <div class="matrix-modal-ask-label">? 問自己 · ASK YOURSELF</div>
+            <div class="matrix-modal-ask-text" id="matrixModalAskText"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function matrixView() {{
+  // ── Read data from the SAME JSON block Phase 1 already embedded ───────────
+  var _raw = JSON.parse(document.getElementById('mental-models-data').textContent);
+  var MMODELS = _raw.models;
+  var MDISCIPLINES = _raw.disciplines;
+
+  function mGetModel(id) {{ return MMODELS.find(function(m) {{ return m.id === id; }}); }}
+  function mEsc(s) {{
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }}
+
+  // ── State (completely separate from Network view state) ───────────────────
+  var mOpenId = null;
+  var mPicks = new Set();
+  var mPickerOn = false;
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  var mLollaBtn = document.getElementById('matrixLollaBtn');
+  var mLollaStrip = document.getElementById('matrixLollaStrip');
+  var mLollaCount = document.getElementById('matrixLollaCount');
+  var mLollaBarFill = document.getElementById('matrixLollaBarFill');
+  var mLollaStatus = document.getElementById('matrixLollaStatus');
+  var mLollaPills = document.getElementById('matrixLollaPills');
+  var mModal = document.getElementById('matrixModal');
+  var mModalHeader = document.getElementById('matrixModalHeader');
+  var mModalDisciplineRow = document.getElementById('matrixModalDisciplineRow');
+  var mModalZh = document.getElementById('matrixModalZh');
+  var mModalEn = document.getElementById('matrixModalEn');
+  var mModalDesc = document.getElementById('matrixModalDesc');
+  var mModalQuote = document.getElementById('matrixModalQuote');
+  var mModalCases = document.getElementById('matrixModalCases');
+  var mModalRelated = document.getElementById('matrixModalRelated');
+  var mModalAskText = document.getElementById('matrixModalAskText');
+  var mModalClose = document.getElementById('matrixModalClose');
+
+  // ── Update lolla readout strip ────────────────────────────────────────────
+  function mUpdateStrip() {{
+    var n = mPicks.size;
+    mLollaCount.textContent = n;
+    var pct = Math.min(100, n * 16);
+    mLollaBarFill.style.width = pct + '%';
+    var barColor = n >= 5 ? '#dc2626' : (n >= 3 ? '#fbbf24' : '#3b82f6');
+    mLollaBarFill.style.background = barColor;
+    var status = '';
+    if (n === 0) status = '點選多個元素 → 觀察偏誤共振強度';
+    else if (n <= 2) status = '一般範圍：單一/雙偏誤';
+    else if (n <= 4) status = '⚠ Munger 警報區：三+ 偏誤同向';
+    else status = '⚠⚠ 災難級共振：FTX / 泡沫等級';
+    mLollaStatus.textContent = status;
+
+    mLollaPills.innerHTML = '';
+    mPicks.forEach(function(id) {{
+      var m = mGetModel(id);
+      if (!m) return;
+      var pill = document.createElement('span');
+      pill.className = 'matrix-lolla-pill';
+      pill.textContent = m.zh;
+      mLollaPills.appendChild(pill);
+    }});
+  }}
+
+  // ── Open modal with a given model id ─────────────────────────────────────
+  function mOpenModal(id) {{
+    var m = mGetModel(id);
+    if (!m) return;
+    mOpenId = id;
+    var d = MDISCIPLINES[m.d];
+
+    // Highlight open cell
+    document.querySelectorAll('.matrix-cell').forEach(function(btn) {{
+      btn.style.borderColor = '';
+      if (btn.dataset.cellId === id) {{
+        btn.style.borderColor = d.color;
+        btn.style.background = d.tint;
+      }} else if (!mPicks.has(btn.dataset.cellId)) {{
+        btn.style.background = '';
+      }}
+    }});
+
+    // Header
+    mModalHeader.style.background = d.tint;
+    mModalHeader.style.borderBottomColor = d.color;
+    mModalDisciplineRow.innerHTML =
+      '<span class="matrix-modal-disc-badge" style="background:' + d.color + '">' + mEsc(d.glyph) + '</span>'
+      + '<span class="matrix-modal-disc-label" style="color:' + d.color + '">' + mEsc(d.zh) + ' · ' + mEsc(d.en.toUpperCase()) + '</span>'
+      + '<span class="matrix-modal-tag-label">· ' + mEsc(m.tag) + '</span>';
+    mModalZh.textContent = m.zh;
+    mModalEn.textContent = m.en;
+
+    // Body text
+    mModalDesc.textContent = m.body;
+    mModalDesc.style.background = d.tint;
+    mModalDesc.style.borderLeftColor = d.color;
+    mModalQuote.textContent = m.quote;
+    mModalQuote.style.borderLeftColor = d.color;
+
+    // Cases
+    mModalCases.innerHTML = (m.cases || []).map(function(c, i) {{
+      return '<div class="matrix-modal-case">'
+        + '<span class="matrix-modal-case-num" style="color:' + d.color + '">' + String(i+1).padStart(2,'0') + '</span>'
+        + '<span style="color:#1e293b">' + mEsc(c) + '</span>'
+        + '</div>';
+    }}).join('');
+
+    // Related chips
+    mModalRelated.innerHTML = (m.related || []).map(function(rid) {{
+      var r = mGetModel(rid);
+      if (!r) return '';
+      var rd = MDISCIPLINES[r.d];
+      return '<button class="matrix-modal-related-chip" data-modal-related="' + rid + '" '
+        + 'style="background:' + rd.tint + ';color:' + rd.color + ';border-color:' + rd.color + '33">'
+        + '<span style="font-family:var(--imq-font-mono)">' + mEsc(rd.glyph) + '</span>'
+        + mEsc(r.zh)
+        + '</button>';
+    }}).join('');
+
+    // Wire related chip clicks (swap modal content, don't close)
+    mModalRelated.querySelectorAll('[data-modal-related]').forEach(function(btn) {{
+      btn.addEventListener('click', function() {{
+        mOpenModal(btn.getAttribute('data-modal-related'));
+      }});
+    }});
+
+    // Ask box
+    mModalAskText.textContent = m.ask;
+
+    // Show modal
+    mModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }}
+
+  // ── Close modal ───────────────────────────────────────────────────────────
+  function mCloseModal() {{
+    mOpenId = null;
+    mModal.style.display = 'none';
+    document.body.style.overflow = '';
+    // Reset open-cell highlight
+    document.querySelectorAll('.matrix-cell').forEach(function(btn) {{
+      if (!mPicks.has(btn.dataset.cellId)) {{
+        btn.style.background = '';
+        btn.style.borderColor = '';
+      }}
+    }});
+  }}
+
+  // ── Toggle pick (lolla mode) ──────────────────────────────────────────────
+  function mTogglePick(id, btn) {{
+    var d = MDISCIPLINES[btn.dataset.cellD];
+    if (mPicks.has(id)) {{
+      mPicks.delete(id);
+      btn.classList.remove('picked');
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      // restore tag color
+      var tagEl = btn.querySelector('.matrix-cell-tag');
+      if (tagEl) tagEl.style.color = d.color;
+      var newEl = btn.querySelector('.matrix-cell-new');
+      if (newEl) newEl.style.background = '#dc2626';
+    }} else {{
+      mPicks.add(id);
+      btn.classList.add('picked');
+      btn.style.background = d.color;
+      btn.style.color = '#fff';
+      btn.style.borderColor = d.color;
+      // picked: tag rendered by CSS .matrix-cell.picked .matrix-cell-tag
+    }}
+    mUpdateStrip();
+  }}
+
+  // ── Cell click handler ────────────────────────────────────────────────────
+  document.querySelectorAll('.matrix-cell').forEach(function(btn) {{
+    var id = btn.dataset.cellId;
+
+    // Hover
+    btn.addEventListener('mouseenter', function() {{
+      if (!mPicks.has(id) && mOpenId !== id) {{
+        var d = MDISCIPLINES[btn.dataset.cellD];
+        btn.style.background = d.tint;
+      }}
+    }});
+    btn.addEventListener('mouseleave', function() {{
+      if (!mPicks.has(id) && mOpenId !== id) {{
+        btn.style.background = '';
+      }}
+    }});
+
+    btn.addEventListener('click', function() {{
+      if (mPickerOn) {{
+        mTogglePick(id, btn);
+      }} else {{
+        mOpenModal(id);
+      }}
+    }});
+  }});
+
+  // ── Lolla toggle button ───────────────────────────────────────────────────
+  mLollaBtn.addEventListener('click', function() {{
+    mPickerOn = !mPickerOn;
+    // Clear picks
+    mPicks.forEach(function(id) {{
+      var btn = document.querySelector('.matrix-cell[data-cell-id="' + id + '"]');
+      if (btn) {{
+        btn.classList.remove('picked');
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+      }}
+    }});
+    mPicks.clear();
+    mLollaBtn.classList.toggle('active', mPickerOn);
+    mLollaBtn.textContent = mPickerOn ? '✓ LOLLA MODE' : '⚡ LOLLAPALOOZA';
+    mLollaStrip.classList.toggle('visible', mPickerOn);
+    if (mPickerOn) mUpdateStrip();
+    // Also close modal if open
+    if (mOpenId) mCloseModal();
+  }});
+
+  // ── Modal close: backdrop click ───────────────────────────────────────────
+  mModal.addEventListener('click', function(e) {{
+    if (e.target === mModal) mCloseModal();
+  }});
+
+  // ── Modal close: × button ────────────────────────────────────────────────
+  mModalClose.addEventListener('click', mCloseModal);
+
+  // ── Modal close: ESC key ──────────────────────────────────────────────────
+  document.addEventListener('keydown', function(e) {{
+    if (e.key === 'Escape' && mOpenId) mCloseModal();
+  }});
+
+}})();
+</script>
+</body>
+</html>"""
+
+    out_path = DOCS_DIR / "mental-models" / "index.html"
+    _write_html(out_path, html)
+
+
 if __name__ == "__main__":
-    build_site()
+    import sys
+    if "--mental-models" in sys.argv:
+        generate_mental_models()
+    else:
+        build_site()
