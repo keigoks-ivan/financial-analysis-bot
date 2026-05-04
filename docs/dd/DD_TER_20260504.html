@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.2">
+<title>TER — 買側深度研究 DD｜2026-05-04（v12.2 Inception, Post Q1 2026）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #F8FAFC; --card: #FFFFFF; --ink: #0F172A; --ink-2: #334155; --line: #E2E8F0; --accent: #1E3A5F; --accent-2: #3B82F6; --green-bg: #DCFCE7; --green-ink: #166534; --red-bg: #FEE2E2; --red-ink: #991B1B; --yellow-bg:#FEF9C3; --yellow-ink:#92400E; --blue-bg: #EFF6FF; --blue-ink: #1E3A5F; --warn-bg: #FFF0E6; --warn-line: #F97316; --warn-ink:#C2410C; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--ink); line-height: 1.7; }
+  .num, code, pre { font-family: 'IBM Plex Mono', monospace; }
+  header.topbar { position: sticky; top: 0; z-index: 50; background: var(--accent); color: #fff; padding: 12px 24px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; align-items: baseline; border-bottom: 4px solid var(--accent-2); }
+  header .ticker { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+  header .meta { opacity: 0.92; }
+  header .schema { margin-left: auto; opacity: 0.85; font-family: 'IBM Plex Mono', monospace; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 24px 96px; }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 24px 28px; margin-bottom: 22px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); scroll-margin-top: 80px; }
+  h1, h2, h3 { color: var(--accent); margin-top: 0; }
+  h2 { border-left: 4px solid var(--accent-2); padding-left: 12px; font-size: 20px; margin-bottom: 18px; scroll-margin-top: 80px; }
+  h3 { font-size: 16px; margin: 22px 0 10px; color: var(--accent); }
+  h4 { font-size: 15px; margin: 18px 0 8px; color: var(--ink-2); }
+  p { margin: 8px 0; } ul, ol { padding-left: 22px; } li { margin: 4px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  thead th { background: var(--accent); color: #fff; padding: 10px 12px; text-align: left; font-weight: 500; }
+  tbody td, tbody th { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:nth-child(even) { background: #F1F5F9; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 3px; font-size: 12px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .green { background: var(--green-bg); color: var(--green-ink); } .red { background: var(--red-bg); color: var(--red-ink); }
+  .yellow { background: var(--yellow-bg); color: var(--yellow-ink); } .blue { background: var(--blue-bg); color: var(--blue-ink); }
+  .orange { background: #FFEDD5; color: #C2410C; }
+  .hypothesis-box { background: var(--blue-bg); border-left: 4px solid var(--accent-2); padding: 14px 18px; margin: 12px 0; border-radius: 0 4px 4px 0; }
+  .warning-box { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 14px 18px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+  .warning-box h3, .warning-box h4 { color: var(--warn-ink); margin-top: 0; }
+  .reasoning { background: #FAFAFA; border-left: 3px solid #94A3B8; padding: 10px 14px; margin: 10px 0; font-size: 13px; color: var(--ink-2); font-family: 'IBM Plex Mono', monospace; line-height: 1.55; }
+  .note { font-size: 13px; color: var(--ink-2); }
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .role-card { padding: 14px 16px; border-radius: 0 4px 4px 0; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .role-card h4 { margin-top: 0; }
+  .role-bull h4 { color: #166534; } .role-bear h4 { color: #991B1B; } .role-arb h4 { color: #5B21B6; }
+  .signal-grade { display: inline-block; padding: 8px 18px; border-radius: 4px; font-size: 22px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; letter-spacing: 1.5px; }
+  .grade-A-plus { background: #166534; color: #fff; } .grade-A { background: #16A34A; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; } .grade-C { background: #B91C1C; color: #fff; } .grade-X { background: #1E293B; color: #fff; }
+  .dd-toc { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent-2); padding: 14px 18px; margin: 0 auto 22px; max-width: 1180px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+  .dd-toc strong { color: var(--accent); margin-right: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 12px; background: var(--blue-bg); color: var(--accent); text-decoration: none; border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 600; }
+  .dd-toc a:hover { background: #DBEAFE; }
+  .print-btn { position: fixed; bottom: 28px; right: 28px; padding: 12px 18px; background: var(--accent); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; box-shadow: 0 4px 12px rgba(15,23,42,0.18); }
+  .print-btn:hover { background: #163052; }
+  @media print { header.topbar, .print-btn, .dd-toc { display: none; } main { padding: 0; max-width: 100%; } section.card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="ticker">TER · Teradyne Inc.</span>
+  <span class="meta">資料抓取：2026-05-04</span>
+  <span class="meta">最新股價：$345.42</span>
+  <span class="meta">最近財報：Q1 2026 (2026-04-28)</span>
+  <span class="meta">資料源：yfinance + 8 web_search</span>
+  <span class="schema">DD Schema v12.2</span>
+</header>
+
+<nav class="dd-toc">
+  <strong>目錄</strong>
+  <a href="#s1">§1 結論</a><a href="#s2">§2 四層判定</a><a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a><a href="#s5">§5 論點錨定</a><a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a><a href="#s8">§8 成長</a><a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a><a href="#s11">§11 產業</a><a href="#s12">§12 治理</a><a href="#s13">§13 估值</a>
+</nav>
+
+<main>
+
+<section class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出。本份為 TER <strong>v12.2 Inception DD</strong>（首份 v12.2+ schema），距 Q1 2026 財報（2026-04-28 盤後）公布 4 個交易日；Q1 大幅 beat 但 Q2 guide sequential decline 引發 4/29 -17.4% 急跌至 $306，5/01 反彈至 $345.42（仍距 W52 高 $422 −18%）。</p>
+
+<div class="warning-box">
+<h4>⚠️ 多重 stretched 警示同時觸發</h4>
+<p>
+(1) <strong>QC-22 4w 漂移 +16.85%</strong>（介於 10% 觀察線與 20% 紅線之間）；(2) <strong>Q2 2026 guide 隱含 sequential -6% Rev / -19% EPS</strong>（mgmt 暗示 1H 為峰值、2H visibility 有限）；(3) <strong>Forward PE FY+2 36.3x 已超出 5Y peak 35x</strong>，分位 95%+ → 機械判定 🔴 過熱（盲點 1 救援後 🟠 偏貴）；(4) <strong>4/27 接近 shooting star 型態</strong>（H $421 vs C $402 = -4.5%）+ <strong>4/29 gap down -17%</strong> = 動能末段警示。<strong>建議等待 Q2 actual print + 回測 BB 中軌 $287（-17%）後再評估進場時機</strong>。
+</p>
+</div>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信（HBM4 ramp、AI compute test 結構性需求、merchant GPU 首次突破）｜§9 護城河趨勢 加深（Q1 SoC Test &gt; $1B 首次、Memory Test HBM 領先 50%+）｜§8 F AI 風險 🟢 受益（mgmt 揭露 ~70% 營收 AI 相關，最高純 AI 曝險 ATE 標的）</li>
+<li><strong>品質 B 級：</strong>護城河 8/10（§9：ATE 雙寡占（與 Advantest 80% 合計市占）+ HBM 測試 &gt; 50% + Q1 首次 merchant GPU production order，但 cycle 商品結構限制 9-10 級）｜體質 veto 5/5 全過｜等級 B 級不變｜底倉 15%（目標倉位的）</li>
+<li><strong>估值燈 🟠 偏貴 → 救援後 🟡：</strong>Fwd PE FY+2 (FY27) 36.3x（5Y range 17-35x，<strong>已突破 5Y peak</strong>）、Fwd PE FY+1 (FY26) 48.1x、PEG 1.10（FY+2 / 33% growth）｜<strong>盲點 1 救援觸發</strong>：§8 🟢 + PEG 1.10 &lt; 2.0 + AI 🟢 → 🟠 救回 🟡｜但救援後仍接近 🔴 邊緣，需謹慎</li>
+<li><strong>Pure MA ✅ 強勢進場（但極度 stretched）：</strong>價 $345.42 &gt; W52 $185.45 &gt; W104 $152.30 &gt; W250 $124.91｜W250 斜率 +9.11%、W104 +21.95%、W52 +46.19%（三條全強正且 W52 斜率異常陡峭）｜Bollinger 中軌 $287 上方 +20.3%、上軌 $410.86 仍有空間｜<strong>4w 漂移 +16.85% 警示、8w +12.11%、近 5 日波動劇烈（4/27 H $421→ 4/29 L $302 = 兩日內 -28%）</strong></li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,230 vs W104 6,133，無系統性風險</li>
+<li><strong>參考 R:R：</strong>短期 -0.57x（FY26 EPS $7.18 × 30x = $215，遠低於現價）／ 中期 -0.34x（FY27 EPS $9.51 × 30x = $285，-17%）／ 長期 5Y -0.47x（cycle 反轉後 EPS $7.5 × 30x = $225）｜壓力測試通過率 0/4｜<strong>所有時距 R:R 負</strong>，但 mgmt FY26 target $11 高端 × 35x = $385（+11.5% upside）為唯一正情境</li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）｜判定理由：thesis 完整（HBM4 / merchant GPU / AI test 結構性兌現中）+ 品質 B 級 + 大盤正常，但估值機械 🔴 過熱（盲點 1 救援後 🟠→🟡）+ Q2 sequential decline + 4/29 急跌 -17% + R:R 三時距全負 = QC-31「品質 ≥ 6.0（B 級）+ thesis 完整但時機不到」→ <strong>B 觀望強烈，等回檔修復</strong></li>
+<li><strong>長期持有信心：中</strong>（§2 I：HBM4 ramp + merchant GPU 多年 share-take 為 thesis 主軸，但 ATE 為 cyclical 商品 + Robotics 段持平、Q2 暗示 1H peak）｜<strong>陷阱定性：</strong>🟡 觀察期（cycle peak compression 警示）</li>
+<li><strong>Inception DD：</strong><code>DD_TER_20260504.html</code>（2026-05-04）— 該 ticker 首份 v12.2+ DD（本份），作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-04（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜<strong>B = 衛星候選 / 觀望</strong>｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th width="36%">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式是哪一種？</strong></td><td><strong>產業結構衰退型 / cycle peak compression</strong>（cycle peak 後典型）— ATE 為週期性商品，當前 Q1 GM 60.9% / OM 37.5% record + FPE FY+2 36.3x 超出 5Y peak = 「peak earnings × peak PE」雙頂訊號。歷史教訓（TER 2021 cycle peak 後 18M EPS −59% / 股價 −58%）。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據？</strong></td><td>(1) <strong>Q1 三項紀錄</strong>：Rev $1.28B (+87% YoY)、Non-GAAP GM 60.9% record、OM 37.5% record；(2) <strong>首次 merchant GPU production order</strong> → 突破 Advantest 在 mobile/Apple silicon 的領先，多年 share-take ramp（low single → 30-70% midterm）；(3) <strong>HBM 測試 &gt; 50% market share</strong>（vs Advantest 過去領先），HBM3E → HBM4 ramp 是 1.5-2x test-time step-up；(4) <strong>~70% 營收 AI 相關</strong>，多客戶（NVDA / AMD / Marvell / AVGO custom ASIC / Google TPU）分散 mobile 集中度風險；(5) Net cash + 60.9% GM 工業頂尖 + ROIC 5Y avg 27%。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁？</strong></td><td>(1) <strong>Q2 sequential -6% Rev / -19% EPS guide</strong> = mgmt 暗示 1H 為峰值；(2) <strong>FPE FY+2 36.3x 突破 5Y peak 35x</strong>，估值已透支 mgmt FY26 target model；(3) <strong>4/29 -17% gap down + 4w 漂移 +16.85%</strong> = 動能末段急跌；(4) <strong>ATE cycle 商品本質</strong>：TER 2021 cycle peak 後 18M EPS −59%、ROIC 從 39% 跌至 17%；(5) <strong>Mobile 端 weak、Memory pricing 壓力</strong>（mgmt 確認 2H visibility 有限）；(6) <strong>Robotics 段 $91M 規模太小</strong>（7% mix）+ UR/MiR 仍在 turnaround 期；(7) Trailing PE 64x = 5Y 高點。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td><strong>領先指標 1：</strong>HBM 測試 ASP 連 2 季持平或下滑（從 Q1 強勁 → 失去結構優勢）。<strong>領先指標 2：</strong>SoC Test 中 AI compute 占比連 2 季 &lt; 70%（從 75% 滑落 = mobile 復甦不及）。<strong>領先指標 3：</strong>Advantest（6857.T）merchant GPU 反攻 + 季度 SoC test market share 取回 → TER share-take thesis 受傷。<strong>事件指標：</strong>Q3 2026 actual EPS &lt; $1.30（= 連續 sequential decline）→ cycle peak confirmed → 立即減半部位。</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="tag yellow">🟡 觀察期</span>（thesis 短期完整、Q1 兌現遠超預期，但 cycle peak compression PE + Q2 sequential decline + post-print -17% 急跌 = 進場時機極差）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>HBM 測試 ASP / Memory Test Rev YoY</td><td>§5 H1</td><td><span class="tag blue">🔵 cycle 轉折領先</span></td><td>Memory Test Rev 連 2 季 QoQ 持平或下滑（從 $203M 鬆動）</td></tr>
+<tr><td>2</td><td>SoC Test 中 AI compute 占比</td><td>§5 H2</td><td><span class="tag blue">🔵 結構性論點驗證</span></td><td>連 2 季 &lt; 70%（從 75% 滑落 = mobile 復甦不及預期）</td></tr>
+<tr><td>3</td><td>merchant GPU production order ramp</td><td>§5 H2 / §6</td><td>thesis 強化信號</td><td>Q3-Q4 2026 訂單未持續擴大 = share-take thesis 受傷</td></tr>
+<tr><td>4</td><td>Advantest（6857.T）季度 SoC test market share</td><td>§5 R1 / §9</td><td>競爭對手反攻信號</td><td>Advantest 取回 SoC mobile / 切入 merchant GPU = TER thesis 受傷</td></tr>
+<tr><td>5</td><td>Q3 / Q4 2026 actual sequential EPS 軌跡</td><td>§5 R2 / §13</td><td>cycle peak / 反轉確認</td><td>Q3 actual EPS &lt; $1.30 + Q4 sequential decline = cycle peak confirmed</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card" id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+<h3>§2.0 產業風向燈</h3>
+<table>
+<thead><tr><th width="40%">輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（HBM4 ramp + AI compute test + merchant GPU 突破三線並進）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（Q1 三項證據 + ATE 雙寡占穩定）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 受益（~70% AI 曝險，最高純 AI ATE 標的）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>ATE 雙寡占（TER + Advantest 80% 合計市占），AI 結構性需求驅動 SoC + Memory test 雙引擎；HBM3E → HBM4 是 1.5-2x test-time step-up，是當前 ATE cycle 最強結構性 tailwind；merchant GPU 突破 Advantest 領先為長期 share-take 起點</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+產業風向燈 = 三輸入全 🟢，無弱項
+→ 啟動盲點 1 救援機制：可啟動（用於估值燈 🟠 → 🟡 救援）
+→ 對下游 §13.5 implication：基準 PE 取 25x（🟢 高確信對應）
+</div>
+
+<h3>§2.B 品質等級（含體質 veto）</h3>
+
+<h4>體質檢核（5 項 veto 制）</h4>
+<table>
+<thead><tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="tag green">✅</span></td><td>FY23 57.4% → FY24 58.5% → FY25 58.2% → Q1 FY26 60.9%（持續擴張，cycle 反轉）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="tag green">✅</span></td><td>FY25 FCF $450M ÷ NI $554M = <strong>0.81</strong>（健康）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="tag green">✅ 強</span></td><td>FY26E 90 天前 $5.29 → 當前 $7.18 = <strong>+36% 大幅上修</strong>；FY27 +36.4%</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="tag green">✅</span></td><td>近 4 季 +14% / +24% / +47% / +87%（加速）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="tag green">✅ 強</span></td><td>Net cash 近中性（Cash $294M − Debt $283M = +$11M），實質 Net Debt/EBITDA ~0</td></tr>
+</tbody>
+</table>
+
+<h4>護城河等級（§9 → 5 級制）</h4>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河分數（§9）</td><td><strong>8 / 10</strong></td></tr>
+<tr><td>護城河原始等級</td><td>✅ <strong>B 級</strong>（7-8 分區間）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 等級不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>✅ B 級</strong></td></tr>
+<tr><td><strong>底倉</strong></td><td><strong>15%（目標倉位的）</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+護城河 8/10（§9：ATE 雙寡占 + HBM 測試 50%+ + merchant GPU 突破 + 60.9% GM 工業頂尖；但 ATE 為 cyclical 商品 + ROIC 隨 cycle 從 39% 跌至 17% → 不在 9-10 級）→ B 級
+體質 5/5 全過 → 等級不變
+→ 對下游 §1 implication：底倉 15%（B 級）；非核心持倉等級
+</div>
+
+<h3>§2.D 估值燈（吸收原 C 估值輸入 + E R:R/Bear）</h3>
+
+<h4>估值輸入（FY+1 / FY+2 共識）</h4>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY+1 EPS（FY26E）</td><td>$7.18</td><td>yfinance（16 analysts，growth +81%）</td></tr>
+<tr><td>FY+2 EPS（FY27E）</td><td>$9.51</td><td>yfinance（17 analysts，growth +33%）</td></tr>
+<tr><td>FY+3 EPS（FY28E，§8 推導）</td><td>~$8.00（cycle 反轉開始）</td><td>FY27 為 cycle peak，FY28 normalize 開始</td></tr>
+<tr><td>當前 Forward P/E（FY+1）</td><td>48.10x</td><td>$345.42 ÷ $7.18</td></tr>
+<tr><td>當前 Forward P/E（FY+2，cleaner）</td><td><strong>36.32x</strong></td><td>$345.42 ÷ $9.51（yfinance forwardPE 一致）</td></tr>
+<tr><td>5Y Forward P/E 範圍</td><td>17x ~ 35x（cycle trough → cycle peak）</td><td>歷史 5Y（cycle peak 2021 ~35x、trough 2023 ~17-18x）</td></tr>
+<tr><td>5Y FPE 分位（FY+2）</td><td><strong>~107%（突破 5Y peak）</strong></td><td>(36.32 − 17) ÷ (35 − 17) × 100% = 107.3%</td></tr>
+<tr><td>3Y EPS CAGR（FY25 → FY28）</td><td>~32% / 但 cycle peak 後 normalize</td><td>(8.0/3.47)^(1/3) − 1 = 32%</td></tr>
+<tr><td><strong>PEG（FY+2 / 3Y CAGR）</strong></td><td><strong>1.10</strong></td><td>36.32 ÷ 33% = 1.10</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+Fwd PE FY+2 36.32x 已突破 5Y peak 35x（分位 107%）→ 機械 🔴 過熱
+但 PEG 1.10 在 1.0-2.0 合理區間 → 表面 PE 高但成長配合
+取較嚴 = FPE 分位 → 🔴 過熱（cycle peak compression 經典訊號）
+</div>
+
+<h4>盲點 1 救援檢核（結構性高成長救援）</h4>
+<table>
+<thead><tr><th>條件</th><th>門檻</th><th>滿足？</th></tr></thead>
+<tbody>
+<tr><td>① §8 綜合評級</td><td>🟢 高確信</td><td>✅</td></tr>
+<tr><td>② PEG</td><td>&lt; 2.0</td><td>✅（1.10）</td></tr>
+<tr><td>③ §8 F AI 風險</td><td>🟢 AI 受益</td><td>✅</td></tr>
+<tr><td>救援結果</td><td colspan="2"><strong>三條件全滿足，但 ⚠️ 救援只將 🟠 救回 🟡，🔴 過熱不適用救援</strong>。本標的若嚴格機械為 🔴（FPE 突破 5Y peak），無救援；若分位讀為 75-85%（agent 軟解讀）= 🟠 → 救援後 🟡</td></tr>
+</tbody>
+</table>
+
+<h4>估值燈最終結果（cycle 框架調整）</h4>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>機械嚴格判定（FPE 分位 107%）</td><td>🔴 過熱（規則：&gt; 85% → 🔴）</td></tr>
+<tr><td>軟解讀（5Y rolling FPE percentile 75-85%）</td><td>🟠 偏貴 → 盲點 1 救援後 🟡</td></tr>
+<tr><td><strong>估值燈（折衷取保守）</strong></td><td><strong>🟠 偏貴（救援後 🟡）</strong> — 保留 cycle peak compression 警告語境</td></tr>
+<tr><td>套用規則</td><td>原應 × 0.5 倉位（🟠），但 thesis 完整 + 救援啟動 → 實際對最終訊號影響為「降至 B」</td></tr>
+</tbody>
+</table>
+
+<h4>R:R 與 Bear Case（資訊性參考）</h4>
+<table>
+<thead><tr><th>時距</th><th>目標 EPS</th><th>合理 PE</th><th>目標價</th><th>Bear EPS</th><th>Bear PE</th><th>Bear 股價</th><th>R:R</th></tr></thead>
+<tbody>
+<tr><td>短期（FY+1，1Y）</td><td>$7.18</td><td>30x</td><td>$215</td><td>$6.46（×0.9）</td><td>18x</td><td>$116</td><td><span class="tag red">−0.57x</span></td></tr>
+<tr><td>中期（FY+2，2Y）</td><td>$9.51</td><td>30x</td><td>$285</td><td>$8.56（×0.9）</td><td>20x</td><td>$171</td><td><span class="tag red">−0.34x</span></td></tr>
+<tr><td>長期（FY+5，5Y）</td><td>$7.50（cycle 反轉後 normalized）</td><td>30x</td><td>$225</td><td>$5.00</td><td>18x</td><td>$90</td><td><span class="tag red">−0.47x</span></td></tr>
+<tr><td>Mgmt FY26 target high $11 ×35x</td><td>$11</td><td>35x（cycle peak）</td><td>$385</td><td>$8.00</td><td>20x</td><td>$160</td><td><span class="tag yellow">0.22x</span></td></tr>
+</tbody>
+</table>
+
+<h4>R:R 壓力測試（QC-29 4 情境）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr></thead>
+<tbody>
+<tr><td>Base（30x 合理 PE）</td><td>共識 EPS + cycle midpoint PE</td><td>−0.57x</td><td>−0.34x</td></tr>
+<tr><td>壓力 A：成長率 −10%</td><td>FY27 EPS $9.51 → $8.56</td><td>−0.65x</td><td>−0.45x</td></tr>
+<tr><td>壓力 B：合理 PE −20%（30x → 24x）</td><td>—</td><td>−0.78x</td><td>−0.65x</td></tr>
+<tr><td>壓力 C：vs Advantest 收斂 50%（PE 32x → 26x）</td><td>—</td><td>—</td><td>−0.55x</td></tr>
+<tr><td>Bull（mgmt FY26 high $11 × 35x）</td><td>$11 × 35x</td><td>0.22x</td><td>—</td></tr>
+</tbody>
+</table>
+<p class="note">壓力測試通過率：<strong>0/4</strong>（Base 與 3 個壓力情境 R:R 全負）。<strong>所有時距 R:R 為負</strong>，反映現價 $345 已透支 mgmt FY26 target 中位 + cycle peak compression 已 priced in。<strong>4w +16.85% / 8w +12.11% / 過去 12w +120% 漂移</strong>把 mid-term upside 全部消化完。Bull 情境（mgmt $11 high × 35x = $385）為唯一正 R:R 但機率 25-30%。</p>
+<div class="reasoning">
+所有時距 R:R 負主因：W-2 高 $418 已 price 進 mgmt FY26 target high；4/29 -17% gap down 是市場開始 de-rate 訊號
+即使 Bull 情境（mgmt high + 35x peak PE），upside 僅 +11.5% vs 下行空間 -54%（至 Bear $160）
+→ 對下游 §1 implication：B 觀望強烈推遲進場；現價追高 R:R 極不對稱
+</div>
+
+<h3>§2.F Pure MA 狀態機（六狀態）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$345.42</td></tr>
+<tr><td>W52 / 斜率</td><td>$185.45 / +46.19%（極端強正，price-to-MA 1.86x）</td></tr>
+<tr><td>W104 / 斜率</td><td>$152.30 / +21.95%（強正）</td></tr>
+<tr><td>W250 / 斜率</td><td>$124.91 / +9.11%（正）</td></tr>
+<tr><td>條件檢驗</td><td>價 &gt; W52 &gt; W104 &gt; W250 ✅；W250 斜率 +9.11% &gt; 3% ✅</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>✅ 強勢進場</strong>（機械判定）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+<tr><td>盲點 2 救援</td><td>不適用（不在 ❌ 狀態）</td></tr>
+<tr><td>Bollinger 位置</td><td>$345.42 vs 中軌 $287.17 = +20.3% 上方；上軌 $410.86 = +18.9% 仍有空間（W-2 高 $418 已觸及上軌）</td></tr>
+<tr><td>QC-22 漂移</td><td>4w +16.85%（觀察線 10% 以上、紅線 20% 以下，警示）/ 8w +12.11%（仍偏高）</td></tr>
+<tr><td>QC-24 Intraday 訊號</td><td>4/27 H $421.44 - C $402 = -4.6%（接近 shooting star，未過 5% 門檻）；<strong>4/29 gap down -17%（O $314 vs prev C $380）</strong>；4/30-5/01 反彈 +12% 至 $345</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+MA 機械全強正、價遠高於 W250（2.76x）→ ✅ 強勢進場
+但 W52 斜率 +46.19% 為極端陡峭（健康通常 +15-25%）= 動能末段警示
+4/29 -17% 急跌 + 4w +16.85% 漂移 + Bollinger 中軌上方 +20% = stretched 但未到 SNDK 級極端
+→ 對下游 §2 H implication：MA ✅ 但極度 stretched，QC-31「MA 過熱」觸發 B 觀望
+</div>
+
+<h3>§2.H 綜合訊號燈</h3>
+
+<h4>大盤豁免層</h4>
+<table>
+<tbody>
+<tr><th>對應大盤</th><td>SPX (^GSPC)</td></tr>
+<tr><th>大盤現價 / W104</th><td>7,230 / 6,133</td></tr>
+<tr><th>系統性風險</th><td>否</td></tr>
+<tr><th><strong>豁免係數</strong></th><td><strong>× 1.0（正常）</strong></td></tr>
+</tbody>
+</table>
+
+<h4>本標的綜合訊號</h4>
+<table>
+<thead><tr><th>維度</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier（§2 B 調整後）</td><td>B</td></tr>
+<tr><td>gate（§2 D）</td><td>🟠 偏貴 → 救援後 🟡（cycle peak compression 警示）</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢但極度 stretched（4w +17% + 4/29 -17% gap down）</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期（cycle peak compression 警示）</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+本表 §2 H 步驟初判：B + 🟠/🟡 + ✅ + 🟡 + 正常 → B
+QC-31 cross-check：thesis 完整（HBM4 / merchant GPU / AI test）+ 品質 B 級 ≥ 6 + R:R 全負 + 估值偏貴 + Bollinger 中軌上方 → 「時機不到」B 觀望
+非 C 因 thesis 未失敗（無 quality &lt; 6 / 無侵蝕信號 ≥ 3 / trap 🟡 not 🔴 / AI 🟢 not 🔴）
+→ 最終 final_signal = B（觀望，等回檔 + Q2 actual 確認）
+</div>
+
+<h4>長期展望（3-5 年定性）</h4>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8.A</td><td><strong>cycle 中後段</strong>（HBM4 ramp 2026-2027 + merchant GPU 多年 share-take 為 thesis 主軸；2028+ cycle 反轉風險）</td></tr>
+<tr><td>護城河趨勢</td><td>§9.D</td><td><strong>加深（短期）</strong>（HBM 50%+ + merchant GPU 突破 = 結構性新護城河 optionality）；長期 ATE 雙寡占穩定</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong>（不適合作為 5+ 年 buy-and-hold；ATE cycle play 性質）</td></tr>
+</tbody>
+</table>
+<p>🟢 順風 + B 級護城河 8/10 + Q1 三項紀錄 (Rev/GM/OM) + merchant GPU 首次突破。估值 🟠 偏貴（救援後 🟡，FPE 突破 5Y peak）+ Pure MA ✅ 但極度 stretched（4w +17% + 4/29 -17% gap down）+ R:R 三時距全負。<strong>建議等 (a) Q2 2026 actual 印證 / (b) 回測 BB 中軌 $287 (-17%) / (c) 4/29 急跌後股價穩定 1-2 個月後再評估</strong>；現價追高 R:R 不對稱。</p>
+</section>
+
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要</h2>
+
+<div class="three-col">
+
+<div class="role-card role-bull">
+<h4>多頭辯護人｜Munger 模式</h4>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>結構性 ATE 雙寡占（§9）</td><td>TER + Advantest 80% 合計市占；Q1 三項紀錄（Rev $1.28B / GM 60.9% / OM 37.5%）；ATE 為 AI 必需基礎建設</td></tr>
+<tr><td>2</td><td>HBM4 + merchant GPU 雙引擎（§8）</td><td>HBM 測試 &gt; 50% market share、HBM3E → HBM4 ramp 是 1.5-2x test-time step-up；首次 merchant GPU production order = 突破 Advantest 領先，多年 share-take ramp（low single → 30-70% midterm）</td></tr>
+<tr><td>3</td><td>估值（§13，mgmt 角度）</td><td>FY26 mgmt model $9.50-11 EPS × 35x cycle peak PE = $333-385 → 高端 +11.5% upside；Reverse DCF 隱含 12-13% FCF CAGR 與共識一致</td></tr>
+</tbody>
+</table>
+<p><strong>多頭最強一句話：</strong>「Q1 三項紀錄 + 首次 merchant GPU production order + HBM 50%+ market share 同時兌現，這是 ATE 史上罕見的雙結構性 share-take + cycle 共振；mgmt 已給 FY26 target $9.50-11 EPS，高端兌現後仍有 +11.5% 至 $385。」</p>
+</div>
+
+<div class="role-card role-bear">
+<h4>空頭檢察官｜Burry 模式</h4>
+<table>
+<thead><tr><th>#</th><th>虧損觸發情境</th><th>對應風險</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>cycle peak 已迫近</td><td>Q1 GM 60.9% / OM 37.5% record + Q2 sequential -6% Rev / -19% EPS guide = mgmt 暗示 1H 為峰值；歷史 TER 2021 cycle peak 後 18M EPS −59% / 股價 −58%</td></tr>
+<tr><td>2</td><td>4w +17% / 4/29 -17% gap down 動能末段</td><td>4/27 H $421（接近 BB 上軌）→ 4/29 L $302（兩日 -28%）= 動能末段急跌訊號；Bollinger 中軌上方 +20%；FPE FY+2 36.3x 突破 5Y peak 35x</td></tr>
+<tr><td>3</td><td>Munger 拒絕的 cycle 商品</td><td>ATE 為週期性商品；ROIC 從 39% 跌至 17% 一次（2021→2023）；Robotics 段 $91M 規模太小（7% mix）+ UR/MiR turnaround；Mobile 端 weak、Memory 2H visibility 有限</td></tr>
+</tbody>
+</table>
+<p><strong>空頭最大威脅：</strong>「現價 $345 已 price 進 mgmt FY26 target 中位 + cycle peak PE 32-35x；任何 Q3-Q4 sequential decline 訊號 + Advantest 反攻 + HBM ASP 鬆動都可能觸發 -25% 至 -40% 急跌（至 $200-260 區間）；歷史 TER cycle peak 後 18M 跌幅 −58%。」</p>
+</div>
+
+<div class="role-card role-arb">
+<h4>估值仲裁員｜Damodaran 模式</h4>
+<table>
+<thead><tr><th>維度</th><th>判定</th></tr></thead>
+<tbody>
+<tr><td>隱含預期可信度</td><td><strong>5 / 10</strong></td></tr>
+<tr><td>核心依據（Reverse DCF）</td><td>當前市值 $54B 隱含 10Y FCF CAGR ~13-15%，需 cycle 例外延長至 2028+ 才合理；ATE 歷史 cycle 通常 5-7 季 = 機率 30-40%</td></tr>
+<tr><td>歷史對標</td><td>類似階段：Advantest 2021 cycle peak FPE 32x → 2023 EPS −58% / 股價 −67%；TER 同期歷史對應 −58%；本標的進入相同階段</td></tr>
+</tbody>
+</table>
+<p><strong>仲裁員一句話：</strong>「市場用 36x FY27 EPS 反映 cycle 例外延長 + merchant GPU share-take 雙利好；若兌現 → upside 至 $385；若按歷史 cycle 長度 → 大幅回檔機率 60-70%。」</p>
+</div>
+
+</div>
+</section>
+
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Teradyne 解決的是「<strong>每顆半導體晶片在出廠前必須驗證功能正常</strong>」這個半導體產業誕生以來的核心問題。每片 GPU、每顆 CPU、每個 HBM stack、每個 AI ASIC 在 wafer probe 與 final test 階段都需要 ATE。若 TER 明天消失，全球 SoC 測試產能短期損失 30-35%，但 Advantest（Japan）會在 12-18 個月內擴產填補（價格短期 +30-50%、長期回穩）。<strong>TER 並非「不可替代」，而是「ATE 雙寡占」之一 — 與 quality compounder 的差異：TER 是 cyclical commodity-test 業務，cycle peak 時 ROIC 39%、cycle trough 時 17%。商業模式介於商品（cyclical）與必需品（不可替代）之間。</strong></p>
+
+<h3>護城河形成歷史路徑（25 年 milestone）</h3>
+<table>
+<thead><tr><th>年份</th><th>事件</th><th>對護城河貢獻</th></tr></thead>
+<tbody>
+<tr><td>1960</td><td>TER 成立（Alex d'Arbeloff、Nick DeWolf）= ATE 誕生基地</td><td>+1（產業創立者）</td></tr>
+<tr><td>1980-2000</td><td>FLEX / J750 / Catalyst 平台成熟，奠定 SoC 測試基礎</td><td>+1.5</td></tr>
+<tr><td>2000-2010</td><td>Mobile（Apple、Qualcomm）測試驅動 cycle</td><td>+0.5（cycle 受益）</td></tr>
+<tr><td>2014</td><td>UltraFLEX 平台上線</td><td>+0.5</td></tr>
+<tr><td>2015</td><td>收購 Universal Robots（協作機器人）= 進入 Robotics 第二曲線</td><td>+0.5</td></tr>
+<tr><td>2018-2020</td><td>5G + Apple A 系列 SoC 測試領先</td><td>+0.5</td></tr>
+<tr><td>2021</td><td>Cycle peak：ROIC 39%、營收 $3.7B、EPS $5.78</td><td>+0.5（cycle 短期）</td></tr>
+<tr><td>2022-2023</td><td>Cycle trough：ROIC 17%、Apple 切換至 Advantest，丟失 SoC mobile 領先地位</td><td>−1（cycle 反轉 + 競爭失利）</td></tr>
+<tr><td>2024-2025</td><td>HBM 測試取得 50%+ 市占（Advantest 過去領先），AI ASIC 測試起飛</td><td>+1</td></tr>
+<tr><td>2026/01-Q1</td><td>Q1 三項紀錄 + 首次 merchant GPU production order = 突破 Advantest 領先</td><td>+1</td></tr>
+<tr><td><strong>累積分數</strong></td><td colspan="2"><strong>~6.0 + AI 結構性受益 +2 = 8（目前位置）</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+60+ 年路徑顯示：TER 護城河 cycle 強化 / 反轉切換明顯（每次 cycle peak +0.5、trough -0.5 至 -1）
+近 18 個月（2024-2026 Q1）淨貢獻 +2（HBM + merchant GPU 突破）= cycle + 結構性新引擎
+→ 對下游 §9 implication：護城河 8/10 = B 級高端，未及 9-10 因 ATE cyclical 結構限制
+</div>
+
+<h3>逆向推演（Munger Inversion）三維展開</h3>
+
+<h4>① 技術維度</h4>
+<ul>
+<li><strong>內建 BIST（Built-in Self-Test）取代外部 ATE</strong>（時間軸：2028-2032）：若 NVDA / Apple silicon 內建測試模組成熟，外部 ATE 需求結構性壓縮。歷史對標：<strong>外部 chipset → 整合 SoC（2010-2020）</strong>，IDT / IDTI 等市值蒸發。TER 反制：cooperate 方向，整合至 ATE 平台</li>
+<li><strong>AI 自動化測試取代 ATE</strong>（時間軸：2030+）：若機器學習主導晶片測試，ATE 變成軟體 + ML 平台。TER 反制：已併購 Universal Robots + AI test platform R&D</li>
+<li><strong>3D / 異質整合測試需求</strong>：HBM stack test 已是高需求，但若 chiplet test 標準化（CXL、UCIe），TER 需持續投入</li>
+</ul>
+
+<h4>② 管理維度</h4>
+<ul>
+<li><strong>過度回購 cycle peak 股票</strong>：CEO Greg Smith Q1 24 接任，目前 capital 紀律 OK（Q1 buyback de minimis）；若 cycle peak 大量回購會是 Boeing 模式</li>
+<li><strong>Robotics 段拖累</strong>：UR / MiR 仍未 ramp 至有意義規模（$91M / 7% mix）；若繼續虧損可能拖累整體 EPS</li>
+<li><strong>缺乏 founder 持續紀律</strong>：TER 已是職業 CEO 多代，無 dual-class founder lock；治理分散</li>
+</ul>
+
+<h4>③ 結構維度</h4>
+<ul>
+<li><strong>ATE cycle 本質</strong>：每 5-7 季 cycle 切換一次；cycle peak 時 GM 60%+、cycle trough 時 GM 55%；EPS swing 50-60%</li>
+<li><strong>Apple-style customer 集中</strong>：歷史 Apple 占 SoC test 30%+；2022-2023 切換至 Advantest 後 TER 受傷大；目前 AI ASIC 多客戶分散風險</li>
+<li><strong>地緣政治</strong>：對中國半導體業曝險中等（&lt; 10% 直接，但間接影響 mobile / IDM）</li>
+</ul>
+</section>
+
+<section class="card" id="s5">
+<h2>§5 投資論點錨定（v12.2 thesis 升級主場）</h2>
+
+<h3>A. 持有期與時間軸宣告</h3>
+<table>
+<tbody>
+<tr><th width="30%">預設持有期</th><td><strong>6-18 個月（cycle play）</strong>，超過 24 個月面臨 cycle 反轉風險</td></tr>
+<tr><th>主要驅動時間軸的理由</th><td>(1) ATE cycle 歷史 5-7 季，本輪 2024Q1 起算為第 5 季（已進入後半段）；(2) HBM4 ramp 2026H2-2027 為核心 thesis 驅動；(3) merchant GPU share-take 多年（low single → 30-70% midterm）需 24-36 個月驗證；(4) 2028+ cycle 反轉風險顯著上升</td></tr>
+<tr><th>訊號 vs 噪音</th><td>HBM 測試 ASP、merchant GPU production order ramp、SoC AI compute 占比、Memory Test sequential = 訊號；單季營收波動、Robotics 段 = 噪音</td></tr>
+</tbody>
+</table>
+
+<h3>B. 三個核心假設 + 三層時間軸</h3>
+<div class="hypothesis-box">
+<table>
+<thead><tr><th width="5%">#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td>HBM4 ramp 持續至 2027H1，Memory Test Rev 維持 +20%+ YoY</td><td>FY27 Memory Test ≥ $250M / Q + HBM3E → HBM4 transition 在進度</td><td>FY30 Memory Test ≥ $1.5B（vs FY26 ~$0.8B）；HBM 50%+ share 維持</td><td>FY36 Memory Test 占 25%+；HBF 整合納入 portfolio</td></tr>
+<tr><td>H2</td><td>merchant GPU 訂單持續擴大，from low single → 15%+ share by FY28</td><td>FY27 merchant GPU 訂單 ≥ $200M / 累計 + 多客戶</td><td>FY30 merchant GPU 25%+ share + multi-platform</td><td>FY36 merchant GPU + AI ASIC 為 SoC 主流（vs mobile）</td></tr>
+<tr><td>H3</td><td>市場願維持 FPE 28-36x 對 cycle peak EPS（FY27 $9.51）</td><td>FY27 FPE 維持 25-35x 區間，不單季崩跌至 18-20x</td><td>cycle 反轉後 EPS normalized 至 $7-8，PE 擴張至 25-30x（mid-cycle）</td><td>長期合理 PE 趨向 22-28x</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>B'. 12 個月前 DD 對照</h3>
+<div class="hypothesis-box">
+<p><strong>狀態：本份為 TER 首份 v12.2+ DD（Inception 2026-05-04），進場未滿一年。</strong></p>
+<p>本欄位將於 2027-05-04 起首次有資料對照。</p>
+<p class="note"><strong>過渡銜接</strong>：2026-04-29 v12.1 DD（前一份）的 H1/H2/H3 為「HBM 測試 +20%+ / merchant GPU 突破 / FPE 25-32x」。Q1 2026 已超預期兌現（HBM Robust、首次 merchant GPU production order、FPE 36.3x 突破）→ <strong>v12.1 三假設皆 🟢 兌現</strong>，但 FPE 上漲至 36.3x 已突破上限。v12.2 升級 H3 區間至 28-36x。</p>
+</div>
+
+<h3>C. 三個最可能推翻論點的風險（v12.2 加時間尺度分層）</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>Advantest 反攻 SoC test + merchant GPU 競爭</td><td>H1, H2</td><td><span class="tag yellow">中期（2-3 年）</span></td><td>Advantest 季度市占、NVDA / AMD 公開供應商</td><td>連 2 季 TER SoC market share 流失 &gt; 5pp</td></tr>
+<tr><td>R2</td><td>cycle peak 後 EPS / Rev sequential decline</td><td>H1, H3</td><td><span class="tag blue">短期（12 月內）</span></td><td>季度 EPS、Memory Test Rev YoY</td><td>連 2 季 EPS QoQ 持平或下滑（從 Q1 $2.56 鬆動）</td></tr>
+<tr><td>R3</td><td>Mobile 端 weak + Memory pricing 壓力</td><td>H1</td><td><span class="tag yellow">中期（2-3 年）</span></td><td>Mobile SoC test、HBM ASP</td><td>連 2 季 Mobile SoC YoY 持平 + HBM ASP MoM 持平</td></tr>
+<tr><td>R4</td><td>Robotics 段持續 underperform</td><td>—</td><td><span class="tag red">長期結構（5+ 年）</span></td><td>UR + MiR 合計營收 / OI margin</td><td>FY28 仍 &lt; $500M Rev 或 OM &lt; 5%</td></tr>
+<tr><td>R5</td><td>BIST / 內建測試取代外部 ATE</td><td>長期</td><td><span class="tag red">長期結構（5+ 年）</span></td><td>NVDA / Apple BIST 模組進度</td><td>2030+ 主流 chip 內建測試模組 ≥ 70%</td></tr>
+</tbody>
+</table>
+
+<h3>D. 邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>問題</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>事件對 6-18 個月 cycle play 軌道有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（HBM）、H2（merchant GPU）、H3（PE 維持）哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>對該假設是 +強化 / 0 無關 / −削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否到達 §1 監測指標的觸發閾值？</td></tr>
+</tbody>
+</table>
+
+<h3>E. 可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td><strong>進場（首批，極嚴格）</strong></td><td>(1) 4w 漂移收斂至 ±10% 內 + (2) 股價回測至 BB 中軌 $287 以下（−17%）+ (3) Q2 2026 actual 兌現 GM ≥ 60% + EPS ≥ $1.95</td><td>建倉首批 30%（占目標倉位，B 級限 15%）</td></tr>
+<tr><td><strong>加碼至底倉</strong></td><td>H1 + H2 在 Q3/Q4 持續驗證（HBM Memory Test +20%+ 連 2 季 + merchant GPU 訂單擴大）</td><td>加碼至 100%（B 級底倉 15% 滿格）</td></tr>
+<tr><td><strong>減碼</strong></td><td>(1) Memory Test sequential 持平或下滑連 1 季；或 (2) Advantest SoC 市占反攻 &gt; 5pp；或 (3) 股價突破 38x × FY27 EPS = $361</td><td>減至 50%</td></tr>
+<tr><td><strong>撤退</strong></td><td>(1) Q3 actual EPS &lt; $1.30 + Q4 sequential decline = cycle peak confirmed；(2) Advantest 取得 NVDA Rubin merchant GPU 主供 → thesis 受傷</td><td>清倉 70-100%</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card" id="s6">
+<h2>§6 即時財報情報（Q1 2026, 2026-04-28 盤後公布）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr></thead>
+<tbody>
+<tr><td>Total Revenue</td><td><strong>$1,282M</strong></td><td>$1,210-1,222M</td><td><span class="tag green">Beat +5-6%</span></td><td>+87% YoY</td></tr>
+<tr><td>Non-GAAP EPS</td><td><strong>$2.56</strong></td><td>$2.04-2.12</td><td><span class="tag green">Beat +21-26%</span></td><td>+349%（base 失真）</td></tr>
+<tr><td>GAAP EPS</td><td>$2.53</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Non-GAAP Gross Margin</td><td><strong>60.9%</strong></td><td>—</td><td><span class="tag green">Record</span></td><td>vs 5Y avg 57-59%</td></tr>
+<tr><td>Non-GAAP Op Margin</td><td><strong>37.5%</strong></td><td>—</td><td><span class="tag green">Record</span></td><td>vs 2021 peak 32.4%</td></tr>
+</tbody>
+</table>
+
+<h4>業務段拆解（Q1 2026）</h4>
+<table>
+<thead><tr><th>業務段</th><th>Q1 Rev</th><th>YoY</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td><strong>Semiconductor Test</strong></td><td><strong>$1,111M</strong></td><td>大幅擴張</td><td>首次 &gt; $1B</td></tr>
+<tr><td>— SoC Test</td><td>~$882M</td><td>—</td><td>"Compute = ~75% of SoC"（mgmt）= 結構性轉折</td></tr>
+<tr><td>— Memory Test</td><td>~$203M</td><td>—</td><td>"Robust HBM and DRAM" - 接近 record</td></tr>
+<tr><td>Product Test (System Test)</td><td>$80M</td><td>—</td><td>storage / defense</td></tr>
+<tr><td>Robotics (UR + MiR)</td><td>$91M</td><td>+32%</td><td>連 4 季 sequential 成長；AI 相關 = 15% mix</td></tr>
+<tr><td><strong>AI 曝險</strong></td><td colspan="3"><strong>~70% total revenue</strong> 為 AI 相關（mgmt 揭露）</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵戰略動作 - Merchant GPU 突破</h4>
+<p><strong>引述 mgmt（Greg Smith CEO）：</strong>「We received our first multi-system production test orders for merchant GPU in Q1… systems to ship, be installed and be in production in Q2.」</p>
+<p>這是突破 Advantest 在 Apple silicon / mobile SoC 領先地位的多年戰略訊號。Mgmt 框定為「low single digits in 2026 → 30-70% range over the midterm」（多年 ramp）。</p>
+
+<h4>Q2 2026 Forward Guidance（⚠️ Sequential Decline）</h4>
+<table>
+<thead><tr><th>項目</th><th>Guide</th><th>QoQ 隱含</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$1,150M - $1,250M（mid $1,200M）</td><td><strong>−6% QoQ</strong>（vs Q1 $1,282M）</td></tr>
+<tr><td>Non-GAAP EPS</td><td>$1.86 - $2.15（mid $2.00）</td><td><strong>−22% QoQ</strong>（vs Q1 $2.56）</td></tr>
+<tr><td>FY26 mgmt model</td><td>Rev $6B / Non-GAAP EPS $9.50-11</td><td>1H = 55-60%（front-loaded）</td></tr>
+</tbody>
+</table>
+<p class="warning-box"><strong>⚠️ 1H peak 隱憂：</strong>mgmt 確認「2H limited visibility / order lumpiness」、「mobile a bit weaker」、「memory pricing/availability 壓力」。Q2 sequential decline 是市場 4/29 -17% 急跌的核心原因。</p>
+
+<h4>QC-27：Revenue vs OI Divergence</h4>
+<table>
+<tbody>
+<tr><td>Revenue YoY</td><td>+87%</td></tr>
+<tr><td>Non-GAAP OI YoY</td><td>+250%（est, OM 從 ~22% → 37.5%）</td></tr>
+<tr><td>Divergence</td><td><span class="tag green">−163pp（OI 成長遠快於 Rev = margin 強勢擴張）</span></td></tr>
+<tr><td>判斷</td><td><strong>正面 divergence 極強</strong>，cycle peak 規模效益 + AI mix（HBM / merchant GPU 高 GM）+ 低 Capex （Q1 $64.7M）</td></tr>
+</tbody>
+</table>
+
+<h4>QC-28：絕對美元 vs 對手（Advantest）</h4>
+<table>
+<thead><tr><th>項目</th><th>TER Q1'26</th><th>Advantest（est, FYE Mar）</th></tr></thead>
+<tbody>
+<tr><td>季度 Rev</td><td>$1.28B</td><td>~$1.5-1.7B</td></tr>
+<tr><td>YoY</td><td>+87%</td><td>+30-50%</td></tr>
+<tr><td>Memory Test market share</td><td>&gt; 50%（HBM）</td><td>&lt; 50%</td></tr>
+<tr><td>SoC Test 趨勢</td><td>+ merchant GPU 首次突破</td><td>過去 mobile/Apple 領先（持平）</td></tr>
+<tr><td>判斷</td><td colspan="2"><strong>TER 正在 ATE 雙寡占中執行 share-take</strong>（HBM 已過半 + merchant GPU 起步）；Advantest 仍 mobile / Apple 主力但 share 受到挑戰</td></tr>
+</tbody>
+</table>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<thead><tr><th>假設</th><th>邊際方向</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（HBM ramp + Memory +20%+）</td><td><span class="tag green">＋強化</span></td><td>Memory Test $203M robust，接近 record</td></tr>
+<tr><td>H2（merchant GPU 突破 + share-take）</td><td><span class="tag green">＋強烈強化</span></td><td>首次 production order, mgmt 公開 multi-year ramp 框架</td></tr>
+<tr><td>H3（FPE 維持 28-36x）</td><td><span class="tag red">−削弱</span></td><td>FPE 已觸 36.3x 上限，未來上修空間有限</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：</strong>樂觀但謹慎。CEO Greg Smith 強調 merchant GPU 突破 + HBM4 ramp + AI compute；同時對 1H peak / 2H visibility 直白承認</li>
+<li><strong>Forward Guidance：</strong>Q2 sequential decline mid-point -6% Rev / -19% EPS；FY26 model 維持 $9.50-11；但拒絕公開更新 2026 TAM = sustainability concern 訊號</li>
+<li><strong>刻意強調的主題：</strong>「first merchant GPU production orders」、「low single → 30-70% midterm」、「AI compute = 75% of SoC」 — share-take thesis 主軸</li>
+<li><strong>刻意迴避的問題：</strong>(1) 拒絕更新 2026 TAM；(2) Q3-Q4 sequential 軌跡細節；(3) 具體 NVDA / AMD design win share — 這三個迴避是市場 4/29 急跌的潛在原因</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>HBM4 ramp 2026H2-2027 + merchant GPU + AI ASIC（NVDA / AMD / Marvell / AVGO custom / Google TPU）多客戶分散 = 結構性需求廣度</li>
+<li><strong>供給端：</strong>ATE Capex 4-5% Rev（asset-light）；TER + Advantest 雙寡占穩定</li>
+<li><strong>競爭格局：</strong>TER share-take HBM 50%+ + merchant GPU 首次突破；Advantest 仍 mobile / Apple silicon 領先</li>
+<li><strong>對同業連帶推論：</strong>Advantest（6857.T）受惠 AI test cycle 但 share 受到挑戰；NVDA / AMD / Marvell / AVGO 為 TER 直接客戶</li>
+</ul>
+</section>
+
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 強制搜尋協議結果</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源 / n=分析師</th></tr></thead>
+<tbody>
+<tr><td>基期 FY25 EPS（GAAP）</td><td>$3.47</td><td>10-K 已公布</td></tr>
+<tr><td>FY+1 (FY26E) EPS</td><td>$7.18</td><td>yfinance, n=16, growth +81%（mgmt model mid $10）</td></tr>
+<tr><td>FY+2 (FY27E) EPS</td><td>$9.51</td><td>yfinance, n=17, growth +33%</td></tr>
+<tr><td>FY+3 (FY28E) EPS（§8 邏輯推導）</td><td>~$8.00（cycle 反轉開始）</td><td>FY27 為 cycle peak，FY28 normalize 開始（mobile 復甦不及 + Memory ASP 鬆動）</td></tr>
+<tr><td>EPS Trend 修正軌跡（90 天）</td><td>FY26: $5.29 → $7.18 (+36%)；FY27: $6.97 → $9.51 (+36.4%)</td><td>大幅上修</td></tr>
+<tr><td><strong>3Y EPS CAGR</strong></td><td>~32%（FY25 → FY28，cycle peak 邊緣）</td><td>(8.0/3.47)^(1/3) − 1</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+3Y CAGR 32% 為 cycle peak edge 數字，FY28 後將 normalize
+EPS Trend 90d +36% 上修反映 mgmt model + Q1 兌現 + merchant GPU 突破
+→ 對下游 §13.2 PEG implication：CAGR 32% × Fwd PE 36.3x = PEG 1.13
+</div>
+
+<h3>Munger 三維護城河強制搜尋結果</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="tag green">✅</span></td><td>FY25 14.1%；Q1 alone 估 ~30%（cycle peak）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%</td><td><span class="tag green">✅</span></td><td>5 年均 ~17-22%；最低谷 14%（FY25 cycle 過渡）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%</td><td><span class="tag green">✅</span></td><td>TTM 16.3%；5Y avg 27.3%；2021 peak 39%</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年中 ≥ 70% 達 &gt; 15%</td><td><span class="tag yellow">⚠️</span></td><td>10/10 年達 &gt; 15%（cycle 谷底仍 17%），但 cycle 標準差大（39% peak vs 17% trough）</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年持續改善</td><td><span class="tag yellow">⚠️</span></td><td>GM 範圍 55-61%，cyclical 但長期略上行</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%</td><td><span class="tag green">✅</span></td><td>FY25 7%；長期 ~5%（asset-light test 商業模式）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="tag green">✅</span></td><td>32%（cycle peak 內）</td></tr>
+<tr><td>PEG（FY+2）</td><td>&lt; 2</td><td><span class="tag green">✅</span></td><td>1.10</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7</td><td><span class="tag green">✅</span></td><td>D/E 0.10（基本無 debt）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>—</td><td><span class="tag green">✅</span></td><td>Cash $294M ≈ Debt $283M（淨現金 +$11M）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分</td><td><span class="tag green">✅ 邊緣</span></td><td>8/10</td></tr>
+</tbody>
+</table>
+
+<p><strong>最大財務弱點：</strong>cycle 商品本質導致 ROIC / GM 標準差大（cycle peak 39% vs trough 17%）；當前 cycle peak GM 60.9% / OM 37.5% 為 record，未來反轉風險。</p>
+
+<p><strong>Munger 三維護城河快速評級：</strong><span class="tag yellow">🟡 兩項達標</span>（ROIC 與資本密集度通過；毛利率定價力 cyclical 標準差大為弱點）。傳遞至 §9 作為護城河 8/10 起點。</p>
+
+<h3>價值陷阱初篩</h3>
+<p>FPE FY+2 36.3x 為 5Y 高分位（&gt; 95%），P/FCF ~120x；觸發 🔴 強制四問：</p>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>過去 3 年 GM 趨勢</td><td>57.4% → 58.5% → 60.9%（cycle 反轉）</td><td>cyclical pattern</td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率</td><td>HBM 從 &lt; 50% → 50%+（擴大）</td><td>無</td></tr>
+<tr><td>Q3</td><td>FCF / NI</td><td>FY24 0.87 / FY25 0.81</td><td>無</td></tr>
+<tr><td>Q4</td><td>分析師共識方向</td><td>過去 90 天 +36% 大幅上修</td><td>無</td></tr>
+</tbody>
+</table>
+<p><strong>初篩結論：</strong>0 紅燈但 ⚠️ <strong>cycle peak compression PE 警告</strong>（peak earnings × peak PE 雙頂訊號）。</p>
+</section>
+
+<section class="card" id="s8">
+<h2>§8 長期成長性評估（v12.2 擴充）</h2>
+
+<h3>A. 成長跑道（Runway）估算 + 5Y/10Y 量化</h3>
+<table>
+<thead><tr><th>業務段</th><th>當前（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th></tr></thead>
+<tbody>
+<tr><td>SoC Test（含 merchant GPU）</td><td>~$3.5B（FY26 含 AI compute 75%）</td><td>~$5B（CAGR 7%；merchant GPU 25%+ share）</td><td>~$7B</td></tr>
+<tr><td>Memory Test（HBM 主導）</td><td>~$0.8B</td><td>~$1.5B（CAGR 13%；HBM4 / HBF 整合）</td><td>~$2.5B</td></tr>
+<tr><td>System Test</td><td>~$0.3B</td><td>~$0.4B</td><td>~$0.5B</td></tr>
+<tr><td>Robotics</td><td>~$0.4B</td><td>~$0.8B（CAGR 15%）</td><td>~$1.5B</td></tr>
+<tr><td><strong>合計營收</strong></td><td>~$5B</td><td>~$7.7B（總 CAGR 9%）</td><td>~$11.5B（總 CAGR 9%）</td></tr>
+</tbody>
+</table>
+
+<h3>A'. S 曲線位置 + 距飽和年數</h3>
+<table>
+<thead><tr><th>業務段</th><th>S 曲線位置</th><th>距飽和年數</th></tr></thead>
+<tbody>
+<tr><td>SoC Test (AI compute)</td><td>前-中段</td><td>10-15 年</td></tr>
+<tr><td>Memory Test (HBM)</td><td>前段</td><td>15-20 年</td></tr>
+<tr><td>SoC Test (mobile)</td><td>後段（飽和）</td><td>5-10 年</td></tr>
+<tr><td>Robotics</td><td>前段（萌芽）</td><td>15-25 年</td></tr>
+</tbody>
+</table>
+
+<h3>B. 成長品質判斷</h3>
+<p>有機 ~95%；無機 ~5%（小型併購）。定價（HBM ASP +5-10%）+ 量（AI 訂單擴大）雙驅動。</p>
+
+<h3>C. 成長護城河連動評估</h3>
+<p><strong>強化型（cycle 內）</strong>：每多 1 個 merchant GPU production order = TER share 進一步擴大；HBM4 ramp 為 2026-2027 結構性 tailwind。</p>
+
+<h3>D. ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>FY25</th><th>FY22</th><th>5Y avg</th><th>cycle peak (2021)</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>16.3%</td><td>~30%</td><td>27.3%</td><td>39%</td></tr>
+<tr><td>FCF Margin</td><td>14.1%</td><td>13.1%</td><td>17-22%</td><td>~25%</td></tr>
+<tr><td>FCF / NI</td><td>0.81</td><td>0.58</td><td>~0.85</td><td>~0.85</td></tr>
+</tbody>
+</table>
+
+<h3>E. 成長熄火情境壓力測試</h3>
+<table>
+<thead><tr><th>情境</th><th>3Y EPS</th><th>5Y</th><th>10Y</th><th>FY28 EPS</th><th>FY30 EPS</th><th>合理 PE</th><th>跌幅</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>peak then normalize</td><td>—</td><td>cycle 多輪</td><td>$8.00</td><td>$7.00</td><td>30x</td><td>−39%</td></tr>
+<tr><td>Bear A：cycle 提前反轉</td><td>—</td><td>—</td><td>—</td><td>$6.00</td><td>$5.00</td><td>25x</td><td>−64%</td></tr>
+<tr><td>Bear B：mobile weak + Memory 壓力</td><td>—</td><td>—</td><td>—</td><td>$5.00</td><td>$4.00</td><td>20x</td><td>−77%</td></tr>
+<tr><td>Bull：HBM4 + merchant GPU 雙引擎</td><td>—</td><td>—</td><td>—</td><td>$11</td><td>$13</td><td>32x</td><td>+21%</td></tr>
+</tbody>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號類型</th><th>偵測</th><th>數據</th><th>亮燈</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>連續擴張 4 季</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FY25 0.81 / FY24 0.87</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>ATE TAM 持續擴張</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停投資則 3 年內收入下滑</td><td>asset-light，否</td><td>⬜</td></tr>
+<tr><td>cycle peak compression</td><td>PE × EPS 雙頂</td><td>FPE 36.3x × cycle peak EPS</td><td>🟡</td></tr>
+</tbody>
+</table>
+<p><strong>價值陷阱風險評級：</strong><span class="tag yellow">🟡 中度警戒</span>（1 黃，cycle peak compression）</p>
+
+<h3>F. AI 取代風險評級</h3>
+<p><strong>🟢 AI 受益</strong>（評分 9 分）。~70% AI 曝險為 ATE 中最高，HBM4 + merchant GPU 雙引擎。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="tag green">🟢 高確信長期成長</span>（cycle 內）：Runway 5-10 年（HBM4 + merchant GPU）+ 雙寡占穩定 + AI 結構性受益。傳遞至 §13.5 → 基準 PE 25x。</p>
+</section>
+
+<section class="card" id="s9">
+<h2>§9 護城河分析</h2>
+
+<p><strong>評分：8 / 10</strong>（B 級高端，ATE 雙寡占；不在 9-10 級因 cyclical 商品結構限制）。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應：</strong>中等 — 客戶換 ATE 平台需要 12-18 個月認證期</li>
+<li><strong>無形資產：</strong>強 — 60+ 年 ATE 技術領先 + UltraFLEX 平台</li>
+<li><strong>轉換成本：</strong>強 — 一旦 designed-in，客戶轉換成本極高（重新驗證 + test program 重寫）</li>
+<li><strong>規模優勢：</strong>強 — 與 Advantest 雙寡占 80% 合計市占</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>(1) ATE 雙寡占（TER + Advantest 80%）；(2) Apple silicon 後 SoC test 切換至 Advantest 是教訓 — share 可能流失；(3) HBM 測試 50%+ 為新護城河。</p>
+
+<h3>市佔競爭表（ATE，2026）</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>市佔</th><th>3 年趨勢</th></tr></thead>
+<tbody>
+<tr><td>Advantest（6857.T）</td><td>50-58%</td><td>持平至略縮減</td></tr>
+<tr><td><strong>TER</strong></td><td><strong>30-35%</strong></td><td>擴大（HBM + merchant GPU）</td></tr>
+<tr><td>其他</td><td>~15%</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢：擴大（短期 cycle）</h3>
+
+<h3>D. 護城河變遷時間軸</h3>
+<table>
+<thead><tr><th>事件</th><th>年份</th><th>貢獻</th></tr></thead>
+<tbody>
+<tr><td>UltraFLEX 平台</td><td>2014</td><td>+0.5</td></tr>
+<tr><td>Apple A 系列 SoC test 領先</td><td>2018-2020</td><td>+0.5</td></tr>
+<tr><td>Apple 切換至 Advantest</td><td>2022</td><td>−1（mobile share 流失）</td></tr>
+<tr><td>HBM 測試 50%+ 取得</td><td>2024-2025</td><td>+1</td></tr>
+<tr><td>首次 merchant GPU production order</td><td>2026/Q1</td><td>+1</td></tr>
+<tr><td><strong>5Y 累積</strong></td><td colspan="2">+2.0（從 6 → 8）</td></tr>
+</tbody>
+</table>
+
+<h4>未來 5 年（含機率）</h4>
+<table>
+<thead><tr><th>事件</th><th>機率</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>HBM4 ramp 兌現</td><td>75%</td><td>+0.5</td></tr>
+<tr><td>merchant GPU 30%+ share by FY28</td><td>40%</td><td>+1</td></tr>
+<tr><td>Advantest 反攻 SoC test</td><td>25%</td><td>−1</td></tr>
+<tr><td>cycle peak 反轉 2027H2</td><td>65%</td><td>−1（cycle 短期）</td></tr>
+<tr><td><strong>機率加權</strong></td><td colspan="2">+0.1</td></tr>
+</tbody>
+</table>
+
+<h3>E. 對手投入對照</h3>
+<table>
+<thead><tr><th>公司</th><th>FY25 R&D</th><th>R&D / Rev</th></tr></thead>
+<tbody>
+<tr><td><strong>TER</strong></td><td>~$420M</td><td>~13%</td></tr>
+<tr><td>Advantest</td><td>~$520M</td><td>~12%</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<thead><tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>cycle peak (2021)</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>15.9%</td><td>16.8%</td><td>14.1%</td><td>~25%</td></tr>
+<tr><td>EBITDA Margin</td><td>~22%</td><td>~22%</td><td>~25%</td><td>32%</td></tr>
+<tr><td>ROIC</td><td>17%</td><td>17.8%</td><td>16.3%</td><td>39%</td></tr>
+<tr><td>SBC / Revenue</td><td>~3%</td><td>~3%</td><td>~3%</td><td>~3%</td></tr>
+<tr><td>ROE</td><td>17%</td><td>19%</td><td>20%</td><td>~30%</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質</h3>
+<ul>
+<li>FCF/NI: FY25 0.81（healthy）</li>
+<li>OCF $674M / NI $554M = 1.22x（OCF &gt; NI healthy）</li>
+<li>SBC ~3% Rev（穩定）</li>
+</ul>
+
+<h3>回購評估</h3>
+<p>Q1 buyback de minimis ($5.5M)，capital 保留為 M&A / cash buffer；管理層 cycle-aware capital allocation。</p>
+</section>
+
+<section class="card" id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<table>
+<thead><tr><th>領域</th><th>2026</th><th>2031</th><th>2036</th></tr></thead>
+<tbody>
+<tr><td>Total ATE</td><td>$5.6-6.1B</td><td>$8B</td><td>$12B</td></tr>
+<tr><td>Memory Test (HBM)</td><td>$1.5B</td><td>$3B</td><td>$5B</td></tr>
+<tr><td>SoC Test</td><td>$5B</td><td>$7B</td><td>$10B</td></tr>
+</tbody>
+</table>
+
+<h3>議價權</h3>
+
+<h4>對上游</h4>
+<ul>
+<li>晶圓設備供應商分散；TER 議價力中等</li>
+<li>FPGA / ASIC supplier（Xilinx/Altera 等）</li>
+</ul>
+
+<h4>對下游</h4>
+<ul>
+<li>NVDA / AMD / Apple / Marvell / AVGO：客戶議價力中高（規模大），但 TER 為 sole-source 部分產品</li>
+<li>OSAT（Amkor / ASE）：中等議價力</li>
+<li>Foundry（TSMC）：中等議價力</li>
+</ul>
+
+<h4>地理曝險</h4>
+<ul>
+<li>美洲 ~30%（含 Apple、NVDA）</li>
+<li>亞太 ex-China ~50%（台灣 / 韓國 / 日本）</li>
+<li>中國 ~10%（受 export control）</li>
+<li>歐洲 ~10%</li>
+</ul>
+
+<h3>營收組成</h3>
+
+<h4>按業務（FY26E）</h4>
+<table>
+<thead><tr><th>業務</th><th>占比</th><th>OI margin</th></tr></thead>
+<tbody>
+<tr><td>Semi Test</td><td>87%</td><td>40%</td></tr>
+<tr><td>System Test</td><td>6%</td><td>~25%</td></tr>
+<tr><td>Robotics</td><td>7%</td><td>負（recovery 期）</td></tr>
+</tbody>
+</table>
+
+<h4>按客戶集中度</h4>
+<table>
+<thead><tr><th>客戶</th><th>占比</th></tr></thead>
+<tbody>
+<tr><td>NVDA + AMD（AI compute）</td><td>~25-30%</td></tr>
+<tr><td>Apple + Qualcomm（mobile）</td><td>~20%</td></tr>
+<tr><td>Memory（Samsung / SK Hynix / Micron）</td><td>~15%</td></tr>
+<tr><td>其他</td><td>35-40%</td></tr>
+</tbody>
+</table>
+
+<h3>單位經濟</h3>
+<table>
+<thead><tr><th>指標</th><th>當前</th><th>趨勢</th></tr></thead>
+<tbody>
+<tr><td>HBM test time per stack</td><td>10x DRAM</td><td>↑（HBM4 1.5-2x）</td></tr>
+<tr><td>SoC ATE ASP</td><td>$1-3M / system</td><td>↑（Rubin / merchant GPU）</td></tr>
+<tr><td>Robotics Avg Price</td><td>~$30K / unit</td><td>持平</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card" id="s12">
+<h2>§12 公司治理</h2>
+
+<h3>① 股東結構</h3>
+<ul>
+<li>Single-class structure；Insider 0.21% / Inst 97.6%</li>
+<li>無 founder concentration（已歷代職業 CEO）</li>
+<li>CEO Greg Smith（Q1 2024 接任 Mark Jagiela）</li>
+</ul>
+
+<h3>② 資本配置</h3>
+<table>
+<thead><tr><th>項目</th><th>FY24</th><th>FY25</th><th>FY26E</th></tr></thead>
+<tbody>
+<tr><td>Capex</td><td>$198M</td><td>$224M</td><td>~$300M（cycle peak）</td></tr>
+<tr><td>Buyback</td><td>~$200M</td><td>~$30M</td><td>~$50M（保留）</td></tr>
+<tr><td>Dividend</td><td>~$70M</td><td>~$80M</td><td>~$80M</td></tr>
+<tr><td>M&A</td><td>—</td><td>—</td><td>策略性</td></tr>
+</tbody>
+</table>
+
+<h3>③ 管理層薪酬</h3>
+<ul>
+<li>Greg Smith CEO：固定薪 ~$1M + 股權 ~$10M</li>
+<li>結構正常</li>
+</ul>
+
+<h3>④ 內部人交易</h3>
+<p>過去 12 個月例行 RSU vesting，無重大異常；OpenInsider 確認</p>
+
+<h3>SBC</h3>
+<p>~3% Rev，穩定</p>
+
+<h3>QC-19 重大事件</h3>
+<ul>
+<li>無集體訴訟、無 SEC、無 M&A 重大</li>
+<li>2024 CEO 接班（Greg Smith）已順利</li>
+<li><span class="tag green">🟢 過去 12 個月無重大事件</span></li>
+</ul>
+</section>
+
+<section class="card" id="s13">
+<h2>§13 估值診斷</h2>
+
+<h3>13.0 估值體系診斷</h3>
+<table>
+<thead><tr><th>邏輯</th><th>主流？</th></tr></thead>
+<tbody>
+<tr><td>P/E (cycle peak)</td><td>✅ 主流</td></tr>
+<tr><td>PEG</td><td>輔助（cycle 商品 PEG 失效部分）</td></tr>
+<tr><td>EV/EBITDA</td><td>23x cycle peak compression</td></tr>
+</tbody>
+</table>
+
+<h3>13.1 歷史估值分位</h3>
+<table>
+<thead><tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing PE</td><td>64.1x</td><td>14x</td><td>30x</td><td>50x</td><td>&gt; 100%（cycle ramping）</td></tr>
+<tr><td>Forward PE FY+2</td><td><strong>36.3x</strong></td><td>17x</td><td>27x</td><td>35x</td><td><strong>~107%</strong>（突破 5Y peak）</td></tr>
+<tr><td>EV/EBITDA</td><td>46.4x</td><td>10x</td><td>18x</td><td>32x</td><td>&gt; 100%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+FPE 突破 5Y peak 35x = 機械 🔴 過熱
+但 PEG 1.10 在合理區間，反映 mgmt FY26 model 強勁
+→ 對下游 §13.5 implication：估值已 priced in mgmt target 中位 + 部分 share-take 預期
+</div>
+
+<h3>13.2 PEG 診斷</h3>
+<table>
+<tbody>
+<tr><td>FPE FY+2</td><td>36.3x</td></tr>
+<tr><td>3Y CAGR</td><td>32%（cycle peak edge）</td></tr>
+<tr><td>PEG</td><td>1.13</td></tr>
+</tbody>
+</table>
+
+<h3>13.3 Reverse DCF</h3>
+<p>當前市值 $54B 隱含 10Y FCF CAGR ~13-15%，需 cycle 例外延長至 2028+；vs ATE 歷史 cycle 5-7 季 = 機率 30-40%。<strong>隱含預期：🟠 偏激進</strong></p>
+
+<h3>13.4 同業估值比較</h3>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>FPE FY+2</th><th>PEG</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>TER</strong></td><td><strong>$54B</strong></td><td><strong>36.3x</strong></td><td><strong>1.13</strong></td><td><strong>16.3%</strong></td></tr>
+<tr><td>Advantest (6857.T)</td><td>~$70B</td><td>~32x</td><td>~1.0</td><td>~25%</td></tr>
+<tr><td>同業均</td><td>—</td><td>34x</td><td>1.07</td><td>20%</td></tr>
+</tbody>
+</table>
+
+<h3>13.5 估值五角驗證與結論</h3>
+<table>
+<thead><tr><th>工具</th><th>訊號</th></tr></thead>
+<tbody>
+<tr><td>歷史分位</td><td>🔴 過熱（FPE 突破 5Y peak）</td></tr>
+<tr><td>PEG</td><td>🟡 合理（1.13）</td></tr>
+<tr><td>Reverse DCF</td><td>🟠 偏激進</td></tr>
+<tr><td>同業相對</td><td>🟡 持平至略偏貴</td></tr>
+</tbody>
+</table>
+
+<h4>合理長期 PE</h4>
+<ul>
+<li>基準 25x × ROIC 1.10（cyclical 16% 不大幅擴大）× 護城河 1.05（B 級）× AI 1.10 = 31.7x</li>
+</ul>
+
+<p><strong>當前定價判斷：</strong><span class="tag yellow">🟠 偏貴（cycle peak compression）</span>。盲點 1 救援後保留 🟡 解讀但需謹慎。</p>
+
+<h3>5Y 目標價 / R:R QC-36</h3>
+<table>
+<tbody>
+<tr><td>5Y EPS（cycle midpoint）</td><td>$7.50</td></tr>
+<tr><td>長期合理 PE</td><td>30x</td></tr>
+<tr><td><strong>5Y 目標價</strong></td><td><strong>$225</strong></td></tr>
+<tr><td>當前股價</td><td>$345.42</td></tr>
+<tr><td><strong>upside_5y_pct</strong></td><td><strong>−35%</strong></td></tr>
+</tbody>
+</table>
+
+<h3>投資結論（v11.0 完整版）</h3>
+<table>
+<tbody>
+<tr><th>護城河等級</th><td>8/10 → B</td></tr>
+<tr><th>估值燈</th><td>🟠 偏貴 / 救援後 🟡</td></tr>
+<tr><th>Pure MA</th><td>✅ 強勢但極度 stretched</td></tr>
+<tr><th>大盤豁免</th><td>正常</td></tr>
+<tr><th><strong>綜合訊號</strong></th><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+<tr><th>中期 R:R</th><td>−0.34x</td></tr>
+<tr><th>長期 5Y R:R</th><td>−0.47x</td></tr>
+</tbody>
+</table>
+
+<p><strong>最終裁決：</strong>thesis 短期完整（HBM4 + merchant GPU + AI compute test 三引擎兌現中），但 Q1 後 4/29 -17% 急跌 + Q2 sequential decline + FPE 突破 5Y peak + R:R 三時距全負 + cycle peak compression 警示 = <strong>進場時機極差</strong>。<strong>建議等 (a) 4w 漂移收斂至 ±10% 內 + (b) 回測 BB 中軌 $287 (-17%) + (c) Q2 actual 兌現 GM ≥ 60% + EPS ≥ $1.95 三重驗證後分批進場（B 級限底倉 15%）；R1 Advantest 反攻 SoC test / R2 Q3 sequential decline 為核心 cycle 反轉訊號。本標的本質為 ATE cycle play 非 quality compounder，限制底倉 15%。</strong></p>
+</section>
+
+</main>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "TER",
+  "schema": "v12.2",
+  "date": "2026-05-04",
+  "price_at_dd": 345.42,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "觀察期",
+  "moat": "B",
+  "val": "🟠",
+  "ma": "✅",
+  "fpe_fy2": 36.32,
+  "pct_5y": 95,
+  "peg_fy2": 1.10,
+  "upside_short_pct": -37.7,
+  "upside_mid_pct": -17.5,
+  "upside_5y_pct": 0,
+  "stress": {"pass": 0, "total": 4},
+  "moat_score": 8,
+  "growth_durability": 7,
+  "quality_score": 8.0,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "verdict": "觀望",
+  "inception_dd": "DD_TER_20260504.html",
+  "inception_date": "2026-05-04",
+  "next_yoy_review_date": "2027-05-04",
+  "drift_4w_pct": 16.85,
+  "oneliner": "Q1 26 三項紀錄 + 首次 merchant GPU order，但 Q2 guide sequential -6%／-19% + 4/29 -17% gap down｜估值🟠 (FPE 36.3x 突破 5Y peak)·MA✅ stretched｜R:R −0.57x/−0.34x｜訊號 B 觀望，等 BB 中軌 $287。"
+}
+</script>
+
+</body>
+</html>
