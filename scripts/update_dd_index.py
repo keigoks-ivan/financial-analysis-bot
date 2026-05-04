@@ -1169,6 +1169,289 @@ def build_outdated_dd_banner() -> str:
     )
 
 
+# === PM marker injection ======================================================
+
+PM_DIR = DOCS / "pm"
+PM_INDEX_MD = PM_DIR / "INDEX.md"
+
+
+def parse_latest_pm():
+    """Find latest PM_YYYYMMDD.html by filename date, return (path, date_str).
+    Returns (None, None) if no PM files found."""
+    pm_files = sorted(PM_DIR.glob("PM_[0-9]*.html"))
+    if not pm_files:
+        return None, None
+    # Sort by embedded date in filename (last 8 digits before .html)
+    def _pm_date(p):
+        m = re.match(r'PM_(\d{8})\.html$', p.name)
+        return m.group(1) if m else ""
+    pm_files = [f for f in pm_files if _pm_date(f)]
+    if not pm_files:
+        return None, None
+    latest = max(pm_files, key=_pm_date)
+    raw_date = _pm_date(latest)
+    date_str = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}"
+    return latest, date_str
+
+
+def _pm_mtime_cst(path: Path) -> str:
+    """Return file mtime in CST (UTC+8) as 'YYYY-MM-DD HH:MM CST'."""
+    import datetime
+    mtime = path.stat().st_mtime
+    utc_dt = datetime.datetime.utcfromtimestamp(mtime)
+    cst_dt = utc_dt + datetime.timedelta(hours=8)
+    return cst_dt.strftime("%Y-%m-%d %H:%M CST")
+
+
+def inject_pm_last_run(html: str, pm_path: Path) -> str:
+    """Inject PM_LAST_RUN_START/END with file mtime in CST."""
+    try:
+        ts = _pm_mtime_cst(pm_path)
+        new_html = re.sub(
+            r'<!-- PM_LAST_RUN_START -->.*?<!-- PM_LAST_RUN_END -->',
+            f'<!-- PM_LAST_RUN_START -->{ts}<!-- PM_LAST_RUN_END -->',
+            html,
+            flags=re.DOTALL,
+        )
+        return new_html
+    except Exception as e:
+        print(f"WARN: PM_LAST_RUN injection skipped — {e}")
+        return html
+
+
+def inject_pm_holdings(html: str, pm_path: Path, pm_date: str) -> str:
+    """Parse §1 'after rebalance' table in PM HTML and inject PM_HOLDINGS block."""
+    try:
+        text = pm_path.read_text(encoding="utf-8", errors="ignore")
+        pm_filename = pm_path.name
+
+        # Build link to the PM file (strip .html → /pm/<filename>)
+        pm_href = f"/pm/{pm_filename}"
+
+        # Parse the §1 holdings table: look for <thead> with 本週後 column,
+        # then extract rows. We use the table right after "after rebalance" h3.
+        # Structure: <tr><td rowspan="N"><strong>核心 N/N</strong></td><td>TICKER</td>
+        #   ...<td class="num-cell">X%</td><td class="num-cell">Y%</td>...
+        #   <td><span class="signal-Aplus">A+</span>...</td>...</tr>
+        # and <tr><td><strong>現金</strong></td>...<td class="num-cell"><strong>Z%</strong>...</td>
+
+        # Find the table section after "after rebalance"
+        rebalance_anchor = text.find("after rebalance")
+        if rebalance_anchor < 0:
+            rebalance_anchor = text.find("§1")
+        if rebalance_anchor < 0:
+            raise ValueError("Cannot find §1 / 'after rebalance' section")
+
+        table_start = text.find("<table", rebalance_anchor)
+        table_end = text.find("</table>", table_start) + len("</table>")
+        if table_start < 0 or table_end < len("</table>"):
+            raise ValueError("Cannot find holdings table")
+        table_html = text[table_start:table_end]
+
+        # Parse rows with regex
+        # rowspan-group rows: <tr><td rowspan="N"><strong>TYPE N/N</strong></td><td>TICKER...
+        # continuation rows: <tr><td>TICKER...
+        # cash row: <tr><td><strong>現金</strong></td>...
+        row_re = re.compile(r'<tr[^>]*>(.*?)</tr>', re.DOTALL)
+        # Match full <td ...>content</td> keeping the tag attrs
+        full_cell_re = re.compile(r'(<td([^>]*)>)(.*?)</td>', re.DOTALL)
+        signal_re = re.compile(r'class="signal-([^"]+)"[^>]*>([^<]+)<')
+
+        holdings = []  # list of (tier, ticker, pct, signal)
+        cash_pct = ""
+        current_tier = ""
+
+        for row_m in row_re.finditer(table_html):
+            row = row_m.group(1)
+            full_cells = [(m.group(2), TAG_RE.sub("", m.group(3)).strip())
+                          for m in full_cell_re.finditer(row)]
+            # full_cells: list of (attrs, text_content)
+
+            if not full_cells or full_cells[0][1] == "類別":
+                continue  # header row
+
+            # Check for tier group cell (rowspan)
+            tier_m = re.search(r'rowspan[^>]*>.*?<strong>([^<]+)</strong>', row)
+            if tier_m:
+                current_tier = tier_m.group(1).strip()
+
+            cell_texts = [c[1] for c in full_cells]
+            cell_attrs = [c[0] for c in full_cells]
+
+            # Cash row detection — "現金" in first cell text
+            if cell_texts and "現金" in cell_texts[0]:
+                # num-cell columns: attrs contain 'num-cell'
+                num_cell_vals = [cell_texts[i] for i, a in enumerate(cell_attrs)
+                                 if 'num-cell' in a]
+                # 本週後 is second num-cell (index 1)
+                raw_val = num_cell_vals[1] if len(num_cell_vals) >= 2 else (
+                    num_cell_vals[0] if num_cell_vals else "")
+                pct_m = re.search(r'(\d+)', raw_val)
+                cash_pct = pct_m.group(1) + "%" if pct_m else raw_val
+                continue
+
+            # Holdings row: first cell (after possible rowspan) is ticker
+            ticker_cell_idx = 1 if tier_m else 0
+            if len(cell_texts) < ticker_cell_idx + 2:
+                continue
+            ticker = cell_texts[ticker_cell_idx].strip()
+            if not ticker or "現金" in ticker or "類別" in ticker or ticker == "—":
+                continue
+            # Skip rows that start with tier labels (核心/衛星/新進)
+            if any(kw in ticker for kw in ("核心", "衛星", "候選", "§")):
+                continue
+
+            # Find 本週後 % — the second num-cell column
+            num_cell_vals = [cell_texts[i] for i, a in enumerate(cell_attrs)
+                             if 'num-cell' in a]
+            after_pct = ""
+            raw_val = num_cell_vals[1] if len(num_cell_vals) >= 2 else (
+                num_cell_vals[0] if num_cell_vals else "")
+            pct_m = re.search(r'(\d+)', raw_val)
+            if pct_m:
+                after_pct = pct_m.group(1) + "%"
+
+            # Extract signal from the row HTML
+            sig_m = signal_re.search(row)
+            signal = ""
+            if sig_m:
+                sig_class = sig_m.group(1)  # "Aplus", "A", "B", "C", "X"
+                sig_text = sig_m.group(2).strip()
+                # Normalize signal text (might have trailing noise like " (↓)")
+                sig_clean = re.match(r'([A-Z][+]?)', sig_text)
+                if sig_clean and sig_clean.group(1) in {"A+", "A", "B", "C", "X", "S"}:
+                    signal = sig_clean.group(1)
+                elif sig_class == "Aplus":
+                    signal = "A+"
+
+            if ticker and after_pct:
+                holdings.append((current_tier, ticker, after_pct, signal))
+
+        if not holdings:
+            raise ValueError("No holdings parsed from PM HTML table")
+
+        # Build the HTML block
+        lines = []
+        lines.append(f'          <div style="font-size:12px;color:#64748b;margin-bottom:6px">'
+                     f'提案日：{pm_date} · <a href="{pm_href}">詳細→</a></div>')
+        lines.append('          <ul style="padding-left:18px;margin:4px 0;list-style:none;font-size:13px">')
+
+        last_tier_label = None
+        core_count = sum(1 for t, _, _, _ in holdings if "核心" in t)
+        sat_count = sum(1 for t, _, _, _ in holdings if "衛星" in t)
+
+        tier_order = []
+        for tier, ticker, pct, signal in holdings:
+            if tier not in tier_order:
+                tier_order.append(tier)
+
+        first_tier = tier_order[0] if tier_order else None
+        seen_tiers = set()
+        for tier, ticker, pct, signal in holdings:
+            if tier not in seen_tiers:
+                seen_tiers.add(tier)
+                margin = (' style="font-weight:600"' if tier == first_tier
+                          else ' style="font-weight:600;margin-top:6px"')
+                lines.append(f'            <li{margin}>{tier}</li>')
+            sig_str = f" · {signal}" if signal else ""
+            lines.append(f'            <li><strong>{ticker}</strong> {pct}{sig_str}</li>')
+
+        # Cash
+        lines.append('            <li style="font-weight:600;margin-top:6px">現金</li>')
+        if cash_pct:
+            lines.append(f'            <li>{cash_pct}</li>')
+        else:
+            lines.append('            <li>—</li>')
+        lines.append('          </ul>')
+
+        block = "\n".join(lines)
+
+        new_html = re.sub(
+            r'<!-- PM_HOLDINGS_START -->.*?<!-- PM_HOLDINGS_END -->',
+            f'<!-- PM_HOLDINGS_START -->\n{block}\n<!-- PM_HOLDINGS_END -->',
+            html,
+            flags=re.DOTALL,
+        )
+        return new_html
+    except Exception as e:
+        print(f"WARN: PM_HOLDINGS injection skipped — {e}")
+        return html
+
+
+def inject_pm_actions(html: str) -> str:
+    """Parse PM INDEX.md last row's action_summary + note to inject PM_ACTIONS block.
+
+    Uses Strategy B (INDEX.md note column split on <br>) to build bullet list.
+    The note column is col[8] in the last data row.
+    """
+    try:
+        if not PM_INDEX_MD.exists():
+            raise FileNotFoundError(f"{PM_INDEX_MD} not found")
+
+        lines = PM_INDEX_MD.read_text(encoding="utf-8").splitlines()
+        # Find last row that starts with "| 20"
+        last_row = None
+        for line in lines:
+            stripped = line.strip()
+            if stripped.startswith("|") and re.match(r'\|\s*20\d{2}-', stripped):
+                last_row = stripped
+        if not last_row:
+            raise ValueError("No data rows found in PM INDEX.md")
+
+        cols = [c.strip() for c in last_row.split("|")]
+        # cols[0] = '', cols[1]=date, cols[2]=NAV, cols[3]=cash%,
+        # cols[4]=core, cols[5]=sat, cols[6]=action_summary, cols[7]=override,
+        # cols[8]=filename, cols[9:]=note (rejoin if contains |)
+        if len(cols) < 9:
+            raise ValueError(f"Not enough columns in last PM row: {len(cols)}")
+
+        # Note is cols[9] onward (rejoin), fallback to action_summary (cols[6])
+        if len(cols) >= 10:
+            note_raw = "|".join(cols[9:-1]).strip() if len(cols) > 10 else cols[9].strip()
+        else:
+            note_raw = cols[6].strip()  # action_summary fallback
+
+        if not note_raw:
+            note_raw = cols[6].strip()
+
+        # Split note on <br> or <br/> tags to get bullet items
+        items = re.split(r'<br\s*/?>', note_raw)
+        items = [TAG_RE.sub("", item).strip() for item in items]
+        items = [item for item in items if item]
+
+        if not items:
+            # Fallback to action_summary split on "/"
+            action_summary = cols[6].strip() if len(cols) > 6 else ""
+            items = [i.strip() for i in action_summary.split("/") if i.strip()]
+
+        if not items:
+            raise ValueError("No action items found in INDEX.md note or action_summary")
+
+        li_items = "\n".join(
+            f'            <li>{item}</li>'
+            for item in items
+        )
+        block = (
+            '          <ol style="padding-left:20px;margin:4px 0;font-size:13px">\n'
+            f'{li_items}\n'
+            '          </ol>'
+        )
+
+        new_html = re.sub(
+            r'<!-- PM_ACTIONS_START -->.*?<!-- PM_ACTIONS_END -->',
+            f'<!-- PM_ACTIONS_START -->\n{block}\n<!-- PM_ACTIONS_END -->',
+            html,
+            flags=re.DOTALL,
+        )
+        return new_html
+    except Exception as e:
+        print(f"WARN: PM_ACTIONS injection skipped — {e}")
+        return html
+
+
+# === end PM marker injection ==================================================
+
+
 def update_index(entries, dry_run: bool = False):
     html = INDEX_HTML.read_text(encoding="utf-8")
     original_html = html
@@ -1311,6 +1594,21 @@ def update_index(entries, dry_run: bool = False):
         print("DD_STALE_FRESH injected.")
     except Exception as e:
         print(f"WARN: DD_STALE_FRESH injection skipped — {e}")
+
+    # Inject PM marker blocks (PM_LAST_RUN, PM_HOLDINGS, PM_ACTIONS)
+    pm_path, pm_date = parse_latest_pm()
+    if pm_path:
+        if "<!-- PM_LAST_RUN_START -->" in new_html:
+            new_html = inject_pm_last_run(new_html, pm_path)
+            print(f"PM_LAST_RUN injected ({pm_path.name}).")
+        if "<!-- PM_HOLDINGS_START -->" in new_html:
+            new_html = inject_pm_holdings(new_html, pm_path, pm_date)
+            print(f"PM_HOLDINGS injected ({pm_path.name}).")
+        if "<!-- PM_ACTIONS_START -->" in new_html:
+            new_html = inject_pm_actions(new_html)
+            print(f"PM_ACTIONS injected (INDEX.md Strategy B).")
+    else:
+        print("WARN: No PM_*.html files found — PM markers not updated.")
 
     if dry_run:
         # Print unified diff and skip the write
