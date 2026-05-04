@@ -889,7 +889,7 @@ def build_row_v12(entry: dict) -> str:
     date_disp = entry.get("date") or "—"
 
     return (
-        f'<tr class="searchable" data-ticker="{entry["ticker"]}"'
+        f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
         f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
         f' data-fpe="{fpe_num}" data-pct="{pct_num}" data-peg="{peg_num}"'
