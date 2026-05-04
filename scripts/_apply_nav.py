@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 """Apply unified nav to all top-level landing pages.
 
-Strategy:
+MIGRATION NOTE (2026-05-04):
+All THIS-repo in-scope pages have been migrated to the new IMQ minimal header
+(scripts/imq_header.py).  This script now only handles EXTERNAL-REPO pages
+(backtest/, qgm/, qgm-tw/) which still use the old dark nav.
+
+For in-scope pages, use scripts/_apply_imq_header.py instead.
+
+Legacy strategy (external repos):
 - Find existing <header>...</header> block (or first dark nav bar for inline-styled pages)
 - Replace with unified nav with correct active markers for the page.
 """
@@ -149,36 +156,27 @@ def apply_to_inline_bar_page(relpath, active):
 
 
 def main():
-    print("Applying unified nav to CSS-class pages...")
-    for relpath, active in PAGES_HEADER_STYLE.items():
+    # ── External-repo pages (backtest, qgm, qgm-tw) ─────────────────────────
+    # These pages are NOT in-scope for the new IMQ minimal header; they use
+    # the legacy dark nav from the external repos.  Only process the external
+    # subset of PAGES_HEADER_STYLE.
+    EXTERNAL_ONLY = {
+        "backtest/index.html": PAGES_HEADER_STYLE.get("backtest/index.html", {}),
+        "qgm/latest.html":     PAGES_HEADER_STYLE.get("qgm/latest.html", {}),
+        "qgm-tw/latest.html":  PAGES_HEADER_STYLE.get("qgm-tw/latest.html", {}),
+    }
+    print("Applying legacy dark nav to external-repo pages only...")
+    for relpath, active in EXTERNAL_ONLY.items():
+        if not active:
+            continue
         apply_to_header_style_page(relpath, active)
 
-    print("\nApplying to /briefing/ pages (inline-bar style)...")
-    briefing_pages = sorted((ROOT / "briefing").glob("*.html"))
-    for p in briefing_pages:
-        apply_to_inline_bar_page(
-            str(p.relative_to(ROOT)), {"group": "market", "item": "brief"}
-        )
-
-    print("\nApplying to /weekly/ page(s) (inline-bar style)...")
-    for p in sorted((ROOT / "weekly").glob("*.html")):
-        apply_to_inline_bar_page(
-            str(p.relative_to(ROOT)), {"group": "market", "item": "week"}
-        )
-
-    # PM page has NO existing nav — inject after <body>
-    print("\nInjecting nav into /pm/index.html (no existing nav)...")
-    p = ROOT / "pm/index.html"
-    text = p.read_text(encoding="utf-8")
-    active = {"group": "research", "item": "pm"}
-    new_block = full_nav_block(active)
-    # Remove the first h1 "🏛 PM 週度複盤" from inside container since nav duplicates breadcrumb
-    if "<body>" in text and ".imq-nav-root" not in text:
-        new_text = text.replace("<body>", "<body>\n" + new_block, 1)
-        p.write_text(new_text, encoding="utf-8")
-        print("  ✅ pm/index.html")
-    else:
-        print("  ⚠️  pm/index.html already has nav or unexpected structure")
+    # ── In-scope pages: redirect to new IMQ header ───────────────────────────
+    # All other pages now use the new IMQ minimal header (imq_header.py).
+    # Run _apply_imq_header.py to update in-scope pages.
+    print("\nIn-scope pages now use the new IMQ minimal header.")
+    print("Run:  python3 scripts/_apply_imq_header.py")
+    print("  or:  python3 scripts/_update_imq_style.py  (CSS-only update)")
 
 
 if __name__ == "__main__":
