@@ -88,6 +88,15 @@ def upside_top(records, n=5):
     return sorted(pool, key=lambda r: -r["upside_mid_pct"])[:n]
 
 
+def upside_5y_top(records, n=5):
+    pool = [
+        r for r in records.values()
+        if r.get("signal") != "X"
+        and isinstance(r.get("upside_5y_pct"), (int, float))
+    ]
+    return sorted(pool, key=lambda r: -r["upside_5y_pct"])[:n]
+
+
 def x_cohort(records):
     x_recs = [r for r in records.values() if r.get("signal") == "X"]
     val_red = sorted([r["ticker"] for r in x_recs if r.get("val") == "🔴"])
@@ -123,6 +132,7 @@ def render(records):
     peg = peg_cheapest(records)
     pct = pct5y_cheapest(records)
     ups = upside_top(records)
+    ups5y = upside_5y_top(records)
     val_red, ma_brake = x_cohort(records)
 
     progress_count = sum(c for s, c in sig_dist if s in ("A+", "A"))
@@ -164,6 +174,12 @@ def render(records):
         for r in ups
     )
 
+    ups5y_lis = "".join(
+        f'<li><span class="lead">{_ticker_link(r["ticker"], r.get("_path", ""))}</span>'
+        f'<span class="meta">{r["upside_5y_pct"]:+.0f}% · {escape(str(r.get("signal", "?")))}</span></li>'
+        for r in ups5y
+    )
+
     val_red_str = " · ".join(escape(t) for t in val_red) if val_red else "—"
     ma_brake_str = " · ".join(escape(t) for t in ma_brake) if ma_brake else "—"
 
@@ -202,6 +218,11 @@ def render(records):
     <div class="stats-cell">
       <div class="stats-label">🚀 中期 Upside 最高（A+/A/B）</div>
       <ol>{ups_lis}</ol>
+    </div>
+
+    <div class="stats-cell">
+      <div class="stats-label">📈 5Y Upside 最高（排除 X）</div>
+      <ol>{ups5y_lis}</ol>
     </div>
 
     <div class="stats-cell x-cohort">
