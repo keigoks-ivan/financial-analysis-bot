@@ -369,6 +369,7 @@ financial-analysis-bot/
 - **id-meta JSON 必填 `mega` + `sub_group`**（v1.8 新增，見 Step 9.6 / QC-I37 / `docs/id/taxonomy.md`）
 - append `docs/id/INDEX.md` 一行
 - 更新 `docs/id/index.html` 列表（**依 mega + sub_group 自動插入到對應 anchor，見 Step 9.6**）
+- **插入 article 到 index.html 的 subgroup-anchor 後，必須跑 `python3 scripts/build_id_category_pages.py` 重生 cat-{mega}.html，再 commit。**
 - 若 `docs/research/index.html` 有「產業深度」tab，更新 markers
 - `git add + commit + push`（依 MEMORY feedback）
 
