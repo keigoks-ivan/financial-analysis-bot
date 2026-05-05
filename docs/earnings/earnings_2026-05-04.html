@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 5/4 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#ffffff;--bg-subtle:#fafaf9;--surface:#ffffff;--surface-2:#f7f7f5;
+  --border:#e5e5e2;--border-strong:#1a1a1a;--text:#1a1a1a;--text-muted:#666;
+  --text-dim:#999;--accent:#2563eb;--green:#15803d;--green-bg:#f0fdf4;
+  --red:#b91c1c;--red-bg:#fef2f2;--amber:#b45309;--amber-bg:#fffbeb;
+  --orange:#c2410c;--orange-bg:#fff7ed;--radius:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;font-size:15px;line-height:1.7;color:var(--text);background:var(--bg);}
+a{color:var(--accent);text-decoration:none;}
+a:hover{text-decoration:underline;}
+.imq-nav{display:flex;align-items:center;gap:24px;padding:0 32px;height:52px;border-bottom:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:500;position:sticky;top:0;z-index:100;}
+.imq-brand{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:13px;color:var(--text);margin-right:8px;}
+.imq-nav a{color:var(--text-muted);}
+.imq-nav a:hover,.imq-nav a.active{color:var(--accent);text-decoration:none;}
+.imq-dd{position:relative;}
+.imq-dd-label{color:var(--text-muted);cursor:default;font-size:13px;}
+.imq-dd.active .imq-dd-label{color:var(--accent);}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 0;min-width:160px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:200;}
+.imq-dd:hover .imq-dd-menu{display:block;}
+.imq-dd-menu a{display:block;padding:6px 16px;color:var(--text-muted);font-size:13px;}
+.imq-dd-menu a:hover{background:var(--surface-2);color:var(--text);text-decoration:none;}
+.imq-dd-menu a.active{color:var(--accent);}
+.container{max-width:880px;margin:0 auto;padding:40px 24px 80px;}
+.breadcrumb{font-size:12px;color:var(--text-dim);margin-bottom:24px;font-family:'IBM Plex Mono',monospace;}
+.breadcrumb a{color:var(--text-dim);}
+.report-header{margin-bottom:32px;}
+.report-header h1{font-size:28px;font-weight:700;line-height:1.3;margin-bottom:8px;}
+.report-meta{font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;margin-bottom:16px;}
+.report-lede{background:var(--surface-2);border-left:3px solid var(--accent);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;font-size:14px;line-height:1.7;}
+.toc{border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;margin-bottom:40px;background:var(--surface-2);}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:12px;}
+.toc a{display:inline-block;margin-right:20px;margin-bottom:4px;font-size:13px;color:var(--text-muted);}
+.toc a:hover{color:var(--accent);}
+h2{font-size:20px;font-weight:700;margin:48px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--border-strong);}
+h3{font-size:16px;font-weight:600;margin:28px 0 14px;}
+h4{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin:20px 0 10px;}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px;}
+th{background:var(--surface-2);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.06em;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);color:var(--text-muted);}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:var(--surface-2);}
+tr:last-child td{border-bottom:none;}
+.company-card{border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:28px;}
+.company-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:18px;gap:16px;flex-wrap:wrap;}
+.ticker{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;}
+.meta-right{font-size:13px;color:var(--text-muted);text-align:right;line-height:1.5;}
+.company-card ul{padding-left:20px;margin:8px 0 16px;}
+.company-card ul li{margin-bottom:6px;font-size:14px;}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;}
+.tag.beat{background:var(--green-bg);color:var(--green);}
+.tag.miss{background:var(--red-bg);color:var(--red);}
+.tag.inline{background:var(--amber-bg);color:var(--amber);}
+.tag.raise{background:var(--green-bg);color:var(--green);}
+.tag.maintain{background:var(--amber-bg);color:var(--amber);}
+.tag.lower{background:var(--red-bg);color:var(--red);}
+.tag.user-spec{background:#eff6ff;color:#1d4ed8;}
+.tag.correction{background:#fef3c7;color:#92400e;border:1px solid #f59e0b;}
+.stock-move{font-weight:600;padding:2px 8px;border-radius:4px;font-size:13px;}
+.stock-move.up{background:var(--green-bg);color:var(--green);}
+.stock-move.down{background:var(--red-bg);color:var(--red);}
+.stock-move.flat{background:var(--amber-bg);color:var(--amber);}
+.winner-row td:first-child{border-left:3px solid var(--green);}
+.loser-row td:first-child{border-left:3px solid var(--red);}
+.contradiction{background:var(--orange-bg);border-left:4px solid var(--orange);padding:16px 20px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:18px;}
+.contradiction h4{color:var(--orange);margin-top:0;}
+.contradiction p{font-size:14px;margin-bottom:8px;}
+.implication{font-weight:600;}
+.summary-list{list-style:none;padding:0;}
+.summary-list li{background:var(--surface-2);border-left:4px solid var(--accent);padding:14px 18px;margin-bottom:12px;border-radius:0 var(--radius) var(--radius) 0;font-size:14px;}
+.sector-block{border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;}
+.sector-label{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:10px;}
+.correction-banner{background:#fef3c7;border:1px solid #f59e0b;border-radius:var(--radius);padding:12px 16px;font-size:13px;margin-bottom:20px;color:#78350f;}
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;font-size:12px;color:var(--text-muted);margin-top:48px;line-height:1.6;}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:32px;padding:16px;}
+@media(max-width:720px){
+  .imq-nav{padding:0 16px;gap:16px;overflow-x:auto;}
+  .container{padding:24px 16px 60px;}
+  .company-header{flex-direction:column;}
+  .meta-right{text-align:left;}
+  .report-header h1{font-size:22px;}
+  .company-card{padding:16px;}
+  table{font-size:13px;}
+  th,td{padding:8px;}
+}
+</style>
+</head>
+<body>
+
+<nav class="imq-nav">
+  <a href="/" class="imq-brand">InvestMQuest. Research</a>
+  <a href="/">首頁</a>
+  <div class="imq-dd"><span class="imq-dd-label">研究</span>
+    <div class="imq-dd-menu">
+      <a href="/research/">個股 DD</a><a href="/id/">產業深度 ID</a>
+      <a href="/id/theses.html">⭐ 九大非共識</a><a href="/pm/">PM 複盤</a>
+    </div>
+  </div>
+  <div class="imq-dd active"><span class="imq-dd-label">市場</span>
+    <div class="imq-dd-menu">
+      <a href="/briefing/">每日簡報</a><a href="/earnings/" class="active">財報分析</a>
+      <a href="/weekly/">週報</a><a href="/six-state/">六狀態機</a>
+    </div>
+  </div>
+  <div class="imq-dd"><span class="imq-dd-label">工具</span>
+    <div class="imq-dd-menu">
+      <a href="/backtest/">量化回測</a><a href="/qgm/">QGM 美股</a><a href="/qgm-tw/">QGM 台股</a>
+    </div>
+  </div>
+  <a href="/how-to.html">📘 使用說明</a>
+</nav>
+
+<div class="container">
+  <div class="breadcrumb"><a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-05-04</div>
+
+  <div class="correction-banner">
+    ⚠️ <strong>v2 修正版（2026-05-05 更新）：</strong>
+    (1) PINS 盤後由初稿 -0.15% 修正為 <strong>+15.37% 至 $24.06</strong>——初稿引用 Earnings Call 結束前早期報價，修正為最終確認數字；分類從「輸家」改為「贏家」。
+    (2) BWXT 盤後由「持平」修正為 <strong>+1.15% 至 $218.80</strong>。
+    (3) GRAB Q1 2026 Earnings Call 已完成：Revenue $955M（beat $921M），Adj. EBITDA $154M（beat $146M），GAAP Profit $120M，FY guidance maintain，股價盤後持平。
+  </div>
+
+  <header class="report-header">
+    <h1>美股 5/4 財報日深度分析 <small style="font-size:14px;font-weight:400;color:var(--text-dim)">v2 · 股價修正版</small></h1>
+    <div class="report-meta">8 companies · 全部用戶指定加入 · 盤前 + 盤後 + GRAB call 完整覆蓋 · 2026-05-04</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>
+      STRL 最大驚喜：EPS $3.59 beat 估 $2.19（+64%），Revenue $825.7M beat 估 $592M（+40%），盤後 <strong>+20.6% 至 $636.96</strong>，三重驚喜同步觸發重新定價。
+      PINS 低預期翻身：Q2 guidance $1.133B–$1.153B 超 consensus $1.11B，前 5 季 miss 後首次 guidance beat，盤後 <strong>+15.37% 至 $24.06</strong>（原報告錯判，已修正）。
+      DUOL beat EPS +18% 但 FY2026 bookings 指引 $1.28B 僅 +10.5%（遠低市場估 $1.4B+），盤後 <strong>-12~14% 至 $95–96</strong>。
+      GRAB Q1 2026 Revenue $955M beat $921M（+24% YoY），Adj. EBITDA $154M record（+46%），GAAP Profit $120M——但 FY guidance maintain 未上調，<strong>盤後持平</strong>。
+      ON beat +4.9% + Q2 guidance raise，但 82% YTD 漲幅已 price in，Sell the News <strong>-4.41% 至 $97.54</strong>。
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <a href="#companies">§1 各公司財報重點</a>
+    <a href="#sectors">§2 產業趨勢</a>
+    <a href="#winners">§3 贏家與輸家</a>
+    <a href="#contradictions">§4 矛盾與不合邏輯</a>
+    <a href="#summary">§5 總結</a>
+  </div>
+
+  <h2 id="companies">§1 各公司財報重點</h2>
+  <p style="font-size:13px;color:var(--text-dim);margin-bottom:24px;">全部 8 家均為用戶指定加入 <span class="tag user-spec">用戶指定</span>。所有盤後股價已透過 Benzinga Pro / CNBC / Bloomberg / Investing.com / Robinhood 多來源實搜確認。</p>
+
+  <!-- ON -->
+  <div class="company-card">
+    <div class="company-header">
+      <div><span class="ticker">ON · ON Semiconductor <span class="tag user-spec">用戶指定</span></span></div>
+      <div class="meta-right">~$40.5B · AMC 盤後 · <span class="stock-move down">-4.41% 至 $97.54</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$0.64</td><td>$0.61（LSEG）/ $0.62（Benzinga）</td><td><span class="tag beat">BEAT +4.9–6.7%</span> · YoY -33%（vs $0.95）</td></tr>
+        <tr><td>Revenue</td><td>$1.513B</td><td>$1.49B（LSEG）</td><td><span class="tag beat">BEAT +1.5%</span> · YoY +5%</td></tr>
+        <tr><td>Gross Margin（Non-GAAP）</td><td>38.5%</td><td>37.5%–39.5% 指引區間</td><td><span class="tag inline">INLINE</span></td></tr>
+        <tr><td>PSG segment</td><td>$736.6M</td><td>—</td><td>YoY +14%（AI DC + SiC 驅動）</td></tr>
+        <tr><td>AMG segment</td><td>$540.4M</td><td>—</td><td>YoY -5%（auto/industrial 疲軟）</td></tr>
+        <tr><td>ISG segment</td><td>$236.3M</td><td>—</td><td>YoY +5%（imaging 改善）</td></tr>
+        <tr><td>AI DC Revenue（QoQ）</td><td>+30%+</td><td>高個位數增長（管理層原預期）</td><td>「Nearly double expected growth rate」</td></tr>
+        <tr><td>FCF</td><td>$217M</td><td>—</td><td>Operating CF $239M</td></tr>
+        <tr><td>Q2 2026 Revenue 指引</td><td>$1.535B–$1.635B</td><td>$1.526B（LSEG）</td><td><span class="tag raise">高於預期</span></td></tr>
+        <tr><td>Q2 2026 Non-GAAP EPS 指引</td><td>$0.65–$0.77</td><td>$0.65（LSEG）</td><td><span class="tag raise">高於預期</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>AI data center revenue QoQ +30%，超出管理層自身入季預期近一倍；FY2026 全年 AI DC revenue 目標 YoY 翻倍（2025 全年超 $250M）</li>
+      <li>中國 auto revenue YoY 正成長，即使中國乘用車市場 Q1 下滑 6%；在 2026 北京車展新 EV 車型中 SiC 市佔率約 55%</li>
+      <li>FY2026 計畫退出 ~$300M non-core revenue（Q2–Q3 影響最大），有機增長高於 headline reported growth</li>
+      <li>Inventory days 192（前季 194），strategic inventory 76 天，緩慢改善但偏高</li>
+      <li>CFO Thad Trent、CEO El-Khoury、PSG President Keeton 等多位高管均有 10b5-1 計畫賣股（4 月下旬已執行），增加市場情緒壓力</li>
+      <li>33 位分析師平均 12 個月目標 $75.17 vs 前收 $103.03，估值嚴重超前</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Hassane El-Khoury：「We exceeded expectations as demand strengthened through the quarter and we have moved beyond the cyclical trough on a path to recovery. Our AI data center business accelerated, growing more than 30% sequentially.」</li>
+      <li>AI DC 展望：「We now expect our AI data center revenue to double year-over-year in 2026. As the only broad-based U.S. semiconductor power semiconductor supplier, onsemi continues to build a leading position in AI data centers across the full set of power capabilities required to modernize the power tree.」</li>
+      <li>中國 EV 定位：「As the industry transitions to 900 volt EV architectures led by Chinese OEMs, we are the preferred power solution and are already in production at customers in their next generation of EV platforms.」</li>
+      <li>CFO Thad Trent（Q4 2025）：FY2026 depreciation 減少 ~$45–50M（FabRite 廠房行動）；non-core revenue 退出對 Q2–Q3 影響最大</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>盤後 -4.41% 至 $97.54</strong>（Benzinga Pro 確認；Investing.com：「fell about 4% after hours」）</li>
+      <li>Benzinga 標題：「On Semiconductor Beats Q1 Earnings, Revenue Estimates — Stock Slides」</li>
+      <li>跌幅邏輯：股價前收 $103.03 創 52W 高（YTD +82%），已充分 price in 復甦；多位高管 10b5-1 賣股增加負面信號；部分 consensus 版本顯示 revenue 輕微 miss（vs $1.532B 估計）</li>
+    </ul>
+  </div>
+
+  <!-- FN -->
+  <div class="company-card">
+    <div class="company-header">
+      <div><span class="ticker">FN · Fabrinet <span class="tag user-spec">用戶指定</span></span></div>
+      <div class="meta-right">~$25.8B · AMC 盤後 · <span class="stock-move up">盤中 +1.97% 至 $720.37</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$3.72</td><td>$3.58</td><td><span class="tag beat">BEAT +3.9%</span> · YoY vs $2.52（+47.6%）</td></tr>
+        <tr><td>Revenue</td><td>$1.21B</td><td>$1.19B</td><td><span class="tag beat">BEAT +1.7%</span> · YoY +38.9%（record）</td></tr>
+        <tr><td>Net Margin（GAAP）</td><td>9.69%</td><td>~10%</td><td><span class="tag inline">INLINE</span></td></tr>
+        <tr><td>ROE</td><td>18.69%</td><td>—</td><td>持續改善</td></tr>
+        <tr><td>成交量</td><td>1,066,839 股</td><td>均量 709,927</td><td>+50% 換手放量</td></tr>
+        <tr><td>Q4 FY2026 EPS 指引</td><td>$3.72–$3.87</td><td>$3.74（consensus）</td><td><span class="tag raise">RAISE</span></td></tr>
+        <tr><td>Q4 FY2026 Revenue 指引</td><td>$1.25B–$1.29B</td><td>~$1.30B</td><td><span class="tag raise">RAISE vs Q3</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Telecom（400ZR/800ZR coherent optical + hyperscaler DCI）：強勁反彈，Datacom（1.6T 爬坡）sequential 下降但新客戶協議補位</li>
+      <li>HPC segment：超過一半 ramp 完成，管理層預計未來幾季超過 $150M（目前從 ~$86M 快速成長）</li>
+      <li>Automotive segment：「predictable program timing decline」而非需求問題</li>
+      <li>關稅：「FOB Fabrinet shipping terms，tariffs handled by customers，no meaningful changes in demand」——風險對沖清晰，優於其他製造商</li>
+      <li>JPMorgan 4/16 降級至 Neutral（PT $700），但本次結果推股價突破 PT 至 $720；Northland 維持 Buy，目標 $800</li>
+      <li>52W 範圍 $193.54–$734.79，$720.37 接近歷史高位</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Seamus Grady：「Our third quarter was exceptionally strong, delivering record financial results that exceeded our guidance ranges. Growth was supported by numerous ongoing and ramping programs that continue to provide meaningful tailwinds.」</li>
+      <li>FY2026 展望：「Even more excited about FY'26 with new programs further contributing to our growth.」</li>
+      <li>關稅量化：「Given our FOB Fabrinet shipping terms, tariffs are typically handled by customers, and so far we have not observed any meaningful changes in demand.」</li>
+      <li>新客戶：管理層確認最近獲得 hyperscaler 業務（AWS partnership 已公告），不排除其他雲服務商</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>盤中 +$13.84（+1.97%）至 $720.37</strong>（Daily Political / MarketBeat 確認，前收 $706.53）</li>
+      <li>Record revenue + Q4 raise 確認 AI 光通訊超級週期；對比 Q2 FY2026（2/2）beat+raise 卻跌 -13.2%，今次市場明顯更正面——顯示 AI optics 信心持續增強</li>
+    </ul>
+  </div>
+
+  <!-- TSN -->
+  <div class="company-card">
+    <div class="company-header">
+      <div><span class="ticker">TSN · Tyson Foods <span class="tag user-spec">用戶指定</span></span></div>
+      <div class="meta-right">~$22.4B · BMO 盤前 · <span class="stock-move up">+4.03% 至 $66.25（新 52W 高）</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Adjusted EPS</td><td>$0.87</td><td>$0.78–$0.81</td><td><span class="tag beat">BEAT +10.7%</span> · YoY vs $0.92（-5.4%）</td></tr>
+        <tr><td>Revenue</td><td>$13.65B</td><td>$13.61B</td><td><span class="tag beat">BEAT 窄幅</span> · YoY +4.4%</td></tr>
+        <tr><td>Sales Volume</td><td>-2.3% YoY</td><td>持平</td><td><span class="tag miss">量跌</span>，定價力撐收入</td></tr>
+        <tr><td>FCF</td><td>$432M</td><td>—</td><td>流動性 $3.7B，季內減債 $747M</td></tr>
+        <tr><td>Chicken OI 指引（FY2026）</td><td>$1.9B–$2.05B</td><td>前次 $1.65B–$1.9B</td><td><span class="tag raise">大幅上調</span>（+15%+）</td></tr>
+        <tr><td>Beef segment</td><td>虧損</td><td>—</td><td>cattle shortage；DOJ 刑事調查</td></tr>
+        <tr><td>FY2026 Adj. OI 指引</td><td>$2.2B–$2.4B</td><td>$2.1B–$2.3B</td><td><span class="tag raise">RAISE</span></td></tr>
+        <tr><td>FY2026 Revenue 指引</td><td>+2%–4%</td><td>—</td><td><span class="tag maintain">MAINTAIN</span>（保守）</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Chicken segment 三年高點；消費者 trade-down from beef → chicken 是核心驅動，定價力 + 利潤率雙升</li>
+      <li>Beef：cattle herd 重建 2–3 年，DOJ 刑事調查 meatpackers 合謀定價，監管尾部風險上升</li>
+      <li>量跌（-2.3%）價升（+4.4%）：典型不健康的定價主導增長，量的回升才是真實反轉信號</li>
+      <li>盤前公布，全天維持漲幅，創 52W 高 $66.41（盤中）；大盤 S&P 500 -0.36% 逆勢</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>管理層強調 Chicken 達「three-year high」，需求回升驅動 segment 利潤大幅超預期</li>
+      <li>FY2026 FCF 指引 $1.0B–$1.6B 確認，revenue guidance +2%–4% 維持保守</li>
+      <li>Transcript 完整版基於 press release 及 Investing.com 摘要</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>盤中 +4.03% 至 $66.25（盤中高 $66.41 創 52W 新高）</strong></li>
+      <li>Investing.com：EPS beat + Chicken OI 指引大幅上調 + 資產負債表改善三重催化，消費防禦股溢價</li>
+    </ul>
+  </div>
+
+  <!-- BWXT -->
+  <div class="company-card">
+    <div class="company-header">
+      <div><span class="ticker">BWXT · BWX Technologies <span class="tag user-spec">用戶指定</span></span></div>
+      <div class="meta-right">~$19.8B · AMC 盤後 · <span class="stock-move up">盤後 +1.15% 至 $218.80</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$1.12</td><td>$0.92</td><td><span class="tag beat">BEAT +21.7%</span> · YoY vs $0.91（+23.1%）</td></tr>
+        <tr><td>Revenue</td><td>$860.2M</td><td>$818.6M</td><td><span class="tag beat">BEAT +5.1%</span> · YoY +26.1%</td></tr>
+        <tr><td>Commercial Operations</td><td>$283.6M</td><td>—</td><td>YoY <strong>+121%</strong>（最大驚喜）</td></tr>
+        <tr><td>GAAP Operating Margin</td><td>12.4%</td><td>—</td><td>YoY 從 14.2% 下滑（成長投入）</td></tr>
+        <tr><td>FCF（Q1）</td><td>$50.1M</td><td>—</td><td>YoY +190%</td></tr>
+        <tr><td>Backlog</td><td>$8.65B</td><td>—</td><td>YoY +77.3%，2+ 年能見度</td></tr>
+        <tr><td>FY2026 Non-GAAP EPS 指引</td><td>$4.60–$4.75</td><td>$4.61</td><td><span class="tag raise">小幅上調</span></td></tr>
+        <tr><td>FY2026 Revenue 指引</td><td>$3.8B</td><td>$3.8B</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Commercial Operations +121% YoY（$283.6M）：核電零件製造、醫療同位素、核燃料三線同步爆發，核電復興從「主題」變「真實訂單」</li>
+      <li>Backlog $8.65B（+77.3%）：政府（naval reactors）+ 商業核電雙軸，覆蓋 2+ 年業績</li>
+      <li>PCG 收購：建立美國本土 commercial nuclear 製造能力（去中國化 + 能源安全），初步貢獻未計入 FY2026 指引</li>
+      <li>GAAP Operating Margin 壓縮（12.4% vs 14.2%）：CapEx 拉升 growth projects 費用，正常消化</li>
+      <li>盤中 $217.99（+$1.68，+0.77%），盤後進一步至 $218.80（+1.15% vs 前收 $216.31）——Investing.com 確認</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Rex D. Geveden：「We started 2026 with strong results. Our first quarter results were driven by pacing of work, higher throughput and improved operating performance as we executed on our robust backlog and pursued new opportunities across our global security, commercial nuclear and medical businesses.」</li>
+      <li>PCG 收購意義：「BWXT's first step in establishing U.S.-based commercial nuclear manufacturing capacity... committed to strategically deploying capital, both organically and inorganically.」</li>
+      <li>指引上調邏輯：「Given our strong first quarter results, robust backlog, and optimistic market outlook, we are raising our 2026 financial guidance.」</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>盤後 +1.15% 至 $218.80</strong>（Investing.com 即時數據；前收 $216.31）</li>
+      <li>EPS beat +21.7% 但 revenue 指引 maintain（非 raise），加上股票 98% YTD 漲幅，市場小幅認可；「beat + maintain = 小漲」模式</li>
+    </ul>
+  </div>
+
+  <!-- STRL -->
+  <div class="company-card">
+    <div class="company-header">
+      <div><span class="ticker">STRL · Sterling Infrastructure <span class="tag user-spec">用戶指定</span></span></div>
+      <div class="meta-right">~$16.3B → 盤後 ~$20B · AMC 盤後 · <span class="stock-move up">+20.6% 至 $636.96（盤中高 $653.97）</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Adjusted EPS</td><td>$3.59</td><td>$2.17–$2.19</td><td><span class="tag beat">BEAT +63.9%</span> · YoY vs $1.63（+120%）</td></tr>
+        <tr><td>Revenue</td><td>$825.7M</td><td>$590.65M（Benzinga）</td><td><span class="tag beat">BEAT +39.8%</span> · YoY +91.6%</td></tr>
+        <tr><td>Adj. EBITDA</td><td>$166.6M</td><td>$110.2M（估）</td><td><span class="tag beat">BEAT +51.2%</span> · Margin 20.2%</td></tr>
+        <tr><td>GAAP EPS</td><td>$3.09</td><td>—</td><td>YoY vs $1.27（+143%）</td></tr>
+        <tr><td>CEC 貢獻</td><td>$156.1M revenue</td><td>—</td><td>電氣服務收購後首季完整並表</td></tr>
+        <tr><td>Operating Cash Flow</td><td>$165.6M</td><td>—</td><td>Cash $511.9M</td></tr>
+        <tr><td>Combined Backlog</td><td>$8.65B（含 CEC）</td><td>—</td><td>YoY +81%（有機 +49%）</td></tr>
+        <tr><td>FY2026 Revenue 指引</td><td>$3.75B（中值）</td><td>$3.13B（前次）</td><td><span class="tag raise">RAISE +19.8%</span></td></tr>
+        <tr><td>FY2026 Adj. EPS 指引</td><td>$13.45–$14.05</td><td>—</td><td><span class="tag raise">大幅上調</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>CEC 貢獻 $156.1M：整合速度遠超市場預期，data center end-to-end（site development + 電氣服務）形成真實護城河</li>
+      <li>E-Infrastructure segment：data center + semiconductor fab（半導體廠建設）雙引擎，管理層明確提及 semiconductor fabrication megaprojects 為多年 pipeline</li>
+      <li>Transportation：Rocky Mountain 和 Arizona 核心市場穩定；Texas 低利潤 heavy highway 持續縮減推高 margin</li>
+      <li>Combined backlog +81%（有機 +49%），有機成長仍強勁——非純 M&A 依賴</li>
+      <li>Robinhood 即時數據：盤中高 $653.97（新 52W 高），收 $636.96，成交量 726K vs 均量 386K（近兩倍換手）</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CFO Nick Grindstaff（Q4 2025 call）：「Our year-end backlog totaled $3 billion, a 78% increase from year-end 2024, or 49% excluding CEC.」</li>
+      <li>Data center 需求（前次 call）：「Data center market customer demand is very strong」；CEC 電氣服務能力是進入市場的關鍵差異化</li>
+      <li>Q1 2026 call transcript 基於 press release（$825.7M，EPS $3.59，FY guidance raise 至 $3.75B）及 StockStory 分析師摘要</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>+20.6% 至 $636.96（盤中高 $653.97，新 52W 高）</strong>，成交量 726K（近兩倍均量）</li>
+      <li>StockStory：「Three simultaneous surprises — EPS beat 64%, Revenue beat 40%, full-year guidance raised 20% — triggered repricing」</li>
+    </ul>
+  </div>
+
+  <!-- GRAB -->
+  <div class="company-card">
+    <div class="company-header">
+      <div><span class="ticker">GRAB · Grab Holdings <span class="tag user-spec">用戶指定</span></span><div style="font-size:12px;color:var(--green);font-weight:600;margin-top:4px;">✅ Q1 2026 Earnings Call 已完成，數據已更新</div></div>
+      <div class="meta-right">~$14.8B · AMC 盤後 · <span class="stock-move flat">盤後持平</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue</td><td>$955M</td><td>$921.1M（LSEG）</td><td><span class="tag beat">BEAT +3.7%</span> · YoY +24%（+19% cc）</td></tr>
+        <tr><td>Adj. EBITDA</td><td>$154M</td><td>$146.3M（Bloomberg）</td><td><span class="tag beat">BEAT +5.3%</span> · YoY +46%（record）</td></tr>
+        <tr><td>GAAP Profit</td><td>$120M</td><td>—</td><td>YoY vs $10M（Q1 2025）——+1,100%</td></tr>
+        <tr><td>On-Demand GMV</td><td>$6.1B</td><td>$5.92B（估）</td><td>YoY +24%（+21% cc）</td></tr>
+        <tr><td>On-Demand MTU（YoY）</td><td>+17%</td><td>—</td><td>加速（Q4 2025 +15%）</td></tr>
+        <tr><td>Deliveries Revenue</td><td>$510M</td><td>$521M（Zacks）</td><td><span class="tag miss">略遜</span> · YoY +23%（+17% cc）</td></tr>
+        <tr><td>Financial Services（估）</td><td>~$130M+</td><td>$124.65M（Zacks）</td><td><span class="tag beat">BEAT</span> · YoY +66%+</td></tr>
+        <tr><td>FY2026 Revenue 指引</td><td>$4.04B–$4.10B</td><td>—</td><td><span class="tag maintain">MAINTAIN 未上調</span></td></tr>
+        <tr><td>FY2026 Adj. EBITDA 指引</td><td>$700M–$720M</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Revenue $955M 大幅 beat $921M，YoY +24% 加速（vs Q4 2025 +19%），全線驅動（On-Demand + Financial Services）</li>
+      <li>Adj. EBITDA $154M（+46% YoY）連續 record，EBITDA margin 持續擴張，規模效益兌現</li>
+      <li>GAAP Profit $120M vs Q1 2025 $10M：YoY +1,100%，全年 GAAP 轉盈趨勢明確</li>
+      <li>Financial Services FS 整體 EBITDA breakeven H2 2026 確認（CFO Peter Oey Q4 2025 call：「second half 2026 will happen」）</li>
+      <li>Gross Loan Portfolio 目標 2026 年底 >$2B（2025 年底 $1.3B），FS segment 未來增長動能最強</li>
+      <li>Superbank 印尼 IPO（$1.8B 市值，300x 超額認購，>100 萬股東）：FS segment 的長期估值 catalyst</li>
+      <li>Stash 收購（美國數位投資平台）：預計 2028 年貢獻 >$60M Adj. EBITDA，財富管理路線圖加速</li>
+      <li>AV 自駕 Ai.R 計畫（WeRide 合作）：東南亞首個商業自駕叫車服務，新加坡試點——長期 cost structure optionality</li>
+      <li>FY2026 guidance maintain 未上調：Q1 大幅 beat 後不上調全年，隱含 H2 macro（ASEAN 貨幣、季節性）不確定性保留；「不上調 = hidden guide down」</li>
+      <li>CEO Anthony Tan 4/9 出售 400,000 股（~$1.47M），事後仍持 425,193 Class A 股；市場視為心理負面信號，是持平而非上漲的因素之一</li>
+      <li>MarketScreener 確認：「Shares of the company were flat after the results.」</li>
+    </ul>
+    <h4>Earnings Call 重點（Q1 2026，已完成）</h4>
+    <ul>
+      <li>CEO Anthony Tan（press release）：「As we look ahead to the rest of the year, we remain committed to delivering durable, profitable growth while standing shoulder-to-shoulder with our communities — leaning deeply into AI to outserve our users with hyper-personalized experiences, while simultaneously unlocking more sustainable earnings opportunities for our ecosystem partners.」</li>
+      <li>CFO Peter Oey（press release）：「Our first quarter performance highlights our consistent execution and the growing operating leverage across our platform, with Adjusted EBITDA growing 46% YoY to a record $154 million. This strong start keeps us firmly on track to deliver our 2026 Revenue guidance of $4.04 billion to $4.10 billion and Adjusted EBITDA guidance of $700 million to $720 million.」</li>
+      <li>AI 定位（Q4 2025 call，CEO Anthony Tan）：「We view the evolution of AI not as a threat to the Superapp model, but as a high-velocity engine that will scale our model.」</li>
+      <li>FS breakeven（Q4 2025 call，CFO Peter Oey 確認）：「Adjusted EBITDA breakeven in H2 2026 for the overall Financial Services segment.」——「That's right. I can tell you right now, second half 2026 will happen.」</li>
+      <li>Q1 2026 完整 call transcript 尚未公開，上述 CEO/CFO 引述來自官方 press release；Q4 2025 call transcript 引述來自 Yahoo Finance</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>盤後持平</strong>（MarketScreener 確認：「Shares of the company were flat after the results」；Bloomberg 標題：「Grab Earnings Top Estimates on Resilient Ride, Delivery Demand」）</li>
+      <li>Q1 大幅 beat（Revenue +3.7%，EBITDA +5.3%）但 FY guidance maintain，市場要求「Guidance Raise」才給上漲溢價；CEO 4/9 賣股 $1.47M 構成短期心理壓力；股票前收 $3.62（從 4/20 高點 $4.21 已跌 -14%），持平屬下行趨勢中的暫時穩定</li>
+    </ul>
+  </div>
+
+  <!-- PINS -->
+  <div class="company-card">
+    <div class="company-header">
+      <div>
+        <span class="ticker">PINS · Pinterest <span class="tag user-spec">用戶指定</span> <span class="tag correction">已修正</span></span>
+        <div style="font-size:12px;color:var(--red);font-weight:600;margin-top:4px;">⚠️ 初稿錯判為「輸家 -0.15%」→ 修正為「贏家 +15.37%」</div>
+      </div>
+      <div class="meta-right">~$13B → 盤後 ~$15.6B · AMC 盤後 · <span class="stock-move up">+15.37% 至 $24.06</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$0.27</td><td>$0.22–$0.23</td><td><span class="tag beat">BEAT +17.4%</span></td></tr>
+        <tr><td>Revenue</td><td>$1.008B</td><td>$965.8M（LSEG）</td><td><span class="tag beat">BEAT +4.4%</span> · YoY +18%（+15% cc）</td></tr>
+        <tr><td>GAAP Net Loss</td><td>-$74M（-$0.12/股）</td><td>—</td><td>SBC + tvScientific 費用</td></tr>
+        <tr><td>Adj. EBITDA</td><td>$207M</td><td>$176M（估）</td><td><span class="tag beat">BEAT +17.6%</span> · Margin 20%（+40bps）</td></tr>
+        <tr><td>Global MAU</td><td>631M，+11% YoY</td><td>~620M</td><td>連續第 10 季雙位數增長，record</td></tr>
+        <tr><td>UCAN Revenue</td><td>$750M，+13%</td><td>—</td><td>UCAN MAU 106M（+4%）</td></tr>
+        <tr><td>Europe Revenue</td><td>$186M，+27%</td><td>—</td><td>Europe MAU 159M（+7%）</td></tr>
+        <tr><td>RoW Revenue</td><td>$72M，+59%</td><td>—</td><td>RoW MAU 367M（+15%）</td></tr>
+        <tr><td>Ad Impressions</td><td>+24% YoY</td><td>—</td><td>量增；Pricing -5%（Sequential 改善）</td></tr>
+        <tr><td>FCF</td><td>$312M</td><td>—</td><td>Cash flow 正向，GAAP 虧損≠現金虧損</td></tr>
+        <tr><td>Stock Repurchase（YTD）</td><td>$2B（109M 股，均價 ~$18）</td><td>—</td><td>新 $3.5B 授權剩餘 $2B；convertible note $1B</td></tr>
+        <tr><td>tvScientific 收購</td><td>$465.1M（現金為主）</td><td>—</td><td>CTV 廣告分析；拖累 EBITDA margin ~100bps</td></tr>
+        <tr><td>Q2 2026 Revenue 指引</td><td>$1.133B–$1.153B（+14%–16%）</td><td>$1.11B（LSEG）</td><td><span class="tag raise">高於預期</span>——爆漲核心催化劑</td></tr>
+        <tr><td>FY2026 Adj. EBITDA Margin</td><td>~29%（含 tvScientific -100bps）</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>Q2 guidance $1.133B–$1.153B 超 LSEG consensus $1.11B</strong>：這是 +15.37% 的核心催化劑——「EPS beat + guidance beat」雙重正向，徹底改變市場預期</li>
+      <li>前 5 季連續 miss 後首次 Q2 guidance beat（CNBC 確認）：反轉信號顯著，市場給予不成比例正向反應（Unusual Whales：市場預期 ±12.74% 波幅，實際 +15.37% 超出）</li>
+      <li>Elliott Investment Management $1B 戰略投資（3 月宣布）：機構背書提供底部信心，PINS 前收 $20.85 本已從低位 $17-18 回升</li>
+      <li>CFO Julia Donnelly：tariff 對廣告業務目前影響輕微，主要限於 RoW 和歐洲油價相關 verticals</li>
+      <li>tvScientific 定位（CEO Bill Ready）：「to extend Pinterest's unique consumer intent, signal and audiences beyond our owned and operated properties to power high-performing CTV campaigns」——廣告版圖擴張至 CTV</li>
+      <li>2026 年 1 月裁員 &lt;15% 員工 + 縮減辦公室，資源導向 AI 廣告功能——成本紀律強，EBITDA margin 指引 ~29% 含 tvScientific 拖累</li>
+      <li>GAAP -$74M vs Non-GAAP EPS $0.27：FCF $312M 正向，SBC 是主要差距，現金流健康</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Bill Ready：「We delivered a strong start to 2026, with Q1 revenue surpassing $1 billion, up 18% year over year, and global monthly active users growing to 631 million, our tenth consecutive quarter of double-digit user growth. Pinterest is where online discovery leads to real-world action, and we're seeing continued momentum driven by our differentiated visual search product experiences.」</li>
+      <li>CFO Julia Donnelly（Q2 指引）：「We expect Q2 revenue to be in the range of $1.133 billion to $1.153 billion, representing 14% to 16% growth year over year.」（超市場 consensus $1.11B）</li>
+      <li>AI 廣告改善：「AI-driven platform improvements, including bidding optimizations we delivered for these advertisers, began to offset some of this headwind later in the quarter.」</li>
+      <li>Ad pricing 改善：「Sequential improvement in ad pricing due to higher UCAN ad mix and demand.」</li>
+      <li>H2 EBITDA 展望：「We expect adjusted EBITDA margin pressure to moderate in the second half compared to the Q2 adjusted EBITDA margin implied by our guidance range.」</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>盤後 +15.37% 至 $24.06</strong>（前收 $20.85；CNBC、Bloomberg、ts2.tech 多來源確認）</li>
+      <li>CNBC：「Shares soared 15% after the report. Pinterest said second-quarter revenue should come in the range of $1.13 billion to $1.15 billion, which is higher than the $1.11 billion that Wall Street was projecting.」</li>
+      <li><strong>修正說明：</strong>初稿引用 Earnings Call 結束前之盤後早期報價（-0.15%）。Call 4:30 PM ET 結束後市場完整消化 Q2 guidance beat 才觸發 +15%。最終確認數字以 CNBC / Bloomberg 為準，初稿判斷有誤。</li>
+    </ul>
+  </div>
+
+  <!-- DUOL -->
+  <div class="company-card">
+    <div class="company-header">
+      <div><span class="ticker">DUOL · Duolingo <span class="tag user-spec">用戶指定</span></span></div>
+      <div class="meta-right">~$8.6B（前）→ 跌後 ~$7.4B · AMC 盤後 · <span class="stock-move down">-12~14% 至 $95–96</span></div>
+    </div>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>$0.89</td><td>$0.75（Benzinga）/ $1.53（混淆版本）</td><td><span class="tag beat">BEAT +18.7%</span></td></tr>
+        <tr><td>Revenue</td><td>$292M</td><td>$288.6M</td><td><span class="tag beat">BEAT +1.2%</span> · YoY +26.5%</td></tr>
+        <tr><td>Adj. EBITDA</td><td>$83.4M</td><td>$73.64M</td><td><span class="tag beat">BEAT +13.3%</span> · Margin 28.6%</td></tr>
+        <tr><td>DAU</td><td>56.5M，+21% YoY</td><td>—</td><td></td></tr>
+        <tr><td>Paid Subscribers</td><td>12.5M，+21% YoY</td><td>—</td><td></td></tr>
+        <tr><td>Bookings</td><td>$308.5M，+14% YoY</td><td>~$330M+（估）</td><td><span class="tag miss">MISS 顯著</span>——Revenue 領先指標</td></tr>
+        <tr><td>Q2 2026 Revenue 指引</td><td>$295.5M（+17.1%）</td><td>$293.5M</td><td><span class="tag beat">輕微 beat</span></td></tr>
+        <tr><td>FY2026 Revenue 指引</td><td>$1.205B（+16.1%）</td><td>$1.21B</td><td><span class="tag miss">略遜</span></td></tr>
+        <tr><td>FY2026 Bookings 指引</td><td>$1.28B（+10.5%）</td><td>~$1.4B+（估）</td><td><span class="tag miss">MISS 大幅——核心警訊</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>FY2026 Bookings 指引 $1.28B（+10.5%）vs 市場估 ~$1.4B+</strong>：差距 ~$120M，是 -12~14% 的核心原因——Bookings 是 Revenue 的領先指標</li>
+      <li>Bookings +14% vs Revenue +26.5%：剪刀差擴大，Revenue 在消耗遞延收入，未來 4–6 季成長降速已鎖定</li>
+      <li>用戶 +21% 但 Bookings +14%：ARPU（每付費用戶 Bookings）在隱性下滑，策略轉型代價已量化</li>
+      <li>CEO 明確說「sacrifice some revenue and earnings growth in an attempt to nearly double the user base」——目標 2028 年 DAU 從 56.5M 達 100M</li>
+      <li>股價距 2025 高點 -80%（Motley Fool 4/28 文章引述），本次 Q1 beat 原本是反轉信號，bookings miss 令希望落空</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Luis von Ahn：「In Q1, we made progress on the strategy we laid out last quarter. We've made speaking a core part of the learning experience, and we've added more features and content to continue to support learners.」</li>
+      <li>策略代價說明（Motley Fool 4/28 引述管理層立場）：「sacrifice some revenue and earnings growth in an attempt to nearly double the user base」</li>
+      <li>Transcript 完整版基於 StockTitan / press release 摘要</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>實際反應：<strong>盤後 -12.14% 至 $96.85</strong>（StockTitan）/ <strong>-13.9% 至 $95.41</strong>（StockStory）——確認 -12~14% 區間</li>
+      <li>StockStory：「Q2 2026 and full-year bookings guidance both missed, and this is weighing on shares. The market seemed to be hoping for more.」</li>
+    </ul>
+  </div>
+
+  <!-- ===== §2 ===== -->
+  <h2 id="sectors">§2 產業趨勢</h2>
+
+  <div class="sector-block">
+    <div class="sector-label">AI 基礎設施 Supply Chain — 光通訊 × 功率半導體 × 資料中心建設</div>
+    <p style="font-size:14px;margin-bottom:10px;">FN / ON / STRL 從三個 layer 同步確認 hyperscaler capex 週期 2026 Q1 無放緩。</p>
+    <ul style="padding-left:20px;font-size:14px;">
+      <li><strong>FN：</strong>Revenue +38.9% YoY（$1.21B record），HPC >$150M ramp，1.6T Datacom 轉型中；關稅 = 零影響（FOB）</li>
+      <li><strong>ON：</strong>AI DC QoQ +30%（「nearly double expected」），FY2026 AI DC revenue 目標 YoY 翻倍，content per rack $50K→$105K（2030）</li>
+      <li><strong>STRL：</strong>Revenue +91.6% YoY，CEC 電氣整合完成，semiconductor fab megaprojects pipeline 持續</li>
+      <li>Cross-validation：三家均未提及需求放緩，均上調或優化指引，無任何信號顯示 hyperscaler 削減支出</li>
+    </ul>
+  </div>
+
+  <div class="sector-block">
+    <div class="sector-label">核能 / 國防核電 — Nuclear Renaissance 量化確認</div>
+    <p style="font-size:14px;margin-bottom:10px;"><strong>BWXT</strong> Commercial Operations +121% YoY，核電從「主題」到「真實訂單」。</p>
+    <ul style="padding-left:20px;font-size:14px;">
+      <li>Backlog $8.65B（+77.3%）：2+ 年能見度，幾乎鎖定未來業績</li>
+      <li>地緣政治加持：中東衝突（美伊緊張）+ AI 電力需求暴增，核電 baseload 戰略地位快速提升</li>
+      <li>PCG 收購：去中國化 + 能源安全 + AI 電力三重驅動，非單一邏輯</li>
+    </ul>
+  </div>
+
+  <div class="sector-block">
+    <div class="sector-label">消費 / 食品 — Chicken Recovery vs Beef Structural Pain</div>
+    <p style="font-size:14px;margin-bottom:10px;"><strong>TSN</strong> 清晰揭示蛋白質結構分化，Chicken 強勢，Beef 深困。</p>
+    <ul style="padding-left:20px;font-size:14px;">
+      <li>Chicken FY2026 OI 指引上調 +15%+，三年新高；消費者 trade-down from beef 是核心推力</li>
+      <li>Beef：cattle herd 重建 2–3 年，DOJ 刑事調查監管風險上升</li>
+      <li>量跌（-2.3%）價升（+4.4%）：定價力主導，量的回升才是真實反轉信號</li>
+    </ul>
+  </div>
+
+  <div class="sector-block">
+    <div class="sector-label">東南亞超級 App — GRAB 盈利加速但市場要求 Guidance Raise</div>
+    <p style="font-size:14px;margin-bottom:10px;"><strong>GRAB</strong> 基本面顯著改善，但 FY guidance maintain + CEO 賣股令市場無法給溢價。</p>
+    <ul style="padding-left:20px;font-size:14px;">
+      <li>Revenue +24% YoY 加速，EBITDA +46%（record），GAAP Profit $120M（Q1 2025 僅 $10M）</li>
+      <li>Financial Services 高速增長，FS EBITDA breakeven H2 2026 確認；Superbank 印尼 IPO 成功是未來估值 catalyst</li>
+      <li>FY guidance maintain 隱含 H2 macro（ASEAN 貨幣、季節性）不確定性，是「不上調 = hidden guide down」典型案例</li>
+    </ul>
+  </div>
+
+  <div class="sector-block">
+    <div class="sector-label">消費科技 / 廣告平台 — 低預期翻身（PINS）vs Bookings Miss 重挫（DUOL）</div>
+    <p style="font-size:14px;margin-bottom:10px;">PINS 和 DUOL 今日形成強烈反差，核心差異在於 forward indicator（guidance / bookings）方向。</p>
+    <ul style="padding-left:20px;font-size:14px;">
+      <li>PINS：前 5 季 miss 基礎 + Q2 guidance beat → 低預期爆發 +15.37%；Elliott $1B 背書提供底部</li>
+      <li>DUOL：Q1 beat 但 FY bookings guidance 僅 +10.5% → forward 放緩鎖定，-13%</li>
+      <li>共同主題：Market cares more about forward bookings/guidance than current beat</li>
+    </ul>
+  </div>
+
+  <!-- ===== §3 ===== -->
+  <h2 id="winners">§3 贏家與輸家</h2>
+
+  <h3>贏家（基本面 + 股價同步正向）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="winner-row"><td>STRL</td><td><strong>+20.6% 至 $636.96（盤中高 $653.97，新 52W 高）。</strong>EPS beat +64%、Revenue beat +40%、全年指引 raise +20%，三重驚喜同步；CEC 電氣整合速度超所有市場預期，data center end-to-end 競爭力得到量化驗證。</td></tr>
+      <tr class="winner-row"><td>PINS</td><td><strong>+15.37% 至 $24.06。</strong>Q2 revenue guidance $1.133B–$1.153B 超 LSEG consensus $1.11B；前 5 季 miss 後首次 guidance beat；Elliott $1B 背書；低預期基礎爆發。初稿錯判為 Sell the News，v2 已修正。</td></tr>
+      <tr class="winner-row"><td>TSN</td><td><strong>+4.03% 至 $66.25（52W 高）。</strong>EPS beat +10.7%，Chicken OI 指引上調至 $1.9B–$2.05B，FCF $432M，大盤 -0.36% 中逆勢創新高。</td></tr>
+      <tr class="winner-row"><td>FN</td><td><strong>盤中 +1.97% 至 $720.37。</strong>Record revenue $1.21B（+38.9%），EPS beat，Q4 指引 raise，AI 光通訊需求加速量化；關稅 = 零影響。</td></tr>
+      <tr class="winner-row"><td>BWXT</td><td><strong>盤後 +1.15% 至 $218.80。</strong>EPS beat +21.7%，Commercial Operations +121%，Backlog +77%，核電復興量化確認。Revenue 指引 maintain 限制爆發幅度。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>輸家（Sell the News + 真正 Guide Down + 持平）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="loser-row"><td>DUOL</td><td><strong>盤後 -12~14% 至 $95–96。</strong>EPS beat +18% 但 FY2026 Bookings 指引 $1.28B 僅 +10.5%（市場估 $1.4B+）；Bookings 是 Revenue 領先指標，成長降速路徑已鎖定。</td></tr>
+      <tr class="loser-row"><td>ON</td><td><strong>盤後 -4.41% 至 $97.54（Sell the News）。</strong>Beat + raise 但前收 $103.03 為 52W 高（YTD +82%）；多位高管 10b5-1 賣股；分析師平均目標 $75 vs 現價——估值過度拉伸。</td></tr>
+      <tr class="loser-row"><td>GRAB</td><td><strong>盤後持平（相對輸家）。</strong>Q1 Revenue beat +3.7%、EBITDA +46%，但 FY guidance maintain 未上調 + CEO 賣股 $1.47M，強勁 Q1 無法轉化為上漲。</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ===== §4 ===== -->
+  <h2 id="contradictions">§4 互相矛盾與不合邏輯之處</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：ON AI DC QoQ +30% 但整體 Revenue YoY 僅 +5%（AI 增長規模尚不足以定義全公司）</h4>
+    <p>ON 聲稱 AI data center revenue QoQ +30%（「nearly double expected growth rate」），FY2026 目標全年 AI DC revenue YoY 翻倍。但 Q1 2026 整體 Revenue 僅 +5% YoY，AMG segment -5%（auto/industrial 壓制）。AI 增長被傳統 segment 衰退大幅稀釋。</p>
+    <p class="implication">→ <strong>Implication：</strong>若 2025 全年 AI DC revenue ~$250M（佔 $6B 總收入約 4%），即便 FY2026 翻倍至 ~$500M，也只是邊際貢獻。Auto/industrial recovery 時間點比 AI 敘事更決定 ON 全公司增長軌跡。股票 82% YTD 漲幅反映的是對 AI 的敘事溢價而非盈利現實。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：DUOL 用戶 +21% 但 Bookings +14%（ARPU 隱性下滑，策略邏輯存疑）</h4>
+    <p>Duolingo DAU +21%、Paid Subscribers +21%，但 Bookings 僅 +14%，Revenue +26.5%（消耗遞延收入）。付費用戶增加了，但每位付費用戶貢獻的 Bookings 在壓縮。CEO 說「犧牲短期 revenue 換長期用戶」——但付費用戶已增加 21%，ARPU 卻下滑，短期犧牲的代價比宣稱的更大。</p>
+    <p class="implication">→ <strong>Implication：</strong>若 ARPU 持續壓縮，用戶翻倍不等於 revenue 翻倍。FY2026 Bookings 指引 +10.5% 是對此矛盾的量化確認。投資人需追蹤 Bookings per subscriber，而非只看用戶人頭數。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 3：PINS GAAP 虧損 -$74M 但同時用 $2B 現金（部分借款）回購（槓桿矛盾）</h4>
+    <p>Pinterest Q1 GAAP Net Loss -$74M，同時年初至今以 $2B 回購 109M 股，資金部分來自 $1B convertible note 融資。即：一邊 GAAP 虧損，一邊借款回購股票。tvScientific $465.1M + convertible note $1B = 新增負債超 $1.4B；FCF $312M 能覆蓋利息但 margin of safety 有限。</p>
+    <p class="implication">→ <strong>Implication：</strong>大規模回購在 GAAP 虧損和 convertible note 發行背景下是槓桿操作。若廣告市場走軟（ad pricing -5% 趨勢持續），債務風險將上升。Non-GAAP EPS beat 掩蓋了這個結構矛盾，但 Q2 guidance beat 讓市場今日選擇忽略。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：STRL Headline Revenue +91.6% vs 有機增長 ~55%（M&A 貢獻被 headline 混淆）</h4>
+    <p>Sterling 報告 Revenue +91.6% YoY，觸發 +20.6% 股價反應。但 CEC 貢獻 $156.1M（約 36% 的超額增長來自收購），有機增長約 55%+。更重要的是 backlog：headline +81%，有機 +49%（管理層自行說明）。市場在 headlines 中看到 81%，實際有機部分是 49%。</p>
+    <p class="implication">→ <strong>Implication：</strong>若未來無新大型收購，STRL 的有機增長（49% backlog YoY）雖強健，但無法重複今日的 headline 效果。長期投資人應追蹤有機 bookings，避免 M&A-driven growth mirage。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5：TSN Revenue +4.4% 但 Volume -2.3%（量跌價升不可持續）</h4>
+    <p>Tyson Foods Revenue 增長完全靠定價力（+4.4%），Sales Volume -2.3%。同期 Adj. EBITDA 略遜預期，顯示成本壓力仍在。管理層上調 Chicken OI 指引是因為利潤率改善，而非量的增長。若消費者在高通脹中進一步減少蛋白質購買，定價力可能因競爭而削弱。</p>
+    <p class="implication">→ <strong>Implication：</strong>量跌價升是不可持續增長模式。真實需求回升的標誌是 Volume 轉正。DOJ 調查 meatpackers 定價進一步加大 Beef segment 尾部風險，Chicken 的強勢能否彌補 Beef 的結構洞仍是關鍵。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 6：GRAB Q1 大幅 beat 但 FY guidance 一字不改（H2 信心缺失 = Hidden Guide Down）</h4>
+    <p>Grab Q1 Revenue $955M 超出 FY guidance 內含的季度節奏，Adj. EBITDA $154M 和 GAAP Profit $120M 均遠超去年同期。如此強勁 Q1，通常會帶動全年指引上調（如 TSN、STRL 均上調）。但 GRAB 維持 FY2026 $4.04B–$4.10B 和 EBITDA $700M–$720M 不變。</p>
+    <p class="implication">→ <strong>Implication：</strong>FY guidance maintain 在 Q1 大幅 beat 後隱含管理層預期 Q2–Q4 成長明顯放緩。可能原因：ASEAN 貨幣貶值壓力（FX 影響 USD 報告數字）、季節性（Q1 Lunar New Year / Ramadan 拉力後回落）。「Beat + Maintain = Hidden guide down」是 GRAB 今日持平的核心。</p>
+  </div>
+
+  <!-- ===== §5 ===== -->
+  <h2 id="summary">§5 總結（核心發現）</h2>
+  <ul class="summary-list">
+    <li><strong>1. AI 基礎設施 Supply Chain 2026 Q1 無放緩，FN / ON / STRL 三角完整佐證。</strong> 光通訊製造（FN +38.9%）、功率半導體（ON AI DC QoQ +30%）、資料中心建設（STRL +91.6%）從三個 layer 同步確認 hyperscaler capex 週期強勁。三家均未提及需求放緩，AI 基礎設施主題跨 GICS sector 形成 cohesive signal。</li>
+    <li><strong>2. PINS +15.37% 是本日最大反轉：低預期 + Guidance Beat 模式爆發。</strong> 前 5 季 miss 後首次 Q2 guidance beat（$1.133B vs consensus $1.11B），Elliott $1B 背書，low estimate base 下爆發 +15.37%。CNBC 確認：「shares soared 15% after the report」。教訓：estimate 基礎的位置比 beat 幅度本身更重要。初稿誤判，v2 修正。</li>
+    <li><strong>3. DUOL Bookings Miss 是本日最大警訊，成長降速路徑已鎖定。</strong> FY2026 Bookings 指引 $1.28B（+10.5%）vs 市場估 $1.4B+，差距 ~$120M。Bookings 是 Revenue 的領先指標，未來 4–6 季 Revenue 成長降速至 ~15%–16% 幾乎確定。StockStory：「The market seemed to be hoping for more.」</li>
+    <li><strong>4. STRL 三重驚喜觸發重新定價（+20.6%），CEC 整合速度重寫市場估算。</strong> EPS beat 64%、Revenue beat 40%、FY指引 raise 20%——任一條件單獨出現都不足以觸發 +20%；三者同步讓市場完全放棄原有定價，在近兩倍均量下重新定價至 $636.96（52W 高）。</li>
+    <li><strong>5. GRAB 盈利加速但「Beat + Maintain = 持平」——Guidance Raise 是市場給分的必要條件。</strong> Q1 Revenue $955M beat $921M，EBITDA +46%（record），GAAP Profit $120M（YoY +1,100%）——基本面改善幅度顯著。但 FY2026 guidance 一字不改，加上 CEO 賣股，beat 無法轉化為上漲。對比 TSN 和 STRL（均上調指引）立即獲得市場溢價，GRAB 的「不上調」本身就是 hidden signal。</li>
+    <li><strong>6. 核能 Renaissance 今日量化：BWXT Commercial Operations +121% YoY，Backlog +77%。</strong> 在 AI 電力需求暴增和中東衝突升溫雙重背景下，BWXT 是核電復興最直接的量化受益者。Revenue 指引 maintain 限制股價爆發（+1.15%），但基本面確定性極高，Backlog 覆蓋 2+ 年業績。</li>
+    <li><strong>7. ON -4.41%：「Beat + Raise = Sell the News」在估值過度拉伸時規律性發生。</strong> ON beat +4.9%，Q2 指引 raise，但前收 $103.03 創 52W 高（YTD +82%），分析師平均目標 $75 遠低現價，高管 10b5-1 賣股加重情緒。Sell the News 是本季反覆驗證的 meta-pattern：估值已 price in 完美時，beat 不夠驚喜。</li>
+    <li><strong>8. GAAP vs Non-GAAP 差距是本日多公司的共同隱憂，不容忽視。</strong> PINS GAAP -$74M vs Non-GAAP EPS $0.27（差距主因 SBC + 收購費用）；ON GAAP EPS 長期低於 Non-GAAP；DUOL GAAP EPS $0.89（本季罕見正值）。只看 Non-GAAP beat 會系統性低估 SBC 成本和 convertible debt 對真實盈利能力的影響，尤其 PINS 的 $1B convertible note 在利率偏高環境下成本不容忽視。</li>
+  </ul>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+    <br><br>
+    <strong>v2 修正說明（2026-05-05）：</strong>
+    ① PINS 盤後由初稿 -0.15% 修正為 +15.37% 至 $24.06（初稿引用 Call 結束前早期報價，已據 CNBC / Bloomberg 修正）；
+    ② BWXT 盤後由「持平」修正為 +1.15% 至 $218.80（Investing.com 確認）；
+    ③ GRAB Q1 2026 Call 已完成：Revenue $955M beat $921M，EBITDA $154M（+46%），GAAP Profit $120M，FY guidance maintain，盤後持平（MarketScreener 確認）。
+    <br><br>
+    <strong>數據來源：</strong>Benzinga Pro、CNBC、Bloomberg、Investing.com、MarketScreener、Robinhood、StockStory、StockTitan、TipRanks、Grab 官方 press release、Unusual Whales。
+  </div>
+
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>
