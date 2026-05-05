@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>生技 / 醫療 — 產業深度 ID 索引</title>
+<meta name="description" content="跨多檔個股共用的產業深度研究（Industry DD），按產業類別整理">
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.65;-webkit-text-size-adjust:100%}
+.container{max-width:1240px;margin:0 auto;padding:1.4rem 1.5rem 3rem}
+.crumb{font-size:.78rem;color:#6B7280;margin-bottom:.5rem}
+.crumb a{color:#6B7280;text-decoration:none}
+
+/* H1 + meta strip */
+.head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:1px solid #E5E7EB;padding-bottom:14px;margin-bottom:14px}
+h1{color:#4C1D95;font-size:1.7rem;font-weight:800;letter-spacing:-.03em;margin:0}
+.sub{color:#6B7280;font-size:.88rem;margin-top:.35rem;max-width:680px;line-height:1.55}
+.sub code{background:#EDE9FE;padding:1px 6px;border-radius:3px;font-size:11.5px;color:#6B21A8}
+
+.meta-strip{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;font-size:11.5px;color:#4B5563}
+.meta-strip .item{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E5E7EB;padding:5px 10px;border-radius:14px}
+.meta-strip .item b{color:#4C1D95;font-weight:700;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.meta-strip .info-toggle{cursor:pointer;color:#7C3AED;background:none;border:0;font:inherit;font-size:11.5px;padding:0;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.phase-pop{display:none;background:#fff;border:1px solid #DDD6FE;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:12px;color:#4B5563;line-height:1.6}
+.phase-pop.open{display:block}
+.phase-pop b{color:#6B21A8}
+.phase-pop .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+
+/* Compressed Flagship */
+.flagship{background:linear-gradient(135deg,#4C1D95 0%,#7C3AED 100%);color:#fff;border-radius:12px;padding:16px 20px;margin:14px 0;box-shadow:0 4px 14px rgba(76,29,149,.15)}
+.fl-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.fl-head .label{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;opacity:.8;font-weight:600}
+.fl-head h2{margin:2px 0 0;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.fl-tabs{display:flex;gap:4px;background:rgba(255,255,255,.1);padding:3px;border-radius:8px}
+.fl-tab{background:none;border:0;color:rgba(255,255,255,.75);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit;font-size:12px;font-weight:600}
+.fl-tab.active{background:#fff;color:#4C1D95}
+.fl-pane{display:none}
+.fl-pane.active{display:block}
+.fl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.fl-grid a{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:9px 11px;text-decoration:none;color:#fff;transition:background .15s}
+.fl-grid a:hover{background:rgba(255,255,255,.18)}
+.fl-grid .num{font-size:9.5px;opacity:.7;font-weight:600;letter-spacing:.5px}
+.fl-grid .title{font-size:12px;font-weight:600;margin-top:2px;line-height:1.4}
+.fl-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:11.5px;flex-wrap:wrap}
+.fl-foot .more{background:#fff;color:#4C1D95;padding:5px 12px;border-radius:5px;text-decoration:none;font-weight:700;font-size:11.5px}
+.fl-foot .toggle{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 10px;border-radius:5px;cursor:pointer;font:inherit;font-size:11px;font-weight:500}
+
+/* Tier Matrix one-liner: keep as-is from original (passes through tier_alert_html which already has its own styling). Wrapped in margin reset */
+.tier-passthrough{margin:8px 0 16px}
+.tier-passthrough > div{margin:0 !important}
+
+/* Sticky toolbar */
+.toolbar{position:sticky;top:48px;z-index:50;background:rgba(250,250,249,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:10px 0;margin:6px -1.5rem 0;border-bottom:1px solid #E5E7EB}
+.toolbar-inner{max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.search-box{flex:1 1 280px;min-width:0;position:relative}
+.search-box input{width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 12px 8px 32px;font:inherit;font-size:13px;background:#fff;color:#1E1B4B;outline:none;transition:border-color .15s,box-shadow .15s}
+.search-box input:focus{border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+.search-box::before{content:"🔍";position:absolute;top:50%;left:10px;transform:translateY(-50%);font-size:13px;opacity:.55;pointer-events:none}
+.f-group{display:flex;gap:5px;flex-wrap:wrap}
+.f-chip{background:#fff;border:1px solid #E5E7EB;color:#4B5563;padding:6px 10px;border-radius:14px;cursor:pointer;font:inherit;font-size:11.5px;font-weight:500;transition:all .12s;white-space:nowrap}
+.f-chip:hover{border-color:#C4B5FD;color:#4C1D95}
+.f-chip.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.f-clear{background:none;border:0;color:#7C3AED;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;padding:4px 6px;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.cat-jump{display:flex;gap:6px;overflow-x:auto;margin:10px -1.5rem 0;padding:6px 1.5rem;border-bottom:1px solid #E5E7EB;background:#fff;scrollbar-width:thin}
+.cat-jump a{flex-shrink:0;background:#F5F3FF;color:#6B21A8;padding:5px 11px;border-radius:14px;text-decoration:none;font-size:11.5px;font-weight:500;border:1px solid transparent;white-space:nowrap}
+.cat-jump a:hover{background:#EDE9FE;border-color:#DDD6FE}
+.cat-jump a .n{color:#94A3B8;font-size:10.5px;margin-left:4px;font-weight:400}
+.filter-status{font-size:11.5px;color:#6B7280;margin-top:10px}
+.filter-status b{color:#4C1D95;font-weight:700}
+
+/* Categories */
+.category{margin-top:24px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.025);overflow:hidden;scroll-margin-top:130px}
+.cat-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #E5E7EB;background:linear-gradient(90deg,#F5F3FF,#fff);gap:10px;flex-wrap:wrap;cursor:pointer;user-select:none}
+.cat-head:hover{background:linear-gradient(90deg,#EDE9FE,#FAF5FF)}
+.cat-head .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cat-head h2{margin:0;color:#4C1D95;font-size:15.5px;font-weight:700}
+.cat-head .cat-icon{font-size:18px}
+.cat-head .count{background:#EDE9FE;color:#6B21A8;padding:2px 10px;border-radius:14px;font-size:11px;font-weight:600}
+.cat-head .hint{color:#94A3B8;font-size:11.5px;flex:1 1 auto;text-align:right}
+.cat-chev{font-size:11px;color:#7C3AED;transition:transform .25s;font-weight:700;display:inline-block}
+.category:not(.open) .cat-chev{transform:rotate(-90deg)}
+.cat-body{padding:14px 18px 18px}
+.category:not(.open) .cat-body{display:none}
+
+/* Topic grid */
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:10px}
+.topic-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column}
+.topic-card:hover{border-color:#C4B5FD;box-shadow:0 2px 10px rgba(124,58,237,.06)}
+.topic-card.is-parent{background:linear-gradient(180deg,#FAF5FF,#fff);border-color:#DDD6FE;grid-column:1/-1}
+
+.tc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tc-num{flex:0 0 auto;background:#EDE9FE;color:#6B21A8;font-weight:700;font-size:11.5px;min-width:22px;height:22px;padding:0 5px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.topic-card.is-parent .tc-num{background:#7C3AED;color:#fff}
+.tc-title{flex:1 1 auto;min-width:0;font-size:14.5px;font-weight:700;color:#4C1D95;text-decoration:none;line-height:1.35}
+.tc-title:hover{color:#7C3AED;text-decoration:underline}
+.tc-title .arrow{font-size:12px;opacity:.55;font-weight:500;margin-left:3px}
+.tc-badge{background:#7C3AED;color:#fff;padding:1px 6px;border-radius:3px;font-size:9.5px;font-weight:600;letter-spacing:.3px}
+.tc-badge.child{background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE}
+.tc-phase{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;flex-shrink:0}
+.phase-I{background:#DCFCE7;color:#166534}
+.phase-II{background:#FEF3C7;color:#92400E}
+.phase-III{background:#FEE2E2;color:#991B1B}
+.phase-IV{background:#E0E7FF;color:#3730A3}
+.tc-expand{flex:0 0 auto;background:none;border:0;color:#94A3B8;cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;transition:transform .2s,color .15s}
+.tc-expand:hover{color:#7C3AED}
+.topic-card.expanded .tc-expand{transform:rotate(180deg);color:#7C3AED}
+
+.tc-thesis-short{font-size:12px;color:#4B5563;margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+
+.tc-details{display:none;border-top:1px dashed #E5E7EB;margin-top:10px;padding-top:10px}
+.topic-card.expanded .tc-details{display:block}
+.tc-tags{color:#6B7280;font-size:11.5px;margin-bottom:6px}
+.tc-meta{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;margin-bottom:6px;font-size:11px;color:#6B7280}
+.tc-meta .chip{display:inline-flex;align-items:center;gap:3px;background:#F3F4F6;padding:2px 7px;border-radius:9px;color:#4B5563;font-weight:500}
+.tc-thesis-full{padding:8px 11px;background:#FAFAF9;border-left:3px solid #C4B5FD;border-radius:0 4px 4px 0;font-size:11.5px;color:#4B5563;line-height:1.55;margin-top:4px}
+.tc-thesis-full::before{content:"非共識";display:block;font-size:9px;color:#7C3AED;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+
+.tc-children{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tc-children .label{font-size:10px;color:#7C3AED;font-weight:700;letter-spacing:.3px}
+.tc-chip{display:inline-flex;align-items:center;gap:3px;background:#fff;border:1px solid #C4B5FD;color:#6B21A8;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;text-decoration:none;transition:all .15s}
+.tc-chip:hover{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.tc-chip .arrow{font-size:9px;opacity:.7}
+
+.empty-state{text-align:center;padding:18px 14px;color:#94A3B8;font-size:12px}
+.empty-state .eco{font-size:24px;margin-bottom:4px}
+.suggest{background:#F5F3FF;border:1px dashed #C4B5FD;border-radius:6px;padding:10px 14px;margin-top:10px;color:#6B21A8;font-size:12px;line-height:1.65}
+.suggest summary{cursor:pointer;font-weight:600;list-style:none;color:#4C1D95}
+.suggest summary::-webkit-details-marker{display:none}
+.suggest summary::before{content:"▸";display:inline-block;margin-right:6px;transition:transform .2s}
+.suggest[open] summary::before{transform:rotate(90deg)}
+.suggest-body{margin-top:8px}
+.suggest strong{color:#4C1D95}
+.suggest code{background:#EDE9FE;padding:1px 6px;border-radius:3px;color:#6B21A8;font-size:11.5px;font-weight:600}
+.suggest ul{margin:8px 0 0;padding-left:18px}
+.suggest ul li{margin-bottom:6px;color:#4C1D95;font-size:11.5px}
+
+.footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#6B7280;font-size:.78rem;text-align:center}
+
+.topic-card.hidden,.category.hidden{display:none !important}
+
+/* ===== Responsive breakpoints =====
+   ≥1280 desktop wide / ≤1024 tablet 橫 / ≤768 平板直 + 大手機橫 / ≤480 手機直 / ≤360 ultra narrow
+*/
+@media(max-width:1024px){
+  .container{padding:1.2rem 1.2rem 2.5rem}
+  .toolbar{margin:6px -1.2rem 0}
+  .toolbar-inner{padding:0 1.2rem}
+  .cat-jump{margin:8px -1.2rem 0;padding:6px 1.2rem}
+  .head-row{align-items:flex-start}
+  .meta-strip{font-size:11px;gap:6px 8px}
+  .meta-strip .item{padding:4px 8px}
+  .flagship{padding:14px 16px}
+  .fl-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .topic-grid{gap:8px}
+}
+@media(max-width:768px){
+  .container{padding:1rem 1rem 2.2rem}
+  h1{font-size:1.4rem}
+  .sub{font-size:.85rem}
+  .head-row{flex-direction:column;gap:10px;padding-bottom:10px;margin-bottom:10px}
+  .meta-strip{width:100%}
+  .toolbar{margin:6px -1rem 0;top:46px;padding:8px 0}
+  .toolbar-inner{padding:0 1rem;gap:6px}
+  .search-box{flex:1 1 100%;order:1}
+  .toolbar .f-group{order:2}
+  .toolbar .f-clear{order:3}
+  .cat-jump{margin:8px -1rem 0;padding:6px 1rem;-webkit-overflow-scrolling:touch}
+  .topic-grid{grid-template-columns:1fr;gap:8px}
+  .topic-card{padding:10px 12px}
+  .topic-card.is-parent{grid-column:auto}
+  .fl-head{flex-direction:column;align-items:flex-start;gap:10px}
+  .fl-tabs{align-self:stretch}
+  .fl-tab{flex:1 1 50%;text-align:center}
+  .fl-grid{grid-template-columns:1fr 1fr}
+  .tc-title{font-size:13.5px}
+  .tc-num{font-size:11px;height:20px;min-width:20px;padding:0 4px}
+  .tc-badge{font-size:9px;padding:1px 5px}
+  .tc-phase{font-size:9.5px;padding:1px 6px}
+  .cat-head{padding:11px 14px}
+  .cat-head h2{font-size:14.5px}
+  .cat-head .hint{display:none}
+  .cat-body{padding:12px 12px 14px}
+  .tier-passthrough > div{font-size:12px !important}
+  .tier-passthrough > div span{word-break:break-all}
+}
+@media(max-width:480px){
+  body{font-size:13.5px}
+  .container{padding:.85rem .8rem 2rem}
+  h1{font-size:1.25rem}
+  .sub{font-size:.82rem;line-height:1.5}
+  .meta-strip{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:100%}
+  .meta-strip .item{justify-content:center;padding:5px 8px;font-size:10.5px}
+  .meta-strip .info-toggle{grid-column:1/-1;text-align:center;padding:4px 0}
+  .toolbar{margin:6px -.8rem 0;top:42px}
+  .toolbar-inner{padding:0 .8rem}
+  .cat-jump{margin:8px -.8rem 0;padding:6px .8rem}
+  .flagship{padding:12px 14px;border-radius:10px}
+  .fl-head h2{font-size:14.5px}
+  .fl-head .label{font-size:9.5px}
+  .fl-grid{grid-template-columns:1fr}
+  .fl-foot{flex-direction:column;align-items:stretch;gap:6px}
+  .fl-foot .more,.fl-foot .toggle{text-align:center}
+  .topic-card{padding:9px 11px;border-radius:7px}
+  .tc-head{gap:6px}
+  .tc-title{font-size:13px;flex:1 1 100%;order:2}
+  .tc-num{order:1}
+  .tc-badge,.tc-phase{order:3}
+  .tc-expand{order:4;margin-left:auto}
+  .tc-thesis-short{font-size:11.5px;margin-top:5px;-webkit-line-clamp:3}
+  .tc-children{margin-top:6px;gap:4px}
+  .tc-chip{font-size:10.5px;padding:2px 8px}
+  .tc-tags,.tc-meta{font-size:10.5px}
+  .tc-thesis-full{font-size:11px;padding:7px 9px}
+  .cat-head{padding:10px 12px;gap:6px}
+  .cat-head h2{font-size:14px}
+  .cat-head .count{font-size:10.5px;padding:2px 8px}
+  .cat-body{padding:10px 10px 12px}
+  .filter-status{font-size:11px}
+  .suggest{padding:9px 12px;font-size:11.5px}
+  .suggest ul{padding-left:16px}
+  .suggest ul li{font-size:11px}
+  .phase-pop .row{grid-template-columns:1fr}
+}
+@media(max-width:360px){
+  .container{padding:.7rem .65rem 1.8rem}
+  h1{font-size:1.15rem}
+  .meta-strip{grid-template-columns:1fr;gap:4px}
+  .meta-strip .info-toggle{grid-column:auto}
+  .toolbar{margin:5px -.65rem 0}
+  .toolbar-inner{padding:0 .65rem}
+  .cat-jump{margin:6px -.65rem 0;padding:5px .65rem}
+  .topic-card{padding:8px 10px}
+  .tc-head{gap:5px}
+  .tc-title{font-size:12.5px}
+  .tc-thesis-short{font-size:11px;-webkit-line-clamp:4}
+  .fl-tab{font-size:11px;padding:5px 8px}
+}
+/* Landscape phones (low height): drop sticky to recover viewport */
+@media(max-height:500px) and (orientation:landscape){
+  .toolbar{position:static;border-bottom:none}
+  .imq-nav-root{position:static}
+  .category{scroll-margin-top:8px}
+}
+/* Wide screens: enable 3-col when there's room (capped by 1240 container) */
+@media(min-width:1280px){
+  .topic-grid{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+}
+/* Print */
+@media print{
+  .toolbar,.cat-jump,.tc-expand,.imq-nav-root{display:none !important}
+  .category{break-inside:avoid;page-break-inside:avoid}
+  .topic-card{break-inside:avoid}
+  .tc-details{display:block !important}
+  .category:not(.open) .cat-body{display:block !important}
+  body{font-size:11px}
+}
+
+/* ── Cat summary grid (directory mode) ── */
+.cat-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:20px 0}
+.cat-summary-card{display:flex;align-items:center;gap:14px;padding:16px 18px;background:#fff;border:1px solid #E5E7EB;border-radius:8px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s,transform .12s}
+.cat-summary-card:hover{border-color:#C4B5FD;box-shadow:0 4px 12px rgba(124,58,237,.08);transform:translateY(-1px)}
+.cs-icon{font-size:24px;flex-shrink:0;line-height:1}
+.cs-text{flex:1 1 auto;min-width:0}
+.cs-text h3{margin:0 0 2px;color:#4C1D95;font-size:14px;font-weight:700;line-height:1.3}
+.cs-count{display:inline-block;background:#EDE9FE;color:#6B21A8;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:4px}
+.cs-hint{margin:0;color:#94A3B8;font-size:11.5px;line-height:1.4}
+.cs-arrow{color:#C4B5FD;font-size:16px;font-weight:600;flex-shrink:0}
+.cat-summary-card:hover .cs-arrow{color:#7C3AED}
+@media(max-width:768px){
+  .cat-summary-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .cat-summary-card{padding:12px 14px;gap:10px}
+  .cs-icon{font-size:20px}
+  .cs-text h3{font-size:13px}
+}
+@media(max-width:480px){
+  .cat-summary-grid{grid-template-columns:1fr}
+}
+
+
+/* Cat page extras */
+.cat-breadcrumb{padding:12px 0 8px;font-size:.8rem;color:#6B7280}
+.cat-breadcrumb a{color:#6B7280;text-decoration:none}
+.cat-breadcrumb a:hover{color:#4C1D95;text-decoration:underline}
+.cat-breadcrumb strong{color:#4C1D95}
+.cat-page-h1{color:#4C1D95;font-size:1.6rem;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
+.cat-page-hint{color:#6B7280;font-size:.88rem;margin:0 0 12px}
+.cat-jump a.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.cat-page-footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#9CA3AF;font-size:.72rem;text-align:center}
+/* Force cat-head non-clickable on standalone pages */
+.cat-head{cursor:default !important}
+.cat-head:hover{background:linear-gradient(90deg,#F5F3FF,#fff) !important}
+
+</style>
+
+</head>
+<body>
+
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/" class="active">產業深度 ID</a>
+          <a href="/id/theses.html">🔥 十五大非共識</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="container">
+  <nav class="cat-breadcrumb">
+    <a href="/">首頁</a> &rsaquo;
+    <a href="/research/">研究</a> &rsaquo;
+    <a href="/id/">所有產業報告</a>
+    &rsaquo; <strong>🧬 生技 / 醫療</strong>
+  </nav>
+
+  <h1 class="cat-page-h1">🧬 生技 / 醫療（2 份）</h1>
+  <p class="cat-page-hint">GLP-1 / 基因治療 / 醫材 / 數位健康</p>
+
+  <div class="toolbar">
+    <div class="toolbar-inner">
+      <div class="search-box">
+        <input id="q" type="search" placeholder="搜尋產業 / 標題 / ticker / tag（如 CoWoS、CRWD、液冷）" autocomplete="off">
+      </div>
+      <div class="f-group" id="type-filter">
+        <button class="f-chip" data-filter="type" data-val="parent">母題</button>
+        <button class="f-chip" data-filter="type" data-val="child">子題</button>
+      </div>
+      <button class="f-clear" id="clear-filters">清除</button>
+    </div>
+    <div class="cat-jump">
+      <a href="/id/">↩ 全部</a>
+      <a href="cat-semi.html">🔷 半導體 / AI 基建 <span class="n">19 份</span></a>
+      <a href="cat-bio.html">🧬 生技 / 醫療 <span class="n">1 份</span></a>
+      <a href="cat-cloud.html">☁️ 雲端 / SaaS / 軟體 <span class="n">9 份</span></a>
+      <a href="cat-energy.html">⚡ 能源 / 電動車 / 新能源 <span class="n">3 份</span></a>
+      <a href="cat-consumer.html">🛍️ 消費 / 零售 / 精品 <span class="n">20 份</span></a>
+      <a href="cat-finance.html">🏦 金融 / 保險 / FinTech <span class="n">2 份</span></a>
+      <a href="cat-industrial.html">🔧 工業 / 航太 / 自動化 <span class="n">6 份</span></a>
+      <a href="cat-staples.html">🛒 必選消費 / 飲料 / 個護 <span class="n">2 份</span></a>
+      <a href="cat-reits.html">🏢 REITs / 數位基建房東 <span class="n">1 份</span></a>
+      <a href="cat-space.html">🛰️ 太空經濟 / 衛星 / 低軌道 <span class="n">1 份</span></a>
+      <a href="cat-housing.html">🏠 住房 / 房貸 / Builders <span class="n">1 份</span></a>
+      <a href="cat-transport.html">🚢 運輸 / 物流 / 航運 <span class="n">0 份</span></a>
+      <a href="cat-materials.html">⛏️ 材料 / 礦業 / 特殊化學 <span class="n">1 份</span></a>
+      <a href="cat-agri.html">🌾 農業 / 食品 / 大宗商品 <span class="n">2 份</span></a>
+      <a href="cat-macro.html">🌐 跨域 / 其他 <span class="n">14 份</span></a>
+    </div>
+  </div>
+  <div class="filter-status" id="filter-status">顯示全部 <b id="visible-count">—</b> 份報告</div>
+
+<div class="category open" id="cat-bio" data-cat="bio">
+  <div class="cat-head">
+    <div class="left">
+      <span class="cat-icon">🧬</span>
+      <h2>生技 / 醫療</h2>
+      <span class="count">2 份</span>
+    </div>
+    <span class="hint">GLP-1 / 基因治療 / 醫材 / 數位健康</span>
+    <span class="cat-chev">▾</span>
+  </div>
+  <div class="cat-body">
+    <div class="topic-grid">
+<!-- mega-anchor: bio
+Sub-groups (controlled vocabulary, see /docs/id/taxonomy.md):
+  · bio.glp1
+  · bio.gene_cell
+  · bio.medical_device
+  · bio.cdmo_cro
+  · bio.digital_health
+  · bio.hospital_chain
+  · bio.china_pharma
+新 ID 由 industry-analyst skill 生成時依 id-meta JSON 的 mega+sub_group 插入到對應 [subgroup-anchor: bio.{sub_group}] 之後。
+-->
+<article class="topic-card is-parent" data-phase="II" data-type="parent" data-search="glp-1 跨域擴散母題 cross-domain master lly · nvo · stvn · cmg · cava · dnut · hsy · khc · mdlz · dal · ual · aal · luv · ccl · rcl · mar · hlt · plnt · pton · hims · aapl · grmn · met · pru · rga · afl · unh · ci · elv · cvs · unm">
+  <div class="tc-head">
+    <span class="tc-num">1</span>
+    <span class="tc-badge">🌐 跨域母題</span>
+    <a class="tc-title" href="/id/ID_GLP1Master_20260429.html">GLP-1 跨域擴散母題（Cross-Domain Master） <span class="arrow">→</span></a>
+    <span class="tc-phase phase-II">跨域 Phase 不一致（治療 III / 食品 IV / 旅遊 I-II / 健康 II / 保險 I→II）</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">GLP-1 不是單一 sector shock 而是 6+ domain 串聯 cascade 母題；治療 + 食品 + 餐飲 3 sector 已被 sell-side 大量分析（Phase III-IV 已被 priced）；旅遊 + 健康 + 保險 3 個擴散域仍 Phase I-II 嚴重 underpriced — Jefferies 2026-01 study $580M/yr top-4 carrier fuel saving 4% EPS / RGA 2025-11 publish mortality -3.5% by 2045 / PLNT Q4 25 公開 50% GLP-1 user 考慮 gym + Ro partnership 公司史上最成功 = 三條 anchored leading-edge data 但 sell-side 尚未 incorporate 進入 EPS model。母題 framework 提供「跨域 Phase 不一致」+「跨域 catalyst lag 矩陣」+「跨域 unit economics 對照」三個 PM-level 工具。2026-Q3 至 2027-Q1 是 6 個月跨域 catalyst peak window（Foundayo Q1 27 + retatrutide 2026 H2 + Numerator 24-month + Medicare BALANCE + sell-side EPS incorporation）— alpha 在 catalyst 前 1-2 季 build position。</div>
+  <div class="tc-details">
+    <div class="tc-tags">LLY · NVO · STVN · CMG · CAVA · KHC · HSY · MDLZ · DNUT · DAL · UAL · AAL · LUV · CCL · RCL · MAR · HLT · PLNT · PTON · HIMS · AAPL · GRMN · MET · PRU · RGA · AFL · UNH · CI · ELV · CVS · UNM</div>
+    <div class="tc-meta"><span class="chip">📊 32 檔</span>
+<span class="chip">5🔴 / 16🟡 / 11🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span class="chip">3 子題引用</span></div>
+    <div class="tc-thesis-full">4 條非共識：① <strong>跨域擴散順序</strong>：旅遊 / 健康 / 保險擴散領先共識認知 12-24 個月（Jefferies / RGA / PLNT 三條 anchored data sell-side 尚未 incorporate）；② <strong>保險 timing mismatch pair trade alpha</strong>：long MET/PRU/RGA + short UNH/CVS short-term — life 5-10 yr 慢 vs health 1-3 yr 快，雙端都 underpriced（MET fwd PE 8-9x「boring sector」vs UNH 14-16x cost peak 都未充分 priced）；③ <strong>跨域 binary catalyst 邊際 alpha 不對稱</strong>：Foundayo Q1 27 + retatrutide 2026-H2 對「未 priced 擴散域」(DAL / MET / PLNT) 邊際 alpha +30-40% &gt; 「已 priced 成熟域」+10-20%（multiple re-rating opportunity）；④ <strong>Cross-tier ticker（KO / UNH / DXCM）</strong>跨域整合 net impact 比 sector-isolated 共識更分化（KO fairlife $4B 4y from $1B / UNH 短期 cost vs 長期慢病 saving / DXCM T2D vs OTC GLP-1 era）。整合 3 子題：<a href="/id/ID_GLP1Treatment_20260428.html">ID_GLP1Treatment</a>（治療 III）+ <a href="/id/ID_GLP1PackagedFood_20260428.html">ID_GLP1PackagedFood</a>（食品 IV）+ <a href="/id/ID_GLP1RestaurantImpact_20260427.html">ID_GLP1RestaurantImpact</a>（餐飲 II→III）+ 擴散到 旅遊（DAL/UAL/AAL/LUV/CCL/RCL/MAR/HLT）/ 健康（PLNT/PTON/HIMS/AAPL/GRMN）/ 保險（MET/PRU/RGA/AFL/UNH/CI/ELV/CVS/UNM）；數據基礎：Numerator 30K consumer -10% across 100+ Grocery/QSR/Tobacco / 12% adults on GLP-1 / 11M user Q2 25 → 25M 2030 / 跨 6 domain $300-500B 2030 累積 P&L impact ≈ S&P 500 全年 EPS 3-5%。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="III" data-type="child" data-search="glp-1 治療藍圖 incretin therapeutics lly · nvo · amgn · rhhby · vktx · alt · innovent · zealand · stvn · schott · gxi · hims · pfe · smmt">
+  <div class="tc-head">
+    <span class="tc-num">2</span>
+    <span class="tc-badge">治療子題</span>
+    <a class="tc-title" href="/id/ID_GLP1Treatment_20260428.html">GLP-1 治療藍圖（Incretin Therapeutics） <span class="arrow">→</span></a>
+    <span class="tc-phase phase-III">III 口服切換 + 第二陣營讀出</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">GLP-1 進入 mono → dual → triple agonist + oral 切換的 S 曲線陡峭段；Lilly Q4 25 Mounjaro $7.4B + Zepbound $4.3B（FY25 合計 $36.5B）已超越 NVO semaglutide $33B；2026-04-01 Foundayo (orforglipron) FDA 50 天核准 + Medicare BALANCE $50/月 = 第三波擴張啟動；TRIUMPH-1/2 (retatrutide) + REDEFINE (CagriSema) + MARITIME (MariTide) + VANQUISH (VK2735) 2026-2027 連續讀出將決定第二陣營格局；MFN $245/月 + 2031-32 美國 semaglutide patent cliff 是兩大重塑因子；CDMO (CTLT 私有化) + device 4 寡占 (STVN +47% YoY / SCHOTT $371M Wilson NC) 是被低估的 picks-and-shovels。</div>
+  <div class="tc-details">
+    <div class="tc-tags">LLY · NVO · AMGN · RHHBY · VKTX · ALT · 1801.HK Innovent · ZEAL.CO · STVN · 1A8.DE SCHOTT · GXI · HIMS · PFE · SMMT</div>
+    <div class="tc-meta"><span class="chip">📊 14 檔</span>
+<span class="chip">4🔴 / 6🟡 / 4🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full">3 條非共識：① <strong>LLY vs NVO 2027 share 65/35</strong>（vs 共識 60/40，LLY 12 個月 +6pp 加速擴大 / Foundayo 50 天 FDA 最快 NME since 2002 / retatrutide TRIUMPH-4 28.7% vs sema 13.7%）；② <strong>oral GLP-1 滲透 2030 35-40%</strong>（vs 共識 20-25%；Foundayo 2026-04 FDA + VK2735 oral + amycretin oral + CT-996 5 玩家 race；類比 statin oral 完全 dominate IV evolocumab）；③ <strong>美國 patent cliff 2031-32 衝擊 ≤ 20% revenue erosion</strong>（vs 共識 -35-50%；5 重 LOE defense：tirzepatide 2036+ + 第二/三代 portfolio + indication moat outcome trial barrier + cartridge 4 寡占供應 + brand）；兄弟 ID：ID_GLP1PackagedFood + ID_GLP1RestaurantImpact</div>
+  </div>
+</article>
+</div>
+<details class="suggest"><summary>📋 建議補建</summary>
+<div class="suggest-body"><strong>📋 本類別建議補建（依 taxonomy 子群組對照）：</strong>
+
+<p style="margin:10px 0 6px;font-size:12px;color:#16A34A;font-weight:700">✅ 已建子群組</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.7;font-size:12px;color:#4B5563">
+<li><strong>GLP-1 / 代謝藥物（glp1）</strong> — GLP1Master(P) · GLP1Treatment</li>
+</ul>
+
+<p style="margin:14px 0 6px;font-size:12px;color:#7C3AED;font-weight:700">🔴 母題級缺口（待建）</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.85">
+<li><code>研究 基因治療 / 細胞治療（gene_cell）</code><br/><span style="color:#4B5563">VRTX / CRSP / EDIT / NTLA / BMRN / IONS</span><br/><span style="font-size:11px;color:#94A3B8">Casgevy 商業化進度；CAR-T 量產成本下降曲線；in vivo CRISPR 突破時程；2026-2027 BLA 讀出密集窗口</span></li>
+<li><code>研究 醫療設備 / 心導管（medical_device）</code><br/><span style="color:#4B5563">ISRG / SYK / MDT / ABT / DXCM / EW / BSX / PEN</span><br/><span style="font-size:11px;color:#94A3B8">Da Vinci 5 attach rate 提升；PFA 心房顫動 TAM 擴張；TAVR 老化人口；DXCM vs GLP-1 T2D 相互影響</span></li>
+<li><code>研究 CDMO / CRO 服務（cdmo_cro）</code><br/><span style="color:#4B5563">LH / DGX / IQV / WuXi 2359.HK / Lonza LONN.SW / Catalent（已私有化）</span><br/><span style="font-size:11px;color:#94A3B8">NVO / LLY GLP-1 製造瓶頸；肽合成 CDMO 產能緊缺；中國 CDMO 地緣風險再評估；IQV 臨床研究 AI 整合</span></li>
+<li><code>研究 數位健康 / 遠距醫療（digital_health）</code><br/><span style="color:#4B5563">HIMS / TDOC / DOCS / PROG</span><br/><span style="font-size:11px;color:#94A3B8">HIMS GLP-1 generic + ED + hair telehealth 三引擎 +60% YoY；TDOC 持續虧損結構問題；FDA AI 認證加速</span></li>
+<li><code>研究 醫院 / 連鎖診所（hospital_chain）</code><br/><span style="color:#4B5563">UNH / HCA / THC / 1099.HK Sinopharm</span><br/><span style="font-size:11px;color:#94A3B8">UNH 短期 cost surge vs 長期慢病 saving 雙面向；HCA 容量滿載 + 護士合約；Medicare Advantage 報銷壓力</span></li>
+<li><code>研究 中國創新藥 BD 浪潮（china_pharma）</code><br/><span style="color:#4B5563">1099.HK / 600196.SS / 1093.HK / 2196.HK / Innovent 1801.HK / BeiGene BGNE</span><br/><span style="font-size:11px;color:#94A3B8">2025-2026 中美藥企 license deal 爆發；ADC / 雙抗 / PD-1/L1 全球授權潮；中國研發成本優勢 vs 地緣風險</span></li>
+</ul>
+
+<p style="margin:14px 0 6px;font-size:12px;color:#EAB308;font-weight:700">🟡 子題級補強（已建 GLP-1 母題的延伸）</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.85">
+<li><code>研究 GLP-1 競爭者第二梯隊子題</code><br/><span style="color:#4B5563">AMGN MariTide · VKTX Viking · Roche / Zealand · Structure Therapeutics GPCR</span><br/><span style="font-size:11px;color:#94A3B8">補強 GLP1Treatment；REDEFINE / MARITIME / VANQUISH 三大讀出 2026-2027；第二陣營市場份額爭奪 vs LLY/NVO 強化</span></li>
+<li><code>研究 GLP-1 醫療設備位移子題</code><br/><span style="color:#4B5563">DXCM · ABT FreeStyle / Lingo · ISRG / BSX（手術量變化）</span><br/><span style="font-size:11px;color:#94A3B8">補強 GLP1Master；GLP-1 普及後 CGM T2D 需求下降；減重手術量縮；DXCM vs OTC GLP-1 era 業務重定位</span></li>
+</ul>
+</div>
+</details>
+
+  </div>
+</div>
+
+
+</div>
+
+<div class="cat-page-footer">
+  本頁由 scripts/build_id_category_pages.py 從 docs/id/index.html 自動生成 · 最後生成：2026-05-05T07:42:17Z
+</div>
+
+<script>
+// Topic card expand (event delegation)
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.tc-expand');
+  if(!btn) return;
+  e.preventDefault();
+  btn.closest('.topic-card').classList.toggle('expanded');
+});
+
+// Open ID report links in new tab
+document.querySelectorAll('a[href*="/id/ID_"]').forEach(function(a){
+  a.target = '_blank';
+  a.rel = 'noopener';
+});
+
+// Filters & search
+var filterState = {type:new Set(), q:''};
+function applyFilters(){
+  var visible = 0;
+  document.querySelectorAll('.topic-card').forEach(function(card){
+    var ok = true;
+    if(filterState.type.size > 0 && !filterState.type.has(card.dataset.type)) ok = false;
+    if(ok && filterState.q){
+      var hay = (card.dataset.search || '') + ' ' + card.textContent.toLowerCase();
+      if(hay.indexOf(filterState.q) === -1) ok = false;
+    }
+    card.classList.toggle('hidden', !ok);
+    if(ok) visible++;
+  });
+  document.querySelectorAll('.category').forEach(function(cat){
+    var topics = cat.querySelectorAll('.topic-card');
+    if(topics.length === 0) return;
+    var anyVisible = Array.from(topics).some(function(c){return !c.classList.contains('hidden');});
+    cat.classList.toggle('hidden', !anyVisible);
+  });
+  var vcEl=document.getElementById('visible-count');if(vcEl)vcEl.textContent=visible;
+  var any = filterState.type.size || filterState.q;
+  var fsEl=document.getElementById('filter-status');if(fsEl)fsEl.firstChild.textContent=any?'篩選後顯示 ':'顯示全部 ';
+}
+
+document.querySelectorAll('.f-chip').forEach(function(chip){
+  chip.addEventListener('click', function(){
+    var f = chip.dataset.filter, v = chip.dataset.val;
+    if(filterState[f].has(v)){ filterState[f].delete(v); chip.classList.remove('active'); }
+    else { filterState[f].add(v); chip.classList.add('active'); }
+    applyFilters();
+</script>
+
+</body>
+</html>

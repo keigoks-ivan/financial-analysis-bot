@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>消費 / 零售 / 精品 — 產業深度 ID 索引</title>
+<meta name="description" content="跨多檔個股共用的產業深度研究（Industry DD），按產業類別整理">
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.65;-webkit-text-size-adjust:100%}
+.container{max-width:1240px;margin:0 auto;padding:1.4rem 1.5rem 3rem}
+.crumb{font-size:.78rem;color:#6B7280;margin-bottom:.5rem}
+.crumb a{color:#6B7280;text-decoration:none}
+
+/* H1 + meta strip */
+.head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;border-bottom:1px solid #E5E7EB;padding-bottom:14px;margin-bottom:14px}
+h1{color:#4C1D95;font-size:1.7rem;font-weight:800;letter-spacing:-.03em;margin:0}
+.sub{color:#6B7280;font-size:.88rem;margin-top:.35rem;max-width:680px;line-height:1.55}
+.sub code{background:#EDE9FE;padding:1px 6px;border-radius:3px;font-size:11.5px;color:#6B21A8}
+
+.meta-strip{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;font-size:11.5px;color:#4B5563}
+.meta-strip .item{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid #E5E7EB;padding:5px 10px;border-radius:14px}
+.meta-strip .item b{color:#4C1D95;font-weight:700;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.meta-strip .info-toggle{cursor:pointer;color:#7C3AED;background:none;border:0;font:inherit;font-size:11.5px;padding:0;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.phase-pop{display:none;background:#fff;border:1px solid #DDD6FE;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:12px;color:#4B5563;line-height:1.6}
+.phase-pop.open{display:block}
+.phase-pop b{color:#6B21A8}
+.phase-pop .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+
+/* Compressed Flagship */
+.flagship{background:linear-gradient(135deg,#4C1D95 0%,#7C3AED 100%);color:#fff;border-radius:12px;padding:16px 20px;margin:14px 0;box-shadow:0 4px 14px rgba(76,29,149,.15)}
+.fl-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.fl-head .label{font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;opacity:.8;font-weight:600}
+.fl-head h2{margin:2px 0 0;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.fl-tabs{display:flex;gap:4px;background:rgba(255,255,255,.1);padding:3px;border-radius:8px}
+.fl-tab{background:none;border:0;color:rgba(255,255,255,.75);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit;font-size:12px;font-weight:600}
+.fl-tab.active{background:#fff;color:#4C1D95}
+.fl-pane{display:none}
+.fl-pane.active{display:block}
+.fl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.fl-grid a{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:6px;padding:9px 11px;text-decoration:none;color:#fff;transition:background .15s}
+.fl-grid a:hover{background:rgba(255,255,255,.18)}
+.fl-grid .num{font-size:9.5px;opacity:.7;font-weight:600;letter-spacing:.5px}
+.fl-grid .title{font-size:12px;font-weight:600;margin-top:2px;line-height:1.4}
+.fl-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:11.5px;flex-wrap:wrap}
+.fl-foot .more{background:#fff;color:#4C1D95;padding:5px 12px;border-radius:5px;text-decoration:none;font-weight:700;font-size:11.5px}
+.fl-foot .toggle{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 10px;border-radius:5px;cursor:pointer;font:inherit;font-size:11px;font-weight:500}
+
+/* Tier Matrix one-liner: keep as-is from original (passes through tier_alert_html which already has its own styling). Wrapped in margin reset */
+.tier-passthrough{margin:8px 0 16px}
+.tier-passthrough > div{margin:0 !important}
+
+/* Sticky toolbar */
+.toolbar{position:sticky;top:48px;z-index:50;background:rgba(250,250,249,.96);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:10px 0;margin:6px -1.5rem 0;border-bottom:1px solid #E5E7EB}
+.toolbar-inner{max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.search-box{flex:1 1 280px;min-width:0;position:relative}
+.search-box input{width:100%;border:1px solid #E5E7EB;border-radius:8px;padding:8px 12px 8px 32px;font:inherit;font-size:13px;background:#fff;color:#1E1B4B;outline:none;transition:border-color .15s,box-shadow .15s}
+.search-box input:focus{border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+.search-box::before{content:"🔍";position:absolute;top:50%;left:10px;transform:translateY(-50%);font-size:13px;opacity:.55;pointer-events:none}
+.f-group{display:flex;gap:5px;flex-wrap:wrap}
+.f-chip{background:#fff;border:1px solid #E5E7EB;color:#4B5563;padding:6px 10px;border-radius:14px;cursor:pointer;font:inherit;font-size:11.5px;font-weight:500;transition:all .12s;white-space:nowrap}
+.f-chip:hover{border-color:#C4B5FD;color:#4C1D95}
+.f-chip.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.f-clear{background:none;border:0;color:#7C3AED;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;padding:4px 6px;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+.cat-jump{display:flex;gap:6px;overflow-x:auto;margin:10px -1.5rem 0;padding:6px 1.5rem;border-bottom:1px solid #E5E7EB;background:#fff;scrollbar-width:thin}
+.cat-jump a{flex-shrink:0;background:#F5F3FF;color:#6B21A8;padding:5px 11px;border-radius:14px;text-decoration:none;font-size:11.5px;font-weight:500;border:1px solid transparent;white-space:nowrap}
+.cat-jump a:hover{background:#EDE9FE;border-color:#DDD6FE}
+.cat-jump a .n{color:#94A3B8;font-size:10.5px;margin-left:4px;font-weight:400}
+.filter-status{font-size:11.5px;color:#6B7280;margin-top:10px}
+.filter-status b{color:#4C1D95;font-weight:700}
+
+/* Categories */
+.category{margin-top:24px;border:1px solid #E5E7EB;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.025);overflow:hidden;scroll-margin-top:130px}
+.cat-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #E5E7EB;background:linear-gradient(90deg,#F5F3FF,#fff);gap:10px;flex-wrap:wrap;cursor:pointer;user-select:none}
+.cat-head:hover{background:linear-gradient(90deg,#EDE9FE,#FAF5FF)}
+.cat-head .left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cat-head h2{margin:0;color:#4C1D95;font-size:15.5px;font-weight:700}
+.cat-head .cat-icon{font-size:18px}
+.cat-head .count{background:#EDE9FE;color:#6B21A8;padding:2px 10px;border-radius:14px;font-size:11px;font-weight:600}
+.cat-head .hint{color:#94A3B8;font-size:11.5px;flex:1 1 auto;text-align:right}
+.cat-chev{font-size:11px;color:#7C3AED;transition:transform .25s;font-weight:700;display:inline-block}
+.category:not(.open) .cat-chev{transform:rotate(-90deg)}
+.cat-body{padding:14px 18px 18px}
+.category:not(.open) .cat-body{display:none}
+
+/* Topic grid */
+.topic-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:10px}
+.topic-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:11px 14px;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column}
+.topic-card:hover{border-color:#C4B5FD;box-shadow:0 2px 10px rgba(124,58,237,.06)}
+.topic-card.is-parent{background:linear-gradient(180deg,#FAF5FF,#fff);border-color:#DDD6FE;grid-column:1/-1}
+
+.tc-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tc-num{flex:0 0 auto;background:#EDE9FE;color:#6B21A8;font-weight:700;font-size:11.5px;min-width:22px;height:22px;padding:0 5px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',ui-monospace,monospace}
+.topic-card.is-parent .tc-num{background:#7C3AED;color:#fff}
+.tc-title{flex:1 1 auto;min-width:0;font-size:14.5px;font-weight:700;color:#4C1D95;text-decoration:none;line-height:1.35}
+.tc-title:hover{color:#7C3AED;text-decoration:underline}
+.tc-title .arrow{font-size:12px;opacity:.55;font-weight:500;margin-left:3px}
+.tc-badge{background:#7C3AED;color:#fff;padding:1px 6px;border-radius:3px;font-size:9.5px;font-weight:600;letter-spacing:.3px}
+.tc-badge.child{background:#F5F3FF;color:#7C3AED;border:1px solid #DDD6FE}
+.tc-phase{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:600;flex-shrink:0}
+.phase-I{background:#DCFCE7;color:#166534}
+.phase-II{background:#FEF3C7;color:#92400E}
+.phase-III{background:#FEE2E2;color:#991B1B}
+.phase-IV{background:#E0E7FF;color:#3730A3}
+.tc-expand{flex:0 0 auto;background:none;border:0;color:#94A3B8;cursor:pointer;font-size:13px;padding:2px 4px;line-height:1;transition:transform .2s,color .15s}
+.tc-expand:hover{color:#7C3AED}
+.topic-card.expanded .tc-expand{transform:rotate(180deg);color:#7C3AED}
+
+.tc-thesis-short{font-size:12px;color:#4B5563;margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+
+.tc-details{display:none;border-top:1px dashed #E5E7EB;margin-top:10px;padding-top:10px}
+.topic-card.expanded .tc-details{display:block}
+.tc-tags{color:#6B7280;font-size:11.5px;margin-bottom:6px}
+.tc-meta{display:flex;flex-wrap:wrap;gap:5px 8px;align-items:center;margin-bottom:6px;font-size:11px;color:#6B7280}
+.tc-meta .chip{display:inline-flex;align-items:center;gap:3px;background:#F3F4F6;padding:2px 7px;border-radius:9px;color:#4B5563;font-weight:500}
+.tc-thesis-full{padding:8px 11px;background:#FAFAF9;border-left:3px solid #C4B5FD;border-radius:0 4px 4px 0;font-size:11.5px;color:#4B5563;line-height:1.55;margin-top:4px}
+.tc-thesis-full::before{content:"非共識";display:block;font-size:9px;color:#7C3AED;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+
+.tc-children{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.tc-children .label{font-size:10px;color:#7C3AED;font-weight:700;letter-spacing:.3px}
+.tc-chip{display:inline-flex;align-items:center;gap:3px;background:#fff;border:1px solid #C4B5FD;color:#6B21A8;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600;text-decoration:none;transition:all .15s}
+.tc-chip:hover{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.tc-chip .arrow{font-size:9px;opacity:.7}
+
+.empty-state{text-align:center;padding:18px 14px;color:#94A3B8;font-size:12px}
+.empty-state .eco{font-size:24px;margin-bottom:4px}
+.suggest{background:#F5F3FF;border:1px dashed #C4B5FD;border-radius:6px;padding:10px 14px;margin-top:10px;color:#6B21A8;font-size:12px;line-height:1.65}
+.suggest summary{cursor:pointer;font-weight:600;list-style:none;color:#4C1D95}
+.suggest summary::-webkit-details-marker{display:none}
+.suggest summary::before{content:"▸";display:inline-block;margin-right:6px;transition:transform .2s}
+.suggest[open] summary::before{transform:rotate(90deg)}
+.suggest-body{margin-top:8px}
+.suggest strong{color:#4C1D95}
+.suggest code{background:#EDE9FE;padding:1px 6px;border-radius:3px;color:#6B21A8;font-size:11.5px;font-weight:600}
+.suggest ul{margin:8px 0 0;padding-left:18px}
+.suggest ul li{margin-bottom:6px;color:#4C1D95;font-size:11.5px}
+
+.footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#6B7280;font-size:.78rem;text-align:center}
+
+.topic-card.hidden,.category.hidden{display:none !important}
+
+/* ===== Responsive breakpoints =====
+   ≥1280 desktop wide / ≤1024 tablet 橫 / ≤768 平板直 + 大手機橫 / ≤480 手機直 / ≤360 ultra narrow
+*/
+@media(max-width:1024px){
+  .container{padding:1.2rem 1.2rem 2.5rem}
+  .toolbar{margin:6px -1.2rem 0}
+  .toolbar-inner{padding:0 1.2rem}
+  .cat-jump{margin:8px -1.2rem 0;padding:6px 1.2rem}
+  .head-row{align-items:flex-start}
+  .meta-strip{font-size:11px;gap:6px 8px}
+  .meta-strip .item{padding:4px 8px}
+  .flagship{padding:14px 16px}
+  .fl-grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+  .topic-grid{gap:8px}
+}
+@media(max-width:768px){
+  .container{padding:1rem 1rem 2.2rem}
+  h1{font-size:1.4rem}
+  .sub{font-size:.85rem}
+  .head-row{flex-direction:column;gap:10px;padding-bottom:10px;margin-bottom:10px}
+  .meta-strip{width:100%}
+  .toolbar{margin:6px -1rem 0;top:46px;padding:8px 0}
+  .toolbar-inner{padding:0 1rem;gap:6px}
+  .search-box{flex:1 1 100%;order:1}
+  .toolbar .f-group{order:2}
+  .toolbar .f-clear{order:3}
+  .cat-jump{margin:8px -1rem 0;padding:6px 1rem;-webkit-overflow-scrolling:touch}
+  .topic-grid{grid-template-columns:1fr;gap:8px}
+  .topic-card{padding:10px 12px}
+  .topic-card.is-parent{grid-column:auto}
+  .fl-head{flex-direction:column;align-items:flex-start;gap:10px}
+  .fl-tabs{align-self:stretch}
+  .fl-tab{flex:1 1 50%;text-align:center}
+  .fl-grid{grid-template-columns:1fr 1fr}
+  .tc-title{font-size:13.5px}
+  .tc-num{font-size:11px;height:20px;min-width:20px;padding:0 4px}
+  .tc-badge{font-size:9px;padding:1px 5px}
+  .tc-phase{font-size:9.5px;padding:1px 6px}
+  .cat-head{padding:11px 14px}
+  .cat-head h2{font-size:14.5px}
+  .cat-head .hint{display:none}
+  .cat-body{padding:12px 12px 14px}
+  .tier-passthrough > div{font-size:12px !important}
+  .tier-passthrough > div span{word-break:break-all}
+}
+@media(max-width:480px){
+  body{font-size:13.5px}
+  .container{padding:.85rem .8rem 2rem}
+  h1{font-size:1.25rem}
+  .sub{font-size:.82rem;line-height:1.5}
+  .meta-strip{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;width:100%}
+  .meta-strip .item{justify-content:center;padding:5px 8px;font-size:10.5px}
+  .meta-strip .info-toggle{grid-column:1/-1;text-align:center;padding:4px 0}
+  .toolbar{margin:6px -.8rem 0;top:42px}
+  .toolbar-inner{padding:0 .8rem}
+  .cat-jump{margin:8px -.8rem 0;padding:6px .8rem}
+  .flagship{padding:12px 14px;border-radius:10px}
+  .fl-head h2{font-size:14.5px}
+  .fl-head .label{font-size:9.5px}
+  .fl-grid{grid-template-columns:1fr}
+  .fl-foot{flex-direction:column;align-items:stretch;gap:6px}
+  .fl-foot .more,.fl-foot .toggle{text-align:center}
+  .topic-card{padding:9px 11px;border-radius:7px}
+  .tc-head{gap:6px}
+  .tc-title{font-size:13px;flex:1 1 100%;order:2}
+  .tc-num{order:1}
+  .tc-badge,.tc-phase{order:3}
+  .tc-expand{order:4;margin-left:auto}
+  .tc-thesis-short{font-size:11.5px;margin-top:5px;-webkit-line-clamp:3}
+  .tc-children{margin-top:6px;gap:4px}
+  .tc-chip{font-size:10.5px;padding:2px 8px}
+  .tc-tags,.tc-meta{font-size:10.5px}
+  .tc-thesis-full{font-size:11px;padding:7px 9px}
+  .cat-head{padding:10px 12px;gap:6px}
+  .cat-head h2{font-size:14px}
+  .cat-head .count{font-size:10.5px;padding:2px 8px}
+  .cat-body{padding:10px 10px 12px}
+  .filter-status{font-size:11px}
+  .suggest{padding:9px 12px;font-size:11.5px}
+  .suggest ul{padding-left:16px}
+  .suggest ul li{font-size:11px}
+  .phase-pop .row{grid-template-columns:1fr}
+}
+@media(max-width:360px){
+  .container{padding:.7rem .65rem 1.8rem}
+  h1{font-size:1.15rem}
+  .meta-strip{grid-template-columns:1fr;gap:4px}
+  .meta-strip .info-toggle{grid-column:auto}
+  .toolbar{margin:5px -.65rem 0}
+  .toolbar-inner{padding:0 .65rem}
+  .cat-jump{margin:6px -.65rem 0;padding:5px .65rem}
+  .topic-card{padding:8px 10px}
+  .tc-head{gap:5px}
+  .tc-title{font-size:12.5px}
+  .tc-thesis-short{font-size:11px;-webkit-line-clamp:4}
+  .fl-tab{font-size:11px;padding:5px 8px}
+}
+/* Landscape phones (low height): drop sticky to recover viewport */
+@media(max-height:500px) and (orientation:landscape){
+  .toolbar{position:static;border-bottom:none}
+  .imq-nav-root{position:static}
+  .category{scroll-margin-top:8px}
+}
+/* Wide screens: enable 3-col when there's room (capped by 1240 container) */
+@media(min-width:1280px){
+  .topic-grid{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+}
+/* Print */
+@media print{
+  .toolbar,.cat-jump,.tc-expand,.imq-nav-root{display:none !important}
+  .category{break-inside:avoid;page-break-inside:avoid}
+  .topic-card{break-inside:avoid}
+  .tc-details{display:block !important}
+  .category:not(.open) .cat-body{display:block !important}
+  body{font-size:11px}
+}
+
+/* ── Cat summary grid (directory mode) ── */
+.cat-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:20px 0}
+.cat-summary-card{display:flex;align-items:center;gap:14px;padding:16px 18px;background:#fff;border:1px solid #E5E7EB;border-radius:8px;text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s,transform .12s}
+.cat-summary-card:hover{border-color:#C4B5FD;box-shadow:0 4px 12px rgba(124,58,237,.08);transform:translateY(-1px)}
+.cs-icon{font-size:24px;flex-shrink:0;line-height:1}
+.cs-text{flex:1 1 auto;min-width:0}
+.cs-text h3{margin:0 0 2px;color:#4C1D95;font-size:14px;font-weight:700;line-height:1.3}
+.cs-count{display:inline-block;background:#EDE9FE;color:#6B21A8;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:4px}
+.cs-hint{margin:0;color:#94A3B8;font-size:11.5px;line-height:1.4}
+.cs-arrow{color:#C4B5FD;font-size:16px;font-weight:600;flex-shrink:0}
+.cat-summary-card:hover .cs-arrow{color:#7C3AED}
+@media(max-width:768px){
+  .cat-summary-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .cat-summary-card{padding:12px 14px;gap:10px}
+  .cs-icon{font-size:20px}
+  .cs-text h3{font-size:13px}
+}
+@media(max-width:480px){
+  .cat-summary-grid{grid-template-columns:1fr}
+}
+
+
+/* Cat page extras */
+.cat-breadcrumb{padding:12px 0 8px;font-size:.8rem;color:#6B7280}
+.cat-breadcrumb a{color:#6B7280;text-decoration:none}
+.cat-breadcrumb a:hover{color:#4C1D95;text-decoration:underline}
+.cat-breadcrumb strong{color:#4C1D95}
+.cat-page-h1{color:#4C1D95;font-size:1.6rem;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
+.cat-page-hint{color:#6B7280;font-size:.88rem;margin:0 0 12px}
+.cat-jump a.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.cat-page-footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#9CA3AF;font-size:.72rem;text-align:center}
+/* Force cat-head non-clickable on standalone pages */
+.cat-head{cursor:default !important}
+.cat-head:hover{background:linear-gradient(90deg,#F5F3FF,#fff) !important}
+
+</style>
+
+</head>
+<body>
+
+<style>
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/" class="active">產業深度 ID</a>
+          <a href="/id/theses.html">🔥 十五大非共識</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="container">
+  <nav class="cat-breadcrumb">
+    <a href="/">首頁</a> &rsaquo;
+    <a href="/research/">研究</a> &rsaquo;
+    <a href="/id/">所有產業報告</a>
+    &rsaquo; <strong>🛍️ 消費 / 零售 / 精品</strong>
+  </nav>
+
+  <h1 class="cat-page-h1">🛍️ 消費 / 零售 / 精品（20 份）</h1>
+  <p class="cat-page-hint">服飾 / 餐飲 / 奢侈品 / E-commerce</p>
+
+  <div class="toolbar">
+    <div class="toolbar-inner">
+      <div class="search-box">
+        <input id="q" type="search" placeholder="搜尋產業 / 標題 / ticker / tag（如 CoWoS、CRWD、液冷）" autocomplete="off">
+      </div>
+      <div class="f-group" id="type-filter">
+        <button class="f-chip" data-filter="type" data-val="parent">母題</button>
+        <button class="f-chip" data-filter="type" data-val="child">子題</button>
+      </div>
+      <button class="f-clear" id="clear-filters">清除</button>
+    </div>
+    <div class="cat-jump">
+      <a href="/id/">↩ 全部</a>
+      <a href="cat-semi.html">🔷 半導體 / AI 基建 <span class="n">19 份</span></a>
+      <a href="cat-bio.html">🧬 生技 / 醫療 <span class="n">1 份</span></a>
+      <a href="cat-cloud.html">☁️ 雲端 / SaaS / 軟體 <span class="n">9 份</span></a>
+      <a href="cat-energy.html">⚡ 能源 / 電動車 / 新能源 <span class="n">3 份</span></a>
+      <a href="cat-consumer.html">🛍️ 消費 / 零售 / 精品 <span class="n">20 份</span></a>
+      <a href="cat-finance.html">🏦 金融 / 保險 / FinTech <span class="n">2 份</span></a>
+      <a href="cat-industrial.html">🔧 工業 / 航太 / 自動化 <span class="n">6 份</span></a>
+      <a href="cat-staples.html">🛒 必選消費 / 飲料 / 個護 <span class="n">2 份</span></a>
+      <a href="cat-reits.html">🏢 REITs / 數位基建房東 <span class="n">1 份</span></a>
+      <a href="cat-space.html">🛰️ 太空經濟 / 衛星 / 低軌道 <span class="n">1 份</span></a>
+      <a href="cat-housing.html">🏠 住房 / 房貸 / Builders <span class="n">1 份</span></a>
+      <a href="cat-transport.html">🚢 運輸 / 物流 / 航運 <span class="n">0 份</span></a>
+      <a href="cat-materials.html">⛏️ 材料 / 礦業 / 特殊化學 <span class="n">1 份</span></a>
+      <a href="cat-agri.html">🌾 農業 / 食品 / 大宗商品 <span class="n">2 份</span></a>
+      <a href="cat-macro.html">🌐 跨域 / 其他 <span class="n">14 份</span></a>
+    </div>
+  </div>
+  <div class="filter-status" id="filter-status">顯示全部 <b id="visible-count">—</b> 份報告</div>
+
+<div class="category open" id="cat-consumer" data-cat="consumer">
+  <div class="cat-head">
+    <div class="left">
+      <span class="cat-icon">🛍️</span>
+      <h2>消費 / 零售 / 精品</h2>
+      <span class="count">20 份</span>
+    </div>
+    <span class="hint">奢侈品 / 服飾 / 港股 / 通路 / 私募 / 鞋類 / 電商 / 品牌 / 旅遊 / 旅館 / OTA / 航空 / 嬰兒潮母題 / 賭場娛樂</span>
+    <span class="cat-chev">▾</span>
+  </div>
+  <div class="cat-body">
+    <div class="topic-grid">
+<!-- mega-anchor: consumer
+Sub-groups (controlled vocabulary, see /docs/id/taxonomy.md):
+  · consumer.apparel
+  · consumer.luxury
+  · consumer.restaurant
+  · consumer.discount_retail
+  · consumer.ecommerce
+  · consumer.fitness_personal
+  · consumer.home_furniture
+新 ID 由 industry-analyst skill 生成時依 id-meta JSON 的 mega+sub_group 插入到對應 [subgroup-anchor: consumer.{sub_group}] 之後。
+-->
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="全球奢侈品結構（global luxury goods structure） rms hermès · cfr richemont · mc lvmh · tpr tapestry · ker kering · 1913.hk prada · brby burberry · cpri · pndora · atz">
+  <div class="tc-head">
+    <span class="tc-num">1</span>
+    <a class="tc-title" href="/id/ID_GlobalLuxury_20260427.html">全球奢侈品結構（Global Luxury Goods Structure） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">IV K 形分化 + Hard Luxury 結構性升</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Quiet Luxury 是結構性而非循環性 trend（Brunello Cucinelli +14% / Loro Piana +20% 同期 Gucci -14%）、Hard Luxury（Cartier 高珠寶 / Van Cleef）是 luxury sector 結構性 alpha 非循環次品類（Richemont Jewellery +11% emotion-driven asset / Cartier 高珠寶 wait list 12-18 月）、Tapestry Coach 是被忽略的 accessible luxury 結構性受益者（GM 75.5% record + EPS +34% / 美國 mid-affluent 與歐洲 luxury 動盪不相關）。Hermès Q1 +6% organic 全產業最強。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">RMS Hermès · CFR Richemont · MC LVMH · TPR Tapestry · KER Kering · 1913.HK Prada · BRBY Burberry · CPRI · PNDORA · ATZ</div>
+    <div class="tc-meta"><span class="chip">📊 10 檔</span>
+<span class="chip">4🔴 / 4🟡 / 2🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full">Quiet Luxury 是<strong>結構性而非循環性</strong> trend（Brunello Cucinelli +14% / Loro Piana +20% 同期 Gucci -14%）、Hard Luxury（Cartier 高珠寶 / Van Cleef）是 luxury sector 結構性 alpha 非循環次品類（Richemont Jewellery +11% emotion-driven asset / Cartier 高珠寶 wait list 12-18 月）、Tapestry Coach 是被忽略的 accessible luxury 結構性受益者（GM 75.5% record + EPS +34% / 美國 mid-affluent 與歐洲 luxury 動盪不相關）。Hermès Q1 +6% organic 全產業最強。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="服飾與鞋類（apparel & footwear） nke nike · lulu lululemon · onon on holding · deck hoka/ugg · uaa under armour · rl ralph lauren · goos canada goose · root roots · anf abercrombie · gap · aeo american eagle · urbn urban · levi levi's · vfc vans/tnf · pvh ck/tommy">
+  <div class="tc-head">
+    <span class="tc-num">2</span>
+    <a class="tc-title" href="/id/ID_ApparelFootwear_20260427.html">服飾與鞋類（Apparel & Footwear） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">III → IV K 形分化 + Tariff Permanent Reset</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">K-shape 是結構性而非循環性（高端 RL Asia +22% / China +30% c/c + 新進者 HOKA / ONON 全球 +30% + specialty inflection URBN UO +9.6% / Anthro +8.3% / FP +8.0% 三引擎 vs 中段 Abercrombie -10% / Vans -10% / LULU 北美 -1% 集體失速；同公司內部已 30pp+ 差距）、Tariff 是 GM permanent reset 而非 transitory（PVH -215bps EBIT / DECK $150M / NKE -130bps；FY27 GM 不會回 FY24 高點）、VFC turnaround 真 alpha 是 TNF + Timberland 而非 Vans（TNF +5% c/c / Timberland +9% Americas + &lt;2% China sourcing；Vans 連 8 季 -ve 的「衰退率減速」≠ inflection）。Nike Greater China FY19 = FY25 雙 $7.5B 6 年零成長確認 local-for-local；Anta 23% 已超越 Nike 20.7% China 市佔。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">NKE Nike · LULU Lululemon · ONON On Holding · DECK HOKA/UGG · UAA Under Armour · RL Ralph Lauren · GOOS Canada Goose · ROOT Roots · ANF Abercrombie · GAP · AEO American Eagle · URBN Urban · LEVI Levi's · VFC Vans/TNF · PVH CK/Tommy</div>
+    <div class="tc-meta"><span class="chip">📊 15 檔</span>
+<span class="chip">6🔴 / 8🟡 / 1🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full"><strong>K-shape 是結構性而非循環性</strong>（高端 RL Asia +22% / China +30% c/c + 新進者 HOKA / ONON 全球 +30% + specialty inflection URBN UO +9.6% / Anthro +8.3% / FP +8.0% 三引擎 vs 中段 Abercrombie -10% / Vans -10% / LULU 北美 -1% 集體失速；同公司內部已 30pp+ 差距）、<strong>Tariff 是 GM permanent reset 而非 transitory</strong>（PVH -215bps EBIT / DECK $150M / NKE -130bps；FY27 GM 不會回 FY24 高點）、<strong>VFC turnaround 真 alpha 是 TNF + Timberland 而非 Vans</strong>（TNF +5% c/c / Timberland +9% Americas + &lt;2% China sourcing；Vans 連 8 季 -ve 的「衰退率減速」≠ inflection）。Nike Greater China FY19 = FY25 雙 $7.5B 6 年零成長確認 local-for-local；Anta 23% 已超越 Nike 20.7% China 市佔。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="中國本土運動服飾崛起（china domestic sportswear rise） 2020.hk anta · as amer sports · 2331.hk li-ning · 1361.hk 361° · 1368.hk xtep · 6110.hk topsports · nke · addyy adidas · lulu lululemon">
+  <div class="tc-head">
+    <span class="tc-num">3</span>
+    <a class="tc-title" href="/id/ID_ChinaSportswearRise_20260427.html">中國本土運動服飾崛起（China Domestic Sportswear Rise） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">III 後段 永久反超 + 全球化啟動</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Anta Group 中國市占 23.0% &gt; Nike 20.7% 已是 6 年永久結構性反超非循環（2018 12.5% → 2025 22.9% +10.4pp / Nike GC FY19=FY25 雙 ~$6-7B inflation-adj -25%；Adidas Gulden 2023 turnaround 為 reversion 非 share gain）、Anta 真正 alpha 是 Other Brands segment +59.2%（Descente / KOLON / Maia / Jack Wolfskin 合計 RMB 17B 已超 Li-Ning 全集團 60%；OPM 27.9% &gt; Anta brand 21% &amp; FILA 26%；FILA 從 RMB 0.6B → 26.6B 用 15 年 44x 為類比 → Other Brands 2024 RMB 17B → 2030 RMB 60-80B base case；應 25-30x PE rerate）、Topsports 12.99% 殖利率是 NKE 中國衰退結構化最直接交易工具（FY25 RMB 27B / FY26 H1 profit warning + 6,800 門店資產 / dividend cushion 已 price in 衰退至少 2 年）。Anta + Amer 雙引擎啟動全球化（SE Asia 1,000 店 + Puma 29% €1.51B + Jack Wolfskin USD 290M + Amer GC Q4 +42% / Salomon $2B + Arc'teryx $2B）。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">2020.HK Anta · AS Amer Sports · 2331.HK Li-Ning · 1361.HK 361° · 1368.HK Xtep · 6110.HK Topsports · NKE · ADDYY Adidas · LULU Lululemon</div>
+    <div class="tc-meta"><span class="chip">📊 9 檔</span>
+<span class="chip">5🔴 / 4🟡 / 0🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 ApparelFootwear 子題 #1</span></div>
+    <div class="tc-thesis-full"><strong>Anta Group 中國市占 23.0% &gt; Nike 20.7% 已是 6 年永久結構性反超非循環</strong>（2018 12.5% → 2025 22.9% +10.4pp / Nike GC FY19=FY25 雙 ~$6-7B inflation-adj -25%；Adidas Gulden 2023 turnaround 為 reversion 非 share gain）、<strong>Anta 真正 alpha 是 Other Brands segment +59.2%</strong>（Descente / KOLON / Maia / Jack Wolfskin 合計 RMB 17B 已超 Li-Ning 全集團 60%；OPM 27.9% &gt; Anta brand 21% &amp; FILA 26%；FILA 從 RMB 0.6B → 26.6B 用 15 年 44x 為類比 → Other Brands 2024 RMB 17B → 2030 RMB 60-80B base case；應 25-30x PE rerate）、<strong>Topsports 12.99% 殖利率是 NKE 中國衰退結構化最直接交易工具</strong>（FY25 RMB 27B / FY26 H1 profit warning + 6,800 門店資產 / dividend cushion 已 price in 衰退至少 2 年）。Anta + Amer 雙引擎啟動全球化（SE Asia 1,000 店 + Puma 29% €1.51B + Jack Wolfskin USD 290M + Amer GC Q4 +42% / Salomon $2B + Arc'teryx $2B）。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="通路權力反轉（apparel channel power reversion） dks dick's · amzn amazon · jd jd sports fashion · kss kohl's · m macy's · jwn nordstrom · nke nike · lulu lululemon · deck deckers">
+  <div class="tc-head">
+    <span class="tc-num">4</span>
+    <a class="tc-title" href="/id/ID_ChannelPowerReversion_20260427.html">通路權力反轉（Apparel Channel Power Reversion） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">II → III 通路反撲確認</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">DKS-FL 整併不是「兩家拼大」是「美國運動 retail 結構性 #1 確認」（DKS-FL combined ~$22B vs JD US $5.9B 領先 4x；3,200+ stores 跨 20 國；FL 不是「拖累 segment」是「sneaker culture + 一站式」雙引擎；synergies $100-125M 不是 cost saving 是「結構性 oligopoly 確認」）、AMZN apparel + ad 是 sector 內最 underappreciated 雙引擎（apparel share 8.5%(2019) → 16.4%(Q2 25) 接近翻倍 + Nike 1P 直銷 2025-05 回流 + ad $14.6B/Q +19%；ad GM 70% vs retail GM 25% 倍數差結構性使 AMZN 「實際運動 retail 利潤率」遠超 DKS / JD）、Nike DTC 44% peak 已永久 lock 在 ~40%（FY25 wholesale +8% &gt; DTC -4% 是 Hill turnaround 真正 alpha；Donahoe-era 過熱反噬 case study 不會 5+ 年內重演）。利潤池正從中游品牌（NKE / LULU / VFC）→ 下游通路（DKS-FL / AMZN / JD）+ ad ecosystem 結構性轉移；百貨（KSS / M / JWN-private）合計 share 從 11.5%(2018) → 6.8%(2025) 流失 4.7pp。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">DKS Dick's · AMZN Amazon · JD JD Sports Fashion · KSS Kohl's · M Macy's · JWN Nordstrom · NKE Nike · LULU Lululemon · DECK Deckers</div>
+    <div class="tc-meta"><span class="chip">📊 9 檔</span>
+<span class="chip">3🔴 / 5🟡 / 1🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 ApparelFootwear 子題 #2</span></div>
+    <div class="tc-thesis-full"><strong>DKS-FL 整併不是「兩家拼大」是「美國運動 retail 結構性 #1 確認」</strong>（DKS-FL combined ~$22B vs JD US $5.9B 領先 4x；3,200+ stores 跨 20 國；FL 不是「拖累 segment」是「sneaker culture + 一站式」雙引擎；synergies $100-125M 不是 cost saving 是「結構性 oligopoly 確認」）、<strong>AMZN apparel + ad 是 sector 內最 underappreciated 雙引擎</strong>（apparel share 8.5%(2019) → 16.4%(Q2 25) 接近翻倍 + Nike 1P 直銷 2025-05 回流 + ad $14.6B/Q +19%；ad GM 70% vs retail GM 25% 倍數差結構性使 AMZN 「實際運動 retail 利潤率」遠超 DKS / JD）、<strong>Nike DTC 44% peak 已永久 lock 在 ~40%</strong>（FY25 wholesale +8% &gt; DTC -4% 是 Hill turnaround 真正 alpha；Donahoe-era 過熱反噬 case study 不會 5+ 年內重演）。利潤池正從中游品牌（NKE / LULU / VFC）→ 下游通路（DKS-FL / AMZN / JD）+ ad ecosystem 結構性轉移；百貨（KSS / M / JWN-private）合計 share 從 11.5%(2018) → 6.8%(2025) 流失 4.7pp。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="athleisure 私募新進者 + dupe 生態（athleisure private entrants） lulu lululemon · vuori（私募 $5.5b）· alo yoga（私募 $10b 探索）· skims（私募 $5b）· nke nike · gap athleta · onon on · deck hoka · halara（私募）· cost costco · bandit running（私募）">
+  <div class="tc-head">
+    <span class="tc-num">5</span>
+    <a class="tc-title" href="/id/ID_AthleisureNewEntrants_20260427.html">Athleisure 私募新進者 + Dupe 生態（Athleisure Private Entrants） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">II 中後段 LULU erode + IPO 上市潮</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Vuori IPO（$5.5B 起點 = LULU 2007 IPO $1.6B 的 3.4x）是「Lululemon 化 cycle 起點」非「下一個 LULU」（dupe ecosystem 已遠強於 2007-2014；Performance fabric 已 commoditize；男裝-first 結構優勢使長期 TAM 比 LULU 更大但 trajectory 取決於 brand premium）、NikeSkims 是「NKE 自認女性段失敗」confirmation 非戰略加碼（NKE +$6.7B 市值在 Skims 公布週 = 公開市場 bless Skims $5B；NKE 認可 Skims 為 incumbent；NKE partnership-led 非獨立 compete）、Alo Yoga 100% 創辦人 ownership + $10B 探索 2 年無 PE deal closed = sector 結構性錯配（LULU public fwd PE 11x derate vs Alo $10B / 5-6x P/S 不可調和；創辦人不接受 below-public-comp，PE 不接受 LULU-comp 估值）。LULU 站內 share 30%(Jan 25) → 24%(Nov 25) -6pp / Vuori +2.21pp / Alo +3pp / 90% Vuori + 84% Alo US stores 在 LULU 0.5mi 內；Costco 2025-06 訴訟 active；Halara TikTok GMV peak $58-62M/月。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">LULU Lululemon · Vuori（私募 $5.5B）· Alo Yoga（私募 $10B 探索）· Skims（私募 $5B）· NKE Nike · GAP Athleta · ONON On · DECK HOKA · Halara（私募）· COST Costco · Bandit Running（私募）</div>
+    <div class="tc-meta"><span class="chip">📊 11 檔（含 4 私募）</span>
+<span class="chip">4🔴 / 5🟡 / 2🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 ApparelFootwear 子題 #3</span></div>
+    <div class="tc-thesis-full"><strong>Vuori IPO（$5.5B 起點 = LULU 2007 IPO $1.6B 的 3.4x）是「Lululemon 化 cycle 起點」非「下一個 LULU」</strong>（dupe ecosystem 已遠強於 2007-2014；Performance fabric 已 commoditize；男裝-first 結構優勢使長期 TAM 比 LULU 更大但 trajectory 取決於 brand premium）、<strong>NikeSkims 是「NKE 自認女性段失敗」confirmation 非戰略加碼</strong>（NKE +$6.7B 市值在 Skims 公布週 = 公開市場 bless Skims $5B；NKE 認可 Skims 為 incumbent；NKE partnership-led 非獨立 compete）、<strong>Alo Yoga 100% 創辦人 ownership + $10B 探索 2 年無 PE deal closed = sector 結構性錯配</strong>（LULU public fwd PE 11x derate vs Alo $10B / 5-6x P/S 不可調和；創辦人不接受 below-public-comp，PE 不接受 LULU-comp 估值）。LULU 站內 share 30%(Jan 25) → 24%(Nov 25) -6pp / Vuori +2.21pp / Alo +3pp / 90% Vuori + 84% Alo US stores 在 LULU 0.5mi 內；Costco 2025-06 訴訟 active；Halara TikTok GMV peak $58-62M/月。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="athletic footwear 子市場細分（athletic footwear sub-segments） deck deckers hoka · onon on holding · nke nike · as amer sports（salomon）· birk birkenstock · www wolverine（saucony+merrell）· pum puma · skx skechers（已私）">
+  <div class="tc-head">
+    <span class="tc-num">6</span>
+    <a class="tc-title" href="/id/ID_AthleticFootwearSubsegments_20260427.html">Athletic Footwear 子市場細分（Athletic Footwear Sub-Segments） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">III Nike dominance erode + 新進者 maturation</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Nike 跑鞋 dominance 已永久 erode（2024 Strava #1 Pegasus → 2025 ASICS Novablast 反超；2025 WMM adidas Adios Pro Evo 2 拿下 21 podiums / 9 金 / 7 of 12 winners = 多家攻擊式 share shift 非單對手 reverse；Nike Alphafly 3 僅 6 podiums vs adidas 21）、HOKA + ON 已進入 Lululemon-化 cycle（HOKA Q3 FY26 +18.5% from ~25-30% / ON 2026 guide ≥23% cc from 35.6% cc；FY27 mid-teens growth 是 base case 類比 LULU 2018 +14% → 2024 +1% 的 6 年 path）、Salomon GC +43% (Anta + Amer) 是 sector 內最 underappreciated 全球化 case（Salomon FY25 突破 $2B / 286 doors China / Anta playbook 重演 FILA 1→44x in 15 years；XT-6 / XT-Whisper sportstyle sneaker 全球擴張）。Birkenstock APAC +37% / closed-toe 60% Q1 / Boston 50 周年 2026 catalyst；中國本土跑鞋 2024-2025 WMM zero podium 是 sector 真實 brand health 盲點。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">DECK Deckers HOKA · ONON On Holding · NKE Nike · AS Amer Sports（Salomon）· BIRK Birkenstock · WWW Wolverine（Saucony+Merrell）· PUM Puma · SKX Skechers（已私）</div>
+    <div class="tc-meta"><span class="chip">📊 8 檔</span>
+<span class="chip">4🔴 / 3🟡 / 1🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 ApparelFootwear 子題 #4</span></div>
+    <div class="tc-thesis-full"><strong>Nike 跑鞋 dominance 已永久 erode</strong>（2024 Strava #1 Pegasus → 2025 ASICS Novablast 反超；2025 WMM adidas Adios Pro Evo 2 拿下 21 podiums / 9 金 / 7 of 12 winners = 多家攻擊式 share shift 非單對手 reverse；Nike Alphafly 3 僅 6 podiums vs adidas 21）、<strong>HOKA + ON 已進入 Lululemon-化 cycle</strong>（HOKA Q3 FY26 +18.5% from ~25-30% / ON 2026 guide ≥23% cc from 35.6% cc；FY27 mid-teens growth 是 base case 類比 LULU 2018 +14% → 2024 +1% 的 6 年 path）、<strong>Salomon GC +43% (Anta + Amer) 是 sector 內最 underappreciated 全球化 case</strong>（Salomon FY25 突破 $2B / 286 doors China / Anta playbook 重演 FILA 1→44x in 15 years；XT-6 / XT-Whisper sportstyle sneaker 全球擴張）。Birkenstock APAC +37% / closed-toe 60% Q1 / Boston 50 周年 2026 catalyst；中國本土跑鞋 2024-2025 WMM zero podium 是 sector 真實 brand health 盲點。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="郵輪 / 旅遊復甦（cruise & luxury travel） rcl royal caribbean · vik viking · aena · nclh · ccl carnival · dg vinci · fra fraport · bkng · abnb · trip">
+  <div class="tc-head">
+    <span class="tc-num">7</span>
+    <a class="tc-title" href="/id/ID_LuxuryTravelCruise_20260427.html">郵輪 / 旅遊復甦（Cruise & Luxury Travel） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">IV 嬰兒潮 + 4 家造船廠瓶頸 + 機場 toll booth</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Cruise 是結構性 demographic 順風非循環性反彈（RCL 2027 EPS CAGR 20% 目標反映此結構 + 2/3 booked record rates）、純 luxury cruise（VIK）是嬰兒潮 high-end 獨佔非 mass cruise 子集（FY25 EBITDA +43.9% / 2026 86% booked / $6B advanced bookings +13% YoY）、機場 concession（Aena +3.8% pax / VINCI / Fraport）是 luxury / cruise 投資組合的 stable cash flow anchor 非低成長 utility（EBITDA margin 50-60% 行業最高）。新船 supply 受 4 家造船廠瓶頸結構保護到 2031+。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">RCL Royal Caribbean · VIK Viking · AENA · NCLH · CCL Carnival · DG VINCI · FRA Fraport · BKNG · ABNB · TRIP</div>
+    <div class="tc-meta"><span class="chip">📊 10 檔</span>
+<span class="chip">4🔴 / 4🟡 / 2🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full">Cruise 是<strong>結構性 demographic 順風</strong>非循環性反彈（RCL 2027 EPS CAGR 20% 目標反映此結構 + 2/3 booked record rates）、純 luxury cruise（VIK）是嬰兒潮 high-end 獨佔非 mass cruise 子集（FY25 EBITDA +43.9% / 2026 86% booked / $6B advanced bookings +13% YoY）、機場 concession（Aena +3.8% pax / VINCI / Fraport）是 luxury / cruise 投資組合的 stable cash flow anchor 非低成長 utility（EBITDA margin 50-60% 行業最高）。新船 supply 受 4 家造船廠瓶頸結構保護到 2031+。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="拉美電商生態（latam e-commerce ecosystem） meli mercado libre · nu holdings · se sea shopee · cpng · amzn · baba · pdd temu · vtex · mglu3 magalu · falabella">
+  <div class="tc-head">
+    <span class="tc-num">8</span>
+    <a class="tc-title" href="/id/ID_LATAMEcommerce_20260427.html">拉美電商生態（LATAM E-commerce Ecosystem） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">IV Mexico 滲透反超 + Mercado Pago 飛輪</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Mexico 2026 e-comm 滲透率 17.7% 反超美國 17% 是 leapfrog 結構性訊號非統計噪音（MELI Mexico GMV +35% / NU Mexico 14M 客戶 15% penetration）、Mercado Pago 是 LATAM 唯一「e-comm × 支付 × 信貸」三引擎飛輪獨佔（80M MAU + AUM $19B +78% YoY / 87% AI 互動 / NU 純 fintech 不直接競爭）、Temu / 中國跨境攻擊已過峰（US de minimis 關閉 2025-05 + MELI/Shopee 在地物流 24h 配送護城河 → 增量 GMV &lt; 5%）。Brazil + Mexico 雙引擎佔 70%+ LATAM 規模。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">MELI Mercado Libre · NU Holdings · SE Sea Shopee · CPNG · AMZN · BABA · PDD Temu · VTEX · MGLU3 Magalu · Falabella</div>
+    <div class="tc-meta"><span class="chip">📊 10 檔</span>
+<span class="chip">4🔴 / 4🟡 / 2🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full">Mexico 2026 e-comm 滲透率 <strong>17.7% 反超美國 17%</strong> 是 leapfrog 結構性訊號非統計噪音（MELI Mexico GMV +35% / NU Mexico 14M 客戶 15% penetration）、Mercado Pago 是 LATAM 唯一<strong>「e-comm × 支付 × 信貸」三引擎飛輪獨佔</strong>（80M MAU + AUM $19B +78% YoY / 87% AI 互動 / NU 純 fintech 不直接競爭）、Temu / 中國跨境攻擊已過峰（US de minimis 關閉 2025-05 + MELI/Shopee 在地物流 24h 配送護城河 → 增量 GMV &lt; 5%）。Brazil + Mexico 雙引擎佔 70%+ LATAM 規模。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="全球 e-commerce 整合（global e-commerce consolidation） amzn · shop shopify · pdd temu · meli · se sea · baba · wmt · cpng · etsy · jd">
+  <div class="tc-head">
+    <span class="tc-num">9</span>
+    <a class="tc-title" href="/id/ID_GlobalEcommerce_20260427.html">全球 e-commerce 整合（Global E-commerce Consolidation） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">IV 廣告利潤池主導 + AI 推薦 + 區域 leapfrog</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">廣告利潤池才是 e-commerce 真結構性 alpha（AMZN Q1 26 ad $14.6B +19% / 占 retail 利潤 50%+；廣告 GM 70% vs retail GM 25%）、PDD/Temu 跨境攻擊已過峰（US de minimis 取消 2025-05 + redirect LATAM/SEA 增速放緩 + customer acquisition cost 升）、SHOP B2B GMV +96% 是被低估的 e-commerce 新章（vs SMB-only 共識；FY25 GMV $378B +29% / Shopify Payments $84B +38%）。四層分化（規模 / OS / 飛輪 / 跨境）取代「AMZN vs Temu」單一框架。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">AMZN · SHOP Shopify · PDD Temu · MELI · SE Sea · BABA · WMT · CPNG · ETSY · JD</div>
+    <div class="tc-meta"><span class="chip">📊 10 檔</span>
+<span class="chip">4🔴 / 4🟡 / 2🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full">廣告利潤池才是 e-commerce 真結構性 alpha（<strong>AMZN Q1 26 ad $14.6B +19% / 占 retail 利潤 50%+</strong>；廣告 GM 70% vs retail GM 25%）、PDD/Temu 跨境攻擊已過峰（US de minimis 取消 2025-05 + redirect LATAM/SEA 增速放緩 + customer acquisition cost 升）、SHOP B2B GMV +96% 是被低估的 e-commerce 新章（vs SMB-only 共識；FY25 GMV $378B +29% / Shopify Payments $84B +38%）。四層分化（規模 / OS / 飛輪 / 跨境）取代「AMZN vs Temu」單一框架。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="美國連鎖餐飲（us restaurant chains） mcd · txrh · dri · eat brinker · cmg · cava · dpz domino's · wing · cake · shak · sbux · yum · qsr · wen · jack · pzza · blmn">
+  <div class="tc-head">
+    <span class="tc-num">10</span>
+    <a class="tc-title" href="/id/ID_USRestaurantChains_20260427.html">美國連鎖餐飲（US Restaurant Chains） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">IV K 形分化 + Casual Dining 反撲 + 牛肉超級循環</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Casual Dining 反撲是 structural 不是 cyclical（Chili's Q2 FY26 SSS +8.6% / TXRH Q1 26 +8.2% / DRI LongHorn +7.2% — 同期 CMG -2.5% / WING -5.8%；EAT fwd PE 17x / PEG 1.1 是 sector 最大 valuation gap）、Fast Casual 通用配方失效（CMG / SHAK / WING SSS 退潮，唯一 structural alpha 是 CAVA Mediterranean 17-18% unit growth + AUV $3M+ + 2026 SSS +3-5% / WING 19% unit growth）、牛肉超級循環 + GLP-1 + CA $20 三重壓力 2026-2027 同步擠壓（cattle herd 86.2M 1951 以來最低 / 2028+ 才能 expansion / GLP-1 dinner traffic -6%）— cap-light franchise（MCD / DPZ / WING / QSR）royalty 護城河與 1P 廠脫鉤。MCD Q4 25 US SSS +6.8% McValue 啟動 + SBUX Niccol 翻身首季 NA SSS +4% / traffic +3%（8 季衰退結束）是 sector 兩大 catalyst。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">MCD · TXRH · DRI · EAT Brinker · CMG · CAVA · DPZ Domino's · WING · CAKE · SHAK · SBUX · YUM · QSR · WEN · JACK · PZZA · BLMN</div>
+    <div class="tc-meta"><span class="chip">📊 17 檔</span>
+<span class="chip">8🔴 / 6🟡 / 3🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full"><strong>Casual Dining 反撲是 structural 不是 cyclical</strong>（Chili's Q2 FY26 SSS +8.6% / TXRH Q1 26 +8.2% / DRI LongHorn +7.2% — 同期 CMG -2.5% / WING -5.8%；EAT fwd PE 17x / PEG 1.1 是 sector 最大 valuation gap）、<strong>Fast Casual 通用配方失效</strong>（CMG / SHAK / WING SSS 退潮，唯一 structural alpha 是 CAVA Mediterranean 17-18% unit growth + AUV $3M+ + 2026 SSS +3-5% / WING 19% unit growth）、<strong>牛肉超級循環 + GLP-1 + CA $20 三重壓力 2026-2027 同步擠壓</strong>（cattle herd 86.2M 1951 以來最低 / 2028+ 才能 expansion / GLP-1 dinner traffic -6%）— cap-light franchise（MCD / DPZ / WING / QSR）royalty 護城河與 1P 廠脫鉤。MCD Q4 25 US SSS +6.8% McValue 啟動 + SBUX Niccol 翻身首季 NA SSS +4% / traffic +3%（8 季衰退結束）是 sector 兩大 catalyst。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="餐飲科技 saas（restaurant tech saas） tost toast · par technology · lspd lightspeed · xyz block (square for restaurants) · vyx ncr voyix · four shift4 · fi fiserv · gpn global payments · dash · olo（已私）">
+  <div class="tc-head">
+    <span class="tc-num">11</span>
+    <a class="tc-title" href="/id/ID_RestaurantTechSaaS_20260427.html">餐飲科技 SaaS（Restaurant Tech SaaS） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">III 雲端滲透 + AI 整合 + PE 整合潮</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Olo 9/12/2025 私有化（Thoma Bravo $2B）是 sector regime change → 公開純玩家從 4 變 3，TOST scarcity prem 結構合理（fwd PE 21x for 22-25% growth + EV/ARR 8.7x）、Toast IQ AI 50% 4 月 adoption 是 vertical SaaS AI watershed（vs MSFT Copilot 11.5% activation / Salesforce Agentforce 16%；餐飲 vertical 高頻單一 use case 反而比 horizontal 快採用）、「SaaS + Payments 飛輪」vs「SaaS-only」分化已不可逆（OLO EV/loc $6K vs TOST $106K = 18x 結構性差距）。VYX NCR Voyix EBITDA margin 18.1%（Q4 25 vs FY24 11%）是被低估的 enterprise turnaround。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">TOST Toast · PAR Technology · LSPD Lightspeed · XYZ Block (Square for Restaurants) · VYX NCR Voyix · FOUR Shift4 · FI Fiserv · GPN Global Payments · DASH · OLO（已私）</div>
+    <div class="tc-meta"><span class="chip">📊 10 檔</span>
+<span class="chip">3🔴 / 3🟡 / 4🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 USRestaurantChains 子題 #15</span></div>
+    <div class="tc-thesis-full"><strong>Olo 9/12/2025 私有化（Thoma Bravo $2B）是 sector regime change</strong> → 公開純玩家從 4 變 3，<strong>TOST scarcity prem 結構合理</strong>（fwd PE 21x for 22-25% growth + EV/ARR 8.7x）、<strong>Toast IQ AI 50% 4 月 adoption 是 vertical SaaS AI watershed</strong>（vs MSFT Copilot 11.5% activation / Salesforce Agentforce 16%；餐飲 vertical 高頻單一 use case 反而比 horizontal 快採用）、<strong>「SaaS + Payments 飛輪」vs「SaaS-only」分化已不可逆</strong>（OLO EV/loc $6K vs TOST $106K = 18x 結構性差距）。VYX NCR Voyix EBITDA margin 18.1%（Q4 25 vs FY24 11%）是被低估的 enterprise turnaround。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="casual dining 翻身案例（casual dining turnaround） txrh · eat brinker (chili's) · cmg · dpz · wing · dri · blmn · cbrl · cake · cava · shak · bros · fwrg · sg · krus · o · tost">
+  <div class="tc-head">
+    <span class="tc-num">9</span>
+    <a class="tc-title" href="/id/ID_CasualDiningTurnaround_20260427.html">Casual Dining 翻身案例（Casual Dining Turnaround） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">II 暴力分化 + Brinker 翻身已驗證</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">CDR 不是死亡是暴力分化（TXRH +4.9% / EAT Q3 FY25 +31% vs RL/TGIF/Hooters Ch.11 — 10 件 PE-backed 2024 餐飲 Ch.11 / 21 件總）、CMG/DPZ 1.0 翻身 playbook 退潮（FY25 -1.7% / -3.3% 首次負成長）— 新 alpha 是 EAT $10.99 + Triple Dipper value architecture（Q3 FY25 +31% comp / FY +14%）、PE-owned 餐飲是 implicit short signal（2014 RL→2024 Ch.11 / 2017 TGIF→2024 Ch.11 / 2023 Hooters→2025 Ch.11，BLMN 邊緣 / 2.3x lev）；下一波 turnaround 不是 brand 是 balance-sheet reset（Adamolekun-led RL post-Ch.11 debt $1B → $350M 是首例）；O / TOST 是 non-obvious 二次受益。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">TXRH · EAT Brinker (Chili's) · CMG · DPZ · WING · DRI · BLMN · CBRL · CAKE · CAVA · SHAK · BROS · FWRG · SG · KRUS · O · TOST</div>
+    <div class="tc-meta"><span class="chip">📊 17 檔</span>
+<span class="chip">5🔴 / 7🟡 / 5🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 USRestaurantChains 子題 A</span></div>
+    <div class="tc-thesis-full"><strong>CDR 不是死亡是暴力分化</strong>（TXRH +4.9% / EAT Q3 FY25 +31% vs RL/TGIF/Hooters Ch.11 — 10 件 PE-backed 2024 餐飲 Ch.11 / 21 件總）、<strong>CMG/DPZ 1.0 翻身 playbook 退潮</strong>（FY25 -1.7% / -3.3% 首次負成長）— 新 alpha 是 EAT $10.99 + Triple Dipper value architecture（Q3 FY25 +31% comp / FY +14%）、<strong>PE-owned 餐飲是 implicit short signal</strong>（2014 RL→2024 Ch.11 / 2017 TGIF→2024 Ch.11 / 2023 Hooters→2025 Ch.11，BLMN 邊緣 / 2.3x lev）；下一波 turnaround 不是 brand 是 balance-sheet reset（Adamolekun-led RL post-Ch.11 debt $1B → $350M 是首例）；O / TOST 是 non-obvious 二次受益。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="glp-1 對餐飲長期衝擊（glp-1 restaurant impact） dnut · wing · sbux · mcd · dpz · cmg · shak · txrh · cava · dri · pzza · blmn · wen · jack · sg · eat · cake · yum · ko · pep · lly · nvo">
+  <div class="tc-head">
+    <span class="tc-num">10</span>
+    <a class="tc-title" href="/id/ID_GLP1RestaurantImpact_20260427.html">GLP-1 對餐飲長期衝擊（GLP-1 Restaurant Impact） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">II 機制驗證 + 2027 oral 拐點</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">GLP-1 對餐飲是 -1.5% to -3% 累積 5y SSS drag 不是 -10%+ 末日（Cornell-JMR user 12M 後 +0.9% restaurant spending 證明結構是「品類 share shift」非「全業流失」）、2027 oral GLP-1（Lilly Orforglipron）+ retatrutide 雙叉是市場低估的 30%+ tail event（base 從 11M→25M / weight loss -29% vs Wegovy -15% / CMS BALANCE 2026/05 Medicaid + 2027/01 Medicare $50/月覆蓋）、「protein pivot」是真 alpha 不是 commodity（CMG Honey Chicken 公司史上最高 LTO 訂購率 / SBUX Niccol 9% → 20% 家庭引用 / Q1 FY26 traffic +3% 兩年首次正 / SHAK Good Fit Menu 2026/01 first-mover / TXRH「customer trade-up to bigger steaks」）；DNUT 5y -12 to -16% 最重災 / CAVA +1 to +3% 結構性 winner。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">DNUT · WING · SBUX · MCD · DPZ · CMG · SHAK · TXRH · CAVA · DRI · PZZA · BLMN · WEN · JACK · SG · EAT · CAKE · YUM · KO · PEP · LLY · NVO</div>
+    <div class="tc-meta"><span class="chip">📊 22 檔</span>
+<span class="chip">9🔴 / 7🟡 / 6🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 USRestaurantChains 子題 A</span></div>
+    <div class="tc-thesis-full"><strong>GLP-1 對餐飲是 -1.5% to -3% 累積 5y SSS drag 不是 -10%+ 末日</strong>（Cornell-JMR user 12M 後 +0.9% restaurant spending 證明結構是「品類 share shift」非「全業流失」）、<strong>2027 oral GLP-1（Lilly Orforglipron）+ retatrutide 雙叉是市場低估的 30%+ tail event</strong>（base 從 11M→25M / weight loss -29% vs Wegovy -15% / CMS BALANCE 2026/05 Medicaid + 2027/01 Medicare $50/月覆蓋）、<strong>「protein pivot」是真 alpha 不是 commodity</strong>（CMG Honey Chicken 公司史上最高 LTO 訂購率 / SBUX Niccol 9% → 20% 家庭引用 / Q1 FY26 traffic +3% 兩年首次正 / SHAK Good Fit Menu 2026/01 first-mover / TXRH「customer trade-up to bigger steaks」）；DNUT 5y -12 to -16% 最重災 / CAVA +1 to +3% 結構性 winner。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="美國牛肉超級循環產業鏈（beef supercycle value chain） txrh · tsn tyson · jbs · ppc pilgrim's · dri · mcd · yum · blmn · shak · eat · wen · zts · hrl · sfd · cake · dpz · wing · line · cold · bynd · bg">
+  <div class="tc-head">
+    <span class="tc-num">11</span>
+    <a class="tc-title" href="/id/ID_BeefSupercycle_20260427.html">美國牛肉超級循環產業鏈（Beef Supercycle Value Chain） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">II trough 年 + 三重壓力</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">不是 normal 10 年週期是 4 重 driver supercycle 2030+ 才見 rebuild（heifer paradox + Mexico screwworm 1B lbs 損失 + Brazil tariff 反復 + 2011-14 drought 殘留；牛群 86.2M 75 年低 / beef cows 27.6M 1961 以來最低 / live cattle $248.38 record / beef CPI YoY +19.7% Q1 26）、PPC 是 cleanest long supercycle（FY25 record EBITDA $2.3B + revenue $18.5B / chicken/beef parity 5y 極端 / 14x P/E vs TXRH 24x 顯著低估）、TXRH FY26 menu 漲 +1.9% only 是 traffic-bet 不是漲價失策（紀律 vs MCD/WEN +44%/+38% destroy demand 對比）；TSN Beef FY25 -$426M / Q1 FY26 -$319M 是 packer trough；ZTS / LINE / COLD 是 picks-and-shovels alpha；YUM Taco Bell Cantina Chicken 2030 $5B 是被低估 chicken pivot。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">TXRH · TSN Tyson · JBS · PPC Pilgrim's · DRI · MCD · YUM · BLMN · SHAK · EAT · WEN · ZTS · HRL · SFD · CAKE · DPZ · WING · LINE · COLD · BYND · BG</div>
+    <div class="tc-meta"><span class="chip">📊 21 檔</span>
+<span class="chip">7🔴 / 7🟡 / 7🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 USRestaurantChains 子題 A</span></div>
+    <div class="tc-thesis-full"><strong>不是 normal 10 年週期是 4 重 driver supercycle 2030+ 才見 rebuild</strong>（heifer paradox + Mexico screwworm 1B lbs 損失 + Brazil tariff 反復 + 2011-14 drought 殘留；牛群 86.2M 75 年低 / beef cows 27.6M 1961 以來最低 / live cattle $248.38 record / beef CPI YoY +19.7% Q1 26）、<strong>PPC 是 cleanest long supercycle</strong>（FY25 record EBITDA $2.3B + revenue $18.5B / chicken/beef parity 5y 極端 / 14x P/E vs TXRH 24x 顯著低估）、<strong>TXRH FY26 menu 漲 +1.9% only 是 traffic-bet 不是漲價失策</strong>（紀律 vs MCD/WEN +44%/+38% destroy demand 對比）；TSN Beef FY25 -$426M / Q1 FY26 -$319M 是 packer trough；ZTS / LINE / COLD 是 picks-and-shovels alpha；YUM Taco Bell Cantina Chicken 2030 $5B 是被低估 chicken pivot。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="fast casual 段別內部分化（fast casual bifurcation） cmg · wing · shak · bros · cava · krus · sg · fwrg · dpz · yum · jack · loco · pzza · mod · bfi · mcd · dri · txrh · sbux">
+  <div class="tc-head">
+    <span class="tc-num">12</span>
+    <a class="tc-title" href="/id/ID_FastCasualBifurcation_20260427.html">Fast Casual 段別內部分化（Fast Casual Bifurcation） <span class="arrow">→</span></a>
+    
+    <span class="tc-phase phase-IV">II playbook 退潮 + format moat 新 alpha</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">「Niccol playbook」（digital + throughput + loyalty）已 commoditized 不再是 alpha（CMG digital 36.7% plateau + WING 73.2% plateau + 兩家 FY25 首次負成長 since 2017 / since 2003）— 新 alpha 是 format moat（SHAK drive-thru 重置 + Q20 連勝 / BROS drinks-led 85% liquid + 2,029 by 2029 / KRUS conveyor automation 從未需翻身 / CAVA $2.9M AUV + 23.7-24.2% RLM 2026 guide）、CAVA 80x P/E 已 priced for perfection — Q4 +0.5% SSS 是 IPO 蜜月期 ending 訊號、FC 段別 +6% 2025 sales growth 是 misleading（幾乎全 unit-driven，comp ~0-1%；2026-2030 真實 CAGR 3-5% 而非歷史 +10%+）；SG Spyce 賣 Wonder $186M（2025/12/26）是「FC tech-as-format」破裂 / Wonder 2027 IPO 是被低估「FC 重塑」事件。</div>
+  
+  <div class="tc-details">
+    <div class="tc-tags">CMG · WING · SHAK · BROS · CAVA · KRUS · SG · FWRG · DPZ · YUM · JACK · LOCO · PZZA · MOD · BFI · MCD · DRI · TXRH · SBUX</div>
+    <div class="tc-meta"><span class="chip">📊 19 檔</span>
+<span class="chip">7🔴 / 6🟡 / 6🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 USRestaurantChains 子題 A</span></div>
+    <div class="tc-thesis-full"><strong>「Niccol playbook」（digital + throughput + loyalty）已 commoditized 不再是 alpha</strong>（CMG digital 36.7% plateau + WING 73.2% plateau + 兩家 FY25 首次負成長 since 2017 / since 2003）— 新 alpha 是 format moat（SHAK drive-thru 重置 + Q20 連勝 / BROS drinks-led 85% liquid + 2,029 by 2029 / KRUS conveyor automation 從未需翻身 / CAVA $2.9M AUV + 23.7-24.2% RLM 2026 guide）、<strong>CAVA 80x P/E 已 priced for perfection — Q4 +0.5% SSS 是 IPO 蜜月期 ending 訊號</strong>、<strong>FC 段別 +6% 2025 sales growth 是 misleading</strong>（幾乎全 unit-driven，comp ~0-1%；2026-2030 真實 CAGR 3-5% 而非歷史 +10%+）；SG Spyce 賣 Wonder $186M（2025/12/26）是「FC tech-as-format」破裂 / Wonder 2027 IPO 是被低估「FC 重塑」事件。</div>
+  </div>
+</article>
+<article class="topic-card is-parent" data-phase="II" data-type="parent" data-search="嬰兒潮旅遊超級循環（baby boomer travel supercycle）母題 dal delta · rcl royal caribbean · vik viking · h hyatt · hlt hilton · mar marriott · aena · bkng booking · rms hermès · axp · jpm · hst · rhp · ual united · nclh · ccl carnival · cfr richemont · ihg six senses">
+  <div class="tc-head">
+    <span class="tc-num">16</span>
+    <a class="tc-title" href="/id/ID_BoomerTravelSupercycle_20260429.html">嬰兒潮旅遊超級循環（Baby Boomer Travel Supercycle） <span class="arrow">→</span></a>
+    <span class="tc-badge">🔴 母議題 Master</span>
+    <span class="tc-phase phase-II">II 早中段 demographic supercycle 啟動 + 2030+ supply lock</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">嬰兒潮 73M（age 62-80 in 2026）+ <strong>$83.3T 美國家庭淨值佔 51.4%</strong> + 健康可用窗 2025-2035 = 結構性 demographic supercycle 跨 cruise / 高端 hotel / airline premium / 機場 concession / wellness / luxury 多子產業共振；2030+ supply 端 4 家造船廠 + 寬體機 backlog + 高端 hotel pipeline 已 lock 至 2031+；DAL premium revenue +14% Q1 / Amex co-brand $8.2B (+11%) 是 K 形分化最直接證據；VIK 2026 86% booked 是 demand visibility 範例；本母題整合 4 份既有子議題 + Airline 新子題；推薦 5 檔 cross-vertical pair trade basket（DAL/RCL/VIK/H/AENA/AXP）預期 alpha vs SPX +6-9% 年化。</div>
+  <div class="tc-children">
+    <span class="label">↳ 整合子題：</span>
+    <a class="tc-chip" href="/id/ID_HotelChains_20260429.html">HotelChains<span class="arrow">→</span></a>
+    <a class="tc-chip" href="/id/ID_LuxuryTravelCruise_20260427.html">LuxuryTravelCruise<span class="arrow">→</span></a>
+    <a class="tc-chip" href="/id/ID_OTAandAITravel_20260429.html">OTAandAITravel<span class="arrow">→</span></a>
+    <a class="tc-chip" href="/id/ID_GlobalLuxury_20260427.html">GlobalLuxury<span class="arrow">→</span></a>
+    <a class="tc-chip" href="/id/ID_AirlineLoyaltyRepricing_20260429.html">Airline+Loyalty<span class="arrow">→</span></a>
+  </div>
+
+  <div class="tc-details">
+    <div class="tc-tags">DAL · RCL · VIK · H · HLT · MAR · AENA · BKNG · RMS · AXP · JPM · HST · RHP · UAL · NCLH · CCL · CFR · IHG Six Senses</div>
+    <div class="tc-meta"><span class="chip">📊 18 檔</span>
+<span class="chip">6🔴 / 5🟡 / 7🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full"><strong>嬰兒潮 73M + $83.3T (51.4% 美國家庭淨值) + 健康可用窗 2025-2035</strong> = 結構性 demographic supercycle 跨 5 個 sub-vertical 共振（cruise / luxury hotel / airline premium / 機場 concession / wellness）；<strong>2030+ supply 端 4 家造船廠 + 寬體機 + 高端 hotel pipeline 已 lock 至 2031+</strong>；DAL premium revenue +14% Q1 / Amex co-brand $8.2B (+11%) / VIK 2026 86% booked / RCL 2027 EPS CAGR 20% target / Hyatt NUG 7.3% 是 K 形 + supply lock 雙因素的具體 metrics；<strong>非共識核心：Sector EBITDA peak 在 2029-2030 vs 共識 2027（晚 2-3 年 EBITDA flow-through 是 alpha 來源）+ DAL 估值倍數應 9x → 12-15x payment platform 重定價</strong>；推薦 cross-vertical pair trade basket（DAL/RCL/VIK/H/AENA/AXP）。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="III" data-type="standalone" data-search="航空公司 + loyalty 重議（airlines + loyalty repricing） dal delta · ual united · aal american · luv southwest · alk alaska · jblu jetblue · save spirit · fro frontier · ryaay ryanair · lha lufthansa · iag · af.pa · axp · jpm · c citi · ba boeing · air.pa airbus · cpa copa">
+  <div class="tc-head">
+    <span class="tc-num">17</span>
+    <a class="tc-title" href="/id/ID_CasinoGamingIR_20260429.html">Casino + Gaming + Integrated Resorts <span class="arrow">→</span></a>
+
+    <span class="tc-phase phase-II">II 早中段 Macau 復甦 + Singapore 創高 + UAE 開幕 + 線上雙寡占</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short"><strong>LVS Marina Bay Sands Q4 EBITDA $806M（+50.1%）「歷史最強」</strong> 是 sector 中最被低估的單一 asset alpha（年化 $3.2B / 占 LVS 80%+）、<strong>UAE Wynn Al Marjan Q1 2027 開幕是「第二個 MBS」級事件</strong>（monopoly + 沙烏地高端 + 印度俄國資本 / 預估 2028 EBITDA $1.5-2B base）、<strong>BetMGM $470M EBITDA turnaround 是 MGM SOTP step-up 支柱</strong>（2026 guide $300-350M / monthly volume +24%）、<strong>Macau 是 demographic + RMB stimulus 雙引擎而非 cycle</strong>（2025 GGR ~85% pre-COVID / 2026 +8.3% forecast / MGM China 16.5% Macau share 史上最高 / VIP +47.8%）、<strong>線上 sports betting hold rate 8.1% → 10% structural margin 升級</strong>（DKNG 2027 EBITDA 倍增 vs 2025 / FanDuel 44% + DKNG 34% = 78% 雙寡占）；沙烏地 Vision 2030 賭場合法化 long-tail 30-50%。</div>
+
+  <div class="tc-details">
+    <div class="tc-tags">MGM · WYNN · LVS · CZR · DKNG · FLUT · PENN · BYD · BALY · 027.HK GEG · 1928.HK Sands China · 1128.HK Wynn Macau · 880.HK SJM · 6883.HK Melco · 2282.HK MGM China · GENS.SI Genting · 4661.T Oriental Land · NCLH</div>
+    <div class="tc-meta"><span class="chip">📊 18 檔</span>
+<span class="chip">5🔴 / 7🟡 / 6🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 BoomerTravelSupercycle 子題</span></div>
+    <div class="tc-thesis-full"><strong>LVS Marina Bay Sands Q4 EBITDA $806M「歷史最強」</strong> + <strong>UAE Wynn Al Marjan Q1 2027 開幕是「第二個 MBS」</strong> + <strong>BetMGM $470M EBITDA turnaround SOTP alpha</strong> + <strong>Macau 結構性復甦（2026 +8.3%）</strong> + <strong>線上 hold rate 升級（8.1% → 10% by 2027）</strong>；MGM 三引擎（LV + Macau + BetMGM）= sector 最完整 K 形 hedge。沙烏地 Vision 2030 賭場合法化 long-tail upside（2028-2030 機率 30-50%）。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="III" data-type="standalone" data-search="航空公司 + loyalty 重議（airlines + loyalty repricing） dal delta · ual united · aal american · luv southwest · alk alaska · jblu jetblue · save spirit · fro frontier · ryaay ryanair · lha lufthansa · iag · af.pa · axp · jpm · c citi · ba boeing · air.pa airbus · cpa copa">
+  <div class="tc-head">
+    <span class="tc-num">18</span>
+    <a class="tc-title" href="/id/ID_AirlineLoyaltyRepricing_20260429.html">航空公司 + Loyalty 重議（Airlines + Loyalty Repricing） <span class="arrow">→</span></a>
+
+    <span class="tc-phase phase-III">III 中段 K 形分化 + Loyalty 重定價 + ULCC 死亡</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short"><strong>DAL 估值倍數 9x → 12-15x payment platform 重定價是 sector 最大 alpha</strong>（Amex co-brand $8.2B (+11%) 中目標 $10B / Premium Q1 +14% / premium ticket $5.4B 接近超 main cabin $41M 差距）、<strong>Co-brand royalty 重議擴散是 sector-wide secular re-rating</strong>（DAL Amex / UAL Chase +12% / AAL Citi 獨家 2026 + Globe Mastercard / LUV Chase amended / 2030 4 大合計 $32-35B vs 共識 $25-28B）、<strong>「3 大美國航空雙寡占共贏」是錯誤 — DAL 永久領先 UAL/AAL</strong>（DAL premium 領先 UAL 12-18 個月 / FCF $5B+ vs UAL $3B+ / AAL $1-2B 結構性差距）、<strong>ULCC 結構性死亡 SAVE Chapter 22 / fleet -56%</strong>（FRO 2027-2028 likely Chapter 11 / JBLU 中端 niche 受擠壓 / LUV 全面轉型 hybrid 是 ULCC-light 失敗反向確認）、<strong>LUV $4 EPS guide 2026 vs $0.93 2025 (+330%) 是 turnaround 教科書</strong>。AXP / JPM / Citi cross-vertical co-brand 同分潤受惠。</div>
+
+  <div class="tc-details">
+    <div class="tc-tags">DAL Delta · UAL United · AAL American · LUV Southwest · ALK Alaska · JBLU JetBlue · SAVE Spirit · FRO Frontier · RYAAY · LHA · IAG · AF.PA · AXP · JPM · C Citi · BA · AIR.PA · CPA Copa</div>
+    <div class="tc-meta"><span class="chip">📊 18 檔</span>
+<span class="chip">4🔴 / 7🟡 / 7🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 BoomerTravelSupercycle 子題</span></div>
+    <div class="tc-thesis-full"><strong>DAL 估值倍數 9x → 12-15x payment platform 重定價</strong>（Amex co-brand $8.2B (+11%) 中目標 $10B / Premium Q1 +14% vs main +1% 差 13pp / premium ticket revenue $5.4B 接近超 main cabin 僅差 $41M = 1 年內超越 milestone）、<strong>Co-brand royalty 重議擴散是 sector-wide secular re-rating</strong>（4 大 airline FY 25 co-brand 已實質重議或加碼 / 類比 MAR Bonvoy royalty +35% / 2030 4 大合計 $32-35B vs 共識 $25-28B）、<strong>3 大「雙寡占共贏」框架錯誤 — DAL 永久領先</strong>（DAL premium / co-brand / FCF 三維度全面領先 UAL/AAL；UAL second player 落後 12-18 個月）、<strong>ULCC 結構性死亡 — SAVE Chapter 22 不是 isolated</strong>（fleet 從 214 → 94 / -56% / 40% fewer flights / FRO 高 leverage 2027-2028 likely Chapter 11）、<strong>LUV 2026 EPS $4 vs 2025 $0.93 (+330%) 是 turnaround 教科書</strong>（從 ULCC-light 全面轉型 hybrid network carrier）。AXP（DAL+MAR+HLT 三引擎）+ JPM（UAL+LUV+H+IHG 四引擎）+ Citi（AAL 獨家）cross-vertical 共振；BA / AIR.PA 寬體機 backlog 至 2030+ 是供給端 lock。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="線上旅遊 ota + ai 分發革命（ota & ai travel distribution） bkng booking · expe expedia · tcom trip.com · trip tripadvisor viator · abnb airbnb · googl ai overview · msft copilot · mmyt makemytrip · openai chatgpt · perplexity · skyscanner · kayak ai · apple intelligence">
+  <div class="tc-head">
+    <span class="tc-num">19</span>
+    <a class="tc-title" href="/id/ID_OTAandAITravel_20260429.html">線上旅遊 OTA + AI 分發革命（OTA &amp; AI Travel Distribution） <span class="arrow">→</span></a>
+
+    <span class="tc-phase phase-IV">IV → V OTA 雙寡占成熟 + AI 分發革命啟動</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short"><strong>Google AI Overview（不是 ChatGPT）才是 OTA 真正威脅</strong>（60% query 滲透 / travel SEO -20-40% / OTA 必須 paid + brand direct + AI hedge 對沖）、<strong>BKNG vs EXPE 結構性分化非雙寡占共贏</strong>（Q4 BKNG GBV +16% / EXPE +11% / EBITDA margin BKNG 36.9% vs EXPE 23.9% 差 13pp / BKNG AI 整合 + Connected Trip 領先 12-18 個月）、<strong>「Agentic AI 取代 OTA」是錯誤框架 — OTA 是 inventory layer 不可繞過</strong>（OpenAI ChatGPT Apps 內含 Booking + Expedia / Perplexity + Selfbook + TRIP / Kayak AI Mode；70-80% AI booking 仍透過 OTA inventory）、<strong>TRIP Viator 50% rev / 30% profit 是 sector 最大 mispricing</strong>（GBV $4.7B +16% / standalone 估值應 $3-4B vs 整體市值 $2B / 2026-2027 spin-off 機率 40-60%）、<strong>EXPE B2B +24% 是被忽略 alpha</strong>（不依賴 SEO / 抗 AI 衝擊）、<strong>TCOM 中國 outbound +60% 是地緣 alpha</strong>（Skyscanner 是 OpenAI Operator partner）。BKNG 估值倍數應 24x → 27-30x payment+AI platform。</div>
+
+  <div class="tc-details">
+    <div class="tc-tags">BKNG Booking · EXPE Expedia · TCOM Trip.com · TRIP TripAdvisor Viator · ABNB · GOOGL AI Overview · MSFT Copilot · MMYT · OpenAI · Perplexity · Skyscanner · Kayak · Apple Intelligence</div>
+    <div class="tc-meta"><span class="chip">📊 14 檔（4 私募 / AI 平台）</span>
+<span class="chip">4🔴 / 4🟡 / 5🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span>
+<span style="background:#F0F9FF;color:#1E40AF;padding:2px 8px;border-radius:10px;font-size:10.5px;font-weight:600">📐 與 HotelChains 互鎖</span></div>
+    <div class="tc-thesis-full"><strong>Google AI Overview（不是 ChatGPT）才是 OTA 真正威脅</strong>（60% query 滲透 / travel SEO -20-40% / OTA 必須 paid + brand direct + AI hedge 對沖）、<strong>BKNG vs EXPE 結構性分化非雙寡占共贏</strong>（Q4 BKNG GBV +16% / EXPE +11% / EBITDA margin BKNG 36.9% vs EXPE 23.9% 差 13pp / BKNG AI 整合 + Connected Trip 領先 12-18 個月）、<strong>「Agentic AI 取代 OTA」是錯誤框架 — OTA 是 inventory layer 不可繞過</strong>（OpenAI ChatGPT Apps 內含 Booking + Expedia / Perplexity + Selfbook + TRIP / Kayak AI Mode；70-80% AI booking 仍透過 OTA inventory）、<strong>TRIP Viator 50% rev / 30% profit 是 sector 最大 mispricing</strong>（GBV $4.7B +16% / standalone 估值應 $3-4B vs 整體市值 $2B / 2026-2027 spin-off 機率 40-60%）、<strong>EXPE B2B +24% 是被忽略 alpha</strong>（不依賴 SEO / 抗 AI 衝擊）、<strong>TCOM 中國 outbound +60% 是地緣 alpha</strong>（Skyscanner 是 OpenAI Operator partner）。BKNG 估值倍數應 24x → 27-30x payment+AI platform。</div>
+  </div>
+</article>
+<article class="topic-card" data-phase="IV" data-type="standalone" data-search="全球連鎖旅館（global hotel chains） mar marriott · hlt hilton · h hyatt · ihg intercontinental · chh choice · wh wyndham · abnb airbnb · bkng booking · expe expedia · jpm chase · axp · cof · hst · rhp">
+  <div class="tc-head">
+    <span class="tc-num">20</span>
+    <a class="tc-title" href="/id/ID_HotelChains_20260429.html">全球連鎖旅館（Global Hotel Chains） <span class="arrow">→</span></a>
+
+    <span class="tc-phase phase-IV">IV asset-light 飽和 + K 形分化 + loyalty 商務化</span>
+    <button class="tc-expand" aria-label="展開">▾</button>
+  </div>
+  <div class="tc-thesis-short">Marriott 共品牌信用卡 royalty <strong>+35% 永久重定價</strong>是 sector 最大 alpha（royalty rate 從 Chase / Amex 重新議價，非 cycle 性 booster；271M Bonvoy 會員 × per-spending royalty = 永久增量 fee；估值倍數應從 hotel cycle 27x → payment rail 32-35x）、<strong>Hyatt NUG 7.3% 是結構性而非 mean-revert</strong>（pipeline 47% sector 最高 + luxury+lifestyle 集中度 30%+ + Playa $2.6B 完成 all-inclusive 整合；共識預期 2027 mean-revert 至 5-6% 是錯誤）、<strong>WH + CHH 100% franchise + cycle 底部是最被低估 contrarian buy</strong>（Q4 US RevPAR -8% / -3% / 估值 16-19x 是 sector 折讓；100% royalty 結構應對標 V/MA 25-35x；2027 cycle 翻轉時 fee growth +2% → +8%）、<strong>NYC Local Law 18 模式 18 個月後沒有 Tier-1 跟進 = ABNB regulation backlash 已到頂</strong>（ABNB Q4 GBV +16% 重新加速 / 全球 STR share 44%）。共品牌信用卡 partner（JPM / AXP / COF）是 non-obvious 二次受益。</div>
+
+  <div class="tc-details">
+    <div class="tc-tags">MAR Marriott · HLT Hilton · H Hyatt · IHG · CHH Choice · WH Wyndham · ABNB Airbnb · BKNG Booking · EXPE Expedia · JPM Chase · AXP · COF · HST · RHP</div>
+    <div class="tc-meta"><span class="chip">📊 14 檔</span>
+<span class="chip">4🔴 / 5🟡 / 5🟢</span>
+<span class="chip">🟢🟢🟢 鮮度</span></div>
+    <div class="tc-thesis-full">Marriott 共品牌信用卡 royalty <strong>+35% 永久重定價</strong>是 sector 最大 alpha（royalty rate 從 Chase / Amex 重新議價，非 cycle 性 booster；271M Bonvoy 會員 × per-spending royalty = 永久增量 fee；估值倍數應從 hotel cycle 27x → payment rail 32-35x）、<strong>Hyatt NUG 7.3% 是結構性而非 mean-revert</strong>（pipeline 47% sector 最高 + luxury+lifestyle 集中度 30%+ + Playa $2.6B 完成 all-inclusive 整合；共識預期 2027 mean-revert 至 5-6% 是錯誤）、<strong>WH + CHH 100% franchise + cycle 底部是最被低估 contrarian buy</strong>（Q4 US RevPAR -8% / -3% / 估值 16-19x 是 sector 折讓；100% royalty 結構應對標 V/MA 25-35x；2027 cycle 翻轉時 fee growth +2% → +8%）、<strong>NYC Local Law 18 模式 18 個月後沒有 Tier-1 跟進 = ABNB regulation backlash 已到頂</strong>（ABNB Q4 GBV +16% 重新加速 / 全球 STR share 44%）。共品牌信用卡 partner（JPM / AXP / COF）是 non-obvious 二次受益。</div>
+  </div>
+</article>
+</div>
+<details class="suggest"><summary>📋 建議補建</summary>
+<div class="suggest-body"><strong>📋 本類別建議補建（依 taxonomy 子群組對照）：</strong>
+
+<p style="margin:10px 0 6px;font-size:12px;color:#16A34A;font-weight:700">✅ 已建子群組</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.7;font-size:12px;color:#4B5563">
+<li><strong>服飾 / 鞋類（apparel）</strong> — ApparelFootwear(P) · AthleticFootwearSubsegments · AthleisureNewEntrants · ChannelPowerReversion · ChinaSportswearRise</li>
+<li><strong>奢侈品（luxury）</strong> — GlobalLuxury</li>
+<li><strong>餐飲 / 連鎖（restaurant）</strong> — USRestaurantChains(P) · FastCasualBifurcation · CasualDiningTurnaround · RestaurantTechSaaS</li>
+<li><strong>折扣 / 百貨零售（discount_retail）</strong> — DiscountRetailKShape</li>
+<li><strong>E-commerce（ecommerce）</strong> — GlobalEcommerce · LATAMEcommerce</li>
+</ul>
+
+<p style="margin:14px 0 6px;font-size:12px;color:#7C3AED;font-weight:700">🔴 母題級缺口（待建）</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.85">
+<li><code>研究 健身 / 個護消費（fitness_personal）</code><br/><span style="color:#4B5563">PTON / LULU 健身分支 / ELF e.l.f. / EL Estée Lauder / ULTA / LRLCY L'Oréal / Amorepacific</span><br/><span style="font-size:11px;color:#94A3B8">ELF 連 +25-30% comp 取代 EL 是結構非循環；K-beauty 全球接管 +35% YoY；PTON 復甦路徑；GLP-1 + gym 正相關</span></li>
+<li><code>研究 家居 / 家具（home_furniture）</code><br/><span style="color:#4B5563">RH / W / WSM / Z / TPX</span><br/><span style="font-size:11px;color:#94A3B8">RH 高端家居護城河 vs W 大眾化競爭；WSM premium 家居耐久性；千禧購屋延後 → 首次裝潢 wave；HD Pro segment 互補</span></li>
+</ul>
+
+<p style="margin:14px 0 6px;font-size:12px;color:#EAB308;font-weight:700">🟡 子題級補強（已建母題的子題擴充）</p>
+<ul style="margin:4px 0 0;padding-left:18px;line-height:1.85">
+<li><code>研究 奢侈品 Hard vs Soft 分化子題</code><br/><span style="color:#4B5563">CFR Richemont（Cartier / Van Cleef）· RMS Hermès · KER Kering（Gucci）</span><br/><span style="font-size:11px;color:#94A3B8">補強 GlobalLuxury；Hard Luxury 結構性跑贏 +11% vs Soft Luxury 週期性 -14%；Richemont Jewellery emotion moat</span></li>
+<li><code>研究 中國消費降級 / 國潮子題</code><br/><span style="color:#4B5563">PDD / BABA / Meituan / Luckin Coffee / 蜜雪冰城 / 名創優品 MNSO / POP MART 9992.HK</span><br/><span style="font-size:11px;color:#94A3B8">補強 DiscountRetailKShape + GlobalEcommerce；PDD Temu 全球 + 中國降級雙引擎；POP MART Labubu 國潮全球化 +400% global rev</span></li>
+<li><code>研究 Casual Dining 翻身子題</code><br/><span style="color:#4B5563">EAT Brinker（Chili's）· TXRH · DRI Olive Garden / LongHorn</span><br/><span style="font-size:11px;color:#94A3B8">補強 CasualDiningTurnaround；Chili's $10.99「3 For Me」直接吃 fast food；EAT fwd PE 17x / PEG 1.1 sector 最大 valuation gap</span></li>
+<li><code>研究 QSR 數位 loyalty 飛輪子題</code><br/><span style="color:#4B5563">MCD 200M+ · SBUX 32M · DPZ 70%+ digital · DASH / Uber Eats 對抗</span><br/><span style="font-size:11px;color:#94A3B8">補強 USRestaurantChains；數位 sales 是 ad pool 雛形；first-party app 對抗 DASH 15-30% commission；50%+ digital 是隱性護城河</span></li>
+<li><code>研究 眼鏡 + Smart Glasses 雙引擎子題</code><br/><span style="color:#4B5563">EssilorLuxottica ESLOY · WBY Warby Parker · META Ray-Ban · GOOG smart glasses</span><br/><span style="font-size:11px;color:#94A3B8">補強 consumer tech 生態；Meta-Ray-Ban 破 200 萬副 +200% YoY；EssilorLuxottica META partnership royalty；2026-2030 smart glasses TAM $30-50B</span></li>
+<li><code>研究 寵物經濟子題</code><br/><span style="color:#4B5563">CHWY · FRPT Freshpet · IDXX · ZTS Zoetis · TRUP Trupanion</span><br/><span style="font-size:11px;color:#94A3B8">補強 consumer staples 生態；FRPT 連 +25% 結構性護城河；CHWY autoship 78% retention；Z 世代「養寵不生育」demographic shift</span></li>
+</ul>
+</div>
+</details>
+
+  </div>
+</div>
+
+
+</div>
+
+<div class="cat-page-footer">
+  本頁由 scripts/build_id_category_pages.py 從 docs/id/index.html 自動生成 · 最後生成：2026-05-05T07:42:17Z
+</div>
+
+<script>
+// Topic card expand (event delegation)
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.tc-expand');
+  if(!btn) return;
+  e.preventDefault();
+  btn.closest('.topic-card').classList.toggle('expanded');
+});
+
+// Open ID report links in new tab
+document.querySelectorAll('a[href*="/id/ID_"]').forEach(function(a){
+  a.target = '_blank';
+  a.rel = 'noopener';
+});
+
+// Filters & search
+var filterState = {type:new Set(), q:''};
+function applyFilters(){
+  var visible = 0;
+  document.querySelectorAll('.topic-card').forEach(function(card){
+    var ok = true;
+    if(filterState.type.size > 0 && !filterState.type.has(card.dataset.type)) ok = false;
+    if(ok && filterState.q){
+      var hay = (card.dataset.search || '') + ' ' + card.textContent.toLowerCase();
+      if(hay.indexOf(filterState.q) === -1) ok = false;
+    }
+    card.classList.toggle('hidden', !ok);
+    if(ok) visible++;
+  });
+  document.querySelectorAll('.category').forEach(function(cat){
+    var topics = cat.querySelectorAll('.topic-card');
+    if(topics.length === 0) return;
+    var anyVisible = Array.from(topics).some(function(c){return !c.classList.contains('hidden');});
+    cat.classList.toggle('hidden', !anyVisible);
+  });
+  var vcEl=document.getElementById('visible-count');if(vcEl)vcEl.textContent=visible;
+  var any = filterState.type.size || filterState.q;
+  var fsEl=document.getElementById('filter-status');if(fsEl)fsEl.firstChild.textContent=any?'篩選後顯示 ':'顯示全部 ';
+}
+
+document.querySelectorAll('.f-chip').forEach(function(chip){
+  chip.addEventListener('click', function(){
+    var f = chip.dataset.filter, v = chip.dataset.val;
+    if(filterState[f].has(v)){ filterState[f].delete(v); chip.classList.remove('active'); }
+    else { filterState[f].add(v); chip.classList.add('active'); }
+    applyFilters();
+</script>
+
+</body>
+</html>
