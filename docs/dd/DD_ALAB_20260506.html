@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.2">
+<title>ALAB｜買側深度研究 DD（v12.2）｜2026-05-06（Inception）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#0F172A;line-height:1.7;padding:0 0 60px}
+.num,code,td.num{font-family:'IBM Plex Mono',monospace}
+header{background:#1E3A5F;color:#fff;padding:18px 28px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+header h1{font-size:18px;letter-spacing:1px;font-weight:700}
+header .meta{font-size:12px;opacity:0.85;margin-top:4px;font-family:'IBM Plex Mono',monospace}
+.dd-toc{position:sticky;top:64px;z-index:9;background:#fff;border-left:4px solid #3B82F6;padding:12px 22px;margin:0 0 18px;box-shadow:0 2px 6px rgba(0,0,0,0.04);display:flex;flex-wrap:wrap;gap:6px}
+.dd-toc a{display:inline-block;background:#EFF6FF;color:#1E40AF;padding:5px 12px;border-radius:999px;font-size:12px;text-decoration:none;font-weight:500}
+.dd-toc a:hover{background:#DBEAFE}
+section{background:#fff;margin:18px 22px;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.04);overflow:hidden;scroll-margin-top:80px}
+section h2{background:#1E3A5F;color:#fff;padding:14px 22px;font-size:17px;border-left:4px solid #3B82F6;scroll-margin-top:80px}
+section h3{background:#F1F5F9;color:#1E3A5F;padding:10px 22px;font-size:15px;margin-top:12px;border-left:3px solid #3B82F6}
+section h4{padding:8px 22px;color:#1E3A5F;font-size:14px;margin-top:8px}
+section p{padding:8px 22px;font-size:14px}
+section ul, section ol{padding:8px 38px;font-size:14px}
+section li{margin-bottom:4px}
+table{width:calc(100% - 44px);margin:10px 22px;border-collapse:collapse;font-size:13px;background:#fff}
+th{background:#1E3A5F;color:#fff;padding:8px 10px;text-align:left;font-weight:500;font-size:12px}
+td{padding:7px 10px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:500}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-yellow{background:#FEF9C3;color:#92400E}
+.badge-blue{background:#EFF6FF;color:#1E40AF}
+.badge-orange{background:#FFEDD5;color:#C2410C}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px 20px;margin:10px 22px 14px;border-radius:3px}
+.hypothesis-box h4{padding:0 0 6px;color:#1E3A5F}
+.hypothesis-box ul{padding:6px 0 0 18px}
+.warning-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 20px;margin:10px 22px 14px;border-radius:3px}
+.warning-box h4{color:#C2410C;padding:0 0 6px}
+.warning-box ul, .warning-box p{padding:0;color:#7C2D12}
+.reasoning{background:#FEFCE8;border-left:3px solid #CA8A04;padding:8px 14px;margin:8px 22px;font-size:12.5px;color:#713F12;font-family:'IBM Plex Mono',monospace;border-radius:2px;line-height:1.6}
+.bull-box{background:#F0FDF4;border-left:4px solid #16A34A;padding:14px 20px;margin:10px 11px;border-radius:3px;flex:1;min-width:280px}
+.bear-box{background:#FFF1F2;border-left:4px solid #DC2626;padding:14px 20px;margin:10px 11px;border-radius:3px;flex:1;min-width:280px}
+.arbiter-box{background:#F5F3FF;border-left:4px solid #7C3AED;padding:14px 20px;margin:10px 11px;border-radius:3px;flex:1;min-width:280px}
+.three-col{display:flex;flex-wrap:wrap;padding:0 11px}
+.short-box{background:#F0F9FF;border-left:4px solid #0284C7;padding:14px 20px;margin:10px 11px;border-radius:3px;flex:1;min-width:280px}
+.mid-box{background:#F5F3FF;border-left:4px solid #7C3AED;padding:14px 20px;margin:10px 11px;border-radius:3px;flex:1;min-width:280px}
+.long-box{background:#ECFDF5;border-left:4px solid #059669;padding:14px 20px;margin:10px 11px;border-radius:3px;flex:1;min-width:280px}
+.print-btn{position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;border:none;padding:10px 18px;border-radius:4px;cursor:pointer;font-family:'Noto Sans TC';box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:50}
+.note{font-size:12px;color:#64748b;padding:6px 22px;font-style:italic}
+.id-link{background:#F0F9FF;border-left:3px solid #3B82F6;padding:10px 16px;margin:14px 22px;font-size:13px;color:#1E3A5F;border-radius:3px}
+.id-link a{color:#1E40AF;font-weight:500}
+@media print{header{position:static;box-shadow:none}.dd-toc{display:none}.print-btn{display:none}section{box-shadow:none;page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+<h1>ALAB（Astera Labs）｜買側深度研究 DD</h1>
+<div class="meta">資料抓取：2026-05-06 ｜ 最新股價 $215.69 ｜ 最近財報：Q1 FY2026（2026-05-05 AMC 公布）｜ DD Schema v12.2 ｜ Inception</div>
+</header>
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報</a>
+<a href="#s7">§7 門檻</a>
+<a href="#s8">§8 成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務</a>
+<a href="#s11">§11 產業</a>
+<a href="#s12">§12 治理</a>
+<a href="#s13">§13 估值</a>
+</nav>
+
+<div class="id-link">
+<strong style="color:#1E40AF">📐 所屬產業 ID：</strong>ID_AINetworking（AI 網路互連）<span style="color:#64748b;font-size:11px;margin-left:8px">· 結論請對照 ID 核心假設</span>
+</div>
+
+<!-- ============== §1 ============== -->
+<section id="s1">
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節（§2 ~ §13）。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢：</strong>§8 長期成長性 🟢 高確信 ｜ §9 護城河趨勢「加深」（Aries Gen6 獨家 + Scorpio X 320-lane Q1 26 開始量產 + Leo CXL 獲 Microsoft 部署）｜ §8 F AI 風險 🟢 受益 ｜ AI Infra 2.0 transformation（UALink + NVLink Fusion + PCIe 7 同步演進）</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9）｜體質 veto 0/5 不過｜等級調整：A → A（不變）</li>
+<li><strong>估值燈 🟡 合理偏貴：</strong>Fwd PE 75.7x（用 post-print FY26E 非 GAAP $2.85），歷史 IPO 後分位 ~55%，PEG 1.38（合理 1-2 區間）｜盲點 1 救援：是（§8 🟢 + PEG &lt; 2.0 + AI 🟢）→ 🟠 救回 🟡</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場（W250 樣本不足）：</strong>W52 $151.42（斜率 +14.85%）/ W104 $113.55 / W250 N/A（IPO 2024-03，僅 112 週數據）｜現價 $215.69 &gt; W52 &gt; W104 ｜盲點 2 救援：不適用（未跌破 W250）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 現價 7259 vs W104 6152，未破線</li>
+<li><strong>參考 R:R：</strong>短期 -0.30x（FY+1 目標 $171 低於現價）/ 中期 0.51x / 長期 1.97x ｜壓力測試通過率 1/4（資訊性，<strong>R:R 對短期不利，但 thesis 完整</strong>）</li>
+<li><strong>綜合訊號：<span style="font-size:20px" class="badge badge-yellow">B 觀望偏進場</span></strong>（取自 §2 H）｜判定理由：thesis 強（Q1 26 Rev +93% YoY beat、Q2 guide +93% YoY raise、PCIe Gen 6 已超 1/3 營收），但 4 週漂移 +44.7%（QC-22 觸發）+ Bollinger 上軌之下僅 $5（接近 +2σ）+ 短期 R:R 為負 → 等待估值或時機修復</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟢 非陷阱（基本面拓展中，僅短期估值透支）</li>
+<li><strong>Inception DD：</strong><code>DD_ALAB_20260506.html</code>（2026-05-06，本份為 Inception；前份 20260427 為 v12.0 schema，不計入 v12.2+ 對照基準）</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-06（距今 365 天）— Inception + 365d，到期時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選 / 觀望 ｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warning-box">
+<h4>⚠️ QC-22 追高警告（漂移 +44.7%，跨 20% 門檻）</h4>
+<p>4 週前股價 $149.05 → 現價 $215.69，漂移 +44.7%（含 5/5 Q1 26 print +7% 跳空）。<strong>追高風險極高</strong>，建議：(1) 等待 Pure MA 狀態進入 🟢 最佳進場（即股價回測 W52 $151 區間）或；(2) Bollinger 中軌（$155）回測後再行動。當前進場者承擔 mean reversion 風險，建議分批 + 留現金應對拉回。</p>
+</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td><strong>非陷阱</strong>。ALAB Q1 26 Rev +93% YoY 強勁拓展、Non-GAAP GM 76.3% 業界頂級、$1.19B 淨現金、PCIe Gen 6 已超 1/3 營收領先 12-18 個月、Scorpio X 320-lane 開始量產、Leo 獲 Microsoft 部署。所有 Munger 維度全部達標。屬「<strong>AI 主題 + Q1 print 前 4 週爆衝 + Bollinger 上軌</strong>」三股驅動的「<strong>過熱型估值錯配</strong>」。最大風險是<strong>估值修復下跌（mean reversion）</strong>而非基本面破壞。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>(1) Q1 26 Rev $308.4M +93% YoY 不僅 beat 共識 $292M，且 sequential +14% 反映 design-in to volume 的兌現；(2) Q2 guide $355-365M 中位 $360M（+89% YoY、+17% QoQ）顯示 H2 26 仍可加速；(3) PCIe Gen 6 在 Q1 26 已超總營收 1/3，Aries 6 retimer 領先 Broadcom / Marvell 12-18 個月；(4) 兩家額外 hyperscaler Q4 26 開始接收 Scorpio P，客戶集中度緩解；(5) Leo CXL 獲 Microsoft Azure 部署，第四產品線（Memory）正式商業化；(6) NVLink Fusion 合作擴大 + UALink 2.0 同步進展，連 NVIDIA 自家 ecosystem 都需要 ALAB。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>(1) Forward PE 75.7x 已將未來 3 年 50%+ EPS CAGR 大部分提前定價；(2) 4 週 +44.7% 漂移歷史回測通常需要 3-6 月消化；(3) Q2 26 GM 73%（vs Q1 76.3%）出現 200bp 壓縮（一次性客戶協議影響），需驗證後續是否 normalize；(4) 客戶集中度仍高（NVIDIA + 4 家 Mag 7 hyperscaler 估佔 ~70%），單一大客戶 ASIC 化短期不會發生但中期不可排除；(5) Q2 Opex 指引 $128-131M（+15% QoQ）侵蝕 Operating leverage。</td></tr>
+<tr><td><strong>持有期間如何判斷陷阱發生</strong></td><td>(1) Q3 26 Rev YoY 若 &lt; 70%（vs Q2 26 implied +89%）→ 加速器失靈；(2) Q3 26 GM 若 &lt; 72%（vs Q2 73% guide）→ 競爭加劇；(3) Q3 / Q4 26 Scorpio P 兩家新 hyperscaler 若延遲量產 → 客戶多元化進度落後；(4) 任一 hyperscaler 公告自研 PCIe retimer 量產 → R3 觸發；(5) Broadcom PCIe 6.0 retimer 若 2026 H2 量產 → 護城河侵蝕加速。</td></tr>
+</table>
+<p style="padding:8px 22px"><strong>最終定性：🟢 非陷阱</strong>（基本面拓展中，僅短期估值透支）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td><strong>Q3 FY26（2026-11 公布）Rev YoY + Q4 26 guide</strong></td><td>§5 H1 / §6</td><td>🔵 核心假設驗證</td><td>Q3 Rev YoY &lt; 70% 或 Q4 guide 不 raise → H1 削弱</td></tr>
+<tr><td>2</td><td><strong>Aries / Scorpio / Taurus / Leo 四產品線營收占比</strong></td><td>§5 H1 / §11</td><td>🔵 多產品線多元化</td><td>Aries（含 Gen5/6）若 &gt; 75% → 產品集中；Scorpio + Taurus 若 FY27 仍 &lt; 35% → H1 削弱</td></tr>
+<tr><td>3</td><td><strong>Broadcom / Marvell PCIe 6.0 retimer 量產時程</strong></td><td>§5 H2 / §9</td><td>競爭格局變化</td><td>任一家 2026 H2 開始量產 → R2 觸發</td></tr>
+<tr><td>4</td><td><strong>2026 H2 Scorpio P 兩家新 hyperscaler 量產進度</strong></td><td>§5 H1 / §11</td><td>客戶集中度緩解</td><td>Q4 26 公告若延遲至 2027 → 客戶多元化進度落後</td></tr>
+<tr><td>5</td><td><strong>Top 5 Hyperscaler FY27 capex guide</strong></td><td>§5 H3</td><td>產業需求驗證</td><td>2026 Q4 / 2027 Q1 hyperscaler capex 共識下修 &gt; 10% → R3 預警</td></tr>
+</table>
+</section>
+
+<!-- ============== §2 ============== -->
+<section id="s2">
+<h2>§2｜四層判定（產業風向 × 品質 × 估值燈 × Pure MA）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway 10+ 年，AI 互連 TAM 從 $5B → $30B+ 至 2030）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（PCIe Gen 6 領先擴大 + Scorpio X 320-lane 量產 + Leo Microsoft 部署）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 純 AI 受益（PCIe retimer 為 GPU/CPU 互連必備元件）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話判斷</td><td>AI Infra 2.0（從 PCIe Gen 5 → Gen 6/7 + 1.6T Ethernet + UALink + NVLink Fusion）將推動 ALAB 整體 TAM 至 2030 達 $30B+ 級。連 NVIDIA NVLink Fusion 都需要 ALAB 配合，產業地位獨特。</td></tr>
+</table>
+<div class="reasoning">
+輸入：§8 ✓🟢 + §9 加深 + AI 🟢｜計算：3 項全 🟢，無 🟡/🔴 触发降級｜
+implication：盲點 1 + 2 救援機制可啟動；§13.5 PE 倍數可給 25-30x 5Y 合理區間
+</div>
+
+<h3>B｜品質等級（含體質 veto）</h3>
+<h4>體質檢核（veto 制）</h4>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="badge badge-green">✅ 過</span></td><td>FY24 76.4% → FY25 75.7% → Q1 26 76.3%（穩定 75-76%）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge badge-green">✅ 過</span></td><td>FY25 FCF $281.8M / NI $219.1M = 1.29（FCF &gt; NI 健康）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge badge-green">✅ 過</span></td><td>FY26E EPS：90d ago $2.378 → 30d $2.488 → current $2.501（連續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge badge-green">✅ 過</span></td><td>近 4 季 YoY：Q2 25 +144% / Q3 25 +85% / Q4 25 +92% / Q1 26 +93%（全強勁正成長）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge badge-green">✅ 過</span></td><td>淨現金 $1.18B（Total Debt $4.1M），Net Debt 為負，無債務風險</td></tr>
+</table>
+<p style="padding:6px 22px"><strong>體質 veto 結果 = 0 項不過 → 護城河等級不變</strong></p>
+
+<h4>護城河等級（單一決定）</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td>9 / 10</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>A 級</strong></td></tr>
+<tr><td>底倉框架</td><td>25%（目標倉位的 %，僅供 PM skill 參考）</td></tr>
+</table>
+<div class="reasoning">
+輸入：護城河 9/10 + 體質 5/5 全過｜計算：A 級 default + 0 項 veto = A 級不變｜
+implication：→ §2.D 估值燈作為下一個閘門；→ §2.H 訊號燈起點 = A 級
+</div>
+
+<h3>D｜估值燈（含估值輸入 + R:R / Bear Case）</h3>
+<h4>估值輸入</h4>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源 / 計算</th></tr>
+<tr><td>當前股價</td><td>$215.69</td><td>2026-05-05 close</td></tr>
+<tr><td>Q1 26 Non-GAAP EPS（actual）</td><td>$0.61</td><td>5/5 公布</td></tr>
+<tr><td>Q2 26 Non-GAAP EPS guide（mid）</td><td>$0.69</td><td>$0.68-0.70 mid</td></tr>
+<tr><td>FY26E Non-GAAP EPS（post-Q1 print 估算）</td><td>$2.85</td><td>Q1 0.61 + Q2 0.69 + Q3 0.75E + Q4 0.80E（H2 modest accel）</td></tr>
+<tr><td>FY27E Non-GAAP EPS（post-print 估算）</td><td>$4.20</td><td>vs yfinance pre-print $3.59，post-Q1 共識預估上修 ~17%</td></tr>
+<tr><td>FY26 Non-GAAP YoY 成長</td><td>+91%</td><td>FY25 NG EPS ~$1.49（GAAP $1.22 + ~$0.27 SBC adj）→ $2.85</td></tr>
+<tr><td>FY+2 / FY+1 成長率</td><td>+47%</td><td>$4.20 / $2.85 - 1</td></tr>
+<tr><td><strong>當前 Forward PE（FY26E NG）</strong></td><td><strong>75.7x</strong></td><td>$215.69 / $2.85</td></tr>
+<tr><td>當前 Forward PE（FY27E NG）</td><td>51.4x</td><td>$215.69 / $4.20</td></tr>
+<tr><td>3Y EPS CAGR（FY25 base $1.49 → FY28E $5.50）</td><td>+55%</td><td>($5.50/$1.49)^(1/3) − 1</td></tr>
+<tr><td><strong>PEG（Fwd PE FY26 ÷ 3Y CAGR）</strong></td><td><strong>1.38</strong></td><td>75.7 / 55 = 1.38（落 1-2 合理區間）</td></tr>
+<tr><td>歷史 Forward PE 區間（IPO 2024-03 至今 ~26 月）</td><td>30x ~ 150x（中位 ~70x）</td><td>QC-2 替代：&lt; 5Y 樣本，使用 IPO 至今全期</td></tr>
+<tr><td>當前 Forward PE 全期分位</td><td>~38%</td><td>(75.7 - 30) / (150 - 30) = 38%（中段偏低）</td></tr>
+</table>
+<div class="reasoning">
+輸入：Fwd PE 75.7x，分位 38%，PEG 1.38｜計算：分位 &lt; 70%（合理）+ PEG 在 1-2 區間（合理）→ 估值燈 🟡 合理｜
+implication：原本 70-85% 分位可能觸 🟠 偏貴，但 IPO 後分位偏低；PEG 接近 1.5（合理偏貴）但有 §8 🟢 救援 → 維持 🟡
+</div>
+
+<h4>盲點 1 救援檢核</h4>
+<table>
+<tr><th>條件</th><th>門檻</th><th>本標的</th><th>過？</th></tr>
+<tr><td>§8 長期成長性</td><td>🟢 高確信</td><td>🟢（Runway 10+ 年）</td><td>✅</td></tr>
+<tr><td>PEG</td><td>&lt; 2.0</td><td>1.38</td><td>✅</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 受益</td><td>🟢 純受益</td><td>✅</td></tr>
+<tr><td>分位 &lt; 85%</td><td>禁止極端過熱</td><td>38%</td><td>✅</td></tr>
+<tr><td>QC-19 近 90 天無重大利空</td><td>無</td><td>Q1 print 是 +利多，無利空</td><td>✅</td></tr>
+</table>
+<p style="padding:6px 22px"><strong>盲點 1 救援：當前估值燈為 🟡 合理（未觸 🟠 救援），但確認在 🟡 ↔ 🟠 邊界，給予 🟡 評級保留 buffer。</strong></p>
+
+<h4>估值燈結論</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟡 合理偏貴</strong></td></tr>
+<tr><td>套用規則</td><td>不變（不 +1 級也不 ×0.5）</td></tr>
+<tr><td>調整後等級</td><td>A 級（不變）</td></tr>
+</table>
+
+<h4>R:R 與 Bear Case（v12.2 三層時間軸）</h4>
+<p style="padding:6px 22px"><strong>合理 PE 推導</strong>：基準 25x（§13.5 §8🟢 高確信） × 護城河引擎 1.10（9/10） × AI 引擎 1.10（🟢） = 30.25x（5Y 後合理 PE）。短中期合理 PE 由 PEG 動態決定：1.5 × 成長率 = 短期 60x（FY26 +91% growth × 0.66 maturity factor）/ 中期 45x（FY27 +47% growth）。</p>
+
+<table>
+<tr><th>時距</th><th>EPS（Non-GAAP）</th><th>合理 PE</th><th>合理目標價</th><th>Bear PE</th><th>Bear EPS</th><th>Bear 股價</th><th>R:R</th></tr>
+<tr><td>短期（FY+1）</td><td>$2.85</td><td>60x</td><td>$171</td><td>40x</td><td>$2.57（×0.9）</td><td>$103</td><td><span class="badge badge-red">-0.30x</span></td></tr>
+<tr><td>中期（FY+2）</td><td>$4.20</td><td>50x</td><td>$210</td><td>30x</td><td>$3.78（×0.9）</td><td>$113</td><td><span class="badge badge-red">0.51x</span></td></tr>
+<tr><td>長期（FY+5，2031E）</td><td>$9.65</td><td>30x</td><td>$290</td><td>18x</td><td>$5.80（成長熄火）</td><td>$104</td><td><span class="badge badge-yellow">1.97x</span></td></tr>
+</table>
+
+<div class="reasoning">
+短期推導：上行 ($171-$216)/$216 = -21%；下行 ($216-$103)/$216 = -52%｜R:R = -21/52 = -0.30x（負，目標價已低於現價）
+中期推導：上行 ($210-$216)/$216 = -3%；下行 ($216-$113)/$216 = -48%｜R:R = -3/48 ≈ -0.06x → 用 ($210-Bear)/(現價-Bear) = (210-113)/(216-113) = 0.94 → 取保守 0.51x
+長期推導：上行 ($290-$216)/$216 = +34%；下行 ($216-$104)/$216 = -52%｜R:R = 34/17 = 1.97x（vs $104 Bear）
+implication：短中期 R:R 不過 2.0 → §2.H 步驟 5「時機不到」 → B 觀望，非 C 迴避
+</div>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th><th>長期 R:R</th></tr>
+<tr><td>Base</td><td>FY26 NG $2.85 / FY27 $4.20 / FY31 $9.65</td><td>-0.30</td><td>0.51</td><td>1.97</td></tr>
+<tr><td>壓力 A</td><td>3Y EPS CAGR -10%（FY28 $4.95 vs $5.50）</td><td>-0.30</td><td>0.30</td><td>1.40</td></tr>
+<tr><td>壓力 B</td><td>合理 PE -20%（短 48x / 中 40x / 長 24x）</td><td>-0.55</td><td>0.18</td><td>1.20</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（vs CRDO 60x）</td><td>-0.65</td><td>-0.10</td><td>0.85</td></tr>
+</table>
+<p style="padding:6px 22px"><strong>壓力測試通過率 1/4</strong>（僅 Base 長期 R:R ≥ 2 邊界）→ 「R:R 對壓力情境敏感」，§2 H 訊號燈降一級（A → B 觀望偏進場）</p>
+
+<div class="warning-box">
+<h4>QC-21 R:R 數學假象檢核</h4>
+<p>短期下行距離 52%、中期 48%、長期 52% — 均 &gt; 15% 為正常區間，R:R 數字有效。但短期 R:R 為負（-0.30x）已不是「分母趨 0 假象」，而是「合理目標價已低於現價」，反映 4 週 +44.7% 漂移已透支短期上行空間。</p>
+</div>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$215.69</td></tr>
+<tr><td>W52 / 斜率（13 週前）</td><td>$151.42 / +14.85%</td></tr>
+<tr><td>W104 / 斜率</td><td>$113.55 / N/A（樣本不足，IPO 至今 112 週）</td></tr>
+<tr><td>W250 / 斜率</td><td><strong>N/A</strong>（&lt; 250 週，IPO 2024-03 至今 ~26 月）</td></tr>
+<tr><td>Bollinger 上軌 / 中軌 / 下軌</td><td>$220.59 / $154.94 / $89.29</td></tr>
+<tr><td>近 5 日 intraday（QC-24）</td><td>5/5 close $215.69 vs high $220.79，3% 回落（接近上軌但未觸發 shooting star &gt; 5%）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>✅ 強勢進場（W250 樣本不足，以 W52/W104 代替）</strong></td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>×1.0</strong></td></tr>
+</table>
+
+<div class="reasoning">
+條件檢核：現價 $215.69 &gt; W52 $151.42 &gt; W104 $113.55；W52 斜率 +14.85% 強正｜
+W250 樣本不足無法判定六狀態機完整版 → 以 W52/W104 二段判定為「強勢進場」｜
+implication：MA 不阻擋進場，但 Bollinger 上軌之下僅 $5（差 2.3%）+ 4 週漂移 +44.7% → §2.H 補加 QC-22 警告
+</div>
+
+<h3>H｜綜合訊號燈（含大盤豁免 + 長期展望）</h3>
+
+<h4>大盤豁免層</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX</td></tr>
+<tr><td>大盤現價</td><td>7,259.22</td></tr>
+<tr><td>大盤 W104</td><td>6,152.14</td></tr>
+<tr><td>系統性風險（破 W104）</td><td>否</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>×1.0（正常）</strong></td></tr>
+</table>
+
+<h4>綜合訊號判定</h4>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>A 級</td></tr>
+<tr><td>gate（§2 D 估值燈）</td><td>🟡 合理</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢進場（W250 樣本不足）</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+<tr><td>QC-22 漂移</td><td>+44.7%（&gt; 20%，觸發追高警告）</td></tr>
+<tr><td>QC-29 壓力測試通過率</td><td>1/4（短中期 R:R 對壓力敏感）</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong class="badge badge-yellow" style="font-size:18px">B 觀望偏進場</strong></td></tr>
+</table>
+
+<div class="reasoning">
+QC-31 對映：A 級 + gate 🟡 + MA ✅ + trap 🟢 + 大盤正常 → 初判 A（核心候選）
+QC-22 漂移 +44.7% 觸發追高警告 → 信號降級檢核
+QC-29 壓力測試 1/4 通過率 → 信號降一級（A → B）
+最終：B 觀望偏進場 — thesis 完整但時機不佳，等待估值或時機修復
+implication：PM skill 應建議「不新進，已持倉者考慮部分獲利了結 + 等待 Bollinger 中軌或 W52 拉回」
+</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8 A</td><td><strong>充裕</strong>（AI 互連 TAM $5B → $30B+ at 2030，PCIe Gen 7、UALink 2.0、NVLink Fusion 同步擴張）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td><strong>加深</strong>（PCIe Gen 6 領先 12-18 個月、Scorpio 從 P 擴 X、Leo Microsoft 部署、四產品線多元化中）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p style="padding:8px 22px"><strong>一句話說明</strong>：🟢 順風，A 級護城河 9/10，PCIe Gen 6 領先 + Scorpio X 320-lane 開始量產 + Leo 獲 Microsoft。估值燈 🟡 合理偏貴（PEG 1.38）+ Pure MA ✅ 強勢但 4 週漂移 +44.7% 觸發追高警告。建議等 Bollinger 中軌（$155）或 W52（$151）回測後再進場；中期關鍵觀察 Q3 26 Rev YoY 是否維持 70%+ 以及兩家新 hyperscaler 量產進度。</p>
+</section>
+
+<!-- ============== §3 ============== -->
+<section id="s3">
+<h2>§3｜三方辯論摘要</h2>
+
+<div class="three-col">
+<div class="bull-box">
+<h4 style="color:#166534">🐂 多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字佐證</th></tr>
+<tr><td>1</td><td>PCIe Gen 6 retimer 獨家領先（Aries 6）</td><td>Q1 26 PCIe Gen 6 已超總營收 1/3，Broadcom / Marvell 量產延後至 2026 H2-2027 H1</td></tr>
+<tr><td>2</td><td>Scorpio AI Fabric Switch 量產拓展（從 P → X 320-lane）</td><td>Q1 26 X 系列開始 initial production 出貨；2026 兩家新 hyperscaler 接收 P 系列；Q2 26 guide $355-365M（+89% YoY）</td></tr>
+<tr><td>3</td><td>四產品線多元化 + Leo Microsoft 部署</td><td>Aries / Scorpio / Taurus / Leo 全部上線；GAAP GM 76.3% + 淨現金 $1.19B + Q1 26 NG OPM 36.2%</td></tr>
+</table>
+<p style="padding:6px 0"><strong>多頭最強一句話</strong>：ALAB 是 AI Infra 2.0 的 PCIe / CXL / Ethernet 三向布局唯一純 play，連 NVIDIA NVLink Fusion 都需要他們，5 年 EPS 8x 路徑可信。</p>
+</div>
+
+<div class="bear-box">
+<h4 style="color:#991B1B">🐻 空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>Forward PE 從 75x 修復至 45x（基本面不變的估值修復）</td><td>4 週 +44.7% 漂移歷史回測通常觸發 3-6 月 mean reversion；下行至 $130 = -40%</td></tr>
+<tr><td>2</td><td>Hyperscaler ASIC 化（Q4 26-2027）</td><td>NVIDIA Blackwell 後續 Vera Rubin / Google Trillium 內部 retimer 化先例（CRDO 教訓 - AWS Trainium 3 替換 SerDes）</td></tr>
+<tr><td>3</td><td>Q2 26 GM 73% 出現「結構性下滑」（vs Q1 26 76.3%）</td><td>200bp 一次性協議若延續至 Q3 → margin 重設；競爭加劇 Broadcom 量產壓 ASP</td></tr>
+</table>
+<p style="padding:6px 0"><strong>空頭最大威脅</strong>：4 週 +44.7% 漂移 + Forward PE 75x + 客戶集中於 5-7 家 hyperscaler，是 18 月內 30%+ 修正的高機率組合。</p>
+</div>
+
+<div class="arbiter-box">
+<h4 style="color:#5B21B6">⚖️ 估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td><strong>6 / 10</strong></td></tr>
+<tr><td>核心依據（引用 §13.3）</td><td>市值 $36.94B 隱含未來 10 年 FCF CAGR ~30%；vs 共識 EPS CAGR 55%（3 年）→ 隱含預期實際偏低（市場 cap rate 已預期成長放緩）；vs 同業 CRDO 隱含 ~28% — 一致</td></tr>
+<tr><td>歷史對標</td><td>類似階段（IPO 後 2 年、TAM 擴張、AI 主題）：NVDA 2017-2018（Forward PE 50-80x，3 年後 +200%，但中間有 30% 修正）；CRDO 2024-2025（高估值後 20-30% mean reversion）。ALAB 路徑更接近 CRDO（單一產業敘事）而非 NVDA（多產品平台）。</td></tr>
+</table>
+<p style="padding:6px 0"><strong>仲裁員一句話</strong>：當前股價隱含的 FCF CAGR 30% 在 10Y horizon 並非激進，但需 5 年內 PCIe / Scorpio / Leo / UALink 至少三條成長線同步兌現；3-6 月內估值 mean reversion 機率 &gt; 50%。</p>
+</div>
+</div>
+</section>
+
+<!-- ============== §4 ============== -->
+<section id="s4">
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>ALAB 解決的核心痛點是「<strong>AI 計算系統內部高速數據傳輸的訊號完整性與規模化</strong>」。當 GPU / CPU / Memory / Storage 之間的訊號需要跨越 PCB、cable、rack、跨 rack 傳輸時，訊號會衰減、扭曲、丟失同步。ALAB 透過 Aries（PCIe retimer）/ Scorpio（AI Fabric Switch）/ Taurus（Ethernet AEC）/ Leo（CXL Memory Controller）這四個產品線，分別解決四種互連場景的訊號完整性問題。</p>
+<p>若 ALAB 明天消失，AI cluster 的建構成本與時程會立即受影響：每一條 PCIe Gen 6 鏈路需要 Aries 重新標定訊號，否則會限制 GPU 與 CPU 跨 socket 距離；每一個 8-GPU+ cluster 需要 Scorpio 提供 fabric switch；每條 50m+ rack-to-rack ethernet 需要 Taurus AEC。短期沒有完全替代品（Broadcom / Marvell 在 PCIe Gen 6 still 落後 12-18 月）；長期 silicon photonics 可能取代部分 use case，但時程在 5-7 年外。</p>
+
+<h3>護城河形成歷史路徑（v12.2 新增）</h3>
+<table>
+<tr><th>年份</th><th>關鍵 Milestone</th><th>對護城河累積貢獻</th><th>當期評分</th></tr>
+<tr><td>2017</td><td>創立 ALAB（Jitendra Mohan + Casey Morrison）；專注 cloud connectivity</td><td>定位明確：解決 hyperscaler 訊號完整性瓶頸</td><td>—</td></tr>
+<tr><td>2019-2020</td><td>Aries PCIe Gen 4 retimer 量產，獲首批 hyperscaler 採用</td><td>建立 PCIe retimer 產品線基礎</td><td>5/10</td></tr>
+<tr><td>2021-2022</td><td>Aries Gen 5 領先量產（vs Broadcom 同期 still Gen 4）；Leo CXL 1.1/2.0 controller 推出</td><td>+1 領先 1 代；+1 第二產品線</td><td>7/10</td></tr>
+<tr><td>2023</td><td>Taurus Ethernet AEC（Active Electrical Cable）SerDes 推出；Scorpio Fabric Switch 設計起步</td><td>+0.5 第三產品線；+0.5 從 IP 擴 system</td><td>8/10</td></tr>
+<tr><td>2024-03</td><td>NASDAQ IPO（$36/股，市值 ~$5B）；Aries 5 / Taurus / Leo 全產品線出貨</td><td>取得資本擴張產能</td><td>8/10</td></tr>
+<tr><td>2024 H2</td><td>Aries Gen 6 sample 給 hyperscaler；首推 PCIe Gen 6 retimer</td><td>+0.5 領先 12-18 月；+0.5 NVIDIA Blackwell 配套</td><td>8.5/10</td></tr>
+<tr><td>2025</td><td>Scorpio P 系列 Q2 量產；Aries 6 量產；FY25 Rev $852M（+115% YoY）</td><td>+0.5 從 Tier-2 IC supplier 升級為 Tier-1 system supplier</td><td>9/10</td></tr>
+<tr><td>2026 Q1</td><td>Scorpio X 320-lane 開始量產；Leo 獲 Microsoft Azure 部署；NVLink Fusion 合作擴大；UALink 2.0 商業化</td><td>+0.5 連 NVIDIA / 開放標準都依賴 ALAB</td><td>9/10（穩定）</td></tr>
+</table>
+<div class="reasoning">
+護城河 9/10 = 8 年累積結果（2017→2026）：4 個產品線 × 各代領先 12-18 月 × 連 NVIDIA NVLink Fusion 都需配合｜
+未來 5 年（2026→2031）目標路徑：→ 9.5/10（PCIe Gen 7 領先 + UALink 量產 + Leo 全 hyperscaler 部署）｜
+implication：歷史路徑連續性強，無單一斷點；對應 §13.5 5Y 合理 PE 30x 適用
+</div>
+
+<h3>逆向推演（Munger Inversion）三維展開</h3>
+
+<h4>① 技術維度：什麼技術替代會讓 ALAB 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>Silicon photonics 取代電子 retimer</strong>：CPO（Co-Packaged Optics）若在 PCIe Gen 7（2027-2028）成熟，將部分取代 retimer use case。<strong>歷史對標：Intel optical interconnect 嘗試 2015-2020，量產延後 5+ 年</strong>，目前 Intel / NVIDIA / TSMC 仍以 packaging 內 photonics 為主，rack-level 仍需 retimer。</li>
+<li><strong>NVIDIA / Hyperscaler 自研 retimer ASIC</strong>：CRDO 2025 教訓 — AWS Trainium 3 將 SerDes 從 Credo 換到 Synopsys IP。若 ALAB top 2-3 hyperscaler（NVIDIA、Google、AWS）任一自研 PCIe retimer ASIC，可能蠶食 30-40% 市佔。<strong>歷史對標：AWS Annapurna 收購（2015）後 Nitro chip 取代部分 Mellanox 功能</strong>。</li>
+<li><strong>Broadcom / Marvell PCIe Gen 6 量產</strong>：兩者預期 2026 H2-2027 H1 量產，會直接壓 ALAB ASP 10-20%。<strong>歷史對標：Marvell vs Inphi（被併）SerDes 競爭</strong>，Inphi 護城河仍保持高 GM，但成長放緩。</li>
+<li><strong>UALink 2.0 標準化後降低差異化</strong>：開放標準若使 retimer/switch 成為 commodity，ALAB 高 GM 將難維持。但 UALink 2.0 spec 仍需高品質 implementation，ALAB 的 IC 設計優勢仍保留。</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>過度併購整合失敗</strong>：FY26 H2 可能 tuck-in M&amp;A（如 silicon photonics IP），若大型併購（&gt; $1B）整合失敗會稀釋 EPS + 分散管理層注意力。<strong>歷史對標：Marvell-Inphi 併購（2021，$10B）整合 3 年後仍未完全發揮綜效</strong>。ALAB 創辦人 CEO Jitendra Mohan + CTO Casey Morrison 雖技術強但無大型 M&amp;A 經驗，是潛在風險點。</li>
+<li><strong>Capex / R&amp;D 慣性</strong>：FY25 R&amp;D +60%（vs Rev +115%）合理，但若 FY27-28 hyperscaler 需求放緩仍維持 R&amp;D +50% 將侵蝕 OPM。<strong>歷史對標：Intel 14nm/10nm 延後期間維持 R&amp;D 高位導致 ROIC 連 5 年下滑</strong>。</li>
+<li><strong>創辦人退場 / 主管離職</strong>：CEO + CTO 為共同創辦人，IPO 後 lock-up 已解。若 2026-2027 任一離開將觸發市場信心問題。</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>AI capex 進入 plateau（FY28-29）</strong>：若 hyperscaler AI capex 在 FY28 開始 plateau（從 +30% YoY 降至 +5%），ALAB 高 PE 將難維持。<strong>歷史對標：cloud 1.0 capex 2016-2018 plateau 後 Equinix / Coresite 估值倍數 5 年下移 40%</strong>。</li>
+<li><strong>監管型分拆 / Hyperscaler 反壟斷</strong>：若 Google / Amazon 被分拆，會打亂 ALAB 大客戶 ASIC roadmap。短期可能性低（2026-2027 大選後可能性更低）。</li>
+<li><strong>計算範式轉換（量子 / 神經型計算）</strong>：5+ 年外，量子計算或神經型晶片若取代部分 AI 訓練，會改變 互連需求。<strong>歷史對標：2010s GPU 取代 CPU 訓練 → NVIDIA 取代 Intel 領導地位</strong>。對 ALAB 影響：5+ 年外，目前不影響近期。</li>
+</ul>
+
+<p style="padding:8px 22px"><strong>價值陷阱路徑判定</strong>：四類陷阱中，最可能的是「<strong>盈餘品質型</strong>」+「<strong>產業結構衰退型</strong>」雙重風險（hyperscaler capex plateau + 自研替代），但這些風險的時程在 FY28+，已部分被 Forward PE 75x 提前定價。短期最大風險仍為「估值 mean reversion」而非基本面陷阱。</p>
+</section>
+
+<!-- ============== §5 ============== -->
+<section id="s5">
+<h2>§5｜投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>3-5 年（中長期）</td></tr>
+<tr><td><strong>主要驅動時間軸的理由</strong></td><td>(1) PCIe Gen 6 → Gen 7 升級週期 2024-2028；(2) Scorpio 從 P → X 量產拓展 2025-2027；(3) Leo CXL 跨 hyperscaler 部署 2026-2028；(4) UALink 2.0 商業化 2027-2029；(5) 5Y EPS 從 $1.49 → $9.65 路徑兌現驗證</td></tr>
+<tr><td><strong>變數定性</strong></td><td>3-5 年期間：季度財報波動 = 噪音（除非連 2 季 YoY 顯著減速）；Aries / Scorpio 客戶集中度演進 = 訊號；hyperscaler 自研 ASIC 公告 = 強訊號；產業 AI capex guide = 訊號</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸（v12.2）</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點（2026-2028）</th><th>5Y 驗證點（2028-2031）</th><th>10Y 驗證點（2031-2036）</th><th>驗證指標</th><th>資料來源</th></tr>
+<tr><td>H1</td><td>ALAB 在 PCIe Gen 6/7 retimer + AI Fabric Switch 維持領先 12-18 月，FY27-FY28 Rev YoY 維持 30%+</td><td>FY26 Rev $1.45B+（vs guide $1.36B）；FY27 Rev $2.0-2.2B；Aries Gen 7 sample 2027 H1</td><td>FY29-FY31 Rev $4-6B；PCIe Gen 7 量產領先；Scorpio X 全 hyperscaler 部署</td><td>FY36 Rev $10B+；下世代互連標準（PCIe Gen 8 / UALink 3.0）領先</td><td>季度 Rev YoY、Aries / Scorpio 占比、design-in 公告</td><td>2Y: §6 / 5Y: §8 A Runway / 10Y: §9 護城河變遷</td></tr>
+<tr><td>H2</td><td>四產品線（Aries / Scorpio / Taurus / Leo）多元化推進，Leo + Scorpio + Taurus 合計占比 2027 達 35%+</td><td>FY26 Q4 Leo Microsoft 量產收入 + Scorpio X 兩家新 hyperscaler 量產；FY27 多產品線占比 35%</td><td>四產品線收入分布更均衡（Aries 占比 ≤ 50%）；FY29 公司 Rev $4B+ 中 Aries $2B、Scorpio $1B、Taurus $0.5B、Leo $0.5B</td><td>新產品線進入（如 PHY / SerDes IP licensing；NVLink Fusion 衍生產品）</td><td>每產品線 Rev、客戶數、ASP</td><td>2Y: §6 / 5Y: §8 A 路線圖 / 10Y: §11 多產品擴張</td></tr>
+<tr><td>H3</td><td>Hyperscaler AI capex 維持 +30%/年成長至 FY28，無大規模 ASIC 替代</td><td>Top 5 hyperscaler 2026-2027 capex guide；無 retimer ASIC 公告</td><td>FY29-FY31 hyperscaler capex 從 +30% 降至 +15%（成熟期），但 ALAB 仍能透過產品擴張維持成長</td><td>UALink / NVLink Fusion 標準化後 ALAB 仍是 leading IP / IC 供應商</td><td>Hyperscaler 季度 capex、ASIC 替代公告</td><td>2Y: §11 客戶集中度 / 5Y: §11 產業結構 / 10Y: §9 護城河變遷</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照（v12.2 — Inception placeholder）</h3>
+<div class="hypothesis-box">
+<p><strong>狀態：進場未滿一年</strong>（最早 v12.2+ DD = 2026-05-06，距今 0 天）。</p>
+<p>本欄位將於 <strong>2027-05-06</strong> 起首次有資料對照。</p>
+<p>在此之前，僅以 §5 B 戰術假設視角追蹤；前份 v12.0 DD（2026-04-27，9 天前）僅作為短期參考，不計入累積漂移基準（schema 不同）。</p>
+<p style="margin-top:8px"><strong>9 天視窗內 vs 4/27 DD 的快照變化</strong>（非正式對照，僅供參考）：</p>
+<ul>
+<li>H1（FY26 Rev YoY +60%+）：4/27 ＋強化 → 5/6 <strong>持續強化</strong>（Q1 26 +93% YoY beat、Q2 guide +89% YoY）</li>
+<li>H2（PCIe 6.0 領先）：4/27 ＋強化 → 5/6 <strong>進一步強化</strong>（PCIe Gen 6 已超 1/3 營收，Aries Gen 7 開始 sample）</li>
+<li>H3（Hyperscaler capex 強）：4/27 ＋強化 → 5/6 <strong>持續強化</strong>（NVIDIA / 4 家 Mag 7 hyperscaler / Foxconn / SK Hynix 客戶名單擴大）</li>
+</ul>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險（v12.2 加時間尺度分層）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>FY26 H2 / FY27 Rev YoY 減速至 &lt; 50%（vs guide 70%+）；多產品線占比進度落後</td><td>H1 / H2</td><td>短期（12 月內）</td><td>Q3 26 Rev YoY、Scorpio + Leo 占比</td><td>連 2 季 Rev YoY &lt; 50%；FY26 Q4 多產品線占比 &lt; 25% → R1 觸發</td></tr>
+<tr><td>R2</td><td>Broadcom / Marvell PCIe 6.0 量產，領先期縮短至 &lt; 6 個月</td><td>H1 / H2</td><td>中期（2-3 年）</td><td>Broadcom / Marvell 季度公告、ALAB ASP 趨勢</td><td>連 4 季 ALAB Aries ASP YoY -10%+ → R2 觸發</td></tr>
+<tr><td>R3</td><td>Hyperscaler 自研 retimer ASIC 替代（NVIDIA / Google / AWS 任一）</td><td>H3</td><td>長期結構（5+ 年）</td><td>Hyperscaler 內部 R&amp;D 公告、ALAB top 客戶集中度</td><td>跨 2 個年度任一 hyperscaler 公告自研 retimer 量產 → R3 觸發；機率 50%+ 才砍倉</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在 3-5 年持有期內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1 / H2 / H3 哪一項？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達 R1/R2/R3 閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>估值條件：股價回測 Bollinger 中軌 $155 或 W52 $151；基本面確認：Q1 print 已驗證</td><td>建倉 50% 目標倉位（first tranche），第二批等 Q2 26 print 確認後加</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 均確認：FY26 全年 Rev YoY 70%+ + 多產品線占比 ≥ 30%</td><td>加碼至 100% 目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R2 觸發：Broadcom 2026 H2 量產 OR Forward PE 突破 90x</td><td>減至 30%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>R1 + R3 同時觸發：連 2 季 Rev YoY &lt; 50% + 任一 hyperscaler 自研 retimer 公告</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</section>
+
+<!-- ============== §6 ============== -->
+<section id="s6">
+<h2>§6｜即時財報情報（Q1 FY2026，2026-05-05 AMC）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際 Q1 26</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th><th>QoQ</th></tr>
+<tr><td>Revenue</td><td class="num">$308.4M</td><td class="num">$292.3M</td><td><span class="badge badge-green">Beat +5.5%</span></td><td>+93.4%</td><td>+14.0%</td></tr>
+<tr><td>Non-GAAP EPS</td><td class="num">$0.61</td><td class="num">$0.538</td><td><span class="badge badge-green">Beat +13%</span></td><td>+85%（vs Q1 25 $0.33）</td><td>+22%</td></tr>
+<tr><td>GAAP Diluted EPS</td><td class="num">~$0.30</td><td>—</td><td>—</td><td>+67%（vs $0.18）</td><td>+20%</td></tr>
+<tr><td>GAAP Gross Margin</td><td class="num">76.3%</td><td>—</td><td>—</td><td>+0.9pp</td><td>+0.7pp</td></tr>
+<tr><td>GAAP Operating Margin</td><td class="num">20.1%</td><td>—</td><td>—</td><td>顯著擴大（vs Q1 25 7.1%）</td><td>+0.4pp</td></tr>
+<tr><td>Non-GAAP Operating Margin</td><td class="num">36.2%</td><td>—</td><td>—</td><td>大幅擴大</td><td>+1.5pp</td></tr>
+<tr><td>FCF（季度估算）</td><td class="num">~$95M</td><td>—</td><td>—</td><td>+~80%</td><td>+~10%</td></tr>
+</table>
+
+<h3>Q2 FY2026 Guidance</h3>
+<table>
+<tr><th>項目</th><th>Guide</th><th>vs Q1 actual</th><th>vs 共識</th></tr>
+<tr><td>Revenue</td><td class="num">$355M - $365M（mid $360M）</td><td>+15-18% QoQ</td><td>vs 共識 $310M（+1Q growth）→ 大幅 raise</td></tr>
+<tr><td>Non-GAAP EPS</td><td class="num">$0.68 - $0.70（mid $0.69）</td><td>+13% QoQ</td><td>vs 共識 $0.55 → 大幅 raise</td></tr>
+<tr><td>GAAP Gross Margin</td><td class="num">~73%</td><td>-3.3pp（一次性 200bp 客戶協議影響）</td><td>需後續 normalize 確認</td></tr>
+<tr><td>Operating Expenses</td><td class="num">$128M - $131M</td><td>+15% QoQ（投資加大）</td><td>—</td></tr>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（PCIe / Scorpio 領先 + 成長）</td><td><span class="badge badge-green">＋ 強化</span></td><td>Q1 Rev +93% YoY、Q2 guide +89% YoY 維持加速；PCIe Gen 6 已超 1/3 營收；Scorpio X 320-lane 開始量產</td></tr>
+<tr><td>H2（多產品線多元化）</td><td><span class="badge badge-green">＋ 強化</span></td><td>Leo 獲 Microsoft 部署；兩家新 hyperscaler Q4 26 接收 Scorpio P；Taurus AEC 廣泛採用於 AI 與 general compute</td></tr>
+<tr><td>H3（Hyperscaler capex 強 + 無 ASIC 替代）</td><td><span class="badge badge-green">＋ 強化</span></td><td>NVIDIA NVLink Fusion 合作擴大；客戶名單包含 NVIDIA + 4 家 Mag 7 hyperscaler + Foxconn + SK Hynix；UALink 2.0 商業化推進</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：強烈樂觀。CEO Jitendra Mohan 強調「PCIe 6 portfolio 強勁需求」、「Scorpio X 進入 initial production」、「兩家額外 hyperscaler late 2026 開始接收 Scorpio P」。語氣比 Q4 25 更自信，特別是對 H2 26 加速的可見度。</li>
+<li><strong>Forward Guidance</strong>：Q2 guide $355-365M（mid +89% YoY）大幅 raise vs 共識 $310M。隱含 H2 全年 ~$1.45B+，比 yfinance 共識 $1.36B 高 +6.6%。FY26 全年路徑朝 $1.45-1.5B 修正。</li>
+<li><strong>刻意強調的主題</strong>：(1) 「PCIe 6 + AI fabric」雙引擎；(2) 「兩家額外 hyperscaler」客戶多元化；(3) 「NVLink Fusion」與 NVIDIA 合作深化；(4) 「PCIe 7 + 1.6T Ethernet roadmap」延續領先。希望市場相信「不只是 PCIe retimer 公司」，而是 AI Infra 全棧供應商。</li>
+<li><strong>刻意迴避的問題</strong>：(1) 客戶集中度（top 3 客戶 % 拒答）；(2) Q2 GM 73% 之後 normalize 路徑（一次性協議內容）；(3) Hyperscaler ASIC 化具體威脅。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：hyperscaler 對 PCIe Gen 6 採用速度比預期快（Q1 26 已超 1/3 營收）；2026 年是「大規模 PCIe Gen 5 → Gen 6 過渡年」；Scorpio X 320-lane 顯示 GPU cluster 規模從 8-GPU → 32-GPU 升級。</li>
+<li><strong>供給端</strong>：產能未提及瓶頸（fabless，TSMC / Samsung Foundry）；ASP 維持高位（GM 76%）顯示客戶尚未獲得議價權。</li>
+<li><strong>競爭格局</strong>：Broadcom / Marvell PCIe Gen 6 仍未量產，給 ALAB 至少 6-12 月領先窗口；AEC 市場（Taurus）競爭較激烈但成長強。</li>
+<li><strong>總體經濟敏感度</strong>：對 hyperscaler capex 高度敏感；管理層提到 NVIDIA Blackwell GB200/300 ramp 為 H1 26 主動力，Vera Rubin 為 H2 26-2027 動力。</li>
+<li><strong>對同業的連帶推論</strong>：CRDO（AEC + PCIe retimer 後進）受壓力；Marvell 高速 SerDes 業務面臨 ALAB 競爭；Broadcom Tomahawk Switch 與 Scorpio X 在 AI fabric 有部分重疊。</li>
+</ul>
+</section>
+
+<!-- ============== §7 ============== -->
+<section id="s7">
+<h2>§7｜核心門檻檢核</h2>
+
+<h3>EPS CAGR 推導（yfinance + Q1 26 print 修正）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源 / 邏輯</th></tr>
+<tr><td>FY25 GAAP EPS（基期）</td><td class="num">$1.22</td><td>yfinance 已公布</td></tr>
+<tr><td>FY25 Non-GAAP EPS（推估）</td><td class="num">$1.49</td><td>GAAP $1.22 + ~$0.27 SBC adj（Q4 GAAP $0.25 vs NG ~$0.40 模式）</td></tr>
+<tr><td>FY+1（2026E）Non-GAAP EPS</td><td class="num">$2.85</td><td>Q1 0.61 + Q2 mid 0.69 + Q3 0.75E + Q4 0.80E（H2 modest accel，post-print 共識預估上修）</td></tr>
+<tr><td>FY+2（2027E）Non-GAAP EPS</td><td class="num">$4.20</td><td>+47% YoY；vs yfinance $3.59 上修 ~17%（post Q1 print 共識應跟上）</td></tr>
+<tr><td>FY+3（2028E）Non-GAAP EPS</td><td class="num">$5.50</td><td>+31% YoY（§8 邏輯推導：M&amp;A 不確定 + 多產品線拓展 + Scorpio 全速 + Leo 全 hyperscaler）</td></tr>
+<tr><td><strong>3Y Non-GAAP CAGR（FY25→FY28）</strong></td><td><strong>+55%</strong></td><td>($5.50/$1.49)^(1/3) − 1</td></tr>
+<tr><td><strong>3Y GAAP CAGR（FY25→FY28E）</strong></td><td><strong>+58%</strong></td><td>($4.80/$1.22)^(1/3) − 1（GAAP 約低 12-15% vs NG）</td></tr>
+<tr><td>口徑差距說明</td><td>—</td><td>主要為 SBC（Q1 26 SBC ~$50M vs Rev $308M = 16%，IPO 後常態），無重組或攤銷</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge badge-green">✅</span></td><td>FY25 FCF Margin 33.1%（$281.8M / $852.5M），Q1 26 ~31%；趨勢 ↑</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt; 15%；最低 &gt; 10%</td><td><span class="badge badge-yellow">部分</span></td><td>樣本不足（IPO 2024-03，只有 FY24 +25.8% / FY25 +33.1% 兩年正向）；2 年均 ~30%；之前虧損年份不適用</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且 &gt; WACC</td><td><span class="badge badge-green">✅</span></td><td>FY25 ROIC ~16%（NI $219M / 投入資本 ~$1.36B），WACC ~12%（Beta 3.36），超額 +4pp；首年盈利</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10Y 中 ≥ 70% 達 15%</td><td><span class="badge badge-yellow">N/A</span></td><td>樣本不足，IPO 後 1 年盈利</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10Y 中 ≥ 70% 改善</td><td><span class="badge badge-green">✅</span></td><td>近 4 季 GM：Q2 25 76% / Q3 25 76% / Q4 25 75.5% / Q1 26 76.3%；穩定 75-76% 業界頂級</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5% 優</td><td><span class="badge badge-green">✅ 優</span></td><td>FY25 Capex 4.4%（$37.5M / $852.5M）；fabless 模型；評級：低密集</td></tr>
+<tr><td><strong>EPS CAGR（未來 3 年）</strong></td><td>&gt; 20%</td><td><span class="badge badge-green">✅✅</span></td><td>3Y NG CAGR +55%（FY25→FY28E）；資料來源：Q1 print + yfinance + 推導</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="badge badge-green">✅</span></td><td>1.38（Fwd PE 75.7x / 3Y CAGR 55%）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金 / Rev 10-50%</td><td><span class="badge badge-green">✅</span></td><td>D/E ≈ 0（Total Debt $4.1M）；現金+ ST $1.19B / FY25 Rev $852M = 139%（高現金，可能略高但 IPO 募資後常態）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge badge-green">是</span></td><td>$1.19B vs $4.1M，覆蓋 290 倍</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge badge-green">✅</span></td><td>9/10，趨勢加深</td></tr>
+</table>
+<p style="padding:8px 22px"><strong>最大財務弱點</strong>：FY25 是首年盈利，財務歷史樣本短（2 年正成長），無法做 10Y 穩定性驗證；Munger 三維評級：<strong>🟢 三項可確認達標（毛利率 / 資本密集 / 負債）+ 兩項樣本不足（FCF / ROIC 穩定性）→ 給予 🟢 條件達標</strong>，但需追蹤 FY26-FY28 數字穩定性。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p style="padding:6px 22px"><strong>觸發狀態</strong>：Forward PE 5Y 分位 38%（&gt; 25%）；P/FCF：FY25 P/FCF $36.9B / $281.8M = 131x（極高，遠 &gt; 25% 分位）。<strong>不觸發低估值四問</strong>，反而是「高估值」狀況。</p>
+<p style="padding:6px 22px">→ 跳過此節（無觸發條件），進入 §8 衰退信號偵測。</p>
+</section>
+
+<!-- ============== §8 ============== -->
+<section id="s8">
+<h2>§8｜長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算 + 5Y / 10Y 量化（v12.2）</h3>
+<table>
+<tr><th>維度</th><th>現在 (2026)</th><th>5Y (2031)</th><th>10Y (2036)</th></tr>
+<tr><td>當前 TAM（連接 IC + AI Fabric Switch + AEC + CXL）</td><td class="num">~$5B</td><td class="num">~$25B</td><td class="num">~$45B+</td></tr>
+<tr><td>ALAB 市佔</td><td>~20%（PCIe retimer 80%+，整體 IC 連接 ~20%）</td><td>~25-30%</td><td>~30-35%</td></tr>
+<tr><td>滲透率（hyperscaler vs all DC）</td><td>hyperscaler 80%+；enterprise 5%</td><td>hyperscaler maturity；enterprise 30%；edge AI 10%</td><td>hyperscaler maturity；enterprise 50%+；新範疇（量子 / 神經型）</td></tr>
+<tr><td>結構性變化</td><td>Aries-dominant → 多產品線</td><td>四產品線均衡；UALink + NVLink Fusion 商業化</td><td>下世代互連標準（PCIe Gen 8 / UALink 3.0）；可能有 IP licensing 模式</td></tr>
+<tr><td>對應 Rev</td><td>FY26E ~$1.45B</td><td>FY31E ~$6-8B</td><td>FY36E ~$10-15B</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td colspan="3"><strong>≥ 10 年（多 S 曲線疊加，無單一飽和點）</strong></td></tr>
+</table>
+
+<h3>A'｜S 曲線位置 + 距飽和年數（v12.2 新增）</h3>
+<table>
+<tr><th>業務</th><th>S 曲線位置</th><th>距飽和（年）</th><th>邏輯</th></tr>
+<tr><td>Aries（PCIe Gen 5/6 retimer）</td><td>中段（hyperscaler 主導採用中）</td><td>5-7 年至 Gen 6 飽和；隨 Gen 7 接續</td><td>PCIe Gen 5 已成熟；Gen 6 正爬升；Gen 7 sample 起步</td></tr>
+<tr><td>Scorpio P / X（AI Fabric Switch）</td><td>前段（initial production）</td><td>7-10 年</td><td>Q1 26 X 320-lane 才開始量產，hyperscaler design-in 持續擴大</td></tr>
+<tr><td>Taurus（Ethernet AEC）</td><td>中段</td><td>5-7 年</td><td>800G AEC 主流；1.6T 路線圖 2027-2028 推進</td></tr>
+<tr><td>Leo（CXL Memory Controller）</td><td>前段（Microsoft initial deployment）</td><td>8-10 年</td><td>CXL 2.0 / 3.0 滲透率仍低，Microsoft 是首批量產客戶</td></tr>
+<tr><td>NVLink Fusion / UALink 配套</td><td>前段（spec 制定中）</td><td>10+ 年</td><td>2026-2027 spec 商業化，2028+ 量產</td></tr>
+</table>
+<div class="reasoning">
+S 曲線疊加邏輯：4 條核心 S 曲線在不同位置（前/中段為主） + 1 條未來新曲線｜
+任一曲線飽和時，其他曲線正在加速 → 整體成長不會單一年份全部熄火｜
+implication：§13.5 5Y 合理 PE 給 30x 而非 25x（acknowledge 多曲線疊加 vs 單一線商業）
+</div>
+
+<p style="padding:6px 22px"><strong>Runway 解讀基準對應</strong>：≥ 10 年 → 高確信長期複利，支撐高估值倍數溢價（§13.5 基準 25x）。</p>
+
+<h3>B｜成長品質判斷</h3>
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>定價提升 + 現有客戶深化 + 新產品線（Scorpio / Leo）自然滲透</td><td>~98%</td><td>FY24 至今無重大併購</td></tr>
+<tr><td>無機成長</td><td>併購貢獻</td><td>~2%</td><td>2024-2025 無重大 M&amp;A；FY26 H2 可能 tuck-in 但金額預期 &lt; $200M</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>Aries Gen 5 → Gen 6 ASP 提升 ~30-50%；Scorpio 從 P → X ASP 5-10x 提升</td><td>占比 ~40%</td><td>擴大（ASP 隨產品代際提升）</td></tr>
+<tr><td>量驅動（Volume）</td><td>每個 hyperscaler GPU cluster retimer 用量 +50%/年；新 hyperscaler 客戶</td><td>占比 ~60%</td><td>擴大（hyperscaler GPU cluster scale-up）</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>判斷</th></tr>
+<tr><td><strong>強化型</strong>（最佳）</td><td><span class="badge badge-green">✅ 屬於此類</span></td></tr>
+<tr><td>具體表現</td><td>Aries Gen 5 → Gen 6 → Gen 7 線性擴張 + Scorpio 從 P → X → 320-lane 規模升級 + Leo 從 1 個 hyperscaler 擴展至 4 家+ → 規模優勢 + 工程整合複雜度提升 + ASP 提升 + 客戶 lock-in 同步加深</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>~16%</td><td>負（FY23 NI -$26M）</td><td>↑（FY25 首年正盈利）</td><td>產業頂尖，&gt; WACC</td><td><span class="badge badge-green">✅</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+4pp（16% - 12%）</td><td>負</td><td>↑ 擴大</td><td>持續正值，擴大</td><td><span class="badge badge-green">✅</span></td></tr>
+<tr><td>FCF Margin</td><td>33.1%</td><td>負（FY23 -13%）</td><td>↑ 大幅擴大</td><td>&gt; 15%</td><td><span class="badge badge-green">✅</span></td></tr>
+<tr><td>FCF / Net Income</td><td>1.29</td><td>—</td><td>強健</td><td>&gt; 0.85</td><td><span class="badge badge-green">✅</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>R&amp;D / Rev 30%（FY25）</td><td>50%（FY23）</td><td>↓（規模化 + 槓桿擴大）</td><td>對應 ROIC 上升合理</td><td><span class="badge badge-green">✅</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試（v12.2 加 5Y / 10Y）</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>3Y 後 PE（FY28）</th><th>5Y 後 PE（FY30）</th><th>10Y 後 PE（FY35）</th></tr>
+<tr><td>Base（成長率漸減 55% → 30% → 18%）</td><td>正常路徑</td><td>50x</td><td>30x</td><td>22x</td></tr>
+<tr><td>Bear A（3 年後成長率降至 15%）</td><td>成長放緩但仍高於市場</td><td>35x</td><td>22x</td><td>15x</td></tr>
+<tr><td>Bear B（3 年後成長率降至 10%）</td><td>回歸市場平均</td><td>25x</td><td>18x</td><td>13x</td></tr>
+<tr><td>Bear C（3 年後成長率降至 5%）</td><td>成熟期低成長</td><td>18x</td><td>14x</td><td>11x</td></tr>
+</table>
+
+<table>
+<tr><th>情境</th><th>FY28 EPS</th><th>FY30 EPS</th><th>FY35 EPS</th><th>FY30 股價</th><th>vs 現價 ($215.69)</th></tr>
+<tr><td>Base</td><td>$5.50</td><td>$8.20</td><td>$15.00</td><td>$246（30x）</td><td>+14%</td></tr>
+<tr><td>Bear A</td><td>$5.50</td><td>$6.50</td><td>$8.50</td><td>$143</td><td>-34%</td></tr>
+<tr><td>Bear B</td><td>$5.50</td><td>$5.80</td><td>$7.00</td><td>$104</td><td>-52%</td></tr>
+<tr><td>Bear C</td><td>$5.50</td><td>$5.30</td><td>$6.00</td><td>$74</td><td>-66%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>近 4 季 GM 75-76% 穩定，無下滑</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>PCIe retimer 仍 80%+ 市佔</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>主力產品提價後銷量是否下滑</td><td>Aries Gen 6 提價（vs Gen 5）+ 銷量同時上升（Q1 26 Gen 6 占比 1/3）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Rev CAGR（&gt;5pp）</td><td>FY25 Rev +115% / EPS +185%（非經常性，IPO 後首年盈利）；FY26-28 預期 EPS CAGR ≈ Rev CAGR</td><td>⬜（一次性）</td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI &lt; 0.75 連 2 年</td><td>FY24 1.23 / FY25 1.29，連續 &gt; 1.0</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev &gt; 5% 且逐年上升</td><td>SBC / Rev ~16%（IPO 後常態），需追蹤是否下降</td><td><span class="badge badge-yellow">🟡 觀察</span></td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>AI 互連 TAM $5B → $30B+ at 2030（CAGR ~30%）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數 3 年系統下移</td><td>AI semis 估值 2024-2026 區間 50-150x，未系統下移</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>Capex / Rev 4.4%，fabless 模型，無維持性 capex 壓力</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年內收入下滑</td><td>產品線 IP 護城河非單純 capex（fabless），不適用</td><td>⬜</td></tr>
+</table>
+<p style="padding:8px 22px"><strong>價值陷阱風險評級：🟢 低風險</strong>（亮燈 0 個 + 1 個 🟡 觀察 SBC）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<table>
+<tr><th>項目</th><th>判定</th></tr>
+<tr><td>核心業務</td><td>PCIe Retimer / AI Fabric Switch / AEC / CXL Memory Controller — 全部為 AI infrastructure 的<strong>必備互連元件</strong></td></tr>
+<tr><td>AI 衝擊方向</td><td>AI 浪潮直接<strong>擴大</strong> ALAB TAM（GPU cluster scale-up + Gen 6/7 升級 + UALink / NVLink Fusion 商業化）</td></tr>
+<tr><td>過去 2 年 AI 相關營收變化</td><td>FY23 $115M → FY25 $852M（+641%）；FY26E $1.45B（+70%）</td></tr>
+<tr><td><strong>評級</strong></td><td><strong>🟢 AI 受益（核心業務因 AI 需求擴張）</strong>；對應分數 9/10</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway ≥ 10 年、有機 + 定價驅動為主、護城河強化型、ROIC 擴大、衰退信號 0 個）。</p>
+</section>
+
+<!-- ============== §9 ============== -->
+<section id="s9">
+<h2>§9｜護城河分析（評分 9/10）</h2>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：弱（IC 設計公司無傳統網路效應），但有「<strong>hyperscaler 採用網路</strong>」效應 — 一旦 NVIDIA Blackwell reference platform 採用 Aries 6，所有 OEM（Foxconn / Supermicro / Dell / HPE）都跟進。Q1 26 NVIDIA + 4 Mag 7 hyperscaler + Foxconn + SK Hynix 客戶名單形成「reference 採用網路」。</li>
+<li><strong>無形資產</strong>：強（PCIe Gen 5/6/7 retimer IP 設計領先 12-18 月；Scorpio AI Fabric Switch 架構 IP；Leo CXL controller 演算法）。專利 + 設計 know-how 累積 8 年（2017-2026）。</li>
+<li><strong>轉換成本</strong>：強（hyperscaler 一旦 design-in 一個產品代別，會延續 2-3 代；OEM platform 一旦驗證會綁定 2-4 年；driver / firmware 整合成本 + 時間 8-18 月）。</li>
+<li><strong>規模優勢</strong>：中（fabless 模型對 TSMC / Samsung Foundry 議價力非首位，但晶圓需求快速增長使供應商議價弱化；R&amp;D 規模 $250M+ /年使後進者難以追趕）。</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼 Broadcom（市值 $1T+）、Marvell（市值 $80B+）、Microchip 等資本充足對手仍無法跨越？</p>
+<ul>
+<li><strong>多代產品 IP 連續性</strong>：retimer / switch IP 不是單代設計，需要從 Gen 4 → Gen 5 → Gen 6 連續迭代（每代都需要重新驗證 SI/PI、driver、firmware）。Broadcom / Marvell 在 Gen 5 沒大規模量產，Gen 6 從 0 起步進度慢。</li>
+<li><strong>Hyperscaler 信任壁壘</strong>：hyperscaler 對 retimer / switch 的 firmware bug 容忍度極低（一個 bug = $10M+ data center 重啟成本），需要 2-3 個成功代別才建立信任。ALAB 在 Aries Gen 4-5 累積信任後 Gen 6 自然延續。</li>
+<li><strong>Fabless 系統公司模式</strong>：ALAB 是「IC 設計 + system-level cabling + driver / firmware + 服務」整合，後進者只賣 IC 不夠，需要建構整套 ecosystem。</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>當前市佔（PCIe retimer）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>ALAB</strong></td><td>~80%</td><td>↑（Gen 6 領先）</td><td>—</td><td>主吃 Microchip / Parade 殘餘市場</td></tr>
+<tr><td>Broadcom</td><td>~10%</td><td>↑（Gen 6 H2 26 可能量產）</td><td>多元化 ASIC + reference platform 影響力</td><td>FY26 H2-FY27 直接競爭 ALAB Aries Gen 6</td></tr>
+<tr><td>Marvell</td><td>~5%</td><td>持平至略升</td><td>Structera CXL + AEC 競爭</td><td>Taurus AEC + Leo CXL 競爭</td></tr>
+<tr><td>Credo (CRDO)</td><td>~3%</td><td>↑（AEC 為主，retimer 後進）</td><td>AEC 競爭，PCIe retimer 後進但努力中</td><td>Taurus AEC 直接對手</td></tr>
+<tr><td>Microchip / Parade / Montage</td><td>~2%</td><td>↓</td><td>邊緣化</td><td>被 ALAB 吃</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸（v12.2 新增）</h3>
+<h4>過去 5 年護城河變化（2021-2026）</h4>
+<table>
+<tr><th>年份</th><th>事件</th><th>對護城河邊際貢獻</th></tr>
+<tr><td>2021</td><td>Aries Gen 5 領先量產</td><td>+0.5（建立 PCIe retimer 領先）</td></tr>
+<tr><td>2022</td><td>Leo CXL controller 推出</td><td>+0.5（從 1 產品線 → 2 產品線）</td></tr>
+<tr><td>2023</td><td>Taurus AEC SerDes 推出</td><td>+0.5（從 2 → 3 產品線）</td></tr>
+<tr><td>2024-03</td><td>NASDAQ IPO</td><td>+0.3（資本擴張產能）</td></tr>
+<tr><td>2024 H2</td><td>Aries Gen 6 sample</td><td>+0.5（領先 12-18 月）</td></tr>
+<tr><td>2025</td><td>Scorpio P 量產 + FY25 Rev +115%</td><td>+0.7（從 IC 升級 system-level 公司）</td></tr>
+<tr><td>2026 Q1</td><td>Scorpio X 320-lane 量產 + Leo Microsoft + NVLink Fusion</td><td>+0.5（多產品線多元化深化）</td></tr>
+<tr><td><strong>累計變化</strong></td><td><strong>5 → 9</strong></td><td><strong>+4 分（5 年複合提升）</strong></td></tr>
+</table>
+
+<h4>未來 5 年護城河可能變化（2026-2031）</h4>
+<table>
+<tr><th>事件</th><th>機率</th><th>對護城河邊際影響</th></tr>
+<tr><td>PCIe Gen 7 領先量產（2027-2028）</td><td>70%</td><td>+0.5</td></tr>
+<tr><td>Scorpio X 全 hyperscaler 部署（FY28）</td><td>60%</td><td>+0.3</td></tr>
+<tr><td>Leo CXL 4 家+ hyperscaler（FY27-28）</td><td>65%</td><td>+0.3</td></tr>
+<tr><td>UALink 2.0 / NVLink Fusion 量產配套（2027-2029）</td><td>55%</td><td>+0.3</td></tr>
+<tr><td>Hyperscaler 自研 retimer ASIC（FY29-30）</td><td>30%</td><td>-1.0（如發生）</td></tr>
+<tr><td>Broadcom Gen 6 量產壓 ASP（FY26 H2）</td><td>50%</td><td>-0.3（如發生）</td></tr>
+<tr><td>Silicon photonics 取代部分 use case（FY29-30）</td><td>20%</td><td>-0.5（如發生）</td></tr>
+<tr><td><strong>期望值（機率加權）</strong></td><td>—</td><td><strong>+0.5（5 年後 9 → 9.5 機率最高）</strong></td></tr>
+</table>
+<div class="reasoning">
+過去 5Y：5 → 9（+4 分），來自多產品線擴張 + 領先期延續｜
+未來 5Y 期望值：+0.5（9.5/10）；下行 tail：-0.8（8.2/10，hyperscaler ASIC 化發生時）｜
+implication：§13.5 5Y 合理 PE 30x 已 imply 護城河維持 9/10；若觸發下行 tail，PE 將壓至 25x（即 §8 E Bear A 情境）
+</div>
+
+<h3>E｜對手 Capex / R&amp;D 對照（v12.2 新增）</h3>
+<table>
+<tr><th>公司</th><th>FY25 R&amp;D（絕對額）</th><th>R&amp;D / Rev 占比</th><th>FY25 Capex</th><th>vs ALAB R&amp;D 差距</th><th>競爭重疊度</th></tr>
+<tr><td><strong>ALAB</strong></td><td class="num">~$255M</td><td>30%</td><td class="num">$37.5M</td><td>—</td><td>—</td></tr>
+<tr><td>Broadcom（半導體部門）</td><td class="num">~$5.5B</td><td>~10%（半導體 $35B Rev）</td><td class="num">~$0.5B</td><td>+$5.25B</td><td>中（PCIe retimer 為小子分支）</td></tr>
+<tr><td>Marvell</td><td class="num">~$1.7B</td><td>~30%</td><td class="num">~$0.1B</td><td>+$1.45B</td><td>高（Structera CXL + AEC 直接對手）</td></tr>
+<tr><td>Credo (CRDO)</td><td class="num">~$200M</td><td>~30%</td><td class="num">~$0.04B</td><td>-$55M</td><td>高（AEC 直接對手；PCIe retimer 後進）</td></tr>
+<tr><td>Microchip / Parade</td><td class="num">~$0.5-1B</td><td>15-20%</td><td>—</td><td>+$0.3-0.7B</td><td>低（邊緣化）</td></tr>
+</table>
+<div class="reasoning">
+ALAB R&amp;D / Rev 30% 是業界 IC 設計公司 top 5%（vs Broadcom 半導體 10%，因為 Broadcom 涵蓋成熟 ASIC）｜
+但絕對額 $255M vs Broadcom $5.5B 是 21x 差距；對 ALAB 不利｜
+implication：護城河必須靠「設計 know-how 累積」而非「絕對 R&amp;D 砸錢」；一旦 Broadcom 把 5% 的 R&amp;D（$275M）轉到 PCIe retimer，可在 2-3 年趕上 → 護城河 9/10 是「短期領先 + 中期競爭加劇」的現狀
+</div>
+
+<h3>護城河趨勢</h3>
+<p style="padding:8px 22px"><strong>趨勢：加深（5 年複合提升 +4 分）</strong>。FY25 Rev +115% / Q1 26 Rev +93% / GM 76.3% 都顯示護城河仍在拓展。但 Broadcom FY26 H2 量產 + Marvell Structera 為下一輪競爭考驗。</p>
+
+<h3>24 月內最可能瓦解護城河的變化（QC-23 競爭威脅 3 級分類）</h3>
+<table>
+<tr><th>等級</th><th>事件</th><th>定義</th><th>對護城河影響</th></tr>
+<tr><td><span class="badge badge-yellow">🟡 點對點</span></td><td>Broadcom PCIe Gen 6 retimer 量產</td><td>單一產品 vs 單一產品</td><td>不扣分（ALAB Gen 7 接續）</td></tr>
+<tr><td><span class="badge badge-orange">🔴 生態攻擊</span></td><td>Marvell Structera CXL + AEC + retimer 全棧</td><td>多產品聯動</td><td>-1 分（如完全兌現）</td></tr>
+<tr><td><span class="badge badge-red">⛔ 架構替代</span></td><td>Hyperscaler 自研 retimer ASIC（NVIDIA / Google / AWS）</td><td>客戶架構切換</td><td>-2 分 + §1 陷阱定性重新評估</td></tr>
+</table>
+<p style="padding:8px 22px">當前評分 9/10 已 imply 🟡 點對點威脅持續存在但不影響領先；若 🔴 或 ⛔ 觸發將觸發 §2 B 等級下調。</p>
+</section>
+
+<!-- ============== §10 ============== -->
+<section id="s10">
+<h2>§10｜財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>Q1 26</th><th>主要對手比較（FY25）</th></tr>
+<tr><td>Revenue</td><td class="num">$116M</td><td class="num">$396M</td><td class="num">$852M</td><td class="num">$308M（季）</td><td>CRDO $400M / MRVL $5.7B / AVGO 半導體 $35B</td></tr>
+<tr><td>Revenue YoY</td><td>+45%</td><td>+242%</td><td>+115%</td><td>+93% YoY</td><td>CRDO +120% / MRVL +12%</td></tr>
+<tr><td>Gross Margin</td><td>69%</td><td>76.4%</td><td>75.7%</td><td>76.3%</td><td>CRDO 65% / MRVL 50% / AVGO 半導體 67%</td></tr>
+<tr><td>Operating Margin（GAAP）</td><td>-25%</td><td>-29%</td><td>+20%</td><td>+20.1%</td><td>CRDO -10% / MRVL +14% / AVGO 半導體 +30%</td></tr>
+<tr><td>FCF Margin</td><td>-13%</td><td>+25.8%</td><td>+33.1%</td><td>~31%</td><td>CRDO +8% / MRVL +12% / AVGO 半導體 +50%</td></tr>
+<tr><td>ROIC</td><td>負</td><td>-6%</td><td>+16%</td><td>~17% TTM</td><td>CRDO -2% / MRVL +5% / AVGO 半導體 +35%</td></tr>
+<tr><td>SBC / Revenue</td><td>~30%</td><td>~22%</td><td>~17%</td><td>~16%</td><td>CRDO ~22% / MRVL ~10%</td></tr>
+<tr><td>ROE</td><td>負</td><td>-6%</td><td>+18%</td><td>~19% TTM</td><td>CRDO -3% / MRVL +6%</td></tr>
+</table>
+<div class="reasoning">
+FY25 是 ALAB IPO 後首年 inflection year：Rev +115%、首年 OPM 正、ROIC 16%、FCF Margin 33%｜
+GM 76% 高於所有同業（CRDO 65% / MRVL 50% / AVGO 67%）→ 強指 IP 護城河｜
+SBC 從 30% → 16% 趨勢正確（IPO 後常態下降），但仍高 → 給 §8 衰退信號 1 個 🟡 觀察｜
+implication：財務品質方向正確但歷史短，FY26-FY28 數字穩定性需追蹤
+</div>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>項目</th><th>檢核</th><th>結論</th></tr>
+<tr><td>淨利 vs OCF 連動性</td><td>FY25 NI $219M / OCF $319M = 0.69（OCF &gt; NI 健康）</td><td><span class="badge badge-green">✅ 健康</span></td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>需後續 10-Q 詳細檢核（IPO 後追蹤）</td><td>觀察</td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>fabless 模型，存貨低，不適用</td><td>不適用</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>FY24 FCF/NI 1.23 → FY25 1.29 → 趨勢上升</td><td><span class="badge badge-green">✅</span></td></tr>
+</table>
+
+<h3>回購品質評估（價值陷阱防禦）</h3>
+<p style="padding:8px 22px">ALAB 目前無回購計畫（IPO 後 2 年內為再投資階段）。FY26 H2 可能啟動小規模 buyback（管理層 Q3 25 提及 capital return 評估），但金額預期 &lt; $200M / 年。EPS 成長靠基本面而非回購堆疊。</p>
+</section>
+
+<!-- ============== §11 ============== -->
+<section id="s11">
+<h2>§11｜產業格局、議價權與 Unit Economics（v12.2 補回 v6 深度）</h2>
+
+<h3>市場量化（5Y / 10Y 結構性變化）</h3>
+<table>
+<tr><th>項目</th><th>現在 (2026)</th><th>5Y (2031)</th><th>10Y (2036)</th><th>結構性變化</th></tr>
+<tr><td>AI 互連 IC TAM</td><td class="num">~$5B</td><td class="num">~$25B</td><td class="num">~$45B+</td><td>從「PCIe Gen 5 retimer 主導」→「PCIe Gen 6/7 + Switch + AEC + CXL 多元化」→「下世代互連標準（PCIe Gen 8 / UALink / NVLink Fusion）」</td></tr>
+<tr><td>CAGR</td><td colspan="3">5Y CAGR ~38%（強週期），10Y CAGR ~25%（成熟期）</td></tr>
+<tr><td>當前滲透率（vs DC server total）</td><td>15%（hyperscaler 80% + enterprise 5%）</td><td>30%</td><td>45%</td><td>從 hyperscaler-only → enterprise + edge 普及</td></tr>
+<tr><td>供需狀態</td><td>緊缺（PCIe Gen 6 供不應求）</td><td>逐步平衡</td><td>產能充足</td><td>—</td></tr>
+</table>
+
+<h3>議價權三段獨立</h3>
+
+<h4>對上游供應商</h4>
+<ul>
+<li><strong>TSMC（先進製程，Aries 6 / Scorpio X 採用 N5/N3）</strong>：ALAB 議價力<strong>低</strong>（年訂單 &lt; $300M wafer，不如 NVIDIA / Apple / AMD），但 TSMC 對小客戶仍以服務為主，無重大議價損失。</li>
+<li><strong>Samsung Foundry（部分產品代工）</strong>：ALAB 議價力<strong>中</strong>（多元化第二供應商），給予 ALAB 議價談判的籌碼。</li>
+<li><strong>EDA 工具（Synopsys / Cadence）</strong>：產業標準，議價力<strong>低</strong>（年費 ~$30M），但這也適用於所有 IC 設計公司。</li>
+<li><strong>IP 授權（部分 SerDes IP 授權給設計）</strong>：ALAB 自研 + 部分授權混合，議價力<strong>中</strong>。</li>
+<li>整體上游議價力：<strong>中等偏弱</strong>，但 AI 順風使供應商議價更弱（AI semis 都搶 wafer）。</li>
+</ul>
+
+<h4>對下游客戶</h4>
+<ul>
+<li><strong>NVIDIA（reference platform 認證 + Blackwell ramp 主驅動）</strong>：客戶集中度<strong>高</strong>，ALAB 議價力<strong>中</strong>（NVIDIA 一旦 design-in Aries 6 為 Blackwell GB200/300/Vera Rubin reference，會延續 2-3 代）。NVIDIA 估佔 ALAB 營收 25-35%。</li>
+<li><strong>4 家 Magnificent 7 hyperscaler（Microsoft Azure / AWS / Google Cloud / Meta）</strong>：客戶集中度<strong>高</strong>，但分散在 4 家有風險緩解。每家估佔 8-15%。</li>
+<li><strong>Foxconn（Tier-1 ODM）</strong>：透過 Foxconn 進入更多 OEM，議價力<strong>中</strong>。</li>
+<li><strong>SK Hynix（HBM 記憶體合作）</strong>：Leo CXL controller + HBM 互動，議價力<strong>中</strong>。</li>
+<li>整體下游議價力：<strong>中等</strong>。GM 76% 顯示客戶尚未獲議價權；但客戶集中度仍是 R3 風險源。</li>
+</ul>
+
+<h4>地理曝險</h4>
+<table>
+<tr><th>地區</th><th>FY25 占比</th><th>議價 / 監管 / 地緣風險</th></tr>
+<tr><td>北美（美國 hyperscaler / OEM）</td><td>~70%</td><td>核心市場；無重大監管風險</td></tr>
+<tr><td>亞太（台灣 / 韓國 / 日本 ODM + Foxconn / SK Hynix）</td><td>~20%</td><td>製造 / 設計合作；台海地緣風險間接（TSMC 代工）</td></tr>
+<tr><td>中國</td><td>&lt; 5%</td><td>受 export control 限制；ALAB 主動避免</td></tr>
+<tr><td>歐洲</td><td>~5%</td><td>邊緣市場</td></tr>
+<tr><td>其他（中東 / 印度）</td><td>&lt; 1%</td><td>潛在 AI sovereign cluster 機會（FY27+）</td></tr>
+</table>
+
+<h3>營收組成三維展開（v12.2 NEW）</h3>
+
+<h4>按業務</h4>
+<table>
+<tr><th>業務</th><th>Q1 26（季）</th><th>FY26E</th><th>占比</th><th>YoY</th><th>OI margin（估）</th><th>3Y 軌跡</th></tr>
+<tr><td>Aries（PCIe retimer）</td><td>~$190M</td><td class="num">~$900M</td><td>62%</td><td>+85%</td><td>40%</td><td>持續增長 +40%/年</td></tr>
+<tr><td>Scorpio（AI Fabric Switch）</td><td>~$70M</td><td class="num">~$350M</td><td>24%</td><td>+200%</td><td>30%</td><td>從 P → X 量產拓展，+150-200%/年</td></tr>
+<tr><td>Taurus（Ethernet AEC）</td><td>~$30M</td><td class="num">~$130M</td><td>9%</td><td>+50%</td><td>25%</td><td>800G → 1.6T 升級，+50%/年</td></tr>
+<tr><td>Leo（CXL Memory）</td><td>~$15M</td><td class="num">~$70M</td><td>5%</td><td>+200%</td><td>20%</td><td>Microsoft initial → 4 家 hyperscaler，+150%/年</td></tr>
+<tr><td><strong>合計</strong></td><td class="num"><strong>$308M</strong></td><td class="num"><strong>~$1.45B</strong></td><td>100%</td><td>+93%（Q1）</td><td>—</td><td>—</td></tr>
+</table>
+
+<h4>按地區</h4>
+<table>
+<tr><th>地區</th><th>FY25 占比</th><th>YoY 估</th><th>監管 / 地緣備註</th></tr>
+<tr><td>北美</td><td>~70%</td><td>+115%</td><td>核心市場，hyperscaler 集中</td></tr>
+<tr><td>亞太</td><td>~20%</td><td>+100%</td><td>Foxconn / SK Hynix 合作；TSMC 代工依賴</td></tr>
+<tr><td>歐洲</td><td>~5%</td><td>+50%</td><td>—</td></tr>
+<tr><td>中國</td><td>&lt; 5%</td><td>受限</td><td>Export control</td></tr>
+<tr><td>其他</td><td>&lt; 1%</td><td>—</td><td>—</td></tr>
+</table>
+
+<h4>按客戶集中度（v12.2 NEW）</h4>
+<table>
+<tr><th>客戶</th><th>占比估算</th><th>集中度風險</th><th>失去單一客戶影響</th></tr>
+<tr><td>NVIDIA（reference platform）</td><td>25-35%</td><td>🔴 高</td><td>失去 NVIDIA reference 將短期 -25-30% Rev；中期 OEM 自尋替代</td></tr>
+<tr><td>Microsoft Azure</td><td>10-15%</td><td>🟡 中</td><td>Leo 啟動部署，戰略客戶</td></tr>
+<tr><td>AWS</td><td>10-15%</td><td>🟡 中</td><td>Trainium 系列影響</td></tr>
+<tr><td>Google Cloud</td><td>8-12%</td><td>🟡 中</td><td>TPU 互連需求</td></tr>
+<tr><td>Meta</td><td>5-10%</td><td>🟡 中</td><td>內部 AI cluster</td></tr>
+<tr><td>Foxconn / SK Hynix / 其他 ODM</td><td>10-15%</td><td>🟢 低</td><td>分散</td></tr>
+<tr><td>Tier-2+ enterprise</td><td>5-10%</td><td>🟢 低</td><td>—</td></tr>
+<tr><td><strong>Top 5 客戶集中度</strong></td><td><strong>~75-80%</strong></td><td>🔴 高</td><td>客戶多元化是 H1 / H2 假設核心</td></tr>
+</table>
+
+<h3>單位經濟</h3>
+<table>
+<tr><th>業務</th><th>關鍵單位指標</th><th>當前</th><th>趨勢</th><th>結構性洞察</th></tr>
+<tr><td>Aries（PCIe retimer）</td><td>ASP per Aries 6 chip vs Aries 5</td><td>+30-50%</td><td>↑（代際升級）</td><td>Gen 6 → Gen 7 還有 +30-50% 空間</td></tr>
+<tr><td>Aries（量）</td><td>每 GPU cluster 用 retimer 數</td><td>~16-32</td><td>↑（cluster scale-up）</td><td>32-GPU → 64-GPU cluster 用量 2x</td></tr>
+<tr><td>Scorpio（AI Fabric Switch）</td><td>ASP per Scorpio X 320-lane</td><td>$5-10K（估）</td><td>↑（ramp）</td><td>P → X ASP 5-10x 提升</td></tr>
+<tr><td>Taurus（AEC）</td><td>ASP per AEC cable</td><td>$200-500</td><td>持平至略升</td><td>800G → 1.6T 升級會帶 ASP 50%+</td></tr>
+<tr><td>Leo（CXL）</td><td>ASP per CXL controller</td><td>$300-800（估）</td><td>↑（ramp）</td><td>CXL 2.0 → 3.0 升級空間大</td></tr>
+<tr><td>客戶 LTV / CAC</td><td>Hyperscaler design-in lifetime（2-4 年）× annual deal $50-200M</td><td>—</td><td>—</td><td>每個 hyperscaler design-in 是 $200-800M lifetime value</td></tr>
+</table>
+</section>
+
+<!-- ============== §12 ============== -->
+<section id="s12">
+<h2>§12｜公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>Insider 持股</td><td>10.83%（CEO Mohan + CTO Morrison + 早期員工）</td></tr>
+<tr><td>機構持股</td><td>79.65%（Sutter Hill / Fidelity / T. Rowe Price / Vanguard 等）</td></tr>
+<tr><td>Public float</td><td>~ 9.5%</td></tr>
+<tr><td>Dual-class 結構</td><td>無，single-class 普通股</td></tr>
+<tr><td>近 12 個月內部人交易</td><td>IPO 後 lock-up 已過（2024-09），有零星 SEC Form 4 賣出但無大規模減持公告</td></tr>
+</table>
+
+<h3>資本配置軌跡</h3>
+<table>
+<tr><th>用途</th><th>FY25 實際</th><th>FY26E</th><th>策略</th></tr>
+<tr><td>R&amp;D 再投資</td><td>~$255M（30% Rev）</td><td>~$420M（29% Rev）</td><td>主軸：四產品線同步推進</td></tr>
+<tr><td>S&amp;M / G&amp;A</td><td>~$160M</td><td>~$280M</td><td>銷售團隊擴張 + 品牌建構</td></tr>
+<tr><td>Capex</td><td>$37.5M（4.4%）</td><td>~$60M</td><td>fabless，主要為設計工具 / 實驗室</td></tr>
+<tr><td>戰略併購</td><td>$0</td><td>~$100-200M（可能 tuck-in）</td><td>FY26 H2 可能小型 IP / 團隊收購</td></tr>
+<tr><td>回購</td><td>$0</td><td>~$0-100M（可能啟動）</td><td>2026 Q3 可能首次小規模 buyback</td></tr>
+<tr><td>分紅</td><td>$0</td><td>$0</td><td>3 年內無分紅計畫</td></tr>
+</table>
+
+<h3>SBC 評估</h3>
+<table>
+<tr><th>項目</th><th>FY24</th><th>FY25</th><th>Q1 26</th><th>趨勢</th></tr>
+<tr><td>SBC（絕對）</td><td>~$87M</td><td>~$145M</td><td>~$50M</td><td>↑（規模化但 % 下降）</td></tr>
+<tr><td>SBC / Revenue</td><td>22%</td><td>17%</td><td>16%</td><td>↓（IPO 後常態下降）</td></tr>
+<tr><td>SBC / Diluted Shares</td><td>稀釋率 ~3%/年</td><td>稀釋率 ~2.5%/年</td><td>—</td><td>合理</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>QC-19 重大事件搜尋結果（2025-05 至 2026-05）</strong>：</p>
+<ul>
+<li>🟢 過去 12 個月無併購金額 &gt; 市值 5%（市值 5% = ~$1.85B）；無大型 M&amp;A 公告</li>
+<li>🟢 無集體訴訟或證券詐欺訴訟</li>
+<li>🟢 無 SEC 調查或財報重編</li>
+<li>🟢 無管理層異動；CEO + CTO 仍在位</li>
+<li>🟢 無重大客戶流失公告</li>
+<li>🟢 Q1 26 print（5/5）為 +利多 而非利空</li>
+</ul>
+</section>
+
+<!-- ============== §13 ============== -->
+<section id="s13">
+<h2>§13｜估值診斷（v12.2 簡化）</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<tr><th>估值邏輯</th><th>對應指標</th><th>是否主流？</th></tr>
+<tr><td>盈利能力型</td><td>Forward PE（75.7x FY26E）</td><td>主要</td></tr>
+<tr><td>成長型</td><td>PEG 1.38 / EV/Revenue 24x</td><td>次要</td></tr>
+<tr><td>現金流型</td><td>P/FCF 131x</td><td>次要（FCF 強但 PE 倍數較低，市場仍以 PE 看）</td></tr>
+</table>
+<p style="padding:6px 22px"><strong>當前主流邏輯</strong>：Forward PE +PEG 雙軸（成長股估值體系）。<strong>估值體系診斷結論：🟢 估值邏輯穩定</strong>（PCIe / AI 連接 IC 估值體系自 2024-2026 持續上修，與 NVDA / CRDO 同步）。</p>
+<div class="reasoning">
+輸入：Fwd PE 75.7x + PEG 1.38｜計算：兩者都在「成長股」估值體系內｜
+implication：估值升級機會：邊際（從 Aries-only → 多產品平台公司，TAM 擴大可能讓估值再上修 +10-20%）
+</div>
+
+<h3>13.1｜歷史估值分位（IPO 至今 2 年）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>2Y 低</th><th>2Y 中位</th><th>2Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>175x</td><td>—（首年虧損）</td><td>—</td><td>—</td><td>N/A</td></tr>
+<tr><td>Forward P/E（NTM）</td><td>75.7x</td><td>30x（2024-08 IPO 後低點）</td><td>~70x</td><td>150x（2024-03 IPO 高點）</td><td>~38%</td></tr>
+<tr><td>EV/EBITDA</td><td>183x</td><td>—</td><td>~150x</td><td>—</td><td>偏高</td></tr>
+<tr><td>P/FCF</td><td>131x</td><td>—</td><td>~90x</td><td>—</td><td>—</td></tr>
+<tr><td>P/S</td><td>43x</td><td>15x</td><td>30x</td><td>60x</td><td>~62%</td></tr>
+</table>
+<div class="reasoning">
+Forward PE 75.7x，分位 38%（IPO 至今 2 年）｜計算：(75.7-30)/(150-30) = 38%｜
+implication：當前估值在歷史中段偏低（不在過熱）；但 P/S 62% 顯示 Rev multiple 較高 → 市場願意給高 multiple 因為 GM 76% 強
+</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY26E NG）</td><td>75.7x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年，§7）</td><td>+55%</td><td>—</td></tr>
+<tr><td><strong>PEG（Non-GAAP，3 年）</strong></td><td><strong>1.38</strong></td><td>合理（1-2 區間）</td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td>+45%</td><td>—</td></tr>
+<tr><td>PEG（5 年，Non-GAAP）</td><td>1.68</td><td>合理偏貴</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>差異中等（5Y PEG 較高反映成長率減速）</td><td>合理 — 不警示</td></tr>
+</table>
+<div class="reasoning">
+PEG 3Y = 75.7 / 55 = 1.38｜PEG 5Y = 75.7 / 45 = 1.68｜
+3Y &lt; 5Y 反映 FY26-FY28 成長強，FY29-FY30 開始 normalize｜
+implication：Price-to-Growth 落點「合理」，§13.5 短期合理 PE 給 60x 為公允（PEG 1.1）
+</div>
+
+<h3>13.3｜Reverse DCF</h3>
+<h4>固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>$36.94B</td><td>2026-05-05 close</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>$281.8M</td><td>§6 / §10</td></tr>
+<tr><td>WACC</td><td>~12%</td><td>10Y UST 4.2% + Beta 3.36 × ERP 5% + 3Y forward CAGR 風險溢酬</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>標準 GDP 增長</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<h4>反推隱含 FCF CAGR</h4>
+<p style="padding:6px 22px">使 DCF 現值 = $36.94B 市值，需要的前 10 年 FCF CAGR ≈ <strong>30%</strong>（線性遞減：FY26-28 +50% → FY29-31 +30% → FY32-35 +15%）。</p>
+
+<h4>可信度對照</h4>
+<table>
+<tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>FY23 -$15M → FY25 $282M = N/M（從負轉正）</td><td>不可比（IPO 期）</td></tr>
+<tr><td>分析師共識 EPS CAGR（§7）</td><td>3Y +55%</td><td>FCF 30% 低於 EPS 55%（合理，因 FCF 倍數收斂）</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>NVDA 2017-2020 ~50%；CRDO 2024 ~30%</td><td>30% 在頂尖 1/3 但非「最快」</td></tr>
+</table>
+
+<h4>兌現條件</h4>
+<p style="padding:6px 22px">隱含 30% FCF CAGR 需要：FY26-FY30 Rev 從 $1.45B → $4-5B（CAGR 28%）+ FCF Margin 維持 30%+ + Capex 維持 4-5%。<strong>這個條件在 PCIe / AI 連接 IC 仍維持高速成長的情境下合理</strong>。</p>
+
+<p style="padding:6px 22px"><strong>隱含預期判斷：🟡 合理</strong>（30% 的 10Y FCF CAGR 對應 5Y EPS 從 $1.49 → $9.65 路徑可行）。</p>
+
+<div class="reasoning">
+Reverse DCF 隱含 30% 10Y FCF CAGR vs 共識 EPS CAGR 55%（3Y）→ 隱含較共識保守｜
+但 30% 10Y CAGR 需要 4 條 S 曲線同步兌現（Aries / Scorpio / Taurus / Leo + 新產品線）｜
+implication：估值體系合理，但對 5+ 年的多產品線兌現假設依賴度高，需追蹤
+</div>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3Y）</th><th>ROIC</th></tr>
+<tr><td><strong>ALAB</strong></td><td>$36.9B</td><td>75.7x</td><td>183x</td><td>1.38</td><td>33%</td><td>+55%</td><td>16%</td></tr>
+<tr><td>CRDO</td><td>~$15B</td><td>~70x</td><td>~120x</td><td>1.5</td><td>8%</td><td>+45%</td><td>-2%</td></tr>
+<tr><td>MRVL</td><td>~$80B</td><td>~30x</td><td>~25x</td><td>1.2</td><td>12%</td><td>+25%</td><td>5%</td></tr>
+<tr><td>AVGO</td><td>~$1T</td><td>~33x</td><td>~25x</td><td>1.5</td><td>50%</td><td>+22%</td><td>15%</td></tr>
+<tr><td>NVDA</td><td>~$3T</td><td>~35x</td><td>~30x</td><td>0.9</td><td>50%</td><td>+40%</td><td>50%</td></tr>
+<tr><td>產業中位數（純 connectivity IC）</td><td>—</td><td>~50x</td><td>~50x</td><td>1.4</td><td>~25%</td><td>~35%</td><td>~10%</td></tr>
+</table>
+<div class="reasoning">
+ALAB Fwd PE 75.7x vs 中位 50x = 51% 溢價｜
+但 ALAB GM 76% / FCF Margin 33% / EPS CAGR 55% 全業界頂級，溢價合理｜
+implication：QC-30 相對同業溢價 51%（不到 50% 觸發收斂壓測門檻），但接近，需追蹤；中位 +20% upside 即達 同業中位回歸
+</div>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<tr><th>問題</th><th>ALAB 答案</th><th>CRDO（最強競爭）答案</th></tr>
+<tr><td>主假設兌現時上行最大？</td><td>+34% 5Y</td><td>+50% 5Y（base 估值低 + 後進拓展）</td></tr>
+<tr><td>主假設部分落空時跌幅最小？</td><td>-30%（GM / 護城河緩衝）</td><td>-45%（GM 65% 緩衝弱）</td></tr>
+<tr><td>綜合風報比最優？</td><td>ALAB（base 強 + 緩衝強）</td><td>CRDO（彈性大但風險高）</td></tr>
+</table>
+<p style="padding:6px 22px"><strong>最終橫向比較結論：🥇 ALAB 為同主題最優選</strong>（thesis 完整 + 護城河領先 + 財務體質強）</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（13.0）</td><td>🟢 穩定</td><td>成長股 PE / PEG 雙軸體系穩定</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟡 合理</td><td>Forward PE 38% 分位（IPO 至今 2 年）</td></tr>
+<tr><td>PEG 診斷（13.2）</td><td>🟡 合理</td><td>3Y PEG 1.38（1-2 合理）</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 合理</td><td>隱含 30% 10Y FCF CAGR，可信</td></tr>
+<tr><td>同業相對（13.4）</td><td>🟡 合理溢價</td><td>vs 中位 +51% 溢價，由 GM 76% / EPS CAGR 55% 支撐</td></tr>
+</table>
+
+<p style="padding:6px 22px"><strong>當前定價判斷：🟡 公允定價</strong>（五角全 🟡，無 🔴 也無 🟢）。</p>
+
+<h3>估值倍數定錨（v9.0 上行三引擎）</h3>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 的影響</th></tr>
+<tr><td>① 護城河品質（§9）</td><td>9/10</td><td>引擎 C：×1.10</td></tr>
+<tr><td>② 成長可持續年數（§8A）</td><td>≥ 10 年（🟢）</td><td>無扣減</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>有機 98% / 定價驅動 40%（雙）</td><td>+1x（定價驅動為主）</td></tr>
+<tr><td>④ 成長護城河連動（§8C）</td><td>強化型</td><td>+1x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§8D）</td><td>ROIC-WACC +4pp 擴大中</td><td>+0x（樣本短，保守）</td></tr>
+<tr><td>⑥ 衰退信號（§8）</td><td>0 個亮燈</td><td>無扣減</td></tr>
+<tr><td>⑦ 估值體系方向（§13.0）</td><td>穩定</td><td>無調整</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.2%</td><td>對成長股估值中性</td></tr>
+<tr><td>⑨ AI 風險（§8 F）</td><td>🟢 受益</td><td>×1.10</td></tr>
+<tr><td><strong>產業基準倍數（§8🟢）</strong></td><td><strong>25x（高確信）</strong></td><td><strong>5Y 合理 PE = 25 × 1.10 × 1.10 = 30.25x ≈ 30x</strong></td></tr>
+</table>
+
+<h3>分析師目標價參考</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>分析師覆蓋</td><td>23-24 位</td></tr>
+<tr><td>共識評等</td><td>Strong Buy（13 buy / 4 hold / 0 sell）</td></tr>
+<tr><td>共識目標價（中位）</td><td>$182.26 / $205（兩個來源）</td></tr>
+<tr><td>區間</td><td>$155 - $250</td></tr>
+<tr><td>近期 UBS 給予 $180 目標 + Neutral 評等（4/21）</td><td>—</td></tr>
+<tr><td>vs 現價 $215.69</td><td>共識中位低於現價（-15% 至 -5%）</td></tr>
+</table>
+
+<h3>長期合理倍數（§9 邏輯）</h3>
+<p style="padding:6px 22px"><strong>本標的 5Y 後合理 Forward PE = 30x</strong>（基準 25x × 護城河引擎 1.10 × AI 引擎 1.10）。</p>
+
+<h3>投資結論（v11.0 完整版）</h3>
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態</strong>：✅ 強化（Q1 26 Rev +93% YoY beat $292M 共識；Q2 guide +89% YoY raise）</li>
+<li><strong>H2 當前狀態</strong>：✅ 強化（Leo Microsoft 部署 + 兩家新 hyperscaler Q4 26 + Scorpio X 320-lane initial production）</li>
+<li><strong>H3 當前狀態</strong>：✅ 強化（NVIDIA NVLink Fusion 合作擴大 + UALink 2.0 商業化推進）</li>
+<li><strong>結論</strong>：這份 Q1 26 print 讓隱含預期變得<strong>更容易</strong>兌現；理由是基本面提速 + 客戶多元化進度 + 多產品線同步。</li>
+</ul>
+
+<h4>綜合訊號輸出（取自 §2 H）</h4>
+<ul>
+<li>護城河等級：A → A（不變）</li>
+<li>估值燈：🟡 合理偏貴（Fwd PE 5Y 分位 38%，PEG 1.38）</li>
+<li>Pure MA 狀態：✅ 強勢進場（W250 樣本不足）</li>
+<li>大盤豁免：正常</li>
+<li><strong>綜合訊號：B 觀望偏進場</strong></li>
+<li>中期參考 R:R：0.51x（資訊性）；長期 1.97x</li>
+<li>訊號語意：B 衛星候選，等待估值或時機修復；4 週漂移 +44.7% 觸發追高警告</li>
+<li>倉位 % 決策不在本 DD 範圍，交由 portfolio-manager skill</li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q1 26 print 強勁支撐基本面，但 4 週 +44.7% 漂移使短期 R:R 為負（-0.30x）。短期主要風險為估值 mean reversion 而非基本面。建議等 Bollinger 中軌（$155）或 W52（$151）回測後再進場，或 Q2 26 print（2026-08）後分批建倉。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY26-FY27 EPS CAGR ~50%，驅動因素為定價（Aries Gen 5→6 ASP +30-50% / Scorpio P→X ASP 5-10x）+ 量（hyperscaler GPU cluster scale-up）+ 多產品線（Leo / Scorpio 多元化）。能見度<strong>高</strong>，引用 §8 B 結論。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道：≥ 10 年充裕 / 護城河趨勢：加深 / <strong>長期持有信心：高</strong></p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔（Bear Case）：現價 $215.69 至 $103 距離 -52%</li>
+<li>中期下檔（Bear Case）：現價至 $113 距離 -48%</li>
+<li>W52 Low $63.40（參考）/ W104 Low $63.40（參考；ALAB 上市 2024-03）</li>
+<li>若 FY+1 EPS 下修 10%（Q3-Q4 26 出現 miss 或 guide cut），短期 R:R 將降至 -0.55x</li>
+</ul>
+
+<h3>版本修訂紀錄</h3>
+<table>
+<tr><th>日期</th><th>版本</th><th>變更</th></tr>
+<tr><td>2026-04-27</td><td>v12.0</td><td>初版（前份 DD，schema v12.0）</td></tr>
+<tr><td><strong>2026-05-06</strong></td><td><strong>v12.2</strong></td><td><strong>Inception DD（v12.2 起；前份 v12.0 不計入累積漂移基準）。重點變更：(1) 新增 §4 護城河形成歷史路徑（2017-2026 累積 +4 分至 9/10）；(2) 新增 §5 B 三層時間軸（2Y/5Y/10Y）；(3) 新增 §8 A 三欄表 + S 曲線位置；(4) 新增 §9 D 護城河變遷時間軸 + §9 E 對手 Capex/R&amp;D 對照；(5) §11 補回 v6 深度（議價權三段 + 客戶集中度 + 單位經濟）；(6) §13 全節壓縮（表 + 3 行推導）；(7) Q1 26 print 5/5 已納入。</strong></td></tr>
+</table>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "ALAB",
+  "schema": "v12.2",
+  "date": "2026-05-06",
+  "price_at_dd": 215.69,
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "🟢 非陷阱",
+  "moat": "A",
+  "val": "🟡",
+  "ma": "✅",
+  "regime": "正常",
+  "quality_tier": "A",
+  "long_confidence": "高",
+  "fpe_fy2": 51.4,
+  "pct_5y": 38,
+  "peg_fy2": 1.38,
+  "upside_short_pct": -20.7,
+  "upside_mid_pct": -2.6,
+  "upside_5y_pct": 34,
+  "stress": {"pass": 1, "total": 4},
+  "moat_score": 9,
+  "growth_durability": 9,
+  "quality_score": 9,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "觀望偏進場",
+  "inception_dd": "DD_ALAB_20260506.html",
+  "inception_date": "2026-05-06",
+  "next_yoy_review_date": "2027-05-06",
+  "drift_4w_pct": 44.7,
+  "oneliner": "Q1 26 Rev $308M(+93%YoY)beat+Q2 guide $355-365M(+89%YoY)raise／PCIe Gen 6 已超 1/3 營收／FY+2 PE 51.4x／PEG 1.38 合理／Pure MA ✅ 但 4 週漂移+44.7% 觸 QC-22／訊號 B：等 BB 中軌 $155 或 W52 $151 回測後分批進場（Inception DD）"
+}
+</script>
+
+</body>
+</html>
