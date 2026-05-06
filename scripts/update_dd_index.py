@@ -17,9 +17,34 @@ from pathlib import Path
 
 DOCS = Path(__file__).parent.parent / "docs"
 DD_DIR = DOCS / "dd"
+DCA_DIR = DOCS / "dca"
 INDEX_HTML = DOCS / "research" / "index.html"
 INDEX_MD = DD_DIR / "INDEX.md"
 PRICE_CACHE = DOCS / "research" / "price_cache.json"
+
+DCA_FILENAME_RE = re.compile(r"^DCA_([A-Z0-9]+)_(\d{8})\.html$")
+
+
+def collect_dca_map() -> dict:
+    """Scan docs/dca/ for DCA_{TICKER}_{YYYYMMDD}.html and return
+    {ticker: latest_dca_href}. Same ticker → keep newest by date suffix.
+
+    href format mirrors DD: '/dca/DCA_TICKER_YYYYMMDD.html' (absolute path).
+    Returns empty dict if dca/ folder missing or empty (research page just
+    shows '—' for every row).
+    """
+    if not DCA_DIR.exists():
+        return {}
+    latest: dict[str, tuple[str, str]] = {}  # ticker -> (date_str, filename)
+    for path in DCA_DIR.glob("DCA_*.html"):
+        m = DCA_FILENAME_RE.match(path.name)
+        if not m:
+            continue
+        ticker, date_str = m.group(1), m.group(2)
+        prev = latest.get(ticker)
+        if prev is None or date_str > prev[0]:
+            latest[ticker] = (date_str, path.name)
+    return {t: f"/dca/{fname}" for t, (_, fname) in latest.items()}
 
 META_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
@@ -807,9 +832,13 @@ def _verdict_to_signal(verdict_raw: str) -> str:
     return ""
 
 
-def build_row_v12(entry: dict) -> str:
-    """Render one v12 row (data-* attrs + 10 td cells) matching the hand-curated
-    schema in docs/research/index.html. Missing fields render as '?' or 0."""
+def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
+    """Render one v12 row (data-* attrs + td cells) matching the hand-curated
+    schema in docs/research/index.html. Missing fields render as '?' or 0.
+
+    dca_map: optional {ticker: dca_href} from collect_dca_map(). When provided
+    and ticker has a DCA report, inject a 📋 link cell after Ticker; else '—'.
+    """
     sig = entry.get("signal", "") or "?"
     trap_emoji = entry.get("trap_emoji", "") or "?"
     moat = entry.get("moat", "") or "?"
@@ -888,6 +917,21 @@ def build_row_v12(entry: dict) -> str:
 
     date_disp = entry.get("date") or "—"
 
+    # Normalize ticker for DCA lookup: DD entries use "2330.TW" with dot,
+    # DCA filenames strip non-alphanumeric ("2330TW"). Try both forms.
+    _dm = dca_map or {}
+    _t_raw = entry["ticker"]
+    _t_norm = re.sub(r"[^A-Za-z0-9]", "", _t_raw).upper()
+    dca_href = _dm.get(_t_raw) or _dm.get(_t_norm)
+    if dca_href:
+        dca_cell = (
+            f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
+            f'rel="noopener" title="Deep Conviction Analysis 投資決策報告" '
+            f'style="text-decoration:none">📋</a></td>'
+        )
+    else:
+        dca_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
+
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
@@ -895,6 +939,7 @@ def build_row_v12(entry: dict) -> str:
         f' data-fpe="{fpe_num}" data-pct="{pct_num}" data-peg="{peg_num}"'
         f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-stress="{stress_frac}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
+        f'{dca_cell}'
         f'<td class="num-cell">{date_disp}</td>'
         f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
@@ -1037,7 +1082,8 @@ def update_index_v12_full(html: str) -> tuple:
     open_tag, _, close_tag = m.group(1), m.group(2), m.group(3)
 
     entries = _sort_v12_entries(collect_v12_entries())
-    rows = "\n".join(build_row_v12(e) for e in entries)
+    dca_map = collect_dca_map()
+    rows = "\n".join(build_row_v12(e, dca_map) for e in entries)
     new_block = open_tag + "\n" + rows + "\n" + close_tag
     new_html = html[:m.start()] + new_block + html[m.end():]
     return new_html, len(entries)

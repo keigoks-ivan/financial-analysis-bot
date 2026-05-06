@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCA｜2330.TW（TSMC）｜2026-05-06</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#0F172A; --muted:#475569;
+    --line:#E2E8F0; --line-strong:#CBD5E1; --accent:#1E3A5F; --accent-light:#3B82F6;
+    --row-alt:#F1F5F9;
+    --thesis-bg:#EFF6FF; --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+    --conflict-bg:#FFF7ED; --conflict-line:#F97316; --verdict-bg:#FED7AA;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --ok:#DCFCE7; --ok-text:#166534; --no:#FEE2E2; --no-text:#991B1B;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.65}
+  .mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header.fixed-top{position:sticky;top:0;z-index:100;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:14px}
+  header.fixed-top .ticker{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.fixed-top .sep{opacity:.4}
+  header.fixed-top .thesis-line{flex:1;min-width:280px;font-style:italic;opacity:.95}
+  main{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+  h1{font-size:32px;margin:0 0 4px}
+  h2{font-size:22px;margin:48px 0 12px;padding:10px 14px;background:var(--accent);color:#fff;border-left:4px solid var(--accent-light);border-radius:2px}
+  h3{font-size:17px;margin:24px 0 8px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+  .thesis-card{background:var(--thesis-bg);border:1px solid #BFDBFE;border-radius:4px;padding:36px 32px;margin:16px 0;text-align:center}
+  .thesis-card .quote{font-size:26px;font-weight:500;line-height:1.5;color:#1E3A8A}
+  .thesis-card .label{font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:1px}
+  .decision-card{background:var(--decision-wait);border-left:4px solid #CA8A04;padding:18px 22px;margin:12px 0;border-radius:2px}
+  .decision-card.go{background:var(--decision-go);border-left-color:#16A34A}
+  .decision-card.no{background:var(--decision-no);border-left-color:#DC2626}
+  .decision-card .verdict-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:8px}
+  .decision-card.go .verdict-tag{background:#166534;color:#fff}
+  .decision-card .verdict-tag{background:#CA8A04;color:#fff}
+  .decision-card.no .verdict-tag{background:#991B1B;color:#fff}
+  .conflict-card{background:var(--conflict-bg);border-left:4px solid var(--conflict-line);padding:16px 20px;margin:12px 0;border-radius:2px}
+  .verdict-table{background:var(--verdict-bg);padding:8px;border-radius:2px;margin-top:10px}
+  .verdict-table table{margin:0;font-size:13px}
+  .verdict-table thead th{background:#9A3412}
+  .premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:14px 20px;margin:10px 0;border-radius:2px;font-style:italic}
+  .pattern-card{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 20px;margin:10px 0;border-radius:2px}
+  .ok-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--ok);color:var(--ok-text);font-weight:600;font-size:12px}
+  .no-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--no);color:var(--no-text);font-weight:600;font-size:12px}
+  .memo-paper{background:#FAFAF7;border:1px solid #E5E5E0;padding:24px 30px;font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;border-radius:2px;margin:12px 0;box-shadow:1px 1px 0 #00000010}
+  .elevator{font-style:italic;background:#F8FAFC;border-left:3px solid var(--muted);padding:14px 18px;margin:10px 0;color:var(--muted)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;margin:12px 0}
+  details summary{padding:14px 20px;cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▶ ";font-size:11px;color:var(--muted);margin-right:6px}
+  details[open] summary::before{content:"▼ "}
+  details > *:not(summary){padding:0 24px 20px}
+  .summary-conclusion{font-weight:400;color:var(--muted);margin-left:12px;font-size:13px}
+  .source-list{font-size:13px;color:var(--muted);margin-top:8px}
+  .source-list a{color:var(--accent-light);text-decoration:none}
+  .source-list a:hover{text-decoration:underline}
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:2px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px #00000018;z-index:200}
+  .print-btn:hover{background:#0F2542}
+  @media print {
+    header.fixed-top, .print-btn { display:none !important }
+    details { border:none }
+    details:not([open]) > *:not(summary) { display:block !important }
+    details > *:not(summary) { padding:0 !important }
+    summary::before { display:none }
+    main { max-width:100%; padding:0 12px }
+    h2 { page-break-after:avoid }
+    .card, .conflict-card, .decision-card, .thesis-card { page-break-inside:avoid }
+  }
+</style>
+</head>
+<body>
+
+<header class="fixed-top">
+  <span class="ticker mono">2330.TW · TSMC</span>
+  <span class="sep">｜</span>
+  <span class="mono">2026-05-06</span>
+  <span class="sep">｜</span>
+  <span class="thesis-line">TSMC 是 AI 時代的 silicon toll booth — A16 + CoWoS 雙寡占</span>
+</header>
+
+<main>
+
+<h1>Deep Conviction Analysis · 2330.TW（TSMC）</h1>
+<p style="color:var(--muted);font-size:14px;margin:0 0 12px">深度定見分析 ｜ 報告日期：2026-05-06 ｜ 標的價格：TWD 2,275 ｜ Forward P/E ≈ 23.6x</p>
+
+<!-- ==================== §2 ONE-SENTENCE THESIS ==================== -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-card">
+  <div class="quote">TSMC 是 AI 時代唯一能持續供應頂尖製程的 silicon bottleneck，<br>A16 backside power + CoWoS 雙寡占讓它成為整個 AI 產業鏈的 toll booth。</div>
+  <div class="label">— 50 字以內的投資本質 ｜ 敘事性，非財務指標性 —</div>
+</div>
+
+<!-- ==================== §7 DECISION ==================== -->
+<h2>§7 Decision · 可執行計畫</h2>
+
+<div class="decision-card">
+  <span class="verdict-tag">WAIT &amp; SCALE-IN</span>
+  <p style="margin:0;font-size:15px"><strong>裁決</strong>：基本面支持核心持倉，但目前 RSI 75 overbought + 估值在 5Y 平均上方 → 等回測進場；分批建倉。</p>
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<div class="card">
+<table>
+  <thead><tr><th style="width:30%">項目</th><th>具體內容</th></tr></thead>
+  <tbody>
+    <tr><td>在投資組合中的角色</td><td><strong>核心持倉</strong>（AI 產業鏈 toll booth；非投機部位）</td></tr>
+    <tr><td>初始建倉倉位</td><td>3-4% of portfolio（試倉，待 §7b 觸發再加碼）</td></tr>
+    <tr><td>目標倉位</td><td>6-8% of portfolio（thesis 確認 + 估值合理時）</td></tr>
+    <tr><td>進場價位區間</td><td>TWD <strong>1,950 ~ 2,100</strong>（vs 現價 2,275，-8% to -14%）</td></tr>
+    <tr><td>進場節奏</td><td>分批 3 次：① 初始試倉 1.5% @ 2,100、② 加 1.5% @ 1,950、③ 加 2-3% 待 Q3 2026 法說 GM 確認 &gt; 67%</td></tr>
+    <tr style="background:#FED7AA"><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td>
+      <td><strong>明確點名</strong>：若已持有 NVDA（AI 設計龍頭）+ ASML（光刻寡占），TSMC 是<strong>第三條獨立 vector</strong>（代工寡占）— 對 AI 浪潮的曝露維度不同，<u>非重複</u>。<br>
+      但 ASML × TSMC capex 高度相關（同一資本支出循環的不同節點），若 ASML 已重壓需評估雙重曝險。<br>
+      邊際資金優先序：TSMC（23x fwd PE，4 年漲價已 booked）&gt; NVDA（已 priced in 更高）&gt; 加碼 ASML（capex cycle peak 風險最高）。<br>
+      若 portfolio 缺 AI 中游製造曝險 → TSMC 是補洞首選；若已有 TSMC 同等部位 → 此 DCA 視為 conviction 回測，不是新進倉位決策。</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>7b. 加碼與減碼條件</h3>
+<div class="card">
+<table>
+  <thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+  <tbody>
+    <tr><td><strong>加碼</strong></td><td>跌至 TWD 1,950 + RSI &lt; 50（價值 + 動能對齊）</td><td>5%</td></tr>
+    <tr><td><strong>加碼</strong></td><td>Q3 2026 法說 GM &gt; 67% 且 N2 yield &gt; 75%（thesis 兌現確認）</td><td>8%</td></tr>
+    <tr><td><strong>減碼</strong></td><td>Pure MA 跌破 MA200 + 月線低點下破（Pure MA 系統 brake）</td><td>4%</td></tr>
+    <tr><td><strong>減碼</strong></td><td>Hyperscaler 月度 capex 出現首次 m/m 下修（Phase B 矛盾#1 settle 的硬數據）</td><td>3%</td></tr>
+    <tr><td><strong>清倉</strong></td><td>§5 single-thing 觸發（Intel 14A 取得 hyperscaler 大客戶簽約）</td><td>0%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>7c. Pure MA 相容性檢查</h3>
+<div class="card">
+<table>
+  <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td>股價在 MA60 之上？</td><td><span class="ok-tag">✅ 是</span></td><td>2,275 vs MA60 ~1,497（+52%，明顯延伸）</td></tr>
+    <tr><td>股價在 MA200 之上？</td><td><span class="ok-tag">✅ 是</span></td><td>2,275 vs MA200 1,214（+87%，極度延伸）</td></tr>
+    <tr><td>股價在 MA104w 之上？</td><td><span class="ok-tag">✅ 是</span></td><td>5Y 結構性多頭（2024 年至今未跌破 MA104w）</td></tr>
+    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="ok-tag">✅ 支持但 RSI overbought</span></td><td>多頭結構完整，但 RSI 75.5 → <strong>不適合追高，等回測 MA60</strong></td></tr>
+  </tbody>
+</table>
+<p style="margin-top:12px;color:var(--muted);font-size:13px"><strong>MA 確認條件</strong>：建議等待 RSI 14d 回到 50-60 區間（價約 TWD 2,000-2,100），Pure MA 維持完整時再分批進場。直接追高 = 接受 8% 試倉的 short-term drawdown 風險。</p>
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<div class="card">
+<table>
+  <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+  <tbody>
+    <tr><td>短期（&lt; 2 年）</td><td>如果 §5 觸發或 §8 review trigger 命中 → 短期出場</td></tr>
+    <tr><td><strong>中期（2-5 年）</strong></td><td><strong>主軸推薦</strong>：A16 護城河窗口 2027-2030；A14 / A13 接力</td></tr>
+    <tr><td>長期（5-10 年）</td><td>需在 2028-2029 重評：Intel 14A / Samsung SF1.4 是否拉近差距、地緣局勢、AI 需求穩態</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:8px"><strong>建議持有年限：5-7 年（中期偏長）</strong>。原因：A16 + A14 領先窗口剛開啟（2026 H2 - 2030），sub-2nm 漲價已 booked 至 2029；2030+ 競爭加劇，需動態評估。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+  <thead><tr><th>年份</th><th>EPS 估計（TWD）</th><th>來源</th><th>備注</th></tr></thead>
+  <tbody>
+    <tr><td>2026E</td><td><strong>~96</strong></td><td>賣方 consensus</td><td>FY 共識；Q1 2026 +58% YoY 已超預期</td></tr>
+    <tr><td>2027E</td><td><strong>~125-135</strong></td><td>推估（+30~40% YoY）</td><td>2nm full year + 漲價 5-10% + AdvPkg &gt; 12%</td></tr>
+    <tr><td>2030E（外推）</td><td>~200-220</td><td>外推</td><td>外推假設：2027-2030 +15% CAGR；A14 + AdvPkg ASP 持續</td></tr>
+  </tbody>
+</table>
+
+<h4>假設長期持有（5-10 年），現在的股價適合嗎？</h4>
+<p>以 2026E EPS 96 計，forward PE 23.6x；以 2027E 130 中位估，forward PE ~17.5x（合理偏低）。Asymmetry analysis 顯示 5Y 機率加權期望值 ~1.51x，5Y CAGR 約 8.5%，<strong>單檔報酬不算誘人但風險可控；只在 §7a 進場區間內買進才符合邊際投入</strong>。盲目追高至 2,400 等於買入「合理估值的好公司但 R:R 受擠壓」，違反巴菲特「好公司好價格」原則的下半句。</p>
+</div>
+
+<!-- ==================== §4 ASYMMETRY ==================== -->
+<h2>§4 Asymmetry Analysis</h2>
+<div class="card">
+<table>
+  <thead><tr><th>情境</th><th>倍數</th><th>依據</th><th>機率估計</th></tr></thead>
+  <tbody>
+    <tr><td>Thesis 對：A16 領先持續 + 漲價 booked + AdvPkg ASP 上升</td><td><strong>+100% (2.0x)</strong></td><td>EPS 96→200，PE 維持 22-25x，5Y CAGR ~15%</td><td>55%</td></tr>
+    <tr><td>中間情境：thesis 對但放緩，地緣風險溢價擴大</td><td>+30% (1.3x)</td><td>EPS 96→160，PE 從 23x → 19x（小殺戴維斯）</td><td>20%</td></tr>
+    <tr><td>Thesis 錯：地緣事件 / AI capex 斷崖 / Intel 14A 突襲</td><td><strong>-50% (0.5x)</strong></td><td>GM 65→50%、PE 23→14x、EPS 折半</td><td>25%</td></tr>
+    <tr style="background:#FED7AA"><td><strong>機率加權期望值</strong></td><td colspan="2"><strong>0.55 × 2.0 + 0.20 × 1.3 + 0.25 × 0.5 = 1.49x</strong></td><td><strong>5Y CAGR ~8.3%</strong></td></tr>
+  </tbody>
+</table>
+
+<h4>追加壓力測試</h4>
+<ul>
+  <li><strong>thesis 對但時間拉長 10 年（而非 5 年）</strong>：CAGR 從 15% 降至 7-8%，若同期間美股長期 CAGR ~10% → <em>機會成本下不夠 attractive</em>。但 TSMC 不是用來打敗大盤，是用來建立 AI 中游曝險，所以仍可持有。</li>
+  <li><strong>機會成本後的答案</strong>：若 portfolio 已有同等 AI 曝險（NVDA + ASML 重壓），TSMC 邊際 1.49x 期望值不夠 outperform 加碼 NVDA。但若 AI 曝險缺中游 → TSMC 不可替代。</li>
+</ul>
+
+<div class="pattern-card">
+  <h4 style="margin-top:0;color:#0C4A6E">📐 Pattern Match · 讓機率有錨點</h4>
+  <table>
+    <tbody>
+      <tr><td style="width:30%"><strong>歷史相似 setup</strong></td><td>1990s Microsoft Windows 平台壟斷 / 2017-2022 NVDA 早期 AI 賭局 雙重對照</td></tr>
+      <tr><td><strong>當時的 setup</strong></td><td>MSFT 1995-2000：90%+ OS 市占 + 開發者生態網路效應 + 高 capex 不足以複製。NVDA 2017-2022：CUDA 軟硬體整合 + AI 訓練早期需求拐點 + 競爭者（AMD MI / Intel Gaudi）落後。</td></tr>
+      <tr><td><strong>5Y 實現報酬</strong></td><td>MSFT 1995-2000 +600%（dot-com 泡沫高點）；NVDA 2017-2022 +600%；2 個案 5Y 都是 5-7x 區間。</td></tr>
+      <tr><td><strong>我的標的最像</strong></td><td>「90%+ 市占 + 客戶生態 lock-in + 高 capex 護城河」 — TSMC 全中</td></tr>
+      <tr><td><strong>最不像的地方</strong></td><td>(1) <u>地緣風險</u>：MSFT/NVDA 都沒有國家級存亡風險，TSMC 有 — 這是 5Y 跌幅 -50% 機率不能低於 25% 的根本原因。<br>(2) <u>已 priced in 程度</u>：MSFT/NVDA 起漲時 PE 都偏低，TSMC 現 23x forward PE 已比歷史 5Y 平均高 → 倍數空間天花板較低。</td></tr>
+    </tbody>
+  </table>
+  <p style="margin:8px 0 0;font-size:13px;color:#0C4A6E"><em>Pattern match 結論：thesis 結構像 5-7x 5Y 報酬的 setup，但地緣 + 已 priced in 兩個 discount 拉低到 1.5-2x 區間 — 這就是為什麼 §7 主推「等回測進場」而非追高的根本原因。</em></p>
+</div>
+</div>
+
+<!-- ==================== §1 MENTAL MODELS ==================== -->
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">
+<strong>TO</strong>: Investment Committee<br>
+<strong>FROM</strong>: PM, $500M AUM<br>
+<strong>DATE</strong>: 2026-05-06<br>
+<strong>RE</strong>: TSMC (2330.TW) · INITIATE 3% / TARGET 8%<br>
+<br>
+<strong>THESIS</strong>: TSMC 是 AI 時代唯一供應頂尖製程的 silicon bottleneck — A16 backside power（H2 2026 投產，領先 Samsung/Intel 1-2 代）+ CoWoS 寡占（NVDA 占 50%+ 產能）讓它成為整個 AI 產業鏈的 toll booth。<br>
+<br>
+<strong>KEY DRIVERS</strong>:<br>
+&nbsp;&nbsp;1. 先進製程量價齊升：90%+ 2-3nm 市占，sub-5nm wafer ASP 連 4 年 +3-10%/年（2026-2029 booked）<br>
+&nbsp;&nbsp;2. AdvPkg 從 8% (2025) → &gt;10% (2026) 營收，ASP 漲幅 10-20%/年（vs logic wafer +5%）<br>
+<br>
+<strong>R:R</strong>:<br>
+&nbsp;&nbsp;Upside（55%）: +100% / 5Y · CAGR 15%<br>
+&nbsp;&nbsp;Mid（20%）: +30% / 5Y · CAGR 5%<br>
+&nbsp;&nbsp;Downside（25%）: -50% · 地緣事件 / Intel 14A 突襲 / hyperscaler capex 斷崖<br>
+&nbsp;&nbsp;<strong>機率加權：1.49x / 5Y CAGR 8.3%</strong><br>
+<br>
+<strong>主要風險</strong>:<br>
+&nbsp;&nbsp;1. 地緣（Taiwan 2027 PLA「ready by 2027」，但 readiness ≠ invasion；用倉位上限 8% 控制）<br>
+&nbsp;&nbsp;2. AI capex 拐點（Q4 2025 hyperscaler capex YoY +49% 已從 +75% 放緩；2026 H2 m/m 下修是早期信號）<br>
+&nbsp;&nbsp;3. Intel 14A 2027-Q4 ~ 2028-Q1 取得 hyperscaler 簽約 = 護城河被破<br>
+<br>
+<strong>建議倉位</strong>: 試倉 3-4%；目標 6-8%；進場區 TWD 1,950-2,100（現價 2,275，等 -8% 至 -14%）；分批 3 次。<br>
+<br>
+<strong>清倉條件</strong>: §5 single-thing 觸發 = Intel 14A 取得任一 NVDA/AMD/GOOGL/META/AMZN 大客戶簽約。<br>
+<strong>保質期</strong>: 3 個月或 Q2 2026 法說後重新評估。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+"TSMC 是 AI 時代的 silicon toll booth — 90%+ 2-3nm 市占、A16 backside power 領先 1-2 代、CoWoS 客戶寡占。連 4 年 sub-2nm 漲價已 booked，capex 訂單滿到 2028。風險是 hyperscaler capex 拐點提前 + Intel 14A 突襲。Forward PE 23x = 5Y 平均，期望值 1.5x／5 年；地緣風險用倉位上限 8% 控制；現在 RSI 75 overbought，等回測 TWD 2,100 才進場。"
+</div>
+
+<p><strong>壓測結果</strong>：1 頁紙 + 30 秒兩版本邏輯自洽，thesis、driver、R:R、風險、進場條件無矛盾 → ✅ 通過，繼續執行 §7 計畫。</p>
+
+<!-- ==================== PHASE B ==================== -->
+<h2>Phase B · 矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1 + A2 + A3 方向一致 = 高信心區）</h3>
+<div class="card">
+<ul>
+  <li>✅ <strong>結構性護城河至 2027-2028 不變</strong>（A1 製程領先 + A4 ID 報告 cross-confirm）</li>
+  <li>✅ <strong>短期供需偏緊 + 訂單已 booked</strong>（A2 「3x 短缺」+ A3 「2028 booked」）</li>
+  <li>✅ <strong>高 ROIC（24-42%）+ 高 GM（66.2%）+ 高 capex 同時並存</strong>（A1 + A3 反共識：通常 capex 重 = ROIC 低，TSMC 是極少數例外）</li>
+</ul>
+</div>
+
+<h3>2. 矛盾清單（A1/A2/A3 內部）</h3>
+
+<div class="conflict-card">
+<h4 style="margin-top:0">🔴 矛盾 #1（不可調和）：AI capex 路徑分歧</h4>
+<table>
+  <tbody>
+    <tr><td style="width:18%"><strong>矛盾點</strong></td><td>A2「AI capex 2027 可能 plateau」 vs A3「Capex booking 已滿到 2028」</td></tr>
+    <tr><td><strong>A2 view</strong></td><td>hyperscaler capex YoY 從 Q3 2025 +75% → Q4 2025 +49% → 2026 末 +25%（base effect + 電力瓶頸 + 風險偏好重定價）</td></tr>
+    <tr><td><strong>A3 view</strong></td><td>TSMC 2-3nm 訂單 booked through 2028；Q1 2026 GM 66.2% 大幅超預期；NVDA 變最大客戶（22%）</td></tr>
+    <tr><td><strong>性質</strong></td><td>🔴 不可調和（時間差大但方向相反 — capex 緊縮先於訂單取消，但有 6-12 個月 lag）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="conflict-card">
+<h4 style="margin-top:0">🟡 矛盾 #2（可調和，程度差異）：地緣風險 vs 分散產能</h4>
+<table>
+  <tbody>
+    <tr><td style="width:18%"><strong>矛盾點</strong></td><td>A2「Taiwan 2027 PLA ready, 美 CIA 預警」 vs A3「Arizona P2 2H27 投產、Kumamoto 2nd fab 2028」</td></tr>
+    <tr><td><strong>性質</strong></td><td>🟡 可調和：即使 2027 出事，海外分散產能起來部分緩衝 — 不是 binary 風險</td></tr>
+    <tr><td><strong>不下強制裁決</strong></td><td>程度問題，反映在 -50% downside 機率估計（25%，已內化）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="conflict-card">
+<h4 style="margin-top:0">🔴 矛盾 #3（不可調和）：A16 護城河持續性</h4>
+<table>
+  <tbody>
+    <tr><td style="width:18%"><strong>矛盾點</strong></td><td>A1「A16 backside power 是 2027-2028 護城河」 vs A4 之 ID_HighNAEUV「TSMC skip A14/A13/A12 至 2030+ 是 capital discipline」</td></tr>
+    <tr><td><strong>A1 view</strong></td><td>A16 領先 1-2 代 → 護城河延續</td></tr>
+    <tr><td><strong>A4 (HighNAEUV ID) view</strong></td><td>TSMC 在 A14 之後刻意減速 → 2029-2030 與 Intel 14A 差距可能縮小</td></tr>
+    <tr><td><strong>性質</strong></td><td>🔴 不可調和（時間區間不同：2026-2028 vs 2029+；同一個 driver 不同方向）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3. 與既有 ID 報告的交叉矛盾</h3>
+<div class="card">
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>ID 報告結論</th><th>可能原因</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>CoWoS 是不是 2026 H2 真瓶頸</td><td>A3：CoWoS 127K WPM 緊俏 + AdvPkg ASP 領漲</td><td>ID_CoWoSCoPoS 2026-05-01：「NVDA 2026 H2 真瓶頸不是 CoWoS（130K WPM 已綽綽有餘），是 HBM4 12-Hi yield + ABF warpage」</td><td>視角差（TSMC 自己 vs 全產業鏈視角）</td></tr>
+    <tr><td>2</td><td>CoPoS 對 2027 EPS 是否有貢獻</td><td>A3：AdvPkg 2026 &gt;10% 營收</td><td>ID_CoPoSFOPLPRace 2026-05-05：「CoPoS 對 TSMC 2026-2027 EPS 沒實質貢獻 — 共識把 CoPoS 算進 TSM 2027 PE 是過度樂觀」</td><td>分析深度差（A3 看現有 CoWoS，ID 已切到 next-gen CoPoS 量產時程）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決</h3>
+
+<div class="verdict-table">
+<table>
+  <thead><tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據（不能是「直覺」）</th><th>會 settle 此衝突的硬數據點（出處、頻率）</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>AI capex 拐點</td>
+      <td><strong>A3 邊（near-term）</strong></td>
+      <td>2026 全年 capex 已 booked；訂單取消有 6-12 個月 lag；Q1 2026 GM 66.2% 超預期是 priced power 仍強的硬數據。但 A2 不是錯，是<u>領先信號</u>需要監控。</td>
+      <td><strong>hyperscaler 月度 capex（AWS / GOOGL / META / MSFT / ORCL）</strong>：若 2026 H2 出現首次 m/m 下修 → A2 對，立即減碼。<br>來源：每家公司財報 + Visible Alpha consensus，<u>每月追蹤</u>。</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>A16 護城河持續性</td>
+      <td><strong>A1 邊（2026-2028）+ A4 補充（2030+）</strong></td>
+      <td>A16 / A14 在 2027-2028 仍領先 2-3 年（ID_LeadingEdgeNode + ID_HighNAEUV 均 cross-confirm）；2029-2030 進入「TSMC 刻意減速 vs Intel 14A 衝刺」窗口，要動態評估。</td>
+      <td><strong>Intel 14A 是否 2027-Q4 ~ 2028-Q1 取得 hyperscaler 大客戶簽約</strong>（HighNAEUV ID 已點明此為命運點）— 取得 = 護城河被破，§5 single-thing 觸發。<br>來源：Intel earnings call、semianalysis.com、Reuters/Bloomberg 大客戶轉單新聞，<u>每月</u>。</td>
+    </tr>
+    <tr>
+      <td><strong>交叉 1</strong></td>
+      <td>CoWoS vs HBM4 yield 哪個是真瓶頸</td>
+      <td><strong>採信 ID_CoWoSCoPoS（2026-05-01）</strong></td>
+      <td>ID 視角更全面（看全 supply chain）；A3 只看 TSMC 自己。HBM4 12-Hi yield 在 SK Hynix / Samsung / Micron 已是 2026 H2 NVDA Rubin 真瓶頸 — 這意味著 TSMC CoWoS 緊俏度可能比賣方想像低。</td>
+      <td><strong>SK Hynix / Samsung HBM4 12-Hi yield 是否 2026 H2 突破 70%</strong> — 突破 = NVDA 出貨無瓶頸，反證 CoWoS 不是緊俏點；未突破 = 全產業鏈卡 HBM 而非 CoWoS。<br>來源：DigiTimes / TrendForce / 公司財報，<u>每季</u>。</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p style="background:#FED7AA;padding:10px 14px;border-radius:2px;font-size:13px;margin-top:12px"><strong>強制裁決對 Phase C 的影響：</strong>(1) §5 single-thing 主軸採用「Intel 14A hyperscaler 簽約」(裁決 #3)；(2) §7b 加減碼觸發加入「hyperscaler 月度 capex m/m 下修」(裁決 #1)；(3) §6 What I Don't Know #2「AI inference 穩態」吸納交叉裁決#1。</p>
+
+<!-- ==================== §3 KEY DRIVERS ==================== -->
+<h2>§3 Key Drivers</h2>
+<div class="card">
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>先進製程量價齊升（90%+ 2-3nm 市占 + sub-5nm ASP 連 4 年 +3-10%/年）</td>
+      <td>沒有量沒有壟斷；沒有 ASP 升級護城河 monetize 不出來。AI capex 浪潮是需求源，但 TSMC <strong>能不能漲價</strong>是測試壟斷強度的唯一指標。</td>
+      <td>季度 wafer ASP（從財報拆 wafer revenue / shipped wafer count），N3 / N2 yield，季度 GM</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>AdvPkg（CoWoS / SoIC / COUPE）營收占比 + ASP 漲幅</td>
+      <td>logic 漲價 +5%/年，AdvPkg ASP +10-20%/年 — AdvPkg 是<strong>下一個 GM 拐點的源頭</strong>。CoWoS 寡占（NVDA 占 50%+ 容量）讓 TSMC 從「foundry」升級成「整合系統供應商」。</td>
+      <td>AdvPkg 占總營收 %（季度披露）、CoWoS 月產能（127K WPM 目標）、N3 vs CoWoS GM 差</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>為什麼是這 1-2 個，而不是其他？</h4>
+<p>智慧手機週期、IoT 復甦、汽車半導體 — 這些都會貢獻營收，但<strong>不會改變 TSMC 的命脈邏輯</strong>。TSMC 的故事不是「半導體景氣循環」，是「AI 時代的 silicon toll booth」 — 而 toll booth 的 monetize 就靠 (1) 通行的車流量（先進製程市占）+ (2) 通行費（ASP）。其他都是噪音。</p>
+
+<h4>強制減法 — 我認為不重要的事</h4>
+<table>
+  <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>季度 EPS surprise</td><td>對長期 thesis 無關；季度 ±10% 是 noise，5Y trajectory 才是 signal</td></tr>
+    <tr><td>美國對台關稅</td><td>反覆被討論但 carve-out 多；半導體已享有實質豁免；總經影響小於 thesis-level driver</td></tr>
+    <tr><td>智慧手機週期</td><td>26% 營收但對 thesis 無解釋力；HPC 61% 才是命脈</td></tr>
+    <tr><td>RSI 75 overbought</td><td>影響「<u>進場時機</u>」（已反映在 §7c），不影響 5Y thesis</td></tr>
+    <tr><td>美國商務部禁售（中國市場）</td><td>已 priced in 多年；2026 邊際影響小</td></tr>
+  </tbody>
+</table>
+
+<h4>🔄 我和市場 consensus 的最大分歧（Munger inversion 落地）</h4>
+<table>
+  <tbody>
+    <tr><td style="width:30%"><strong>市場目前定價在什麼假設上</strong></td><td>Forward PE ~23.6x（5Y 平均 23.1x）= 共識認為 TSMC 是「合理估值的優質公司」，不再低估。EPS 2027 共識 ~125。</td></tr>
+    <tr><td><strong>我認為的不同假設</strong></td><td>(1) sub-2nm 寡占至 2028+ 比共識更牢固（共識假設 Intel 18A 2026 末已是商業 yield，但實際只 55-60%）；(2) AdvPkg ASP &gt; wafer ASP 的差距會放大（共識仍把 AdvPkg 當 ancillary，但其實是 GM 拐點源頭）；(3) AI inference 是<strong>線性結構性</strong>需求，不是 DRAM/storage 那種週期性 — 所以 capex 不會斷崖。三者疊加，2027-2028 EPS 路徑可能比共識高 15-20%。</td></tr>
+    <tr><td><strong>賣方為什麼錯（具體理由）</strong></td><td>賣方把 AI capex 視為「可能週期性」（從歷史 DRAM/storage 學來的 mental model），但 inference 部署是「inferences-per-query × queries-per-day」線性增長 — 不像 DRAM 是按批次採購。賣方 mental model 用錯類比。具體誤判點：把 hyperscaler capex YoY 放緩當作「週期見頂」信號，沒看到絕對量仍在歷史高峰且訂單已 booked 至 2028。</td></tr>
+  </tbody>
+</table>
+<p style="font-size:13px;color:var(--muted);margin-top:8px"><em>校驗：我對「賣方為什麼錯」的回答有<u>具體 mental model 誤判點</u>（DRAM-like 類比 vs inference-like 部署），不是空泛 → thesis 有獨立 alpha 來源。但分歧只 15-20%，不是 50%+ — 屬於中等 conviction。</em></p>
+</div>
+
+<!-- ==================== §5 SINGLE THING ==================== -->
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+<div class="card">
+<table>
+  <tbody>
+    <tr><td style="width:25%"><strong>事件描述</strong></td><td>Intel 14A 在 2027-Q4 ~ 2028-Q1 取得任一 hyperscaler（NVDA / AMD / GOOGL / META / AMZN / MSFT / Apple）大客戶簽約 — 不是 lab demo，不是 small batch，是<strong>多年 billion-dollar 級 production 訂單</strong>。</td></tr>
+    <tr><td><strong>為什麼這個事件是致命的</strong></td><td>TSMC 護城河的核心是「客戶被 PDK + IP ecosystem 鎖住」+「沒人能達到良率」。Intel 14A 拿到任一 hyperscaler 量產訂單 = 這兩個前提至少有一個被破：<br>① PDK 鎖定可被打破 → 其他客戶會跟進評估 → 切換成本下降<br>② 良率 / 容量足以支援 hyperscaler scale → A16 backside power 領先優勢只剩「短期 1-2 代」而非永久<br>任一成立都意味著 thesis 從「永續 toll booth」變成「短期 toll booth」，估值 fair PE 從 23x 降到 15-17x，戴維斯雙殺。</td></tr>
+    <tr><td><strong>如何監測</strong></td><td>每月：Intel earnings call（quarterly）、semianalysis.com 月報、Reuters / Bloomberg / DigiTimes 大客戶轉單新聞、SemiAccurate / SemiWiki 技術討論</td></tr>
+    <tr><td><strong>目前離發生有多遠</strong></td><td>Intel 18A 已取得 Microsoft Maia 3（2025-10）+ AWS（2026-04）兩個 hyperscaler，但這些是 specialty / chiplet 級別，<strong>非主流 AI accelerator GPU 量產</strong>。14A 良率與工具尚未到位（Lip-Bu Tan 2026-02-03 確認時程滑到 risk 2028 / mass 2029）。<u>距離還有 18-24 個月</u>。</td></tr>
+  </tbody>
+</table>
+<p style="background:#FEF3C7;padding:10px 14px;border-radius:2px;font-size:13px;margin-top:12px"><strong>規則檢查：</strong>✅ 明確、單點、可驗證；❌ 不模糊（不是「市佔下降」）；❌ 不慢（事件而非趨勢）。</p>
+</div>
+
+<!-- ==================== §6 WHAT I DON'T KNOW + PRE-MORTEM ==================== -->
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<div class="card">
+<table>
+  <thead><tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>中國 2027 行動的真實機率</td>
+      <td>&lt; 10% per year（Xi 政治判斷未來 5 年偏理性）</td>
+      <td>thesis 完全失效；股價 -70%~-90%；TSMC 海外產能僅能保留 30-40% 營收能力</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>AI inference TAM 的真實穩態（vs 1 度泡沫高點）</td>
+      <td>2030 年 inference 需求是 training 3-4x，且大部分來自<u>產業 production 採用</u>，不是 hype</td>
+      <td>若實際 inference 採用低於預期，hyperscaler capex 2027-2028 可能砍 30-40%；TSMC EPS 2030 從 220 → 130，股價殺戴維斯到 PE 14x → 跌幅 -50%</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Samsung SF2P / Intel 14A 良率突破速度</td>
+      <td>兩者 2028 之前皆未達商業 yield (&gt; 75%)</td>
+      <td>TSMC 提前失去定價權；ASP 漲幅從 +5-10%/年 變 0-2%；GM 從 65% 跌至 50-55%；EPS 砍 30%</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>6b. Pre-mortem · 失敗故事倒推</h3>
+<div class="premortem">
+<strong>「假設 5 年後（2031）這個部位虧 50%，最可能的故事是：</strong><br><br>
+2026 H2 hyperscaler 月度 capex 出現首次 m/m 下修（OpenAI 訓練擱淺 + Meta 成本壓力）；2027 NVDA 訂單砍 30%（Rubin Ultra 推遲 2 季）；同時 2027 PLA 在台海空中演習升級為實彈，地緣風險溢價放大、外資撤離 — TSMC 從 2,275 跌至 1,400（-38%）；2028 Intel 14A 意外取得 AMD MI500 訂單（AMD 第二供應商策略），市場對 TSMC「永續 toll booth」敘事崩解；2029 GM 從 65% 跌至 52%，PE 從 23x 殺到 14x（戴維斯雙殺），最終價 ~1,100，5 年帳面 -52%。」
+</div>
+<p><strong>校驗：</strong>這個故事和 §5 single-thing <strong>部分重疊</strong>（Intel 14A 取得 AMD 訂單 ✅）但<strong>多了「需求斷崖 + 估值殺」雙重打擊</strong>。<br>
+👉 <strong>§5 應補強為次要單點觸發</strong>：「<u>hyperscaler 月度 capex 出現首次 m/m 下修</u>」 — 已加入 §7b 減碼觸發（裁決 #1 對應）。pre-mortem 找出了 §5 漏抓的需求風險，這是 deepening 點 D 的價值。</p>
+
+<!-- ==================== §8 REVIEW TRIGGERS ==================== -->
+<h2>§8 Review Triggers</h2>
+<div class="card">
+<table>
+  <thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Q2 2026 法說</td><td>財報日期</td><td><strong>2026-07 中旬</strong>。檢查：GM 是否維持 65%+、N2 yield、CoWoS capacity guidance、capex 是否上修</td></tr>
+    <tr><td>2</td><td>Intel 18A → 14A 大客戶新聞</td><td>產業事件</td><td>每月。任一 hyperscaler 簽約（量產級）→ §5 觸發、清倉</td></tr>
+    <tr><td>3</td><td>2330 跌至 TWD 1,950</td><td>價位觸發</td><td>進場 + 加碼至 5%（§7b 第一加碼觸發）</td></tr>
+    <tr><td>4</td><td>hyperscaler 月度 capex m/m 下修</td><td>領先信號</td><td>每月。AWS / GOOGL / META / MSFT / ORCL 任一公司 m/m 下修 → 減碼至 3%（§7b 觸發）</td></tr>
+    <tr><td>5</td><td>地緣事件升級（PLA 實彈演習 / 美中軍事衝突）</td><td>地緣事件</td><td>即時。任何能讓 VIX &gt; 35 的台海事件 → 暫停加碼，重評倉位上限</td></tr>
+  </tbody>
+</table>
+
+<p style="margin-top:16px"><strong>這份報告的保質期</strong>：<span style="background:var(--ok);color:var(--ok-text);padding:2px 8px;border-radius:2px">3 個月或下次 Q2 2026 法說後（2026-07）重新評估</span>，以較早者為準。地緣 / capex 拐點 / Intel 14A 任一觸發即 invalidate。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：sub-2nm 漲價達 +10%（vs 預期 +3-5%）+ AdvPkg 占比超 12% + Apple 切回 N2 全用 + AI inference 需求超預期 → 2027 EPS 可達 145+，股價 1Y 內可觸 2,800-3,000。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：hyperscaler 月度 capex 2026 H2 出現首次 m/m 下修 + 地緣事件 + Intel 14A 突襲（任一即可，三者疊加 = -50% pre-mortem 場景）。</p>
+</div>
+
+<!-- ==================== PHASE A1 (collapsed) ==================== -->
+<details>
+<summary>Phase A1 · 護城河深度分析<span class="summary-conclusion">獨立結論：TSMC 護城河 5 年穩固度極高（9/10），主要侵蝕風險來自 2029+ Intel 14A 而非當前 Samsung SF2</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>主要護城河類型</td><td>(1) <strong>製程技術領先</strong>：90%+ 2-3nm 市占 + A16 backside power 領先 1-2 代；(2) <strong>客戶生態 lock-in</strong>：PDK + IP ecosystem 切換成本多年/多 million 工程</td></tr>
+    <tr><td>持久性評分</td><td><strong>9/10，5 年穩固度：高</strong>（2026-2030 視窗清楚；2030+ 不確定）</td></tr>
+    <tr><td>最大侵蝕風險</td><td>Intel 14A 2027-Q4 ~ 2028-Q1 取得 hyperscaler 大客戶簽約 — 18-24 個月時間軸</td></tr>
+    <tr><td>關鍵數據</td><td>毛利率 66.2%（趨勢 ↑，Q1 2026 vs guidance 63-65%）、市佔率 sub-5nm 90%+（趨勢 →，已飽和上限）、ROIC 24-42% vs WACC 9-13% → 超額 ~15-30%p</td></tr>
+  </tbody>
+</table>
+
+<p><strong>細節分析（內部完成）：</strong></p>
+<ul>
+  <li>2026 capex $52-56B（vs Intel $16B）= 「3 個 Intel」每年蓋產能 — 這是<strong>capex moat</strong>，不是技術 moat；後者是必要條件，前者是不可複製條件。</li>
+  <li>PDK lock-in 量化：客戶從 TSMC 切到 Samsung，IP library 重驗證需要 2-3 年 + millions USD 投入，且 Samsung 本身良率還更差 → 客戶根本沒理由切。</li>
+  <li>A16 backside power（Super Power Rail）2H 2026 投產，這是 ID_LeadingEdgeNode 認定的 2027-2028 真正護城河 — 領先 Samsung / Intel 1-2 代。</li>
+  <li>網路效應自我強化：每個用 TSMC 的設計者貢獻 IP 到平台，平台對下一個設計者更有吸引力。</li>
+</ul>
+
+<div class="source-list">
+<strong>主要 sources：</strong>
+<a href="https://seekingalpha.com/article/4856595-tsmc-moat-is-deepening">Seeking Alpha · TSMC's Moat Is Deepening</a> ｜
+<a href="https://patentpc.com/blog/samsung-vs-tsmc-vs-intel-whos-winning-the-foundry-market-latest-numbers">PatentPC · Foundry Market Share</a> ｜
+<a href="https://stayingrational.substack.com/p/the-physics-of-money-why-tsmc-has">Staying Rational · The Physics of Money</a> ｜
+<a href="https://anysilicon.com/news/tsmcs-2026-north-america-technology-symposium-a-roadmap-built-for-a-more-segmented-compute-era/">AnySilicon · 2026 NA Technology Symposium</a> ｜
+<a href="https://www.alphaspread.com/security/twse/2330/profitability/ratio/return-on-invested-capital">AlphaSpread · TSMC ROIC</a>
+</div>
+</details>
+
+<!-- ==================== PHASE A2 (collapsed) ==================== -->
+<details>
+<summary>Phase A2 · 產業趨勢深度分析<span class="summary-conclusion">獨立結論：foundry TAM CAGR 12% + 短期供需偏緊但 AI capex 拐點為核心不確定 + 地緣 2027 為命運點</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>TAM 與成長</td><td>2026 全球 foundry $218.8B（+24.8% YoY，TrendForce）；Foundry 2.0 $360B；CAGR 7.6-12.2%（2026-2031/2035 不同來源）；4-10nm 是 37% 市佔大頭，3nm CAGR 最快</td></tr>
+    <tr><td>供需判斷</td><td>目前<strong>供需極度偏緊</strong>（TSMC「3x 短缺」，2-3nm booked through 2028）；未來 12 個月：供應穩定增加，需求可能拐點（hyperscaler capex 從 +49% 放緩至 +25%）</td></tr>
+    <tr><td>最大技術替代風險</td><td>Intel 14A（2028-2029 量產，High-NA EUV 平台）— 18-24 個月內驗證；Samsung SF2P（2026 末 yield 仍 55-60%，威脅較弱）</td></tr>
+    <tr><td>最大政策/地緣風險</td><td>中國 PLA「ready by 2027」（CIA 預警）；雖然 readiness ≠ invasion，但任何升級 = 全產業鏈停擺；衝擊路徑：(1) Taiwan fab 直接停工 (2) 海外產能僅能 30-40% 替代 (3) 全球科技股殺 30-50%</td></tr>
+    <tr><td>議價權位置</td><td>對上游（ASML / AMAT / TEL）強（買家集中、量大）；對下游（Apple / NVDA / AMD）<strong>強</strong>（替代成本極高，連年漲價照單全收）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>細節分析（內部完成）：</strong></p>
+<ul>
+  <li>AI capex $690-720B 2026（hyperscaler 五雄 + Tier 2），但增速 Q3→Q4 2025 從 +75% → +49% 是早期信號；2026 H2 / 2027 H1 是拐點觀測窗口。</li>
+  <li>TSMC 海外分散：Arizona P2 2H27 投產（拉前一季）、Kumamoto 2nd fab 2028、Germany 2026 specialty — 分散是真的在做，但無法在 binary 地緣事件中保 80%+ 營收。</li>
+  <li>inference vs training：inference 2026 將佔 2/3 compute（vs 2023 1/3），這是結構性線性增長，不是週期性 — 但<u>絕對需求量</u>仍依賴 hyperscaler 採購節奏。</li>
+</ul>
+
+<div class="source-list">
+<strong>主要 sources：</strong>
+<a href="https://www.trendforce.com/news/2026/04/27/news-tsmc-3nm-monthly-capacity-may-hit-180k-wafers-by-2026-up-over-40-yoy-on-ai-demand/">TrendForce · TSMC 3nm capacity</a> ｜
+<a href="https://www.tomshardware.com/tech-industry/semiconductors/tsmc-csays-advanced-node-capacity-falls-short-of-ai-demand">Tom's Hardware · 3x demand short</a> ｜
+<a href="https://telecomlead.com/semiconductor/ai-chip-demand-fuels-global-foundry-revenue-surge-to-218-8-billion-in-2026-trendforce-125193">TelecomLead · Foundry $218.8B 2026</a> ｜
+<a href="https://www.technologyreview.com/2025/08/15/1121358/taiwan-silicon-shield-tsmc-china-chip-manufacturing/">MIT Technology Review · Silicon Shield Erosion</a> ｜
+<a href="https://futurumgroup.com/insights/ai-capex-2026-the-690b-infrastructure-sprint/">Futurum · AI Capex $690B 2026</a> ｜
+<a href="https://www.digitimes.com/news/a20260106PD217/tsmc-arizona-market-germany-2026.html">DigiTimes · Arizona / Germany progress</a>
+</div>
+</details>
+
+<!-- ==================== PHASE A3 (collapsed) ==================== -->
+<details>
+<summary>Phase A3 · 業務 / 財務 / 資本配置<span class="summary-conclusion">獨立結論：HPC 61% 集中度 + Nvidia 22% 客戶集中度 + AdvPkg 是下一個 GM 拐點，capex 紀律維持</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>營收結構</td><td>現金牛：HPC 61%（含 AI 加速器）；成長引擎：AdvPkg（8% 2025 → &gt;10% 2026）+ N2/A16；拖累/新興：智慧手機 26%（持平）、IoT 6%、Auto 4%、DCE 1%</td></tr>
+    <tr><td>客戶集中度</td><td>最大客戶 Nvidia 22%、第二 Apple 18%；前五大（Nvidia/Apple/Broadcom/MediaTek/Qualcomm）~75%；風險：<strong>中等偏高</strong>（但客戶之間競爭，反而降低系統性風險）</td></tr>
+    <tr><td>定價權</td><td>ASP 2019-2025 +15.9% CAGR；2026-2029 sub-5nm 漲價 +3-10%/年；CoWoS ASP 漲 +10-20%/年；定價權：<strong>強</strong></td></tr>
+    <tr><td>未來金雞母</td><td>(1) AdvPkg：目前 8% → 2030 預估 18-22%；潛在 TAM $30-50B；2-3 年成熟；(2) COUPE 矽光子 2026 H2 量產，2028+ 成熟<br>(3) A16/A14 backside power：2026-2028 高價週期</td></tr>
+    <tr><td>財務體質</td><td>FCF 轉換率 ~55%（Q1 2026 OCF NT$699B / Capex NT$351B → FCF NT$348B）；GM 66.2%（Q1 2026，趨勢 ↑）；壓力測試：營收 -20% 仍可維持 GM 50%+ 並支撐 capex（之前 2018-2019 cycle 證實過）</td></tr>
+    <tr><td>資本配置紀律</td><td>2026 capex $52-56B（YoY +32%）；CAPEX 效率：每 $1 capex 創造 ~$1.4 營收（產業最佳）；併購：歷史上極少併購（M&A 紀律佳）；股東回報：穩定增長季度股息（NT$6/股 Q4 2025），無 buyback</td></tr>
+  </tbody>
+</table>
+
+<p><strong>細節分析（內部完成）：</strong></p>
+<ul>
+  <li>客戶集中度看起來高，但前五大客戶之間競爭（Nvidia vs AMD vs Broadcom），反而<u>降低任一客戶失去 = 結構性危機</u>的機率。</li>
+  <li>capex 上修但 ROIC 仍 25-40% — 這是極少數「capex heavy 但仍 capital efficient」的案例。</li>
+  <li>無 buyback：管理層偏向再投資（capex）+ 增息，符合「fast grower 偏 capex」邏輯，但對股東回報節奏要有預期。</li>
+</ul>
+
+<div class="source-list">
+<strong>主要 sources：</strong>
+<a href="https://investor.tsmc.com/english/quarterly-results/2026/q1">TSMC Investor Relations · Q1 2026 Results</a> ｜
+<a href="https://www.investing.com/news/company-news/tsmc-q1-2026-slides-margins-soar-past-guidance-on-hpc-demand-93CH-4617201">Investing.com · TSMC Q1 2026 slides</a> ｜
+<a href="https://www.cnbc.com/2026/01/26/nvidia-set-to-supplant-apple-as-tsmcs-largest-customer.html">CNBC · NVDA overtakes Apple as TSMC top customer</a> ｜
+<a href="https://www.tomshardware.com/tech-industry/semiconductors/tsmcs-average-wafer-prices-increased-by-over-15-percent-each-year-since-2019-report-suggests-gross-profit-margins-increase-by-3-3x-in-2025-alone-facing-no-real-challengers">Tom's Hardware · Wafer ASP 15% CAGR</a> ｜
+<a href="https://www.trendforce.com/news/2026/04/28/news-tsmc-cowos-wafer-asp-reportedly-nears-7nm-levels-advanced-packaging-poised-to-become-a-key-profit-driver/">TrendForce · CoWoS ASP nears 7nm</a> ｜
+<a href="https://www.tipranks.com/news/company-announcements/tsmc-board-backs-massive-2026-capex-dividend-and-bonus-payouts-after-strong-2025-results">TipRanks · 2026 capex / dividend</a>
+</div>
+</details>
+
+<!-- ==================== PHASE A4 (collapsed) ==================== -->
+<details>
+<summary>Phase A4 · 既有 DD / ID 報告數據摘要<span class="summary-conclusion">DD v12.2 訊號 A（觀望偏進場）+ 10 份 ID 涵蓋 2330；DCA 與 DD 方向一致，僅多加 RSI timing 層</span></summary>
+
+<h4>DD 報告擷取（DD_2330TW_20260504.html · v12.2）</h4>
+<table>
+  <thead><tr><th>項目</th><th>DD 數據</th></tr></thead>
+  <tbody>
+    <tr><td>DD 日期 / Schema</td><td>2026-05-04 ｜ DD v12.2 ｜ 資料抓取股價 TWD 2,280</td></tr>
+    <tr><td>綜合訊號燈（§8）</td><td><strong>A（觀望偏進場）</strong> — S 級品質 + 估值燈 🟢 + MA ✅ + 中期 R:R 3.40x 強過門檻；但短期 R:R 0.64x &lt; 2.0 + Bollinger 上軌外 + 4 週漂移 +12.3%（QC-22 警示）→ 不給 A+ 滿格</td></tr>
+    <tr><td>三引擎目標價</td><td>分析師：高 3,000 / 中 2,500 / 低 1,800；DD 短期 1Y 合理 28x × 97.49 = <strong>2,730</strong>（與共識中位接近）</td></tr>
+    <tr><td>進場條件（§7d 對應）</td><td>FPE FY+2 ≤ 18x（≈ TWD 2,170）+ Q2 2026 GM ≥ 64% 維持 → 首次建倉 25%（S 級）</td></tr>
+    <tr><td>Bear anchor</td><td>2027 H2 起 hyperscaler capex 同步下修 &gt; 15% → HPC 從 65% 回到 45%、GM 從 66% 回到 55%、PE 重定為週期型 foundry FPE 12-14x → 股價 1,400-1,650（-30% 至 -38%）</td></tr>
+    <tr><td>R:R（三版本）</td><td>短期 0.64x（QC-22 警示）｜中期 3.40x（高於門檻）｜長期 5Y 暗示 +92%</td></tr>
+  </tbody>
+</table>
+<p style="background:#FEF3C7;padding:10px 14px;border-radius:2px;font-size:13px;margin-top:10px"><strong>本 DCA 與 DD 一致 / 不一致對齊：</strong><br>
+✅ <strong>一致</strong>：方向（進場但等回測）、Bear case 路徑（hyperscaler capex 下修為核心 downside）、進場價區間（DD: ≤ 2,170 ｜ DCA: 1,950-2,100，DCA 更保守）。<br>
+⚠ <strong>差異</strong>：DD 給「綜合訊號 A」（即將分批進場），本 DCA 在 DD 之上多加了 "等 RSI 回到 50-60 才動手" 的 timing 層 — 這是 DCA 投資決策層 vs DD 分析層的合理 delta。</p>
+
+<h4>ID 報告擷取（10 份涵蓋 2330）</h4>
+<table>
+  <thead><tr><th>ID 報告</th><th>對 TSMC 的關鍵 insight（含非共識觀點）</th></tr></thead>
+  <tbody>
+    <tr><td>ID_AIAcceleratorDemand_20260419（母題）</td><td>TSMC 是「ASIC 份額 35-40%」非共識的最大受益者（vs 共識 20-25%）；2027 是訓練→推論轉折點；電力是永久瓶頸</td></tr>
+    <tr><td>ID_LeadingEdgeNode_20260419</td><td><strong>「TSMC A16 backside power 是真正 2027-2028 護城河」</strong> — Samsung 2nm 2028 市佔上看 15%（共識 7-10%），Intel 18A 2026-2027 基本無外部客戶</td></tr>
+    <tr><td>ID_HighNAEUV_20260505</td><td>「TSMC skip A14/A13/A12 至 2030+ 是 capital-discipline 戰略<u>而非落後</u>」 — 共識把 skip 解讀為負面是錯的；Intel 14A 是 binary outcome（Lip-Bu Tan 確認時程滑到 risk 2028 / mass 2029）</td></tr>
+    <tr><td>ID_HBM_Supercycle_20260419</td><td>「TSMC 透過 HBM4 base die 成隱性贏家」 — HBM 已脫離 DRAM 週期不會 2028 crash</td></tr>
+    <tr><td>ID_CoWoSCoPoS_20260501</td><td><strong>「NVDA 2026 H2 真瓶頸不是 CoWoS，是 HBM4 12-Hi yield + ABF warpage」</strong> — 130K WPM 已綽綽有餘；CoPoS 是 hyperscaler ASIC second-source 解放工具，不是 CoWoS 接班</td></tr>
+    <tr><td>ID_CoPoSFOPLPRace_20260505</td><td><strong>「CoPoS 對 TSMC 2026-2027 EPS 沒實質貢獻（量產 2028H2-2029；Rubin Ultra 2027 不採 CoPoS） — 共識把 CoPoS 算進 TSM 2027 PE 是過度樂觀」</strong></td></tr>
+    <tr><td>ID_SiliconPhotonicsCPO_20260419</td><td>「TSMC COUPE 重演 CoWoS 獨家」 — CPO 2026 H2 已商用（比共識早 2-3 年）</td></tr>
+    <tr><td>ID_GlassSubstrate_20260420</td><td>TSMC 涵蓋；glass 2028 佔 AP 15%（共識 5-8%）</td></tr>
+    <tr><td>ID_HybridBondingSoIC_20260420</td><td>BESI+AMAT 是 ASML-like 設備寡占雛形；Adeia royalty 稀釋 Intel 毛利</td></tr>
+    <tr><td>ID_AIDCPowerElectronics_20260421</td><td>TSMC 在電力電子供應鏈外圍提及，非主要</td></tr>
+  </tbody>
+</table>
+
+<p style="margin-top:12px"><strong>本 DCA 已在 Phase B 矛盾#3 + 交叉矛盾 #1 #2 採用 ID 視角，覆蓋 A1/A2/A3 自身的盲點：</strong>(1) CoWoS 不一定是真瓶頸 → 影響 §3 driver 2 的具體權重；(2) CoPoS 不影響 2027 EPS → 對共識 PE 形成 contrarian 提示；(3) A16 backside power 確認為 2027-2028 護城河 → §3 driver 1 的核心。</p>
+</details>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+</main>
+
+<script>
+// Open all <details> on print so collapsed sections appear in PDF
+window.addEventListener('beforeprint', () => {
+  document.querySelectorAll('details').forEach(d => d.dataset.wasOpen = d.open ? '1' : '0');
+  document.querySelectorAll('details').forEach(d => d.open = true);
+});
+window.addEventListener('afterprint', () => {
+  document.querySelectorAll('details').forEach(d => { if (d.dataset.wasOpen === '0') d.open = false; });
+});
+</script>
+
+</body>
+</html>

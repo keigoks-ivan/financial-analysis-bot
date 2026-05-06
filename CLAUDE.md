@@ -45,6 +45,17 @@ Agent({
 
 當用戶說「push earnings」/「發布財報」/「發佈財報」/「發布新財報」/「更新 earnings index」時，自動觸發 `push-earnings` skill（`.claude/skills/push-earnings/`），照其 9 個 steps 執行。
 
+## Workflow: DCA 深度定見分析
+
+當用戶說「幫我跑 {ticker} dca」/「{ticker} 定見」/「{ticker} dca」/「conviction analysis {ticker}」/「最終判斷 {ticker}」時，自動觸發 `deep-conviction-analyst` skill（`.claude/skills/deep-conviction-analyst/`）。
+
+**定位**：DD 之上的「投資決策層」 — Phase A 三軸獨立搜尋（護城河 / 產業趨勢 / 業務財務） + Phase B 矛盾辨識與強制裁決 + Phase C PM 決策框架（§2 thesis、§7 倉位+opportunity cost、§5 single-thing、§6 pre-mortem）。
+
+**輸出**：
+- HTML：`docs/dca/DCA_{TICKER}_{YYYYMMDD}.html`（不放 `docs/dd/`，避免被 `validate_dd_meta.py` 鎖規則）
+- 索引：`docs/dca/INDEX.md`（skill 自動 append）
+- Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄會自動連到該 ticker 最新的 DCA 報告
+
 ## Git pre-commit hook
 
 Repo 有 dd/id meta validator pre-commit hook。新 clone 啟用方式與 bypass 細節：見 `scripts/README.md`。
