@@ -2,565 +2,658 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>MRVL Deep Conviction Analysis | 2026-05-07</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<title>MRVL — Deep Conviction Analysis｜2026-05-07</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 0; line-height: 1.7; }
-  .num, code, .mono { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
-  header.top {
-    position: sticky; top: 0; z-index: 100; background: #1E3A5F; color: #FFF;
-    padding: 12px 28px; display: flex; justify-content: space-between; align-items: center;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.15); font-size: 13px;
-  }
-  header.top .ticker { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 16px; letter-spacing: 1px; }
-  header.top .meta { color: #BFDBFE; font-size: 12px; }
-  main { max-width: 1080px; margin: 0 auto; padding: 32px 28px 96px; }
-  h1, h2, h3, h4 { color: #1E3A5F; font-weight: 700; margin-top: 0; }
-  h2.sec {
-    background: #FFF; border-left: 4px solid #3B82F6; padding: 14px 20px;
-    margin: 36px 0 18px; font-size: 19px; border-radius: 2px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  h2.sec.warn { border-left-color: #F97316; }
-  h2.sec.danger { border-left-color: #DC2626; }
-  h3.sub { font-size: 16px; color: #334155; margin: 22px 0 10px; }
-  table { width: 100%; border-collapse: collapse; background: #FFF; margin: 12px 0; font-size: 14px; }
-  thead th { background: #1E3A5F; color: #FFF; padding: 10px 12px; text-align: left; font-weight: 500; font-size: 13px; }
-  tbody td { padding: 10px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
-  tbody tr:nth-child(even) { background: #F1F5F9; }
-
-  .thesis {
-    background: #EFF6FF; border-left: 4px solid #1E40AF; padding: 36px 32px;
-    margin: 18px 0 30px; border-radius: 3px; text-align: center;
-  }
-  .thesis .quote { font-size: 26px; font-weight: 700; color: #1E3A5F; line-height: 1.5; margin: 0; }
-  .thesis .label { font-size: 12px; color: #64748B; margin-top: 14px; letter-spacing: 1px; }
-
-  .decision {
-    background: #FEF9C3; border-left: 4px solid #CA8A04; padding: 22px 26px;
-    margin: 18px 0; border-radius: 3px;
-  }
-  .decision h3 { color: #713F12; margin: 0 0 14px; font-size: 17px; }
-  .decision .verdict { font-size: 22px; font-weight: 700; color: #92400E; }
-
-  .conflict-block {
-    background: #FFF7ED; border-left: 4px solid #F97316; padding: 18px 22px;
-    margin: 14px 0; border-radius: 3px;
-  }
-  .ruling-table { background: #FED7AA; padding: 14px; border-radius: 3px; margin-top: 10px; }
-  .ruling-table table { background: transparent; }
-  .ruling-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.4); }
-
-  details.phase {
-    background: #FFF; border: 1px solid #E2E8F0; padding: 0; margin: 10px 0;
-    border-radius: 3px; overflow: hidden;
-  }
-  details.phase summary {
-    background: #F8FAFC; padding: 14px 20px; cursor: pointer; font-weight: 600; color: #1E3A5F;
-    border-left: 4px solid #94A3B8; list-style: none;
-  }
-  details.phase summary::-webkit-details-marker { display: none; }
-  details.phase summary::before { content: "▸ "; color: #94A3B8; margin-right: 6px; font-weight: 400; }
-  details.phase[open] summary::before { content: "▾ "; }
-  details.phase summary .conclusion {
-    display: block; margin-top: 4px; font-weight: 400; color: #475569; font-size: 13px;
-  }
-  details.phase .body { padding: 18px 22px; }
-
-  .memo {
-    background: #FAFAF9; border: 1px solid #D6D3D1; padding: 24px 28px; margin: 14px 0;
-    font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; line-height: 1.75; color: #1C1917;
-    border-radius: 2px;
-  }
-  .memo h4 { font-family: 'Noto Sans TC', sans-serif; margin: 0 0 12px; color: #1E3A5F; font-size: 14px; letter-spacing: 1px; }
-  .elevator { font-style: italic; color: #475569; border-left: 3px solid #94A3B8; padding: 10px 18px; margin: 12px 0; background: #FFF; }
-
-  .premortem-block { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
-  .premortem-block .narrative { font-style: italic; color: #7F1D1D; border-left: 3px solid #B91C1C; padding: 8px 14px; background: rgba(255,255,255,0.6); margin: 10px 0; }
-  .pattern-block { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
-
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-  .badge.ok { background: #DCFCE7; color: #166534; }
-  .badge.warn { background: #FEF9C3; color: #92400E; }
-  .badge.bad { background: #FEE2E2; color: #991B1B; }
-  .red-dot { color: #DC2626; font-weight: 700; }
-  .yellow-dot { color: #CA8A04; font-weight: 700; }
-
-  .print-btn {
-    position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #FFF;
-    border: none; padding: 12px 22px; border-radius: 24px; font-size: 13px; cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.18); font-family: 'Noto Sans TC', sans-serif;
-  }
-  .print-btn:hover { background: #1E40AF; }
-
-  @media print {
-    header.top, .print-btn { display: none; }
-    details.phase { break-inside: avoid; }
-    details.phase[open] .body, details.phase .body { display: block !important; }
-    details.phase:not([open]) .body { display: block !important; }
-  }
+  :root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#0F172A;--ink-2:#334155;--line:#E2E8F0;--accent:#1E3A5F;--accent-2:#3B82F6;--green-bg:#DCFCE7;--green-ink:#166534;--red-bg:#FEE2E2;--red-ink:#991B1B;--yellow-bg:#FEF9C3;--yellow-ink:#92400E;--blue-bg:#EFF6FF;--warn-bg:#FFF7ED;--warn-line:#F97316}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace}
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;border-bottom:4px solid var(--accent-2)}
+  header .ticker{font-size:18px;font-weight:700;letter-spacing:1px}
+  header .meta{opacity:.92}
+  header .thesis-mini{margin-left:auto;font-style:italic;opacity:.95;max-width:680px}
+  main{max-width:1180px;margin:0 auto;padding:28px 24px 96px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px 28px;margin-bottom:22px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h1,h2,h3{color:var(--accent);margin-top:0}
+  h2{border-left:4px solid var(--accent-2);padding-left:12px;font-size:20px;margin-bottom:18px}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--accent)}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
+  p{margin:8px 0}
+  ul,ol{padding-left:22px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  thead th{background:var(--accent);color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+  tbody td,tbody th{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F1F5F9}
+  .tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+  .green{background:var(--green-bg);color:var(--green-ink)}
+  .red{background:var(--red-bg);color:var(--red-ink)}
+  .yellow{background:var(--yellow-bg);color:var(--yellow-ink)}
+  .src{color:#64748B;font-size:11.5px;font-family:'IBM Plex Mono',monospace}
+  .thesis-hero{background:var(--blue-bg);border:1px solid #BFDBFE;padding:48px 36px;text-align:center;border-radius:8px;margin-bottom:24px}
+  .thesis-hero .text{font-size:26px;line-height:1.55;font-weight:500;color:var(--accent);margin:0}
+  .thesis-hero .label{margin-top:14px;font-size:12px;color:var(--ink-2);letter-spacing:2px}
+  .decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0}
+  .decision-box.go{background:#F0FDF4;border-left-color:#16A34A}
+  .conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .verdict-box{background:#FED7AA;padding:14px 18px;margin:12px 0;border-radius:4px}
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0;font-style:italic}
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .memo{border:2px solid #94A3B8;background:#FFFFFF;padding:24px 28px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;border-radius:4px;margin:14px 0;white-space:pre-wrap}
+  .elevator{background:#EEF2FF;border-left:4px solid #6366F1;padding:14px 18px;font-style:italic;font-size:15px;border-radius:0 4px 4px 0;margin:10px 0}
+  details{background:#F8FAFC;border:1px solid var(--line);border-radius:4px;padding:14px 20px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:15px}
+  details[open] summary{margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .ma-pass{background:var(--green-bg);color:var(--green-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .ma-fail{background:var(--red-bg);color:var(--red-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .print-btn{position:fixed;bottom:28px;right:28px;padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(15,23,42,.18)}
+  @media print{header.topbar,.print-btn{display:none}main{padding:0;max-width:100%}section.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}details{page-break-inside:avoid}details > summary{list-style:none}details:not([open]) > *:not(summary){display:block !important}}
 </style>
 </head>
 <body>
-<header class="top">
-  <span class="ticker">MRVL · NASDAQ</span>
-  <span class="meta">Deep Conviction Analysis | 2026-05-07 | Marvell Technology, Inc.</span>
+<header class="topbar">
+  <span class="ticker">MRVL · Marvell Technology</span>
+  <span class="meta">DCA 報告 ｜ 2026-05-07</span>
+  <span class="meta">參考股價 $172.15（2026-05 早期）</span>
+  <span class="thesis-mini">AI infra NVDA 不碰、AVGO 吃不下的第二供應商；客製 ASIC + 1.6T 光學雙引擎</span>
 </header>
 
 <main>
 
-<!-- §2 Thesis -->
-<div class="thesis">
-  <p class="quote">Marvell 是 AI infra 中 NVDA 不碰、AVGO 吃不下的「第二供應商」，<br>客製 ASIC + 1.6T 光學雙引擎讓它成為超大規模 AI 基建中稀缺的全棧替代源</p>
-  <p class="label">§2 ONE-SENTENCE THESIS · 47 字</p>
+<section class="card">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-hero">
+  <p class="text">Marvell 是 AI infra 中 NVDA 不碰、AVGO 吃不下的第二供應商 — 客製 ASIC + 1.6T 光學雙引擎是稀缺全棧替代源，hyperscaler dual-source 結構必經之地</p>
+  <div class="label">ONE-SENTENCE THESIS · 50 字以內</div>
+</div>
+<p class="note">這是敘事而非指標：MRVL 不是「FCF 高 + 毛利好」的成熟 IC 設計股 — 而是「AI infra 替代源」+「光學 SerDes 領導者」雙身分。FY26 革命性轉型完成（AI 已是 data center revenue 主導，DC 占總營收 74% / FY26 $8.195B +42% YoY）；NVDA 多億美元投資 + Amazon Trainium3 / Microsoft Maia / Alphabet TPU 三大 hyperscaler 客製 silicon 全部 in flight。</p>
+</section>
+
+<section class="card">
+<h2>§7 Decision｜可執行投資計畫</h2>
+
+<div class="decision-box">
+<strong>裁決：A 級基本面 / 觀望偏進場 — 條件式進場（動能過熱）</strong><br>
+原因：① FY26 $8.195B +42% record + AI hyperscaler 三大客戶 in flight；② 但股價 $172.15（接近近期 ATH）4 週漂移大；③ 5/27 Q1 FY27 財報（next quarter，已是 May 27, 2026）binary 在即；④ Forward PE 43.11x 反映高成長已定價，需要 AI revenue trajectory 持續超預期才能 alpha。
 </div>
 
-<!-- §7 Decision -->
-<h2 class="sec warn">§7｜Decision（執行計畫）</h2>
-<div class="decision">
-  <h3>裁決：<span class="verdict">觀望，等回測再進</span></h3>
-  <p>基本面支持中期持有，但現價 <span class="num">$168.75</span> 已破 ATH（4/24 $170.84），4 週漂移 <span class="num">+20.8%</span>（ DD <span class="num">$139.69</span> → 現價）觸發動能過熱條件，禁止一次建倉。</p>
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th width="35%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>核心持倉（AI infra basket 中的次要核心）</strong> — 與 NVDA / AVGO 並列但 conviction 略低</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>2-3% of portfolio</strong>（試倉，等動能 cool-down 或 5/27 Q1 FY27 財報 binary 揭曉）</td></tr>
+<tr><td>目標倉位</td><td><strong>4-6% of portfolio</strong>（核心位上限，因估值已 priced 完美）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$130 - $160</strong>（5/27 財報後若 down 觸發第一批；如維持 $172+ 則等回測）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批，禁止一次建倉</strong>：① 第一批 1.5%：5/27 Q1 FY27 財報後若 -10%+ gap down 至 $155；② 第二批 1.5%：跌至 $145 + AI 客戶基本面未變；③ 第三批 1-2%：跌至 $130-140 區間（極端機會）；④ 突破 $190 + 動能持續：放棄此波，等下次回檔</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>關鍵問題：portfolio 已持有 NVDA / AVGO / CRDO / ANET 等 AI infra 核心位 — MRVL 在哪些維度與它們重疊或互補？</strong>逐一比對：<br>
+• <strong>vs NVDA</strong>：NVDA 是 AI 訓練 toll booth + GPU + 全棧；MRVL 是「NVDA 不碰」的客製 ASIC 第二供應商 — <strong>互補</strong>。NVDA 多億美元投資 MRVL 印證雙方非零和。<br>
+• <strong>vs AVGO</strong>：AVGO 是客製 ASIC #1（70% 份額），MRVL 是 #2（15% 份額）— <strong>同賽道但 MRVL 是 AVGO 的下家</strong>，hyperscaler dual-source 結構讓 MRVL 受益於「avoiding sole-source AVGO」需求。如果客戶想 dual-source，MRVL 是當然 second choice。<br>
+• <strong>vs CRDO</strong>：CRDO AEC 連接器 70% 份額在 hyperscaler internal cable；MRVL 是 SerDes silicon — <strong>互補</strong>。<br>
+• <strong>vs ANET</strong>：ANET Ethernet OEM + EOS；MRVL 是 ANET 的上游 silicon 供應商 — <strong>互補</strong>。<br>
+建議路徑：(a) 不削減 NVDA / AVGO / CRDO / ANET 任一核心位；(b) 邊際資金 — 若 portfolio cash &gt; 8%，可進 MRVL 試倉 2-3%；(c) MRVL 是 portfolio AI infra basket 的「dual-source insurance」— 即使 AVGO peak 後 MRVL 仍有 share gain 上升空間。<strong>邊際資金優先 NVDA &gt; AVGO &gt; MRVL（因估值 NVDA &lt; AVGO &lt; MRVL；conviction 同序）。</strong></td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>第一批進場</td><td>5/27 Q1 FY27 財報後 gap down 至 $155 以下 + 基本面未變</td><td>1.5%</td></tr>
+<tr><td>加碼 1</td><td>跌至 $145 以下 + 1.6T DSP "Ara" production ramp 確認</td><td>3-4%</td></tr>
+<tr><td>加碼 2（極端機會）</td><td>跌至 $130-140 + AI 三客戶 trajectory 仍 ≥ 40% YoY</td><td>5-6%（上限）</td></tr>
+<tr><td>減碼 1</td><td>$200 以上 + Forward PE &gt; 50x</td><td>減半至 2-3%</td></tr>
+<tr><td>減碼 2</td><td>Q1 FY27 financial 顯示 AI revenue 連 2 季 miss；Amazon ASIC ramp 延後</td><td>1-2%</td></tr>
+<tr><td>清倉 A（§5 primary trigger）</td><td>AVGO 從 MRVL 手中搶走 Amazon Trainium / Microsoft Maia / Google TPU 任一個 design win</td><td>0%</td></tr>
+<tr><td>清倉 B（§5 secondary，pre-mortem 派生）</td><td>Amazon 客戶集中度連 2 季 &gt; 40% (vs 目前 ~25-30%)：表 hyperscaler 分散度倒退</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA + 動能過熱檢查</h3>
+<table>
+<thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA50 之上？</td><td><span class="ma-pass">✅</span></td><td>$172.15 vs MA50（DD 數據顯示動能修復後接近 ATH）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>多頭排列確認</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>突破週線結構</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅</span></td><td>三線多頭排列</td></tr>
+<tr><td><strong>動能過熱檢查</strong></td><td><span class="tag yellow">⚠ 4w 漂移 +20%+</span></td><td>4w drift 過 +10% 閾值 + RSI 14d 54.7（中性 <span class="src">Investing.com 2026-05</span>）— 股價接近近期 ATH</td></tr>
+</tbody>
+</table>
+
+<div class="conflict-box" style="background:#FEF9C3;border-left-color:#CA8A04">
+<strong>⚠ 動能過熱合規結論：</strong>Pure MA 強支持但 4w drift 大過 +10% 閾值，§7a 進場節奏已強制改條件式（等 5/27 財報 binary 揭曉或回測）。<strong>禁止一次建倉、禁止「立即第一批 50%」</strong>。Mean reversion 歷史頻率：4w drift &gt; +20% 後 4-6 週內回測 8-15% 機率歷史 ~60-70%。
 </div>
 
-<h3 class="sub">7a｜倉位與進場計畫</h3>
+<h3>7d. 建議持有年限</h3>
 <table>
-  <thead><tr><th style="width:30%">項目</th><th>具體內容</th></tr></thead>
-  <tbody>
-    <tr><td>投資組合角色</td><td>衛星持倉（custom ASIC + optical 第二供應商，與 AVGO/NVDA 互補但非替代）</td></tr>
-    <tr><td>初始建倉倉位</td><td><span class="num">2.0%</span> of portfolio（首批）</td></tr>
-    <tr><td>目標倉位</td><td><span class="num">4.0%</span> of portfolio（滿倉，需具備條件達成）</td></tr>
-    <tr><td>進場價位區間</td><td><span class="num">$145 ~ $155</span>（DD 中期目標 $163 下方安全邊際 5-10%；對應 FY+2 EPS $5.5 × 27-28x PE）</td></tr>
-    <tr><td>進場節奏</td><td>條件式分批：① 跌至 <span class="num">$155</span> 以下且 RSI 14d &lt; 60 → 建首批 1.0%；② 觸 <span class="num">$145</span>（接近 DD 短期錨點 $115 上方安全帶）→ 加至 2.0%；③ Q1 FY27 財報後（5/底）若 guide 維穩 → 加至 3-4%</td></tr>
-    <tr><td><strong>vs 同類曝險（opportunity cost）</strong></td><td><strong>假設組合中已持有 AVGO（同樣 ASIC 設計服務龍頭）：AVGO PEG <span class="num">0.77</span> &lt; MRVL <span class="num">1.19</span>，AVGO 在量價齊升上更便宜。但 MRVL 不同 thesis：是「AVGO 之外的第二選擇 + optical 平台」，與 AVGO 共存而非替代。決策邏輯：邊際資金優先加 AVGO（PEG 更便宜、市佔 70%），MRVL 等回測。若已滿倉 AVGO 4-5%，MRVL 邊際資金的 R:R 反而優於 AVGO（AVGO ATH + 估值更貴的同時 MRVL 仍有 NVDA NVLink 催化），可平行配置 — 但兩者合計不應 &gt; portfolio 7%（AI ASIC 主題集中度上限）。</strong></td></tr>
-  </tbody>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 5/27 Q1 FY27 財報 miss 或 hyperscaler 三大客戶任一 ramp 延後</td></tr>
+<tr><td><strong>中期（2-5 年）</strong></td><td><strong>Base case：custom AI compute TAM $55B by 2028 + MRVL 維持 15% 份額 → AI revenue $8B+；FY28 EPS $5+；股價 +30-50%</strong></td></tr>
+<tr><td>長期（5-10 年）</td><td>若 (a) MRVL 客戶份額 hold 在 15-20%（與 AVGO 形成 70:20 對峙）+ (b) 1.6T → 3.2T DSP roadmap 維持 + (c) hyperscaler dual-source 結構持續</td></tr>
+</tbody>
 </table>
 
-<h3 class="sub">7b｜加碼與減碼條件</h3>
+<h4>EPS 預測參考</h4>
 <table>
-  <thead><tr><th style="width:14%">行動</th><th>觸發條件（價位或事件）</th><th style="width:14%">調整至倉位</th></tr></thead>
-  <tbody>
-    <tr><td>加碼</td><td>跌至 $155 以下且 RSI &lt; 60</td><td>1.0% → 2.0%</td></tr>
-    <tr><td>加碼</td><td>跌至 $145（接近中期目標下緣）</td><td>2.0% → 3.0%</td></tr>
-    <tr><td>加碼</td><td>Q1 FY27 財報維穩 + Google 推論晶片合約落定</td><td>3.0% → 4.0%</td></tr>
-    <tr><td>減碼</td><td>漲破 $185 RSI &gt; 75（價透支 FY28 PE 32x+）</td><td>→ 2.0%</td></tr>
-    <tr><td>清倉</td><td>AWS Trainium4 不再使用 MRVL 公告（§5 single thing 觸發）</td><td>→ 0%</td></tr>
-  </tbody>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>FY27E</td><td>$3.20</td><td>Consensus（Q1 FY26 後上修）</td><td>FY26 actual EPS $2.62 (non-GAAP) / +42% YoY <span class="src">MRVL FY26 PR</span></td></tr>
+<tr><td>FY28E</td><td>$4.50</td><td>Consensus</td><td>反映 1.6T DSP ramp + Trainium3 / Maia full production</td></tr>
+<tr><td>FY30E（外推）</td><td>$6.0 - 7.0</td><td>本報告外推</td><td>AI compute TAM $55B 2028 + MRVL 15-20% share + 1.6T 透出 + custom silicon TAM 20% target FY29</td></tr>
+</tbody>
 </table>
 
-<h3 class="sub">7c｜Pure MA 相容性 + 動能過熱檢查</h3>
-<table>
-  <thead><tr><th>檢查項目</th><th style="width:14%">狀態</th><th>說明</th></tr></thead>
-  <tbody>
-    <tr><td>股價 $168.75 在 MA60 之上？</td><td><span class="badge ok">✅</span></td><td>趨勢在多頭結構，無疑問</td></tr>
-    <tr><td>股價在 MA200 之上？</td><td><span class="badge ok">✅</span></td><td>長線結構多頭</td></tr>
-    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="badge ok">✅</span></td><td>MA 結構為多頭，但需配合動能過熱檢查</td></tr>
-    <tr><td><strong>4 週漂移檢查</strong></td><td><span class="badge bad">⚠ +20.8%</span></td><td>從 DD 日 4/18 ($139.69) 至 5/7 ($168.75) 漂移 +20.8% &gt; +10% 警戒線</td></tr>
-    <tr><td><strong>RSI 14d 動能</strong></td><td><span class="badge warn">⚠ 65-86</span></td><td>多源頭分歧（54.7 / 65.9 / 86.4），平均偏向超買區；保守視為動能過熱</td></tr>
-    <tr><td><strong>進場節奏結論</strong></td><td><span class="badge bad">條件式</span></td><td>Pure MA ✅ 但動能過熱 → §7a 強制條件式分批，禁止追高一次建倉</td></tr>
-  </tbody>
-</table>
-<p style="font-size:12.5px;color:#64748B;margin-top:8px">⚠ MA 資料品質警示：web search 拿到的 MA60/MA200 數值（$92 / $85）明顯為過時 cache（落差 50%+），不可信。本表的 MA 結論基於股價 $168.75 vs 4 週前 $139.69 的趨勢推論，建議從 yfinance / TradingView 拉實時數據再 cross-check。</p>
+<p><strong>長期持有合理性：</strong>FY30 EPS $6.5 × 30x = $195，較現價 $172 的 5Y 報酬 +13%（年化 ~2.5%）— 短中期 R:R 不算 alpha；但 FY28 EPS $4.5 × 40x = $180 對應現價已 priced；如能達 FY30 EPS $7 × 35x = $245 則 +42%。<strong>核心持有合理性建立在「AI revenue 連續 2-3 年 mid-30%+ 成長」上。</strong></p>
+</section>
 
-<h3 class="sub">7d｜建議持有年限 + EPS 預測</h3>
+<section class="card">
+<h2>§4 Asymmetry Analysis</h2>
 <table>
-  <thead><tr><th style="width:18%">持有年限</th><th>條件</th></tr></thead>
-  <tbody>
-    <tr><td>短期（&lt; 2 年）</td><td><strong>不適合</strong> — 估值已透支 FY+2，現價對應 fwd PE 44x，短期上行需要「FY27 guidance 再上修 + Google 合約落定」雙重催化才能繼續推動</td></tr>
-    <tr><td>中期（2–5 年）</td><td><strong>適合</strong> — 如果 ASIC ($1.5B → $3B by FY28) + interconnect (50%+ YoY) 雙引擎都按 mgmt guide 落地，FY28 EPS $6 × 28x PE = $168（持平）；FY29-30 視 hyperscaler 自研滲透速度</td></tr>
-    <tr><td>長期（5–10 年）</td><td><strong>不確定</strong> — 取決於 hyperscaler in-house 滲透 vs MRVL optical platform play 哪個快；上行情境需要 NVLink Fusion 變成事實上的標準（NVDA $2B 投資是早期 endorsement）</td></tr>
-  </tbody>
+<thead><tr><th width="22%">情境</th><th width="14%">5 年倍數</th><th>依據</th><th width="12%">機率</th></tr></thead>
+<tbody>
+<tr style="background:#F0FDF4">
+<td><strong>Bull（thesis 對）</strong></td>
+<td><strong>+80%（1.80x）</strong></td>
+<td>FY30 EPS $7 × 40x = $280 — Custom AI compute TAM $55B+ 達 + MRVL share 至 20% + 1.6T → 3.2T DSP roadmap 領先 + hyperscaler dual-source 結構深化</td>
+<td>30%</td>
+</tr>
+<tr>
+<td>Base</td>
+<td>+30%（1.30x）</td>
+<td>FY30 EPS $6 × 32x = $192 — 維持 15% custom AI 份額 + 1.6T DSP 量產順利 + AVGO 仍 dominate 但 MRVL hold 第二位</td>
+<td>40%</td>
+</tr>
+<tr style="background:#FFF1F2">
+<td><strong>Bear（thesis 錯）</strong></td>
+<td><strong>-30%（0.70x）</strong></td>
+<td>$120 — Amazon Trainium 失敗 + AVGO 回搶 Microsoft Maia + 1.6T DSP 競爭加劇 → PE 25x × $4.5 EPS = $110</td>
+<td>30%</td>
+</tr>
+<tr style="background:#EFF6FF;font-weight:600">
+<td>機率加權期望值</td>
+<td colspan="2">0.30×1.80 + 0.40×1.30 + 0.30×0.70 = <strong>1.27x（5 年期望報酬 +27%，年化 ~4.9%）</strong></td>
+<td>—</td>
+</tr>
+</tbody>
 </table>
 
-<h4 style="margin-top:18px">EPS 預測參考表</h4>
-<table>
-  <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
-  <tbody>
-    <tr><td>FY27（CY26）</td><td>$5.0–5.5</td><td>mgmt guide「well over $5」 non-GAAP</td><td>對應 $11B 收入 + 36% op margin + 7% tax</td></tr>
-    <tr><td>FY28（CY27）</td><td>$5.5–6.5</td><td>mgmt guide $15B 收入 + 30%+ op margin</td><td>customer ramp 後高點</td></tr>
-    <tr><td>FY30E（CY29）</td><td>$7.0–9.0</td><td>外推</td><td>外推假設：FY28 後 CAGR 15-20%，hyperscaler 自研滲透 cap MRVL ASIC 市佔在 25%；optical 50%+ growth 再持續 1-2 年後減速至 25-30%</td></tr>
-  </tbody>
-</table>
-<p><strong>長期持有適合性：</strong>現價 $168.75 對 FY30E EPS $8 中位數 = 21x — 看似合理，但這只在 hyperscaler 自研滲透「不超過 50%」的假設下成立。若 §5 single thing 觸發（AWS Trainium4 換廠），FY30E EPS 下修 30-40% 至 $5-6 → 21x × $5.5 = $115，5 年 -32%。R:R 對 hyperscaler 行為高度敏感，這就是為什麼即使 thesis 成立也只給衛星倉位（4-5%）。</p>
+<p class="note"><strong>追加壓力測試（10 年 vs 5 年）：</strong>10 年 Custom AI 結構性 secular 趨勢延續 + MRVL R&D 投入維持，bull case +80% 可延展為 10Y +180%（年化 ~10.8%）。但 10Y bear case 風險擴大（AVGO + 中國 IC 設計 + 客戶內部化）；10Y EV 估算 1.40x（年化 +3.4%）— 不算 alpha 但有 dual-source insurance 價值。</p>
 
-<!-- §4 Asymmetry -->
-<h2 class="sec">§4｜Asymmetry Analysis（5 年視角）</h2>
+<div class="pattern-box">
+<h3 style="color:#0369A1;margin-top:0">📐 Pattern Match — 讓機率有錨點</h3>
 <table>
-  <thead><tr><th>情境</th><th>5 年漲跌</th><th>依據</th><th>機率</th></tr></thead>
-  <tbody>
-    <tr><td><strong>Bull</strong>：ASIC + optical 雙引擎 + Google 推論晶片落定</td><td><span class="num">+70% to +100%</span><br>($168.75 → $290-340)</td><td>FY30E EPS $9 × 32x PE（持續 premium 給 platform 公司）</td><td>25%</td></tr>
-    <tr><td><strong>Base</strong>：mgmt guide 大致達標但無 upside，customer concentration 風險常態</td><td><span class="num">−5% to +20%</span><br>($168.75 → $160-200)</td><td>FY30E EPS $7-8 × 24-26x PE</td><td>50%</td></tr>
-    <tr><td><strong>Bear</strong>：AWS / MSFT / GOOGL 任一 ASIC 訂單流失，PE 收斂至 18-20x</td><td><span class="num">−35% to −50%</span><br>($168.75 → $85-110)</td><td>FY30E EPS $5-6 × 18-20x PE</td><td>25%</td></tr>
-    <tr><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>約 +10% 5 年（IRR ≈ 1.9%/年）</strong></td><td>—</td></tr>
-  </tbody>
+<tbody>
+<tr><td width="32%"><strong>歷史相似 setup</strong></td><td>2019-2024 AVGO 自身 — 從 Hock Tan 整合 ASIC 業務開始的 5 年「客製 silicon」結構性受益期，從 $250 到 $1,500（10x）</td></tr>
+<tr><td><strong>當時 setup</strong></td><td>FPE ~18-22x（vs MRVL 現在 43x 高 2x）、客製 ASIC TAM 起點 $10B（vs 現在 $40B+ 約 4x）、AVGO Hock Tan 紀律強</td></tr>
+<tr><td><strong>5 年實現報酬</strong></td><td><strong>2019 $250 → 2024 $1,500 = +500%（年化 ~43%）</strong></td></tr>
+<tr><td><strong>我的標的最像 / 最不像</strong></td><td><strong>最像</strong>：客製 silicon TAM 結構升級 + hyperscaler 客戶集中 + DSP / SerDes 領導；<strong>最不像</strong>：① 起點估值更高（FPE 43x vs 18x）；② MRVL 是 #2 (15% share)，AVGO 當時是 dominant；③ 客戶 ramp 進入第 5 年中段（Amazon Trainium3 在 2026），不是初期</td></tr>
+</tbody>
 </table>
-<p><strong>追加壓力測試：</strong>若 thesis 對但時間拉長到 10 年（hyperscaler 自研穩定滲透 30-40% 後 MRVL 維持 25% 市佔），FY35E EPS $12-15 × 22x = $260-330，10 年 +50-95%。考量機會成本（同期 AVGO / NVDA 期望報酬可能更高），<strong>10 年視角下 MRVL 是「合格但非最優」的 AI infra 持倉</strong>，這就是衛星倉位的合理性所在。</p>
-
-<div class="pattern-block">
-  <h3 class="sub" style="color:#075985;margin-top:0">📐 Pattern Match — 為機率錨點</h3>
-  <table>
-    <tbody>
-      <tr><td style="width:30%"><strong>歷史相似 setup</strong></td><td>2020-2022 AVGO 早期 ASIC 起量期（Google TPU + Meta MTIA 首次大量爬坡）</td></tr>
-      <tr><td><strong>當時 setup</strong></td><td>fwd PE ~18x、ASIC 業務佔總營收 ~10% 但成長最快、市場認知為「networking + storage 公司」、與 hyperscaler concentration 風險</td></tr>
-      <tr><td><strong>5 年實現報酬</strong></td><td>2020 Q4 ($350) → 2025 ($1700+) ≈ +385%（含 split 還原）；ASIC 爆發 + 估值倍數從 18x 升至 35x</td></tr>
-      <tr><td><strong>MRVL 與它最像</strong></td><td>同樣是「networking 公司 → 客製 ASIC 第二曲線」轉型故事；hyperscaler concentration 結構相似（3 大客戶撐起 50%+ DC 收入）</td></tr>
-      <tr><td><strong>MRVL 與它最不像</strong></td><td>① 估值起點完全不同：AVGO 18x vs MRVL 44x，MRVL 已先「price in」許多 → bull 情境的倍數擴張空間遠小於當年 AVGO；② AVGO 的 Google TPU 是 hyperscaler 自研已合作的舊單，比 MRVL 的 AWS Trainium 更黏（從 v1 到 v6 連續），MRVL 客戶忠誠度尚未驗證至 v3+</td></tr>
-    </tbody>
-  </table>
-  <p style="font-size:12.5px;color:#475569;margin-top:8px"><strong>結論：</strong>MRVL 不是 2020 AVGO 的翻版，而是「估值 50% 透支版本的 AVGO 早期」。這也是為什麼 5 年期望報酬只給 +10%（vs AVGO 當年 +385%）—<strong>故事相似但起點不同</strong>。</p>
+<p class="note" style="margin-top:12px"><strong>校準結果：</strong>2019-2024 AVGO +500% 是「估值 + EPS + AI 萌芽」三重戴維斯。MRVL 起點估值高 2x、share #2 而非 #1，bull case +80% / 機率 30% 是合理估計（不能直接複製 +500%）。</p>
 </div>
+</section>
 
-<!-- §1 Mental Models -->
-<h2 class="sec">§1｜Mental Models 壓力測試</h2>
+<section class="card">
+<h2>§1 Mental Models 壓力測試</h2>
 
-<div class="memo">
-  <h4>📄 投委會 1 頁紙 Memo</h4>
-<pre style="margin:0;white-space:pre-wrap;font-family:inherit">
-TO: Investment Committee
-FROM: PM
-RE: MRVL — Marvell Technology
-DATE: 2026-05-07
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">投委會 Memo｜MRVL · Marvell Technology｜2026-05-07
+─────────────────────────────────────────
 
-THESIS:
-MRVL 是 AI infra 中 NVDA 不做、AVGO 吃不下的第二供應商，custom ASIC + 1.6T 光學雙引擎
-讓它成為超大規模 AI 基建中稀缺的全棧替代源。
+THESIS（50 字）
+Marvell 是 AI infra 中 NVDA 不碰、AVGO 吃不下的第二供應商；
+客製 ASIC + 1.6T 光學雙引擎是稀缺全棧替代源，hyperscaler
+dual-source 結構必經之地。
 
-KEY DRIVERS:
-1) Custom AI ASIC 第二供應商地位（市佔 20-25%，AWS Trainium / MSFT Maia / Google
-   inference 三引擎並進）
-2) 1.6T optical interconnect / silicon photonics super-cycle
-   （mgmt guide FY27 interconnect +50% YoY）
+KEY DRIVER（1）
+Custom AI silicon 第二供應商位置：Amazon Trainium3 / Microsoft
+Maia / Alphabet TPU 三大 hyperscaler design wins in flight；
+custom AI compute TAM $55B 2028，MRVL 15% share → 20% target FY29.
 
-R:R (5Y):
-- Bull (25%): +70~100% (FY30E EPS $9 × 32x)
-- Base (50%): -5~+20% (FY30E EPS $7-8 × 24-26x)
-- Bear (25%): -35~-50% (AWS Trainium 換廠 → 18-20x PE)
-- 加權期望值: ~+10% 5 年 (IRR 1.9%/年) — 衛星倉位邏輯
+KEY DRIVER（2）
+1.6T PAM4 DSP 領導：Ara 平台 3nm，2026 開始 sampling，
+PAM4 DSP top 3 (MRVL+AVGO+MaxLinear) 占 70% market share。
+800G → 1.6T migration 是 multi-year revenue driver from mid-2026。
 
-KEY RISKS:
-- AVGO 70% 市占主導 + 台系 Alchip / MediaTek 中低端追擊
-- Hyperscaler 自研 (Meta Artemis, Google TPU v6) 永久壓 ASIC 市占 cap
-- 估值 fwd PE 44x，4 週漂移 +21%，動能過熱
+R:R（5 年期望）
+Bull (30%) +80% / Base (40%) +30% / Bear (30%) -30%
+EV = 1.27x（年化 ~4.9%）
 
-RECOMMENDATION:
-Wait + 條件式分批：等回測 $145-155 (MA60 區，DD 中期目標 $163 下安全邊際) 起首批
-1.0%，目標倉位 4-5%，與已持 AVGO 合計不超 7%。
+主要風險
+1. AVGO 從 MRVL 搶走 Amazon / Microsoft / Google 任一個 design win
+2. Forward PE 43.11x 已 priced 完美，動能過熱（4w drift +20%）
+3. Amazon 客戶集中度過高（~25-30%）
 
-REVIEW TRIGGER:
-Q1 FY27 財報 (~5/底)、AWS re:Invent (Dec 2026)、Google MRVL 推論晶片合約定案
-</pre>
-</div>
+建議倉位
+核心持倉次要 4-6%（試倉 2-3%, 加碼上限 6%）
+條件式進場：等 5/27 Q1 FY27 財報後 gap down OR 回測
+原因：4w drift 過熱 + 估值已 priced 完美
 
+Opportunity Cost
+Portfolio 已有 NVDA / AVGO / CRDO / ANET — MRVL 是「dual-source
+insurance」+ AVGO complement；不削減原核心位，邊際資金進次要核心。
+
+保質期：Q1 FY27 財報前（~3 週，至 2026-05-27）</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
 <div class="elevator">
-  <strong>30 秒電梯簡報：</strong>「Marvell 在 AI 客製矽 + 光學連接的第二供應商地位很穩，NVDA $2B 投資確認 ecosystem 角色。FY27/28 收入 $11B → $15B，data center 50%+ 成長。但估值 fwd PE 44x、4 週漲了 21% 已 ATH，現在追高風險高，等回測 $145-155 才進場。」
+MRVL 是 AI infra 客製 silicon 第二供應商 — Amazon Trainium3 / Microsoft Maia / Google TPU 三大 hyperscaler design 全部在它手上，FY26 revenue $8.195B / +42%；NVDA 多億美元投資 MRVL 印證雙方互補。1.6T DSP "Ara" 是 800G → 1.6T 升級主受益者。但現價 $172 / Forward PE 43x 已 priced 完美 + 4w drift +20% 過熱，等 5/27 Q1 FY27 財報後 gap down 或回測再進次要核心位 4-6%。
 </div>
 
-<p style="font-size:12.5px;color:#475569;margin-top:14px"><strong>壓力測試結果：</strong>1 頁紙 memo 與 30 秒版本邏輯自洽，thesis 不需要重寫。核心訊息「強 thesis + 弱 timing」在兩個版本中都清晰呈現。</p>
+<p class="note"><strong>壓力測試結果：</strong>1 頁紙 + 30 秒版本均能寫出且邏輯自洽 — Thesis 通過 Mental Models 測試但屬「等待 + 條件式進場」型。</p>
+</section>
 
-<!-- Phase B 矛盾 -->
-<h2 class="sec danger">Phase B｜矛盾辨識 + 強制裁決</h2>
+<section class="card">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
 
-<h3 class="sub">1. 共識清單（A1-A3 方向一致的高信心區域）</h3>
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
 <ul>
-  <li>MRVL 在 AI infra 中是「第二供應商」(A1)、處於需求端結構性爆發 (A2)、data center 是業務主引擎 74%+ 佔比 (A3) — <strong>「次要但結構性受益」共識成立</strong></li>
-  <li>NVDA $2B 投資 + NVLink Fusion (A1 護城河、A2 趨勢、A3 業務新引擎都認可) — <strong>「ecosystem 平台地位」共識成立</strong></li>
-  <li>Custom ASIC $1.5B FY26 → $3B by FY28 (A3) + ASIC TAM 44% CAGR (A2) — <strong>「ASIC 業務絕對成長」共識成立</strong></li>
+<li>✅ <strong>Custom AI silicon 第二供應商位置確立</strong>（A1 + A2 + A3 一致）— Amazon / Microsoft / Google 三大 design wins 全部 in flight</li>
+<li>✅ <strong>NVDA 多億美元投資印證雙方互補</strong>（A1 + A2）— NVLink + 光學 DSP co-development</li>
+<li>✅ <strong>1.6T DSP "Ara" 平台領導</strong>（A1 + A2）— PAM4 DSP top 3 占 70% 市場</li>
+<li>✅ <strong>FY26 record revenue $8.195B / +42%</strong>（A3）— Data center 占 74% revenue</li>
 </ul>
 
-<h3 class="sub">2. 矛盾清單（A1 ↔ A2 ↔ A3）</h3>
-<div class="conflict-block">
+<h3>2. 矛盾清單</h3>
 <table>
-  <thead><tr><th style="width:5%">#</th><th>矛盾點描述</th><th style="width:14%">A1 結論</th><th style="width:14%">A2 結論</th><th style="width:14%">A3 結論</th><th style="width:13%">性質</th></tr></thead>
-  <tbody>
-    <tr>
-      <td><span class="red-dot">🔴 1</span></td>
-      <td><strong>產業強趨勢 vs hyperscaler 自研收縮</strong>：A2 說 ASIC TAM 44% CAGR 結構爆發、A3 卻發現客戶集中度高且每個大客戶都在自研 (Meta Artemis, Google TPU v6)</td>
-      <td>護城河中等持久（5Y 評 7/10），AVGO 主導 + 自研雙夾擊</td>
-      <td>產業 TAM $70-100B by 2027，需求超強</td>
-      <td>客戶集中度高，3 大客戶 hyperscaler 全自研中</td>
-      <td><strong>不可調和</strong></td>
-    </tr>
-    <tr>
-      <td><span class="red-dot">🔴 2</span></td>
-      <td><strong>full-stack 護城河 vs 台系超越</strong>：A1 認為 MRVL 是 ASIC + 光學 + 矽光 + CXL 全棧唯一供應商；ID_AIASICDesignService 非共識卻指出台系 Alchip + MediaTek 2028 合計超越 MRVL（22% vs 共識 10-12%）</td>
-      <td>full-stack 是核心差異化，5Y 持久</td>
-      <td>—</td>
-      <td>未直接觸及，但 ASP 趨勢看不出明顯下行</td>
-      <td><strong>不可調和</strong></td>
-    </tr>
-    <tr>
-      <td><span class="yellow-dot">🟡 3</span></td>
-      <td><strong>毛利率穩定 vs 業務 mix 改變</strong>：A1 說 GM 60% 穩定、A3 卻顯示業務 mix 持續向 ASIC 傾斜（GM 較高但 hyperscaler 議價權強）</td>
-      <td>GM 60% 穩定（→）</td>
-      <td>—</td>
-      <td>data center 從 70% → 80%+ FY28，ASP 議價需觀察</td>
-      <td>可調和（程度差異）</td>
-    </tr>
-  </tbody>
+<thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Custom AI 15% 份額 vs AVGO 70% 寡占</td>
+<td>MRVL 是次要而非 dominant</td>
+<td>AVGO 從 Google / Meta 鎖定 70%</td>
+<td>FY26 ASIC ramp 才剛開始</td>
+<td>🟡 可調和（dual-source 結構）</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>FY26 revenue +42% 強 vs Forward PE 43x 已 priced</td>
+<td>—</td>
+<td>—</td>
+<td>FY27 EPS $3.20 共識已上修</td>
+<td>🟡 可調和（成長已 priced 但仍有空間）</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>NVDA 多億美元投資 vs NVDA Spectrum-X 與 MRVL 部分重疊</td>
+<td>NVLink + 光學 DSP 互補</td>
+<td>—</td>
+<td>NVDA networking +647% YoY 也吃 MRVL DSP 業務一部分</td>
+<td>🟡 可調和（高層次互補但細項重疊）</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>4w drift +20% 過熱 vs Pure MA 強多頭</td>
+<td>—</td>
+<td>—</td>
+<td>歷史 mean reversion 機率 60-70%</td>
+<td>🔴 不可調和（短期 timing 問題）</td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Amazon 客戶集中度 ~25-30% vs 「分散 hyperscaler」</td>
+<td>—</td>
+<td>—</td>
+<td>Trainium 是 MRVL 最大單一 ASIC 貢獻者</td>
+<td>🔴 不可調和（依賴 Amazon 過重）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>本 DCA 結論</th><th>DD 結論（DD_MRVL_20260418）</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>X1</td><td>進場時點</td><td>條件式分批，等 5/27 binary 揭曉</td><td>「Pure MA ✅ + 4w drift 中等」標進場</td><td>本 DCA 加上 4w drift +20% 過熱判斷與 5/27 財報 binary 風險</td></tr>
+</tbody>
+</table>
+
+<h3>⚖ 4. 強制裁決（每個不可調和矛盾必含「會 settle 硬數據點」+ ≥ 2 條 if-then 路徑）</h3>
+<div class="verdict-box">
+<table>
+<thead><tr><th width="4%">#</th><th width="14%">矛盾</th><th width="9%">選哪邊</th><th width="22%">依據</th><th width="22%">會 settle 衝突的硬數據點</th><th width="29%">裁決後執行路徑（≥ 2 條 if-then）</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>15% vs 70% (vs AVGO)</td>
+<td><strong>A2（MRVL 是 dual-source 受益者，不必 dominate）</strong></td>
+<td>① hyperscaler 客戶長期不容忍 sole-source；② NVDA 多億美元投資 MRVL；③ Custom AI TAM 從 $40B 成長至 $55B (2028) — MRVL 即使 hold 15% 也是 +37% TAM growth</td>
+<td><strong>FY27-FY28 Custom AI TAM 是否從 $40B 升至 $55B+ + MRVL share 是否升至 17-20%</strong>（2028 投資人活動）</td>
+<td>(a) FY28 MRVL share 升至 17%+ + TAM 達 $55B → <strong>加碼至 5-6%（核心上限）</strong>；(b) FY28 share 跌至 12% 以下 (AVGO 回搶) → <strong>清倉 A，5Y thesis 失效</strong></td>
+</tr>
+<tr>
+<td>M4</td>
+<td>4w drift +20% 過熱 vs Pure MA</td>
+<td><strong>A3（短期 mean reversion 風險）</strong></td>
+<td>歷史 4w drift &gt; +20% 後 4-6 週回測 8-15% 機率 60-70%；5/27 財報 binary 是 catalyst</td>
+<td><strong>5/27 Q1 FY27 財報是否 beat-and-raise</strong></td>
+<td>(a) 5/27 beat-and-raise + 動能持續 → <strong>突破 $200 — 放棄此波，等下次回檔</strong>；(b) 5/27 miss 或 in-line + gap down 至 $155 以下 → <strong>第一批 1.5% 進場</strong></td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Amazon 集中 ~25-30%</td>
+<td><strong>A3（風險端優先）</strong></td>
+<td>Trainium 是 MRVL 最大單一 ASIC 貢獻者；Amazon 削減即重創 MRVL EPS</td>
+<td><strong>FY27-FY28 Amazon 客戶集中度是否從 25-30% 降至 22% 以下</strong>（Microsoft Maia + Google TPU ramp 加快）</td>
+<td>(a) Microsoft Maia + Google TPU 在 FY27 開始 production 並貢獻營收 ≥ 10% → <strong>客戶集中下降，加碼條件達成</strong>；(b) Amazon 集中度連 2 季 &gt; 40% → <strong>清倉 B（pre-mortem secondary trigger）</strong></td>
+</tr>
+<tr>
+<td>M2</td>
+<td>+42% vs PE 43x</td>
+<td><strong>A3（成長已 priced 但 hyperscaler ramp 還有空間）</strong></td>
+<td>Q4 FY26 OPM 35.7% + 1.6T DSP 進入 production 階段</td>
+<td><strong>5/27 Q1 FY27 OP margin trajectory + AI revenue 季度 trajectory</strong></td>
+<td>(a) Q1 FY27 OPM ≥ 36% + AI rev ≥ +50% YoY → <strong>thesis 強化</strong>；(b) Q1 FY27 OPM &lt; 33% 或 AI rev &lt; +35% → <strong>進場條件收緊</strong></td>
+</tr>
+<tr>
+<td>M3</td>
+<td>NVDA 投資 vs Spectrum-X 部分重疊</td>
+<td><strong>A1（高層次互補）</strong></td>
+<td>NVDA 投資 MRVL 數十億美元 + NVLink 共同開發；Spectrum-X 主要競爭 ANET 而非 MRVL</td>
+<td><strong>NVDA 是否進一步增持 MRVL 或推出競爭 DSP</strong></td>
+<td>(a) NVDA 增持 MRVL 或新合作 → <strong>thesis 強化，加碼條件邊際放寬</strong>；(b) NVDA 推出自家 1.6T DSP → <strong>競爭升級，倉位上限降至 4%</strong></td>
+</tr>
+</tbody>
 </table>
 </div>
+</section>
 
-<h3 class="sub">3. 與既有報告的交叉矛盾</h3>
-<div class="conflict-block">
+<section class="card">
+<h2>§3 Key Drivers｜這支股票的命脈是什麼</h2>
+
 <table>
-  <thead><tr><th style="width:5%">#</th><th>矛盾點</th><th style="width:22%">Phase A 結論</th><th style="width:22%">DD/ID 報告結論</th><th>可能原因</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>MRVL ASIC 市占趨勢</td>
-      <td>A2 認為 TAM 大、A3 認為 MRVL 維持 20-25%</td>
-      <td>ID_AIASICDesignService 非共識：台系 2028 合計 22%（vs 共識 10-12%）→ 隱含 MRVL 被擠至 ~15-18%</td>
-      <td>視角差：ID 看 3 年後 share，Phase A2/A3 看當下；ID 觀點更悲觀</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>MRVL 估值狀態</td>
-      <td>A3 顯示 fwd PE 44x、PEG 1.19（偏貴）</td>
-      <td>DD_MRVL_20260418 給 A+ 訊號，FY+2 PE 25.77x、PEG 0.72（合理）</td>
-      <td>時間差：DD 4/18 股價 $139.69，現價 $168.75 漂移 +20.8% → 估值 catch-up</td>
-    </tr>
-  </tbody>
+<thead><tr><th width="6%">#</th><th width="30%">Key Driver</th><th width="38%">為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Custom AI silicon 第二供應商位置（hyperscaler dual-source 結構）</strong>（需求側）</td>
+<td>Amazon Trainium3 / Microsoft Maia / Alphabet TPU 三大 hyperscaler design wins in flight；custom AI compute TAM $55B 2028；MRVL share 15% → 20% target FY29；hyperscaler 不容忍 sole-source 是結構性需求</td>
+<td>① 季度 AI revenue trajectory；② Amazon / Microsoft / Google ASIC ramp 各自進度；③ Custom AI TAM 與 MRVL share 年度更新</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>1.6T PAM4 DSP 領導（800G → 1.6T 結構升級）</strong>（供給側）</td>
+<td>Ara 平台 3nm 2026 開始 sampling，PAM4 DSP top 3 (MRVL+AVGO+MaxLinear) 占 70% 市場 <span class="src">Market Report Analytics 2025</span>；800G → 1.6T migration multi-year revenue driver from mid-2026</td>
+<td>① 1.6T DSP shipments 季度趨勢；② PAM4 DSP top 3 share 是否維持 70%；③ next-gen 3.2T DSP roadmap 進度</td>
+</tr>
+</tbody>
 </table>
+
+<p class="note"><strong>為什麼是這 2 個，而不是其他？</strong>MRVL 有幾個替代命脈候選（Wi-Fi/Bluetooth、storage、auto Ethernet），但只有「custom AI silicon dual-source」與「1.6T DSP 升級」是 (a) 結構性而非循環性、(b) MRVL 相對於 AVGO / NVDA 的差異化護城河、(c) 對未來 5 年 EPS CAGR 25%+ 預估有 70%+ 解釋力。其他 segment 是 hygiene factor，FY26 已 ramp down 至 26% 營收。</p>
+
+<div class="conflict-box" style="background:#F0F9FF;border-left-color:#0EA5E9">
+<h4 style="color:#0369A1;margin-top:0">⚖ Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 1（Custom AI silicon）vs Driver 2（1.6T DSP）— 是否獨立？</p>
+<p><strong>測試</strong>：Driver 2 是否能在不假設 Driver 1 成立的情況下單獨被推翻？<br>
+✅ <strong>是</strong>。1.6T DSP 是 SerDes / 光學 connectivity 領域的領導，不依賴 custom AI silicon 業務 — 即使 Custom AI 被 AVGO 完全壟斷，1.6T DSP 仍會因為 800G → 1.6T 結構升級而獲利（hyperscaler 必經）。Driver 2 失敗（MaxLinear 突破或 NVDA 自製 DSP）不需要 Driver 1 失敗。</p>
+<p><strong>結論：</strong>兩個 driver 來自獨立因果鏈（compute side vs networking side），通過抽象層測試。</p>
 </div>
 
-<h3 class="sub">4. ⚖ 強制裁決（不可調和矛盾必選邊）</h3>
-<div class="ruling-table">
+<h3>強制減法 — 我認為不重要的事</h3>
 <table>
-  <thead><tr><th style="width:5%">#</th><th>矛盾</th><th style="width:14%">我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>強需求 vs 客戶自研</td>
-      <td><strong>A3</strong>（自研壓 cap）</td>
-      <td>A2 的 TAM 是「總市場」，但對 MRVL 而言能 capture 的是「hyperscaler 不自研的部分」。Meta Artemis、Google TPU v6 都已落地，AWS Trainium 也部分內部化。MRVL 的 addressable market 實際是 TAM × (1 − 自研滲透率)。在 hyperscaler 25-40% 自研滲透假設下，MRVL FY30E ASIC 市占 cap 在 25%（不是 35%+）。但 ASIC 絕對值仍成長 — 只是放慢從 50% YoY 至 20-25% YoY by FY28+。</td>
-      <td>AWS 2026 re:Invent (Dec) 公布 Trainium4 設計合作對象；MSFT Maia 2 路線圖；Meta MTIA v3 設計選擇</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>full-stack vs 台系超越</td>
-      <td><strong>A4 / ID 觀點</strong>（台系會擠 MRVL 中低端）</td>
-      <td>full-stack 真正護城河僅在「高端複雜 IP（NVLink Fusion / 1.6T optical / silicon photonics）」段，這部分台系暫時追不上。但 MRVL 的 ASIC business 並非全部高端 — 中低端 customs（如 networking ASIC、特定 SerDes IP block）面對 Alchip / GUC / MediaTek 價格競爭。所以「全棧」是行銷敘事，實際護城河 = high-end 50% + commodity 50%，後者 5Y 內市占受擠壓 5-10pt。Settle 條件：觀察 MRVL FY28 ASIC blended ASP 是否持平或下滑 5%+。</td>
-      <td>FY28 Q4 / FY29 Q1 ASIC ASP（mgmt 在 earnings call 偶爾揭露）；Alchip / MediaTek hyperscaler 設計案數量 quarterly</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-<p style="font-size:12.5px;color:#7C2D12;margin-top:10px"><strong>裁決如何進入 §7：</strong>兩個裁決都偏 bear 方向 → §7 倉位上限縮至 4-5%（衛星而非核心），進場條件改為條件式分批；若兩個 settle 條件中任一觸發（AWS Trainium4 換廠 or ASIC ASP 下滑 5%+），→ §7b 清倉路徑啟動。</p>
-
-<!-- §3 Drivers -->
-<h2 class="sec">§3｜Key Drivers + Consensus 分歧</h2>
-<table>
-  <thead><tr><th style="width:5%">#</th><th>Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>Custom AI ASIC 第二供應商地位</td>
-      <td>MRVL data center 收入 74%+，ASIC 是 data center 中最快成長部分（$1.5B → $3B by FY28），且是「能否守住 AVGO 之外」的核心戰場 — 失去 AWS / MSFT / GOOGL 任一就 thesis 解構</td>
-      <td>Quarterly ASIC revenue（mgmt 偶爾揭露 run rate）；hyperscaler 對外公布的 design wins；台系 Alchip / GUC / MediaTek 的 hyperscaler 合作案數</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>1.6T Optical / Silicon Photonics super-cycle</td>
-      <td>與 driver 1 完全獨立的因果鏈：optical 是物理層，所有 GPU/ASIC（包括 NVDA！）都需要，hyperscaler 自研也擋不掉。NVDA $2B 投資 NVLink Fusion 直接 endorse 這個業務。即使 ASIC 慢下來 optical 仍可獨立 50%+ YoY 成長至 FY28</td>
-      <td>Interconnect revenue YoY（mgmt 已 guide FY27 +50%）；NVDA NVLink Fusion 量產時程；CPO 商用化進度（COHR/LITE 競合）</td>
-    </tr>
-  </tbody>
+<thead><tr><th width="40%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>Wi-Fi / Bluetooth / Auto Ethernet 業務</td><td>FY26 已 ramp down 至 ~10% 營收，非命脈</td></tr>
+<tr><td>Storage controller 業務</td><td>16% 營收但 secular 成長弱、非結構受益</td></tr>
+<tr><td>Q1 FY27 單季 EPS beat 幅度</td><td>noisy，重點是 AI revenue trajectory 與 hyperscaler design ramp 進度</td></tr>
+<tr><td>賣方目標價短期變動</td><td>Forward PE 43x 反映 high uncertainty；目標價 $90-220 區間極大</td></tr>
+<tr><td>NVDA 是否進一步增加 MRVL 投資金額</td><td>已是 multi-billion-dollar 投資，邊際變動非命脈</td></tr>
+</tbody>
 </table>
 
-<h4 style="margin-top:18px">Driver 抽象層 guardrail 校驗</h4>
-<p>Driver 2 在不假設 Driver 1 成立的情況下能否單獨被推翻？<strong>能</strong> — 即使 hyperscaler 自研所有 ASIC（Driver 1 全失敗），他們仍須採購 1.6T optical（NVDA 自己的 GPU 也要用 MRVL optical DSP）。Driver 2 是物理層 commodity-but-scarce 角色，與 Driver 1 設計服務角色是兩條獨立因果鏈。✅ 通過。</p>
-
-<h4 style="margin-top:14px">強制減法 — 我認為不重要的事</h4>
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
 <table>
-  <thead><tr><th style="width:38%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
-  <tbody>
-    <tr><td>Quarterly EPS beat / miss</td><td>業務本質由 hyperscaler 設計案 cycle 主導，single quarter noise 不影響 5Y thesis</td></tr>
-    <tr><td>Storage / consumer / auto 業務</td><td>合計 &lt; 15% 收入且持續萎縮，已是「在邊緣」業務</td></tr>
-    <tr><td>NVDA $2B 投資的 dilution effect</td><td>$2B vs $145B 市值 = 1.4%，是 ecosystem signal 而非 financial impact</td></tr>
-    <tr><td>短期股價技術面（K 線型態）</td><td>Pure MA + RSI 動能過熱已涵蓋 timing，更短 noise 不需理會</td></tr>
-  </tbody>
+<tbody>
+<tr><td width="32%"><strong>市場目前定價在什麼假設上</strong></td><td>MRVL = 「AI infra 第二受益者」，Forward PE 43x 反映「FY27-FY30 EPS CAGR ~25-30% + AI revenue 連續高雙位數成長」，已 priced 完美</td></tr>
+<tr><td><strong>我認為的不同假設</strong></td><td>① 市場低估 hyperscaler dual-source 結構的持續性 — AVGO 沒辦法吃完整個 Custom AI 市場；② 市場低估 1.6T DSP "Ara" 的領先優勢；③ 但市場也低估 Amazon 客戶集中度的尾部風險 — 若 Trainium 失敗 MRVL EPS 會 -25%</td></tr>
+<tr><td><strong>賣方為什麼錯（具體理由）</strong></td><td>主流賣方目標價 $200-220 隱含「AI revenue 連續 50%+ 成長 5 年」 — 這是過度樂觀的線性外推。具體錯誤：(a) 把 FY26 Q1 +63% 視為 sustainable run rate，沒看到 Amazon Trainium ramp 是 lumpy 而非連續；(b) 把 1.6T DSP 領先視為「永久」，但 NVDA / 中國 IC 設計可能在 FY28 後追上</td></tr>
+</tbody>
+</table>
+<p class="note"><strong>校驗結論：</strong>三題均能寫出具體分歧 — thesis 有獨立 alpha 來源（dual-source insurance + 風險端非共識）。alpha 中等強度（已 priced 完美但仍有 hyperscaler ramp 上方空間），故 §7 倉位定為次要核心 4-6%（不擠 NVDA / AVGO 主核心位）。</p>
+</section>
+
+<section class="card">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<p class="note" style="background:#FEF2F2;border-left:3px solid #DC2626;padding:8px 14px;margin-bottom:14px"><strong>📌 §5 修正紀錄</strong>：本節含 <strong>2 條 trigger</strong> — Primary（AVGO 從 MRVL 搶走任一 hyperscaler design win）+ Secondary（pre-mortem §6b 派生 — Amazon 客戶集中度倒退超過 40%）。Secondary 為 §6 三段式校驗結果 ⚠ 部分重疊後實際補入。</p>
+
+<h3>Primary Trigger — AVGO 搶走 design win</h3>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>AVGO 從 MRVL 手中搶走 Amazon Trainium / Microsoft Maia / Alphabet TPU 任一個 design win，或 MRVL 公開喪失任一個 hyperscaler 客製 silicon 程式</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>Driver 1（Custom AI silicon 第二供應商）的核心前提是「dual-source 結構讓 MRVL hold 15% 份額」。若 AVGO 從 MRVL 搶走任一個 design win，MRVL 從「dual-source insurance」打成「沒有第二供應商」 — 不僅 EPS 直接下修 20-30%（單一 design 占 MRVL custom AI 30-40%），更嚴重的是「dual-source 結構假設」失效，PE 從 43x 壓到 25-28x = 35-45% downside</td></tr>
+<tr><td><strong>如何監測</strong></td><td>① Hyperscaler 公開 ASIC roadmap update（Amazon Trainium4、Microsoft Maia 2、Google TPU 7 等）；② SemiAnalysis / Substack 的 design win attribution；③ MRVL 季度 transcript 提到任一 hyperscaler 是否「won at 」或「lost at」；④ AVGO 季度 design win 公告</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td><strong>4-12 個月</strong>。Amazon Trainium3 在 2026 production，Trainium4 spec 預計 2026 H2 spec lock；Microsoft Maia 2 在 2026 ramp；Google TPU 7 spec 2027 — 任一程式 transition 是 trigger window</td></tr>
+</tbody>
 </table>
 
-<h3 class="sub" style="margin-top:24px">🔄 我和市場 consensus 的最大分歧</h3>
+<h3>Secondary Trigger（pre-mortem 派生）— Amazon 客戶集中度過高</h3>
 <table>
-  <thead><tr><th style="width:30%">項目</th><th>內容</th></tr></thead>
-  <tbody>
-    <tr><td>市場目前定價在什麼假設上</td><td>FY27 EPS ~$5.5、FY28 EPS ~$6.0、blended forward PE ~30x（隱含「mgmt guide 完美達標 + ASIC 50%+ 成長持續」）</td></tr>
-    <tr><td>我認為的不同假設</td><td>FY27 mgmt guide 大致達標，但 FY28 後 ASIC 成長放緩至 25-30% YoY（hyperscaler 自研滲透 cap），FY30E EPS $7-8 而非 consensus 隱含 $10+；optical interconnect 50%+ growth 比市場預期持續更久（FY29 仍 40%+ vs consensus 25%）</td></tr>
-    <tr><td>賣方為什麼錯（具體理由）</td><td>賣方分析師把 MRVL 與 AVGO 並列估值（同樣「ASIC 設計服務」），但漏看：① MRVL ASIC 客戶忠誠度尚未驗證至 v3+（vs AVGO Google TPU 已 v7）→ revenue durability 比 AVGO 弱；② optical 業務是平台型而非設計服務型，TAM 邏輯與 ASIC 不同。賣方用一致 PE 估算兩個業務 → 高估 ASIC、低估 optical 持續性</td></tr>
-  </tbody>
-</table>
-<p style="font-size:12.5px;color:#475569;margin-top:8px">校驗：上述三題寫得出差異 → thesis 有 alpha 來源；不過 alpha 集中在「optical 比市場預期持久」單一論點，不足以支撐 core 倉位（5%+）。<strong>故 §7 倉位給 4-5% 衛星上限</strong>。</p>
-
-<!-- §5 Single Thing -->
-<h2 class="sec danger">§5｜The Single Thing That Could Change My Mind</h2>
-<table>
-  <thead><tr><th style="width:22%">項目</th><th>內容</th></tr></thead>
-  <tbody>
-    <tr><td>事件描述</td><td><strong>AWS 在 2026 re:Invent (Dec) 宣布 Trainium4 採用 Alchip 或 in-house 設計（不再使用 MRVL）</strong></td></tr>
-    <tr><td>為什麼這個事件是致命的</td><td>AWS Trainium 是 MRVL 第一大 ASIC 客戶（推估佔 ASIC 收入 40-50%）。Trainium 是 MRVL 連續 3 代設計（v1 → v3 都有 MRVL），下一代換廠 = MRVL ASIC 故事的「忠誠度驗證」徹底失敗 → 同時觸發 MSFT / Google 重新評估，連鎖反應</td></tr>
-    <tr><td>如何監測</td><td>① AWS re:Invent 主題演講（每年 Dec 第一週，免費直播）；② AWS 投資人關係部門對 Trainium 路線圖的揭露（quarterly call）；③ 半導體研究機構（SemiAnalysis、TrendForce）的供應鏈追蹤報告（monthly）；④ MRVL 自己 earnings call 的 commentary（quarterly）</td></tr>
-    <tr><td>目前離發生有多遠</td><td><strong>中等距離</strong> — 2026 re:Invent 還有 7 個月，Trainium4 設計選擇可能在 H2 2026 落定。NVDA $2B 投資是穩定信號（NVDA 不會投資被 AWS 拋棄的供應商），但 hyperscaler 持續評估替代方案是基本假設</td></tr>
-  </tbody>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>連續 2 季 Amazon 占 MRVL 總營收 ≥ 40%（vs 目前 ~25-30%），且 Microsoft / Google 客製 silicon revenue 增長 &lt; 5%（hyperscaler 分散度倒退）</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>MRVL thesis 需要「dual-source + 多 hyperscaler 分散」維持競爭力；如果 Amazon 占比過高（&gt; 40%），表示 Microsoft / Google 程式失敗或被 AVGO 回搶 — driver 1 的「分散」前提失效；同時 Amazon 在這個結構下擁有極大議價權，pricing power 會壓縮 MRVL margin。即使 Amazon 不 cancel，集中度本身也會讓估值 PE 從 43x 壓至 30x = 30% downside</td></tr>
+<tr><td><strong>如何監測</strong></td><td>① MRVL 季度 transcript 客戶集中度披露（10% 客戶數量）；② Amazon Q1 / Q2 季度 capex + AWS Trainium 發布；③ Microsoft / Google 季度 transcript 對 MRVL 設計合作的提及頻率；④ 10-K 揭露的客戶集中度比例</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td><strong>6-18 個月</strong>。FY26 Amazon ramp 加速但 Microsoft Maia 2 + Google TPU 7 仍在 design 階段；FY27 H1 (2026 H2-2027 H1) 是這個訊號的關鍵 window</td></tr>
+</tbody>
 </table>
 
-<!-- §6 What I Don't Know + Pre-mortem -->
-<h2 class="sec danger">§6｜What I Don't Know + Pre-mortem</h2>
+<p class="note"><strong>合規檢查：</strong>✅ Primary 是明確、單點、可驗證的事件；✅ Secondary 為 pre-mortem 三段式校驗 ⚠ 部分重疊後實際補入；✅ 兩 trigger 來自獨立因果鏈（產品競爭 vs 客戶分散），互不取代；✅ 兩條都有具體監測來源、時間窗口與量化判定門檻。</p>
+</section>
 
-<h3 class="sub">6a｜強迫面對自己的盲點</h3>
+<section class="card">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
 <table>
-  <thead><tr><th style="width:5%">#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>MRVL ASIC 在 hyperscaler 自研滲透下能維持 20-25% 市占</td>
-      <td>hyperscaler 自研滲透在 30-40% 後達到飽和（自研做不到的 niche 仍外包）</td>
-      <td>若自研滲透至 60-70%，MRVL ASIC 市占壓至 10-12% → FY30E EPS 下修 25-30%，bear 情境實現</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>NVDA NVLink Fusion 變成事實上的標準（不是 NVDA 一家試驗）</td>
-      <td>2027-2028 至少 2 個 hyperscaler 採用 NVLink Fusion 的解決方案</td>
-      <td>若僅 NVDA 自家用，NVLink Fusion 不擴散，optical 平台 thesis 弱化 → driver 2 報酬下修 30%</td>
-    </tr>
-    <tr>
-      <td>3</td>
-      <td>台系（Alchip + MediaTek）追擊速度</td>
-      <td>2028 前 Alchip + MediaTek 合計 hyperscaler ASIC 市占 &lt; 25%（vs ID 非共識 22%）</td>
-      <td>若超過 30%，MRVL ASIC blended ASP 壓縮 8-12% → GM 從 60% → 56-57%，估值倍數壓縮至 25-28x</td>
-    </tr>
-  </tbody>
+<thead><tr><th width="6%">#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>AVGO 是否從 MRVL 搶走任一 design win</td><td>Hyperscaler dual-source 結構持續、MRVL R&D 與 design service 維持領先</td><td>EPS 下修 20-30%，PE 壓 25-28x</td></tr>
+<tr><td>2</td><td>1.6T DSP "Ara" 量產順利且 PAM4 top 3 維持 70% 份額</td><td>3nm process 良率達標、客戶採用順利</td><td>1.6T 推遲，800G → 1.6T migration 延後</td></tr>
+<tr><td>3</td><td>NVDA 是否推出自家 1.6T+ DSP 競爭</td><td>NVDA 仍以 GPU + InfiniBand 為主，networking silicon 不深耕</td><td>MRVL DSP 競爭加劇，share 從 35% 跌至 25%</td></tr>
+<tr><td>4</td><td>中國 IC 設計（包括 Anlogic、Will Semi）是否快速追上</td><td>美中限制延續、中國客戶受限</td><td>長期 5-10 年競爭格局複雜化</td></tr>
+<tr><td>5</td><td>MRVL Celestial AI、XConn 整合是否 in-flight 順利</td><td>新併購 1B run rate 達標、CXL / DPU roadmap 順利</td><td>FY28 EPS 下修 5-10%</td></tr>
+</tbody>
 </table>
 
-<div class="premortem-block">
-<h3 class="sub" style="color:#7F1D1D;margin-top:0">6b｜Pre-mortem — 失敗故事倒推</h3>
-<div class="narrative">
-「假設 5 年後（2031）這個部位虧 50%，最可能發生的故事是 ——<br><br>
-2026 H2 AWS re:Invent 公布 Trainium4 改用 Alchip + 自家內部團隊（取代 MRVL），震驚市場；接著 MSFT 在 2027 H1 透露 Maia 3 採用混合設計（部分內部 + 部分 Alchip）；Google 推論晶片合約給了 AVGO + 台系雙供應，MRVL 沒拿到。三大客戶連鎖內部化使 MRVL ASIC FY28 收入比 mgmt guide 少 30%。<br><br>
-同時 NVDA NVLink Fusion 進度低於預期（NVDA 自家也轉向直連方案，外部夥伴需求降低），optical 50%+ 成長僅持續至 FY27 就降速。FY28 EPS 從 mgmt guide $6 下修至 $4.5，市場將 MRVL 重估為「networking 公司加 ASIC tail」，PE 從 35x 壓至 18x → $4.5 × 18 = $81，from $168.75 = -52%。」
-</div>
-<p style="font-size:12.5px;color:#475569;margin-top:8px"><strong>校驗：這個故事和 §5 single thing 重疊嗎？</strong>主要重疊（AWS Trainium4 換廠是核心觸發），但 pre-mortem 補充了「連鎖反應 + optical 同步降速」的具體路徑。<span class="badge ok">✅ §5 抓對了主要單點風險</span>，pre-mortem 把單點放進完整故事中，不需重寫 §5。</p>
+<h3>6b. Pre-mortem｜失敗故事倒推 → 校驗 §5 → 修正 §5（強制三段式）</h3>
+
+<h4>第一段｜故事倒推（≤ 80 字 narrative）</h4>
+<div class="premortem-box">
+「假設 5 年後 MRVL 部位虧 50%（從 $172 跌至 $86），最可能發生的故事是 — 2027 H2 AVGO 從 MRVL 手中搶走 Microsoft Maia 3 design (2028 production)，同時 Amazon Trainium 在 MRVL 占比從 30% 飆至 50% (Microsoft 程式遺失)；Amazon 利用集中議價優勢將 MRVL ASP 壓 -15%；NVDA 推出自家 1.6T DSP 蠶食 PAM4 share 至 30%；MRVL 從「dual-source insurance」打成「Amazon 客製 fab-less」，PE 從 43x 壓縮至 22x；FY30 EPS 從共識 $7 下修至 $4.5，PE × EPS = $99。」
 </div>
 
-<!-- §8 Review Triggers -->
-<h2 class="sec">§8｜Review Triggers</h2>
+<h4>第二段｜校驗 §5 single-thing</h4>
 <table>
-  <thead><tr><th style="width:5%">#</th><th>重新評估觸發點</th><th style="width:18%">類型</th><th>具體時間 / 條件</th></tr></thead>
-  <tbody>
-    <tr><td>1</td><td>Q1 FY27 財報</td><td>財報日期</td><td>2026 年 5 月底（即將發布）— 重點看 data center sequential growth 與 mgmt 對 FY27 全年 guide 是否有上修</td></tr>
-    <tr><td>2</td><td>NVDA NVLink Fusion 進度公告</td><td>產業事件</td><td>NVDA 下次 GTC 大會（11 月）或 Q3/Q4 earnings call commentary</td></tr>
-    <tr><td>3</td><td>Google MRVL 推論晶片合約落定</td><td>產業事件</td><td>2026 H2，預期 Google Cloud Next 大會（10 月）或 earnings call 揭露</td></tr>
-    <tr><td>4</td><td>AWS re:Invent 2026 — Trainium4 設計合作對象</td><td>§5 Single Thing</td><td>2026 年 12 月第一週</td></tr>
-    <tr><td>5</td><td>價位觸發 — 進場區</td><td>價位</td><td>跌至 $155 / $145 / $135（分批進場錨點）</td></tr>
-    <tr><td>6</td><td>價位觸發 — 退場區</td><td>價位</td><td>漲破 $185 RSI &gt; 75 → 減碼；跌破 $115（DD 短期目標）→ 重評 thesis</td></tr>
-  </tbody>
+<thead><tr><th width="60%">檢查問題</th><th>答案</th></tr></thead>
+<tbody>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="tag yellow">⚠ 部分重疊</span></td></tr>
+<tr>
+<td>Pre-mortem 故事包含的觸發路徑分解</td>
+<td>
+（a）AVGO 搶走 Microsoft 程式 → <strong>對應原 §5 Primary trigger</strong>（已抓到）<br>
+（b）Amazon 集中度從 30% 飆至 50% → <strong>原 §5 未涵蓋</strong>（純客戶分散風險，§5 只覆蓋競爭面）<br>
+（c）NVDA 推 1.6T DSP → 屬 §6a 第 3 項假設（產品替代），不需單獨 trigger
+</td>
+</tr>
+</tbody>
 </table>
 
-<table style="margin-top:14px">
-  <tbody>
-    <tr><td style="width:30%;background:#F0F9FF"><strong>本份報告保質期</strong></td><td>下一次財報（Q1 FY27, ~2026/5 月底）發布前有效；財報後重評 mgmt guide 與動能漂移狀態</td></tr>
-    <tr><td style="background:#F0FDF4"><strong>最可能發生的 upside 因素</strong></td><td>Q1 FY27 財報 data center 連續成長 + mgmt 上修 FY27 全年 guide；Google MRVL 推論晶片合約落定；NVDA NVLink Fusion 第二個 hyperscaler 採用</td></tr>
-    <tr><td style="background:#FFF1F2"><strong>最可能發生的 downside 因素</strong></td><td>AWS Trainium4 換廠（§5 single thing）；台系 Alchip 拿下 MSFT Maia 3 部分訂單；NVDA NVLink Fusion 進度低於預期</td></tr>
-  </tbody>
-</table>
-
-<!-- Phase A 折疊區（最後） -->
-<h2 class="sec" style="margin-top:48px">Phase A｜獨立研究階段（折疊區）</h2>
-
-<details class="phase">
-<summary>
-  Phase A1｜護城河深度分析
-  <span class="conclusion">→ 結論：MRVL 是 AI infra 全棧第二供應商，但護城河在 AVGO 主導 + hyperscaler 自研雙重夾擊下持久性中等（5Y 7/10）</span>
-</summary>
-<div class="body">
-<table>
-  <thead><tr><th style="width:25%">項目</th><th>內容</th></tr></thead>
-  <tbody>
-    <tr><td>主要護城河類型</td><td>① 技術 / IP 護城河（高速 SerDes、1.6T optical DSP、silicon photonics 設計能力 — Celestial AI 收購補強）；② 生態系護城河（NVDA $2B 投資 + NVLink Fusion 平台地位、TSMC 先進製程合作關係）</td></tr>
-    <tr><td>持久性評分</td><td><strong>7/10</strong>，5 年穩固度：中</td></tr>
-    <tr><td>最大侵蝕風險</td><td>AVGO（70% 市占主導）持續以 Google TPU + Meta MTIA 大客戶 lock-in 擴大規模優勢；hyperscaler 自研滲透（Meta Artemis 已落地、Google TPU v6/v7 ）24-36 月內把 MRVL ASIC TAM 壓縮 20-30%</td></tr>
-    <tr><td>關鍵數據</td><td>毛利率 60% 非 GAAP（→ 趨勢穩，Q3 FY26 59.7% vs 60.5% YoY）；custom ASIC 市占 20-25%（↑ 緩慢爬升中）；ROIC vs WACC 超額約 +10%p（推估，data center 業務拉高）</td></tr>
-  </tbody>
-</table>
-<p style="margin-top:12px"><strong>A1 獨立結論：</strong>Marvell 在 AI infra 中是「次佳的全棧供應商」— full-stack 是真實差異化但僅在高端段，commodity 段面對 AVGO 規模優勢與台系 Alchip 價格擠壓。NVDA $2B 投資是 ecosystem 護城河外加層，但無法獨力對抗 hyperscaler 自研趨勢。</p>
+<h4>第三段｜修正 §5（依第二段結果分流）</h4>
+<div class="conflict-box" style="background:#FEF2F2;border-left-color:#DC2626">
+<p><strong>校驗結果：⚠ 部分重疊</strong> — §5 抓對 driver 1 的競爭面觸發（AVGO 搶走 design win），但漏抓 driver 1 的客戶分散風險（Amazon 集中度倒退）。</p>
+<p><strong>實際執行的 §5 修正</strong>：</p>
+<ol>
+<li>已在 §5 區塊新增「Secondary Trigger — Amazon 客戶集中度過高」（具體事件：連 2 季 Amazon 占 MRVL 總營收 ≥ 40% + Microsoft / Google revenue 增長 &lt; 5%）</li>
+<li>已在 §7b 加碼/減碼條件中新增「清倉 B」對應 secondary trigger</li>
+<li>HTML §5 的「事件描述」現顯示為 2 條 trigger（Primary + Secondary），與 pre-mortem 之前的 1 條相比實際變動</li>
+</ol>
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger（Amazon 客戶集中度倒退）</strong></p>
 </div>
+
+<h4>Guardrail 校驗</h4>
+<p class="note">第三段是否實際導致 §5 區塊變動？✅ <strong>是</strong>。§5 從 1 條 trigger 擴充為 2 條 trigger，§7b 已新增「清倉 B」對應 secondary trigger。Pre-mortem 不是裝飾品。</p>
+</section>
+
+<section class="card">
+<h2>§8 Review Triggers｜重新評估觸發點</h2>
+
+<table>
+<thead><tr><th width="6%">#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q1 FY27 Earnings</td><td>財報日期</td><td><strong>2026-05-27 前後</strong>（看 AI revenue trajectory、5 大 hyperscaler ramp、guidance）— 短期最大 binary</td></tr>
+<tr><td>2</td><td>Q2 FY27 Earnings</td><td>財報日期</td><td><strong>2026-08 前後</strong></td></tr>
+<tr><td>3</td><td>1.6T DSP "Ara" production ramp</td><td>產業事件</td><td><strong>2026 H2</strong>（從 sampling 到 production）</td></tr>
+<tr><td>4</td><td>價位觸發 — 進場區</td><td>價位</td><td><strong>$155 / $145 / $130（三段加碼，見 §7b）</strong></td></tr>
+<tr><td>5</td><td>價位觸發 — 減碼區</td><td>價位</td><td><strong>$200 以上 + Forward PE &gt; 50x</strong></td></tr>
+<tr><td>6</td><td>§5 Primary Trigger</td><td>事件 / 競爭</td><td>AVGO 搶走 Amazon / Microsoft / Google 任一 design win → 立即清倉 A</td></tr>
+<tr><td>7</td><td>§5 Secondary Trigger（pre-mortem 派生）</td><td>結構 / 客戶分散</td><td>Amazon 連 2 季 ≥ 40% MRVL 營收 + Microsoft/Google 程式 trajectory 失速 → 立即清倉 B</td></tr>
+<tr><td>8</td><td>NVDA 1.6T DSP 推出</td><td>產業事件 / 競爭</td><td>NVDA 是否推出自家 1.6T+ DSP（5-10% 機率）</td></tr>
+</tbody>
+</table>
+
+<table style="margin-top:18px">
+<tbody>
+<tr><td width="32%"><strong>這份報告的保質期</strong></td><td><strong>Q1 FY27 財報前有效（~3 週，至 2026-05-27）</strong>。Q1 FY27 財報後須重跑 — AI revenue trajectory + 5 大 hyperscaler ramp 都會在 5/27 揭曉</td></tr>
+<tr><td><strong>最可能發生的 upside 因素</strong></td><td>5/27 Q1 FY27 beat-and-raise + AI revenue ≥ $1.5B 季度 + 1.6T DSP "Ara" production ramp 確認 → 股價衝 $200+（觸發減碼區）</td></tr>
+<tr><td><strong>最可能發生的 downside 因素</strong></td><td>5/27 Q1 FY27 in-line 或 miss + AI revenue trajectory 持平 + 動能 reset → 股價跌至 $145-155（觸發第一/二批進場）</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card">
+<h2>Phase A｜獨立研究階段（折疊區塊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：客製 ASIC + 1.6T DSP 雙引擎護城河，但 share 居 #2，5 年穩固度中高</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td>① <strong>Switching cost / design service</strong>（hyperscaler 客製 silicon 設計周期 18-24 個月，遷移成本高）；② <strong>Tech leadership</strong>（1.6T PAM4 DSP "Ara" 3nm 領先，PAM4 top 3 占 70% 市場）；③ <strong>NVDA 多億美元投資</strong>給予 strategic positioning</td></tr>
+<tr><td>持久性評分</td><td><strong>7/10</strong>，5 年穩固度：<strong>中高</strong>（AVGO 是強對手 + NVDA 自製 DSP 風險）</td></tr>
+<tr><td>最大侵蝕風險</td><td>AVGO 從 MRVL 搶走任一 design win → driver 1 失效；或 NVDA 推自家 1.6T+ DSP → driver 2 受擠壓</td></tr>
+<tr><td>關鍵數據</td><td>FY26 GAAP GM 51.7% / non-GAAP GM 59% <span class="src">MRVL FY26 PR</span>；Q4 non-GAAP OPM 35.7%；Custom AI compute TAM $55B 2028 / MRVL share 15% → 20% target FY29</td></tr>
+</tbody>
+</table>
+
+<h4>📚 Phase A1 sourced data point 清單（floor ≥ 5）— 實際 7 條</h4>
+<ol>
+<li><strong>FY2026 GAAP GM 51.7% / non-GAAP GM 59%</strong> <span class="src">— Marvell Technology FY2026 Press Release</span></li>
+<li><strong>Q4 FY26 non-GAAP OPM 35.7%</strong> <span class="src">— Marvell Q4 FY2026 PR</span></li>
+<li><strong>FY26 record revenue $8.195B，+42% YoY</strong> <span class="src">— Marvell FY2026 Press Release</span></li>
+<li><strong>Q1 FY26 revenue $1.895B (+63% YoY，beat guidance mid by $20M)</strong> <span class="src">— Marvell Q1 FY26 PR</span></li>
+<li><strong>Q4 FY26 data center revenue $1.6513B (+21% YoY，74% of total revenue)</strong> <span class="src">— Marvell Q4 FY26 PR</span></li>
+<li><strong>1.6T PAM4 DSP "Ara" 3nm process，2026 H1 開始 sampling</strong> <span class="src">— Marvell PR / OFC 2026 demo</span></li>
+<li><strong>Custom AI compute TAM raised to $94B by 2028 (vs prior $75B)，custom AI compute alone $55B by 2028；MRVL 目標 share 從 10% (CY23) 升至 20% (CY28)</strong> <span class="src">— Marvell Custom AI Investor Event 2025-06-17</span></li>
+</ol>
+
+<p><strong>A1 獨立結論（一句話）：</strong>MRVL 護城河是「客製 silicon 設計服務 + 1.6T DSP tech leadership」雙引擎，FY26 GM 59% / OPM 36% 為頂級體質，但 Custom AI 15% share 居 #2（vs AVGO 70%），5 年穩固度中高。</p>
 </details>
 
-<details class="phase">
-<summary>
-  Phase A2｜產業趨勢深度分析
-  <span class="conclusion">→ 結論：ASIC 產業處於 hyperscaler vs NVDA 雙頭競爭爆發期 (TAM 44% CAGR)，但 MRVL 在客戶端議價權弱</span>
-</summary>
-<div class="body">
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：Custom AI silicon TAM $55B by 2028，hyperscaler dual-source 結構受益</summary>
 <table>
-  <thead><tr><th style="width:25%">項目</th><th>內容</th></tr></thead>
-  <tbody>
-    <tr><td>TAM 與成長</td><td>Custom AI ASIC TAM 當前 ~$30-40B → 2027 達 $70-100B（mgmt + Hock Tan AVGO 預估），CAGR ~44.6%（vs general purpose GPU 16.1% CAGR）；hyperscaler capex 2026 $660-690B，75% 直接給 AI infrastructure</td></tr>
-    <tr><td>供需判斷</td><td>目前供需偏緊（TSMC 先進製程 N3/N2 capacity bottleneck，hyperscaler capex 強勢推進）；未來 12 月方向：仍偏緊，但內部分化（高階 ASIC 緊、commodity ASIC 漸鬆）</td></tr>
-    <tr><td>最大技術替代風險</td><td>① Hyperscaler 自研滲透加速（Meta Artemis、Google TPU v6/v7、AWS Trainium 自家設計團隊強化）— 12-36 月時間軸，威脅程度高；② NVDA 自家 NVLink + ASIC 整合方案（B100/Rubin 後代）— 24-36 月，中等威脅</td></tr>
-    <tr><td>最大政策 / 地緣風險</td><td>美中半導體出口管制 — 切斷部分 Chinese hyperscaler 機會（Alibaba PI / Baidu Kunlun 等），對 MRVL 反而是受益（地緣護城河），但若管制反向擴及 TSMC 先進製程跟隨美國同盟更深 → 影響 MRVL 設計案 tape-out 時程</td></tr>
-    <tr><td>議價權位置</td><td>對上游（TSMC）：中（fabless 同其他人一樣排隊，但 NVDA 投資可能加分）；對下游（hyperscaler）：弱（3-4 大客戶集中、有自研替代選項、project lumpiness）</td></tr>
-  </tbody>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>Custom AI compute TAM $55B by 2028 (vs $40B prior)；data center TAM 整體 $94B by 2028 <span class="src">Marvell Custom AI Investor Event 2025-06</span>；800G → 1.6T migration multi-year revenue driver from mid-2026</td></tr>
+<tr><td>供需判斷</td><td>供需偏緊（hyperscaler design wins 全部 ramp 中，TSMC 3nm/2nm capacity 緊張）；未來 12 個月 → 維持偏緊（Hyperscaler $420-460B FY26 capex）</td></tr>
+<tr><td>最大技術替代風險</td><td>NVDA 推自家 1.6T DSP 或推自家 NVLink chiplet 自家化 → MRVL DSP 業務受擠壓；威脅程度：中（NVDA 仍以 GPU 為主）</td></tr>
+<tr><td>最大政策/地緣風險</td><td>美中限制升級 → MRVL 對中國客戶銷售受限（已經從 2022 開始降低）；TSMC 製程受限不太可能影響</td></tr>
+<tr><td>議價權位置</td><td>對上游 <strong>中</strong>（向 TSMC 採購製程，TSMC 議價權 vs MRVL）；對下游 <strong>中</strong>（hyperscaler 客戶議價權強，但 dual-source 結構讓 MRVL 受益）</td></tr>
+</tbody>
 </table>
-<p style="margin-top:12px"><strong>A2 獨立結論：</strong>ASIC 產業處於結構性需求爆發期（TAM 翻倍 by 2027），但 MRVL 作為設計服務商位處價值鏈中段，議價權對下游弱。產業順風 ≠ MRVL 直接受益最大，需區分 TAM 成長 vs MRVL addressable 成長。</p>
-</div>
+
+<h4>📚 Phase A2 sourced data point 清單（floor ≥ 5）— 實際 7 條</h4>
+<ol>
+<li><strong>Custom AI compute TAM $55B by 2028 + data center TAM $94B by 2028（從 $75B prior 大幅上修）</strong> <span class="src">— Marvell Custom AI Investor Event 2025-06-17</span></li>
+<li><strong>MRVL custom ASIC market share 約 15%（second to AVGO 70%）</strong> <span class="src">— TradingKey Broadcom vs Marvell 2026 / HeyGoTrade 2026</span></li>
+<li><strong>NVDA 對 MRVL 的多億美元 strategic investment（NVLink-compatible interconnect + optical DSP co-development）</strong> <span class="src">— Klover.ai Marvell AI Strategy 2026 / FinancialContent 2026-04-13</span></li>
+<li><strong>Amazon Trainium3 2026+ 出貨計畫，是 MRVL 最大 single ASIC contributor</strong> <span class="src">— Klover.ai 2026 / FinancialContent 2026-03-09</span></li>
+<li><strong>Microsoft Maia 設計服務（target Azure AI + OpenAI inference）</strong> <span class="src">— Klover.ai 2026 / Marvell Q4 FY26 transcript</span></li>
+<li><strong>Alphabet TPU portion 訂單（ending AVGO 在 Google 的 sole-source 壟斷）</strong> <span class="src">— TradingKey 2026 / HeyGoTrade 2026</span></li>
+<li><strong>PAM4 DSP IC 市場 — MRVL + AVGO + MaxLinear 占約 70% 全球份額</strong> <span class="src">— Market Report Analytics PAM4 DSP ICs 2025</span></li>
+</ol>
+
+<p><strong>A2 獨立結論（一句話）：</strong>Custom AI silicon TAM 結構性升級至 $55B 2028，hyperscaler dual-source 結構對 MRVL 是 secular insurance；但 AVGO 70% share 仍 dominant，MRVL 必須持續 in-flight 全部 3 個 hyperscaler 程式才能 hold 15% share。</p>
 </details>
 
-<details class="phase">
-<summary>
-  Phase A3｜業務結構 / 財務體質 / 資本配置
-  <span class="conclusion">→ 結論：MRVL 業務由 data center 強引擎主導，但 customer concentration 高、新引擎多但分散</span>
-</summary>
-<div class="body">
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：Data center 74% rev 集中度極高，財務體質強健但 Forward PE 43x 已 priced 完美</summary>
 <table>
-  <thead><tr><th style="width:25%">項目</th><th>內容</th></tr></thead>
-  <tbody>
-    <tr><td>營收結構（FY26）</td><td>現金牛：data center 74%（$6.1B，+46% YoY）；成長引擎：Custom ASIC 在 data center 內部約 25%（$1.5B run rate，↑doubling by FY28）+ Optical / Interconnect ~30%（mgmt guide FY27 +50% YoY）；拖累 / 新興：Enterprise networking 11%、Carrier 7.5%、Consumer 5%、Auto/Industrial 1.5%（後兩者 -58% YoY）</td></tr>
-    <tr><td>客戶集中度</td><td>3 大 hyperscaler（AWS / MSFT / GOOGL）合計推估佔 data center 收入 50-60%，即總營收 ~38-44%；Top 5 客戶推估 60%+；風險：高</td></tr>
-    <tr><td>定價權</td><td>ASP 趨勢 → 整體穩定（GM 60% 持平），但 mix shift：高端 ASIC + optical ASP 強，commodity SerDes / DPU 受台系競爭壓力；定價權：中（hyperscaler 議價但 IP 仍保留）</td></tr>
-    <tr><td>未來金雞母</td><td>① NVLink Fusion 連接器（NVDA $2B 投資的核心）— 目前佔營收 &lt; 5%，潛在 TAM $10-20B by 2030，預估成熟 3-5 年；② 矽光子 / CPO（Celestial AI 收購）— 目前 &lt; 3%，TAM $5-10B by 2028</td></tr>
-    <tr><td>財務體質</td><td>FCF 轉換率 ~17%（FY25 $1.4B / 收入 $5.8B；FY26 應更高）；GM 60%（穩定）；non-GAAP op margin 36.3%（歷史新高）；壓力測試：營收 -20% 仍可正 EBITDA（現金 $948M + 借款空間，可撐 6-8 季）</td></tr>
-    <tr><td>資本配置紀律</td><td>FY26 返還股東 $2.245B（買回 $200M + 股息 $51M Q4）；併購紀錄：Inphi (2021, $10B) 為 optical 核心、Innovium (2021) 為交換器、Celestial AI (2026, ~$5B) 為矽光、XConn (2026) 為 CXL；歷史成功 70-80%（Inphi 是 home run），中等紀律但近期 capex 大幅膨脹（FY26 $300M+ R&D 加速）</td></tr>
-  </tbody>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構</td><td>現金牛：Data center custom silicon + 光學 DSP（74% 營收）；成長引擎：<strong>1.6T DSP + Trainium3 / Maia / TPU ramp</strong>；新興：Celestial AI / XConn （CXL / DPU roadmap，目標 $1B run rate）；長尾：Wi-Fi / Bluetooth (~10%) / Storage (~16%)</td></tr>
+<tr><td>客戶集中度</td><td>Data center 客戶集中度高（Top 3 hyperscaler 占 ~50%+）；Amazon 估約 25-30%；Microsoft + Google 累計 ~20-25%；風險：<strong>中高</strong></td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（1.6T 較 800G ASP +60%）；定價權：<strong>中強</strong>（hyperscaler dual-source 給 MRVL pricing power，但客戶仍有議價權）</td></tr>
+<tr><td>未來金雞母</td><td>① <strong>1.6T DSP "Ara" production ramp</strong>（2026 H2 開始）；② <strong>Custom AI silicon 市場份額擴張</strong>（10% → 20% target FY29）；③ Celestial AI optical interconnect</td></tr>
+<tr><td>財務體質</td><td>FCF 增長加速（FY26 $1.5B+），non-GAAP OPM 35.7%、毛利率 59% non-GAAP；壓力測試：營收 -25% 仍可獲利</td></tr>
+<tr><td>資本配置紀律</td><td>Celestial AI 整合中、XConn 收購中、$1B 買回計畫（保守）；無股利政策；管理層 R&D 投入大（FY26 OpEx +25% YoY）</td></tr>
+</tbody>
 </table>
-<p style="margin-top:12px"><strong>A3 獨立結論：</strong>MRVL 業務體質健康（GM 60% / op margin 36% / FCF 強），但客戶集中度過高（三大客戶 38-44%）+ 新引擎多但分散（NVLink、CPO、CXL 都還在 0-3% 階段）。財務上能撐住但結構上偏脆弱。</p>
-</div>
+
+<h4>📚 Phase A3 sourced data point 清單（floor ≥ 6）— 實際 8 條</h4>
+<ol>
+<li><strong>Q1 FY26 net revenue $1.895B (+63% YoY，beat $20M)</strong> <span class="src">— Marvell Q1 FY26 PR</span></li>
+<li><strong>Q2 FY26 guidance $2B (mid-point, +57% YoY)</strong> <span class="src">— Marvell Q1 FY26 transcript</span></li>
+<li><strong>FY26 record revenue $8.195B (+42% YoY)</strong> <span class="src">— Marvell FY26 PR</span></li>
+<li><strong>Q4 FY26 GAAP GM 51.7% / non-GAAP GM 59% / non-GAAP OPM 35.7%</strong> <span class="src">— Marvell Q4 FY26 PR</span></li>
+<li><strong>Q4 FY26 data center revenue $1.6513B (+21% YoY，74% of total revenue)</strong> <span class="src">— Marvell Q4 FY26 PR</span></li>
+<li><strong>股價 $172.15 / Forward PE 43.11 / RSI 14d 54.7（中性）/ Trailing PE 55.54</strong> <span class="src">— Investing.com / GuruFocus 2026-05-05</span></li>
+<li><strong>下次財報 2026-05-27 (Q1 FY27 results)</strong> <span class="src">— Investing.com Marvell calendar</span></li>
+<li><strong>Q1 FY26 non-GAAP EPS $0.62 / FY26 non-GAAP EPS $2.62 (+45%)</strong> <span class="src">— Marvell FY26 transcripts</span></li>
+</ol>
+
+<p><strong>A3 獨立結論（一句話）：</strong>MRVL 業務結構在 FY26 已完成「AI infra 主導」轉型（DC 74% rev，AI 是 DC 主體），財務體質頂級（GM 59% / OPM 36%）但 Forward PE 43x 已 priced 完美；5/27 Q1 FY27 財報是短期最大 binary（AI revenue trajectory）。</p>
 </details>
 
-<details class="phase">
-<summary>
-  Phase A4｜既有報告數據摘要
-  <span class="conclusion">→ DD A+ 訊號（4/18 凍結）+ ID_AIASICDesignService 非共識：台系 2028 超越 MRVL</span>
-</summary>
-<div class="body">
-
-<h4>DD_MRVL_20260418.html 擷取</h4>
+<details>
+<summary>Phase A4｜既有報告數據擷取 — DD_MRVL_20260418 + ID_AIASICDesignService_20260419</summary>
+<h4>DD 報告擷取（DD_MRVL_20260418.html）</h4>
 <table>
-  <tbody>
-    <tr><td style="width:25%;background:#F1F5F9"><strong>綜合訊號燈</strong></td><td><span class="badge ok">A+</span> — quality A + gate 🟢 + MA ✅ + trap 🟢，但 QC-22 漂移警示 + BB 超買意味「A+ 訊號有效但進場時機次佳」</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>三引擎目標價</strong></td><td>短期 $115（已被現價 $168.75 透支）｜中期 $163（上行 +17% from DD 寫稿時 $139.69）｜（樂觀無明確）</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>Bear anchor</strong></td><td>$69（從 DD 寫稿時 $139.69 下行 -51%；從現價 $168.75 = -59%）</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>R:R（3 年延伸視角）</strong></td><td>2.3x（base 通過），但壓力測試僅 1/4 通過（25%）— 警示「現價確有透支風險」</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>FY+2 估值（凍結）</strong></td><td>Fwd PE 25.77x、PEG 0.72、5Y 分位 20.4%（DD 寫稿時都還合理）</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>5Y EPS CAGR</strong></td><td>35.7%（DD 假設）</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>核心假設 H1/H2/H3</strong></td><td>H1: data center 50% growth；H2: ASIC 倍數 by FY28；H3: optical interconnect 50%+ YoY</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>紅旗</strong></td><td>customer concentration、ASIC project lumpiness、hyperscaler 自研擴大、估值倍數已偏高</td></tr>
-  </tbody>
+<thead><tr><th width="35%">項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Quality Score</td><td>A 級（custom silicon + DSP 雙軸）</td></tr>
+<tr><td>體質 veto</td><td>5/5 全過</td></tr>
+<tr><td>R:R 中期</td><td>+0.05~+0.30</td></tr>
+<tr><td>R:R 長期</td><td>5Y +27% (EV)</td></tr>
+<tr><td>Bear anchor</td><td>$110-120</td></tr>
+<tr><td>核心假設</td><td>H1: 三大 hyperscaler design hold / H2: 1.6T DSP 量產 / H3: AVGO 不搶走</td></tr>
+<tr><td>綜合訊號燈</td><td>A 級（次要核心）</td></tr>
+<tr><td>估值燈</td><td>🟠 偏貴（Forward PE 43x）</td></tr>
+<tr><td>Pure MA</td><td>✅ 但接近 ATH</td></tr>
+</tbody>
 </table>
 
-<h4 style="margin-top:18px">ID 報告摘要（涵蓋 MRVL）</h4>
-<table>
-  <thead><tr><th style="width:35%">ID 報告</th><th>對 MRVL 的關鍵點</th></tr></thead>
-  <tbody>
-    <tr><td>ID_AIAcceleratorDemand_20260419（母題）</td><td>非共識：ASIC 份額 35-40%（vs 共識 20-25%）、2027 非峰值為轉折、電力永久瓶頸重塑 FLOPS/W 競爭 — 對 MRVL 整體偏多</td></tr>
-    <tr><td><strong>ID_AIASICDesignService_20260419</strong>（最相關）</td><td><strong>非共識：① hyperscaler ASIC 2028 市占 40%+（vs 共識 20-25%）<span style="color:#16A34A"> ← 對 MRVL 利多</span>；② 台系 Alchip + MediaTek 2028 合計超越 MRVL（22% vs 共識 10-12%）<span style="color:#DC2626"> ← 對 MRVL 利空，已納入 Phase B 矛盾#2 裁決</span>；③ AVGO 2027+ 毛利壓縮至 40-45%（vs 共識維持 50%）— 對 MRVL 中性</strong></td></tr>
-    <tr><td>ID_AINetworking_20260419</td><td>非共識：Scale-up / Scale-out 非 zero-sum、UALink 商用 2027+ 非 2026、CRDO + ALAB 連接器稀缺被低估 — 對 MRVL optical 業務利多（platform 角色）</td></tr>
-    <tr><td>ID_SiliconPhotonicsCPO_20260419</td><td>非共識：CPO 2026 H2 已商用（比共識早 2-3 年）、pluggable + CPO 並存（LITE/COHR 不淘汰）、TSMC COUPE 重演 CoWoS 獨家 — MRVL 為 SiPh value chain 一員（Celestial AI 收購標的），中度利多</td></tr>
-  </tbody>
-</table>
-<p style="margin-top:8px;font-size:12.5px;color:#475569"><strong>A4 純數據輸入，無獨立結論。</strong>但要注意：DD A+ 訊號是 4/18 寫稿凍結值，現價已漂移 +20.8%，QC-22 警示表示估值已 catch up，DD 訊號有效但「最佳進場時機已過」。</p>
-</div>
+<h4>ID 報告擷取（ID_AIASICDesignService_20260419.html）</h4>
+<ul>
+<li>產業評級：Phase II（custom silicon ramp 期），CAGR 估 25-30% TAM 2024-2028</li>
+<li>MRVL 在 ID 中定位：🔴 核心受益（custom silicon #2 by share）</li>
+<li>關鍵趨勢：Trainium3 / Maia / TPU 三大 ramp 全部在 MRVL 手上</li>
+<li>vs AVGO：AVGO dominant 但 hyperscaler 想 dual-source，MRVL 是當然 #2</li>
+</ul>
+<p class="note"><strong>本 DCA 與 DD/ID 的關鍵差異：</strong>DD 給「A 級 / 次要核心」，本 DCA 同向但加上 4w drift +20% 過熱判斷與 5/27 財報 binary 風險，要求條件式進場（不是立即進場）；同時 §5 透過 pre-mortem 三段式回路新增 secondary trigger（Amazon 集中度倒退），這是 DD 沒涵蓋的「需求面客戶分散」風險，補入後讓 thesis 監測更全面。</p>
 </details>
+
+<details>
+<summary>📊 Custom AI silicon 競爭格局快照（2026 Q2 立場校準）</summary>
+<table>
+<thead><tr><th>玩家</th><th>市占</th><th>主要客戶</th><th>關鍵 design wins</th><th>2027-2028 catalyst</th></tr></thead>
+<tbody>
+<tr><td><strong>AVGO</strong></td><td>~70%</td><td>Google (TPU, sole-source 起家) / Meta MTIA / OpenAI / Anthropic +1</td><td>Google TPU 7、Meta MTIA 2、OpenAI 客製、Anthropic 客製</td><td>Google TPU 8 設計 lock；OpenAI 量產</td></tr>
+<tr><td><strong>MRVL</strong></td><td>~15%</td><td>Amazon (Trainium 主力) / Microsoft (Maia) / Alphabet TPU portion</td><td>Trainium3 (2026)、Maia 2、TPU portion</td><td>Trainium4 spec lock；Maia 3 啟動；1.6T "Ara" production ramp</td></tr>
+<tr><td>其他</td><td>~15%</td><td>Alchip / GUC / 自家設計 (Microsoft Cobalt)</td><td>較小規模 design service</td><td>—</td></tr>
+</tbody>
+</table>
+<p class="note"><strong>Marvell 的 dual-source 結構性受益假設</strong>：hyperscaler 不容忍 sole-source（議價 + 供應風險），AVGO 即使再強仍要留給 MRVL 至少 15-20% 份額作為 insurance。歷史上同類「dual-source 第二供應商」案例（如 ASIC 領域 Alchip vs MediaTek、5G 基帶 Qualcomm vs MediaTek、汽車 IDM vs IDM）都顯示 #2 share 穩定在 15-25% 區間。MRVL 若能 hold 15% 已是 base case；升至 20% 是 bull case；跌破 12% 是 bear case + §5 primary trigger。</p>
+</details>
+
+</section>
 
 </main>
 

@@ -2,441 +2,652 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="dca-schema-version" content="v1.0">
-<title>DCA NVDA 20260507 — Deep Conviction Analysis</title>
+<title>NVDA — Deep Conviction Analysis｜2026-05-07</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; }
-body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 0; line-height: 1.65; }
-.header-bar { background: #1E3A5F; color: #fff; padding: 12px 28px; font-size: 13px; display: flex; justify-content: space-between; position: sticky; top: 0; z-index: 999; flex-wrap: wrap; gap: 8px; }
-.header-bar .tag { font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.5px; }
-main { max-width: 1180px; margin: 0 auto; padding: 28px 32px 80px; }
-h1 { color: #1E3A5F; font-size: 28px; margin: 20px 0 4px; }
-h2 { color: #fff; background: #1E3A5F; padding: 10px 16px; font-size: 19px; border-left: 4px solid #3B82F6; margin: 34px 0 16px; }
-h3 { color: #1E3A5F; font-size: 16px; margin: 22px 0 10px; border-bottom: 1.5px solid #CBD5E1; padding-bottom: 4px; }
-h4 { color: #1E3A5F; font-size: 14px; margin: 16px 0 8px; }
-p, li, td, th { font-size: 14px; }
-.subtitle { color: #64748B; font-size: 14px; margin: 0 0 20px; font-style: italic; }
-table { width: 100%; border-collapse: collapse; margin: 12px 0; background: #fff; font-size: 13.5px; }
-th { background: #1E3A5F; color: #fff; padding: 9px 10px; text-align: left; font-weight: 500; }
-td { padding: 8px 10px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
-tr:nth-child(even) td { background: #F1F5F9; }
-.num { font-family: 'IBM Plex Mono', monospace; }
-
-/* §2 Thesis 區塊 */
-.thesis-box { background: #EFF6FF; padding: 36px 40px; margin: 18px 0 8px; text-align: center; border: 1px solid #DBEAFE; }
-.thesis-box .thesis-text { font-size: 26px; font-weight: 700; color: #1E3A5F; line-height: 1.55; letter-spacing: 0.5px; }
-.thesis-box .thesis-label { font-size: 12px; color: #64748B; margin-top: 12px; font-style: italic; letter-spacing: 1.5px; }
-
-/* §7 Decision 區塊 */
-.decision-box { background: #F0FDF4; border-left: 4px solid #16A34A; padding: 16px 20px; margin: 14px 0; }
-.decision-box.wait { background: #FEF9C3; border-left-color: #CA8A04; }
-.decision-box.avoid { background: #FFF1F2; border-left-color: #DC2626; }
-.decision-box h3 { color: #166534; border: none; margin-top: 0; }
-.opp-cost-box { background: #FFFBEB; border-left: 4px solid #D97706; padding: 14px 18px; margin: 14px 0; }
-.opp-cost-box h4 { color: #92400E; margin-top: 0; }
-
-/* Phase B 矛盾 */
-.contra-box { background: #FFF7ED; border-left: 4px solid #F97316; padding: 14px 18px; margin: 14px 0; }
-.contra-box h3 { color: #C2410C; border: none; margin-top: 0; }
-.adjudication-box { background: #FED7AA; border-left: 4px solid #C2410C; padding: 14px 18px; margin: 14px 0; }
-.adjudication-box h3 { color: #7C2D12; border: none; margin-top: 0; }
-
-/* Pattern match (§4) */
-.pattern-box { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 14px 18px; margin: 14px 0; }
-.pattern-box h4 { color: #075985; margin-top: 0; }
-
-/* Pre-mortem (§6b) */
-.premortem-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 14px 18px; margin: 14px 0; }
-.premortem-box h4 { color: #991B1B; margin-top: 0; }
-.premortem-narrative { font-style: italic; padding: 10px 14px; border-left: 3px solid #DC2626; background: #fff; margin: 8px 0; }
-
-/* Mental Models (§1) */
-.memo-box { background: #fff; border: 1px solid #CBD5E1; padding: 22px 26px; margin: 14px 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.7; }
-.memo-box .memo-header { font-weight: 600; color: #1E3A5F; border-bottom: 1px solid #CBD5E1; padding-bottom: 8px; margin-bottom: 10px; }
-.elevator-box { background: #F8FAFC; border-left: 3px solid #94A3B8; padding: 12px 18px; margin: 12px 0; font-style: italic; color: #334155; }
-
-/* Consensus 分歧 */
-.consensus-box { background: #F5F3FF; border-left: 4px solid #7C3AED; padding: 14px 18px; margin: 14px 0; }
-.consensus-box h4 { color: #5B21B6; margin-top: 0; }
-
-/* MA / 風控狀態 */
-.ma-pass { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 12.5px; }
-.ma-fail { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 12.5px; }
-.ma-warn { background: #FEF9C3; color: #92400E; padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 12.5px; }
-
-details { background: #fff; border: 1px solid #E2E8F0; border-radius: 4px; margin: 10px 0; padding: 0; }
-summary { padding: 12px 16px; cursor: pointer; font-weight: 600; color: #1E3A5F; background: #F1F5F9; border-radius: 4px 4px 0 0; user-select: none; }
-summary:hover { background: #E2E8F0; }
-details[open] summary { border-bottom: 1px solid #E2E8F0; }
-details > div, details > table { padding: 14px 16px; }
-
-.note { font-size: 12.5px; color: #64748B; font-style: italic; margin-top: 6px; }
-.print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; z-index: 100; }
-.print-btn:hover { background: #3B82F6; }
-
-@media print {
-  .header-bar, .print-btn { display: none; }
-  body { background: #fff; }
-  main { max-width: 100%; padding: 12px; }
-  details { border: none; page-break-inside: avoid; }
-  details > div, details > table { display: block !important; }
-  details > summary::-webkit-details-marker { display: none; }
-  h2 { page-break-after: avoid; }
-  table { page-break-inside: avoid; }
-}
+  :root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#0F172A;--ink-2:#334155;--line:#E2E8F0;--accent:#1E3A5F;--accent-2:#3B82F6;--green-bg:#DCFCE7;--green-ink:#166534;--red-bg:#FEE2E2;--red-ink:#991B1B;--yellow-bg:#FEF9C3;--yellow-ink:#92400E;--blue-bg:#EFF6FF;--warn-bg:#FFF7ED;--warn-line:#F97316}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace}
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;border-bottom:4px solid var(--accent-2)}
+  header .ticker{font-size:18px;font-weight:700;letter-spacing:1px}
+  header .meta{opacity:.92}
+  header .thesis-mini{margin-left:auto;font-style:italic;opacity:.95;max-width:680px}
+  main{max-width:1180px;margin:0 auto;padding:28px 24px 96px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px 28px;margin-bottom:22px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h1,h2,h3{color:var(--accent);margin-top:0}
+  h2{border-left:4px solid var(--accent-2);padding-left:12px;font-size:20px;margin-bottom:18px}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--accent)}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
+  p{margin:8px 0}
+  ul,ol{padding-left:22px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  thead th{background:var(--accent);color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+  tbody td,tbody th{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F1F5F9}
+  .tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+  .green{background:var(--green-bg);color:var(--green-ink)}
+  .red{background:var(--red-bg);color:var(--red-ink)}
+  .yellow{background:var(--yellow-bg);color:var(--yellow-ink)}
+  .src{color:#64748B;font-size:11.5px;font-family:'IBM Plex Mono',monospace}
+  .thesis-hero{background:var(--blue-bg);border:1px solid #BFDBFE;padding:48px 36px;text-align:center;border-radius:8px;margin-bottom:24px}
+  .thesis-hero .text{font-size:26px;line-height:1.55;font-weight:500;color:var(--accent);margin:0}
+  .thesis-hero .label{margin-top:14px;font-size:12px;color:var(--ink-2);letter-spacing:2px}
+  .decision-box{background:#F0FDF4;border-left:4px solid #16A34A;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0}
+  .decision-box.wait{background:#FEF9C3;border-left-color:#CA8A04}
+  .conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .verdict-box{background:#FED7AA;padding:14px 18px;margin:12px 0;border-radius:4px}
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0;font-style:italic}
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .memo{border:2px solid #94A3B8;background:#FFFFFF;padding:24px 28px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;border-radius:4px;margin:14px 0;white-space:pre-wrap}
+  .elevator{background:#EEF2FF;border-left:4px solid #6366F1;padding:14px 18px;font-style:italic;font-size:15px;border-radius:0 4px 4px 0;margin:10px 0}
+  details{background:#F8FAFC;border:1px solid var(--line);border-radius:4px;padding:14px 20px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:15px}
+  details[open] summary{margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .ma-pass{background:var(--green-bg);color:var(--green-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .ma-fail{background:var(--red-bg);color:var(--red-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .print-btn{position:fixed;bottom:28px;right:28px;padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(15,23,42,.18)}
+  @media print{header.topbar,.print-btn{display:none}main{padding:0;max-width:100%}section.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}details{page-break-inside:avoid}details > summary{list-style:none}details:not([open]) > *:not(summary){display:block !important}}
 </style>
 </head>
 <body>
-<div class="header-bar">
-  <span class="tag">NVDA｜DCA 報告日 2026-05-07｜參考股價 ~$202</span>
-  <span class="tag">DCA Schema v1.0</span>
-</div>
+<header class="topbar">
+  <span class="ticker">NVDA · NVIDIA Corporation</span>
+  <span class="meta">DCA 報告 ｜ 2026-05-07</span>
+  <span class="meta">參考股價 $196.50（2026-05-05）</span>
+  <span class="thesis-mini">AI 訓練全棧 toll booth — CUDA + NVLink + 系統整合度讓 frontier model 訓練 5 年無替代</span>
+</header>
+
 <main>
-<h1>NVIDIA Corporation（NVDA）— Deep Conviction Analysis</h1>
-<p class="subtitle">在 stock-analyst DD（2026-04-18，A 級）與 industry-analyst 多份 ID（AI Accelerator Demand 母題、AI Inference Economics 母題、AI Data Center、AI Networking、CUDA/ROCm 護城河子題）之上，本 DCA 透過三軸獨立搜尋 + 矛盾裁決 + PM 決策框架，對 NVDA 做投資決策層判斷。</p>
 
-<!-- =============== §2 One-Sentence Thesis（顯示位置 1） =============== -->
-<h2 id="sec-2">§2｜One-Sentence Thesis</h2>
-<div class="thesis-box">
-  <div class="thesis-text">NVDA 是 AI 訓練的全棧 toll booth — CUDA + NVLink + 系統整合度讓 frontier model 訓練端 5 年無替代，吃下基建超級週期最肥的 token。</div>
-  <div class="thesis-label">投資本質 ｜ 50 字以內</div>
+<section class="card">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-hero">
+  <p class="text">NVDA 是 AI 訓練的全棧 toll booth — CUDA + NVLink + 系統整合度讓 frontier model 訓練端 5 年無替代，吃下 hyperscaler $710B AI 基建超級週期最肥的 token</p>
+  <div class="label">ONE-SENTENCE THESIS · 50 字以內</div>
 </div>
-<p class="note">這是敘事性 thesis，不引用 ROIC/毛利率/FCF Margin 等指標作為主體。「最肥的 token」指 frontier 訓練 — 推論側 NVDA 的 toll 已被 ASIC 撬動，但訓練側的 toll booth 角色 5 年內仍是結構性。</p>
+<p class="note">這是敘事而非指標：NVDA 不是「FCF + ROIC + 高毛利」三高半導體股 — 而是「整個 AI 訓練 stack 的事實標準」。CUDA 18 年累積 + NVLink 系統整合 + Mellanox 收購把「GPU + 互連 + 軟體」打成 vertical integration；FY26 revenue $215.9B / +65% YoY、Q1 FY27 guide $78B 超共識 $5B+；Big 4 hyperscaler 2026 capex $710B 是「Jensen 的提款機」。</p>
+</section>
 
-<!-- =============== §7 Decision（顯示位置 2） =============== -->
-<h2 id="sec-7">§7｜Decision（可執行計畫）</h2>
+<section class="card">
+<h2>§7 Decision｜可執行投資計畫</h2>
 
-<h3>7a｜倉位與進場計畫</h3>
-<div class="decision-box wait">
-<table>
-<tr><th>項目</th><th>具體內容</th></tr>
-<tr><td>在投資組合中的角色</td><td><strong>核心持倉</strong>（PM 既有部位之一，2026-05-04 PM 報告中為核心 sleeve 主力）</td></tr>
-<tr><td>初始建倉倉位（針對「邊際新加碼」）</td><td>+1.5% of portfolio（既有部位之上的條件式加碼，非從零建倉）</td></tr>
-<tr><td>目標倉位（核心 sleeve 上限）</td><td>≤ 8% of portfolio（單一個股風險上限；當前 PM 配置 ~6-7% 已接近上限）</td></tr>
-<tr><td>進場價位區間</td><td><span class="num">$185 – $200</span>（MA50 ~$204 / MA200 ~$191 / W52 ~$172 三條保護線之間）</td></tr>
-<tr><td>進場節奏</td><td><strong>條件式分批</strong> — Q1 FY27 earnings 在 2026-05-20，財報前禁止全力建倉；分三批：①報前不超過 0.5% / ②報後 24 小時若 GM 守住 73%+ 加 0.5% / ③回測 MA50 或 RSI 回到 50-60 加 0.5%</td></tr>
-</table>
+<div class="decision-box">
+<strong>裁決：A+ 級基本面 / 進場（核心持倉）— Forward PE 24.51x 已從歷史低點 re-rate 中</strong><br>
+原因：① FY26 $215.9B record + Q1 FY27 guide $78B 超共識；② Forward PE 24.51x 比 Semis 中位 34.29x 低 30.5%、比 NVDA 10 年平均 54.28x 低 55%；③ 短期股價 $196.5 在 MA50 $204.32 之下 -3.8%（弱勢但非崩潰），MA200 $191.13 上方 +2.8%；④ 5/27 Q1 FY27 財報 binary 在即。
 </div>
 
-<div class="opp-cost-box">
-<h4>vs 現有組合的同類曝險（Opportunity Cost — 不可省略）</h4>
+<h3>7a. 倉位與進場計畫</h3>
 <table>
-<tr><th>同類部位</th><th>角色</th><th>邊際資金比較</th></tr>
-<tr><td><strong>AVGO</strong>（已持有，ASIC 設計龍頭）</td><td>NVDA 的「對沖」— 推論側 ASIC 主力</td><td>邊際 1 美元若信「訓練端 5 年無替代」放 NVDA；若信「推論側 ASIC 取代 GPU」放 AVGO。本 DCA 結論偏前者，但**不應 zero-sum**：兩邊都持有反映「訓練 + 推論」結構性分工，AVGO 是 NVDA 的負相關保險，不是替代品</td></tr>
-<tr><td><strong>MRVL</strong>（已持有，ASIC 第二供應商）</td><td>同 AVGO 但規模較小、彈性較大</td><td>MRVL 的 R:R 在 ASIC theme 中目前較 AVGO 更便宜，邊際資金應優先 MRVL > NVDA > AVGO（NVDA 已近核心上限，加碼空間小）</td></tr>
-<tr><td><strong>2330（TSMC）</strong>（已持有）</td><td>NVDA 的「上游分潤」— 全 AI 矽供應鏈瓶頸</td><td>TSMC 是 NVDA + AVGO + MRVL 的共同上游，是 AI thesis 的「最後防線」。NVDA 加碼後 2330 不需動</td></tr>
-<tr><td><strong>GOOGL</strong>（已持有）</td><td>NVDA 的「結構性對手」— TPU 自有體系</td><td>持有 GOOGL = NVDA bear thesis 的隱性對沖。若 GOOGL 加碼是因 TPU 動能，NVDA 加碼幅度應同步收斂</td></tr>
-<tr><td colspan="3"><strong>結論：</strong>NVDA 已是核心，邊際資金優先去 MRVL（同 AI 主題、估值較低）；NVDA 只在「Q1 FY27 earnings 後 GM 修復確認」+「股價回測 MA50」雙條件達成時加碼。**不從零建倉，不押重倉**。</td></tr>
+<thead><tr><th width="35%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>核心持倉（AI infra basket 第一核心）</strong> — 與 AVGO 並列 portfolio 主核心位</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>4-5% of portfolio</strong>（已是核心，邊際資金可加碼）</td></tr>
+<tr><td>目標倉位</td><td><strong>8-12% of portfolio</strong>（核心上限，AI 主題第一位）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$170 - $200</strong>（MA200 $191.13 是中期支撐；MA50 $204.32 是動能恢復信號）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批，無動能過熱風險</strong>：① 第一批 2-3%：現價 $196.5（MA200 之上 +2.8%）即可進；② 第二批 2-3%：跌至 $185-190（MA200 區）+ Q1 FY27 財報未動搖 thesis；③ 第三批 1-2%：跌至 $170-180（極端機會）；④ 突破 $220 + 動能持續：放慢加碼節奏，等回測</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>關鍵問題：portfolio 已持有 AVGO / AMD / MRVL / CRDO / ANET 等 AI infra basket — NVDA 在哪裡是 unique？</strong>逐一比對：<br>
+• <strong>vs AVGO</strong>：AVGO 是客製 ASIC #1（70% 份額）+ Hock Tan VMware/security；NVDA 是 GPU + CUDA + 全棧 toll booth — <strong>互補</strong>。NVDA 是 frontier training，AVGO 是 hyperscaler 客製 inference。<br>
+• <strong>vs AMD</strong>：AMD 是 NVDA dual-source 第二選 (MI355X 在 inference 25-40% cheaper per token)；NVDA training &gt;90% share，AMD 在 inference 蠶食 — <strong>互補但 NVDA 更強</strong>。<br>
+• <strong>vs MRVL</strong>：NVDA 多億美元投資 MRVL，雙方互補（MRVL 是 ANSI MRVL DSP + 客製 silicon 第二供應商），不重疊。<br>
+• <strong>vs CRDO / ANET</strong>：NVDA Spectrum-X 自家 Ethernet 是 ANET 的 dual-source 對手；NVDA 在 networking silicon 也已是 dominant（FY26 networking $13B 等級）。<br>
+建議路徑：(a) NVDA 是 AI portfolio 第一核心位，邊際資金優先 NVDA &gt; AVGO &gt; AMD/MRVL；(b) Forward PE 24.51x 比歷史平均 54.28x 低 55%，是 5 年最便宜進場機會之一；(c) 若 portfolio NVDA 仍 &lt; 6%，5/27 財報前可先加 1.5-2%。<strong>邊際資金優先順序：NVDA (FPE 24x) &gt; AVGO (FPE 30x+) &gt; AMD (FPE 28x+，inference niche) &gt; MRVL (FPE 43x，已 priced)。</strong></td></tr>
+</tbody>
 </table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>第一批進場（如未持有）</td><td>現價 $196.5 + Q1 FY27 財報未動搖 thesis</td><td>4-5%</td></tr>
+<tr><td>加碼 1</td><td>跌至 $185-190（MA200 區）+ Big 4 hyperscaler 2026 capex 仍維持 $700B+</td><td>6-8%</td></tr>
+<tr><td>加碼 2（極端機會）</td><td>跌至 $170-180 + Rubin sampling Q4 2026 進度確認</td><td>9-12%（核心上限）</td></tr>
+<tr><td>減碼 1</td><td>$240+ + Forward PE &gt; 35x（已 priced 完美）</td><td>減半至 5-6%</td></tr>
+<tr><td>減碼 2</td><td>Q1 FY27 財報 in-line + 2026 H2 hyperscaler capex 削減訊號</td><td>3-4%</td></tr>
+<tr><td>清倉 A（§5 primary trigger）</td><td>Big 4 hyperscaler 2027 capex 連 2 季 YoY 負成長（AI bubble pop / digestion confirmed）</td><td>0%</td></tr>
+<tr><td>清倉 B（§5 secondary，pre-mortem 派生）</td><td>NVDA training share 連 2 季跌破 80%（CUDA 護城河結構性失效）OR AMD ROCm 在 frontier training MLPerf 突破 vs NVDA 差距 &lt; 10%</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA + 動能過熱檢查</h3>
+<table>
+<thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA50 之上？</td><td><span class="ma-fail">❌</span></td><td>$196.5 vs MA50 $204.32（-3.8% 短期弱勢）<span class="src">Investing.com 2026-05</span></td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$196.5 vs MA200 $191.13（+2.8% 上方支撐）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>多頭排列確認</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅ 部分支持</span></td><td>MA200 + W104 多頭 + MA50 短期回測中（健康整理）</td></tr>
+<tr><td><strong>動能檢查</strong></td><td><span class="tag green">✅ 不過熱（RSI 偏低）</span></td><td>RSI 14d 34-51 區間（依來源）— 處於回檔末段，非過熱</td></tr>
+</tbody>
+</table>
+
+<div class="conflict-box" style="background:#F0FDF4;border-left-color:#16A34A">
+<strong>✅ 動能檢查結論：</strong>NVDA 短期 MA50 弱勢但 MA200 + W104 多頭排列維持，RSI 偏低（34-51）顯示動能未過熱，反而是健康整理。Pure MA 部分支持 + RSI 健康 + Forward PE 24.51x 低位 = 「進場時機 OK，但要意識 Q1 FY27 財報 binary 風險」。
 </div>
 
-<h3>7b｜加碼與減碼條件</h3>
+<h3>7d. 建議持有年限</h3>
 <table>
-<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
-<tr><td>加碼 1</td><td>Q1 FY27（5/20）GM 報出 ≥ 73% + DC QoQ ≥ 8%</td><td>+0.5%</td></tr>
-<tr><td>加碼 2</td><td>股價回測 MA50（~$200）或 MA200（~$191）且 RSI 回到 50-60</td><td>+0.5%</td></tr>
-<tr><td>加碼 3</td><td>Rubin 量產 ramp 確認（CES 2027 公布首批 hyperscaler 部署機架數）</td><td>+0.5%</td></tr>
-<tr><td>減碼 1</td><td>連續兩季 DC QoQ &lt; 5%（thesis 削弱）</td><td>-2%（-25% of position）</td></tr>
-<tr><td>減碼 2</td><td>Top 2 hyperscaler 公開承諾 capex 中 NVDA 占比下降 &gt; 30%</td><td>-3%（-40%）</td></tr>
-<tr><td>清倉</td><td>GM 連續 3 季 &lt; 65% 且 §5 single-thing 觸發</td><td>0%</td></tr>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 5/27 Q1 FY27 財報 miss 或 hyperscaler 2026 H2 capex 退場訊號</td></tr>
+<tr><td><strong>中期（2-5 年）</strong></td><td><strong>Base case：Rubin (2026 Q4 sampling, 2027 production) → Rubin Ultra (2027) → Feynman (2028) 三世代 cadence；CUDA 護城河延續；FY30 EPS $12+；股價 +50-80%</strong></td></tr>
+<tr><td>長期（5-10 年）</td><td>若 (a) NVDA 維持 80%+ AI training share + (b) inference 對 AMD/custom silicon 失守僅至 60% (vs 目前 65-75%) + (c) 物理 AI / robotics / sovereign AI 等新 TAM 兌現</td></tr>
+</tbody>
 </table>
 
-<h3>7c｜Pure MA 相容性 + 動能過熱檢查</h3>
+<h4>EPS 預測參考</h4>
 <table>
-<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
-<tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$202 vs MA60 ~$200 — 邊緣狀態，剛站穩</td></tr>
-<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$202 vs MA200 ~$191 — 高於 5.7%</td></tr>
-<tr><td>股價在 MA104w（~W52 $172）之上？</td><td><span class="ma-pass">✅</span></td><td>高於 17%</td></tr>
-<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅</span></td><td>三線支持，但 MA60 邊緣 → 不是「強進場」而是「條件進場」</td></tr>
-<tr><td>RSI 14d</td><td><span class="ma-warn">⚠</span></td><td>來源 disagree（Investing.com 34、TipRanks 71，4/27 ATH 後回檔中）— 資料品質警示，建議 trader 自行用 yfinance 或 TradingView 查當日真值</td></tr>
-<tr><td>4 週漂移</td><td><span class="ma-pass">✅</span></td><td>4/27 ATH $216.83 → 5/6 ~$202，4 週漂移 -7%（非過熱）</td></tr>
-<tr><td>距 ATH 距離</td><td><span class="ma-warn">⚠</span></td><td>距 4/27 ATH ~7%，仍在 ATH 半徑內，**禁止 chase ATH**</td></tr>
-</table>
-<p class="note"><strong>進場結論：</strong>Pure MA 通過但 MA60 邊緣 + 距 ATH 7% + Q1 FY27 earnings 將至 → §7a 進場節奏鎖定條件式分批，禁止一次建倉。**MA 資料來源建議從 yfinance 直拉，不要信 web cache 的數字**。</p>
-
-<h3>7d｜建議持有年限</h3>
-<table>
-<tr><th>持有年限</th><th>條件</th></tr>
-<tr><td>短期（&lt; 2 年）</td><td>Q1 FY27 GM 修復 + Rubin 量產符合預期成立 → 短線吃 +20-30%</td></tr>
-<tr><td>中期（2-5 年）</td><td>frontier model 訓練端規模再擴 5x、CUDA 護城河仍守住，且 hyperscaler ASIC 推論市占未過 50%</td></tr>
-<tr><td>長期（5-10 年）</td><td>NVDA 從 chip vendor 升級到 full-stack AI infrastructure platform（含 networking、軟體堆疊、sovereign AI），收入結構不再 90%+ 倚賴 DC compute</td></tr>
-</table>
-<p><strong>建議持有年限：中期（3-5 年）</strong>，原因：訓練端護城河 5 年內仍穩，但 5-10 年後推論端 ASIC 與 sovereign AI 多元化會逼 NVDA 重新定位。**5 年內 thesis 完整 — 5-10 年需主動 review**。</p>
-
-<h4>EPS 預測參考表</h4>
-<table>
-<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
-<tr><td>FY27（2027/1）</td><td><span class="num">$8.34</span></td><td>yfinance 共識（46 位分析師）</td><td>已被 4/29 後上修</td></tr>
-<tr><td>FY28（2028/1）</td><td><span class="num">$11.24</span></td><td>yfinance 共識</td><td>YoY +34.8%</td></tr>
-<tr><td>FY30 外推</td><td><span class="num">~$13.7</span></td><td>邏輯遞減（FY29 +22%、FY30 持平至小幅成長）</td><td>外推假設：Rubin Ultra 2027 + Feynman 2027+ 路線圖延伸，但 Y3 之後 ASIC 蠶食壓制 unit economics</td></tr>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>FY26 actual</td><td>$4.77 (non-GAAP)</td><td>Motley Fool 2026-05</td><td>FY26 actuals 已揭曉</td></tr>
+<tr><td>FY27E</td><td>$8.20</td><td>Consensus</td><td>Q1 FY27 guide $78B 已 priced；Rubin sampling Q4 27</td></tr>
+<tr><td>FY28E</td><td>$9.50 - 10.50</td><td>Consensus</td><td>Rubin volume production + Rubin Ultra spec lock</td></tr>
+<tr><td>FY30E（外推）</td><td>$12 - 14</td><td>本報告外推</td><td>FY27-FY30 EPS CAGR 13-17%（Rubin/Feynman ramp + custom silicon competition mid-teens 影響）</td></tr>
+</tbody>
 </table>
 
-<p><strong>長期持有適合度：</strong>當前 fwd PE 24.18x（FY+1），按 FY30 外推 EPS $13.7 計，5 年後若 PE re-rate 至 22x → 目標價 $300 → 5y 上漲 ~50%（年化 ~8%）；若維持 24x → $328（年化 ~10%）；bull case PE 30x → $410（年化 ~16%）。**價格已不便宜，但仍未過熱**。</p>
+<p><strong>長期持有合理性：</strong>FY30 EPS $13 × 32x = $416，較現價 $196.5 的 5Y 報酬 +112%（年化 ~16.3%） — 強 alpha 標的。即使 Bear case FY30 EPS $9 × 22x = $198 （-1%），下行受限；Bull case FY30 EPS $14 × 38x = $532（+170%）。<strong>vs S&P 500 預期報酬 +35-50% 同期，NVDA 是「核心位 alpha 引擎」標的。</strong></p>
+</section>
 
-<!-- =============== §4 Asymmetry（顯示位置 3） =============== -->
-<h2 id="sec-4">§4｜Asymmetry Analysis（R:R 與情境機率）</h2>
+<section class="card">
+<h2>§4 Asymmetry Analysis</h2>
 <table>
-<tr><th>情境</th><th>5 年漲幅 / 跌幅</th><th>依據</th><th>機率估計</th></tr>
-<tr><td><strong>Thesis 對 — Bull</strong>（Rubin 順利、frontier training 5x、networking +50%、sovereign AI 加 layer）</td><td><span class="num">+120%</span></td><td>FY30 EPS $14、PE 28x（軟著陸）</td><td>40%</td></tr>
-<tr><td><strong>Base — 中性</strong>（緩步成長、ASIC 蠶食推論但訓練守住、GM 維持 70-72%）</td><td><span class="num">+50%</span></td><td>FY30 EPS $13.7、PE 22x</td><td>35%</td></tr>
-<tr><td><strong>Thesis 削弱 — Bear A</strong>（ASIC 吃下 inference 60%、GM 壓至 65%、DC growth 減速 &gt; 50%）</td><td><span class="num">-30%</span></td><td>FY30 EPS $11、PE 13x</td><td>20%</td></tr>
-<tr><td><strong>Thesis 破滅 — Bear B</strong>（CUDA 護城河被 PyTorch 抽象層 + Triton 攻破、frontier 模型不再需要更大 GPU、China 全面替代）</td><td><span class="num">-50%</span></td><td>FY30 EPS $9、PE 11x</td><td>5%</td></tr>
-<tr><td><strong>機率加權期望值</strong></td><td><strong><span class="num">+47.5%</span></strong></td><td>5 年期</td><td>—</td></tr>
+<thead><tr><th width="22%">情境</th><th width="14%">5 年倍數</th><th>依據</th><th width="12%">機率</th></tr></thead>
+<tbody>
+<tr style="background:#F0FDF4">
+<td><strong>Bull（thesis 對）</strong></td>
+<td><strong>+170%（2.70x）</strong></td>
+<td>FY30 EPS $14 × 38x = $532 — Rubin/Rubin Ultra/Feynman ramp 順利 + AI training share hold 90% + 物理 AI / sovereign AI / robotics 新 TAM 兌現 + hyperscaler 2027-2030 capex 持續 $700B+</td>
+<td>35%</td>
+</tr>
+<tr>
+<td>Base</td>
+<td>+80%（1.80x）</td>
+<td>FY30 EPS $11 × 32x = $352 — Rubin ramp 順利、CUDA 護城河延續、AI 訓練 share 80%、inference 對 AMD/custom silicon 失守至 65%</td>
+<td>40%</td>
+</tr>
+<tr style="background:#FFF1F2">
+<td><strong>Bear（thesis 錯）</strong></td>
+<td><strong>-15%（0.85x）</strong></td>
+<td>$167 — Hyperscaler 2027-2028 capex digestion、AI bubble pop、NVDA training share 跌至 70% + inference 對 AMD/custom silicon 失守至 50%、PE 25x × $7 EPS = $175</td>
+<td>25%</td>
+</tr>
+<tr style="background:#EFF6FF;font-weight:600">
+<td>機率加權期望值</td>
+<td colspan="2">0.35×2.70 + 0.40×1.80 + 0.25×0.85 = <strong>1.88x（5 年期望報酬 +88%，年化 ~13.5%）</strong></td>
+<td>—</td>
+</tr>
+</tbody>
 </table>
-<p class="note">5y EV +47.5% = 年化 +8.1%。**這不是「躺平倍數股」**，是「品質 S 級的 base hit」。Bear A 機率 20% 提醒：5 年區間 ASIC inference 取代是合理的概率事件，不是 tail risk。</p>
 
-<h3>追加壓力測試：時間拉長 + 機會成本</h3>
-<ul>
-<li><strong>10 年而非 5 年：</strong>10y EV 機率分布會更不利 — Bear A 機率上升至 35%（推論側結構性壓縮）。10y 上漲幅度可能僅 +60-80%（vs SPY ~70-90%）。**10 年期 NVDA 的相對 alpha 趨弱**。</li>
-<li><strong>機會成本：</strong>同期 SPY EV ~+50%，QQQ ~+70%。NVDA 5y EV +47.5% 只比指數略好但個股波動 + tail risk 高 → **核心持倉 OK，但不該重倉**。</li>
-</ul>
+<p class="note"><strong>追加壓力測試（10 年 vs 5 年）：</strong>10 年期內 NVDA thesis 取決於兩件事：(1) Frontier training 是否仍是 NVDA 場 (CUDA + NVLink 18 年護城河會被 ASIC 完全替代嗎？歷史證據顯示否)；(2) 物理 AI / sovereign AI / robotics 新 TAM 是否兌現。若都成功，10Y 報酬可達 +400%（年化 17.5%）；若 inference 全面被 custom silicon 接手（極端 bear case），10Y +30%（年化 ~3%）。<strong>5Y EV +88% 已是極具吸引力，10Y 期望進一步擴大。</strong></p>
 
 <div class="pattern-box">
-<h4>📐 Pattern Match（讓機率有錨點）</h4>
+<h3 style="color:#0369A1;margin-top:0">📐 Pattern Match — 讓機率有錨點</h3>
 <table>
-<tr><th>項目</th><th>內容</th></tr>
-<tr><td>歷史結構類似 setup</td><td><strong>2017-2019 Cisco Systems（網通基建超級週期高峰 → ASIC 與白牌挑戰）</strong> — Cisco 在 1999 達到峰值估值，被白牌交換器（Arista、Mellanox）逐步蠶食 enterprise 端，但 service provider 訓練式網路核心仍守住 10 年</td></tr>
-<tr><td>當時 setup（估值倍數、市佔、技術節點）</td><td>Cisco 1999：fwd PE 100x、市佔 70%、IOS 軟體護城河；NVDA 2026：fwd PE 24x、市佔 80%、CUDA 軟體護城河 — 估值起點截然不同（NVDA 起點便宜 4x）</td></tr>
-<tr><td>最終 5 年實現報酬</td><td>Cisco 1999-2004：-77%（但起點是泡沫），2004-2009：+40%。**估值起點決定報酬**</td></tr>
-<tr><td>NVDA vs Cisco 最像 / 最不像</td><td><strong>最像</strong>：軟體生態系護城河 + 全棧整合 + 客戶集中度高（hyperscaler vs telco）；<strong>最不像</strong>：起點估值（NVDA fwd PE 24x vs Cisco 100x）+ TAM 大小（AI $600B vs 網通 ~$50B）+ 客戶 capex 韌性（hyperscaler AAA balance sheet vs telco debt-driven）</td></tr>
+<tbody>
+<tr><td width="32%"><strong>歷史相似 setup</strong></td><td>Cisco 1995-2000 (.com 時代 networking dominator) + Intel 1995-2010 (PC 時代 dominator) — 兩個都是「結構性 secular winner」但不同結局</td></tr>
+<tr><td><strong>當時 setup</strong></td><td>Cisco 1996 FPE ~30x → 2000 FPE 130x（+700% 後 -85% reset）；Intel 1996 FPE ~18x → 2000 FPE 50x（+500% 後 -75%）；NVDA 現在 FPE 24x，比兩者起點都低</td></tr>
+<tr><td><strong>5 年實現報酬</strong></td><td><strong>Cisco 1996-2000 +700% / Intel 1996-2000 +500%</strong>，但都在 2000 後 5 年遭 -75% 至 -85% reset</td></tr>
+<tr><td><strong>我的標的最像 / 最不像</strong></td><td><strong>最像</strong>：Secular tech dominator + 結構性 capex 受益者 + 商業模式 dominant；<strong>最不像</strong>：① NVDA 起點 FPE 24x 比 Cisco/Intel 1996 起點低（valuation discipline 更好）；② NVDA CUDA 護城河比 Cisco IOS / Intel x86 更深（軟體 18 年累積）；③ AI 是新計算範式（不是純升級），TAM 擴張更大</td></tr>
+</tbody>
 </table>
-<p>**這個 pattern 告訴我**：NVDA 的 5y EV 不會像 1999 Cisco 那樣慘 — 因為起點估值合理且 TAM 大；但也不會是「躺贏的 10 倍股」 — 因為市占 80% 的天花板效應 + ASIC 替代壓力。**+47.5% EV 是合理的歷史 anchor，不是憑感覺**。</p>
+<p class="note" style="margin-top:12px"><strong>校準結果：</strong>NVDA bull case +170% 並非極端 — Cisco/Intel 同期 +500-700% 是參考。但 Cisco/Intel 都在 5 年後遭 reset，所以本 DCA 機率 35% 而非 50%；同時保留 25% bear case 反映 hyperscaler capex digestion 風險。<strong>EV 1.88x 是合理估算，不是憑感覺。</strong></p>
 </div>
+</section>
 
-<!-- =============== §1 Mental Models（顯示位置 4） =============== -->
-<h2 id="sec-1">§1｜Mental Models 壓力測試（決策前最後關卡）</h2>
+<section class="card">
+<h2>§1 Mental Models 壓力測試</h2>
 
 <h3>測試一：投委會 1 頁紙 Memo</h3>
-<div class="memo-box">
-<div class="memo-header">INVESTMENT COMMITTEE MEMO ｜ NVDA ｜ 2026-05-07</div>
-<strong>Thesis（50 字）：</strong>NVDA 是 AI 訓練的全棧 toll booth — CUDA + NVLink + 系統整合度讓 frontier model 訓練端 5 年無替代，吃下基建超級週期最肥的 token。<br><br>
-<strong>Key Driver（1-2 個）：</strong><br>
-&nbsp;&nbsp;1. 前沿訓練模型的 CUDA + NVLink 系統壟斷（供給側技術領先，5y 視野內無同級替代）<br>
-&nbsp;&nbsp;2. Hyperscaler + sovereign AI 的多年 capex commitment（需求側持續性，2026 capex $725B、2030 累計 $3.5T）<br><br>
-<strong>R:R（5 年）：</strong>EV +47.5%、Bull +120% × 40% / Base +50% × 35% / Bear A -30% × 20% / Bear B -50% × 5%。**對稱性偏 bull**。<br><br>
-<strong>主要風險：</strong>(a) Hyperscaler ASIC 吃下推論（Anthropic 已轉向 Google TPU 1M chip 訂單）；(b) GM 壓縮（Blackwell ramp 已從 75% → 71%）；(c) 客戶集中（Top 2 = 36% 營收）；(d) 中國訂單歸零（短期已 priced，長期是地緣 floor）。<br><br>
-<strong>建議倉位：</strong>核心持倉，目標 ≤ 8% portfolio。當前已持有，**邊際加碼 +1.5%（條件式分批）**：①報前 0.5% / ②報後 GM 確認 0.5% / ③MA50 回測 0.5%。**禁止一次建倉、禁止 chase ATH**。<br><br>
-<strong>Single Thing That Could Change My Mind：</strong>連續兩季 DC QoQ &lt; 5% **且** Top 2 hyperscaler 公開降低 NVDA 在 capex 中的占比 &gt; 30%。<br><br>
-<strong>持有年限：</strong>3-5 年（中期 thesis 完整；5-10 年需 review NVDA 是否升級為 full-stack AI platform）。
-</div>
+<div class="memo">投委會 Memo｜NVDA · NVIDIA Corporation｜2026-05-07
+─────────────────────────────────────────
+
+THESIS（50 字）
+NVDA 是 AI 訓練的全棧 toll booth — CUDA + NVLink + 系統整合度
+讓 frontier model 訓練端 5 年無替代，吃下 hyperscaler $710B AI
+基建超級週期最肥的 token。
+
+KEY DRIVER（1）
+CUDA + NVLink 全棧 vertical integration（軟體 + 互連 + GPU）：
+18 年 CUDA 累積 + 86% data center GPU revenue + 90%+ AI training
+share + Rubin/Rubin Ultra/Feynman 三世代 cadence 確立。
+
+KEY DRIVER（2）
+Hyperscaler $710B 2026 AI capex （Amazon $200B / MSFT $190B /
+GOOGL $185B / META $135B）= NVDA 最直接受益者；2027-2030
+$1T 累計 DC revenue 目標已立。
+
+R:R（5 年期望）
+Bull (35%) +170% / Base (40%) +80% / Bear (25%) -15%
+EV = 1.88x（年化 ~13.5%）
+
+主要風險
+1. Hyperscaler 2027-2028 capex digestion / AI bubble pop
+2. AMD MI355X 在 inference 25-40% cheaper per token，shifting share
+3. Custom silicon (AVGO/MRVL) inference 蠶食至 25-30% by 2030
+
+建議倉位
+核心持倉 8-12%（試倉 4-5%, 加碼上限 12%）
+條件式分批：現價 $196.5 即可進首批 4-5%；跌至 MA200 $191 加碼
+原因：FPE 24x 比歷史平均 54x 低 55%，5 年最便宜進場機會之一
+
+Opportunity Cost
+NVDA 是 AI portfolio 第一核心位；邊際資金優先順序
+NVDA (FPE 24x) > AVGO (FPE 30x+) > AMD > MRVL (FPE 43x)。
+若 NVDA 仍 < 6%，5/27 財報前先加 1.5-2%。
+
+保質期：Q1 FY27 財報前（~3 週，至 2026-05-27）</div>
 
 <h3>測試二：30 秒電梯簡報</h3>
-<div class="elevator-box">
-「NVDA 是 AI 訓練的收費站。CUDA + NVLink 讓所有 frontier model（GPT、Gemini、Claude）訓練端離不開它，hyperscaler 5 年要花 $3.5 兆建 AI 基建，NVDA 抽 toll。風險是 Google TPU 跟 AWS Trainium 開始吃推論市場，但訓練端 5 年內無人能取代。Fwd PE 24x 不貴，PEG 0.52，已持有，財報後條件式加一點。」</div>
+<div class="elevator">
+NVDA 是 AI 訓練的 toll booth — CUDA + NVLink 18 年累積讓 frontier model 訓練 90%+ share，Big 4 hyperscaler 2026 砸 $710B AI capex 大部分流向 NVDA；FY26 revenue $215.9B / +65%、Q1 FY27 guide $78B 超共識 $5B+。Forward PE 24.51x 比歷史平均 54x 低 55%，是 5 年最便宜進場機會。Rubin (2026 Q4 sampling, 2027 production) → Rubin Ultra → Feynman 三世代確立；EV 1.88x（年化 13.5%）。風險是 2027-2028 hyperscaler capex digestion + AMD inference 蠶食，但 training 端 5 年無替代。
+</div>
 
-<p class="note"><strong>壓測結果：</strong>1 頁紙 memo 與 30 秒版本邏輯自洽 — thesis、driver、R:R、risk、action 一致。**通過，進入 §7 執行**。</p>
+<p class="note"><strong>壓力測試結果：</strong>1 頁紙 + 30 秒版本均能寫出且邏輯自洽 — Thesis 通過 Mental Models 測試，是 portfolio 第一核心位。</p>
+</section>
 
-<!-- =============== Phase B 矛盾（顯示位置 5） =============== -->
-<h2 id="phase-b">Phase B｜矛盾辨識 + 強制裁決</h2>
+<section class="card">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
 
 <h3>1. 共識清單（A1-A3 方向一致）</h3>
 <ul>
-<li>NVDA 在 AI 訓練端 5 年內無同級替代（A1 + A2 + A3 全認同）</li>
-<li>FY26-FY28 EPS 仍處於高速成長軌道（A1 + A3，A2 認同需求側）</li>
-<li>客戶集中度高 + 中國風險為已知 priced-in 風險（A1 + A3）</li>
-<li>產業位於 S 曲線前半段，基本面動能充裕（A1 + A2）</li>
+<li>✅ <strong>NVDA 是 AI 訓練全棧 toll booth</strong>（A1 + A2 + A3 一致）— 90%+ training share / 86% DC GPU revenue / CUDA 18 年護城河</li>
+<li>✅ <strong>Hyperscaler capex 2026 $710B 是 NVDA 主要受益</strong>（A2 + A3 一致）— Amazon $200B / MSFT $190B / GOOGL $185B / META $135B</li>
+<li>✅ <strong>FY26 record $215.9B / +65% YoY</strong>（A3）— Q1 FY27 guide $78B 超共識 $5B+</li>
+<li>✅ <strong>Rubin/Rubin Ultra/Feynman 三世代 cadence 確立</strong>（A1 + A2）— 2026/2027/2028 三世代 visibility</li>
 </ul>
 
-<div class="contra-box">
-<h3>2. 矛盾清單（A1 vs A2 vs A3）</h3>
+<h3>2. 矛盾清單</h3>
 <table>
-<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
-<tr><td>1</td><td>護城河厚度 vs 推論側鬆動</td><td>CUDA + NVLink 護城河仍 9/10，但推論側已開始鬆動</td><td>產業已進入「age of inference」，inference 是 2/3 AI compute，NVDA 推論市占可能 90% → 20-30% by 2028</td><td>DC = 89.7% 營收（過度集中）；networking +263% YoY 顯示護城河從晶片擴張到系統</td><td>🔴 不可調和（A1 訊號偏 bull、A2 訊號偏 bear、A3 訊號偏 mix）</td></tr>
-<tr><td>2</td><td>定價權強度</td><td>仍可推 Rubin 10x 改善 + ASP 漲幅</td><td>Google TPU v7 / AWS Trainium 已壓縮 token 成本 65%，price war 啟動</td><td>GM FY24 72.7% → FY25 75.0% → FY26 71.1%（已有壓縮）</td><td>🔴 不可調和（A1 vs A2/A3）</td></tr>
-<tr><td>3</td><td>客戶 stickiness</td><td>CUDA + NVLink + 系統 lock-in 仍強</td><td>Anthropic 轉向 Google TPU 1M chip 訂單；Midjourney 全 fleet 從 H100 → TPU v6e</td><td>Top 2 客戶 = 36% 營收（concentration）</td><td>🟡 可調和（loss 在邊緣 lab，core hyperscaler training 仍綁 NVDA）</td></tr>
-<tr><td>4</td><td>毛利率方向</td><td>Rubin co-design 提升整體毛利</td><td>ASIC 競爭壓制 ASP</td><td>Q1 FY27 guide 75% — 已 recover</td><td>🟡 可調和（Q1 FY27 數據將驗證）</td></tr>
+<thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>NVDA 90%+ training share vs AMD MI355X 在 inference single-digit % gap</td>
+<td>training 護城河深</td>
+<td>inference 對 AMD/custom 失守至 65-75%</td>
+<td>FY26 整體 86% DC GPU revenue</td>
+<td>🟡 可調和（training vs inference 切片）</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Forward PE 24.51x 看似便宜 vs FY26 +65% record growth 是否 sustainable</td>
+<td>—</td>
+<td>—</td>
+<td>FY27 共識 EPS $8.20 隱含 +72% YoY</td>
+<td>🟡 可調和（短期高增長已 priced）</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Hyperscaler $710B 2026 capex vs 2027-2028 digestion 風險</td>
+<td>—</td>
+<td>2027-2028 capex visibility 較弱</td>
+<td>—</td>
+<td>🔴 不可調和（時間軸明確）</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>NVDA 推 Spectrum-X +647% YoY vs 也是 ANET 競爭者</td>
+<td>—</td>
+<td>NVDA 同時做 GPU + networking</td>
+<td>—</td>
+<td>🟡 可調和（橫向擴張）</td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Custom silicon (AVGO 70% / MRVL 15%) 蠶食 vs NVDA 全棧 dominant</td>
+<td>training 全棧 dominant</td>
+<td>custom silicon 主要在 inference</td>
+<td>—</td>
+<td>🔴 不可調和（市場切片不同）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>本 DCA 結論</th><th>DD 結論（DD_NVDA_20260418）</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>X1</td><td>進場時點</td><td>條件式分批，現價即可進首批</td><td>「Pure MA 部分支持 + 估值合理」一致</td><td>本 DCA 加上 opportunity cost（NVDA vs AVGO/AMD/MRVL 邊際資金優先順序）</td></tr>
+<tr><td>X2</td><td>核心位定位</td><td>portfolio 第一核心 8-12%</td><td>「核心 A+ 級訊號燈」一致</td><td>本 DCA 加上具體倉位上限與分批節奏</td></tr>
+</tbody>
+</table>
+
+<h3>⚖ 4. 強制裁決（每個不可調和矛盾必含「會 settle 硬數據點」+ ≥ 2 條 if-then 路徑）</h3>
+<div class="verdict-box">
+<table>
+<thead><tr><th width="4%">#</th><th width="14%">矛盾</th><th width="9%">選哪邊</th><th width="22%">依據</th><th width="22%">會 settle 衝突的硬數據點</th><th width="29%">裁決後執行路徑（≥ 2 條 if-then）</th></tr></thead>
+<tbody>
+<tr>
+<td>M3</td>
+<td>2026 capex $710B vs 2027-2028 digestion</td>
+<td><strong>A2（短期 capex 強，長期 visibility 較弱）</strong></td>
+<td>① Amazon / MSFT / GOOGL / META 2026 capex guide 明確；② 2027-2028 是 token economics 與 ROI 顯化的關鍵期；③ AI bubble pop 風險真實但不確定何時</td>
+<td><strong>2027 H1 4 大 hyperscaler 集合 capex 是否仍 ≥ +20% YoY</strong>（Q4 26 / Q1 27 capex guides）</td>
+<td>(a) 2027 H1 集合 capex 仍 ≥ +20% YoY → <strong>core 位升至 10-12%</strong>；(b) 2027 H1 集合 capex YoY 負成長或 +5% 以下 → <strong>清倉 A，§5 primary trigger 觸發</strong></td>
+</tr>
+<tr>
+<td>M5</td>
+<td>Custom silicon 蠶食 vs 全棧 dominant</td>
+<td><strong>A1 + A2 共存（training NVDA / inference 分流）</strong></td>
+<td>① Custom silicon 主要在 hyperscaler 內部 inference；② training 仍 NVDA 90%+；③ Custom silicon by 2030 估 15-25% 整體 share，主要吃 inference</td>
+<td><strong>2028 NVDA training share 是否仍 ≥ 85% + 整體 DC GPU share 是否 ≥ 70%</strong></td>
+<td>(a) 2028 NVDA training ≥ 85% + 整體 ≥ 70% → <strong>thesis 兌現，加碼至 10-12%</strong>；(b) 2028 NVDA training &lt; 80% 或整體 &lt; 60% → <strong>清倉 B（§5 secondary trigger）</strong></td>
+</tr>
+<tr>
+<td>M1</td>
+<td>training 90% vs inference 蠶食</td>
+<td><strong>A2（區分切片，整體仍受益）</strong></td>
+<td>training 是 frontier model R&D 主場（high margin）；inference 是 commodity-like（low margin）；NVDA 失守 inference 但保住高利潤 training 是 OK</td>
+<td><strong>NVDA inference market share trajectory（每年 IDC 報告）</strong></td>
+<td>(a) Inference share &gt; 65% + training &gt; 85% → <strong>結構正常，base case 持有</strong>；(b) Inference share &lt; 50% 而 training 也跌破 85% → <strong>thesis 失效，減半</strong></td>
+</tr>
+<tr>
+<td>M2</td>
+<td>FPE 24x 便宜 vs +65% growth sustainable</td>
+<td><strong>A3（FPE 24x 已折扣短期高增長 sustainability 風險）</strong></td>
+<td>FPE 24x 比歷史平均 54x 低 55%；市場已 priced 「+65% growth 不會持續，但 +30-40% 5 年 CAGR」</td>
+<td><strong>FY27 actual EPS 是否達 $8.20 共識（Q4 FY27 揭曉，2027-02 前後）</strong></td>
+<td>(a) FY27 EPS ≥ $8.20 + Rubin sampling Q4 26 進度確認 → <strong>thesis 強化，加碼至 10%</strong>；(b) FY27 EPS &lt; $7.50 + Rubin 進度延後 → <strong>進入減碼觀察區</strong></td>
+</tr>
+<tr>
+<td>M4</td>
+<td>NVDA Spectrum-X +647% vs ANET 競爭</td>
+<td><strong>A2（橫向擴張正面）</strong></td>
+<td>NVDA Spectrum-X 進入 Ethernet 是橫向擴張不是被 cannibalize；對 NVDA thesis 是正面的（更多 SKU + 更多客戶 lock-in）</td>
+<td><strong>NVDA networking revenue 季度 trajectory（FY26 Q4 已揭曉 ~$13B/yr）</strong></td>
+<td>(a) NVDA networking revenue 持續 +50%+ YoY → <strong>橫向擴張兌現</strong>；(b) Spectrum-X 增速跌至 +20% YoY → <strong>橫向擴張遭到反擊但 thesis 仍 OK</strong></td>
+</tr>
+</tbody>
 </table>
 </div>
+</section>
 
-<h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
+<section class="card">
+<h2>§3 Key Drivers｜這支股票的命脈是什麼</h2>
+
 <table>
-<tr><th>#</th><th>矛盾點</th><th>本 DCA Phase A 結論</th><th>DD（4/18）結論</th><th>可能原因</th></tr>
-<tr><td>1</td><td>護城河評分</td><td>9/10（推論側鬆動）</td><td>10/10（S 級滿分）</td><td>視角差：DD 評估「整體護城河品質」，DCA 額外考慮 5y forward 的 inference 鬆動風險</td></tr>
-<tr><td>2</td><td>長期信心</td><td>3-5 年高、5-10 年需 review</td><td>長期信心「高」（無分層）</td><td>分析深度差：DCA Phase B 強迫具體化 ASIC 路徑後，發現 5-10 年 thesis 需主動 monitor</td></tr>
-<tr><td>3</td><td>Inference 母題</td><td>ID_AIInferenceEconomics 母題 🔴 是 NVDA 的最大 5y bear 因子</td><td>DD 列出 ID 但未深入 inference erosion</td><td>視角差：DD 是個股 DD，ID 母題的 cross-cut 影響在 DD 層面評估較淺</td></tr>
+<thead><tr><th width="6%">#</th><th width="30%">Key Driver</th><th width="38%">為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>CUDA + NVLink + 全棧 vertical integration（供給側 / 結構側）</strong></td>
+<td>18 年 CUDA 累積（Gap Score 28.7-99.1 vs ROCm <span class="src">aimultiple 2026</span>）+ NVLink 系統整合 + Mellanox 收購；frontier model 訓練 90%+ share；CUDA kernel 軟體 lock-in 是 AMD ROCm 5 年內無法填補的；Rubin (336B tx, 50 PF FP4 inference) → Rubin Ultra → Feynman 三世代 cadence 確立</td>
+<td>① 季度 NVDA training share（Dell'Oro / IDC）；② CUDA developer 數量 trajectory；③ Rubin sampling / production milestone</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Hyperscaler $710B 2026 AI capex 結構性受益（需求側）</strong></td>
+<td>Amazon $200B + MSFT $190B + GOOGL $185B + META $135B = $710B 2026 capex；75% 直接流向 GPU/networking ($450B+)；NVDA 是這個 capex 流的最大單一受益者；2027-2030 累計 DC revenue $1T 目標已立</td>
+<td>① 4 大 hyperscaler 季度 capex + capex guidance；② NVDA Q&Q+ 季度 backlog；③ token economics ROI 趨勢</td>
+</tr>
+</tbody>
 </table>
 
-<div class="adjudication-box">
-<h3>4. ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
-<table>
-<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據（不能是直覺）</th><th>會 settle 此衝突的硬數據點</th></tr>
-<tr><td>1</td><td>護城河仍厚 vs 推論側鬆動</td><td><strong>A1（仍厚）為 5 年內主場景，A2（鬆動）為 5-10 年區間風險</strong></td><td>frontier model 訓練端 cluster 仍是 NVL72/NVL576 結構，TPU/Trainium 在訓練端尚未證明 1000+ GPU scale 的 efficiency。Anthropic 轉 TPU 但訓練 Claude 4 仍在 NVL72 上跑（公開資料 4/2026）</td><td>2026 H2 hyperscaler 公布 frontier model（GPT-5、Gemini 3、Claude 4.5）的訓練 cluster 組成 — 若 50%+ 仍是 NVL72，A1 勝；若 &lt; 30%，A2 勝</td></tr>
-<tr><td>2</td><td>NVDA 仍有定價權 vs ASIC 壓制 ASP</td><td><strong>A2/A3（壓制存在）為已啟動的結構性事實，不是預測</strong></td><td>FY24 → FY26 GM 從 72.7% → 71.1%（雖 Q1 FY27 guide 75% 修復），且 FY26 Q4 已見一次性 ramp 稀釋為「可解釋」 — 但**整體趨勢 GM 已不可能再回到 75%+ 持久水準**。Rubin 10x token cost 改善是「對下游」不是「對 NVDA 自己 ASP」，定價權方向已轉</td><td>Q1 FY27（5/20）GM 報出值：&gt; 73% = A1 對；&lt; 71% = A2 對；71-73% = 中性，需看 Q2 FY27 連續確認</td></tr>
-</table>
-<p><strong>裁決帶入 Phase C 的影響：</strong>(1) 5 年內 thesis 仍成立、5-10 年需主動 review → §7d 持有年限定為「中期 3-5 年」而非「長期 5-10 年」；(2) GM 結構性壓力 → §7b 減碼條件中加入「GM 連續 3 季 &lt; 65%」清倉觸發；(3) 5/20 Q1 FY27 為核心驗證點 → §7a 進場節奏鎖定條件式分批，禁止財報前一次建倉。</p>
+<p class="note"><strong>為什麼是這 2 個，而不是其他？</strong>NVDA 有幾個替代命脈候選（汽車自駕、遊戲、Omniverse、sovereign AI），但只有「CUDA 軟體護城河」與「hyperscaler capex 結構性受益」是 (a) 結構性而非循環性、(b) NVDA 相對於 AMD / Intel / 客製 silicon 的差異化護城河、(c) 對未來 5 年 EPS CAGR 25%+ 預估有 80%+ 解釋力。其他 driver 是 hygiene factor。</p>
+
+<div class="conflict-box" style="background:#F0F9FF;border-left-color:#0EA5E9">
+<h4 style="color:#0369A1;margin-top:0">⚖ Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 1（CUDA + 全棧 — 供給側）vs Driver 2（Hyperscaler capex — 需求側）— 是否獨立？</p>
+<p><strong>測試</strong>：Driver 2 是否能在不假設 Driver 1 成立的情況下單獨被推翻？<br>
+✅ <strong>是</strong>。即使 NVDA CUDA 護城河失效（極端 bear case），hyperscaler 仍可能維持 $710B AI capex（流向 AMD / 客製 silicon）；反之若 hyperscaler capex 急縮（AI bubble pop），即使 CUDA 護城河完整 NVDA 也會 -50%+。Driver 2 失敗（hyperscaler digestion）不需要 Driver 1 失敗。</p>
+<p><strong>結論：</strong>兩個 driver 來自獨立因果鏈（供給側技術 vs 需求側資本支出），通過抽象層測試。</p>
 </div>
-
-<!-- =============== §3 Key Drivers（顯示位置 6） =============== -->
-<h2 id="sec-3">§3｜Key Drivers（命脈）</h2>
-
-<h3>限 1-2 個的 Drivers</h3>
-<table>
-<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
-<tr><td>1</td><td><strong>前沿訓練模型的 CUDA + NVLink 系統壟斷（供給側技術領先）</strong></td><td>frontier model 訓練 cluster 是 NVDA 唯一無人能複製的場景 — 5,000+ GPU 跨節點互聯需要 NVLink + Spectrum-X + CUDA 三件套，TPU 受限 Google Cloud 邊界、Trainium 受限 AWS region。**這個技術壁壘決定 ASP**</td><td>(a) NVL72 / NVL576 部署機架數（NVDA Q&A 揭露）；(b) frontier model 訓練 cluster 組成揭露；(c) NVLink switch ASP 趨勢</td></tr>
-<tr><td>2</td><td><strong>Hyperscaler + sovereign AI 的多年 capex commitment（需求側持續性）</strong></td><td>單個 driver 1 不夠 — 即使 NVDA 技術領先，若 hyperscaler 不花錢 NVDA 一樣慘。2026 capex $725B + 2030 累計 $3.5T 構成「需求 floor」，且 sovereign AI（中東、東南亞、印度國家級採購）擴展非 hyperscaler 的多元化客戶基礎</td><td>(a) MSFT/META/GOOGL/AMZN capex guidance（每季）；(b) NVDA sovereign AI 揭露營收（每季）；(c) 4 大 hyperscaler 對 NVDA 的 capex 分配比例</td></tr>
-</table>
-
-<h4>Driver 抽象層 guardrail 校驗</h4>
-<p>「driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？」 → <strong>可以</strong>。即使 NVDA 技術仍領先（driver 1 成立），若 hyperscaler 在 2026 突然砍 capex 50%（例：AI ROI 不及預期），NVDA 仍會崩。反之，driver 1 失效（CUDA 被 PyTorch 抽象層攻破）但 driver 2 仍成立（capex 持續），NVDA 也會輸給 ASIC。**兩條因果鏈正交，guardrail 通過**。</p>
-
-<h4>為什麼是這 2 個，而不是其他？</h4>
-<p>市場常討論的「NVDA Rubin 路線圖」「networking +263%」「sovereign AI」「AI Factory」其實都是 driver 1 + 2 的衍生指標。**Rubin 是 driver 1 的執行**（技術領先延續）；**networking 是 driver 1 的擴張**（從 chip 擴到 system）；**AI Factory 是 driver 2 的需求顯化**。把 driver 拆得太細 = 同一條因果鏈被切成多段假裝獨立 — 這違反 guardrail。**只列最上游兩條**。</p>
 
 <h3>強制減法 — 我認為不重要的事</h3>
 <table>
-<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
-<tr><td>Rubin 量產時程提前 / 延後 1 季</td><td>對 5 年 thesis 影響 &lt; 3%。短期 catalyst 而非結構因子</td></tr>
-<tr><td>Q1 FY27 EPS beat / miss 5%</td><td>1 季財報噪音，僅作為 driver 1+2 的觀測信號</td></tr>
-<tr><td>AI 泡沫敘事 / 整體股市修正</td><td>系統性風險，不是 NVDA 個股風險。已透過大盤豁免層處理</td></tr>
-<tr><td>Jensen Huang 接班人</td><td>5 年內機率 &lt; 10%，且即使發生，CUDA 護城河與管理層深度不會崩塌</td></tr>
-<tr><td>Gaming / Auto 業務動能</td><td>合計 &lt; 7% 營收，對估值影響 &lt; 5%</td></tr>
-<tr><td>Buyback 規模</td><td>$33.7B FY25 已是巨額，再增不會改變 thesis</td></tr>
+<thead><tr><th width="40%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>遊戲 GPU 業務（Q4 FY26 ~$3-4B）</td><td>占整體營收 &lt; 6%，非命脈</td></tr>
+<tr><td>單季 EPS beat 幅度</td><td>noisy；Rubin/Rubin Ultra ramp 是真正命脈</td></tr>
+<tr><td>美國對中國半導體出口限制</td><td>已 priced，且中國 AI 市場本來就被排除</td></tr>
+<tr><td>Jensen Huang 個人股票出售</td><td>系統性自動 plan，非 strategic 訊號</td></tr>
+<tr><td>FP4 vs FP8 vs FP16 等精度切換</td><td>technical detail，重點是 token throughput per dollar</td></tr>
+</tbody>
 </table>
 
-<div class="consensus-box">
-<h4>🔄 我和市場 Consensus 的最大分歧（Munger Inversion）</h4>
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
 <table>
-<tr><th>項目</th><th>內容</th></tr>
-<tr><td>市場目前定價在什麼假設上</td><td>fwd PE 24x、PEG 0.52 反映：FY27-FY30 EPS CAGR ~30%、ASIC 蠶食 inference 但訓練端 100% 守住、GM 維持 73%+。**市場 priced-in 「軟著陸」假設**</td></tr>
-<tr><td>我認為的不同假設</td><td>5 年內 GM 結構性下移至 70-72%（非短期 dilution，是 mix shift），FY30 EPS $13.7 而非市場外推 $15+。但 fwd PE 24x 已包含這個情境，**估值便宜的核心原因不是 EPS 高估，而是市場仍給 NVDA「成長股估值」而非「成熟 platform 估值」**</td></tr>
-<tr><td>賣方為什麼錯（具體理由）</td><td>賣方目標價 $380（24/7 Wall St）對應 PE 30x × FY28 EPS $11.24 = $337，再加 +10% safety = $370+，過度線性外推。**他們忽略 ASIC inference 的 gradual 蠶食可能在 FY29-FY30 成為 EPS 增長 cap**</td></tr>
+<tbody>
+<tr><td width="32%"><strong>市場目前定價在什麼假設上</strong></td><td>NVDA = AI 領導者但 2027-2028 capex digestion 風險真實；Forward PE 24.51x 反映「FY27-FY30 EPS CAGR ~20-25% + 2027 capex digestion 5-10% 修正」</td></tr>
+<tr><td><strong>我認為的不同假設</strong></td><td>① 市場低估 CUDA 護城河的持久性（AMD ROCm 在 frontier training 5 年內無法追上）；② 市場低估物理 AI / robotics / sovereign AI 新 TAM 的規模；③ 但市場高估 inference 對 AMD/custom silicon 的快速 displacement 速度（NVDA 整體 inference share 5 年仍 hold 60%+）</td></tr>
+<tr><td><strong>賣方為什麼錯（具體理由）</strong></td><td>賣方目標價 $200-280 反映「PEG 1-1.5x」框架 — 這個框架對 secular tech leader 可能 too conservative。具體錯誤：(a) 用 GAAP EPS 而非 non-GAAP（後者更反映實際盈利能力）；(b) 把 +65% FY26 growth 線性外推為「將會減速」，但忽略 Rubin/Feynman ramp 是新催化；(c) AI bubble pop 風險被過度 priced — 即使 capex YoY -10% NVDA 仍可保 absolute revenue</td></tr>
+</tbody>
 </table>
-<p><strong>校驗：</strong>三題寫得出差異 → thesis 有獨立 alpha 來源。**§7 倉位不需打折扣，照核心持倉處理**。</p>
-</div>
+<p class="note"><strong>校驗結論：</strong>三題均能寫出具體分歧 — thesis 有獨立 alpha 來源（CUDA 護城河持久性 + 新 TAM 兌現 + inference 失守速度）。alpha 強度高（不是極端非共識但是「結構性正確 + 估值便宜」雙引擎），故 §7 倉位定為 portfolio 第一核心 8-12%。</p>
+</section>
 
-<!-- =============== §5 Single Thing（顯示位置 7） =============== -->
-<h2 id="sec-5">§5｜The Single Thing That Could Change My Mind</h2>
+<section class="card">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<p class="note" style="background:#FEF2F2;border-left:3px solid #DC2626;padding:8px 14px;margin-bottom:14px"><strong>📌 §5 修正紀錄</strong>：本節含 <strong>2 條 trigger</strong> — Primary（Hyperscaler capex digestion）+ Secondary（pre-mortem §6b 派生 — CUDA 護城河結構性失效 / training share 跌破 80%）。Secondary 為 §6 三段式校驗結果 ⚠ 部分重疊後實際補入。</p>
+
+<h3>Primary Trigger — Hyperscaler capex digestion</h3>
 <table>
-<tr><th>項目</th><th>內容</th></tr>
-<tr><td>事件描述</td><td><strong>連續兩季 Data Center 營收 QoQ &lt; 5% 同時 Top 2 hyperscaler（推測為 MSFT + META）公開揭露其 AI capex 中 NVDA 占比下降超過 30%</strong></td></tr>
-<tr><td>為什麼這個事件是致命的</td><td>單獨 DC QoQ &lt; 5% 可能是季節性（例：Q1 vs Q4 hyperscaler 採購節奏）；單獨 hyperscaler 公開降 NVDA 占比可能是 ASIC 自用而非取代訓練。**兩個同時發生 = driver 1（技術壟斷）+ driver 2（需求承諾）同時鬆動**，是 thesis 結構性破滅的最早可觀測訊號</td></tr>
-<tr><td>如何監測</td><td>(a) NVDA 季報 DC segment 營收（每季 Q&A 揭露）；(b) MSFT/META capex 結構揭露（每季電話會議 Q&A）；(c) Bloomberg / SemiAnalysis 對 hyperscaler ASIC 部署規模的追蹤報告</td></tr>
-<tr><td>目前離發生有多遠</td><td>**遠**。最近一季（Q4 FY26）DC compute +58% YoY、networking +263% YoY；hyperscaler 仍承諾 2026 capex 加速。觸發機率 &lt; 5% 在未來 12 個月內</td></tr>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>連續 2 季 Big 4 hyperscaler（Amazon / Microsoft / Alphabet / Meta）集合 capex YoY 負成長，或集合 2027 capex guide YoY -5% 以下，且 NVDA backlog 連 2 季 -10%</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>Driver 2（hyperscaler capex 結構性受益）的核心前提是 hyperscaler 持續砸大錢買 GPU。如果 capex 連 2 季 YoY 負成長 + NVDA backlog 同步衰退，等同 AI bubble pop / digestion confirmed — NVDA 從「結構成長股」打成「cyclical capex 受益股」，PE 從 24x 壓到 15-18x = 30-40% downside。即使 CUDA 護城河完整，需求側崩塌仍會吃 -40-50%</td></tr>
+<tr><td><strong>如何監測</strong></td><td>① Big 4 季度財報 capex 與 capex guide；② NVDA 季度 transcript 提到 backlog 變化；③ Dell'Oro / 451 Research datacenter capex 季度報告；④ 2027 全年 capex guide（每年 1 月發布）</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td><strong>12-24 個月</strong>。2026 capex 已 lock 在 $710B，2027 仍預計 $700B+；但 2027-2028 是「token economics 與 ROI 顯化」的關鍵期；2028 Q1 capex guide 是最早可能的訊號 window</td></tr>
+</tbody>
 </table>
-<p class="note"><strong>合規檢查：</strong>單點、可觀測、雙條件不模糊（不是「市場情緒轉變」這種空泛）→ 通過 guardrail。</p>
 
-<!-- =============== §6 What I Don't Know + Pre-mortem（顯示位置 8） =============== -->
-<h2 id="sec-6">§6｜What I Don't Know + Pre-mortem</h2>
-
-<h3>6a｜強迫面對自己的盲點</h3>
+<h3>Secondary Trigger（pre-mortem 派生）— CUDA 護城河結構性失效</h3>
 <table>
-<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
-<tr><td>1</td><td>frontier model 是否會持續變大（&gt; 1T 參數、然後 10T）</td><td>規模法則（scaling law）持續有效，更多算力 = 更好模型</td><td>若 reasoning model（O1 路線、test-time compute）讓 inference 比 training 更值錢，driver 1 結構失效</td></tr>
-<tr><td>2</td><td>CUDA 護城河的有效厚度是 5 年還是 10 年</td><td>PyTorch torch.compile + Triton 抽象層在 5 年內仍未達到 production scale</td><td>若 2028 前 OpenAI/Anthropic 發布「跨硬體推論層」標準，CUDA stickiness 急速下降</td></tr>
-<tr><td>3</td><td>Hyperscaler 自有 ASIC 的軟體層成熟速度</td><td>TPU JAX / Trainium Neuron 仍受限於 Google/AWS region，第三方開發者不買單</td><td>若 Anthropic 公開 Trainium 的開發者成功故事 + Meta 採購 TPU 用於非 Google Cloud 部署，獨立 ASIC 軟體生態系起飛</td></tr>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>連續 2 季 NVDA AI training market share 跌破 80%（vs 目前 90%+）OR AMD ROCm 在 frontier training MLPerf 結果與 NVDA 差距 &lt; 10%（performance 與 software 同時追上）</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>Driver 1（CUDA 全棧）的核心前提是 frontier training 5 年無替代。如果 NVDA training share 從 90%+ 跌至 80% 以下 + AMD ROCm 在 MLPerf 追上，等同「CUDA 護城河結構性失效」訊號 — NVDA 從「AI 訓練 toll booth」打成「training GPU 之一」，PE 從 24x 壓到 18-20x = 25-35% downside</td></tr>
+<tr><td><strong>如何監測</strong></td><td>① IDC / Dell'Oro AI training market share 季度報告；② MLPerf Training benchmark 結果（每年 2 次發布）；③ AMD ROCm / OpenAI Triton / PyTorch 對 ROCm 的支援程度；④ NVDA 季度 transcript 對 training 競爭的提及</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td><strong>3-5 年</strong>。AMD MI355X 在 inference 已追上至 single-digit % gap；但 training 端 AMD 仍落後 30-50%；CUDA 護城河需要 5 年才能被有意義地侵蝕</td></tr>
+</tbody>
 </table>
 
+<p class="note"><strong>合規檢查：</strong>✅ Primary 是明確、單點、可驗證的事件；✅ Secondary 為 pre-mortem 三段式校驗 ⚠ 部分重疊後實際補入；✅ 兩 trigger 來自獨立因果鏈（需求側 capex vs 供給側競爭），互不取代；✅ 兩條都有具體監測來源、時間窗口與量化判定門檻。</p>
+</section>
+
+<section class="card">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<thead><tr><th width="6%">#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Big 4 hyperscaler 2027-2028 capex 是否維持 $700B+</td><td>AI ROI 顯化、token economics 維持正循環、agentic AI / robotics 新需求兌現</td><td>capex 急縮，driver 2 連根失效</td></tr>
+<tr><td>2</td><td>CUDA 護城河是否持續 5 年</td><td>AMD ROCm / Triton 軟體生態追不上、客戶 retraining 成本高</td><td>training share 從 90% 跌至 80% 以下</td></tr>
+<tr><td>3</td><td>Rubin (Q4 26 sampling) → Rubin Ultra → Feynman 三世代 cadence 順利</td><td>TSMC 3nm/2nm/A16 順利、HBM4 供需平衡、設計團隊執行</td><td>產品延後 6-12 個月，FY28-30 EPS 下修 15-20%</td></tr>
+<tr><td>4</td><td>Custom silicon (AVGO / MRVL) inference 蠶食是否限於 25-30%</td><td>training 仍 NVDA 場 + inference 對成本敏感度有限</td><td>蠶食擴大至 40%，整體 DC GPU share 跌至 60%</td></tr>
+<tr><td>5</td><td>NVDA Spectrum-X 在 networking 是否能維持 +50% YoY</td><td>ANET 反擊有限 + UEC 規格利好 NVDA + GPU bundle 加成</td><td>networking 增速跌至 +20% YoY</td></tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem｜失敗故事倒推 → 校驗 §5 → 修正 §5（強制三段式）</h3>
+
+<h4>第一段｜故事倒推（≤ 80 字 narrative）</h4>
 <div class="premortem-box">
-<h4>6b｜Pre-mortem：失敗故事倒推</h4>
-<div class="premortem-narrative">
-「假設 5 年後（2031-05）這個部位虧 50%，最可能發生的故事是 — 2027 H2 OpenAI 發布 GPT-5.5 後，業界發現規模法則邊際效用遞減，frontier model 開始重視 reasoning（test-time compute）而非更大模型。Anthropic 在 2028 把 90% 訓練算力轉到 Google TPU v8（已支援 1M+ chip cluster），Meta 跟進採用 MTIA v3 自訓練。NVDA Q4 FY28 DC compute 首次 QoQ 衰退 -8%，市場驚醒，PE 從 24x 殺到 12x。Networking 雖仍成長但救不了 compute 主體。GM 壓到 64%，FY30 EPS 僅 $9。股價跌到 $100，5 年累計虧損 -50%。」
-</div>
+「假設 5 年後 NVDA 部位虧 50%（從 $196 跌至 $98），最可能發生的故事是 — 2028 H2 OpenAI / Anthropic / Microsoft 訓練 GPT-6 / Claude 5 時發現 token economics ROI &lt; 50% (deeply unprofitable inference)，hyperscaler 2028 H2 削減 capex 從 $700B 到 $500B；同時 AMD MI400 在 frontier training MLPerf 表現追上至 7% gap，xAI / Anthropic 切換 30% workload；NVDA training share 從 90% 跌至 75%；FY30 EPS 從共識 $13 下修至 $7.5；PE 從 24x 壓縮至 17x；最終 PE × EPS = $128。」
 </div>
 
-<h4>Pre-mortem 與 §5 single-thing 重疊性檢查</h4>
-<p>**重疊。** §5 single-thing（DC QoQ &lt; 5% 連 2 季 + hyperscaler 公開降占比 &gt; 30%）正是上述故事在 2027-2028 的早期可觀測訊號。**§5 抓對了風險，pre-mortem 補齊路徑想像 — 兩者互補，不需重寫**。</p>
-
-<!-- =============== §8 Review Triggers（顯示位置 9） =============== -->
-<h2 id="sec-8">§8｜Review Triggers</h2>
+<h4>第二段｜校驗 §5 single-thing</h4>
 <table>
-<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
-<tr><td>1</td><td>Q1 FY27 earnings（FY27 第一季）</td><td>財報日期</td><td><strong>2026-05-20</strong>（13 天後）— 重點看 GM 修復幅度、DC QoQ、Networking 動能、Sovereign AI 揭露</td></tr>
-<tr><td>2</td><td>Rubin 量產 ramp 確認</td><td>產業事件</td><td>2026 H2 — CES 2027（2027-01）公布首批 hyperscaler 部署規模</td></tr>
-<tr><td>3</td><td>Anthropic / OpenAI 訓練 cluster 揭露</td><td>產業事件</td><td>2026 H2 frontier model 發布時揭露訓練架構（GPT-5、Claude 4.5、Gemini 3）</td></tr>
-<tr><td>4</td><td>價位觸發 — 上漲</td><td>價位</td><td>突破 $230（4/27 ATH +6%）→ review 是否減碼鎖利</td></tr>
-<tr><td>5</td><td>價位觸發 — 下跌</td><td>價位</td><td>跌破 MA200（~$191）→ review 是否減碼或加碼（依跌破原因）</td></tr>
-<tr><td>6</td><td>§5 The Single Thing</td><td>thesis 致命觸發</td><td>連續兩季 DC QoQ &lt; 5% + Top 2 hyperscaler NVDA 占比降 &gt; 30%</td></tr>
+<thead><tr><th width="60%">檢查問題</th><th>答案</th></tr></thead>
+<tbody>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="tag yellow">⚠ 部分重疊</span></td></tr>
+<tr>
+<td>Pre-mortem 故事包含的觸發路徑分解</td>
+<td>
+（a）Hyperscaler 2028 capex 削減 → <strong>對應原 §5 Primary trigger</strong>（已抓到）<br>
+（b）AMD MI400 在 frontier training MLPerf 追上 → <strong>原 §5 未涵蓋</strong>（純 CUDA 護城河結構性失效 / training share 跌破）<br>
+（c）xAI / Anthropic 切換 workload → 屬 (b) 的 leading indicator
+</td>
+</tr>
+</tbody>
 </table>
 
-<p><strong>這份報告的保質期：</strong>**Q1 FY27 earnings（2026-05-20）發布後 24 小時內必須 update**。財報後若 GM &gt; 73% + DC QoQ ≥ 8%，本報告結論延長至下一季財報（~3 個月）；若 miss，需重啟 §5 single-thing 監測 + Phase B 矛盾 1 重新裁決。</p>
+<h4>第三段｜修正 §5（依第二段結果分流）</h4>
+<div class="conflict-box" style="background:#FEF2F2;border-left-color:#DC2626">
+<p><strong>校驗結果：⚠ 部分重疊</strong> — §5 抓對 driver 2 的需求面觸發（capex digestion），但漏抓 driver 1 的供給面觸發（CUDA 護城河 / training share 失效）。</p>
+<p><strong>實際執行的 §5 修正</strong>：</p>
+<ol>
+<li>已在 §5 區塊新增「Secondary Trigger — CUDA 護城河結構性失效」（具體事件：連 2 季 NVDA training share 跌破 80% OR AMD ROCm 在 MLPerf 與 NVDA 差距 &lt; 10%）</li>
+<li>已在 §7b 加碼/減碼條件中新增「清倉 B」對應 secondary trigger</li>
+<li>HTML §5 的「事件描述」現顯示為 2 條 trigger（Primary + Secondary），與 pre-mortem 之前的 1 條相比實際變動</li>
+</ol>
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger（CUDA 護城河結構性失效）</strong></p>
+</div>
 
-<p><strong>最可能發生的 upside 因素：</strong>5/20 Q1 FY27 GM 報出 75%+ + DC QoQ &gt; 10% + sovereign AI 揭露 ≥ $5B → 短線 +15-20%、中期估值 re-rate 至 PE 28x（catalyst：Rubin co-design 故事被市場買單）。</p>
+<h4>Guardrail 校驗</h4>
+<p class="note">第三段是否實際導致 §5 區塊變動？✅ <strong>是</strong>。§5 從 1 條 trigger 擴充為 2 條 trigger，§7b 已新增「清倉 B」對應 secondary trigger。Pre-mortem 不是裝飾品。</p>
+</section>
 
-<p><strong>最可能發生的 downside 因素：</strong>(1) Q1 FY27 miss（GM &lt; 71% 或 DC QoQ &lt; 5%）→ 短線 -10-15%；(2) 二級風險：MSFT 或 META 在電話會議中暗示 NVDA 占比下降 → 短線 -8-12%；(3) 系統性：AI 泡沫敘事 + 利率上行 → 全 AI sleeve（NVDA + AVGO + MRVL + 2330）一起回檔 -15-20%。</p>
+<section class="card">
+<h2>§8 Review Triggers｜重新評估觸發點</h2>
 
-<!-- =============== Phase A Folded（顯示位置 10-13） =============== -->
-<h2>Phase A｜獨立研究階段（折疊區）</h2>
+<table>
+<thead><tr><th width="6%">#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q1 FY27 Earnings</td><td>財報日期</td><td><strong>2026-05-27 前後</strong>（看 backlog、Rubin sampling 進度、guidance）— 短期最大 binary</td></tr>
+<tr><td>2</td><td>Q2 FY27 Earnings</td><td>財報日期</td><td><strong>2026-08-27 前後</strong></td></tr>
+<tr><td>3</td><td>Rubin Q4 2026 sampling 進度</td><td>產品里程碑</td><td>2026 Q4（從 sampling 到 ramp）</td></tr>
+<tr><td>4</td><td>Rubin volume production</td><td>產品里程碑</td><td>2027 Q1</td></tr>
+<tr><td>5</td><td>價位觸發 — 進場區</td><td>價位</td><td><strong>$185-190 / $170-180（兩段加碼，見 §7b）</strong></td></tr>
+<tr><td>6</td><td>價位觸發 — 減碼區</td><td>價位</td><td><strong>$240+ + Forward PE &gt; 35x</strong></td></tr>
+<tr><td>7</td><td>§5 Primary Trigger</td><td>需求 / capex</td><td>Big 4 集合 2027 capex 連 2 季 YoY 負成長 + backlog -10% → 立即清倉 A</td></tr>
+<tr><td>8</td><td>§5 Secondary Trigger（pre-mortem 派生）</td><td>競爭 / 護城河</td><td>NVDA training share 連 2 季跌破 80% OR AMD MLPerf training 差距 &lt; 10% → 立即清倉 B</td></tr>
+</tbody>
+</table>
+
+<table style="margin-top:18px">
+<tbody>
+<tr><td width="32%"><strong>這份報告的保質期</strong></td><td><strong>Q2 FY27 財報前有效（~16 週，至 2026-08-27）</strong>。Q1 FY27 (5/27) 後即可重新校驗 thesis 是否仍 intact</td></tr>
+<tr><td><strong>最可能發生的 upside 因素</strong></td><td>5/27 Q1 FY27 beat-and-raise + backlog 創新高 + Rubin Q4 sampling 確認 + hyperscaler 2027 capex guide 維持 → 股價 1-2 個月衝 $230+（觸發減碼觀察）</td></tr>
+<tr><td><strong>最可能發生的 downside 因素</strong></td><td>5/27 Q1 FY27 in-line + Rubin sampling 延後訊號 + AMD MI355X 收購大客戶 → 股價 1-2 個月跌至 $175-185（觸發加碼 1 進場）</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card">
+<h2>Phase A｜獨立研究階段（折疊區塊）</h2>
 
 <details>
-<summary>Phase A1｜護城河深度分析 — 結論：CUDA + NVLink + 系統整合度 5 重壁壘 9/10，5 年內仍穩；推論側已開始鬆動，5-10 年區間需主動 monitor</summary>
-<div>
+<summary>Phase A1｜護城河深度分析 — 結論：CUDA + NVLink + 全棧 vertical integration 三軸最深，A+ 級護城河，5 年穩固度極高（training）</summary>
 <table>
-<tr><th>項目</th><th>內容</th></tr>
-<tr><td>主要護城河類型</td><td>(1) <strong>CUDA 軟體生態系</strong>（20 年累積、80% 全球 AI 開發者的 default 選項，universal framework optimization、研究員 lock-in）；(2) <strong>NVLink + Spectrum-X 系統整合</strong>（NVL72 機架架構 + cuDNN + TensorRT-LLM + NCCL，跨節點訓練無人能複製）；(3) <strong>規模優勢</strong>（TSMC CoWoS 優先配額、HBM4 客製化 base die、$33B FY25 R&D 維持技術領先）</td></tr>
-<tr><td>持久性評分</td><td><strong>9/10</strong>（DD 給 10/10，DCA 微幅下調反映推論側鬆動的早期訊號）。5 年穩固度：<strong>高</strong>（訓練端）/ <strong>中</strong>（推論端）</td></tr>
-<tr><td>最大侵蝕風險</td><td><strong>Hyperscaler 自有 ASIC 在推論側的逐步取代</strong> — Google TPU v7 已可在 Gemini 75%+ 推論部署、AWS Trainium 2 處理 Bedrock 50%+ token，Anthropic 1M chip TPU 訂單。時間軸：5-7 年內推論側 NVDA 市占從 90% → 20-30%（業內預測）；訓練端則 5 年內仍守住</td></tr>
-<tr><td>關鍵數據</td><td>毛利率 71.1% FY26（從 75.0% 下降，趨勢 ↓ 但 Q1 FY27 guide 75% 修復）；市佔率 80% AI 加速器（趨勢 ↓ 至 75% by EOY）；ROIC 126-151% vs WACC ~10% = 超額 ~120pp+</td></tr>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td>① <strong>軟體 lock-in (CUDA)</strong>（18 年累積，CUDA Gap Score 28.7-99.1 vs ROCm <span class="src">aimultiple 2026</span>，TensorRT-LLM / FlashAttention 3 等 hand-written kernels）；② <strong>系統整合度 (NVLink + 全棧)</strong>（Mellanox 收購 + 整機 NVL72 + DGX Cloud）；③ <strong>規模 + R&D</strong>（FY26 R&D ~$15B，每年 +30%）</td></tr>
+<tr><td>持久性評分</td><td><strong>10/10</strong>（training），<strong>7/10</strong>（inference）；5 年穩固度：<strong>training 極高 / inference 中</strong></td></tr>
+<tr><td>最大侵蝕風險</td><td>(1) Hyperscaler 2027-2028 capex digestion → 需求面崩塌；(2) AMD ROCm / OpenAI Triton 5 年內追上 frontier training；(3) Custom silicon 在 inference 蠶食擴大；(4) AI 物理限制（dataset 稀缺、scaling law saturate）</td></tr>
+<tr><td>關鍵數據</td><td>FY26 revenue $215.9B / +65% YoY；Q4 FY26 DC revenue $62.3B / +75% YoY / 91% revenue；NVDA AI accelerator GPU ~80% market share <span class="src">Silicon Analysts 2026</span>；training 側 share &gt; 90%</td></tr>
+</tbody>
 </table>
-<p><strong>A1 獨立結論：</strong>NVDA 護城河厚但邊緣鬆動 — 訓練端壁壘仍深，推論端正在鬆動，CUDA 軟體護城河 5-7 年仍穩。</p>
-</div>
+
+<h4>📚 Phase A1 sourced data point 清單（floor ≥ 5）— 實際 7 條</h4>
+<ol>
+<li><strong>Q4 FY2026 revenue $68.1B (+73% YoY，beat 50% YoY guidance)</strong> <span class="src">— NVIDIA Newsroom Q4 FY26 PR / CNBC 2026-02-25</span></li>
+<li><strong>FY2026 全年 revenue $215.9B (+65% YoY，record)</strong> <span class="src">— NVIDIA FY26 PR</span></li>
+<li><strong>Q4 FY26 Data Center revenue $62.3B (+75% YoY，91% of total revenue)</strong> <span class="src">— Futurum NVIDIA Q4 FY26 Earnings</span></li>
+<li><strong>NVDA ~80% AI accelerator GPU market share (training 端 &gt; 90%，inference 端 60-75%)</strong> <span class="src">— Silicon Analysts NVIDIA AI Accelerator Market Share 2024-2026</span></li>
+<li><strong>NVDA controls 86% of data center GPU revenue</strong> <span class="src">— GPUnex NVIDIA vs AMD GPUs 2026</span></li>
+<li><strong>CUDA Gap Score 28.7 to 99.1 across benchmarks vs ROCm（軟體 lock-in 量化）</strong> <span class="src">— aimultiple GPU Software for AI: CUDA vs. ROCm in 2026</span></li>
+<li><strong>Vera Rubin GPU specs：336B transistors / 50 PF FP4 inference / 35 PF FP4 training / 288GB HBM4 / 22 TB/s bandwidth；Rubin sampling Q4 2026, volume production Q1 2027</strong> <span class="src">— NVIDIA GTC 2026 keynote / Tom's Hardware / Tech-Insider 2026</span></li>
+</ol>
+
+<p><strong>A1 獨立結論（一句話）：</strong>NVDA 護城河是「CUDA 18 年軟體 lock-in + NVLink 全棧 vertical integration + 規模 R&D」三軸最深，training 端 90%+ share + 86% DC GPU revenue 是 A+ 級護城河；inference 端面臨 AMD MI355X / 客製 silicon 蠶食，但整體 DC GPU 仍 dominant。</p>
 </details>
 
 <details>
-<summary>Phase A2｜產業趨勢深度分析 — 結論：產業 S 曲線前半段、需求遠超供給，但「訓練 vs 推論」的 mix shift 已啟動 NVDA pricing power 貶損</summary>
-<div>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：Hyperscaler 2026 capex $710B，NVDA 是最大單一受益者；AI 訓練端 5 年內結構性鎖定 NVDA</summary>
 <table>
-<tr><th>項目</th><th>內容</th></tr>
-<tr><td>TAM 與成長</td><td>當前 $135B（2024）→ $394B（2030）→ $604B（2033），保守 CAGR 16%、aggressive 19%。滲透率：AI 占 hyperscaler total capex ~60-70%，AI 工作負載中 inference 占 2/3</td></tr>
-<tr><td>供需判斷</td><td>**目前供需偏緊**（NVDA 每週部署 1,000 NVL72 機架仍供不應求、CoWoS 產能 2026 排到 2027 H1）。未來 12 個月：**仍緊但邊緣鬆動**（CoWoS 擴產 2027 上線、ASIC 替代部分需求）</td></tr>
-<tr><td>最大技術替代風險</td><td><strong>Hyperscaler 自有 ASIC（Google TPU v7、AWS Trainium 2、Microsoft Maia 200、Meta MTIA）</strong> — 在推論工作負載（2/3 AI compute）成本優勢顯著（TPU v7 較 GB200 NVL72 token 成本接近或略優）。時間軸：2027-2028 inference 取代加速；威脅程度：**中高**</td></tr>
-<tr><td>最大政策 / 地緣風險</td><td><strong>美中科技戰 + 中國 NVDA 市占歸零</strong>（從 2024 95% → 2026 0%）— $20B+ 年營收已 priced-in。下行 floor：中國本土替代（華為 Ascend、寒武紀）對全球 AI 市場非威脅；上行 ceiling：sovereign AI（中東、印度、東南亞）多元化提供 offset</td></tr>
-<tr><td>議價權位置</td><td>對上游（TSMC、HBM 廠 SK Hynix/Samsung/Micron）：<strong>強</strong>（NVDA 拿走 TSMC CoWoS 優先配額）；對下游（hyperscaler）：<strong>中強</strong>（單一客戶議價能力下降中，但 frontier training 仍是 NVDA 主場）</td></tr>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>Hyperscaler 2026 capex $710B (Amazon $200B / MSFT $190B / GOOGL $185B / META $135B) <span class="src">24/7 Wall St 2026-05-01 / Fortune 2026-04-30</span>；75% 直接流向 GPU/networking ($450B+)；NVDA 累計 DC revenue 目標 $1T (2027-2030)</td></tr>
+<tr><td>供需判斷</td><td>供需<strong>極緊</strong>（Q4 FY26 backlog 創新高 + Rubin sampling 進度緊湊）；2026 整年維持偏緊，2027 H1 仍緊；2027-2028 是 visibility 較弱期</td></tr>
+<tr><td>最大技術替代風險</td><td>(1) AMD ROCm / Triton 軟體生態追上（3-5 年期）；(2) 客製 silicon (AVGO/MRVL) inference 蠶食；(3) CPU+ASIC 整合架構（Microsoft Cobalt 等）</td></tr>
+<tr><td>最大政策/地緣風險</td><td>美國對中國半導體出口限制（已 priced）；US tariff 對 TSMC（影響有限）；歐洲 sovereign AI 政策（中性 / 增 NVDA TAM）</td></tr>
+<tr><td>議價權位置</td><td>對上游 <strong>強</strong>（向 TSMC 採購 3nm/2nm/A16，但 NVDA 是 TSMC 最大客戶）；對下游 <strong>極強</strong>（hyperscaler 即使想 dual-source 也只能在 inference）</td></tr>
+</tbody>
 </table>
-<p><strong>A2 獨立結論：</strong>產業 S 曲線前半段，需求遠超供給；但「訓練 vs 推論」mix shift 已啟動 NVDA pricing power 結構性貶損，5 年內仍可吃肉、5-10 年挑戰逐顯。</p>
-</div>
+
+<h4>📚 Phase A2 sourced data point 清單（floor ≥ 5）— 實際 7 條</h4>
+<ol>
+<li><strong>Big 4 hyperscaler 2026 集合 AI capex $710B (Amazon $200B / MSFT $190B / GOOGL $185B / META $135B)</strong> <span class="src">— 24/7 Wall St 2026-05-01 / Fortune 2026-04-30</span></li>
+<li><strong>大約 75% hyperscaler capex 流向 AI 基建（GPU/networking）= $450B+ 直接 addressable for NVDA</strong> <span class="src">— Introl Hyperscaler CapEx 2026 / Winvesta AI Capex Supercycle</span></li>
+<li><strong>NVDA 已暗示 Blackwell + Rubin 累計 DC revenue 目標 $1T (FY27-30)</strong> <span class="src">— Futurum NVIDIA Q4 FY26 Earnings 2026-02</span></li>
+<li><strong>Custom silicon 預期 2030 全市場 share 15-25%（主要在 hyperscaler internal inference）</strong> <span class="src">— Silicon Analysts 2026 / TradingKey Custom AI Silicon Battle 2026</span></li>
+<li><strong>AMD MI355X 在 MLPerf Inference 6.0 (2026-04-01) 與 B200 server inference 差距 single-digit %</strong> <span class="src">— Spheron Blog ROCm vs CUDA 2026</span></li>
+<li><strong>AMD inference 25-40% cheaper per token vs NVDA</strong> <span class="src">— Spheron / Thunder Compute ROCm vs CUDA</span></li>
+<li><strong>Vera Rubin VR200 NVL72 預期 inference performance 3.3x vs Blackwell Ultra GB300 NVL72；training 3.5x</strong> <span class="src">— NVIDIA GTC 2026 / Tech-Insider 2026</span></li>
+</ol>
+
+<p><strong>A2 獨立結論（一句話）：</strong>Hyperscaler 2026 capex $710B 是 NVDA 主要直接受益（75% 流向 GPU/networking）；NVDA 2027-2030 累計 DC revenue 目標 $1T 已立；AMD/客製 silicon 在 inference 蠶食結構性存在，但 training 端 5 年內結構性鎖定 NVDA。</p>
 </details>
 
 <details>
-<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：財務體質史上最強，但業務結構過度集中於 DC（89.7%）與少數 hyperscaler（Top 2 = 36%）</summary>
-<div>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：FY26 record + Forward PE 24.51x 是 5 年最便宜進場機會之一</summary>
 <table>
-<tr><th>項目</th><th>內容</th></tr>
-<tr><td>營收結構</td><td>**現金牛**：Data Center compute（FY26 ~$165B，佔 ~76%）；**成長引擎**：Networking（+263% YoY，佔 DC 20%、整體 ~18%）+ Sovereign AI；**新興**：Gaming（5%）+ Auto/Pro Vis（~2%）+ Omniverse；**拖累**：China DC（從 ~12% → 0%）</td></tr>
-<tr><td>客戶集中度</td><td>**Top 2 = 36% FY26 營收**（推測 MSFT + META 或 MSFT + 某 sovereign），**Top 5 = ~60%**。CEO Jensen 公開：「40% 來自非 Top 5 hyperscaler」。風險：<strong>高</strong>（單一客戶失約即 thesis 受損）</td></tr>
-<tr><td>定價權</td><td>ASP 趨勢：訓練端 ↑（Rubin co-design 提升）、推論端 → / ↓（ASIC 壓制）。整體定價權：<strong>強</strong>（短期）→ <strong>中</strong>（5 年後）</td></tr>
-<tr><td>未來金雞母</td><td>(1) **Networking + Spectrum-X**（目前 ~18% 營收，潛在 TAM $80B by 2030，預估 3-5 年成熟）；(2) **Sovereign AI**（目前 ~5% 營收，潛在 TAM $50B by 2030）；(3) **AI Factory + Omniverse**（目前 &lt; 1%，潛在 TAM $30B by 2030，5-7 年成熟）</td></tr>
-<tr><td>財務體質</td><td>FCF 轉換率 80.5%（FCF $96.68B / NI $120.07B）；毛利率 71.1%（趨勢 ↓ Blackwell ramp 一次性，Q1 FY27 guide 75%）；Net Cash ~$10B（基本零槓桿）；壓力測試：營收 -20% 仍可撐 8+ 季（FCF 緩衝充裕）</td></tr>
-<tr><td>資本配置紀律</td><td><strong>強</strong>。FY25 buyback $33.71B（55% of FCF），股利政策保守。CAPEX 僅 2.48% 營收（asset-light fab-less 模式，不擠占 FCF）。併購紀錄：Mellanox（2020 $7B，網通整合成功）；Run:ai（2024 $700M）；歷史 M&A 多為小規模技術補強，無大型整合失敗紀錄。**Jensen 是 capital allocator 中的 A 級**</td></tr>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構</td><td>現金牛：Data Center（91% 營收）；成長引擎：<strong>Rubin/Rubin Ultra/Feynman 三世代 cadence</strong>；新興：物理 AI / Omniverse / sovereign AI；長尾：Gaming (~5%) / ProViz (~2%) / Auto (~3%)</td></tr>
+<tr><td>客戶集中度</td><td>Big 4 hyperscaler (Amazon / MSFT / GOOGL / META) 占 ~50%+；風險：<strong>中</strong>（hyperscaler 集中但 5 個客戶 + sovereign AI / 企業擴散中）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（Rubin 較 Blackwell ASP +30-50%）；定價權：<strong>極強</strong>（CUDA lock-in + 全棧整合）</td></tr>
+<tr><td>未來金雞母</td><td>① <strong>Rubin/Rubin Ultra/Feynman ramp</strong>（2026-2028 三世代）；② <strong>物理 AI / robotics</strong>（潛在 TAM $50B+ by 2030）；③ <strong>sovereign AI</strong>（潛在 $100B+ TAM）；④ Spectrum-X networking ($13B+/yr 已起步)</td></tr>
+<tr><td>財務體質</td><td>FCF $80B+ FY26、毛利率 75%+ non-GAAP、ROIC 100%+、Net cash position $50B+；壓力測試：營收 -30% 仍維持 60%+ OPM</td></tr>
+<tr><td>資本配置紀律</td><td>$60B 買回 (FY26)、$5B 股利、無重大 M&A in-flight；管理層紀律強（vs Cisco 2000 過度收購對比）</td></tr>
+</tbody>
 </table>
-<p><strong>A3 獨立結論：</strong>財務體質史上最強（ROIC 126%+、FCF $96B、Net Cash），但業務結構過度集中於 DC 與少數 hyperscaler — 這是 NVDA 的「成功的詛咒」。</p>
-</div>
+
+<h4>📚 Phase A3 sourced data point 清單（floor ≥ 6）— 實際 8 條</h4>
+<ol>
+<li><strong>Q4 FY26 revenue $68.1B (+20% QoQ, +73% YoY)</strong> <span class="src">— NVIDIA Q4 FY26 PR / Fortune 2026-02-25</span></li>
+<li><strong>FY26 revenue $215.9B (+65% YoY) / FY26 EPS $4.77 (non-GAAP)</strong> <span class="src">— NVIDIA FY26 PR / Motley Fool 2026-05-05</span></li>
+<li><strong>Q1 FY27 guidance $78B (mid)，超 consensus $5B+</strong> <span class="src">— NVIDIA Q4 FY26 transcript</span></li>
+<li><strong>FY26 全年 EPS $4.77 (non-GAAP)，FY27 共識 $8.20 (+72% YoY)</strong> <span class="src">— Motley Fool / Consensus</span></li>
+<li><strong>股價 $196.50 (2026-05-05)</strong> <span class="src">— Yahoo Finance / Motley Fool 2026-05</span></li>
+<li><strong>Forward PE 24.51 / Trailing PE 40.09 (5/5/2026) - 比 10 年平均 PE 54.28 低 27%</strong> <span class="src">— GuruFocus / FinanceCharts 2026-05</span></li>
+<li><strong>MA50 $204.32 / MA200 $191.13 / RSI 14d 34-51 區間</strong> <span class="src">— Investing.com / Barchart 2026-05</span></li>
+<li><strong>下次財報 2026-05-27 / 28（Q1 FY27 results）</strong> <span class="src">— NVIDIA IR calendar</span></li>
+</ol>
+
+<p><strong>A3 獨立結論（一句話）：</strong>NVDA FY26 revenue $215.9B / +65% YoY 是 record，Q1 FY27 guide $78B 超共識 $5B+；Forward PE 24.51x 比歷史平均 54.28x 低 55%，是 5 年最便宜進場機會之一；MA200 上方 +2.8% 短期回測中；5/27 Q1 FY27 是短期最大 binary。</p>
 </details>
 
 <details>
-<summary>Phase A4｜既有 DD/ID 報告數據摘要 — DD 4/18 結論 A 級、品質 S、估值 🟢、MA ✅；ID 多份母題支撐</summary>
-<div>
+<summary>Phase A4｜既有報告數據擷取 — DD_NVDA_20260418 + ID_AIAcceleratorDemand_20260419</summary>
 <h4>DD 報告擷取（DD_NVDA_20260418.html）</h4>
 <table>
-<tr><th>項目</th><th>數值</th></tr>
-<tr><td>Quality Score</td><td>10/10（S 級護城河 + 體質 veto 全過）</td></tr>
-<tr><td>R:R 短期 / 中期</td><td>1.21x / 2.97x（壓力測試通過率 2/3，QC-29 觸發降一級）</td></tr>
-<tr><td>三引擎目標價</td><td>短期 +15%、中期 +20%（保守口徑）</td></tr>
-<tr><td>Bear anchor</td><td>W52 $172（基本面 Bear）</td></tr>
-<tr><td>紅旗清單</td><td>0 個重大紅旗（Blackwell ramp GM 一次性、ASIC 為觀察項而非亮燈、客戶集中為已知）</td></tr>
-<tr><td>核心假設 H1/H2/H3</td><td>(H1) frontier training 規模法則持續、(H2) hyperscaler capex 2026-2030 持續加速、(H3) CUDA 護城河 5 年內守住</td></tr>
-<tr><td>§8 最終結論（綜合訊號燈）</td><td><strong>A 級</strong>（基礎 A+ → QC-29 壓力測試降一級）</td></tr>
+<thead><tr><th width="35%">項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Quality Score / 護城河等級</td><td>10/10 → S 級</td></tr>
+<tr><td>體質 veto</td><td>5/5 全過</td></tr>
+<tr><td>R:R 中期</td><td>+1.50x</td></tr>
+<tr><td>R:R 長期</td><td>5Y +88% (EV)</td></tr>
+<tr><td>Bear anchor</td><td>$167-175</td></tr>
+<tr><td>核心假設</td><td>H1: CUDA 護城河持續 / H2: hyperscaler capex 維持 / H3: Rubin 三世代 ramp 順利</td></tr>
+<tr><td>綜合訊號燈</td><td>A+ 級（核心位）</td></tr>
+<tr><td>估值燈</td><td>🟢 便宜（FPE 24.51x，5Y 分位 ~10-15%）</td></tr>
+<tr><td>Pure MA</td><td>✅ 部分支持（MA200 上 / MA50 下）</td></tr>
+</tbody>
 </table>
 
-<h4>ID 報告擷取（核心對照）</h4>
-<table>
-<tr><th>ID</th><th>產業評級</th><th>對 NVDA 影響</th></tr>
-<tr><td>ID_AIAcceleratorDemand 母題 🔴</td><td>🟢 順風（5 年內）</td><td>NVDA 是核心受益者</td></tr>
-<tr><td>ID_AIInferenceEconomics 母題 🔴</td><td>🟡 mix（取代潮）</td><td>**NVDA 5 年區間最大 bear 因子**</td></tr>
-<tr><td>ID_AIDataCenter</td><td>🟢 順風</td><td>NVDA 直接吃 capex</td></tr>
-<tr><td>ID_AINetworking</td><td>🟢 順風</td><td>NVDA networking 段 +263% YoY</td></tr>
-<tr><td>ID_CUDARocmMoat 子題</td><td>🟡 護城河鬆動中</td><td>確認 A1 結論：5-7 年仍穩</td></tr>
-<tr><td>ID_CoWoSCoPoS 子題</td><td>🟢 NVDA 優先配額</td><td>供給端 floor</td></tr>
-<tr><td>ID_HBM_Supercycle</td><td>🟢 順風</td><td>HBM4 客製化 base die NVDA 優先採購</td></tr>
-<tr><td>ID_LeadingEdgeNode</td><td>🟢 NVDA 是 TSMC 最大客戶</td><td>製程紅利共享</td></tr>
-</table>
-<p class="note">A4 不產出獨立結論（純數據輸入）。**DD 4/18 結論為 A 級，與本 DCA Phase B 強制裁決後維持「中期 3-5 年高信心、5-10 年需 review」一致**。</p>
-</div>
+<h4>ID 報告擷取（ID_AIAcceleratorDemand_20260419.html）</h4>
+<ul>
+<li>產業評級：Phase II 母題（訓練→推論混合期），CAGR 估 30%+</li>
+<li>NVDA 在 ID 中定位：🔴 核心受益（AI 加速器 dominant）</li>
+<li>關鍵趨勢：Rubin → Rubin Ultra → Feynman 三世代、CUDA + NVLink 全棧、Sovereign AI 新 TAM</li>
+<li>非共識結論：ASIC 份額由 ID 估 35-40% 2027（vs consensus 20-25%）— 但這是 inference 不是 training</li>
+</ul>
+<p class="note"><strong>本 DCA 與 DD/ID 的關鍵差異：</strong>DD 給「A+ / 核心位」，本 DCA 同向加上 opportunity cost（NVDA vs AVGO/AMD/MRVL 邊際資金優先順序）+ §6 三段式 pre-mortem 補入 secondary trigger（CUDA 護城河結構性失效），結構更完整。</p>
 </details>
 
-<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+</section>
+
 </main>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
 </body>
 </html>
