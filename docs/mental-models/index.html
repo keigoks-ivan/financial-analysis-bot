@@ -105,6 +105,37 @@ a:hover{color:var(--imq-accent-hover)}
 .canvas-col{position:relative;border:1px solid var(--imq-border);background:transparent}
 .detail-col{background:var(--imq-card);padding:24px 24px 32px;overflow:auto;max-height:900px}
 
+/* ── List view (alternative to SVG, useful on mobile) ── */
+.list-view{display:none;padding:18px 18px 24px}
+.canvas-col.list-mode .graph-view{display:none}
+.canvas-col.list-mode .list-view{display:block}
+.list-group{margin-bottom:12px;border:1px solid var(--imq-border);border-radius:8px;overflow:hidden;background:#fff}
+.list-group-header{padding:10px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#f8fafc;user-select:none}
+.list-group.open .list-group-header{border-bottom:1px solid var(--imq-border)}
+.list-group-title{font-family:var(--imq-font-mono);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;display:inline-flex;align-items:center;gap:8px}
+.list-group-meta{font-family:var(--imq-font-mono);font-size:10px;color:#94a3b8;display:inline-flex;align-items:center;gap:8px}
+.list-group-toggle{display:inline-block;width:10px;text-align:center;transition:transform .15s}
+.list-group.open .list-group-toggle{transform:rotate(90deg)}
+.list-group-body{display:none;padding:10px 10px 12px;flex-wrap:wrap;gap:6px}
+.list-group.open .list-group-body{display:flex}
+.list-item{padding:7px 10px;border:1px solid var(--imq-border);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:6px;transition:all .12s;font-family:inherit}
+.list-item:hover{border-color:#0f172a;background:#f8fafc}
+.list-item.selected{background:#0f172a;color:#fff;border-color:#0f172a}
+.list-item.selected .list-item-glyph{color:#fff !important}
+.list-item-glyph{font-family:var(--imq-font-mono);font-weight:700}
+
+/* ── Mobile breakpoint (Phase 1) ── */
+@media(max-width:768px){
+  .main-grid{grid-template-columns:1fr;min-height:auto}
+  .canvas-col{overflow-x:auto;min-height:auto}
+  .canvas-col .graph-view{min-width:760px}
+  .detail-col{max-height:none;padding:20px 18px 28px;border-top:1px solid var(--imq-border-soft)}
+  .top-chrome{padding:14px 16px 10px}
+  .top-title{font-size:22px}
+  .top-controls{gap:4px}
+  .filter-chip,.lolla-btn,.view-reset-btn{font-size:10px;padding:5px 9px}
+}
+
 /* ── SVG node states ── */
 .node{cursor:pointer;transition:opacity .2s}
 .node.dimmed{opacity:.28}
@@ -299,6 +330,7 @@ a:hover{color:var(--imq-accent-hover)}
 <button class="filter-chip" data-filter="eng" style="color:#B45309;border-color:#e5e7eb"><span>◆</span>工程/物理</button>
 <button class="filter-chip" data-filter="bio" style="color:#C0392B;border-color:#e5e7eb"><span>✚</span>生物學</button>
 
+    <button class="view-reset-btn" id="viewModeToggle" title="切換 圖表 / 列表 檢視">📋 列表</button>
     <button class="view-reset-btn" id="viewResetBtn" title="重置視圖（拖移背景平移、滾輪縮放、雙擊背景重置）">⟲ 重置視圖</button>
     <button class="lolla-btn" id="lollaToggle">⚡ LOLLAPALOOZA</button>
   </div>
@@ -307,7 +339,8 @@ a:hover{color:var(--imq-accent-hover)}
 <!-- Main 2-col grid -->
 <div class="main-grid">
   <!-- Left: SVG canvas -->
-  <div class="canvas-col">
+  <div class="canvas-col" id="canvasCol">
+    <div class="graph-view" id="graphView">
     <svg id="networkSvg" viewBox="0 0 1240 930" style="width:100%;height:auto;display:block;background:transparent">
       <defs>
         <pattern id="latticeGrid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -462,6 +495,10 @@ a:hover{color:var(--imq-accent-hover)}
       <div class="lolla-verdict" id="lollaVerdict">點選 2+ 個節點觀察共振強度。</div>
       <div class="lolla-picks" id="lollaPicks"></div>
     </div>
+    </div><!-- /.graph-view -->
+
+    <!-- List view (alternative to SVG, default-on for narrow viewports) -->
+    <div class="list-view" id="listView"><!-- rendered by JS --></div>
   </div>
 
   <!-- Right: detail panel -->
@@ -789,9 +826,81 @@ a:hover{color:var(--imq-accent-hover)}
   var resetBtn = document.getElementById('viewResetBtn');
   if (resetBtn) resetBtn.addEventListener('click', resetView);
 
+  // ── List view (alternative to SVG) ───────────────────────────────────────
+  var canvasCol = document.getElementById('canvasCol');
+  var listViewEl = document.getElementById('listView');
+  var viewModeBtn = document.getElementById('viewModeToggle');
+
+  function renderListView() {
+    var disciplineKeys = ['psych','micro','math','eng','bio'];
+    var html = '';
+    disciplineKeys.forEach(function(dKey){
+      var d = DISCIPLINES[dKey];
+      if (!d) return;
+      var modelsInD = MODELS.filter(function(m){return m.d === dKey;});
+      html += '<div class="list-group open" data-d="'+dKey+'">';
+      html +=   '<div class="list-group-header">';
+      html +=     '<span class="list-group-title" style="color:'+d.color+'"><span style="font-size:13px">'+d.glyph+'</span>'+escHtml(d.zh)+' <span style="color:#94a3b8;font-weight:500;text-transform:none;letter-spacing:0">· '+escHtml(d.en)+'</span></span>';
+      html +=     '<span class="list-group-meta">'+modelsInD.length+' 個 <span class="list-group-toggle">▸</span></span>';
+      html +=   '</div>';
+      html +=   '<div class="list-group-body">';
+      modelsInD.forEach(function(m){
+        var flagshipMark = m.flagship ? ' ⚡' : '';
+        var newMark = m.isNew ? ' <span style="font-family:var(--imq-font-mono);font-size:9px;color:#dc2626;letter-spacing:.1em">NEW</span>' : '';
+        html += '<button class="list-item" data-id="'+m.id+'" style="border-color:'+d.color+'40">';
+        html +=   '<span class="list-item-glyph" style="color:'+d.color+'">'+d.glyph+'</span>';
+        html +=   '<span>'+escHtml(m.zh)+flagshipMark+'</span>'+newMark;
+        html += '</button>';
+      });
+      html +=   '</div>';
+      html += '</div>';
+    });
+    listViewEl.innerHTML = html;
+
+    listViewEl.querySelectorAll('.list-group-header').forEach(function(h){
+      h.addEventListener('click', function(){ h.parentElement.classList.toggle('open'); });
+    });
+    listViewEl.querySelectorAll('.list-item').forEach(function(b){
+      b.addEventListener('click', function(){
+        var id = b.dataset.id;
+        listViewEl.querySelectorAll('.list-item.selected').forEach(function(x){x.classList.remove('selected');});
+        b.classList.add('selected');
+        renderPanel(id);
+        if (window.innerWidth <= 768) {
+          var panel = document.getElementById('detailPanel');
+          if (panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+      });
+    });
+  }
+
+  function setViewMode(mode) {
+    if (mode === 'list') {
+      canvasCol.classList.add('list-mode');
+      viewModeBtn.textContent = '🌐 圖表';
+      viewModeBtn.title = '切換回圖表檢視';
+    } else {
+      canvasCol.classList.remove('list-mode');
+      viewModeBtn.textContent = '📋 列表';
+      viewModeBtn.title = '切換 圖表 / 列表 檢視';
+    }
+    try { localStorage.setItem('mm-view', mode); } catch (e) {}
+  }
+  viewModeBtn.addEventListener('click', function(){
+    var current = canvasCol.classList.contains('list-mode') ? 'list' : 'graph';
+    setViewMode(current === 'list' ? 'graph' : 'list');
+  });
+
   // ── Init ──────────────────────────────────────────────────────────────────
+  renderListView();
   renderPanel(selectedId);
   selectNode(selectedId);
+
+  var storedView = null;
+  try { storedView = localStorage.getItem('mm-view'); } catch (e) {}
+  if (storedView === 'list' || (storedView == null && window.innerWidth <= 640)) {
+    setViewMode('list');
+  }
 })();
 </script>
 
