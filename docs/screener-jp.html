@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>US RS + VCP Screener | Property Monitor</title>
+<title>日股 RS + VCP Screener | InvestMQuest Research</title>
 <meta name="color-scheme" content="light">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -129,9 +129,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
           <a href="/backtest/">量化回測</a>
           <a href="/qgm/">QGM 美股</a>
           <a href="/qgm-tw/">QGM 台股</a>
-          <a href="/screener.html" class="active">Screener 美股</a>
+          <a href="/screener.html">Screener 美股</a>
           <a href="/screener-tw.html">Screener 台股</a>
-          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/screener-jp.html" class="active">Screener 日股</a>
         </div>
       </div>
       <a href="/mental-models/">🧠 心智模型</a>
@@ -143,8 +143,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 
 <section class="hero">
   <div class="hero-inner">
-    <h1 class="hero-h1"><span class="lang-en">US RS + VCP Screener</span><span class="lang-zh">美股 RS + VCP 選股器</span></h1>
-    <p class="hero-sub"><span class="lang-en">S&amp;P 500 + NASDAQ 100 &middot; ~510 stocks &middot; RS (60%) + VCP (40%) &middot; Tue-Sat 06:00 TW (after US close)</span><span class="lang-zh">S&amp;P 500 + NASDAQ 100 &middot; 約510支 &middot; RS (60%) + VCP (40%) &middot; 週二至週六 06:00 台灣時間（美股收盤後）</span></p>
+    <h1 class="hero-h1"><span class="lang-en">Japan RS + VCP Screener</span><span class="lang-zh">日股 RS + VCP 選股器</span></h1>
+    <p class="hero-sub"><span class="lang-en">TOPIX Core 30 + Nikkei 225 &middot; ~225 JP stocks &middot; RS (60%) + VCP (40%) &middot; Mon-Fri 17:00 JST (holiday = last trading day)</span><span class="lang-zh">TOPIX Core 30 + Nikkei 225 &middot; 約225支日股 &middot; RS (60%) + VCP (40%) &middot; 週一至五 17:00 JST（休市日用前一交易日資料）</span></p>
     <p class="hero-sub" id="updateDate" style="font-size:11px;color:#94a3b8;margin-top:4px"></p>
   </div>
 </section>
@@ -155,10 +155,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <div style="font-size:10px;letter-spacing:.16em;color:#3b82f6;font-weight:600;margin-bottom:12px"><span class="lang-en">TODAY'S TOP PICKS</span><span class="lang-zh">今日精選</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px" id="picksRow1"></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px" id="picksRow2"></div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:24px" id="picksRow3"></div>
+    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:24px" id="picksRow3"></div>
   </div>
 
-  <!-- Sector Filter -->
+  <!-- Tier filter (Core30 / N225) -->
   <div class="sector-bar" id="sectorBar"></div>
 
   <!-- Main Table -->
@@ -176,42 +176,44 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <div style="font-weight:600;color:#1e3a5f;margin-bottom:6px"><span class="lang-en">Column Definitions</span><span class="lang-zh">欄位說明</span></div>
     <span class="lang-en">
       <b>Score</b> — RS (60%) + VCP (40%) composite score<br>
-      <b>RS</b> — Relative Strength percentile vs S&amp;P 500 (1W/4W/13W weighted)<br>
+      <b>RS</b> — Relative Strength percentile within JP universe (1W/4W/13W weighted)<br>
       <b>Trend</b> — RS momentum: Accel (rising), Steady, Fading (declining), Choppy<br>
       <b>VCP</b> — Volatility Contraction Pattern score (tightening + support)<br>
       <b>vs200MA</b> — Current price vs 200-day moving average<br>
       <b>fm High</b> — Distance from 52-week high<br>
       <b>Pullback / #PB</b> — Last pullback depth &amp; number of contractions<br>
       <b>ATR%</b> — Average True Range ratio (lower = tighter)<br>
-      <b>Q ✓</b> — Quality check: EPS 2Y &gt;15% AND ROIC &gt;15% AND FCF% &gt;10%<br>
-      <b>Rev 2Y↗</b> — Forward 2-year revenue CAGR (analyst consensus estimates)<br>
-      <b>EPS 2Y↗</b> — Forward 2-year EPS CAGR (analyst consensus estimates)<br>
-      <b>ROIC</b> — Return on Invested Capital, TTM (NOPAT / Invested Capital)<br>
+      <b>Q ✓</b> — Quality check: EPS 1Y &gt;20% AND ROIC &gt;15%<br>
+      <b>Rev 1Y↑</b> — 1-year forward revenue growth (yfinance analyst consensus, +1y FY estimate)<br>
+      <b>EPS 1Y↑</b> — 1-year forward EPS growth (yfinance analyst consensus, +1y FY estimate)<br>
+      <b>ROIC</b> — Return on Invested Capital, TTM (NOPAT / Invested Capital, computed from yfinance income_stmt + balance_sheet). <i>Note: not directly comparable for banks/insurers.</i><br>
       <b>FCF%</b> — Free Cash Flow Margin, TTM (FCF / Revenue)<br>
-      <b>Chg</b> — Rank change vs previous day
+      <b>Chg</b> — Rank change vs previous day<br>
+      <b>Tier</b> — Core30 (TOPIX Core 30, mega cap) / N225 (Nikkei 225 outside Core30)
     </span>
     <span class="lang-zh">
       <b>總分</b> — RS (60%) + VCP (40%) 綜合評分<br>
-      <b>RS</b> — 相對強度百分位（對比 S&amp;P 500，1週/4週/13週加權）<br>
+      <b>RS</b> — 相對強度百分位（在 ~225 檔日股母體內排序，1週/4週/13週加權）<br>
       <b>趨勢</b> — RS 動能：加速（上升）、穩定、衰退（下降）、震盪<br>
       <b>VCP</b> — 波動收斂型態評分（收縮 + 支撐）<br>
       <b>vs200MA</b> — 現價 vs 200日均線<br>
       <b>距高點</b> — 距離52週高點<br>
       <b>回撤 / 收縮</b> — 最近一次回撤深度 &amp; 收縮次數<br>
       <b>ATR%</b> — 平均真實波幅比率（越低越緊）<br>
-      <b>Q ✓</b> — 品質篩選：EPS 2Y &gt;15% 且 ROIC &gt;15% 且 FCF% &gt;10%<br>
-      <b>營收2Y↗</b> — 未來兩年營收 CAGR（分析師共識預估）<br>
-      <b>EPS 2Y↗</b> — 未來兩年 EPS CAGR（分析師共識預估）<br>
-      <b>ROIC</b> — 投入資本回報率，TTM（稅後營業利潤 / 投入資本）<br>
+      <b>Q ✓</b> — 品質篩選：EPS 1Y &gt;20% 且 ROIC &gt;15%<br>
+      <b>營收1Y↑</b> — 未來一年營收成長率（yfinance 分析師 consensus，下個財年 estimate）<br>
+      <b>EPS 1Y↑</b> — 未來一年 EPS 成長率（yfinance 分析師 consensus，下個財年 estimate）<br>
+      <b>ROIC</b> — 投入資本回報率，TTM（稅後營業利潤 / 投入資本，從 yfinance income statement + balance sheet 計算）。<i>註：銀行 / 保險業 ROIC 不適用</i><br>
       <b>FCF%</b> — 自由現金流利潤率，TTM（自由現金流 / 營收）<br>
-      <b>變動</b> — 排名較前一日變動
+      <b>變動</b> — 排名較前一日變動<br>
+      <b>類別</b> — Core30（TOPIX Core 30 大型股）/ N225（Nikkei 225 餘下成份）
     </span>
   </div>
 </div>
 
 <footer>
   <div class="footer">
-    <div>PROPERTY MONITOR</div>
+    <div>INVESTMQUEST RESEARCH</div>
     <div><span class="lang-en">Data for reference only &middot; Not investment advice &middot; &copy; 2026 InvestMQuest</span><span class="lang-zh">資料僅供參考 &middot; 非投資建議 &middot; &copy; 2026 InvestMQuest</span></div>
   </div>
 </footer>
@@ -222,25 +224,26 @@ var currentLang=localStorage.getItem('lang')||'en';
 var sortKey='combined',sortAsc=false,filterSector='ALL',allData=[],pickData={},topSectorData={};
 
 var COLS=[
-  {key:'rank',en:'#',zh:'#',align:'left',w:'28px'},
-  {key:'ticker',en:'Ticker',zh:'代號',align:'left',w:'48px'},
-  {key:'sector',en:'Sector',zh:'類股',align:'left',w:'48px'},
-  {key:'combined',en:'Score',zh:'總分',align:'right',w:'40px'},
-  {key:'rs_score',en:'RS',zh:'RS',align:'right',w:'34px'},
-  {key:'rs_trend',en:'Trend',zh:'趨勢',align:'left',w:'36px'},
-  {key:'vcp_score',en:'VCP',zh:'VCP',align:'right',w:'34px'},
-  {key:'price',en:'Price',zh:'價格',align:'right',w:'48px'},
-  {key:'vs_200ma_pct',en:'vs200MA',zh:'vs200MA',align:'right',w:'48px'},
-  {key:'dist_from_high_pct',en:'fm High',zh:'距高點',align:'right',w:'42px'},
-  {key:'last_pullback_pct',en:'Pullback',zh:'回撤',align:'right',w:'42px'},
-  {key:'pullback_count',en:'#PB',zh:'收縮',align:'right',w:'28px'},
-  {key:'atr_ratio',en:'ATR%',zh:'ATR%',align:'right',w:'36px'},
+  {key:'rank',en:'#',zh:'#',align:'left',w:'26px'},
+  {key:'ticker',en:'Ticker',zh:'代號',align:'left',w:'52px'},
+  {key:'name',en:'Name',zh:'名稱',align:'left',w:'90px'},
+  {key:'etf',en:'Tier',zh:'類別',align:'left',w:'48px'},
+  {key:'combined',en:'Score',zh:'總分',align:'right',w:'38px'},
+  {key:'rs_score',en:'RS',zh:'RS',align:'right',w:'32px'},
+  {key:'rs_trend',en:'Trend',zh:'趨勢',align:'left',w:'52px'},
+  {key:'vcp_score',en:'VCP',zh:'VCP',align:'right',w:'32px'},
+  {key:'price',en:'Price',zh:'價格',align:'right',w:'52px'},
+  {key:'vs_200ma_pct',en:'vs200MA',zh:'vs200MA',align:'right',w:'46px'},
+  {key:'dist_from_high_pct',en:'fm High',zh:'距高點',align:'right',w:'40px'},
+  {key:'last_pullback_pct',en:'Pullback',zh:'回撤',align:'right',w:'40px'},
+  {key:'pullback_count',en:'#PB',zh:'收縮',align:'right',w:'26px'},
+  {key:'atr_ratio',en:'ATR%',zh:'ATR%',align:'right',w:'34px'},
   {key:'quality',en:'Q',zh:'Q',align:'center',w:'22px'},
-  {key:'rev_cagr',en:'Rev 2Y↗',zh:'營收2Y↗',align:'right',w:'46px'},
-  {key:'eps_cagr',en:'EPS 2Y↗',zh:'EPS 2Y↗',align:'right',w:'46px'},
+  {key:'rev_cagr',en:'Rev 1Y↑',zh:'營收1Y↑',align:'right',w:'46px'},
+  {key:'eps_cagr',en:'EPS 1Y↑',zh:'EPS 1Y↑',align:'right',w:'46px'},
   {key:'roic',en:'ROIC',zh:'ROIC',align:'right',w:'40px'},
   {key:'fcf_margin',en:'FCF%',zh:'FCF%',align:'right',w:'40px'},
-  {key:'rank_change',en:'Chg',zh:'變動',align:'right',w:'34px'}
+  {key:'rank_change',en:'Chg',zh:'變動',align:'right',w:'32px'}
 ];
 
 var TREND_MAP={
@@ -248,6 +251,11 @@ var TREND_MAP={
   steady:{en:'Steady ▲',zh:'穩定▲',cls:'badge-blue'},
   fading:{en:'Fading ▼',zh:'衰退▼',cls:'badge-red'},
   choppy:{en:'Choppy —',zh:'震盪—',cls:'badge-orange'}
+};
+
+var TIER_MAP={
+  Core30:{cls:'badge-blue'},
+  N225:{cls:'badge-orange'}
 };
 
 function renderHeader(){
@@ -261,10 +269,10 @@ function renderHeader(){
 }
 
 function renderTable(){
-  var filtered=filterSector==='ALL'?allData:allData.filter(function(r){return r.sector===filterSector;});
+  var filtered=filterSector==='ALL'?allData:allData.filter(function(r){return r.etf===filterSector;});
   var sorted=filtered.slice().sort(function(a,b){
     var va=a[sortKey],vb=b[sortKey];
-    if(sortKey==='ticker'||sortKey==='sector'||sortKey==='rs_trend'||sortKey==='rank_change'){va=String(va);vb=String(vb);}
+    if(sortKey==='ticker'||sortKey==='etf'||sortKey==='rs_trend'||sortKey==='rank_change'){va=String(va);vb=String(vb);}
     if(va<vb)return sortAsc?-1:1;if(va>vb)return sortAsc?1:-1;return 0;
   });
   var h='';
@@ -274,19 +282,20 @@ function renderTable(){
       var v='',s='padding:5px 5px;';
       switch(c.key){
         case 'rank': v=r.rank; s+='color:#94a3b8;font-size:10px;'; break;
-        case 'ticker': v='<strong>'+r.ticker+'</strong>'; break;
-        case 'sector': v='<span style="font-size:9px;color:#5a7a9a">'+r.sector+'</span>'; break;
+        case 'ticker': v='<strong>'+r.ticker.replace('.T','')+'</strong>'; break;
+        case 'name': v='<span style="font-size:9px;color:#475569">'+r.name+'</span>'; break;
+        case 'etf': var tm=TIER_MAP[r.etf]||{cls:'badge-orange'}; v='<span class="badge '+tm.cls+'">'+r.etf+'</span>'; break;
         case 'combined': v=r.combined.toFixed(1); s+='font-weight:700;color:'+(r.combined>=70?C.green:r.combined>=50?C.navy:C.red)+';'; break;
         case 'rs_score': v=r.rs_score.toFixed(0); s+='color:'+(r.rs_score>=80?C.green:r.rs_score>=60?C.navy:C.red)+';'; break;
         case 'rs_trend': var t=TREND_MAP[r.rs_trend]||TREND_MAP.choppy; v='<span class="badge '+t.cls+'">'+(currentLang==='zh'?t.zh:t.en)+'</span>'; break;
         case 'vcp_score': v=r.vcp_score; s+='color:'+(r.vcp_score>=70?C.green:r.vcp_score>=40?C.navy:C.red)+';'; break;
-        case 'price': v='$'+r.price.toFixed(0); break;
+        case 'price': v='¥'+r.price.toLocaleString('en-US',{maximumFractionDigits:0}); break;
         case 'vs_200ma_pct': v=(r.vs_200ma_pct>=0?'+':'')+r.vs_200ma_pct.toFixed(0)+'%'; s+='color:'+(r.vs_200ma_pct>0?C.green:C.red)+';'; break;
         case 'dist_from_high_pct': v='-'+r.dist_from_high_pct.toFixed(0)+'%'; s+='color:'+(r.dist_from_high_pct<5?C.green:r.dist_from_high_pct<10?C.orange:C.red)+';'; break;
         case 'last_pullback_pct': v=r.last_pullback_pct?r.last_pullback_pct.toFixed(0)+'%':'—'; break;
         case 'pullback_count': v=r.pullback_count||'—'; break;
         case 'atr_ratio': v=r.atr_ratio?r.atr_ratio.toFixed(2):'—'; s+='color:'+(r.atr_ratio<0.5?C.green:r.atr_ratio<0.7?C.navy:C.muted)+';'; break;
-        case 'quality': v=(r.eps_cagr!=null&&r.roic!=null&&r.fcf_margin!=null&&r.eps_cagr>0.15&&r.roic>0.15&&r.fcf_margin>0.10)?'<span style="color:#16a34a;font-size:13px">✓</span>':''; break;
+        case 'quality': v=(r.eps_cagr!=null&&r.roic!=null&&r.eps_cagr>0.20&&r.roic>0.15)?'<span style="color:#16a34a;font-size:13px">✓</span>':''; break;
         case 'rev_cagr': v=r.rev_cagr!=null?(r.rev_cagr>0?'+':'')+(r.rev_cagr*100).toFixed(0)+'%':'—'; s+='font-size:10px;color:'+(r.rev_cagr>0.15?C.green:r.rev_cagr>0?C.navy:r.rev_cagr!=null?C.red:C.muted)+';'; break;
         case 'eps_cagr': v=r.eps_cagr!=null?(r.eps_cagr>0?'+':'')+(r.eps_cagr*100).toFixed(0)+'%':'—'; s+='font-size:10px;color:'+(r.eps_cagr>0.15?C.green:r.eps_cagr>0?C.navy:r.eps_cagr!=null?C.red:C.muted)+';'; break;
         case 'roic': v=r.roic!=null?(r.roic*100).toFixed(0)+'%':'—'; s+='font-size:10px;color:'+(r.roic>0.15?C.green:r.roic>0?C.navy:r.roic!=null?C.red:C.muted)+';'; break;
@@ -326,19 +335,19 @@ function renderPicks(){
     var t=TREND_MAP[r.rs_trend]||TREND_MAP.choppy;
     var h='<div class="pick-card '+l.cls+'">';
     h+='<div class="pick-label" style="color:'+l.color+'">'+(currentLang==='zh'?l.zh:l.en)+'</div>';
-    h+='<div class="pick-ticker">'+r.ticker+'</div>';
-    h+='<div class="pick-meta">'+r.sector+' &middot; $'+r.price.toFixed(0)+' &middot; RS '+r.rs_score.toFixed(0)+' &middot; VCP '+r.vcp_score+' &middot; Score '+r.combined.toFixed(1)+'</div>';
+    h+='<div class="pick-ticker">'+r.ticker.replace('.T','')+'</div>';
+    h+='<div class="pick-meta">'+r.name+' &middot; '+r.etf+' &middot; ¥'+r.price.toLocaleString('en-US',{maximumFractionDigits:0})+' &middot; RS '+r.rs_score.toFixed(0)+' &middot; VCP '+r.vcp_score+'</div>';
     h+='<div class="pick-meta"><span class="badge '+t.cls+'">'+(currentLang==='zh'?t.zh:t.en)+'</span>';
     h+=' &middot; '+(currentLang==='zh'?'距高點':'fm High')+' -'+r.dist_from_high_pct.toFixed(1)+'%';
     h+=' &middot; vs200MA '+(r.vs_200ma_pct>=0?'+':'')+r.vs_200ma_pct.toFixed(1)+'%</div>';
     return h+'</div>';
   }
 
-  // Top sector card
+  // Top tier card
   var ts=topSectorData||{};
   var sectorCard='<div class="pick-card" style="border-top-color:#1e3a5f">';
-  sectorCard+='<div class="pick-label" style="color:#1e3a5f">'+(currentLang==='zh'?'Top Sector':'Top Sector')+'</div>';
-  sectorCard+='<div class="pick-ticker" style="font-size:18px">'+(ts.sector||'—')+'</div>';
+  sectorCard+='<div class="pick-label" style="color:#1e3a5f">'+(currentLang==='zh'?'最強類別':'Top Tier')+'</div>';
+  sectorCard+='<div class="pick-ticker" style="font-size:18px">'+(ts.etf||'—')+'</div>';
   sectorCard+='<div class="pick-meta">'+(currentLang==='zh'?'平均RS：':'Avg RS: ')+(ts.avg_rs||0)+' &middot; '+(ts.count||0)+(currentLang==='zh'?' 支':' stocks')+'</div>';
   sectorCard+='</div>';
 
@@ -346,8 +355,8 @@ function renderPicks(){
   var r1=cardHtml('minervini_1')+cardHtml('minervini_2')+cardHtml('minervini_3');
   // Row 2: VCP #1, #2, #3
   var r2=cardHtml('vcp_1')+cardHtml('vcp_2')+cardHtml('vcp_3');
-  // Row 3: Momentum + Top Sector
-  var r3=cardHtml('momentum')+sectorCard;
+  // Row 3: Momentum
+  var r3=cardHtml('momentum');
 
   document.getElementById('picksRow1').innerHTML=r1;
   document.getElementById('picksRow2').innerHTML=r2;
@@ -356,9 +365,9 @@ function renderPicks(){
 }
 
 function renderSectorBar(){
-  var sectors={};
-  allData.forEach(function(r){sectors[r.sector]=(sectors[r.sector]||0)+1;});
-  var sorted=Object.entries(sectors).sort(function(a,b){return b[1]-a[1];});
+  var tiers={};
+  allData.forEach(function(r){tiers[r.etf]=(tiers[r.etf]||0)+1;});
+  var sorted=Object.entries(tiers).sort(function(a,b){return b[1]-a[1];});
   var h='<div class="sector-chip'+(filterSector==='ALL'?' active':'')+'" onclick="setSector(\'ALL\')">ALL ('+allData.length+')</div>';
   sorted.forEach(function(s){
     h+='<div class="sector-chip'+(filterSector===s[0]?' active':'')+'" onclick="setSector(\''+s[0]+'\')">'+s[0]+' ('+s[1]+')</div>';
@@ -367,7 +376,7 @@ function renderSectorBar(){
 }
 
 function setSector(s){filterSector=s;renderSectorBar();renderTable();}
-function doSort(k){if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=(k==='ticker'||k==='sector');}renderHeader();renderTable();}
+function doSort(k){if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=(k==='ticker'||k==='etf');}renderHeader();renderTable();}
 
 function setLang(lang){
   currentLang=lang;localStorage.setItem('lang',lang);
@@ -379,14 +388,13 @@ function setLang(lang){
 
 // Load data
 Promise.all([
-  fetch('screener/latest.json').then(function(r){return r.json();}),
-  fetch('screener/fundamentals.json').then(function(r){return r.json();}).catch(function(){return {data:{}};})
+  fetch('screener/jp_latest.json').then(function(r){return r.json();}),
+  fetch('screener/jp_fundamentals.json').then(function(r){return r.json();}).catch(function(){return {data:{}};})
 ]).then(function(arr){
   var d=arr[0], fund=arr[1].data||{};
   allData=d.rankings||[];
   pickData=d.top_picks||{};
-  topSectorData=d.top_sector||{};
-  // Merge fundamentals into each row
+  topSectorData=d.top_etf||{};
   allData.forEach(function(r){
     var f=fund[r.ticker];
     r.rev_cagr=f?f.rev_cagr:null;
@@ -398,7 +406,7 @@ Promise.all([
   document.getElementById('updateDate').textContent=(currentLang==='zh'?'最後更新：':'Last updated: ')+d.date;
   renderHeader();renderTable();renderPicks();renderSectorBar();
 }).catch(function(e){
-  document.getElementById('loading').innerHTML='<span style="color:#dc2626">'+(currentLang==='zh'?'無法載入數據。請先執行 python scripts/screener.py':'Failed to load data. Run python scripts/screener.py first')+'</span>';
+  document.getElementById('loading').innerHTML='<span style="color:#dc2626">'+(currentLang==='zh'?'無法載入數據。請先執行 python scripts/screener_jp.py':'Failed to load data. Run python scripts/screener_jp.py first')+'</span>';
 });
 
 setLang(currentLang);
