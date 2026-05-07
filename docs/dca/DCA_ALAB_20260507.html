@@ -1,484 +1,491 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>ALAB Deep Conviction Analysis | 2026-05-07</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dca-schema-version" content="v1.0">
+<title>DCA｜ALAB Astera Labs｜2026-05-07</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 0; line-height: 1.7; }
-  .num, code, .mono { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
-  header.top { position: sticky; top: 0; z-index: 100; background: #1E3A5F; color: #FFF; padding: 12px 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 6px rgba(0,0,0,0.15); font-size: 13px; }
-  header.top .ticker { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 16px; letter-spacing: 1px; }
-  header.top .meta { color: #BFDBFE; font-size: 12px; }
-  main { max-width: 1080px; margin: 0 auto; padding: 32px 28px 96px; }
-  h1, h2, h3, h4 { color: #1E3A5F; font-weight: 700; margin-top: 0; }
-  h2.sec { background: #FFF; border-left: 4px solid #3B82F6; padding: 14px 20px; margin: 36px 0 18px; font-size: 19px; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  h2.sec.warn { border-left-color: #F97316; }
-  h2.sec.danger { border-left-color: #DC2626; }
-  h3.sub { font-size: 16px; color: #334155; margin: 22px 0 10px; }
-  table { width: 100%; border-collapse: collapse; background: #FFF; margin: 12px 0; font-size: 14px; }
-  thead th { background: #1E3A5F; color: #FFF; padding: 10px 12px; text-align: left; font-weight: 500; font-size: 13px; }
-  tbody td { padding: 10px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
-  tbody tr:nth-child(even) { background: #F1F5F9; }
-  .thesis { background: #EFF6FF; border-left: 4px solid #1E40AF; padding: 36px 32px; margin: 18px 0 30px; border-radius: 3px; text-align: center; }
-  .thesis .quote { font-size: 26px; font-weight: 700; color: #1E3A5F; line-height: 1.5; margin: 0; }
-  .thesis .label { font-size: 12px; color: #64748B; margin-top: 14px; letter-spacing: 1px; }
-  .decision { background: #FEF9C3; border-left: 4px solid #CA8A04; padding: 22px 26px; margin: 18px 0; border-radius: 3px; }
-  .decision h3 { color: #713F12; margin: 0 0 14px; font-size: 17px; }
-  .decision .verdict { font-size: 22px; font-weight: 700; color: #92400E; }
-  .conflict-block { background: #FFF7ED; border-left: 4px solid #F97316; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
-  .ruling-table { background: #FED7AA; padding: 14px; border-radius: 3px; margin-top: 10px; }
-  .ruling-table table { background: transparent; }
-  .ruling-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.4); }
-  details.phase { background: #FFF; border: 1px solid #E2E8F0; padding: 0; margin: 10px 0; border-radius: 3px; overflow: hidden; }
-  details.phase summary { background: #F8FAFC; padding: 14px 20px; cursor: pointer; font-weight: 600; color: #1E3A5F; border-left: 4px solid #94A3B8; list-style: none; }
-  details.phase summary::-webkit-details-marker { display: none; }
-  details.phase summary::before { content: "▸ "; color: #94A3B8; margin-right: 6px; font-weight: 400; }
-  details.phase[open] summary::before { content: "▾ "; }
-  details.phase summary .conclusion { display: block; margin-top: 4px; font-weight: 400; color: #475569; font-size: 13px; }
-  details.phase .body { padding: 18px 22px; }
-  .memo { background: #FAFAF9; border: 1px solid #D6D3D1; padding: 24px 28px; margin: 14px 0; font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; line-height: 1.75; color: #1C1917; border-radius: 2px; }
-  .memo h4 { font-family: 'Noto Sans TC', sans-serif; margin: 0 0 12px; color: #1E3A5F; font-size: 14px; letter-spacing: 1px; }
-  .elevator { font-style: italic; color: #475569; border-left: 3px solid #94A3B8; padding: 10px 18px; margin: 12px 0; background: #FFF; }
-  .premortem-block { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
-  .premortem-block .narrative { font-style: italic; color: #7F1D1D; border-left: 3px solid #B91C1C; padding: 8px 14px; background: rgba(255,255,255,0.6); margin: 10px 0; }
-  .pattern-block { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-  .badge.ok { background: #DCFCE7; color: #166534; }
-  .badge.warn { background: #FEF9C3; color: #92400E; }
-  .badge.bad { background: #FEE2E2; color: #991B1B; }
-  .red-dot { color: #DC2626; font-weight: 700; }
-  .yellow-dot { color: #CA8A04; font-weight: 700; }
-  .print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #FFF; border: none; padding: 12px 22px; border-radius: 24px; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.18); font-family: 'Noto Sans TC', sans-serif; }
-  .print-btn:hover { background: #1E40AF; }
-  @media print {
-    header.top, .print-btn { display: none; }
-    details.phase { break-inside: avoid; }
-    details.phase[open] .body, details.phase .body { display: block !important; }
-    details.phase:not([open]) .body { display: block !important; }
-  }
+body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 0; line-height: 1.75; }
+.num, .mono { font-family: 'IBM Plex Mono', monospace; }
+.container { max-width: 1180px; margin: 0 auto; padding: 32px 40px; }
+.header { position: sticky; top: 0; background: #1E3A5F; color: white; padding: 14px 40px; display: flex; justify-content: space-between; z-index: 100; font-size: 14px; }
+.header b { font-weight: 500; }
+.card { background: white; padding: 28px 32px; margin: 22px 0; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+h1 { color: #1E3A5F; font-size: 28px; margin: 0 0 8px; }
+h2 { background: #1E3A5F; color: white; padding: 12px 18px; margin: 30px 0 16px; border-left: 4px solid #3B82F6; font-size: 20px; }
+h3 { color: #1E3A5F; border-bottom: 2px solid #E2E8F0; padding-bottom: 8px; margin-top: 24px; font-size: 17px; }
+h4 { color: #334155; margin-top: 20px; font-size: 15px; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+th { background: #1E3A5F; color: white; padding: 10px 12px; text-align: left; font-weight: 500; }
+td { padding: 9px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+tr:nth-child(even) td { background: #F1F5F9; }
+.thesis-box { background: #EFF6FF; padding: 36px 32px; margin: 22px 0; border-radius: 2px; text-align: center; border-left: 4px solid #3B82F6; }
+.thesis-box .thesis-text { font-size: 26px; line-height: 1.5; color: #1E3A5F; font-weight: 500; }
+.thesis-box .thesis-note { font-size: 13px; color: #64748B; font-style: italic; margin-top: 12px; }
+.decision-box { background: #FEF9C3; border-left: 4px solid #CA8A04; padding: 22px 28px; margin: 18px 0; border-radius: 2px; }
+.decision-box h3 { color: #854D0E; border: 0; }
+.contradiction-box { background: #FFF7ED; border-left: 4px solid #F97316; padding: 22px 28px; margin: 18px 0; border-radius: 2px; }
+.contradiction-box h3 { color: #9A3412; border: 0; }
+.verdict-table { background: #FED7AA; }
+.verdict-table th { background: #9A3412; }
+.premortem-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 22px 28px; margin: 18px 0; border-radius: 2px; }
+.premortem-box h3 { color: #991B1B; border: 0; }
+.pattern-box { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 22px 28px; margin: 18px 0; border-radius: 2px; }
+.pattern-box h3 { color: #075985; border: 0; }
+.consensus-box { background: #F5F3FF; border-left: 4px solid #7C3AED; padding: 18px 24px; margin: 14px 0; border-radius: 2px; }
+.memo-box { background: #FAFAF9; border: 1px solid #D6D3D1; padding: 28px 32px; margin: 18px 0; font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; line-height: 1.85; }
+.elevator-quote { border-left: 4px solid #94A3B8; padding: 14px 22px; margin: 18px 0; font-style: italic; color: #475569; background: #F8FAFC; }
+.tag { padding: 2px 9px; border-radius: 3px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.green { background: #DCFCE7; color: #166534; }
+.red { background: #FEE2E2; color: #991B1B; }
+.yellow { background: #FEF9C3; color: #92400E; }
+.blue { background: #EFF6FF; color: #1E3A8A; }
+.orange { background: #FFEDD5; color: #9A3412; }
+.note { color: #64748B; font-size: 13px; font-style: italic; margin: 6px 0; }
+.print-btn { position: fixed; bottom: 30px; right: 30px; background: #1E3A5F; color: white; padding: 10px 18px; border: none; border-radius: 3px; cursor: pointer; font-family: inherit; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+details { background: #F8FAFC; padding: 16px 22px; margin: 12px 0; border: 1px solid #E2E8F0; border-radius: 2px; }
+details summary { cursor: pointer; font-weight: 500; color: #1E3A5F; padding: 4px 0; }
+details[open] summary { margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 8px; }
+ul { padding-left: 20px; }
+li { margin: 4px 0; }
+@media print { .header, .print-btn { display: none; } body { background: white; } .card { box-shadow: none; page-break-inside: avoid; } details { background: white; } details > * { display: block !important; } }
 </style>
 </head>
 <body>
-<header class="top">
-  <span class="ticker">ALAB · NASDAQ</span>
-  <span class="meta">Deep Conviction Analysis | 2026-05-07 | Astera Labs, Inc.</span>
-</header>
 
-<main>
-
-<!-- §2 Thesis -->
-<div class="thesis">
-  <p class="quote">Astera Labs 是 PCIe retimer 86% 市占龍頭，<br>Scorpio Smart Fabric 成為 UALink ＋ NVLink Fusion<br>核心開放標準連接器，AI infra 制定者</p>
-  <p class="label">§2 ONE-SENTENCE THESIS · 49 字</p>
+<div class="header">
+<span><b>ALAB</b> Astera Labs</span>
+<span>DCA 2026-05-07 ｜ 股價 <b class="num">$215.69</b> ｜ 市值 <b class="num">~$36B</b> ｜ AI rack-scale connectivity 三層 stacking 必經之地</span>
+<span>DCA Schema <b>v1.0</b></span>
 </div>
 
-<!-- §7 Decision -->
-<h2 class="sec warn">§7｜Decision（執行計畫）</h2>
-<div class="decision">
-  <h3>裁決：<span class="verdict">高 conviction satellite，等回測再進</span></h3>
-  <p>Q1 FY26 +93% YoY beat + Q2 +93% guide raise + Scorpio X 320-lane shipping + UALink 2.0 規範主導 — thesis 完整。但 4 週漂移 <span class="num">+44.7%</span>（DD QC-22 觸發），現價 $206 短期 R:R <span class="num">-0.30x</span> 中期 <span class="num">0.51x</span> 雙 &lt; 1.0；forward PE <span class="num">85x</span> 是樣本中最貴。</p>
+<div class="container">
+
+<div class="card">
+<h1>ALAB Astera Labs｜深度定見分析（DCA）</h1>
+<p class="note">v1.0 投資決策層報告。基於 DD_ALAB_20260506 + ID_AINetworking_20260419 + 獨立 web search 7 次。</p>
+
+<h3>Executive Summary（30 秒讀完）</h3>
+<table>
+<tr><th>項目</th><th>結論</th></tr>
+<tr><td>Thesis（一句話）</td><td>ALAB 是 AI rack-scale connectivity 唯一三層 stacking（PCIe retimer + Scorpio fabric switch + COSMOS 軟體）的 reference 平台，hyperscaler 從 1U server 擴到 rack-scale 必經 toll booth</td></tr>
+<tr><td>裁決</td><td><span class="tag yellow">🟡 觀察池 / 試倉</span>（0%→1% 試倉 if 回到 MA60 $175 區間）</td></tr>
+<tr><td>進場價位</td><td>$170-185（試倉 1%，回測 MA60 + RSI &lt; 60）｜$130-150（核心建倉，回測 MA200 ~$135）</td></tr>
+<tr><td>5Y 機率加權期望值</td><td><strong>+5.8%</strong>（IRR ~1.1%）— 期望值正但邊際 alpha 不足；3Y 期更具吸引力（Q1 +93% × Q2 guide +93% = 結構爆發中）</td></tr>
+<tr><td>致命風險（§5）</td><td>(1) Marvell Structera S 60260 / Broadcom PCIe Gen 6 portfolio 從 hyperscaler 端切走 ALAB ≥ 30% Gen6 retimer 設計位；(2) hyperscaler 自研 retimer ASIC（pre-mortem 派生）</td></tr>
+<tr><td>持有年限</td><td>3-5 年（AI fabric 標準化期，Scorpio X 量產到 PCIe 7 過渡）</td></tr>
+<tr><td>邊際資金 vs 同類</td><td>優先級：AVGO &gt; MRVL &gt; ALAB &gt; CRDO（ALAB 第 3，品質佳但動能透支）</td></tr>
+</table>
 </div>
 
-<h3 class="sub">7a｜倉位與進場計畫</h3>
-<table>
-  <thead><tr><th style="width:30%">項目</th><th>具體內容</th></tr></thead>
-  <tbody>
-    <tr><td>投資組合角色</td><td><strong>衛星持倉</strong>（PCIe retimer + Smart Fabric 雙 niche，但估值極貴 + 客戶集中需 cap）</td></tr>
-    <tr><td>初始建倉倉位</td><td><span class="num">1.0%</span> of portfolio（首批，需條件）</td></tr>
-    <tr><td>目標倉位</td><td><span class="num">4.0%</span> of portfolio（衛星上限，比 CRDO 3% 略高，因 thesis 完整度更佳 + UALink 路線圖明確）</td></tr>
-    <tr><td>進場價位區間</td><td><span class="num">$160 ~ $180</span>（DD 4 週前均價 $149 區，中期 R:R 從 0.51x 提升至 2.0+；對應 FY27 EPS $4.20 × 38-43x = $160-180）</td></tr>
-    <tr><td>進場節奏</td><td>條件式分批：① 跌至 <span class="num">$185</span> RSI &lt; 55 → 建首批 0.5%；② 跌至 <span class="num">$165</span>（DD 4w 均價區）→ 加至 2.0%；③ Q2 FY26 8 月初財報維持 +90%+ 成長且 Scorpio X ramp 進度確認 → 加至 3.0%；④ 2027 H1 UALink 與 AWS Trainium 4 / AMD MI500 intersect 確認 → 加至 4.0%。<br>⛔ <strong>禁止現價 $206 任何規模建倉</strong>（DD 已警示「等待估值或時機修復」，short R:R -0.30x 表示 FY+1 目標已低於現價）</td></tr>
-    <tr><td><strong>vs 同類曝險（opportunity cost）</strong></td><td><strong>vs CRDO（同樣 connector niche satellite）：兩者市場區隔清晰 — ALAB 是 PCIe retimer + Smart Fabric（86% 市占），CRDO 是 AEC（88% 市占）。可同時持有不衝突。<br>邊際資金邏輯：① ALAB thesis 完整度 &gt; CRDO（無 QC-23 失點報告 + UALink 路線圖明確 + Scorpio fabric 第二曲線已 shipping）；② ALAB 期望報酬 +88% 5Y &gt; CRDO +20% 5Y；③ 但 ALAB 估值更貴（forward PE 85x vs CRDO 41x）— 估值倍數 mean reversion 風險更大。<br>建議：connector 主題總曝險 ALAB 4% + CRDO 3% = 7%（兩者市場互補可雙持）；MRVL 4% 可加入但需評估與 ALAB/CRDO 的 PCIe 業務重疊（MRVL PCIe 8.0 SerDes Demo 是直接挑戰）。<br>vs MRVL：MRVL 有 PCIe 8.0 SerDes 直接挑戰 ALAB，但 ALAB Scorpio fabric 是 system-level switch（不只 SerDes IP），市場區隔較好；可平行配置。</strong></td></tr>
-  </tbody>
-</table>
-
-<h3 class="sub">7b｜加碼與減碼條件</h3>
-<table>
-  <thead><tr><th style="width:14%">行動</th><th>觸發條件</th><th style="width:14%">調整至倉位</th></tr></thead>
-  <tbody>
-    <tr><td>加碼</td><td>跌至 $185 RSI &lt; 55</td><td>0% → 0.5%</td></tr>
-    <tr><td>加碼</td><td>跌至 $165（DD 4w 均價）</td><td>0.5% → 2.0%</td></tr>
-    <tr><td>加碼</td><td>跌至 $130（DD Bear 區，極端機會）</td><td>→ 3.0%</td></tr>
-    <tr><td>加碼</td><td>Q2 FY26 8 月財報維 +90%+ 成長 + Scorpio X ramp 確認</td><td>→ 3.5%</td></tr>
-    <tr><td>加碼</td><td>2027 UALink × Trainium 4 / MI500 intersect 確認</td><td>→ 4.0%</td></tr>
-    <tr><td>減碼</td><td>漲破 $260 RSI &gt; 80（forward PE &gt; 110x）</td><td>→ 1.5%</td></tr>
-    <tr><td>減碼</td><td>Scorpio X ramp 延後（mgmt 揭露）</td><td>→ 1.5%</td></tr>
-    <tr><td>清倉</td><td>UALink 2027 商用化失敗 + AWS Trainium 4 / AMD MI500 採用 CRDO/MRVL（§5 single thing 觸發）</td><td>→ 0%</td></tr>
-  </tbody>
-</table>
-
-<h3 class="sub">7c｜Pure MA 相容性 + 動能過熱檢查</h3>
-<table>
-  <thead><tr><th>檢查項目</th><th style="width:14%">狀態</th><th>說明</th></tr></thead>
-  <tbody>
-    <tr><td>股價 $206 在 MA60 / MA200 之上？</td><td><span class="badge ok">✅</span></td><td>4 週 +44.7% 大漲後遠高於 MA</td></tr>
-    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="badge ok">✅</span></td><td>MA 強多頭</td></tr>
-    <tr><td><strong>4 週漂移檢查</strong></td><td><span class="badge bad">⚠ +44.7%</span></td><td>DD 4w 前 $149 → 5/6 $216 = +44.7%（DD 寫稿時）；本 DCA 5/7 觀察 stock 已從 ATH $262.90 回落至 $206 = -22% 修正中</td></tr>
-    <tr><td><strong>Bollinger 帶位置</strong></td><td><span class="badge warn">⚠ 接近上軌</span></td><td>DD 寫稿時上軌之下僅 $5（接近 +2σ）</td></tr>
-    <tr><td><strong>RSI 14d 動能</strong></td><td><span class="badge warn">66</span></td><td>中性偏熱（5/5 +8.76% 大漲後）— 已從 ATH $262 開始 mean reverting</td></tr>
-    <tr><td><strong>52 週位置</strong></td><td><span class="badge warn">距 ATH -22%</span></td><td>W52 高 $262.90 / 低 $63.40；現價 $206 在區間 70% 位置</td></tr>
-    <tr><td><strong>Q1 FY26 業績驗證</strong></td><td><span class="badge ok">✅ +93% YoY beat</span></td><td>Revenue $308.4M / EPS $0.61 全 beat；Q2 guide $355-365M (+93%) raise</td></tr>
-    <tr><td><strong>進場節奏結論</strong></td><td><span class="badge bad">條件式</span></td><td>MA + 業績 ✅ 但估值極貴 (forward PE 85x) + R:R 短中期 &lt; 1.0 → §7a 強制等回測 $165-185；現價 $206 在 mean reversion 早期但仍偏貴</td></tr>
-  </tbody>
-</table>
-
-<h3 class="sub">7d｜建議持有年限 + EPS 預測</h3>
-<table>
-  <thead><tr><th style="width:18%">持有年限</th><th>條件</th></tr></thead>
-  <tbody>
-    <tr><td>短期（&lt; 2 年）</td><td><strong>不適合</strong> — 短期 R:R -0.30x，DD FY+1 合理目標 $171 已低於現價 $206</td></tr>
-    <tr><td>中期（2–5 年）</td><td><strong>條件式適合</strong> — Scorpio fabric ramp + UALink 2027 commercialization 是 sweet spot；FY28 EPS $5.5-6.5 × 35-40x = $193-260（現價附近至 +25%）</td></tr>
-    <tr><td>長期（5–10 年）</td><td><strong>適合</strong> — DD FY+5 EPS $9.65 × 30x = $290（+34% from $216）；長期 PCIe / UALink / 連接器標準制定者地位若維持，可達 +88% 5Y</td></tr>
-  </tbody>
-</table>
-
-<h4 style="margin-top:18px">EPS 預測參考表</h4>
-<table>
-  <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
-  <tbody>
-    <tr><td>FY26（CY26）</td><td>$2.85</td><td>DD 假設（Q1 已實現 + Q2 guide）</td><td>+91% YoY</td></tr>
-    <tr><td>FY27（CY27）</td><td>$4.20</td><td>DD 假設</td><td>+47% YoY，UALink 早期 ramp + Scorpio X 全年量產</td></tr>
-    <tr><td>FY28（CY28）</td><td>$6.0–7.0</td><td>外推</td><td>+45% YoY，UALink 與 AWS Trainium 4 / AMD MI500 intersect</td></tr>
-    <tr><td>FY30E（CY30）</td><td>$10–12</td><td>外推（DD FY+5 $9.65）</td><td>外推假設：FY28 後 CAGR 25%；UALink + NVLink Fusion 兩標準並存</td></tr>
-  </tbody>
-</table>
-<p><strong>長期持有適合性：</strong>現價 $206 對 FY30E EPS $11 中位數 = 19x — 看似合理，但這假設 ALAB 維持 retimer 80%+ 市占 + Scorpio fabric 變成 UALink 標準。Bear 情境（CRDO + MRVL 切入 + 市占降至 50%）EPS 至 $5，19x × $5 = $95, -54%。<strong>R:R 對護城河演變敏感，故衛星倉位 4% 上限</strong>。</p>
-
-<!-- §4 Asymmetry -->
-<h2 class="sec">§4｜Asymmetry Analysis（5 年視角）</h2>
-<table>
-  <thead><tr><th>情境</th><th>5 年漲跌</th><th>依據</th><th>機率</th></tr></thead>
-  <tbody>
-    <tr><td><strong>Bull</strong>：UALink 2027 ramp 完美 + Scorpio X dominant + AWS/AMD 都採</td><td><span class="num">+200% to +260%</span><br>($206 → $620-740)</td><td>FY30E EPS $14 × 50x（platform premium）</td><td>25%</td></tr>
-    <tr><td><strong>Base</strong>：mgmt guide 達標但 PE 從 85x mean reversion 至 35x</td><td><span class="num">+30% to +90%</span><br>($206 → $270-390)</td><td>FY30E EPS $10 × 30-38x</td><td>50%</td></tr>
-    <tr><td><strong>Bear</strong>：Scorpio 落後 + CRDO/MRVL 切入 PCIe retimer + UALink 商用延後</td><td><span class="num">−40% to −55%</span><br>($206 → $90-125)</td><td>FY30E EPS $5 × 18-25x</td><td>25%</td></tr>
-    <tr><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>約 +88% 5 年（IRR ≈ 13.5%/年）</strong></td><td>—</td></tr>
-  </tbody>
-</table>
-<p><strong>追加壓力測試：</strong>vs CRDO (+20% 5Y)，ALAB 期望報酬高 4 倍。原因：① UALink 路線圖更明確（2027 與 AWS Trainium 4 / AMD MI500 intersect 已預告）；② Scorpio fabric 是 NEW product line（第二曲線比 CRDO DustPhotonics 更早 ramp）；③ ALAB 客戶分散度更高（PCIe retimer 86% 市占 in 整個 hyperscaler GPU 生態 vs CRDO 88% in 4 hyperscaler AEC）。<strong>從 $165-180 進場期望報酬從 +88% 提升至 +135-160%，這是條件式進場的 alpha</strong>。</p>
-
-<div class="pattern-block">
-  <h3 class="sub" style="color:#075985;margin-top:0">📐 Pattern Match — 為機率錨點</h3>
-  <table>
-    <tbody>
-      <tr><td style="width:30%"><strong>歷史相似 setup</strong></td><td>2022-2024 SMCI（Super Micro Computer）AI server boom 早期 + 2017-2020 NVDA gaming GPU 主導期 mixed</td></tr>
-      <tr><td><strong>當時 setup（NVDA 2017）</strong></td><td>fwd PE 30-40x、gaming GPU 70%+ 市占、新業務 (DC) 30% growing；股價 5Y +800% (含 ChatGPT)</td></tr>
-      <tr><td><strong>5 年實現報酬</strong></td><td>NVDA 2017-2022 ~+500%（GPU 市占維持 + DC 業務爆發）</td></tr>
-      <tr><td><strong>ALAB 與 NVDA 2017 最像</strong></td><td>① 同為 connector niche dominant（86% retimer vs NVDA 70% GPU）；② 新業務（Scorpio fabric vs NVDA DC）開始 ramp；③ Open standard 制定者（UALink 2.0 vs CUDA 早期）</td></tr>
-      <tr><td><strong>ALAB 與 NVDA 2017 最不像</strong></td><td>① 估值起點更貴（forward PE 85x vs NVDA 35x）— 倍數擴張空間遠小；② NVDA CUDA 是 closed proprietary，ALAB UALink 是 open standard（差異化弱）；③ NVDA 規模更大（gaming + DC + auto），ALAB 純 connector niche；④ NVDA 客戶分散（消費者 + 雲端），ALAB 集中於 hyperscaler</td></tr>
-    </tbody>
-  </table>
-  <p style="font-size:12.5px;color:#475569;margin-top:8px"><strong>結論：</strong>ALAB 不是 NVDA 翻版，但有相似的「市占主導 + 新業務 ramp + 標準制定」特徵。預期 5Y 報酬 +88% 反映「相似結構但估值起點更貴」attenuated 版本（vs NVDA +500%）。如果回測至 $165 進場，期望報酬可達 +135-160%，更接近 NVDA 2017-2022 的軌跡。</p>
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+<div class="thesis-text">「ALAB 是 AI rack-scale connectivity 唯一三層 stacking（PCIe retimer + Scorpio fabric switch + COSMOS 軟體）的 reference 平台，hyperscaler 從 1U server 擴到 rack-scale 必經 toll booth。」</div>
+<div class="thesis-note">50 字以內。Thesis 主體是「三層 stacking 平台 × AI 結構需求」的敘事，非財務指標。</div>
 </div>
 
-<!-- §1 Mental Models -->
-<h2 class="sec">§1｜Mental Models 壓力測試</h2>
-
-<div class="memo">
-  <h4>📄 投委會 1 頁紙 Memo</h4>
-<pre style="margin:0;white-space:pre-wrap;font-family:inherit">
-TO: Investment Committee
-FROM: PM
-RE: ALAB — Astera Labs, Inc.
-DATE: 2026-05-07
-
-THESIS:
-Astera Labs 是 PCIe retimer 86% 市占龍頭，Scorpio Smart Fabric 是 UALink +
-NVLink Fusion 核心開放標準連接器，AI infra 連接器標準制定者。
-
-KEY DRIVERS:
-1) PCIe retimer 86% 市占 + PCIe Gen 6 ramp（已超 1/3 收入）
-2) Scorpio Smart Fabric Switch + UALink 2.0 標準制定（2027 與 AWS
-   Trainium 4 / AMD MI500 intersect）
-
-R:R (5Y):
-- Bull (25%): +200~260% (FY30E EPS $14 × 50x — platform premium)
-- Base (50%): +30~+90% (FY30E EPS $10 × 30-38x，PE mean reversion)
-- Bear (25%): -40~-55% (Scorpio 落後 + CRDO/MRVL 切入)
-- 加權期望值: ~+88% 5 年 (IRR 13.5%/年) — 衛星標的中第二高（meta 系列）
-
-KEY DATA:
-- Q1 FY26: $308.4M (+93% YoY beat)，Q2 guide $355-365M (+93% raise)
-- GAAP GM 76.3%，non-GAAP op margin 36.2%，EPS $0.61
-- PCIe Gen 6 已超 1/3 收入；Scorpio X 320-lane 開始 shipping
-- UALink switch 將於 AWS Trainium 4 + AMD MI500 平台 ramp 2027 intersect
-
-KEY RISKS:
-- 估值極貴（forward PE 85x，是 6 檔 satellite 樣本中最貴）
-- DD 短期 R:R -0.30x（FY+1 目標 $171 已低於現價 $206）
-- DD 4w 漂移 +44.7%（QC-22 觸發）
-- CRDO + MRVL 在 PCIe SerDes IP 領域競爭加劇
-
-RECOMMENDATION:
-條件式分批：① $185 RSI < 55 → 0.5%；② $165 (DD 4w 均價) → 2.0%；③ Q2
-財報 8 月維 +90%+ → 3.0%；④ 2027 UALink × Trainium 4 / MI500 intersect →
-4.0%。目標 4% 衛星上限。現價 $206 任何進場都是追高。
-
-REVIEW TRIGGER:
-Q2 FY26 8 月初、Scorpio X ramp 進度、2027 UALink commercialization 訊號、
-CRDO + MRVL 在 PCIe retimer 設計 win
-</pre>
+<h2>§7 Decision｜可執行計畫</h2>
+<div class="decision-box">
+<h3>裁決：🟡 觀察池 → 試倉（不滿格進場）</h3>
+<p><strong>核心理由：</strong>Q1 26 Revenue $308.4M（+93% YoY）+ Q2 guide $355-365M（+93% YoY）= 結構性爆發確認，三層 stacking moat 深化（Scorpio X 320-lane 5.12 TB/s 5/5 launch，COSMOS 軟體 lock-in），但 Forward PE 80-82x + RSI 69 + 4 週漂移 +44.7%（DD 警示）= 動能末段。當前位置不該滿格，留 timing 餘地。</p>
 </div>
 
-<div class="elevator">
-  <strong>30 秒電梯簡報：</strong>「Astera Labs 是 PCIe retimer 86% 市占龍頭，新 Scorpio fabric 是 UALink + NVLink Fusion 核心連接器。Q1 +93% YoY，Q2 guide +93% raise。但 forward PE 85x 是 satellite 中最貴，DD 短期 R:R -0.30x，4w 漲了 45% — 等回測 $165-180 才有 +135% upside，現價追高就是賠錢。」
-</div>
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>衛星持倉候選（核心 only if 估值對 + Scorpio X 量產 confirm）— A 級護城河 + 3-5 年 AI fabric ramp 跑道</td></tr>
+<tr><td>初始建倉倉位</td><td>0%（當前不進場）｜進場條件 (a) 達成後 1.0% 試倉</td></tr>
+<tr><td>目標倉位</td><td>2-3%（衛星上限）— 條件：Scorpio X 多客戶 production wins confirm + Fwd PE 回到 50x 以下</td></tr>
+<tr><td>進場價位區間</td><td>第一批 $170-$185（MA60 ~$175 + RSI &lt; 60）｜第二批 $130-$150（MA200 ~$135 + Bollinger 中軌或下軌）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong> — 必達兩條件之一：(a) RSI 14d 回落 ≤ 50 + 回測 MA60 ($175) 守穩；(b) 股價達 $175 以下且 Q2 法說（~2026-08-05）revenue 達標 / GM 不下修。<strong>禁止當前位置 RSI 69 + PE 82x 一次建倉。</strong></td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>同類點名比較：</strong><br>① <strong>AVGO</strong>（custom AI ASIC + Tomahawk switch + 5 大 hyperscaler 客戶事實壟斷，FY26 AI 加速器 +140% YoY）— 護城河更寬廣、估值 PE ~30x 比 ALAB 便宜；5Y IRR 估 ~10-13%。<br>② <strong>MRVL</strong>（custom ASIC + 1.6T 光學雙引擎 + AWS pure-play，PE ~35x）— 多元 silicon photonics 比 ALAB 更廣度，5Y IRR 估 ~8-11%。<br>③ <strong>CRDO</strong>（AEC 88% 市占的純 niche，PE ~50x）— 直接同類但護城河窄、被 SNPS+MRVL 兩面夾擊；5Y IRR 估 ~3-6%。<br><strong>結論：</strong>邊際資金優先放 AVGO（多 driver、估值 ok），次 MRVL；ALAB 排第 3，僅在現有組合無 AVGO/MRVL 時為 unique 配置；CRDO 排第 4 暫不建議。</td></tr>
+</table>
 
-<!-- Phase B 矛盾 -->
-<h2 class="sec danger">Phase B｜矛盾辨識 + 強制裁決</h2>
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>第一批進場</td><td>股價 ≤ $185 + RSI 14d ≤ 60 + Q2 法說（~2026-08-05）revenue 達 $355M +</td><td>1.0%</td></tr>
+<tr><td>加碼至衛星</td><td>Scorpio X production wins ≥ 3 個 hyperscaler 公開 + Fwd PE ≤ 50x</td><td>2.0%</td></tr>
+<tr><td>加碼滿格</td><td>FY27 EPS 共識上修至 $5+ + Fwd PE ≤ 40x</td><td>3.0%</td></tr>
+<tr><td>減碼</td><td>Fwd PE 衝破 100x（5Y 分位 90%+）— 動能末段強制縮減</td><td>1.0%</td></tr>
+<tr><td>清倉</td><td>Marvell Structera S 60260 / Broadcom PCIe Gen 6 portfolio 從 hyperscaler 端切走 ≥ 30% ALAB Gen6 retimer 設計位（年度 design wins 出現結構性逆轉）</td><td>0%</td></tr>
+</table>
 
-<h3 class="sub">1. 共識清單</h3>
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="tag green">✅</span></td><td>$215.69 vs MA50 $175.04（+23.2% premium）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="tag green">✅</span></td><td>$215.69 vs MA200 $134.88（+59.9%）</td></tr>
+<tr><td>股價在 MA104w（W104）之上？</td><td><span class="tag green">✅</span></td><td>W104 $113.55（+90%）</td></tr>
+<tr><td>Pure MA 是否支持進場？</td><td><span class="tag green">✅</span></td><td>三層全多頭排列（W250 不適用，IPO 2024-03 僅 112 週）</td></tr>
+<tr><td><strong>短期動能過熱</strong></td><td><span class="tag red">⚠ 過熱</span></td><td>RSI 14d 69.124（接近 70 警戒）；DD 紀錄 4 週漂移 +44.7%（QC-22 觸發）；MA50 距現價 +23%、MA200 距現價 +60% — 結構超漲</td></tr>
+</table>
+<p><strong>結論：</strong>Pure MA 通過 + RSI 69 + 4 週漂移 +44.7% = 典型「結構多頭 + 短期過熱」的 entry timing 警戒。<strong>§7a 進場節奏強制改條件式</strong>，禁止當前位置任何規模建倉。Mean reversion 歷史頻率：RSI &gt; 70 + 4 週漂移 &gt; +30% 的個股，1 個月內回測 10-15% 的機率歷史上 ~65%。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>不建議 — 當前 PE 82x 短期 R:R 為負，等回測 MA60 才看得到 entry alpha</td></tr>
+<tr><td>中期（2-5 年）</td><td><strong>主場景</strong> — Scorpio X 量產 + PCIe Gen6 / UALink / NVLink Fusion 並存期 + Aries 6 ramp，3-5 年 AI fabric 標準化爆發</td></tr>
+<tr><td>長期（5-10 年）</td><td>條件性可行 — 護城河持續加深（COSMOS + ICP 整合）但 PCIe 7 / 後續標準替代風險上升；長期應視為 cyclic-secular hybrid</td></tr>
+</table>
+<p><strong>建議持有年限：3-5 年</strong>（一旦進場），原因：Aries 6 + Scorpio X 是最完整的 ramp 期，AI rack-scale 標準化期內 ALAB 三層 stacking 是 reference；超過 5 年後 PCIe 7 + UALink 1.0 / NVLink Fusion 2.0 等下一代標準將重新洗牌，ALAB 必須持續投資 R&amp;D 才能守住 — 不是「買著睡」的 quality compounder。</p>
+
+<h4>EPS 路徑壓力測試（FY26 → FY30）</h4>
+<table>
+<tr><th>年份</th><th>Bear EPS</th><th>Base EPS</th><th>Bull EPS</th><th>關鍵假設</th></tr>
+<tr><td>FY26</td><td>$2.50</td><td>$2.85</td><td>$3.20</td><td>共識 $2.85；Bull = Q3/Q4 法說連續 raise；Bear = warrant non-cash 拖累 + GM 73% 下修</td></tr>
+<tr><td>FY27</td><td>$3.20</td><td>$4.50</td><td>$5.50</td><td>Scorpio X ramp 全年化（base）；Bull 假設 Scorpio X 拿下 NVDA + AMD + Microsoft 三家</td></tr>
+<tr><td>FY28</td><td>$3.50</td><td>$5.50</td><td>$7.50</td><td>外推：Base CAGR FY27→FY30 = 10-15%；Bull 22-25%（NVDA-like compounder）；Bear 5-8%（PCIe Gen6 滲透成熟）</td></tr>
+<tr><td>FY29</td><td>$3.20</td><td>$5.50</td><td>$8.50</td><td>外推同上 — Bear 已含 Marvell/Broadcom 切位 effect</td></tr>
+<tr><td>FY30</td><td>$3.00</td><td>$5.45</td><td>$9.00</td><td>對應 Asymmetry 表中三情境</td></tr>
+<tr><td>FY26 → FY30 CAGR</td><td>+4.6%</td><td>+17.6%</td><td>+29.5%</td><td>Bear 對應護城河被切；Base 對應穩定 AI fabric ramp；Bull 對應 NVDA-like 結構性壟斷</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>不適合（全價）但可試倉。FY30E EPS Bull $9 × PE 50x = $450 = +109%（5Y IRR ~16%），但這要求 (a) Scorpio X 拿下 ≥ 3 hyperscaler；(b) Marvell/Broadcom 不切走 retimer 主流市場；(c) PCIe 7 過渡 ALAB 領先。三條件同時成立機率僅 ~30%。Base case +5% 報酬不足以彌補機會成本，<strong>等回測 MA60 後試倉，等 MA200 才核心建倉</strong>是更穩健路徑。</p>
+
+<h2>§4 Asymmetry Analysis</h2>
+<div class="card">
+<table>
+<tr><th>情境</th><th>5Y 倍數</th><th>依據</th><th>機率</th></tr>
+<tr><td>Thesis 對：FY30 EPS $9 × PE 50x = $450</td><td><strong>+109%</strong></td><td>Scorpio X 拿下 ≥ 3 hyperscaler production wins + Aries 6 持續壟斷 + COSMOS 軟體 lock-in 結構深化；NVDA-like compounder pattern</td><td>30%</td></tr>
+<tr><td>Base：FY30 EPS $5.45 × PE 35x = $191</td><td><strong>−11%</strong></td><td>AI fabric ramp 兌現至 2028，後段競爭加劇（Marvell/Broadcom 切走 30% Gen6 retimer）；穩定但非壟斷</td><td>40%</td></tr>
+<tr><td>Thesis 錯：FY30 EPS $3 × PE 18x = $54</td><td><strong>−75%</strong></td><td>(a) Marvell Structera S / Broadcom PCIe Gen6 portfolio 切走 ALAB ≥ 30% retimer 設計位；(b) hyperscaler 自研 retimer ASIC（AWS Trainium2 內建 retimer pattern）；(c) Scorpio X 量產延後</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+5.8%（5Y）</strong></td><td colspan="2">≈ 1.1% IRR — 不足以動部位，但 timing 對 entry 後 3Y bullish 兌現可接受</td></tr>
+</table>
+<p><strong>追加壓力測試：</strong></p>
 <ul>
-  <li>ALAB 在 PCIe retimer 是真實龍頭（86% 市占）— Q1 +93% YoY beat 業績驗證（A1 + A2 + A3 一致）</li>
-  <li>Scorpio fabric switch 是 next-gen catalyst — 已 shipping，2027 UALink × AWS/AMD intersect 確認（A2 + A3 一致）</li>
-  <li>估值絕對貴（forward PE 85x，trailing 176x）— 已 priced in super bull</li>
+<li><strong>3Y 期更具吸引力：</strong>Q1 26 +93% × Q2 guide +93% 是當下結構性爆發中，3Y 期 Bull case +74%（FY28 EPS $7.5 × PE 50x = $375，從 $215 計），3Y EV +0.5% — 仍弱但比 5Y 更接近進場 R:R。</li>
+<li><strong>機會成本：</strong>同 5Y 期，AVGO（custom ASIC + Tomahawk switch + 5 大客戶壟斷）IRR ~10-13%、MRVL IRR ~8-11%；ALAB 1.1% 期望值最差於兩者。</li>
+<li><strong>不對稱性檢查：</strong>Bull/Bear 倍數比 = 109% / 75% = 1.45x — 遠低於進場理想的 3.0x 不對稱性門檻。當前不該滿格，待 entry timing 改善（MA60 進場後 Bull/Bear 比可拉至 ~2.5x）。</li>
 </ul>
 
-<h3 class="sub">2. 矛盾清單</h3>
-<div class="conflict-block">
+<h4>三情境推導細節</h4>
 <table>
-  <thead><tr><th style="width:5%">#</th><th>矛盾點描述</th><th style="width:14%">A1 結論</th><th style="width:14%">A2 結論</th><th style="width:14%">A3 結論</th><th style="width:13%">性質</th></tr></thead>
-  <tbody>
-    <tr>
-      <td><span class="red-dot">🔴 1</span></td>
-      <td><strong>PCIe retimer 86% 市占 vs CRDO + MRVL 切入</strong>：A1 認為 ALAB 主導 PCIe retimer；A2 顯示 CRDO 早期切入 + MRVL PCIe 8.0 SerDes Demo 直接挑戰；A3 顯示 ALAB Q1 業績仍強</td>
-      <td>86% retimer + 系統級設計</td>
-      <td>CRDO + MRVL 競爭中</td>
-      <td>業績 +93% 但 GM 從 76% 後續可能壓縮</td>
-      <td><strong>不可調和</strong>（短期主導 vs 長期競爭）</td>
-    </tr>
-    <tr>
-      <td><span class="red-dot">🔴 2</span></td>
-      <td><strong>Scorpio fabric 已 shipping vs 量產 ramp 至 2027</strong>：A3 顯示 Scorpio X 320-lane 已 shipping；A2 顯示 multiple customer 廣泛 ramp 在 2027 — 即 FY26 主要 contribution 仍從 retimer 主</td>
-      <td>—</td>
-      <td>2027 broader ramp</td>
-      <td>FY26 第二曲線 contribution 有限</td>
-      <td>可調和（時序差異）</td>
-    </tr>
-    <tr>
-      <td><span class="yellow-dot">🟡 3</span></td>
-      <td><strong>UALink 2.0 規範主導 vs UALink 商用 2027+</strong>：A2 顯示 ALAB 與 UALink Consortium 共同制定規範；ID_AINetworking 非共識：UALink 商用 2027+ 非 2026</td>
-      <td>—</td>
-      <td>標準制定 = 早期玩家優勢</td>
-      <td>FY26 vs FY27 收入貢獻時序</td>
-      <td>可調和（早期生態系建立期）</td>
-    </tr>
-  </tbody>
+<tr><th>情境</th><th>EPS 推導</th><th>PE 推導</th><th>機率依據</th></tr>
+<tr><td>Bull 30%</td><td>FY26 $2.85 → FY30 $9.00 = 5Y CAGR 33%（Q1+Q2 +93% YoY 結構爆發 + Scorpio X 多客戶 ramp + COSMOS 軟體 lock-in 加深）</td><td>50x = 接近 NVDA 2024 巔峰估值 + AI fabric reference 平台溢價</td><td>30% — Bull 需要：(a) Scorpio X 拿下 NVDA/AMD/Microsoft 三家；(b) Marvell/Broadcom 不切走主流；(c) PCIe 7 過渡 ALAB 領先</td></tr>
+<tr><td>Base 40%</td><td>FY26 $2.85 → FY30 $5.45 = 5Y CAGR 17.6%（Q1 26 +93% 後逐年降速到 +12-15% 成熟期）</td><td>35x = 接近當前 ALAB IPO 後中位數 + 合理 AI infra niche player</td><td>40% — Base 需要：(a) PCIe Gen6 / UALink / NVLink Fusion 並存 5 年；(b) ALAB 守住 retimer 主流</td></tr>
+<tr><td>Bear 30%</td><td>FY26 $2.85 → FY30 $3.00 = 5Y CAGR 1.3%（Marvell/Broadcom 切走 30% Gen6 + Scorpio X 量產延後 + hyperscaler 自研 ASIC）</td><td>18x = AI fabric niche 玩家 cyclical 估值底部</td><td>30% — Bear 需要任一：(a) Structera S / Gen 6 portfolio 切走；(b) hyperscaler 自研；(c) Scorpio X 延後</td></tr>
+</table>
+
+<p><strong>機率加總校驗：</strong>30% + 40% + 30% = 100%（無遺漏）。期望值計算：0.30 × 109% + 0.40 × (-11%) + 0.30 × (-75%) = 32.7 - 4.4 - 22.5 = +5.8%。</p>
+
+<div class="pattern-box">
+<h3>📐 Pattern Match｜歷史相似 setup</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史相似 setup</td><td><strong>2017-2019 NVDA AI 訓練早期 + 2018 AVGO Tomahawk switch ramp</strong></td></tr>
+<tr><td>當時 setup</td><td>NVDA 2017/01 Fwd PE 30x → 2017/12 50x（與 ALAB 當前 82x 同等級）；AVGO 2018 PE 15x → 2021 22x；都是「AI infra 結構性需求 + 寡占地位」邏輯</td></tr>
+<tr><td>最終 5Y 實現報酬</td><td>NVDA 2017/01 → 2022/01 = +400%（PE 從 30x → 60x rerating + EPS 4x）；AVGO 2018 → 2023 = +180%（PE rerating + Symbol Technologies 整合）</td></tr>
+<tr><td>另一參照：2023 CRDO IPO 後</td><td>CRDO 2023/01 IPO PE 80x → 2024 PE 100x → 2025 PE 50x rerating（壓縮 50%），最終 5Y 報酬僅 +60% — niche 玩家估值 mean reversion 風險</td></tr>
+<tr><td>我的標的最像 / 最不像之處</td><td><strong>最像：</strong>NVDA 2017 AI 早期 toll booth pattern（從一個產品擴到平台）、AVGO Tomahawk 寡占地位。<strong>最不像：</strong>NVDA 當時 PE 30x 起跑，ALAB PE 82x 起跑 — 起點高出 2.7x，rerating 空間遠小於 NVDA 當年；ALAB niche 較窄（連接器 vs NVDA GPU 平台），更接近 CRDO mean reversion 模式</td></tr>
+</table>
+<p><strong>Pattern 結論：</strong>結構性爆發確定（Q1 +93% × Q2 guide +93% = 不假，pattern match NVDA 2017），但 PE 起點 82x 已透支 rerating 空間 — 更可能走 CRDO 模式（PE 從 80x 壓回 40-50x）而非 NVDA 模式（PE 從 30x 升至 60x）。<strong>等 PE 自然壓縮回 50x 以下，再對應 EPS 上修，是更穩健的 entry。</strong></p>
+</div>
+</div>
+
+<h2>§1 Mental Models 壓力測試</h2>
+<div class="card">
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<strong>致：投委會</strong><br>
+<strong>主旨：ALAB — 觀察池 / 試倉（不滿格進場）</strong><br><br>
+
+<strong>Thesis：</strong>ALAB 是 AI rack-scale connectivity 唯一三層 stacking（PCIe retimer + Scorpio fabric switch + COSMOS 軟體）的 reference 平台 — Aries 6 是 PCIe Gen 6 唯一量產 retimer、Scorpio X 5/5/2026 launch 320-lane 5.12 TB/s 開放 fabric、COSMOS 軟體把硬體鎖到客戶網路管理層。Q1 26 Rev $308.4M（+93% YoY）+ Q2 guide $355-365M（+93% YoY）= 結構性爆發 confirmed。<br><br>
+
+<strong>Key Driver：</strong>(1) AI fabric 標準化（PCIe Gen6 + UALink + NVLink Fusion 並存）— 結構需求驅動 5 年 ramp；(2) COSMOS 軟體 lock-in — 護城河結構深化（hyperscaler 換 retimer 要重訓 AI cluster monitoring stack）。<br><br>
+
+<strong>Asymmetry：</strong>5Y 機率加權期望值 +5.8%（IRR 1.1%）— 期望值正但 Bull/Bear = 1.45x 不對稱性不足；3Y 期 EV +0.5% 接近進場 R:R 但 timing 仍須等 entry。<br><br>
+
+<strong>主要風險：</strong>(1) Marvell Structera S 60260（首款 PCIe 6.0 260-lane switch）+ Broadcom 2026/02 PCIe Gen 6 portfolio = 兩大廠夾擊；(2) hyperscaler 自研 retimer ASIC（AWS pattern，pre-mortem 派生）；(3) Forward PE 80-82x = 工業中位數 34.71 的 +137%，估值透支。<br><br>
+
+<strong>建議：</strong>觀察池 0%；當 (a) 股價 ≤ $185 + RSI ≤ 60 + Q2 法說 revenue 達 $355M + 達成時，試倉 1.0%；當 (b) Scorpio X production wins ≥ 3 + Fwd PE ≤ 50x 時，加碼至衛星 2-3%。<strong>機會成本：</strong>邊際資金優先放 AVGO（custom ASIC + 5 大客戶壟斷 + PE 30x），次 MRVL（多元 + AWS 結構性），ALAB 排第 3。<br><br>
+
+<strong>單點 Game-changer：</strong>Marvell Structera S 或 Broadcom PCIe Gen 6 portfolio 從 hyperscaler 端切走 ALAB ≥ 30% Gen6 retimer 設計位 — 一旦發生立即清倉。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-quote">「ALAB 是 AI 機架的『神經系統』— 從 retimer 到 fabric switch 到 COSMOS 軟體三層全包，hyperscaler 蓋 AI cluster 沒它不行。Q1 +93% Q2 guide +93%，公司本身在爆發，但股價 PE 82x 已把兩年成長吃光，RSI 69 過熱。我等回 $175 試倉，現在會優先買 AVGO 或 MRVL。」</div>
+
+<p><strong>壓力測試結果：</strong>兩個版本都寫得出來且邏輯一致 — 公司本質強、價格錯。<strong>進入 §7</strong>。</p>
+</div>
+
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+<div class="contradiction-box">
+
+<h3>共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li>AI rack-scale connectivity 結構爆發確認（A1 護城河 + A2 產業 + A3 業務）— Q1 +93% × Q2 guide +93% 驗證 thesis</li>
+<li>三層 stacking moat（A1）+ COSMOS 軟體 lock-in（A1）+ PCIe Gen6 唯一量產 retimer（A1）— 短期 12-18 個月競爭優勢確認</li>
+<li>Forward PE 80-82x（工業中位數 34.71 的 +137%）— A4 估值面三方一致警告過熱</li>
+</ul>
+
+<h3>不可調和矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>性質</th></tr>
+<tr><td>M1</td><td>「ALAB 是 PCIe Gen 6 retimer 唯一量產供應商」（A1）vs 「Marvell Structera S 60260 + Broadcom 2026/02 PCIe Gen 6 portfolio」（A1 內 + 公開市場數據）</td><td>不可調和（時間差 + 程度差）</td></tr>
+<tr><td>M2</td><td>「AI fabric 標準化是 5 年結構需求」（A2）vs 「PCIe 7 / UALink 1.0 / NVLink Fusion 2.0 等下一代標準持續進化」（A2 / 技術面）</td><td>不可調和（標準持續演進 vs 5 年穩定）</td></tr>
+<tr><td>M3</td><td>「Q1 +93% × Q2 guide +93% = 結構爆發」（A3）vs 「Forward PE 82x 已 priced 兩年成長」（A4）</td><td>不可調和（基本面 vs 估值的 timing 錯位）</td></tr>
+</table>
+
+<h3>⚖ 強制裁決（每個矛盾必填）</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據（具體）</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥2 條 if-then，方向相反）</th></tr>
+<tr>
+<td>M1</td>
+<td>ALAB Gen6 retimer 唯一量產 vs Marvell/Broadcom 切位</td>
+<td>混合裁決 — ALAB 在 12-18 個月內保有先發優勢，但 2027-2028 Marvell Structera S / Broadcom 將切走 20-30% 設計位</td>
+<td>① FY26 ALAB Gen6 retimer 設計 wins 數量（半年度公開）；② Marvell Structera S 60260 出貨時程（2026 H2 vs delay）；③ Broadcom PCIe Gen 6 portfolio 公開客戶（hyperscaler 名單）</td>
+<td>(a) FY27 ALAB Gen6 retimer 仍 ≥ 70% market share + Scorpio X production wins ≥ 3 → moat 強化路徑成立 → 進場條件可放寬至 PE ≤ 60x；(b) FY27 ALAB Gen6 retimer 跌破 50% market share + Scorpio X 量產延後 → moat 結構性切走 → 等 PE ≤ 25x（Bear 估值）才考慮，否則迴避</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>AI fabric 5 年結構需求 vs 標準持續演進</td>
+<td>選兩者並存 — 5 年內 PCIe Gen6 / UALink / NVLink Fusion 並存，但 PCIe 7 過渡（2028-2029）會重新洗牌</td>
+<td>① PCIe Gen 7 spec finalize 日期（PCI-SIG 預期 2026-2027）；② UALink Consortium 量產 spec 1.0（預期 2027）；③ NVLink Fusion 對開放標準的支援態度（NVDA 法說）</td>
+<td>(a) ALAB 領先 PCIe 7 製程節點 + Scorpio X 升級至 PCIe 7 → 5-10 年連續 toll booth 確認 → 持有期可拉長至 7-10 年；(b) ALAB 在 PCIe 7 落後 + Marvell/Broadcom 領先 → 持有期縮為 3-5 年（PCIe Gen6 ramp 期內）</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Q1/Q2 結構爆發 vs PE 82x 已透支</td>
+<td>選 A4（估值方）— 結構爆發已 priced，剩餘 alpha 來自 Q3/Q4 法說超預期上修</td>
+<td>① FY26 EPS 共識路徑（當前 $2.85，月度上修速度）；② Q3 法說 revenue 是否 ≥ $400M（Q2 guide $355-365M 隱含）；③ 4 週漂移從 +44.7% 回落速度</td>
+<td>(a) FY26 EPS 共識上修至 $3.20+ + 股價漲幅低於 EPS 上修速度 → PE 自然壓縮至 60x → 進場條件達成；(b) FY26 EPS 共識維持 $2.85 + 股價持續推升至 $250+ → PE 突破 90x → 動能末段，等回測 MA60</td>
+</tr>
+</table>
+
+<h3>與既有報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>ALAB 訊號燈</td><td>應為 🟡 觀察池（試倉）— 估值透支但 thesis 完整</td><td>DD_ALAB_20260506 final_signal: B 觀望偏進場</td><td>一致 — DD 與 DCA 都認為 thesis 完整但 timing 不對</td></tr>
+<tr><td>2</td><td>Scorpio X production timing</td><td>2026 H2 ramp，2027 多家 production，2028 全年放量</td><td>DD §0.5 H1：Scorpio X Q1 26 開始量產</td><td>視角差 — DD 看 announcement 時點，DCA 加入「first ramp vs full production」差異</td></tr>
+</table>
+
+<h3>AI 連接器同類比較（決策矩陣）</h3>
+<table>
+<tr><th>Ticker</th><th>護城河</th><th>Forward PE</th><th>5Y EV (估)</th><th>5Y IRR</th><th>主要 thesis</th><th>主要風險</th><th>邊際資金優先級</th></tr>
+<tr><td><strong>AVGO</strong></td><td>S+ 級（custom ASIC + Tomahawk switch + 5 大客戶事實壟斷）</td><td>~30x</td><td>+65-80%</td><td>10-13%</td><td>FY26 AI 加速器 +140% YoY + Tomahawk 5 數據中心 switch + Symbol Technologies VMware 整合</td><td>NVDA 自研 NVLink Fusion 與 InfiniBand 競爭、5 大客戶集中度</td><td><strong>1（最優）</strong></td></tr>
+<tr><td><strong>MRVL</strong></td><td>A+ 級（custom ASIC + 1.6T 光學 + AWS pure-play）</td><td>~35x</td><td>+50-65%</td><td>8-11%</td><td>AWS Trainium custom ASIC + Inphi 1.6T DSP + Structera S 60260 PCIe 6.0 switch</td><td>客戶集中度（AWS ~40%）、custom ASIC 切換成本</td><td>2</td></tr>
+<tr><td><strong>ALAB</strong></td><td>A 級（三層 stacking + COSMOS）</td><td>~82x</td><td>+5.8%</td><td>1.1%</td><td>PCIe Gen6 retimer 唯一量產 + Scorpio X 320-lane + COSMOS 軟體 lock-in</td><td>Marvell/Broadcom 切位、niche 玩家估值 mean reversion 風險</td><td><strong>3（不缺品質缺價格）</strong></td></tr>
+<tr><td><strong>CRDO</strong></td><td>B+ 級（AEC 88% 市占的純 niche）</td><td>~50x</td><td>+15-30%</td><td>3-6%</td><td>AEC 市占 88% + hyperscaler 1.6T 連接器需求</td><td>SNPS + MRVL 兩面夾擊、護城河窄</td><td>4</td></tr>
+</table>
+
+<p><strong>邊際資金結論：</strong>AI 連接器同類中，邊際資金應依序放 AVGO → MRVL → ALAB → CRDO。ALAB 不是品質差，而是 PE 82x 起跑線太高 — 等 PE 自然壓縮至 50x，ALAB 順位會升至第 1-2。</p>
+</div>
+
+<h2>§3 Key Drivers + Consensus 分歧</h2>
+<div class="card">
+
+<h3>這支股票的命脈是什麼？</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>AI fabric 標準化</strong>（需求側持續性）— PCIe Gen6 / UALink / NVLink Fusion 並存期 5 年是結構需求，hyperscaler 從 1U server 擴到 rack-scale 必經</td><td>沒有這個，ALAB 就只是 niche retimer 玩家，PE 只該 25-30x；有這個，ALAB 才有資格 PE 50x+</td><td>① 季度 hyperscaler capex YoY（Big 4：MSFT/META/GOOGL/AMZN）；② Big 4 對 PCIe Gen6 / UALink / NVLink Fusion 的公開採用度；③ NVDA Spectrum-X / Marvell Structera S 出貨數據</td></tr>
+<tr><td>2</td><td><strong>三層 stacking 護城河深化</strong>（供給側壟斷）— Aries retimer + Scorpio fabric switch + COSMOS 軟體共構 hyperscaler 換不掉的 reference</td><td>沒有這個，PCIe Gen6 ramp 結束後 ALAB 會被 commoditized；有這個，ALAB 才有資格在 PCIe 7 過渡時保住領先</td><td>① Scorpio X production wins 數（季度 announcement）；② COSMOS 軟體在 hyperscaler AI cluster 的 deployed seat 數（管理層 commentary）；③ Aries 6 在 NVDA / AMD 平台 design wins</td></tr>
+</table>
+<p><strong>為什麼是這 1-2 個，而不是其他？</strong></p>
+<p>Driver 1（AI fabric 標準化）是 ALAB「為什麼能漲 EPS」的需求側因果鏈 — TAM 是否兌現；Driver 2（三層 stacking）是「為什麼能漲 PE」的供給側因果鏈 — moat 是否擴大。兩者<strong>獨立可推翻</strong>：(a) 即使 AI fabric 結構需求兌現，若 Marvell/Broadcom 切走主流，ALAB 不必然受益；(b) 即使 ALAB 三層 stacking 領先，若 hyperscaler capex 轉 idle，FY27 EPS $4.50 也兌現不了。<strong>兩條獨立因果鏈通過 §3 driver 抽象層 guardrail。</strong></p>
+
+<p><strong>強制減法 — 我認為不重要的事：</strong></p>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>季度 EPS Beat / Miss（如 Q1 2026 EPS +13% beat）</td><td>已被股價反映 +44.7%（4 週漂移）；增量驚喜空間有限</td></tr>
+<tr><td>Aries 6 vs Aries 5 升級進度</td><td>方向確定（Gen5 → Gen6 一路 ramp），但增量對長期 EPS 已 priced</td></tr>
+<tr><td>分析師 PT 上修（$192-205）</td><td>共識本身就是落後指標；ALAB 已被機構持有 90%+，邊際買盤不來自賣方升級</td></tr>
+<tr><td>warrant non-cash 200bps GM 拖累</td><td>Q2 guide 一次性，FY26 全年化已調整；不影響長期 thesis</td></tr>
+</table>
+
+<div class="consensus-box">
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>共識 FY27 EPS $4.50 + 終端 PE 50x，假設「ALAB 是 NVDA 2017 早期 AI 平台」+ Marvell/Broadcom 切位威脅可控（&lt; 20% retimer market share）</td></tr>
+<tr><td>我認為的不同假設</td><td>(1) PE 重估只能到 35x（不是 50x），因為 ALAB niche 較 NVDA 窄、商業模式更接近 AVGO 而非 NVDA；(2) Marvell Structera S + Broadcom PCIe Gen 6 portfolio 將切走 25-30% retimer 設計位（2027-2028）— 這是時間問題不是會不會問題</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方在 2024 IPO 後給 ALAB PE 60x，2025 結構爆發後一路上調至 80x；但他們忽略了 (a) ALAB Aries 6 的 Gen6 唯一量產地位是「12-18 個月先發」非「永久壟斷」（Marvell Structera S 60260 已宣告 first 260-lane PCIe 6.0 switch）；(b) hyperscaler 自研 retimer ASIC pattern（AWS Trainium2）長期會壓縮 ALAB 的 toll booth 空間</td></tr>
+</table>
+<p><strong>校驗：</strong>我和共識的分歧具體可量化（PE 35x vs 50x、retimer market share 70% vs 80%+）。Alpha 來源具體 — §7 倉位採折扣處理（不在 PE 60x 進場、等到 50x 以下），這是 Munger inversion 的具體落地。</p>
+</div>
+
+<h3>Driver 觸發或失效的領先指標</h3>
+<table>
+<tr><th>Driver</th><th>領先指標（≤6 個月先於財報）</th><th>滯後指標（季報才看得到）</th></tr>
+<tr><td>Driver 1：AI fabric 標準化</td><td>① Big 4 hyperscaler capex 季度 YoY；② NVDA Spectrum-X / Marvell Structera S 出貨數據；③ UALink Consortium 量產 spec 進度</td><td>① ALAB 季度 revenue YoY；② Scorpio family revenue 占比（Scorpio P + X）；③ 客戶集中度公開揭露</td></tr>
+<tr><td>Driver 2：三層 stacking moat</td><td>① Scorpio X production wins announcement（季度）；② Marvell Structera S 60260 hyperscaler 公開客戶（如有）；③ Broadcom PCIe Gen 6 portfolio 競爭事件</td><td>① Non-GAAP GM（季度）；② COSMOS 軟體 ARR（年度可能 disclose）；③ R&amp;D / Revenue ratio</td></tr>
 </table>
 </div>
 
-<h3 class="sub">3. 與既有報告的交叉矛盾</h3>
-<div class="conflict-block">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+<div class="card">
 <table>
-  <thead><tr><th style="width:5%">#</th><th>矛盾點</th><th style="width:22%">Phase A 結論</th><th style="width:22%">DD/ID 報告結論</th><th>可能原因</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>進場時機</td>
-      <td>A 整體看 thesis 強</td>
-      <td>DD_ALAB_20260506 給 B 觀望偏進場 — 4w 漂移 +44.7%（QC-22 觸發）+ Bollinger 上軌之下僅 $5 + 短期 R:R -0.30x → 等待估值或時機修復</td>
-      <td>本 DCA 完全採納 DD 「等估值修復」結論並具體化為 $165-185</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>連接器供應鏈中地位</td>
-      <td>A2 認為 ALAB PCIe retimer 86% 市占</td>
-      <td>ID_AINetworking_20260419 非共識：「CRDO + ALAB 連接器稀缺被低估」 — 對 ALAB 直接利多</td>
-      <td>視角差：ID 看「稀缺」（正面）vs DD 看「估值已 priced in」（中性）— 兩個 view 並非矛盾，是「短期稀缺 + 長期估值倍數 mean reversion」並存</td>
-    </tr>
-  </tbody>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Trigger 1（Primary）：</strong>事件描述</td><td>Marvell Structera S 60260 + Broadcom PCIe Gen 6 portfolio 從 hyperscaler 端切走 ALAB ≥ 30% Gen6 retimer 設計位（年度 design wins 出現結構性逆轉，可從 ALAB 法說 §Q&amp;A 中 retimer market share commentary 監測）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>(1) ALAB 的 Aries 6「唯一量產」地位是 12-18 個月先發優勢，不是永久壟斷；若 Marvell Structera S（首款 260-lane PCIe 6.0 switch）+ Broadcom PCIe Gen 6 portfolio 在 2027 切走 30% 設計位，ALAB Driver 1（AI fabric 標準化）的需求兌現大打折扣；(2) Driver 2（三層 stacking moat）的核心 retimer 層被切走後，COSMOS 軟體 lock-in 失去 install base 基石</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>① ALAB 季度法說 §Q&amp;A retimer market share commentary（季度）；② Marvell Structera S 60260 出貨時程 + hyperscaler 公開客戶（半年度 review）；③ Broadcom PCIe Gen 6 portfolio 客戶 wins 公開（年度 review）；④ DigiTimes / SemiAnalysis 報導</td></tr>
+<tr><td>目前離發生有多遠</td><td>~12-18 個月 — Marvell Structera S 60260 2026 中後出貨，hyperscaler 評估期 6-12 個月，最早 2027 中可看到結構性切位數據</td></tr>
+<tr><td><strong>Trigger 2（Secondary，pre-mortem 派生）：</strong>事件描述</td><td>Big 3 hyperscaler 之一（AWS / Microsoft / Google）公開 announce 自研 PCIe Gen6/7 retimer ASIC 並從自家 AI cluster 部署</td></tr>
+<tr><td>為什麼也是致命的</td><td>AWS 已有 Trainium2 + Annapurna Labs 自研 ASIC pattern；若 hyperscaler 將自研 retimer 整合進 AI ASIC，ALAB 的 toll booth 空間直接縮小 30-40%（hyperscaler 部分）；Driver 2（三層 stacking）的 PCIe retimer 層被結構性繞過</td></tr>
+<tr><td>如何監測</td><td>① AWS re:Invent / Microsoft Ignite / Google Cloud Next 年度大會（每年 11-12 月）— 自研 chip announcement；② AWS Trainium / Annapurna Labs 法說 commentary；③ Anthropic / Project Rainier 部署細節</td></tr>
+<tr><td>目前離發生有多遠</td><td>~18-30 個月 — AWS Trainium3 / Microsoft Maia2 / Google TPU 8e 的下一代設計週期，最早 2027 H2 可看到自研 retimer 整合的結構性訊號</td></tr>
+</table>
+<p class="note">※ Trigger 2 為 §6b pre-mortem 第二段校驗結果為「⚠ 部分重疊」後實際補入。原 Trigger 1（Marvell/Broadcom 切位）抓住「外部競爭」這條失敗路徑，pre-mortem 故事推導出「hyperscaler 自研整合」是更隱性、更結構性的失敗路徑 — 兩條路徑互補。</p>
+</div>
+
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+<div class="card">
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>ALAB Aries 6 的 12-18 個月先發優勢能否轉成永久寡占</td><td>FY27 ALAB Gen6 retimer 仍 ≥ 70% market share + Scorpio X 拿下 ≥ 3 hyperscaler</td><td>Marvell/Broadcom 切走 30%+ 設計位 → Driver 2 moat 從「整段位」降為「2/3 段位」，PE 應壓到 35-40x</td></tr>
+<tr><td>2</td><td>COSMOS 軟體 lock-in 在 hyperscaler 端的真實 sticky 度</td><td>hyperscaler 換 retimer 同時換 COSMOS 的成本 ≥ 6-12 個月 + 重訓 AI cluster monitoring</td><td>若 sticky 度低（hyperscaler 自研 monitoring stack），Driver 2 護城河深度大打折扣</td></tr>
+<tr><td>3</td><td>PCIe 7 / UALink 1.0 / NVLink Fusion 2.0 過渡 ALAB 是否領先</td><td>ALAB 持續 R&amp;D 至 PCIe 7 + 開放標準對 NVDA 私有標準的開放度提升</td><td>若 ALAB 在 PCIe 7 落後 → 持有期被迫從 5-10 年壓縮至 3-5 年</td></tr>
+</table>
+
+<div class="premortem-box">
+<h3>6b. Pre-mortem｜失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<h4>第一段｜故事倒推（≤80 字 narrative）</h4>
+<blockquote style="background: white; padding: 16px 22px; border-left: 4px solid #DC2626; margin: 12px 0;">
+「假設 5 年後（2031-05）這個部位虧 50%，最可能發生的故事是：2027 H2 AWS re:Invent 公開 Trainium3 + 自研 PCIe Gen6 retimer ASIC，Microsoft 跟進 Maia3 自研整合；ALAB hyperscaler retimer 設計位從 2026 ~80% market share 跌至 2030 ~45%；Q3 27 法說 EPS 共識下修 -25%，市場重估 PE 從 80x 壓縮至 22x。股價從 $215 跌至 ~$80。」
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing（Marvell/Broadcom 切位）？</td><td><span class="tag yellow">⚠ 部分重疊</span> — Pre-mortem 主角是 hyperscaler 自研整合（AWS Trainium3 + 自研 retimer），不是 §5 原寫的 Marvell/Broadcom 外部競爭。§5 抓住「外部 IDM 競爭」一條，但漏抓了「hyperscaler 內部自研整合」這條更結構性的失敗路徑。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5（依校驗結果分流）</h4>
+<p><strong>校驗結果為 ⚠ 部分重疊 → §5 已實際補入 Trigger 2（hyperscaler 自研 retimer ASIC），現有兩條 trigger（primary Marvell/Broadcom 切位 + secondary hyperscaler 自研）。</strong></p>
+
+<p><strong>校驗紀錄：</strong>「§5 修正狀態：⚠ 已補 1 條 secondary trigger（hyperscaler 自研 retimer ASIC）。Pre-mortem 故事是 secondary trigger 的具體展開；primary trigger（Marvell/Broadcom 切位）保留作為更近期、更高機率的外部競爭風險。」</p>
+</div>
+
+<h3>失敗路徑風險時間尺度分層</h3>
+<table>
+<tr><th>時間尺度</th><th>失敗路徑</th><th>觸發機率</th><th>應對速度</th></tr>
+<tr><td>短期（&lt; 12 個月）</td><td>Q3/Q4 法說 GM 跌破 73% + revenue 不及 guide（warrant non-cash 拖累擴大）</td><td>~20-25%</td><td>季度 — 法說當日 React</td></tr>
+<tr><td>中期（1-3 年）</td><td>Marvell Structera S / Broadcom PCIe Gen 6 portfolio hyperscaler 公開 wins ≥ 30% market share</td><td>~30-35%（3 年累計）</td><td>半年度 — 半年度 review + DigiTimes 月度</td></tr>
+<tr><td>長期（3-7 年）</td><td>AWS Trainium3 / Microsoft Maia3 自研 PCIe retimer ASIC + hyperscaler 部分繞過 ALAB</td><td>~25-30%（5 年累計）</td><td>年度 — 不影響短期決策但影響 5Y thesis 持有</td></tr>
 </table>
 </div>
 
-<h3 class="sub">4. ⚖ 強制裁決</h3>
-<div class="ruling-table">
+<h2>§8 Review Triggers</h2>
+<div class="card">
 <table>
-  <thead><tr><th style="width:5%">#</th><th>矛盾</th><th style="width:14%">我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>86% 市占 vs CRDO/MRVL 切入</td>
-      <td><strong>部分 A1（市占維持但漸蝕）</strong></td>
-      <td>ALAB 在 PCIe retimer 的 system-level 設計（Aries + Scorpio + Leo + Taurus）整合優勢比純 SerDes IP 競爭者 (CRDO/MRVL) 強。CRDO 是 AEC 主導不直接競爭；MRVL PCIe 8.0 SerDes 是 IP licensing 而非 system 替代。預期 ALAB 維持 70-75% PCIe retimer 市占（vs CRDO/MRVL 各搶 5-10%），絕對量隨 PCIe Gen 6/7 升級翻倍。已 internalize 在 §4 base case +30-90%。Settle: 觀察 ALAB Q4 FY26 + FY27 各 hyperscaler design wins。</td>
-      <td>Hyperscaler 選擇 ALAB Aries 6 vs CRDO/MRVL retimer 的設計案揭露（mgmt 偶爾 commentary）</td>
-    </tr>
-  </tbody>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 法說（revenue $355-365M 達標 + Q3 guide）</td><td>財報日期</td><td><strong>2026-08-05</strong>（預期日期）— 必看 Scorpio X production wins 進度、Aries 6 retimer market share、GM 73% 是否兌現</td></tr>
+<tr><td>2</td><td>Marvell Structera S 60260 出貨</td><td>產業事件</td><td>2026 H2（首款 260-lane PCIe 6.0 switch）— 是否搶到 hyperscaler 主流 design wins</td></tr>
+<tr><td>3</td><td>股價回測 MA60</td><td>價位觸發</td><td>$170-185 區間 — 第一批試倉條件</td></tr>
+<tr><td>4</td><td>§5 Trigger 1（Marvell/Broadcom 切位）</td><td>結構事件</td><td>FY27 ALAB Gen6 retimer 跌破 70% market share — 立即清倉</td></tr>
+<tr><td>5</td><td>§5 Trigger 2（hyperscaler 自研整合）</td><td>結構事件</td><td>AWS re:Invent 2026/12 + Microsoft Ignite + Google Cloud Next — 自研 retimer announcement → 立即清倉</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：</strong>至 <span class="tag yellow">2026-08-05</span>（Q2 FY26 法說前有效）。法說後若 (a) revenue ≥ $355M + (b) GM ≥ 73% + (c) Scorpio X production wins 公開 ≥ 1 → 維持「觀察池/試倉」；若任一惡化 → 觸發降為「迴避」。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>Q2 法說 revenue beat $370M+ + Scorpio X 拿下 1 hyperscaler production win + Aries 6 retimer market share commentary 維持 ≥ 80% → 共識 FY27 EPS 上修至 $5+ + 股價漲幅低於 EPS 上修速度 → PE 自然壓縮至 60x → 試倉條件達成。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>Q2 法說 GM 跌破 71%（warrant non-cash 拖累擴大）+ Q3 guide revenue 增速放緩至 +60% YoY（vs 當前 +93%）+ Marvell Structera S 拿下 hyperscaler design win → 股價回測 MA200 ~$135 → 試倉 + 核心建倉條件達成（意外快速到位）。</p>
+
+<h3>Action Plan 摘要（保質期內優先順序）</h3>
+<table>
+<tr><th>時間</th><th>動作</th><th>條件</th></tr>
+<tr><td>2026-05-07 → 06-15</td><td>觀察池 — 不動部位</td><td>當前 PE 82x + RSI 69 不進場；密切監測 4 週漂移回落速度</td></tr>
+<tr><td>2026-08-05（預估）</td><td>Q2 FY26 法說</td><td>revenue ≥ $355M + GM ≥ 73% + Scorpio X production wins 公開 ≥ 1 → 維持觀察池；任一惡化 → 「迴避」</td></tr>
+<tr><td>條件達成（任一時點）</td><td>第一批試倉 1.0%</td><td>股價 ≤ $185 + RSI 14d ≤ 60</td></tr>
+<tr><td>條件達成（後續）</td><td>加碼至衛星 2-3%</td><td>Scorpio X production wins ≥ 3 + Fwd PE ≤ 50x</td></tr>
+<tr><td>2026-11-2027-02</td><td>AWS re:Invent + Microsoft Ignite review</td><td>無自研 retimer announcement → 維持持倉；有 announcement → 立即清倉</td></tr>
 </table>
 </div>
 
-<!-- §3 Drivers -->
-<h2 class="sec">§3｜Key Drivers + Consensus 分歧</h2>
+<h2>Phase A｜獨立研究（折疊區塊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析｜獨立結論：A 級護城河（9/10）— 三層 stacking（PCIe retimer + Scorpio fabric switch + COSMOS 軟體）構成 hyperscaler 換不掉的 reference 平台，但 12-18 個月先發優勢非永久壟斷</summary>
+
 <table>
-  <thead><tr><th style="width:5%">#</th><th>Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>PCIe retimer 86% 市占 + Gen 6 ramp</td>
-      <td>Q1 FY26 PCIe Gen 6 已超 1/3 收入；Aries 6 系列覆蓋所有 hyperscaler GPU 平台；Gen 6 升級 ASP 翻倍。系統級設計（retimer + cable + IP 整合）使切換成本高</td>
-      <td>Quarterly retimer revenue YoY；PCIe Gen 6 比例（mgmt 揭露）；hyperscaler 平台 design wins</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>Scorpio fabric + UALink 標準制定</td>
-      <td>Scorpio X 320-lane 是 UALink + NVLink Fusion 雙標準支援，2027 與 AWS Trainium 4 / AMD MI500 intersect 確認；ALAB 是 UALink 2.0 規範主要制定者。Driver 1 不假設下能單獨被推翻？能 — UALink 是新業務，與 retimer 業務不同物理層 ✅ 通過 driver 抽象層校驗</td>
-      <td>Scorpio X / P 系列 quarterly revenue（mgmt 揭露）；UALink Consortium 規範進度；AWS Trainium 4 / AMD MI500 ramp 時程</td>
-    </tr>
-  </tbody>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) 軟體 lock-in（COSMOS 觀測性 + 預測分析 + 性能管理跨整個 connectivity fabric）；(2) 時序先發（Aries 6 是 PCIe Gen 6 唯一量產 retimer，12-18 個月領先 Marvell/Broadcom）；(3) 整合平台優勢（ICP 整合 CXL/Ethernet/NVLink Fusion/PCIe/UALink，hyperscaler switching cost 高）</td></tr>
+<tr><td>持久性評分</td><td>9/10，5 年穩固度：中高（Aries 6 先發 12-18 個月明確；Scorpio X 5/5/2026 launch 12-24 個月領先；COSMOS 軟體在持續加深）</td></tr>
+<tr><td>最大侵蝕風險</td><td>(1) Marvell Structera S 60260（首款 260-lane PCIe 6.0 switch）+ Broadcom 2026/02 PCIe Gen 6 portfolio 將切走 20-30% retimer 設計位；(2) hyperscaler 自研 retimer ASIC（AWS Trainium pattern）長期繞過 ALAB</td></tr>
+<tr><td>關鍵數據（含來源 + 日期）</td><td>① Aries PCIe 6 DSP retimer 唯一量產（semianalysis 2024 + ALAB 法說 2026/05/05）；② Scorpio P-Series Q1 2026 占 &gt; 15% 營收（asteralabs 8-K 2026-05-05）；③ Scorpio X-Series 320-lane 5.12 TB/s 5/5/2026 launch（globenewswire 2026-05-05）；④ COSMOS 軟體 ICP 整合 5 種協定（asteralabs.com 2026）；⑤ 直接競爭者：Credo / Parade / Marvell / Broadcom / Microchip / BIWIN（Saul's Investing Discussions 2026）；⑥ Marvell Structera S 60260（首款 260-lane PCIe 6.0 switch，Marvell 2026 Q1）；⑦ Scorpio X 「10+ engagements」（asteralabs 法說 2026-05-05）</td></tr>
 </table>
-
-<h4 style="margin-top:18px">Driver 抽象層 guardrail 校驗</h4>
-<p>Driver 2 在不假設 Driver 1 成立的情況下能否單獨被推翻？<strong>能</strong> — Scorpio fabric switch 是 system-level switch product，與 PCIe retimer 是不同 product line（雖共享部分 IP 設計）。即使 PCIe retimer 業務被切入，UALink/NVLink Fusion fabric 仍可獨立成長。✅ 通過。</p>
-
-<h3 class="sub" style="margin-top:24px">🔄 我和市場 consensus 的最大分歧</h3>
-<table>
-  <thead><tr><th style="width:30%">項目</th><th>內容</th></tr></thead>
-  <tbody>
-    <tr><td>市場目前定價在什麼假設上</td><td>FY27 EPS $4.20、forward PE 85x，隱含「PCIe retimer 86% 維持 + Scorpio fabric 完美 ramp」super bull case；trailing PE 176x 表示市場已給 platform premium</td></tr>
-    <tr><td>我認為的不同假設</td><td>FY27 mgmt guide 大致達標，但 forward PE 從 85x mean reversion 至 35-40x 是 base case（vs market 隱含維持 60x+）。FY30E EPS $10-12 高於 consensus 隱含 $8-9（Scorpio + UALink upside），但 PE 倍數壓縮抵銷部分。淨期望報酬 +88% 5Y 中等</td></tr>
-    <tr><td>賣方為什麼錯（具體理由）</td><td>賣方分析師太注重 short-term momentum（4w +44.7%）而忽略 forward PE 85x 是「歷史百分位 99%」極端 — mean reversion 是高機率事件。同時把 Scorpio fabric early ramp 視為「已驗證」，但 broader 量產要 2027（仍有執行風險）。我的觀點：thesis 強但估值倍數需要 mean reverted 才能進場，否則 alpha 被估值倍數壓縮吃掉</td></tr>
-  </tbody>
-</table>
-
-<!-- §5 Single Thing -->
-<h2 class="sec danger">§5｜The Single Thing That Could Change My Mind</h2>
-<table>
-  <thead><tr><th style="width:22%">項目</th><th>內容</th></tr></thead>
-  <tbody>
-    <tr><td>事件描述</td><td><strong>2027 H1 AWS Trainium 4 與 AMD MI500 平台公告不採用 ALAB Scorpio fabric（轉用內部 / Broadcom Tomahawk / Marvell 替代）— UALink intersect 失敗</strong></td></tr>
-    <tr><td>為什麼這個事件是致命的</td><td>UALink 2027 商用 ramp 是 ALAB 第二曲線的核心。如果 AWS + AMD 任一不採用 ALAB Scorpio，則：① 第二曲線收入大幅低於 mgmt guide；② Scorpio platform premium 估值倍數 collapse；③ 連帶質疑 PCIe retimer 業務也可能被切入；④ Forward PE 從 85x 壓至 25x，FY28 EPS 從 $6 降至 $4 → $4 × 25 = $100，from $206 = -51%</td></tr>
-    <tr><td>如何監測</td><td>① AWS re:Invent（每年 12 月）對 Trainium 4 platform partner 揭露；② AMD Investor Day 對 MI500 平台揭露；③ ALAB earnings call commentary（quarterly）；④ UALink Consortium 進度公告</td></tr>
-    <tr><td>目前離發生有多遠</td><td><strong>中等距離</strong> — 2027 上半年揭曉，距現在 12-18 月</td></tr>
-  </tbody>
-</table>
-
-<!-- §6 Pre-mortem -->
-<h2 class="sec danger">§6｜What I Don't Know + Pre-mortem</h2>
-
-<div class="premortem-block">
-<h3 class="sub" style="color:#7F1D1D;margin-top:0">6b｜Pre-mortem — 失敗故事倒推</h3>
-<div class="narrative">
-「假設 5 年後（2031）這個部位虧 50%，最可能發生的故事是 ——<br><br>
-2027 H1 AWS Trainium 4 公告採用 Broadcom Tomahawk 5/6 而非 ALAB Scorpio 為主要 fabric switch。AMD MI500 平台同步使用 Marvell 解決方案。ALAB UALink intersect 失敗，FY27-28 Scorpio 第二曲線收入大幅低於 mgmt guide。<br><br>
-同時 CRDO + MRVL 在 PCIe retimer 領域以價格戰切入 hyperscaler，ALAB PCIe retimer 市占從 86% 降至 65%。GM 從 76% 壓至 60%（價格戰）。<br><br>
-FY28 EPS 從 mgmt guide $6.5 下修至 $4.0。Forward PE 從 85x 壓至 22x（platform premium 蒸發）→ $4.0 × 22 = $88，from $206 = -57%。」
-</div>
-<p style="font-size:12.5px;color:#475569;margin-top:8px"><strong>校驗：</strong>主要重疊 §5（UALink intersect 失敗），補充 PCIe retimer 競爭加劇路徑。<span class="badge ok">✅ §5 抓對主要 binary 觸發</span>。</p>
-</div>
-
-<!-- §8 Review Triggers -->
-<h2 class="sec">§8｜Review Triggers</h2>
-<table>
-  <thead><tr><th style="width:5%">#</th><th>重新評估觸發點</th><th style="width:18%">類型</th><th>具體時間 / 條件</th></tr></thead>
-  <tbody>
-    <tr><td>1</td><td>Q2 FY26 財報</td><td>財報日期</td><td>2026 年 8 月初 — 維 +90%+ 成長、Scorpio X ramp commentary</td></tr>
-    <tr><td>2</td><td>Q3 FY26 財報</td><td>財報日期</td><td>2026 年 10 月底</td></tr>
-    <tr><td>3</td><td>AWS re:Invent / AMD Investor Day</td><td>產業事件 / §5 觸發點</td><td>2026 年 11-12 月 — Trainium 4 / MI500 platform partner 揭露</td></tr>
-    <tr><td>4</td><td>NVDA GTC 2026</td><td>產業事件</td><td>2026 年 11 月 — NVLink Fusion 進度，可能影響 Scorpio fabric 採用</td></tr>
-    <tr><td>5</td><td>UALink Consortium 進度</td><td>持續</td><td>2027 H1 商用化 ramp 確認</td></tr>
-    <tr><td>6</td><td>價位觸發 — 進場區</td><td>價位</td><td>$185 RSI &lt; 55（首批 0.5%）/ $165（DD 4w 均價，加碼 2.0%）/ $130（極端機會 3.0%）</td></tr>
-    <tr><td>7</td><td>價位觸發 — 退場區</td><td>價位</td><td>漲破 $260 RSI &gt; 80 → 減碼；UALink intersect 失敗 → 立即減半</td></tr>
-  </tbody>
-</table>
-
-<table style="margin-top:14px">
-  <tbody>
-    <tr><td style="width:30%;background:#F0F9FF"><strong>本份報告保質期</strong></td><td>下一次財報（Q2 FY26, 2026-08 月初）發布前有效</td></tr>
-    <tr><td style="background:#F0FDF4"><strong>最可能發生的 upside 因素</strong></td><td>Q2 +90%+ 持續；Scorpio X ramp 提前；2026 Q4 AWS re:Invent 確認 Trainium 4 採用 ALAB；UALink 商用提前；NVLink Fusion 第三方採用擴大</td></tr>
-    <tr><td style="background:#FFF1F2"><strong>最可能發生的 downside 因素</strong></td><td>UALink × Trainium 4 / MI500 intersect 失敗（§5）；CRDO + MRVL 在 PCIe retimer 切入加深；hyperscaler digestion；Scorpio X ramp 延後</td></tr>
-  </tbody>
-</table>
-
-<!-- Phase A 折疊區 -->
-<h2 class="sec" style="margin-top:48px">Phase A｜獨立研究階段（折疊區）</h2>
-
-<details class="phase">
-<summary>
-  Phase A1｜護城河深度分析
-  <span class="conclusion">→ ALAB PCIe retimer 86% 市占 + Scorpio fabric 標準制定者，護城河中等偏強但估值已超前透支（5Y 7/10）</span>
-</summary>
-<div class="body">
-<table>
-  <tbody>
-    <tr><td style="width:25%"><strong>主要護城河類型</strong></td><td>① PCIe retimer 86% 市占（Aries 系列 5 年累積）；② 系統級設計整合（Aries retimer + Scorpio fabric switch + Leo CXL + Taurus Ethernet 全棧）；③ 開放標準制定者（UALink 2.0 規範主導 + NVLink Fusion 兼容）；④ 與 NVDA / AMD / hyperscaler 深度合作關係</td></tr>
-    <tr><td><strong>持久性評分</strong></td><td><strong>7/10</strong>，5 年穩固度：中-高（PCIe retimer 主導但面臨 CRDO + MRVL 競爭）</td></tr>
-    <tr><td><strong>最大侵蝕風險</strong></td><td>① CRDO 在 AEC 領域已主導 + 進入 PCIe retimer；② MRVL PCIe 8.0 SerDes Demo 直接挑戰；③ Broadcom Tomahawk 在 AWS Trainium 4 競爭；④ TI / Renesas 在低端 retimer 切入</td></tr>
-    <tr><td><strong>關鍵數據</strong></td><td>非 GAAP GM 76.3%（產業頂尖）；non-GAAP op margin 36.2%；PCIe retimer 86% 市占；PCIe Gen 6 已超 1/3 收入</td></tr>
-  </tbody>
-</table>
-<p style="margin-top:12px"><strong>A1 獨立結論：</strong>ALAB 在 PCIe retimer 是真實龍頭，系統級設計 + 開放標準制定者地位是 strong moat。但 connector niche 護城河深度有上限（vs mega cap 軟體 + 雲端），預期市占 86% → 70-75% mean reversion。</p>
-</div>
+<p><strong>A1 獨立結論：</strong>ALAB 護城河 A 級且短期擴大，但 12-18 個月先發優勢非永久壟斷 — 三層 stacking 是 hyperscaler 「目前換不掉」非「永遠換不掉」，要避免 NVDA-level moat 的假設。</p>
 </details>
 
-<details class="phase">
-<summary>
-  Phase A2｜產業趨勢深度分析
-  <span class="conclusion">→ AI infra 連接器超級週期 2026-2028 是 sweet spot，UALink 商用 2027+ 是 ALAB 第二曲線命運分水嶺</span>
-</summary>
-<div class="body">
+<details>
+<summary>Phase A2｜產業趨勢深度分析｜獨立結論：AI rack-scale connectivity 5 年結構需求確認（PCIe Gen6 CAGR 36% 2026-33）+ UALink/NVLink Fusion 並存期 2026-2028 是 ALAB 黃金期，但 PCIe 7 過渡（2028-2029）會重新洗牌</summary>
+
 <table>
-  <tbody>
-    <tr><td style="width:25%"><strong>TAM 與成長</strong></td><td>PCIe retimer 市場 by 2030 達 $5B+；UALink fabric switch market $10B+ by 2030（Bull case）；hyperscaler GPU 平台採購 $200B+ by 2027</td></tr>
-    <tr><td><strong>供需判斷</strong></td><td>偏緊（hyperscaler 急需 PCIe Gen 6 升級 + UALink 早期 commercialization）；2027+ 子市場分化（PCIe retimer 競爭加劇 vs Scorpio fabric 早期專屬）</td></tr>
-    <tr><td><strong>最大技術替代風險</strong></td><td>① CRDO + MRVL 在 PCIe retimer 切入（12-24 月）；② Broadcom Tomahawk 在 AI fabric switch 競爭（24-36 月）；③ NVLink Fusion 採用 NVDA 自家方案而非 Scorpio（12-24 月）；④ CPO 替代部分 PCIe interconnect（36+ 月）</td></tr>
-    <tr><td><strong>議價權位置</strong></td><td>對上游（TSMC、Synopsys IP）：弱（規模不大）；對下游（hyperscaler + GPU vendor）：中（系統級設計差異化但有替代）</td></tr>
-  </tbody>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>PCIe Express Retimer 市場 2026 $497.54M → 2035 $13.6B（CAGR 42.4%，SNS Insider 2026）；PCIe Gen6 specific 2024 $1.82B → 2033 $8.15B（CAGR 17.4%）；PCIe 6.0（64 GT/s）2026-2033 CAGR 36.09%（fastest segment）</td></tr>
+<tr><td>供需判斷</td><td>偏緊 — hyperscaler capex 軍備競賽（Big 4 FY26 capex $260-290B）+ AI cluster scale-up 從 1U server 擴到 rack-scale；未來 12 個月方向 ↑（Scorpio X 2026 H2 ramp + Aries 6 全年放量）</td></tr>
+<tr><td>最大技術替代風險</td><td>(1) PCIe 7 / UALink 1.0 / NVLink Fusion 2.0 等下一代標準持續演進，2028-2029 過渡期會重新洗牌；(2) hyperscaler 自研 retimer ASIC 整合進 AI ASIC（AWS Trainium pattern）</td></tr>
+<tr><td>最大政策/地緣風險</td><td>低 — ALAB 美國總部 + fabless 設計公司 + 主要客戶為 hyperscaler，地緣風險小；BIS 對中國 retimer / fabric switch 的限制反而對 ALAB 有利（限制 BIWIN 等替代）</td></tr>
+<tr><td>議價權位置</td><td>對上游：強（fabless 設計，TSMC 代工 + 自有 IP，毛利率 76% Q1 2026）；對下游：中強（hyperscaler 集中度高 4-5 家，但 ALAB 三層 stacking switching cost 高 — 不是純粹 commodity）</td></tr>
 </table>
-<p style="margin-top:12px"><strong>A2 獨立結論：</strong>產業順風強（PCIe Gen 6 + UALink + AI fabric supercycle），ALAB 是 #1 直接受益者。但護城河漸蝕風險（CRDO + MRVL）+ 開放標準對手 fragmentation 是長期挑戰。</p>
-</div>
+<p><strong>A2 獨立結論：</strong>產業順風確認 5 年（PCIe Gen6 / UALink / NVLink Fusion 並存），但 PCIe 7 過渡期（2028-2029）是 ALAB 必須證明持續領先的拐點 — 5 年內結構需求兌現，5 年後變數加大。</p>
 </details>
 
-<details class="phase">
-<summary>
-  Phase A3｜業務結構 / 財務體質 / 資本配置
-  <span class="conclusion">→ Q1 +93% YoY 業績 + 76% GM 是 connector niche 中最高，但客戶集中於 hyperscaler GPU 平台，估值絕對貴</span>
-</summary>
-<div class="body">
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置｜獨立結論：A+ 級爆發期體質（Q1 +93% × Q2 guide +93%）+ GM 76.4% 業界頂級 + 實質 FCF 轉正，但 Forward PE 80-82x 是工業中位數的 +137% 結構透支</summary>
+
 <table>
-  <tbody>
-    <tr><td style="width:25%"><strong>營收結構</strong></td><td>① Aries PCIe retimer ~50%（主力，PCIe Gen 6 比例上升）；② Taurus Ethernet smart cable ~20%；③ Leo CXL memory ~15%；④ Scorpio fabric switch ~15%（成長最快，2026 量產）</td></tr>
-    <tr><td><strong>客戶集中度</strong></td><td>客戶分散於所有 hyperscaler 與 GPU vendor（NVDA / AMD / AWS / MSFT / GOOGL / Meta），具體 Top 客戶比例不揭露但估 Top 5 ~70%</td></tr>
-    <tr><td><strong>定價權</strong></td><td>系統級設計 + 標準制定者地位 = 強定價權；GM 76.3% 是 connector 業界頂尖</td></tr>
-    <tr><td><strong>未來金雞母</strong></td><td>① Scorpio fabric switch（已 shipping，2027 broader ramp）；② UALink 2.0 商用化（2027+）；③ Leo CXL memory expansion（CXL 標準成熟）</td></tr>
-    <tr><td><strong>財務體質</strong></td><td>FCF 約 $200M+ 年化（FY26 估）；non-GAAP op margin 36.2%；GM 76.3%（頂尖）；現金充裕；無重大長期債</td></tr>
-    <tr><td><strong>資本配置紀律</strong></td><td>R&D 重投入支援 Scorpio + UALink；無 buyback / 股息（成長期，現金留產品）；管理層 IPO 2024-03，紀律待長期驗證</td></tr>
-  </tbody>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：Aries 6 PCIe retimer（&gt; 50% Q1 2026 營收，PCIe Gen 6 占整體 1/3+）；成長引擎：Scorpio family（P + X-Series，P-Series &gt; 15% Q1 2026，X-Series Q3-Q4 量產）；新興：Leo CXL（Microsoft 部署中）</td></tr>
+<tr><td>客戶集中度</td><td>NVIDIA / AMD / Intel + AWS / Microsoft / Google 四大集團；具體比例未細分但 hyperscaler 4-5 家集中度高，風險：中（多元化中）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（Aries 6 vs Aries 5 升級 + Scorpio X 規模溢價），定價權：強 — Q1 2026 GM 76.4% 是 fabless 業界頂級</td></tr>
+<tr><td>未來金雞母</td><td>Scorpio X-Series（320-lane PCIe 6.0 single ASIC，Q3-Q4 2026 ramp，2027 多家 production，FY28 全年放量）</td></tr>
+<tr><td>財務體質</td><td>FCF $78.18M 最近季度（alphaquery）；Q1 2026 GM 76.4%（+70bps QoQ）；Net Cash positive；壓力測試：營收 -20% 仍可保持正 FCF（GM 高 + 低 capex fabless 模型）</td></tr>
+<tr><td>資本配置紀律</td><td>初級 — IPO 2024-03 後資本配置主要聚焦 R&amp;D（Scorpio X 開發 + COSMOS 軟體迭代）；無大規模 buyback / dividend；無紀錄 M&amp;A；以「自然成長」為主</td></tr>
 </table>
-<p style="margin-top:12px"><strong>A3 獨立結論：</strong>業績爆發 + 業界頂尖 GM + 業務結構分散（4 條 product line）= 衛星持倉 4% 上限的合理性。但估值絕對貴（forward PE 85x）+ 規模相對小（$30B+ market cap）對 sentiment 敏感。</p>
-</div>
+<p><strong>關鍵 Q1 FY26 數據（含來源 + 日期）：</strong>① Q1 2026 Revenue $308.4M（+93% YoY，+14% QoQ，stocktitan 8-K 2026-05-05）；② Non-GAAP EPS $0.61（beat $0.54 by $0.07）；③ Non-GAAP GM 76.4%（+70bps QoQ）；④ Q2 2026 guide revenue $355-365M（+93% YoY）；⑤ Q2 2026 guide non-GAAP EPS $0.68-0.70；⑥ Q2 2026 GM guide ~73%（含 ~200bps non-cash warrant impact）；⑦ PCIe Gen 6 revenue &gt; 1/3 total Q1 2026；⑧ FY 2025 revenue ~$830M（vs FY 2023 $116M = 7x in 2 years）；⑨ Forward PE 80.47-82.38x（gurufocus / yahoo 2026-05）；⑩ Trailing PE 164.96；⑪ Median analyst price target $205（range $155-250）；⑫ FCF $78.18M most recent quarter（alphaquery）；⑬ Scorpio X 2026 ramp + multiple production designs 2027（asteralabs 法說 2026-05-05）</p>
+<p><strong>A3 獨立結論：</strong>體質完美（A+ 級爆發期），GM 76.4% 業界頂級 + Q1+Q2 雙 +93% 結構爆發 confirmed；但 Forward PE 80-82x 是工業中位數 34.71 的 +137%，動能末段風險高 — 估值已 priced 兩年成長。</p>
 </details>
 
-<details class="phase">
-<summary>
-  Phase A4｜既有報告數據摘要
-  <span class="conclusion">→ DD B 觀望偏進場（5/6 凍結）— thesis 強但 4w 漂移 +44.7% + R:R 短中期 &lt; 1.0 + 估值已 priced in NTM upside</span>
-</summary>
-<div class="body">
+<details>
+<summary>Phase A4｜既有 DD / ID 報告數據摘要</summary>
+
+<h3>DD 報告擷取（DD_ALAB_20260506.html）</h3>
 <table>
-  <tbody>
-    <tr><td style="width:25%;background:#F1F5F9"><strong>綜合訊號燈</strong></td><td><span class="badge warn">B 觀望偏進場</span> — thesis 強（Q1 +93% beat + Q2 +93% guide raise + PCIe Gen 6 已超 1/3 營收）但 4w 漂移 +44.7% + Bollinger 上軌之下 $5 + 短期 R:R 為負 → 等待估值或時機修復</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>三引擎目標價</strong></td><td>短期 FY+1 $171 / 中期 $210 / 長期 FY+5 $290</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>R:R</strong></td><td>短期 -0.30x / 中期 0.51x / 長期 1.97x；壓測 1/4 通過（僅 Base 長期）</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>Bear anchor</strong></td><td>短期 $103 / 中期 $113 / 長期 $104</td></tr>
-    <tr><td style="background:#F1F5F9"><strong>QC-22 警示</strong></td><td>4 週 +44.7% 漂移觸發，DD 建議「等待估值或時機修復」</td></tr>
-  </tbody>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>Quality Score</td><td>9.0 / 10（v12.2 體質 veto 全過 + 護城河 A 級）</td></tr>
+<tr><td>final_signal</td><td>B（觀望偏進場）</td></tr>
+<tr><td>Forward PE FY+1</td><td>75.7x（用 post-print FY26E 非 GAAP $2.85）</td></tr>
+<tr><td>歷史 IPO 後分位</td><td>~55%</td></tr>
+<tr><td>PEG FY+1</td><td>1.38（合理 1-2 區間）</td></tr>
+<tr><td>盲點 1 救援</td><td>是（§8 🟢 + PEG &lt; 2.0 + AI 🟢）→ 🟠 救回 🟡</td></tr>
+<tr><td>R:R</td><td>短期 -0.30x / 中期 0.51x / 長期 1.97x（壓力測試 1/4 通過，資訊性）</td></tr>
+<tr><td>下行錨點</td><td>FY+1 Bear PE 35x × $2.50 = ~$88（接近 MA200 $135 偏低）</td></tr>
+<tr><td>核心假設 H1/H2/H3</td><td>H1：Scorpio X Q1 26 開始量產；H2：PCIe Gen 6 已超 1/3 營收持續擴大；H3：Aries 6 retimer 12-18 個月先發</td></tr>
+<tr><td>紅旗</td><td>Forward PE 75.7x、4 週漂移 +44.7%、RSI 69、Bollinger 上軌之下僅 $5</td></tr>
 </table>
 
-<h4 style="margin-top:18px">ID 報告（涵蓋 ALAB）</h4>
+<h3>ID 報告擷取（ID_AINetworking_20260419.html）</h3>
 <table>
-  <tbody>
-    <tr><td style="width:35%"><strong>ID_AINetworking_20260419</strong></td><td><strong>非共識：① Scale-up / Scale-out 非 zero-sum — 對 ALAB 利多；② UALink 商用 2027+ 非 2026 — 對 ALAB 中性（時序確認）；③ <span style="color:#16A34A">CRDO + ALAB 連接器稀缺被低估 — 對 ALAB 直接利多</span></strong></td></tr>
-    <tr><td>ID_AIAcceleratorDemand_20260419</td><td>非共識：ASIC 份額 35-40%；2027 非峰值；電力永久瓶頸 — 都對 ALAB 利多（ASIC 越多 = 連接器需求越多）</td></tr>
-    <tr><td>ID_SiliconPhotonicsCPO_20260419</td><td>非共識：CPO 2026 H2 已商用、pluggable + CPO 並存 — 對 ALAB 中性偏正（PCIe 不被 CPO 全面取代）</td></tr>
-  </tbody>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>產業評級</td><td>AI Networking — Phase II（Ethernet 替代 InfiniBand + 1.6T 連接器超循環 + UALink 開放標準成形）</td></tr>
+<tr><td>關鍵趨勢</td><td>(1) AI fabric 標準化 5 年結構需求；(2) 800G → 1.6T 帶寬升級驅動 retimer / fabric switch ASP +30-50%；(3) Ethernet vs InfiniBand vs NVLink Fusion 三足鼎立</td></tr>
+<tr><td>相關 ticker 排名</td><td>AVGO（Tomahawk switch + custom ASIC，事實壟斷）&gt; ANET（EOS 軟體 toll booth）&gt; MRVL（Inphi 1.6T DSP）&gt; ALAB（PCIe retimer + Scorpio）&gt; CRDO（AEC 88% niche）</td></tr>
 </table>
-</div>
+
+<h3>本次 DCA 獨立搜尋的新增資訊（vs DD/ID）</h3>
+<table>
+<tr><th>新增 / 更新點</th><th>來源</th><th>影響</th></tr>
+<tr><td>Q1 2026 Revenue $308.4M（+93% YoY）發佈 5/5</td><td>asteralabs 8-K 2026-05-05</td><td>確認結構爆發，DD 已含但 DCA 確認 thesis 路徑兌現中</td></tr>
+<tr><td>Scorpio X-Series 320-lane 5.12 TB/s 5/5/2026 launch</td><td>globenewswire 2026-05-05</td><td>Driver 2 三層 stacking moat 加深的具體事件</td></tr>
+<tr><td>Marvell Structera S 60260（首款 260-lane PCIe 6.0 switch）</td><td>marvell.com 2026 Q1</td><td>確認 §5 Trigger 1 的具體競爭威脅，2026 H2 出貨</td></tr>
+<tr><td>RSI 14d 69.124（接近過熱）</td><td>tipranks / investing 2026-05</td><td>確認 §7c 動能過熱判定，§7a 進場節奏條件式有效</td></tr>
+<tr><td>FY27 EPS 共識 ~$4.50（推導）</td><td>analyst PT $192-205 implied multiple</td><td>填入 §7d EPS 路徑表 + §4 Asymmetry base case</td></tr>
+<tr><td>Scorpio X 「10+ engagements」growing</td><td>asteralabs 法說 2026-05-05</td><td>support Driver 1 兌現中，但具體 production wins 仍待 confirm</td></tr>
+</table>
 </details>
 
-</main>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
 
-<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
-
+</div>
 </body>
 </html>

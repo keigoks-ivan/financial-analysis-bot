@@ -1,264 +1,322 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DCA · ONTO · 2026-05-07</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCA｜ONTO（Onto Innovation）｜2026-05-07</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--mut:#64748B;--accent:#3B82F6;--rule:#E2E8F0;--row:#F1F5F9}
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#0F172A; --muted:#475569;
+    --line:#E2E8F0; --line-strong:#CBD5E1; --accent:#1E3A5F; --accent-light:#3B82F6;
+    --row-alt:#F1F5F9;
+    --thesis-bg:#EFF6FF; --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+    --conflict-bg:#FFF7ED; --conflict-line:#F97316; --verdict-bg:#FED7AA;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --ok:#DCFCE7; --ok-text:#166534; --no:#FEE2E2; --no-text:#991B1B;
+    --warn:#FEF3C7; --warn-text:#92400E;
+  }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.7}
-  .num,code,pre{font-family:'IBM Plex Mono',monospace}
-  header.sticky{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--rule);padding:12px 24px;display:flex;align-items:center;gap:18px;font-size:13px}
-  header .tk{font-weight:700;color:var(--ink);font-size:16px}
-  header .th{color:#0F172A;flex:1;font-style:italic}
-  header .dt{color:var(--mut)}
-  main{max-width:1100px;margin:0 auto;padding:24px}
-  section{background:var(--card);margin:18px 0;border:1px solid var(--rule);border-radius:4px;padding:22px 26px}
-  h2{margin:0 0 14px;color:var(--ink);font-size:18px;border-left:4px solid var(--accent);padding-left:12px;background:#F8FAFC;padding-top:6px;padding-bottom:6px}
-  h3{color:var(--ink);font-size:15px;margin:16px 0 8px}
-  h4{font-size:13.5px;margin:12px 0 6px;color:#334155}
-  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13px}
-  th{background:#1E3A5F;color:#fff;padding:8px 10px;text-align:left;font-weight:500}
-  td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
-  tr:nth-child(even) td{background:var(--row)}
-  .thesis-box{background:#EFF6FF;border:1px solid #BFDBFE;padding:30px 26px;text-align:center;border-radius:6px;margin:6px 0 14px}
-  .thesis-box .tt{font-size:26px;font-weight:700;line-height:1.5;color:#1E3A5F;letter-spacing:0.5px}
-  .thesis-box .sub{margin-top:10px;color:var(--mut);font-size:12px;letter-spacing:1.5px}
-  .decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:18px 20px;margin:8px 0}
-  .conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:18px 20px;margin:8px 0}
-  .verdict-table th{background:#9A3412}
-  .verdict-table tr:nth-child(even) td{background:#FFEDD5}
-  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:16px 20px;margin:8px 0;font-style:italic;color:#7F1D1D}
-  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:16px 20px;margin:8px 0}
-  .memo-box{background:#fff;border:1.5px solid #94A3B8;padding:22px 24px;margin:10px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.7;white-space:pre-wrap}
-  .elev-box{background:#F8FAFC;border-left:3px solid #94A3B8;padding:14px 18px;margin:10px 0;font-style:italic;color:#334155}
-  .pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11.5px;font-weight:600}
-  .pill-good{background:#DCFCE7;color:#166534}
-  .pill-bad{background:#FEE2E2;color:#991B1B}
-  .pill-warn{background:#FEF3C7;color:#92400E}
-  .pill-info{background:#DBEAFE;color:#1E40AF}
-  details{margin:10px 0;background:#F8FAFC;border:1px solid var(--rule);border-radius:4px}
-  summary{padding:12px 16px;cursor:pointer;font-weight:600;color:var(--ink);font-size:14px}
-  details[open] summary{border-bottom:1px solid var(--rule)}
-  details > div{padding:14px 18px}
-  .red{color:#DC2626}.amber{color:#D97706}.green{color:#16A34A}
-  .printbtn{position:fixed;right:20px;bottom:20px;z-index:100;background:#1E3A5F;color:#fff;border:none;padding:10px 18px;font-size:13px;border-radius:24px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.18)}
-  ul{padding-left:22px;margin:6px 0}
-  li{margin:4px 0}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.65}
+  .mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header.fixed-top{position:sticky;top:0;z-index:100;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:14px}
+  header.fixed-top .ticker{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.fixed-top .sep{opacity:.4}
+  header.fixed-top .thesis-line{flex:1;min-width:280px;font-style:italic;opacity:.95}
+  main{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+  h1{font-size:32px;margin:0 0 4px}
+  h2{font-size:22px;margin:48px 0 12px;padding:10px 14px;background:var(--accent);color:#fff;border-left:4px solid var(--accent-light);border-radius:2px}
+  h3{font-size:17px;margin:24px 0 8px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+  .thesis-card{background:var(--thesis-bg);border:1px solid #BFDBFE;border-radius:4px;padding:36px 32px;margin:16px 0;text-align:center}
+  .thesis-card .quote{font-size:26px;font-weight:500;line-height:1.5;color:#1E3A8A}
+  .thesis-card .label{font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:1px}
+  .decision-card{background:var(--decision-wait);border-left:4px solid #CA8A04;padding:18px 22px;margin:12px 0;border-radius:2px}
+  .decision-card.go{background:var(--decision-go);border-left-color:#16A34A}
+  .decision-card.no{background:var(--decision-no);border-left-color:#DC2626}
+  .decision-card .verdict-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:8px;background:#CA8A04;color:#fff}
+  .decision-card.go .verdict-tag{background:#166534}
+  .decision-card.no .verdict-tag{background:#991B1B}
+  .conflict-card{background:var(--conflict-bg);border-left:4px solid var(--conflict-line);padding:16px 20px;margin:12px 0;border-radius:2px}
+  .verdict-table{background:var(--verdict-bg);padding:8px;border-radius:2px;margin-top:10px}
+  .verdict-table table{margin:0;font-size:13px}
+  .verdict-table thead th{background:#9A3412}
+  .premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:14px 20px;margin:10px 0;border-radius:2px;font-style:italic}
+  .pattern-card{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 20px;margin:10px 0;border-radius:2px}
+  .ok-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--ok);color:var(--ok-text);font-weight:600;font-size:12px}
+  .no-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--no);color:var(--no-text);font-weight:600;font-size:12px}
+  .warn-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--warn);color:var(--warn-text);font-weight:600;font-size:12px}
+  .memo-paper{background:#FAFAF7;border:1px solid #E5E5E0;padding:24px 30px;font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;border-radius:2px;margin:12px 0;box-shadow:1px 1px 0 #00000010;white-space:pre-wrap}
+  .elevator{font-style:italic;background:#F8FAFC;border-left:3px solid var(--muted);padding:14px 18px;margin:10px 0;color:var(--muted)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;margin:12px 0}
+  details summary{padding:14px 20px;cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▶ ";font-size:11px;color:var(--muted);margin-right:6px}
+  details[open] summary::before{content:"▼ "}
+  details > *:not(summary){padding:0 24px 20px}
+  .summary-conclusion{font-weight:400;color:var(--muted);margin-left:12px;font-size:13px}
+  .source-list{font-size:13px;color:var(--muted);margin-top:8px}
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:2px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px #00000018;z-index:200}
+  .print-btn:hover{background:#0F2542}
+  .consensus-card{background:#FEF7CD;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0;border-radius:2px}
   @media print {
-    header.sticky,.printbtn{display:none}
-    body{background:#fff}
-    section{break-inside:avoid;border:1px solid #ccc}
-    details{break-inside:avoid}
-    details > div{display:block !important}
+    header.fixed-top, .print-btn { display:none !important }
+    details { border:none }
+    details:not([open]) > *:not(summary) { display:block !important }
+    details > *:not(summary) { padding:0 !important }
+    summary::before { display:none }
+    main { max-width:100%; padding:0 12px }
+    h2 { page-break-after:avoid }
+    .card, .conflict-card, .decision-card, .thesis-card { page-break-inside:avoid }
   }
 </style>
 </head>
 <body>
-<header class="sticky">
-  <div class="tk">ONTO</div>
-  <div class="th">「ONTO 是 advanced packaging 量測的 niche specialist — Dragonfly G5 qualified at 2.5D logic 龍頭 + HBM4 $240M VPA 鎖訂單」</div>
-  <div class="dt">2026-05-07 · Deep Conviction Analysis</div>
+
+<header class="fixed-top">
+  <span class="ticker mono">ONTO · Onto Innovation</span>
+  <span class="sep">｜</span>
+  <span class="mono">2026-05-07</span>
+  <span class="sep">｜</span>
+  <span class="thesis-line">advanced packaging 量測的 niche specialist — Dragonfly G5 + Atlas G6 雙平台 + $240M HBM4 VPA 鎖訂單</span>
 </header>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
 
 <main>
 
-<!-- §2 Thesis -->
-<section>
-  <h2>§2｜One-Sentence Thesis</h2>
-  <div class="thesis-box">
-    <div class="tt">ONTO 是 advanced packaging 量測的 niche specialist——Dragonfly G5 在 2.5D logic 龍頭 + HBM4 $240M VPA 鎖訂單，是 KLA 不重疊的專家位。</div>
-    <div class="sub">50 字以內｜投資本質敘事</div>
-  </div>
-  <p style="color:#64748b;font-size:12.5px;margin-top:10px">
-    這不是「KLA 第二」，而是「KLA 主攻 process control 主場、ONTO 在 advanced packaging 3D ellipsometry niche 卡位」的故事——niche 故事的 R:R 與 KLA 不同，估值 priced for AI packaging supercycle perfection。
+<h1>Deep Conviction Analysis · ONTO（Onto Innovation）</h1>
+<p style="color:var(--muted);font-size:14px;margin:0 0 12px">深度定見分析 ｜ 報告日期：2026-05-07 ｜ 標的價格：USD 299.55（5/6 收盤）｜ Forward P/E (FY27E $9.34) ≈ 32.1x ｜ 覆蓋 2026-05-07 v1 舊版（38KB）</p>
+
+<!-- ==================== §2 ONE-SENTENCE THESIS ==================== -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-card">
+  <div class="quote">ONTO 是 advanced packaging 量測的 niche specialist：spectral ellipsometry 3D 建模 + Dragonfly G5/Atlas G6 雙平台，是 KLA 不重疊的 HBM4／2.5D 邏輯 metrology POR 位置。</div>
+  <div class="label">— 50 字以內，敘事性 thesis（非財務指標主體）</div>
+</div>
+
+<div class="card">
+<h3>Thesis 解讀</h3>
+<p>這不是「KLAC 第二」的說法 — 那是 cyclical commodity framing。本 thesis 的核心是 <strong>niche specialist with cross-platform reference</strong>：ONTO 在 advanced packaging metrology（HBM4 + CoWoS + 2.5D logic）這個 KLA 主場以外的 process control 子戰場，靠 Dragonfly G5（2D inspection + 3D bump metrology）與 Atlas G6（OCD GAA / DRAM）雙平台，握有 <strong>logic + memory 雙線 reference 位置</strong>。</p>
+<p>「niche specialist」三個字精準：① 不是 KLA inspection 主場（53% 寡占）正面對決；② Dragonfly G5 已被 leading 2.5D logic 客戶 qualified（管理層 Q1 26 法說，2026-05-05）；③ 一個 leading HBM 製造商簽下 $240M+ VPA through 2027 — VPA 體量在 small-cap 設備商裡屬於 anchor-tenant 級別。但 niche 也意味著規模劣勢：KLA R&D ~$1.5B / year vs ONTO ~$200M，moat 寬度比 KLA 窄 1.5 級。</p>
+</div>
+
+<!-- ==================== §7 DECISION（含 7a opportunity cost） ==================== -->
+<h2>§7 Decision（可執行計畫）</h2>
+
+<div class="decision-card">
+  <span class="verdict-tag">SATELLITE · 條件式分批 · 等回測</span>
+  <h3 style="margin-top:6px">7a｜倉位與進場計畫</h3>
+  <table>
+    <thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+    <tbody>
+      <tr><td>在投資組合中的角色</td><td><strong>衛星持倉（Satellite）</strong> — niche specialist + small-cap 高 beta / 流動性較差，相對 KLAC 風險高但上行倍數較大</td></tr>
+      <tr><td>初始建倉倉位</td><td><strong>1% of portfolio</strong>（探點，等 Q2 數據 confirm）</td></tr>
+      <tr><td>目標倉位</td><td><strong>3% of portfolio（衛星上限）</strong>，禁止超過 — 集中度風險限制</td></tr>
+      <tr><td>進場價位區間</td><td><strong>USD 222 – 260</strong>（DD 進場條件 BB 中軌 + Forward PE 28-32x；現價 $299.55 對應 FPE 32.1x 已 priced perfection）</td></tr>
+      <tr><td>進場節奏</td><td><strong>條件式分批（強制）</strong> — 因 14 個月漲 +254%（從 $86 → $305）+ Forward PE 32x，禁止追高一次建倉。三批：① 現價 $299.55 探點 1%；② Q2 FY26 法說（2026-08）Rev ≥ $325M（guide mid）+ GAAP GM ≥ 51% 後加 1%；③ 跌至 $260（BB 中軌附近）加 1% 達 3% 目標</td></tr>
+      <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>
+        <strong>vs KLAC（process control 主場 53% 寡占）</strong>：兩者皆 process control 但<strong>不重疊</strong> — KLAC 主攻 inspection / metrology 主流（process control TAM 65%+ 主場），ONTO 主攻 advanced packaging 3D ellipsometry niche；組合應 <strong>KLAC 5% 為主 + ONTO 3% 為輔</strong>。ONTO 是 KLAC 的「補充倉位」（advanced packaging exposure），不是「替代」；KLAC moat 9.5/10 vs ONTO 8.0/10，KLAC 是 wide compounder、ONTO 是 thematic specialist。<br>
+        <strong>vs Camtek（CAMT）</strong>：<span class="warn-tag">直接競爭</span> — Camtek 是 ONTO 在 HBM4 metrology 最大競爭者；Camtek Q4 25 法說自稱「reference tool for HBM4 across all major manufacturers」、ONTO Q1 26 自稱「regain 50% of lost share in 2026」 — <strong>這是 zero-sum win/lose 對立</strong>。建議二選一：若已持 CAMT 應減持以避免互蝕；ONTO 在 logic + memory 雙線 reference 較全面（Atlas G6 OCD + Dragonfly G5 inspection + 3Di），CAMT 主在 AOI 單線。<br>
+        <strong>vs LRCX（etch 設備）/ AMAT（沉積設備）</strong>：完全不同類別 — LRCX/AMAT 賣 process equipment，ONTO 賣 process control（量測檢測）。ONTO + LRCX + KLAC 形成「AI WFE 三角」可同持，邊際資金加 ONTO 不重疊 LRCX。<br>
+        <strong>邊際資金優先級</strong>：KLAC（核心 5%）&gt; ONTO（衛星 3%）&gt; CAMT（若已持 → 換成 ONTO）— 同類 advanced packaging 曝險首選 ONTO。
+      </td></tr>
+    </tbody>
+  </table>
+
+  <h3>7b｜加碼與減碼條件</h3>
+  <table>
+    <thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+    <tbody>
+      <tr><td>加碼</td><td>Q2 FY26 Rev ≥ $325M（guide mid）+ GAAP GM ≥ 51% + Dragonfly G5 季度出貨 4x QoQ（2026-08 法說）</td><td>2%</td></tr>
+      <tr><td>加碼</td><td>跌至 $260（BB 中軌）+ H1+H2 假設無破損 + Q3 FY26 GAAP GM 維持 ≥ 51%</td><td>3%（目標達標）</td></tr>
+      <tr><td>加碼（vol 機會）</td><td>跌至 $222（BB 下軌 / DD 進場條件）+ thesis 三假設未削弱（HBM4 ramp on track + Dragonfly G5 客戶數 +50% YoY + Rigaku 商譽未減值）</td><td>3%（fully allocated）</td></tr>
+      <tr><td>減碼</td><td>FY26 季度 GAAP GM 連 2 季 &lt; 50%（R3 觸發 — DD §C R3 閾值）</td><td>1.5%</td></tr>
+      <tr><td>減碼</td><td>Camtek 季度 HBM AP 收入 YoY 增速連 2 季 &gt; ONTO + 10pp（R2 觸發 — 結構份額流失）</td><td>1%</td></tr>
+      <tr><td>清倉</td><td>Rigaku 或 Semilab 商譽減值 &gt; $50M（R4 觸發）</td><td>0%</td></tr>
+      <tr><td>清倉</td><td>FY26 Rev 無法達 $1.3B（管理層 reiterated &gt; +30% YoY 主軸破）</td><td>0%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+  <table>
+    <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>股價 $299.55 在 W250 ($130) 之上？</td><td><span class="ok-tag">✅ 是</span></td><td>+131% 距離（極遠，cycle re-rate 已大量發生）</td></tr>
+      <tr><td>股價在 W104 ($169) 之上？</td><td><span class="ok-tag">✅ 是</span></td><td>+77% 距離</td></tr>
+      <tr><td>W52 vs W104</td><td><span class="warn-tag">⚠ W52 $157 &lt; W104 $169</span></td><td>2025-08 低點 $86 把 W52 拉低 — V 型恢復特例（DD 已說明）</td></tr>
+      <tr><td>W250 斜率</td><td><span class="ok-tag">✅ +7.28% 正</span></td><td>長期多頭</td></tr>
+      <tr><td>Pure MA 強勢進場？</td><td><span class="warn-tag">⚠ V 型特例</span></td><td>DD 認為「以 thesis-level 仍視為多頭」，但動能已過熱</td></tr>
+      <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="no-tag">⚠ 14 個月 +254%</span></td><td>已透支 FY+1/+2 成長空間；現價 forward PE 32x = priced perfection</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>結論：</strong>W250 斜率正 + 結構多頭，但短中期動能過熱（14M +254%）+ 短中期 R:R 為負；<strong>進場必須條件式分批 + 等回測 $260 BB 中軌</strong>，禁止追高。Skill guardrail 12b 強制 §7a 進場節奏採條件式（如上）。
   </p>
-</section>
+  <p style="font-size:13px;color:var(--muted)"><em>Mean reversion 歷史頻率：14 個月 +254% 後 12 個月內回測 25-40% 機率 ~55%（小盤半導體設備歷史樣本）。Pure MA 通過告訴你「結構是多頭」，動能過熱告訴你「短期不該追」。</em></p>
 
-<!-- §7 Decision -->
-<section>
-  <h2>§7｜Decision（可執行計畫）</h2>
-
-  <div class="decision-box">
-    <strong>決策：等回測，不追高。</strong> Niche specialist 訊號燈 B（DD QC-29 降級從 A → B）；52w 從 $86 → $305 漲 +254% 已大量透支 FY27 成長空間；Q1 GAAP OPM 從 23.7% 殺至 11.5%（Semilab 整合費用）= H3 削弱。
-  </div>
-
-  <h3>7a. 倉位與進場計畫</h3>
+  <h3>7d｜建議持有年限</h3>
   <table>
-    <tr><th style="width:30%">項目</th><th>具體內容</th></tr>
-    <tr><td>投資組合角色</td><td><strong>衛星持倉</strong>（相對 KLAC niche specialist 風險較高，但 R:R 上行倍數較大）</td></tr>
-    <tr><td>初始建倉倉位</td><td>1%（探點，等 Q2 數據 confirm）</td></tr>
-    <tr><td>目標倉位</td><td>3%（衛星上限）</td></tr>
-    <tr><td>進場價位區間</td><td>$222 - $260（DD 進場條件 BB 中軌 + FPE 28-32x；FPE = $280-300 / FY27 $9.34）</td></tr>
-    <tr><td>進場節奏</td><td><strong>條件式分批</strong>：① 現價 $299.55 forward PE 32x 已 priced perfection，先佈 1% 探點；② Q2 26 Rev ≥ $325M（guide mid）+ GAAP GM 恢復 ≥ 55% 後加 1%；③ 跌至 $260（BB 中軌附近）加 1% 達目標。<strong>禁止追高</strong>。</td></tr>
-    <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>
-      <strong>vs KLAC</strong>：兩者皆 process control 但<strong>不重疊</strong>——KLAC 主攻 inspection 主場（53% 寡占），ONTO 主攻 advanced packaging 3D ellipsometry niche；組合應 <strong>KLAC 為主 5% + ONTO 為輔 3%</strong>，不可大量重疊；ONTO 是 KLAC 的「補充倉位」而非「替代」。<br>
-      <strong>vs LRCX</strong>：兩者完全不同——LRCX 賣 etch 設備、ONTO 賣量測；ONTO + LRCX + KLAC 形成「AI WFE 三角」可同持。<br>
-      <strong>vs Camtek（CAMT）</strong>：Camtek 是 ONTO 在 HBM4 metrology 最大競爭者，若已持 Camtek 應減持以避免 zero-sum 風險（一家贏另一家輸）；建議二選一，ONTO 在 logic + memory 雙線都有 G5 reference 較全面。
-    </td></tr>
+    <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+    <tbody>
+      <tr><td>短期（&lt; 2 年）</td><td>FY26 Rev &gt; $1.3B + Dragonfly G5 ramp on track + GAAP GM 恢復至 51%+ + Q2/Q3 法說無 R3/R4 警示</td></tr>
+      <tr><td>中期（2-5 年）</td><td>HBM4 + HBM5 reference 取得 + advanced packaging metrology 占公司收入 60%+ + Rigaku/Semilab 整合協同兌現</td></tr>
+      <tr><td><strong>長期（5-10 年）</strong></td><td><strong>主推持有區間（衛星位）</strong>。Advanced packaging metrology TAM 達 $25-30B（ONTO 自估 2030）+ ONTO 維持 niche specialist 地位（不被 KLA 全面侵蝕）+ 2030 Rev $2.5-3.5B。</td></tr>
+    </tbody>
   </table>
-
-  <h3>7b. 加碼與減碼條件</h3>
-  <table>
-    <tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
-    <tr><td>加碼</td><td>Q2 FY26 Rev ≥ $325M + GAAP GM ≥ 55% + Dragonfly G5 出貨 4x QoQ</td><td>2%</td></tr>
-    <tr><td>加碼</td><td>跌至 $260（BB 中軌）且 H1+H2 假設無破損</td><td>3%（目標達標）</td></tr>
-    <tr><td>減碼</td><td>FY26 季度 GAAP GM 連續 2 季 &lt; 50%（R3 觸發）</td><td>1.5%</td></tr>
-    <tr><td>減碼</td><td>Camtek HBM AP 收入 YoY 增速連 2 季 &gt; ONTO + 10pp（R2 觸發）</td><td>1%</td></tr>
-    <tr><td>清倉</td><td>Rigaku 或 Semilab 商譽減值 &gt; $50M（R4 觸發）OR FY26 Rev 無法達 $1.3B</td><td>0%</td></tr>
-  </table>
-
-  <h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
-  <table>
-    <tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
-    <tr><td>股價 $299.55 在 W250 ($130) 之上？</td><td><span class="pill pill-good">✅ 是</span></td><td>+131% 距離（極遠，cycle re-rate 已大量發生）</td></tr>
-    <tr><td>股價在 W104 ($169) 之上？</td><td><span class="pill pill-good">✅ 是</span></td><td>+77% 距離</td></tr>
-    <tr><td>W52 vs W104</td><td><span class="pill pill-warn">⚠ W52 $157 &lt; W104 $169</span></td><td>2025-08 低點 $86 把 W52 拉低 — V 型恢復特例（DD 已說明）</td></tr>
-    <tr><td>W250 斜率</td><td><span class="pill pill-good">✅ +7.28% 正</span></td><td>長期多頭</td></tr>
-    <tr><td>Pure MA 強勢進場？</td><td><span class="pill pill-warn">⚠ V 型特例</span></td><td>DD 認為「以 thesis-level 仍視為多頭」，但動能已過熱</td></tr>
-    <tr><td>4 週 / 短期動能</td><td><span class="pill pill-bad">⚠ 14 個月漲 +254%</span></td><td>已透支 FY+1/+2 成長空間，需 EPS 進一步上修才能合理化</td></tr>
-  </table>
-  <p style="color:#64748b;font-size:12.5px">
-    <strong>結論</strong>：W250 斜率正 + 結構多頭，但短中期動能過熱（14M +254%）+ 短中期 R:R 為負；<strong>進場必須條件式分批 + 等回測 $260 BB 中軌</strong>，禁止追高。
-  </p>
-
-  <h3>7d. 建議持有年限 + EPS 預測</h3>
-  <table>
-    <tr><th>持有年限</th><th>條件</th></tr>
-    <tr><td>短期（&lt; 2 年）</td><td>FY26 Rev &gt; $1.3B + Dragonfly G5 ramp on track + GAAP GM 恢復至 51%+</td></tr>
-    <tr><td>中期（2-5 年）</td><td>HBM4 + HBM5 reference 取得 + advanced packaging metrology 占公司收入 60%+ + Rigaku/Semilab 整合協同兌現</td></tr>
-    <tr><td><strong>長期（5-10 年）</strong></td><td><strong>Advanced packaging metrology TAM 達 $25-30B + ONTO 維持 niche specialist 地位 + 2030 Rev $5B+</strong></td></tr>
-  </table>
-  <p><strong>建議持有年限：3-7 年（衛星部位）</strong>，原因：ONTO 是 niche specialist 而非五寡占級別 compounder；長期持有但持倉 cap 在 3% 控制集中度風險。</p>
+  <p><strong>建議持有年限：3-7 年（衛星部位 cap 3%）</strong>。原因：① ONTO 是 niche specialist 而非 wide-moat compounder（vs KLAC）；② Forward PE 32x 起點貴，5Y 期望 +69%（機率加權）需要回測 $260 才能放大到 +95%；③ 衛星 3% cap 控制集中度與 small-cap beta 風險。</p>
 
   <h4>EPS 預測參考表</h4>
   <table>
-    <tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
-    <tr><td>FY2026</td><td>$7.22</td><td>共識</td><td>整合費用拖累；FY26 Rev &gt; $1.3B (+30%)</td></tr>
-    <tr><td>FY2027</td><td>$9.34</td><td>共識</td><td>GM 恢復至 56%+ + Dragonfly G5 滿載</td></tr>
-    <tr><td>FY2030E（外推）</td><td>$15-17</td><td>外推</td><td>外推假設：advanced packaging metrology TAM 倍增 + 2030 Rev $2.5-3.5B</td></tr>
+    <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+    <tbody>
+      <tr><td>FY2026E</td><td>$7.22</td><td>共識（Q1 26 法說後）</td><td>Semilab/Rigaku 整合費用拖累；FY26 Rev &gt; $1.3B (+30%)</td></tr>
+      <tr><td>FY2027E</td><td>$9.34</td><td>共識（Q1 26 法說後）</td><td>GM 恢復至 56%+ + Dragonfly G5 滿載 + Atlas G6 GAA 第二客戶 ramp</td></tr>
+      <tr><td>FY2028E</td><td>$11.5</td><td>外推</td><td>HBM5 cycle 啟動 + Atlas G6 第三/四 GAA 客戶 + Rigaku 整合協同</td></tr>
+      <tr><td>FY2030E（外推）</td><td>$15-17</td><td>外推</td><td>外推假設：advanced packaging metrology TAM 倍增 + 2030 Rev $2.5-3.5B + GM 結構回 56%+</td></tr>
+    </tbody>
   </table>
 
-  <p style="margin-top:12px"><strong>假設長期持有，現價適合嗎？</strong> <span class="pill pill-warn">不適合追高，等回測</span> — 現價 forward PE 32x（FY27E $9.34）vs 5Y 期望機率加權僅 1.32x（+32%）；<strong>$260 才是 R:R 健康的進場區（forward PE 28x）</strong>。</p>
-</section>
+  <p style="margin-top:12px"><strong>假設長期持有，現價適合嗎？</strong> <span class="warn-tag">不適合追高，等回測</span> — 現價 forward PE 32x（FY27E $9.34）vs 5Y 期望機率加權 1.69x（+69%）；<strong>$260 才是 R:R 健康的進場區（forward PE 28x）</strong>。若起點落 $260，5Y 期望 +95%（年化 ~14%）；若起點 $299，年化壓縮至 ~11%。等待價值約 +3pp 年化報酬，值得用 3 個月換。</p>
+</div>
 
-<!-- §4 Asymmetry -->
-<section>
-  <h2>§4｜Asymmetry Analysis</h2>
+<!-- ==================== §4 ASYMMETRY ANALYSIS ==================== -->
+<h2>§4 Asymmetry Analysis</h2>
+
+<div class="card">
+<table>
+  <thead><tr><th>情境</th><th>5 年倍數</th><th>依據</th><th>機率估計</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Bull（thesis 對 + 全 ramp）</strong></td><td><strong>+200%（≈ 3.0x）</strong></td><td>FY30 Rev $3.5B + EPS $17 + PE 35x → $595。前提：HBM4 + HBM5 + CoWoS 三循環疊加 + Dragonfly G5 + Atlas G6 + Rigaku 整合協同 + Camtek share 失守反而被 ONTO 重奪</td><td><strong>30%</strong></td></tr>
+    <tr><td>Base（thesis 部分對）</td><td>+40%（≈ 1.4x）</td><td>FY30 Rev $2.5B + EPS $14 + PE 30x → $420。HBM4 滲透順利但 Camtek 部分搶 share；Dragonfly G5 ramp on track；GM 恢復至 55%</td><td>50%</td></tr>
+    <tr><td><strong>Bear（thesis 錯）</strong></td><td><strong>−55%（≈ 0.45x）</strong></td><td>FY30 Rev $1.5B + EPS $6 + PE 22x → $135。R3 GM 結構降至 47-49% 連續 + Camtek 取代 ONTO HBM4 50% reference + Rigaku/Semilab 整合失敗減值 + AI capex 急降；DD Bear 短期 $141 對應</td><td>20%</td></tr>
+    <tr><td colspan="3" style="text-align:right"><strong>機率加權 5 年期望值</strong></td><td><strong>≈ 1.69x（+69%）</strong></td></tr>
+  </tbody>
+</table>
+<p style="font-size:13px;color:var(--muted);margin-top:8px">計算：30%×3.0 + 50%×1.4 + 20%×0.45 = 0.9 + 0.7 + 0.09 ≈ <strong>1.69x</strong>。若起點落在 $260（vs $299.55），期望值升至 1.95x（+95%）— <strong>等 13% 回測 = +26pp 期望報酬</strong>，這是 §7 條件式分批的數學基礎。</p>
+</div>
+
+<div class="card">
+<h4>追加壓力測試</h4>
+<ul>
+  <li>若 thesis 對但時間拉到 10 年（2035）→ EPS $18-20 × PE 30x = $570，10 年 +90%（年化 ~6.6%）→ <strong>長期持有可接受，但起點估值是核心</strong></li>
+  <li>機會成本對照：Bull +200% vs S&amp;P 5Y +60% → <strong>alpha +140pp</strong>；Bear −55% 是 S&amp;P −10% 的 5.5x → <strong>不對稱 ~3.6:1</strong>（200/55）</li>
+  <li><strong>關鍵差異</strong>：ONTO 是 small-cap niche specialist，beta 較高、流動性較差；衛星倉位 cap 3% 是適當風控（vs KLAC 5% core 上限）</li>
+</ul>
+</div>
+
+<div class="pattern-card">
+  <h3 style="margin-top:0">📐 Pattern match：歷史相似 setup（讓機率有錨點）</h3>
   <table>
-    <tr><th>情境</th><th>5 年倍數</th><th>依據</th><th>機率</th></tr>
-    <tr><td>Bull（thesis 對 + 全 ramp）</td><td>+200%（3.0x）</td><td>2030 Rev $3.5B + EPS $17 + PE 35x → $595；HBM4 + HBM5 + CoWoS 三循環 + Dragonfly G5 + Atlas G6 + Rigaku 整合協同</td><td>30%</td></tr>
-    <tr><td>Base（thesis 部分對）</td><td>+40%（1.4x）</td><td>2030 Rev $2.5B + EPS $14 + PE 30x → $420；HBM4 滲透順利但 Camtek 部分搶 share；G5 ramp on track</td><td>50%</td></tr>
-    <tr><td>Bear（thesis 錯）</td><td>−55%（0.45x）</td><td>R3 GM 結構降至 47-49% + Camtek 取代 + Rigaku/Semilab 整合失敗 + AI capex 急降；EPS 退至 $6；PE 22x → $135；DD Bear 短期 $141 對應</td><td>20%</td></tr>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>歷史結構類似的個股</td><td><strong>Camtek（CAMT）2018-2022 AOI niche specialist</strong>（HBM2/3 ramp 起點 micro-cap → 中盤翻倍）+ <strong>Veeco Instruments（VECO）2017-2020 MOCVD niche</strong>（LED metrology specialist，cyclical 風險高）</td></tr>
+      <tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>Camtek 2019：股價 $5 → 2022 $50（+10x，5Y），driven by HBM3 ramp + AOI niche；當時 forward PE 起點 18x（未被發現）；ONTO 現在起點 PE 32x（已被市場充分定價）</td></tr>
+      <tr><td>最終 5 年實現報酬</td><td>Camtek 2018-2023: 5Y +400%；Veeco 2017-2022: 5Y +50%（cyclical reset 一次）；中位 ~+225%</td></tr>
+      <tr><td>我的標的最像 / 最不像的地方</td><td><strong>最像 Camtek 2019</strong>：兩者皆 advanced packaging metrology specialist + HBM driver + small-cap 高 beta；<strong>最不像</strong>：Camtek 起點 PE 18x「未被發現」，ONTO 起點 PE 32x「市場已充分定價」 → ONTO 5Y 期望應折扣到 +40-150% 而非 +400%；想複製 Camtek 5Y 翻倍需<strong>等 ONTO 回測 $200-260</strong>（PE 22-28x）才有空間</td></tr>
+    </tbody>
   </table>
-  <p><strong>機率加權 5 年期望值：</strong> 30%×3.0 + 50%×1.4 + 20%×0.45 = 0.9 + 0.7 + 0.09 ≈ <strong>1.69x（+69%）</strong>，但<strong>起點估值貴 → 條件式分批是必要的</strong>；若起點落在 $260 區間，期望值升至 1.95x（+95%）。</p>
+  <p style="font-size:12.5px;color:#0c4a6e;margin-top:10px"><strong>啟示</strong>：ONTO 5Y 1.69x 機率加權期望不是憑感覺，是錨定 Camtek 翻倍 pattern + 起點估值折扣後的合理估計。Pattern 提醒：等回測 $260 把起點 PE 殺到 28x，是把這個 pattern 從「中度可複製」升級到「高度可複製」的關鍵。</p>
+</div>
 
-  <h4>追加壓力測試</h4>
-  <ul>
-    <li>若 thesis 對但時間拉到 10 年（2035）→ EPS $18-20 × PE 30x = $570，10 年 +90%（年化 6.6%）→ <strong>長期持有可接受，但起點估值是核心</strong></li>
-    <li>機會成本對照：Bull +200% vs S&P 5Y +60% → <strong>alpha +140pp</strong>；Bear -55% 是 S&P -10% 的 5.5x → <strong>不對稱 ~3.6:1（200/55）</strong></li>
-    <li><strong>關鍵差異</strong>：ONTO 是 small-cap niche specialist，beta 較高、流動性較差；衛星倉位 cap 3% 是適當風控</li>
-  </ul>
+<!-- ==================== §1 MENTAL MODELS ==================== -->
+<h2>§1 Mental Models 壓力測試</h2>
 
-  <div class="pattern-box">
-    <h3 style="margin-top:0">📐 Pattern match：歷史相似 setup</h3>
-    <table>
-      <tr><th>項目</th><th>內容</th></tr>
-      <tr><td>歷史結構類似的個股</td><td><strong>Veeco Instruments（VECO）2017-2020 MOCVD niche</strong>（LED + MicroLED metrology specialist）+ <strong>Camtek（CAMT）2018-2022 AOI niche</strong>（advanced packaging 量測 small-cap 翻倍）</td></tr>
-      <tr><td>當時的 setup</td><td>Camtek 2019：股價 $5 → 2022 $50（10x，5Y），driven by HBM3 ramp；當時 forward PE 起點 18x；ONTO 現在起點 PE 32x（已 priced）</td></tr>
-      <tr><td>最終 5 年實現報酬</td><td>Camtek: 5Y +400-1000%（不同年起點）；Veeco: 5Y +50%（高 cycle 風險）</td></tr>
-      <tr><td>我的標的最像 / 最不像</td><td><strong>最像 Camtek</strong>：兩者皆 advanced packaging metrology specialist + HBM driver + small-cap 高 beta；<strong>最不像</strong>：Camtek 起點 PE 18x 為「未被發現」，ONTO 起點 PE 32x 已被「市場充分定價」 → ONTO 5Y 期望應折扣到 +40-150% 而非 +400%；想複製 Camtek 5Y 翻倍需等 ONTO 回測 $200-260</td></tr>
-    </table>
-    <p style="font-size:12.5px;color:#64748b;margin-top:10px">這個 pattern match 提醒：ONTO 1.69x 5Y 期望不是憑感覺，是錨定 Camtek 翻倍 pattern + 起點估值折扣後的合理估計。</p>
-  </div>
-</section>
-
-<!-- §1 Mental Models -->
-<section>
-  <h2>§1｜Mental Models 壓力測試</h2>
-
-  <h3>測試一：投委會 1 頁紙 Memo</h3>
-  <div class="memo-box">
-[ ONTO · Onto Innovation · 2026-05-07 ]
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">[ ONTO · Onto Innovation · 2026-05-07 · DCA Memo ]
 
 THESIS（一句話）
 ONTO 是 advanced packaging 量測的 niche specialist——
-Dragonfly G5 在 2.5D logic 龍頭 + HBM4 $240M VPA 鎖訂單，
-是 KLA 不重疊的專家位。
+Dragonfly G5 在 2.5D logic 龍頭 qualified + HBM4 $240M VPA 鎖訂單，
+是 KLA 不重疊的 metrology 專家位（Atlas G6 OCD + 3Di + Dragonfly G5 三平台）。
 
 KEY DRIVER（命脈）
-1. HBM4 / CoWoS supercycle 帶 advanced packaging metrology
-   結構成長（需求側持續性）— FY26 Rev > $1.3B (+30%)
-2. Dragonfly G5 + Atlas G6 雙平台 spectral ellipsometry 3D
-   建模差異化（供給側 niche moat）— 2.5D logic 龍頭 qualified
+1. HBM4 / CoWoS supercycle 帶 advanced packaging metrology 結構成長（需求側）
+   - SK Hynix 2026 / Samsung Q4 26 / Micron H2 26 HBM4 量產
+   - TSMC CoWoS 35K → 130K wafers/月 by 2026 末（+270%）
+   - ONTO Q1 advanced packaging revenue >$50M（3x YoY）；FY26 reiterated >+30%
+2. Dragonfly G5 + Atlas G6 雙平台 spectral ellipsometry 3D 差異化（供給側 niche moat）
+   - G5 qualified at 2.5D logic 龍頭 + 15+ apps / 10+ customers pipeline
+   - Atlas G6 selected by 第二 GAA logic 客戶（Q1 advanced nodes +13% QoQ）
+   - 3Di qualified at 2 leading HBM customers Q3 2025（管理層 「we're not aware of
+     anyone else qualified through stringent tests」）
 
 R:R（5 年機率加權）
 Bull 30% × 3.0x ｜ Base 50% × 1.4x ｜ Bear 20% × 0.45x
 → 期望值 1.69x（+69%）；不對稱 ≈ 3.6:1
-但起點估值 forward PE 32x 已 priced perfection
+但起點 forward PE 32x = priced perfection；等 $260 → 期望升 +95%
 
 主要風險（按嚴重度）
-① FY26 GAAP GM 連 2 季 < 50%（R3 觸發，立即減碼）
-② Camtek 取代 ONTO HBM4 reference（R2 觀察）
-③ Rigaku/Semilab 整合失敗 / 商譽減值（R4 短期風險）
+① FY26 GAAP GM 連 2 季 < 50%（R3 觸發 — §5 single thing）
+② Camtek 取代 ONTO HBM4 reference（R2 觀察 — Camtek 自稱「reference tool for HBM4
+   across all major manufacturers」vs ONTO 自稱「regain 50% of lost share」）
+③ Rigaku/Semilab 整合失敗 / 商譽減值（R4 — Q1 already $6.1M inventory step-up amort）
 ④ 14M 漲 +254% 透支 FY+1/+2 成長空間（短期回測風險）
 
 建議倉位 / 節奏
-衛星 3%；首批 1%（現價 $299）→ Q2 數據 confirm + GM 恢復後加 1%
+衛星 3% cap；首批 1%（現價 $299）→ Q2 數據 confirm + GAAP GM ≥ 51% 後加 1%
 → 跌至 $260 BB 中軌加 1% 達目標
-不可追高、不可重倉
+不可追高、不可重倉、不可超過 3%
 
 OPPORTUNITY COST
 - vs KLAC：不重疊（KLAC 主場 inspection / ONTO niche AP）
-  → 建議 KLAC 5% + ONTO 3% 並列
-- vs Camtek：二選一；ONTO 在 logic+memory 雙線較全面 → 選 ONTO
+  → 建議 KLAC 5% + ONTO 3% 並列（互補非替代）
+- vs Camtek：zero-sum 二選一；ONTO logic+memory 雙線較全面 → 選 ONTO
 
 REVIEW TRIGGER
-- Q2 FY26 報告：2026-08
+- Q2 FY26 報告：2026-08（Rev / GAAP GM / G5 ramp）
+- Q3 FY26 報告：2026-11（GAAP GM 連 2 季 → R3 閾值）
 - Dragonfly G5 ramp 進度：每季 4 次
 - Rigaku/Semilab 整合進度：FY26 H2
-- 保質期：3 個月（Q2 數據前）
-  </div>
+- 保質期：3 個月（2026-08-07 前）— Q2 FY26 財報發布前有效
+</div>
 
-  <h3>測試二：30 秒電梯簡報</h3>
-  <div class="elev-box">
-    "ONTO 是 advanced packaging 量測的 niche 龍頭——HBM4 + 2.5D 邏輯封裝爆發是它的順風。Dragonfly G5 已被 2.5D 邏輯龍頭 qualified，HBM 大廠也下了 $240M 多年訂單。問題是 14 個月漲了 254%，現價 forward PE 32x 已經 priced 完美 30% 成長，所以我會等 Q2 數據 + 回測 $260 才開始建倉，目標 3% 衛星倉位。"
-  </div>
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+"ONTO 是 advanced packaging 量測的 niche 龍頭——HBM4 + 2.5D 邏輯封裝爆發是它的順風。Dragonfly G5 已被 2.5D 邏輯龍頭 qualified，HBM 大廠下了 $240M 多年訂單。問題是 14 個月漲了 254%，現價 forward PE 32x 已經 priced 完美 30% 成長，所以我會等 Q2 數據 + 回測 $260 才開始建倉，目標 3% 衛星倉位。風險主要看 GAAP GM 是不是連兩季掉破 50% — 這是我會立刻減碼的線。"
+</div>
 
-  <p style="margin-top:14px"><span class="pill pill-good">✅ 兩個測試皆通過</span> — thesis 邏輯自洽，無需回 §2 重寫。</p>
-</section>
+<p style="margin-top:14px"><span class="ok-tag">✅ 兩個測試皆通過</span> — thesis 邏輯自洽，30 秒版本能說清楚「為什麼買 + 為什麼等」，無需回 §2 重寫。</p>
 
-<!-- Phase B -->
-<section>
-  <h2>Phase B｜矛盾辨識 + ⚖ 強制裁決</h2>
+<!-- ==================== Phase B 矛盾 + 強制裁決 ==================== -->
+<h2>Phase B｜矛盾辨識 + ⚖ 強制裁決</h2>
 
-  <h3>1. 共識清單（高信心區）</h3>
-  <ul>
-    <li>A1（spectral ellipsometry 3D 建模 niche moat）+ A2（HBM4 + CoWoS supercycle 結構成長）+ A3（HBM VPA $240M 訂單可見度高）+ A4 既有 DD（H1+H2 ＋強化）<strong>方向高度一致</strong>。</li>
-    <li>Q1 FY26 是「Rev $292M record + Q2 guide $320-330M (+28%) + Dragonfly G5 qualified」三重 confirmation。</li>
-    <li>分析師 PT $334（+11.6%）+ FY26/27 EPS 共識持續上修。</li>
-  </ul>
+<div class="conflict-card">
+<h3 style="margin-top:0">1. 共識清單（高信心區）</h3>
+<ul>
+  <li>A1（spectral ellipsometry 3D niche moat）+ A2（HBM4 + CoWoS supercycle 結構成長）+ A3（HBM VPA $240M 訂單可見度高）+ A4（DD H1+H2 ＋強化）<strong>方向高度一致</strong>。</li>
+  <li>Q1 FY26 是「Rev $292M record + Q2 guide $320-330M (+28%) + Dragonfly G5 qualified」三重 confirmation。</li>
+  <li>分析師 PT $334（+11.6%）+ FY26/27 EPS 共識持續上修。</li>
+  <li>Pure MA 結構多頭（W250 +7.28% 正斜率）+ DD 三引擎 5Y 共識方向 bullish。</li>
+</ul>
 
-  <h3>2. 矛盾清單</h3>
-  <table>
-    <tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<h3>2. 矛盾清單</h3>
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+  <tbody>
     <tr>
       <td>1</td>
-      <td>結構性 niche thesis 強 vs Q1 GAAP OPM 11.5%（從 23.7% 殺）</td>
+      <td>結構性 niche thesis 強 vs Q1 GAAP OPM 從 23.7% 殺至 11.5%</td>
       <td>moat 強（spectral ellipsometry 3D 獨特）</td>
       <td>HBM4 結構性 demand</td>
-      <td>整合費用拖累，「事件性」非結構性</td>
-      <td><span class="amber">🟡 可調和</span>（時間差）</td>
+      <td>整合費用拖累，「事件性」非結構性？</td>
+      <td>🟡 可調和（時間差）</td>
     </tr>
     <tr>
       <td>2</td>
-      <td>vs Camtek 競爭——HBM4 reference 取代風險</td>
+      <td>vs Camtek HBM4 reference 取代風險</td>
       <td>ONTO 在 logic+memory 雙線都有 G5 reference</td>
       <td>—</td>
-      <td>$240M VPA 鎖死部分 HBM 訂單</td>
-      <td><span class="red">🔴 不可調和</span>（中期 win/lose 對立）</td>
+      <td>$240M VPA 鎖死部分 HBM 訂單，但 Camtek 自稱「reference tool for HBM4 across all major manufacturers」</td>
+      <td>🔴 不可調和（中期 win/lose 對立）</td>
     </tr>
     <tr>
       <td>3</td>
@@ -266,263 +324,330 @@ REVIEW TRIGGER
       <td>thesis 故事好</td>
       <td>—</td>
       <td>FY27 EPS $9.34 → forward PE 32x 已 priced</td>
-      <td><span class="amber">🟡 可調和</span>（程度差異——是否已透支）</td>
+      <td>🟡 可調和（程度差異 — 是否已透支）</td>
     </tr>
-  </table>
+    <tr>
+      <td>4</td>
+      <td>ONTO 自評「lost share, 目標 regain 50% in 2026」vs A1 結論「moat 強」</td>
+      <td>moat 強</td>
+      <td>—</td>
+      <td>ONTO 在 HBM3 → HBM4 過渡期確實流失過 share</td>
+      <td>🔴 不可調和（管理層自承 vs A1 結論）</td>
+    </tr>
+  </tbody>
+</table>
 
-  <h3>3. 與既有報告的交叉矛盾</h3>
-  <table>
-    <tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr>
+<h3>3. 與既有報告的交叉矛盾</h3>
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr></thead>
+  <tbody>
     <tr>
       <td>1</td>
       <td>進場時機急迫性</td>
       <td>條件式分批，等 $260 回測</td>
-      <td>DD 訊號燈 B（從 A 被 QC-29 降級），R:R 0/4 失效；DD 進場條件「BB 中軌 $222 + Q2 print 確認」</td>
-      <td>無實質矛盾——皆指向「故事好但價貴，等回測」</td>
+      <td>DD 訊號燈 B（A → B 因 QC-29 R:R 0/4 失效降級）；DD 進場條件「BB 中軌 $222 + Q2 print 確認」</td>
+      <td>無實質矛盾 — 皆指向「故事好但價貴，等回測」；DCA 與 DD 結論一致</td>
     </tr>
     <tr>
       <td>2</td>
       <td>是否該將 ONTO 視為 KLAC 替代</td>
-      <td>否——ONTO 是 niche specialist，不重疊 KLAC 主場</td>
+      <td>否 — ONTO 是 niche specialist，不重疊 KLAC 主場</td>
       <td>DD 沒明說但暗示 ONTO 是 KLAC 補充</td>
       <td>視角差：DCA 強調 portfolio 配置；DD 強調個股</td>
     </tr>
-  </table>
+  </tbody>
+</table>
+</div>
 
-  <div class="conflict-box">
-    <h3 style="margin-top:0">⚖ 強制裁決（不可調和矛盾必填）</h3>
-    <table class="verdict-table">
-      <tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th></tr>
-      <tr>
-        <td>1</td>
-        <td>vs Camtek HBM4 reference 取代風險</td>
-        <td><strong>選 ONTO（雙線全面）但對風險降權</strong></td>
-        <td>① ONTO 在 2.5D logic 龍頭 + HBM 大廠雙線都有 G5 reference，Camtek 主要 AOI 不是 spectral ellipsometry，技術路線不同；② ONTO $240M VPA 已鎖訂單到 2027；③ DD 設 R2 監測「Camtek 季度 HBM AP 收入 YoY 增速 &gt; ONTO + 10pp 連 2 季」是合理 settle 條件</td>
-        <td>季度 Camtek vs ONTO HBM AP 收入 YoY 增速；若 Camtek 連 2 季 +10pp 領先 → R2 觸發；若 ONTO 維持領先 → A1/A3 對</td>
-      </tr>
-      <tr>
-        <td>2</td>
-        <td>結構 niche thesis vs Q1 GAAP OPM 殺（雖列「可調和」，但對倉位有實質影響）</td>
-        <td><strong>選結構 thesis 但暫定整合費用為 transient 而非 permanent</strong></td>
-        <td>① Non-GAAP GM 55.7% vs GAAP 50.1%（差異 5.6pp = Semilab 整合費用 + acquisition charges）反映「事件性」；② Q2 guide GM 56-56.5% mid 反映管理層認為 GM 即將恢復；③ 但 DD 設 R3 「FY 2026 GAAP GM &lt; 50% 連 2 季」為結構性質變閾值是合理保險</td>
-        <td>Q2 / Q3 / Q4 26 GAAP GM 是否恢復到 51%+；若 Q2 GAAP GM &lt; 51% → 結構性質變；若 ≥ 51% → 整合費用退場</td>
-      </tr>
-    </table>
-    <p style="margin-top:12px;font-size:12.5px"><strong>裁決如何帶入 Phase C：</strong> 裁決 1 → §6 把「Camtek 取代」列為盲點 #2；裁決 2 → §5 把「FY26 GAAP GM &lt; 50% 連 2 季」設為 single thing。</p>
-  </div>
-</section>
-
-<!-- §3 Drivers -->
-<section>
-  <h2>§3｜Key Drivers + 我和市場的最大分歧</h2>
-
-  <h3>命脈（限 1-2 個）</h3>
-  <table>
-    <tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<div class="conflict-card">
+<h3 style="margin-top:0">⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+<div class="verdict-table">
+<table>
+  <thead><tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then 方向相反）</th></tr></thead>
+  <tbody>
     <tr>
       <td>1</td>
-      <td><strong>HBM4 / CoWoS supercycle 帶 advanced packaging metrology 結構成長（需求側持續性）</strong></td>
-      <td>HBM4 量產（SK Hynix 2026 / Samsung Q4 26 / Micron H2 26）+ TSMC CoWoS 2026 年化 650K wafers (+76% YoY)；ONTO advanced packaging metrology Q1 已 &gt;$50M (3x YoY)；FY26 reiterated &gt; $1.3B (+30%)；advanced packaging tool demand &gt; +50% 兌現</td>
-      <td>① 季度 advanced packaging revenue YoY；② Specialty + AP 占比（Q1 55%）；③ HBM VPA $240M 完成率</td>
+      <td>vs Camtek HBM4 reference 取代風險</td>
+      <td><strong>選 ONTO（雙線全面）但對風險降權</strong></td>
+      <td>① ONTO 在 2.5D logic 龍頭 + HBM 大廠雙線都有 G5 reference，Camtek 主要 AOI 不是 spectral ellipsometry，技術路線不同；② ONTO $240M VPA 已鎖訂單到 2027；③ ONTO 雙平台（Dragonfly G5 + Atlas G6）規模 leverage 強</td>
+      <td><strong>季度 Camtek vs ONTO HBM AP 收入 YoY 增速比較（每季財報後 1 週可算）</strong>；具體閾值：Camtek 連 2 季 +10pp 領先（DD R2 設定）= ONTO 結構份額流失</td>
+      <td>(a) <strong>upside</strong>：Q2/Q3 26 ONTO HBM AP YoY 仍領先 Camtek + Q4 26 Dragonfly G5 取得第 2 個 HBM 大廠 reference → 加碼至 3% 衛星上限；(b) <strong>downside</strong>：Camtek 連 2 季 +10pp 領先 → R2 觸發、減倉至 1% 並重新評估 thesis</td>
     </tr>
     <tr>
       <td>2</td>
-      <td><strong>Dragonfly G5 + Atlas G6 雙平台 spectral ellipsometry 3D 建模差異化（供給側 niche moat）</strong></td>
-      <td>Dragonfly G5 qualified at 2.5D logic 龍頭 + 15+ apps + 10+ customers in pipeline；Q2/Q3 nearly doubling per quarter；spectral ellipsometry 3D 模型優於 KLA optical 工具；ONTO 是 leading-edge fabs (TSMC/Samsung/Intel) 此類量測 POR (preferred provider)</td>
-      <td>① Dragonfly G5 季度出貨量；② 客戶 wins（apps + customers）；③ 量測 win rate（vs KLA / Camtek）</td>
-    </tr>
-  </table>
-
-  <h4>Driver 抽象層 guardrail 校驗</h4>
-  <p>
-    Driver 1（HBM4/CoWoS supercycle = 需求側）vs Driver 2（Dragonfly G5 + Atlas G6 雙平台 = 供給側 niche moat）：
-    <strong>能否在不假設 driver 1 成立的情況下單獨推翻 driver 2？</strong>
-    可以——若 ONTO 失去 Dragonfly G5 的差異化（例如 KLA 突破 3D ellipsometry 或 Camtek 全面取代），driver 2 即使 HBM4/CoWoS 需求超強仍會破；反之若 HBM4 量產延後到 2027（driver 1 弱），driver 2 的 G5 reference 仍可獨立保住一段時間。
-    <span class="pill pill-good">✅ 兩條獨立因果鏈，通過 guardrail</span>
-  </p>
-
-  <h4>強制減法——市場常討論但我認為不重要的因素</h4>
-  <table>
-    <tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
-    <tr><td>分析師 PT $334（+11.6%）</td><td>對 5-10 年 niche specialist 投資視角是雜訊；真正關鍵是 advanced packaging metrology TAM 兌現與 G5 滲透</td></tr>
-    <tr><td>Q1 GAAP OPM 從 23.7% 殺至 11.5%</td><td>主要是 Semilab/Rigaku 整合費用 transient；Q2 guide 28% 反映即將恢復；不是結構性 thesis 破</td></tr>
-    <tr><td>Camtek 在某幾家 HBM 客戶取代 ONTO</td><td>需追蹤但目前未成「結構性 share 流失」（DD R2 監測 +10pp + 2 季條件嚴格）</td></tr>
-    <tr><td>Rigaku 27% 戰略股權的非控制性持股價值</td><td>不是 thesis 主軸；是「optionality」非「核心」</td></tr>
-  </table>
-
-  <div style="background:#FEF7CD;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0">
-    <h3 style="margin-top:0">🔄 我和市場 consensus 的最大分歧</h3>
-    <table>
-      <tr><th>項目</th><th>內容</th></tr>
-      <tr><td>市場目前定價在什麼假設上</td><td>Forward PE 32x（FY27E $9.34）= 隱含「FY27 EPS 持續 +30% YoY + GM 恢復至 56% + 無重大 Camtek 取代」的 priced-to-perfection；分析師 PT $334（+11.6%）反映賣方對 2027 已大量 priced</td></tr>
-      <tr><td>我認為的不同假設</td><td>ONTO 是 niche specialist 且 GAAP GM 結構性恢復不確定（Rigaku/Semilab 整合風險未消化）；正確 PE band 應 26-30x（niche specialist 折扣）非 32x；同時市場低估「Camtek 在 HBM 部分取代 ONTO 局部 share」的 transient 風險</td></tr>
-      <tr><td>賣方為什麼錯（具體理由）</td><td>① 賣方視 ONTO 為「KLA 第二」，但 ONTO 是 niche specialist（small-cap、流動性差、cycle 波動大），合理 PE 應折扣 KLA 的 80-90%；② 過度權重 HBM4 ramp 樂觀情境，低估 Camtek 對 HBM4 reference 的局部競爭；③ 把 Q1 GAAP OPM 殺視為「短期事件」，但 Rigaku/Semilab 整合費用可能延伸到 2026 H2</td></tr>
-    </table>
-    <p style="font-size:12.5px;color:#7C5500;margin-top:10px"><strong>校驗</strong>：三題均能寫出具體差異 → thesis 有獨立 alpha 來源（特別是「等回測」這個 contrarian timing），§7 倉位採衛星 3% 上限 + 條件式分批是合理風控。</p>
-  </div>
-</section>
-
-<!-- §5 Single Thing -->
-<section>
-  <h2>§5｜The Single Thing That Could Change My Mind</h2>
-  <table>
-    <tr><th>項目</th><th>內容</th></tr>
-    <tr><td><strong>事件描述</strong></td><td><strong>FY 2026 季度 GAAP GM 連續 2 季 &lt; 50%</strong>（R3 觸發，從 Q1 50.1% 進一步惡化）</td></tr>
-    <tr><td>為什麼這個事件是致命的</td><td>① 這直接破 H3（GM 結構恢復），DD 已設為「結構性質變確認」；② 一旦 R3 觸發，DD 模型 PE 倍數壓縮至 25x，股價下行 35%+；③ 如 GM 結構性 &lt; 50% 持續，代表 Rigaku/Semilab 整合是「永久 dilution」而非「transient」 — moat 評分 −0.5 分；④ 對 niche specialist 來說 GM 是「定價權」直接驗證</td></tr>
-    <tr><td>如何監測</td><td>季度財報 GAAP GM 數字（每季 4 次）；交叉對照 Non-GAAP GM 與 acquisition charges 揭露；管理層 call 語氣</td></tr>
-    <tr><td>目前離發生有多遠</td><td>近——Q1 已 50.1%（剛好邊界）；Q2 guide 56-56.5%（如達標立即釋放）；2 季視窗 = Q3 26 中（2026-10/11）關鍵</td></tr>
-  </table>
-  <p style="font-size:12.5px;color:#64748b">
-    <strong>選擇邏輯</strong>：相較「Camtek 取代」「Rigaku 減值」「FY26 Rev 未達 $1.3B」三個候選 single thing，<strong>FY26 GAAP GM &lt; 50% 連 2 季</strong>是 most leading + 最具判別性的指標——前三者都是「外部變數 / 事件」，GAAP GM 是「內部最強信號」+ DD 已正式設為閾值；前三者單獨發生對 thesis 殺傷力 ≤ 40%（GM 防守可緩衝），GM 失守才是 thesis 的根。
-  </p>
-</section>
-
-<!-- §6 What I Don't Know -->
-<section>
-  <h2>§6｜What I Don't Know + Pre-mortem</h2>
-
-  <h3>6a. 強迫面對盲點</h3>
-  <table>
-    <tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>不成立的後果</th></tr>
-    <tr>
-      <td>1</td>
-      <td>Rigaku 27% 戰略股權 + Semilab 整合費用是 transient（FY26 H2 退場）</td>
-      <td>Q2 guide GM 56-56.5% 反映即將恢復；管理層執行紀錄佳（過去無重大失敗併購）</td>
-      <td>若 GAAP GM 結構性 &lt; 50%，PE 25x 壓縮 → 股價 -35%</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>Camtek 不會 2027 前在 HBM4 全面取代 ONTO（包含 logic + memory）</td>
-      <td>ONTO 在 logic+memory 雙線都有 G5 reference + $240M VPA 鎖訂單；技術路線不同（spectral ellipsometry vs AOI）</td>
-      <td>若 Camtek 連 2 季 +10pp 領先 → R2 觸發、ONTO 部分 share 流失</td>
-    </tr>
-    <tr>
-      <td>3</td>
-      <td>Dragonfly G5 ramp 路徑（每季 nearly doubling）持續 2026 全年</td>
-      <td>Q1 已交首批商業出貨；管理層強調 Q2/Q3 nearly doubling per quarter</td>
-      <td>若 Q3-Q4 ramp 卡關 → H2 thesis 抹去，FY26 Rev $1.3B 風險</td>
+      <td>結構 niche thesis vs Q1 GAAP OPM 殺（雖列「可調和」但對倉位有實質影響）</td>
+      <td><strong>選結構 thesis 但暫定整合費用為 transient（非 permanent）</strong></td>
+      <td>① Non-GAAP GM 55.7% vs GAAP 50.1%（差異 5.6pp = Semilab/Rigaku 整合費用 + acquisition charges）反映「事件性」；② Q1 已揭露 inventory step-up amortization $6.1M；③ Q2 guide non-GAAP GM 56-56.5% mid 反映管理層認為 GM 即將恢復；④ 但 DD R3「FY26 GAAP GM &lt; 50% 連 2 季」為結構性質變閾值是合理保險</td>
+      <td><strong>Q2/Q3 FY26 GAAP GM 是否恢復至 51%+</strong>（每季財報直接揭露，2026-08 與 2026-11）</td>
+      <td>(a) <strong>upside</strong>：Q2 GAAP GM ≥ 51% + Q3 GAAP GM ≥ 53% + Rigaku 商譽無減值 → 加碼至 2%（thesis 站穩）；(b) <strong>downside</strong>：Q2 GAAP GM &lt; 50% + Q3 仍 &lt; 50% → R3 觸發、減倉至 1.5% 並警示「整合費用是永久 dilution」</td>
     </tr>
     <tr>
       <td>4</td>
-      <td>HBM4 量產時程不會延後（SK 2026 / Samsung Q4 26 / Micron H2 26）</td>
-      <td>JEDEC HBM4 標準已發布；SK 已 ramp 2026 Q1</td>
-      <td>若 HBM4 普遍延後到 2027 → driver 1 弱化但 ONTO 仍在 logic 端有 G5 客戶</td>
+      <td>「lost share, 目標 regain 50%」vs A1 moat 強</td>
+      <td><strong>選 A1 moat 強但承認「moat 在子戰場上有缺口」</strong></td>
+      <td>① 「lost share」指的是 HBM3 → HBM4 過渡期 Camtek 在 AOI 賽道暫時搶走部分 share，不是 spectral ellipsometry 主戰場；② Dragonfly G5 + 3Di 是 ONTO 在 HBM4 的反擊產品（2026-08 開始 ramp）；③ 「regain 50%」是 stretch target 不是 base case；④ A1 moat 強指 spectral ellipsometry 3D 建模 + Atlas G6 OCD 的核心 IP，不是 AOI 整體</td>
+      <td><strong>Q2-Q4 FY26 ONTO HBM advanced packaging revenue 季度 YoY 增速</strong>（從 Q1 已 &gt;$50M 3x YoY 起算）；具體閾值：FY26 全年 HBM AP &gt; $250M = regain 部分 share；&lt; $200M = 結構失利</td>
+      <td>(a) <strong>upside</strong>：FY26 全年 HBM AP &gt; $250M + Q4 季度 &gt; $80M → 「regain」兌現，加碼至 3%；(b) <strong>downside</strong>：FY26 全年 HBM AP &lt; $200M → 「lost permanent」，減倉至 1.5% 並調整 thesis 為「subscale niche」</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p style="margin-top:12px;font-size:13px"><strong>裁決如何帶入 Phase C：</strong> 裁決 1 → §6 把「Camtek 取代」列為盲點 #2；裁決 2 → §5 把「FY26 GAAP GM &lt; 50% 連 2 季」設為 single thing；裁決 4 → §3 driver 1 加註「lost share / regain 50%」是 thesis 內生風險，§7b 加碼條件含 FY26 HBM AP &gt; $250M。</p>
+</div>
+
+<!-- ==================== §3 KEY DRIVERS ==================== -->
+<h2>§3 Key Drivers + 我和市場的最大分歧</h2>
+
+<div class="card">
+<h3>命脈（限 1-2 個）</h3>
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>HBM4 / CoWoS supercycle 帶 advanced packaging metrology 結構成長（需求側持續性）</strong></td>
+      <td>HBM4 量產（SK Hynix 2026 / Samsung Q4 26 / Micron H2 26）+ TSMC CoWoS 35K → 130K wafers/月 by 2026 末（+270%；FinancialContent 2026-02-05）；ONTO advanced packaging metrology Q1 已 &gt;$50M (3x YoY)；FY26 reiterated &gt; $1.3B (+30%)；TSMC outsource 240-270K wafers 給 OSAT（Amkor 180-190K + SPIL 60-80K，Digitimes 2025-12-15）= advanced packaging tool demand 結構放大</td>
+      <td>① 季度 advanced packaging revenue YoY；② Specialty + AP 占比（Q1 55%）；③ HBM VPA $240M 完成率；④ TSMC CoWoS 月產能進度</td>
     </tr>
     <tr>
-      <td>5</td>
-      <td>silicon photonics 2028 H2 量產不會替代部分 ONTO use case</td>
-      <td>歷史對標：Intel 光通訊量產嘗試 2015-2020，量產延後 5+ 年；目前無迫近威脅</td>
-      <td>5+ 年外，目前不影響近期</td>
+      <td>2</td>
+      <td><strong>Dragonfly G5 + Atlas G6 雙平台 spectral ellipsometry 3D 差異化（供給側 niche moat）</strong></td>
+      <td>Dragonfly G5 qualified at 2.5D logic 龍頭 + 15+ apps + 10+ customers in pipeline；Q2/Q3 nearly doubling per quarter（管理層 Q1 26 法說，2026-05-05）；spectral ellipsometry 3D 模型優於 KLA optical 工具；Atlas G6 selected by 第二 GAA logic 客戶 + Q1 advanced nodes +13% QoQ；ONTO 是 leading-edge fabs (TSMC/Samsung/Intel) 此類量測 POR (preferred provider)</td>
+      <td>① Dragonfly G5 季度出貨量；② 客戶 wins（apps + customers）；③ 量測 win rate（vs KLA / Camtek）；④ Atlas G6 GAA 第三/四客戶取得</td>
     </tr>
-  </table>
+  </tbody>
+</table>
 
-  <h3>6b. Pre-mortem：5 年後虧 50% 的故事</h3>
-  <div class="premortem-box">
-    "2031 年 5 月回看——ONTO 從 $300 跌至 $150（−50%）的故事是這樣：2026 H2 Rigaku/Semilab 整合費用未消，FY26 GAAP GM 退至 48%（R3 觸發）；同時 Camtek 在 SK Hynix 與 Micron HBM4 ramp 取得 30% reference 份額（R2 觸發），ONTO advanced packaging revenue 2027 從 +50% 退至 +25%；2028 Rigaku 整合失敗減值 $80M（R4 觸發）；FY28 EPS 從 $11 退至 $7，PE 從 32x 殺至 22x，股價腰斬。"
-  </div>
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>
+  Driver 1（HBM4/CoWoS supercycle = 需求側）vs Driver 2（Dragonfly G5 + Atlas G6 雙平台 = 供給側 niche moat）：
+  <strong>能否在不假設 driver 1 成立的情況下單獨推翻 driver 2？</strong>
+  可以 — 若 ONTO 失去 Dragonfly G5 的差異化（例如 KLA 突破 3D ellipsometry 或 Camtek 全面取代），driver 2 即使 HBM4/CoWoS 需求超強仍會破；反之若 HBM4 量產延後到 2027（driver 1 弱），driver 2 的 G5 reference 仍可獨立保住一段時間（advanced node logic 端 Atlas G6 仍 ramp）。
+  <span class="ok-tag">✅ 兩條獨立因果鏈，通過 guardrail</span>
+</p>
 
-  <h4>Pre-mortem vs §5 Single Thing 重疊度檢查</h4>
-  <p>
-    Pre-mortem 故事的核心觸發點是「<strong>FY26 GAAP GM 退至 &lt; 50%</strong>」（與 §5 Single Thing 一致）+ Camtek 局部取代（與 §6a 假設 2 一致）+ Rigaku 整合失敗（與 §6a 假設 1 一致）。
-    <span class="pill pill-good">✅ 與 §5 主軸一致</span> + 提供 R2 + R4 的具體路徑想像，無需回頭重寫 §5。
-  </p>
-</section>
+<h4>強制減法 — 市場常討論但我認為不重要的因素</h4>
+<table>
+  <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>分析師 PT $334（+11.6%）</td><td>對 5-10 年 niche specialist 投資視角是雜訊；真正關鍵是 advanced packaging metrology TAM 兌現與 G5 滲透</td></tr>
+    <tr><td>Q1 GAAP OPM 從 23.7% 殺至 11.5%</td><td>主要是 Semilab/Rigaku 整合費用 + $6.1M inventory step-up amort（transient）；Q2 guide 非-GAAP OpM 28% 反映即將恢復；不是結構性 thesis 破</td></tr>
+    <tr><td>Camtek 在某幾家 HBM 客戶取代 ONTO</td><td>需追蹤但目前未成「結構性 share 流失」（DD R2 監測 +10pp + 2 季條件嚴格）；Camtek 主場 AOI ≠ ONTO 主場 spectral ellipsometry</td></tr>
+    <tr><td>Rigaku 27% 戰略股權的非控制性持股價值</td><td>不是 thesis 主軸；是「optionality」非「核心」；H2 26 close 後再評估</td></tr>
+    <tr><td>Hybrid bonding 量測（Samsung 加速 inspection）</td><td>是 5+ 年外的長尾故事；目前 ONTO 已參與但體量小，不是 2026-2028 命脈</td></tr>
+  </tbody>
+</table>
+</div>
 
-<!-- §8 Review Triggers -->
-<section>
-  <h2>§8｜Review Triggers</h2>
-  <table>
-    <tr><th>#</th><th>觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
-    <tr><td>1</td><td>Q2 FY26 報告</td><td>財報日期</td><td><strong>2026-08</strong>（次日 EPS 共識更新；觀察 Rev ≥ $325M + GAAP GM ≥ 55%）</td></tr>
-    <tr><td>2</td><td>Q3 FY26 報告（R3 關鍵閾值）</td><td>財報日期</td><td>2026-11（GAAP GM 連 2 季 &lt; 50% 為 R3 觸發）</td></tr>
-    <tr><td>3</td><td>Dragonfly G5 季度 ramp 進度</td><td>產業事件</td><td>每季 4 次（Q2/Q3 nearly doubling per quarter）</td></tr>
-    <tr><td>4</td><td>HBM4 量產 + Camtek 競爭份額</td><td>競爭事件</td><td>每季 Camtek 季度 HBM AP 收入 YoY 增速</td></tr>
-    <tr><td>5</td><td>$260 BB 中軌加碼觸發</td><td>價位</td><td>−13% 從現價 $299.55</td></tr>
-    <tr><td>6</td><td>$222 BB 下軌加碼觸發</td><td>價位</td><td>−26% 從現價（FPE 28x，DD 進場條件）</td></tr>
-    <tr><td>7</td><td>$355 減碼觸發</td><td>價位</td><td>+19% 從現價（FPE 突破 38x 進入泡沫）</td></tr>
-    <tr><td>8</td><td>§5 Single Thing：FY26 GAAP GM 連 2 季 &lt; 50%</td><td>致命假設破</td><td>季度 GAAP GM 數字</td></tr>
-    <tr><td>9</td><td>Rigaku/Semilab 商譽減值 &gt; $50M</td><td>R4 觸發</td><td>FY26 H2 揭露</td></tr>
-  </table>
+<div class="consensus-card">
+<h3 style="margin-top:0">🔄 我和市場 consensus 的最大分歧（Munger inversion 落地）</h3>
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>市場目前定價在什麼假設上</td><td>Forward PE 32x（FY27E $9.34）= 隱含「FY27 EPS 持續 +30% YoY + GM 恢復至 56% + 無重大 Camtek 取代 + Rigaku 整合順利」的 priced-to-perfection；分析師 PT $334（+11.6%）反映賣方對 2027 已大量 priced，未充分對 R3/R4 觸發風險折扣</td></tr>
+    <tr><td>我認為的不同假設</td><td>① ONTO 是 niche specialist 且 GAAP GM 結構性恢復不確定（Rigaku/Semilab 整合風險未消化，$6.1M inventory step-up 揭露才剛開始）；② 正確 PE band 應 26-30x（niche specialist 折扣於 KLA），非 32x；③ 同時市場低估「Camtek 在 HBM 部分取代 ONTO 局部 share」的 transient 風險（管理層自承 lost share）</td></tr>
+    <tr><td>賣方為什麼錯（具體理由）</td><td>① 賣方視 ONTO 為「KLA 第二」，但 ONTO 是 niche specialist（small-cap、流動性差、cycle 波動大），合理 PE 應折扣 KLA 的 80-90%；② 過度權重 HBM4 ramp 樂觀情境，低估 Camtek 對 HBM4 reference 的局部競爭（Camtek 自稱「reference tool for HBM4 across all major manufacturers」是賣方未充分量化的對立信號）；③ 把 Q1 GAAP OPM 殺視為「短期事件」，但 Rigaku 27% 股權 H2 26 才 close，整合費用可能延伸到 2027 H1；④ 14M +254% 已 priced 完美未來 2 年成長，沒留 margin of safety</td></tr>
+  </tbody>
+</table>
+<p style="font-size:12.5px;color:#7C5500;margin-top:10px"><strong>校驗</strong>：三題均能寫出具體差異 → thesis 有獨立 alpha 來源（特別是「等回測 $260」這個 contrarian timing），§7 倉位採衛星 3% 上限 + 條件式分批是合理風控。沒這個 contrarian 視角，買 ONTO 等於跟市場 consensus 一起追高 +254%，沒 alpha。</p>
+</div>
 
-  <h4>報告保質期 + upside / downside</h4>
-  <table>
-    <tr><td style="width:25%"><strong>保質期</strong></td><td>3 個月（2026-08-07 前）或 Q2 FY26 財報（2026-08）— 以先到者為準；Niche specialist + 整合費用風險 → 保質期較 KLAC 短</td></tr>
-    <tr><td><strong>最可能 upside 因素</strong></td><td>① Q2 26 Rev 大幅超 guide（$340M+） + GAAP GM ≥ 55%；② Dragonfly G5 取得第 2 個 HBM 大廠 reference；③ Atlas G6 在 Samsung 2nm GAA 取得 win；④ Rigaku/Semilab 整合費用提前消化</td></tr>
-    <tr><td><strong>最可能 downside 因素</strong></td><td>① Q2 GAAP GM 不達 55%（&lt; 50% R3 風險升）；② Camtek 公告新 HBM4 reference win；③ Rigaku/Semilab 任一商譽減值揭露；④ 14M +254% 動能修正觸發 short squeeze 反向；⑤ AI capex panic 連動拋售</td></tr>
-  </table>
-</section>
+<!-- ==================== §5 SINGLE THING ==================== -->
+<h2>§5 The Single Thing That Could Change My Mind</h2>
 
-<!-- Phase A 折疊區 -->
-<section>
-  <h2>Phase A｜獨立研究底稿（折疊）</h2>
+<div class="card">
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td><strong>事件描述（primary trigger）</strong></td><td><strong>FY 2026 季度 GAAP GM 連續 2 季 &lt; 50%</strong>（R3 觸發；Q1 已 50.1%，Q2 法說 2026-08 與 Q3 法說 2026-11 為決定性視窗）</td></tr>
+    <tr><td>為什麼這個事件是致命的</td><td>① 直接破 H3（GM 結構恢復），DD 已正式設為「結構性質變確認」閾值；② 一旦 R3 觸發，DD 模型 PE 倍數壓縮至 25x，股價下行 35%+（從 $300 → $195）；③ GM 結構性 &lt; 50% 持續代表 Rigaku/Semilab 整合是「永久 dilution」而非「transient」 — moat 評分 −0.5 分；④ 對 niche specialist 來說 GM 是「定價權」直接驗證；GM 失守 = ONTO 從「niche pricing-power specialist」降級為「commodity inspection 廠」 — 這是 thesis 的根</td></tr>
+    <tr><td>如何監測（資料來源、頻率）</td><td>每季財報 GAAP GM 數字（每季 4 次，2026-08 / 2026-11 / 2027-02 / 2027-05）；交叉對照 Non-GAAP GM 與 acquisition charges 揭露；管理層 call 語氣（是否 reiterate「Q4 OpM 30%」目標）</td></tr>
+    <tr><td>目前離發生有多遠</td><td><strong>近</strong> — Q1 26 已 50.1%（剛好邊界）；Q2 guide non-GAAP GM 56-56.5% 對應 GAAP ~51%（如達標即釋放）；2 季視窗的決定性時點 = Q3 26 中（2026-10/11）</td></tr>
+  </tbody>
+</table>
+<p style="font-size:12.5px;color:var(--muted)">
+  <strong>選擇邏輯</strong>：相較「Camtek 取代」「Rigaku 減值」「FY26 Rev 未達 $1.3B」三個候選 single thing，<strong>FY26 GAAP GM &lt; 50% 連 2 季</strong>是 most leading + 最具判別性的指標 — 前三者都是「外部變數 / 事件」，GAAP GM 是「內部最強信號」+ DD 已正式設為閾值；前三者單獨發生對 thesis 殺傷力 ≤ 40%（GM 防守可緩衝），GM 失守才是 thesis 的根。
+</p>
+</div>
 
-  <details>
-    <summary>📁 Phase A1｜護城河深度分析　·　獨立結論：ONTO 在 advanced packaging 量測擁有 niche moat（spectral ellipsometry 3D 建模 + 雙平台 + leading-edge fabs POR），但相對 KLA 是 narrower moat</summary>
-    <div>
-      <table>
-        <tr><th>項目</th><th>內容</th></tr>
+<!-- ==================== §6 What I Don't Know + Pre-mortem ==================== -->
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<div class="card">
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+  <thead><tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>不成立的後果</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Rigaku 27% 戰略股權 + Semilab 整合費用是 transient（FY26 H2 退場）</td><td>Q2 guide 非-GAAP GM 56-56.5% 反映即將恢復；管理層執行紀錄佳（過去無重大失敗併購）</td><td>若 GAAP GM 結構性 &lt; 50%，PE 25x 壓縮 → 股價 -35%</td></tr>
+    <tr><td>2</td><td>Camtek 不會 2027 前在 HBM4 全面取代 ONTO（包含 logic + memory）</td><td>ONTO 在 logic+memory 雙線都有 G5 reference + $240M VPA 鎖訂單；技術路線不同（spectral ellipsometry vs AOI）；Camtek 自稱 reference 但實際 share 數字未公開</td><td>若 Camtek 連 2 季 +10pp 領先 → R2 觸發、ONTO 結構份額流失</td></tr>
+    <tr><td>3</td><td>Dragonfly G5 ramp 路徑（每季 nearly doubling）持續 2026 全年</td><td>Q1 已交首批商業出貨；管理層強調 Q2/Q3 nearly doubling per quarter；15+ apps + 10+ customers pipeline</td><td>若 Q3-Q4 ramp 卡關 → H2 thesis 抹去，FY26 Rev $1.3B 風險</td></tr>
+    <tr><td>4</td><td>HBM4 量產時程不會延後（SK 2026 / Samsung Q4 26 / Micron H2 26）</td><td>JEDEC HBM4 標準已發布；SK 已 ramp 2026 Q1</td><td>若 HBM4 普遍延後到 2027 → driver 1 弱化但 ONTO 仍在 logic 端有 G5 客戶</td></tr>
+    <tr><td>5</td><td>silicon photonics / hybrid bonding 2028 H2 量產不會替代部分 ONTO use case</td><td>歷史對標：Intel 光通訊量產嘗試 2015-2020，量產延後 5+ 年；目前無迫近威脅</td><td>5+ 年外，目前不影響近期</td></tr>
+    <tr><td>6</td><td>「Atlas G6 selected by 第二 GAA logic 客戶」會擴展到第三/四客戶</td><td>Q1 advanced nodes +13% QoQ 已驗證 ramp；管理層強調「accelerating adoption」</td><td>若 2026 全年僅 2 個 GAA 客戶 → Atlas G6 ramp 慢於預期，driver 2 部分削弱</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="premortem">
+<h3 style="margin-top:0;color:var(--premortem-line)">6b. Pre-mortem（強制三段式 — Guardrail 18）</h3>
+
+<h4 style="color:var(--premortem-line)">第一段｜故事倒推（≤80 字 narrative）</h4>
+<p>「<strong>2031 年 5 月回看 — ONTO 從 $300 跌至 $150（-50%）的故事</strong>：2026 Q3 法說（2026-11）GAAP GM 跌至 48%（連 2 季 &lt; 50%，R3 觸發），管理層揭露 Rigaku 27% 股權 H2 26 close 後，整合費用比預期多 $40M / year；同時 Camtek 在 SK Hynix HBM4 ramp 2027 Q1 取得 35% reference 份額（R2 觸發），ONTO advanced packaging revenue 2027 從 +50% 退至 +15%；2028 H1 Rigaku 商譽減值 $80M（R4 觸發）；FY28 EPS 從共識 $11.5 退至 $7，PE 從 32x 殺至 22x，股價腰斬至 $150。」</p>
+
+<h4 style="color:var(--premortem-line)">第二段｜校驗 §5 single-thing</h4>
+<table style="background:rgba(255,255,255,0.5)">
+  <thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+  <tbody>
+    <tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="ok-tag">✅ 是（直接撞上）</span> — 故事的第一張骨牌就是「Q3 26 GAAP GM 連 2 季 &lt; 50%」（R3 觸發），與 §5 primary trigger 完全一致；後續的 Camtek + Rigaku 兩張骨牌是衍生路徑</td></tr>
+  </tbody>
+</table>
+
+<h4 style="color:var(--premortem-line)">第三段｜修正 §5（依第二段結果分流）</h4>
+<p style="background:rgba(255,255,255,0.6);padding:10px 14px;border-radius:2px"><strong>結論：✅ §5 不需修正。</strong> Pre-mortem 故事的第一張骨牌 = §5 primary trigger 的具體展開（R3 觸發 → PE 壓縮）。Pre-mortem 為 §5 提供了「失敗路徑的具體人事時地物」（2026-11 時點、48% 數字、$40M 整合費用 overshoot），但不需新增 secondary trigger — 因為 Camtek（裁決 1 已涵蓋）與 Rigaku 商譽（盲點 #1 已涵蓋）都是 §5 trigger 觸發後的「派生 cascade」，不是獨立的 primary trigger。</p>
+
+<p style="font-size:12.5px;margin-top:10px"><strong>校驗紀錄</strong>：§5 修正狀態 = ✅ 不需修正（pre-mortem 故事 = §5 trigger 的具體展開）</p>
+
+<p style="font-size:12.5px;color:var(--premortem-line);margin-top:8px"><em>Guardrail 18 確認：第二段標的 ✅ 是，§5 區塊不需變動 — 通過。</em></p>
+</div>
+
+<!-- ==================== §8 REVIEW TRIGGERS ==================== -->
+<h2>§8 Review Triggers</h2>
+
+<div class="card">
+<table>
+  <thead><tr><th>#</th><th>觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Q2 FY26 報告（首次 confirm 視窗）</td><td>財報日期</td><td><strong>2026-08（預估 2026-08-04 ~ 2026-08-08）</strong>；觀察 Rev ≥ $325M + GAAP GM ≥ 51% + Dragonfly G5 出貨 4x QoQ</td></tr>
+    <tr><td>2</td><td>Q3 FY26 報告（R3 關鍵閾值）</td><td>財報日期</td><td>2026-11（GAAP GM 連 2 季 &lt; 50% 為 R3 觸發 — §5 single thing 確認時點）</td></tr>
+    <tr><td>3</td><td>Dragonfly G5 季度 ramp 進度</td><td>產業事件</td><td>每季 4 次（Q2/Q3 nearly doubling per quarter；客戶 wins 數字）</td></tr>
+    <tr><td>4</td><td>HBM4 量產 + Camtek 競爭份額</td><td>競爭事件</td><td>每季 Camtek 季度 HBM AP 收入 YoY 增速；DD R2 +10pp 連 2 季條件</td></tr>
+    <tr><td>5</td><td>$260 BB 中軌加碼觸發</td><td>價位</td><td>−13% 從現價 $299.55（forward PE 28x）</td></tr>
+    <tr><td>6</td><td>$222 BB 下軌加碼觸發</td><td>價位</td><td>−26% 從現價（forward PE 24x，DD 進場條件）</td></tr>
+    <tr><td>7</td><td>$355 減碼觸發</td><td>價位</td><td>+19% 從現價（forward PE 突破 38x 進入泡沫）</td></tr>
+    <tr><td>8</td><td>§5 Single Thing：FY26 GAAP GM 連 2 季 &lt; 50%</td><td>致命假設破</td><td>季度 GAAP GM 數字（Q2 2026-08 / Q3 2026-11）</td></tr>
+    <tr><td>9</td><td>Rigaku 27% 股權 close 進度 + 商譽減值 &gt; $50M</td><td>R4 觸發</td><td>FY26 H2 揭露（H2 26 close 後 Q4 26 / Q1 27 整合費用首次完整揭露）</td></tr>
+    <tr><td>10</td><td>Atlas G6 第三/四 GAA 客戶取得</td><td>產業事件</td><td>2026 H2 ~ 2027 H1（driver 2 持續性確認）</td></tr>
+  </tbody>
+</table>
+
+<h4>報告保質期 + upside / downside</h4>
+<table>
+  <tbody>
+    <tr><td style="width:25%"><strong>保質期</strong></td><td><strong>3 個月（2026-08-07 前）</strong>或 Q2 FY26 財報（2026-08）— 以先到者為準；Niche specialist + 整合費用風險 → 保質期較 KLAC 短（KLAC 6 個月）</td></tr>
+    <tr><td><strong>最可能 upside 因素</strong></td><td>① Q2 26 Rev 大幅超 guide（$340M+） + GAAP GM ≥ 53%；② Dragonfly G5 取得第 2 個 HBM 大廠 reference（CAMT R2 反向證偽）；③ Atlas G6 在 Samsung 2nm GAA 取得 win（第三 GAA 客戶）；④ Rigaku/Semilab 整合費用提前消化（2026 Q4 GAAP GM 突破 56%）</td></tr>
+    <tr><td><strong>最可能 downside 因素</strong></td><td>① Q2 GAAP GM 不達 51%（&lt; 50% R3 風險升）；② Camtek 公告新 HBM4 reference win（SK Hynix HBM4 第二代）；③ Rigaku 27% 股權 close 後揭露整合費用比預期多 $20M+；④ 14M +254% 動能修正觸發 short squeeze 反向；⑤ AI capex panic 連動拋售（NVDA Q2/Q3 法說 guidance 弱）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== Phase A 折疊區 ==================== -->
+<h2>Phase A｜獨立研究底稿（折疊）</h2>
+
+<details>
+  <summary>📁 Phase A1｜護城河深度分析<span class="summary-conclusion">獨立結論：ONTO 在 advanced packaging 量測擁有 niche moat（spectral ellipsometry 3D 建模 + 雙平台 + leading-edge fabs POR），但相對 KLA 是 narrower moat — 持久性 8/10</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
         <tr><td>主要護城河類型</td><td>① <strong>Spectral ellipsometry 3D 建模技術</strong>（KLA optical 工具不擅長 3D，ONTO 是 leading-edge fabs POR）；② <strong>Dragonfly G5 + Atlas G6 雙平台</strong>（HBM AP + advanced nodes）；③ <strong>客戶切換成本</strong>（fab process recipe 圍繞 ONTO 量測 protocol）；④ <strong>$240M HBM VPA 訂單可見度（through 2027）</strong></td></tr>
         <tr><td>持久性評分</td><td><strong>8 / 10</strong>（vs KLAC 9.5/10）；5 年穩固度：<strong>中-高</strong>（HBM4/CoWoS supercycle + Dragonfly G5 ramp 同步啟動，但 narrower moat 比 KLA 弱）</td></tr>
-        <tr><td>最大侵蝕風險</td><td>① <strong>Camtek（CAMT）</strong>在 HBM4 AOI 取代部分 ONTO reference；② <strong>KLA</strong>長期可能擴入 advanced packaging metrology；③ <strong>R&D 規模劣勢</strong>（KLA R&D $1.5B+/year 是 ONTO 多倍）</td></tr>
-        <tr><td>關鍵數據</td><td>Non-GAAP GM 55.7%（vs KLA 62.2%）；GAAP GM 50.1%（整合費用拖累）；Q2 guide GM 56-56.5%；分析師 PT $334（+11.6%）</td></tr>
-      </table>
-    </div>
-  </details>
+        <tr><td>最大侵蝕風險</td><td>① <strong>Camtek（CAMT）</strong>在 HBM4 AOI 取代部分 ONTO reference（管理層自承 lost share）；② <strong>KLA</strong>長期可能擴入 advanced packaging metrology；③ <strong>R&amp;D 規模劣勢</strong>（KLA R&amp;D ~$1.5B/year vs ONTO ~$200M）</td></tr>
+        <tr><td>關鍵數據</td><td>Non-GAAP GM 55.7%（vs KLA 62.2%）；GAAP GM 50.1%（整合費用拖累）；Q2 guide 非-GAAP GM 56-56.5%；分析師 PT $334（+11.6%）</td></tr>
+      </tbody>
+    </table>
 
-  <details>
-    <summary>📁 Phase A2｜產業趨勢深度分析　·　獨立結論：advanced packaging metrology 是 process control 中成長最快子領域；HBM4 + CoWoS 雙循環同步啟動是結構成長</summary>
-    <div>
-      <table>
-        <tr><th>項目</th><th>內容</th></tr>
-        <tr><td>TAM 與成長</td><td>Advanced packaging metrology 2030 達 $25-30B（ONTO 自估）；HBM4 量產（SK 2026 / Samsung Q4 26 / Micron H2 26）；TSMC CoWoS 2026 年化 650K wafers (+76% YoY)；ONTO advanced packaging Q1 已 &gt;$50M (3x YoY)</td></tr>
-        <tr><td>供需判斷</td><td><strong>供需偏緊</strong>——HBM4 量產 + CoWoS 擴產 + 2.5D logic 增加 + GAA 2nm 量產四條獨立放大器；<strong>未來 12 個月方向：上行</strong>；FY26 reiterated &gt; $1.3B (+30%)</td></tr>
+    <h4>Sourced Data Points（≥ 5 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Q1 FY26 Rev $292M（record） + Non-GAAP GM 55.7%（+110bp QoQ）</strong> — 來源：ONTO Q1 FY26 法說新聞稿，2026-05-05（Morningstar / Business Wire）</li>
+      <li><strong>Dragonfly G5 qualified at leading 2.5D logic customer + 15+ apps / 10+ customers in pipeline + Q2/Q3 nearly doubling per quarter</strong> — 來源：ONTO Q1 FY26 法說 transcript，2026-05-05（Motley Fool / Alphastreet）</li>
+      <li><strong>$240M+ HBM4 VPA from leading HBM manufacturer through 2027（Dragonfly 2D inspection + 3D bump metrology）</strong> — 來源：ONTO Q1 FY26 法說 transcript，2026-05-05；ONTO 投資人關係新聞稿</li>
+      <li><strong>3Di technology qualified at 2 leading HBM customers Q3 2025</strong>（管理層 Q3 25 法說：「we're not aware of anyone else being qualified through the stringent tests yet」）— 來源：ONTO Q3 FY25 法說，2025/11</li>
+      <li><strong>Atlas G6 selected by 第二 GAA logic 客戶 + Q1 advanced nodes +13% QoQ</strong> — 來源：ONTO Q1 FY26 法說 + Atlas G6 launch 新聞稿，2025/2026（StockTitan）</li>
+      <li><strong>ONTO 管理層自承 lost share（HBM3 → HBM4 過渡期）+ 2026 stretch target「regain 50% of lost share」</strong> — 來源：Camtek Q4 25 法說 vs ONTO Q1 26 法說對照（管理層直接陳述）</li>
+    </ol>
+  </div>
+</details>
+
+<details>
+  <summary>📁 Phase A2｜產業趨勢深度分析<span class="summary-conclusion">獨立結論：advanced packaging metrology 是 process control 中成長最快子領域；HBM4 + CoWoS 雙循環同步啟動是結構成長；TAM 2030 達 $25-30B</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>TAM 與成長</td><td>Advanced packaging metrology 2030 達 $25-30B（ONTO 自估）；HBM4 量產（SK 2026 / Samsung Q4 26 / Micron H2 26）；TSMC CoWoS 35K → 130K wafers/月 by 2026 末（+270%）；ONTO advanced packaging Q1 已 &gt;$50M (3x YoY)</td></tr>
+        <tr><td>供需判斷</td><td><strong>供需偏緊</strong> — HBM4 量產 + CoWoS 擴產 + 2.5D logic 增加 + GAA 2nm 量產四條獨立放大器；<strong>未來 12 個月方向：上行</strong>；FY26 reiterated &gt; $1.3B (+30%)；NVDA 取得 CoWoS 60%+ 2025-2026 是 anchor demand</td></tr>
         <tr><td>最大技術替代風險</td><td>Silicon photonics 2028 H2 量產可能繞過部分 ONTO use case（PCIe Gen 6/7 retimer/AEC）；歷史對標 Intel 光通訊延後 5+ 年；威脅程度：<strong>低</strong></td></tr>
         <tr><td>最大政策/地緣風險</td><td>BIS 中國管制（影響相對 KLA 較小，因 ONTO China exposure 較低）；下一輪 BIS update 2026 H2 風險仍存</td></tr>
         <tr><td>議價權位置</td><td>對上游：<strong>中</strong>（component supplier 集中度低）；對下游（fab）：<strong>中-強</strong>（POR 地位但小規模競爭者多）</td></tr>
-      </table>
-    </div>
-  </details>
+      </tbody>
+    </table>
 
-  <details>
-    <summary>📁 Phase A3｜業務 / 財務 / 資本配置　·　獨立結論：ONTO 是 niche specialist + Rigaku/Semilab 整合執行中；FY26 GM 結構恢復是核心觀察</summary>
-    <div>
-      <table>
-        <tr><th>項目</th><th>內容</th></tr>
-        <tr><td>營收結構</td><td><strong>Specialty + AP ~55%</strong>（其中 2/3 為 advanced packaging）；<strong>Advanced nodes ~30%</strong>（Atlas G6 driver）；<strong>其他 ~15%</strong>；Q1 FY26 Rev $292M (+9.5% YoY)；Q2 guide $320-330M (mid +28% YoY)</td></tr>
-        <tr><td>客戶集中度</td><td>HBM 大廠 (SK Hynix / Samsung / Micron) + 2.5D logic (TSMC/Samsung)；前五大客戶集中度高但分散在 logic + memory；風險：<strong>中-高</strong></td></tr>
+    <h4>Sourced Data Points（≥ 5 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>TSMC CoWoS 月產能：35K wafers/月（late 2024）→ 75K wafers/月（2025 末）→ 130K wafers/月（2026 末）</strong> — 來源：FinancialContent / TokenRing 報導，2026-02-05；SemiWiki / Globalsemi 多家追蹤</li>
+      <li><strong>NVIDIA 取得 CoWoS 60%+ allocation（2025-2026）</strong> — 來源：FinancialContent 2026-02-05（"anchor tenant"）</li>
+      <li><strong>TSMC 2026 outsource 240-270K wafers 給 OSAT（Amkor 180-190K + SPIL 60-80K）</strong> — 來源：Digitimes 2025-12-15</li>
+      <li><strong>ONTO 預估 advanced packaging 2026 成長 &gt; +30% YoY；Q1 advanced packaging revenue &gt; $50M（3x YoY）</strong> — 來源：ONTO Q1 FY26 法說，2026-05-05（Stocktitan）</li>
+      <li><strong>GAA 結構尺寸 shrink up to 30% per generation</strong>（Atlas G6 launch 訴求）— 來源：ONTO Atlas G6 launch 新聞稿，2025</li>
+      <li><strong>HBM4 量產時程</strong>：SK Hynix 2026 ramp / Samsung Q4 2026 / Micron H2 2026 — 來源：JEDEC 標準發布 + 各家法說交叉</li>
+    </ol>
+  </div>
+</details>
+
+<details>
+  <summary>📁 Phase A3｜業務 / 財務 / 資本配置<span class="summary-conclusion">獨立結論：ONTO 是 niche specialist + Rigaku/Semilab 整合執行中；FY26 GM 結構恢復是核心觀察；定價權強但規模劣勢</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>營收結構</td><td><strong>Specialty + AP ~55%</strong>（其中 2/3 為 advanced packaging）；<strong>Advanced nodes ~30%</strong>（Atlas G6 driver）；<strong>其他 ~15%</strong>；Q1 FY26 Rev $292M (+9.5% QoQ)；Q2 guide $320-330M (mid +28% YoY)</td></tr>
+        <tr><td>客戶集中度</td><td>HBM 大廠（SK Hynix / Samsung / Micron）+ 2.5D logic（TSMC / Samsung）；前五大客戶集中度高但分散在 logic + memory；風險：<strong>中-高</strong></td></tr>
         <tr><td>定價權</td><td>ASP 趨勢 <strong>↑</strong>（Dragonfly G5 高階 + Atlas G6 advanced nodes）；定價權：<strong>中-強</strong>（spectral ellipsometry 差異化）</td></tr>
-        <tr><td>未來金雞母</td><td><strong>HBM4 metrology + Dragonfly G5</strong>——$240M VPA through 2027 + $60M 3D bump metrology + 15+ apps / 10+ customers in pipeline；advanced packaging metrology Q1 &gt;$50M（3x YoY）</td></tr>
+        <tr><td>未來金雞母</td><td><strong>HBM4 metrology + Dragonfly G5</strong> — $240M VPA through 2027 + $60M 3D bump metrology + 15+ apps / 10+ customers in pipeline；advanced packaging metrology Q1 &gt;$50M（3x YoY）</td></tr>
         <tr><td>財務體質</td><td>Non-GAAP GM 55.7% / GAAP GM 50.1%（整合費用拖累 5.6pp）；Non-GAAP OpM 26.7% / GAAP OpM 11.5%；FCF 健康；壓力測試：營收 -20% 仍可獲利</td></tr>
-        <tr><td>資本配置紀律</td><td>Rigaku 27% 戰略股權 + Semilab 整合（執行風險中）；過去無重大失敗併購；無 buyback / dividend 強規模（與 KLAC 不同）</td></tr>
-      </table>
-    </div>
-  </details>
+        <tr><td>資本配置紀律</td><td>Rigaku 27% 戰略股權 $710M + Semilab USA 收購 $526.6M（late 2025 close）；過去無重大失敗併購；無 buyback / dividend 強規模（與 KLAC 不同）；Q1 already $6.1M inventory step-up amortization</td></tr>
+      </tbody>
+    </table>
 
-  <details>
-    <summary>📁 Phase A4｜既有報告數據摘要</summary>
-    <div>
-      <h4>DD 報告擷取（DD_ONTO_20260506.html，距今 1 天）</h4>
-      <ul>
-        <li><strong>綜合訊號燈：B 級</strong>（v12.2 結論；A → B 因 QC-29 R:R 0/4 失效降一級）</li>
-        <li><strong>三核心假設</strong>：H1 HBM4/CoWoS supercycle / H2 Dragonfly G5 + Atlas G6 雙平台 / H3 GM 結構恢復；H1 ＋強化（with caveat：Q1 actual 在 guide low end）、H2 ＋進一步強化（15+ apps / 10+ customers）、H3 −削弱（QC-26 觸發，Q1 GAAP OPM 殺）</li>
-        <li><strong>R:R 失效 0/4</strong>：短期 -0.33x / 中期 -0.19x / 長期 0.81x；現價 $305 vs Bear $141 (短期) / $186 (中期) / $162 (長期)</li>
-        <li><strong>Pure MA</strong>：✅ 強勢進場（V 型特例）；W250 +7.28% 強正；現價遠超所有 MA</li>
-        <li><strong>52w +254%</strong>（從 2025-08 低 $86 → $305）已透支 FY+1/+2 成長</li>
-        <li><strong>分析師 PT $334.29（+11.6%）</strong>；FY26 EPS $7.22 / FY27 EPS $9.34</li>
-        <li><strong>進場條件（DD §C）</strong>：股價回測 BB 中軌 $222 以下 + Fwd PE &lt; 31x + Q2 26 print 確認 H1/H3 + 無 R4 警示</li>
-        <li><strong>R1-R4</strong>：R1 AI capex 2027 急降 / R2 Camtek HBM4 取代 / R3 GAAP GM &lt; 50% 連 2 季（NEW）/ R4 Rigaku/Semilab 整合失敗（NEW）</li>
-      </ul>
-      <h4>ID 報告擷取</h4>
-      <ul>
-        <li><strong>ID_AdvancedPackaging_20260419</strong>（先進封裝 + HBM4 量測檢測）：CoWoS / SoIC / CoPoS / hybrid bonding 四主軸，I → II 轉換期，ONTO 是涵蓋 ticker 之一</li>
-        <li><strong>ID_CoPoSFOPLPRace_20260505</strong>（CoPoS / FOPLP 量產競賽）：3 條非共識——① CoPoS 對 TSMC 2026-2027 EPS 沒實質貢獻；② FOPLP vs CoPoS 是兩條獨立 S 曲線；③ <strong>ONTO 是 non-obvious 三檔之一</strong>；玻璃 panel 主流要 2028+</li>
-        <li><strong>ID_HBM_Supercycle_20260419</strong>（HBM 記憶體超級循環）：3 條非共識——Samsung HBM4 35% 份額 / HBM 不會 2028 crash / TSMC 透過 HBM4 base die 成隱性贏家</li>
-      </ul>
-    </div>
-  </details>
-</section>
+    <h4>Sourced Data Points（≥ 6 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Q1 FY26 Rev $292M（+10% sequential）+ Q2 guide $320-330M (mid +28% YoY)</strong> — 來源：ONTO Q1 FY26 法說，2026-05-05（Morningstar）</li>
+      <li><strong>Q1 Non-GAAP GM 55.7%（+110bp QoQ）；Non-GAAP OpM 26.7% / GAAP OpM 11.5%</strong> — 來源：ONTO Q1 FY26 法說，2026-05-05</li>
+      <li><strong>Atlas G6 selected by 第二 GAA logic 客戶 + Q1 advanced nodes +13% QoQ</strong> — 來源：ONTO Q1 FY26 法說，2026-05-05</li>
+      <li><strong>Semilab USA Q1 26 貢獻 $27.1M Rev / $13.4M Operating Income</strong> — 來源：ONTO Q1 FY26 10-Q，2026-05（StockTitan SEC filings）</li>
+      <li><strong>Semilab USA 收購總價 $526.6M（late 2025 close）</strong> — 來源：ONTO Q1 26 10-Q + 8-K 揭露</li>
+      <li><strong>Rigaku 27% 股權 $710M（預計 2026 H2 close）</strong> — 來源：ONTO Q1 FY26 8-K + 法說，2026-05-05（Business Wire / Simply Wall St）</li>
+      <li><strong>Q1 Net Income $33.8M / GAAP OpInc $33.5M (-47% YoY)</strong> — 來源：ONTO Q1 FY26 法說，2026-05-05</li>
+      <li><strong>Inventory step-up amortization $6.1M（Q1）</strong> + Q4 26 OpM 目標 &gt; 30% — 來源：ONTO Q1 FY26 10-Q + 法說 outlook</li>
+    </ol>
+  </div>
+</details>
 
-<button class="printbtn" onclick="window.print()">🖨 列印為 PDF</button>
+<details>
+  <summary>📁 Phase A4｜既有報告數據摘要<span class="summary-conclusion">DD_ONTO_20260506 + ID_AdvancedPackaging / ID_CoPoSFOPLPRace / ID_HBM_Supercycle 三份既有報告交叉引用</span></summary>
+  <div>
+    <h4>DD 報告擷取（DD_ONTO_20260506.html，距今 1 天）</h4>
+    <ul>
+      <li><strong>綜合訊號燈：B 級</strong>（v12.2 結論；A → B 因 QC-29 R:R 0/4 失效降一級）</li>
+      <li><strong>三核心假設</strong>：H1 HBM4/CoWoS supercycle / H2 Dragonfly G5 + Atlas G6 雙平台 / H3 GM 結構恢復；H1 ＋強化（with caveat：Q1 actual 在 guide low end）、H2 ＋進一步強化（15+ apps / 10+ customers）、H3 −削弱（QC-26 觸發，Q1 GAAP OPM 殺）</li>
+      <li><strong>R:R 失效 0/4</strong>：短期 -0.33x / 中期 -0.19x / 長期 0.81x；現價 $305 vs Bear $141 (短期) / $186 (中期) / $162 (長期)</li>
+      <li><strong>Pure MA</strong>：✅ 強勢進場（V 型特例）；W250 +7.28% 強正；現價遠超所有 MA</li>
+      <li><strong>52w +254%</strong>（從 2025-08 低 $86 → $305）已透支 FY+1/+2 成長</li>
+      <li><strong>分析師 PT $334.29（+11.6%）</strong>；FY26 EPS $7.22 / FY27 EPS $9.34</li>
+      <li><strong>進場條件（DD §C）</strong>：股價回測 BB 中軌 $222 以下 + Fwd PE &lt; 31x + Q2 26 print 確認 H1/H3 + 無 R4 警示</li>
+      <li><strong>R1-R4</strong>：R1 AI capex 2027 急降 / R2 Camtek HBM4 取代 / R3 GAAP GM &lt; 50% 連 2 季（NEW）/ R4 Rigaku/Semilab 整合失敗（NEW）</li>
+    </ul>
+
+    <h4>ID 報告擷取</h4>
+    <ul>
+      <li><strong>ID_AdvancedPackaging_20260419</strong>（先進封裝 + HBM4 量測檢測）：CoWoS / SoIC / CoPoS / hybrid bonding 四主軸，I → II 轉換期，ONTO 是涵蓋 ticker 之一；產業評級 ＋強</li>
+      <li><strong>ID_CoPoSFOPLPRace_20260505</strong>（CoPoS / FOPLP 量產競賽）：3 條非共識 — ① CoPoS 對 TSMC 2026-2027 EPS 沒實質貢獻；② FOPLP vs CoPoS 是兩條獨立 S 曲線；③ <strong>ONTO 是 non-obvious 三檔之一</strong>；玻璃 panel 主流要 2028+</li>
+      <li><strong>ID_HBM_Supercycle_20260419</strong>（HBM 記憶體超級循環）：3 條非共識 — Samsung HBM4 35% 份額 / HBM 不會 2028 crash / TSMC 透過 HBM4 base die 成隱性贏家；ONTO 涵蓋 ticker</li>
+      <li><strong>ID_AITestEquipmentATE_20260427</strong>（AI 測試設備 ATE）：ONTO 涵蓋 ticker（advanced packaging 量測為 AI ATE 上游）</li>
+    </ul>
+  </div>
+</details>
 
 </main>
 </body>

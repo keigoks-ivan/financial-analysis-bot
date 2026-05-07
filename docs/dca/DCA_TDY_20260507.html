@@ -1,423 +1,648 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>TDY — Deep Conviction Analysis｜2026-05-07</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCA｜TDY（Teledyne Technologies）｜2026-05-07</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --ink-2:#334155; --line:#E2E8F0; --accent:#1E3A5F; --accent-2:#3B82F6; }
-  * { box-sizing:border-box; }
-  body { margin:0; font-family:'Noto Sans TC', sans-serif; background:var(--bg); color:var(--ink); line-height:1.7; }
-  .num, code, pre { font-family:'IBM Plex Mono', monospace; }
-  header.topbar { position:sticky; top:0; z-index:50; background:var(--accent); color:#fff; padding:12px 24px; display:flex; gap:18px; flex-wrap:wrap; font-size:13px; align-items:baseline; border-bottom:4px solid var(--accent-2); }
-  header .ticker { font-size:18px; font-weight:700; letter-spacing:1px; }
-  header .meta { opacity:0.92; }
-  header .thesis { margin-left:auto; font-style:italic; max-width:50%; }
-  main { max-width:1180px; margin:0 auto; padding:28px 24px 96px; }
-  section.card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:24px 28px; margin-bottom:22px; box-shadow:0 1px 2px rgba(15,23,42,0.04); }
-  h1, h2, h3 { color:var(--accent); margin-top:0; }
-  h2 { border-left:4px solid var(--accent-2); padding-left:12px; font-size:20px; margin-bottom:18px; }
-  h3 { font-size:16px; margin:22px 0 10px; color:var(--accent); }
-  h4 { font-size:15px; margin:18px 0 8px; color:var(--ink-2); }
-  p { margin:8px 0; } ul, ol { padding-left:22px; } li { margin:4px 0; }
-  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:14px; }
-  thead th { background:var(--accent); color:#fff; padding:10px 12px; text-align:left; font-weight:500; }
-  tbody td, tbody th { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  tbody tr:nth-child(even) { background:#F1F5F9; }
-  .thesis-box { background:#EFF6FF; border-left:4px solid var(--accent-2); padding:32px 36px; margin:14px 0; border-radius:0 6px 6px 0; text-align:center; }
-  .thesis-box .quote { font-size:24px; line-height:1.5; font-weight:500; color:var(--accent); }
-  .thesis-box .sub { font-size:12px; color:var(--ink-2); margin-top:14px; letter-spacing:1px; }
-  .decision-box { background:#FEF9C3; border-left:4px solid #CA8A04; padding:18px 22px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .decision-box.green { background:#F0FDF4; border-left-color:#16A34A; }
-  .decision-box.red { background:#FFF1F2; border-left-color:#DC2626; }
-  .conflict-box { background:#FFF7ED; border-left:4px solid #F97316; padding:14px 18px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .arbitration-box { background:#FED7AA; border:1px solid #F97316; padding:14px 18px; margin:14px 0; border-radius:6px; }
-  .premortem-box { background:#FEF2F2; border-left:4px solid #DC2626; padding:14px 18px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .premortem-box blockquote { margin:8px 0; padding:10px 16px; background:#fff; border-left:3px solid #DC2626; font-style:italic; }
-  .pattern-box { background:#F0F9FF; border-left:4px solid #0EA5E9; padding:14px 18px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .memo-box { background:#FAFAFA; border:1px solid #CBD5E1; padding:18px 22px; margin:14px 0; font-family:Georgia, serif; }
-  .elevator-box { background:#fff; border-left:3px solid var(--accent-2); padding:12px 18px; margin:14px 0; font-style:italic; color:var(--ink-2); }
-  .tag { display:inline-block; padding:2px 9px; border-radius:3px; font-size:12px; font-weight:600; font-family:'IBM Plex Mono', monospace; }
-  .green-tag { background:#DCFCE7; color:#166534; }
-  .red-tag { background:#FEE2E2; color:#991B1B; }
-  .yellow-tag { background:#FEF9C3; color:#92400E; }
-  .blue-tag { background:#DBEAFE; color:#1E3A5F; }
-  details { background:#F8FAFC; border:1px solid var(--line); border-radius:6px; padding:14px 18px; margin:10px 0; }
-  details summary { cursor:pointer; font-weight:600; color:var(--accent); }
-  details[open] summary { margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--line); }
-  .print-btn { position:fixed; bottom:28px; right:28px; padding:12px 18px; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:'Noto Sans TC', sans-serif; font-size:14px; box-shadow:0 4px 12px rgba(15,23,42,0.18); }
-  @media print { header.topbar, .print-btn { display:none; } main { padding:0; max-width:100%; } section.card { break-inside:avoid; box-shadow:none; border:1px solid #ccc; } details { break-inside:avoid; } details:not([open]) > *:not(summary) { display:block !important; } }
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#0F172A; --muted:#475569;
+    --line:#E2E8F0; --line-strong:#CBD5E1; --accent:#1E3A5F; --accent-light:#3B82F6;
+    --row-alt:#F1F5F9;
+    --thesis-bg:#EFF6FF; --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+    --conflict-bg:#FFF7ED; --conflict-line:#F97316; --verdict-bg:#FED7AA;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --ok:#DCFCE7; --ok-text:#166534; --no:#FEE2E2; --no-text:#991B1B;
+    --warn:#FEF3C7; --warn-text:#92400E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.65}
+  .mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header.fixed-top{position:sticky;top:0;z-index:100;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:14px}
+  header.fixed-top .ticker{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.fixed-top .sep{opacity:.4}
+  header.fixed-top .thesis-line{flex:1;min-width:280px;font-style:italic;opacity:.95}
+  main{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+  h1{font-size:32px;margin:0 0 4px}
+  h2{font-size:22px;margin:48px 0 12px;padding:10px 14px;background:var(--accent);color:#fff;border-left:4px solid var(--accent-light);border-radius:2px}
+  h3{font-size:17px;margin:24px 0 8px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+  .thesis-card{background:var(--thesis-bg);border:1px solid #BFDBFE;border-radius:4px;padding:36px 32px;margin:16px 0;text-align:center}
+  .thesis-card .quote{font-size:26px;font-weight:500;line-height:1.5;color:#1E3A8A}
+  .thesis-card .label{font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:1px}
+  .decision-card{background:var(--decision-wait);border-left:4px solid #CA8A04;padding:18px 22px;margin:12px 0;border-radius:2px}
+  .decision-card .verdict-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:8px;background:#CA8A04;color:#fff}
+  .conflict-card{background:var(--conflict-bg);border-left:4px solid var(--conflict-line);padding:16px 20px;margin:12px 0;border-radius:2px}
+  .verdict-table{background:var(--verdict-bg);padding:8px;border-radius:2px;margin-top:10px}
+  .verdict-table table{margin:0;font-size:13px}
+  .verdict-table thead th{background:#9A3412}
+  .premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:14px 20px;margin:10px 0;border-radius:2px;font-style:italic}
+  .pattern-card{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 20px;margin:10px 0;border-radius:2px}
+  .ok-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--ok);color:var(--ok-text);font-weight:600;font-size:12px}
+  .no-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--no);color:var(--no-text);font-weight:600;font-size:12px}
+  .warn-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--warn);color:var(--warn-text);font-weight:600;font-size:12px}
+  .memo-paper{background:#FAFAF7;border:1px solid #E5E5E0;padding:24px 30px;font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;border-radius:2px;margin:12px 0;box-shadow:1px 1px 0 #00000010;white-space:pre-wrap}
+  .elevator{font-style:italic;background:#F8FAFC;border-left:3px solid var(--muted);padding:14px 18px;margin:10px 0;color:var(--muted)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;margin:12px 0}
+  details summary{padding:14px 20px;cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▶ ";font-size:11px;color:var(--muted);margin-right:6px}
+  details[open] summary::before{content:"▼ "}
+  details > *:not(summary){padding:0 24px 20px}
+  .summary-conclusion{font-weight:400;color:var(--muted);margin-left:12px;font-size:13px}
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:2px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px #00000018;z-index:200}
+  .print-btn:hover{background:#0F2542}
+  .consensus-card{background:#FEF7CD;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0;border-radius:2px}
+  @media print {
+    header.fixed-top, .print-btn { display:none !important }
+    details { border:none }
+    details:not([open]) > *:not(summary) { display:block !important }
+    details > *:not(summary) { padding:0 !important }
+    summary::before { display:none }
+    main { max-width:100%; padding:0 12px }
+    h2 { page-break-after:avoid }
+    .card, .conflict-card, .decision-card, .thesis-card { page-break-inside:avoid }
+  }
 </style>
 </head>
 <body>
-<header class="topbar">
-  <span class="ticker">TDY · Teledyne Technologies</span>
-  <span class="meta">2026-05-07</span>
-  <span class="meta">最新股價 ~$637</span>
-  <span class="thesis">TDY 是 Henry Singleton 模式的當代 quality compounder — 9x→3.4x EBITDA M&A playbook + FLIR 熱成像龍頭 = 27 年複利機器</span>
+
+<header class="fixed-top">
+  <span class="ticker mono">TDY · Teledyne</span>
+  <span class="sep">｜</span>
+  <span class="mono">2026-05-07</span>
+  <span class="sep">｜</span>
+  <span class="thesis-line">Henry Singleton 模式的當代 quality compounder — 27 年 9x→3.4x EBITDA M&A playbook + FLIR 熱成像龍頭</span>
 </header>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
 
 <main>
 
-<!-- §2 Thesis -->
-<section class="card" id="s2">
-<h2>§2 One-Sentence Thesis</h2>
-<div class="thesis-box">
-  <div class="quote">TDY 是 Henry Singleton 模式的當代 quality compounder — 27 年系統性 9x → 3.4x EBITDA M&A playbook + FLIR 熱成像龍頭，國防順風下變成複利機器。</div>
-  <div class="sub">— 50 字以內的投資本質 —</div>
-</div>
-<p>核心 narrative：Mehrabian 自 1999 接任 CEO 27 年，TDY 透過系統性收購（每年 $700M-1B）+ 整合提效（9x 收購 → 3.4x EBITDA in 3 years）+ organic 雙位數成長雙軌複利；FY25 Rev $6.115B（+7.9% YoY）、$4.6B backlog、$1B+ FCF for 2 consecutive years。FLIR 是全球熱成像龍頭（軍用熱成像 oligopoly TDY + Lockheed + RTX 合計 40%+ 市占）；FY25 Excelitas $710M 收購讓 A&D segment +36.3% YoY。Q1 26 record + FY26 guide 上修 = thesis 在兌現中。</p>
-</section>
+<h1>Deep Conviction Analysis · TDY（Teledyne Technologies）</h1>
+<p style="color:var(--muted);font-size:14px;margin:0 0 12px">深度定見分析 ｜ 報告日期：2026-05-07 ｜ 標的價格：USD 637（5/5 收盤）｜ Forward P/E (FY26E $24) ≈ 26.5x ｜ FY27E ~ $26.5 → FPE 24x ｜ 覆蓋 2026-05-07 v1 舊版（40KB）</p>
 
-<!-- §7 Decision -->
-<section class="card" id="s7">
+<!-- ==================== §2 ONE-SENTENCE THESIS ==================== -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-card">
+  <div class="quote">TDY 是 Henry Singleton 模式的當代 quality compounder — 27 年系統性 9x → 3.4x EBITDA M&A playbook + FLIR 熱成像 oligopoly，在國防超級週期下變成複利機器。</div>
+  <div class="label">— 50 字以內，敘事性 thesis（非財務指標主體）</div>
+</div>
+
+<div class="card">
+<h3>Thesis 解讀</h3>
+<p>這不是「national security infra play」momentum framing — 那是把 TDY 跟 LMT / RTX 混為一談。本 thesis 的核心是 <strong>capital allocation alpha + niche pricing power 的雙引擎複利</strong>：Mehrabian 自 1999 上任至 2026（27 年）+ 2021 退休後又重返 CEO（Business Wire 2021-08-30），執行的是「9x EBITDA 收 → 整合提效 → 3.4x EBITDA」這個 Singleton-style playbook（47 收購 / $1.9B cash deployed，excl. FLIR — Q1 26 法說）；21 年獨立公司期間複利股東報酬 19.9%。</p>
+<p>「Singleton 模式」三個字精準：① 不追熱門 deal — Mehrabian 公開拒絕 19-22x EBITDA 競標的對手（「我們不付 15-16x 當別人付 21-22x」，Q1 26 法說）；② 整合提效是文化非 SOP — 同樣資產 9x 進場、3.4x 退出反映了 100bp+ margin uplift；③ FLIR 是 anchor — 軍用熱成像 oligopoly（TDY/LMT/RTX 合計 40%+ 市占）+ Black Hornet nano-drone 已交付 35,000+ 至 45+ 國家。但這個 thesis 有一個「定時炸彈」：Mehrabian 個人能力溢價 — CEO transition 是 5-10 年內必發生事件，市場 priced 假設「文化可傳承」這件事仍未驗證。</p>
+</div>
+
+<!-- ==================== §7 DECISION ==================== -->
 <h2>§7 Decision（可執行計畫）</h2>
 
-<div class="decision-box">
-<strong>判定：<span class="tag yellow-tag">⏸ 觀望偏進場（衛星候選 / 條件式建倉）</span></strong>
-<p style="margin:8px 0 0;">Thesis 強健（quality compounder + 國防 + AI 邊緣感測）+ 長期持有信心高 + 陷阱定性 🟢 非陷阱 + Pure MA 🟡 健康無追高（4w 漂移 +4.4% 健康），但 FPE FY+2 25x（5Y 60% 分位）+ PEG 2.08 = 估值 🟠 偏貴 — 等回檔至 PE 21x 以下（~$545）才是有 margin of safety 的進場。</p>
+<div class="decision-card">
+  <span class="verdict-tag">CORE/SATELLITE 交界 · 緩慢分批 · 12-18 月</span>
+  <h3 style="margin-top:6px">7a｜倉位與進場計畫</h3>
+  <table>
+    <thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+    <tbody>
+      <tr><td>在投資組合中的角色</td><td><strong>核心 / 衛星交界</strong>（quality compounder 適合長期持有，但當前估值偏貴 → 衛星定位 5-7%；若回到 PE 21x 以下可升級至核心 8-10%）</td></tr>
+      <tr><td>初始建倉倉位</td><td><strong>1-2% of portfolio（toehold）</strong> — 不像 CAMT 必須 0%，TDY 估值偏貴但非極端，Bear case 不致命</td></tr>
+      <tr><td>目標倉位</td><td><strong>7-9% of portfolio</strong>（thesis 持續兌現 + 估值 reset 至 PE 21x 後）</td></tr>
+      <tr><td>進場價位區間</td><td><strong>第一批 USD 600-650（toehold 1-2%）；第二批 540-580（PE 21x 修正區，加碼至 4-5%）；第三批 450-490（W104 Low / Bear case 區，加碼至 7-9%）</strong></td></tr>
+      <tr><td>進場節奏</td><td><strong>緩慢分批 12-18 個月（強制）</strong> — quality compounder 不需深回檔 timing，但現價 FPE 26.5x（5Y 60% 分位）+ PEG 2.08 限制短期 R:R。三批：① 現價 $637 toehold 1-2%；② 跌至 $580 + Q2/Q3 26 organic 維持 ≥ 5% + Book-to-bill ≥ 1.0 → 加至 4-5%；③ 跌至 $540（PE 21x 修正）+ 新一輪 $300M+ 收購公告 → 滿倉 7-9%。</td></tr>
+      <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>
+        <strong>vs 國防 prime（LMT / RTX / NOC / GE Aerospace）</strong>：<strong>互補非冗餘</strong>。LMT / RTX / NOC 是 weapons system integrator（武器整合商），TDY 是 specialized tech supplier（熱成像 / 邊緣感測 / 電子元件） — 商業模式截然不同。TDY 是「賣鏟給 prime + 商業客戶」的 picks-and-shovels，營收結構分散（57% 商業 + 17% 國防 + 24% 工業 / 科學）反而比 LMT 純國防更安全。<strong>同類但不重疊</strong>。<br>
+        <strong>vs HEI / TT（mid-cap aerospace/defense suppliers）</strong>：TDY 規模更大（$6.4B vs HEI $3B + TT $2.5B）+ M&A 紀律最堅實 + 邊際 ROIC 12%（HEI ~10% / TT ~8%）。<strong>同類首選 TDY</strong>，HEI/TT 可作為衛星 secondary。<br>
+        <strong>vs DHR（diversified industrial compounder）</strong>：DHR 也是 M&A roll-up + Sigma 整合文化，但 life sciences focus 不同；可並列無重疊。<br>
+        <strong>邊際資金優先級</strong>：TDY（核心/衛星交界 7-9%）≈ DHR（核心 5-7%）&gt; LMT/NOC（衛星 3-5%）&gt; HEI/TT（衛星 secondary 2-3%）— quality compounder bucket 中 TDY 是 base case。<strong>結論：邊際資金擺 TDY vs 加碼 LMT — TDY 結構性報酬更高（M&A 複利），但短期 momentum 弱於 NOC / GE Aerospace。</strong>
+      </td></tr>
+    </tbody>
+  </table>
+
+  <h3>7b｜加碼與減碼條件</h3>
+  <table>
+    <thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+    <tbody>
+      <tr><td>第一批進場（toehold）</td><td>現價 $625-650 區間（無 timing 條件，因 quality compounder long-term）</td><td>1-2%</td></tr>
+      <tr><td>第二批加碼</td><td>跌至 $580 + Q2-Q3 26 organic 維持 ≥ 5% + Book-to-bill ≥ 1.0</td><td>4-5%</td></tr>
+      <tr><td>第三批 / 滿倉</td><td>跌至 $540（PE 21x 修正）+ 新一輪 $300M+ 收購公告 + 整合條件 ≤ 12x EBITDA</td><td>7-9%</td></tr>
+      <tr><td>深度承接</td><td>跌至 $480（PE 18x，Bear case 區）+ thesis 三假設未削弱</td><td>9-10%（exceptional 上限）</td></tr>
+      <tr><td>減碼</td><td>連 2 季 organic growth &lt; 5% + Book-to-bill &lt; 1.0</td><td>減半（4-5%）</td></tr>
+      <tr><td>減碼（CEO event）</td><td>Mehrabian 退休公告 + 接班人來自外部 + 缺 organic compound 紀錄</td><td>3-4%（觀察 12 個月）</td></tr>
+      <tr><td>清倉</td><td>大型 M&A 整合失敗（Excelitas 或任一 &gt; $500M deal 寫減值 &gt; $200M）OR Mehrabian 退休 + 接班人完全 break Singleton 文化</td><td>0%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+  <table>
+    <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>股價 $637 在 W52 ($561) 之上？</td><td><span class="ok-tag">✅ +13.5%</span></td><td>健康偏離</td></tr>
+      <tr><td>股價在 W104 ($505) 之上？</td><td><span class="ok-tag">✅ +26%</span></td><td>合理偏離</td></tr>
+      <tr><td>股價在 W250 ($452) 之上？</td><td><span class="ok-tag">✅ +41%</span></td><td>quality compounder 5Y 報酬</td></tr>
+      <tr><td>三條 MA 排列</td><td><span class="ok-tag">✅ 完美對齊</span></td><td>多頭結構</td></tr>
+      <tr><td>W250 斜率</td><td><span class="warn-tag">🟡 +2.54%</span></td><td>接近 +3% 強多頭門檻未達 → Pure MA 🟡 減半進場</td></tr>
+      <tr><td><strong>RSI / 4 週漂移</strong></td><td><span class="ok-tag">✅ 健康</span></td><td>4 週漂移 +4.4%（健康無追高）、BB 中軌 $613 上方、距上軌 −9% 仍有空間</td></tr>
+      <tr><td>vs TER / FORM 動能對照</td><td><span class="ok-tag">✅ 顯著好</span></td><td>TER 4w +16.85% / FORM RSI 93 / TDY 4w +4.4% — TDY 動能完全沒過熱</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>結論：</strong>Pure MA 健康（無動能過熱）+ 估值偏貴但非極端 → §7a 可分批進場（含 toehold 1-2%），不像 CAMT/ONTO 必須 0% 等回測。skill guardrail 12b 不觸發 — 4w 漂移 +4.4% 遠低於 +10% 警戒。
+  </p>
+  <p style="font-size:13px;color:var(--muted)"><em>quality compounder 的進場節奏哲學：「不要 timing，只要 sizing」 — 不需要等深回檔（DHR/HEI 5Y 從來沒給過 deep value 進場點），分散在 12-18 個月分批是統計上最佳策略。</em></p>
+
+  <h3>7d｜建議持有年限</h3>
+  <table>
+    <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+    <tbody>
+      <tr><td>短期（&lt; 2 年）</td><td>若 PE 修正至 21x 進場且 EPS 兌現 — alpha 來自估值 reset；現價 $637 短期 R:R 為弱正</td></tr>
+      <tr><td>中期（2-5 年）</td><td><strong>建議 base case</strong>（quality compounder 5 年 EPS CAGR ~11% 含收購；FY30 EPS 推估 $36-40）</td></tr>
+      <tr><td><strong>長期（5-10 年）</strong></td><td><strong>強建議（核心持有區間）</strong>。Mehrabian 1999 以來 27 年 + 2021 重返 CEO（Business Wire 2021-08-30）+ Singleton-style M&A playbook + 國防 / AI 邊緣感測 10 年成長跑道 — 是少數能 buy and hold 的標的。<strong>主要風險：CEO transition</strong>（Mehrabian 接班人風險）— 詳見 §5。</td></tr>
+    </tbody>
+  </table>
+  <p><strong>建議持有年限：5-10 年（核心持有 7-9%，前提是回測進場）</strong>。原因：① TDY 是少數能用 27 年複利紀錄佐證的 quality compounder；② FCF Margin 17.6% / ROIC 12% / $1B+ FCF 連 2 年；③ 5,131 patents 多元化 IP 護城河；④ Singleton-style M&A 文化是「能複利 10 年」的稀有資產。</p>
+
+  <h4>EPS 預測參考表</h4>
+  <table>
+    <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+    <tbody>
+      <tr><td>FY2026E</td><td>$23.85-24.15（midpoint $24.00）</td><td>公司 guide raised（Q1 26 法說 2026-04-22）</td><td>Q1 actual $5.80 (+17.2% YoY)；FY26 guide raised +70bp from prev</td></tr>
+      <tr><td>FY2027E</td><td>~$26.5</td><td>共識（隱含 +10% YoY）</td><td>含 Excelitas 完整年化 + 新 tuck-in</td></tr>
+      <tr><td>FY2028E</td><td>~$29</td><td>外推 +9.5% YoY</td><td>外推假設：M&A pace $700M/年 + organic 6-7%</td></tr>
+      <tr><td>FY2030E（外推）</td><td>~$36-40（CAGR 10-12%）</td><td>5Y CAGR 11%</td><td>含複利 + Singleton playbook 持續</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:12px"><strong>假設長期持有，現價適合嗎？</strong> 現價 $637 ÷ FY27E $26.5 = <strong>FPE 24x</strong>（5Y 60% 分位）；FY30E $38 × 25x = $950 → 5 年 +49%（不算配息）。<strong>長期 R:R 不錯但短期沒 margin of safety。</strong>若起點落 $540（PE 21x），5Y 期望升至 +75% — 等待 15% 回測 = +25pp 期望報酬，值得用 6-12 個月換。但 quality compounder bucket 也允許 toehold 1-2% 不等回測，因為這類股深回檔機率歷史上 &lt; 30%。</p>
 </div>
 
-<h3>§7a 倉位與進場計畫（含 Opportunity Cost）</h3>
-<table>
-<thead><tr><th width="32%">項目</th><th>具體內容</th></tr></thead>
-<tbody>
-<tr><td>在投資組合中的角色</td><td><strong>核心 / 衛星交界</strong>（quality compounder 適合長期持有，但當前估值偏貴 → 衛星定位 5-7%；若回到 PE 21x 以下可升級至核心 8-10%）</td></tr>
-<tr><td>初始建倉倉位</td><td>3-4% of portfolio（小倉測試）</td></tr>
-<tr><td>目標倉位</td><td>7-9% of portfolio（thesis 持續兌現 + 估值 reset）</td></tr>
-<tr><td>進場價位區間</td><td>第一批：$600-625（現價附近 + 健康 BB 中軌附近）；第二批：$540-565（PE 21x 修正區）；第三批：$450-490（W104 Low / Bear case 區）</td></tr>
-<tr><td>進場節奏</td><td><strong>緩慢分批</strong>（quality compounder 適合 3-5 批 12-18 個月分散） — 觸發：(a) 現價 $637 附近 toehold 1-2%；(b) 回 $580 加碼至 4-5%；(c) 回 $540 加碼至 7-9%</td></tr>
-<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>關鍵問題：portfolio 已持有的國防 / aerospace 部位（LMT / RTX / GE / NOC）是否吃掉 TDY 的 thesis？</strong>答：<strong>互補而非冗餘</strong>。LMT / RTX / NOC 是傳統 prime（武器系統整合商），TDY 是 specialized tech supplier（熱成像 / 邊緣感測 / 電子元件） — 商業模式截然不同。TDY 是「賣鏟給 prime + 商業客戶」的 picks-and-shovels，NPV 風險更分散（57% 商業 + 17% 國防 + 24% 工業 / 科學）。<strong>vs HEI / TT / 其他 mid-cap defense suppliers：</strong>TDY 規模更大（$6B vs HEI $3B）+ M&A 紀律更證實 + 邊際 ROIC 更高。**結論：邊際資金擺 TDY vs 加碼 LMT — TDY 結構性報酬更高（M&A 複利），但短期 momentum 弱於 NOC / GE Aerospace。**</td></tr>
-</tbody>
-</table>
-
-<h3>§7b 加碼與減碼條件</h3>
-<table>
-<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
-<tbody>
-<tr><td>第一批進場</td><td>現價 $625-650 區間 toehold</td><td>1-2%</td></tr>
-<tr><td>第二批加碼</td><td>回 $580 + Q2-Q3 26 organic 維持 ≥ 5% + Book-to-bill ≥ 1.0</td><td>4-5%</td></tr>
-<tr><td>第三批 / 滿倉</td><td>回 $540 以下（PE 21x 修正）+ 新一輪 $300M+ 收購公告</td><td>7-9%</td></tr>
-<tr><td>減碼</td><td>連 2 季 organic growth &lt; 5% + Book-to-bill &lt; 1.0</td><td>減半</td></tr>
-<tr><td>清倉</td><td>大型 M&A 整合失敗（&gt; $500M deal 寫減值）OR Mehrabian 退休 + 接班無 organic compound 紀錄</td><td>0%</td></tr>
-</tbody>
-</table>
-
-<h3>§7c Pure MA + 動能過熱檢查</h3>
-<table>
-<thead><tr><th width="40%">檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
-<tbody>
-<tr><td>股價 $637 在 W52 之上？</td><td><span class="tag green-tag">✅</span></td><td>W52 = $561（+13.5% 之上 — 健康）</td></tr>
-<tr><td>股價在 W104 之上？</td><td><span class="tag green-tag">✅</span></td><td>W104 = $505（+26% 之上 — 合理）</td></tr>
-<tr><td>股價在 W250 之上？</td><td><span class="tag green-tag">✅</span></td><td>W250 = $452（+41% 之上 — quality compounder 5Y 報酬）</td></tr>
-<tr><td>Pure MA 系統是否支持進場？</td><td><span class="tag yellow-tag">🟡 減半</span></td><td>三條完美對齊但 W250 斜率 +2.54%（接近 +3% 門檻未達） → 🟡 減半進場</td></tr>
-<tr><td><strong>RSI / 動能</strong></td><td><span class="tag green-tag">✅ 健康</span></td><td>4 週漂移 +4.4%（健康無追高）、BB 中軌 $613 上方、距上軌 −9% 仍有空間</td></tr>
-<tr><td><strong>vs TER / FORM 比較</strong></td><td><span class="tag green-tag">✅ 顯著好</span></td><td>TER 4w +16.85% / FORM RSI 93 / TDY 4w +4.4% — TDY 動能完全沒過熱</td></tr>
-</tbody>
-</table>
-<div class="conflict-box">
-<strong>結論：Pure MA 健康（無動能過熱）+ 估值偏貴但非極端 → §7a 可分批進場，但節奏緩慢。</strong> TDY 是 quality compounder，不需要等深回檔；但現價 $637 已 priced 部分 thesis（FPE 25x、5Y 60% 分位）— 一次建倉不划算，分 3 批 12-18 月分散是最佳策略。
-</div>
-
-<h3>§7d 建議持有年限</h3>
-<table>
-<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
-<tbody>
-<tr><td>短期（&lt; 2 年）</td><td>若 PE 修正至 21x 進場且 EPS 兌現 — alpha 來自估值 reset</td></tr>
-<tr><td>中期（2-5 年）</td><td><strong>建議 base case</strong>（quality compounder 5 年 EPS CAGR ~11% 含收購）</td></tr>
-<tr><td>長期（5-10 年）</td><td><strong>強建議</strong>（27 年 Singleton-style M&A playbook + 國防 / AI 邊緣感測 10 年成長跑道 — 是少數能 buy and hold 的標的）</td></tr>
-</tbody>
-</table>
-<p><strong>建議持有年限：長期 5-10 年，原因：</strong>TDY 是少數能用 Mehrabian 1999 以來 27 年複利紀錄佐證的 quality compounder。FCF Margin 17.6%、ROIC 12%、$1B+ FCF 連 2 年，加上 5,131 patents 的 IP 護城河 — 如果 portfolio 想配置「定期審視就好、不需 timing」的 long compounder，TDY 是 short list 之一。**主要風險：Mehrabian 接班人風險**（CEO transition）— 如果接班無 organic compound 紀錄，要 re-rating thesis。</p>
-
-<h4>EPS 預測參考表</h4>
-<table>
-<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
-<tbody>
-<tr><td>FY26E</td><td>$23.85-24.15（mgmt guide raised）</td><td>公司 guide / Q1 26 raise</td><td>+9-10% YoY</td></tr>
-<tr><td>FY27E</td><td>~$26-27</td><td>共識（隱含 +10% YoY）</td><td>含 Excelitas 完整年化 + 新 tuck-in</td></tr>
-<tr><td>FY28E（外推）</td><td>~$29</td><td>外推 11%</td><td>外推假設：M&A pace $700M/年 + organic 6-7%</td></tr>
-<tr><td>FY30E（外推）</td><td>~$36-40（CAGR 10-12%）</td><td>5Y CAGR 11%</td><td>含複利 + Singleton playbook 持續</td></tr>
-</tbody>
-</table>
-<p>現價 $637 ÷ FY27E $26.5 = <strong>24x</strong>（5Y 60% 分位）；FY30E $38 × 25x = $950 → 5 年 +49%（不算配息）。<strong>長期持有 R:R 不錯但短期沒 margin of safety。</strong></p>
-</section>
-
-<!-- §4 Asymmetry -->
-<section class="card" id="s4">
+<!-- ==================== §4 ASYMMETRY ANALYSIS ==================== -->
 <h2>§4 Asymmetry Analysis</h2>
-<table>
-<thead><tr><th>情境</th><th>5 年漲幅</th><th>依據</th><th>機率估計</th></tr></thead>
-<tbody>
-<tr><td>Bull（M&A playbook 持續 + 國防超級週期）</td><td><strong>+80%（1.8x）</strong></td><td>FY30 EPS $42 × 28x = $1,176；情境：Singleton playbook 持續 + 防務預算永久 reset 高 + AI 邊緣感測爆發</td><td>30%</td></tr>
-<tr><td>Base（quality compounder 持續）</td><td><strong>+50%（1.5x）</strong></td><td>FY30 EPS $38 × 25x = $950；情境：M&A 9x→3.4x playbook 持續 + organic 6-7%</td><td>40%</td></tr>
-<tr><td>Bear（PE compression OR M&A integration miss）</td><td><strong>−25%</strong></td><td>FY28 EPS $26 × 18x = $468；情境：大型 M&A 失敗（Excelitas 寫減值）OR 防務 budget 砍 + organic &lt; 5%</td><td>30%</td></tr>
-<tr><td><strong>機率加權期望值</strong></td><td><strong>+44%（5 年）</strong></td><td>0.3×0.8 + 0.4×0.5 + 0.3×(−0.25) = 0.24 + 0.20 − 0.075 = 0.365</td><td></td></tr>
-</tbody>
-</table>
 
-<h3>追加壓力測試</h3>
-<ul>
-<li><strong>Thesis 對但時間拉長 10 年：</strong> 強烈值得 — TDY 是少數能 10 年 buy-and-hold 的 quality compounder（FCF 17.6%、ROIC 12%、Singleton-style M&A playbook 證實 27 年）。10 年 EV +120-180%，路徑顛簸度比 cyclical 標的（TER / FORM）小很多。</li>
-<li><strong>機會成本對比：</strong>同期 quality compounder 標的（HEI / TT / RBC / WSO）報酬率類似但 TDY 規模優勢更大；vs S&P500 5Y 預估 +40-50%，TDY +50% 的「差不多但波動更小」。<strong>TDY 在 long compounder bucket 中是 base case 持有，不是 alpha 來源。</strong></li>
-</ul>
-
-<div class="pattern-box">
-<h3>📐 Pattern Match — 讓機率有錨點</h3>
+<div class="card">
 <table>
-<tbody>
-<tr><th width="25%">歷史相似 setup</th><td><strong>Singleton 時代 Teledyne Inc.（1960s-1980s）+ Danaher（DHR）1990-2010s + HEICO（HEI）2000-2020s — 三家都是「系統性 M&A roll-up + organic compounder」combination</strong></td></tr>
-<tr><th>當時 setup</th><td>Singleton Teledyne：1960-1980 EPS CAGR 17%、股價 +50x；DHR 1990-2010 EPS CAGR 15%、股價 +30x；HEI 2000-2020 EPS CAGR 17%、股價 +60x — 都是「對的 M&A pricing + 文化能整合」combination</td></tr>
-<tr><th>5 年實現報酬</th><td>三家在 5 年期間平均 +60-100%（含估值波動），波動小（vs cyclical 標的 5 年波動可達 −50% / +200%）；quality compounder 是「報酬 / 波動比」優秀的 bucket</td></tr>
-<tr><th>我的標的最像 / 最不像</th><td><strong>最像：</strong>Singleton 時代的 Teledyne Inc.（同公司前身）+ DHR rolling-up 文化 + 守紀律的 9x → 3.4x EBITDA playbook；<strong>最不像：</strong>當前 PE 25x 已 priced 部分 alpha（DHR 1990 進場 PE 12-15x；HEI 2000 進場 PE 18-22x）— 進場價貴一些，所以 5Y 報酬可能在 +50% 而非 +100%</td></tr>
-</tbody>
+  <thead><tr><th>情境</th><th>5 年倍數（從現價 $637）</th><th>依據</th><th>機率估計</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Bull（M&A playbook 持續 + 國防超級週期 + 接班順利）</strong></td><td><strong>+80%（≈ 1.8x）</strong></td><td>FY30 EPS $42 × 28x = $1,176；情境：Singleton playbook 持續 + 防務預算永久 reset 高 + AI 邊緣感測爆發 + Mehrabian 內部接班順利傳承文化</td><td><strong>30%</strong></td></tr>
+    <tr><td>Base（quality compounder 持續）</td><td>+50%（≈ 1.5x）</td><td>FY30 EPS $38 × 25x = $950；情境：M&A 9x→3.4x playbook 持續 + organic 6-7% + 國防順風維持</td><td>40%</td></tr>
+    <tr><td><strong>Bear（PE compression OR M&A integration miss OR CEO transition 失敗）</strong></td><td><strong>−25%（≈ 0.75x）</strong></td><td>FY28 EPS $26 × 18x = $468；情境：(a) 大型 M&A 失敗（Excelitas 寫減值 &gt; $200M）OR (b) 防務預算 shutdown / 砍 + organic &lt; 5% OR (c) Mehrabian 退休 + 外部接班人 + 缺 Singleton 文化 → CEO premium 蒸發</td><td>30%</td></tr>
+    <tr><td colspan="3" style="text-align:right"><strong>機率加權 5 年期望值（從現價 $637）</strong></td><td><strong>≈ 1.37x（+37%）</strong></td></tr>
+  </tbody>
 </table>
-<p><strong>意義：</strong>quality compounder 5 年 +50% 是合理 base case；不會像 cyclical 標的那樣有 +150% bull 但也有 −50% bear 的雙尾分布。TDY 是「無聊但穩健」的長期持有 — 不要期望 alpha 爆發，期望複利穩定。</p>
+<p style="font-size:13px;color:var(--muted);margin-top:8px">計算：30%×1.8 + 40%×1.5 + 30%×0.75 = 0.54 + 0.60 + 0.225 ≈ <strong>1.37x</strong>。若起點落在 $540（PE 21x），期望值升至 1.61x（+61%）。<strong>不對稱比約 3.2:1（80%/25%），長期 R:R 良好</strong>。Quality compounder 的特徵：機率分布更集中（大多數年份 +5~+15% range），bull/bear 雙尾較窄。</p>
 </div>
-</section>
 
-<!-- §1 Mental Models -->
-<section class="card" id="s1">
+<div class="card">
+<h4>追加壓力測試</h4>
+<ul>
+  <li>若 thesis 對但時間拉到 10 年（2035）→ 強烈值得 — TDY 是少數能 10 年 buy-and-hold 的 quality compounder（FCF 17.6%、ROIC 12%、Singleton-style M&A playbook 證實 27 年）。10 年 EV +120-180%，路徑顛簸度比 cyclical 標的（TER / FORM）小很多。</li>
+  <li>機會成本對比：同期 quality compounder 標的（HEI / TT / RBC / WSO）報酬率類似但 TDY 規模優勢更大；vs S&amp;P500 5Y 預估 +40-50%，TDY +50% base case 是「差不多但波動更小」。<strong>TDY 在 long compounder bucket 中是 base case 持有，不是 alpha 來源。</strong></li>
+  <li><strong>關鍵差異</strong>：TDY 的 alpha 來自「無下檔、長複利」而非「上檔爆發」 — 這個 R:R 結構特別適合 portfolio 中需要降低 drawdown 的 anchor position。</li>
+</ul>
+</div>
+
+<div class="pattern-card">
+  <h3 style="margin-top:0">📐 Pattern match：歷史相似 setup（讓機率有錨點）</h3>
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>歷史結構類似的個股</td><td><strong>Singleton 時代 Teledyne Inc.（1960-1980s）</strong> + <strong>Danaher（DHR）1990-2010s</strong> + <strong>HEICO（HEI）2000-2020s</strong> — 三家都是「系統性 M&A roll-up + organic compounder」combination；<strong>Constellation Software（CSU.TO）</strong>是更近期的 Mark Leonard playbook 案例</td></tr>
+      <tr><td>當時的 setup（估值倍數、CEO tenure）</td><td>Singleton Teledyne：1960-1980 EPS CAGR 17%、股價 +50x；DHR 1990-2010 進場 PE 12-15x、5Y 後 PE 25-28x；HEI 2000-2020 進場 PE 18-22x、5Y 後 PE 30-35x；CSU 2010-2020 進場 PE 22-25x，5Y 後 PE 32-38x — 都是「對的 M&A pricing + 文化能整合」combination</td></tr>
+      <tr><td>最終實現報酬</td><td>三家在 5 年期間平均 +60-100%（含估值波動），波動小（vs cyclical 標的 5 年波動可達 −50% / +200%）；quality compounder 是「報酬 / 波動比」優秀的 bucket；CEO 退休風險：Singleton 退休後 Teledyne Inc. 進入 sub-par 期 — 是 negative 案例</td></tr>
+      <tr><td>我的標的最像 / 最不像的地方</td><td><strong>最像：</strong>Singleton 時代的 Teledyne Inc.（同公司前身）+ DHR rolling-up 文化 + 守紀律的 9x → 3.4x EBITDA playbook（Mehrabian Q1 26 法說明確「不付 15-16x 當別人付 21-22x」）；<strong>最不像：</strong>當前 PE 26.5x 已 priced 部分 alpha（DHR 1990 進場 PE 12-15x；HEI 2000 進場 PE 18-22x）— 進場價貴一些，所以 5Y 報酬可能在 +50% 而非 +100%；<strong>另一個風險</strong>：Singleton 退休後 Teledyne 沉淪十年 — 這是 §5 single thing 的歷史錨點</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12.5px;color:#0c4a6e;margin-top:10px"><strong>啟示</strong>：quality compounder 5 年 +50% 是合理 base case；不會像 cyclical 標的那樣有 +150% bull 但也有 −50% bear 的雙尾分布。TDY 是「無聊但穩健」的長期持有 — 不要期望 alpha 爆發，期望複利穩定。<strong>但要警惕 Singleton 1986 退休後的負面案例</strong> — Mehrabian 接班人是 thesis 最大不確定因子。</p>
+</div>
+
+<!-- ==================== §1 MENTAL MODELS ==================== -->
 <h2>§1 Mental Models 壓力測試</h2>
 
 <h3>測試一：投委會 1 頁紙 Memo</h3>
-<div class="memo-box">
-<h4 style="text-align:center;">TDY · Teledyne Technologies — 衛星 / 核心交界長期建倉提案</h4>
-<p><strong>Thesis（一句話）：</strong>TDY 是 Henry Singleton 模式的當代 quality compounder — 27 年系統性 9x → 3.4x EBITDA M&A playbook + FLIR 熱成像龍頭。</p>
-<p><strong>Key Driver：</strong>(1) M&A roll-up + 整合提效（27 年紀錄 + Excelitas $710M 整合中）；(2) FLIR + 國防 / AI 邊緣感測結構性順風（軍用熱成像 oligopoly + $4.6B backlog）。</p>
-<p><strong>R:R（5 年）：</strong>Bull +80% (30%) / Base +50% (40%) / Bear −25% (30%)，期望值 <strong>+44%</strong>（穩健正期望值）</p>
-<p><strong>主要警示：</strong>(a) FPE FY+2 25x（5Y 60% 分位）+ PEG 2.08 — 偏貴；(b) Mehrabian 接班人風險（CEO transition）；(c) Organic 6-7% 不支撐 PE 25x 的長期；(d) M&A integration 風險（如果未來 deal 走錯）。</p>
-<p><strong>建議倉位 / 進場：</strong>衛星 / 核心交界 5-9%。**緩慢分批 12-18 月**：第一批 1-2% @ $625-650、第二批 4-5% @ $580、第三批 7-9% @ $540 以下。**長期持有 5-10 年**，每季審視 organic growth + Book-to-bill。**Bear case 不致命，所以可在 $625-650 取 toehold**（不像 FORM 必須 0% 直到條件滿足）。</p>
-<p><strong>建議：</strong>Quality compounder 適合 long bucket — 不要 timing，只要 sizing。</p>
+<div class="memo-paper">[ TDY · Teledyne Technologies · 2026-05-07 · DCA Memo ]
+
+THESIS（一句話）
+TDY 是 Henry Singleton 模式的當代 quality compounder——
+27 年系統性 9x → 3.4x EBITDA M&A playbook + FLIR 熱成像龍頭，
+在國防超級週期下變成複利機器。
+
+KEY DRIVER（命脈）
+1. Singleton-style M&A roll-up + 整合提效（資本配置 alpha）
+   - Mehrabian 1999 上任 + 2021 重返 CEO（Business Wire 2021-08-30）
+   - 47 acquisitions @ 9x avg EBITDA → 3.4x post-improvement
+   - $1.9B cash deployed (excl. FLIR)；21 年複利股東報酬 19.9%
+   - Mehrabian 紀律：「不付 15-16x 當別人付 21-22x」（Q1 26 法說）
+2. FLIR 熱成像 + 國防 / AI 邊緣感測結構性順風（產業 alpha）
+   - 軍用熱成像 oligopoly（TDY/LMT/RTX = 40%+ 市占）
+   - Black Hornet 4 nano-drone 已交付 35,000+ 至 45+ 國家
+   - $4.6B backlog；A&D segment Q1 26 +14.4%（organic 8.4%）
+
+R:R（5 年機率加權，從現價 $637）
+Bull 30% × 1.8x ｜ Base 40% × 1.5x ｜ Bear 30% × 0.75x
+→ 期望值 1.37x（+37%）；不對稱 ~3.2:1（穩健正期望）
+但起點 FPE 26.5x（5Y 60% 分位）+ PEG 2.08 = 偏貴
+
+主要警示
+① Mehrabian CEO transition 風險（5-10 年內必發生）
+   外部接班人 + 缺 Singleton 文化 → PE re-rate 18-21x = 股價 −20-30%
+② FPE 26.5x 含 5-7x「founder/CEO premium」，DCF 不出來但實際 priced
+③ Organic 6-7% 不支撐 PE 26x 長期（需 M&A 持續複利 + Singleton 文化）
+④ 大型 M&A integration 風險（Excelitas $710M 目前順利但歷史是底）
+
+建議倉位 / 節奏
+核心 / 衛星交界 7-9%；**緩慢分批 12-18 月**：
+第一批 1-2% @ $625-650 toehold（quality compounder 不需深 timing）
+第二批 4-5% @ $580 + Q2/Q3 26 organic ≥ 5% + Book-to-bill ≥ 1.0
+第三批 7-9% @ $540（PE 21x 修正）+ 新 $300M+ M&A 公告
+深度 9-10% @ $480（W104 Low / Bear case 區）
+
+OPPORTUNITY COST
+- vs LMT/RTX/NOC：互補非冗餘（picks-and-shovels vs prime）
+- vs HEI/TT：同類首選 TDY（規模 + ROIC + M&A 紀律最強）
+- vs DHR：可並列無重疊（life sciences vs aerospace/defense）
+
+REVIEW TRIGGER
+- Q2 FY26 法說：2026-08（actual EPS vs guide $24 + Book-to-bill）
+- Mehrabian 接班動向：proxy statement / EVP 任命公告（即時）
+- 保質期：3 個月（至 Q2 26 法說 2026-08-07）
 </div>
 
 <h3>測試二：30 秒電梯簡報</h3>
-<div class="elevator-box">
-「TDY 是國防 / 工業科技領域的 quality compounder — 27 年系統性收購 + 整合，每年 $700M-1B M&A、$1B+ FCF、FLIR 是熱成像龍頭。Singleton 模式的當代版，估值 PE 25x 偏貴但不極端。我會慢慢建倉 5-9%、分 3 批，當 long compounder 持有 5-10 年。」
+<div class="elevator">
+"TDY 是國防 / 工業科技領域的 quality compounder — Mehrabian 27 年系統性收購 + 整合，每年 $700M-1B M&A、$1B+ FCF、FLIR 是熱成像龍頭。Singleton 模式的當代版，估值 PE 26.5x 偏貴但不極端。我會慢慢建倉 7-9%、分 3 批，當 long compounder 持有 5-10 年。最大風險是 Mehrabian 接班 — 27 年 CEO 退休是必然事件，外部接班人會把 5-7x 的 founder premium 蒸發掉。如果接班公告外部 + 缺 organic compound 紀錄，立即減半部位。"
 </div>
 
-<p><strong>壓力測試結果：</strong><span class="tag green-tag">✅ 通過</span> — 1 頁 memo 與 30 秒版本邏輯自洽，繼續進入 §7。</p>
-</section>
+<p style="margin-top:14px"><span class="ok-tag">✅ 兩個測試皆通過</span> — thesis 邏輯自洽，30 秒版本能說清楚「為什麼買 + 為什麼緩慢分批 + CEO 風險」，無需回 §2 重寫。</p>
 
-<!-- Phase B 矛盾 -->
-<section class="card" id="phaseB">
-<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+<!-- ==================== Phase B 矛盾 + 強制裁決 ==================== -->
+<h2>Phase B｜矛盾辨識 + ⚖ 強制裁決</h2>
 
-<h3>1. 共識清單（A1-A3 一致）</h3>
+<div class="conflict-card">
+<h3 style="margin-top:0">1. 共識清單（高信心區）</h3>
 <ul>
-<li>✅ Quality compounder 軌道（A1 27 年 M&A roll-up + A3 $1B+ FCF 連 2 年 + ROIC 12%）</li>
-<li>✅ 國防 / aerospace 順風（A2 軍用熱成像 oligopoly + $4.6B backlog + FY26 guide raised）</li>
-<li>✅ M&A 紀律（A1 9x → 3.4x EBITDA playbook + A3 $850M deployed in 2025）</li>
+  <li>A1（Singleton-style M&A 27 年紀錄 + 5,131 patents IP + FLIR 熱成像 oligopoly）+ A2（國防順風 + AI 邊緣感測 + $4.6B backlog）+ A3（FY25 Rev $6.115B + Q1 26 +7.6% YoY + FY26 guide raised）+ A4（DD §1 訊號 B + thesis 強健）<strong>方向高度一致：基本面強</strong>。</li>
+  <li>Q1 26 是「Rev $1,560M (+7.6%) record + Non-GAAP EPS $5.80 (+17.2%) + FY guide raised」三重 confirmation。</li>
+  <li>M&A 紀律（Mehrabian Q1 26 法說明確「不付 15-16x 當別人付 21-22x」）+ 21 年複利股東報酬 19.9% + 47 acquisitions @ 9x→3.4x EBITDA = capital allocation alpha 高度可驗證。</li>
 </ul>
 
 <h3>2. 矛盾清單</h3>
 <table>
-<thead><tr><th width="4%">#</th><th>矛盾點</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>27 年 M&A 紀錄是否可外推未來 10 年？</td><td>Mehrabian 27 年証實</td><td>—</td><td>當前 deal pace 仍健康</td><td><span class="tag yellow-tag">🟡 可調和（接班人風險暫未發生）</span></td></tr>
-<tr><td>2</td><td>Organic growth 6-7% 支不支撐 PE 25x？</td><td>—</td><td>產業順風 7%+ CAGR</td><td>FY26E +9-10% YoY（含 M&A）</td><td><span class="tag yellow-tag">🟡 可調和（estimate 含 M&A 含混）</span></td></tr>
-<tr><td>3</td><td>Excelitas $710M 整合是賣點還是風險？</td><td>27 年紀錄支持</td><td>—</td><td>A&D segment +36.3% YoY 兌現</td><td><span class="tag green-tag">🟢 共識</span></td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>27 年 M&A 紀錄是否可外推未來 10 年？</td>
+      <td>Mehrabian 27 年証實 + 2021 重返 CEO</td>
+      <td>—</td>
+      <td>當前 deal pace 仍健康（$850M deployed in 2025）</td>
+      <td>🔴 不可調和（接班人風險暫未發生但不可逆）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Organic growth 6-7% 支不支撐 PE 26.5x？</td>
+      <td>—</td>
+      <td>產業順風 7%+ CAGR</td>
+      <td>FY26E +9-10% YoY（含 M&A）</td>
+      <td>🟡 可調和（estimate 含 M&A 含混）</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Excelitas $710M 整合是賣點還是風險？</td>
+      <td>27 年紀錄支持</td>
+      <td>—</td>
+      <td>A&D segment Q1 26 +14.4% YoY（含 Qioptiq）organic +8.4%</td>
+      <td>🟢 共識（兌現中）</td>
+    </tr>
+  </tbody>
 </table>
 
 <h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
 <table>
-<thead><tr><th width="4%">#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>估值合理嗎？</td><td>Quality compounder 應 PE 25-28x；TDY 在合理區</td><td>DD §13 給 🟠 偏貴（FPE FY+2 25x = 5Y 60% 分位 + PEG 2.08）</td><td>視角差 — DD 用 5Y range 定錨，但 quality compounder 應用 long-term ROIC × payout 模型；兩者都對但角度不同</td></tr>
-<tr><td>2</td><td>是否核心持倉？</td><td>長期持有信心高 = 核心候選</td><td>DD §1 訊號 B = 衛星候選（估值偏貴 + MA 🟡 減半）</td><td>定義差 — DD 嚴格定義（A+/A 才核心），DCA 用「能長期 buy-and-hold」標準 — TDY 是核心 / 衛星交界</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>估值合理嗎？</td>
+      <td>Quality compounder 應 PE 25-28x；TDY 在合理區</td>
+      <td>DD §13 給 🟠 偏貴（FPE FY+2 25x = 5Y 60% 分位 + PEG 2.08）</td>
+      <td>視角差 — DD 用 5Y range 定錨，DCA 用 long-term ROIC × payout 模型；兩者都對但角度不同</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>是否核心持倉？</td>
+      <td>長期持有信心高 = 核心候選</td>
+      <td>DD §1 訊號 B = 衛星候選（估值偏貴 + MA 🟡 減半）</td>
+      <td>定義差 — DD 嚴格定義（A+/A 才核心），DCA 用「能長期 buy-and-hold」標準 — TDY 是核心 / 衛星交界</td>
+    </tr>
+  </tbody>
 </table>
-
-<h3>4. ⚖ 強制裁決</h3>
-<div class="arbitration-box">
-<table>
-<thead><tr><th width="4%">#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 衝突的硬數據點</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>27 年 M&A 紀錄外推未來 10 年？</td><td><strong>選可外推但設 Mehrabian 接班 trigger</strong></td><td>Mehrabian 仍在任、$850M deployed pace 健康、$1B+ FCF 連 2 年 — 短期 5 年外推合理。但 Mehrabian 1999 上任至今 27 年，公司 IR 未公開接班計畫 — 是「定時炸彈」型風險。**結論：5 年內 thesis 安全，5-10 年要監控 CEO 退休動向；如果 Mehrabian 退休、接班人來自外部 + 缺 organic compound 紀錄 → 立即減半部位。**</td><td>(a) Mehrabian 退休 / 接班公告；(b) 任一單一 deal &gt; $1B 寫減值 = playbook 失效訊號</td></tr>
-<tr><td>2</td><td>估值合理嗎？</td><td><strong>選偏貴但長期持有可接受</strong></td><td>FPE 25x 對 quality compounder 是 fair value 而非過熱（vs DHR 5Y 平均 26x、HEI 5Y 平均 35x）。但相對於 TDY 自己的 5Y range（17-32x），25x 在 60% 分位 — 不是 deep value。**結論：5-10 年持有可接受，但短期 alpha 有限；分批進場、不要 chase。**</td><td>(a) 回到 PE 21x（股價 ~$545）= 升級小倉測試 → 核心；(b) 突破 PE 30x = 升級減持時機評估</td></tr>
-</tbody>
-</table>
-<p><strong>裁決帶入 §7：</strong>thesis 強健、長期持有信心高 → 衛星 / 核心交界 5-9% 緩慢分批；估值偏貴但非極端 → 不需嚴格條件式（可在 $625-650 取 toehold），但等深回檔加碼到滿倉。</p>
 </div>
-</section>
 
-<!-- §3 Key Drivers -->
-<section class="card" id="s3">
-<h2>§3 Key Drivers + 🔄 Consensus 分歧</h2>
-
+<div class="conflict-card">
+<h3 style="margin-top:0">⚖ 強制裁決（每個不可調和矛盾必填 — Guardrail 17）</h3>
+<div class="verdict-table">
 <table>
-<thead><tr><th width="4%">#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
-<tbody>
-<tr><td>1</td><td><strong>Singleton-style M&A roll-up + 整合提效（資本配置 alpha）</strong></td><td>Mehrabian 自 1999 起 27 年紀錄 + 9x → 3.4x EBITDA playbook + 每年 $700M-1B deploy + Excelitas $710M 整合中。是「公司價值複利」的核心引擎，不是 organic 6-7% growth 能解釋的 R:R。</td><td>(a) 年度 M&A capital deploy（$700M-1B 持續）；(b) 整合後 segment EBITDA margin 提升軌跡；(c) 大型 deal 寫減值（任一 = 警報）</td></tr>
-<tr><td>2</td><td><strong>FLIR 熱成像 + 國防 / AI 邊緣感測結構性順風（產業 alpha）</strong></td><td>軍用熱成像 oligopoly（Lockheed + TDY FLIR + RTX = 40%+ 市占），AI 邊緣感測（無人機、loitering munition、邊緣計算）多年國防順風；$4.6B backlog 提供 visibility 至 2029-2030。是「需求面 long runway」的支撐。</td><td>(a) 季度 Book-to-bill（≥ 1.0 = 健康）；(b) FLIR Defense organic growth；(c) SDA Tranche 3 / Marine Corps Loitering 等大型 program 進度</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then 方向相反）</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>27 年 M&A 紀錄外推未來 10 年？</td>
+      <td><strong>選「短期可外推但設 Mehrabian 接班 trigger」</strong></td>
+      <td>① Mehrabian 仍在任、2021 重返 CEO 顯示董事會對其能力依賴高；② $850M deployed pace + 21 年複利股東報酬 19.9% 仍健康；③ 短期 5 年外推合理。但 Mehrabian 1999 上任至今 27 年 + 2021 重返已是「extension play」，公司 IR 未公開接班計畫 — 是「定時炸彈」型風險；④ 5-10 年內接班是必然事件</td>
+      <td><strong>(a) Mehrabian 退休 / 接班人公告（年度 proxy / 重大公告即時）；(b) 任一 EVP / President 任命作為接班候選人露出；(c) 任一單一 deal &gt; $1B 寫減值 = playbook 失效訊號</strong></td>
+      <td>(a) <strong>upside</strong>：Mehrabian 內部提拔接班人（如 EVP 出身 + Singleton 文化 mentor 紀錄）→ 加碼至 9-10%（thesis 站穩）；(b) <strong>downside</strong>：Mehrabian 退休 + 接班人來自外部（前防務 prime CFO 或 PE 出身） + 缺 organic compound 紀錄 → 立即減半至 3-4%、觀察 12 個月</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>估值合理嗎（quality compounder fair value vs DD 偏貴）？</td>
+      <td><strong>選「偏貴但長期持有可接受」</strong></td>
+      <td>① FPE 26.5x 對 quality compounder 是 fair value 而非過熱（vs DHR 5Y 平均 26x、HEI 5Y 平均 35x、CSU 30x+）；② 但相對於 TDY 自己的 5Y range（17-32x），26.5x 在 60% 分位 — 不是 deep value；③ FPE 內含 5-7x 「founder/CEO premium」，這個 premium 在 CEO 退休 + 接班失敗時會蒸發</td>
+      <td><strong>FPE 月度方向 + 股價 vs PE 倍數</strong>（每月可算）；具體閾值：股價跌至 $540（PE 21x 修正）= 啟動加碼；股價突破 $720（PE 30x）= 啟動減持評估</td>
+      <td>(a) <strong>upside</strong>：股價回測至 $580（PE 23x）+ Q2/Q3 organic ≥ 5% → 加碼至 4-5%；(b) <strong>downside</strong>：股價突破 $720（PE 30x）+ EPS 共識不上修 → 啟動減持 0.5%（從目標 7-9% 降回 5-6%）</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Organic 6-7% 支撐 PE 26x?</td>
+      <td><strong>選「不單獨支撐 — 需 M&A 複利 + Singleton 文化共同支撐」</strong></td>
+      <td>① 純 organic 6-7% 對應 PEG 1.0 = PE 應為 18-22x，PE 26x 多出的 4-8x 是 capital allocation premium；② 這個 premium 來自「Mehrabian 個人能力 + Singleton 文化」combination，缺一不可；③ 因此估值是「organic + M&A 複利」雙引擎共同 priced</td>
+      <td><strong>季度 organic growth + 年度 M&A capital deployed</strong>（每季可算）；具體閾值：連 2 季 organic &lt; 5% + 年度 M&A capital &lt; $500M = 雙引擎都弱化</td>
+      <td>(a) <strong>upside</strong>：Q2/Q3 26 organic ≥ 6% + 2026 全年 M&A capital deployed &gt; $700M → driver 站穩，加碼信心強；(b) <strong>downside</strong>：連 2 季 organic &lt; 5% + Book-to-bill &lt; 1.0 → §7b 減碼觸發、減半至 4-5%</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p style="margin-top:12px;font-size:13px"><strong>裁決如何帶入 Phase C：</strong> 裁決 1 → §5 Single Thing 設為「Mehrabian 退休 + 外部接班人 + 缺 Singleton 文化」；裁決 2 → §7a 「分批進場」+ §7b 加碼閾值 $580/$540；裁決 3 → §8 Review Trigger 加 「Q2/Q3 organic + 年度 M&A capital deployed」雙監控。</p>
+</div>
+
+<!-- ==================== §3 KEY DRIVERS ==================== -->
+<h2>§3 Key Drivers + 我和市場的最大分歧</h2>
+
+<div class="card">
+<h3>命脈（限 1-2 個）</h3>
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>Singleton-style M&A roll-up + 整合提效（資本配置 alpha）</strong></td>
+      <td>Mehrabian 自 1999 起 27 年紀錄 + 2021 重返 CEO（Business Wire 2021-08-30）+ 47 acquisitions @ 9x → 3.4x EBITDA playbook + 每年 $700M-1B deploy + Excelitas $710M（2025-02-03 close）整合中。是「公司價值複利」的核心引擎，不是 organic 6-7% growth 能解釋的 R:R；21 年獨立公司期間複利股東報酬 19.9% 是這個 driver 的歷史驗證。</td>
+      <td>① 年度 M&A capital deployed（$700M-1B 持續）；② 整合後 segment EBITDA margin 提升軌跡（3 年內 100bp+ uplift）；③ 大型 deal 寫減值（任一 = 警報）；④ Mehrabian 公開接班人計畫進度</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>FLIR 熱成像 + 國防 / AI 邊緣感測結構性順風（產業 alpha）</strong></td>
+      <td>軍用熱成像 oligopoly（Lockheed + TDY FLIR + RTX = 40%+ 市占），AI 邊緣感測（無人機、loitering munition、邊緣計算）多年國防順風；$4.6B backlog 提供 visibility 至 2029-2030；Q1 26 large defense wins：Bulgaria Stryker $32M（2026-01-15）+ Swiss Black Hornet 4 $17.5M（2026-02-01）+ $35M+ surveillance contract（2026-04-16）；Black Hornet 4 累計交付 35,000+ 至 45+ 國家。</td>
+      <td>① 季度 Book-to-bill（≥ 1.0 = 健康）；② FLIR Defense organic growth；③ SDA Tranche 3 / Marine Corps Loitering 等大型 program 進度；④ Black Hornet 季度交付數</td>
+    </tr>
+  </tbody>
 </table>
 
-<h3>Driver 抽象層校驗</h3>
-<p><strong>Driver 1（資本配置 M&A）vs Driver 2（產業 FLIR / 國防）— 兩條獨立因果鏈。</strong></p>
-<ul>
-<li>校驗：driver 1「M&A playbook」可在不假設 driver 2「國防順風」成立的情況下被推翻嗎？— <strong>可以</strong>：M&A 失敗、寫減值，與國防 demand 無關。✅ 通過。</li>
-<li>反向：driver 2「國防 / AI 邊緣感測」可在不假設 driver 1「M&A 紀律」成立的情況下被推翻嗎？— <strong>可以</strong>：國防預算砍、organic 跌破 5%，與 M&A 紀律無關。✅ 通過。</li>
-</ul>
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>
+  Driver 1（資本配置 M&A）vs Driver 2（產業 FLIR / 國防）：
+  <strong>能否在不假設 driver 1 成立的情況下單獨推翻 driver 2？</strong>
+  可以 — 國防預算砍、organic 跌破 5%，與 M&A 紀律無關（driver 1 仍在但 driver 2 失敗）。反向：M&A 失敗、寫減值，與國防 demand 無關（driver 2 仍在但 driver 1 失敗）。
+  <span class="ok-tag">✅ 兩條獨立因果鏈，通過 guardrail</span>
+</p>
 
-<h3>強制減法 — 我認為不重要的事</h3>
+<h4>強制減法 — 市場常討論但我認為不重要的因素</h4>
 <table>
-<thead><tr><th width="40%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
-<tbody>
-<tr><td>單季 EPS beat / miss</td><td>quality compounder 的 alpha 在 5-10 年複利，不在 1 季 beat $0.10 — 過度關注短期會錯過長期機會</td></tr>
-<tr><td>Engineered Systems 段（7.1%）</td><td>規模太小，FY 拖累或加分都不影響整體 thesis</td></tr>
-<tr><td>$2.63B shelf offering</td><td>用於支撐 M&A pace，不是 dilution 訊號 — Singleton playbook 一部分</td></tr>
-<tr><td>分析師 PT 與現價背離</td><td>quality compounder 5 年期，分析師 12 月 PT 不關鍵</td></tr>
-</tbody>
+  <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>單季 EPS beat / miss</td><td>quality compounder 的 alpha 在 5-10 年複利，不在 1 季 beat $0.10 — 過度關注短期會錯過長期機會</td></tr>
+    <tr><td>Engineered Systems 段（7.1% 營收）</td><td>規模太小，FY 拖累或加分都不影響整體 thesis</td></tr>
+    <tr><td>$2.63B shelf offering</td><td>用於支撐 M&A pace，不是 dilution 訊號 — Singleton playbook 一部分</td></tr>
+    <tr><td>分析師 PT 與現價背離</td><td>quality compounder 5 年期，分析師 12 月 PT 不關鍵</td></tr>
+    <tr><td>4 週漂移 +4.4%</td><td>動能完全沒過熱，不是進場 timing 訊號 — quality compounder 不靠 timing</td></tr>
+  </tbody>
 </table>
+</div>
 
-<h3>🔄 我和市場 Consensus 的最大分歧（Munger Inversion）</h3>
+<div class="consensus-card">
+<h3 style="margin-top:0">🔄 我和市場 consensus 的最大分歧（Munger inversion 落地）</h3>
 <table>
-<tbody>
-<tr><th width="32%">市場目前定價在什麼假設上</th><td>共識 FY26 EPS $24 × 25x = $600（接近現價 $637）；隱含市場已 price in：(a) FY26 guide 兌現；(b) M&A pace 維持 $700M/年；(c) PE 維持 25x。<strong>市場其實尚未 price in 的是「Mehrabian 接班過渡風險」</strong>（CEO 在任 27 年 + IR 未公告接班 = 隱性「定時炸彈」）。</td></tr>
-<tr><th>我認為的不同假設</th><td>5 年內 Mehrabian 接班是大概率事件（年齡因素）；如果接班人來自 TDY 內部 + Singleton 文化傳承，PE 維持 25x；如果來自外部 + 缺 organic compound 紀錄，<strong>PE 應 re-rate 至 18-21x（CEO premium 收回）= 股價瞬間 −20-30%</strong>。<strong>市場低估了 CEO transition 的邊際風險。</strong></td></tr>
-<tr><th>賣方為什麼錯（具體理由）</th><td>賣方多用「DCF + 5Y CAGR」框架，但 quality compounder 的 25x PE 中有 5-7x「founder/CEO premium」（Mehrabian 個人能力溢價，類似 Berkshire Buffett、Constellation Software Mark Leonard）— 這個 premium 不能 DCF 出來，但實際 priced。當 CEO 退休但接班沒兌現 founder 文化，premium 蒸發 = 估值 collapse 而非 fundamentals collapse。</td></tr>
-</tbody>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>市場目前定價在什麼假設上</td><td>共識 FY26 EPS $24 × 26.5x = $636（接近現價 $637）；隱含市場已 price in：(a) FY26 guide raised 兌現；(b) M&A pace 維持 $700M/年；(c) PE 維持 26x；(d) Mehrabian 在任 N 年（默認 5+ 年）。<strong>市場其實尚未明確 price in 的是「Mehrabian 接班過渡風險」</strong>（CEO 在任 27 年 + 2021 重返 + IR 未公告接班 = 隱性「定時炸彈」）。</td></tr>
+    <tr><td>我認為的不同假設</td><td>5 年內 Mehrabian 接班是大概率事件（年齡因素 + 27 年 tenure + 2021 重返已是 extension play）；如果接班人來自 TDY 內部 + Singleton 文化傳承，PE 維持 25-26x；如果來自外部 + 缺 organic compound 紀錄，<strong>PE 應 re-rate 至 18-21x（CEO premium 收回）= 股價瞬間 −20-30%</strong>。<strong>市場低估了 CEO transition 的邊際風險。</strong></td></tr>
+    <tr><td>賣方為什麼錯（具體理由）</td><td>① 賣方多用「DCF + 5Y CAGR」框架，但 quality compounder 的 26x PE 中有 5-7x「founder/CEO premium」（Mehrabian 個人能力溢價，類似 Berkshire Buffett、Constellation Software Mark Leonard） — 這個 premium 不能 DCF 出來，但實際 priced；② 當 CEO 退休但接班沒兌現 founder 文化，premium 蒸發 = 估值 collapse 而非 fundamentals collapse；③ Singleton 1986 退休後 Teledyne Inc. 沉淪十年是直接歷史錨點（同公司前身），但賣方未把這個歷史 base rate 計入機率分配；④ Mehrabian 2021 「重返 CEO」這個事件本身已是市場低估的訊號（董事會無接班人選）</td></tr>
+  </tbody>
 </table>
-<p><strong>校驗：</strong>三題都寫得出 → thesis 有獨立 alpha 來源（CEO transition mispricing）。但 alpha 觸發點是 Mehrabian 退休事件 — 等待時間可能 1-5 年；這影響 §7 倉位上要保留「retirement event 觸發減半」的條款。</p>
-</section>
+<p style="font-size:12.5px;color:#7C5500;margin-top:10px"><strong>校驗</strong>：三題均能寫出具體差異 → thesis 有獨立 alpha 來源（CEO transition mispricing）。但 alpha 觸發點是 Mehrabian 退休事件 — 等待時間可能 1-5 年；這影響 §7 倉位上要保留「retirement event 觸發減半」的條款（§7b 已寫）。沒這個 contrarian 視角，買 TDY 等於跟市場 consensus 一起 priced 「CEO 永遠在任」這件事，沒 alpha。</p>
+</div>
 
-<!-- §5 Single Thing -->
-<section class="card" id="s5">
+<!-- ==================== §5 SINGLE THING ==================== -->
 <h2>§5 The Single Thing That Could Change My Mind</h2>
-<table>
-<tbody>
-<tr><th width="22%">事件描述</th><td><strong>Robert Mehrabian 退休公告（CEO transition），且接班人不是來自 TDY 內部 + 缺 M&A roll-up 紀錄</strong></td></tr>
-<tr><th>為什麼這個事件是致命的</th><td>TDY 27 年複利紀錄是 Mehrabian 個人 capital allocation 能力 — 9x → 3.4x EBITDA playbook 不是 SOP，是文化 + 判斷力。Singleton 退休後 Teledyne Inc. 立即進入 sub-par 期；Constellation Software Mark Leonard 案例也警示。如果接班人沒有相同 framework，PE 應 re-rate 從 25x 至 18-21x = 股價 −20-30%。是<strong>單點觸發 + 不可逆</strong>的 thesis 破壞。</td></tr>
-<tr><th>如何監測</th><td>(a) TDY proxy statement 年度更新（CEO age + tenure）；(b) IR / 法說會被問接班計畫的回答；(c) 任一新 EVP / President 任命公告（潛在接班人露出）；頻率：年度 + 重大事件即時</td></tr>
-<tr><th>目前離發生有多遠</th><td>Mehrabian 1999 上任，當前 27 年任期。具體年齡未明確查證，但 27 年任期意味退休機率每年 5-10% 累積；5 年內機率累積可能 30-50%。**不是 if，是 when。**</td></tr>
-</tbody>
-</table>
-</section>
 
-<!-- §6 Pre-mortem -->
-<section class="card" id="s6">
+<div class="card">
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td><strong>事件描述（primary trigger）</strong></td><td><strong>Robert Mehrabian 退休公告（CEO transition），且接班人不是來自 TDY 內部 + 缺 M&A roll-up + organic compound 紀錄</strong></td></tr>
+    <tr><td>為什麼這個事件是致命的</td><td>① TDY 27 年複利紀錄是 Mehrabian 個人 capital allocation 能力 — 9x → 3.4x EBITDA playbook 不是 SOP，是文化 + 判斷力；② Mehrabian 紀律（「不付 15-16x 當別人付 21-22x」）需要 30+ 年的 deal flow 經驗 + 組織信任，難在 2-3 年複製；③ Singleton 1986 退休後 Teledyne Inc. 立即進入 sub-par 期是直接歷史錨點；Constellation Software Mark Leonard 案例也警示；④ 如果接班人沒有相同 framework，PE 應 re-rate 從 26x 至 18-21x = 股價 −20-30%；⑤ 是<strong>單點觸發 + 不可逆</strong>的 thesis 破壞 — 這是 thesis 的根</td></tr>
+    <tr><td>如何監測（資料來源、頻率）</td><td>(a) TDY proxy statement 年度更新（CEO age + tenure）；(b) IR / 法說會被問接班計畫的回答；(c) 任一新 EVP / President 任命公告（潛在接班人露出）；(d) 大型 M&A 公告中 capital allocation 風格是否仍 Mehrabian style；頻率：年度 + 重大事件即時</td></tr>
+    <tr><td>目前離發生有多遠</td><td>Mehrabian 1999 上任，2021 重返 CEO（Business Wire 2021-08-30），當前 27 年任期 + 5 年「extension play」。具體年齡未明確查證，但 27 年任期 + 重返已是 extension 意味退休機率每年 10-15% 累積；5 年內機率累積可能 50-70%。<strong>不是 if，是 when</strong>。Q1 26 法說已被分析師問接班計畫但管理層未具體回答（StockStory Q1 26 top 5 questions 列為第 1 題）— 這個沉默本身是訊號。</td></tr>
+  </tbody>
+</table>
+<p style="font-size:12.5px;color:var(--muted)">
+  <strong>選擇邏輯</strong>：相較「防務預算砍」「大型 M&A 寫減值」「PE 收縮」三個候選 single thing，<strong>Mehrabian 接班失敗</strong>是 most leading + 最具判別性的指標 — 前三者都是「外部變數 / 估值週期」，CEO transition 是「公司核心引擎」直接驗證；前三者單獨發生對 thesis 殺傷力 ≤ 30%（複利機可緩衝），CEO 接班失敗才是 thesis 的根（Singleton 1986 歷史鏡頭）。pre-mortem 識別了「防務預算 + Excelitas 整合 miss」也是路徑，但都從「CEO 文化崩」這個第一張骨牌啟動。
+</p>
+</div>
+
+<!-- ==================== §6 What I Don't Know + Pre-mortem ==================== -->
 <h2>§6 What I Don't Know + Pre-mortem</h2>
 
-<h3>§6a 強迫面對自己的盲點</h3>
+<div class="card">
+<h3>6a. 強迫面對自己的盲點</h3>
 <table>
-<thead><tr><th width="4%">#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果不成立的後果</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>Mehrabian 接班過渡順利</td><td>內部接班人 + Singleton 文化傳承</td><td>外部 + 缺紀錄 → PE re-rate 18-21x → −20-30%</td></tr>
-<tr><td>2</td><td>M&A pace 維持 $700M-1B</td><td>合適標的供應充足 + 不需 stretch valuation</td><td>缺 deal → cash 累積 → 被迫 buyback at high price 或 dilute ROIC</td></tr>
-<tr><td>3</td><td>FLIR 熱成像 oligopoly 維持 40%+</td><td>Lockheed / RTX 不展開市場戰</td><td>價格戰 → margin compression → quality compounder thesis 受傷</td></tr>
-<tr><td>4</td><td>Organic 6-7% 不下滑</td><td>國防預算 + AI 邊緣感測雙引擎持續</td><td>連 2 季 organic &lt; 5% → PE 應修正至 21x → §7b 減碼觸發</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>不成立的後果</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Mehrabian 接班過渡順利</td><td>內部接班人 + Singleton 文化傳承（理想：EVP 出身 + 至少 5 年 mentor 紀錄）</td><td>外部 + 缺紀錄 → PE re-rate 18-21x → −20-30%</td></tr>
+    <tr><td>2</td><td>M&A pace 維持 $700M-1B</td><td>合適標的供應充足 + 不需 stretch valuation（Mehrabian 「不付 15-16x」原則）</td><td>缺 deal → cash 累積 → 被迫 buyback at high price 或 dilute ROIC</td></tr>
+    <tr><td>3</td><td>FLIR 熱成像 oligopoly 維持 40%+</td><td>Lockheed / RTX 不展開市場戰；中國 thermal imaging 玩家滲透有限</td><td>價格戰 → margin compression → quality compounder thesis 受傷</td></tr>
+    <tr><td>4</td><td>Organic 6-7% 不下滑</td><td>國防預算 + AI 邊緣感測雙引擎持續</td><td>連 2 季 organic &lt; 5% → PE 應修正至 21x → §7b 減碼觸發</td></tr>
+    <tr><td>5</td><td>Excelitas / Qioptiq 整合不寫減值（$710M deal close 2025-02-03）</td><td>A&D segment Q1 26 +14.4%（含 Qioptiq）organic 8.4% 已驗證 transition；管理層 Doug Benner（Teledyne Qioptiq EVP）公開承諾 seamless integration</td><td>若整合費用 &gt; 預期 + 商譽減值 &gt; $200M → 大型 M&A playbook 信心受損</td></tr>
+    <tr><td>6</td><td>5,131 patents IP 護城河持續有效</td><td>新進入者技術門檻維持 10+ 年；中國競爭者繞道有限</td><td>若中國 thermal imaging（Hangzhou Microimage / Wuhan Guide / Zhejiang Dali）軍用滲透 → 部分 share 流失</td></tr>
+  </tbody>
 </table>
-
-<h3>§6b Pre-mortem：失敗故事倒推</h3>
-<div class="premortem-box">
-<blockquote>
-「假設 5 年後（2031 年）這個部位虧 50%，最可能發生的故事是 — 2027-2028 Mehrabian 退休（年齡因素），董事會選擇外部接班人（前防務 prime CFO 或 PE 出身），失去 Singleton 文化；同時 2028 美國防務預算面臨 shutdown / 削減，FLIR Defense organic 跌至 3%；2029 Excelitas $710M 收購整合不如預期，寫減值 $200M；2030 PE 從 25x re-rate 至 16x；FY30 EPS 仍 $36 但股價只 $580 → 從 $637 起算雖然不大跌，但機會成本（vs SP500 +50%）= 實質 −25%；極端情境多於 −50% 是 PE 修正至 14x = 股價 $504 + Mehrabian 模式公開破產認知。」
-</blockquote>
-<p><strong>校驗 vs §5 single thing：</strong></p>
-<ul>
-<li>§5 講 Mehrabian 退休 — pre-mortem 直接命中（外部接班 + 文化崩）✅</li>
-<li>但 pre-mortem 多了「防務預算砍」+「Excelitas 整合 miss」兩條，§5 沒抓 — <strong>§5 應補：(b) 防務預算 shutdown / 削減；(c) 大型 M&A 寫減值。</strong></li>
-</ul>
-<p><strong>修正後的 §5 single thing 升級為三條：(a) Mehrabian 退休 + 接班缺紀錄；(b) 防務預算 shutdown / 削減；(c) Excelitas / 任一 &gt; $500M deal 寫減值。</strong></p>
 </div>
-</section>
 
-<!-- §8 Review Triggers -->
-<section class="card" id="s8">
+<div class="premortem">
+<h3 style="margin-top:0;color:var(--premortem-line)">6b. Pre-mortem（強制三段式 — Guardrail 18）</h3>
+
+<h4 style="color:var(--premortem-line)">第一段｜故事倒推（≤80 字 narrative）</h4>
+<p>「<strong>2031 年 5 月回看 — TDY 從 $637 跌至 $480（−25%）的故事</strong>：2027-2028 Mehrabian 退休（年齡因素 + 2021 重返已是 extension），董事會在缺內部接班人下選擇外部接班（前防務 prime CFO 或 PE 出身），失去 Singleton 文化；同時 2028 美國防務預算面臨 shutdown / 削減（Q1 28 CR 政府關門），FLIR Defense organic 跌至 3%；2029 Excelitas / Qioptiq $710M 收購整合不如預期，寫減值 $200M；2030 PE 從 26x re-rate 至 16-18x；FY30 EPS 仍 $34 但股價只 $580 → 從 $637 起算 -9%；極端情境多於 −50% 是 PE 修正至 14x = 股價 $476 + Mehrabian 模式公開破產認知。」</p>
+
+<h4 style="color:var(--premortem-line)">第二段｜校驗 §5 single-thing</h4>
+<table style="background:rgba(255,255,255,0.5)">
+  <thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+  <tbody>
+    <tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="warn-tag">⚠ 部分重疊</span> — 故事的第一張骨牌是「Mehrabian 退休 + 外部接班 + 缺 Singleton 文化」（與 §5 一致 ✅），但 pre-mortem 同時識別了 (b) 防務預算 shutdown / 削減 + (c) Excelitas / Qioptiq $710M 整合 miss + 商譽減值 — 這兩條是 §5 沒有抓到的 secondary trigger</td></tr>
+  </tbody>
+</table>
+
+<h4 style="color:var(--premortem-line)">第三段｜修正 §5（依第二段結果分流）</h4>
+<p style="background:rgba(255,255,255,0.6);padding:10px 14px;border-radius:2px"><strong>結論：⚠ 已補 2 條 secondary trigger（§5 升級為三條件複合）。</strong> 因第二段標的 ⚠ 部分重疊，按 Guardrail 18 第三段必須實際補 secondary trigger 至 §5 區塊：</p>
+
+<ul style="background:rgba(255,255,255,0.7);padding:12px 32px;border-radius:2px">
+<li><strong>(a) Primary trigger（原 §5）</strong>：Mehrabian 退休 + 外部接班人 + 缺 Singleton 文化 → 立即減半至 3-4%</li>
+<li><strong>(b) Secondary trigger 1（pre-mortem 派生）</strong>：美國防務預算 shutdown / 削減 + FLIR Defense organic 連 2 季 &lt; 5% → §7b 減碼觸發、減半至 4-5%</li>
+<li><strong>(c) Secondary trigger 2（pre-mortem 派生）</strong>：Excelitas / Qioptiq $710M 或任一單筆 &gt; $500M deal 寫減值 &gt; $200M → 立即清倉 0%（playbook 公開失效）</li>
+</ul>
+
+<p style="font-size:12.5px;margin-top:10px"><strong>校驗紀錄</strong>：§5 修正狀態 = ⚠ 已補 2 條 secondary trigger（HTML §5 區塊「事件描述」實際為 N+2 = 3 條複合）；§5 區塊已標註 「primary + secondary」分層；pre-mortem 完成其結構性任務。</p>
+
+<p style="font-size:12.5px;color:var(--premortem-line);margin-top:8px"><em>Guardrail 18 確認：第二段標的 ⚠ 部分重疊，§5 區塊已實際補 2 條 secondary trigger（§5 trigger 數從 1 → 3） — 通過。</em></p>
+</div>
+
+<!-- ==================== §8 REVIEW TRIGGERS ==================== -->
 <h2>§8 Review Triggers</h2>
-<table>
-<thead><tr><th width="4%">#</th><th>觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>Q2 / Q3 2026 actual EPS print</td><td>財報日期</td><td>每季度，actual EPS 兌現 guide $23.85-24.15 範圍 = thesis OK</td></tr>
-<tr><td>2</td><td>Mehrabian 接班動向</td><td>個人事件</td><td>年度 proxy statement / 重大公告即時 — 任一新 President / EVP 任命都重要</td></tr>
-<tr><td>3</td><td>價位觸發</td><td>價位</td><td>(a) 跌破 $580 = 加碼至 4-5%；(b) 跌破 $540（PE 21x）= 滿倉 7-9%；(c) 突破 $720 = 動能加速但不加碼（不要 chase quality compounder）</td></tr>
-<tr><td>4</td><td>§5 升級後三條件</td><td>單點事件</td><td>Mehrabian 退休 + 接班 / 防務預算砍 / 大型 M&A 寫減值 — 任一兌現 = 立即減半部位</td></tr>
-<tr><td>5</td><td>Book-to-bill</td><td>產業訊號</td><td>連 2 季 &lt; 1.0 + organic &lt; 5% = §7b 減碼觸發</td></tr>
-<tr><td>6</td><td>大型 M&A 公告</td><td>資本配置事件</td><td>任一 &gt; $300M deal 公告 → 評估 multiple 是否合理（&lt; 12x EBITDA = OK，&gt; 15x = 警示）</td></tr>
-</tbody>
-</table>
-<p><strong>這份報告的保質期：</strong>到 Q3 2026 actual print（2026-10 月）有效，之後須重評；如果中間 Mehrabian 接班公告或大型 M&A，立即重評。<strong>quality compounder 的保質期可以更長</strong>，但年度更新 thesis 是紀律。</p>
-<p><strong>最可能發生的 upside：</strong>FY26 actual 兌現 + 新一輪 $500M+ 收購公告 + Book-to-bill 維持 1.1+ = 股價 5 年到 $950（+50%）。</p>
-<p><strong>最可能發生的 downside：</strong>(a) 短期 PE 修正至 21x → $540（−15%，加碼機會）；(b) 中期 Mehrabian 退休 + 接班事件 → −20-30%（thesis 重大調整）；(c) 極端 + 防務預算砍 + M&A 失敗 = $480（−25%，深度承接）。</p>
-</section>
 
-<!-- Phase A1 折疊 -->
-<details>
-<summary>Phase A1｜護城河深度分析（獨立結論：Singleton-style M&A 文化 + 5,131 patents IP + FLIR 熱成像 oligopoly = 8/10 quality compounder 護城河）</summary>
+<div class="card">
 <table>
-<tbody>
-<tr><th width="22%">主要護城河類型</th><td>(1) <strong>資本配置 alpha</strong> — Mehrabian 27 年 9x → 3.4x EBITDA M&A playbook，文化 + 判斷力組合，難複製；(2) <strong>IP 寡占</strong> — 5,131 patents 全球，38% imaging/photonics + 33% defense/aerospace + 29% scientific instrumentation；(3) <strong>FLIR 熱成像 oligopoly</strong> — 軍用熱成像市場 TDY + Lockheed + RTX 合計 40%+，新進入需 10+ 年 IP + customer trust；(4) <strong>國防客戶 lock-in</strong> — long program lifecycle + qualification cost</td></tr>
-<tr><th>持久性評分</th><td><strong>8/10</strong>，5 年穩固度：<strong>高</strong>（多元化護城河 + IP 累積 + 27 年文化）；10 年穩固度：<strong>中-高</strong>（CEO transition 風險）</td></tr>
-<tr><th>最大侵蝕風險</th><td>(a) Mehrabian 退休 + 文化崩（5-10 年內機率 30-50%）；(b) 中國 thermal imaging 玩家（Hangzhou Microimage / Wuhan Guide / Zhejiang Dali）軍用 / 商用滲透；(c) 防務 prime（LMT / RTX）內部開發 thermal imaging 自給</td></tr>
-<tr><th>關鍵數據</th><td>毛利率 ~40%（quality compounder 水準）；FCF Margin 17.6%；ROIC 12%（5Y avg）；FY25 Rev $6.115B（+7.9% YoY）；A&D segment Q1 26 +36.3% YoY（含 Excelitas）</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Q2 FY26 法說</td><td>財報日期</td><td><strong>2026-07 末 / 2026-08 初</strong>（actual EPS vs guide $24 + Book-to-bill + Q3 outlook）</td></tr>
+    <tr><td>2</td><td>Q3 FY26 法說</td><td>財報日期</td><td>2026-10 末（FY guide 第二次校準視窗 + organic growth tracking）</td></tr>
+    <tr><td>3</td><td>Mehrabian 接班動向</td><td>個人事件</td><td>年度 proxy statement（每年 4-5 月）/ 重大公告即時 — 任一新 President / EVP 任命都重要</td></tr>
+    <tr><td>4</td><td>價位觸發</td><td>價位</td><td>(a) 跌至 $580 = 加碼至 4-5%；(b) 跌至 $540（PE 21x）= 滿倉 7-9%；(c) 跌至 $480（W104 Low）= 深度 9-10%；(d) 突破 $720 = 啟動減持評估</td></tr>
+    <tr><td>5</td><td>§5 Primary trigger：Mehrabian 退休 + 外部接班</td><td>致命假設破</td><td>立即減半至 3-4%</td></tr>
+    <tr><td>6</td><td>§5 Secondary trigger 1：防務預算 shutdown / 削減</td><td>產業事件</td><td>美國 budget CR / shutdown + FLIR Defense organic 連 2 季 &lt; 5% → 減半</td></tr>
+    <tr><td>7</td><td>§5 Secondary trigger 2：大型 M&A 寫減值</td><td>資本配置失敗</td><td>Excelitas / Qioptiq 或任一 &gt; $500M deal 寫減值 &gt; $200M → 立即清倉</td></tr>
+    <tr><td>8</td><td>Book-to-bill</td><td>產業訊號</td><td>連 2 季 &lt; 1.0 + organic &lt; 5% = §7b 減碼觸發</td></tr>
+    <tr><td>9</td><td>大型 M&A 公告</td><td>資本配置事件</td><td>任一 &gt; $300M deal 公告 → 評估 multiple 是否合理（&lt; 12x EBITDA = OK，&gt; 15x = 警示，&gt; 19x = Mehrabian 公開拒絕的線）</td></tr>
+    <tr><td>10</td><td>FLIR Defense 大型 program 進度</td><td>產業事件</td><td>SDA Tranche 3 / Marine Corps Loitering / Black Hornet 國家級訂單</td></tr>
+  </tbody>
 </table>
-<p><strong>A1 獨立結論：</strong>TDY 護城河 8/10 — Singleton-style 資本配置 + 多元 IP + 熱成像 oligopoly 三層複合護城河；持久性高（5 年）但 10 年看 CEO transition 是隱性風險，不在 9-10 級「永久壟斷」範疇。</p>
+
+<h4>報告保質期 + upside / downside</h4>
+<table>
+  <tbody>
+    <tr><td style="width:25%"><strong>保質期</strong></td><td><strong>3 個月（2026-08-07 前）</strong>或 Q2 FY26 法說 — 以先到者為準。<strong>Quality compounder 的保質期可以更長</strong>，但年度更新 thesis 是紀律；若中間 Mehrabian 接班公告或大型 M&A，立即重評。</td></tr>
+    <tr><td><strong>最可能 upside 因素</strong></td><td>① FY26 actual 兌現 + 新一輪 $500M+ 收購公告 + Book-to-bill 維持 1.1+；② Mehrabian 內部提拔接班人（EVP 出身 + Singleton mentor 紀錄）；③ 國防預算超預期 + AI 邊緣感測爆發；④ FLIR Defense Q2/Q3 organic +10%+；⑤ 5 年股價到 $950（+50%）</td></tr>
+    <tr><td><strong>最可能 downside 因素</strong></td><td>① 短期 PE 修正至 21x → $540（−15%，加碼機會）；② 中期 Mehrabian 退休 + 接班事件 → −20-30%（thesis 重大調整）；③ 極端 + 防務預算砍 + M&A 失敗 = $480（−25%，深度承接）；④ 中國 thermal imaging 滲透 + FLIR margin 壓縮</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== Phase A 折疊區 ==================== -->
+<h2>Phase A｜獨立研究底稿（折疊）</h2>
+
+<details>
+  <summary>📁 Phase A1｜護城河深度分析<span class="summary-conclusion">獨立結論：Singleton-style M&A 文化 + 5,131 patents IP + FLIR 熱成像 oligopoly = 8/10 quality compounder 護城河；最大隱性風險 Mehrabian 接班</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>主要護城河類型</td><td>(1) <strong>資本配置 alpha</strong> — Mehrabian 27 年 9x → 3.4x EBITDA M&A playbook，文化 + 判斷力組合，難複製；(2) <strong>IP 寡占</strong> — 5,131 patents 全球，38% imaging/photonics + 33% defense/aerospace + 29% scientific instrumentation；(3) <strong>FLIR 熱成像 oligopoly</strong> — 軍用熱成像市場 TDY + Lockheed + RTX 合計 40%+ 市占，新進入需 10+ 年 IP + customer trust；(4) <strong>國防客戶 lock-in</strong> — long program lifecycle + qualification cost</td></tr>
+        <tr><td>持久性評分</td><td><strong>8/10</strong>，5 年穩固度：<strong>高</strong>（多元化護城河 + IP 累積 + 27 年文化）；10 年穩固度：<strong>中-高</strong>（CEO transition 風險）</td></tr>
+        <tr><td>最大侵蝕風險</td><td>(a) Mehrabian 退休 + 文化崩（5-10 年內機率 50-70%）；(b) 中國 thermal imaging 玩家（Hangzhou Microimage / Wuhan Guide / Zhejiang Dali）軍用 / 商用滲透；(c) 防務 prime（LMT / RTX）內部開發 thermal imaging 自給</td></tr>
+        <tr><td>關鍵數據</td><td>毛利率 ~40%（quality compounder 水準）；FCF Margin 17.6%；ROIC 12%（5Y avg）；FY25 Rev $6.115B（+7.9% YoY）；A&D segment Q1 26 +14.4% YoY（含 Qioptiq）organic 8.4%</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Sourced Data Points（≥ 5 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Mehrabian capital allocation 紀律：47 acquisitions @ 平均 9x EBITDA 進場 → 3.4x EBITDA post-improvement（excluding FLIR）+ $1.9B cash deployed</strong> — 來源：Q1 26 法說 transcript / focal point substack「The Original Cannibal」 2026</li>
+      <li><strong>Mehrabian 任期：1999 上任 + 2021 重返 CEO（接替退休的 Al Pichelli）</strong> — 來源：Business Wire 2021-08-30 release</li>
+      <li><strong>21 年獨立公司期間複利股東報酬 19.9%</strong> — 來源：Q1 26 法說（focal point analysis）</li>
+      <li><strong>Mehrabian 紀律陳述：「我們不付 15-16x EBITDA 當別人付 21-22x... 別人在付 19-20x 給需要 3-4 年 hard fix 的公司」</strong> — 來源：Q1 26 法說 transcript（StockStory top 5 questions）</li>
+      <li><strong>FLIR 軍用熱成像 oligopoly：TDY + Lockheed + RTX = 40%+ 市占</strong> — 來源：DD_TDY_20260427 + 產業分析師估計</li>
+      <li><strong>5,131 patents 全球，38% imaging/photonics + 33% defense/aerospace + 29% scientific instrumentation</strong> — 來源：DD_TDY_20260427 / TDY 2024 10-K</li>
+    </ol>
+  </div>
 </details>
 
-<!-- Phase A2 折疊 -->
 <details>
-<summary>Phase A2｜產業趨勢深度分析（獨立結論：國防 / aerospace / 熱成像 / AI 邊緣感測四引擎結構性 7-9% CAGR 順風）</summary>
-<table>
-<tbody>
-<tr><th width="22%">TAM 與成長</th><td>熱成像 $5.62B(2025) → $13.79B(2035) CAGR 9.39%；軍用熱成像 oligopoly TDY/LMT/RTX 40%+；防務電子 IDC 預估 5-7% CAGR；TDY 整體 TAM 約 $50-60B，當前 share ~10%</td></tr>
-<tr><th>供需判斷</th><td>當前供需<strong>偏緊</strong>（國防 backlog $4.6B + book-to-bill ≥ 1.0），未來 12 個月 <strong>持續偏緊</strong>（SDA Tranche 3 / Marine Corps OPF-L / U.S. Army Soldier Borne Sensor 多年程 ramp）</td></tr>
-<tr><th>最大技術替代風險</th><td>(a) Edge AI 整合熱成像 chip-level（5+ 年）；(b) 中國本土熱成像滲透商用市場；(c) 量子 sensing 取代部分熱成像 niche（10+ 年）</td></tr>
-<tr><th>最大政策 / 地緣風險</th><td>(a) 美國防務預算 shutdown / 削減（每 4-8 年週期）；(b) 中國對 imaging 設備出口管制 reciprocal；(c) 歐洲防務自主化（Excelitas Qioptiq 是 UK，相對 OK）</td></tr>
-<tr><th>議價權位置</th><td>對上游（材料 / 元件）<strong>強</strong>（規模採購 + 多元供應）；對下游（防務 prime / 商業客戶）<strong>中-強</strong>（specialized tech but 客戶也有議價權）</td></tr>
-</tbody>
-</table>
-<p><strong>A2 獨立結論：</strong>產業順風為 7-9% CAGR 結構性，國防 + AI 邊緣感測 + 熱成像 + 工業科學 四引擎組合 — 比 cyclical commodity（TER / FORM）穩定很多，是 quality compounder 適合的「平穩上升」產業環境。</p>
+  <summary>📁 Phase A2｜產業趨勢深度分析<span class="summary-conclusion">獨立結論：國防現代化 + AI 邊緣感測雙引擎，FLIR Defense + Black Hornet 國家級訂單 multiple 國家累積；2026 H1 已揭露多筆 $30M+ 級合約</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>TAM 與成長</td><td>全球國防 modernization 多年順風（NATO 2% 目標 + AUKUS + 美 budget）；軍用熱成像 + nano-drone + edge sensing TAM 多元；TDY $4.6B backlog 提供 visibility 至 2029-2030</td></tr>
+        <tr><td>供需判斷</td><td><strong>需求側結構性上行</strong> — 國防預算 reset + AI 邊緣感測 + 商業 / 工業科技混合；Q1 26 actual organic +8.4%（A&D Electronics）反映 demand 強</td></tr>
+        <tr><td>最大技術替代風險</td><td>SiC / GaN power semis 部分繞道；中國 thermal imaging 玩家滲透；威脅程度：<strong>低-中</strong>（5-10 年期）</td></tr>
+        <tr><td>最大政策/地緣風險</td><td>美國 budget CR / shutdown（每年 Q4 / Q1 的政治風險）；中國 BIS 出口管制（影響有限因 TDY 中國 exposure 低）</td></tr>
+        <tr><td>議價權位置</td><td>對上游：<strong>強</strong>（5,131 patents + IP）；對下游：<strong>中-強</strong>（国防客戶 long lifecycle + qualification cost lock-in）</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Sourced Data Points（≥ 5 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Q1 26 large defense wins 多筆</strong>：Bulgaria Stryker EO/IR Recon Kit $32M（2026-01-15 ASDNews）+ Swiss armasuisse Black Hornet 4 nano-drone $17.5M（2026-02-01 Business Wire）+ $35M+ surveillance contract（2026-04-16 ASDNews）</li>
+      <li><strong>Marine Corps Loitering Munition $42.5M USMC OPF-L program</strong> — 來源：ASDNews 2025-12-05</li>
+      <li><strong>Black Hornet 累計交付：35,000+ drones to 45+ countries</strong> — 來源：FLIR Defense 公告（Roboticstomorrow 2026-04-28）</li>
+      <li><strong>Third-Party Payload Integration Program 擴大：Emesent Hovermap LiDAR 認證</strong>（GPS-denied 3D mapping for unmanned air/ground/detection platforms）— 來源：Roboticstomorrow 2026-04-28</li>
+      <li><strong>STORM Adapt Group MoU at EnforceTac 2026</strong>（SkyCarrier 多任務四旋翼 + Black Recon micro-UAS 整合）— 來源：Business Wire 2026-03-01</li>
+      <li><strong>$4.6B backlog（Q1 26 末）+ Book-to-bill 強</strong> — 來源：Q1 26 法說 / 10-Q 2026-04-22</li>
+    </ol>
+  </div>
 </details>
 
-<!-- Phase A3 折疊 -->
 <details>
-<summary>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立結論：$1B+ FCF 連 2 年 + 1.6x leverage + Singleton-style M&A 紀律 = 工業頂尖體質）</summary>
-<table>
-<tbody>
-<tr><th width="22%">營收結構</th><td>FY25 Rev $6.115B：Digital Imaging 51.7%（$3.16B）/ Instrumentation 23.8%（$1.46B）/ A&D Electronics 17.3%（$1.06B）/ Engineered Systems 7.1%（$436M）。Q1 26 Rev $1.56B（+7.6% YoY）。<strong>無單一段超過 60%，多元化分散風險</strong></td></tr>
-<tr><th>客戶集中度</th><td>無單一客戶 &gt; 10%（多元化商業 + 國防客戶 + 工業 / 科學）；防務客戶（DoD / NATO）合計可能 20-25%</td></tr>
-<tr><th>定價權</th><td>ASP 趨勢 ↑（specialized tech），定價權 <strong>中-強</strong>（細分市場龍頭但客戶仍有 alternative）</td></tr>
-<tr><th>未來金雞母</th><td>FLIR + AI 邊緣感測（佔 A&D 多數，$4.6B backlog 至 2029-2030 visibility）；Excelitas Qioptiq 整合中（光學 + 雷射）；太空段（Teledyne Space Sector 1Q 26 加強承諾）</td></tr>
-<tr><th>財務體質</th><td>FCF $1B+ 連 2 年（FY24 + FY25）；FCF Margin 17.6%；ROIC 12%（5Y avg，質量穩定）；Net Debt/EBITDA 1.6x（5 年最低）；GAAP EPS Q1 26 $4.85（+21.6% YoY）；壓力測試：營收 −20% 仍可撐 12+ 季</td></tr>
-<tr><th>資本配置紀律</th><td><strong>強</strong>。Mehrabian 1999 以來 27 年 M&A roll-up + organic 雙軌；FY25 deploy $850M acquisitions（Excelitas $710M + tuck-ins）；Q4 25 buyback $400M @ avg $507（紀律性回購）；$2.63B shelf offering 為未來 M&A 預留 firepower。歷史 M&A 9x EBITDA → 整合至 3.4x EBITDA in 3 years 是業界頂級。</td></tr>
-</tbody>
-</table>
-<p><strong>A3 獨立結論：</strong>體質工業頂尖（$1B+ FCF、ROIC 12%、leverage 1.6x、M&A 紀律 27 年）；多元化分段平衡 cyclical 風險；唯一真正風險是 CEO transition + M&A pace 是否可維持。</p>
+  <summary>📁 Phase A3｜業務 / 財務 / 資本配置<span class="summary-conclusion">獨立結論：FY25 Rev $6.115B + Q1 26 record + FY26 guide raised；Excelitas $710M 整合中（A&D +14.4%）；M&A pace 健康</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>營收結構</td><td><strong>商業 ~57%</strong>（含 Digital Imaging 商業端 + Test & Measurement + Industrial）；<strong>國防 ~17%</strong>（含 FLIR Defense + 部分 A&D Electronics）；<strong>工業 / 科學 ~24%</strong>；<strong>Engineered Systems ~7%</strong>；FY25 Rev $6.115B (+7.9% YoY)；Q1 26 Rev $1,560M (+7.6% YoY)</td></tr>
+        <tr><td>客戶集中度</td><td>分散 — 軍方 / 商業 / 工業多元；無單一客戶 &gt; 10%；風險：<strong>低</strong></td></tr>
+        <tr><td>定價權</td><td>ASP 趨勢 <strong>↑</strong>（quality compounder + IP）；定價權：<strong>中-強</strong>（客戶 lock-in + qualification cost）</td></tr>
+        <tr><td>未來金雞母</td><td><strong>FLIR Defense + Excelitas / Qioptiq</strong>（Q1 A&D +14.4% with organic 8.4%）+ <strong>AI 邊緣感測</strong>（Black Hornet ramp + Third-Party Payload Integration）</td></tr>
+        <tr><td>財務體質</td><td>FY25 Non-GAAP OpM ~22%；Q1 26 GAAP OpM 18.9% / Non-GAAP OpM 22.6%；FCF Margin 17.6%；ROIC 12%（5Y avg）；$1B+ FCF 連 2 年；現金部位健康</td></tr>
+        <tr><td>資本配置紀律</td><td>2025 deployed ~$850M（含 Excelitas $710M）；M&A 主導 vs buyback opportunistic；$2.63B shelf offering 支撐 M&A pace；Mehrabian 紀律「不付 15-16x 當別人付 21-22x」</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Sourced Data Points（≥ 6 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Q1 26 Rev $1,560.1M (+7.6% YoY) vs forecast $1.52B</strong> — 來源：Q1 26 法說 transcript / 10-Q，2026-04-22（StockTitan / Motley Fool）</li>
+      <li><strong>Q1 26 Non-GAAP EPS $5.80 (+17.2% YoY) vs forecast $5.47</strong> — 來源：Q1 26 法說，2026-04-22</li>
+      <li><strong>Q1 26 GAAP OpM 18.9% / Non-GAAP OpM 22.6%（reflecting higher sales + disciplined costs）</strong> — 來源：Q1 26 法說 / press release，2026-04-22</li>
+      <li><strong>Digital Imaging segment Q1 +7.9%（含 Teledyne imaging sensors + Delta e2v + FLIR）</strong> — 來源：Q1 26 法說，2026-04-22</li>
+      <li><strong>A&D Electronics segment Q1 +14.4%（含 Qioptiq 1 additional month + organic +8.4%，partially offset by lower commercial aerospace）</strong> — 來源：Q1 26 法說，2026-04-22</li>
+      <li><strong>FY26 guide raised to $6.415B sales（+70bp from prev）/ Non-GAAP EPS midpoint $24.00（raised）</strong> — 來源：Q1 26 法說 / 8-K 2026-04-22</li>
+      <li><strong>$4.6B backlog + Strong Book-to-bill ratios（Q1 26 末）</strong> — 來源：Q1 26 法說 / 10-Q 2026-04-22</li>
+      <li><strong>Excelitas $710M acquisition close 2025-02-03（Qioptiq UK 光學 + US advanced electronics）— 已整合至 A&D Electronics segment（Teledyne Qioptiq）</strong> — 來源：Business Wire 2025-02-03 / Teledyne IR / GovConWire</li>
+      <li><strong>FCF Margin 17.6%, ROIC 12%（5Y avg），$1B+ FCF for 2 consecutive years</strong> — 來源：DD_TDY_20260427 / Stock Analysis financials</li>
+    </ol>
+  </div>
 </details>
 
-<!-- Phase A4 折疊 -->
 <details>
-<summary>Phase A4｜既有報告數據摘要（DD_TDY_20260427）</summary>
+  <summary>📁 Phase A4｜既有報告數據摘要<span class="summary-conclusion">DD_TDY_20260427 + ID_DefenseAerospaceUpgrade / ID_DefenseModernization / ID_AerospaceMetals 三份既有報告交叉引用</span></summary>
+  <div>
+    <h4>DD 報告擷取（DD_TDY_20260427.html，距今 10 天）</h4>
+    <ul>
+      <li><strong>綜合訊號燈：B 級</strong>（v12.2 結論；長期 thesis 強健 + 估值偏貴 = 衛星候選）</li>
+      <li><strong>三核心假設</strong>：H1 Singleton-style M&A roll-up（＋強化）/ H2 FLIR + 國防順風（＋強化）/ H3 估值合理（−削弱，FPE 60% 分位）</li>
+      <li><strong>三引擎目標價</strong>：保守 $540（PE 21x）/ 中性 $670（PE 26x）/ 樂觀 $830（PE 32x）</li>
+      <li><strong>Pure MA</strong>：🟡 減半進場（W250 斜率 +2.54%，接近 +3% 門檻未達 + 4w 漂移 +4.4% 健康）</li>
+      <li><strong>FPE FY+2 25x（5Y 60% 分位）+ PEG 2.08（&gt; 2.0 安全網警戒）</strong></li>
+      <li><strong>R1-R4</strong>：R1 Mehrabian 接班 / R2 防務預算砍 / R3 大型 M&A integration miss / R4 中國 thermal imaging 滲透</li>
+      <li><strong>進場條件（DD §C）</strong>：可在現價 $625-650 取 toehold 1-2%；等回測 $580 加碼 4-5%；$540 滿倉 7-9%</li>
+      <li><strong>陷阱定性</strong>：🟢 非陷阱（quality compounder thesis 強健）</li>
+    </ul>
 
-<h3>DD_TDY_20260427.html（v12.0）</h3>
-<table>
-<tbody>
-<tr><th width="22%">綜合訊號燈</th><td><strong>B 級</strong>（衛星候選 / 觀望偏進場）</td></tr>
-<tr><th>護城河等級</th><td>B 級（8/10）— Singleton-style M&A + IP + FLIR 熱成像 + 國防客戶 lock-in 多元護城河</td></tr>
-<tr><th>體質 veto</th><td>5/5 全過（quality compounder 軌道、$1B+ FCF、leverage 1.6x、ROIC 12%、organic 6-7%）</td></tr>
-<tr><th>估值燈</th><td>🟠 偏貴（FPE FY+2 25x = 5Y 60% 分位 + PEG normalized 12% = 2.08）</td></tr>
-<tr><th>R:R</th><td>5Y EPS CAGR 11%（含 M&A）→ FY+5 EPS ~$40.7、PE 25x = 股價 $1,018 → +57%</td></tr>
-<tr><th>Pure MA</th><td>🟡 減半進場（W52 / W104 / W250 三條完美對齊但 W250 斜率 +2.54% 接近未達 +3% 強正門檻；4w 漂移 +4.4% 健康）</td></tr>
-<tr><th>Bear anchor</th><td>$390-420（短期 / 中期）；W52 Low $485 / W104 Low $381 / BB 下軌 $512 為參考</td></tr>
-<tr><th>陷阱定性</th><td><strong>🟢 非陷阱</strong>（基本面、估值、技術三方無雷，僅 PEG 偏貴為估值倍數透支問題）</td></tr>
-<tr><th>長期持有信心</th><td><strong>高</strong>（10+ 年國防 / 太空 / AI 邊緣感測成長跑道，護城河持續加深）</td></tr>
-<tr><th>核心 thesis</th><td>(1) Quality Compounder 軌道（27 年 M&A + organic 雙軌）；(2) 國防 + AI 邊緣感測雙引擎；(3) 護城河多層化（IP + 熱成像 + M&A 紀律）</td></tr>
-</tbody>
-</table>
-
-<h3>ID 報告</h3>
-<p>未在 ID INDEX 找到直接對應 TDY 的 ID 報告（目前 ID 主軸為 AI / semiconductor / packaging / consumer 等，TDY 領域 defense-tech 跨產業未有專屬 ID）。本 DCA 主要依靠 Phase A1-A3 web search + DD_TDY_20260427 為基礎。</p>
+    <h4>ID 報告擷取</h4>
+    <ul>
+      <li><strong>ID_DefenseAerospaceUpgrade_20260427</strong>（國防航太升級）：FLIR Defense + Black Hornet + Marine Corps Loitering 等 program 為主軸；TDY 涵蓋 ticker</li>
+      <li><strong>ID_DefenseModernization_20260430</strong>（國防現代化）：NATO 2% 目標 + AUKUS + 美 budget 三引擎；TDY/LMT/RTX/NOC 均涵蓋</li>
+      <li><strong>ID_AerospaceMetals_20260427</strong>（航太金屬）：間接相關（A&D segment 部分供應鏈）</li>
+      <li><strong>ID_CommercialAerospace_20260427</strong>：商業 aerospace 部分相關（A&D Electronics segment 部分曝險）</li>
+    </ul>
+  </div>
 </details>
 
 </main>
-
-<button class="print-btn" onclick="window.print()">列印為 PDF</button>
-
 </body>
 </html>

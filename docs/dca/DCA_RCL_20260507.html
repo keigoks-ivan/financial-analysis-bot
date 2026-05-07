@@ -1,430 +1,653 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<title>RCL — Deep Conviction Analysis｜2026-05-07</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCA｜RCL（Royal Caribbean）｜2026-05-07</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --ink-2:#334155; --line:#E2E8F0; --accent:#1E3A5F; --accent-2:#3B82F6; }
-  * { box-sizing:border-box; }
-  body { margin:0; font-family:'Noto Sans TC', sans-serif; background:var(--bg); color:var(--ink); line-height:1.7; }
-  .num, code, pre { font-family:'IBM Plex Mono', monospace; }
-  header.topbar { position:sticky; top:0; z-index:50; background:var(--accent); color:#fff; padding:12px 24px; display:flex; gap:18px; flex-wrap:wrap; font-size:13px; align-items:baseline; border-bottom:4px solid var(--accent-2); }
-  header .ticker { font-size:18px; font-weight:700; letter-spacing:1px; }
-  header .meta { opacity:0.92; }
-  header .thesis { margin-left:auto; font-style:italic; max-width:50%; }
-  main { max-width:1180px; margin:0 auto; padding:28px 24px 96px; }
-  section.card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:24px 28px; margin-bottom:22px; box-shadow:0 1px 2px rgba(15,23,42,0.04); }
-  h1, h2, h3 { color:var(--accent); margin-top:0; }
-  h2 { border-left:4px solid var(--accent-2); padding-left:12px; font-size:20px; margin-bottom:18px; }
-  h3 { font-size:16px; margin:22px 0 10px; color:var(--accent); }
-  h4 { font-size:15px; margin:18px 0 8px; color:var(--ink-2); }
-  p { margin:8px 0; } ul, ol { padding-left:22px; } li { margin:4px 0; }
-  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:14px; }
-  thead th { background:var(--accent); color:#fff; padding:10px 12px; text-align:left; font-weight:500; }
-  tbody td, tbody th { padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  tbody tr:nth-child(even) { background:#F1F5F9; }
-  .thesis-box { background:#EFF6FF; border-left:4px solid var(--accent-2); padding:32px 36px; margin:14px 0; border-radius:0 6px 6px 0; text-align:center; }
-  .thesis-box .quote { font-size:24px; line-height:1.5; font-weight:500; color:var(--accent); }
-  .thesis-box .sub { font-size:12px; color:var(--ink-2); margin-top:14px; letter-spacing:1px; }
-  .decision-box { background:#FEF9C3; border-left:4px solid #CA8A04; padding:18px 22px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .decision-box.green { background:#F0FDF4; border-left-color:#16A34A; }
-  .decision-box.red { background:#FFF1F2; border-left-color:#DC2626; }
-  .conflict-box { background:#FFF7ED; border-left:4px solid #F97316; padding:14px 18px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .arbitration-box { background:#FED7AA; border:1px solid #F97316; padding:14px 18px; margin:14px 0; border-radius:6px; }
-  .premortem-box { background:#FEF2F2; border-left:4px solid #DC2626; padding:14px 18px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .premortem-box blockquote { margin:8px 0; padding:10px 16px; background:#fff; border-left:3px solid #DC2626; font-style:italic; }
-  .pattern-box { background:#F0F9FF; border-left:4px solid #0EA5E9; padding:14px 18px; margin:14px 0; border-radius:0 6px 6px 0; }
-  .memo-box { background:#FAFAFA; border:1px solid #CBD5E1; padding:18px 22px; margin:14px 0; font-family:Georgia, serif; }
-  .elevator-box { background:#fff; border-left:3px solid var(--accent-2); padding:12px 18px; margin:14px 0; font-style:italic; color:var(--ink-2); }
-  .tag { display:inline-block; padding:2px 9px; border-radius:3px; font-size:12px; font-weight:600; font-family:'IBM Plex Mono', monospace; }
-  .green-tag { background:#DCFCE7; color:#166534; }
-  .red-tag { background:#FEE2E2; color:#991B1B; }
-  .yellow-tag { background:#FEF9C3; color:#92400E; }
-  .blue-tag { background:#DBEAFE; color:#1E3A5F; }
-  details { background:#F8FAFC; border:1px solid var(--line); border-radius:6px; padding:14px 18px; margin:10px 0; }
-  details summary { cursor:pointer; font-weight:600; color:var(--accent); }
-  details[open] summary { margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--line); }
-  .print-btn { position:fixed; bottom:28px; right:28px; padding:12px 18px; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer; font-family:'Noto Sans TC', sans-serif; font-size:14px; box-shadow:0 4px 12px rgba(15,23,42,0.18); }
-  @media print { header.topbar, .print-btn { display:none; } main { padding:0; max-width:100%; } section.card { break-inside:avoid; box-shadow:none; border:1px solid #ccc; } details { break-inside:avoid; } details:not([open]) > *:not(summary) { display:block !important; } }
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#0F172A; --muted:#475569;
+    --line:#E2E8F0; --line-strong:#CBD5E1; --accent:#1E3A5F; --accent-light:#3B82F6;
+    --row-alt:#F1F5F9;
+    --thesis-bg:#EFF6FF; --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+    --conflict-bg:#FFF7ED; --conflict-line:#F97316; --verdict-bg:#FED7AA;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --ok:#DCFCE7; --ok-text:#166534; --no:#FEE2E2; --no-text:#991B1B;
+    --warn:#FEF3C7; --warn-text:#92400E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.65}
+  .mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header.fixed-top{position:sticky;top:0;z-index:100;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:14px}
+  header.fixed-top .ticker{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.fixed-top .sep{opacity:.4}
+  header.fixed-top .thesis-line{flex:1;min-width:280px;font-style:italic;opacity:.95}
+  main{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+  h1{font-size:32px;margin:0 0 4px}
+  h2{font-size:22px;margin:48px 0 12px;padding:10px 14px;background:var(--accent);color:#fff;border-left:4px solid var(--accent-light);border-radius:2px}
+  h3{font-size:17px;margin:24px 0 8px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+  .thesis-card{background:var(--thesis-bg);border:1px solid #BFDBFE;border-radius:4px;padding:36px 32px;margin:16px 0;text-align:center}
+  .thesis-card .quote{font-size:26px;font-weight:500;line-height:1.5;color:#1E3A8A}
+  .thesis-card .label{font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:1px}
+  .decision-card{background:var(--decision-go);border-left:4px solid #16A34A;padding:18px 22px;margin:12px 0;border-radius:2px}
+  .decision-card .verdict-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:8px;background:#166534;color:#fff}
+  .conflict-card{background:var(--conflict-bg);border-left:4px solid var(--conflict-line);padding:16px 20px;margin:12px 0;border-radius:2px}
+  .verdict-table{background:var(--verdict-bg);padding:8px;border-radius:2px;margin-top:10px}
+  .verdict-table table{margin:0;font-size:13px}
+  .verdict-table thead th{background:#9A3412}
+  .premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:14px 20px;margin:10px 0;border-radius:2px;font-style:italic}
+  .pattern-card{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 20px;margin:10px 0;border-radius:2px}
+  .ok-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--ok);color:var(--ok-text);font-weight:600;font-size:12px}
+  .no-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--no);color:var(--no-text);font-weight:600;font-size:12px}
+  .warn-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--warn);color:var(--warn-text);font-weight:600;font-size:12px}
+  .memo-paper{background:#FAFAF7;border:1px solid #E5E5E0;padding:24px 30px;font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;border-radius:2px;margin:12px 0;box-shadow:1px 1px 0 #00000010;white-space:pre-wrap}
+  .elevator{font-style:italic;background:#F8FAFC;border-left:3px solid var(--muted);padding:14px 18px;margin:10px 0;color:var(--muted)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;margin:12px 0}
+  details summary{padding:14px 20px;cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▶ ";font-size:11px;color:var(--muted);margin-right:6px}
+  details[open] summary::before{content:"▼ "}
+  details > *:not(summary){padding:0 24px 20px}
+  .summary-conclusion{font-weight:400;color:var(--muted);margin-left:12px;font-size:13px}
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:2px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px #00000018;z-index:200}
+  .print-btn:hover{background:#0F2542}
+  .consensus-card{background:#FEF7CD;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0;border-radius:2px}
+  @media print {
+    header.fixed-top, .print-btn { display:none !important }
+    details { border:none }
+    details:not([open]) > *:not(summary) { display:block !important }
+    details > *:not(summary) { padding:0 !important }
+    summary::before { display:none }
+    main { max-width:100%; padding:0 12px }
+    h2 { page-break-after:avoid }
+    .card, .conflict-card, .decision-card, .thesis-card { page-break-inside:avoid }
+  }
 </style>
 </head>
 <body>
-<header class="topbar">
-  <span class="ticker">RCL · Royal Caribbean</span>
-  <span class="meta">2026-05-07</span>
-  <span class="meta">最新股價 $263.92（5/5）</span>
-  <span class="thesis">RCL 是 cruise 大眾 + premium 段執行龍頭 — Perfect Day 私有島嶼 + Icon-class 規模 + 寡占結構，Q1 26 兌現 +33% EPS</span>
+
+<header class="fixed-top">
+  <span class="ticker mono">RCL · Royal Caribbean</span>
+  <span class="sep">｜</span>
+  <span class="mono">2026-05-07</span>
+  <span class="sep">｜</span>
+  <span class="thesis-line">cruise 大眾 + premium 段執行龍頭 — Perfect Day 私有目的地 + Icon-class 規模 + 三大寡占結構</span>
 </header>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
 
 <main>
 
-<!-- §2 Thesis -->
-<section class="card" id="s2">
-<h2>§2 One-Sentence Thesis</h2>
-<div class="thesis-box">
-  <div class="quote">RCL 是 cruise 大眾+premium 段執行龍頭 — Perfect Day 私有目的地 + Icon-class 規模 + 三大寡占結構鎖死 yield growth alpha。</div>
-  <div class="sub">— 50 字以內的投資本質 —</div>
-</div>
-<p>核心 narrative：cruise sector 三大寡占（RCL + CCL + NCLH 合計 ~80%），4 家造船廠 supply lock，新船 lead time 4-5 年。RCL 在執行層全面領先 — 2023 net yield vs 2019 +13%（vs NCLH +4.5% / CCL +7.8%）= 結構性 outperformance。Perfect Day at CocoCay $250M 投資讓 itinerary 收 +15% premium，CocoCay 2024 visitors 3M / Perfect Day Mexico 興建中 = 私有目的地 moat 持續擴大。Q1 26 已兌現：Rev $4.45B（+11.3%）、EPS $3.60（+33% YoY，beat $0.37 above guide）、Net Yield +2%；FY26 EPS guide $17.10-17.50（含 geopolitical 微下修）。<strong>Forward PE 13.5x vs VIK 25x vs 同業 9-12x — RCL 是 cruise sector quality + value sweet spot。</strong></p>
-</section>
+<h1>Deep Conviction Analysis · RCL（Royal Caribbean）</h1>
+<p style="color:var(--muted);font-size:14px;margin:0 0 12px">深度定見分析 ｜ 報告日期：2026-05-07 ｜ 標的價格：USD 263.92（5/5 收盤）｜ Forward P/E (FY26E $17.30 mid) ≈ 15.3x ｜ FY27E $20 → FPE 13.2x ｜ 覆蓋 2026-05-07 v1 舊版（41KB）</p>
 
-<!-- §7 Decision -->
-<section class="card" id="s7">
+<!-- ==================== §2 ONE-SENTENCE THESIS ==================== -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-card">
+  <div class="quote">RCL 是 cruise 大眾 + premium 段執行龍頭 — Perfect Day 私有目的地 + Icon-class 7 艘 megaship 至 2030 + 三大寡占供給絕對紀律，鎖死 yield growth alpha。</div>
+  <div class="label">— 50 字以內，敘事性 thesis（非財務指標主體）</div>
+</div>
+
+<div class="card">
+<h3>Thesis 解讀</h3>
+<p>這不是「reopening play」or「cyclical rebound」momentum framing — 那是 2022 年的故事。本 thesis 的核心是 <strong>「執行 alpha + 供給絕對紀律」雙引擎結構性複利</strong>：cruise sector 三大寡占（RCL + CCL + NCLH 合計 ~80% global market share），4 家造船廠（Meyer Werft / Chantiers de l'Atlantique / Fincantieri 系 + 1）supply lock，新船 lead time 4-5 年。RCL 在執行層全面領先 — 2023 net yield vs 2019 +13%（vs NCLH +4.5% / CCL +7.8%）= 結構性 outperformance。</p>
+<p>「執行 alpha」三個字精準：① Perfect Day at CocoCay $250M 投資讓 itinerary 收 +15% premium，CocoCay 2024 visitors 3M / Perfect Day Mexico 2027 興建中 = 私有目的地 moat 持續擴大；② Icon-class 規模經濟 — Royal Caribbean 已宣布 7 艘 Icon megaship at 5,600 berths each 至 2030（Icon 2024 / Star 2025 / Legend 2026 / Hero 2027 / Icon 5 2028 / Icon 6 2029 / Icon 7 2030 — Caribbean Journal 2026-04-28）；③ Q1 26 已兌現 — Adj EPS $3.60（+33% YoY，beat $3.22 by 11.8%）+ Net Yield +2% constant / +3.6% as-reported + Customer deposits $6.55B record（管理層 Q1 26 法說 2026-04-30）。Forward PE 13.5x vs VIK 25x vs CCL 9x = quality/value sweet spot。</p>
+</div>
+
+<!-- ==================== §7 DECISION ==================== -->
 <h2>§7 Decision（可執行計畫）</h2>
 
-<div class="decision-box green">
-<strong>判定：<span class="tag green-tag">✅ 進場 / 核心候選</span> · A 級訊號</strong>
-<p style="margin:8px 0 0;">三軸罕見全綠：品質 A 級（estimation 燈 🟢 救援後）+ 估值 🟢 便宜（FPE 13.5x = 5Y 22% 分位 + PEG 0.85）+ Pure MA 🟢 最佳進場區（價在 W52/W104 sweet spot + W250 斜率 +7.9%）+ 陷阱定性 🟢 非陷阱。Q1 兌現 +33% EPS 強化 thesis。**現價 $263.92 即可分批建倉**（不需等回檔），這是三檔（RMS/VIK/RCL）中唯一 actionable 的標的。</p>
+<div class="decision-card">
+  <span class="verdict-tag">CORE · 立即分批 · A 級訊號</span>
+  <h3 style="margin-top:6px">7a｜倉位與進場計畫</h3>
+  <table>
+    <thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+    <tbody>
+      <tr><td>在投資組合中的角色</td><td><strong>核心持倉（Core）</strong> — A 級訊號 + 5Y EPS CAGR 12-13% + 估值便宜（FPE 13.5x = 5Y 22% 分位）= 適合核心配置</td></tr>
+      <tr><td>初始建倉倉位</td><td><strong>3-4% of portfolio（toehold）</strong></td></tr>
+      <tr><td>目標倉位</td><td><strong>6-8% of portfolio（核心 A 級）</strong></td></tr>
+      <tr><td>進場價位區間</td><td><strong>第一批 USD 260-275（現價附近，立即進場）；第二批 240-255（Bear case 上緣，加碼至 5-6%）；第三批 210-225（Bear case mid，深度承接至 6-8%）</strong></td></tr>
+      <tr><td>進場節奏</td><td><strong>立即分批，2-3 批 6-12 個月（不需 timing condition）</strong> — RCL 是 RMS / VIK / RCL 三檔 cruise sector 中唯一 estimation 🟢 + Pure MA 🟢 + Q1 已兌現的標的。第一批現價 toehold 3-4%、第二批 sector 任一回檔加至 5-6%、第三批 deep dive 加至 6-8%。Skill guardrail 12b 不觸發 — 4w 漂移健康無動能過熱。</td></tr>
+      <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>
+        <strong>vs VIK（ultra-luxury cruise niche）</strong>：互補非冗餘 — VIK 是 ultra-niche luxury（55+ 富裕窄客群、no kids、river + ocean premium），RCL 是 mass + premium（家庭 + 中產 + 部分富裕，TAM 大 5-10x）。兩者都吃 cruise demographic supercycle 但客群與商業模式不同。RCL 估值便宜（FPE 13.5x）vs VIK 25x，<strong>邊際資金 RCL 優於 VIK</strong>；可同持但 RCL 為主 (6-8%) / VIK 為衛星 (2-3%)。<br>
+        <strong>vs CCL（Carnival）/ NCLH（Norwegian）</strong>：CCL FPE 9x（更便宜）但 yield growth 顯著弱（2023 +7.8% vs RCL +13%），執行層差；NCLH 8x 但 ROE / yield growth 都最差。<strong>RCL 是 cruise sector quality + value sweet spot</strong> — 不是最便宜（CCL 9x），但是最佳 R:R。邊際資金 RCL 優於 CCL/NCLH。<br>
+        <strong>vs DAL（Boomer travel demographic）</strong>：DAL 也是 demographic supercycle 5 檔 basket 之一，但 airline 商業模式（capex heavy + 燃料 + labor）與 cruise 不同；可同持，互補。<br>
+        <strong>邊際資金優先級</strong>：RCL（核心 6-8%）&gt; DAL（衛星 3-4%）&gt; VIK（衛星 2-3%）&gt; CCL/NCLH（避免，cycle bottom 才考慮）— cruise sector 首選 RCL，VIK / NCLH / CCL 是次選擇。
+      </td></tr>
+    </tbody>
+  </table>
+
+  <h3>7b｜加碼與減碼條件</h3>
+  <table>
+    <thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+    <tbody>
+      <tr><td>第一批進場（toehold）</td><td>現價 $260-275 區間，立即進場（無 timing condition）</td><td>3-4%</td></tr>
+      <tr><td>第二批加碼</td><td>跌至 $240-255（sector 任一回檔）+ Q2 26 booking 進度維持 + Net Yield +2%+</td><td>5-6%</td></tr>
+      <tr><td>第三批 / 滿倉</td><td>跌至 $210-225（Bear case mid）+ Perfect Day Mexico 完工進度兌現</td><td>6-8%</td></tr>
+      <tr><td>深度承接</td><td>跌至 $180（cycle bottom 候選）+ thesis 三假設未削弱（Net Yield 仍 +1%+）</td><td>8-10%（exceptional）</td></tr>
+      <tr><td>減碼</td><td>連 2 季 Net Yield YoY 持平或下滑 / FY guide 連續下修 &gt; 5%</td><td>減半</td></tr>
+      <tr><td>清倉</td><td>Cruise sector 結構性需求崩（衰退 + 高失業 + Boomer 受傷）OR §5 升級後四條件任一觸發</td><td>0%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+  <table>
+    <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>股價 $263.92 vs W52 ($292.10)</td><td><span class="warn-tag">⚠ 約等</span></td><td>股價在 W52 之下 -10%（Q1 法說後地緣 + EPS guide 微下修拖累）— 結構未破</td></tr>
+      <tr><td>股價在 W104 ($241.78) 之上？</td><td><span class="ok-tag">✅ +9%</span></td><td>sweet spot 進場區</td></tr>
+      <tr><td>股價在 W250 ($146.46) 之上？</td><td><span class="ok-tag">✅ +80%</span></td><td>5Y 結構性多頭</td></tr>
+      <tr><td>W250 斜率</td><td><span class="ok-tag">✅ +7.9%</span></td><td>強正多頭</td></tr>
+      <tr><td>Pure MA 是否支持進場？</td><td><span class="ok-tag">✅ 🟢 最佳進場區</span></td><td>價在 W52 與 W104 之間 sweet spot，W250 斜率 +7.9% — Pure MA 健康（少見三檔 cruise 中最健康）</td></tr>
+      <tr><td><strong>RSI / 4 週漂移</strong></td><td><span class="ok-tag">✅ 健康</span></td><td>無動能過熱訊號，4 月底 Q1 actual +7% jump 後正常震盪</td></tr>
+      <tr><td>vs RMS / VIK 對照</td><td><span class="ok-tag">✅ 顯著優於</span></td><td>RMS Pure MA ❌ 系統失效 / VIK W104 不可得 + 估值 🔴 / RCL 三軸全綠 — 三檔中唯一可現價進場</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px">
+    <strong>結論：</strong>Pure MA 🟢 最佳進場區（少見三檔中最健康）+ 估值 🟢 便宜 + 動能無過熱 → §7a 立即分批建倉合理。<strong>不需條件式進場</strong>，現價就是合理 toehold 區間。Skill guardrail 12b 不觸發。
+  </p>
+  <p style="font-size:13px;color:var(--muted)"><em>進場節奏哲學：cruise sector 在 cycle reflation 中段（FPE 13.5x、Yield 加速）的歷史 base rate = 70%+ 機率 5Y 正報酬 +50%+；但每次 cycle reflation 都會有 1-2 個 -20% 中段回檔（中段冷卻），需忍受。</em></p>
+
+  <h3>7d｜建議持有年限</h3>
+  <table>
+    <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+    <tbody>
+      <tr><td>短期（&lt; 2 年）</td><td>合理 — Q1 26 已兌現 +33% EPS、Perfect Day Mexico 2027 開幕為 catalyst、Forward PE 13.5x 有 multiple expansion 空間</td></tr>
+      <tr><td><strong>中期（2-5 年）</strong></td><td><strong>主推持有區間（base case）</strong> — Boomer demographic supercycle + Icon V/VI/VII 交付（2028-2030）+ Perfecta 2027 ROIC 17%+ 目標</td></tr>
+      <tr><td>長期（5-10 年）</td><td>合理（cruise demographic 黃金期 2025-2035 + 三大寡占穩定）— 但 cruise sector cyclical 本質要 watch peak（2028-2030 共識）</td></tr>
+      <tr><td>極長期（10+ 年）</td><td>不建議 — Boomer 老齡化後 Gen X 接力風險 + cruise sector 環保法規 capex pressure（IMO 2030 sulphur cap）</td></tr>
+    </tbody>
+  </table>
+  <p><strong>建議持有年限：3-5 年（核心持倉 6-8%）</strong>。原因：① RCL 是 cruise sector 在 demographic supercycle 中段（Boomer 健康可用窗 2025-2035）；② Perfecta 計畫 2027 完成（ROIC 從 15.5% → 17%+）；③ Perfect Day Mexico 2027 完工 — 多個 catalyst 在 3-5 年集中兌現。<strong>5+ 年要 watch cycle peak（2028-2030 共識）+ Gen X 接力速度。</strong></p>
+
+  <h4>EPS 預測參考表</h4>
+  <table>
+    <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+    <tbody>
+      <tr><td>FY25</td><td>$15.61（actual）</td><td>RCL FY25 actual</td><td>+42% YoY，cycle 反彈</td></tr>
+      <tr><td>FY26E</td><td>$17.10-17.50（midpoint $17.30）</td><td>公司 Q1 26 法說 guide raised（2026-04-30）</td><td>+10-12% YoY，含 geopolitical 微下修（從 prev $17.70-18.10）</td></tr>
+      <tr><td>FY27E</td><td>~$20.00（共識，+15-16% YoY）</td><td>賣方</td><td>含 Perfect Day Mexico ramp + Icon V 全年</td></tr>
+      <tr><td>FY28E（外推）</td><td>~$22-24</td><td>外推 +10-12%</td><td>Perfecta 計畫 ROIC 17%+ 兌現 + Icon 5 交付</td></tr>
+      <tr><td>FY30E（外推）</td><td>~$26-29</td><td>3Y CAGR 8-10%</td><td>cycle peak 候選 + Icon 6/7 交付</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:12px"><strong>假設長期持有，現價適合嗎？</strong> <span class="ok-tag">✅ 適合，立即分批</span> — 現價 $263.92 ÷ FY27E $20 = <strong>FPE 13.2x</strong>（5Y 22% 分位 = deep value）；FY30E $28 × 16x = $448 → 5 年 +70%（不算配息）。<strong>R:R 結構性吸引，質量便宜的少數 sweet spot</strong>。若起點 $240（第二批），5Y 期望升至 +87%；$210（第三批）升至 +113% — 但等待時間成本（6-12 個月）也有 missed alpha 風險（multiple expansion 加速）。<strong>核心策略：toehold 不等。</strong></p>
 </div>
 
-<h3>§7a 倉位與進場計畫（含 Opportunity Cost）</h3>
-<table>
-<thead><tr><th width="32%">項目</th><th>具體內容</th></tr></thead>
-<tbody>
-<tr><td>在投資組合中的角色</td><td><strong>核心持倉</strong>（A 級訊號 + 5Y EPS CAGR 12-13% + 估值便宜 = 適合核心配置）</td></tr>
-<tr><td>初始建倉倉位</td><td>3-4% of portfolio（現價 toehold）</td></tr>
-<tr><td>目標倉位</td><td>6-8% of portfolio（核心 A 級）</td></tr>
-<tr><td>進場價位區間</td><td>第一批：$260-275（現價附近，立即進場）；第二批：$240-255（Bear case 上緣，加碼）；第三批：$210-225（Bear case mid，深度承接）</td></tr>
-<tr><td>進場節奏</td><td><strong>立即分批，2-3 批 6-12 個月</strong>。第一批現價 toehold 3-4%、第二批 sector 任一回檔加至 5-6%、第三批 deep dive 加至 6-8%。**不需 timing condition**（與 RMS / VIK 對照，RCL 是這次唯一 estimation + MA 雙綠）</td></tr>
-<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>關鍵問題：portfolio 同時持有 VIK / DAL 等 demographic 股票是否冗餘？</strong>答：<strong>互補</strong>。VIK 是 ultra-niche luxury cruise（55+ 富裕窄客群），RCL 是 mass + premium cruise（家庭 + 中產 + 部分富裕，TAM 大 5-10x）— 兩者都吃 cruise demographic supercycle 但客群與商業模式不同。<strong>vs CCL（Carnival）：</strong>CCL FPE 9x（更便宜）但 yield growth 顯著弱（2023 +7.8% vs RCL +13%），執行層差。**RCL 是 cruise sector quality + value sweet spot — 不是最便宜（CCL 9x），但是最佳 R:R。** <strong>vs NCLH：</strong>NCLH 8x 但 ROE / yield growth 都最差。<strong>邊際資金擺 RCL vs CCL：</strong>RCL 質量明顯更高，4-5pp 估值溢價合理；vs VIK：RCL 更便宜（13.5x vs 25x）+ 客群分散更好；vs DAL：DAL 也是 demographic supercycle 5 檔 basket 之一，更彈性 cycle 暴險，可同時持有。<strong>結論：RCL 是 cruise sector 首選，VIK / NCLH / CCL 是次選擇。</strong></td></tr>
-</tbody>
-</table>
-
-<h3>§7b 加碼與減碼條件</h3>
-<table>
-<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
-<tbody>
-<tr><td>第一批進場</td><td>現價 $260-275，立即進場</td><td>3-4%</td></tr>
-<tr><td>第二批加碼</td><td>$240-255（sector 任一回檔）+ Q2 26 booking 進度維持</td><td>5-6%</td></tr>
-<tr><td>第三批 / 滿倉</td><td>$210-225（Bear case mid）+ Perfect Day Mexico 完工進度兌現</td><td>6-8%</td></tr>
-<tr><td>減碼</td><td>連 2 季 Net Yield YoY 持平或下滑 / FY guide 連續下修 &gt; 5%</td><td>減半</td></tr>
-<tr><td>清倉</td><td>Cruise sector 結構性需求崩（衰退 + 高失業 + Boomer 受傷）</td><td>0%</td></tr>
-</tbody>
-</table>
-
-<h3>§7c Pure MA + 動能過熱檢查</h3>
-<table>
-<thead><tr><th width="40%">檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
-<tbody>
-<tr><td>股價 $263.92 在 W52 之上？</td><td><span class="tag yellow-tag">⚠ 約等</span></td><td>W52 = $292.10（價 -10% 之下，但結構未破）</td></tr>
-<tr><td>股價在 W104 之上？</td><td><span class="tag green-tag">✅</span></td><td>W104 = $241.78（+9% 之上，sweet spot）</td></tr>
-<tr><td>股價在 W250 之上？</td><td><span class="tag green-tag">✅</span></td><td>W250 = $146.46（+80% 之上，5Y 結構性多頭）</td></tr>
-<tr><td>Pure MA 系統是否支持進場？</td><td><span class="tag green-tag">✅ 🟢 最佳進場區</span></td><td>價在 W52 與 W104 之間 sweet spot，W250 斜率 +7.9% 強正 — Pure MA 健康</td></tr>
-<tr><td><strong>RSI / 動能</strong></td><td><span class="tag green-tag">✅ 健康</span></td><td>無動能過熱訊號，4 月底 Q1 actual +7% jump 後正常震盪</td></tr>
-<tr><td><strong>vs RMS / VIK 對照</strong></td><td><span class="tag green-tag">✅ 顯著優於</span></td><td>RMS Pure MA ❌ 系統失效 / VIK W104 不可得 + 估值 🔴 / RCL 三軸全綠 — 三檔中唯一可現價進場</td></tr>
-</tbody>
-</table>
-<div class="conflict-box">
-<strong>結論：Pure MA 🟢 最佳進場區（少見三檔中最健康）+ 估值 🟢 便宜 + 動能無過熱 → §7a 立即分批建倉合理。</strong> 不需條件式進場，現價就是合理 toehold 區間。
-</div>
-
-<h3>§7d 建議持有年限</h3>
-<table>
-<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
-<tbody>
-<tr><td>短期（&lt; 2 年）</td><td>合理 — Q1 26 已兌現 +33% EPS、Perfect Day Mexico 2027 開幕為 catalyst、Forward PE 13.5x 有 multiple expansion 空間</td></tr>
-<tr><td>中期（2-5 年）</td><td><strong>建議 base case</strong> — Boomer demographic supercycle + Icon VI/VII 交付 + Perfecta 2027 ROIC 17%+ 目標</td></tr>
-<tr><td>長期（5-10 年）</td><td>合理（cruise demographic 黃金期 2025-2035 + 三大寡占穩定）— 但 cruise sector cyclical 本質要 watch peak</td></tr>
-<tr><td>極長期（10+ 年）</td><td>不建議 — Boomer 老齡化後 Gen X 接力風險 + cruise sector 環保法規 capex pressure</td></tr>
-</tbody>
-</table>
-<p><strong>建議持有年限：中期 3-5 年，原因：</strong>RCL 是 cruise sector 在 demographic supercycle 中段（Boomer 健康可用窗 2025-2035）+ Perfecta 計畫 2027 完成（ROIC 從 15.5% → 17%+）+ Perfect Day Mexico 2027 完工 — 多個 catalyst 在 3-5 年集中兌現。**5+ 年要 watch cruise cycle peak（2029-2030 EBITDA peak 共識）+ Gen X 接力速度。**</p>
-
-<h4>EPS 預測參考表</h4>
-<table>
-<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
-<tbody>
-<tr><td>FY25</td><td>$15.61（actual）</td><td>RCL FY25 actual</td><td>+42% YoY，cycle 反彈</td></tr>
-<tr><td>FY26E</td><td>$17.10-17.50（mgmt guide）</td><td>公司 4/30 法說</td><td>+10-12% YoY，含 geopolitical 微下修</td></tr>
-<tr><td>FY27E</td><td>~$20.00（共識，+15-16% YoY）</td><td>賣方</td><td>含 Perfect Day Mexico ramp + Icon V 全年</td></tr>
-<tr><td>FY28E（外推）</td><td>~$22-24</td><td>外推 +10-12%</td><td>Perfecta 計畫 ROIC 17%+ 兌現</td></tr>
-<tr><td>FY30E（外推）</td><td>~$26-29</td><td>3Y CAGR 8-10%</td><td>cycle peak 候選 + Icon VI/VII 交付</td></tr>
-</tbody>
-</table>
-<p>現價 $263.92 ÷ FY27E $20 = <strong>13.2x</strong>；FY30E $28 × 16x = $448 → 5 年 +70%。<strong>R:R 結構性吸引，質量便宜的少數 sweet spot。</strong></p>
-</section>
-
-<!-- §4 Asymmetry -->
-<section class="card" id="s4">
+<!-- ==================== §4 ASYMMETRY ANALYSIS ==================== -->
 <h2>§4 Asymmetry Analysis</h2>
-<table>
-<thead><tr><th>情境</th><th>5 年漲幅</th><th>依據</th><th>機率估計</th></tr></thead>
-<tbody>
-<tr><td>Bull（cycle peak 延長 + multiple 修正）</td><td><strong>+100%（2.0x）</strong></td><td>FY30 EPS $30 × 17x = $510；情境：Boomer + Gen X 雙世代消費 + Perfecta 全部兌現 + multiple 從 13x 修正至 17x</td><td>30%</td></tr>
-<tr><td>Base（穩健 + 適度 multiple expansion）</td><td><strong>+70%（1.7x）</strong></td><td>FY30 EPS $28 × 16x = $448；情境：Yield mid-SD + capacity +6-7% + multiple 微擴張</td><td>40%</td></tr>
-<tr><td>Bear（衰退 + cycle peak compression）</td><td><strong>-30%</strong></td><td>FY28 EPS $18 × 10x = $180；情境：經濟衰退 + 燃料 + 地緣 + Perfecta capex 失敗</td><td>30%</td></tr>
-<tr><td><strong>機率加權期望值</strong></td><td><strong>+49%（5 年）</strong></td><td>0.3×1.0 + 0.4×0.7 + 0.3×(-0.3) = 0.3 + 0.28 - 0.09 = 0.49</td><td></td></tr>
-</tbody>
-</table>
 
-<h3>追加壓力測試</h3>
-<ul>
-<li><strong>Thesis 對但時間拉長 10 年：</strong>EV +120-180%，但 cycle 風險隨時間累積（cruise sector 平均 cycle 8-12 年，下次 cycle bottom 可能在 2032-2034）。**5 年 horizon 是 sweet spot，10 年要忍受 cycle bottom drawdown -40-50%。**</li>
-<li><strong>機會成本：</strong>同期 SP500 +50%、CCL +60-90%（更高 beta）、VIK +30-50%（高 multiple 收斂）— RCL +49% 機率加權 + R:R 結構平衡 = 優於同業。</li>
-</ul>
-
-<div class="pattern-box">
-<h3>📐 Pattern Match — 讓機率有錨點</h3>
+<div class="card">
 <table>
-<tbody>
-<tr><th width="25%">歷史相似 setup</th><td><strong>2017-2018 RCL 自身（cycle reflation post-2016 Q1 trough）+ 2003-2004 RCL（post-9/11 recovery）+ 2010-2011 RCL（GFC recovery）</strong></td></tr>
-<tr><th>當時 setup</th><td>2017 RCL：Forward PE 12-14x + cycle reflation + Yield 加速 → 2018 末 +50%；2003-2004：post-9/11 recovery + Forward PE 10-12x → 4 年 +200%；2010-2011：GFC recovery + Forward PE 11-13x → 3 年 +180%。**RCL 在 cycle reflation 早中段（FPE 12-14x 區）的歷史平均 4-5 年報酬 +100-200%。**</td></tr>
-<tr><th>5 年實現報酬</th><td>三次歷史 setup 5Y 平均報酬 +120-180%（含中間波動）；but key risk：每次 cycle reflation 都會有 1-2 個 -20% 中段回檔（中段冷卻），需忍受</td></tr>
-<tr><th>我的標的最像 / 最不像</th><td><strong>最像：</strong>cycle reflation 中段 + Forward PE 12-14x + Yield 加速 + 寡占結構穩定；<strong>最不像：</strong>當前 cycle 已運行 4 年（從 2022 reopening trough），peak 距離可能更近（2-3 年 vs 歷史 3-5 年）— upside magnitude 可能比歷史 +180% 略小 +70-100%</td></tr>
-</tbody>
+  <thead><tr><th>情境</th><th>5 年倍數（從現價 $263.92）</th><th>依據</th><th>機率估計</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Bull（cycle peak 延長 + multiple 修正）</strong></td><td><strong>+100%（≈ 2.0x）</strong></td><td>FY30 EPS $30 × 17x = $510；情境：Boomer + Gen X 雙世代消費 + Perfecta 全部兌現 + Perfect Day Mexico 兌現超預期 + multiple 從 13x 修正至 17x</td><td><strong>30%</strong></td></tr>
+    <tr><td>Base（穩健 + 適度 multiple expansion）</td><td>+70%（≈ 1.7x）</td><td>FY30 EPS $28 × 16x = $448；情境：Yield mid-SD（+1.5-2.5%）+ capacity +6-7% YoY + multiple 微擴張</td><td>40%</td></tr>
+    <tr><td><strong>Bear（衰退 + cycle peak compression）</strong></td><td><strong>−30%（≈ 0.7x）</strong></td><td>FY28 EPS $18 × 10x = $180；情境：經濟衰退 + 燃料 + 地緣 + Perfecta capex 失敗；graceful slowdown 而非 cliff（vs 2008 GFC -50%）</td><td>30%</td></tr>
+    <tr><td colspan="3" style="text-align:right"><strong>機率加權 5 年期望值（從現價 $263.92）</strong></td><td><strong>≈ 1.49x（+49%）</strong></td></tr>
+  </tbody>
 </table>
-<p><strong>意義：</strong>RCL 在 cycle reflation 中段 + FPE 13.5x = 高 base rate setup（70%+ 機率 5Y 正報酬 +50%+）。**進場時機（vs RMS Pure MA ❌ / VIK 估值 🔴）顯著好** — 三檔中真正 actionable。</p>
+<p style="font-size:13px;color:var(--muted);margin-top:8px">計算：30%×2.0 + 40%×1.7 + 30%×0.7 = 0.6 + 0.68 + 0.21 ≈ <strong>1.49x</strong>。若起點 $240（第二批），期望值升至 1.64x（+64%）；$210 升至 1.87x（+87%）。<strong>不對稱比約 3.3:1（100%/30%）</strong>，且 Bear case 設定為 graceful -30% 而非 cliff -50%（vs 共識 / 2008 GFC 類比） — 這是 §3 consensus 分歧的具體體現。</p>
 </div>
-</section>
 
-<!-- §1 Mental Models -->
-<section class="card" id="s1">
+<div class="card">
+<h4>追加壓力測試</h4>
+<ul>
+  <li>若 thesis 對但時間拉到 10 年（2035）→ EV +120-180%，但 cycle 風險隨時間累積（cruise sector 平均 cycle 6-10 年，下次 cycle bottom 可能在 2032-2034）。<strong>5 年 horizon 是 sweet spot，10 年要忍受 cycle bottom drawdown -25-35%。</strong></li>
+  <li>機會成本對比：同期 SP500 +50%、CCL +60-90%（更高 beta + 更便宜起點 9x）、VIK +30-50%（高 multiple 收斂）— RCL +49% 機率加權 + R:R 結構平衡 = 優於 VIK，略低於 CCL bull 但風險顯著低。</li>
+  <li><strong>關鍵差異</strong>：RCL 是「執行 alpha 兌現中」，CCL 是「估值 alpha 但執行弱」 — 兩種策略不同。RCL 適合 buy and hold core 持倉，CCL 適合 deep cycle bottom contrarian play。</li>
+</ul>
+</div>
+
+<div class="pattern-card">
+  <h3 style="margin-top:0">📐 Pattern match：歷史相似 setup（讓機率有錨點）</h3>
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>歷史結構類似的個股</td><td><strong>2017-2018 RCL 自身（cycle reflation post-2016 Q1 trough）</strong> + <strong>2003-2004 RCL（post-9/11 recovery）</strong> + <strong>2010-2011 RCL（GFC recovery）</strong> — 三次都是「cycle reflation 中段 + FPE 12-14x + Yield 加速」combination</td></tr>
+      <tr><td>當時的 setup（估值倍數、cycle 階段）</td><td>2017 RCL：Forward PE 12-14x + cycle reflation + Yield 加速 → 2018 末 +50%；2003-2004：post-9/11 recovery + Forward PE 10-12x → 4 年 +200%；2010-2011：GFC recovery + Forward PE 11-13x → 3 年 +180%。<strong>RCL 在 cycle reflation 早中段（FPE 12-14x 區）的歷史平均 4-5 年報酬 +100-200%</strong></td></tr>
+      <tr><td>最終實現報酬</td><td>三次歷史 setup 5Y 平均報酬 +120-180%（含中間波動）；but key risk：每次 cycle reflation 都會有 1-2 個 -20% 中段回檔（中段冷卻），需忍受</td></tr>
+      <tr><td>我的標的最像 / 最不像的地方</td><td><strong>最像：</strong>cycle reflation 中段 + Forward PE 13.5x + Yield 加速（Q1 26 +2% constant / +3.6% as-reported）+ 寡占結構穩定；<strong>最不像：</strong>當前 cycle 已運行 4 年（從 2022 reopening trough），peak 距離可能更近（2-3 年 vs 歷史 3-5 年） — upside magnitude 可能比歷史 +180% 略小 +70-100%；但 Perfect Day + Icon-class 是 2017 沒有的新護城河，部分補償</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12.5px;color:#0c4a6e;margin-top:10px"><strong>啟示</strong>：RCL 在 cycle reflation 中段 + FPE 13.5x = 高 base rate setup（70%+ 機率 5Y 正報酬 +50%+）。<strong>進場時機（vs RMS Pure MA ❌ / VIK 估值 🔴）顯著好</strong> — 三檔 cruise / 旅遊 中真正 actionable。</p>
+</div>
+
+<!-- ==================== §1 MENTAL MODELS ==================== -->
 <h2>§1 Mental Models 壓力測試</h2>
 
 <h3>測試一：投委會 1 頁紙 Memo</h3>
-<div class="memo-box">
-<h4 style="text-align:center;">RCL · Royal Caribbean — 核心建倉提案</h4>
-<p><strong>Thesis（一句話）：</strong>RCL 是 cruise 大眾 + premium 段執行龍頭 — Perfect Day 私有目的地 + Icon-class 規模 + 三大寡占結構鎖死 yield growth alpha。</p>
-<p><strong>Key Driver：</strong>(1) Cruise demographic supercycle（Boomer 73M + Gen X 接力雙世代）；(2) Perfect Day 私有目的地 moat（CocoCay +15% yield premium + Mexico 2027）+ Icon-class 規模經濟。</p>
-<p><strong>R:R（5 年）：</strong>Bull +100% (30%) / Base +70% (40%) / Bear -30% (30%)，期望值 <strong>+49%</strong>（穩健正期望值）</p>
-<p><strong>主要警示：</strong>(a) FY26 EPS guide 微下修 ($17.70-18.10 → $17.10-17.50，地緣 + 燃料）；(b) Q1 高 capex 期 FCF/NI = 0.29（但 ROIC 15.5% 已超 WACC）；(c) Cycle peak 2029-2030 共識 — 5+ 年期要 watch；(d) 同業 CCL FPE 9x / NCLH 8x = 相對溢價（壓力測試 0/4 觸發）。</p>
-<p><strong>建議倉位 / 進場：</strong><strong>核心持倉 6-8%</strong>。**立即分批**：第一批 3-4% @ $260-275（現價 toehold）、第二批 5-6% @ $240-255、第三批 6-8% @ $210-225。**不需 timing condition** — RCL 是這次三檔中唯一 estimation 🟢 + MA 🟢 + Q1 已兌現的標的。建議持有 3-5 年。</p>
-<p><strong>建議：</strong>三軸全綠 + Q1 +33% EPS 兌現 = **首選進場標的**。若 portfolio 已持 cruise sector，邊際擺 RCL 優於 CCL/NCLH/VIK。</p>
+<div class="memo-paper">[ RCL · Royal Caribbean · 2026-05-07 · DCA Memo ]
+
+THESIS（一句話）
+RCL 是 cruise 大眾 + premium 段執行龍頭——
+Perfect Day 私有目的地 + Icon-class 7 艘 megaship 至 2030 +
+三大寡占供給絕對紀律，鎖死 yield growth alpha。
+
+KEY DRIVER（命脈）
+1. Perfect Day 私有目的地 + Icon-class 規模 = 結構性 yield premium
+   - CocoCay $250M 投資 + +15% itinerary yield premium
+   - Perfect Day Mexico 2027 開幕興建中
+   - Icon-class 5,600 berths × 7 艘至 2030（Caribbean Journal 2026-04-28）
+   - 2023 net yield vs 2019 +13%（vs NCLH +4.5% / CCL +7.8%）
+2. Cruise demographic supercycle + 4 家造船廠 supply lock
+   - Boomer 73M × $83.3T 淨值 + Gen X 接力雙世代至 2035
+   - 4 家造船廠 capacity 至 2031 已被 RCL/CCL/NCLH 訂滿
+   - Lead time 4-5 年 = 供給絕對紀律（vs 2008 過剩）
+
+R:R（5 年機率加權，從現價 $263.92）
+Bull 30% × 2.0x ｜ Base 40% × 1.7x ｜ Bear 30% × 0.7x
+→ 期望值 1.49x（+49%）；不對稱 ~3.3:1（穩健正期望）
+Forward PE 13.5x = 5Y 22% 分位（deep value）
+
+主要警示
+① Cycle peak 2028-2030 共識（5+ 年期要 watch）
+② FY26 EPS guide 微下修（$17.70-18.10 → $17.10-17.50；地緣 + 燃料）
+③ Q1 高 capex 期 FCF/NI 0.29（但 ROIC 15.5% 已超 WACC）
+④ 同業 CCL FPE 9x / NCLH 8x = 相對溢價（壓力測試 0/4 觸發）
+
+建議倉位 / 節奏
+**核心持倉 6-8%**；**立即分批 6-12 個月**：
+第一批 3-4% @ $260-275（現價 toehold，無 timing condition）
+第二批 5-6% @ $240-255 + Q2 26 booking 強
+第三批 6-8% @ $210-225 + Perfect Day Mexico 兌現
+不需 timing — 三軸全綠 + Q1 +33% EPS 兌現 = 首選 cruise sector 標的
+
+OPPORTUNITY COST
+- vs VIK：互補（mass+premium vs ultra-luxury），RCL 為主 6-8% / VIK 衛星 2-3%
+- vs CCL/NCLH：避免（更便宜但執行差），RCL 是 quality+value sweet spot
+- vs DAL：可同持，互補 demographic supercycle basket
+
+REVIEW TRIGGER
+- Q2 FY26 法說：2026-07 末（Net Yield + booking 進度 + Perfect Day visitors）
+- Perfect Day Mexico 完工進度：每季 4 次
+- 保質期：3 個月（至 Q2 26 法說 2026-08-07）
 </div>
 
 <h3>測試二：30 秒電梯簡報</h3>
-<div class="elevator-box">
-「RCL 是 cruise 三大寡占龍頭，Perfect Day at CocoCay 讓行程多收 15%、Q1 26 EPS +33% 已兌現、Forward PE 13.5x 在 5 年低端、價在年線上方多頭結構 — 估值便宜 + 動能多頭 + 基本面剛兌現，三軸全綠。三檔中唯一 actionable 的標的，現價就分批建倉，不需等回檔。」
+<div class="elevator">
+"RCL 是 cruise 三大寡占龍頭，Perfect Day at CocoCay 讓行程多收 15%、Q1 26 EPS +33% 已兌現、Forward PE 13.5x 在 5 年低端、價在年線上方多頭結構 — 估值便宜 + 動能多頭 + 基本面剛兌現，三軸全綠。三檔（RMS/VIK/RCL）中唯一 actionable 的標的，現價就分批建倉，不需等回檔。最大風險是 cycle peak 2028-2030，所以 horizon 設 3-5 年最佳。"
 </div>
 
-<p><strong>壓力測試結果：</strong><span class="tag green-tag">✅ 通過</span> — 1 頁 memo 與 30 秒版本邏輯一致，繼續進入 §7。</p>
-</section>
+<p style="margin-top:14px"><span class="ok-tag">✅ 兩個測試皆通過</span> — thesis 邏輯自洽，30 秒版本能說清楚「為什麼買 + 為什麼立即進場 + cycle peak 風險」，無需回 §2 重寫。</p>
 
-<!-- Phase B 矛盾 -->
-<section class="card" id="phaseB">
-<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+<!-- ==================== Phase B 矛盾 + 強制裁決 ==================== -->
+<h2>Phase B｜矛盾辨識 + ⚖ 強制裁決</h2>
 
-<h3>1. 共識清單（A1-A3 一致）</h3>
+<div class="conflict-card">
+<h3 style="margin-top:0">1. 共識清單（高信心區）</h3>
 <ul>
-<li>✅ Cruise 三大寡占結構穩固（A1 25% 市佔 + A2 4 家造船廠 supply lock + A3 advance booking visibility）</li>
-<li>✅ Q1 26 已兌現（A2 demographic + A3 Rev +11.3% / EPS +33% / Net Yield +2%）</li>
-<li>✅ 估值 + 動能 + 質量三綠（A1 護城河 7/10 + A3 ROIC 15.5% + 估值 FPE 13.5x = 5Y 22% 分位）</li>
+  <li>A1（Cruise 三大寡占結構穩固 + Perfect Day moat 兌現中）+ A2（Boomer demographic supercycle + 4 家造船廠 supply lock）+ A3（Q1 26 Rev +11.3% / Adj EPS $3.60 +33% / Net Yield +2%）+ A4（DD §1 訊號 A + thesis 強健）<strong>方向高度一致：基本面強</strong>。</li>
+  <li>Q1 26 是「Rev $4.5B + Adj EPS $3.60 (+33%) + Net Yield +2% constant + Customer deposits $6.55B record + Occupancy 108.5%」五重 confirmation。</li>
+  <li>估值 + 動能 + 質量三綠（A1 護城河 7/10 + A3 ROIC 15.5% + 估值 FPE 13.5x = 5Y 22% 分位）。</li>
 </ul>
 
 <h3>2. 矛盾清單</h3>
 <table>
-<thead><tr><th width="4%">#</th><th>矛盾點</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>FY26 EPS guide 微下修代表結構性放緩嗎？</td><td>Perfect Day moat 持續</td><td>Boomer demographic supercycle 中段</td><td>guide 從 $17.70-18.10 → $17.10-17.50（-3%）</td><td><span class="tag yellow-tag">🟡 可調和（noise + adjustment）</span></td></tr>
-<tr><td>2</td><td>FCF/NI 2025 = 0.29 是體質警訊嗎？</td><td>—</td><td>—</td><td>Perfecta 計畫高 capex 期 = 設計性</td><td><span class="tag green-tag">🟢 共識（capex 週期性）</span></td></tr>
-<tr><td>3</td><td>Cycle peak 2029-2030 距現在多近？</td><td>—</td><td>4 家造船廠 supply lock 至 2031 + boomer 黃金期 2025-2035</td><td>當前 cycle 已運行 4 年（2022 trough）</td><td><span class="tag yellow-tag">🟡 可調和（時間問題）</span></td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>FY26 EPS guide 微下修代表結構性放緩嗎？</td>
+      <td>Perfect Day moat 持續</td>
+      <td>Boomer demographic supercycle 中段</td>
+      <td>guide 從 $17.70-18.10 → $17.10-17.50（-3%）</td>
+      <td>🟡 可調和（noise + adjustment）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>FCF/NI 2025 = 0.29 是體質警訊嗎？</td>
+      <td>—</td>
+      <td>—</td>
+      <td>Perfecta 計畫高 capex 期 = 設計性</td>
+      <td>🟢 共識（capex 週期性）</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Cycle peak 2028-2030 距現在多近？</td>
+      <td>—</td>
+      <td>4 家造船廠 supply lock 至 2031 + boomer 黃金期 2025-2035</td>
+      <td>當前 cycle 已運行 4 年（2022 trough）</td>
+      <td>🔴 不可調和（時間問題 — peak 距離 2-3 年 vs 5+ 年）</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Bear case magnitude：-30%（graceful）vs 共識 -50%（cliff）？</td>
+      <td>三大寡占 + supply lock 比 2008 強</td>
+      <td>Boomer 富裕 + 私有目的地是新 moat</td>
+      <td>2008 是 over-supply + 中產為主，2026 是 supply lock + 富裕</td>
+      <td>🔴 不可調和（Bear case 重新定義 vs 共識歷史類比）</td>
+    </tr>
+  </tbody>
 </table>
 
 <h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
 <table>
-<thead><tr><th width="4%">#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>進場時機？</td><td>三軸全綠 + Q1 兌現 = 立即進場</td><td>DD 訊號 A（壓力測試 0/4 降 A+ 至 A）+ ID_BoomerTravelSupercycle 認 5 檔 basket</td><td>共識 — DCA 與 DD 都建議進場，DCA 把這視為三檔（RMS/VIK/RCL）中唯一 actionable 的對比</td></tr>
-<tr><td>2</td><td>R:R 與壓力測試 0/4 的關係？</td><td>+49% 機率加權，正期望值合理</td><td>DD 認 R:R 對壓力情境敏感（同業溢價收斂等）</td><td>分歧不大 — DCA 視角承認壓力測試風險，但仍認為 base case 機率最高，正期望值成立</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>進場時機？</td>
+      <td>三軸全綠 + Q1 兌現 = 立即進場</td>
+      <td>DD 訊號 A（壓力測試 0/4 降 A+ 至 A）+ ID_BoomerTravelSupercycle 認 5 檔 basket</td>
+      <td>共識 — DCA 與 DD 都建議進場，DCA 把這視為三檔（RMS/VIK/RCL）中唯一 actionable 的對比</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>R:R 與壓力測試 0/4 的關係？</td>
+      <td>+49% 機率加權，正期望值合理</td>
+      <td>DD 認 R:R 對壓力情境敏感（同業溢價收斂等）</td>
+      <td>分歧不大 — DCA 視角承認壓力測試風險，但仍認為 base case 機率最高，正期望值成立</td>
+    </tr>
+  </tbody>
 </table>
-
-<h3>4. ⚖ 強制裁決</h3>
-<div class="arbitration-box">
-<table>
-<thead><tr><th width="4%">#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 衝突的硬數據點</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>FY26 EPS guide 微下修是否結構性？</td><td><strong>選 noise，但 watch Q2-Q3</strong></td><td>下修 -3%（$17.40 vs $17.90）幅度不大，理由是 geopolitical（中東地緣 + Mediterranean booking 暫時放緩）+ 燃料 — 都是 transitory 因素。Q1 actual EPS $3.60 大幅 beat $0.37 = 短期執行力強。**結論：guide 微下修是 conservative reset 而非結構性弱化；Q2-Q3 actual 兌現 $4-4.5 EPS 即可確認。**</td><td>(a) Q2 26 actual EPS &gt; $4.00 = noise 確認；(b) 連 2 季 EPS miss guide = 結構性訊號</td></tr>
-<tr><td>2</td><td>cycle peak 距離多近？</td><td><strong>選 2-3 年（2028-2029）但 graceful 而非 cliff</strong></td><td>當前 cycle 從 2022 trough 起算已 4 年，歷史 cycle 6-10 年 → peak 可能 2027-2029。但與 2008 GFC 不同：(a) 4 家造船廠 supply lock = 供給不會像 2008 過剩；(b) Boomer 黃金期 2025-2035 + Gen X 接力 = demographic 結構性需求；(c) 私有目的地 + Icon-class 規模差異化是新護城河。**結論：未來 cycle 反轉可能是 graceful slowdown（EPS 從 $26 → $20 而非 $26 → $10），股價跌幅 -25-35% 而非 -50%+。**</td><td>(a) 連 2 季 Net Yield YoY 持平或下滑；(b) advance booking 進度連 4 季 &lt; 同期 prior year</td></tr>
-</tbody>
-</table>
-<p><strong>裁決帶入 §7：</strong>thesis 完整、cycle reflation 中段、3-5 年 horizon 最佳 → 立即分批進場 6-8% 核心。**5+ 年要在 cycle peak 訊號出現時減碼，不要 buy and forget。**</p>
 </div>
-</section>
 
-<!-- §3 Key Drivers -->
-<section class="card" id="s3">
-<h2>§3 Key Drivers + 🔄 Consensus 分歧</h2>
-
+<div class="conflict-card">
+<h3 style="margin-top:0">⚖ 強制裁決（每個不可調和矛盾必填 — Guardrail 17）</h3>
+<div class="verdict-table">
 <table>
-<thead><tr><th width="4%">#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
-<tbody>
-<tr><td>1</td><td><strong>Perfect Day 私有目的地 + Icon-class 規模 = 結構性 yield premium（執行 alpha）</strong></td><td>Perfect Day at CocoCay 讓 itinerary 收 +15% yield premium，CocoCay 2024 visitors 3M、Perfect Day Mexico 2027 開幕。Icon-class 規模 + 多 attraction onboard 結合 = 客戶體驗 differentiation 對抗 mass cruise commoditization。是「2023 net yield +13% vs NCLH +4.5%」的結構基礎。</td><td>(a) Perfect Day visitors 數據（季度）；(b) RCL 季度 Net Yield growth；(c) Perfect Day Mexico 完工進度；(d) Icon V/VI/VII 訂單與交付</td></tr>
-<tr><td>2</td><td><strong>Cruise demographic supercycle + 4 家造船廠 supply lock（產業 alpha）</strong></td><td>Boomer 73M × $83.3T 淨值 + Gen X 接力雙世代 = demographic supply 結構性增長至 2035；同時 4 家造船廠（Meyer Werft + Chantiers + Fincantieri + 一家）合計 capacity 至 2031 已被 RCL/CCL/NCLH 訂滿 = 供給絕對紀律。是「需求結構增長 + 供給絕對 lock」雙寡占。</td><td>(a) 美國 65+ 富裕族群可支配收入（FRED）；(b) RCL/CCL/NCLH 合計新船訂單 backlog；(c) 4 家造船廠 capacity sold-out 至年份</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then 方向相反）</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>FY26 EPS guide 微下修是否結構性？</td>
+      <td><strong>選 noise，但 watch Q2-Q3</strong></td>
+      <td>① 下修 -3%（$17.40 vs $17.90）幅度不大，理由是 geopolitical（中東地緣 + Mediterranean booking 暫時放緩）+ 燃料 — 都是 transitory；② Q1 actual EPS $3.60 大幅 beat $3.22 forecast by 11.8% = 短期執行力強；③ Customer deposits $6.55B record + Occupancy 108.5% = 需求結構未弱化；④ 結論：guide 微下修是 conservative reset 而非結構性弱化</td>
+      <td><strong>Q2/Q3 26 actual EPS vs guide</strong>（每季財報後可算，2026-07 / 2026-10）；具體閾值：Q2 EPS &gt; $4.00 = noise 確認；連 2 季 EPS miss guide = 結構性訊號</td>
+      <td>(a) <strong>upside</strong>：Q2 26 actual EPS &gt; $4.00 + Net Yield +2%+ → 加碼至 5-6%；(b) <strong>downside</strong>：連 2 季 EPS miss guide + Net Yield 持平或下滑 → 減半至 3-4% 並警示 thesis 結構性弱化</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>cycle peak 距離多近？</td>
+      <td><strong>選「2-3 年（2028-2029）但 graceful 而非 cliff」</strong></td>
+      <td>① 當前 cycle 從 2022 trough 起算已 4 年，歷史 cycle 6-10 年 → peak 可能 2027-2029；② 與 2008 GFC 不同：(a) 4 家造船廠 supply lock 至 2031 = 供給不會像 2008 過剩；(b) Boomer 黃金期 2025-2035 + Gen X 接力 = demographic 結構性需求；(c) Perfect Day + Icon-class 7 艘 megaship 至 2030 是新護城河；③ 結論：cycle 反轉是 graceful slowdown（EPS 從 $26 → $20 而非 $26 → $10）</td>
+      <td><strong>(a) Net Yield 連 2 季 YoY 持平或下滑；(b) advance booking 進度連 4 季 &lt; 同期 prior year；(c) RCL/CCL/NCLH 合計新船訂單 backlog 縮短至 &lt; 2 年</strong></td>
+      <td>(a) <strong>upside</strong>：Net Yield 維持 +2%+ + advance booking 連 4 季 &gt; PY + Perfect Day Mexico 2027 開幕兌現 → 加碼至 8% + 延長 horizon 至 5+ 年；(b) <strong>downside</strong>：cycle peak 早期訊號（連 2 季 Net Yield 持平 + booking 連 2 季弱）→ 減碼至原始倉位 50%（4-5%）+ 縮短 horizon 至 2-3 年</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Bear case magnitude：-30% graceful vs -50% cliff？</td>
+      <td><strong>選「graceful -30%」（market mispriced）</strong></td>
+      <td>① 賣方多用「2008-2009 cycle bottom」當壓力測試基準，但 2008 與 2026 的 cruise sector 結構不同：2008 是 over-supply + 客群分散，2026 是 supply lock + 富裕族群；② Perfect Day 等私有目的地是新一代 cruise moat（vs 2008 時無此差異化）；③ 三大寡占結構強化（RCL/CCL/NCLH 合計 ~80% market share）；④ 結論：Bear case 該重新定義為 -25-35% 而非 -50%+ → R:R 公平比現價更好</td>
+      <td><strong>下次 cycle reversal 時實際股價跌幅</strong>（這個 settle 點需要 cycle 真實發生才驗證）；過渡指標：sector 任一同業（CCL/NCLH）大幅下修 + RCL 跌幅 &lt; 同業 = thesis 站穩</td>
+      <td>(a) <strong>upside</strong>：cycle reversal 時 RCL 跌幅 -25-35%（vs CCL/NCLH -45%+）→ thesis 站穩、graceful slowdown 兌現、為下一 cycle 加倉 toehold；(b) <strong>downside</strong>：cycle reversal 時 RCL 跌幅 &gt; -45% → thesis 結構性破壞、Bear case 共識正確、清倉</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p style="margin-top:12px;font-size:13px"><strong>裁決如何帶入 Phase C：</strong> 裁決 1 → §7b 加碼條件 Q2 EPS &gt; $4.00；裁決 3 → §5 Single Thing 升級含 Net Yield + booking 雙監控；裁決 4 → §3 consensus 分歧三題明確「Bear -30% graceful」是 alpha 來源；§7a 「立即分批進場」+ 5+ 年 cycle peak 訊號出現時減碼。</p>
+</div>
+
+<!-- ==================== §3 KEY DRIVERS ==================== -->
+<h2>§3 Key Drivers + 我和市場的最大分歧</h2>
+
+<div class="card">
+<h3>命脈（限 1-2 個）</h3>
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>Perfect Day 私有目的地 + Icon-class 規模 = 結構性 yield premium（執行 alpha）</strong></td>
+      <td>Perfect Day at CocoCay 讓 itinerary 收 +15% yield premium，CocoCay 2024 visitors 3M、Perfect Day Mexico 2027 開幕。Icon-class 規模 + 多 attraction onboard 結合 = 客戶體驗 differentiation 對抗 mass cruise commoditization。是「2023 net yield +13% vs NCLH +4.5%」的結構基礎；7 艘 Icon megaship 至 2030（Icon 2024 / Star 2025 / Legend 2026 / Hero 2027 / Icon 5 2028 / Icon 6 2029 / Icon 7 2030）= ASP & yield 持續上行的供給承載。</td>
+      <td>① Perfect Day visitors 數據（季度）；② RCL 季度 Net Yield growth；③ Perfect Day Mexico 完工進度；④ Icon V/VI/VII 訂單與交付時程</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Cruise demographic supercycle + 4 家造船廠 supply lock（產業 alpha）</strong></td>
+      <td>Boomer 73M × $83.3T 淨值 + Gen X 接力雙世代 = demographic 需求結構性增長至 2035；同時 4 家造船廠（Meyer Werft + Chantiers + Fincantieri 系 + 1）合計 capacity 至 2031 已被 RCL/CCL/NCLH 訂滿 = 供給絕對紀律。是「需求結構增長 + 供給絕對 lock」雙寡占。</td>
+      <td>① 美國 65+ 富裕族群可支配收入（FRED）；② RCL/CCL/NCLH 合計新船訂單 backlog；③ 4 家造船廠 capacity sold-out 至年份；④ 美國消費者信心 + housing wealth</td>
+    </tr>
+  </tbody>
 </table>
 
-<h3>Driver 抽象層校驗</h3>
-<p><strong>Driver 1（執行 alpha Perfect Day）vs Driver 2（產業 alpha demographic + supply lock）— 兩條獨立因果鏈。</strong></p>
-<ul>
-<li>校驗：driver 1「Perfect Day moat」可在不假設 driver 2「demographic」成立的情況下被推翻嗎？— <strong>可以</strong>：CCL / NCLH 也建私有目的地（Half Moon Cay / Great Stirrup Cay）追上 → Perfect Day 差異化收斂，與 demographic 無關。✅ 通過。</li>
-<li>反向：driver 2「demographic + supply lock」可在不假設 driver 1「Perfect Day」的情況下被推翻嗎？— <strong>可以</strong>：Boomer 衰退 / Gen X 不接力 / 第 5 家造船廠出現 → demographic + supply 都受傷，與 Perfect Day 無關。✅ 通過。</li>
-</ul>
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>
+  Driver 1（執行 alpha Perfect Day）vs Driver 2（產業 alpha demographic + supply lock）：
+  <strong>能否在不假設 driver 1 成立的情況下單獨推翻 driver 2？</strong>
+  可以 — Boomer 衰退 / Gen X 不接力 / 第 5 家造船廠出現 → demographic + supply 都受傷，與 Perfect Day 無關（driver 1 仍在但 driver 2 失敗）。反向：CCL / NCLH 也建私有目的地（Half Moon Cay / Great Stirrup Cay）追上 → Perfect Day 差異化收斂，與 demographic 無關（driver 2 仍在但 driver 1 失敗）。
+  <span class="ok-tag">✅ 兩條獨立因果鏈，通過 guardrail</span>
+</p>
 
-<h3>強制減法 — 我認為不重要的事</h3>
+<h4>強制減法 — 市場常討論但我認為不重要的因素</h4>
 <table>
-<thead><tr><th width="40%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
-<tbody>
-<tr><td>燃料價格 / 匯率波動</td><td>季度 noise，不影響 5Y 結構性 thesis</td></tr>
-<tr><td>新船延遲交付</td><td>偶有，但 Icon-class 已穩定交付（V 已運營，VI/VII 已下訂）</td></tr>
-<tr><td>單季 booking 進度（除非連 2 季弱）</td><td>booking 進度本身波動大，要看連續趨勢</td></tr>
-<tr><td>地緣短期事件（中東 / 紅海）</td><td>cruise 公司 routing flexibility 高，可移除問題航線</td></tr>
-</tbody>
+  <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>燃料價格 / 匯率波動</td><td>季度 noise，不影響 5Y 結構性 thesis；RCL 已透過 hedging 平滑</td></tr>
+    <tr><td>新船延遲交付</td><td>偶有，但 Icon-class 已穩定交付（Icon 2024 / Star 2025 已運營）</td></tr>
+    <tr><td>單季 booking 進度（除非連 2 季弱）</td><td>booking 進度本身波動大，要看連續趨勢</td></tr>
+    <tr><td>地緣短期事件（中東 / 紅海）</td><td>cruise 公司 routing flexibility 高，可移除問題航線；FY26 guide 微下修已 priced 此風險</td></tr>
+    <tr><td>同業 CCL FPE 9x / NCLH 8x「相對溢價」</td><td>RCL 5pp 估值溢價是 yield growth +13% vs +7.8% 結構差距支撐的，不是 mispricing</td></tr>
+  </tbody>
 </table>
+</div>
 
-<h3>🔄 我和市場 Consensus 的最大分歧（Munger Inversion）</h3>
+<div class="consensus-card">
+<h3 style="margin-top:0">🔄 我和市場 consensus 的最大分歧（Munger inversion 落地）</h3>
 <table>
-<tbody>
-<tr><th width="32%">市場目前定價在什麼假設上</th><td>共識 PT $350.67 + Forward PE 13.5x 隱含市場已 price in：(a) Boomer demographic supercycle；(b) Perfect Day Mexico 2027 兌現；(c) Cycle peak 2029-2030。<strong>市場其實過度悲觀的是「cruise sector cycle 反轉跌幅」</strong> — 賣方 Bear case 多用 -50% drawdown 為基準（GFC 時的數字）。</td></tr>
-<tr><th>我認為的不同假設</th><td>下次 cycle 反轉會是 graceful slowdown（-25-35%）而非 cliff（-50%+）。理由：(a) 4 家造船廠 supply lock 至 2031 = 供給不會像 2008 過剩；(b) Boomer 健康可用窗 2025-2035 = 多年需求承接；(c) Perfect Day 等私有目的地是新一代 cruise moat（vs 2008 時無此差異化）；(d) 三大寡占結構強化（RCL/CCL/NCLH）。<strong>Bear case 該重新定義為 -25-35% 而非 -50%+ → R:R 公平比現價更好。</strong></td></tr>
-<tr><th>賣方為什麼錯（具體理由）</th><td>賣方多用「2008-2009 cycle bottom」當壓力測試基準，但 2008 與 2026 的 cruise sector 結構不同：2008 是 over-supply（2007 訂單峰值 + 經濟衰退）+ 客群分散（中產為主），2026 是 supply lock + 客群結構性（Boomer 富裕族群 + 私有目的地 differentiation）。賣方 Bear -50% 是錯誤類比 — 該用 2003 SARS / 2010 GFC recovery 等較溫和 cycle event 為類比。</td></tr>
-</tbody>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>市場目前定價在什麼假設上</td><td>共識 PT $350.67 + Forward PE 13.5x 隱含市場已 price in：(a) Boomer demographic supercycle；(b) Perfect Day Mexico 2027 兌現；(c) Cycle peak 2028-2030。<strong>市場其實過度悲觀的是「cruise sector cycle 反轉跌幅」</strong> — 賣方 Bear case 多用 -50% drawdown 為基準（2008 GFC 時的數字）；FY26 EPS guide 微下修也被市場視為「cycle peak warning」。</td></tr>
+    <tr><td>我認為的不同假設</td><td>下次 cycle 反轉會是 graceful slowdown（-25-35%）而非 cliff（-50%+）。理由：(a) 4 家造船廠 supply lock 至 2031 = 供給不會像 2008 過剩；(b) Boomer 健康可用窗 2025-2035 = 多年需求承接；(c) Perfect Day 等私有目的地是新一代 cruise moat（vs 2008 時無此差異化）；(d) 三大寡占結構強化（RCL/CCL/NCLH ~80% market share）。<strong>Bear case 該重新定義為 -25-35% 而非 -50%+ → R:R 公平比現價更好。</strong></td></tr>
+    <tr><td>賣方為什麼錯（具體理由）</td><td>① 賣方多用「2008-2009 cycle bottom」當壓力測試基準，但 2008 與 2026 的 cruise sector 結構不同：2008 是 over-supply（2007 訂單峰值 + 經濟衰退）+ 客群分散（中產為主），2026 是 supply lock + 客群結構性（Boomer 富裕族群 + 私有目的地 differentiation）；② 賣方 Bear -50% 是錯誤類比 — 該用 2003 SARS / 2010 GFC recovery 等較溫和 cycle event 為類比（-25-35%）；③ FY26 guide 微下修被誇大解讀，但 Q1 actual +33% EPS 顯示 demand 結構未弱化；④ 同業 CCL/NCLH 估值溢價分析過度簡化，忽視 yield growth 結構性差距</td></tr>
+  </tbody>
 </table>
-<p><strong>校驗：</strong>三題都寫得出 → thesis 有獨立 alpha 來源（market mispriced Bear case magnitude）。alpha 觸發點是 cycle reversal 兌現時 Bear -25-35% 的觀察值出現 — 5-7 年內有可能驗證，§7 倉位上反映（核心 6-8% 但 cycle peak 訊號出現時減碼）。</p>
-</section>
+<p style="font-size:12.5px;color:#7C5500;margin-top:10px"><strong>校驗</strong>：三題均能寫出具體差異 → thesis 有獨立 alpha 來源（market mispriced Bear case magnitude）。alpha 觸發點是 cycle reversal 兌現時 Bear -25-35% 的觀察值出現 — 5-7 年內有可能驗證，§7 倉位上反映（核心 6-8% 但 cycle peak 訊號出現時減碼）。沒這個 contrarian 視角，買 RCL 等於跟市場 consensus 一起 priced -50% Bear，沒 alpha；該定價會讓 RCL 永遠維持 FPE 13-14x discount。</p>
+</div>
 
-<!-- §5 Single Thing -->
-<section class="card" id="s5">
+<!-- ==================== §5 SINGLE THING ==================== -->
 <h2>§5 The Single Thing That Could Change My Mind</h2>
-<table>
-<tbody>
-<tr><th width="22%">事件描述</th><td><strong>RCL 連 2 季 Net Yield YoY 持平或下滑（從當前 +2-3% 跌至 0% 或負）</strong></td></tr>
-<tr><th>為什麼這個事件是致命的</th><td>RCL thesis 兩腳：(a) Perfect Day + Icon-class 結構性 yield premium；(b) Cruise demographic + 寡占供給。**Net Yield 是這兩腳唯一可量化的兌現指標** — 連 2 季持平或下滑代表：(i) Perfect Day 差異化開始 commoditize（CCL / NCLH 追上）；(ii) demographic 需求軟化開始；(iii) 寡占供給紀律弱化（過度新船訂單）。三者任一觸發都是 thesis 結構性破壞訊號。**比 EPS / Rev 更領先 + 比 booking 更明確。**</td></tr>
-<tr><th>如何監測</th><td>(a) 季度法說 Net Yield growth（公司直接揭露）；(b) 賣方 model FY26 / FY27 Net Yield 共識動態；(c) Perfect Day visitors 數據（YoY，先行指標）；頻率：季度 + 重大事件即時</td></tr>
-<tr><th>目前離發生有多遠</th><td>Q1 26 actual Net Yield +2%（above guide），FY26 guide +1.5-2.5%；Q2 26 已 booking 強。**最早可能 Q3-Q4 26 出現 +1% 邊際弱化、最早 2027 H1 可能 0%。** 6-12 個月觀察期。</td></tr>
-</tbody>
-</table>
-</section>
 
-<!-- §6 Pre-mortem -->
-<section class="card" id="s6">
+<div class="card">
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td><strong>事件描述（primary trigger）</strong></td><td><strong>RCL 連 2 季 Net Yield YoY 持平或下滑（從當前 +2-3% 跌至 0% 或負）</strong></td></tr>
+    <tr><td>為什麼這個事件是致命的</td><td>RCL thesis 兩腳：(a) Perfect Day + Icon-class 結構性 yield premium；(b) Cruise demographic + 寡占供給。<strong>Net Yield 是這兩腳唯一可量化的兌現指標</strong> — 連 2 季持平或下滑代表：(i) Perfect Day 差異化開始 commoditize（CCL / NCLH 追上）；(ii) demographic 需求軟化開始；(iii) 寡占供給紀律弱化（過度新船訂單）。三者任一觸發都是 thesis 結構性破壞訊號。<strong>比 EPS / Rev 更領先 + 比 booking 更明確</strong>。</td></tr>
+    <tr><td>如何監測（資料來源、頻率）</td><td>(a) 季度法說 Net Yield growth（公司直接揭露 — Q1 26 actual +2% constant / +3.6% as-reported）；(b) 賣方 model FY26 / FY27 Net Yield 共識動態；(c) Perfect Day visitors 數據（YoY，先行指標）；頻率：季度 + 重大事件即時</td></tr>
+    <tr><td>目前離發生有多遠</td><td>Q1 26 actual Net Yield +2% constant（above guide），FY26 guide +1.5-2.5%；Q2 26 已 booking 強。<strong>最早可能 Q3-Q4 26 出現 +1% 邊際弱化、最早 2027 H1 可能 0%</strong>。6-12 個月觀察期。</td></tr>
+  </tbody>
+</table>
+<p style="font-size:12.5px;color:var(--muted)">
+  <strong>選擇邏輯</strong>：相較「FY guide 微下修」「FCF/NI 0.29」「燃料價格」三個候選 single thing，<strong>Net Yield 連 2 季持平或下滑</strong>是 most leading + 最具判別性的指標 — 前三者都是「外部變數 / 估值週期 / capex 週期」，Net Yield 是「定價權結構」直接驗證；前三者單獨發生對 thesis 殺傷力 ≤ 30%（複利機可緩衝），Net Yield 失守才是 thesis 的根（Perfect Day moat 同時失敗 = thesis 雙腳崩）。
+</p>
+</div>
+
+<!-- ==================== §6 What I Don't Know + Pre-mortem ==================== -->
 <h2>§6 What I Don't Know + Pre-mortem</h2>
 
-<h3>§6a 強迫面對自己的盲點</h3>
+<div class="card">
+<h3>6a. 強迫面對自己的盲點</h3>
 <table>
-<thead><tr><th width="4%">#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果不成立的後果</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>下次 cycle 反轉是否如預期 graceful</td><td>-25-35% Bear case 而非 -50%+</td><td>若 -50%+ Bear → FY28 EPS $14 × 8x = $112（-58% from $264）</td></tr>
-<tr><td>2</td><td>Perfecta 計畫 ROIC 17%+ 兌現速度</td><td>2027 達標</td><td>若延遲至 2029 → multiple 維持 13-14x，不擴張</td></tr>
-<tr><td>3</td><td>CCL / NCLH 私有目的地反擊</td><td>RCL 維持 5-7pp yield premium</td><td>premium 收斂至 2-3pp = thesis 一腳斷</td></tr>
-<tr><td>4</td><td>Gen X 接力 Boomer 速度</td><td>無縫接力（demographic continuity）</td><td>Gen X 偏好 experiential / adventure → cruise demand softens after 2032</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>不成立的後果</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>下次 cycle 反轉是否如預期 graceful</td><td>-25-35% Bear case 而非 -50%+；3 大寡占 + supply lock 比 2008 強</td><td>若 -50%+ Bear → FY28 EPS $14 × 8x = $112（-58% from $264）</td></tr>
+    <tr><td>2</td><td>Perfecta 計畫 ROIC 17%+ 兌現速度</td><td>2027 達標</td><td>若延遲至 2029 → multiple 維持 13-14x，不擴張</td></tr>
+    <tr><td>3</td><td>CCL / NCLH 私有目的地反擊（Half Moon Cay / Great Stirrup 升級）</td><td>RCL 維持 5-7pp yield premium</td><td>premium 收斂至 2-3pp = thesis 一腳斷</td></tr>
+    <tr><td>4</td><td>Gen X 接力 Boomer 速度</td><td>無縫接力（demographic continuity）</td><td>Gen X 偏好 experiential / adventure → cruise demand softens after 2032</td></tr>
+    <tr><td>5</td><td>IMO 2030 環保法規 capex（sulphur cap）</td><td>capex / Rev 維持 ≤ 7%</td><td>若 capex / Rev 結構升至 &gt; 8% → FCF 永久壓縮</td></tr>
+    <tr><td>6</td><td>Icon-class 7 艘交付時程不延遲（Star 2025 / Legend 2026 / Hero 2027 / Icon 5-7 2028-2030）</td><td>4 家造船廠 capacity 紀律維持</td><td>若任一艘 &gt; 6 個月延遲 → capacity 增長放緩 + ASP / yield 受限</td></tr>
+  </tbody>
 </table>
-
-<h3>§6b Pre-mortem：失敗故事倒推</h3>
-<div class="premortem-box">
-<blockquote>
-「假設 5 年後（2031 年）這個部位虧 50%，最可能發生的故事是 — 2026-2027 沒問題（Perfect Day Mexico 開幕 + Q1-Q2 兌現）；2027-Q4 美國經濟進入溫和衰退，cruise booking 開始放緩；2028 連 2 季 Net Yield 持平至 -1%；2028-2029 燃料成本 + 環保法規（IMO 2030 sulphur cap）capex 大幅上升；2029 cycle peak 確認；2030 EPS 從 $26 跌至 $18 + multiple 從 14x 修正至 9x = $162（-39% from $264）；極端情境 + Gen X 不接力 + Perfect Day 被 CCL Half Moon Cay 抄襲成功 → $130（-51%）。」
-</blockquote>
-<p><strong>校驗 vs §5 single thing：</strong></p>
-<ul>
-<li>§5 講 Net Yield 持平 — pre-mortem 命中（2028 連 2 季 Net Yield 0%）✅</li>
-<li>但 pre-mortem 多了「Perfect Day 被抄襲」+「IMO 2030 環保 capex」+「Gen X 不接力」三條 — <strong>§5 應補：(b) Perfect Day yield premium 從 +15% 收斂至 +8%；(c) IMO 2030 環保 capex 全年 capex / Rev 維持 &gt; 8%；(d) advance booking 進度連 4 季 YoY 跌。</strong></li>
-</ul>
-<p><strong>修正後的 §5 single thing 升級為四條：(a) Net Yield 連 2 季持平或下滑；(b) Perfect Day yield premium 收斂至 +8% 以下；(c) capex / Rev 維持 &gt; 8%（IMO 環保 capex 失控）；(d) advance booking 進度連 4 季 YoY 跌。</strong></p>
 </div>
-</section>
 
-<!-- §8 Review Triggers -->
-<section class="card" id="s8">
+<div class="premortem">
+<h3 style="margin-top:0;color:var(--premortem-line)">6b. Pre-mortem（強制三段式 — Guardrail 18）</h3>
+
+<h4 style="color:var(--premortem-line)">第一段｜故事倒推（≤80 字 narrative）</h4>
+<p>「<strong>2031 年 5 月回看 — RCL 從 $264 跌至 $130（−51%）的故事</strong>：2026-2027 沒問題（Perfect Day Mexico 2027-Q4 開幕 + Q1-Q2 兌現）；2027-Q4 美國經濟進入溫和衰退，cruise booking 開始放緩；2028 連 2 季 Net Yield 持平至 -1%；2028-2029 燃料成本 + IMO 2030 sulphur cap capex 大幅上升（capex/Rev 從 7% → 9%）；2029 cycle peak 確認；2030 EPS 從 $26 跌至 $18 + multiple 從 14x 修正至 9x = $162（-39% from $264）；極端情境 + Gen X 不接力 + Perfect Day 被 CCL Half Moon Cay 抄襲成功 yield premium 從 +15% 收斂至 +6% → $130（-51%）。」</p>
+
+<h4 style="color:var(--premortem-line)">第二段｜校驗 §5 single-thing</h4>
+<table style="background:rgba(255,255,255,0.5)">
+  <thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+  <tbody>
+    <tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="warn-tag">⚠ 部分重疊</span> — 故事的第一張骨牌是「Net Yield 連 2 季持平」（與 §5 一致 ✅），但 pre-mortem 同時識別了 (b) Perfect Day 被 CCL 抄襲、yield premium 從 +15% → +6% + (c) IMO 2030 環保 capex 失控（capex/Rev 升至 9%） + (d) advance booking 進度連 4 季 YoY 跌 — 這三條是 §5 沒有抓到的 secondary trigger</td></tr>
+  </tbody>
+</table>
+
+<h4 style="color:var(--premortem-line)">第三段｜修正 §5（依第二段結果分流）</h4>
+<p style="background:rgba(255,255,255,0.6);padding:10px 14px;border-radius:2px"><strong>結論：⚠ 已補 3 條 secondary trigger（§5 升級為四條件複合）。</strong> 因第二段標的 ⚠ 部分重疊，按 Guardrail 18 第三段必須實際補 secondary trigger 至 §5 區塊：</p>
+
+<ul style="background:rgba(255,255,255,0.7);padding:12px 32px;border-radius:2px">
+<li><strong>(a) Primary trigger（原 §5）</strong>：Net Yield 連 2 季 YoY 持平或下滑 → 立即減半至 3-4%</li>
+<li><strong>(b) Secondary trigger 1（pre-mortem 派生）</strong>：Perfect Day yield premium 從 +15% 收斂至 +8% 以下（CCL/NCLH 抄襲成功）→ §7b 減碼觸發、減半至 4-5%</li>
+<li><strong>(c) Secondary trigger 2（pre-mortem 派生）</strong>：capex / Rev 結構升至 &gt; 8%（IMO 環保 capex 失控）→ §7b 減碼觸發、減半至 4-5%</li>
+<li><strong>(d) Secondary trigger 3（pre-mortem 派生）</strong>：Advance booking 進度連 4 季 YoY 跌 → 縮短 horizon 至 2-3 年、清倉準備</li>
+</ul>
+
+<p style="font-size:12.5px;margin-top:10px"><strong>校驗紀錄</strong>：§5 修正狀態 = ⚠ 已補 3 條 secondary trigger（HTML §5 區塊的 thesis 命脈現由 1 → 4 條複合）；§5 區塊已標註「primary + secondary」分層；pre-mortem 完成其結構性任務。</p>
+
+<p style="font-size:12.5px;color:var(--premortem-line);margin-top:8px"><em>Guardrail 18 確認：第二段標的 ⚠ 部分重疊，§5 區塊已實際補 3 條 secondary trigger（§5 trigger 數從 1 → 4） — 通過。</em></p>
+</div>
+
+<!-- ==================== §8 REVIEW TRIGGERS ==================== -->
 <h2>§8 Review Triggers</h2>
-<table>
-<thead><tr><th width="4%">#</th><th>觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr></thead>
-<tbody>
-<tr><td>1</td><td>Q2 2026 actual EPS print</td><td>財報日期</td><td>2026-07 月底（預估），actual EPS &gt; $4.00 + Net Yield +2%+ = thesis 強化</td></tr>
-<tr><td>2</td><td>Q3 / Q4 2026 actual</td><td>財報日期</td><td>連 2 季 booking 進度 ≥ 同期 prior year + Net Yield +1%+ = base case 維持</td></tr>
-<tr><td>3</td><td>價位觸發</td><td>價位</td><td>(a) 跌至 $240-255 = 第二批加碼；(b) $210-225 = 第三批承接；(c) 突破 $310 = base case 加速兌現，不再加碼但保持核心倉位</td></tr>
-<tr><td>4</td><td>§5 升級後四條件</td><td>結構事件</td><td>Net Yield / Perfect Day premium / capex / booking 任一達閾值 = 立即減半或清倉</td></tr>
-<tr><td>5</td><td>Perfect Day Mexico 完工進度</td><td>產業事件</td><td>2027 開幕進度（公司公告 + 衛星圖驗證）</td></tr>
-<tr><td>6</td><td>cycle peak 早期訊號</td><td>產業 + 個股結合</td><td>連 2 季 Net Yield 持平 + advance booking 連 2 季 YoY 跌 + 同業 CCL / NCLH guide cut = cycle peak 早期訊號 → 減碼至原始倉位 50%</td></tr>
-</tbody>
-</table>
-<p><strong>這份報告的保質期：</strong>到 Q2 2026 actual print（2026-07）有效，之後須重評。**5 年期 thesis 中，每季都要 watch Net Yield + booking + Perfect Day metrics 三項指標。**</p>
-<p><strong>最可能發生的 upside：</strong>Q2-Q3 兌現 + Perfect Day Mexico 開幕進度兌現 + multiple 從 13.5x 修正至 16-17x → 5 年股價 $400-450（+50-70%）。</p>
-<p><strong>最可能發生的 downside：</strong>(a) 短期 sector 任一回檔至 $240（-9%，第二批加碼）；(b) 中期 cycle peak 訊號 → $210-225（第三批 sweet spot）；(c) 極端衰退 → $150-180（cycle bottom，generational entry）。</p>
-</section>
 
-<!-- Phase A1 折疊 -->
-<details>
-<summary>Phase A1｜護城河深度分析（獨立結論：RCL 護城河 7/10 — 三大寡占 + Perfect Day 差異化 + Icon-class 規模，但 cruise 商品本質限制 8-10 級）</summary>
+<div class="card">
 <table>
-<tbody>
-<tr><th width="22%">主要護城河類型</th><td>(1) <strong>三大寡占結構</strong> — RCL/CCL/NCLH 合計 ~80% global market share；(2) <strong>Perfect Day 私有目的地</strong> — CocoCay $250M 投資 + Mexico 興建中 + +15% yield premium；(3) <strong>Icon-class 規模經濟</strong> — 大船多 attraction 構建 differentiation；(4) <strong>4 家造船廠 supply lock</strong> — 全球 cruise 船建造廠就 4 家，lead time 4-5 年</td></tr>
-<tr><th>持久性評分</th><td><strong>7/10</strong>，5 年穩固度：<strong>高</strong>（Perfect Day + Icon-class + supply lock）；10 年穩固度：<strong>中</strong>（cruise sector cyclical + Gen X 接力 + 環保法規 capex）</td></tr>
-<tr><th>最大侵蝕風險</th><td>(a) CCL / NCLH 私有目的地反擊（Half Moon Cay / Great Stirrup 升級）；(b) 經濟衰退或地緣 cruise demand 短期 -10-20%；(c) 燃料成本 + IMO 2030 環保 capex 結構性壓力</td></tr>
-<tr><th>關鍵數據</th><td>Q1 26 Rev $4.45B（+11.3% YoY）；Q1 EPS $3.60（+33% YoY）；Net Yield +2%（above guide）；ROIC 15.5%；Perfect Day 2024 visitors 3M；2023 net yield vs 2019 +13%（vs NCLH +4.5% / CCL +7.8%）</td></tr>
-</tbody>
+  <thead><tr><th>#</th><th>觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Q2 FY26 法說</td><td>財報日期</td><td><strong>2026-07 末（預估 2026-07-29 ~ 2026-08-01）</strong>，actual EPS &gt; $4.00 + Net Yield +2%+ + booking 進度 = thesis 強化</td></tr>
+    <tr><td>2</td><td>Q3 / Q4 FY26 法說</td><td>財報日期</td><td>2026-10 末 / 2027-02（連 2 季 booking 進度 ≥ PY + Net Yield +1%+ = base case 維持）</td></tr>
+    <tr><td>3</td><td>價位觸發</td><td>價位</td><td>(a) 跌至 $240-255 = 第二批加碼至 5-6%；(b) $210-225 = 第三批承接至 6-8%；(c) $180 = 深度承接至 8-10%；(d) 突破 $310 = base case 加速兌現，不再加碼但保持核心倉位</td></tr>
+    <tr><td>4</td><td>§5 升級後四條件（任一觸發）</td><td>結構事件</td><td>Net Yield / Perfect Day premium / capex / booking 任一達閾值 = 立即減半或清倉</td></tr>
+    <tr><td>5</td><td>Perfect Day Mexico 完工進度</td><td>產業事件</td><td>2027 開幕進度（公司公告 + 衛星圖驗證）；目標 Q4 2027 開幕</td></tr>
+    <tr><td>6</td><td>Icon-class 交付時程</td><td>產業事件</td><td>Legend 2026 / Hero 2027 / Icon 5 2028 — 任一艘 &gt; 6 個月延遲 = capacity ramp 受限</td></tr>
+    <tr><td>7</td><td>cycle peak 早期訊號</td><td>產業 + 個股結合</td><td>連 2 季 Net Yield 持平 + advance booking 連 2 季 YoY 跌 + 同業 CCL / NCLH guide cut = cycle peak 早期訊號 → 減碼至原始倉位 50%</td></tr>
+    <tr><td>8</td><td>同業 CCL / NCLH 比較</td><td>產業相對訊號</td><td>RCL Net Yield 領先 CCL/NCLH 5pp+ = 執行 alpha 維持；收斂至 2pp = thesis 一腳弱</td></tr>
+  </tbody>
 </table>
-<p><strong>A1 獨立結論：</strong>護城河 7/10 — 寡占 + 私有目的地 + 規模 + supply lock 四層複合護城河；但 cruise 商品本質（cyclical + 高 capex + 燃料 / 環保 exposure）限制不在 8-10 級。</p>
+
+<h4>報告保質期 + upside / downside</h4>
+<table>
+  <tbody>
+    <tr><td style="width:25%"><strong>保質期</strong></td><td><strong>3 個月（2026-08-07 前）</strong>或 Q2 FY26 法說 — 以先到者為準。<strong>5 年期 thesis 中，每季都要 watch Net Yield + booking + Perfect Day metrics 三項指標。</strong></td></tr>
+    <tr><td><strong>最可能 upside 因素</strong></td><td>① Q2-Q3 兌現 + Perfect Day Mexico 2027 開幕進度兌現 + multiple 從 13.5x 修正至 16-17x → 5 年股價 $400-450（+50-70%）；② Icon V/VI/VII 交付順利 + capacity ramp + ASP & yield 持續上行；③ CCL / NCLH 執行繼續落後 → RCL 相對 multiple 擴張</td></tr>
+    <tr><td><strong>最可能 downside 因素</strong></td><td>① 短期 sector 任一回檔至 $240（-9%，第二批加碼）；② 中期 cycle peak 訊號 → $210-225（第三批 sweet spot）；③ 極端衰退 + IMO 2030 capex 失控 → $130-150（cycle bottom，-44~-50%，generational entry）；④ Perfect Day 被 CCL/NCLH 抄襲成功 → yield premium 收斂、thesis 一腳斷</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== Phase A 折疊區 ==================== -->
+<h2>Phase A｜獨立研究底稿（折疊）</h2>
+
+<details>
+  <summary>📁 Phase A1｜護城河深度分析<span class="summary-conclusion">獨立結論：RCL 護城河 7/10 — 三大寡占 + Perfect Day 差異化 + Icon-class 規模，cruise 商品本質限制 8-10 級</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>主要護城河類型</td><td>(1) <strong>三大寡占結構</strong> — RCL/CCL/NCLH 合計 ~80% global market share；(2) <strong>Perfect Day 私有目的地</strong> — CocoCay $250M 投資 + Mexico 興建中 + +15% yield premium；(3) <strong>Icon-class 規模經濟</strong> — 7 艘 5,600 berths megaship 至 2030 構建 differentiation；(4) <strong>4 家造船廠 supply lock</strong> — 全球 cruise 船建造廠就 4 家，lead time 4-5 年</td></tr>
+        <tr><td>持久性評分</td><td><strong>7/10</strong>，5 年穩固度：<strong>高</strong>（Perfect Day + Icon-class + supply lock）；10 年穩固度：<strong>中</strong>（cruise sector cyclical + Gen X 接力 + 環保法規 capex）</td></tr>
+        <tr><td>最大侵蝕風險</td><td>(a) CCL / NCLH 私有目的地反擊（Half Moon Cay / Great Stirrup 升級）；(b) 經濟衰退或地緣 cruise demand 短期 -10-20%；(c) 燃料成本 + IMO 2030 環保 capex 結構性壓力</td></tr>
+        <tr><td>關鍵數據</td><td>Q1 26 Rev $4.5B（+11.3% YoY）；Q1 Adj EPS $3.60（+33% YoY）；Net Yield +2% constant / +3.6% as-reported；ROIC 15.5%；Perfect Day 2024 visitors 3M；2023 net yield vs 2019 +13%（vs NCLH +4.5% / CCL +7.8%）</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Sourced Data Points（≥ 5 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Q1 26 Adj EPS $3.60 (+33% YoY) vs forecast $3.22 — beat 11.8%；GAAP EPS $3.48</strong> — 來源：RCL Q1 26 法說，2026-04-30（Motley Fool / PRNewswire / BigGo Finance）</li>
+      <li><strong>Q1 26 Rev $4.5B + Net Yield +2% constant / +3.6% as-reported + Occupancy 108.5%</strong> — 來源：Q1 26 法說 + 10-Q，2026-04-30（StockTitan）</li>
+      <li><strong>Customer deposits $6.55B record</strong>（Q1 26 末，bookings strength validated）— 來源：Q1 26 法說，2026-04-30</li>
+      <li><strong>Icon-class 7 艘 megaship 至 2030</strong>：Icon (2024) / Star (2025) / Legend (2026) / Hero (2027) / Icon 5 (2028) / Icon 6 (2029) / Icon 7 (2030)，capacity 5,600 berths each — 來源：Caribbean Journal 2026-04-28 / Detroit News 2026-05-04</li>
+      <li><strong>Perfect Day at CocoCay $250M 投資 + +15% itinerary yield premium + 2024 visitors 3M</strong> — 來源：DD_RCL_20260427 + 公司歷史 IR 揭露</li>
+      <li><strong>Perfect Day Mexico 興建中 / 2027 開幕</strong> — 來源：DD_RCL_20260427 + 公司公告</li>
+    </ol>
+  </div>
 </details>
 
-<!-- Phase A2 折疊 -->
 <details>
-<summary>Phase A2｜產業趨勢深度分析（獨立結論：cruise sector 在 Boomer demographic supercycle Phase II 中段，2025-2035 黃金期 + 4 家造船廠 supply lock 結構性順風）</summary>
-<table>
-<tbody>
-<tr><th width="22%">TAM 與成長</th><td>全球 cruise TAM ~$60-65B（2026E），CAGR 7-9%；其中 mass cruise（RCL/CCL/NCLH）~80%，luxury / niche（VIK/Regent/Silversea）~20%。Cruise 滲透率（vacation 中佔比）仍只 5-8%（vs land vacation），長期 2-3x 滲透空間</td></tr>
-<tr><th>供需判斷</th><td>當前供需<strong>偏緊</strong>（4 家造船廠 capacity sold-out 至 2031 + advance booking visibility 高），未來 12 個月 <strong>持續偏緊</strong>（demographic 需求 + supply lock 結構維持）</td></tr>
-<tr><th>最大技術替代風險</th><td>(a) Adventure travel / experiential travel（Gen X 偏好替代）；(b) 高端定制旅行 / 私人遊艇（ultra-luxury 段替代）；(c) AI-powered itinerary planning 改變 booking flow（影響 OTA 而非 cruise lines）</td></tr>
-<tr><th>最大政策 / 地緣風險</th><td>(a) IMO 2030 環保法規（甲醇 / LNG 動力轉換 capex 全行業 $20-30B）；(b) 美國經濟衰退 → cruise demand -15-25%；(c) 地緣（中東 / 紅海 / 黑海）影響 routing</td></tr>
-<tr><th>議價權位置</th><td>對上游（造船廠）<strong>中</strong>（4 家寡占造船廠也有議價力，但 RCL Icon-class 規模採購有 leverage）；對下游（消費者 + 旅行社）<strong>強</strong>（Perfect Day 差異化 + 50% 直銷比例 + 寡占）</td></tr>
-</tbody>
-</table>
-<p><strong>A2 獨立結論：</strong>cruise sector 結構性順風，4 家造船廠 supply lock 提供 5-7 年確定 visibility，Boomer demographic 黃金期 2025-2035 是 base case；唯一風險是 cycle peak 2029-2030 共識 + IMO 2030 環保 capex。</p>
+  <summary>📁 Phase A2｜產業趨勢深度分析<span class="summary-conclusion">獨立結論：cruise demographic supercycle 中段 + 4 家造船廠 supply lock + 三大寡占結構穩固；下次 cycle peak 2028-2030 共識</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>TAM 與成長</td><td>全球 cruise 市場 2025 ~$60B → 2030 ~$90B（CAGR 8-9%）；Boomer 73M × $83.3T 淨值 + Gen X 接力雙世代；4 家造船廠 capacity sold-out 至 2031；RCL/CCL/NCLH 合計 ~80% market share</td></tr>
+        <tr><td>供需判斷</td><td><strong>供需偏緊</strong> — 需求結構增長至 2035 + 供給絕對紀律（lead time 4-5 年）；<strong>未來 12 個月方向：上行</strong>；cycle 已運行 4 年（2022 trough），peak 2-3 年距離但 graceful</td></tr>
+        <tr><td>最大技術替代風險</td><td>experiential travel（land-based luxury / adventure）部分繞道；威脅程度：<strong>低-中</strong>（5-10 年期）</td></tr>
+        <tr><td>最大政策/地緣風險</td><td>(a) IMO 2030 sulphur cap = 燃料 / capex 結構性壓力；(b) 中東 / 紅海地緣 = 短期 routing flexibility；(c) 美國消費信心衰退</td></tr>
+        <tr><td>議價權位置</td><td>對上游（造船廠）：<strong>強</strong>（4 家 + RCL anchor tenant）；對下游（消費者）：<strong>強</strong>（Perfect Day + Icon-class differentiation）</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Sourced Data Points（≥ 5 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Cruise sector 三大寡占：RCL + CCL + NCLH 合計 ~80% global market share</strong> — 來源：產業分析 / DD_RCL_20260427</li>
+      <li><strong>4 家造船廠 supply lock</strong>（Meyer Werft + Chantiers de l'Atlantique + Fincantieri + 1）capacity sold-out 至 2031；lead time 4-5 年 — 來源：產業分析 / cruise industry trade press</li>
+      <li><strong>Boomer 73M × $83.3T 淨值（FRED 2024）+ Gen X 接力雙世代至 2035</strong> — 來源：FRED / DD_RCL_20260427 / ID_BoomerTravelSupercycle_20260429</li>
+      <li><strong>Icon-class 規模：7 艘 megaship 5,600 berths each 至 2030</strong> — 來源：Caribbean Journal 2026-04-28</li>
+      <li><strong>Q1 26 large defense / cruise demand validation：Customer deposits $6.55B record + Occupancy 108.5%</strong> — 來源：Q1 26 法說 2026-04-30</li>
+      <li><strong>FY26 guide raised: Adj EPS $17.10-17.50 + Net Yield +1.5-2.5%（slight reset from prev $17.70-18.10）</strong> — 來源：Q1 26 法說，2026-04-30（Ticker Report / PRNewswire）</li>
+    </ol>
+  </div>
 </details>
 
-<!-- Phase A3 折疊 -->
 <details>
-<summary>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立結論：RCL ROIC 15.5% + 寡占地位 + Q1 兌現 +33% EPS = 工業頂尖體質，FCF/NI 0.29 是 Perfecta 計畫 capex 期設計性）</summary>
-<table>
-<tbody>
-<tr><th width="22%">營收結構</th><td>FY25 Rev ~$16-17B：Royal Caribbean International（旗艦品牌）~75% + Celebrity Cruises（premium）~20% + Silversea（luxury）~5%。<strong>Q1 26 Rev $4.45B</strong>（+11.3% YoY）。多品牌 portfolio 從 mass 到 luxury 全段</td></tr>
-<tr><th>客戶集中度</th><td>無單一客戶（B2C），但客群 ~50% 美國 + 25% 歐洲 + 25% 其他；Direct booking ~50% + travel agent ~50%</td></tr>
-<tr><th>定價權</th><td>Net Yield +2%（Q1 26 above guide），定價權 <strong>強</strong>（Perfect Day 差異化 + Icon-class 規模 + 寡占）</td></tr>
-<tr><th>未來金雞母</th><td>Perfect Day Mexico 2027 開幕（incremental yield premium）；Icon VI / VII 訂單（capacity expansion）；Celebrity Edge-class（premium 段）；Silversea（luxury 段擴張）</td></tr>
-<tr><th>財務體質</th><td>FY25 EPS $15.61（+42% YoY）；ROE 47.7%（業界領先）；ROIC 15.5%（Perfecta 2027 目標 17%+）；FCF/NI 0.29（Perfecta capex 期，設計性）；Net debt ~$20B（IPO 後 1.5x leverage 回正常區）；advance booking visibility 高</td></tr>
-<tr><th>資本配置紀律</th><td><strong>強</strong>。Perfecta 計畫 systematic（2024-2027 三年 capex 高峰），ROIC 目標 17%+；FY25 enhanced buyback；無 dividend cut 紀錄；M&A 紀律（Silversea acquisition 2018，整合 OK）；Icon V/VI/VII 訂單 = 配合 demographic supply</td></tr>
-</tbody>
-</table>
-<p><strong>A3 獨立結論：</strong>體質工業頂尖（ROE 47.7% + ROIC 15.5% + advance booking visibility 高）；Perfecta capex 期 FCF 暫時受擠壓但 ROIC 軌道正向；2027 後 FCF 正常化。</p>
+  <summary>📁 Phase A3｜業務 / 財務 / 資本配置<span class="summary-conclusion">獨立結論：FY25 Rev 強反彈 + Q1 26 record + FY26 guide raised；Perfecta 計畫高 capex 期 FCF/NI 0.29 但 ROIC 15.5% 已超 WACC</span></summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>營收結構</td><td><strong>Cruise tickets ~75%</strong>（pre-cruise booking）+ <strong>onboard / other ~25%</strong>（含 spa / shore excursion / dining premium）；Q1 26 Rev $4.5B (+11.3% YoY)；FY26 guide ~$17B（+9% YoY 隱含）</td></tr>
+        <tr><td>客戶集中度</td><td>分散 — 全球 OEM individual passengers + travel agents；風險：<strong>低</strong></td></tr>
+        <tr><td>定價權</td><td>ASP 趨勢 <strong>↑</strong>（Net Yield +2-3% 持續）；定價權：<strong>中-強</strong>（Perfect Day + Icon-class + 寡占供給）</td></tr>
+        <tr><td>未來金雞母</td><td><strong>Perfect Day Mexico 2027 + Icon V/VI/VII（2028-2030）</strong>；CoCay 2024 visitors 3M baseline，Mexico 預期翻倍</td></tr>
+        <tr><td>財務體質</td><td>Q1 26 Adj EPS $3.60 (+33% YoY beat 11.8%)；FCF/NI 2025 = 0.29（Perfecta 高 capex 期，設計性）；ROIC 15.5%（已超 WACC）；Customer deposits $6.55B record；資產負債表健康；FY26 raised buyback</td></tr>
+        <tr><td>資本配置紀律</td><td>Perfecta 計畫至 2027（ROIC 17%+ 目標）；Q1 26 ramped buybacks；無 dividend；M&A 紀律穩健</td></tr>
+      </tbody>
+    </table>
+
+    <h4>Sourced Data Points（≥ 6 floor）</h4>
+    <ol style="font-size:13px;line-height:1.8">
+      <li><strong>Q1 26 Rev $4.5B (+11.3% YoY) vs forecast $4.46B — beat</strong> — 來源：Q1 26 法說 / 10-Q，2026-04-30（StockTitan）</li>
+      <li><strong>Q1 26 Adj EPS $3.60 (+33% YoY) vs forecast $3.22 — beat 11.8%；GAAP EPS $3.48</strong> — 來源：Q1 26 法說，2026-04-30（Investing.com / BigGo）</li>
+      <li><strong>Q1 26 Net Yield +2% constant currency / +3.6% as-reported + Occupancy 108.5%</strong> — 來源：Q1 26 法說 / press release，2026-04-30</li>
+      <li><strong>Customer deposits $6.55B record</strong>（Q1 26 末）— 來源：Q1 26 10-Q，2026-04-30</li>
+      <li><strong>FY26 guide raised: Adj EPS midpoint $17.30 (range $17.10-17.50) + Net Yield +1.5-2.5%（geopolitical reset 從 prev $17.70-18.10）</strong> — 來源：Q1 26 法說，2026-04-30</li>
+      <li><strong>Perfecta 計畫至 2027（ROIC 17%+ 目標）</strong>；Q1 26 ramped buybacks — 來源：Q1 26 法說 + DD_RCL_20260427</li>
+      <li><strong>FY25 Rev 強反彈 + actual EPS $15.61（+42% YoY）</strong> — 來源：RCL FY25 actual / DD_RCL_20260427</li>
+    </ol>
+  </div>
 </details>
 
-<!-- Phase A4 折疊 -->
 <details>
-<summary>Phase A4｜既有報告數據摘要（DD_RCL_20260427 + ID_LuxuryTravelCruise / ID_BoomerTravelSupercycle）</summary>
+  <summary>📁 Phase A4｜既有報告數據摘要<span class="summary-conclusion">DD_RCL_20260427 + ID_BoomerTravelSupercycle / ID_LuxuryTravelCruise / ID_CasinoGamingIR 三份既有報告交叉引用</span></summary>
+  <div>
+    <h4>DD 報告擷取（DD_RCL_20260427.html，距今 10 天）</h4>
+    <ul>
+      <li><strong>綜合訊號燈：A 級</strong>（v12.2 結論；A+ → A 因壓力測試 0/4 失效降一級，仍是 cruise sector 訊號最高）</li>
+      <li><strong>三核心假設</strong>：H1 Cruise demographic supercycle（＋強化）/ H2 Perfect Day + Icon-class moat（＋強化）/ H3 Yield growth alpha 持續（兌現中）</li>
+      <li><strong>三引擎目標價</strong>：保守 $300（FPE 17x）/ 中性 $400（FPE 22x）/ 樂觀 $500（FPE 27x）</li>
+      <li><strong>Pure MA</strong>：✅ 🟢 最佳進場區（價在 W52 與 W104 之間 sweet spot，W250 斜率 +7.9%）</li>
+      <li><strong>FPE FY+2 13.2x（5Y 22% 分位 = deep value）+ PEG 0.85（&lt; 1.0 安全網綠燈）</strong></li>
+      <li><strong>R1-R4</strong>：R1 Cycle peak / R2 燃料 / 環保 capex / R3 Perfect Day 抄襲 / R4 Gen X 接力</li>
+      <li><strong>進場條件（DD §C）</strong>：可在現價 $260-275 立即進場 toehold 3-4%；等回測 $240 加碼 5-6%；$210 滿倉 6-8%</li>
+      <li><strong>陷阱定性</strong>：🟢 非陷阱（A 級訊號 + 三軸全綠 + Q1 兌現）</li>
+    </ul>
 
-<h3>DD_RCL_20260427.html（v12.1）</h3>
-<table>
-<tbody>
-<tr><th width="22%">綜合訊號燈</th><td><strong>A 級核心候選</strong>（A+ → A 因壓力測試 0/4 通過率降一級）</td></tr>
-<tr><th>護城河等級</th><td>B → A 級（estimation 燈 🟢 +1 救援；護城河 7/10）</td></tr>
-<tr><th>體質 veto</th><td>4/5 通過（FCF/NI 2025 = 0.29 不過 1 項 — Perfecta capex 期設計性）</td></tr>
-<tr><th>估值燈</th><td>🟢 便宜（Forward PE 13.29x = 5Y 22% 分位 + PEG 0.85，雙條件達標）</td></tr>
-<tr><th>R:R</th><td>Bear $186-216（-30% / -19%）；壓力測試 0/4（同業溢價收斂、cycle reflection、衰退、資本市場）</td></tr>
-<tr><th>Pure MA</th><td><strong>🟢 最佳進場區</strong> — 價在 W52 / W104 sweet spot + W250 斜率 +7.9%</td></tr>
-<tr><th>Bear anchor</th><td>$186-216（短/中期）</td></tr>
-<tr><th>陷阱定性</th><td>🟢 非陷阱（高 capex 為 Perfecta 設計性投資週期，2027 起 ICON-class 交付完畢後 FCF 正常化）</td></tr>
-<tr><th>長期持有信心</th><td><strong>中-高</strong>（cruise demographic + Perfect Day moat + Perfecta 紀律）</td></tr>
-<tr><th>核心 thesis</th><td>(1) Cruise demographic supercycle；(2) Perfect Day + Icon-class 差異化；(3) Perfecta 2027 ROIC 17%+ 目標</td></tr>
-</tbody>
-</table>
-
-<h3>ID 報告</h3>
-<table>
-<tbody>
-<tr><th width="22%">ID_LuxuryTravelCruise_20260427</th><td>Phase IV（嬰兒潮 demographic + 4 家造船廠 supply 瓶頸 + 機場 concession toll booth 三層結構）；3 條非共識：cruise demographics 結構非循環、純 luxury cruise（VIK）是嬰兒潮獨佔、機場 concession 是穩定 cash flow anchor — RCL 列 mass + premium 段執行龍頭</td></tr>
-<tr><th>ID_BoomerTravelSupercycle_20260429</th><td>母題（demographic supercycle）— RCL 列為 5 檔 basket（DAL/RCL/VIK/H/AENA/AXP）；Boomer 73M + $83.3T 淨值 + 健康可用窗 2025-2035；Sector EBITDA peak 2029-2030；5 檔 basket alpha vs SPX +6-9% 年化</td></tr>
-</tbody>
-</table>
+    <h4>ID 報告擷取</h4>
+    <ul>
+      <li><strong>ID_BoomerTravelSupercycle_20260429</strong>（Boomer 旅遊超級週期）：5 檔 basket（RCL/VIK/RMS/HLT/MAR）；RCL 是 mass-premium 旗艦</li>
+      <li><strong>ID_LuxuryTravelCruise_20260427</strong>（豪華旅遊與 cruise）：cruise sector 涵蓋 RCL/CCL/NCLH/VIK；RCL 是 mass-premium 龍頭</li>
+      <li><strong>ID_CasinoGamingIR_20260429</strong>（賭場 / IR）：間接相關（cruise onboard casino + Royal Caribbean Casino-at-Sea）</li>
+      <li><strong>ID_HotelChains_20260429</strong>：間接相關（Boomer travel demographic 共同 driver）</li>
+    </ul>
+  </div>
 </details>
 
 </main>
-
-<button class="print-btn" onclick="window.print()">列印為 PDF</button>
-
 </body>
 </html>
