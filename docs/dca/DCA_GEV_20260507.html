@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>GEV — Deep Conviction Analysis｜2026-05-07</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#0F172A;--ink-2:#334155;--line:#E2E8F0;--accent:#1E3A5F;--accent-2:#3B82F6;--green-bg:#DCFCE7;--green-ink:#166534;--red-bg:#FEE2E2;--red-ink:#991B1B;--yellow-bg:#FEF9C3;--yellow-ink:#92400E;--blue-bg:#EFF6FF;--blue-ink:#1E3A5F;--warn-bg:#FFF7ED;--warn-line:#F97316;--warn-ink:#C2410C}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace}
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;border-bottom:4px solid var(--accent-2)}
+  header .ticker{font-size:18px;font-weight:700;letter-spacing:1px}
+  header .meta{opacity:.92}
+  header .thesis-mini{margin-left:auto;font-style:italic;opacity:.95;max-width:680px}
+  main{max-width:1180px;margin:0 auto;padding:28px 24px 96px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px 28px;margin-bottom:22px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h1,h2,h3{color:var(--accent);margin-top:0}
+  h2{border-left:4px solid var(--accent-2);padding-left:12px;font-size:20px;margin-bottom:18px}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--accent)}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
+  p{margin:8px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  thead th{background:var(--accent);color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+  tbody td,tbody th{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F1F5F9}
+  .tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+  .green{background:var(--green-bg);color:var(--green-ink)}
+  .red{background:var(--red-bg);color:var(--red-ink)}
+  .yellow{background:var(--yellow-bg);color:var(--yellow-ink)}
+  .blue{background:var(--blue-bg);color:var(--blue-ink)}
+  .thesis-hero{background:var(--blue-bg);border:1px solid #BFDBFE;padding:48px 36px;text-align:center;border-radius:8px;margin-bottom:24px}
+  .thesis-hero .text{font-size:26px;line-height:1.55;font-weight:500;color:var(--accent);margin:0}
+  .thesis-hero .label{margin-top:14px;font-size:12px;color:var(--ink-2);letter-spacing:2px}
+  .decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0}
+  .decision-box.go{background:#F0FDF4;border-left-color:#16A34A}
+  .decision-box.avoid{background:#FFF1F2;border-left-color:#DC2626}
+  .contradiction-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .verdict-box{background:#FED7AA;padding:14px 18px;margin:12px 0;border-radius:4px}
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0;font-style:italic}
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .memo{border:2px solid #94A3B8;background:#FFFFFF;padding:24px 28px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;border-radius:4px;margin:14px 0;white-space:pre-wrap}
+  .elevator{background:#EEF2FF;border-left:4px solid #6366F1;padding:14px 18px;font-style:italic;font-size:15px;border-radius:0 4px 4px 0;margin:10px 0}
+  details{background:#F8FAFC;border:1px solid var(--line);border-radius:4px;padding:14px 20px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:15px}
+  details[open] summary{margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .ma-pass{background:var(--green-bg);color:var(--green-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .ma-fail{background:var(--red-bg);color:var(--red-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .print-btn{position:fixed;bottom:28px;right:28px;padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(15,23,42,.18)}
+  @media print{header.topbar,.print-btn{display:none}main{padding:0;max-width:100%}section.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}details{page-break-inside:avoid}details > summary{list-style:none}details:not([open]) > *:not(summary){display:block !important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="ticker">GEV · GE Vernova</span>
+  <span class="meta">DCA 報告 ｜ 2026-05-07</span>
+  <span class="meta">參考股價 ~$1,083（FPE FY27 44x）</span>
+  <span class="thesis-mini">AI 用電 supercycle 的 gas turbine pricing power 收割者 — 34% 全球寡占，但 FPE 44x 已 priced 5 年</span>
+</header>
+
+<main>
+
+<section class="card">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-hero">
+  <p class="text">GEV 是 AI 用電 supercycle 的 gas turbine pricing power 收割者 — 34% 全球寡占 + 100GW backlog + 產能 sold out 至 2030+，但 FPE 44x 已 priced 5 年增長</p>
+  <div class="label">ONE-SENTENCE THESIS · 50 字以內</div>
+</div>
+<p class="note">這是敘事而非指標：GEV 不是「FCF +EPS +112%」的工業 cyclical 股 — 而是「全球三家能造 large-scale gas turbine 之一 + 客戶 sold out 到 2030+ 願付 SRA premium 鎖時段」的真稀缺 supply。但市場已把 5 年 pricing power 紅利全 priced 進 44x FPE。</p>
+</section>
+
+<section class="card">
+<h2>§7 Decision｜可執行投資計畫</h2>
+
+<div class="decision-box">
+<strong>裁決：B 級 / 觀察池偏謹慎 — 「真稀缺好公司、貴價格」典型情境</strong><br>
+原因：① DD final_signal = B（衛星）；② R:R 全負（短 -0.33x / 中 -0.20x / 長 +0.08x 長期僅微正）；③ 12M +167% / 6M +85% 長線追高已實現；④ Bollinger 上軌 -3.8%（接近過熱）；⑤ Wind 結構性 EBITDA -$382M 翻倍惡化（FY25 -$146M → Q1 26 single quarter 已超 PY 全年）；⑥ 4w drift +1.08% 已 plateau，比 VRT 健康，但 12M 168% 反映「good news 全 priced in」。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th width="35%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>觀察池 / 衛星試倉</strong>（不做核心，因 R:R 全負且估值已 priced 5Y）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0% 現在 → 1.5-2% 條件達成後</strong></td></tr>
+<tr><td>目標倉位</td><td><strong>3-4% of portfolio（衛星上限）</strong>，不會升核心，因估值不在極端低估</td></tr>
+<tr><td>進場價位區間</td><td><strong>$780 - $920</strong>（FPE FY27 ≤ 35x 對應 $24.22 × 32-38x = $775-920）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批，三條件門檻（任一達成才進首批）</strong>：① 估值條件：FPE FY27 ≤ 35x（即股價 ≤ $848）；② 動能條件：Bollinger 中軌附近（~$818）回測 + RSI 14d ≤ 50；③ 事件條件：Q2 2026 財報後（2026-07 下旬）若繼續 raise guide 但市場給「正常」反應 + 任一寡占對手公開產能擴張 confirmed → 確認 supply 結構不會驟然放開，可進首批</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>關鍵問題：portfolio 已飽和 AI infra 上游（NVDA / AVGO / MRVL / CRDO） + 觀察 APH / ANET / VRT — VRT 已是「AI 機架 power thermal」的觀察位，GEV 是「AI 用電上游 utility」更早期 layer。但 VRT FPE 51x vs GEV FPE 44x，GEV 的「pricing power 護城河」（gas turbine 寡占 + supply scarcity 至 2030+）比 VRT 的「co-develop sole partner narrative」更結構性。建議路徑：① 在 AI Power basket 中，GEV vs VRT vs ETN 三選一 — GEV 是「上游 utility 寡占」、VRT 是「機架 power thermal」、ETN 是「電氣分配 + thermal hybrid」；② 邊際資金優先 ETN（FPE 25x 最便宜）&gt; GEV（FPE 44x but 真稀缺寡占）&gt; VRT（FPE 51x 純 play 但動能過熱）；③ 若必須 GEV 純 play，等估值修復至 FPE ≤ 35x 才進，且「衛星 2-4%」上限。</strong></td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>第一批進場</td><td>三條件之一達成（FPE FY27 ≤ 35x OR 回測 Bollinger 中軌 OR Q2 後 expectations reset + 寡占產能擴張 confirmed）</td><td>1.5%</td></tr>
+<tr><td>加碼至飽和</td><td>$800 以下 + Q2-Q3 26 backlog 維持 ≥ $163B + 100GW SRA premium 兌現</td><td>2.5-3%</td></tr>
+<tr><td>加碼極端機會</td><td>$700 以下 + hyperscaler capex 2027 guide 仍 +20%+</td><td>3-4%（衛星上限）</td></tr>
+<tr><td>減碼 1</td><td>Hyperscaler 2027 capex guide YoY &lt; +15%</td><td>1-1.5%</td></tr>
+<tr><td>減碼 2</td><td>$1,200 以上 + FPE FY27 &gt; 50x</td><td>0-1%</td></tr>
+<tr><td>清倉</td><td>§5 Single Thing 觸發（capex digestion confirmed + Mitsubishi/Siemens 雙倍產能擴張 confirmed 把 supply 瓶頸打開）</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$1,083 vs MA50 ~$925（高 17%）— 中度伸展</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$1,083 vs MA200 ~$722（高 50%）— 高度伸展</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>$1,083 vs W104 $468.38（高 131%）— 極度伸展（spin-off 後 2 年漲 131%）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅</span></td><td>三線多頭排列、W104 斜率 +11.73% 強正</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="tag yellow">⚠ 中等過熱（plateau 中）</span></td><td><strong>4w drift +1.08%（cool-down）+ RSI 61-63（中性偏高）+ Bollinger 上軌 -3.8% + 12M +167%</strong> → §7c 規則觸發「條件式進場」（4w drift cool-down 但長線追高已實現）</td></tr>
+</tbody>
+</table>
+
+<div class="contradiction-box" style="background:#FEF9C3;border-left-color:#CA8A04">
+<strong>⚠ 動能與長線追高的雙層分析：</strong>4w drift +1.08% 已 plateau（vs VRT 4w +16% 仍熱 — GEV 較健康），但 12M +167% / 6M +85% 反映「長線追高已實現 = 估值已 priced 5 年」。Pure MA 通過 + 短期 cool-down ≠ 立即進場 — 估值維度才是主要 timing constraint。<strong>禁止以「Pure MA 通過 + 4w 已 cool」為由跳過估值門檻</strong>。Mean reversion 歷史頻率：股票 12M +167% 後接續 12M 報酬 mean reversion 至 -10% 至 +20% 機率 ~70%。
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>「估值修復」賭局 — 等回測 Bollinger 中軌 ($818) 或 FPE FY27 ≤ 35x 進場，賭 Q2-Q4 26 backlog 維持 + 新 gas equipment pricing 10-20% premium 兌現</td></tr>
+<tr><td><strong>中期（2-5 年）</strong></td><td><strong>Base case：賭「gas turbine supply 卡至 2030+ 結構不變 + Electrification + Prolec 整合兌現」 — FY30 EPS $35-45 × 28-32x = $980-1,440，但需從 lower 進場價才合理</strong></td></tr>
+<tr><td>長期（5-10 年）</td><td>若 (a) gas turbine 雙寡占 + 1 補充供應商結構不被打破 + (b) AI 用電 supercycle 延伸至 2035+ + (c) Wind 收斂至 break-even + Electrification 升 19%+ EBITDA。但 Wind segment 結構失衡是 5-10 年隱憂</td></tr>
+</tbody>
+</table>
+
+<h4>EPS 預測參考</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>FY26E（GAAP, 含 Prolec gain）</td><td>$30.93</td><td>Consensus</td><td>含 ~$15.7/sh 一次性收益，估值不可用</td></tr>
+<tr><td>FY26E（Adj, 去 gain）</td><td>$17</td><td>DD 推導 / FY26 guide midpoint</td><td>Adj EBITDA $5.85B 對應</td></tr>
+<tr><td>FY27E</td><td>$24.22</td><td>Consensus（24 analysts）</td><td>YoY +43% on adj basis</td></tr>
+<tr><td>FY28E</td><td>$31</td><td>賣方推算</td><td>新 gas pricing premium 兌現 + Electrification margin 達 19% + Wind 收斂</td></tr>
+<tr><td>FY30E（外推）</td><td>$35 - 45</td><td>本報告外推</td><td>外推假設：FY27-FY30 EPS CAGR 13-22%（取決 hyperscaler capex 軌跡）</td></tr>
+</tbody>
+</table>
+
+<p><strong>長期持有合理性：</strong>FY30 EPS $40 × 30x = $1,200，較現價 $1,083 5Y 報酬 +11%（年化 ~2.1%）— 不及 SPX。Bull case FY30 EPS $45 × 35x = $1,575，5Y +45%（年化 7.7%）需 hyperscaler capex 持續 +25%+ 五年 + Wind 收斂。<strong>結論：當前 $1,083 不適合「長期複利持有」進場 — 必須等 20-25% 回檔（至 $820-870）才進場才有合理長期 value。等待是正確 timing 策略。</strong></p>
+</section>
+
+<section class="card">
+<h2>§4 Asymmetry Analysis</h2>
+<table>
+<thead><tr><th width="22%">情境</th><th width="14%">5 年倍數</th><th>依據</th><th width="12%">機率</th></tr></thead>
+<tbody>
+<tr style="background:#F0FDF4">
+<td><strong>Bull（thesis 對）</strong></td>
+<td><strong>+45%（1.45x）</strong></td>
+<td>FY30 EPS $45 × 35x = $1,575 — gas turbine supply 卡至 2032+ + 新 pricing +20% 兌現 + Electrification 19% EBITDA + Wind 收斂、AI capex +25% 持續</td>
+<td>30%</td>
+</tr>
+<tr>
+<td>Base</td>
+<td>-10%（0.90x）</td>
+<td>FY30 EPS $35 × 28x = $980 — hyperscaler capex 從 +30% 降至 mid-teens、PE compression 反映 cyclical 重新校準、Wind EBITDA -$200M 持續</td>
+<td>40%</td>
+</tr>
+<tr style="background:#FFF1F2">
+<td><strong>Bear（thesis 錯）</strong></td>
+<td><strong>-49%（0.51x）</strong></td>
+<td>$550 — 2027-2028 capex digestion (YoY +5%) + Mitsubishi 雙倍產能 confirmed + OBBBA 2027-07 PTC phase-out 加速 Wind 失血、FY30 EPS $25 × 22x = $550</td>
+<td>30%</td>
+</tr>
+<tr style="background:#EFF6FF;font-weight:600">
+<td>機率加權期望值</td>
+<td colspan="2">0.30×1.45 + 0.40×0.90 + 0.30×0.51 = 0.435 + 0.360 + 0.153 = <strong>0.95x（5 年期望報酬 -5%，年化 ~-1%）</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+
+<p class="note"><strong>追加壓力測試：</strong>5 年期望加權報酬負！與 VRT 一樣是「估值已 priced peak」的數學結果。即使 thesis 對（30% 機率 +45%），bear 30% 的 -49% 損失壓制了 EV。<strong>必須等估值修復至 FPE ≤ 35x（股價 $820-870）才能讓 EV &gt; 1.0</strong>。10 年期 EV 改善有限（base case 仍受估值 reset 影響），即使 hold to 2036。</p>
+
+<div class="pattern-box">
+<h3 style="color:#0369A1;margin-top:0">📐 Pattern Match — 讓機率有錨點</h3>
+<table>
+<tbody>
+<tr><td width="32%"><strong>歷史相似 setup</strong></td><td>① <strong>2007-2008 GE Power（GE 內部，前身）</strong> — 上一波 utility capex peak + gas turbine pricing power + 高 PE 35-40x → 2009-2015 mean reversion -60% PE compression；② <strong>2021 ENPH/SEDG</strong> — clean energy structural narrative + 高 PE 50-60x + sole-source 供應商 → 2026 -81%</td></tr>
+<tr><td><strong>當時 setup</strong></td><td>GE Power 2007 peak EBITDA $7B PE 35x；ENPH 2021 PE 65x</td></tr>
+<tr><td><strong>5 年實現報酬</strong></td><td>① <strong>GE Power 2007 → 2012：營收下滑 + PE 從 35x 壓至 12x = 估值蒸發 60%+</strong>（cyclical 機構財）；② ENPH 2021 → 2026 -81%</td></tr>
+<tr><td><strong>我的標的最像 / 最不像</strong></td><td><strong>最像 GE Power 2007</strong>：① 同一前身公司！gas turbine 業務歷史；② utility capex peak narrative（這次是 AI；上次是新興市場）；③ 高 PE × 寡占 narrative；<strong>不像之處</strong>：① GEV spin-off 後管理紀律 + capital allocation 改善（dividend doubling、$5B buyback）；② AI capex supercycle 較 EM utility 結構強（hyperscaler $725B）；③ SRA premium 鎖時段是新工具（gas turbine 史上首次）；<strong>最像 ENPH 2021</strong>：narrative trap（FOMO + 純 play + 高 PE）</td></tr>
+</tbody>
+</table>
+<p class="note" style="margin-top:12px"><strong>校準結果：</strong>GEV 是「真稀缺寡占」（vs ENPH 那種「成本曲線競爭」），所以最壞情況不會像 ENPH -81%；但「2007-2012 GE Power -60% PE compression」是有用的歷史錨點 — 高 PE × cyclical 機構財，PE 下降比 EPS 下降更危險。我的 Bear 30% / -49% 是合理估計，不是極端。</p>
+</div>
+</section>
+
+<section class="card">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">投委會 Memo｜GEV · GE Vernova｜2026-05-07
+─────────────────────────────────────────
+
+THESIS（50 字）
+GEV 是 AI 用電 supercycle 的 gas turbine pricing power 收割者 —
+34% 全球寡占 + 100GW backlog + 產能 sold out 至 2030+，
+但 FPE 44x 已 priced 5 年增長。
+
+KEY DRIVER（1）
+AI 用電 hyperscaler $725B capex → gas turbine supply scarcity：
+3 家寡占（GEV 34% / Siemens 24% / MHI 16%），合計產能擴張
+&lt; 需求增速 = 結構性 pricing power（新 gas equipment +10-20%）。
+
+KEY DRIVER（2）
+Electrification + Prolec 整合：FY26 $14B 營收（+~30% YoY）
++ 18-20% EBITDA margin、$5B Prolec backlog（+$1B 自宣告以來）。
+
+R:R（5 年期望）
+Bull (30%) +45% / Base (40%) -10% / Bear (30%) -49%
+EV = 0.95x（年化 ~-1% — 期望加權虧損！）
+
+主要風險
+1. 12M +167% / 6M +85% 長線追高已實現
+2. FPE FY27 44x 已透支 5 年增長
+3. Bollinger 上軌 -3.8% + 4w plateau（不再上漲）
+4. Wind segment Q1 -$382M 翻倍惡化 + OBBBA 2027-07 phase-out
+5. Pattern match 像 2007 GE Power（同一前身！）
+
+建議倉位
+觀察池 0% → 衛星 1.5-4%（三條件門檻）
+門檻 1：FPE FY27 ≤ 35x（股價 ≤ $848）
+門檻 2：回測 Bollinger 中軌 ($818) + RSI ≤ 50
+門檻 3：Q2 後 expectations reset + 寡占產能擴張 confirmed
+
+Opportunity Cost
+AI Power basket 三選：邊際資金 ETN ($25x) > GEV ($44x) > VRT ($51x)
+VRT 是觀察位，GEV 是更便宜替代，ETN 是最便宜替代
+
+保質期：Q2 2026 財報前（~12 週，至 2026-07-30）</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+GEV 是 AI 用電 supercycle 最大受益者，全球三家能造 large-scale gas turbine 之一（34% 市佔），客戶 sold out 到 2030+，願付 SRA premium 鎖時段。Q1 backlog $163B (+71% YoY)、新 gas pricing +10-20% premium 兌現中。但市場已給 44x FPE 把 5 年 pricing power 全 priced 進去；12M +167% 反映 FOMO 已實現。Pattern match 像 2007 GE Power（同一前身！）+ 2021 ENPH。等估值修復至 FPE ≤ 35x（$820-870）或 Bollinger 中軌回測才進場 — 現在 EV 期望加權為負。
+</div>
+
+<p class="note"><strong>壓力測試結果：</strong>1 頁紙 + 30 秒均能寫出且邏輯自洽，結論偏向「不該進場」 — Thesis 通過 mental models 但時機嚴重不利；繼續進入 §7 觀望偏謹慎決策。</p>
+</section>
+
+<section class="card">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li>✅ <strong>Gas turbine 三家寡占 + supply 卡至 2030+</strong>（A1 + A2）— GEV 34% / Siemens 24% / MHI 16%</li>
+<li>✅ <strong>AI 用電 hyperscaler $725B capex 結構性需求</strong>（A1 + A2）— Q1 26 orders +71% YoY</li>
+<li>✅ <strong>SRA premium pricing power 結構升級</strong>（A1 + A3）— 43 GW SRA + 新 gas equipment +10-20% premium</li>
+<li>✅ <strong>FCF / 財務體質頂級</strong>（A3）— Q1 FCF $4.8B 已超 FY25 全年、Net Cash $7.68B、零淨負債</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Gas turbine pricing power 結構升級 vs FPE 44x 估值透支</td>
+<td>真稀缺寡占</td>
+<td>—</td>
+<td>動能極強但估值已 5 年 priced</td>
+<td>🔴 不可調和（時機與基本面分離）</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Wind segment 結構性 EBITDA -$382M（Q1）vs Power+Electrification 強</td>
+<td>—</td>
+<td>OBBBA 2027 PTC phase-out 加速 Wind 失血</td>
+<td>FY26 Wind -$400M EBITDA 拖累</td>
+<td>🟡 可調和（segment 各自獨立）</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>4w drift +1.08% cool-down vs 12M +167% 長線追高</td>
+<td>—</td>
+<td>—</td>
+<td>短期已 plateau 但長期追高已實現</td>
+<td>🟡 可調和（時間維度差）</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>R:R 全負 vs DD 「長期持有信心高」</td>
+<td>—</td>
+<td>—</td>
+<td>thesis 結構強但時機不到</td>
+<td>🟡 可調和（信心 ≠ 立即進場時機）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>本 DCA 結論</th><th>DD/ID 結論</th><th>原因</th></tr></thead>
+<tbody>
+<tr>
+<td>X1</td>
+<td>進場時點</td>
+<td>觀察池，等三條件達成</td>
+<td>DD 給「B 級觀望」訊號燈、Pure MA ✅ 強勢</td>
+<td>本 DCA 加 portfolio context 與動能 plateau 後仍有估值門檻</td>
+</tr>
+<tr>
+<td>X2</td>
+<td>5Y 期望加權報酬</td>
+<td>EV 0.95x（年化 -1%）— 進場不合理</td>
+<td>DD 標「長期持有信心：高」+ 長期 R:R +0.08x（5Y 視角）</td>
+<td>DD 從「成長 outpace 估值修復」邏輯，本 DCA 從機率加權 EV — bear 30% 機率較 DD 嚴格</td>
+</tr>
+<tr>
+<td>X3</td>
+<td>vs ETN / VRT 比較</td>
+<td>ETN ($25x) &gt; GEV ($44x) &gt; VRT ($51x) — GEV 中間值</td>
+<td>DD 與 ID 未明確 cross-rank</td>
+<td>本 DCA 加 portfolio opportunity cost 維度</td>
+</tr>
+</tbody>
+</table>
+
+<h3>⚖ 4. 強制裁決</h3>
+<div class="verdict-box">
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 衝突的硬數據點</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Pricing power 真實 vs FPE 44x 透支</td>
+<td><strong>兩邊都 90% 屬實 — 進場時機選 estate（time it right）</strong></td>
+<td>① Q1 26 orders +71% YoY、新 gas pricing +10-20% premium 是真實兌現；② FPE 44x 較同業 Siemens Energy 25x = 76% premium 已過度反映；③ Pattern match GE Power 2007 → 2012 PE 從 35x 壓至 12x；④ 4w drift cool-down 但 12M +167% 反映「good news 全 priced」</td>
+<td><strong>Q2-Q3 2026 backlog 軌跡 + Q3 26 hyperscaler 2027 capex 初步 guide</strong></td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Wind 結構失血 vs Power 強</td>
+<td><strong>Wind 持續失血但 segment 隔離 — Power 強足以抵消，但「乾淨」價值更高</strong></td>
+<td>① Wind FY26 -$400M EBITDA vs Power+Electrification +$8B EBITDA — Wind 占比 -5%；② OBBBA 2027 phase-out 對 Wind 是 binary 加速；③ 管理層尚未明確 spin-off Wind 計畫</td>
+<td><strong>FY27 Wind EBITDA 軌跡 — 是否從 -$400M 收斂至 -$200M base case</strong></td>
+</tr>
+<tr>
+<td>M3</td>
+<td>4w cool-down vs 12M +167%</td>
+<td><strong>本 DCA（觀察池）— 4w plateau 是「等回測前的 peak distribution」</strong></td>
+<td>4w +1% plateau + Bollinger 上軌 -3.8% + 12M 168% = 經典「plateau before correction」模式；不是「動能繼續向上」</td>
+<td>1-3 個月內股價是否突破 $1,135 上軌或回測 Bollinger 中軌 ($818) — 後者機率更高</td>
+</tr>
+<tr>
+<td>X1</td>
+<td>進場時點</td>
+<td><strong>本 DCA（觀察池）</strong></td>
+<td>DD 訊號燈 B 對映 PM「衛星候選」可建倉，但 DCA 加 timing & opportunity cost — GEV 動能 plateau + ETN 更便宜 = 邊際資金不應立即進場</td>
+<td>FPE FY27 何時降至 35x 以下 — 若是 Q2 後股價回測，是合理 timing</td>
+</tr>
+<tr>
+<td>X2</td>
+<td>5Y 期望加權</td>
+<td><strong>本 DCA（EV 0.95x）</strong></td>
+<td>機率加權嚴格 EV 計算 — Bull 30% × +45% &lt; Base+Bear 70% 的損失機率，數學上 EV 為負</td>
+<td>FY28-FY30 EPS 軌跡 — 若 EPS CAGR ≥ 22% 維持，EV 可重回 &gt; 1.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="card">
+<h2>§3 Key Drivers｜這支股票的命脈是什麼</h2>
+
+<table>
+<thead><tr><th width="6%">#</th><th width="30%">Key Driver</th><th width="38%">為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>AI 用電 + gas turbine 三家寡占 supply scarcity</strong>（產業需求 × 供給結構）</td>
+<td>全球 gas turbine 製造能力高度集中（GEV 34% / Siemens 24% / MHI 16% = 74%），且這三家 2026-2028 產能擴張速度（~2x）跟不上 AI capex 需求增速（~3x），導致結構性 pricing power（新 gas equipment +10-20% premium、SRA 鎖時段 10-20% premium）；HA-class 64% combined cycle 效率是 hyperscaler 採購偏好的核心因素</td>
+<td>① 季度 gas turbine orders（GW）；② 新 gas equipment ASP YoY；③ SRA backlog；④ Hyperscaler 直接訂單 YoY；⑤ Mitsubishi/Siemens 產能擴張公告</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Electrification + Prolec 整合（grid + transformer）</strong>（多元化引擎）</td>
+<td>FY26 $14B 營收（+~30% YoY）+ 18-20% EBITDA margin + $2.4B 直接 hyperscaler DC 訂單（超過 FY25 全年），是 GEV 的「第二成長曲線」 — 不只 gas turbine，整套 grid 升級都是 AI capex 受益；Prolec $5B backlog 加速 transformer 收入兌現</td>
+<td>① Electrification 季度 orders YoY；② Electrification EBITDA margin 季度；③ Prolec 整合進度（背景的 backlog YoY）；④ 全球 grid capex tracker</td>
+</tr>
+</tbody>
+</table>
+
+<p class="note"><strong>為什麼是這 2 個，而不是其他？</strong>GEV 有 Wind + Power Services 等次要 driver，但只有「gas turbine pricing power」與「Electrification + Prolec」是 (a) 結構性而非循環性、(b) 解釋 GEV 過去 12M +167% 漲幅的核心因子、(c) 也是未來 5 年 thesis 風險集中點。Wind 是「拖累」而非命脈；Power Services 是 hygiene factor。</p>
+
+<div class="contradiction-box" style="background:#F0F9FF;border-left-color:#0EA5E9">
+<h4 style="color:#0369A1;margin-top:0">⚖ Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 1（gas turbine 寡占 supply scarcity）vs Driver 2（Electrification + Prolec）— 是否獨立？</p>
+<p><strong>測試</strong>：Driver 2 是否能在不假設 Driver 1 成立的情況下單獨被推翻？<br>
+✅ <strong>是</strong>。Electrification 業務即使在 gas turbine 寡占被打破（Driver 1 失敗）情況下，仍可由 grid modernization、industrial electrification、renewable interconnection 等需求驅動；Driver 2 失敗（Electrification 整合失序）也不必然 Driver 1 失敗。</p>
+<p><strong>結論：</strong>兩個 driver 來自獨立因果鏈（gas turbine 供給端 + electrification 需求端），通過抽象層測試。</p>
+</div>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<thead><tr><th width="40%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>Wind segment 季度 EBITDA loss 變動</td><td>Wind 占比 -5% 公司價值，loss 從 -$200M → -$400M 對 thesis 影響微小（除非 OBBBA 加速 phase-out）</td></tr>
+<tr><td>單季 EPS beat $1.88 vs $2.06</td><td>QC-34 季節性過濾 — 單季 beat 是 backlog conversion 節奏 noise，非結構訊號</td></tr>
+<tr><td>分析師目標價分散（$1,062 - $1,400）</td><td>賣方都建立在「FY27 EPS $24.22 × 50x」基線，沒充分 stress test bear case</td></tr>
+<tr><td>Q1 FCF $4.8B 已超 FY25 全年</td><td>Q1 FCF 高是 working capital 釋放的時點 effect，FY26 FCF guide $6.5-7.5B 才是真實水位</td></tr>
+<tr><td>$200M Hai Phong Vietnam 擴廠</td><td>capacity expansion 是 hygiene factor，不是命脈</td></tr>
+</tbody>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tbody>
+<tr><td width="32%"><strong>市場目前定價在什麼假設上</strong></td><td>GEV = AI 用電 supercycle 最大純 play 受益者，FPE FY27 44x 反映「FY27 $24.22 → FY28 $31 → FY30 $40+」線性外推 + 「gas turbine pricing power 持續 5+ 年 + AI capex +25% CAGR + Wind 不變糟」的順風基線</td></tr>
+<tr><td><strong>我認為的不同假設</strong></td><td>市場低估了「hyperscaler 2027-2028 capex digestion」（即使絕對值 $700B+ 維持，YoY 增速從 +30% 降至 +10% 已足以讓 GEV FPE 從 44x 壓縮至 25x = -43% PE re-rating）；市場高估了 GEV「真稀缺寡占」narrative — 三家寡占合計產能擴張至 2028 已 +60-80%（GEV 70-80 units、Siemens 250+ units、MHI 雙倍），supply 瓶頸 2027-2028 解開機率 ~40%；Wind 結構失血 + OBBBA 2027 phase-out 加速被低估</td></tr>
+<tr><td><strong>賣方為什麼錯</strong></td><td>賣方 model 的 5Y EPS 路徑都用「pricing power 持續」做線性外推，但忽略：(a) gas turbine 三家共同產能擴張 ~60-80% 至 2028；(b) hyperscaler dual-vendor 採購策略（GEV vs Siemens vs MHI 三家比價成熟）；(c) Pattern match 2007 GE Power → 2012 PE 從 35x 壓縮至 12x — 同一前身公司有歷史教訓</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>校驗結論：</strong>三題均能寫出具體分歧 — 此 thesis 是「估值修復 + timing」雙重而非單純做空。alpha 來源是「等待修復」，§7 倉位定為觀察池而非衛星 — 直到三條件達成才放 1.5%。</p>
+</section>
+
+<section class="card">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>(a) Hyperscaler 2027 capex YoY 增速 &lt; +15%（Big 4 任三家公開 2027 initial guide）OR (b) Mitsubishi/Siemens 雙寡占公告 2027-2028 產能 doubled（GEV 從 70-80 units → 對手 fast-tracking 到 200+ units）</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>GEV FPE 44x 完全建立在「gas turbine supply 卡至 2030+ 結構性 pricing power 持續 5+ 年」前提；任何 supply 瓶頸鬆動或 demand 增速放緩，都會立即 reset GEV 從「成長股 44x」至「資本財循環股 22x」 = -50% re-rating；historical pattern：GE Power 2007-2012 PE 從 35x 壓縮至 12x（同一前身！）</td></tr>
+<tr><td><strong>如何監測</strong></td><td>① <strong>Big 4 hyperscaler Q4 2026 earnings</strong>（2027-01 / 02 公布 2027 capex initial guide）；② Siemens Energy / Mitsubishi Heavy Industries 季度 capacity expansion guidance；③ Q3 2026 hyperscaler earnings 中的 2027 capex 提示；④ Power Engineering / Turbomachinery Magazine 季度 gas turbine orders tracker</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td><strong>6-12 個月</strong>。Big 4 2027 capex guide 預計 2027 Q1；Siemens / Mitsubishi 產能 update 預計 2026 Q3-Q4。<strong>2026 Q4 - 2027 Q1 是這個 single thing 的關鍵 reveal window</strong></td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>合規檢查：</strong>✅ 是明確、單點、可驗證的事件；✅ 有具體監測來源；✅ 有時間窗口；✅ 有量化判定門檻（&lt; +15% 增速 OR doubled 產能）。</p>
+</section>
+
+<section class="card">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<thead><tr><th width="6%">#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Hyperscaler 2027-2028 capex 維持 +20%+ 增速</td>
+<td>AI workloads 持續超預期 + token 經濟兌現</td>
+<td>GEV FPE 從 44x re-rate 至 25x = -43% PE compression</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Gas turbine 三家寡占產能擴張不超 +60% 至 2028</td>
+<td>capacity 限制（土地、人力、長 lead time tooling）保持結構</td>
+<td>Pricing power 失去 → SRA premium 從 10-20% 降至 0-5% → EBITDA margin 打回原型</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Wind segment EBITDA -$400M FY26 是底</td>
+<td>OBBBA 2027 PTC phase-out 影響可控 + offshore 復甦</td>
+<td>Wind FY27 -$600M / FY28 -$800M = total EBITDA 增速被吃掉 30-40%</td>
+</tr>
+<tr>
+<td>4</td>
+<td>HA-class 64% combined cycle 仍是 hyperscaler 偏好的核心技術</td>
+<td>Mitsubishi M501JAC（66%+）+ Siemens HL（65%）不致過早超越</td>
+<td>技術差異化縮小 → Pricing power 進一步下降</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Spin-off 後 GEV 管理層執行力（CEO Scott Strazik 任期 ~2 年）</td>
+<td>Capital allocation 紀律延續、Wind 收斂計畫成功</td>
+<td>戰略誤判（如 over-invest Wind 或過度擴張 Electrification）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem｜失敗故事倒推</h3>
+<div class="premortem-box">
+「假設 5 年後 GEV 從 $1,083 跌至 $540（虧 50%），最可能發生的故事是 — 2027 Q1 hyperscaler 全部公布 2027 capex initial guide 平均增速 +12%（從 2026 +30% step-down）；同時 Siemens Energy 在 2026 Q4 財報宣告 2027-2028 產能擴張至 350 units/yr（GEV 70-80 units），Mitsubishi 2027 投產 韓國新廠加倍至 80 units；market 立即 reset GEV 從 44x FPE 至 22x，即使 FY27 EPS 仍達 $24.22 也只值 $533；隨後 2028 OBBBA PTC phase-out 加速 Wind 失血至 -$700M EBITDA，FY28 整體 EBITDA growth 被吃掉 30%；2029 H1 GEV 為了維持 5Y EBITDA growth 過度擴張 Electrification（過度 capex），拖垮 ROIC；FY30 EPS 從共識 $40 下修至 $24，PE × EPS = 22 × $24 = $528 final；加上 GE Power 2007-2012 -60% pattern 確認，市場用『同一前身公司歷史教訓』對待 GEV。」
+</div>
+
+<p><strong>校驗：這個故事和 §5 single-thing 重疊嗎？</strong></p>
+<ul>
+<li>✅ <strong>主要重疊</strong>：§5 hyperscaler 2027 capex digestion + 寡占產能擴張是 pre-mortem 故事的雙觸發點，§5 抓對了核心快速觸發風險</li>
+<li>⚠ <strong>Pre-mortem 多抓到的</strong>：OBBBA Wind 加速失血 + 過度擴張 Electrification — 這兩個是「次級擴散」風險，§5 沒涵蓋；對 5Y 路徑很重要</li>
+<li><strong>結論：</strong>§5 抓對了第一觸發點（雙條件），但 pre-mortem 補完整了「擴散路徑」；長期持有應監控 (a) hyperscaler capex（已 in §5）+ (b) Mitsubishi/Siemens 產能（已 in §5）+ (c) Wind segment EBITDA 軌跡 + (d) Electrification capex/revenue 比例（已列入 §6a）</li>
+</ul>
+</section>
+
+<section class="card">
+<h2>§8 Review Triggers｜重新評估觸發點</h2>
+
+<table>
+<thead><tr><th width="6%">#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 2026 Earnings</td><td>財報日期</td><td><strong>2026-07-23 前後</strong>（看 backlog $163B → ?、新 gas pricing premium 兌現、Wind EBITDA 軌跡、Electrification 整合進度）</td></tr>
+<tr><td>2</td><td>Siemens Energy Q3 26 earnings</td><td>事件</td><td><strong>2026-08</strong>（雙寡占產能擴張公告）</td></tr>
+<tr><td>3</td><td>Mitsubishi Heavy Industries 2026 H1 result</td><td>事件</td><td><strong>2026-11</strong>（雙寡占產能擴張公告）</td></tr>
+<tr><td>4</td><td>Big 4 hyperscaler Q4 26 earnings</td><td>事件</td><td><strong>2027-01 / 02</strong>（§5 single thing：2027 capex initial guide）</td></tr>
+<tr><td>5</td><td>價位觸發 — 進場區</td><td>價位</td><td><strong>$820 - $920</strong>（FPE FY27 ≤ 35x）</td></tr>
+<tr><td>6</td><td>動能觸發 — 進場區</td><td>技術</td><td>回測 Bollinger 中軌 ($818) + RSI ≤ 50 + 4w drift &lt; +5%</td></tr>
+<tr><td>7</td><td>§5 Single Thing</td><td>事件</td><td>(a) hyperscaler 2027 capex YoY &lt; +15% OR (b) 雙寡占產能 doubled confirmed → 立即 0% 倉位</td></tr>
+</tbody>
+</table>
+
+<table style="margin-top:18px">
+<tbody>
+<tr><td width="32%"><strong>這份報告的保質期</strong></td><td><strong>Q2 2026 財報前有效（~12 週，至 2026-07-23）</strong></td></tr>
+<tr><td><strong>最可能發生的 upside 因素</strong></td><td>Q2 2026 backlog 升至 $180B+ + FY26 guide 再上修 + Mitsubishi/Siemens 維持產能 guidance（不 doubled）→ 股價 1-2 個月內衝 $1,200+（極端 stretched，但非進場 — 觸發減碼 2）</td></tr>
+<tr><td><strong>最可能發生的 downside 因素</strong></td><td>Q2 2026 Wind 持續失血 + 任一寡占對手公開產能加速 + AI capex hyperscaler 短期回調 sentiment → 股價 1-2 個月跌至 $850-920（觸發第一批進場 1.5%）</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card">
+<h2>Phase A｜獨立研究階段（折疊區塊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：「gas turbine 雙寡占（GEV 34%）+ HA-class 技術 + SRA 鎖時段」三層護城河，A 級但成長性持續性已 priced in</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td>① <strong>規模 + 寡占（34% global gas turbine 市佔）</strong>：全球只有 3 家能造 large-scale gas turbine（GEV / Siemens / MHI = 74%）；② <strong>技術差異化</strong>：HA-class 64% combined cycle 效率 + 100GW backlog 經驗複利；③ <strong>SRA 鎖時段（pricing power 工具）</strong>：43 GW SRA + 10-20% premium 鎖到 2030+；④ Service & After-market 的 cash cow（installed base servicing margin）</td></tr>
+<tr><td>持久性評分</td><td><strong>9/10</strong>，5 年穩固度：<strong>高</strong>（雙寡占結構強）</td></tr>
+<tr><td>最大侵蝕風險</td><td>① Mitsubishi M501JAC（66%+ efficiency）技術超越 HA-class；② Siemens HL 系列加速；③ 三家寡占 2027-2028 產能擴張 +60-80% 解除 supply 瓶頸；時間軸：2027-2028</td></tr>
+<tr><td>關鍵數據</td><td>FY26 guide adj EBITDA 12-14% margin、ROIC 高（具體未披露）、Q1 FCF $4.8B 超 FY25 全年、Net Cash $7.68B、SRA premium 10-20%</td></tr>
+</tbody>
+</table>
+<p><strong>A1 獨立結論（一句話）：</strong>GEV 護城河來自「gas turbine 雙寡占 + HA-class 技術 + SRA 鎖時段」三層，A 級結構強但短期 pricing power 已被市場 priced 進 5 年。</p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：AI 用電 supercycle 真實 + gas turbine supply 嚴重偏緊至 2030+，但雙寡占產能擴張 +60-80% 至 2028 是中期 reset risk</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>全球 gas turbine TAM ~$50B 2026、5Y CAGR 18-22%；Hyperscaler 2026 capex $725B（+36% YoY）；Electrification + grid modernization 5Y CAGR 25%+</td></tr>
+<tr><td>供需判斷</td><td>目前 <strong>嚴重供需偏緊</strong>（GEV/Siemens/MHI 三家全 sold out 至 2028+），未來 12 個月 → 維持偏緊；但 2027-2028 產能擴張 ~60-80% 是 reset risk</td></tr>
+<tr><td>最大技術替代風險</td><td>① 核能小型反應器 SMR（NuScale / X-Energy）可能 2030+ 滲透；② 燃料電池 + 儲能整合；③ 氫氣 retrofit；威脅程度：低-中；時間軸：2030+</td></tr>
+<tr><td>最大政策/地緣風險</td><td>OBBBA 2027-07 onshore Wind PTC phase-out 加速 Wind segment 失血；歐美中政府對 gas turbine 投資補貼可能變動；變壓器 2-3 年 lead time 是 industry-wide 瓶頸</td></tr>
+<tr><td>議價權位置</td><td>對上游 <strong>強</strong>（specialized supply chain，但 transformer 卡 GEV 自家）；對下游 hyperscaler / utility <strong>強</strong>（GEV 雙寡占 + supply 偏緊 + SRA 鎖時段）</td></tr>
+</tbody>
+</table>
+<p><strong>A2 獨立結論（一句話）：</strong>產業 secular 順風強（AI 用電 supercycle）+ supply 嚴重偏緊至 2030+，但 2027-2028 雙寡占產能擴張 ~60-80% 是中期 reset risk；OBBBA Wind phase-out 是次要逆風。</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：營收 segment 多元（Power 35% + Electrification 30% + Wind 20% + Power Services 15%），Wind 結構性失血但 Power+Electrification 強</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構</td><td>現金牛：Power Services（installed base after-market service）；成長引擎：<strong>Power Equipment（gas turbine new orders）+ Electrification（$14B 2026 / +30% YoY）</strong>；拖累：<strong>Wind（Q1 -$382M EBITDA 翻倍惡化）</strong></td></tr>
+<tr><td>客戶集中度</td><td>分散（utility + hyperscaler + IPP），單一客戶 &lt; 5%；風險：<strong>低</strong></td></tr>
+<tr><td>定價權</td><td>新 gas equipment ASP +10-20% premium、SRA 鎖時段 10-20% premium；定價權：<strong>強</strong>（雙寡占 + supply scarcity）</td></tr>
+<tr><td>未來金雞母</td><td>① <strong>HA-class gas turbine + SRA 鎖時段</strong>（2026-2032 收成期）；② Electrification + Prolec transformer（FY26 $14B / 18-20% EBITDA margin）；③ Power Services after-market（installed base 2,500+ unit servicing）</td></tr>
+<tr><td>財務體質</td><td>Q1 FCF $4.8B（超 FY25 全年）、毛利率 ~25%（趨勢 ↑）、Net Cash $7.68B、零淨負債、ROIC 計算複雜（spin-off 後僅 2 年）；壓力測試：Wind 失血到 -$1B/yr 仍可承受</td></tr>
+<tr><td>資本配置紀律</td><td>2026-04 dividend doubled、$5B buyback authorization、Prolec 100% 收購（$3B）整合中、Hai Phong Vietnam $200M 擴廠；無亂花錢前科（spin-off 僅 2 年數據）；管理層 Scott Strazik 領導 capital allocation</td></tr>
+</tbody>
+</table>
+<p><strong>A3 獨立結論（一句話）：</strong>GEV 業務結構快速 mix shift 至 Power+Electrification 主導，財務體質頂級（Q1 FCF $4.8B 超 FY25 全年、Net Cash $7.68B），但 Wind 結構失血 + 高估值 + 短線 plateau 給「等待修復」更合理 timing。</p>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取 — DD_GEV_20260504 (v12.2) + ID_AIDataCenter_20260419 + ID_Transformers_20260419</summary>
+<h4>DD 報告擷取（DD_GEV_20260504.html）</h4>
+<table>
+<thead><tr><th width="35%">項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Quality Score / 護城河等級</td><td>A 級（雙寡占 + HA-class + SRA）</td></tr>
+<tr><td>體質 veto</td><td>5/5 全過</td></tr>
+<tr><td>R:R 短期</td><td><strong>-0.33x（負）</strong></td></tr>
+<tr><td>R:R 中期</td><td><strong>-0.20x（負）</strong></td></tr>
+<tr><td>R:R 長期（5Y）</td><td>+0.08x（微正）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $850 / 中期 $969 / 長期 $1,085</td></tr>
+<tr><td>Bear anchor</td><td>$459-781 區間</td></tr>
+<tr><td>核心假設</td><td>H1：AI 用電 supercycle / H2：gas turbine 寡占持續 / H3：Wind 收斂</td></tr>
+<tr><td>綜合訊號燈</td><td><strong>B 級</strong>（觀望，thesis 完整時機不到）</td></tr>
+<tr><td>估值燈</td><td>🟠 偏貴（FPE FY27 43.9x、EV/EBITDA 82x 極端）</td></tr>
+<tr><td>Pure MA</td><td>✅ 強勢進場（但 Bollinger 上軌 -3.8% 接近過熱）</td></tr>
+<tr><td>陷阱定性</td><td>🟡 觀察期（非價值陷阱，估值透支型 + Wind 結構警訊）</td></tr>
+<tr><td>長期持有信心</td><td>高</td></tr>
+</tbody>
+</table>
+
+<h4>ID 報告擷取（多份）</h4>
+<ul>
+<li><strong>ID_AIDataCenter_20260419</strong>：「GEV gas turbine 不是過渡是 2030+ 主力」 — 結構性順風確認</li>
+<li><strong>ID_Transformers_20260419</strong>：「GEV Prolec 是被 gas turbine 熱度蓋過的 pure play」 — Electrification 是被低估的 driver</li>
+<li><strong>ID_Transformers patch</strong>：「變壓器 2-3 年 lead time 是 industry-wide 瓶頸」</li>
+</ul>
+<p class="note"><strong>本 DCA 與 DD/ID 的關鍵差異：</strong>DD 已意識到「真稀缺好公司、貴價格」+ R:R 全負，給「B 觀望」訊號燈；本 DCA 強化 (a) 12M +167% 長線追高已實現、(b) Pattern match 2007 GE Power 同一前身公司、(c) AI Power basket 中 ETN ($25x) &gt; GEV ($44x) &gt; VRT ($51x) 排序。同時 ID_AIDataCenter 「GEV gas turbine 2030+ 主力」結論在當前 FPE 44x 已 fully priced in，本 DCA 加 portfolio opportunity cost 維度。</p>
+</details>
+
+</section>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+</body>
+</html>
