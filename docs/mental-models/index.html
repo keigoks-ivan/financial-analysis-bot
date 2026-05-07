@@ -100,6 +100,16 @@ a:hover{color:var(--imq-accent-hover)}
 }
 .view-reset-btn:hover{color:#0f172a;border-color:#0f172a}
 
+/* ── Search input (Phase 2) ── */
+.model-search{
+  padding:6px 11px;font-size:11px;font-family:var(--imq-font-mono);font-weight:500;letter-spacing:.02em;
+  background:#fff;color:#0f172a;border:1px solid var(--imq-border);border-radius:var(--imq-r-pill);
+  width:170px;outline:none;transition:all .15s
+}
+.model-search:focus{border-color:#0f172a;box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+.model-search::placeholder{color:#94a3b8}
+.kbd-hint{font-family:var(--imq-font-mono);font-size:9px;color:#94a3b8;letter-spacing:.06em;padding:0 4px;align-self:center}
+
 /* ── Main layout ── */
 .main-grid{display:grid;grid-template-columns:1fr 380px;min-height:820px}
 .canvas-col{position:relative;border:1px solid var(--imq-border);background:transparent}
@@ -330,9 +340,10 @@ a:hover{color:var(--imq-accent-hover)}
 <button class="filter-chip" data-filter="eng" style="color:#B45309;border-color:#e5e7eb"><span>◆</span>工程/物理</button>
 <button class="filter-chip" data-filter="bio" style="color:#C0392B;border-color:#e5e7eb"><span>✚</span>生物學</button>
 
+    <input class="model-search" id="modelSearch" type="search" placeholder="搜尋模型... (按 / 聚焦)" autocomplete="off">
     <button class="view-reset-btn" id="viewModeToggle" title="切換 圖表 / 列表 檢視">📋 列表</button>
     <button class="view-reset-btn" id="viewResetBtn" title="重置視圖（拖移背景平移、滾輪縮放、雙擊背景重置）">⟲ 重置視圖</button>
-    <button class="lolla-btn" id="lollaToggle">⚡ LOLLAPALOOZA</button>
+    <button class="lolla-btn" id="lollaToggle" title="切換 Lollapalooza 多選模式（按 L）">⚡ LOLLAPALOOZA</button>
   </div>
 </div>
 
@@ -524,8 +535,15 @@ a:hover{color:var(--imq-accent-hover)}
   var selectedId = 'm10';
   var hoveredId = null;
   var filter = 'all';
+  var searchTerm = '';
   var lollaMode = false;
   var lollaPicks = new Set();
+
+  function matchesSearch(m) {
+    if (!searchTerm) return true;
+    var hay = ((m.zh||'') + ' ' + (m.en||'') + ' ' + (m.tag||'') + ' ' + (m.short||'')).toLowerCase();
+    return hay.indexOf(searchTerm) !== -1;
+  }
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
   var svg = document.getElementById('networkSvg');
@@ -575,16 +593,20 @@ a:hover{color:var(--imq-accent-hover)}
   // ── Filter logic ──────────────────────────────────────────────────────────
   function applyFilter(f) {
     allNodes().forEach(function(node) {
+      var id = node.getAttribute('data-id');
       var d = node.getAttribute('data-d');
-      var out = (f !== 'all' && d !== f);
-      node.classList.toggle('filtered-out', out);
+      var m = getModel(id);
+      var disciplineOut = (f !== 'all' && d !== f);
+      var searchOut = (m && !matchesSearch(m));
+      node.classList.toggle('filtered-out', disciplineOut || searchOut);
     });
     allEdges().forEach(function(edge) {
       var a = edge.getAttribute('data-a');
       var b = edge.getAttribute('data-b');
       var ma = getModel(a), mb = getModel(b);
-      var visible = (f === 'all' || (ma && ma.d === f) || (mb && mb.d === f));
-      edge.classList.toggle('filtered-out', !visible);
+      var disciplineVisible = (f === 'all' || (ma && ma.d === f) || (mb && mb.d === f));
+      var searchVisible = (!searchTerm) || (ma && matchesSearch(ma)) || (mb && matchesSearch(mb));
+      edge.classList.toggle('filtered-out', !(disciplineVisible && searchVisible));
     });
     // Cluster labels
     clusterLabels.forEach(function(label) {
@@ -825,6 +847,62 @@ a:hover{color:var(--imq-accent-hover)}
   // Reset button
   var resetBtn = document.getElementById('viewResetBtn');
   if (resetBtn) resetBtn.addEventListener('click', resetView);
+
+  // ── Search + keyboard (Phase 2) ──────────────────────────────────────────
+  var searchInput = document.getElementById('modelSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      searchTerm = (searchInput.value || '').trim().toLowerCase();
+      applyFilter(filter);
+      // Also dim list-view items
+      document.querySelectorAll('.list-item').forEach(function(b) {
+        var m = getModel(b.getAttribute('data-id'));
+        b.style.opacity = (m && matchesSearch(m)) ? '1' : '0.3';
+      });
+    });
+  }
+
+  function visibleNodeIds() {
+    var ids = [];
+    allNodes().forEach(function(n){
+      if (!n.classList.contains('filtered-out')) ids.push(n.getAttribute('data-id'));
+    });
+    return ids;
+  }
+
+  document.addEventListener('keydown', function(e) {
+    var inField = (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable));
+    if (e.key === 'Escape') {
+      if (searchInput) {
+        searchInput.value = '';
+        searchTerm = '';
+        applyFilter(filter);
+        document.querySelectorAll('.list-item').forEach(function(b){ b.style.opacity = '1'; });
+        searchInput.blur();
+      }
+      return;
+    }
+    if (inField) return;
+    if (e.key === '/' || e.key === 's') {
+      if (searchInput) { e.preventDefault(); searchInput.focus(); searchInput.select(); }
+      return;
+    }
+    if (e.key === 'l' || e.key === 'L') {
+      e.preventDefault();
+      if (lollaToggle) lollaToggle.click();
+      return;
+    }
+    if (e.key === 'j' || e.key === 'k') {
+      e.preventDefault();
+      var ids = visibleNodeIds();
+      if (!ids.length) return;
+      var i = ids.indexOf(selectedId);
+      if (e.key === 'j') i = (i + 1) % ids.length;
+      else i = (i - 1 + ids.length) % ids.length;
+      selectNode(ids[i]);
+      renderPanel(ids[i]);
+    }
+  });
 
   // ── List view (alternative to SVG) ───────────────────────────────────────
   var canvasCol = document.getElementById('canvasCol');
