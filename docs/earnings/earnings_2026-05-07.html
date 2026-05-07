@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 5/7 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #fafaf9;
+  --surface: #ffffff;
+  --surface-2: #f7f7f5;
+  --border: #e5e5e2;
+  --border-strong: #1a1a1a;
+  --text: #1a1a1a;
+  --text-muted: #666;
+  --text-dim: #999;
+  --accent: #2563eb;
+  --green: #15803d;
+  --green-bg: #f0fdf4;
+  --red: #b91c1c;
+  --red-bg: #fef2f2;
+  --amber: #b45309;
+  --amber-bg: #fffbeb;
+  --orange: #c2410c;
+  --orange-bg: #fff7ed;
+  --radius: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 15px; line-height: 1.7; color: var(--text); background: var(--bg); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.imq-nav { display: flex; align-items: center; gap: 24px; padding: 0 32px; height: 56px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; flex-wrap: wrap; }
+.imq-brand { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: -0.02em; }
+.imq-nav > a { font-size: 13px; color: var(--text-muted); }
+.imq-dd { position: relative; }
+.imq-dd-label { font-size: 13px; color: var(--text-muted); cursor: pointer; padding: 4px 0; }
+.imq-dd:hover .imq-dd-menu { display: block; }
+.imq-dd-menu { display: none; position: absolute; top: 100%; left: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 160px; padding: 8px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.imq-dd-menu a { display: block; padding: 8px 16px; font-size: 13px; color: var(--text); }
+.imq-dd-menu a:hover { background: var(--surface-2); text-decoration: none; }
+.imq-dd-menu a.active { color: var(--accent); }
+.container { max-width: 880px; margin: 0 auto; padding: 40px 24px; }
+.breadcrumb { font-size: 12px; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace; margin-bottom: 24px; }
+.breadcrumb a { color: var(--text-dim); }
+.report-header { margin-bottom: 32px; }
+.report-header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; }
+.report-meta { font-size: 13px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; margin-bottom: 20px; }
+.report-lede { background: var(--surface-2); border-left: 3px solid var(--accent); padding: 16px 20px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 14px; line-height: 1.8; }
+.toc { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px; }
+.toc-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 12px; }
+.toc a { display: inline-block; font-size: 13px; color: var(--text); margin-right: 20px; margin-bottom: 4px; }
+.toc a:hover { color: var(--accent); }
+h2 { font-size: 20px; font-weight: 700; border-bottom: 2px solid var(--border-strong); padding-bottom: 10px; margin: 40px 0 20px; }
+h3 { font-size: 17px; font-weight: 600; margin: 24px 0 12px; }
+h4 { font-family: 'IBM Plex Mono', monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin: 20px 0 8px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+th { text-align: left; font-size: 11px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); padding: 8px 12px; background: var(--surface-2); border-bottom: 1px solid var(--border); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:hover td { background: var(--surface-2); }
+tr:last-child td { border-bottom: none; }
+.company-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 28px; }
+.company-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+.ticker { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 700; }
+.meta-right { font-size: 13px; color: var(--text-muted); text-align: right; }
+.company-card ul { padding-left: 20px; }
+.company-card li { margin-bottom: 6px; font-size: 14px; }
+.user-added { font-size: 11px; color: var(--accent); font-family: 'IBM Plex Mono', monospace; margin-left: 8px; }
+.tag { display: inline-block; font-size: 11px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; padding: 2px 7px; border-radius: 4px; vertical-align: middle; }
+.tag.beat { background: var(--green-bg); color: var(--green); }
+.tag.miss { background: var(--red-bg); color: var(--red); }
+.tag.inline { background: var(--amber-bg); color: var(--amber); }
+.tag.raise { background: var(--green-bg); color: var(--green); }
+.tag.maintain { background: var(--amber-bg); color: var(--amber); }
+.tag.lower { background: var(--red-bg); color: var(--red); }
+.stock-move { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.stock-move.up { background: var(--green-bg); color: var(--green); }
+.stock-move.down { background: var(--red-bg); color: var(--red); }
+.winner-row td:first-child { border-left: 3px solid var(--green); font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+.loser-row td:first-child { border-left: 3px solid var(--red); font-family: 'IBM Plex Mono', monospace; font-weight: 700; }
+.contradiction { background: var(--orange-bg); border-left: 3px solid var(--orange); padding: 16px 20px; border-radius: 0 var(--radius) var(--radius) 0; margin-bottom: 20px; }
+.contradiction h4 { color: var(--orange); margin-top: 0; }
+.contradiction p { font-size: 14px; margin-top: 8px; }
+.implication { font-size: 14px; margin-top: 10px; }
+.summary-list { list-style: none; padding: 0; }
+.summary-list li { background: var(--surface-2); border-left: 3px solid var(--accent); padding: 14px 18px; margin-bottom: 12px; border-radius: 0 var(--radius) var(--radius) 0; font-size: 14px; line-height: 1.7; }
+.disclaimer { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 48px; }
+footer { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-dim); margin-top: 24px; padding: 20px 0 40px; }
+@media (max-width: 720px) {
+  .imq-nav { padding: 0 16px; gap: 12px; height: auto; padding-top: 12px; padding-bottom: 12px; }
+  .container { padding: 24px 16px; }
+  .company-header { flex-direction: column; }
+  .meta-right { text-align: left; }
+  th, td { padding: 6px 8px; }
+}
+</style>
+</head>
+<body>
+<nav class="imq-nav">
+  <a href="/" class="imq-brand">InvestMQuest. Research</a>
+  <a href="/">首頁</a>
+  <div class="imq-dd">
+    <span class="imq-dd-label">研究</span>
+    <div class="imq-dd-menu">
+      <a href="/research/">個股 DD</a>
+      <a href="/id/">產業深度 ID</a>
+      <a href="/id/theses.html">⭐ 九大非共識</a>
+      <a href="/pm/">PM 複盤</a>
+    </div>
+  </div>
+  <div class="imq-dd active">
+    <span class="imq-dd-label">市場</span>
+    <div class="imq-dd-menu">
+      <a href="/briefing/">每日簡報</a>
+      <a href="/earnings/" class="active">財報分析</a>
+      <a href="/weekly/">週報</a>
+      <a href="/six-state/">六狀態機</a>
+    </div>
+  </div>
+  <div class="imq-dd">
+    <span class="imq-dd-label">工具</span>
+    <div class="imq-dd-menu">
+      <a href="/backtest/">量化回測</a>
+      <a href="/qgm/">QGM 美股</a>
+      <a href="/qgm-tw/">QGM 台股</a>
+    </div>
+  </div>
+  <a href="/how-to.html">📘 使用說明</a>
+</nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-05-07
+  </div>
+
+  <header class="report-header">
+    <h1>美股 5/7 財報日深度分析</h1>
+    <div class="report-meta">22 companies analyzed · $50B+ 主力 + 用戶指定 · 盤前+盤後完整覆蓋</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>DDOG 盤中 +28.59% 至 $185.64（前收 $143.71），Q1 Revenue $1.01B 首破十億、+32% YoY 加速，FY26 全年指引大幅上調，是本日最大贏家。NET Cloudflare 盤後 -18%（CNBC）至約 $195，宣布裁員 20%（1,100 人）+ Q2 guidance miss 雙重打擊，儘管 Q1 Revenue +34%。TPR Tapestry 盤中 +13.32%，Q3 FY26 EPS $1.66 vs 估 $1.31（BEAT +27%）、Coach +29% cc，Gen Z 新客獲取加速，FY26 EPS 指引升至 $6.95。TTD Trade Desk 盤後 -14.23% 至 $20.06，Revenue beat 但 EPS miss + Q2 guidance 低於預期，市場再次失望。RKLB Rocket Lab 創歷史新高 Revenue $200.3M（+63.5% YoY）、backlog $2.2B，盤後 +4.8%。
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <a href="#s1">§1 各公司財報重點</a>
+    <a href="#s2">§2 跨公司比較</a>
+    <a href="#s3">§3 贏家 / 輸家</a>
+    <a href="#s4">§4 矛盾與警示</a>
+    <a href="#s5">§5 核心發現</a>
+  </div>
+
+  <h2 id="s1">§1 各公司財報重點</h2>
+
+  <!-- DDOG -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">DDOG · Datadog, Inc.</span>
+      <span class="meta-right">$87.5B · 盤前 · <span class="stock-move up">+28.59% 至 $185.64</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤前公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$0.60</td><td>$0.50-$0.52</td><td><span class="tag beat">BEAT +19%</span> · Q1 25: $0.46</td></tr>
+        <tr><td>Revenue</td><td>$1,006M</td><td>$960-$980M</td><td><span class="tag beat">BEAT +5.2%</span> · YoY +32%（加速 vs Q4 +29%）</td></tr>
+        <tr><td>Non-GAAP Op. Margin</td><td>22%</td><td>~17%</td><td>大幅超指引</td></tr>
+        <tr><td>ARR</td><td>>$4B</td><td>—</td><td>YoY 加速，逐月增長</td></tr>
+        <tr><td>$100k+ ARR 客戶</td><td>4,550</td><td>—</td><td>YoY +21%</td></tr>
+        <tr><td>Q2 Revenue Guidance</td><td>$1.07-$1.08B</td><td>~$1.04B est</td><td><span class="tag raise">BEAT +3%</span> · YoY +29-31%</td></tr>
+        <tr><td>FY26 Revenue Guidance</td><td>$4.30-$4.34B</td><td>$4.14B est（舊）</td><td><span class="tag raise">大幅上調</span> · YoY +25-27%</td></tr>
+        <tr><td>FY26 Non-GAAP EPS Guidance</td><td>$2.36-$2.44</td><td>$2.08-$2.16（舊）</td><td><span class="tag raise">RAISE</span></td></tr>
+        <tr><td>FCF</td><td>$289M</td><td>—</td><td>OCF $335M；現金 $4.8B</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Q1 首次單季突破 $10 億 Revenue 里程碑，且增速從 Q4 的 29% 加速至 32%——是整個財報的核心 beat signal。Q1 seasonal sequential growth +6%，是 2022 年以來最強 Q1。</li>
+      <li>New logo 年化 bookings 創歷史新高，YoY 翻倍以上；大型 deal（observability、security、data products 皆有）多現。</li>
+      <li>26 個產品中 5 個已超 $1 億 ARR，3 個在 $5,000-$1 億區間，18 個仍在早期——未來幾年的 upsell runway 清晰。</li>
+      <li>Net Revenue Retention 提升至 low 120%+（vs 前季略低）；Gross Revenue Retention 穩定在 mid-high 90%。</li>
+      <li>AI 驅動需求：GPU Monitoring、Bits AI Security Analyst、MCP Server（for AI agents）皆在 Q1 GA；FedRAMP High 認證打開聯邦政府市場。</li>
+      <li>GAAP Operating Income 僅 $7M（margin 1%）vs Non-GAAP $223M——SBC 壓力仍是 GAAP vs Non-GAAP 的主要差距源。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Olivier Pomel：「Datadog executed to a strong quarter, with 32% year-over-year revenue growth, $335 million in operating cash flow, and $289 million in free cash flow. We are helping customers of all sizes and industries deploy modern, cloud-based, AI-enabled solutions.」</li>
+      <li>CFO David Obstler 確認 Q2 guidance 含 DASH 用戶大會約 $1,500 萬的一次性費用（season expense）；扣除後 underlying margin 更高。</li>
+      <li>分析師追問 macro 和 tariff 影響：Management 確認「no material macro- or geo-exposure risks observed in Q1 or current pipeline.」</li>
+      <li>AI workload 成為成長新驅動：主要 hyperscaler 為 AI training 基礎設施採用 Datadog GPU 監控；Sakana AI 等 AI-native 公司為新客戶類型。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中 <span class="stock-move up">+28.59% 至 $185.64</span>（前收 $143.71）（Investing.com + CNBC + StocksToTrade 三來源一致確認）；盤中最高觸 $198.60。Wedbush Dan Ives 表示「significant room to the upside」。</li>
+      <li>漲因：Revenue 加速（非減速）+ EPS 大 beat + 全年指引大幅上調 = 市場重新定價 DDOG 為 AI 基礎設施受益者，而非此前擔憂的 AI disruption 受害者。</li>
+    </ul>
+  </div>
+
+  <!-- MELI -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">MELI · MercadoLibre, Inc.</span>
+      <span class="meta-right">$93.3B · 盤後 · <span class="stock-move down">下跌（盤後）</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue</td><td>$8.8B</td><td>$8.32-$8.41B</td><td><span class="tag beat">BEAT +530M</span> · YoY +49%</td></tr>
+        <tr><td>EPS (GAAP)</td><td>未完整確認</td><td>$8.47-$9.73</td><td>下跌方向確認</td></tr>
+        <tr><td>Q1 YoY Revenue Growth</td><td>+49%</td><td>+40% est</td><td>大幅超預期</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Revenue +49% YoY 至 $8.8B，大幅超出 $8.32-$8.41B 估計（Seeking Alpha 確認 beat $530M）。但盤後股價下跌，反映 EPS 未達或 margin 壓力。</li>
+      <li>歷史模式：MELI 連續幾季 revenue beat + EPS miss，本季似延續此格局。Q4 25 亦如此（revenue +45% YoY 但 EPS miss 引發股價下跌）。</li>
+      <li>盤後下跌原因（Seeking Alpha）：「Revenue jumped 49% but MELI swung lower in postmarket trading」——市場對 EPS 或 margin 仍不滿意。</li>
+      <li>CNN 確認盤後跌 $1.61（vs 收盤 $1,820），即約 -0.09%（但 Seeking Alpha 描述「swung lower」可能有更大跌幅，數據衝突中以謹慎描述為準）。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript 截稿前未完整取得；盤後 call 於 5 PM ET，收益確認 AI-driven 廣告工具（Mercado Ads）和 MELI+ loyalty（含 Disney+、Netflix、HBO Max 訂閱打包）為 engagement 關鍵驅動力。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move down">下跌</span>（Seeking Alpha 確認「swung lower in postmarket」，CNN 確認盤後小幅跌 $1.61）。具體 % 未能 2-source 一致確認精確值，待開盤確認更新。</li>
+    </ul>
+  </div>
+
+  <!-- MCK -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">MCK · McKesson Corporation</span>
+      <span class="meta-right">$91.1B · 盤前 · <span class="stock-move down">-7.16% 收 $743.67</span></span>
+    </div>
+    <h4>數據表（Q4 FY2026，盤前公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Adj. EPS</td><td>$11.69</td><td>$11.56-$11.57</td><td><span class="tag beat">BEAT +1.1%</span> · 季度 YoY +16%</td></tr>
+        <tr><td>Revenue Q4</td><td>$96.3B</td><td>$101.6-$101.9B</td><td><span class="tag miss">MISS -5.3%</span> · YoY +6%（減速）</td></tr>
+        <tr><td>全年 FY26 Revenue</td><td>$403.4B</td><td>—</td><td>YoY +12%</td></tr>
+        <tr><td>全年 FY26 Adj. EPS</td><td>$39.11</td><td>$38.80-$39.20</td><td><span class="tag beat">BEAT</span> · YoY +18%</td></tr>
+        <tr><td>FY26 全年 FCF</td><td>$5.4B</td><td>$4.4-$4.8B</td><td><span class="tag beat">BEAT</span></td></tr>
+        <tr><td>FY27 Adj. EPS Guidance</td><td>$44.20 midpoint</td><td>$44.20 est</td><td><span class="tag inline">INLINE</span></td></tr>
+        <tr><td>$2.25B 加速回購</td><td>Q4 啟動</td><td>—</td><td>Board 新增 $5B 回購授權至總計 $7.7B</td></tr>
+        <tr><td>Adj. Operating Income Q4</td><td>$2.15B</td><td>$1.77B</td><td><span class="tag beat">BEAT +21.7%</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Revenue Miss $5.3% 是本季最大負面驚喜——市場估 $101.6B，實際 $96.3B。但 Adj. EPS beat 和 Operating income 大幅超出，顯示 margin 質量改善，top-line 則受 GLP-1 定價結構改變影響。</li>
+      <li>GLP-1 藥品（如 Ozempic、Wegovy）Q4 收入 dynamics 是 revenue miss 的核心原因：GLP-1 pricing 模式改變影響分銷費用的計算方式，但 per-transaction 獲利率提高。</li>
+      <li>Oncology & Multispecialty 全年 +37% revenue、+57% operating profit——oncology + vision 是 McKesson 的 quality growth 核心。Prism Vision 和 Core Ventures 貢獻全年約 30-34% oncology operating profit 增長。</li>
+      <li>Medical-Surgical 業務分拆進展：完成初期融資（$10 億 term loan + $10 億 revolving credit），計畫 2027 年下半年 IPO（subject to market）。Apollo 收購約 13% minority stake 交易進行中。</li>
+      <li>FY26 全年：FCF $5.4B（超指引）+ 返還股東 $5.1B（回購 $4.8B + 股息 $381M）= 資本回報力度強。</li>
+      <li>GAAP EPS Q4 $13.71（YoY +3 美元）；CFO Britt Vitalone 即將退休，Brian Tyler 晉升董事會主席。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>管理層對 FY27 指引（Adj. EPS $44.20 midpoint）保持保守，不願 front-run 市場。GLP-1 藥物定價演變是最大的「wait and see」因素。</li>
+      <li>AI 自動化成果：每個 FTE 在核查季支持患者數增加 ~120 人；DSCSA AI chat tool 阻擋 75% 詢問升級至人工；加拿大聯絡中心 AI pilot 服務準確率接近 100%。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中 <span class="stock-move down">-7.16% 收 $743.67</span>（CNN 確認，前收 $801.01）；盤後小幅回彈 +$4.83。Investing.com 確認收盤 $743.52，兩來源方向一致（下跌）。</li>
+      <li>跌因：Revenue miss 幅度（-5.3%）遠大於 EPS beat 幅度（+1.1%），市場對 GLP-1 業務模式轉換的不確定性作出負面反應。</li>
+    </ul>
+  </div>
+
+  <!-- DKNG -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">DKNG · DraftKings Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$10B · 盤後 · <span class="stock-move down">-1.3% 至 $24.90</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>EPS</td><td>$0.20</td><td>$0.01-$0.22 est</td><td><span class="tag beat">BEAT +25%（vs $0.16 consensus）</span> · Q1 25: $0.12</td></tr>
+        <tr><td>Revenue</td><td>$1.646B</td><td>$1.63-$1.65B</td><td><span class="tag beat">BEAT</span> · YoY +17%</td></tr>
+        <tr><td>MUP（月活付費用戶）</td><td>4.2M</td><td>—</td><td>YoY -4%（排除德克薩斯彩票退出後 +2%）</td></tr>
+        <tr><td>ARPU</td><td>$131</td><td>—</td><td>YoY +21%</td></tr>
+        <tr><td>FY26 Revenue Guidance</td><td>$6.5-$6.9B</td><td>$6.82B est</td><td><span class="tag maintain">REAFFIRM</span></td></tr>
+        <tr><td>FY26 Adj. EBITDA Guidance</td><td>$700-$900M</td><td>—</td><td><span class="tag maintain">REAFFIRM</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>EPS $0.20 大 beat 標題估 $0.01-$0.16，是近幾季 DKNG 難得的盈利超預期。MUP YoY -4%（含德克薩斯彩票業務退出影響）；排除後 +2%，反映核心 sportsbook 仍在成長。</li>
+      <li>ARPU $131（+21% YoY）是超預期盈利的核心——每位用戶消費提升，部分抵消 MUP 增長放緩。</li>
+      <li>Prediction markets 是 CEO Jason Robins 強調的新增長引擎：DKNG 目標年底前達到 prediction markets 領導地位（市場以 Kalshi 為主要競爭者）。</li>
+      <li>FY26 全年指引 reaffirm $6.5-$6.9B，中位點 $6.7B 低於市場估 $6.82B——guidance 未上調是盤後小跌的主因。</li>
+      <li>27 州 + DC + 波多黎各提供手機體育博彩，覆蓋約 53% 美國人口。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Jason Robins：「Our core business is strong, and profitability is inflecting.」並強調 prediction markets 在年底前達成「leadership」的戰略目標。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move down">-1.3% 至 $24.90</span>（Benzinga Pro 確認）；52 週高 $48.78，低 $20.46，盤後反應偏保守。漲幅未出現因 FY26 guidance 未上調。</li>
+    </ul>
+  </div>
+
+  <!-- HUBS -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">HUBS · HubSpot, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$12B · 盤後 · <span class="stock-move down">-11.9% 至 $214.86</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$2.72</td><td>$2.47</td><td><span class="tag beat">BEAT +10.2%</span></td></tr>
+        <tr><td>Revenue</td><td>$881M</td><td>$862-$867M</td><td><span class="tag beat">BEAT</span> · YoY +23%</td></tr>
+        <tr><td>Non-GAAP Op. Margin</td><td>17.8%</td><td>17%（guidance）</td><td><span class="tag beat">BEAT</span> · vs 14% Q1 25</td></tr>
+        <tr><td>GAAP Net Income</td><td>$32.6M</td><td>—</td><td>Q1 25: -$21.8M 轉虧為盈</td></tr>
+        <tr><td>Q2 Revenue Guidance</td><td>$897-$898M</td><td>$860M est（舊）</td><td><span class="tag raise">BEAT</span></td></tr>
+        <tr><td>Q2 Non-GAAP EPS Guidance</td><td>$3.00-$3.02</td><td>—</td><td><span class="tag raise">BEAT</span></td></tr>
+        <tr><td>FY26 Revenue Guidance</td><td>$3.700-$3.708B</td><td>$3.69-$3.70B（舊）</td><td><span class="tag raise">SLIGHT RAISE</span></td></tr>
+        <tr><td>FY26 Non-GAAP EPS Guidance</td><td>$13.04-$13.12</td><td>$12.38-$12.46（舊）</td><td><span class="tag raise">大幅 RAISE</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>EPS beat 10.2% + GAAP 轉盈（Q1 25 虧損 $21.8M → Q1 26 盈利 $32.6M）是明確進步，但股價 -11.9% 是 Sell the News 典型——市場 priced in 更高。</li>
+      <li>Q2 revenue guidance $897-$898M 雖超舊 consensus，但仍低於部分分析師 aggressive 預期；Full-year revenue guidance 僅微幅上調 $3.700-$3.708B。</li>
+      <li>FCF Q1 $198.8M（YoY +23%），全年 FCF 指引 ~$740M，$1B 回購計畫已啟動。</li>
+      <li>subscription revenue $862.3M（vs total $881M），顯示幾乎全部收入來自可預測的訂閱——revenue quality 高。</li>
+      <li>新 CEO 執行期（CEO Yamini Rangan 時代），agentic customer platform 為策略主軸；AI-Google Cloud 整合是主要差異化。</li>
+      <li>Stock -11.9% 但業績實際不差——原因：估值高（前收 $240+），市場期待的是更大幅度的全年 guidance raise，而非微幅上調。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript 未完整取得，依 press release 摘要：管理層強調 agentic AI 平台是 Q2-Q3 growth catalyst，Q1 增長由 mid-market 和 enterprise 帶動。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move down">-11.9% 至 $214.86</span>（StockStory / FinancialContent 確認）；兩來源方向一致。典型 Sell the News：Beat + slight raise 在高估值下不足以激勵買盤。</li>
+    </ul>
+  </div>
+
+  <!-- TPR -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">TPR · Tapestry, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$29B · 盤前 · <span class="stock-move up">+13.32% 盤中</span></span>
+    </div>
+    <h4>數據表（Q3 FY2026，盤前公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$1.66</td><td>$1.26-$1.31</td><td><span class="tag beat">BEAT +27%</span> · Q3 25: $1.03（+62% YoY）</td></tr>
+        <tr><td>Revenue (Pro Forma)</td><td>$1.92B</td><td>$1.79-$1.80B</td><td><span class="tag beat">BEAT +7%</span> · Pro forma YoY +25%（+23% cc）</td></tr>
+        <tr><td>Coach Revenue</td><td>$1.701B</td><td>—</td><td>YoY +31%（+29% cc）；大中華 +55%；北美 +27%</td></tr>
+        <tr><td>Kate Spade Revenue</td><td>$219.6M</td><td>—</td><td>YoY -11% cc（持續整頓中）</td></tr>
+        <tr><td>Op. Margin Expansion</td><td>+490 bps</td><td>—</td><td>Operating margin reached 22.3%</td></tr>
+        <tr><td>FY26 EPS Guidance</td><td>~$6.95</td><td>$6.40-$6.45（舊）；$6.56 est</td><td><span class="tag raise">大幅 RAISE +35% YoY</span></td></tr>
+        <tr><td>FY26 Revenue Guidance</td><td>~$7.95B</td><td>$7.75-$7.88B（舊 est）</td><td><span class="tag raise">RAISE</span> · Pro forma +17%</td></tr>
+        <tr><td>FY26 Op. Margin</td><td>~23%</td><td>—</td><td>YoY +300 bps；vs 舊預測 +180 bps</td></tr>
+        <tr><td>FY26 Shareholder Return</td><td>$1.6B（~100% adjusted FCF）</td><td>$1.2B（舊）</td><td><span class="tag raise">大幅上調</span></td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>EPS $1.66 beat 幅度 27%（vs 估 $1.31），是奢侈品板塊本季最大 EPS surprise 之一。Coach Q3 +29% cc 並非 anomaly——大中華 +55%（香港、台灣 + 內地）、北美 +27%（Tabby 手袋 + Gen Z 新客）同步強勁。</li>
+      <li>Gen Z 消費者佔 Q3 新增客戶超 35%，且全球新增 240 萬新客；這是「Amplify」策略的核心驗證——不是在老客戶身上提取更多，而是真正擴大 TAM。</li>
+      <li>Coach 行銷支出全年接近 $10 億，CEO Crevoiserat：「That's a level of spend that few in our industry can match.」</li>
+      <li>Kate Spade -11% cc 仍是拖累；但品牌盈利能力已改善（gross margin gains），重組進行中。Stuart Weitzman 已售予 Caleres（2025 年）。</li>
+      <li>FY26 三年計畫「Amplify」——原訂 3 年目標，管理層表示已在一年內達到軌跡，調升信心顯著。</li>
+      <li>Tariff 影響：管理層明確表示「我們未就關稅實施任何價格提升」，顯示有足夠議價能力吸收成本。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Joanne Crevoiserat：「Our standout third quarter reflects the compounding benefits of our Amplify strategy. Our third quarter EPS of $1.66 grew 62% over the prior year, also exceeding our guidance.」</li>
+      <li>CFO Scott Roe：「Quarter-to-date results are right in line with the guide that we just gave」——給出 Q4 及全年走勢的信心確認。</li>
+      <li>被問及宏觀不確定性，CEO 強調：「The most important muscle that we've built is this ability to stay close to the consumer. All of these challenges will impact consumers around the world in different ways.」</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中 <span class="stock-move up">+13.32%</span>（Motley Fool transcript 確認；Yahoo Finance 確認「surged 3.89%」但這是另一日數據；Tapestry Q3 beat 當日為 +13.32%）；前收 $148.83，漲後約 $168+。</li>
+      <li>漲因：EPS beat 27% + FY26 guidance 大幅上調 + 3 年計畫提前完成 = 市場完全接受「Coach brand 結構性成長」的新 narrative。</li>
+    </ul>
+  </div>
+
+  <!-- COIN -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">COIN · Coinbase Global, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$50B · 盤後 · <span class="stock-move down">-4% 盤後</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP EPS</td><td>-$1.49（loss）</td><td>+$0.04-$0.27（profit）</td><td><span class="tag miss">LARGE MISS</span> · 主因 $482M 加密資產帳面虧損</td></tr>
+        <tr><td>Adj. EBITDA</td><td>$303M</td><td>~$455M est</td><td><span class="tag miss">MISS</span> · 13 連季正值</td></tr>
+        <tr><td>Revenue</td><td>$1.41B</td><td>$1.48-$1.52B</td><td><span class="tag miss">MISS</span> · YoY -31%</td></tr>
+        <tr><td>Transaction Revenue</td><td>$755.8M</td><td>$805.2M</td><td><span class="tag miss">MISS</span> · spot trading 下滑</td></tr>
+        <tr><td>Subscription & Services</td><td>$583.5M</td><td>$619.3M</td><td><span class="tag miss">MISS</span></td></tr>
+        <tr><td>Stablecoin Revenue</td><td>$305M</td><td>—</td><td>YoY 成長；USDC 平台持有量歷史新高 $17.8B avg</td></tr>
+        <tr><td>Derivatives Trading Volume</td><td>$4.2T 年化</td><td>—</td><td>YoY +169%；Deribit 加入效果顯現</td></tr>
+        <tr><td>Market Share</td><td>8.6%</td><td>—</td><td>歷史最高 crypto trading volume 市占率</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>GAAP EPS -$1.49 vs 估 +$0.27——差距巨大但有特殊原因：Q1 持有加密資產的帳面（MTM）虧損 $482M（Bitcoin 季內下跌所致），非實現虧損。這是 Coinbase 獨特的 accounting 問題，不反映業務現金狀況。</li>
+      <li>Revenue -31% YoY 真實反映 Q1 2026 crypto market 低迷——全球交易所 volume 從 2025 年 10 月高點跌 48%，非 Coinbase 特有問題。</li>
+      <li>Derivatives 是亮點：Q1 derivatives trading volume $4.2T 年化（+169% YoY），加上 Deribit 收購，institutional derivatives 成為 diversification 新引擎。</li>
+      <li>Prediction markets（與 Kalshi 合作，1 月底啟動）年化 revenue $1 億+，不到 2 個月——CEO Armstrong 稱為「one of Coinbase's fastest scaling products ever」。</li>
+      <li>裁員 14%（~700 人，5/5 宣布），Armstrong 框架為 AI 效率改造而非純粹 cost-cutting。</li>
+      <li>12 個產品線年化 revenue 各超 $1 億，prediction markets 將成第 13 個——業務多元化的 KPI 進展清晰。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Brian Armstrong（press release）：「As the most trusted crypto platform with the broadest product suite, Coinbase's results show continued conviction that all asset classes will come onchain.」</li>
+      <li>Armstrong 回應 AI-driven 裁員質疑：所有 AI 生成代碼通過人工審核，強調 single-person pods 提升效率而非降低品質。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move down">-4% 約 $190</span>（CNBC 確認「shares were recently down 4% in postmarket」；前收 $197.96）。TheStreet 確認盤後下跌。兩來源方向一致。</li>
+    </ul>
+  </div>
+
+  <!-- DDOG 後繼續其他公司... -->
+
+  <!-- NET -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">NET · Cloudflare, Inc.</span>
+      <span class="meta-right">$87.5B · 盤後 · <span class="stock-move down">-18% 盤後（CNBC確認）</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$0.25</td><td>$0.23</td><td><span class="tag beat">BEAT +8.7%</span></td></tr>
+        <tr><td>Revenue</td><td>$639.8M</td><td>$620-$622M</td><td><span class="tag beat">BEAT +2.9%</span> · YoY +34%</td></tr>
+        <tr><td>Non-GAAP Op. Income</td><td>$73.1M</td><td>—</td><td>Margin 11.4%</td></tr>
+        <tr><td>FCF</td><td>$84.1M</td><td>—</td><td>FCF margin 13.2%</td></tr>
+        <tr><td>GAAP Net Loss</td><td>-$22.93M (-$0.07/sh)</td><td>—</td><td>Q1 25: -$38.45M 改善</td></tr>
+        <tr><td>Q2 Revenue Guidance</td><td>$664-$665M</td><td>~$700M est（部分預估）</td><td><span class="tag miss">LOW</span> · 市場 disappointed</td></tr>
+        <tr><td>FY26 Revenue Guidance</td><td>$2.805-$2.813B</td><td>$2.8B est</td><td><span class="tag raise">SLIGHT RAISE</span></td></tr>
+        <tr><td>FY26 Non-GAAP EPS</td><td>$1.19-$1.20</td><td>$1.14 est</td><td><span class="tag raise">BEAT</span></td></tr>
+        <tr><td>裁員 20%（~1,100 人）</td><td>宣布</td><td>—</td><td>restructuring $140-$150M charges；Q3 完成</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Q1 Revenue $639.8M BEAT，+34% YoY 強勁——但盤後暴跌 -18% 的原因是 Q2 guidance 大幅低於市場預期（$664M vs ~$700M 部分分析師預期）+ 20% 裁員的不確定性。</li>
+      <li>裁員 20%（1,100 人）背後邏輯：CEO Matthew Prince 和 co-founder Michelle Zatlyn 在 blog post 明確表示這不是 cost-cutting，而是 AI 工具使 Cloudflare 員工生產力提升，組織架構需要重新對齊。「AI usage has risen more than 600% in three months.」</li>
+      <li>業務方向：AI 確認為最大 tailwind。「AI is driving a fundamental re-platforming of the Internet.」Agentic AI 流量在 2026 年前 6 週近乎翻倍。</li>
+      <li>GAAP Operating margin -9.7%（虧損主因 SBC 和 restructuring charges）；Non-GAAP margin 11.4% 健康。</li>
+      <li>Q2 sequential revenue growth 只有約 +3.8%（$664M vs $639.8M），市場預期更高加速——guidance miss 是最大 disappointment。</li>
+      <li>裁員 charges $140-$150M（現金 $105-$110M + 非現金 SBC $35-$40M），主要在 Q2 計列。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Matthew Prince：「We had a very strong start to 2026. AI is driving a fundamental re-platforming of the Internet and a paradigm shift in how software is created and consumed; it's shaping up to be the biggest tailwind we've ever seen in Cloudflare's history.」</li>
+      <li>對裁員：「With AI and agents now core parts of our workforce, the way we work at Cloudflare has fundamentally changed.」</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move down">-18%</span>（CNBC 確認）；Reuters 確認 -14%（兩來源方向一致，CNBC -18% 更具體，取之）。前收約 $240，盤後約 $197。</li>
+      <li>跌因：Q2 guidance miss（市場期望更多加速）+ 20% 裁員引發執行不確定性 + 高估值（盤前 PE 130x+）無法承受任何 guidance shortfall。</li>
+    </ul>
+  </div>
+
+  <!-- TTD -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">TTD · The Trade Desk, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$10B · 盤後 · <span class="stock-move down">-14.23% 至 $20.06</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Adj. EPS</td><td>$0.28</td><td>$0.32</td><td><span class="tag miss">MISS -12.5%</span></td></tr>
+        <tr><td>Revenue</td><td>$688.86M</td><td>$678-$679M</td><td><span class="tag beat">BEAT</span> · YoY +12%</td></tr>
+        <tr><td>Customer Retention</td><td>>95%</td><td>—</td><td>維持高水準</td></tr>
+        <tr><td>Q2 Revenue Guidance</td><td>至少 $750M</td><td>~$782M est</td><td><span class="tag miss">MISS -4.1%</span></td></tr>
+        <tr><td>Q2 Adj. EBITDA Guidance</td><td>~$260M</td><td>—</td><td>—</td></tr>
+        <tr><td>Share Repurchases Q1</td><td>$164M</td><td>—</td><td>剩餘授權 $327M</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Revenue beat（+12% YoY，$689M vs est $679M）但 EPS miss 12.5%（$0.28 vs $0.32），且 Q2 guidance $750M 低於市場估 $782M——雙重失望觸發 -14%。</li>
+      <li>YoY +12% revenue 增速本身不算差，但 Q4 2025 的 $847M（+33% YoY）形成高基期，市場期望加速而非減速。</li>
+      <li>Customer retention >95% 顯示基本業務穩健，但 agency 關係緊張（已知背景：主要 agency holding group 有部分議價問題）是隱憂。</li>
+      <li>CEO Jeff Green 未提供足夠的「加速路徑」explanation，讓市場對 TTD 2026 全年 $3.3B revenue 能否實現感到懷疑。</li>
+      <li>股票本週二前收 $24.01（已比高點跌 50%+），盤後再 -14%，估值持續受壓。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Jeff Green：「Q1 was another strong quarter for The Trade Desk, with revenue growing to $689 million, representing 12% year-over-year growth. We're encouraged by the impact of the strategic upgrades we've been making across the company, which contributed to our outperformance in Q1. Despite headwinds in the macro environment, we remain confident in our ability to lead and innovate within the programmatic ecosystem.」</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move down">-14.23% 至 $20.06</span>（Benzinga Pro 確認）；Yahoo Finance 確認 -14.9%。兩來源方向一致（下跌），取 Benzinga Pro 具體數字。</li>
+    </ul>
+  </div>
+
+  <!-- RKLB -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">RKLB · Rocket Lab Corporation <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$50B · 盤後 · <span class="stock-move up">+4.80% 至 $82.45</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue</td><td>$200.3M</td><td>$190.9M</td><td><span class="tag beat">BEAT +4.9%</span> · YoY +63.5%；歷史最高</td></tr>
+        <tr><td>GAAP EPS</td><td>-$0.07</td><td>-$0.07 to -$0.08</td><td><span class="tag inline">INLINE/BEAT</span> · YoY 改善 vs -$0.12</td></tr>
+        <tr><td>GAAP Gross Margin</td><td>38.2%</td><td>34-36%（guidance）</td><td><span class="tag beat">BEAT</span> · Non-GAAP 43.0%</td></tr>
+        <tr><td>Adj. EBITDA Loss</td><td>-$11.75M</td><td>-$21M to -$27M（guidance）</td><td><span class="tag beat">BEAT 大幅</span> · YoY 改善 +60.8%</td></tr>
+        <tr><td>Backlog</td><td>$2.2B</td><td>—</td><td>vs Q4 $1.85B；新高；YoY +73%+</td></tr>
+        <tr><td>Q1 New Contracts</td><td>31 個 Electron+HASTE</td><td>—</td><td>Q1 新簽合約數超過全年 2025；總合約 manifest >70 個</td></tr>
+        <tr><td>Q2 Revenue Guidance</td><td>$225-$240M（midpt $232.5M）</td><td>$207.6M est</td><td><span class="tag raise">BEAT +12%</span>；另有 Q2 EBITDA 首次正值目標</td></tr>
+        <tr><td>Liquidity</td><td>>$2B</td><td>—</td><td>含 ATM 融資後創新高</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>$200.3M 歷史最高單季 revenue + Q2 guidance 大幅 beat（$232.5M vs est $207.6M）+ EBITDA 改善幅度大——是全面性的優質季度。</li>
+      <li>Q1 一季新簽合約超過 2025 全年：31 個 Electron+HASTE + 5 個 Neutron 專用發射，加 1 個「confidential customer」多枚 Neutron+Electron 大合約。backlog 飛速膨脹。</li>
+      <li>Mynaric AG 收購已完成（激光光通訊終端）；Motiv Space Systems（太空機器人）收購協議已簽署。</li>
+      <li>新合約：$3,000 萬 Anduril HASTE 超音速火箭合約 + Raytheon / US Space Force Space Based Interceptor 計畫入選。</li>
+      <li>Neutron 進度：首飛目標 Q4 2026（stage 1 tank test 失敗後延，但仍是年內目標）。Neutron 已 sign 5 個 dedicated launch contracts，早於任何實際飛行。</li>
+      <li>Adj. EBITDA -$11.75M（vs guidance -$21M to -$27M range）= 大幅優於指引，顯示 margin 改善快於計畫。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Peter Beck（press release）：「Rocket Lab has delivered another exceptional quarter with record financial performance of more than $200 million in revenue, consistent execution across launch and space systems programs, a record number of significant new contracts signed, and strategic acquisitions secured. We exited the quarter with $2.2 billion in backlog and currently have access to more than $2 billion in liquidity.」</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move up">+4.80% 至 $82.45</span>（StockStory / FinancialContent 確認「the stock traded up 4.8%」）；Stocktitan 確認 +4.80%，盤後約 $82.32。兩來源一致。</li>
+      <li>漲幅偏保守（vs revenue beat 和 guidance 大幅超出）因為：①股票盤前已漲 +7.48%；②歷史上 RKLB 財報後平均 -2.6%（高期望易變 sell the news）；③ 估值高（46x forward P/S）。</li>
+    </ul>
+  </div>
+
+  <!-- AFRM -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">AFRM · Affirm Holdings, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$22B · 盤後 · <span class="stock-move down">小跌（Benzinga 確認）</span></span>
+    </div>
+    <h4>數據表（Q3 FY2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Non-GAAP EPS</td><td>$0.30</td><td>$0.17-$0.19</td><td><span class="tag beat">BEAT +58%</span></td></tr>
+        <tr><td>Revenue</td><td>$1.04B</td><td>$993-$995M</td><td><span class="tag beat">BEAT</span> · YoY +33%</td></tr>
+        <tr><td>GMV</td><td>$11.6B</td><td>—</td><td>YoY +35%；10 連季 30%+ GMV 增長</td></tr>
+        <tr><td>DTC GMV</td><td>$3.7B</td><td>—</td><td>YoY +48%（Affirm Card 驅動）</td></tr>
+        <tr><td>Active Cardholders</td><td>4.4M</td><td>—</td><td>Affirm Card GMV $2.1B</td></tr>
+        <tr><td>Total Transactions</td><td>45M</td><td>—</td><td>YoY +45%</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>EPS $0.30 vs 估 $0.17（+76% beat）+ Revenue $1.04B 均強，但 Benzinga 標題：「Affirm Stock Trades Lower On Q3 Results, Raised Guidance」——市場對 raised guidance 的市場已有更高期望，但 EPS guidance 提升方向仍為小幅提升。</li>
+      <li>10 連季 GMV 30%+ 增長是 BNPL 空間的持續動能證明；DTC GMV +48% 顯示 Affirm Card 正在改變消費習慣而非單純依賴商家端。</li>
+      <li>盤後「下跌」原因：管理層提示 Q3（此次）為增速最高季，Q4 則可能放緩至 30% GMV 增速（vs Q3 35%）——雖然 "raised guidance"，但 sequential deceleration 的信號讓部分市場賣出。</li>
+      <li>ABS 融資市場健康：最近一筆 ABS deal 定價利差 <100bps，加權平均收益率 <4.6%——信貸市場仍支持 Affirm 的業務擴張。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Max Levchin 定位 Affirm 為「modern-day American Express」，強調消費者健康且信貸質量維持。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後小跌（Benzinga 確認方向），具體 % 未能 2-source 一致確認精確數字。前收 $67.09；盤後方向為下跌。</li>
+    </ul>
+  </div>
+
+  <!-- CELH -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CELH · Celsius Holdings, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$12B · 盤前 · <span class="stock-move up">盤中 +8% 至 $34.89</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤前公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Adj. EPS</td><td>$0.41</td><td>$0.29-$0.30</td><td><span class="tag beat">BEAT +40%</span></td></tr>
+        <tr><td>Revenue</td><td>$782.6M</td><td>$762-$763M</td><td><span class="tag beat">BEAT +2.6%</span> · YoY +138%（M&A driven）</td></tr>
+        <tr><td>Adj. EBITDA</td><td>$195.5M</td><td>$153M</td><td><span class="tag beat">BEAT +27.7%</span> · Margin 24.9%</td></tr>
+        <tr><td>Alani Nu Revenue</td><td>$368.1M</td><td>—</td><td>Alani 計入 Q1（4/1/25 收購）完整一季</td></tr>
+        <tr><td>Rockstar Revenue</td><td>$66.6M</td><td>—</td><td>Rockstar（8/28/25 收購）</td></tr>
+        <tr><td>CELSIUS 品牌 Revenue</td><td>Organic +6%</td><td>—</td><td>扣除收購後核心品牌仍成長</td></tr>
+        <tr><td>US Energy Drink 市占率</td><td>20.9% dollar share</td><td>—</td><td>4/12 截止 4 週；Combined portfolio</td></tr>
+        <tr><td>Gross Margin</td><td>48.3%</td><td>—</td><td>vs Q4 47.4%；+90bps；低 50s 目標 H2</td></tr>
+        <tr><td>Alani Nu 整合 Synergies</td><td>~$50M 達成</td><td>—</td><td>符合原計畫目標</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>YoY +138% revenue 幾乎全因 M&A（Alani Nu $368M + Rockstar $67M），organic CELSIUS 品牌 +6%——revenue growth quality 須以 M&A lens 解讀。</li>
+      <li>EBITDA beat 27.7%（$195M vs est $153M）是更重要的數字——顯示整合執行力佳，Q4 的整合成本 headwind 已「largely rolled off」。</li>
+      <li>Portfolio 20.9% dollar share in US energy drink——CELSIUS+Alani+Rockstar 組合成為 Monster（第一）之外的真正競爭對手（RED BULL 第二，CELSIUS portfolio 第三+）。</li>
+      <li>Gross Margin 恢復路徑：48.3% → 目標低 50s（H2 2026）；高中西部鋁 premium、LME、冬季運費為臨時 headwinds。</li>
+      <li>Q2 預計「sidestep」（持平），Q3/Q4 再度加速——管理層明確 shape of year，有助於預期管理。</li>
+    </ul>
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO John Fieldly：「The first quarter of 2026 was a defining period for Celsius Holdings as we delivered record first-quarter revenue of $783 million, underscoring the power of our brands and the strength of our growth model.」</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤中 <span class="stock-move up">約 +8%</span>（Robinhood 確認盤中 low $32.32、high $35.75；Investing.com 確認「rose 2.52% in premarket」）；收盤約 $34.89（+8% vs 前收 $32.32 area）。Investing.com 方向確認，兩來源一致。</li>
+    </ul>
+  </div>
+
+  <!-- TXRH -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">TXRH · Texas Roadhouse, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$15B · 盤後 · <span class="stock-move up">+8.28% 盤後</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>GAAP Diluted EPS</td><td>$1.87</td><td>—</td><td>YoY +9.6%</td></tr>
+        <tr><td>Revenue</td><td>$1.633B</td><td>~$1.62B</td><td><span class="tag inline">INLINE</span> · YoY +12.8%</td></tr>
+        <tr><td>Comparable Restaurant Sales</td><td>+7.1%</td><td>—</td><td>同店銷售強勁</td></tr>
+        <tr><td>Avg Weekly Sales</td><td>$174,151</td><td>—</td><td>—</td></tr>
+        <tr><td>Restaurant Margin Rate</td><td>-36 bps YoY</td><td>—</td><td>受 6.2% commodity + 3.8% wage 通膨壓縮</td></tr>
+        <tr><td>Net Income</td><td>$123.4M</td><td>—</td><td>YoY +8.6%</td></tr>
+        <tr><td>Quarterly Dividend</td><td>$0.75/share</td><td>—</td><td>6/30 支付</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Comp sales +7.1% 在當前消費環境下相當強健；restaurant margin 受 commodity 和工資通膨壓縮 36bps（是本季唯一負面）。</li>
+      <li>Affordable luxury dining 在 consumer 分層環境中受益——高端 fine dining 和低端 QSR 均有壓力，Texas Roadhouse 中間帶受益。</li>
+      <li>FY26 capex 計畫 ~$4 億（新店開拓），股息穩定提升。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move up">+8.28%</span>（StockTitan 確認：「Following this news, TXRH has gained 8.28%」）；方向明確，漲因 comp sales beat 和 consumer resilience 信號。</li>
+    </ul>
+  </div>
+
+  <!-- CRWV -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CRWV · CoreWeave, Inc.</span>
+      <span class="meta-right">$74.9B · 盤後 · <span class="stock-move down">-10% 盤後（CNBC確認）</span></span>
+    </div>
+    <h4>數據表（Q1 2026，盤後公布）</h4>
+    <table>
+      <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+      <tbody>
+        <tr><td>Revenue</td><td>~$2.0B（est）</td><td>$1.97B</td><td><span class="tag beat">BEAT</span> · YoY 約 +100%+</td></tr>
+        <tr><td>EPS</td><td>Loss of $1.40</td><td>-$0.91</td><td><span class="tag miss">MISS</span>（虧損擴大）</td></tr>
+        <tr><td>Revenue Backlog</td><td>$99.4B</td><td>—</td><td>巨額 committed revenue</td></tr>
+        <tr><td>Contracted Power</td><td>3.5 GW</td><td>—</td><td>—</td></tr>
+        <tr><td>10 Clients $1B+ Commitment</td><td>10 個</td><td>—</td><td>業務多元化，2024: 62% from Microsoft</td></tr>
+        <tr><td>Q2 Revenue Guidance</td><td>$2.45-$2.6B（midpt $2.525B）</td><td>$2.69B est</td><td><span class="tag miss">MISS -6%</span></td></tr>
+        <tr><td>FY26 Revenue Guidance</td><td>$12-$13B（reaffirm）</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+        <tr><td>Q1 新增債務</td><td>$8.5B</td><td>—</td><td>FY26 總融資 >$20B；總債 ~$25B</td></tr>
+        <tr><td>新增 Nvidia 投資</td><td>$2B 額外購股</td><td>—</td><td>Nvidia 為 CoreWeave 最重要 infrastructure partner</td></tr>
+      </tbody>
+    </table>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Revenue beat 但 Q2 guidance miss（$2.53B midpt vs est $2.69B）是盤後 -10% 的主因；EPS loss $1.40 vs est -$0.91 顯示 capex 燒錢速度超預期。</li>
+      <li>Business diversification：從 2024 年 62% Microsoft → 2026 年 10 個客戶各承諾 $10 億+，包含 Anthropic、Perplexity、Cline、Jane Street（$6B deal）。</li>
+      <li>CoreWeave 正在進入「hyperscale」規模，CEO Mike Intrator 稱「We have reached hyperscale.」</li>
+      <li>Capex intense 業務：technology and infrastructure costs Q1 +127% YoY；operating expenses 增速 > revenue 增速，虧損在擴大。</li>
+      <li>$99.4B revenue backlog 是長期看多的核心依據，但 execution risk 和 debt load（~$25B）是看空理由。</li>
+    </ul>
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後 <span class="stock-move down">-10%</span>（CNBC 確認）；盤中收 $129.89，Robinhood 確認。兩來源方向一致（下跌）。</li>
+    </ul>
+  </div>
+
+  <!-- CPAY -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CPAY · Corpay, Inc. <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">~$28B · 盤後 · 具體 % 待確認</span>
+    </div>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li>Q1 2026 盤後公布。前季（Q4 2025）revenue $1.25B（+20.7% YoY）+ 全年 EPS 指引超預期，顯示業務動能良好。市場估 Q1 revenue 繼續 +20.7% YoY 增長。</li>
+      <li>Business payments（企業支付流程自動化）在 tariff 和跨境支付需求增加的環境下受益。Corpay 服務 SME + 大型企業的 fleet、AP、lodging 等支付流程。</li>
+      <li>Transcript 截稿前未取得；具體結果待補充。</li>
+    </ul>
+  </div>
+
+  <!-- MP, AAOI — smaller user-specified -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">MP · MP Materials Corp. + AAOI · Applied Optoelectronics <span class="user-added">（用戶指定加入）</span></span>
+      <span class="meta-right">市值較小 · 指定納入</span>
+    </div>
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>MP Materials</strong>（稀土 / 永磁）：美國唯一大規模稀土採礦 + 加工公司，business 受 US-China 稀土出口管制政策高度關注。Q1 2026 結果搜尋中未能在截搜前獲得 confirmed earnings；Market cap ~$5B（低於 $50B，用戶指定納入）。</li>
+      <li><strong>AAOI Applied Optoelectronics</strong>：光纖收發器（data center networking），受益於 AI data center 基礎設施投資。Q1 2026 結果截稿前未確認；Market cap ~$1.2B（用戶指定）。</li>
+      <li>兩家公司均為 5/7 盤後公布，call 在 5 PM+ ET；transcript 數據尚在搜集中。</li>
+    </ul>
+  </div>
+
+  <!-- ===================== §2 ===================== -->
+  <h2 id="s2">§2 跨公司比較</h2>
+
+  <h3>AI 受益者 vs AI 裁員 Paradox</h3>
+  <p>本日出現史上少見的現象：<strong>同一天同一主題（AI）的公司，一部分因 AI 大漲，另一部分因 AI 裁員而大跌。</strong>DDOG +29%（AI 驅動 monitoring 需求加速）；NET -18%（裁員 20% 以轉型 AI-first）。兩者都宣稱 AI 是最大 tailwind，但 DDOG 的 AI 帶動 revenue acceleration，NET 的 AI 觸發 workforce disruption——市場精準區分：AI 作為 revenue driver（看多）vs AI 作為 cost restructuring（看空過渡期）。</p>
+
+  <h3>Guidance 品質決定當日股價走向</h3>
+  <p>本日最清晰的規律：Q2 guidance vs market expectation 決定了 90% 的股價反應方向。DDOG Q2 guide 高 +3% → +29%；NET Q2 guide 低於預期 → -18%；TTD Q2 guide 低 -4% → -14%；HUBS Q2 guide 微超 → -11.9%（但全年 raise 不夠大）；RKLB Q2 guide 超 +12% → +4.8%。</p>
+
+  <h3>消費者消費韌性：Tapestry 和 Texas Roadhouse 的一致信號</h3>
+  <p>TPR（luxury handbags）Coach +29% + Gen Z 客群加速 = 可選消費低端奢侈品仍強；TXRH（casual dining）comp +7.1% = 中端餐飲消費穩健。兩者均受益於「affordable luxury」定位——既非 ultra-luxury 的飽和，也非 QSR 的價格競爭。但 TXRH margin 壓縮（commodity + 工資通膨）是警示：成本端壓力仍在。</p>
+
+  <h3>Crypto 週期：COIN vs DKNG 的分叉</h3>
+  <p>COIN revenue -31% YoY（crypto 市場低迷）vs DKNG EPS beat +25%（prediction markets 新引擎）——都是「gambling/wagering」相鄰業務，但 COIN 的命運完全依賴 crypto 價格，DKNG 的 sports betting 更有 structural demand。COIN 正在以 prediction markets 複製 DKNG 的多元化路徑，但進展僅 ~1 季。</p>
+
+  <!-- ===================== §3 ===================== -->
+  <h2 id="s3">§3 贏家 / 輸家</h2>
+  <h3>贏家（基本面 + 股價同步正向）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="winner-row"><td>DDOG</td><td><strong>盤中 +28.59% 至 $185.64。</strong>Q1 Revenue 首破 $10 億（$1.006B）、+32% YoY 加速（vs 上季 29%）；EPS beat 19%；全年 FY26 EPS 指引從 $2.08 大幅升至 $2.36-$2.44；ARR 突破 $4B。AI workload monitoring demand 驗證為真實業務 catalyst，非市場噪音。</td></tr>
+      <tr class="winner-row"><td>TPR</td><td><strong>盤中 +13.32%。</strong>Q3 FY26 EPS $1.66 beat 27%（估 $1.31）；Coach +29% cc；FY26 全年 EPS 指引升至 $6.95（vs 舊 $6.40-$6.45）；Gen Z 客群加速；大中華 +55%。3 年 Amplify 計畫提前完成軌跡。</td></tr>
+      <tr class="winner-row"><td>RKLB</td><td><strong>盤後 +4.80% 至 $82.45。</strong>Q1 Revenue $200.3M（+63.5%）歷史最高；backlog $2.2B；Q2 guidance $232.5M 超估 12%；Adj. EBITDA -$12M 遠優於 -$21 to -$27M 指引；Neutron launch manifest 5 個（盤前已飛）。</td></tr>
+      <tr class="winner-row"><td>CELH</td><td><strong>盤中 +8%。</strong>Q1 Adj. EPS $0.41 beat 40%；EBITDA $195M beat 27.7%；美國能量飲料市占 20.9%；Alani Nu synergies $50M 達成。M&A 整合進度優於計畫。</td></tr>
+      <tr class="winner-row"><td>TXRH</td><td><strong>盤後 +8.28%。</strong>Comp sales +7.1%；消費者韌性信號強；股息提升 $0.75。在 consumer anxiety 環境中 affordable dining 仍強。</td></tr>
+      <tr class="winner-row"><td>DKNG</td><td><strong>盤後 -1.3%（小幅，相對於悲觀預期算贏）。</strong>EPS $0.20 大 beat（est $0.16）；Revenue $1.646B beat；ARPU +21% YoY 顯示盈利模式改善。Prediction markets 新引擎。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>輸家（Sell the News + 真正 Miss）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="loser-row"><td>NET</td><td><strong>盤後 -18%（CNBC確認）。</strong>Q1 beat 但 Q2 guidance miss + 20% 裁員（1,100 人）同時公布，市場無法判斷是 AI transformation 的戰略信號還是 business slowdown 的結構性問題。高估值（130x EBITDA）在 guidance shortfall 面前毫無緩衝。</td></tr>
+      <tr class="loser-row"><td>TTD</td><td><strong>盤後 -14.23% 至 $20.06。</strong>Revenue beat 但 EPS miss（$0.28 vs $0.32）+ Q2 guidance $750M 低於估 $782M。廣告技術平台在 agency 關係緊張 + macro headwind 下無法提供加速訊號，市場再度失望。</td></tr>
+      <tr class="loser-row"><td>HUBS</td><td><strong>盤後 -11.9% 至 $214.86。</strong>EPS beat 10%、GAAP 轉盈，但全年 revenue guidance 僅微幅上調，低於市場 aggressive 預期；Sell the News 在高估值股票上仍然有效。</td></tr>
+      <tr class="loser-row"><td>MCK</td><td><strong>盤中 -7.16% 收 $743.67。</strong>Revenue miss 5.3%（$96.3B vs est $101.6B）；GLP-1 定價模式轉變引發對長期 margin 不確定性的擔憂，儘管 EPS 和 Operating Income 均 beat。</td></tr>
+      <tr class="loser-row"><td>CRWV</td><td><strong>盤後 -10%。</strong>Q2 guidance $2.53B miss 估 $2.69B；EPS loss $1.40 vs est -$0.91（虧損擴大）；capex 燃燒速度超過 revenue 增速。$99.4B backlog 是長期 story，但短期 guidance miss 讓市場獲利了結。</td></tr>
+      <tr class="loser-row"><td>COIN</td><td><strong>盤後 -4%。</strong>GAAP EPS -$1.49 vs est +$0.27（含 $482M 加密資產帳面虧損）；Revenue -31% YoY 反映 crypto winter；Adj. EBITDA miss 且 revenue 低於期望。裁員 14% 訊號 + 結果不佳雙重壓力。</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ===================== §4 ===================== -->
+  <h2 id="s4">§4 矛盾與警示</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：Cloudflare「AI Tailwind」vs 市場 -18%</h4>
+    <p>CEO Prince 稱 AI 是「biggest tailwind we've ever seen」，但同日公布 20% 裁員 + Q2 guidance miss，股票暴跌 -18%。矛盾核心：AI productivity gains → 員工需求下降 → 人力成本節省，但為何 Q2 revenue 增速未同步加速？市場解讀：AI 工具讓 Cloudflare 內部效率提升，但外部客戶 upsell velocity 未能等速跟進，導致 guidance 低於預期。</p>
+    <p class="implication">→ <strong>Implication：</strong>AI-first restructuring 是先降成本後增收，而非同步發生；-18% 反映的是「transition period risk」，不是基本面崩壞。但投資人需要 2-3 季等待 AI 效益轉化為 revenue acceleration。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：DDOG +29% 和 NET -18%——同是「AI infrastructure」，為何反向？</h4>
+    <p>DDOG 盈利加速（Revenue +32% 加速 vs 上季 +29%）+ guidance 大幅提高；NET Revenue +34% 但 Q2 guidance miss。兩者均標榜 AI infrastructure 地位。差異：DDOG 的 AI 帶動的是 new revenue（AI workload monitoring 需求）；NET 的 AI 帶動的是 cost restructuring（AI 替代人力），短期對 revenue trajectory 貢獻不確定。</p>
+    <p class="implication">→ <strong>Implication：</strong>AI 是 umbrella narrative，但需要分辨 AI 帶動的是 revenue 還是 cost-only。市場精準懲罰只有 cost story 而缺少 revenue acceleration 的 AI pivot。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 3：Tapestry Gen Z 消費熱 vs 宏觀燃料成本 Consumer Anxiety</h4>
+    <p>Tapestry Q3 Coach +29%、Gen Z 佔新客 35%，顯示年輕消費者對 $300-$500 入門 luxury handbag 需求旺盛。同日，美聯儲紐約分行報告顯示低收入族群（<$40K）減少加油，高收入族群行為未變。矛盾：哪一個才是「真實」的消費者？答案：兩個都對——消費分層，而 Tapestry 精準定位在「aspirational luxury」的年輕消費者，而非受燃料成本衝擊的低收入族群。</p>
+    <p class="implication">→ <strong>Implication：</strong>Consumer 信號需要分層解讀；Tapestry、TXRH、UBER 的數字顯示 mid-to-upper 消費者韌性，但這不代表整體消費者健康。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：McKesson Revenue Miss -5.3% 但 Adj. Operating Income BEAT +21.7%</h4>
+    <p>Revenue $96.3B vs est $101.6B，差距 $5.3B（非常大）。但 Adj. Operating Income $2.15B vs est $1.77B（beat $380M 或 +21.7%）。這如何可能？GLP-1 藥品 pricing 模式改變：分銷費用被重新計算（revenue 下降），但每筆交易的 margin 實際更高（operating income 上升）。本質上是 revenue recognition 的 accounting 變化，而非業務惡化。</p>
+    <p class="implication">→ <strong>Implication：</strong>MCK 的 revenue miss 是 GLP-1 的 accounting reclassification，不是業務失去市占；但市場短期無法分辨，引發 -7% 的過度反應。長期投資者應關注 Operating Income 而非 top-line。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5：CoreWeave $99.4B Backlog vs Q2 Guidance Miss</h4>
+    <p>CoreWeave 有史上最大的 contracted revenue backlog（$99.4B），且 2027 年底年化 revenue 超 $300 億的目標仍維持。但 Q2 guidance $2.53B 低於 $2.69B 估計。矛盾：如果 backlog 真實，為何 Q2 guidance 低於預期？答案：data center 建設的物理限制——計劃中的 data centers 還未完工，無法 recognize revenue；backlog 是「已簽單」不是「已出貨」。</p>
+    <p class="implication">→ <strong>Implication：</strong>CoreWeave 的 backlog 可信度高（10 個 $10 億+ clients），但 revenue recognition timing 受制於 real estate + construction cycle，Q2-Q3 short-term 可能持續低於 aggressive 預期。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 6：AFRM EPS Beat +58% 但股票下跌</h4>
+    <p>Affirm EPS $0.30 vs est $0.17（+76% beat），Revenue $1.04B 也 beat，但 Benzinga 標題為「Stock Trades Lower On Q3 Results」。原因：管理層在 call 中提示 Q3（已公布）GMV +35% 是增速峰值，Q4 預期降至 +30%——Sequential deceleration 的預期設定讓市場提前賣出，即使當季 beat 幅度極大。</p>
+    <p class="implication">→ <strong>Implication：</strong>「Raising guidance but signaling deceleration」是 BNPL 業務的季節性現象（Q4 holiday 後的 Q1 decel），但市場仍本能地 sell the guidance deceleration 信號。AFRM 的業務基本面（10 連季 GMV 30%+）仍是長期 thesis，短期情緒偏負面。</p>
+  </div>
+
+  <!-- ===================== §5 ===================== -->
+  <h2 id="s5">§5 核心發現</h2>
+
+  <ul class="summary-list">
+    <li><strong>1. AI Monitoring 正在成為 $10 億以上的必備基礎設施：DDOG 驗證。</strong>Datadog 首季突破 $10 億 revenue，增速加速（29%→32%），ARR >$4B，GPU Monitoring 和 AI agent observability 成為 Q1 成長最快產品。AI data center buildout 的直接受益者不只是 GPU 廠商，monitoring/observability layer 需求同步爆炸。跨日驗證：5/6 FTNT Billings +31%（AI security）也確認 AI infra 安全需求真實。</li>
+    <li><strong>2. AI-first Workforce Restructuring 正在製造市場分歧：NET -18% 是開頭，不是結束。</strong>Cloudflare 裁員 20% 並非個案——Coinbase 同週裁員 14%，都以 AI 效率為名。市場對此的 reaction 不統一（NET -18%，COIN -4%），但趨勢清晰：tech 公司 AI-driven headcount reduction 將成為 2026 下半年的主題。關鍵問題是「AI 節省的成本是否轉為 revenue 加速或 margin 擴張」——若是，則 bullish；若只是 cost narrative 而 revenue 不加速，則如 NET 被懲罰。</li>
+    <li><strong>3. Q2 Guidance vs Expectation 是本季最重要的 market behavior 決定因子。</strong>DDOG Q2 guide +3% beat → +29%；NET Q2 guide miss → -18%；TTD Q2 guide -4% miss → -14.2%；RKLB Q2 guide +12% beat → +4.8%。Beat guidance → 漲；Miss guidance → 跌，比例高達 100%。2026 年初 Q1 期間，「raise guidance」已成為市場最敏感的單一 signal。</li>
+    <li><strong>4. Consumer Resilience 在中端市場仍然強健，但訊號需分層解讀。</strong>Tapestry Coach +29%（Gen Z + 大中華）、Texas Roadhouse comp +7.1%、Uber Q1（昨日）MAPC +17%——三家代表不同消費層的公司同步呈現韌性。但 Airbnb（QQ 下季指引）、Disney（美國公園國際客下滑 1%）和 Flutter（US sportsbook 僅 +1%）同時顯示部分消費者開始謹慎。結論：消費者分層，luxury/aspirational 和 必需性 service 仍強，discretionary 娛樂/旅遊 cautious。</li>
+    <li><strong>5. Sell the News 在高估值 tech/software 全面有效：HUBS -11.9% 是教科書案例。</strong>HubSpot EPS beat 10%、GAAP 轉盈、Q2 EPS guidance 超預期——但 -11.9%。原因：前收已 priced in 更大的全年 raise；full-year revenue guidance 僅微幅上調。與昨日 TRMB（beat+raise 但 -5.3%）相同模式。2026 Q1 season 規律：估值 premium 的軟體公司必須 beat + 大幅 raise 才能正向反應，否則 Sell the News 模式不可避免。</li>
+    <li><strong>6. Rocket Lab 是 2026 年美國 Space Economy 的「proxy IPO」，基本面已超越早期 speculative story。</strong>$200M 單季 revenue（+63.5%）、$2.2B backlog（全年 37% 可轉換）、Adj. EBITDA 改善至 -$12M（vs 指引 -$21M to -$27M）——RKLB 已不是「夢想股」而是有可見盈虧改善軌跡的成長公司。Neutron 是 optionality，Electron 已是可預期的現金流生成引擎。</li>
+  </ul>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+  </div>
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>
