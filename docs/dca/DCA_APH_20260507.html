@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>APH — Deep Conviction Analysis｜2026-05-07</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --ink-2:#334155;
+    --line:#E2E8F0; --accent:#1E3A5F; --accent-2:#3B82F6;
+    --green-bg:#DCFCE7; --green-ink:#166534;
+    --red-bg:#FEE2E2; --red-ink:#991B1B;
+    --yellow-bg:#FEF9C3; --yellow-ink:#92400E;
+    --blue-bg:#EFF6FF; --blue-ink:#1E3A5F;
+    --warn-bg:#FFF7ED; --warn-line:#F97316; --warn-ink:#C2410C;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace}
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;border-bottom:4px solid var(--accent-2)}
+  header .ticker{font-size:18px;font-weight:700;letter-spacing:1px}
+  header .meta{opacity:.92}
+  header .thesis-mini{margin-left:auto;font-style:italic;opacity:.95;max-width:680px}
+  main{max-width:1180px;margin:0 auto;padding:28px 24px 96px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px 28px;margin-bottom:22px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h1,h2,h3{color:var(--accent);margin-top:0}
+  h2{border-left:4px solid var(--accent-2);padding-left:12px;font-size:20px;margin-bottom:18px}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--accent)}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
+  p{margin:8px 0}
+  ul,ol{padding-left:22px}
+  li{margin:4px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  thead th{background:var(--accent);color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+  tbody td,tbody th{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F1F5F9}
+  .tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+  .green{background:var(--green-bg);color:var(--green-ink)}
+  .red{background:var(--red-bg);color:var(--red-ink)}
+  .yellow{background:var(--yellow-bg);color:var(--yellow-ink)}
+  .blue{background:var(--blue-bg);color:var(--blue-ink)}
+  .orange{background:#FFEDD5;color:#C2410C}
+  .thesis-hero{background:var(--blue-bg);border:1px solid #BFDBFE;padding:48px 36px;text-align:center;border-radius:8px;margin-bottom:24px}
+  .thesis-hero .text{font-size:26px;line-height:1.55;font-weight:500;color:var(--accent);margin:0}
+  .thesis-hero .label{margin-top:14px;font-size:12px;color:var(--ink-2);letter-spacing:2px}
+  .decision-box{background:#F0FDF4;border-left:4px solid #16A34A;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0}
+  .decision-box.wait{background:#FEF9C3;border-left-color:#CA8A04}
+  .decision-box.avoid{background:#FFF1F2;border-left-color:#DC2626}
+  .contradiction-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .verdict-box{background:#FED7AA;padding:14px 18px;margin:12px 0;border-radius:4px}
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0;font-style:italic}
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .memo{border:2px solid #94A3B8;background:#FFFFFF;padding:24px 28px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;border-radius:4px;margin:14px 0;white-space:pre-wrap}
+  .elevator{background:#EEF2FF;border-left:4px solid #6366F1;padding:14px 18px;font-style:italic;font-size:15px;border-radius:0 4px 4px 0;margin:10px 0}
+  details{background:#F8FAFC;border:1px solid var(--line);border-radius:4px;padding:14px 20px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:15px}
+  details[open] summary{margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .ma-pass{background:var(--green-bg);color:var(--green-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .ma-fail{background:var(--red-bg);color:var(--red-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .print-btn{position:fixed;bottom:28px;right:28px;padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(15,23,42,.18)}
+  .print-btn:hover{background:#163052}
+  @media print{
+    header.topbar,.print-btn{display:none}
+    main{padding:0;max-width:100%}
+    section.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+    details{page-break-inside:avoid}
+    details > summary{list-style:none}
+    details:not([open]) > *:not(summary){display:block !important}
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="ticker">APH · Amphenol Corporation</span>
+  <span class="meta">DCA 報告 ｜ 2026-05-07</span>
+  <span class="meta">參考股價 $139.18</span>
+  <span class="thesis-mini">AI 機櫃連接層的稀缺賣鏟商 — 35 年 decentralized M&amp;A + sole-source NVL72 銅背板 + Rubin 內容 +20-40%</span>
+</header>
+
+<main>
+
+<!-- ============== §2 One-Sentence Thesis ============== -->
+<section class="card">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-hero">
+  <p class="text">APH 是 AI 機櫃連接層的稀缺賣鏟商 — 35 年 decentralized M&amp;A 把 fragmented 連接器市場整合成複利機，sole-source NVL72 銅背板讓 Rubin 內容 +20-40%</p>
+  <div class="label">ONE-SENTENCE THESIS · 50 字以內</div>
+</div>
+<p class="note">這是敘事而非指標：APH 不是「ROIC 高 + 毛利好」的工業股 — 而是「AI rack 必經，每代平台連接器內容結構升級」+「分散管理 + 持續併購把碎片市場吞下來」雙引擎複利機。</p>
+</section>
+
+<!-- ============== §7 Decision ============== -->
+<section class="card">
+<h2>§7 Decision｜可執行投資計畫</h2>
+
+<div class="decision-box wait">
+<strong>裁決：A 級 / 觀望偏進場 — 但條件式進場（動能略過熱）</strong><br>
+原因：基本面 Q1 record + AI 受益 + 護城河 9/10 全達標，但 4w 漂移 +11.28% 略過 +10% 閾值，禁止一次建倉。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th width="35%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（AI infra basket，與 MRVL/AVGO/CRDO 同籃但功能互補）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>2-3% of portfolio</strong>（試倉，等動能 cool-down）</td></tr>
+<tr><td>目標倉位</td><td><strong>4-6% of portfolio</strong>（衛星上限，非核心，因估值已反映 25% EPS CAGR 而非極端低估）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$128 - $140</strong>（MA60 $142 / MA200 $133，等回測 MA60 或 RSI 回到 50-60）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批，禁止一次建倉</strong>：① 第一批 1.5%：等 RSI 14d 回到 60 以下 OR 股價回測 MA60 ($142) 不破；② 第二批 1.5%：跌至 $130 以下；③ 第三批 1-2%：跌至 $120-125 (W104 與 5Y Median PE 交集區)</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>核心問題：portfolio 已持有 MRVL（AI 客製 ASIC + 1.6T 光學）/ AVGO（hyperscaler 客製 ASIC 龍頭）/ CRDO（AEC 連接器 70% 份額）— 這三檔對 AI 連接層曝險已飽和。APH 的差異化在「mass-market 連接器規模 + 工業 + 汽車多元化」，不純 AI 但波動低於 CRDO。建議路徑：① 不削減 MRVL/AVGO/CRDO（核心信念位）；② 用「現金 +/- 削減其他低 conviction 工業股」的邊際資金進 APH 衛星位；③ 若必須二選一，APH vs CRDO，邊際資金優先 APH（更穩、估值更合理、ARPU 多元）— CRDO PE 已 60-80x，APH 25-30x。</strong></td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>加碼 1</td><td>$130 以下 + Q2 2026 IT Datacom organic ≥ +50%</td><td>3-4%</td></tr>
+<tr><td>加碼 2</td><td>$120 以下（除非基本面同步惡化）</td><td>5-6%</td></tr>
+<tr><td>加碼 3（極端機會）</td><td>$110 以下 + B/B 仍 &gt; 1.1</td><td>6-8%（衛星上限）</td></tr>
+<tr><td>減碼 1</td><td>$170 以上 + Forward PE &gt; 35x</td><td>減半至 2-3%</td></tr>
+<tr><td>減碼 2</td><td>IT Datacom organic 連 2 季 &lt; +30%</td><td>1-2%</td></tr>
+<tr><td>清倉</td><td>NVDA Rubin / AMD MI400 平台架構 confirmed cable-free + 全 optical（§5 Single Thing 觸發）</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$139.18 vs MA60 $139.38（接近持平，剛回測中）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$139.18 vs MA200 $128.42（高出 8.4%）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>$139.18 vs W104 $94.93（高出 47%）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅</span></td><td>三線多頭排列、W250 斜率 +9.66% 強正</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="tag yellow">⚠ 4w 漂移 +11.28%（過 +10%）</span></td><td>RSI 67（未過 70）+ 4w drift 11.28% 過閾值 → 觸發條件式進場</td></tr>
+</tbody>
+</table>
+
+<div class="contradiction-box" style="background:#FEF9C3;border-left-color:#CA8A04">
+<strong>⚠ 動能過熱合規結論：</strong>Pure MA 強支持但 4w drift 11.28% 過 +10% 閾值，§7a 進場節奏已強制改條件式（等 RSI 回到 60 或回測 MA60）。<strong>禁止一次建倉、禁止「立即第一批 50%」</strong>。Mean reversion 歷史頻率：4w drift &gt; +10% 後 4-6 週內回測 MA60 機率 ~55-65%。
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 Rubin 平台 2026 H2 reveal 連接器內容低於 +20%（thesis 弱化）</td></tr>
+<tr><td><strong>中期（2-5 年）</strong></td><td><strong>Base case：AI rack 內容升級週期延續至 Rubin Ultra（2027-2028），CCS/Trexon 整合協同兌現，FY27 EPS $5.56 → FY28 $6.5+</strong></td></tr>
+<tr><td>長期（5-10 年）</td><td>若 (a) APH 取代 TE 成為連接器全球第一 + (b) 工業/汽車/醫療 secular 連接器升級延續 + (c) decentralized M&A 模型成功跨代傳承</td></tr>
+</tbody>
+</table>
+
+<h4>EPS 預測參考</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>FY26E</td><td>$4.77</td><td>Consensus（90 天前 $4.39 → +8.7% 上修）</td><td>Q1 2026 EPS $1.06 已超預期</td></tr>
+<tr><td>FY27E</td><td>$5.56</td><td>Consensus</td><td>反映 AI 持續 + CCS 全年貢獻</td></tr>
+<tr><td>FY30E（外推）</td><td>$7.5 - 8.0</td><td>本報告外推</td><td>外推假設：FY27-FY30 EPS CAGR 12-15%（AI 動能 step-down 但仍 +mid-teens）</td></tr>
+</tbody>
+</table>
+
+<p><strong>長期持有合理性：</strong>FY30 EPS $8 × 30x = $240，較現價 $139 的 5Y 報酬 +73%（年化 ~11.6%）— 中期合理但非極端 alpha；若 Rubin 內容真升 +30%+ 且 CCS 整合協同高於 guide，FY30 可達 $9 → 5Y +94%。考慮 opportunity cost，APH 是衛星型「複利持有」標的，非核心 conviction 位。</p>
+</section>
+
+<!-- ============== §4 Asymmetry ============== -->
+<section class="card">
+<h2>§4 Asymmetry Analysis</h2>
+<table>
+<thead><tr><th width="22%">情境</th><th width="14%">5 年倍數</th><th>依據</th><th width="12%">機率</th></tr></thead>
+<tbody>
+<tr style="background:#F0FDF4">
+<td><strong>Bull（thesis 對）</strong></td>
+<td><strong>+85%（1.85x）</strong></td>
+<td>FY30 EPS $8 × 32x = $256 — Rubin/MI400 內容 +30% 兌現 + CCS 整合超 guide + 全球第一連接器 PE re-rate</td>
+<td>40%</td>
+</tr>
+<tr>
+<td>Base</td>
+<td>+30%（1.30x）</td>
+<td>FY30 EPS $6.8 × 27x = $184 — AI 動能 mid-teens 持續，無 architecture 大切換</td>
+<td>35%</td>
+</tr>
+<tr style="background:#FFF1F2">
+<td><strong>Bear（thesis 錯）</strong></td>
+<td><strong>-25%（0.75x）</strong></td>
+<td>$104 — Rubin cable-free 兌現 + CCS 整合失序 + PE 壓 18x × $5 EPS = $90-110</td>
+<td>25%</td>
+</tr>
+<tr style="background:#EFF6FF;font-weight:600">
+<td>機率加權期望值</td>
+<td colspan="2">0.40×1.85 + 0.35×1.30 + 0.25×0.75 = <strong>1.38x（5 年期望報酬 +38%，年化 ~6.7%）</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+
+<p class="note"><strong>追加壓力測試（10 年 vs 5 年）：</strong>若 thesis 對但時間拉長（10 年），AI rack 結構性升級延伸至 Rubin Ultra (2028) → 下一代 (2030+)，5Y +85% 可能延展為 10Y +180%（年化 ~10.8%）— 仍屬「複利持有」級別，非「20%+ 年化」alpha 標的。<strong>考慮機會成本：vs MRVL/CRDO/AVGO（同 AI infra basket）APH 的年化 expected return 較低但波動性較低，是 basket 內的「穩定支柱」角色，非「最大 alpha」角色。</strong></p>
+
+<div class="pattern-box">
+<h3 style="color:#0369A1;margin-top:0">📐 Pattern Match — 讓機率有錨點</h3>
+<table>
+<tbody>
+<tr><td width="32%"><strong>歷史相似 setup</strong></td><td>2017-2022 APH 自身循環 — 雲端早期 capex（hyperscale Big 4）推升 IT Datacom，AI 萌芽前的「pure cloud」階段</td></tr>
+<tr><td><strong>當時 setup</strong></td><td>FPE ~25-28x（vs 現在 25.6x 接近）、IT Datacom 占 ~25%（vs 現在 41% 升級）、ROIC 18-20%（vs 現 21.6% 升級）</td></tr>
+<tr><td><strong>5 年實現報酬</strong></td><td><strong>2017 $19 → 2022 $76 = +300%（年化 ~32%）</strong></td></tr>
+<tr><td><strong>我的標的最像 / 最不像</strong></td><td><strong>最像</strong>：fragmented market + decentralized M&A + 多元終端結構不變；<strong>最不像</strong>：① 起點估值更高（現 PE 較 2017 起點高 5-8 個 turn）；② AI structural tailwind 比 cloud 更強 5x（IT Datacom +81% organic 是公司歷史紀錄）；③ Net Debt 1.6x 比 2017 的 0.5x 高出 3x（CCS 整合代價）</td></tr>
+</tbody>
+</table>
+<p class="note" style="margin-top:12px"><strong>校準結果：</strong>2017-2022 的 +300% 是「估值 + EPS + AI 萌芽」三重戴維斯，但起點 PE 較低。當前 +85% bull case 已折扣了「estate 起點」效應 — 機率 40% 是合理估計，不是憑感覺。</p>
+</div>
+</section>
+
+<!-- ============== §1 Mental Models ============== -->
+<section class="card">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">投委會 Memo｜APH · Amphenol Corporation｜2026-05-07
+─────────────────────────────────────────
+
+THESIS（50 字）
+APH 是 AI 機櫃連接層的稀缺賣鏟商 — 35 年 decentralized M&A 把
+fragmented 連接器市場整合成複利機，sole-source NVL72 銅背板讓
+Rubin 內容 +20-40%。
+
+KEY DRIVER（1）
+AI rack 連接器 content per system 結構性升級：每代 NVDA/AMD
+平台 +20-40% content（NVL72 → Rubin → Rubin Ultra）。
+
+KEY DRIVER（2）
+Decentralized M&A flywheel：100+ 獨立子公司模型 35 年成功，
+CCS $10.5B + Trexon $1B 整合中（CCS 已 in line with 33% organic）。
+
+R:R（5 年期望）
+Bull (40%) +85% / Base (35%) +30% / Bear (25%) -25%
+EV = 1.38x（年化 ~6.7%）
+
+主要風險
+1. NVDA Rubin 平台 cable-free 架構真實內容降幅未知（事件型）
+2. Net Debt $14.2B / 1.6x EBITDA 為歷史新高（CCS 整合）
+3. Trailing PE 40.77x 為 10 年高點（Forward PE 25.6x 較合理）
+
+建議倉位
+衛星持倉 4-6%（試倉 2-3%, 加碼上限 6%）
+條件式進場：等 RSI 14d 回到 60 以下 OR 回測 MA60 ($142)
+原因：4w drift +11.28% 過 +10% 閾值，禁止一次建倉
+
+Opportunity Cost
+Portfolio 已持有 MRVL/AVGO/CRDO（AI infra），APH 為「mass-market
+規模 + 多元終端」差異化，不削減原核心位，邊際資金進衛星位。
+
+保質期：2026 Q2 財報前（~12 週）</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+APH 是 NVDA AI 機櫃裡每根高速銅背板的 sole supplier，每一代平台連接器內容都升 20-40%；它還有 35 年 decentralized M&A 模型把全球 fragmented 連接器市場一塊塊吞掉，剛吃下 CCS $10.5B + Trexon $1B。風險是 NVDA Rubin 「cable-free」可能讓銅背板需求降低，但分析師認為連接器密度上升足以抵消。現價 $139 / Forward PE 25.6x 合理但不便宜，等動能 cool-down 後條件式進衛星位。
+</div>
+
+<p class="note"><strong>壓力測試結果：</strong>1 頁紙 memo + 30 秒版本均能寫出且邏輯自洽 — Thesis 通過 Mental Models 測試，繼續進入 §7 決策。</p>
+</section>
+
+<!-- ============== Phase B 矛盾辨識 + 強制裁決 ============== -->
+<section class="card">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li>✅ <strong>AI rack 結構性受益</strong>（A1 護城河 + A2 產業 + A3 業務 三方一致）— IT Datacom +81% organic 是公司歷史紀錄</li>
+<li>✅ <strong>decentralized M&A 模型 35 年成功</strong>（A1 + A3）— ROIC 21.6% / 100+ 子公司</li>
+<li>✅ <strong>連接器全球第一規模</strong>（A1 + A2）— APH 已快速縮小與 TE 的差距</li>
+<li>✅ <strong>FCF 引擎健康</strong>（A3）— FY25 FCF $4.38B / NI conversion 1.025</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>NVDA Rubin 平台「cable-free」披露 vs APH 連接器內容 +20-40%</td>
+<td>Rubin 內容升級（強護城河）</td>
+<td>cable-free 可能架構切換（A2 風險）</td>
+<td>分析師估算 content $50K → $70-120K（+40-140%）</td>
+<td>🔴 不可調和</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>Net Debt $14.2B / 1.6x EBITDA 是歷史新高 vs 「健康財務體質」</td>
+<td>CCS 整合是策略複利</td>
+<td>—</td>
+<td>5/5 體質 veto 全過、FCF 1.025x</td>
+<td>🟡 可調和（程度差異）</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Trailing PE 40.77x 為 10 年高點 vs Forward PE 25.6x「估值合理」</td>
+<td>—</td>
+<td>—</td>
+<td>EPS 仍在快速 ramp，TPE 高反映 trailing 落後</td>
+<td>🟡 可調和（時間差）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>本 DCA 結論</th><th>DD 結論（DD_APH_20260504）</th><th>原因</th></tr></thead>
+<tbody>
+<tr>
+<td>X1</td>
+<td>進場時點</td>
+<td>條件式分批，等 RSI 回到 60 或回測 MA60</td>
+<td>「Pure MA ✅ 強勢進場（健康未過熱）」、4w drift +11.28% 標「中等」</td>
+<td>本 DCA 嚴格執行 §7c skill 規則：4w drift &gt; +10% 即觸發條件式進場（與 DD 觀察判斷不同）</td>
+</tr>
+<tr>
+<td>X2</td>
+<td>核心 vs 衛星定位</td>
+<td>衛星持倉 4-6%</td>
+<td>DD 給「核心候選 / 觀望偏進場」訊號燈 A 級</td>
+<td>opportunity cost：portfolio 已飽和 AI infra 曝險（MRVL/AVGO/CRDO），APH 邊際 alpha 不足以擠進核心位</td>
+</tr>
+</tbody>
+</table>
+
+<h3>⚖ 4. 強制裁決</h3>
+<div class="verdict-box">
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據（不能是直覺）</th><th>會 settle 衝突的硬數據點</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>Rubin cable-free vs +20-40% content</td>
+<td><strong>A1（內容升級兌現）但留 30% downside risk</strong></td>
+<td>① 2025 GTC Kyber 3 demo 顯示 cable 形式變化但 connector 密度上升；② NVL72 仍在量產（GB200 出貨高峰 2026 H1）；③ analyst（GlobalTech / Substack）一致估 +20-40%；④ APH 自己 Q1 sequential organic growth 「virtually all from AI」— 即使 cable 減少，總 dollar content 上升</td>
+<td><strong>NVDA 2026 H2 GTC Fall Rubin 完整 reveal — BOM connector 內容 dollar value vs Blackwell 對比</strong>；頻率：6 個月一次 NVDA 平台 update</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>歷史新高槓桿 vs 健康體質</td>
+<td><strong>A3（健康，但 watch）</strong></td>
+<td>① 1.6x EBITDA 仍遠低於 IG 上限 3.0x；② FCF 1.025 NI conversion；③ CCS guide $4.1B revenue + 26% EBITDA margin → debt service 充裕；④ APH 35 年 M&A 紀錄無重大失敗 case</td>
+<td><strong>下季 Net Debt / EBITDA 是否 ≤ 1.8x</strong>（Q2 2026, 2026-07-29）；超過即進入警戒區</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>Trailing PE 40x 高點 vs Forward 25.6x</td>
+<td><strong>A3（forward 為主，trailing 是 EPS ramp 滯後）</strong></td>
+<td>① Q1 2026 EPS $1.06 × 4 = $4.24 annualized → 已遠超 FY24 的 $3.0；② 90 天 EPS 共識 +8.7% 上修；③ TPE 反映 12 個月前 AI 還未爆發的低 EPS 基期</td>
+<td><strong>2026 Q4 / FY26 全年 EPS 是否達 $4.77 共識</strong>；達標則 Trailing PE 自動降至 ~30x</td>
+</tr>
+<tr>
+<td>X1</td>
+<td>進場時點</td>
+<td><strong>本 DCA（條件式）</strong></td>
+<td>4w drift +11.28% 已過 skill §7c 硬性 +10% 閾值；mean reversion 機率歷史 55-65%；DD 觀察判斷不應 override skill 硬規則</td>
+<td>1 個月內股價是否回測 MA60（$142）— 若是，第一批進場確認</td>
+</tr>
+<tr>
+<td>X2</td>
+<td>核心 vs 衛星</td>
+<td><strong>本 DCA（衛星 4-6%）</strong></td>
+<td>portfolio 已有 MRVL/AVGO/CRDO 三檔 AI infra 核心位，APH 在「純 AI alpha」維度被三檔夾擊；APH 的差異化在「多元終端 + 規模穩定」 — 適合衛星而非核心</td>
+<td>若 portfolio 未來 6 個月削減 CRDO（過熱）— APH 邊際資金可升至「核心-衛星 hybrid」5-7%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ============== §3 Key Drivers ============== -->
+<section class="card">
+<h2>§3 Key Drivers｜這支股票的命脈是什麼</h2>
+
+<table>
+<thead><tr><th width="6%">#</th><th width="30%">Key Driver</th><th width="38%">為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>AI rack 連接器 content per system 結構性升級</strong>（需求側）</td>
+<td>NVL72 sole-source Paladin HD 224G/s 連接器（72 differential pairs）+ Rubin 平台內容 +20-40% 是「每代 NVDA/AMD 平台都重新 RFP」的 design-in moat；IT Datacom 從 25% → 41% 營收占比的核心引擎</td>
+<td>① 季度 IT Datacom organic growth；② 季度 IT Datacom OI margin；③ NVDA / AMD 新平台 BOM 公開的 connector content $</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Decentralized M&A flywheel</strong>（供給側／結構側）</td>
+<td>35 年成功記錄、100+ 獨立 GM 模型、連接器市場結構 fragmented（top 3 累計 &lt; 80%）→ 持續的併購標的供給；CCS $10.5B + Trexon $1B 是史上最大兩筆併購，整合成功將 lock-in 下個 5 年複利</td>
+<td>① CCS / Trexon 季度整合進度（incremental margin、organic growth in line？）；② 年度新增併購數量；③ Net Debt / EBITDA 控制（不超 2.5x）</td>
+</tr>
+</tbody>
+</table>
+
+<p class="note"><strong>為什麼是這 2 個，而不是其他？</strong>連接器產業有幾個替代命脈候選（汽車電動化、5G、國防/航太），但只有「AI rack 內容升級」與「decentralized M&A」是 (a) 結構性而非循環性、(b) APH 相對於 TE/Molex 的差異化護城河、(c) 對未來 5 年 EPS CAGR 25%+ 預估有 70%+ 解釋力。其他 driver 是 hygiene factor，不是命脈。</p>
+
+<div class="contradiction-box" style="background:#F0F9FF;border-left-color:#0EA5E9">
+<h4 style="color:#0369A1;margin-top:0">⚖ Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 1（AI rack 內容升級）vs Driver 2（M&A flywheel）— 是否獨立？</p>
+<p><strong>測試</strong>：Driver 2 是否能在不假設 Driver 1 成立的情況下單獨被推翻？<br>
+✅ <strong>是</strong>。M&A 模型在 1990-2020 過去 30 年完全沒有 AI 也持續複利（汽車、工業、醫療、軍工）；AI 是 2023 後新加入的需求軸，M&A 軸獨立存在。Driver 2 失敗（CCS/Trexon 大幅整合失序、商譽減損）不需要 Driver 1 失敗。</p>
+<p><strong>結論：</strong>兩個 driver 來自獨立因果鏈（需求側 + 供給/結構側），通過抽象層測試。</p>
+</div>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<thead><tr><th width="40%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>季度 organic growth 短期波動（+47% vs +33% vs +28%）</td><td>這是 driver 1 的 noisy 觀測，不是 driver 本身。中長期 trajectory 才重要。</td></tr>
+<tr><td>關稅 / 中美貿易戰</td><td>APH 全球 100+ 子公司結構讓區域 footprint 高度分散，關稅是 short-term cost，可透過定價傳遞。</td></tr>
+<tr><td>FX 美元強弱（國際營收占 60%）</td><td>歷史證據：APH FX hedge 與 pricing power 足以抵消大部分 FX swing，5-10pp 影響非命脈。</td></tr>
+<tr><td>單季 EPS 是否 beat consensus</td><td>QC-34 季節性過濾：單季 snapshot 容易誤判，TTM trajectory 才是 thesis 訊號。</td></tr>
+<tr><td>UBS / Citi 短期降目標價</td><td>賣方降價的理由都是「估值偏高」 — 這是 backward-looking PE 框架，沒回答「Rubin content 升級多少」這個前瞻命脈問題。</td></tr>
+</tbody>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tbody>
+<tr><td width="32%"><strong>市場目前定價在什麼假設上</strong></td><td>APH = AI infra 工業股，Forward PE 30x（FY26）/ 25.6x（FY27）反映「AI 驅動 25% EPS CAGR 持續到 2028 然後 step-down 到 mid-teens」</td></tr>
+<tr><td><strong>我認為的不同假設</strong></td><td>① 市場低估 Rubin content 升級幅度（市場預期 +10-15%，我認為實際 +25-35%）；② 市場低估 CCS+Trexon 整合協同 — 35 年成功 record 的「複利」效應在賣方 model 中通常用 conservative 5% revenue synergy，但歷史 baseline 是 8-12%</td></tr>
+<tr><td><strong>賣方為什麼錯（具體理由）</strong></td><td>UBS Q1 後的 downgrade thesis 是「PE 接近 10 年高點」 — 這是 backward-looking valuation 框架，沒回答 forward-looking 兩個 driver 問題。具體錯誤：(a) 用 trailing PE 40x 而非 forward 25x 評估（mean reversion 假設下 EPS 會繼續 ramp 而非 PE 下殺）；(b) 把 IT Datacom +81% organic 視為 cyclical peak，但實際是 AI infra 結構升級的早期</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>校驗結論：</strong>三題均能寫出具體分歧 — 此 thesis 有獨立 alpha 來源（不是跟市場 consensus 做多）。但 alpha 強度 moderate（不是極端非共識），故 §7 倉位定為衛星 4-6% 而非核心 8-10%。</p>
+</section>
+
+<!-- ============== §5 Single Thing ============== -->
+<section class="card">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>NVDA Rubin (2026 H2 GTC Fall) 或 AMD MI400 平台架構 official reveal 顯示「全 optical / cable-free + 連接器 dollar content per system 較 Blackwell 下降 &gt; 10%」</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>NVL72 高速銅背板是 APH 在 AI 結構受益的 sole-source 關鍵點 — IT Datacom +81% organic 的 70%+ 來自 NVDA AI rack content。如果 Rubin 真實 content 下降而非如 analyst 估算 +20-40%，driver 1（AI rack 內容升級）即被推翻；APH 從「AI infra 受益工業股」重定價為「傳統連接器股」，PE 從 25x 壓到 14-16x = 40-50% downside</td></tr>
+<tr><td><strong>如何監測</strong></td><td>① NVDA Investor Day / GTC（2026 春 + 2026 秋兩次）；② SemiAnalysis / GlobalTech Research substack 的 BOM teardown 報告；③ APH 季度財報 IT Datacom 細項；④ 第三方 ODM（Foxconn、Quanta）AI server BOM 拆解報告（每 6-9 個月一次）</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td><strong>3-6 個月</strong>。NVDA 2026 GTC Fall 預計 10-11 月；Rubin 平台 sample 預計 2026 Q4 → 2027 H1 量產；AMD MI400 預計 2026 H2 reveal；2026 Q3-Q4 是這個 single thing 的關鍵 reveal window</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>合規檢查：</strong>✅ 是明確、單點、可驗證的事件（不是「ROIC 連續下降」這種模糊表述）；✅ 有具體監測來源；✅ 有時間窗口；✅ 有量化判定門檻（content 下降 &gt; 10%）。</p>
+</section>
+
+<!-- ============== §6 What I Don't Know + Pre-mortem ============== -->
+<section class="card">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<thead><tr><th width="6%">#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>NVDA Rubin 平台 connector content per system 真的 +20-40%</td>
+<td>Rubin 雖 cable-free 但 connector 密度上升足以抵消 cable 減少</td>
+<td>IT Datacom organic growth 從 +81% 急降至 mid-teens，driver 1 被推翻</td>
+</tr>
+<tr>
+<td>2</td>
+<td>CCS + Trexon 整合在 18-24 個月內達成 management guide（CCS mid-teens growth, $4.1B revenue）</td>
+<td>APH 35 年 decentralized M&A 模型在「史上最大筆」併購上仍適用</td>
+<td>商譽減損 $1-2B、Net Debt 失控 &gt; 2.5x、driver 2 被質疑</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Lotes / Bizlink 等中國對手在 PCIe socket / AEC 層級的蠶食速度</td>
+<td>APH sole-source design-in 在 high-speed connector 的 switching cost 足以阻止快速 share loss</td>
+<td>APH IT Datacom 毛利率被壓 200-300bps，OI margin 從 30.6% 滑至 27%</td>
+</tr>
+<tr>
+<td>4</td>
+<td>連接器產業是否會在 5-7 年內被 silicon photonics / CPO 結構性取代</td>
+<td>CPO 商業化緩慢（2027+ 量產），且 CPO 仍需 connector interface</td>
+<td>長期 thesis 受質疑，10 年外推 EPS $8 不成立</td>
+</tr>
+<tr>
+<td>5</td>
+<td>管理層 CEO 接班計畫（CEO 任期已長）</td>
+<td>decentralized 模型 robust enough 即使 CEO 變動仍維持</td>
+<td>戰略一致性下滑、M&A 紀律可能鬆動</td>
+</tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem｜失敗故事倒推</h3>
+<div class="premortem-box">
+「假設 5 年後 APH 部位虧 50%（從 $139 跌至 $70），最可能發生的故事是 — 2027 H1 NVDA Rubin 完整 reveal 時宣布大規模轉向 CPO + fiber 互連，APH 銅背板內容驟降 60%；同時 CCS 整合在 18 個月後出現 $1.5B 商譽減損（管理階層估算過於樂觀的 mid-teens growth 實為 mid-single digit）；AI infra 「連接器溢價」被市場重新定價，PE 從 26x 壓縮至 14x；加上 Lotes 在 PCIe Gen6/Gen7 的 share gain 從 5% 上升至 20%，APH IT Datacom OI margin 從 30.6% 滑至 24%；最終 FY30 EPS 從共識 $7.5 下修至 $5.0，PE × EPS = $70。」
+</div>
+
+<p><strong>校驗：這個故事和 §5 single-thing 重疊嗎？</strong></p>
+<ul>
+<li>✅ <strong>主要重疊</strong>：§5 抓的「Rubin cable-free + content 下降」是 pre-mortem 故事的觸發點，§5 抓對了核心風險</li>
+<li>⚠ <strong>Pre-mortem 多抓到的</strong>：CCS 整合失敗 + Lotes 蠶食 — 這兩個是 §5 沒涵蓋的「慢性退化」風險。這合理，因為 §5 設計為「單點觸發」，pre-mortem 設計為「路徑想像」</li>
+<li><strong>結論：</strong>§5 抓對了快速觸發風險，但長期持有者應同步監控 CCS 整合進度與 Lotes share trajectory（已列入 §6a 第 2、3 項假設）</li>
+</ul>
+</section>
+
+<!-- ============== §8 Review Triggers ============== -->
+<section class="card">
+<h2>§8 Review Triggers｜重新評估觸發點</h2>
+
+<table>
+<thead><tr><th width="6%">#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 2026 Earnings</td><td>財報日期</td><td><strong>2026-07-29 前後</strong>（看 IT Datacom organic growth、B/B、CCS 整合進度、Net Debt/EBITDA）</td></tr>
+<tr><td>2</td><td>NVDA GTC Fall 2026 / Rubin 平台 reveal</td><td>產業事件</td><td><strong>2026 年 10-11 月</strong>（§5 Single Thing 的判定窗口）</td></tr>
+<tr><td>3</td><td>AMD MI400 平台 reveal</td><td>產業事件</td><td><strong>2026 H2</strong></td></tr>
+<tr><td>4</td><td>價位觸發 — 進場區</td><td>價位</td><td><strong>$130 以下、$120 以下、$110 以下</strong>（三段加碼條件，見 §7b）</td></tr>
+<tr><td>5</td><td>價位觸發 — 減碼區</td><td>價位</td><td><strong>$170 以上 + Forward PE &gt; 35x</strong>（減半至 2-3%）</td></tr>
+<tr><td>6</td><td>§5 Single Thing</td><td>事件 / 結構</td><td>NVDA Rubin / AMD MI400 confirmed cable-free + connector content -10%+ → 立即清倉</td></tr>
+<tr><td>7</td><td>CCS 整合警訊</td><td>結構</td><td>連 2 季 Net Debt / EBITDA &gt; 2.5x，或 CCS 全年 organic growth &lt; +5%</td></tr>
+</tbody>
+</table>
+
+<table style="margin-top:18px">
+<tbody>
+<tr><td width="32%"><strong>這份報告的保質期</strong></td><td><strong>Q2 2026 財報前有效（~12 週，至 2026-07-29）</strong></td></tr>
+<tr><td><strong>最可能發生的 upside 因素</strong></td><td>Q2 IT Datacom organic 維持 +60%+ + 管理層上調 FY26 guide + NVDA Rubin 早期 spec leak 顯示 connector content +30%+ → 股價 1-2 個月內衝 $170-180（觸發減碼）</td></tr>
+<tr><td><strong>最可能發生的 downside 因素</strong></td><td>Q2 IT Datacom organic 滑至 +50% 以下（market 視為「AI 動能 peak」） + UBS/Citi 進一步降目標價 + Lotes Q2 PCIe share data 公開 → 股價 1-2 個月跌至 $125-130（觸發第二批加碼）</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============== Phase A 折疊區塊 ============== -->
+<section class="card">
+<h2>Phase A｜獨立研究階段（折疊區塊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：APH 護城河來自「decentralized M&A flywheel + design-in switching cost + 全球第一規模」三軸，9/10 級護城河，5 年穩固度高</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td>① <strong>Switching cost / design-in</strong>（AI rack sole-source Paladin HD connector，每代平台 RFP 都需重新 qualify，customer integration 6-9 個月）；② <strong>規模 + 範圍經濟</strong>（100+ 子公司全球 footprint、年營收 $23B 規模、產品線涵蓋連接器全光譜）</td></tr>
+<tr><td>持久性評分</td><td><strong>9/10</strong>，5 年穩固度：<strong>高</strong></td></tr>
+<tr><td>最大侵蝕風險</td><td>NVDA / AMD 平台架構大切換（cable-free / 全 optical / CPO）→ 銅背板需求驟降 → APH 的 sole-source design-in 失效；時間軸 2027-2030</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 36.9%（FY25，4 年 +5pp 持續擴張 ↑）、市佔率 ~20-25%（接近 TE 的 #1 位置 ↑）、ROIC 21.6% vs WACC 8% = 超額 +13.6pp（連續 10 年達標）</td></tr>
+</tbody>
+</table>
+<p><strong>A1 獨立結論（一句話）：</strong>APH 是連接器產業中 design-in switching cost + decentralized M&A flywheel 雙軸最深的玩家，AI rack 結構升級進一步加深 sole-source moat。</p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：連接器全球 TAM $118B (2026) → $167B (2031) 7.21% CAGR，AI rack 高速 connector 是結構升級加速點</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>Cable Connector 全球 TAM $118B (2026)、CAGR 7.21% → $167B (2031)；其中 High-speed Backplane 子市場 $3.8B (2025) → $7.2B (2034) CAGR 7.4%；AI rack 細分滲透率從 2024 ~3% → 2028E ~12%</td></tr>
+<tr><td>供需判斷</td><td>目前 <strong>供需偏緊</strong>（APH B/B 1.24x record + 9.4B order 也是 record），未來 12 個月 → 維持偏緊（Hyperscaler $420-460B FY26 capex）</td></tr>
+<tr><td>最大技術替代風險</td><td>Co-Packaged Optics (CPO) 在 2028+ 商業化、Silicon Photonics 整合度上升 → 部分 backplane connector 需求被 fiber/optical 取代；威脅程度：中（CPO 仍需 connector interface）；時間軸：2028-2032</td></tr>
+<tr><td>最大政策/地緣風險</td><td>中美貿易戰下 Lotes / Bizlink 等中國對手在 PCIe socket / AEC 層級蠶食 + 中國 OEM 國產替代政策；影響路徑：APH 中國子公司營收占 ~25%</td></tr>
+<tr><td>議價權位置</td><td>對上游 <strong>強</strong>（材料供應商高度分散）；對下游 <strong>中-強</strong>（NVDA / AMD / Hyperscaler 是大客戶但 sole-source design-in 給定價權；汽車 OEM 議價較弱）</td></tr>
+</tbody>
+</table>
+<p><strong>A2 獨立結論（一句話）：</strong>連接器產業正在 AI rack 結構升級驅動下進入加速期，TAM 7%+ CAGR 但 high-speed 子市場 10%+，APH 在 high-speed AI 子市場是受益最大者之一。</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：營收結構多元（IT Datacom 41% + HES 23% + IS 17% + 4 段次要）、FCF 引擎強健、35 年 M&A 模型成功</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構</td><td>現金牛：HES（防務 / 航太 / 軍工，佔 23%）+ Industrial（17%）；成長引擎：<strong>IT Datacom（佔 41%，AI 驅動 +81% organic）</strong>；新興：CCS 整合中 + Trexon 整合中（佔 ~15-18% 待確認）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶（NVDA / Apple / AWS / 軍方）佔 ~10-12%；前五大佔 ~30-35%；風險：<strong>中</strong>（單一客戶集中度可控）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（high-speed 224G 較 112G ASP +50%）；定價權：<strong>強</strong>（design-in switching cost 給 pricing power）</td></tr>
+<tr><td>未來金雞母</td><td>① <strong>Optical interconnect 整合</strong>（從 CCS 取得 fiber 連接技術，目前佔營收 ~10%，潛在 TAM $30B+，預估成熟 5 年後）；② AI rack high-speed copper backplane（已是現金牛，但 Rubin/Rubin Ultra 持續升級）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 102.5%、毛利率 36.9%（趨勢 ↑ 4 年 +5pp）、壓力測試：營收 -20% 可撐 8+ 季（充裕現金 + IG 信評）</td></tr>
+<tr><td>資本配置紀律</td><td>35 年成功併購記錄、CCS $10.5B + Trexon $1B（2025-2026 史上最大兩筆，整合中）、$2B 三年買回計畫 + 15 年連續加股利、FY25 capital return $1.5B</td></tr>
+</tbody>
+</table>
+<p><strong>A3 獨立結論（一句話）：</strong>APH 業務結構在 AI 加速下從「分散多元」轉向「IT Datacom 主導」，財務體質健康但 Net Debt $14.2B 是歷史新高（CCS 整合代價），資本配置紀律維持但需密切觀察 CCS 整合執行。</p>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取 — DD_APH_20260504 (v12.2 Inception) + ID_AINetworking_20260419</summary>
+<h4>DD 報告擷取（DD_APH_20260504.html，v12.2 Inception）</h4>
+<table>
+<thead><tr><th width="35%">項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Quality Score / 護城河等級</td><td>9/10 → A 級（5 級制）</td></tr>
+<tr><td>體質 veto</td><td>5/5 全過</td></tr>
+<tr><td>R:R 短期</td><td>0.22x（FY26 EPS $4.77 × 30x = $143 ≈ 現價）</td></tr>
+<tr><td>R:R 中期</td><td><strong>1.10x</strong>（FY27 EPS $5.56 × 32x = $178，+25%；Bear $110，-22.7%）</td></tr>
+<tr><td>R:R 長期</td><td>5Y +80%（FY30 EPS $8 × 32x = $256）</td></tr>
+<tr><td>三引擎目標價</td><td>保守 $143 / 中性 $178 / 樂觀 $256</td></tr>
+<tr><td>Bear anchor</td><td>$110（Bear PE × FY+1 EPS × 0.9）</td></tr>
+<tr><td>核心假設</td><td>H1：AI 連接器 content 結構升級 / H2：CCS 整合成功 / H3：M&A 模型持續</td></tr>
+<tr><td>綜合訊號燈</td><td><strong>A 級</strong>（核心候選 / 觀望偏進場）</td></tr>
+<tr><td>估值燈</td><td>🟡 合理（FPE 5Y 分位 ~30-50%）</td></tr>
+<tr><td>Pure MA</td><td>✅ 強勢進場（健康未過熱，4w drift +11.28% 中等）</td></tr>
+<tr><td>陷阱定性</td><td>🟢 非陷阱</td></tr>
+<tr><td>長期持有信心</td><td>高</td></tr>
+</tbody>
+</table>
+
+<h4>ID 報告擷取（ID_AINetworking_20260419.html）</h4>
+<ul>
+<li>產業評級：Phase II（Ethernet 逆襲 + UALink 規格完成），CAGR 估 18%</li>
+<li>APH 在 ID 中定位：🟡 次要受益（連接器類，~25% AI revenue exposure）</li>
+<li>連接器類 ROIC 較低（vs CRDO/COHR 純 AI play），但 APH 是最大規模 + 最分散終端</li>
+<li>關鍵趨勢：AI rack 擴張每個 rack 需 $50K+ AEC 連接器，APH 在高速銅背板是主要供應商</li>
+</ul>
+<p class="note"><strong>本 DCA 與 DD/ID 的關鍵差異：</strong>DD 給「核心候選 / 觀望偏進場」，本 DCA 在 portfolio context 下調整為「衛星 4-6%」 — 因 portfolio 已飽和 AI infra 曝險（MRVL/AVGO/CRDO），APH 的邊際 alpha 不足以擠進核心位（opportunity cost 考量）。同時 DD 標 4w drift +11.28% 為「中等」，本 DCA 嚴格執行 §7c skill 規則 +10% 閾值，要求條件式進場。</p>
+</details>
+
+</section>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+</body>
+</html>

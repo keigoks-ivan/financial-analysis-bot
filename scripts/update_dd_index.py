@@ -49,6 +49,145 @@ def collect_dca_map() -> dict:
             latest[ticker] = (date_str, path.name)
     return {t: f"/dca/{fname}" for t, (_, fname) in latest.items()}
 
+
+def extract_dca_ev_5y(dca_path) -> float | None:
+    """Parse the 5-year probability-weighted expected value from §4 Asymmetry
+    Analysis of a DCA HTML report.
+
+    Returns the value as a percentage float (e.g. 47.5 for "+47.5%", -32.25
+    for "-32.25%"). Returns None when the keyword is absent or no numeric
+    answer can be located in its neighborhood.
+
+    Recognized formats observed across existing DCA files:
+      "+47.5%" / "-32.25%"          NVDA, AMD, MU, ON, SNDK, NXPI, TXN
+      "+57%（5Y）" / "+74%（5Y）"     2330TW, AAPL, ASML, LULU, META, NKE
+      "約 +88% 5 年（IRR ≈ ...）"     ALAB, AVGO, CRDO, GOOGL, MRVL, MSFT
+      "1.38x（... +38%，年化 ...）"   APH
+      "1.77x（+77%）"                LRCX
+      "+0.41x（即 +41%）"            TER
+      Range "+25% to +30%"           AVGO (averages to midpoint)
+    """
+    try:
+        html = Path(dca_path).read_text(encoding="utf-8")
+    except OSError:
+        return None
+
+    # Locate the keyword anchor; tolerate spacing variants.
+    anchors = (
+        "機率加權期望值",
+        "機率加權 5 年期望值",
+        "機率加權 5年期望值",
+    )
+    idx = -1
+    for kw in anchors:
+        idx = html.find(kw)
+        if idx >= 0:
+            break
+    if idx < 0:
+        return None
+
+    # Window after the anchor — large enough to cover the cell + maybe note.
+    window = html[idx : idx + 800]
+
+    def _strip_tags(s: str) -> str:
+        return re.sub(r"<[^>]+>", "", s)
+
+    # Sign chars: ASCII -/+, plus Unicode minus U+2212 (used in some DCAs).
+    _SIGN = r"[+\-−]"
+    _NEG_RUN = r"[\-−]"  # negative-only set for ranges
+
+    def _norm_sign(s: str) -> str:
+        return "-" if s in ("-", "−") else "+"
+
+    def _parse_pct(text: str) -> float | None:
+        # Range form: "+25% to +30%" or "+25% ~ +30%" — average endpoints.
+        rng = re.search(
+            rf"({_SIGN})?\s*(\d+(?:\.\d+)?)\s*%\s*(?:to|~|至|–|—|-)\s*({_SIGN})?\s*(\d+(?:\.\d+)?)\s*%",
+            text,
+        )
+        if rng:
+            s1 = _norm_sign(rng.group(1) or "+")
+            v1 = float(rng.group(2)) * (1 if s1 == "+" else -1)
+            s2 = _norm_sign(rng.group(3) or s1)
+            v2 = float(rng.group(4)) * (1 if s2 == "+" else -1)
+            return (v1 + v2) / 2
+        # Plain percentage with explicit sign first (most reliable).
+        signed = re.search(rf"({_SIGN})\s*(\d+(?:\.\d+)?)\s*%", text)
+        if signed:
+            sign = _norm_sign(signed.group(1))
+            val = float(signed.group(2))
+            return val if sign == "+" else -val
+        # Bare percent (uncommon — fall through if unsigned context).
+        bare = re.search(r"(?<![=×x.\d])(\d+(?:\.\d+)?)\s*%", text)
+        if bare:
+            return float(bare.group(1))
+        return None
+
+    def _parse_mult(text: str) -> float | None:
+        # "1.38x" / "1.77x" → (mult-1)*100. Skip "0.41x" style (absolute return
+        # already; the percent form is more reliable when both present).
+        m = re.search(r"(?<![\d.×])(\d+\.\d+)\s*x", text)
+        if m:
+            mult = float(m.group(1))
+            if mult >= 1.0:
+                return (mult - 1) * 100
+        return None
+
+    # Walk <strong> blocks after the anchor first; the canonical answer is
+    # almost always wrapped in <strong>. Skip strongs that are just the
+    # keyword label (no number).
+    strong_iter = re.finditer(r"<strong>(.*?)</strong>", window, re.DOTALL)
+    for sm in strong_iter:
+        text = _strip_tags(sm.group(1))
+        if "期望值" in text and "%" not in text and "x" not in text:
+            continue  # this <strong> wraps just the label
+        pct = _parse_pct(text)
+        if pct is not None:
+            return pct
+        mult = _parse_mult(text)
+        if mult is not None:
+            return mult
+
+    # Fallback: search the whole window (covers cells without <strong>, e.g.
+    # "<td>機率加權期望值</td><td colspan=...>...計算式 = 1.38x（... +38%）</td>").
+    flat = _strip_tags(window)
+    # Drop the keyword itself so its trailing "5 年" doesn't confuse the regex.
+    for kw in anchors:
+        flat = flat.replace(kw, "", 1)
+    pct = _parse_pct(flat)
+    if pct is not None:
+        return pct
+    mult = _parse_mult(flat)
+    if mult is not None:
+        return mult
+    return None
+
+
+def collect_dca_ev_map() -> dict:
+    """Return {ticker: ev_5y_pct} parsed from each ticker's latest DCA file.
+
+    Tickers without a parseable §4 EV are omitted. Caller should treat
+    missing ticker as "no EV available" and render '—'.
+    """
+    if not DCA_DIR.exists():
+        return {}
+    # Pick latest DCA per ticker (mirrors collect_dca_map logic).
+    latest: dict[str, tuple[str, Path]] = {}
+    for path in DCA_DIR.glob("DCA_*.html"):
+        m = DCA_FILENAME_RE.match(path.name)
+        if not m:
+            continue
+        ticker, date_str = m.group(1), m.group(2)
+        prev = latest.get(ticker)
+        if prev is None or date_str > prev[0]:
+            latest[ticker] = (date_str, path)
+    out: dict[str, float] = {}
+    for ticker, (_, path) in latest.items():
+        ev = extract_dca_ev_5y(path)
+        if ev is not None:
+            out[ticker] = ev
+    return out
+
 META_RE = re.compile(
     r'<meta\s+name="dd-schema-version"\s+content="([^"]+)"', re.IGNORECASE
 )
@@ -954,12 +1093,16 @@ def _verdict_to_signal(verdict_raw: str) -> str:
     return ""
 
 
-def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
+def build_row_v12(entry: dict, dca_map: dict | None = None,
+                   dca_ev_map: dict | None = None) -> str:
     """Render one v12 row (data-* attrs + td cells) matching the hand-curated
     schema in docs/research/index.html. Missing fields render as '?' or 0.
 
     dca_map: optional {ticker: dca_href} from collect_dca_map(). When provided
     and ticker has a DCA report, inject a 📋 link cell after Ticker; else '—'.
+    dca_ev_map: optional {ticker: ev_5y_pct} from collect_dca_ev_map(). When
+    provided, the next cell after 定見 shows the parsed §4 5Y probability-
+    weighted expected value; else '—'.
     """
     sig = entry.get("signal", "") or "?"
     trap_emoji = entry.get("trap_emoji", "") or "?"
@@ -1091,15 +1234,37 @@ def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
     else:
         dca_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
 
+    # 5Y 機率加權期望值（§4 Asymmetry）— color band mirrors 5Y Upside.
+    _ev = (dca_ev_map or {}).get(_t_raw)
+    if _ev is None:
+        _ev = (dca_ev_map or {}).get(_t_norm)
+    if _ev is None:
+        ev_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
+        ev_num_attr = "0"
+    else:
+        if _ev >= 50:
+            ev_color = "#166534"
+        elif _ev >= 0:
+            ev_color = "#15803D"
+        else:
+            ev_color = "#991B1B"
+        ev_sign = "+" if _ev > 0 else ""
+        # One decimal only when needed (e.g. 47.5%, -32.25% → -32.3%).
+        ev_text = f"{ev_sign}{_ev:.1f}%" if abs(_ev - round(_ev)) > 0.05 else f"{ev_sign}{_ev:.0f}%"
+        ev_cell = f'<td class="num-cell" style="color:{ev_color};font-weight:600">{ev_text}</td>'
+        ev_num_attr = f"{_ev:.2f}"
+
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
         f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
         f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-pct="{pct_num}" data-peg="{peg_num}"'
         f' data-eps-cagr="{eps_num_attr}"'
-        f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-stress="{stress_frac}">\n'
+        f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-ev5y="{ev_num_attr}"'
+        f' data-stress="{stress_frac}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
         f'{dca_cell}'
+        f'{ev_cell}'
         f'<td class="num-cell">{date_disp}</td>'
         f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
@@ -1114,6 +1279,88 @@ def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
         f'<td class="num-cell">{stress_disp}</td>\n'
         f'</tr>'
     )
+
+
+def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
+                        ev_5y: float | None) -> str:
+    """Render a row for a ticker that has a DCA report but NO DD coverage.
+
+    DD-derived columns render '—'. The ticker link points to the DCA file
+    (since there is no DD). data-rank=0 keeps these rows sorted to the
+    bottom in the default signal-desc view.
+    """
+    if ev_5y is None:
+        ev_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
+        ev_num_attr = "0"
+    else:
+        if ev_5y >= 50:
+            ev_color = "#166534"
+        elif ev_5y >= 0:
+            ev_color = "#15803D"
+        else:
+            ev_color = "#991B1B"
+        sign = "+" if ev_5y > 0 else ""
+        ev_text = (
+            f"{sign}{ev_5y:.1f}%"
+            if abs(ev_5y - round(ev_5y)) > 0.05
+            else f"{sign}{ev_5y:.0f}%"
+        )
+        ev_cell = (
+            f'<td class="num-cell" style="color:{ev_color};font-weight:600">'
+            f'{ev_text}</td>'
+        )
+        ev_num_attr = f"{ev_5y:.2f}"
+
+    em = '<td class="num-cell" style="color:#CBD5E1">—</td>'
+    return (
+        f'<tr class="searchable" data-ticker="{ticker}" data-date="{dca_date}"'
+        f' data-signal="" data-trap=""'
+        f' data-rank="0" data-trap-rank="0" data-quality="0"'
+        f' data-fpe="0" data-pe2y="0" data-pct="0" data-peg="0"'
+        f' data-eps-cagr="0"'
+        f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
+        f' data-stress="0">\n'
+        f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
+        f'rel="noopener" title="僅 DCA 報告，無對應 DD（DD 已輪替/未建檔）">'
+        f'{ticker}</a></td>'
+        f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
+        f'rel="noopener" title="Deep Conviction Analysis 投資決策報告" '
+        f'style="text-decoration:none">📋</a></td>'
+        f'{ev_cell}'
+        f'<td class="num-cell">{dca_date}</td>'
+        # 11 em-dashes to match DD-row schema:
+        # signal, trap, triax, fpe, pe2y, pct, peg, eps_cagr, 2Y_upside,
+        # 5Y_upside, stress.
+        f'{em}{em}{em}{em}{em}{em}{em}{em}{em}{em}{em}\n'
+        f'</tr>'
+    )
+
+
+def collect_dca_only_rows(entries, dca_map: dict, dca_ev_map: dict) -> list:
+    """Return list of HTML row strings for DCAs without matching DD entries.
+
+    Picks tickers in dca_map whose normalized form does not appear in any
+    DD entry's ticker. Date is parsed from the DCA filename in dca_map.
+    """
+    if not dca_map:
+        return []
+    dd_tickers: set[str] = set()
+    for e in entries:
+        t = e["ticker"]
+        dd_tickers.add(t)
+        dd_tickers.add(re.sub(r"[^A-Za-z0-9]", "", t).upper())
+    rows: list[str] = []
+    for ticker, href in sorted(dca_map.items()):
+        if ticker in dd_tickers:
+            continue
+        m = re.search(r"DCA_[A-Z0-9]+_(\d{8})\.html", href)
+        date_str = ""
+        if m:
+            d = m.group(1)
+            date_str = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+        ev = dca_ev_map.get(ticker)
+        rows.append(build_row_dca_only(ticker, href, date_str, ev))
+    return rows
 
 
 def collect_v12_entries(force_refresh_eps: bool = False):
@@ -1263,10 +1510,15 @@ def update_index_v12_full(html: str, force_refresh_eps: bool = False) -> tuple:
 
     entries = _sort_v12_entries(collect_v12_entries(force_refresh_eps=force_refresh_eps))
     dca_map = collect_dca_map()
-    rows = "\n".join(build_row_v12(e, dca_map) for e in entries)
+    dca_ev_map = collect_dca_ev_map()
+    dd_rows = [build_row_v12(e, dca_map, dca_ev_map) for e in entries]
+    orphan_rows = collect_dca_only_rows(entries, dca_map, dca_ev_map)
+    if orphan_rows:
+        print(f"  DCA-only rows (no DD coverage): {len(orphan_rows)} appended")
+    rows = "\n".join(dd_rows + orphan_rows)
     new_block = open_tag + "\n" + rows + "\n" + close_tag
     new_html = html[:m.start()] + new_block + html[m.end():]
-    return new_html, len(entries)
+    return new_html, len(entries) + len(orphan_rows)
 
 
 # === end v12 row builder =====================================================

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>ANET — Deep Conviction Analysis｜2026-05-07</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#0F172A;--ink-2:#334155;--line:#E2E8F0;--accent:#1E3A5F;--accent-2:#3B82F6;--green-bg:#DCFCE7;--green-ink:#166534;--red-bg:#FEE2E2;--red-ink:#991B1B;--yellow-bg:#FEF9C3;--yellow-ink:#92400E;--blue-bg:#EFF6FF;--blue-ink:#1E3A5F;--warn-bg:#FFF7ED;--warn-line:#F97316;--warn-ink:#C2410C}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace}
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;border-bottom:4px solid var(--accent-2)}
+  header .ticker{font-size:18px;font-weight:700;letter-spacing:1px}
+  header .meta{opacity:.92}
+  header .thesis-mini{margin-left:auto;font-style:italic;opacity:.95;max-width:680px}
+  main{max-width:1180px;margin:0 auto;padding:28px 24px 96px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px 28px;margin-bottom:22px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  h1,h2,h3{color:var(--accent);margin-top:0}
+  h2{border-left:4px solid var(--accent-2);padding-left:12px;font-size:20px;margin-bottom:18px}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--accent)}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
+  p{margin:8px 0}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  thead th{background:var(--accent);color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+  tbody td,tbody th{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F1F5F9}
+  .tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+  .green{background:var(--green-bg);color:var(--green-ink)}
+  .red{background:var(--red-bg);color:var(--red-ink)}
+  .yellow{background:var(--yellow-bg);color:var(--yellow-ink)}
+  .blue{background:var(--blue-bg);color:var(--blue-ink)}
+  .thesis-hero{background:var(--blue-bg);border:1px solid #BFDBFE;padding:48px 36px;text-align:center;border-radius:8px;margin-bottom:24px}
+  .thesis-hero .text{font-size:26px;line-height:1.55;font-weight:500;color:var(--accent);margin:0}
+  .thesis-hero .label{margin-top:14px;font-size:12px;color:var(--ink-2);letter-spacing:2px}
+  .decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0}
+  .decision-box.go{background:#F0FDF4;border-left-color:#16A34A}
+  .decision-box.avoid{background:#FFF1F2;border-left-color:#DC2626}
+  .contradiction-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .verdict-box{background:#FED7AA;padding:14px 18px;margin:12px 0;border-radius:4px}
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0;font-style:italic}
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+  .memo{border:2px solid #94A3B8;background:#FFFFFF;padding:24px 28px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;border-radius:4px;margin:14px 0;white-space:pre-wrap}
+  .elevator{background:#EEF2FF;border-left:4px solid #6366F1;padding:14px 18px;font-style:italic;font-size:15px;border-radius:0 4px 4px 0;margin:10px 0}
+  details{background:#F8FAFC;border:1px solid var(--line);border-radius:4px;padding:14px 20px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:15px}
+  details[open] summary{margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:10px}
+  .ma-pass{background:var(--green-bg);color:var(--green-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .ma-fail{background:var(--red-bg);color:var(--red-ink);padding:2px 8px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+  .print-btn{position:fixed;bottom:28px;right:28px;padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(15,23,42,.18)}
+  @media print{header.topbar,.print-btn{display:none}main{padding:0;max-width:100%}section.card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}details{page-break-inside:avoid}details > summary{list-style:none}details:not([open]) > *:not(summary){display:block !important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="ticker">ANET · Arista Networks</span>
+  <span class="meta">DCA 報告 ｜ 2026-05-07</span>
+  <span class="meta">參考股價 $143.94（Q1 後 -15%）</span>
+  <span class="thesis-mini">AI 後端 Ethernet 替代 InfiniBand 的 EOS 軟體 toll booth — 但 NVDA Spectrum-X 已咬走 Meta/Oracle 增量份額</span>
+</header>
+
+<main>
+
+<section class="card">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-hero">
+  <p class="text">ANET 是 AI 後端 Ethernet 替代 InfiniBand 的 EOS 軟體 toll booth — 7+ 年 design-in switching cost 鎖住 Cloud Titan，但 NVDA Spectrum-X dual-vendor 化是進行式威脅</p>
+  <div class="label">ONE-SENTENCE THESIS · 50 字以內</div>
+</div>
+<p class="note">這是敘事而非指標：ANET 不是「FCF + ROIC + 零負債」三高工業股 — 而是「AI fabric secular 從 IB 轉 Ethernet」的軟體賣鏟商，但賣鏟競爭已多了 NVDA Spectrum-X 這個有自家 GPU bundle 優勢的對手。</p>
+</section>
+
+<section class="card">
+<h2>§7 Decision｜可執行投資計畫</h2>
+
+<div class="decision-box">
+<strong>裁決：B 級 / 觀察池偏謹慎 — 等待事件驅動的進場時機</strong><br>
+原因：① DD final_signal = B（衛星）；② 短中期 R:R 為負（短 -0.34 / 中 +0.005）；③ NVDA Spectrum-X 已 Meta/Oracle 採用，driver 1（Ethernet 替代 IB）的 ANET 受益份額正在被稀釋；④ Q1 2026 Q1 +35% 強，但盤後 -13% 反映「期待透支 + margin 焦慮」。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th width="35%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>觀察池 / 衛星試倉</strong>（不做核心，因 R:R 不利且競爭結構惡化）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0% 現在 → 1.5-2% 條件達成後</strong></td></tr>
+<tr><td>目標倉位</td><td><strong>2-3% of portfolio（衛星上限）</strong>，不會升核心</td></tr>
+<tr><td>進場價位區間</td><td><strong>$110 - $130</strong>（5Y FPE 分位 < 40% 對應 PE 30-32x × FY27 EPS $4.10-4.50 = $123-144）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批，雙條件門檻</strong>：① 估值條件：5Y FPE 分位 < 40%（FPE FY+1 從 39.6x → < 33x）；② 競爭條件：Q3-Q4 2026 Dell'Oro AI back-end Ethernet 季報 ANET 份額穩定 ≥ 18%（不再被 Spectrum-X 蠶食）。<strong>兩個條件至少達成一個才進首批 1.5%；兩個都達成才能加到 3%。</strong></td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>關鍵問題：portfolio 已持有 NVDA / AVGO / MRVL / CRDO 等 AI infra 核心位 — NVDA 自己就是 ANET 的競爭者（Spectrum-X）。在 AI Networking basket 中，NVDA + AVGO 的「半導體 + ASIC」護城河比 ANET 的「Ethernet OEM + EOS 軟體」更穩定。CRDO（AEC 連接器 70% 份額）+ AVGO（Tomahawk 6 + Jericho ASIC）是 ANET 的「上游 chip」，買它們就間接 cover Ethernet AI 主題。建議路徑：① 不為了「補 ANET 曝險」進場（已 cover）；② 只在估值極端 + 競爭威脅明朗化兩條件都成立時，當「逆向估值修復賭局」進 2-3%；③ 若必須選 AI Networking 純玩家，邊際資金優先 NVDA（Spectrum-X + GPU bundle）&gt; AVGO（Tomahawk 6 silicon）&gt; ANET（OEM + EOS）。</strong></td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>第一批進場</td><td>估值條件：FPE FY+1 ≤ 33x（即股價 $122 以下） OR 競爭條件：Q3-Q4 26 Dell'Oro 顯示 ANET share 穩 ≥ 19%</td><td>1.5%</td></tr>
+<tr><td>加碼至飽和</td><td>兩個條件都達成 + Q2 2026 H1 AI 營收累計 ≥ $1.5B</td><td>2.5-3%</td></tr>
+<tr><td>減碼 1</td><td>Dell'Oro 連 2 季 ANET share &lt; 17% OR Microsoft 公開搭配 Vera Rubin + Spectrum-X</td><td>0-1%</td></tr>
+<tr><td>清倉</td><td>§5 Single Thing 觸發（Spectrum-X 在 Cloud Titan 增量採購占 &gt; 50%）</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$143.94 vs MA50 $136.18（高 5.7%）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$143.94 vs MA200 $134.24（高 7.2%）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>$143.94 vs W104 $111.87（高 28.7%）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅</span></td><td>三線多頭排列、W250 斜率 +10.17%、W104 +9.16% 全正</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="tag green">✅ 健康</span></td><td>RSI 58-65 中性偏高（未過 70）；Q1 後從 $170 → $144（-15%）= 動能反向，已 cool-down，未過熱</td></tr>
+</tbody>
+</table>
+
+<div class="contradiction-box" style="background:#FEF9C3;border-left-color:#CA8A04">
+<strong>⚠ Pure MA 通過但 R:R 不利的衝突結論：</strong>Pure MA 顯示「結構是多頭」但 §4 R:R 顯示「短中期估值已 fully priced in」。Pure MA 通過 ≠ 立即進場 — 在 R:R 不利 + 競爭結構惡化的情況下，應遵循「估值 + 競爭雙條件」門檻，禁止 Pure MA 過關就進場。這是 skill 對「Pure MA 訊號是必要非充分條件」的標準翻譯。
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>賭「估值修復」 — 5Y FPE 分位 &lt; 40% 進場 + Q2-Q3 2026 AI guide 達成或上調</td></tr>
+<tr><td>中期（2-5 年）</td><td><strong>Base case：賭「Spectrum-X 滲透 cap 在 25%，ANET 仍維持 50%+ AI back-end Ethernet 份額」 — FY30 EPS $5.5-6.5 × 28-32x = $165-195</strong></td></tr>
+<tr><td>長期（5-10 年）</td><td>若 (a) EOS software moat 跨越 AI 替代波 + (b) ANET 在企業/邊緣 AI 拓展 + (c) 競爭結構穩定。但「軟體護城河 vs NVIDIA 半導體 bundle」是 5 年內未經考驗的 thesis</td></tr>
+</tbody>
+</table>
+
+<h4>EPS 預測參考</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>FY26E</td><td>$3.70</td><td>Consensus（Q1 beat 推升）</td><td>Q1 26 EPS $0.87 vs $0.81 est</td></tr>
+<tr><td>FY27E</td><td>$4.55</td><td>Consensus（post-print 上修）</td><td>Morgan Stanley $4.02 → $4.10</td></tr>
+<tr><td>FY28E</td><td>$4.69 - 5.20</td><td>Morgan Stanley + buyside 推算</td><td>23% growth 假設遞減</td></tr>
+<tr><td>FY30E（外推）</td><td>$5.5 - 6.5</td><td>本報告 base case 外推</td><td>外推假設：FY27-FY30 EPS CAGR 12-15%（Spectrum-X 蠶食增量份額但 EOS 護城河保住中段）</td></tr>
+</tbody>
+</table>
+
+<p><strong>長期持有合理性：</strong>FY30 EPS $6 × 30x = $180，較現價 $144 5Y 報酬 +25%（年化 ~4.6%）— 不及 SPX 預期。Bull case FY30 EPS $7 × 35x = $245，5Y +70%（年化 11.2%）但需 Spectrum-X 滲透 cap 在 20% 以下 + ANET 企業/邊緣 AI 拓展兌現，機率 ~35%。<strong>結論：當前 $144 不適合「長期複利持有」進場 — 賭逆向估值修復是更精確 thesis。</strong></p>
+</section>
+
+<section class="card">
+<h2>§4 Asymmetry Analysis</h2>
+<table>
+<thead><tr><th width="22%">情境</th><th width="14%">5 年倍數</th><th>依據</th><th width="12%">機率</th></tr></thead>
+<tbody>
+<tr style="background:#F0FDF4">
+<td><strong>Bull（thesis 對）</strong></td>
+<td><strong>+70%（1.70x）</strong></td>
+<td>FY30 EPS $7 × 35x = $245 — Spectrum-X 滲透 cap 在 20%、ANET AI 進入企業 + 邊緣 + 1.6T Etherlink 普及，PE re-rate 反映 software moat</td>
+<td>35%</td>
+</tr>
+<tr>
+<td>Base</td>
+<td>+15%（1.15x）</td>
+<td>FY30 EPS $5.5 × 30x = $165 — Spectrum-X 蠶食增量份額至 35%，ANET 維持 50% 但增速減速至 mid-teens</td>
+<td>35%</td>
+</tr>
+<tr style="background:#FFF1F2">
+<td><strong>Bear（thesis 錯）</strong></td>
+<td><strong>-39%（0.61x）</strong></td>
+<td>$88 — Microsoft 跟 Meta 全面 dual-vendor 50/50；Spectrum-X 在 Cloud Titan 增量超 50%，ANET AI 從 19% 降至 10%；FY30 EPS $4 × 22x = $88</td>
+<td>30%</td>
+</tr>
+<tr style="background:#EFF6FF;font-weight:600">
+<td>機率加權期望值</td>
+<td colspan="2">0.35×1.70 + 0.35×1.15 + 0.30×0.61 = 0.595 + 0.4025 + 0.183 = <strong>1.18x（5 年期望報酬 +18%，年化 ~3.4%）</strong></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+
+<p class="note"><strong>追加壓力測試：</strong>5 年期望年化 3.4% 已低於 SPX 長期 7-9% — 在 portfolio context 下，這個 expected return 不夠支撐核心倉位。即使 thesis 對（35% 機率），bull +70% / 5 年 = 年化 11% 也只是 SPX 小幅 outperform，<strong>非「20%+ alpha」標的</strong>。考慮機會成本，ANET 邊際資金不如進 NVDA / AVGO 等 AI 半導體核心位（後者 expected return 更高且競爭結構更穩定）。</p>
+
+<div class="pattern-box">
+<h3 style="color:#0369A1;margin-top:0">📐 Pattern Match — 讓機率有錨點</h3>
+<table>
+<tbody>
+<tr><td width="32%"><strong>歷史相似 setup</strong></td><td>2018-2020 ANET — Microsoft 客戶集中度 36% 達峰 → MS 自建 SONiC + Sonic Cloud（自研 Ethernet OS 內部威脅），ANET 股價 2018-2019 Q4 -45% 估值修復；類似當前 NVDA Spectrum-X 結構性威脅 + 客戶集中度問題</td></tr>
+<tr><td><strong>當時 setup</strong></td><td>FPE 從 ~30x 跌至 ~18x、MS 客戶集中度 36% → 後續降至 22%、AI 還未成為驅動因素</td></tr>
+<tr><td><strong>5 年實現報酬</strong></td><td><strong>2018 $63 → 2023 $186 = +195%（年化 ~24%）</strong> — 主要 driver 是 (a) MS 集中度問題消化 + (b) Cloud Titans 數量擴張 + (c) AI 浪潮初期</td></tr>
+<tr><td><strong>我的標的最像 / 最不像</strong></td><td><strong>最像</strong>：客戶集中度問題 + 內部對手威脅（SONiC vs Spectrum-X）；<strong>最不像</strong>：① 當前 FPE 39.6x 已比 2018 時更高，估值修復幅度有限；② Spectrum-X 不是「客戶自研」，是 NVIDIA 帶 GPU bundle 的「對手系統」 — 更難消化；③ 2018 後 5 年迎來 AI 大浪潮，2026 後 5 年的「下一個浪潮」是什麼不明（已是 AI 浪潮中）</td></tr>
+</tbody>
+</table>
+<p class="note" style="margin-top:12px"><strong>校準結果：</strong>2018-2020 是「估值修復 + AI 浪潮」雙重 drive，當前更類似「估值修復 + 競爭威脅」 — 機率 35% Bull case 是合理估計，不是憑感覺。<strong>但要記住：2018 後 ANET 上漲是「碰到 AI 浪潮」運氣 — 這次是否還有「下一個浪潮」是 thesis 開放問題。</strong></p>
+</div>
+</section>
+
+<section class="card">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">投委會 Memo｜ANET · Arista Networks｜2026-05-07
+─────────────────────────────────────────
+
+THESIS（50 字）
+ANET 是 AI 後端 Ethernet 替代 InfiniBand 的 EOS 軟體 toll booth —
+7+ 年 design-in switching cost 鎖住 Cloud Titan，但 NVDA Spectrum-X
+dual-vendor 化是進行式威脅。
+
+KEY DRIVER（1）
+AI back-end Ethernet 結構性替代 InfiniBand：Dell'Oro Q3 25 已
+顯示 Ethernet 占 67% AI back-end（vs 兩年前 IB 80%）。
+
+KEY DRIVER（2）
+EOS 7+ 年軟體 design-in switching cost：deferred revenue $5.4B
++ Cloud Titan 客製 automation 不可替換。
+
+R:R（5 年期望）
+Bull (35%) +70% / Base (35%) +15% / Bear (30%) -39%
+EV = 1.18x（年化 ~3.4% — 不及 SPX）
+
+主要風險
+1. NVDA Spectrum-X 已 Meta/Oracle 採用 dual-vendor（已發生）
+2. Microsoft Vera Rubin 是否搭配 Spectrum-X（2026 H2 reveal）
+3. Q1 後 -15% 反映 margin 焦慮 + AI guidance 不夠激進
+4. FPE 39.6x 仍偏高（5Y 分位 53%）
+
+建議倉位
+觀察池 / 衛星 0% → 1.5-3%（雙條件門檻）
+門檻 1：FPE ≤ 33x（股價 ≤ $122）
+門檻 2：Q3-Q4 26 Dell'Oro 顯示 ANET share 穩 ≥ 18%
+
+Opportunity Cost
+Portfolio 已有 NVDA/AVGO/MRVL/CRDO（cover Ethernet AI 上游 chip）
+NVDA 是 ANET 競爭者本身 — 「買對手」較佳；ANET 不是必要曝險。
+
+保質期：Q2 2026 財報前（~12 週）</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+ANET 是 AI fabric 從 InfiniBand 轉 Ethernet 浪潮的最大 OEM 受益者，EOS 軟體 7+ 年護城河鎖住 Cloud Titan。但 NVIDIA 的 Spectrum-X 已咬走 Meta/Oracle 的增量份額，Q1 record 但盤後 -15% 反映 margin 焦慮。現價 $144 / FPE 39.6x 不便宜，Pattern match 像 2018 MS 集中度危機但這次缺「下一個 AI 浪潮」buffer。觀察池等估值修復或競爭結構穩定，不為了「AI 配置」進場 — portfolio 已 cover。
+</div>
+
+<p class="note"><strong>壓力測試結果：</strong>1 頁紙 + 30 秒均能寫出且邏輯自洽，但結論偏向「不該核心持有」 — Thesis 通過 mental models 但偏 wait/observation pool；繼續進入 §7 觀望偏謹慎決策。</p>
+</section>
+
+<section class="card">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li>✅ <strong>EOS software moat 真實</strong>（A1 + A3）— deferred revenue $5.4B + Cloud Titan 客製 lock-in 7+ 年</li>
+<li>✅ <strong>AI 後端 Ethernet 結構性替代 InfiniBand</strong>（A1 + A2）— Dell'Oro Q3 25 Ethernet 占 67%</li>
+<li>✅ <strong>財務體質頂級</strong>（A3）— ROIC &gt; 50%、零負債、$10.7B 淨現金、FCF $4.25B</li>
+<li>✅ <strong>FY26 guide 上修強</strong>（A3）— 總 Rev $11.5B (+27.7%)、AI $3.5B (&gt;2x YoY)</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>EOS 軟體護城河 vs NVDA Spectrum-X bundle 攻擊</td>
+<td>EOS 7+ 年 lock-in 強護城河</td>
+<td>Meta/Oracle 已採用 Spectrum-X dual-vendor</td>
+<td>—</td>
+<td>🔴 不可調和</td>
+</tr>
+<tr>
+<td>M2</td>
+<td>FY26 guide record 上修 vs Q1 後 -15% 股價</td>
+<td>—</td>
+<td>—</td>
+<td>數字頂配但市場 reaction 不買單 → 反映 expectations 過高 + margin 焦慮</td>
+<td>🟡 可調和（市場 sentiment）</td>
+</tr>
+<tr>
+<td>M3</td>
+<td>FPE 39.6x 仍偏高 vs Pure MA ✅ 強勢</td>
+<td>—</td>
+<td>—</td>
+<td>MA 反映過去 trend，FPE 反映 forward 期望差</td>
+<td>🟡 可調和（時間維度差）</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>ROIC &gt; 50% / 零負債超優體質 vs B 級護城河（DD 調整後）</td>
+<td>EOS moat 強</td>
+<td>—</td>
+<td>體質頂級</td>
+<td>🔴 不可調和（DD 已 QC-23 -1 分降至 B，但體質 5/5 全過）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>本 DCA 結論</th><th>DD/ID 結論</th><th>原因</th></tr></thead>
+<tbody>
+<tr>
+<td>X1</td>
+<td>進場時點</td>
+<td>觀察池，不立即進場（雙條件門檻）</td>
+<td>DD 給 B 級「衛星候選」訊號燈、Pure MA ✅ 強勢進場</td>
+<td>DD 是分析師裁決，DCA 是 PM 決策；DCA 加入 opportunity cost 維度（NVDA/AVGO 已 cover）</td>
+</tr>
+<tr>
+<td>X2</td>
+<td>長期持有信心</td>
+<td>不確定（5Y EV 1.18x = 年化 3.4%）</td>
+<td>DD 標「長期持有信心：高」</td>
+<td>DD 從基本面 / 護城河角度判斷，DCA 從 R:R / EV 維度判斷 — 兩個視角差異</td>
+</tr>
+</tbody>
+</table>
+
+<h3>⚖ 4. 強制裁決</h3>
+<div class="verdict-box">
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據</th><th>會 settle 衝突的硬數據點</th></tr></thead>
+<tbody>
+<tr>
+<td>M1</td>
+<td>EOS moat vs Spectrum-X bundle</td>
+<td><strong>A2 已部分 win</strong>（Spectrum-X 已咬走增量份額）— 但 EOS moat 在 installed base 仍 hold</td>
+<td>① IDC Q2 25：NVDA 25.9% 已超 ANET 18.9%；② Meta + Oracle 公開採用 Spectrum-X；③ Spectrum-X 帶 GPU bundle 經濟誘因強過純 chip 採購；④ EOS moat 在 brownfield 但 greenfield AI rack 是新 RFP，moat 較弱</td>
+<td><strong>2026 H2 Microsoft Vera Rubin 採購結構公開 — 是否搭配 Spectrum-X</strong>。頻率：Microsoft Q4 26 / Q1 27 capex 細節披露</td>
+</tr>
+<tr>
+<td>M4</td>
+<td>體質頂級 vs B 級護城河</td>
+<td><strong>合適裁決：B 是相對護城河（vs A 的 7+ 級），不影響體質</strong></td>
+<td>① ROIC &gt; 50% / 零負債是「歷史複利成果」反映；② B 級反映「未來 5 年護城河持續性下調」；③ 兩個衡量不同維度，可同時成立</td>
+<td>FY26 / FY27 ROIC 軌跡 — 若 ROIC 從 50% 降至 40% = B 級護城河兌現；若維持 50%+ = 護城河仍 A 級實質</td>
+</tr>
+<tr>
+<td>X1</td>
+<td>進場時點</td>
+<td><strong>本 DCA（觀察池雙條件）</strong></td>
+<td>DD 訊號燈 B 對映 PM 倉位「衛星候選」，但 PM 必須加 opportunity cost 校驗 — Portfolio 已 cover AI Networking 上游</td>
+<td>portfolio 結構是否變動：若 NVDA / AVGO 削減（Spectrum-X 對手 NVDA），ANET 成為「逆向」對沖位 — 倉位上限可放寬</td>
+</tr>
+<tr>
+<td>X2</td>
+<td>長期持有信心</td>
+<td><strong>本 DCA（持中性）</strong></td>
+<td>DD「信心高」基於護城河持續，但 DCA 額外計入 R:R EV 1.18x 反映「即使 thesis 對，年化 3.4% 也不夠」 — 信心 ≠ 報酬</td>
+<td>FY28-FY30 EPS 軌跡 — 若 EPS CAGR ≥ 18% 維持，5Y 報酬可達 +50% 年化 8.4% 接近 SPX，那時長期持有合理</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="card">
+<h2>§3 Key Drivers｜這支股票的命脈是什麼</h2>
+
+<table>
+<thead><tr><th width="6%">#</th><th width="30%">Key Driver</th><th width="38%">為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>AI 後端 Ethernet 結構性替代 InfiniBand</strong>（產業需求側）</td>
+<td>Dell'Oro 預估 5Y AI back-end Ethernet $100B+ TAM；Ethernet 占比從 2024 ~20% 升至 2025 67%（vs IB 80% 兩年前），是 ANET 的 secular 前提；FY26 AI guide $3.5B 翻倍是這個 driver 兌現的速度</td>
+<td>① Dell'Oro 季度 AI back-end Ethernet 滲透率；② ANET 季度 AI 營收 vs $3.5B FY26 guide 達成度；③ ANET 在 AI back-end Ethernet 份額 trajectory（current 18.9%）</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>EOS 7+ 年 software design-in switching cost</strong>（供給/結構側）</td>
+<td>deferred revenue $5.4B + Cloud Titan 客製 automation script 形成 vendor lock-in；EOS 是「網路 OS 中的 Linux」，Cisco IOS / Juniper JunOS / NVIDIA Cumulus 都比不上 EOS 的「pub-sub state-sharing」架構；護城河與 hardware OEM 解耦（用 Broadcom 等第三方 silicon），focus 在軟體</td>
+<td>① 客戶 retention rate（披露困難，從 deferred revenue 增速間接看）；② RPO / billings 比率；③ Cloud Titan 客戶是否 dual-vendor（10-K 客戶集中度披露）</td>
+</tr>
+</tbody>
+</table>
+
+<p class="note"><strong>為什麼是這 2 個，而不是其他？</strong>連接器產業有許多次要 driver（企業 campus、邊緣 AI、CloudVision 訂閱、安全），但只有「AI Ethernet 替代 IB」與「EOS software moat」是 (a) 結構性而非循環性、(b) 解釋 ANET 過去 5 年 +200% 漲幅的根本因子、(c) 也是未來 5 年最大的 thesis 風險集中點。其他 driver 是 incremental optionality，不是命脈。</p>
+
+<div class="contradiction-box" style="background:#F0F9FF;border-left-color:#0EA5E9">
+<h4 style="color:#0369A1;margin-top:0">⚖ Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 1（AI Ethernet 替代 IB）vs Driver 2（EOS software moat）— 是否獨立？</p>
+<p><strong>測試</strong>：Driver 2 是否能在不假設 Driver 1 成立的情況下單獨被推翻？<br>
+✅ <strong>是</strong>。EOS 在 enterprise DC（非 AI back-end）持續複利 10+ 年；即使 Driver 1 失敗（Spectrum-X 全吃 AI），Driver 2 仍 hold 在企業 DC + Cloud Titan front-end + edge 領域。但 Driver 2 失敗（EOS 被 SONiC / Cumulus 替代）也不必然 Driver 1 失敗。</p>
+<p><strong>結論：</strong>兩個 driver 來自獨立因果鏈（產業需求 + 軟體護城河），通過抽象層測試。</p>
+</div>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<thead><tr><th width="40%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>單季 GM 波動 64.1% → 62-63% guide</td><td>Q1 後股價 -15% 主因 — 但 GM 在 62-64% 區間都是 best-in-class，1-2pp 滑落是 cyclical 而非 structural</td></tr>
+<tr><td>Cisco 反攻（N9300 SmartSwitch）</td><td>Cisco 在 AI back-end 已落後（Q2 25 IDC 9.1% growth，遠不及 ANET / NVDA），不是命脈威脅</td></tr>
+<tr><td>1.6T Etherlink 2026 推出時程</td><td>是 driver 1 的兌現節奏，已 priced-in</td></tr>
+<tr><td>Q1 EPS beat $0.06</td><td>QC-34 季節性過濾 — 單季 snapshot 噪音，TTM 與 trajectory 才重要</td></tr>
+<tr><td>分析師 price target 震盪 ($178 → $180 → $350)</td><td>賣方目標價分散（$110 - $350）反映本身 thesis 不確定，不是命脈訊號</td></tr>
+</tbody>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tbody>
+<tr><td width="32%"><strong>市場目前定價在什麼假設上</strong></td><td>ANET = AI Networking 龍頭，Forward PE 39.6x（FY26）/ 32.3x（FY27）反映「AI 從 IB 轉 Ethernet 的最大 OEM 受益者，FY26 AI 翻倍 + FY27 EPS CAGR 23%」的順風基線</td></tr>
+<tr><td><strong>我認為的不同假設</strong></td><td>市場低估了 NVDA Spectrum-X 在「greenfield AI rack RFP」的競爭力 — Meta + Oracle 已採用是 leading indicator，Microsoft Vera Rubin 採購結構是下個 binary 觸發點。Spectrum-X 帶 GPU bundle 經濟誘因（buy 2 get 1 effect），ANET 的 EOS moat 在 brownfield hold 但 greenfield 弱於市場預期。FY28-FY30 ANET AI 營收增速可能從 +30%+ 降至 mid-teens，賣方未充分反映</td></tr>
+<tr><td><strong>賣方為什麼錯</strong></td><td>賣方 model 的 AI revenue trajectory 通常 base on management guide 的線性外推（$3.5B → $5B → $7B），但忽略：(a) 增量份額被 Spectrum-X 蠶食的 cumulative effect；(b) Cloud Titan dual-vendor 結構一旦形成就難回頭（Microsoft / Oracle / Meta 三家已不同程度 dual-vendor）；(c) 賣方都用「ROIC + zero debt」框架評體質但未足夠扣分護城河相對性</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>校驗結論：</strong>三題均能寫出具體分歧 — 此 thesis 是「逆向估值修復」而非跟 consensus 做多。alpha 強度中等，但因 R:R EV 1.18x 已不利，§7 倉位定為觀察池而非衛星 — 直到雙條件達成才放 1.5%。</p>
+</section>
+
+<section class="card">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>NVDA Spectrum-X 在 Cloud Titan AI back-end 增量採購中佔 &gt; 50% — 具體觸發訊號為 Microsoft 公開宣布 Vera Rubin NVL72 全機架搭配 Spectrum-X，或 Dell'Oro 連 2 季顯示 ANET AI back-end Ethernet 份額 &lt; 15%</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>Driver 1（AI Ethernet 替代 IB）的 ANET 受益份額被 Spectrum-X 取代 — ANET 從「Ethernet 浪潮唯一龍頭」降為「Ethernet 浪潮二線玩家」；FY28-FY30 AI 營收從 base $5-6B 路徑下修至 $4B 平台，PE 從 32x 壓縮至 22x = 40-50% downside</td></tr>
+<tr><td><strong>如何監測</strong></td><td>① <strong>Microsoft Build / Ignite 大會（2026-09 / 2026-11）</strong>+ MS 季度 capex 細節披露；② <strong>Dell'Oro Group 季度 datacenter switch market share 報告</strong>（每季發布）；③ <strong>NVDA GTC Fall 2026（Rubin reveal）+ NVDA 季度 networking 營收細項</strong>（Spectrum-X $X B run rate）；④ ANET 自身季度 10-K 客戶集中度（Meta / MSFT YoY 變動）</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td><strong>3-9 個月</strong>。Microsoft Vera Rubin 採購決策預計 2026 H2；Dell'Oro Q3 26 數據預計 2026-12 公布；ANET FY26 10-K 預計 2027-02 公布。<strong>2026 Q3-Q4 是這個 single thing 的關鍵 reveal window</strong></td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>合規檢查：</strong>✅ 是明確、單點、可驗證的事件；✅ 有具體監測來源；✅ 有時間窗口；✅ 有量化判定門檻（&gt; 50% 增量份額或 &lt; 15% 份額）。</p>
+</section>
+
+<section class="card">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<thead><tr><th width="6%">#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Spectrum-X 在 Cloud Titan greenfield AI rack 真的能 cap 在 25-35% 增量份額</td>
+<td>Cloud Titan dual-vendor 政策不傾全面 NVDA bundle</td>
+<td>ANET AI back-end 份額從 19% 跌至 10%，driver 1 半數失效</td>
+</tr>
+<tr>
+<td>2</td>
+<td>EOS software moat 在「全新 AI rack RFP」中仍是 design-in lock-in</td>
+<td>Cloud Titan 偏好「軟體穩定性」高於「GPU bundle 經濟」</td>
+<td>EOS moat 只在 brownfield 有效，greenfield AI 完全跟 GPU 採購綁定</td>
+</tr>
+<tr>
+<td>3</td>
+<td>AI back-end Ethernet TAM 不過早被 Optical (CPO) 蠶食</td>
+<td>CPO 商業化在 2028+，且 CPO 仍需 Ethernet OS</td>
+<td>長期 5-10 年 TAM 增速從 30%+ 降至 mid-teens</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Cisco / Juniper / Dell 不在企業 AI 反攻成功</td>
+<td>EOS 在企業 AI campus 仍領先；Cisco N9300 落地慢</td>
+<td>ANET 的「企業 AI 增量」buffer（用來抵消 Cloud Titan 蠶食）失效</td>
+</tr>
+<tr>
+<td>5</td>
+<td>管理層長期執行力（Jayshree Ullal CEO 任期已長）</td>
+<td>接班規劃 robust，戰略一致性維持</td>
+<td>戰略誤判風險上升（如過度押注 1.6T 而忽略 Optical 整合）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem｜失敗故事倒推</h3>
+<div class="premortem-box">
+「假設 5 年後 ANET 從 $144 跌至 $72（虧 50%），最可能發生的故事是 — 2026 H2 Microsoft 宣布 Vera Rubin NVL72 全機架搭配 Spectrum-X，2027 H1 Meta 也跟進 dual-vendor 50/50，Oracle 全面轉 Spectrum-X；ANET 在 AI back-end Ethernet 從 19% 跌至 10%；同時 Cisco N9300 SmartSwitch 在企業 AI 反攻成功（用 ASIC 自研 + 既有客戶 lock-in）；FY28 AI 營收停在 $4B 而非 $7B base case，FY30 EPS 從共識 $6.5 下修至 $4；market 把 ANET 從「AI Networking 龍頭」重定價為「企業 OEM」，PE 從 32x 壓縮至 22x = $4 × 22 = $88；加上市場 sentiment 把 EOS moat 重新校準（從 7+ 年 lock-in 降為 3-4 年）。」
+</div>
+
+<p><strong>校驗：這個故事和 §5 single-thing 重疊嗎？</strong></p>
+<ul>
+<li>✅ <strong>主要重疊</strong>：§5 Microsoft Vera Rubin + Spectrum-X 是 pre-mortem 故事的觸發點，§5 抓對了快速觸發風險</li>
+<li>⚠ <strong>Pre-mortem 多抓到的</strong>：Cisco 企業反攻 + Meta/Oracle 跟進 — 這是「次級擴散」而非 §5 單點；對 5Y 路徑很重要</li>
+<li><strong>結論：</strong>§5 抓對了第一觸發點，但 pre-mortem 補完整了「擴散路徑」；長期持有應監控 (a) Microsoft 採購結構 + (b) Cisco 企業反攻速度（已列入 §6a 第 1、4 項）</li>
+</ul>
+</section>
+
+<section class="card">
+<h2>§8 Review Triggers｜重新評估觸發點</h2>
+
+<table>
+<thead><tr><th width="6%">#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 2026 Earnings</td><td>財報日期</td><td><strong>2026-08 上旬</strong>（看 AI 營收 H1 累計 vs $1.5B、Q2 GM、Cloud Titan 集中度）</td></tr>
+<tr><td>2</td><td>Microsoft Build / Ignite 2026</td><td>產業事件</td><td><strong>2026-09 / 2026-11</strong>（Vera Rubin 採購結構公開窗口）</td></tr>
+<tr><td>3</td><td>NVDA GTC Fall 2026 (Rubin)</td><td>產業事件</td><td><strong>2026-10 / 2026-11</strong>（Spectrum-X 進化 + Cloud Titan 採購情報）</td></tr>
+<tr><td>4</td><td>Dell'Oro Q3 26 datacenter switch 報告</td><td>產業事件</td><td><strong>2026-12</strong>（ANET 份額 trajectory，§5 量化判定關鍵）</td></tr>
+<tr><td>5</td><td>價位觸發 — 進場區</td><td>價位</td><td><strong>$120-130</strong>（FPE ≤ 33x 估值修復進場條件 1）</td></tr>
+<tr><td>6</td><td>價位觸發 — 減碼區</td><td>價位</td><td><strong>$180+ + FPE &gt; 45x</strong>（已建倉者考慮減碼）</td></tr>
+<tr><td>7</td><td>§5 Single Thing</td><td>事件 / 結構</td><td>Microsoft Vera Rubin + Spectrum-X confirmed OR Dell'Oro ANET 份額連 2 季 &lt; 15% → 立即 0% 倉位</td></tr>
+</tbody>
+</table>
+
+<table style="margin-top:18px">
+<tbody>
+<tr><td width="32%"><strong>這份報告的保質期</strong></td><td><strong>Q2 2026 財報前有效（~12 週，至 2026-08 上旬）</strong></td></tr>
+<tr><td><strong>最可能發生的 upside 因素</strong></td><td>Q2 2026 AI 營收 H1 累計 ≥ $1.7B（超過 50% 進度）+ Microsoft Vera Rubin 部分採購搭配 ANET（dual-vendor 但 ANET 持平不丟份額）→ 股價 1-2 個月內回到 $160-170（觸發進場條件 2）</td></tr>
+<tr><td><strong>最可能發生的 downside 因素</strong></td><td>Q2 GM 滑至 62% 以下（margin 焦慮持續）+ Dell'Oro Q2 26 數據顯示 ANET 份額再降 → 股價 1-2 個月跌至 $115-125（觸發進場條件 1）</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card">
+<h2>Phase A｜獨立研究階段（折疊區塊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：EOS 軟體 7+ 年 design-in 是真實護城河，但已從 A 級降為 B 級（QC-23 Spectrum-X 攻擊扣 1 分）</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td>① <strong>Software switching cost</strong>（EOS pub-sub state-sharing 架構 + Cloud Titan 客製 automation script，deferred revenue $5.4B 反映 lock-in 強度）；② <strong>規模 + 範圍經濟</strong>（用 Broadcom 第三方 silicon，省下自研 $B+ R&D 投入軟體迭代）</td></tr>
+<tr><td>持久性評分</td><td><strong>8/10</strong>（DD QC-23 -1 分後），5 年穩固度：<strong>中-高</strong>（brownfield 強、greenfield 受 Spectrum-X 攻擊）</td></tr>
+<tr><td>最大侵蝕風險</td><td>NVDA Spectrum-X 在 greenfield AI rack RFP 用「GPU bundle 經濟誘因」攻擊；時間軸已進行（Meta + Oracle 已採用），2026 H2 Microsoft 是關鍵</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 64.1%（FY25，best-in-class）↑；AI back-end Ethernet 市佔 ~19%（vs NVDA 26% Q2 25 ↓）；ROIC &gt; 50% / 連續 10 年達標</td></tr>
+</tbody>
+</table>
+<p><strong>A1 獨立結論（一句話）：</strong>EOS software moat 在 brownfield AI 仍 hold，但 greenfield 已被 Spectrum-X 結構性攻擊，護城河從「壟斷」降為「雙寡占」。</p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：AI back-end Ethernet TAM 5Y $100B+，Ethernet 已勝 InfiniBand，但內部競爭格局正在重塑（NVDA Spectrum-X 已 25.9% 超過 ANET）</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>AI back-end Ethernet 5Y 累計 $100B+（Dell'Oro），Ethernet 占 AI back-end 從 2024 ~20% 升至 2025 67%；數據中心交換器全球 TAM $40B+，5Y CAGR 18-22%</td></tr>
+<tr><td>供需判斷</td><td>目前 <strong>供需偏緊</strong>（ANET 自承 supply 是 1-2 年 binding constraint），未來 12 個月 → 維持偏緊（Hyperscaler $420-460B FY26 capex）</td></tr>
+<tr><td>最大技術替代風險</td><td>Co-Packaged Optics (CPO) + Silicon Photonics 在 1.6T+ 滲透 → 部分 Ethernet switch 需求被 fiber/optical 取代；威脅程度：低-中（CPO 仍需 Ethernet OS）；時間軸：2028-2032</td></tr>
+<tr><td>最大政策/地緣風險</td><td>中美貿易戰：ANET 中國營收占比低（&lt; 5%），geopolitical 風險小；NVDA Spectrum-X 在 China 反而受出口管制限制（ANET 暗中受益）</td></tr>
+<tr><td>議價權位置</td><td>對上游（Broadcom Tomahawk silicon）<strong>中</strong>（依賴 Broadcom 但 Broadcom 也賣 ANET 對手）；對下游 Cloud Titan <strong>中-強</strong>（EOS lock-in 給定價權，但 dual-vendor 已壓縮 pricing power）</td></tr>
+</tbody>
+</table>
+<p><strong>A2 獨立結論（一句話）：</strong>產業 secular 順風強（Ethernet 替代 IB），但內部競爭格局已從「ANET 壟斷」變成「ANET vs NVDA Spectrum-X」雙寡占，ANET 增量份額正在被稀釋。</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：營收結構高度集中 Cloud Titan（48%），FCF 引擎超強健，但 Cloud Titan dual-vendor 風險集中</summary>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構</td><td>現金牛：Cloud Titan / 服務雲端業務（佔 ~48%，Meta 16% + MSFT 26% + 其他）；成長引擎：<strong>AI 後端（FY26 guide $3.5B = ~30% 營收）</strong>；新興：企業 AI campus + 1.6T Etherlink</td></tr>
+<tr><td>客戶集中度</td><td>Top 2（Meta + MSFT）= 42%，Top 5 = ~55%；風險：<strong>高</strong>（單一 Cloud Titan dual-vendor 可立即影響 5pp 營收）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（800G 較 400G 約 +50%，1.6T 2026 推出）；定價權：<strong>中</strong>（dual-vendor 後從強壓縮為中）</td></tr>
+<tr><td>未來金雞母</td><td>① <strong>1.6T Etherlink</strong>（2026 推出，AI back-end 升級需求）；② 企業 AI campus（Cisco 反攻防禦戰場）；③ CloudVision SaaS / NDR 訂閱（5% 營收 → 10%+ 潛力）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 121%、毛利率 64.1%（趨勢 ↑ 4 年 +3pp）、ROIC &gt; 50%、零負債、$10.7B 淨現金；壓力測試：營收 -30% 可撐 12+ 季</td></tr>
+<tr><td>資本配置紀律</td><td>歷史以 retain cash + 補強 R&D 為主；無大額併購紀錄（vs APH 的 35 年 M&A）；買回計畫小規模、無股利；現金部位 $10.7B 為「optionality 資產」但 ROIC 拖累潛在</td></tr>
+</tbody>
+</table>
+<p><strong>A3 獨立結論（一句話）：</strong>ANET 財務體質頂級（ROIC &gt; 50% 零負債），但業務結構高度集中 Cloud Titan，且 Cloud Titan dual-vendor 政策對 ANET 的「未來 5 年增量份額」是直接威脅。</p>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取 — DD_ANET_20260506 (v12.2 Inception) + ID_AINetworking_20260419</summary>
+<h4>DD 報告擷取（DD_ANET_20260506.html，v12.2 Inception）</h4>
+<table>
+<thead><tr><th width="35%">項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Quality Score / 護城河等級</td><td>9/10 → QC-23 -1 → 8/10 → <strong>B 級</strong></td></tr>
+<tr><td>體質 veto</td><td>5/5 全過</td></tr>
+<tr><td>R:R 短期</td><td><strong>-0.34（負）</strong></td></tr>
+<tr><td>R:R 中期</td><td><strong>+0.005（中性）</strong></td></tr>
+<tr><td>R:R 長期</td><td>+1.0x（5Y +52%，年化 8.7%）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $119.5 / 中期 $147.0 / 長期 $222.9</td></tr>
+<tr><td>Bear anchor</td><td>$66.6（Bear PE × Bear EPS）</td></tr>
+<tr><td>核心假設</td><td>H1：AI Ethernet 替代 IB / H2：EOS moat 持續 / H3：Cloud Titan 採購結構穩定</td></tr>
+<tr><td>綜合訊號燈</td><td><strong>B 級</strong>（衛星候選）</td></tr>
+<tr><td>估值燈</td><td>🟡 合理（FPE 5Y 分位 53%、PEG 1.72）</td></tr>
+<tr><td>Pure MA</td><td>✅ 強勢進場（盤後 $146.65 仍 &gt; W52 $130.69 &gt; W104 $111.87 &gt; W250 $69.26）</td></tr>
+<tr><td>陷阱定性</td><td>🟢 非陷阱（但需密切觀察 Spectrum-X 蠶食）</td></tr>
+<tr><td>長期持有信心</td><td>高</td></tr>
+</tbody>
+</table>
+
+<h4>ID 報告擷取（ID_AINetworking_20260419.html）</h4>
+<ul>
+<li>產業評級：Phase II（Ethernet 逆襲 + UALink 規格完成），CAGR 估 18%</li>
+<li>ANET 在 ID 中定位：系統 OEM 一線 — Cisco / Arista 是雙寡占 OEM 但 EBITDA 軟，ROIC 30-35%</li>
+<li>關鍵趨勢：① Scale-up vs Scale-out 是兩個截然不同市場；② UALink 1.0 商用 2027+；③ 連接器稀缺性被低估（CRDO + ALAB）</li>
+<li>ID 中對 ANET 的具體解讀：「Arista 仍維持 lead in pure Ethernet switching for AI fabrics, 但 NVDA Spectrum-X 快速 gain ground」</li>
+</ul>
+<p class="note"><strong>本 DCA 與 DD/ID 的關鍵差異：</strong>DD 給「衛星候選 B 級 / 長期信心高」，本 DCA 在 portfolio context 下調整為「觀察池 0% → 雙條件達成才 1.5%」 — 因 portfolio 已 cover AI Networking 上游（NVDA / AVGO / MRVL / CRDO），ANET 的「Ethernet OEM」位置在 NVDA 競爭下不夠 conviction core。同時 DD 「長期信心高」基於護城河持續，本 DCA 計入 R:R EV 1.18x 反映即使 thesis 對年化也僅 3.4%，不足核心配置。</p>
+</details>
+
+</section>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+</body>
+</html>
