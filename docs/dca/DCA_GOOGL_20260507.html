@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>GOOGL Deep Conviction Analysis | 2026-05-07</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 0; line-height: 1.7; }
+  .num, code, .mono { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  header.top { position: sticky; top: 0; z-index: 100; background: #1E3A5F; color: #FFF; padding: 12px 28px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 6px rgba(0,0,0,0.15); font-size: 13px; }
+  header.top .ticker { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 16px; letter-spacing: 1px; }
+  header.top .meta { color: #BFDBFE; font-size: 12px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 32px 28px 96px; }
+  h1, h2, h3, h4 { color: #1E3A5F; font-weight: 700; margin-top: 0; }
+  h2.sec { background: #FFF; border-left: 4px solid #3B82F6; padding: 14px 20px; margin: 36px 0 18px; font-size: 19px; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  h2.sec.warn { border-left-color: #F97316; }
+  h2.sec.danger { border-left-color: #DC2626; }
+  h2.sec.go { border-left-color: #16A34A; }
+  h3.sub { font-size: 16px; color: #334155; margin: 22px 0 10px; }
+  table { width: 100%; border-collapse: collapse; background: #FFF; margin: 12px 0; font-size: 14px; }
+  thead th { background: #1E3A5F; color: #FFF; padding: 10px 12px; text-align: left; font-weight: 500; font-size: 13px; }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+  tbody tr:nth-child(even) { background: #F1F5F9; }
+  .thesis { background: #EFF6FF; border-left: 4px solid #1E40AF; padding: 36px 32px; margin: 18px 0 30px; border-radius: 3px; text-align: center; }
+  .thesis .quote { font-size: 26px; font-weight: 700; color: #1E3A5F; line-height: 1.5; margin: 0; }
+  .thesis .label { font-size: 12px; color: #64748B; margin-top: 14px; letter-spacing: 1px; }
+  .decision { background: #FEF9C3; border-left: 4px solid #CA8A04; padding: 22px 26px; margin: 18px 0; border-radius: 3px; }
+  .decision h3 { color: #713F12; margin: 0 0 14px; font-size: 17px; }
+  .decision .verdict { font-size: 22px; font-weight: 700; color: #92400E; }
+  .conflict-block { background: #FFF7ED; border-left: 4px solid #F97316; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
+  .ruling-table { background: #FED7AA; padding: 14px; border-radius: 3px; margin-top: 10px; }
+  .ruling-table table { background: transparent; }
+  .ruling-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.4); }
+  details.phase { background: #FFF; border: 1px solid #E2E8F0; padding: 0; margin: 10px 0; border-radius: 3px; overflow: hidden; }
+  details.phase summary { background: #F8FAFC; padding: 14px 20px; cursor: pointer; font-weight: 600; color: #1E3A5F; border-left: 4px solid #94A3B8; list-style: none; }
+  details.phase summary::-webkit-details-marker { display: none; }
+  details.phase summary::before { content: "▸ "; color: #94A3B8; margin-right: 6px; font-weight: 400; }
+  details.phase[open] summary::before { content: "▾ "; }
+  details.phase summary .conclusion { display: block; margin-top: 4px; font-weight: 400; color: #475569; font-size: 13px; }
+  details.phase .body { padding: 18px 22px; }
+  .memo { background: #FAFAF9; border: 1px solid #D6D3D1; padding: 24px 28px; margin: 14px 0; font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; line-height: 1.75; color: #1C1917; border-radius: 2px; }
+  .memo h4 { font-family: 'Noto Sans TC', sans-serif; margin: 0 0 12px; color: #1E3A5F; font-size: 14px; letter-spacing: 1px; }
+  .elevator { font-style: italic; color: #475569; border-left: 3px solid #94A3B8; padding: 10px 18px; margin: 12px 0; background: #FFF; }
+  .premortem-block { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
+  .premortem-block .narrative { font-style: italic; color: #7F1D1D; border-left: 3px solid #B91C1C; padding: 8px 14px; background: rgba(255,255,255,0.6); margin: 10px 0; }
+  .pattern-block { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 18px 22px; margin: 14px 0; border-radius: 3px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .badge.ok { background: #DCFCE7; color: #166534; }
+  .badge.warn { background: #FEF9C3; color: #92400E; }
+  .badge.bad { background: #FEE2E2; color: #991B1B; }
+  .red-dot { color: #DC2626; font-weight: 700; }
+  .yellow-dot { color: #CA8A04; font-weight: 700; }
+  .print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #FFF; border: none; padding: 12px 22px; border-radius: 24px; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.18); font-family: 'Noto Sans TC', sans-serif; }
+  .print-btn:hover { background: #1E40AF; }
+  @media print {
+    header.top, .print-btn { display: none; }
+    details.phase { break-inside: avoid; }
+    details.phase[open] .body, details.phase .body { display: block !important; }
+    details.phase:not([open]) .body { display: block !important; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="ticker">GOOGL · NASDAQ</span>
+  <span class="meta">Deep Conviction Analysis | 2026-05-07 | Alphabet Inc.</span>
+</header>
+
+<main>
+
+<!-- §2 Thesis -->
+<div class="thesis">
+  <p class="quote">Google 是 AI 時代最完整的全棧贏家 ——<br>Search ＋ Cloud ＋ Gemini ＋ TPU 四引擎加速複利，<br>且自有 ASIC 讓 $185B capex 直接內部 monetize</p>
+  <p class="label">§2 ONE-SENTENCE THESIS · 48 字</p>
+</div>
+
+<!-- §7 Decision -->
+<h2 class="sec warn">§7｜Decision（執行計畫）</h2>
+<div class="decision">
+  <h3>裁決：<span class="verdict">thesis 強但動能極端過熱，等回測再進</span></h3>
+  <p>4 週漂移 <span class="num">+31.5%</span>（DD 4 週前 $293.29 → 現價 $385.69），DD 已警示「現價追高 R:R 高度不對稱」、Bollinger 上軌之外、W52 接近頂部、短期 R:R <span class="num">0.01x</span> 中期 <span class="num">0.26x</span> 雙雙 &lt; 1.0、壓測 1/4 通過 — <strong>三檔 mega cap 中動能最極端</strong>。</p>
+</div>
+
+<h3 class="sub">7a｜倉位與進場計畫</h3>
+<table>
+  <thead><tr><th style="width:30%">項目</th><th>具體內容</th></tr></thead>
+  <tbody>
+    <tr><td>投資組合角色</td><td><strong>核心持倉</strong>（mega cap 全棧 AI 贏家，Search + Cloud + Gemini + TPU 四引擎）</td></tr>
+    <tr><td>初始建倉倉位</td><td><span class="num">2.0%</span> of portfolio（首批，需條件）</td></tr>
+    <tr><td>目標倉位</td><td><span class="num">6.0%</span> of portfolio（mega cap 核心倉位）</td></tr>
+    <tr><td>進場價位區間</td><td><span class="num">$300 ~ $325</span>（DD 建議 BB 中軌 $318 / W52 +10% $286 區間 — 提供 5Y target $727 下 +120%+ 上行空間）</td></tr>
+    <tr><td>進場節奏</td><td>嚴格條件式分批：① 跌至 <span class="num">$340</span> 以下且 RSI 14d &lt; 60 → 建首批 1.0%；② 跌至 <span class="num">$320</span>（BB 中軌附近）→ 加至 2.5%；③ Q2 FY26 7 月底財報 Cloud 維 50%+ → 加至 4.0%；④ 2026 末 antitrust 判決明朗（無強制拆分）→ 加至 6.0%。<br>⛔ <strong>禁止現價 $385 任何規模建倉</strong> — DD 明確警示「追高 R:R 高度不對稱」</td></tr>
+    <tr><td><strong>vs 同類曝險（opportunity cost）</strong></td><td><strong>vs MSFT（同樣 mega cap AI 核心）：兩者 thesis 結構不同 — MSFT 是「企業 IT 棧 + 軟體 lock-in」，GOOGL 是「Search + 全棧 AI + TPU 自有」。可平行配置不衝突。<br>邊際資金邏輯：① MSFT fwd PE 24.3 + 動能已冷卻 + 即時可起，現階段優先 MSFT；② GOOGL 等回測 $320-340 才是合理進場區（等於買 5Y +88% upside，不是現價 +0.4%）；③ 現價 $385 vs analyst avg target $390 = 已 priced in，進場無安全邊際。<br>vs AVGO：AVGO 是 ASIC 設計服務商（hyperscaler 客戶），GOOGL 是 hyperscaler（AVGO 客戶），兩者反向曝險 — GOOGL TPU 自研成功 = AVGO 部分業務受影響但 GOOGL 受益。可同時持有但建倉節奏不同（AVGO 等回測 $385-400，GOOGL 等回測 $320-340）。<br>建議：核心 AI mega cap 配置 MSFT 6% + GOOGL 6% + AVGO 5% = 17%（已是 mega cap AI 主題上限，不應再加）。</strong></td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub">7b｜加碼與減碼條件</h3>
+<table>
+  <thead><tr><th style="width:14%">行動</th><th>觸發條件</th><th style="width:14%">調整至倉位</th></tr></thead>
+  <tbody>
+    <tr><td>加碼</td><td>跌至 $340 RSI &lt; 60</td><td>0% → 1.0%</td></tr>
+    <tr><td>加碼</td><td>跌至 $320（DD BB 中軌）</td><td>1.0% → 2.5%</td></tr>
+    <tr><td>加碼</td><td>跌至 $286（DD W52 +10% 區）</td><td>→ 4.0%</td></tr>
+    <tr><td>加碼</td><td>Q2 FY26 7 月底財報 Cloud 維 50%+</td><td>→ 5.0%</td></tr>
+    <tr><td>加碼</td><td>2026 末 antitrust 判決明朗（無強制拆分）</td><td>→ 6.0%</td></tr>
+    <tr><td>減碼</td><td>漲破 $470 RSI &gt; 75（fwd PE &gt; 28x）</td><td>→ 3.0%</td></tr>
+    <tr><td>減碼</td><td>Search ad revenue 連 2 季 YoY &lt; 10%（AI Overview 反噬訊號）</td><td>→ 2.0%</td></tr>
+    <tr><td>清倉</td><td>Antitrust 強制拆分 Chrome / Android / Search ads（§5 single thing 觸發）</td><td>→ 0%</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub">7c｜Pure MA 相容性 + 動能過熱檢查</h3>
+<table>
+  <thead><tr><th>檢查項目</th><th style="width:14%">狀態</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td>股價 $385.69 在 MA60 / MA200 之上？</td><td><span class="badge ok">✅</span></td><td>4 週 +31.5% 大漲後，價格遠高於各條 MA</td></tr>
+    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="badge ok">✅</span></td><td>MA 結構強多頭</td></tr>
+    <tr><td><strong>4 週漂移檢查</strong></td><td><span class="badge bad">⚠ +31.5%</span></td><td><strong>遠超過 QC-22 「20% 追高極限」門檻</strong>（DD 原文）— 三檔 mega cap 中漂移最極端</td></tr>
+    <tr><td><strong>Bollinger 帶位置</strong></td><td><span class="badge bad">⚠ 上軌外</span></td><td>$385.69 vs BB 上軌 $364.02，已穿出上軌 = 統計上 mean reversion 機率高</td></tr>
+    <tr><td><strong>52 週位置</strong></td><td><span class="badge bad">⚠ 接近頂部</span></td><td>W52 高 $386.76，距現價僅 0.3%</td></tr>
+    <tr><td><strong>短中期 R:R</strong></td><td><span class="badge bad">0.01x / 0.26x</span></td><td>雙雙 &lt; 1.0；DD 壓測 1/4 通過（僅 5Y 通過）</td></tr>
+    <tr><td><strong>進場節奏結論</strong></td><td><span class="badge bad">嚴格條件式</span></td><td>Pure MA ✅ 但所有動能 / 統計指標都警告 mean reversion 機率高 → §7a 強制等回測 BB 中軌 $318 或 W52 +10% $286，現價任何進場都是追高</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub">7d｜建議持有年限 + EPS 預測</h3>
+<table>
+  <thead><tr><th style="width:18%">持有年限</th><th>條件</th></tr></thead>
+  <tbody>
+    <tr><td>短期（&lt; 2 年）</td><td><strong>不適合追高</strong> — 現價已透支 12-24 月 upside（DD 短中期 R:R 雙 &lt; 1.0），分析師 avg target $390 vs 現價 $385 表示 NTM upside 已 priced in</td></tr>
+    <tr><td>中期（2–5 年）</td><td><strong>強烈適合（等回測後）</strong> — Cloud +63% + Gemini 750M MAU + TPU 自研 + Anthropic 5GW 合作 = 多催化驗證；FY28 EPS $14-16 × 25-28x = $400-450</td></tr>
+    <tr><td>長期（5–10 年）</td><td><strong>強烈適合</strong> — DD 5Y target $727（FY+5 EPS $22.72 × 32x），上行 +88% from $385 — 但前提是 antitrust 不強制拆分</td></tr>
+  </tbody>
+</table>
+
+<h4 style="margin-top:18px">EPS 預測參考表</h4>
+<table>
+  <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+  <tbody>
+    <tr><td>FY26（CY26）</td><td>$10.5–11.0</td><td>Q1 FY26 已實現 + Q2 consensus $2.76</td><td>+22% YoY，Q1 賠率 ~$11</td></tr>
+    <tr><td>FY27（CY27）</td><td>$13.0–14.5</td><td>外推（Cloud + capex monetize）</td><td>+25% YoY，Cloud 業務佔比上升</td></tr>
+    <tr><td>FY28（CY28）</td><td>$15.0–17.0</td><td>外推</td><td>+15% YoY，TPU 自研降本顯現</td></tr>
+    <tr><td>FY30E（CY30）</td><td>$22–25</td><td>DD 假設 FY+5 $22.72</td><td>外推假設：FY28 後 CAGR 12-15%；TPU 完整 ramp + Cloud 30% margin 結構性持續</td></tr>
+  </tbody>
+</table>
+<p><strong>長期持有適合性：</strong>現價 $385 對 FY30E EPS $23 中位數 = 17x — 看似合理。但這假設 antitrust 不強制拆分 + AI Overview 不反噬 search ads。Bear 情境（拆分 + Search ad -30%）EPS 至 $18，17x × $18 = $306, -21%。<strong>R:R 對 antitrust 高度敏感，需把 2026 末判決納入倉位節奏</strong>。</p>
+
+<!-- §4 Asymmetry -->
+<h2 class="sec">§4｜Asymmetry Analysis（5 年視角）</h2>
+<table>
+  <thead><tr><th>情境</th><th>5 年漲跌</th><th>依據</th><th>機率</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Bull</strong>：TPU 取代 NVDA 5%+，Cloud 維 50%+，Gemini 進 Apple</td><td><span class="num">+90% to +130%</span><br>($385 → $730-885)</td><td>FY30E EPS $28 × 30x（platform premium）— 接近 DD 5Y target $727</td><td>30%</td></tr>
+    <tr><td><strong>Base</strong>：mgmt guide 達標但 antitrust 結構性壓制 + AI Overview 蝕 search 10%</td><td><span class="num">+30% to +60%</span><br>($385 → $500-615)</td><td>FY30E EPS $23 × 22-26x</td><td>50%</td></tr>
+    <tr><td><strong>Bear</strong>：Antitrust 強制拆分 + AI Overview 反噬 search 30%</td><td><span class="num">−25% to −10%</span><br>($385 → $290-345)</td><td>FY30E EPS $18 × 16-18x</td><td>20%</td></tr>
+    <tr><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>約 +49% 5 年（IRR ≈ 8.3%/年）</strong></td><td>—</td></tr>
+  </tbody>
+</table>
+<p><strong>追加壓力測試：</strong>vs MSFT (+57%) / AVGO (+27%) / MRVL (+10%)，GOOGL 期望報酬與 MSFT 類似但 R:R 結構不同 — GOOGL 上行 bull 倍數最高（+130%）但下行 bear 也最深（-25%）。<strong>關鍵差異：GOOGL bear 情境機率 20% 含 antitrust binary risk，所以 5Y 期望報酬從 +57% 折讓至 +49%</strong>。如果回測至 $320 進場，期望報酬從現價 $385 的 +49% 提升至從 $320 的 +79%（再 +20% 回升至 $385），這是條件式進場的 alpha。</p>
+
+<div class="pattern-block">
+  <h3 class="sub" style="color:#075985;margin-top:0">📐 Pattern Match — 為機率錨點</h3>
+  <table>
+    <tbody>
+      <tr><td style="width:30%"><strong>歷史相似 setup</strong></td><td>2000-2002 Microsoft 反壟斷 (Justice Dept v. Microsoft) + 2024-2025 Alphabet 自身 antitrust 一審</td></tr>
+      <tr><td><strong>當時 setup（Microsoft 2000）</strong></td><td>fwd PE 30x、Windows + Office 雙寡占、DOJ 要求拆分；股價 ATH 後因判決 -50%；最終上訴後改為 behavioral remedies</td></tr>
+      <tr><td><strong>5 年實現報酬（MSFT 2000 → 2005）</strong></td><td>-30%（含 dot-com bubble）；but GOOGL 不在 dot-com 環境，比較不公平</td></tr>
+      <tr><td><strong>更接近：GOOGL 自身 2024-2025 antitrust 一審期間</strong></td><td>2024-08 一審輸（DOJ 勝訴）後 GOOGL 跌 5%，2025-09 Mehta ruling 不拆分後反彈 +25% 至 ATH。市場已部分內化 antitrust 風險</td></tr>
+      <tr><td><strong>GOOGL 2026 與當年最像</strong></td><td>① 估值結構類似（fwd PE 25-30x mega cap）；② 反壟斷判決進入「最後階段上訴」；③ 公司業務多元化保護下行（vs MSFT 2000 高度集中於 Windows）；④ 但 AI Overview 是新風險（MSFT 2000 沒有對應）</td></tr>
+      <tr><td><strong>GOOGL 與當年最不像</strong></td><td>① GOOGL 業務多元（Search + Cloud + YouTube + Android + Gemini）vs MSFT 2000 Windows + Office；② AI 同步是新增 driver（vs MSFT 2000 無新驅動）；③ TPU 自研讓 capex 內部 monetize（vs MSFT 2000 無對應結構）</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12.5px;color:#475569;margin-top:8px"><strong>結論：</strong>GOOGL 的 antitrust binary risk 是真實的，但業務多元化 + AI 驅動 + TPU 自研三項因素降低 downside（vs MSFT 2000 -50% 衝擊）。預期 bear 情境 -25% 反映「拆分但不毀滅」中等悲觀路徑。</p>
+</div>
+
+<!-- §1 Mental Models -->
+<h2 class="sec">§1｜Mental Models 壓力測試</h2>
+
+<div class="memo">
+  <h4>📄 投委會 1 頁紙 Memo</h4>
+<pre style="margin:0;white-space:pre-wrap;font-family:inherit">
+TO: Investment Committee
+FROM: PM
+RE: GOOGL — Alphabet Inc.
+DATE: 2026-05-07
+
+THESIS:
+Google 是 AI 時代最完整的全棧贏家 — Search + Cloud + Gemini + TPU 四引擎
+加速複利，且自有 ASIC 讓 $185B capex 直接內部 monetize。
+
+KEY DRIVERS:
+1) Cloud + Gemini 雙加速複利（Cloud +63% YoY、Gemini 750M MAU、Cloud RPO
+   $462B 反超 AWS、Cloud op margin 從 17.8% → 32.9% 翻倍）
+2) TPU 自研 ASIC + Anthropic 5GW 合作（capex $185B 內部 monetize；TPU 7
+   Ironwood + 8t/8i 已 split training/serving；Anthropic 1M chips 鎖定）
+
+R:R (5Y):
+- Bull (30%): +90~130% (FY30E EPS $28 × 30x — 接近 DD 5Y target $727)
+- Base (50%): +30~+60% (FY30E EPS $23 × 22-26x，antitrust 結構性壓制)
+- Bear (20%): -25~-10% (Antitrust 強制拆分 + AI Overview 反噬 search 30%)
+- 加權期望值: ~+49% 5 年 (IRR 8.3%/年)
+
+KEY RISKS:
+- 4 週漂移 +31.5%（DD 4/4 $293 → 5/4 $385）— QC-22 嚴重觸發
+- 短中期 R:R 0.01x / 0.26x 雙 < 1.0（DD 警示「追高 R:R 高度不對稱」）
+- Antitrust 上訴判決 2026 末 — binary risk
+- AI Overview 已使 publisher CTR -58%；Search ads +19% 仍強但反噬風險
+- $185B capex 史上最大，但 TPU 內部 monetize 部分緩解
+
+RECOMMENDATION:
+嚴格等回測。$340 RSI < 60 起 1.0%；$320（BB 中軌）加至 2.5%；$286（W52
++10%）加至 4.0%；Q2 FY26 + antitrust 明朗加至 5-6%。目標 6% 核心倉位。
+現價 $385 任何進場都是追高。
+
+REVIEW TRIGGER:
+Q2 FY26 7 月底、antitrust 上訴判決（2026 末）、Anthropic TPU ramp 進度、
+TPU 8t/8i 量產時程、Apple Gemini 整合進度
+</pre>
+</div>
+
+<div class="elevator">
+  <strong>30 秒電梯簡報：</strong>「Google 是 AI 時代最完整全棧贏家：Search + Cloud + Gemini + TPU 四引擎，且自有 ASIC 讓 $185B capex 內部 monetize。但 4 週漲了 31.5% 已 ATH，短中期 R:R &lt; 1.0，現在追高就是賠錢。等回測 $320-340 才是 5Y +90% upside 的進場區。」
+</div>
+
+<p style="font-size:12.5px;color:#475569;margin-top:14px"><strong>壓力測試結果：</strong>1 頁紙與 30 秒版本邏輯一致，core message「最強 thesis + 最差 timing」清晰。<span class="badge ok">✅ 通過</span></p>
+
+<!-- Phase B 矛盾 -->
+<h2 class="sec danger">Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3 class="sub">1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+  <li>GOOGL 在 AI 時代擁有最完整全棧（Search + Cloud + Gemini + TPU + Android + YouTube + Apple deal）— 護城河深度 mega cap 第一（A1 + A3 一致）</li>
+  <li>TPU 自研 + Anthropic 5GW 合作是 GOOGL vs MSFT/AMZN 最大差異化（A2 + A3 一致確認）</li>
+  <li>Cloud Q1 +63% + RPO $462B 反超 AWS 是真實成長故事（A2 + A3 + DD 一致）</li>
+</ul>
+
+<h3 class="sub">2. 矛盾清單（A1 ↔ A2 ↔ A3）</h3>
+<div class="conflict-block">
+<table>
+  <thead><tr><th style="width:5%">#</th><th>矛盾點描述</th><th style="width:14%">A1 結論</th><th style="width:14%">A2 結論</th><th style="width:14%">A3 結論</th><th style="width:13%">性質</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="red-dot">🔴 1</span></td>
+      <td><strong>Search 護城河深 vs AI Overview 自我蠶食</strong>：A1 認為 Search 是最深護城河；A2 顯示 AI Overview 已使 publisher CTR -58%、$2B 廣告營收消失；A3 卻顯示 Search 收入仍 +19% YoY</td>
+      <td>Search + 數據護城河深</td>
+      <td>AI Overview 是雙刃劍：減少 click 但 GOOGL 仍從 ad-on-result 賺錢</td>
+      <td>Q1 FY26 Search +19% YoY 仍強，但 publisher CTR -58% 是長期警訊</td>
+      <td><strong>不可調和</strong>（短期 vs 長期）</td>
+    </tr>
+    <tr>
+      <td><span class="red-dot">🔴 2</span></td>
+      <td><strong>Antitrust 一審勝訴 vs DOJ 上訴</strong>：A1 / A2 / A3 都認為 GOOGL 業務深整合是護城河；但 DOJ + 35 州檢察長已上訴要求結構性拆分</td>
+      <td>業務整合 = 護城河</td>
+      <td>Antitrust 是 binary 風險，2026 末判決</td>
+      <td>業務整合性高（Search + Android + Chrome + Cloud），拆分會破壞</td>
+      <td><strong>不可調和</strong></td>
+    </tr>
+    <tr>
+      <td><span class="yellow-dot">🟡 3</span></td>
+      <td><strong>Capex $185B 創高 vs Cloud op margin 翻倍</strong>：A1 / A3 把 capex 視為負擔；A2 / A3 也顯示 Cloud op margin 從 17.8% → 32.9% 已驗證 monetize</td>
+      <td>capex 終將 monetize</td>
+      <td>capex 內部化（TPU 自研）部分降低風險</td>
+      <td>Cloud op margin 翻倍 = capex 已開始 monetize</td>
+      <td>可調和（capex 結構不同於 MSFT）</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 class="sub">3. 與既有報告的交叉矛盾</h3>
+<div class="conflict-block">
+<table>
+  <thead><tr><th style="width:5%">#</th><th>矛盾點</th><th style="width:22%">Phase A 結論</th><th style="width:22%">DD/ID 報告結論</th><th>可能原因</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>進場時機</td>
+      <td>A 整體看 thesis 強</td>
+      <td>DD_GOOGL_20260504 給 B 訊號（品質 S 級 + 護城河擴大但 4 週漂移 +31.5% + Bollinger 上軌外 + R:R 雙 &lt; 1.0 + 壓測 1/4）— 明確警示「追高 R:R 高度不對稱」</td>
+      <td>DD 觀點與本 DCA 完全一致：thesis 強但 timing 嚴重不對。本 DCA 把 DD 警示具體化為「等回測 $320-340」</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>AI Overview 對 Search 影響</td>
+      <td>A2 警示 publisher CTR -58%</td>
+      <td>ID_AICrossDomainImpact_20260429 非共識：「Google AI Overview 60% 滲透是真正威脅但 Google 自身 net 受惠（publisher -33% / Chegg -49% 但 Google 廣告 +12%）」 — 比 Phase A 樂觀</td>
+      <td>視角差：ID 看 net economic impact（廣告 +12%），Phase A 看生態系健康度（publisher -58% CTR）；ID 觀點短期更準確</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>TPU 市占</td>
+      <td>A2 看到 TPU adoption 成長</td>
+      <td>ID_AIAcceleratorDemand_20260419 非共識：ASIC 份額 35-40%（vs 共識 20-25%），TPU 受惠；Goldman 估 TPU adoption 35% by Q4 2026 — 對 GOOGL 強烈利多</td>
+      <td>視角差：ID 更樂觀，本 DCA 採 ID 觀點納入 §4 bull case</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 class="sub">4. ⚖ 強制裁決（不可調和矛盾必選邊）</h3>
+<div class="ruling-table">
+<table>
+  <thead><tr><th style="width:5%">#</th><th>矛盾</th><th style="width:14%">我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Search 護城河深 vs AI Overview 自我蠶食</td>
+      <td><strong>部分 A3 + ID 觀點</strong>（短期 search 仍強，但長期 5-10Y 漸蝕）</td>
+      <td>ID_AICrossDomainImpact 非共識「Google 廣告 +12%」與 A3「Q1 +19% YoY」一致，短期 GOOGL 從 AI Overview 反而受惠（more relevant ads, less click waste）。但長期 publisher 流量崩跌 -58% 會破壞 Web 生態系，最終影響 search 廣告 inventory（沒有 publisher 內容 → search 黏著度下降）。淨效應：FY26-27 Search 仍 +15-19% YoY，FY28+ 開始放緩至 +10%，FY30+ 可能 +5-8%。這已 internalize 在 §4 base case。</td>
+      <td>Quarterly Search ad revenue YoY 軌跡（mgmt 揭露）；publisher 流量恢復跡象（AI Overview 改版頻率）；ChatGPT / Perplexity 對 search query share 的搶占</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Antitrust 一審勝訴 vs DOJ 上訴拆分要求</td>
+      <td><strong>暫無法決定</strong>（binary risk）— 但給出 settle 條件</td>
+      <td>2025-09 Mehta ruling 已是 favorable（不拆分 Chrome/Android），但 DOJ + 35 州檢察長上訴可能逆轉。歷史模式（MSFT 2000）顯示上訴階段判決常 mitigate 到 behavioral remedies 而非結構性拆分，但無 100% 保證。我採取「給 20% 機率強制拆分」的 base case，這已 internalize 在 §4 bear scenario。倉位節奏設計把進場分散到 antitrust 判決前 + 後（首批進場前等回測，加碼至 6% 等判決明朗）。</td>
+      <td>D.C. Circuit Court of Appeals 判決時程（預期 2026 末）；DOJ 是否進一步上訴最高法院（再延 1-2 年）；任何 mid-litigation settlement 信號</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p style="font-size:12.5px;color:#7C2D12;margin-top:10px"><strong>裁決如何進入 §7：</strong>裁決#1 確認「Search 短期強長期漸蝕」→ §4 base case 已建模 +30-60% 5Y（合理但非極端 bull）。裁決#2 確認「antitrust binary 暫無法決定」→ §7a 倉位節奏明確將「2026 末判決明朗」作為加碼至 6.0% 的 trigger，而非提前滿倉。</p>
+
+<!-- §3 Drivers -->
+<h2 class="sec">§3｜Key Drivers + Consensus 分歧</h2>
+<table>
+  <thead><tr><th style="width:5%">#</th><th>Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Cloud + Gemini 雙加速複利</td>
+      <td>Q1 FY26 Cloud +63% YoY 是 hyperscaler 中最快（vs Azure 40% / AWS 28%），Cloud op margin 從 17.8% → 32.9% 翻倍 = capex monetization 已驗證。Gemini 750M MAU + Apple deal 讓 inference 工作負載自動流入 Cloud。Cloud RPO $462B 反超 AWS 是 multi-year 鎖定收入</td>
+      <td>Quarterly Cloud revenue YoY；Cloud op margin（每季）；Cloud RPO 季增；Gemini API 使用量；Apple Siri 整合 Gemini 使用率</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>TPU 自研 ASIC + Anthropic 多年合作</td>
+      <td>$185B capex 中 ~$65B 是 TPU 相關（45% of total），這部分 capex 是「內部成本」而非「外部採購」（vs MSFT 全部給 NVDA）。Anthropic 1M chips + 5GW 多年合約鎖定收入 + 驗證 TPU 對 NVDA 替代性。能單獨被推翻嗎？能 — 即使 Cloud 成長放緩，TPU 自研降本仍持續支撐毛利；反之亦然 ✅ 通過 driver 抽象層校驗</td>
+      <td>TPU adoption 市占（Goldman estimate quarterly）；Anthropic TPU 採購量公告；Apple Siri Gemini 整合進度；TPU 8t/8i 量產時程</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 style="margin-top:18px">Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 2 在不假設 Driver 1 成立的情況下能否單獨被推翻？<strong>能</strong> — TPU 自研是「降低 Cloud 業務成本結構」的 internal economics，與 Cloud 對外業務的成長獨立。即使 Cloud 增速從 +63% 降至 +20%，TPU 自研降本仍可能擴大毛利率。兩條獨立因果鏈。✅ 通過。</p>
+
+<h4 style="margin-top:14px">強制減法 — 我認為不重要的事</h4>
+<table>
+  <thead><tr><th style="width:38%">市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>YouTube 廣告 single quarter miss</td><td>廣告週期 noise，不影響長期 thesis；Q1 miss 也 +13% YoY 仍強</td></tr>
+    <tr><td>Other Bets（Waymo / Verily / X）</td><td>佔總收入 &lt; 2%，是 option value 但不在主 thesis</td></tr>
+    <tr><td>Pixel 手機 / Nest 硬體</td><td>輔助 Android 生態系，但 financials 影響有限</td></tr>
+    <tr><td>Bard 早期失敗 vs Gemini 成功</td><td>過去歷史，Gemini 3 已驗證；繼續討論 Bard 是無意義</td></tr>
+    <tr><td>YouTube TV / Primetime Channels</td><td>策略性業務，但對 thesis 影響邊緣</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub" style="margin-top:24px">🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+  <thead><tr><th style="width:30%">項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>市場目前定價在什麼假設上</td><td>FY27 EPS ~$13.5、blended forward PE 28-30x，分析師 avg target $390 = 現價 +0.4% NTM upside；隱含「Q1 FY26 業績已 priced in，antitrust 風險已部分 internalize」</td></tr>
+    <tr><td>我認為的不同假設</td><td>市場低估 TPU 內部 monetize 的長期毛利效應 + Anthropic 5GW 多年合約的收入鎖定 + Apple Gemini 整合的 inference 工作負載增量。FY30E EPS $23-25 比 consensus 隱含 $20 高 15%。<strong>但市場高估短期上行（4 週漂移 +31.5% 已透支 12-24 月）</strong>，所以 NTM 期望報酬接近 0、但 5Y 期望報酬 +49%</td></tr>
+    <tr><td>賣方為什麼錯（具體理由）</td><td>賣方分析師太注重「antitrust 一審判決後的 relief rally」（已發生），低估「TPU 自研 capex 內部 monetize 的結構性差異」（vs MSFT capex 純外部採購）。同時把 AI Overview 視為「Search 自我蠶食」而忽視「廣告效率提升」（ID 觀點：publisher -58% 但 Google 廣告 +12%）。我的觀點：FY30E EPS 因 TPU monetize + AI Overview 廣告效率，長期 +30% 高於 consensus，但這 alpha 需要等回測進場才能 capture</td></tr>
+  </tbody>
+</table>
+<p style="font-size:12.5px;color:#475569;margin-top:8px">校驗：上述三題寫得出差異 → thesis 有 alpha 來源（TPU 結構優勢 + Apple deal + AI Overview 廣告效率被低估）；但 alpha 的 capture 完全依賴 entry timing — 現價追高把 alpha 完全吃掉。<strong>故 §7 倉位節奏設計強制等回測</strong>。</p>
+
+<!-- §5 Single Thing -->
+<h2 class="sec danger">§5｜The Single Thing That Could Change My Mind</h2>
+<table>
+  <thead><tr><th style="width:22%">項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>事件描述</td><td><strong>D.C. Circuit Court of Appeals 在 2026 末或 2027 H1 裁定強制拆分 Chrome、Android、或 Search ads 業務（推翻 2025-09 Mehta ruling 的 favorable 結果）</strong></td></tr>
+    <tr><td>為什麼這個事件是致命的</td><td>GOOGL thesis 的核心是「整合產生複合複利」（Search 數據 → Gemini 訓練 → Cloud monetize → TPU 降本 → Apple 整合 → Android 分銷 ...）。任何強制拆分會打斷複利機器：① Chrome 拆分 = 失去 search default placement；② Android 拆分 = 失去 mobile distribution；③ Search ads 拆分 = 失去 $200B+ ad business 整合性。任一拆分 = thesis 解構，PE 從 28x 壓至 16-18x，FY30E EPS 同時下修 20-25%</td></tr>
+    <tr><td>如何監測</td><td>① D.C. Circuit Court 案件進度（公開 docket）；② DOJ 與 Alphabet 的 settlement 談判信號（Bloomberg / Reuters 深度報導）；③ Mid-litigation behavioral remedy proposal（mgmt earnings call commentary）；④ 35 州檢察長 join filing 動向</td></tr>
+    <tr><td>目前離發生有多遠</td><td><strong>中等距離</strong> — 預計 2026 末 (Q4) 至 2027 H1 D.C. Circuit Court 判決；判決後可能進一步上訴最高法院（再延 1-2 年）。所以「致命事件」最快 6-9 月，最遲 18-24 月落地</td></tr>
+  </tbody>
+</table>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<h2 class="sec danger">§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3 class="sub">6a｜強迫面對自己的盲點</h3>
+<table>
+  <thead><tr><th style="width:5%">#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Cloud +63% YoY 增速能持續至 FY27</td>
+      <td>capex $185B 提供足夠 capacity（mgmt 說 capacity caps growth），Anthropic 5GW + Apple integration 落地</td>
+      <td>若 Cloud 降至 +35% by FY27，Cloud op income FY30E 下修 30%，base case 弱化</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>AI Overview 對 Search 是 net positive（廣告 +12% 而非 -X%）</td>
+      <td>用戶仍依賴 search ads 點擊，AI 摘要不替代購買意圖 query</td>
+      <td>若 ChatGPT / Perplexity 取代 search 5%+ 市占 by FY28，Search +19% 跌至 +5%，long-term moat 破裂</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Apple Gemini 整合擴大至 Siri 2.0（WWDC 2026-06 揭曉）</td>
+      <td>Apple 採用 Gemini 作為 Siri 主 LLM 或 search engine</td>
+      <td>若 Apple 改用 OpenAI / Anthropic（已 Apple Intelligence 部分採用 OpenAI）為主，inference 工作負載流向其他雲端</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="premortem-block">
+<h3 class="sub" style="color:#7F1D1D;margin-top:0">6b｜Pre-mortem — 失敗故事倒推</h3>
+<div class="narrative">
+「假設 5 年後（2031）這個部位虧 50%，最可能發生的故事是 ——<br><br>
+2026-Q4 D.C. Circuit Court 推翻 Mehta 一審，要求 Alphabet 在 18 月內拆分 Search ads 為獨立公司。Alphabet 上訴最高法院延長至 2027-Q3，但最高法院維持判決。Search ads 業務獨立 IPO / spinoff，Alphabet 失去 Search + Cloud + YouTube 整合廣告 ecosystem。<br><br>
+同時 Apple WWDC 2026-06 公布 Siri 2.0 採用 Anthropic Claude（而非 Gemini），Inference 工作負載流向 AWS。ChatGPT 6 + Perplexity Pro 的合計搜尋 query share 從 8% 升至 18% by FY28，AI Overview 反噬效應加速 — Search ads 從 +19% YoY 降至 +5% YoY。<br><br>
+$185B capex 的 ROI 不如預期（FY27 capex 加碼至 $230B），Cloud op margin 從 32.9% 壓至 22%。FY28 EPS 從 guide $16 下修至 $11。市場將 GOOGL 從「AI 全棧贏家」重估為「成熟廣告公司 + 雲端二線」，PE 從 28x 壓至 14x → $11 × 14 = $154，from $385 = -60%。」
+</div>
+<p style="font-size:12.5px;color:#475569;margin-top:8px"><strong>校驗：這個故事和 §5 single thing 重疊嗎？</strong>主要重疊（antitrust 拆分是核心觸發），但 pre-mortem 補充了「Apple 走 Anthropic + ChatGPT 搶 search query + capex 加碼但 ROI 失敗」三軸同時失效的具體路徑。<span class="badge ok">✅ §5 抓對主要 binary 觸發</span>。要做到 -60% 需多重失效，單一 antitrust 拆分（base case bear）大約 -25% — 這支持 6% 核心倉位上限（不超過）+ 嚴格條件式進場。</p>
+</div>
+
+<!-- §8 Review Triggers -->
+<h2 class="sec">§8｜Review Triggers</h2>
+<table>
+  <thead><tr><th style="width:5%">#</th><th>重新評估觸發點</th><th style="width:18%">類型</th><th>具體時間 / 條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Q2 FY26 財報</td><td>財報日期</td><td>2026 年 7 月底 — Cloud 維 50%+、capex 軌跡、Anthropic ramp 進度</td></tr>
+    <tr><td>2</td><td>Q3 FY26 財報</td><td>財報日期</td><td>2026 年 10 月底 — Holiday 季前 Search ad 訊號、TPU 8t/8i 量產時程</td></tr>
+    <tr><td>3</td><td>Apple WWDC 2026</td><td>產業事件 / 盲點 #3</td><td>2026 年 6 月 — Siri 2.0 LLM 選擇（Gemini / OpenAI / Anthropic）；GOOGL bull case 關鍵 catalyst</td></tr>
+    <tr><td>4</td><td>Google I/O 2026</td><td>產業事件</td><td>2026 年 5 月 — Gemini 3 路線圖、TPU 進度、AI Overview 改版方向</td></tr>
+    <tr><td>5</td><td>D.C. Circuit Court 上訴判決</td><td>§5 single thing 主軸</td><td>2026 年 Q4 - 2027 H1 — 強制拆分 / 維持 Mehta ruling / 中間 behavioral remedy；本 DCA 加碼至 6.0% 的最後條件</td></tr>
+    <tr><td>6</td><td>價位觸發 — 進場區</td><td>價位</td><td>$340 RSI &lt; 60（首批 1.0%）/ $320 BB 中軌（加碼 2.5%）/ $286 W52 +10%（加碼 4.0%）</td></tr>
+    <tr><td>7</td><td>價位觸發 — 退場區</td><td>價位</td><td>漲破 $470 RSI &gt; 75 → 減碼；Search ad YoY 連 2 季 &lt; 10% → 減碼</td></tr>
+  </tbody>
+</table>
+
+<table style="margin-top:14px">
+  <tbody>
+    <tr><td style="width:30%;background:#F0F9FF"><strong>本份報告保質期</strong></td><td>下一次財報（Q2 FY26, 2026-07 月底）發布前有效；或 Apple WWDC（6 月）+ Google I/O（5 月）任一重大事件後重評</td></tr>
+    <tr><td style="background:#F0FDF4"><strong>最可能發生的 upside 因素</strong></td><td>Apple Siri 2.0 採用 Gemini（WWDC 2026-06）；Q2 FY26 Cloud 維 +60%+；Anthropic 加碼 TPU；TPU 8t/8i 量產提前；antitrust 上訴判決維持 Mehta ruling</td></tr>
+    <tr><td style="background:#FFF1F2"><strong>最可能發生的 downside 因素</strong></td><td>Antitrust 強制拆分（§5）；Apple 採用 Anthropic / OpenAI；Cloud 增速從 +63% 跌至 +35%；ChatGPT 6 / Perplexity 搶 search query 5%+</td></tr>
+  </tbody>
+</table>
+
+<!-- Phase A 折疊區 -->
+<h2 class="sec" style="margin-top:48px">Phase A｜獨立研究階段（折疊區）</h2>
+
+<details class="phase">
+<summary>
+  Phase A1｜護城河深度分析
+  <span class="conclusion">→ Google 是 mega cap 中最完整全棧護城河（Search 數據 + Cloud + Gemini + TPU + Android + Apple deal），但 antitrust 是潛在拆分風險（5Y 9.5/10）</span>
+</summary>
+<div class="body">
+<table>
+  <thead><tr><th style="width:25%">項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>主要護城河類型</td><td>① Search + Index 數據壟斷（25 年累積，AI 訓練數據護城河）；② Network effects（Search → 廣告 → Web inventory → Search 用戶 飛輪）；③ Switching cost（Android + Workspace + Chrome 用戶 lock-in）；④ Cost advantage（TPU 自研 + 數據中心規模 + Cloud 自家 capex）；⑤ Intangible assets（YouTube IP、Maps、Waymo 自駕資產）</td></tr>
+    <tr><td>持久性評分</td><td><strong>9.5/10</strong>，5 年穩固度：高（業務多元化深，但 antitrust 是 binary risk）</td></tr>
+    <tr><td>最大侵蝕風險</td><td>① Antitrust 上訴強制拆分（D.C. Circuit Court 2026 末判決）；② AI Overview 自我蠶食 publisher 生態系（CTR -58%，5-10Y 蠶食 search inventory）；③ ChatGPT / Perplexity / Apple Intelligence 搶 search query；④ TikTok / Reels 搶 YouTube 注意力（已部分緩解）</td></tr>
+    <tr><td>關鍵數據</td><td>ROIC 45.21%（DD 引述，創高）；Search ad +19% YoY（Q1 FY26）；Cloud +63% YoY；Cloud op margin 32.9%（從 17.8% 翻倍）；Gemini 750M MAU；Cloud RPO $462B（反超 AWS）</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:12px"><strong>A1 獨立結論：</strong>GOOGL 是 mega cap 中最完整全棧贏家，5 大護城河複合（數據 + 網路效應 + switching cost + cost advantage + 無形資產）。Antitrust 是唯一 binary 風險，但業務多元化深度提供下行緩衝（vs MSFT 2000 -50% 拆分衝擊）。</p>
+</div>
+</details>
+
+<details class="phase">
+<summary>
+  Phase A2｜產業趨勢深度分析
+  <span class="conclusion">→ 全棧 AI 競賽中 GOOGL 是少數有「自有 ASIC + 自有 LLM + 自有雲端 + 自有分銷」的玩家，但 antitrust 與 search disruption 雙重結構性挑戰</span>
+</summary>
+<div class="body">
+<table>
+  <thead><tr><th style="width:25%">項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>TAM 與成長</td><td>Global digital ad spend $700B+（GOOGL 30% 市占）；Cloud infrastructure $800B by 2027（GCP 12% 但 +63% 成長）；AI inference market $200B+ by 2027；Mobile ecosystem $900B annual（Android 70% 市占）</td></tr>
+    <tr><td>供需判斷</td><td>Cloud capacity 偏緊（mgmt 說 "capacity caps growth"）；Search ad 結構性穩定但成長放緩；TPU 供給穩定（自家設計 + AVGO/MRVL 製造）</td></tr>
+    <tr><td>最大技術替代風險</td><td>① ChatGPT / Perplexity 對 search query share 蠶食 — 12-36 月，已 5-8% 替代；② Apple Intelligence 不選 Gemini → inference 工作負載流向 OpenAI/Anthropic — 6-12 月（WWDC 2026-06 揭曉）；③ TikTok / Reels 對 YouTube 注意力競爭 — ongoing；④ AWS Trainium / MSFT Maia 對 TPU 在 third-party 客戶的競爭 — 12-24 月</td></tr>
+    <tr><td>最大政策 / 地緣風險</td><td>① <strong>Antitrust 上訴判決 D.C. Circuit Court 2026 末</strong>（§5 single thing）；② EU DMA 對 Google Search / Android 的監管；③ 中國 Android 系統替代（HarmonyOS）— 影響有限；④ 歐美對 AI Overview / Generative AI 的內容監管</td></tr>
+    <tr><td>議價權位置</td><td>對上游（NVDA / AVGO / Broadcom）：強（自有 TPU 替代選項）；對下游（廣告主、企業 cloud 客戶）：強（不可替代的 search 廣告 inventory + Cloud 整合服務）；對 hyperscaler peers (MSFT/AMZN)：中（TPU 是差異化但非主導市場）</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:12px"><strong>A2 獨立結論：</strong>產業趨勢對 GOOGL 整體有利（AI 全棧 + Cloud + 廣告數位化持續），但兩個結構性挑戰：① antitrust 上訴可能逆轉一審 favorable；② AI Overview 自我蠶食 publisher 生態系且 ChatGPT 部分搶 search query。整體：thesis 強但 timing 結構性 binary。</p>
+</div>
+</details>
+
+<details class="phase">
+<summary>
+  Phase A3｜業務結構 / 財務體質 / 資本配置
+  <span class="conclusion">→ Alphabet 業務多元 + 現金流深，$185B capex 是史上最大但 TPU 內部化部分降低風險，FCF 增速放緩但結構健康</span>
+</summary>
+<div class="body">
+<table>
+  <thead><tr><th style="width:25%">項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>營收結構（Q1 FY26）</td><td>① Search & Other ~55%（$60B Q1 估算，+19% YoY，主要 cash cow）；② YouTube ads ~9%（$9.88B Q1，+13% YoY 但 missed）；③ Google Cloud ~18%（$20B Q1，+63% YoY，最快成長）；④ Subscriptions/devices/other ~15%；⑤ Other Bets &lt; 2%（Waymo / Verily / X）</td></tr>
+    <tr><td>客戶集中度</td><td>分散（廣告主數百萬 + Cloud 企業 + Android 用戶 30 億 + YouTube 觀眾 25 億+）— mega cap 中最分散；風險：低</td></tr>
+    <tr><td>定價權</td><td>Search ads CPM 隨廣告效率提升（AI Overview 提升轉化率）；Cloud pricing 競爭中（vs Azure / AWS）但 RPO $462B 顯示鎖定力強；定價權：強（Search 廣告）+ 中（Cloud）+ 強（YouTube Premium）</td></tr>
+    <tr><td>未來金雞母</td><td>① Cloud + Gemini API（已成主力，FY27 預估佔 25% 收入）；② TPU 對外供應（Anthropic 1M chips、潛在第三方）；③ Waymo 自駕（option value，2027+ 商業化）；④ Apple Gemini 整合（WWDC 2026-06 揭曉）</td></tr>
+    <tr><td>財務體質</td><td>FCF $90B+（FY26 預估，2026 capex 大幅加碼後）；非 GAAP op margin 30%+；現金 $110B+（最大現金部位）；無重大長期債；壓力測試：營收 -20% 仍維持 op income 正且現金流足夠 capex</td></tr>
+    <tr><td>資本配置紀律</td><td>FY26 配息 + 買回 ~$70B 等（持續加碼）；同時 capex $185B（capex/FCF ~ 2:1，比 MSFT 2.4:1 略好）；歷史紀錄：YouTube ($1.65B 2006)、Android（$50M 2005）、DoubleClick ($3.1B 2007）— 大量併購整合成功；Pichai 紀律強，但 capex 軌跡顯示 2027 仍 significantly increase</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:12px"><strong>A3 獨立結論：</strong>Alphabet 是 mega cap 中業務最多元（5 條獨立成長線）+ 現金流最深（$110B 現金、$90B+ FCF）的公司。$185B capex 是史上最大賭局但 TPU 內部化（45% 用於自家 ASIC）部分降低 NVDA 採購暴露。整體：核心持倉資格充分，但 capex/FCF 2:1 顯示資本配置已大幅向 AI 傾斜。</p>
+</div>
+</details>
+
+<details class="phase">
+<summary>
+  Phase A4｜既有報告數據摘要
+  <span class="conclusion">→ DD B 訊號（5/4 凍結）— 品質 S + 護城河擴大但 4w 漂移 +31.5% + R:R 雙 &lt; 1.0 + 壓測 1/4 → QC-31「等修復」｜多份 ID 有非共識 contrarian view</span>
+</summary>
+<div class="body">
+
+<h4>DD_GOOGL_20260504.html 擷取</h4>
+<table>
+  <tbody>
+    <tr><td style="width:25%;background:#F1F5F9"><strong>綜合訊號燈</strong></td><td><span class="badge warn">B（觀望，等修復）</span> — 品質 S 級 + 護城河擴大，但短期 Bollinger 上軌外 + 4w 漂移 +31.5% + R:R 雙 &lt; 1.0，符合 QC-31「等修復」邏輯</td></tr>
+    <tr><td style="background:#F1F5F9"><strong>長期持有信心</strong></td><td><strong>高</strong>（Cloud RPO $462B 反超 AWS、Gemini 整合 Apple 設備鎖定 2B+ inference、TPU 自研鏈降本、ROIC 45.21% 創高）</td></tr>
+    <tr><td style="background:#F1F5F9"><strong>陷阱定性</strong></td><td>🟢 非陷阱（thesis 強 + 業績驗證；4w +31.5% 是 Q1 印證後跳空 +27% + 持續走高）</td></tr>
+    <tr><td style="background:#F1F5F9"><strong>三引擎目標價</strong></td><td>短期 $388 / 中期 $427 / 5Y $727</td></tr>
+    <tr><td style="background:#F1F5F9"><strong>R:R</strong></td><td>短期 0.01x / 中期 0.26x / 長期 5Y 3.62x；壓力測試通過率 1/4（僅 long-term 過關 ≥ 2.0）</td></tr>
+    <tr><td style="background:#F1F5F9"><strong>Bear anchor</strong></td><td>短期 $237 / 中期 $230 / 長期 R:R 3.62x</td></tr>
+    <tr><td style="background:#F1F5F9"><strong>DD 進場建議</strong></td><td><em>「建議等待回檔至 Bollinger 中軌 $318 或 W52 $260+10%（$286）區間再分批進場；現價追高 R:R 高度不對稱。」</em>—— 本 DCA §7a 已完全採納此建議</td></tr>
+    <tr><td style="background:#F1F5F9"><strong>FY+5 EPS 假設</strong></td><td>$22.72（CAGR 16% 推算），對應 5Y 32x PE = $727 target</td></tr>
+  </tbody>
+</table>
+
+<h4 style="margin-top:18px">ID 報告摘要（涵蓋 GOOGL）</h4>
+<table>
+  <thead><tr><th style="width:35%">ID 報告</th><th>對 GOOGL 的關鍵點</th></tr></thead>
+  <tbody>
+    <tr><td>ID_AIAcceleratorDemand_20260419（母題）</td><td><strong>非共識：① ASIC 份額 35-40%（vs 共識 20-25%）— 對 GOOGL TPU 強烈利多（TPU 是 ASIC 主力）</strong>；② 2027 非峰值為轉折 — 對 GOOGL 中性；③ 電力永久瓶頸重塑 FLOPS/W 競爭 — 對 GOOGL 利多（TPU 自研優化 FLOPS/W）</td></tr>
+    <tr><td>ID_AIASICDesignService_20260419</td><td>非共識：hyperscaler ASIC 2028 市占 40%+（vs 共識 20-25%）— 對 GOOGL 強烈利多（TPU 自研直接受惠）；台系 Alchip + MediaTek 2028 合計超越 MRVL — 對 GOOGL TPU 製造夥伴生態擴大；AVGO 2027+ 毛利壓縮至 40-45% — 對 GOOGL TPU 製造成本降低</td></tr>
+    <tr><td>ID_CUDARocmMoat_20260501</td><td><strong>非共識：① CUDA inference moat 已開始裂 — 對 GOOGL TPU 利多；② 真正不可取代不是 CUDA 是 NCCL+NVLink scale-out — 對 GOOGL 中性（TPU 也有自家 scale-out）；③ 2027-2028 真贏家是 framework owner（META PyTorch + GOOGL JAX/Pallas + OpenAI Triton 主導 abstraction governance；GPU 變 swappable backend） — <span style="color:#16A34A">GOOGL JAX/Pallas 直接受惠，是核心利多</span></strong></td></tr>
+    <tr><td>ID_AICrossDomainImpact_20260429（母題）</td><td><strong>非共識：① Anthropic ARR $30B 超 OpenAI $25B = enterprise-first 永久勝出 — 對 GOOGL 利多（Anthropic 是 GOOGL Cloud + TPU 大客戶）；② Google AI Overview 60% 滲透是真正威脅但 Google 自身 net 受惠（publisher -33% / Chegg -49% 但 Google 廣告 +12%）— 對 GOOGL 中度利多（已納入裁決#1）；③ Apple WWDC 2026-06 Siri 2.0 binary 50/50（"invisible AI" OS 整合 vs standalone agent）— GOOGL bull case 關鍵 catalyst</strong></td></tr>
+    <tr><td>ID_CoWoSCoPoS_20260501</td><td>非共識：EMIB-T 2027 是 OSAT 命運分水嶺（Bernstein EMIB $200-300/chip vs CoWoS $900-1,000，<strong>AWS Trainium 3 / Google TPU v9 切換窗口</strong>）— 對 GOOGL TPU 製造成本降低利多</td></tr>
+    <tr><td>ID_CybersecurityPlatformConsolidation_20260423</td><td>GOOGL 涵蓋為 Cloud 資安服務一員；不在 thesis 主軸</td></tr>
+    <tr><td>ID_AgenticAIPlatform_20260424（新母題）</td><td>GOOGL 列為 Horizontal 平台前五（A2A 150+），對 Agentic AI 平台層利多</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:8px;font-size:12.5px;color:#475569"><strong>A4 純數據輸入。</strong>關鍵啟示：① DD 5/4 給 B 訊號 + 「等回檔」是本 DCA §7 的直接基礎，本 DCA 完全採納 DD 進場建議；② 多份 ID 提供強烈 contrarian bullish view（TPU 受惠、JAX/Pallas framework 主導、Anthropic 客戶）— 這些都已 internalize 在 §4 bull case；③ ID_AICrossDomainImpact 提供 antitrust 風險與 AI Overview 廣告效率的精準資訊，已納入 Phase B 裁決。</p>
+</div>
+</details>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+</body>
+</html>

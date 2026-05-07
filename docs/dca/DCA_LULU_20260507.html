@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DCA｜LULU｜2026-05-07</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#0F172A; --muted:#475569;
+    --line:#E2E8F0; --line-strong:#CBD5E1; --accent:#1E3A5F; --accent-light:#3B82F6;
+    --row-alt:#F1F5F9;
+    --thesis-bg:#EFF6FF; --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+    --conflict-bg:#FFF7ED; --conflict-line:#F97316; --verdict-bg:#FED7AA;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --ok:#DCFCE7; --ok-text:#166534; --no:#FEE2E2; --no-text:#991B1B;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.65}
+  .mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header.fixed-top{position:sticky;top:0;z-index:100;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:14px}
+  header.fixed-top .ticker{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.fixed-top .sep{opacity:.4}
+  header.fixed-top .thesis-line{flex:1;min-width:280px;font-style:italic;opacity:.95}
+  main{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+  h1{font-size:32px;margin:0 0 4px}
+  h2{font-size:22px;margin:48px 0 12px;padding:10px 14px;background:var(--accent);color:#fff;border-left:4px solid var(--accent-light);border-radius:2px}
+  h3{font-size:17px;margin:24px 0 8px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+  .thesis-card{background:var(--thesis-bg);border:1px solid #BFDBFE;border-radius:4px;padding:36px 32px;margin:16px 0;text-align:center}
+  .thesis-card .quote{font-size:26px;font-weight:500;line-height:1.5;color:#1E3A8A}
+  .thesis-card .label{font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:1px}
+  .decision-card{background:var(--decision-wait);border-left:4px solid #CA8A04;padding:18px 22px;margin:12px 0;border-radius:2px}
+  .decision-card.go{background:var(--decision-go);border-left-color:#16A34A}
+  .decision-card.no{background:var(--decision-no);border-left-color:#DC2626}
+  .decision-card .verdict-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:8px}
+  .decision-card.go .verdict-tag{background:#166534;color:#fff}
+  .decision-card .verdict-tag{background:#CA8A04;color:#fff}
+  .decision-card.no .verdict-tag{background:#991B1B;color:#fff}
+  .conflict-card{background:var(--conflict-bg);border-left:4px solid var(--conflict-line);padding:16px 20px;margin:12px 0;border-radius:2px}
+  .verdict-table{background:var(--verdict-bg);padding:8px;border-radius:2px;margin-top:10px}
+  .verdict-table table{margin:0;font-size:13px}
+  .verdict-table thead th{background:#9A3412}
+  .premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:14px 20px;margin:10px 0;border-radius:2px;font-style:italic}
+  .pattern-card{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 20px;margin:10px 0;border-radius:2px}
+  .ok-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--ok);color:var(--ok-text);font-weight:600;font-size:12px}
+  .no-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--no);color:var(--no-text);font-weight:600;font-size:12px}
+  .memo-paper{background:#FAFAF7;border:1px solid #E5E5E0;padding:24px 30px;font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;border-radius:2px;margin:12px 0;box-shadow:1px 1px 0 #00000010}
+  .elevator{font-style:italic;background:#F8FAFC;border-left:3px solid var(--muted);padding:14px 18px;margin:10px 0;color:var(--muted)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;margin:12px 0}
+  details summary{padding:14px 20px;cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▶ ";font-size:11px;color:var(--muted);margin-right:6px}
+  details[open] summary::before{content:"▼ "}
+  details > *:not(summary){padding:0 24px 20px}
+  .summary-conclusion{font-weight:400;color:var(--muted);margin-left:12px;font-size:13px}
+  .source-list{font-size:13px;color:var(--muted);margin-top:8px}
+  .source-list a{color:var(--accent-light);text-decoration:none}
+  .source-list a:hover{text-decoration:underline}
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:2px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px #00000018;z-index:200}
+  .print-btn:hover{background:#0F2542}
+  @media print {
+    header.fixed-top, .print-btn { display:none !important }
+    details { border:none }
+    details:not([open]) > *:not(summary) { display:block !important }
+    details > *:not(summary) { padding:0 !important }
+    summary::before { display:none }
+    main { max-width:100%; padding:0 12px }
+    h2 { page-break-after:avoid }
+    .card, .conflict-card, .decision-card, .thesis-card { page-break-inside:avoid }
+  }
+</style>
+</head>
+<body>
+
+<header class="fixed-top">
+  <span class="ticker mono">LULU</span>
+  <span class="sep">｜</span>
+  <span class="mono">2026-05-07</span>
+  <span class="sep">｜</span>
+  <span class="thesis-line">LULU 是被市場過度悲觀的 athleisure turnaround — FPE 10.7x 已 priced bear case，但 dupe 結構性威脅未解</span>
+</header>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<main>
+
+<h1>Deep Conviction Analysis · LULU</h1>
+<p style="color:var(--muted);font-size:14px;margin:0 0 12px">深度定見分析 ｜ 報告日期：2026-05-07 ｜ 標的價格：USD 130.21（5/6 收盤）｜ Forward P/E (FY+1) ≈ 10.7x ｜ YTD -38%</p>
+
+<!-- ==================== §2 ONE-SENTENCE THESIS ==================== -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-card">
+  <div class="quote">LULU 是被市場過度悲觀的高品質品牌 — 估值已殺到 5 年低點（FPE 10.7x），但 dupe 生態 + 北美失速是結構性而非循環性，是 turnaround 賭局而非 conviction core。</div>
+  <div class="label">— 50 字以內，敘事性 thesis（非財務指標主體）</div>
+</div>
+
+<div class="card">
+<h3>Thesis 解讀</h3>
+<p>LULU 不是「便宜的 wide-moat 標的」 — 那是錯誤類比。它是 <strong>「結構性受傷 + 估值極度便宜」的雙刃 setup</strong>：① FPE 10.7x 已 priced 接近 bear case（5Y 區間 9-34x，當前 ~5% 分位）；② 但站內 share 從 30%（Jan 25）跌至 24%（Nov 25）-6pp 是 <strong>結構性流失</strong>非循環噪音；③ 創辦人 Chip Wilson 公開顧問 Vuori / Alo 是「對手有 insider playbook」的破壞性訊號。</p>
+<p>「turnaround 賭局而非 conviction core」是 thesis 核心定位 — 不能像 META 那樣「立即建首批 40%」進場（後者 thesis 強化只是估值便宜 timing）。LULU 需 ① 中國 +20% 兌現；② 北美 SSS 從 -3% reverse；③ 男裝 / 國際 doubles by 2026 三項 turnaround 證明，才能升 conviction。當前位置適合 <strong>小衛星 deep-value bet</strong>，不適合核心持倉。</p>
+</div>
+
+<!-- ==================== §7 DECISION ==================== -->
+<h2>§7 Decision（可執行計畫）</h2>
+
+<div class="decision-card">
+  <span class="verdict-tag">SATELLITE · 試倉 deep value bet</span>
+  <h3 style="margin-top:6px">7a｜倉位與進場計畫</h3>
+  <table>
+    <thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+    <tbody>
+      <tr><td>在投資組合中的角色</td><td><strong>小衛星持倉（Satellite）</strong> — deep-value contrarian bet；非 conviction core；如 turnaround 證明可升至中衛星</td></tr>
+      <tr><td>初始建倉倉位</td><td><strong>1.5–2% of portfolio</strong>（試倉等級；估值已 priced bear case 但 thesis 結構性削弱）</td></tr>
+      <tr><td>目標倉位</td><td><strong>3–4% of portfolio</strong>（thesis turnaround 三條件中至少 2 條兌現後加滿；不需追至 5%+）</td></tr>
+      <tr><td>進場價位區間</td><td><strong>USD 115 – 135</strong>（已落入區間 — 不需等更便宜）</td></tr>
+      <tr><td>進場節奏</td><td><strong>條件式分批</strong> — Pure MA 已 ❌（股價 YTD -38%、可能在 W52 / W104 之下），不適合一次建倉。分 3 批：① 立即建 30% @ $130（估值 priced bear case）；② 等 Q1 FY26 法說（5 月底-6 月初）後驗證 China +20% / 北美 -1~-3% 數據再進 40%；③ 若跌至 $105（W250 附近 / FPE ~8.5x 極端低估）補滿 30%。</td></tr>
+      <tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td>同類消費品 / brand premium 標的：<strong>NKE</strong>（更深的 turnaround 故事，中國衰退更嚴重）、<strong>Vuori private</strong>（無法投資 = LULU 是唯一 athleisure pure-play 上市標的）、<strong>Alo private</strong>（同上）。<br><strong>邊際資金優先級：</strong>① 若 portfolio 重消費 / 可選消費（已有 NKE / RL / TJX 等），LULU 是「同 vertical 內估值最便宜 + brand strongest」hedge — 該加；② 若 portfolio 仍重 AI / 半導體（如本系列 DCA 下的 NVDA / AVGO / TSMC），LULU 是「降相關性 + deep value」配置 — 1.5-2% 試倉；③ 若已有 NKE 3%+，LULU 與 NKE 同 vertical 不重複（前者 athleisure premium / 後者 sneaker culture），可同持但兩者合計勿超 5%。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7b｜加碼與減碼條件</h3>
+  <table>
+    <thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+    <tbody>
+      <tr><td>加碼</td><td>Q1 FY26 法說 China revenue YoY +20%+ 維持 + 北美 SSS 改善至 -1% 以上 + 全年 EPS guidance 不再下修</td><td>3%</td></tr>
+      <tr><td>加碼</td><td>跌至 $105（W250 附近 / FPE 8.5x）+ thesis 三條件未進一步崩壞</td><td>4%</td></tr>
+      <tr><td>減碼</td><td>反彈至 $190（FPE 15.5x）但 turnaround 訊號未完整（北美仍 -3% / China &lt; +15% / men's 平緩）</td><td>2%</td></tr>
+      <tr><td>減碼</td><td>站內 share 連 1 季從 24% 進一步跌至 &lt; 22%（dupe 加速蠶食訊號）</td><td>1.5%</td></tr>
+      <tr><td>清倉</td><td>§5 single-thing 觸發（中國 SSS 連 2 季 &lt; +10% + 北美 SSS 連 2 季 &lt; -5%）</td><td>0%</td></tr>
+      <tr><td>清倉</td><td>Vuori IPO 估值 ≥ $10B + LULU 站內 share 跌至 &lt; 20%（雙重結構性破口）</td><td>0%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+  <table>
+    <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>股價在 W52 之上？</td><td><span class="no-tag">❌</span></td><td>$130 vs W52 估算 ~$190-210（YTD -38% 後在 W52 之下 -30%+）</td></tr>
+      <tr><td>股價在 W104 之上？</td><td><span class="no-tag">❌</span></td><td>$130 vs W104 估算 ~$280-300（在 W104 之下 ~55%）</td></tr>
+      <tr><td>股價在 W250 之上？</td><td><span class="no-tag">❌</span></td><td>$130 vs W250 估算 ~$280-340（在 W250 之下 ~55-60%）</td></tr>
+      <tr><td>三條 MA 斜率全強正？</td><td><span class="no-tag">❌</span></td><td>三條 MA 全下行（從 $400+ 高點墜落多年）</td></tr>
+      <tr><td>Pure MA 系統是否支持進場？</td><td><span class="no-tag">❌ 不支持</span></td><td>結構性空頭 — Pure MA 全面失效。<strong>盲點 2 救援評估</strong>：是否「V 反轉早期」？— Q1 FY26 法說（5 月底-6 月初）若 China + 北美數據實質改善，可能形成底部 V 反轉訊號（類似 META 2022-Q4），但目前未確認。</td></tr>
+      <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="ok-tag">✅ 不過熱</span></td><td>YTD -38% 動能完全消化；RSI 估計 &lt; 40（超賣區間附近）</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:12px"><strong>結論：</strong>Pure MA <strong>❌ 全面不支持</strong>但動能完全消化（超賣）。skill guardrail 12 規則：<strong>即使基本面分析支持進場，也必須等待 MA 信號確認</strong>。<strong>但本案是 deep-value bet 例外處理</strong>：因估值已 priced 接近 bear case（FPE 10.7x ≈ 5Y 5% 分位），向下空間有限（Bear PE 9x × Bear EPS $10 = $90 = -31%），向上空間明確（Bull case +177%）— 在這種極端不對稱 setup 下，「等 MA 確認」會錯過底部買進機會。<strong>採折衷方案：建首批 30% @ $130，剩餘 70% 等 turnaround 訊號 / Q1 FY26 法說。</strong></p>
+  <p style="font-size:13px;color:var(--muted)"><em>MA 確認條件（如等待）：① 站上 MA60（約 $145-150）+ MA60 斜率 turn positive；② Bollinger 中軌 turn up；③ 連 2 季 SSS 改善訊號。任二條件成立 = MA confirmation 觸發。</em></p>
+
+  <h3>7d｜建議持有年限</h3>
+  <table>
+    <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+    <tbody>
+      <tr><td>短期（&lt; 2 年）</td><td>合理 — turnaround bet timing window 通常 18-24 個月。Q2-Q3 FY26 是命運點：若 China + men's + international 三引擎兌現至少 2 個，PE re-rate 至 14-16x，股價 +50-70%</td></tr>
+      <tr><td>中期（2-5 年）</td><td>強推 — 若 turnaround 證明（North America stabilize + China $1.5B+ + men's $4B+），EPS 復原至 $18-20，PE 18-20x，股價 +130-170%</td></tr>
+      <tr><td><strong>長期（5-10 年）</strong></td><td><strong>條件式持有</strong>。Athleisure TAM 仍 +9% CAGR；LULU 若維持 brand premium + 國際成功，是合理長期持有；但需注意 dupe 生態（Halara TikTok GMV $58-62M/月、Costco 2025-06 訴訟 active）持續壓制 pricing power 上限。</td></tr>
+    </tbody>
+  </table>
+  <p><strong>建議持有年限：2-5 年（衛星 → 升核心位）</strong>。原因：① 估值已 priced bear case，向下空間有限；② Q2-Q3 FY26 是 turnaround binary 命運點；③ 中國 +20% guidance 給予 18 個月窗口驗證；④ 5+ 年長期持有需 dupe 結構性 contained，當前未確認。</p>
+
+  <h4>EPS 預測參考表</h4>
+  <table>
+    <thead><tr><th>年份</th><th>EPS 估計（USD）</th><th>來源</th><th>備注</th></tr></thead>
+    <tbody>
+      <tr><td>FY2026E（Jan 27）</td><td>$12.10–$12.30</td><td>Lululemon 公司 guidance（3/17 法說）</td><td>YoY -13~-15%（vs FY25 ~$14.20，受 tariff $380M + GM -120bps + OPM -250bps 拖累）</td></tr>
+      <tr><td>FY2027E</td><td>$13.0–$14.0</td><td>共識（隱含 turnaround 部分修復）</td><td>+5-15%；假設 tariff 結構性穩定 + 北美 SSS turn 0% / China 維持 +15-20%</td></tr>
+      <tr><td>FY2028E</td><td>$15.5</td><td>邏輯推導</td><td>+10-15%；國際接力 + men's 加速；前提 turnaround 至少 2 引擎兌現</td></tr>
+      <tr><td>FY2030E（外推）</td><td>$18-$22</td><td>外推假設</td><td>2026 Power of Three ×2 達標假設下 — 中國 $1.5B+ / men's $4B+ / digital double / international quadruple 2021 base</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+  <p>適合 <strong>如果你接受 turnaround binary 風險</strong>。FPE 10.7x 已 priced 接近 5 年低點；分析師中位 target $201.50 = +55% upside（雖共識評級 Hold）；長期 R:R 5Y +75%（EV）含風險。<strong>關鍵警示：</strong>不是「便宜的 wide-moat」進場（如 META），而是「結構性受傷的高品質品牌等 turnaround 證明」進場 — 倉位嚴格控制在小衛星 1.5-2%，避免 thesis 失敗時 portfolio impact。</p>
+</div>
+
+<!-- ==================== §4 ASYMMETRY ==================== -->
+<h2>§4 Asymmetry Analysis</h2>
+
+<div class="card">
+<table>
+  <thead><tr><th>情境</th><th>5 年倍數</th><th>依據</th><th>機率估計</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Bull（thesis 對）</strong></td><td><strong>+177%（≈ 2.77x）</strong></td><td>FY+5 EPS $20 × 18x = $360。前提：① 中國 $1.5B+ 達標；② men's 翻倍至 $4B+；③ 北美 SSS 復原至 +3%；④ international quadruple 2021 base；⑤ tariff 結構穩定 + GM 復原至 58%+</td><td><strong>25%</strong></td></tr>
+    <tr><td>Base</td><td>+54%</td><td>FY+5 EPS $15 × 13.3x = $200。中國 +15% / 北美 -1~+1% 平緩 / men's 慢速兌現 / tariff 持續但 absorbed</td><td>50%</td></tr>
+    <tr><td><strong>Bear（thesis 錯）</strong></td><td><strong>–31%（≈ 0.69x）</strong></td><td>FY+5 EPS $10 × 9x = $90。Vuori IPO 估值 ≥ $10B 持續蠶食 + 北美 SSS 連年 -3~-5% + men's 不見效 + Costco/Halara dupe 結構性壓制 + brand 中段化</td><td>25%</td></tr>
+    <tr><td colspan="3" style="text-align:right"><strong>機率加權期望值</strong></td><td><strong>+74%（5Y）</strong></td></tr>
+  </tbody>
+</table>
+
+<h4>追加壓力測試</h4>
+<ul>
+  <li><strong>時間拉長（10Y vs 5Y）：</strong>10Y +120-150%（CAGR ~8-10%） — 略優於 SPX 平均；考慮機會成本，仍是合理 deep-value 配置但不再是 alpha 引擎。</li>
+  <li><strong>vs 同 vertical：</strong>NKE 5Y +30-50% 較穩、UAA 5Y -30~+30% 較破；LULU 介於兩者間，asymmetry 偏好 LULU（FPE 10.7x vs NKE ~22x）但 conviction 較低。</li>
+  <li><strong>Vuori IPO 影響：</strong>若 Vuori 2026 H2 IPO @ $10B+，等同公開市場 bless「LULU 站內 share 持續流失」narrative — LULU 可能再殺 -15-25%。但 IPO 後 Vuori 自身估值合理化（5-6x P/S）也可能反向 imply LULU 過度悲觀（LULU 站內 share 仍 24% &gt; Vuori 12%）。Net binary。</li>
+  <li><strong>Tariff 結構性逆轉情境：</strong>若 2027 美國貿易政策反轉（Democratic 重新執政等）→ tariff $380M 取消 → 立即 +$2-3 EPS / +200bps GM → estimates +$2 → 立即 +20-30%。低機率但是免費的 optionality。</li>
+</ul>
+</div>
+
+<div class="pattern-card">
+<h3>📐 Pattern match — 讓機率有錨點</h3>
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>歷史結構類似的個股</td><td><strong>NKE 2017-Q4 至 2019-Q1（adidas turnaround 同期）</strong></td></tr>
+    <tr><td>當時的 setup（NKE 2017 H2）</td><td>股價 $50-55 / FPE ~22x；adidas 蠶食 NKE 北美 share；中國市場是新引擎；管理層強調「Triple Double（2x innovation, 2x speed, 2x direct connection）」轉型；但 GM 仍 strong（44%+）；ROIC 23%。</td></tr>
+    <tr><td>最終 5 年實現報酬（2017-Q4 至 2022-Q4）</td><td>$50 → $100-110 = <strong>+100-120%</strong>（CAGR ~15-17%）。多數來自 EPS 復原（adidas turnaround 失敗回到 NKE）+ 中國市場兌現。但 2022 後 NKE 又進入 Greater China FY19=FY25 6 年零成長期 — turnaround 並非永久。</td></tr>
+    <tr><td>我的標的（LULU 2026 進場）最像 / 最不像 2017 NKE</td><td><strong>最像：</strong>① brand premium 仍存（GM 58.5% vs NKE 44%）；② 中國是新引擎（NKE 當年從 0 % → 17% 中國市佔；LULU 現在 +20% YoY）；③ 北美 SSS 失速但非崩潰；④ 主要對手結構未完全替代核心。<br><strong>最不像（且這是關鍵）：</strong>① <strong>NKE 2017 沒有 Vuori / Alo / Halara 三線同步蠶食</strong>（adidas 是傳統 wholesale 對手，可被 NKE DTC 戰略反擊；LULU 對手是 DTC native + dupe culture + 創辦人 insider 三層攻擊）；② NKE 2017 PE 22x 留下 PE compression 空間有限；LULU 已 PE 10.7x 已壓到底；③ NKE 全球品牌力 vs LULU 品類專注（athleisure），TAM 不同；④ NKE 中國 0→17% 是空白市場滲透，LULU 是已有競品市場滲透。</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:8px"><strong>啟示：</strong>NKE 2017-2022 +100% case 是 best analog 但不該完全複製 — LULU dupe 生態 + 創辦人 insider 是 NKE 沒有的負面變量。LULU 5Y +75% EV 是合理上限（介於 NKE +100% 與 UAA -30% 之間）；不要期待重演 NKE 2017-2019 +50% / 18 個月。</p>
+</div>
+
+<!-- ==================== §1 MENTAL MODELS ==================== -->
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">
+<strong>TO: Investment Committee</strong><br>
+<strong>FROM: PM</strong><br>
+<strong>DATE: 2026-05-07</strong><br>
+<strong>RE: LULU — 小衛星 deep-value bet（試倉 1.5-2%）</strong><br>
+<br>
+<strong>Thesis (50 字)：</strong> LULU 估值殺到 5Y 低點（FPE 10.7x），但 dupe 結構性威脅未解，是 turnaround 賭局而非 conviction core。<br>
+<br>
+<strong>Key Driver：</strong>① 中國 + 國際成長能否補北美下滑（China FY26 +20% guidance / men's needs to double 2021 base）；② Brand premium 維持 vs Vuori / Alo（GM 58.5% / 站內 share 24%）。<br>
+<br>
+<strong>Asymmetry：</strong>Bull +177% (25%) / Base +54% (50%) / Bear -31% (25%) → EV +74% (5Y)。<br>
+<br>
+<strong>關鍵警示：</strong>YTD -38%、Pure MA ❌ 全面失效、創辦人 Chip Wilson 顧問對手公司、站內 share 6pp/年流失。需 Q1 FY26 法說（5 月底-6 月初）證明 turnaround。<br>
+<br>
+<strong>Position：</strong>Satellite 1.5-2% 試倉，目標 3-4%。<br>
+<br>
+<strong>Entry：</strong>條件式分批 — 立即建 30% @ $130（priced bear case）、剩餘 70% 等 turnaround 訊號。<br>
+<br>
+<strong>主要風險：</strong>① 中國 SSS 連 2 季 &lt; +10% + 北美連 2 季 &lt; -5%（清倉）；② Vuori IPO @ $10B+ + LULU 站內 share &lt; 20%（清倉）；③ tariff 持續惡化 + GM 結構性 -300bps（減碼）。<br>
+<br>
+<strong>Single thing that changes mind：</strong>中國 SSS 連 2 季 &lt; +10% YoY + 北美 SSS 連 2 季 &lt; -5%（雙條件，turnaround narrative 全面失效）。<br>
+<br>
+<strong>建議：小衛星 1.5-2% 試倉，2-5 年 turnaround timing；不適合核心持倉。</strong>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「LULU 今年跌了 38%，PE 10.7x 是過去 10 年最低 — 比 2018 還便宜。市場擔心 Vuori、Alo、Halara dupe 蠶食、加上創辦人公開幫對手做顧問。但護城河仍在：GM 58.5%、中國 +20%、會員社群活躍。這是 turnaround 賭局 — 5 年期望值 +74%，但風險是 Vuori IPO + dupe 結構性壓制 brand。試倉 1.5-2%，等 Q1 法說證明再加碼。」
+</div>
+
+<p><strong>壓力測試結果：</strong> ✅ 兩個版本邏輯自洽，1 頁紙 memo 與 30 秒版本都明確標註「試倉 + 等 turnaround 證明」立場（與 META「立即進場 4-5%」、AAPL「等回測 2-3%」、ASML「等回測 3-4%」相比，LULU 是「最低 conviction + 最低倉位」配置），與 §7 小衛星 1.5-2% 一致。</p>
+
+<!-- ==================== Phase B ==================== -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（Phase A1-A3 方向一致的判斷）</h3>
+<div class="card">
+<ul>
+  <li><strong>Brand premium 仍存（A1 / A3 一致）：</strong>GM 58.5% Q2 2026 / 59.23% FY24；OPM 23.7% 在 sector 頂端；DTC 90%+ 模型未變。</li>
+  <li><strong>北美失速（A2 / A3 一致）：</strong>2026 guidance 北美 -1~-3%、站內 share 從 30% 跌至 24%、男裝 / digital 仍未 doubled vs 2021 base。</li>
+  <li><strong>中國 + 國際是新引擎（A2 / A3 一致）：</strong>China +20% FY26 guidance、Q4 +28%、6 新國家 2026 拓展。</li>
+  <li><strong>Tariff 是 GM 結構性逆風（A2 / A3 一致）：</strong>2025 $275M → 2026 $380M（gross），GM -120bps / OPM -250bps。</li>
+  <li><strong>估值已 priced 接近 bear case（A3 一致）：</strong>FPE 10.7x = 5Y ~5% 分位；YTD -38%；Wall Street median target $201.50 +55%（但評級 Hold）。</li>
+</ul>
+</div>
+
+<h3>2. 矛盾清單</h3>
+
+<div class="conflict-card">
+<table>
+  <thead>
+    <tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🔴 1</td>
+      <td>Brand premium 維持（A1）vs 站內 share 6pp/年流失（A2）</td>
+      <td>GM 58.5% / cult-like 社群仍存</td>
+      <td>站內 share 30%（Jan 25）→ 24%（Nov 25）；Vuori 9.85% → 12.06%；Alo 6% → 9%</td>
+      <td>—</td>
+      <td><strong>不可調和</strong>（brand premium 若仍強，share 不應 6pp/年流失）</td>
+    </tr>
+    <tr>
+      <td>🔴 2</td>
+      <td>China +20% 強勁（A2）vs Power of Three ×2 2026 $12.5B 目標恐 miss（A3）</td>
+      <td>—</td>
+      <td>China FY26 +20% / Q4 +28% / 30%+ 產品 China-specific</td>
+      <td>2026 guidance $11.35-11.50B vs $12.5B 目標 = miss $1B+</td>
+      <td><strong>不可調和</strong>（China 強勁不等於整體達標 — 北美失速太嚴重）</td>
+    </tr>
+    <tr>
+      <td>🟡 3</td>
+      <td>Vuori private $5.5B（→ 可能 IPO @ $10B）vs LULU public FPE 10.7x</td>
+      <td>—</td>
+      <td>Vuori private 估值 5-6x P/S; LULU 1.4x P/S</td>
+      <td>—</td>
+      <td>可調和（私募 vs 公開估值差，但暗示 sector 估值錯配 — LULU 可能過度悲觀）</td>
+    </tr>
+    <tr>
+      <td>🟡 4</td>
+      <td>創辦人 Chip Wilson 公開顧問 Vuori / Alo（A1 治理問題）vs Brand premium 仍存（A1 商業面）</td>
+      <td>內部矛盾</td>
+      <td>—</td>
+      <td>—</td>
+      <td>可調和（治理 vs 商業，但 insider playbook 流失 = 中長期 brand erosion 加速劑）</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<div class="conflict-card">
+<table>
+  <thead>
+    <tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>final_signal</td>
+      <td>5/7 B（觀望偏進場 / 試倉 deep value）</td>
+      <td><strong>無 LULU DD 報告可引用</strong></td>
+      <td>無 — 本 DCA 是 first conviction document</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>ID_AthleisureNewEntrants 對 LULU 評估</td>
+      <td>—</td>
+      <td>「LULU 站內 share 30% (Jan 25) → 24% (Nov 25) -6pp」「LULU public fwd PE 11x derate vs Alo private $10B / 5-6x P/S 不可調和」</td>
+      <td>ID 視角 — sector 結構性錯配，LULU 是兩端中的「過度悲觀端」</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>ID_ApparelFootwear 對 LULU 評估</td>
+      <td>—</td>
+      <td>「K-shape 是結構性而非循環性 — 中段 LULU 北美 -1% 集體失速」「Tariff 是 GM permanent reset 而非 transitory」</td>
+      <td>ID 視角 — LULU 在 K-shape 中段，tariff 是結構性 cost reset</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>ID_ChannelPowerReversion 對 LULU 評估</td>
+      <td>—</td>
+      <td>「利潤池正從中游品牌（NKE / LULU / VFC）→ 下游通路（DKS-FL / AMZN）+ ad ecosystem 結構性轉移」</td>
+      <td>ID 視角 — LULU 屬「品牌 DTC peak 過後」段，2018-2024 通路權力反向期</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（每個「不可調和」矛盾必填）</h3>
+
+<div class="verdict-table">
+<table>
+  <thead>
+    <tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 的硬數據點</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>🔴 1</td>
+      <td>Brand premium 維持 vs 站內 share 流失</td>
+      <td><strong>選 A2（share 流失是真訊號；brand premium 仍存但天花板已下移）</strong></td>
+      <td>站內 share 數據（Earnest Analytics 等供應鏈數據追蹤）是 leading indicator，比 GM（lagging）更早反映 brand 變化。<strong>GM 仍 58.5%</strong>是因為 LULU 沒降價護份額（拒絕跟 Vuori 打 promotion）— 這是 short-term margin 保護但 long-term volume 流失。<strong>brand premium 從「絕對 dominance」降至「one of three premium athleisure brands」</strong>，PE 應從 wide-moat 30x 退至 mature consumer 14-18x（實際已殺至 10.7x，over-correction）。</td>
+      <td>Earnest 站內 share 季度數據：① 連 2 季從 24% &lt; 22% = brand 結構性退化加速（清倉訊號）；② 維持 22-26% 區間 = 平台共存 base case。</td>
+    </tr>
+    <tr>
+      <td>🔴 2</td>
+      <td>China +20% 強勁 vs $12.5B Power of Three ×2 miss</td>
+      <td><strong>選 A3（北美失速太嚴重，整體目標 miss）</strong></td>
+      <td>China FY26 預估 ~$1.5B（從 FY25 ~$1.25B +20%）= 仍佔總營收 ~13%。即使 China +20% 也無法補北美 -1~-3%（占 ~50% 營收）。<strong>$12.5B 目標的 binary failure 是 known known</strong>，已 priced in。重點不是「目標達標」而是「miss 程度」 — $11.35B 範圍代表 -$1.15B miss（約 -9%），estimates 已下修反應。</td>
+      <td>FY26 全年 actual revenue：① ≥ $11.5B = guidance 上端 = 中性；② $11.35-11.5B = 守住 = 中性；③ &lt; $11.35B = 加速衰退 = 紅旗。</td>
+    </tr>
+    <tr>
+      <td>🟡 3</td>
+      <td>Vuori private $10B 估值 vs LULU public $14B 市值</td>
+      <td><strong>並存：暗示 sector 估值錯配，LULU 過度悲觀</strong></td>
+      <td>Vuori 估算 FY25 revenue ~$0.8-1B（私募估值 5-6x P/S = $5-6B → 2026 H2 IPO $10B 估值 = 10x P/S）；LULU FY25 revenue ~$11.1B × 1.4x P/S = $15.5B 市值（接近當前 $130 × 1.05B shares = $137B？— 需驗證 share count）。<strong>Vuori P/S 5-10x vs LULU 1.4x</strong>是私募 hype + 高成長 / 市場 over-priced；但 LULU 1.4x P/S 也代表市場 under-priced 高品質品牌。<strong>5+ 年後均值回歸機率高 — Vuori P/S 收斂至 3-4x、LULU P/S 修復至 2-3x</strong>。</td>
+      <td>Vuori IPO 實際定價 + 後 6 個月股價：① IPO &gt; $10B 且後 6 個月維持 = sector 重 re-rate；② IPO 失敗或 -25% = sector 估值合理化，LULU 受益。</td>
+    </tr>
+    <tr>
+      <td>🟡 4</td>
+      <td>Chip Wilson 顧問對手 vs Brand premium 維持</td>
+      <td><strong>選 A1 商業面（短期 brand 仍強）但承認治理 risk 是中長期 erosion accelerator</strong></td>
+      <td>Chip Wilson 已不在公司管理層 9 年，他的 insider playbook 對 Vuori / Alo 的 marginal 助益是「品牌定位 + 社群運作」概念性建議，不是直接的供應鏈 / 客戶名單竊取。<strong>但 2026-04 公開揭露此事</strong>是 narrative 層面負面（market 把它當「founder 否決自家品牌」）— 短期股價 -10% 反應；中長期讓 Vuori / Alo 看起來更 legitimate。</td>
+      <td>① Chip Wilson 後續是否公開支持 dupe 訴訟（Costco 案）；② Vuori IPO 招股書是否提及 Wilson 顧問角色 — 若是，sector 對 LULU 的 brand 認知折扣加劇。</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p style="background:#FEF3C7;padding:12px 16px;border-left:4px solid #F59E0B;border-radius:2px;margin-top:14px"><strong>結論：</strong>4 個矛盾經強制裁決後，主要兩項（🔴 1 share 流失 / 🔴 2 整體目標 miss）都指向「thesis 結構性受傷但估值已 priced」，兩者並不撼動「deep-value bet」定位 — 但確認了 §7 應為「小衛星 1.5-2% 試倉、條件式進場」而非「核心持倉立即進場」。Final signal <strong>B（觀望偏進場）</strong>。</p>
+
+<!-- ==================== §3 KEY DRIVERS ==================== -->
+<h2>§3 Key Drivers</h2>
+
+<div class="card">
+<h3>這支股票的命脈是什麼？</h3>
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>中國 + 國際接力北美下滑（地理 mix shift）</strong></td>
+      <td>北美營收 ~50%、SSS -1~-3%；中國目前 ~13%、+20-30% 增速；國際 27%。<strong>turnaround 成立的最低條件是「國際增速能 absorb 北美下滑」</strong>。沒這條，total revenue 不再成長 → estimates 持續下修 → PE 進一步壓縮至 8x</td>
+      <td>① 中國 SSS YoY（季度，門檻 &gt; +15% 健康 / &lt; +10% 連 2 季警戒）；② 國際 segment YoY（季度，門檻 &gt; +20%）；③ 北美 SSS YoY（季度，門檻 &gt; -3% 容忍 / 連 2 季 &lt; -5% 警戒）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>Brand premium 維持 vs Vuori / Alo（pricing power 飛輪）</strong></td>
+      <td>沒這條，LULU 從 wide-moat 退化為 mature consumer，PE 從 historical 25-30x 永久壓在 10-14x。GM 58.5%、站內 share 24%、cult-like 社群 — 三層支撐 brand premium。沒這條，Driver 1 也難救（在 mature consumer 框架下，國際成長被市場給更低 PE multiple）</td>
+      <td>① GM YoY trend（季度，門檻 &gt; 56% 健康 / &lt; 54% 結構性削弱）；② 站內 share Earnest 數據（季度，門檻 &gt; 22% 健康 / &lt; 20% 紅旗）；③ ASP 趨勢 + markdown rate（季度法說披露）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>為什麼是這 2 個，而不是其他？</h4>
+<p>Driver 1（地理 mix shift — 量）+ Driver 2（brand premium — 價）兩條獨立因果鏈：</p>
+<ul>
+  <li>Driver 1 不依賴 Driver 2：即便 brand premium 退化（PE 壓 10x），中國 + 國際成長若兌現仍能拉動 total revenue 成長，estimates 不再下修。</li>
+  <li>Driver 2 不依賴 Driver 1：即便北美 -3% / 中國 +5%（Driver 1 失敗），若 GM 維持 56%+ + brand 護住 high-end positioning，PE 仍能維持 14-18x。</li>
+  <li><strong>校驗</strong>：Driver 2 不假設 Driver 1 成立的情況下能否單獨被推翻？能 — 即使 Driver 1 中國 +25%，若 GM 跌至 52% + 站內 share 跌至 18%，brand 已壞；total revenue 高也救不了 PE。✅ 通過獨立性測試。</li>
+</ul>
+
+<h4>強制減法：我認為不重要的事</h4>
+<table>
+  <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>男裝 doubled by 2026 Power of Three ×2 目標</td><td>表面上是新引擎，本質是 Driver 1 sub-component（仍是地理 + 男女 mix shift 同一條因果鏈下的子集）。重點看總營收結構是否改善。</td></tr>
+    <tr><td>buyback 4% YoY share count 下降</td><td>是 result 不是 driver。buyback 速度由 FCF 決定（FCF 由 driver 1 + 2 決定）。重點看 FCF。</td></tr>
+    <tr><td>tariff $380M 2026 absorption</td><td>已 priced in（FY26 guidance 已含 tariff）；重點不是 absorption 而是 2027+ tariff 結構性走勢（已列入 §6）。</td></tr>
+    <tr><td>Costco dupe 訴訟</td><td>2025-06 active 但訴訟結果不會在 1-2 年內出來；對 thesis 的影響是 long-term reputation，不是即時 driver。</td></tr>
+    <tr><td>Inventory dollar +18% / 6 unit growth mismatch</td><td>是 management 規劃的 short-term phenomenon；2026 guidance 已 acknowledge 並 plan to rein in。</td></tr>
+    <tr><td>activist investor 介入 / proxy battle</td><td>2026-04 proxy filing 提及 Chip Wilson 顧問對手，但無 active investor 嚴重 push 拆 / 賣公司；對 thesis 的影響低。</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="conflict-card">
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+  <tbody>
+    <tr>
+      <td style="width:30%"><strong>市場目前定價在什麼假設上</strong></td>
+      <td>FPE FY+1 10.7x（5Y 5% 分位）+ Wall Street median target $201.50（+55%）+ Hold consensus rating — 共識把 LULU 定價為「結構性 erode 中的 mature consumer」。隱含「PE 永久 lock 在 10-14x、estimates 持續下修、brand premium 永久受傷」的判斷。<strong>市場已 priced 接近 bear case</strong>。</td>
+    </tr>
+    <tr>
+      <td><strong>我認為的不同假設</strong></td>
+      <td>共識在 <strong>「dupe 生態 + 創辦人 insider 是永久性 brand 損傷」的定價過度悲觀</strong> — 但忽略 ① brand premium 殺到 GM 58.5% 仍 sector 頂端；② 中國 +20% 結構性兌現；③ Vuori IPO 後 sector 估值會均值回歸。<strong>5Y 內 PE 從 10.7x 修復至 14-16x</strong>是合理 base case，配合 EPS 從 $12.20 復原至 $15-16，股價 $200-240 = +55-85% — 與 analyst median target 一致。</td>
+    </tr>
+    <tr>
+      <td><strong>賣方為什麼錯（具體理由）</strong></td>
+      <td>賣方對 LULU brand 的定價過度線性 — 把站內 share 6pp/年流失外推為「永久趨勢」（5 年 -30pp 退至 0%）但忽略 ① dupe 生態本身有 saturation（Vuori / Alo 用戶 50%+ 與 LULU 重疊，他們搶的是 wallet share 不是 customer base）；② 中國市場 LULU 沒有 Vuori / Alo 等 US-centric dupe（中國市場 LULU 對 Anta / Li-Ning，是不同戰場）；③ Tariff 是循環性而非結構性（2027 政治週期可能反轉）。<strong>賣方錯誤根源：把 US 市場 dynamics 外推為 global pattern</strong>。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="margin-top:10px"><strong>校驗：</strong>三題寫得出差異 — 但分歧本質是「PE re-rate 的可能性」（市場給 perpetual 10-14x，本 thesis 認為 5Y 內可修復至 14-16x）。這意味著 §7 倉位上需要「等 turnaround 證明才放心加碼」 — 試倉 1.5-2% 起，逐步加至 3-4%。<strong>不能因 conviction 不足而跳過這檔 — asymmetry +74% EV 是合理 deep-value optionality</strong>。</p>
+</div>
+
+<!-- ==================== §5 SINGLE THING ==================== -->
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<div class="card" style="background:#FFF7ED;border-left:4px solid #F97316">
+<table>
+  <tbody>
+    <tr>
+      <td style="width:30%"><strong>事件描述</strong></td>
+      <td><strong>中國 SSS 同店 YoY 連 2 季 &lt; +10% + 北美 SSS 同店 YoY 連 2 季 &lt; -5%</strong>（雙條件成立）。注意：① 不是單季 SSS 偏弱（已發生 2025）；必須是 連 2 季 China &lt; +10% 顯示中國 turnaround 失敗；② 不是北美 -3%（已發生 2026 guidance）；必須是 連 2 季 &lt; -5% 顯示加速衰退（從 -3% → -5% → -8% 等）。</td>
+    </tr>
+    <tr>
+      <td><strong>為什麼這個事件是致命的</strong></td>
+      <td>① 直接擊穿 Driver 1（地理 mix shift）— 中國 turnaround 失敗 + 北美加速 = total revenue 結構性 -5~-10% YoY；② 同時擊穿 Driver 2 — 北美 -5% 通常伴隨 markdown 加深 → GM 跌穿 54% → brand premium 結構失守；③ PE 從 10.7x 進一步壓至 8-9x（distressed mature consumer 級別）— 估值 -20-30%；④ EPS 共識下修 15-25% → 雙重壓力 → 股價 -30-40%。</td>
+    </tr>
+    <tr>
+      <td><strong>如何監測</strong></td>
+      <td>① <strong>季度法說</strong>（Q1 FY26 5/底-6/初、Q2 FY26 9/中、Q3 FY26 12/中、Q4 FY26 3/中）— 中國 + 北美 SSS 數據；② <strong>Earnest Analytics 站內 share 季度報告</strong>；③ <strong>management 談話</strong> — 是否提及「macro headwind / consumer caution」或「需要 elevate 促銷」；④ <strong>競品數據</strong>（Vuori / Alo / NKE 同期數據對比）。</td>
+    </tr>
+    <tr>
+      <td><strong>目前離發生有多遠</strong></td>
+      <td>近 — Q1 FY26 法說（約 5 月底）就會看到第 1 季數據。中國 +20% guidance（含農曆新年 boost +5pp）暗示實際 +15% — 已接近 +10% 警戒線。北美 SSS Q4 -1.4% → 2026 guidance -1~-3% — 也接近 -5% 警戒線。<strong>2026 H2 機率估 25-30%</strong>觸發雙條件，2027 H1 累積機率達 35-40%。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="margin-top:10px"><strong>校驗：</strong>該事件雙條件 + 明確 + 可驗證 — 不是「市場情緒轉變」、不是「macro 走弱」這種模糊表述。✅ 通過 guardrail 7。</p>
+</div>
+
+<!-- ==================== §6 WHAT I DON'T KNOW + PRE-MORTEM ==================== -->
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a｜強迫面對自己的盲點</h3>
+<div class="card">
+<table>
+  <thead><tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>中國 +20% 是否能維持 3+ 年</td>
+      <td>FY26 +20% / FY27 +15-18% / FY28 +12-15%</td>
+      <td>若 FY27 中國滑至 +10%、FY28 +5% → estimates -8-10%、PE -1x → 股價 -15-20%</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Vuori IPO 估值 + 後續股價走勢</td>
+      <td>Vuori IPO @ $7-9B（中性）+ 後 6 個月平緩</td>
+      <td>若 IPO @ $12B+ + 後 6 個月 +30%，sector 對 LULU 視為「過時 athleisure 一線」，再殺 -15-25%</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>tariff 2027+ 是否結構性反轉</td>
+      <td>tariff 在 $300-400M 區間穩定（不再上修）</td>
+      <td>若 tariff 升至 $500M+ → GM -200bps、estimates -$2 → 股價 -15%；若反轉至 $100M → +20%</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>北美 SSS 是否能 stabilize 或進入永久衰退</td>
+      <td>FY26 -3% → FY27 -1% → FY28 0%</td>
+      <td>若 FY27 仍 -3% / FY28 -5% → 永久衰退確認，§5 single-thing 觸發 → 清倉</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Chip Wilson activism 升級</td>
+      <td>Wilson 維持 advisor 角色但不發起 activist campaign</td>
+      <td>若 Wilson 公開支持拆分 / 發起 proxy battle → 治理動盪 -10-15%</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>6b｜Pre-mortem：失敗故事倒推</h3>
+<div class="premortem">
+「假設 5 年後（2031-05）這個部位虧 50%（從 $130 進場 → $65），最可能發生的故事是：<strong>2026-Q3 Q1 FY26 法說中國 SSS 滑至 +12%</strong>（低於 guidance +20%，因 5 月起 Anta 推出本土 athleisure 子品牌）；<strong>2026-Q4 Vuori IPO @ $12B + Wilson 公開背書</strong> → market 把 LULU brand「過時化」narrative confirm；<strong>2027-Q2 北美 SSS 滑至 -6%</strong>（從 -3% 加速）→ markdown 加深至 GM 跌至 53% → estimates 大砍；<strong>2027-Q4 §5 single-thing 雙條件觸發</strong>（中國 SSS 連 2 季 +8%、北美連 2 季 -7%）→ market 視為「結構性 erode 確認」；<strong>2028-Q2 tariff 升至 $500M</strong>（特朗普 2.0 加碼 vs 中國）→ GM 跌至 51% → EPS 跌至 $9 → PE 從 10.7x 壓至 7x → 股價 9 × 7 = $63。」
+</div>
+
+<p><strong>校驗：</strong>這個故事和 §5 single-thing 重疊嗎？</p>
+<ul>
+  <li>核心重疊（中國 SSS &lt; +10% + 北美 &lt; -5%）— ✅ §5 抓對了「turnaround narrative 失敗」最致命路徑</li>
+  <li>但 pre-mortem 揭示：<strong>真正的 -50% 路徑是「China turnaround 失敗（§5）+ Vuori IPO 高估值（外部 narrative）+ 北美加速 + tariff 升級」四重疊加</strong> — §5 抓到了主要 binary 但 pre-mortem 提示 Vuori IPO + tariff 是並行 risk vectors</li>
+  <li><strong>啟示：</strong>除了監測 §5 single-thing，要同等重視 ① Vuori IPO 時程 + 估值（年度）；② tariff 政策走勢（季度）；③ Chip Wilson activism 升級訊號（持續監測）— 三者組合構成完整 risk dashboard</li>
+</ul>
+
+<!-- ==================== §8 REVIEW TRIGGERS ==================== -->
+<h2>§8 Review Triggers</h2>
+
+<div class="card">
+<table>
+  <thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>LULU Q1 FY26 法說 — 中國 SSS YoY、北美 SSS YoY、全年 guidance 是否再下修</strong></td><td>財報日期</td><td><strong>2026-06-初（約 6/4-6/8）</strong>（最重要單一事件 — 4 週後）</td></tr>
+    <tr><td>2</td><td>Earnest Analytics 站內 share 季度數據</td><td>產業事件</td><td>季度（次季初）</td></tr>
+    <tr><td>3</td><td>Vuori IPO 申請 / 定價 / 上市</td><td>產業事件</td><td>持續監測（預計 2026 H2 - 2027 H1）</td></tr>
+    <tr><td>4</td><td>tariff 政策走勢（美國 2026 期中選舉前後）</td><td>政治事件</td><td>持續監測（2026 H2 政治不確定性高）</td></tr>
+    <tr><td>5</td><td>Costco dupe 訴訟進度</td><td>政治事件</td><td>持續監測（2025-06 開始 active）</td></tr>
+    <tr><td>6</td><td>股價跌至 $115 + Q1 FY26 法說 acceptable（建首批 30%）</td><td>價位觸發</td><td>跌幅 -11.7% 自當前</td></tr>
+    <tr><td>7</td><td>股價跌至 $105（W250 附近 / FPE 8.5x）</td><td>價位觸發</td><td>跌幅 -19.4% 自當前</td></tr>
+    <tr><td>8</td><td>反彈至 $190 + turnaround 訊號未完整（減碼）</td><td>價位觸發</td><td>漲幅 +45.9% 自當前</td></tr>
+    <tr><td>9</td><td>反彈至 $230 + Q1 法說 turnaround 確認 + China +20% 兌現（減碼至 2%）</td><td>價位觸發</td><td>漲幅 +76.6% 自當前</td></tr>
+    <tr><td>10</td><td>§5 Single Thing — 中國 SSS 連 2 季 &lt; +10% + 北美 SSS 連 2 季 &lt; -5%</td><td>產業事件</td><td>2026 H2 - 2027 H1 累積機率 35-40%</td></tr>
+  </tbody>
+</table>
+
+<p style="margin-top:14px"><strong>這份報告的保質期：</strong>Q1 FY26 法說（2026-06-初）後立即重評（4 週後）；最遲下一次財報發布前有效。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>① Q1 FY26 法說中國 SSS +25%+ 兌現 + 北美 -1% 改善（從 -3%）；② Q2 FY26 法說 men's segment 加速；③ tariff 2026 H2 政治反轉訊號；④ Vuori IPO 失敗或低估值定價（sector 估值合理化、LULU 受益）；⑤ buyback 加速 + share count 持續下降。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>① Q1 FY26 法說中國 SSS &lt; +15%（excl. CNY shift 影響）；② 北美 SSS 進一步惡化至 -5% 以下；③ Vuori IPO @ $12B+ + 後續 6 個月 +30%；④ Costco dupe 訴訟 LULU 敗訴 + 公開反向 narrative；⑤ Chip Wilson 升級為 active proxy battle。</p>
+</div>
+
+<!-- ==================== Phase A 折疊 ==================== -->
+<h2>Phase A｜獨立研究階段（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 <span class="summary-conclusion">— 結論：A 級護城河（7-8/10）— GM 58.5% 仍 sector 頂端；但站內 share 6pp/年流失 + 創辦人顧問對手，brand premium 從「絕對 dominance」退至「one of three premium」</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>主要護城河類型</td><td>① <strong>無形資產 — Brand premium</strong>（GM 58.5% Q2 2026 / 59.23% FY24，全 athleisure 頂端；cult-like 社群 + ambassador 模式）；② <strong>DTC 飛輪</strong>（90%+ 營收 from 直營門市 + lululemon.com，無 wholesale 依賴）</td></tr>
+    <tr><td>持久性評分</td><td><strong>7 / 10</strong>（從歷史 9 退至 7），5 年穩固度：中 — Brand 仍存但「絕對 dominance」narrative 已破；dupe 生態 + Vuori / Alo 結構性蠶食；創辦人 Chip Wilson 公開顧問對手是治理層 negative</td></tr>
+    <tr><td>最大侵蝕風險</td><td>① Vuori IPO @ $10B+ + Alo 突破 14% 站內 share（時間軸 2026 H2 - 2027 H1，威脅高）；② Halara TikTok dupe 持續 GMV $58-62M/月（時間軸已發生，威脅中）；③ Costco dupe 訴訟若 LULU 敗訴，setting precedent（時間軸 2-3 年，威脅低-中）</td></tr>
+    <tr><td>關鍵數據</td><td>GM 58.5% Q2 2026（趨勢 ↓，2026 -120bps guidance）；OPM 23.7% FY24（trend ↓，2026 -250bps guidance）；站內 share 30%(Jan 25) → 24%(Nov 25) -6pp/年；ROIC 30%+（仍 sector 頂端但下行）；92% customer retention（穩定）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>A1 獨立結論：</strong>A 級護城河結構性弱化中 — Brand premium 仍 sector 頂端但 narrative 已破；站內 share 流失 + 創辦人顧問對手 + dupe 生態三層攻擊；估值已從歷史 PE 25-34x 殺至 10.7x（5Y 5% 分位）反映「品質溢價結構性下調」。</p>
+
+<p class="source-list"><strong>Sources：</strong>
+<a href="https://www.alphaspread.com/security/nasdaq/lulu/qualitative/block/economic-moat">LULU Economic Moat - Alpha Spread</a> ·
+<a href="https://www.bloomberg.com/news/articles/2026-04-28/lululemon-says-its-founder-has-advised-rivals-alo-and-vuori">Chip Wilson Has Advised Rivals Alo, Vuori</a> ·
+<a href="https://www.heygotrade.com/en/blog/nike-vs-lululemon-margin-leadership/">Nike vs Lululemon Margin Leadership</a> ·
+<a href="https://www.morningstar.com/company-reports/1242731-lululemons-immense-popularity-is-an-advantage-but-activewear-competition-is-heating-up">Morningstar: LULU Moat with Heated Competition</a></p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 <span class="summary-conclusion">— 結論：Athleisure TAM $472.71B (+9% CAGR) 健康但 Phase II 中後段；新進者爆發 + dupe 生態 + tariff permanent reset 三層逆風</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>TAM 與成長</td><td>全球 athleisure $472.71B 2025 → $1,157.29B 2035（CAGR 9.37%）；北美 $126.16B；中國 athleisure 增速估 +20%+</td></tr>
+    <tr><td>供需判斷</td><td>需求側健康（消費者 athleisure 偏好穩固）；供給側急速擴張（Vuori 100 stores by 2026 / Alo 66 US stores / Halara 線上爆發）；未來 12 個月：競爭白熱化但 TAM 擴張速率 absorb 部分</td></tr>
+    <tr><td>最大技術替代風險</td><td>AI 個人化推薦助長 dupe 生態（時間軸已發生，威脅高）；TikTok GMV channel（Halara 等品牌主場，時間軸已發生，威脅中-高）</td></tr>
+    <tr><td>最大政策/地緣風險</td><td>① <strong>Tariff permanent reset</strong>（2025 $275M → 2026 $380M，Vietnam / Cambodia / Sri Lanka 三大供應地 tariff 加重，時間軸結構性）；② Costco dupe 訴訟 setting precedent（時間軸 2-3 年）；③ 中國消費者愛國運動風險（雖目前 LULU 受惠 22%+ 增速）</td></tr>
+    <tr><td>議價權位置</td><td>對上游（Vietnam / Cambodia 工廠）：弱（受 tariff 衝擊轉嫁不易）；對下游（DTC 直接消費者）：中（仍有 brand premium 但 dupe 生態壓制 ASP 上限）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>A2 獨立結論：</strong>Athleisure TAM 仍健康（+9% CAGR）但 sector 進入 Phase II 中後段（LULU 主導 erode + 新進者爆發 + IPO cycle 啟動）；Tariff 是 GM permanent reset 而非 transitory；channel 利潤池正從中游品牌 → 下游通路 + ad ecosystem 結構性轉移。</p>
+
+<p class="source-list"><strong>Sources：</strong>
+<a href="https://www.precedenceresearch.com/athleisure-market">Athleisure Market Size 2026-2035</a> ·
+<a href="https://www.retaildive.com/news/alo-yoga-vuori-gaining-activewear-market-share/714384/">Alo Yoga, Vuori Gaining Share</a> ·
+<a href="https://www.businessoffashion.com/articles/retail/vuori-activewear-competition-alo-yoga-lululemon/">Vuori Activewear Competition</a> ·
+<a href="https://www.fool.com/investing/2026/05/05/trade-barriers-have-been-a-huge-negative-for-lulul/">Trade Barriers Negative for LULU</a></p>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 <span class="summary-conclusion">— 結論：Q4 FY25 revenue $3.64B beat 但 EPS -18% YoY；2026 guidance miss + tariff $380M + GM -120bps；估值 FPE 10.7x = 5Y 5% 分位</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>營收結構（FY25）</td><td>北美 ~70%（SSS -1~-3% 2026 guidance）；國際 ~27% （+27%+ growth）；其中中國 ~13%（+20%+ growth）；男裝 ~25%；women's ~63%；accessories 12%</td></tr>
+    <tr><td>客戶集中度</td><td>無單一大客戶 — DTC 模式分散；前 10% 重度會員可能貢獻 30-40%（典型 athleisure pattern）；風險：低</td></tr>
+    <tr><td>定價權</td><td>ASP 趨勢 → 持平至小升；定價權從「強」退至「中-強」 — 拒絕跟 Vuori promotion 護住 GM 但 trade off volume；2026 guidance GM -120bps 反映 mix shift + tariff absorb 並非主動降價</td></tr>
+    <tr><td>未來金雞母</td><td>① <strong>中國市場</strong>（FY25 ~$1.25B → FY26 +20%+ → 2030 $3-4B 潛力）；② <strong>男裝 segment</strong>（雙引擎之一，需 doubled by 2026 base）；③ <strong>international ex-China</strong>（6 個新國家 2026 拓展、EMEA 加速）；④ <strong>digital double</strong>（2026 Power of Three ×2 目標之一，仍未 doubled）</td></tr>
+    <tr><td>財務體質</td><td>FCF Margin 估 ~14% FY25；GM 58.5% Q2 2026；OPM 23.7% FY24（FY26 -250bps guidance）；net cash 狀態 (Net cash $1.5B+)；inventory $1.7B (+18% YoY) — concern；壓力測試：營收 -20% 仍可撐 ≥ 8 季</td></tr>
+    <tr><td>資本配置紀律</td><td>$5B+ buyback authorization 持續；股息 N/A；R&D N/A 但 product innovation budget 結構性投入；無大型併購歷史（保守）；ROIC 30%+ 證明 capital efficient；唯一 vanity 是 Mirror 收購 2020 後 written-down — 已了結</td></tr>
+  </tbody>
+</table>
+
+<p><strong>A3 獨立結論：</strong>FY25 營收創高但 EPS -18% YoY 反映 tariff + 結構性壓力；FY26 guidance miss 已 priced in；估值 FPE 10.7x 已殺到 5 年低點；turnaround engine（中國 + men's + international + digital）路徑清晰但執行風險高。</p>
+
+<p class="source-list"><strong>Sources：</strong>
+<a href="https://corporate.lululemon.com/~/media/Files/L/Lululemon/investors/results-center/financial-supplement-q4-2025.pdf">LULU Q4 2025 Financial Supplement</a> ·
+<a href="https://www.cnbc.com/2026/03/17/lululemon-lulu-earnings-q4-2025.html">LULU Q4 2025 Earnings</a> ·
+<a href="https://corporate.lululemon.com/media/press-releases/2025/12-18-2025-113011673">LULU 2026 6 New Markets Expansion</a> ·
+<a href="https://stockanalysis.com/stocks/lulu/forecast/">LULU Analyst Targets Median $201.50</a></p>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取 <span class="summary-conclusion">— 無 LULU DD 報告；ID_AthleisureNewEntrants / ID_ApparelFootwear / ID_ChannelPowerReversion 提供 sector framing</span></summary>
+
+<h4>DD 報告擷取</h4>
+<p style="background:#FEF2F2;padding:10px 14px;border-left:3px solid #DC2626;border-radius:2px"><strong>無 LULU DD 報告可引用</strong>（docs/dd/ 無 DD_LULU_*.html）— 本 DCA 為 first conviction document，獨立基於 Phase A1-A3 + 多份 ID 報告 framing。</p>
+
+<h4>ID 報告擷取（4 份相關 ID）</h4>
+<table>
+  <thead><tr><th>ID</th><th>關鍵內容</th></tr></thead>
+  <tbody>
+    <tr><td>ID_AthleisureNewEntrants_20260427</td><td>「LULU 站內 share 30%(Jan 25) → 24%(Nov 25) -6pp / Vuori 9.85% → 12.06% / Alo 6% → 9% / 90% Vuori + 84% Alo US stores 在 LULU 0.5mi 內」「Vuori IPO（$5.5B 估值起點 = LULU 2007 IPO $1.6B 的 3.4x）是『Lululemon 化 cycle 起點』非『下一個 LULU』」「LULU public fwd PE 11x derate vs Alo private $10B / 5-6x P/S 不可調和」「Costco 2025-06 訴訟 active；Halara TikTok GMV peak $58-62M/月」</td></tr>
+    <tr><td>ID_ApparelFootwear_20260427</td><td>「K-shape 是結構性而非循環性 — 高端 RL Asia +22% / China +30% + 新進者 HOKA / ONON +30% + specialty inflection URBN / Aerie +23% / Hollister +23% 三引擎 vs 中段 Abercrombie -10% / Vans -10% / LULU 北美 -1% 集體失速」「Tariff 是 GM permanent reset 而非 transitory（PVH -215bps EBIT / DECK $150M / NKE -130bps；FY27 GM 不會回 FY24 高點）」</td></tr>
+    <tr><td>ID_ChannelPowerReversion_20260427</td><td>「DKS-FL 整併 = 美國運動 retail 結構性 #1 確認」「AMZN apparel + ad 是 sector 內最 underappreciated 雙引擎」「Nike DTC 44% peak 已永久 lock 在 ~40%」「利潤池正從中游品牌（NKE / LULU / VFC）→ 下游通路（DKS-FL / AMZN / JD）+ ad ecosystem 結構性轉移」</td></tr>
+    <tr><td>ID_ChinaSportswearRise_20260427</td><td>「Anta Group 中國市占 23.0% &gt; Nike 20.7% 已是 6 年永久結構性反超非循環」— LULU 在中國對 Anta / Li-Ning 戰場，目前增速 +20%+ 仍維持，但需注意中國本土運動服飾子品牌可能切入 athleisure（如 Anta 旗下子品牌）</td></tr>
+  </tbody>
+</table>
+
+<p style="background:#EFF6FF;padding:10px 14px;border-radius:2px;margin-top:10px"><strong>A4 整合結論：</strong>4 份 ID 提供完整 sector framing — LULU 屬「中段集體失速 + 通路權力反向 + Tariff permanent reset」三層逆風 sector；估值已 priced in 但 sector 結構性壓力未解。本 DCA 與 ID_AthleisureNewEntrants 觀點一致：<strong>「LULU public fwd PE 10.7x derate vs Alo private $10B / 5-6x P/S 不可調和」是 sector 結構性錯配，5+ 年內均值回歸機率高</strong>；定位為「等 turnaround 證明的 deep-value bet」。</p>
+</details>
+
+<div class="card" style="background:#F8FAFC;margin-top:32px;font-size:13px;color:var(--muted)">
+<p><strong>方法論說明：</strong>本報告採 Deep Conviction Analysis 框架（DD + ID 之上的投資決策層）— Phase A 三軸獨立搜尋（護城河 / 產業趨勢 / 業務財務）+ Phase B 矛盾辨識與強制裁決 + Phase C PM 決策框架。</p>
+<p><strong>對比同日其他 DCA：</strong>META（A+ 立即進場 4-5%）、2330.TW（A 條件式 6-8%）、ASML（A 等回測 3-4%）、AAPL（B 等回測 2-3%）、<strong>LULU（B 試倉 1.5-2% deep value bet）</strong> — LULU 是本系列 DCA 中 conviction 最低 / 倉位最小、但 asymmetry 上行最高（+177% Bull / -31% Bear）的 setup。屬「降相關性 + deep value optionality」配置，不是 alpha 引擎。</p>
+<p><strong>引用既有報告：</strong>無 LULU DD（first DCA conviction document）+ ID_AthleisureNewEntrants_20260427 / ID_ApparelFootwear_20260427 / ID_ChannelPowerReversion_20260427 / ID_ChinaSportswearRise_20260427 / ID_AthleticFootwearSubsegments_20260427。</p>
+</div>
+
+</main>
+
+</body>
+</html>

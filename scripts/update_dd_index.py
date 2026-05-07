@@ -9,6 +9,8 @@ Usage:
   python scripts/update_dd_index.py                  # normal regenerate (upside = DD 快照)
   python scripts/update_dd_index.py --refresh-prices # fetch yfinance and recompute upside
 """
+from __future__ import annotations
+
 import argparse
 import datetime as dt
 import json
@@ -21,6 +23,7 @@ DCA_DIR = DOCS / "dca"
 INDEX_HTML = DOCS / "research" / "index.html"
 INDEX_MD = DD_DIR / "INDEX.md"
 PRICE_CACHE = DOCS / "research" / "price_cache.json"
+EPS_CAGR_CACHE = DOCS / "research" / ".eps_cagr_cache.json"
 
 DCA_FILENAME_RE = re.compile(r"^DCA_([A-Z0-9]+)_(\d{8})\.html$")
 
@@ -214,6 +217,125 @@ def extract_stress_v12(text: str):
     if m:
         return int(m.group(1)), int(m.group(2))
     return 0, 4  # default for newer DDs that may not have QC-29 section
+
+
+# === EPS CAGR (2Y) + 2Y PE — yfinance fetch + cache ==========================
+# Single yfinance call per ticker yields:
+#   - yearAgoEps (FY-1 actual, used as base for 2Y CAGR)
+#   - FY+2 EPS estimate (avg consensus from t.earnings_estimate)
+#   - currentPrice (used for 2Y PE = price / FY+2 EPS)
+# Cache keeps these per-ticker so daily reruns of update_dd_index.py don't
+# re-hit yfinance. Cache is auto-populated when a new ticker appears (e.g. after
+# a fresh DD is added). Use --refresh-eps-cagr to force re-fetch all tickers.
+
+
+def load_eps_cagr_cache() -> dict:
+    if EPS_CAGR_CACHE.exists():
+        try:
+            return json.loads(EPS_CAGR_CACHE.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def save_eps_cagr_cache(cache: dict) -> None:
+    EPS_CAGR_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    EPS_CAGR_CACHE.write_text(
+        json.dumps(cache, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+def fetch_eps_metrics_yf(ticker: str) -> dict:
+    """Fetch FY-1 EPS, FY+2 EPS estimate, current price for one ticker.
+
+    Returns {
+      'fy_minus_1_eps': float|None,
+      'fy_2_eps': float|None,
+      'current_price': float|None,
+      'eps_cagr_2y_pct': float|None,
+      'pe_2y': float|None,
+      'fetched_at': iso8601 str,
+      'status': 'ok' | 'no_estimate' | 'no_base' | 'error',
+    }
+    """
+    out = {
+        "fy_minus_1_eps": None,
+        "fy_2_eps": None,
+        "current_price": None,
+        "eps_cagr_2y_pct": None,
+        "pe_2y": None,
+        "fetched_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "status": "error",
+    }
+    try:
+        import yfinance as yf
+    except ImportError:
+        return out
+    try:
+        t = yf.Ticker(ticker)
+        info = t.info or {}
+        price = info.get("currentPrice") or info.get("regularMarketPrice")
+        out["current_price"] = float(price) if price else None
+        # earnings_estimate has rows: 0q, +1q, 0y (=FY+1 = current year), +1y (=FY+2)
+        ee = t.earnings_estimate
+        if ee is None or ee.empty:
+            out["status"] = "no_estimate"
+            return out
+        # FY+2 = +1y row, avg column
+        if "+1y" in ee.index and "avg" in ee.columns:
+            fy2 = ee.loc["+1y", "avg"]
+            out["fy_2_eps"] = float(fy2) if fy2 == fy2 else None  # NaN check
+        # Base = yearAgoEps of 0y row (= FY-1 actual, i.e. base year for FY+2 / base 2Y CAGR)
+        if "0y" in ee.index and "yearAgoEps" in ee.columns:
+            base = ee.loc["0y", "yearAgoEps"]
+            out["fy_minus_1_eps"] = float(base) if base == base else None
+    except Exception:
+        return out
+
+    fy2 = out["fy_2_eps"]
+    base = out["fy_minus_1_eps"]
+    price = out["current_price"]
+
+    if not fy2 or fy2 <= 0:
+        out["status"] = "no_estimate"
+        return out
+
+    # 2Y EPS CAGR = (FY+2 / base)^(1/2) − 1; needs positive base
+    if base and base > 0:
+        out["eps_cagr_2y_pct"] = ((fy2 / base) ** 0.5 - 1) * 100
+    else:
+        out["status"] = "no_base"
+
+    # 2Y PE = current price / FY+2 EPS
+    if price and price > 0:
+        out["pe_2y"] = price / fy2
+
+    if out["eps_cagr_2y_pct"] is not None and out["pe_2y"] is not None:
+        out["status"] = "ok"
+    return out
+
+
+def get_eps_metrics(ticker: str, cache: dict, force_refresh: bool = False) -> dict:
+    """Cache-first lookup. Returns {eps_cagr_2y_pct, pe_2y, status}.
+
+    On cache miss (or force_refresh), hits yfinance and writes back to cache."""
+    if not ticker:
+        return {"eps_cagr_2y_pct": None, "pe_2y": None, "status": "missing"}
+    if not force_refresh and ticker in cache:
+        c = cache[ticker]
+        return {
+            "eps_cagr_2y_pct": c.get("eps_cagr_2y_pct"),
+            "pe_2y": c.get("pe_2y"),
+            "status": c.get("status", "cached"),
+        }
+    fetched = fetch_eps_metrics_yf(ticker)
+    cache[ticker] = fetched
+    return {
+        "eps_cagr_2y_pct": fetched.get("eps_cagr_2y_pct"),
+        "pe_2y": fetched.get("pe_2y"),
+        "status": fetched.get("status", "error"),
+    }
 
 
 def extract_upside_fy2(text: str, index_comment: str = "") -> str:
@@ -850,6 +972,8 @@ def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
     upside = entry.get("upside", "")
     upside_5y = entry.get("upside_5y", "")
     sp, st = entry.get("stress_pass", 0), entry.get("stress_total", 4)
+    eps_cagr = entry.get("eps_cagr_2y_value")
+    pe_2y = entry.get("pe_2y_value")
 
     # Numeric data attrs (for sorting); fallback to 0 when empty.
     rank = _SIGNAL_RANK.get(sig, 0)
@@ -915,6 +1039,41 @@ def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
     up5y_style = f"color:{u5y_color};font-weight:600" if u5y_color else "color:#94A3B8"
     up5y_num_attr = f"{up5y_num:.0f}" if up5y_num is not None else "0"
 
+    # EPS CAGR (2Y) cell — yfinance live consensus (FY+2 vs FY-1 actual).
+    if eps_cagr is None:
+        eps_cell = '<td class="num-cell" style="color:#94A3B8">—</td>'
+        eps_num_attr = "0"
+    else:
+        if eps_cagr >= 20:
+            eps_color = "#166534"     # deep green
+        elif eps_cagr >= 10:
+            eps_color = "#15803D"     # green
+        elif eps_cagr >= 0:
+            eps_color = "#92400E"     # amber
+        else:
+            eps_color = "#991B1B"     # red
+        eps_sign = "+" if eps_cagr > 0 else ""
+        eps_cell_text = f"{eps_sign}{eps_cagr:.1f}%"
+        eps_cell = f'<td class="num-cell" style="color:{eps_color};font-weight:600">{eps_cell_text}</td>'
+        eps_num_attr = f"{eps_cagr:.1f}"
+
+    # 2Y PE cell — yfinance live (current price / FY+2 EPS estimate).
+    if pe_2y is None:
+        pe2y_cell = '<td class="num-cell" style="color:#94A3B8">—</td>'
+        pe2y_num_attr = "0"
+    else:
+        # Color heuristic mirrors Fwd PE bands (low = green, high = red)
+        if pe_2y < 15:
+            pe2y_color = "#166534"
+        elif pe_2y < 25:
+            pe2y_color = "#15803D"
+        elif pe_2y < 40:
+            pe2y_color = "#92400E"
+        else:
+            pe2y_color = "#991B1B"
+        pe2y_cell = f'<td class="num-cell" style="color:{pe2y_color};font-weight:600">{pe_2y:.1f}x</td>'
+        pe2y_num_attr = f"{pe_2y:.1f}"
+
     date_disp = entry.get("date") or "—"
 
     # Normalize ticker for DCA lookup: DD entries use "2330.TW" with dot,
@@ -936,7 +1095,8 @@ def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
         f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
-        f' data-fpe="{fpe_num}" data-pct="{pct_num}" data-peg="{peg_num}"'
+        f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-pct="{pct_num}" data-peg="{peg_num}"'
+        f' data-eps-cagr="{eps_num_attr}"'
         f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-stress="{stress_frac}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
         f'{dca_cell}'
@@ -945,8 +1105,10 @@ def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
         f'<td class="num-cell">{triax_disp}</td>'
         f'<td class="num-cell">{fpe_disp}</td>'
+        f'{pe2y_cell}'
         f'<td class="num-cell">{pct_disp}</td>'
         f'<td class="num-cell">{peg_disp}</td>'
+        f'{eps_cell}'
         f'<td class="num-cell" style="color:{u_color};font-weight:600">{up_cell_text}</td>'
         f'<td class="num-cell" style="{up5y_style}">{up5y_cell_text}</td>'
         f'<td class="num-cell">{stress_disp}</td>\n'
@@ -954,7 +1116,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None) -> str:
     )
 
 
-def collect_v12_entries():
+def collect_v12_entries(force_refresh_eps: bool = False):
     """Walk INDEX.md + DD HTMLs and produce per-row v12 entries.
 
     Per-DD priority for field extraction:
@@ -966,6 +1128,9 @@ def collect_v12_entries():
     Only includes DDs where INDEX.md schema starts with 'v12'.
     """
     index_data = parse_index_md()
+    eps_cache = load_eps_cagr_cache()
+    cache_dirty = False  # track whether we fetched anything new
+
     entries = []
     for fname, md in index_data.items():
         if not md["schema"].startswith("v12"):
@@ -977,10 +1142,16 @@ def collect_v12_entries():
 
         # Priority 1: dd-meta JSON block (canonical) ---------------------------
         meta = extract_dd_meta_json(text)
+        ticker = (meta.get("ticker") if meta else None) or md["ticker"]
+        cache_miss = ticker not in eps_cache
+        eps_metrics = get_eps_metrics(ticker, eps_cache, force_refresh=force_refresh_eps)
+        if cache_miss or force_refresh_eps:
+            cache_dirty = True
+
         if meta:
             stress = meta.get("stress", {}) or {}
             entry = {
-                "ticker": meta.get("ticker") or md["ticker"],
+                "ticker": ticker,
                 "filename": fname,
                 "href": f"/dd/{fname}",
                 "date": meta.get("date") or md["date"],
@@ -996,6 +1167,8 @@ def collect_v12_entries():
                 "upside_5y": str(int(meta["upside_5y_pct"])) if meta.get("upside_5y_pct") is not None else "",
                 "stress_pass": int(stress.get("pass", 0)),
                 "stress_total": int(stress.get("total", 4) or 4),
+                "eps_cagr_2y_value": eps_metrics["eps_cagr_2y_pct"],
+                "pe_2y_value": eps_metrics["pe_2y"],
             }
             entries.append(entry)
             continue
@@ -1008,7 +1181,7 @@ def collect_v12_entries():
         m5y = UPSIDE_5Y_RE.search(text)
         upside_5y_fallback = m5y.group(1).replace("−", "-") if m5y else ""
         entries.append({
-            "ticker": md["ticker"],
+            "ticker": ticker,
             "filename": fname,
             "href": f"/dd/{fname}",
             "date": md["date"],
@@ -1024,7 +1197,14 @@ def collect_v12_entries():
             "upside_5y": upside_5y_fallback,
             "stress_pass": sp,
             "stress_total": st,
+            "eps_cagr_2y_value": eps_metrics["eps_cagr_2y_pct"],
+            "pe_2y_value": eps_metrics["pe_2y"],
         })
+
+    # Persist cache if any ticker was fetched (auto-backfill on new DD or refresh)
+    if cache_dirty:
+        save_eps_cagr_cache(eps_cache)
+
     # Latest DD per ticker only (date desc)
     latest = {}
     for e in entries:
@@ -1063,7 +1243,7 @@ def _sort_v12_entries(entries: list) -> list:
     return sorted(entries, key=key, reverse=False)
 
 
-def update_index_v12_full(html: str) -> tuple:
+def update_index_v12_full(html: str, force_refresh_eps: bool = False) -> tuple:
     """Full regenerate of v12 tbody from collect_v12_entries() (dd-meta SSOT).
 
     Replaces every row in <tbody id="dd-tbody-v12"> with freshly-built rows
@@ -1081,7 +1261,7 @@ def update_index_v12_full(html: str) -> tuple:
         return html, 0
     open_tag, _, close_tag = m.group(1), m.group(2), m.group(3)
 
-    entries = _sort_v12_entries(collect_v12_entries())
+    entries = _sort_v12_entries(collect_v12_entries(force_refresh_eps=force_refresh_eps))
     dca_map = collect_dca_map()
     rows = "\n".join(build_row_v12(e, dca_map) for e in entries)
     new_block = open_tag + "\n" + rows + "\n" + close_tag
@@ -1501,7 +1681,7 @@ def inject_pm_actions(html: str) -> str:
 # === end PM marker injection ==================================================
 
 
-def update_index(entries, dry_run: bool = False):
+def update_index(entries, dry_run: bool = False, force_refresh_eps: bool = False):
     html = INDEX_HTML.read_text(encoding="utf-8")
     original_html = html
 
@@ -1512,7 +1692,7 @@ def update_index(entries, dry_run: bool = False):
     # overwrite existing hand-curated rows so QA tweaks survive.
     v12_mode = '<tbody id="dd-tbody-v12">' in html
     if v12_mode:
-        new_html, row_count = update_index_v12_full(html)
+        new_html, row_count = update_index_v12_full(html, force_refresh_eps=force_refresh_eps)
         print(
             f"v12 mode: regenerated dd-tbody-v12 from dd-meta JSON "
             f"({row_count} row(s) total — full overwrite)."
@@ -1731,6 +1911,12 @@ def main():
         help="Fetch current prices via yfinance and recompute upsides.",
     )
     parser.add_argument(
+        "--refresh-eps-cagr",
+        action="store_true",
+        help="Force re-fetch EPS CAGR / 2Y PE for all tickers via yfinance "
+             "(default: cache-only; new tickers auto-backfilled).",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Show unified diff of changes without writing the file.",
@@ -1748,7 +1934,7 @@ def main():
         print()
         refresh_upsides(entries)
 
-    if update_index(entries, dry_run=args.dry_run):
+    if update_index(entries, dry_run=args.dry_run, force_refresh_eps=args.refresh_eps_cagr):
         if args.dry_run:
             print(f"\n(dry-run; no file written)")
         else:
