@@ -77,6 +77,10 @@ def extract_dca_ev_5y(dca_path) -> float | None:
         "機率加權期望值",
         "機率加權 5 年期望值",
         "機率加權 5年期望值",
+        "機率加權 EV（5Y）",
+        "機率加權 EV (5Y)",
+        "機率加權EV（5Y）",
+        "機率加權EV(5Y)",
     )
     idx = -1
     for kw in anchors:
