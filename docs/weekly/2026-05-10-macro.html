@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>全球景氣狀況 — 深度週報 W19</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:Arial,sans-serif; max-width:1140px; margin:0 auto;
+       padding:0; color:#222; background:#fff; }
+@media(max-width:768px) {
+  body { padding:0 8px; }
+  table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+</head>
+<body>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/theses.html">⭐ 九大非共識</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/" class="active">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})})})();</script>
+<div style="padding:24px 20px;">
+
+<div style="background:#1B3A5C;border-radius:8px 8px 0 0;padding:24px 28px;
+            display:flex;justify-content:space-between;align-items:center;">
+  <div>
+    <div style="font-size:14px;letter-spacing:2px;text-transform:uppercase;
+                color:rgba(255,255,255,0.6);margin-bottom:6px;">WEEKLY DEEP REPORT</div>
+    <div style="font-family:Georgia,serif;font-size:28px;font-weight:700;
+                color:#fff;">🌍 全球景氣狀況</div>
+  </div>
+  <div style="text-align:right;color:rgba(255,255,255,0.8);font-size:14px;line-height:1.8;">
+    W19<br>2026-05-04 — 2026-05-10
+  </div>
+</div>
+
+<div style="background:#FEF3CD;padding:14px 28px;font-size:17px;font-weight:500;
+            color:#856404;line-height:1.6;">
+  📌 地緣政治推升通膨預期，服務業疲軟，製造業受預防性需求支撐，經濟分化加劇。
+</div>
+<div style="padding:0 4px;">
+
+<div style="margin:24px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:12px;">本週關鍵變化</div>
+  <div style="display:flex;gap:0;">
+    <div style="width:4px;background:#378ADD;border-radius:2px;flex-shrink:0;"></div>
+    <div style="background:#EBF2FA;border-radius:0 6px 6px 0;padding:16px 20px;
+                font-size:16px;color:#222;line-height:1.8;flex:1;">本週關鍵變化是美國消費支出出現急劇、廣泛的下滑（Bank of America數據），與先前強勁的零售銷售形成對比。同時，製造業PMI升至52.6，為2022年3月以來新高，但主要由預防性庫存建立和關稅驅動，而非終端需求。</div>
+  </div>
+</div>
+<div style="margin:24px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">深度分析</div>
+  
+<div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:20px 24px;
+            margin-bottom:16px;">
+  <div style="font-size:18px;font-weight:600;color:#222;margin-bottom:12px;
+              line-height:1.5;">美國經濟韌性與通膨壓力</div>
+  <div style="font-size:16px;color:#333;line-height:1.8;margin-bottom:16px;">
+    儘管中東衝突爆發導致油價飆升，美國第一季GDP年化成長率仍達2.0%，顯示經濟具韌性。然而，4月CPI預計年增3.4%（高於3月3.3%），核心CPI年增約2.6%，均高於Fed目標。能源價格上漲和關稅衝擊正推升通膨，導致Fed面臨更複雜的政策路徑。Bank of America數據顯示，截至5月2日當週，美國所有收入階層的信用卡/金融卡消費均出現急劇下滑，這與先前零售銷售的韌性形成對比，暗示消費者可能因通膨壓力而開始緊縮開支。
+  </div>
+  <div style="background:#f7f7f5;border-radius:6px;padding:14px 18px;margin-bottom:14px;">
+    <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;
+                color:#888;font-weight:500;margin-bottom:8px;">EVIDENCE</div>
+    <div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• US real GDP grew 2% annualized in Q1 2026 (Callan Institute)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• April CPI forecast at 3.4% YoY, core CPI at ~2.6% YoY (Trading Economics, S&P Global)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Bank of America reported a sharp, broad-based drop in US consumer spending for the week ending May 2, 2026 (Morningstar/MarketWatch)</div>
+  </div>
+  <div style="display:flex;gap:0;">
+    <div style="width:3px;background:#0F6E56;border-radius:2px;flex-shrink:0;"></div>
+    <div style="padding:10px 14px;font-size:15px;color:#0F6E56;line-height:1.7;flex:1;">
+      <span style="font-weight:600;">投資含義：</span>通膨壓力可能導致Fed維持鷹派立場，甚至考慮升息，這將對股市估值構成壓力。消費者支出下滑可能預示未來經濟成長放緩，需密切關注零售銷售數據的實質成長情況。
+    </div>
+  </div>
+</div>
+<div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:20px 24px;
+            margin-bottom:16px;">
+  <div style="font-size:18px;font-weight:600;color:#222;margin-bottom:12px;
+              line-height:1.5;">全球PMI分化：製造業假象與服務業疲軟</div>
+  <div style="font-size:16px;color:#333;line-height:1.8;margin-bottom:16px;">
+    4月J.P. Morgan全球製造業PMI升至52.6，為2022年3月以來最高，但其強勁表現主要源於企業因關稅期限、供應鏈擔憂和預期價格上漲而進行的「預防性庫存建立和訂單前置」。全球製造業出口連續第二個月下降，顯示終端需求疲軟。相對地，全球服務業PMI僅為51.2，是過去一年中最弱的讀數之一，其中消費服務業連續第二個月萎縮，反映高物價和旅遊中斷對需求的負面影響。
+  </div>
+  <div style="background:#f7f7f5;border-radius:6px;padding:14px 18px;margin-bottom:14px;">
+    <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;
+                color:#888;font-weight:500;margin-bottom:8px;">EVIDENCE</div>
+    <div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• J.P. Morgan Global Manufacturing PMI: 52.6 (April), highest since March 2022</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Exports fell for a second consecutive month (NAM.org)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• J.P. Morgan Global Services PMI: 51.2 (April), among the weakest readings of the past year</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Consumer services contracted for the second month (J.P. Morgan Global Services PMI)</div>
+  </div>
+  <div style="display:flex;gap:0;">
+    <div style="width:3px;background:#0F6E56;border-radius:2px;flex-shrink:0;"></div>
+    <div style="padding:10px 14px;font-size:15px;color:#0F6E56;line-height:1.7;flex:1;">
+      <span style="font-weight:600;">投資含義：</span>製造業的表面強勁不可持續，一旦預防性需求耗盡，可能面臨庫存調整壓力。服務業的持續疲軟預示全球經濟成長動能不足。投資者應警惕製造業數據背後的結構性問題，並關注服務業的復甦情況。
+    </div>
+  </div>
+</div>
+<div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:20px 24px;
+            margin-bottom:16px;">
+  <div style="font-size:18px;font-weight:600;color:#222;margin-bottom:12px;
+              line-height:1.5;">全球央行鷹派抬頭，政策路徑分歧</div>
+  <div style="font-size:16px;color:#333;line-height:1.8;margin-bottom:16px;">
+    Fed、ECB、BoJ上週均維持利率不變，但本週釋出的評論和研究報告顯示鷹派立場增強。ECB被市場預期6月升息機率達80%，因中東衝突推升能源價格，通膨「透視」窗口關閉。Fed內部異議增加，3位鷹派成員推動放棄寬鬆傾向，政策路徑「更趨二元」。BoJ則因4月會議有3位委員支持升息，市場預期6月升息機率升高，顯示其正從超低利率政策中緩慢轉向。地緣政治風險正促使各央行更傾向於收緊政策以應對通膨。
+  </div>
+  <div style="background:#f7f7f5;border-radius:6px;padding:14px 18px;margin-bottom:14px;">
+    <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;
+                color:#888;font-weight:500;margin-bottom:8px;">EVIDENCE</div>
+    <div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Markets now price ECB June hike odds at ~80% (ADM Investor Services)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Fed Chair Powell announced he will stay on the Board amid 3 hawkish dissenters (Thin Ice Macroeconomics)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• BoJ held policy rate at 0.75% with 6-3 vote—largest dissents (3 for hike) since normalization (State Street)</div>
+  </div>
+  <div style="display:flex;gap:0;">
+    <div style="width:3px;background:#0F6E56;border-radius:2px;flex-shrink:0;"></div>
+    <div style="padding:10px 14px;font-size:15px;color:#0F6E56;line-height:1.7;flex:1;">
+      <span style="font-weight:600;">投資含義：</span>全球主要央行同步轉向鷹派，意味著全球流動性將進一步收緊。這對風險資產構成壓力，特別是對於高負債企業。投資者應重新評估各國債券殖利率和貨幣政策差異對資產配置的影響。
+    </div>
+  </div>
+</div>
+<div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:20px 24px;
+            margin-bottom:16px;">
+  <div style="font-size:18px;font-weight:600;color:#222;margin-bottom:12px;
+              line-height:1.5;">信貸市場分化：高收益債韌性，低評級承壓</div>
+  <div style="font-size:16px;color:#333;line-height:1.8;margin-bottom:16px;">
+    本週美國信貸市場表現分化，高收益債（HY）表現優於投資級債（IG）。Bloomberg U.S. Aggregate Bond Index下跌0.39%，其中投資級公司債下跌0.45%，主要受殖利率上升拖累。然而，高收益公司債微幅上漲0.05%，因其較短的存續期和較高的息票收入提供了韌性。儘管如此，CCC及以下評級的高收益債有效殖利率上升至13.16%，顯示低評級區塊仍面臨壓力。BlackRock維持對全球高收益債的中性看法，但看好歐洲高收益債。
+  </div>
+  <div style="background:#f7f7f5;border-radius:6px;padding:14px 18px;margin-bottom:14px;">
+    <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;
+                color:#888;font-weight:500;margin-bottom:8px;">EVIDENCE</div>
+    <div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Bloomberg U.S. Aggregate Bond Index: -0.39% for the week ending May 6 (Nuveen)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Investment Grade Corporates: -0.45%, High Yield Corporates: +0.05% (Nuveen)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• CCC & Lower HY effective yield hit 13.16% on May 7 (ICE BofA via MacroMicro)</div>
+  </div>
+  <div style="display:flex;gap:0;">
+    <div style="width:3px;background:#0F6E56;border-radius:2px;flex-shrink:0;"></div>
+    <div style="padding:10px 14px;font-size:15px;color:#0F6E56;line-height:1.7;flex:1;">
+      <span style="font-weight:600;">投資含義：</span>信貸市場的韌性可能支撐部分風險資產，但低評級債券的壓力預示信用風險正在累積。投資者應選擇性地配置高收益債，並警惕信貸利差擴大對企業融資成本的影響，尤其是在經濟前景不確定的情況下。
+    </div>
+  </div>
+</div>
+<div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:20px 24px;
+            margin-bottom:16px;">
+  <div style="font-size:18px;font-weight:600;color:#222;margin-bottom:12px;
+              line-height:1.5;">衰退指標：短期機率低，長期風險累積</div>
+  <div style="font-size:16px;color:#333;line-height:1.8;margin-bottom:16px;">
+    紐約聯準會3m10y殖利率曲線模型顯示，截至4月2027年，美國經濟衰退機率為17.6%，遠低於先前峰值。然而，其他領先指標卻發出警示訊號。Conference Board LEI在3月下降0.6%，顯示多個月的跌勢，暗示經濟處於週期後期放緩。密西根大學消費者信心指數維持在53.3的低點，接近2022年低谷，預示消費支出可能收縮。房屋許可證、臨時僱用人數等指標也呈現惡化趨勢，儘管股市創新高，但這些領先指標的疲軟預示長期風險正在累積。
+  </div>
+  <div style="background:#f7f7f5;border-radius:6px;padding:14px 18px;margin-bottom:14px;">
+    <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;
+                color:#888;font-weight:500;margin-bottom:8px;">EVIDENCE</div>
+    <div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• NY Fed 3m10y Treasury Spread Model: 12-month US recession probability at 17.6% for Apr 2027</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Conference Board LEI: -0.6% (Mar 2026)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• UMich Consumer Sentiment: 53.3 (latest)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Housing Permits: Rollover (Apr est.)</div><div style="padding:6px 0;font-size:15px;color:#555;line-height:1.7;">• Temp Help Employment: Deteriorating (Apr)</div>
+  </div>
+  <div style="display:flex;gap:0;">
+    <div style="width:3px;background:#0F6E56;border-radius:2px;flex-shrink:0;"></div>
+    <div style="padding:10px 14px;font-size:15px;color:#0F6E56;line-height:1.7;flex:1;">
+      <span style="font-weight:600;">投資含義：</span>儘管短期內衰退機率不高，但領先指標的持續惡化表明經濟成長動能正在減弱，長期風險不容忽視。投資者應保持警惕，避免過度樂觀，並關注這些領先指標的後續發展，以評估經濟軟著陸的可能性。
+    </div>
+  </div>
+</div>
+</div>
+<div style="margin:24px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">分析師觀點</div>
+  <table width="100%" cellpadding="0" cellspacing="0"
+         style="border:1px solid #e8e8e8;border-radius:6px;overflow:hidden;border-collapse:collapse;">
+    <thead>
+      <tr style="background:#f7f7f5;">
+        <th style="padding:10px 14px;font-size:13px;color:#888;text-align:left;font-weight:500;">機構</th>
+        <th style="padding:10px 14px;font-size:13px;color:#888;text-align:left;font-weight:500;">觀點</th>
+        <th style="padding:10px 14px;font-size:13px;color:#888;text-align:left;font-weight:500;">評級/目標價</th>
+      </tr>
+    </thead>
+    <tbody>
+<tr style="border-bottom:1px solid #f0f0f0;">
+  <td style="padding:12px 14px;font-size:15px;font-weight:500;color:#222;
+             white-space:nowrap;vertical-align:top;">BlackRock Investment Institute</td>
+  <td style="padding:12px 14px;font-size:15px;color:#555;line-height:1.7;
+             vertical-align:top;">對全球高收益債持中性看法（具吸引力息票、短存續期，但發行人分散度提高），但看好歐洲高收益債（利差接近歷史低點，信貸損失有限，2026年成長前景佳）。對美國/全球投資級公司債持中性看法，偏好歐洲而非美國，因AI驅動的再槓桿風險。</td>
+  <td style="padding:12px 14px;font-size:15px;vertical-align:top;
+             white-space:nowrap;">—</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+  <td style="padding:12px 14px;font-size:15px;font-weight:500;color:#222;
+             white-space:nowrap;vertical-align:top;">BNP Paribas Economic Research</td>
+  <td style="padding:12px 14px;font-size:15px;color:#555;line-height:1.7;
+             vertical-align:top;">預計ECB將在6月升息25個基點，因為能源衝擊使通膨前景更加明朗，關閉了「透視」窗口。Fed則可能維持現狀到6月，但存在25個基點升息的「低但不斷增長的風險」。</td>
+  <td style="padding:12px 14px;font-size:15px;vertical-align:top;
+             white-space:nowrap;">—</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+  <td style="padding:12px 14px;font-size:15px;font-weight:500;color:#222;
+             white-space:nowrap;vertical-align:top;">State Street Global Advisors</td>
+  <td style="padding:12px 14px;font-size:15px;color:#555;line-height:1.7;
+             vertical-align:top;">Fed的政策前景「更趨二元」，軟數據可能維持寬鬆傾向，但高通膨/地緣政治可能轉向升息。BoJ的政策已不再受信念限制，而是時機不確定，市場認為下次升息時間比表面上更近。</td>
+  <td style="padding:12px 14px;font-size:15px;vertical-align:top;
+             white-space:nowrap;">—</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+  <td style="padding:12px 14px;font-size:15px;font-weight:500;color:#222;
+             white-space:nowrap;vertical-align:top;">Thin Ice Macroeconomics</td>
+  <td style="padding:12px 14px;font-size:15px;color:#555;line-height:1.7;
+             vertical-align:top;">ECB正處於「升息高速公路」，6月升息是預設選項，除非中東衝突結束。Fed的信譽面臨考驗，戰前3%的通膨加上當前風險，加劇了通膨預期脫錨的擔憂。</td>
+  <td style="padding:12px 14px;font-size:15px;vertical-align:top;
+             white-space:nowrap;">—</td>
+</tr>
+<tr style="border-bottom:1px solid #f0f0f0;">
+  <td style="padding:12px 14px;font-size:15px;font-weight:500;color:#222;
+             white-space:nowrap;vertical-align:top;">JPMorgan Asset Management</td>
+  <td style="padding:12px 14px;font-size:15px;color:#555;line-height:1.7;
+             vertical-align:top;">Fed主席Powell認為關稅是一次性價格衝擊，但能源飆升需要「觀望」其傳導效應。ECB總裁Lagarde的3月預測已納入兩次升息，6月行動的可能性高。BoJ面臨停滯性通膨困境，但美元/日圓和全球Fed立場限制其行動。</td>
+  <td style="padding:12px 14px;font-size:15px;vertical-align:top;
+             white-space:nowrap;">—</td>
+</tr></tbody>
+  </table>
+</div>
+<div style="margin:24px 0;background:#f7f7f5;border-radius:6px;padding:16px 20px;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">觀察清單影響</div>
+  <div style="font-size:16px;color:#222;line-height:1.8;">鑑於美國消費支出意外下滑和全球PMI數據的分化，投資者應重新評估消費類股的成長前景。同時，全球央行鷹派立場的強化將推高融資成本，對高成長但尚未盈利的科技股構成壓力。信貸市場的壓力分化，提示需警惕低評級債券風險。</div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">下週催化劑</div>
+  <div><span style="display:inline-block;background:#E1F5EE;color:#0F6E56;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">美國4月CPI數據（週二）</span><span style="display:inline-block;background:#E1F5EE;color:#0F6E56;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">美國4月零售銷售數據（週四）</span><span style="display:inline-block;background:#E1F5EE;color:#0F6E56;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">歐洲央行（ECB）官員講話及相關通膨數據</span></div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">風險警示</div>
+  <div><span style="display:inline-block;background:#FCF0EC;color:#993C1D;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">中東地緣政治衝突升級導致能源價格持續飆升，進一步推高全球通膨</span><span style="display:inline-block;background:#FCF0EC;color:#993C1D;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">美國消費者支出持續疲軟，導致經濟成長動能大幅放緩甚至陷入衰退</span><span style="display:inline-block;background:#FCF0EC;color:#993C1D;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">全球製造業的預防性需求耗盡後，面臨嚴重的庫存調整和訂單萎縮</span></div>
+</div>
+
+<div style="font-size:13px;color:#aaa;border-top:1px solid #e8e8e8;
+            padding-top:14px;margin-top:8px;display:flex;justify-content:space-between;">
+  <span>本份報告涵蓋 2026-05-04 至 2026-05-10</span>
+  <span>AI 輔助分析 · 僅供參考</span>
+</div>
+</div>
+</div>
+</body>
+</html>

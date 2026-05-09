@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>選擇權市場情緒 — 深度週報 W19</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:Arial,sans-serif; max-width:1140px; margin:0 auto;
+       padding:0; color:#222; background:#fff; }
+@media(max-width:768px) {
+  body { padding:0 8px; }
+  table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+}
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){
+  .imq-nav-root{padding:.55rem 12px}
+  .imq-nav-inner{gap:.4rem}
+  .imq-menu{width:100%;justify-content:flex-start;gap:.1rem}
+  .imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}
+  .imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}
+  .imq-dd.open .imq-dd-menu{display:block}
+}
+</style>
+</head>
+<body>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/id/theses.html">⭐ 九大非共識</a>
+          <a href="/id/tier_matrix.html">🎯 Tier Matrix</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/" class="active">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+        </div>
+      </div>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})})})();</script>
+<div style="padding:24px 20px;">
+
+<div style="background:#1B3A5C;border-radius:8px 8px 0 0;padding:24px 28px;
+            display:flex;justify-content:space-between;align-items:center;">
+  <div>
+    <div style="font-size:14px;letter-spacing:2px;text-transform:uppercase;
+                color:rgba(255,255,255,0.6);margin-bottom:6px;">WEEKLY DEEP REPORT</div>
+    <div style="font-family:Georgia,serif;font-size:28px;font-weight:700;
+                color:#fff;">📊 選擇權市場情緒</div>
+  </div>
+  <div style="text-align:right;color:rgba(255,255,255,0.8);font-size:14px;line-height:1.8;">
+    W19<br>2026-05-04 — 2026-05-10
+  </div>
+</div>
+
+<div style="background:#FEF3CD;padding:14px 28px;font-size:17px;font-weight:500;
+            color:#856404;line-height:1.6;">
+  📌 市場情緒謹慎樂觀，尾部風險對沖需求上升，但流動性壓力緩解。
+</div>
+<div style="padding:0 4px;">
+
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">VIX 數據</div>
+  <div style="background:#f7f7f5;border-radius:6px;padding:14px 18px;">
+<div style="display:flex;gap:12px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;">
+  <div style="font-size:14px;font-weight:500;color:#888;min-width:120px;">VIX Spot</div>
+  <div style="font-size:15px;color:#222;line-height:1.7;flex:1;">17.19</div>
+</div>
+<div style="display:flex;gap:12px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;">
+  <div style="font-size:14px;font-weight:500;color:#888;min-width:120px;">VIX 3M</div>
+  <div style="font-size:15px;color:#222;line-height:1.7;flex:1;">20.50</div>
+</div>
+<div style="display:flex;gap:12px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;">
+  <div style="font-size:14px;font-weight:500;color:#888;min-width:120px;">期限結構</div>
+  <div style="font-size:15px;color:#222;line-height:1.7;flex:1;">contango</div>
+</div>
+<div style="display:flex;gap:12px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;">
+  <div style="font-size:14px;font-weight:500;color:#888;min-width:120px;">VVIX</div>
+  <div style="font-size:15px;color:#222;line-height:1.7;flex:1;">96.78</div>
+</div></div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">VIX 解讀</div>
+  <div style="display:flex;gap:0;">
+    <div style="width:4px;background:#534AB7;border-radius:2px;flex-shrink:0;"></div>
+    <div style="background:#f7f7f5;border-radius:0 6px 6px 0;padding:16px 20px;
+                font-size:16px;color:#222;line-height:1.8;flex:1;">VIX期限結構保持contango，顯示市場預期未來波動性高於當前，有利於波動性賣家。VVIX維持在96.78，表明波動性的波動性處於中等水平，未見恐慌性飆升。</div>
+  </div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">Put/Call Ratio</div>
+  <div style="background:#f7f7f5;border-radius:6px;padding:14px 18px;">
+<div style="display:flex;gap:12px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;">
+  <div style="font-size:14px;font-weight:500;color:#888;min-width:120px;">QQQ P/C Ratio</div>
+  <div style="font-size:15px;color:#222;line-height:1.7;flex:1;">1.48</div>
+</div>
+<div style="display:flex;gap:12px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;">
+  <div style="font-size:14px;font-weight:500;color:#888;min-width:120px;">本週趨勢</div>
+  <div style="font-size:15px;color:#222;line-height:1.7;flex:1;">上升</div>
+</div>
+<div style="display:flex;gap:12px;padding:8px 0;border-bottom:0.5px solid #e8e8e8;">
+  <div style="font-size:14px;font-weight:500;color:#888;min-width:120px;">訊號</div>
+  <div style="font-size:15px;color:#222;line-height:1.7;flex:1;">偏空</div>
+</div></div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">P/C 解讀</div>
+  <div style="display:flex;gap:0;">
+    <div style="width:4px;background:#378ADD;border-radius:2px;flex-shrink:0;"></div>
+    <div style="background:#f7f7f5;border-radius:0 6px 6px 0;padding:16px 20px;
+                font-size:16px;color:#222;line-height:1.8;flex:1;">QQQ的Put/Call Ratio本週上升至1.48，顯示看跌期權交易量顯著高於看漲期權，表明投資者對Nasdaq 100的下行保護需求增加。這與TQQQ期權的溫和看跌傾斜（0.88）形成對比，可能反映了機構對沖而非散戶投機的影響。</div>
+  </div>
+</div>
+<div style="margin:24px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">偏斜與機構部位</div>
+  <div style="font-size:16px;color:#222;line-height:1.8;">CBOE SKEW指數本週升至136.11，儘管VIX下降，顯示專業投資者對尾部風險的對沖需求顯著增加，尤其是在伊朗地緣政治緊張局勢下。大型機構在SOLS上出現大規模看跌期權買入，同時在SPX上透過賣出看跌期權建立7000點支撐，並買入看漲期權目標8000點以上，顯示出複雜的、有選擇性的對沖與看漲策略並存。</div>
+</div>
+<div style="margin:24px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">Gamma 環境</div>
+  <div style="font-size:16px;color:#222;line-height:1.8;">Nasdaq 100的Gamma Exposure (GEX)在本週中段轉為負值（最低達-$2.4B），表明交易商在價格上漲時賣出，下跌時買入，這會放大市場波動。負GEX環境預示著下週市場可能出現更劇烈的價格波動，除非突破關鍵阻力位。</div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">關鍵價位</div>
+  <div><span style="display:inline-block;background:#F0EDF8;color:#534AB7;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">NDX Gamma Flip Point: 20,450</span><span style="display:inline-block;background:#F0EDF8;color:#534AB7;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">NDX Put Wall (Max Put GEX Support): 20,200</span><span style="display:inline-block;background:#F0EDF8;color:#534AB7;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">NDX Call Wall (Max Call GEX Resistance): 20,800</span></div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">NQ100 綜合判斷</div>
+  <div style="display:flex;gap:0;">
+    <div style="width:4px;background:#1B3A5C;border-radius:2px;flex-shrink:0;"></div>
+    <div style="background:#f7f7f5;border-radius:0 6px 6px 0;padding:16px 20px;
+                font-size:16px;color:#222;line-height:1.8;flex:1;">綜合選擇權指標顯示對NQ100持中性偏空判斷。儘管TQQQ期權數據顯示謹慎樂觀，但QQQ Put/Call Ratio高企、SKEW指數上升以及GEX轉負，均表明市場對下行風險的擔憂加劇，且波動性可能放大。機構在個股層面進行對沖，但在指數層面仍有看漲押注，形成複雜局面。</div>
+  </div>
+</div>
+<div style="margin:20px 0;">
+  <div style="background:#f7f7f5;border-radius:8px;border:0.5px solid #e8e8e8;padding:14px 18px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;
+                margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid #e8e8e8;">
+      <span style="font-size:12px;letter-spacing:1.8px;text-transform:uppercase;
+                   font-weight:500;color:#888;">本週情緒分析</span>
+      <span style="font-size:12px;color:#888;">VIX·VVIX·SKEW·信貸·跨資產</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="font-size:13px;font-weight:600;color:#1B3A5C;background:#EBF2FA;padding:3px 10px;border-radius:4px;">第三階段</span><span style="font-size:13px;color:#555;">落底訊號浮現</span></div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr><td width="33%" style="vertical-align:top;padding:8px 10px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:4px;">VIX 週變化</div><div style="font-size:13px;color:#333;line-height:1.5;">本週VIX從16.99小幅上漲至17.19，但仍遠低於高點，顯示恐慌情緒已大幅緩解。</div></td><td width="33%" style="vertical-align:top;padding:8px 10px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:4px;">VVIX 週變化</div><div style="font-size:13px;color:#333;line-height:1.5;">VVIX今日值為96.78，週趨勢為高位震盪後回落，距峰值133.18已回落6週，較峰值回落27.3%。</div></td><td width="33%" style="vertical-align:top;padding:8px 10px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:4px;">SKEW 週變化</div><div style="font-size:13px;color:#333;line-height:1.5;">本週SKEW從141.38回落至138.21，但仍處於高位，顯示尾部風險對沖需求依然存在。</div></td></tr></table>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:6px;border-top:0.5px solid #e8e8e8;"><tr><td width="33%" style="vertical-align:top;padding:8px 10px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:4px;">信貸確認</div><div style="font-size:13px;color:#333;line-height:1.5;">本週HYG信貸市場震盪，顯示信貸壓力中等。</div></td><td width="33%" style="vertical-align:top;padding:8px 10px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:4px;">跨資產確認</div><div style="font-size:13px;color:#333;line-height:1.5;">本週DXY連續下降，美元流動性壓力緩解，黃金和BTC震盪，RSP/SPY連續收縮，IWM/SPY震盪，跨資產確認訊號中性。</div></td><td width="33%"></td></tr></table>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;margin-top:6px;border-top:0.5px solid #e8e8e8;"><span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:3px;background:#FFF8F0;color:#854F0B;">可靠性：中</span><span style="font-size:13px;color:#888;">信貸市場壓力中等，且跨資產確認訊號不足，但VVIX已從高點回落多週，VIX維持低位。</span></div>
+    <div style="background:#1B3A5C;border-radius:4px;padding:10px 14px;margin-top:10px;display:flex;align-items:center;gap:10px;"><div style="width:10px;height:10px;border-radius:50%;background:#E67E22;flex-shrink:0;"></div><div style="font-size:14px;color:#fff;line-height:1.6;">本週VIX和VVIX數據顯示市場已從恐慌高點回落，VVIX已連續6週回落，符合第三階段的落底訊號。然而，SKEW仍高企且信貸市場震盪，表明市場對尾部風險仍有擔憂。下週展望為市場可能在震盪中尋找方向，需關注跨資產指標的進一步確認。</div></div>
+  </div>
+</div>
+<div style="margin:20px 0;">
+  <div style="font-size:13px;letter-spacing:1.8px;text-transform:uppercase;
+              font-weight:500;color:#888;margin-bottom:14px;">風險警示</div>
+  <div><span style="display:inline-block;background:#FCF0EC;color:#993C1D;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">SKEW指數高企，暗示市場對尾部風險的對沖需求強烈。</span><span style="display:inline-block;background:#FCF0EC;color:#993C1D;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">Nasdaq 100 Gamma Exposure轉負，可能放大下週市場波動。</span><span style="display:inline-block;background:#FCF0EC;color:#993C1D;font-size:14px;font-weight:500;padding:6px 14px;border-radius:4px;margin:0 8px 8px 0;line-height:1.6;">QQQ Put/Call Ratio顯著上升，表明投資者對下行保護的需求增加。</span></div>
+</div>
+
+<div style="font-size:13px;color:#aaa;border-top:1px solid #e8e8e8;
+            padding-top:14px;margin-top:8px;display:flex;justify-content:space-between;">
+  <span>本份報告涵蓋 2026-05-04 至 2026-05-10</span>
+  <span>AI 輔助分析 · 僅供參考</span>
+</div>
+</div>
+</div>
+</body>
+</html>
