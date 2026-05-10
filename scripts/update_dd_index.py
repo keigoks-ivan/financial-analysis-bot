@@ -50,61 +50,79 @@ def collect_dca_map() -> dict:
     return {t: f"/dca/{fname}" for t, (_, fname) in latest.items()}
 
 
+_DCA_EV_ANCHORS = (
+    "機率加權期望值",
+    "機率加權 5 年期望值",
+    "機率加權 5年期望值",
+    "機率加權 EV（5Y）",
+    "機率加權 EV (5Y)",
+    "機率加權EV（5Y）",
+    "機率加權EV(5Y)",
+    "期望值（機率加權）",
+    "期望值(機率加權)",
+)
+_DCA_EV_CELL_CLOSE_RE = re.compile(
+    r"</(td|th|p|h[1-6]|li|div|section|tr|article)\b", re.IGNORECASE
+)
+_DCA_EV_TR_CLOSE_RE = re.compile(r"</tr\s*>", re.IGNORECASE)
+# Strips the canonical "/ IRR ≈ ±X.X%/yr" tag emitted by patch_dca_irr.py
+# so a fresh extract on already-patched HTML doesn't mis-parse our own tag
+# as the 5Y EV.
+_DCA_EV_OUR_IRR_RE = re.compile(
+    r"\s*/\s*IRR\s*[~≈]?\s*[+\-−]?\s*\d+(?:\.\d+)?\s*%(?:\s*/\s*(?:yr|年))?"
+)
+
+
+def _dca_ev_find_all(s: str, kw: str) -> list[int]:
+    out: list[int] = []
+    start = 0
+    while True:
+        i = s.find(kw, start)
+        if i < 0:
+            return out
+        out.append(i)
+        start = i + len(kw)
+
+
+def _dca_ev_in_cell(html: str, anchor_idx: int) -> bool:
+    """First block-level close tag after anchor must be </td> or </th>."""
+    m = _DCA_EV_CELL_CLOSE_RE.search(html[anchor_idx : anchor_idx + 400])
+    return bool(m and m.group(1).lower() in ("td", "th"))
+
+
+def _dca_ev_row_window(html: str, anchor_idx: int) -> str:
+    """Window from anchor to the next </tr>, capped at 1500 bytes."""
+    cap = min(len(html), anchor_idx + 1500)
+    candidate = html[anchor_idx:cap]
+    m = _DCA_EV_TR_CLOSE_RE.search(candidate)
+    return candidate[: m.end()] if m else candidate
+
+
 def extract_dca_ev_5y(dca_path) -> float | None:
-    """Parse the 5-year probability-weighted expected value from §4 Asymmetry
-    Analysis of a DCA HTML report.
+    """Parse the 5-year probability-weighted EV from §4 Asymmetry Analysis.
 
-    Returns the value as a percentage float (e.g. 47.5 for "+47.5%", -32.25
-    for "-32.25%"). Returns None when the keyword is absent or no numeric
-    answer can be located in its neighborhood.
+    Returns the absolute 5-year return as a percentage float (e.g. 47.5 for
+    "+47.5%", -32.25 for "-32.25%"). Returns None when no parseable EV is
+    found in any table-cell-anchored EV row.
 
-    Recognized formats observed across existing DCA files:
-      "+47.5%" / "-32.25%"          NVDA, AMD, MU, ON, SNDK, NXPI, TXN
-      "+57%（5Y）" / "+74%（5Y）"     2330TW, AAPL, ASML, LULU, META, NKE
-      "約 +88% 5 年（IRR ≈ ...）"     ALAB, AVGO, CRDO, GOOGL, MRVL, MSFT
-      "1.38x（... +38%，年化 ...）"   APH
-      "1.77x（+77%）"                LRCX
-      "+0.41x（即 +41%）"            TER
-      Range "+25% to +30%"           AVGO (averages to midpoint)
+    Filters out narrative anchors in <p>/<h2>/<li> contexts where stray
+    percentages (e.g. position-sizing 1.5%) could mislead the regex.
+    Recognized number forms: "+57%", "1.49x", "+25% to +30%", "+88%（年化 ...）".
     """
     try:
         html = Path(dca_path).read_text(encoding="utf-8")
     except OSError:
         return None
 
-    # Locate the keyword anchor; tolerate spacing variants.
-    anchors = (
-        "機率加權期望值",
-        "機率加權 5 年期望值",
-        "機率加權 5年期望值",
-        "機率加權 EV（5Y）",
-        "機率加權 EV (5Y)",
-        "機率加權EV（5Y）",
-        "機率加權EV(5Y)",
-    )
-    idx = -1
-    for kw in anchors:
-        idx = html.find(kw)
-        if idx >= 0:
-            break
-    if idx < 0:
-        return None
-
-    # Window after the anchor — large enough to cover the cell + maybe note.
-    window = html[idx : idx + 800]
-
     def _strip_tags(s: str) -> str:
         return re.sub(r"<[^>]+>", "", s)
 
-    # Sign chars: ASCII -/+, plus Unicode minus U+2212 (used in some DCAs).
     _SIGN = r"[+\-−]"
-    _NEG_RUN = r"[\-−]"  # negative-only set for ranges
 
     def _norm_sign(s: str) -> str:
         return "-" if s in ("-", "−") else "+"
 
     def _parse_pct(text: str) -> float | None:
-        # Range form: "+25% to +30%" or "+25% ~ +30%" — average endpoints.
         rng = re.search(
             rf"({_SIGN})?\s*(\d+(?:\.\d+)?)\s*%\s*(?:to|~|至|–|—|-)\s*({_SIGN})?\s*(\d+(?:\.\d+)?)\s*%",
             text,
@@ -115,21 +133,17 @@ def extract_dca_ev_5y(dca_path) -> float | None:
             s2 = _norm_sign(rng.group(3) or s1)
             v2 = float(rng.group(4)) * (1 if s2 == "+" else -1)
             return (v1 + v2) / 2
-        # Plain percentage with explicit sign first (most reliable).
         signed = re.search(rf"({_SIGN})\s*(\d+(?:\.\d+)?)\s*%", text)
         if signed:
             sign = _norm_sign(signed.group(1))
             val = float(signed.group(2))
             return val if sign == "+" else -val
-        # Bare percent (uncommon — fall through if unsigned context).
         bare = re.search(r"(?<![=×x.\d])(\d+(?:\.\d+)?)\s*%", text)
         if bare:
             return float(bare.group(1))
         return None
 
     def _parse_mult(text: str) -> float | None:
-        # "1.38x" / "1.77x" → (mult-1)*100. Skip "0.41x" style (absolute return
-        # already; the percent form is more reliable when both present).
         m = re.search(r"(?<![\d.×])(\d+\.\d+)\s*x", text)
         if m:
             mult = float(m.group(1))
@@ -137,34 +151,45 @@ def extract_dca_ev_5y(dca_path) -> float | None:
                 return (mult - 1) * 100
         return None
 
-    # Walk <strong> blocks after the anchor first; the canonical answer is
-    # almost always wrapped in <strong>. Skip strongs that are just the
-    # keyword label (no number).
-    strong_iter = re.finditer(r"<strong>(.*?)</strong>", window, re.DOTALL)
-    for sm in strong_iter:
-        text = _strip_tags(sm.group(1))
-        if "期望值" in text and "%" not in text and "x" not in text:
-            continue  # this <strong> wraps just the label
-        pct = _parse_pct(text)
+    def _from_window(window: str) -> float | None:
+        for sm in re.finditer(r"<strong>(.*?)</strong>", window, re.DOTALL):
+            text = _DCA_EV_OUR_IRR_RE.sub("", _strip_tags(sm.group(1)))
+            if "期望值" in text and "%" not in text and "x" not in text:
+                continue
+            pct = _parse_pct(text)
+            if pct is not None:
+                return pct
+            mult = _parse_mult(text)
+            if mult is not None:
+                return mult
+        flat = _DCA_EV_OUR_IRR_RE.sub("", _strip_tags(window))
+        for kw in _DCA_EV_ANCHORS:
+            flat = flat.replace(kw, "", 1)
+        pct = _parse_pct(flat)
         if pct is not None:
             return pct
-        mult = _parse_mult(text)
-        if mult is not None:
-            return mult
+        return _parse_mult(flat)
 
-    # Fallback: search the whole window (covers cells without <strong>, e.g.
-    # "<td>機率加權期望值</td><td colspan=...>...計算式 = 1.38x（... +38%）</td>").
-    flat = _strip_tags(window)
-    # Drop the keyword itself so its trailing "5 年" doesn't confuse the regex.
-    for kw in anchors:
-        flat = flat.replace(kw, "", 1)
-    pct = _parse_pct(flat)
-    if pct is not None:
-        return pct
-    mult = _parse_mult(flat)
-    if mult is not None:
-        return mult
+    positions = sorted({
+        idx for kw in _DCA_EV_ANCHORS for idx in _dca_ev_find_all(html, kw)
+    })
+    for anchor_idx in positions:
+        if not _dca_ev_in_cell(html, anchor_idx):
+            continue
+        ev = _from_window(_dca_ev_row_window(html, anchor_idx))
+        if ev is not None:
+            return ev
     return None
+
+
+def compute_dca_irr(ev_5y_pct: float) -> float:
+    """Annualized IRR (%) from 5-year absolute return (%).
+
+    e.g. +58% 5Y → 9.59%/yr; -51% → -13.36%/yr."""
+    base = 1 + ev_5y_pct / 100
+    if base <= 0:
+        return -100.0
+    return (base ** (1 / 5) - 1) * 100
 
 
 def collect_dca_ev_map() -> dict:
@@ -1238,7 +1263,9 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     else:
         dca_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
 
-    # 5Y 機率加權期望值（§4 Asymmetry）— color band mirrors 5Y Upside.
+    # 5Y 機率加權期望 IRR（§4 Asymmetry）— color band: <8% weak / 8-12% mid /
+    # >12% strong (matches SKILL.md IRR 落點解讀). data-ev5y stores IRR so the
+    # column sorts by user-visible value.
     _ev = (dca_ev_map or {}).get(_t_raw)
     if _ev is None:
         _ev = (dca_ev_map or {}).get(_t_norm)
@@ -1246,17 +1273,19 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         ev_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
         ev_num_attr = "0"
     else:
-        if _ev >= 50:
-            ev_color = "#166534"
-        elif _ev >= 0:
-            ev_color = "#15803D"
+        _irr = compute_dca_irr(_ev)
+        if _irr >= 12:
+            ev_color = "#166534"  # strong
+        elif _irr >= 8:
+            ev_color = "#15803D"  # mid (beats SPX baseline)
+        elif _irr >= 0:
+            ev_color = "#92400E"  # weak (positive but below SPX)
         else:
-            ev_color = "#991B1B"
-        ev_sign = "+" if _ev > 0 else ""
-        # One decimal only when needed (e.g. 47.5%, -32.25% → -32.3%).
-        ev_text = f"{ev_sign}{_ev:.1f}%" if abs(_ev - round(_ev)) > 0.05 else f"{ev_sign}{_ev:.0f}%"
+            ev_color = "#991B1B"  # negative IRR
+        ev_sign = "+" if _irr > 0 else ("−" if _irr < 0 else "")
+        ev_text = f"{ev_sign}{abs(_irr):.1f}%/yr"
         ev_cell = f'<td class="num-cell" style="color:{ev_color};font-weight:600">{ev_text}</td>'
-        ev_num_attr = f"{_ev:.2f}"
+        ev_num_attr = f"{_irr:.2f}"
 
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
@@ -1297,23 +1326,22 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         ev_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
         ev_num_attr = "0"
     else:
-        if ev_5y >= 50:
+        irr = compute_dca_irr(ev_5y)
+        if irr >= 12:
             ev_color = "#166534"
-        elif ev_5y >= 0:
+        elif irr >= 8:
             ev_color = "#15803D"
+        elif irr >= 0:
+            ev_color = "#92400E"
         else:
             ev_color = "#991B1B"
-        sign = "+" if ev_5y > 0 else ""
-        ev_text = (
-            f"{sign}{ev_5y:.1f}%"
-            if abs(ev_5y - round(ev_5y)) > 0.05
-            else f"{sign}{ev_5y:.0f}%"
-        )
+        sign = "+" if irr > 0 else ("−" if irr < 0 else "")
+        ev_text = f"{sign}{abs(irr):.1f}%/yr"
         ev_cell = (
             f'<td class="num-cell" style="color:{ev_color};font-weight:600">'
             f'{ev_text}</td>'
         )
-        ev_num_attr = f"{ev_5y:.2f}"
+        ev_num_attr = f"{irr:.2f}"
 
     em = '<td class="num-cell" style="color:#CBD5E1">—</td>'
     return (
