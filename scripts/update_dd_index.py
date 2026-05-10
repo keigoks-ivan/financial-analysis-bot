@@ -192,6 +192,133 @@ def compute_dca_irr(ev_5y_pct: float) -> float:
     return (base ** (1 / 5) - 1) * 100
 
 
+_TR_PATTERN = re.compile(r"<tr[^>]*>(.*?)</tr>", re.DOTALL | re.IGNORECASE)
+_TD_PATTERN = re.compile(r"<td[^>]*>(.*?)</td>", re.DOTALL | re.IGNORECASE)
+
+
+def _parse_row_return(row_html: str) -> float | None:
+    """Best-effort 5Y absolute return % from a scenario <tr>.
+
+    Tries signed pct first (+92%, −47%, -15%), then x-multiple (1.92x → 92%).
+    Strips our own canonical "/ IRR ≈ ..." tag so re-runs don't pick it up."""
+    text = _DCA_EV_OUR_IRR_RE.sub("", re.sub(r"<[^>]+>", " ", row_html))
+    # Skip a "vs $XYZ" anchor column by searching for first signed percent.
+    signed = re.search(r"([+\-−])\s*(\d+(?:\.\d+)?)\s*%", text)
+    if signed:
+        sign = -1 if signed.group(1) in ("-", "−") else 1
+        return sign * float(signed.group(2))
+    mult = re.search(r"(?<![\d.])(\d+\.\d+)\s*x", text)
+    if mult:
+        return (float(mult.group(1)) - 1) * 100
+    return None
+
+
+def _parse_row_prob(row_html: str) -> float | None:
+    """Probability % from the LAST <td> in a scenario <tr>. Returns None if
+    no parseable percent."""
+    tds = _TD_PATTERN.findall(row_html)
+    if not tds:
+        return None
+    last = re.sub(r"<[^>]+>", "", tds[-1])
+    m = re.search(r"(\d+(?:\.\d+)?)\s*%", last)
+    return float(m.group(1)) if m else None
+
+
+def _extract_scenario_rows(html: str, anchor_idx: int) -> list[dict] | None:
+    """Find Bull/Base/Bear (or N) scenario rows in the §4 table containing
+    `anchor_idx` (the 機率加權期望值 EV-row anchor).
+
+    Returns list of {"return": pct, "prob": pct} for each scenario row, or
+    None when the table can't be identified or fewer than 2 rows parsed.
+    Caller decides which row is the worst (Bear)."""
+    # Walk back to <table>... opening that holds the EV row.
+    table_start = html.rfind("<table", 0, anchor_idx)
+    if table_start < 0:
+        return None
+    table_end = html.find("</table>", anchor_idx)
+    if table_end < 0:
+        return None
+    table_html = html[table_start : table_end + len("</table>")]
+
+    scenarios: list[dict] = []
+    for m in _TR_PATTERN.finditer(table_html):
+        row = m.group(0)
+        # Stop at the EV summary row itself.
+        if any(kw in row for kw in _DCA_EV_ANCHORS):
+            break
+        # Skip header rows (no <td>, only <th>).
+        if "<td" not in row.lower():
+            continue
+        # Scenario rows have ≥3 cells (label / return / basis / prob, etc).
+        # Excludes 2-cell dashboard "description" rows whose narrative text
+        # can spuriously match signed-pct patterns (e.g. "53-63% 寡占").
+        tds = _TD_PATTERN.findall(row)
+        if len(tds) < 3:
+            continue
+        ret = _parse_row_return(row)
+        prob = _parse_row_prob(row)
+        if ret is None or prob is None:
+            continue
+        if not (0 < prob <= 100):
+            continue
+        scenarios.append({"return": ret, "prob": prob})
+    if len(scenarios) < 2:
+        return None
+    return scenarios
+
+
+def extract_dca_confidence_bear(dca_path) -> tuple[float, float] | None:
+    """Return (confidence%, bear_5y_pct) from §4 scenario rows, or None.
+
+    - confidence = 1 - P(worst scenario) — "thesis 不完全失敗的機率"
+    - bear_5y    = worst scenario's 5Y absolute return %
+
+    For N scenarios, the worst is the one with the lowest 5Y return; its
+    probability subtracted from 100 gives confidence. Works for 3-scenario
+    (Bull/Base/Bear) and 4-scenario (Bull/Base/Bear/Tail) DCAs alike.
+    """
+    try:
+        html = Path(dca_path).read_text(encoding="utf-8")
+    except OSError:
+        return None
+    positions = sorted({
+        idx for kw in _DCA_EV_ANCHORS for idx in _dca_ev_find_all(html, kw)
+    })
+    for anchor_idx in positions:
+        if not _dca_ev_in_cell(html, anchor_idx):
+            continue
+        scenarios = _extract_scenario_rows(html, anchor_idx)
+        if not scenarios:
+            continue
+        worst = min(scenarios, key=lambda s: s["return"])
+        confidence = 100.0 - worst["prob"]
+        return confidence, worst["return"]
+    return None
+
+
+def collect_dca_confidence_bear_maps() -> tuple[dict, dict]:
+    """Return ({ticker: confidence_pct}, {ticker: bear_5y_pct}) for each
+    ticker's latest DCA. Tickers without parseable scenarios are omitted."""
+    if not DCA_DIR.exists():
+        return {}, {}
+    latest: dict[str, tuple[str, Path]] = {}
+    for path in DCA_DIR.glob("DCA_*.html"):
+        m = DCA_FILENAME_RE.match(path.name)
+        if not m:
+            continue
+        ticker, date_str = m.group(1), m.group(2)
+        prev = latest.get(ticker)
+        if prev is None or date_str > prev[0]:
+            latest[ticker] = (date_str, path)
+    conf_map: dict[str, float] = {}
+    bear_map: dict[str, float] = {}
+    for ticker, (_, path) in latest.items():
+        result = extract_dca_confidence_bear(path)
+        if result is not None:
+            conf_map[ticker], bear_map[ticker] = result
+    return conf_map, bear_map
+
+
 def collect_dca_ev_map() -> dict:
     """Return {ticker: ev_5y_pct} parsed from each ticker's latest DCA file.
 
@@ -1122,8 +1249,47 @@ def _verdict_to_signal(verdict_raw: str) -> str:
     return ""
 
 
+def _render_confidence_cell(conf: float | None) -> tuple[str, str]:
+    """(td_html, num_attr) for the §4 確信度 cell. conf = 100 - P(worst)."""
+    if conf is None:
+        return '<td class="num-cell" style="color:#CBD5E1">—</td>', "0"
+    if conf >= 75:
+        color = "#166534"
+    elif conf >= 65:
+        color = "#15803D"
+    elif conf >= 50:
+        color = "#92400E"
+    else:
+        color = "#991B1B"
+    text = f"{conf:.0f}%"
+    return (
+        f'<td class="num-cell" style="color:{color};font-weight:600">{text}</td>',
+        f"{conf:.2f}",
+    )
+
+
+def _render_bear_cell(bear: float | None) -> tuple[str, str]:
+    """(td_html, num_attr) for the §4 Bear 跌幅 cell. bear = worst scenario %."""
+    if bear is None:
+        return '<td class="num-cell" style="color:#CBD5E1">—</td>', "0"
+    if bear >= -20:
+        color = "#166534"  # 淺 Bear，下檔保護強
+    elif bear >= -40:
+        color = "#92400E"
+    else:
+        color = "#991B1B"  # 深 Bear
+    sign = "+" if bear > 0 else ("−" if bear < 0 else "")
+    text = f"{sign}{abs(bear):.0f}%"
+    return (
+        f'<td class="num-cell" style="color:{color};font-weight:600">{text}</td>',
+        f"{bear:.2f}",
+    )
+
+
 def build_row_v12(entry: dict, dca_map: dict | None = None,
-                   dca_ev_map: dict | None = None) -> str:
+                   dca_ev_map: dict | None = None,
+                   dca_conf_map: dict | None = None,
+                   dca_bear_map: dict | None = None) -> str:
     """Render one v12 row (data-* attrs + td cells) matching the hand-curated
     schema in docs/research/index.html. Missing fields render as '?' or 0.
 
@@ -1132,6 +1298,9 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     dca_ev_map: optional {ticker: ev_5y_pct} from collect_dca_ev_map(). When
     provided, the next cell after 定見 shows the parsed §4 5Y probability-
     weighted expected value; else '—'.
+    dca_conf_map / dca_bear_map: optional {ticker: pct} from
+    collect_dca_confidence_bear_maps(). When provided, inject 確信度 + Bear
+    cells (the cross-case "確定性" surfacing) after the IRR cell.
     """
     sig = entry.get("signal", "") or "?"
     trap_emoji = entry.get("trap_emoji", "") or "?"
@@ -1287,6 +1456,16 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         ev_cell = f'<td class="num-cell" style="color:{ev_color};font-weight:600">{ev_text}</td>'
         ev_num_attr = f"{_irr:.2f}"
 
+    # 確信度 (= 1 − P(worst scenario)) + Bear 5Y 跌幅 — the "確定性" axis.
+    _conf = (dca_conf_map or {}).get(_t_raw)
+    if _conf is None:
+        _conf = (dca_conf_map or {}).get(_t_norm)
+    _bear = (dca_bear_map or {}).get(_t_raw)
+    if _bear is None:
+        _bear = (dca_bear_map or {}).get(_t_norm)
+    conf_cell, conf_num_attr = _render_confidence_cell(_conf)
+    bear_cell, bear_num_attr = _render_bear_cell(_bear)
+
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
@@ -1294,10 +1473,13 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-pct="{pct_num}" data-peg="{peg_num}"'
         f' data-eps-cagr="{eps_num_attr}"'
         f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-ev5y="{ev_num_attr}"'
+        f' data-confidence="{conf_num_attr}" data-bear="{bear_num_attr}"'
         f' data-stress="{stress_frac}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
         f'{dca_cell}'
         f'{ev_cell}'
+        f'{conf_cell}'
+        f'{bear_cell}'
         f'<td class="num-cell">{date_disp}</td>'
         f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
@@ -1315,7 +1497,9 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
 
 
 def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
-                        ev_5y: float | None) -> str:
+                        ev_5y: float | None,
+                        confidence: float | None = None,
+                        bear: float | None = None) -> str:
     """Render a row for a ticker that has a DCA report but NO DD coverage.
 
     DD-derived columns render '—'. The ticker link points to the DCA file
@@ -1343,6 +1527,9 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         )
         ev_num_attr = f"{irr:.2f}"
 
+    conf_cell, conf_num_attr = _render_confidence_cell(confidence)
+    bear_cell, bear_num_attr = _render_bear_cell(bear)
+
     em = '<td class="num-cell" style="color:#CBD5E1">—</td>'
     return (
         f'<tr class="searchable" data-ticker="{ticker}" data-date="{dca_date}"'
@@ -1351,6 +1538,7 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f' data-fpe="0" data-pe2y="0" data-pct="0" data-peg="0"'
         f' data-eps-cagr="0"'
         f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
+        f' data-confidence="{conf_num_attr}" data-bear="{bear_num_attr}"'
         f' data-stress="0">\n'
         f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
         f'rel="noopener" title="僅 DCA 報告，無對應 DD（DD 已輪替/未建檔）">'
@@ -1359,6 +1547,8 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f'rel="noopener" title="Deep Conviction Analysis 投資決策報告" '
         f'style="text-decoration:none">📋</a></td>'
         f'{ev_cell}'
+        f'{conf_cell}'
+        f'{bear_cell}'
         f'<td class="num-cell">{dca_date}</td>'
         # 11 em-dashes to match DD-row schema:
         # signal, trap, triax, fpe, pe2y, pct, peg, eps_cagr, 2Y_upside,
@@ -1368,7 +1558,9 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
     )
 
 
-def collect_dca_only_rows(entries, dca_map: dict, dca_ev_map: dict) -> list:
+def collect_dca_only_rows(entries, dca_map: dict, dca_ev_map: dict,
+                           dca_conf_map: dict | None = None,
+                           dca_bear_map: dict | None = None) -> list:
     """Return list of HTML row strings for DCAs without matching DD entries.
 
     Picks tickers in dca_map whose normalized form does not appear in any
@@ -1391,7 +1583,9 @@ def collect_dca_only_rows(entries, dca_map: dict, dca_ev_map: dict) -> list:
             d = m.group(1)
             date_str = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
         ev = dca_ev_map.get(ticker)
-        rows.append(build_row_dca_only(ticker, href, date_str, ev))
+        conf = (dca_conf_map or {}).get(ticker)
+        bear = (dca_bear_map or {}).get(ticker)
+        rows.append(build_row_dca_only(ticker, href, date_str, ev, conf, bear))
     return rows
 
 
@@ -1543,8 +1737,12 @@ def update_index_v12_full(html: str, force_refresh_eps: bool = False) -> tuple:
     entries = _sort_v12_entries(collect_v12_entries(force_refresh_eps=force_refresh_eps))
     dca_map = collect_dca_map()
     dca_ev_map = collect_dca_ev_map()
-    dd_rows = [build_row_v12(e, dca_map, dca_ev_map) for e in entries]
-    orphan_rows = collect_dca_only_rows(entries, dca_map, dca_ev_map)
+    dca_conf_map, dca_bear_map = collect_dca_confidence_bear_maps()
+    dd_rows = [build_row_v12(e, dca_map, dca_ev_map, dca_conf_map, dca_bear_map)
+               for e in entries]
+    orphan_rows = collect_dca_only_rows(
+        entries, dca_map, dca_ev_map, dca_conf_map, dca_bear_map
+    )
     if orphan_rows:
         print(f"  DCA-only rows (no DD coverage): {len(orphan_rows)} appended")
     rows = "\n".join(dd_rows + orphan_rows)
