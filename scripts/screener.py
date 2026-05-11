@@ -8,7 +8,7 @@ Usage:
   python scripts/screener.py --quick  # skip fundamentals (faster)
 """
 
-import json, os, sys, math, warnings
+import csv, io, json, os, sys, math, warnings
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -51,7 +51,12 @@ NQ100_EXTRAS = {
 }
 
 def fetch_sp500_tickers():
-    """Fetch S&P 500 components from GitHub CSV."""
+    """Fetch S&P 500 components from GitHub CSV.
+
+    Uses csv.reader so quoted fields with embedded commas (e.g.
+    "Verisk Analytics, Inc.") parse correctly — naive split(',')
+    previously misaligned columns and produced sector='Inc."'.
+    """
     url = 'https://raw.githubusercontent.com/datasets/s-and-p-500-companies/main/data/constituents.csv'
     try:
         import requests
@@ -59,12 +64,12 @@ def fetch_sp500_tickers():
         if r.status_code != 200:
             raise Exception(f"HTTP {r.status_code}")
         tickers = {}
-        for line in r.text.strip().split('\n')[1:]:
-            parts = line.split(',')
-            if len(parts) >= 3:
-                sym = parts[0].replace('.', '-')  # BRK.B → BRK-B
-                sector = parts[2]
-                # Normalize sector names
+        reader = csv.reader(io.StringIO(r.text))
+        next(reader, None)  # skip header row
+        for row in reader:
+            if len(row) >= 3:
+                sym = row[0].replace('.', '-')  # BRK.B → BRK-B
+                sector = row[2]
                 sector = sector.replace('Information Technology', 'Technology')
                 sector = sector.replace('Consumer Discretionary', 'Consumer Disc')
                 sector = sector.replace('Consumer Staples', 'Consumer Staples')
