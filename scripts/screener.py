@@ -284,6 +284,52 @@ def calc_vcp(closes, highs, lows, volumes):
     }
 
 
+def calc_extra_indicators(closes, highs, lows, price):
+    """MA21%/MA50%/52W high%/RSI14/ATR% on adjusted close. Returns dict with None for any insufficient-data field."""
+    out = {'ma21_pct': None, 'ma50_pct': None, 'dist_52w_high_pct': None,
+           'rsi14': None, 'atr_pct': None}
+
+    if len(closes) < 2 or price <= 0:
+        return out
+
+    if len(closes) >= 21:
+        ma21 = closes.iloc[-21:].mean()
+        if ma21 > 0:
+            out['ma21_pct'] = round((price / ma21 - 1) * 100, 1)
+    if len(closes) >= 50:
+        ma50 = closes.iloc[-50:].mean()
+        if ma50 > 0:
+            out['ma50_pct'] = round((price / ma50 - 1) * 100, 1)
+
+    window = min(252, len(closes))
+    high_52w = closes.iloc[-window:].max()
+    if high_52w > 0:
+        out['dist_52w_high_pct'] = round((price / high_52w - 1) * 100, 1)
+
+    if len(closes) >= 15:
+        delta = closes.diff()
+        gain = delta.where(delta > 0, 0.0)
+        loss = (-delta).where(delta < 0, 0.0)
+        avg_gain = gain.ewm(alpha=1/14, adjust=False).mean().iloc[-1]
+        avg_loss = loss.ewm(alpha=1/14, adjust=False).mean().iloc[-1]
+        if avg_loss == 0:
+            out['rsi14'] = 100.0
+        else:
+            rs = avg_gain / avg_loss
+            out['rsi14'] = round(100 - (100 / (1 + rs)), 1)
+
+    if len(closes) >= 15 and len(highs) >= 15 and len(lows) >= 15:
+        prev_close = closes.shift(1)
+        tr = pd.concat([highs - lows,
+                        (highs - prev_close).abs(),
+                        (lows - prev_close).abs()], axis=1).max(axis=1)
+        atr14 = tr.ewm(alpha=1/14, adjust=False).mean().iloc[-1]
+        if pd.notna(atr14):
+            out['atr_pct'] = round((atr14 / price) * 100, 2)
+
+    return out
+
+
 def fetch_fundamentals(ticker):
     """Fetch basic fundamentals for a single ticker."""
     try:
@@ -386,11 +432,14 @@ def main():
             vs_200ma = (price - ma200) / ma200 * 100
 
             vcp = calc_vcp(closes, highs, lows, volumes)
+            extras = calc_extra_indicators(closes, highs, lows, price)
         except:
             price = 0
             vs_200ma = 0
             vcp = {'score': 0, 'pullback_count': 0, 'last_pullback_pct': 0,
                    'dist_from_high_pct': 0, 'atr_ratio': 1.0, 'vol_ratio': 1.0, 'trend_ok': False}
+            extras = {'ma21_pct': None, 'ma50_pct': None, 'dist_52w_high_pct': None,
+                      'rsi14': None, 'atr_pct': None}
 
         combined = round(rs_score * 0.6 + vcp['score'] * 0.4, 1)
 
@@ -412,6 +461,11 @@ def main():
             'price': round(price, 2),
             'vs_200ma_pct': round(vs_200ma, 1),
             'trend_ok': bool(vcp['trend_ok']),
+            'ma21_pct': extras['ma21_pct'],
+            'ma50_pct': extras['ma50_pct'],
+            'dist_52w_high_pct': extras['dist_52w_high_pct'],
+            'rsi14': extras['rsi14'],
+            'atr_pct': extras['atr_pct'],
         })
 
     # Sort by combined score
@@ -490,6 +544,26 @@ def main():
     sector_ranking = [{'sector': s, 'avg_rs': round(np.mean(v), 1), 'count': len(v)}
                       for s, v in sector_scores.items()]
     sector_ranking.sort(key=lambda x: x['avg_rs'], reverse=True)
+
+    # ── Sector strength (strong/neutral/weak) ───────────────────────────
+    sector_counts = {}
+    for r in results:
+        sec = r['sector']
+        c = sector_counts.setdefault(sec, {'strong': 0, 'total': 0})
+        c['total'] += 1
+        if r['rs_score'] >= 75 and r['rs_trend'] in ('accelerating', 'steady'):
+            c['strong'] += 1
+    sector_strength_map = {}
+    for sec, c in sector_counts.items():
+        ratio = c['strong'] / c['total'] if c['total'] > 0 else 0
+        if ratio >= 0.30 and c['strong'] >= 5:
+            sector_strength_map[sec] = 'strong'
+        elif ratio >= 0.15:
+            sector_strength_map[sec] = 'neutral'
+        else:
+            sector_strength_map[sec] = 'weak'
+    for r in results:
+        r['sector_strength'] = sector_strength_map.get(r['sector'], 'weak')
 
     # ── Output JSON ─────────────────────────────────────────────────────
     output = {
