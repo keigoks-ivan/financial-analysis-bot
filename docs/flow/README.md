@@ -89,6 +89,60 @@ git push
 - 寫入 `flow/data.json`
 - index.html 用 `fetch("./data.json")` 讀取(已實作 fallback 機制)
 
+---
+
+## 資料定義(全站統一)
+
+### 🔑 價格定義:還原權息(Adjusted Close)
+
+**所有頁面、所有欄位的價格 / ATH / DMA / RS / P&L 計算,一律使用還原權息收盤價。**
+
+#### 為什麼
+
+| 類型 | 名目價(Close) | 還原權息(Adj. Close) |
+|---|---|---|
+| 含義 | 收盤價 | 配息再投資後的累積總報酬 |
+| 對 MSFT 2014–2016 | 看起來沒創 ATH | 已創多次 ATH |
+| 對長抱者 | 漏掉真正在賺錢的好公司 | ✅ 正確訊號 |
+
+對「長抱 outperformer」目標(配息再投資 + 長期持有)來說,**還原權息才是真實的累積總報酬**。
+
+#### 技術實作
+
+```python
+import yfinance as yf
+
+# yfinance >= 0.2.x 預設 auto_adjust=True
+df = yf.download("MSFT", period="max", auto_adjust=True)
+
+# df['Close'] 已經是 adjusted close
+ath = df['Close'].max()                  # Adj. ATH
+current = df['Close'].iloc[-1]           # Adj. current price
+dma_50 = df['Close'].rolling(50).mean()  # Adj. 50DMA
+dma_200 = df['Close'].rolling(200).mean()  # Adj. 200DMA
+
+# 距 ATH
+distance_from_ath = (current / ath - 1) * 100
+
+# RS vs SPY (30-day momentum ratio)
+stock_ret = df['Close'].iloc[-1] / df['Close'].iloc[-30] - 1
+spy_ret = spy_df['Close'].iloc[-1] / spy_df['Close'].iloc[-30] - 1
+rs_score = (stock_ret - spy_ret) * 100
+```
+
+#### 對應到 UI
+
+所有欄位標示為 `Adj. Price` / `距 Adj. ATH` / `Adj. P&L`,並在每頁頂部用藍色橫幅明確提示。
+
+#### 與 IBKR / TradingView 對照
+
+- **IBKR 報價** 通常顯示**名目價**(配息以現金分配,股價會除息下跌)
+- **TradingView K 線**有 "Adjusted for dividends" 選項,預設開啟
+- **本系統** 與 TradingView 的 Adjusted 模式一致
+- 操作時的盤中監看仍可用 IBKR 名目價(差距通常 < 5%,不影響進場決策)
+
+---
+
 ### Phase 3 · 各子頁的 data
 每個子頁讀對應的 `data-{module}.json`:
 - `data-ath.json` — Base/Cont/Extended 三層清單
