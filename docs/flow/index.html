@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Cockpit · InvestMQuest Research</title>
+<meta name="description" content="Ivan 的 5 步投資流程儀表板 — ATH Hunter / Timing Board / 持倉 Cockpit / 修正期 RS Board">
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f7f6f3;
+    --bg-tertiary: #efede7;
+    --text-primary: #1a1a1a;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #8a8881;
+    --border-light: rgba(0,0,0,0.08);
+    --border-medium: rgba(0,0,0,0.15);
+    --warn-bg: #faeeda;
+    --warn-text: #633806;
+    --warn-strong: #854f0b;
+    --success-bg: #eaf3de;
+    --success-text: #27500a;
+    --info-bg: #e6f1fb;
+    --info-text: #0c447c;
+    --danger-bg: #fcebeb;
+    --danger-text: #791f1f;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+  /* Header */
+  .topbar {
+    border-bottom: 0.5px solid var(--border-light);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .topbar a { color: var(--text-secondary); text-decoration: none; font-size: 12px; }
+  .topbar a:hover { color: var(--text-primary); }
+  .breadcrumb { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.5px; }
+
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin: 0 0 1.5rem; }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 1rem;
+  }
+  .status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .label-tiny { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.5px; }
+  .status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .status-cell .label { font-size: 11px; color: var(--text-secondary); margin: 0; }
+  .status-cell .value { font-size: 18px; font-weight: 500; margin: 2px 0 0; }
+  .status-cell .meta { font-size: 10px; color: var(--text-tertiary); margin: 0; }
+  .v-success { color: var(--success-text); }
+  .v-warn { color: var(--warn-strong); }
+  .v-danger { color: var(--danger-text); }
+
+  /* Action Queue */
+  .action-queue {
+    background: var(--warn-bg);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 1.5rem;
+  }
+  .action-queue-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--warn-text);
+  }
+  .action-queue-empty {
+    background: var(--success-bg);
+    color: var(--success-text);
+  }
+  .action-item {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .action-item:last-child { margin-bottom: 0; }
+  .action-item-left { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .action-item strong { font-weight: 500; }
+  .action-item a { font-size: 11px; color: var(--info-text); text-decoration: none; white-space: nowrap; }
+  .action-item a:hover { text-decoration: underline; }
+
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .b-ath { background: var(--success-bg); color: var(--success-text); }
+  .b-review { background: var(--warn-bg); color: var(--warn-text); }
+  .b-timing { background: var(--info-bg); color: var(--info-text); }
+  .b-base { background: var(--success-bg); color: var(--success-text); }
+  .b-cont { background: var(--warn-bg); color: var(--warn-text); }
+  .b-ext { background: var(--danger-bg); color: var(--danger-text); }
+  .b-tier1 { background: #eeedfe; color: #3c3489; }
+  .b-tier2 { background: #e1f5ee; color: #085041; }
+  .b-tier3 { background: #f1efe8; color: #444441; }
+  .b-dormant { background: var(--bg-tertiary); color: var(--text-tertiary); }
+  .b-active { background: var(--info-bg); color: var(--info-text); }
+  .b-new { background: var(--warn-bg); color: var(--warn-text); }
+  .b-ok { background: var(--success-bg); color: var(--success-text); }
+
+  /* Module list (vertical) */
+  .section-label { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.5px; margin: 0 0 12px; }
+  .module-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem; }
+  .module-card {
+    background: var(--bg-primary);
+    border: 0.5px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: block;
+    transition: border-color 0.15s;
+  }
+  .module-card:hover { border-color: var(--border-medium); }
+  .module-card.dormant { opacity: 0.55; }
+  .module-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .module-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+  }
+  .module-title .icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+  }
+  .module-desc { font-size: 12px; color: var(--text-secondary); margin: 0 0 10px; }
+  .module-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .module-meta { font-size: 11px; color: var(--text-tertiary); margin: 0; }
+
+  /* QQQ track */
+  .qqq-track {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 1rem;
+  }
+  .qqq-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .qqq-title { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .qqq-detail { font-size: 12px; color: var(--text-secondary); margin: 0; }
+
+  /* Footer */
+  .footer-nav {
+    border-top: 0.5px solid var(--border-light);
+    padding-top: 14px;
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .footer-nav a {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+  .footer-nav a:hover { color: var(--text-primary); }
+  .footer-nav .right { margin-left: auto; }
+
+  .disclaimer {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-top: 1.5rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 600px) {
+    .status-grid { grid-template-columns: 1fr 1fr; }
+    .container { padding: 1.5rem 1rem 2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="topbar">
+    <span class="breadcrumb">RESEARCH.INVESTMQUEST.COM / FLOW</span>
+    <a href="/">← 回主站</a>
+  </div>
+
+  <h1>Investment Cockpit</h1>
+  <p class="subtitle">大道至簡 · 5 步投資流程儀表板 · 自用</p>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-header">
+      <span class="label-tiny" id="status-timestamp">MARKET STATUS · ——</span>
+      <span class="label-tiny" id="status-update">last update ——</span>
+    </div>
+    <div class="status-grid">
+      <div class="status-cell">
+        <p class="label">SPY vs ATH</p>
+        <p class="value v-success" id="spy-dd">−2.1%</p>
+        <p class="meta" id="spy-meta">未進入加碼模式</p>
+      </div>
+      <div class="status-cell">
+        <p class="label">QQQ 六狀態</p>
+        <p class="value" id="qqq-state">S1 巡航</p>
+        <p class="meta" id="qqq-meta">無 Grid 觸發</p>
+      </div>
+      <div class="status-cell">
+        <p class="label">Pure MA</p>
+        <p class="value v-success" id="puma-state">站上 50DMA</p>
+        <p class="meta" id="puma-meta">綠燈持倉</p>
+      </div>
+      <div class="status-cell">
+        <p class="label">Today's actions</p>
+        <p class="value v-warn" id="action-count">3 件</p>
+        <p class="meta" id="action-meta">需處理</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Queue -->
+  <div class="action-queue" id="action-queue">
+    <div class="action-queue-header">
+      <span>🔔</span>
+      <span>Action Queue · 今日待處理</span>
+    </div>
+    <div id="action-list">
+      <!-- Items injected by JS -->
+    </div>
+  </div>
+
+  <!-- Modules (vertical) -->
+  <p class="section-label">FLOW MODULES · 5 步流程</p>
+  <div class="module-list">
+
+    <a href="ath-hunter.html" class="module-card">
+      <div class="module-card-header">
+        <div class="module-title">
+          <span class="icon">🎯</span>
+          <span>1 · ATH Hunter</span>
+        </div>
+        <span class="badge b-new">1 new</span>
+      </div>
+      <p class="module-desc">每日掃描通過五條件 + ATH 候選股。Base / Continuation / Extended 自動分類。</p>
+      <div class="module-stats">
+        <span class="badge b-base">Base 4</span>
+        <span class="badge b-cont">Continuation 7</span>
+        <span class="badge b-ext">Extended 3</span>
+      </div>
+      <p class="module-meta">最近建倉:GOOGL · MELI · AVGO</p>
+    </a>
+
+    <a href="timing-board.html" class="module-card">
+      <div class="module-card-header">
+        <div class="module-title">
+          <span class="icon">⏱</span>
+          <span>2 · Timing Board</span>
+        </div>
+        <span class="badge b-active">1 active</span>
+      </div>
+      <p class="module-desc">馬上建倉 vs 等回測 規則化決策樹。距均線 + ATR + 距 ATH 三維度。</p>
+      <div class="module-stats">
+        <span class="badge b-base">可進場 5</span>
+        <span class="badge b-cont">等回踩 6</span>
+        <span class="badge b-ext">過熱 3</span>
+      </div>
+      <p class="module-meta">決策樹:Base Breakout / Continuation / Extended</p>
+    </a>
+
+    <a href="cockpit.html" class="module-card">
+      <div class="module-card-header">
+        <div class="module-title">
+          <span class="icon">💼</span>
+          <span>3 · 持倉 Cockpit</span>
+        </div>
+        <span class="badge b-review">2 review</span>
+      </div>
+      <p class="module-desc">Tier Matrix · Thesis 狀態 · 證偽條件 · 季度三題 review。</p>
+      <div class="module-stats">
+        <span class="badge b-tier1">Tier 1: 3</span>
+        <span class="badge b-tier2">Tier 2: 3</span>
+        <span class="badge b-tier3">Tier 3: 1</span>
+      </div>
+      <p class="module-meta">證偽觸發:0 · 待 review:RMS / SE</p>
+    </a>
+
+    <a href="rs-board.html" class="module-card dormant">
+      <div class="module-card-header">
+        <div class="module-title">
+          <span class="icon">🌊</span>
+          <span>4 · 修正期 RS Board</span>
+        </div>
+        <span class="badge b-dormant">休眠</span>
+      </div>
+      <p class="module-desc">SPY drawdown < −7% 自動點亮。顯示 RS 線創新高的領導股。平時不打擾。</p>
+      <div class="module-stats">
+        <span class="badge b-dormant">當前距觸發 −4.9%</span>
+      </div>
+      <p class="module-meta">觸發後加碼 Tier S → Tier A → 不加 Tier C</p>
+    </a>
+
+  </div>
+
+  <!-- QQQ track -->
+  <div class="qqq-track">
+    <div class="qqq-header">
+      <div class="qqq-title">
+        <span>📊</span>
+        <span>QQQ 軌(獨立 mode)</span>
+      </div>
+      <span class="badge b-ok">無動作</span>
+    </div>
+    <p class="qqq-detail">六狀態機 S1 巡航 · Pure MA 站上 50DMA · 無 Grid 加碼觸發</p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-nav">
+    <a href="/research/">📚 DD 庫</a>
+    <a href="/id/">🧱 ID 報告</a>
+    <a href="/mental-models/">🧠 心智模型</a>
+    <a href="/backtest/">📈 量化白皮書</a>
+    <a href="/" class="right">回主站</a>
+  </div>
+
+  <p class="disclaimer">
+    本頁所有數據為示範用途。真實數據接入後將由 GitHub Actions 每日自動更新。<br>
+    本網站所有內容均由 AI 自動生成,僅供參考,不構成任何投資建議。
+  </p>
+
+</div>
+
+<script>
+  // ============================================================
+  // 資料來源:第一版讀取 data.json(GitHub Actions 產生)
+  // 後續可接 Pipeline B / IBKR Flex Query
+  // ============================================================
+  const DEMO_DATA = {
+    timestamp_tpe: "2026-05-10 06:00 TPE",
+    last_update_minutes_ago: 2,
+    market: {
+      spy_drawdown_from_ath_pct: -2.1,
+      qqq_six_state: "S1 巡航",
+      qqq_grid_triggered: false,
+      pure_ma_state: "站上 50DMA",
+      pure_ma_color: "green"
+    },
+    actions: [
+      { type: "ATH",    ticker: "PLTR",  desc: "Base breakout 第 3 週 · 五條件全過", link: "ath-hunter.html#PLTR" },
+      { type: "REVIEW", ticker: "RMS",   desc: "Q1 財報已出 · 季度 Thesis Review 待回答", link: "cockpit.html#RMS" },
+      { type: "TIMING", ticker: "GOOGL", desc: "回踩至 21DMA · 進場 1/2 倉位訊號",       link: "timing-board.html#GOOGL" }
+    ]
+  };
+
+  function renderStatus(d) {
+    document.getElementById("status-timestamp").textContent = "MARKET STATUS · " + d.timestamp_tpe;
+    document.getElementById("status-update").textContent = "last update " + d.last_update_minutes_ago + " min ago";
+    document.getElementById("spy-dd").textContent = (d.market.spy_drawdown_from_ath_pct >= 0 ? "+" : "") + d.market.spy_drawdown_from_ath_pct + "%";
+    document.getElementById("spy-meta").textContent = d.market.spy_drawdown_from_ath_pct < -7 ? "已進入加碼模式" : "未進入加碼模式";
+    document.getElementById("qqq-state").textContent = d.market.qqq_six_state;
+    document.getElementById("qqq-meta").textContent = d.market.qqq_grid_triggered ? "Grid 觸發" : "無 Grid 觸發";
+    document.getElementById("puma-state").textContent = d.market.pure_ma_state;
+    document.getElementById("action-count").textContent = d.actions.length + " 件";
+    document.getElementById("action-meta").textContent = d.actions.length === 0 ? "今日無事" : "需處理";
+  }
+
+  function renderActions(actions) {
+    const container = document.getElementById("action-list");
+    const queueDiv = document.getElementById("action-queue");
+    if (actions.length === 0) {
+      queueDiv.classList.add("action-queue-empty");
+      container.innerHTML = '<div style="font-size:13px;">✅ 今日無 action,享受你的咖啡。</div>';
+      return;
+    }
+    container.innerHTML = actions.map(a => `
+      <div class="action-item">
+        <div class="action-item-left">
+          <span class="badge b-${a.type.toLowerCase()}">${a.type}</span>
+          <span><strong>${a.ticker}</strong> · ${a.desc}</span>
+        </div>
+        <a href="${a.link}">→ 處理</a>
+      </div>
+    `).join("");
+  }
+
+  // 嘗試讀取 data.json,失敗則用 DEMO_DATA
+  fetch("./data.json")
+    .then(r => r.ok ? r.json() : Promise.reject("no data.json"))
+    .then(data => { renderStatus(data); renderActions(data.actions); })
+    .catch(() => { renderStatus(DEMO_DATA); renderActions(DEMO_DATA.actions); });
+</script>
+</body>
+</html>
