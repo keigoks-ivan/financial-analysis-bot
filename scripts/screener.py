@@ -433,6 +433,20 @@ def main():
 
             vcp = calc_vcp(closes, highs, lows, volumes)
             extras = calc_extra_indicators(closes, highs, lows, price)
+
+            # Price-action override for V-shape recovery: percentile-rank trend
+            # lags after a sharp reversal because s1w/s4w/s13w ordering is noisy.
+            # Upgrade fading/choppy → accelerating when price > 21DMA > 50DMA
+            # AND RSI14 > 60 AND last-week raw return > 0. rs_score unchanged.
+            if trend in ('fading', 'choppy') \
+                    and extras.get('ma21_pct') is not None \
+                    and extras.get('ma50_pct') is not None \
+                    and extras.get('rsi14') is not None \
+                    and extras['ma21_pct'] > 0 \
+                    and extras['ma21_pct'] < extras['ma50_pct'] \
+                    and extras['rsi14'] > 60 \
+                    and rs_raw[ticker]['r1w'] > 0:
+                trend = 'accelerating'
         except:
             price = 0
             vs_200ma = 0
