@@ -72,6 +72,7 @@ function calcQCheck(stock, fund) {
 function classify(stock) {
   const dh = Math.abs(stock.dist_52w_high_pct ?? 999);
   const d50 = stock.ma50_pct ?? 0;
+  const vs200 = stock.vs_200ma_pct ?? 999;
   const rsi = stock.rsi14 ?? 50;
   const vcp = stock.vcp_score ?? 0;
   const pb = stock.pullback_count ?? 0;
@@ -87,6 +88,10 @@ function classify(stock) {
   const ssStrong = ss === 'strong';
   const ssOk = ss === 'strong' || ss === 'neutral';
   const overheated = d50 > 20 || rsi > 75;
+  // Tier F · FRESH BREAKOUT — must come before S (keep in sync with ath-hunter.html)
+  if (dh < 3 && d50 >= 0 && d50 < 8 && vs200 < 30
+      && vcp >= 70 && pb >= 2 && (accel || steady)
+      && q && rcUp) return 'F';
   if (dh < 3 && vcp >= 85 && pb >= 3 && pb <= 5 && accel && q && rcUp && ssStrong) return 'S';
   if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'A';
   if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
@@ -271,7 +276,7 @@ async function main() {
       const tier = classify(stock);
       if (!tier) continue;
       stock.tier = tier;
-      if (tier === 'S' || tier === 'A' || tier === 'B') ready.push(stock);
+      if (tier === 'F' || tier === 'S' || tier === 'A' || tier === 'B') ready.push(stock);
       else if (tier === 'E') wait.push(stock);
       else if (tier === 'P' || tier === 'W') skip.push(stock);
       else if (tier === 'M') watch.push(stock);

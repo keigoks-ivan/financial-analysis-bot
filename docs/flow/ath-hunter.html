@@ -6,6 +6,7 @@
 <title>ATH Hunter · Flow Cockpit</title>
 <link rel="stylesheet" href="flow.css">
 <style>
+  .tier-F { background: #FFF4D6; color: #7A5500; }
   .tier-S { background: #EEEDFE; color: #3C3489; }
   .tier-A { background: #EAF3DE; color: #27500A; }
   .tier-B { background: #E1F5EE; color: #085041; }
@@ -177,6 +178,7 @@
     </div>
   </details>
 
+  <div id="tier-F" class="tier-section"></div>
   <div id="tier-S" class="tier-section"></div>
   <div id="tier-A" class="tier-section"></div>
   <div id="tier-B" class="tier-section"></div>
@@ -207,6 +209,7 @@ const MARKET_STATE_URL = '/screener/market_state.json';
 function classify(stock) {
   const dh = Math.abs(stock.dist_52w_high_pct ?? 999);
   const d50 = stock.ma50_pct ?? 0;
+  const vs200 = stock.vs_200ma_pct ?? 999;
   const rsi = stock.rsi14 ?? 50;
   const vcp = stock.vcp_score ?? 0;
   const pb = stock.pullback_count ?? 0;
@@ -227,6 +230,11 @@ function classify(stock) {
   const ssOk = ss === 'strong' || ss === 'neutral';
   const overheated = d50 > 20 || rsi > 75;
 
+  // Tier F · FRESH BREAKOUT — 從 base 剛突破，尚未延伸（vs MA50/200 都還近）。
+  // 必須在 Tier S 之前檢查；同檔若也合 S，會優先標 F（綠線時刻優先於強勢續航）。
+  if (dh < 3 && d50 >= 0 && d50 < 8 && vs200 < 30
+      && vcp >= 70 && pb >= 2 && (accel || steady)
+      && q && rcUp) return 'F';
   if (dh < 3 && vcp >= 85 && pb >= 3 && pb <= 5 && accel && q && rcUp && ssStrong) return 'S';
   if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'A';
   if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
@@ -415,6 +423,8 @@ function renderRegimeBanner(marketState) {
 }
 
 const TIER_META = {
+  F: { name: 'F · FRESH',        action: '🎯 黃金切入點 · 立即 DD',  emoji: '🌱',
+       rule: '距 52W high &lt; 3% · 距 50DMA &lt; 8% · 距 200DMA &lt; 30% · VCP ≥ 70 · 收縮 ≥ 2 · RS accel/steady · Q✓ · 排名上升（剛從 base 突破，尚未延伸）' },
   S: { name: 'S · PRIME',        action: '優先全力 DD',           emoji: '⭐',
        rule: '距 52W high &lt; 3% · VCP ≥ 85 · 收縮 3–5 次 · RS accel · Q✓ · 排名上升 · sector strong' },
   A: { name: 'A · SETUP',        action: '主力候選池',           emoji: '🎯',
@@ -467,7 +477,7 @@ function renderTier(tier, stocks) {
   }
 
   let rows;
-  if (tier === 'S' || tier === 'A') {
+  if (tier === 'F' || tier === 'S' || tier === 'A') {
     rows = stocks.map(s => `
       <tr id="row-${s.ticker}">
         <td><strong>${s.ticker}</strong></td>
@@ -590,7 +600,7 @@ async function main() {
     // Market regime banner — v1.3 IBD-style from market_state.json
     renderRegimeBanner(mData);
 
-    const buckets = { S: [], A: [], B: [], M: [], E: [], P: [], W: [] };
+    const buckets = { F: [], S: [], A: [], B: [], M: [], E: [], P: [], W: [] };
     for (const stock of rankings) {
       const fund = fundamentals[stock.ticker] || null;
       stock.fund = fund;
@@ -601,7 +611,7 @@ async function main() {
     for (const t of Object.keys(buckets)) {
       buckets[t].sort((a, b) => (b.combined ?? b.rs_score ?? 0) - (a.combined ?? a.rs_score ?? 0));
     }
-    for (const t of ['S','A','B','M','E','P','W']) renderTier(t, buckets[t]);
+    for (const t of ['F','S','A','B','M','E','P','W']) renderTier(t, buckets[t]);
 
     // Scroll to ticker from Action Queue (e.g. ath-hunter.html#GLW)
     const hash = location.hash.slice(1);
@@ -619,7 +629,7 @@ async function main() {
     console.error(err);
     document.getElementById('stale-warning-slot').innerHTML =
       `<div class="stale-warning critical">❌ 資料載入失敗:${err.message}。請檢查 screener pipeline 是否正常運行。</div>`;
-    for (const t of ['S','A','B','M','E','P','W']) renderTier(t, []);
+    for (const t of ['F','S','A','B','M','E','P','W']) renderTier(t, []);
   }
 }
 

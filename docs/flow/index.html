@@ -133,6 +133,8 @@
     font-weight: 500;
     white-space: nowrap;
   }
+  .b-fresh { background: #fff4d6; color: #7a5500; }
+  .b-rs { background: var(--info-bg); color: var(--info-text); }
   .b-ath { background: var(--success-bg); color: var(--success-text); }
   .b-review { background: var(--warn-bg); color: var(--warn-text); }
   .b-timing { background: var(--info-bg); color: var(--info-text); }
@@ -400,6 +402,7 @@ function calcQCheck(stock, fund) {
 function classify(stock) {
   const dh = Math.abs(stock.dist_52w_high_pct ?? 999);
   const d50 = stock.ma50_pct ?? 0;
+  const vs200 = stock.vs_200ma_pct ?? 999;
   const rsi = stock.rsi14 ?? 50;
   const vcp = stock.vcp_score ?? 0;
   const pb = stock.pullback_count ?? 0;
@@ -415,6 +418,10 @@ function classify(stock) {
   const ssStrong = ss === 'strong';
   const ssOk = ss === 'strong' || ss === 'neutral';
   const overheated = d50 > 20 || rsi > 75;
+  // Tier F · FRESH BREAKOUT — 必須在 S 之前；同檔若也合 S，會優先標 F。
+  if (dh < 3 && d50 >= 0 && d50 < 8 && vs200 < 30
+      && vcp >= 70 && pb >= 2 && (accel || steady)
+      && q && rcUp) return 'F';
   if (dh < 3 && vcp >= 85 && pb >= 3 && pb <= 5 && accel && q && rcUp && ssStrong) return 'S';
   if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'A';
   if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
@@ -484,7 +491,24 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
     for (const it of rsItems) items.push(it);
   }
 
-  // 2) ATH new entries — tier S/A/B today but not yesterday
+  // 2) Fresh Breakout (Tier F) — 黃金切入點，priority 0（高於 RS、ATH）。
+  // 不論市場狀態都顯示，因為這是最稀有也最高訊號的事件。
+  if (prevBuckets) {
+    const prevF = new Set(prevBuckets.F || []);
+    for (const ticker of todayBuckets.F || []) {
+      if (!prevF.has(ticker)) {
+        items.push({
+          type: 'FRESH',
+          ticker,
+          desc: `🌱 Tier F 新鮮突破 · 黃金切入點`,
+          link: `ath-hunter.html#${ticker}`,
+          priority: 0,
+        });
+      }
+    }
+  }
+
+  // 3) ATH new entries — tier S/A/B today but not yesterday
   if (prevBuckets) {
     const prevSAB = new Set();
     for (const t of ['S', 'A', 'B']) {
@@ -510,7 +534,7 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
 }
 
 function bucketRankings(rankings, fundamentals) {
-  const buckets = { S: [], A: [], B: [], M: [], E: [], P: [], W: [], byTicker: {} };
+  const buckets = { F: [], S: [], A: [], B: [], M: [], E: [], P: [], W: [], byTicker: {} };
   for (const stock of rankings) {
     const fund = fundamentals[stock.ticker] || null;
     stock.fund = fund;
