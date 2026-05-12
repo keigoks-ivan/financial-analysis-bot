@@ -11,6 +11,7 @@
   .tier-B { background: #E1F5EE; color: #085041; }
   .tier-M { background: #F1EFE8; color: #444441; }
   .tier-E { background: #FAEEDA; color: #633806; }
+  .tier-P { background: #FDE2D5; color: #7A2B0A; }
   .tier-W { background: #FCEBEB; color: #791F1F; }
   .sector-strong  { color: var(--success-text); font-weight: 500; }
   .sector-neutral { color: var(--warn-strong); }
@@ -176,13 +177,14 @@
   </details>
 
   <details class="info-box" style="margin-bottom: 1.5rem;">
-    <summary style="cursor: pointer; font-size: 13px; font-weight: 500;">📋 六層分類規則(點開展開)</summary>
+    <summary style="cursor: pointer; font-size: 13px; font-weight: 500;">📋 七層分類規則(點開展開)</summary>
     <div style="margin-top: 12px; font-size: 12px; line-height: 1.8;">
       <p style="margin: 0 0 8px;"><span class="badge tier-S">S · PRIME</span> &nbsp; 距 52W high &lt; 3% · VCP ≥ 85 · 收縮 3–5 次 · RS accel · Q✓ · 排名上升 · sector strong</p>
       <p style="margin: 0 0 8px;"><span class="badge tier-A">A · SETUP</span> &nbsp; 距 52W high &lt; 8% · VCP ≥ 75 · 收縮 ≥ 2 · RS accel/steady · Q✓ · sector strong/neutral</p>
       <p style="margin: 0 0 8px;"><span class="badge tier-B">B · CONTINUATION</span> &nbsp; 距 52W high 8–15% · 距 50DMA &lt; 12% · RS accel · Q✓</p>
       <p style="margin: 0 0 8px;"><span class="badge tier-M">M · MOMENTUM</span> &nbsp; 距 52W high &lt; 8% · VCP ≥ 80 · RS accel · Q✗(動能極強但基本面差)</p>
       <p style="margin: 0 0 8px;"><span class="badge tier-E">E · EXTENDED</span> &nbsp; 距 50DMA &gt; 20% 或 RSI &gt; 75 · RS accel/steady · Q✓(強勢過熱,等回踩)</p>
+      <p style="margin: 0 0 8px;"><span class="badge tier-P">🚀 P · PARABOLIC</span> &nbsp; 距 52W high &lt; 5% · 距 50DMA &gt; 20% · VCP &lt; 75 · RS accel · Q✗(拋物線飆漲,基本面不過 → 看不買)</p>
       <p style="margin: 0;"><span class="badge tier-W">W · WEAKENING</span> &nbsp; 距 50DMA &gt; 20% 或 RSI &gt; 75 · RS fading/choppy(警示過熱,避開)</p>
     </div>
   </details>
@@ -192,6 +194,7 @@
   <div id="tier-B" class="tier-section"></div>
   <div id="tier-M" class="tier-section"></div>
   <div id="tier-E" class="tier-section"></div>
+  <div id="tier-P" class="tier-section"></div>
   <div id="tier-W" class="tier-section"></div>
 
   <p class="disclaimer">
@@ -224,11 +227,14 @@ function classify(stock) {
   const ss = stock.sector_strength;
   const q = stock.qcheck;
 
-  const accel = trend === 'accel';
+  const accel = trend === 'accelerating';
   const steady = trend === 'steady';
   const fading = trend === 'fading';
   const choppy = trend === 'choppy';
-  const rcUp = typeof rc === 'number' && rc < 0;
+  // rank_change is emitted as a string by screener.py: "+5" / "-3" / "—" / "NEW".
+  // Treat new entries and improving ranks (negative numeric prefix) as "up".
+  const rcUp = typeof rc === 'string'
+    && (rc === 'NEW' || (rc.startsWith('-') && rc !== '—'));
   const ssStrong = ss === 'strong';
   const ssOk = ss === 'strong' || ss === 'neutral';
   const overheated = d50 > 20 || rsi > 75;
@@ -238,6 +244,8 @@ function classify(stock) {
   if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
   if (dh < 8 && vcp >= 80 && accel && !q) return 'M';
   if (overheated && (accel || steady) && q) return 'E';
+  // P · PARABOLIC — must come after M (which wants VCP ≥ 80) and before W
+  if (dh < 5 && d50 > 20 && vcp < 75 && accel && !q) return 'P';
   if (overheated && (fading || choppy)) return 'W';
   return null;
 }
@@ -424,6 +432,7 @@ const TIER_META = {
   B: { name: 'B · CONTINUATION', action: '加碼參考',             emoji: '📈' },
   M: { name: 'M · MOMENTUM',     action: '觀察用,不建倉',       emoji: '👀' },
   E: { name: 'E · EXTENDED',     action: '設提醒,等回踩',       emoji: '🔥' },
+  P: { name: 'P · PARABOLIC',    action: '看不買 · 拋物線階段', emoji: '🚀' },
   W: { name: 'W · WEAKENING',    action: '避開',                emoji: '⚠️' }
 };
 
@@ -445,12 +454,15 @@ function renderTier(tier, stocks) {
   const meta = TIER_META[tier];
   const container = document.getElementById(`tier-${tier}`);
   if (!container) return;
+  const note = tier === 'P'
+    ? `<p style="font-size:11px;color:#7A2B0A;margin:-4px 0 8px;">⚠️ 基本面不過,僅作市場觀察,不建議建倉</p>`
+    : '';
   const header = `
     <div class="tier-header">
       <span class="tier-name"><span class="badge tier-${tier}">${meta.emoji} ${meta.name}</span></span>
       <span class="tier-action">→ ${meta.action} · ${stocks.length} 檔</span>
     </div>
-  `;
+  ` + note;
   if (stocks.length === 0) {
     container.innerHTML = header + `<div class="empty-tier">本日無符合條件股票</div>`;
     return;
@@ -505,7 +517,7 @@ function renderTier(tier, stocks) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
-  } else if (tier === 'M') {
+  } else if (tier === 'M' || tier === 'P') {
     rows = stocks.map(s => {
       const f = s.fund || {};
       const reasons = [];
@@ -580,7 +592,7 @@ async function main() {
     // Market regime banner — v1.3 IBD-style from market_state.json
     renderRegimeBanner(mData);
 
-    const buckets = { S: [], A: [], B: [], M: [], E: [], W: [] };
+    const buckets = { S: [], A: [], B: [], M: [], E: [], P: [], W: [] };
     for (const stock of rankings) {
       const fund = fundamentals[stock.ticker] || null;
       stock.fund = fund;
@@ -591,12 +603,12 @@ async function main() {
     for (const t of Object.keys(buckets)) {
       buckets[t].sort((a, b) => (b.combined ?? b.rs_score ?? 0) - (a.combined ?? a.rs_score ?? 0));
     }
-    for (const t of ['S','A','B','M','E','W']) renderTier(t, buckets[t]);
+    for (const t of ['S','A','B','M','E','P','W']) renderTier(t, buckets[t]);
   } catch (err) {
     console.error(err);
     document.getElementById('stale-warning-slot').innerHTML =
       `<div class="stale-warning critical">❌ 資料載入失敗:${err.message}。請檢查 screener pipeline 是否正常運行。</div>`;
-    for (const t of ['S','A','B','M','E','W']) renderTier(t, []);
+    for (const t of ['S','A','B','M','E','P','W']) renderTier(t, []);
   }
 }
 
