@@ -5,6 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>修正期 RS Board · Flow Cockpit</title>
 <link rel="stylesheet" href="flow.css">
+<style>
+  .state-banner {
+    border-radius: var(--radius-lg, 8px);
+    padding: 18px 22px;
+    margin: 0 0 1.5rem;
+    line-height: 1.7;
+  }
+  .state-dormant { background: #F1F5F9; border-left: 4px solid #94A3B8; }
+  .state-active  { background: #FEE2E2; border-left: 4px solid #DC2626; }
+  .state-banner h2 { margin: 0 0 8px; font-size: 18px; font-weight: 500; }
+  .state-banner .state-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px 16px;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .state-banner .state-stats .label { color: var(--text-tertiary, #94A3B8); font-size: 11px; }
+  .state-banner .state-stats .val { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  .pure-ma-green  { color: var(--success-text, #166534); }
+  .pure-ma-yellow { color: var(--warn-strong, #B45309); }
+  .pure-ma-red    { color: var(--danger-text, #991B1B); }
+  .preview-note { font-size: 12px; color: var(--text-tertiary, #94A3B8); margin-top: 12px; padding-top: 10px; border-top: 0.5px solid rgba(0,0,0,0.08); }
+  .rs-bucket { margin-bottom: 1.5rem; }
+  .rs-bucket-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; font-size: 13px; }
+  .rs-bucket-rule { font-size: 11px; color: var(--text-tertiary, #94A3B8); font-weight: 400; }
+  .empty-bucket { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 10px; background: var(--bg-secondary, #F8FAFC); border-radius: 4px; text-align: center; }
+  .num-pos { color: var(--success-text, #166534); }
+  .num-neg { color: var(--danger-text, #991B1B); }
+</style>
 </head>
 <body>
 <div class="container">
@@ -15,78 +45,26 @@
   </div>
 
   <h1>🌊 修正期 RS Board</h1>
-  <p class="subtitle">SPY drawdown &lt; −7% 自動點亮 · RS 線新高 = 真正的領導股</p>
+  <p class="subtitle">SPY 距 52W high ≤ −7% 或 IBD state ∈ {correction, under_pressure} 自動點亮 · RS 線新高 = 真正的領導股</p>
   <p class="adj-notice">📐 <strong>所有價格 / RS 計算使用還原權息(Adjusted Close)</strong>——SPY 與個股皆含配息。</p>
 
-  <!-- Dormant state (current) -->
-  <div class="dormant-state">
-    <p class="dormant-label">當前狀態</p>
-    <p class="dormant-title">💤 休眠中</p>
-    <p class="dormant-detail">
-      SPY 距 Adj. ATH: <strong>−2.1%</strong><br>
-      距觸發閾值: 還需 <strong>−4.9%</strong><br>
-      Pure MA: 站上 50DMA(綠燈持倉)
-    </p>
-    <p class="dormant-meta">
-      平時不打擾。大盤進入 −7% 修正時,這個頁面會自動點亮並推播。<br>
-      此時無 action,可以去做別的事。
-    </p>
-  </div>
-
-  <p class="section-label">🚨 觸發後將顯示(預覽)</p>
-
-  <div class="info-box">
-    <p class="info-title">RS 線新高(Tier S 加碼候選)</p>
-    <table class="data-table compact">
-      <thead>
-        <tr><th>Ticker</th><th>距 Adj. ATH</th><th>RS vs SPY</th><th>狀態</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><strong>AVGO</strong></td><td>−2.1%</td><td>+3.2 (新高)</td><td>🟢 真正的領導股</td></tr>
-        <tr><td><strong>GOOGL</strong></td><td>−1.5%</td><td>+2.8 (新高)</td><td>🟢 真正的領導股</td></tr>
-        <tr><td colspan="4" class="placeholder">範例資料</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="info-box">
-    <p class="info-title">RS 持平(Tier A 觀察)</p>
-    <table class="data-table compact">
-      <thead>
-        <tr><th>Ticker</th><th>距 Adj. ATH</th><th>RS vs SPY</th><th>狀態</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><strong>TSMC</strong></td><td>−5.8%</td><td>+0.5</td><td>🟡 觀察</td></tr>
-        <tr><td colspan="4" class="placeholder">範例資料</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="info-box">
-    <p class="info-title">RS 走弱(Tier C 不加碼,可能要降倉)</p>
-    <table class="data-table compact">
-      <thead>
-        <tr><th>Ticker</th><th>距 Adj. ATH</th><th>RS vs SPY</th><th>狀態</th></tr>
-      </thead>
-      <tbody>
-        <tr><td><strong>(範例)</strong></td><td>−12%</td><td>−1.8</td><td>🔴 退出領導圈</td></tr>
-        <tr><td colspan="4" class="placeholder">範例資料</td></tr>
-      </tbody>
-    </table>
-  </div>
+  <div id="state-slot"></div>
+  <div id="body-slot"></div>
 
   <div class="info-box">
     <p class="info-title">加碼順序規則</p>
     <ul class="info-list">
-      <li>🟢 RS 創新高 → 先加碼,優先 Tier 1 持倉</li>
+      <li>🟢 RS 創新高 → 先加碼,優先持倉(IBKR Flex 接入後將自動標記持倉股)</li>
       <li>🟡 RS 持平 → 等更明確訊號</li>
       <li>🔴 RS 走弱 → 不加碼,考慮減倉至 Tier 降級</li>
     </ul>
   </div>
 
   <p class="disclaimer">
-    觸發閾值 −7% 可在 config 中調整。<br>
-    RS 計算方式:該股 N 日報酬 / SPY 同期報酬 × 100,N 預設 = 30 日。
+    觸發閾值 −7% 對應 SPY 距 52w high。<br>
+    RS 新高判斷:rs_peaks.json 紀錄 history 中該股 rs_score 峰值,today &gt;= 峰值 → at_new_high=true。<br>
+    History 隨時間累積(每日 daily-screener-us +1 檔),訊號精度自動提升。<br>
+    <span id="data-timestamp">資料時間:載入中...</span>
   </p>
 
   <div class="footer-nav">
@@ -95,5 +73,196 @@
   </div>
 
 </div>
+
+<script>
+const MARKET_STATE_URL  = '/screener/market_state.json';
+const LATEST_URL        = '/screener/latest.json';
+const RS_PEAKS_URL      = '/screener/rs_peaks.json';
+
+const TRIGGER_DRAWDOWN_PCT = -7.0;
+const TRIGGER_STATES = new Set(['correction', 'under_pressure']);
+const TOP_N = 30;
+
+function pureMaColor(vs50, vs200) {
+  if (vs50 == null || vs200 == null) return { label: '—', cls: '' };
+  if (vs50 > 0 && vs200 > 0) return { label: '🟢 站上 50DMA + 200DMA', cls: 'pure-ma-green' };
+  if (vs50 <= 0 && vs200 > 0) return { label: '🟡 跌破 50DMA · 守 200DMA', cls: 'pure-ma-yellow' };
+  return { label: '🔴 雙跌破', cls: 'pure-ma-red' };
+}
+
+function fmtPct(v, d = 1) {
+  if (v == null || isNaN(v)) return '—';
+  const s = v > 0 ? '+' : '';
+  return `${s}${v.toFixed(d)}%`;
+}
+function fmtNum(v, d = 1) {
+  if (v == null || isNaN(v)) return '—';
+  return v.toFixed(d);
+}
+function pctClass(v) {
+  if (v == null || isNaN(v)) return '';
+  return v > 0 ? 'num-pos' : (v < 0 ? 'num-neg' : '');
+}
+
+function renderDormant(spy) {
+  const dd = spy.drawdown_52w_high_pct;
+  const toTrigger = dd == null ? null : TRIGGER_DRAWDOWN_PCT - dd;
+  const ma = pureMaColor(spy.vs_50dma_pct, spy.vs_200dma_pct);
+  return `
+    <div class="state-banner state-dormant">
+      <h2>💤 休眠中</h2>
+      <div class="state-stats">
+        <div><div class="label">SPY state</div><div class="val">${spy.state || '—'}</div></div>
+        <div><div class="label">SPY 距 52w high</div><div class="val ${pctClass(dd)}">${fmtPct(dd)}</div></div>
+        <div><div class="label">距 ${TRIGGER_DRAWDOWN_PCT}% 觸發</div><div class="val">${toTrigger == null ? '—' : '還需 ' + fmtPct(toTrigger)}</div></div>
+        <div><div class="label">Pure MA</div><div class="val ${ma.cls}">${ma.label}</div></div>
+      </div>
+      <p class="preview-note">
+        平時不打擾。SPY 距 52w high 跌破 −7% 或 IBD state 轉 correction/under_pressure 時,這個頁面會自動點亮顯示 RS 三桶分類。
+        此時無 action,可以去做別的事。
+      </p>
+    </div>`;
+}
+
+function renderTriggered(spy, ready, watch, weak, peaksMeta) {
+  const dd = spy.drawdown_52w_high_pct;
+  const ma = pureMaColor(spy.vs_50dma_pct, spy.vs_200dma_pct);
+  const renderBucket = (title, rule, stocks, emptyMsg, columnMode) => {
+    const inner = stocks.length === 0
+      ? `<div class="empty-bucket">${emptyMsg}</div>`
+      : `<table class="data-table compact"><thead><tr>
+           <th>Ticker</th><th>距 52w high</th><th>RS score</th>
+           ${columnMode === 'peak' ? '<th>vs peak</th>' : '<th>趨勢</th>'}
+           <th>狀態</th>
+         </tr></thead><tbody>${stocks.map(s => `
+           <tr>
+             <td><strong>${s.ticker}</strong> <span style="font-size:10px;color:var(--text-tertiary)">${s.sector || '—'}</span></td>
+             <td class="${pctClass(s.dist_52w_high_pct)}">${fmtPct(s.dist_52w_high_pct)}</td>
+             <td>${fmtNum(s.rs_score, 0)}</td>
+             ${columnMode === 'peak'
+               ? `<td style="font-size:11px">${s._peakInfo}</td>`
+               : `<td style="font-size:11px;color:var(--text-tertiary)">${s.rs_trend || '—'}</td>`}
+             <td style="font-size:11px">${s._statusLabel}</td>
+           </tr>`).join('')}</tbody></table>`;
+    return `
+      <div class="rs-bucket">
+        <div class="rs-bucket-header">
+          <span><strong>${title}</strong> <span class="rs-bucket-rule">${rule}</span></span>
+          <span class="rs-bucket-rule">${stocks.length} 檔</span>
+        </div>
+        ${inner}
+      </div>`;
+  };
+  return `
+    <div class="state-banner state-active">
+      <h2>🚨 觸發中 · RS Board 啟動</h2>
+      <div class="state-stats">
+        <div><div class="label">SPY state</div><div class="val">${spy.state || '—'}</div></div>
+        <div><div class="label">SPY 距 52w high</div><div class="val ${pctClass(dd)}">${fmtPct(dd)}</div></div>
+        <div><div class="label">Pure MA</div><div class="val ${ma.cls}">${ma.label}</div></div>
+        <div><div class="label">History 深度</div><div class="val">${peaksMeta.history_days_available} 天</div></div>
+      </div>
+      <p class="preview-note">優先盯 🟢 新高桶 — 修正期 RS 創新高 = 真正的領導股,出修正後最可能加速。</p>
+    </div>
+    ${renderBucket('🟢 RS 新高(Tier S 加碼候選)',
+        'at_new_high === true AND rs_trend === accelerating',
+        ready,
+        'Universe 中目前無 ticker 同時 RS 新高 + 加速 — 修正期還早或都還沒分化',
+        'peak')}
+    ${renderBucket('🟡 RS 持平(Tier A 觀察)',
+        'rs_trend === steady',
+        watch,
+        '無 ticker 屬於穩定段',
+        'trend')}
+    ${renderBucket('🔴 RS 走弱(Tier C 不加碼,可能減倉)',
+        'rs_trend ∈ {fading, choppy}',
+        weak,
+        '無走弱 ticker(意外的好事)',
+        'trend')}`;
+}
+
+function renderPreview() {
+  return `
+    <div class="info-box">
+      <p class="info-title">🔍 觸發後將顯示(預覽 logic)</p>
+      <ul class="info-list">
+        <li><strong>🟢 RS 新高</strong>:<code>rs_peaks.at_new_high === true</code> AND <code>rs_trend === 'accelerating'</code></li>
+        <li><strong>🟡 RS 持平</strong>:<code>rs_trend === 'steady'</code></li>
+        <li><strong>🔴 RS 走弱</strong>:<code>rs_trend ∈ {fading, choppy}</code></li>
+      </ul>
+      <p style="font-size:11px;color:var(--text-tertiary);margin:8px 0 0;">
+        Universe:top ${TOP_N} by rs_score from latest.json。
+        持倉專屬排序等 IBKR Flex 接入後啟用。
+      </p>
+    </div>`;
+}
+
+async function main() {
+  try {
+    const [mRes, sRes, pRes] = await Promise.all([
+      fetch(MARKET_STATE_URL),
+      fetch(LATEST_URL),
+      fetch(RS_PEAKS_URL).catch(() => null),
+    ]);
+    if (!mRes.ok) throw new Error(`market_state fetch failed: ${mRes.status}`);
+    if (!sRes.ok) throw new Error(`latest fetch failed: ${sRes.status}`);
+    const m = await mRes.json();
+    const s = await sRes.json();
+    const p = (pRes && pRes.ok) ? await pRes.json() : { tickers: {}, history_days_available: 0 };
+
+    const spy = (m.indices && m.indices.SPY) || {};
+    const drawdown = spy.drawdown_52w_high_pct;
+    const triggered = (drawdown != null && drawdown <= TRIGGER_DRAWDOWN_PCT)
+                   || TRIGGER_STATES.has(spy.state);
+
+    document.getElementById('data-timestamp').textContent =
+      `market_state: ${m.data_date || '—'} · screener: ${s.date || '—'} · rs_peaks: ${p.date || '—'} (history ${p.history_days_available || 0} 天)`;
+
+    if (!triggered) {
+      document.getElementById('state-slot').innerHTML = renderDormant(spy);
+      document.getElementById('body-slot').innerHTML = renderPreview();
+      return;
+    }
+
+    // Triggered → classify top N by rs_score
+    const rankings = Array.isArray(s) ? s : (s.rankings || s.data || []);
+    const sorted = rankings.slice().sort((a, b) => (b.rs_score ?? 0) - (a.rs_score ?? 0));
+    const universe = sorted.slice(0, TOP_N);
+    const peaks = p.tickers || {};
+
+    const ready = [], watch = [], weak = [];
+    for (const r of universe) {
+      const peak = peaks[r.ticker] || {};
+      const atNewHigh = peak.at_new_high === true;
+      const trend = r.rs_trend;
+      // Enrich for rendering
+      const enriched = Object.assign({}, r);
+      if (atNewHigh && trend === 'accelerating') {
+        enriched._statusLabel = '🟢 真正的領導股';
+        const dsp = peak.days_since_peak;
+        enriched._peakInfo = `at high (peak ${fmtNum(peak.rs_score_max_in_history, 1)})`;
+        ready.push(enriched);
+      } else if (trend === 'steady') {
+        enriched._statusLabel = '🟡 觀察';
+        watch.push(enriched);
+      } else if (trend === 'fading' || trend === 'choppy') {
+        enriched._statusLabel = '🔴 退出領導圈';
+        weak.push(enriched);
+      }
+      // Tickers not matching any rule (e.g., accelerating but not at_new_high) are not displayed
+    }
+
+    document.getElementById('state-slot').innerHTML =
+      renderTriggered(spy, ready, watch, weak, { history_days_available: p.history_days_available || 0 });
+    document.getElementById('body-slot').innerHTML = '';
+  } catch (err) {
+    console.error(err);
+    document.getElementById('state-slot').innerHTML =
+      `<div class="state-banner state-active"><h2>❌ 資料載入失敗</h2><p>${err.message}</p></div>`;
+  }
+}
+
+main();
+</script>
 </body>
 </html>

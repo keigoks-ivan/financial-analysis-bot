@@ -206,6 +206,11 @@ def build_index_payload(df):
     state = infer_state(df, ftd_info, dd_count, rally_day)
     since = state_since_proxy(df)
 
+    # 52w high derived from current df (400-day window ≈ 52 trading weeks),
+    # matches screener.py's per-ticker dist_52w_high_pct convention.
+    high_52w = float(df['Close'].max())
+    drawdown_52w_high_pct = round((close / high_52w - 1) * 100, 1) if high_52w > 0 else None
+
     return {
         'state': state,
         'state_since': since,
@@ -213,6 +218,7 @@ def build_index_payload(df):
         'close': round(close, 2),
         'vs_50dma_pct': round((close / ma50 - 1) * 100, 1) if ma50 else None,
         'vs_200dma_pct': round((close / ma200 - 1) * 100, 1) if ma200 else None,
+        'drawdown_52w_high_pct': drawdown_52w_high_pct,
         'ma50_above_200': bool(ma50 > ma200) if (ma50 is not None and ma200 is not None) else None,
         'ftd': ftd_info or {
             'last_ftd_date': None,
