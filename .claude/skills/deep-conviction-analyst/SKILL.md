@@ -1,7 +1,7 @@
 ---
 name: deep-conviction-analyst
-version: v1.1
-released: 2026-05-11
+version: v1.2
+released: 2026-05-12
 description: "對單一個股執行深度定見分析（Deep Conviction Analysis / DCA），位於 DD 之上的『投資決策層』 — 假設 stock-analyst 的個股 DD 與 industry-analyst 的產業 ID 已存在，本 skill 透過 Phase A 三軸獨立搜尋（護城河 / 產業趨勢 / 業務財務）+ Phase B 矛盾辨識 + Phase C 基金經理決策框架，產出可執行的單檔 HTML 投資決策報告。觸發：用戶說『幫我跑 {ticker} dca』、『{ticker} dca』、『{ticker} 定見』、『deep conviction {ticker}』、『conviction analysis {ticker}』、『最終判斷 {ticker}』、『該不該進場 {ticker}』、『買不買 {ticker}』。輸出 docs/dca/DCA_{TICKER}_{YYYYMMDD}.html。"
 ---
 
@@ -602,9 +602,9 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 
 ## 【最終自檢清單｜寫完必跑（防偷懶最後一道閘）】
 
-> **Deepening 點 G**：Guardrails 16-22 是「寫的時候不准違規」，這份自檢清單是「寫完後對照確認沒違規」。Skill 在輸出 HTML **之前**必須在對話中靜默列出此 12 條的 ✅/❌ 狀態，任一 ❌ 必須回頭補完才能呼叫 Write 工具。
+> **Deepening 點 G**：Guardrails 16-22 是「寫的時候不准違規」，這份自檢清單是「寫完後對照確認沒違規」。Skill 在輸出 HTML **之前**必須在對話中靜默列出此 13 條的 ✅/❌ 狀態，任一 ❌ 必須回頭補完才能呼叫 Write 工具。
 
-**12 條檢查項（HTML 輸出前必須逐條報告 ✅/❌ + 實際數據）**：
+**13 條檢查項（HTML 輸出前必須逐條報告 ✅/❌ + 實際數據）**：
 
 ```
 □ Phase A1 sourced data point 數 ≥ 5？實際數：__（必須含具體數字 + 來源 + 日期）
@@ -620,6 +620,7 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 □ §4 IRR composition 三分量加總（EPS + re-rate + 股息回購）與「機率加權年化 IRR」Base 列偏差 ≤ 2%p？
 □ §6c Max DD 為範圍（非單點），寬度 ≥ 10%p？若評級 🔴，§7a 倉位是否自動下修？
 □ Status Bar（§2 之上）含 4 格：訊號燈 / moat ↑→↓ / runway 🟢🟡🔴 / max DD −__%？
+□ HTML `<head>` 含機器可讀標記 `<!-- dca-moat-trend: ↑/→/↓ -->`（單一箭頭，無多餘文字）？
 ```
 
 **輸出格式範例**（Skill 必須在呼叫 Write 之前在對話中輸出）：
@@ -687,6 +688,11 @@ HTML 必須包含所有 Phase 和 § 的完整分析內容，不得摘要化。
 - **章節標題**：深藍 #1E3A5F 底色，左側加 4px accent 線（#3B82F6）
 
 - **Status Bar**（§2 之上，最頂部）：
+  - **機器可讀標記（v1.2 必填）**：HTML `<head>` 內必須塞一行：
+    ```html
+    <!-- dca-moat-trend: ↑ -->   <!-- 或 → 或 ↓，三選一 -->
+    ```
+    這給 research generator 的 extractor 一個 deterministic primary anchor，避免 status-bar CSS class 多樣化導致解析失敗。**禁止省略 / 寫多個 / 寫 holding 之類的文字** — 必須是單一 Unicode 箭頭。
   - 一行 4 格 grid（`display:flex; gap:16px; justify-content:center`），各格固定寬度 ~180px
   - 每格上方標籤（11px，#64748B），下方主體（22px，粗體）
   - 4 格內容：

@@ -300,6 +300,8 @@ def extract_dca_moat_trend(dca_path) -> "str | None":
     """Return the moat trend arrow (↑/→/↓) from a DCA HTML file, or None.
 
     Extraction strategy (first hit wins):
+    0. Machine-readable marker `<!-- dca-moat-trend: X -->` in <head>
+       (DCA skill v1.2+ guarantees this). Deterministic primary path.
     1. Status Bar 2nd cell — authoritative moat_trend visual output.
        Cell boundary detection uses class="cell"/"status-cell" divs.
        Arrow search within the 2nd cell prefers value/body/status-value/
@@ -314,6 +316,11 @@ def extract_dca_moat_trend(dca_path) -> "str | None":
         html = Path(dca_path).read_text(encoding="utf-8")
     except OSError:
         return None
+
+    # Strategy 0: machine-readable marker (v1.2+ guarantee)
+    m0 = re.search(r"<!--\s*dca-moat-trend:\s*([↑→↓])\s*-->", html)
+    if m0:
+        return m0.group(1)
 
     # Strategy 1: status-bar 2nd cell
     sb_idx = html.find('class="status-bar"')
