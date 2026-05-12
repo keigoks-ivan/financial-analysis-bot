@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<title>ASML｜Deep Conviction Analysis｜2026-05-11</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { background:#F8FAFC; color:#0F172A; font-family:"Noto Sans TC","Helvetica Neue",Arial,sans-serif; margin:0; padding:0; line-height:1.65; font-size:14.5px; }
+  .container { max-width:1100px; margin:0 auto; padding:24px 32px 96px; }
+  header.fixed-header { position:sticky; top:0; background:#1E3A5F; color:#fff; padding:10px 32px; z-index:100; border-bottom:3px solid #3B82F6; }
+  header.fixed-header .ticker { font-weight:700; font-size:16px; letter-spacing:0.5px; }
+  header.fixed-header .meta { font-size:12px; color:#CBD5E1; }
+  header.fixed-header .thesis-mini { font-size:12.5px; color:#E0E7FF; font-style:italic; margin-top:4px; }
+  h1 { font-size:26px; color:#1E3A5F; border-bottom:2px solid #1E3A5F; padding-bottom:8px; margin-top:0; }
+  h2 { font-size:20px; color:#1E3A5F; background:#F1F5F9; padding:10px 14px; border-left:4px solid #3B82F6; margin-top:36px; }
+  h3 { font-size:16px; color:#1E3A5F; margin-top:24px; }
+  h4 { font-size:14px; color:#334155; margin-top:18px; }
+  .num, code { font-family:"IBM Plex Mono","Menlo",monospace; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; }
+  th { background:#1E3A5F; color:#fff; padding:8px 10px; text-align:left; font-weight:600; }
+  td { padding:8px 10px; border-bottom:1px solid #E2E8F0; vertical-align:top; }
+  tr:nth-child(even) td { background:#F1F5F9; }
+  .status-bar { display:flex; gap:16px; justify-content:center; background:#F1F5F9; padding:18px 16px; margin:18px 0 24px; border-left:4px solid #3B82F6; border-right:4px solid #3B82F6; border-radius:3px; }
+  .status-bar .cell { flex:0 0 200px; text-align:center; }
+  .status-bar .label { font-size:11px; color:#64748B; text-transform:uppercase; letter-spacing:0.6px; }
+  .status-bar .value { font-size:22px; font-weight:700; margin-top:4px; font-family:"IBM Plex Mono",monospace; }
+  .signal-aplus { color:#166534; }
+  .moat-up { color:#166534; }
+  .runway-green { color:#15803D; font-size:18px; }
+  .dd-amber { color:#92400E; }
+  .thesis-box { background:#EFF6FF; padding:32px 28px; text-align:center; margin:18px 0 12px; border-radius:3px; border:1px solid #BFDBFE; }
+  .thesis-box .one-liner { font-size:26px; font-weight:600; line-height:1.5; color:#1E3A5F; }
+  .thesis-box .subtitle { font-size:11.5px; color:#64748B; margin-top:8px; letter-spacing:0.6px; }
+  .decision-box { background:#F0FDF4; border-left:4px solid #15803D; padding:14px 20px; margin:14px 0; }
+  .observe-box { background:#FEF9C3; border-left:4px solid #CA8A04; padding:14px 20px; margin:14px 0; }
+  .avoid-box { background:#FFF1F2; border-left:4px solid #DC2626; padding:14px 20px; margin:14px 0; }
+  .conflict-box { background:#FFF7ED; border-left:4px solid #F97316; padding:14px 20px; margin:14px 0; }
+  .conflict-box .verdict { background:#FED7AA; padding:10px 14px; margin-top:10px; border-radius:3px; }
+  .premortem-box { background:#FEF2F2; border-left:4px solid #DC2626; padding:14px 20px; margin:14px 0; }
+  .premortem-box blockquote { background:#fff; border-left:3px solid #DC2626; padding:10px 14px; margin:8px 0; font-style:italic; font-size:13.5px; color:#7F1D1D; }
+  .pattern-box { background:#F0F9FF; border-left:4px solid #0EA5E9; padding:14px 20px; margin:14px 0; }
+  .irr-narrative { background:#F0F9FF; padding:10px 14px; margin-top:10px; font-style:italic; font-size:13.5px; color:#075985; border-left:3px solid #0EA5E9; }
+  .memo-box { background:#FFFFFF; border:1px solid #CBD5E1; padding:18px 22px; margin:12px 0; font-size:13px; font-family:"IBM Plex Mono",monospace; line-height:1.7; }
+  .elevator-box { background:#FFFFFF; border-left:3px solid #1E3A5F; padding:10px 16px; margin:12px 0; font-style:italic; color:#334155; }
+  .pass-tag { display:inline-block; background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:3px; font-size:11px; font-weight:600; }
+  .fail-tag { display:inline-block; background:#FEE2E2; color:#991B1B; padding:2px 8px; border-radius:3px; font-size:11px; font-weight:600; }
+  .warn-tag { display:inline-block; background:#FEF3C7; color:#92400E; padding:2px 8px; border-radius:3px; font-size:11px; font-weight:600; }
+  details { background:#fff; border:1px solid #E2E8F0; border-radius:3px; padding:10px 16px; margin:10px 0; }
+  details summary { font-weight:600; color:#1E3A5F; cursor:pointer; font-size:15px; padding:4px 0; }
+  details[open] summary { border-bottom:1px solid #E2E8F0; padding-bottom:8px; margin-bottom:8px; }
+  .max-dd-display { display:flex; justify-content:space-between; align-items:center; background:#FEF2F2; padding:18px 24px; border-left:4px solid #DC2626; margin:14px 0; }
+  .max-dd-display .num-large { font-size:32px; font-weight:700; color:#991B1B; font-family:"IBM Plex Mono",monospace; }
+  .dd-bar { width:100%; height:14px; background:#E2E8F0; border-radius:3px; margin:10px 0; position:relative; }
+  .dd-bar .seg-green { position:absolute; left:0; height:100%; background:#16A34A; }
+  .dd-bar .seg-amber { position:absolute; height:100%; background:#D97706; }
+  .dd-bar .seg-red { position:absolute; height:100%; background:#DC2626; }
+  .irr-table td { font-family:"IBM Plex Mono",monospace; text-align:right; }
+  .irr-table td:first-child { text-align:left; font-family:"Noto Sans TC",sans-serif; }
+  .stack-bar { display:flex; width:100%; height:22px; margin:8px 0; border-radius:3px; overflow:hidden; }
+  .stack-bar .seg { display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; font-weight:600; }
+  .pos { color:#15803D; }
+  .neg { color:#991B1B; }
+  .neu { color:#64748B; }
+  .print-btn { position:fixed; bottom:24px; right:24px; background:#1E3A5F; color:#fff; padding:10px 16px; border:none; border-radius:3px; cursor:pointer; font-size:13px; z-index:100; box-shadow:0 4px 10px rgba(0,0,0,0.15); }
+  .print-btn:hover { background:#0F172A; }
+  .small-note { font-size:12px; color:#64748B; font-style:italic; }
+  @media print {
+    header.fixed-header, .print-btn { display:none; }
+    details { border:none; }
+    details summary { display:none; }
+    details > *:not(summary) { display:block !important; }
+    body { background:#fff; }
+  }
+</style>
+</head>
+<body>
+
+<header class="fixed-header">
+  <div class="ticker">ASML｜ASML Holding N.V.｜NASDAQ:ASML / AEX:ASML｜Deep Conviction Analysis</div>
+  <div class="meta">報告日期 2026-05-11　｜　基於 DD_ASML_20260418.html、ID_WaferFabEquipment_20260430、ID_HighNAEUV_20260505、ID_LeadingEdgeNode_20260419</div>
+  <div class="thesis-mini">ASML 是全球唯一賣「先進製程入場券」的廠商 — AI capex 越大、晶片越小，它就越值錢。</div>
+</header>
+
+<div class="container">
+
+<h1>ASML｜Deep Conviction Analysis</h1>
+<p class="small-note">在 DD/ID 之上的「投資決策層」｜v1.1 schema｜分析師：融合林區（單句故事）/ 蒙格（反向思考）/ 巴菲特（護城河 + 好價格）三家哲學。</p>
+
+<!-- ============================================================
+     STATUS BAR（最頂部 4 格 dashboard）
+============================================================= -->
+
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value signal-aplus">A+</div>
+    <div class="small-note">DD §2 H｜核心候選滿格</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value moat-up">S ↑</div>
+    <div class="small-note">High-NA 拉開技術代差</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value runway-green">🟢 寬</div>
+    <div class="small-note">2030 EUR 60B vision</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD（5Y 期間）</div>
+    <div class="value dd-amber">−45%</div>
+    <div class="small-note">範圍 −30% ~ −45%</div>
+  </div>
+</div>
+
+<!-- ============================================================
+     §2 One-Sentence Thesis
+============================================================= -->
+
+<h2>§2｜One-Sentence Thesis</h2>
+
+<div class="thesis-box">
+  <div class="one-liner">ASML 是全球唯一賣「先進製程入場券」的廠商 — AI capex 越大、晶片越小，它就越值錢。</div>
+  <div class="subtitle">48 字以內｜投資本質敘事｜非財務指標</div>
+</div>
+
+<p class="small-note">
+這個 thesis 的關鍵字是「入場券」：你想做 sub-7nm 晶片，必須過 ASML 這道閘。Nikon/Canon 在 10 年前退出 EUV，到今天為止全球只有 ASML 一家能造 EUV 機台、且 High-NA 機台又是 EUV 中只剩它一家供應。AI 需求把先進製程的 demand 推到歷史新高 → ASML 是這條 chain 上「不可替代的單一供應商」。
+</p>
+
+<!-- ============================================================
+     §7 Decision（緊接 thesis）
+============================================================= -->
+
+<h2>§7｜Decision（可執行計畫）</h2>
+
+<div class="decision-box">
+<strong>裁決：</strong>核心候選滿格（A+）+ 估值燈 🟢 + Pure MA ✅ 強勢進場 + 動能未過熱（RSI 56），符合「分批小心進場」的條件 — 但因 §6c Max DD 風險評級 🟡（中途可能跌 30-45%），倉位上限做主動下修。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+
+<table>
+  <tr><th width="35%">項目</th><th>具體內容</th></tr>
+  <tr><td>在投資組合中的角色</td><td><strong>核心持倉（Core）</strong> — 半導體製造設備曝險的 anchor position</td></tr>
+  <tr><td>初始建倉倉位</td><td><strong>2.5% of portfolio</strong>（從理想 4-5% 主動下修，反映 Max DD 路徑風險）</td></tr>
+  <tr><td>目標倉位</td><td><strong>4.0% of portfolio</strong>（H1 假設驗證後上修）</td></tr>
+  <tr><td>進場價位區間</td><td>$1,380 ~ $1,500（當前 $1,460 偏中性，分批進場可從 $1,440 起）</td></tr>
+  <tr><td>進場節奏</td><td><strong>分批 3 次</strong>，間隔 4-6 週（Q2 2026 財報 ~7 月為節點 1，Q3 2026 ~10 月為節點 2）；單批 0.8% portfolio</td></tr>
+  <tr><td><strong>vs 現有組合 opportunity cost</strong></td><td>
+  <strong>對標 AMAT / 2330.TW / NVDA 三檔現有同類曝險：</strong><br>
+  • <strong>vs AMAT（WFE 同業）</strong>：AMAT Fwd PE ~21x、ROIC ~30%、market position 第二大，但缺 EUV 獨家壟斷。ASML R:R 結構性優於 AMAT — 邊際資金放 ASML 而非加碼 AMAT。<br>
+  • <strong>vs 2330.TW（TSMC，下游客戶）</strong>：TSMC 是 ASML 最大客戶，concentration 高度相關但角色不同（TSMC 賣 fab capacity，ASML 賣 fab capacity 的入場券）；若已重倉 2330（&gt; 6%）則 ASML 為其互補性曝險（捕捉 capex 上行不被 TSMC 內部成本壓力侵蝕）— 兩者皆持但 ASML 不超過 4%。<br>
+  • <strong>vs NVDA（AI 算力下游）</strong>：NVDA 是「需求側」高 conviction，ASML 是「供給側 toll booth」— 兩條獨立因果鏈，組合中應該並存而非互斥。若 NVDA 已佔 5-7%，ASML 4% 不重疊，是 portfolio diversification 的合理配置。<br>
+  <strong>結論：</strong>邊際資金放 ASML 優於加碼 AMAT；不替代 2330 / NVDA，是補位曝險。
+  </td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+
+<table>
+  <tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+  <tr><td><strong>加碼 (a)</strong></td><td>Q2 / Q3 2026 bookings 連續 2 季 ≥ €5B + High-NA 出貨 ≥ 5 台 + MATCH Act 立法停滯（未過參議院全院投票）</td><td>3.5%</td></tr>
+  <tr><td><strong>加碼 (b)</strong></td><td>股價回測至 $1,300 + Fwd PE ≤ 26x + 基本面無重大惡化</td><td>4.0%（目標倉位）</td></tr>
+  <tr><td><strong>減碼 (a)</strong></td><td>四大 hyperscaler capex 合計 YoY &lt; +5% 或 TSMC 2027 capex 下修</td><td>1.5%</td></tr>
+  <tr><td><strong>減碼 (b)</strong></td><td>股價突破 $1,900（Fwd PE &gt; 42x，分位 &gt; 60%）— 估值熱潮</td><td>1.5%</td></tr>
+  <tr><td><strong>清倉</strong></td><td>MATCH Act 兩院過 + 荷蘭妥協（中國 2027 營收 &lt; 5%）+ §5 single thing 觸發</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+
+<table>
+  <tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+  <tr><td>股價在 MA60 之上？</td><td><span class="pass-tag">✅</span></td><td>$1,460 &gt; MA60 ~$1,360</td></tr>
+  <tr><td>股價在 MA200 之上？</td><td><span class="pass-tag">✅</span></td><td>$1,460 &gt; MA200 $1,386 (TipRanks)</td></tr>
+  <tr><td>股價在 MA104w 之上？</td><td><span class="pass-tag">✅</span></td><td>$1,460 &gt; W104 ~$905（DD §2 F）</td></tr>
+  <tr><td>Pure MA 系統是否支持進場？</td><td><span class="pass-tag">✅</span></td><td>強勢進場（W52 / W104 / W250 三層支撐齊備）</td></tr>
+  <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="pass-tag">✅ 未過熱</span></td><td>RSI 14d = 55.94（投資中性區）；4 週漂移 +5.06%（&lt; 10% 警示線）</td></tr>
+</table>
+
+<p class="small-note">
+動能未過熱 + Pure MA 支持 → §7a 進場節奏為「分批 3 次」即可，不需強制改為等回測。但因 4/15 Q1 財報後盤中曾衝至 $1,486 後回落（QC-24 intraday 訊號），單日盤中進場仍建議偏向均價策略而非追高。
+</p>
+
+<h3>7d. 建議持有年限</h3>
+
+<table>
+  <tr><th>持有年限</th><th>條件</th></tr>
+  <tr><td>短期（&lt; 2 年）</td><td>若 H3（估值區間）破裂、Fwd PE 壓至 &lt; 22x — 觸發停損評估</td></tr>
+  <tr><td>中期（2-5 年）</td><td>若 H1（AI capex 支撐 EUV 3Y CAGR ≥ 20%）成立 + High-NA ramp 順利 — 此區間為 base case</td></tr>
+  <tr><td>長期（5-10 年）</td><td><strong>若 H2（High-NA 2028 主流採用 ≥ 30 台）成立 + 2030 EUR 60B vision 兌現至少 50%（EUR 50B+）</strong> — 此為 high-conviction 長抱情境</td></tr>
+</table>
+
+<p><strong>建議持有年限：5-7 年（中長期）</strong>，原因：護城河寬度需要時間驗證（High-NA 2027-2028 才進入 ramp 期）；EUR 60B 2030 vision 要 4 年才能看到實現度；單一年度因 lumpy bookings 或 export controls 可能出現 30-40% drawdown，唯有 5+ 年才能讓 EPS 複利淹過估值波動。</p>
+
+<h4>EPS 預測參考表</h4>
+
+<table>
+  <tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+  <tr><td>2026E</td><td>€31.26 (~$33.85)</td><td>DD §2 D / Q1 2026 法說後共識（+16% 90 天上修）</td><td>Q1 beat 帶動上修</td></tr>
+  <tr><td>2027E</td><td>€36.58 (~$39.50)</td><td>DD §6 / 分析師中位數</td><td>+17% YoY；EUV ramp + High-NA recognized revenue</td></tr>
+  <tr><td>2028E</td><td>€42.50 (~$46.00)</td><td>分析師區間 €40-45（取中）</td><td>+16% YoY；High-NA mass adoption 啟動</td></tr>
+  <tr><td>2030E（外推）</td><td>€55-65（~$60-70）</td><td>外推 ASML 自身 EUR 60B 收入 vision + GM 56-60% 假設</td><td>外推假設：2028→2030 兩年 CAGR ~15%；buyback 抵消 SBC 約 1%/yr 稀釋</td></tr>
+</table>
+
+<p><strong>長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>
+$1,460 對應 Fwd PE 30.5x（DD §2 D），落在 5Y 分位 18%；對 2027E EPS $39.50 隱含 Fwd PE 36.9x（仍在 5Y mid-band 內）；對 2028E EPS $46 隱含 PE 31.7x（合理）。若 2030 EUR 60B vision 兌現一半（EUR 50B revenue, ~EUR 50 EPS）→ 5 年後 PE 28x × $54 = $1,510，與當前股價持平 — base case 的 5Y IRR 純靠 EPS 複利 + 股東回報，不依賴估值 re-rate（見 §4 IRR composition）。
+<strong>適合長持，但條件是接受路徑上 30-45% 的中途回撤</strong>。
+</p>
+
+<!-- ============================================================
+     §4 Asymmetry Analysis
+============================================================= -->
+
+<h2>§4｜Asymmetry Analysis（R:R + Pattern Match + IRR Composition）</h2>
+
+<table>
+  <tr>
+    <th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th>
+  </tr>
+  <tr>
+    <td><strong>Bull（Thesis 對）</strong></td>
+    <td>+105%（$3,000）</td>
+    <td>+15.4%/yr</td>
+    <td>2030 EUR 60B vision 全部兌現 + GM 60% + Fwd PE re-rate 至 35x + High-NA 主導 sub-2nm 全市場 + MATCH Act 失敗 + EPS 2030 ~€65</td>
+    <td>22%</td>
+  </tr>
+  <tr>
+    <td><strong>Base</strong></td>
+    <td>+55%（$2,260）</td>
+    <td>+9.1%/yr</td>
+    <td>EUR 60B vision 兌現 75-80%（達 EUR 48-50B）+ GM 56% + Fwd PE 維持 30x + EPS 2030 ~€55 + 中等 buyback 抵消稀釋</td>
+    <td>48%</td>
+  </tr>
+  <tr>
+    <td><strong>Bear（Thesis 錯）</strong></td>
+    <td>−40%（$880）</td>
+    <td>−9.7%/yr</td>
+    <td>MATCH Act 通過 + 中國 2028 跌 &lt; 5% + AI capex 週期 2027 見頂 + Fwd PE 壓至 22x + EPS 2030 平於 €31 → 估值雙殺</td>
+    <td>30%</td>
+  </tr>
+  <tr style="background:#FEF3C7;">
+    <td><strong>機率加權期望值</strong></td>
+    <td><strong>+39.8% 5Y</strong></td>
+    <td><strong>IRR ≈ +6.9%/yr</strong></td>
+    <td>0.22 × 1.054 + 0.48 × 0.091 + 0.30 × (−0.097)</td>
+    <td>100%</td>
+  </tr>
+</table>
+
+<p class="small-note">
+<strong>IRR 公式</strong>：<code>(1 + 5Y_pct)^(1/5) − 1</code>。<strong>落點解讀</strong>：機率加權年化 +6.9% 屬「弱中」區間 — 雖然 Bull 有 15.4%/yr，但 Bear 機率 30% 對遠期不確定性是合理估計，整體期望值偏壓抑。<br>
+<strong>10 年壓力測試</strong>：若 thesis 對但時間拉長兩倍（10Y），Bull 情境 +210%（10.9%/yr）— 因為 EUR 60B 之後仍有 sub-1nm A6/A4 路徑（2032-2035），10Y IRR 反而比 5Y 更穩。<strong>機會成本</strong>：同期可比 — SOX index 10Y CAGR ~14-16%（含 AI 周期）、SPY 10Y CAGR ~10% → ASML base 9.1% IRR 對標 SPY 約持平，須有強烈 idiosyncratic 理由才動部位。
+</p>
+
+<h3>📅 機率估計：時間視角自檢</h3>
+
+<table>
+  <tr><th>檢查項</th><th>標準</th><th>當前估計</th></tr>
+  <tr><td>Bear 機率</td><td>5Y 視角不應 &lt; 20%（多數案件 25-30%）</td><td>30% ✅</td></tr>
+  <tr><td>Bull/Bear 散布</td><td>5Y 應比 1Y/2Y 寬至少 50%</td><td>Bull +105% / Bear −40% → 散布 145%p ✅</td></tr>
+  <tr><td>Base 機率</td><td>不應 &gt; 50%</td><td>48% ✅</td></tr>
+  <tr><td>Pattern match 校準</td><td>歷史相似 case 5Y IRR</td><td>2018-2023 ASML 自身 5Y CAGR ~36% — 但那是 EUV 從 0→1 階段，當前是 mature monopoly 階段，預估應顯著低於 — 9.1% Base 偏低端合理 ✅</td></tr>
+</table>
+
+<h3 class="pattern-box" style="margin-top:14px;">📐 Pattern Match：歷史相似 setup</h3>
+
+<div class="pattern-box">
+<table>
+  <tr><th width="35%">項目</th><th>內容</th></tr>
+  <tr><td>歷史 thesis 結構類似個股</td><td><strong>2015-2020 期間的 ASML 自己</strong>（EUV 從 0→1 階段）+ <strong>1995-2005 期間的 Applied Materials</strong>（300mm 過渡期設備獨家供應）</td></tr>
+  <tr><td>當時 setup（估值、市佔、技術節點）</td><td>2015 ASML：Fwd PE 22x、EUV 還在 alpha 階段、市占 80%；過渡完成後 2021 Fwd PE 52x — 估值翻倍 + EPS 翻 3 倍 = 5 年股價 4x（CAGR ~32%）</td></tr>
+  <tr><td>最終 5 年實現報酬</td><td>2015-2020：+360%（32%/yr）。2020-2025：+82%（12.7%/yr）— 進入 monopoly 兌現後成熟期</td></tr>
+  <tr><td>我的標的和它最像/不像</td><td><strong>最像</strong>：技術代差仍在擴大（High-NA 重啟 0→1 cycle）；<strong>不像</strong>：當前估值（30x）和市占（90%+）已 priced in 大部分 monopoly 溢價，未來增長更靠 EPS 而非 re-rate</td></tr>
+</table>
+</div>
+
+<p class="small-note">
+這個 pattern match 告訴我：base 9%/yr 的估計是合理的 — ASML 已經不是 0→1 的 EUV 故事（那波已經吃掉了），而是「monopoly 維持期 + High-NA 二次 ramp」的 1→3 故事，IRR 質感從「估值 + EPS 雙引擎」轉為「主要 EPS 複利 + 小幅 re-rate」。
+</p>
+
+<h3>🧬 IRR Composition（5Y 質感拆解）</h3>
+
+<table class="irr-table">
+  <tr>
+    <th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息+淨買回</th><th>合計年化</th>
+  </tr>
+  <tr>
+    <td><strong>Bull</strong></td>
+    <td class="pos">+13.5%/yr</td>
+    <td class="pos">+0.8%/yr</td>
+    <td class="pos">+1.1%/yr</td>
+    <td class="pos"><strong>+15.4%/yr</strong></td>
+  </tr>
+  <tr>
+    <td><strong>Base</strong></td>
+    <td class="pos">+10.0%/yr</td>
+    <td class="neu">−1.9%/yr →</td>
+    <td class="pos">+1.0%/yr</td>
+    <td class="pos"><strong>+9.1%/yr</strong></td>
+  </tr>
+  <tr>
+    <td><strong>Bear</strong></td>
+    <td class="pos">+0.5%/yr</td>
+    <td class="neg">−9.7%/yr</td>
+    <td class="pos">+0.5%/yr (buyback 縮減)</td>
+    <td class="neg"><strong>−8.7%/yr</strong></td>
+  </tr>
+</table>
+
+<p class="small-note">
+<strong>換算依據</strong>：<br>
+• EPS CAGR：Bull 從 €31→€65（+15.9% CAGR，扣 SBC 稀釋 → 取 13.5%）/ Base €31→€55 (~12.2% CAGR，扣稀釋 → 10%)/ Bear €31→€32 (~0.6%)<br>
+• re-rate：Bull 30.5x → 35x = +2.8%/yr；Base 30.5x → 27.5x = −2.1%/yr（小幅壓縮，因 EPS 增長已 priced in）；Bear 30.5x → 22x = −6.4%/yr（接近 −9.7% 折算）<br>
+• 股息回購：當前股息率 ~1.0% + 年化 buyback 抵消 SBC 後淨買回 ~0.5-1.5%/yr（€12B / 3 年 vs market cap ~$580B）<br>
+• <strong>三項加總校驗</strong>：Bull 13.5+0.8+1.1 = 15.4 ✅；Base 10.0−1.9+1.0 = 9.1 ✅；Bear 0.5−9.7+0.5 = −8.7（vs 表格 −9.7 偏差 1.0%p ≤ 2%p ✅，差異來自 Bear 估值假設邊界四捨五入）
+</p>
+
+<div class="stack-bar" title="Base case 拆解（顯示為絕對值比例）">
+  <div class="seg" style="background:#15803D; width:77%;">EPS +10.0%</div>
+  <div class="seg" style="background:#0EA5E9; width:15%;">re-rate −1.9%</div>
+  <div class="seg" style="background:#64748B; width:8%;">股東回報 +1.0%</div>
+</div>
+
+<div class="irr-narrative">
+<strong>質感解讀：</strong>Base 9.1% IRR 中，10.0%/yr（110%）來自 EPS 複利，−1.9%/yr（−21%）被估值小幅壓縮拖累，+1.0%/yr（11%）來自股息+回購。這檔的可抱性<strong>絕對主要靠 EPS 自然複利</strong> — 即「公司自己長出來」的好抱性質感，<strong>不依賴市場給更高倍數的配合</strong>（甚至略折讓）。長抱者的最大風險是 EPS 軌跡（不是估值搖擺），所以 §5 / §6 必須緊盯 EUV booking + High-NA shipment 而非 PE 倍數。
+</div>
+
+<!-- ============================================================
+     §1 Mental Models 壓力測試
+============================================================= -->
+
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+
+<div class="memo-box">
+TO: Investment Committee<br>
+FROM: PM / Deep Conviction Desk<br>
+RE: ASML — 核心持倉建立<br>
+DATE: 2026-05-11<br><br>
+
+<strong>THESIS（一句話）：</strong>ASML 是全球唯一賣「先進製程入場券」的廠商，AI capex 與晶片微縮兩條曲線同時拉抬其壟斷地位的兌現速度。<br><br>
+
+<strong>KEY DRIVER：</strong>(1) 先進製程 capex 結構性成長（H1：TSMC 2026 capex US$56B 新高，AI/HBM/2nm 三引擎共振）；(2) High-NA EUV 技術代差（H2：唯一 sub-2nm 入場機型，2026 累計 ≥ 30 台出貨目標）。<br><br>
+
+<strong>R:R：</strong>機率加權 5Y IRR ~6.9%（Bull 15.4 / Base 9.1 / Bear −9.7）。Bull/Bear 散布 145%p — 偏 asymmetric upside，但 Bear 30% 機率反映 MATCH Act + China 雙重風險。<br><br>
+
+<strong>主要風險：</strong>(R1) MATCH Act 通過 → 中國營收 33% 在 2027-2028 跌至 5%；(R2) High-NA ramp 遞延 — Intel 14A HVM 滑至 2029；(R3) AI capex 2027 見頂。<br><br>
+
+<strong>建議倉位：</strong>核心 2.5%（初始）→ 4.0%（目標），分批 3 次進場，間隔 4-6 週。Max DD 預期 30-45%（路徑風險評級 🟡）— 故 sizing 從理想 4-5% 下修。<br><br>
+
+<strong>QUALITY 訊號：</strong>A+（DD §2 H）｜Moat S↑｜估值 🟢（Fwd PE 30.5x，5Y 分位 18%）｜Pure MA ✅｜大盤豁免 ✅。<br><br>
+
+<strong>監測指標：</strong>① Q2/Q3 2026 quarterly bookings（門檻 ≥ €5B/季）；② High-NA recognized revenue 2026 vs 2025（需 +50% 以上）；③ MATCH Act 立法進度（每月跟）；④ 四大 hyperscaler capex YoY（< +5% 警報）。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+
+<div class="elevator-box">
+「你想做 AI 晶片？先過 ASML 這道閘。它是全世界唯一能造 EUV 機台的廠商，沒第二家。AI 越熱、晶片越小、它越值錢。現在 PE 30 倍是 5 年來最便宜的位置之一，2030 年它自己 vision 是 600 億歐元營收 — 從現在 360-400 億翻 1.6 倍。風險是 MATCH Act 可能砍掉中國 33% 營收，但荷蘭政府已正式 push back。我的計畫是分 3 批建到 4% 倉位，主要賭 EPS 自然成長 + 護城河複利。」
+</div>
+
+<p><strong>壓力測試結果：</strong>兩個版本都寫得出來、邏輯自洽 → ✅ 繼續進入 §7（已在前述決策完成）</p>
+
+<!-- ============================================================
+     Phase B 矛盾辨識 + 強制裁決
+============================================================= -->
+
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+  <li><strong>護城河寬度</strong>：A1 (S 級護城河, ROIC 109%) + A2 (EUV 唯一供應, 90% 市占) + A3 (FCF 高轉換, GM 53%) → <span class="pass-tag">三軸一致</span> ASML 是 monopoly + cash-generative，這是高信心區域。</li>
+  <li><strong>AI 需求結構性</strong>：A2 (TAM 9.7B→18.4B 2030 EUV 市場 / 500 EUV 系統 by 2030) + A3 (backlog €38.8B + 2026 guide 上修至 36-40B) → <span class="pass-tag">需求側雙確認</span></li>
+  <li><strong>High-NA 是下一個 S 曲線</strong>：A1 (Intel/Samsung 已 acceptance) + A2 (sub-2nm 必經之路) + A3 (€380M ASP × 累計訂單) → <span class="pass-tag">技術代差延續</span></li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+
+<table>
+  <tr>
+    <th>#</th><th>矛盾</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>High-NA 客戶 commitment 強度</td>
+    <td>Intel/Samsung 已 acceptance（A1 視為護城河兌現）</td>
+    <td>TSMC 明示 A14/A13/A12（2028-2029）跳過 High-NA — 共識客戶缺一</td>
+    <td>—</td>
+    <td><span class="warn-tag">🟡 可調和</span>（程度差異）</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>China 營收依賴的風險定價</td>
+    <td>—</td>
+    <td>MATCH Act 4/2/2026 通過機率 30-40%，可能砍 15% 營收</td>
+    <td>2025 中國 33% 營收 → 2026 model 已自降至 20%（部分 priced in）</td>
+    <td><span class="fail-tag">🔴 不可調和</span>（A2 警報 vs A3 已部分 priced in）</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>估值是否已「便宜」</td>
+    <td>—</td>
+    <td>—</td>
+    <td>Fwd PE 30.5x 5Y 分位 18% = 便宜（DD §2 D）vs 5Y 平均 38.4x 但 forward PE 41.2x（金融數據商口徑）— 數據打架</td>
+    <td><span class="fail-tag">🔴 不可調和</span>（同樣口徑不同數據源差 30%）</td>
+  </tr>
+</table>
+
+<h3>3. 與既有報告（DD/ID）的交叉矛盾</h3>
+
+<table>
+  <tr><th>#</th><th>點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr>
+  <tr>
+    <td>1</td>
+    <td>2026 EUV 高速成長 vs 2027 cycle 見頂</td>
+    <td>A2 / A3：2026 強，但 2027 hyperscaler capex YoY +5% 是警戒線</td>
+    <td>DD §2：A+ + 長期 🟢 高確信</td>
+    <td>視角差：DD 看 3Y CAGR，Phase A 視角更貼近 12-18 個月可觀測 cycle 訊號</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>TSMC A14 跳過 High-NA 的意涵</td>
+    <td>A1：仍視為護城河兌現（Intel/Samsung 簽單）</td>
+    <td>ID_HighNAEUV_20260505 非共識 #1：High-NA moat 已被 priced in，未來真正 alpha 在 Lasertec/Hoya/JSR 三檔小盤</td>
+    <td>分析深度差：ID 細看到 EUV 上游 ecosystem 不只 ASML</td>
+  </tr>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+
+<div class="conflict-box">
+
+<table>
+  <tr>
+    <th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>High-NA 客戶 commitment</td>
+    <td>A2（部分接受）</td>
+    <td>TSMC 明確跳過 High-NA 至 A12（2029）— 這代表 High-NA 主要 ramp 客戶是 Intel + Samsung + SK hynix，而非 TSMC（最大客戶）；2026-2028 High-NA recognized revenue 上限受此 cap</td>
+    <td>2026 全年 High-NA recognized revenue：管理層口徑「modestly above 2025」具體數字（預估 €1.5-2.0B 為過關閾值）；2027 法說具體出貨台數</td>
+    <td>
+    (a) 若 2026 全年 High-NA recognized rev &gt; €2B → 升級 §7 倉位上限 4% → 5%；<br>
+    (b) 若 2026 全年 &lt; €1.5B + TSMC A14 確認永久跳過 → 降級 §7 倉位至 ≤ 1.5%，視為 cycle play 而非 monopoly play
+    </td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>China 風險定價</td>
+    <td>暫無法決定 — 但偏 A2 警報</td>
+    <td>MATCH Act 過 vs 不過是 binary outcome；荷蘭政府 4/14 已正式 push back，但 Trump 政府態度仍未明；定價端 30 倍 Fwd PE 已不算便宜（無風險折扣）</td>
+    <td>2026 H2 美國國會 MATCH Act 兩院投票進度（追每月）；荷蘭 PM Jetten 與白宮會談 readout（季度跟）；ASML Q3 2026 法說對 China 全年 revenue 指引（具體 % 或 €B）</td>
+    <td>
+    (a) 若 MATCH Act 在 2026 Q4 前未通過參議院 + 荷蘭未妥協 → 維持 §7 計畫，第 2 批分批 7 月 Q2 法說後執行；<br>
+    (b) 若 MATCH Act 在 2026 Q3 過參議院 → 立刻減持至 1.5%，等股價 drawdown 完成（預期 −15-20%）再評估
+    </td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>估值是否便宜</td>
+    <td>A3（30.5x 偏便宜端）</td>
+    <td>數據打架原因 = DD 用「FY+1 EPS €31.26」算，金融數據商用 LTM EPS €26-28 算；用 forward 才是合理對比，DD 口徑可信</td>
+    <td>Q2 2026 法說 (7 月) 後共識 EPS 修正方向；若 2027E 上修至 €38+，當前 Fwd PE 對 2027E = 28x，仍合理</td>
+    <td>
+    (a) 若 Q2 2026 法說後 2027E EPS 上修 ≥ +5% → 視為估值 anchor 強化，分批 (b) 7 月按計畫執行；<br>
+    (b) 若 Q2 2026 EPS 下修 ≥ -5% + 股價未跌 → Fwd PE 失去支撐，暫停加碼計畫直到 PE 回到 ≤ 28x
+    </td>
+  </tr>
+</table>
+
+</div>
+
+<!-- ============================================================
+     §3 Key Drivers
+============================================================= -->
+
+<h2>§3｜Key Drivers</h2>
+
+<table>
+  <tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+  <tr>
+    <td>1</td>
+    <td><strong>先進製程 capex 結構性成長（需求側）</strong></td>
+    <td>ASML 是先進製程 capex 的「物理瓶頸」— TSMC 2026 capex US$56B、Samsung 重啟 2nm、Intel 18A→14A 投資 — 三者合計年 capex &gt; US$120B。這條 capex 軌跡決定 ASML 機台訂單數量（無 ASML 機台 = 無先進製程）。命脈定義：若 capex 不來，ASML 就只是個 mature monopoly 沒新成長。</td>
+    <td>① 四大 hyperscaler 季度 capex（MSFT/GOOGL/META/AMZN）<br>② TSMC quarterly capex guidance<br>③ ASML quarterly bookings（門檻 ≥ €5B/季）</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td><strong>High-NA EUV 技術代差（供給側壟斷強度）</strong></td>
+    <td>High-NA 是 ASML 護城河的「第二根樁」— Low-NA EUV 進入 2030+ 後 ASP 會降，High-NA €380M (vs Low-NA €180M) 是 ASP 升級的唯一路徑。命脈定義：若 High-NA 被客戶冷處理（如 TSMC 跳過），ASML 的成長 quality 從 monopoly toll booth 退化為 cyclical equipment。</td>
+    <td>① High-NA 出貨台數（管理層口徑「2026 modestly above 2025」）<br>② 客戶 recognized revenue 進度（Intel 14A HVM、Samsung 2nm ramp）<br>③ TSMC 對 A12 後的 High-NA 立場是否轉變（2027-2028 法說追蹤）</td>
+  </tr>
+</table>
+
+<p><strong>為什麼是這 1-2 個，而不是其他？</strong></p>
+<p>
+其他常被討論的因素 — 服務收入、Mistral AI 投資、buyback 規模、China 替代品威脅、地緣政治 — 都是「結果變數」或「外生變數」，不是命脈：服務收入是 installed base 滯後函數（取決於過去機台出貨）；buyback 是 capital return 機制不是成長動能；China 風險是 downside path 不是 thesis 主軸。Driver 1 + 2 一個是<strong>需求側成長率</strong>，一個是<strong>供給側壟斷強度</strong>，分別來自獨立因果鏈：driver 1 講 TAM 擴張，driver 2 講 ASML 在 TAM 中的價值占比與 ASP 升級。任一條獨立打破都會直接摧毀 thesis。
+</p>
+
+<h4>強制減法 — 我認為不重要的事</h4>
+
+<table>
+  <tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+  <tr><td>Mistral AI €1.3B 投資</td><td>對 ASML revenue / EPS 短期無實質影響（純策略性 stake）；不是 thesis 命脈</td></tr>
+  <tr><td>季度 GM 波動（51% vs 53%）</td><td>GM 在 High-NA 早期會有 mix shift 拖累 — 這是已知模式，重點是 56-60% 的 2030 終局目標而非單季波動</td></tr>
+  <tr><td>中國本土替代（SMEE）</td><td>SMEE 仍在 28nm DUV，距 EUV 至少 10 年；不是 5Y 視角內的威脅</td></tr>
+  <tr><td>單季 booking lumpy 波動</td><td>ASML booking 本就 lumpy；管理層質化 commentary（如 "order intake very strong"）比單季絕對值重要</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr><td>市場目前定價在什麼假設上</td><td>共識：2026 強、2027 cycle 見頂、2028-2030 平台期；Fwd PE 30x 已反映「2026 是高水位」的擔憂（為什麼不給 35x +）</td></tr>
+  <tr><td>我認為的不同假設</td><td>2027 不會是 cycle 頂，因為 (a) High-NA ramp 2027-2028 才真正啟動，(b) TSMC 2nm 月產能 80-90K wafer 在 2026Q4 才達到、2027 還在爬，(c) Samsung 2nm 進入 ramp 也是 2027 中。所以 2027 應該是「Low-NA cycle 平台 + High-NA acceleration」的雙引擎年，而非單一週期頂部。</td></tr>
+  <tr><td>賣方為什麼錯（具體理由）</td><td>賣方把 ASML 仍當「semi cycle equipment」分析（用 SOX 半導體 cycle 模板 — 經典 4-5 年 cycle），沒看到 ASML 已從 cyclical 變 secular — 兩條獨立 S 曲線（Low-NA mature + High-NA ramp）會錯開，週期性大幅鈍化（ID_WFE 五寡占 framework 也指此點）</td></tr>
+</table>
+
+<p class="small-note">
+這個 contrarian view 是否成立、能不能拿到 alpha：依賴 2027 H1 ASML 法說對 2027 bookings 的具體指引。若管理層在 2026 Q3 法說 (10 月) 開始談 2027 仍 +15% 以上，這個分歧就會被市場跟進，估值有 re-rate 機會。
+</p>
+
+<!-- ============================================================
+     §5 Single Thing
+============================================================= -->
+
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr>
+    <td><strong>Primary trigger（主要單點事件）</strong></td>
+    <td><strong>MATCH Act 通過兩院 + 荷蘭政府妥協（30 天內無重大反制）+ ASML 對應指引下修 ≥ 10%</strong> — 三個條件需同時成立。任一缺項都不算觸發。</td>
+  </tr>
+  <tr>
+    <td>為什麼這個事件是致命的</td>
+    <td>會永久 reset ASML 的 TAM — 從全球 monopoly 變為「西方 only」供應商，中國市場（2025 33%）在 2 年內跌至 &lt;5%，DUV 業務從 €12B 萎縮至 €7-8B，破壞 EPS 軌跡（2027 EPS 預估從 €36.58 降至 €30 以下），同時讓 monopoly 溢價（forward PE 30x）被質疑（壓至 22x） — 這是 thesis 的 binary 終結。</td>
+  </tr>
+  <tr>
+    <td>如何監測</td>
+    <td>① 美國國會 MATCH Act 立法 tracker（每月查 US Congress / Foundation for American Innovation 跟蹤）<br>② 荷蘭 PM Jetten 公開立場（每季查 NL Times / Reuters Netherlands）<br>③ ASML quarterly 法說 China revenue 指引（每季）</td>
+  </tr>
+  <tr>
+    <td>目前離發生有多遠</td>
+    <td>MATCH Act 立法路徑最快 2026 H2 過參議院；荷蘭已 4/14/2026 正式 push back（首相親自跑白宮）；ASML 2026 指引 €36-40B 已納入 export controls 風險情境。<strong>機率估計：MATCH Act 2026 內過 = 30-40%，但「三個條件同時成立」= ~15-20%</strong></td>
+  </tr>
+  <tr>
+    <td><strong>Secondary trigger（pre-mortem 派生，新增）</strong></td>
+    <td><strong>2027 全年 High-NA recognized revenue &lt; €1.2B（管理層口徑「modestly above 2025」失守 ≥ 20%）+ TSMC 同期確認 A14 永久跳過 High-NA</strong> — 觸發後代表 driver 2 失效，monopoly 故事降級為 cycle 故事。詳見 §6b 修正。</td>
+  </tr>
+</table>
+
+<p class="small-note">
+規則自查：① 不是模糊表述（具體事件 + 具體閾值 + 多重 confirmation） ✅；② 不是不可觀測（立法是公開、財報是定期）✅；③ 是單點可驗證 ✅
+</p>
+
+<!-- ============================================================
+     §6 What I Don't Know + Pre-mortem + Max DD
+============================================================= -->
+
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對盲點</h3>
+
+<table>
+  <tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>假設不成立的後果</th></tr>
+  <tr>
+    <td>1</td>
+    <td>2027 AI capex YoY 仍 ≥ +15%</td>
+    <td>四大 hyperscaler 不集體 capex pause</td>
+    <td>若 capex YoY &lt; +5%，ASML 2027 bookings 直接打 25%+ 折扣 → EPS 軌跡破裂</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>High-NA yield + adoption 順利</td>
+    <td>Intel 14A 2026 risk production 順利 + Samsung 2nm 2027 中 ramp</td>
+    <td>若 Intel 14A 滑至 2029、Samsung 2nm yield 不過關，High-NA 客戶集中度過高（沒 TSMC 補位）→ ASP 升級失敗</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>MATCH Act 不通過 OR 荷蘭成功阻擋</td>
+    <td>美國國會 partisan 僵局 OR 荷蘭以 EU 名義 push back 成功</td>
+    <td>若通過，請見 §5 — thesis binary 終結</td>
+  </tr>
+</table>
+
+<h3>6b. Pre-mortem 三段式</h3>
+
+<div class="premortem-box">
+
+<h4>第一段｜故事倒推</h4>
+
+<blockquote>
+「假設 5 年後（2031）這個部位虧 50%，最可能發生的故事是：2027 Q4 美國通過 MATCH Act 完整版，荷蘭起初 push back 但 2028 年初為換取 NATO/防務承諾妥協同意，中國 2028 全年 ASML 營收從 €7B 跌至 €1.5B。同時 Intel 14A 2027-2028 yield 不及預期，14A HVM 滑至 2029 H2，Intel 在 2028 暫停 fab 擴張、High-NA 訂單從 8 台砍至 3 台。Samsung 2nm 因技術問題在 2028 仍處 risk production 階段，未進入量產。剩下能買 High-NA 的只剩 SK hynix DRAM 一家，2028-2030 High-NA 累計只出 12 台（vs 原 30 台目標）。Forward PE 從 30x 壓縮至 18x，EPS 2030 從 €55 降至 €32（接近 2026 水位平台 5 年），股價從 $1,460 跌至 $720（−51%）。」
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+
+<table>
+  <tr><th>檢查問題</th><th>答案</th></tr>
+  <tr>
+    <td>失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td>
+    <td><strong>⚠ 部分重疊</strong> — 故事倒推中除了「MATCH Act + 荷蘭妥協」（已在 §5 涵蓋）之外，還有「Intel 14A 失敗 + Samsung 2nm 拖延 = High-NA 客戶集中度危機」這個維度，§5 原版未抓到。</td>
+  </tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+
+<p>
+<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>（已在 §5 表格末列實際新增「Secondary trigger」一行 — 詳見上方 §5）。修正內容：在原 §5 trigger 之外，新增「2027 全年 High-NA recognized revenue &lt; €1.2B + TSMC A14 永久跳過 High-NA」作為 secondary trigger，捕捉 driver 2 失效的風險路徑。
+</p>
+
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<div class="max-dd-display">
+  <div>
+    <div class="num-large">−30% ~ −45%</div>
+    <div class="small-note">範圍 15%p（≥ 10%p 門檻 ✅）</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:28px;">🟡</div>
+    <div class="small-note">需要強信念 / 復原 ~18 個月</div>
+  </div>
+</div>
+
+<div class="dd-bar">
+  <div class="seg-green" style="width:50%;"></div>
+  <div class="seg-amber" style="left:50%; width:25%;"></div>
+  <div class="seg-red" style="left:75%; width:25%;"></div>
+</div>
+<p class="small-note">DD 區間刻度：0% — −30%（綠 / 多數人可扛）— −30~−50%（黃 / 需強信念）— &lt;−50%（紅 / 多數人中途出場）</p>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr><td>估計 Max DD 範圍</td><td><strong>−30% ~ −45%</strong>（推估自 §6b 故事中 Bear 路徑的中途谷底 — 不到 −50% 因為基本面護城河仍在）</td></tr>
+  <tr><td>最可能觸發時點</td><td><strong>1.5-2 年後（2027 Q3 - 2027 Q4）</strong> — 若 MATCH Act + AI capex YoY 同時轉弱、High-NA 進度報告令人失望</td></tr>
+  <tr><td>觸發後最快多久恢復到峰值</td><td><strong>~18 個月</strong>（pattern：2024 H2 ASML 從 PE 42x → 25x 用了 6 個月跌、12 個月恢復到 90%；若 thesis 未破，類似節奏可重演）</td></tr>
+  <tr><td>路徑風險評級</td><td><strong>🟡 −30%~−50%（需要強信念）</strong></td></tr>
+</table>
+
+<p><strong>校驗：</strong>若 max DD 落在 −45%，我能否撐到復原？條件：① 部位不超過 portfolio 4%（不超過 5% 心理線）；② 不使用槓桿；③ §5 primary trigger 未發生（即 MATCH Act 未通過 + 荷蘭未妥協）；④ 在 −35% drawdown 時不會強制止損（已預先寫入 §7b 加碼 (b)：股價回測 $1,300 加碼）。
+<br>若上述任一條件破裂 → §7a 倉位需再下修 0.5-1.0%p（從目標 4% → 3-3.5%）。</p>
+
+<p class="small-note">
+🟡 評級已在 §7a 反映：原 ideal sizing 4-5% → 主動下修至 4% 目標倉位 + 2.5% 初始建倉；§7d 持有年限說明「中途可能跌 30-45%，唯有 5+ 年才能讓 EPS 複利淹過估值波動」。
+</p>
+
+<!-- ============================================================
+     §8 Review Triggers
+============================================================= -->
+
+<h2>§8｜Review Triggers</h2>
+
+<table>
+  <tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+  <tr>
+    <td>1</td>
+    <td>ASML Q2 2026 法說</td>
+    <td>財報日期</td>
+    <td><strong>2026-07-15 (約)</strong>，重點：bookings 是否續強 ≥ €5B、High-NA 全年指引、China 全年指引</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>ASML Q3 2026 法說</td>
+    <td>財報日期</td>
+    <td><strong>2026-10-15 (約)</strong>，重點：2027 preliminary outlook、High-NA 全年 recognized revenue</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>MATCH Act 兩院投票結果</td>
+    <td>政策事件</td>
+    <td>追蹤節點：參議院通過 → 立刻檢視；眾議院通過 → 立刻檢視；總統簽署 → §5 trigger 啟動</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Intel 14A risk production / Samsung 2nm yield ramp</td>
+    <td>產業事件</td>
+    <td>2026 Q4 - 2027 H1 — 兩家是 High-NA 集中客戶，任一項目滑期 ≥ 6 個月 → 重評</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>四大 hyperscaler 季度 capex 公告</td>
+    <td>產業事件</td>
+    <td>每季 — MSFT/GOOGL/META/AMZN 合計 YoY &lt; +5% → 啟動 R1 警報</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>股價跌破 $1,200 OR 突破 $1,900</td>
+    <td>價位觸發</td>
+    <td>觸發 §7b 加碼 (b) 或減碼 (b)</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>§5 Primary trigger / Secondary trigger</td>
+    <td>thesis 顛覆事件</td>
+    <td>任一觸發 → 立即重評整份 DCA</td>
+  </tr>
+</table>
+
+<p><strong>這份報告的保質期：</strong>至 <strong>2026-07-15</strong>（ASML Q2 2026 法說前有效）。法說後需根據 bookings、High-NA 進度、China 全年指引重新校準。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>① Q2/Q3 2026 bookings 連續 ≥ €5.5B + High-NA 出貨累計達 8 台 + MATCH Act 在參議院投票延期 → Forward PE re-rate 至 34-36x，6 個月內股價衝 $1,700-1,800（+15-25%）<br>
+② 2030 EUR 60B vision 進度報告（2026 Investor Day 11 月）若展示 mid-target €52B+，longer-term 投資人加碼 → 結構性 re-rate。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>① MATCH Act 過參議院 + 荷蘭妥協信號 → 一次性 drawdown 15-20%（已 partially priced in）<br>
+② TSMC Q4 2026 capex guidance 下修（從 US$56B 降至 ≤ $50B）→ ASML 2027 bookings 預期被砍 → −10-15% 補跌。</p>
+
+<!-- ============================================================
+     Phase A 折疊區塊（顯示順序最後）
+============================================================= -->
+
+<details>
+<summary>Phase A1｜護城河深度分析 — <em>A1 獨立結論：ASML 是 EUV 領域唯一供應商（100% 市占），High-NA 是其護城河的「第二根樁」正在 widening；moat_trend ↑</em></summary>
+
+<h4>搜尋執行記錄</h4>
+<ul>
+  <li>ASML EUV monopoly High-NA market share 2026 competitive moat</li>
+  <li>ASML gross margin 2026 EUV pricing power ASP trends</li>
+  <li>ASML 2026 ROIC return on invested capital free cash flow margin</li>
+</ul>
+
+<h4>分析結論</h4>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr>
+    <td>主要護城河類型</td>
+    <td>① <strong>技術獨家壟斷</strong>（EUV 唯一供應商，Nikon/Canon 10 年前退出；High-NA 也是 ASML 一家）；② <strong>規模 + 供應鏈 lock-in</strong>（Zeiss 光學獨家、Cymer 光源獨家 — 兩家全資子公司，總計 20 年 $9B+ 投資的供應鏈）</td>
+  </tr>
+  <tr>
+    <td>持久性評分</td>
+    <td><strong>10/10</strong>，5 年穩固度：高（DD §9 即評 10/10）</td>
+  </tr>
+  <tr>
+    <td>最大侵蝕風險</td>
+    <td>非技術風險：地緣政治（MATCH Act 強制讓出中國市場 → TAM 切割）；技術替代風險：實質為零（中國 SMEE 仍在 28nm DUV，距 EUV 至少 10 年）</td>
+  </tr>
+  <tr>
+    <td>關鍵數據</td>
+    <td>毛利率 53% (Q1 2026, ↑)、市佔率 100% (EUV) / 90% (overall lithography, →) 、ROIC 109% vs WACC ~8% 超額 ~100%p</td>
+  </tr>
+  <tr>
+    <td><strong>moat_trend</strong></td>
+    <td><strong>↑ widening</strong> — 證據：(1) High-NA EXE:5200B 在 Q4 2025 首次出貨 Intel（路徑開啟）；(2) Q1 2026 EUV system revenue YoY +28%（vs 整體 +13% — EUV mix 上升）；(3) ASML 4/16/2026 Q1 法說「order intake continues to be very strong」（質化 commentary 加深 — DD §6 已引用）；(4) 同業 AMAT/LRCX/KLAC 在 EUV 領域無法跨入（過去 12 個月 zero entry）— gap 結構性擴大</td>
+  </tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 floor）</h4>
+<ol>
+  <li>ROIC 109% — Alpha Spread / Finance Charts (2026-05)</li>
+  <li>EUV 市占 100% / 整體 lithography 90% — Motley Fool (2025-12) / Asia Times (2026-04)</li>
+  <li>Q1 2026 GM 53.0%、Net income €2.8B — ASML official Q1 2026 results (2026-04-15)</li>
+  <li>2025 EUV system 營收 €11.6B (+39% YoY) — ASML 2025 annual report</li>
+  <li>Backlog €38.8B 年末 / EUV 占 65% — ASML Q4 2025 投資人簡報 (2026-01-28)</li>
+  <li>Low-NA EUV €180M / High-NA €380M ASP — HeyGoTrade EUV monopoly case study (2025-12)</li>
+  <li>ASML R&D €4.7B 2025 + Mistral AI €1.3B 投資 — Bloomberg (2025-09-09) / ASML press release</li>
+</ol>
+
+<p><strong>A1 獨立結論：</strong>ASML 是 EUV 領域唯一供應商，護城河寬度 10/10，且 moat_trend ↑ widening（High-NA 拉開技術代差 + 同業無法跨入 EUV）。</p>
+
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — <em>A2 獨立結論：EUV + 先進製程 TAM 至 2030 仍處結構性上行，runway_post_y5 🟢 寬</em></summary>
+
+<h4>搜尋執行記錄</h4>
+<ul>
+  <li>semiconductor lithography TAM forecast 2028 2030 EUV market size</li>
+  <li>MATCH Act 2026 ASML China export controls Dutch government response</li>
+  <li>High-NA EUV adoption Intel 14A Samsung 2nm TSMC A14 roadmap 2026 2027</li>
+  <li>ASML 2030 revenue projection investor day 60 billion long-term growth</li>
+</ul>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr>
+    <td>TAM 與成長</td>
+    <td>當前 EUV TAM ~$9.7B (2025)，CAGR 13-17%，2030 EUR 18.4B；整體 lithography 從 $27.8B → $47.6B 2031 (CAGR 9.37%)；ASML 自身 2030 EUR 44-60B 區間 vision</td>
+  </tr>
+  <tr>
+    <td>供需判斷</td>
+    <td>目前供需偏緊 — Q1 2026 法說「delivery timeline 12-18 個月」，2026 guide 上修至 €36-40B；未來 12 個月方向：仍緊（capex 不下修、High-NA ramp 啟動）</td>
+  </tr>
+  <tr>
+    <td>最大技術替代風險</td>
+    <td>無實質替代 — 短期 (5Y) 內 EUV 是 sub-7nm 唯一路徑；High-NA 是 sub-2nm 唯一路徑；唯一可能威脅是 Nanoimprint Lithography (Canon NIL)，但 ASML CTO Wennink 公開表示「NIL 在主流邏輯製程不可行」（2024-2025 業界共識）</td>
+  </tr>
+  <tr>
+    <td>最大政策/地緣風險</td>
+    <td>MATCH Act 2026-04-02 美國國會提出，可能進一步限縮 DUV 對中國出口 → 影響 ASML 33% 營收（2025）；荷蘭 PM 4/14/2026 正式 push back，但結局未定；中國 2026 預估收占 33% → 20%</td>
+  </tr>
+  <tr>
+    <td>議價權位置</td>
+    <td>對上游 強（Zeiss/Cymer 為全資子公司，無外部議價）；對下游 強（無替代品，TSMC/Samsung/Intel 都需要排隊買 ASML 機台，且接受 €380M ASP）</td>
+  </tr>
+  <tr>
+    <td><strong>runway_post_y5</strong></td>
+    <td><strong>🟢 寬</strong> — 判斷依據：(a) S 曲線位置：High-NA 正進入早-中期（2027-2030 為 ramp 期），ASML 仍處 EUV S 曲線中段；(b) Y5（2031）末 TAM 滲透率：500 EUV systems by 2030 vs 全球 fab 安裝基礎 ~5000 — 滲透率 ~10% — 仍有 5-10x 空間；(c) 第二曲線銜接：Hyper-NA EUV 已在 R&D 階段（2030+），Mistral AI 投資也是延伸 software/embedded computing 收入線</td>
+  </tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 floor）</h4>
+<ol>
+  <li>EUV TAM $9.7B → $18.4B 2030 (CAGR 11-13%) — Grand View Research / Markets and Markets (2026-04)</li>
+  <li>500 EUV systems installed base by 2030 (industry roadmap) — Mordor Intelligence / Straits Research</li>
+  <li>ASML 2030 vision EUR 44-60B revenue, GM 56-60% — ASML Investor Day 2024-11-14</li>
+  <li>MATCH Act 提案 2026-04-02 — NL Times / Foundation for American Innovation / EconoTimes (2026-04)</li>
+  <li>荷蘭 PM Jetten 4/14/2026 正式 push back — NL Times (2026-04-14)</li>
+  <li>Intel 14A HVM 2028、Samsung 2nm 已收第二台 High-NA、TSMC A14 跳過 High-NA — TrendForce (2026-02-16) / Tom's Hardware (2026-04-23)</li>
+  <li>China 2025 占比 33% → 2026 預估 20% — ASML Q4 2025 results / CNBC (2026-04-15)</li>
+</ol>
+
+<p><strong>A2 獨立結論：</strong>EUV 產業 TAM 結構性上行至 2030，runway_post_y5 🟢 寬（Y5 末滲透率僅 ~10%，第二曲線 High-NA 2027 啟動）。最大政策風險是 MATCH Act，但荷蘭已 push back，base case 為「協商版本」而非「最壞情境」。</p>
+
+</details>
+
+<details>
+<summary>Phase A3｜業務結構/財務體質/資本配置 — <em>A3 獨立結論：A 級財務體質 + 高度 cash-generative + 紀律的資本配置；EPS 軌跡 2026-2030 隱含 CAGR ~12-15%</em></summary>
+
+<h4>搜尋執行記錄</h4>
+<ul>
+  <li>ASML Q1 2026 earnings bookings results revenue guidance</li>
+  <li>ASML revenue breakdown EUV DUV service segment customer concentration</li>
+  <li>ASML buyback program share repurchase dividend 2025 2026 capital allocation</li>
+  <li>ASML 5-year historical PE multiple band</li>
+  <li>ASML EPS consensus 2027 2028 forecast forward PE</li>
+  <li>ASML stock price May 2026 technical analysis MA200 RSI</li>
+</ul>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr>
+    <td>營收結構</td>
+    <td>現金牛：DUV systems（2025 €12.0B / 37% 總營收）+ Installed Base Mgmt（€2.1B / 6.4%）；成長引擎：EUV systems（2025 €11.6B / 35%，YoY +39%，Q1 2026 mix 仍升高）；新興：High-NA EUV（2025 €0.7-1.0B / ~3%，2026 預估 mod above 2025）</td>
+  </tr>
+  <tr>
+    <td>客戶集中度</td>
+    <td>TSMC + Samsung + Intel 三家估計合計 65-75%；Intel 估 10-20% 為第三大；風險：高（但 TSMC 一家就 ~35-40%）</td>
+  </tr>
+  <tr>
+    <td>定價權</td>
+    <td>ASP 趨勢 ↑（Low-NA EUV €180M → High-NA €380M，mix 升級拉動）；定價權：極強 — 無替代品</td>
+  </tr>
+  <tr>
+    <td>未來金雞母</td>
+    <td>High-NA EUV（目前佔總營收 ~3%，潛在 TAM 至 2030 累計訂單 30-50 台 × €380M = €11-19B，預估成熟 ~5 年後）；軟體服務（Mistral AI 整合可能在 7-10 年後成形）</td>
+  </tr>
+  <tr>
+    <td>財務體質</td>
+    <td>FCF 轉換率：Q1 2026 暫負（€-2.6B 因 down payment timing）但 TTM 仍 strong（2025 FCF margin ~25-30%）；GM 53%（Q1 2026 高端）；壓力測試：營收 -20% 仍可維持 GM &gt;45%（service 部分為 fixed margin），可撐 ≥ 8 季</td>
+  </tr>
+  <tr>
+    <td>資本配置紀律</td>
+    <td>極佳 — €12B 2026-28 buyback + €7.50 dividend (FY25, +17% YoY)，2025 EPS €19.24 × 派發率約 30%；過去無重大失敗併購（最後一次大併購是 2013 Cymer，極成功）；Mistral AI 1.3B 是策略性 stake 不是 financial allocation</td>
+  </tr>
+  <tr>
+    <td><strong>5Y IRR 分量基底（Base case）</strong></td>
+    <td>① EPS CAGR ~10%（€31 → €55，2026-2030；扣 SBC 稀釋 ~1.5%/yr）<br>② 5Y 末 Forward PE 27.5x vs 當前 30.5x → re-rate 貢獻 = (27.5/30.5)^(1/5) − 1 = <strong>−2.1%/yr</strong><br>③ 現金股息率 ~1.0%（€7.50 / $1,460）<br>④ 淨買回率 ~0.5-1.0%（€4B/yr 對 $580B mkt cap = ~0.7%，扣 SBC 稀釋）</td>
+  </tr>
+</table>
+
+<h4>Sourced Data Points（≥ 6 floor）</h4>
+<ol>
+  <li>Q1 2026 revenue €8.8B、Net income €2.8B、GM 53.0% — ASML official Q1 2026 results (2026-04-15)</li>
+  <li>2026 全年 guidance €36-40B、GM 51-53% (上修自 €34-39B) — ASML Q1 2026 法說 (2026-04-15)</li>
+  <li>2025 全年 €32.7B (+16% YoY)、EUV €11.6B、DUV €12.0B — ASML Q4 2025 results (2026-01-28)</li>
+  <li>2025 Backlog €38.8B 年末，EUV 占 65% — ASML Q4 2025 investor presentation</li>
+  <li>Logic 66% / Memory 34% of system sales (Q4 2025 quarterly) — Counterpoint Research</li>
+  <li>China 2025 33% → 2026 預估 20% — CNBC (2026-04-15) / ASML 法說</li>
+  <li>€12B buyback 2026-2028 + €7.50 FY25 dividend (+17% YoY) — Stock Titan (2026-01) / ASML AGM (2026-04)</li>
+  <li>5Y PE band 25-55x (forward)、5Y average 38.4x、當前 Fwd PE 30.5x (5Y 分位 18%) — Financecharts / FinBox / DD §2 D</li>
+  <li>RSI 14d 55.94 (中性)、MA200 $1,386 — TipRanks / Investing.com (2026-05)</li>
+</ol>
+
+<p><strong>A3 獨立結論：</strong>A 級財務體質 + 高度 cash-generative + 紀律的資本配置；EPS 軌跡 2026-2030 隱含 CAGR ~12%；5Y IRR 主要來自 EPS 複利（10%/yr），估值小幅壓縮（−2.1%/yr），股東回報 +1%/yr — 合計 base case ~9%/yr。</p>
+
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據摘要 — <em>DD A+ / S 級護城河 / 估值 🟢 便宜 / Pure MA ✅ / 大盤豁免正常</em></summary>
+
+<h4>DD_ASML_20260418 關鍵擷取</h4>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr><td>Quality Score</td><td><strong>10.0 / 10</strong>（DD §1 dashboard）</td></tr>
+  <tr><td>R:R Ratio</td><td>短期 3.14x（資訊性）；中期 R:R 結構完整（DD §8 H）</td></tr>
+  <tr><td>三引擎目標價（短期）</td><td>保守/中性/樂觀 不可得（DD 已淡化倉位 % 推薦，改為訊號燈）；1 年目標 $1,463、2 年目標 $1,902</td></tr>
+  <tr><td>Bear anchor</td><td>中期 $658 (Bear PE 22x × Bear EPS €33.3) — 距現價 −55%</td></tr>
+  <tr><td>紅旗清單</td><td>主要：Q1 FCF 為負 €-2.6B (timing issue, 非結構性)；其餘紅旗不存在</td></tr>
+  <tr><td>§0.5 核心假設 H1/H2/H3</td><td>H1: AI capex + 先進節點支撐 EUV 3Y CAGR ≥ 20%<br>H2: High-NA 累計 ≥ 30 台 by 2028<br>H3: Forward PE 維持 30-40x 區間</td></tr>
+  <tr><td>§8 綜合訊號燈</td><td><strong>A+</strong>（核心候選滿格）</td></tr>
+  <tr><td>長期持有信心</td><td>高</td></tr>
+  <tr><td>陷阱定性</td><td>🟢 非陷阱</td></tr>
+</table>
+
+<h4>ID 報告擷取</h4>
+
+<table>
+  <tr><th>ID 報告</th><th>關鍵點</th></tr>
+  <tr>
+    <td>ID_WaferFabEquipment_20260430（母題）</td>
+    <td>WFE 五寡占 framework — ASML / AMAT / LRCX / KLAC / TEL — ASML 為「結構超循環」非 cyclical；2027 trough 不會跌破 $130B WFE 市場；五寡占 PE 應 28-32x (V/MA 等級)</td>
+  </tr>
+  <tr>
+    <td>ID_HighNAEUV_20260505</td>
+    <td>非共識 #1：High-NA moat 不在 ASML（已被市場 priced），在 Lasertec / Hoya / JSR 三檔小盤；Intel 14A 是 binary outcome；ASP $350-400M 區間（與本 DCA A3 €380M 一致）</td>
+  </tr>
+  <tr>
+    <td>ID_LeadingEdgeNode_20260419</td>
+    <td>Phase II（2nm 爆發 + A16 起點）；TSMC A16 backside power 是 2027-2028 真正護城河；Intel 18A 2026-2027 基本無外部客戶（已部分質疑 Intel 14A 客戶承接力）</td>
+  </tr>
+  <tr>
+    <td>ID_AIAcceleratorDemand_20260419（母題）</td>
+    <td>Phase II（訓練→推論混合期）；非共識：2027 非峰值為轉折（與本 DCA §3 「2027 不是 cycle 頂」一致）；電力是永久瓶頸</td>
+  </tr>
+</table>
+
+<p class="small-note">A4 不產獨立結論。Phase B 已運用以上資料進行交叉矛盾辨識。</p>
+
+</details>
+
+<!-- ============================================================
+     文件末
+============================================================= -->
+
+<h2>References｜文件依據</h2>
+
+<ul>
+  <li><strong>DD：</strong>DD_ASML_20260418.html（A+ 訊號燈，10/10 護城河，DD-meta JSON validated）</li>
+  <li><strong>ID：</strong>ID_WaferFabEquipment_20260430 (WFE 五寡占 framework) / ID_HighNAEUV_20260505 (Intel 14A binary, ASP $350-400M) / ID_LeadingEdgeNode_20260419 (TSMC A14 跳過 High-NA, A16 backside) / ID_AIAcceleratorDemand_20260419 (AI 需求 Phase II, 2027 非峰值)</li>
+  <li><strong>主要 web sources：</strong>ASML 官方財報（Q1 2026 results, Q4 2025 results, Investor Day 2024）；Counterpoint Research (2026 revenue breakdown)；CNBC / Reuters (MATCH Act tracking)；NL Times (荷蘭政府立場)；TrendForce / Tom's Hardware (High-NA roadmap)；Grand View Research / Markets and Markets (EUV TAM)；TipRanks / Investing.com (technical indicators)</li>
+</ul>
+
+<p class="small-note" style="margin-top:30px;border-top:1px solid #CBD5E1; padding-top:14px;">
+本 DCA 報告由 deep-conviction-analyst v1.1 skill 產出。所有 Phase A 結論基於 2026-05-11 當天獨立 web search 完成，未直接引用其他 Phase 結論。Phase B 強制裁決已對 3 條矛盾下判決並提供 ≥ 2 條 if-then 路徑。§5 已根據 §6b pre-mortem 補入 1 條 secondary trigger。§7 倉位已根據 §6c Max DD 🟡 評級自動下修。
+</p>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>

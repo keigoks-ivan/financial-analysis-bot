@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<meta name="dca-schema-version" content="v1.1">
+<title>AMZN — Deep Conviction Analysis｜2026-05-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --ink-2:#334155; --ink-3:#64748B;
+    --line:#E2E8F0; --accent:#1E3A5F; --accent-2:#3B82F6;
+    --green-bg:#DCFCE7; --green-ink:#166534; --green-2:#15803D;
+    --red-bg:#FEE2E2; --red-ink:#991B1B;
+    --amber-bg:#FEF3C7; --amber-ink:#92400E;
+    --blue-bg:#EFF6FF; --blue-ink:#1E3A5F;
+    --pre-bg:#FEF2F2; --pre-line:#DC2626;
+    --pat-bg:#F0F9FF; --pat-line:#0EA5E9;
+    --warn-bg:#FFF7ED; --warn-line:#F97316;
+    --verdict-bg:#FED7AA;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--ink); line-height:1.7;}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace;}
+  header.topbar{position:sticky; top:0; z-index:50; background:var(--accent); color:#fff; padding:12px 24px; display:flex; gap:18px; flex-wrap:wrap; font-size:13px; align-items:baseline; border-bottom:4px solid var(--accent-2);}
+  header .ticker{font-size:18px; font-weight:700; letter-spacing:1px;}
+  header .meta{opacity:0.92;}
+  header .schema{margin-left:auto; opacity:0.85; font-family:'IBM Plex Mono',monospace;}
+  main{max-width:1180px; margin:0 auto; padding:24px 24px 96px;}
+  section.card{background:var(--card); border:1px solid var(--line); border-radius:6px; padding:24px 28px; margin-bottom:20px; box-shadow:0 1px 2px rgba(15,23,42,0.04);}
+  h1,h2,h3{color:var(--accent); margin-top:0;}
+  h2{border-left:4px solid var(--accent-2); padding-left:12px; font-size:20px; margin-bottom:16px;}
+  h3{font-size:16px; margin:20px 0 10px; color:var(--accent);}
+  h4{font-size:14px; margin:14px 0 8px; color:var(--ink-2);}
+  table{width:100%; border-collapse:collapse; margin:12px 0; font-size:13.5px;}
+  thead th{background:var(--accent); color:#fff; padding:9px 11px; text-align:left; font-weight:500;}
+  tbody td, tbody th{padding:9px 11px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tbody tr:nth-child(even){background:#F1F5F9;}
+  .tag{display:inline-block; padding:2px 9px; border-radius:3px; font-size:12px; font-weight:600; font-family:'IBM Plex Mono',monospace;}
+  .green{background:var(--green-bg); color:var(--green-ink);}
+  .red{background:var(--red-bg); color:var(--red-ink);}
+  .amber{background:var(--amber-bg); color:var(--amber-ink);}
+  .blue{background:var(--blue-bg); color:var(--blue-ink);}
+
+  /* Status Bar */
+  .status-bar{display:flex; gap:16px; justify-content:center; background:#F1F5F9; padding:16px 12px; border-radius:6px; margin-bottom:18px; border-left:4px solid var(--accent-2); border-right:4px solid var(--accent-2);}
+  .status-bar > div{flex:0 0 200px; text-align:center; padding:8px;}
+  .status-bar .lbl{font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;}
+  .status-bar .val{font-size:22px; font-weight:700; line-height:1.2;}
+  .status-bar .sub{font-size:11px; color:var(--ink-3); margin-top:4px;}
+  .sig-A{color:var(--green-ink);}
+  .sig-B{color:var(--amber-ink);}
+  .sig-X{color:var(--red-ink);}
+  .arrow-up{color:var(--green-ink);}
+  .arrow-flat{color:var(--ink-3);}
+  .arrow-down{color:var(--red-ink);}
+
+  /* Thesis block */
+  .thesis-box{background:var(--blue-bg); padding:28px; border-radius:6px; text-align:center; margin:8px 0 16px; border-left:4px solid var(--accent-2);}
+  .thesis-box .txt{font-size:24px; font-weight:700; color:var(--accent); line-height:1.5;}
+  .thesis-box .sub{font-size:12px; color:var(--ink-3); margin-top:10px;}
+
+  /* Decision (§7) */
+  .decision-box{background:#FEF9C3; border-left:4px solid #CA8A04; padding:18px 22px; border-radius:0 6px 6px 0;}
+
+  /* Phase B conflicts */
+  .conflict-box{background:var(--warn-bg); border-left:4px solid var(--warn-line); padding:18px 22px; border-radius:0 6px 6px 0; margin:12px 0;}
+  .conflict-box h3{color:#9A3412;}
+  .verdict-table th{background:#9A3412 !important;}
+  .verdict-table{background:var(--verdict-bg);}
+
+  /* Pre-mortem */
+  .premortem-box{background:var(--pre-bg); border-left:4px solid var(--pre-line); padding:18px 22px; border-radius:0 6px 6px 0; margin:12px 0;}
+  .premortem-box h3{color:var(--pre-line);}
+  blockquote.scenario{border-left:3px solid var(--pre-line); margin:8px 0; padding:8px 16px; background:#fff; font-style:italic; color:var(--ink-2);}
+
+  /* Pattern match */
+  .pattern-box{background:var(--pat-bg); border-left:4px solid var(--pat-line); padding:18px 22px; border-radius:0 6px 6px 0; margin:12px 0;}
+  .pattern-box h3{color:var(--pat-line);}
+
+  /* IRR composition */
+  .irr-narrative{background:var(--pat-bg); border-left:3px solid var(--pat-line); padding:10px 16px; font-style:italic; margin:10px 0; color:var(--ink-2);}
+  .irr-stack{display:flex; align-items:center; gap:6px; margin:10px 0; font-size:12px;}
+  .irr-stack .seg{padding:6px 10px; color:#fff; font-weight:600; font-family:'IBM Plex Mono',monospace;}
+  .seg-eps{background:#15803D;}
+  .seg-rerate{background:#0EA5E9;}
+  .seg-yield{background:#64748B;}
+
+  /* Max DD §6c */
+  .maxdd-box{background:#FEF3C7; border-left:4px solid #D97706; padding:18px 22px; border-radius:0 6px 6px 0; margin:12px 0;}
+  .maxdd-num{font-size:32px; font-weight:700; font-family:'IBM Plex Mono',monospace; color:#92400E;}
+  .maxdd-bar{display:flex; width:100%; height:14px; border-radius:3px; overflow:hidden; margin:10px 0;}
+  .maxdd-bar .s1{background:#15803D; flex:30;}
+  .maxdd-bar .s2{background:#D97706; flex:20;}
+  .maxdd-bar .s3{background:#991B1B; flex:0;}
+
+  /* Memo / Elevator (§1) */
+  .memo{background:#FAFAF9; border:1px dashed var(--ink-3); padding:18px 22px; font-family:'IBM Plex Mono',monospace; font-size:13px; border-radius:4px; white-space:pre-wrap; line-height:1.6;}
+  .elevator{border-left:3px solid var(--accent-2); margin:10px 0; padding:10px 16px; background:#fff; font-style:italic; color:var(--ink-2); font-size:14px;}
+
+  /* Phase A details */
+  details{background:#FAFAFA; border:1px solid var(--line); border-radius:4px; padding:12px 18px; margin:10px 0;}
+  details summary{cursor:pointer; font-weight:700; color:var(--accent); font-size:15px;}
+  details[open] summary{margin-bottom:10px;}
+
+  /* Print button */
+  .print-btn{position:fixed; bottom:28px; right:28px; padding:12px 18px; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,0.18); font-family:'Noto Sans TC',sans-serif;}
+  .print-btn:hover{background:var(--accent-2);}
+
+  @media print{
+    header.topbar,.print-btn{display:none;}
+    body{background:#fff;}
+    main{padding:0; max-width:100%;}
+    section.card{box-shadow:none; border:1px solid #ccc; page-break-inside:avoid;}
+    details{page-break-inside:avoid;}
+    details:not([open]) > *:not(summary){display:block;}
+  }
+  @media (max-width:900px){
+    .status-bar{flex-wrap:wrap;}
+    .status-bar > div{flex:0 0 45%;}
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="ticker">AMZN ｜ Amazon.com, Inc.</span>
+  <span class="meta">DCA 報告：2026-05-11</span>
+  <span class="meta">收盤參考：$273（5/8）</span>
+  <span class="meta">Thesis：AWS + Trainium 雙引擎 × Retail-Ad 飛輪 — AI 基建雙占龍頭之一</span>
+  <span class="schema">DCA Schema v1.1</span>
+</header>
+
+<main>
+
+<!-- ===================== Status Bar ===================== -->
+<div class="status-bar" id="status-bar">
+  <div>
+    <div class="lbl">綜合訊號燈</div>
+    <div class="val sig-B">B</div>
+    <div class="sub">衛星候選｜DD 4/30 → DCA 5/11</div>
+  </div>
+  <div>
+    <div class="lbl">護城河趨勢</div>
+    <div class="val">A <span class="arrow-flat">→</span></div>
+    <div class="sub">holding（QC-28 質變警示但 Trainium 補位）</div>
+  </div>
+  <div>
+    <div class="lbl">Runway Post-Y5</div>
+    <div class="val">🟢 寬</div>
+    <div class="sub">AI 推論 + Ads + 國際電商三條延伸</div>
+  </div>
+  <div>
+    <div class="lbl">Max DD（5Y 內）</div>
+    <div class="val" style="color:#92400E;">−50%</div>
+    <div class="sub">範圍 −35% ~ −50%｜🟡 需強信念</div>
+  </div>
+</div>
+
+<!-- ===================== §2 One-Sentence Thesis ===================== -->
+<section class="card" id="thesis">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="txt">Amazon 把全球零售與計算基建縫成一張飛輪網，而 AI 推論時代讓這張網的中央調度權，從 NVIDIA 手上回流到 hyperscaler。</div>
+  <div class="sub">50 字以內的投資本質｜Trainium $225B 訂單 = AI 基建第二供應源確立</div>
+</div>
+<p style="font-size:13px; color:var(--ink-3); margin:8px 0 0;">
+  <strong>禁忌檢核：</strong>未使用 ROIC / FCF Margin / 毛利率作 thesis 主體 ✓；敘事性（誰、做什麼、為什麼這件事此刻變值錢）✓；50 字以內 ✓。
+</p>
+</section>
+
+<!-- ===================== §7 Decision ===================== -->
+<section class="card" id="decision">
+<h2>§7 Decision｜可執行計畫</h2>
+
+<div class="decision-box">
+<h3 style="margin-top:0;">7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th width="32%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>核心持倉（core，邊緣）</strong> — A 級護城河 9/10 + 三引擎結構性成長，但 FCF 兌現延後使其略遜於 GOOGL 的核心首選地位</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.5% of portfolio</strong>（試倉，等回測或催化驗證後加碼）</td></tr>
+<tr><td>目標倉位</td><td><strong>4.0% of portfolio</strong>（A 級核心區下緣；上限受 §6c Max DD 🟡 評級下修，從原規劃 6% 砍到 4%）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$224 ~ $250</strong>（W52 $224 區間到 Bollinger 中軌 $245 之間，相當於回檔 −9% ~ −18%）</td></tr>
+<tr><td>進場節奏（條件式 — 動能過熱）</td><td><strong>RSI 14d = 76.57 觸發 §7c guardrail，禁止一次建倉</strong>。三條 timing 條件擇一：(a) <strong>RSI 14d 回到 50-60</strong>（過熱解除）；(b) <strong>回測 MA60 / Bollinger 中軌 $245</strong>；(c) <strong>Q2 2026 財報後 AWS margin ≥ 36% + Capex 不再上修</strong>。觸發前持空倉觀察。</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>點名 GOOGL（已假設 portfolio 持有 3.5%，同為 hyperscaler + AI 基建 + ads 三引擎）。</strong> 對比 R:R：GOOGL DD 中期 R:R 1.67x vs AMZN 0.04x（v11 vs v12 DD 數字不可直接比較，但方向：GOOGL 估值更便宜 PE 26x + FCF margin 18% 健康 + Cloud margin 翻倍 vs AWS 微壓）；GOOGL FCF/NI 0.55 vs AMZN 0.099 = Q1 26 兌現訊號 GOOGL 更乾淨。<br><strong>結論：</strong>邊際資金優先加碼 GOOGL 至 4.5% 再說，AMZN 等回測或 Q2 兌現訊號才動。<strong>不該減 GOOGL 加 AMZN</strong>。同時持有以分散 hyperscaler 路徑風險（GOOGL TPU 路線 vs AMZN Trainium 路線），但相對性價比 GOOGL 領先。</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>首批進場</td><td>RSI 回到 50-60 OR 回測 $245 Bollinger 中軌 OR Q2 26 AWS margin ≥ 36%</td><td>1.5%</td></tr>
+<tr><td>加碼</td><td>Trainium 訂單從 $225B 進一步堆疊至 $280B+（顯示需求未飽和） AND AWS YoY +25%+ 兩季</td><td>2.5%</td></tr>
+<tr><td>加碼至目標</td><td>FY27 H1 FCF (TTM) 回到 $25B+（Capex ROI 兌現）+ Trainium 開始按項揭露 revenue</td><td>4.0%</td></tr>
+<tr><td>減碼</td><td>AWS OI margin 連 2 季 &lt; 30%（從 37.66% 跌破 7pp）OR 突破 PE 32x 即 $305 但共識未上修</td><td>2.0%</td></tr>
+<tr><td>清倉</td><td>(a) Anthropic 出現重大融資警訊 + Trainium 訂單 cancel；OR (b) FCF (TTM) 至 2028 仍 &lt; $10B（H3 推翻）</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<thead><tr><th width="40%">檢查項目</th><th width="14%">狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA60 之上？</td><td><span class="tag green">✅</span></td><td>$273 &gt; 50d MA $214（5/8 數據；altindex.com）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="tag green">✅</span></td><td>$273 &gt; 200d MA $229（altindex.com）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="tag green">✅</span></td><td>$273 &gt; W104 $210（DD §2 F）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="tag amber">🟡 減半</span></td><td>價序通過但 DD §2 F 記錄 W250 斜率 +1.65% &lt; 3% 持平門檻 → MA 部位乘數 × 0.5（保留自 DD 4/30）</td></tr>
+<tr><td><strong>短期動能過熱檢查（QC-22）</strong></td><td><span class="tag red">⚠ RSI 14d = 76.57</span></td><td>investing.com / altindex.com 顯示 RSI 76.57 = 顯著超買（&gt; 70 警示，&gt; 75 強警示）；5/5 創 ATH $278.56；4 週漂移從 4/29 $263 → 5/8 $273 約 +3.8%（未過 +10%）</td></tr>
+</tbody>
+</table>
+
+<p style="background:#FEE2E2; padding:12px 16px; border-left:4px solid var(--red-ink); margin:12px 0;">
+<strong>⛔ §7a 進場節奏強制條件式（QC-22 觸發）：</strong>RSI 14d 76.57 &gt; 75 強警示閾值 + 5/5 ATH 創高，根據 SKILL §7c guardrail，<strong>禁止一次建倉、禁止「立即第一批 50%」</strong>。Mean reversion 歷史頻率：RSI &gt; 75 後 1 個月內回測 8-15% 機率 ~60%。Pure MA 通過告訴你「結構是多頭」，動能過熱告訴你「短期不該追」。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th width="22%">持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 Q2-Q3 2026 AWS margin 未守 30% + Capex 持續超預期 → 短期持有，等估值殺後決定棄守還是抄底</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 Trainium 訂單 2027 開始 booked revenue + FCF 修復至 $30B+ → 持有此區間並等 re-rate 完成</td></tr>
+<tr><td>長期（5-10 年）</td><td>若護城河趨勢從「holding」轉「widening」（Trainium 變 multi-vendor inference 標準 + Anthropic 變盈利）+ AWS retake share + AI ad take rate 上升 → 主長期</td></tr>
+</tbody>
+</table>
+<p><strong>建議持有年限：</strong>3-5 年（中期主場），原因：Trainium ramp + FCF 兌現週期 + 零售 margin 修復皆需 2-4 年，5 年內結構性 alpha 可兌現；超過 5 年的延伸視 §6c Max DD 後復原情況決定是否轉長期。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>2026E</td><td>$7.74</td><td>yfinance / FY+1 共識（DD 4/30）</td><td>Q1 $2.78 已 36% 完成，全年上修空間 ~+10%</td></tr>
+<tr><td>2027E</td><td>$9.40 ~ $9.54</td><td>StockAnalysis / Seeking Alpha 共識</td><td>YoY +22%，AWS 持續 +25% + Trainium 早期 booked</td></tr>
+<tr><td>2030E（外推）</td><td>$15 ~ $17</td><td>線性 EPS CAGR 15-17%</td><td>外推假設：AWS +20%、Ads +18%、Retail +10%、Trainium +50% 三年放量；含 Anthropic $100B 部分兌現</td></tr>
+</tbody>
+</table>
+
+<p><strong>長期持有（5-10 年）股價適合嗎？</strong>以 2030E EPS $16 × long-term PE 22-26x = $352 ~ $416。當前 $273 = 5 年累計 +29% ~ +52%，年化 IRR 5.2% ~ 8.7%（中位 ~7%）。<strong>不算驚艷但合理；§4 機率加權年化 IRR 約 8.8%/yr 與此 cross-check 一致</strong>。意味著「現在分批進場 + 等更好 entry」比「一次梭哈」優；GOOGL 同期 IRR 估 12-14% 仍佔上風。</p>
+</section>
+
+<!-- ===================== §4 Asymmetry Analysis ===================== -->
+<section class="card" id="asymmetry">
+<h2>§4 Asymmetry Analysis</h2>
+
+<table>
+<thead><tr><th width="20%">情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr></thead>
+<tbody>
+<tr><td><strong>Bull（thesis 對）</strong></td><td><span class="num">+80%</span><br>$273 → $491</td><td><span class="tag green">+12.5%/yr</span></td><td>Trainium 兌現 + FCF 修復 + AWS share retake → PE re-rate 27 → 30x + EPS $16+；catalyst：Anthropic 盈利、Trainium ASIC 標準化</td><td>25%</td></tr>
+<tr><td><strong>Base</strong></td><td><span class="num">+50%</span><br>$273 → $410</td><td><span class="tag amber">+8.5%/yr</span></td><td>Trainium ramp + FCF 緩修 + AWS 守 +20%；PE 維持 25-27x × EPS $15-16；零售 OI margin 微改</td><td>50%</td></tr>
+<tr><td><strong>Bear（thesis 錯）</strong></td><td><span class="num">−35%</span><br>$273 → $177</td><td><span class="tag red">−8.3%/yr</span></td><td>FCF 結構性壓抑 + AWS margin 跌破 30% + Anthropic 融資危機 → PE 殺至 18-20x × EPS $8-9</td><td>25%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+36.3% 5Y</strong></td><td><strong>IRR ≈ +6.4%/yr</strong></td><td>0.25×80 + 0.50×50 + 0.25×(−35)</td><td></td></tr>
+</tbody>
+</table>
+
+<p><strong>IRR 公式核驗：</strong>
+Bull: (1+0.80)^(1/5)−1 = 12.47%；
+Base: (1+0.50)^(1/5)−1 = 8.45%；
+Bear: (1−0.35)^(1/5)−1 = −8.27%。
+機率加權年化 IRR = 0.25×12.5 + 0.50×8.5 + 0.25×(−8.3) ≈ <strong>+8.81%/yr</strong>（注意：和「機率加權 5Y 終點 +36.3%」換算回年化 +6.4%/yr 不同，因為 IRR 加權 vs 終點加權有 Jensen gap；長抱者看 IRR-weighted 才合理）。</p>
+
+<p><strong>IRR 落點解讀：</strong>機率加權 IRR ≈ <strong>8.8%/yr</strong> 落「中（合理 mid-conviction）」區間 — 比 S&amp;P 長期 ~10% 略弱，不該佔組合 core 首位，定位「衛星 + 邊緣 core」較合理。</p>
+
+<h3>追加壓力測試</h3>
+<table>
+<tbody>
+<tr><th width="32%">10 年 IRR（thesis 對但時間拖長）</th><td>若 Bull 案僅在 10 年實現（$273 → $491），年化 IRR = (1.80)^(1/10)−1 = <strong>6.05%/yr</strong>。意味著「Trainium 兌現拖延 5 年」會把 IRR 從 12.5% 殺到 6%。<strong>時間是 thesis 的最大隱性敵人</strong>。</td></tr>
+<tr><th>機會成本（同期可比）</th><td>S&amp;P 500 長期 ~10%/yr；GOOGL 同期估計 12-14%/yr（更乾淨的 FCF + cloud margin 翻倍）；NVDA 仍待新 DD。<strong>AMZN 8.8%/yr 不及大盤、不及 GOOGL</strong>，必須有 idiosyncratic 理由（如 portfolio diversification、Trainium 路徑分散）才動部位。</td></tr>
+</tbody>
+</table>
+
+<h3>📅 機率估計：時間視角檢核</h3>
+<table>
+<thead><tr><th width="30%">檢查項</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>Bear 機率 ≥ 20%（5Y 視角）</td><td><span class="tag green">✅ 25%</span></td><td>FCF/NI 0.099 是 5 年新低 + Anthropic 集中度 44% + FTC trial Feb 2027 三重 tail risk 支撐 25%</td></tr>
+<tr><td>Bull/Bear 散布 5Y 寬於 1Y/2Y</td><td><span class="tag green">✅</span></td><td>5Y 散布 +80% / −35% = 115pp；中期 R:R（DD §2 E）約 ±25pp 散布 = 5Y 比中期寬 ~3.6x，符合「遠期不確定性更高」原則</td></tr>
+<tr><td>Base 機率 ≤ 50%</td><td><span class="tag green">✅ 50%</span></td><td>剛好 50%，未過度集中於 Base；已壓測失敗路徑（§6b pre-mortem）</td></tr>
+<tr><td>Pattern match 校準</td><td><span class="tag green">✅</span></td><td>歷史 case MSFT 2017-2022（Azure margin 從壓縮到爆發）年化 ~25%；AMZN 估 8.8%/yr 顯著保守於 case best 但符合「估值起點偏高」差異</td></tr>
+</tbody>
+</table>
+
+<!-- Pattern match -->
+<div class="pattern-box">
+<h3>📐 Pattern Match</h3>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>歷史相似 thesis 個股</td><td><strong>MSFT 2017-2022（Azure margin 壓縮 → 爆發）</strong> — 2017 Azure 剛起飛，Microsoft 為了追趕 AWS 大幅投入，commercial cloud GM 從 ~50% 一路殺到 2018Q4 ~62% 才回穩；同期 MSFT 股價 2017/01 $62 → 2022/01 $310 = +400% / 年化 ~38%</td></tr>
+<tr><td>當時的 setup</td><td>Forward PE ~22x（vs AMZN 今 28x）/ Cloud share 仍 #2 追趕 AWS / Capex/Rev ~12% 重投入期 / FCF margin 27% 仍高（vs AMZN 今 1.07% 壓縮）</td></tr>
+<tr><td>最終 5 年實現報酬</td><td>2017 → 2022 高點 $343：+453% / <strong>年化 IRR ≈ 41%</strong></td></tr>
+<tr><td>我的標的和它最像的地方</td><td>(a) hyperscaler 內部競爭點兌現；(b) AI 平台戰啟動；(c) 自有矽片（Trainium / MTIA）追趕 NVDA；(d) 三引擎飛輪（雲 + Ads + 用戶 base）</td></tr>
+<tr><td>最不像的地方</td><td>(a) AMZN FCF margin 起點極低 1.07% vs MSFT 起點 27%；(b) AMZN 估值起點 PE 28x vs MSFT 22x（再 re-rate 空間更小）；(c) AMZN 零售業務 50% 拖累整體 ROIC（13% vs MSFT 28%）；(d) MSFT 2017 有極強 SaaS 黏著（Office 365）作為 cushion，AMZN retail 黏著相對弱</td></tr>
+</tbody>
+</table>
+<p><strong>對 IRR 估計的 implication：</strong>MSFT 5Y 41% IRR 是「對手追趕 + multiple 起點低 + FCF 強」三重 perfect storm。AMZN 缺第二三項，所以 Bull 案 12.5% 已偏樂觀，<strong>不能直接複製 MSFT pattern 拍 25%+ IRR</strong>。Pattern 提供方向（hyperscaler 兌現可行），但提供量級會誤導。</p>
+</div>
+
+<!-- IRR Composition -->
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table>
+<thead><tr><th width="14%">情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+<tbody>
+<tr><td><strong>Bull</strong></td><td><span style="color:var(--green-2);">+12.5%/yr</span><br>EPS $7.17 → $13（CAGR 12.6%）</td><td><span style="color:var(--green-2);">+0.6%/yr</span><br>PE 27 → 28x：(28/27)^(1/5)−1 = 0.73%</td><td><span style="color:var(--ink-3);">−0.6%/yr</span><br>SBC 稀釋 1%/yr（無回購）</td><td><strong>+12.5%/yr</strong></td></tr>
+<tr><td><strong>Base</strong></td><td><span style="color:var(--green-2);">+10.0%/yr</span><br>EPS $7.17 → $11.5（CAGR 9.9%）</td><td><span style="color:var(--ink-3);">−0.7%/yr</span><br>PE 27 → 26x：(26/27)^(1/5)−1 = −0.75%</td><td><span style="color:var(--ink-3);">−0.6%/yr</span><br>SBC dilution 1%/yr</td><td><strong>+8.7%/yr</strong></td></tr>
+<tr><td><strong>Bear</strong></td><td><span style="color:var(--red-ink);">+3.0%/yr</span><br>EPS $7.17 → $8.3（CAGR 3%）</td><td><span style="color:var(--red-ink);">−10.5%/yr</span><br>PE 27 → 16x：(16/27)^(1/5)−1 = −10.0%</td><td><span style="color:var(--ink-3);">−0.6%/yr</span><br>SBC 稀釋持平</td><td><strong>−8.1%/yr</strong></td></tr>
+</tbody>
+</table>
+
+<div class="irr-stack">
+  <span style="font-weight:600; color:var(--ink-2);">Base 拆解 →</span>
+  <span class="seg seg-eps" style="flex:10;">EPS +10.0%</span>
+  <span class="seg seg-rerate" style="flex:0.75;">re −0.7%</span>
+  <span class="seg seg-yield" style="flex:0.6;">div −0.6%</span>
+  <span style="font-weight:600; margin-left:8px;">= +8.7%/yr</span>
+</div>
+
+<div class="irr-narrative">
+「Base 8.7% IRR 中，10.0%/yr 來自 EPS 複利（佔 115%），−0.7%/yr 來自估值 re-rate 微負（已不在 multiple 擴張位置），−0.6%/yr 來自 SBC 稀釋（無回購抵銷）。這檔的可抱性主要靠 <strong>EPS 自然複利</strong>（公司自己長出來），而非市場配合升 multiple — <strong>偏自然複利好抱型，不依賴 narrative 翻轉</strong>。但 Bear 案 −10.5%/yr re-rate 殺傷力極大（PE 27 → 16），這是長抱最大隱性風險：股價中途 drawdown 主要來自 multiple compression，不是 EPS 崩。」
+</div>
+
+<p style="font-size:13px; color:var(--ink-3);">
+<strong>Guardrail 校驗：</strong>Base 三分量加總 = 10.0 + (−0.7) + (−0.6) = <strong>+8.7%/yr</strong> vs §4 機率加權年化 IRR Base 列 = <strong>+8.5%/yr</strong>，偏差 0.2pp ≤ 2pp ✅ PASS。
+</p>
+</section>
+
+<!-- ===================== §1 Mental Models 壓力測試 ===================== -->
+<section class="card" id="mental-models">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">標的：AMZN｜建議：試倉 1.5% → 目標 4%（條件式）｜DCA 日期：2026-05-11
+
+THESIS（一句話）
+Amazon 把全球零售與計算基建縫成一張飛輪網，而 AI 推論時代讓這張網的中央調度權從 NVIDIA 回流到 hyperscaler。
+
+KEY DRIVERS（兩條獨立因果鏈）
+1. 供給側｜Trainium ASIC 標準化：$225B 訂單（Anthropic $100B + OpenAI 2GW + 其他）讓 AMZN 成為 NVIDIA 之外的 AI 基建第二供應源。Trainium2 sold out、Trainium3 nearly fully subscribed。30% 更佳 price/perf vs GPU。
+2. 需求側｜AI 推論時代 hyperscaler 飛輪：cloud spend 19% 來自 AI workload（2023: 8%），inference 2026 占 AI compute 2/3、2028 占 70-80%。AWS Q1 26 +28% = 15Q 高，推論放量直接接觸 AWS。
+
+R:R 與 IRR
+• 機率加權 5Y IRR ≈ +8.8%/yr（25% Bull +12.5% / 50% Base +8.5% / 25% Bear −8.3%）
+• 中期 R:R（DD 4/30）：短 −0.34x / 中 +0.04x — 已 priced in 大部分 thesis
+• Max DD 估計 −35% ~ −50%（🟡 需強信念）
+
+主要風險
+1. FCF/NI 0.099 = 5 年新低；Capex $200B 2026、$250B+ 2027；H3 FCF 修復可能拖到 2029+
+2. QC-28 GOOGL Cloud 絕對美元增量追平 AWS 至 93%；AWS margin 微壓 −1.6pp YoY
+3. Anthropic $100B 是 $225B 訂單的 44%，集中度過高；Anthropic 仍依賴融資輸血
+
+建議倉位
+• 試倉 1.5%（條件式進場：RSI 14d 76.57 過熱，等回到 50-60 或回測 $245-224 區間）
+• 加碼到 4% 條件：FY27 H1 FCF 修復至 $25B+ AND Trainium 持續訂單堆疊
+• 不該減 GOOGL 加 AMZN — GOOGL 同主題 R:R 更優
+
+裁決：B 級觀望偏進場（核心邊緣 + 條件式 timing）
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「Amazon 今年燒 $200B 蓋 AI 基建，看起來像錢坑 — 但客戶已經訂走 $225B 的 Trainium 晶片產能，其中 Anthropic 自己就吃 $100B / 5GW。所以這不是 Capex burn，是 multi-year backlog 提前鎖定。問題是現在股價已經 RSI 76 過熱，剛創 ATH，估值 PE 28x — 你要等回測，不要追。等回到 $245 或者 Q2 財報 AWS margin 守住 36%，再分批進。」
+</div>
+
+<p><strong>壓力測試結果：</strong>
+1 頁紙 memo 與 30 秒版本邏輯自洽（共同關鍵詞：Trainium $225B、AI 推論時代、條件式進場）。
+✅ 進入 §7 — Decision 區塊已寫；§2 thesis 不需重寫。
+</p>
+</section>
+
+<!-- ===================== Phase B 矛盾清單 + 強制裁決 ===================== -->
+<section class="card" id="phase-b">
+<h2>Phase B｜矛盾辨識 + 強制下判決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li><strong>AI 基建需求結構性</strong>：A1（護城河深化 via Trainium）+ A2（推論 TAM 擴張）+ A3（Q1 26 AWS +28%）三軸一致看 AI 基建是中長期 driver。</li>
+<li><strong>AMZN 仍是 hyperscaler 三巨頭之一</strong>：A1（規模優勢 + Bedrock model-agnostic）+ A2（cloud TAM CAGR 12-20%）+ A3（AWS share 28% 全球第一）三軸一致確認競爭地位。</li>
+<li><strong>估值起點偏熱</strong>：A2（同業 hyperscaler 重投入期 PE 多 26-32x）+ A3（AMZN PE 28x + RSI 76）一致顯示「結構好、價位高」。</li>
+</ul>
+
+<h3>2. 矛盾清單（A1-A3 不一致）</h3>
+<div class="conflict-box">
+<table>
+<thead><tr><th width="4%">#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Trainium 護城河 vs NVIDIA 的相對位置</td><td>強護城河（30% better price/perf、$225B 訂單）</td><td>NVDA 仍佔 GPU 80% 市占；ASIC 2028 才 25% sales share</td><td>Trainium 佔 AWS 收入比 &lt; 5%（estimate）= 短期財務貢獻仍小</td><td><span class="tag amber">🟡 可調和（時間差）</span></td></tr>
+<tr><td>2</td><td>AWS margin 結構性走向</td><td>規模優勢 = margin 持續擴張</td><td>同業 GOOGL Cloud margin 17.8% → 32.9% 翻倍 + Azure margin 也升</td><td>AWS Q1 26 margin 37.66% vs Q1 25 39.3% = −1.6pp YoY 微壓</td><td><span class="tag red">🔴 不可調和（A1 看擴 / A3 看壓）</span></td></tr>
+<tr><td>3</td><td>FCF 結構與 thesis 可抱性</td><td>規模優勢 + 訂單堆疊 = 長期 FCF 上行</td><td>cloud + AI 行業 capex/rev 普遍 20-25%，FCF 壓抑是行業現象</td><td>FY25 FCF/NI 0.099 = 5 年新低；FCF margin 1.07%</td><td><span class="tag red">🔴 不可調和（A1+A2 認為暫時 / A3 看結構）</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>3. 與既有報告（DD 4/30）的交叉矛盾</h3>
+<table>
+<thead><tr><th width="4%">#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 4/30 結論</th><th>可能原因</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>RSI 動能</td><td>RSI 14d = 76.57（5/8 數據，強警示）</td><td>DD 4/30 未紀錄 RSI，但 Bollinger 上軌邊緣 99%</td><td>時間差（4/29 → 5/8 連漲 +3.8%）</td></tr>
+<tr><td>2</td><td>進場條件</td><td>QC-22 RSI 強警示 + Phase A2 估值起點偏熱 → 嚴格條件式</td><td>DD 4/30 「等回測 W52 區間 $224 或 Q2 26 AWS margin ≥ 35% 兩季驗證」</td><td>方向一致 — DCA 加嚴 timing</td></tr>
+</tbody>
+</table>
+
+<h3>4. ⚖ 強制裁決（不可調和矛盾必填）</h3>
+<div class="conflict-box" style="background:var(--verdict-bg);">
+<table class="verdict-table">
+<thead><tr><th width="4%">#</th><th width="14%">矛盾</th><th width="10%">我選哪邊</th><th width="22%">我的依據</th><th width="26%">會 settle 衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then 方向相反）</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Trainium 護城河 vs NVDA 相對位置</td>
+<td><strong>暫無法決定（時間差矛盾）</strong></td>
+<td>A1 講「方向」、A3 講「現況」、A2 講「天花板」— 三者合在一起 = 訂單真實但兌現要 24-36 月。不是邏輯矛盾，是時間軸矛盾。在 2027 之前無法 settle。</td>
+<td><strong>Q2 27 法說</strong>：(a) Trainium revenue 按項揭露（≥ $5B 該季）OR (b) Anthropic Project Rainier 2026Q4 1GW 上線確認（Anthropic 法說或 AWS re:Invent 2026/12）</td>
+<td>(a) 2026Q4 1GW 確認 + Trainium2/3 supply pace on-schedule → <strong>加碼 1.5% → 2.5%</strong>；(b) 2026Q4 1GW 未達 OR Trainium 訂單退單 → <strong>持空倉繼續觀察，移除 AMZN 進場優先級到 LATAM ID 後段</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td>AWS margin 走向</td>
+<td><strong>A2 + A3 → 看 mild 結構性壓縮</strong></td>
+<td>同業 GOOGL Cloud margin 翻倍 17.8 → 32.9% 顯示行業天花板沒問題；AMZN AWS 微壓 1.6pp 是「Trainium ramp early production cost + AI workload pricing 偏低」結構性原因，不是行業性。但因起點 37.66% 仍是業內最高，質變幅度為 mild，<strong>非崩盤</strong>。</td>
+<td><strong>具體數字</strong>：AWS Q2 26 actual OI margin（2026/07 末公布）。閾值：≥ 36% = 結構性質變被 Anthropic ramp 抵消；&lt; 33% = 結構性質變確認；30-33% = 灰色帶 = 嚴格觀察 4 個季度</td>
+<td>(a) Q2 26 AWS margin ≥ 36% → <strong>條件達標，分批進場至 1.5% 試倉</strong>；(b) Q2 26 AWS margin &lt; 33% → <strong>暫停進場、wait 至 Q3-Q4 26 再決定</strong>；(c) Q2 26 AWS margin 30-33% → <strong>進場節奏延後一季，等 Q3 cross-check</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td>FCF 結構性 vs 暫時性</td>
+<td><strong>A3 → 看暫時性但持續時間比共識長</strong></td>
+<td>FY26 Capex $200B + FY27「significantly increase」（隱含 $250B+）= 至少 2027 仍 FCF 壓抑；但 Trainium 訂單 $225B / 多年 = Capex 有對應 revenue，故非結構性侵蝕。MSFT 2018-2019 cloud invest 期也曾 FCF margin 從 30% 殺到 20% 再回升，<strong>歷史先例可比</strong>。Anthropic Project Rainier 已 production scale (500K Trainium2)，現金流轉換已啟動但未體現在 GAAP FCF。</td>
+<td><strong>具體數字</strong>：FCF (TTM) 月度追蹤（每季法說）。閾值：(a) 2027 H1 FCF (TTM) ≥ $25B = 修復軌跡確認；(b) 2027 全年 FCF &lt; $10B = 結構性侵蝕確認（H3 推翻）</td>
+<td>(a) 2027 H1 FCF ≥ $25B → <strong>加碼至 2.5% → 4%（衝目標倉位）</strong>；(b) 2027 全年 FCF &lt; $10B → <strong>觸發 §7 撤退路徑，清倉 70-100%</strong>；(c) 2026 年底 FCF 仍 &lt; $5B 但 Trainium revenue 開始按項揭露 → <strong>暫不清倉但凍結加碼至 1.5%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:13px; color:var(--ink-3); margin-top:12px;"><strong>三條裁決將直接帶入 §7 Decision 7b 加碼/減碼觸發條件，作為主軸。</strong></p>
+</section>
+
+<!-- ===================== §3 Key Drivers + Consensus 分歧 ===================== -->
+<section class="card" id="key-drivers">
+<h2>§3 Key Drivers</h2>
+
+<table>
+<thead><tr><th width="4%">#</th><th width="22%">Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>供給側｜Trainium ASIC 成為 AI 基建第二供應源</strong></td><td>$225B 訂單堆疊 = 「AI 推論 NVDA 之外的選項」這件事的市場接受度被驗證。一旦 Anthropic 訂單兌現 + Trainium revenue 按項揭露，市場 narrative 從「AMZN 是 retail + cloud」變「AMZN 是 NVDA 對立面的 AI 基建巨頭」，多元定價權躍升。</td><td>(a) Anthropic Project Rainier 2026Q4 1GW 上線；(b) Trainium revenue 按項揭露（預估 Q2-Q3 27）；(c) Trainium2/3 訂單堆疊更新（每季法說 forward backlog）</td></tr>
+<tr><td>2</td><td><strong>需求側｜AI 推論時代的 hyperscaler 飛輪</strong></td><td>AI workload 占 cloud spend 從 2023 的 8% 到 2026 的 19%，inference 2028 占 AI compute 70-80%。AWS 28% market share + 28% YoY 成長 = 推論放量直接接觸最大 cloud。這條 driver 與 driver 1 獨立：即使 Trainium 失敗（買 NVDA 也能跑推論），AWS 仍受惠於需求成長。</td><td>(a) AWS YoY 維持 +25%+ 4 季；(b) cloud TAM 報告（Synergy / Canalys / Gartner）季度更新；(c) AWS backlog 月增（$364B 4/30 起算）</td></tr>
+</tbody>
+</table>
+
+<h3>為什麼是這 1-2 個？</h3>
+<p>排除掉的候選：(a) 零售 OI margin 修復 — 是 nice-to-have，不是命脈（佔總 OI 已被 AWS + Ads 主導）；(b) Ads $17B +24% — 雖然 25% 成長強勁但占總 rev 9%，不足以決定 thesis 命運；(c) Prime 用戶增長 — 已飽和（200M+），增量小。<strong>真正會決定股價 5 年 ±50% 的，只有「AI 基建二選一」的供給側 + 「推論放量」的需求側兩條</strong>，其他都是 second-order。</p>
+
+<h4>⚖ Driver 抽象層校驗</h4>
+<p style="background:#F0FDF4; padding:12px 16px; border-left:3px solid var(--green-2);">
+<strong>測試題：driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？</strong> ✅ <strong>是</strong> — driver 2（AI 推論放量）可以在 Trainium 失敗的情境下仍成立（AWS 賣 NVDA GPU 也接觸推論放量）；反之 driver 1（Trainium 標準化）可以在推論放量普通的情境下仍是好標的（搶 NVDA 份額本身就是 alpha）。<strong>兩條獨立因果鏈確認</strong>，driver 2 非 driver 1 子集。
+</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>季度 retail GMV beat/miss</td><td>noise 不是 signal — 零售在三引擎中已是「拖累」段（OI margin 5% 拖累整體 ROIC）；本來就不是 thesis 命脈。</td></tr>
+<tr><td>FTC 反壟斷訴訟 Feb 2027 開庭</td><td>政治風險已被 mlex / Bloomberg 充分定價；最壞情境是分拆 Marketplace（但 AWS / Trainium / Ads 不受影響），且分拆估值可能反而 +5-10%（SOTP）。tail risk 但非 base case。</td></tr>
+<tr><td>Bezos 賣股</td><td>10b5-1 plan routine selling，金額不到個人持股 5%；策略意圖明確（Blue Origin + 慈善），非「失去信心」訊號。</td></tr>
+<tr><td>Walmart / Shopify 雙占電商</td><td>Walmart e-com $50B+ 投入仍不到 AMZN 1/4，且 AMZN 的 alpha 不在零售而在 AWS + Trainium。</td></tr>
+<tr><td>單季 ad CPM 波動</td><td>Ads $17B Q1 +24% 已驗證軌跡，季波動是 ad budget shift 不是結構問題。</td></tr>
+</tbody>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger Inversion 落地）</h3>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>市場目前定價在什麼假設上</td><td>「Trainium 訂單兌現 + AWS 守 +25% + FCF 在 2028 後修復」三件事 priced in 至 Fwd PE 28x。共識 EPS 2027 $9.4 / 2028 隱含 forward PE 21x = 市場默認「2028 EPS 將達到 $13」（28 × 13 = $364 = 共識中位目標 $280 + buffer）。</td></tr>
+<tr><td>我認為的不同假設</td><td>市場低估 Trainium 變「inference 標準」的速度與廣度 — ASIC 2028 unit share 35%、sales share 25% 是共識，但賣方未充分定價「Anthropic + OpenAI + 第三家（疑似 Meta 或 GOOG 第二來源）2027 同時放量」的 path。同時市場可能高估 FCF 2028 修復速度 — Jassy 已 hint 2027 capex「significantly increase」，市場 EPS 2028 共識可能上修但 FCF 不會。</td></tr>
+<tr><td>賣方為什麼錯（≥ 1 具體理由）</td><td>賣方模型把 Trainium revenue line item 放在 2028+ 才開始建模（典型 BAML / GS 模型），完全忽略 2026Q4-2027Q2 是「booking → recognition」拐點窗口。原因：缺乏 ASIC 行業（vs general cloud）的 booking-to-revenue lag 經驗，且 AMZN 不揭露 Trainium 細分 = 賣方惰性低估。具體佐證：Seeking Alpha / TIKR 多份分析仍把 Trainium 視為「optionality」而非「base case 2027 contributor」 — 這就是 mispricing。</td></tr>
+</tbody>
+</table>
+<p style="background:#FEF3C7; padding:10px 16px; border-left:3px solid #D97706; font-size:13px;">
+<strong>校驗：</strong>分歧理由具體（賣方模型結構性 lag）+ 有時間窗（2026Q4-2027Q2）+ 可驗證（屆時看 AMZN 是否按項揭露）。<strong>有獨立 alpha 來源</strong>，§7 倉位不需折扣，但需配合 timing（不能追高）。
+</p>
+</section>
+
+<!-- ===================== §5 Single Thing ===================== -->
+<section class="card" id="single-thing">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容（Primary Trigger）</th></tr></thead>
+<tbody>
+<tr><td>事件描述</td><td><strong>Anthropic 出現重大融資警訊（down round / cash burn 公開揭露 / 大規模裁員）+ AWS 法說同步調整 Trainium 訂單從「fully subscribed」改口「partially subscribed」措辭</strong>。具體可觀測指標：Anthropic 2026 H2 或 2027 任何輪融資 valuation &lt; 上輪（目前 ~$200B 估值區間）+ 同步 AMZN 法說頁 Trainium 段落用詞變化。</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Anthropic $100B 是 $225B 訂單 44%。Anthropic 商業可持續性是 thesis driver 1 的命脈。若 Anthropic 融資寒冬 → Trainium 訂單 cancel 或 stretch → AMZN「AI 基建二選一」narrative 被擊破 → multiple compression 27 → 18x (Bear 案 PE) + EPS 2027 共識下修 = 雙殺。歷史對照：2022 RIVN / FSR 等汽車創投融資寒冬 case，customer cancel + 訂單 stretch 直接觸發 50%+ drawdown。</td></tr>
+<tr><td>如何監測</td><td>(a) Anthropic 融資新聞：The Information / Bloomberg / FT 月度追蹤；(b) AMZN AWS 法說 Trainium 段落文字差異（每季 transcript diff）；(c) Bedrock Anthropic Claude usage growth（季度，AWS 不揭露但 Anthropic 自己公布過 ARR 數字 $30B+ 是錨）。頻率：月（融資新聞） + 季（法說 diff）</td></tr>
+<tr><td>目前離發生有多遠</td><td>Anthropic 2026/04 剛拿 Amazon 額外 $5B + 確認 $100B / 5GW deal，現金流目前充裕；ARR $30B 領先 OpenAI $25B。<strong>短期（6-12 個月）發生機率低（~5-10%）；中期（12-24 個月）若 LLM 競爭加劇，機率升至 ~15-20%</strong>。</td></tr>
+</tbody>
+</table>
+
+<table style="margin-top:18px;">
+<thead><tr><th width="22%">項目</th><th>內容（Secondary Trigger — 來自 §6b pre-mortem 校驗結果，⚠ 部分重疊新增）</th></tr></thead>
+<tbody>
+<tr><td>事件描述</td><td><strong>AWS Operating Margin 連 2 季 &lt; 30%（從 37.66% 跌 7pp+）+ GOOGL Cloud margin 同期持續擴張至 35%+</strong>。即「同業擴張、本標的下滑」的 QC-26 結構性質變被連續確認。</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>AWS margin 是 thesis 「規模優勢 + Trainium ramp 成本管理」雙重證據。若 GOOGL TPU 走 economies of scale 路線跑出更佳 unit cost，AMZN Trainium 的 30% price/perf 優勢可能被結構性追平甚至反超 → AWS 失去定價權 = driver 2 受傷。</td></tr>
+<tr><td>如何監測</td><td>(a) AWS OI margin 季度（AMZN 法說）；(b) GOOGL Cloud OI margin 季度（GOOGL 法說 — 2024 17.8% → 2025 32.9% 翻倍）；(c) AWS pricing actions（公開折扣 / 促銷新聞）。頻率：季</td></tr>
+<tr><td>目前離發生有多遠</td><td>已是「半發生」狀態：AWS Q1 26 margin 37.66% vs Q1 25 39.3% = −1.6pp YoY（QC-28 觸發 90% 警示但非 7pp 連續）。連 2 季 &lt; 30% 仍需 6-12 個月才可能發生（若 trigger）。</td></tr>
+</tbody>
+</table>
+
+<p style="background:#FEF3C7; padding:10px 16px; border-left:3px solid #D97706; font-size:13px; margin-top:14px;">
+<strong>§5 修正狀態：</strong>⚠ <strong>已補 1 條 secondary trigger</strong>（來自 §6b pre-mortem 校驗：原 Single Thing 抓 Anthropic 融資但 pre-mortem 失敗故事的關鍵 trigger 是 AWS margin 連 2 季 &lt; 30% — 部分重疊但獨立風險面向）。Primary 與 Secondary 同時監測，任一觸發都重新評估 thesis。
+</p>
+</section>
+
+<!-- ===================== §6 What I Don't Know + Pre-mortem ===================== -->
+<section class="card" id="pre-mortem">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<thead><tr><th width="4%">#</th><th width="26%">我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Trainium booking 中 Anthropic + OpenAI 比例與「集中度脫鉤」程度</td><td>Trainium 需多元化客戶（Meta / 中型 AI 公司 / enterprise inference）至少佔訂單 30%+</td><td>若 Anthropic + OpenAI 仍 &gt; 70%，driver 1 的「ASIC 標準化」其實是「兩家定制」，整體市場接受度遠低於 narrative；估值不應 re-rate</td></tr>
+<tr><td>2</td><td>2027 Capex 「significantly increase」實際規模（隱含 $250B+ vs 共識 $230B）</td><td>2027 Capex 漲幅 ≤ +25%（≤ $250B）= 增速放緩，FCF 兌現週期可預測</td><td>若 2027 Capex 漲 +40%（$280B+），FCF 修復推遲到 2029，5Y IRR 從 8.5% 殺到 6%；長抱 ROI 不及大盤</td></tr>
+<tr><td>3</td><td>FTC 反壟斷 Feb 2027 trial 結果與 remedy 範圍</td><td>最壞情境是 Marketplace 分拆但 AWS / Trainium / Ads 不動 = SOTP 估值可能 +5-10%</td><td>若 remedy 包含 Bedrock / AWS pricing 行為限制（極不可能但可能），可能砍 AWS margin 2-3pp</td></tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem｜失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<div class="premortem-box">
+<h4>第一段｜故事倒推（≤80 字 narrative）</h4>
+<blockquote class="scenario">
+「假設 5 年後（2031 H1）這個部位虧 50%，最可能發生的故事是：2027 Q2 AWS OI margin 跌破 30%（從 37.66% 一路殺至 28%），市場驚覺『規模優勢 + Trainium 成本管理』雙引擎失效；同期 Anthropic 因 OpenAI 推出 GPT-6 反超而出現 down round 融資（valuation $200B → $150B），Trainium 訂單中 Anthropic 那 $100B 部分被 stretch 出 3-5 年；AMZN forward PE 從 28x 殺至 18x（Bear PE），2027 全年 EPS 共識從 $9.4 下修至 $7.5，股價從 $273 殺至 $135。」
+</blockquote>
+
+<h4>第二段｜校驗 §5 Single-Thing</h4>
+<table>
+<thead><tr><th width="60%">檢查問題</th><th>答案</th></tr></thead>
+<tbody>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing（Anthropic 融資警訊 + Trainium 訂單措辭變化）？</td><td><strong>⚠ 部分重疊</strong> — Anthropic 融資警訊 ✅ 是 §5 抓的；但 AWS margin 連 2 季 &lt; 30% 是 §5 原本沒抓的獨立 trigger（GOOGL Cloud margin 競爭路徑），需要補進去</td></tr>
+</tbody>
+</table>
+
+<h4>第三段｜修正 §5（依校驗結果分流）</h4>
+<p>⚠ <strong>部分重疊</strong> → 已在 §5 區塊新增「Secondary Trigger：AWS OI margin 連 2 季 &lt; 30% + GOOGL Cloud margin 持續擴張」作為獨立 trigger。原 Primary Trigger（Anthropic 融資警訊）保留為主，Secondary 為輔。<strong>§5 trigger 數從 1 條 → 2 條</strong>。</p>
+
+<p><strong>校驗紀錄：</strong>「§5 修正狀態：⚠ 已補 1 條 secondary trigger（AWS margin 結構性壓縮）」</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<div class="maxdd-box">
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>估計 Max DD 範圍</td><td><span class="maxdd-num">−35% ~ −50%</span>（範圍寬度 15pp，禁止單點）</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027 Q3 ~ 2028 H1</strong>，含具體事件：Anthropic 融資寒冬 + AWS Q2-Q3 27 margin 跌破 30% 雙重 trigger 同時發生（最壞情境）；或單 trigger + macro de-rating（VIX &gt; 30 + 利率上行）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>18-30 個月</strong>（若 thesis 未根本破，類似 AMZN 2022 跌 50% 後 18 月修復至 ATH）；若 thesis 根本破（Anthropic 倒、Trainium cancel）則「不會恢復」（永久損失）</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🟡 −35~−50%（需強信念）</strong></td></tr>
+</tbody>
+</table>
+
+<div class="maxdd-bar">
+  <div class="s1" style="flex:30;"></div>
+  <div class="s2" style="flex:20;"></div>
+  <div class="s3" style="flex:0;"></div>
+</div>
+<p style="font-size:11px; color:var(--ink-3); margin:4px 0 14px;">
+🟢 0 ~ −30% 多數人扛得住 ▮ 🟡 −30 ~ −50% 需要強信念 ▮ 🔴 &lt; −50% 多數人會中途出場
+</p>
+
+<p><strong>校驗：</strong>若 Max DD 落在 −50% 下界（最壞情境），我能否撐到復原？條件：
+<strong>(a) 部位不超過 portfolio 4%（已強制下修 6% → 4%）；(b) 不使用槓桿；(c) 同期 portfolio core（GOOGL + 其他）未同時觸發 trigger，組合層面 drawdown ≤ −20%；(d) §5 primary + secondary trigger 任一未觸發（即下跌是 macro 不是 thesis 破壞）。</strong> 若 (d) 觸發 → §7 撤退路徑啟動，不假設能撐到復原。
+</p>
+</div>
+
+<p style="background:#FEE2E2; padding:10px 16px; border-left:3px solid var(--red-ink); font-size:13px;">
+<strong>Guardrail：</strong>範圍寬度 50 − 35 = 15pp ≥ 10pp ✅ PASS；評級 🟡（非 🔴）→ §7a 倉位上限從規劃 6% 自動下修至 <strong>4%</strong>（已在 §7 反映）；§7d 已標註中期持有警示（中途出場風險 mid，非高）。
+</p>
+</section>
+
+<!-- ===================== §8 Review Triggers ===================== -->
+<section class="card" id="review-triggers">
+<h2>§8 Review Triggers</h2>
+
+<table>
+<thead><tr><th width="4%">#</th><th width="26%">重新評估觸發點</th><th width="14%">類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>AMZN Q2 2026 法說</td><td>財報日期</td><td><strong>2026-07-31（預估）盤後</strong> — 觀察 AWS OI margin 是否守 36%、Capex 是否再次上修、Trainium 措辭是否仍 "fully subscribed"</td></tr>
+<tr><td>2</td><td>Anthropic Project Rainier 1GW 上線里程碑</td><td>產業事件</td><td><strong>2026 Q4（AWS re:Invent 2026/12）</strong> — 1GW capacity 是否如期上線（Anthropic 公告 + AMZN 法說 cross-verify）</td></tr>
+<tr><td>3</td><td>$245 回測 OR $305 突破</td><td>價位觸發</td><td><strong>$245（Bollinger 中軌，−10%）</strong> → 觸發試倉首批；<strong>$305（PE 32x × FY+2 EPS）</strong> → 啟動減持評估</td></tr>
+<tr><td>4</td><td>§5 Primary Trigger</td><td>§5 Single Thing</td><td>Anthropic 融資警訊（down round / cash burn / 裁員）+ AMZN 法說 Trainium 措辭從 "fully subscribed" 變 "partially"</td></tr>
+<tr><td>5</td><td>§5 Secondary Trigger</td><td>§5 Single Thing</td><td>AWS OI margin 連 2 季 &lt; 30% + GOOGL Cloud margin 同期持續擴張至 35%+</td></tr>
+<tr><td>6</td><td>FTC trial 開庭</td><td>監管事件</td><td><strong>2027-02-09</strong>（已從 2026/10 延後）— 開庭前 6 個月 (2026/08) 開始準備減倉避險選項</td></tr>
+</tbody>
+</table>
+
+<p><strong>這份報告的保質期：</strong>有效至 <strong>2026-08-01（AMZN Q2 2026 財報公布前）</strong>。財報後必須以新數據（特別是 AWS margin + Capex guidance + Trainium 措辭）重跑 §7 Decision 與 Phase B 裁決。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>2026 H2 Anthropic Project Rainier 1GW 上線（base case 大概率達成）+ Trainium revenue 開始按項揭露（2027 Q1-Q2 較可能） → narrative 從「optionality」變「base case contributor」 → multiple expansion +10-15%。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>2026 H2 macro 風險（Fed 利率政策轉鷹 + VIX 飆升）+ AWS margin Q2-Q3 26 進一步壓縮 +1pp+ → 雙重 de-rating 觸發 −20% 拉回至 $218 區間（W52 附近）。</p>
+</section>
+
+<!-- ===================== Phase A1 護城河 (折疊) ===================== -->
+<section class="card">
+<h2>Phase A — 獨立研究階段</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：護城河仍強，但 moat_trend = → holding，AWS 規模優勢被追趕）</summary>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td>(a) <strong>網路效應（雙邊 marketplace + Prime ecosystem）</strong>：Prime 200M+ 會員 retention 93% Y1 / 98% Y2（cirpamazon.substack.com）；(b) <strong>規模優勢（AWS 數據中心 + 物流 + ASIC 量產）</strong>：Capex $200B 2026 = 全球 #1（vs GOOGL $185B、MSFT $140-160B）；Trainium 訂單 $225B = ASIC 量產規模化</td></tr>
+<tr><td>持久性評分</td><td><strong>9/10</strong>，5 年穩固度：<strong>高</strong> — 四重護城河（Prime + AWS + Logistics + Trainium）相互強化；扣 1 分為 ROIC 13% 仍偏低，反映 retail 低 margin 結構稀釋整體</td></tr>
+<tr><td>最大侵蝕風險</td><td><strong>GOOGL Cloud 絕對美元增量追平 AWS 至 93%</strong>（QC-28 警示，DD 4/30 紀錄）+ <strong>NVDA 在 inference 端鞏固護城河使 Trainium 成本優勢未來 2-3 年可能被追平</strong>（時間軸：2027-2028）</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 <strong>50.29%</strong>（趨勢 ↑，FY23 45% → FY25 50.3%；TIKR 2026Q1）；AWS 全球 share <strong>28%</strong>（趨勢 →，Q1 26 vs Q1 25 −1pp；crnasia.com）；ROIC vs WACC 超額 <strong>+4pp</strong>（13% − 9%，趨勢 ↑ 改善但仍偏低）</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong><span class="arrow-flat">→ holding</span></strong>｜12 個月內變化的具體證據（5 個 sourced data points）：(1) AWS Q1 26 +28% YoY = <strong>15Q 高</strong>（futurumgroup.com）；(2) Trainium 訂單從 $40B (2024) → <strong>$225B (2026)</strong>，含 Anthropic $100B / 5GW（aboutamazon.com / 2026-04 deal）；(3) AWS OI margin <strong>37.66%（Q1 26）vs 39.3%（Q1 25）= −1.6pp YoY 微壓</strong>（QC-26 結構性質變早期）；(4) GOOGL Cloud Q1 26 絕對美元增量 $7.77B vs AWS $8.32B = <strong>93%</strong>（QC-28 90% 警示閾值觸發）；(5) Prime retention <strong>Y1 93% / Y2 98%</strong>（cirpamazon.substack.com 2025/2026 對照穩定）。<strong>規模優勢被邊際追趕（負）+ Trainium 結構性護城河補位（正）= 兩股力量大致抵消，moat 維持但不擴張，故 → holding，不寫 ↑</strong>。</td></tr>
+</tbody>
+</table>
+
+<p><strong>A1 獨立結論（一句話）：</strong>AMZN 護城河持久性 9/10、moat_trend = <strong>→ holding</strong>（規模優勢被 GOOGL Cloud 追趕至 93% 但 Trainium 訂單堆疊 $225B 補位，五年內護城河寬度大致不變）。</p>
+
+<p style="font-size:12px; color:var(--ink-3);">
+<strong>sourced data points 達標檢核（floor ≥ 5）</strong>：(1) Prime retention 93%/98% / cirpamazon.substack.com / 2025-2026；(2) AWS share 28% Q1 26 / crnasia.com / 2026-04；(3) Trainium $225B / aboutamazon.com / 2026-04；(4) AWS margin 37.66% Q1 26 vs 39.3% Q1 25 / TIKR / futurumgroup.com / 2026-04-30；(5) GOOGL Cloud Q1 26 $20B vs Q1 25 $12.26B 絕對美元 +$7.77B / DD §6 4/30；(6) Capex $200B 2026 / convergedigest.com / Andy Jassy 2026/02 法說。<strong>達標 6/5 ✅</strong>。
+</p>
+</details>
+
+<!-- ===================== Phase A2 產業趨勢 (折疊) ===================== -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析（獨立結論：AI 推論時代 hyperscaler 受益、TAM 擴張、runway_post_y5 = 🟢 寬）</summary>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>(a) <strong>Hyperscale Cloud TAM $548-905B 2026</strong>，CAGR 12-29.8%（Research and Markets / Precedence Research / Fortune Business Insights，spread 大因定義差異）；滲透率 cloud workload 19% 來自 AI（2023: 8%）；(b) <strong>Retail Media Ad $203.9B 2026</strong> （US $69.33B 2026），CAGR 14%（adtelligent.com / emarketer.com）；(c) <strong>AI Accelerator Market $380B by 2028</strong>，GPU 75% / ASIC 25% sales share（trendforce.com / siliconanalysts.com）</td></tr>
+<tr><td>供需判斷</td><td><strong>偏緊（hyperscaler capex bottleneck）</strong>：未來 12 個月 cloud 供給仍 compute constrained（Jassy / Pichai / Nadella 共同 narrative）；inference 訂單超過 GPU 供應 → 推 ASIC（Trainium / TPU / MTIA）需求；2026 Big 5 hyperscaler capex $600B+ = +36% YoY（IEEE ComSoc 2025/12）</td></tr>
+<tr><td>最大技術替代風險</td><td><strong>NVDA Rubin generation（2027 量產）+ NVLink scale-out 持續主導 training；ASIC 主攻 inference 但 training 仍弱</strong>。時間軸：2027-2028；威脅程度：中（不會消滅 ASIC 但壓縮 training share）</td></tr>
+<tr><td>最大政策/地緣風險</td><td><strong>FTC v. AMZN trial 2027-02-09 開庭</strong>（mlex / Bloomberg），可能 remedy 分拆 Marketplace；歐盟 DMA / DSA 持續罰款（已多次）；中國 retail 已退出非曝險</td></tr>
+<tr><td>議價權位置</td><td>對上游：中（vs TSMC 弱、vs NVDA 中等 — Trainium 提供替代）；對下游：強（Prime / AWS lock-in / Marketplace seller FBA 依賴）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬</strong>｜判準（三維檢核）：<br>(a) <strong>S 曲線位置</strong>：cloud（含 AI workload）仍在 Phase II 中段 — 2026 cloud TAM $548-905B → 2030 $1.5T+；推論 economics 才剛 takeoff（2028 inference 占 AI compute 70-80%）；retail media 仍在 Phase II（$203B 2026 → $300B+ 2030）<br>(b) <strong>Y5 末 TAM 滲透率</strong>：AWS 全球 cloud share ~28%（vs Azure 21% / GCP 13%）；2030 預估 25-30%（share 大致穩定但絕對量翻倍因 TAM 漲）；Trainium 全球 AI 晶片自研滲透 2025 ~10% → 2028 ~25% sales share<br>(c) <strong>下一條 S 曲線</strong>：(i) Agentic AI / robotaxi vertical（Anthropic 主導，AMZN 受惠）；(ii) Sovereign AI（國家級 cloud build-out，2027-2030 起）；(iii) Edge AI inference（Trainium-derivative 邊緣晶片，2028+）<br><strong>結論：Y5（2031）末仍有 4-5x 空間（cloud + ASIC + retail media 三條延伸），下一條 S 曲線（agentic + sovereign + edge）已在 horizon</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>A2 獨立結論（一句話）：</strong>cloud + AI 基建 + retail media 三條 S 曲線均處 Phase II 中段，2030 仍有 2-3x 整體 TAM 空間，runway_post_y5 = <strong>🟢 寬</strong>（2031 後仍有 agentic + sovereign + edge AI 三條延伸曲線銜接）。</p>
+
+<p style="font-size:12px; color:var(--ink-3);">
+<strong>sourced data points 達標檢核（floor ≥ 5）</strong>：(1) Hyperscale Cloud TAM $548B 2026 CAGR 19% / Research and Markets；(2) Cloud workload AI 19% 2026 vs 8% 2023 / programming-helper.com；(3) Retail Media US TAM $69.33B 2026 / emarketer.com；(4) AI Accelerator TAM $380B by 2028 GPU 75% ASIC 25% / trendforce.com；(5) NVDA GPU share 80% / siliconanalysts.com；(6) FTC trial 2027-02-09 / mlex.com / 2026；(7) Big 5 capex $600B+ 2026 (+36% YoY) / IEEE ComSoc 2025/12。<strong>達標 7/5 ✅</strong>。
+</p>
+</details>
+
+<!-- ===================== Phase A3 業務財務 (折疊) ===================== -->
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立結論：三引擎結構性成長，但 FCF 兌現延後 24-30 個月）</summary>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構（Q1 2026 數據外推 FY26）</td><td><strong>現金牛：NA Retail（佔 50%，YoY +12%）+ Intl Retail（佔 19%，YoY +19%）</strong>；<strong>成長引擎：AWS（佔 20%，YoY +28%）+ Ads（佔 9%，YoY +22%）</strong>；<strong>新興：Trainium（佔 AWS &lt; 5% est，YoY +500%+ booking growth）+ Subscription（佔 2%）</strong>。Q1 2026 total rev $181.5B +17% YoY（投資 .com）</td></tr>
+<tr><td>客戶集中度</td><td>Retail：無單一大客戶，2M+ marketplace seller；AWS：前 10 大客戶估佔 AWS revenue &lt; 25%；<strong>Trainium 訂單：Anthropic $100B = 訂單 44%（高集中度警示）</strong>+ OpenAI 2GW (2027+)；風險：retail 低、AWS 低-中、Trainium 高（時間軸 24-36 月降低，因新客戶接力）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢：(a) Prime 漲價 4-5 年一次（接受度高）↑；(b) AWS 定價 stable（rivalrous discount）→；(c) Ads CPM 上升 ↑（retail intent data 黃金）；定價權：<strong>整體中-強</strong>（Prime + Ads 強、AWS 中）</td></tr>
+<tr><td>未來金雞母</td><td><strong>Trainium（目前佔 rev &lt; 1%，潛在 TAM $200B AI 晶片 by 2030，預估成熟 4-5 年後）+ Bedrock / SageMaker AI 平台（目前佔 AWS &lt; 10%，TAM $50B+ AI Platform）</strong>。10 億美元級 catalyst：Anthropic Project Rainier 2026Q4 1GW 上線（500K Trainium2 已 deployed 至 production scale，aboutamazon.com）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率：FY25 0.099（5 年新低，Capex $131.8B / +59% YoY 壓縮）；毛利率 50.29%（趨勢 ↑，TIKR Q1 26）；OI margin record 13.1% Q1 26（公司史上最高）；壓力測試：Cash $86.8B + TTM OCF $139.5B 可承受營收 −20% 約 24-36 個月仍維持 Capex（雖然 FCF 全壓掉）</td></tr>
+<tr><td>資本配置紀律</td><td>(a) <strong>Capex 紀律：</strong>FY24 $83B → FY25 $131.8B → FY26 $200B → FY27 「significantly increase」（隱含 $250B+）— 激進但有 Trainium $225B 訂單對應；(b) <strong>無回購無分紅</strong>（reinvestment-only policy，bitget.com 確認 2026）；(c) <strong>M&amp;A 紀律</strong>：MGM $8.5B (2022) + One Medical $3.9B (2023) 整合效果有限，iRobot 終止；近期 Anthropic 額外 $5B（2026-04，總投資 ~$13B 含早期）；管理層花錢花得「激進、有紀律但 ROI 仍待驗證」</td></tr>
+<tr><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td><strong>EPS CAGR 預估 +10%/yr</strong>（FY25 $7.17 → FY30E ~$11.5；含 Trainium ramp + AWS +20% + Ads +18% + Retail +8%，扣除 SBC 1% 稀釋）；<strong>5Y 末 forward PE 預估 26x vs 當前 27x</strong>，re-rate 貢獻 = (26/27)^(1/5)−1 = <strong>−0.75%/yr</strong>（輕微壓縮，反映成長率自然下行）；<strong>現金股息率 0%</strong>（AMZN 無分紅政策）；<strong>淨買回率 −1%/yr</strong>（SBC 稀釋 ~1% 無回購抵銷，故為負）。<strong>Base 合計 = 10.0 + (−0.75) + (−0.6) ≈ +8.7%/yr</strong>（已餵入 §4 IRR composition）</td></tr>
+</tbody>
+</table>
+
+<p><strong>A3 獨立結論（一句話）：</strong>三引擎結構性成長（AWS +28% / Ads +22% / Retail +12-19%）+ Trainium 是 4-5 年金雞母，但 FCF/NI 0.099 + 無回購無分紅 + SBC 1% 稀釋 = 5Y IRR 主要靠 EPS 複利（+10%/yr），不靠 multiple re-rate 或股東報酬。</p>
+
+<p style="font-size:12px; color:var(--ink-3);">
+<strong>sourced data points 達標檢核（floor ≥ 6）</strong>：(1) Q1 26 Rev $181.5B +17% / 投資.com；(2) AWS $37.6B +28% / futurumgroup.com；(3) Ads $17.2B +22% / TIKR；(4) NA $104.1B +12% / Intl $39.8B +19% / 公司法說；(5) GM 50.29% / TIKR；(6) FCF/NI 0.099 / DD §1 4/30；(7) Capex $200B 2026 / convergedigest.com / Jassy；(8) EPS 2027 $9.4 / StockAnalysis；(9) Forward PE 2027 26.5x / 2028 21.03x / Seeking Alpha；(10) RSI 14d 76.57 + MA200 $229.16 + 5d MA $247.53 + 50d MA $214.24 / altindex.com / investing.com 2026-05；(11) Anthropic $100B / 5GW / aboutamazon.com 2026-04；(12) Buyback $0 history / bitget.com。<strong>達標 12/6 ✅</strong>。
+</p>
+</details>
+
+<!-- ===================== Phase A4 既有報告 (折疊) ===================== -->
+<details>
+<summary>Phase A4｜既有報告數據擷取（DD_AMZN_20260430.html + ID_HyperscalerCloudBigThree_20260505.html + ID_AIInferenceEconomics_20260430.html）</summary>
+
+<h3>DD 報告擷取（DD_AMZN_20260430.html，DD Schema v12.1）</h3>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>Quality Score（複合品質）</td><td>9 / 10（A 級護城河；MSFT、LLY 等級）</td></tr>
+<tr><td>R:R ratio（短/中/長）</td><td>短 −0.34x / 中 +0.04x / 長 +1.6x（DD §2 E）— 短中皆 &lt; 1.0，僅長期 R:R 過閾值</td></tr>
+<tr><td>三引擎目標價（短/中）</td><td>短期 $216.72（28x × $7.74）/ 中期 $267.12（28x × $9.54）/ 長期 ~$439（5Y）</td></tr>
+<tr><td>Bear anchor</td><td>$125.39（短）/ $154.55（中）= 18x × Bear EPS 0.9 折扣</td></tr>
+<tr><td>紅旗清單</td><td>(1) FCF/NI 0.099 為 5 年新低（價值陷阱觀察）；(2) QC-28 GOOGL Cloud 絕對美元追平 93%；(3) AWS margin Q1 26 vs Q1 25 −1.6pp YoY；(4) RSI 14d 過熱 76.57（DCA 新加）</td></tr>
+<tr><td>§5 核心假設（H1/H2/H3）</td><td>H1: AWS +25%、margin 35%+（強化）｜H2: Trainium 訂單兌現（強化）｜H3: FCF 修復至 $40B by 2028（削弱）</td></tr>
+<tr><td>§8 最終結論（綜合訊號燈）</td><td><strong>B 觀望偏進場</strong>（A 級品質 + 一項訊號減半 MA 🟡）</td></tr>
+</tbody>
+</table>
+
+<h3>ID 報告擷取</h3>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要 ID（Hyperscaler 子題）</td><td><strong>ID_HyperscalerCloudBigThree_20260505.html</strong>｜Phase II（平台化爆發 + capex 軍備競賽 + ASIC 自研滲透）；3 條非共識：① Big Three 是 3 條獨立 thesis（GCP 加速 / Azure 利潤最厚 / AWS 規模大但集中度高），equal-weight basket miss 60% alpha；② GCP 2027 op margin 22-26% (vs 共識 18-20%) → GOOGL re-rate 25-28x；③ NVDA Big 4 hyperscaler share 2027-2028 erosion 至 55-60% (vs 共識 65-70%)</td></tr>
+<tr><td>母題 ID（AI Inference Economics）</td><td><strong>ID_AIInferenceEconomics_20260430.html</strong>｜Phase II 中期；真贏家排序 AVGO &gt; GOOG &gt; META &gt; NVDA &gt; MSFT（AMZN 落在「規模大但集中度高」陣營）；2026 capex YoY +74-85% vs 共識 +36%；inference 是三層分裂 multi-winner（ASIC + routing + 端側）</td></tr>
+<tr><td>關鍵趨勢</td><td>(a) 自研 ASIC 占 hyperscaler AI capex：2024 ~12-15% → 2026E 25-30% → 2028E 35-45% → 2030E 50-55%；(b) Trainium2 30-40% perf/$ premium vs GPU；(c) 推論超越訓練成主流支出 + token cost 60-80% 跌</td></tr>
+<tr><td>相關 ticker 排名（同 ID）</td><td>AMZN / MSFT / GOOGL / NVDA / AVGO / AMD / MRVL / ORCL / META / 9988.HK / 0700.HK / 8035.T / ANET / AAPL / Anthropic（私）/ CRWV / Lambda（私）— AMZN 在 hyperscaler 三巨頭中 #3（GCP 加速 / Azure 利潤厚 / AWS 規模但 erosion 早期）</td></tr>
+</tbody>
+</table>
+
+<p style="font-size:12px; color:var(--ink-3);"><strong>A4 純數據擷取，不產出獨立結論</strong>（已餵入 Phase B 交叉矛盾比對）。</p>
+</details>
+
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>

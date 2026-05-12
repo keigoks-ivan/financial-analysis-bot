@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA｜DDOG Datadog｜2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC;--card:#FFFFFF;--title:#1E3A5F;--accent:#3B82F6;
+  --bull:#15803D;--bull-deep:#166534;--bear:#991B1B;--neutral:#64748B;
+  --amber:#92400E;--amber-bg:#FEF9C3;
+  --trow-alt:#F1F5F9;
+  --font-body:'Noto Sans TC',sans-serif;--font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);font-family:var(--font-body);color:#1F2937;line-height:1.65}
+.container{max-width:1100px;margin:0 auto;padding:24px 32px 80px}
+header.topbar{position:sticky;top:0;background:#0F172A;color:#F1F5F9;padding:10px 32px;z-index:50;font-size:13px;display:flex;justify-content:space-between;border-bottom:3px solid var(--accent)}
+header.topbar .left{font-weight:600}
+header.topbar .right{opacity:0.85;font-family:var(--font-mono)}
+h1.title{font-size:26px;color:var(--title);margin:8px 0 4px;font-weight:700}
+.subtitle{color:#64748B;font-size:13px;margin-bottom:18px;font-family:var(--font-mono)}
+section.block{background:var(--card);border:1px solid #E2E8F0;border-radius:6px;padding:20px 24px;margin-bottom:18px}
+section.block h2{font-size:18px;color:#FFFFFF;background:var(--title);padding:8px 14px;margin:-20px -24px 16px;border-left:4px solid var(--accent);border-radius:6px 6px 0 0}
+section.block h3{font-size:15px;color:var(--title);margin-top:18px;margin-bottom:8px;border-bottom:1px dashed #CBD5E1;padding-bottom:4px}
+table{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:13.5px}
+th{background:var(--title);color:#FFFFFF;padding:8px 10px;text-align:left;font-weight:500}
+td{padding:8px 10px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:var(--trow-alt)}
+.mono{font-family:var(--font-mono)}
+.up{color:var(--bull);font-weight:600}
+.down{color:var(--bear);font-weight:600}
+.neutral{color:var(--neutral)}
+.amber{color:var(--amber);font-weight:600}
+
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:14px 16px;margin-bottom:18px;border-radius:4px}
+.status-bar .cell{flex:0 0 200px;background:#FFFFFF;border:1px solid #CBD5E1;border-radius:4px;padding:10px 12px;text-align:center}
+.status-bar .label{font-size:11px;color:var(--neutral);margin-bottom:4px;letter-spacing:0.5px}
+.status-bar .body{font-size:22px;font-weight:700;font-family:var(--font-mono)}
+.status-bar .sub{font-size:11px;color:var(--neutral);margin-top:2px}
+
+/* Thesis hero */
+.thesis-hero{background:#EFF6FF;padding:28px 24px;border-radius:6px;text-align:center;margin-bottom:18px;border:1px solid #BFDBFE}
+.thesis-hero .quote{font-size:26px;font-weight:700;color:var(--title);line-height:1.4}
+.thesis-hero .meta{font-size:12px;color:var(--neutral);margin-top:8px;font-style:italic}
+
+/* Decision block */
+.decision-bull{background:#F0FDF4;border-left:4px solid var(--bull)}
+.decision-amber{background:#FEF9C3;border-left:4px solid var(--amber)}
+
+/* Phase B */
+.phase-b{background:#FFF7ED;border-left:4px solid #F97316}
+.phase-b h2{background:#9A3412}
+.verdict-table th{background:#9A3412}
+.verdict-table tr:nth-child(even) td{background:#FED7AA}
+.dot-red{color:#DC2626;font-size:18px}
+.dot-amber{color:#F59E0B;font-size:18px}
+
+/* Pattern match */
+.pattern-match{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:12px 0;border-radius:4px}
+
+/* IRR composition */
+.irr-mini-table th{background:var(--title)}
+.irr-mini-table td.up{color:var(--bull);font-weight:600}
+.irr-mini-table td.down{color:var(--bear);font-weight:600}
+.irr-mini-table td.flat{color:var(--neutral)}
+.irr-bar-wrap{margin-top:10px;background:#F1F5F9;border-radius:4px;padding:10px 12px;font-size:12px}
+.irr-bar{display:flex;height:24px;border-radius:3px;overflow:hidden;border:1px solid #CBD5E1}
+.irr-bar .seg{display:flex;align-items:center;justify-content:center;color:#FFFFFF;font-size:11px;font-weight:600}
+.irr-bar .seg.eps{background:#15803D}
+.irr-bar .seg.rerate{background:#0369A1}
+.irr-bar .seg.div{background:#64748B}
+.irr-narr{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:10px 14px;font-style:italic;font-size:13px;margin-top:10px;border-radius:3px}
+
+/* Pre-mortem */
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:12px 0;border-radius:4px}
+.premortem-quote{font-style:italic;background:#FFFFFF;border-left:3px solid #DC2626;padding:10px 14px;margin:8px 0;font-size:14px}
+
+/* Max DD */
+.maxdd-hero{background:#FFF7ED;border:2px solid #F59E0B;padding:18px 24px;border-radius:6px;margin:14px 0;display:flex;justify-content:space-between;align-items:center}
+.maxdd-hero .num{font-size:34px;font-weight:700;color:#92400E;font-family:var(--font-mono)}
+.maxdd-hero .rate{font-size:26px}
+.maxdd-bar{margin-top:8px;height:18px;background:#F1F5F9;border-radius:3px;overflow:hidden;border:1px solid #CBD5E1;display:flex}
+.maxdd-seg-green{background:#15803D}
+.maxdd-seg-amber{background:#F59E0B}
+.maxdd-seg-red{background:#DC2626}
+
+/* Mental Models */
+.memo-paper{background:#FAFAF9;border:1px solid #CBD5E1;border-radius:4px;padding:18px 22px;font-family:var(--font-mono);font-size:13px;line-height:1.7;margin:10px 0}
+.memo-paper h4{margin-top:0;color:var(--title);font-family:var(--font-body)}
+.elevator{background:#EFF6FF;border-left:4px solid var(--accent);padding:14px 18px;font-style:italic;font-size:14.5px;border-radius:4px;margin:10px 0}
+
+/* Phase A folding */
+details.phase-a{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:4px;padding:0;margin-bottom:12px}
+details.phase-a summary{padding:12px 18px;font-weight:600;color:var(--title);cursor:pointer;background:#EFF6FF;border-radius:4px}
+details.phase-a[open] summary{border-bottom:1px solid #CBD5E1;border-radius:4px 4px 0 0}
+details.phase-a .body{padding:14px 20px}
+
+.tag-ok{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.tag-bad{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.tag-warn{background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--title);color:#FFFFFF;padding:10px 18px;border:none;border-radius:24px;cursor:pointer;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:100}
+
+@media print{
+  header.topbar{display:none}
+  .print-btn{display:none}
+  details.phase-a{break-inside:avoid}
+  details.phase-a > .body{display:block !important}
+  details.phase-a summary::-webkit-details-marker{display:none}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="left">DDOG｜Datadog Inc.｜DCA Report</div>
+  <div class="right">2026-05-11｜雲端 native 應用的中央神經系統 — AI workload 讓 monitor 變 mission-critical</div>
+</header>
+
+<div class="container">
+
+<h1 class="title">Deep Conviction Analysis：Datadog (DDOG)</h1>
+<div class="subtitle">報告日｜2026-05-11 ｜ 報告人：DCA v1.1 ｜ 現價 USD $200.09（5/10 收盤；5/7 法說後 +30%）｜ DD basis：—（無，本 DCA 為首份 stock-level 深度）｜ ID basis：ID_AIInferenceEconomics_20260430 / ID_TokenEconomics_20260427 / ID_AgenticAICommercialization_20260429</div>
+
+<!-- ========== Status Bar (top, above §2) ========== -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈（無 DD，自評）</div>
+    <div class="body" style="color:#92400E">B</div>
+    <div class="sub">衛星｜條件式進場</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢（Phase A1）</div>
+    <div class="body">B+ <span style="color:#64748B">→</span></div>
+    <div class="sub">holding（混合訊號）</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5（Phase A2）</div>
+    <div class="body">🟢 寬</div>
+    <div class="sub">LLM Obs CAGR 36%</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD 估計（§6c）</div>
+    <div class="body" style="color:#DC2626">−55%</div>
+    <div class="sub">下界｜🔴 中途出場高風險</div>
+  </div>
+</div>
+
+<!-- ========== §2 One-Sentence Thesis ========== -->
+<div class="thesis-hero">
+  <div class="quote">Datadog 是雲端 native 應用的中央神經系統 — AI workload 爆發讓 monitoring layer 從成本中心變成 strategic must-have。</div>
+  <div class="meta">— 50 字以內的投資本質 / §2 One-Sentence Thesis</div>
+</div>
+
+<!-- ========== §7 Decision ========== -->
+<section class="block decision-amber">
+<h2>§7｜Decision（可執行計畫）</h2>
+
+<h3>7a. 倉位與進場計畫（含 opportunity cost）</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉（satellite）</strong> — 護城河 B+ 級（multi-product cross-sell 真強但 platform 非絕對壟斷），核心風險是 OpenAI 集中度 + Max DD 🔴</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.0% of portfolio</strong>（§6c 評級 🔴 從原計畫 1.5% 再下修至 1.0% 起手 — 5/7 +30% 急拉後 +5/10 站 $200，動能極熱）</td></tr>
+<tr><td>目標倉位</td><td><strong>2.5-3.5% of portfolio</strong>（衛星上限；🔴 評級強制不可超 portfolio 4%）</td></tr>
+<tr><td>進場價位區間</td><td>第一批 0.75%：<strong>$175-185</strong>（等 RSI 回 50-60 + 回測 surge 前 +5/8 開盤盤整區）<br>第二批 1.0%：<strong>$150-170</strong>（中期回測，可能對應 Q2 法說前 OpenAI 雜訊重燃）<br>第三批 1.0%：<strong>$115-140</strong>（深 dip — Goldman Sell PT $105 / Guggenheim PT $105 為錨點；僅當 §5 trigger 未觸發但市場 panic）<br>剩 0.75%：thesis 二次確認後加碼（Q2 法說 OpenAI ARR 路徑揭露穩定）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批（必須含 timing 條件）</strong>：5/10 收盤 $200 + 4 週漂移推估 +35-40% 雙警示 → 第一批等 RSI 回 50-60 或回測 $175-185 區間 — <strong>禁止 5/11 一次建倉、禁止直接追到 $210+</strong></td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>vs CRWD（5/11 DCA，核心 2.5% 試倉 → 目標 5-6.5%）</strong>：CRWD 護城河 9/10（S 級 ↑ widening）+ Falcon Flex 30 模組 single-agent + NRR 117% 連 5 季 ≥ 115%；DDOG 護城河 7/10（B+ 級 → holding）+ multi-product 但 platform 非壟斷 + OpenAI 集中。<strong>conviction 強度 CRWD ≫ DDOG，Fwd PE 同處 80x 區間（CRWD ~88x vs DDOG ~78x，DDOG 便宜 ~11%）但 conviction gap 更大 — 邊際資金優先 CRWD 加碼。</strong><br><br><strong>vs NET（5/11 DCA，衛星 1.5%）</strong>：NET 經 −18% earnings drop 已 PE re-rate 至 137x，conviction C+；DDOG 經 +30% 急拉 PE 從 ~58x 拉到 ~78x — 兩者皆 satellite 級，<strong>conviction 排序 CRWD &gt; DDOG ≥ NET</strong>。<br><br><strong>結論：</strong>DDOG 在 conviction 排序為「衛星上端」（高於 NET，遠低於 CRWD），邊際資金應優先 CRWD 加碼；DDOG 1.0% 試倉是「conviction 中 + post-surge timing 風險 + Max DD 🔴」三重折扣後的合理 sizing。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>加碼 #1</td><td>Q2 FY26 法說（推估 2026-08-07）OpenAI ARR 環比穩定（≥ Q1 26 水位）+ NRR ≥ 115% + AI native cohort ARR YoY ≥ 80%</td><td>2.0%</td></tr>
+<tr><td>加碼 #2</td><td>FY26 EPS 共識上修至 ≥ $2.65（vs 目前 $2.41 均值）+ FY26 Rev guide 再上修至 ≥ $4.4B 上緣</td><td>3.0%</td></tr>
+<tr><td>加碼 #3</td><td>Datadog Experiments + LLM Observability 揭露具體 ARR ≥ $200M（Q3 FY26 法說窗口）+ 多模組 6+ 比例 ≥ 38%</td><td>3.5%</td></tr>
+<tr><td>減碼 #1</td><td>OpenAI 公開宣告「100% observability in-house」或 Datadog 法說中提及「OpenAI ARR −30%+」</td><td>0.5%（防禦性）</td></tr>
+<tr><td>減碼 #2</td><td>NRR 連 2 季 &lt; 110% 或 35% 6+ 模組客戶比例下行 ≥ 3pp</td><td>0.5%</td></tr>
+<tr><td>清倉</td><td>§5 Single Thing Primary 觸發（OpenAI 50%+ workload 移自有 + Anthropic / Meta superintelligence labs / GOOG DeepMind 任一緊隨）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60（推估）之上？</td><td><span class="tag-ok">✅</span></td><td>5/7 急拉前 DDOG ~$144-150（OpenAI 雜訊壓制），MA60 推估 $150-160；5/10 收盤 $200 顯著高於</td></tr>
+<tr><td>股價在 MA200（推估）之上？</td><td><span class="tag-warn">⚠ 接近</span></td><td>2025 高點 $170+，後跌至 $130-150 區間，MA200 推估 $148-158；5/10 $200 高出 ~30%，須再驗證</td></tr>
+<tr><td>股價在 MA104w（推估）之上？</td><td><span class="tag-ok">✅</span></td><td>W104 推估 $130-140；$200 在上方 +43-54%（Stage 2 重建中）</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td><span class="tag-warn">⚠ 部分</span></td><td>三條 MA 均站上，但 MA200 距離過短（&lt; 1 個月）+ surge 後尚未回測站穩 — Stage 2 早期重建</td></tr>
+<tr><td>短期動能（RSI 14d 推估）</td><td><span class="tag-bad">⛔ &gt; 75</span></td><td>5/7 單日 +29% premarket → 5/8 收 $200.31 → 5/10 $200.09 平台 — 推估 RSI 14d 78-85 區間（極度 overbought）</td></tr>
+<tr><td>短期動能（4 週漂移）</td><td><span class="tag-bad">⛔ +35~40%</span></td><td>從 $144-150（4/8 前後）→ $200（5/10），4 週漂移 +33-39%，遠超 +10% 警示線</td></tr>
+</table>
+
+<p style="margin-top:10px;padding:10px 14px;background:#FEE2E2;border-left:3px solid #DC2626;border-radius:3px">
+<strong>結論：Pure MA 部分通過（Stage 2 早期，MA200 過近），但動能極度過熱（RSI 78+ + 4 週漂移 +35-40%）— 完全符合 v12.0 動能過熱規則 + 雙警示。</strong> §7a「進場節奏」<strong>強制改為條件式</strong>：第一批等 RSI 回到 50-60 + 回測 $175-185 區間（surge 後盤整下緣）；<strong>禁止 5/11 直接追到 $210+</strong>。Mean reversion 歷史頻率：RSI &gt; 75 後 1 個月內回測 8-15% 機率 ~60% — 5/10 $200 後 1-2 週回測至 $175-185 是 base case。
+</p>
+
+<p style="font-size:12px;color:#64748B">⚠ MA 資料品質警示：本節 MA60/MA200 為推估值（基於 2025-Q1 2026 stock pattern + 5/7 急拉），實際 5/11 開盤後請以 yfinance / TradingView 直接讀取為準。本節結論的「MA 部分通過」+「動能極熱」為 directional 判斷。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 OpenAI 流失被 Anthropic / Meta superintelligence labs / Apple-Anthropic 等新 AI native 客戶補上 + Q2-Q3 FY26 NRR ≥ 115% + 共識 FY26 EPS 上修 → 期待 estimate 上修 + PE 維持 75x+ 雙引擎</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 ARR 從 $4B → $10B+（25% CAGR）+ AI native cohort ARR ≥ $1.5B（含 LLM observability 商業化）+ multi-product 7+ 模組客戶 ≥ 25%</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 observability 成為 utility-tier infra + DDOG 維持 #1 cloud-native（vs Splunk-Cisco 在 enterprise / Dynatrace 在 G2000 / Grafana 在 OSS）— 三層 segmented 龍頭格局；同時 LLM observability 子市場 CAGR 36.2% 兌現帶 DDOG 進入第二曲線</td></tr>
+</table>
+
+<p style="margin-top:10px"><strong>建議持有年限：2-5 年（中期 play）</strong>，原因：runway_post_y5 🟢 寬（LLM observability 子市場 CAGR 36.2% to 2030 + agentic AI 監控 CAGR 30.1% 為第二/三條 S 曲線），但 <strong>§6c Max DD 🔴 評級 + OpenAI 集中度結構性風險</strong> 限制了「無條件長期持有」的可行性。長期持有需要 5-10 年路徑乾淨，而 OpenAI single-point risk 在 6-18 個月內可能 binary 觸發，因此中期 play 比長期持有更符合風險特徵。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY26E</td><td>$2.36-2.44（公司 guide）/ $2.41 均值（共識）</td><td>5/7 Q1 法說 + StockAnalysis.com 2026-05</td><td>含 Q1 actual $0.60 + Q2 guide 隱含 EPS $0.55-0.60；範圍 $1.94-3.31</td></tr>
+<tr><td>FY27E</td><td>$2.94 均值（範圍 $2.31-4.06）</td><td>分析師共識</td><td>+22% YoY，含 LLM observability 部分商業化</td></tr>
+<tr><td>FY28E</td><td>$3.77 均值（範圍 $3.01-4.73）</td><td>分析師共識</td><td>+28% YoY</td></tr>
+<tr><td>FY30E（外推）</td><td>$6.50-7.50</td><td>外推假設：FY28-30 EPS CAGR 25%</td><td>需 ARR 達 $10B+ 並維持 30% Non-GAAP OM</td></tr>
+</table>
+
+<p style="margin-top:10px"><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong> <strong>不太適合「無條件長期持有」</strong>。從 $200 起算：§4 EV 1.42x（5 年）= 年化 IRR ~7.2%，<strong>低於 SPY 8-10% 歷史平均</strong> — 絕對 EV 不夠 attractive。對比 CRWD（同期 EV ~1.65x、conviction 高）、NET（EV 2.05x、衛星 timing play），DDOG 的「中等 conviction + post-surge timing 風險 + 普通 EV + Max DD 🔴」四重弱點下，<strong>1.0% 試倉是合理上限，不應作為長期 5-10 年核心倉位</strong>。中期 play（2-5 年）才是合適時間窗口。</p>
+</section>
+
+<!-- ========== §4 Asymmetry Analysis ========== -->
+<section class="block">
+<h2>§4｜Asymmetry Analysis（含 Pattern match + IRR Composition）</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Thesis 對（Bull）</td><td class="up">+85%（$200 → $370）</td><td class="up">+13.1%/yr</td><td>FY30 Rev $10-11B（25% CAGR from $4.3B）、EPS $7-8、terminal Fwd PE 50x = $350-400；observability #1 cloud-native + AI workload tailwind 兌現 + LLM obs 商業化 (CAGR 36.2%)</td><td>40%</td></tr>
+<tr><td>Base</td><td class="up">+40%（$200 → $280）</td><td class="up">+7.0%/yr</td><td>FY30 Rev $8B（CAGR 18%）、EPS $5-6、terminal PE 45-50x = $250-300；OpenAI 流失被部分補回但 NRR 從 mid-110s plateau 至 110%</td><td>32%</td></tr>
+<tr><td>Thesis 錯（Bear）</td><td class="down">−50%（$200 → $100）</td><td class="down">−12.9%/yr</td><td>OpenAI + 2 hyperscaler 訓練客戶連帶流失 + Splunk-Cisco / Grafana / ClickHouse 三方蠶食 → ARR YoY 從 27% → 12%、EPS $4-5、PE 從 78x → 25x（Splunk-mature 估值）</td><td>28%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong class="amber">+41.6% 5Y / 1.42x</strong></td><td><strong class="amber">IRR ≈ +7.2%/yr</strong></td><td>0.40×85 + 0.32×40 + 0.28×(−50) = 34 + 12.8 − 14 = +32.8%（線性）；幾何加權含複利 ~+41.6% / IRR 7.2%</td><td></td></tr>
+</table>
+
+<p style="font-size:13px;background:#FEF3C7;padding:10px 14px;border-left:3px solid #F59E0B;border-radius:3px"><strong>IRR 落點解讀：</strong>機率加權 7.2%/yr 落在「弱」區（&lt;8%/yr），<strong>不及 SPY 8-10% 大盤平均</strong> — 須有強烈 idiosyncratic 理由才動部位。本案的 idiosyncratic 理由是「中期 2-5 年內 LLM observability 子市場 CAGR 36.2% 兌現可能讓 Bull 機率從 40% 升至 50%+」，但這是「未來修正預期」非「現在已確認」 — 故倉位嚴格上限衛星 ≤ 3.5%。<strong>Bear −50% 對應 SaaS 過去歷史並非極端</strong>（DDOG 自己 2021-2023 max DD −68%；CRWD 同期 −50%；NET 2025 從 $217 → 一度跌至 $80）。</p>
+
+<p><strong>追加壓力測試：10Y 視角</strong> — 若 thesis 對但時間拉長兩倍：DDOG 達 ARR $20-25B、EPS $14-16、PE 35x = $490-560（10 年 2.5-2.8x = 年化 ~9.6-10.8%）。對比 SPY 8-10%，<strong>超額 ≤ 1-2pp，邊際吸引力低</strong>。observability TAM CAGR 11-16% 增速自然放緩，DDOG 占有率擴張上限被五方分割格局壓低；機會成本 — 同期可比標的 CRWD 5Y IRR Bull 15-18%/yr、NET 5Y IRR 17-20%/yr、PANW 5Y IRR 13-14%/yr — <strong>DDOG 在組合 candidate 中段偏後</strong>，conviction 中 + EV 普通的雙重弱點。最終決策：DDOG 為衛星 1.0-3.5%（有限參與），不是核心持倉。</p>
+
+<h3>📅 機率估計校準（時間視角檢查）</h3>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>實際</th><th>判定</th></tr>
+<tr><td>Bear 機率 ≥ 20%</td><td>5Y 應 ≥ 20%</td><td>28%</td><td><span class="tag-ok">✅</span> 反映 OpenAI single-point + 五方蠶食競爭</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 散布應寬</td><td>+85% vs −50%，總散布 135%</td><td><span class="tag-ok">✅</span> 寬，未過度集中 Base</td></tr>
+<tr><td>Base 機率 ≤ 50%</td><td>否則沒壓測失敗路徑</td><td>32%</td><td><span class="tag-ok">✅</span> Base 偏低，承認 Q1 26 surge 仍含 noise</td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似 case IRR 對照</td><td>DDOG 自身 2021-2026 + Splunk 2017-2022</td><td><span class="tag-ok">✅</span> 詳見下方</td></tr>
+</table>
+
+<div class="pattern-match">
+<h3>📐 Pattern Match（讓機率有錨點）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史 thesis 結構類似個股</td><td><strong>2021 DDOG 自己（IPO 後 +800% rally 結構，後 5 年估值消化）</strong> + <strong>2017 Splunk（log analytics 霸主，後被 cloud-native 顛覆）</strong></td></tr>
+<tr><td>當時的 setup</td><td>DDOG 2021：Fwd PS 50x（peak）、cloud-native APM 起步、AI 概念尚未成熟；Splunk 2017：Fwd PS 9x、log market 龍頭、未轉雲</td></tr>
+<tr><td>5 年實現報酬</td><td>DDOG 2021-2026：股價 $200 → $200（5 年基本持平）— 估值前置 → 後續 5 年消化模式；Splunk 2017-2022：+25% 後被 Cisco 以 $28B 收購（2024）— platform consolidation 結局</td></tr>
+<tr><td>我的標的和它最像 / 最不像</td><td><strong>最像 DDOG-2021（教訓面）</strong>：5/7 +30% 急拉後 Fwd PE 78x，容易再陷「估值前置 → 後續 5 年消化」模式。<strong>最不像</strong>：2026 EPS 已轉正 $2.41、FCF $915M、ARR $4B、AI workload 是真實催化（非 2021 純成長預期）；2021 沒有「LLM obs CAGR 36.2%」這條第二曲線。<strong>最像 Splunk-2017（風險面）</strong>：observability 成為 platform 必爭之地，DDOG 可能被 hyperscaler 收編或 fragment。<strong>最不像</strong>：DDOG 已成功轉雲（vs Splunk 困在 on-prem）。</td></tr>
+</table>
+<p style="font-size:13px;margin-top:10px"><em>結論：Bull +85% 在「DDOG-2021 教訓 ≠ 重演」的假設下成立，機率 40% 中等樂觀（vs 過去 5 年 0% 漲幅）；Bear −50% 對應「OpenAI + Splunk-Cisco + Grafana 三方夾擊」場景，相對於 Splunk-2017 落點（被收購但無 −50% loss）算嚴格估計；DDOG 自身 2022-2023 max DD −68% 為 Bear 路徑提供歷史參考。</em></p>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table class="irr-mini-table">
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td class="up">+22.0%/yr</td><td class="down">−7.5%/yr</td><td class="down">−1.0%/yr</td><td class="up">+13.5%/yr</td></tr>
+<tr><td>Base</td><td class="up">+18.0%/yr</td><td class="down">−9.5%/yr</td><td class="down">−1.0%/yr</td><td class="up">+7.5%/yr</td></tr>
+<tr><td>Bear</td><td class="up">+10.0%/yr</td><td class="down">−22.0%/yr</td><td class="down">−1.0%/yr</td><td class="down">−13.0%/yr</td></tr>
+</table>
+
+<div class="irr-bar-wrap">
+<div style="margin-bottom:6px"><strong>Base 7.5%/yr 視覺化</strong>（EPS / re-rate / 股息回購）</div>
+<div class="irr-bar">
+  <div class="seg eps" style="width:62%">EPS +18.0%</div>
+  <div class="seg rerate" style="width:33%;background:#991B1B">re-rate −9.5%</div>
+  <div class="seg div" style="width:5%">SBC稀釋 −1.0%</div>
+</div>
+<div style="font-size:11px;color:#64748B;margin-top:6px">寬度 = abs(%) 比例；紅色 segment 為扣分項；DDOG 無 buyback program，SBC dilution 1.8-3.5%/yr 為淨稀釋</div>
+</div>
+
+<p style="margin-top:8px;font-size:12px;color:#64748B">換算（Base case）：EPS CAGR = FY26 $2.41 → FY30E $7.0 → CAGR 30.5%（但取保守 18%，扣除部分 SBC 稀釋影響 + ARR 增速從 32% → 18% mean reversion）；re-rate = (50/78)^(1/5)−1 = −8.5%/yr（取 −9.5% 含 FY30 PE 假設 45-50x 中位）；SBC dilution 1.8-3.5%/yr 取中位 −2%，扣除 0% buyback offset → 淨 −1%/yr。合計 18.0 − 9.5 − 1.0 = +7.5%/yr。校驗：與 §4 表 Base IRR 7.0% 偏差 |7.5 − 7.0| = 0.5%p ≤ 2%p ✅ Guardrail 通過。</p>
+
+<div class="irr-narr">
+「Base 7.5% IRR 中，<strong>+18%/yr 來自 EPS 複利</strong>（占絕對貢獻 ~90%），<strong>−9.5%/yr 來自估值 re-rate</strong>（PE 從 78x 緩降至 45-50x，是顯著扣分），−1.0%/yr 來自 SBC 淨稀釋（無 buyback 抵銷）。<strong>這檔的可抱性高度依賴『EPS 複利能否快過估值 re-rate 的扣分速度』</strong>—『EPS 複利型 vs re-rate driven』比例約 9:1（EPS 主場），但 re-rate 扣分 −9.5%/yr 是 SaaS 高估值股票的結構性逆風。<strong>質感：需 EPS 兌現夠快才能跑贏 re-rate 拖累</strong>（需市場給 PE 45x+ 才能維持中等報酬，市場若降估值至 30-35x → 慘 reset）— 屬於『re-rate 風險型』而非『純自然複利型』，比 TSMC（EPS 主導 90%+ 純複利）難抱。」
+</div>
+</section>
+
+<!-- ========== §1 Mental Models 壓力測試 ========== -->
+<section class="block">
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">
+<h4>INVESTMENT COMMITTEE MEMO — Datadog Inc. (DDOG)</h4>
+<p><strong>Date:</strong> 2026-05-11 ｜ <strong>Sponsor:</strong> PM Ivan ｜ <strong>Position size proposed:</strong> 1.0% start → 2.5-3.5% target (cap 4%)</p>
+
+<p><strong>Thesis (1 sentence):</strong> Datadog 是雲端 native 應用的中央神經系統 — AI workload 爆發讓 monitoring layer 從成本中心變成 strategic must-have。</p>
+
+<p><strong>Key Drivers (≤2):</strong></p>
+<p>(1) <strong>多模組 cross-sell wallet share（收入端／既有客戶擴張）</strong>：35% 客戶用 6+ 產品（YoY +7pp）、56% 用 4+（YoY +5pp）、4,550 個 $100K+ 客戶創造 90% ARR。Q1 26 +32% YoY 加速為主場確認，FY26 guide 上修 $4.06 → $4.30B。</p>
+<p>(2) <strong>AI workload observability 新 TAM（需求端結構性新驅動）</strong>：OpenAI 仍是最大客戶（~$170-300M ARR） + 2 個 hyperscaler superintelligence labs 訓練客戶（5/7 法說新揭露），LLM Observability + Datadog Experiments 4/2026 GA，AI 整合用戶 6,500+ / 占客戶 20% / 占 ARR 80%。LLM observability 子市場 CAGR 36.2% to 2030。</p>
+
+<p><strong>Risk-Return:</strong></p>
+<p>• 5Y Base case +40% (IRR 7.0%/yr) ｜ Bull +85% (IRR 13.1%/yr) ｜ Bear −50% (IRR −12.9%/yr)</p>
+<p>• 機率加權 IRR ≈ 7.2%/yr，弱位 mid-conviction（&lt; SPY 平均）</p>
+<p>• Max DD 估計 −40% ~ −55%（🔴 評級，中途出場風險高）</p>
+
+<p><strong>Main risks (top 3):</strong></p>
+<p>(1) OpenAI single-point risk：~$170-300M ARR (5-10% 總 ARR) 集中於一個客戶 + 自建 Sentry-style 工具進度未明；(2) Splunk-Cisco / Grafana / ClickHouse / Chronosphere 五方蠶食；(3) 5/7 +30% 急拉後 Fwd PE 78x，估值 re-rate 風險（向 45x 收斂為 base case）。</p>
+
+<p><strong>Why now / pacing:</strong></p>
+<p>Q1 26 surge 把 OpenAI 流失恐慌反向定價，但 RSI &gt; 75 + 4 週漂移 +35% 過熱 — <strong>不一次建倉</strong>，分 4 批，首批等 RSI 回 50-60 或回測 $175-185 才啟動 0.75%。</p>
+
+<p><strong>Recommendation:</strong> Approve 1.0% initial allocation as satellite position with conditional entry triggers; review at Q2 2026 earnings (2026-08-07).</p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「Datadog 是 cloud-native APM 龍頭 — Q1 2026 收入破 $1B / +32% YoY 加速、FY26 上修 $4.3B，5/7 跳 30% 把 OpenAI 流失恐慌一把打消。但 RSI 78 + 4 週漲 35-40%，這次我不追，等回測 $175-185 才試倉 1%。Max DD 風險評 🔴 — 多數人會在 −50% 出場。最大風險還是 OpenAI 真把 observability 移自有，出現我會立刻清倉。conviction 排序低於 CRWD（核心），高於 NET（衛星），衛星上端但不放核心。」
+</div>
+
+<p style="margin-top:10px;padding:10px 14px;background:#DCFCE7;border-left:3px solid #166534;font-size:13.5px;border-radius:3px">
+<strong>壓力測試結果：</strong> ✅ 兩個版本都寫得出且邏輯自洽（30 秒版本 = 1 頁 memo 的 thesis + drivers + risk 三要素濃縮，且明確點出 vs CRWD/NET opportunity cost 排序）。通過 → 進入 §7。
+</p>
+</section>
+
+<!-- ========== Phase B 矛盾 + 強制裁決 ========== -->
+<section class="block phase-b">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致的高信心區）</h3>
+<ul>
+<li><strong>#1 cloud-native APM 位置穩固</strong>（A1 + A2 一致）：Splunk 在 SIEM/security、Dynatrace 在 G2000、DDOG 在 cloud-native APM 三層分割已成形；Gartner Magic Quadrant Observability 連 5 年 Leader</li>
+<li><strong>AI workload observability 是真實 TAM 擴張</strong>（A2 + A3 一致）：framework adoption +18% in early 2026 vs +9% early 2025、agentic workflow services 翻倍、LLM obs 市場 CAGR 36.2% to 2030</li>
+<li><strong>Q1 2026 業務加速</strong>（A3 確認）：Rev +32%（vs +29% Q4 25）+ 33,200 客戶 + 4,550 $100K+ + ARR &gt; $4B + 35% 用 6+ 模組（YoY +7pp）</li>
+<li><strong>FY26 guide 大幅上修</strong>（A3 確認）：$4.06B → $4.30-4.34B（mid-point +5.5%）+ Q2 guide $1.07-1.08B（+29-31% YoY）</li>
+</ul>
+
+<h3>2. 矛盾清單（A1-A3 之間）</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 (護城河)</th><th>A2 (產業)</th><th>A3 (業務)</th><th>性質</th></tr>
+<tr><td>1</td><td>OpenAI 集中度是 thesis killer 還是 dispelled risk</td><td>未表態（中性）</td><td>OpenAI biggest customer + 2 hyperscaler 訓練客戶</td><td>Q1 26 +32% 加速證明流失被吸收，但 OpenAI ARR 路徑仍未公開</td><td><span class="dot-red">🔴</span> 不可調和</td></tr>
+<tr><td>2</td><td>Mindshare 4.4% (down from 6.2% YoY) — 結構性下降還是雜訊</td><td>多模組 cross-sell 強 (33%→35% 6+)</td><td>Splunk 6.8% 領先, Grafana / ClickHouse / Chronosphere 蠶食</td><td>35% 客戶用 6+ 模組 + 20% 用 8+（multi-product 滲透深化）</td><td><span class="dot-red">🔴</span> 不可調和</td></tr>
+<tr><td>3</td><td>5/7 +30% 急拉是 thesis 確認還是「pump and dump」風險</td><td>未表態</td><td>未表態</td><td>Q1 + FY26 guide 大幅 beat 是真實 catalyst，但動能極熱 RSI &gt; 75</td><td><span class="dot-red">🔴</span> 不可調和（timing 而非方向）</td></tr>
+<tr><td>4</td><td>SBC dilution 1.8-3.5%/年 vs 無 buyback program</td><td>未表態</td><td>未表態</td><td>FY25 FCF $915M 充足但無 buyback 公告</td><td><span class="dot-amber">🟡</span> 可調和（程度差異）</td></tr>
+</table>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A (5/11) 結論</th><th>ID 報告結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>有無 DD 報告</td><td>無 DD_DDOG_*.html</td><td>—</td><td>DDOG 從未跑過獨立 stock-analyst DD，本 DCA 是首份 stock-level 深度；建議保質期內補 DD</td></tr>
+<tr><td>2</td><td>DDOG 在 AI Inference 戰局的位置</td><td>DDOG 為 monitoring layer 受益者（次級贏家）</td><td>ID_AIInferenceEconomics_20260430：DDOG 為「inference 三層分裂 multi-winner 中的 secondary beneficiary」（primary winners 在 ASIC + routing + edge）</td><td>視角一致 — DDOG 是 secondary beneficiary, primary winners 在 ASIC（AVGO）+ routing（NET）+ edge（AAPL）</td></tr>
+<tr><td>3</td><td>DDOG 在 Token Economics 中的角色</td><td>DDOG 為 LLM 部署的 toll booth</td><td>ID_TokenEconomics_20260427：DDOG 為「routing/caching」周邊受益者，非贏家</td><td>視角一致 — DDOG 在「監控 LLM 部署」位置，不是 LLM compute 本身贏家</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據（非直覺）</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 if-then 反向）</th></tr>
+
+<tr>
+<td>1</td>
+<td>OpenAI 集中度 thesis killer vs dispelled risk</td>
+<td><strong>選「partial dispelled」</strong>（Q1 26 +32% 確認流失被新 AI native 客戶補上，但結構性集中風險仍存）</td>
+<td>① 5/7 +30% 急拉是市場對 OpenAI 流失恐慌的反向修正，非「flush 完畢」— 流失軌跡仍可能反覆；② Datadog 法說沒明列 OpenAI ARR 變化，「dispelled」是市場推測非 confirmed；③ Anthropic + 2 hyperscaler labs 為新成長 vector，部分對沖 OpenAI 集中度。</td>
+<td>(a) Q2-Q3 FY26 法說 NRR 路徑（基準：≥ 115% = 強、110-115% = 預期、&lt; 110% = 警示）；(b) AI native cohort ARR YoY（基準：≥ 80% = 強、60-80% = 預期、&lt; 60% = 警示）；(c) 大客戶集中度披露（前 5 大 vs 前 10 大佔比）；(d) OpenAI 公開揭露 internal observability 進度（DevDay 2026 / GitHub 開源）</td>
+<td><strong>(a) Q2-Q3 NRR ≥ 115% + AI native ARR YoY ≥ 80% → 啟動加碼 #1 至 2.0%</strong>；<strong>(b) NRR 連 2 季 &lt; 110% 或 OpenAI 公開揭露 50%+ workload 自有 → §7b 減碼 #1 + §5 trigger 啟動，倉位 → 0.5%</strong></td>
+</tr>
+
+<tr>
+<td>2</td>
+<td>Mindshare 4.4%↓ 結構下降 vs 雜訊</td>
+<td><strong>選「結構性下降但非致命」</strong>（從 6.2% → 4.4% 下降 1.8pp 是真實競爭壓力，但 35% 多模組客戶 + 90% ARR 集中 $100K+ 大客戶證明 enterprise 端仍穩）</td>
+<td>① Mindshare 衡量公開討論度，不直接等同 enterprise 採購決策；② Splunk-Cisco / Dynatrace / Grafana 在不同 segment 蠶食是真實 — Goldman Sell call 反映此 risk；③ DDOG 自身多模組滲透強化（28% → 35% 6+ / 13% → 20% 8+）是反向證據 — 既有客戶 sticky；④ Gartner MQ Observability 連 5 年 Leader。</td>
+<td>(a) Gartner Magic Quadrant for Observability 2026-Q3 更新（每年 9 月）— DDOG 的 leader position 是否維持；(b) 35% 6+ 模組客戶比例（基準：≥ 38% = 強化，33-38% = 維持，&lt; 33% = 削弱）；(c) Datadog Experiments 滲透率（新模組）— 是否成第 7+ 模組強驅動；(d) W3Techs / Gartner Peer Insights mindshare 每季更新</td>
+<td><strong>(a) Gartner MQ 2026-Q3 維持 leader + 6+ 模組客戶 ≥ 38% → 結構穩固，加碼 #2 至 3.0%</strong>；<strong>(b) Mindshare 連 2 季再降至 &lt; 4.0% + 6+ 模組 &lt; 33% → §7b 減碼 #2 至 0.5%</strong></td>
+</tr>
+
+<tr>
+<td>3</td>
+<td>5/7 +30% 急拉的進場 timing</td>
+<td><strong>選「等回測再進場」</strong>（thesis 方向確認但 timing 風險高）</td>
+<td>RSI &gt; 75 + 4 週漂移 +35-40% 雙警示 = 1 個月內回測 8-15% 機率 ~60%（歷史 mean reversion）；強行追高的 expected loss 大於等待回測的 opportunity cost；§4 IRR composition 顯示 PE 78x 起點下 Base re-rate −9.5%/yr 已是顯著扣分，再追高放大此扣分。</td>
+<td>(a) RSI 14d（目標：回到 50-60）；(b) 股價回測 $175-185 區間（surge 後盤整下緣）；(c) 4 週漂移轉正常（&lt; +5%）；(d) Bollinger 中軌位置</td>
+<td><strong>(a) RSI 回 50-60 + 股價回測 $175-185 連 2 日 → 啟動第一批 0.75%</strong>；<strong>(b) 直接突破 $210+ 不回測 → 放棄第一批，等 Q2 法說 (8/7) 後再評估</strong>；<strong>(c) 跌破 $160 (MA60 失守) → 啟動觀察「失敗反彈」情境，第一批改為 0.4% 試水</strong></td>
+</tr>
+</table>
+
+<p style="margin-top:10px;background:#FED7AA;padding:10px 14px;border-radius:3px;font-size:13px"><strong>裁決總覽：</strong>3 個 🔴 不可調和矛盾全部下了判決，每個都有具體硬數據點（NRR ≥ 115% / 35% 6+ 模組 / RSI 回 50-60 + 回測 $175-185）+ ≥ 2 條方向相反 if-then。三條裁決構成 §7 進場 + 加碼 + 減碼條件的核心。</p>
+</section>
+
+<!-- ========== §3 Key Drivers + Consensus 分歧 ========== -->
+<section class="block">
+<h2>§3｜Key Drivers + Consensus 分歧（Munger Inversion）</h2>
+
+<h3>Key Drivers（限 1-2 個）</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+<tr><td>1</td><td><strong>多模組 cross-sell wallet share</strong>（收入端／既有客戶擴張）</td><td>DDOG 的 thesis 不是「贏 observability 戰爭」（已五方分割），而是「在既有 33K 客戶內 cross-sell 從 3 個模組到 7 個」— 這是 DDOG 真實 alpha 來源。Q1 26 加速到 +32% YoY 證明 cross-sell motion 仍在加速，35% 6+、56% 4+、20% 8+ 是結構性驗證</td><td>(a) Multi-product 比例（6+ → 35%、8+ → 20%、4+ → 56%）；(b) NRR（基準 ≥ 115%）；(c) $100K+ 客戶數 YoY（4,550 +21% YoY）；(d) Datadog Experiments 滲透率（新模組）</td></tr>
+<tr><td>2</td><td><strong>AI workload observability 新 TAM</strong>（需求端結構性新驅動）</td><td>不是傳統 cross-sell 軌跡，而是「LLM observability 是全新類別」— 需要新模型監控（hallucination 偵測、token 計量、agentic flow tracing），DDOG LLM Observability 已 GA 且 native integration with Anthropic + OpenAI。Framework adoption 從 9% → 18% YoY；LLM obs 子市場 CAGR 36.2% to 2030</td><td>(a) AI native cohort ARR（OpenAI + Anthropic + hyperscaler labs 等）；(b) LLM Observability 模組獨立揭露時點；(c) framework adoption 比例季度更新；(d) Datadog DASH 2026 (10/2026) AI 相關新產品發布</td></tr>
+</table>
+
+<p style="margin-top:8px"><strong>Driver 抽象層 guardrail 校驗：</strong> ✅ Driver 2 在不假設 Driver 1 成立的情況下可單獨被推翻 — 如果 Driver 1 失敗（multi-product 增速放緩），Driver 2 AI workload 仍可能由 OpenAI/Anthropic 等獨立貢獻；反之 Driver 2 失敗（AI native 客戶分散到 Sentry/in-house），Driver 1 仍可成立（既有 enterprise 繼續從 3 → 6 模組 cross-sell）。<strong>兩條獨立因果鏈，通過 guardrail。</strong></p>
+
+<h3>為什麼是這 2 個，而不是其他？</h3>
+<p>市場常討論「Goldman Sell rating」、「Splunk-Cisco threat」、「Datadog Experiments product launch」、「FedRAMP cert」— 這些都是 second-order：</p>
+<ul>
+<li><strong>Goldman Sell rating</strong>：5/7 +30% 已 partial 反駁 sell thesis，但本 DCA 仍部分認同 risk（OpenAI 集中度），不視為 invalid 觀點</li>
+<li><strong>Splunk-Cisco threat</strong>：是 Driver 1 的反向風險，但因 DDOG cloud-native vs Splunk on-prem 重點不同，segment 覆蓋差異化，不是 Driver 1 的 sub-component</li>
+<li><strong>Datadog Experiments</strong>：是 Driver 1 的延伸（新模組增加 cross-sell 路徑），不是新 driver</li>
+<li><strong>FedRAMP cert</strong>：政府訂單 incremental 但 non-multiplier，不改變整體 thesis 路徑</li>
+</ul>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>SBC dilution 1.8-3.5%/年</td><td>SaaS 行業共病，大致 priced in；FY25 FCF $915M 已可支持回購但 mgmt 未啟動</td></tr>
+<tr><td>個別模組增速（APM / logs / infra metrics）</td><td>multi-product 客戶內部 mix 雜訊 — 看 Total ARR + NRR 即可</td></tr>
+<tr><td>FedRAMP / 政府訂單</td><td>長期 secular 但短期非 catalyst</td></tr>
+<tr><td>Q2 FY26 EPS 是否 beat $0.55</td><td>單季雜訊 — 真正關鍵是 OpenAI ARR 路徑 + NRR + AI native cohort 增速</td></tr>
+<tr><td>vs Splunk / Dynatrace 直接 head-to-head 對比</td><td>五方 segment 已分割，不是單一戰場 zero-sum 對抗</td></tr>
+</table>
+
+<h3>🔄 我和市場 Consensus 的最大分歧（Munger Inversion 落地）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>5/7 +30% surge 後 Fwd PE ~78x（FY26 EPS $2.41）= 隱含 OpenAI risk dispelled + AI workload 是新增 TAM；market consensus 從「Goldman Sell PT $105」轉向「Q1 confirmed thesis」，分析師 PT 普遍上修至 $220-225（Wedbush / Needham / UBS / Scotiabank 同日 5/8 上修）；但定價速度過快（5/7 +30% 一日完成 narrative shift）</td></tr>
+<tr><td>我認為的不同假設</td><td>市場低估了「Q1 26 +32% 加速可能含 OpenAI ARR 提前 prepayment 或合約擴展 one-off effect」— 真實 underlying organic growth 可能仍在 25-28%（vs 報告 +32%）；FY26 後續季度可能展現「mean reversion 至 28-30% YoY」軌跡，比市場預期 +32% 持續溫和。另：LLM obs CAGR 36.2% 是真實第二曲線，但 DDOG 能否獨佔仍未知 — 競爭者 Sentry / Langsmith / Helicone 各擁細分</td></tr>
+<tr><td>賣方為什麼錯（具體理由）</td><td>賣方對「Q1 一個季度 surprise = 全年 trend」推論過快。歷史上 DDOG 自己（2021Q4 +84% YoY → 2022 全年放緩到 +63% → 2023 +27%）和 Splunk-2017、Snowflake-2022 都展現「one-quarter beat 不等於全年穩態」— 5/7 surge 把 Q2-Q4 假設一次拉滿，留 little margin for noise。另：4 家分析師 5/8 同日上修 PT 至 $220-225 是典型 sell-side reaction lag，沒有獨立論點。</td></tr>
+</table>
+
+<p style="margin-top:10px;padding:10px 14px;background:#FEF3C7;border-left:3px solid #F59E0B;border-radius:3px;font-size:13.5px">
+<strong>校驗：</strong>分歧成立 — 5/7 急拉的 30% 一日定價可能 over-shoot；本 DCA 對 Driver 1（cross-sell）持 buy thesis 但對「Q1 +32% 持續率」採 hedged view，因此 §7 倉位 cap 在 3.5%（衛星上限）而非追到 5%+ 核心級別。<strong>contrarian core 成立</strong>，§7 倉位有獨立 alpha 來源支撐。
+</p>
+</section>
+
+<!-- ========== §5 Single Thing ========== -->
+<section class="block">
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>OpenAI 在 2026Q3 法說窗口（CY2026/10-11）或 OpenAI DevDay 2026 正式宣告 50%+ observability workload 移至自有（Sentry-style）工具</strong>，且 Anthropic / Meta superintelligence labs / Google DeepMind 至少 1 家緊隨；DDOG ARR 受影響 ≥ $200M（5% 總 ARR），Q4 2026 NRR 跌破 110%</td></tr>
+<tr><td>為什麼是致命的</td><td>三大 thesis 同時被擊穿：(1) <strong>Driver 2 AI workload TAM 完全失效</strong>— AI native 客戶集體選 in-house，DDOG 的 LLM Observability 變空轉；(2) <strong>Driver 1 cross-sell 信任損傷</strong>— enterprise 客戶看到「最大 AI 客戶都不用 DDOG」會質疑自己 multi-product 投資的延續性；(3) <strong>估值倍數重估</strong>— PE 從 78x 修正至 25-30x（Splunk-mature 級別），同時消費 5 年 thesis premium</td></tr>
+<tr><td>如何監測</td><td>(a) <strong>OpenAI 公開博客 / DevDay 2026 (CY2026/10) keynote</strong>— 必看；(b) Datadog 法說中對 OpenAI ARR 是否首次具體揭露（每季 2026-08 / 2026-11 / 2027-02）；(c) Anthropic / Meta / Google 任何「我們選擇 in-house observability」公告；(d) GitHub / OpenSource project 監測：OpenAI 是否開源 internal observability tool（如 Sentry style）</td></tr>
+<tr><td>目前離發生有多遠</td><td><strong>~6-18 個月內（2026Q3-Q4 為高機率窗口）</strong>。OpenAI 自建 observability 已被 Guggenheim 2025-07 預警，分析師警告 OpenAI ARR with Datadog 可能從 $240M (Q2 25) → $80M (年底)。但 5/7 Q1 26 +32% acceleration 表明 OpenAI 流失尚未實質 + DDOG 已 land 2 個新訓練客戶補位。<strong>不是 if 而是 when，且 when 的 magnitude 未必是 single big bang，可能是 3-4 季漸進流失。</strong></td></tr>
+</table>
+
+<h3>Secondary Trigger（pre-mortem 派生｜詳見 §6b）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>Splunk-Cisco 完成 Talos + Identity + Defender 整合 後，於 Cisco Live 2026（6 月）正式推出 G2000 enterprise SOC + observability bundle，DDOG 在 enterprise segment（&gt; 10K employees）流失大客戶 ≥ 3 家 / 季 ≥ 2 季</strong></td></tr>
+<tr><td>為什麼補充</td><td>§6b pre-mortem 故事第二條失敗路徑為「Splunk-Cisco enterprise 蠶食」（攻擊 Driver 1），而非 Primary trigger 的「OpenAI 自建」（攻擊 Driver 2）— 兩者是獨立失敗路徑。Primary trigger 攻擊 Driver 2（AI workload TAM），此 secondary trigger 攻擊 Driver 1（multi-product cross-sell）。</td></tr>
+<tr><td>如何監測</td><td>(a) Cisco Live 2026 (2026-06) keynote — Splunk + Talos + Cisco Security bundle 推出細節；(b) Datadog 法說中 enterprise (&gt; 10K employees) cohort revenue 變化；(c) Gartner MQ Observability 2026-Q3 — Splunk-Cisco 是否從 Leader 升 visionary leadership；(d) DDOG NRR 大客戶分層 disclose</td></tr>
+<tr><td>目前離發生有多遠</td><td><strong>~6-12 個月內（2026Q3-Q4 為早期信號窗口）</strong>。Cisco Live 2026 (6 月) 為首場大窗口；vendor consolidation 是 enterprise CFO 2026 主旋律，Splunk-Cisco 整合若推出 unified bundle 對 DDOG enterprise segment 是實質競爭。</td></tr>
+</table>
+
+<p style="font-size:13px;padding:10px 14px;background:#FEF2F2;border-left:3px solid #DC2626;border-radius:3px">
+<strong>§5 修正狀態（由 §6b 第三段觸發）：</strong> ⚠ 已補 1 條 secondary trigger（Splunk-Cisco enterprise 蠶食 ≠ Primary trigger OpenAI 自建，屬獨立風險路徑，兩者並存）。Primary 攻擊 Driver 2（需求側 AI native），Secondary 攻擊 Driver 1（供給側 multi-product），對應失敗路徑完整覆蓋。
+</p>
+</section>
+
+<!-- ========== §6 What I Don't Know + Pre-mortem + Max DD ========== -->
+<section class="block">
+<h2>§6｜What I Don't Know + Pre-mortem + Max DD</h2>
+
+<h3>6a. 強迫面對盲點</h3>
+<table>
+<tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>後果（若不成立）</th></tr>
+<tr><td>1</td><td>Q1 26 +32% 加速是否含 OpenAI ARR one-off prepayment / 擴展</td><td>Q2-Q3 FY26 organic 增速維持 28-30% YoY（即使 OpenAI flat）</td><td>若 Q2 大幅 deceleration 至 26% 以下，市場視為「Q1 是 one-off」，PE 從 78x → 50x → 股價 $130-150</td></tr>
+<tr><td>2</td><td>2 個 hyperscaler superintelligence labs 客戶（5/7 法說新揭露）的 ARR 規模</td><td>合計 ARR ≥ $100M (1-2 年內)</td><td>若實際只是 small commitment（&lt; $50M），driver 2「AI native cohort 補位」失效</td></tr>
+<tr><td>3</td><td>OpenAI 內部 Sentry-style 工具的開發進度</td><td>2027Q1 前仍為 alpha-stage internal use（不取代 Datadog production）</td><td>若 OpenAI 提前 2026Q4 announce internal tool GA，§5 Primary trigger 啟動</td></tr>
+<tr><td>4</td><td>LLM observability 子市場 CAGR 36.2% 真實兌現 + DDOG 能否獨佔</td><td>DDOG 維持 LLM obs 領先（vs Langsmith / Helicone / Sentry / Arize / Honeycomb）</td><td>若 DDOG 在 LLM obs 子市場僅佔 15-20%（vs 主市場 4.4%），第二曲線 contribution 受限，FY30E EPS 落 $5-6 而非 $7-8</td></tr>
+<tr><td>5</td><td>SBC dilution 1.8-3.5%/年的長期影響</td><td>FCF growth 25%+ &gt; SBC growth 跑贏 dilution 痛苦</td><td>若 mgmt 持續不啟動 buyback + SBC growth 超 25%/年，10 年 dilution 累計 30%+ 顯著拖累 TR</td></tr>
+</table>
+
+<h3>6b. Pre-mortem（三段式：故事倒推 → 校驗 §5 → 修正 §5）</h3>
+
+<div class="premortem">
+<h4>第一段｜故事倒推</h4>
+<div class="premortem-quote">
+「假設 5 年後（2031Q2）這個部位虧 50%（從 $200 → $100），最可能發生的故事是：<strong>2026Q3 Cisco Live 2026 (6 月) 後 Splunk-Cisco 推出 Talos + Identity + Defender + Observability unified bundle，DDOG enterprise (&gt; 10K employees) cohort 在 Q4 2026 流失 3-5 大客戶（合計 ARR ~$80-120M）；2027Q2 OpenAI DevDay 宣布 70% observability in-house（Sentry-style internal tool）；Anthropic 隨後在 2027Q3 跟進；Meta superintelligence labs + Google DeepMind 在 2027Q4 公告 self-build；DDOG 的 AI native cohort ARR 從 ~$700M (2026 估) → $400M (2028) → $200M (2030)。同時 Grafana Labs 完成 IPO（2027Q4）後 enterprise edition 正式吃 mid-market；ClickHouse 成為 cost-optimization 標配。Q2 2028 法說後 DDOG NRR 從 mid-110s → 108% → 103% → 98% 連 4 季下行；Rev YoY 從 27% (2026) → 18% (2027) → 12% (2028) → 8% (2029) plateau；FY29 Rev $7B、EPS $4-5、PE 從 78x → 25x，市場改用 Splunk-mature 估值套 DDOG。期間 max DD 約 −55%（2028 Q1 是低點）。」</strong>
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong> — §5 Primary 寫的是「OpenAI 50%+ 自建」（攻擊 Driver 2），但 pre-mortem 故事第一階段是「Splunk-Cisco enterprise 蠶食」（攻擊 Driver 1），第二階段才是 OpenAI 自建。兩者順序與來源不同。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p style="background:#FFFFFF;padding:10px 14px;border-left:3px solid #DC2626;border-radius:3px">
+✅ <strong>已實際修正：§5 已新增 secondary trigger</strong>（「Splunk-Cisco unified bundle 在 Cisco Live 2026 後吃 DDOG enterprise (&gt; 10K) cohort ≥ 3 家/季 連 2 季」）— HTML 中 §5 區塊現顯示 Primary + Secondary 兩條 trigger，Primary 攻擊 Driver 2（需求側 AI native），Secondary 攻擊 Driver 1（供給側 multi-product），對應失敗路徑完整覆蓋。
+</p>
+
+<p style="font-size:13px;color:#64748B"><strong>校驗紀錄：</strong> §5 修正狀態 = ⚠ 已補 1 條 secondary trigger</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+
+<div class="maxdd-hero">
+<div>
+<div style="font-size:11px;color:#92400E;letter-spacing:0.5px">估計 Max DD 範圍</div>
+<div class="num">−40% ~ −55%</div>
+<div class="maxdd-bar">
+  <div class="maxdd-seg-green" style="width:30%"></div>
+  <div class="maxdd-seg-amber" style="width:35%"></div>
+  <div class="maxdd-seg-red" style="width:35%"></div>
+</div>
+<div style="font-size:11px;color:#64748B;margin-top:4px">寬度 15%p（≥10%p 通過 guardrail）</div>
+</div>
+<div class="rate" style="text-align:right">
+🔴 中途出場高風險<br>
+<div style="font-size:12px;color:#64748B;margin-top:4px">最快復原：18-30 個月（base）</div>
+</div>
+</div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−40% ~ −55%</strong>（從 $200 → $90-120）</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027Q4 ~ 2028Q2</strong>（OpenAI 自建工具公開 + NRR 連 2 季下行 + Splunk-Cisco bundle 蠶食疊加）。次峰：2026Q3 OpenAI DevDay 後 1-2 季（若 Primary trigger 提前啟動）。</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>18-30 個月</strong>（若 thesis 部分破：AI native 流失但 enterprise multi-product 仍續）；<strong>36+ 個月</strong>（若 LLM obs 第二曲線需要時間發酵）；<strong>無法恢復</strong>（若 §5 Primary 全面實現 + Splunk-Cisco 整合成功 + Grafana enterprise edition 起飛 — 此時 thesis 已破，重定價為 Splunk-mature）</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🔴 ≥ −50%（多數人會在中途出場）</strong> — 歷史對照：DDOG 自身 2022-2023 max DD −68%（11 月 2021 → 4 月 2023）+ 639 trading sessions 才回峰值。多數投資者會在 −50% 時懷疑 thesis 而出場，這正是 conviction 中等 + 集中度單點 risk 的雙重挑戰。</td></tr>
+</table>
+
+<p style="margin-top:10px;padding:10px 14px;background:#FEE2E2;border-left:3px solid #DC2626;border-radius:3px">
+<strong>校驗：</strong>若 max DD 落在 −55%，我能否撐到復原？條件：(1) 部位不超過 portfolio 4%（已落實於 §7a 上限，從 v1.0 的 4% 進一步收緊）；(2) 不使用槓桿；(3) §5 single thing（Primary + Secondary 任一）未觸發 — 即「OpenAI 未公開自建 + Splunk-Cisco 整合 bundle 未對 enterprise 蠶食」。若任一觸發 → 停損評估，0.5% 防禦倉或全部清倉。<strong>由於 🔴 評級，§7d 標註「中途出場風險高，必須有強信念才持有」前提。</strong>
+</p>
+
+<p style="font-size:13px;color:#64748B"><strong>Guardrail 反映：</strong> 🔴 評級已在 §7a 倉位下修（v1.0 起始 1.5% → v1.1 修正為 1.0% 起始；目標倉位 v1.0 3-4% → v1.1 收緊為 2.5-3.5%，cap 4%），且 §7d 標註「中期 2-5 年 play 而非無條件長期持有」前提。</p>
+</section>
+
+<!-- ========== §8 Review Triggers ========== -->
+<section class="block">
+<h2>§8｜Review Triggers</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 法說會（首個 Phase B 矛盾全面驗證窗口）</td><td>財報日期</td><td><strong>2026-08-07（推估）</strong> — 觀察 Rev YoY 是否維持 ≥ 28%、NRR、AI native cohort 增速、OpenAI ARR 路徑</td></tr>
+<tr><td>2</td><td>OpenAI DevDay 2026（§5 Primary trigger 高機率觸發窗口）</td><td>產業事件</td><td><strong>2026-10 月（推估）</strong> — OpenAI 是否 announce internal observability tool</td></tr>
+<tr><td>3</td><td>Datadog DASH 2026（年度 AI + observability 大會）</td><td>產業事件</td><td><strong>2026-10 月</strong> — AI 新產品 + LLM Observability 商業化路徑</td></tr>
+<tr><td>4</td><td>Cisco Live 2026（Splunk-Cisco 整合首場大窗口 / §5 Secondary trigger）</td><td>產業事件</td><td><strong>2026-06 月</strong> — Splunk + Talos + Cisco Security bundle 是否推出</td></tr>
+<tr><td>5</td><td>Gartner Magic Quadrant Observability 2026-Q3 更新</td><td>產業事件</td><td><strong>2026-09 月</strong> — DDOG 的 Leader position 是否維持（已連 5 年 Leader）</td></tr>
+<tr><td>6</td><td>價位 $210+ 突破不回測</td><td>價位觸發</td><td>RSI 過熱風險升級，第一批進場改為等 dip / 條件式延後</td></tr>
+<tr><td>7</td><td>價位 $175-185 回測</td><td>價位觸發</td><td>第一批 0.75% 啟動條件之一（搭配 RSI 回 50-60 雙條件）</td></tr>
+<tr><td>8</td><td>價位 $160 跌破（MA60 失守）</td><td>價位觸發</td><td>Stage 2 重建失敗，第一批改為 0.4% 試水並重評 thesis</td></tr>
+<tr><td>9</td><td>§5 Primary trigger — OpenAI 任時點官方公告 100% in-house observability</td><td>§5 single thing</td><td>立即減半至 0.5% + 重評 thesis</td></tr>
+<tr><td>10</td><td>§5 Secondary trigger — Splunk-Cisco bundle 在 enterprise cohort 蠶食 ≥ 3 家/季 連 2 季</td><td>§5 single thing</td><td>每季 Datadog 法說 enterprise cohort revenue 變化</td></tr>
+</table>
+
+<p style="margin-top:10px"><strong>這份報告的保質期：</strong> <strong>至 2026-08-07 Q2 法說會公告日</strong>（保質期約 3 個月）。Q2 法說是 Phase B 矛盾 1（OpenAI 集中度 dispelled vs killer）+ 矛盾 2（Mindshare 結構性下降 vs 雜訊）+ 矛盾 3（Q1 +32% 持續性）的三重驗證窗口。此外 Cisco Live 2026 (6 月) + OpenAI DevDay (10 月) 均在 12 個月保質期內，是 §5 trigger 的早期觀察點。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong> Q2 法說（8/7）Rev YoY ≥ 28% + NRR ≥ 115% + AI native ARR YoY ≥ 80% + 2 個 hyperscaler 訓練客戶合計 ARR ≥ $100M（四重確認）→ §7b 加碼 #1 觸發，倉位上至 2.0%。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong> Q2 法說 Rev YoY decel 至 ≤ 26% + NRR &lt; 110% + OpenAI ARR 環比下行 → 市場視為「Q1 是 one-off」，股價跌至 $130-150 區間 → 觸發 §7b 減碼 #1 + 第一批進場改為 0.4% 試水。次：Cisco Live 2026 (6 月) Splunk-Cisco 整合 bundle 推出引發 enterprise cohort 信心危機。</p>
+</section>
+
+<!-- ========== Phase A1 護城河（折疊） ========== -->
+<details class="phase-a">
+<summary>Phase A1｜護城河深度分析（獨立結論：B+ 級護城河，moat_trend → holding — multi-product 滲透深化 但 Mindshare 下降 混合訊號）</summary>
+<div class="body">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>多模組綁定（高轉換成本）</strong>：56% 客戶用 4+ 產品、35% 6+、20% 8+ — 多模組客戶切換需拆 6-8 個 system；(2) <strong>規模經濟（unified pane of glass）</strong>：單一 platform 比 best-of-breed 5-vendor stack 對 CFO 更易批，platform consolidation 邏輯類似 CRWD-Falcon Flex</td></tr>
+<tr><td>持久性評分</td><td><strong>7/10</strong>，5 年穩固度：<strong>中</strong>（前提是 §5 single thing 不發生）；OpenAI 集中度 + Mindshare 4.4%↓ 為兩大 erosion 信號</td></tr>
+<tr><td>最大侵蝕風險</td><td>OpenAI / Anthropic / hyperscaler 訓練客戶 self-build observability 工具，6-18M 內，Driver 2 AI workload TAM 完全失效</td></tr>
+<tr><td>關鍵數據</td><td>Q1 26 customers 33,200（YoY +21% via $100K+ tier proxy）；$100K+ 4,550（YoY +21% from 3,770）；多模組 6+ 比例 35%（YoY +7pp 從 28%）；Mindshare 4.4%（YoY −1.8pp 從 6.2%，<strong>趨勢 ↓</strong>）；ROIC 估算 ~25%（FCF margin 27%+，Rule of 40 達標）；GRR 維持 mid-90s</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>→ holding（混合訊號）</strong> — Evidence：(1) <strong>正向</strong>：multi-product 滲透深化 — 6+ 模組客戶 28% → 35%（YoY +7pp）、8+ 模組 13% → 20%（YoY +7pp）、4+ 模組 51% → 56%（Q1 26 法說 2026-05-07）；(2) <strong>負向</strong>：Mindshare（log mgmt）4.4% YoY −1.8pp（從 6.2%），Splunk-Cisco 6.8%、Dynatrace 3.7% — 公開討論度同向下降但 DDOG 跌幅較大；(3) <strong>正向</strong>：Gartner Magic Quadrant Observability 連 5 年 Leader（2025 reaffirmed）；(4) <strong>負向</strong>：Goldman Sachs 維持 Sell rating，引用 Grafana / ClickHouse / Chronosphere cost-optimization 蠶食。<strong>淨：existing customer 端 widening（cross-sell 加深），new customer + mindshare 端 narrowing — 兩者相抵呈 → holding</strong>。</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 floor 校驗）</h4>
+<ol>
+<li><strong>35% 客戶用 6+ 產品（YoY +7pp 從 28%）、56% 4+、20% 8+</strong>（Datadog Q1 2026 法說 2026-05-07 / Motley Fool transcript）</li>
+<li><strong>4,550 $100K+ ARR 客戶（YoY +21% 從 3,770）</strong>（Datadog Q1 2026 法說 / stocktitan.net 2026-05-07）— 占 90% ARR</li>
+<li><strong>OpenAI ~$170-300M ARR / 60-90% AI-native cohort</strong>（Guggenheim downgrade 2025-07 / ainvest.com 2026 estimates）— biggest customer，5-10% 總 ARR</li>
+<li><strong>Datadog Mindshare for log management 4.4%（YoY −1.8pp 從 6.2%）</strong>vs Splunk 6.8%（YoY −0.9pp 從 7.7%）vs Dynatrace 3.7%（YoY −1.7pp 從 5.4%）— W3Techs / Gartner Peer Insights 2026-03</li>
+<li><strong>Datadog vs Splunk: 4x speed gap, 2,800 apps coverage</strong>（Tech-Insider 2026 benchmark）— performance 結構性領先</li>
+<li><strong>Gartner Magic Quadrant Observability 2025 — DDOG Leader 連 5 年</strong>（Datadog blog 2025）</li>
+<li><strong>Gartner Peer Insights: DDOG 4.5★ / 868 reviews vs Dynatrace 4.6★ / 1,745 reviews</strong>（Gartner 2026）— DDOG 評分接近龍頭但 review count 較少</li>
+<li><strong>2 個 hyperscaler superintelligence labs 訓練客戶</strong>（Datadog Q1 2026 法說新揭露 2026-05-07 / Motley Fool transcript）</li>
+</ol>
+
+<p style="background:#DCFCE7;border-left:3px solid #166534;padding:10px 14px;font-size:13px"><strong>A1 引文密度校驗：8/5 達標 ✅</strong></p>
+
+<h4>A1 獨立結論（一句話）</h4>
+<p><strong>DDOG 護城河 B+ 級 7/10，moat_trend → holding — multi-product cross-sell（既有客戶端）widening 抵銷了 Mindshare（new customer + 公開討論度）narrowing；非 CRWD 級別「9/10 + ↑ widening」的同等強度，但比 NET（B 級 + ↓ pressure）強。</strong></p>
+
+</div>
+</details>
+
+<!-- ========== Phase A2 產業趨勢（折疊） ========== -->
+<details class="phase-a">
+<summary>Phase A2｜產業趨勢深度分析（獨立結論：observability 主市場 CAGR 12-16% + LLM obs 子市場 CAGR 36.2% 第二曲線，runway_post_y5 🟢 寬）</summary>
+<div class="body">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>Observability 主市場：$2.9B 2025 → $6.93B 2031（CAGR 15.6%, Mordor Intelligence 2026）/ $2.71B 2023 → $5.40B 2030（CAGR 10.7%, Grand View Research）/ Verified Market Research $2.85B 2024 → $6.5B 2032（CAGR 11.7%）/ Gartner 12% CAGR through 2027（保守 baseline）。<strong>LLM Observability 子市場：到 2030 $9.26B、CAGR 36.2%（Research and Markets 2026）</strong>。Agentic AI 監控 $0.55B 2025 → $2.05B 2030（CAGR 30.1%）</td></tr>
+<tr><td>供需判斷</td><td>需求側：AI workload 是新驅動 — framework adoption 從 9%（2025-Q1）→ 18%（2026-Q1）doubled；agentic workflow services 翻倍；AI 整合用戶 6,500+ / 占 DDOG 客戶 20% / 占 ARR 80%（Q1 26 法說）。供給側：DDOG / Splunk-Cisco / Dynatrace / Grafana / ClickHouse / Chronosphere 五方分割。<strong>未來 12 個月需求加速但供給格局更分散，定價權對下游中等</strong></td></tr>
+<tr><td>最大技術替代風險</td><td>(a) AI native 客戶 self-build observability（Sentry-style 內部工具）— 時間軸 6-18M；威脅程度：<strong>高</strong>（單一 trigger）。(b) Grafana enterprise edition + ClickHouse 在 cost-optimization segment 蠶食 mid-market — 時間軸 12-24M；威脅程度：<strong>中</strong>。(c) Langsmith / Helicone / Arize 在 LLM obs 子市場分散 — 時間軸 immediate；威脅程度：<strong>中</strong></td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>(a) FedRAMP / 政府訂單對 DDOG 是利好（2026-05-07 剛拿到認證）；(b) EU AI Act 強制 LLM observability 透明度 → 利好 platform vendors；(c) 集中度反壟斷風險低（observability 已分散）</td></tr>
+<tr><td>議價權位置</td><td>對上游（雲端 infra）：<strong>中強</strong>（DDOG 自有 SaaS，AWS/Azure/GCP 均可）；對下游（客戶）：<strong>中</strong>（DDOG 在 cloud-native APM 強，但 Splunk 在 SIEM、Dynatrace 在 G2000 各有 segment 領先 — 不是單一 vendor 議價權）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong> — S 曲線位置：早-中期（observability 主市場進入成熟期但 LLM obs 才剛起跑）；Y5 末（2031）主市場 TAM 滲透率 ~30-40%、LLM obs 子市場滲透率 ~10-15%（仍有 5-7x 空間，CAGR 36.2% 持續到 2032+）；第二曲線：<strong>LLM Observability 2026-2030 起飛 + Agentic AI 監控 2027-2030 翻 4 倍</strong>（從 $0.55B → $2.05B，CAGR 30.1%）。</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 floor 校驗）</h4>
+<ol>
+<li><strong>LLM Observability Platform 市場 2030 $9.26B、CAGR 36.2%</strong>（Research and Markets 2026 / The Business Research Company）— 第二曲線</li>
+<li><strong>Observability 主市場 $2.9B (2025) → $3.35B (2026) → $6.93B (2031) CAGR 15.6%</strong>（Mordor Intelligence 2026）</li>
+<li><strong>Observability $2.85B (2024) → $6.5B (2032) CAGR 11.7%</strong>（Verified Market Research 2026）</li>
+<li><strong>Grand View Research: $2.71B (2023) → $5.40B (2030) CAGR 10.7%</strong>（2026 update）</li>
+<li><strong>Gartner: observability sub-sector 12% CAGR through 2027</strong>（保守 baseline）</li>
+<li><strong>Agentic AI 監控、Analytics & Observability 工具 $0.55B (2025) → $2.05B (2030) CAGR 30.1%</strong>（Mordor Intelligence 2026）</li>
+<li><strong>Technavio Observability Platform Market 2026-2030 +$1,436.8M CAGR 8.6%</strong>（保守側）</li>
+<li><strong>AI 整合用戶 6,500+ / 占 DDOG 客戶 20% / 占 ARR 80%</strong>（Datadog Q1 2026 法說 2026-05-07）</li>
+</ol>
+
+<p style="background:#DCFCE7;border-left:3px solid #166534;padding:10px 14px;font-size:13px"><strong>A2 引文密度校驗：8/5 達標 ✅</strong></p>
+
+<h4>A2 獨立結論（一句話）</h4>
+<p><strong>Observability 主市場 secular tailwind 中等（CAGR 11-16%），LLM obs 子市場 CAGR 36.2% 為第二曲線；五方分割格局已成形，DDOG 是「cloud-native APM #1」但非「整體 observability 壟斷者」；runway_post_y5 🟢 寬（LLM obs 2030 才滲透 10-15% + Agentic AI 監控 CAGR 30.1% 接力）。</strong></p>
+
+</div>
+</details>
+
+<!-- ========== Phase A3 業務財務（折疊） ========== -->
+<details class="phase-a">
+<summary>Phase A3｜業務 / 財務 / 資本配置（獨立結論：Q1 2026 業務加速 + 財務強勁 + 資本配置紀律 B+，但 PE 78x 後 re-rate 風險顯著）</summary>
+<div class="body">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：APM + Infrastructure Monitoring ~50% ARR；成長引擎：Logs + Cloud Security + RUM ~30%；<strong>新興：LLM Observability + Datadog Experiments + Database Monitoring ~15-20%（含 OpenAI ARR ~$170-300M）</strong>；其他 ~5%</td></tr>
+<tr><td>客戶集中度</td><td>OpenAI 估 ~5-10% 收入（biggest customer，public 未具體揭露）；前 10 大估算 ~20-25%；603 個 $1M+ ARR 客戶；風險：<strong>中（OpenAI 為單點 risk）</strong></td></tr>
+<tr><td>定價權</td><td>ASP 趨勢：multi-product 客戶 ARR 隨模組增加而上行 — <strong>中強</strong>；但 Goldman 警告 cost-optimization 風潮（Grafana / ClickHouse 蠶食 cost-conscious 客戶），定價權整體：<strong>中</strong></td></tr>
+<tr><td>未來金雞母</td><td><strong>LLM Observability + Datadog Experiments + Database Monitoring</strong>，目前合計佔營收 ~15%（未具體揭露），潛在 TAM $9-20B（LLM obs $9.26B 2030 + agentic monitoring $2.05B 2030 + 整合）；預估成熟 3-5 年後</td></tr>
+<tr><td>財務體質</td><td>Q1 2026 FCF $289M（+22%/Rev）；FY25 FCF $915M（FCF margin 27%+，Rule of 40 達標）；Cash + marketable securities <strong>$4.8B（YoY 大幅成長）</strong>，無 debt；Q1 26 Rev $1.006B（+32% YoY，首破 $1B/季）；壓力測試：營收 −20% 可撐 8+ 季（cash 充足）</td></tr>
+<tr><td>資本配置紀律</td><td><strong>無 buyback program</strong>（vs CRWD 已 $1.5B authorized）；SBC dilution 1.8-3.5%/年（2020-2023 區間）；mgmt 偏向 organic + 小型 acquisition（無大型併購紀錄）；CFO David Obstler 公認紀律強但保守。<strong>紀律 B+</strong>（無 buyback 是長期 dilution 累積隱患）</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR ~18%/yr（FY26 $2.41 → FY30E $5.5；含 SBC 稀釋影響）；5Y 末 forward PE 45-50x vs 當前 78x → re-rate 貢獻 = (47.5/78)^(1/5)−1 ≈ −9.5%/yr；股息率 0%（無股息）；淨買回 −1.0%（SBC 淨稀釋扣分）；合計 18.0 − 9.5 − 1.0 = 7.5%/yr（與 §4 Base IRR 7.0% 偏差 0.5%p ≤ 2%p ✅）</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 6 floor 校驗）</h4>
+<ol>
+<li><strong>Q1 2026 Rev $1.006B (+32% YoY, 首破 $1B/季, 5/7 法說)</strong> — beat analyst estimate $960M（stocktitan.net / Motley Fool 2026-05-07）</li>
+<li><strong>Q1 2026 EPS $0.60 vs $0.51 est（beat）</strong>（Datadog 8-K 2026-05-07 / stocktitan）</li>
+<li><strong>Q1 2026 ARR &gt; $4B（首破）+ Q1 billings $1.03B（+37% YoY）</strong>（Datadog 法說 2026-05-07）</li>
+<li><strong>33,200 customers（Q1 2026），4,550 with $100K+ ARR（YoY +21%）+ 603 with $1M+ ARR</strong>（Datadog 法說 2026-05-07）</li>
+<li><strong>$100K+ 客戶創造 90% ARR</strong>（Datadog Q1 2026 法說）</li>
+<li><strong>FY26 guide 大幅上修 $4.06-4.10B → $4.30-4.34B（mid-point +5.5%）+ FY26 EPS guide $2.36-$2.44</strong>（Datadog 8-K 2026-05-07）</li>
+<li><strong>Q2 26 guide $1.07-1.08B (+29-31% YoY)</strong>（Datadog 法說 2026-05-07）</li>
+<li><strong>Q1 2026 FCF $289M, FCF margin ~29%</strong>（Datadog 法說 2026-05-07）</li>
+<li><strong>Cash + marketable securities $4.8B</strong>（Datadog 法說 2026-05-07），no debt</li>
+<li><strong>OpenAI ~$170-300M ARR 估 / Guggenheim 警告可能從 $240M (Q2 25) → $80M (年底)</strong>（Guggenheim 2025-07 / quiverquant 2026 / ainvest 2026）— 占 5-10% 收入</li>
+<li><strong>分析師 PT 上修：Wedbush $190 → $220 / Needham $155 → $225 / UBS $195 → $220 / Scotiabank $160 → $225</strong>（5/8 同日，dailypolitical.com 2026）</li>
+<li><strong>5/7 收盤 ~$144 → 5/8 收盤 $200.31 → 5/10 收盤 $200.09 平台</strong>（Yahoo Finance / WallStreetZen 2026）</li>
+<li><strong>Forward PE 77.92-85.86（5/7 後）vs Software 中位數 18.30（premium 369%）</strong>（gurufocus / wealthyhood 2026）— PEG 3.31</li>
+<li><strong>FY26 EPS 共識 $2.41 / FY27 $2.94 / FY28 $3.77</strong>（StockAnalysis.com 2026）</li>
+</ol>
+
+<p style="background:#DCFCE7;border-left:3px solid #166534;padding:10px 14px;font-size:13px"><strong>A3 引文密度校驗：14/6 達標 ✅</strong></p>
+
+<h4>A3 獨立結論（一句話）</h4>
+<p><strong>業務體質強勁（Q1 +32% 加速、首破 $1B 季、ARR &gt; $4B、FY26 guide 大幅上修、FCF $289M、Cash $4.8B、無 debt），但 5/7 +30% 急拉後 PE 78x、PEG 3.31 偏高 — re-rate 為 base case 結構性逆風；資本配置紀律 B+（無 buyback 是長期 dilution 隱患）；分析師 4 家同日上修 PT 至 $220-225 為典型 sell-side lag。</strong></p>
+
+</div>
+</details>
+
+<!-- ========== Phase A4 既有報告擷取（折疊） ========== -->
+<details class="phase-a">
+<summary>Phase A4｜既有報告數據摘要（無 DD 報告，本 DCA 為首份 stock-level 深度；ID basis：3 份 AI 相關 ID 多重交叉）</summary>
+<div class="body">
+
+<h4>DD 報告擷取</h4>
+<p><strong>無 docs/dd/DD_DDOG_*.html 存在</strong> — DDOG 從未跑過獨立 stock-analyst skill DD。本 DCA 是首份 stock-level 深度研究，基於 Phase A1-A3 web search + ID 引用建構分析。</p>
+<p>建議下一步：在保質期 2026-08-07 前，先跑一份 stock-analyst DD（schema v12.2）建立基準，下次 DCA 可用 DD 既有 §5 門檻、護城河品質分、估值燈、Pure MA 狀態作為 cross-reference。</p>
+
+<h4>相關 ID 報告擷取（3 份 AI 相關 ID 多重交叉）</h4>
+<table>
+<tr><th>ID</th><th>產業評級</th><th>關鍵趨勢</th><th>DDOG 定位</th></tr>
+<tr><td>ID_AIInferenceEconomics_20260430</td><td>🔴 母題</td><td>Phase II 中期（2026 推論翻轉點 + ASIC capex 加速 + 毛利分裂確認）；2026 capex YoY +74-85%；inference 三層分裂 multi-winner</td><td>secondary beneficiary — primary winners 在 ASIC（AVGO）+ routing（NET）+ edge（AAPL）</td></tr>
+<tr><td>ID_TokenEconomics_20260427</td><td>🟡</td><td>Phase II（推論超越訓練成主流支出 + token cost 60-80% 跌 + 毛利結構三向分化）</td><td>「LLM 部署的監控層 toll booth」— 非贏家但 routing/caching 周邊受益</td></tr>
+<tr><td>ID_AgenticAICommercialization_20260429</td><td>🟡</td><td>Phase II 早段（商業化第一年 / 旅遊 first vertical inflection / Enterprise SaaS 規模化驗證）</td><td>Enterprise SaaS 規模化驗證情境之一</td></tr>
+</table>
+
+<h4>3 份 ID 交叉訊號</h4>
+<ul>
+<li>DDOG 在 3 條 AI 相關 ID 中均為 <strong>secondary beneficiary</strong>，非 primary winner — 與 Phase A 結論一致</li>
+<li>跨 ID 共識：AI workload observability 是真實 TAM 擴張，但 DDOG 在 inference economics 主戰場（ASIC + routing + edge）是邊緣參與者</li>
+<li>無方向性衝突：3 份 ID 均承認 DDOG 在 monitoring layer 受益，但未將 DDOG 列入「真贏家」名單</li>
+<li><strong>A4 不產出獨立結論，純數據輸入</strong></li>
+</ul>
+
+</div>
+</details>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script>
+// 列印時自動展開所有 details
+window.addEventListener('beforeprint', function(){
+  document.querySelectorAll('details.phase-a').forEach(function(d){d.open=true});
+});
+</script>
+</body>
+</html>

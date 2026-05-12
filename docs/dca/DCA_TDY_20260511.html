@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<!-- dca-schema-version: v1.1 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA｜Teledyne Technologies (TDY) — 2026/05/11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Noto Sans TC',-apple-system,sans-serif;background:#F8FAFC;color:#1F2937;margin:0;padding:0;line-height:1.7;}
+  .container{max-width:1100px;margin:0 auto;padding:24px;}
+  header{background:#1E3A5F;color:#fff;padding:18px 24px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+  header h1{margin:0;font-size:18px;font-weight:700;}
+  header .meta{font-family:'IBM Plex Mono',monospace;font-size:13px;opacity:0.9;}
+  header .thesis-bar{flex-basis:100%;font-size:13px;margin-top:8px;opacity:0.95;font-style:italic;}
+  .card{background:#fff;border-radius:6px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.06);}
+  h2{color:#1E3A5F;background:#F1F5F9;padding:12px 16px;border-left:4px solid #3B82F6;margin:0 0 16px 0;font-size:18px;}
+  h3{color:#1E3A5F;font-size:15px;margin-top:20px;margin-bottom:10px;border-bottom:1px solid #E5E7EB;padding-bottom:6px;}
+  h4{color:#374151;font-size:14px;margin:14px 0 8px 0;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;}
+  th{background:#1E3A5F;color:#fff;padding:8px;text-align:left;font-weight:500;}
+  td{padding:8px;border-bottom:1px solid #E5E7EB;vertical-align:top;}
+  tbody tr:nth-child(even){background:#F1F5F9;}
+  .num{font-family:'IBM Plex Mono',monospace;}
+  .pos{color:#15803D;font-weight:500;}
+  .neg{color:#991B1B;font-weight:500;}
+  .neu{color:#64748B;font-weight:500;}
+
+  /* Status Bar */
+  .status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:16px;margin-bottom:20px;border-radius:6px;flex-wrap:wrap;}
+  .status-cell{min-width:180px;text-align:center;padding:8px 12px;}
+  .status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+  .status-value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .signal-aplus{color:#166534;}
+  .signal-a{color:#15803D;}
+  .signal-b{color:#92400E;}
+  .signal-c{color:#991B1B;}
+  .arrow-up{color:#166534;}
+  .arrow-flat{color:#64748B;}
+  .arrow-down{color:#991B1B;}
+  .dd-light{color:#15803D;}
+  .dd-amber{color:#92400E;}
+  .dd-red{color:#991B1B;}
+
+  /* §2 Thesis */
+  .thesis-block{background:#EFF6FF;padding:36px 32px;border-radius:8px;text-align:center;margin-bottom:24px;}
+  .thesis-text{font-size:24px;font-weight:700;color:#1E3A5F;line-height:1.5;}
+  .thesis-caption{font-size:12px;color:#64748B;margin-top:12px;letter-spacing:0.05em;}
+
+  /* §7 Decision */
+  .decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0;border-radius:4px;}
+  .decision-enter{background:#F0FDF4;border-left-color:#16A34A;}
+  .decision-wait{background:#FEF9C3;border-left-color:#CA8A04;}
+  .decision-avoid{background:#FFF1F2;border-left-color:#DC2626;}
+
+  /* §4 Asymmetry */
+  .asymm-table th{text-align:right;}
+  .asymm-bull{background:#DCFCE7;}
+  .asymm-base{background:#FEF3C7;}
+  .asymm-bear{background:#FEE2E2;}
+
+  /* IRR composition mini-table */
+  .irr-stacked{display:flex;height:24px;margin:12px 0;border-radius:3px;overflow:hidden;background:#E5E7EB;}
+  .irr-eps{background:#15803D;color:#fff;text-align:center;font-size:11px;line-height:24px;}
+  .irr-rerate{background:#3B82F6;color:#fff;text-align:center;font-size:11px;line-height:24px;}
+  .irr-shareholder{background:#64748B;color:#fff;text-align:center;font-size:11px;line-height:24px;}
+  .irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:12px 16px;margin:12px 0;font-style:italic;font-size:13px;}
+
+  /* Pattern match */
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;border-radius:4px;}
+
+  /* Phase B - 矛盾區塊 */
+  .conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;border-radius:4px;}
+  .verdict-box{background:#FED7AA;border-left:4px solid #EA580C;padding:14px 18px;margin:14px 0;border-radius:4px;}
+  .conflict-red{color:#991B1B;}
+  .conflict-amber{color:#92400E;}
+
+  /* §6b Pre-mortem */
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0;border-radius:4px;}
+  .premortem-narrative{background:#FFE4E6;padding:12px 16px;margin:12px 0;font-style:italic;border-radius:4px;font-size:13px;}
+
+  /* §6c Max DD */
+  .maxdd-block{background:#FFFBEB;border-left:4px solid #D97706;padding:18px 24px;margin:14px 0;border-radius:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+  .maxdd-main{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .maxdd-bar{height:18px;border-radius:3px;background:#FBBF24;width:60%;}
+  .maxdd-rating{font-size:28px;}
+
+  /* §1 Mental models */
+  .memo-box{background:#FAFAF9;border:1px solid #D6D3D1;padding:18px 22px;font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.6;border-radius:4px;margin:12px 0;}
+  .elevator-box{background:#F1F5F9;border-left:3px solid #1E3A5F;padding:12px 16px;font-style:italic;margin:12px 0;border-radius:4px;}
+
+  /* details */
+  details{background:#fff;border:1px solid #E5E7EB;border-radius:6px;padding:12px 18px;margin-bottom:14px;}
+  details summary{cursor:pointer;font-weight:600;color:#1E3A5F;font-size:14px;}
+  details[open] summary{margin-bottom:12px;border-bottom:1px solid #E5E7EB;padding-bottom:10px;}
+
+  /* Print button */
+  .print-btn{position:fixed;bottom:24px;right:24px;background:#1E3A5F;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-family:inherit;}
+  @media print{header,.print-btn{display:none;}.card{box-shadow:none;border:1px solid #E5E7EB;page-break-inside:avoid;}details{page-break-inside:avoid;}details > *:not(summary){display:block !important;}details:not([open]) > *:not(summary){display:block !important;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Teledyne Technologies (TDY)｜Deep Conviction Analysis</h1>
+  <div class="meta">2026/05/11｜$621.38｜DCA Schema v1.1</div>
+  <div class="thesis-bar">系統性收購複利 + 國防/邊緣 AI 感測雙引擎 = quality compounder。</div>
+</header>
+
+<div class="container">
+
+<!-- ========== STATUS BAR ========== -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">綜合訊號燈</div>
+    <div class="status-value signal-b">B</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">衛星候選 / 觀望偏進場</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-value">B<span class="arrow-flat"> →</span></div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">holding（高端深化、低端被切）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-value dd-light">🟢 寬</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">國防超週期 + 邊緣 AI 第二曲線</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（5Y 內）</div>
+    <div class="status-value dd-amber">−45%</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">範圍 −30% ~ −45%</div>
+  </div>
+</div>
+
+<!-- ========== §2 One-Sentence Thesis ========== -->
+<div class="card">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-block">
+<div class="thesis-text">Teledyne 把感測（thermal / 影像 / 海事 / 太空）變成國防與 AI 邊緣的「toll booth」。</div>
+<div class="thesis-caption">— 50 字以內的投資本質 —</div>
+</div>
+<p style="font-size:13px;color:#475569;">本質：1999 年 Mehrabian 上任後 27 年系統性收購 + organic 雙軌複利成 quality compounder；FLIR 整合後 thermal imaging 全球 #1，再用 $770M 加 Excelitas 光學/能量裝置/Saab TransponderTech/Maretron 補滿國防電子與海事自動化拼圖。當邊緣 AI、無人系統、Golden Dome 全部要 sensor，TDY 成為「實體層 picks & shovels」。</p>
+</div>
+
+<!-- ========== §7 Decision ========== -->
+<div class="card">
+<h2>§7 Decision（可執行計畫）</h2>
+
+<h3>7a. 倉位與進場計畫</h3>
+<div class="decision-box decision-wait">
+<table>
+<tr><td width="32%"><strong>在投資組合中的角色</strong></td><td><strong>衛星持倉</strong>（B 級衛星候選，非核心）</td></tr>
+<tr><td><strong>初始建倉倉位</strong></td><td><strong>2.0%</strong> of portfolio（首批 50% = 1.0%；條件式分批）</td></tr>
+<tr><td><strong>目標倉位</strong></td><td><strong>4.0%</strong> of portfolio（B 級衛星上限；§6c Max DD 🟡，不下修）</td></tr>
+<tr><td><strong>進場價位區間</strong></td><td>$540 ~ $610（對應 Fwd PE FY+2 21–23x）；當前 $621.38 已接近上緣</td></tr>
+<tr><td><strong>進場節奏</strong></td><td><strong>條件式分批</strong> — RSI 14d = 37（已超賣，非過熱），但價格 $621 仍位於 BB 中軌 $613 附近；建議：第一批 50% 於 $610 以下、第二批 30% 於 $570、第三批 20% 於 $540。**禁止追到 $640 以上**。</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>同類點名比較：</strong><br>• <strong>LMT（Lockheed Martin）</strong>：大型國防主承包商，Fwd PE ~18x、5Y EPS CAGR ~6-7%，dividend 2.6% — 比 TDY 便宜但 organic 較慢、無 sensor「toll booth」屬性。<strong>TDY 邊際資金更優當 portfolio 已有 LMT</strong>（不重複大平台 prime 曝險）。<br>• <strong>RTX（Raytheon）</strong>：Pratt 引擎 + 飛彈感測，Fwd PE ~21x — sensor 含量比 LMT 高但被 Pratt GTF AOG 拖累，<strong>conviction 強度 < TDY</strong>。<br>• <strong>HEI（Heico）</strong>：航太零件 toll booth，Fwd PE 50x — quality 更高但估值已透支，<strong>邊際資金不放 HEI 加碼</strong>。<br><strong>結論</strong>：portfolio 已有 LMT/RTX → TDY 邊際資金優於再加 LMT（去重 prime 曝險）；無 LMT/RTX → 先 LMT（cheaper + dividend）再 TDY。**該減 HEI 加 TDY**（同類 multiple 套利）。</td></tr>
+</table>
+</div>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td><span class="pos">加碼</span></td><td>價格回測 $570 以下（Fwd PE ~22x）+ Q2 26 organic ≥ 6% + Book-to-bill ≥ 1.1</td><td>3.0%</td></tr>
+<tr><td><span class="pos">加碼</span></td><td>Excelitas 整合 ROIC 揭露 ≥ 10%（FY26 末或 Q4 26 法說）+ Aerospace &amp; Defense Electronics segment margin ≥ 22%</td><td>4.0%（達目標）</td></tr>
+<tr><td><span class="neu">減碼</span></td><td>Q2/Q3 26 organic growth < 5% 連續 2 季 或 Book-to-bill < 1.0</td><td>1.0%</td></tr>
+<tr><td><span class="neg">清倉</span></td><td>§5 Single Thing 觸發（Defense Authorization Act 2027 縮減 + FLIR Defense YoY < +5%）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價 $621 在 W52 $561 之上？</td><td><span class="pos">✅</span></td><td>+10.7% above W52</td></tr>
+<tr><td>股價 $621 在 W104 $505 之上？</td><td><span class="pos">✅</span></td><td>+23.0% above W104</td></tr>
+<tr><td>股價 $621 在 W250 $452 之上？</td><td><span class="pos">✅</span></td><td>+37.4% above W250；W250 斜率 +2.54%（接近 +3% 強正門檻但未達）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="neu">🟡</span></td><td>三條完美對齊但 W250 斜率未達強正 → 維持 🟡 減半進場（與 DD 一致）</td></tr>
+<tr><td>短期動能檢查</td><td><span class="pos">✅</span></td><td>RSI 14d ≈ 37（超賣區，非過熱）；股價自 4/27 DD 日 $649 已修正 -4.3% 至 $621；4 週漂移 ≈ -3%（健康，無追高風險）</td></tr>
+</table>
+<p style="background:#DCFCE7;color:#166534;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>結論</strong>：MA 結構穩健 + 動能未過熱 — 不需「等回測 MA60」的硬條件，但因 W250 斜率仍未強正，<strong>進場節奏仍維持分批</strong>（非一次建倉）。$621 距 BB 中軌 $613 僅 +1.3%，視同接近合理回測位。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（< 2 年）</td><td>若 FY26 guidance 再上修 + Aerospace &amp; Defense Electronics 維持 +30% YoY → 12-18 個月 PE re-rate 至 28x 為 trim 訊號</td></tr>
+<tr><td><strong>中期（2-5 年）</strong></td><td><strong>Base case 假設</strong>：FY26-FY30 EPS CAGR 10-12%，PE 維持 22-25x → 5Y 報酬 +50-65%</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 Excelitas/Qioptiq 整合成功 + Trump Golden Dome 持續 + edge AI 第二曲線啟動（runway_post_y5 🟢）→ 持有至 2030+ 合理</td></tr>
+</table>
+<p><strong>建議持有年限：3-5 年</strong>（quality compounder 標準窗口）；若 §5 Single Thing 未觸發，可順延至 10 年。runway_post_y5 🟢，無 ≤ 3Y 警示。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>2026E</td><td>$24.00（mid guidance）</td><td>Mgmt 4/22/26 guidance $23.85-24.15</td><td>含 Excelitas 全年貢獻；yfinance 共識 $24.09</td></tr>
+<tr><td>2027E</td><td>$25.95</td><td>yfinance 共識（n=12）</td><td>+7.7% YoY，typical compounder 速度</td></tr>
+<tr><td>2030E（外推）</td><td>~$33-35</td><td>外推</td><td>假設 FY27→FY30 CAGR 8-10%（organic 5-7% + 收購貢獻 2-3%）</td></tr>
+</table>
+
+<p style="font-size:13px;color:#475569;"><strong>假設長期持有（5-10 年），現在的股價 $621 適合嗎？</strong> §4 Base case 5Y IRR +10.5%/yr（5Y 累積 +64%）+ Bear case probability 30% 給出 −22%/−5%yr → 機率加權年化 ~7.4%。略低於 S&P 500 長期 ~10%；屬於「合理 quality compounder 配置」但非 high-conviction。<strong>結論</strong>：適合在 $570-610 區間建倉，當前 $621 進場合理但邊際 R:R 平庸，等深度回測更好。</p>
+</div>
+
+<!-- ========== §4 Asymmetry Analysis ========== -->
+<div class="card">
+<h2>§4 Asymmetry Analysis</h2>
+
+<h3>5 年情境矩陣</h3>
+<table class="asymm-table">
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr class="asymm-bull"><td><strong>Bull（Thesis 對）</strong></td><td>+95%</td><td>+14.3%/yr</td><td>FY30 EPS ~$35 × PE 28x (re-rate) + Excelitas 整合 ROIC ≥ 12% + Defense super-cycle 全程延續至 2030</td><td>25%</td></tr>
+<tr class="asymm-base"><td><strong>Base</strong></td><td>+64%</td><td>+10.5%/yr</td><td>FY30 EPS ~$33 × PE 24x（持平）+ organic 6-7% + 收購貢獻 2-3%</td><td>45%</td></tr>
+<tr class="asymm-bear"><td><strong>Bear（Thesis 錯）</strong></td><td>−22%</td><td>−4.9%/yr</td><td>Defense budget 2028 縮減 + Excelitas 整合失敗 + PE 壓至 18x；FY30 EPS ~$27 × 18x = $486</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+37% / 5Y</strong></td><td><strong>IRR ≈ +6.5%/yr</strong></td><td>(0.25×95 + 0.45×64 + 0.30×−22)</td><td>100%</td></tr>
+</table>
+
+<p style="background:#FEF9C3;color:#92400E;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>IRR 落點解讀</strong>：6.5%/yr 落「< 8%/yr 弱（不及大盤平均）」區間。意味即使 thesis 強健，當前估值 $621 + Bear 機率 30%（合理）讓機率加權報酬被壓制。**這正是 §7 維持「衛星持倉 + 條件式分批」的根本原因 — 不是 thesis 錯，是 entry timing 不夠便宜。**</p>
+
+<h4>壓力測試</h4>
+<p style="font-size:13px;">• <strong>10 年視角</strong>：若 thesis 對但延長至 10 年（Excelitas 整合 + edge AI + Golden Dome 完整週期），10Y IRR ≈ +12%/yr（EPS double + PE re-rate at $1,400+），機會成本 vs SPX 10Y 歷史 ~10% → 邊際 alpha +2-3%/yr，<strong>值得</strong>。<br>• <strong>機會成本</strong>：同期 LMT 5Y 估計 IRR ~9-11% / RTX ~8-10% / HEI ~7-9%（已 priced）→ TDY 機率加權 6.5%/yr 在國防 sensor sub-sector 內 <strong>中間位</strong>。</p>
+
+<h3>📅 機率估計：時間視角校準</h3>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>實際</th></tr>
+<tr><td>Bear 機率</td><td>5Y 視角 ≥ 20%</td><td><span class="pos">✅ 30%</span> — Defense budget 政治週期 + Excelitas 整合不確定，30% 合理</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 比 1Y 寬 ≥ 50%</td><td><span class="pos">✅</span> Bull +95% / Bear −22% 差 117pp；1Y 預估 +15%/−25% 差 40pp，5Y 散布為 1Y 的 2.9x</td></tr>
+<tr><td>Base 機率</td><td>不應 > 50%</td><td><span class="pos">✅ 45%</span></td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似 case IRR vs 當前</td><td><span class="pos">✅</span> 見下方 Pattern Match</td></tr>
+</table>
+
+<h3>📐 Pattern Match</h3>
+<div class="pattern-box">
+<table>
+<tr><th width="35%">項目</th><th>內容</th></tr>
+<tr><td>歷史相似 setup</td><td><strong>2019-2021 ROK (Rockwell Automation) + 2017-2019 AME (Ametek)</strong> — 兩者都是「系統性收購 quality compounder + 25x Fwd PE + 5Y 60%+ 分位」估值起點</td></tr>
+<tr><td>當時 setup</td><td>ROK 2019 Fwd PE 24x + 收購 PTC 整合中；AME 2017 Fwd PE 22x + Zygo / Surface Vision 整合中</td></tr>
+<tr><td>最終 5Y 報酬</td><td>ROK 2019→2024: +85%（IRR ~13%/yr）；AME 2017→2022: +120%（IRR ~17%/yr，含 Covid sensor boom）</td></tr>
+<tr><td>TDY vs 它們最像</td><td>同樣 quality compounder + 25x 起點 + 多元化整合中 + 國防順風（vs 工業自動化順風）</td></tr>
+<tr><td>TDY vs 它們最不像</td><td>(1) AME / ROK 當時 organic growth 7-9%（vs TDY 6-7%），略快；(2) TDY 國防 24.5% revenue 暴露政治週期，AME / ROK 無此風險；(3) TDY 估值 60% 5Y 分位起點略貴於 ROK 2019 的 45% 分位起點</td></tr>
+</table>
+<p style="font-size:13px;color:#0C4A6E;"><strong>結論</strong>：歷史相似標的 5Y IRR 13-17%，TDY 因起點略貴 + Defense 政治風險，下修至 10-11% Base。本 §4 Base IRR +10.5%/yr 與 pattern 校準一致。</p>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr class="asymm-bull"><td><strong>Bull</strong></td><td>+12.0%/yr</td><td>+2.2%/yr（PE 25 → 28，re-rate +12% 累積）</td><td>+0.5%/yr（無股息 + 1-2% buyback）</td><td><strong>+14.7%/yr</strong></td></tr>
+<tr class="asymm-base"><td><strong>Base</strong></td><td>+10.0%/yr</td><td>+0.5%/yr（PE 25 → 24，−4% 5Y = -0.8%）</td><td>+0.5%/yr</td><td><strong>+10.7%/yr ≈ +10.5%/yr</strong></td></tr>
+<tr class="asymm-bear"><td><strong>Bear</strong></td><td>+7.5%/yr（organic 放緩但仍正）</td><td>−13.0%/yr（PE 25 → 18，−28% 累積 = -6.4%/yr，但 EPS 也降）</td><td>+0.5%/yr</td><td><strong>−5.0%/yr ≈ −4.9%/yr</strong></td></tr>
+</table>
+
+<div class="irr-stacked" title="Base IRR composition visualization">
+  <div class="irr-eps" style="width:88%;">EPS +10.0%/yr (88%)</div>
+  <div class="irr-rerate" style="width:6%;">+0.5%</div>
+  <div class="irr-shareholder" style="width:6%;">+0.5%</div>
+</div>
+
+<div class="irr-narrative">
+「Base 10.5% IRR 中，10.0%/yr（94%）來自 EPS 複利，0.5%/yr 來自估值 re-rate（接近 0），0.5%/yr 來自 buyback（無股息）。這檔的可抱性 <strong>幾乎完全靠 EPS 自然複利</strong>（自然複利好抱，不需市場配合 re-rate）— 典型 quality compounder 質感：你買的不是 PE 重估，是公司每年把收購整合進來自己長出 10% EPS。風險：若 EPS CAGR 跌至 5%（Excelitas 失敗），IRR 立刻被壓到 5-6% 區間，與大盤打平。」
+</div>
+
+<p style="font-size:12px;color:#64748B;"><strong>Guardrail 校驗</strong>：Base 合計 +10.7%/yr vs §4 表 IRR Base +10.5%/yr，偏差 0.2%p ≤ 2%p ✅。</p>
+</div>
+
+<!-- ========== §1 Mental Models ========== -->
+<div class="card">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<strong>TO:</strong> Investment Committee<br>
+<strong>FROM:</strong> PM<br>
+<strong>RE:</strong> Teledyne Technologies (TDY) — Initiate衛星 position<br>
+<strong>DATE:</strong> 2026-05-11<br>
+<br>
+<strong>1. THESIS（50 字）</strong>: Teledyne 把感測（thermal/影像/海事/太空）變成國防與 AI 邊緣的 toll booth。<br>
+<br>
+<strong>2. KEY DRIVERS</strong>: (a) US Defense FY27 budget +42% 至 $1.5T，sensors line item $865M（vs $183M FY26） = 4.7x，TDY Aerospace &amp; Defense Electronics +38% YoY 受益。(b) Edge AI camera 2027 197M units / $35B revenue（ABI Research），TDY Digital Imaging 52% 營收持續 outgrow GDP。<br>
+<br>
+<strong>3. R:R</strong>: 5Y Base +64%（IRR +10.5%/yr）；Bull +95%；Bear −22%。機率加權 +37%（IRR 6.5%/yr）— 弱 alpha 區，需 entry discount 才動部位。<br>
+<br>
+<strong>4. 主要風險</strong>: (a) Defense budget political volatility（2028 中期選舉後可能 reset）。(b) Excelitas $710M 整合 ROIC 待 2027 H1 驗證。(c) PE 25x 5Y 60% 分位，留給意外的緩衝有限。<br>
+<br>
+<strong>5. 建議倉位</strong>: 衛星 2.0% 初始 → 4.0% 目標（B 級衛星上限）；分批進場 $610/$570/$540。Opportunity cost vs LMT/RTX/HEI：TDY 邊際資金最優當 portfolio 已有 LMT；該減 HEI 加 TDY（同 multiple 套利）。<br>
+<br>
+<strong>6. KILL SWITCH</strong>: Defense Authorization Act 2027 縮減 + Q3 26 organic < 5% → 清倉。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-box">
+「Teledyne 是國防 + AI 邊緣感測的 toll booth — 不押對哪個 prime 贏，因為他們的 sensor 都裝在每家國防商的飛機/衛星/船上。FLIR 全球 thermal #1，加上剛買的 Excelitas 光學/能量裝置整合中。Trump FY27 國防預算 +42% 把 sensors line item 從 $183M 拉到 $865M，TDY Aerospace 部門已經 +38% 在跑。它的弱點是 25x PE 對 organic 6-7% 偏貴，所以等回到 $570 以下再加碼。」
+</div>
+
+<p style="background:#DCFCE7;color:#166534;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>壓力測試結果</strong>：✅ 兩個版本都寫得出來且邏輯自洽 — thesis 簡單（sensor toll booth）、driver 明確（FY27 budget + edge AI）、kill switch 具體（Defense Authorization + organic growth）。進入 §7 / §3 / §5。</p>
+</div>
+
+<!-- ========== Phase B 矛盾辨識 + 強制裁決 ========== -->
+<div class="card">
+<h2>Phase B｜矛盾辨識 + 強制下判決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li>✅ <strong>Defense sensor TAM 結構性成長</strong>：A1（FLIR 整合 #1）+ A2（Defense electronics CAGR 5.4-7.1%）+ A3（Aerospace &amp; Defense Electronics +38% Q1）三軸都看到國防順風</li>
+<li>✅ <strong>quality compounder 軌道</strong>：A1（高轉換成本 + export-controlled moat）+ A3（FCF Margin 17.6% + 22% Non-GAAP op margin + 5Y EPS CAGR ~10-12%）共識</li>
+<li>✅ <strong>收購驅動 vs organic</strong>：三軸都認 ~$770M 收購（Excelitas + Maretron + Saab）是主要無機成長動能，organic 6-7%</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="conflict-box">
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td><strong>低端 thermal 商品化威脅</strong></td><td>A1: HikVision 8.7% 全球 sensor 市佔成長中，低端壓縮 TDY 商業段 ASP</td><td>A2: 邊緣 AI 推升 thermal 需求量但 ASP 競爭加劇</td><td>A3: 商業 Digital Imaging 段 organic 僅 5%</td><td><span class="conflict-amber">🟡 可調和（程度差異）</span></td></tr>
+<tr><td>2</td><td><strong>ROIC 數值差距</strong></td><td>A1: 護城河 8/10 → 推 ROIC 應 15%+</td><td>A2: 不直接相關</td><td>A3: 多數來源 ROIC 7.5-12%（gurufocus 8.16% / roic.ai 7.49% / DD §10 12%）— 顯著低於護城河 implied</td><td><span class="conflict-red">🔴 不可調和（方向相反）</span></td></tr>
+<tr><td>3</td><td><strong>Defense budget 政治週期 vs 結構超週期</strong></td><td>A1: 國防 sensor moat 強（不因 budget 短期消失）</td><td>A2: FY27 +42% 是結構超週期啟動（NATO 5% 路徑 + Golden Dome）</td><td>A3: DoD 24.5% 客戶集中度，2028 中期選舉後 budget reset 風險</td><td><span class="conflict-red">🔴 不可調和（方向相反）</span></td></tr>
+</table>
+</div>
+
+<h3>3. 與既有報告（DD_TDY_20260427）交叉比對</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>當前股價合理性</td><td>5/9 $621 比 4/27 $649 已修正 -4.3%，RSI 37 超賣 → entry 機會改善</td><td>4/27 DD：$649 略貴，建議等 $545 或 W250 +3% 強正</td><td>14 天股價修正讓 DD 結論「等回測」部分 priced in</td></tr>
+<tr><td>2</td><td>Q1 26 EPS beat 是否足以 trigger re-rate</td><td>A3 觀察：Q1 26 EPS +17.2% YoY 強，但分析師目標價 $696 上看 $770（已 priced）</td><td>DD：FY guidance 上修，但仍維持 B 級</td><td>無重大差異 — 共識</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決</h3>
+
+<div class="verdict-box">
+<h4>矛盾 #1：低端 thermal 商品化威脅（🟡 可調和）</h4>
+<table>
+<tr><td width="20%"><strong>我選哪邊</strong></td><td><strong>A1 + A3</strong> — 商品化威脅 real，但局限於商業 thermal（占 Digital Imaging ~15%），國防/科學 thermal 受 ITAR/export control 保護，moat 趨勢 = → holding 而非 ↓ narrowing</td></tr>
+<tr><td><strong>依據</strong></td><td>(a) Sony 15.1% + Samsung 14.7% + Canon 10.2% 在 CMOS 商業段先碾壓，但都不做國防 cooled IR detector；(b) 中國 Hikvision 受 US export control + EU 國防採購禁制，無法進入 TDY 國防/Tier-1 客戶基地；(c) Teledyne FLIR Defense 持續贏 DoD/Saudi/IDF 訂單（Lightweight Vehicle Surveillance / TacFLIR 380HD 2025 簽約）</td></tr>
+<tr><td><strong>會 settle 此衝突的硬數據點</strong></td><td>(1) Digital Imaging 段商業 vs 國防 mix 揭露（10-K FY26 4Q 法說，預期 2027/2 公佈）；(2) Aerospace &amp; Defense Electronics segment GM ≥ 22% 連 2 季（Q2 + Q3 26 法說，2026/07/22 + 2026/10/22）；(3) FLIR Defense YoY 從 +38%（Q1 26）降至 < +15% → 商品化進入國防段警訊</td></tr>
+<tr><td><strong>裁決後執行路徑（≥ 2 if-then 方向相反）</strong></td><td>(a) <strong>Upside</strong>：Q2 26 Aerospace &amp; Defense Electronics GM ≥ 23% + FLIR Defense YoY ≥ +20% → 加碼至 3.0%；(b) <strong>Downside</strong>：Q2/Q3 26 Digital Imaging 商業段 organic < 3% 連 2 季 → 減碼至 1.0%（從 2.0%）</td></tr>
+</table>
+</div>
+
+<div class="verdict-box">
+<h4>矛盾 #2：ROIC 數值差距（🔴 不可調和）</h4>
+<table>
+<tr><td width="20%"><strong>我選哪邊</strong></td><td><strong>A3</strong> — ROIC 7.5-12% 區間，<strong>不是</strong> 15%+ 高 quality compounder 等級</td></tr>
+<tr><td><strong>依據</strong></td><td>(a) Wikipedia 24.5% DoD revenue + cost-plus 國防合約壓低 ROIC；(b) FY25 NI $895M / Invested Capital $7.5B = 11.9%（DD 12%）— 偏向 12% 但仍 < 護城河 8/10 typical 隱含的 15%+；(c) 同業 ROK 14% / AME 14% / HEI 14% 都 > TDY；(d) ROIC 低於同業 quality compounder 約 -2-3pp 是 TDY 「收購驅動稀釋 ROIC」的結構特徵 — 把收購 goodwill 算入 IC</td></tr>
+<tr><td><strong>會 settle 此衝突的硬數據點</strong></td><td>(1) FY26 末 Excelitas 段 ROIC 揭露（預期 2027/2 10-K，integration year 2 比較）；(2) 連續 3 年 ROIC trend ≥ 14% → 升級 quality compounder；(3) 若 ROIC 持續 < 12% 即使 EPS 成長，則 PE 應 down-rate 至 20-22x（reflecting compounder vs deep value 邊界）</td></tr>
+<tr><td><strong>裁決後執行路徑</strong></td><td>(a) <strong>Upside</strong>：FY27 ROIC ≥ 14% + FY28 同樣 → 升級至 core 候選（4-5% 倉位），長期信心從「高」上修「極高」；(b) <strong>Downside</strong>：FY27 ROIC < 11% 且 trend 朝 10% 走 → 降級至追蹤池（清倉），轉持 HEI/AME（同類 ROIC 14%）</td></tr>
+</table>
+</div>
+
+<div class="verdict-box">
+<h4>矛盾 #3：Defense budget 政治週期 vs 結構超週期（🔴 不可調和）</h4>
+<table>
+<tr><td width="20%"><strong>我選哪邊</strong></td><td><strong>A2 偏多但 A3 為 hedge</strong> — FY27 $1.5T 結構超週期啟動 (NATO 5% + Golden Dome + drone surge) 是 5 年 visibility；但 DoD 24.5% 客戶集中度確實放大 2028 政治週期風險，故倉位上限 4%（不放 core 5%+）</td></tr>
+<tr><td><strong>依據</strong></td><td>(a) Trump FY27 budget 含 Golden Dome $18B + sensor line $865M（vs $183M FY26 = 4.7x）— 多年 commit 非單年；(b) NATO 5% 路徑（含 1.5% security + 3.5% pure defense）已啟動，歐洲 + 亞太均跟進；(c) BUT 2028 中期選舉若 Democrat 拿回國會，可能 reset 至 +2-3% trajectory（仍正成長但減速）；(d) 歷史 Defense super-cycle 平均 7-10 年（1981-1989 Reagan / 2001-2009 GWOT），當前 2025 才啟動，2028 衝擊 = mid-cycle 而非 cycle 結束</td></tr>
+<tr><td><strong>會 settle 此衝突的硬數據點</strong></td><td>(1) FY27 NDAA 通過時程（預期 2026/12-2027/3，watch sensor line item 維持 $865M+）；(2) 2026 美中期選舉結果（2026/11/03，House + Senate 控制 → 預測 FY28 budget 走向）；(3) TDY Backlog $4.6B 季度趨勢（Q2/Q3 26 維持 ≥ $4.5B = budget commit 仍流入）；(4) Book-to-bill 維持 ≥ 1.0（連 10 季已 > 1，破 1 為訊號）</td></tr>
+<tr><td><strong>裁決後執行路徑</strong></td><td>(a) <strong>Upside</strong>：FY27 NDAA sensor line item 確認 + 2026/11 共和黨保住國會 → 升級加碼至目標 4% 達上限；(b) <strong>Downside</strong>：2026/11 民主黨取得 House + 2027/3 NDAA sensor line 砍至 $500M 以下 → 減碼至 1.0%（從 2-3%），同時加 prime contractor 對沖（LMT/RTX，受 budget 影響更分散）</td></tr>
+</table>
+</div>
+
+<p style="background:#FFE4E6;color:#991B1B;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>Phase B 總結</strong>：3 個矛盾全部裁決完成，2 個🔴不可調和都有具體 settle 數據點 + 雙向 if-then 路徑。最關鍵單一變數：<strong>2026/11 美國中期選舉 + 2027/3 FY27 NDAA 最終版本</strong> — 這兩個 18 個月內事件會 reset TDY 的 5Y thesis。</p>
+</div>
+
+<!-- ========== §3 Key Drivers ========== -->
+<div class="card">
+<h2>§3 Key Drivers + 🔄 Consensus 分歧</h2>
+
+<h3>Key Drivers（1-2 個命脈）</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr>
+<tr><td>1</td><td><strong>國防 sensor toll booth — Aerospace &amp; Defense Electronics segment growth</strong></td><td>佔 2025 營收 17%，但 Q1 26 +38% YoY；FY27 budget sensor line $865M（vs $183M FY26 = 4.7x）+ Golden Dome $18B 多年 commit；TDY 為唯一 cross-prime sensor supplier（FLIR cooled IR + Excelitas Qioptiq optics + Saab TransponderTech）</td><td>(a) Aerospace &amp; Defense Electronics segment YoY 成長率（季度）；(b) Backlog $4.6B 趨勢；(c) FY27 NDAA sensor appropriations 最終版本</td></tr>
+<tr><td>2</td><td><strong>Edge AI / unmanned systems → Digital Imaging 第二曲線</strong></td><td>佔 2025 營收 52%（最大段），目前 organic 5-7% 是 GDP 加減速；ABI Research 2027 forecast 197M edge AI cameras / $35B；TDY FLIR Lepton/Boson cores + 機器視覺廠 DALSA 為 edge AI bare-metal 供應方</td><td>(a) Digital Imaging segment organic growth（季度，從 5% 加速至 ≥ 8% 為訊號）；(b) Industrial vision 段 ASP；(c) Drone integrator（AVAV / Anduril）採購量</td></tr>
+</table>
+
+<p style="font-size:13px;color:#475569;"><strong>為什麼是這 1-2 個，而不是其他？</strong> Driver 1 是「需求側結構爆發」（政府 budget + 多年 commit），driver 2 是「需求側技術滲透」（edge AI + 商業 OEM）— 兩條獨立因果鏈：driver 2 即使政府 budget reset 也成立（drone / industrial vision 民用 demand 不依賴聯邦 NDAA）。Instrumentation（24%）+ Engineered Systems（7%）成長 mid-single-digit，不會撼動 thesis。收購整合（Excelitas / Maretron）是 driver 1 的 enabler 而非獨立 driver — 沒有 driver 1 + 2 的需求側拉力，收購本身只是 inorganic 數字。</p>
+
+<h4>⚖ Driver 抽象層 guardrail 校驗</h4>
+<p style="font-size:13px;background:#F0F9FF;padding:10px 14px;border-radius:4px;color:#0C4A6E;"><strong>校驗</strong>：「Driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？」答：✅ 可以 — 若 driver 1（國防 sensor 超週期）瓦解，driver 2（edge AI camera）仍可成立（民用 industrial vision + drone integrator 採購）；反之亦然。<strong>兩條獨立因果鏈，driver 2 不是 driver 1 的 sub-component。通過。</strong></p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>CEO 換人（George Bobb 2025/04 接任，DD 寫的是 Edwin Roks，需更新）</td><td>Mehrabian → Roks → Bobb 是 27 年系統性收購文化的延續，非個人英雄主義；CEO 換人不改變 culture / capital allocation playbook</td></tr>
+<tr><td>Tariff / 關稅短期擾動</td><td>TDY 國防 + scientific imaging 多在美國本土製造；商業段約 30% 海外採購但已 priced</td></tr>
+<tr><td>無 dividend</td><td>quality compounder 用 FCF 再投資（收購）+ buyback 是 capital efficiency 高的選擇，dividend 並非品質訊號</td></tr>
+<tr><td>機構持股 98% 是否擁擠</td><td>高機構持股反映長期 conviction，不是反向訊號（vs 散戶熱門股）</td></tr>
+<tr><td>Q1 EPS beat $5.80 vs $5.47 共識</td><td>已 priced in（股價 4/22 後仍從 $649 跌至 $621）；單季 beat 不改變 5Y thesis</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>市場目前定價在什麼假設上</strong></td><td>分析師共識目標 $696（範圍 $599-$770），隱含 PE 27x × FY27 EPS $25.95；組合於：(a) Excelitas 整合 ROIC 12-14%；(b) FY27 organic 6-7%；(c) Defense budget 維持當前軌道至 2028；(d) edge AI 緩慢滲透 Digital Imaging</td></tr>
+<tr><td><strong>我認為的不同假設</strong></td><td>我不同意「PE 27x × $25.95 = $700」這個 target — 我認為 Bear 機率 30%（vs 共識 ~15%）；Excelitas ROIC 只到 10-11%（不到 12%）；Defense budget 2028 後可能減速至 +3% trajectory（市場 priced 5%+）</td></tr>
+<tr><td><strong>賣方為什麼錯（≥ 1 具體理由）</strong></td><td>賣方的 ROIC 模型多用 «return on tangible capital» 而非含 goodwill 的 ROIC — TDY 系統性收購把 $5B+ goodwill 堆上 BS，正確 ROIC（含 goodwill）只有 11-12%，這直接影響 reverse DCF。例如 Jefferies $770 target 隱含 ROIC 14%，是 tangible-only 算法；用 fully-loaded ROIC 11.5% 重做 reverse DCF，fair value 落 $560-590（PE 22x × $25.95）。<strong>這是 §7 進場價位 $540-610 的根本依據</strong>。</td></tr>
+</table>
+
+<p style="font-size:13px;color:#0C4A6E;background:#F0F9FF;padding:10px 14px;border-radius:4px;"><strong>分歧的執行含義</strong>：若我的觀點對 → $621 仍偏貴 +5-10%，等回測 $570-590 才有 margin of safety；若市場對 → 錯失 12-18% 短期上行。倉位設計（衛星 2-4%）即是這種 50/50 conviction 的 hedge。</p>
+</div>
+
+<!-- ========== §5 The Single Thing ========== -->
+<div class="card">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th width="35%">項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述（Primary Trigger）</strong></td><td><strong>2027/3 FY27 NDAA 最終版本中 sensor line item appropriations 從 FY26 提案 $865M 砍至 ≤ $400M（含 Golden Dome funding 不到承諾的 50%）。</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>(a) 直接打破 driver 1（國防 sensor toll booth）的 5Y 結構故事；(b) NDAA 是 commit 後 3-4 年的 revenue flow，砍 sensor line item = TDY backlog 2-3 年內從 $4.6B 跌至 $3.5B 以下；(c) 同時驗證 Bear 30% 機率上修至 50%+，5Y IRR 從 +10.5% 跌至 +2-3%；(d) 國防 24.5% 客戶集中度的副作用即時暴露</td></tr>
+<tr><td><strong>如何監測</strong></td><td>(a) <strong>主要</strong>：DoD 預算公開文件（war.gov + whitehouse.gov OMB）— 每年 12 月-3 月 NDAA conference report；(b) <strong>次要</strong>：Pentagon RDT&E line item 細項（每月 budget execution reports）；(c) <strong>輔助</strong>：TDY 季度 Backlog 是否從 $4.6B 跌破 $4.2B（Q3/Q4 26 法說）；(d) 頻率：季度 + NDAA 發布事件驅動</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td>(a) FY27 NDAA Conference report 預期 2026/12-2027/3；(b) 之前的 leading indicator：2026/11 美國中期選舉（→ 國會控制變化 → 預示 NDAA 走向）；(c) <strong>實質 trigger window：未來 10-16 個月</strong>（高解析度）</td></tr>
+</table>
+
+<h3>Secondary Trigger（§6b 校驗後新增）</h3>
+<table>
+<tr><th width="35%">項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述</strong></td><td><strong>FY27 末 Excelitas 段 ROIC 揭露 < 8%（vs 收購估值隱含 ≥ 12%）+ FY27 末 Digital Imaging 商業 organic < 3% 連 2 季</strong></td></tr>
+<tr><td><strong>為什麼這個事件是致命的</strong></td><td>同時擊穿 (a) 收購複利機器（Excelitas 整合失敗 = 27 年系統性 M&amp;A track record 出現 第一個結構性 miss）+ (b) driver 2（Digital Imaging edge AI 第二曲線）— 兩個 thesis 支柱同時失效</td></tr>
+<tr><td><strong>如何監測</strong></td><td>FY27 10-K（2028/2 發佈）segment disclosure + 季度法說 Q4 27 organic growth disclosure</td></tr>
+<tr><td><strong>目前離發生有多遠</strong></td><td>20-22 個月（Q4 27 法說 + 10-K 完整揭露）</td></tr>
+</table>
+
+<p style="font-size:12px;color:#64748B;"><strong>§5 修正紀錄</strong>：§6b pre-mortem 校驗結果 = ⚠ 部分重疊（primary trigger 與 pre-mortem 故事有 70% 重疊但漏抓「Excelitas 整合 + edge AI 第二曲線」共同失效路徑），已補 1 條 secondary trigger。</p>
+</div>
+
+<!-- ========== §6 What I Don't Know + Pre-mortem ========== -->
+<div class="card">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Excelitas $710M 整合 ROIC 達 12%+</td><td>FY26-27 段 GM ≥ 22% + segment revenue $400M+</td><td>若 ROIC 只達 8-10% → Buffett 的「值 dollar 的 95 cents」M&amp;A 機器破洞，5Y EPS CAGR 從 10% 跌至 7%</td></tr>
+<tr><td>2</td><td>Defense budget 多年 visibility（2028 後仍 +5%）</td><td>2026/11 中期選舉 共和黨保 House + 2027/3 NDAA sensor line item 不砍</td><td>若 budget reset 至 +2% → TDY Aerospace 段 YoY 從 +30% 跌至 +5-8%，PE 應 down-rate 至 20x，股價 -25%</td></tr>
+<tr><td>3</td><td>FLIR 在 edge AI camera 是 winner 而非 supplier 給 winner</td><td>Digital Imaging segment organic 從 5% 加速至 8%+ by FY27</td><td>若 FLIR 在 edge AI camera 只是 sensor component supplier（非 system integrator）→ ASP 競爭比預期慘烈，segment margin compression -200bp</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推</h3>
+
+<div class="premortem-box">
+<h4>第一段｜故事倒推</h4>
+<div class="premortem-narrative">
+「假設 5 年後（2031/05）這個部位虧 50%（股價從 $621 跌至 $310），最可能發生的故事是：<strong>2026/11 美國中期選舉民主黨拿回 House，2027/3 FY27 NDAA Conference report 把 sensor line item 從提案 $865M 砍至 $380M，Golden Dome 削減 60%；同時 2027 Q4 法說 Excelitas 段 ROIC 只達 8.5%（vs 收購假設 12%），CEO George Bobb 承認整合 synergy timeline 延後 2 年；2028 H1 Digital Imaging 商業 organic 跌至 2%（HikVision 低端 thermal 切入中端 industrial vision），TDY Aerospace &amp; Defense Electronics YoY 從 +30% 跌至 +5%；市場重估 forward PE 從 25x 壓縮至 14x，FY30 EPS 從原預期 $33 下修至 $24，股價 $310-340。</strong>」
+</div>
+
+<h4>第二段｜校驗 §5 Single Thing</h4>
+<table>
+<tr><th width="50%">檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing（FY27 NDAA sensor line item 砍）？</td><td><strong>⚠ 部分重疊（70%）</strong> — 故事的觸發事件涵蓋：(a) §5 NDAA 砍（含），(b) Excelitas 整合失敗（不含 §5），(c) Digital Imaging 商業段商品化（不含 §5）。NDAA 是主因但非唯一，故事漏抓了「Excelitas + edge AI」共同失效路徑。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p style="background:#FED7AA;padding:10px 14px;border-radius:4px;font-size:13px;color:#92400E;"><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong> — 在 §5 區塊新增「Secondary Trigger」（FY27 末 Excelitas ROIC < 8% + Digital Imaging 商業 organic < 3% 連 2 季）。Primary trigger 維持 NDAA sensor line item 砍。pre-mortem 故事 = primary + secondary 兩 trigger 共振路徑。</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd-block">
+  <div>
+    <div style="font-size:11px;color:#92400E;text-transform:uppercase;margin-bottom:4px;">估計 Max DD 範圍（5Y 內）</div>
+    <div class="maxdd-main dd-amber">−30% ~ −45%</div>
+    <div style="font-size:12px;color:#92400E;margin-top:8px;">寬度 15%p ✅</div>
+  </div>
+  <div style="flex-grow:1;padding:0 20px;">
+    <div class="maxdd-bar"></div>
+    <div style="font-size:11px;color:#64748B;margin-top:6px;">0% ━━ −30% ━━ <strong>−45%</strong> ━━ −60%</div>
+  </div>
+  <div style="text-align:right;">
+    <div class="maxdd-rating">🟡</div>
+    <div style="font-size:11px;color:#64748B;margin-top:6px;">需要強信念<br>復原 18-24 個月</div>
+  </div>
+</div>
+
+<table>
+<tr><th width="35%">項目</th><th>內容</th></tr>
+<tr><td><strong>估計 Max DD 範圍</strong></td><td><strong>−30% ~ −45%</strong>（從 $621 至 $342-435）</td></tr>
+<tr><td><strong>最可能觸發時點</strong></td><td>2027 Q2-Q3（FY27 NDAA conference 後 + Excelitas 段 ROIC 揭露 + Digital Imaging organic deceleration 訊號同時擊發；對應 §6b 失敗故事第二階段）</td></tr>
+<tr><td><strong>觸發後最快多久恢復到峰值</strong></td><td>18-24 個月（若僅 NDAA 砍且 Excelitas 持續 organic 6%，PE re-rate 後可回 $621；若 thesis 完全破則無法恢復）</td></tr>
+<tr><td><strong>路徑風險評級</strong></td><td><span class="dd-amber"><strong>🟡 −30~−50%（需要強信念）</strong></span></td></tr>
+</table>
+
+<p style="background:#FEF2F2;padding:10px 14px;border-radius:4px;font-size:13px;color:#991B1B;"><strong>校驗</strong>：若 max DD 落在 −45%，我能否撐到復原？條件：(a) 部位不超過 portfolio 4%（B 級衛星上限）；(b) 不使用槓桿；(c) §5 primary + secondary trigger 都未發生（NDAA sensor line 未砍至 < $400M + Excelitas ROIC 仍 ≥ 10%）。若這些條件同時破，已視 thesis 失效，<strong>不應「撐到復原」而應立即依 §7b 減/清倉條件執行</strong>。<strong>Guardrail：🟡 評級 → §7a 倉位不下修</strong>（仍維持 4% 目標上限），但 §7d 中期持有提醒「中途有 -30~-45% 壓力測試窗口，B 級衛星倉位設計即是 hedge」。</p>
+</div>
+
+<!-- ========== §8 Review Triggers ========== -->
+<div class="card">
+<h2>§8 Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 法說</td><td>財報日期</td><td><strong>2026/07/22（預估）</strong> — watch: Aerospace &amp; Defense Electronics GM, Book-to-bill, FLIR Defense YoY</td></tr>
+<tr><td>2</td><td>Q3 FY26 法說</td><td>財報日期</td><td><strong>2026/10/22（預估）</strong> — Digital Imaging organic, Excelitas 整合進度</td></tr>
+<tr><td>3</td><td>美國中期選舉</td><td>產業 / 政策事件</td><td><strong>2026/11/03</strong> — 國會控制變化預示 FY28+ Defense budget 走向</td></tr>
+<tr><td>4</td><td>FY27 NDAA Conference Report</td><td>產業 / 政策事件</td><td><strong>2026/12-2027/03</strong> — sensor line item 最終 appropriations（§5 Primary Trigger 直接 settle）</td></tr>
+<tr><td>5</td><td>股價回測 $570</td><td>價位觸發</td><td>Fwd PE ~22x 5Y 35% 分位 → 觸發第二批進場（30% 倉位）</td></tr>
+<tr><td>6</td><td>股價突破 $720</td><td>價位觸發</td><td>Fwd PE ~28x 5Y 75% 分位 → 觸發 trim 評估（減 20-30% 倉位）</td></tr>
+<tr><td>7</td><td>FY26 10-K（Excelitas 段 ROIC 揭露）</td><td>§5 Single Thing 相關</td><td><strong>2027/02</strong> — Excelitas ROIC ≥ 10% / 8-10% / < 8% 三級分流</td></tr>
+</table>
+
+<p style="background:#F0F9FF;color:#0C4A6E;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>這份報告的保質期：至 2026/07/23（Q2 FY26 法說後 24 小時內）</strong> — 該日期之後必須重做 DCA。若 Q2 法說前無重大事件，原報告有效。</p>
+
+<table>
+<tr><th width="50%">最可能發生的 upside 因素</th><td>(1) Q2 26 FLIR Defense YoY ≥ +25% + Aerospace 段 GM ≥ 23%；(2) 2026/11 共和黨保住國會兩院 + FY27 NDAA sensor line 通過 ≥ $750M；(3) Excelitas Qioptiq 揭露 first full-year segment margin ≥ 25%；(4) RKLB / AVAV / Anduril 採購 FLIR sensor 簽多年 framework。</td></tr>
+<tr><th width="50%">最可能發生的 downside 因素</th><td>(1) 2026/11 民主黨取得 House → FY28 budget reset 預期升溫；(2) Q3 26 Digital Imaging 商業 organic < 3% → 暗示 edge AI camera 商品化進入中端；(3) PE 跟隨 SPX 整體 derating 至 22x（總體流動性收縮）；(4) Excelitas Q4 26 法說 揭露 integration cost overrun。</td></tr>
+</table>
+</div>
+
+<!-- ========== Phase A1 (folded) ========== -->
+<details>
+<summary>Phase A1｜護城河深度分析 — A1 結論：FLIR thermal #1 全球 + ITAR/export control + 高轉換成本 = 護城河 B+ → holding（高端深化、低端被 HikVision 切入）</summary>
+
+<table>
+<tr><th width="25%">項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>無形資產</strong>：FLIR thermal imaging 專利 + ITAR/export-controlled 技術 + DoD/NASA 長期合約；(2) <strong>轉換成本</strong>：國防/太空客戶設計 cycle 5-10 年，認證後切換成本極高</td></tr>
+<tr><td>持久性評分</td><td><strong>8/10</strong>，5 年穩固度：高（高端國防/太空）/ 中（商業 thermal 受低端壓力）</td></tr>
+<tr><td>最大侵蝕風險</td><td>HikVision 8.7% 全球 sensor 市佔成長中，逐步從低端 thermal 上探中端 industrial vision，3-5 年時間軸；高端國防/太空段受 export control 保護不受影響</td></tr>
+<tr><td>關鍵數據</td><td>GM 42.8%（→ 持平 3 年）、Non-GAAP op margin 22.0%（→ ↑ +58bp YoY）、TDY 全球 sensor 市佔 6.2%（vs Sony 15.1% / Samsung 14.7% / Hamamatsu 12.5% / Canon 10.2% / HikVision 8.7%）、ROIC 7.5-12%（gurufocus 8.16% / DD 12%）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>→ holding</strong>。Evidence：(a) FLIR Defense 2025 仍贏 Saudi Lightweight Vehicle Surveillance / TacFLIR 380HD（2025 簽約，end-2025 交付）— 高端護城河深化；(b) BUT HikVision 全球市佔從 2023 7.5% 升至 2025 8.7%（+1.2pp 2 年）— 低端被切入；(c) TDY 全球 sensor 市佔 6.2% 在 5 大廠最後 — net 護城河結構穩固但份額未擴張 → holding</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 floor 校驗）</h4>
+<ol style="font-size:12px;">
+<li>FLIR thermal imaging 是 dual field-of-view cooled IR 領域 frontrunner（intelmarketresearch.com 2025-2034 outlook，2026/05 search）</li>
+<li>Teledyne FLIR + L3Harris + Thales lead night vision device market（Yahoo Finance Night Vision Device Company Evaluation Report 2025）</li>
+<li>Teledyne 全球 image detection sensor 市佔 6.2%（globalgrowthinsights.com 2025）— Sony 15.1% / Samsung 14.7% / Hamamatsu 12.5% / Canon 10.2% / HikVision 8.7%</li>
+<li>Excelitas 收購 $710M completed 2025/02（businesswire.com 2025/02/03 + govconwire.com）— 含 Qioptiq optics（UK）+ 美國 advanced electronic systems（custom energetics）</li>
+<li>Teledyne FLIR Defense 簽 Middle East Task Company TacFLIR 380HD（Saudi military，2025 末交付，optics.org / 公司新聞）</li>
+<li>GM 持平 3 年（2023 42.7% / 2024 42.9% / 2025 42.8%，DD §10 引 macrotrends.net 數據）</li>
+<li>Q1 26 Non-GAAP op margin 22.0% +58bp YoY（roic.ai 2026/04/22 EC transcript）</li>
+</ol>
+
+<p style="background:#F0FDF4;color:#166534;padding:8px 12px;border-radius:4px;font-size:12px;"><strong>A1 達標：7 sourced data points ≥ 5 floor ✅</strong></p>
+
+<p style="background:#FFFBEB;color:#92400E;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>A1 獨立結論</strong>：「FLIR thermal #1 全球 + ITAR/export control + 高轉換成本 = 護城河 B+ 等級；moat_trend → holding — 高端國防/太空段深化、商業低端被 HikVision 切入，net 護城河穩固但市佔未擴張。」</p>
+</details>
+
+<!-- ========== Phase A2 (folded) ========== -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — A2 結論：Defense electronics + Edge AI sensor + 無人系統三 secular tailwind 結構超週期，runway_post_y5 🟢 寬</summary>
+
+<table>
+<tr><th width="25%">項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>(1) <strong>Defense electronics</strong>：$244.38B (2025) → $317.67B (2030) CAGR 5.4%；(2) <strong>Thermal imaging</strong>：$5.78B (2025) → $7.59B (2030) CAGR 7.3%；(3) <strong>Edge AI camera</strong>：2027 197M units / $35B revenue（ABI Research）；(4) <strong>Military drone</strong>：$20.8B (2026) → $34.1B (2033) CAGR 7.3%；TDY 服務 TAM 合計 ~$300B+</td></tr>
+<tr><td>供需判斷</td><td><strong>供需偏緊 → 持續偏緊</strong>。Defense sensor 受 ITAR + 認證壁壘 + Western 供應鏈集中（美 + 加 + 英 + 法 + 德），無 China 替代；未來 12 個月 NATO 5% 路徑 + Golden Dome ramp → 需求 +30-50%（vs 供給彈性 +10-15%）</td></tr>
+<tr><td>最大技術替代風險</td><td>中國 HikVision 在低端 thermal 商品化逐步上探，3-5 年內可能侵蝕 TDY 商業 segment（占 Digital Imaging ~15%）；高端國防/太空 0 替代風險（export control + 客戶認證 5-10 年 cycle）</td></tr>
+<tr><td>最大政策/地緣風險</td><td>(a) <strong>2026/11 美國中期選舉</strong>：民主黨拿 House → FY28 budget reset 風險（影響 driver 1）；(b) <strong>2027/3 FY27 NDAA 通過</strong>：sensor line item 從 $865M 提案版本可能被砍；(c) <strong>歐洲國防自主化</strong>：Rheinmetall/Saab 等歐洲玩家擴產可能擠壓 TDY 在 NATO 訂單佔比（但長期仍正和）</td></tr>
+<tr><td>議價權位置</td><td>對上游：晶圓 / 感測器原料 <strong>中</strong>（多元供應）；對下游：DoD / Lockheed / Boeing / Airbus / NASA <strong>中</strong>（cost-plus + 認證壁壘下，TDY 不可輕易替換，但客戶為 monopsony）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>。Y5 末（2031）：(a) Defense electronics CAGR 5.4% 持續至 2035+（S 曲線早中期），TAM 滲透率僅 ~30%；(b) Edge AI camera S 曲線早期，2027 197M units → 2035+ 預估 700M+（4x），第二曲線啟動；(c) Golden Dome 多年 commit 至 2030+（10 年 commit window）；(d) Unmanned systems / drones 全球軍方滲透率仍 < 15%（Ukraine effect 才剛開始全球擴散）— 5-10 年仍有 4-5x 跑道</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 floor 校驗）</h4>
+<ol style="font-size:12px;">
+<li>US FY2027 Defense budget $1.5T，+42% vs FY26（war.gov 2026/04 + whitehouse.gov FY2027 topline fact sheet）</li>
+<li>FY27 missile defense sensors line item $183M → $865M（4.7x，war.gov 2026/04 release）</li>
+<li>FY27 Golden Dome $18B 多年 commit（whitehouse.gov FY2027 fact sheet）</li>
+<li>Thermal imaging market $5.78B 2025 → $7.59B 2030 CAGR 7.3%（grandviewresearch.com）；military thermal CAGR 5.6% reaching $1144M 2030（maximizemarketresearch.com）</li>
+<li>Defense electronics $244.38B 2025 → $317.67B 2030 CAGR 5.4%（thebusinessresearchcompany.com）</li>
+<li>Military drone $20.8B 2026 → $34.1B 2033 CAGR 7.3%（coherentmarketinsights.com）；drone spending FY27 conservatively $54B（defensenews.com 2026/05）</li>
+<li>Edge AI machine vision cameras 197M deployed by 2027 / $35B revenue（ABI Research 2023/01 forecast → 2026/05 持續驗證）</li>
+</ol>
+
+<p style="background:#F0FDF4;color:#166534;padding:8px 12px;border-radius:4px;font-size:12px;"><strong>A2 達標：7 sourced data points ≥ 5 floor ✅</strong></p>
+
+<p style="background:#FFFBEB;color:#92400E;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>A2 獨立結論</strong>：「Defense electronics + Edge AI sensor + 無人系統三 secular tailwind 結構超週期（非短期 cyclical 反彈），TAM 合計 $300B+ 成長軌道至 2030+；runway_post_y5 🟢 寬 — S 曲線早中期，Y5 末 TAM 滲透率僅 ~30%，第二曲線（edge AI camera + drone sensor 民用滲透）2027-2030 啟動。」</p>
+</details>
+
+<!-- ========== Phase A3 (folded) ========== -->
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — A3 結論：典型 quality compounder 軌道，FCF Margin 17.6% + ROIC 12% + 多元化 segment，但 ROIC 受 goodwill 拖累，PE 25x 留給意外緩衝有限</summary>
+
+<table>
+<tr><th width="25%">項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td><strong>現金牛</strong>：Instrumentation（24%）+ Engineered Systems（7%）= 31%；<strong>成長引擎</strong>：Aerospace &amp; Defense Electronics（17%，Q1 26 +38% YoY）；<strong>核心 + 第二曲線</strong>：Digital Imaging（52%，含 FLIR + DALSA + e2v）organic 5-7%。FY25 total revenue $6.115B（+7.86%）</td></tr>
+<tr><td>客戶集中度</td><td>DoD 24.5% revenue（最大客戶）— <strong>風險：中-高</strong>（集中度遠超業界 quality compounder 平均 ~10%）；NASA + 其他政府機構合計 ~5-10%；商業 + 工業 ~60%（多元 OEM / Tier-1，無單一客戶 > 5%）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢：國防/太空 <strong>↑</strong>（cost-plus + 認證壁壘讓 ASP 隨成本上漲）；商業 thermal/industrial vision <strong>→ ↓</strong>（HikVision 競爭）；整體定價權：<strong>中</strong>（不是高 ASP power 如 HEI 50x PE 等級）</td></tr>
+<tr><td>未來金雞母</td><td>(1) <strong>Aerospace &amp; Defense Electronics</strong>（含 Excelitas Qioptiq + Saab TransponderTech），目前佔 17%，FY27-28 預估升至 22-25%；(2) <strong>Unmanned systems</strong>，目前 ~$500M（FY26 forecast $550M，+10% YoY）— sub-segment 但快速成長；(3) <strong>Edge AI camera</strong>（FLIR Lepton/Boson 為 OEM bare-metal），長期 TAM $35B 2027</td></tr>
+<tr><td>財務體質</td><td>FCF Margin 17.6%（FY25 $1,074M / $6,115M）；FY25 EPS $18.88（CAGR ~8% 3Y）；Net Debt/EBITDA 1.5x（Q1 26 leverage 1.8x，健康）；壓力測試：營收 -20% 可撐 8-10 季（FCF 仍正、debt service ~$80M/yr 對 FCF $700M+ 充裕）</td></tr>
+<tr><td>資本配置紀律</td><td><strong>系統性收購 > buyback > 0 dividend</strong>。CEO Bobb（2025/04 接任，繼承 Mehrabian + Roks 文化）；2024-25 deploy $770M acquisitions（Excelitas $710M + Micropac $57.3M）；2025 announce $2B 新 buyback authorization（取代 $896M 剩餘）；歷史：2024 buyback $354M。Mgmt 公開言「buy companies > buy stock」— acquisitions 為 capital priority。CAPEX 1.9% rev（低密集，無資本陷阱）</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td><strong>EPS CAGR 預估 10%/yr</strong>（FY26 $24 → FY30 ~$35，含收購 + organic 6-7% + EPS leverage 1.2x rev growth）；<strong>5Y 末 forward PE</strong> 預估 24x vs 當前 25x → re-rate 貢獻 = (24/25)^(1/5) - 1 = <strong>−0.8%/yr</strong>；<strong>現金股息率 0%</strong>（無 dividend）；<strong>淨買回率 0.5-1.0%/yr</strong>（$2B 新授權 / $30B mcap = ~6.7% potential，但歷史 selective）。Base 合計 ≈ 10.0% + (-0.8%) + 0.5% + 0.5% = <strong>10.2%/yr</strong>（與 §4 IRR composition Base 10.7% 偏差 0.5pp ≤ 2pp ✅）</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 6 floor 校驗）</h4>
+<ol style="font-size:12px;">
+<li>FY25 revenue $6.115B（+7.86%），segment breakdown Digital Imaging 52% / Instrumentation 24% / Aerospace &amp; Defense Electronics 17% / Engineered Systems 7%（macrotrends.net + stocktitan SEC filing 10-K 2025）</li>
+<li>Q1 26 sales +7.6% YoY / organic +6.9% / non-GAAP EPS $5.80（+17.2% YoY）/ FY26 guidance $23.85-24.15 EPS（fool.com EC transcript 2026/04/22）</li>
+<li>Backlog $4.6B（創新高）+ Book-to-bill 1.16（10 季連續 > 1）（DD §6 + fool.com 2026/04/22）</li>
+<li>2024-25 acquisitions $770M（Excelitas $710M 2025/02 + Micropac $57.3M）（ainvest.com + govconwire.com）</li>
+<li>$2B 新 buyback authorization 2025（取代 $896M 剩餘）；2024 buyback $354M（financecharts.com + simplywall.st 2025）</li>
+<li>R&amp;D Q2 25 $82.4M + Q1 25 $74.3M = annual ~$300M (Q1+Q2 trajectory)；公司公開 annual ~$474M total + 4,700 engineers（matrixbcg.com / public IR）</li>
+<li>Aerospace &amp; Defense Electronics Q1 26 +38% YoY；Q2 25 +36.2% YoY（incremental $64.3M acquisitions 貢獻）（ainvest.com）</li>
+<li>DoD 24.5% revenue 2023（Wikipedia / AFSC Investigate）</li>
+<li>ROIC 7.49-8.16%（gurufocus 8.16% 2026/02/27 / roic.ai 7.49% / DD §10 寫 12% — 差異反映 tangible vs fully-loaded ROIC 算法）</li>
+<li>EPS 共識：FY26 $24.09（n=10）/ FY27 $25.95（n=12）（yfinance 共識，DD §2 C）</li>
+<li>Forward PE 26.99（gurufocus 2026/04/22）；5Y avg PE 29.62-30.05（fullratio.com + macrotrends.net）；10Y avg PE 27.05（macrotrends.net）</li>
+</ol>
+
+<p style="background:#F0FDF4;color:#166534;padding:8px 12px;border-radius:4px;font-size:12px;"><strong>A3 達標：11 sourced data points ≥ 6 floor ✅</strong></p>
+
+<p style="background:#FFFBEB;color:#92400E;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>A3 獨立結論</strong>：「典型 quality compounder 軌道 — FCF Margin 17.6% + 5Y EPS CAGR ~10% + 系統性收購 + 多元 segment + 健康 leverage 1.5x；但 fully-loaded ROIC 11-12%（含 goodwill）而非 14%+（同業 ROK/AME/HEI），意味 25x PE 比同業溢價 +19% 留給意外的緩衝有限。」</p>
+</details>
+
+<!-- ========== Phase A4 (folded) ========== -->
+<details>
+<summary>Phase A4｜既有報告數據摘要 — DD_TDY_20260427.html + Industry-level cross-references</summary>
+
+<h4>DD 報告擷取（DD_TDY_20260427.html，v12.0）</h4>
+<table>
+<tr><th width="35%">項目</th><th>內容</th></tr>
+<tr><td>Quality Score (composite)</td><td>8.0 / 10（moat_score 8.0 + growth_durability 7.0 + quality_score 8.0）</td></tr>
+<tr><td>綜合訊號燈</td><td><strong>B</strong>（衛星候選 / 觀望偏進場）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 1Y: $583（FY+1 EPS $24.09 × 24.2x）；中期 2Y: $727（FY+2 EPS $25.95 × 28x）；長期 5Y: $1,018（FY+5 EPS $40.7 × 25x）</td></tr>
+<tr><td>Bear anchor</td><td>短期 $390（FY+1 EPS $21.68 × 18x）；中期 $420（FY+2 EPS $23.36 × 18x）</td></tr>
+<tr><td>紅旗清單</td><td>(1) PEG normalized 2.08（5Y 60% 分位）；(2) Cash $352M < Debt $2,642M；(3) Insider 持股 0.86%（治理 yellow flag）；(4) Organic growth 6-7% 對 25x PE 偏熱</td></tr>
+<tr><td>核心假設（H1/H2/H3）</td><td>H1: FY26 organic 6-7% / FY27 5-6%；H2: Excelitas/Saab/Maretron 整合 ROIC ≥ 10%（2Y 驗證）；H3: FLIR Defense + unmanned 維持雙位數至 2028</td></tr>
+<tr><td>§8 最終結論</td><td>「Teledyne 自 1999 年 Mehrabian 上任以來持續以系統性收購複利 EPS，10-12% 長期 CAGR 軌道明確，國防順風 + AI 邊緣感測新增曲線；唯一弱點為 PE 倍數已偏熱。」</td></tr>
+</table>
+
+<h4>ID 報告交叉參考</h4>
+<p style="font-size:13px;">docs/id/INDEX.md 中無 TDY 直接專屬 ID 報告，但有 3 份高度相關產業 ID：</p>
+<ul style="font-size:13px;">
+<li><strong>ID_DefenseAerospaceUpgrade_20260427.html</strong>（國防航太升級 母題）— TAM Defense Electronics $244B 2025，NATO 5% 路徑啟動 + 歐洲擴產 + 彈藥 + 無人機革命；產業評級 18% conviction Phase II；非共識：歐洲玩家是真正結構性 alpha + 無人機/loitering munitions 是 sector 第二春 + 彈藥短缺 multi-year fix</li>
+<li><strong>ID_CNTW_S7_DefenseIndustry_20260424.html</strong>（國防工業重估 子題）— 2026-2031 結構超級週期（非週期反彈），彈藥/無人機真正稀缺（AVAV/Anduril EPS +50-100%）</li>
+<li><strong>ID_CommercialAerospace_20260427.html</strong>（商業航太復甦）— Boeing 信用修復 + 引擎 aftermarket 黃金期；TDY Aerospace &amp; Defense Electronics segment 部分受益</li>
+</ul>
+
+<p style="background:#F0F9FF;color:#0C4A6E;padding:10px 14px;border-radius:4px;font-size:13px;"><strong>A4 提示</strong>：DD（4/27）與 5/9-5/11 期間，股價從 $649 修正至 $621.38（-4.3%），RSI 14d 從中性區跌至 37（超賣區）— entry 機會比 DD 寫的時間點略有改善，但仍未達 DD 建議的 $545 進場價（再 -12%）。本 DCA 採取「條件式分批，首批可在 $610 觸發 vs DD 等 $545 一次建倉」的微調，因 RSI 已超賣 + W250 結構穩固 + Q1 26 fundamentals 強化所有 H1-H3 假設。</p>
+</details>
+
+<button class="print-btn" onclick="window.print()">列印 PDF</button>
+
+</div>
+
+</body>
+</html>

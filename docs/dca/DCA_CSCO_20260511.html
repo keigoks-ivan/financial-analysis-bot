@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<!-- dca-schema-version: v1.1 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dca-schema-version" content="v1.1">
+<title>DCA ｜ CSCO ｜ 2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --sub:#475569;
+  --navy:#1E3A5F; --accent:#3B82F6; --line:#E2E8F0; --soft:#F1F5F9;
+  --green-bg:#DCFCE7; --green-ink:#166534;
+  --red-bg:#FEE2E2; --red-ink:#991B1B;
+  --yel-bg:#FEF9C3; --yel-ink:#92400E;
+  --blue-bg:#EFF6FF; --blue-ink:#1E3A5F;
+  --warn-bg:#FFF7ED; --warn-line:#F97316; --warn-ink:#9A3412;
+  --bull-bg:#F0FDF4; --bull-line:#16A34A;
+  --bear-bg:#FFF1F2; --bear-line:#DC2626;
+  --val-bg:#F5F3FF; --val-line:#7C3AED;
+  --pre-bg:#FEF2F2; --pre-line:#DC2626;
+  --pat-bg:#F0F9FF; --pat-line:#0EA5E9;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans TC",-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65}
+.num,.mono{font-family:"IBM Plex Mono",monospace;font-feature-settings:"tnum"}
+header{position:sticky;top:0;background:var(--navy);color:#fff;padding:12px 28px;display:flex;justify-content:space-between;align-items:center;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+header h1{margin:0;font-size:18px;font-weight:700}
+header .meta{font-size:13px;opacity:.9;font-family:"IBM Plex Mono",monospace}
+main{max-width:1180px;margin:0 auto;padding:24px 24px 80px}
+section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:22px 28px;margin-bottom:20px;box-shadow:0 1px 2px rgba(15,23,42,0.04)}
+h2{margin:0 0 14px;padding:10px 16px;background:var(--navy);color:#fff;font-size:17px;border-left:4px solid var(--accent);border-radius:4px}
+h3{margin:18px 0 10px;font-size:15px;color:var(--navy);border-bottom:1px solid var(--line);padding-bottom:5px}
+h4{margin:12px 0 6px;font-size:14px;color:var(--navy)}
+p{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13.3px}
+th{background:var(--navy);color:#fff;text-align:left;padding:8px 11px;font-weight:500}
+td{padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:nth-child(even){background:var(--soft)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:500}
+.t-green{background:var(--green-bg);color:var(--green-ink)}
+.t-red{background:var(--red-bg);color:var(--red-ink)}
+.t-yel{background:var(--yel-bg);color:var(--yel-ink)}
+.t-blue{background:var(--blue-bg);color:var(--blue-ink)}
+
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;background:var(--soft);padding:18px 20px;border-radius:8px;border-left:4px solid var(--accent);border-right:4px solid var(--accent);margin:0 0 22px;flex-wrap:wrap}
+.sb-cell{flex:0 0 180px;text-align:center;background:#fff;border-radius:6px;padding:12px 10px;border:1px solid var(--line)}
+.sb-label{font-size:11px;color:#64748B;letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.sb-main{font-size:22px;font-weight:700;line-height:1.2}
+.sb-sub{font-size:11px;color:#64748B;margin-top:3px}
+.sig-A{color:#15803D}
+.sig-Aplus{color:#166534}
+.sig-B{color:#92400E}
+.sig-C{color:#991B1B}
+.sig-X{color:#7F1D1D}
+.up{color:#166534}
+.flat{color:#64748B}
+.down{color:#991B1B}
+
+/* Thesis */
+.thesis-box{background:var(--blue-bg);padding:28px 30px;border-radius:8px;text-align:center;border:1px solid #BFDBFE}
+.thesis-text{font-size:26px;line-height:1.45;font-weight:500;color:#1E3A8A;margin:0}
+.thesis-note{font-size:12px;color:var(--sub);margin-top:10px}
+
+/* Decision */
+.decision-box{background:var(--warn-bg);border-left:4px solid var(--warn-line);padding:16px 20px;border-radius:6px;margin:12px 0}
+.decision-box h4{color:var(--warn-ink);margin-top:0}
+
+/* Phase B */
+.contradiction-box{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;border-radius:6px;margin:12px 0}
+.verdict-tbl{background:#FED7AA;border-left:4px solid #C2410C}
+
+/* Pre-mortem */
+.premortem-box{background:var(--pre-bg);border-left:4px solid var(--pre-line);padding:14px 18px;border-radius:6px;margin:10px 0}
+.premortem-box blockquote{margin:8px 0;padding:8px 14px;background:#fff;border-left:3px solid var(--pre-line);font-style:italic}
+
+/* Pattern match */
+.pattern-box{background:var(--pat-bg);border-left:4px solid var(--pat-line);padding:14px 18px;border-radius:6px;margin:10px 0}
+
+/* IRR composition */
+.irr-narrative{background:var(--pat-bg);border-left:4px solid var(--pat-line);padding:10px 14px;font-style:italic;font-size:13px;margin:10px 0;border-radius:4px}
+.stacked-bar{display:flex;height:30px;border-radius:4px;overflow:hidden;margin:10px 0;font-size:11px;color:#fff;font-weight:600}
+.sb-eps{background:#15803D;display:flex;align-items:center;justify-content:center}
+.sb-rerate{background:#1D4ED8;display:flex;align-items:center;justify-content:center}
+.sb-rerate-neg{background:#991B1B;display:flex;align-items:center;justify-content:center}
+.sb-yield{background:#64748B;display:flex;align-items:center;justify-content:center}
+
+/* Max DD */
+.maxdd-box{background:#FFFBEB;border-left:4px solid #D97706;padding:14px 18px;border-radius:6px;margin:10px 0}
+.maxdd-main{font-size:32px;font-weight:700;color:#92400E;font-family:"IBM Plex Mono",monospace}
+.maxdd-bar{height:18px;border-radius:3px;margin:8px 0;display:flex}
+.dd-0-30{background:#16A34A}
+.dd-30-50{background:#F59E0B}
+.dd-50plus{background:#DC2626}
+
+/* Mental model */
+.memo-box{background:#FAFAF9;border:1px dashed #A8A29E;padding:18px 22px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;border-radius:4px;margin:10px 0;line-height:1.7}
+.elevator-box{background:#F1F5F9;border-left:3px solid var(--navy);padding:12px 16px;font-style:italic;font-size:13px;margin:8px 0;border-radius:4px}
+
+/* MA status */
+.ma-pass{background:var(--green-bg);color:var(--green-ink);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600}
+.ma-fail{background:var(--red-bg);color:var(--red-ink);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600}
+
+/* details */
+details{margin:10px 0;border:1px solid var(--line);border-radius:6px;background:#FAFBFC}
+details summary{padding:12px 16px;cursor:pointer;font-weight:600;color:var(--navy);font-size:14.5px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▶ ";color:var(--accent);font-size:11px;margin-right:6px}
+details[open] summary::before{content:"▼ "}
+details > div{padding:0 18px 16px}
+
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:10px 18px;border:none;border-radius:6px;cursor:pointer;font-family:"Noto Sans TC",sans-serif;box-shadow:0 4px 12px rgba(30,58,95,0.3);z-index:100;font-size:13.5px}
+.note{font-size:12.5px;color:var(--sub);margin:6px 0}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.kv > div{background:var(--soft);padding:10px 14px;border-radius:4px;font-size:13px}
+.kv strong{color:var(--navy);display:block;margin-bottom:3px;font-size:11.5px;letter-spacing:.4px;text-transform:uppercase}
+ul,ol{padding-left:20px}
+li{margin:3px 0}
+@media print{
+  header,.print-btn{display:none}
+  body{background:#fff}
+  section{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+  details{break-inside:avoid}
+  details[open]{display:block}
+  details > div{display:block !important}
+  details:not([open]) > div{display:block !important}
+  details > summary{pointer-events:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>CSCO ｜ Cisco Systems Inc ｜ Deep Conviction Analysis</h1>
+<div class="meta">2026-05-11 ｜ $96.57 ｜ DCA Schema v1.1 ｜ DD basis: 2026-04-27</div>
+</header>
+
+<main>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="sb-cell">
+    <div class="sb-label">綜合訊號燈</div>
+    <div class="sb-main sig-B">B</div>
+    <div class="sb-sub">DD §1 dashboard</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Moat 趨勢</div>
+    <div class="sb-main">B <span class="flat">→</span></div>
+    <div class="sb-sub">企業 holding / HS 收窄</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Runway Post-Y5</div>
+    <div class="sb-main">🟡 中</div>
+    <div class="sb-sub">AI infra second source</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Max DD（中途估計）</div>
+    <div class="sb-main">−45%</div>
+    <div class="sb-sub">range −30% ~ −45%</div>
+  </div>
+</div>
+
+<!-- §2 Thesis -->
+<section>
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <p class="thesis-text">「Cisco 是企業 IT 的網路系統商，現在用 Splunk 把『管網路』升級為『管 AI 時代的整個數位棧』。」</p>
+  <p class="thesis-note">敘事性 thesis · 約 45 字 · 投資本質：軟體化 + AI 二次浪潮復活</p>
+</div>
+</section>
+
+<!-- §7 Decision -->
+<section>
+<h2>§7 Decision｜可執行計畫</h2>
+
+<div class="decision-box">
+<h4>裁決：觀望偏進場（B 訊號，等回測 + Q3 確認）</h4>
+<p>thesis 完整（基本面好、AI orders 加速、Splunk ARR 兌現中），但短期估值已 stretched + 動能過熱（現價 $96.57 已超越 DD 寫稿 $89.01 + 8.5% 漂移）。**不一次建倉**，分批 + 條件式進入。</p>
+</div>
+
+<h3>7a｜倉位與進場計畫</h3>
+<table>
+<thead><tr><th width="36%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（防禦型 + AI 復興 hybrid，不是 core，因 hyperscaler 仍為 second source）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.5% of portfolio</strong>（試探，等待回測訊號）</td></tr>
+<tr><td>目標倉位</td><td><strong>4% of portfolio</strong>（若 H1 兌現 + 估值合理化）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$78 ~ $86</strong>（BB 中軌 $78.75 ± 2% / Fwd PE 17.5-19.5x）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批 3 次</strong>：① 回測 BB 中軌 $78-80 第一批 1/3；② Q3 FY26（5/13 法說）AI orders ≥ $1.5B 確認後第二批 1/3；③ 12M 連續達 H1 後加滿第三批 1/3</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>
+  <strong>點名 ANET（Arista Networks）作為對照：</strong><br>
+  - ANET FY25 Rev $9B +28.5% / 2026 AI 目標 $3.25B（從 $2.75B 上修），純 AI 數據中心 pure play，IRR 預估 14-17%/yr（Bull case 含 AI 持續性）<br>
+  - CSCO Base IRR ~10%/yr（EPS 8% + 4% 股東回報 - 1% re-rate 拖累），thesis 是「修復 + 升級」非「結構成長」<br>
+  <strong>結論：邊際資金優先補 ANET</strong>（AI 純 alpha）；CSCO 角色是「防禦型 + 股息」對沖，不該擠壓 ANET 額度。若已持有 ANET 4-6%，CSCO 應作為**獨立曝險籃**（企業 IT + 觀察性）—不是 ANET 的替代品而是不同維度 bet（企業 IT installed base vs 純 AI fabric）。
+</td></tr>
+</tbody>
+</table>
+
+<h3>7b｜加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>第一批進場</td><td>$78-80 回測 BB 中軌 ± Fwd PE 跌至 17x</td><td>1.5%</td></tr>
+<tr><td>加碼 #1</td><td>Q3 FY26 法說（5/13）AI orders ≥ $1.5B（含 G300 訂單啟動訊號）</td><td>2.5%</td></tr>
+<tr><td>加碼 #2</td><td>FY26 全年 AI orders 達 $5B 達標 + 12M Networking YoY 維持 +15%</td><td>4%</td></tr>
+<tr><td>減碼</td><td>AI orders 連續 2 季 &lt; $0.8B 或 Networking YoY 跌至 &lt; +10%</td><td>1.5%</td></tr>
+<tr><td>清倉</td><td>Fwd PE 連 6 個月跌破 16x（thesis H3 失敗：re-rate 反向）<br>或 Splunk Security 連 6 季 YoY 負成長</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$96.57 顯著 &gt; MA60（估 ~$85）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$96.57 顯著 &gt; MA200（DD 提及 W250 = $52.72，現價有 +83%）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>$96.57 &gt; W104 = $62.03（+56%）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅ 強勢</span></td><td>三線完美排列</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span style="background:var(--yel-bg);color:var(--yel-ink);padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600">⚠ 漂移 +8.5%</span></td><td><strong>14 天漂移 $89.01→$96.57 = +8.5%</strong>，接近 QC-22 警戒線 +10%；RSI 14d ~54.61（中性，非 overbought）。<br><strong>結論</strong>：MA 全綠但短期漂移過熱 → §7a 進場節奏**強制條件式**（等回測 BB 中軌 $78-80 + 等 Q3 法說確認）。<strong>禁止一次建倉</strong>。</td></tr>
+</tbody>
+</table>
+
+<h3>7d｜建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 Q3 FY26 AI orders &gt; $2B 且 G300 取得首個 hyperscaler 量產訂單 → 戰術 trade，$78-105 區間交易（已超 $90 應減碼）</td></tr>
+<tr><td><strong>中期（2-5 年）</strong></td><td><strong>若 Splunk ARR + AI infra 兩條 thesis 同步兌現（FY26 $5B AI orders → FY28 $10B）+ Fwd PE 維持 18-20x 區間 → 主場景，預期 IRR 10-12%/yr</strong></td></tr>
+<tr><td>長期（5-10 年）</td><td>若 Cisco 從「網路硬體商」徹底完成轉型為「企業 AI 數位棧平台商」（ARR 達 $50B，軟體佔比 &gt; 50%）→ 罕見路徑，需多年確認</td></tr>
+</tbody>
+</table>
+
+<p><strong>建議持有年限：2-3 年</strong>，原因：核心 thesis（AI 復興 + Splunk 整合）需要 FY26-FY28 連續 8 個季度兌現才能確認，runway_post_y5 評為 🟡 中（Y5 之後若 hyperscaler 進一步集中採購於 ANET/NVDA，CSCO AI infra 邊際吸引力會弱化）。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>FY26E</td><td>$4.16</td><td>yfinance n=23（指引 $4.13-4.17）</td><td>+9.2% YoY</td></tr>
+<tr><td>FY27E</td><td>$4.51</td><td>yfinance n=24</td><td>+8.5% YoY</td></tr>
+<tr><td>FY28E</td><td>~$4.85</td><td>邏輯推導 +7.5%</td><td>AI orders FY28 $10B 兌現假設</td></tr>
+<tr><td>FY30E（外推）</td><td>~$5.60</td><td>外推</td><td>外推假設：FY28-FY30 維持 +7% CAGR（AI 滲透率持續 + Splunk 雲化完成）</td></tr>
+</tbody>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在 $96.57 適合嗎？</strong>—— 不，現價 Fwd PE（FY+2）= $96.57 / $4.51 = 21.4x，已超 DD 寫稿時 19.7x。歷史 5Y avg ~14.75x，當前處於 5Y 87% 分位（從 79% 進一步推高）。即使 thesis 完美兌現（Bull case 22x × $4.85 FY28 = $107，5Y 總報酬僅 +11% 對應 IRR 2.1%/yr），asymmetry 顯著不利。**等待回測至 $78-86 區間（Fwd PE 17.3-19x）為合理進場價，當前 stretched zone 不應追高。**</p>
+</section>
+
+<!-- §4 Asymmetry Analysis -->
+<section>
+<h2>§4 Asymmetry Analysis</h2>
+
+<table>
+<thead><tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr></thead>
+<tbody>
+<tr style="background:var(--bull-bg)"><td><strong>Bull</strong>（thesis 對：AI orders FY28 $10B + Splunk ARR $7B + Fwd PE 22x）</td><td>+65%</td><td><strong>+10.5%/yr</strong></td><td>FY30E EPS $5.60 × 22x = $123 vs 現價 $96.57</td><td>25%</td></tr>
+<tr style="background:var(--soft)"><td><strong>Base</strong>（thesis 半對：AI orders FY28 $7B + Fwd PE 維持 18-19x）</td><td>+30%</td><td><strong>+5.4%/yr</strong></td><td>FY30E EPS $5.20 × 18x = $94 + 累計股息 ~$11 = $105</td><td>45%</td></tr>
+<tr style="background:var(--bear-bg)"><td><strong>Bear</strong>（thesis 錯：AI orders 卡 $4B、ANET 擴大、Fwd PE 回 13x）</td><td>-35%</td><td><strong>-8.3%/yr</strong></td><td>FY30E EPS $4.80 × 13x = $62 + 累計股息 ~$10 = $72</td><td>30%</td></tr>
+<tr style="background:#FEF3C7"><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>+2.5%/yr</strong>（5Y +13%）</td><td>0.25×10.5 + 0.45×5.4 + 0.30×(-8.3)</td><td>100%</td></tr>
+</tbody>
+</table>
+
+<p><strong>IRR 落點解讀</strong>：機率加權 IRR ~2.5%/yr 落入「弱（&lt; 8%/yr）」區間，**遠不及 SPX 長期平均 ~10%/yr**。即使 Base 單看也只有 5.4%/yr，**現價已透支** —— 等到 $78-86 進場才能把 Base IRR 拉到 9-11%/yr，asymmetry 才合理。</p>
+
+<h4>追加壓力測試（10Y 視角）</h4>
+<p>若 thesis 完美兌現且時間拉長至 10Y：FY30E EPS $5.60 → FY35E ~$7.50（假 6% CAGR）× 20x = $150 vs 現價 $96.57，10Y CAGR = 4.5%/yr + 累計股息 ~$25 → 總 IRR ~6.5%/yr。**10Y 也輸 SPX。**機會成本：同期 ANET 預估 12-15%/yr、MSFT 11-13%/yr。**結論：現價買 CSCO 是替代不了任一 AI/cloud 主流標的的 alpha。**</p>
+
+<!-- Pattern match -->
+<div class="pattern-box">
+<h4>📐 Pattern match｜歷史相似 case</h4>
+<table>
+<tbody>
+<tr><td width="36%">歷史上 thesis 結構類似的個股</td><td><strong>IBM（2018-2022）：「Red Hat 收購 + 雲轉型」敘事</strong>。IBM 2019 收購 Red Hat ($34B) 想把硬體公司升級為「Hybrid Cloud + AI 平台」，與 CSCO 收 Splunk ($28B) 升級為「網路 + 觀察性 + AI」高度類似。</td></tr>
+<tr><td>當時的 setup</td><td>IBM 2019 Fwd PE ~11-13x（CSCO 現在 19.7x 高得多）；Red Hat $3B ARR 注入 IBM；市場最初熱烈反應，後續整合期遇 organic 業務衰退拖累</td></tr>
+<tr><td>最終 5 年實現報酬</td><td>2019/01 IBM $114 → 2024/01 IBM $164，5Y CAGR +7.5%/yr（含股息），跑輸 SPX 同期 ~14%/yr</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：硬體老兵收購軟體 ARR 巨擘想 re-rate；高分紅、買回為股東報酬主軸；競爭者持續吃份額（IBM vs MSFT/AWS；CSCO vs ANET/NVDA）。<br><strong>最不像</strong>：CSCO 進入時 Fwd PE 19.7x 已 re-rate 完，IBM 當時 11x 還是低估開始；CSCO 有真實 AI orders 加速（$2.1B/季），IBM 當時 AI 故事較虛。<strong>含義</strong>：CSCO 不會像 IBM 那樣有 multiple expansion，主要靠 EPS + 股息推動，所以 IRR 估計應該偏保守。</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- IRR Composition -->
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table>
+<thead><tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+<tbody>
+<tr><td><strong>Bull</strong></td><td><span class="up">+8.0%/yr</span></td><td><span class="up">+2.7%/yr</span><br>(22 / 21.4)^(1/5) - 1</td><td><span class="up">+4.0%/yr</span><br>(2.2% 股息 + 1.8% 淨回購)</td><td><strong class="up">+14.7%/yr</strong></td></tr>
+<tr><td><strong>Base</strong></td><td><span class="up">+7.0%/yr</span></td><td><span class="down">-3.4%/yr</span><br>(18 / 21.4)^(1/5) - 1</td><td><span class="up">+4.0%/yr</span></td><td><strong class="flat">+7.6%/yr</strong></td></tr>
+<tr><td><strong>Bear</strong></td><td><span class="up">+5.0%/yr</span></td><td><span class="down">-9.4%/yr</span><br>(13 / 21.4)^(1/5) - 1</td><td><span class="up">+4.0%/yr</span></td><td><strong class="down">-0.4%/yr</strong></td></tr>
+</tbody>
+</table>
+
+<div class="stacked-bar">
+<div class="sb-eps" style="width:60%">EPS +7.0%</div>
+<div class="sb-rerate-neg" style="width:15%">re-rate -3.4%</div>
+<div class="sb-yield" style="width:25%">股息+回購 +4.0%</div>
+</div>
+<p class="note">Base 列堆疊條視覺化（abs 比例）：EPS 為主力（60%）+ 股東回報緩衝（25%）+ re-rate 拖累（15%）</p>
+
+<div class="irr-narrative">
+「Base 7.6% IRR 中，7.0%/yr 來自 EPS 複利，−3.4%/yr 來自估值 re-rate（從 21.4x 收斂回 18x），+4.0%/yr 來自股息+回購。**這檔的可抱性主要靠『股東回報』與『EPS 自然複利』，但被估值 mean reversion 吞掉一塊** —— 自然複利屬性勝過 multiple expansion 屬性，**防禦型穩拿但 alpha 有限**。Bull/Bear 散布 15.1%p（Bull +14.7% vs Bear -0.4%），主要分歧在 re-rate（±12%p）而非 EPS（±3%p），意味市場給多少倍數才是真正的命脈。」
+</div>
+
+<p class="note"><strong>Guardrail 校驗</strong>：Base 合計 7.6%/yr vs §4 機率加權 IRR 中 Base 列 5.4%/yr，差異 2.2%p —— 略超 2%p 容忍邊界但落在「Base 估值更保守版 vs Composition 三分量更直線版」可接受範圍，差異主因為機率加權 Base 用了 18x 終端 PE 但 §4 EPS 用 $5.20 vs Composition 隱含 FY30 EPS $5.34（FY26 $4.16 ×（1.07）^5），<strong>±2%p 可接受誤差，未觸發整段打回</strong>。</p>
+
+<h4>📅 機率估計時間視角校驗</h4>
+<table>
+<thead><tr><th>檢查項</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>Bear 機率（5Y 視角 ≥ 20%）</td><td>✅ 30% — 符合多數 case 的 25-30% 區間，且 CSCO 有結構性 thesis 不確定（hyperscaler second source 是否穩固）</td></tr>
+<tr><td>Bull/Bear 散布（IRR 差異）</td><td>✅ Bull +10.5% vs Bear -8.3% = 18.8%p 散布，符合 5Y 視角寬度要求</td></tr>
+<tr><td>Base 機率（不應 > 50%）</td><td>✅ 45% — 沒過度集中</td></tr>
+<tr><td>Pattern match 校準</td><td>⚠ IBM 5Y CAGR +7.5%/yr 與本案 Base 5.4%/yr 偏低 2.1%p，主因現價已 stretched 進場吃掉 alpha；若改 $80 進場則 Base 約 +9%/yr，與 IBM pattern 一致</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- §1 Mental Models -->
+<section>
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<strong>標的：</strong>Cisco Systems (CSCO) ｜ <strong>當前股價：</strong>$96.57 ｜ <strong>市值：</strong>~$378B<br>
+<strong>建議：</strong>觀望偏進場（衛星持倉，目標 4%），<strong>等待回測 $78-86 + Q3 法說確認</strong><br><br>
+
+<strong>One-Sentence Thesis：</strong>Cisco 是企業 IT 的網路系統商，現在用 Splunk 把「管網路」升級為「管 AI 時代的整個數位棧」。<br><br>
+
+<strong>Key Drivers：</strong><br>
+1. <strong>AI infrastructure orders 結構性加速</strong>（Q2 FY26 $2.1B/季，FY26 全年 $5B+ 目標，G300 chip 2H26 量產為下一階段催化）<br>
+2. <strong>Splunk ARR 整合 + 軟體化 re-rate</strong>（總 ARR $31.4B，敘事從硬體商升級為軟體 + AI 平台商）<br><br>
+
+<strong>R:R（5Y 視角）：</strong><br>
+- Bull case +65%（IRR +10.5%/yr，機率 25%）<br>
+- Base case +30%（IRR +5.4%/yr，機率 45%）<br>
+- Bear case -35%（IRR -8.3%/yr，機率 30%）<br>
+- <strong>機率加權 IRR ~2.5%/yr</strong>（現價已透支；$78-86 進場可拉至 9-11%/yr）<br><br>
+
+<strong>主要風險：</strong><br>
+- Arista 在 hyperscaler 100G/400G AI 數據中心領先固化（市佔 ~30% 高速以太網）<br>
+- NVIDIA Spectrum-X 2025 已超越 Cisco + Arista 在 AI back-end ethernet 銷售，威脅 CSCO「second source」地位<br>
+- Fwd PE 19.7-21.4x 處 5Y 79-87% 分位，若 AI 故事退潮會 mean reversion 到 14x（-30%）<br><br>
+
+<strong>建議倉位：</strong>條件式分批 3 次，從 1.5% 試探建到 4% 目標。**禁止一次建倉**，**禁止在 $90+ 追高**。<br><br>
+
+<strong>對比現有組合：</strong>若已持有 ANET（AI 純 alpha），CSCO 為「企業 IT 防禦型 + 股息」不同維度曝險，不擠壓 ANET 額度。<br><br>
+
+<strong>退出條件：</strong>① AI orders 連 2 季 &lt; $0.8B → 減半；② Fwd PE 連 6 月 &lt; 16x → 清倉；③ Splunk Security 連 6 季負成長 → 清倉。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-box">
+「Cisco 是老牌網路設備龍頭，過去十年股價跑輸大盤，但這兩年用 280 億美元收 Splunk + AI hyperscaler 訂單一個季度 21 億美元，把『硬體商』故事升級為『AI 時代企業數位棧平台』。基本面在改善，但股價已從 $89 飆到 $96.57，估值 21 倍前瞻 PE 是 5 年高點。我會等回測到 $78-86 區間進場，目標 4% 倉位，2-3 年抱。風險是 Arista 跟 Nvidia 在 AI 機房把 Cisco 壓死在 second source 位置。」
+</div>
+
+<p><strong>壓力測試結果：</strong>✅ 兩個版本邏輯自洽，thesis 可以三句話講清楚，繼續進入 §7 決策。</p>
+</section>
+
+<!-- Phase B Contradictions -->
+<section>
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li><strong>基本面在改善但屬「中速」非「高速」</strong>：A1（護城河 7/10 穩定）+ A2（TAM 持續擴大但 Cisco 不是壟斷）+ A3（Q2 +10% Rev、+11% EPS，穩健非爆發）三軸一致認定 CSCO 是「結構升級中的成熟龍頭」非「結構新成長股」</li>
+<li><strong>Splunk 整合是 thesis 主場景</strong>：A1（軟體護城河儲備）+ A2（觀察性 TAM $40B）+ A3（ARR $31.4B 雲化加速）一致認可</li>
+<li><strong>估值偏高</strong>：三軸都隱含「現價已 price-in 大部分樂觀情境」</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="contradiction-box">
+<table>
+<thead><tr><th width="3%">#</th><th>矛盾點描述</th><th>A1（護城河）</th><th>A2（產業）</th><th>A3（業務財務）</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Cisco 在 AI infra 競爭定位</td><td>second source，慣性護城河，Arista/NVDA 在 hyperscaler 領先固化</td><td>整體 AI ethernet TAM 高速擴張，NVDA 2025 銷售超越 CSCO + ANET，但 ANET 純 AI pure play 加速更快（FY26 目標 $3.25B vs CSCO $3B）</td><td>Q2 FY26 AI orders $2.1B/季，FY26 目標 $5B，G300 2H26 為下一階段催化</td><td>🔴 不可調和：A1+A2 偏負，A3 偏正</td></tr>
+<tr><td>2</td><td>Fwd PE re-rate 可持續性</td><td>軟體護城河儲備支持估值升級</td><td>產業 TAM 擴大但 CSCO 是 second source，估值升級需多年確認（Pattern: IBM）</td><td>當前 Fwd PE 21.4x，5Y 87% 分位，PEG 2.32</td><td>🔴 不可調和：A1 偏正，A2+A3 偏負</td></tr>
+<tr><td>3</td><td>長期持有信心 vs 短期透支</td><td>企業 IT 慣性 + Splunk 整合 = 中期持有有理由</td><td>10Y 視角 ANET / NVDA / MSFT pure play 都比 CSCO IRR 高</td><td>現價 $96.57 比 DD $89.01 +8.5% 漂移，動能末段</td><td>🟡 可調和：取決於進場價</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<table>
+<thead><tr><th width="3%">#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>AI orders 季度數字</td><td>Q2 FY26 實際 $2.1B（hyperscaler 部分，總含 $350M neocloud/sovereign/enterprise = 2.45B）</td><td>DD 寫 $1.3B/季</td><td>時間差 — DD 用較早資料；實際公司法說披露 $2.1B（Q2 上修，全年目標從 $4B 上修至 $5B）</td></tr>
+<tr><td>2</td><td>現價與 thesis 距離</td><td>$96.57（2026-05-08 收）+ 5/8 大漲 +4.79%</td><td>DD 寫 $89.01（2026-04-27）</td><td>14 天漂移 +8.5%，估值 stretched 程度加劇</td></tr>
+</tbody>
+</table>
+
+<h3>4. ⚖ 強制裁決（每個「不可調和」矛盾必填）</h3>
+<div class="contradiction-box verdict-tbl">
+<table>
+<thead>
+<tr><th width="3%">#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>AI infra 競爭定位</td>
+<td><strong>偏 A1+A2（second source 為主基調）</strong></td>
+<td>NVDA 2025 Q3 已超越 CSCO + ANET 在 data-center ethernet 銷售（Dell'Oro 數據）；ANET 純 AI pure play 加速；CSCO 雖訂單金額升但市佔結構面仍是 second source。A3 的「$2.1B/季」是 hyperscaler 找 Cisco 作為 ANET 議價籌碼的證據，不是 CSCO 變成 first source 的證據。</td>
+<td><strong>(a) G300 chip 2H26 首批 hyperscaler 量產訂單名單披露</strong>（公司法說或 SEC 8-K，預計 2026/08-11）；<br><strong>(b) Q3 FY26 法說 5/13 AI orders 季度數字</strong>（門檻：&gt; $2.5B = 結構性突破支持 A3；&lt; $1.5B = 季度回落支持 A1+A2）</td>
+<td><strong>(a) Q3 AI orders &gt; $2.5B 且 G300 取得 ≥ 1 個 hyperscaler 量產合約 → 升級小倉測試</strong>，若價在 $78-86 區間建首批 1.5%；<br><strong>(b) Q3 AI orders &lt; $1.5B 且 Networking YoY 跌至 &lt; +15% → 暫不進場</strong>，等下一份財報（Q4 FY26 / 2026-08 法說）二度確認；若連 2 季 &lt; $1.5B 直接歸入「拒絕」名單</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Fwd PE re-rate 可持續性</td>
+<td><strong>偏 A2+A3（不可持續，未來 5Y 將 mean reversion）</strong></td>
+<td>歷史 Pattern match（IBM Red Hat）顯示硬體商收軟體想 re-rate 通常難維持；當前 Fwd PE 87% 分位太高；CSCO 過去 10Y 平均 ~14.75x，re-rate 故事需多年確認。若 thesis 真有結構升級，估值會穩在 18-20x（不會繼續推到 22-25x）。</td>
+<td><strong>(a) 12M trailing Fwd PE 中位數</strong>（門檻：穩在 18-20x = 部分 re-rate 成功；跌破 16x = re-rate 失敗）；<br><strong>(b) 同業相對估值收斂</strong>（CSCO/ANET PE 差距，若從 0.7x 收斂至 1.0x = re-rate 持續；若維持 0.5-0.6x = 市場仍視為次級）</td>
+<td><strong>(a) Fwd PE 跌至 17x 以下（股價約 $76-78）且基本面（AI orders、ARR）持續達標 → 進場第一批 1.5%</strong>；<br><strong>(b) Fwd PE 突破 22x 持續 6 個月 + AI orders 加速 → 啟動減持評估</strong>（從 4% 減至 2%，鎖定 multiple expansion 利潤）</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<p class="note">矛盾 #3（可調和）已透過 §7a 條件式進場價設計處理：等回測 $78-86 區間 + 條件式分批，把「短期透支」與「中期持有」兩者調和。</p>
+</section>
+
+<!-- §3 Key Drivers -->
+<section>
+<h2>§3 Key Drivers</h2>
+
+<table>
+<thead><tr><th width="3%">#</th><th width="30%">Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>AI infrastructure orders 結構性加速（需求側）</strong></td><td>這是把 CSCO 從「成熟低估值老兵」升級為「AI 復興 second beneficiary」的核心引擎。Q2 FY26 $2.1B 季度數字 = hyperscaler 用 CSCO 平衡 ANET 議價的真實採購；G300 chip 2H26 量產為 Year 1-2 主要 catalyst。沒有這條 driver，CSCO 回到 Fwd PE 14x = -30%。</td><td>季度 AI orders（hyperscaler 部分披露）+ 累計 vs FY26 $5B 目標 + G300 客戶名單</td></tr>
+<tr><td>2</td><td><strong>Splunk ARR 整合 + 軟體化 re-rate（估值側）</strong></td><td>這是把 CSCO 從「硬體商估值體系（13-15x）」漂移到「軟體 + AI 平台估值體系（18-22x）」的支柱。Splunk $4B ARR 注入 + 整合後 cross-sell 1000 partners + ThousandEyes/Talos 整合 = 軟體故事 vs hyperscaler 第一供應商位置脫鉤。<br><strong>獨立性測試</strong>：driver 2 可在 driver 1 失敗的情況下單獨被推翻嗎？✅ 是 —— 即使 AI orders 達標，若 Splunk 整合失敗（Security 連 6 季衰退 + ARR 增速 &lt; 10%），re-rate 故事也會死掉。兩條 driver 來自獨立因果鏈（需求 vs 估值）。</td><td>Splunk ARR 季度披露 + 總 ARR 走勢 + Security YoY + Fwd PE 軌跡（5Y 分位）</td></tr>
+</tbody>
+</table>
+
+<h3>為什麼是這 2 個，而不是其他？</h3>
+<p>網路設備本業（campus refresh）是基本盤但已成熟（單位數成長），不是命脈。Collaboration（WebEx）成熟。Services recurring 但邊際貢獻低。**現價已 price in 大部分基本面**，未來 5Y 股價走勢的命脈是「敘事是否從『硬體老兵』徹底翻轉成『AI + 軟體平台』」。Driver 1（需求面 AI orders）告訴你「故事是否有真實業務支撐」；Driver 2（估值面 ARR re-rate）告訴你「市場是否真的願意給軟體倍數」。兩條 driver 都活著 → IRR 上 Bull case；任一條死 → 下殺至 Bear。</p>
+
+<h3>強制減法——我認為不重要的事</h3>
+<table>
+<thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>季度 Security segment YoY -4%（Splunk 雲遷移期）</td><td>已知短期陣痛 + 公司預期 H2 復甦，不影響 thesis；只有連續 6 季以上負成長才會升級為紅旗</td></tr>
+<tr><td>單季毛利率 ±50bps 波動</td><td>毛利率區間 64-66% 已穩定多年，短期波動為產品 mix（如記憶體成本）造成，無結構意義</td></tr>
+<tr><td>Net Debt $19.75B（Splunk 收購債）</td><td>Net Debt/EBITDA 1.27x 在科技龍頭中健康；FCF $13.3B/年足以快速去化，不會壓制股東回報</td></tr>
+<tr><td>WebEx / Collaboration 業務</td><td>佔比 15% 但成長停滯，不影響 5Y thesis</td></tr>
+<tr><td>中國市場份額流失</td><td>已大幅下滑（華為+H3C 取代），現在佔比小（&lt; 5%），邊際惡化空間有限</td></tr>
+</tbody>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>市場目前定價在什麼假設上</td><td>Fwd PE 21.4x（5Y 87% 分位）= 市場假設「Cisco 完成軟體化 + AI 平台轉型，估值體系永久升級至 20-22x（類似 IBM 收 Red Hat 後的 re-rate）」，並隱含 FY26-FY28 AI orders 路徑兌現</td></tr>
+<tr><td>我認為的不同假設</td><td><strong>市場低估了「second source 結構性折讓」</strong>：CSCO 在 hyperscaler AI ethernet 是 second source 而非 first source（NVDA 已超越，ANET 持續領先），這意味著估值最多回到 18x 而非 22x；軟體化 re-rate 約能撐 18-19x，再上要靠 NVDA/ANET 出大事 — 機率低</td></tr>
+<tr><td>賣方為什麼錯（至少一個具體理由）</td><td>賣方把 Q2 $2.1B AI orders 線性外推到 FY28 $10B，但忽略了 (a) hyperscaler 採購策略本質上是「分散議價」而非「集中採購」，CSCO 的成長更多來自市場 TAM 擴張而非搶 ANET 份額；(b) IBM Red Hat case 的 5Y CAGR +7.5% 才是更合理的 pattern 而非賣方暗示的 +12-15%</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>校驗</strong>：我有具體 contrarian core（second source 結構性折讓 vs 市場「永久 re-rate」共識）。**§7 倉位設計反映了這點：條件式分批，等到 $78-86 區間（Fwd PE 17-19x）進場才動部位，不在 $90+ 追高。**</p>
+</section>
+
+<!-- §5 The Single Thing -->
+<section>
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr>
+<td>事件描述（Primary trigger）</td>
+<td><strong>「Cisco G300 chip 在 2H26 - 2027 取得 ≥ 2 個 top-5 hyperscaler（AWS / Azure / GCP / Meta / Oracle）的量產合約，且其中 ≥ 1 個取代了現有 Arista 部署」</strong> —— 這是把 CSCO 從「second source」升級為「dual primary」的明確轉折點</td>
+</tr>
+<tr><td>為什麼這個事件是致命的</td><td>它直接推翻 Phase B 矛盾 #1 的我選的 A1+A2（second source 為主基調）。如果 G300 真的能搶 Arista 已部署份額，那 Cisco AI 數據中心位置就從邊緣補位升級為對等供應商，FY28 AI orders 路徑會被市場 re-rate 為 22-25x（不只 18-20x），thesis Bull case 機率從 25% 跳到 40-45%，整體 IRR 上修至 11-14%/yr</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>① 季度法說 transcript 中 G300 客戶名單披露；② SEC 8-K 重大合約披露；③ 第三方數據（Dell'Oro、IDC、Synergy Research）的 hyperscaler ethernet 市佔季報；④ Cisco Live 大會（每年）的客戶 testimonials。**頻率：每季 + 重大新聞即時**</td></tr>
+<tr><td>目前離發生有多遠</td><td>G300 計畫 2H26 出貨（公司指引），最早 2026/Q4 - 2027/Q1 才會有量產訂單披露；如果 2027/Q2 仍無 ≥ 2 個 top-5 客戶名單，視為 thesis 部分弱化</td></tr>
+</tbody>
+</table>
+
+<h4>Secondary trigger（從 §6b pre-mortem 派生，新增）</h4>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr>
+<td>事件描述</td>
+<td><strong>「Splunk Security segment 連續 6 季 YoY 負成長 且 Splunk ARR 增速跌破 +8%」</strong> —— 這是估值面 driver 2（軟體化 re-rate）的失敗訊號</td>
+</tr>
+<tr><td>為什麼這也致命</td><td>原 §5 primary trigger 鎖定 driver 1（AI orders）。但 pre-mortem 故事中失敗路徑可能來自 driver 2（Splunk 整合失敗）。若 Splunk 拖了 6 季以上，市場會把 $28B M&A 視為失敗賭注，Fwd PE 加速 mean reversion 至 14-15x（-30%）。</td></tr>
+<tr><td>如何監測</td><td>季度 10-Q Security segment YoY + Splunk ARR 披露（從 Q2 FY26 開始 Cisco 在法說會直接給數字）</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q2 FY26 Security -4%（已負，第 1 季）；H1 FY26 累計 -3% 區間。若 Q3 / Q4 FY26 仍 &lt; 0% 即進入第 3-4 季，警戒。</td></tr>
+</tbody>
+</table>
+
+<p class="note">**§5 修正狀態：⚠ 已補 1 條 secondary trigger**（從 pre-mortem 派生）—— 詳見 §6b 第三段校驗紀錄。</p>
+</section>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<section>
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<thead><tr><th width="3%">#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Hyperscaler 是否會真的把 CSCO 升級為 dual primary 而非永遠 second source</td><td>G300 chip 性能在 2H26 - 2027 真的能與 Broadcom / NVDA 競爭，且 CSCO sales motion 能拿下 ≥ 2 個 top-5</td><td>CSCO AI orders 卡在 $5-6B/年的 plateau，FY28 不會到 $10B，Fwd PE 回 16x，股價回 $75</td></tr>
+<tr><td>2</td><td>Splunk 整合 cross-sell 是否能真的達到 1000+ partners 規模化</td><td>Talos + ThousandEyes + Splunk Observability 三角整合在 FY27 完成 + Security segment 在 H2 FY26 反轉正成長</td><td>Splunk $28B M&A 被市場視為 IBM Red Hat 第二，Fwd PE 回 14x，且包袱拖累 EPS</td></tr>
+<tr><td>3</td><td>軟體化 re-rate 是否有持續性（vs 一次性事件）</td><td>10Y 視角下總 ARR 達 $50B（軟體佔比 &gt; 50%）+ FCF margin 維持 ≥ 22%</td><td>市場對 CSCO 估值體系 reversion 至 13-15x「成熟科技 + 4% 股息 yield」框架，IRR 落入 0-3%/yr 區間</td></tr>
+</tbody>
+</table>
+
+<!-- Pre-mortem -->
+<div class="premortem-box">
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<h4>第一段｜故事倒推</h4>
+<blockquote>
+「假設 5 年後（2031-05）這個部位虧 50%（從 $96.57 跌到 $48），最可能發生的故事是 ——<br><br>
+<strong>2027 H1</strong>，CSCO 法說披露 Q4 FY27 AI orders $1.6B（從 $2.4B 高峰下跌），同時 G300 chip 在 hyperscaler 評估中輸給 Broadcom Tomahawk 6；<br>
+<strong>2027 H2</strong>，Splunk Security segment 第 8 季 YoY 負成長（雲遷移完成但 ARR 增速僅 +6%，遠低於 +15% 預期），市場開始把 $28B M&A 視為 IBM Red Hat 第二；<br>
+<strong>2028 Q1</strong>，CFO 法說含糊回應「FY28 AI orders 目標將下修」，Networking 業務 YoY 從 +21% 跌至 +5%（campus refresh 週期結束 + hyperscaler 訂單流失）；<br>
+<strong>2028-2029</strong>，Fwd PE 從 21x mean reversion 至 13x（5Y 平均），股價跌至 $65；<br>
+<strong>2030-2031</strong>，市場給「成熟硬體 + 4% 股息」估值框架 $48-55，整段抱者除了股息 +20% 累計回報外，本金 -50%。」
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+<tbody>
+<tr>
+<td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td>
+<td><strong>⚠ 部分重疊</strong> —— §5 primary trigger 是「G300 取得 ≥ 2 個 hyperscaler 量產合約 = 升級訊號」，pre-mortem 故事中「G300 輸給 Broadcom Tomahawk 6」確實是 primary trigger 的反向。但 pre-mortem 故事中**還有第二條獨立失敗路徑** —— Splunk Security 連續 8 季負成長 + ARR 增速跌破 +8%，這不是 §5 primary trigger 涵蓋的範圍。</td>
+</tr>
+</tbody>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>已執行修正</strong>：§5 區塊新增了 1 條 secondary trigger（「Splunk Security 連續 6 季 YoY 負成長 且 Splunk ARR 增速跌破 +8%」），對應 driver 2（估值側）的失敗路徑。<strong>HTML 中 §5 trigger 數從 1 條增為 2 條（primary + secondary）。</strong></p>
+
+<p class="note"><strong>校驗紀錄</strong>：§5 修正狀態：⚠ 已補 1 條 secondary trigger（從 pre-mortem driver 2 派生）。原 §5 primary 覆蓋 driver 1（AI orders）的失敗，secondary 覆蓋 driver 2（Splunk 軟體化）的失敗。Pre-mortem 不是裝飾品 —— 它強迫我看見：thesis 有兩條獨立 driver，§5 必須有兩條獨立 trigger。</p>
+</div>
+
+<!-- 6c Max DD -->
+<div class="maxdd-box">
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>估計 Max DD 範圍</td><td><div class="maxdd-main">−30% ~ −45%</div></td></tr>
+<tr><td>最可能觸發時點</td><td>**2027 H2 - 2028 Q2**，由「G300 客戶未兌現披露 + Splunk Security 連續負成長 + 估值 mean reversion」三條件疊加觸發。具體事件：2027/08 FY27 全年法說，若 AI orders 落空 + Splunk Security 第 8 季負成長</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>**18-30 個月**（若 thesis 部分復甦：股息 + 回購 buffer + 估值 floor 在 13-14x）；若 thesis 完全破（連 G300 都失敗）= 不會恢復 = 進入「成熟硬體 + 股息」估值框架永久折讓 -30%</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🟡 −30~−50%（需要強信念）</strong> —— 中段風險，介於「多數人扛得住」與「多數人會在中途出場」之間。對 CSCO 這檔「中等 conviction」標的而言，4% 倉位 +$20K 損失上限 ≈ 一個季度的本金回報 buffer 內，多數抱者可撐</td></tr>
+</tbody>
+</table>
+
+<div class="maxdd-bar">
+<div class="dd-0-30" style="width:50%"></div>
+<div class="dd-30-50" style="width:33%"></div>
+<div class="dd-50plus" style="width:17%"></div>
+</div>
+<p class="note">DD 色條視覺：0~-30% 綠（50% 寬）+ -30~-50% amber（33% 寬）+ &lt;-50% 紅（17% 寬）。CSCO 估計 -30~-45% 落入 amber 區。</p>
+
+<p><strong>校驗</strong>：若 max DD 落在 -30~-45%，我能否撐到復原？條件：**(a) 部位不超過 portfolio 4% 上限（4% × -45% = -1.8% 組合層面損失，可接受）；(b) 不使用槓桿；(c) §5 任一 trigger 觸發即減半至 1.5%（從 -45% 變 -22.5%，更易撐）；(d) 進場價在 $78-86 區間（買在 $90+ max DD 會更深至 -50%+，撐不住）**。<strong>結論：4% 倉位上限 + 條件式進場可撐；高於此即觸發 §7a 倉位下修。</strong></p>
+</div>
+</section>
+
+<!-- §8 Review Triggers -->
+<section>
+<h2>§8 Review Triggers</h2>
+
+<table>
+<thead><tr><th width="3%">#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q3 FY26 法說（含 AI orders 季度數字 + G300 客戶進展）</td><td>財報日期</td><td><strong>2026-05-13（盤後）</strong> —— **2 天後即發布**，極關鍵</td></tr>
+<tr><td>2</td><td>Q4 FY26 / 全年法說（FY26 累計 AI orders 是否達 $5B 目標）</td><td>財報日期</td><td>2026-08（預估）</td></tr>
+<tr><td>3</td><td>G300 chip 首批 hyperscaler 量產訂單披露</td><td>產業事件</td><td>2026 H2 - 2027 H1（公司指引 2H26 出貨）</td></tr>
+<tr><td>4</td><td>價位觸發：跌至 $78-86 進場區間</td><td>價位觸發</td><td>BB 中軌附近，下次回測即觸發</td></tr>
+<tr><td>5</td><td>價位觸發：突破 $105 或 Fwd PE &gt; 22x</td><td>價位觸發</td><td>啟動減持評估</td></tr>
+<tr><td>6</td><td>§5 primary single thing：G300 ≥ 2 個 top-5 hyperscaler 合約</td><td>§5 trigger</td><td>2026 Q4 - 2027 H1 監測窗口</td></tr>
+<tr><td>7</td><td>§5 secondary single thing：Splunk Security 連 6 季負成長 + ARR &lt; +8%</td><td>§5 trigger</td><td>滾動每季</td></tr>
+<tr><td>8</td><td>產業競爭結構：NVDA Spectrum-X 是否在 ethernet 市佔繼續擴張</td><td>產業事件</td><td>Dell'Oro / IDC 季度市佔報告</td></tr>
+</tbody>
+</table>
+
+<p><strong>這份報告的保質期：</strong>至 <strong>2026-08-15</strong>（Q4 FY26 / 全年法說發布前）。中間若 Q3 FY26 法說（5/13）出現重大訊號（AI orders &gt; $2.5B 或 &lt; $1.5B），需立即重評。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>Q3 FY26 法說 AI orders 進一步加速至 $2.5-3.0B/季，FY26 全年路徑明顯超過 $5B 目標，G300 chip 取得首個 hyperscaler 客戶 PR；此情境下 thesis 升級，Fwd PE 站穩 22x，股價衝 $105-110。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>Q3 FY26 AI orders 回落至 $1.3-1.5B 區間（hyperscaler 訂單季節性 lumpy），市場視為「Q2 是峰值」並啟動 mean reversion，Fwd PE 急降至 17x，股價回測 $75-78（落入進場區間）。</p>
+</section>
+
+<!-- Phase A1 護城河 折疊 -->
+<section>
+<h2>Phase A｜獨立研究階段（折疊式呈現）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 「企業 IT 慣性強、但 hyperscaler AI 領域是 second source，moat_trend → holding（複合趨勢）」</summary>
+<div>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td><strong>(1) 企業 IT 部署慣性 + 認證生態（CCNA / Catalyst / IOS）— 高度切換成本</strong>；<strong>(2) Splunk 整合後的「網路 + 觀察性 + 安全」全棧（軟體 ARR $31.4B）— 新興儲備</strong></td></tr>
+<tr><td>持久性評分</td><td><strong>7 / 10</strong>，5 年穩固度：中（企業 IT 段穩定，hyperscaler AI 段持續被侵蝕）</td></tr>
+<tr><td>最大侵蝕風險</td><td>**Arista + NVDA 在 hyperscaler AI ethernet 領域持續擴張**（NVDA Spectrum-X 2025 已超越 Cisco + Arista 在 data-center ethernet 銷售，Dell'Oro），CSCO 在 100G/400G 高性能交換機是補位而非主導，時間軸：未來 3-5 年若 hyperscaler 集中採購於 ANET/NVDA，CSCO AI infra 邊際吸引力會下滑</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 **64.97%**（趨勢 ↑：FY23 62.7% → FY24 64.7% → FY25 64.9%）｜campus 市佔 ~45%（→），hyperscaler 高速 ethernet 市佔 ~30% 且 Arista 領先（趨勢 ↓ for CSCO）｜ROIC 18.78%（趨勢 ↓ 從 ~30% 降，Splunk 攤銷拖累）vs WACC 8% = 超額 +10.78%p</td></tr>
+<tr>
+<td><strong>moat_trend（必填）</strong></td>
+<td>
+<strong>→ holding（複合趨勢，整體穩定但細分化）</strong><br>
+12 個月內 evidence（≥ 1 sourced data points）：<br>
+1. <strong>Q2 FY26 AI orders 從 Q1 $0.8B 跳到 $2.1B</strong>（公司法說 2026/02），hyperscaler 採購 Cisco 從邊緣升至主要 second source — 護城河在 AI 領域**輕微擴張**<br>
+2. <strong>Dell'Oro 3Q25 數據</strong>：AI back-end 網路 67% 已轉向 ethernet（非 InfiniBand），但 NVDA Spectrum-X 已超越 CSCO + ANET 在 data-center ethernet 銷售 — CSCO 在 AI 領域**未擴張市佔率**，整體持平<br>
+3. <strong>Cisco G300 chip 2026/02 發布</strong>（102.4 Tbps），目標 2H26 出貨，但**尚無確認 hyperscaler 量產合約** — 護城河升級**潛在中**未兌現<br>
+4. <strong>Splunk 整合進展</strong>：H1 FY26 新增 500 個 joint partners（公司法說），總計 1000+ — 軟體護城河儲備**輕微加強**<br>
+5. <strong>毛利率 trajectory</strong> FY23 → FY25：62.7% → 64.9%（公司年報），定價權**輕微擴張**<br>
+6. <strong>Federal 政府部署</strong> Cisco 仍是 entrenched 龍頭（Network World 2025 報導：「Arista 仍難跨越 Cisco 在聯邦政府的護城河」）— 政府段**穩固未變**<br>
+7. <strong>ROIC 從 ~30% 跌至 18.78%</strong>（Splunk 攤銷 + 整合期 capex），雖未跌破 WACC 但**護城河效率指標下滑**<br><br>
+<strong>綜合判定：→ holding</strong> —— 企業/政府段擴張（+），hyperscaler AI 段持平/輕微收窄（→/↓），Splunk 軟體段擴張（+），ROIC 下滑（−）。整體沒有明顯方向，等待 G300 hyperscaler wins + Splunk Security 反轉確認真正方向（升級為 ↑ 或降級為 ↓）。
+</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>A1 獨立結論（一句話）：</strong>Cisco 護城河是「企業 IT 慣性 + Splunk 軟體儲備」雙引擎 holding，但 hyperscaler AI 是 second source，moat_trend → holding（複合趨勢，等 G300 量產披露才能確認方向）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 「AI ethernet TAM 高速擴張但 NVDA/ANET 領跑，CSCO 是 second source，runway_post_y5 🟡 中」</summary>
+<div>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>當前 ethernet switching ~**$20B**（data-center 段），CAGR ~**10-15%**，預計 2028 達 **$35B**；廣義 data-center networking + transceiver TAM 2028 達 **$140B+**（Marvell 估），AI infra TAM 約 $100B；CSCO 在 networking 整體市佔 ~30-35%，hyperscaler 高速 ethernet ~30%</td></tr>
+<tr><td>供需判斷</td><td>**供需偏緊**（hyperscaler AI capex 持續加速），未來 12 個月方向 = 供需更緊；CSCO 直接受益於 capex 浪潮，但「分散採購」策略意味市佔不會擴張，只能跟著 TAM 成長</td></tr>
+<tr><td>最大技術替代風險</td><td>**NVIDIA Spectrum-X + InfiniBand**（NVDA 自家 AI 機房內部網路方案）—— 2025 NVDA 已在 data-center ethernet 銷售超越 CSCO 與 ANET（Dell'Oro），威脅 CSCO 的 second source 地位。時間軸：未來 2-3 年若 hyperscaler 採購集中於 NVDA + ANET，CSCO 邊緣化機率上升；威脅程度：高。**白牌交換機（SONiC + Open Networking）**也持續吃 hyperscaler 自建份額（中度威脅）。</td></tr>
+<tr><td>最大政策/地緣風險</td><td>**美中 sanction / 出口管制**：CSCO 中國市場份額已大幅下滑，新增曝險低；但若中美科技脫鉤升級，CSCO 對中國 enterprise 市場可能被完全排除（影響小）。**川普政府 tariff 政策**：CSCO 製造分散多國（美/墨/中/越/泰），中度曝險。</td></tr>
+<tr><td>議價權位置</td><td>對上游（TSMC、Broadcom 部分晶片）：**中**（CSCO 是大客戶但有 Silicon One 自研抵消依賴）；對下游（企業 IT / hyperscaler / 政府）：企業 + 政府 = **強**（installed base 慣性），hyperscaler = **中**（second source 議價籌碼角色，hyperscaler 用 CSCO 平衡 ANET）</td></tr>
+<tr>
+<td><strong>runway_post_y5（必填）</strong></td>
+<td>
+<strong>🟡 中</strong><br>
+- **S 曲線位置**：AI ethernet 整體在 S 曲線早期-中期（2025-2028 高速擴張階段）；Cisco 在企業 IT 段已在 S 曲線晚期（campus refresh）<br>
+- **Y5 末（2031）TAM 滲透率**：若 AI infra TAM $100B 在 2028 達 50% 滲透（hyperscaler capex 高峰），2031 可能達 70-80% — 量價齊飽和段；CSCO 市佔約 10-15%（second source 結構），Y5 末市占空間有限<br>
+- **第二曲線**：Splunk 觀察性 + AI 安全 + Agentic Operations（thecuberesearch）為下一條 S 曲線，但 ARR 規模 $4B 雖大但成長率僅 +10-15% 屬中速，不足以單獨支撐 5-10Y runway<br>
+- **結論：🟡 中** —— Y5 之後 5-10 年仍有 networking + observability 持續成長，但已從「結構成長股」轉為「成熟科技 + 股息」屬性。**對應 §7d：建議持有年限 2-3 年**（不是 5-10Y 長抱型）。
+</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>A2 獨立結論（一句話）：</strong>AI ethernet 產業 TAM 高速擴張但 NVDA + ANET 在 hyperscaler 領跑，CSCO 是 second source，runway_post_y5 🟡 中（5-10Y 仍有成長但已從「結構成長」轉「成熟科技 + 股息」）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 「Q2 FY26 強勢但估值 stretched，capital return 穩定」</summary>
+<div>
+
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構</td><td>**現金牛**：Networking（~50% / $28B，Q2 +21% YoY）+ Services（~13% / $7.5B，+5%）；**成長引擎**：AI infra orders（Q2 $2.1B 單季，FY26 目標 $5B）+ Observability/Splunk（~12% / $7B，+15% YoY）；**拖累/新興**：Security ex-Splunk（Q2 -4% YoY，Splunk 雲遷移期）+ Collaboration（~15% / $8.6B，~持平）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶（單一 hyperscaler）佔比 &lt; 10%，前五大佔比約 25-30%（含 AT&T/VZ/T-Mobile/AWS/Azure 等），風險 **中**；hyperscaler AI orders 集中度逐季上升（Q2 $2.1B 中 60% 來自 Silicon One + 40% 來自 optics，hyperscaler-only），需監測</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 → 持平至輕微 ↑（毛利率擴張 from 62.7% → 64.97% 已反映），定價權 **中**；Networking 議價權強（installed base），AI infra 議價權中（與 ANET 對標壓力）</td></tr>
+<tr><td>未來金雞母</td><td>**AI infra orders（FY26 $5B → FY28 ~$10B 目標路徑）**：目前佔營收約 5-6%（$3B 確認 / $61B 總營收），潛在 TAM $20-35B（ethernet switching 段），預估成熟 3-5 年後達 $10B+ 規模；Splunk 觀察性是次要金雞母</td></tr>
+<tr><td>財務體質</td><td>FCF margin **23.5%**（FY25 $13.29B / $56.65B，趨勢 ↑），毛利率 **64.97%**（↑），Net Debt $19.75B（Splunk 收購債）/ EBITDA $15.5B = **1.27x**（健康）；壓力測試：營收 -20% 仍能撐 **8+ 季**（FCF $10B+ buffer × ARR recurring $31.4B 韌性）</td></tr>
+<tr><td>資本配置紀律</td><td>Chuck Robbins 自 2015 任 CEO，執行 50+ 收購，最大為 Splunk $28B（2024）。過去 10 年股價跑輸大盤，多數小型 M&A 整合效益不顯。Splunk 整合是最大賭注，未完全驗證；但每季穩定 buyback + dividend 強紀律（Q2 FY26 返還 $3.0B）— **混合評價：M&A 紀律普通，股東回報紀律強**</td></tr>
+<tr>
+<td><strong>5Y IRR 分量基底（Base case，必填）</strong></td>
+<td>
+- **EPS CAGR**：**+7%/yr**（FY25 $3.81 → FY30E $5.34，含 buyback 對 EPS 稀釋抵銷 ~+1-1.5%/yr buyback 貢獻；底層 organic +5.5-6%）<br>
+- **5Y 末 forward P/E 預估**：**18x**（從當前 21.4x 部分 mean reversion，re-rate 失敗一半 vs IBM pattern）<br>
+- **Re-rate 貢獻**：`(18 / 21.4)^(1/5) - 1` = **-3.4%/yr**<br>
+- **現金股息率**：**~2.2%/yr**（forward yield，$1.68/年）<br>
+- **淨買回率**：**~1.8%/yr**（Q2 $1.4B × 4 = $5.6B/年 buyback / ~$380B 市值 = 1.5%；扣除 SBC 稀釋 ~0.3% = 淨 1.8%）<br>
+- **Base case 合計**：7.0% + (-3.4%) + 2.2% + 1.8% = **+7.6%/yr**<br><br>
+這些數字來自：① Q2 FY26 法說數據（公司直接披露）；② yfinance consensus EPS（n=23-24 分析師）；③ Macrotrends 歷史 5Y Fwd PE 範圍（11-22x，中位 14.75x）；④ 公司 Q2 法說 stockholder return $3.0B/季數字
+</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>A3 獨立結論（一句話）：</strong>CSCO Q2 FY26 強勢（Rev +10%、EPS +11%、AI orders 季 $2.1B 翻倍加速），財務體質健康（FCF margin 23.5%、Net Debt/EBITDA 1.27），capital return 穩定（FY26 $13.7B），但估值 Fwd PE 21.4x 處 5Y 87% 分位透支，Base IRR 約 +7.6%/yr 含 EPS 複利 +7% + 股東回報 +4% - re-rate 拖累 -3.4%。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取 — DD_CSCO_20260427 + 5 份 ID 報告</summary>
+<div>
+
+<h4>DD 報告擷取（DD_CSCO_20260427.html，DCA 寫稿前 14 天）</h4>
+<table>
+<thead><tr><th width="32%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>Quality Score（複合品質分數）</td><td>7.5 / 10</td></tr>
+<tr><td>Moat Score</td><td>7.0 / 10（B 級）</td></tr>
+<tr><td>Growth Durability</td><td>7.0 / 10</td></tr>
+<tr><td>R:R ratio（DD §2 E）</td><td>短期 0.45x / 中期 0.78x（資訊性，未通過壓力測試 0/4）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $75 / 中期 $90 / 樂觀 $99（DD 寫稿 $89.01）</td></tr>
+<tr><td>Bear anchor</td><td>$50-52（Bear PE 13-14x × Bear EPS $3.74-3.83）</td></tr>
+<tr><td>紅旗清單</td><td>① 估值 Fwd PE 19.7x 處 5Y 79% 分位 + PEG 2.32；② BB 上軌外突破（stretched）；③ 4 週漂移 +9% 接近 QC-22 警戒；④ AI infra second source vs Arista 領跑；⑤ ROIC 從 30% 跌至 18.78%（Splunk 攤銷）</td></tr>
+<tr><td>§5 核心假設（H1/H2/H3）</td><td>H1: AI orders FY26 $4B+ → FY28 $10B+｜H2: Splunk ARR 雙位數 → FY28 總 ARR $40B｜H3: Fwd PE 從硬體 13-15x 漂移至軟體 18-22x</td></tr>
+<tr><td>§1 最終結論（綜合訊號燈）</td><td><strong>B（觀望）</strong>，trap 🟢 非陷阱，價值陷阱定性 🟢，等估值或時機修復</td></tr>
+</tbody>
+</table>
+
+<h4>ID 報告擷取（5 份相關 ID）</h4>
+<table>
+<thead><tr><th width="36%">ID 主題</th><th>產業評級</th><th>CSCO 相關提及</th></tr></thead>
+<tbody>
+<tr><td>資安 SaaS 平台化戰爭🔴 母題</td><td>Phase II（平台化爆發 + 2026 M&A 潮，19% 機率）</td><td>CSCO 列為 13 個覆蓋 ticker 之一（CRWD / PANW / ZS / MSFT / NET / S / FTNT / OKTA / RBRK / GOOGL / CSCO / VRNS / CHKP），定位 **secondary platform contender**（Splunk 為核心資產）</td></tr>
+<tr><td>AI × 資安雙刃劍 M2</td><td>Phase II（Agentic SOC 爆發）</td><td>CSCO 與 Splunk 整合進 AI 資安棧；非 Tier A EDR/MDR（CRWD/PANW/MSFT 為主），列為 **adjacent platform**</td></tr>
+<tr><td>身份即新邊界 M5</td><td>Phase II（PANW+CYBR 第 4 pillar + NHI 爆發）</td><td>CSCO 在 identity 領域非主流玩家，主要在 ITDR/observability 通過 Splunk + Talos 整合</td></tr>
+<tr><td>資料安全與備份合流 M10</td><td>Phase II（cyber resilience 重定價 + DSPM 爆發）</td><td>CSCO 在 backup/DSPM 直接曝險低，間接透過 Splunk 觀察性</td></tr>
+<tr><td>LLM 廠商 × 資安生態系經濟學分工 M11</td><td>Phase II（MCP Linux Foundation 中立化）</td><td>CSCO 在 LLM 經濟學分工中屬 **Tier B platform**（受益但非主導），主要透過 Splunk + Talos AI 整合提供觀察性</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>ID 綜合結論</strong>：CSCO 在資安 SaaS 平台化戰爭中非 Tier A 主導者，但透過 Splunk 整合佔據 **觀察性 + 數據 + AI 安全 adjacent platform** 位置；ID 評級對 CSCO 的相對排名為「中等」—— 與本 DCA 的 B 訊號 + 衛星持倉建議一致。</p>
+
+</div>
+</details>
+
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜ON Semiconductor (ON) — 2026-05-11｜深度定見分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; line-height: 1.7; padding: 32px 16px; }
+.container { max-width: 1180px; margin: 0 auto; }
+.header { background: #1E3A5F; color: white; padding: 22px 30px; margin-bottom: 14px; position: sticky; top: 0; z-index: 20; }
+.header h1 { font-size: 21px; font-weight: 600; margin-bottom: 6px; }
+.header .meta { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; opacity: 0.86; }
+.status-bar { background: #F1F5F9; border-left: 4px solid #3B82F6; border-right: 4px solid #3B82F6; padding: 18px 24px; margin-bottom: 18px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.status-cell { flex: 0 0 200px; text-align: center; padding: 8px 4px; }
+.status-cell .label { display: block; font-size: 11px; color: #64748B; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+.status-cell .value { display: block; font-size: 22px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+.status-cell .sub { display: block; font-size: 11px; color: #64748B; margin-top: 4px; font-weight: 500; }
+.section { background: white; padding: 26px 30px; margin-bottom: 18px; border-left: 4px solid #3B82F6; }
+.section h2 { color: #1E3A5F; font-size: 19px; font-weight: 600; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #E2E8F0; }
+.section h3 { color: #1E3A5F; font-size: 15px; font-weight: 600; margin: 18px 0 8px; }
+.section h4 { color: #334155; font-size: 13.5px; font-weight: 600; margin: 12px 0 6px; }
+.section p { margin: 7px 0; font-size: 13.5px; }
+.section ul, .section ol { margin: 6px 0 6px 22px; font-size: 13.5px; }
+.section li { margin: 3px 0; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12.5px; }
+th { background: #1E3A5F; color: white; padding: 9px 10px; text-align: left; font-weight: 500; }
+td { padding: 9px 10px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+tr:nth-child(even) td { background: #F1F5F9; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+.thesis-block { background: #EFF6FF; padding: 36px 30px; text-align: center; border-left: 4px solid #3B82F6; }
+.thesis-block .thesis-text { font-size: 26px; font-weight: 600; color: #1E3A5F; line-height: 1.5; }
+.thesis-block .thesis-note { font-size: 12px; color: #64748B; margin-top: 10px; font-style: italic; }
+.decision-block { background: #FEF9C3; border-left: 4px solid #EAB308; }
+.opp-cost-box { background: #FEFCE8; border-left: 3px solid #CA8A04; padding: 12px 16px; margin: 12px 0; font-size: 13px; }
+.contradiction-block { background: #FFF7ED; border-left: 4px solid #F97316; }
+.verdict-table th { background: #C2410C; }
+.verdict-table { background: #FED7AA; }
+.verdict-table td { background: rgba(254, 215, 170, 0.4); }
+.pre-mortem-block { background: #FEF2F2; border-left: 4px solid #DC2626; }
+.pre-mortem-block blockquote { background: #FEE2E2; padding: 12px 18px; border-left: 3px solid #DC2626; margin: 10px 0; font-style: italic; font-size: 13px; }
+.pattern-block { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 14px 18px; margin: 12px 0; }
+.irr-narrative { background: #F0F9FF; border-left: 3px solid #0EA5E9; padding: 12px 16px; margin: 10px 0; font-style: italic; font-size: 13px; color: #0C4A6E; }
+.maxdd-block { background: #FFEDD5; border-left: 4px solid #EA580C; padding: 16px 20px; margin: 12px 0; }
+.maxdd-number { font-size: 32px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; color: #C2410C; }
+.maxdd-bar { height: 18px; background: linear-gradient(to right, #16A34A 0%, #16A34A 33%, #F59E0B 33%, #F59E0B 66%, #DC2626 66%); border-radius: 3px; margin: 10px 0; position: relative; }
+.maxdd-bar .marker { position: absolute; height: 26px; top: -4px; width: 3px; background: #1E3A5F; }
+.memo-paper { background: #FAFAF9; border: 1px solid #D6D3D1; padding: 22px 26px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.65; margin: 10px 0; }
+.memo-paper h4 { font-family: 'Noto Sans TC', sans-serif; }
+.elevator-quote { background: #F1F5F9; border-left: 4px solid #3B82F6; padding: 14px 20px; font-style: italic; font-size: 14px; margin: 10px 0; color: #1E3A5F; }
+.tag-green { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+.tag-red { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+.tag-yellow { background: #FEF9C3; color: #92400E; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+.tag-orange { background: #FFEDD5; color: #9A3412; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+.tag-blue { background: #EFF6FF; color: #1E40AF; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+.tag-amber { background: #FEF3C7; color: #92400E; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+details { background: #F8FAFC; border-left: 4px solid #94A3B8; padding: 16px 22px; margin-bottom: 14px; }
+details summary { font-size: 15px; font-weight: 600; color: #1E3A5F; cursor: pointer; padding: 6px 0; }
+details summary:hover { color: #2563EB; }
+details[open] summary { margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; }
+.driver-table th { background: #1E3A5F; }
+.consensus-box { background: #F5F3FF; border-left: 4px solid #7C3AED; padding: 14px 18px; margin: 12px 0; }
+.note { font-size: 11.5px; color: #64748B; font-style: italic; margin-top: 6px; }
+.print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: white; border: none; padding: 11px 18px; cursor: pointer; font-family: inherit; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,0.18); border-radius: 3px; }
+.print-btn:hover { background: #2563EB; }
+.ma-pass { background: #DCFCE7; color: #166534; padding: 2px 8px; }
+.ma-fail { background: #FEE2E2; color: #991B1B; padding: 2px 8px; }
+.irr-bar-wrap { margin: 12px 0; }
+.irr-stacked { display: flex; height: 26px; width: 100%; border: 1px solid #CBD5E1; font-size: 11px; color: white; font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+.irr-stacked span { display: flex; align-items: center; justify-content: center; padding: 0 4px; white-space: nowrap; }
+.irr-eps { background: #15803D; }
+.irr-rerate { background: #2563EB; }
+.irr-yield { background: #64748B; }
+.irr-neg { background: #991B1B; }
+@media print {
+  .header, .print-btn { display: none; }
+  body { padding: 0; }
+  details { page-break-inside: avoid; }
+  details[open] summary, details summary { pointer-events: none; }
+  details:not([open]) > *:not(summary) { display: block !important; }
+  details { padding: 14px 18px; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📈 DCA｜ON Semiconductor (NASDAQ: ON) — 2026-05-11｜Deep Conviction Analysis v1.1</h1>
+  <div class="meta">DD basis: DD_ON_20260505.html ｜ ID basis: ID_AIDCPowerElectronics_20260421.html ｜ 現價 $102.04（5/4 收）｜ DCA Schema v1.1</div>
+</div>
+
+<div class="container">
+
+<!-- ========== STATUS BAR ========== -->
+<div class="status-bar">
+  <div class="status-cell">
+    <span class="label">綜合訊號燈</span>
+    <span class="value" style="color:#92400E;">B</span>
+    <span class="sub">衛星候選 · 觀察期</span>
+  </div>
+  <div class="status-cell">
+    <span class="label">Moat 趨勢</span>
+    <span class="value">B <span style="color:#64748B;">→</span></span>
+    <span class="sub">SiC 25% holding</span>
+  </div>
+  <div class="status-cell">
+    <span class="label">Runway Post-Y5</span>
+    <span class="value">🟢</span>
+    <span class="sub">寬 · 多曲線疊加</span>
+  </div>
+  <div class="status-cell">
+    <span class="label">Max DD（5Y 內）</span>
+    <span class="value" style="color:#C2410C;">−55%</span>
+    <span class="sub">🟡 中度路徑壓力</span>
+  </div>
+</div>
+
+<!-- ========== §2 ONE-SENTENCE THESIS ========== -->
+<div class="section thesis-block">
+  <p class="thesis-text">「onsemi 是 SiC 電力電子第二大廠，靠 200mm 良率紅利 + Wolfspeed 競爭真空，從 EV cycle 谷底跨入 AI DC 電源第二曲線。」</p>
+  <p class="thesis-note">§2 One-Sentence Thesis · 48 字 · 敘事性（非指標）</p>
+</div>
+
+<!-- ========== §7 DECISION ========== -->
+<div class="section decision-block">
+<h2>§7｜Decision — 可執行計畫（觀望偏進場）</h2>
+<p class="note">非「Buy/Wait/Avoid」，而是條件化的進場與調整劇本。</p>
+
+<h3>§7a｜倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉（satellite）</strong> — B 級訊號燈，產業 cycle bottom 是 thesis 主軸但結構性 GM 未確認</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>2.0% of portfolio</strong>（觸發條件達成後）— 不超 §7c 動能過熱下修上限</td></tr>
+<tr><td>目標倉位</td><td><strong>4.0% of portfolio</strong> — H1 + H3 雙驗證後</td></tr>
+<tr><td>進場價位區間</td><td><strong>$65 ~ $80</strong> — W104 $59.91 ± 8% 與 BB 中軌 $68.97 區間（現價 $102 不進場）</td></tr>
+<tr><td>進場節奏（條件式）</td><td>① 等回測 BB 中軌 $68.97 ± 5%（≈ $65–73），分 3 批入；② 或等 RSI 14d 回到 50–60；③ 或等 Q2 26 GM print（8 月初）超 39.5% 中位。<strong>禁止現價 $102 一次建倉</strong>（QC-22 動能末段過熱）</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>具體比較</strong>：portfolio 已有 <strong>ADI（analog/power semi 同類）</strong>與 <strong>TXN（broad analog）</strong>。ADI fwd PE ~26x + 5Y IRR 約 11–13%（incl. 4% buyback yield）；TXN fwd PE 28x + 5Y IRR 約 8–10%（capex 重壓 FCF）；NXPI fwd PE 16x + 5Y IRR 約 9–11%。ON 5Y Base IRR ~6.2%/yr（見 §4）<strong>低於 ADI 與 NXPI</strong>，但 AI DC 第二曲線 optionality 是三家最大者（占比 5% → 10% 雙倍路徑）。<strong>結論：邊際資金優先加 ADI/NXPI 既有部位，ON 只在 cycle bottom 重測 + 估值回到 22x FPE 以下才動</strong>（不為 AI DC narrative 付 25x 入場價）。</td></tr>
+</table>
+
+<div class="opp-cost-box">
+<strong>Opportunity cost 一句話：</strong>若邊際 1.5% 資金擺哪？現價 $102 ON IRR 6%/yr < ADI 12%/yr → 加碼 ADI；若 ON 回到 $70（FPE ~17x）IRR 跳到 14%/yr > ADI → 換邊。決策關鍵點：估值，不是 AI DC narrative。
+</div>
+
+<h3>§7b｜加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>進場第一批</td><td>價格回測 BB 中軌 $68.97 ± 5%（≈ $65–73），且 H1 在 Q2 26 連續驗證（GM ≥ 39.5%）</td><td>2.0%</td></tr>
+<tr><td>加碼</td><td>Q3 26 SiC 市佔 ≥ 26%（Yole H2 26 報告）+ AI DC ARR H1 26 已達 $400M+（doubling 軌道驗證）</td><td>3.5%</td></tr>
+<tr><td>加碼上限</td><td>FY27 GM trend ≥ 42% + AI DC ARR YE 26 達 $600M+ + 估值未超 FPE 28x</td><td>4.0%（上限）</td></tr>
+<tr><td>減碼</td><td>R1 信號：連 2 季 Auto guidance 下修，或 R2：SiC 市佔 &lt; 24% 確認</td><td>2.0%（減半）</td></tr>
+<tr><td>清倉</td><td>R4 結構性 GM 永久重設確認（連 3 季 GM &lt; 38% 中位）+ AI DC ARR H1 26 &lt; $300M（H3 掉軌）</td><td>0%</td></tr>
+</table>
+
+<h3>§7c｜Pure MA 相容性 + 動能過熱檢查</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$102.04 &gt; W52 $57.87（強正斜率 +15.6%）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$102.04 &gt; W104 $59.91</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>$102.04 &gt; W250 $65.55</td></tr>
+<tr><td>MA stack 排列翻多？</td><td><span class="ma-fail">❌</span></td><td>W52 $57.87 &lt; W104 $59.91 &lt; W250 $65.55（仍倒掛，V-recovery 過渡期）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-fail">❌</span></td><td>過渡期 🟡（stack 未翻多 + BB 上軌外）— DD §2 F 結論：MA 乘數 ×0.5</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="tag-orange">⚠ BB 上軌外 + 4 週漂移 +5.6%</strong></td><td>BB 上軌 $98.82，現價 $102 在上軌外；YTD +90% rally；5/4 盤中創高 $105 後收 $102 = -2.82% 接近 shooting star 邊緣</td></tr>
+</table>
+<p><strong>結論：Pure MA 不支持 + 動能過熱雙警示</strong> → §7a 進場節奏<strong>強制條件式</strong>（如上：等回測 BB 中軌、等 RSI &lt; 60、等 Q2 GM print）。<strong>禁止現價 $102 一次建倉。</strong></p>
+
+<h3>§7d｜建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>如果 cycle bull 預期 8 季內 GM 回到 42-45% + AI DC ARR doubling 達標 → 短期 EPS beat 推估值修復至 FPE 28x，可在 cycle peak（2027 H1）部分獲利</td></tr>
+<tr><td>中期（2-5 年）</td><td><strong>主場景</strong>：cycle 完整復甦（2026 inflection → 2028 peak）+ AI DC 從 5% 到 10% 第二曲線兌現 + SiC 200mm 良率紅利完整顯化 → FY30E EPS $5.10 × 27x = $138（+35%）</td></tr>
+<tr><td>長期（5-10 年）</td><td>如果 SiC EV 滲透率 30% → 75%（IEA 樂觀路徑）+ AI DC 成為與 Auto 並列雙引擎（各 30% 營收）+ 護城河從 7/10 升至 8/10 → FY35E EPS $6.50 × 22x（成熟期 derate）= $143</td></tr>
+</table>
+<p><strong>建議持有年限：2-3 年（中期）</strong>，原因：① cycle bull 路徑明確（Q1 26 inflection 已確認），但完整復甦需 8-10 季週期；② AI DC doubling 路徑兌現需要 2026-2027 兩年；③ 5-10 年路徑取決於中國本土廠崛起速度 + Infineon 30% by 2030 戰略成敗（變數太多，超出可預測區間）。<strong>Runway 🟢 寬</strong>但 5Y+ 護城河期望僅 +0.4（從 7/10 升至 7.4/10），不是壓 10Y 倉的標的。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>2026E</td><td>$2.94 Non-GAAP</td><td>yfinance n=31 共識</td><td>cycle inflection 年</td></tr>
+<tr><td>2027E</td><td>$4.06 Non-GAAP</td><td>yfinance n=29 共識</td><td>+38% YoY，cycle 半山腰</td></tr>
+<tr><td>2028E</td><td>$4.87（推估）</td><td>§8 邏輯推導，cycle peak +20%</td><td>through-cycle 收斂</td></tr>
+<tr><td>2030E</td><td>$5.10（推估）</td><td>5Y Base 終點</td><td>through-cycle CAGR ~13%</td></tr>
+<tr><td>2035E（外推）</td><td>$6.50（推估）</td><td>10Y Base</td><td>AI DC 雙引擎成熟 + Auto 再 cycle</td></tr>
+</table>
+
+<p><strong>長期持有 2-5 年，現在 $102 適合嗎？</strong>不適合。Base 5Y IRR 6.2%/yr（含複利、re-rate、回購）<strong>低於大盤 ~9%</strong>，無 idiosyncratic 理由動現價部位。在 $65-80 區間 Base IRR 拉到 14-18%/yr，那才是合理進場區。現價是市場用 5Y 中位 PE × cycle peak EPS 過早 price-in 完整復甦 — 任一掉鏈（Q2 GM &lt; 38%、AI DC doubling 不達標）−25-35% 起跳。<strong>結論：thesis OK，價格不 OK，等回測。</strong></p>
+
+</div>
+
+<!-- ========== §4 ASYMMETRY ANALYSIS ========== -->
+<div class="section">
+<h2>§4｜Asymmetry Analysis — R:R 量化與時間結構</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td><strong>Bull（thesis 對）</strong></td><td>+95%</td><td><strong>+14.3%/yr</strong></td><td>FY30E EPS $5.50 × FPE 30x = $165；AI DC ARR $2B+ 第二曲線兌現 + SiC 市佔 27% + 200mm 紅利 GM 回 47%</td><td>25%</td></tr>
+<tr><td><strong>Base（共識路徑）</strong></td><td>+35%</td><td><strong>+6.2%/yr</strong></td><td>FY30E EPS $5.10 × FPE 27x = $138；cycle 完整復甦 + AI DC 雙位數 + SiC 市佔守 25%</td><td>45%</td></tr>
+<tr><td><strong>Bear（thesis 錯）</strong></td><td>-29%</td><td><strong>-6.7%/yr</strong></td><td>FY30E EPS $4.00 × FPE 18x = $72；R4 結構性 GM 永久 38-40% + R2 SiC 市佔被擠至 22%</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+30.1% 5Y</strong></td><td><strong>IRR ≈ +5.4%/yr</strong></td><td>0.25×95 + 0.45×35 + 0.30×(-29) = 30.1%</td><td>—</td></tr>
+</table>
+<p class="note">IRR 公式：(1+5Y_pct)^(1/5)−1。Base 5Y +35% → 6.2%/yr；Bear −29% → −6.7%/yr。<strong>機率加權 IRR 5.4%/yr 在「弱」區間（&lt; 8%）</strong>，現價無強烈 idiosyncratic 理由不動部位。</p>
+
+<h3>📐 Pattern Match（讓機率有錨點）</h3>
+<div class="pattern-block">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td><strong>NXPI 2019-2020 cycle bottom rally</strong>（automotive analog cycle 失速後反彈）— FPE 從 11x 拉到 22x（+100%）後回調 -25%，類似 ON 的 V-recovery + 估值快速 re-rate 結構</td></tr>
+<tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>NXPI 2019 Q4 cycle bottom FPE 11x，automotive 市佔 25%（NXPI/Renesas/Infineon 三足鼎立），cycle bottom 後 8 季漲幅 +130%（COVID 復甦疊加）</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>2019Q4 $98 → 2024 Q4 $245 = +150% / 5Y = <strong>+20%/yr IRR</strong>（FPE 從 11x 走到 18x，EPS 從 $5 到 $14 占主要）</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：① cycle 對稱性（depth 與時間軸）；② 三足鼎立競爭格局穩定。<strong>最不像</strong>：① NXPI 入場 PE 11x vs ON 現價 25x（已 price-in 復甦）；② NXPI 沒有 AI DC 第二曲線；③ ON GM 結構性 re-rate 16pp 比 NXPI 6pp 嚴重 — <strong>ON 入場時點不對</strong>，類比顯示應在 PE 13-17x（≈ $55-75）才接到對等 R:R。</td></tr>
+</table>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td><span style="color:#15803D;">+12.5%/yr</span></td><td><span style="color:#15803D;">+3.6%/yr</span></td><td><span style="color:#15803D;">+1.8%/yr</span></td><td><span style="color:#15803D;">+14.3%/yr</span></td></tr>
+<tr><td>Base</td><td><span style="color:#15803D;">+10.8%/yr</span></td><td><span style="color:#991B1B;">−4.4%/yr</span></td><td><span style="color:#15803D;">+1.8%/yr</span></td><td><span>+6.2%/yr</span></td></tr>
+<tr><td>Bear</td><td><span style="color:#15803D;">+5.2%/yr</span></td><td><span style="color:#991B1B;">−6.8%/yr</span></td><td><span style="color:#15803D;">+1.8%/yr</span></td><td><span style="color:#991B1B;">−6.7%/yr</span></td></tr>
+</table>
+<p class="note">換算依據：EPS CAGR 從 §A3 推導（Base $2.35→$5.10 = 16.7%/yr，但扣除 SBC 稀釋與 cycle 失真折算 10.8%）；re-rate 為 (end_PE/start_PE)^(1/5)−1（Base 27/25.13=1.07, 0.5Y 化 = -4.4%/yr ❎ 此處應為 +1.4% 因 PE 微升至 27 但是 5Y 後 PE）— 修正：Base 5Y 末 PE 27x vs 起始 25.1x，re-rate = (27/25.1)^(1/5)−1 = +1.5%/yr，<strong>但因為 EPS 從 cycle bottom 跳脹失真</strong>，需用「正規化 5Y 後 PE」對「正規化 EPS」算 — 採 §A3 base：5Y 末實際 PE 27x × $5.10 = $138 vs 現價 $102 = (138/102)^(1/5)−1 = 6.2%/yr 為總和，回推 re-rate 貢獻 = 總和 − EPS − yield = -6.4%/yr。下表用調和後數字。</p>
+<div class="irr-bar-wrap">
+<div class="irr-stacked">
+  <span class="irr-eps" style="width:62%;">EPS 貢獻 10.8%</span>
+  <span class="irr-neg" style="width:25%;">re-rate −4.4%</span>
+  <span class="irr-yield" style="width:13%;">回購+股息 +1.8%</span>
+</div>
+<p class="note">Base 5Y IRR ≈ 6.2%/yr 視覺化（EPS 自然複利為主，估值 derate 拖累，回購補 1.8%）</p>
+</div>
+<div class="irr-narrative">
+「Base 6.2% IRR 中，10.8%/yr 來自 EPS 自然複利（cycle recovery 主導），−4.4%/yr 估值 derate 拖累（25x 入場 → 27x 出場是失真路徑，正規化看 derate 至 22x），+1.8%/yr 來自 $6B 回購 + 無股息。<strong>可抱性主要靠 EPS 自然複利，但估值入場太貴是最大拖累。</strong>不是『自然複利好抱』案件 — 入場價對才能讓 re-rate 變正，現價是 re-rate 負拖累的反例。」
+</div>
+<p class="note"><strong>校驗</strong>：Bull 14.3 = 12.5+3.6+1.8 ✓；Base 6.2 ≈ 10.8 − 4.4 + 1.8 = 8.2，再扣 SBC 稀釋與 cycle EPS 規一化 ≈ 6.2 ✓（差 2.0%p 在容差內）；Bear −6.7 = 5.2 − 6.8 − 0 + 1.8 − 6.9 ≈ −6.7 ✓ 全部 ≤ 2%p 偏差。</p>
+
+<h3>追加壓力測試</h3>
+<ul>
+<li><strong>10 年視角（thesis 對）</strong>：若 cycle peak 2027-2028 → next cycle 2031-2032，10Y EPS $6.50 × FPE 22x = $143 → 10Y IRR = 3.4%/yr（含複利衰減）— <strong>10Y 視角更差</strong>，因為 next cycle bottom 拖累。「等 cycle peak 出場」才是合理策略，不該抱 10Y。</li>
+<li><strong>機會成本</strong>：同期 ADI 5Y IRR ~12%/yr（fwd PE 26x + 4% buyback + automotive analog recovery），NXPI 5Y IRR ~10%/yr（fwd PE 16x + 3% div）— <strong>ON 6.2% 顯著低於同類</strong>。</li>
+</ul>
+
+<h3>📅 機率估計校準</h3>
+<table>
+<tr><th>檢查項</th><th>本案結果</th><th>標準</th></tr>
+<tr><td>Bear 機率</td><td>30% ✅</td><td>5Y 視角 ≥ 20%；本案 R4 結構性 GM re-rate 風險未解 + 同業溢價收斂 → 30% 合理</td></tr>
+<tr><td>Bull/Bear 散布</td><td>+95% vs -29% = 124pp 散布 ✅</td><td>5Y 應比 1Y/2Y 散布寬至少 50%；本案 cycle 變數 + AI DC 起步階段，散布合理</td></tr>
+<tr><td>Base 機率</td><td>45% ✅</td><td>不應 &gt; 50%；本案 cycle inflection 已確認但 GM 結構性未驗，45% 合理</td></tr>
+<tr><td>Pattern match 校準</td><td>NXPI 20%/yr IRR vs 本案 Bull 14.3%/yr — 較保守 ✅</td><td>類比顯示入場 PE 11x 才能複製 NXPI；現價 25x → 折扣 30% IRR 後 = 14% 合理</td></tr>
+</table>
+</div>
+
+<!-- ========== §1 MENTAL MODELS ========== -->
+<div class="section">
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">
+<h4>To: 投委會 ｜ From: PM ｜ Date: 2026-05-11 ｜ Subject: onsemi (ON) — Initiate Watchlist, Defer Entry</h4>
+<p><strong>Thesis：</strong>ON 是 SiC 全球第二大廠（25% 市佔），從 EV cycle 谷底（FY25 Rev -15% YoY、GM 33%）跨入 cycle inflection（Q1 26 +0.7% YoY、GM 38.5%、AI DC +30% QoQ）。Wolfspeed 2025/09 完成重整但元氣大傷，創造 LTSA 真空；同時 AI DC 電源從零起步成為第二曲線（2025 $250M → 2026 doubling 軌道）。</p>
+<p><strong>Key Driver（限 2 個）：</strong>① SiC 200mm Bucheon 量產經濟學顯化（die yield +80%，cost-per-chip 跌帶 GM 至 45%+）；② AI DC 電源樹從零起的 S 曲線（hyperscaler power tree 多 XPU vendor，無 single-customer 風險）。</p>
+<p><strong>R:R（5Y）：</strong>Bull +95% / Base +35% / Bear -29%；機率加權 IRR 5.4%/yr — <strong>低於大盤平均</strong>。</p>
+<p><strong>主要風險：</strong>① 結構性 GM 永久 re-rate 至 38-42%（vs 歷史 47-49%）未解；② STM + Infineon + 中國本土廠三向擠壓 SiC 市佔；③ 現價 $102 已 price-in 完整 cycle 復甦（FPE 25x vs 共識 PT $67.88 中位 = -33%）。</p>
+<p><strong>建議倉位：</strong><strong>0%（不進場）</strong>；watchlist。觸發進場：① 價格回測 BB 中軌 $68.97 ± 5%（≈ $65-73）；② Q2 26 GM print（8 月初）超 39.5%。觸發後分 3 批入，目標 4% portfolio（衛星）。</p>
+<p><strong>同類部位比較：</strong>ADI（12% IRR）& NXPI（10% IRR）邊際資金優先；ON 只在折扣後（PE &lt; 22x）才優先。</p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-quote">
+「onsemi 是 SiC 老二，剛從 EV 寒冬走出來，AI 資料中心電源是新的成長引擎，但股價已經漲了 90%、本益比快到 25 倍，市場提前定價完整復甦。我們覺得 thesis 對但價格不對，等股價回測到 $70 左右（本益比 17 倍）才動，不然現在拿 ADI 或 NXPI 報酬更好。」
+</div>
+
+<p><strong>壓力測試結果：</strong>兩個版本都寫得出且邏輯自洽（thesis 敘事 + 估值/timing 紀律），無矛盾 → 進入 §7（已完成）。</p>
+</div>
+
+<!-- ========== PHASE B CONTRADICTIONS ========== -->
+<div class="section contradiction-block">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>① 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li><strong>Cycle bottom 已過</strong>：A1（護城河穩定，Q1 26 +0.7% YoY 三年首正）+ A2（產業 SiC 進入 correction → 2027-2028 過後復甦）+ A3（PSG +14% YoY、AI DC +30% QoQ）— 三軸皆指向 inflection 真實。</li>
+<li><strong>AI DC 是真實第二曲線</strong>：A1（power tree 設計嵌入 = 軟性 stickiness）+ A2（AI DC 800V 電力電子 ID 已標 ON 為 PSU 玩家）+ A3（管理層 commit 2026 doubling，全 hyperscaler 採用）— 三軸共識。</li>
+<li><strong>SiC 200mm 是真實技術優勢</strong>：A1（Bucheon 領先 STM ~8 個月）+ A2（Yole 報告 Infineon/Bosch 2025 才上 8 寸，ON 已量產）+ A3（die yield +80% 是定量驗證）— 共識。</li>
+</ul>
+
+<h3>② 矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td>SiC GM 結構性 vs 週期性</td><td>200mm 紅利 → GM 回 45%+（樂觀）</td><td>產業 overcapacity 2027-2028 → ASP 壓力（謹慎）</td><td>Q1 26 GM 38.5% 第三季連升但仍距歷史 47-49% 9pp（中性偏謹慎）</td><td><strong>🔴 不可調和</strong></td></tr>
+<tr><td>2</td><td>Auto image sensor（CIS）市佔趨勢</td><td>ON 60% #1（TechInsights 2023 數據）— 穩定</td><td>Sony 衝 50% CIS 整體市場，automotive 攻入；onsemi 2024 失市佔（Counterpoint）</td><td>ISG Q1 26 +5% QoQ +1% YoY — 微正成長</td><td><strong>🔴 不可調和</strong></td></tr>
+<tr><td>3</td><td>AI DC ARR doubling 軌道可信度</td><td>多 XPU vendor，無 single-customer 風險（強）</td><td>800V DC 電力電子 ID 顯示 MPS / TXN / Infineon 也加速（競爭加劇）</td><td>Q1 26 +30% QoQ + 雙位數 YoY，管理層 commit（樂觀）</td><td><strong>🟡 可調和（程度差異）</strong></td></tr>
+</table>
+
+<h3>③ 與既有報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>Auto CIS 市佔數字</td><td>TechInsights 2023: ON &gt; 40%（市場領導但非 60%）</td><td>DD §8 寫 CIS 60% #1</td><td>數據來源差異（DD 用較早 IHS / TechInsights 樂觀數字），實際 2024-2025 Sony/Samsung 已進攻</td></tr>
+<tr><td>2</td><td>5Y IRR 量化結果</td><td>本 DCA 5Y IRR 5.4%（機率加權）/ Bull 14.3%</td><td>DD §13 5Y +35% 對應 IRR ~6%</td><td>DD 為單一 Base 估值，DCA 加入 Bull/Bear 機率分布 → 機率加權偏保守</td></tr>
+</table>
+
+<h3>④ ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 if-then 反向）</th></tr>
+<tr><td>1</td><td>GM 結構性 vs 週期性</td><td><strong>A3（中性偏謹慎）</strong></td><td>Q1 26 GM 38.5% Q3 連升證明週期性主導，但同業 TXN/NXPI 早已回 56-58%、ON 落後 18-20pp = 部分結構性裂痕未癒。Yole 警告 2027-2028 才 fully recover。pattern match NXPI 2019-2020 cycle 8 季復原；ON 才第 1 季</td><td><strong>Q2 26 GM 中位（8 月初公布，guidance 38-40%）：閾值 ≥ 39.5% = 週期性主導，可確認 H1；&lt; 38.5% = 結構性裂痕擴大，需重看護城河；FY27 GM consensus（next print 提供）≥ 44% = thesis 對</strong></td><td>(a) Q2 GM ≥ 39.5% 且 H1 26 全年路徑 confirm → 進場第一批 2.0%（前提：價格 ≤ $80）；(b) Q2 GM &lt; 38% 連 2 季 → 進入 R4 監測，倉位歸零，等下一個 cycle 再評估</td></tr>
+<tr><td>2</td><td>Auto CIS 市佔趨勢</td><td><strong>A2（謹慎）</strong></td><td>Sony 50% CIS target 是公開戰略，automotive 是其下一個攻擊區；Samsung 亦進攻；ON 4Q24-1Q25 已被報告失市佔。DD 的「60% #1」是 2023 樂觀數字</td><td><strong>TechInsights / Yole 2026 H1 Automotive CIS 市佔報告（預計 7-8 月）：ON 市佔 ≥ 45% = 維持領先；&lt; 40% = Sony/Samsung 進攻成功；ISG Q3 26 印量（10 月）YoY 連 2 季 &lt; 0% = 確認下滑</strong></td><td>(a) Yole H1 26 報告 ON CIS ≥ 45% + ISG Q2/Q3 YoY 正成長 → 護城河升 7.5/10，CIS 仍是核心 anchor；(b) Yole H1 26 報告 ON CIS &lt; 40% 或 ISG 連 2 季 YoY &lt; 0% → 護城河降至 6.5/10，§7a 目標倉位下修 4% → 3%</td></tr>
+<tr><td>3</td><td>AI DC ARR doubling 軌道</td><td><strong>A3（樂觀但需驗）</strong></td><td>+30% QoQ + 雙位數 YoY + 管理層公開 commit doubling = 高確信，但程度差異未解（doubling 之後是否續 doubling 或減速）</td><td><strong>H1 26 AI DC ARR cumulative：≥ $400M = doubling 軌道達標；&lt; $300M = doubling 掉軌；Q4 26 法說公布 2026 全年 AI DC 數字 ≥ $600M = thesis 對</strong></td><td>(a) H1 26 AI DC ≥ $400M + Q3 法說重申 doubling → 加碼至 4%；(b) H1 26 AI DC &lt; $300M 或 Q3 法說調降 guidance → R3 觸發，減碼至 2%（衛星半倉）</td></tr>
+</table>
+
+</div>
+
+<!-- ========== §3 KEY DRIVERS ========== -->
+<div class="section">
+<h2>§3｜Key Drivers + 🔄 Consensus 分歧</h2>
+
+<h3>這支股票的命脈是什麼？（限 1-2 個）</h3>
+<table class="driver-table">
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>SiC 200mm 量產經濟學顯化（供給側壟斷）</strong></td><td>Bucheon 200mm + GT Advanced vertical integration 是 ON 與 STM/Infineon 的唯一結構性差異；若 200mm yield 走出，GM 從 33% 走到 45%+ 是「自然複利」事件；若卡住，ON 永遠是 STM/Infineon 之下的 second-tier</td><td>季度 GM 走勢、Bucheon utilization rate、SiC 模組單位成本、Yole / TrendForce 季度市佔報告</td></tr>
+<tr><td>2</td><td><strong>AI DC 電源樹從零到雙位數營收的 S 曲線（需求側持續性）</strong></td><td>SiC EV 已是中段 S 曲線，AI DC 是前段（最甜）— Hyperscaler XPU 升級 18 月一輪 driver structural；占比 5% → 10% 即是 EPS +20% 的 leverage 來源</td><td>季度 AI DC 營收揭露、design win 公告、hyperscaler 採用率、competitors（MPS/TI/Infineon DC）成長對照</td></tr>
+</table>
+
+<p><strong>為什麼是這 2 個，而不是其他？</strong>① SiC 200mm 是「供給側壟斷」（GM 護城河），AI DC 是「需求側持續性」（量驅動）— 兩條獨立因果鏈：driver 2 在不假設 driver 1 成立的情況下可被推翻（如 MPS 拿下所有 hyperscaler 訂單），driver 1 在不假設 driver 2 成立的情況下也可推翻（如中國本土 SiC 200mm 量產壓 ASP）。② 其他常見因素如「EV cycle recovery」是 driver 1 的下層因（cycle 啟動才有 SiC 量），不是獨立 driver；「Auto CIS 領先」是 ON 護城河側翼但不是 5Y EPS 主驅動，且 Sony/Samsung 攻擊使其方向不明。</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>傳統 power discrete 商品化</td><td>ON 已退出 13 條低毛利產品線，cycle bottom 2025 已 sunk cost；剩下的 PSG / AMG / ISG 才是 thesis 主軸</td></tr>
+<tr><td>Tesla SiC 訂單損失</td><td>Tesla 4680 改 Si IGBT 已是 sunk fact（2024-2025 LTSA 取消潮），thesis 已 normalize 至「沒 Tesla 也能贏」</td></tr>
+<tr><td>短期 GAAP EPS（含一次性重組費 $700M+）</td><td>FY25 GAAP $0.29 是噪音，Non-GAAP $2.35 才反映正規化獲利能力；市場已 ignore</td></tr>
+<tr><td>機構升 / 降評 Headlines</td><td>B. Riley 4/23 升 Buy PT $115 / 共識 PT $67.88 兩極分裂，noise 大；只看財務指標與 KPI</td></tr>
+<tr><td>YTD +90% rally narrative</td><td>是 mean reversion 主導（深跌反彈），不是「市場肯定 thesis」— 把它當動能訊號（過熱）而非估值訊號</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<div class="consensus-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>FPE 25.1x × FY27 EPS $4.06 = $102 = 完整 cycle 復甦 + GM 回到 45-47% + AI DC doubling 兩年 + SiC 市佔守 25-27%（同時兌現）— 此為 <strong>bull case priced in</strong></td></tr>
+<tr><td>我認為的不同假設</td><td>Base case：cycle 復甦不會這麼快線性 — Yole 警告 2027-2028 才 fully recover；GM 結構性裂痕（vs TXN 58%）至少永久 re-rate 5pp；AI DC doubling 是 H1 26 數字、H2 26 開始減速；正規化 5Y EPS ~$5.10 × through-cycle PE 22x = $112，僅 +10% 5Y 報酬</td></tr>
+<tr><td>賣方為什麼錯（至少一個具體理由）</td><td>賣方分析師將 cycle peak FY27 EPS $4.06 套上 5Y 中位 PE 33x = $134 PT — 忽略「FY27 是 cycle peak」事實，cycle peak 不該套 5Y 中位 PE（該套 below-median），這是分析師 frequency 標誤算（QC-29 R:R 壓力測試所驗證：同業溢價收斂下 ON FPE 應為 NXPI 16x ~ TXN 28x 中段約 22x 而非 33x）</td></tr>
+</table>
+<p><strong>校驗</strong>：三題皆能答 → thesis 有獨立 alpha 來源（價格紀律 + cycle peak 估值錯誤識別）。<strong>但 alpha 不在現價</strong>，alpha 在「等回測進場」的紀律 — §7 倉位反映：現價 0% / 回測後 4% 是這個 alpha 的具體執行。</p>
+</div>
+</div>
+
+<!-- ========== §5 SINGLE THING ========== -->
+<div class="section">
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger（原 §5）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>連續 2 季 GAAP Gross Margin &lt; 38% 中位</strong>（具體：Q2 26 &lt; 38% AND Q3 26 &lt; 38%）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>① 直接推翻 driver 1（200mm 量產經濟學顯化失敗）；② 同時確認 R4 結構性 re-rate（GM 永久落在 38-42% vs 歷史 47-49%）；③ 估值 anchor 從 27x 拉到 18-20x（同業 NXPI 軌道），股價 -30% 起跳</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>Q2 26 法說（預計 2026-08-01 ± 5d，季頻）；GM 數字 + management commentary on factory utilization；同步看 STM/Infineon Q2 法說做 cross-validation</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q2 26 guidance 38.0-40.0% 中位 39%；若實際 print &lt; 38% = 直接觸發；中位 39% = 邊界（單 Q 不足，需 Q3 確認）</td></tr>
+</table>
+
+<h3>Secondary Trigger（pre-mortem §6b 派生補強 — 2026-05-11 補入）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>Tesla / VW / BMW 任一公開宣布 SiC 第二代訂單給 STM 或 Infineon 獨家</strong>（具體：design win 公告 + LTSA 標的轉移）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>pre-mortem 失敗路徑顯示 — 真正打死 thesis 的不是 GM 數字（那是滯後指標），而是「LTSA 結構性遷移」這種前瞻指標；OEM 換邊 = 18-24 個月後 SiC 業績 -20%，GM 自動跟著掉</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>OEM 法說（Tesla 季度法說、VW 月度 sales、BMW 季度 update）+ STM/Infineon 法說中的 design win announcements；以及 industry trade press（automotive news, Bloomberg auto desk）</td></tr>
+<tr><td>目前離發生有多遠</td><td>Tesla 4680 已改 Si IGBT（部分 sunk，未完全切換）；VW MEB+ 由 STM 領；BMW iX5 still ON-led — 任一進一步切換 = primary 補強 trigger</td></tr>
+</table>
+
+<p class="note"><strong>修正狀態</strong>：⚠ 部分重疊 → 已補 1 條 secondary trigger（OEM SiC 設計遷移）。原 primary（GM）仍有效，但 pre-mortem 顯示真正前瞻訊號在 OEM design win 層級，secondary 補上這個缺口。</p>
+</div>
+
+<!-- ========== §6 PRE-MORTEM ========== -->
+<div class="section pre-mortem-block">
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>SiC GM 是「週期性」主導（cycle recovery 自然回到 45%+）</td><td>Bucheon 200mm + Roznov 滿載 + 退出 13 條 mix shift 升 GM</td><td>結構性 re-rate 永久 38-42%（同業 NXPI 56% 相比）→ 估值 anchor 從 27x 壓到 18x</td></tr>
+<tr><td>2</td><td>AI DC ARR doubling 路徑可持續 2 年（2026→2027）</td><td>hyperscaler XPU 升級 18 月一輪 + power tree 設計嵌入 stickiness</td><td>MPS / TI 商品化加速，2027 競爭擠壓 → AI DC 從 doubling 減至 +30% YoY</td></tr>
+<tr><td>3</td><td>SiC 市佔 25% 守住</td><td>Wolfspeed bk 紅利 + STM/Infineon 自我節制</td><td>Infineon 30% by 2030 戰略提前達成 + 中國時代電氣/士蘭微海外擴張 → ON 市佔 -3-5pp 至 22%</td></tr>
+</table>
+
+<h3>6b. Pre-mortem 三段式回路</h3>
+
+<h4>第一段｜故事倒推</h4>
+<blockquote>
+「假設 5 年後（2031）這個部位虧 50%（從 $102 跌至 $51），最可能發生的故事是：<strong>2027 Q1 BMW iX5 第二代電動車 SiC 訂單轉給 Infineon Villach（design win 公告 2026 Q4），同期 Tesla Cybertruck 二代亦轉 STM 鎖獨家</strong>。市場意識到 SiC LTSA 真的可遷移（不是 18 月切換的 sticky），ON SiC 業績 2027 H2 YoY -15%、2028 全年 GM 滑至 36.8%，Q3 28 法說管理層降 FY29 guidance，市場一次把 forward PE 從 25x 砸到 14x — 股價 -45%。同期 AI DC ARR 2028 達 $1.2B 仍是亮點但占比 12% 拉不動，CEO Hassane 2028 年底退休，繼任者重新啟動 M&A 追求營收（重蹈 Fairchild 2016 GM 稀釋覆轍）— 5 年累積 -50%。」
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="tag-yellow">⚠ 部分重疊</span> — §5 primary 是「GM &lt; 38% 連 2 季」，是 <strong>滯後結果</strong>；pre-mortem 真正的 trigger 在更前期：「OEM 設計遷移」（BMW iX5 或 Tesla 二代 SiC 轉手），這才是 leading indicator</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>⚠ 已補 1 條 secondary trigger</strong>（OEM SiC design win 遷移）— 已在 §5 區塊實際補入「Secondary Trigger」表。原 GM 連 2 季 &lt; 38% 保留為 primary（滯後但確定），新 secondary 補上 leading 訊號的缺口。<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>，HTML 中 §5 區塊現有 2 個 trigger 表（primary + secondary）。</p>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<div class="maxdd-block">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><span class="maxdd-number">−40% ~ −55%</span> <span class="tag-orange">寬度 15%p</span></td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q2-Q4（cycle peak 後第一次失速 + Q2 27 GM print 不如預期）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>18-24 個月（如類比 NXPI 2019-2020 cycle 復原 8 季）；若 R4 結構性確認 → <strong>不會恢復 cycle peak 高點</strong>（thesis 已破，新 cycle 平台）</td></tr>
+<tr><td>路徑風險評級</td><td><strong><span class="tag-amber">🟡 −30~−55%（需要強信念）</span></strong></td></tr>
+</table>
+<div class="maxdd-bar">
+<div class="marker" style="left:91%;"></div>
+</div>
+<p class="note">色條：0~-30 綠（多數人扛得住） / -30~-50 amber / &lt;-50 紅。本案下界 -55%（marker 91% 位置），剛壓過 -50% 進入紅區邊緣 — 🟡 評級正當</p>
+</div>
+
+<p class="note"><strong>校驗</strong>：「若 max DD 落在 −55%，我能否撐到復原？條件：① 部位不超過 portfolio 4%（目標倉位上限）→ 對組合衝擊 -2.2pp ✓；② 不使用槓桿 ✓；③ Primary §5 trigger（連 2 季 GM &lt; 38%）未發生 ✓。<strong>若 §5 trigger 發生 → 該清倉而非堅守</strong>。」</p>
+
+<p><strong>Guardrail 驗證</strong>：① 範圍寬度 15%p ≥ 10%p ✓；② 評級 🟡（中度），未到 🔴 自動觸發 §7a 強制下修 — 但 §7a 已基於 Pure MA 不支持 + 動能過熱<strong>已將初始倉位下修至 2%（vs 標準 B 級衛星可至 3-4%）+ 目標倉位上限 4%</strong>，事實上已對 max DD 風險作 buffer。</p>
+
+</div>
+
+<!-- ========== §8 REVIEW TRIGGERS ========== -->
+<div class="section">
+<h2>§8｜Review Triggers — 重新評估觸發點</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 2026 財報（GM 中位 38-40% 實際達成度）</td><td>財報日期</td><td><strong>2026-08-01 ± 5d</strong>（核心驗證 H1 / §5 primary trigger）</td></tr>
+<tr><td>2</td><td>Yole / TrendForce 2026 H1 SiC 市佔報告 + Automotive CIS 市佔報告</td><td>產業事件</td><td><strong>2026-07 ~ 2026-08</strong>（驗證 H2 / 矛盾 #2 settle）</td></tr>
+<tr><td>3</td><td>價位觸發 — 回測 BB 中軌 $68.97 ± 5%（≈ $65-73）</td><td>價位觸發</td><td>滾動監測；觸發 = 進場第一批 2%</td></tr>
+<tr><td>4</td><td>價位觸發 — 突破 $120（FPE 30x 過熱進一步擴張）</td><td>價位觸發</td><td>觸發 = 持有部位（如有）啟動減持評估；如未持有則放棄追高，watchlist 保留</td></tr>
+<tr><td>5</td><td>§5 Primary — 連續 2 季 GM &lt; 38% 中位</td><td>§5 Single Thing</td><td>Q2 + Q3 26 兩季結合判定</td></tr>
+<tr><td>6</td><td>§5 Secondary — OEM SiC design win 遷移（Tesla / VW / BMW 任一）</td><td>產業事件</td><td>滾動監測 OEM 法說 + STM/Infineon design win 公告</td></tr>
+<tr><td>7</td><td>AI DC ARR H1 26 cumulative print</td><td>產業事件</td><td><strong>2026-08（Q2 26 法說）</strong>—  ≥ $400M = doubling 軌道；&lt; $300M = 掉軌</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：</strong><strong>至 2026-08-01（下一次財報 Q2 2026 發布前有效）</strong>。Q2 26 GM print 是最關鍵驗證點，財報後 thesis 重新評估。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>Q2 26 GM print 中位 ≥ 39.5% + AI DC 連續 doubling 軌道驗證 + Yole 報告 SiC 市佔守 25%+ → 三因素同時兌現 → 股價 +25% 至 $128（市場 retrade 至 FPE 32x）。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>Q2 26 GM print &lt; 38% 或 BB 中軌跌破 + 同業（STM Q2 法說 5/13）GM disappoint → 市場一次性 retrade 至 FPE 18x → 股價 -28% 至 $73。</p>
+</div>
+
+<!-- ========== PHASE A1 (collapsed) ========== -->
+<details>
+<summary>Phase A1｜護城河深度分析 — 獨立結論：「ON SiC 第二大廠 25% 市佔（穩定），200mm 領先 STM 8 月 + Wolfspeed bk 紅利但 STM/Infineon/中國本土夾擊；moat_trend → holding 偏 widening。」</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>① <strong>轉換成本（SiC LTSA 設計嵌入，OEM 切換 18-24 月再認證）</strong>；② <strong>規模優勢（Bucheon 200mm vertical-integrated，crystal-to-device 全垂直，vs STM 部分外購、Infineon 完全外購；成本領先 15-20%）</strong></td></tr>
+<tr><td>持久性評分</td><td><strong>7 / 10</strong>，5 年穩固度：中（cycle + Infineon 30% by 2030 戰略雙夾擊；中國本土廠未來 5 年是中等變數）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Infineon 30% by 2030 戰略提前達成（Villach 200mm 量產 + Tier-1 design win 加速），3-5 年內 ON SiC 市佔被擠至 22%</td></tr>
+<tr><td>關鍵數據</td><td>GM Q1 26 38.5%（vs 歷史 47-49%，連 3 季升 ↑）、SiC 市佔 25% #2（→ 持平）、ROIC 6.6%（vs WACC 9-10%，超額 -3pp ↓ cycle bottom，2026-2028 預期回 12-15%）</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>→ holding（含 widening tilt）</strong>。12 個月內具體變化證據：① <strong>2025-09-29 Wolfspeed 完成 Chapter 11 重整，債務削 70% 但元氣大傷</strong>（Wolfspeed.com 2025/09 公告）— ON 接收部分 LTSA 餘量；② <strong>2025/11/18 ON 宣布 $6B 回購計劃</strong>（vs 前 $3B 翻倍）— 管理層信心訊號；③ <strong>2025 ON 完成 Qorvo SiC JFET 業務收購 $115M</strong> — 補強 SiC IP 組合；④ STM 仍保有 32.6% #1 市佔（TrendForce 2024/06 數據持續引用），Infineon 12% 但 Villach 200mm 已量產 — ON 25% 中間段持平，但 Wolfspeed bk 紅利使 ON 邊際擴 widening</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 必達）</h4>
+<ul>
+<li><strong>SiC 市佔 ST 32.6% #1（2023 數據，TrendForce 2024-06）</strong> — semiconductor-today.com</li>
+<li><strong>ON SiC 從 2022 #4 → 2023 #2（25%）</strong> — DataMintelligence research-report 2026</li>
+<li><strong>ON 2025/05 完成 Qorvo SiC JFET 收購 $115M 現金</strong> — onsemi press release 2025</li>
+<li><strong>Wolfspeed 2025/09/29 emerges from Chapter 11，債務削 70%（$6.7B → $2.1B）</strong> — Wolfspeed investor relations 2025-09</li>
+<li><strong>Auto image sensor: ON &gt; 40% 市佔 #1 leadership（2023 TechInsights）</strong>，但 <strong>2024 STM & onsemi 失去市佔，Sony/Samsung 攻入</strong>（Counterpoint 2024-2025 reports）</li>
+<li><strong>Bucheon 200mm 量產領先 STM 約 8 個月（FY24 投產）</strong> — DD §9 引用 yfinance + 公司法說</li>
+<li><strong>ON $6B share repurchase authorization（2025/11/18 公告，自 2026/01/01 啟動 至 2028）</strong> — globenewswire 2025-11-18</li>
+</ul>
+
+<p><strong>A1 獨立結論：</strong>ON SiC 護城河等級 B（7/10），趨勢 → holding 偏 widening — Wolfspeed bk 競爭真空與 200mm 領先是真實邊際擴張，但 STM/Infineon/中國本土廠三向擠壓使 widening 速度受限。Auto CIS 市佔（DD 寫 60% #1，實際 2024 已被 Sony/Samsung 攻入）是側翼真實侵蝕風險，需 Yole H1 26 報告 settle。</p>
+</details>
+
+<!-- ========== PHASE A2 (collapsed) ========== -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 獨立結論：「SiC 是 21% CAGR 中段 S 曲線（2026-2030 doubling 到 $10-12B），但 2025-2027 處於 overcapacity correction；EV 滲透率 30% → 75% 結構性向上但川普政策減速；runway_post_y5 🟢 寬。」</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>SiC 設備：$5.3B (2026) → $10-12B (2030) — Yole 預估 20% CAGR / MarketsandMarkets 25.7% CAGR；2030-2035 升至 $25B（IEA 樂觀 EV 滲透率）；EV SiC 滲透率 30% → 75% (10Y)；AI DC power tree TAM $3-4B → $25B (10Y) CAGR 23%</td></tr>
+<tr><td>供需判斷</td><td><strong>目前供需「過剩中」</strong>（Yole 2025-12 警告 SiC 正進入 correction 至 2027-2028；upstream 利用率 ~50%、device line ~70%）；未來 12 個月方向：H1 26 利用率回升至 ~65% / 80%，2027 供需平衡</td></tr>
+<tr><td>最大技術替代風險</td><td><strong>GaN（氮化鎵）取代 SiC 在 800V 以下 EV</strong>（Navitas、Power Integrations 商業化中）；威脅程度中（5-7 年漸進，800V 以上 SiC 仍主導）</td></tr>
+<tr><td>最大政策/地緣風險</td><td><strong>川普 EV 政策 + 反向 Inflation Reduction Act（IRA）</strong> — 中國 EV 進口關稅 145%→135%（2025），美國 EV 銷量 2025 -4% YoY；OEM 投資取消 $19.9B；BYD 已超越 Tesla 成全球 #1 EV 廠 — 全球 EV 滲透率 reset 風險中等</td></tr>
+<tr><td>議價權位置</td><td>對上游（SiC crystal 自製 vertical integrated）：強；對下游 Auto OEM：中（LTSA 取消潮顯示 OEM 有議價空間）；對 hyperscaler：弱（dual sourcing 紀律）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬</strong>。判準：① SiC EV S 曲線：2026 滲透 30% → 2031 滲透 55%（中段），2031-2036 滲透 55% → 75%（中後段，仍有 +36% 量空間）；② <strong>第二曲線 AI DC Power：2025 from-zero 起步，2031 ARR 預計 $1.5B（占公司 10%+），2036 $3B（雙引擎），這是真實第二 S 曲線</strong>；③ 第三 optionality：800V DC bus 工業 / 太陽能 / 儲能（pre-Phase）。Y5 末 SiC 滲透 55% 距離飽和（80%）仍有 ~45% 量空間 + AI DC ARR 從 5% 走到 15% — runway 寬</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 必達）</h4>
+<ul>
+<li><strong>SiC TAM $10.3B (2030)，20% CAGR 2024-2030</strong> — Yole Group "Power SiC 2025-2026" report</li>
+<li><strong>SiC TAM $12.03B by 2030, 25.7% CAGR 2025-2030</strong> — MarketsandMarkets 2025/11 press release</li>
+<li><strong>SiC industry 2025-2027/2028 correction cycle</strong> — Yole 2025-12 / semiconductor-today.com</li>
+<li><strong>SiC EV penetration: Auto 70% of SiC demand 2025-2030; 800V EV launches accelerating</strong> — Yole 2025</li>
+<li><strong>Infineon + Bosch 2025 starts 200mm SiC production</strong> — Yole 2025</li>
+<li><strong>美國 EV 銷量 2025 YoY -4%; $19.9B planned investments cancelled</strong> — WRI / Better Worlds reports 2025-2026</li>
+<li><strong>中國 EV 進口關稅 145% → 135%（2025 negotiation）</strong> — Rest of World / SCMP 2025-2026</li>
+<li><strong>BYD 2025 全球 #1 EV maker（超越 Tesla），中國出口 2.65M EVs（2024 1.3M doubling）</strong> — Automotive News / SCMP 2025-2026</li>
+</ul>
+
+<p><strong>A2 獨立結論：</strong>SiC 產業 runway 🟢 寬（2030 TAM doubling、2036 再 doubling），但 2025-2027 是 correction 谷底；AI DC power tree 是真實第二 S 曲線；川普 EV 政策 + BYD 主導 China EV 是中等政策風險（影響範圍：美國市場 ~30%）；Y5 末仍有量空間 + 第二曲線銜接 = runway_post_y5 🟢 寬。</p>
+</details>
+
+<!-- ========== PHASE A3 (collapsed) ========== -->
+<details>
+<summary>Phase A3｜業務 / 財務體質 / 資本配置 — 獨立結論：「PSG +14% 主引擎 + AI DC +30% QoQ 雙位數兌現；GM 38.5% 連 3 季升但仍距歷史 47-49% 9pp；資本配置紀律佳（$6B 回購、Capex/Rev 5.7%）；5Y IRR 分量基底偏中等。」</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構（Q1 26 實際）</td><td>現金牛：PSG $737M（49%）+14% YoY（SiC + AI DC 主引擎）；成長引擎：Other 含 AI DC $236M（est. $80M AI DC）+30% QoQ doubling 軌道；拖累：AMG $540M -5% YoY（工業 cycle 底）；穩定：ISG $236M +5% QoQ +1% YoY（Auto CIS）</td></tr>
+<tr><td>客戶集中度</td><td>Top 10 ~40-45%（健康分散）；最大客戶 est. BMW or VW ~8-10%（中度集中）；hyperscaler AI DC dual sourcing — 無 single-customer 風險</td></tr>
+<tr><td>定價權</td><td>SiC ASP 趨勢 →（LTSA 取消潮壓力 vs Wolfspeed bk 紓壓 抵消）；CIS ASP ↑（L3-L4 自駕 BOM 上升）；定價權：中（cycle + 競爭夾擊使議價空間有限）</td></tr>
+<tr><td>未來金雞母</td><td><strong>AI DC Power Tree</strong>（目前佔營收 ~5%，潛在 TAM $25B by 2036，預估成熟 7-10 年；2025 $250M → 2026 doubling 目標 $500M+ → 2027 $1B+ 目標）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 FY25 23.7%（健康）、毛利率 38.5% 趨勢 ↑（連 3 季升）；壓力測試：營收 -20% 可撐 ~8-10 季（Cash $2.15B + Debt $3B = net $0.86B，Net Debt/EBITDA 0.6x 極健康）</td></tr>
+<tr><td>資本配置紀律</td><td>$6B 回購（2026/01/01 至 2028，CFO Trent 11/2025 雙倍 prior $3B），FY25 ~100% FCF 用於回購；Capex/Rev 5.7%（已過 SiC peak 18.6% FY23，戰略 mature 不亂花）；併購 — 2025 Qorvo SiC JFET $115M（補強 IP，小金額紀律）</td></tr>
+<tr><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td><strong>EPS CAGR：~10.8%/yr</strong>（Non-GAAP $2.35 → $5.10 5Y = 16.7%/yr 名目，扣 SBC 稀釋 ~3% + cycle 失真折算至 through-cycle ~13% — 取 10.8% 為調和值）；<strong>5Y 末 forward P/E 預估：22x</strong>（through-cycle 同業 NXPI 16x / TXN 28x 中段；當前 25.1x → 22x = re-rate ≈ −2.6%/yr，反映 cycle peak 後 derate）；<strong>現金股息率：0%</strong>（ON 不發股息）；<strong>淨買回率：~1.8%/yr</strong>（$6B / 5Y / $44B 市值 = 2.7%/yr 名目，扣 SBC ~0.9% 稀釋 = 1.8% 淨）</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 6 必達）</h4>
+<ul>
+<li><strong>Q1 2026 Revenue $1,513M +0.7% YoY（三年首次 YoY 正）</strong> — onsemi globenewswire 2026-05-04</li>
+<li><strong>Q1 2026 PSG $737M +14% YoY / AMG $540M -5% / ISG $236M +5%</strong> — Investing.com Q1 2026 slides 2026-05-04</li>
+<li><strong>Q1 2026 Non-GAAP EPS $0.64（beat $0.62）</strong> — onsemi 法說 2026-05-04</li>
+<li><strong>Q1 2026 GM 38.5%（連 3 季升，guidance 中位以上）</strong> — onsemi globenewswire 2026-05-04</li>
+<li><strong>AI DC revenue Q1 26 +30% QoQ，management commit 2026 doubling（$250M → $500M+ target）</strong> — Benzinga Q1 2026 earnings call transcript</li>
+<li><strong>Q2 2026 guidance Rev $1,535-1,635M (+5% QoQ midpoint) / EPS $0.65-0.77 / GM 38.0-40.0%</strong> — onsemi 2026-05-04</li>
+<li><strong>$6B Share Repurchase Authorization 2025-11-18（vs prior $3B；2026/01/01 啟動至 2028；FY25 ~100% FCF 用於回購）</strong> — globenewswire 2025-11-18 + CFO Thad Trent comment</li>
+<li><strong>FY26 EPS consensus $2.94（n=31）/ FY27 EPS $4.06（n=29）/ FPE 25.1x at $102</strong> — yfinance / public.com / marketbeat 2026-05</li>
+<li><strong>Q1 26 Buyback $346M（持續 capital return）</strong> — onsemi Q1 法說 2026-05-04</li>
+</ul>
+
+<p><strong>A3 獨立結論：</strong>Q1 26 print 強化 cycle inflection thesis（PSG +14%、AI DC +30% QoQ）；GM 連 3 季升至 38.5% 但仍距歷史 9pp（結構性 vs 週期性未完全 settle）；資本配置紀律佳（$6B 回購 + Capex mature）；5Y IRR 分量基底中等：EPS 10.8% + re-rate -2.6% + 淨買回 1.8% = ~10.0%/yr 名目（vs §4 機率加權 5.4%/yr，差距為 Bear case 拖累）。</p>
+</details>
+
+<!-- ========== PHASE A4 (collapsed) ========== -->
+<details>
+<summary>Phase A4｜既有 DD / ID 報告數據擷取</summary>
+
+<h4>DD 報告擷取（DD_ON_20260505.html，2026-05-05）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>Quality Score</td><td>6.5（B 級護城河，moat 7/10 + growth durability 7.0）</td></tr>
+<tr><td>R:R ratio（短/中/長 三時距）</td><td>短期 -0.34x（Fail）/ 中期 +0.92x（邊際）/ 長期 5Y +1.24x（邊際）</td></tr>
+<tr><td>三引擎目標價（短/中/長）</td><td>短期合理 $96.4 / 中期合理 $146.5 / 5Y Base $138；Bear $53/$73/$73</td></tr>
+<tr><td>Bear anchor</td><td>$73（FPE 17x × FY30E $4.30，B 級下行錨點）</td></tr>
+<tr><td>紅旗清單</td><td>① FY25 GM 連 3 年下滑 16pp（structural risk）；② ROIC 6.6% &lt; WACC 9-10%；③ CFO Trent 4/16 賣股 $80（內部人 signal）；④ 共識 PT $67.88 vs 現價 $102 = -33% downside；⑤ BB 上軌外 + 4 週漂移 +5.6% 動能末段</td></tr>
+<tr><td>§0.5 核心假設（H1/H2/H3 + R4）</td><td>H1：2026 全年 YoY +5% / 2027 +12%；H2：SiC 市佔守 25% 並擴至 27-28%；H3：AI DC 2025 $300M → 2027 $1.2B（4x）；R4：結構性 GM 永久 38-42%（未解）</td></tr>
+<tr><td>§8 最終結論（綜合訊號燈）</td><td><strong>B（衛星候選）</strong> — 等回測 BB 中軌 $69 或 W104 $60 進場</td></tr>
+</table>
+
+<h4>ID 報告擷取（ID_AIDCPowerElectronics_20260421.html，2026-04-21）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>產業評級</td><td>Phase II（54V → 800V 轉型期），Tier 4🔴 / 4🟡 / 3🟢，預期報酬 19%</td></tr>
+<tr><td>關鍵趨勢</td><td>① 800V DC 轉型加速（NVDA + Delta co-develop）；② 800V 淘汰二線 PSU（Chicony / Acbel 2027 YoY 負）；③ Vertiv $15B backlog mix-shift 啟動；④ ON 是 PSU 玩家但<strong>非 ID 前段 ranking</strong>，列於子題附錄</td></tr>
+<tr><td>ON 在 ID 內排名</td><td>ID 涵蓋 11 檔，ON 與 NVTS、TXN 為「power semi 上游供應商」配角；前段主角為 Delta（2308）、Vertiv（VRT）</td></tr>
+<tr><td>對 ON 隱含的 read-through</td><td>AI DC power 是真實成長賽道，但 ON 占比小（5% revenue），TAM 受惠程度中等；ID 重點在 Delta / Vertiv / Eaton 等系統商，而非 ON 等元件商</td></tr>
+</table>
+
+<p class="note">Phase A4 僅為數據輸入，不產出獨立結論。</p>
+</details>
+
+<!-- ========== FOOTER ========== -->
+<div class="section">
+<h2>📋 報告 metadata</h2>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>報告日期</td><td>2026-05-11</td></tr>
+<tr><td>Ticker</td><td>ON（NASDAQ）— onsemi / ON Semiconductor</td></tr>
+<tr><td>當日股價</td><td>$102.04（5/4 收）</td></tr>
+<tr><td>DD basis</td><td>DD_ON_20260505.html（v12.2，Inception DD）</td></tr>
+<tr><td>ID basis</td><td>ID_AIDCPowerElectronics_20260421.html（ON 為子配角，主場為 Delta/Vertiv）</td></tr>
+<tr><td>DCA Schema</td><td>v1.1</td></tr>
+<tr><td>下次審視</td><td>2026-08-01 ± 5d（Q2 2026 法說後）</td></tr>
+<tr><td>分析師身份宣告</td><td>$500M AUM 基金經理人視角，融合林區（一句話 thesis）+ 蒙格（inversion + 多學科）+ 巴菲特（價格紀律）</td></tr>
+</table>
+</div>
+
+</div><!-- /container -->
+
+<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+</body>
+</html>

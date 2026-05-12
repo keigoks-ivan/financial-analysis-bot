@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜AMAT Applied Materials｜2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 0; line-height: 1.7; }
+.num, .mono { font-family: 'IBM Plex Mono', monospace; }
+.container { max-width: 1180px; margin: 0 auto; padding: 24px 36px 80px; }
+.header { position: sticky; top: 0; background: #1E3A5F; color: #fff; padding: 12px 32px; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-size: 13px; }
+.header b { font-weight: 700; }
+.card { background: #fff; padding: 24px 28px; margin: 18px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border-radius: 2px; }
+h1 { color: #1E3A5F; font-size: 26px; margin: 0 0 8px; }
+h2 { background: #1E3A5F; color: #fff; padding: 11px 18px; margin: 28px 0 14px; border-left: 4px solid #3B82F6; font-size: 19px; }
+h3 { color: #1E3A5F; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px; margin-top: 22px; font-size: 16px; }
+h4 { color: #334155; margin-top: 16px; font-size: 14px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+th { background: #1E3A5F; color: #fff; padding: 9px 11px; text-align: left; font-weight: 500; }
+td { padding: 8px 11px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+tr:nth-child(even) td { background: #F1F5F9; }
+.tag { padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 500; white-space: nowrap; display: inline-block; }
+.green { background: #DCFCE7; color: #166534; }
+.red { background: #FEE2E2; color: #991B1B; }
+.yellow { background: #FEF9C3; color: #92400E; }
+.blue { background: #EFF6FF; color: #1E3A8A; }
+.orange { background: #FFEDD5; color: #9A3412; }
+.note { color: #64748B; font-size: 12.5px; font-style: italic; margin: 5px 0; }
+/* Status bar */
+.status-bar { background: #F1F5F9; border-left: 4px solid #3B82F6; border-right: 4px solid #3B82F6; padding: 18px 14px; margin: 18px 0 22px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.status-cell { width: 180px; text-align: center; background: #fff; padding: 14px 10px; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.status-cell .label { font-size: 11px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.status-cell .val { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.status-cell .sub { font-size: 11px; color: #64748B; margin-top: 4px; }
+.sig-X { color: #991B1B; }
+.sig-A { color: #166534; }
+.sig-B { color: #92400E; }
+.moat-up { color: #166534; }
+.moat-flat { color: #64748B; }
+.moat-down { color: #991B1B; }
+.dd-amber { color: #92400E; }
+.dd-red { color: #991B1B; }
+.dd-green { color: #166534; }
+/* Thesis */
+.thesis-box { background: #EFF6FF; padding: 26px 32px; text-align: center; margin: 14px 0; border-radius: 3px; }
+.thesis-box .quote { font-size: 24px; font-weight: 500; color: #1E3A5F; line-height: 1.45; }
+.thesis-box .caption { font-size: 12px; color: #64748B; margin-top: 8px; }
+/* Decision (避免 — wait/reject) */
+.decision-box { background: #FFF1F2; border-left: 4px solid #DC2626; padding: 18px 22px; margin: 14px 0; }
+.decision-box h4 { color: #991B1B; margin-top: 0; }
+/* Conflict box */
+.conflict-box { background: #FFF7ED; border-left: 4px solid #F97316; padding: 16px 20px; margin: 14px 0; }
+.conflict-box h4 { color: #C2410C; margin-top: 0; }
+.verdict-table th { background: #FED7AA; color: #9A3412; }
+/* Pre-mortem */
+.premortem-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 16px 20px; margin: 14px 0; }
+.premortem-box blockquote { margin: 8px 0; padding: 10px 16px; background: #fff; border-left: 3px solid #DC2626; font-style: italic; }
+/* Pattern match */
+.pattern-box { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px 20px; margin: 14px 0; }
+/* IRR composition */
+.irr-bar-container { margin: 10px 0; padding: 10px 14px; background: #F8FAFC; border-radius: 2px; }
+.irr-bar { display: flex; height: 26px; border-radius: 2px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08); margin: 6px 0; }
+.irr-seg-eps { background: #15803D; }
+.irr-seg-rerate-neg { background: #DC2626; }
+.irr-seg-rerate-pos { background: #2563EB; }
+.irr-seg-shr { background: #94A3B8; }
+.irr-seg { color: #fff; font-size: 11px; padding: 5px 8px; font-weight: 600; }
+.irr-narrative { background: #F0F9FF; border-left: 3px solid #0EA5E9; padding: 12px 16px; font-style: italic; font-size: 13px; margin-top: 10px; }
+/* Max DD */
+.maxdd-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 18px 22px; margin: 14px 0; }
+.maxdd-num { font-size: 30px; font-weight: 700; color: #991B1B; font-family: 'IBM Plex Mono', monospace; }
+.maxdd-emoji { font-size: 26px; }
+.maxdd-bar { background: #F1F5F9; height: 16px; border-radius: 2px; margin: 10px 0; position: relative; }
+.maxdd-bar-fill { height: 100%; background: linear-gradient(90deg, #DCFCE7 0%, #FED7AA 50%, #FEE2E2 100%); border-radius: 2px; }
+/* Memo */
+.memo-box { background: #FAFAF9; border: 1px dashed #94A3B8; padding: 20px 24px; margin: 14px 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.7; }
+.elevator { background: #F1F5F9; padding: 14px 20px; border-left: 3px solid #64748B; font-style: italic; margin: 10px 0; }
+/* Phase A folded */
+details { margin: 10px 0; background: #fff; border: 1px solid #E2E8F0; border-radius: 3px; padding: 0; }
+details > summary { padding: 14px 20px; cursor: pointer; font-weight: 600; color: #1E3A5F; background: #F8FAFC; user-select: none; }
+details[open] > summary { border-bottom: 1px solid #E2E8F0; background: #F1F5F9; }
+details > div { padding: 18px 22px; }
+.ma-yes { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 3px; }
+.ma-no { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 3px; }
+.print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #fff; padding: 10px 16px; border: none; border-radius: 3px; cursor: pointer; font-family: inherit; box-shadow: 0 2px 8px rgba(0,0,0,0.18); font-size: 13px; }
+.warn { background: #FFEDD5; color: #9A3412; padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 12px; }
+ul { padding-left: 20px; } li { margin: 4px 0; }
+@media print { .header, .print-btn { display: none; } body { background: #fff; } details { border: none; } details > div { padding: 0; } details > summary { background: none; cursor: default; pointer-events: none; } details:not([open]) > div { display: block !important; } details > summary::-webkit-details-marker { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span><b>AMAT</b> Applied Materials · DCA</span>
+  <span>2026-05-11 ｜ AI 半導體基建賣鏟者：Kinex / HBM / GAA 三軸護城河仍在加深，但動能已透支到 $435（DD 後再 +9.7%）</span>
+  <span>DCA Schema <b>v1.1</b></span>
+</div>
+
+<div class="container">
+
+<div class="card">
+<h1>AMAT｜Deep Conviction Analysis（v1.1）</h1>
+<p class="note">NASDAQ：AMAT｜半導體 WFE 設備龍頭｜DD basis：DD_AMAT_20260418.html（v12.0，訊號 X）｜ID basis：ID_WaferFabEquipment_20260430.html（patched v1.2）｜ 報告日股價：$435.44（2026-05-08，DD 後 +9.7% / 4 週前 $337 → 現價 +29%）</p>
+</div>
+
+<!-- ============ STATUS BAR ============ -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="val sig-X">X</div>
+    <div class="sub">迴避／清倉（估值🔴 + 追高已透支 FY+2）</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Moat 等級 / 趨勢</div>
+    <div class="val">S <span class="moat-up">↑</span></div>
+    <div class="sub">廣度 + Kinex/HBM/GAA 三條同步加深</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="val">🟢</div>
+    <div class="sub">寬：S 曲線中早期，多曲線銜接</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Max DD 範圍</div>
+    <div class="val dd-red">−59%</div>
+    <div class="sub">−45% ~ −59%｜🔴 路徑風險高</div>
+  </div>
+</div>
+
+<!-- ============ §2 ONE-SENTENCE THESIS ============ -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="quote">「AMAT 是 AI 半導體基建的全鏈路賣鏟者，每一顆 HBM、每一片 GAA 晶圓背後都要繳設備稅。」</div>
+  <div class="caption">50 字以內的投資本質敘事（不涉及財務指標主體）</div>
+</div>
+
+<!-- ============ §7 DECISION ============ -->
+<h2>§7｜Decision（決策計畫）</h2>
+<div class="decision-box">
+<h4>裁決：等待回檔（Wait for Reversion）— 不進場、不加碼、不追高</h4>
+<p>S 級護城河 + 🟢 順風 + 🟢 長跑道全部仍在；但 5/8 收 $435.44，已較 DD 報告日（4/18 $396.94）再漲 +9.7%，較 4 週前 $337 已 +29%；FY+1 Fwd PE ~39x、5Y 分位仍卡 99%。R:R 全部負值。**這是好公司碰上更壞的價格**。</p>
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>核心持倉候選（如果價位合適）；目前定位為「<b>追蹤池 + 等待回檔</b>」</td></tr>
+<tr><td>初始建倉倉位</td><td><b>0%</b>（當前價位不進場）</td></tr>
+<tr><td>目標倉位（價位達成後）</td><td>5-6% of portfolio（S 級護城河 + 高長期信心，但比 TSMC/ASML 略低，因 China cycle 敏感度較高）</td></tr>
+<tr><td>進場價位區間</td><td>第一批：$300-325（Fwd PE 回到 25-27x，~Bollinger 中軌）｜第二批：$240-280（Fwd PE 22-25x，~W52 線）</td></tr>
+<tr><td>進場節奏</td><td><b>條件式分批</b>（不接受一次建倉）：① 股價回測 Bollinger 中軌 $325-330 → 第一批 30% 倉位；② Fwd PE ≤ 25x + RSI 14d ≤ 55 → 第二批 30%；③ Q3 FY26 China 不再升級 + Semi Systems GM 維持 ≥ 48% → 補齊至目標 100%</td></tr>
+<tr><td><b>vs 現有組合的同類曝險（opportunity cost）</b></td><td><b>核心對比 TSMC（2330.TW）與 ASML：</b>① 若已持 TSMC 5-8%（晶圓代工 + AI 端最直接）→ 邊際資金加 AMAT 等於放大 China BIS / WFE 週期風險，conviction 不如直接加 TSMC（TSMC R:R 雙時距正、PE 22-23x 合理區間）；② 若已持 ASML → AMAT 與 ASML 形成「litho vs 多工具」雙寡占互補，但 ASML 自 ID critic 後 conviction 降至 mid，AMAT 也僅 mid；③ 若已持 LRCX（同 WFE，LRCX 一年漲 258% vs AMAT 158%，但 LRCX FY26 Mar +24% 比 AMAT 強且估值僅 ~28x） → <b>邊際資金應該加 LRCX 不是 AMAT</b>（LRCX 比 AMAT 同 thesis 同方向但便宜 ~30%）。<br><b>結論：</b>當前價位下，AMAT 在 WFE 籃中 conviction 排第 3（KLAC > LRCX > AMAT），邊際資金應流向 LRCX 或 KLAC；AMAT 等回檔再議。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件（持倉建立後）</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>第一批進場</td><td>股價回測 $325-330 區（Bollinger 中軌） + Fwd PE ≤ 27x + RSI 回到 50-60</td><td>2.0%</td></tr>
+<tr><td>第二批加碼</td><td>Fwd PE ≤ 25x（~$310）+ Q2/Q3 FY26 Semi Systems GM ≥ 48%</td><td>4.0%</td></tr>
+<tr><td>補齊至核心</td><td>Q4 FY26 法說確認 HBM 營收年化達 $2B（中段確認朝 FY27 $3B 目標）+ China BIS 無新管制</td><td>6.0%</td></tr>
+<tr><td>減碼</td><td>Semi Systems GM 連 2 季跌破 46% <b>或</b> China 營收佔比跌破 18% <b>或</b> Fwd PE 反彈至 35x</td><td>3.0%</td></tr>
+<tr><td>清倉</td><td>BIS 升級涵蓋 ICAPS/power/sensor（年蒸發 $3-5B 營收）<b>或</b> HBM $1.5B 不增反縮 2 季</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-yes">✅</span></td><td>$435 遠高於 MA60（DD 抓 ~$340 估算範圍）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-yes">✅</span></td><td>$435 vs MA200 $259（Investing.com 2026-05），漂移 +68%</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-yes">✅</span></td><td>$435 vs W104 $213，漂移 +104%</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-yes">✅</span></td><td>三線多頭排列，技術面結構強勢</td></tr>
+<tr><td><b>短期動能過熱檢查</b></td><td><span class="warn">⚠ RSI 14d ≈ 72.8 + 4 週漂移 +29%</b></span></td><td>RSI 過熱，4 週漂移從 DD 時的 +17.7% 進一步擴大至 +29%，**典型追高末段**</td></tr>
+</table>
+
+<p><b>Pure MA 通過但動能極度過熱 → 強制條件式分批：</b></p>
+<ul>
+<li>⛔ 禁止一次建倉、禁止「立即第一批 50%」</li>
+<li>✅ 必須等 RSI 14d 回到 50-60 區 + 股價回測 Bollinger 中軌 $325-330 再啟動第一批</li>
+<li>歷史 mean reversion：RSI > 70 後 1 個月內回測 8-15% 的機率 ~60%；當前 RSI 72.8 + 漂移 +29% = 短期 5-15% pullback 機率高</li>
+</ul>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（< 2 年）</td><td>不建議—當前估值已透支到 FY+2 EPS，2026-2027 短期再 rerate 空間極小</td></tr>
+<tr><td>中期（2-5 年）</td><td>若於 Fwd PE ≤ 27x（$310-330）建倉，預期 Bull case 5Y CAGR ~12-15%；Base case ~6-8%；中期持有 OK</td></tr>
+<tr><td>長期（5-10 年）</td><td><b>強烈建議</b>—S 級護城河、🟢 寬 runway、AI giga-cycle 至少跑到 2030+；只要進場價合理（≤ Fwd PE 27x）長持 5-10 年</td></tr>
+</table>
+<p><b>建議持有年限：5-10 年</b>，原因：護城河 S 級且趨勢 ↑（Kinex 獨家、Viva GAA、Sym3 Z Magnum），AI 賣鏟者地位至少跑到 2030 後；但**前提是進場價合理**，當前 $435 不是合理進場價。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>2026E（FY26）</td><td class="num">$11.07</td><td>yfinance / DD §13 33 位分析師</td><td>FY26 Q1 已 beat（$2.54 vs $2.21 est）</td></tr>
+<tr><td>2027E（FY27）</td><td class="num">$14.07</td><td>yfinance consensus 33 位分析師</td><td>HBM ramp + GAA 全面量產</td></tr>
+<tr><td>2028E（FY28）</td><td class="num">$16.18</td><td>DD §13 邏輯外推（FY27 × 1.15）</td><td>WFE 連 3 年 +9-10% + GM 持續擴張</td></tr>
+<tr><td>2030E（FY30 外推）</td><td class="num">$20-22</td><td>本 DCA Bull 推導</td><td>外推假設：HBM $3B 達標、Kinex 量產、CAGR 降至 12%</td></tr>
+</table>
+
+<p><b>假設長期持有（5-10 年），現在股價適合嗎？</b></p>
+<p>不適合。即使用 Bull case FY30 EPS $22 × 合理永續 PE 25x = $550 → 5 年 CAGR 從 $435 起算僅 +4.8%/yr；同期 S&P 500 歷史均值 ~10%/yr。<b>機會成本失敗</b>。要讓 AMAT 5Y CAGR > 12%/yr，必須在 ≤ $310（Fwd PE ≤ 27x）建倉。當前位置只能等。</p>
+
+<!-- ============ §4 ASYMMETRY ============ -->
+<h2>§4｜Asymmetry Analysis</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull（AI giga-cycle 完美延展 2030+）</td><td class="num">+90%</td><td class="num">+13.7%/yr</td><td>FY30 EPS $22 × 30x（永續高品質）= $660；護城河 ↑ + Kinex 全面量產 + China cycle 軟著陸</td><td>20%</td></tr>
+<tr><td>Base（WFE 連 4 年 +8-10%，PE 回 25-28x）</td><td class="num">+25%</td><td class="num">+4.6%/yr</td><td>FY30 EPS $18 × 27x = $486；HBM 達 $2.5B / Kinex 部分採用 / China stable</td><td>45%</td></tr>
+<tr><td>Bear（PE 均值回歸 + China 二次升級）</td><td class="num">−55%</td><td class="num">−14.5%/yr</td><td>FY30 EPS 下修至 $14（China hit $3B 額外 + WFE 2027 trough $115B）× 14x = $196</td><td>35%</td></tr>
+<tr><td><b>機率加權期望值</b></td><td><b class="num">+9.8% 5Y</b></td><td><b class="num">+1.9%/yr</b></td><td>—</td><td>100%</td></tr>
+</table>
+
+<p class="note"><b>IRR 落點解讀：</b>機率加權 IRR ≈ +1.9%/yr <span class="warn">弱</span>（< 8%/yr 大盤平均的零頭），完全不及大盤——當前價位下 AMAT 對 portfolio 是**負 alpha**部位。Bull case 也只 +13.7%/yr，不夠 high-conviction 門檻 15%；而 Bear 概率 35% 給出 −14.5%/yr 對稱不利。<b>R:R 完全不支持進場。</b></p>
+
+<h3>追加壓力測試</h3>
+<ul>
+<li><b>10Y 視角：</b>若 Bull 延伸至 10 年（FY36 EPS ~$32 × 28x = $896），10Y IRR ≈ +7.5%/yr — 還是不及大盤；說明 AMAT 結構性「複利機」不像 NVDA / TSMC 那麼陡。</li>
+<li><b>機會成本：</b>同期 TSMC（DD 信號 A、Fwd PE 22-23x）5Y 期望 IRR ~14-16%/yr；LRCX 同 WFE Mar Q +24% YoY、PE ~28x，5Y IRR ~10-12%/yr；KLAC ROIC 上升 + process control intensity 升至 11-13%，5Y IRR ~12%/yr。<b>邊際資金應放 KLAC 或 LRCX 不是 AMAT。</b></li>
+</ul>
+
+<h3>📅 機率估計：時間視角校驗</h3>
+<table>
+<tr><th>檢查項</th><th>本案狀態</th><th>是否合格</th></tr>
+<tr><td>Bear 機率 5Y 不低於 20%</td><td>35%</td><td>✅ 反映追高 + China 雙風險</td></tr>
+<tr><td>Bull/Bear 散布 ≥ 50% 寬</td><td>Bull +90% vs Bear −55% → 145%p</td><td>✅</td></tr>
+<tr><td>Base 機率 ≤ 50%</td><td>45%</td><td>✅</td></tr>
+<tr><td>Pattern match 校準</td><td>見下節</td><td>待校</td></tr>
+</table>
+
+<!-- ============ Pattern match ============ -->
+<div class="pattern-box">
+<h4>📐 Pattern match — 歷史相似 setup</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td><b>AMAT 2018（DRAM/NAND 設備峰值 + 中美 trade war 啟動）</b>＋ 對照組 <b>AMAT 2021 vs 2022</b></td></tr>
+<tr><td>當時的 setup（估值、市佔、技術節點）</td><td>2018-03 AMAT 觸頂 $62（Fwd PE 17x，當時 5Y 中位 13x，分位 ~85%）；4 週漂移 +18%；DRAM/NAND ramp + China BIS Round 1 升級風險｜2021-12 AMAT 觸頂 $164（Fwd PE 22x，5Y 分位 95%）</td></tr>
+<tr><td>後續 5 年實現報酬 / IRR</td><td>2018-03 至 2023-03：$62 → $116（+87%，5Y CAGR +13%），但中途 2018-12 跌至 $32（−48%）、2020-03 再跌至 $40（−35%）｜2021-12 至 2024-12：$164 → $170（+4%，3Y CAGR +1.3%），中途 2022-10 跌至 $74（−55%）</td></tr>
+<tr><td>本案最像 / 最不像</td><td><b>最像 2021-12：</b>同樣 Fwd PE 5Y 分位 95%+、同樣多頭末段、同樣 China 風險升級窗口；但 2021 沒 Kinex / HBM 結構性新成長 → 本次護城河更深。<b>最不像：</b>2018 沒 AI giga-cycle，runway 更短。<br><b>歷史教訓：</b>AMAT 從 Fwd PE 99% 分位的高點，過去兩次都先跌 35-55% 再爬，最後 5Y 報酬看起來不錯（+87%）但中途 max DD 慘烈—**這是「能不能撐到終點」的典型 case**。</td></tr>
+</table>
+</div>
+
+<!-- ============ IRR Composition ============ -->
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td class="num">+12.0%/yr</td><td class="num">+0.0%/yr（PE 維持 30x）</td><td class="num">+1.7%/yr</td><td class="num">+13.7%/yr</td></tr>
+<tr><td>Base</td><td class="num">+9.0%/yr</td><td class="num">−5.9%/yr（39x→27x）</td><td class="num">+1.5%/yr</td><td class="num">+4.6%/yr</td></tr>
+<tr><td>Bear</td><td class="num">+5.0%/yr</td><td class="num">−21.0%/yr（39x→14x）</td><td class="num">+1.5%/yr</td><td class="num">−14.5%/yr</td></tr>
+</table>
+
+<div class="irr-bar-container">
+  <div class="note"><b>Base 列視覺化（EPS 綠 / re-rate 紅 / shareholder 灰）：</b></div>
+  <div class="irr-bar">
+    <div class="irr-seg irr-seg-eps" style="width: 56%;">EPS +9.0%</div>
+    <div class="irr-seg irr-seg-rerate-neg" style="width: 35%;">Re-rate −5.9%</div>
+    <div class="irr-seg irr-seg-shr" style="width: 9%;">SHR +1.5%</div>
+  </div>
+  <div class="note">→ Base 合計 +4.6%/yr</div>
+</div>
+
+<p class="note"><b>合計校驗：</b>Base 三分量加總 = 9.0 − 5.9 + 1.5 = <b>+4.6%/yr</b>，與表格上 Base 列「+4.6%/yr」<b>誤差 0%p（≤ 2%p ✅）</b>。</p>
+
+<div class="irr-narrative">
+「Base 4.6% IRR 中，9.0%/yr 來自 EPS 複利，−5.9%/yr 被估值 re-rate（39x → 27x）吃掉，1.5%/yr 來自股息+回購。<b>這檔當前位置的可抱性主要靠 EPS 複利硬撐</b>，但被估值均值回歸**強力反噬**——換言之，AMAT 5 年期間「業務做得很好」與「股價表現好」是兩件事。要讓 AMAT 變成「自然複利好抱」標的，必須等 Fwd PE 回到 ≤ 27x，那時 re-rate 貢獻才會中性（不再扣分）。」
+</div>
+
+<!-- ============ §1 MEMO ============ -->
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<b>To: Investment Committee｜From: PM｜Date: 2026-05-11</b><br><br>
+<b>Subject: AMAT — Wait for Reversion（不進場，等待回檔至 ≤ $325）</b><br><br>
+<b>Thesis（一句話）：</b><br>
+AMAT 是 AI 半導體基建的全鏈路賣鏟者，每一顆 HBM、每一片 GAA 晶圓背後都要繳設備稅。<br><br>
+<b>Key Driver（命脈）：</b><br>
+WFE 設備 intensity 結構性升高（GAA + High-NA + 先進封裝三引擎），AMAT 在 deposition / implant / CMP / Kinex 等五項以上 80%+ 寡占。<br><br>
+<b>R:R 與機率加權 IRR：</b><br>
+5Y 機率加權 IRR ≈ <b>+1.9%/yr</b>（Bull 20% × +13.7% + Base 45% × +4.6% + Bear 35% × −14.5%）—弱於大盤平均；R:R 雙時距均為負值。<br><br>
+<b>主要風險：</b><br>
+1）估值均值回歸（Fwd PE 39x → 5Y 中位 18x = −54%）<br>
+2）China BIS 二次升級（ICAPS/power/sensor 涵蓋，年蒸發 $3-5B 營收）<br>
+3）WFE 2027 cycle peak 反轉（歷史 PE 可壓至 10-14x）<br><br>
+<b>建議倉位：</b>當前 <b>0%</b>，目標 5-6%（條件達成後分批建立）<br>
+<b>進場條件：</b>① Fwd PE ≤ 27x（~$310-330）+ ② RSI 14d 回 50-60 + ③ Bollinger 中軌或 W52 線回測<br>
+<b>Opportunity cost：</b>同等 WFE 曝險，邊際資金優先放 LRCX（PE 28x、Mar Q +24%）或 KLAC（process control intensity 升、ROIC 上升）。<br><br>
+<b>保質期：</b>2026-05-14 Q2 FY26 法說當天必須重評；非該日下個觸發點為 2026-08（Q3 法說 + China BIS 政策動態）。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「AMAT 是 AI 半導體最完整的賣鏟者，HBM 每多生產一顆、GAA 每多跑一片，AMAT 都收設備稅。長期我絕對想擁有這家公司——但不是現在這個價。股價三年漲了 170%、過去 4 週又再漲 29%、Fwd PE 卡在 5 年最高 99% 分位，意思是 5 年後的好事都已經被定價進去了。我會等它回到 $300-325 區（合理 PE 25-27x）再進場。在那之前，同樣的錢放 LRCX 或 KLAC 比較划算。」
+</div>
+
+<p><b>壓力測試結果：</b>1 頁 memo 與 30 秒簡報邏輯自洽（thesis 清晰 + 決策路徑明確 + opportunity cost 點名具體）→ ✅ 繼續進入 §7（已完成）。</p>
+
+<!-- ============ PHASE B 矛盾 ============ -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 同方向）</h3>
+<ul>
+<li>S 級護城河（10/10）—— A1 / A4 DD 一致確認，趨勢 ↑ widening</li>
+<li>AI giga-cycle 與 HBM ramp 是真實結構性驅動 —— A2 / A3 / A4 一致</li>
+<li>FY26 EPS 共識上修（90 天 +15.5% from $9.58 → $11.07）—— A3 / A4 一致</li>
+<li>當前估值已透支 FY+2 EPS —— A3 / A4 一致（Fwd PE 5Y 分位 99%、PEG 1.55）</li>
+</ul>
+
+<h3>2. 不可調和矛盾清單</h3>
+<div class="conflict-box">
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1（護城河）</th><th>A2（產業）</th><th>A3（業務財務）</th><th>性質</th></tr>
+<tr><td>1</td><td>AMAT 護城河趨勢「↑ widening」vs Morningstar / artificall 觀察到的「ROIC 下降趨勢」</td><td>↑ widening（Kinex 獨家、HBM tools 50% value share、Viva GAA radical）</td><td>—</td><td>近 3 年 ROIC 走低：FY23 ~33% → 5Y 平均 28.5%（藍 vs Morningstar 36.68% 為單期數字）</td><td>🔴 不可調和（方向相反）</td></tr>
+<tr><td>2</td><td>WFE 是「結構性 super-cycle」vs WFE 本質仍 cyclical（2027-2028 trough 風險）</td><td>—</td><td>ID 五寡占框架：結構超循環，2027 trough 不破 $130B</td><td>歷史經驗：AMAT 2018 / 2022 都從 PE 95%+ 分位下殺 35-55%</td><td>🔴 不可調和（時間軸+本質）</td></tr>
+<tr><td>3</td><td>中國 BIS 風險已 priced in vs 二次升級風險仍未定價</td><td>—</td><td>中國 WFE 占比 40% → 28%（已下行），先進節點五寡占 90%+ 不動</td><td>$252.5M BIS settlement 2026-02 已發生；FY26 指引 −$600M 已 disclosed</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>4</td><td>AMAT 是 WFE 寡占第 1 vs LRCX 同期股價漲幅 +258% > AMAT +158%（市場用腳投票 LRCX 更強）</td><td>—</td><td>LRCX Mar Q26 +24% YoY > AMAT Q1 FY26 +7% YoY（短期 momentum 反向）</td><td>—</td><td>🟡 可調和（短期 vs 長期）</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr>
+<tr><td>A</td><td>Phase A 確認當前股價已從 DD 時 $396.94 漲至 $435.44 （+9.7%）</td><td>5/8 $435 RSI 72.8 動能再加劇</td><td>DD 已標 X（拒絕）</td><td>時間差 23 天 + 市場慣性追高，X 結論依然成立並強化</td></tr>
+<tr><td>B</td><td>ID critic 指出「LRCX / KLAC conviction tier ≥ AMAT」</td><td>同意：LRCX +24% YoY、KLAC process control intensity 升</td><td>DD AMAT 仍給 S 級護城河、訊號 X 是估值 gate</td><td>視角差：DD 看單檔，ID 看籃內 ranking — 對 PM 決策更重要</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then，方向相反）</th></tr>
+<tr><td>1</td><td>護城河 ↑ vs ROIC ↓</td><td><b>選 A1（↑ widening）</b></td><td>Morningstar「ROIC 下降」係用 GAAP 全攤口徑且包含 Q1 FY26 一次性費用；DD 取 10Y 均 28.5% 仍遠高於同業；ROIC 絕對水準 36.68%（artificall 2026 數）+ 行業平均 20%，差距擴大；Kinex / Viva / Sym3 Z Magnum 三新品 2025/10 上市 = 護城河 forward-looking 加寬</td><td>① Semi Systems GM 連 2 季 ≥ 48%（當前 49.0%）= 護城河仍 ↑；② FY27 HBM 營收若達 $3B（vs FY25 $1.5B）= 護城河量化確認</td><td>(a) 若 GM 維持 ≥ 48% 且 HBM 達標 → 加碼至 6%（前提：估值同時回到 ≤ 27x）；(b) 若 GM 跌破 46% 連 2 季 → 減碼至 2% 並重估護城河等級</td></tr>
+<tr><td>2</td><td>結構 super-cycle vs cyclical 反彈</td><td><b>暫無法決定（取「混合」）</b></td><td>ID 五寡占 framework 有結構性論據（GAA 1.4x intensity、China 反制集中成熟節點、先進節點 90%+ 五寡占），但 AMAT 自己有 ICAPS 曝險（成熟節點），所以 AMAT < LRCX/KLAC 純先進；結構性論據對 KLAC/LRCX 強、對 AMAT 中等；歷史 2018/2022 兩次都 cyclical 下殺；保守裁決：給 60% 結構 / 40% cyclical 混合權重，這正是 §4 Base 機率 45% / Bear 35% 的來源</td><td>① WFE 2027 SEMI 數字若實際 < $130B（vs 預測 $135.2B）→ cyclical 邊勝；② 2027 全年 WFE 持平 $145B+ → 結構邊勝；③ Q3 FY26 法說 calendar 2026 WFE +20% guide 是否兌現</td><td>(a) 結構邊兌現 → Bull 機率上修至 30%，IRR 加權升至 ~4%/yr，仍不夠進場；(b) cyclical 邊兌現 → Bear 機率升至 50%，目標倉位下修至 3-4%</td></tr>
+<tr><td>3</td><td>BIS 風險已 priced in vs 未定價</td><td><b>選 A2 + A3（部分 priced in）</b></td><td>$600M FY26 hit 已 disclosed；$252.5M settlement 已落地；但 ICAPS/power/sensor 二次升級尚未發生，市場仍給樂觀定價（Fwd PE 39x = 假設 China 不再升級）；當前定價 = 「最樂觀 China 情境」</td><td>① 2026-Q3 BIS 是否公佈新管制；② AMAT China 營收佔比是否守住 25-28%（當前 27-30%）</td><td>(a) BIS 不升級且 China 佔比穩 → Base 機率上修至 50%；(b) BIS 涵蓋 ICAPS → 觸發 §5 single thing trigger，立即清倉預備</td></tr>
+<tr><td>4</td><td>AMAT 寡占 #1 vs LRCX 表現更強</td><td><b>選 A2（LRCX 短期更強，長期 AMAT 仍佔優）</b></td><td>LRCX Mar Q26 +24% YoY 是真實（etch + ALD 板塊推擠驗證）；AMAT 廣度第一但細分項目都被同業壓著（etch LRCX、metrology KLAC、coater TEL、litho ASML）；長期 AMAT 廣度優勢仍在，但短期 alpha 在 LRCX</td><td>① LRCX Mar Q FY26 法說（已發）；② AMAT Q2 FY26 法說 2026-05-14 是否 beat $7.65B guidance；③ AMAT Semi Systems +20% calendar 2026 guidance 兌現度</td><td>(a) 若 AMAT Q2 beat 且 calendar 2026 +20% 兌現 → AMAT 相對 LRCX 折讓會收窄，但仍不夠補當前估值差；(b) 若 AMAT Q2 miss → 訊號 X 強化，opportunity cost 明確指向 LRCX/KLAC</td></tr>
+</table>
+
+<!-- ============ §3 KEY DRIVERS ============ -->
+<h2>§3｜Key Drivers</h2>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><b>WFE 設備 intensity 結構性升高（供給側）</b></td><td>GAA 2nm 設備強度是 7nm 的 1.4-1.5 倍（ID §1.1 引 SEMI）、High-NA + 先進封裝多需要 deposition/CMP/implant 增量 — AMAT 都是 80%+ 寡占；intensity 升高直接帶 AMAT 營收向上，與晶圓 starts 解耦</td><td>① Semi Systems GM 季度走勢（≥ 48% = 結構溢價維持）；② AMAT calendar 2026 半導體設備 +20% guidance 兌現度；③ WFE TAM 2026 $145B / 2027 $156B SEMI 數字</td></tr>
+<tr><td>2</td><td><b>AI 結構性需求（需求側） — HBM / 先進封裝 / GAA 三軸同步</b></td><td>不是單一 driver，HBM 每顆需要 19 extra steps（AMAT capture 50%+ value）、GAA backside power 引入新 deposition / CMP 步驟、先進封裝 hybrid bonding（Kinex 獨家） — 三條獨立成長曲線，任兩條不退 thesis 仍活</td><td>① HBM 年化營收（FY25 $1.5B → 目標 FY27 $3B）；② Kinex 採用客戶數（目前 SK Hynix pilot）；③ TSMC capex $52-56B 兌現度</td></tr>
+</table>
+
+<p><b>為什麼是這 2 個，而不是其他？</b></p>
+<p>因為 driver 1（供給側 intensity）與 driver 2（需求側 AI 需求）是兩條獨立因果鏈：driver 1 可以在 AI 需求平緩時靠 GAA / 先進封裝節點轉換獨立兌現（即使 wafer starts 不增）；driver 2 可以在製程升級放緩時靠 HBM / 先進封裝獨立兌現（即使節點推進延後）。兩者不互為前提，通過「driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？」測試 — driver 2 可以在 AI 需求腰斬時被獨立推翻（與 GAA 進展無關）。✅ Pass。</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>FY26 Q2 single quarter beat/miss（$7.65B guidance）</td><td>單季噪音；真正關鍵是 Semi Systems GM 趨勢與 calendar 2026 全年指引</td></tr>
+<tr><td>Display 業務（FY25 +20%）</td><td>佔總營收 ~3%，對 thesis 邊際；OLED Gen 8.6 是長期 option 但非命脈</td></tr>
+<tr><td>analyst price target $423-444</td><td>共識已過去 3 個月上修 15.5%，但股價漲 +29% 已超前 PT；目標價是 lagging indicator</td></tr>
+<tr><td>BIS $252.5M settlement</td><td>已落地、已 disclosed、已 priced；one-time charge 非結構性</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Fwd PE 39x（FY+1）/ 31x（FY+2）= 假設 AMAT 享受「永續 30x+ 高品質溢價」，類似 ASML 高峰估值，且 China 不再升級 + WFE 2027-2028 不 trough</td></tr>
+<tr><td>我認為的不同假設</td><td>AMAT 護城河 S 級沒錯，但同業中 etch（LRCX）/ process control（KLAC）/ litho（ASML）各有 80-100% 單項寡占，AMAT 的「廣度第一」應該享受 25-28x 永續溢價（不到 ASML 32-35x）；且 ICAPS 28% 曝險加上 WFE 仍部分 cyclical → 公允估值 25-27x，不是 39x</td></tr>
+<tr><td>賣方為什麼錯（具體理由）</td><td>賣方在 90 天內把 FY26 EPS 從 $9.58 上修到 $11.07（+15.5%），股價卻漲了 +29%（從 $337 → $435）— 意思是 PE 從 32x 擴張到 39x；這是典型 「fundamental upgrade 完了 PE 還在跟著漲」的動能末段。賣方目標價 $423-444 已被股價超前，且新一輪上修需要 Q2 FY26 5/14 法說再次 huge beat 才能撐 — 賠率不對稱（小機率 huge beat 才能撐當前價，大機率 miss 即下殺）。</td></tr>
+</table>
+
+<!-- ============ §5 SINGLE THING ============ -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger（原始）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><b>事件描述</b></td><td><b>BIS 二次升級新管制涵蓋 ICAPS / power / sensor 任一類別</b>（即 28nm 以上成熟節點納入管制範圍）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>AMAT ICAPS 中國 27-30% 營收曝險全部進入風險區；目前 China FY26 hit 為 $600M，若 ICAPS 也被涵蓋年蒸發可達 $3-5B（FY25 China 營收 ~$8B）；EPS −20%、估值同步下殺至 22x → 股價 $194（−55%）</td></tr>
+<tr><td>如何監測</td><td>① Federal Register（BIS 公告）每月一查；② AMAT 法說中 ICAPS 指引變化；③ Reuters / Bloomberg 半導體記者推特（資料來源 + 頻率：每兩週）</td></tr>
+<tr><td>目前離發生有多遠</td><td>2026-04 BIS 微調 license review 政策（advanced AI chips 對中國案件審查改 case-by-case），尚未涵蓋 ICAPS；下一個窗口可能是 2026-Q3 政府新會期或 2027-01 政權更替後新政</td></tr>
+</table>
+
+<h3>Secondary Trigger（從 §6 pre-mortem 派生補充）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><b>事件描述</b></td><td><b>Semi Systems GM 連 2 季跌破 46%</b>（當前 49.0%）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Semi Systems GM 是「GAA 技術溢價」與「Kinex 獨家溢價」最直接的可觀測量化指標；若連續兩季跌破 46%，等於宣告護城河擴張停滯或反轉 → §1 護城河 ↑ 變 → / ↓ → 訊號燈從 X 進一步降至「拒絕（護城河降級）」，整個 thesis 框架破裂</td></tr>
+<tr><td>如何監測</td><td>季報 Semi Systems segment GM（Q2 FY26 5/14、Q3 FY26 8/14、Q4 FY26 11/13）</td></tr>
+<tr><td>目前離發生有多遠</td><td>當前 Q1 FY26 Semi Systems GM 已升至 54%+（含 100bps QoQ）— 短期離 trigger 很遠；但 2018 cycle 反轉時曾於 18 個月內從 45% 跌至 38%，所以這是中期（12-18M）關注點</td></tr>
+</table>
+
+<!-- ============ §6 PRE-MORTEM ============ -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果不成立的後果</th></tr>
+<tr><td>1</td><td>WFE 2027 是 super-cycle 延展，不是 cycle peak</td><td>SEMI 2027 預測 $156B 兌現 + KLA Q3 raise $140B+ 為真</td><td>若 2027 實際下修 10-15%（$130B 以下），AMAT EPS 從 $14 → $11，PE 從 27x → 18x，股價 $200（−54%）</td></tr>
+<tr><td>2</td><td>Kinex hybrid bonding 在 HBM4/5 全面採用</td><td>SK Hynix pilot → production；TSMC / Samsung 也採用</td><td>若 BESI 標準 die-to-die hybrid bonder 搶下 60%+ HBM 訂單（AMAT 即使有 9% BESI 股權也吃不到設備毛利），AMAT Kinex 商業化期望落空 → FY27 HBM 從 $3B 縮至 $2B，−15% EPS impact</td></tr>
+<tr><td>3</td><td>China 政府不啟動「報復性」反封鎖（如禁止 AMAT 在中國運營）</td><td>中美維持「設備 vs 製造」分工默契</td><td>若中國要求外資設備商在地生產或撤出（類似 2024-12 Naura 對等回應），AMAT 失去 25-30% 營收 + 還要 write-off 中國資產 → 股價 $150（−65%）</td></tr>
+</table>
+
+<h3>6b. Pre-mortem 三段式</h3>
+<div class="premortem-box">
+<h4>第一段｜故事倒推（≤80 字）</h4>
+<blockquote>
+「假設 5 年後（2031-05）這個部位虧 50%，最可能的故事是：2027-Q2 中國 BIS 二次升級涵蓋 ICAPS power/sensor，AMAT 同年 11/13 Q4 FY27 法說 guide FY28 Semi Systems GM 從 49% 降至 45%、China 營收佔比跌至 15%；同期 TSMC 確認 A14 / A13 全部 skip High-NA + Intel 14A 進一步延後至 2030，先進製程客戶資本支出延宕，WFE 2028 trough $115B。市場重估 forward PE 從 39x 壓至 14x（回到 5Y 中位下方），股價從 $435 → $185。」
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><b>⚠ 部分重疊</b>—— §5 抓到 BIS 升級這條 primary trigger，但失敗故事還引入第二條獨立 trigger：「Semi Systems GM 跌破 46%」（護城河量化反轉），這條 §5 原本沒寫</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><b>動作：</b>已在 §5 區塊新增「Secondary Trigger：Semi Systems GM 連 2 季跌破 46%」作為 N+1 條 trigger（上方 §5 已可見兩條 trigger）。</p>
+
+<p><b>校驗紀錄：</b>「§5 修正狀態：<span class="warn">⚠ 已補 1 條 secondary trigger</span>」</p>
+</div>
+
+<!-- ============ §6c MAX DD ============ -->
+<h3>6c. 路徑壓力測試（§6c Max DD 範圍）</h3>
+<div class="maxdd-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><span class="maxdd-num">−45% ~ −59%</span>（從 $435 高點計算到 Bear 終點區間 $230 / $179）</td></tr>
+<tr><td>最可能觸發時點</td><td><b>1-2 年內</b>（2026-Q4 ~ 2027-Q3）— BIS 升級 + Q2 FY26 5/14 法說若 disappoint 為近期觸發；歷史對照 2018-2019、2022 兩次都是 12 個月內 35-55% 下殺</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><b>18-30 個月</b>（歷史 2018 高點 $62 → 2018-12 low $32 → 2021-04 突破回峰約 30 個月；2021-12 $164 → 2022-10 $74 → 2024-05 突破峰約 30 個月）</td></tr>
+<tr><td>路徑風險評級</td><td><span class="maxdd-emoji">🔴</span> <b>多數人會在中途出場</b>（DD 範圍 −45% ~ −59% 跨在 −50% 心理閾值兩側）</td></tr>
+</table>
+
+<div class="maxdd-bar"><div class="maxdd-bar-fill"></div></div>
+<p class="note">DD 帶（−45% ~ −59%）對應左右色條 −50% 閾值上下 — 此區間多數散戶 + 多數 PM 會選擇停損</p>
+</div>
+
+<p><b>校驗：</b>若 max DD 落在 −59%，我能否撐到復原？條件：① 部位**不超過 portfolio 6%**（避免單檔 −59% 造成 portfolio −3.5%）；② 不使用槓桿；③ §5 primary 或 secondary trigger 任一發生 → 立即減碼至 2% 而非堅持抱；④ 進場時點必須在 ≤ $325 才能避免從 $435 起算的 max DD。**若無法給出明確進場價條件 → §7 倉位必須再打折**，故 §7a 已強制改為 0% 當前 + 條件式分批。</p>
+
+<p><b>Guardrail 校驗：</b>① 範圍寬度 = 14%p（59 − 45）≥ 10%p ✅；② 評級 🔴 已在 §7a 強制下修原 6% 至 0% 當前進場、條件達成後分批至 5-6%（含降一檔安全邊際）✅；③ §7d 已標註「短期不建議、中期 OK、長期強建議」對應 🔴 路徑風險 ✅。</p>
+
+<!-- ============ §8 REVIEW TRIGGERS ============ -->
+<h2>§8｜Review Triggers</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 法說</td><td>財報日期</td><td><b>2026-05-14（3 天後）</b>，4:30 PM ET — 觀察點：① 是否 beat $7.65B revenue & $2.64 EPS guidance；② Semi Systems GM 是否維持 ≥ 49%；③ China 營收佔比變化；④ Q3 FY26 guidance</td></tr>
+<tr><td>2</td><td>BIS 政策更新</td><td>產業事件</td><td>2026-Q3 / 2027-01 兩個窗口（國會新會期 + 政權更替）— 任何涵蓋 ICAPS / power / sensor 的新管制 → §5 trigger</td></tr>
+<tr><td>3</td><td>股價回測 Bollinger 中軌 / W52</td><td>價位觸發</td><td>$325-330 = 啟動第一批 30% 倉位｜$240-280 = 啟動第二批</td></tr>
+<tr><td>4</td><td>§5 Single Thing — BIS 升級涵蓋 ICAPS</td><td>結構性 trigger</td><td>監測 Federal Register / Reuters BIS 報導（每兩週一次）</td></tr>
+<tr><td>5</td><td>§5 Secondary — Semi Systems GM 連 2 季 < 46%</td><td>護城河量化 trigger</td><td>季報 Q2/Q3/Q4 FY26（5/14、8/14、11/13）</td></tr>
+<tr><td>6</td><td>HBM 年化營收進度</td><td>產業事件</td><td>FY26 半年累計達 $2B 中段（vs 目標 FY27 $3B）— 確認 thesis；若不增反縮 → 觸發減碼</td></tr>
+</table>
+
+<p><b>報告保質期：</b>至 <b>2026-05-14 Q2 FY26 法說當天</b>強制重評；若 Q2 結果與本 DCA 假設方向一致（estimate beat / guidance 持平至上修），延長至 <b>2026-08-14 Q3 FY26 法說</b>。</p>
+
+<p><b>最可能發生的 upside 因素：</b>① Q2 5/14 large beat（rev > $7.8B、EPS > $2.75） + Q3 guide raised + Semi Systems GM ≥ 50% — 但此情境下股價可能再衝 $475-500，反讓 R:R 更差；② Kinex 拿下第二家客戶（如 Micron 或 Samsung）。</p>
+
+<p><b>最可能發生的 downside 因素：</b>① 5/14 disappoint（任何指標 in-line 或 miss）→ 估值快速壓縮，1 個月內回測 $370-390（−10 ~ −15%）；② BIS 二次升級 → 立即觸發 §5 primary。</p>
+
+<!-- ============ PHASE A FOLDED ============ -->
+<h2>Phase A｜獨立研究（折疊區塊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：S 級護城河，趨勢 ↑ widening</summary>
+<div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>① 無形資產（intangible：30+ 年工藝知識、客戶 reference tool 地位）；② 高轉換成本（每換一台 deposition / CMP / implant 需要重做整個 process recipe，週期 18-24 個月、損失數千萬美元）</td></tr>
+<tr><td>持久性評分</td><td><b>9.5/10</b>，5 年穩固度：高（5nm 以下五寡占 90%+，AMAT 在 deposition、implant、CMP 五項以上 single-vendor 90%+ — 來源：ID_WaferFabEquipment §3.1 2026-04-30）</td></tr>
+<tr><td>最大侵蝕風險</td><td>BESI 在 hybrid bonding 標準 die-to-die 工具搶 60%+ HBM 訂單（AMAT 9% 持股 + Kinex co-develop 為對沖），時間軸 2026-2028</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 49.0%（Q1 FY26，趨勢 ↑：FY23 46.7% → FY24 47.5% → FY25 48.7% → Q1 FY26 49.0%，來源：AMAT IR Q1 FY26）；ROIC 36.68% 單期 / 10Y 均 28.5%（artificall 2026 + DD §10）；ROIC vs WACC 超額 27.5%p+（vs WACC ~9%）</td></tr>
+<tr><td><b>moat_trend</b></td><td><b>↑ widening</b>｜12M 內變化證據：① 2025-04 AMAT 取得 BESI 9% 持股 + co-develop integrated hybrid bonding（AMAT IR 2025-04-14）；② Kinex integrated die-to-wafer hybrid bonder 2025-10 上市，SK Hynix 已採用 pilot line（AMAT 2025-10-07 product launch）；③ Viva radical treatment for GAA + Sym3 Z Magnum 2025-10 推出（同上）；④ Semi Systems GM 從 FY23 46.7% 升至 Q1 FY26 49.0%（+2.3pp 三年，量化護城河擴張）；⑤ Q1 FY26 systems gross margin 升 100bps 至 over 54%（公司報告，driven by value-based pricing）。**綜合 5 條 12M 證據，方向一致 ↑**</td></tr>
+</table>
+
+<p><b>A1 sourced data points 達標數：6/5 ✅</b>（毛利率趨勢 / ROIC 36.68% / 10Y ROIC 28.5% / BESI 9% stake / Kinex 上市 + SK Hynix pilot / Semi Systems GM 升 100bps；每點含具體數字 + 來源 + 日期）</p>
+
+<p><b>A1 獨立結論：</b>AMAT 仍是 WFE 廣度第一的 S 級護城河公司，過去 12 個月透過 BESI 入股、Kinex 上市、Viva/Sym3 Z Magnum 三新品，moat_trend 明確 ↑ widening；但需注意同業 etch（LRCX）/ process control（KLAC）/ litho（ASML）各有單項更強的寡占，AMAT 強項在「broadest portfolio」而非單一 80%+ 獨家。</p>
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：WFE Phase II super-cycle 仍在上行，runway_post_y5 🟢 寬</summary>
+<div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td><b>WFE 2026E $135.2B（純 WFE）/ $145B（總設備，含後段）；2027E $156B</b>（SEMI Dec 2025 forecast + KLA Q3 FY26 raises to $140B+ 純 WFE 2026）；CAGR 7-9%（連 4 年新高）；先進製程滲透率：5nm 以下從 2024 ~15% → 2027E ~28%（從 ID 數據 reverse-engineer）</td></tr>
+<tr><td>供需判斷</td><td>當前供需偏緊（GAA / HBM ramp + High-NA 啟動）；未來 12 個月方向：持平偏緊（2027 trough 風險存在但不會跌破 $130B，per ID critic）</td></tr>
+<tr><td>最大技術替代風險</td><td>BESI 標準 hybrid bonder 替代 Kinex（但 AMAT 9% 持股 + co-develop 對沖）；時間軸 2027-2028 HBM4 量產關鍵窗口；威脅程度：中</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>BIS 2026-01 已調整 advanced AI chips 對中國 license review（Morgan Lewis 2026-01）；$252.5M settlement 2026-02-11（Arnold Porter）；下一步可能涵蓋 ICAPS — 時間軸 2026-Q3 / 2027-01</td></tr>
+<tr><td>議價權位置</td><td>對上游（半導體零組件）強（AMAT 是 MKSI / UCTT / ICHR 最大客戶）；對下游（TSMC / Samsung / Intel / Micron / SK Hynix）強至中強（reference tool 地位、design-in 18-24 月切換成本，但客戶 capex 拉動仍主導 cycle）</td></tr>
+<tr><td><b>runway_post_y5</b></td><td><b>🟢 寬</b>｜判準：① S 曲線位置 — GAA 2nm 才剛開始 ramp（2025-2026），A16 backside power 2027 起 / A12-A14 2029-2030，五寡占 framework 至少跑到 2030+；② Y5 末 TAM 滲透率 — 先進製程 ~28%（2027E），仍有 3-4x 空間至 ~80%；③ 第二曲線銜接：High-NA EUV 2027-2028 啟動、Hybrid bonding 2028-2030、玻璃基板 2028+ — 三條獨立 S 曲線銜接</td></tr>
+</table>
+
+<p><b>A2 sourced data points 達標數：7/5 ✅</b>（SEMI 2026 $145B / 2027 $156B、KLA Q3 raises $140B、GAA 1.4x intensity ID §1.1、China WFE 占比 40%→28% ID §0、High-NA 單價 $380M、TSMC skip 至 A13 2029 Bloomberg 2026-04-22、Intel 14A 延期至 2028 risk Lip-Bu Tan 2026-04 Cisco AI Summit）</p>
+
+<p><b>A2 獨立結論：</b>WFE 處於 Phase II 結構超循環中段（GAA + High-NA + 中國反制三引擎），AMAT 享有五寡占 framework 紅利但廣度第一不代表單項第一；2027 cycle trough 風險被 ID 量化為 alpha 縮窄，runway_post_y5 🟢 寬至 2030+；最大風險為 China BIS 二次升級。</p>
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：A 級體質、回購紀律強、估值已透支</summary>
+<div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>① 現金牛：Semi Systems $21.1B（FY25，74%）；② 成長引擎：AGS（Applied Global Services）$6.4B（23%，+3% YoY）；③ 拖累 / 新興：Display + adjacent $0.8B（3%，但 +20% YoY）</td></tr>
+<tr><td>客戶集中度</td><td>TSMC 為最大單一客戶（FY26 capex $52-56B 高峰）；前五大客戶（TSMC / Samsung / Intel / Micron / SK Hynix）合計 ~70%；客戶集中度風險：中（多元化結構 + 設備轉換成本提供緩衝）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（Q1 FY26 systems gross margin +100bps to 54%，公司宣稱 driven by value-based pricing）；定價權：強</td></tr>
+<tr><td>未來金雞母</td><td>① Kinex hybrid bonder（目前 ~$50M？，TAM 潛在 $1-2B 2028-2030）；② HBM tooling（FY25 $1.5B → 目標 FY27 $3B、潛在 $5B+ 2030）；③ GAA / backside power 工具升級包 — 三條獨立成長曲線</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 81%（FY25 FCF $5.70B / NI $7.00B）、毛利率 49.0%（趨勢 ↑）、Q1 FY26 EPS +75% YoY、現金 $7.24B（淨負債 −$0.19B，淨現金公司）、Net Debt / EBITDA < 0；壓力測試：營收 -20% 可撐 8-10 季（淨現金 + AGS 服務收入韌性）</td></tr>
+<tr><td>資本配置紀律</td><td>2025-03 增加 $10B 新買回授權（疊加既有 $7.6B 餘額 = $17.6B 總授權）+ 股息 +15%（per share $0.46，2025-06 起；25% boost 2026-03 第 7 年連續）；過去 10 年返還 ~90% FCF；R&D 持續投入；EPIC R&D 中心 $5B 投資（FY25-FY29）。Kokusai 收購雖失敗但金額 $2.2B 未承擔；BESI 9% 戰略持股；併購紀律：偏 buy-in / minority stake 模式，避免大規模 dilutive M&A</td></tr>
+<tr><td><b>5Y IRR 分量基底（Base case）</b></td><td>EPS CAGR 預估 <b>+9.0%/yr</b>（含 buyback 抵銷 SBC 稀釋；CAGR 從 23% 降至 9% = 假設 cycle 軟著陸 + China 持平）；5Y 末 forward PE 預估 <b>27x</b>（vs 當前 39x；re-rate 貢獻 = (27/39)^(1/5) - 1 = <b>−7.1%/yr</b>，調整為 −5.9%/yr 因部分由 FY+2 EPS growth 緩衝）；股息率 <b>0.45%</b>（FY25 $1.84 / $410 平均）；淨買回率 <b>~1.1%</b>（年買回 $4-5B / market cap $345B，已扣 SBC ~$0.4B 稀釋）</td></tr>
+</table>
+
+<p><b>A3 sourced data points 達標數：10+/6 ✅</b>（FY25 revenue $28.37B / Semi Systems $21.1B / AGS $6.4B / Q1 FY26 rev $7.01B / Q1 FY26 EPS $2.54 / FCF $5.7B / GM 49.0% / FY26 EPS $11.07 / FY27 EPS $14.07 / $10B buyback 2025-03 / 股息 +25% 2026-03 / $252.5M BIS settlement 2026-02-11 / Q2 FY26 guide $7.65B & $2.64 / BESI 9% 2025-04-14）</p>
+
+<p><b>A3 獨立結論：</b>財務體質 A+，資本配置紀律一流（90% FCF 返還），EPS / FCF 品質均高；但當前估值已透支 FY+2 EPS（Fwd PE 39x FY+1 / 31x FY+2 vs 5Y 中位 18x），IRR 分量基底顯示 re-rate 將吃掉 5.9%/yr 的複利成果，當前位置等待回檔。</p>
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取</summary>
+<div>
+<h4>DD_AMAT_20260418.html（v12.0）關鍵擷取</h4>
+<ul>
+<li><b>綜合訊號燈：</b>X（拒絕；gate 🔴 過熱（5Y 分位 99%）觸發 Step-1 拒絕）</li>
+<li><b>Quality Score：</b>10.0 / 10.0（護城河 S 級）</li>
+<li><b>R:R 三版本：</b>短期 -0.27x（TP $277 < 現價）/ 中期 -0.27x（TP $352 < 現價）/ 壓測 0/4 通過</li>
+<li><b>三引擎目標價：</b>引擎 A 29.4x（ROIC +3 年擴大）/ 引擎 B 不觸發（PEG > 15% 條件未過）/ 引擎 C 28.75x（護城河 10/10）；取較高 29.4x</li>
+<li><b>Bear anchor：</b>短期 $179（Bear PE 18x × $9.96）/ 中期 $228（Bear PE 18x × $12.66）</li>
+<li><b>紅旗清單：</b>① 估值 🔴 5Y 分位 99%；② 4 週漂移 +17.7%；③ R:R 壓測 0/4；④ Intraday 4/10 reverse 3%（QC-24）；⑤ China 28% 曝險 + BIS 升級風險；⑥ 三年股價已 +170%</li>
+<li><b>§0.5 核心假設：</b>H1（WFE intensity 結構性升）/ H2（HBM 從 $1.5B → $3B）/ H3（China cycle 軟著陸）</li>
+<li><b>§13.5 估值診斷：</b>合理 PE 25x（基準）/ 27.5x（含 AI 1.10x 加碼）；當前 39x 透支</li>
+</ul>
+
+<h4>ID_WaferFabEquipment_20260430.html（v1.2 patched）關鍵擷取</h4>
+<ul>
+<li><b>產業評級：</b>Phase II（GAA + High-NA + 中國反制三引擎），結構超循環</li>
+<li><b>關鍵趨勢：</b>WFE 五寡占（ASML / AMAT / LRCX / KLAC / TEL）合計先進製程 90%+；五寡占 PE 應從 22-26x rerate 至 28-32x（critic patched：真壟斷 ASML/TEL coater 32-35x；雙寡占 28-30x）</li>
+<li><b>AMAT 在 ID 中的 ranking：</b>conviction mid（leading-edge +20% intact / ICAPS 中國 risk）；低於 KLAC / LRCX（high conviction），高於 ASML（critic 後降至與 LRCX 並列 #2-3）</li>
+<li><b>關鍵 thesis：</b>① WFE 結構超循環（非 cyclical），2027 trough 不破 $130B；② KLA 是最被低估的「複利機」；③ 中國 WFE 替代論被誇大（先進節點五寡占從 90% 升至 95%+）</li>
+</ul>
+</div>
+</details>
+
+<!-- ============ 結尾 ============ -->
+<h2>結論摘要</h2>
+<div class="card">
+<p><b>AMAT DCA 裁決：</b><span class="tag red">X 訊號維持（v12.0 DD）/ DCA 升級為「Wait + Conditional」</span></p>
+<p>S 級護城河仍在加深、🟢 順風 + 🟢 寬 runway 不變，但 5/8 收 $435 較 DD 後再 +9.7%，已是 4 週前 $337 的 +29%，估值透支進一步擴大。R:R 全負、IRR 機率加權僅 +1.9%/yr、Max DD 區間 −45% ~ −59% 🔴 路徑風險高，當前位置不進場。等待 Fwd PE 回到 ≤ 27x（$310-330）+ RSI 14d ≤ 60 + Bollinger 中軌回測為第一批進場條件。同類曝險 opportunity cost 明確指向 LRCX / KLAC（同 thesis 同方向但便宜 ~30%）。</p>
+<p><b>下一個強制重評日：</b>2026-05-14（Q2 FY26 法說，3 天後）— 若 large beat 觸發新一輪追高，本 DCA 保質期不延長，可能需要重寫；若 miss 或 in-line，等待 1 個月內 5-15% 回測機會。</p>
+
+<h3>三個獨立判斷脈絡的最終整合</h3>
+<table>
+<tr><th>面向</th><th>判斷</th><th>強度</th></tr>
+<tr><td>長期擁有意願</td><td>強烈想擁有（S 級護城河 + AI 賣鏟者 + 10 年 runway）</td><td>🟢 高</td></tr>
+<tr><td>當前進場價格</td><td>已透支到 FY+2 EPS，PE 5Y 分位 99%</td><td>🔴 拒絕</td></tr>
+<tr><td>動能 / 技術面</td><td>三線多頭排列但 RSI 72.8 / 4 週 +29% 過熱</td><td>🟡 條件式分批</td></tr>
+<tr><td>同類組合中相對排序</td><td>WFE 籃中 #3（KLAC > LRCX > AMAT）</td><td>🟡 邊際資金應放他處</td></tr>
+<tr><td>路徑可抱性</td><td>Max DD −45 ~ −59% 🔴，多數人撐不到復原</td><td>🔴 倉位必須打折</td></tr>
+</table>
+
+<h3>關於「為何不直接 Buy」的最後辯護（PM 自我檢驗）</h3>
+<p>有人可能會說：「AI giga-cycle 才剛開始，AMAT 是最完整的賣鏟者，現在不買等多少？」這個論點看似合理但忽略兩件事：</p>
+<ul>
+<li><b>1）estimate revisions cycle 的時序：</b>過去 90 天 FY26 EPS 共識從 $9.58 升到 $11.07（+15.5%），股價漲 +29%（從 $337 到 $435）— PE 從 32x 擴到 39x。要再上漲，下一輪 estimate revision 必須再 +10%+ 才能撐當前位置（共識年初預測通常只剩 4-6% upside revision 空間）。賠率不對稱：huge beat 才能撐當前價（小機率事件），任何 miss 或 in-line 都會觸發 PE 壓縮。</li>
+<li><b>2）歷史 pattern：</b>AMAT 從 Fwd PE 99% 分位高點，過去兩次（2018-03、2021-12）都先跌 35-55%，最後 5Y 報酬 +87% / +4%。即使長期沒虧錢，中途 max DD 殺得很慘 — 「能不能撐到終點」是真實問題，不是 academic exercise。</li>
+</ul>
+
+<p><b>結論：</b>這份 DCA 不是說 AMAT 不能買，而是說「在 $435 不能買」。等回檔到 $325，所有指標都會反轉（IRR 機率加權從 +1.9% 升至 ~+12%、R:R 從負值轉正、Max DD 從 −59% 縮到 −35%、opportunity cost 從負變正）。**好公司可以等，壞價格不能將就。**</p>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+
+</body>
+</html>

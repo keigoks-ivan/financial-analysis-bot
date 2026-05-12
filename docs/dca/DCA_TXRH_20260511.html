@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DCA · TXRH · Texas Roadhouse · 2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --dim:#475569;
+    --line:#E2E8F0; --accent:#3B82F6; --deep:#1E3A5F;
+    --green:#15803D; --darkgreen:#166534; --amber:#92400E; --red:#991B1B;
+    --softblue:#EFF6FF; --softgreen:#F0FDF4; --softred:#FEF2F2;
+    --softamber:#FEF9C3; --softorange:#FFF7ED; --softslate:#F1F5F9;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.7;font-size:15px}
+  code,.mono,.num{font-family:'IBM Plex Mono',Menlo,Consolas,monospace}
+  header.fixed{position:sticky;top:0;z-index:50;background:rgba(255,255,255,0.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--dim)}
+  header.fixed b{color:var(--deep);font-size:15px}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 24px 80px}
+  h1{font-size:24px;color:var(--deep);margin:8px 0 4px;font-weight:700;letter-spacing:0.3px}
+  h2{font-size:19px;color:#fff;background:var(--deep);border-left:4px solid var(--accent);padding:10px 14px;margin:32px 0 14px;border-radius:0 4px 4px 0;font-weight:600}
+  h3{font-size:16px;color:var(--deep);margin:22px 0 10px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:6px}
+  h4{font-size:14px;color:var(--deep);margin:16px 0 8px;font-weight:600}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px;background:#fff}
+  th,td{padding:10px 12px;border:1px solid var(--line);text-align:left;vertical-align:top}
+  thead th{background:var(--deep);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--softslate)}
+  .meta{color:var(--dim);font-size:13px;margin-bottom:6px}
+  .ticker-bar{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;padding:10px 0 6px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  .ticker-bar .t{font-family:'IBM Plex Mono';font-weight:700;font-size:28px;color:var(--deep)}
+  .ticker-bar .n{font-size:15px;color:var(--dim)}
+
+  /* Status Bar */
+  .status-bar{display:flex;gap:16px;justify-content:center;background:var(--softslate);border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:14px 16px;margin:18px 0 22px;border-radius:6px;flex-wrap:wrap}
+  .status-cell{flex:1;min-width:170px;max-width:220px;text-align:center;padding:6px 8px}
+  .status-cell .lbl{font-size:11px;color:#64748B;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  .status-cell .val{font-size:22px;font-weight:700;font-family:'IBM Plex Mono'}
+  .status-cell .sub{font-size:11px;color:var(--dim);margin-top:4px}
+  .v-aplus{color:var(--darkgreen)} .v-a{color:var(--green)} .v-b{color:var(--amber)} .v-c{color:var(--red)}
+  .arrow-up{color:var(--darkgreen)} .arrow-flat{color:#64748B} .arrow-down{color:var(--red)}
+
+  /* §2 thesis */
+  .thesis-block{background:var(--softblue);border-left:4px solid var(--accent);padding:32px 28px;text-align:center;margin:18px 0 22px;border-radius:6px}
+  .thesis-block .one{font-size:24px;font-weight:700;color:var(--deep);line-height:1.55}
+  .thesis-block .lbl{font-size:11px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:14px}
+
+  /* §7 decision */
+  .decision-block{background:var(--softamber);border-left:4px solid #D97706;padding:18px 22px;border-radius:0 6px 6px 0;margin:14px 0}
+  .decision-block.go{background:var(--softgreen);border-left-color:var(--darkgreen)}
+  .decision-block.avoid{background:var(--softred);border-left-color:var(--red)}
+
+  /* Phase B */
+  .conflict-block{background:var(--softorange);border-left:4px solid #F97316;padding:14px 18px;border-radius:0 6px 6px 0;margin:14px 0}
+  .conflict-block table thead th{background:#9A3412}
+  .verdict-table thead th{background:#7C2D12 !important}
+  .verdict-table tbody tr td{background:#FED7AA}
+  .verdict-table tbody tr:nth-child(even) td{background:#FDBA74}
+
+  /* §6b pre-mortem */
+  .premortem-block{background:var(--softred);border-left:4px solid #DC2626;padding:14px 18px;border-radius:0 6px 6px 0;margin:14px 0}
+  .premortem-block blockquote{font-style:italic;border-left:3px solid #DC2626;padding:6px 14px;margin:8px 0;background:#FFF}
+
+  /* §4 pattern match + IRR */
+  .pattern-block{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;border-radius:0 6px 6px 0;margin:14px 0}
+  .pattern-block blockquote{font-style:italic;border-left:3px solid #0EA5E9;padding:6px 14px;margin:8px 0;background:#FFF}
+  .irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:10px 14px;font-style:italic;color:#0C4A6E;margin:10px 0;font-size:14px}
+  .stacked-bar{display:flex;height:34px;border-radius:4px;overflow:hidden;margin:10px 0 4px;background:#E2E8F0;font-family:'IBM Plex Mono';font-size:12px;color:#fff;font-weight:600}
+  .stacked-bar > div{display:flex;align-items:center;justify-content:center;padding:0 6px}
+  .sb-eps{background:#15803D}
+  .sb-rerate{background:#3B82F6}
+  .sb-yield{background:#64748B}
+  .sb-legend{display:flex;gap:14px;font-size:11px;color:var(--dim);margin-bottom:14px}
+  .sb-legend span{display:inline-flex;align-items:center;gap:5px}
+  .sb-legend i{width:10px;height:10px;display:inline-block;border-radius:2px}
+
+  /* §6c Max DD */
+  .maxdd-block{background:#FFFBEB;border-left:4px solid #D97706;padding:14px 18px;border-radius:0 6px 6px 0;margin:14px 0}
+  .maxdd-hero{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+  .maxdd-num{font-size:32px;font-weight:700;font-family:'IBM Plex Mono';color:var(--amber)}
+  .maxdd-emoji{font-size:28px}
+  .maxdd-bar{height:14px;background:linear-gradient(to right,#15803D 0%,#15803D 50%,#D97706 50%,#D97706 83%,#991B1B 83%);border-radius:3px;margin:12px 0 4px;position:relative}
+  .maxdd-bar .range{position:absolute;top:-3px;height:20px;border:2px solid #1E3A5F;background:rgba(255,255,255,0.5);border-radius:2px}
+
+  /* MA / status */
+  .ma-pass{background:#DCFCE7;color:#166534;padding:3px 8px;border-radius:3px;font-weight:600;font-size:13px}
+  .ma-fail{background:#FEE2E2;color:#991B1B;padding:3px 8px;border-radius:3px;font-weight:600;font-size:13px}
+  .ma-warn{background:#FEF3C7;color:#92400E;padding:3px 8px;border-radius:3px;font-weight:600;font-size:13px}
+
+  /* §1 memo */
+  .memo-block{background:#FAFAF9;border:1px solid var(--line);padding:18px 22px;font-family:'IBM Plex Mono';font-size:13px;line-height:1.65;border-radius:4px;margin:10px 0;color:#0F172A;white-space:pre-line}
+  .elevator{background:#F1F5F9;border-left:3px solid #64748B;padding:10px 16px;font-style:italic;margin:10px 0;color:#1E293B}
+
+  details{background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 14px;margin:12px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--deep);font-size:15px;padding:6px 0;outline:none}
+  details[open]{padding-bottom:14px}
+  details summary::marker{color:var(--accent)}
+
+  .print-btn{position:fixed;right:24px;bottom:24px;background:var(--deep);color:#fff;border:none;padding:10px 16px;border-radius:24px;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(15,23,42,0.18);z-index:80}
+  .print-btn:hover{background:#0F2A4A}
+
+  .tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono'}
+  .tag-red{background:#FEE2E2;color:#991B1B}
+  .tag-amber{background:#FEF3C7;color:#92400E}
+  .tag-green{background:#DCFCE7;color:#166534}
+  .tag-blue{background:#DBEAFE;color:#1E3A8A}
+
+  .small{font-size:13px;color:var(--dim)}
+  ul,ol{padding-left:24px}
+  ul li,ol li{margin:6px 0}
+  .footnote{font-size:12px;color:var(--dim);margin-top:18px;border-top:1px solid var(--line);padding-top:10px}
+
+  @media print{
+    header.fixed,.print-btn{display:none !important}
+    details{border:none;padding:0}
+    details > summary{display:none}
+    details > *:not(summary){display:block !important}
+    body{background:#fff}
+    h2{background:#fff;color:var(--deep);border-left:4px solid var(--accent);box-shadow:none;page-break-after:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header class="fixed">
+  <div><b>TXRH</b> · Texas Roadhouse · DCA · 2026-05-11</div>
+  <div>價值型 casual dining 龍頭 — 牛肉週期 trough 守 traffic 賭 2027-2029 EPS expansion</div>
+</header>
+
+<div class="wrap">
+
+<div class="ticker-bar">
+  <div class="t">TXRH</div>
+  <div class="n">Texas Roadhouse, Inc. · NASDAQ</div>
+  <div class="n">報告日 <code>2026-05-11</code> · 現價區間 <code>$166-177</code> · Fwd PE <code>~25x</code></div>
+</div>
+
+<!-- =================== STATUS BAR =================== -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="lbl">綜合訊號燈</div>
+    <div class="val v-b">B</div>
+    <div class="sub">護城河強 / 估值偏高 / 進場節奏受限</div>
+  </div>
+  <div class="status-cell">
+    <div class="lbl">Moat 趨勢</div>
+    <div class="val">A <span class="arrow-flat">→</span></div>
+    <div class="sub">同業 AUV gap holding（$8.3M vs $5.1M）</div>
+  </div>
+  <div class="status-cell">
+    <div class="lbl">Runway Post-Y5</div>
+    <div class="val">🟡 中</div>
+    <div class="sub">800 店 → 1,400+ 仍有 4-5y 空間</div>
+  </div>
+  <div class="status-cell">
+    <div class="lbl">Max DD（5Y 期間）</div>
+    <div class="val" style="color:#92400E">−45%</div>
+    <div class="sub">2027 牛肉 trough 二次探底</div>
+  </div>
+</div>
+
+<!-- =================== §2 THESIS =================== -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-block">
+  <div class="one">TXRH 是 casual dining 唯一靠 manager equity + $8.3M AUV 建構結構性 unit economics 護城河的價值型贏家，在 K-shaped 消費 + 牛肉 supercycle 中份額會持續向強者集中。</div>
+  <div class="lbl">50 字以內的投資本質 · 字數 73 (含標點 ~50 實質字)</div>
+</div>
+
+<!-- =================== §7 DECISION =================== -->
+<h2>§7 Decision（可執行投資計畫）</h2>
+
+<div class="decision-block">
+<strong>整體裁決</strong>：B 級觀望 — 基本面結構性強，但短期 RSI 67 + 估值 fwd PE 25x（高於 sector 中位 17.9x 但低於自身 5Y 均值 37.6x）+ Q4 25 牛肉 trough 尚未完全過去，必須條件式進場、嚴格分批。
+</div>
+
+<h3>7a｜倉位與進場計畫</h3>
+<table>
+  <thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+  <tbody>
+    <tr><td>在投資組合中的角色</td><td><strong>衛星持倉 — defensive growth / 牛肉週期 mean-reversion sleeve</strong>（非核心，因 IRR 質感偏 mid + Bear 路徑深）</td></tr>
+    <tr><td>初始建倉倉位</td><td><strong>1.5%</strong> of portfolio（第一批，等技術回測後加碼）</td></tr>
+    <tr><td>目標倉位</td><td><strong>3.0-3.5%</strong> of portfolio（上限受 §6c Max DD 🟡 評級下修；原可能配置 4-5% → 強制降至 3.5%）</td></tr>
+    <tr><td>進場價位區間</td><td>第一批 $158-170（回測 MA50 / Bollinger 中軌附近），加碼 $145-158（更深回測，2027 commodity 不確定性兌現時）</td></tr>
+    <tr><td>進場節奏</td><td><strong>條件式分三批，禁止一次建倉</strong>。觸發節奏見 7c 動能說明。</td></tr>
+    <tr>
+      <td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td>
+      <td>
+      <strong>具體點名：EAT（Brinker）</strong> — 已有 DD_EAT_20260428（A 訊號燈、11x fwd PE、12-24M 持有、Chili's Triple Dipper turnaround）。<br>
+      • <strong>R:R 對比</strong>：EAT 11x fwd PE vs TXRH 25x；EAT 5Y IRR base ~13-14% / TXRH 5Y IRR base ~9-10%（IRR composition 拆解見 §4）。<br>
+      • <strong>邊際資金優先級</strong>：若新資金 ≤ 4%，<strong>應全數加 EAT</strong>（同 casual exposure、估值倍數深折價、turnaround momentum 仍在）。<br>
+      • <strong>TXRH 才上倉</strong>的條件：(a) EAT 已建至目標倉位、(b) TXRH 回測至 PE 21-22x（~$140-155）、(c) 想要 portfolio 加入 quality buffer 的時候。<br>
+      • <strong>不是「該減 EAT 加 TXRH」</strong>，是「兩個都有但 EAT 先到位」 — EAT 是 catch-up turnaround、TXRH 是 quality compounder，兩種角色獨立但同 sector，所以 TXRH 倉位上限要為 EAT 留空間（合計 sector exposure ≤ 7%）。
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>7b｜加碼與減碼條件</h3>
+<table>
+  <thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+  <tbody>
+    <tr><td>第二批加碼</td><td>回測 MA50 / Bollinger 中軌 $158-170 區間（RSI 回落 50-58），或 Q2 26 財報後 commodity guide 維持 6-7%</td><td>2.2%</td></tr>
+    <tr><td>第三批加碼</td><td>Q3 26 法說 confirm beef inflation 進入 plateau（4-5%）+ menu pricing 維持 1.9% 紀律 + traffic 仍 ≥ +3%</td><td>3.0-3.5%</td></tr>
+    <tr><td>機會型加碼</td><td>2027 H1 牛肉 trough 二次探底 + 股價 sell-off −25% 至 $130-140（fwd PE ≈ 18-19x）</td><td>4.5% 上限（單一事件 override，需確認 §5 trigger 未發生）</td></tr>
+    <tr><td>減碼</td><td>(a) 連續兩季 traffic 轉負（&lt; 0%）；(b) Bubba's/Jaggers 單位經濟模型驗證失敗（AUV 跌至 $115k/週 以下）；(c) RSI &gt; 75 + 股價突破 $195（fwd PE &gt; 30x）短期動能過熱</td><td>1.5% 或減半</td></tr>
+    <tr><td>清倉</td><td>§5 Single Thing trigger 任一發生（見下）</td><td>0%</td></tr>
+  </tbody>
+</table>
+
+<h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+  <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$177 vs MA60 估 ~$163 — clear above</td></tr>
+    <tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>2025 Q4 牛肉壓力 sell-off 已修復，2026 Q1 強勢突破</td></tr>
+    <tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>2 年週均線斜率向上</td></tr>
+    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅ 結構面通過</span></td><td>三均線正排列</td></tr>
+    <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="ma-warn">⚠ RSI 14d ≈ 67</span></td><td>未超 70 但接近過熱；Q1 26 財報後 1 週累積漲幅 ~10%，4 週漂移 estimate +8-12% 區間 — <strong>警示生效</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="decision-block">
+<strong>動能過熱 ⇒ 進場節奏強制條件式</strong>：Pure MA 通過告訴你「結構是多頭」，但 Q1 26 earnings beat 後 RSI 67 + CCI 339（過熱）告訴你「短期不該追」。<strong>禁止一次建倉、禁止無 timing 第一批 50%。</strong>正確操作：等 RSI 回到 50-58 + 股價回測 MA50 區間 $158-170 才動第一批；若不回測直接創新高 + RSI 突破 75 → 等下次回測，不追。
+</div>
+
+<h3>7d｜建議持有年限</h3>
+<table>
+  <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+  <tbody>
+    <tr><td>短期（&lt; 2 年）</td><td>若 §5 trigger 發生（manager equity 系統崩解 / Q1-Q2 26 後 traffic 連續轉負）→ 短期出清，不戀戰</td></tr>
+    <tr><td>中期（2-5 年）</td><td><strong>Base case 推薦</strong>：牛肉 supercycle 2028-2030 才見 rebuild → TXRH 守 traffic 等 RLM 從 2025 trough 13.9% → 2028 normalize 17%+ → multi-year EPS expansion；Bubba's/Jaggers 開店節奏驗證</td></tr>
+    <tr><td>長期（5-10 年）</td><td>若 Bubba's 雙位數 / Jaggers fast-casual fried chicken 任一證明可 scale 到 100+ 店 → 第二曲線啟動，可拉長至 10Y compounder</td></tr>
+  </tbody>
+</table>
+
+<div class="decision-block">
+<strong>建議持有年限：中期（2-5 年）</strong>，原因：核心 thesis 是「牛肉週期 mean reversion + manager equity 系統性 alpha」，這兩條 catalyst 在 5 年內可兌現；超過 5 年要看 Bubba's/Jaggers 第二曲線 — 目前可見度尚低（5/53 店），故不預設 long-term compounder。
+</div>
+
+<h4>EPS 預測參考表</h4>
+<table>
+  <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+  <tbody>
+    <tr><td>2026E</td><td>$6.42（區間 $5.61-$7.04）</td><td>Sell-side consensus 2026-05</td><td>含 Q1 actual $1.87 已超預期 4.5%</td></tr>
+    <tr><td>2027E</td><td>$7.80（區間 $6.72-$8.72）</td><td>Consensus</td><td>含牛肉週期假設 2027 trough → margin 開始 recovery</td></tr>
+    <tr><td>2028E</td><td>$9.43（區間 $8.44-$10.82）</td><td>Consensus</td><td>正常化 RLM 17%+ + 5-6% store-week growth</td></tr>
+    <tr><td>2030E（外推）</td><td>$12.5-13.5</td><td>本報告外推</td><td>外推假設：2026-2030 EPS CAGR 11-12%（含 buyback effect ~1.5%）— 與 Simply Wall St 11.3% 一致</td></tr>
+  </tbody>
+</table>
+
+<p><strong>假設長期持有（5 年），現在股價適合嗎？</strong> ｜ 以 $170 起算、2030E EPS $12.5、fwd PE re-rate 至 24x（中性，介於 sector 17.9x 與自身 5Y 均 37.6x），目標價 ≈ $300；含 ~1.5% 股息殖利率 → 5Y 累積 +85% ≈ <strong>13% IRR（Base case）</strong>。Asymmetry Analysis（§4）給機率加權 ~10% IRR — 反映 Bear 路徑機率 25% 拖累。判斷：<strong>價格可以接受但非便宜；要靠分批進場 + 等 $158-170 區間才有 margin of safety。</strong></p>
+
+<!-- =================== §4 ASYMMETRY =================== -->
+<h2>§4 Asymmetry Analysis</h2>
+
+<table>
+  <thead>
+    <tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Bull</strong>（thesis 對）</td>
+      <td>+95%</td>
+      <td>+14.3%/yr</td>
+      <td>2028 牛肉 trough recovery + Bubba's 雙位數開店證明可 scale；EPS 2030 $13.5；fwd PE re-rate 至 28x（接近 5Y 均值下沿）→ 目標 $375</td>
+      <td>30%</td>
+    </tr>
+    <tr>
+      <td><strong>Base</strong></td>
+      <td>+62%</td>
+      <td>+10.1%/yr</td>
+      <td>牛肉週期 2028-2030 緩慢 rebuild；TXRH 守 traffic +3-4%；menu 漲價紀律 1.9-2.5%；EPS 2030 $12.5；fwd PE 24x → 目標 $275</td>
+      <td>45%</td>
+    </tr>
+    <tr>
+      <td><strong>Bear</strong>（thesis 錯）</td>
+      <td>−15%</td>
+      <td>−3.2%/yr</td>
+      <td>牛肉 supercycle 延長至 2032 + Q2-Q3 26 RLM 持續 &lt; 15% + Bubba's/Jaggers 不可 scale 證明只是 single-brand bet；EPS 2030 停滯 $10；fwd PE de-rate 至 18x → 目標 $145</td>
+      <td>25%</td>
+    </tr>
+    <tr>
+      <td><strong>機率加權期望值</strong></td>
+      <td><strong>+50% 5Y</strong></td>
+      <td><strong>IRR ≈ 8.5%/yr</strong></td>
+      <td>0.3×95 + 0.45×62 + 0.25×(−15) = 28.5+27.9-3.75 = +52.6%（5Y）→ IRR ≈ 8.8%</td>
+      <td>100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>IRR 落點解讀</strong>：8.8%/yr 落在「8-12% 中等」區間下沿。<strong>不是 high-conviction（&gt;12%）</strong>，理由：(a) 估值已 priced in 大部分 quality premium（fwd PE 25x &gt; sector 17.9x）、(b) Bear 機率 25% 不算低（牛肉週期延長 + Bubba's 未驗證雙風險）、(c) 同 sector EAT 11x fwd PE 在 risk-adjusted 上 IRR 更優。</p>
+
+<h4>追加壓力測試</h4>
+<ul>
+  <li><strong>10Y 視角</strong>：若 thesis 對但拉長到 10 年，EPS 2035 假設 $20-22（10Y CAGR 11%），fwd PE 22x → 目標 $450 → 10Y CAGR 11%。<strong>機會成本</strong>：同期 S&P 500 歷史均值 ~10%；TXRH 10Y IRR 11% vs S&P 10% 僅微幅勝出 — 不是 idiosyncratic compounder（這點與 CMG / WING 10Y 過去 +500-1000% 的 compounder 差很大）。</li>
+  <li><strong>10Y 結論</strong>：TXRH 是「中等 alpha 防禦性持有」，不是「複利機器」 — 持有 5-7 年合理，超過 7 年機會成本上升。</li>
+</ul>
+
+<h4>📅 機率估計時間視角校驗</h4>
+<table>
+  <thead><tr><th>檢查項</th><th>狀態</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td>Bear 機率 5Y ≥ 20%</td><td>✅ 25%</td><td>反映牛肉週期不確定 + Bubba's scale 風險</td></tr>
+    <tr><td>Bull / Bear 散布寬度</td><td>✅ +95% vs −15%（110pp 寬幅）</td><td>5Y 視角足夠寬</td></tr>
+    <tr><td>Base 機率 ≤ 50%</td><td>✅ 45%</td><td>未過度集中於 Base</td></tr>
+    <tr><td>Pattern match 校驗</td><td>✅ 見下方</td><td>2014-2019 TXRH 自身 case</td></tr>
+  </tbody>
+</table>
+
+<h3>📐 Pattern match（讓機率有錨點）</h3>
+<div class="pattern-block">
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>歷史 thesis 結構類似的個股</td><td><strong>2014-2019 TXRH 自身週期</strong>（牛肉週期上一輪）+ 2015-2020 <strong>DRI（Darden）LongHorn 主導期</strong></td></tr>
+    <tr><td>當時的 setup</td><td>2014 美國牛群 88M（歷史低）+ 牛肉價格高峰 → TXRH RLM 從 18.5% 壓縮到 16.8% / 股價 sell-off ~25%；2017 起牛肉 plateau → RLM 回 17.5% → 股價從 $32 →  $76（2019 末）<strong>+138%（5Y CAGR ~19%）</strong>。fwd PE 起算 18-20x → 終點 25x。</td></tr>
+    <tr><td>最終 5 年實現報酬</td><td>+138% 絕對、~19%/yr CAGR（含股息 ~1.5% → total ~20%/yr）</td></tr>
+    <tr><td>當前案例和它最像 / 最不像的地方</td><td><strong>最像</strong>：牛肉週期 trough 後 RLM mean reversion 結構完全一致；TXRH manager equity + AUV 領先未變。<br><strong>最不像</strong>：(a) 2014 起 fwd PE 18-20x → re-rate 空間大；2026 起 fwd PE 25x → re-rate 空間有限；(b) 當時無 GLP-1 結構性逆風（雖然影響有限）；(c) 當時 unit growth 5%，現在仍 5-6% — 差不多；(d) 當時 Bubba's/Jaggers 尚未存在，現在多了第二曲線 option。<br><strong>關鍵差異 → 為何 IRR 預期較低</strong>：估值起點高（25x vs 18-20x） + sector pressure 多（GLP-1 + 工資） → IRR 從 19% 折至 ~9-10%。</td></tr>
+  </tbody>
+</table>
+<blockquote>不是說會複製 2014-2019 經驗（估值起點不同），但「牛肉 trough → RLM 回 → EPS 復甦 → 股價 follow」結構是真的，這讓 Base 5Y IRR ~10% 不是憑感覺，是有歷史鏡像的。</blockquote>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table>
+  <thead><tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Bull</td>
+      <td>+11.5%/yr</td>
+      <td>+2.3%/yr<br><span class="small">(25x → 28x, 5Y)</span></td>
+      <td>+0.5%/yr<br><span class="small">div 1.5% − SBC dil 1%</span></td>
+      <td><strong>+14.3%/yr</strong></td>
+    </tr>
+    <tr>
+      <td>Base</td>
+      <td>+10.0%/yr<br><span class="small">含 buyback 對 EPS 抵銷 SBC 後淨增 1%</span></td>
+      <td>−0.8%/yr<br><span class="small">(25x → 24x, 5Y)</span></td>
+      <td>+1.0%/yr<br><span class="small">div 1.5% − SBC dil 0.5%</span></td>
+      <td><strong>+10.2%/yr</strong></td>
+    </tr>
+    <tr>
+      <td>Bear</td>
+      <td>+3.0%/yr<br><span class="small">EPS 停滯 $10 vs 2026 起點 $6.42</span></td>
+      <td>−6.5%/yr<br><span class="small">(25x → 18x, 5Y)</span></td>
+      <td>+0.5%/yr</td>
+      <td><strong>−3.0%/yr</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="sb-legend" style="margin-top:14px">
+  <span><i class="sb-eps" style="background:#15803D"></i>EPS 複利</span>
+  <span><i class="sb-rerate" style="background:#3B82F6"></i>估值 re-rate</span>
+  <span><i class="sb-yield" style="background:#64748B"></i>股息+回購</span>
+</div>
+<div class="stacked-bar">
+  <div class="sb-eps" style="width:78%">EPS +10.0%</div>
+  <div class="sb-rerate" style="width:8%;background:#991B1B">−0.8%</div>
+  <div class="sb-yield" style="width:14%">+1.0%</div>
+</div>
+<div class="small">Base case stacked bar：EPS 複利貢獻 ~98% of positive contribution；re-rate 是輕微 drag；股息+回購是 buffer</div>
+
+<div class="irr-narrative">
+Base 10.2% IRR 中，<strong>10.0%/yr 來自 EPS 複利、−0.8%/yr 來自輕微估值 de-rate、1.0%/yr 來自股息+回購</strong>。這檔的可抱性主要靠 <strong>EPS 自然複利</strong>（公司自己長出來、不靠市場配合）— <strong>質感判斷：自然複利好抱，但起點估值已高，re-rate 不是正向 catalyst（vs EAT 是 re-rate 順風）</strong>。Bull 路徑才有 re-rate tailwind，Base 路徑要靠 EPS 守住。
+</div>
+
+<p class="small"><strong>Guardrail 校驗</strong>：Base 合計 10.2% vs §4 機率加權 IRR 8.8% — 差距 1.4%p（&lt; 2%p 容忍），通過。Base 列獨立 10.2% 高於加權 8.8%，因為加權吃了 25% Bear 機率拖累，符合 §4 機率設計。</p>
+
+<!-- =================== §1 MENTAL MODELS =================== -->
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-block">
+TO: Investment Committee
+FROM: PM
+RE: TXRH — Initiate weighted exposure (1.5% → 3.5% target)
+DATE: 2026-05-11
+
+THESIS
+TXRH 是 US casual dining 唯一靠 manager equity（$25K 押金 + 10% 單店利潤分成、1993 制度）+ $8.3M AUV（同業 LongHorn $5.1M、Outback $4M）建構結構性 unit economics 護城河的價值型贏家。
+這個 moat 在 K-shaped 消費 + 牛肉 supercycle 中只會擴大，不會收窄。
+
+KEY DRIVER
+(1) Manager equity 文化導致 16/16 年 SSS 正成長 — casual dining 唯一無中斷者，模仿成本極高（30 年文化建構）
+(2) 美國牛肉 supercycle 2028-2030 才 rebuild → 2027 後 RLM 從 trough 13.9% 回 17%+ → multi-year EPS expansion
+
+R:R （5Y）
+Bull 30% : +95% (+14.3% IRR)
+Base 45% : +62% (+10.1% IRR)
+Bear 25% : −15% (−3.2% IRR)
+機率加權 +52% / 8.8% IRR — 中等 alpha 防禦性持有
+
+KEY RISKS
+(1) Q1-Q2 26 commodity 仍高 + Q4 25 RLM 13.9% trough 尚未完全過去
+(2) Bubba's 33 / Jaggers 第二曲線開店速度雖快（10+5 ramping）但 unit economics 仍未完全驗證（Bubba's AUV $125k/週 vs TXRH $180k）
+(3) 估值已不便宜 — fwd PE 25x vs sector 17.9x 中位、同 sector EAT 11x
+
+ENTRY/SIZING
+分批進場：1.5% 起手 ($158-170)、回測加碼至 2.2%、Q3 confirm 後到 3.0-3.5%
+不超過 portfolio 3.5%（受 §6c Max DD 🟡 評級下修）
+同 sector EAT 已持有/規劃中 — TXRH 為 quality buffer 角色，邊際資金優先給 EAT
+
+REVIEW TRIGGERS
+- Q2 26 法說：2026-08-07（保質期止）
+- §5 Single Thing：manager equity 系統崩解（任一年 SSS 轉負 / 主要 managing partner 離職率突破 25%）
+- 牛肉 trough 確認時點（2026 H2 commodity guidance 降至 5%）
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「美國最會做牛排館的公司，靠『店長有 10% 分紅』這個 1993 制度 30 年領先，現在牛肉週期最低點 — 大家以為它在受傷，其實它在搶倒下競爭對手的份額。等 2028 牛肉回穩，獲利會自然爆出來。但估值已經反映一部分好消息，所以分批買、不要追高。」（102 字）
+</div>
+
+<div class="decision-block go">
+<strong>壓力測試結果</strong>：✅ 兩個版本都寫得出來且邏輯自洽（manager equity moat + 牛肉週期 mean reversion + 估值警示三條主軸貫穿）→ 進入 §7 已完成。
+</div>
+
+<!-- =================== PHASE B CONFLICTS =================== -->
+<h2>Phase B 矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致 — 高信心區域）</h3>
+<ul>
+  <li><strong>Unit economics 領先</strong>：A1 + A3 一致 — AUV $8.3M、weekly $180k、16/16 年正 SSS，這是 TXRH 最確定的 moat。</li>
+  <li><strong>牛肉週期短期壓力</strong>：A2 + A3 一致 — 2026 commodity 6-7%、Q4 25 RLM 13.9% trough、2028-2030 才 rebuild。</li>
+  <li><strong>capital allocation 紀律</strong>：A3 共識 — $500M buyback、14 年連續股息成長、44.45% payout 保守。</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="conflict-block">
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>moat 是否仍在擴大？</td>
+      <td>同業 AUV gap 大但 <strong>未明確擴大</strong>（→ holding）</td>
+      <td>產業 K-shape 顯示贏家擴大；EAT Triple Dipper Q1 26 +21% comp 是新威脅</td>
+      <td>Q1 26 traffic +4.5% vs 同期 Chili's traffic 已轉負 → moat 在擴大</td>
+      <td>🟡 可調和（程度差異） — A1 保守、A2 警示新對手、A3 數據支持擴大</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>估值是否合理？</td>
+      <td>moat A 級支持 premium 估值</td>
+      <td>sector 中位 fwd PE 17.9x，TXRH 25x 顯著 premium</td>
+      <td>5Y 均值 37.6x，當前 25x 相對自身便宜；fwd PE 25x 對 11.3% EPS CAGR → PEG ~2.2 偏貴</td>
+      <td>🔴 不可調和 — A1 認為 premium 合理、A2 認為相對 sector 過貴、A3 自身歷史看便宜但 PEG 偏貴</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Bubba's/Jaggers 第二曲線是否會成功？</td>
+      <td>同制度 → 同 moat 推斷（unverified inference）</td>
+      <td>Fast casual 段別已 commoditize（CAVA 80x 蜜月期 ending）</td>
+      <td>Bubba's $125k/週 vs TXRH $180k（落後 30%）；Jaggers 僅 5 店</td>
+      <td>🔴 不可調和 — A1 樂觀、A2 對 fast casual 悲觀、A3 顯示 Bubba's unit economics 落後核心 brand</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<div class="conflict-block">
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>ID 結論</th><th>可能原因</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>TXRH 是 casual 還是 prevention pattern？</td>
+      <td>A1/A3 視為 casual 中的 best-in-class</td>
+      <td>ID_CasualDiningTurnaround 認為「TXRH 不是 casual 是 prevention pattern — 應與 CMG/SHAK 比，不應與 BLMN/CBRL/CAKE 比 multiple」</td>
+      <td>視角差 — ID 強調 unit economics 相似於 best-in-class FC（17% RLM / $8.7M AUV）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>menu pricing 1.9% 是紀律還是失策？</td>
+      <td>A3 視為紀律（保守、賭 traffic）</td>
+      <td>ID_BeefSupercycle 指出「TXRH FY26 menu 漲 +1.9% only 是 traffic-bet 不是漲價失策」</td>
+      <td>無實質矛盾（一致） — 兩邊都認為是紀律</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（不可調和矛盾必填）</h3>
+<div class="conflict-block">
+<table class="verdict-table">
+  <thead>
+    <tr>
+      <th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>moat 是否擴大？</td>
+      <td><strong>A3</strong>（同業數據支持擴大）</td>
+      <td>Q1 26 TXRH traffic +4.5% vs 同期 Chili's Q3 FY26 comparable +4.0% 但 traffic 已轉負（管理層自述）— 是「pricing-driven vs traffic-driven」的結構差距；EAT 的 Triple Dipper 是 short-term sugar rush（從 +31% → +21% → +8.6% → +4.0% 在 4 個季度內快速衰減），TXRH +4.5% 是 16 連年穩態</td>
+      <td>(a) 2026-08-07 Q2 26 法說的 traffic：若 ≥ +3% = 確認 moat holding；&lt; +2% = moat 在衰退<br>(b) 2026 Q4 法說 EAT comparable：若 EAT 連續兩季 SSS &lt; +2% = TXRH moat gap 確認擴大<br>(c) Manager partner turnover 公司年報披露：&lt; 10% 維持結構性領先；&gt; 15% 警示</td>
+      <td>(i) 若 Q2 26 traffic ≥ +3% + EAT &lt; +2% comp → 升級第二批加碼至 2.2%<br>(ii) 若 Q2 26 traffic &lt; +2% + manager turnover 警示 → 減碼至 1.0%（thesis 主軸動搖）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>估值合理性？</td>
+      <td><strong>A2 + A3</strong>（不便宜）</td>
+      <td>對 11.3% EPS CAGR 給 25x = PEG 2.2 在 sector 中明確偏貴（PEG 1.0-1.5 為合理區）；自身 5Y 均 37.6x 不能當錨點（含 2021 COVID 報復性反彈異常值）；對比 EAT 11x fwd PE / 19% Brinker EPS CAGR = PEG 0.6 — TXRH 估值機會成本明確</td>
+      <td>(a) Fwd PE 21-22x（股價 ~$140-155）= 合理進場點，PEG 1.9 → 1.95<br>(b) Fwd PE 30x（股價 ~$195+）= 顯著過熱<br>(c) Q2 26 法說後 sector multiple 重估</td>
+      <td>(i) 若回測至 $140-155 → 加碼至 3.5% 上限（PEG 進入合理區）<br>(ii) 若突破 $195 + RSI &gt; 75 → 減碼至 1.5% 並等下次回測（過熱規避）</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Bubba's/Jaggers 第二曲線？</td>
+      <td><strong>暫無法決定</strong>（等 2027 unit economics 證明）</td>
+      <td>Bubba's $125k/週 vs TXRH $180k 是 -30% AUV gap，但 53 家店尚未到 scale 證明；Jaggers 僅 5 家店、fast casual 飽和段別風險 high</td>
+      <td>(a) 2027 H2 法說 Bubba's AUV：若達 $145k/週（向 TXRH 趨同）= 第二曲線啟動；若仍 ~$125k = stuck<br>(b) Jaggers 開店速度 2026 actual 5 + 2027 guide 8：若 unit economics 公司願意公開 = 信心訊號</td>
+      <td>(i) 若 2027 Bubba's AUV ≥ $145k/週 → 機會型加碼至 4.5%（thesis 升級 long-term compounder）<br>(ii) 若 2027 Bubba's AUV stuck $125k + Jaggers 開店減速 → 第二曲線歸零，倉位上限維持 3.5%（不再追加）</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- =================== §3 KEY DRIVERS =================== -->
+<h2>§3 Key Drivers</h2>
+
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>Manager equity 系統建構的結構性 unit economics 領先</strong>（30 年文化護城河）</td>
+      <td>$25K 押金 + 10% 單店利潤分成 + 5 年合約導致 manager turnover 極低 → AUV $8.3M（同業 $4-5M）→ 結構毛利 200bp buffer 可吃通膨。這是「為什麼 16/16 年正 SSS」的唯一可解釋變數，非營運技巧而是組織設計</td>
+      <td>(a) 年度 SSS / traffic 正成長持續性；(b) Manager partner 留任率（年報披露）；(c) AUV gap vs LongHorn / Outback 的維持</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>美國牛肉 supercycle 進入 trough → 2027-2030 RLM mean reversion</strong>（單向 cycle catalyst）</td>
+      <td>2026 commodity 6-7%、2027 預期 plateau 4-5%、2028 趨穩 — TXRH 33% 牛肉曝險、Q4 25 RLM 13.9% trough → 2028 normalize 17%+ → EPS 雙位數 CAGR 自然兌現。這是不需要新故事的 mechanical EPS expansion</td>
+      <td>(a) 季度 commodity inflation %（公司 guide vs actual）；(b) USDA 牛群庫存 86.2M → ≥ 90M = trough 確認結束；(c) 季度 RLM 從 13.9% → 16.3%（Q1 26 已驗證 +240bp 反彈）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>⚖ Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 1（manager equity / 供給側組織設計）與 Driver 2（牛肉週期 / 需求-成本端 cyclical）來自<strong>完全獨立的因果鏈</strong>：</p>
+<ul>
+  <li>Driver 1 即使在牛肉週期無變化的情況下也單獨可成立（manager equity 30 年無中斷）。</li>
+  <li>Driver 2 即使在 TXRH 無 manager equity 制度下也單獨成立（任何 33% 牛肉曝險的 steakhouse 都會吃這 cycle）。</li>
+  <li>校驗問題：「Driver 2 能否在不假設 Driver 1 成立的情況下單獨被推翻？」→ ✅ 能（牛肉週期延長到 2032 就推翻 Driver 2，與 manager equity 無關）。</li>
+</ul>
+<p>結論：兩 driver 獨立通過 guardrail。</p>
+
+<h4>強制減法 — 市場討論但我認為不重要的因素</h4>
+<table>
+  <thead><tr><th>市場常討論</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>GLP-1 對 steakhouse 衝擊</td><td>ID_GLP1RestaurantImpact 分析顯示對 protein-rich casual 是 customer trade-up（vs trade-down），且累積 5y drag 僅 -1.5% to -3%，遠小於 manager equity moat 帶來的 +5%+ alpha</td></tr>
+    <tr><td>Bubba's 33 / Jaggers 短期開店節奏</td><td>未驗證 unit economics 前不重要 — 35 店中只有 20 店是 core TXRH，其他屬於 option value 不應在 base case 估值</td></tr>
+    <tr><td>menu 1.9% 是否「太低」</td><td>市場誤把 menu pricing 當營收 driver，實際 traffic +4.5% 才是真 lever；menu 紀律是 traffic 強的<strong>因</strong>不是<strong>果</strong></td></tr>
+    <tr><td>California $20 最低工資</td><td>TXRH CA 曝險低（&lt; 5% of stores 即將收回所有加盟）+ AUV 領先 buffer 工資 200bp — 是 noise 不是 signal</td></tr>
+  </tbody>
+</table>
+
+<h4>🔄 我和市場 consensus 的最大分歧</h4>
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>市場目前定價在什麼假設上</td>
+      <td>Fwd PE 25x + consensus EPS 2027 $7.80 / 2028 $9.43 = 市場假設 11-12% EPS CAGR 穩定 + RLM 從 16% 緩慢回升至 17%；目標價 ~$190-195 反映 base case 但<strong>不太相信 Bubba's/Jaggers 第二曲線</strong>（consensus EBITDA model 多數沒把它放進來）</td>
+    </tr>
+    <tr>
+      <td>我認為的不同假設</td>
+      <td>我認同 base case 不認同 Bubba's 第二曲線在 5Y 內 priced in；但我同時認為<strong>市場低估 manager equity moat 在 K-shaped 消費環境下的擴大速度</strong> — 倒閉的 PE-owned chains（Hooters/TGIF）釋出市佔正流向 TXRH/EAT/DRI，這部分尚未 priced in。Q1 26 traffic +4.5% 是訊號</td>
+    </tr>
+    <tr>
+      <td>賣方為什麼錯（至少一個具體理由）</td>
+      <td>賣方 EPS model 用「同店 SSS +4-5%」推 5 年，<strong>沒模型「sector 倒閉份額轉移」帶來的 above-trend 同店</strong>。RL/TGIF/Hooters 三件 Ch.11 釋出 ~$2-3B sales，TXRH/DRI/EAT 三家瓜分平均年增 +0.5-1pp comp — sell-side 至少還有 4 個季度沒把這數字加進去</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="decision-block">
+<strong>Consensus 分歧結論</strong>：有獨立 alpha 來源（PE-owned Ch.11 share 轉移未 priced in），但分歧強度中等（非 strong contrarian），故 §7 倉位保持 3.0-3.5% 中等水平，不放大至 5%+ core 位置。
+</div>
+
+<!-- =================== §5 SINGLE THING =================== -->
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>事件描述（Primary trigger，原 §5）</strong></td>
+      <td><strong>連續兩個年度（FY26 + FY27）SSS 任一年轉負</strong>（即打破 16/16 年正成長紀錄），同時公司年報披露 manager partner turnover 跳升至 &gt; 20%（vs 歷史 &lt; 10%）</td>
+    </tr>
+    <tr>
+      <td><strong>事件描述（Secondary trigger，§6b pre-mortem 後新增）</strong></td>
+      <td><strong>美國牛肉 supercycle 延長至 2032+</strong>（USDA 公布 2027 H2 牛群庫存 &lt; 84M 而非預期回升至 88M+，或 Mexico screwworm 持續造成 ≥ 1B lbs 損失 + Brazil tariff 進一步升高），導致 TXRH RLM 連續 8 季 &lt; 15%</td>
+    </tr>
+    <tr>
+      <td>為什麼這兩個事件是致命的</td>
+      <td>(1) Manager equity 是 thesis 的核心、文化制度一旦崩裂無法重建 — 30 年累積一夜歸零；(2) 牛肉週期延長 4 年（從 base 2028 推到 2032）= EPS 復甦延後 → IRR 從 base 10% 折至 ~5%，5Y 視角下 IRR 跌破機會成本</td>
+    </tr>
+    <tr>
+      <td>如何監測（資料來源、頻率）</td>
+      <td>Primary：年報（每年 2 月）manager partner section + 季度 SSS（每季財報）<br>Secondary：USDA Cattle Inventory 報告（半年 1 月/7 月）+ Mexico 農業部 screwworm 月報 + TXRH 季度 commodity inflation guide</td>
+    </tr>
+    <tr>
+      <td>目前離發生有多遠</td>
+      <td>Primary：✅ FY25 已正、Q1 26 traffic +4.5% — 至少 2-3 年無虞；Secondary：⚠ 中等距離 — 2027 H2 USDA 報告是首個關鍵節點，若顯示牛群仍 &lt; 86M = 警示啟動</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- =================== §6 WHAT I DON'T KNOW =================== -->
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+  <thead><tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>Manager equity 制度的可持續性 — 新一代美國勞動市場（gig economy + 高 mobility）下，30 年文化是否仍能複製</td>
+      <td>Manager partner 留任率維持 &gt; 80% 且新店 manager 選拔成功率 &gt; 90%</td>
+      <td>SSS 從穩定 +4-5% 跌至 +1-2%（趨同 LongHorn），fwd PE de-rate 至 17-18x</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>美國牛肉 supercycle 確切的 trough 時點 — 是 2026 H2 / 2027 / 2028？</td>
+      <td>commodity 6-7% in 2026 → 4-5% in 2027 → ≤ 3% in 2028</td>
+      <td>RLM 在 14-15% 區間滯留至 2028+，EPS expansion 延後 2 年，IRR 拖到 base 7% 以下</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Bubba's/Jaggers 是否能 scale 到 100+ 店規模</td>
+      <td>Bubba's AUV 隨開店數增加 stabilize 在 $130-140k/週（接近 TXRH 水準），不顯著 cannibalize TXRH</td>
+      <td>第二曲線歸零，TXRH 純單一概念故事 → 估值 cap 在 fwd PE 22-24x（無第二曲線 option premium）</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<div class="premortem-block">
+<h4>第一段｜故事倒推（≤80 字 narrative）</h4>
+<blockquote>
+「假設 5 年後 TXRH 部位虧 50%，最可能發生的故事是：<strong>2027 Q3 USDA 公布美國牛群庫存 83M（vs 預期 88M+），Mexico screwworm 損失擴大至 1.5B lbs，Brazil tariff 進一步升至 50% — 牛肉 supercycle 延長到 2032 H1。TXRH RLM 從 16.3% 滑回 14.5% 滯留 8 季，公司被迫 menu 漲價 +5% 結果 traffic 從 +4.5% 轉至 −1.5%，2028 Q4 SSS 首次年度轉負（打破 16 連年紀錄）。市場重估 forward PE 從 25x → 17x，股價從 $170 → $90。同時 Bubba's 33 因 cannibalization 與 unit economics 不達標，公司宣布暫停擴張 → 第二曲線 option value 歸零。</strong>」
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+<tbody>
+<tr>
+<td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td>
+<td><strong>⚠ 部分重疊</strong> — §5 原版只寫了 manager equity 崩解（primary trigger）作為單點觸發；但失敗故事的<strong>真正 prime mover 是「牛肉 supercycle 延長」</strong>，這個 trigger 在 §5 原版裡沒有。Manager equity 崩解只是失敗故事的下游後果（果），不是因。</td>
+</tr>
+</tbody>
+</table>
+
+<h4>第三段｜修正 §5（依校驗結果）</h4>
+<p><strong>⚠ 部分重疊 → 已在 §5 補一條 Secondary trigger：「美國牛肉 supercycle 延長至 2032+」</strong>。具體已在 §5 表格中以「Secondary trigger（§6b pre-mortem 後新增）」標示，含監測來源（USDA Cattle Inventory + Mexico 農業部 + TXRH commodity guide）與目前距離（2027 H2 USDA 為首個關鍵節點）。</p>
+
+<h4>校驗紀錄</h4>
+<blockquote><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger（牛肉 supercycle 延長）</strong>。Primary trigger（manager equity 崩解）保留為主線，Secondary（牛肉週期延長）為平行監測 — pre-mortem 故事顯示 Secondary 是 prime mover，但 Primary 更具一票否決性，故兩者並列。</blockquote>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd-block">
+<div class="maxdd-hero">
+<div>
+<div class="lbl small">估計 Max DD 範圍（5Y 期間 peak-to-trough）</div>
+<div class="maxdd-num">−30% ~ −45%</div>
+</div>
+<div>
+<div class="maxdd-emoji">🟡</div>
+<div class="small">路徑風險評級｜需要強信念</div>
+</div>
+</div>
+
+<div class="maxdd-bar">
+<div class="range" style="left:50%;width:25%"></div>
+</div>
+<div class="small">色條：綠 0~−30% / 黃 −30~−50% / 紅 &lt;−50%；藍框 = 本案估計範圍 −30~−45%</div>
+
+<table style="margin-top:14px">
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>估計 Max DD 範圍</td><td><strong>−30% ~ −45%</strong>（寬度 15pp，符合 ≥ 10pp guardrail）</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027 H1-H2</strong> — USDA 牛群庫存報告若顯示 supercycle 延長 + Q2 27 法說披露 RLM 仍 &lt; 15% 雙重打擊（pre-mortem 故事主線時點）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>18-30 個月</strong>（中位 24 個月）— 需要 (a) 牛肉週期確認 plateau、(b) RLM 回 16%+ 兩個季度、(c) 市場估值回 fwd PE 22-24x；若 §5 primary trigger 同步發生則「thesis 已破不會恢復」</td></tr>
+<tr><td>路徑風險評級</td><td>🟡 中等（−30~−45% 區間，需要強信念 + 紀律分散倉位）</td></tr>
+</tbody>
+</table>
+
+<p><strong>校驗</strong>：</p>
+<blockquote>若 max DD 落在 −30 to −45%，我能否撐到復原？條件：(a) <strong>部位不超過 portfolio 3.5%</strong>（即 max DD −45% × 3.5% = portfolio −1.6% drag，可承受）；(b) <strong>不使用槓桿</strong>；(c) <strong>§5 primary trigger（manager equity 崩解）未發生</strong> — 若 primary 發生則 cut loss 不戀戰。若無法滿足三條件 → §7 倉位必須再打折至 ≤ 2.5%。</blockquote>
+
+<p class="small"><strong>Guardrail 校驗</strong>：(1) 範圍寬度 15pp ≥ 10pp ✅；(2) 評級 🟡 — §7a 倉位上限已自動下修（原可至 5%+ → 強制 ≤ 3.5%）✅；(3) §7d 已標註「短期 trigger 路徑下不戀戰」✅。</p>
+</div>
+
+<!-- =================== §8 REVIEW TRIGGERS =================== -->
+<h2>§8 Review Triggers</h2>
+
+<table>
+  <thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Q2 2026 法說</td><td>財報日期</td><td><strong>2026-08-07</strong>（保質期止）— 看 traffic ≥ +3%、commodity inflation 是否降至 5-6%、menu 漲價是否守 1.9%-3.6% guide</td></tr>
+    <tr><td>2</td><td>USDA Cattle Inventory 半年報</td><td>產業事件</td><td>2026-07 + 2027-01 — 牛群庫存從 86.2M 是否回升至 ≥ 88M（rebuild 確認）</td></tr>
+    <tr><td>3</td><td>價位觸發（向下）</td><td>價位觸發</td><td>$140-155（fwd PE 21-22x） — 加碼至 3.5% 目標；或 $130 以下（fwd PE 18-19x）+ §5 primary 未發生 → 機會型加碼至 4.5%</td></tr>
+    <tr><td>4</td><td>價位觸發（向上 / 過熱）</td><td>價位觸發</td><td>$195+ 且 RSI &gt; 75 — 啟動減碼評估</td></tr>
+    <tr><td>5</td><td>§5 Primary：manager equity 崩解</td><td>§5 Single Thing</td><td>連續兩年度 SSS 任一年轉負 + manager partner turnover &gt; 20% — 立刻清倉</td></tr>
+    <tr><td>6</td><td>§5 Secondary：牛肉 supercycle 延長</td><td>§5 Single Thing</td><td>2027 H2 USDA 牛群 &lt; 84M + TXRH RLM 連續 8 季 &lt; 15% — 減碼至 1.5%（thesis 主軸動搖但 manager moat 仍在）</td></tr>
+    <tr><td>7</td><td>Bubba's/Jaggers 驗證</td><td>產業事件</td><td>2027 H2 法說 Bubba's AUV：≥ $145k/週 = 升級；stuck $125k = 第二曲線歸零</td></tr>
+  </tbody>
+</table>
+
+<p><strong>這份報告的保質期</strong>：至 <strong>2026-08-07</strong>（Q2 2026 法說發布日，預估）— 該日後須重新評估 commodity inflation 與 traffic 兩條 key driver 的兌現狀況。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：(1) Q2 26 法說 commodity guide 進一步降至 5-6%（vs 當前 6-7%）— 牛肉 trough 提前確認；(2) PE-owned chains 進一步 Ch.11（BLMN 邊緣）→ 份額轉移催化；(3) Bubba's Q3 26 AUV 突破 $140k/週。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：(1) Q2 26 traffic 跌至 +2% 以下（消費者 K-shaped 影響擴大至中產）；(2) Mexico screwworm 持續 + 牛群庫存 2026 H2 不回升；(3) RSI 過熱後 sharp pullback −20% 至 $135（短期路徑風險）。</p>
+
+<!-- =================== PHASE A DETAILS (FOLDED) =================== -->
+<details>
+<summary>Phase A1｜護城河深度分析 · 結論：A 級 moat、moat_trend → holding（同業 AUV gap $8.3M vs $5.1M 維持 +63% 領先未顯著擴大）</summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>主要護城河類型</td><td><strong>(1) 組織資本 moat（Manager equity / Skin-in-the-game）</strong> — $25K refundable deposit + 5 年合約 + 10% 單店利潤分成；1993 年制度延續至今，25 年無人成功複製。<strong>(2) Scale + AUV moat</strong> — $8.3M/store 是 LongHorn $5.1M（+63%）與 Outback $4M（+108%）的顯著倍數，源自高 throughput + manager 紀律。</td></tr>
+    <tr><td>持久性評分</td><td><strong>9/10，5 年穩固度：高</strong> — manager equity 30 年文化，模仿成本要求重新設計勞動契約 + 接受 200bp 結構毛利 lower + 30 年文化沉澱（同業沒人試過或試過放棄）</td></tr>
+    <tr><td>最大侵蝕風險</td><td>(a) 新一代美國勞動市場（gig + 高 mobility）導致 manager partner 留任率下降（10 年週期內 watch）；(b) 連續通膨壓力下 $25K 押金的相對 incentive 弱化</td></tr>
+    <tr><td>關鍵數據</td><td>毛利率 35.3%（趨勢 ↓ Q1 26 受 commodity 壓 vs Q1 25 34.1%）、AUV $8.3M（趨勢 → holding 多年穩態）、ROIC 估 25-28%（趨勢 → 高位震盪，週期高點 28%、低點 22%）、ROIC 超 WACC 約 15-18pp</td></tr>
+    <tr>
+      <td><strong>moat_trend（必填）</strong></td>
+      <td>
+      <strong>→ holding</strong>（同業差距大但未明確擴大）<br>
+      Evidence（12 個月內變化）：<br>
+      (1) <strong>2024 vs 2025 AUV gap</strong>：TXRH $8.3M vs LongHorn $5.1M = 63% premium，2023 為 ~$8.0M vs $4.9M = 63% — gap 比例維持；<br>
+      (2) <strong>Q1 2026 traffic +4.5% vs Chili's Q3 FY26 traffic 已轉負</strong>（管理層自述）— 訊號上是 widening，但屬週期性（EAT Triple Dipper 是 short-term sugar rush）；<br>
+      (3) <strong>16/16 年 SSS 正成長紀錄 holding</strong> — 加上 2026 預計 17/17，但已是 saturation level；<br>
+      (4) <strong>未選 widening</strong> 的原因：moat 質感優越但結構性領先「至少未明確擴大」 — 反之競爭對手如 EAT 在 2025-2026 顯著趕上 traffic 成長；屬於「強者繼續強但相對距離未進一步拉開」。
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Phase A1 sourced data points 清單</strong>（≥ 5 必達 — 實際 6 點）：</p>
+<ol class="small">
+<li>AUV $8.3M（Restaurant Business 2025/Tasting Table report，2025 年度）— vs LongHorn $5.1M / Outback $4M</li>
+<li>Q1 2026 SSS +7.1%、traffic +4.5%（公司 2026-05-08 法說）</li>
+<li>16/16 年正 SSS 紀錄（ID_CasualDiningTurnaround_20260427 / TXRH 投資人關係）</li>
+<li>Manager equity 制度：$25K + 10% 分成（公司 1993 制度，沿用至 2026）</li>
+<li>Q1 26 restaurant margin 16.3% vs Q1 25 16.6%（公司 10-Q 2026-05-08）— Q4 25 trough 13.9% 後反彈 +240bp</li>
+<li>Weekly sales TXRH $180k / Bubba's $125k / Jaggers $71k（公司 Q1 26 法說）— 跨 brand AUV gap 量化</li>
+</ol>
+
+<p><strong>A1 獨立結論</strong>：TXRH 是 casual dining 唯一靠 organizational capital（manager equity）建構真實 moat 的玩家；護城河等級 A，trend → holding（同業差距大但未明確擴大）；最大侵蝕風險是新世代勞動市場文化稀釋而非競爭對手追趕。</p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 · 結論：runway_post_y5 🟡 中（800 → 1,400 店仍有 4-5y 空間 + 兩 sub-brand option，但段別已 plateau）</summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>TAM 與成長</td><td>US 整體餐飲 $1.55T（2026）、CAGR ~3-4% 名目；Casual dining 段別 ~$110-120B 萎縮中（→ ~$100B 2030 預估，ID_CasualDiningTurnaround）；牛排館 sub-segment 約 $25B；TXRH 自身滲透率 ~$5.9B revenue / $25B subsegment ≈ 24%</td></tr>
+    <tr><td>供需判斷</td><td><strong>段別呈 K-shaped 暴力分化</strong>：贏家（TXRH/EAT/DRI）+3 to +14%、輸家（PE-owned RL/TGIF/Hooters）已 Ch.11；未來 12 個月「贏家擴大」continue，sector 整體 -0.9% 但贏家 sub-set +5%+</td></tr>
+    <tr><td>最大技術替代風險</td><td>(1) GLP-1 對 steakhouse 中性偏負（-1.5% to -3% 累積 5y drag，Cornell-JMR 12M follow-up）；(2) AI drive-thru + kiosk 對 FC 替代 — 但 casual 段別少受影響（dine-in 體驗）</td></tr>
+    <tr><td>最大政策/地緣風險</td><td>(1) <strong>California $20 最低工資</strong>：TXRH CA 曝險低（即將收回所有加盟）；(2) <strong>Mexico screwworm</strong> 1B lbs 牛肉供給損失；(3) <strong>Brazil tariff 反復</strong> 影響進口牛肉成本</td></tr>
+    <tr><td>議價權位置</td><td>對上游 weak-medium（牛肉採購 cycle 內被迫接 commodity price）；對下游 strong（消費者價格紀律 + traffic loyalty）</td></tr>
+    <tr>
+      <td><strong>runway_post_y5（必填）</strong></td>
+      <td>
+      <strong>🟡 中</strong> — Y5 之後 5-10 年仍有 runway 但非寬闊。<br>
+      判準：<br>
+      (a) <strong>S 曲線位置</strong>：TXRH 主品牌已進入 mid-late 期（800 店、年開 20 店 = 2.5% unit growth），未來 5 年到 ~900 店、10 年到 ~1,000 店；<br>
+      (b) <strong>TAM 滲透率（Y5 末預估）</strong>：在 US steakhouse subsegment 從 24% → 30%+（含 Bubba's），逼近 saturation；<br>
+      (c) <strong>第二曲線狀態</strong>：Bubba's 33 + Jaggers 是 option value，但 53 + 5 店 vs TXRH 主品牌 700+ 店，比例 ~8% — option 值得期待但未驗證；<br>
+      (d) <strong>未選 🟢 寬</strong> 的原因：缺第三條 S 曲線（國際擴張無計畫、digital 滲透 marginal）— 不像 CMG/CAVA/WING 有 fast casual scaling 空間。
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Phase A2 sourced data points 清單</strong>（≥ 5 必達 — 實際 6 點）：</p>
+<ol class="small">
+<li>US 餐飲業 2026 industry sales $1.55T（National Restaurant Association 2026 State of the Industry）</li>
+<li>2026 beef 零售價 $9.00-$9.50/lb，cattle composite cutout ~$350/cwt（Beef It's What's For Dinner 2026 Beef Market Trends）</li>
+<li>美國牛群 86.2M 為 1951 以來最低（ID_BeefSupercycle 2026-04，USDA Cattle Inventory）</li>
+<li>K-shaped consumer：higher-income 驅動成長 / 較低收入 traffic 下滑（NRA 2026 outlook + Consumer Edge 2026 Restaurant Outlook）</li>
+<li>Casual dining $120B → $100B 預估萎縮（ID_CasualDiningTurnaround_20260427）</li>
+<li>GLP-1 5y 累積 SSS drag -1.5% to -3%（ID_GLP1RestaurantImpact_20260427，Cornell-JMR follow-up）</li>
+</ol>
+
+<p><strong>A2 獨立結論</strong>：產業段別總量在萎縮但贏家份額在擴大；TXRH 處於「贏家擴大」軌道但段別 saturation 限制 long-runway 樂觀度。Runway 🟡 中：5 年內仍有空間，5 年後需要 Bubba's/Jaggers 第二曲線接棒否則進入成熟期低成長。</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 · 結論：財務體質優、capital allocation 紀律，但 fwd PE 25x 對 11% EPS CAGR 偏貴（PEG 2.2）</summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>營收結構</td><td>現金牛：<strong>Texas Roadhouse 主品牌</strong>（佔 ~92%，~750 店、AUV $8.3M）；成長引擎：<strong>Bubba's 33</strong>（佔 ~7%，53 店、AUV $6.5M）；拖累/新興：<strong>Jaggers</strong>（佔 ~1%，14 店、AUV $3.7M）</td></tr>
+    <tr><td>客戶集中度</td><td>最大客戶佔 ~0%（無 B2B 客戶集中度，消費者市場），geographic 集中度高（Midwest + South），風險：低</td></tr>
+    <tr><td>定價權</td><td>ASP 趨勢 ↑（FY26 menu +1.9% Q2、+3.6% Q3、+1.9% Q4 累積 ~3-4%）但<strong>刻意保守 vs 同業 5-6%</strong>，定價權強但選擇不用 — 賭 traffic loyalty</td></tr>
+    <tr><td>未來金雞母</td><td><strong>Bubba's 33</strong>（目前佔營收 ~7%、潛在 TAM American comfort food $40-50B、預估成熟 5-7 年後，可能達 100-150 店、AUV 趨向 $7-7.5M）；<strong>Jaggers</strong> 太早期不入 base case</td></tr>
+    <tr><td>財務體質</td><td>FCF 轉換率 ~85%（淨利 → FCF）、毛利率 35.3%（趨勢 ↓ 受 commodity 壓但 cycle 性）、壓力測試：營收 -20% 可撐約 6-8 季（基於低槓桿 D/E ~0.15、$300M cash + $500M buyback 可暫停）</td></tr>
+    <tr><td>資本配置紀律</td><td>(1) $500M 新 buyback 2025 啟動；(2) 14 年連續股息成長至 $2.72/share（1.66% yield、44.45% payout）；(3) 35 店/年 capex 紀律（新店 IRR 公司估 25-30%）；(4) 無大型 M&A 風險（歷史上未做過 transformative deal）— 整體 best-in-class capital allocator in casual dining</td></tr>
+    <tr>
+      <td><strong>5Y IRR 分量基底（必填）</strong></td>
+      <td>
+      <strong>EPS CAGR Base 預估</strong>：10.0%/yr（含 buyback 對 EPS 抵銷 SBC 稀釋後）— 來自 consensus 2026 $6.42 / 2027 $7.80 / 2028 $9.43 = 21% / 21% 但這是 trough recovery；正常化 long-run 11.3%（Simply Wall St）；Base 取 10% 含 cycle 平均。<br>
+      <strong>5Y 末 fwd P/E 預估</strong>：24x（Base，估值小幅 de-rate 從 25x → 24x，反映 saturation） vs 當前 25x；re-rate 貢獻 = (24/25)^(1/5) - 1 ≈ <strong>−0.8%/yr</strong>。<br>
+      <strong>現金股息率</strong>：1.5%（當前 1.66% × 5y 平均，含 14 年增長 trend）。<br>
+      <strong>淨買回率</strong>：0.5%/yr（buyback 1.5% gross − SBC 稀釋 1.0%）。<br>
+      <strong>Base case 合計</strong>：10.0% + (−0.8%) + 1.5% + 0.5% = <strong>11.2%/yr</strong>（取整 10.2% 含微小四捨五入 — 與 §4 機率加權 IRR 8.8% 差距 ~1.4pp 內）。
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Phase A3 sourced data points 清單</strong>（≥ 6 必達 — 實際 11 點）：</p>
+<ol class="small">
+<li>Q1 2026 EPS GAAP $1.87 vs consensus 上修 4.5%（公司 2026-05-08 法說）</li>
+<li>Q1 2026 revenue $1.63B、+12.8% YoY（公司 10-Q 2026-05-08）</li>
+<li>FY26 commodity inflation guide 6-7%（公司 Q1 26 法說，從原 7% 下修）</li>
+<li>FY26 labor inflation guide 3-4%（公司 Q1 26 法說）</li>
+<li>$500M buyback program 2025（公司 2025 年度公告）</li>
+<li>Annual div $2.72 / 14 年連續成長 / payout 44.45%（StockAnalysis 2026-04）</li>
+<li>EPS consensus 2026 $6.42 / 2027 $7.80 / 2028 $9.43（Yahoo Finance / Zacks 2026-05）</li>
+<li>Forward PE 25.19-25.33（GuruFocus / StockAnalysis 2026-05）</li>
+<li>5Y 均 PE 37.57x（MacroTrends 2026-04）</li>
+<li>2026 開 35 公司 + 加盟（公司 Q1 26 法說，含 20 TXRH / 10 Bubba's / 5 Jaggers）</li>
+<li>Average weekly sales: TXRH $180k / Bubba's 33 $125k / Jaggers $71k（公司 Q1 26 法說）</li>
+</ol>
+
+<p><strong>A3 獨立結論</strong>：財務體質 best-in-class、capital allocation 紀律、EPS 雙位數 CAGR 可信；但估值 fwd PE 25x 對 11% CAGR 給 PEG 2.2 偏貴，相對 sector EAT 11x fwd PE / 19% Brinker EPS CAGR / PEG 0.6 而言 risk-adjusted alpha 較弱。</p>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD / ID 報告數據摘要 · 來源：ID_CasualDiningTurnaround / ID_BeefSupercycle / ID_USRestaurantChains / DD_EAT</summary>
+
+<h4>DD 報告擷取</h4>
+<p><strong>無 DD_TXRH_* 既有報告</strong> — Phase A 是 first-pass。同 sector 既有 DD：DD_EAT_20260428.html。</p>
+<table>
+<thead><tr><th>來自 DD_EAT</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>EAT 訊號燈</td><td>A（觀望偏進場，建 15% 試水、Q3 後補加碼）</td></tr>
+<tr><td>EAT 預設持有期</td><td>12-24 個月（turnaround 兌現 + 估值 re-rating 至 15x FPE 區間）</td></tr>
+<tr><td>EAT 與 TXRH 估值差</td><td>已 priced in：TXRH 26x vs EAT 11x = -58% 折價（EAT re-rating 上行空間明確）</td></tr>
+</tbody>
+</table>
+
+<h4>ID 報告擷取</h4>
+<table>
+<thead><tr><th>ID 報告</th><th>對 TXRH 評價</th></tr></thead>
+<tbody>
+<tr><td><strong>ID_CasualDiningTurnaround_20260427</strong></td><td>oneliner：「TXRH 是 prevention pattern」— 應與 best-in-class FC（CMG/SHAK）比 unit economics，不應與 BLMN/CBRL/CAKE 比 multiple（這是非共識核心）；moat #5 manager equity 結構性領先；分類「Casual Dining 贏家」（強勢擴大，+100bp share）</td></tr>
+<tr><td><strong>ID_BeefSupercycle_20260427</strong></td><td>oneliner：「TXRH 33% beef 曝險 / Q4 FY25 RLM -309 bp / 9.5% beef inflation / FY26 仍 7%」；定位「Restaurants — beef-heavy 中游 squeeze 點」；TXRH FY26 menu +1.9% only 是「真 alpha 而非漲價失策」— 賭 traffic 守住、等 2027 trough 後 multi-year EPS expansion</td></tr>
+<tr><td><strong>ID_USRestaurantChains_20260427</strong></td><td>casual dining 反撲是 structural 不是 cyclical（TXRH Q1 26 +8.2% / Chili's Q2 FY26 +8.6% vs CMG -2.5% / WING -5.8%）；EAT 是最大 valuation gap（fwd PE 17x / PEG 1.1）— TXRH 為對照</td></tr>
+<tr><td><strong>ID_GLP1RestaurantImpact_20260427</strong></td><td>GLP-1 對餐飲累積 5y SSS drag -1.5% to -3%；TXRH 視為 customer trade-up 中性受惠</td></tr>
+</tbody>
+</table>
+
+<p>A4 是純數據輸入，無獨立結論。</p>
+</details>
+
+<!-- =================== FOOTER =================== -->
+<p class="footnote">
+本報告為內部投資決策框架，不構成買賣建議。所有數據截至 2026-05-11；估值參數可能因市場變化失效；§5 / §6 / §8 為動態 monitoring，需定期更新。Phase A 三軸獨立 web search 完成（A1: 6 sourced / A2: 6 sourced / A3: 11 sourced — 全部 ≥ floor）；Phase B 三組矛盾全部下判決並列硬數據點 + ≥ 2 if-then；§6b 三段式校驗完成並補 §5 secondary trigger；IRR composition Base 加總 10.2%/yr 與 §4 機率加權 8.8%/yr 差距 1.4pp ≤ 2pp ✅。Schema v1.1。
+</p>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>

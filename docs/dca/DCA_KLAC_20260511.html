@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- dca-schema-version: v1.1 -->
+<title>KLAC｜Deep Conviction Analysis｜2026-05-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #0F172A; margin: 0; padding: 0; line-height: 1.7; }
+  .num { font-family: 'IBM Plex Mono', monospace; }
+  .header { position: sticky; top:0; background:#1E3A5F; color:#fff; padding:12px 24px; z-index:100; display:flex; align-items:center; gap:24px; font-size:14px; box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+  .header .ticker { font-weight:700; font-size:18px; letter-spacing:1px; }
+  .header .date { color:#CBD5E1; }
+  .header .thesis-mini { color:#E2E8F0; font-style:italic; flex:1; max-width:60%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 30px; color:#1E3A5F; border-bottom: 3px solid #3B82F6; padding-bottom:10px; }
+  h2 { font-size: 22px; color:#fff; background:#1E3A5F; padding:10px 14px; border-left:4px solid #3B82F6; margin: 32px 0 14px; border-radius:2px; }
+  h3 { font-size:17px; color:#1E3A5F; margin: 20px 0 10px; border-bottom:1px dashed #CBD5E1; padding-bottom:4px;}
+  h4 { font-size:15px; color:#334155; margin:14px 0 6px; }
+  .card { background:#fff; border-radius:4px; padding:16px 18px; margin:14px 0; box-shadow:0 1px 3px rgba(15,23,42,0.05); border:1px solid #E2E8F0; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:13px; }
+  th, td { padding:8px 10px; border:1px solid #E2E8F0; text-align:left; vertical-align:top; }
+  th { background:#1E3A5F; color:#fff; font-weight:500; }
+  tbody tr:nth-child(even) { background:#F1F5F9; }
+  .status-bar { display:flex; gap:16px; justify-content:center; background:#F1F5F9; border-left:4px solid #3B82F6; border-right:4px solid #3B82F6; padding:16px 12px; margin:18px 0 24px; border-radius:3px; flex-wrap:wrap;}
+  .status-cell { flex:1; min-width:170px; max-width:200px; text-align:center; background:#fff; padding:12px 8px; border-radius:3px; border:1px solid #E2E8F0; }
+  .status-cell .label { font-size:11px; color:#64748B; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+  .status-cell .value { font-size:22px; font-weight:700; line-height:1.2; }
+  .sig-Aplus { color:#166534; }
+  .sig-A { color:#15803D; }
+  .sig-B { color:#92400E; }
+  .sig-C { color:#991B1B; }
+  .arrow-up { color:#166534; }
+  .arrow-flat { color:#64748B; }
+  .arrow-down { color:#991B1B; }
+  .dd-good { color:#15803D; }
+  .dd-mid { color:#B45309; }
+  .dd-bad { color:#991B1B; }
+  .thesis-block { background:#EFF6FF; border:1px solid #BFDBFE; padding:28px 32px; margin:18px 0; text-align:center; border-radius:4px; }
+  .thesis-block .thesis-text { font-size:28px; color:#1E3A5F; font-weight:500; line-height:1.5; }
+  .thesis-block .thesis-note { font-size:12px; color:#64748B; margin-top:10px; }
+  .decision-block { background:#FEF9C3; border-left:4px solid #CA8A04; padding:18px 22px; margin:14px 0; }
+  .decision-block.enter { background:#F0FDF4; border-left-color:#16A34A; }
+  .decision-block.avoid { background:#FFF1F2; border-left-color:#DC2626; }
+  .contradict-block { background:#FFF7ED; border-left:4px solid #F97316; padding:16px 18px; margin:14px 0; }
+  .contradict-block .arbiter { background:#FED7AA; padding:10px 12px; margin-top:10px; border-radius:2px; }
+  .pre-mortem { background:#FEF2F2; border-left:4px solid #DC2626; padding:14px 18px; margin:12px 0; }
+  .pre-mortem blockquote { background:#fff; padding:10px 14px; margin:10px 0; border-left:3px solid #DC2626; font-style:italic; color:#7F1D1D; }
+  .pattern { background:#F0F9FF; border-left:4px solid #0EA5E9; padding:14px 18px; margin:12px 0; }
+  .ma-ok { background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:2px; font-weight:500; }
+  .ma-bad { background:#FEE2E2; color:#991B1B; padding:2px 8px; border-radius:2px; font-weight:500; }
+  details { margin:12px 0; background:#fff; border:1px solid #E2E8F0; border-radius:3px; padding:8px 14px; }
+  details summary { cursor:pointer; font-weight:500; color:#1E3A5F; padding:6px 0; }
+  details[open] summary { border-bottom:1px dashed #CBD5E1; margin-bottom:10px; }
+  .memo { background:#FAFAF9; border:1px solid #D6D3D1; padding:22px 26px; margin:14px 0; font-family:'IBM Plex Mono', monospace; font-size:13px; line-height:1.8; color:#1C1917; }
+  .elev { background:#F0F9FF; border-left:3px solid #0EA5E9; padding:14px 18px; font-style:italic; color:#0C4A6E; margin:12px 0; }
+  .print-btn { position:fixed; right:24px; bottom:24px; background:#1E3A5F; color:#fff; padding:10px 16px; border:none; border-radius:4px; cursor:pointer; font-family:inherit; z-index:99; }
+  .pass { color:#15803D; font-weight:500; }
+  .fail { color:#991B1B; font-weight:500; }
+  .mid { color:#B45309; font-weight:500; }
+  .irr-bar { display:flex; height:24px; margin:8px 0 12px; border-radius:3px; overflow:hidden; border:1px solid #CBD5E1; }
+  .irr-bar div { display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; font-weight:500; }
+  .irr-eps { background:#15803D; }
+  .irr-rerate { background:#3B82F6; }
+  .irr-rerate-neg { background:#991B1B; }
+  .irr-yield { background:#64748B; }
+  .dd-display { font-size:32px; font-weight:700; font-family:'IBM Plex Mono', monospace; margin:8px 0; }
+  .dd-color-bar { display:flex; height:18px; margin:6px 0 12px; border-radius:3px; overflow:hidden; border:1px solid #CBD5E1; }
+  .small { font-size:12px; color:#64748B; }
+  @media print {
+    .header, .print-btn { display:none; }
+    details { page-break-inside: avoid; }
+    details > summary { list-style:none; }
+    details[open] > * { display:block !important; }
+    details:not([open]) > *:not(summary) { display:block !important; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <span class="ticker">KLAC</span>
+  <span class="date">2026-05-11</span>
+  <span class="thesis-mini">KLA 是半導體良率的「品管巨擘」，AI 把這份品管的價值放大成 monopoly economics。</span>
+</div>
+
+<div class="container">
+
+<h1>KLA Corporation｜Deep Conviction Analysis</h1>
+
+<!-- Status Bar (mandatory: 4 grid cells) -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value sig-B">B</div>
+    <div class="small">衛星候選</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">S <span class="arrow-up">↑</span></div>
+    <div class="small">Widening</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value">🟢</div>
+    <div class="small">寬｜2030 後 AI/HBM 續航</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Max DD（pre-mortem）</div>
+    <div class="value dd-mid">−50%</div>
+    <div class="small">🟡 中度 路徑風險</div>
+  </div>
+</div>
+
+<!-- §2 One-Sentence Thesis -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-block">
+  <div class="thesis-text">KLA 是半導體良率把關的「品管巨擘」，AI 把這份品管的價值放大成 monopoly economics。</div>
+  <div class="thesis-note">39 字｜投資本質：不在製造、在「能不能讓晶片做出來」的關卡</div>
+</div>
+
+<!-- §7 Decision -->
+<h2>§7｜Decision（可執行計畫）</h2>
+<div class="decision-block">
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（B 級訊號 + 估值偏貴 → 不放 core）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.0%</strong> of portfolio（小倉觀察）</td></tr>
+<tr><td>目標倉位</td><td><strong>3.0%</strong>（滿足進場條件後分批堆至）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$1,450 ~ $1,550</strong>（對應 FPE 30-32x，現價 ~$1,800 高估 ~16-24%）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong>：(i) 等 FPE 回到 ≤ 30x 或 Bollinger 中軌 $1,450 回測 → 第一批 30% 倉位；(ii) Q4 FY26 法說（2026-07-30 預估）Services YoY ≥ 13% 確認 → 第二批 40%；(iii) FY27 EPS 共識上修不止跌（不再下修連 1 季） → 末批 30%</td></tr>
+<tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td><strong>同類已持有：AMAT（衛星 2.0%）、ASML（核心 4.5%）、LRCX（衛星 1.5%）。</strong>WFE 五寡占已有 8% 曝險。KLAC vs AMAT：KLAC 利潤率與 ROIC 領先（GM 62% vs AMAT 47%、ROIC 100%+ vs AMAT 35%），但 FPE 溢價 +42%（37x vs 26x），R:R 短期 −0.27x vs AMAT 0.8x。<strong>結論：邊際資金優先加 AMAT（同 WFE beta 但估值彈藥充足），KLAC 等 FPE 回落或從 ASML 部位轉出（ASML 已在 35x，無 alpha 差）— 兩者擇一 swap，不雙押。</strong></td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>加碼</td><td>FPE ≤ 28x（~$1,350）且 Services YoY ≥ 15% 連 2 季</td><td>3.5%</td></tr>
+<tr><td>加碼</td><td>2030 Investor Day 重申 $26B/$84 EPS + 中國風險降至 ≤ 15% 營收</td><td>4.0%（升級至 core 邊緣）</td></tr>
+<tr><td>減碼</td><td>FPE 突破 42x（~$2,020）或 RSI 14d &gt; 80 連 2 週</td><td>1.5%（先收 50%）</td></tr>
+<tr><td>清倉</td><td>Services YoY 連 2 季 &lt; 10%（H1 推翻）或 China 營收 &lt; 15% 觸發（R1 實現）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-ok">✅</span></td><td>現價 ~$1,800 &gt; MA50 $1,482（Barchart 2026-05-08）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-ok">✅</span></td><td>$1,800 &gt; MA200 $1,475（Barchart）— 上方 22%</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-ok">✅</span></td><td>$1,800 &gt; W104 $924（DD 引用），上方 95%（接近 2 倍）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-ok">✅</span></td><td>✅ 強勢進場（W250 斜率 +11.2% &gt; +3%）</td></tr>
+<tr><td>短期動能過熱檢查</td><td><span class="ma-bad">⚠ RSI 14d 70.13 / 4 週漂移 +15.7%</span></td><td>RSI（ChartMill 5/8）已突破 70；4 週漂移從 $1,549 → $1,791 = +15.7% 達警示門檻 → §7a 進場節奏必須條件式</td></tr>
+</table>
+<p><strong>結論</strong>：Pure MA ✅ 強勢，但動能過熱（RSI 70+ 且 4 週漂移 +15.7%）。歷史上 RSI &gt; 70 後 1 個月內回測 8-15% 機率 ~60%。<strong>§7a 已採條件式分批進場，禁止一次建倉</strong>。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 WFE 2027 週期見頂（SEMI 預測 +7.3%）+ FY27 EPS 上修接近上沿 → 1-2 年內報酬主要由 EPS 兌現驅動</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 2030 $26B/$84 EPS 路徑保持 + China 風險逐年消化 → 中期 EPS 複利 + 估值維持是主要驅動</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 Y5 後第二曲線（advanced packaging、HBM 量產持續、2nm/A16/A12 process control intensity 累積到 +200bp 以上）銜接 → 可拉至 10 年</td></tr>
+</table>
+<p><strong>建議持有年限：3-7 年</strong>。原因：(i) Y5 落點 2031 對應管理層 2030 模型完成 + AI capex 進入 mature growth；(ii) Runway Post-Y5 🟢 寬，但需在 2028-2030 期間驗證下一條 S 曲線（A16/A12 + 玻璃基板 + HBM 量產）能否銜接；(iii) 估值偏貴使 1-2 年回報受限於 EPS 兌現速度，需中長期才能讓 EPS 複利消化倍數。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>FY2026E</td><td>$36.74</td><td>yfinance 共識 n=30（DD 2026-04-18）</td><td>Q3 FY26 已揭露非 GAAP $9.40，年度路徑走穩</td></tr>
+<tr><td>FY2027E</td><td>$48.16</td><td>yfinance 共識 n=29（DD 2026-04-18）</td><td>90 天前 $43.46 → 上修 +10.8%</td></tr>
+<tr><td>FY2028E</td><td>$56-58</td><td>邏輯推導 22% YoY（2030 $84 路徑）</td><td>DD §8A 推算</td></tr>
+<tr><td>FY2030E（管理層）</td><td>$84 ± $8</td><td>KLA Investor Day 2026 / Q3 FY26 法說重申</td><td>對應 $26B 營收，CAGR 13-17%</td></tr>
+</table>
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong> 答：<strong>偏貴但不致命</strong>。$1,800 / FY30 $84 = 21.4x，若 2030 末市場給 25x 合理倍數 → 2030 末股價 $2,100，5Y CAGR 僅 ~3.1%；若給 30x 樂觀 → $2,520，5Y CAGR 7.0%。配上 1.0% 股息 + 1.5% 淨買回，總年化 ~7-9%/yr。<strong>vs 大盤 9-10%/yr 預期報酬，KLAC 5Y 投報相對溢價在「品質溢價」而非「成長溢價」，現價已透支 5-6 年 EPS。</strong> 故建議等 FPE 回到 30x 進場，能把 5Y IRR 提至 11-13%/yr。</p>
+</div>
+
+<!-- §4 Asymmetry Analysis -->
+<h2>§4｜Asymmetry Analysis（R:R + IRR 分量）</h2>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull（Thesis 對 + AI 超級週期延長至 2032）</td><td>+95%</td><td>+14.3%/yr</td><td>FY30 EPS $90（上沿）× 30x PE = $2,700，含股息 1% + 回購 1.5%</td><td>25%</td></tr>
+<tr><td>Base</td><td>+40%</td><td>+7.0%/yr</td><td>FY30 EPS $84 × 28x = $2,352，含股息回購 2.5%</td><td>50%</td></tr>
+<tr><td>Bear（China 擴禁 + WFE 2028 反轉 + de-rate 至 18x）</td><td>−40%</td><td>−9.7%/yr</td><td>FY30 EPS $60（下修 28%）× 18x = $1,080，扣股息</td><td>25%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+33.8% 5Y</strong></td><td><strong>IRR ≈ 6.0%/yr</strong></td><td>0.25×95 + 0.50×40 + 0.25×(−40)</td><td></td></tr>
+</table>
+<p class="small"><strong>IRR 公式</strong>：(1 + 5Y_pct)^(1/5) − 1。<strong>IRR 落點解讀</strong>：6.0%/yr 屬「弱」（&lt; 8%），不及大盤平均 — 反映現價已透支大量未來成長，現價進場無 idiosyncratic alpha；只有等估值回落才有 mid/high conviction 進場理由。</p>
+
+<h4>📐 Pattern Match（讓機率有錨點）</h4>
+<div class="pattern">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似</td><td><strong>2020-2022 ASML</strong>（EUV 壟斷 + 半導體 capex 超級週期 + 估值飆升到 FPE 40x+）</td></tr>
+<tr><td>當時 setup</td><td>FPE 40-45x（2021Q4 高點）、EUV 市佔 ~100%、訂單滿 18 個月、AI capex 概念尚在早期</td></tr>
+<tr><td>最終 5 年實現報酬（2021-12 至 2024-12，3Y 樣本）</td><td>3Y 報酬 −15%（含 2022 暴跌 −45% 到回穩），3Y 年化 IRR ≈ −5%/yr；若拉到 5Y（2021-2026）約 +25%，5Y IRR ≈ 4.6%/yr</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：寡占型業務 + 估值頂峰 + AI 概念加持。<strong>最不像</strong>：KLA process control 在 advanced packaging / HBM 仍有滲透率擴張空間（vs ASML EUV 已 100%），KLA 還有 services recurring 14% CAGR 護身（vs ASML 服務佔比較低）</td></tr>
+</table>
+<p>啟示：頂峰 FPE 進場常吃到 1-2 年負回報甚至 −40% drawdown，但有護城河護身者 3-5 年內復原。當前 KLAC 機率分配（Bear 25%, Bull 25%, Base 50%）與 ASML 2021 樣本接近 — Base 50% 已偏中性，<strong>5Y 視角下不應再壓低 Bear。</strong></p>
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+11.2%/yr</td><td>+0.5%/yr（37x→30x 是 de-rate；EPS 上沿補回）</td><td>+2.5%/yr</td><td>+14.2%/yr</td></tr>
+<tr><td>Base</td><td>+9.5%/yr</td><td>−4.7%/yr（37x→28x: (28/37)^(1/5)-1）</td><td>+2.5%/yr</td><td>+7.3%/yr</td></tr>
+<tr><td>Bear</td><td>+2.5%/yr</td><td>−13.5%/yr（37x→18x: (18/37)^(1/5)-1）</td><td>+1.5%/yr</td><td>−9.5%/yr</td></tr>
+</table>
+<div class="irr-bar">
+  <div class="irr-eps" style="width:60%;">EPS +9.5%</div>
+  <div class="irr-rerate-neg" style="width:30%;">Re-rate −4.7%</div>
+  <div class="irr-yield" style="width:10%;">買回+股息 +2.5%</div>
+</div>
+<div class="elev">
+質感解讀：Base 7.3% IRR 中，9.5%/yr 來自 EPS 複利（健康），但被 −4.7%/yr 的 de-rate（37x→28x 倍數收縮）抵銷，剩 2.5%/yr 由股息+回購墊底。<strong>這檔的可抱性主要靠 EPS 複利支撐，但需「市場願意維持 28x 倍數」的合作 — 屬「需市場配合中等難抱」。</strong>若市場 de-rate 至 25x 以下（歷史均值），IRR 會掉到 5%/yr 以下；現價進場是賭 EPS 複利能跑贏 de-rate。建議等 PE 回落降低 de-rate 風險再進場。
+</div>
+<p class="small">校驗：Base 列加總 9.5 − 4.7 + 2.5 = 7.3%/yr vs §4 表格 Base 7.0%/yr，差 0.3%p &lt; 2%p ✅</p>
+
+<h4>追加壓力測試</h4>
+<p><strong>10 年情境</strong>：若 thesis 對但拉到 10Y（2036），假設 FY36 EPS ~$150（CAGR 13% 從 $84 起算）× 28x = $4,200 → 10Y CAGR 8.9%/yr。考慮 SPX 10Y 預期 9%/yr — KLAC 10Y 報酬與大盤打平，無明顯 alpha。<strong>同期同類比較</strong>：AMAT 預期 5Y IRR ~10%/yr（FPE 26x 進場、EPS CAGR 14%），KLAC 6.0% &lt; AMAT 10% → AMAT 是同 WFE beta 的更優選擇。</p>
+
+<!-- §1 Mental Models -->
+<h2>§1｜Mental Models 壓力測試</h2>
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">
+TO: Investment Committee<br>
+FROM: PM｜RE: KLAC 衛星持倉提案｜DATE: 2026-05-11<br>
+<br>
+THESIS<br>
+KLA 在半導體 process control 寡占 58%（Q3 FY26 法說），靠 57,000+ 工具的 installed base 與切換成本鎖客戶。AI capex 把製程複雜度（GAA、HBM、advanced packaging）提升 → 每片 wafer 的 process control intensity +100bp，KLA 是「複雜度通膨」的最大受益者。<br>
+<br>
+KEY DRIVERS<br>
+(1) Process control intensity 結構性提升（2nm/A16/HBM 帶動 PC 佔 WFE 比從 9% → 11-13%）<br>
+(2) Services recurring CAGR 13-15% 到 2030（57k 工具裝機底 + 80%+ 多年合約）<br>
+<br>
+R:R｜5Y EV +33.8%（Bull 95%×25 + Base 40%×50 + Bear −40%×25）｜IRR 6.0%/yr（弱）<br>
+IRR 拆解：EPS +9.5%/yr − Re-rate 4.7%/yr + 股息買回 2.5%/yr = 7.3%/yr Base<br>
+<br>
+RISKS<br>
+(1) FPE 37x（5Y 分位 97%、PEG 1.68）— 已透支 6 年成長，de-rate 是中期最大風險<br>
+(2) China 出口管制擴大至 DRAM/HBM inspection（每年 $300-350M 拖累，CY2026 結束消化）<br>
+(3) RSI 70+ 動能過熱 + 4 週漂移 +15.7% — 短期回測機率 60%<br>
+<br>
+RECOMMENDATION<br>
+衛星 1.0% 起手、目標 3.0%。<br>
+進場條件式：FPE ≤ 30x（~$1,450）或 Bollinger 中軌回測 → 第一批 30%；Q4 FY26 法說 Services ≥13% → 第二批 40%；FY27 共識穩定 → 末批 30%。<br>
+不放 core 理由：B 級訊號、IRR &lt; 8%、estimation 已透支。<br>
+Opportunity cost：邊際資金優先 AMAT（同 WFE beta、估值彈藥充足）。<br>
+<br>
+RE-REVIEW: 下次 Q4 FY26 法說 2026-07-30（預估）
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elev">
+「KLA 是半導體良率的 QA 監考官，AI 越複雜、它越值錢。寡占 58%、毛利 62%、ROIC 100%+，但現價 PE 37 倍已透支 6 年成長。我會用 1% 倉位先觀察，等回到 PE 30 倍（約 $1,450）或 Q4 服務業務再確認 13% 成長後分批進場 — 不放核心，因為 AMAT 同樣 WFE beta 估值便宜 40%。」
+</div>
+<p><strong>壓力測試結果</strong>：兩個版本邏輯一致（thesis = process control 寡占 + AI 複雜度通膨；risk = 估值透支；action = 條件式衛星）。✅ 通過。</p>
+
+<!-- Phase B -->
+<h2>Phase B｜矛盾辨識 + ⚖ 強制裁決</h2>
+<div class="contradict-block">
+<h3>1. 共識清單</h3>
+<ul>
+<li>A1（護城河 widening）+ A3（FY27 EPS 上修 +10.8%、Services +18%、ROIC 100%+）方向一致 → <strong>基本面穩固、護城河持續加深</strong></li>
+<li>A2（WFE 2027 創 $135B、process control intensity +100bp）+ A3（FY30 $26B 路徑） → <strong>產業順風與公司路徑互相驗證</strong></li>
+<li>A1 + A2：寡占 58% 在 2nm/A16 轉換中只會擴大（ASML HMI 僅 e-beam 單點，KLAC 在 optical/reticle/wafer metrology 主場）</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr>
+<tr><td>1</td><td>基本面強 vs 估值貴：護城河 widening、產業順風，但 FPE 37x（5Y 分位 97%、PEG 1.68）</td><td>↑ widening（強）</td><td>🟢 寬（強）</td><td>FPE 過去 5Y 均 25x（貴）</td><td>🔴 不可調和（方向相反）</td></tr>
+<tr><td>2</td><td>EPS 上修 vs PE 擴張同時發生 → de-rate 風險累積</td><td>—</td><td>—</td><td>FY27 上修 +10.8% 但 FPE 同時擴至 37x</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>3</td><td>Services recurring +18% YoY 持續，但 process control intensity 提升需要客戶高 capex（2027 WFE +7.3%，2028 可能放緩）</td><td>—</td><td>2026-2027 強，2028+ 不確定</td><td>$26B/$84 EPS 路徑需 capex 持續</td><td>🟡 可調和</td></tr>
+</table>
+
+<h3>3. 與 DD 報告交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>進場時機</td><td>等 FPE ≤ 30x（~$1,450）再進場</td><td>DD 也指出 trap 🟡 觀察、建議 Bollinger 中軌 $1,439 回測</td><td>一致（無矛盾），DD 與 Phase A 觀點交叉確認 → 高信心</td></tr>
+<tr><td>2</td><td>訊號燈</td><td>—</td><td>B（衛星候選，QC-29 降一級）</td><td>Phase A 不直接產出訊號燈，但 IRR 6.0% &lt; 8% + 估值 97% 分位 → 與 DD 的 B 級判定方向一致</td></tr>
+</table>
+
+<div class="arbiter">
+<h3>4. ⚖ 強制裁決（不可調和矛盾必填）</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>選邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥2 條 if-then 方向相反）</th></tr>
+<tr><td>1</td><td>基本面強 vs 估值 97% 分位</td><td><strong>A3（估值貴主導短期路徑）</strong></td><td>歷史上 FPE 5Y 分位 ≥ 95% 進場的個股，1Y 後負回報機率 ~65%（即使護城河 widening）。Pattern match ASML 2021 高點進場 5Y CAGR 僅 4.6%/yr。護城河強度不能 override 估值極端值，只能延後而非取消 de-rate。</td><td>(a) FPE 回到 30x（~$1,450）；(b) FY27 EPS 共識上修達 $52+（再 +8% 上修）讓 FPE 自然壓縮至 34x；(c) WFE 2028 SEMI 預測 YoY 由負轉正；任一觸發 = 估值風險解除</td><td>
+(a) 若 FPE 回到 ≤30x 且 Services Q4 FY26 ≥13% → 啟動第一批進場 30% 倉位（$1,450 區）；<br>
+(b) 若 FPE 突破 42x（~$2,020）+ RSI &gt; 80 連 2 週 → 不進場 + 將 ASML 部位減半轉現金（避免 WFE 整體 over-exposure）
+</td></tr>
+</table>
+</div>
+</div>
+
+<!-- §3 Key Drivers -->
+<h2>§3｜Key Drivers</h2>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>Process Control Intensity 結構性提升</strong>（供給側 / 技術複雜度）</td><td>2nm GAA / A16 backside power / HBM stacking 每個技術節點都讓「能不能良率 ramp」變成 ROI 關鍵，process control 佔 WFE 比從 9%（2020）→ 預估 11-13%（2030）— 這是 KLA 的「量價齊升」結構，獨立於 capex 週期</td><td>(i) KLA 季度 systems revenue YoY；(ii) Process control 佔 WFE 比（SEMI 半年報）；(iii) TSMC/Samsung/Intel 2nm 良率公告</td></tr>
+<tr><td>2</td><td><strong>Services Installed Base Leverage</strong>（需求側 / recurring lock-in）</td><td>57,000+ 工具裝機底 + 80% 多年合約 + 14% CAGR 到 2030（$3B → $6B）。這是 KLA 的「年金化收入」基礎，與 capex 週期解耦（即使 WFE 週期回檔，services 仍長）；切換成本極高，是護城河最堅固處</td><td>(i) Services 季度 YoY（要 ≥ 13%）；(ii) Multi-year contract renewal 率；(iii) Installed base 數量年增</td></tr>
+</table>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 1（供給側：技術複雜度通膨）vs Driver 2（需求側：installed base 服務年金化）— 兩條獨立因果鏈。Driver 2 在不假設 Driver 1 成立的情況下能單獨成立（即使技術節點推進放緩，現有 57k 工具仍有服務 recurring 收入）→ 通過獨立性校驗 ✅。</p>
+
+<h4>強制減法 — 我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>季度 China 營收佔比</td><td>已 priced-in，市場已 model 中國從 30% 降到 15%，這是已知 headwind 而非未來驚喜</td></tr>
+<tr><td>EUV / High-NA EUV 採購量</td><td>那是 ASML 的故事，KLA 是 EUV process control 的賣鏟子者，不直接受 EUV 採購週期波動</td></tr>
+<tr><td>同業（AMAT / LRCX）短期市佔波動</td><td>三家在不同 WFE 段落，KLA 在 process control 主場 58%+，AMAT/LRCX 在 etch/dep，並非直接競爭</td></tr>
+<tr><td>FY26 季度 EPS beat 幅度</td><td>已是高機率事件，看 FY27/FY28 路徑更重要</td></tr>
+</table>
+
+<h4>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>FY30 EPS $84 兌現 + 維持 25-30x PE（隱含 5Y EPS CAGR 17%、PE 維持 5Y 均上沿）→ 5Y 目標價隱含 $2,100-2,500</td></tr>
+<tr><td>我認為的不同假設</td><td>FY30 EPS 路徑可能因 (i) China 進一步擴禁、(ii) WFE 2028 週期反轉、(iii) Process control 在 advanced packaging 段被 ONTO/CAMT 蠶食 → 實際 EPS 落在 $70-80 而非 $84 上沿；同時 PE 在週期反轉時被壓至 22-25x（5Y 均下沿）→ 5Y 目標價可能僅 $1,800-2,000，與現價相當</td></tr>
+<tr><td>賣方為什麼錯（具體理由）</td><td>賣方多以 2030 路徑線性外推，忽略：(i) WFE 是週期性產業（即使結構性提升，2027-2028 仍可能出現 1-2 年 trough），歷史上五寡占在週期低點 de-rate 至 18-22x 是常態；(ii) PEG 1.68 對半導體設備股偏貴（歷史 0.8-1.5）— 賣方用 PEG 看 KLAC 是用消費股 framework 套用週期股</td></tr>
+</table>
+<p class="small">校驗：三題有具體答案 → thesis 有獨立 alpha 來源，但 alpha 在「等估值回落」而非「現價買 + 持有」。§7 倉位已對應折扣（衛星 ≤ 3%，非核心）。</p>
+
+<!-- §5 Single Thing -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+<div class="card">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Primary Trigger</strong></td><td><strong>Services YoY 連續 2 季 &lt; 10%</strong>（目前 +18% Q2 FY26，連 52 季正成長）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Services 是 KLA 「installed base leverage」的具體變現指標。若 services &lt; 10% 連 2 季，代表 (i) 客戶開始延遲服務合約續約（高切換成本被市場質疑）、(ii) installed base 沒有按預期擴張、或 (iii) 客戶在新工具採購中選擇競爭對手（ONTO / AMAT）。任一情況都直接推翻 §3 Driver 2，且間接削弱 Driver 1（無 services lock-in → process control intensity 提升的價值不會完全留在 KLA）</td></tr>
+<tr><td>如何監測</td><td>季度法說 + 10-Q 揭露的 services 段落 YoY；頻率：每季</td></tr>
+<tr><td>目前離發生有多遠</td><td>很遠 — 最新 Q3 FY26（2026-04-29 公布）Services +16% YoY，連 53 季正成長。下一個觀察點：Q4 FY26（預估 2026-07-30）</td></tr>
+</table>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Secondary Trigger（pre-mortem 派生，§6b 補入）</strong></td><td><strong>China 季度營收 &lt; $500M（目前 ~$900M / 28% 比重）</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Pre-mortem 失敗故事中關鍵是 BIS 擴大限制至 DRAM leading-edge memory inspection。若 China 單季 revenue &lt; $500M，代表新一輪 export controls 已生效並影響大陸客戶（YMTC, CXMT），FY27 EPS 下修 15-20% 直接打破 FY30 $84 路徑</td></tr>
+<tr><td>如何監測</td><td>季度 10-Q 揭露 China 營收；BIS 公告（每季抽檢）；中國客戶採購限制新聞；頻率：每季 + 即時新聞</td></tr>
+<tr><td>目前離發生有多遠</td><td>中等距離 — China 已從 ~$1.1B（CY2024）降至 ~$900M，但仍遠高於 $500M 閾值。Pre-mortem 故事預估發生時點：2027 Q2-Q3 BIS 第二波禁令</td></tr>
+</table>
+</div>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Process control 佔 WFE 比能否從 9% → 11-13%（依管理層 2030 模型）</td><td>2nm/A16/HBM 量產順利，每節點 PC intensity +50-100bp 累積</td><td>若僅維持 9-10%，FY30 revenue 僅 $20-22B 而非 $26B，EPS 下修至 $65-70</td></tr>
+<tr><td>2</td><td>ASML HMI 在 e-beam 之外能否突破 KLAC 的 optical/reticle/wafer 主場</td><td>HMI 僅在 e-beam 單點挑戰，未跨界整合</td><td>若 ASML 透過 EUV + HMI bundle 在 2nm 取得 1-2 家 foundry reference wins，KLAC 53% 市佔可能在 5 年內掉到 45%，PE 結構性 de-rate 至 22-25x</td></tr>
+<tr><td>3</td><td>2030 後第二曲線（玻璃基板、CPO、3D NAND 200+ layer）能否如期啟動</td><td>Advanced packaging $11.5B by 2030（Yole）兌現 + KLA 在 macro defect inspection 取得份額</td><td>若 ONTO 在 advanced packaging macro defect 持續蠶食 + 玻璃基板量產延後到 2030+，Runway Post-Y5 可能從 🟢 退至 🟡，5-10Y 報酬路徑變平</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+<div class="pre-mortem">
+<h4>第一段｜故事倒推</h4>
+<blockquote>
+假設 5 年後 KLAC 部位虧 50%（從 $1,800 → $900），最可能的故事：2026 Q4 美國新一輪 BIS 出口管制將 DRAM 與 HBM leading-edge inspection 設備全面禁運中國，China 營收 4 個季度內從 28% 砍到 12%，FY27 revenue 從 $14B 下修到 $12.2B（−13%）、Non-GAAP EPS 從 $48 下修到 $40。同期間，TSMC A16 量產推遲至 2027 H2（Q3 FY26 已揭露延後跡象），Intel 18A 失敗轉外包但 Apple/Qualcomm 仍選 TSMC，foundry capex 集中度上升使 KLA 客戶從 7 家壓到 4 家，bargaining power 削弱、ASP 增速從 +6% 降到 +2%。2028 WFE 週期由 SEMI 預測 +7.3% 翻轉成 −5%，KLA Q4 2028 book-to-bill 跌破 0.8 連 2 季。市場重估 FPE 從 37x → 18x（5Y 下沿），EPS $40 × 18x = $720，再考慮 buyback 與股息略補 → 股價 $900，drawdown −50%。
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong> — §5 原寫的「Services YoY &lt; 10%」抓住一部分（installed base leverage 弱化），但失敗故事的核心觸發是「China 擴禁」+「WFE 週期反轉」，這兩條 §5 未直接寫出</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>（China 季度營收 &lt; $500M）。Primary trigger（Services &lt; 10% 連 2 季）保持，secondary trigger（China 營收）已新增至 §5 區塊（請見上方 §5 第二個表格）。</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="card">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td class="dd-display dd-mid">−40% ~ −55%</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027 Q2-Q4</strong>（含具體事件：(i) 2026 Q4 BIS 第二波禁令 + (ii) 2027 H2 TSMC A16 量產延後 + (iii) 2028 H1 WFE 週期由 +7.3% 翻轉至 −5%）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>18-30 個月</strong>（2028 H2 - 2029 H2），假設 Bear 故事但護城河未瓦解、Services recurring 仍 +10-13% 保護下檔。若 Services 同時跌破 10% → thesis 已破，不會恢復至峰值</td></tr>
+<tr><td>路徑風險評級</td><td><span class="dd-display dd-mid">🟡 中度</span>（−40~−55% 區間中段，需要強信念才扛得住）</td></tr>
+</table>
+<div class="dd-color-bar">
+  <div style="background:#15803D;width:30%;height:100%;"></div>
+  <div style="background:#B45309;width:30%;height:100%;"></div>
+  <div style="background:#991B1B;width:40%;height:100%;"></div>
+</div>
+<p class="small">色條：綠 0~−30%（多數人能扛） / 琥珀 −30~−50%（需強信念） / 紅 &lt;−50%（多數人會出場）。KLAC 落在中段。</p>
+
+<p><strong>校驗</strong>：若 max DD 落在 −55%（下界），我能否撐到復原？條件：(i) 衛星倉位 ≤ 3%（已反映在 §7a）、(ii) 不使用槓桿、(iii) Services YoY 仍 &gt; 10%（§5 primary trigger 未觸發）、(iv) 護城河 vs 同業 gap 未收窄（process control 市佔仍 &gt; 50%）。若上述條件任一不符 → 觸發清倉而非繼續扛。</p>
+</div>
+
+<!-- §8 Review Triggers -->
+<h2>§8｜Review Triggers</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td>Q4 FY26 法說</td><td>財報日期</td><td><strong>預估 2026-07-30</strong>（前次 Q3 FY26 在 04-29 公布，間隔 ~3 個月）— 關鍵看 Services YoY、FY27 guidance、China 營收</td></tr>
+<tr><td>2</td><td>2030 Investor Day follow-up</td><td>產業事件</td><td>2026 H2 至 2027 Q1 任何 KLA 法說中重申 / 修正 $26B/$84 EPS 路徑</td></tr>
+<tr><td>3</td><td>TSMC A16 量產進度公告</td><td>產業事件</td><td>2026 Q4 - 2027 Q1（TSMC 法說週期，K1 Q3 26 為關鍵）</td></tr>
+<tr><td>4</td><td>BIS export controls 第二波</td><td>地緣政治</td><td>不定期，但 2026 Q4 - 2027 Q1 為高機率窗口（新政府上任後 100 天政策窗口）</td></tr>
+<tr><td>5</td><td>價位觸發 — 進場</td><td>價位觸發</td><td>$1,450（FPE ≤30x）或 Bollinger 中軌回測</td></tr>
+<tr><td>6</td><td>價位觸發 — 警示</td><td>價位觸發</td><td>$2,020（FPE 42x）或 RSI 14d &gt; 80 連 2 週</td></tr>
+<tr><td>7</td><td>§5 Primary Trigger</td><td>單點事件</td><td>Services YoY &lt; 10% 連 2 季</td></tr>
+<tr><td>8</td><td>§5 Secondary Trigger</td><td>單點事件</td><td>China 季度營收 &lt; $500M（目前 ~$900M）</td></tr>
+</table>
+
+<p><strong>這份報告的保質期</strong>：至 <strong>2026-08-01</strong>（Q4 FY26 法說後 1 週內，需重新評估）。觸發更新條件：(i) Q4 法說發布後；(ii) 股價跌破 $1,450 或漲破 $2,020；(iii) BIS 公告。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：FY27 EPS 共識上修至 $52+（+8% 上修空間，配合 AI capex 持續 + advanced packaging 量產），FPE 自然壓縮至 32-34x → R:R 由負轉中性。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：(i) RSI 70+ + 4 週漂移 +15.7% 引發短線回測至 $1,450-1,550（−15% 至 −20%）— 屬正常 mean reversion 而非 thesis 破壞，反而是進場窗口；(ii) BIS 新一輪禁令公告 → 中等深度回測 −25% 至 $1,350，仍屬 thesis 風險未致命。</p>
+
+<!-- Phase A1 -->
+<h2>Phase A｜獨立研究階段</h2>
+<details>
+<summary><strong>Phase A1｜護城河深度分析</strong>｜獨立結論：KLA 護城河 ↑ widening — process control 市佔從 53%（2024）擴大至 58%（Q3 FY26），ASML HMI 僅在 e-beam 單點威脅，主場 optical/reticle 仍寡占</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>技術領導 + R&D 規模</strong>（KLA R&D 佔營收 13-15%，行業最高，建立競爭對手難以追上的演算法 + 光學技術組合）；(2) <strong>切換成本 + Installed base lock-in</strong>（57,000+ 工具裝機，工程師訓練、產線整合一旦完成切換成本極高）</td></tr>
+<tr><td>持久性評分</td><td><strong>9.5 / 10</strong>，5 年穩固度：<strong>高</strong></td></tr>
+<tr><td>最大侵蝕風險</td><td><strong>ASML HMI 透過 EUV bundle 在 2nm e-beam 取得 1-2 家 foundry reference wins（2026-2027）</strong> — 但僅影響 e-beam 子市場（佔 KLA 營收 &lt; 5%）</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 <strong>62.2% Q3 FY26 non-GAAP</strong>（趨勢 ↑，KLA IR 2026-04-29）、市佔率 <strong>58% Q3 FY26</strong>（趨勢 ↑，Investing.com 2026 法說 slides）、ROIC <strong>100%+</strong>（vs WACC ~10%，超額 90%p+，行業最高）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>。Evidence：(1) Process control 市佔從 53%（DD 2026-04-18 引用 SEMI 2024）擴大至 58%（KLA Q3 FY26 法說 2026-04-29），12 個月內 +5pp；(2) Services 連 53 季 YoY 正成長 + Q3 FY26 +16%（KLA IR），lock-in 強化；(3) AMAT 在 2025 半導體設備市場份額被報告流失（Castellano 2025）— KLA 是其受益方</td></tr>
+</table>
+
+<h4>Sourced Data Points（floor ≥ 5）</h4>
+<ol>
+<li>Process control 市佔 58%（KLA Q3 FY26 法說 slides，Investing.com 2026-04-29）</li>
+<li>Gross margin 62.2% Q3 FY26 non-GAAP（KLA IR 2026-04-29）</li>
+<li>Services YoY +16% Q3 FY26 / +18% Q2 FY26 / 第 53 連季 YoY 正成長（KLA IR 2026-04-29）</li>
+<li>Gross margin FY25 60.91%（Macrotrends，截至 2025-06-30）</li>
+<li>E-beam 市佔 12.9%（GMI 2025，遠低於整體 PC 58%）</li>
+<li>整體 inspection + metrology 市佔 55%（GMI 2025）</li>
+<li>Installed base 57,000+ 工具（KLA DD 引用，Investor Day 2026）</li>
+</ol>
+<p>共 7 sourced data points，floor ≥ 5 ✅</p>
+
+<p><strong>A1 獨立結論</strong>：護城河 ↑ widening。Process control 市佔從 53% → 58%（+5pp / 12 個月），毛利率 60.9% → 62.2%（+130bp），ASML HMI 僅威脅 e-beam 子段，主場 optical/reticle/wafer 仍寡占。Munger 等級護城河，可抱性最強的單點是 services recurring。</p>
+</details>
+
+<!-- Phase A2 -->
+<details>
+<summary><strong>Phase A2｜產業趨勢深度分析</strong>｜獨立結論：WFE 處於結構性擴張中段（Phase II），AI/HBM 推升 process control intensity +100bp，Runway Post-Y5 🟢 寬</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>WFE 2026 <strong>$135.2B</strong>（SEMI Dec 2025，+9% YoY） / 2027 <strong>$135.2B → +7.3% / $145.3B</strong>；2030 預估 <strong>$184B</strong>（Yole，含後段服務）；CAGR 7.9%（Yole 2025-2030）；滲透率：process control 佔 WFE 從 9% → 11-13%（KLA Investor Day 2030 模型）</td></tr>
+<tr><td>供需判斷</td><td>2026-2027 <strong>偏緊</strong>（GAA 2nm 良率 ramp 期間客戶資本支出加大），未來 12 個月方向：續強，但 2028 可能進入 cycle 中段見頂</td></tr>
+<tr><td>最大技術替代風險</td><td><strong>整合式 metrology / inline AI defect detection</strong> — Onto Innovation / CAMTEK 在 advanced packaging macro defect 蠶食，5-10 年威脅程度：中。但 process control 核心算法仍由 KLA 主導</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td><strong>BIS 對中 DRAM/HBM inspection 第二波禁令</strong>（2026 Q4 - 2027 Q1 高機率），每年 $300-350M revenue drag 已 priced，但若範圍擴大可能造成 China 從 28% → &lt;15%</td></tr>
+<tr><td>議價權位置</td><td>對上游：<strong>強</strong>（光學元件 / 雷射 / 偵測器供應商分散，KLA 是大客戶）；對下游（foundry/IDM）：<strong>強</strong>（process control 寡占 58%，客戶無替代）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong> — S 曲線位置：Phase II 中段（2nm 量產 2026-2027、A16 量產 Q4 2026-2027、A12 量產 2029）；Y5（2031）末 TAM 滲透率：process control 佔 WFE 11-13%，仍有 +200-400bp 空間（vs 製造端飽和）；第二曲線：玻璃基板封裝 / CPO（co-packaged optics）/ 3D NAND 200+ layer 等多個技術節點預計 2027-2030 啟動</td></tr>
+</table>
+
+<h4>Sourced Data Points（floor ≥ 5）</h4>
+<ol>
+<li>WFE 2026 $135.2B / 2027 $145.3B（SEMI 2025-12）</li>
+<li>Total equipment sales 2027 $156B（SEMI 2025-12 預測）</li>
+<li>WFE 2030 outlook CAGR 7.9% / 終值 ~$184B（Yole Group 2025）</li>
+<li>HBM 增加 process control intensity +100bp（KLA management Q3 FY26 法說）</li>
+<li>TSMC A16 mass production Q4 2026 / 2027（TrendForce 2026-04-23 update）</li>
+<li>TSMC roadmap: A12 / A13 set for 2029（Tom's Hardware 2026-04 update）</li>
+<li>NAND equipment +12.7% 2026 $15.7B / +7.3% 2027 $16.9B（SEMI 2025-12）</li>
+<li>China revenue impact $300-350M for CY2026（KLA management guidance）</li>
+</ol>
+<p>共 8 sourced data points，floor ≥ 5 ✅</p>
+
+<p><strong>A2 獨立結論</strong>：產業 🟢 順風進入 Phase II 中段。AI/HBM 推升 process control intensity +100bp，TAM 雙軸（量 + 強度）擴張至 2030 後。第二曲線（A16/A12 + 玻璃基板 + CPO）2027-2030 啟動。Runway Post-Y5 🟢 寬。</p>
+</details>
+
+<!-- Phase A3 -->
+<details>
+<summary><strong>Phase A3｜業務結構 / 財務體質 / 資本配置</strong>｜獨立結論：FY26-30 EPS CAGR 22% 路徑可期，但現價 FPE 37x 過度透支 — 5Y IRR 質感 60% 依賴 EPS 複利，40% 受 de-rate 風險拖累</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td><strong>現金牛</strong>：Process Control Systems（佔 ~75%，含 optical/e-beam/reticle/wafer inspection）；<strong>成長引擎</strong>：Services（佔 ~22%，14% CAGR 至 $6B by 2030）+ Advanced Packaging（佔 &lt;5%，雙位數成長）；<strong>拖累</strong>：China legacy node 業務（管制下逐步收縮）</td></tr>
+<tr><td>客戶集中度</td><td>前 5 大客戶佔 ~50%（TSMC / Samsung / Intel / Micron / SK Hynix），最大客戶 TSMC 估 ~15-18%，風險：<strong>中</strong>（客戶集中但都是 IDM/foundry 龍頭，bargaining power 互制）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（2nm tool ASP +30-40% vs 3nm），定價權：<strong>強</strong>（GM 62%+ 持續擴張）</td></tr>
+<tr><td>未來金雞母</td><td><strong>Advanced packaging inspection</strong>（目前佔營收 &lt; 5%，潛在 TAM $11.5B by 2030 Yole，預估 5-7 年後成熟）+ <strong>HBM-specific process control</strong>（隨 HBM4/HBM5 ramp 2027-2030）</td></tr>
+<tr><td>財務體質</td><td>FCF / NI <strong>0.92</strong>（FY25 FCF $3.74B / NI $4.06B）、GM <strong>62.2% Q3 FY26 non-GAAP</strong>（趨勢 ↑），Net Debt / EBITDA <strong>0.16x</strong>（near-zero leverage）；壓力測試：營收 −20% 可撐 8+ 季（GM 維持 ≥ 55% 即現金流為正）</td></tr>
+<tr><td>資本配置紀律</td><td>頂尖 — $7B 新買回（2026-03 公告，總授權 $11B）+ 股息 +21% 至 $2.30/季（第 17 連年加碼）+ R&D 佔營收 13-15%（行業最高）+ M&A 紀錄保守（小型補強）；過去 5 年股本從 154M → 131M（−15%），buyback 顯著抵銷 SBC 稀釋</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR <strong>9.5%/yr</strong>（FY25 $30.97 → FY30 $84 路徑換算，含 buyback 抵銷稀釋）；5Y 末 forward PE 預估 <strong>28x</strong> vs 當前 <strong>37x</strong>（5Y 均 25x 上沿，re-rate 貢獻 = (28/37)^(1/5) − 1 = −4.7%/yr）；現金股息率 <strong>0.5-0.7%/yr</strong>（$2.30×4 = $9.20 / $1,800 = 0.51%）；淨買回率 <strong>~1.8-2.0%/yr</strong>（$7B / $245B 市值 / 5Y ≈ 0.57% 但快速消化下年化 1.8-2.0%）</td></tr>
+</table>
+
+<h4>Sourced Data Points（floor ≥ 6）</h4>
+<ol>
+<li>Q3 FY26 revenue $3.415B +11% YoY（KLA IR 2026-04-29）</li>
+<li>Q3 FY26 non-GAAP EPS $9.40（KLA IR 2026-04-29，beat consensus $9.15）</li>
+<li>Q4 FY26 guidance: revenue $3.575B ± $200M、EPS $9.87 ± $1.00（KLA 2026-04-29）</li>
+<li>2030 target: $26B ± $2.5B 營收 / $84 ± $8 EPS / GM ~63.5% / OM 45-47% / R&D 11%（KLA Investor Day 2026）</li>
+<li>$7B 新買回（2026-03-12 公告）+ 既有 $3.944B 剩餘授權（總 ~$11B）</li>
+<li>股息 +21% 至 $2.30/季（2026 update，第 17 連年加碼）</li>
+<li>5Y avg PE 25.03（fullratio May 2026）vs 當前 forward PE 35-36（GuruFocus）</li>
+<li>過去 5 年股本 154M → 131M（−15%，DD 引用）</li>
+<li>Long-term revenue CAGR target 13-17% 至 2030（KLA Q3 FY26 update）</li>
+</ol>
+<p>共 9 sourced data points，floor ≥ 6 ✅</p>
+
+<p><strong>A3 獨立結論</strong>：財務體質頂尖（GM 62%, ROIC 100%+, Net Debt 0.16x, FCF/NI 0.92），2030 路徑可信但需 PE 維持 25x+ 才能讓 5Y IRR 達到 mid-conviction（≥ 10%/yr）。現價 FPE 37x 過度透支，IRR 結構：EPS 複利 9.5%/yr 是主軸，但 de-rate −4.7%/yr 拖累 + 股息回購 2.5%/yr 墊底 = Base 7.3%/yr，屬「需市場配合」可抱性中等。</p>
+</details>
+
+<!-- Phase A4 -->
+<details>
+<summary><strong>Phase A4｜既有報告數據摘要</strong>｜DD_KLAC_20260418.html / ID_LeadingEdgeNode_20260419.html / ID_WaferFabEquipment_20260430.html</summary>
+<h4>DD 報告擷取</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>Quality Score</td><td>10.0 / 10（S 級）</td></tr>
+<tr><td>綜合訊號燈</td><td><strong>B</strong>（衛星候選，QC-29 降一級）</td></tr>
+<tr><td>R:R ratio（MA60 / MA200 / MA104w）</td><td>短期 −0.27x / 中期 −0.01x（壓力測試通過率 0/4）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 1Y $1,522（FY27 $48.16 × 31.6x）/ 中期 2Y $1,785（FY28 $56.5 × 31.6x）</td></tr>
+<tr><td>Bear anchor</td><td>$780（FY27 EPS 下修 10% × 18x PE）</td></tr>
+<tr><td>紅旗清單</td><td>FPE 37.2x（5Y 分位 97%）/ PEG 1.68（半導體設備股偏貴）/ 4 週漂移 +15.7%</td></tr>
+<tr><td>§0.5 核心假設</td><td>H1（process control 53%+ + Services ≥13%）/ H2（FY27 $48+ / FY28 $56-58 / FY30 $84）/ H3（FPE 回 30x 合理區）</td></tr>
+<tr><td>當前 H 狀態</td><td>H1 強化（Services +18%）/ H2 強化（FY27 共識 +10.8%）/ H3 削弱（FPE 擴張至 37x）</td></tr>
+<tr><td>Pure MA</td><td>✅ 強勢（W250 斜率 +11.2%）</td></tr>
+<tr><td>護城河趨勢</td><td>加深（process control intensity ↑）</td></tr>
+</table>
+
+<h4>ID 報告擷取</h4>
+<table>
+<tr><th>ID</th><th>產業評級</th><th>關鍵趨勢</th><th>KLAC 相關</th></tr>
+<tr><td>ID_LeadingEdgeNode_20260419</td><td>9 / 10（Phase II）</td><td>2nm 爆發 + A16 起點</td><td>列入 9 檔覆蓋之一，process control 寡占</td></tr>
+<tr><td>ID_WaferFabEquipment_20260430</td><td>12 / 10（Phase II）</td><td>GAA + High-NA + 中國反制三引擎 + 五寡占地位確認</td><td><strong>核心 thesis</strong>：「KLA 是五寡占中最被低估的『複利機』— GM 60% / ROIC 50% / process control intensity 結構性升至 11-13% / PE 25x → 32-35x rerating 空間最大」— 與本 DCA Phase A1 結論高度一致</td></tr>
+</table>
+<p><strong>A4 不產出獨立結論</strong>，純數據輸入。Phase A1-A3 結論與 DD/ID 交叉驗證 → 共識一致：基本面強、估值貴、需等回落進場。</p>
+</details>
+
+<!-- Supplementary Analysis：補充 5 大論點 -->
+<h2>補充分析｜Supplementary Notes</h2>
+
+<h3>S1. 與五寡占同業比較（為什麼 KLAC 在這個 cluster 中是「貴的」）</h3>
+<div class="card">
+<table>
+<tr><th>指標</th><th>KLAC</th><th>AMAT</th><th>LRCX</th><th>ASML</th><th>結論</th></tr>
+<tr><td>Forward PE</td><td><strong>37x</strong></td><td>26x</td><td>33x</td><td>35x</td><td>KLAC 最貴（+10-42%）</td></tr>
+<tr><td>Gross Margin TTM</td><td><strong>62.2%</strong></td><td>47%</td><td>48%</td><td>52%</td><td>KLAC 最高（+10pp 領先）</td></tr>
+<tr><td>ROIC TTM</td><td><strong>100%+</strong></td><td>35%</td><td>40%</td><td>30%</td><td>KLAC 最高（near-zero working capital + 重資產輕模式）</td></tr>
+<tr><td>5Y Rev CAGR</td><td>~17%</td><td>~12%</td><td>~10%</td><td>~16%</td><td>KLAC 與 ASML 並列領先</td></tr>
+<tr><td>Services / recurring %</td><td>~22%</td><td>~25%</td><td>~30%</td><td>~25%</td><td>大致接近</td></tr>
+<tr><td>市佔（核心段）</td><td><strong>58%</strong> (process control)</td><td>~22% (etch+dep)</td><td>~50% (etch)</td><td>~100% (EUV)</td><td>KLAC 與 ASML 並列「監標型寡占」</td></tr>
+<tr><td>R:R 短期</td><td>−0.27x</td><td>+0.8x</td><td>+0.4x</td><td>+0.1x</td><td>KLAC 短期 R:R 最差</td></tr>
+</table>
+<p><strong>意義</strong>：KLAC 在五寡占中「最貴但體質最頂尖」— 但「最頂尖」是已 priced 的因子，「短期 R:R 最差」才是當下的問題。<strong>邏輯結論</strong>：若想保留 WFE beta 但要 better R:R，AMAT 是 swap 對象（同 cluster, 估值彈藥充足）。若想保留 process control 寡占 + monopoly economics，等 KLAC 回到 30x 進場。雙押 KLAC + AMAT 在 portfolio 中重複 WFE beta 80%，不增加 alpha。</p>
+</div>
+
+<h3>S2. 為什麼 thesis 仍值得追蹤（即使現價不買）</h3>
+<div class="card">
+<p>儘管現價 IRR 弱，KLAC 的 thesis 仍是「長期值得在 watchlist 頂端」的標的，三個理由：</p>
+<ol>
+<li><strong>結構性護城河加深</strong>：Process control intensity 在 2nm/A16/HBM 結構性提升，KLA 是少數能從「製造端景氣」獨立的設備商，因為它的營收與 「複雜度」線性相關而非與「產能擴張」線性相關。這意味著即使 WFE 進入週期 trough，KLA 的 EPS 下修幅度會小於 AMAT/LRCX。</li>
+<li><strong>Services 年金化護身</strong>：53 連季 Services YoY 正成長 + 80% 多年合約 = 即使 systems 業務在 cycle 中波動，services 提供穩定下檔。歷史上 KLA 在 2019 WFE trough 時 services 仍 +12% YoY，這是 V/MA 等級的可預測性。</li>
+<li><strong>資本配置紀律頂尖</strong>：$11B 總授權 buyback + 17 年連加碼股息 + R&D 13-15%（行業最高） + 保守 M&A = 蒙格最愛的「現金流複利機器」。在 5-10 年的時間軸上，這類公司的內在價值是「年化 10-12%」的有機複利。</li>
+</ol>
+<p>但這些都不能改變一個事實：「好公司 ≠ 好股票」，估值是 risk-adjusted 報酬的關鍵變數。當 FPE 從 25x 升至 37x，未來 5 年的報酬被「借走」了 5 年。等估值 mean-revert 至 30x 以下再進場，能把這個被借走的部分還回來。</p>
+</div>
+
+<h3>S3. 對 portfolio 的 3 個情境化建議</h3>
+<div class="card">
+<table>
+<tr><th>情境</th><th>建議</th><th>理由</th></tr>
+<tr><td>A. 已持有 AMAT 衛星 + ASML 核心，無 KLAC</td><td><strong>不新進，watchlist 觀察</strong>。等 FPE ≤ 30x 或 RSI 回到 50-60 + Services Q4 FY26 ≥ 13% → 1% 衛星起手</td><td>WFE beta 已 6.5%（AMAT 2% + ASML 4.5%），邊際資金加 KLAC 重複 beta，alpha 來源不足</td></tr>
+<tr><td>B. 已持有 KLAC 衛星 1-2%（從早期建倉）</td><td><strong>續抱不加</strong>，但 trim 50% 若 FPE 突破 42x 或 RSI &gt; 80 連 2 週。Trim 後資金挪去現金或 AMAT 同步加碼</td><td>已建倉的部位已享受複利，trim 50% 鎖利同時保留 thesis 曝險</td></tr>
+<tr><td>C. 已持有 KLAC 核心 3-5%（過度集中）</td><td><strong>主動減至 2-3%</strong>。將超出部分轉至 AMAT 或現金，等 KLAC FPE ≤ 30x 再加回</td><td>單一個股核心 3-5% + 估值 97% 分位 = 風險集中過高，下行情境（−50% drawdown）會嚴重影響 portfolio</td></tr>
+</table>
+</div>
+
+<h3>S4. 結論濃縮：三個關鍵問題的答案</h3>
+<div class="card">
+<table>
+<tr><th>問題</th><th>答案</th></tr>
+<tr><td>1. KLAC 是不是好公司？</td><td><strong>是，極好</strong>。Munger 等級護城河（process control 寡占 58% + GM 62% + ROIC 100%+）+ 17 年連加碼股息 + $11B buyback 紀律</td></tr>
+<tr><td>2. KLAC 現在是不是好股票？</td><td><strong>不是</strong>。FPE 37x（5Y 分位 97%）+ PEG 1.68（半導體設備偏貴）+ 4 週漂移 +15.7% + RSI 70+ = 已透支 5-6 年成長，現價 5Y IRR 6.0% &lt; 8% 弱</td></tr>
+<tr><td>3. 什麼時候會變成好股票？</td><td>三個條件任一：(a) FPE 回到 ≤ 30x（~$1,450，需要 −20% 回測）；(b) FY27 EPS 共識上修 +8% 至 $52+ 讓 FPE 自然壓縮至 34x；(c) WFE 2028 SEMI 預測由負轉正消除週期見頂疑慮</td></tr>
+<tr><td>4. 如果不進場，我會錯過什麼？</td><td>若 thesis 完美兌現（Bull 25% 機率），5Y +95% / IRR 14.3%。但代價是承擔 25% 機率 −40%（IRR −9.7%）+ 路徑中 50% 機率 −40 至 −55% 的 max DD。期望值 IRR 6.0% &lt; 大盤 9%，機會成本 negative</td></tr>
+<tr><td>5. 如果現在必須選邊，是 buy 還是 wait？</td><td><strong>Wait（條件式分批）</strong>。第一批進場條件已寫在 §7a，禁止無條件一次建倉</td></tr>
+</table>
+</div>
+
+<h3>S5. 半年內可能改變判斷的 5 個劇本</h3>
+<div class="card">
+<table>
+<tr><th>#</th><th>劇本</th><th>機率（6 個月內）</th><th>對 thesis 的影響</th><th>對應動作</th></tr>
+<tr><td>1</td><td>股價回測至 $1,450-1,550（−15~20%，正常 mean reversion）</td><td>60%</td><td>+ 正面（進場窗口）</td><td>啟動條件式分批，第一批 30%（衛星 1%）</td></tr>
+<tr><td>2</td><td>BIS 第二波禁令（DRAM/HBM inspection 全面禁中）</td><td>30%</td><td>− 中等負面（FY27 EPS 下修 10-15%）</td><td>暫停進場，watch China 季度營收是否 &lt; $500M（§5 secondary trigger）</td></tr>
+<tr><td>3</td><td>FY27 EPS 共識持續上修至 $52+</td><td>25%</td><td>+ 正面（FPE 自然壓縮）</td><td>進場條件放寬至 FPE ≤ 33x</td></tr>
+<tr><td>4</td><td>2030 Investor Day 重申 $26B/$84 EPS + 加碼 buyback</td><td>40%</td><td>+ 中等正面（confidence 強化）</td><td>持有部位視為加分，但不放鬆估值門檻</td></tr>
+<tr><td>5</td><td>TSMC A16 量產嚴重延遲（&gt; 6 個月延後）</td><td>15%</td><td>− 中等負面（process control intensity ramp 延後）</td><td>觀察 process control 在 N3 / N3P 的 ASP 增速是否補位</td></tr>
+</table>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+
+<script>
+// nothing for now; HTML is self-contained
+</script>
+</body>
+</html>

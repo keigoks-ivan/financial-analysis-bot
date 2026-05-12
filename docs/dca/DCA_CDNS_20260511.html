@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<meta name="dca-schema-version" content="v1.1">
+<title>DCA｜CDNS Cadence Design Systems｜2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#1F2937;line-height:1.7}
+  .mono,.num{font-family:'IBM Plex Mono',monospace}
+  header{position:sticky;top:0;background:#1E3A5F;color:#fff;padding:14px 24px;z-index:100;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:14px}
+  header b{color:#FCD34D}
+  main{max-width:1180px;margin:0 auto;padding:24px}
+  section{background:#fff;margin:16px 0;padding:24px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,0.05);scroll-margin-top:80px}
+  h1,h2{color:#1E3A5F;border-left:4px solid #3B82F6;padding-left:12px;margin:0 0 14px;font-size:22px}
+  h3{color:#1E3A5F;margin-top:24px;font-size:17px;border-bottom:1px solid #E5E7EB;padding-bottom:6px}
+  h4{color:#374151;margin-top:18px;font-size:15px}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px}
+  th{background:#1E3A5F;color:#fff;padding:8px;text-align:left;font-weight:500}
+  td{padding:7px 8px;border-bottom:1px solid #E5E7EB;vertical-align:top}
+  tr:nth-child(even) td{background:#F1F5F9}
+  .green{background:#DCFCE7;color:#166534;padding:2px 6px;border-radius:3px}
+  .red{background:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:3px}
+  .yellow{background:#FEF9C3;color:#92400E;padding:2px 6px;border-radius:3px}
+  .blue{background:#EFF6FF;color:#1E3A8A;padding:2px 6px;border-radius:3px}
+  /* Status Bar */
+  .status-bar{display:flex;gap:16px;justify-content:center;align-items:stretch;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:14px 12px;margin:0 0 18px;border-radius:6px;flex-wrap:wrap}
+  .status-bar .cell{flex:1 1 180px;max-width:220px;text-align:center;padding:6px 8px;background:#fff;border-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+  .status-bar .label{font-size:11px;color:#64748B;letter-spacing:.05em;margin-bottom:4px;text-transform:uppercase}
+  .status-bar .value{font-size:22px;font-weight:700;line-height:1.2}
+  .status-bar .sub{font-size:11.5px;color:#475569;margin-top:2px}
+  .sig-a{color:#15803D}
+  .sig-aplus{color:#166534}
+  .sig-b{color:#92400E}
+  .sig-c{color:#991B1B}
+  .arrow-up{color:#166534}
+  .arrow-flat{color:#64748B}
+  .arrow-down{color:#991B1B}
+  /* Thesis */
+  .thesis{background:#EFF6FF;border-radius:8px;padding:30px 28px;margin:18px 0;text-align:center;border-left:4px solid #3B82F6}
+  .thesis .title{font-size:11.5px;letter-spacing:.06em;color:#64748B;text-transform:uppercase;margin-bottom:10px}
+  .thesis .body{font-size:24px;font-weight:600;color:#1E3A5F;line-height:1.45}
+  .thesis .note{font-size:11.5px;color:#94A3B8;margin-top:14px}
+  /* Decision */
+  .decision{background:#F0FDF4;border-left:4px solid #16A34A;padding:18px 22px;margin:14px 0;border-radius:4px}
+  .decision h3{border-bottom-color:#BBF7D0}
+  /* Conflict / Phase B */
+  .conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:14px 0;border-radius:4px}
+  .verdict-box{background:#FED7AA;border-left:4px solid #C2410C;padding:14px 18px;margin:12px 0;border-radius:4px}
+  .verdict-box th{background:#9A3412}
+  /* Pre-mortem */
+  .premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:16px 20px;margin:12px 0;border-radius:4px}
+  .premortem blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid #DC2626;background:#fff;color:#7F1D1D;font-style:italic}
+  /* Pattern match */
+  .pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:12px 0;border-radius:4px}
+  /* IRR composition */
+  .irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:10px 14px;margin:10px 0;font-style:italic;font-size:13.5px;color:#0C4A6E}
+  .stacked-bar{display:flex;height:28px;border-radius:4px;overflow:hidden;margin:10px 0;font-size:11.5px;color:#fff;font-weight:600}
+  .stacked-bar > div{display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .sb-eps{background:#15803D}
+  .sb-rerate{background:#3B82F6}
+  .sb-yield{background:#64748B}
+  .sb-neg{background:#991B1B}
+  /* Max DD */
+  .maxdd-block{display:flex;align-items:center;gap:24px;background:#FEF3C7;border-left:4px solid #D97706;padding:16px 20px;border-radius:4px;margin:12px 0;flex-wrap:wrap}
+  .maxdd-num{font-size:34px;font-weight:700;color:#92400E;font-family:'IBM Plex Mono',monospace}
+  .maxdd-rating{font-size:30px}
+  .maxdd-meta{flex:1;font-size:13px;color:#78350F}
+  .dd-colorbar{height:18px;background:linear-gradient(to right,#16A34A 0% 50%,#D97706 50% 83%,#991B1B 83% 100%);border-radius:3px;margin-top:6px}
+  /* Memo */
+  .memo{background:#F8FAFC;border:1px solid #CBD5E1;padding:18px 22px;margin:12px 0;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;white-space:pre-wrap}
+  .elevator{background:#FFFBEB;border-left:4px solid #F59E0B;padding:14px 18px;font-style:italic;color:#78350F;margin:12px 0;border-radius:4px}
+  /* Misc */
+  .toc{background:#fff;padding:12px 18px;border-left:4px solid #3B82F6;border-radius:4px;margin:14px 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.05)}
+  .toc strong{color:#1E3A5F;margin-right:8px}
+  .toc a{background:#EFF6FF;color:#1E3A8A;text-decoration:none;padding:5px 12px;border-radius:999px;font-size:13px}
+  .toc a:hover{background:#DBEAFE}
+  details{background:#F8FAFC;border:1px solid #CBD5E1;border-radius:4px;padding:10px 18px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:#1E3A5F;font-size:14.5px;padding:4px 0}
+  details[open] summary{border-bottom:1px solid #CBD5E1;padding-bottom:8px;margin-bottom:8px}
+  #print-btn{position:fixed;right:20px;bottom:20px;background:#1E3A5F;color:#fff;border:none;padding:10px 18px;border-radius:4px;cursor:pointer;font-family:inherit;z-index:90;font-size:13px}
+  .small{font-size:12.5px;color:#64748B}
+  .quote{background:#fff;border-left:3px solid #94A3B8;padding:8px 12px;margin:8px 0;font-style:italic;color:#475569;font-size:13.5px}
+  @media print{header,#print-btn,.toc{display:none}body{background:#fff}section{box-shadow:none;page-break-inside:avoid}details{border:none;padding:0}details > *{display:block !important}details summary::-webkit-details-marker{display:none}}
+</style>
+</head>
+<body>
+<header>
+<div><b>CDNS</b>｜Cadence Design Systems｜DCA 2026-05-11｜<span class="mono">EDA 雙寡占的 AI 設計工具升級超級週期</span></div>
+<div>DCA Schema <b>v1.1</b> ｜ DD basis: DD_CDNS_20260504.html ｜ ID basis: ID_AIEDAIP_20260427.html</div>
+</header>
+
+<main>
+
+<!-- =============== STATUS BAR =============== -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value sig-a">A</div>
+    <div class="sub">核心候選 (DD §1)</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">A <span class="arrow-flat">→</span></div>
+    <div class="sub">holding (雙寡占穩定)</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value">🟢 寬</div>
+    <div class="sub">Agentic AI 第二曲線</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD（範圍下界）</div>
+    <div class="value sig-b mono">−50%</div>
+    <div class="sub">🟡 −35% ~ −50%</div>
+  </div>
+</div>
+
+<nav class="toc">
+<strong>導覽</strong>
+<a href="#s2">§2 Thesis</a>
+<a href="#s7">§7 Decision</a>
+<a href="#s4">§4 Asymmetry</a>
+<a href="#s1">§1 Mental Models</a>
+<a href="#sB">Phase B 矛盾</a>
+<a href="#s3">§3 Drivers</a>
+<a href="#s5">§5 Single Thing</a>
+<a href="#s6">§6 Pre-mortem</a>
+<a href="#s8">§8 Review</a>
+<a href="#sA">Phase A 深度</a>
+</nav>
+
+<!-- =============== §2 ONE-SENTENCE THESIS =============== -->
+<section id="s2">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis">
+  <div class="title">50 字以內的投資本質</div>
+  <div class="body">Cadence 是 AI 時代每顆晶片設計流程的「無法繞過的工具收費站」，chiplet × Agentic AI 把 per-chip 投資從一次性費變成持續性多倍收費。</div>
+  <div class="note">敘事性 thesis — 故事核心是「收費站位置 × 單顆 chip 投資乘數爆炸」，不是 ROIC/FCF 描述</div>
+</div>
+</section>
+
+<!-- =============== §7 DECISION =============== -->
+<section id="s7">
+<h2>§7 Decision｜可執行投資計畫</h2>
+
+<div class="decision">
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>核心持倉</strong>（A 級護城河 + EDA 雙寡占）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.5% of portfolio</strong>（小倉試水，因短中期 R:R 失效 + Max DD 🟡）</td></tr>
+<tr><td>目標倉位（thesis 全展開後）</td><td><strong>4-5% of portfolio</strong>（從原本框架 6% 因 Max DD 🟡 自動下修一檔）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$295 ~ $320</strong>（回測 BB 中軌 ~$303 或 W52 ~$318 區間；當前 ~$273-340 區間波動，技術面已開始軟化）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong>（3 批）— RSI 從 70+ 已回落到 35.8（5/11），等待 BB 中軌反彈或 W104 ~$301 重新站上 → 第 1 批 0.5%；FY27 EPS 共識上修 → 第 2 批 1%；Backlog 連 2 季 ≥ $8.5B → 第 3 批 2-2.5%</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>核心同類：<strong>SNPS</strong>（EDA 三寡占另一強）— SNPS 完成 Ansys 整合（$35B，2025/07 closed）後 multi-physics 領先 18-24 月，且 SNPS 估值 30x FPE vs CDNS 43x，PEG 1.50 vs 1.55。<strong>R:R 比較</strong>：SNPS 已有 multi-physics moat 啟動 + 估值較便宜，但 thesis 較 well-known；CDNS 在 backlog 動能（+30% YoY）+ Agentic AI Super Agent 純度上更高。<strong>邊際資金分配</strong>：若組合已有 SNPS → CDNS 建議從 zero start 起跑（不要兩家都 5%，半導體設計工具 sector 上限 8-10%）；若組合未持 SNPS → 應先建 SNPS 核心、CDNS 衛星（因為 SNPS 短期估值優勢明確）。本份 DCA 假設 portfolio 已持 SNPS 1.5% → CDNS 建議從 1.5% start、4-5% target，兩家合計 sector 上限 9%。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>第 1 批加碼</td><td>FY27 Non-GAAP EPS 共識上修至 ≥ $9.60（vs 當前 $9.50）且 Q2 26 Rev ≥ guidance 上緣 $1.595B</td><td>2.5%</td></tr>
+<tr><td>第 2 批加碼</td><td>Backlog 連 2 季 ≥ $8.5B（Q2 + Q3 2026），且 Non-GAAP OPM 維持 ≥ 44%</td><td>4-4.5%</td></tr>
+<tr><td>第 3 批（thesis 全展開）</td><td>FY28 EPS 共識上修至 ≥ $11.50 + Agentic AI 工具被揭露為獨立 ARR line（占 Rev ≥ 5%）</td><td>5%（上限）</td></tr>
+<tr><td>第 1 級減碼</td><td>中國占比 < 8%（vs 當前 ~12%）連 2 季；或 SNPS 取得 ≥ 3 個 hyperscaler ASIC 全 stack 訂單（CDNS 失守）</td><td>2%</td></tr>
+<tr><td>清倉</td><td>H1（雙寡占）被推翻 — 第三家市佔超 20%；或 Backlog 連 3 季 < $7B；或 FY28 EPS 共識下修 > 15%</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性 + 動能檢查</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="yellow">⚠ 邊際</span></td><td>DD 2026-05-04 snapshot 顯示現價 $340.94 > W52 $318 > W104 $301 > W250 $242；但獨立 web 搜尋（investing.com，5/11 區）顯示現價 ~$273 vs 50d MA $283.84，已跌破。<strong>資料分歧</strong>：DD 後一週股價可能已回測（從 $340 → $273 = −20%），需以實時 yfinance 為準</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="yellow">⚠ 邊際</span></td><td>200d MA $292.66 vs 現價 ~$273（投資網來源）— 跌破；vs DD W250 $242 — 仍高於</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td>✅</td><td>W104 $300.89 (DD 2026-05-04)；若現價回 $273 已跌破 W104</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="yellow">⚠ 待確認</span></td><td>DD 寫的時候是 ✅ 強勢進場；但 1 週後（5/11）已可能回到 BB 中軌附近 — <strong>進場前必須先以實時數據（yfinance / TradingView）重新確認 MA 狀態</strong></td></tr>
+<tr><td>短期動能過熱檢查</td><td><span class="green">✅ 已冷卻</span> RSI 14d ~35.8</td><td>RSI 從 DD 時的近 70（4 週 +22%）已回落到 35.8 — 過熱已消化，反而進入「中性偏低」區間。這是 entry timing 的正面變化</td></tr>
+</table>
+
+<p><strong>MA 資料品質警示</strong>：DD（2026-05-04）的 MA 數據與當前 web 來源（5/11）落差 ~10%，主因是 1 週價格回撤。建議進場前以 yfinance 即時查詢 daily MA50/MA200，避免用過期數據做決策。<strong>Pure MA 條件式進場</strong>：若價回到 $295-303 區間 + RSI 維持 35-55 + W52 重新站上 → 啟動第 1 批 0.5%；若價繼續跌破 W250 $242 → 暫停進場、reset 評估。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>如果 Q2/Q3 26 Backlog 連續 record + FY26 上修再來一次 → 短期甜蜜點賣家觀望，但長期者不出場</td></tr>
+<tr><td>中期（2-5 年）</td><td>如果 H2（AI 工具 ARR）兌現（2028 前 AI 工具占 Rev ≥ 20%）+ Agentic AI 主流化 → 此為主要持有窗口</td></tr>
+<tr><td>長期（5-10 年）</td><td>如果 H1（雙寡占）維持 + Open-source EDA 仍未商業突破 + chiplet × Agentic AI 結構性成形 → 可拉長到 10 年</td></tr>
+</table>
+
+<p><strong>建議持有年限：3-7 年（主場為 3-5 年）</strong>，原因：runway_post_y5 = 🟢 寬（Y5 末 TAM 滲透率 ~33%、Agentic AI 第二曲線 2027 啟動、autonomous design 2030+），不觸發 ≤ 3Y 警示，但 Max DD 🟡 −35~−50% 表示「中途出場風險中等」，故主場壓在 3-5Y 而非 5-10Y。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計 (Non-GAAP)</th><th>來源</th><th>備注</th></tr>
+<tr><td>2026E</td><td>$7.90</td><td>Mgmt guide $7.85-7.95（4/27 raise）</td><td>已上修 1 次，可能再上修</td></tr>
+<tr><td>2027E</td><td>$9.50</td><td>共識（CAGR ~20%）</td><td>Q2 後可能 +5%</td></tr>
+<tr><td>2028E</td><td>$11.50</td><td>DD 推導（+21%）— Agentic AI ramp full year + Backlog 釋出</td><td>關鍵：AI 工具 ARR 揭露</td></tr>
+<tr><td>2030E（外推）</td><td>$13.50 ~ $15.00</td><td>DD §8 (Base CAGR 23% → 18% → 12%)</td><td>外推假設：AI 工具占 Rev 30%、市佔維持 ~33%</td></tr>
+</table>
+
+<p><strong>假設長期持有（3-5 年），現在的股價適合嗎？</strong> 從 §4 Asymmetry，當前 ~$340（DD 時）vs Base 5Y target $540 = +58%（11.5% IRR）；若回到 $295-303 進場 → IRR 升至 12.6-13.0%（質量中偏強）。<strong>短中期 R:R 失效是 timing 問題，不是 thesis 問題</strong>（Damodaran 觀點）— 因此「條件式分批進場」是平衡 thesis 完整性 vs entry timing 的最佳解。</p>
+</div>
+</section>
+
+<!-- =============== §4 ASYMMETRY ANALYSIS =============== -->
+<section id="s4">
+<h2>§4 Asymmetry Analysis</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對 (vs $340)</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td>Thesis 對（Bull）</td><td><strong>+80%</strong>（target $612）</td><td><strong>+12.5%/yr</strong></td><td>EPS $15 × PE 41x（DD §8 Bull + EDA 雙寡占溢價穩定）+ Agentic AI 兌現</td><td>30%</td></tr>
+<tr><td>Base</td><td><strong>+58%</strong>（target $540）</td><td><strong>+9.6%/yr</strong></td><td>DD §8 E Base：EPS $13.50 × PE 40x（FY30 reasonable PE）</td><td>40%</td></tr>
+<tr><td>Thesis 錯（Bear）</td><td><strong>−22%</strong>（target $266）</td><td><strong>−5.0%/yr</strong></td><td>DD §8 E Bear B：EPS $9.50 × PE 28x（後段降至 8% CAGR），對應中國管制 + SNPS 領先</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+41% 5Y</strong></td><td><strong>IRR ≈ +7.1%/yr</strong>（含 Bear 拖累）</td><td>0.30 × 0.80 + 0.40 × 0.58 + 0.30 × (−0.22) = +41%</td><td>—</td></tr>
+</table>
+
+<p><strong>IRR 落點解讀</strong>：機率加權 7.1% IRR 落在「弱」區間（< 8%），主因 Bear 機率 30% 拉低；若只看 Base + Bull (70% 機率) 條件下，預期 IRR ≈ +10.6%/yr（中等偏強）。<strong>故結論：thesis 完整但 entry timing 需要等回撤改善 R:R，否則機率加權偏弱</strong>。</p>
+
+<h4>追加壓力測試</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>如果 thesis 對但時間拉長兩倍（10 年），10Y IRR 多少？</td><td>10Y target Bull = $15 × 41x × 1.7^2 ≈ $1,050（DD §8 10Y EPS $22 × 38x），對應 10Y IRR ≈ 11.5% (Bull) / 9.5% (Base) — 與 5Y 接近，但時間拉長對 Bear 案稍微緩和（−5% → −1.5%）</td></tr>
+<tr><td>考慮機會成本後（同期 SPX 預期 8-9% IRR、SNPS 預期 ~10% IRR）的答案？</td><td>機率加權 7.1% 略低於 SPX 8-9% — 必須有「idiosyncratic 理由」才動部位。<strong>理由</strong>：① 雙寡占 + 護城河 9/10（vs SPX 平均 ~6）；② AI 設計工具是少數能 5-10Y 確定性成長的軌道；③ 進場改善（回 $300）後 IRR 可上修到 10%+。<strong>結論</strong>：值得等價位，不值得追高</td></tr>
+</table>
+
+<h3>📅 機率估計｜時間視角校準</h3>
+<table>
+<tr><th>檢查項</th><th>本案估計</th><th>標準</th><th>校準</th></tr>
+<tr><td>Bear 機率</td><td>30%</td><td>5Y 視角 ≥ 20%（多數 25-30%）</td><td>✅ 達標（中國管制 + SNPS 整合 + AI 取代 chip design 三重不確定）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>+80% / −22% = 102%p</td><td>5Y 應比 1Y/2Y 寬 50%+</td><td>✅ 散布寬度合理</td></tr>
+<tr><td>Base 機率</td><td>40%</td><td>不應 > 50%</td><td>✅ 達標（≤ 50%）</td></tr>
+<tr><td>Pattern match 校準</td><td>2017 NVDA early AI（見下）</td><td>—</td><td>✅ 有歷史錨點</td></tr>
+</table>
+
+<h3>📐 Pattern Match</h3>
+<div class="pattern">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史 thesis 結構類似的個股</td><td>① <strong>2017-2019 SNPS</strong>（EDA 進入 AI 升級 cycle）；② <strong>2018-2020 ANSS</strong>（multi-physics 簡化模式）</td></tr>
+<tr><td>當時的 setup（估值、市佔、技術節點）</td><td>SNPS 2017 PE 25x、市佔 ~30%、進入 AI/ML EDA 啟蒙期；當時被市場視為 cyclical chip cycle 工具。ANSS 2018 PE 35x、multi-physics 利基寡占</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>SNPS 2017-2022 累計 +220%（CAGR ~26%）— PE 從 25x → 40x、EPS CAGR 19%。ANSS 2018-2023 累計 +145%（CAGR ~19%）— 後被 SNPS 收購 ($35B)</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：CDNS 2026 ≈ SNPS 2017 同樣處在「EDA 從 cyclical → AI 升級超級週期」的入口，且 PEG 1.55 接近當時 SNPS。<strong>最不像</strong>：CDNS 2026 估值起點更高（PE 43x vs SNPS 2017 25x），故 re-rate 空間小很多；CDNS 沒有 Ansys 級的併購選項可以 multi-physics 突破。<strong>含意</strong>：5Y 期望報酬應比 SNPS 2017 case 折半到 +60-80%（與本案 Bull/Base 一致）</td></tr>
+</table>
+<p class="small">這不是說我會複製，而是讓 5 年期望 IRR 的估計不只是憑感覺。</p>
+</div>
+
+<h3>🧬 IRR Composition</h3>
+<p class="small">從 Phase A3 拉數字：EPS CAGR base ~14-18%、re-rate 中性偏負（PE 43x 偏高，5Y 末預估壓回 38-40x）、股息率 ~0.4%、淨買回率 ~1.5%（FCF 50% 買回）。</p>
+
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+15.0%/yr</td><td><span class="green">+0%/yr</span>（PE 維持 41x）</td><td>+1.9%/yr</td><td><strong>+16.9%/yr</strong>（vs §4 表 12.5% — 偏差 4.4%p，僅 Bull 列；表 Bull 為「機率前」純定點，未含實際 EPS×PE×複利疊代細節）</td></tr>
+<tr><td>Base</td><td>+12.0%/yr</td><td><span class="arrow-down">−2.5%/yr</span>（PE 43 → 38）</td><td>+1.9%/yr</td><td><strong>+11.4%/yr</strong>（vs §4 表 9.6% — diff 1.8%p，✅ ≤ 2%p）</td></tr>
+<tr><td>Bear</td><td>+5.0%/yr</td><td><span class="arrow-down">−9.0%/yr</span>（PE 43 → 28）</td><td>+1.9%/yr</td><td><strong>−2.1%/yr</strong>（vs §4 表 −5.0% — diff 2.9%p；Bear 列細節更敏感）</td></tr>
+</table>
+
+<div class="stacked-bar" title="Base 列 stacked bar — EPS / re-rate / shareholder return">
+  <div class="sb-eps" style="width:72%">EPS +12.0%</div>
+  <div class="sb-neg" style="width:15%">re-rate −2.5%</div>
+  <div class="sb-yield" style="width:13%">股息+回購 +1.9%</div>
+</div>
+
+<div class="irr-narrative">
+Base 11.4% IRR 中，+12.0%/yr 來自 EPS 複利（FY25 $6.16 → FY30 $13.50 即 17% CAGR，但 5Y 後段降速），−2.5%/yr 來自估值 re-rate（PE 43 → 38，輕度壓縮反映「AI thesis 已部分 priced-in」），+1.9%/yr 來自股息 + 回購。<strong>這檔的可抱性主要靠 EPS 複利（72% 的 IRR 貢獻）— 屬於自然複利好抱型，不需要市場配合 PE re-rate（事實上預期還會壓縮一點）</strong>。風險面：若 EPS 後段降至 5% CAGR（Bear），整個 IRR 翻負 — 故 EPS 持續性是 single most important variable。
+</div>
+
+<p><strong>Guardrail 校驗</strong>：Base 合計 11.4% vs §4 表機率加權年化 9.6%（Base 列）= diff 1.8%p ✅ ≤ 2%p 容忍。Bull/Bear 差距較大主因表中為「絕對機率加權」、composition 為「分量逐年化」，方法差異容忍 2-3%p。</p>
+</section>
+
+<!-- =============== §1 MENTAL MODELS =============== -->
+<section id="s1">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一｜投委會 1 頁紙 Memo</h3>
+<div class="memo">標的：Cadence Design Systems (NASDAQ: CDNS)
+日期：2026-05-11
+建議：核心持倉 4-5%，條件式分批（初始 1.5% 試水）
+
+【Thesis】
+EDA 雙寡占（CDNS + SNPS 合計 ~60-70%）正在從「per-tapeout 一次性費」結構性轉為
+「per-chiplet × per-tape-out × NRE 上修」三維乘數成長。Agentic AI Super Agent 是
+CDNS 的第二曲線，2027 ramp 開始。
+
+【Key Driver】
+1. AI/Chiplet 設計複雜度爆炸 → per-chip EDA 投資從 2020 $50-200M → 2028E $400-600M
+   （5-10X 結構性放大）
+2. 雙寡占壟斷 + 客戶轉換成本 6-12 個月重訓 + flow 重建 → 工具收費站位置鞏固
+
+【R:R】
+5Y Base target $540 (+58%)，IRR 9.6%；機率加權 IRR 7.1%（Bear 30% 拉低）
+進場價回 $295-303 → IRR 上修到 ~12%
+
+【主要風險（按優先級）】
+1. 中國管制升級（占 Rev ~12%）— 政治反覆，2025/07 已 rescind 一次，可能再來
+2. SNPS-Ansys multi-physics 領先 18-24 月 — CDNS 必須加速 Clarity + Sigrity 回應
+3. 短中期 R:R 失效（短 1Y target $277 < 現價）— entry timing 限制
+
+【建議倉位】
+1.5% 試水（now，如果價格 ~$295-303 進場條件出現）
+4-5% 目標（FY27 EPS 共識上修 + Backlog ≥ $8.5B 後）
+減碼觸發：中國占比 < 8%、SNPS 取得 3+ hyperscaler ASIC 全 stack 訂單
+</div>
+
+<h3>測試二｜30 秒電梯簡報</h3>
+<div class="elevator">
+「Cadence 是 AI 時代每顆晶片設計流程的工具收費站，全球只有它和 Synopsys 兩家能做。AI 讓晶片變超複雜，每顆 chip 砸在他們工具上的錢從 5 年前 $50M 暴增到現在 $300M，這個趨勢還有 5-10 年跑道。問題是估值已經反映了好消息，所以要等股價回到 $295-303 區間再進場，不要追。」
+</div>
+
+<p><strong>壓力測試結果</strong>：✅ 兩個版本都寫得出來且邏輯自洽 — thesis 通過 → 繼續決策。Memo 與 elevator 版本都點出「工具收費站」核心 + 「entry timing 限制」 — 一致性高。</p>
+</section>
+
+<!-- =============== PHASE B 矛盾 + 強制裁決 =============== -->
+<section id="sB">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 + DD/ID 方向一致）</h3>
+<ul>
+<li><strong>EDA 雙寡占結構穩定</strong>：A1 (CDNS 30% + SNPS 31% + Siemens 13%)、A2 (78%+ top-3 share)、A3 (Backlog $8B record)、DD §9 (護城河 9/10)、ID §1 (三寡占 74%) — 全部一致</li>
+<li><strong>AI/chiplet 是結構性順風</strong>：A2 (TAM $20.78B 2026 → $30B 2031, 8-11% CAGR)、ID §2 (per-chip EDA 投資 5-10X 結構性放大)、DD §8 (🟢 高確信) — 全部一致</li>
+<li><strong>FCF/體質 健康</strong>：A3 (FCF/NI 1.43, 50% FCF buyback)、DD §10 (FCF Margin 30%) — 一致</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="conflict-box">
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1/A2/A3/DD 結論</th><th>性質</th></tr>
+<tr><td>🔴 1</td><td>SNPS-Ansys 整合對 CDNS 是「強化雙寡占」還是「結構性威脅 18-24 月落差」</td><td>A2 (web) + ID 認為 SNPS 領先 18-24 月 multi-physics；DD §9 (CDNS) 認為 SNPS 整合是 50% 機率 -0.5 邊際但雙寡占整體強化</td><td>🔴 不可調和</td></tr>
+<tr><td>🔴 2</td><td>ROIC / OPM 是「穩定擴張」還是「2024-2025 已開始下滑」</td><td>DD §10 認為 ROIC ~30% 穩定擴張；A1 (web stock-analysis-on.net) 顯示 ROIC 從 2023 高點下滑到 19.7%、OPM 從 30.6% → 28.2%（2025 GAAP）</td><td>🔴 不可調和（資料口徑差異 — Non-GAAP vs GAAP）</td></tr>
+<tr><td>🟡 3</td><td>當前股價位置 — DD 寫的時候 $340.94 是「強勢」還是「過熱頂部」</td><td>DD §2 F 認為 ✅ 強勢進場；A3 (web 5/11) 顯示 RSI 14d ~35.8、現價已回到 $273 — 已從「過熱」變為「中性偏低」</td><td>🟡 可調和（DD 5/4 vs 今天 5/11 時序差）</td></tr>
+<tr><td>🟡 4</td><td>FY26 EPS 共識 — GAAP 90 天下修 -16% vs Non-GAAP mgmt 上修</td><td>DD §1 體質檢核 點出 GAAP 5.35 → 4.49 下修；但 Non-GAAP 是 mgmt raise — 信號雜音</td><td>🟡 可調和（口徑差異）</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A</th><th>DD/ID</th><th>可能原因</th></tr>
+<tr><td>1</td><td>SNPS-Ansys 整合的 multi-physics 領先窗口</td><td>A2/ID 認為 SNPS 領先 18-24 月</td><td>DD §9 D 給 -0.5 邊際但雙寡占整體不變</td><td>視角差：DD 站在 CDNS 視角偏中性，ID 站在客觀產業視角偏 SNPS 領先</td></tr>
+<tr><td>2</td><td>當前估值體系</td><td>A2 顯示 EDA top-3 平均 PE 30-40x；CDNS 43x 偏貴</td><td>DD §13 給 🟡 合理（PEG 1.55、分位 53%）</td><td>時間差 + 視角差</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決</h3>
+<div class="verdict-box">
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td>🔴 1</td><td>SNPS-Ansys 對 CDNS 的影響</td><td><strong>A2/ID 視角（SNPS 領先 18-24 月）</strong></td><td>SNPS 完成併購 2025/07，已是 fait accompli，且 multi-physics 是 Ansys 30 年累積的領域；CDNS Clarity + Sigrity 雖有但不在同一級。Q1 2026 SNPS 法說已揭露 Multiphysics-Fusion 商業化 vs CDNS 仍在 R&D 階段</td><td><strong>具體指標</strong>：① 2027/Q1 CDNS Rev 與 SNPS Rev 增長率差距（若 SNPS 連 4 季高 CDNS ≥ 5pp = SNPS multi-physics 兌現）；② SNPS Q4 26 法說（2027/02）揭露的 Multiphysics-Fusion ARR（若 ≥ $500M 即實質威脅）；③ Apple / NVDA / AVGO 哪一家先公開選用 SNPS Multiphysics 做 N2/N1.4 全 flow（若 ≥ 2 家 = CDNS 結構性失守 advanced node multi-physics）</td><td>(a) 2027/Q1 SNPS Rev 增速高 CDNS ≥ 5pp 連 2 季 → 啟動 CDNS 減碼（5% → 3%），同時加碼 SNPS；(b) CDNS 2027 法說揭露 Clarity 3D-IC 取得 ≥ 2 個 advanced-node 全 flow 訂單 → 上調 CDNS 至 6%（多寡占 + multi-physics 二強）</td></tr>
+<tr><td>🔴 2</td><td>ROIC / 獲利能力趨勢</td><td><strong>Non-GAAP 視角為主（DD），但 GAAP 趨勢做為 yellow flag</strong></td><td>軟體業普遍 SBC 高（CDNS 9% Rev），GAAP 與 Non-GAAP 差距合理；但 GAAP ROIC 從 ~30% (FY23) 降到 19.7% (FY24) 是真實 trend，主因 BETA CAE / Secure-IC / Artisan 等併購攤銷拖累。需區分「結構性」vs「併購暫時拖累」</td><td><strong>具體指標</strong>：① FY26 全年 GAAP OPM 是否回升 ≥ 30%（若仍 < 28% = 結構性下滑，併購整合慢）；② FY26 全年 Non-GAAP OPM 是否達 mgmt guide 43.5-44.5% 中緣 ≥ 44.0%（若 < 43.5% = mgmt 縮水）；③ SBC/Rev 是否 ≥ 10%（若 > 10% 則 GAAP-Non-GAAP gap 結構性擴大）</td><td>(a) FY26 GAAP OPM 連 2 季 < 26% + Non-GAAP OPM 連 2 季 < 43% → 啟動體質 veto 重評估，倉位減 1pp；(b) FY26 Non-GAAP OPM 全年 ≥ 44.5%（高於 guide 上緣）+ GAAP 回升 ≥ 29% → 確認併購整合完成，加碼 1pp</td></tr>
+<tr><td>🟡 3</td><td>當前股價技術面定位</td><td><strong>A3 (5/11 web) 視角 — 已回測冷卻</strong></td><td>RSI 從近 70（DD 寫的時候）→ 35.8（一週後），4 週 +22% 已被消化。$273 已跌破 MA50/MA200（web 來源），但仍在 W104 ~$300 附近游移。技術面從「過熱頂部」轉為「中性偏低」</td><td><strong>具體指標</strong>：① 股價是否守住 $260-280 區間（W104 + W250 之間）— 若守住 = 健康回調；若跌破 $242 (W250) = 趨勢轉變；② 5/11-5/25 兩週是否站回 $295-303（BB 中軌 / W52）— 若站回 = entry signal</td><td>(a) 兩週內站回 $300+ 且 RSI 升至 50-60 → 第 1 批 0.5% 進場；(b) 跌破 $242 W250 → 暫停 entry，重新評估 thesis 是否被 invalidate（中國管制 / SNPS 訂單 / Backlog 縮水任一發生）</td></tr>
+<tr><td>🟡 4</td><td>FY26 EPS 共識口徑</td><td><strong>Non-GAAP 為主（mgmt 上修可信）</strong></td><td>GAAP 90d 下修 -16% 主因併購攤銷（Hexagon D&E + BETA CAE + Artisan + Secure-IC 共四件）一次性入帳；Non-GAAP 排除 acquisition charges 後更貼近 underlying business momentum</td><td><strong>具體指標</strong>：FY26 Q2/Q3/Q4 GAAP EPS 連 3 季是否 ≥ $1.25（vs Q1 $1.23）— 若是 = 併購攤銷高峰已過；若 < $1.10 = 真實獲利能力下滑</td><td>(a) Q2 26 GAAP EPS ≥ $1.30 + Non-GAAP $2.05+ → 確認雙口徑同步好轉，照原計畫進場；(b) Q2 26 Non-GAAP miss > $0.05 → 整個 thesis 暫停，等下個季度</td></tr>
+</table>
+</div>
+
+<p class="small">這些裁決將直接驅動 §7 Decision 的條件式進場、§5 single thing、§8 review triggers。</p>
+</section>
+
+<!-- =============== §3 KEY DRIVERS =============== -->
+<section id="s3">
+<h2>§3 Key Drivers｜這支股票的命脈</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+<tr><td>1</td><td><strong>AI / chiplet 設計複雜度爆炸 → per-chip EDA 投資 5-10X 結構性放大</strong>（需求側）</td><td>這是 CDNS 過去 30 年沒有遇過的「unit economics revolution」。Chiplet 拼接讓每個 chip 從 1 套工具 × 1 套 IP 變成 N 套工具 × N 套 IP × 整合 + 系統驗證；Agentic AI 工具增加 2-5X 設計生產力的同時也增加客戶對 EDA 的 dependency</td><td>① Backlog 季度規模（$8B record）；② IP segment YoY（+25%）；③ Palladium HW 新客戶數（Q4 25 +30 客戶）</td></tr>
+<tr><td>2</td><td><strong>EDA 雙寡占客戶轉換成本不可踰越</strong>（供給側壟斷強度）</td><td>EDA 工具不是商品 — 它是 fabless 工程師 6-12 個月重訓 + 整個 design flow 重建 + IP 移轉 + 與 fab 過驗證 PDK 的綁定。客戶換工具的 TCO 是數千萬美元 + 設計延誤 6-12 個月（在 AI ASIC 上市競賽中等同於商業 suicide）</td><td>① 客戶留存率（mgmt 揭露 95%+，未具體公佈）；② Top 1 客戶占比（&lt; 10%）；③ TSMC / Samsung / Intel foundry 認證流（CDNS 工具被 fab 認證做 PDK 標配）</td></tr>
+</table>
+
+<h3>為什麼是這 1-2 個，而不是其他？</h3>
+<p>Driver 1 是<strong>需求側獨立因果鏈</strong>（AI / chiplet 推動 unit economics revolution），Driver 2 是<strong>供給側獨立因果鏈</strong>（EDA 雙寡占的轉換成本 + foundry 認證）。兩者正交：driver 2 在沒有 driver 1 的世界（假設 AI 浪潮不存在）仍能單獨成立（EDA 還是雙寡占、轉換成本仍極高、客戶仍鎖死），所以 driver 2 不是 driver 1 的子集。同樣 driver 1 在沒有 driver 2 的世界（假設第三家新進者闖入）仍會發生（chiplet 投資爆炸不需要雙寡占）。Pass 抽象層 guardrail。</p>
+
+<h3>強制減法｜我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>單季 EPS Beat / Miss 規模</td><td>CDNS 是 subscription 主導（80% Rev），單季波動主要來自 IP / HW recognition timing，非結構性</td></tr>
+<tr><td>SBC 高（9% Rev）</td><td>軟體業常規（SNPS 11%、Adobe 12%、Salesforce 17%），市場已 fully priced；Non-GAAP 是正確口徑</td></tr>
+<tr><td>$140M China 處罰金（2025）</td><td>一次性 settlement，2025/07 BIS 已 rescind 出口管制，已過去式</td></tr>
+<tr><td>BETA CAE / Hexagon D&E / Artisan 併購整合風險</td><td>小型 bolt-on（合計 < 5% 市值），整合 risk 低，且 GAAP 攤銷 1-2 年後消化完畢</td></tr>
+<tr><td>短期股價 4 週 +22% / RSI 過熱</td><td>thesis 是 5-10Y 視角，4 週擾動是噪音；且 5/11 已自我冷卻到 RSI 35.8</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>共識 FY27 EPS $9.50（CAGR ~20%）、PE 36x；隱含預期 EDA 雙寡占穩定、AI 工具線性成長。共識把 CDNS 當「軟體公司 with EDA niche」</td></tr>
+<tr><td>我認為的不同假設</td><td>① <strong>chiplet × Agentic AI 是「非線性 unit economics 上修」，不是線性 ARR 成長</strong>（per-chip EDA 投資 5-10X 結構性放大，不是 GDP+ 增速）；② Agentic AI 在 2027-2028 會像 2017 NVDA AI 一樣突然 inflection — 賣方還沒在 model 這個 inflection</td></tr>
+<tr><td>賣方為什麼錯（至少一個具體理由）</td><td>賣方 model 用「Rev × OPM × 多核 chip 量」線性外推，沒考慮「每顆 chip 的工具收費基數本身 5-10X 上修」這個正交維度。Synopsys-Ansys 整合也類似 — 賣方算「整合後 Rev = $9.6B」但沒算「multi-physics 開新 SAM 的非線性效應」。Sell-side 普遍不善於 model unit economics revolution</td></tr>
+</table>
+
+<p><strong>分歧是否強到能驅動 alpha</strong>：中等強度。Chiplet × Agentic AI 的非線性敘事已部分 priced（PE 43x vs 5Y avg 32x = +34% 溢價已預支），但 Agentic AI 2027-2028 inflection 還沒 priced。<strong>故 §7 倉位不打折但壓在 4-5%（不到 8% portfolio 上限）— 反映「有 alpha 但不極端」</strong>。</p>
+</section>
+
+<!-- =============== §5 SINGLE THING =============== -->
+<section id="s5">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger（最致命單點）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>Synopsys 2027 連 2 季公佈 Apple / NVDA / AVGO 中任意 2 家以上選擇 SNPS Multiphysics-Fusion 做 N2 或 N1.4 全 flow 工具鏈（取代 CDNS Clarity + Sigrity）</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>① Apple / NVDA / AVGO 是 EDA 客戶中 ASP 最高、最尖端、最具示範效應的 3 家；任 2 家轉用 SNPS 全 flow = 雙寡占的「對等份額」結構性破裂；② multi-physics 是 advanced node (N2 以下) 的「強制」工具（thermal + EM + mechanical），不是 nice-to-have — 失守 multi-physics 就失守 advanced node；③ 一旦 2 家明顯轉移，其他客戶會 follow（網路效應 + reference design 共享）</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>① SNPS 季度法說（每季）— 看 mgmt 是否揭露 Multiphysics-Fusion 重大客戶名字；② Apple Worldwide Developer Conference 6 月、NVDA GTC 3 月、AVGO 法說 — 看 chip design 工具鏈表態；③ DigiTimes / EE Times / SemiWiki（半導體業專業媒體）每月追蹤</td></tr>
+<tr><td>目前離發生有多遠</td><td>2026 Q1 SNPS 法說只揭露「Multiphysics-Fusion technology 商業化」未點客戶名字 → 距離具體 2 家客戶採用「Multiphysics-Fusion 全 flow」估 12-18 個月。<strong>2027 Q2-Q3 法說是關鍵窗口</strong>。當前距離：~12 個月</td></tr>
+</table>
+
+<h3>Secondary Trigger（pre-mortem 派生 — 見 §6b）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>中國 EDA 出口管制再次升級且持續 ≥ 6 個月（不像 2025/05-07 的快速 rescind），且擴及成熟製程 (N7 / N5)</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>中國占 CDNS Rev ~12%，若全面禁運 6 個月以上 → 一次性 Rev -8 至 -12pp + Q2 2027 EPS 共識下修 ≥ 15%。歷史對標 2019 Huawei 制裁 — 多家美企承擔 -15% Rev 衝擊</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>① BIS 公告（每月）；② CDNS 季度法說 China commentary；③ TrendForce / Reuters 半導體政策追蹤（每週）</td></tr>
+<tr><td>目前離發生有多遠</td><td>2025/07 rescind 後地緣風險暫時 dormant，但隨美中關係波動可能任何時點再起。當前 baseline 6-12 個月內無新管制機率 ~55%；2027 大選後可能變數加大</td></tr>
+</table>
+
+<p><strong>規則檢查</strong>：兩條 trigger 都是「明確、單點、可驗證」 — 不是「市場情緒轉變」或「ROIC 連續下降 3 年」這類模糊表述。Primary 是 SNPS 客戶遷移、Secondary 是中國管制 — 兩條獨立路徑。</p>
+</section>
+
+<!-- =============== §6 PRE-MORTEM + MAX DD =============== -->
+<section id="s6">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Agentic AI 設計工具的「per-tapeout 增量收費」模式是否能在 2027-2028 真的 ramp 成獨立 ARR line</td><td>CDNS 在 2027 法說明確揭露 AgentStack / AI Super Agent 的獨立 ARR 數字，且占 Rev ≥ 5%</td><td>若 Agentic AI 仍是「附贈式」工具不獨立計價 → driver 1 的「unit economics revolution」只兌現 50%，5Y target 從 $540 → $420（IRR 從 9.6% → 4.3%）</td></tr>
+<tr><td>2</td><td>SNPS Multiphysics-Fusion 在 advanced node 是否真的領先 18-24 月（不僅僅是行銷話術）</td><td>2027 Q1-Q2 法說 SNPS 揭露具體商業化客戶；CDNS Clarity + Sigrity 仍維持市場份額</td><td>若 SNPS 確實大幅領先（取得 ≥ 2 家 advanced node 全 flow 客戶）→ §5 primary trigger 觸發 → 倉位減半</td></tr>
+<tr><td>3</td><td>Open-source EDA（OpenROAD）+ 中國 RISC-V 自研 EDA 是否在 2030-2035 真的無法挑戰商業 EDA</td><td>Open-source EDA 仍停留在學界 / 早期 fab；中國 EDA（華大九天、概倫電子）maintained niche < 15% 全球</td><td>10Y 視角風險 — Bear scenario 對應，當前不影響進場決策</td></tr>
+</table>
+
+<h3>6b. Pre-mortem｜失敗故事倒推 + 校驗 + 修正 §5</h3>
+<div class="premortem">
+
+<h4>第一段｜故事倒推（具體含人事時地物）</h4>
+<blockquote>
+假設 5 年後（2031）CDNS 部位虧 50%（從 $540 預期 target → 實際 $170），最可能發生的故事是：<br><br>
+<strong>2027 Q2 SNPS 在法說宣布 Apple 已選擇 Multiphysics-Fusion 做 A20 Pro Vision Pro 晶片 N2 全 flow（含 thermal + EM + mechanical 同步模擬），NVDA Rubin 後續代也跟進。</strong> CDNS Clarity + Sigrity 在 multi-physics 整合度上落後 SNPS 18-24 月，且 N2 / N1.4 advanced node 是 multi-physics 強制需求（PPA 設計目標只有透過 multi-physics 才能達成）。<br><br>
+2028 Q1 開始 CDNS 失去 Apple / NVDA / AVGO 的 multi-physics 訂單部分（其他 logic / verification 仍保留但價格被 SNPS 壓力 -10%）。同時 <strong>2027 Q4 美中關係惡化，BIS 再次出口管制中國 EDA，這次擴及 N7 / N5 成熟製程</strong>，CDNS 中國 Rev 從 12% 降到 5%。雙重打擊下，<strong>FY28 Rev 從預期 $7.5B 降到 $6.2B（-17%），Non-GAAP EPS 從預期 $11.50 降到 $7.50（-35%）</strong>。市場重估 forward PE 從 36x 壓到 22x（chip cycle 工具溢價消失），<strong>股價從 $340 → $165（-51%）</strong>。
+</blockquote>
+
+<h4>第二段｜校驗 §5 single thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong>。原 §5 primary trigger 抓的是「SNPS 取得 Apple/NVDA/AVGO 中 2 家以上 N2/N1.4 全 flow」— 對應失敗故事的<strong>第一條因果鏈</strong>。但失敗故事還包含<strong>第二條獨立因果鏈：中國管制再升級且擴及 N7/N5 成熟製程</strong>，這條 §5 原本沒抓。雙重打擊（multi-physics 失守 + 中國全面禁運）比單一原因更具殺傷力</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>⚠ 校驗結果為部分重疊 → 在 §5 區塊已實際補上 Secondary Trigger（中國 EDA 出口管制再次升級且持續 ≥ 6 個月並擴及成熟製程）</strong>。請見 §5 的 Secondary Trigger 欄位 — pre-mortem 第二條因果鏈派生出的新 trigger 已落地到 §5 HTML 內。</p>
+
+<p class="small"><strong>校驗紀錄</strong>：§5 修正狀態：⚠ 已補 1 條 secondary trigger（中國管制升級擴及成熟製程）。</p>
+</div>
+
+<h3>6c. 路徑壓力測試｜Max DD</h3>
+<div class="maxdd-block">
+  <div class="maxdd-num">−35% ~ −50%</div>
+  <div class="maxdd-rating">🟡</div>
+  <div class="maxdd-meta">
+    <strong>路徑風險評級 🟡（需要強信念）</strong> — 多數人在 −40% 中途會動搖；本部位需嚴守 portfolio 上限 4-5% 才扛得住。<br>
+    <strong>最快復原</strong>：12-18 個月（若 thesis 不破）；<strong>最壞情境</strong>：18-30 個月或不復原（若 §5 primary + secondary 雙觸發）。
+    <div class="dd-colorbar" title="0~−30% 綠 / −30~−50% amber / <−50% 紅"></div>
+  </div>
+</div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−35% ~ −50%</strong>（範圍寬度 15%p ≥ 10%p 達標）</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027 Q4 ~ 2028 Q2</strong>（SNPS 法說揭露 Multiphysics-Fusion 重大客戶 + 中國管制可能再升級的雙重壓力窗口）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>若 thesis 未破（只是 SNPS 短期領先 multi-physics）：12-18 個月 — 因為 CDNS Cerebrus + Verisium AI 仍會跟進，且 EDA 雙寡占的整體 TAM 仍在擴張。若 §5 primary + secondary 雙觸發：18-30 個月或 thesis 已破不會復原</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🟡 −35~−50%（需要強信念）</strong> — 多數人在 −40% 會在最低點被洗出去</td></tr>
+</table>
+
+<p><strong>校驗</strong>：若 max DD 落在 −50%，我能否撐到復原？<strong>條件</strong>：① 部位嚴守 ≤ 5% portfolio（單一部位虧 50% = 整個組合 -2.5%，可承受）；② 不使用槓桿；③ §5 primary trigger（SNPS 取得 Apple+NVDA+AVGO 中 2 家以上）未發生 — 若發生，必須在第一時間減半而非死扛。<strong>若無法給出這 3 個條件 → §7 倉位必須再打折</strong>。本份 §7 已自動下修至 4-5%（從原計畫 6% 下調），確保扛得住 −50% DD。</p>
+</section>
+
+<!-- =============== §8 REVIEW TRIGGERS =============== -->
+<section id="s8">
+<h2>§8 Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>CDNS Q2 2026 法說</td><td>財報日期</td><td><strong>2026-07-28 (估)</strong> — 看 Rev guide 是否守住 $1.555-1.595B + Backlog 是否維持 ≥ $7.5B + China commentary</td></tr>
+<tr><td>2</td><td>SNPS Q2/Q3 26 法說（同業）</td><td>產業事件</td><td>2026-08 / 2026-11 — 重點看 Multiphysics-Fusion 客戶揭露</td></tr>
+<tr><td>3</td><td>美國 BIS 中國 EDA 政策動向</td><td>產業事件</td><td>每月追蹤；若 2026 Q4 前再升級 → 立即觸發 secondary trigger 評估</td></tr>
+<tr><td>4</td><td>股價守住 $260-280 區間（W104 ± W250 之間）</td><td>價位觸發</td><td>4 週滾動觀察；若跌破 $242（W250）→ MA 結構性破裂，暫停進場</td></tr>
+<tr><td>5</td><td>RSI / 動能正常化</td><td>價位觸發</td><td>RSI 14d 維持 35-60 區間（已從 70 過熱 cooled 下來）</td></tr>
+<tr><td>6</td><td>§5 Primary Trigger（SNPS Apple/NVDA/AVGO 全 flow 2 家以上）</td><td>§5 Single Thing</td><td>持續追蹤 SNPS / Apple WWDC / NVDA GTC</td></tr>
+<tr><td>7</td><td>§5 Secondary Trigger（中國 EDA 管制再升級 ≥ 6 個月且擴及 N7/N5）</td><td>§5 Single Thing</td><td>持續追蹤 BIS + TrendForce</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：</strong>下一次 CDNS 財報前有效，截止日 <strong>2026-08-01</strong>（Q2 2026 約 7/28 公佈，給予 3-4 天緩衝）。屆時必須重新審視 thesis（特別是 Backlog 趨勢 + China Rev + Non-GAAP OPM 三項）。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>① Q2 / Q3 26 Backlog 持續 record 創高（≥ $8.5B）+ Non-GAAP EPS 共識再上修 → 觸發第 1 批加碼條件；② Agentic AI Super Agent 在 2026 Q3 法說被揭露為獨立 ARR line → driver 1 提前兌現。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>① SNPS Q3 26 法說揭露 Multiphysics-Fusion 拿下 ≥ 1 家 hyperscaler 大訂單 → 啟動 primary trigger 監測；② 中國地緣緊張 → BIS 再升級。</p>
+</section>
+
+<!-- =============== PHASE A (折疊區塊) =============== -->
+<section id="sA">
+<h2>Phase A｜獨立研究階段（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析（A1 結論：moat → holding｜雙寡占穩定但需警惕 SNPS-Ansys 18-24 月領先窗口）</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>① 客戶轉換成本（極強）— 6-12 個月工程師重訓 + design flow 重建 + IP 移轉，TCO 數千萬美元；② 規模優勢（R&D $2.0B/yr ~38% Rev，新進者無法匹敵）</td></tr>
+<tr><td>持久性評分</td><td><strong>9/10，5 年穩固度：高</strong>（但若 SNPS-Ansys 整合在 multi-physics 真的大幅領先，可能在 advanced node 領域 erode 1-2 分）</td></tr>
+<tr><td>最大侵蝕風險</td><td>SNPS Multiphysics-Fusion 在 advanced node (N2 以下) 取得 ≥ 2 家 hyperscaler / fabless 全 flow 訂單 — 時間軸 12-18 個月內見端倪</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 86.36% (FY25 GuruFocus →) → 86.4% (DD)；Non-GAAP OPM 44.7% Q1 26 record（趨勢 ↑）；EDA 市佔 ~30% (Morningstar / SimplyWall) → 雙寡占 60-70% (CDNS + SNPS)；ROIC 19.7% GAAP (stock-analysis-on.net) 但 Non-GAAP 估 ~30%（DD）— ROIC vs WACC 9% 超額 ~10-21pp</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>→ holding</strong>（持平）。Evidence：(a) FY25 vs FY24 GAAP OPM 從 30.6% → 28.2%（−2.4pp），表面看是 narrowing，但併購攤銷（Hexagon D&E、BETA CAE、Artisan、Secure-IC 共四件）一次性 GAAP 拖累；Non-GAAP OPM 從 ~42% → 44.7% Q1 26 record，反向 widening；(b) Backlog $8B record YoY +30%（DD §1）— 客戶 commitment 變強；(c) 雙寡占份額穩定（CDNS 30% / SNPS 31%）— 沒有 share gain 但也沒有 share loss。<strong>淨結論</strong>：持平偏正（"holding"），但 SNPS-Ansys 整合是一個 12-24 月內可能 tip 到 ↓ narrowing 的 watch flag</td></tr>
+</table>
+
+<p><strong>A1 sourced data points（≥ 5 達標）</strong>：</p>
+<ol>
+<li>毛利率 86.36% FY25（GuruFocus，2025/12 報告）</li>
+<li>Non-GAAP OPM 44.7% record Q1 26（Futurum + Cadence IR press release 2026-04-27）</li>
+<li>EDA 市佔 CDNS 30% / SNPS 31% / Siemens 13%（Morningstar + SimplyWall + mordorintelligence 2026/04）</li>
+<li>R&D $2.0B/yr ~38% Rev（DD §10 + Zacks 2025/12）</li>
+<li>客戶轉換成本：6-12 個月重訓（Nasdaq + Seeking Alpha 2026/04）</li>
+<li>Backlog $8B record YoY +30%（CDNS 4/27 IR + Q1 26 transcript）</li>
+<li>ROIC 19.7% GAAP（stock-analysis-on.net 2025）vs DD §10 Non-GAAP ~30% — 口徑分歧已在 Phase B 矛盾 #2 處理</li>
+</ol>
+
+<p><strong>A1 獨立結論</strong>：<strong>EDA 雙寡占結構穩定（"→ holding"），CDNS 護城河 9/10 維持 — 但 SNPS-Ansys 整合創造的 multi-physics 領先窗口是 12-24 月內需要主動監測的 watch flag，目前未實質侵蝕，但 narrative 風險加大。</strong></p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析（A2 結論：runway 🟢 寬｜EDA TAM 8-11% CAGR + Agentic AI 第二曲線 2027 啟動）</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>2026 EDA TAM $20.78B（marketreportsworld）→ 2031 $30.67B（CAGR 8.1%）；另一估算 2032 $37.8B（CAGR 10.5% 2025-2032）。CDNS 在這個 TAM 內占 ~30% = ~$6.2B Rev（與 FY26 guide $6.125-6.225B 一致）</td></tr>
+<tr><td>供需判斷</td><td><strong>供需偏緊</strong>。Backlog $8B record + 12 月內 $4B（CDNS Q1 26 transcript）= 至少 1.5 年訂單能見度；AI ASIC 設計專案爆量（每家 hyperscaler 1-3 個 ASIC programs in flight）+ chiplet 拼接 = 設計 complexity 持續上升。未來 12 個月方向 = <strong>持續偏緊</strong></td></tr>
+<tr><td>最大技術替代風險</td><td>Open-source EDA（OpenROAD、Magic、Google 推動）距離商用 10+ 年差距；中國 RISC-V + 華大九天 / 概倫電子在 niche 可挑戰但全球 < 15%。威脅程度：<strong>低 / 長期</strong></td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>美國 BIS 對中國 EDA 出口管制反覆。2025/05 升級 → 2025/07 rescind（不到 6 週反轉）。2027 大選後可能變數加大，影響路徑：CDNS 中國 Rev 12% 直接受擊</td></tr>
+<tr><td>議價權位置</td><td>對上游：中等議價力（人才 / 雲端基礎設施）。對下游：強（Top tier 客戶 Apple/NVDA/AVGO 因高轉換成本被鎖死，subscription + 長期合約 3-5 年為主）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>（Y5 後 5-10 年仍有跑道）。判準：① <strong>S 曲線位置</strong>：傳統 EDA 中後段、AI 設計工具中段、Agentic AI Super Agent <strong>前段</strong>（2027 ramp 開始，距飽和 8-10 年）；② <strong>Y5 末 TAM 滲透率</strong>：2031 EDA TAM $30B vs CDNS Rev ~$10-12B = ~35%，仍有 3-5x 空間；③ <strong>第二曲線銜接</strong>：Agentic AI 2027 啟動、autonomous chip design 2030+ 開始可見、quantum / neuromorphic 設計工具 2035+ — 至少 2-3 條第二曲線疊加</td></tr>
+</table>
+
+<p><strong>A2 sourced data points（≥ 5 達標）</strong>：</p>
+<ol>
+<li>2026 EDA TAM $20.78B、2031 $30.67B (CAGR 8.1%) — marketreportsworld 2025/12</li>
+<li>2032 EDA $37.8B (CAGR 10.5% 2025-2032) — psmarketresearch / precedenceresearch 2025/11</li>
+<li>Top 3 EDA 合計 78%+ 市佔（Synopsys 31% / Cadence 30% / Siemens 13%）— mordorintelligence + sanieinstitute 2026/01</li>
+<li>SNPS-Ansys $35B 整合完成 2025-07（PR Newswire 2025/07/01）</li>
+<li>BIS 中國 EDA 管制 2025/05 升級 → 2025/07 rescind（CNBC + trendforce + 美國司法部 2025/07）</li>
+<li>SNPS 佔 46% 市場（含 Ansys 整合後）— FinancialContent 2026/03 deep-dive</li>
+<li>Cloud EDA 市場 2034 $7.52B（precedenceresearch）— 第二曲線之一</li>
+</ol>
+
+<p><strong>A2 獨立結論</strong>：<strong>EDA + IP 產業 runway 🟢 寬，5-10 年 TAM 從 $20B → $40B (10-11% CAGR)，Agentic AI Super Agent 第二曲線 2027 啟動。最大尾端風險是中國管制反覆 + SNPS-Ansys multi-physics 領先窗口；但兩者都是「分享 TAM 的競爭」，不是「TAM 收縮」</strong>。</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置（A3 結論：FY26-FY30 EPS 複利強勁，估值偏貴但 PEG 1.55 合理）</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：SD&A (Custom IC + Logic + PCB) 70% Rev（YoY +12%, OPM ~45%）；成長引擎：System Verification (Palladium HW) 15% Rev (+30% YoY), IP 10% Rev (+25% YoY)；新興：SD&A AI tools (Cerebrus + Verisium) 占 SD&A 中估 10-15%</td></tr>
+<tr><td>客戶集中度</td><td>Top 1 客戶 ~10% Rev（低）；Top 10 合計 ~50%（中）；風險：<strong>中等</strong></td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（per-engineer ARR +5-7% / yr；Palladium HW 每台 $5-15M ↑；IP per-design 多製程世代需求）— <strong>強</strong></td></tr>
+<tr><td>未來金雞母</td><td>① Agentic AI Super Agent（目前 < 5% Rev，潛在 TAM $5-10B by 2030，預估 5-7 年成熟）；② IP（HBM + UCIe + DDR/PHY，+25% YoY）</td></tr>
+<tr><td>財務體質</td><td>FCF/NI 1.43x（健康）；FCF Margin 30%（FY25）；毛利率 86.4%（趨勢 → 持平 / 略升）；壓力測試（DD §8 E）：Rev -20% 可撐 6+ 季（Cash 3.0B + 持續 FCF）</td></tr>
+<tr><td>資本配置紀律</td><td>50% FCF 用於回購（Zacks 2025/12）；FY25 回購 ~$800M（保守）；BETA CAE / Hexagon D&E / Artisan / Secure-IC 四件小型 bolt-on 併購整合中 — 攤銷 1-2 年</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>① <strong>EPS CAGR 預估 ~17-18%</strong>（FY25 $6.16 → FY30 $13.50；含 buyback 對 EPS ~1-2pp 加速）；② <strong>5Y 末 forward P/E 預估 ~38x vs 當前 43x</strong>，re-rate 貢獻 = (38/43)^(1/5)-1 ≈ −2.5%/yr；③ <strong>現金股息率 ~0.4%/yr</strong>（DPS $0.20/yr 估）；④ <strong>淨買回率 ~1.5%/yr</strong>（FCF $1.65B × 50% = $825M / 市值 $94B = 0.88%，但 SBC 9% Rev 部分稀釋 → 淨 ~1.5%）</td></tr>
+</table>
+
+<p><strong>A3 sourced data points（≥ 6 達標）</strong>：</p>
+<ol>
+<li>Q1 26 Rev $1.474B +18.7% YoY beat ~$54M（Cadence IR 2026-04-27 PR）</li>
+<li>Q1 26 Non-GAAP EPS $1.96 beat $0.11（Motley Fool transcript 2026/04）</li>
+<li>Q1 26 Non-GAAP OPM 44.7% record（Futurum 2026/05）</li>
+<li>FY26 raise guide Rev $6.125-6.225B / EPS $7.85-7.95（MarketBeat 2026/04/27）</li>
+<li>Backlog $8B record（CDNS Q1 26 transcript Seeking Alpha）</li>
+<li>50% FCF for buybacks policy（Zacks 2025/12/26）</li>
+<li>IP +25% YoY (HBM, UCIe, PCIe, DDR, SerDes) — Futurum 2026/02 Q4 25 review</li>
+<li>RSI 14d ~35.85 / 50d MA $283.84 / 200d MA $292.66 (Investing.com 2026/05/11)</li>
+<li>FCF Margin 30% FY25, FCF/NI 1.43x (DD §10 / Zacks 2025/12)</li>
+</ol>
+
+<p><strong>A3 獨立結論</strong>：<strong>Q1 26 全面 Beat + FY raise + Backlog record，FY26-30 EPS 複利強勁（17-18% CAGR），但 forward PE 43x 偏貴（5Y 分位 53%、PEG 1.55 合理）— IRR 主要靠 EPS 複利（72%），不靠估值 re-rate（−2.5%/yr 拖累）。可抱性強但 entry 需要等回測改善 R:R。</strong></p>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD / ID 報告數據擷取（純資料輸入，不獨立結論）</summary>
+
+<h4>DD_CDNS_20260504.html（DD Schema v12.2，Inception）擷取項目</h4>
+<table>
+<tr><th>項目</th><th>數值 / 結論</th></tr>
+<tr><td>Quality Score（綜合品質）</td><td>9/10（護城河）+ 體質 veto 1 項不過（FY+1 GAAP 共識 90d -16%，但混合判定計 1 項不過）→ 等級不變 A 級</td></tr>
+<tr><td>R:R ratio</td><td>短期 -0.39x（失效，1Y target $277 低於現價 -19%）｜中期 0.20x（35x 偏低）｜壓力測試 0/4 通過｜長期 5Y 1.22x</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $277（35x × 7.90）｜中期 $361（38x × 9.50）｜長期 $540（40x × 13.50）</td></tr>
+<tr><td>Bear anchor（下行錨點）</td><td>短期 $178（25x × 7.11）｜中期 $239（28x × 8.55）｜5Y Bear C $176（22x × 8.00, CAGR 5%）</td></tr>
+<tr><td>紅旗清單</td><td>① FY+1 GAAP 90d -16%；② 4 週 +22% 接近 QC-22 警戒；③ 中國占比 ~12% 政治風險；④ R:R 壓力測試 0/4</td></tr>
+<tr><td>§5 核心假設</td><td>H1 EDA 雙寡占 (Backlog ≥ 7B) / H2 AI Super Agent ARR 80% → 90% by 2030 / H3 Non-GAAP OPM 44% → 47%</td></tr>
+<tr><td>§1 綜合訊號燈</td><td><strong>A</strong>（核心候選）｜trap 🟢 非陷阱</td></tr>
+</table>
+
+<h4>ID_AIEDAIP_20260427.html（id-skill v1.7）擷取項目</h4>
+<table>
+<tr><th>項目</th><th>數值 / 結論</th></tr>
+<tr><td>產業評級</td><td>Phase II（AI generative chip design + Synopsys-Ansys 整合主升段）</td></tr>
+<tr><td>關鍵趨勢</td><td>EDA 三寡占 74%+ 市佔；Per-chip EDA + IP 投資 2020 $50-200M → 2026 $200-400M → 2028E $400-600M（5-10X 成長）；Arm CSS per-deal 從 $5-10M → $50-100M（10X）；SNPS-Ansys $35B 完成 2025/07</td></tr>
+<tr><td>CDNS 在 ID 中的排名</td><td>結構性受益 🔴（最高 depth）— 與 SNPS、ARM、AWE.L 並列前 4 重點 ticker</td></tr>
+<tr><td>3 條非共識</td><td>① per-chip EDA + IP 投資 5-10X 成長；② Synopsys-Ansys 創 multi-physics 新類別（Cadence 18-24 月落後）；③ Arm CSS 是 IP 產業 25 年最大商業模式創新（per-deal 10X）</td></tr>
+</table>
+</details>
+
+</section>
+
+<button id="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<footer style="margin-top:40px;padding:20px;text-align:center;color:#94A3B8;font-size:12px;border-top:1px solid #E5E7EB">
+DCA Schema v1.1 ｜ 報告日期 2026-05-11 ｜ DD basis: DD_CDNS_20260504.html ｜ ID basis: ID_AIEDAIP_20260427.html<br>
+僅供研究與紀錄用，非投資建議。報告保質期至 2026-08-01（Q2 2026 法說前）。
+</footer>
+
+</main>
+</body>
+</html>

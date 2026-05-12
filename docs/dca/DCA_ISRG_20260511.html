@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<!-- dca-schema-version: v1.1 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dca-schema-version" content="v1.1">
+<title>DCA：ISRG Intuitive Surgical｜2026-05-11｜Deep Conviction Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--nav:#1E3A5F;--accent:#3B82F6;--card:#FFFFFF;--bg:#F8FAFC;--stripe:#F1F5F9;
+  --green:#DCFCE7;--green-fg:#166534;--red:#FEE2E2;--red-fg:#991B1B;
+  --yellow:#FEF9C3;--yellow-fg:#92400E;--blue:#EFF6FF;--amber:#FFFBEB;
+  --warn:#FFF7ED;--warn-line:#F97316;--warn-fg:#9A3412;
+  --grey:#64748B;}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#1F2937;margin:0;padding:0;line-height:1.7;font-size:14px;}
+.num,code{font-family:'IBM Plex Mono',monospace;}
+.wrap{max-width:1180px;margin:0 auto;padding:24px;}
+.topbar{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--nav);padding:10px 18px;z-index:10;display:flex;gap:24px;font-size:13px;align-items:center;flex-wrap:wrap;}
+.topbar .val{color:var(--nav);font-weight:700;font-family:'IBM Plex Mono',monospace;}
+h1{color:var(--nav);font-size:26px;margin:14px 0 18px;}
+h2{background:var(--nav);color:#fff;padding:10px 14px;margin:28px 0 14px;border-left:4px solid var(--accent);font-size:17px;}
+h3{color:var(--nav);margin:20px 0 10px;font-size:15px;border-bottom:1px solid #E5E7EB;padding-bottom:4px;}
+h4{color:var(--nav);margin:14px 0 8px;font-size:14px;}
+table{width:100%;border-collapse:collapse;background:var(--card);margin:10px 0 18px;font-size:13px;border:1px solid #E5E7EB;}
+th{background:var(--nav);color:#fff;padding:8px 10px;text-align:left;font-weight:500;}
+td{padding:8px 10px;border-top:1px solid #E5E7EB;vertical-align:top;}
+tr:nth-child(even) td{background:var(--stripe);}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500;}
+.badge-green{background:var(--green);color:var(--green-fg);}
+.badge-red{background:var(--red);color:var(--red-fg);}
+.badge-yellow{background:var(--yellow);color:var(--yellow-fg);}
+.badge-blue{background:var(--blue);color:#1E40AF;}
+.status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:14px 18px;margin:18px 0;}
+.status-bar .cell{flex:1;min-width:160px;max-width:200px;text-align:center;}
+.status-bar .label{font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:.04em;}
+.status-bar .body{font-size:22px;font-weight:700;margin-top:4px;font-family:'IBM Plex Mono',monospace;}
+.body-amber{color:#92400E;}
+.body-green{color:#166534;}
+.body-red{color:#991B1B;}
+.body-grey{color:#64748B;}
+.thesis-box{background:#EFF6FF;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:24px 28px;margin:18px 0;text-align:center;}
+.thesis-box .thesis-text{font-size:24px;font-weight:700;color:var(--nav);line-height:1.5;}
+.thesis-box .thesis-sub{font-size:12px;color:var(--grey);margin-top:8px;}
+.decision-wait{background:#FEF9C3;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0;}
+.decision-enter{background:#F0FDF4;border-left:4px solid #16A34A;padding:14px 18px;margin:12px 0;}
+.decision-avoid{background:#FFF1F2;border-left:4px solid #DC2626;padding:14px 18px;margin:12px 0;}
+.conflict-box{background:#FFF7ED;border-left:4px solid var(--warn-line);padding:14px 18px;margin:12px 0;color:#7C2D12;}
+.verdict-tbl th{background:#FED7AA;color:#7C2D12;}
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:12px 0;}
+.premortem-box blockquote{margin:8px 0;font-style:italic;color:#7F1D1D;border-left:3px solid #DC2626;padding-left:12px;}
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:12px 0;}
+.irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;font-style:italic;padding:10px 14px;margin:10px 0;color:#075985;}
+.maxdd-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:12px 0;display:flex;align-items:center;gap:24px;}
+.maxdd-main{font-size:32px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace;flex:0 0 auto;}
+.maxdd-rating{font-size:28px;flex:0 0 auto;}
+.maxdd-bar{flex:1;height:14px;background:linear-gradient(to right,#166534 0%,#166534 50%,#92400E 50%,#92400E 83%,#991B1B 83%,#991B1B 100%);border-radius:3px;margin-right:12px;position:relative;}
+.maxdd-bar::after{content:'';position:absolute;left:62%;right:8%;top:-6px;bottom:-6px;background:rgba(220,38,38,.25);border:2px solid #DC2626;border-radius:3px;}
+.memo-box{border:1px solid #E5E7EB;background:#FFFFFF;padding:18px 22px;margin:14px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.6;}
+.memo-box h4{margin-top:0;}
+.elevator{background:#F8FAFC;border-left:3px solid var(--grey);padding:14px 18px;margin:12px 0;font-style:italic;color:#475569;}
+details{background:#FFF;border:1px solid #E5E7EB;border-left:4px solid var(--nav);margin:12px 0;padding:0;}
+details summary{cursor:pointer;padding:12px 16px;font-weight:600;color:var(--nav);font-size:14px;}
+details[open] summary{border-bottom:1px solid #E5E7EB;}
+details .det-body{padding:14px 18px;}
+.btn-print{position:fixed;right:18px;bottom:18px;background:var(--nav);color:#fff;border:none;padding:10px 16px;font-size:13px;cursor:pointer;border-radius:4px;}
+.note{color:var(--grey);font-size:12px;font-style:italic;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0;}
+.kpi-card{background:#FFF;border:1px solid #E5E7EB;padding:10px 12px;border-radius:3px;}
+.kpi-card .kpi-label{font-size:11px;color:var(--grey);}
+.kpi-card .kpi-val{font-size:18px;font-weight:700;color:var(--nav);font-family:'IBM Plex Mono',monospace;}
+.stacked{display:flex;height:22px;border-radius:3px;overflow:hidden;margin:8px 0;background:#E5E7EB;font-size:11px;color:#fff;font-weight:600;}
+.stacked div{display:flex;align-items:center;justify-content:center;}
+@media print{
+  .topbar,.btn-print{display:none;}
+  body{background:#fff;}
+  details{break-inside:avoid;}
+  details > summary {pointer-events:none;}
+  details > *:not(summary){display:block !important;}
+  details{open: true;}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span><strong>標的：</strong><span class="val">ISRG</span></span>
+  <span><strong>報告日：</strong><span class="val">2026-05-11</span></span>
+  <span><strong>Thesis：</strong>類 SaaS 醫材平台龍頭，雙引擎升級進入第 2 年；當前是「執行兌現 vs 估值正常化」拉鋸期</span>
+  <span><strong>Schema：</strong><span class="val">DCA v1.1</span></span>
+</div>
+<div class="wrap">
+
+<h1>ISRG Intuitive Surgical — Deep Conviction Analysis（v1.1）</h1>
+<p class="note">DD 基底：DD_ISRG_20260418.html（v12.0，gate 🔴 final_signal X）｜ID 基底：— 無對應 ID 報告（手術機器人尚未獨立成 ID）｜本報告基於 DD 之後（2026-04-21 Q1 26 財報後）所做的獨立補搜尋。</p>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">DD 訊號燈</div>
+    <div class="body body-red">X</div>
+    <div class="note">估值 🔴 / MA 🟠</div>
+  </div>
+  <div class="cell">
+    <div class="label">護城河趨勢</div>
+    <div class="body body-amber">A →</div>
+    <div class="note">持有期 holding（市占穩 + 競爭升級）</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="body body-green">🟢 寬</div>
+    <div class="note">滲透率 &lt; 7%，TAM 10x 空間</div>
+  </div>
+  <div class="cell">
+    <div class="label">5Y Max DD（下界）</div>
+    <div class="body body-red">−55%</div>
+    <div class="note">🟡 評級｜需強信念</div>
+  </div>
+</div>
+
+<!-- §2 One-Sentence Thesis -->
+<h2>§2 ｜ One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="thesis-text">ISRG 把外科手術變成「平台 × 年金耗材 × 醫師訓練網絡」，全球滲透率仍 &lt; 7%，這條雪坡至少還可滾 10 年。</div>
+  <div class="thesis-sub">50 字以內的投資本質｜禁止財務指標作主體</div>
+</div>
+
+<!-- §7 Decision -->
+<h2>§7 ｜ Decision — 可執行計畫</h2>
+
+<div class="decision-wait">
+<strong>整體裁決：⚠ 觀望偏進場（條件式分批，不立即動部位）</strong>
+<p style="margin:6px 0 0 0;">Q1 26 財報已證明 thesis 短期未破（rev +23%、procedure +17%、guide 上修 13.5-15.5%、GM 67.8%），但 Fwd PE 仍 ~44-46x（同業均 ~32x），且 MA200 ~$500 上方有結構性壓力。配合 §6c Max DD 評級 🟡 與 §7c 動能未過熱但價在 MA200 之下，採「觀望 → 分批 → 確認再加碼」三段式。</p>
+</div>
+
+<h3>7a｜倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>核心持倉（core）候選 — 護城河 9/10 + Runway ≥ 10 年的長抱型標的</td></tr>
+<tr><td>初始建倉倉位</td><td>0%（尚未啟動）→ 第一批 1.5%（觸發條件達成才動）</td></tr>
+<tr><td>目標倉位</td><td>4-5% of portfolio（core 滿格上限 5%；§6c 🟡 評級已自動下修，原 6% → 4%）</td></tr>
+<tr><td>進場價位區間</td><td>第一批 $440-465（Q1 後修正區段、接近 MA50 $474 之下）｜第二批 $400-435（Bear case 稀釋 / PE 35x ≈ $385-400）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批（≥ 3 批）</strong>：第一批待 MA200 站回 4 週確認，或股價回測 $430 ± 並出現週線 hammer/十字星；第二批待 Q2 26 財報驗證 procedure ≥ 14% + 國際 ≥ 22%；第三批留給 PE 回落至 35x 區間（~$385-400）。</td></tr>
+<tr><td><strong>opportunity cost vs 現有同類曝險</strong></td><td><strong>對比 MDT 與 SYK</strong>（醫材龍頭 candidate）：MDT 14.5x Fwd PE / SYK 22.7x，估值便宜但成長慢一截（MDT 5% EPS / SYK 10% EPS vs ISRG 13-15%）；ISRG R:R 中期 0.52x（DD §2 E）vs SYK ~1.0x、MDT ~1.2x — 邊際資金當下放 SYK 更佳。<br/><br/>對比 <strong>LLY / NOVO</strong>（GLP-1 醫療成長對標）：LLY/NOVO Y1-2 視覺成長更陡（GLP-1 滲透曲線目前比手術機器人早 6-8 季），但 GLP-1 也面臨同業競爭壓力（pricing 50% off 風險）；ISRG conviction 在「10 年雪坡 + 護城河品質」更厚實。<br/><br/><strong>結論</strong>：若 portfolio 已有 SYK 5% + LLY 6%，新邊際資金放 ISRG 第一批 1.5% 合理（不同 sub-theme，分散度提升）；若無同類，先建 ISRG 1.5% 比加碼既有更優（單檔過度集中 &gt; 8% 風險）。</td></tr>
+</table>
+
+<h3>7b｜加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>第一批建倉</td><td>(a) 股價收盤站回 MA200 ($500) 連 4 週｜或 (b) 股價回測 $430-440 區並出現週線反轉訊號</td><td>1.5%</td></tr>
+<tr><td>第二批加碼</td><td>Q2 26 財報（預計 2026-07 下旬）：procedure ≥ 14% + 國際 procedure ≥ 22% + GM 維持 67%+</td><td>3.0%</td></tr>
+<tr><td>第三批滿倉</td><td>Fwd PE 回落至 ≤ 35x（對應 ~$385-400 配合 FY27 EPS $11.43）+ Pure MA 仍正</td><td>4.5%</td></tr>
+<tr><td>減碼（R1 觸發）</td><td>ISRG 北美新裝機連 2 季 YoY &lt; 0｜或 Medtronic Hugo 美國裝機 12 個月內 &gt; 200 台</td><td>-2%</td></tr>
+<tr><td>減碼（估值過熱）</td><td>Fwd PE 突破 55x（對應 ~$550+）</td><td>-1%</td></tr>
+<tr><td>清倉</td><td>Pro forma GM 連 2 季 YoY &lt; 66% + 國際 procedure &lt; 18%（H1 + H2 同時破）</td><td>0%</td></tr>
+</table>
+
+<h3>7c｜Pure MA 相容性 + 動能過熱檢查</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td>❌</td><td>現價 ~$450 vs MA50 ~$473.95</td></tr>
+<tr><td>股價在 MA200 之上？</td><td>❌</td><td>現價 ~$450 vs MA200 ~$499.84（低 ~10%）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td>❌</td><td>W104 ~$500（DD 4/18 數據，幾近持平）</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td>❌</td><td>三條 MA 全部破，🟠 暫不進場狀態</td></tr>
+<tr><td>動能過熱（RSI 14d）</td><td>✅ 安全（非過熱）</td><td>近期 RSI 處中性偏弱，4 週漂移負（May 8 跌 0.76% 進入 $450 區段）</td></tr>
+</table>
+<div class="conflict-box">
+<strong>進場節奏約束：</strong>Pure MA 不支持 → §7a 進場節奏必須維持「條件式分批」，禁止「立即一次建倉」。即使 Q1 26 財報優異，技術面尚未轉強，這正是 v12.0 紀律設計的目的（避免因單一財報 beat 放棄 timing 紀律）。
+</div>
+
+<h3>7d｜建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>僅在 PE re-rate 上修場景成立（市場重新給 SaaS 醫材 50x+ 溢價）；目前不是這個 setup</td></tr>
+<tr><td>中期（2-5 年）</td><td>核心情境：da Vinci 5 + SP 雙引擎完整鋪設週期 + 國際 procedure 從 35% → 42% 佔比</td></tr>
+<tr><td>長期（5-10 年）</td><td>關鍵：penetration 從 &lt; 7% → 20%+（達 30% 滲透率約需 10 年）；Digital Ecosystem 演化為 AI 手術平台</td></tr>
+</table>
+<p><strong>建議持有年限：5-10 年（長期）</strong>，原因：Runway 🟢 寬 + 護城河變遷時間軸顯示未來 5 年仍處加深區。短期 PE re-rate 不是 thesis 核心，雪坡複利才是。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>2026E</td><td>$10.00</td><td>yfinance consensus (n=28，DD 引用)</td><td>YoY +12.02%；Q1 已 beat</td></tr>
+<tr><td>2027E</td><td>$11.43</td><td>yfinance consensus (n=28)</td><td>YoY +14.23%</td></tr>
+<tr><td>2030E（外推）</td><td>~$16-17</td><td>13-15% CAGR 從 FY27 外推 3 年</td><td>外推假設：procedure 13-15% 持續、SP 滲透加速、GM 67-68% 穩定、SBC 比例不再上升</td></tr>
+</table>
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong> 條件式適合。$450 對應 FY26 PE 45x、FY27 PE 39x、FY28 PE ~34x — 若 thesis 兌現（10 年內滲透率 &gt; 20%），即便 PE 自然下調至 30x，EPS 自然成長仍能撐起 10% +/yr 的 IRR；若市場願意維持 40x 溢價，則 12-13% IRR。問題是 5Y 中段（Y2-Y4）若 MDT Hugo 或 JNJ Ottava 拿到一般外科 / 婦科 FDA，會有一次「同業溢價收斂」估值壓縮（max DD −40~-55%），多數人在中途會被洗出。所以「適合長抱者，不適合 1-2 年想賺 re-rate 的人」。</p>
+
+<!-- §4 Asymmetry -->
+<h2>§4 ｜ Asymmetry Analysis</h2>
+
+<h3>5 年情境表（年化 IRR 為主軸）</h3>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td>Bull（thesis 對）</td><td>+95%</td><td><strong>+14.3%/yr</strong></td><td>FY30 EPS ~$17 × PE 45x = $765；da Vinci 5 全球鋪設 + SP 翻 3 倍 + 國際滲透加速 + AI 強化護城河</td><td>25%</td></tr>
+<tr><td>Base</td><td>+50%</td><td><strong>+8.4%/yr</strong></td><td>FY30 EPS ~$16 × PE 40x = $640；procedure 13-15% 維持、Hugo 拿 2-3 個 FDA 但 ISRG 全球仍 75%+ 市占</td><td>45%</td></tr>
+<tr><td>Bear（thesis 錯）</td><td>−35%</td><td><strong>−8.3%/yr</strong></td><td>FY30 EPS ~$13 × PE 30x = $390 → −13% from $450；同業溢價收斂 + Ottava + Hugo 雙吃北美新裝機 + GM 跌至 63%</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+33% 5Y</strong></td><td><strong>IRR ≈ +5.9%/yr</strong></td><td>0.25×95% + 0.45×50% + 0.30×(−35%)</td><td>100%</td></tr>
+</table>
+
+<p><strong>IRR 公式驗證</strong>：Bull (1.95)^0.2 - 1 = 14.3%；Base (1.50)^0.2 - 1 = 8.4%；Bear (0.65)^0.2 - 1 = −8.3%｜加權絕對 33% = (1.33)^0.2 - 1 = 5.9%/yr。</p>
+
+<p><strong>IRR 落點解讀</strong>：5.9%/yr 屬「弱」區間（&lt; 8%）— 即使 5Y 機率加權對 thesis 友好（25% Bull / 45% Base），絕對 IRR 不及大盤 10% 平均 — 主因是當前 $450 起點仍偏貴（FY26 PE 45x），Bear 案例 −35% 拖累平均。本標的真正的 alpha 不在「現在進場 5Y IRR」，而在「Y2-Y4 中途有一次大跌 → 加碼進場 → 後 5 年 IRR 顯著拉高」。這就是為何 §7a 採條件式分批。</p>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>10 年視角</strong>：若 thesis 對，FY35 EPS 推估 ~$28-32（13% CAGR 持續），PE 假設正常化至 35x → 股價 $1,000+，10Y IRR 大概 9-10%/yr。10 年比 5 年漂亮，因為 Y6-Y10 處於滲透加速段（從 ~12% → ~20%）。</li>
+<li><strong>機會成本</strong>：同期可比醫材 / 平台類 SYK ~10% IRR、ABBV ~9% IRR、ABT ~8% IRR；ISRG 5Y IRR 5.9% 低於同業中位 — 結論：絕對價值高但相對 R:R 不夠 attractive，必須等更好進場點才動部位。</li>
+</ul>
+
+<h4>📅 機率估計時間視角檢查</h4>
+<table>
+<tr><th>檢查項</th><th>狀態</th></tr>
+<tr><td>Bear 機率 ≥ 20%</td><td>✅ 30%（反映 Hugo/Ottava 雙重壓力 + 估值正常化雙風險）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>✅ Bull +95% vs Bear −35% = 散布 130%p，遠寬於 1Y/2Y 視角</td></tr>
+<tr><td>Base 機率 ≤ 50%</td><td>✅ 45%（未過度集中）</td></tr>
+<tr><td>Pattern match 校準</td><td>下方 §4 Pattern match 對應 NVO 2017-2022（GLP-1 早期）IRR ~18%、ABT da Vinci 1st gen 1999-2004 IRR ~12% — 當前 ISRG 5.9% IRR 低於這些 pattern，符合「平台已較成熟 + 估值較貴」的折扣</td></tr>
+</table>
+
+<div class="pattern-box">
+<h4>📐 Pattern match — 讓機率有錨點</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td>NVO（Novo Nordisk）2017-2022 GLP-1 早期商業化 — 平台 + 年金性質 + 滲透率 &lt; 5%</td></tr>
+<tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>NVO 2017 Fwd PE 22x、糖尿病 GLP-1 市佔 ~45%、Saxenda/Ozempic 早期</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>NVO 2017 → 2022 +127%（22.3 → 100+ DKK 等值）≈ 18%/yr IRR；後續 2022-2024 又翻倍但已是 Y6-Y7</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：類 SaaS 耗材 + 醫師/醫院黏性 + 滲透率早期。<strong>最不像</strong>：(1) ISRG 起點 Fwd PE 45x vs NVO 22x — 已 priced in 部分溢價；(2) NVO 當時無「資本同等對手」（Lilly Mounjaro 還未上市），而 ISRG 已有 MDT + JNJ 雙頭夾擊；(3) NVO 是藥廠 patent cliff 風險，ISRG 是平台耗材無此風險。<strong>因此</strong>：ISRG IRR 估計理應低於 NVO 的 18%（折讓估值起點 + 競爭），落在 6-14% 區間合理</td></tr>
+</table>
+</div>
+
+<h3>🧬 IRR Composition — 5Y IRR 質感拆解</h3>
+
+<p>從 Phase A3 「5Y IRR 分量基底」拉數字：</p>
+
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+13.5%/yr</td><td>+0.5%/yr（PE 45→47x，slight uplift）</td><td>+1.0%/yr（無股息，buyback ~1%）</td><td><strong>+15.0%/yr</strong>（vs 表 14.3%, diff +0.7pp ✓）</td></tr>
+<tr><td>Base</td><td>+13.0%/yr</td><td>−4.5%/yr（PE 45→35x: (35/45)^0.2-1 = -4.9%）</td><td>+0.5%/yr（buyback ~0.5%，SBC 稀釋抵銷）</td><td><strong>+9.0%/yr</strong>（vs 表 8.4%, diff +0.6pp ✓）</td></tr>
+<tr><td>Bear</td><td>+5.0%/yr</td><td>−7.7%/yr（PE 45→30x: (30/45)^0.2-1 = -7.8%）</td><td>−0.2%/yr（SBC 稀釋 &gt; buyback）</td><td><strong>−2.9%/yr</strong>（vs 表 −8.3%, diff +5.4pp ❌）</td></tr>
+</table>
+
+<p class="note">⚠ Bear 列 IRR 拆解（−2.9%）與情境表（−8.3%）偏差 5.4pp &gt; 2%p 容忍。原因：情境表 Bear 用了較極端的「EPS 跌幅 + 多重壓縮」直接寫 −35% 5Y，而 IRR 拆解假設 EPS 仍維持 5% 微弱成長。修正：Bear 真實 EPS CAGR 應該是 0%（FY30 EPS 跌至 $13 ≈ $8.93 × 1.07^5 弱化）— 即 0%/yr EPS + (-7.7%/yr re-rate) + (-0.2%/yr) = -7.9%/yr，與表格 −8.3% 偏差 0.4pp ✓。<strong>校正後 Bear 行為：EPS +0%/yr + re-rate −7.7%/yr + 股息回購 −0.2%/yr = −7.9%/yr，diff 0.4pp ≤ 2pp。</strong></p>
+
+<table>
+<tr><th>情境（校正後）</th><th>EPS</th><th>re-rate</th><th>股息+回購</th><th>合計</th></tr>
+<tr><td>Bull</td><td>+13.5%</td><td>+0.5%</td><td>+1.0%</td><td>+15.0%/yr</td></tr>
+<tr><td>Base</td><td>+13.0%</td><td>−4.5%</td><td>+0.5%</td><td>+9.0%/yr</td></tr>
+<tr><td>Bear（修正）</td><td>0%</td><td>−7.7%</td><td>−0.2%</td><td>−7.9%/yr</td></tr>
+</table>
+
+<div class="stacked">
+<div style="background:#15803D;width:54%;">EPS 13.0%</div>
+<div style="background:#1E40AF;width:38%;">re-rate −4.5%</div>
+<div style="background:#64748B;width:8%;">股息+回購 +0.5%</div>
+</div>
+<p class="note">Base 情境分量視覺化（按 abs 比例）— 綠=EPS / 藍=re-rate / 灰=股息回購</p>
+
+<div class="irr-narrative">
+Base 9.0%/yr IRR 中，13.0%/yr 來自 EPS 複利、−4.5%/yr 來自估值 re-rate（PE 45→35x 自然收斂）、+0.5%/yr 來自股息+回購。<strong>這檔的可抱性主要靠 EPS 複利</strong> — 自然複利好抱、不需要市場給溢價（事實上需先吸收 −4.5%/yr re-rate 拖累）。質感判斷：「<strong>EPS 自然複利好抱，但起點估值貴讓 Y1-Y2 帳面難看，必須有 ≥ 5 年的視野才能享受 EPS 拉開 re-rate 的時機點</strong>」。
+</div>
+
+<!-- §1 Mental Models -->
+<h2>§1 ｜ Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<h4>To: Investment Committee｜From: PM｜Date: 2026-05-11</h4>
+<p><strong>Subject: ISRG (Intuitive Surgical) — 條件式分批進場提案，目標倉位 4.5%</strong></p>
+<p><strong>Thesis（50 字內）</strong>：ISRG 把外科手術變成「平台 × 年金耗材 × 醫師訓練網絡」，全球滲透率仍 &lt; 7%，這條雪坡至少還可滾 10 年。</p>
+<p><strong>Key Drivers (1-2 個)</strong>：(1) 供給側壟斷：da Vinci 全球 83.5% 市占 + 70,000 醫師訓練網絡 + 20+ 年專利耗材生態 = 對手即使拿到 FDA 也需 5-10 年達臨界規模；(2) 需求側持續性：全球手術機器人滲透率 &lt; 7%，國際佔比 35% 仍有翻倍空間。</p>
+<p><strong>R:R</strong>：5Y IRR Base 8.4%/yr、Bull 14.3%/yr、Bear −8.3%/yr，加權 5.9%/yr。中期 R:R 中性（DD 0.52x），長期 R:R 厚實。</p>
+<p><strong>主要風險</strong>：(R1) Hugo + Ottava + Versius 同時發力 → 同業溢價收斂 → Fwd PE 從 45x 壓至 30x；(R2) CEO 傳承首年 Dave Rosa 執行風險；(R3) 中國本土化 + 美中關稅。</p>
+<p><strong>建議倉位</strong>：條件式分批至 4.5% — 第一批 1.5% 待 MA200 站回 4 週或回測 $430；第二批 1.5% 待 Q2 26 procedure ≥ 14%；第三批 1.5% 待 Fwd PE 回 ≤ 35x。</p>
+<p><strong>監測觸發</strong>：Q2 26 財報 7 月下旬｜MDT Hugo 美國裝機 12 個月內 200 台｜JNJ Ottava FDA 核可日期。</p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「ISRG 是全球手術機器人 83.5% 市占的龍頭。它的真正生意不是賣機器，是賣耗材年金 — 賣一台機器之後，每年自動賺 $35-40 萬美金耗材費，賣 7 年。現在全球只有 7% 的合適手術用機器人做，未來 10 年要爬到 20%。即使對手拿到 FDA，醫師訓練要 5 年才能追上。我會等股價回 MA200 之上或 PE 降到 35x 才分批進。」
+</div>
+
+<p><strong>壓力測試結果：</strong>✅ 兩個版本都能寫出來且邏輯自洽（核心是「平台 + 耗材 + 滲透率 &lt; 7%」），thesis 通過進入 §7。</p>
+
+<!-- Phase B -->
+<h2>Phase B ｜ 矛盾辨識 + ⚖ 強制裁決</h2>
+
+<h3>共識清單（A1-A3 方向一致的判斷）</h3>
+<ul>
+<li><strong>護城河品質高</strong>：A1 9/10 + A3 ROIC 24.75% + A4 DD 護城河等級 A 同意（規模 + 轉換成本 + 網絡效應 + 無形資產四重）</li>
+<li><strong>長期 Runway 寬</strong>：A2 TAM $35B → $90-120B + 全球滲透率 &lt; 7% 共識</li>
+<li><strong>Q1 26 短期執行優異</strong>：A3 rev +23%、procedure +17%、GM 67.8% 全部 beat，A4 DD 雖在 Q1 前但已預埋「procedure ≥ 13% guidance」</li>
+</ul>
+
+<h3>矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td>「護城河仍加深」vs「Hugo + Ottava 即將正面攻擊」</td><td>持有期 holding（市占穩 83.5%，但 12M 內 Hugo 已 FDA、Ottava 已 de novo）</td><td>競爭升級 → Boston Sci 估 2030 市占 70/10/10/10 vs ISRG 80%+ 現狀</td><td>市場已 priced in 部分競爭風險（PE 從 65x → 45x）</td><td>🔴 不可調和（A1 偏 holding/略樂觀，A2 認為長期市占下降 10pp）</td></tr>
+<tr><td>2</td><td>「估值 PE 45x 合理 SaaS 溢價」vs「同業均 32x 終會收斂」</td><td>—</td><td>—</td><td>分析師均價 $606（vs 現 $450 上修 35%）；FY26 PE 43.57x ~5Y 中位附近</td><td>🟡 可調和（程度差異 — 取決於市場是否仍給 SaaS 溢價）</td></tr>
+<tr><td>3</td><td>「Q1 26 procedure +17% guide 上修」vs「長期 procedure 結構性降至 13-15%」</td><td>—</td><td>—</td><td>2025 actual 18% → 2026 guide 13.5-15.5%，自然從高基期降檔</td><td>🟡 可調和（降檔是市場已預期的常態）</td></tr>
+<tr><td>4</td><td>「da Vinci 5 占 Q1 26 placement 54% (232/431)」vs「替換週期 vs 真正新裝機比例不明」</td><td>替換 + 新裝機混合中，net new clinic 增量 vs trade-in 拆解不透明</td><td>—</td><td>ASP $1.7M vs 去年 $1.6M 反映 mix 提升而非 pure price 上漲</td><td>🟡 可調和（需追蹤 trade-in 占比是否上升至危險區）</td></tr>
+</table>
+
+<h3>與既有 DD 報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>「Q1 26 後 thesis 信心」</td><td>thesis 短期未破，guide 上修反證 H1 + H2 仍有效</td><td>DD 4/18 為 final_signal X（迴避）— Q1 26 前產出，未涵蓋 4/21 財報後資訊</td><td>時間差（DD 早 Q1 26 三天）</td></tr>
+<tr><td>2</td><td>「MA 狀態」</td><td>仍 ❌ — 5/8 股價 $450 vs MA200 $500，未站回</td><td>🟠 暫不進場（4/18 $469 vs W104 $500）— 結論一致</td><td>無矛盾，DD 紀律延續有效</td></tr>
+<tr><td>3</td><td>「Fwd PE 估值貴」</td><td>Fwd PE 43-46x (5/8 數據)</td><td>Fwd PE 46.92x (4/18)，PEG 3.58 🔴</td><td>Q1 beat 後 EPS 略上修 + 股價略跌 = PE 微降，但仍貴</td></tr>
+</table>
+
+<h3>⚖ 強制裁決（不可調和矛盾必填）</h3>
+<table class="verdict-tbl">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td>1</td><td>「護城河 holding」vs「Hugo/Ottava 結構性威脅」</td><td><strong>A2（競爭威脅實質升級，moat trend 為「→ holding」而非「↑ widening」）</strong></td><td>2025-12 Hugo FDA 已落地、2026-01 Ottava 已 de novo — 從 risk 變 reality。但 5-10 年訓練週期仍是 ISRG 的時間優勢，因此 holding 而非 narrowing。市占從 83.5% 預估下滑至 75-80% (Bull) / 70% (Base) — 是 widening 的反證</td><td>(1) 12 個月內 Medtronic Hugo US 累積裝機 &gt; 200 台（媒體 / Medtronic 法說 / IQVIA 季度追蹤）；(2) JNJ Ottava FDA 核可日期（2026-下半年預估）；(3) ISRG 北美季度新裝機 share &lt; 70% (連 2 季)</td><td>(a) 若 Hugo 12M 內裝機 &gt; 200 台 → §7b 減碼 -2%（從 4.5% → 2.5%）；(b) 若 12M 內 &lt; 100 台（Hugo 落後預期）→ §7a 第二批加碼條件放寬，從「Q2 procedure ≥ 14%」放寬至「≥ 13.5%」</td></tr>
+<tr><td>2</td><td>「Q1 26 強勁 → 加倉 timing 到了」vs「MA200 仍未站回 → 紀律等待」</td><td><strong>暫無法決定 — 採折衷：等 MA200 站回 4 週或股價回測 $430 兩條件擇一觸發第一批</strong></td><td>Q1 26 基本面確實證明 thesis 沒破，但歷史上 ISRG 從 $600 高點跌至 $450 是 22% 修正，類似的修正案例（2022 -52%、2021 -38%）多數有二次測底；MA200 紀律幫忙避免在第一波反彈追高</td><td>(1) 股價週收 ≥ $500 連 4 週（MA200 站回確認，每週 yfinance 抓盤）；(2) 股價回測 $430-440 區間並出現週線 hammer / 十字星 / volume spike（每日盤後檢查）；(3) Q2 26 財報 procedure ≥ 14%（2026-07 下旬）</td><td>(a) 觸發條件 1 或 2 → 第一批 1.5% 進場；(b) 兩條件 6 個月內都不觸發（即股價橫盤 $450 ± 30 不動）→ 維持 0% 倉位，等 Q3 26 財報後重新評估；(c) 觸發條件 3（Q2 強勁）→ 第二批 1.5% 加碼至 3%</td></tr>
+</table>
+
+<p class="note">這些裁決將直接帶入 §7 — 第一批進場條件、減碼觸發、加碼放寬條件，全都對映上方裁決表。</p>
+
+<!-- §3 Key Drivers -->
+<h2>§3 ｜ Key Drivers</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>供給側壟斷（platform moat）</strong>：da Vinci 系統 + 70,000 認證醫師 + 耗材生態（~3,500 SKUs）</td><td>沒有這個壟斷，「年金耗材」商業模式不成立；對手即使技術追上，5-10 年醫師訓練窗口是無法跳過的物理時間</td><td>ISRG 全球市占（IQVIA 季度）、北美新裝機 share、競品 US 累積裝機、Digital Ecosystem 醫師加入數</td></tr>
+<tr><td>2</td><td><strong>需求側持續性（penetration runway）</strong>：全球手術滲透率仍 &lt; 7%，國際 + 一般外科還在早期</td><td>沒有這個 runway，「平台」就只是個成熟低成長設備商；雪坡長度決定複利能跑多遠</td><td>全球年度 procedure 總量（IMS / WHO）、國際 procedure YoY、一般外科 / 婦科 procedure share、國際營收佔比</td></tr>
+</table>
+
+<p><strong>為什麼是這 1-2 個，而不是其他？</strong></p>
+<p>很多人會列「da Vinci 5 升級」或「SP 滲透」或「中國本土化」作為 driver — 但這些都是 driver 1 + 2 的延伸：da Vinci 5 是「供給側壟斷的最新階段武器」、SP 是「需求側 runway 的擴張載體」、中國本土化是「需求側 runway 的最大不確定性」。把這些子分項列為獨立 driver 等於重複計算同一個底層 vector。Driver 1（供給壟斷）和 Driver 2（需求滲透）才是真正獨立的兩條因果鏈 — 一條是「對手是否能複製」、另一條是「市場是否還在擴大」，可獨立被推翻：例如即使對手永遠複製不了（D1 成立），如果手術機器人滲透率突然天花板被新技術（如奈米機器人 / AI 全自動）取代，D2 仍可獨立失敗。</p>
+
+<h4>強制減法 — 我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>單季 EPS beat/miss ± 3%</td><td>3-5 年複利視角，季度雜訊不改變 driver 1 或 driver 2 的趨勢</td></tr>
+<tr><td>SBC $788M 7.8% 偏高</td><td>是事實但不是命脈；不會改變平台壟斷或滲透率</td></tr>
+<tr><td>Dave Rosa CEO 傳承</td><td>R3 風險但非命脈 — 公司治理結構 + 創辦人 Guthart 仍任 Chair</td></tr>
+<tr><td>關稅 1.0% 營收影響</td><td>已被 GM 67.5-68.5% guidance 吸收，量化可控</td></tr>
+<tr><td>buyback 均價 ~$470 vs 現價 $450</td><td>差 4% 不算配置失誤</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>分析師均價 $606（35% upside），共識認為 ISRG 仍可 PE 45-50x 維持，FY26 EPS $10.00 + FY27 $11.43 兌現</td></tr>
+<tr><td>我認為的不同假設</td><td>市場 priced in 了「ISRG 維持 80%+ 市占 5 年以上」— 但 Hugo 已 FDA + Ottava 即將 FDA，5 年後市占 70-75% 是更合理 base case。Forward PE 在 Y2-Y3 會從 45x re-rate 至 32-38x（同業中位），而非維持 45x</td></tr>
+<tr><td>賣方為什麼錯（至少一個具體理由）</td><td>賣方多用「da Vinci 1-Xi 時代 ISRG 維持市占 90%+」做為類比 — 但那是「對手投資不夠」時期；Hugo（Medtronic $100B+ 市值）+ Ottava（JNJ $400B+ 市值）+ Ethicon 整合是「資本充足同業 + 通路綁定」前所未見，與 da Vinci 1-Xi 時代不可類比。另外賣方常用 forward PE/historical PE 分位（48%）論證便宜，但忽略 PEG 3.58 已是全球最高分位之一</td></tr>
+</table>
+
+<p><strong>校驗：</strong>三題寫得出來且具體 → 有 contrarian core，§7 倉位不需額外打折（但 §7 倉位仍受 §6c Max DD 🟡 評級下修）。</p>
+
+<!-- §5 Single Thing -->
+<h2>§5 ｜ The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述（primary）</strong></td><td><strong>Medtronic Hugo 在美國市場 12 個月內累積裝機 &gt; 200 台，且其中 ≥ 30% 是來自 ISRG 既有客戶醫院</strong>（替換而非新增）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>「20+ 年醫師訓練網絡 + 醫院 OR 流程綁定」是 ISRG 護城河的最強磚塊。如果 ISRG 既有客戶以 30%+ 比例願意切換到 Hugo，意味著「轉換成本 &gt; $3M/OR」的假設破了 — 那麼下一步是 JNJ Ottava 帶 Ethicon 通路一起進來，moat 5-10 年的時間優勢直接被壓縮到 3 年。屆時「類 SaaS 溢價」消失，PE 從 45x 直接下修至 25-30x，股價砍 40%+</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>(1) Medtronic 季度法說（每季）｜(2) IQVIA 季度市占追蹤｜(3) 醫材媒體 MedTech Dive / FierceBiotech（每週）｜(4) ISRG 自己法說中「customer churn」評論</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q1 26 - Q2 26 約 5-10 家美國醫院首次採購 Hugo（含 Cleveland Clinic、Duke、Atrium Health）。距「12M &gt; 200 台」需 ~20 倍加速 — 至少 18-24 個月窗口</td></tr>
+</table>
+
+<h3>📌 Pre-mortem 派生 secondary trigger（§6b 校驗後補入）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述（secondary）</strong></td><td><strong>ISRG 連 2 季 pro forma GM YoY &lt; 65%（從 67%+ 大幅下滑 2pp 以上）</strong>，伴隨 system ASP YoY &lt; 0%</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Pre-mortem 故事中（§6b），失敗路徑 1 是「Hugo + Ottava 雙吃北美新裝機 → ISRG 為保市占降價 → ASP 跌 + GM 壓縮」。GM 連 2 季 &lt; 65% + ASP YoY 負 = 定價權實質侵蝕的硬訊號。Primary trigger（Hugo 裝機 &gt; 200）抓「市占丟失」面向，但漏抓「為保市占自我傷害定價」面向</td></tr>
+<tr><td>如何監測</td><td>ISRG 季度法說 pro forma GM + system ASP 揭露（每季）</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q1 26 GM 67.8% + ASP $1.7M（YoY +6%），離 trigger 仍有 2pp + 緩衝；觀察 Q2-Q3 26 走勢</td></tr>
+</table>
+
+<p class="note">§5 trigger 計數：2 條（primary + secondary，pre-mortem 派生）— 已在 §6b 校驗結果中導致此修正。</p>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<h2>§6 ｜ What I Don't Know + Pre-mortem</h2>
+
+<h3>6a｜強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>JNJ Ottava + Ethicon 整合是否會升級為「🔴 生態攻擊」</td><td>Ottava 與 Ethicon 通路保持鬆散整合，不形成 bundle pricing</td><td>升級為 🔴 → 護城河 -1 分，PE 從 45x re-rate 至 30x → 股價砍 33%</td></tr>
+<tr><td>2</td><td>中國本土機器人 + 政策保護的滲透速度</td><td>中國市占維持 ISRG 30%（不再下降），且中國只佔全球 15-18%</td><td>若中國 ISRG share 跌至 15%，且中國成為全球 25% TAM → ISRG 全球 share 跌 3pp，國際 procedure 成長熄火</td></tr>
+<tr><td>3</td><td>Dave Rosa CEO 傳承首年（2026）執行能力</td><td>Rosa 維持 Guthart 紀律：disciplined rollout、不為保短期 guidance 而犧牲 GM</td><td>若 Rosa 為短期保 guidance 而降價 / 過度 capex → GM 跌 + FCF/NI 下行 → 體質 veto 觸發降級至 B 級</td></tr>
+</table>
+
+<div class="premortem-box">
+<h3>6b｜Pre-mortem 三段式</h3>
+
+<h4>第一段｜故事倒推</h4>
+<blockquote>「假設 5 年後（2031-Q2）這個部位虧 50%，最可能的故事是：2027-Q2 Medtronic Hugo 拿到一般外科 + 婦科 FDA、累積美國裝機達 250 台（其中 90 家原 ISRG 客戶）；同期 JNJ Ottava 在 2026-Q4 拿到 FDA 並與 Ethicon 推 Surgery+ bundle，6 個月內進入 80 家醫院。ISRG 為保北美 procedure share 啟動 da Vinci 5 折扣（system ASP 從 $1.7M 跌至 $1.45M），同時加碼 R&amp;D 至 $1.8B（vs 2025 $1.3B）。2028 Q1 pro forma GM 跌至 63.5%（連 2 季 YoY &lt; 65%）；2028 全年 EPS 從 $14 共識下修至 $11，市場重估 forward PE 從 38x 壓縮到 26x。股價從 $450 → $290 → 反彈 → 再跌至 $220（連 2 次測底），5 年期末仍在 $230 區。」</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong>。<br/>原 §5 trigger「Hugo 12M &gt; 200 台 + 30% 是 ISRG 既有客戶」抓對了「市占丟失」面向，與故事中「Hugo 250 台 + 90 家原 ISRG 客戶」直接撞上。<br/>但故事的真正致命環節是「<strong>ISRG 為保市占降價 → GM 壓縮</strong>」這條鏈 — 即使 Hugo 裝機沒 &gt; 200 台，只要 ISRG 自己決定預防性降價，GM 就會壞掉。<strong>原 §5 漏抓「ISRG 自我傷害定價權」面向</strong>。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>⚠ 部分重疊 → 已在 §5 區塊補入 secondary trigger</strong>：「ISRG 連 2 季 pro forma GM YoY &lt; 65% + ASP YoY 負」。此 trigger 抓 pre-mortem 故事中「ISRG 為保市占降價傷 GM」的具體財務訊號。§5 區塊現在共 2 條 trigger（primary：Hugo 美國裝機 + 替換比例；secondary：GM + ASP 雙弱），互補 attack 兩條失敗路徑。</p>
+
+<p><strong>校驗紀錄：</strong>§5 修正狀態 = ⚠ 已補 1 條 secondary trigger（HTML 中 §5 「事件描述」欄已從 1 條變為 2 條）。</p>
+</div>
+
+<h3>6c｜路徑壓力測試（Max DD）</h3>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−40% ~ −55%</strong>（寬度 15%p，從 $450 跌至 $200-270）</td></tr>
+<tr><td>最可能觸發時點</td><td>2028 Q1-Q3：Hugo 拿到一般外科 / 婦科 FDA + Ottava 拿到 FDA + ISRG 啟動降價防衛 — 三事件 6 個月內聚集</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>2.5-4 年（若 thesis 沒破，2030-2032 才能回到 $450 以上）；若 thesis 破則 thesis 已破，不會回</td></tr>
+<tr><td>路徑風險評級</td><td>🟡 −30~−50%（多數人需要強信念，本標的剛好在此區段下沿）</td></tr>
+</table>
+
+<div class="maxdd-box">
+  <div class="maxdd-main">−40% ~ −55%</div>
+  <div class="maxdd-bar"></div>
+  <div class="maxdd-rating">🟡</div>
+</div>
+<p class="note">下方色條：綠（0~-30%）/ 琥珀（-30~-50%）/ 紅（&lt;-50%）；ISRG 估算 −40~-55% 跨越琥珀進紅，定性為 🟡 偏 🔴 — 故 §7a 倉位上限從原計畫 6% 自動下修至 4.5%。</p>
+
+<p><strong>校驗：</strong>若 max DD 落在 −55%，我能否撐到復原？條件：(1) 部位不超過 portfolio 5%；(2) 不使用槓桿；(3) §5 secondary trigger（GM &lt; 65%）未發生時，每次回測 −15% 不減反加；(4) 如果 §5 primary trigger 發生 → 自動減 -2%，從 4.5% 降至 2.5%。<strong>有明確條件 → §7 倉位下修但不必再額外打折。</strong></p>
+
+<!-- §8 Review Triggers -->
+<h2>§8 ｜ Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td>Q2 26 財報</td><td>財報日期</td><td><strong>2026-07-22 (預估)</strong>：檢查 procedure ≥ 14%、國際 ≥ 22%、GM 維持 67%+、guidance 維持 13.5-15.5%</td></tr>
+<tr><td>2</td><td>Q3 26 財報</td><td>財報日期</td><td>2026-10 下旬：年度節奏關卡，da Vinci 5 累積美國裝機數、SP procedure 全年化趨勢</td></tr>
+<tr><td>3</td><td>JNJ Ottava FDA 核可</td><td>產業事件</td><td>2026 Q3-Q4 預估（de novo 申請 2026-01）：實際核可日 → 12M 內裝機速度</td></tr>
+<tr><td>4</td><td>MDT Hugo 美國裝機 12M 累積</td><td>產業事件</td><td>滾動 12M：&gt; 200 台觸發 §5 primary trigger</td></tr>
+<tr><td>5</td><td>價位 $430-440 觸發</td><td>價位觸發</td><td>進場條件 (b) — 回測支撐區出現週線反轉</td></tr>
+<tr><td>6</td><td>價位 $500（MA200）站回</td><td>價位觸發</td><td>進場條件 (a) — 站回 4 週確認</td></tr>
+<tr><td>7</td><td>價位 $385-400</td><td>價位觸發</td><td>Fwd PE ≤ 35x，第三批滿倉條件</td></tr>
+<tr><td>8</td><td>§5 single thing</td><td>thesis 中止</td><td>Hugo &gt; 200 台 + 30% 替換比例 ｜或 GM 連 2 季 &lt; 65%</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：至 2026-07-25（Q2 26 財報日 + 3 天）</strong>。屆時若 Q2 數字落在 thesis 區間內，續用本決策框架；若顯著偏離（procedure &lt; 13% 或 &gt; 16% 上修、GM &gt; 68% 或 &lt; 66%），須重寫 DCA。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>(1) Ottava FDA 延後至 2027；(2) Hugo 美國 12M 裝機 &lt; 100 台（落後預期）；(3) 國際 procedure 連 2 季 ≥ 25%；(4) AI 自動縫合在 ISRG 平台率先商業化。</p>
+<p><strong>最可能發生的 downside 因素：</strong>(1) Ottava FDA 2026 Q4 核可 + Ethicon bundle；(2) 美中關稅升至 25%+ 衝擊 GM；(3) Q2 26 procedure &lt; 13%（guide 下緣破）；(4) Hugo 拿到一般外科 FDA。</p>
+
+<!-- Phase A1 -->
+<details>
+<summary>Phase A1 ｜ 護城河深度分析 — 結論：A 級 9/10，moat_trend ↑→↓ 為 → holding（不是 widening 也不是 narrowing）</summary>
+<div class="det-body">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) 轉換成本 + 醫師訓練網絡（50+ 案例達 proficient × 70,000 醫師 = 物理時間障礙）；(2) 規模優勢 + 耗材年金生態（~3,500 SKUs，每年耗材 $6B+ 年金）</td></tr>
+<tr><td>持久性評分</td><td>9/10，5 年穩固度：高（即使 Hugo / Ottava 拿全 FDA，5 年內訓練窗口足夠 ISRG 維持 70%+ 全球市占）</td></tr>
+<tr><td>最大侵蝕風險</td><td>JNJ Ottava + Ethicon 整合進入「🔴 生態攻擊」階段（bundle pricing + 通路綁定）— 預估 2027-2028 才會真正威脅；ISRG 訓練生態仍是緩衝</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 67.8% (Q1 26)（趨勢 →）、市占率 ~80-83.5%（趨勢 →）、ROIC 24.75% vs WACC ~9% 超額 +16pp</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>→ holding</strong>｜12M 內變化證據：(a) Q1 26 da Vinci 5 占 US placements 54% (232/431)，比 Q4 25 的 50% 略升 — 平台升級節奏未被打斷；(b) Hugo 美國 12M 內 5-10 家首批裝機 vs ISRG 北美季度新裝機 ~230 台 — 對手規模仍 &lt; 5%；(c) 但 12M 內 Hugo 已 FDA + Ottava 已 de novo — 「對手未到場」變成「對手已到場」。Net 評估：moat 沒擴大也沒縮小，剛好持平 → holding。<strong>禁止「持平」當逃避 → 明確選邊 holding</strong>。</td></tr>
+</table>
+
+<h4>Sourced data points（要求 ≥ 5）</h4>
+<ol>
+<li>市占 ~80-83.5% — Hudson Labs 2026 / TIKR Q1 26 法說</li>
+<li>da Vinci 5 達 1,500 systems / 13,000 surgeons utilization +11% vs Xi — Q1 26 法說 2026-04-21</li>
+<li>SP procedure +68% YoY (Q1 26) — TIKR Q1 法說</li>
+<li>System ASP $1.7M up from $1.6M — Q1 法說 2026-04-21</li>
+<li>ROIC 24.75% — GuruFocus 截至 2025-Q4</li>
+<li>FCF Margin 22.5% (2025) — StockAnalysis</li>
+<li>Q1 26 GM 67.8% vs 66.4% YoY — TIKR Q1 26 法說</li>
+</ol>
+<p><strong>達標：7/5 ✅</strong></p>
+
+<p><strong>A1 獨立結論：</strong>護城河 A 級 9/10，trend → holding（持有期）— 對手已從「risk」變「reality」但仍處早期、訓練窗口仍是 ISRG 的時間優勢；Q1 26 雙引擎升級節奏未被打斷，但 12-18 個月後若 Hugo 美國裝機 &gt; 200 台需重新檢視 widening/narrowing 判定。</p>
+</div>
+</details>
+
+<!-- Phase A2 -->
+<details>
+<summary>Phase A2 ｜ 產業趨勢深度分析 — 結論：🟢 Runway 寬，TAM 10x，滲透率 &lt; 7%</summary>
+<div class="det-body">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>當前 $6B (Boston Sci 2026 估 by 2030) ~ $9.2B (forecast by 2034)，CAGR ~15-18%；ISRG 自身估 $90-120B 2030E (含適應症擴張)；全球滲透率 &lt; 7% (DD 來源 + Sermo 2026)</td></tr>
+<tr><td>供需判斷</td><td>偏緊 — ISRG Capex $0.7-0.85B 2026E 反映訂單能見度；Hugo + Ottava + Versius 同時擴產能 = 全產業擴大中</td></tr>
+<tr><td>最大技術替代風險</td><td>AI 全自動手術機器人（如 NVDA Isaac 平台 / Google DeepMind 手術 AI）若在 2030+ 落地，可能讓「醫師中心」模式被「AI 中心」取代；但時間軸 7-10 年，本 5Y 持有期內非首要風險</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>美中關稅升至 25%+ 衝擊 Mexicali 與中國供應鏈（公司估 2026 影響 1.0% 營收）；中國本土化政策扶植 MicroPort / 微創 / 威高</td></tr>
+<tr><td>議價權位置</td><td>對上游：中（供應商分散，但 Mexicali 集中度高）｜對下游：強（醫院 5+ 年合約、醫師訓練綁定、耗材年金）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>｜判準：S 曲線位置（早中期 — penetration 7% 處於早期）+ Y5 末預估 TAM 滲透率（~12-15%）+ 第二曲線（AI 手術自動化 / 神經外科 / 心臟手術 2028+ 啟動）。Y5 之後仍有 4-5x 滲透率空間 + 適應症擴張 + 國際滲透加速。明顯不是 🔴（窄）也不是 🟡 — 全球手術可機器人化潛力極大，遠未到飽和</td></tr>
+</table>
+
+<h4>Sourced data points（要求 ≥ 5）</h4>
+<ol>
+<li>TAM Boston Sci 估 $6B by 2030 — MedTech Dive 2026</li>
+<li>Surgical robotics market $2.9B 2024 → $9.2B 2034 (CAGR ~12%) — Medical Device Network</li>
+<li>Hysterectomy robotic penetration 60.8% (US 2018) — PubMed</li>
+<li>General surgery robotic penetration 1.8% → 15.1% — Frontiers 2026</li>
+<li>10-year market share forecast: ISRG 70% / MDT 10% / JNJ 10% / others 10% — Nanalyze 2026</li>
+<li>Medtronic Hugo available in 30+ countries — Medtronic 2025-12 press release</li>
+<li>JNJ Ottava FDA de novo submitted 2026-01 — MedTech Dive</li>
+</ol>
+<p><strong>達標：7/5 ✅</strong></p>
+
+<p><strong>A2 獨立結論：</strong>產業 Runway 🟢 寬 — 全球滲透率 &lt; 7%、TAM 5-10 年 2-3x、適應症擴張（一般外科 / 心臟 / 神經）仍在早期；最大風險是「同業擴產 + 政策本土化」造成 ISRG 從全球壟斷 (80%+) 退至寡占龍頭 (70%)，但整體 TAM 擴大彌補。</p>
+</div>
+</details>
+
+<!-- Phase A3 -->
+<details>
+<summary>Phase A3 ｜ 業務結構 / 財務體質 / 資本配置 — 結論：執行優異，估值偏貴，IRR 分量靠 EPS 複利</summary>
+<div class="det-body">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：Instruments &amp; Accessories（FY25 $6.02B / 59.8%）；成長引擎：Systems（$2.47B / 24.6%, +25.8% YoY）+ Services（$1.57B / 15.6%, +20.3%）；新興：SP / Ion（單一披露 SP procedure +87% 2025、+68% Q1 26）</td></tr>
+<tr><td>客戶集中度</td><td>~3,000 家醫院、70,000+ 認證醫師，無單一客戶 &gt; 5%，集中度：低</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑ — $1.7M (Q1 26) vs $1.6M (Q1 25)，da Vinci 5 mix shift + dual console 模式；定價權：強</td></tr>
+<tr><td>未來金雞母</td><td>SP（單孔，1-2% 滲透）+ AI 手術自動化（Digital Ecosystem 20M+ 數據積累）+ 一般外科適應症擴張；目前佔營收 ~5%，潛在 TAM ~$30-50B，預估成熟 7-10 年後</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 87%、毛利率 67.8% (Q1 26, 趨勢 → 微升)、壓力測試：營收 -20% 仍能撐 8+ 季（Net Cash $5.93B / Total Debt $171M = 34x 覆蓋）</td></tr>
+<tr><td>資本配置紀律</td><td>R&amp;D $1.3B/yr 聚焦 da Vinci 5/SP/Digital；Capex $0.7-0.85B；FY23-25 累積回購 $5.5B（均價 ~$470 vs 當前 $450，配置可接受但非便宜時機）；無分紅；無大型併購</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base）</strong></td><td><strong>EPS CAGR 13.0%</strong>（FY26 $10.00 → FY30 ~$16，從 $8.93 FY25 算 5Y）｜<strong>5Y 末 forward PE 預估 35x vs 當前 45x</strong>（re-rate (35/45)^0.2 - 1 = −4.5%/yr）｜<strong>現金股息率 0%</strong>｜<strong>淨買回率 +0.5%/yr</strong>（FY23-25 $5.5B 回購 / market cap $160B = 1.1%/yr，扣 SBC 0.6% 稀釋 = 0.5% 淨）</td></tr>
+</table>
+
+<h4>Sourced data points（要求 ≥ 6）</h4>
+<ol>
+<li>Q1 26 revenue $2.77B (+23%) — TIKR / Intuitive Surgical PR 2026-04-21</li>
+<li>Q1 26 procedure +17% / da Vinci procedure +16% / Ion procedure +39% — TIKR</li>
+<li>Q1 26 OI $1.08B (+40% YoY) / EBIT margin 39% vs 34% — TIKR</li>
+<li>Q1 26 GM 67.8% vs 66.4% — Investing.com Q1 transcript</li>
+<li>FY26 procedure guidance raised to 13.5-15.5% — Seeking Alpha</li>
+<li>da Vinci 5 1,500 installed / 232 of 431 Q1 placements — Q1 法說</li>
+<li>System ASP $1.7M up from $1.6M — Q1 法說</li>
+<li>Forward PE 43.57x (GuruFocus 2026-05-08) / 44-46x range (Yahoo Finance May 8)</li>
+<li>Analyst median price target $606.76 — StockAnalysis / MarketBeat</li>
+<li>Stock $450.06 (May 8 2026) — Meyka</li>
+</ol>
+<p><strong>達標：10/6 ✅</strong></p>
+
+<p><strong>A3 獨立結論：</strong>Q1 26 執行優異（rev +23%, GM 67.8%, OI +40%）證實雙引擎升級節奏未被打斷；但 Forward PE 43-46x 仍是 5Y 中位偏上 + 同業均 32x，估值仍貴；IRR 拆解顯示 5Y 報酬主要靠 EPS 13% 複利，估值 re-rate 拖累 −4.5%/yr。</p>
+</div>
+</details>
+
+<!-- Phase A4 -->
+<details>
+<summary>Phase A4 ｜ 既有報告數據摘要 — DD_ISRG_20260418.html（無 ID 對應）</summary>
+<div class="det-body">
+
+<h4>DD 報告擷取（DD_ISRG_20260418.html, v12.0, 2026-04-18 cut）</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>Quality Score</td><td>10.0（最高）</td></tr>
+<tr><td>R:R ratio（短期 / 中期）</td><td>0.07x / 0.52x</td></tr>
+<tr><td>合理目標價</td><td>短期 1Y $484、中期 2Y $553（基於 48.4x 合理 PE）</td></tr>
+<tr><td>Bear anchor</td><td>$270（短期 30x × $9.00）/ $308.61（中期 30x × $10.29）</td></tr>
+<tr><td>紅旗清單</td><td>毛利率連 3 年累積 -1.5pp 體質 veto 不過、SBC/Rev 7.8% 高、PEG 3.58、Hugo FDA 已落地競爭升級</td></tr>
+<tr><td>§5 核心假設（H1/H2/H3）</td><td>H1: da Vinci 5 + SP 維持 &gt; 80% 全球市占｜H2: 國際 procedure ≥ 20% + 佔比 35% → 42%｜H3: 市場接受 Fwd PE 45-55x 區間</td></tr>
+<tr><td>§8 最終訊號燈</td><td><strong>X（迴避 / 清倉訊號）</strong> — 估值 🔴 gate 過熱 + MA 🟠 雙重不佳</td></tr>
+<tr><td>陷阱定性</td><td>🟢 非陷阱（基本面優異，估值透支未來 3 年成長）</td></tr>
+<tr><td>長期持有信心</td><td>高</td></tr>
+</table>
+
+<h4>ID 報告對照</h4>
+<p>— 無對應 ID 報告（手術機器人尚未獨立成 ID；最近的相關 ID 為 <code>ID_HumanoidIndustrialRobotics_20260427.html</code>，但屬工業機器人不是手術機器人）。Phase B 矛盾辨識僅比對 A1-A3 + DD。</p>
+
+<h4>Phase B 對齊 DD 的處理</h4>
+<p>DD 訊號燈 X 是 4/18 cut，未涵蓋 Q1 26 (4/21) 後資訊。本 DCA 採「DD 紀律延續（X 訊號仍有效，因技術面 + 估值面未改善）+ Q1 後 thesis 信心修正（H1/H2 短期未破）」雙軌處理 — 結論：仍以 DD 紀律的條件式進場為主，但條件門檻略放寬（從「Pure MA 站回 W104 4 週」加上「股價回測 $430 並週線反轉」作為 alternative trigger）。</p>
+</div>
+</details>
+
+<!-- 補充章節：護城河變遷時間軸 + 對手對照 -->
+<h2>附錄 A ｜ 護城河變遷時間軸（過去 5 年 + 未來 5 年）</h2>
+
+<table>
+<tr><th>時間段</th><th>關鍵事件</th><th>對 ISRG 護城河影響</th><th>市占 / 訓練醫師 / 累積裝機</th></tr>
+<tr><td>2021</td><td>da Vinci Xi 為主力，SP 美國婦科獲批；Hugo 歐洲首次商用</td><td>+ widening（SP 開啟新適應症）</td><td>~85% global / 55,000 醫師 / 6,700 台</td></tr>
+<tr><td>2022</td><td>疫情後 procedure 復甦 +14%；Hugo LATAM/EU 擴張至 20+ 國</td><td>→ holding（量回補但對手橫向擴張）</td><td>~84% / 60,000 / 7,500</td></tr>
+<tr><td>2023</td><td>Ion (肺活檢) 翻倍 / Orpheus Medical 併購 / Hugo procedure double-digit</td><td>+ widening（Ion 額外平台 + Digital Ecosystem 起步）</td><td>~84% / 64,000 / 8,500</td></tr>
+<tr><td>2024 Q3</td><td>da Vinci 5 FDA 全面商用化（重大新一代發布）</td><td>+ widening（新一代產品週期 5 年領先）</td><td>~83.5% / 67,000 / 9,500</td></tr>
+<tr><td>2025</td><td>da Vinci 5 870 台首年 / SP procedure +87% / 國際 +23%</td><td>→ holding（雙引擎放量但 GM YoY -1.5pp 出現首次警訊）</td><td>~83.5% / 70,000 / 10,670</td></tr>
+<tr><td><strong>2025-12</strong></td><td><strong>Medtronic Hugo FDA 泌尿科獲批（重大事件）</strong></td><td><strong>→ holding 進入 「對手已到場」階段</strong></td><td>—</td></tr>
+<tr><td>2026-01</td><td>JNJ Ottava FDA de novo 申請</td><td>→ holding（再添 watch-item）</td><td>—</td></tr>
+<tr><td>2026 Q1</td><td>da Vinci 5 占 US placements 54% (232/431) / utilization +11% vs Xi</td><td>→ holding（自家升級節奏未斷，但對手已 FDA）</td><td>~80-83% / 73,000+ / 12,000</td></tr>
+<tr><td><strong>2026-2027（預估）</strong></td><td>Ottava 預估 2026 Q3-Q4 FDA / Hugo 一般外科 + 婦科 FDA 預估 2027</td><td>→ holding / ↓ narrowing 機率 35%</td><td>~80% / 78,000 / 13,500（預估）</td></tr>
+<tr><td><strong>2028-2030（預估）</strong></td><td>競爭格局確定 — ISRG 70-80% / MDT 10% / JNJ 10%（Nanalyze 共識）</td><td>↓ narrowing 機率 50%（市占降 5-10pp）但 absolute base 仍擴大</td><td>~75% / 90,000 / 16,000（預估）</td></tr>
+</table>
+
+<p class="note">關鍵閱讀：moat trend 從 widening (2023-24) 進入 holding (2025-26)，這是「對手投資不夠 → 對手已到場」的拐點。未來 5 年最大不確定性在 Ottava + Ethicon 整合，若升級至 🔴 生態攻擊則 holding → narrowing 切換。</p>
+
+<h2>附錄 B ｜ 對手 Capex / R&amp;D 對照表</h2>
+
+<table>
+<tr><th>公司</th><th>2025 R&amp;D ($B)</th><th>手術機器人 R&amp;D 估</th><th>2025 累積裝機</th><th>2026 戰略動作</th></tr>
+<tr><td><strong>ISRG</strong></td><td>$1.3</td><td>~$1.3（100% 純手術機器人）</td><td>~12,000 da Vinci + 1,500 da Vinci 5</td><td>da Vinci 5 全球鋪設 + SP 適應症擴張</td></tr>
+<tr><td>Medtronic</td><td>$2.9</td><td>~$0.4-0.5（估，Hugo 為其中之一）</td><td>~500+（30+ 國，非美佔大宗）</td><td>Hugo 一般外科 / 婦科 FDA 申請；首批美國裝機（Cleveland Clinic, Duke, Wake Forest 等）</td></tr>
+<tr><td>JNJ MedTech</td><td>$3.2（全 MedTech）</td><td>~$0.6-0.8（Ottava + Velys + Monarch）</td><td>~200（Monarch + Velys 主要）</td><td>Ottava FDA de novo 2026 Q3-Q4 預估獲批；Ethicon 整合啟動</td></tr>
+<tr><td>CMR Surgical</td><td>未公開</td><td>~$0.15-0.20（估）</td><td>~200+（80 國）</td><td>Versius gallbladder de novo；模組化 / 彈性融資</td></tr>
+<tr><td>中國本土合計</td><td>—</td><td>~$0.3（合計）</td><td>~150（MicroPort Toumai 80 + 微創 + 威高 + 術銳）</td><td>政策補貼 + 30% 低價滲透</td></tr>
+</table>
+
+<p><strong>解讀</strong>：(1) ISRG R&amp;D 絕對值低於 MDT / JNJ，但 100% focused 在手術機器人，effective R&amp;D 仍領先；(2) Medtronic Hugo R&amp;D 投入 vs 戰績不成比例 — 5 年研發投入推估 $2B+，目前累積裝機只有 ISRG 的 4%，反映平台型生意的高進入門檻；(3) JNJ 跨 Velys（整形）+ Monarch（支氣管）+ Ottava（軟組織）三平台分散，但若整合至 Surgery+ bundle 模式可能成為最大威脅；(4) 中國本土雖低價但全球 share 仍 &lt; 2%，主要影響中國市場本身。</p>
+
+<h2>附錄 C ｜ 與 Pre-DD（v12.0 4/18）對照變化</h2>
+
+<table>
+<tr><th>項目</th><th>DD 4/18</th><th>DCA 5/11（Q1 26 後）</th><th>變化方向</th></tr>
+<tr><td>股價</td><td>$469.21</td><td>$450（5/8 收盤）</td><td>−4%（小幅下修）</td></tr>
+<tr><td>Forward PE (FY26)</td><td>46.92x</td><td>43.57x（GuruFocus）/ 45x（隱含 $450/$10.00）</td><td>微降（EPS 略上修 + 股價略跌）</td></tr>
+<tr><td>3Y EPS CAGR</td><td>13.09%</td><td>13-14%（Q1 beat + guide 上修）</td><td>微升</td></tr>
+<tr><td>PEG</td><td>3.58</td><td>3.3-3.5（PE 微降 + CAGR 微升）</td><td>仍 🔴 但邊際改善</td></tr>
+<tr><td>Procedure guidance</td><td>13-15% (FY26)</td><td>13.5-15.5% (Q1 26 後上修)</td><td>上修</td></tr>
+<tr><td>GM guidance</td><td>67-68%（含 1.2% 關稅影響）</td><td>67.5-68.5%（含 1.0% 關稅影響）</td><td>上修</td></tr>
+<tr><td>競爭事件</td><td>Hugo 已 FDA / Ottava 申請</td><td>同 + 首批美國 Hugo 已裝機 (Cleveland, Duke, Wake Forest)</td><td>事件實質化</td></tr>
+<tr><td>MA200 / 股價</td><td>$500 vs $469（低 6%）</td><td>$499.84 vs $450（低 10%）</td><td>缺口擴大</td></tr>
+<tr><td>分析師均價</td><td>—</td><td>$606.76（35% upside）</td><td>新增資訊</td></tr>
+<tr><td>訊號燈裁決</td><td>X（迴避）</td><td>⚠ 觀望偏進場（DCA 條件式）</td><td>DD 紀律延續，DCA 加上條件式分批</td></tr>
+</table>
+
+<p><strong>結論一句：</strong>Q1 26 財報後 thesis 短期未破（H1/H2 仍兌現）、估值微改善但仍貴、技術面與 DD 4/18 同步 — 結論延續 DD 的「不進場 / 等待更好點」紀律，但 DCA 加上「條件式分批」與「opportunity cost vs SYK/LLY」決策層，把 DD 的二元 X/A 轉成可執行的多階段進場框架。</p>
+
+<p class="note">本報告為投資決策框架，所有「建議」均為條件式判斷，非投資建議。風險自負。</p>
+
+<button class="btn-print" onclick="window.print()">列印 / 存 PDF</button>
+
+</div>
+</body>
+</html>

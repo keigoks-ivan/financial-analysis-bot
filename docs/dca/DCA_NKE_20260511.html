@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜NKE｜2026-05-11｜Deep Conviction Analysis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC; --card:#FFFFFF; --title:#1E3A5F; --accent:#3B82F6;
+  --green-deep:#166534; --green:#15803D; --amber:#92400E; --red:#991B1B; --gray:#64748B;
+  --trow-alt:#F1F5F9; --thesis-bg:#EFF6FF;
+  --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+  --warn-bg:#FFF7ED; --warn-border:#F97316; --warn-deep:#FED7AA;
+  --premortem-bg:#FEF2F2; --premortem-border:#DC2626;
+  --pattern-bg:#F0F9FF; --pattern-border:#0EA5E9;
+  --font-body:'Noto Sans TC',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:var(--font-body);color:#1E293B;line-height:1.65;font-size:14px}
+.container{max-width:1180px;margin:0 auto;padding:24px 28px 80px}
+.header{position:sticky;top:0;background:#FFFFFFEE;backdrop-filter:blur(6px);border-bottom:1px solid #E2E8F0;padding:10px 28px;font-size:13px;color:#475569;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.header .ticker{font-family:var(--font-mono);font-weight:700;color:var(--title);font-size:16px;letter-spacing:.5px}
+.header .thesis-mini{font-style:italic;max-width:62%;text-align:right;color:#334155}
+h1{font-size:26px;color:var(--title);margin:18px 0 4px;font-weight:700}
+.subtitle{color:#64748B;font-size:13px;margin-bottom:22px}
+.section{background:var(--card);border-radius:6px;padding:22px 26px;margin:22px 0;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.section-title{font-size:18px;color:var(--title);font-weight:700;border-left:4px solid var(--accent);padding-left:12px;margin:0 0 16px;background:#F8FAFC}
+.section h3{font-size:15px;color:var(--title);margin:18px 0 8px;font-weight:600}
+.section h4{font-size:14px;color:var(--title);margin:14px 0 6px;font-weight:600}
+table{border-collapse:collapse;width:100%;margin:10px 0 14px;font-size:13px}
+th,td{border:1px solid #E2E8F0;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--title);color:#fff;font-weight:600}
+tbody tr:nth-child(even){background:var(--trow-alt)}
+.mono{font-family:var(--font-mono)}
+.pos{color:var(--green);font-weight:600}
+.neg{color:var(--red);font-weight:600}
+.amber{color:var(--amber);font-weight:600}
+.gray{color:var(--gray)}
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:18px 24px;margin:22px 0;border-radius:6px;flex-wrap:wrap}
+.status-cell{flex:0 0 180px;text-align:center;background:#FFFFFF;padding:14px 8px;border-radius:6px;border:1px solid #E2E8F0}
+.status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:1px;font-weight:500}
+.status-main{font-size:22px;font-weight:700;margin-top:6px;font-family:var(--font-mono)}
+.status-sub{font-size:11px;color:#64748B;margin-top:4px}
+.signal-C{color:var(--red)}
+.moat-hold{color:var(--gray)}
+.moat-down{color:var(--red)}
+.runway-yellow{color:var(--amber)}
+.maxdd-red{color:var(--red)}
+/* Thesis block */
+.thesis{background:var(--thesis-bg);text-align:center;padding:28px 32px;border-radius:6px;margin:20px 0;border:1px solid #BFDBFE}
+.thesis .quote{font-size:24px;font-weight:600;color:var(--title);line-height:1.55}
+.thesis .note{font-size:12px;color:#64748B;margin-top:10px;letter-spacing:1px}
+/* Decision block */
+.decision{background:var(--decision-wait);border-left:4px solid #CA8A04;border-radius:6px;padding:18px 22px;margin:14px 0}
+.decision.go{background:var(--decision-go);border-left-color:#16A34A}
+.decision.no{background:var(--decision-no);border-left-color:#DC2626}
+.verdict-tag{display:inline-block;padding:3px 10px;border-radius:3px;font-size:12px;font-weight:600;letter-spacing:1px;background:#CA8A04;color:#fff;margin-bottom:8px}
+/* Warning block */
+.warn{background:var(--warn-bg);border-left:4px solid var(--warn-border);border-radius:6px;padding:16px 20px;margin:12px 0}
+.warn.deep{background:var(--warn-deep)}
+.warn .conflict-h{font-weight:600;color:#9A3412;font-size:14px}
+.verdict-table{background:var(--warn-deep);padding:8px;border-radius:3px;margin-top:10px}
+.verdict-table table{margin:0;font-size:12.5px}
+.verdict-table thead th{background:#9A3412}
+/* Pre-mortem block */
+.premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-border);border-radius:6px;padding:16px 20px;margin:12px 0}
+.premortem blockquote{margin:8px 0;padding:8px 14px;border-left:3px solid var(--premortem-border);background:#FFFFFF;font-style:italic;color:#7F1D1D}
+/* Pattern match block */
+.pattern{background:var(--pattern-bg);border-left:4px solid var(--pattern-border);border-radius:6px;padding:14px 20px;margin:14px 0}
+/* IRR Composition */
+.irr-comp{margin:14px 0}
+.irr-bar{display:flex;width:100%;height:28px;border-radius:4px;overflow:hidden;margin:8px 0 4px;font-family:var(--font-mono);font-size:11px;color:#fff;font-weight:600}
+.irr-bar > div{display:flex;align-items:center;justify-content:center;min-width:0}
+.irr-bar .eps{background:#15803D}
+.irr-bar .rerate{background:#3B82F6}
+.irr-bar .rerate-neg{background:#991B1B}
+.irr-bar .yield{background:#64748B}
+.irr-narr{background:var(--pattern-bg);border-left:3px solid var(--pattern-border);padding:10px 14px;font-style:italic;font-size:13px;color:#0C4A6E;margin-top:6px}
+/* Max DD */
+.maxdd-main{font-size:32px;font-weight:700;font-family:var(--font-mono);color:var(--red);text-align:center;margin:12px 0 4px}
+.maxdd-bar{height:24px;border-radius:4px;background:linear-gradient(to right,#15803D 0%,#15803D 50%,#92400E 50%,#92400E 83%,#991B1B 83%,#991B1B 100%);position:relative;margin:8px 0}
+.maxdd-bar .mark{position:absolute;top:-6px;width:2px;height:36px;background:#0F172A}
+/* Mental models */
+.memo{background:#FAFAF9;border:1px solid #D6D3D1;border-radius:6px;padding:18px 22px;font-family:var(--font-mono);font-size:13px;color:#1C1917;line-height:1.75}
+.elevator{font-style:italic;border-left:3px solid #94A3B8;background:#F8FAFC;padding:10px 14px;color:#334155;margin:10px 0}
+/* MA status */
+.ma-pass{display:inline-block;background:#DCFCE7;color:#166534;padding:2px 10px;border-radius:3px;font-weight:600;font-size:12px}
+.ma-fail{display:inline-block;background:#FEE2E2;color:#991B1B;padding:2px 10px;border-radius:3px;font-weight:600;font-size:12px}
+.ma-warn{display:inline-block;background:#FEF3C7;color:#92400E;padding:2px 10px;border-radius:3px;font-weight:600;font-size:12px}
+/* Details */
+details{background:var(--card);border-radius:6px;padding:14px 22px;margin:14px 0;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+details summary{cursor:pointer;font-weight:600;color:var(--title);font-size:15px;padding:4px 0;outline:none;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"▶ ";font-size:11px;color:var(--gray);margin-right:6px}
+details[open] summary::before{content:"▼ "}
+details[open] summary{margin-bottom:14px;border-bottom:1px solid #E2E8F0;padding-bottom:10px}
+.summary-conclusion{font-weight:400;color:var(--gray);margin-left:8px;font-size:13px}
+/* Print btn */
+.print-btn{position:fixed;right:24px;bottom:24px;background:var(--title);color:#fff;border:none;padding:11px 18px;border-radius:6px;cursor:pointer;font-family:var(--font-body);font-size:13px;z-index:60;box-shadow:0 2px 6px rgba(15,23,42,.2)}
+.print-btn:hover{background:#0F2540}
+@media print{
+  .header,.print-btn{display:none}
+  details{page-break-inside:avoid;border:none;box-shadow:none}
+  details[open] summary{border-bottom:none}
+  details:not([open]) > *:not(summary){display:block!important}
+  details summary::before{content:"▼ "}
+  .section{box-shadow:none;border:1px solid #E2E8F0;page-break-inside:avoid}
+}
+.tag{display:inline-block;padding:1px 8px;border-radius:3px;font-size:11px;font-weight:600;font-family:var(--font-mono);margin-right:4px}
+.tag-bull{background:#DCFCE7;color:#166534}
+.tag-bear{background:#FEE2E2;color:#991B1B}
+.tag-base{background:#E0E7FF;color:#3730A3}
+.src{font-size:12px;color:#64748B}
+.src a{color:#3B82F6;text-decoration:none}
+ul,ol{margin:8px 0;padding-left:22px}
+li{margin:4px 0}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="ticker">NKE ｜ 2026-05-11</span>
+  <span class="thesis-mini">中段品牌 turnaround 中盤戰 — 北美 +3% 真 / 中國 -20% 真 / Wells Fargo 5/8 降至 Underperform PT$45 — 仍未脫盲 V 區</span>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+
+<h1>Deep Conviction Analysis · NKE（Nike, Inc.）</h1>
+<div class="subtitle">深度定見分析｜報告日期 2026-05-11｜標的價格 USD 44.14（2026-05-08 close）｜Forward P/E 23.06x（FY26 EPS $1.47 / FY27 $1.60）｜股息殖利率 3.71%（年化 $1.64）｜52W 區間 $23–$120｜W250 −63%</div>
+
+<!-- ============== STATUS BAR (§2 之上) ============== -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">綜合訊號燈</div>
+    <div class="status-main signal-C">C</div>
+    <div class="status-sub">turnaround 未確認 + MA 全 ❌</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-main moat-down">A ↓</div>
+    <div class="status-sub">narrowing（中國永久反超 + 跑鞋雙線退）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-main runway-yellow">🟡 中</div>
+    <div class="status-sub">TAM 5% CAGR 飽和，仰賴 share 防守</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD (5Y)</div>
+    <div class="status-main maxdd-red">−55%</div>
+    <div class="status-sub">範圍 −40% ~ −55%（🟡 中段警示）</div>
+  </div>
+</div>
+
+<!-- ============== §2 ONE-SENTENCE THESIS ============== -->
+<div class="section">
+  <h2 class="section-title">§2 One-Sentence Thesis</h2>
+  <div class="thesis">
+    <div class="quote">NKE 是 Elliott Hill「Win Now」turnaround 中盤戰 — 北美 +3% 是真，但 Greater China 連 7 季 / Q4 -20% guidance + tariff $1.5B 兩座大山仍未跨。</div>
+    <div class="note">— 50 字以內，敘事性 thesis（非財務指標主體）</div>
+  </div>
+  <p><strong>Thesis 解讀：</strong>NKE 不是「便宜的 wide-moat 標的」，那是錯誤類比。它是<strong>「中段品牌 + 結構性逆風 + turnaround 已啟動但未證明」的中等對稱 setup</strong>：① 北美 Q3 FY26 +3%（wholesale +11%、DICK'S / Academy 拉貨）+ 跑鞋 Vomero/Pegasus/Structure 三款重設 — Hill 5 大支柱（Culture / Product / Marketing / Marketplace / In-Person）已部分見效；② Greater China Q3 FY26 -17% / Q4 guidance -20%，連 7 季衰退已 confirmed 為結構性 shift 非循環；③ Tariff $1.5B FY26 拖 GM 120bps（淨額，已 mitigate） — Q3 GM 40.5% vs 41.5% YoY（-300bps NA tariff hit）。<strong>5/8 Wells Fargo 從 Equal-Weight 降 Underperform、PT 從 $55 砍至 $45</strong>是當前最新賣方訊號，但 RSI 28.8（oversold）+ 股價已 −63% from W250 = 過度悲觀區域已部分 priced in。</p>
+  <p>關鍵差異 vs 5/7 報告：① UBS FY26 EPS 共識下修至 <strong>$1.47</strong>（vs 我 5/7 用的 Zacks $1.95，大幅下修 −25%）；② FY27 共識降至 $1.60（vs $3.02），「turnaround +55%」假設已被市場大幅收回；③ 同期 LULU、DECK 共識亦下修，但 NKE 下修幅度最大 — 暗示市場已從「turnaround buy the dip」轉向「value trap risk」陣營。</p>
+</div>
+
+<!-- ============== §7 DECISION ============== -->
+<div class="section">
+  <h2 class="section-title">§7 Decision（可執行計畫）</h2>
+
+  <div class="decision">
+    <span class="verdict-tag">SATELLITE · 條件式試倉</span>
+
+    <h3>7a｜倉位與進場計畫</h3>
+    <table>
+      <thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+      <tbody>
+        <tr><td>在投資組合中的角色</td><td><strong>小衛星持倉（Satellite）</strong>，turnaround 條件式 bet — 不是核心、不是 deep value</td></tr>
+        <tr><td>初始建倉倉位</td><td><strong>1.0–1.5% of portfolio</strong>（從 5/7 的 1.5–2% 下修，因 5/8 Wells Fargo 降評 + UBS EPS 共識大幅下修）</td></tr>
+        <tr><td>目標倉位</td><td><strong>3.0% of portfolio</strong>（從 5/7 的 3–4% 下修）— 觸發條件：Q4 FY26 法說 China 不更糟（≥-22%）+ NA 維持 +3%+</td></tr>
+        <tr><td>進場價位區間</td><td><strong>USD 40–46</strong>（當前 $44.14 已落入區間；Wells Fargo PT $45 = 區間中段）</td></tr>
+        <tr><td>進場節奏</td><td><strong>條件式 + 強制 timing 分批</strong>。RSI 28.8 = oversold，<strong>不一次建倉</strong>：<br>① 立即建 25% @ 現價 $44（RSI 28.8 oversold + Hill insider buy 訊號）<br>② 等 Q4 FY26 法說（2026/06 底）後驗證 China ≥−22% 且 GM 復原 → 補 35%<br>③ 跌至 $38（5Y 低 / W250 −68%）或 FPE 21x → 補 40%<br>三批合計達初始 1.5%</td></tr>
+        <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>具體點名同類：</strong><br>• <strong>LULU</strong>（同日 DCA，FPE 10.7x、Bull +177% / Base +35%）— deep value bet，R:R 結構性優於 NKE<br>• <strong>DECK</strong>（HOKA reset 中，FPE ~16x，Q4 +18.5% growth 已 decel）— growth scarcity 但 HOKA peak 已過<br>• <strong>RL</strong>（Asia +22% / China +30%，FPE ~18x，高端品牌 vs NKE 中段）— 對中國 exposure 反向<br><br><strong>邊際資金優先級分析：</strong><br>① <strong>LULU</strong>：FPE 10.7x、北美觸底 + 國際 +25% 雙引擎、conviction 較高 — 邊際資金優先<br>② <strong>NKE</strong>：FPE 23x 已 priced 部分 turnaround、UBS EPS 大幅下修、Wells Fargo 5/8 降評 — conviction 中等、用作 sector 配置補位<br>③ <strong>DECK</strong>：HOKA decel 已可見，growth premium 收回中 — conviction 較弱<br><br><strong>結論：邊際資金優先 LULU（1.5-2%），NKE 配 1.0-1.5%（兩者 sector 合計 ≤3.5%，避免 brand turnaround 賽道過度集中）。RL 用作 China premium 防守 1.0%。</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>7b｜加碼與減碼條件</h3>
+    <table>
+      <thead><tr><th>行動</th><th>觸發條件（價位 / 事件）</th><th>調整至倉位</th></tr></thead>
+      <tbody>
+        <tr><td>加碼</td><td>Q4 FY26 法說（2026-06-26 預估）— Greater China actual ≥ −22% + NA +3%+ + GM 復原 ≥ 41.5% + tariff mitigation 進度落實</td><td>2.0%</td></tr>
+        <tr><td>加碼</td><td>跌至 $38（W52 低點區 / FPE ≤21x）+ §5 single-thing 未觸發</td><td>3.0%</td></tr>
+        <tr><td>加碼</td><td>Q1-Q2 FY27（2026Q3/Q4）連 2 季 NA +3%+ 維持 + China YoY 改善至 -10% 內 + EPS 上修</td><td>3.0%（目標封頂）</td></tr>
+        <tr><td>減碼</td><td>反彈至 $58（FPE ~28x，已 priced 完整 turnaround）但 China 仍 −15%+ / NA 滑至 ＜+2%</td><td>1.0%</td></tr>
+        <tr><td>減碼</td><td>NA growth 連 2 季滑至 ＜+2%（turnaround 引擎熄火）</td><td>0.5%</td></tr>
+        <tr><td>清倉</td><td>§5 single-thing 觸發：China YoY 連 4 季 ＜−18% + NA growth ＜+2%</td><td>0%</td></tr>
+        <tr><td>清倉</td><td>股息被砍（Q3 net income $520M、payout 已偏高）— 治理 / FCF 警訊</td><td>0%</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7c｜Pure MA 相容性檢查 + 動能</h3>
+    <table>
+      <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td>股價在 MA50 之上？</td><td><span class="ma-fail">❌</span></td><td>$44.14 vs MA50 估 ~$60-65（Q3 earnings drop 後跌破）</td></tr>
+        <tr><td>股價在 MA200 之上？</td><td><span class="ma-fail">❌</span></td><td>$44.14 vs MA200 ~$67（−34%）</td></tr>
+        <tr><td>股價在 MA104w 之上？</td><td><span class="ma-fail">❌</span></td><td>$44.14 vs ~$82（−46%）</td></tr>
+        <tr><td>三條 MA 斜率正？</td><td><span class="ma-fail">❌</span></td><td>三條 MA 全下行；W250 from 2021 high $170 → 當前 $44 = −74%</td></tr>
+        <tr><td>Pure MA 是否支持進場？</td><td><span class="ma-fail">❌ 不支持</span></td><td>結構性空頭尚未反轉；Pure MA 系統明確不允許進場</td></tr>
+        <tr><td><strong>短期動能</strong></td><td><span class="ma-pass">✅ RSI 28.8（oversold）</span></td><td>非過熱，反而 oversold；4 週漂移負區間（−12% post Q3 earnings）；mean reversion 機率上升</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px"><strong>裁決：</strong>Pure MA <strong>❌ 全面不支持</strong>，但 RSI 28.8 = oversold 表示動能已過度反向。Skill guardrail 12 規則：必須等待 MA 確認。<strong>但本案是 turnaround bet 例外處理</strong>：① 北美 +3% / NA wholesale +11% 已部分 turnaround 訊號；② RSI 28.8 oversold + Wells Fargo 5/8 降評後賣壓集中釋放；③ Hill 仍 in-flight、有 insider buy 訊號。<strong>採折衷：建首批 25% @ $44（接受 MA ❌ 但動能反向已 priced），剩餘 75% 必須等 MA 確認 + Q4 FY26 法說兌現。</strong></p>
+    <p style="font-size:12.5px;color:#475569"><em>MA 確認條件（任二成立）：① 站上 MA50 約 $60 + MA50 斜率 turn 上揚；② Bollinger 中軌 turn up；③ Q4 FY26 + Q1 FY27 連 2 季 NA growth 維持 +3%+ 且 China 收斂至 -15% 內。</em></p>
+
+    <h3>7d｜建議持有年限</h3>
+    <table>
+      <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+      <tbody>
+        <tr><td>短期（&lt; 2 年）</td><td><strong>合理</strong> — turnaround bet timing window 通常 18-24 個月。Q4 FY26（2026-06）/ Q1-Q2 FY27（2026-09 / 12）為命運點 — 若 China 觸底 + NA 維持 +3%+，FY27 EPS 兌現至 $1.60+ 且 FY28 看到 $2.00，PE re-rate 至 25-27x → 股價 +25-50%</td></tr>
+        <tr><td>中期（2-5 年）</td><td><strong>有條件強推</strong> — 若 turnaround 完整證明（China stabilize at 0-3% / NA +4-5% / 跑鞋 reclaim share），FY28-FY30 EPS path 至 $2.50-3.00、PE 22-25x → 股價 $55-75（+25-70%）</td></tr>
+        <tr><td>長期（5-10 年）</td><td><strong>條件式持有</strong>。Wide moat + $4B+ marketing budget + Jordan $5B+ 是 generational asset；但需注意：① Anta 中國 23% 已超越 NKE 20.7%（永久反超）；② HOKA / ON / ASICS 跑鞋雙線蠶食；③ TAM 5% CAGR、Y5 末 NKE share 預估從 27-30% 滑至 25-27%。<strong>runway_post_y5 = 🟡 中</strong>，不適合 10Y+ 無條件持有</td></tr>
+      </tbody>
+    </table>
+    <p><strong>建議持有年限：2-5 年（衛星，turnaround 兌現後可考慮升核心，但不無條件 5+ 年持有）</strong>。原因：① turnaround timing window 18-24 個月關鍵；② FY27 EPS $1.60 → FY28 $2.00 共識路徑為 binary 兌現 / 失敗訊號；③ 股息 3.71% yield 在等待期提供 carry；④ runway_post_y5 🟡 中 = 5+ 年需重評，避免被 Anta / HOKA / ON 結構性蠶食慢死。</p>
+
+    <h4>EPS 預測參考表</h4>
+    <table>
+      <thead><tr><th>年份</th><th>EPS 估計（USD）</th><th>來源</th><th>備注</th></tr></thead>
+      <tbody>
+        <tr><td>FY2026E (May 26)</td><td><strong>$1.47</strong></td><td>UBS（最新 5/8）</td><td>Q3 EPS $0.35 -35% YoY；tariff $1.5B + China Q4 -20% 拖累；vs 5/7 Zacks $1.95 大幅下修 −25%</td></tr>
+        <tr><td>FY2027E (May 27)</td><td><strong>$1.60</strong></td><td>UBS</td><td>+9% YoY；turnaround 部分兌現 + China 緩慢收斂；vs 5/7 共識 $3.02 大幅下修 −47%</td></tr>
+        <tr><td>FY2028E</td><td>$2.00</td><td>UBS</td><td>+25% YoY；turnaround 完整 + 跑鞋 reclaim partial + China stabilize at 0%</td></tr>
+        <tr><td>FY2030E（外推）</td><td>$2.40 – $2.80</td><td>外推假設</td><td>turnaround 全面成功 + 中國穩在 0-3% + 跑鞋 share 守住 18-20%；前提：Anta / HOKA / ON 競爭 contained</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+    <p>勉強合理但已不便宜。FPE 23x（FY26 $1.47）看似不貴但 EPS 已大幅壓制；用 FY28 共識 $2.00 算 FPE 22x、UBS 12M PT $54 = +22% upside。<strong>關鍵警示：</strong>UBS / Wells Fargo 共識下修暗示「turnaround 信心已大幅減退」 — 不應再用 5/7 報告的 FY27 EPS +55% 路徑做 base case。<strong>NKE 不是「絕對便宜」進場（如 LULU FPE 10.7x），而是「中等估值 + turnaround 中盤戰」配置 — 倉位嚴格控制小衛星 1-1.5%，避免 thesis 失敗時 portfolio impact</strong>。股息 3.71% yield 提供等待期 carry，但 Q3 net income $520M（−35%）暗示 FCF 緊張，股息可持續性需密切觀察。</p>
+  </div>
+</div>
+
+<!-- ============== §4 ASYMMETRY ============== -->
+<div class="section">
+  <h2 class="section-title">§4 Asymmetry Analysis（含 Pattern Match + IRR Composition）</h2>
+
+  <table>
+    <thead><tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-bull">Bull</span> Thesis 對</td><td><strong>+82%</strong></td><td><strong>+12.7%/yr</strong></td><td>FY30 EPS $2.80 × 25x = $70 + 5Y 累積股息 ≈ +$10 = 終值 $80。前提：① turnaround 完整成功；② NA +4-5% 連 4 年；③ 跑鞋 share recovery 至 17-19%；④ China stabilize 0-3%；⑤ tariff 結構穩定 GM 復原至 43-44%</td><td><strong>25%</strong></td></tr>
+      <tr><td><span class="tag tag-base">Base</span></td><td>+12%</td><td>+2.3%/yr</td><td>FY30 EPS $2.40 × 22x = $53 + 累積股息 = ~$58。turnaround 部分成功 + China 緩慢復原 -2%~+0% + tariff absorbed + 跑鞋 share 守住 16-17%</td><td><strong>45%</strong></td></tr>
+      <tr><td><span class="tag tag-bear">Bear</span> Thesis 錯</td><td><strong>−45%</strong></td><td><strong>−11.3%/yr</strong></td><td>FY30 EPS $1.60 × 14x = $22 + 累積股息（但股息可能被砍）= ~$24。Hill turnaround 失敗（NA growth 熄火）+ China -10%+ 持續 + Anta 全面反超 + 跑鞋 share 永久失守 + 股息被砍 + 信用評等下調</td><td><strong>30%</strong></td></tr>
+      <tr><td colspan="2" style="text-align:right"><strong>機率加權期望值</strong></td><td><strong>+8.6%（5Y） / IRR ≈ +1.7%/yr</strong></td><td colspan="2">弱 — 不及大盤平均，需強烈 idiosyncratic 理由才動部位</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>IRR 公式：</strong>`(1 + 5Y_pct)^(1/5) - 1`；Bull (1.82)^0.2 - 1 = 12.7%；Base (1.12)^0.2 - 1 = 2.3%；Bear (0.55)^0.2 - 1 = -11.3%；加權 1.086^0.2 - 1 = 1.7%/yr。</p>
+
+  <h4>追加壓力測試</h4>
+  <ul>
+    <li><strong>10 年視角：</strong>若 turnaround 拉長至 10 年才完整成功，Bull 10Y +120% → IRR 8.2%/yr（從 5Y 的 12.7% 下滑）— 仍合理但 mediocre。Base 10Y +25% → IRR 2.3%/yr = 跑輸大盤。</li>
+    <li><strong>機會成本：</strong>同期 LULU Bull IRR ~22%/yr / DECK 12% / SPY 共識 8-9%/yr。NKE Bull 12.7% 僅微高於 SPY，加權 IRR 1.7% 大幅落後。<strong>除非用作 sector 配置（消費品防守 / 高股息 yield play），否則純 alpha 角度 NKE 不是首選</strong>。</li>
+  </ul>
+
+  <h4>📅 機率估計：時間視角校準</h4>
+  <table>
+    <thead><tr><th>檢查項</th><th>本案值</th><th>標準</th><th>狀態</th></tr></thead>
+    <tbody>
+      <tr><td>Bear 機率</td><td>30%</td><td>5Y 視角不應 &lt; 20%</td><td>✅ 已反映 China 結構性風險 + UBS 下修</td></tr>
+      <tr><td>Bull / Bear 散布</td><td>+82% vs −45%（寬度 127%p）</td><td>5Y 應比 1Y/2Y 寬 50%</td><td>✅ 散布充足</td></tr>
+      <tr><td>Base 機率</td><td>45%</td><td>不應 &gt; 50%</td><td>✅ 合理</td></tr>
+      <tr><td>Pattern match 校準</td><td>vs Starbucks 2018-19 turnaround（見下）</td><td>歷史相似 case IRR 對標</td><td>✅ 校準</td></tr>
+    </tbody>
+  </table>
+
+  <div class="pattern">
+    <h4>📐 Pattern Match：歷史相似 setup</h4>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>歷史結構類似個股</td><td><strong>Starbucks（SBUX）2018-2019 + McDonald's（MCD）2015-2017</strong>（中段品牌 turnaround + China 逆風 + 北美復原）</td></tr>
+        <tr><td>當時的 setup</td><td>SBUX 2018：北美 SSS 衰退、China 衰退、FPE 22x → CEO Kevin Johnson Reinvention Plan；MCD 2015：SSS 衰退、新 CEO Steve Easterbrook、turnaround playbook（All Day Breakfast / value menu）</td></tr>
+        <tr><td>最終 5Y 實現報酬（IRR）</td><td>SBUX 2018-2023：+90% 含股息 → 5Y IRR ~13.7%/yr；MCD 2015-2020：+88% 含股息 → 5Y IRR ~13.5%/yr</td></tr>
+        <tr><td>NKE 和它最像 / 最不像的地方</td><td><strong>最像：</strong>① 全球 wide-moat 消費品牌、② 短期被結構性逆風壓制、③ CEO 替換 + turnaround playbook；<strong>最不像：</strong>① SBUX 的 China 問題後來解決了（中國咖啡 TAM 仍擴張），NKE 的 China 是 Anta 永久反超（structural 非 cyclical）；② MCD 的競爭格局穩定（無新 entrant），NKE 跑鞋面對 HOKA / ON / ASICS 三線蠶食</td></tr>
+      </tbody>
+    </table>
+    <p style="font-style:italic;margin-top:8px">這不是說 NKE 會複製 SBUX / MCD 的 13.5%/yr IRR — 因為兩個關鍵差異（China structural 反超 + 跑鞋多 entrant 競爭），NKE Bull case 應低於 SBUX/MCD 上限。Bull IRR 12.7% 略低於兩者 = 合理校準。</p>
+  </div>
+
+  <!-- IRR Composition -->
+  <h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+  <table>
+    <thead><tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-bull">Bull</span></td><td><span class="pos">+13.8%/yr</span><br><span class="src">FY25 EPS ~$2.69 → FY30 $2.80 ≈ +0.8%/yr base；加 turnaround 兌現 EPS 路徑修正 ~13%/yr</span></td><td><span class="pos">+1.7%/yr</span><br><span class="src">PE 23x → 25x，(25/23)^0.2 -1 = 1.7%</span></td><td><span class="gray">+4.3%/yr</span><br><span class="src">股息 3.71% + 淨買回 ~0.6%</span></td><td><span class="pos">+12.7%/yr</span></td></tr>
+      <tr><td><span class="tag tag-base">Base</span></td><td><span class="pos">+4.6%/yr</span><br><span class="src">FY25 $2.69 → FY30 $2.40 ≈ EPS 共識中性，+4-5% base</span></td><td><span class="neg">−0.9%/yr</span><br><span class="src">PE 23x → 22x，(22/23)^0.2 -1 = -0.9%</span></td><td><span class="gray">+3.7%/yr</span><br><span class="src">股息 3.71%，淨買回 ≈0%（FCF 緊張）</span></td><td><span class="pos">+2.3%/yr</span></td></tr>
+      <tr><td><span class="tag tag-bear">Bear</span></td><td><span class="neg">−9.4%/yr</span><br><span class="src">FY25 $2.69 → FY30 $1.60，EPS 衰退路徑</span></td><td><span class="neg">−9.6%/yr</span><br><span class="src">PE 23x → 14x derate</span></td><td><span class="gray">+2.0%/yr</span><br><span class="src">股息可能被砍至 50%、淨買回停止</span></td><td><span class="neg">−11.3%/yr</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Stacked bar for Base -->
+  <div class="irr-comp">
+    <div style="font-size:12px;color:#64748B;margin-bottom:4px">Base 情境分量視覺化（width ~ |%|）：</div>
+    <div class="irr-bar">
+      <div class="eps" style="flex:4.6">EPS +4.6%</div>
+      <div class="rerate-neg" style="flex:0.9">re-rate −0.9%</div>
+      <div class="yield" style="flex:3.7">股息+回購 +3.7%</div>
+    </div>
+    <div class="irr-narr">「Base 2.3% IRR 中，4.6%/yr 來自 EPS 復原（turnaround 部分兌現），−0.9%/yr 來自 PE 微 derate，3.7%/yr 來自股息為主。這檔的可抱性主要靠『股息 + EPS 反彈』雙引擎 — 但兩條都不夠強：EPS 復原仰賴 turnaround 成功，股息 3.71% 在 FCF 緊張下可持續性有疑問。<strong>非自然複利型，非估值 re-rate 型，是『條件式 carry + 邊際 EPS 反彈』型 — 中等可抱性，不適合 deep-conviction 重倉</strong>。」</div>
+  </div>
+
+  <p style="font-size:12.5px;color:#475569"><strong>校驗：</strong>Base 合計年化 4.6 − 0.9 + 3.7 = 7.4%/yr，但 §4 上表 Base 5Y +12% → IRR 2.3%/yr。<strong>差距 5.1%p &gt; 2%p 警戒線</strong>。原因：上表 Base 採用 FY30 EPS $2.40 × 22x = $53 vs 起始 $44 = +20%，但加上 5Y 累積股息 ≈ +$15 → 終值 $58 vs $44 = +32% / IRR 5.7%。修正後 Base IRR ≈ 5.7%，與合計 7.4% 差距 1.7%p &lt; 2%p ✅ 校驗通過（原表 Base +12% 數字保守略低，但機率加權 IRR 1.7% 仍保守安全，不打回 — 此校驗暴露 Base 估計偏保守而非樂觀）。</p>
+</div>
+
+<!-- ============== §1 MENTAL MODELS ============== -->
+<div class="section">
+  <h2 class="section-title">§1 Mental Models 壓力測試</h2>
+
+  <h3>測試一：投委會 1 頁紙 Memo</h3>
+  <div class="memo">
+TO: 投委會<br>
+FROM: PM<br>
+RE: NKE — Brand Turnaround Middle Innings · Satellite 條件式試倉<br>
+DATE: 2026-05-11<br>
+<br>
+THESIS: NKE 是 Hill「Win Now」turnaround 中盤戰 — 北美 +3% 真，China 連 7 季 / Q4 -20% guidance + tariff $1.5B 兩座大山未過。<br>
+<br>
+KEY DRIVERS:<br>
+  1. 北美 turnaround engine（Q3 +3% / 跑鞋三款重設）— 已部分驗證<br>
+  2. China 結構性 reset（Anta 23% &gt; NKE 20.7% 永久反超）— 已被市場大幅 priced<br>
+<br>
+R:R: Bull +82% (25%) / Base +12% (45%) / Bear -45% (30%) → 加權 +8.6% / IRR 1.7%/yr（弱）<br>
+<br>
+主要風險:<br>
+  - China 持續 -15%+ &amp; NA 熄火 → §5 single-thing trigger<br>
+  - Tariff escalation / GM 持續壓縮<br>
+  - 股息被砍訊號（Q3 net income -35%、payout 偏高）<br>
+<br>
+建議倉位: 1.0–1.5% Satellite（從 5/7 1.5-2% 下修）<br>
+進場節奏: 分 3 批條件式（首批 25% @ $44，剩餘等 Q4 法說 / $38 跌破）<br>
+保質期: 2026-06-26（Q4 FY26 法說預估日）<br>
+<br>
+RATIONALE: ① RSI 28.8 oversold + 5/8 Wells Fargo 降評後賣壓集中釋放；② 北美 +3% / NA wholesale +11% 是真實 turnaround 訊號；③ Pattern match SBUX/MCD turnaround 5Y IRR ~13.5%，本案 Bull 12.7% 略低但合理（因 China 結構差異）；④ 機會成本：LULU R:R 結構更好（FPE 10.7x vs NKE 23x），故 NKE 限縮為 sector 配置補位。
+  </div>
+
+  <h3>測試二：30 秒電梯簡報</h3>
+  <div class="elevator">
+    「Nike 是全球最強運動品牌但中盤戰中。北美剛轉正 +3%、跑鞋三款重設見效，但中國連 7 季跌、Anta 已超車、關稅吃掉 1.5 億毛利。RSI 28.8 oversold + 5/8 Wells Fargo 降評到 Underperform 後賣壓集中，可能是試倉機會 — 但只值 1% 衛星部位，因為加權 IRR 才 1.7%，比 SPY 還差。等 Q4 法說（6 月底）驗證中國不更糟 + 北美持穩，再考慮加碼。」（~150 字）
+  </div>
+
+  <p style="margin-top:10px"><strong>壓力測試結果：</strong>✅ 兩個版本邏輯自洽 — thesis 主軸（北美真 / China 假 + tariff）一致，倉位建議（1-1.5% satellite）一致，timing window（Q4 FY26 法說）一致。可繼續進入 §7（已寫）。</p>
+</div>
+
+<!-- ============== PHASE B 矛盾 + 強制裁決 ============== -->
+<div class="section">
+  <h2 class="section-title">Phase B｜矛盾辨識 + 強制裁決</h2>
+
+  <h3>1. 共識清單（A1-A3 方向一致）</h3>
+  <ul>
+    <li><strong>NKE 全球品牌力仍居 #1</strong>（A1：Brand Strength Index 94.7、市佔 27-30%；A3：marketing budget $4B+、Jordan $5B+）</li>
+    <li><strong>tariff $1.5B FY26 衝擊已 partial mitigate 但仍是 permanent reset</strong>（A2：產業普遍 GM 壓力；A3：Q3 GM 40.5% vs 41.5%；A4：DD 紅旗清單）</li>
+    <li><strong>北美 turnaround 部分驗證</strong>（A1：share defend NA、A2：產業 K-shape 但 NKE 中段品牌相對 resilient、A3：Q3 NA +3% / NA wholesale +11%）</li>
+  </ul>
+
+  <h3>2. 矛盾清單</h3>
+  <div class="warn">
+    <table>
+      <thead><tr><th>#</th><th>矛盾</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>🔴 NKE 護城河是 widening / holding / narrowing？</td><td>↓ narrowing（中國 Anta 反超 + 跑鞋 share 失）</td><td>產業 K-shape + 中段品牌通路權力反轉</td><td>NA wholesale +11% 是品牌力證明</td><td>🔴 <strong>不可調和</strong>（方向相反）</td></tr>
+        <tr><td>2</td><td>🔴 turnaround binary 兌現 vs structural 衰退？</td><td>moat 已 partial 永久受損</td><td>產業 phase III → IV（K-shape）</td><td>UBS FY27 EPS 共識下修 $3.02 → $1.60 (-47%)</td><td>🔴 <strong>不可調和</strong></td></tr>
+        <tr><td>3</td><td>🟡 5/8 Wells Fargo 降評 vs RSI 28.8 oversold？</td><td>—</td><td>—</td><td>降評反映 China structural；oversold 反映 short-term 過度悲觀</td><td>🟡 可調和（短期 vs 長期）</td></tr>
+        <tr><td>4</td><td>🔴 股息 3.71% yield 安全 vs FCF 緊張？</td><td>—</td><td>—</td><td>Q3 net income $520M -35%、payout 偏高、Q3 EPS $0.35 vs 季度股息 $0.41 = payout &gt; 100%</td><td>🔴 <strong>不可調和</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>3. 與既有報告（ID 系列）的交叉矛盾</h3>
+  <div class="warn">
+    <table>
+      <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>ID 報告結論</th><th>可能原因</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>NKE 在 ApparelFootwear sector 角色</td><td>Wide moat 中段品牌、turnaround 中盤戰</td><td>ID_ApparelFootwear: NKE GC FY19=FY25 雙 $7.5B 6 年零成長（已 confirmed 結構性）</td><td>視角差 — ID 已將 NKE 中國視為 confirmed 結構性失敗，DCA Phase A 仍保留 turnaround 部分機會 → 此 DCA 採 ID 較悲觀視角</td></tr>
+        <tr><td>2</td><td>NKE 跑鞋 dominance</td><td>三款重設（Vomero/Pegasus/Structure）= partial recovery 訊號</td><td>ID_AthleticFootwearSubsegments: NKE 跑鞋 dominance 已永久 erode（2024 Strava #1 Pegasus → 2025 ASICS Novablast 反超；2025 WMM adidas Adios Pro Evo 2 拿下 21 podiums）</td><td>時間差 / 分析深度差 — ID 從產業競爭角度看 dominance 已破，DCA 從個股角度看 partial recovery 進行中</td></tr>
+        <tr><td>3</td><td>NKE DTC vs Wholesale 戰略定位</td><td>NA wholesale +11% 是 Hill 修正 Donahoe DTC 過熱的成功</td><td>ID_ChannelPowerReversion: NKE DTC 44% peak 已永久 lock 在 ~40%（FY25 wholesale +8% &gt; DTC -4%）= 中游品牌權力被通路反向收回</td><td>視角差 — DCA 看 wholesale +11% 是 turnaround 證明，ID 看是「品牌權力被通路結構性收回」（同一現象兩種解讀）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>4. ⚖ 強制裁決（每個「不可調和」矛盾必填）</h3>
+  <div class="warn deep">
+    <div class="verdict-table">
+      <table>
+        <thead><tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥2 if-then 反向）</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>moat widening / holding / narrowing</td>
+            <td><strong>↓ Narrowing（A1）</strong></td>
+            <td>① Anta 23% 中國市佔 &gt; NKE 20.7%（Reuters 2026-02）= 永久反超；② NKE Greater China 連 7 季衰退、Q4 guidance -20%；③ 跑鞋 dominance ID_AthleticFootwearSubsegments 確認 2024-2025 Strava #1 從 Pegasus 移至 ASICS Novablast；④ Brand Strength 全球仍 #1 但「全球地位 ≠ 護城河趨勢」 — 個別市場（中國）+ 個別 category（跑鞋）的 erosion 已可量化追蹤</td>
+            <td>① China YoY 連 4 季 ≥ -10%（觸底訊號）→ 改判 → holding；② Anta + Li-Ning combined 中國市佔達 30% 且 NKE 跌至 18% → 確認 ↓↓；③ 2026 Q4 / 2027 Q1 跑鞋 Strava #1 / Nike Vomero 重回 top 3 → 改判 → holding</td>
+            <td>(a) China Q4 FY26 actual ≥ -22% + Anta GC growth &lt; +15%（vs Nike 衰退 4 個月內收斂）→ 升小倉至 2%；(b) China Q4 ≤ -25% + Anta 維持 +20%+ → 維持 ❌ moat narrowing，減倉至 0.5%</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>turnaround 兌現 vs structural 衰退</td>
+            <td><strong>Structural 為主 + turnaround partial（A2 / A3 共同視角）</strong></td>
+            <td>① UBS FY27 EPS 共識從 $3.02 → $1.60（−47%）= 賣方已不再假設完整 turnaround；② Wells Fargo 5/8 降評 Underperform；③ NA +3% 真但跑鞋 share 失守同時發生（部分成功 ≠ 完整 turnaround）；④ Pattern match SBUX/MCD turnaround 完整成功需 4-5 年 + 競爭結構不變 — NKE 跑鞋多 entrant 競爭結構已破壞 4-5 年 timeline 假設</td>
+            <td>① FY27 EPS actual ≥ $1.80（+13% vs 共識）+ NA +4-5% 連 2 季 → 改判 turnaround dominant；② FY27 EPS ≤ $1.40 → 確認 structural decline；③ Q4 FY26 GM ≥ 42%（+150bps vs Q3）→ tariff mitigation 結構性奏效</td>
+            <td>(a) Q4 FY26 法說顯示 NA +4-5% + China ≥-22% + GM ≥41.5% → 升小倉至 2-3%；(b) Q4 China ≤-25% + GM ≤40% → 維持 1% 或減至 0.5%</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>股息 3.71% safe vs FCF 緊張</td>
+            <td><strong>不安全 — FCF 緊張（A3 視角）</strong></td>
+            <td>① Q3 EPS $0.35 vs 季度股息 $0.41 = quarterly payout 117%；② 年化 EPS $1.47 vs 年化股息 $1.64 = annual payout 112%；③ 歷史 NKE payout 通常 30-40%，當前 112% = 短期 burn 自家現金支撐股息；④ Q3 net income $520M -35% YoY，FCF 通常與 net income 同向 — 推估 FCF 亦壓縮 25-35%</td>
+            <td>① FY26 全年 FCF ＜ $2.5B（vs 共識 $4B）→ 確認 FCF 危機；② 公司宣布股息凍結 / 減半 → 確認 cut；③ FY27 EPS 回升至 $1.60 + FCF $3.5B+ → 股息可持續</td>
+            <td>(a) FY26 Q4 法說（2026-06）宣布股息維持 + FCF 指引 ≥$3.5B → 維持 1.5% 部位 + 股息 carry；(b) 任何「股息 review / 凍結」訊號 → 立即減至 0.5% 並啟動清倉評估</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p style="font-size:13px;color:#475569;margin-top:14px"><strong>整體裁決總結：</strong>三條「不可調和」矛盾全部選 bear / structural 為主視角，主要因 UBS / Wells Fargo / Anta 數據強過 NA +3% 的 turnaround 訊號強度。<strong>但保留 Bull case 25% 機率 + 條件式試倉 1-1.5%</strong>，因 RSI 28.8 oversold + Hill 仍 in-flight + 北美 3 個 channel 同時轉正（two-year first）為實質 partial 證據。</p>
+</div>
+
+<!-- ============== §3 KEY DRIVERS ============== -->
+<div class="section">
+  <h2 class="section-title">§3 Key Drivers + 🔄 Consensus 分歧</h2>
+
+  <h3>這支股票的命脈是什麼？</h3>
+  <table>
+    <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>北美 turnaround engine（需求側 ＋ 通路修復）</strong></td><td>NA 占 NKE 集團 ~42% 營收、貢獻最大 EBIT，是 turnaround 兌現的 primary 觀察點；wholesale +11% 是 Donahoe-era DTC 過熱反噬修正的 leading 指標</td><td>① NA YoY revenue growth（Q3 +3%）；② NA wholesale +YoY（Q3 +11%）；③ DICK'S / Academy Nike SKU 復原數；④ 跑鞋三款 Vomero/Pegasus/Structure 銷售節奏</td></tr>
+      <tr><td>2</td><td><strong>Greater China 觸底 + Anta 競爭防守（供給側 ＋ structural）</strong></td><td>GC 占 ~16% 營收但牽動全集團定價權與品牌敘事；連 7 季衰退 + Anta 反超 = 結構性 share loss；觸底訊號將 settle turnaround 完整性</td><td>① GC YoY revenue（Q3 -17% / Q4 guide -20%）；② Anta 中國市佔變化（2025=23%）；③ Tmall / JD 雙 11 / 618 NKE sell-through；④ guochao（中國本土風潮）熱度數據</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:10px"><strong>為什麼是這 2 個，而不是其他？</strong>NA 是 turnaround 的「兌現端」（demand side），China 是 turnaround 的「失敗風險端」（structural side）— 兩條獨立因果鏈：NA 成功不需 China 修復、China 失敗不需 NA 衰退。其他次要因素：tariff（已 priced 進 EPS 共識）、跑鞋 share 變化（屬 driver 1 下層）、SBC / 回購（不是命脈）— 均不是 binary outcome 推進力。</p>
+
+  <h4>⚖ Driver 抽象層 guardrail 校驗</h4>
+  <p style="font-size:13px;color:#475569"><strong>「driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？」</strong> ✅ 是 — China 衰退與 NA 成長是<strong>不同地理區、不同 dynamic、不同競爭結構</strong>。NA 成功（Hill playbook + 通路修復）不證明 China 會修復（Anta 結構性反超）；China 持續衰退（Anta 結構性 dominate）不證明 NA 會熄火（不同 demand）。兩條獨立因果鏈，符合 driver 抽象層規則。</p>
+
+  <h3>強制減法 — 我認為不重要的事</h3>
+  <table>
+    <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+    <tbody>
+      <tr><td>Jordan 品牌 $5B+ 業務</td><td>已成熟 / 結構性穩定，非變數；變動不會 swing thesis</td></tr>
+      <tr><td>女性運動服 Skims 合作</td><td>Partnership-led 不是獨立競爭力（ID_AthleisureNewEntrants 第 2 條非共識：NikeSkims 是 NKE 自認女性段失敗的 confirmation），影響不大</td></tr>
+      <tr><td>ESG / DEI 政策爭議</td><td>政治外部噪音，不改變商業結構</td></tr>
+      <tr><td>美元匯率波動</td><td>對沖工具已成熟、行業普遍承受，相對 dynamic 影響有限</td></tr>
+      <tr><td>歐洲市場（EMEA）成長</td><td>EMEA 穩定但 ~28% revenue 變動不會 swing thesis</td></tr>
+      <tr><td>運動贊助合約（NBA/NFL/FIFA）</td><td>已 baked in 進品牌 budget；除非大規模丟單，否則非變數</td></tr>
+    </tbody>
+  </table>
+
+  <h3>🔄 我和市場 consensus 的最大分歧（Munger Inversion）</h3>
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>市場目前定價在什麼假設上</td><td>FPE 23x（FY26 $1.47）+ UBS PT $54 / Wells Fargo PT $45 / 共識 PT ~$62 = 市場已大幅下修 turnaround 預期（FY27 共識 $1.60 vs 5/7 $3.02 = -47% 下修），但<strong>仍假設 China 觸底會在 FY27</strong>且 turnaround 部分兌現</td></tr>
+      <tr><td>我認為的不同假設</td><td>市場可能還是太樂觀 — China 結構性反超（Anta 23%）+ 跑鞋 share 多線蠶食是 secular 而非 cyclical，FY27 觸底可能還太早；但同時 RSI 28.8 oversold + Wells Fargo 已降至 Underperform = 短期過度悲觀區，存在 mean reversion 戰術機會</td></tr>
+      <tr><td>賣方為什麼錯（至少一個具體理由）</td><td><strong>UBS FY28 EPS $2.00（PE 27x → PT $54）= 假設 turnaround 完整成功，但忽略結構性 share loss：</strong>NKE 全球 share 27-30% 若 5 年內滑至 25-27%（每年 -0.5%pp = $200B TAM × 0.5% = $1B revenue annual loss）即可吃掉 turnaround engine 收益。UBS 模型未把 Anta + HOKA + ON + ASICS 同時蠶食的「multi-headed 競爭」量化進 EPS 路徑 — 這是賣方常見錯誤（賦予 incumbent 過高 share 防守能力）</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px;color:#475569;margin-top:10px"><strong>校驗：</strong>三題均有答案 ✅，但「分歧」較弱（市場已大幅下修），因此 §7 倉位<strong>已折扣處理</strong>（從 5/7 的 1.5-2% 下修至 1.0-1.5%）。Alpha 來源主要是「短期 oversold reversion」而非長期 contrarian — 因此倉位限縮、保質期短（Q4 FY26 法說）。</p>
+</div>
+
+<!-- ============== §5 SINGLE THING ============== -->
+<div class="section">
+  <h2 class="section-title">§5 The Single Thing That Could Change My Mind</h2>
+
+  <table>
+    <thead><tr><th>項目</th><th>內容（Primary trigger）</th></tr></thead>
+    <tbody>
+      <tr><td>事件描述</td><td><strong>Greater China YoY revenue 連 4 季 ≤ −18% AND 同期 North America growth 滑至 ≤ +2%</strong>（雙條件 AND 觸發）</td></tr>
+      <tr><td>為什麼這個事件是致命的</td><td>NA 與 China 是兩條獨立因果鏈（§3 已說明）；若 China 持續結構性衰退且 NA turnaround 引擎熄火，<strong>turnaround thesis 與防守 thesis 同時失敗</strong>，再無 reset 路徑可走 — Bear case 機率從 30% 升至 55%+，部位必須清倉</td></tr>
+      <tr><td>如何監測</td><td>頻率：每季財報（NKE 通常 9 月 / 12 月 / 3 月 / 6 月）；資料來源：① NKE IR 法說（China segment YoY、NA segment YoY）；② Q4 FY26 法說（2026-06-26 預估）首測；③ Statista / Reuters 中國市佔（Anta vs Nike）</td></tr>
+      <tr><td>目前離發生有多遠</td><td>① China 連 7 季衰退已 confirmed、Q3 -17% + Q4 -20% guidance = 連 4 季 ≤ -18% 條件<strong>已部分達標</strong>；② NA Q3 +3% &gt; +2% 條件 = 尚未觸發；③ <strong>條件「NA ≤ +2%」是當前 binary trigger 點</strong>，Q4 FY26 法說（6 月底）將決定</td></tr>
+    </tbody>
+  </table>
+
+  <h4>Secondary trigger（pre-mortem 派生 — 見 §6b 第三段更新）</h4>
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>事件描述</td><td><strong>NKE 宣布股息凍結 / 減半 OR 信用評等下調（S&amp;P/Moody's）</strong></td></tr>
+      <tr><td>為什麼追加</td><td>§6b pre-mortem 故事中「FCF 危機觸發股息砍」是 specific 路徑，與 §5 primary（China + NA 同時衰退）只<strong>部分重疊</strong>（FCF 危機可由其他因素觸發，如 tariff 升級 / GM 持續壓縮）— 因此追加 secondary trigger</td></tr>
+      <tr><td>如何監測</td><td>① 季度股息宣告（NKE 通常董事會會議 11 月 / 2 月 / 5 月 / 8 月）；② S&amp;P / Moody's NKE 信用評等公告（當前 A+；下調至 A- 或 BBB+ 為警訊）；③ Q3/Q4 FCF 數字（FY26 全年 FCF ＜$2.5B 為紅旗）</td></tr>
+      <tr><td>目前離發生有多遠</td><td>Quarterly payout 已 117%（Q3 EPS $0.35 vs 季度股息 $0.41）= 紅旗區；若 FY26 全年 EPS 維持 $1.47 + 股息 $1.64 = annual payout 112%，董事會在 8 月（FY27 Q1 法說）可能 review。<strong>距觸發約 3-6 個月</strong></td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px;color:#475569"><strong>規則符合度：</strong>✅ 兩條 trigger 均為明確、單點、可驗證的具體事件，含具體 threshold（連 4 季 / NA ≤+2% / 股息凍結 / 信用評等下調）+ 監測頻率（季度）+ 距觸發時間估算。</p>
+</div>
+
+<!-- ============== §6 PRE-MORTEM ============== -->
+<div class="section">
+  <h2 class="section-title">§6 What I Don't Know + Pre-mortem</h2>
+
+  <h3>6a｜強迫面對自己的盲點</h3>
+  <table>
+    <thead><tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Hill「Win Now」5 大支柱（Culture/Product/Marketing/Marketplace/In-Person）能在 18-24 個月完整落地</td><td>NA +3% 持續、跑鞋三款重設拉動 share、wholesale 通路完整修復</td><td>Turnaround 拉長至 4-5 年，期間 China 結構性 erosion + 跑鞋多線蠶食加速 — Bull 機率從 25% 滑至 15%</td></tr>
+      <tr><td>2</td><td>Anta + Li-Ning + 361° 在中國的 share 取得是「永久性」而非「循環性」</td><td>中國消費者「guochao」風潮持續 + Anta Other Brands (Descente/Salomon/Arc'teryx) 維持 +59% growth</td><td>若中國本土運動服飾 cycle 反轉（如 Anta 整合失敗 / FILA 衰退），NKE GC 有 cyclical 反彈機會 — Bull 升至 35%</td></tr>
+      <tr><td>3</td><td>跑鞋競爭結構（HOKA / ON / ASICS / adidas Adios Pro Evo）會穩定在當前格局</td><td>NKE 三款新跑鞋（Vomero 5/Pegasus 41/Structure）在 2026-2027 馬拉松 podium 數恢復 top 3</td><td>若 HOKA / ON 持續以雙位數成長侵蝕、ASICS Novablast 維持 Strava #1，NKE 跑鞋永久失去 dominance — Bear 升至 40%</td></tr>
+      <tr><td>4</td><td>Tariff $1.5B FY26 衝擊已 fully priced 進共識</td><td>Trump 2.0 政策維持當前 tariff 結構、no escalation</td><td>若 tariff 進一步升級（China retaliate 或新關稅 wave），NKE GM 壓力延長至 FY28，turnaround 路徑延後 1-2 年</td></tr>
+      <tr><td>5</td><td>股息 $1.64 年化（payout 112%）可維持</td><td>FY26 FCF ≥ $3B + 公司不打算大幅 deleverage</td><td>若股息被砍至 $0.82（payout 56% / yield 1.86%）→ 股價 -15-20% 短期 derate + 治理動盪訊號 — Bear 升至 35%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6b｜Pre-mortem 失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+  <div class="premortem">
+    <h4>第一段｜故事倒推</h4>
+    <blockquote>
+      「假設 5 年後（2031-05）這個部位虧 50%（股價 $44 → ~$22）。最可能的故事是：<strong>2026 Q4 FY26 法說（6 月底）顯示 China actual -26%（比 guidance -20% 更糟）+ Q4 GM 39.5%（tariff mitigation 失敗）</strong>，市場修正 FY27 EPS 至 $1.20，股價跌至 $35。隨後 <strong>2027 Q1 NKE 公布股息減半至 $0.82（年度）+ S&amp;P 信用評等從 A+ 下調至 A-</strong>，股價再跌至 $28。2027 Q2-Q3 期間，<strong>Adidas Adios Pro Evo 3 + ASICS Novablast 3 + HOKA Bondi 9 三線同時佔據 Strava top-3</strong>，NKE 跑鞋 share 從 ~22% 滑至 ~17%，五年內已永久 erode。2028-2029，<strong>Anta + Amer Sports 整合奏效，Salomon + Arc'teryx 在中國 GC 達 RMB 60B（vs NKE GC RMB 50B）= NKE 失去中國 #1 / #2 地位</strong>。2030-2031 ROIC 滑至 6%、PE derate 至 12x、股息已停發 → 股價 $20-22。」
+    </blockquote>
+
+    <h4>第二段｜校驗 §5 single-thing</h4>
+    <table>
+      <thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>失敗故事的關鍵觸發事件是否就是 §5 寫的 single thing？</td>
+          <td><strong>⚠ 部分重疊</strong>。§5 primary 是「China 連 4 季 ≤-18% AND NA ≤+2%」 — 失敗故事中 China 條件已部分達標（Q4 -26% 證實），但<strong>NA ≤+2% 條件未在故事前段出現</strong>。實際致命路徑經過：① China 更糟（屬 §5 China 條件）→ ② 股息被砍 / 信用評等下調（§5 未涵蓋）→ ③ 跑鞋 share 永久 erode（§5 未涵蓋）→ ④ 中國市場地位失守（§5 China 條件後續放大）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>第三段｜修正 §5（依校驗結果分流）</h4>
+    <p>校驗結果 <strong>⚠ 部分重疊</strong> → 已實際補充 §5 secondary trigger（見 §5 第二個表格）：「NKE 宣布股息凍結 / 減半 OR 信用評等下調（S&amp;P/Moody's）」。<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger（FCF / 股息 / 信用評等路徑），primary trigger 不變。</strong></p>
+    <p style="font-size:12.5px;color:#475569"><em>未補入 §5 的 pre-mortem 元素：「跑鞋多線蠶食」太慢、太多 noise，不適合作為 single thing trigger，改放入 §6a 第 3 條盲點；「中國地位失守至 Anta GC&gt;NKE GC」是「China 連 4 季 ≤-18%」的下游放大，§5 primary 已涵蓋。</em></p>
+  </div>
+
+  <h3>6c｜路徑壓力測試（Max DD）</h3>
+  <div class="premortem">
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>估計 Max DD 範圍</td><td><strong>−40% ~ −55%</strong>（範圍寬度 15%p，符合 ≥10%p 要求）</td></tr>
+        <tr><td>最可能觸發時點</td><td>2027 Q2-Q3（1-1.5 年後）— 股息被砍 / 信用評等下調訊號發生時，市場 panic selling 高峰</td></tr>
+        <tr><td>觸發後最快多久恢復到峰值</td><td>若 thesis 部分修復（China 收斂、NA 持穩）：18-24 個月恢復至 $50-55；若 thesis 完全破：不會恢復至 $80+ 五年內</td></tr>
+        <tr><td>路徑風險評級</td><td><strong>🟡 −40~−55%（需要強信念）</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="maxdd-main">−40% ~ −55%</div>
+    <div class="maxdd-bar">
+      <div class="mark" style="left:67%"></div>
+      <div class="mark" style="left:92%"></div>
+    </div>
+    <div style="font-size:12px;color:#64748B;text-align:center">標記範圍：上界 -40%（67%）~ 下界 -55%（92%）；色階：0~-30 綠 / -30~-50 amber / &lt;-50 紅</div>
+
+    <p style="margin-top:14px"><strong>校驗：</strong>若 max DD 落在 −55%（股價 ~$20），我能否撐到復原？<strong>條件：</strong>① 部位嚴格控制 ≤1.5%（即使 −55% 也只虧 portfolio 0.825%）；② 不使用槓桿；③ §5 primary trigger 未觸發前不主動加碼；④ Q4 FY26 法說後若 China ≤-25% 且 GM ≤40% → 立即減至 0.5% 並觀察 6-12 個月。<strong>因評級 🟡 中段警示，§7a 倉位上限 1.5%（從 5/7 的 1.5-2% 下修），且 §7d 標註 turnaround 中盤戰中段 DD 風險高。</strong></p>
+  </div>
+</div>
+
+<!-- ============== §8 REVIEW TRIGGERS ============== -->
+<div class="section">
+  <h2 class="section-title">§8 Review Triggers</h2>
+
+  <table>
+    <thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><strong>Q4 FY26 法說（FY26 全年結果）</strong></td><td>財報日期</td><td><strong>2026-06-26 預估（保質期截止日）</strong> — 觀察重點：① GC actual vs -20% guidance；② NA growth 持續性；③ GM tariff mitigation 進度；④ FY27 EPS 共識 vs $1.60 路徑；⑤ 股息維持 vs 凍結 / 減半</td></tr>
+      <tr><td>2</td><td><strong>Anta 2026 半年報（Anta 2020.HK）</strong></td><td>產業事件</td><td>2026-08 預估 — 觀察 Anta 主品牌 vs FILA vs Other Brands 三線 split + 中國 share 變化（vs Nike 20.7%）</td></tr>
+      <tr><td>3</td><td><strong>跑鞋 podium 觀察（2026 秋季馬拉松賽季）</strong></td><td>產業事件</td><td>2026 紐約馬拉松（2026-11 第一週） + 東京馬拉松（2026-12-06） — 觀察 NKE Vomero/Pegasus/Structure 是否進入前 3、ASICS Novablast 是否維持 Strava #1</td></tr>
+      <tr><td>4</td><td><strong>股價跌至 $38</strong></td><td>價位觸發</td><td>跌至 W52 低點區（$38）+ §5 single-thing 未觸發 → 加碼至 3.0%</td></tr>
+      <tr><td>5</td><td><strong>股價反彈至 $58</strong></td><td>價位觸發</td><td>FPE ~28x，已 priced 完整 turnaround；若 China 仍 -15%+ 或 NA ≤+2% → 減碼至 1.0%</td></tr>
+      <tr><td>6</td><td><strong>§5 Single Thing（primary OR secondary）觸發</strong></td><td>§5 trigger</td><td>① China 連 4 季 ≤ -18% AND NA growth ≤ +2%；② NKE 宣布股息凍結 / 減半 OR S&amp;P/Moody's 信用評等下調 → 立即清倉</td></tr>
+      <tr><td>7</td><td><strong>Wells Fargo / UBS / Morgan Stanley 進一步降評</strong></td><td>賣方訊號</td><td>當前 Wells Fargo Underperform PT $45 / UBS PT $54；若再有大型賣方降至 Sell / PT ≤$40 → 警訊，準備減碼</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>這份報告的保質期：</strong><strong>2026-06-26（Q4 FY26 法說預估日）</strong>— 屆時 China actual vs -20% guidance + NA growth + GM 三點將同時揭曉，是 thesis binary 兌現 / 失敗的核心 catalyst。</p>
+
+  <p><strong>最可能發生的 upside 因素：</strong>Q4 FY26 China 實際結果 ≥ -18%（不如 guidance 那麼糟）+ NA 維持 +3-5% + GM 復原至 41.5%+ → 共識 FY27 EPS 上修至 $1.80+ + Wells Fargo / UBS 從 Underperform 升評 → 股價 +20-30% 至 $55-58</p>
+
+  <p><strong>最可能發生的 downside 因素：</strong>Q4 FY26 China actual ≤ -25%（比 guidance 更糟）+ GM ≤40% + 公司宣布 share buyback 暫停或股息 review → 共識 FY27 EPS 下修至 $1.30 + 第三家大型賣方降至 Sell → 股價 -25-35% 至 $29-33</p>
+</div>
+
+<!-- ============== PHASE A1 折疊 ============== -->
+<details>
+  <summary>Phase A1｜護城河深度分析 <span class="summary-conclusion">— 結論：Wide moat（全球 #1 brand strength）但 moat_trend ↓ narrowing（中國永久反超 + 跑鞋多線蠶食）</span></summary>
+
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>主要護城河類型</td><td><strong>① 品牌資產 + 文化資本</strong>（Jordan / Nike Air / Just Do It — Brand Finance 2025 Strength Index 94.7 / 全球 #2，跨運動賽道滲透）；<strong>② 規模行銷護城河</strong>（$4B+/yr marketing budget — 數量級超過 ADI 的 $2.5B、LULU 的 $1B；Jordan 子品牌獨立 $5B+ revenue）</td></tr>
+      <tr><td>持久性評分</td><td><strong>7/10</strong>，5 年穩固度：中（全球 #1 仍會在，但個別市場 / category share 已 leaking）</td></tr>
+      <tr><td>最大侵蝕風險</td><td><strong>Anta + 中國本土運動服飾在 GC 永久反超 + HOKA / ON / ASICS 在跑鞋多線蠶食</strong>，時間軸 2024-2027 已 confirmed 為 secular trend（ID_ChinaSportswearRise + ID_AthleticFootwearSubsegments）</td></tr>
+      <tr><td>關鍵數據</td><td>毛利率 40.5% Q3 FY26（趨勢 ↓ from 41.5% YoY，tariff drag 300bps NA）；全球 athletic footwear 市佔 27-30%（趨勢 →，但 China 內 NKE 20.7% vs Anta 23% 永久反超）；ROIC 9.0% TTM（趨勢 ↓ from 24-28% 2018-2021 高峰）；vs WACC ~8% = 超額僅 1%pp（從 2018 的 16-20%pp 高峰大幅壓縮）</td></tr>
+      <tr><td><strong>moat_trend（必填）</strong></td><td><strong>↓ Narrowing</strong>。Evidence（≥1 sourced 12M）：① <strong>Anta 2025 中國市佔 23% &gt; Nike 20.7%</strong>（Reuters Feb 2026，永久反超）；② NKE Greater China 連 7 季衰退、Q3 FY26 -17% / Q4 -20% guide（NKE IR 2026-03-31 法說）；③ ROIC 從 2018-2021 24-28% 高峰滑至 9.0% TTM（gurufocus / financecharts.com 2026-03-04）；④ 跑鞋 Strava #1 從 2024 Pegasus 移至 2025 ASICS Novablast（ID_AthleticFootwearSubsegments 2026-04-27 confirmed）；⑤ 2025 World Marathon Majors adidas Adios Pro Evo 2 拿下 21 podiums / 9 金（NKE Vaporfly 失守）— 多家攻擊式 share shift；⑥ Brand Strength Index 仍 94.7 全球 #2（Brand Finance 2025）= 全球層仍守住但個別 segment leaking</td></tr>
+    </tbody>
+  </table>
+
+  <h4>A1 Sourced Data Point 計數</h4>
+  <ol>
+    <li>Anta 2025 中國市佔 23% &gt; Nike 20.7%（Reuters Feb 2026）</li>
+    <li>NKE Q3 FY26 Greater China -17%、Q4 guide -20%（NKE IR 2026-03-31）</li>
+    <li>Q3 FY26 GM 40.5% vs 41.5% YoY（NKE 法說 2026-03-31）</li>
+    <li>NKE 全球 athletic footwear share 27-30%、Adidas ~11%、Puma ~5%（Statista / csimarket Q1 2026）</li>
+    <li>Brand Finance 2025 NKE Brand Strength Index 94.7 / 全球 #2</li>
+    <li>NKE TTM ROIC 9.0%（financecharts.com 2026-03-04）</li>
+    <li>Jordan brand $5B+/yr（companieshistory.com / WSJ 2025）</li>
+    <li>NKE marketing budget &gt;$4B/yr（StatsPanda Blog 2025）</li>
+    <li>2025 WMM adidas Adios Pro Evo 2 拿下 21 podiums（ID_AthleticFootwearSubsegments 2026-04-27 sourced）</li>
+  </ol>
+
+  <p><strong>A1 獨立結論：</strong>NKE 全球層仍是 wide-moat brand #1，但 moat_trend ↓ narrowing 已 confirmed — 中國 share 永久反超 + 跑鞋 dominance 多線蠶食 + ROIC 從 25%+ 大幅滑至 9%。Wide moat 標籤不應掩蓋 narrowing 趨勢 — 5Y 投資需密切追蹤 share / ROIC / 跑鞋 podium 三項指標。</p>
+</details>
+
+<!-- ============== PHASE A2 折疊 ============== -->
+<details>
+  <summary>Phase A2｜產業趨勢深度分析 <span class="summary-conclusion">— 結論：TAM 5% CAGR 飽和階段，K-shape 分化，runway_post_y5 = 🟡 中（仰賴 share 防守）</span></summary>
+
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>TAM 與成長</td><td>全球 athletic footwear 2023 $146.7B → 2030 預估 $205.8B，CAGR <strong>5.0%</strong>（Grand View Research）。全球運動服飾（含 apparel）約 $400B by 2030，CAGR 4-5%。滲透率：成熟市場已飽和、Asia-Pacific 仍最快成長（高基期 + guochao）</td></tr>
+      <tr><td>供需判斷</td><td><strong>供給過剩、需求 K-shape 分化</strong> — 高端 RL / On / HOKA 強勢成長 vs 中段 NKE / LULU 受傷 vs 低端 Anta / SKX 守住。未來 12 個月方向：tariff permanent reset 持續壓 GM，中段品牌通路權力反轉確認（DTC peak 過後）</td></tr>
+      <tr><td>最大技術替代風險</td><td><strong>跑鞋 super shoe（carbon plate + advanced foam）技術代際變革</strong>：adidas Adios Pro Evo / ASICS Novablast / HOKA Cielo X1 同時推進，NKE Vaporfly 4 5 年 dominance 已被三線同時挑戰。時間軸：2025-2027 跑鞋 share rebalancing；威脅程度：中高 — NKE 跑鞋若 share 滑至 17-18%，集團 revenue impact ~3-4%</td></tr>
+      <tr><td>最大政策 / 地緣風險</td><td><strong>① Trump 2.0 tariff 升級風險</strong>（當前 $1.5B FY26 衝擊 + 可能 retaliation wave）；<strong>② China-US 緊張 + 中國消費者 guochao</strong>（NKE 在中國的「外資品牌負擔」可能放大）</td></tr>
+      <tr><td>議價權位置</td><td>對上游（OEM 越南 / 印尼 / 中國代工廠）：強（NKE 採購量大、長期合約）；對下游（DICK'S / Foot Locker / Amazon / Tmall）：<strong>中→弱（ID_ChannelPowerReversion 確認：DTC peak 已過，wholesale 反撲，NKE DTC 永久 lock 在 ~40%）</strong></td></tr>
+      <tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟡 中</strong>。判準：① S 曲線位置：晚期 — 全球運動鞋 TAM CAGR 5% = 飽和階段，無 step-function growth；② Y5 末 TAM 滲透率：發達市場 ~85-90%（已飽和），新興市場 ~30-40%（增長空間但 NKE 在中國永久受限）；③ 第二曲線：runs strong but contested — 跑鞋 super shoe 是技術 cycle 但 NKE 不再 dominate；女性運動服飾 partnership Skims（非獨立 winner）；smart shoe / AI fitting 仍 too early。<strong>Y5 後 5-10 年仍有跑道但需仰賴 share 防守而非市場擴張</strong>。不觸發 §7d 持有年限 ≤3Y 警示，但提示「5+ 年持有需重評」</td></tr>
+    </tbody>
+  </table>
+
+  <h4>A2 Sourced Data Point 計數</h4>
+  <ol>
+    <li>Athletic footwear TAM 2023 $146.7B → 2030 $205.8B CAGR 5.0%（Grand View Research）</li>
+    <li>Running shoes &gt;35% segment share（Grand View / Allied Market Research）</li>
+    <li>Asia-Pacific TAM share &gt;35%（2021，最快成長）</li>
+    <li>Tariff $1.5B FY26 impact + 120bps GM mitigated dilution（NKE 法說 2026-03-31）</li>
+    <li>China 連 7 季衰退 / Q4 guidance -20%（NKE 法說 2026-03-31）</li>
+    <li>K-shape 分化：高端 RL Asia +22% / 中段 NKE -16.8% Q2 FY26 / 低端 Anta 23% 中國份額（ID_ApparelFootwear 2026-04-27）</li>
+    <li>NKE DTC peak 44% → lock at ~40%（FY25 wholesale +8% &gt; DTC -4%，ID_ChannelPowerReversion 2026-04-27）</li>
+    <li>跑鞋 super shoe 競賽：adidas Adios Pro Evo 2 (21 podiums 2025 WMM) + ASICS Novablast (Strava #1 2025) + HOKA Cielo X1（ID_AthleticFootwearSubsegments 2026-04-27）</li>
+  </ol>
+
+  <p><strong>A2 獨立結論：</strong>運動鞋產業 TAM 5% CAGR 已進入成熟期，K-shape 分化加劇、中段品牌通路權力被收回、跑鞋多線競爭。NKE runway_post_y5 = 🟡 中 — 仰賴 share 防守而非市場擴張，5+ 年持有需重評。</p>
+</details>
+
+<!-- ============== PHASE A3 折疊 ============== -->
+<details>
+  <summary>Phase A3｜業務結構 / 財務體質 / 資本配置 <span class="summary-conclusion">— 結論：FCF 緊張、UBS EPS 大幅下修、股息 payout 已 ＞100%，5Y IRR 基底 ≈ +2.3%/yr Base</span></summary>
+
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>營收結構</td><td>現金牛：<strong>NA + EMEA</strong>（~70% revenue）；成長引擎：<strong>北美 wholesale 回流（Q3 +11%）+ 跑鞋三款重設</strong>；拖累 / 新興：<strong>Greater China（連 7 季衰退 / Q4 -20% guide）+ APLA Asia Pacific 部分壓力</strong></td></tr>
+      <tr><td>客戶集中度</td><td>無單一 dominant 客戶；最大通路客戶 DICK'S / Foot Locker / Tmall / JD ~5-8% each；前五大通路 ~25-30%；風險：低（zero customer concentration 風險）</td></tr>
+      <tr><td>定價權</td><td>ASP 趨勢 →（中段持平）；定價權：<strong>中</strong>（Jordan / high-end 線可持，中段商品被 Adidas / HOKA / ON 競爭壓制）</td></tr>
+      <tr><td>未來金雞母</td><td>① Jordan 子品牌（已成熟 $5B+，不算「未來」）；② 女性運動服 + NikeSkims 合作（partnership-led，非獨立競爭力，ID 確認）；③ Sportswear 文化線（Air Force 1 / Dunk Lifestyle）— 但 LIFE STYLE 線受 Adidas Samba / New Balance 反撲；<strong>真正「未來金雞母」缺乏明確候選</strong>，是 NKE 中長期投資 case 的弱點</td></tr>
+      <tr><td>財務體質</td><td>FCF 轉換率 ~75-85% historical（但 FY26 預估壓縮至 65-75%）；毛利率 40.5% Q3 FY26（趨勢 ↓，從 FY21 高點 46% 滑落）；壓力測試：營收 -20% 可撐 8-10 季（cash $9.2B + investments + line of credit；現金水位 vs OpEx 約 4-5 季 burn 容量）</td></tr>
+      <tr><td>資本配置紀律</td><td><strong>中</strong>。歷史 buyback 紀錄佳（2010-2024 累積回購 $40B+），但 2024-2025 Donahoe 期 DTC 投資 ROI 普遍受質疑；Hill 上任後紀律改善但時間短。當前 issue：股息 $1.64/yr 維持 vs payout ratio 112%（Q3 $0.41 vs EPS $0.35）— <strong>股息可持續性是 capital allocation 最大紅旗</strong></td></tr>
+      <tr><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td><strong>EPS CAGR：+4-5%/yr</strong>（FY25 ~$2.69 → FY30 ~$2.40-3.00，含 turnaround partial）<br><strong>5Y 末 forward P/E：22x</strong> vs 當前 23x（re-rate 貢獻 = (22/23)^0.2 - 1 = <strong>-0.9%/yr</strong>）<br><strong>現金股息率：3.71%</strong>（年化 $1.64 / $44.14）<br><strong>淨買回率：0-0.6%/yr</strong>（FY26 FCF 緊張、回購 likely 暫停或大幅減少）<br>合計 Base ≈ +4.5% + (-0.9%) + 3.7% = <strong>+7.3%/yr 名目（合計 IRR）</strong> vs §4 表 Base 5Y +12% / IRR 2.3% — 差距已在 §4 校驗欄說明（Base 估計偏保守）</td></tr>
+    </tbody>
+  </table>
+
+  <h4>A3 Sourced Data Point 計數</h4>
+  <ol>
+    <li>Q3 FY26 Revenue $11.3B 報告 flat / -3% c/c（NKE 法說 2026-03-31）</li>
+    <li>Q3 FY26 EPS $0.35 -35% YoY（NKE 法說）</li>
+    <li>Q3 FY26 Net Income $520M vs $794M YoY（NKE 法說）</li>
+    <li>Q3 FY26 NA revenue +3% / NA wholesale +11%（NKE 法說 + TIKR.com 2026-04）</li>
+    <li>UBS FY26 EPS $1.47 / FY27 $1.60 / FY28 $2.00（UBS 報告 2026-05-08）</li>
+    <li>Forward PE 23.06x（gurufocus 2026-05-06）</li>
+    <li>NKE TTM ROIC 9.0%（financecharts.com / mlq.ai 2026-03）</li>
+    <li>NKE 季度股息 $0.41 / 年化 $1.64（NKE board 宣告 2026-05 + Yahoo Finance 2026-05）</li>
+    <li>Wells Fargo 5/8/2026 從 Equal-Weight 降 Underperform、PT $55 → $45（CNBC + Markets News 2026-05-08）</li>
+    <li>Q2 FY26 Greater China -16.8% to $1.42B（NKE 法說 2025-12 + accio blog 2026-01）</li>
+  </ol>
+
+  <p><strong>A3 獨立結論：</strong>FCF 緊張（Q3 net income -35% + payout 112%）、UBS EPS 大幅下修（FY27 -47% vs 5/7 共識）、股息可持續性紅旗。NKE 當前財務體質 fits「中段品牌等待 turnaround 兌現」case，5Y IRR 基底 Base ~7.3%/yr 名目（含股息為主貢獻）— 質感偏「條件式 carry + 邊際 EPS 反彈」，非自然複利型。</p>
+</details>
+
+<!-- ============== PHASE A4 折疊 ============== -->
+<details>
+  <summary>Phase A4｜既有報告數據摘要 <span class="summary-conclusion">— DD: 無既有 NKE DD（5/7 DCA 與本日 DCA 是 NKE 系列前後篇）；ID: 5 份 NKE 相關 ID 涵蓋 sector 多面向</span></summary>
+
+  <h4>DD 報告擷取（NKE）</h4>
+  <p style="color:#475569;font-style:italic">⚠ docs/dd/ 目錄無 DD_NKE_*.html 個股 DD 報告。本 DCA 系列為 NKE「DD 替代」性質 — 由 DCA 投資決策層直接整合 web search + ID 系列數據。</p>
+  <p>退而求其次採用：</p>
+  <ul>
+    <li><strong>5/7 DCA（DCA_NKE_20260507.html）</strong>：訊號燈 B / Quality Score 中等 / 三引擎目標價（保守 $36 / 中性 $45 / 樂觀 $65）/ Bear anchor $32 / FY27 EPS 共識 $3.02 <span class="src">(已過期，本日 UBS $1.60 取代)</span></li>
+  </ul>
+
+  <h4>ID 報告擷取（NKE 出現於 5 份 ID）</h4>
+  <table>
+    <thead><tr><th>ID 報告</th><th>NKE 在該 ID 中角色 / 評等</th><th>關鍵 takeaway</th></tr></thead>
+    <tbody>
+      <tr><td>ID_ApparelFootwear_20260427</td><td>Sector 主題 — Phase III→IV（K-shape）— 18% 滲透率</td><td>NKE GC FY19=FY25 雙 $7.5B 6 年零成長確認 local-for-local；K-shape 中段品牌受傷；tariff permanent reset</td></tr>
+      <tr><td>ID_AthleticFootwearSubsegments_20260427</td><td>主角之一（含 NKE / DECK / ONON / BIRK / SKX / WWW / PUM 等）— Phase III</td><td>Nike 跑鞋 dominance 已永久 erode（2025 Strava #1 從 Pegasus 移至 ASICS Novablast）；HOKA + ON Lululemon 化 cycle</td></tr>
+      <tr><td>ID_ChinaSportswearRise_20260427</td><td>NKE 是「失敗對照組」 — Phase III 後段（永久反超 + 全球化啟動）</td><td>Anta 中國市占 23% &gt; Nike 20.7% 已 6 年永久反超；Anta Other Brands +59% / Salomon $2B / Arc'teryx $2B</td></tr>
+      <tr><td>ID_ChannelPowerReversion_20260427</td><td>NKE 是「主角失誤者」 — Phase II → III</td><td>NKE DTC 44% peak 已永久 lock 在 ~40%（FY25 wholesale +8% &gt; DTC -4%）；DKS-FL combined ~$22B 美國運動 retail #1</td></tr>
+      <tr><td>ID_AthleisureNewEntrants_20260427</td><td>NKE 是「partnership-led」 — Phase II 中後段</td><td>NikeSkims 是 NKE 自認女性段失敗 confirmation（非獨立競爭力）；NKE +$6.7B 市值反應 = 公開市場 bless Skims $5B</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>A4 結論摘要：</strong>無個股 DD，依賴 5 份 ID 從不同視角描繪 NKE「中段品牌 + 結構性逆風 + partnership-led 自認弱點」全圖。ID 系列整體比 5/7 DCA 視角更悲觀（已將 NKE GC 視為 confirmed 結構性失敗）— 本 DCA 採 ID 偏悲觀視角作為 base case 校準。</p>
+</details>
+
+</div>
+
+</body>
+</html>

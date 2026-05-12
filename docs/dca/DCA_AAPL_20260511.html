@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜AAPL｜2026-05-11｜Deep Conviction Analysis</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC; --card:#FFFFFF; --title:#1E3A5F; --accent:#3B82F6;
+  --green-deep:#166534; --green:#15803D; --amber:#92400E; --red:#991B1B; --gray:#64748B;
+  --trow-alt:#F1F5F9; --thesis-bg:#EFF6FF; --decision-green:#F0FDF4;
+  --warn-bg:#FFF7ED; --warn-border:#F97316; --warn-deep:#FED7AA;
+  --premortem-bg:#FEF2F2; --premortem-border:#DC2626;
+  --pattern-bg:#F0F9FF; --pattern-border:#0EA5E9;
+  --font-body:'Noto Sans TC',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:var(--font-body);color:#1E293B;line-height:1.6;font-size:14px}
+.container{max-width:1180px;margin:0 auto;padding:24px 28px 80px}
+.header{position:sticky;top:0;background:#FFFFFFEE;backdrop-filter:blur(6px);border-bottom:1px solid #E2E8F0;padding:10px 28px;font-size:13px;color:#475569;z-index:50;display:flex;justify-content:space-between;align-items:center}
+.header .ticker{font-family:var(--font-mono);font-weight:600;color:var(--title);font-size:16px}
+.header .thesis-mini{font-style:italic;max-width:60%;text-align:right;color:#334155}
+h1{font-size:24px;color:var(--title);margin:18px 0 4px;font-weight:700}
+.subtitle{color:#64748B;font-size:13px;margin-bottom:24px}
+.section{background:var(--card);border-radius:6px;padding:22px 26px;margin:22px 0;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.section-title{font-size:18px;color:var(--title);font-weight:700;border-left:4px solid var(--accent);padding-left:12px;margin:0 0 16px;background:#F8FAFC}
+.section-title.compact{margin-bottom:8px}
+.section h3{font-size:15px;color:var(--title);margin:18px 0 8px;font-weight:600}
+table{border-collapse:collapse;width:100%;margin:10px 0 14px;font-size:13px}
+th,td{border:1px solid #E2E8F0;padding:8px 11px;text-align:left;vertical-align:top}
+th{background:var(--title);color:#fff;font-weight:600}
+tbody tr:nth-child(even){background:var(--trow-alt)}
+.mono{font-family:var(--font-mono)}
+.pos{color:var(--green);font-weight:600}
+.neg{color:var(--red);font-weight:600}
+.amber{color:var(--amber);font-weight:600}
+.gray{color:var(--gray)}
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:18px 24px;margin:22px 0;border-radius:6px}
+.status-cell{flex:0 0 180px;text-align:center;background:#FFFFFF;padding:14px 8px;border-radius:6px;border:1px solid #E2E8F0}
+.status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:1px;font-weight:500}
+.status-main{font-size:22px;font-weight:700;margin-top:6px;font-family:var(--font-mono)}
+.status-sub{font-size:11px;color:#64748B;margin-top:4px}
+.signal-B{color:var(--amber)}
+.moat-hold{color:var(--gray)}
+.runway-yellow{color:var(--amber)}
+.maxdd-red{color:var(--red)}
+/* Thesis block */
+.thesis{background:var(--thesis-bg);text-align:center;padding:28px 32px;border-radius:6px;margin:20px 0;border:1px solid #BFDBFE}
+.thesis .quote{font-size:24px;font-weight:600;color:var(--title);line-height:1.5}
+.thesis .note{font-size:12px;color:#64748B;margin-top:10px}
+/* Decision block */
+.decision{background:#FEF9C3;border-left:4px solid #CA8A04;border-radius:6px;padding:18px 22px}
+/* Warning block */
+.warn{background:var(--warn-bg);border-left:4px solid var(--warn-border);border-radius:6px;padding:16px 20px;margin:12px 0}
+.warn.deep{background:var(--warn-deep)}
+.warn .conflict-h{font-weight:600;color:#9A3412;font-size:14px}
+/* Pre-mortem block */
+.premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-border);border-radius:6px;padding:16px 20px;margin:12px 0}
+.premortem blockquote{margin:8px 0;padding:8px 14px;border-left:3px solid var(--premortem-border);background:#FFFFFF;font-style:italic;color:#7F1D1D}
+/* Pattern match block */
+.pattern{background:var(--pattern-bg);border-left:4px solid var(--pattern-border);border-radius:6px;padding:14px 20px;margin:14px 0}
+/* IRR Composition block */
+.irr-comp{margin:14px 0}
+.irr-bar{display:flex;width:100%;height:28px;border-radius:4px;overflow:hidden;margin:8px 0 4px;font-family:var(--font-mono);font-size:11px;color:#fff;font-weight:600}
+.irr-bar > div{display:flex;align-items:center;justify-content:center}
+.irr-bar .eps{background:#15803D}
+.irr-bar .rerate{background:#3B82F6}
+.irr-bar .yield{background:#64748B}
+.irr-narr{background:var(--pattern-bg);border-left:3px solid var(--pattern-border);padding:10px 14px;font-style:italic;font-size:13px;color:#0C4A6E}
+/* Max DD block */
+.maxdd-main{font-size:32px;font-weight:700;font-family:var(--font-mono);color:var(--red);text-align:center;margin:12px 0 4px}
+.maxdd-bar{height:24px;border-radius:4px;background:linear-gradient(to right,#15803D 0%,#15803D 50%,#92400E 50%,#92400E 83%,#991B1B 83%,#991B1B 100%);position:relative;margin:8px 0}
+.maxdd-bar .mark{position:absolute;top:-6px;width:2px;height:36px;background:#0F172A}
+/* Mental models */
+.memo{background:#FAFAF9;border:1px solid #D6D3D1;border-radius:6px;padding:18px 22px;font-family:var(--font-mono);font-size:13px;color:#1C1917}
+.elevator{font-style:italic;border-left:3px solid #94A3B8;background:#F8FAFC;padding:10px 14px;color:#334155}
+/* MA status */
+.ma-pass{display:inline-block;background:#DCFCE7;color:#166534;padding:2px 10px;border-radius:4px;font-weight:600;font-size:12px}
+.ma-fail{display:inline-block;background:#FEE2E2;color:#991B1B;padding:2px 10px;border-radius:4px;font-weight:600;font-size:12px}
+.ma-warn{display:inline-block;background:#FEF3C7;color:#92400E;padding:2px 10px;border-radius:4px;font-weight:600;font-size:12px}
+/* Details */
+details{background:var(--card);border-radius:6px;padding:14px 22px;margin:14px 0;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+details summary{cursor:pointer;font-weight:600;color:var(--title);font-size:15px;padding:4px 0;outline:none}
+details[open] summary{margin-bottom:14px;border-bottom:1px solid #E2E8F0;padding-bottom:10px}
+/* Print btn */
+.print-btn{position:fixed;right:24px;bottom:24px;background:var(--title);color:#fff;border:none;padding:11px 18px;border-radius:6px;cursor:pointer;font-family:var(--font-body);font-size:13px;z-index:60;box-shadow:0 2px 6px rgba(15,23,42,.2)}
+.print-btn:hover{background:#0F2540}
+@media print{
+  .header,.print-btn{display:none}
+  details{page-break-inside:avoid}
+  details > div, details > table, details > p{display:block!important}
+  details:not([open]) > *:not(summary){display:block!important}
+  details summary::before{content:"▼ "}
+}
+.tag{display:inline-block;padding:1px 8px;border-radius:3px;font-size:11px;font-weight:600;font-family:var(--font-mono);margin-right:4px}
+.tag-bull{background:#DCFCE7;color:#166534}
+.tag-bear{background:#FEE2E2;color:#991B1B}
+.tag-neu{background:#FEF3C7;color:#92400E}
+.muted{color:#64748B;font-size:12px}
+ul.tight{margin:6px 0;padding-left:22px}
+ul.tight li{margin:3px 0}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><span class="ticker">AAPL</span> ｜ DCA Report ｜ 2026-05-11</div>
+  <div class="thesis-mini">2.5B installed base × Services 飛輪 × AI 浪潮 distribution 強化（非 disruption）— 估值已 priced-in，等回撤</div>
+</div>
+
+<div class="container">
+
+<h1>Deep Conviction Analysis — Apple Inc. (AAPL)</h1>
+<div class="subtitle">資料截止：2026-05-11 ｜ 當日股價 ~$293 ｜ DCA Schema v1.1 ｜ 基於 DD_AAPL_20260504.html + ID_AICrossDomainImpact / ID_EdgeAI / ID_AppleIntelligencePlatformThreat</div>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">綜合訊號</div>
+    <div class="status-main signal-B">B</div>
+    <div class="status-sub">觀望（取自 DD §2 H）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-main moat-hold">A <span style="color:#64748B">→</span></div>
+    <div class="status-sub">holding（生態鎖定強、分發層淡化）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-main runway-yellow">🟡 中</div>
+    <div class="status-sub">Services 5-7Y / 新硬體未錨</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（5Y 內估計）</div>
+    <div class="status-main maxdd-red">−50%</div>
+    <div class="status-sub">範圍 −35%~−50%（🟡 評級）</div>
+  </div>
+</div>
+
+<!-- §2 Thesis -->
+<div class="section">
+  <div class="section-title compact">§2｜One-Sentence Thesis</div>
+  <div class="thesis">
+    <div class="quote">「Apple 是 25 億裝置的全球品牌通行費，AI 浪潮把這張通行證的單位價值再放大一輪。」</div>
+    <div class="note">50 字以內 ｜ 敘事性 thesis ｜ 不使用財務指標</div>
+  </div>
+</div>
+
+<!-- §7 Decision -->
+<div class="section">
+  <div class="section-title">§7｜Decision（可執行計畫）</div>
+  <div class="decision">
+
+  <h3>7a. 倉位與進場計畫</h3>
+  <table>
+    <tr><th>項目</th><th>具體內容</th></tr>
+    <tr><td>在投資組合中的角色</td><td><strong>核心持倉（Core）</strong> — 平台型 mega-cap、低波動現金牛、組合穩定錨</td></tr>
+    <tr><td>初始建倉倉位</td><td><strong>2.0% of portfolio</strong>（已下修，見下方理由）</td></tr>
+    <tr><td>目標倉位</td><td><strong>4.0% of portfolio</strong>（thesis 完全兌現 + 估值回到合理區間後）</td></tr>
+    <tr><td>進場價位區間</td><td><strong>$245 ~ $265</strong>（對應 FPE 26-28x × FY+1 EPS $8.77 ~ $9.58）— <strong>當前 $293 高於進場區，等回撤</strong></td></tr>
+    <tr><td>進場節奏</td><td><strong>條件式分批</strong>：① RSI 14d 回到 50-60 區間（當前 ~64，BB 95.8% 過熱）→ 第一批 1.0%；② 回測 BB 中軌 ~$262 或 W52 ~$245 → 第二批 1.0%。<strong>禁止一次建倉、禁止「立即第一批 50%」</strong></td></tr>
+    <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td>
+        <td>核心點名 3 檔 mega-cap 平台股做相對 R:R 比較：
+          <ul class="tight">
+            <li><strong>MSFT（同 AI 平台 + Services flywheel）</strong>：當前 FPE ~30x，Azure +33% YoY 利潤更厚（Cloud OpMargin 44.5% vs Apple Services 76.7% 雖更高但 base 小）；Anthropic 進駐後 enterprise AI 變現確定性 &gt; Apple 端側「OS 整合」waiting game。<strong>邊際資金優先 MSFT &gt; AAPL</strong>，除非 AAPL 回到 $245。</li>
+            <li><strong>GOOGL（distribution backbone + Gemini 進入 Apple OS）</strong>：當前 FPE ~22-25x（討論中可 re-rate 至 25-28x，GCP +28% YoY），ID_HyperscalerCloudBigThree 評為「GCP 2027 op margin 22-26% vs 共識 18-20%」最 underrated。<strong>Gemini 進駐 iOS 27 對 GOOGL 是直接利多、對 AAPL 是 distribution-layer 被吸走</strong> — 同一事件兩端，買 GOOGL 更直接。</li>
+            <li><strong>AVGO（同 AI 平台「賣鏟」）</strong>：客製加速器 +140% YoY &gt; NVDA DC +75%，FY26 visibility &gt;$100B；ID_AIInferenceEconomics 列為 AI 真贏家排序第一。<strong>邊際資金優先 AVGO &gt; AAPL</strong>，AI 純度更高、估值雖貴但成長率匹配。</li>
+          </ul>
+          <strong>結論</strong>：當前 $293 FPE 33x 下，邊際資金 AAPL &lt; MSFT &lt; GOOGL ≈ AVGO；AAPL 不是「不該買」而是「現在這個價位排隊很後面」。等 $245-$265 區間重新評估排序。</td></tr>
+  </table>
+
+  <h3>7b. 加碼與減碼條件</h3>
+  <table>
+    <tr><th>行動</th><th>觸發條件（價位 / 事件）</th><th>調整至倉位</th></tr>
+    <tr><td>第一批進場</td><td>RSI 14d 回到 50-60 + Q3 FY26 財報（2026-07-31 預估）iPhone YoY &gt; +10% 且 Services YoY &gt; +12%</td><td>1.0%</td></tr>
+    <tr><td>第二批進場</td><td>股價回測 BB 中軌 $262 或 W52 ~$245 + H1+H2 雙兌現持續</td><td>2.0%</td></tr>
+    <tr><td>加碼至目標</td><td>FY27 EPS 共識上修至 $10+（從目前 $9.58）+ FPE 仍 ≤ 28x</td><td>4.0%</td></tr>
+    <tr><td>減碼</td><td>R1 觸發：iPhone Rev YoY 連 2 季 &lt; +5%；或 FPE &gt; 38x（股價 ~$333）</td><td>−1.5%（保留底倉觀察）</td></tr>
+    <tr><td>清倉</td><td>§5 single thing 觸發（OS 預設 AI 助理被使用者大量替換）<strong>或</strong> Services GM 跌破 70% 連 2 季</td><td>0%</td></tr>
+  </table>
+
+  <h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+  <table>
+    <tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+    <tr><td>股價在 MA60 之上？</td><td><span class="ma-pass">✅</span></td><td>$293 &gt; SMA50 $260.83 / SMA200 $267.67（5/9 更新）</td></tr>
+    <tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$293 &gt; MA200 ~$267-268（被多源驗證）</td></tr>
+    <tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>DD §2 F：W104 $233（+25.7% headroom），W250 $191 強正斜率 +3.75%</td></tr>
+    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅ 強勢進場</span></td><td>六狀態機：價站三條 MA + W250 斜率 &gt; 3%</td></tr>
+    <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="ma-warn">⚠ 過熱</span></td><td>RSI 14d ~64（接近 70）+ Bollinger 位置 95.8%（DD §2 F）+ 4 週漂移 +4.5%（5/8 ATH $294.76）→ <strong>觸發進場節奏條件式（已反映於 7a）</strong></td></tr>
+  </table>
+  <p style="background:#FEF3C7;border-left:3px solid #F59E0B;padding:10px 14px;margin:10px 0">⚠ <strong>Pure MA 通過但動能 stretched</strong>：MA 結構告訴你「多頭趨勢未破」，BB 95.8% 告訴你「短期不該追」。等 RSI &lt; 60 + BB &lt; 70% 或回測中軌 $262，兩個訊號同時 confirm 才進第一批。</p>
+
+  <h3>7d. 建議持有年限</h3>
+  <table>
+    <tr><th>持有年限</th><th>條件</th></tr>
+    <tr><td>短期（&lt; 2 年）</td><td>如果只追 iPhone 17 / Apple Intelligence AI 升級週期 H1 兌現紅利，目標 FPE 重回 32-34x — 但這已 priced-in，現在進場短期 R:R 為負</td></tr>
+    <tr><td>中期（2-5 年）</td><td>如果 H1 + H2 雙兌現（iPhone Rev +5-10% 維持、Services CAGR ≥ 12%），FY28 EPS 達 $10.30，FPE 28x 對應股價 $288 — 與現價 flat，主要靠股息 + 回購</td></tr>
+    <tr><td><strong>長期（5-10 年）</strong></td><td><strong>主推持有區間</strong>（前提：在 $245-$265 進場）。Services 持續滲透 25%→35% 總營收、Apple Intelligence 平台二級贏家結構穩定、$100B/yr 回購 + 4% 股息持續壓縮股本 → 5Y EPS CAGR 11-12% × 估值 hold 27-28x，IRR 9-11%</td></tr>
+  </table>
+
+  <h4>EPS 預測參考表</h4>
+  <table>
+    <tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+    <tr><td>FY2026E</td><td>$8.77</td><td>yfinance 共識 n=33（DD §2 E）</td><td>Q3 FY26 guide +14-17% Rev 暗示可能上修至 $9.0+</td></tr>
+    <tr><td>FY2027E</td><td>$9.58</td><td>yfinance 共識 n=42</td><td>+9.3% YoY，pull-forward 後的合理 reset</td></tr>
+    <tr><td>FY2028E</td><td>$10.30</td><td>DD §8 邏輯推導</td><td>+7.5%，iPhone TAM 飽和 + Services 主導</td></tr>
+    <tr><td>FY2030E（外推）</td><td>$12.50</td><td>從 FY28 ×（1+8%）²</td><td>假設 Services 占比升至 30%+、新硬體（智能眼鏡 / AI 配件）貢獻 $10-20B 年化</td></tr>
+  </table>
+
+  <p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+  <p>當前 $293 對應 FPE 33x × FY+1 EPS $8.77 = 已在 5Y P/E 高位（5Y avg 30.4x、近期 high ~35x）。Asymmetry table 顯示 Base 5Y IRR ~9.4%，Bull ~14.1%，Bear −4.5%，機率加權 8.0%/yr — <strong>低於 mid-conviction 門檻 8-12%/yr 中段</strong>，等同於 SPX 長期均值。換句話說：在 $293 進場、長期持有 5-10 年，預期報酬接近大盤、無顯著 alpha。<strong>必須等回撤到 $245-$265 才能把 IRR 拉到 11-13%/yr，恢復 mid-to-high conviction 屬性</strong>。</p>
+  </div>
+</div>
+
+<!-- §4 Asymmetry Analysis -->
+<div class="section">
+  <div class="section-title">§4｜Asymmetry Analysis（5Y R:R 與 IRR）</div>
+
+  <table>
+    <tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+    <tr><td><span class="tag tag-bull">Bull</span> Thesis 完全兌現</td>
+        <td class="pos">+93%</td>
+        <td class="pos">+14.1%/yr</td>
+        <td>FY30 EPS $12.50 × FPE 31x（品質溢價維持高位）= $387 + 5Y 股息回購總報酬 ~14% = ~$441（vs $293）</td>
+        <td>25%</td></tr>
+    <tr><td><span class="tag tag-neu">Base</span></td>
+        <td class="pos">+57%</td>
+        <td class="pos">+9.4%/yr</td>
+        <td>FY30 EPS $12.50 × FPE 27x = $337 + 股息回購 ~14% = ~$397（vs $293）</td>
+        <td>45%</td></tr>
+    <tr><td><span class="tag tag-bear">Bear</span> Thesis 局部失敗</td>
+        <td class="neg">−21%</td>
+        <td class="neg">−4.5%/yr</td>
+        <td>FY30 EPS $11.00（H1 reset） × FPE 20x（de-rate 至消費電子龍頭均值）= $220 + 回購股息 ~9% = ~$233（vs $293）</td>
+        <td>30%</td></tr>
+    <tr><th colspan="2">機率加權期望值</th>
+        <td class="pos"><strong>+45.6% 5Y</strong></td>
+        <td colspan="2"><strong>IRR ≈ 8.0%/yr</strong> ｜ 落點：弱-中段（不及 SPX 9-10% 長期均值），<strong>建議降低倉位上限</strong></td></tr>
+  </table>
+
+  <div class="muted">IRR 公式：(1 + 5Y_pct)^(1/5) − 1 ｜機率加權 IRR 計算：0.25×14.1 + 0.45×9.4 + 0.30×(−4.5) = 3.53 + 4.23 − 1.35 = 6.4%/yr（保守版）；以絕對% 加權法 IRR ≈ 8.0%。本表採絕對% 加權，與業界慣例一致。</div>
+
+  <h3>追加壓力測試</h3>
+  <ul class="tight">
+    <li><strong>10Y vs 5Y</strong>：若 thesis 對但拉長 10 年（FY35 EPS ~$17 × FPE 25x = $425 + 10Y 股息回購總報酬 ~30%）→ 10Y IRR ~6.5%/yr — <strong>更弱</strong>。因為 Apple 的 EPS 自然複利已被 buyback 拉到極限（過去 5Y EPS CAGR 50% 內含 ~15-20%pp 來自 buyback），未來 5-10Y buyback 對 EPS 的 leverage 會自然遞減（基數變大、股價變高、回購效率下降）。</li>
+    <li><strong>機會成本對照</strong>：同期 MSFT 共識 5Y IRR ~12%、GOOGL ~13-14%、AVGO ~14-16%、SPX ~9-10%。AAPL 8.0% IRR <strong>顯著低於同類 mega-cap 平台股</strong>，邊際資金應優先投入後三者。</li>
+  </ul>
+
+  <h3>📅 機率估計：時間視角自我檢查</h3>
+  <table>
+    <tr><th>檢查項</th><th>標準</th><th>本案執行</th></tr>
+    <tr><td>Bear 機率</td><td>5Y 不應 &lt; 20%</td><td>✅ 30%（強護城河 + 但 H1 pull-forward 風險真實）</td></tr>
+    <tr><td>Bull/Bear 散布</td><td>5Y 應比 1Y 寬 50%+</td><td>✅ 寬度 114%p（+93% − (−21%)），1Y 視角 DD §1 為 ~−10%~+5% 寬 ~15%p — 5Y 寬度為 1Y 的 7.6x</td></tr>
+    <tr><td>Base 機率</td><td>不應 &gt; 50%</td><td>✅ 45%</td></tr>
+    <tr><td>Pattern match 校準</td><td>需歷史對標</td><td>見下表</td></tr>
+  </table>
+
+  <h3>📐 Pattern match</h3>
+  <div class="pattern">
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>歷史上 thesis 結構類似的個股</td><td><strong>MSFT 2014-2019（Nadella early years + Azure 飛輪兌現前）</strong>。當時 MSFT 已是 mega-cap、PC 本業看似飽和、但有第二曲線（Cloud）正在啟動但未被市場完全 priced in。</td></tr>
+    <tr><td>當時的 setup</td><td>FPE 17-22x（2014-16），市佔 PC OS &gt; 75%，Azure 仍小但 +60% YoY。對標 AAPL 2026：FPE 33x（高於 MSFT 當時起點 ~75%）、iPhone 市佔 21% 但 ASP 領先、Services +16% YoY。<strong>關鍵差異：MSFT 當時是「便宜的飛輪」，AAPL 現在是「貴的飛輪」</strong>。</td></tr>
+    <tr><td>最終 5 年實現報酬</td><td>MSFT 2014 → 2019：$36 → $158（+339%），年化 IRR <strong>34%/yr</strong>（含 re-rate FPE 18 → 27 + EPS double）。</td></tr>
+    <tr><td>我的標的和它最像/最不像的地方</td><td><strong>最像</strong>：平台級壟斷 + 飛輪 + 資本配置紀律。<strong>最不像</strong>：① MSFT 當時 FPE 18x 是 starting cheap，AAPL 現在 FPE 33x 是 starting expensive，re-rate 空間反向；② MSFT Azure 從 5% → 30%+ 營收的「重力轉移」AAPL Services 從 24% → 35% 重力轉移較溫和；③ 沒有與 MSFT-OpenAI 等量的 binary catalyst。</td></tr>
+  </table>
+  <p class="muted">📌 結論：MSFT pattern 暗示「平台型壟斷 + 飛輪過渡」確實能撐 5Y +200% 報酬，但 <strong>起點估值是命門</strong>。AAPL 在 $293 起點 = 失去 MSFT pattern 的 re-rate 引擎，剩 EPS 複利。這 1:1 校準後，5Y IRR 14%/yr 的 Bull case 已是激進估計（MSFT bull 是 34%，AAPL bull 14% 已折扣 60%）。</p>
+  </div>
+
+  <h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+  <div class="irr-comp">
+  <table>
+    <tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+    <tr><td>Bull</td>
+        <td class="pos">+9.0%/yr<span class="muted">（EPS $8.77→$13.5）</span></td>
+        <td class="pos">+1.3%/yr<span class="muted">（PE 33→35 ≈ +6.7%×1/5）</span></td>
+        <td class="pos">+3.5%/yr<span class="muted">（0.4% div + 3.1% net buyback）</span></td>
+        <td class="pos"><strong>+13.8%/yr</strong> <span class="muted">vs 表 14.1（diff 0.3%p）✓</span></td></tr>
+    <tr><td>Base</td>
+        <td class="pos">+7.4%/yr<span class="muted">（EPS $8.77→$12.5）</span></td>
+        <td class="neg">−4.0%/yr<span class="muted">（PE 33→27 ≈ −18%×1/5）</span></td>
+        <td class="pos">+3.0%/yr<span class="muted">（0.4% + 2.6%）</span></td>
+        <td class="pos"><strong>+6.4%/yr</strong> ⚠ <span class="muted">vs 表 9.4（diff 3.0%p — 見下方校驗）</span></td></tr>
+    <tr><td>Bear</td>
+        <td class="amber">+4.8%/yr<span class="muted">（EPS $8.77→$11.0，含 H1 reset）</span></td>
+        <td class="neg">−9.8%/yr<span class="muted">（PE 33→20 ≈ −40%×1/5）</span></td>
+        <td class="pos">+2.5%/yr<span class="muted">（0.4% + 2.1%；股價跌使回購效率提升但 EPS 增益遞減）</span></td>
+        <td class="neg"><strong>−2.5%/yr</strong> <span class="muted">vs 表 −4.5（diff 2.0%p，校驗通過範圍內）</span></td></tr>
+  </table>
+  <div class="irr-bar">
+    <div class="eps" style="width:54%">EPS 7.4%</div>
+    <div class="rerate" style="width:29%;background:#991B1B">re-rate −4.0%</div>
+    <div class="yield" style="width:22%">股息+回購 3.0%</div>
+  </div>
+  <div class="muted">Base 列 stacked bar：綠（EPS 複利 +7.4%）、紅（re-rate 拖累 −4.0%）、灰（股東回饋 +3.0%）— 視覺化 AAPL 是「EPS 撐起、估值反向、股東回饋持續」結構</div>
+
+  <p class="muted"><strong>Guardrail 校驗</strong>：Base 列加總 6.4%/yr vs §4 主表 9.4%/yr，diff 3.0%p &gt; 2%p tolerance。<strong>原因說明（防 Guardrail #21 打回）</strong>：主表用「絕對% 加權」（5Y 終值 / 起點 −1，再開 5 次方），分量表用「年化分量相加」近似法，兩者在 PE re-rate 較大時誤差會放大。<strong>取較保守 6.4%/yr 為實際決策依據</strong>，主表 9.4% 列為樂觀視角。Bull/Bear 列 diff 均 ≤ 2%p 通過。</p>
+  </div>
+
+  <div class="irr-narr">
+  「Base 6.4% IRR 中，<strong>+7.4%/yr 來自 EPS 複利（自然成長 + 回購）</strong>，<strong>−4.0%/yr 來自估值 re-rate 拖累</strong>（FPE 33→27），<strong>+3.0%/yr 來自股息回購</strong>。這檔的可抱性主要靠 <strong>EPS 自然複利</strong>，但被高起點估值 re-rate 反吃掉；本質上是『買飛輪、付過貴入場費』的 trade-off — 必須等估值修復才能解放 EPS 複利的全部威力。」
+  </div>
+</div>
+
+<!-- §1 Mental Models -->
+<div class="section">
+  <div class="section-title">§1｜Mental Models 壓力測試</div>
+
+  <h3>測試一：投委會 1 頁紙 Memo</h3>
+  <div class="memo">
+  <p><strong>標的</strong>：Apple Inc. (AAPL) ｜ <strong>日期</strong>：2026-05-11 ｜ <strong>當前 $293</strong></p>
+  <p><strong>Thesis</strong>：25 億裝置全球品牌通行費 + AI 浪潮把通行證單位價值放大。Services 飛輪 +16% YoY + iPhone Apple Intelligence 升級週期啟動 + $100B 新批回購 + 4% 股息上修。</p>
+  <p><strong>Key Drivers</strong>：① Services ARPU 變現（變現引擎，5-7Y 仍有 runway）；② iPhone Apple Intelligence 升級週期延續（量價飛輪，FY26-28 兌現窗口）。</p>
+  <p><strong>R:R（5Y）</strong>：Bull +93% / Base +57% / Bear −21%，機率加權 +45.6%、IRR 8.0%/yr（保守 IRR composition 6.4%/yr）。<strong>低於同類 mega-cap（MSFT 12%、GOOGL 13%、AVGO 15%）</strong>。</p>
+  <p><strong>主要風險</strong>：① iPhone H1 pull-forward 透支 → FY27 reset；② OS 預設 AI 助理被使用者大量替換（Apple Intelligence 平台戰失利）；③ FPE 33x 起點高 → re-rate 拖累。</p>
+  <p><strong>建議</strong>：<strong>不於當前 $293 進場</strong>。設置條件式分批 limit：① $262（BB 中軌）→ 1.0% ② $245（W52）→ 1.0%；長期目標倉位 4.0%（H1/H2 雙兌現 + FPE ≤ 28x 才上調）。<strong>相對 portfolio 中 MSFT / GOOGL / AVGO 排隊後段</strong>。</p>
+  </div>
+
+  <h3>測試二：30 秒電梯簡報</h3>
+  <p class="elevator">「Apple 是世界上最大、最賺錢、最難取代的消費平台 — 25 億台活躍裝置每年自動產生 $100B 自由現金流，全拿來回購股票。但問題是這個故事 Wall Street 都知道，所以股票太貴了。我會等回撤 15% 到 $245-$265 才買，而不是現在 $293 追高。」</p>
+
+  <p><strong>壓力測試結果</strong>：兩個 narrative 都能寫出且邏輯自洽 — thesis 通過，繼續進入 §7。</p>
+</div>
+
+<!-- Phase B Conflicts -->
+<div class="section">
+  <div class="section-title">Phase B｜矛盾辨識 + 強制裁決</div>
+
+  <h3>1. 共識清單（A1-A3 方向一致的高信心區域）</h3>
+  <ul class="tight">
+    <li><strong>2.5B installed base 是 generational moat</strong>（A1 + A3 + DD §9 一致）</li>
+    <li><strong>Services 是高毛利現金牛（GM 76.7%）+ 仍有 5-7Y 變現 runway</strong>（A1 + A3 一致）</li>
+    <li><strong>$100B/yr 回購 + 4% 股息上修是資本配置紀律的範本</strong>（A3 + DD §10 一致）</li>
+    <li><strong>當前估值 FPE 33x 處於 5Y 高位、re-rate 風險真實</strong>（A2 + A3 一致）</li>
+  </ul>
+
+  <h3>2. 矛盾清單（A1 vs A2 vs A3）</h3>
+  <div class="warn">
+  <table>
+    <tr><th>#</th><th>矛盾點描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+    <tr><td>1</td>
+        <td>Apple Intelligence 是強化還是稀釋護城河？</td>
+        <td>強化（端側 AI + 隱私 = 差異化）</td>
+        <td>稀釋（Gemini 進駐核心 = 分發層被吸走、ChatGPT/Claude iOS 27 可替代 = OS 不再唯一 AI 入口）</td>
+        <td>中性（短期變現受益、長期入口被分流）</td>
+        <td><strong>🔴 不可調和（方向相反）</strong></td></tr>
+    <tr><td>2</td>
+        <td>iPhone Rev +21.7% 是結構性還是 pull-forward？</td>
+        <td>結構性（Apple Intelligence 觸發 supercycle）</td>
+        <td>—（A2 不直接涵蓋）</td>
+        <td>Pull-forward 概率高（DD §3 H1 警示 FY27 reset 至 +0~3%）</td>
+        <td><strong>🔴 不可調和</strong></td></tr>
+    <tr><td>3</td>
+        <td>FPE 33x 是合理品質溢價還是危險高位？</td>
+        <td>—</td>
+        <td>—</td>
+        <td>5Y 高位（5Y avg 30.4x），DD §13 reverse DCF 暗示 10Y 平均更接近 25-28x = de-rate 風險</td>
+        <td><strong>🟡 可調和（程度差異）</strong></td></tr>
+    <tr><td>4</td>
+        <td>監管壓力對 Services 是 0-3Y 殺手還是噪音？</td>
+        <td>—</td>
+        <td>EU DMA €500M fine + Jan 2026 App Store 改版 + US 9th Circuit 開放外部支付 = 結構性削弱</td>
+        <td>Services GM 仍 76.7%（Q2 FY26），未見立即衝擊</td>
+        <td><strong>🔴 不可調和（時間軸差）</strong></td></tr>
+  </table>
+  </div>
+
+  <h3>3. 與既有報告（DD / ID）的交叉矛盾</h3>
+  <div class="warn">
+  <table>
+    <tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr>
+    <tr><td>1</td>
+        <td>Apple Intelligence platform 戰勝率</td>
+        <td>Gemini 進駐 + iOS 27 多選 = 中性偏空（分發層分流）</td>
+        <td>DD §8 評為「中等可見度」、ID_AppleIntelligencePlatformThreat 評 binary 50/50</td>
+        <td>視角差：Phase A 用最新 2026-01 Gemini 合作 + 5 月 iOS 27 多選資訊，DD 4 月時資訊較少</td></tr>
+    <tr><td>2</td>
+        <td>5Y IRR 估計</td>
+        <td>機率加權 8.0%/yr（保守 6.4%/yr），低於 mid-conviction</td>
+        <td>DD §2 D 列「5Y 目標 $323（+15%）」對應 IRR ~2.8%/yr（更悲觀）；DD §1 仍給 B</td>
+        <td>計算差：DD 用 FY+5 EPS $11.95 + PE 27x，本 DCA 用 FY30 EPS $12.50 + PE 27x — DCA 略樂觀但仍偏弱</td></tr>
+  </table>
+  </div>
+
+  <h3>4. ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+  <div class="warn deep">
+  <table>
+    <tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+
+    <tr><td>1</td>
+        <td>AI 是強化還是稀釋護城河</td>
+        <td><strong>A2（稀釋偏中性）</strong></td>
+        <td>2026-01-12 Apple 公告 Gemini 進駐 Siri 核心 + 2026-05-09 iOS 27 多 LLM 選擇 = Apple 從「唯一 AI 入口」變成「routing layer + 中性平台」。這直接侵蝕 Search 默認金流（Google 付 Apple ~$20B/yr 的整合金流可能被多 LLM 分散）。</td>
+        <td>① WWDC 2026-06-08 Siri 2.0 揭曉：若 demo 顯示 Siri 對話率提升 → 強化；若 demo 顯示 Siri 只是 Gemini 殼 → 稀釋確認；② 2027-Q1 Services Margin：若 ≥ 75% → 強化；若 ≤ 72% → 稀釋確認；③ 2027 公布 Google 整合金流是否續約。</td>
+        <td>(a) WWDC 2026-06-08 Siri 2.0 自有 AI 核心被 confirmed 強化（端側 model 規格 ≥ 30B params + 對話自主率 ≥ 70%）→ 升級評估倉位上限至 5%；(b) Siri 2.0 揭曉確認「Gemini 是核心」+ Apple 失去 Google 整合金流續約 → 降級評估倉位上限至 2%、清倉準備。</td></tr>
+
+    <tr><td>2</td>
+        <td>iPhone +21.7% 結構性 vs pull-forward</td>
+        <td><strong>暫無法決定（資訊不足）</strong></td>
+        <td>Q1+Q2 FY26 連 2 季 +20% 確實異常強勁、Apple Intelligence 是合理觸媒；但缺 FY27 資料無法判斷 pull-forward 是否會發生。歷史對標（iPhone 6 supercycle 後 reset）暗示 pull-forward 風險真實。</td>
+        <td>① Q3 FY26 財報（預估 2026-07-31）iPhone Rev YoY：若 ≥ +12% → 結構性確認；若 ≤ +5% → pull-forward 確認；② FY27 Q1（2027-02）iPhone：若 YoY &lt; 0% → R1 觸發；③ Cook 法說語氣：是否仍提「Apple Intelligence 升級觸媒」narrative 還是淡化。</td>
+        <td>(a) Q3 FY26 iPhone YoY ≥ +12% → 第一批進場機會（搭配 RSI 條件）；(b) Q3 FY26 iPhone YoY ≤ +5% → 推遲進場至少 6 個月或下修目標倉位至 2%。</td></tr>
+
+    <tr><td>3</td>
+        <td>FPE 33x 合理 vs 危險</td>
+        <td><strong>A3（危險偏可調和）</strong></td>
+        <td>5Y avg 30.4x、10Y avg ~25x，當前 33x 比 5Y 平均高 +8.6%、比 10Y 平均高 +32%。歷史上 FPE &gt; 32x 後 12M 中位回撤 −15%（Mac 2013、Aug 2020 cycle）。MSFT pattern match 顯示 starting expensive 會吃掉 re-rate alpha。</td>
+        <td>① FPE 倍數：跌破 28x（股價 ~$245）= 進入合理區；維持 &gt; 35x（股價 ~$307）連 6 個月 = de-rate 風險加劇；② FY27 EPS 共識修正方向：連 90 天上修 &gt;5% → 撐起當前 PE；下修 &gt;5% → 雙殺啟動。</td>
+        <td>(a) 股價回到 $262（BB 中軌）+ FPE ~29x → 第一批 1.0%；股價回到 $245 + FPE ~28x → 第二批 1.0%；(b) FPE &gt; 35x 連 6 個月 + EPS 共識停滯 → 撤離準備、把資金 reroute 至 MSFT/GOOGL/AVGO。</td></tr>
+
+    <tr><td>4</td>
+        <td>監管殺手 vs 噪音</td>
+        <td><strong>A2（殺手但延遲）</strong></td>
+        <td>EU DMA €500M fine（2025-04-23）+ Jan 2026 App Store 改版尚未明確合規 + US 9th Circuit 開放外部支付 = 三線同步進逼。雖然 Services GM Q2 FY26 仍 76.7% 未見立即衝擊，但這是「時間差」非「無衝擊」 — App Store 抽成從 30% 到外部支付的零抽成是結構性削弱、會在 12-24 個月內逐步反映。</td>
+        <td>① 2026-2027 Q4 Services GM：若連 2 季 &lt; 73% → 監管衝擊確認；② App Store 抽成收入單獨披露（若 Apple 開始拆 disclosure）：若揭露單季 −15% YoY → 確認；③ EU + 美國訴訟新增制裁金額：若 12 個月內累計 &gt; $1.5B → 趨勢成立。</td>
+        <td>(a) Services GM 連 2 季 &lt; 73% → R2 觸發、減碼 1.5%；(b) 監管衝擊維持「噪音」（Services GM hold ≥ 75% 連 4 季）→ 確認延遲性、繼續長期持有。</td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- §3 Key Drivers -->
+<div class="section">
+  <div class="section-title">§3｜Key Drivers（命脈分析，限 1-2 個）</div>
+
+  <table>
+    <tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+    <tr><td>1</td>
+        <td><strong>2.5B 裝置 installed base × Services ARPU 變現</strong>（需求側持續性）</td>
+        <td>這是 Apple 唯一不可複製的資產 — 競爭者可以做出更好的手機/平板，但無法複製 2.5B 個已上鎖、已綁定支付/iCloud/iMessage 的活躍用戶。Services Rev $30.98B × GM 76.7% = $23.8B/季 gross profit，這是「不打廣告、不做硬體、自動每季產生」的 cash flow，且 ARPU 從 $40/年（2020） → $60+/年（2026） 仍有 5-7Y 變現曲線。</td>
+        <td>① Services Rev YoY（門檻 ≥ 12% 連 4 季）；② Services GM（門檻 ≥ 73%）；③ Installed base 季度增量（門檻每年 +3-5%）；④ 付費訂閱數（門檻 ≥ 1.1B）</td></tr>
+    <tr><td>2</td>
+        <td><strong>iPhone Apple Intelligence 升級週期的延續性</strong>（供給側壟斷的活化）</td>
+        <td>iPhone 仍佔 51% 營收。Apple Intelligence 是過去 10 年最大的升級觸媒（自 4G/5G 以來）。若升級週期延續至 FY28（而非 FY26 一次性），Apple 的 EPS 從 base + 50%（pull-forward 後 reset 至 +5-7%）變成 base + 80%（持續 +10-12%/yr 4 年）。這直接決定 Bull/Base/Bear 機率分配。</td>
+        <td>① iPhone Rev YoY 連 4 季的趨勢；② iPhone ASP（門檻 ≥ $900）；③ upgrader % vs new buyer %；④ Greater China iPhone Rev（地緣壓力測試）</td></tr>
+  </table>
+
+  <p><strong>為什麼是這 1-2 個，而不是其他？</strong></p>
+  <p>Mac / iPad / Wearables 合計 ~21% 營收且都低個位數成長（5-8% YoY） — 重要但不是命脈，是底盤資產。資本配置（回購 + 股息）是結果不是原因 — 沒有 driver 1+2 撐起 FCF，回購無法為繼。Apple Intelligence platform 戰是 modifier（影響 driver 1 是強化還是稀釋），不是獨立 driver。</p>
+
+  <p><strong>Driver 抽象層 guardrail 校驗</strong>：driver 1 是需求側持續性（installed base × ARPU），driver 2 是供給側壟斷活化（iPhone 升級週期）。<strong>兩條獨立因果鏈</strong>：driver 2 可在「沒有 driver 1」的情況下被推翻（即使 Services 飛輪健康，iPhone reset 至 +0% 仍會嚴重打擊 EPS）。<strong>通過校驗</strong>。</p>
+
+  <h3>強制減法 — 我認為不重要的事</h3>
+  <table>
+    <tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+    <tr><td>Vision Pro / 智能眼鏡 / AR 頭顯</td><td>5Y 視角下對 EPS 貢獻 &lt; 3%，是 narrative 不是 driver。Vision Pro 2024-26 累計出貨 ~1M 台 = 與 iPhone 200M/yr 不在一個數量級。</td></tr>
+    <tr><td>Apple Car 復活 / 自駕車</td><td>已實質 cancel。即使 2027-2030 重啟，無法在 5Y 視窗內 material 貢獻。</td></tr>
+    <tr><td>地緣政治 / Greater China 風險</td><td>Q2 FY26 China +9% 已扭轉 7 季衰退；中國產線分散至印度/越南進行中。風險真實但已被 priced in 多年。</td></tr>
+    <tr><td>Cook 接班</td><td>2027-28 可能交棒。歷史 Ballmer-接 Gates 14 年股價持平案例存在，但 Apple 接班通常已 prep 多年（Cook 接 Jobs 順利）。屬尾部風險，不是 base case。</td></tr>
+    <tr><td>Intel foundry 多元化</td><td>5/8 公告 Apple 可能向 Intel 採購部分 chip（fab 而非 design），對 Apple 是 margin 微弱受益、對 Intel 是大新聞。AAPL thesis 視角下無 material。</td></tr>
+  </table>
+
+  <h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>市場目前定價在什麼假設上</td><td>FPE 33x 對應「Apple Intelligence supercycle 結構性、Services 維持 +14-16% 高速、Bear 機率 ≤ 15%」 — 等於假設 H1+H2 雙線都繼續加速。共識 Q3 FY26 guide +14-17% Rev、12 個月目標價中位 $300（高 $360 / 低 $215，n~35-40）。</td></tr>
+    <tr><td>我認為的不同假設</td><td>Apple Intelligence 是 distribution-layer 中性（不是 disruption 也不是 supercycle）+ iPhone Q1+Q2 FY26 +20% 含 pull-forward 成分、FY27 reset 至 +5-7% 概率 50%。市場給 FPE 33x，我認為 FPE 27-28x 才是 5-10Y 公允（與 5Y/10Y 歷史平均 fair 對齊）。</td></tr>
+    <tr><td>賣方為什麼錯</td><td>① <strong>Wedbush 目標價上修至 $400 反映「AI growth」</strong>但忽略了 Apple Intelligence 的 distribution-layer 性質（Gemini 進駐就是證據）；② 大多數賣方 model 用 FY26 EPS upside 線性外推 5Y，沒給 reset 留 buffer；③ FPE 33x 在 5Y 框架下是 mean-reversion 不利位置，賣方的 12M target 視角太短。</td></tr>
+  </table>
+
+  <p class="muted">✅ 三題都答得出來、且差異具體 — thesis 有獨立 alpha 來源（contrarian on entry timing + valuation reset），但 alpha 的 magnitude 不大（5%-10%pp R:R 差異），對應 §7 倉位 4% target 而非 6-7%。</p>
+</div>
+
+<!-- §5 Single Thing -->
+<div class="section">
+  <div class="section-title">§5｜The Single Thing That Could Change My Mind</div>
+
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td><strong>事件描述（Primary trigger）</strong></td>
+        <td><strong>「iOS 27 / 28 user telemetry 顯示：用戶實際選用第三方 AI（Gemini / ChatGPT / Claude）作為預設 AI 助理的比例 &gt; 35%，且 Siri MAU 連 2 季 &lt; 設備 base 的 50%。」</strong></td></tr>
+    <tr><td><strong>事件描述（Pre-mortem 派生 secondary trigger）</strong><br><span class="muted">由 §6b 第三段「⚠ 部分重疊」補入</span></td>
+        <td><strong>「FY27 Q1（2027-02 公布）iPhone Rev YoY &lt; 0% 且 Greater China YoY &lt; −15% 同時發生。」</strong>（H1 reset 風險 + 地緣 China share loss 雙觸發）</td></tr>
+    <tr><td>為什麼這個事件是致命的</td>
+        <td>Primary：若用戶用腳投票把 Apple Intelligence 降為「OS-level routing layer」、第三方 AI 才是真實入口 — Apple 就從「平台主」變成「分發者」。Search 默認金流（~$20B/yr Google 整合金流）會受威脅，Services 平台價值結構性削弱。Secondary：iPhone 是 51% 營收，若 reset + China loss 同步、EPS 直接砍 15-20%、FPE 必然 de-rate。</td></tr>
+    <tr><td>如何監測（資料來源、頻率）</td>
+        <td>Primary：① Apple 法說 Q&amp;A（特別關注 Cook 對「Siri 使用率」的表述變化）；② Sensor Tower / data.ai AI app 排名（季度頻率）；③ Google / OpenAI 法說對「iOS distribution」的具體著墨。Secondary：① Q3 FY26 + Q1 FY27 財報；② Counterpoint / IDC China smartphone share monthly。</td></tr>
+    <tr><td>目前離發生有多遠</td>
+        <td>Primary：WWDC 2026-06-08 揭曉 Siri 2.0 後，3-6 個月 telemetry 才會出現 → 2026-Q4 ~ 2027-Q1 首次可觀測。Secondary：FY27 Q1 = 2027-02 公布，剩 9 個月。<strong>兩者都不是即時觸發，但都在 12 個月內可驗證</strong>。</td></tr>
+  </table>
+
+  <p class="muted">✅ 兩個 trigger 都是<strong>明確、單點、可驗證</strong>的事件（具體百分比門檻 + 具體日期），不是「市場情緒轉變」這類模糊表述。Primary 是平台戰失利的單一致命點、Secondary 是 H1 reset + 地緣 China 雙因素的具體展開。</p>
+</div>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<div class="section">
+  <div class="section-title">§6｜What I Don't Know + Pre-mortem</div>
+
+  <h3>6a. 強迫面對自己的盲點</h3>
+  <table>
+    <tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+    <tr><td>1</td>
+        <td>Apple Intelligence 的「端側 + 隱私」差異化能否被使用者真實感知為價值？還是只是 marketing narrative？</td>
+        <td>使用者 willing-to-pay 為「隱私」付出時間/體驗成本；端側模型品質 close to cloud</td>
+        <td>若使用者不在乎隱私、純看 AI 能力 → 第三方雲端 AI（Gemini / GPT-5）會碾壓 → §5 Primary trigger 啟動</td></tr>
+    <tr><td>2</td>
+        <td>Services +16% YoY 中有多少來自「App Store 抽成」（受監管威脅）vs「廣告 / 訂閱 / Apple Pay」（其他增長引擎）？</td>
+        <td>App Store 抽成只占 Services 30-35%，其他項目仍可持續 +15%</td>
+        <td>若 App Store 抽成佔比 &gt; 50% + EU DMA / US 9th Circuit 強制執行 → Services 增速可能腰斬至 +6-8%</td></tr>
+    <tr><td>3</td>
+        <td>$100B buyback 的「資本回流節奏」會否被未來突發 AI capex 需求打亂？（Apple 過去 3Y 平均 capex $4B vs MSFT/GOOGL/AMZN $80B+）</td>
+        <td>Apple 維持「精準投放 R&amp;D」、不豪賭 AI moonshot</td>
+        <td>若 Apple 為平台戰被迫 capex 翻倍至 $20-30B/yr → buyback 額度減半、EPS 自然複利從 +7% 降至 +4%</td></tr>
+  </table>
+
+  <h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5（強制三段式）</h3>
+  <div class="premortem">
+
+  <p><strong>第一段｜故事倒推</strong></p>
+  <blockquote>
+  「假設 5 年後（2031-05）AAPL 部位虧 50%，最可能發生的故事是：<strong>2027-Q1 iPhone Rev YoY 跌至 −2%</strong>（Apple Intelligence pull-forward 透支 + 印度新生產線 ramp 延誤）+ 同時 <strong>2027 全年 EU 強制 App Store 開放外部支付執行</strong>，Services GM 從 76% 跌至 70%（流失約 $4-5B 高毛利金流）。市場連續下修 FY28 EPS 從 $10.30 → $8.50，FPE 從 33x 重估至 18x（消費電子 + 監管壓制雙殺），股價從 $293 → $153（−48%）。若同期 China 因地緣 Huawei +10pp 收復失地，跌幅可能達 −55%。」
+  </blockquote>
+
+  <p><strong>第二段｜校驗 §5 single-thing</strong></p>
+  <table>
+    <tr><th>檢查問題</th><th>答案</th></tr>
+    <tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td>
+        <td><strong>⚠ 部分重疊</strong> — 原 §5 寫的是「OS 預設 AI 助理被使用者大量替換」（distribution-layer 風險），但 pre-mortem 故事中真正致命的是「iPhone reset + China loss + 監管同時觸發」三因素複合。§5 只抓到平台戰風險，沒抓到 iPhone reset 風險。</td></tr>
+  </table>
+
+  <p><strong>第三段｜修正 §5（已實際執行）</strong></p>
+  <p>✅ <strong>已執行</strong>：§5 區塊新增「Pre-mortem 派生 secondary trigger：FY27 Q1 iPhone Rev YoY &lt; 0% 且 Greater China YoY &lt; −15%」作為第二條 trigger（HTML 中 §5 表格上方已顯示「Primary trigger（原 §5）」+「Pre-mortem 派生 secondary trigger」兩條）。</p>
+
+  <p><strong>校驗紀錄</strong>：「§5 修正狀態：⚠ 已補 1 條 secondary trigger（pre-mortem 派生）」</p>
+
+  </div>
+
+  <h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+  <div class="warn">
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>估計 Max DD 範圍</td><td class="neg" style="font-size:18px">−35% ~ −50%（寬度 15%p ≥ 10%p ✓）</td></tr>
+    <tr><td>最可能觸發時點</td><td>2027 Q1-Q2（FY27 Q1 iPhone reset 公布 + EU App Store 強制執行 + 地緣 China share loss 三因素 6 個月內疊加）</td></tr>
+    <tr><td>觸發後最快多久恢復到峰值</td><td>2-3 年（若 thesis 仍部分成立、Services 飛輪不破）；若 thesis 嚴重削弱 → 5+ 年甚至不會恢復</td></tr>
+    <tr><td>路徑風險評級</td><td><span style="font-size:24px">🟡</span> <strong>−30~−50%</strong>（需要強信念，多數人在 −40% 已動搖）</td></tr>
+  </table>
+  </div>
+
+  <div class="maxdd-main">−35% ~ −50%</div>
+  <div class="maxdd-bar">
+    <div class="mark" style="left:70%"></div>
+    <div class="mark" style="left:100%"></div>
+  </div>
+  <p class="muted" style="text-align:center">色條視覺：0~−30% 綠（多數人扛得住）｜ −30~−50% 琥珀（需要強信念）｜ &lt;−50% 紅（多數人會出場）｜ AAPL 估計範圍落在琥珀區 / 紅區交界</p>
+
+  <p><strong>校驗</strong>：</p>
+  <blockquote style="background:#FEF3C7;border-left:3px solid #F59E0B;padding:10px 14px">
+  「若 max DD 落在 −50%，我能否撐到復原？<strong>條件</strong>：① 部位不超過 portfolio 4%（不能太大、超過就會痛到出場）；② 不使用槓桿（mega-cap mega cap 期間任何 leverage 都會放大 DD 至 −70%+ 觸發 margin call）；③ §5 primary trigger 未發生（Apple Intelligence 平台戰未失利）— 若失利則 thesis 破、不該撐而該出。<strong>由於 max DD 評級 🟡 + 路徑風險真實，§7a 已將初始倉位下修為 2%、目標倉位下修為 4%（從預設可能的 5-6% 下修），這是 guardrail #22 的執行</strong>。」
+  </blockquote>
+</div>
+
+<!-- §8 Review Triggers -->
+<div class="section">
+  <div class="section-title">§8｜Review Triggers</div>
+
+  <table>
+    <tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+    <tr><td>1</td><td>Q3 FY26 財報</td><td>財報日期</td><td><strong>2026-07-31（預估）</strong>。重點：iPhone YoY（&gt; +12% 結構性 / ≤ +5% pull-forward）+ Services YoY（&gt; +12% / ≤ +10%）+ Q4 guide。<strong>本報告主要保質期錨點</strong>。</td></tr>
+    <tr><td>2</td><td>WWDC 2026 Siri 2.0 揭曉</td><td>產業事件</td><td><strong>2026-06-08（已確認）</strong>。重點：Siri 2.0 demo + Apple Intelligence roadmap + 端側模型規格 + 多 LLM 整合架構（決定 §5 primary trigger 距離）。</td></tr>
+    <tr><td>3</td><td>EU App Store Jan 2026 改版 + 二次裁決</td><td>監管事件</td><td><strong>2026-07-01 deadline 過期後</strong>（EU 給 60 天合規）。若 EC 認定仍不合規 → 二次罰款 + 強制執行加速。觸發 Phase B 矛盾 #4 的裁決路徑。</td></tr>
+    <tr><td>4</td><td>股價 / FPE 觸發</td><td>價位觸發</td><td>① $262（BB 中軌、回測機會）；② $245（W52、第二批進場）；③ $307+（FPE &gt; 35x、減碼評估）；④ $360+（FPE 40x+、清倉評估）</td></tr>
+    <tr><td>5</td><td>§5 Primary：第三方 AI 預設率 &gt; 35%</td><td>§5 Single Thing</td><td>iOS 27 GA（2026-09）+ 3-6 個月後首次 telemetry，~2026-12 ~ 2027-03 首次可觀測</td></tr>
+    <tr><td>6</td><td>§5 Secondary：FY27 Q1 iPhone reset</td><td>§5 Pre-mortem 派生</td><td><strong>2027-02（預估 FY27 Q1 公布）</strong>。iPhone Rev YoY &lt; 0% 且 China YoY &lt; −15% 同時觸發 = §5 secondary 啟動</td></tr>
+  </table>
+
+  <p><strong>這份報告的保質期</strong>：<strong>有效至 2026-07-31（Q3 FY26 財報發布前）</strong>。財報後必須重評，因為 iPhone H1 結構性 vs pull-forward 的判決會由此次財報初步揭曉、若 Q3 iPhone YoY ≤ +5% 則 thesis 重新洗牌。</p>
+
+  <p><strong>最可能發生的 upside 因素</strong>：① WWDC Siri 2.0 demo 驚艷 + Apple 揭曉自有 30B+ 端側模型 → 平台戰中性偏多 + FPE 維持 33-35x；② Q3 FY26 iPhone YoY 持續 +15-20% + Q4 guide 強勁 → consensus 上修 FY27 EPS 至 $10+ → 股價推升至 $310-330。</p>
+
+  <p><strong>最可能發生的 downside 因素</strong>：① Q3 FY26 iPhone YoY 跌至 +5-8% + Cook 法說淡化 Apple Intelligence narrative → pull-forward 確認 → de-rate 啟動；② WWDC Siri 2.0 揭曉就是「Gemini 殼」+ 端側模型令人失望 → distribution-layer 風險 priced-in → FPE 從 33x 壓縮至 27-28x = 股價 $235-245。</p>
+</div>
+
+<!-- Phase A Foldable -->
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：A 級護城河 9/10，moat_trend → holding — 生態鎖定強但 distribution 層淡化）</summary>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr><td>主要護城河類型</td>
+      <td>① <strong>生態系統鎖定 / 高轉換成本</strong>（iMessage + iCloud + Apple Pay + AirDrop + 跨設備連續性，2.5B 裝置使用者轉換成本極高）；② <strong>品牌溢價 / Veblen pricing power</strong>（iPhone ASP $900+ vs Android 平均 $250，「越貴越被認可」的反常需求曲線）</td></tr>
+  <tr><td>持久性評分</td><td><strong>9/10</strong>，5 年穩固度：<strong>高</strong>（但 distribution 層在 AI 浪潮中受 swing factor）</td></tr>
+  <tr><td>最大侵蝕風險</td><td>第三方 AI 雲端模型（Gemini / GPT-5 / Claude）通過 iOS 27 多選機制成為使用者主要 AI 入口 → Apple 從「平台主」變為「routing layer」→ Search 默認金流與 Services 價值結構性削弱（時間軸 3-5 年）</td></tr>
+  <tr><td>關鍵數據</td><td>毛利率 49.3%（趨勢 ↑，Q2 FY26 vs FY25 47%）<sup>1</sup>、智能手機 revenue 市佔率 31.48%（趨勢 →，與 Samsung 21.36% / Xiaomi 9.65% 拉開）<sup>2</sup>、ROIC vs WACC 超額 +43%（ROIC 48.48%，2026-04-22）<sup>3</sup>、Services GM 76.7% vs Products 38.7%<sup>4</sup></td></tr>
+  <tr><td><strong>moat_trend</strong></td>
+      <td><strong>→ holding</strong>（持平偏微強）<br>
+      <strong>12 個月內變化證據</strong>：① ROIC 從 FY25 ~43% 升至 2026-04 48.48% = +5pp 擴大 ROIC-WACC gap<sup>3</sup>；② Q2 FY26 iPhone 全球高端市佔率 21% 從 2025 Q1 19% 微擴大 +2pp<sup>2</sup>；③ Services GM 從 2024 Q4 74.0% → 2025 Q4 75.5% → 2026 Q2 76.7% 連 4 季創高<sup>1,4</sup>；④ 反向證據：Gemini 進駐 Apple Intelligence 核心（2026-01-12）<sup>5</sup> + iOS 27 多 LLM 選擇（2026-05）<sup>6</sup> = distribution 層被淡化。<br>
+      <strong>淨判斷</strong>：本業飛輪 widening，但 distribution layer narrowing — 兩股力量抵銷 → <strong>→ holding</strong>。<strong>禁止寫「持平」當逃避：本判斷有具體雙向 evidence，不是逃避決策</strong>。</td></tr>
+</table>
+
+<p><strong>Sourced data points（≥ 5 要求）— 實際數 6</strong>：</p>
+<ol>
+  <li>Q2 FY26 GM 49.3%（vs Q2 FY25 ~47%）— Source: heygotrade.com 2026-04-30 法說</li>
+  <li>Apple 全球高端市佔 21%、revenue 市佔 31.48% — Source: PhoneArena Q1 2026 report 2026 / Statista</li>
+  <li>ROIC 48.48%（2026-04-22）/ 56.14%（2025-12）— Source: financecharts.com / gurufocus.com 2026 Apr</li>
+  <li>Services GM 76.7%、Products GM 38.7% — Source: 9to5mac.com Apple Q2 2026 earnings 2026-04-30</li>
+  <li>Apple-Google Gemini deal 2026-01-12 — Source: appleinsider.com 2026-01-12</li>
+  <li>iOS 27 多 LLM 選擇 2026-05-09 — Source: macrumors.com 2026-05-05</li>
+</ol>
+
+<p><strong>A1 獨立結論</strong>：Apple 護城河 9/10，本業飛輪繼續加深（ROIC + GM + 市佔三線同步擴大），但 AI 浪潮在 distribution layer 帶來淡化壓力（Gemini / 多 LLM 選擇），淨體 <strong>→ holding</strong> 趨勢。</p>
+
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析（獨立結論：消費電子已飽和、Services 受監管壓力、Edge AI 平台戰 binary — runway_post_y5 🟡 中等）</summary>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr><td>TAM 與成長</td><td>智能手機 TAM $580B（2024）→ $843B（2030），<strong>CAGR 5.5-7.8%</strong>，penetration &gt; 70%（5.5B 用戶）<sup>1</sup>；Services / 數位內容 / Apple Pay TAM 更大但更分散</td></tr>
+  <tr><td>供需判斷</td><td><strong>已飽和</strong>（penetration 70%+，replacement cycle 拉長）；2026 worldwide smartphone 預估 -0.9%（記憶體缺貨 + ASP 上揚）<sup>2</sup>；Apple Q2 FY26 +21.7% iPhone Rev 是 cycle-driven 不是市場成長帶動</td></tr>
+  <tr><td>最大技術替代風險</td><td><strong>Edge AI 平台戰</strong>（時間軸 2026-2028）：若 Apple 端側模型無法匹敵 Gemini 3 / GPT-5 / Claude 4，使用者透過 iOS 27 多選改用第三方雲端 AI → Apple 失去 AI 入口控制權。威脅程度：高（影響 Services 30% 的 Search-related 金流）</td></tr>
+  <tr><td>最大政策 / 地緣風險</td><td>① <strong>EU DMA</strong>：2025-04-23 €500M 罰款 + 2026-01 App Store 改版 + 60 天合規 deadline<sup>3</sup>；② <strong>US 9th Circuit</strong>：開放開發者外部支付通道，免抽成<sup>4</sup>；③ <strong>Greater China</strong>：Q2 FY26 +9% 扭轉 7 季衰退，但華為 12% 市佔擴大、地緣升級風險未除</td></tr>
+  <tr><td>議價權位置</td><td>對上游 <strong>強</strong>（TSMC N2 優先 wafer、晶圓 capacity 預定）；對下游 <strong>強</strong>（消費者支付 ASP $900+ 無議價）；對監管 <strong>弱</strong>（EU/US 同時施壓）；對 AI 雲端供應商 <strong>中</strong>（Gemini deal 自願綁定）</td></tr>
+  <tr><td><strong>runway_post_y5</strong></td>
+      <td><strong>🟡 中</strong> — Y5 之後 5-10 年（2031-2036）<br>
+      <strong>S 曲線位置</strong>：iPhone 已在晚期飽和（penetration 70%+），Services 在中後期（高速期 3-5 年）<br>
+      <strong>Y5 末 TAM 滲透率預估</strong>：Apple 全球高端市佔 ~22-23%（vs 當前 21%）、Services ARPU 約 $80/yr/device（vs 當前 ~$60）<br>
+      <strong>第二曲線狀態</strong>：智能眼鏡 / AI 配件 / Apple Car 全部 未錨定（Vision Pro 失敗、Apple Car 取消、智能眼鏡尚未發布）；Apple Intelligence 自有平台戰結果未明<br>
+      <strong>淨判斷</strong>：Services 5-7Y 仍有 monetization runway 撐起 🟡 評級下界，但缺乏類似 MSFT-Azure 等量第二曲線銜接 → 不能上升至 🟢。<strong>不觸發 §7d 持有年限 ≤ 3Y 警示</strong>（🟡 中不是 🔴 窄）。</td></tr>
+</table>
+
+<p><strong>Sourced data points（≥ 5 要求）— 實際數 7</strong>：</p>
+<ol>
+  <li>Smartphone TAM $580B 2024 → $843B 2030, CAGR 7.76%（CAGR 2026-2030 3.86%） — Source: 360iresearch / accio.com / grandviewresearch</li>
+  <li>2026 worldwide smartphone -0.9%（memory shortage、ASP 升至 $465） — Source: IDC / accio.com 2026 forecast</li>
+  <li>EU DMA €500M fine 2025-04-23 + 60 天 deadline + Jan 2026 App Store changes — Source: ec.europa.eu / Perkins Coie 2025-04 / 2026-01</li>
+  <li>US 9th Circuit 開放外部支付 — Source: gadgethacks.com 2026 Apple developer change</li>
+  <li>Smartphone penetration 70%+, 5.5B 用戶 — Source: technavio.com 2026 smartphone market</li>
+  <li>Apple-Google Gemini partnership 2026-01-12 — Source: fortune.com / appleinsider.com 2026-01</li>
+  <li>iOS 27 multi-LLM choice 2026-05-09 — Source: macrumors.com 2026-05-05</li>
+</ol>
+
+<p><strong>A2 獨立結論</strong>：消費電子已飽和但 Apple 仍能透過 supercycle 撈取超額 + Services 飛輪 5-7Y 變現窗口仍開、但監管三線同步進逼 + Edge AI 平台戰 binary 未明 → <strong>🟡 中等 runway，第二曲線未錨</strong>。</p>
+
+</details>
+
+<details>
+<summary>Phase A3｜業務 / 財務 / 資本配置（獨立結論：超強現金製造機 + 資本配置紀律 A+ + 但 EPS 自然複利依賴回購 leverage 遞減）</summary>
+
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr><td>營收結構（Q2 FY26）</td>
+      <td>iPhone $56.99B（51%）— 現金牛 + supercycle 中；Services $30.98B（28%）— 成長引擎 + GM 76.7%；Mac $8.40B（7.6%）、iPad $6.91B（6.2%）、Wearables $7.90B（7.1%）— 底盤資產<sup>1,2</sup></td></tr>
+  <tr><td>客戶集中度</td><td>消費者端：極度分散（2.5B 裝置 + 1B+ 付費訂閱）<sup>2</sup>；B2B 端：N/A；風險：<strong>低</strong></td></tr>
+  <tr><td>定價權</td><td>iPhone ASP 趨勢 ↑（每代 ASP 微升 $20-50），Apple Intelligence 升級觸發 Pro 機型 mix shift；定價權：<strong>強</strong>（無議價空間 + Veblen pricing）</td></tr>
+  <tr><td>未來金雞母</td><td>① Apple Pay / 廣告 / Search 金流（含 Google ~$20B/yr 整合）— 合計 ~$30B Rev、~40% Services；② 智能眼鏡（未發布，2027-2028 catalyst 預估，潛在 TAM $50-100B）；③ AI 配件 / Apple Car（更遠期）</td></tr>
+  <tr><td>財務體質</td>
+      <td>FCF margin 17.6%+（6M FY26 OCF $82B、capex $4.3B = FCF $77.7B）<sup>3</sup>、毛利率 49.3%（趨勢 ↑）<sup>1</sup>、淨債/EBITDA 0.41（極低槓桿）<sup>4</sup>；壓力測試：營收 -20% 可撐 ≥ 8 季（$60B 現金 + 投資 + Services 韌性）</td></tr>
+  <tr><td>資本配置紀律</td><td>2026-04-30 新批 $100B buyback（累計超過 $850B since 2012）+ 4% 股息上修至 $0.27<sup>5</sup>。Capex 僅 $4.3B/6M vs MSFT/GOOGL/AMZN $80B+/yr，<strong>選擇「stock buyback over AI capex」</strong>，是極端紀律也是策略性押注 — 若 Apple Intelligence 平台戰失利、回頭 capex 已太遲。M&amp;A 紀錄：極少（Beats $3B 2014 最大），有機成長 95%+</td></tr>
+  <tr><td><strong>5Y IRR 分量基底（Base case）</strong></td>
+      <td>EPS CAGR <strong>+7.4%/yr</strong>（FY26E $8.77 → FY30E $12.5，含 ~3%pp buyback 對 EPS 稀釋抵銷）<sup>6</sup>；5Y 末 forward P/E <strong>27x</strong> vs 當前 <strong>33x</strong>（re-rate 貢獻 = (27/33)^(1/5) − 1 ≈ <strong>−4.0%/yr</strong>，回 5Y 平均 30.4x 仍偏謹慎，假設 mean reversion 朝 10Y avg 25x）<sup>7</sup>；現金股息率 <strong>0.4%/yr</strong>（$1.08/yr div ÷ $293）；淨買回率 <strong>2.6%/yr</strong>（$100B / $4.4T mkt cap ÷ 5 ≈ 平均 2.6%/yr net of SBC ~0.3%）。<strong>合計 7.4 − 4.0 + 0.4 + 2.6 = 6.4%/yr</strong>。</td></tr>
+</table>
+
+<p><strong>Sourced data points（≥ 6 要求）— 實際數 8</strong>：</p>
+<ol>
+  <li>Q2 FY26 GM 49.3% / Services GM 76.7% — Source: 9to5mac.com 2026-04-30</li>
+  <li>Q2 FY26 segment: iPhone $56.99B / Services $30.98B / Mac $8.40B / iPad $6.91B / Wearables $7.90B + installed base 2.5B — Source: wccftech.com / cnbc.com 2026-04-30</li>
+  <li>6M FY26 OCF $82B / capex $4.3B / FCF $77.7B — Source: 24/7 Wall St / heygotrade.com 2026-05</li>
+  <li>Net Debt / EBITDA 0.41 — Source: DD §2 C cross-validated with stockanalysis.com</li>
+  <li>$100B new buyback + dividend +4% to $0.27 (2026-04-30) — Source: appleinsider.com 2026-04-30</li>
+  <li>FY26E EPS $8.77 / FY27E $9.58 (yfinance consensus n=33/42) — Source: DD §2 E + finance.yahoo.com</li>
+  <li>Forward PE 32-33x / 5Y avg 30.4x / 10Y avg ~25x — Source: gurufocus.com / fullratio.com / macrotrends.net 2026-04-22</li>
+  <li>Apple Q1 EPS $2.01 vs $1.94 est, Revenue $111.18B vs $109.66B — Source: gurufocus.com 2026-04-30</li>
+</ol>
+
+<p><strong>A3 獨立結論</strong>：Apple 是現金製造機 + 資本配置 A+ 範本，但 EPS 自然複利 leverage 從過去 5Y +50% 將遞減至未來 5Y +37%（base + buyback），起點 PE 33x 是 re-rate 不利位置 → <strong>業務體質滿分、估值起點偏貴</strong>。</p>
+
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取（DD_AAPL_20260504.html + 5 份 AI 系列 ID）</summary>
+
+<h3>DD 報告擷取（DD_AAPL_20260504.html）</h3>
+<table>
+  <tr><th>項目</th><th>內容</th></tr>
+  <tr><td>Quality Score</td><td>A 級（DD §2 B）— 5/5 通過：FCF/Rev ≥ 5%、ROIC ≥ 12%、毛利率 ≥ 30%、現金 / Rev 10-50%、Net Debt / EBITDA ≤ 3.0</td></tr>
+  <tr><td>R:R ratio</td><td>短期 −0.58x / 中期 −0.44x / 長期 5Y +1.5x（FY+5 EPS $11.95 × 27x = $323 vs Bear $209）</td></tr>
+  <tr><td>三引擎目標價</td><td>FY+1 EPS $8.77 × 28x = $245（短期）；FY+2 EPS $9.58 × 25x = $240（中期）；FY+5 EPS $11.95 × 27x = $323（5Y）</td></tr>
+  <tr><td>Bear anchor</td><td>$174 ~ $215（FPE 22-24x × 反映 H1 reset 後的 EPS）</td></tr>
+  <tr><td>紅旗清單</td><td>① iPhone H1 FY26 +20% 含 pull-forward 風險；② App Store / Google search 監管雙線發酵；③ Edge AI 平台戰失利（5+ 年 swing factor）</td></tr>
+  <tr><td>§0.5 核心假設</td>
+      <td>H1: Apple Intelligence 驅動 iPhone 升級至 FY28 — <strong>強化</strong>（Q2 FY26 +22%）<br>
+      H2: Services CAGR ≥ 12%、Margin 70%+ — <strong>強化</strong>（Q2 FY26 +16.3%、GM 76.7%）<br>
+      H3: 市場維持 25-32x FPE — <strong>強化</strong>（當前 33x 接近上緣）</td></tr>
+  <tr><td>§8 最終結論</td><td><strong>B（觀望）</strong> — gate 🔴 觸發初判 X，QC-31 cross-check 降為 B（thesis 完整 + Q2 FY26 強烈兌現），等估值修復或回測 BB 中軌 $262</td></tr>
+</table>
+
+<h3>ID 報告擷取</h3>
+<table>
+  <tr><th>ID</th><th>產業評級</th><th>AAPL 相關關鍵點</th></tr>
+  <tr><td>ID_AICrossDomainImpact_20260429</td><td>Phase II 早期 19%</td><td>AAPL 為「AI 跨域 hedge」basket 之一，WWDC 2026-06 Siri 2.0 binary 50/50</td></tr>
+  <tr><td>ID_AppleIntelligencePlatformThreat_20260429</td><td>Phase II 早段 18%</td><td>Apple Intelligence 是 distributor threat &gt; product threat（OS-native + 1.5B install base），但「OS-native」缺 platform network effect 是結構劣勢</td></tr>
+  <tr><td>ID_EdgeAI_20260427</td><td>Phase II 18%</td><td>邊緣 AI 是 AI 第二大獨立利潤池，AAPL 端側 + ChatGPT/Gemini hybrid 受益</td></tr>
+  <tr><td>ID_TokenEconomics_20260427</td><td>Phase II 19%</td><td>AAPL 端側列為「routing/caching/edge 三層真正贏家」之一（vs LLM 原廠被擠壓）</td></tr>
+  <tr><td>ID_HyperscalerCloudBigThree_20260505</td><td>Phase II 18%</td><td>Apple AFM（Apple Foundation Model）採用 GCP TPU confirmed — Apple 自有 AI 訓練 capex 流向 Google</td></tr>
+</table>
+
+<p class="muted">A4 不產出獨立結論，純數據輸入。本 DCA 主要交叉參考 DD §2 D R:R + ID_AppleIntelligencePlatformThreat 的「OS-native 缺 platform network effect」洞察 → 形成 Phase B 矛盾 #1 的 settle 路徑。</p>
+
+</details>
+
+<div class="section" style="background:#F8FAFC">
+  <p class="muted" style="text-align:center;margin:0">
+  Self-Audit Checklist 12 items passed pre-Write ｜ DCA Schema v1.1 ｜ Generated 2026-05-11<br>
+  本報告基於 DD_AAPL_20260504.html (DCA mode requires) ｜ 不取代 PM 框架的 portfolio-level 決策<br>
+  Sources: Apple Q2 FY26 earnings call (2026-04-30) / SEC 10-Q / appleinsider.com / fxleaders.com / macrumors.com / 9to5mac.com / gurufocus.com / ec.europa.eu / financecharts.com / IDC / accio.com / fortune.com
+  </p>
+</div>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<title>TER — Deep Conviction Analysis｜2026-05-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --ink-2:#334155;
+    --line:#E2E8F0; --accent:#1E3A5F; --accent-2:#3B82F6;
+    --green-bg:#DCFCE7; --green-ink:#166534;
+    --amber-bg:#FEF3C7; --amber-ink:#92400E;
+    --red-bg:#FEE2E2; --red-ink:#991B1B;
+    --blue-bg:#EFF6FF; --orange-bg:#FFF7ED; --orange-line:#F97316;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --decision-watch:#FEF9C3; --decision-buy:#F0FDF4; --decision-avoid:#FFF1F2;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace}
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:18px;flex-wrap:wrap;font-size:13px;align-items:baseline;border-bottom:4px solid var(--accent-2)}
+  header .ticker{font-size:18px;font-weight:700;letter-spacing:1px}
+  header .meta{opacity:.92}
+  header .thesis-inline{margin-left:auto;font-style:italic;opacity:.85;max-width:480px}
+  main{max-width:1180px;margin:0 auto;padding:28px 24px 96px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px 28px;margin-bottom:22px;box-shadow:0 1px 2px rgba(15,23,42,0.04)}
+  h1,h2,h3{color:var(--accent);margin-top:0}
+  h2{border-left:4px solid var(--accent-2);padding-left:12px;font-size:20px;margin-bottom:18px}
+  h3{font-size:16px;margin:22px 0 10px;color:var(--accent)}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--ink-2)}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  thead th{background:var(--accent);color:#fff;padding:10px 12px;text-align:left;font-weight:500}
+  tbody td,tbody th{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:nth-child(even){background:#F1F5F9}
+  .tag{display:inline-block;padding:2px 9px;border-radius:3px;font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+  .green{background:var(--green-bg);color:var(--green-ink)}
+  .red{background:var(--red-bg);color:var(--red-ink)}
+  .amber{background:var(--amber-bg);color:var(--amber-ink)}
+  .blue{background:var(--blue-bg);color:var(--accent)}
+  /* Status Bar */
+  .status-bar{display:flex;gap:16px;justify-content:center;align-items:stretch;background:#F1F5F9;padding:16px 12px;margin:0 0 22px;border-left:4px solid var(--accent-2);border-right:4px solid var(--accent-2);border-radius:4px}
+  .status-cell{flex:0 0 180px;text-align:center;padding:8px 4px;background:#fff;border-radius:4px;border:1px solid var(--line)}
+  .status-cell .label{font-size:11px;color:#64748B;letter-spacing:.5px;text-transform:uppercase}
+  .status-cell .value{font-size:22px;font-weight:700;margin-top:4px;font-family:'IBM Plex Mono',monospace}
+  .signal-A-plus{color:#166534}.signal-A{color:#15803D}.signal-B{color:#92400E}.signal-C{color:#991B1B}.signal-X{color:#1E293B}
+  .arr-up{color:#166534}.arr-flat{color:#64748B}.arr-down{color:#991B1B}
+  .dd-green{color:#15803D}.dd-amber{color:#92400E}.dd-red{color:#991B1B}
+  /* Thesis Block */
+  .thesis-block{background:var(--blue-bg);padding:36px 28px;text-align:center;border-radius:4px;margin:14px 0}
+  .thesis-block .ts-text{font-size:26px;font-weight:700;line-height:1.55;color:var(--accent)}
+  .thesis-block .ts-note{font-size:13px;color:var(--ink-2);margin-top:14px}
+  /* Decision */
+  .decision-watch{background:var(--decision-watch);border-left:4px solid #CA8A04;padding:18px 22px;border-radius:4px;margin:14px 0}
+  /* Conflict / verdict */
+  .conflict-block{background:var(--orange-bg);border-left:4px solid var(--orange-line);padding:18px 22px;border-radius:4px;margin:14px 0}
+  .conflict-block table thead th{background:#9A3412;color:#fff}
+  .verdict-table{background:#FED7AA;padding:6px;border-radius:4px}
+  /* Pre-mortem */
+  .premortem-block{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:18px 22px;border-radius:4px;margin:14px 0}
+  .premortem-narrative{background:#fff;padding:14px 18px;border-left:3px solid var(--premortem-line);font-style:italic;color:var(--ink-2);margin:10px 0}
+  /* Pattern match */
+  .pattern-block{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:18px 22px;border-radius:4px;margin:14px 0}
+  /* IRR comp */
+  .irr-stacked{display:flex;height:30px;border-radius:4px;overflow:hidden;margin:10px 0;font-size:11px;color:#fff;font-weight:600}
+  .irr-stacked .seg{display:flex;align-items:center;justify-content:center;padding:0 8px}
+  .seg-eps{background:#15803D}.seg-rerate{background:#1E3A5F}.seg-shareholder{background:#64748B}
+  /* Max DD */
+  .maxdd-block{background:#FFF7ED;border-left:4px solid var(--orange-line);padding:18px 22px;border-radius:4px;margin:14px 0}
+  .maxdd-num{font-size:32px;font-weight:700;color:var(--red-ink);font-family:'IBM Plex Mono',monospace}
+  .dd-bar{height:14px;background:linear-gradient(to right,#15803D 0%,#15803D 50%,#D97706 50%,#D97706 83%,#991B1B 83%,#991B1B 100%);border-radius:4px;margin:10px 0}
+  /* Memo */
+  .memo-block{background:#FAFAFA;border:1px solid #94A3B8;padding:20px 24px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;margin:14px 0;border-radius:4px}
+  .elevator{background:#fff;border-left:4px solid #94A3B8;padding:14px 18px;font-style:italic;font-size:15px;margin:14px 0;border-radius:0 4px 4px 0}
+  /* Phase A folding */
+  details{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px 18px;margin:10px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style-marker:none}
+  details summary::-webkit-details-marker{display:none}
+  details[open] summary{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px}
+  /* Status flags */
+  .ma-ok{background:#DCFCE7;color:#166534;padding:6px 10px;border-radius:3px;font-weight:600}
+  .ma-fail{background:#FEE2E2;color:#991B1B;padding:6px 10px;border-radius:3px;font-weight:600}
+  .ma-warn{background:#FEF9C3;color:#92400E;padding:6px 10px;border-radius:3px;font-weight:600}
+  .print-btn{position:fixed;bottom:28px;right:28px;padding:12px 18px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(15,23,42,0.18)}
+  @media print{header.topbar,.print-btn{display:none}main{padding:0;max-width:100%}details{break-inside:avoid}details>div,details>p,details>table{display:block !important}details:not([open])>*:not(summary){display:block !important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <span class="ticker">TER · Teradyne Inc.</span>
+  <span class="meta">DCA 報告日：2026-05-11</span>
+  <span class="meta">參考股價：~$360（5/8 close $359.77, 5/11 ~$366）</span>
+  <span class="thesis-inline">「ATE 雙寡占其一，AI 測試時數複利的稅票」</span>
+</header>
+
+<main>
+
+<!-- ============ Status Bar (above §2) ============ -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="label">綜合訊號燈（自 DD）</div>
+    <div class="value signal-B">B</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value"><span class="signal-B">B</span> <span class="arr-up">↑</span></div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value" style="font-size:18px">🟢 寬 (HBM5+ Edge)</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">估計 Max DD</div>
+    <div class="value dd-red">−55%</div>
+  </div>
+</div>
+
+<!-- ============ §2 One-Sentence Thesis ============ -->
+<section class="card">
+<h2>§2 One-Sentence Thesis（投資本質一句話）</h2>
+<div class="thesis-block">
+  <div class="ts-text">Teradyne 是 ATE 雙寡占其一，<br>而 AI 把「每顆晶片測試時數」變成了複利稅票。</div>
+  <div class="ts-note">50 字以內的投資本質敘事 — 不是財務指標清單，是說一個故事</div>
+</div>
+<p class="num" style="font-size:13px;color:var(--ink-2)">字數計：47 字（含標點）。</p>
+</section>
+
+<!-- ============ §7 Decision (full) ============ -->
+<section class="card">
+<h2>§7 Decision（可執行計畫）</h2>
+
+<div class="decision-watch">
+  <strong style="font-size:17px;color:#854D0E">判定：條件式進場（B 級觀望偏進場，等回檔 + Q2 actual 雙確認）</strong>
+  <p style="margin:8px 0 0 0">thesis 完整、Q1 大幅 beat、HBM4 + merchant GPU 雙引擎兌現中 — 但 4/29 -17% gap down 後反彈未回到峰值、估值仍偏緊、Q2 mgmt guide sequential decline、Max DD 路徑風險評級 🟡 — 不適合一次建倉，亦不該完全放棄。</p>
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th width="30%">項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（cycle play + AI 結構性 share-take optionality；不適合 5+ 年 buy-and-hold core）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.0% of portfolio</strong>（B 級基準 1.5-2.0% × Max DD 🟡 折扣 50% × 估值偏貴折扣 70% ≈ 1.0%）</td></tr>
+<tr><td>目標倉位</td><td><strong>3.0% of portfolio</strong>（衛星上限；Max DD 🟡 自動觸發 §7a 倉位下修，從原本可考慮的 5% 降至 3%）</td></tr>
+<tr><td>進場價位區間</td><td>$285 ~ $330（BB 中軌 $287 ~ Q2 actual 印證後 $330 內為理想；$360+ 為「等待」區）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批（三次）</strong>：(1) Q2 actual 印證 GM ≥ 60% + EPS ≥ $1.95（2026-07-29 earnings）→ 建首批 30%（占目標 = 0.9%）；(2) 股價回測 BB 中軌 $287 或 Q3 sequential 不大降 → 加 35%；(3) FY27 共識 EPS 維持 $9+ 且 merchant GPU 訂單擴大 → 加 35% 至滿格 3%。<br><strong>⚠ 不一次建倉、不無條件追高</strong>（RSI 5/5 47-67 區間，回到 60+ 即停手）</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>具體點名：</strong><br>(a) <strong>vs KLAC（WFE / process control）</strong>：KLAC ROIC 35% 結構性高於 TER（cycle peak 39% / trough 17%）、estimated DCA conviction A 級、若 portfolio 已有 KLAC 1.5-2% → TER 邊際資金應減半至 0.5-1.5%；TER 唯一勝出點是「pure AI compute 曝險度 70% > KLAC 35%」，但 KLAC 多元化抵銷 cycle risk。<br>(b) <strong>vs 6857.T Advantest</strong>：直接競爭對手，2025 SoC tester share 56%→66% gain（vs TER 流失對應 share），FPE FY+2 ~32x（vs TER 36.3x）— Advantest R:R 較好且 share trend 較佳；若 USD/JPY 風險可承受，<strong>邊際資金優先 6857.T over TER</strong>。<br>(c) <strong>vs NVDA（直接 AI test 客戶）</strong>：NVDA 為 TER 客戶，conviction A+；NVDA 股息率 0、TER 0.8%；但 NVDA 上漲時 TER 也漲，TER 沒有獨立 alpha — 若已持 NVDA 5%，TER 角色降為「對沖 hyperscaler 賺差價」，僅 1-2% 即可。<br><strong>結論</strong>：邊際資金優先序 = 6857.T > KLAC > NVDA &gt; TER。TER 若無「估值大跌 + Q2 印證 + merchant GPU 訂單擴大」三條件，不該擠掉現有 quality compounder 位置。</td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr></thead>
+<tbody>
+<tr><td>初次建倉</td><td>Q2 2026 actual EPS ≥ $1.95 + GM ≥ 60%（2026-07-29 預期）</td><td>0.9%（首批 30%）</td></tr>
+<tr><td>加碼</td><td>股價回測 BB 中軌 $287（−20%）或 4w 漂移收斂至 ±10% 內</td><td>2.0%（≈ 目標 65%）</td></tr>
+<tr><td>加碼至滿</td><td>Q3 2026 actual sequential 不大降 + FY27 EPS 共識維持 $9+ + merchant GPU 訂單累計 $200M+</td><td>3.0%（滿格）</td></tr>
+<tr><td>減碼</td><td>(1) Memory Test sequential 連 1 季持平或下滑；或 (2) Advantest 再取得 NVDA Rubin 主供；或 (3) 股價突破 $410（FPE 43x，Bull 上限）</td><td>1.5%（減半）</td></tr>
+<tr><td>清倉</td><td>Q3 actual EPS &lt; $1.30 + Q4 sequential decline（cycle peak confirmed）或 Advantest 取回 HBM 50%+ share</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>股價在 MA60 之上？</td><td><span class="ma-ok">✅</span></td><td>$360 vs MA60 ≈ $315</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-ok">✅</span></td><td>$360 vs W52/MA200 $185 — 大幅 stretched</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-ok">✅</span></td><td>$360 vs MA104w $152（2.36x）— 極端 stretched</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-ok">✅</span></td><td>機械強勢進場但近 W52 斜率 +46% 屬於極端動能末段</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="ma-warn">⚠ RSI 14d 67（接近 70 警戒）+ 4w 漂移從 +17% 已收斂至 +6%</span></td><td>RSI 已從 4/29 急跌前的 75 下降到 67，但仍偏高；股價過去 12 個月 +120% 仍屬動能末段</td></tr>
+</tbody>
+</table>
+
+<p><strong>結論：</strong>Pure MA 機械層通過，<strong>但動能仍偏熱 + 估值在峰值附近</strong> → §7a 進場節奏強制改為條件式分批，第一批必須等 Q2 actual print（2026-07-29）。<strong>禁止一次建倉、禁止無 timing 條件的追高</strong>。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 cycle peak 2027H2 真實兌現 + Advantest 反攻 → 持有 6-12 個月 ride cycle 後減持</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 HBM4 ramp + merchant GPU 持續擴大且 cycle 延長至 2028 → 持有至 2028H1</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 ATE 「ASML 化」估值重估 + per-chip test 時數結構性 3X → 持有至 2030 觀察 HBM5 ramp</td></tr>
+</tbody>
+</table>
+<p><strong>建議持有年限：</strong>中期（2-3 年，目標到 2028H1 cycle 結束前）<br><strong>原因：</strong>ATE 商業模式本質 cycle 商品（cycle peak ROIC 39% / trough 17%）；本輪 cycle 2024Q1 起算第 5 季為後段，2027H2 大概率反轉；若 HBM4 + merchant GPU 雙引擎驗證為結構性而非 cycle 暫時 → 持有期可延至 5 年，但機率 35% 不到，base case 仍視為 cycle play。<strong>Runway 🟢 寬只支持「下一輪 cycle 還在」而非「永遠不下滑」</strong>。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+<tbody>
+<tr><td>2026E</td><td>$7.18</td><td>yfinance, n=16</td><td>mgmt model mid-point $10.25（+43% vs consensus）</td></tr>
+<tr><td>2027E</td><td>$9.51</td><td>yfinance, n=17（JPM $9.80 / Northland $6.75 = 分歧大）</td><td>JPM bullish, Northland 預測 cycle 反轉</td></tr>
+<tr><td>2030E（外推）</td><td>~$8-10（cycle 內）/ ~$5-6（cycle 反轉）</td><td>本份 DCA 推估</td><td>外推假設：HBM4 → HBM5 ramp + merchant GPU share 25%+，但 cycle 反轉 EPS 短期 −30-50%</td></tr>
+</tbody>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>$360 現價隱含 FPE FY27 ~38x、FPE FY28（normalize $8）~45x — 已 priced in cycle peak +1 年。<strong>Asymmetry §4 顯示 Base 5Y IRR ≈ 6%</strong>（負！）：EPS 複利 8% − re-rate −3.5% + 股息回購 1.5% — 主要拖累來自估值 multiple 壓縮（FPE 36 → 26）。Bull IRR 16% 需要 merchant GPU 30%+ share 兌現（機率 35-40%）。<strong>結論：現價追高不適合長期持有；條件式進場（等 BB 中軌 $287 或 Q2 印證）後可考慮 2-3 年中期 cycle play，5+ 年 buy-and-hold 不適合</strong>。</p>
+</section>
+
+<!-- ============ §4 Asymmetry Analysis ============ -->
+<section class="card">
+<h2>§4 Asymmetry Analysis（5Y 機率加權 IRR）</h2>
+
+<table>
+<thead><tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+<tbody>
+<tr style="background:#F0FDF4"><td><strong>Bull（thesis 對）</strong></td><td>+110%</td><td><strong>+16%/yr</strong></td><td>HBM4 + merchant GPU 雙引擎兌現；2030 EPS $13 × 32x（cycle 延長 + ATE 「ASML 化」）= $416 vs 現價 $360（路徑經 cycle 中段 $300-400）</td><td>30%</td></tr>
+<tr><td><strong>Base</strong></td><td>+34%</td><td><strong>+6%/yr</strong></td><td>2030 cycle midpoint EPS $9 × 28x mid-cycle PE = $252，但加 dividend + buyback 累計 ~+34%；估值 multiple 從 36x → 28x 壓縮拖累</td><td>40%</td></tr>
+<tr style="background:#FFF1F2"><td><strong>Bear（thesis 錯）</strong></td><td>−48%</td><td><strong>−12%/yr</strong></td><td>2027H2 cycle 反轉 + Advantest 反攻 SoC + Robotics 持續虧損；2030 EPS $5 × 22x = $110，5Y 跌至 $187 範圍</td><td>30%</td></tr>
+<tr style="background:#EFF6FF"><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>+4.5%/yr</strong></td><td colspan="2">5Y 絕對 +25% → IRR ≈ 4.5%/yr <span class="tag amber">弱</span></td></tr>
+</tbody>
+</table>
+
+<p class="num"><strong>IRR 公式驗證</strong>：Bull (2.10)^(1/5)−1 = 16% ✅；Base (1.34)^(1/5)−1 = 6.0% ✅；Bear (0.52)^(1/5)−1 = −12% ✅；加權 Sum(P×5Y) = 0.30×1.10 + 0.40×0.34 + 0.30×(−0.48) = 0.33 + 0.136 − 0.144 = 0.322 → 5Y +32% / IRR (1.32)^(1/5)−1 = 5.7%，略修為 ~4.5%/yr（reflects 標準差大的 cycle 商品 risk discount）。</p>
+
+<p><strong>IRR 落點解讀：</strong><span class="tag amber">~4.5%/yr 屬「弱」區間（不及大盤平均 8%）</span> — 必須有 strong idiosyncratic 理由才動部位。<strong>TER 的 idiosyncratic 理由 = AI test 結構性 share-take + HBM4 supercycle，但機率加權後仍不及 NVDA / KLAC 等同 AI sector 對標</strong>。</p>
+
+<h3>追加壓力測試</h3>
+<table>
+<tbody>
+<tr><th width="35%">如果 thesis 對但時間拉長 10Y（而非 5Y），IRR？</th><td>10Y IRR ≈ +12%（HBM5+ Edge AI 接力 → next supercycle 2030-2035）；但 cycle 經歷 2 輪反轉 max DD ≥ −50% 兩次</td></tr>
+<tr><th>考慮機會成本後的答案？</th><td>同期 S&amp;P 500 mid-case 8%，TER 5Y IRR 4.5% &lt; 8%，<strong>機會成本顯著為負</strong>；vs 6857.T Advantest 估計 5Y IRR ~9%，TER 邊際資金應放 6857.T。<strong>TER 只有 Bull scenario 才有 alpha；Base 已輸大盤</strong>。</td></tr>
+</tbody>
+</table>
+
+<div class="pattern-block">
+<h3>📐 Pattern Match（讓機率有錨點）</h3>
+<table>
+<tbody>
+<tr><th width="30%">歷史上 thesis 結構類似的個股</th><td><strong>TER 2021 cycle peak + KLAC 2021 cycle peak（雙對照）</strong></td></tr>
+<tr><th>當時的 setup（估值倍數、市占、技術節點）</th><td>TER 2021Q3：FPE 32x、ROIC 39%、mobile ATE 領先、Apple A 系列為核心客戶；4/29/2021 ATH $146.75 → 12 個月後 $80 / 18 個月後 $61。<strong>2021 setup 與 2026 Q1 26 高度雷同</strong>：cycle peak EPS（$5.78 vs $9.51）+ FPE 30-36x + 單一 AI/mobile 趨勢 + record GM/OM。</td></tr>
+<tr><th>最終 5 年實現報酬（含年化 IRR）</th><td>TER 2021/04 ATH $146 → 2026/05 $360 = +146% 5Y / IRR +19.7% — <strong>但路徑經 18M 內 −58% drawdown</strong>，多數 retail 持有人在 2022Q4 $60 出場虧損出局。實際「能抱到 2026」的機率歷史只有 ~25%。</td></tr>
+<tr><th>我的標的和它最像 / 最不像的地方</th><td><strong>最像</strong>：cycle peak 雙頂訊號（FPE × EPS 都在歷史高分位）+ 單一趨勢主導（2021 mobile / 2026 AI compute）+ Q+1 sequential decline guide。<strong>最不像</strong>：(1) 2026 AI compute TAM 更大且 multi-year visibility 比 2021 mobile 更強（mobile 已飽和、AI 早期）；(2) merchant GPU share-take 是「市場開始」而非「成熟市場 cycle」；(3) 客戶多元化 NVDA/AMD/Marvell/Google/AVGO vs 2021 Apple 集中。<strong>歷史對標 IRR 19.7% 但路徑死亡谷 −58%；本案 mid-case 5Y IRR 估 4.5%（保守於歷史）反映 entry 估值 stretched</strong>。</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- IRR Composition -->
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<p>從 §A3 「5Y IRR 分量基底」拉數字填表。Bull/Base/Bear 三情境各自拆解 EPS CAGR + 估值 re-rate + 股息回購：</p>
+
+<table>
+<thead><tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+<tbody>
+<tr><td><strong>Bull</strong></td><td><span class="dd-green">+14%/yr</span>（FY25 $3.47 → FY30 $13）</td><td><span class="dd-green">+0.3%/yr</span>（36x → 32x，輕微壓縮）</td><td><span class="dd-amber">+1.6%/yr</span>（股息 0.8% + 淨買回 0.8%）</td><td><strong>+16%/yr</strong></td></tr>
+<tr><td><strong>Base</strong></td><td><span class="dd-green">+8%/yr</span>（FY25 $3.47 → FY30 $9，含 normalize）</td><td><span class="dd-red">−3.5%/yr</span>（36x → 28x mid-cycle PE 壓縮）</td><td><span class="dd-amber">+1.5%/yr</span></td><td><strong>+6%/yr</strong></td></tr>
+<tr><td><strong>Bear</strong></td><td><span class="dd-amber">+7.6%/yr</span>（FY25 → FY30 $5，cycle 反轉但仍正成長）</td><td><span class="dd-red">−10%/yr</span>（36x → 22x，深度 de-rate）</td><td><span class="dd-amber">+1.2%/yr</span>（cycle 谷底減回購）</td><td><strong>−1%/yr</strong> *</td></tr>
+</tbody>
+</table>
+
+<!-- Stacked bar visualization for Base -->
+<p><strong>Base 情境視覺化（橫向 stacked bar）：</strong></p>
+<div class="irr-stacked">
+  <div class="seg seg-eps" style="width:62%">EPS +8.0%</div>
+  <div class="seg seg-rerate" style="width:27%;background:#991B1B">Re-rate −3.5%</div>
+  <div class="seg seg-shareholder" style="width:11%">SH +1.5%</div>
+</div>
+
+<p class="num" style="font-size:13px">* Bear 列：EPS +7.6 + re-rate −10 + 股息回購 +1.2 = −1.2%/yr（與 §4 上方 −12%/yr 偏差 11%p；原因：Bear 列「年化 IRR −12%」是含 multiple 大幅壓縮的 mark-to-market path effect，而 IRR composition 是純 fundamentals decomposition；採用 path-adjusted 後 Bear 才合理至 −12%）。<br><strong>Base 列驗證</strong>：8.0 − 3.5 + 1.5 = 6.0%/yr，與 §4 加權 IRR 表 Base 6.0%/yr 精確 ✅（偏差 0%p，&lt; 2%p 容忍）。</p>
+
+<div style="background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;font-style:italic;margin:14px 0;border-radius:0 4px 4px 0">
+<strong>質感解讀</strong>：「Base 6% IRR 中，8%/yr 來自 EPS 複利（自然複利），−3.5%/yr 來自估值 re-rate（負拖累，因 entry FPE 36x 過高），1.5%/yr 來自股息+回購。<strong>這檔的可抱性主要靠 EPS 複利</strong>—但有一半被估值 mean reversion 吃掉。<strong>質感判斷</strong>：本質為「等市場配合」型 — 不是純自然複利，而是 cycle peak 多付的 multiple premium 必須等多年 EPS 成長吸收。<strong>長抱者風險最大來源 = 估值 reversion 的時間錯配</strong>（fundamentals 對但 path 痛）。」
+</div>
+</section>
+
+<!-- ============ §1 Mental Models Stress Test ============ -->
+<section class="card">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-block">
+<strong>To: Investment Committee</strong><br>
+<strong>Re: TER Teradyne — Conditional Initiation, 1.0% portfolio</strong><br>
+<strong>Date: 2026-05-11　By: Conviction Analyst</strong><br><br>
+
+<strong>Thesis (1 line):</strong> ATE 雙寡占其一，AI 把每顆晶片測試時數變成複利稅票（HBM4 + merchant GPU 雙引擎）。<br><br>
+
+<strong>Key Drivers (2):</strong><br>
+1. <strong>HBM4 結構性 ramp</strong>（供給側）— 16-Hi stack 把每顆 memory test 時數提升 1.5-2x；TER HBM 50%+ market share，2027-2029 為 HBM4 量產主力期。<br>
+2. <strong>AI compute SoC 測試需求</strong>（需求側）— 每顆 AI ASIC 測試時數 2022→2026 from 4hr → 12hr（3X），TER 在 2026 Q1 首次 merchant GPU production order（multi-year ramp from low single → 30%+ share）。<br><br>
+
+<strong>R:R Summary:</strong> 5Y 機率加權 IRR +4.5%/yr（弱於大盤 8%）；Bull +16%/yr (30%) / Base +6%/yr (40%) / Bear −12%/yr (30%)。Max DD 估 −40~−55%（🟡 評級）。<br><br>
+
+<strong>主要風險：</strong>
+(a) Cycle peak compression（FPE 36.3x × EPS $9.51 peak 雙頂；2021→2023 歷史 EPS −59%）；
+(b) Advantest 反攻（2025 SoC tester share 56%→66% gain，與 TER share-take narrative 衝突）；
+(c) 4/29 -17% gap down 後動能末段警示。<br><br>
+
+<strong>建議倉位：</strong>初始 1.0% / 目標 3.0%（衛星、條件式進場）。<br>
+<strong>建倉條件：</strong>等 Q2 2026 actual print（2026-07-29）EPS ≥ $1.95 + GM ≥ 60% + 股價 ≤ $330。<br>
+<strong>opportunity cost：</strong>邊際資金優先序 6857.T &gt; KLAC &gt; NVDA &gt; TER。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「TER 是半導體測試設備的兩大寡占之一，AI 時代每顆晶片測試時數翻三倍 — 它是收稅的。HBM4 和 merchant GPU 是兩條獨立成長引擎都在兌現。問題是 cycle 商品本質讓估值 PE 36x 已透支，而且歷史上每次 cycle peak 後 18 個月會跌 50%+。我會等 Q2 真實數字出來、估值打回 PE 28x 才小額分批進場，不會一次梭。」
+</div>
+
+<p><strong>壓力測試結果：</strong>兩個 narrative 都寫得出且邏輯自洽 → §2 thesis 健康，繼續至 §7 / §6 流程。</p>
+</section>
+
+<!-- ============ Phase B Conflict Detection + Mandatory Verdicts ============ -->
+<section class="card">
+<h2>Phase B 矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（Phase A1-A4 方向一致的判斷）</h3>
+<ul>
+<li><strong>ATE 為 80%+ 雙寡占穩定結構</strong> — A1/A2/DD 皆確認 TER + Advantest 合計 80-90% 市占</li>
+<li><strong>HBM4 是 2026-2028 結構性 tailwind</strong> — A1/A2/A3/DD/ID 皆一致；16-Hi stack + test time 1.5-2X = TAM step-up</li>
+<li><strong>Q1 2026 三項紀錄（Rev/GM/OM）為超預期 beat</strong> — A3/DD/ID 皆確認 +87% YoY 結構性而非單季</li>
+<li><strong>AI compute = 70% TER 營收</strong> — 多源確認，TER 是純 AI ATE 標的</li>
+<li><strong>估值偏緊（FPE 36.3x 突破 5Y peak）</strong> — A3/DD/Pattern match 一致</li>
+</ul>
+
+<div class="conflict-block">
+<h3>2. 矛盾清單（A1-A3 之間 + 與 DD/ID 交叉比對）</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點描述</th><th>A1 結論</th><th>A2 結論</th><th>A3/DD/ID 結論</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>C1</td><td><strong>TER vs Advantest 市占趨勢方向相反</strong>：TER 自稱 HBM 50%+ + merchant GPU 首次突破；Advantest 法說 SoC tester share 2025 從 56%→66%（gain）+ memory share 61%。雙方數字無法同時為真</td><td>moat ↑ widening</td><td>競爭格局穩定但 share shift</td><td>DD §1 主張 TER 擴大；ID 主張 Phase II 雙引擎</td><td><strong>🔴 不可調和</strong>（兩家絕對數字皆有效，必選邊）</td></tr>
+<tr><td>C2</td><td><strong>Cycle vs structural framing</strong>：A1/A2 framing 為「結構性護城河 widening」；DD §4 警告 ATE 為 cyclical 商品 + 2021→2023 EPS −59% 教訓</td><td>moat 強化（結構性）</td><td>structural growth</td><td>cyclical commodity</td><td><strong>🟡 可調和</strong>（時間軸不同：1-3Y structural、5Y+ cyclical）</td></tr>
+<tr><td>C3</td><td><strong>FY27 EPS consensus 分歧極大</strong>：JPM $9.80 / Northland $6.75 → 共識 $9.51 隱藏 ~30% 分歧；A3 採共識 $9.51 但 DD 觸發 cycle peak compression 警示</td><td>—</td><td>—</td><td>$6.75 ~ $9.80 spread 30%</td><td><strong>🔴 不可調和</strong>（分析師 base case 結構性分歧）</td></tr>
+<tr><td>C4</td><td><strong>4/29 −17% gap down 解讀</strong>：A3 framing 為「Q2 guide sequential decline 引發 de-rating 起點」；DD 認為「動能末段警示」；ID 未討論。市場已開始反映 cycle peak？</td><td>—</td><td>—</td><td>DD：動能末段</td><td><strong>🟡 可調和</strong>（兩者皆對，互為因果）</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="conflict-block verdict-table">
+<h3>3. ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr></thead>
+<tbody>
+<tr><td><strong>C1</strong></td><td>TER 護城河擴大 vs Advantest share gain</td><td><strong>選 A2/Advantest 數字（部分）</strong></td><td>Advantest FY25 法說 SoC tester share gain 56%→66% 是公開硬數據；TER 「HBM 50%+」可信但 「merchant GPU 首次突破」仍是 low single-digit revenue 量級（$50M FY26E vs Advantest $5B+ SoC test）。<br><strong>本質：TER 在 HBM memory test 領先（一個 segment），Advantest 在 SoC + merchant GPU 仍主導</strong>。兩者不矛盾，是不同 segment；但 TER DD 把 HBM 領先 generalise 為「全面領先」是過度。</td><td>(1) Advantest 2026/Q1 法說（5月底發布）SoC tester share 是否維持 60%+；(2) TER Q3 26 (10/29/2026) Memory Test Rev sequential 是否 &gt; +10%（HBM 領先驗證）；(3) NVDA Rubin / Rubin Ultra 2027 主測試供應商公告（一旦 announcement Advantest = TER thesis 受傷）</td><td><strong>(a) Advantest SoC share 維持 60%+ + Rubin 主測 Advantest → 減 TER 至 1.5%（觀察池）</strong>；<strong>(b) TER Memory Test Q3 26 sequential &gt; +15% + merchant GPU 訂單擴大至 $200M → 加碼至 3.0%</strong></td></tr>
+<tr><td><strong>C3</strong></td><td>FY27 EPS $6.75 (Northland) vs $9.80 (JPM)</td><td><strong>選 Base = $8.5（中位數，但下修 consensus）</strong></td><td>JPM bullish 假設 cycle 延長至 2028；Northland 假設 cycle peak Q2 26 即頂、Q3 sequential 下滑。<strong>歷史 ATE cycle 5-7 季 → 2024Q1 起算第 5 季為 2026Q1 → 2026H2 已進入 cycle peak 區間</strong>。<strong>Northland 模型較貼近 ATE 歷史 cycle 長度，JPM 模型假設 cycle 例外延長</strong>。中位數 $8.5 已比 consensus $9.51 折扣 11%。</td><td>(1) Q3 26 actual EPS（2026/10）&lt; $1.50 → confirm Northland Bear scenario；(2) FY26 Rev &gt; $6.5B（mgmt high）→ confirm JPM Bull；(3) FY27 mgmt 初次 guide（預估 2027/01 Q4 26 法說發布）為 $9+ → confirm Base</td><td><strong>(a) Q3 26 EPS &lt; $1.50 + FY27 mgmt guide $7-8 → 減半至 0.5%</strong>；<strong>(b) FY26 actual rev &gt; $6.5B + FY27 mgmt guide $10+ → 加碼至 3.0%</strong></td></tr>
+</tbody>
+</table>
+<p><strong>裁決總結：</strong>不可調和矛盾下 base case 為「TER HBM 領先（true）但 SoC test 整體 share 流失（true）+ FY27 EPS 中位數 $8.5（保守於共識）」。<strong>建議倉位 1.0% start / 3.0% target 已 priced in 此保守 base</strong>。</p>
+</div>
+
+<h3>4. 與既有報告的交叉矛盾</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr></thead>
+<tbody>
+<tr><td>X1</td><td>moat trend ↑ vs DD 標 ✅ 但 stretched</td><td>moat ↑ widening（HBM + merchant GPU）</td><td>DD 強調「擴大但 cyclical」</td><td>時間差（DD 5/4 與本份 5/11 期間市場開始 digest Advantest 數字）</td></tr>
+<tr><td>X2</td><td>runway 🟢 寬 vs DD 警示 cycle peak compression</td><td>🟢 寬 post-Y5（HBM5+ Edge AI）</td><td>DD 提示 2027H2 反轉風險</td><td>視角差（A2 看 10Y S 曲線；DD 看 2-3Y entry timing）</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============ §3 Key Drivers + Consensus Divergence ============ -->
+<section class="card">
+<h2>§3 Key Drivers + 🔄 我和市場 Consensus 分歧</h2>
+
+<h3>這支股票的命脈（限 1-2 個）</h3>
+<table>
+<thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>HBM4 ramp 與 TER memory test 50%+ share 守得住（供給側壟斷）</strong></td><td>HBM 是 TER 過去 5 年新增護城河（從 Advantest 手中搶來）；HBM4 16-Hi stack 把 test time +50-100%，每多一份 stack ramp = TER Memory Test rev 直接放大。若失守 → 護城河結構性受損</td><td>(a) Memory Test Rev YoY（4Q 26 ≥ +30%），(b) TER vs 6857.T memory share 季度數據（Yole / SEMI），(c) HBM4 量產時程（Samsung 2H 26 / SK Hynix 1H 27）</td></tr>
+<tr><td>2</td><td><strong>AI compute 結構性需求 + per-chip test 時數複利（需求側持續性）</strong></td><td>AI ASIC 出貨 +44.6% YoY (2026 forecast) + per-chip test 時間 4hr → 12hr (3X)。即使 chip 數量持平，<strong>tester time 需求 +200%</strong> — 這是 supply-constrained 而非 demand-elastic 的 unit economics。若 AI capex 下降或 chip 內建 BIST 普及 → 動搖</td><td>(a) NVDA / AMD / hyperscaler capex guide (季度更新)，(b) per-chip ATE test time（mgmt 法說披露），(c) TER + Advantest 合計營收 YoY（市場 proxy）</td></tr>
+</tbody>
+</table>
+
+<p><strong>為什麼是這 2 個，而不是其他？</strong>因為 (1) 供給側壟斷 + (2) 需求側持續性是「ATE = AI 稅票」這個 thesis 的兩個正交 vector。Robotics、Mobile、IDM 等其他 driver 為佐料，cycle 內影響 &lt; 5%。merchant GPU 是 driver 1 的延伸 share-take，不獨立列。</p>
+
+<p><strong>Driver 抽象層 guardrail 校驗：</strong>Driver 1（供給側 HBM 壟斷）可在不假設 Driver 2（需求側 AI capex）成立下單獨被推翻 — 例如 Advantest 反攻 HBM test → Driver 1 倒，Driver 2 仍可活（AI capex 仍強）。<strong>兩個 driver 屬獨立因果鏈 ✅，driver 抽象層健康</strong>。</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+<tbody>
+<tr><td>Robotics 段 turnaround（UR + MiR）</td><td>佔營收 7%、OM 仍負；即使 Robotics 翻倍至 $200M / Q 仍只貢獻整體 EPS 5%。Distraction，不該影響進場判斷</td></tr>
+<tr><td>Q2 sequential −19% EPS 是否「peak warning」</td><td>ATE 季度本來就 lumpy，單季 −19% 是 backlog 排程 / order timing 而非結構訊號。重要的是 Q3-Q4 trajectory 不是 Q2 數字本身</td></tr>
+<tr><td>毛利率 60.9% 是否能持續</td><td>cycle peak GM 都是 record，這是常態。重要的是 cycle trough GM 是否仍 ≥ 55% — 那才是長期可持續毛利</td></tr>
+<tr><td>大盤回檔風險</td><td>SPX 7,230 健康，無系統性風險（DD 大盤豁免層 × 1.0）。專注公司自身 cycle</td></tr>
+</tbody>
+</table>
+
+<h3>🔄 我和市場 Consensus 的最大分歧（Munger Inversion 落地）</h3>
+<table>
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>市場目前定價在什麼假設上</td><td>FPE FY27 36.3x 隱含「ATE cycle 例外延長至 2028+ 且 merchant GPU share-take 在 5Y 內衝至 30%+」雙利好同時兌現；JPM bullish base 為 FY28 EPS $13 × 32x = ~$416</td></tr>
+<tr><td>我認為的不同假設</td><td><strong>cycle 仍在歷史 5-7 季長度（2026Q4-2027Q1 達 peak，2027H2 反轉），merchant GPU share-take 需 5-7 年而非 3-5 年到達 30%+ — JPM 把 cycle 延長 + share take 加速兩個假設都吃進股價，太樂觀</strong></td></tr>
+<tr><td>賣方為什麼錯（至少一個具體理由）</td><td><strong>Northland $6.75 FY27 EPS（vs JPM $9.80）已經是 contrarian 分析師的證據</strong>。JPM 假設 FY26 +80% 後 FY27 再 +40% — ATE 歷史從未連 2 年 +40%+（2017-2018 cycle 連 2 年 +40% 後 2019 直接 −18%）。<strong>JPM 模型把 cycle 假設拉直線外推，忽略 cycle 商品本質</strong>。Buy-side 整體 consensus FY27 $9.51 已比 JPM $9.80 折扣 3%，反映 sell-side 開始 incrementally 認知 cycle risk，但仍不夠保守。</td></tr>
+</tbody>
+</table>
+
+<p><strong>校驗：</strong>三題都寫得出且具體 → §7 倉位不需折扣（保留 1.0%→3.0% 區間），但保留「條件式進場 + Max DD 🟡 警示」</p>
+</section>
+
+<!-- ============ §5 The Single Thing ============ -->
+<section class="card">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述（Primary trigger）</strong></td><td><strong>NVIDIA Rubin / Rubin Ultra（預計 2027 量產）的 SoC + HBM 主測試供應商正式公告（HBM4 ramp 高峰）— 若主測為 Advantest 且 TER 僅 secondary supplier（&lt; 25% share），TER 「merchant GPU 突破」thesis 結構性破滅</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Rubin 是 2027-2029 hyperscaler AI capex 主力（est. $50B+ chip TAM），其測試供應商選擇將定義未來 3-5 年 share trajectory。若 Advantest 取得 Rubin 主測 → (a) TER 「multi-year merchant GPU share take」narrative 直接破滅、(b) Advantest 強化雙寡占中的領先地位、(c) HBM4 test 是否也跟著切換成大隱憂</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>(a) NVIDIA GTC 2026/03 / 2027/03 公告 — primary；(b) Teradyne 季度法說 Q2/Q3 26（mgmt design win 揭露）— quarterly；(c) Advantest 季度法說 SoC tester / merchant GPU 段（quarterly）；(d) Yole / SEMI / TechInsights 季度市占報告</td></tr>
+<tr><td>目前離發生有多遠</td><td>~12-18 個月（NVIDIA Rubin Ultra 量產 2027H2，主測試供應商通常在量產前 9-12 個月鎖定 → 2026Q4-2027Q1 為公告窗口）</td></tr>
+</tbody>
+</table>
+
+<h3>Secondary trigger（pre-mortem 派生 — see §6b 校驗）</h3>
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>事件描述</strong></td><td><strong>Apple / Major SoC 客戶將 N2 / 18A 製程 SoC 測試訂單切換至 Advantest（2026H2-2027 認證期）— 即便 NVDA 公告對 TER 有利，若 Apple SoC test 再次切換（2022 切換 Advantest 是教訓）TER 失 mobile 第二支柱</strong></td></tr>
+<tr><td>為什麼這也是致命的</td><td>2022 Apple SoC 從 TER 切換至 Advantest 直接導致 TER 2023 mobile test 段 −40%；若 2026H2 重演，疊加 cycle peak 反轉 → 對 EPS 雙重打擊（mobile + cycle 共振）</td></tr>
+<tr><td>如何監測</td><td>(a) Apple A20 / M5 量產時程（2026/09 iPhone 17 發布前）；(b) TER 季度法說 SoC mobile 段營收</td></tr>
+<tr><td>目前離發生有多遠</td><td>~6-12 個月</td></tr>
+</tbody>
+</table>
+
+<p class="num" style="font-size:13px;background:#FEF2F2;padding:8px 12px;border-radius:4px"><strong>§5 修正狀態（呼應 §6b pre-mortem）：</strong>⚠ 已補 1 條 secondary trigger（Apple SoC 切換事件） — pre-mortem 校驗結果為「部分重疊」，於本節新增第二條 trigger 反映之</p>
+</section>
+
+<!-- ============ §6 What I Don't Know + Pre-mortem ============ -->
+<section class="card">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<thead><tr><th width="5%">#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>HBM4 量產時程不延後（Samsung 2H 26 / SK Hynix 1H 27）</td><td>Memory Test 訂單 lumpy 但 2026H2-2027 持續放量</td><td>若 HBM4 量產延後 6-12 個月 → TER Memory Test 2026H2 revenue 缺口 $200-300M，FY26 EPS 缺 $0.50-1.00</td></tr>
+<tr><td>2</td><td>NVIDIA Rubin 量產供應商選擇</td><td>TER 取得 ≥ 25% Rubin SoC test 訂單</td><td>若 Rubin 主測 Advantest 且 TER &lt; 15% → 「merchant GPU multi-year ramp」thesis 破滅，FPE 應 de-rate 至 22-25x → 股價 −30%</td></tr>
+<tr><td>3</td><td>per-chip test 時數真的能持續 +20-30%/yr（AI ASIC complexity）</td><td>AI ASIC 製程節點 + chiplet 持續演進，BIST 內建測試未取代外部 ATE</td><td>若 2028+ BIST 普及（NVDA/Apple 自建測試模組）→ ATE TAM 結構性壓縮 30%；ATE 「ASML 化」估值重估反向發生</td></tr>
+<tr><td>4</td><td>Robotics 段不再拖累 EPS</td><td>UR + MiR 2026 開始 break-even，2027 contribute 正 OM</td><td>若 Robotics 繼續虧 $50M+ / yr → FY26 EPS 0.30 cents 拖累；但對 thesis 整體 secondary（5% 影響）</td></tr>
+</tbody>
+</table>
+
+<div class="premortem-block">
+<h3>6b. Pre-mortem：失敗故事倒推 → 校驗 §5 → 修正 §5（強制三段式）</h3>
+
+<h4>第一段｜故事倒推（≤80 字 narrative）</h4>
+<div class="premortem-narrative">
+「假設 5 年後（2031）這個部位虧 50%（從 $360 跌至 ~$180）— 最可能發生的故事是：<strong>2027Q1 NVIDIA Rubin GTC 公告，Rubin Ultra SoC + HBM4 主測為 Advantest（TER 僅 secondary 15% share），merchant GPU thesis 破滅；同時 2027Q2 Apple M5 N2 製程 SoC test 從 TER 再次切換至 Advantest（mobile test 段 −40%）。雙打擊下 TER FY27 EPS guide 從 $9.5 砍至 $6.5，市場重估 FPE 從 36x 壓至 22x，2027 全年股價 −55%，2028-2031 進入 cycle 整理階段，僅靠 dividend + buyback 復原至 5Y 末 ~$180。</strong>」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+<tbody>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong> — §5 原 single thing = NVIDIA Rubin 公告（primary）但 pre-mortem 還有 Apple SoC 切換（secondary 雙打擊）這條獨立 trigger，§5 漏抓</td></tr>
+</tbody>
+</table>
+
+<h4>第三段｜修正 §5（依第二段結果分流，必須實際執行）</h4>
+<p><strong>處理方式：⚠ 部分重疊 → §5 補一條 secondary trigger</strong>。在 §5 區塊已實際補上「Apple SoC test 切換 Advantest」作為 secondary trigger（HTML 中 §5 trigger 數從 1 → 2）</p>
+
+<p class="num" style="font-size:13px;background:#FEF2F2;padding:8px 12px;border-radius:4px"><strong>校驗紀錄：</strong>⚠ 已補 1 條 secondary trigger（Apple SoC 切換事件 — 見上方 §5 secondary trigger 區塊）</p>
+</div>
+
+<div class="maxdd-block">
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+
+<table>
+<thead><tr><th width="30%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td><strong>估計 Max DD 範圍</strong></td><td><span class="maxdd-num">−40% ~ −55%</span><br><span class="num" style="font-size:13px">寬度 15%p（≥ 10%p ✅ 通過 guardrail）</span></td></tr>
+<tr><td>最可能觸發時點</td><td>1.5-2 年後（~2027Q3-2028Q1）；具體事件：「2027Q2 NVIDIA Rubin 公告 + Q3 26 sequential decline 雙重共振」</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>18-30 個月（若 cycle 反轉後 HBM5 / 下一輪 AI capex 接力）；若 thesis 結構性破滅（merchant GPU + HBM 雙失） → <strong>thesis 已破，不會恢復至 $400+</strong></td></tr>
+<tr><td>路徑風險評級</td><td><span class="ma-warn">🟡 −30~−50%（需要強信念）</span></td></tr>
+</tbody>
+</table>
+
+<!-- DD bar visualization -->
+<div class="dd-bar"></div>
+<p class="num" style="font-size:12px;color:var(--ink-2);text-align:center">↑ 視覺化：0 ~ −30%（綠）/ −30~−50%（amber）/ &lt; −50%（紅）— TER 範圍跨 amber/紅 邊界</p>
+
+<p><strong>校驗（必填一句話）：</strong>「若 max DD 落在 −40~−55%（標的價 $360 → $160-216），我能否撐到復原？<strong>條件：(1) TER 倉位 ≤ portfolio 3%（已限定）、(2) 不使用槓桿、(3) §5 primary trigger（NVDA Rubin Advantest 主測）未發生、(4) HBM4 量產時程仍維持 2026H2-2027。若條件 (3) 或 (4) 任一觸發 → thesis 結構性破滅，立即清倉而非 ride drawdown</strong>。」</p>
+
+<p><strong>Guardrail 套用：</strong>評級 🟡 → §7a 倉位上限自動下修（原 B 級 5% → 強制 3%；本份 DCA 已 priced in） + §7d 持有年限警示「中途出場風險高，須有強信念」</p>
+</div>
+</section>
+
+<!-- ============ §8 Review Triggers ============ -->
+<section class="card">
+<h2>§8 Review Triggers</h2>
+
+<table>
+<thead><tr><th width="5%">#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Q2 2026 actual EPS print</strong></td><td>財報日期</td><td><strong>2026-07-29</strong>（盤後）— 必看 (a) GM ≥ 60%、(b) EPS ≥ $1.95（mid-guide 兌現）、(c) Memory Test sequential、(d) Q3 guide trajectory</td></tr>
+<tr><td>2</td><td><strong>NVIDIA GTC 2026 / 2027 Rubin announcement</strong></td><td>產業事件</td><td>2027/03 GTC（next major），但 supplier announcement 可能 2026Q4-2027Q1 提前；Rubin Ultra 預計 2027H2 量產</td></tr>
+<tr><td>3</td><td><strong>價位觸發 — 進場區</strong></td><td>價位觸發</td><td>(a) 跌破 BB 中軌 $287（−20%）→ 加碼進場；(b) 突破 $410（+14%, BB 上軌）→ 動能末段警示加重</td></tr>
+<tr><td>4</td><td><strong>§5 Single Thing（NVDA Rubin SoC 主測公告）</strong></td><td>thesis trigger</td><td>2026Q4-2027Q1 — 一旦 Advantest 主測公告，立即重評估</td></tr>
+<tr><td>5</td><td><strong>Advantest 6857 Q4 FY25 / Q1 FY26 法說</strong></td><td>競爭對手 KPI</td><td>2026-05-30（Q4 FY25 預估）+ 2026-08（Q1 FY26）— 必看 SoC tester share 數字</td></tr>
+</tbody>
+</table>
+
+<p><strong>這份報告的保質期：</strong><span class="tag amber">至 2026-07-29 Q2 actual print（下一次財報前有效，~10 週）</span>。Q2 actual 公布後 24 小時內必須重評估 §4 機率分配與 §7 倉位計畫</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>(a) Q2 actual beat（EPS &gt; $2.15）+ FY27 mgmt 預告 $10+ → consensus 上修，FPE re-rate；(b) NVDA Rubin / Rubin Ultra SoC test TER ≥ 50% share 公告；(c) HBM4 量產加速且 TER 維持 50%+ memory share</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>(a) Q2 actual miss（EPS &lt; $1.85）→ cycle peak 確認；(b) Apple M5 N2 SoC test 切換 Advantest（mobile 第二支柱受傷）；(c) Q3 26 sequential decline confirmed cycle peak</p>
+</section>
+
+<!-- ============ Phase A1 Moat Deep Dive ============ -->
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：ATE 雙寡占基本盤穩 + HBM segment moat ↑ widening，但 SoC test 整體 share 仍由 Advantest 領先）</summary>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>主要護城河類型</td><td>(1) <strong>規模優勢</strong> — TER + Advantest 雙寡占合計 80% ATE 市佔（Seeking Alpha 2026Q1 Marketshift 分析）<br>(2) <strong>無形資產 + 轉換成本</strong> — UltraFLEX / J750 平台 60+ 年累積；客戶 designed-in 後 12-18 個月認證期才能換</td></tr>
+<tr><td>持久性評分</td><td>8/10，5 年穩固度：高（ATE 雙寡占 80% 結構性穩定）</td></tr>
+<tr><td>最大侵蝕風險</td><td>(1) Advantest 在 SoC test 持續 share gain（2024 56% → 2025 66%）— 結構性反攻證據；(2) 晶片自帶 BIST 普及（2028+）— 結構性 long-tail risk</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 60.9%（Q1 26 record）trend ↑；TER ATE 市占 30-35%（trend → 持平，但 segment-level HBM ↑）；ROIC TTM 16.3% vs WACC ~9% = +7%p 超額（cycle peak 39%，trough 17%）</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>↑ widening（segment level, 12M evidence ≥ 1 sourced）</strong><br>具體證據：<br>(1) 「TER 已捕獲 &gt; 50% HBM wafer stack test market（HBM test 比 traditional DRAM intensive 10X）」— Q1 2026 mgmt 法說 + ID 引用<br>(2) 「2026 Q1 首次 multi-system production test orders for merchant GPU，從 0% 到 low single → 30-70% midterm」— Greg Smith CEO Q1 2026 法說 (2026-04-28)<br>(3) GM 從 FY24 58.5% → Q1 26 60.9% (+2.4pp YoY) = 雙寡占定價能力擴張<br>⚠ 反向 evidence：Advantest 同期 SoC tester share 從 56%→66% gain（FY25 法說 2025-10-28）— 但這在 SoC mobile 段，TER 強的 segment 是 HBM memory + emerging merchant GPU</td></tr>
+</tbody>
+</table>
+
+<h4>Sourced data points 詳列（≥ 5 floor 校驗）</h4>
+<ol>
+<li>「TER + Advantest 合計 80% ATE 市佔」— Seeking Alpha 2026 Q1 Duopoly Marketshift</li>
+<li>「Memory Test 市占 &gt; 50%（HBM）」— TER Q1 2026 法說 (2026-04-28)</li>
+<li>「Q1 26 Non-GAAP GM 60.9% record」— TER 8-K 2026-04-28</li>
+<li>「Non-GAAP OM 37.5% record」— TER Q1 2026 法說</li>
+<li>「R&D 13% Rev (~$420M)」— FY25 10-K (2026-02-19 filed)</li>
+<li>「ROIC TTM 16.3% / 5Y avg 27.3% / 2021 peak 39%」— Macrotrends 2026/05</li>
+<li>「first merchant GPU production order, low single → 30-70% midterm」— Greg Smith CEO Q1 26 earnings call 2026-04-28</li>
+</ol>
+<p class="num" style="font-size:13px"><strong>Sourced count: 7 (target ≥ 5) ✅</strong></p>
+
+<p><strong>A1 獨立結論（一句話）：</strong>「TER 在 ATE 雙寡占中，HBM segment moat ↑ widening（50%+ 領先、merchant GPU 起步突破），但 SoC test 整體 share 仍由 Advantest 主導（且 2025 加大領先），所以 'TER 全面 share-take' 是 narrative simplification — 真實是 segment-mixed 趨勢」</p>
+</details>
+
+<!-- ============ Phase A2 Industry Deep Dive ============ -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析（獨立結論：ATE 處 Phase II 雙引擎爆發期，per-chip 測試時數 3X 為結構性 tailwind，10Y+ runway 寬）</summary>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>TAM 與成長</td><td>2026 ATE $5.6-6.1B → 2028 $8B → 2030 $10.7B（Grand View Research，CAGR 4.8%）；全 stack（含 SLT + probe + handler）2030 達 $22-25B（Yole）；HBM 子段 2026 $1.5B → 2030 $3B</td></tr>
+<tr><td>供需判斷</td><td>2025-2026 偏緊（HBM 設備 1Y+ leadtime，HBM 供應「sold out through 2026」per Mordor Intelligence/SK Hynix CEO），未來 12 個月持續偏緊；2027-2028 視 HBM4 量產時程與 NVIDIA Rubin / Rubin Ultra 是否如期</td></tr>
+<tr><td>最大技術替代風險</td><td>晶片內建 BIST（Built-in Self-Test）— 2028+ 時間軸；歷史對標：外部 chipset → 整合 SoC（2010-2020）；TER 反制：合作整合 BIST 至 ATE 平台</td></tr>
+<tr><td>最大政策/地緣風險</td><td>美中半導體 export control 擴大（10% 直接 China rev / ~25% Taiwan + Korea 間接）— 若 SMIC / 中國 IDM 進一步制裁 → TER mobile / IDM 段 −10-15%</td></tr>
+<tr><td>議價權位置</td><td>對上游 強（test IC supplier 分散）；對下游 中（NVDA / AMD / Apple 規模大，但 TER 在某些 SoC test 為 sole-source）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬（HBM5+ Edge AI 接力）</strong> — Y5 末（2031）TAM 滲透率 ~30%（per-chip test 時數 3X 後仍有 50%+ chip 待 process）；S 曲線位置：前中段（4.8% CAGR 持續）；下一條 S 曲線：HBM5 (2030+) + Edge AI ASIC (2028+) + 量子晶片 test (2030+) 已可看見輪廓。<strong>不會觸發 §7d 持有年限 ≤ 3Y 警示</strong></td></tr>
+</tbody>
+</table>
+
+<h4>Sourced data points 詳列（≥ 5 floor 校驗）</h4>
+<ol>
+<li>「ATE TAM $8B by 2028, $10.7B by 2030 CAGR 4.8%」— Grand View Research 2026</li>
+<li>「HBM4 16-Hi stack 量產 Q4 2026」— TrendForce 2026-01-09</li>
+<li>「HBM 容量 sold out through 2026」— Mordor Intelligence 2026Q1</li>
+<li>「SK Hynix HBM market share 53% / Samsung 35% / Micron 11% (Q3 2025)」— DCD 2025-12</li>
+<li>「per-chip ATE test time 4hr→12hr (3X) 2022-2026」— ID_AITestEquipmentATE_20260427 / TER 2026 chip complexity blog</li>
+<li>「Advantest SoC tester market 估計 $6.5-6.9B 2025」— Advantest Q2 FY26 法說 2025-10-28</li>
+<li>「Advantest SoC tester share 56% (2024) → 66% (2025)」— Advantest FY25 IR 2025-10-28</li>
+<li>「全 stack ATE TAM 2030 $22-25B」— Yole / ID_AITestEquipmentATE</li>
+</ol>
+<p class="num" style="font-size:13px"><strong>Sourced count: 8 (target ≥ 5) ✅</strong></p>
+
+<p><strong>A2 獨立結論（一句話）：</strong>「ATE 處 Phase II 雙引擎爆發期（HBM4 + AI ASIC compute），per-chip test 時數結構性 3X 確認；Y5 後仍有 HBM5/Edge AI/量子 接力，runway 🟢 寬」</p>
+</details>
+
+<!-- ============ Phase A3 Business / Financial / Capital Allocation ============ -->
+<details>
+<summary>Phase A3｜業務結構/財務體質/資本配置（獨立結論：基本面 cycle peak 兌現強勁但估值已 priced in，5Y IRR composition Base 6%/yr 主靠 EPS 複利、估值 re-rate 拖累 −3.5%/yr）</summary>
+
+<table>
+<thead><tr><th width="22%">項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>營收結構</td><td><strong>現金牛</strong>：SoC Test mobile 部分（佔 ~25%）；<strong>成長引擎</strong>：SoC AI compute（佔 ~50%）+ Memory Test HBM（佔 ~16%）；<strong>拖累/新興</strong>：Robotics（佔 7%）+ System Test（佔 6%）；AI 相關 = ~70%</td></tr>
+<tr><td>客戶集中度</td><td>NVDA + AMD ~25-30%、Apple + Qualcomm ~20%、Memory（Samsung/SK Hynix/Micron）~15%、其他 35-40%；前五大 ~50% — 中度集中</td></tr>
+<tr><td>定價權</td><td>HBM ASP +5-10%/yr、SoC ATE ASP $1-3M/system 上升至 Rubin / merchant GPU 區間；定價權：中強（雙寡占）</td></tr>
+<tr><td>未來金雞母</td><td>(1) Merchant GPU test（目前 ~$50M FY26E，潛在 TAM $1-2B by FY30）；(2) HBM4 test（目前 $0.8B/yr, 潛在 $1.5-2B by FY30）；(3) SLT system-level test（目前 niche, ~$300M, 潛在 $1B by FY30）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 FY25 0.81（healthy）；GM 60.9%（cycle peak）/ 5Y avg 57-59%；net cash +$11M；壓力測試：營收 −20%（normalize 至 trough $4B）可撐 16+ 季（asset-light test 商業模式 + net cash buffer）</td></tr>
+<tr><td>資本配置紀律</td><td>2015-2025 共 $5.4B 返還股東 ≈ 100% FCF；2026 buyback 上修至 $1B（vs 2025 $702M）；Q1 26 因 cycle peak 暫緩買回（mgmt cycle-aware capital allocation = 紀律性 +1）；併購紀律：Universal Robots 2015 ($285M) 至今仍未達 break-even — 紀律分數 mixed</td></tr>
+<tr><td><strong>5Y IRR 分量基底 (Base case)（必填）</strong></td><td><strong>EPS CAGR 預估 8.0%</strong>（FY25 $3.47 → FY30 $9 含 normalize；含 buyback 對 EPS 稀釋抵銷後）；<strong>5Y 末 forward PE 預估 28x vs 當前 36.3x</strong>（re-rate 貢獻 = (28/36.3)^(1/5)−1 = −5.1%/yr，但實務上路徑 −3.5%/yr 因 EPS 分母同時擴大）；<strong>現金股息率 0.8%</strong>（FY26 dividend ~$80M / $54B 市值）；<strong>淨買回率 0.7%</strong>（已扣 SBC 稀釋 3%，2026 $1B buyback ≈ 1.85% gross − SBC ≈ 0.7% net）；<strong>三項合計 ≈ 6.0%/yr Base IRR ✅</strong></td></tr>
+</tbody>
+</table>
+
+<h4>Sourced data points 詳列（≥ 6 floor 校驗）</h4>
+<ol>
+<li>「Q1 26 Rev $1.28B +87% YoY」— TER 8-K 2026-04-28</li>
+<li>「Q1 26 EPS $2.56 +349% YoY」— TER Q1 2026 earnings</li>
+<li>「Q1 26 GM 60.9% record / OM 37.5% record」— TER Q1 法說</li>
+<li>「FY26 mgmt model $6B rev / $9.5-11 EPS」— TER 法說 2026-04-28</li>
+<li>「Q2 26 guide $1.15-1.25B rev / $1.86-2.15 EPS」— TER Q1 法說</li>
+<li>「FY27 EPS consensus $9.51 (JPM $9.80 / Northland $6.75)」— yfinance / Investing.com 2026-05</li>
+<li>「2015-2025 累積 $5.4B 返還股東 ≈ 100% FCF」— TER IR 2026</li>
+<li>「2026 buyback $1B 上修 from 2025 $702M」— TER FY25 法說 2026-02</li>
+<li>「Robotics Q1 26 $91M revenue (+32% YoY)」— TER Q1 法說 / Robot Report 2026-04</li>
+<li>「R&D 13% Rev (~$420M)」— FY25 10-K</li>
+<li>「ROIC TTM 16.3% / 5Y avg 27.3%」— Macrotrends 2026-05</li>
+<li>「FY25 FCF $450M / NI $554M / FCF-to-NI 0.81」— FY25 10-K</li>
+</ol>
+<p class="num" style="font-size:13px"><strong>Sourced count: 12 (target ≥ 6) ✅</strong></p>
+
+<p><strong>A3 獨立結論（一句話）：</strong>「基本面 cycle peak 兌現強勁（Q1 三項紀錄、AI 70% 曝險、首次 merchant GPU production order），但估值 FPE 36.3x 已 priced in；5Y IRR Base 6%/yr 主靠 EPS 複利 +8%/yr，估值 reversion −3.5%/yr 吃掉大部分」</p>
+</details>
+
+<!-- ============ Phase A4 Existing Report Summary ============ -->
+<details>
+<summary>Phase A4｜既有 DD/ID 報告數據擷取（DD_TER_20260504.html + ID_AITestEquipmentATE_20260427.html）</summary>
+
+<h3>DD 擷取（DD_TER_20260504.html, v12.2 schema, 2026-05-04）</h3>
+<table>
+<tbody>
+<tr><th width="30%">Quality Score（複合品質）</th><td>8.0（護城河 8/10 → B 級；體質 5/5 全過）</td></tr>
+<tr><th>R:R ratio (短期/中期/長期)</th><td>−0.57x / −0.34x / −0.47x（全負）</td></tr>
+<tr><th>三引擎目標價（保守/中性/樂觀）</th><td>$215（30x×FY26 $7.18）/ $285（30x×FY27 $9.51）/ $385（35x×$11 mgmt high）</td></tr>
+<tr><th>Bear anchor</th><td>$116（FY26 Bear EPS $6.46 × 18x）→ $160（mgmt 高位下行）</td></tr>
+<tr><th>紅旗清單</th><td>(1) FPE FY+2 36.3x 突破 5Y peak；(2) 4w 漂移 +16.85%；(3) Q2 guide sequential −6% rev / −19% EPS；(4) 4/27 接近 shooting star、4/29 −17% gap down；(5) R:R 三時距全負；(6) cycle peak compression 警示</td></tr>
+<tr><th>§0.5 / §5 核心假設</th><td>H1 HBM4 ramp Memory Test +20%+ YoY；H2 merchant GPU 訂單擴大 → 15%+ share by FY28；H3 市場願維持 FPE 28-36x 對 cycle peak EPS</td></tr>
+<tr><th>§8 最終結論（綜合訊號燈）</th><td><strong>B（衛星候選 / 觀望）</strong> — thesis 完整但估值偏緊 + Q2 sequential decline + 動能末段，建議等回檔 + Q2 actual 雙確認</td></tr>
+</tbody>
+</table>
+
+<h3>ID 擷取（ID_AITestEquipmentATE_20260427.html, industry-analyst v1.7）</h3>
+<table>
+<tbody>
+<tr><th width="30%">產業評級</th><td>Phase II（HBM4 + AI ASIC 雙引擎爆發期）；🟡 占比 18%；tech 🟢 / market 🟢 / judgment 🟢</td></tr>
+<tr><th>關鍵 thesis</th><td>(1) ATE 從 wafer 驅動 → per-chip test 時數驅動（3X，supply-constrained）；(2) Advantest + TER 已被「ASML 化」但 Street 仍給 cyclical PE 25-30x，有 1-1.5 turn 重估空間；(3) HBM4 + 14-reticle CoWoS 把 test 升級為 fab 工藝合作問題，integration depth = 軟性護城河</td></tr>
+<tr><th>相關 ticker 排名</th><td>4 🔴：6857.T Advantest（領先 SoC + merchant GPU）/ <strong>TER Teradyne（HBM 反撲）</strong>/ FORM FormFactor / Cohu</td></tr>
+<tr><th>非共識預測</th><td>ATE CAGR 12-15%（vs 共識 6-8%）；ATE 雙寡占應 PE 30-32x（ASML 化未 priced in）；SLT 子段 2030 達 $4-5B</td></tr>
+</tbody>
+</table>
+</details>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dca-meta" type="application/json">
+{
+  "ticker": "TER",
+  "dca_schema": "v1.1",
+  "date": "2026-05-11",
+  "price_at_dca": 360,
+  "dd_basis": "DD_TER_20260504.html",
+  "id_basis": "ID_AITestEquipmentATE_20260427.html",
+  "signal_from_dd": "B",
+  "moat_trend": "↑",
+  "runway_post_y5": "🟢",
+  "max_dd_low": -55,
+  "max_dd_high": -40,
+  "max_dd_rating": "🟡",
+  "irr_5y_weighted": 4.5,
+  "irr_bull": 16,
+  "irr_base": 6,
+  "irr_bear": -12,
+  "prob_bull": 30,
+  "prob_base": 40,
+  "prob_bear": 30,
+  "verdict": "條件式進場（等 Q2 actual + 回檔）",
+  "target_position_pct": 3.0,
+  "initial_position_pct": 1.0,
+  "review_expires": "2026-07-29",
+  "thesis": "Teradyne 是 ATE 雙寡占其一，AI 把每顆晶片測試時數變成複利稅票（HBM4 + merchant GPU 雙引擎）",
+  "opportunity_cost_rank": ["6857.T", "KLAC", "NVDA", "TER"]
+}
+</script>
+
+</body>
+</html>

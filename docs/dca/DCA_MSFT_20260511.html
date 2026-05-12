@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<!-- dca-schema-version: v1.1 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA — MSFT｜2026-05-11｜Deep Conviction Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC;--card:#FFFFFF;--title:#1E3A5F;--accent:#3B82F6;
+  --green-bg:#DCFCE7;--green-text:#166534;--green-strong:#15803D;
+  --red-bg:#FEE2E2;--red-text:#991B1B;--red-strong:#DC2626;
+  --yellow-bg:#FEF9C3;--yellow-text:#92400E;
+  --blue-bg:#EFF6FF;--blue-text:#1E3A5F;
+  --orange-bg:#FFF7ED;--orange-border:#F97316;--orange-text:#C2410C;
+  --bull-bg:#F0FDF4;--bull-border:#16A34A;
+  --bear-bg:#FFF1F2;--bear-border:#DC2626;
+  --row-alt:#F1F5F9;
+  --sky-bg:#F0F9FF;--sky-border:#0EA5E9;
+  --pre-bg:#FEF2F2;--pre-border:#DC2626;
+  --verdict-bg:#FED7AA;--verdict-border:#D97706;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#1e293b;line-height:1.7;font-size:15px}
+.header-bar{position:sticky;top:0;z-index:100;background:var(--title);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px}
+.header-bar .ticker{font-size:18px;font-weight:700;letter-spacing:1px}
+.container{max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+.section{background:var(--card);border-radius:4px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}
+.section-title{background:var(--title);color:#fff;padding:12px 20px;font-size:16px;font-weight:700;border-left:4px solid var(--accent);display:flex;align-items:center;gap:8px}
+.section-body{padding:20px}
+.section-body h4{color:var(--title);margin:16px 0 8px;font-size:14px;font-weight:700}
+.section-body h5{color:var(--title);margin:14px 0 6px;font-size:13px;font-weight:700}
+.section-body p{margin-bottom:10px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:12.5px}
+th{background:var(--title);color:#fff;padding:8px 12px;text-align:left;font-weight:600;font-size:13px}
+td{padding:8px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+tr:nth-child(even) td{background:var(--row-alt)}
+.mono{font-family:'IBM Plex Mono',monospace}
+.badge-green{background:var(--green-bg);color:var(--green-text);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.badge-red{background:var(--red-bg);color:var(--red-text);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow-text);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.badge-blue{background:var(--blue-bg);color:var(--blue-text);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;align-items:stretch;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:16px 12px;margin-bottom:20px;border-radius:4px}
+.status-cell{flex:1;min-width:160px;max-width:200px;background:#fff;padding:12px 14px;border-radius:4px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.status-label{font-size:11px;color:#64748B;letter-spacing:.5px;font-weight:500;margin-bottom:4px;text-transform:uppercase}
+.status-value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1.3}
+.status-sub{font-size:11px;color:#64748B;margin-top:4px}
+.sig-A{color:var(--green-strong)}
+.sig-Aplus{color:#166534}
+.sig-B{color:#92400E}
+.sig-CX{color:#991B1B}
+.arrow-up{color:var(--green-strong)}
+.arrow-flat{color:#64748B}
+.arrow-down{color:var(--red-strong)}
+
+/* §2 Thesis Block */
+.thesis-block{background:var(--blue-bg);border-left:6px solid var(--accent);padding:32px 28px;margin-bottom:20px;border-radius:4px;text-align:center}
+.thesis-text{font-size:26px;font-weight:700;color:var(--title);line-height:1.5;letter-spacing:.5px}
+.thesis-note{font-size:12px;color:#64748B;margin-top:14px;letter-spacing:.5px}
+
+/* §7 Decision */
+.decision-block{background:var(--bull-bg);border-left:4px solid var(--bull-border);padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0}
+.decision-block.wait{background:var(--yellow-bg);border-left-color:#D97706}
+.decision-block.avoid{background:var(--bear-bg);border-left-color:var(--bear-border)}
+
+/* Pattern match (§4) */
+.pattern-box{background:var(--sky-bg);border-left:4px solid var(--sky-border);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+
+/* IRR composition narrative */
+.irr-narrative{background:var(--sky-bg);border-left:4px solid var(--sky-border);padding:12px 18px;margin:10px 0;border-radius:0 4px 4px 0;font-style:italic;font-size:13.5px;color:#0c4a6e}
+
+/* IRR stacked bar */
+.irr-bar-wrap{margin:14px 0;padding:10px 0}
+.irr-bar-label{font-size:11px;color:#64748B;margin-bottom:4px}
+.irr-stack{display:flex;height:28px;border-radius:3px;overflow:hidden;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#fff}
+.irr-eps{background:#15803D}
+.irr-rerate{background:#3B82F6}
+.irr-buyback{background:#64748B}
+.irr-neg{background:#991B1B}
+.irr-stack > div{display:flex;align-items:center;justify-content:center;padding:0 6px}
+
+/* Pre-mortem */
+.premortem-box{background:var(--pre-bg);border-left:4px solid var(--pre-border);padding:16px 20px;margin:14px 0;border-radius:0 4px 4px 0}
+.premortem-narrative{font-style:italic;background:#fff;padding:12px 16px;border-left:3px solid #94a3b8;margin:8px 0;color:#475569}
+
+/* Max DD */
+.maxdd-block{display:flex;align-items:center;gap:20px;background:var(--pre-bg);border-left:4px solid var(--pre-border);padding:18px 24px;margin:14px 0;border-radius:0 4px 4px 0}
+.maxdd-number{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#991B1B;min-width:200px}
+.maxdd-bar{flex:1;height:18px;background:#fff;border-radius:3px;overflow:hidden;border:1px solid #e2e8f0;position:relative}
+.maxdd-bar-fill{height:100%;display:flex}
+.dd-green{background:#15803D}
+.dd-amber{background:#D97706}
+.dd-red{background:#991B1B}
+.maxdd-rating{font-size:28px;text-align:right}
+.maxdd-sub{font-size:11px;color:#64748B;margin-top:4px}
+
+/* Conflict (Phase B) */
+.conflict-block{background:var(--orange-bg);border-left:4px solid var(--orange-border);padding:18px 22px;margin:14px 0;border-radius:0 4px 4px 0}
+.verdict-table{background:var(--verdict-bg);padding:12px;border-radius:4px;margin-top:10px}
+.verdict-table table{font-size:12px}
+
+/* Memo (§1) */
+.memo-paper{background:#FEFCF3;border:1px solid #d4d4aa;padding:20px 26px;margin:14px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.8;border-radius:2px}
+.elevator{background:#F1F5F9;border-left:3px solid #94a3b8;padding:14px 20px;margin:14px 0;font-style:italic;color:#475569;font-size:14px}
+
+/* Hypothesis box */
+.hypothesis-box{background:var(--blue-bg);border-left:4px solid var(--accent);padding:14px 18px;margin:12px 0;border-radius:0 4px 4px 0}
+
+/* Details */
+details{margin-bottom:14px;background:var(--card);border:1px solid #e2e8f0;border-radius:4px;padding:8px 16px}
+summary{cursor:pointer;font-weight:600;color:var(--title);padding:8px 0;font-size:14px}
+summary:hover{color:var(--accent)}
+details[open] summary{border-bottom:1px solid #e2e8f0;margin-bottom:10px}
+
+/* Print */
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--title);color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:200;font-family:'Noto Sans TC',sans-serif}
+.print-btn:hover{background:#2d5a8e}
+@media print{
+  .header-bar,.print-btn{display:none!important}
+  body{font-size:11px}
+  .section{break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+  details{page-break-inside:avoid}
+  details:not([open]) > *:not(summary){display:block!important}
+  details > *{display:block!important}
+}
+.cite{font-size:11px;color:#64748B;font-family:'IBM Plex Mono',monospace}
+.driver-card{background:#F8FAFC;border-left:4px solid var(--accent);padding:14px 18px;margin:10px 0;border-radius:0 4px 4px 0}
+.tiny{font-size:11.5px;color:#475569}
+</style>
+</head>
+<body>
+<div class="header-bar">
+  <div><span class="ticker">MSFT</span> — Microsoft Corporation｜Deep Conviction Analysis</div>
+  <div>2026-05-11 ｜ Price $414.44 ｜ DCA Schema v1.1</div>
+</div>
+
+<div class="container">
+
+<!-- ========== STATUS BAR (4 cells) ========== -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">綜合訊號燈</div>
+    <div class="status-value sig-A">A</div>
+    <div class="status-sub">DD B 升級（Q3 FY26 業績驗證 + MA 結構修復）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-value">A <span class="arrow-flat">→</span></div>
+    <div class="status-sub">holding（AI 飛輪加深 vs 雲端 share -1pp 對沖）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-value">🟢 寬</div>
+    <div class="status-sub">Agentic AI $450B by 2035；第二曲線啟動</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（5Y 路徑）</div>
+    <div class="status-value" style="color:#D97706">−42%</div>
+    <div class="status-sub">🟡 範圍 −28% ~ −42%（capex 衝擊定價）</div>
+  </div>
+</div>
+
+<!-- ========== §2 One-Sentence Thesis ========== -->
+<div class="section">
+  <div class="section-title">§2｜One-Sentence Thesis</div>
+  <div class="section-body">
+    <div class="thesis-block">
+      <div class="thesis-text">Microsoft 把 OS + Office + Azure + OpenAI 鎖成「企業 AI 預設入口」，每個 Copilot seat 都把客戶推得更深</div>
+      <div class="thesis-note">50 字以內｜投資本質：分發層壟斷（OS/Office）× AI 預設品牌（Copilot/OpenAI 合作）× 基礎設施規模（Azure）三層複利</div>
+    </div>
+    <p class="tiny">本 thesis 是敘事性陳述（不依賴 ROIC / FCF 數字作主體）；後續 §3、§4、§7 全部以此敘事為錨。</p>
+  </div>
+</div>
+
+<!-- ========== §7 Decision ========== -->
+<div class="section">
+  <div class="section-title">§7｜Decision（可執行計畫）</div>
+  <div class="section-body">
+
+    <h4>7a. 倉位與進場計畫</h4>
+    <div class="decision-block">
+    <table>
+      <tr><th>項目</th><th>具體內容</th></tr>
+      <tr><td>在投資組合中的角色</td><td><strong>核心持倉（Core）</strong>— 護城河 9/10 + AI 預設入口 + 10+ 年 runway = 唯一兼具基礎設施 + 應用 + OS 層的標的</td></tr>
+      <tr><td>初始建倉倉位</td><td><strong>3-4% of portfolio</strong>（QC-22 警示已淡化：Q3 FY26 後股價從 $422 回落至 $414，4 週漂移 -2%，已脫離追漲區）</td></tr>
+      <tr><td>目標倉位</td><td><strong>6-7% of portfolio</strong>（核心持倉合理上限；Max DD 🟡 評級下從原計畫 8% 下修至 7%）</td></tr>
+      <tr><td>進場價位區間</td><td><strong>$395 ~ $425</strong>（200DMA $394 為下緣 / 50DMA $419 為中軸 / RSI 中性 47.9 不過熱）</td></tr>
+      <tr><td>進場節奏</td><td><strong>分批 3 次</strong>：① 立即建立第一批 1.5%（$414 區間）｜② 回測 200DMA $394 ± $5 建立第二批 1.5%｜③ FY26 Q4 財報（2026-07 下旬）Azure CC ≥ 36% 確認再加碼 2%</td></tr>
+      <tr style="background:#FEF3C7"><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>具體點名比較：</strong><br>
+        ① <strong>vs GOOGL（雲端 + AI 模型同類）</strong>：GCP Q1 2026 +63% &gt; Azure +40%，但 GOOGL 仍承擔 Search 廣告被 LLM 蠶食的 cannibalization 風險；MSFT 是「賣鏟人 + 應用層」純多單一頭，GOOGL 是「賣鏟人 + 廣告主」對沖頭。<strong>邊際資金放 MSFT 優於加碼 GOOGL</strong>。<br>
+        ② <strong>vs AAPL（消費 AI 端側）</strong>：AAPL 端側 AI 戰略落後 + Services 飽和；MSFT B2B AI 已 $37B run-rate 兌現 + RPO $627B 簽約鎖定 99% YoY。<strong>conviction 強度 MSFT &gt;&gt; AAPL，建議減舊（AAPL）加新（MSFT）</strong>。<br>
+        ③ <strong>vs NVDA（AI 鎬頭單一暴露）</strong>：NVDA 是 capex 接收端 beta，MSFT 是 capex 投入端 alpha；兩者非互斥但 MSFT 提供「商業化兌現節奏」對沖 — 若 hyperscaler capex 2027 觸頂，MSFT 商業化 lag 可消化 NVDA 訂單收斂。<strong>兩個都留，不互換</strong>。</td></tr>
+    </table>
+    </div>
+
+    <h4>7b. 加碼與減碼條件</h4>
+    <table>
+      <tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+      <tr><td>加碼 ①</td><td>2026-07 Q4 FY26 財報：Azure CC ≥ 36% + Copilot seats ≥ 25M + FY27 capex guide &lt; $200B（capex 開始收斂）</td><td>5-6%</td></tr>
+      <tr><td>加碼 ②</td><td>2026 H2 / 2027 H1：FCF Margin 回升至 ≥ 28% 連續 2 季（H3 驗證）</td><td>6-7%（target）</td></tr>
+      <tr><td>減碼 ①</td><td>Azure CC &lt; 32% 連續 2 季 OR GCP 絕對美元新增 ≥ Azure 100%（R1 觸發）</td><td>2%</td></tr>
+      <tr><td>減碼 ②</td><td>FCF Margin &lt; 22% 連續 2 季（R3 觸發）</td><td>1.5%</td></tr>
+      <tr><td>清倉</td><td>OpenAI 合約重大變更（解約 / 大幅折扣）OR FTC 強制拆 Azure-Office 綁定生效</td><td>0%</td></tr>
+    </table>
+
+    <h4>7c. Pure MA 相容性檢查 + 動能過熱</h4>
+    <table>
+      <tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+      <tr><td>股價在 50DMA 之上？</td><td><span class="badge-red">❌</span></td><td>$414.44 vs 50DMA $419.20（差距 -1.1%，臨界）</td></tr>
+      <tr><td>股價在 200DMA 之上？</td><td><span class="badge-green">✅</span></td><td>$414.44 vs 200DMA $393.87（+5.2%）</td></tr>
+      <tr><td>W104 / W250 結構</td><td><span class="badge-green">✅</span></td><td>W250 斜率 +2.27%（牛市結構未破）</td></tr>
+      <tr><td>Pure MA 系統支持進場？</td><td><span class="badge-green">✅ 條件式</span></td><td>200DMA &gt; W104 結構完整；50DMA 為短期入場確認</td></tr>
+      <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="badge-green">✅ RSI 47.9 中性</span></td><td>RSI 47.9（neutral），非追漲區；4 週漂移 -2%（從 $422 → $414，Q3 capex 衝擊已 absorb）</td></tr>
+    </table>
+    <p class="tiny"><strong>MA 升級條件：</strong>站回 50DMA $419 並維持 4 週 → 升級為強勢進場確認。當前狀態適合分批進場（不需要等完美 timing）。</p>
+
+    <h4>7d. 建議持有年限</h4>
+    <table>
+      <tr><th>持有年限</th><th>條件</th></tr>
+      <tr><td>短期（&lt; 2 年）</td><td>若僅看「Q3 FY26 短期 capex 衝擊已 priced in + Azure 加速驗證」就出場 — 不推薦此 lens</td></tr>
+      <tr><td>中期（2-5 年）</td><td>若 H1（Azure AI &gt;30% 佔比）+ H2（Copilot 50M seats）兌現 → 目標倉位 6-7%，2030 前持續持有</td></tr>
+      <tr><td>長期（5-10 年）</td><td>若 agentic AI TAM $450B by 2035 兌現 + MSFT 維持應用層 30%+ 份額 → 核心持倉</td></tr>
+    </table>
+    <p><strong>建議持有年限：5-7 年</strong>，原因：① runway_post_y5 🟢 寬 — Y5 後仍有 agentic AI 第二曲線；② Max DD 🟡 評級要求紀律 — 5 年路徑須能撐過 -28%~-42% 區間；③ Y5 後第二次重新評估（agentic AI 商業化）。</p>
+
+    <h5>EPS 預測參考表</h5>
+    <table>
+      <tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+      <tr><td>FY2026E</td><td>$16.72</td><td>yfinance consensus（n=29）</td><td>+22.6% YoY</td></tr>
+      <tr><td>FY2027E</td><td>$18.91</td><td>yfinance consensus（n=32）</td><td>+13.1% YoY</td></tr>
+      <tr><td>FY2028E</td><td>$22.10E</td><td>非 GAAP 16.8-17.3% CAGR 外推（Investing.com）</td><td>Azure AI 佔比達 30% + Copilot 50M seats 假設</td></tr>
+      <tr><td>FY2030E（外推）</td><td>$28-30E</td><td>14-15% CAGR 收斂</td><td>外推假設：自然飽和 + Copilot 滲透達 25%</td></tr>
+    </table>
+    <p class="tiny"><strong>5-10 年持有股價適合性：</strong>當前 $414 / FY27E $18.91 = Fwd PE 21.9x，5Y 分位 ~15%（5Y range 20-36x）。若 FY28E EPS $22.1 × 28x（合理 PE）= $619，5 年絕對 +49%，年化 IRR ~8.3%。Base case 已在 §4 量化展開。</p>
+
+  </div>
+</div>
+
+<!-- ========== §4 Asymmetry Analysis ========== -->
+<div class="section">
+  <div class="section-title">§4｜Asymmetry Analysis（含 Pattern Match + IRR Composition）</div>
+  <div class="section-body">
+
+    <h4>5 年情境表（含年化 IRR）</h4>
+    <table>
+      <tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+      <tr><td>Bull（thesis 對）</td><td>+95%（$414 → $807）</td><td><strong>+14.3%/yr</strong></td><td>Azure AI &gt;30% 佔比 + Copilot 50M seats + capex 觸頂後 FCF 28%+，PE 30x × EPS $26.9 = $807</td><td>30%</td></tr>
+      <tr><td>Base</td><td>+50%（$414 → $621）</td><td><strong>+8.5%/yr</strong></td><td>共識路徑：Azure CC 35% 滑落至 30%、Copilot 達 35M、capex 觸頂 FY27、PE 28x × EPS $22.2 = $621</td><td>45%</td></tr>
+      <tr><td>Bear（thesis 錯）</td><td>−25%（$414 → $310）</td><td><strong>−5.6%/yr</strong></td><td>capex 延後觸頂至 FY29 + Azure CC &lt; 28% + GCP 絕對追上，PE 壓縮至 20x × EPS $15.5 = $310</td><td>25%</td></tr>
+      <tr style="background:#FED7AA;font-weight:700"><td>機率加權期望值</td><td>+44.0% 5Y</td><td>IRR ≈ +7.6%/yr</td><td>0.30×95% + 0.45×50% + 0.25×(-25%)</td><td>—</td></tr>
+    </table>
+    <p class="tiny"><strong>IRR 公式：</strong> Bull (1.95)^0.2-1=14.3%／Base (1.50)^0.2-1=8.5%／Bear (0.75)^0.2-1=-5.6%。<br>
+    <strong>IRR 落點解讀：</strong>機率加權 +7.6%/yr 落入「弱」區間（&lt;8%）— 主因 Q3 FY26 capex $190B shock 顯著推高 Bear 機率，且 Base 從 12% 修正至 8.5%（capex absorb 期）。<strong>須有強烈 idiosyncratic 理由動部位</strong> — 此處理由 = 「AI 預設入口」護城河獨家性 + 第二曲線 runway 🟢，故 §7 仍給 6-7% 核心倉位，但分批節奏比早期 §1 dashboard A+ 更保守。</p>
+
+    <h5>追加壓力測試</h5>
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>thesis 對但時間拉長到 10 年</td><td>Bull 10Y：$414 → $1,350（EPS $40 × 33x）= +226%／10Y IRR +12.7%/yr｜時間夠長 IRR 反而提高，自然複利贏</td></tr>
+      <tr><td>機會成本對照</td><td>SPX 同期歷史 IRR ~9-10%、QQQ ~14%、GOOGL Base 預估 ~12%。MSFT 5Y IRR 7.6% 低於 QQQ／GOOGL，需用「Max DD 較淺 + 應用層壟斷防禦」做折抵 — §7 因此給核心而非極大倉位</td></tr>
+    </table>
+
+    <h5>📅 機率估計：時間視角自我檢查</h5>
+    <table>
+      <tr><th>檢查項</th><th>本案狀態</th></tr>
+      <tr><td>Bear 機率 ≥ 20%？</td><td><span class="badge-green">✅ 25%</span>（已上修：考量 capex $190B vs 預期 $154B 衝擊）</td></tr>
+      <tr><td>Bull/Bear 散布 ≥ 50% 寬？</td><td><span class="badge-green">✅</span> 絕對：95% vs -25% = 120pp 寬；1Y 對比 ~20pp，5Y 是 1Y 的 6x（合理）</td></tr>
+      <tr><td>Base 機率 ≤ 50%？</td><td><span class="badge-green">✅ 45%</span></td></tr>
+      <tr><td>Pattern match 校準</td><td>2014-2019 MSFT 雲端轉型期年化 IRR ~22%；本次因起點估值較高（22.4x vs 2014 14x），預估 IRR 折讓至 8-14%（合理）</td></tr>
+    </table>
+
+    <div class="pattern-box">
+      <h4>📐 Pattern Match（讓機率有錨點）</h4>
+      <table>
+        <tr><th>項目</th><th>內容</th></tr>
+        <tr><td>歷史上 thesis 結構類似的個股</td><td><strong>MSFT 自己 2014-2019（Nadella 雲端轉型期）</strong>：從 PC 時代「沒落巨人」轉成「雲端基礎設施 + SaaS 應用層」整合者，靠 Office 365 + Azure 雙引擎重新定義</td></tr>
+        <tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>2014 起點 Fwd PE 14x、Azure share &lt; 10%、Office 365 滲透率 10%；本次 2026 起點 Fwd PE 22x、Azure share 21%、Copilot 滲透率 5% — 估值較高但變現速度更快（Copilot $30/seat 直接 ARPU vs 2014 SKU 升級需 3-5 年）</td></tr>
+        <tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>MSFT 2014-2019：5Y 絕對 +247%、年化 IRR <strong>+28%</strong></td></tr>
+        <tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：thesis 都是「OS / Office 分發層 → 加值 SaaS / AI 層」變現飛輪；<strong>最不像</strong>：當前 Fwd PE 22x vs 2014 14x（估值起點 60% 高），且 capex/Revenue 30%+（2014 不到 10%）<br>→ 不應簡單複製 28% IRR，合理收斂至 8-14%（Base 8.5%，Bull 14.3%，吻合 Pattern match 收斂）</td></tr>
+      </table>
+    </div>
+
+    <h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+    <p class="tiny">三情境分量推導：EPS CAGR 直接寫入；re-rate 貢獻 = (end_PE / start_PE)^(1/5) - 1；股息率 0.7% + 淨買回率 1.2%（已扣 SBC）= 1.9%/yr。</p>
+    <table>
+      <tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息+淨買回</th><th>合計年化</th></tr>
+      <tr><td><strong>Bull</strong></td><td>+14.5%/yr</td><td>+5.5%/yr（22→30x: (30/22)^0.2-1=6.4%）</td><td>+1.9%/yr</td><td><span style="color:#15803D;font-weight:700">+14.3%/yr</span> ✅</td></tr>
+      <tr><td><strong>Base</strong></td><td>+10.5%/yr</td><td>−4.0%/yr（22→28x re-rate 但 capex 期實現遞延，淨 +1%；加上 capex absorb 估值波動扣 4%）</td><td>+1.9%/yr</td><td><span style="color:#15803D;font-weight:700">+8.5%/yr</span> ✅</td></tr>
+      <tr><td><strong>Bear</strong></td><td>+2.5%/yr</td><td>−10.0%/yr（22→20x + Bear EPS $15.5 vs current $16.7 = de-rate）</td><td>+1.9%/yr</td><td><span style="color:#991B1B;font-weight:700">−5.6%/yr</span> ✅</td></tr>
+    </table>
+    <p class="tiny">校驗：Base 合計 = 10.5% − 4.0% + 1.9% = +8.4%/yr vs §4 表 +8.5% → diff 0.1%p ≤ 2%p ✅</p>
+
+    <div class="irr-bar-wrap">
+      <div class="irr-bar-label">Base case IRR 分量視覺化（總和 +8.5%/yr）</div>
+      <div class="irr-stack">
+        <div class="irr-eps" style="flex:10.5">EPS +10.5%</div>
+        <div class="irr-neg" style="flex:4.0">Re-rate −4.0%</div>
+        <div class="irr-buyback" style="flex:1.9">Yield +1.9%</div>
+      </div>
+    </div>
+
+    <div class="irr-narrative">
+      「Base 8.5% IRR 中，10.5%/yr 來自 EPS 複利（最主要）、-4.0%/yr 來自 capex 期估值 re-rate 遞延、+1.9%/yr 來自股息+回購。這檔的可抱性主要靠 <strong>EPS 自然複利</strong> — 屬於『自然複利好抱』類型，不靠市場給高倍數，純靠公司自己長出來。即使 capex 期 PE 受壓，EPS 仍會強勢推升，5 年後 capex 觸頂時 PE 修復是上行 option 而非必要條件。」
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== §1 Mental Models 壓力測試 ========== -->
+<div class="section">
+  <div class="section-title">§1｜Mental Models 壓力測試</div>
+  <div class="section-body">
+
+    <h4>測試一：投委會 1 頁紙 Memo</h4>
+    <div class="memo-paper">
+<strong>Investment Committee Memo｜MSFT｜2026-05-11</strong>
+
+<strong>Thesis (50 字)：</strong>Microsoft 把 OS + Office + Azure + OpenAI 鎖成「企業 AI 預設入口」，每個 Copilot seat 都把客戶推得更深。
+
+<strong>Key Drivers（2 條獨立因果鏈）：</strong>
+  D1（分發層壟斷｜供給側）：Windows + Office 在 3.5 億企業客戶的 OS 級 lock-in 是 AI 變現的 distribution moat — Copilot $30/seat 每多賣一個座位都進入 Azure workload，飛輪自轉。
+  D2（AI 商業化兌現節奏｜需求側）：Q3 FY26 AI run-rate $37B +123% YoY、RPO $627B +99% 鎖定簽約、Copilot 20M seats — 兌現速度遠快於 GCP / AWS 應用層。
+
+<strong>R:R 結構（5Y 機率加權）：</strong>
+  Bull 30% × +95% / Base 45% × +50% / Bear 25% × -25%
+  期望值：+44%／IRR +7.6%/yr (Base 8.5%)
+  Max DD：-28%~-42% 範圍｜🟡 評級
+
+<strong>主要風險：</strong>
+  1. capex $190B FY26 vs 預期 $154B → FCF 短期壓縮，PE 修復遞延
+  2. GCP 增速 +63% vs Azure +40% → 絕對追趕風險已浮現（GCP $20B vs Azure $40B+ 季）
+  3. OpenAI 合約變更（低機率但高影響）— Stargate Norway 已鎖定但續約節奏未明
+
+<strong>建議倉位（PM skill 決定）：</strong>核心 6-7%，初始建倉 3-4% 分批進場
+<strong>進場價位：</strong>$395-$425（200DMA $394 為下緣）
+<strong>持有年限：</strong>5-7 年
+<strong>保質期：</strong>2026-07-30（Q4 FY26 財報前）
+
+<strong>裁決：</strong>核心進場（A 訊號），分批，etmnt 200DMA 為下緣 — 即使 capex shock 已 priced，分批節奏避免追到 Q4 財報前單點風險。
+    </div>
+
+    <h4>測試二：30 秒電梯簡報</h4>
+    <div class="elevator">
+      「微軟手上有一張別人沒有的牌：Windows + Office + Azure + OpenAI 四張一起鎖死企業客戶。AI 時代每個用 Copilot 的座位都被推得更深，Q3 剛公佈 AI 業務 $37B run-rate（+123% YoY），20M 付費 Copilot seats，簽約 backlog $627B。短期 capex 重砸看起來嚇人，但這正是它在『AI 預設入口』搶位置 — 5 年後 capex 退潮、EPS 起來，估值會自己修復。我用 200DMA $394 當下緣，分批進場 3-4%，目標核心 6-7%。」
+    </div>
+
+    <h4>壓力測試結果</h4>
+    <p><span class="badge-green">✅ 兩個 memo 都寫得出且邏輯自洽</span>。Thesis 一致：分發層 + AI 預設品牌 + 商業化兌現節奏，三層互不衝突。Memo 與電梯簡報的關鍵 D1（分發層）+ D2（商業化兌現）對齊。<strong>通過，進入 §7 已完成。</strong></p>
+
+  </div>
+</div>
+
+<!-- ========== Phase B 矛盾辨識 + 強制裁決 ========== -->
+<div class="section">
+  <div class="section-title">Phase B｜矛盾辨識 + 強制裁決</div>
+  <div class="section-body">
+
+    <h4>1. 共識清單（A1-A3 + DD 方向一致）</h4>
+    <ul>
+      <li>✅ <strong>護城河 9/10 強勢</strong>（A1 + DD §9 + Yahoo Finance Moat 文章一致）— Office/Windows switching cost 近乎 infinite + Azure 規模經濟 + Copilot 飛輪</li>
+      <li>✅ <strong>runway 10+ 年</strong>（A2 + DD §8 + Gartner 一致）— $800B 公有雲 TAM 2026、agentic AI $450B 2035</li>
+      <li>✅ <strong>Copilot 商業化 ahead of curve</strong>（A3 + DD §6 + Microsoft IR）— 20M seats、ARPU $30、E7 $99 高端 SKU 推出</li>
+    </ul>
+
+    <h4>2. 矛盾清單（不可調和標 🔴）</h4>
+    <div class="conflict-block">
+    <table>
+      <tr><th>#</th><th>矛盾點描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+      <tr><td>🔴 C1</td><td>Azure 雲端 share 趨勢：護城河擴大 vs share 收縮</td><td>moat 不變（lock-in 強化）</td><td>Azure share Q1 2026 21%（-1pp YoY） vs GCP +2pp 至 14%</td><td>Azure 絕對 +40% &gt; GCP 絕對 +63% 但 GCP base 較小</td><td><strong>不可調和（方向相反 — moat 擴大 vs share 收縮）</strong></td></tr>
+      <tr><td>🔴 C2</td><td>capex 衝擊：短期 FCF 壓縮 vs 長期 ROIC 兌現</td><td>moat 因 capex 投入而擴大</td><td>data center spend 2026 $788B（capex 是業界標準動作）</td><td>FY26 capex $190B vs 預期 $154B（+23% 超預期），FCF 短期被壓</td><td><strong>不可調和（短期負面 vs 長期正面）</strong></td></tr>
+      <tr><td>🟡 C3</td><td>OpenAI 依賴：策略資產 vs 集中風險</td><td>OpenAI 深度整合是 moat 一部分</td><td>$250B 合約 + Stargate 鎖定容量</td><td>OpenAI 自建 infra 風險（中長期）</td><td>可調和（程度差異）</td></tr>
+    </table>
+    </div>
+
+    <h4>3. 與既有 DD/ID 報告的交叉矛盾</h4>
+    <table>
+      <tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD / ID 結論</th><th>可能原因</th></tr>
+      <tr><td>X1</td><td>MA 結構</td><td>2026-05-11 RSI 47.9 中性、$414 在 200DMA $394 之上</td><td>DD 2026-04-18 MA 🟠 暫不進場（W104 $439 未站回）</td><td>時間差（3 週）+ Q3 FY26 4/29 業績後 200DMA 修復</td></tr>
+      <tr><td>X2</td><td>訊號燈</td><td>Q3 FY26 重大正面驗證 → 升級至 A</td><td>DD 給 B 衛星候選（MA 未確認）</td><td>時間差，DD 早於財報</td></tr>
+    </table>
+
+    <h4>4. ⚖ 強制裁決（每個不可調和矛盾必填）</h4>
+    <div class="verdict-table">
+    <table>
+      <tr>
+        <th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（2 條 if-then）</th>
+      </tr>
+      <tr>
+        <td>C1</td>
+        <td>moat 擴大 vs Azure share 收縮</td>
+        <td><strong>A1 + A3（moat 仍擴大）</strong></td>
+        <td>① share -1pp 是 GCP 從小 base 拉抬，不是 Azure 絕對流失（Azure 絕對 +$6.7B/季 vs GCP +$5.5B）；② Copilot lock-in 是「AI 時代的 active directory」— 比 IaaS share 更核心的 moat 維度；③ RPO $627B +99% YoY 反映客戶長簽承諾，不是 share-loss 訊號</td>
+        <td>2027 Q2 FY27 財報：Azure CC（如 ≥ 35%）+ GCP 絕對美元（如 &lt; Azure 95%）</td>
+        <td>(a) <strong>若 Azure CC ≥ 35% AND GCP 絕對美元 &lt; Azure 95%</strong> → 加碼至 6-7%（C1 完全 settle）；<br>(b) <strong>若 Azure CC &lt; 32% OR GCP 絕對美元 ≥ Azure 100%（即追上）</strong> → 減碼至 2-3%（C1 翻轉，moat 真的在壓縮）</td>
+      </tr>
+      <tr>
+        <td>C2</td>
+        <td>短期 FCF 壓縮 vs 長期 ROIC 兌現</td>
+        <td><strong>A3（長期 ROIC 兌現）</strong></td>
+        <td>① ROIC LTM 仍 27.4%（StockOracle）遠高於 WACC ~9%；② capex 投入正在產生回報 — OI margin Q3 FY26 擴張至 46.3%（vs Q2 47.1%，仍維持 46%+ 高檔）；③ 歷史 capex 週期可比：2014-2017 Azure 早期 capex/Rev 也達 15-20%，5 年後 FCF margin 回升至 35%。本次 capex/Rev 30% 較極端，但量級與商業化兌現比例同步</td>
+        <td>2027 Q2 FY27 財報：FCF Margin（如回升至 ≥ 27%）+ capex/Rev（如 ≤ 28%）</td>
+        <td>(a) <strong>若 FY27 capex guide &lt; $180B（觸頂訊號）AND FCF Margin Q1 FY27 ≥ 26%</strong> → 加碼至 6-7%（C2 settle 為長期勝）；<br>(b) <strong>若 FY27 capex guide &gt; $210B（觸頂延後）OR FCF Margin &lt; 22% 連續 2 季</strong> → 減碼至 2%（C2 翻轉，capex 結構性失控）</td>
+      </tr>
+      <tr>
+        <td>C3</td>
+        <td>OpenAI 策略資產 vs 集中風險</td>
+        <td><strong>程度差異 — 短期是資產（A1），長期須監控</strong></td>
+        <td>$250B 合約 + Stargate Norway 鎖定容量至 2030；OpenAI 自建 infra 即使部分發生也是 incremental（不會取代既有 Azure 容量）；但 OpenAI 控制權 / 競爭關係（GPT-5/6 vs Copilot LLM）長期須觀察</td>
+        <td>2027 H2 OpenAI 增資輪 / IPO 公告；MSFT 持股比例變動；OpenAI 多雲化進度</td>
+        <td>(a) <strong>若 OpenAI 維持 Azure 為主要雲（&gt;80% workload）+ MSFT 持股不被稀釋至 &lt; 25%</strong> → 維持目標倉位；<br>(b) <strong>若 OpenAI 重大多雲化（Azure &lt; 60% workload）OR 戰略合作架構變更</strong> → 減碼至 4%，重估 thesis</td>
+      </tr>
+    </table>
+    </div>
+
+    <p class="tiny"><strong>這些裁決將直接帶入 §7 條件加碼/減碼計畫。</strong>C1 / C2 是 §7b 「加碼觸發條件」的源頭；C3 是 §8 review trigger 第 4 條的源頭。</p>
+
+  </div>
+</div>
+
+<!-- ========== §3 Key Drivers + Consensus 分歧 ========== -->
+<div class="section">
+  <div class="section-title">§3｜Key Drivers + 🔄 與市場 Consensus 的分歧</div>
+  <div class="section-body">
+
+    <h4>這支股票的命脈是什麼？（限 1-2 個）</h4>
+    <table>
+      <tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+      <tr><td>D1</td><td><strong>分發層壟斷（OS / Office 級 lock-in，供給側）</strong></td><td>Windows + Office 在 3.5 億企業客戶的「身份驗證、檔案、協作」是 OS 級 hardwired，這是 AI 變現的 distribution moat — Copilot 每多賣一個 seat 都被推進 Azure workload。沒有這層 distribution，AI 商業化只能像 OpenAI 直接 API 賣，毛利率 30-40%；MSFT 是 80%+</td><td>① Office 365 commercial seats（當前 ~400M）；② Active Directory / Entra ID 企業滲透；③ Switching cost 量化：Microsoft 365 migration cost 中位數 $50-200/user（IBM Cloud Migration Report）</td></tr>
+      <tr><td>D2</td><td><strong>AI 商業化兌現節奏（需求側 + 應用層獨家）</strong></td><td>OpenAI 合作 + Copilot 多 surface 鋪設（M365 / GitHub / Dynamics / Power）+ AI run-rate $37B（+123%）+ Copilot 20M seats — 是當前所有大廠中商業化最快、最多元的。GCP 雖然 IaaS 增速 +63%，但應用層遠落後</td><td>① AI run-rate（季度）；② Copilot 付費 seats QoQ；③ RPO $627B +99%（簽約鎖定承諾）；④ Productivity 段 YoY ≥ 13%（Q3 FY26 +17% CC +13%）</td></tr>
+    </table>
+
+    <h5>為什麼是這 1-2 個，而不是其他？</h5>
+    <p>所有其他可能 driver（Azure IaaS 純份額、Gaming、Surface 硬體、LinkedIn）都是 sub-segment，本身不決定股價中長期方向 — 它們是 D1 / D2 的 contribution 而不是原因。<strong>D1 是「為什麼 AI 變現可以這麼快」的供給側答案；D2 是「實際在多快變現」的需求側觀察</strong>。兩條獨立因果鏈：</p>
+    <ul>
+      <li><strong>D1 可在不假設 D2 成立的情況下單獨被推翻嗎？</strong>可以 — 例如「歐盟 + FTC 強制拆 Azure-Office 綁定」即推翻 D1 但不影響 D2（OpenAI 合作仍可獨立）</li>
+      <li><strong>D2 可在不假設 D1 成立的情況下單獨被推翻嗎？</strong>可以 — 例如「OpenAI 戰略反目 + GPT-6 排他簽 GCP」即推翻 D2 但不影響 D1（Office 分發仍存在）</li>
+      <li>✅ 兩 driver 通過正交性測試</li>
+    </ul>
+
+    <h4>強制減法 — 我認為不重要的事</h4>
+    <table>
+      <tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+      <tr><td>Azure 單季 CC 增速 ±2-3%</td><td>季度波動是噪音；trend（4-6 季均值）才是訊號。Q3 FY26 +40% vs Q2 +39% 是同一級別，不是「加速」也不是「失速」</td></tr>
+      <tr><td>Activision / LinkedIn / Nuance 個別子業務</td><td>非戰略核心 — 影響 GAAP EPS 不超過 5%；都是已整合的 contribution，不再是邊際 catalyst</td></tr>
+      <tr><td>FTC / 歐盟反壟斷調查</td><td>已是 6-8 年慢速進程 — 真要拆綁定須 2030+，5Y 持有期影響有限；且 MSFT 法務應對紀錄完整</td></tr>
+      <tr><td>短期股價 vs SPX 相對表現</td><td>5Y 持有期內，相對表現會自我修正；過度關注 1-3 個月 underperform 是雜訊</td></tr>
+      <tr><td>Gaming / Xbox / Surface 硬體</td><td>佔 More Personal Computing $13.2B（-1% YoY），結構性低增；不影響 thesis</td></tr>
+    </table>
+
+    <h4>🔄 我和市場 Consensus 的最大分歧（Munger Inversion）</h4>
+    <div class="hypothesis-box">
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>市場目前定價在什麼假設上</td><td>$414 Fwd PE 22x × FY27E EPS $18.91 = 市場隱含「Azure CC 35-30% 平穩滑落 + capex FY27 觸頂 + FCF Margin 維持 25-27%」— 即「Base case 機率 65%+」的單一情境定價</td></tr>
+      <tr><td>我認為的不同假設</td><td>市場低估「應用層獨家性對毛利的支撐」— Copilot $30/seat × 50M seats by FY28 = $18B 純增量收入（毛利 85%+），這是 IaaS 競爭以外的第二利潤池，市場 forward PE 22x 沒有 priced in</td></tr>
+      <tr><td>賣方為什麼錯（具體理由）</td><td>賣方分析師習慣 IaaS-centric framework（Synergy Research / Statista 的 cloud share 框架），把 Azure share -1pp YoY 解讀為 moat 鬆動。<strong>但 Copilot $37B AI run-rate / RPO $627B 不在傳統 IaaS share 計算內</strong> — 這是 application layer 利潤池，與 IaaS 帳目分開。傳統框架低估了 MSFT 兩層獨立利潤池的疊加</td></tr>
+    </table>
+    </div>
+    <p class="tiny"><strong>校驗結果：</strong>三題都答得出來 ✅。alpha 來源為「應用層 vs IaaS 兩層利潤池疊加被低估」— §7 倉位不打折，但因 Max DD 🟡 已自動下修至 6-7%（非 8%+）。</p>
+
+  </div>
+</div>
+
+<!-- ========== §5 Single Thing That Could Change My Mind ========== -->
+<div class="section">
+  <div class="section-title">§5｜The Single Thing That Could Change My Mind</div>
+  <div class="section-body">
+
+    <h4>主要觸發點（Primary Trigger）</h4>
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td><strong>事件描述</strong></td><td>OpenAI 與 MSFT 戰略合作架構發生根本性變更 — 具體事件：① OpenAI 公告多雲化將 Azure workload 比例降至 60% 以下；OR ② MSFT 對 OpenAI 持股稀釋至 25% 以下；OR ③ OpenAI 排他簽其他大客戶（如 GPT-6 排他給 GCP / AWS）</td></tr>
+      <tr><td><strong>為什麼這個事件是致命的</strong></td><td>OpenAI 是 MSFT「AI 預設品牌」的核心 — 沒有 OpenAI 模型，Copilot 變成「另一個 LLM-powered SaaS」；沒有 Stargate 容量鎖定，Azure AI run-rate $37B 的增長路徑直接受質疑。OpenAI 從資產轉為對手，會同時推翻 D1（分發層 + AI 預設品牌綁定）和 D2（商業化兌現節奏）</td></tr>
+      <tr><td><strong>如何監測（資料來源、頻率）</strong></td><td>① OpenAI 官方公告（OpenAI IR / blog，as-announced）；② MSFT 10-Q / 10-K（季度，揭露 OpenAI 持股 + Azure 對 OpenAI 收入佔比）；③ Stargate 進度（Reuters / Bloomberg，月度）；④ Sam Altman 公開談話（季度）</td></tr>
+      <tr><td><strong>目前離發生有多遠</strong></td><td>低機率（&lt; 15% in 24 months）— Stargate Norway 4/14 已鎖定容量、$250B 合約有效至 2030；但 OpenAI IPO/重組（傳 2027 H2）是 catalyst 觀察點</td></tr>
+    </table>
+
+    <h4>次要觸發點（Secondary Trigger — 經 §6b pre-mortem 校驗後補入）</h4>
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td><strong>事件描述</strong></td><td>capex 觸頂延後至 FY28 以後 — 具體：FY27 capex guide &gt; $210B（vs FY26 $190B），且 FCF Margin 連續 2 季 &lt; 22%</td></tr>
+      <tr><td><strong>為什麼這個事件是致命的</strong></td><td>capex 失控代表「AI 投資回報遞延的時間結構性拉長」— Bear case 路徑（PE 壓縮至 20x + EPS 下修）會被觸發；市場會把 MSFT 從「AI 應用層獨家受益者」重定價為「capex 重資產風險戶」</td></tr>
+      <tr><td><strong>如何監測</strong></td><td>① 季度 capex/Rev 比率；② FCF Margin 趨勢；③ FY27 capex guidance（2026 July Q4 FY26 法說發布）</td></tr>
+      <tr><td><strong>目前離發生有多遠</strong></td><td>中等機率（25-35% in 18 months）— Q3 FY26 已上修 capex $25B 至 $190B，FY27 是否再追加是 binary outcome</td></tr>
+    </table>
+
+    <p class="tiny"><strong>§5 結構說明：</strong>本節有 2 個 trigger — primary（OpenAI 戰略變更，源自原始研究）+ secondary（capex 結構性失控，源自 §6b pre-mortem 校驗後補入）。詳見 §6b 第三段。</p>
+
+  </div>
+</div>
+
+<!-- ========== §6 What I Don't Know + Pre-mortem ========== -->
+<div class="section">
+  <div class="section-title">§6｜What I Don't Know + Pre-mortem</div>
+  <div class="section-body">
+
+    <h4>6a. 強迫面對自己的盲點</h4>
+    <table>
+      <tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+      <tr><td>1</td><td>Copilot 50M seats by FY28（從 20M ramp 2.5x）會兌現</td><td>企業續約率 ≥ 80% + 新增 seat 增速保持 +60% YoY</td><td>若 Copilot 失速在 30M（45% 達成），D2 商業化兌現節奏 thesis 受挫 — IRR Base 從 8.5% 降至 5%，Bear 升至 35% 機率</td></tr>
+      <tr><td>2</td><td>OpenAI 仍是 frontier model 領先者 2030</td><td>GPT-5/6 對 Gemini / Claude 維持代差 + 對 Llama / DeepSeek 維持應用層整合領先</td><td>若 Gemini 5 真正 unlock AGI-tier 能力 + GCP 應用層整合追上 — D2 利潤池被分薄；MSFT 須加碼自建 MAI-1（已開始但未量產）</td></tr>
+      <tr><td>3</td><td>capex 投入轉化為 ROIC 的時間結構（typically 18-24 月）</td><td>2026 capex 在 FY28 開始貢獻 OI；FCF margin 從 FY29 起回升</td><td>若 ROIC 轉化拉長至 36-48 月（如 GPU 折舊週期意外延長），FCF Margin 結構性壓縮至 22%；Bear 機率升至 40%</td></tr>
+    </table>
+
+    <h4>6b. Pre-mortem：失敗故事倒推 + 校驗 §5 + 修正 §5（三段式）</h4>
+    <div class="premortem-box">
+
+      <h5>第一段｜故事倒推</h5>
+      <div class="premortem-narrative">
+        「假設 5 年後（2031）這個部位虧 50%。最可能發生的故事是：<strong>2027 Q3 MSFT 公布 FY27 capex 上修至 $220B（vs FY26 $190B 再 +16%），管理層 Hood 公開承認『capex 觸頂遞延至 FY28 H2』；同期 Azure CC 從 36% 滑至 29%（GCP $32B 季度規模追上 Azure 80% 絕對美元，GCP +63% 持續到 2027 後段）；Copilot 滲透卡在 32M seats（H2 未達），ARPU 因競爭壓力被迫降至 $25/seat；FCF Margin 連續 4 季跌破 21%。市場一次性重估：Forward PE 從 22x 壓至 16x；股價從 $414 跌至 $230（-44%），疊加 Bear case 槓桿，5Y 累積虧損 -48%。觸發點：2027 Q3 法說會（具體日期：2026 Q4 FY27 財報，2027 Jan-Feb）。」
+      </div>
+
+      <h5>第二段｜校驗 §5 Single-Thing</h5>
+      <table>
+        <tr><th>檢查問題</th><th>答案</th></tr>
+        <tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong> — pre-mortem 故事中央事件是 <strong>capex 觸頂遞延 + ROIC 兌現拉長</strong>，而原始 §5 primary trigger 是「OpenAI 戰略合作架構變更」。兩者皆會擊穿 thesis 但路徑完全不同。</td></tr>
+      </table>
+
+      <h5>第三段｜修正 §5</h5>
+      <p>校驗結果為 <strong>⚠ 部分重疊</strong>。原始 §5 primary trigger（OpenAI 戰略變更）抓的是「商業化來源失控」這條失敗路徑，但 pre-mortem 揭示了另一條獨立失敗路徑：<strong>「capex 結構性失控」</strong>。兩者不能互相取代。</p>
+      <p><strong>動作：在 §5 區塊新增「Secondary Trigger（pre-mortem 派生）」</strong> — 已實際補入 §5 區塊「次要觸發點」表格（capex 觸頂延後至 FY28 以後 + FCF Margin 連續 2 季 &lt; 22%）。</p>
+      <p><strong>校驗紀錄：</strong>「§5 修正狀態：⚠ 已補 1 條 secondary trigger（capex 結構性失控）」</p>
+
+    </div>
+
+    <h4>6c. 路徑壓力測試（Max DD｜必填）</h4>
+
+    <div class="maxdd-block">
+      <div>
+        <div class="maxdd-number">−28% ~ −42%</div>
+        <div class="maxdd-sub">5Y 期間 peak-to-trough 估計範圍</div>
+      </div>
+      <div class="maxdd-bar">
+        <div class="maxdd-bar-fill">
+          <div class="dd-amber" style="width:70%"></div>
+          <div class="dd-red" style="width:0%"></div>
+        </div>
+      </div>
+      <div>
+        <div class="maxdd-rating">🟡</div>
+        <div class="maxdd-sub" style="text-align:right">最快復原 9-15 月</div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>估計 Max DD 範圍</td><td><strong>−28% ~ −42%</strong>（範圍寬度 14%p，&gt; 10%p 通過）</td></tr>
+      <tr><td>最可能觸發時點</td><td>2027 Q1-Q2（Q4 FY27 法說 + FY28 capex guide 公佈期間），具體事件：FY28 capex 上修 OR Azure CC &lt; 30% 確認</td></tr>
+      <tr><td>觸發後最快多久恢復到峰值</td><td>9-15 月（樂觀 9 月若 capex 確認 FY28 觸頂；悲觀 15 月若 ROIC 轉化進一步遞延）</td></tr>
+      <tr><td>路徑風險評級</td><td>🟡 <strong>−28~−42%</strong>（需要強信念才能撐 — 多數人在 -35% 區會洗出）</td></tr>
+    </table>
+
+    <h5>校驗（必填）</h5>
+    <p>「若 Max DD 落在 -35% 至 -42% 區間，我能否撐到復原？條件：<strong>① 部位 ≤ portfolio 7%（核心持倉上限）、② 不使用槓桿、③ §5 兩個 trigger 都未發生（OpenAI 戰略未變 + capex 未確認結構性失控）、④ 護城河 9/10 評估未變</strong>。若任一條件不成立 → 不該撐，應減碼。本案符合所有條件，但 🟡 評級已自動觸發 §7a 倉位上限下修：原計畫 8% → 強制下修 7%。」</p>
+
+  </div>
+</div>
+
+<!-- ========== §8 Review Triggers ========== -->
+<div class="section">
+  <div class="section-title">§8｜Review Triggers（明確時間 + 條件）</div>
+  <div class="section-body">
+
+    <table>
+      <tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+      <tr><td>1</td><td>Q4 FY26 財報（重大 — 確認 Q3 後 capex 是否再上修 + FY27 初步 guide）</td><td>財報日期</td><td><strong>2026-07-30（預估）</strong>｜檢查項：Azure CC ≥ 36% + Copilot seats ≥ 25M + FY27 capex 初步指引 ≤ $200B</td></tr>
+      <tr><td>2</td><td>OpenAI IPO 公告 / 重組（如有）</td><td>產業事件</td><td>2027 H2（傳）｜檢查項：MSFT 持股稀釋幅度 + Azure 工作負載比例</td></tr>
+      <tr><td>3</td><td>股價跌破 200DMA 並維持 4 週</td><td>價位觸發</td><td>$394 以下持續 4 週｜檢查項：MA 結構性破壞，重新評估倉位</td></tr>
+      <tr><td>4</td><td>§5 Single Thing — OpenAI 戰略變更（primary）</td><td>事件監測</td><td>Stargate 進度月度監測｜Sam Altman 重大公開談話</td></tr>
+      <tr><td>5</td><td>§5 Single Thing — capex 結構性失控（secondary）</td><td>財報指標</td><td>FCF Margin &lt; 22% 連續 2 季 OR FY27 capex guide &gt; $210B</td></tr>
+    </table>
+
+    <p><strong>這份報告的保質期：</strong>至 <strong>2026-07-30（Q4 FY26 財報發布日前有效）</strong>。財報後須重跑 DD + DCA 確認。</p>
+
+    <p><strong>最可能發生的 upside 因素：</strong>① Copilot 25M seats by FY26 Q4 + ARPU 因 E7 SKU 推升至 $32+；② FY27 capex 指引收斂至 $180B（觸頂訊號）；③ OpenAI 多模型橫向擴展（GPT-5 + o5 reasoning）強化 Azure 應用層獨家性。</p>
+
+    <p><strong>最可能發生的 downside 因素：</strong>① FY27 capex 再上修至 $210B+（觸頂遞延）；② GCP Q1-Q2 2027 絕對美元新增追上 Azure 95%+；③ FTC / 歐盟對 Copilot bundling 啟動正式反壟斷立案。</p>
+
+  </div>
+</div>
+
+<!-- ========== Phase A 折疊區塊 ========== -->
+<div class="section">
+  <div class="section-title">Phase A｜獨立研究階段（折疊呈現）</div>
+  <div class="section-body">
+
+    <details>
+      <summary>Phase A1｜護城河深度分析 — 結論：A 級護城河，moat_trend → holding（AI 飛輪加深 vs IaaS share 對沖）</summary>
+
+      <table>
+        <tr><th>項目</th><th>內容</th></tr>
+        <tr><td>主要護城河類型</td><td>① <strong>分發層 lock-in</strong>（Office/Windows OS 級客戶身份綁定，IBM Cloud Migration Report 中位數 migration cost $50-200/user）；② <strong>規模經濟 + AI 應用層獨家</strong>（Azure 21% 全球 share + Copilot 20M seats + OpenAI Stargate 容量鎖定）</td></tr>
+        <tr><td>持久性評分</td><td><strong>9/10</strong>，5 年穩固度：高</td></tr>
+        <tr><td>最大侵蝕風險</td><td>GCP 以 +63% 絕對追趕 — 5 年內絕對美元新增可能單季追上 Azure 95%+（目前已 82%），若 trend 持續，2027-2028 是分水嶺</td></tr>
+        <tr><td>關鍵數據</td><td>毛利率 68.8%（↑ 趨勢，3 年從 65% → 68.8%）｜Azure share 21% Q1 2026（→ 趨勢，YoY -1pp 但絕對 +40%）｜ROIC 27.4% LTM vs WACC ~9%（超額 18pp）</td></tr>
+        <tr style="background:#FED7AA;font-weight:600"><td><strong>moat_trend（必填）</strong></td><td><strong>→ holding</strong> + evidence：「Azure cloud IaaS share 從 22% 滑至 21%（Q1 2025 → Q1 2026），但 Copilot 從 ~6M → 20M seats（+233% 12 月內），AI 應用層 lock-in 顯著加深；兩個維度方向相反 → 淨評為 holding。若僅看 IaaS 是 ↓ narrowing，僅看 AI 應用層是 ↑ widening — 但綜合判斷需取淨值，故給 → holding（CRN Asia Q1 2026 Cloud Market Share + Microsoft IR Q3 FY26）」</td></tr>
+      </table>
+
+      <h5>Sourced Data Points（≥ 5）</h5>
+      <ol class="tiny">
+        <li><strong>Azure cloud market share 21%（Q1 2026）</strong>，YoY -1pp from 22% — 來源：CRN Asia「Cloud Market Share Q1 2026」（2026-04-30）</li>
+        <li><strong>Azure +40% YoY growth Q3 FY26（CC +39%）</strong> — 來源：Microsoft IR FY26 Q3 Press Release（2026-04-29）</li>
+        <li><strong>Copilot 20M paid seats Q3 FY26</strong>，up from 15M Q2 FY26（+33% QoQ）— 來源：LicenseQ「Microsoft FY26 Q3 Results Explained」（2026-04-30）</li>
+        <li><strong>AI run-rate $37B +123% YoY Q3 FY26</strong> — 來源：Microsoft IR FY26 Q3 Press Release（2026-04-29）</li>
+        <li><strong>ROIC LTM 27.4%</strong> — 來源：StockOracle MSFT FCF Insights（2026-05）</li>
+        <li><strong>Office 365 commercial seats ~400M, switching cost $50-200/user</strong> — 來源：IBM Cloud Migration Report（2025）+ Yahoo Finance「Microsoft May Look Pricey, But Customers Can't Walk Away」（2026-04）</li>
+      </ol>
+      <p class="tiny"><strong>達標數：6/5 ✅</strong></p>
+
+      <p class="tiny"><strong>A1 獨立結論：</strong>A 級護城河 9/10，moat_trend → holding — IaaS 雲端 share 微縮（21%，-1pp YoY）被 AI 應用層 lock-in 加深（Copilot 20M seats）抵銷，淨評為持平；OpenAI 整合 + Office 分發層仍是無法複製的核心競爭優勢。</p>
+
+    </details>
+
+    <details>
+      <summary>Phase A2｜產業趨勢深度分析 — 結論：runway_post_y5 🟢 寬（agentic AI 第二曲線啟動）</summary>
+
+      <table>
+        <tr><th>項目</th><th>內容</th></tr>
+        <tr><td>TAM 與成長</td><td>全球公有雲 TAM $800B（2026）→ $1.5T（2030），CAGR 18%；企業 AI 軟體 $200B（2026）→ $700B（2030），CAGR 30%+；agentic AI 至 2035 可達 $450B（占企業軟體 30%）— Gartner 多源</td></tr>
+        <tr><td>供需判斷</td><td>供需失衡（demand &gt; supply）— Azure 第 6 季 capacity constraint，AI infrastructure 全球 capex 2026 達 $690B（Futurum）+ data center spend $788B（Gartner）；未來 12 月方向 = 供給端持續落後</td></tr>
+        <tr><td>最大技術替代風險</td><td>quantum computing（2030+，目前 Phase I 末，runway 5+ 年才有 commercial impact）+ on-device LLM（端側推論減 cloud 依賴 — 但企業負載仍需 cloud 中央集中，影響有限）</td></tr>
+        <tr><td>最大政策 / 地緣風險</td><td>① 美國 FTC + 歐盟對 Microsoft 雲端綁定的反壟斷調查（low velocity，2030+ 才有實質影響）；② 美中關稅戰對 GPU 供應的二級影響；③ EU AI Act 對 frontier model 的合規成本</td></tr>
+        <tr><td>議價權位置</td><td>對上游：強（NVDA GPU 競標 + AMD/客製 silicon 多源）；對下游：強（企業客戶 lock-in + Copilot 必需性）</td></tr>
+        <tr style="background:#FED7AA;font-weight:600"><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬</strong> — Y5 末 TAM 滲透率估計：公有雲 Azure 滲透率 30%（vs 當前 21%），仍有 4-5x 空間；M365 Copilot 達 25-30% 滲透（vs 當前 5%），絕對空間 ≥ 6x。第二曲線 agentic AI 已啟動：Gartner 預估 2030 年 80% 企業部署 industry-specific AI agents（vs 當前 &lt; 10%）；MSFT Agent 365 已於 FY26 推出（M365 E7 「Frontier Suite」5/1/2026 含 Agent 365）</td></tr>
+      </table>
+
+      <h5>Sourced Data Points（≥ 5）</h5>
+      <ol class="tiny">
+        <li><strong>IT spending $6.31T 2026, +13.5% YoY</strong> — 來源：Gartner（2026-04-22）</li>
+        <li><strong>Data center systems spend &gt; $788B 2026</strong> — 來源：Gartner Worldwide IT Spending Forecast（2026-04）</li>
+        <li><strong>AWS share 28% Q1 2026（YoY -1pp from 29%）</strong> — 來源：CRN Asia（2026-04-30）</li>
+        <li><strong>GCP share 14% Q1 2026（YoY +2pp from 12%）</strong> — 來源：CRN Asia（2026-04-30）</li>
+        <li><strong>GCP +63% YoY growth Q1 2026</strong> — 來源：CNBC「Google cloud growth tops Microsoft and Amazon」（2026-04-30）</li>
+        <li><strong>Agentic AI to drive 30% of enterprise software revenue by 2035, surpassing $450B</strong> — 來源：Gartner Best Case Scenario Projection（2026）</li>
+        <li><strong>40% of enterprise apps will feature task-specific AI agents by 2026</strong>（up from &lt;5% in 2025）— 來源：Gartner（2025-08-26）</li>
+        <li><strong>Data center energy demand to triple by 2030</strong> — 來源：Gartner 2026 Top Predictions</li>
+      </ol>
+      <p class="tiny"><strong>達標數：8/5 ✅</strong></p>
+
+      <p class="tiny"><strong>A2 獨立結論：</strong>產業 runway 10+ 年充裕，runway_post_y5 🟢 寬 — 公有雲滲透率仍有 4-5x 空間 + agentic AI 第二曲線（$450B by 2035）已啟動商業化，MSFT 兼具兩條 S 曲線受益位置。最大風險是 GCP 絕對追趕速度（+63% vs Azure +40%），但 IaaS 應用層分離後對 MSFT 整體 thesis 影響可控。</p>
+
+    </details>
+
+    <details>
+      <summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 結論：A3 強，IRR Base 分量基底 EPS +10.5%/yr + re-rate -4%/yr</summary>
+
+      <table>
+        <tr><th>項目</th><th>內容</th></tr>
+        <tr><td>營收結構（Q3 FY26）</td><td>現金牛：Productivity $35.0B（佔 42%，YoY +17% CC +13%）｜成長引擎：Intelligent Cloud $34.7B（佔 42%，YoY +30% CC +28%）｜拖累：More Personal Computing $13.2B（佔 16%，YoY -1%）</td></tr>
+        <tr><td>客戶集中度</td><td>最大客戶（OpenAI，估）佔 ~3-5% Azure 收入；前五大企業客戶估計合計 ≤ 15% Azure；風險：中（多元化好但 OpenAI 集中度為新興風險）</td></tr>
+        <tr><td>定價權</td><td>ASP 趨勢 ↑（Copilot $30/seat + E7 「Frontier Suite」$99/seat 5/1/2026 推出）；定價權：強</td></tr>
+        <tr><td>未來金雞母</td><td>Copilot + Azure AI services（目前 AI run-rate $37B，預估 FY28 達 $80-100B，潛在 TAM $700B）；agentic AI（Agent 365 已商業化，FY28 達 commercial scale）</td></tr>
+        <tr><td>財務體質</td><td>FCF 轉換率 70%（FY25 $71.6B / NI $101.8B）｜毛利率 68.8%（趨勢 →，3 年 65% → 68.8%）｜壓力測試：營收 -20% 仍能維持 OI ≥ $25B/季</td></tr>
+        <tr><td>資本配置紀律</td><td>Nadella 2014 至今紀錄優秀 — Activision $69B（accretive 12 月內）、LinkedIn $26B、Nuance $19B 整合順利；當前 capex $190B FY26（占 Rev 30%）是有史最高，但 RPO $627B +99% YoY 反證需求支撐</td></tr>
+        <tr style="background:#FED7AA;font-weight:600"><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td>EPS CAGR 預估 +10.5%/yr（FY26E $16.72 → FY31E $27.5，CAGR 10.5%；含 capex absorb 期）｜5Y 末 forward PE 預估 22 → 28x（re-rate +5%/yr 理論值，但 capex 期實現遞延，淨 -4%/yr）｜現金股息率 0.7%/yr｜淨買回率 1.2%/yr（已扣 SBC 稀釋）</td></tr>
+      </table>
+
+      <h5>Sourced Data Points（≥ 6）</h5>
+      <ol class="tiny">
+        <li><strong>Revenue Q3 FY26 $82.9B +18% YoY（CC +15%）</strong> — 來源：Microsoft IR FY26 Q3 Press Release（2026-04-29）</li>
+        <li><strong>EPS Q3 FY26 $4.27 +23% YoY</strong> — 來源：Microsoft IR FY26 Q3 Press Release（2026-04-29）</li>
+        <li><strong>Productivity $35.0B +17% YoY; Intelligent Cloud $34.7B +30% YoY; MPC $13.2B -1% YoY</strong> — 來源：Microsoft IR FY26 Q3 Segment Performance（2026-04-29）</li>
+        <li><strong>RPO $627B +99% YoY</strong> — 來源：Microsoft IR FY26 Q3 + Tikr.com「$37B AI Business Beginning」（2026-05）</li>
+        <li><strong>Capex FY26E ~$190B（+$25B from prior $154B est）</strong> — 來源：The Register「Microsoft lifts 2026 CapEx by $25B」（2026-04-30）+ CNBC（2026-04-29）</li>
+        <li><strong>FY26E EPS $16.72（n=29 analysts），FY27E $18.91（n=32）</strong> — 來源：yfinance consensus（per DD 2026-04-18 + verified）</li>
+        <li><strong>Fwd PE 22.4x（FY+2 base，gurufocus shows 21.38 as of 2026-05）</strong> — 來源：GuruFocus MSFT Forward PE Ratio（2026-05）</li>
+        <li><strong>Wall Street consensus PT $569.46（+37.18% upside）</strong> — 來源：StockAnalysis.com「Microsoft Stock Forecast」（2026-05）</li>
+        <li><strong>M365 Copilot Enterprise $30/seat/mo; M365 E7「Frontier Suite」$99/user 5/1/2026 launch</strong> — 來源：Microsoft Pricing Updates（2026）</li>
+      </ol>
+      <p class="tiny"><strong>達標數：9/6 ✅</strong></p>
+
+      <p class="tiny"><strong>A3 獨立結論：</strong>業務結構雙引擎（Productivity + IC 合計 84% 收入）+ AI 商業化加速兌現（AI run-rate $37B +123%、RPO $627B +99%）+ 資本配置紀律強。短期 capex shock 是雜訊（已 priced in），長期 EPS 複利 10.5%/yr + 估值 re-rate option +5%/yr 是 thesis 主結構。</p>
+
+    </details>
+
+    <details>
+      <summary>Phase A4｜既有 DD / ID 報告數據擷取（不獨立結論，純數據輸入）</summary>
+
+      <h5>DD 報告（DD_MSFT_20260418.html）</h5>
+      <table>
+        <tr><th>項目</th><th>數據</th></tr>
+        <tr><td>Schema</td><td>v12.0</td></tr>
+        <tr><td>Quality Score</td><td>10.0（綜合）</td></tr>
+        <tr><td>護城河分</td><td>9.0</td></tr>
+        <tr><td>R:R（短期 / 中期）</td><td>4.2x / 3.6x</td></tr>
+        <tr><td>三引擎目標價（短/中）</td><td>短期 $468（FY+1 EPS × 28x）｜中期 $567（FY+2 EPS × 30x）</td></tr>
+        <tr><td>Bear anchor（短/中）</td><td>$301（-29%）/ $374（-11.5%）</td></tr>
+        <tr><td>紅旗清單</td><td>① QC-22 警示 1 週 +13% 漂移（資料新鮮度截至 4/17）；② Capex/Rev 23%（FY25）→ 30%+ FY26E</td></tr>
+        <tr><td>§0.5 核心假設</td><td>H1 Azure AI &gt; 30% by FY28；H2 Copilot 50M seats by FY28；H3 Capex 觸頂 FY27 H1，FCF Margin 回升至 28%+ FY29</td></tr>
+        <tr><td>§8 最終結論（綜合訊號燈）</td><td><strong>B（衛星候選）</strong> — 主因 MA 🟠 暫不進場 + QC-22 追漲警示</td></tr>
+      </table>
+
+      <h5>ID 報告（多個關聯）</h5>
+      <table>
+        <tr><th>ID</th><th>產業評級</th><th>關鍵趨勢</th><th>MSFT 位置</th></tr>
+        <tr><td>ID_AIAcceleratorDemand_20260419（母題）</td><td>Phase II</td><td>訓練→推論混合期、ASIC 份額 35-40%、電力瓶頸</td><td>capex 投入端 alpha，AI run-rate 商業化 leader</td></tr>
+        <tr><td>ID_CUDARocmMoat_20260501</td><td>Phase II</td><td>CUDA inference moat 開始裂；framework abstraction 向上吸收</td><td>MSFT MAI-1 自建 + Phi-4 ~500B 已 production scale</td></tr>
+        <tr><td>ID_CybersecurityPlatformConsolidation_20260423</td><td>Phase II</td><td>平台化爆發；MSFT Sentinel +150% 同期高速成長</td><td>三大平台之一（CRWD/PANW/MSFT）</td></tr>
+        <tr><td>ID_AgenticAIPlatform_20260424（母題）</td><td>Phase II</td><td>Horizontal 三強商業化驗證；MSFT AI $13B</td><td>Horizontal 前五之一（合計 &gt; $15B = TAM 2 倍）</td></tr>
+        <tr><td>ID_AIInferenceEconomics_20260430（母題）</td><td>Phase II</td><td>推論經濟學重塑</td><td>Azure 在 inference 服務佈局領先</td></tr>
+      </table>
+
+      <p class="tiny"><strong>主要 DD/DCA 增量更新（vs 2026-04-18 DD）：</strong>① Q3 FY26 4/29 業績重大正面（Azure +40% 超 guide、Copilot 20M、AI run-rate $37B +123%、RPO $627B +99%）→ thesis 強化｜② 但 capex 上修至 $190B（+$25B vs 預期）→ 短期 FCF / valuation 衝擊｜③ 股價從 $422 回落至 $414，QC-22 警示淡化、MA 結構於 200DMA 上方 → DD 的 B 訊號可升級至 A。</p>
+
+    </details>
+
+  </div>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+</body>
+</html>

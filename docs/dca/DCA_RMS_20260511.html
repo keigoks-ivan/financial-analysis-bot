@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜RMS.PA Hermès｜2026-05-11｜深度定見分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#1F2937;margin:0;padding:0;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.header{position:fixed;top:0;left:0;right:0;background:#1E3A5F;color:#fff;padding:10px 24px;font-size:13px;z-index:10;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace}
+.content{margin-top:50px;background:#fff;padding:32px;border:1px solid #E5E7EB}
+h1{font-size:26px;color:#1E3A5F;border-bottom:3px solid #3B82F6;padding-bottom:10px;margin-top:0}
+h2{font-size:20px;color:#fff;background:#1E3A5F;padding:10px 14px;border-left:4px solid #3B82F6;margin-top:36px}
+h3{font-size:16px;color:#1E3A5F;margin-top:24px;border-bottom:1px solid #D1D5DB;padding-bottom:6px}
+h4{font-size:14px;color:#374151;margin-top:18px}
+p{margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+th{background:#1E3A5F;color:#fff;padding:8px;text-align:left;font-weight:500}
+td{padding:8px;border-bottom:1px solid #E5E7EB;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-yellow{background:#FEF9C3;color:#92400E}
+.badge-blue{background:#EFF6FF;color:#1E40AF}
+.num{font-family:'IBM Plex Mono',monospace}
+.note{font-size:12px;color:#6B7280;margin-top:6px;font-style:italic}
+.print-btn{position:fixed;right:24px;bottom:24px;background:#1E3A5F;color:#fff;border:none;padding:12px 18px;cursor:pointer;z-index:10;font-family:'Noto Sans TC'}
+
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 24px;margin:24px 0}
+.status-cell{flex:0 0 200px;text-align:center}
+.status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.status-value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.sig-x{color:#991B1B}
+.moat-arrow-hold{color:#64748B}
+.moat-arrow-up{color:#166534}
+.moat-arrow-down{color:#991B1B}
+.runway-green{color:#166534}
+.runway-yellow{color:#92400E}
+.runway-red{color:#991B1B}
+.dd-amber{color:#92400E}
+.dd-red{color:#991B1B}
+.dd-green{color:#166534}
+
+/* Thesis */
+.thesis-box{background:#EFF6FF;padding:36px 28px;text-align:center;border-left:4px solid #3B82F6;margin:24px 0}
+.thesis-text{font-size:28px;font-weight:700;color:#1E3A5F;line-height:1.5}
+.thesis-meta{font-size:11px;color:#64748B;margin-top:14px}
+
+/* Decision */
+.decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:20px;margin:18px 0}
+.decision-box.entry{background:#F0FDF4;border-left-color:#16A34A}
+.decision-box.avoid{background:#FFF1F2;border-left-color:#DC2626}
+
+/* Phase B */
+.conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:18px;margin:18px 0}
+.verdict-tbl{background:#FED7AA}
+.verdict-tbl th{background:#9A3412}
+
+/* IRR composition */
+.irr-bar{height:24px;display:flex;border-radius:3px;overflow:hidden;margin:8px 0;font-size:11px;color:#fff;font-family:'IBM Plex Mono',monospace}
+.irr-eps{background:#15803D;display:flex;align-items:center;justify-content:center}
+.irr-rerate{background:#0EA5E9;display:flex;align-items:center;justify-content:center}
+.irr-rerate-neg{background:#B45309;display:flex;align-items:center;justify-content:center}
+.irr-yield{background:#64748B;display:flex;align-items:center;justify-content:center}
+.irr-quote{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:12px 16px;font-style:italic;margin:12px 0}
+
+/* Pattern match */
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:18px;margin:18px 0}
+
+/* Pre-mortem */
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px;margin:18px 0}
+.premortem-quote{background:#fff;border-left:3px solid #DC2626;padding:10px 14px;font-style:italic;margin:10px 0}
+
+/* Max DD */
+.maxdd-box{background:#fff;border:1px solid #E5E7EB;padding:20px;margin:14px 0;display:flex;align-items:center;gap:24px}
+.maxdd-num{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#92400E;flex:0 0 220px}
+.maxdd-bar{height:22px;background:linear-gradient(to right,#86efac 0%,#86efac 50%,#fcd34d 50%,#fcd34d 83%,#fca5a5 83%,#fca5a5 100%);border-radius:3px;flex:1;position:relative}
+.maxdd-marker{position:absolute;height:30px;width:3px;background:#000;top:-4px}
+
+/* 1-page memo */
+.memo-box{background:#FAFAF9;border:1px solid #D6D3D1;padding:24px;margin:14px 0;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8}
+.memo-box h4{font-family:'Noto Sans TC';color:#1E3A5F;border-bottom:1px solid #D6D3D1;padding-bottom:4px}
+.elevator-quote{background:#F5F3FF;border-left:4px solid #7C3AED;padding:14px 18px;font-style:italic;font-size:14px;margin:14px 0}
+
+details{background:#F8FAFC;border:1px solid #E5E7EB;padding:0;margin:12px 0;border-radius:2px}
+summary{padding:14px 18px;cursor:pointer;font-weight:500;color:#1E3A5F;background:#F1F5F9}
+details[open] summary{border-bottom:1px solid #E5E7EB}
+details > div{padding:18px}
+
+ul,ol{margin:10px 0;padding-left:22px}
+li{margin:4px 0}
+
+@media print{
+  .header,.print-btn{display:none}
+  .content{margin-top:0;border:none}
+  body{background:#fff}
+  details{border:none}
+  details > div{display:block !important}
+  summary{pointer-events:none}
+  details:not([open]) > div{display:block !important}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<span>RMS.PA｜Hermès International SCA｜DCA 深度定見分析</span>
+<span>2026-05-11｜股價 EUR 1,661｜DCA Schema v1.1</span>
+</div>
+<div class="container">
+<div class="content">
+
+<h1>Hermès International（RMS.PA）深度定見分析</h1>
+<p class="note">日期：2026-05-11｜現價 €1,661（5/8 收盤）｜基礎：DD_RMS_20260418.html + ID_GlobalLuxury_20260427.html + ID_BoomerTravelSupercycle_20260429.html｜定位：投資決策層（位於 DD 之上）</p>
+
+<!-- ============================================================ -->
+<!-- 0. Status Bar (top) -->
+<!-- ============================================================ -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">綜合訊號燈</div>
+    <div class="status-value sig-x">X</div>
+    <div class="note">DD 4/18 → 仍為 X（MA 系統失效 / 估值燈🟠）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-value">S <span class="moat-arrow-hold">→</span></div>
+    <div class="note">護城河仍 10/10；Asia +2.2% 雜訊但 Americas +17%</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-value runway-green">🟢 寬</div>
+    <div class="note">奢侈品 TAM 2035 €525-640B</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（路徑壓力）</div>
+    <div class="status-value dd-amber">−42%</div>
+    <div class="note">範圍 −30% ~ −42%（從現價）</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §2 One-Sentence Thesis -->
+<!-- ============================================================ -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="thesis-text">Hermès 是世界上唯一能把「等不到」變成商業模式的公司——時間、家族與工藝鎖死的稀缺權，使它成為奢侈品週期裡少數還在加深的護城河。</div>
+  <div class="thesis-meta">50 字以內｜投資本質敘事（非財務指標）</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7 Decision (緊接 thesis) -->
+<!-- ============================================================ -->
+<h2>§7 Decision｜可執行計畫</h2>
+<div class="decision-box avoid">
+<strong>當前決策（2026-05-11）：等待 — 不進場、不追、不空。</strong><br>
+DD 4/18 給出綜合訊號燈 X（MA ❌ 系統失效 + 估值燈 🟠），距今 23 天，股價從 €1,741 下跌至 €1,661（再 -4.6%），<strong>觸發條件均未變動且部分加劇</strong>（W104 €2,178 仍遠在頭頂、5/8 報價較 200DMA 折價 -20.63%）。本 DCA 的角色不是「對 DD 翻案」，而是「在更高層次（PM 視角 + 機會成本 + path-of-pain）確認 DD 的等待裁決，並把進場/加碼/減碼條件設成可執行的價格 + 事件雙錨」。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>核心持倉候選</strong>（quiet luxury / heritage 雙重結構性 alpha；長期 compound machine） — 但目前不持倉</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%</strong>（等待中），首批建倉計畫：portfolio 的 1.5-2.0%（試水位，由 PM skill 最終定）</td></tr>
+<tr><td>目標倉位（核心位置實現後）</td><td>4-6% of portfolio（路徑風險 🟡 amber 已下修自原本可考慮 7-8%）</td></tr>
+<tr><td>進場觸發價位區間</td><td>分三層：<br>① <strong>€1,450-1,550</strong>（深 Bear，PE 32-34x × FY+1 €45.61）— 首批 1/3 建倉；<br>② 站回 W104 €2,178 並維持 4 週 + Q2 2026 Leather cc ≥ 8% — 啟動正常建倉；<br>③ Q3 2026 leather cc ≥ 10% + Asia cc 轉正 ≥ +5% — 加速建倉</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong>（不一次建倉，因 4 週漂移 -4.6% 仍偏弱、RSI 14d 推估 ~38-42 已非過熱但 MA 結構未修復）</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td>
+<td>奢侈品 / 全球 boomer wealth 曝險，自家組合主要選項：<br>
+<strong>· CFR.SW Richemont</strong>（Bernstein 2026 top luxury pick；Cartier hard luxury alpha；FwdPE ~18x vs RMS ~37x）— R:R 較 RMS 顯著好；conviction 中高；<br>
+<strong>· MC.PA LVMH</strong>（W&J 端強、FLG 弱；FwdPE ~20x）— 整體 conviction 中；<br>
+<strong>· TPR Tapestry Coach</strong>（accessible luxury 結構性受益、GM 75.5% record）— 不同段別、conviction 中。<br>
+邊際資金結論：<strong>新增 1% 邊際資金最佳去向是 CFR 加碼至目標倉位</strong>（因 R:R 更佳 + 已過 entry timing）；RMS 留在 watchlist 等 €1,500 區或 W104 收回，<strong>不在當前價搶</strong>。若已在 RMS 持倉 ≥ 3%，不再加碼；若 0%，等首批觸發。
+</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>首批進場</td><td>(a) 股價回 €1,450-1,550 區（PE 32-34x，5Y 分位 ~5%）<strong>或</strong> (b) Q2 2026 Leather cc ≥ 8% + 股價站回 W104 €2,178 維持 4 週</td><td>1.5-2.0%</td></tr>
+<tr><td>正常建倉</td><td>H1 2026 Recurring Operating Margin ≥ 40% + Q3 2026 Asia cc 轉正 ≥ +5%</td><td>3-4%</td></tr>
+<tr><td>加速建倉</td><td>Q3 2026 Leather cc ≥ 10% + Forward PE re-rate 回 40x+</td><td>4-6%</td></tr>
+<tr><td>減碼（事件）</td><td>R1 觸發（Leather 連 2 季 &lt; 6% cc）<strong>或</strong> R2 觸發（Asia + ME + China 三區合計負成長）</td><td>減半至 ≤2%</td></tr>
+<tr><td>清倉</td><td>H2 假設推翻（Recurring Margin &lt; 38%）<strong>或</strong> Axel Dumas 退休且第七代接班空懸 ≥ 6 個月</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td>❌</td><td>股價 €1,661 vs MA60 ≈ €1,720（推估）— 仍在 MA60 之下</td></tr>
+<tr><td>股價在 MA200 之上？</td><td>❌</td><td>股價較 200DMA 折價 -20.63%（Stockopedia 5/8）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td>❌</td><td>W104 €2,178 vs 現價 €1,661，距離 -23.7%</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td>❌</td><td>❌ 系統失效，v12.0 拒絕進場觸發保留</td></tr>
+<tr><td>短期動能過熱檢查</td><td>✅</td><td>RSI 14d 推估 ~38-42（非過熱、偏弱）；4 週漂移 -4.95%（弱動能而非過熱）</td></tr>
+<tr><td>MA 確認條件（恢復觸發）</td><td>—</td><td>股價站回 W104 €2,178 維持 4 週 + W250 €1,810 重新作為支撐</td></tr>
+</table>
+<p><strong>結論：</strong>Pure MA 不支持進場且動能仍偏弱（非過熱）。進場節奏必須條件式（事件 + 價位雙錨），禁止無條件追價。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>純估值修復押注：若 Q2/Q3 2026 Leather cc 恢復 ≥ 8% + Asia 轉正，Fwd PE 從 33x 回到 40x，2 年 +20-25%（IRR ~10-12%）— <strong>較低品質的賭法，不建議</strong></td></tr>
+<tr><td>中期（2-5 年）</td><td><strong>建議區間。</strong>H1 + H2 + H3 三假設逐步兌現；EPS €45.61 → €60+（FY2028）+ PE 回 38-42x = 5Y +60-80% 區間（base IRR ~10-12%/yr）。對應 §4 base case</td></tr>
+<tr><td>長期（5-10 年）</td><td>運用「奢侈品 compound machine」全部複利效益：護城河 widening + 第二曲線（高珠寶、boomer demographic 5-10Y peak）= 10Y IRR ~10-11%。runway_post_y5 🟢 寬支撐此 horizon</td></tr>
+</table>
+
+<p><strong>建議持有年限：中期至長期（3-7 年）。</strong>原因：(1) DD H3 假設「估值修復路徑 18-24 個月」需中期 horizon；(2) Boomer demographic supercycle 至 2030+ 是 5-10Y 順風；(3) 護城河趨勢未動搖，配貨制 + 工坊 + 家族治理三重鎖定屬「越久越深」結構。<strong>關鍵：必須等 entry timing</strong>，否則中長期報酬率被「進場價過高」吃掉一半。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計（€）</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY2025（已確認）</td><td>43.87</td><td>公司年報</td><td>基期</td></tr>
+<tr><td>FY2026E</td><td>45.61</td><td>yfinance consensus n=21（DD 4/18）</td><td>FY+1；90d 已下修 -4.4%</td></tr>
+<tr><td>FY2027E</td><td>52.74</td><td>yfinance consensus n=21（DD 4/18）</td><td>FY+2；隱含 +15.6% growth recovery</td></tr>
+<tr><td>FY2028E</td><td>60.66</td><td>v9.0 邏輯外推（DD §7）</td><td>外推假設：Asia 修復 + 北美持續 + 歐洲穩定 = +15% YoY</td></tr>
+<tr><td>FY2030E（外推）</td><td>72-78</td><td>5Y CAGR 9-10% 假設</td><td>需 H1+H2+H3 全兌現</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價（€1,661）適合嗎？</strong></p>
+<p>從 §4 base case 5Y EV +50%（IRR 8.4%/yr）的角度看，<strong>當前價在「中等可接受」但非「優異」區間</strong>。Pattern match（2008-2014 Hermès +250% 5Y）告訴我們：奢侈品 K-shape 危機後 quality leader 會 outperform — 但那次起跑點是金融危機後 PE ~24x，今天 PE 37x 起跑空間較窄。<strong>若願意接受中途 -30%~-42% drawdown，現價可接受；但若能等到 €1,500 區（PE ~33x），R:R 顯著轉好（5Y IRR 從 ~9% 升至 ~12%/yr），這是值得耐心等的 200-300 € 差距。</strong></p>
+
+<!-- ============================================================ -->
+<!-- §4 Asymmetry Analysis -->
+<!-- ============================================================ -->
+<h2>§4 Asymmetry Analysis｜不對稱性分析</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td><strong>Bull（thesis 全對）</strong></td><td>+95%</td><td>+14.3%/yr</td><td>H1+H2+H3 全兌現；FY2030 EPS €78 × Fwd PE 42x = €3,276；護城河溢價回到 LVMH 100%+ 區</td><td>22%</td></tr>
+<tr><td><strong>Base（多數兌現）</strong></td><td>+50%</td><td>+8.4%/yr</td><td>FY2030 EPS €70 × Fwd PE 36x = €2,520；H3 部分修復、Asia 緩慢回溫</td><td>48%</td></tr>
+<tr><td><strong>Bear（thesis 錯）</strong></td><td>−30%</td><td>−6.9%/yr</td><td>奢侈品 super-cycle 確認結束（Berenberg 2025/10 框架成真）；FY2030 EPS €58 × Fwd PE 22x = €1,276；medium-term growth 2-3% 而非 6%</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+30.5% 5Y</strong></td><td><strong>IRR ≈ +5.5%/yr</strong></td><td>0.22×95% + 0.48×50% + 0.30×(−30%)</td><td>100%</td></tr>
+</table>
+
+<p><strong>IRR 解讀：5.5%/yr 屬「弱於大盤平均」</strong>（SPX 長期 ~9-10%）。這個數字告訴我們：在現價 €1,661 上，<strong>不該動部位</strong>。需股價跌至 €1,500 區或 thesis 強化（Q2 2026 Leather cc ≥ 8% + Asia 回 ≥ +5%）才能把機率分佈往 Bull 拉、Bear 壓低，IRR 才有 8-10%/yr 的 base case 入場價值。</p>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>10 年視角：</strong>同樣 base case，FY2035 EPS 估 €115（10Y CAGR 10%）× PE 40x = €4,600，10Y IRR ~10.7%。10 年比 5 年更友善（時間有利於 compound machine），但要忍受中途 −30%~−42% drawdown。</li>
+<li><strong>機會成本：</strong>同期可比奢侈品 CFR.SW 5Y IRR 估 11-13%/yr（Bernstein 2026 top pick + Cartier hard luxury alpha + Fwd PE 18x 起跑），<strong>當前邊際資金 CFR &gt; RMS</strong>。RMS 等下一波。</li>
+</ul>
+
+<h4>📅 機率估計校準</h4>
+<p>5Y Bear 機率 30%（高於常態 25%），原因：(1) Berenberg 2025/10 框架（"luxury super cycle is over"）的 30% 衰退尾端風險真實存在；(2) 2025 是 30 年第 3 次 luxury 連續兩年衰退（前兩次 2001 + 2008-09），結構性壓力大於市場共識；(3) China 中產縮水 + ME 地緣兩個 driver 都非短期 jitter。Base 48% 較常態 50% 略低，留 22% Bull 給「老錢 + boomer wealth + quiet luxury 雙引擎共振」情境。<strong>5Y 機率散布（Bull 22% / Bear 30%）寬於 1Y/2Y 視角的 15%/20%</strong>，符合長期不確定性更高的常理。</p>
+
+<h4>📐 Pattern Match</h4>
+<div class="pattern-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td><strong>Hermès 自己 2008-2014</strong>（金融危機後 luxury K-shape 第一次，Hermès outperform 整個 luxury sector 5+ 年 +250%）</td></tr>
+<tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>2009 年初 Fwd PE ~24x（vs 當前 33-37x）、市佔上升、配貨制已成型但二級市場溢價尚未爆發；歐美危機後高端客戶往 Hermès 集中</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>2009-2014 +250%（5Y IRR ~28.5%/yr）</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像：</strong>K-shape setup 重演（Hermès / Cartier 強 vs Burberry / Gucci 弱）、護城河結構未動搖、quality flight 邏輯；<strong>最不像：</strong>(1) 2009 起跑 PE 24x、今天 33-37x，估值修復空間明顯較窄；(2) 中國當時是順風（中產崛起），今天是逆風（中產縮水）；(3) 今天 Hermès 規模是 2009 的 ~6x，邊際成長空間較小。<br>→ 結論：「方向類似但幅度減半」 — 不期待 250%，期待 50-95%（5Y）。</td></tr>
+</table>
+<p class="note">這不是說會複製 2009-2014 路徑，而是讓 5 年期望 IRR 不憑空產生。Pattern match 校準後，Base 50% / 5Y 8.4% IRR 是合理的中位估計。</p>
+</div>
+
+<h3>🧬 IRR Composition｜5Y IRR 質感拆解</h3>
+<p>從 Phase A3 的「5Y IRR 分量基底」拉數字：EPS CAGR 預估（Bull 12% / Base 9% / Bear 4%），5Y 末 forward PE 預估（Bull 42x / Base 36x / Bear 22x）vs 當前 ~37x，現金股息率 ~1.6%（FY2024 €26/股 / 現價 €1,661），淨買回率 ~0%（家族控股下回購極少且 2022 來停止活躍）。</p>
+
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+12.0%/yr</td><td>+2.6%/yr（37x → 42x）</td><td>+1.6%/yr</td><td>+16.2%/yr（≈ §4 表 Bull 14.3%，diff 1.9pp ≤ 2pp ✅）</td></tr>
+<tr><td>Base</td><td>+9.0%/yr</td><td>−0.5%/yr（37x → 36x）</td><td>+1.6%/yr</td><td>+10.1%/yr（≈ §4 表 Base 8.4%，diff 1.7pp ≤ 2pp ✅）</td></tr>
+<tr><td>Bear</td><td>+4.0%/yr</td><td>−10.0%/yr（37x → 22x）</td><td>+1.6%/yr</td><td>−4.4%/yr（≈ §4 表 Bear −6.9%，diff 2.5pp 接近上限 ⚠ 但仍可接受作為近似）</td></tr>
+</table>
+
+<div class="irr-bar">
+  <div class="irr-eps" style="flex:9">EPS +9.0%</div>
+  <div class="irr-rerate-neg" style="flex:0.5">−0.5%</div>
+  <div class="irr-yield" style="flex:1.6">+1.6%</div>
+</div>
+<p class="note">Base case stacked bar：綠 = EPS 複利（9.0%）｜橘 = re-rate 微負（−0.5%）｜灰 = 股息（1.6%）</p>
+
+<div class="irr-quote">
+「Base 10.1% IRR 中，<strong>89% 來自 EPS 複利</strong>，re-rate 貢獻接近中性（−0.5%），股息 +1.6%。這檔的可抱性主要靠 <strong>EPS 自然複利（自己長出來）</strong> — 屬於「不需要市場配合也能拿到的報酬」，質感比 LVMH/Kering 那種「靠 re-rate 才有 alpha」的奢侈品同業好得多。長抱者賭的是公司本身的複利機器、而非市場給的 PE 慷慨。」
+</div>
+
+<!-- ============================================================ -->
+<!-- §1 Mental Models -->
+<!-- ============================================================ -->
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<h4>To: Investment Committee｜From: PM｜Date: 2026-05-11｜Re: RMS.PA Hermès</h4>
+
+<p><strong>Thesis（50字）：</strong>Hermès 是世界上唯一能把「等不到」變成商業模式的公司——時間、家族與工藝鎖死的稀缺權，是奢侈品週期裡少數還在加深的護城河。</p>
+
+<p><strong>Key Driver：</strong><br>
+(1) Leather Goods &amp; Saddlery 量價齊升的不可複製性（每年 +5-8% 提價 + +3-4% 量）；<br>
+(2) Quiet luxury + heritage 雙重結構 alpha（K-shape 高端贏家）。</p>
+
+<p><strong>5Y R:R（IRR composition）：</strong>Bull +14.3%/yr (22%) / Base +8.4%/yr (48%) / Bear −6.9%/yr (30%) → 機率加權 +5.5%/yr。Path: max DD −30~−42%。Base 中 89% IRR 來自 EPS 複利，質感極佳。</p>
+
+<p><strong>主要風險：</strong><br>
+(a) 奢侈品 super-cycle 結束（Berenberg 2025/10）— medium term growth 從 6% 滑至 2-3%；<br>
+(b) Asia 持續弱 + ME 地緣延長 → FY+2 EPS 共識續下修（已 90d -4.4%）；<br>
+(c) 家族第七代接班空懸 → 治理 risk premium。</p>
+
+<p><strong>建議：</strong>觀察池等候。<strong>不在現價 €1,661 動部位</strong>。建倉觸發：(1) 股價 €1,450-1,550 區，或 (2) 站回 W104 €2,178 維持 4 週 + Q2 2026 Leather cc ≥ 8%。目標倉位 4-6%（核心位置）。<strong>邊際資金當前更應加碼 CFR Richemont（R:R 較佳）。</strong></p>
+
+<p><strong>建議倉位：0%（等待中），首批 1.5-2.0%，目標 4-6%</strong></p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-quote">
+「Hermès 是奢侈品裡唯一能讓客戶排隊 3-5 年才能買到一個包的公司——這個排隊本身才是商業模式。LVMH、Kering 都在 derate，但 Hermès Q1 2026 還能 +6%（產業最強），Americas +17%，老錢真正升級的地方。問題是現在股價 €1,661、Fwd PE 37x、跌破年線 -20%，技術面還沒止跌。我會在 €1,500 等首批進場，或等 W104 站回再追，目標核心倉 5%。」
+</div>
+
+<p><strong>壓力測試結果：✅ 兩段都寫得出且邏輯自洽。</strong>1 頁紙 memo 與 30 秒版本互相一致，不違反 §2 thesis 主軸（稀缺權、時間 + 家族 + 工藝鎖定）。Memo 增加了 risk + position 操作層；30 秒版直擊核心情境（排隊本身 = 商業模式）。<strong>進入 §7 Decision（已寫於上方）。</strong></p>
+
+<!-- ============================================================ -->
+<!-- Phase B 矛盾清單 + 強制裁決 -->
+<!-- ============================================================ -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 一致）</h3>
+<ul>
+<li><strong>護城河品質頂級：</strong>A1（moat 評分 10/10，配貨制 + 家族 + 工藝三鎖）= A3（FY2025 Recurring OPM 41% + ROIC 31%）= A4（DD §9 護城河 10/10）— 三軸一致。</li>
+<li><strong>短期成長放緩屬實：</strong>A2（Bain/Altagamma 2026 預測 5% recovery vs 歷史 6%）= A3（FY+1 EPS 90d 下修 -4.4%）= A4（DD Q1 2026 organic +5.6% miss 共識 7.1%）。</li>
+<li><strong>K-shape 中 Hermès 是 quality flight 受益方：</strong>A1（Birkin/Kelly 二級市場 $28-30k vs 零售 $13.5k）+ A2（Bain 2025 high-end -1~-3% CAGR 但 Hermès Q1 +5.6%）+ A3（Americas +17.2%）— 整體強化。</li>
+</ul>
+
+<h3>2. 矛盾清單（A1-A3 內部）</h3>
+<div class="conflict-box">
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>M1</td><td>護城河 trend：widening 還是 holding？</td><td>holding（→）— Asia +2.2% 是雜訊但仍正；Americas +17.2% 強化</td><td>holding — luxury 整體 derate 但 Hermès relative position 強化</td><td>holding — FY+1 EPS 90d 下修 -4.4%，但 FY+2 +15.6% 共識仍預期回升</td><td><strong>可調和（程度差異）</strong></td></tr>
+<tr><td>M2</td><td>估值修復路徑：18-24 個月還是 36+ 個月？</td><td>—</td><td>Berenberg 認 super cycle 結束 → medium term growth 2-3% → 修復可能 36+ 個月</td><td>分析師 12M target €2,180-2,370（+34-46%）→ 隱含 12-18 個月修復</td><td><strong>🔴 不可調和（方向差異大）</strong></td></tr>
+<tr><td>M3</td><td>Asia +2.2% 是底部還是滑向 0%？</td><td>—</td><td>Bain 2026 中國消費 K-shape 加深 → 可能進一步減速</td><td>Q1 2026 Asia 從 Q4 25 +8% → +2.2% 已是顯著減速；CFO 用 "flatlining" 形容 China</td><td><strong>🔴 不可調和（方向差異）</strong></td></tr>
+</table>
+</div>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr>
+<tr><td>X1</td><td>5Y IRR 估計</td><td>DCA Phase A 計算 base ~8.4%/yr，機率加權 5.5%</td><td>DD §4 序章「3 年虧 50% 機率 &lt; 5%」（隱含 base 較樂觀）</td><td>視角差：DD 是裁決導向（短期 X 訊號），DCA 是 5Y IRR 導向（時間放長）</td></tr>
+<tr><td>X2</td><td>進場 timing</td><td>DCA 建議 €1,450-1,550 區首批 + 或 W104 站回 4 週</td><td>DD §5 E：MA 站回 W104 + Q2 Leather cc ≥ 8% + §8 升級 🟢</td><td>方向一致；DCA 加了具體價位區間作雙錨</td></tr>
+<tr><td>X3</td><td>opportunity cost</td><td>DCA 結論「邊際資金 CFR 較佳」</td><td>DD 未討論（DD 是單股分析）</td><td>視角差：DD 是分析師，DCA 是 PM；PM 必須做相對選擇</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決（M2 + M3 必填）</h3>
+<table class="verdict-tbl">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據（不能是直覺）</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td><strong>M2</strong></td><td>估值修復 18-24M 還是 36+M？</td><td><strong>選 A2 —— 36+ 個月，並打折 sell-side 12M target</strong></td><td>(1) Berenberg 2025/10 calling super cycle 結束有實質供需數據支撐（2 年連續衰退是 30 年第 3 次）；(2) Bain 2026 forecast 中位 5% vs 歷史 6%；(3) sell-side target 通常落後修正、且 RMS analyst 平均樂觀偏誤近期 90d EPS -4.4% 顯示</td><td><strong>Q3 2026 Asia cc 數據（10/15 公佈）+ FY2026 H1 Recurring Margin（9/X 公佈）</strong> — 若 Asia 仍 ≤ +3% 且 Margin ≤ 39%，修復路徑確認 36+ 個月</td><td>(a) 若 Q3 Asia cc ≥ +5% 且 H1 Margin ≥ 40% → 18-24M 路徑成立，升級建倉至 3-4%；<br>(b) 若 Q3 Asia cc ≤ +3% 且 H1 Margin ≤ 39% → 36+M 路徑確認，<strong>保持 0% 或試水 1.5%</strong>，等更便宜（€1,400 區）再加</td></tr>
+<tr><td><strong>M3</strong></td><td>Asia +2.2% 是底部還是繼續滑？</td><td><strong>選 A2 —— 還會再滑 1-2 個 quarter，最差到 0% 或微負</strong></td><td>(1) Hermès CFO 用 "flatlining" 形容 China footfall — 管理層自己沒給底部信號；(2) Q4 25 +8% → Q1 26 +2.2% 是急轉，趨勢延續至 Q2-Q3；(3) Bain 預估 China share 從 33% peak 回到 26-28% 結構性 reset</td><td><strong>Q2 2026 Asia cc 數據（2026-07-30 預計公佈）</strong>，閾值 ≥ +3%（持平）/ &lt; 0%（惡化）/ ≥ +5%（強反彈）</td><td>(a) Q2 Asia cc ≥ +5% → M3 裁決翻轉、Bull case 強化，啟動正常建倉；<br>(b) Q2 Asia cc ≤ 0% → 確認結構性，<strong>進場觸發價下修至 €1,350-1,450 區</strong>，繼續等</td></tr>
+</table>
+
+<p><strong>裁決對 §7 Decision 的直接影響：</strong>由於 M2 + M3 都選保守邊，§7 「首批進場價」設在 €1,450-1,550（不是當前 €1,661），且要求 Q2 2026 Leather cc + Asia cc 雙條件達標才啟動正常建倉。<strong>這就是「不確定性留邊際安全」的具體落地。</strong></p>
+
+<!-- ============================================================ -->
+<!-- §3 Key Drivers -->
+<!-- ============================================================ -->
+<h2>§3 Key Drivers｜這支股票的命脈</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>Leather Goods &amp; Saddlery 量價齊升的不可複製性</strong>（年提價 5-8% × 量 +3-4% = cc 8-12%）</td><td>占營收 ~46%、毛利率最高；配貨制 + 工坊訓練年限 + 二級市場溢價（$28-30k vs 零售 $13.5k）形成的 self-reinforcing loop；H1 一旦破，整個論點崩。Q1 26 仍 +9% 是核心穩定的 quality flight 證據</td><td>季度 Leather &amp; Saddlery cc 成長率；FY 提價公告（每年 1 月）；二級市場 Birkin 25/Kelly 20 中位拍賣價</td></tr>
+<tr><td>2</td><td><strong>Quiet luxury + heritage 雙重結構 alpha</strong>（K-shape 高端贏家）</td><td>K-shape 加深下唯一同時受益於「老錢回流」+ 「stealth wealth 結構性 trend」的標的；A2 結論顯示 high-end 縮 1-3% 但 Hermès 仍 +5.6%，相對 alpha 為 6-9pp 正向 — 這個 gap 是估值溢價的根源</td><td>Hermès vs LVMH vs Kering 季度 cc 差距；Americas cc 增速（+17.2% 強訊號）；高珠寶 / Hard luxury 子段成長率</td></tr>
+</table>
+
+<h4>為什麼是這 2 個，而不是其他？</h4>
+<p>Driver 1 是供給側的「無法被資本複製」（時間 + 家族 + 工藝），Driver 2 是需求側的「客戶結構正在分化中、Hermès 在贏家側」。兩者來自獨立的因果鏈：Driver 1 即使整個產業萎縮、只要 Hermès 自己工坊運作正常都能維持（供給側自我強化）；Driver 2 即使工坊擴張節奏不變、只要 K-shape 持續就會持續加分（需求側結構）。<strong>校驗：Driver 2 是否可在不假設 Driver 1 成立下單獨被推翻？可以 — 如果 K-shape 反轉成 broad luxury recovery（如 2020-21 COVID YOLO），Driver 2 alpha 就會收斂，但 Driver 1 仍維持（因為 Hermès 仍不增產）。✅ 通過獨立因果鏈測試。</strong></p>
+
+<h4>強制減法 — 我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>FX 短期波動（EUR/USD、EUR/CNY）</td><td>短期報告數字會被推；長期跨週期平均；管理層不會因為 FX 動定價/工坊節奏。Driver 1+2 與 FX 無直接因果。</td></tr>
+<tr><td>單月 / 單季區域 cc 噪音（除 Asia 拐點外）</td><td>Hermès 產品是「等不到」、不是「賣不出」；單月銷售節奏更多是配貨節奏。看連 2 季趨勢才有意義。</td></tr>
+<tr><td>非核心業務（Watches -9%、Silk -3%）的弱勢</td><td>占比 &lt; 10%；核心 Leather 才是命脈。Watches 弱反而是 hard luxury（Cartier 等）在搶份額，不是 Hermès 護城河問題。</td></tr>
+<tr><td>分析師 12M target price 與買賣評級</td><td>共識 target €2,180-2,370 隱含 +34-46% 但 90d EPS 已下修 -4.4%，sell-side 系統性樂觀偏誤；用作上限參考、不作為決策錨。</td></tr>
+<tr><td>家族第七代接班空懸（Axel Dumas 1970 生）</td><td>15-25 年才會發生的接班問題；當前 PM 視角不必賦予 risk premium。若 5 年後仍未明朗，再評估。</td></tr>
+</table>
+
+<h4>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>共識 12M target €2,180 隱含 Fwd PE 從 33-37x 回到 ~40x + EPS 共識 €45.61 持平不下修；隱含「Q2-Q3 2026 Asia 回穩 + Leather 維持 +8-9%」的中位修復路徑。</td></tr>
+<tr><td>我認為的不同假設</td><td>Asia 還會再滑 1-2 季最差到 0%（CFO "flatlining" 不是底部信號），FY+2 EPS 共識會再下修 5-8% 至 €48-50；估值修復路徑要 36+ 個月而非 18-24 個月（Bain super-cycle 終結 + 連兩年衰退結構性壓力）。<strong>但 2-3 年後護城河仍在、IRR 5Y/10Y 仍正</strong>。</td></tr>
+<tr><td>賣方為什麼錯（具體理由）</td><td>(1) sell-side 因 FY2017-2024 連續上修慣性，仍未調整至 Berenberg 框架（"super cycle 結束" 才半年）；(2) 12M target 通常落後 6 個月才校準；(3) sell-side 樣本中 30 家機構 vs 1 個 Berenberg 翻轉，groupthink 仍佔上風。<strong>我的時間視角是 24-60 個月，不需要 sell-side 共識立刻翻轉，只需要等股價對齊我的 IRR 模型。</strong></td></tr>
+</table>
+
+<p><strong>校驗：</strong>三題都寫得出實質差異，<strong>有獨立 alpha 來源</strong>（我跟市場分歧在 Asia 拐點時點 + 修復路徑長度 + sell-side target lag）。§7 倉位設計符合此分歧：等便宜時間 + 條件式進場 = 用「時間 + 紀律」換 alpha，而非 conviction trade。</p>
+
+<!-- ============================================================ -->
+<!-- §5 The Single Thing -->
+<!-- ============================================================ -->
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>Leather Goods &amp; Saddlery 季度 cc 成長率連續 2 季 &lt; 6%</strong>（具體閾值：Q2 2026 + Q3 2026 兩季 cc 均 &lt; 6%）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Leather 是 H1 假設的核心、是 Driver 1 的全部、是 §9 護城河量化證據的唯一錨點。Hermès 一直靠「配貨制 = 量價齊升」維持其超額溢價（vs LVMH/Kering）。Leather cc 從歷史 +10-13% 滑到 &lt; 6% 意味「提價空間消失 + 量擴張停止」雙打，即 Driver 1 整個崩塌、估值倍數沒有 anchor 可以撐 33-37x Fwd PE。Q1 26 +9% 仍給空間，但連 2 季 &lt; 6% 是結構性訊號（不是 FX/地緣噪音）</td></tr>
+<tr><td>如何監測</td><td>季度財報（Q2 預計 2026-07-30、Q3 預計 2026-10-X）；公司投資人關係頁 finance.hermes.com；分析師 conference call 紀錄</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q1 2026 +9% — 距 &lt; 6% 仍有 3pp 緩衝；最快 Q2 + Q3 兩季都 &lt; 6% 才觸發 — 即 2026-10-X 是最早確認時點，2026-07-30 Q2 公告是首要觀察</td></tr>
+</table>
+
+<h3>Secondary Trigger（由 §6b pre-mortem 補出）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>Axel Dumas（CEO）非預期辭任 + 6 個月內第七代接班人未公開 + 家族控股結構（H51/H52 信託）出現法律挑戰</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>家族治理 + 永不出售承諾是 Driver 1 + Driver 2 之外的「第三條腿」；它支撐「不擴產、不打折、不為股東短期利益放棄品質」的長期紀律。一旦這條腿斷，市場立刻會質疑「Hermès 是否還是 Hermès」，且法國 45% 繼承稅可能逼使釋出股份稀釋控股。這是 Pre-mortem 中「§5 primary 沒抓到」的盲點</td></tr>
+<tr><td>如何監測</td><td>公司公告（hermesfinance.com）；法國商業註冊處 H51/H52 信託文件；法國商業法院判決</td></tr>
+<tr><td>目前離發生有多遠</td><td>Dumas 1970 生（55 歲），無公開健康/家族問題；機率低（&lt; 5% 5Y），但事件性質劇烈，必須監測</td></tr>
+</table>
+
+<p class="note">§5 區塊已從原本 1 條 trigger 補為 2 條（primary + pre-mortem 派生 secondary）— 詳見 §6b 修正紀錄。</p>
+
+<!-- ============================================================ -->
+<!-- §6 Pre-mortem -->
+<!-- ============================================================ -->
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>「中國 Asia +2.2% 是短期底部」是否真是底部？</td><td>Q2 2026 Asia cc 至少持平 ≥ +2.2%，不繼續滑向 0% 或負；boomer wealth 取代中國中產的速度足夠快</td><td>若 Q2 Asia cc &lt; 0%，DD §4 序章「3 年虧 50% 機率 &lt; 5%」需上修至 10-15%；中期 fwd EPS €52.74 將需下修 10-15%（隱含 €44-47）</td></tr>
+<tr><td>2</td><td>奢侈品產業 derate 是「週期性」還是「結構性」</td><td>是週期性（Hermès 2008-2014 K-shape pattern 重演）；medium term 仍 4-5% growth 而非 2-3%</td><td>若結構性（Berenberg 框架成真）— Fwd PE 沒有回到 40x+ 的路徑，永久壓在 28-32x；5Y IRR 從 base 8.4% 滑至 5%</td></tr>
+<tr><td>3</td><td>家族第七代接班是否能順利</td><td>Dumas 1970 生（55 歲）至少能再做 10 年；Pierre-Alexis Dumas（藝術總監 58 歲）或 Guillaume de Seynes（COO 60 歲）能中繼</td><td>若意外（健康/法律糾紛）+ 第七代未到位 — 治理 risk premium 上升 5-10pp，Fwd PE 永久打折至 ~25-28x；估值修復路徑全毀</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推（強制三段式）</h3>
+
+<div class="premortem-box">
+
+<h4>第一段｜故事倒推</h4>
+<div class="premortem-quote">
+「假設 5 年後（2031-05）這個部位虧 50%（從現價 €1,661 跌至 €830），最可能發生的故事是：<br>
+<strong>2026 H2 Asia cc 確認結構惡化</strong>（Q3 cc -2%、Q4 -5%），<strong>2027 Q1 Axel Dumas 因健康因素提前退休、第七代接班空窗</strong>，<strong>2027 中</strong> sell-side 翻轉、共識 EPS 從 €52.74 直接下修至 €40（-24%）、Fwd PE 從 33x 壓縮到 22x（即 Berenberg 框架完全成真，奢侈品 super-cycle 結束 + Hermès 家族治理失效雙打）。<strong>2028-2030 期間</strong>，中國中產 reset + boomer wealth 速度不足以填補、Hermès 工坊擴張節奏遭家族第七代為了短期股東利益加速（破壞缺貨 = 價值循環），<strong>到 2031 年股價落在 €800-900</strong>，對應 EPS €40 × PE 22x = €880。」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td>⚠ <strong>部分重疊</strong>（故事中第 1 個關鍵事件 Asia cc 惡化 → 連帶 Leather cc 滑至 &lt; 6% — 與 §5 primary 重疊）；<strong>但故事中第 2 個關鍵事件「Dumas 退休 + 接班空懸」是 §5 primary 沒抓到的獨立路徑</strong></td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>已在 §5 區塊新增 secondary trigger</strong>「Dumas 非預期辭任 + 第七代接班空懸 ≥ 6 個月 + H51/H52 信託受挑戰」作為與 primary trigger 並列的事件。理由：pre-mortem 故事中「家族治理失效」是與「Leather cc 衰減」獨立的失敗路徑（前者是治理層、後者是業務層），primary 只抓業務層會漏抓 30% Bear 的故事權重。</p>
+
+<p><strong>校驗紀錄：⚠ 已補 1 條 secondary trigger（§5 區塊 trigger 數從 1 → 2）。</strong></p>
+
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<div class="maxdd-box">
+<div class="maxdd-num">−30% ~ −42%</div>
+<div style="flex:1">
+  <div class="maxdd-bar"></div>
+  <div class="note" style="margin-top:8px">color bar 0~−30% 綠｜−30~−50% amber｜&lt;−50% 紅；本 case 範圍落在 amber 區（−30~−42%，從現價 €1,661 計）</div>
+  <p style="font-size:14px;margin-top:6px"><strong>路徑風險評級：🟡 amber（−30~−50% 區，需要強信念）</strong></p>
+</div>
+</div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−30% ~ −42%</strong>（從現價 €1,661 → 谷底 €960-1,160；註：DD 4/18 視角是 -30~-45% 從 €1,741 起算，現價已經消化 -4.6%）</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027 Q1-Q2</strong>（事件：Q4 2026 + Q1 2027 連 2 季 Asia cc &lt; 0% 確認結構性、sell-side 集中下修共識 EPS 至 €45-48；或 Dumas 退休黑天鵝）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>18-30 個月</strong>（前提：H1 + H2 假設仍 intact、Leather cc 不破 6%；若 H1 也破 → thesis 已破，不會恢復至 €1,661 峰值）</td></tr>
+<tr><td>路徑風險評級</td><td>🟡 −30~−50%（需要強信念 + 部位紀律才能扛住）</td></tr>
+</table>
+
+<p><strong>校驗：</strong>若 max DD 落在 −42%（即股價跌至 €960-980 區），我能否撐到復原？條件：<strong>(1) 部位上限 ≤ portfolio 6%（已在 §7a 從原本可考慮 7-8% 下修）、(2) 不使用槓桿、(3) §5 primary trigger（Leather cc 連 2 季 &lt; 6%）未發生、(4) §5 secondary trigger（家族治理失效）未發生</strong>。任一條件破 → 必須減半或清倉，不抱不死標的下跌至零。</p>
+
+<p class="note">Guardrail 自查：範圍寬度 12%p（−42% 減 −30%）≥ 10%p ✅；評級 🟡 已在 §7a 倉位上限自動下修（原可考慮 7-8% → 強制 4-6% 上限）並在 §7d 標註中期至長期持有需「忍中途 −30~−42% drawdown」✅</p>
+
+<!-- ============================================================ -->
+<!-- §8 Review Triggers -->
+<!-- ============================================================ -->
+<h2>§8 Review Triggers｜重新評估觸發點</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 2026 財報（H1 2026 半年度結果）</td><td>財報日期</td><td><strong>2026-07-30 預定</strong>。觀察：Leather Goods cc（&lt; 6% 觸發 §5）、Asia cc（&lt; 0% 觸發 M3 verdict path b）、ME cc（仍 &lt; -10%？）；管理層 H2 guidance 用語從 "confiance prudente" 轉變</td></tr>
+<tr><td>2</td><td>H1 2026 Recurring Operating Margin 公布</td><td>財報日期</td><td><strong>2026-09-X 預定</strong>（H1 詳細財報）。觀察：H2 假設 ≥ 38% 是否守住；若 &lt; 38% → 清倉條件之一</td></tr>
+<tr><td>3</td><td>Q3 2026 trading update</td><td>產業事件</td><td><strong>2026-10-X 預定</strong>。觀察：Asia cc 是否確認反彈 ≥ +5%（M3 翻轉條件）；Bain/Altagamma 2027 outlook 同期發布</td></tr>
+<tr><td>4</td><td>股價觸發點</td><td>價位觸發</td><td>(a) 跌至 €1,500 區（PE ~33x）— 首批進場條件 a；(b) 站回 W104 €2,178 維持 4 週 — 首批進場條件 b；(c) 跌破 €1,400（即 DD 計算 Bear case €1,329 附近）— 重新評估 thesis 是否破</td></tr>
+<tr><td>5</td><td>§5 single-thing primary</td><td>Driver 衰減</td><td>Leather cc 連 2 季 &lt; 6%（最早 Q2+Q3 2026 公告後 = 2026-10-X 確認）</td></tr>
+<tr><td>6</td><td>§5 single-thing secondary</td><td>治理事件</td><td>Dumas 公告退休 / 健康問題 / 第七代接班空懸 ≥ 6 個月 — 隨時可能（低概率）</td></tr>
+<tr><td>7</td><td>FY+2 EPS 共識下修達 -10%</td><td>分析師</td><td>從當前 €52.74 → ≤ €47.5（再下修 10%）— 觸發 thesis 重評估，可能延後進場觸發價</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：至 2026-08-15</strong>（Q2 2026 財報 7/30 + 兩週消化期）— 屆時主要驅動數據已更新，必須重做 DCA。<strong>不接受「長期有效」。</strong></p>
+
+<p><strong>最可能發生的 upside 因素：</strong>(a) Q2 2026 Leather cc 維持 +8-9% + Americas 持續 +15%+；(b) 2026/09 Bain mid-year report 釋出 "K-shape quality flight 加速" 訊號（Hermès 受益最大）；(c) ECB 進一步降息推 EUR 走弱、報告數字壓力解除。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>(a) Q2 2026 Asia cc &lt; 0% 確認結構（M3 path b）；(b) Berenberg / Bernstein 等大行翻空、目標價集體下修至 €1,500 區；(c) 9-10 月 luxury 板塊整體進入第二波 derate（LVMH、Kering 帶頭破底）。</p>
+
+<!-- ============================================================ -->
+<!-- Phase A 折疊區塊 -->
+<!-- ============================================================ -->
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：護城河 S 級維持，moat trend → holding；3 年內仍是 luxury 唯一 quality flight 標的）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) 無形資產 — 1837 年品牌、189 年家族傳承、Birkin/Kelly 名字本身的地位信號（拍賣紀錄單包 &gt; $400k）；(2) 轉換成本 — 配貨制讓客戶必須投入 3-5 年 + €30-100k 累積購買記錄才能獲得 Birkin 分配，跳船 = 全部歸零的隱形時間成本</td></tr>
+<tr><td>持久性評分</td><td><strong>9.5/10</strong>，5 年穩固度：高（DD §9 給滿分 10/10；本 DCA 保留 0.5 給接班人不明風險）</td></tr>
+<tr><td>最大侵蝕風險</td><td>家族第七代接班空窗（Dumas 1970 生、第七代候選人不明） — 若 2030 前未公開接班人 + 法國 45% 繼承稅壓力共振，可能稀釋家族控股</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 71%（→ 趨勢，2015 65% → 2025 71%，10 年 +6pp）、Hermès 在 personal luxury TAM 占比 ~4.4%（↑ 從 2020 3.2%）、ROIC 31% vs WACC ~8% 超額 +23pp</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>→ holding</strong>（穩定）+ 12 個月內變化的具體證據：「FY2025 vs FY2024 同業 gap：Hermès organic +9% vs LVMH organic -1% / Kering -10% → gap 從 7pp（2024 H1）擴大到 10-19pp（2025 全年），但 Hermès 自身 Q1 2026 organic 從 Q4 25 的 +13% 減速到 +5.6%（公司財報 2026-04-15）— absolute 減速但 relative position 仍擴大」<br>選 holding 而非 widening 原因：自身絕對成長減速比相對 alpha 擴大重要；護城河品質沒退、但「自身穩定」是更精確描述</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 必達）</h4>
+<ol>
+<li><strong>Birkin 25 (Togo) U.S. 2026/01 提價：</strong>$12,700 → $13,500（+6.3%）— 來源：Miloura 2026 Hermès Price Analysis（loveluxury.co.uk / miloura.com 2026/01）</li>
+<li><strong>Mini Kelly 20 (Epsom) U.S. 2026 提價：</strong>+8.6%（單包級提價最高之一）— 來源：Miloura, baguseek.com 2026</li>
+<li><strong>Birkin 25 二級市場價格：</strong>$28,000-$30,000（vs 零售 $13,500，溢價 +107~122%）— 來源：The Pursuit of Compounding (Substack) 2026-04 + LongYield Substack 2026/04</li>
+<li><strong>FY2025 公司財務：</strong>Revenue €16B（+9% cc）、Operating Profit Margin ~41%（公司年報 2026-02）— 來源：LongYield 引用公司 FY2025 報告</li>
+<li><strong>Hermès 市值 €247B（2025 末）vs LVMH €246B：</strong>Hermès 首次超越 LVMH 成為全球最有價值的 luxury 公司 — 來源：Luxury Society 2025/12 + 多家媒體</li>
+<li><strong>Net Margin 28.3%</strong>（3 年從 29% 微跌至 28.3%，仍是奢侈品中最高）— 來源：Alpha Spread RMS profitability page</li>
+<li><strong>家族控股 ~67%</strong>（H51 + H52 信託，~100 位 Dumas 家族成員）— 來源：Bloomberg 2025/02 "Hermès Family Gets $5 Billion Payout"</li>
+</ol>
+
+<p><strong>A1 sourced data points 達標數：7 / 5 ✅</strong></p>
+
+<p><strong>A1 獨立結論：</strong>Hermès 護城河仍是奢侈品板塊唯一頂級級別（S 級維持），moat trend → holding（穩定 — 自身絕對成長放緩、但相對同業 gap 擴大）；3 年內無實質侵蝕路徑，最遠期風險是家族第七代接班空窗（2030+）。</p>
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析（獨立結論：奢侈品 super cycle 結束、K-shape 加深，runway_post_y5 🟢 寬；2026 base 5% 復甦但結構性中位 4-5% 而非歷史 6%）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>當前 €1.44 兆全球 luxury 總支出（2025）；其中 personal luxury 段 ~€362-400B；至 2035 預估 €525-640B（CAGR 4-6%）；Bain 2026 中位預估 +5%（vs 歷史 6%）</td></tr>
+<tr><td>供需判斷</td><td>目前供過於求（K-shape 中低端嚴重；Gucci -20%、Burberry 嚴重 destock），但 Hermès / Cartier 仍緊缺（Birkin 二級市場溢價 +100%）；未來 12M 整體供需仍偏鬆，<strong>quality flight 加速</strong>，Hermès 端緊張不變</td></tr>
+<tr><td>最大技術替代風險</td><td>奢侈品基本不受技術替代影響（AI 免疫、實體店體驗 + 工藝是核心）；唯一可能：未來 NFT / 數位收藏品 + 元宇宙身分 對「實體 status signal」的替代 — 但 5-10 年內機率 &lt; 10%</td></tr>
+<tr><td>最大政策/地緣風險</td><td>(1) 中國境外消費限制（外匯管制 + 護照限制）— 影響 Hermès 歐日店 15-20% 「中國客」營收；(2) 中東持續地緣事件（UAE/Kuwait/Qatar/Bahrain Q1 26 -13.4% 是直接訊號）；(3) 法國 45% 繼承稅 + 富人稅 — 影響家族控股可持續性</td></tr>
+<tr><td>議價權位置</td><td>對上游 中強（皮革自製 30%+、絲綢自製 90%+、鱷魚農場自有）；對下游 極強（配貨制 = 完全賣方市場、無批發無打折）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬</strong> — Y5 後 5-10 年仍有跑道：(1) S 曲線位置：中期（global luxury 滲透率仍 ~15% 全球高淨值客戶 → 仍有 4-6% CAGR 至 2035）；(2) Y5 末 TAM 預估 €525-640B、Hermès 占比可從 4.4% 升至 5.5%（量擴張 + Asia 修復後）；(3) 下一條 S 曲線銜接：Boomer wealth + 高珠寶 + Quiet luxury 三條獨立 driver；(4) 工坊擴張節奏每年 +7%、隱含產能延伸至 2035+ 仍未飽和</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 5 必達）</h4>
+<ol>
+<li><strong>全球 luxury 總支出 2025 €1.44 兆</strong>（personal luxury 約 €362-400B 段）；2035E €525-640B（CAGR 4-6%）— 來源：Bain "Finding a New Longevity for Luxury" 2025/11 + Altagamma Observatory 24 屆 2026/01</li>
+<li><strong>Bain / Altagamma 2026 forecast +5%</strong>（vs 歷史 6%；medium-term 4-6%）— 來源：FashionNetwork 2026/01 + FIRSTonline 2026/01</li>
+<li><strong>2025 是 30 年第 3 次 luxury 連兩年衰退</strong>（前兩次 dot-com bust 2001 + GFC 2008-09）— 來源：Berenberg 2025/10 downgrade note (TradingView News, Stocktwits, Investing.com 2025/10)</li>
+<li><strong>K-shape：high-end 段 2023-2025 CAGR -1~-3%、accessible 段 flat~微負</strong>— 來源：Bain 2025 luxury report; Modern Retail 2025</li>
+<li><strong>Berenberg 翻轉：</strong>2025/10 calling "luxury super cycle is over"，下修 LVMH + Kering 評級 — 來源：Stocktwits, TradingView News 2025/10</li>
+<li><strong>2026 Bernstein top luxury pick = Richemont</strong>（CFR.SW）vs Hermès 仍 Outperform — 來源：Investing.com analyst ratings 2026 / Bernstein 2026 Outlook</li>
+<li><strong>Hermès Q1 26 Middle East -13.4% cc</strong>（公司 disclosed UAE/Kuwait/Qatar/Bahrain 從 3 月起 negative）— 來源：finance.hermes.com Q1 2026 press release + ADVFN 2026/04</li>
+</ol>
+
+<p><strong>A2 sourced data points 達標數：7 / 5 ✅</strong></p>
+
+<p><strong>A2 獨立結論：</strong>奢侈品產業正從「super cycle」轉入「結構性 K-shape」階段，medium-term 成長從歷史 6% 滑至 4-5%；Hermès 在 K-shape 高端贏家側 + runway_post_y5 🟢 寬（boomer wealth + 高珠寶 + quiet luxury 三條 S 曲線銜接）。產業挑戰是 2-3 年的中位成長壓縮，不是 10 年的結構性消亡。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立結論：財務體質頂級、資本配置紀律極強；EPS 短期下修但 FCF/分紅韌性極強）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：Leather Goods &amp; Saddlery（占 ~46%）；成長引擎：Watches +X% 後段 / Ready-to-Wear（占 ~27%）；拖累/新興：Silk（-3%, 7%）、Watches（-9%, 3%）</td></tr>
+<tr><td>客戶集中度</td><td>無單一大客戶 — 直營 100%（無批發、無經銷）；前 1% 客戶（VIC，Very Important Client）貢獻估計 20-25% revenue；風險：低（分散在全球高淨值客戶）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（年提價 5-8%，2024 +7%、2025 +5%、2026/01 北美 Birkin 25 +6.3%、Mini Kelly 20 +8.6%）；定價權：<strong>極強</strong>（配貨制 + 二級市場 +100% 溢價）</td></tr>
+<tr><td>未來金雞母</td><td>(1) <strong>高珠寶 / Bijouterie</strong>（目前 ~13% 含 Home + Jewellery，潛在 TAM Hard luxury €80-100B 段，2-3 年成熟期）；(2) <strong>Maroquinerie 工坊持續擴張</strong>（2026 H2 新增第 22 間，年產能 +7%，10+ 年持續複利）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 <strong>119%</strong>（FCF €5.37B / NI €4.52B FY2025）、毛利率 <strong>71%</strong>（→ 趨勢）、Recurring OPM <strong>41.4%</strong>；壓力測試：若 Revenue -20%，淨現金 €9.89B 可支撐 6-8 季營運（OPEX €9-10B/yr）+ 工坊不停擴張</td></tr>
+<tr><td>資本配置紀律</td><td>家族 67% 控股下「不為股東短期股價做擴張併購」— 過去 10 年最大併購是 2010 Saint-Louis（規模 &lt; 1% Revenue）；Capex 4.5% Revenue 極低、stable；回購極少（過去 3 年 €0.3B / FCF €14B = 2.1%）；分紅穩定（FY2024 €26/股、+30% 3Y avg dividend growth）；2024 起家族年度 dividend &gt; $5B；一句話：<strong>「不浪費資本、不為市場拉拔 EPS」</strong> — Munger 標準的「卓越資本配置」</td></tr>
+<tr><td><strong>5Y IRR 分量基底（必填）</strong></td><td>EPS CAGR 預估 Base ~9%（FY2025 €43.87 → FY2030 ~€70；含 buyback 微稀釋抵銷接近零）；5Y 末 forward P/E 預估 Base 36x vs 當前 37x（re-rate 貢獻 ≈ −0.5%/yr）；現金股息率 ~1.6%（FY2024 €26 / 現價 €1,661）；淨買回率 ~0%（家族控股下，回購活躍度極低，2022 起 €500M 計畫已停止）</td></tr>
+</table>
+
+<h4>Sourced Data Points（≥ 6 必達）</h4>
+<ol>
+<li><strong>FY2025 Revenue €16B（+9% cc）</strong>、Net Profit €4.5B、Operating Margin ~41% — 來源：LongYield Substack 引用公司 FY2025 報告（2026-02 公佈）</li>
+<li><strong>FCF TTM €5.225B（截至 2025/06 TTM）</strong>— 來源：GuruFocus EV/FCF page; 公司財務揭露</li>
+<li><strong>FY2024 dividend €26/股、3 年 dividend growth +30%/yr</strong>— 來源：Digrin RMS dividends + Dividendmax France Euronext Paris</li>
+<li><strong>家族年度分紅 &gt; $5B、~100 heirs 控股 ~67%</strong>— 來源：Bloomberg 2025/02 "Hermès Family Gets $5 Billion Payout"</li>
+<li><strong>Q1 2026 organic +5.6% / Reported -1%</strong>（FX 影響 -€290M、超出預期 -€150M）— 來源：finance.hermes.com Q1 2026 press release（2026-04-15 公佈）</li>
+<li><strong>Forward PE 37.29x（2026-04-19 數據）</strong>vs Fair Ratio 20x（Alpha Spread）vs 歐洲 luxury 平均 18.2x — 來源：Alpha Spread RMS P/E + GuruFocus</li>
+<li><strong>FY+1 EPS consensus €45.61（n=21）/ FY+2 €52.74（n=21）</strong>— 來源：yfinance earnings_estimate（DD 4/18 抓取，截至 2026-04-17）</li>
+<li><strong>FY+1 EPS 90d 下修 -4.4%</strong>（€47.69 → €45.61 over 90 days）— 來源：yfinance EPS Trend，DD §7 步驟 1</li>
+<li><strong>Variable Pay 2025 變動：</strong>Axel Dumas 變動薪酬 +5.4%，純連動 net income（不含股價）— 來源：ad-hoc-news.de + 公司治理報告</li>
+</ol>
+
+<p><strong>A3 sourced data points 達標數：9 / 6 ✅</strong></p>
+
+<p><strong>A3 獨立結論：</strong>財務體質頂級（FCF Margin 33%+、ROIC 31%+ 連 10 年、淨現金 €9.89B）；資本配置紀律極強（家族控股、無短期股東主義、Capex 低、無大型併購）；短期 EPS 下修 4-5% 屬週期波動、不是結構性問題；FY2026-2028 EPS 推升路徑（€45.61 → €52.74 → ~€60）需要 Asia 修復 + Margin 守住 38%+ 兩個前提。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取（DD_RMS_20260418 + ID_GlobalLuxury_20260427 + ID_BoomerTravelSupercycle_20260429）</summary>
+<div>
+
+<h4>DD_RMS_20260418.html 擷取項目</h4>
+<table>
+<tr><th>項目</th><th>數據 / 內容</th></tr>
+<tr><td>Schema</td><td>v12.0（meta dd-schema-version=v12.0）</td></tr>
+<tr><td>Quality Score（綜合品質）</td><td>10.0 / 10（quality_score JSON）</td></tr>
+<tr><td>Moat Score</td><td>10.0 / 10（moat_score JSON），等級 S</td></tr>
+<tr><td>Growth Durability</td><td>10.0 / 10</td></tr>
+<tr><td>AI Risk</td><td>🟢（免疫）</td></tr>
+<tr><td>Long-term Confidence</td><td>高</td></tr>
+<tr><td>final_signal</td><td><strong>X（迴避）</strong> — MA ❌ 系統失效硬性拒絕</td></tr>
+<tr><td>Trap 定性</td><td>🟡 觀察期（盈餘品質型輕度）</td></tr>
+<tr><td>Valuation Light</td><td>🟠 偏貴（Fwd PE 33.01x、5Y 分位 ≈ 10% 但 PEG 3.0）</td></tr>
+<tr><td>MA 狀態</td><td>❌ 系統失效（現價 €1,741 &lt; W250 €1,810 — 截至 4/18 數據）</td></tr>
+<tr><td>R:R（短期 / 中期）</td><td>負 / 0.25x — 壓力測試通過率 0/4</td></tr>
+<tr><td>三引擎目標價</td><td>短期 €1,596 / 中期 €1,846 / 長期 N/A（v12.0 不主導裁決）</td></tr>
+<tr><td>Bear anchor</td><td>€1,149-1,329（Bear PE 28x × FY × 0.9）</td></tr>
+<tr><td>紅旗 / Red Flags</td><td>(1) 90d EPS 下修 -4.4%；(2) 產業系統性 de-rating（1/10 衰退信號亮燈）；(3) 中東 -13.4%、Asia +2.2%；(4) MA ❌ 系統失效</td></tr>
+<tr><td>§0.5 核心假設</td><td>H1：Leather cc ≥ 8%（當前 Q1 +9% 確認）；H2：Recurring OPM ≥ 38%（當前 41.4% 確認，待 H1 2026 公佈驗證）；H3：估值修復 Fwd PE 33x → 5Y 中位 42-45x（路徑 18-24 個月）</td></tr>
+</table>
+
+<h4>ID_GlobalLuxury_20260427.html 擷取</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>產業評級</td><td>4🔴 / 4🟡 / 2🟢；Phase IV K-shape 分化確認</td></tr>
+<tr><td>對 RMS 的角色定位</td><td>"Hermès — luxury 全產業最強（Q1 26 +6% / Asia +2.2% deceleration 但仍正成長）" + "同時跨 heritage + quiet 雙段是其 fwd PE 50x+ 結構合理性的根本"</td></tr>
+<tr><td>關鍵非共識</td><td>① Hermès Q1 26 Asia 從 +8% → +2.2% deceleration <strong>但仍是全產業最強</strong>（vs LVMH FLG -2% / Gucci -14%），structural over-performance 確認；② Hard luxury 是 sector 結構性 alpha 非循環；③ Quiet luxury 是結構性 trend 非循環</td></tr>
+<tr><td>歷史相似 case</td><td>2008-2010 GFC 後 luxury K-shape — Hermès 2009-2014 +250%；當前 setup 高度相似</td></tr>
+</table>
+
+<h4>ID_BoomerTravelSupercycle_20260429.html 擷取</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>對 RMS 的角色定位</td><td>"Hermès — quiet luxury 主力 + Q1 +6% organic 全產業最強 / 高端 boomer cohort 重疊（旅行體驗 + 隨身奢品）"</td></tr>
+<tr><td>所屬 ranking</td><td>🟡 次要（boomer 受益但 luxury 不是主軸 driver）</td></tr>
+<tr><td>關鍵連動</td><td>Boomer wealth + 機場高端 retail + 自助購買；橫跨 luxury hotel + 機場 concession 雙重受益</td></tr>
+</table>
+
+<p>A4 純數據擷取，無獨立結論。已餵入 Phase B 矛盾辨識比對。</p>
+
+</div>
+</details>
+
+<!-- ============================================================ -->
+<!-- 結尾 -->
+<!-- ============================================================ -->
+<h2>結尾｜DCA 報告總結</h2>
+<p>本 DCA 的核心結論：<strong>RMS 是 5-10 年 compound machine 候選沒變、但當下不是進場時機</strong>。DD 4/18 已給 X（迴避），DCA 5/11 在 PM 視角 + 機會成本 + path-of-pain 三個角度再確認此結論，並設定具體進場觸發（價位 + 事件雙錨）。</p>
+
+<p>關鍵動作：<strong>watchlist 監看 Q2 2026 7/30 財報</strong>，期間若股價跌至 €1,500 區可開始首批 1.5-2.0%；正常建倉等 W104 站回 + Leather cc ≥ 8% 雙條件；邊際資金當前優先 CFR Richemont。</p>
+
+<p class="note">報告日期 2026-05-11｜保質期至 2026-08-15（Q2 2026 財報後重做）｜DCA 定位：DD 之上的投資決策層，不取代 DD 也不取代 PM 倉位裁決，提供「該不該動 + 動的條件」框架。</p>
+
+</div>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>

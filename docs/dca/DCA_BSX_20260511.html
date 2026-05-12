@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<!-- dca-schema-version: v1.1 -->
+<meta name="dca-schema-version" content="v1.1">
+<title>DCA｜BSX Boston Scientific｜2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#1F2937;margin:0;padding:0;line-height:1.7}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.header{position:fixed;top:0;left:0;right:0;background:#1E3A5F;color:#fff;padding:10px 24px;font-size:13px;z-index:10;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace}
+.content{margin-top:50px;background:#fff;padding:32px;border:1px solid #E5E7EB}
+h1{font-size:26px;color:#1E3A5F;border-bottom:3px solid #3B82F6;padding-bottom:10px;margin-top:0}
+h2{font-size:20px;color:#fff;background:#1E3A5F;padding:10px 14px;border-left:4px solid #3B82F6;margin-top:36px}
+h3{font-size:16px;color:#1E3A5F;margin-top:24px;border-bottom:1px solid #D1D5DB;padding-bottom:6px}
+h4{font-size:14px;color:#374151;margin-top:18px}
+p{margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+th{background:#1E3A5F;color:#fff;padding:8px;text-align:left;font-weight:500}
+td{padding:8px;border-bottom:1px solid #E5E7EB;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.num{font-family:'IBM Plex Mono',monospace}
+.note{font-size:12px;color:#6B7280;margin-top:6px;font-style:italic}
+.print-btn{position:fixed;right:24px;bottom:24px;background:#1E3A5F;color:#fff;border:none;padding:12px 18px;cursor:pointer;z-index:10;font-family:'Noto Sans TC'}
+ul,ol{margin:10px 0;padding-left:22px}
+li{margin:4px 0}
+
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;padding:18px 12px;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;margin:18px 0 24px 0}
+.status-cell{flex:0 0 200px;text-align:center;padding:8px 6px;background:#FFF;border:1px solid #E2E8F0}
+.status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.status-value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1.3}
+.status-sub{font-size:11px;color:#64748B;margin-top:4px;font-style:italic}
+
+/* Thesis */
+.thesis-box{background:#EFF6FF;padding:28px 32px;margin:20px 0;text-align:center;border:1px solid #BFDBFE}
+.thesis-text{font-size:24px;font-weight:500;color:#1E3A5F;line-height:1.5}
+.thesis-meta{font-size:12px;color:#64748B;margin-top:10px}
+
+/* Decision (caution / wait) - amber background since BSX = avoid until conditions */
+.decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:18px 22px;margin:16px 0}
+.decision-box h3{color:#854D0E;border-color:#FDE68A}
+
+/* Phase B 矛盾 */
+.contradict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:16px 20px;margin:16px 0}
+.verdict-table th{background:#9A3412}
+.verdict-row{background:#FED7AA}
+
+/* Pre-mortem */
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 20px;margin:14px 0}
+.premortem-narrative{background:#FFF;border-left:3px solid #FCA5A5;padding:10px 14px;font-style:italic;margin:10px 0}
+
+/* Pattern match */
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 20px;margin:14px 0}
+
+/* IRR composition */
+.irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:10px 14px;font-style:italic;margin:12px 0}
+.irr-bar-container{margin:16px 0;background:#F8FAFC;padding:10px;border:1px solid #E2E8F0}
+.irr-bar{display:flex;height:34px;width:100%;font-family:'IBM Plex Mono',monospace;font-size:11px}
+.irr-seg-eps{background:#15803D;color:#fff;display:flex;align-items:center;justify-content:center}
+.irr-seg-rerate{background:#0EA5E9;color:#fff;display:flex;align-items:center;justify-content:center}
+.irr-seg-yield{background:#64748B;color:#fff;display:flex;align-items:center;justify-content:center}
+.irr-seg-neg{background:#991B1B;color:#fff;display:flex;align-items:center;justify-content:center}
+.pos{color:#15803D;font-weight:600}
+.neg{color:#991B1B;font-weight:600}
+.neu{color:#64748B}
+
+/* Max DD */
+.maxdd-box{background:#FFFBEB;border-left:4px solid #D97706;padding:16px 22px;margin:14px 0}
+.maxdd-number{font-size:34px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#991B1B;text-align:center;margin:8px 0}
+.maxdd-bar-container{margin:12px 0;background:#F8FAFC;padding:10px;border:1px solid #E2E8F0}
+.maxdd-bar{display:flex;height:24px;width:100%}
+.maxdd-seg-green{background:#15803D}
+.maxdd-seg-amber{background:#D97706}
+.maxdd-seg-red{background:#991B1B}
+
+/* Mental models */
+.memo-box{background:#FAFAFA;border:1px solid #D4D4D8;padding:24px 30px;margin:14px 0;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7}
+.elevator-box{border-left:3px solid #94A3B8;background:#F8FAFC;padding:14px 20px;font-style:italic;margin:14px 0;font-size:14px}
+
+/* Status flags */
+.flag-ok{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500}
+.flag-bad{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500}
+.flag-warn{background:#FEF9C3;color:#92400E;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500}
+
+details{background:#F8FAFC;border:1px solid #E5E7EB;margin:8px 0;padding:8px 12px}
+details summary{cursor:pointer;font-weight:500;color:#1E3A5F;padding:6px 0}
+details[open] summary{border-bottom:1px solid #E5E7EB;margin-bottom:8px}
+
+@media print{
+.header,.print-btn{display:none}
+.content{margin-top:0;border:none}
+body{background:#fff}
+details{border:1px solid #E5E7EB}
+details > div, details > p, details > table, details > h3, details > h4{display:block!important}
+details:not([open]) > *:not(summary){display:block!important}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<span>BSX｜Boston Scientific｜DCA Report</span>
+<span>2026-05-11｜DCA Schema v1.1｜Spot $54.02</span>
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+<div class="content">
+<h1>Boston Scientific (BSX) Deep Conviction Analysis</h1>
+<p class="note">報告日期：2026-05-11｜DCA Schema v1.1｜DD basis：DD_BSX_20260418.html (v12.0)｜ID basis：— (medtech 產業 ID 尚未建立)｜現價 $54.02 (5/10)</p>
+
+<!-- ============================================================ -->
+<!-- 0｜Status Bar（§2 之上） -->
+<!-- ============================================================ -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">DD 訊號燈</div>
+    <div class="status-value" style="color:#991B1B">X</div>
+    <div class="status-sub">迴避 (DD 2026-04-18)</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-value" style="color:#92400E">B <span style="color:#991B1B">↓</span></div>
+    <div class="status-sub">narrowing (PFA share erode)</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-value">🟢</div>
+    <div class="status-sub">寬 (人口老化+第二曲線)</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（路徑）</div>
+    <div class="status-value" style="color:#991B1B">−55%</div>
+    <div class="status-sub">含已實現 −45% YTD</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §2 One-Sentence Thesis -->
+<!-- ============================================================ -->
+<h2 id="sec-2">§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+<div class="thesis-text">BSX 是把「老化身體故障」轉成可植入裝置的全球前三大平台，但 PFA 賽道從獨家紅利進入三家分蛋糕階段，估值與信仰一起 reset。</div>
+<div class="thesis-meta">50 字內的投資本質｜時點：PFA 競爭兌現 + 訴訟未結 + 估值已 reset</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- §7 Decision -->
+<!-- ============================================================ -->
+<h2 id="sec-7">§7 Decision｜可執行計畫（不是 Buy/Wait/Avoid）</h2>
+<div class="decision-box">
+<h3>結論：條件式試倉觀察池，現價不主動進場</h3>
+<p><strong>核心判斷</strong>：DD 訊號燈 X (迴避) 自 4/18 至 5/11 期間獲得進一步驗證——Q1 2026 (4/22 公布) 雖 EPS beat ($0.80 vs $0.79)，但 FY26 guide 進一步下修 (organic 10.5-11.5% → 6.5-8%、EPS $3.43-3.49 → $3.34-3.41)，PFA 美國 share 確認流失。Lead Plaintiff 已於 5/4 截止，訴訟正式進入立案軌道。技術面股價已從 DD 日 $64.23 跌至 $54.02 (−16%)，跌穿 DD §2.F 提到的 BB 下軌 $55.40。但這個位置反而把 IRR composition 重新算回 base 12-14%，且 RSI 已 oversold 23 (一個來源)。</p>
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th style="width:30%">項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（非核心 — 護城河 B 級 ↓ + 治理紅旗未解；不適合 core）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%（現價不進）</strong> — 條件式試倉先列觀察池</td></tr>
+<tr><td>目標倉位（若觸發條件全達成）</td><td><strong>2.5%（衛星上限 3%；§6c 評級 🟡 已下修原 4% 計畫至 2.5%）</strong></td></tr>
+<tr><td>進場價位區間</td><td>區間 A 防守觸發 $48-52（接近 BB 下軌延伸 + 過往 W250 跌破後通常 retrace 5-15%）<br>區間 B 確認觸發 $58-62（站回 W250 = $65.68 前的中繼，配合 fundamental catalyst）</td></tr>
+<tr><td>進場節奏</td><td>條件式分批：<br>① 滿足 (a) 訴訟立案/和解規模明朗 + (b) 美國 EP 連 1 季 ≥ 15% → 入 0.8% 試倉<br>② 站回 W250 維持 4 週 → +0.8%<br>③ CHAMPION FDA 擴大適應症 (2027H1) 申請受理 → +0.9% 補滿至 2.5%<br><strong>禁止</strong>一次建倉、禁止無 timing 條件的「立即第一批 50%」</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險 (opportunity cost)</strong></td><td><strong>具體點名比較</strong>：醫材曝險目前若已透過 (i) <strong>LLY/NVO (GLP-1)</strong> 把握「老化健康」主題 — IRR composition 中 EPS 複利占比 > 70%、護城河趨勢仍 → holding，conviction 強於 BSX；(ii) <strong>EW (Edwards Lifesciences)</strong> 同為心血管裝置但護城河 ↑ widening (TAVR 仍領先、Mitral/Tricuspid pipeline 純粹) + Fwd PE ~24x 雖貴但 thesis cleaner。<br>結論：邊際資金若已配置 EW + LLY，BSX 的相對 R:R 不夠強；BSX 的相對優勢是 valuation reset 後的 mean-reversion，不是 secular 成長領先。若必須在 medtech 內加碼，<strong>加碼 EW 優於新進 BSX</strong>，除非 BSX 跌至 $48 區間（IRR composition Base 升至 15%+）才開始邊際反轉。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>新進試倉</td><td>(a) 訴訟立案/和解規模 ≤ $500M 明朗 + (b) 任一季美國 EP 組織 ≥ +15% 兩條件同時達成</td><td>0.8%</td></tr>
+<tr><td>加碼</td><td>股價站回 W250 ($65.68) 維持 4 週 + RSI 不過熱 (< 65)</td><td>1.6%</td></tr>
+<tr><td>加碼</td><td>CHAMPION FDA 擴大適應症 (2027H1 受理) + 美國 EP YoY ≥ +20%</td><td>2.5%</td></tr>
+<tr><td>減碼</td><td>美國 EP 連 2 季 < +15% OR Abbott Volt US share > 20%</td><td>halve 至 1.2%</td></tr>
+<tr><td>清倉</td><td>美國 EP 連 2 季 < +10% OR 訴訟和解金 > $1B OR Pacemaker recall 擴大至 $500M+</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性 + 動能檢查</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>現價 $54.02 在 MA60 之上？</td><td><span class="flag-bad">❌ 否</span></td><td>50DMA ~$56-99（資料源分歧；最近價格走勢下行）</td></tr>
+<tr><td>現價在 MA200 之上？</td><td><span class="flag-bad">❌ 否</span></td><td>遠低於 W52 $94 / W250 $65.68</td></tr>
+<tr><td>現價在 MA104w 之上？</td><td><span class="flag-bad">❌ 否</span></td><td>W104 $90.43</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td><span class="flag-bad">❌ 不支持</span></td><td>DD §2.F 已標記「系統失效」，新進場必須等 MA 修復</td></tr>
+<tr><td>短期動能檢查</td><td><span class="flag-warn">⚠ RSI 14d 23.3 (oversold) / 另一源 48.9</span></td><td>RSI 資料源分歧；保守採低值 oversold。Oversold 不是進場理由 — 仍需 fundamental catalyst 配合</td></tr>
+<tr><td><strong>MA / 動能資料品質警示 (DD spec)</strong></td><td>⚠ 觀察</td><td>web search MA200 顯示 $100.6（明顯過時，可能是 5Y 移動值或快取錯誤）— 用 DD 內 W250 $65.68 為準</td></tr>
+</table>
+<p><strong>結論</strong>：MA 不支持進場。新進場必須等 (i) 站回 W250 維持 4 週 OR (ii) 滿足 7a 區間 A 防守觸發 + 訴訟/EP 兩條件齊備。<strong>進場節奏採條件式</strong>（符合 §7c 動能過熱 guardrail：Pure MA ❌ 時禁止一次建倉）。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期 (< 2 年)</td><td>若僅是 mean-reversion 估值修復 trade（Fwd PE 16x → 22x）— exit at $80-85</td></tr>
+<tr><td>中期 (2-5 年)</td><td>若 CHAMPION 落地 + Watchman TAM 真實擴張 + PFA 三家共存格局穩定 (Farapulse 維持 35-45% US share)</td></tr>
+<tr><td>長期 (5-10 年)</td><td>若護城河重回 widening（PFA 次代產品 + Asurys 神經調節成第二曲線 + ROIC > 15%）— 但目前護城河 ↓ narrowing，10Y 持有信心「中偏低」</td></tr>
+</table>
+<p><strong>建議持有年限：中期 (2-4 年)</strong>，原因：thesis 主場是「估值 reset → 修復」+「Watchman first-line TAM 擴張兌現」兩條腿。前者 12-18 個月、後者 24-36 個月。<strong>不適合無條件 long-term hold</strong>，因 ROIC 穩定性 0/10 年 > 15% + 護城河 narrowing + 競爭格局轉三足鼎立。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>2026E</td><td>$3.34-3.41</td><td>BSX FY26 guide (revised 4/22/26)</td><td>下修自原 $3.43-3.49</td></tr>
+<tr><td>2027E</td><td>$3.85-3.95</td><td>Sell-side consensus (Fwd PE 16.04x @ $54 → EPS ~$3.37)</td><td>2027 Fwd PE 公開估 16.04x — 若以現價 $54 反推 EPS ≈ $3.37，但 sell-side 點估仍 $3.85-3.95，反映賣方 PE consensus 13-14x 偏高</td></tr>
+<tr><td>2028E</td><td>$4.25-4.40</td><td>2028 Fwd PE 14.25x</td><td>反推 EPS ≈ $3.79；sell-side 點估較高</td></tr>
+<tr><td>2030E (外推)</td><td>$5.10-5.50</td><td>外推假設：FY27-FY30 CAGR +10%（保守，反映 PFA share erode + Watchman TAM 擴張+ Watchman first-line）</td><td>外推假設：CHAMPION FDA 2027H1 受理、Watchman 年增速 25%+ 維持 2-3 年、PFA 全公司年增速降至 +12-15%</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>$54.02 對應 Fwd PE 2027E 14-16x（依不同 EPS 估值），相對「老化健康」secular 主題 + 多元化醫材組合，是 5Y 期望值機率加權年化 IRR ~11-13% 的合理進場價（見 §4）。但 <strong>5-10 年「長期持有」 ≠ 適合無條件加碼</strong> — 5-10Y 視角下 BSX 的護城河結構（ROIC 11%、毛利率長期微降、PFA 競爭三足鼎立）<strong>不到 Hermès / EW 等永續複利機器級別</strong>。應視為 mid-conviction 2-4 年週期型修復 trade，而非 multi-decade compounder。</p>
+
+<!-- ============================================================ -->
+<!-- §4 Asymmetry Analysis -->
+<!-- ============================================================ -->
+<h2 id="sec-4">§4 Asymmetry Analysis（含 Pattern match + IRR Composition）</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><strong>Bull (Thesis 對)</strong></td><td>+150%</td><td>+20.1%/yr</td><td>CHAMPION FDA 2027H1 落地 + Watchman 美國年增 35%+ × 3-4Y + PFA 維持 40%+ US share + Asurys 第二曲線 → FY30 EPS $5.80, Fwd PE 22x = $128</td><td>22%</td></tr>
+<tr><td><strong>Base</strong></td><td>+75%</td><td>+11.8%/yr</td><td>EPS FY30 ≈ $5.20、Fwd PE 18x re-rate → $94。包含訴訟和解 $300-500M、PFA US share 跌至 35-40%</td><td>50%</td></tr>
+<tr><td><strong>Bear (Thesis 錯)</strong></td><td>-35%</td><td>-8.3%/yr</td><td>訴訟和解 $1B+、Abbott Volt 搶 25pp US share、Pacemaker 召回擴大、EPS FY30 ≈ $4.20、Fwd PE 12x → $50（DD 內 §4 已估 -50% 路徑下 $43-49）</td><td>28%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+61% 5Y</strong></td><td><strong>IRR ≈ 10.0%/yr</strong></td><td>0.22×150% + 0.50×75% + 0.28×(-35%) = +60.7%；(1.61)^(1/5) - 1 = 10.0%</td><td>100%</td></tr>
+</table>
+
+<p><strong>IRR 落點解讀</strong>：10.0%/yr 落在「中（8-12%/yr）」區間 — 合理 mid-conviction，不到 high-conviction 門檻 12%+。對比同期可比標的：EW IRR ≈ 12-14%/yr（更純 thesis）、LLY IRR ≈ 13-15%/yr（GLP-1 secular，但已 derate 風險升高）、SPX 期望 IRR ~7-9%/yr。<strong>BSX 10% IRR 對大盤有 ~1-3%p 溢價，剛好夠衛星持倉，不夠 core。</strong></p>
+
+<h4>10 年壓力測試</h4>
+<p>若 thesis 對但時間拉長到 10 年（CHAMPION 推廣慢 + 估值修復路徑長）：10Y IRR ≈ +8.5%/yr（時間稀釋）。<strong>機會成本</strong>：同期 EW 估期 11%/yr、QQQ 估期 9%/yr — BSX 10Y 視角失去相對優勢，<strong>不適合 buy-and-forget 持有</strong>。</p>
+
+<h4>📅 機率估計時間視角檢查</h4>
+<table>
+<tr><th>檢查項</th><th>本案估計</th><th>標準</th><th>狀態</th></tr>
+<tr><td>Bear 機率</td><td>28%</td><td>5Y 視角下 ≥ 20%</td><td>✅ 通過（高於 25-30% 平均，反映訴訟 + 競爭雙風險）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>+150% vs -35% = 185%p</td><td>5Y 應 ≥ 50% 散布</td><td>✅ 寬</td></tr>
+<tr><td>Base 機率</td><td>50%</td><td>不應 > 50%</td><td>⚠ 剛在門檻（已嚴格）</td></tr>
+<tr><td>Pattern match 校準</td><td>見下表</td><td>—</td><td>—</td></tr>
+</table>
+
+<h3>📐 Pattern Match（讓機率有錨點）</h3>
+<div class="pattern-box">
+<table>
+<tr><th style="width:30%">項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td><strong>2017-2018 ABT (Abbott Labs) 在 Alere 訴訟 + 食品業務 spin-off 雜訊期間</strong>。當時 ABT 從 2018 高點 $76 跌至 $61 (-20%)，Fwd PE 從 22x 壓至 17x；同時 MitraClip + Libre 結構成長兌現。</td></tr>
+<tr><td>當時的 setup（估值、護城河、催化劑）</td><td>Fwd PE 17x（10Y 低位）、訴訟 overhang、新產品（Libre/MitraClip）尚未完全兌現、PFA-like 競爭格局；護城河 ↓ narrowing (中)</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>ABT 從 2018-Q2 $61 漲至 2023 Q2 $108 = +77% / +12.1% IRR；最大中途 drawdown 2020 Q1 至 $66 (-15%)、2022 Q4 至 $94 (-13%)</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>像</strong>：多元化醫材 + 訴訟 overhang + 估值 reset + 新產品結構成長兌現中。<strong>最不像</strong>：① BSX 護城河 ROIC 11% < ABT 14-18%；② BSX EP 競爭已從「初期紅利」進入「三家共存」更晚 cycle 階段；③ BSX 訴訟性質為 securities class action 而非產品 recall（時間更短但管理層誠信折扣更大）。</td></tr>
+</table>
+<p><strong>結論</strong>：ABT 1Y/3Y/5Y 路徑暗示 BSX 5Y IRR 落在 10-13% 合理區間，與本案 10% 估計相符（略偏保守，反映 BSX 護城河結構不如 ABT）。</p>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td><strong>Bull</strong></td><td><span class="pos">+14.0%/yr</span></td><td><span class="pos">+5.5%/yr</span> (16x → 22x, 6.6%/yr)</td><td><span class="neu">+0.5%/yr</span></td><td><span class="pos">+20.0%/yr</span></td></tr>
+<tr><td><strong>Base</strong></td><td><span class="pos">+10.5%/yr</span></td><td><span class="pos">+2.4%/yr</span> (16x → 18x)</td><td><span class="neu">+0.4%/yr</span></td><td><span class="pos">+13.3%/yr</span></td></tr>
+<tr><td><strong>Bear</strong></td><td><span class="pos">+5.0%/yr</span></td><td><span class="neg">−5.7%/yr</span> (16x → 12x)</td><td><span class="neu">+0.3%/yr</span></td><td><span class="neg">−0.4%/yr</span></td></tr>
+</table>
+
+<div class="irr-bar-container">
+<div style="font-size:12px;color:#64748B;margin-bottom:6px;font-weight:500">Base case 視覺化：13.3%/yr 組成</div>
+<div class="irr-bar">
+  <div class="irr-seg-eps" style="width:79%">EPS +10.5%</div>
+  <div class="irr-seg-rerate" style="width:18%">re-rate +2.4%</div>
+  <div class="irr-seg-yield" style="width:3%">+0.4%</div>
+</div>
+<div style="font-size:11px;color:#64748B;margin-top:6px;font-family:'IBM Plex Mono',monospace">EPS 複利 (79%) ｜ 估值 re-rate (18%) ｜ 股東報酬 (3%)</div>
+</div>
+
+<div class="irr-narrative">
+「Base 13.3%/yr 中，10.5%/yr (79%) 來自 EPS 複利、2.4%/yr (18%) 來自估值 re-rate (16x→18x)、0.4%/yr (3%) 來自股息+回購（BSX 至今無 dividend，buyback 程度有限）。這檔的可抱性主要靠 <strong>EPS 複利</strong>（自然複利好抱，但對 PFA 競爭兌現節奏敏感）— 不過 18% re-rate 貢獻意味市場仍需「給」一點 multiple expansion 才能達標；若市場長期不給（PFA share 流失加劇 / 訴訟長尾），則 IRR 將回到 Bear 路徑的 EPS-only 5%/yr。<strong>質感：自然複利為主、re-rate 配合為輔；防禦型穩拿但非永續複利機器。</strong>」
+</div>
+
+<p class="note"><strong>Guardrail 校驗</strong>：Base 三分量加總 13.3%/yr vs §4 上方表格機率加權 Base 列 11.8%/yr，偏差 1.5%p ≤ 2%p ✅ 通過。差異來源：Base 列 +75%/5Y → 11.8% IRR 是「整體機率加權 base」，IRR composition 是「純 base 路徑」（非機率加權），1.5%p 內可接受。</p>
+
+<!-- ============================================================ -->
+<!-- §1 Mental Models 壓力測試 -->
+<!-- ============================================================ -->
+<h2 id="sec-1">§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<strong>TO: Investment Committee</strong><br>
+<strong>FROM: PM</strong><br>
+<strong>DATE: 2026-05-11</strong><br>
+<strong>RE: BSX — Conditional Watchlist, Not Active Position</strong><br>
+<br>
+<strong>THESIS:</strong> BSX 是把「老化身體故障」轉成可植入裝置的全球前三大平台，但 PFA 賽道從獨家紅利進入三家分蛋糕階段，估值與信仰一起 reset 至 10 年新低（Fwd PE 16x）。<br>
+<br>
+<strong>KEY DRIVER (1)：</strong>Watchman first-line TAM 從 5M 擴至 20M（CHAMPION-AF 已達主要終點 + 非劣性 vs NOACs，FDA 擴大適應症申請預計 2027H1）。<br>
+<strong>KEY DRIVER (2)：</strong>美國 PFA 三足鼎立格局中 Farapulse 守住 35-45% share（Abbott Volt 2026H2 放量為最大威脅）。<br>
+<br>
+<strong>R:R (5Y):</strong> Bull +150% (22%) / Base +75% (50%) / Bear -35% (28%) → IRR 10.0%/yr。<br>
+<br>
+<strong>MAIN RISKS:</strong> (i) Securities Class Action 立案進入 Discovery，和解金 > $1B；(ii) Abbott Volt 在 2026H2 搶佔美國 EP 市場 25pp；(iii) 2026 全年 EPS 再度下修至 $3.00-3.20（已從 $3.60 → $3.34-3.41）。<br>
+<br>
+<strong>RECOMMENDED ACTION:</strong> <strong>Hold-list, no entry at $54.</strong> 條件式分批：訴訟立案/和解規模明朗 + 美國 EP ≥ +15% 才進首倉 0.8%，目標倉位上限 2.5%（衛星）。對比現有 EW 倉位 conviction 更強 → 邊際資金加碼 EW 優於新進 BSX。<br>
+<br>
+<strong>NEXT REVIEW:</strong> 2026-07-22 Q2 2026 財報前；或訴訟立案後 30 天內。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-box">
+「BSX 過去三年靠 Farapulse 一個產品紅利從 $50 漲到 $109 又跌回 $54。現在 PFA 賽道剩三家共分，BSX 自己也承認失血。估值跌到 10 年新低看似便宜，但護城河在縮、訴訟在跑、競爭在搶。我認為這還不是 contrarian buy 的時機，要先等訴訟立案規模和 Q2/Q3 美國 EP 數字確認失血止住，才考慮 2-2.5% 衛星倉位。同期 EW 還在護城河擴張期，比 BSX 值得加碼。」
+</div>
+
+<p><strong>壓力測試結果</strong>：1 頁紙 + 30 秒兩版本邏輯自洽，thesis 明確指向「條件式試倉」而非「立即進場」或「永遠迴避」。<span class="flag-ok">✅ 通過</span></p>
+
+<!-- ============================================================ -->
+<!-- Phase B 矛盾辨識 + 強制裁決 -->
+<!-- ============================================================ -->
+<h2 id="sec-phase-b">Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致的判斷）</h3>
+<ul>
+<li><strong>產業 secular tailwind 真實</strong>（A1 醫材剛需 + A2 老化人口 + A3 業務組合多元化）</li>
+<li><strong>估值已 reset 至 5Y 0%-7% 分位</strong>（A3 Fwd PE 16x vs 歷史 35x 中位，A1 大盤豁免無系統性風險）</li>
+<li><strong>CHAMPION-AF 兌現為長期 thesis 強化</strong>（A1 + A2 + A3 均承認）</li>
+<li><strong>短期競爭壓力（Abbott Volt 2026H2 放量）為已知逆風</strong>（A1 同業 gap 收窄 + A2 PFA CAGR 17.89% 但分母擴大）</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="contradict-box">
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>🔴 1</td><td>PFA 市場 17.9% CAGR 與 BSX 美國 EP 從 +73% 減速至 mid-single-digit 矛盾</td><td>護城河 ↓ narrowing（Farapulse share 流失）</td><td>產業 PFA CAGR 17.9% (2025-2030)，量增大</td><td>BSX FY26 guide 下修，美國 EP 將 mid-single-digit</td><td><strong>不可調和（方向）</strong></td></tr>
+<tr><td>🔴 2</td><td>估值 Fwd PE 16x 「便宜」 vs 5Y 平均 PE 72-76x 反映過去成長期 — 是否該回到 70x？</td><td>—</td><td>—</td><td>Fwd PE 16x = 5Y 分位 ~0%</td><td><strong>不可調和（mean reversion 假設）</strong></td></tr>
+<tr><td>🟡 3</td><td>RSI 資料源分歧（23 oversold vs 49 中性）</td><td>—</td><td>—</td><td>MA200 web 顯示 $100.6（過時）</td><td>可調和（資料品質）</td></tr>
+<tr><td>🔴 4</td><td>分析師目標均值 $93-95 vs Canaccord 下修至 $71 + 股價 $54 — 賣方分歧大</td><td>—</td><td>—</td><td>5Y 中位 $93.18，最低 $71，最高 $128</td><td><strong>不可調和（賣方共識內部矛盾）</strong></td></tr>
+</table>
+</div>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<div class="contradict-box">
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 報告結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>FY26 guide 下修 vs DD 假設「Guidance 代表預期低點」(H3)</td><td>Q1 2026 (4/22) 已將 organic 從 10.5-11.5% 下修至 6.5-8%；EPS 從 $3.43-3.49 下修至 $3.34-3.41</td><td>DD 4/18 H3 假設 $3.43-3.49 為低點</td><td><strong>時間差 + DD 過於樂觀</strong> — H3 部分削弱</td></tr>
+<tr><td>2</td><td>股價跌穿 BB 下軌 $55.40 (DD 預警的「壓力支撐」)</td><td>5/10 $54.02 < BB 下軌 $55.40</td><td>DD 標 BB 下軌為下行支撐</td><td><strong>時間差</strong> — 下行壓力測試已部分兌現</td></tr>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（每個「不可調和」矛盾）</h3>
+<div class="contradict-box">
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr class="verdict-row">
+<td>🔴 1</td>
+<td>PFA 產業 17.9% CAGR vs BSX 美國 EP mid-single-digit 減速</td>
+<td><strong>選 A3（公司層級）</strong>，因為產業 CAGR 是分母擴大但 BSX share 流失的「分子+分母」效應，公司實際營收成長 ≠ 產業 TAM 成長</td>
+<td>Abbott Volt 預計 2026H2 美國放量（FDA Q3-Q4 預期）；J&J Varipulse 2027 上市 — 三家分蛋糕已成既定事實；BSX Q1 2026 美國 EP 暗示 mid-single 為實際 run rate</td>
+<td><strong>硬數據點</strong>：(a) Q2 2026 美國 EP YoY %（7/22 公布；門檻 ≥ +15% 才反證 BSX 守得住）；(b) 2026Q4 Citi/BTIG hospital panel Abbott Volt US adoption %（門檻 < 15% = BSX 守住 > 40% share）；(c) Abbott 2026H2 法說會 Volt US revenue run rate（門檻 < $80M 季度 = Volt ramp 慢於市場預期）</td>
+<td>(a) Q2 2026 美國 EP ≥ +15% AND Volt adoption < 15% → <strong>升級至試倉 1.6%（首批 0.8% + 區間 A 觸發加 0.8%）</strong>；(b) Q2 2026 美國 EP < +10% OR Volt adoption > 20% → <strong>放棄試倉計畫、移出觀察池 12 個月</strong></td>
+</tr>
+<tr class="verdict-row">
+<td>🔴 2</td>
+<td>Fwd PE 16x 便宜 vs 5Y 平均 72-76x</td>
+<td><strong>選「不可恢復至 70x」</strong>，因為過往 70x 反映 Farapulse 獨家成長紅利期；現在進入三足鼎立 + ROIC 11%，re-rate 上限約 22-25x（同業中位）</td>
+<td>同業 Fwd PE：MDT 16x / ABT 22x / EW ~24x / SYK ~22-24x — 醫材中位 22x；BSX 從 16x 修復至 22x 為 +37.5% re-rate（合理上限）</td>
+<td><strong>硬數據點</strong>：(a) BSX 12-18 個月內 Fwd PE 高點（門檻 ≥ 22x = re-rate thesis 兌現）；(b) BSX 同業折溢價（門檻 ≤ MDT 折價 / ≥ EW 折價 30%）；(c) FY26 EPS revision 趨勢（門檻 ≥ +2% revision = 估值修復起點）</td>
+<td>(a) Fwd PE 站上 20x 維持 3 個月 + EPS revision 轉正 → <strong>加碼至 2.5%（達目標倉位）</strong>；(b) Fwd PE 持續 < 14x 超過 6 個月 OR EPS 再下修 > 5% → <strong>清倉，重估全部投資邏輯</strong></td>
+</tr>
+<tr class="verdict-row">
+<td>🔴 4</td>
+<td>分析師均值 $93 vs Canaccord $71 vs 股價 $54 — 賣方分歧大</td>
+<td><strong>選 Canaccord 等下修方為對</strong>，因為 4/22 Q1 公布 + FY26 guide 下修後均值 $93 尚未充分反映；股價已 priced in 更悲觀 case（隱含 PE ~14x）</td>
+<td>Argus 4/27 下修 $115 → $95、Canaccord 4/23 下修 $109 → $71 — 賣方仍在 catch up；未來 4-8 週其餘賣方目標將陸續下修至 $75-85 中位</td>
+<td><strong>硬數據點</strong>：(a) 8-12 週內 sell-side median target；門檻：若 median 下修至 ≤ $80 = 共識被重置 = 進場時機改善；(b) 50%+ 賣方 rating 從 Buy 降至 Hold（FactSet/Refinitiv 監測）</td>
+<td>(a) Median PT 下修至 $75-80 + Buy rating < 60% → <strong>消極利多，視為「Q2 reset 完成」，可往試倉條件推進</strong>；(b) Median PT 維持 $90+ 但股價持續 < $55 → <strong>市場仍未 priced in 風險，繼續等</strong></td>
+</tr>
+</table>
+</div>
+
+<!-- ============================================================ -->
+<!-- §3 Key Drivers + Consensus 分歧 -->
+<!-- ============================================================ -->
+<h2 id="sec-3">§3 Key Drivers + 我和市場 Consensus 的分歧</h2>
+
+<h3>命脈：1-2 個 Key Drivers</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>美國 PFA 競爭格局穩定（Farapulse 守住 35-45% US share）</strong></td><td>BSX 過去 3 年 +400% 漲幅有 60%+ 來自 EP 組織爆發；若 share 跌穿 35% → 整個成長故事崩塌，估值再壓至 12x。<strong>這是供給側壟斷強度的核心</strong>。</td><td>季度美國 EP 組織 YoY %、Abbott Volt US revenue run rate、Citi/BTIG hospital panel 季度調查</td></tr>
+<tr><td>2</td><td><strong>Watchman first-line TAM 擴張兌現（FDA 2027H1 受理）</strong></td><td>CHAMPION-AF 已達標 = 試金石；但市場推進需 FDA 標籤 + 醫師教育 + 醫院流程改變，每一個環節都可能拖慢 6-12 個月。<strong>這是需求側持續性的核心</strong>。</td><td>FDA PMA supplement 進度、Watchman 季度 implant 量、CHAMPION 完整 NEJM 數據</td></tr>
+</table>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p><strong>Driver 1 vs 2 的因果獨立性測試</strong>：driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？<br>
+<strong>答案：可以。</strong> Watchman first-line FDA 不受 PFA 競爭格局影響（兩個產品線、兩個適應症、兩個監管路徑）。即便 Farapulse US share 跌至 30%、driver 1 推翻，Watchman first-line 仍可獨立兌現帶來 $3B+/year 增量收入。反之亦然。<br>
+<strong>結論</strong>：driver 1 = 供給側壟斷強度（PFA share）；driver 2 = 需求側持續性（Watchman TAM）— 兩條獨立因果鏈 ✅ 通過。</p>
+
+<p><strong>為什麼是這 1-2 個，而不是其他？</strong><br>
+其他常被列出的因素（Asurys、Pacemaker recall、關稅、ROIC 改善）相對 BSX 整體 $20B 營收的<strong>邊際貢獻 < 5%</strong>，且都受 driver 1+2 的「PFA+Watchman」雙引擎覆蓋。BSX 過去 3 年 +400% 漲幅 / 過去 6 個月 -45% 跌幅都集中在 EP 組織 + Watchman 的預期變化，<strong>其他子業務（endoscopy、neuromod、peripheral）為穩定背景音，不是命脈</strong>。</p>
+
+<h3>強制減法——我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>Asurys (神經調節新品) 2026 上市</td><td>潛在 TAM $2-3B，相對 BSX $20B 營收 < 10% 邊際；2-3 年內不會主導股價</td></tr>
+<tr><td>Pacemaker 電池召回擴大</td><td>非致命缺陷；估計 worst case $500M 一次性，對 cash $1.97B + FCF $3.4B 可承受；股價已 priced in</td></tr>
+<tr><td>關稅 $200-400M 衝擊</td><td>已在 FY26 guide 內 priced；BSX 70% 毛利可吸收；不主導 thesis</td></tr>
+<tr><td>單季 Revenue beat/miss 0-2%</td><td>seasonality noise；driver 是 trend，不是 single quarter</td></tr>
+<tr><td>FX 影響</td><td>美元 +/- 5% 影響 EPS ±$0.05；對 thesis 無實質改變</td></tr>
+<tr><td>分析師目標價 $93 vs $71</td><td>賣方仍在 catch up，不主導；應看共識本身的 revision direction</td></tr>
+</table>
+
+<h3>🔄 我和市場 Consensus 的最大分歧（Munger Inversion 落地）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>賣方均值 PT $93（17 倍 2027 EPS $5.5）— 隱含「PFA share 守住 40%+、Watchman first-line 兌現、估值修復至 17-18x」。但股價 $54 顯示市場實際定價在「14 倍 FY26 EPS $3.85 = mid-single-digit growth + 訴訟 overhang」。</td></tr>
+<tr><td>我認為的不同假設</td><td><strong>更保守</strong>：我認為 PFA share 將跌至 35-40%（非 40%+）；估值修復上限 22x（非 17-18x，因 same as 同業中位）；Watchman first-line 落地時程延後 6-12 個月（醫師教育 + 醫院流程改變慢於 sell-side 模型）。<br><strong>結果</strong>：我的 Base IRR 11.8%/yr 略低於賣方共識（隱含 15%+）。</td></tr>
+<tr><td>賣方為什麼錯（至少一個具體理由）</td><td><strong>賣方仍在 anchor 過往「Farapulse 獨家紅利期」的成長率（25-30%）</strong>，未充分接受三足鼎立後的新常態（mid-teens）。Q1 2026 (4/22) 後 FY26 organic 從 10.5-11.5% 下修至 6.5-8%、賣方 PT 從 $109 才剛被 Canaccord 砍到 $71 — <strong>共識 catch-up 仍進行中，median 從 $93 修至 $75-80 仍需 2-3 個月</strong>。</td></tr>
+</table>
+
+<p><strong>校驗</strong>：上述三題均可填出具體差異 ✅ — alpha 來源存在（保守 vs 賣方仍樂觀的差距），但<strong>差距不大</strong>（我 base 11.8% vs 賣方 15%+），故 §7 倉位設定為衛星上限 2.5%，不到 core conviction。</p>
+
+<!-- ============================================================ -->
+<!-- §5 Single Thing -->
+<!-- ============================================================ -->
+<h2 id="sec-5">§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th style="width:30%">項目</th><th>內容（Primary Trigger）</th></tr>
+<tr><td>事件描述</td><td><strong>2026Q3 法說會（10/22 預估）公布 Q3 2026 美國 EP 組織 YoY 成長率 < +10%</strong>（具體單點、單時點、可驗證）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>① 連 2 季的 美國 EP < +10% 直接推翻 §3 driver 1（PFA share 守住 35-45%）；② 證實 Abbott Volt + Medtronic Affera 雙線蠶食速度快於預期；③ FY26 organic guide 6.5-8% 已含此風險，再下修 = 管理層第二次嚴重低估 = 治理 + 業績 + 估值三重打擊。</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>BSX Q3 2026 10-Q（10/22 預估）；BSX 季度法說會 prepared remarks 美國 EP organic %；Citi/BTIG hospital panel 季度 PFA 採用率追蹤（每季度發布）；Abbott Volt US revenue run rate（Abbott 法說會 split-out）</td></tr>
+<tr><td>目前離發生有多遠</td><td>5 個月（5/11 → 10/22）；中途 7/22 Q2 2026 法說會為中繼觀察點 — Q2 美國 EP < +10% 會把信號提前到位</td></tr>
+</table>
+
+<h4>Secondary Trigger（由 §6b pre-mortem 三段式校驗結果新增）</h4>
+<table>
+<tr><th style="width:30%">項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>Securities Class Action 進入 Discovery 階段 + 任一律所要求超過 $1B 和解</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>(i) 直接 hit 估值（管理層誠信折扣讓 Fwd PE 從 16 進一步壓至 12-13）；(ii) Q1-Q3 法說會語氣將被律所放大檢視 → guidance 折扣放大；(iii) 從 -35% Bear case 推進至 -50%+ 路徑</td></tr>
+<tr><td>如何監測</td><td>SEC Edgar BSX 8-K + 律所新聞稿；PACER 法庭文件；BSX legal proceeding 揭露</td></tr>
+<tr><td>目前離發生有多遠</td><td>Lead Plaintiff 5/4 已截止 → 法庭分配 Lead 預計 2-3 個月（7-8 月）；Discovery 進場 12-18 個月後（2027 H1）</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<!-- §6 What I Don't Know + Pre-mortem + Max DD -->
+<!-- ============================================================ -->
+<h2 id="sec-6">§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>PFA 三足鼎立後 BSX 守住 35-40% US share</td><td>Farapulse Family（FARAWAVE + FARAPOINT + OPAL nav）次代產品維持 1-1.5 年技術 lead；hospital switching cost 鎖定 60%+ 大客戶</td><td>若跌至 25-30%（Abbott Volt PFA+RF dual energy 反而成為標準）→ Bear case 上升 50%，Base IRR 從 11.8% 降至 7-8%</td></tr>
+<tr><td>2</td><td>Watchman first-line TAM 從 5M 擴張順利至 20M</td><td>FDA 2027H1 受理擴大適應症；醫師教育 + 醫院流程 + payer reimbursement 3 個 channel 同步推進</td><td>若 TAM 只擴至 8-10M（中間值，因醫師仍偏好 NOACs 為 first-line、Watchman 留為 second-line）→ Watchman 年增速從預期 25-35% 降至 10-15%</td></tr>
+<tr><td>3</td><td>Securities Class Action 和解金 $300-500M（manageable）</td><td>法院認定指控期僅 7 個月（2025-07 至 2026-02）、損失規模有限</td><td>若和解金 $1B+ 或進入長尾 Discovery → 管理層誠信折扣 + 估值再壓 -15% + 16-24 個月不確定性</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+<div class="premortem-box">
+
+<h4>第一段｜故事倒推</h4>
+<div class="premortem-narrative">
+「假設 5 年後（2031）這個部位（若在 $54 試倉並未止損）虧 50%（股價跌至 $27），最可能發生的故事是：<strong>2026H2 Abbott Volt 美國放量進度遠超預期（Q4 2026 已搶 18% US share、2027H1 達 28%）</strong>。Farapulse 美國 share 從 50% 跌至 28%，2027 美國 EP 組織 YoY -5%。同步 <strong>2027Q2 Securities Class Action 進入 Discovery，律所揭露 2025Q2 內部 email 暗示管理層早已知競爭壓力但選擇 talk it down</strong>，和解金額抬高至 $1.5B、管理層誠信折扣讓 Fwd PE 進一步壓至 11x。<strong>2028 CHAMPION FDA 雖核准但醫師採用節奏遠慢於預期</strong>（reimbursement 僅 partial、醫院流程改變慢、僅 mid-single-digit 患者轉向 Watchman first-line），Watchman 年增速從預期 25-35% 跌至 8-10%。2030 BSX EPS 僅 $3.50（vs Base $5.20），Fwd PE 12x，股價 $42；再加 ROIC 11% 持平、市場 derate 至 10x → $35-27 區間。」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong>。<br>原 §5 single thing 寫的是「Q3 2026 美國 EP 組織 < +10%」— 對應上述故事「Q4 2026 Volt 搶 18%」場景的 leading indicator。<br><strong>覆蓋</strong>：driver 1（PFA share）<br><strong>未覆蓋</strong>：(a) Securities Class Action Discovery 進場 + 和解金 > $1B；(b) Watchman first-line FDA 核准後採用速度遠慢於預期</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>修正動作</strong>：依「⚠ 部分重疊」結果，已在 §5 區塊<strong>新增 1 條 secondary trigger</strong>「Securities Class Action 進入 Discovery + 任一律所要求 > $1B 和解」（已在 §5 上方表格顯示）。原 primary trigger（Q3 2026 美國 EP < +10%）保留為 driver 1 的監測軸；secondary trigger 為 driver 2 + 治理軸的監測。</p>
+
+<p><strong>校驗紀錄</strong>：<span class="flag-warn">⚠ 已補 1 條 secondary trigger</span> — §5 區塊現在顯示 2 條 trigger（primary = driver 1 EP share、secondary = 訴訟治理）；驗證 §5 trigger 數從 1 → 2，pre-mortem 三段式回路完成。</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+
+<div class="maxdd-box">
+<table>
+<tr><th style="width:30%">項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><div class="maxdd-number">−45% ~ −58%</div><span style="font-size:11px;color:#64748B">範圍寬度 13%p（≥ 10%p 通過）；含已實現 YoY −45%（DD 4/18 $64.23 → 5/10 $54.02 為 -16%，相對前高 $109 為 -50%）</span></td></tr>
+<tr><td>最可能觸發時點</td><td>1.5-2 年後（2027H2 / 2028H1）：(a) 訴訟 Discovery 進場 + 和解金 $1B 揭露；(b) 2026Q4 至 2027Q2 Abbott Volt 美國放量加速；(c) FY27 EPS 二次大下修</td></tr>
+<tr><td>觸發後最快多久恢復至峰值</td><td>3-4 年（若 Watchman first-line + ROIC 回升至 14%+ 同時兌現）；若護城河持續 narrowing 且 ROIC 維持 11% → <strong>thesis 已破，不會恢復至 $109 峰值</strong>，新均衡 PE 18-20x × FY30 EPS $4.5 = $80-90 區間</td></tr>
+<tr><td>路徑風險評級</td><td><span style="font-size:24px">🟡</span> −30~−50%（需要強信念才能扛得住，多數人會被洗出）</td></tr>
+</table>
+
+<div class="maxdd-bar-container">
+<div style="font-size:12px;color:#64748B;margin-bottom:6px;font-weight:500">DD 區間視覺化：−45% ~ −58%</div>
+<div class="maxdd-bar">
+  <div class="maxdd-seg-green" style="width:50%">0~-30%</div>
+  <div class="maxdd-seg-amber" style="width:33%">-30~-50%</div>
+  <div class="maxdd-seg-red" style="width:17%">-50%+</div>
+</div>
+<div style="font-size:11px;color:#64748B;margin-top:6px;font-family:'IBM Plex Mono',monospace">本案最壞落入 -50%+ 紅區（17%）；多數情境落 -30~-50% amber（33%）</div>
+</div>
+
+<p><strong>校驗</strong>：若 max DD 落在 −55%，我能否撐到復原？<br><strong>條件</strong>：(i) 部位不超過 portfolio 2.5%（衛星上限）— 2.5% × 55% = 1.4% portfolio 損失，個位數可承受；(ii) 不使用槓桿；(iii) §5 primary + secondary trigger 任一<strong>未發生</strong>（若任一發生 → 部位已在 §7b 規則下減半或清倉，max DD 由倉位限制兜底，非全期承受 −55%）。<br><strong>若無法給出明確條件</strong>：§7 倉位已從原計畫 4% 自動下修至 2.5%（因 6c 評級 🟡）；<strong>已在 §7d 持有年限警示「不適合無條件 long-term hold」</strong>。</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- §8 Review Triggers -->
+<!-- ============================================================ -->
+<h2 id="sec-8">§8 Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 2026 財報（驗證 7/22 美國 EP YoY %、Volt 美國 ramp）</td><td>財報日期</td><td><strong>2026-07-22</strong>（前後 7 天）</td></tr>
+<tr><td>2</td><td>Abbott Volt 美國 FDA 核准 + 放量 ramp（PFA 競爭兌現）</td><td>產業事件</td><td>2026H2（最遲 Q4 2026）</td></tr>
+<tr><td>3</td><td>Securities Class Action Lead Plaintiff 分配 + 訴訟立案規模揭露</td><td>治理 / 法律</td><td>2026-07 ~ 2026-08（5/4 截止 + 法庭分配 2-3 個月）</td></tr>
+<tr><td>4</td><td>股價站回 W250 ($65.68) 並維持 4 週</td><td>價位觸發</td><td>監測中（需 +21% 從 $54 至 $65.68）</td></tr>
+<tr><td>5</td><td>§5 single thing（Q3 2026 美國 EP < +10%）+ secondary（訴訟 Discovery + $1B 和解）</td><td>致命事件</td><td>持續監測；Q3 法說會 10/22 為下次硬節點</td></tr>
+<tr><td>6</td><td>CHAMPION FDA 擴大適應症申請進度（Watchman first-line TAM 兌現）</td><td>產業 / 監管</td><td>2026H2 申請受理；2027H1 核准（預期）</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：</strong><strong>至 2026-07-22 Q2 2026 財報前有效</strong>（≤ 73 天）。Q2 數據將是 driver 1 (EP share) 的第一個硬驗證點；訴訟 lead plaintiff 分配亦預期同期落地。財報後須整份重跑。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>(a) Q2 美國 EP YoY ≥ +15% + Volt US ramp 慢於預期（< 10% share Q2）→ 共識重置至更平衡，股價反彈至 $65-70；(b) 訴訟和解金額 < $300M 早期確認 → 治理折扣移除，估值修復路徑啟動。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>(a) Q2 美國 EP YoY < +10% + Volt 已搶 15% share → 整個 PFA thesis 受撞，股價跌至 $45-48 區間；(b) Pacemaker recall 擴大至 $500M+ 或新 FDA 警告。</p>
+
+<!-- ============================================================ -->
+<!-- Phase A1 折疊 -->
+<!-- ============================================================ -->
+<h2>Phase A｜獨立研究階段（折疊區塊）</h2>
+
+<details>
+<summary><strong>Phase A1｜護城河深度分析</strong> — 結論：B 級護城河 ↓ narrowing，PFA 三足鼎立兌現中</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) 技術 + 監管（PFA first-mover、CE Mark 2021、FDA 2024Q1 為 first PFA approved）；(2) 切換成本（hospital integrated tools、accessories、clinical support、bundled purchasing）</td></tr>
+<tr><td>持久性評分</td><td>7.5/10（與 DD §9 一致），5 年穩固度：中（PFA 先發優勢已被同業 catch up；switching cost 中等）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Abbott Volt 在 2026H2 美國 FDA 核准 + 放量（Truist 預估 BSX 仍守 ≥ 50% 但 share 已從 65% 滑落）</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 70.6% adj FY25（趨勢 → holding）、美國 PFA share ≈ 50% 但流失中（QC-23 生態攻擊）、ROIC 10.5% (FY25 vs FY24 10%，趨勢 → 微升)；ROIC vs WACC 超額 +2-3%p</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>↓ narrowing</strong>｜Evidence ≥ 1：(a) BSX FY26 guide 下修至 organic 6.5-8% (Q1 2026 4/22 公布) — 自承 EP/WATCHMAN/Urology 三業務同時面臨競爭壓力；(b) CEO Mahoney 在 Q1 2026 法說會稱 Medtronic 為「solid competitor」並承認 Abbott + J&J 「expanding footprint」(MedTech Dive 2026/04 報導)；(c) Abbott Volt CE Mark 已下、Volt US pivotal trial 完成、2026H2 預期 FDA 核准（Clinical Trials Arena, HRS 2026 報導）— 雙引擎兌現 = 過去 2 年 BSX 獨家紅利期結束</td></tr>
+</table>
+
+<p><strong>A1 sourced data point 數：6 ≥ 5 floor</strong> ✅</p>
+<ol>
+<li>Truist 預估 2026 PFA $8.2B、BSX share ≥ 50%（MedTech Dive 2025）</li>
+<li>BSX 4/22/2026 FY26 organic guide 從 10.5-11.5% 下修至 6.5-8%、EPS $3.43-3.49 下修至 $3.34-3.41（BSX press release）</li>
+<li>Adjusted GM FY25 70.6% +30bps YoY；Q1 2026 70.5% -100bps YoY（BSX Q1 2026 法說會, 4/22）</li>
+<li>ROIC 10.5%（Q1 2026 簡報，4/22）</li>
+<li>Farapulse 累計治療 500,000 患者（Q1 2026 prepared remarks）— 數量上的 first-mover 紅利</li>
+<li>Abbott Volt: 完成 US pivotal trial、CE Mark 已下、2026H2 FDA 預期（Clinical Trials Arena 2026/04）</li>
+<li>1/3 FARAPULSE accounts use integrated FARAWAVE NAV + OPAL device（BSX HRS 2026）— 切換成本實證</li>
+</ol>
+
+<p><strong>A1 獨立結論</strong>：BSX 護城河 7.5/10 維持 B 級但 moat_trend ↓ narrowing — Farapulse 從「獨家紅利」進入「三家分蛋糕」階段，hospital 切換成本仍在但已被 Volt 的 PFA+RF dual energy 設計挑戰；ROIC 微升至 10.5% 但仍遠低於 Munger 15% 標準。</p>
+</details>
+
+<details>
+<summary><strong>Phase A2｜產業趨勢深度分析</strong> — 結論：EP $10-20B 高 CAGR 跑道仍在，但 BSX 個股 share 流失</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>EP 市場 2025 $10.27B → 2030 $19.08B（Mordor Intelligence, 13.2% CAGR）；另一源 $12.55B → $21.72B (Markets&Markets, 11.6% CAGR)；PFA catheter 子市場 17.89% CAGR；總醫材市場 7% CAGR 2025-2030（$682B → $955B）</td></tr>
+<tr><td>滲透率</td><td>當前 PFA 占 AFib 消融 ~30-40%；2026 預估 60%（Truist）；2030 預期 PFA reshape category leadership</td></tr>
+<tr><td>供需判斷</td><td>需求供過於求轉向平衡：需求由人口老化 + AFib 發病率 + 醫師接受度推動；供給三家共存後價格壓力升溫，但醫療裝置需求剛性 → 12 個月方向「需求穩定 + 競爭加劇」</td></tr>
+<tr><td>最大技術替代風險</td><td>GLP-1 減重藥若大規模降低 AFib 發病池 (3-5 年壓縮 -15% TAM)；長期 AI + 口服 NOAC + 連續心律監測組合可能取代部分 LAAO 適應症（但 CHAMPION 已部分反證 — Watchman 在 NOAC-eligible 患者非劣性）</td></tr>
+<tr><td>最大政策/地緣風險</td><td>FDA Class III PMA 路徑長且高成本（已 priced in）；2026 美國關稅升級可能擴大至墨西哥（BSX Costa Rica 製造基地）；CMS 2025 已通過 LAAC + ablation 同 procedure 新 reimbursement code（正面）</td></tr>
+<tr><td>議價權位置</td><td>對上游：強（裝置零件多元化、無單一供應商瓶頸）；對下游：中（hospital GPO 集采壓力，但 PFA/Watchman 仍為差異化產品）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬</strong>｜判準：S 曲線位置「中期」（PFA 從早期 → 主流，2030 後仍有 RF 替代 + LAAO first-line 成長）；Y5 末 TAM 滲透率 ~50-55%（仍有 2x 空間）；第二曲線 Asurys 神經調節 2026-2027 上市 + Watchman first-line 2027+ 啟動 — 兩條獨立第二曲線銜接</td></tr>
+</table>
+
+<p><strong>A2 sourced data point 數：7 ≥ 5 floor</strong> ✅</p>
+<ol>
+<li>EP market $10.27B (2025) → $19.08B (2030), 13.2% CAGR (Mordor Intelligence 2025)</li>
+<li>另一估 $12.55B → $21.72B, 11.6% CAGR (Markets&Markets 2025)</li>
+<li>PFA catheter 子市場 17.89% CAGR (Mordor)</li>
+<li>全醫材 $682B (2025) → $955B (2030), 7% CAGR (medicalmicromolding 2025)</li>
+<li>Watchman 當前市場 $2B 年增 20%+（BSX Q1 2026 法說會 4/22）</li>
+<li>CHAMPION 達到 noninferiority vs NOACs，5.7% vs 4.8% primary endpoint over 3Y（ACC 2026, NEJM 2026/03/28）</li>
+<li>2030 全球 1.4B 人口 ≥ 60 歲（+40% vs 2020, WHO/UN 引用）— 老化需求驅動底盤</li>
+<li>Abbott Volt CE Mark + US FDA 2026H2 預期、J&J Varipulse 2027 上市（Clinical Trials Arena 2026）</li>
+</ol>
+
+<p><strong>A2 獨立結論</strong>：產業 EP + 全醫材 secular tailwind 真實且 5-10 年跑道寬（🟢 寬）；BSX 個股能否抓住此跑道取決於 PFA share 與 Watchman first-line 兌現速度（與 A1 / A3 結論分離）。</p>
+</details>
+
+<details>
+<summary><strong>Phase A3｜業務結構 / 財務體質 / 資本配置</strong> — 結論：多元化 + FCF 強但 ROIC 結構性偏低</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>FY2025 Revenue $20.07B：<br>- Cardiovascular ~55% (+26% YoY；其中 Cardiology +31%、Peripheral +7%)<br>- MedSurg ~45%（Endoscopy +9%、Neuromod +9%、Urology）<br>現金牛：Endoscopy + 老牌 PI；成長引擎：EP + Watchman；新興：Asurys 神經調節、Silk Road TCAR</td></tr>
+<tr><td>客戶集中度</td><td>分散：hospital + ASC + GPO 多元化；無單一客戶 > 5%；風險：低</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 → holding（PFA pricing 仍維持 premium，Watchman maintain）；管理層 4/22 法說會暗示 mix benefit 將減少 → 定價權：中</td></tr>
+<tr><td>未來金雞母</td><td>(1) Watchman first-line (CHAMPION 後)，潛在 TAM $5-8B vs 當前 $2B；(2) Asurys 神經調節 $2-3B TAM；(3) Silk Road TCAR carotid 中風預防 $1B+ TAM。三條獨立成熟期 2-5 年</td></tr>
+<tr><td>財務體質</td><td>FY25 FCF $3.4B / NI $2.9B = FCF 轉換 117%；GM 69.0%（趨勢 → holding）；壓力測試：營收 -20% 可撐 4-5 季（cash $1.97B + 信用額度 + 強 FCF）</td></tr>
+<tr><td>資本配置紀律</td><td>R&D 9-10% revenue（業界中上）；近 5 年補強型 M&A：Axonics $3.7B、Silk Road $1.16B、Cerevasc、Bolt Medical、Apollo Endo — 紀律好但 ROIC 11% 反映 Invested Capital 擴張快於 NI 擴張；買回計畫 expanded 但無 dividend；CEO Mahoney 自 2012 任職紀律強</td></tr>
+<tr><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td>EPS CAGR：+10.5%/yr（含 buyback 抵銷 SBC 稀釋，反映 FY27-FY30 mid-teens 成長 + 後段減速）<br>5Y 末 Fwd PE：18x vs 當前 16x（re-rate 貢獻 = (18/16)^(1/5)−1 = +2.4%/yr）<br>現金股息率：0%（BSX 無 dividend）<br>淨買回率：+0.4%/yr（已扣 SBC 稀釋）</td></tr>
+</table>
+
+<p><strong>A3 sourced data point 數：8 ≥ 6 floor</strong> ✅</p>
+<ol>
+<li>FY25 Revenue $20.07B +19.9% YoY (BSX 2026/02/04 press release)</li>
+<li>FY26 organic guide 6.5-8% revised (4/22/2026 Q1 法說會)</li>
+<li>Q1 2026 EPS $0.80 beat $0.79 (4/22)；Revenue $5.20B +11.6%</li>
+<li>FY25 adj GM 70.6% +30bps; Q1 2026 70.5% -100bps (BSX press release)</li>
+<li>FY25 FCF $3.4B (BSX 2026/02 press release)</li>
+<li>Total debt $12.0B、cash + ST inv $534M、D/E 53.1% (Simply Wall St 2026)</li>
+<li>Forward PE 2026 18.08x、2027 16.04x、2028 14.25x (consensus 2026/05/01)</li>
+<li>Sell-side target median $93.18、low $71 (Canaccord 4/23 lowered 109→71)、high $128 (33 analysts)</li>
+<li>同業 Fwd PE: MDT 16x / ABT 22x / EW ~24x / SYK ~22-24x</li>
+</ol>
+
+<p><strong>A3 獨立結論</strong>：多元化醫材組合 + 強 FCF + 補強型 M&A 紀律支撐業務體質；但 ROIC 10.5% 結構性偏低（Munger 三維 🟡），這也是估值修復上限 22-25x 而非 70x 的核心原因。</p>
+</details>
+
+<details>
+<summary><strong>Phase A4｜既有 DD 報告數據擷取（DD_BSX_20260418.html v12.0）</strong></summary>
+
+<table>
+<tr><th>項目</th><th>DD 數據</th></tr>
+<tr><td>Quality Score</td><td>8.0 / 10（quality_tier B）</td></tr>
+<tr><td>moat score / growth durability</td><td>7.5 / 7.5</td></tr>
+<tr><td>R:R short (MA60)</td><td>1.08x（短期 R:R 不過 2.0）</td></tr>
+<tr><td>R:R mid (MA200)</td><td>2.20x（中期 R:R 達標）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $86.50（FY+1 $3.46 × 25x）；中期 $97.50（FY+2 $3.90 × 25x）；長期 N/A v12.0</td></tr>
+<tr><td>Bear anchor</td><td>$43-49（短期 $43.50 / 中期 $49.14，14x × 0.9 EPS）</td></tr>
+<tr><td>紅旗清單</td><td>(i) QC-19 Securities Class Action；(ii) QC-23 生態攻擊（Abbott Golden Cable + Medtronic Affera）；(iii) Pacemaker 電池 100% 失效批次；(iv) FY26 guide miss -3-5%</td></tr>
+<tr><td>§0.5 / §5 H1 / H2 / H3</td><td>H1: Farapulse 守住 US > 45% share；H2: CHAMPION 達主要終點 ✅ 兌現 (2026/03/28)；H3: 估值修復 12-18 個月</td></tr>
+<tr><td>§8 最終訊號燈</td><td><strong>X（迴避）</strong> — MA ❌ 系統失效硬性拒絕</td></tr>
+<tr><td>陷阱定性</td><td>🟡 觀察期</td></tr>
+<tr><td>Price at DD</td><td>$64.23（2026-04-18）</td></tr>
+<tr><td>Fwd PE FY+2</td><td>16.47x</td></tr>
+<tr><td>PEG FY+2</td><td>1.28</td></tr>
+</table>
+
+<p><strong>ID 報告擷取</strong>：醫材 / cardiovascular device 產業 ID 尚未建立 — 標記「無既有 ID 可引用」。本 DCA 採用 web search 替代產業端深度，記錄此為 Phase A4 缺口。</p>
+
+<p><strong>DD vs 5/11 變化</strong>：(i) 股價 $64.23 → $54.02 (-15.9%)；(ii) FY26 guide 進一步下修至 EPS $3.34-3.41；(iii) Q1 2026 EPS $0.80 beat 0.79（小幅，但 guide 下修主導）；(iv) Lead Plaintiff 截止 5/4 完成、訴訟進入立案分配階段；(v) 賣方目標已開始 catch-down（Canaccord $71, Argus $95）。<strong>DD X 訊號燈獲得進一步驗證，本 DCA 採用相同 X 起點但量化條件式試倉路徑</strong>。</p>
+</details>
+
+</div>
+</div>
+
+</body>
+</html>

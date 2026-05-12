@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜AMD（Advanced Micro Devices）｜2026-05-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#0F172A; --muted:#475569;
+    --line:#E2E8F0; --line-strong:#CBD5E1; --accent:#1E3A5F; --accent-light:#3B82F6;
+    --row-alt:#F1F5F9;
+    --thesis-bg:#EFF6FF; --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+    --conflict-bg:#FFF7ED; --conflict-line:#F97316; --verdict-bg:#FED7AA;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --ok:#DCFCE7; --ok-text:#166534; --no:#FEE2E2; --no-text:#991B1B;
+    --warn:#FEF3C7; --warn-text:#92400E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.65}
+  .mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header.fixed-top{position:sticky;top:0;z-index:100;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:14px}
+  header.fixed-top .ticker{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.fixed-top .sep{opacity:.4}
+  header.fixed-top .thesis-line{flex:1;min-width:280px;font-style:italic;opacity:.95}
+  main{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+  h1{font-size:32px;margin:0 0 4px}
+  h2{font-size:22px;margin:48px 0 12px;padding:10px 14px;background:var(--accent);color:#fff;border-left:4px solid var(--accent-light);border-radius:2px}
+  h3{font-size:17px;margin:24px 0 8px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+
+  /* ===== Status Bar (top dashboard) ===== */
+  .status-bar{display:flex;gap:16px;justify-content:center;align-items:stretch;background:#F1F5F9;border-left:4px solid var(--accent-light);border-right:4px solid var(--accent-light);padding:14px 18px;margin:16px 0 24px;flex-wrap:wrap}
+  .status-bar .cell{flex:1;min-width:170px;max-width:220px;text-align:center;background:#fff;padding:12px 10px;border-radius:4px;border:1px solid var(--line)}
+  .status-bar .cell .label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .status-bar .cell .value{font-size:22px;font-weight:700;margin-top:6px;line-height:1.2}
+  .status-bar .cell .sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .sig-Aplus{color:#166534}
+  .sig-A{color:#15803D}
+  .sig-B{color:#92400E}
+  .sig-C{color:#991B1B}
+  .arrow-up{color:#166534}
+  .arrow-flat{color:#64748B}
+  .arrow-down{color:#991B1B}
+  .dd-green{color:#166534}
+  .dd-amber{color:#92400E}
+  .dd-red{color:#991B1B}
+
+  .thesis-card{background:var(--thesis-bg);border:1px solid #BFDBFE;border-radius:4px;padding:36px 32px;margin:16px 0;text-align:center}
+  .thesis-card .quote{font-size:26px;font-weight:500;line-height:1.5;color:#1E3A8A}
+  .thesis-card .label{font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:1px}
+
+  .decision-card{background:var(--decision-wait);border-left:4px solid #CA8A04;padding:18px 22px;margin:12px 0;border-radius:2px}
+  .decision-card .verdict-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:8px;background:#92400E;color:#fff}
+
+  .conflict-card{background:var(--conflict-bg);border-left:4px solid var(--conflict-line);padding:16px 20px;margin:12px 0;border-radius:2px}
+  .verdict-table{background:var(--verdict-bg);padding:8px;border-radius:2px;margin-top:10px}
+  .verdict-table table{margin:0;font-size:13px}
+  .verdict-table thead th{background:#9A3412}
+
+  .premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:14px 20px;margin:10px 0;border-radius:2px;font-style:italic}
+  .pattern-card{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 20px;margin:10px 0;border-radius:2px}
+
+  .ok-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--ok);color:var(--ok-text);font-weight:600;font-size:12px}
+  .no-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--no);color:var(--no-text);font-weight:600;font-size:12px}
+  .warn-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--warn);color:var(--warn-text);font-weight:600;font-size:12px}
+
+  .memo-paper{background:#FAFAF7;border:1px solid #E5E5E0;padding:24px 30px;font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;border-radius:2px;margin:12px 0;box-shadow:1px 1px 0 #00000010;white-space:pre-wrap}
+  .elevator{font-style:italic;background:#F8FAFC;border-left:3px solid var(--muted);padding:14px 18px;margin:10px 0;color:var(--muted)}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;margin:12px 0}
+  details summary{padding:14px 20px;cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▶ ";font-size:11px;color:var(--muted);margin-right:6px}
+  details[open] summary::before{content:"▼ "}
+  details > *:not(summary){padding:0 24px 20px}
+  .summary-conclusion{font-weight:400;color:var(--muted);margin-left:12px;font-size:13px}
+
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:2px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px #00000018;z-index:200}
+  .print-btn:hover{background:#0F2542}
+  .consensus-card{background:#FEF7CD;border:1px solid #FCD34D;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0;border-radius:2px}
+
+  /* IRR composition stacked bar */
+  .irr-bar-wrap{margin:14px 0 4px}
+  .irr-bar{display:flex;height:26px;width:100%;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .irr-bar .seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;font-family:"IBM Plex Mono",monospace}
+  .seg-eps{background:#15803D}
+  .seg-rerate{background:#1D4ED8}
+  .seg-buyback{background:#64748B}
+  .irr-narrative{font-style:italic;background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:12px 18px;margin:10px 0;border-radius:2px;font-size:14px}
+
+  /* Max DD visual */
+  .maxdd-wrap{display:flex;gap:16px;align-items:center;margin:12px 0}
+  .maxdd-number{font-size:32px;font-weight:700;font-family:"IBM Plex Mono",monospace;color:#92400E;min-width:200px}
+  .maxdd-bar{flex:1;height:24px;background:linear-gradient(to right,#15803D 0%,#15803D 50%,#CA8A04 50%,#CA8A04 83%,#991B1B 83%,#991B1B 100%);border:1px solid var(--line);border-radius:2px;position:relative}
+  .maxdd-bar .marker{position:absolute;top:-6px;width:2px;height:36px;background:#0F172A}
+
+  @media print {
+    header.fixed-top, .print-btn { display:none !important }
+    details { border:none }
+    details:not([open]) > *:not(summary) { display:block !important }
+    details > *:not(summary) { padding:0 !important }
+    summary::before { display:none }
+    main { max-width:100%; padding:0 12px }
+    h2 { page-break-after:avoid }
+    .card, .conflict-card, .decision-card, .thesis-card { page-break-inside:avoid }
+  }
+</style>
+</head>
+<body>
+
+<header class="fixed-top">
+  <span class="ticker mono">AMD · Advanced Micro Devices</span>
+  <span class="sep">｜</span>
+  <span class="mono">2026-05-11</span>
+  <span class="sep">｜</span>
+  <span class="thesis-line">AI 加速器市場唯一 viable NVDA 第二供應商 — hyperscaler dual-source 結構必經</span>
+</header>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<main>
+
+<h1>Deep Conviction Analysis · AMD（Advanced Micro Devices）</h1>
+<p style="color:var(--muted);font-size:14px;margin:0 0 12px">深度定見分析 ｜ 報告日期：2026-05-11 ｜ 標的價格：USD <strong>~$455</strong>（5/10 報價，較 5/5 DD 時 $355 又 +28%）｜ Forward P/E (FY27E $11.22) ≈ 40.5x ｜ FY28 EPS consensus $14-20 ｜ DD 基底：DD_AMD_20260506.html ｜ ID 連動：ID_AIAcceleratorDemand_20260419 / ID_CUDARocmMoat_20260501 / ID_AIInferenceEconomics_20260430</p>
+
+<!-- ==================== STATUS BAR (top dashboard) ==================== -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value sig-B">B 觀望</div>
+    <div class="sub">DD §1 dashboard｜thesis 完整<br>MA stretched + 追高警示</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">B <span class="arrow-flat">→</span></div>
+    <div class="sub">CPU↑（41% server share）<br>GPU↓（vs NVDA Rubin 縮差）<br>net = holding</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value">🟢 寬</div>
+    <div class="sub">AI infra 2030 仍 5x 空間<br>+ FPGA/Embedded 第二曲線</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD（5Y 路徑）</div>
+    <div class="value dd-amber">−60%</div>
+    <div class="sub">範圍 −45% ~ −60%<br>🟡 需強信念扛住</div>
+  </div>
+</div>
+
+<!-- ==================== §2 ONE-SENTENCE THESIS ==================== -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-card">
+  <div class="quote">AMD 是 AI 加速器市場唯一 viable 的 NVDA 第二供應商 — hyperscaler 從 single-source 走向 dual-source 是結構必經，吃 NVDA 不要的份額也夠飽。</div>
+  <div class="label">— 50 字以內，敘事性 thesis（非財務指標主體）</div>
+</div>
+
+<div class="card">
+<h4>Thesis 結構拆解（內部備忘）</h4>
+<p>本 thesis 押兩件事：(1) <strong>結構必經</strong>：任何 mission-critical 基礎設施都會走向 dual-source（電信 Ericsson/Nokia、晶圓 TSMC/Samsung、CPU INTC/AMD 早已驗證），AI 加速器在訓練成本 $100M+ 等級時，採購端不可能再容許 single point of failure；(2) <strong>市場結構容量</strong>：$500-600B 2028 TAM（AMD/Gartner forecast）下，即使 AMD 只拿 15-20% 也是 $75-120B 年收入（vs FY25 $34.6B 整體營收），意味著 DC GPU 一個 segment 就比目前 total revenue 大 2-3x。Thesis 不需要 AMD 打贏 NVDA — 只需要 AMD 維持「viable 第二」地位且 hyperscaler 維持 dual-source 紀律。</p>
+</div>
+
+<!-- ==================== §7 DECISION ==================== -->
+<h2>§7 Decision（可執行計畫）</h2>
+
+<div class="decision-card">
+  <div class="verdict-tag">B 觀望｜等回測 + 動能降溫</div>
+  <p><strong>裁決：</strong>thesis 完整且護城河趨勢未惡化，但 <strong>5/5 → 5/10 又跳 28%（$355 → $455）</strong>已把 H2 2026 MI400 量產利多前置消化；RSI 14d = <strong>79.84</strong>（5/7 GuruFocus）已深入超買，4 週漂移 ~+25-30%。<strong>新建倉等回測 W52 $260-320 區或 BB 中軌 ~$340 以下分批；現有持倉者保留核心、上半部分位獲利了結 1/3。</strong></p>
+</div>
+
+<h3>§7a｜倉位與進場計畫</h3>
+<table>
+  <thead><tr><th style="width:34%">項目</th><th>具體內容</th></tr></thead>
+  <tbody>
+    <tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（不放 core — 護城河相對 NVDA 仍弱、Beta 2.40 波動太大、單一客戶（OpenAI/Oracle）佔比過高）</td></tr>
+    <tr><td>初始建倉倉位（新進）</td><td><span class="mono">2.0% of portfolio</span>（max DD 🟡 評級，原計畫 3% → 強制下修至 2%）</td></tr>
+    <tr><td>目標倉位（thesis 兌現後）</td><td><span class="mono">4.0% of portfolio</span>（5Y target，需 MI400 量產 + AI ASIC 份額未超 35%）</td></tr>
+    <tr><td>進場價位區間（新進）</td><td><span class="mono">$260 ~ $320</span>（W52 高 $480 的 55-67% 區間；對應 FY27 EPS $11.22 × 23-29x）</td></tr>
+    <tr><td>進場節奏（條件式，動能過熱觸發）</td><td><strong>分 3 批</strong>：(1) RSI 回到 50-60 區 + 股價回測 BB 中軌 $340 以下 → 第 1 批 0.7%；(2) 股價跌至 W52 高 −35%（~$310）或 Q2 法說後 → 第 2 批 0.7%；(3) MI400 出貨確認（H2 2026 Oracle 50K 部署實證）→ 第 3 批 0.6%</td></tr>
+    <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>同 AI 半導體曝險已持有 NVDA（core, ~6%）+ AVGO（satellite, ~3%）。</strong><br>• <strong>vs NVDA</strong>：NVDA 5Y IRR ~14-16%（DD §13），AMD 5Y IRR ~10-12%（本 §4 base），NVDA conviction 更強且 R:R 更佳 — 邊際資金加碼 NVDA 優於新進 AMD。<strong>不該減 NVDA 換 AMD。</strong><br>• <strong>vs AVGO</strong>：AVGO 護城河（ASIC 客製 + Q1 +140% YoY 領先 NVDA DC）強於 AMD，且估值倍數較低（FPE ~30x vs AMD 40.5x）— AVGO 比 AMD 更值得放衛星部位。<br>• <strong>結論</strong>：AMD 不該在現價建倉；若已持有 AMD（如 2024 累積部位）可保留並在 $455+ 獲利了結 1/3。新進邊際資金應放 NVDA 或 AVGO，不應放 AMD。</td></tr>
+  </tbody>
+</table>
+
+<h3>§7b｜加碼與減碼條件</h3>
+<table>
+  <thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+  <tbody>
+    <tr><td>加碼 1</td><td>RSI 回 50-60 + 股價回測 BB 中軌 $340 以下，動能降溫</td><td>0.7%（首批）</td></tr>
+    <tr><td>加碼 2</td><td>Q2 26 法說（2026-08-05 預估）DC 段 guide ≥ $7B 或 MI400 出貨時程確認 H2 26 不延後</td><td>1.4%（累積）</td></tr>
+    <tr><td>加碼 3</td><td>2026-11 Oracle 50K MI450 部署確認 + 毛利率 56%+ 維持</td><td>2.0%（觸及初始建倉目標）</td></tr>
+    <tr><td>升級為 core</td><td>5Y 內，AI hyperscaler 分配 AMD 維持 ≥ 15% + ROCm/CUDA 真實 inference parity 驗證</td><td>4.0%</td></tr>
+    <tr><td>減碼 1</td><td>Q2/Q3 26 法說 DC 段 miss 共識 -10% 或 MI400 量產延後 ≥ 1 季</td><td>1.0%</td></tr>
+    <tr><td>減碼 2</td><td>OpenAI / Oracle 任一客戶宣布縮減多年合約規模 或 hyperscaler 自研 ASIC 在 inference 取代 GPU 加速</td><td>0.5%</td></tr>
+    <tr><td>清倉</td><td>§5 single thing 觸發（NVDA Rubin 出貨後 AMD hyperscaler 分配跌破 8%）</td><td>0%</td></tr>
+  </tbody>
+</table>
+
+<h3>§7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+  <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td>股價在 MA60 之上？</td><td><span class="ok-tag">✅</span></td><td>$455 vs MA60 ~$300-320，遠在 MA60 之上</td></tr>
+    <tr><td>股價在 MA200 之上？</td><td><span class="ok-tag">✅</span></td><td>$455 vs MA200 ~$202（Investing.com 5/7）</td></tr>
+    <tr><td>股價在 MA104w（週線）之上？</td><td><span class="ok-tag">✅</span></td><td>$455 vs MA104w ~$160-180，結構性多頭</td></tr>
+    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="ok-tag">✅</span></td><td>三條 MA 全多頭排列；但 deviation 過大（vs MA200 +125%）反成警訊</td></tr>
+    <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="no-tag">⚠ RSI 14d = 79.84（GuruFocus 5/7） + 4 週漂移 ~+25-30%</span></td><td><strong>雙重過熱訊號</strong>：RSI > 70（已 9 個交易日）+ 5/5 → 5/10 +28%（已 priced in Q1 beat + AH +15% + analyst 上修連動）</td></tr>
+  </tbody>
+</table>
+
+<div class="conflict-card" style="background:#FEF3C7;border-left-color:#92400E">
+<p><strong>⚠ §7a 進場節奏強制改條件式</strong>：Pure MA 通過但動能過熱 — 歷史頻率上 RSI &gt; 75 後 1 個月內回測 8-15% 的機率 ~60%。Pure MA 告訴我們「結構是多頭」，動能過熱告訴我們「短期不該追」。<strong>禁止一次建倉、禁止「立即第一批 50%」。必須等 RSI 回 50-60 或 BB 中軌回測。</strong></p>
+</div>
+
+<h3>§7d｜建議持有年限</h3>
+<table>
+  <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+  <tbody>
+    <tr><td>短期（&lt; 2 年）</td><td>若 Pure MA 結構維持 + Q2/Q3 26 法說連續 beat + MI400 量產順利 — 可短期持有但不是 thesis 用途，純動能交易</td></tr>
+    <tr><td>中期（2-5 年）</td><td>若 AI 加速器 dual-source 結構在 hyperscaler 採購中固化（AMD 拿到 ≥ 15% 分配連續 4 季） — 推薦範圍</td></tr>
+    <tr><td><strong>長期（5-10 年）</strong></td><td><strong>本案推薦持有年限</strong>：5-7 年（DD §8 長期成長性 🟢 高確信 + runway_post_y5 🟢 寬）；若 AI 加速器 TAM 兌現 $500B+ 且 AMD 拿 15-20% 分配，2030 EPS 有機會達 $35-45（FY28 共識已是 $14-20，再 +60-80% 複利至 2030）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>建議持有年限：</strong>5-7 年（衛星部位，視 MI400 量產進度滾動評估）<br>
+<strong>原因：</strong>thesis 是「dual-source 結構必經」這種需要 24-36 個月驗證的命題，無法靠 1-2 個 quarter 證實；max DD 🟡 評級（−45 ~ −60%）需要強信念扛中途回吐，故倉位不放 core 但持有時間放長。<strong>5Y IRR base case ~10-12%/yr</strong>（含 +28% 起跌損益吸收）— 屬「中等 conviction」，不及大盤特長案件，但作為 NVDA 衛星補位 + AI 對沖意義成立。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+<tbody>
+<tr><td>2026E</td><td>$6.76</td><td>DD §13 (5/5)</td><td>Q1 actual $1.37 + Q2 guide $11.2B implied ~$2.0 EPS</td></tr>
+<tr><td>2027E</td><td>$11.22</td><td>DD §13 + Bernstein 上修至 $14+</td><td>MI400 量產 + EPYC Venice 雙引擎</td></tr>
+<tr><td>2028E</td><td>$14-20</td><td>Bernstein upgrade 預估</td><td>區間寬度大反映 AI ASIC vs GPU 競爭結果未定</td></tr>
+<tr><td>2030E（外推）</td><td>$30-40</td><td>外推</td><td>外推假設：FY27-30 EPS CAGR 25-30%（vs Q1 26 YoY +130% GAAP EPS）</td></tr>
+</tbody>
+</table>
+
+<h4>假設長期持有（5-10 年），現在的股價適合嗎？</h4>
+<p>用 §4 Asymmetry：機率加權 5Y IRR 約 +10-12%/yr（base case），位於「中等 conviction」區間。現價 $455 = FY27 PE 40.5x，但若 thesis 兌現至 FY30 EPS $30-40，5Y 末 forward PE 在 25-30x 區間 → 5Y 末股價 $750-1,200。Base case 5Y 漲幅 +65~+165% = IRR 10.5-21.5%/yr。<strong>但 max DD 路徑風險 🟡（−45 ~ −60%）意味著「能否抱到 5Y 終點」本身就是條件，且現價買入觸發 max DD 的機率比 $300 買入觸發機率高 ~2x。結論：價格可接受但時機不佳；分批進場 + 等回測是價值最大化路徑。</strong></p>
+
+<!-- ==================== §4 ASYMMETRY ANALYSIS ==================== -->
+<h2>§4 Asymmetry Analysis（5Y 機率加權 + IRR Composition）</h2>
+
+<table>
+  <thead><tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Thesis 對（Bull）</strong></td><td>+150%（→ ~$1,140）</td><td>+20.1%/yr</td><td>FY30 EPS $40 × PE 28x；AI ASIC 份額不超 30%，AMD 拿到 hyperscaler 20%+ 分配</td><td>25%</td></tr>
+    <tr><td><strong>Base</strong></td><td>+65%（→ ~$750）</td><td>+10.5%/yr</td><td>FY30 EPS $30 × PE 25x；ASIC 份額 30-35%，AMD 拿 15% 分配</td><td>45%</td></tr>
+    <tr><td><strong>Thesis 錯（Bear）</strong></td><td>−45%（→ ~$250）</td><td>−11.2%/yr</td><td>FY30 EPS $18 × PE 14x；ASIC 取代 GPU inference + NVDA Rubin 領先 perf/W 30%</td><td>30%</td></tr>
+    <tr><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>+45.5% 5Y → IRR ≈ +7.8%/yr</strong></td><td colspan="2">註：含現價 $455 起跌損益吸收，較 DD $355 時 IRR 折讓 ~3pp</td></tr>
+  </tbody>
+</table>
+
+<p><strong>IRR 落點解讀：</strong>機率加權 7.8%/yr <strong>位於「弱」區間</strong>（&lt; 8% 為大盤平均以下）— 反映現價 $455 已透支 24 個月 EPS 跳升的大部分；若進場價在 $300 區，IRR 跳升至 12-14%/yr（中-強）。<strong>這是為什麼 §7a 倉位下修至 2% + 進場價設 $260-320 的核心理由：等估值修復才能把 IRR 推回中等以上。</strong></p>
+
+<h3>追加壓力測試</h3>
+<p><strong>10Y vs 5Y 比較：</strong>若 thesis 對但拉長至 10Y，AI 加速器 2030 TAM $1T+（mlq.ai forecast），AMD 拿到 15-20% = $150-200B 年收入，FY35 EPS 有機會 $60-80 → 10Y IRR ~14-18%/yr（仍中等而已，因現價 $455 起點高）。<strong>機會成本：</strong>同期 NVDA 5Y IRR ~14-16%、AVGO 5Y IRR ~13-15%（兩者 base case 估值都更友善） — 邊際資金的 IRR ranking 是 AVGO ≥ NVDA &gt; AMD。</p>
+
+<h3>📅 機率估計：時間視角自檢</h3>
+<table>
+  <thead><tr><th>檢查項</th><th>標準</th><th>本案落點</th><th>判定</th></tr></thead>
+  <tbody>
+    <tr><td>Bear 機率</td><td>5Y 視角 ≥ 20-25%</td><td>30%</td><td><span class="ok-tag">✅ 達標</span> — 反映 ASIC 取代 + NVDA Rubin 雙重結構風險</td></tr>
+    <tr><td>Bull / Bear 散布</td><td>5Y 應比 1Y/2Y 寬 50%+</td><td>Bull +150% vs Bear −45% = 散布 195pp</td><td><span class="ok-tag">✅ 達標</span></td></tr>
+    <tr><td>Base 機率</td><td>不應 &gt; 50%</td><td>45%</td><td><span class="ok-tag">✅ 達標</span></td></tr>
+    <tr><td>Pattern match 校準</td><td>歷史相似 case IRR</td><td>NVDA 2017-2022 +1,500% (IRR 75%) — 不直接可比但結構相似</td><td>本案 base 10.5% IRR 較低，反映「相對於 2017 NVDA，AMD 護城河弱且現價已 priced in 多」</td></tr>
+  </tbody>
+</table>
+
+<h3>📐 Pattern match（歷史相似 setup）</h3>
+<div class="pattern-card">
+<table>
+  <tbody>
+    <tr><td style="width:30%"><strong>歷史上 thesis 結構類似的個股</strong></td><td>NVDA 2017-2019（GPU gaming → DC AI 早期）+ AMD 自身 2019-2022（CPU 對 INTC 翻身）</td></tr>
+    <tr><td><strong>當時的 setup</strong></td><td>NVDA 2017Q1：Fwd PE 35-45x、AI rev 佔比 &lt; 10%、市場質疑「不是炒作就是泡沫」。AMD 2019：Fwd PE 28-35x、Server CPU 市佔 4%、Intel 10nm 反覆延後。</td></tr>
+    <tr><td><strong>最終 5 年實現報酬</strong></td><td>NVDA 2017-2022：+1,500%（IRR ~75%/yr，但屬 outlier）。AMD 2019-2024：+500%（IRR ~43%/yr）。</td></tr>
+    <tr><td><strong>我的標的最像 / 最不像的地方</strong></td><td><strong>最像</strong>：AMD GPU 對 NVDA = AMD CPU 對 INTC 的早期形態（市佔小、產品節奏正在追上、客戶開始 dual-source）。<strong>最不像</strong>：(1) 對手強度不同 — NVDA 護城河（CUDA + NVLink）遠強於 2019 INTC（10nm 已破功）；(2) 現價已 priced in — 2019 AMD Fwd PE 30x 是「合理」進場，現在 AMD Fwd PE 40.5x 是「樂觀」進場，pattern match 的最後 50% 漲幅可能已被 5/5-5/10 +28% 消化。</td></tr>
+  </tbody>
+</table>
+<p style="margin-top:10px;font-size:13px"><strong>結論：</strong>pattern match 顯示「正確結構但已過 sweet spot」— 這跟現價 IRR 7.8% / 進場價 IRR 12-14% 的差距吻合。<strong>不是不能買，是現價買不該期待 NVDA 2017 那種報酬。</strong></p>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+
+<p>從 Phase A3 拉的「5Y IRR 分量基底」：FY25-30 EPS CAGR 預估 base case ~15-20%（含 buyback 對 EPS 稀釋抵銷）、5Y 末 forward PE 預估 25x vs 當前 40.5x（re-rate 貢獻 = (25/40.5)^(1/5) − 1 ≈ −9.3%/yr）、現金股息率 0% (AMD 不發股息)、淨買回率 ~1.5%/yr（$6B 程序對應 ~1.0-1.5% 市值/年）。</p>
+
+<table>
+  <thead><tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+  <tbody>
+    <tr><td>Bull</td><td><span style="color:#15803D;font-weight:600">+30.0%/yr</span></td><td><span style="color:#991B1B;font-weight:600">−10.6%/yr</span></td><td><span style="color:#64748B;font-weight:600">+1.5%/yr</span></td><td><strong>+20.9%/yr</strong></td></tr>
+    <tr><td>Base</td><td><span style="color:#15803D;font-weight:600">+18.0%/yr</span></td><td><span style="color:#991B1B;font-weight:600">−9.3%/yr</span></td><td><span style="color:#64748B;font-weight:600">+1.5%/yr</span></td><td><strong>+10.2%/yr</strong></td></tr>
+    <tr><td>Bear</td><td><span style="color:#15803D;font-weight:600">+5.0%/yr</span></td><td><span style="color:#991B1B;font-weight:600">−18.0%/yr</span></td><td><span style="color:#64748B;font-weight:600">+1.5%/yr</span></td><td><strong>−11.5%/yr</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="irr-bar-wrap">
+  <p style="font-size:13px;color:var(--muted);margin:4px 0">Base case stacked bar（橫向視覺化）：</p>
+  <div class="irr-bar">
+    <div class="seg seg-eps" style="width:62%">EPS +18.0%/yr</div>
+    <div class="seg seg-rerate" style="width:32%">re-rate −9.3%/yr</div>
+    <div class="seg seg-buyback" style="width:6%">+1.5%</div>
+  </div>
+</div>
+
+<div class="irr-narrative">
+Base 10.2% IRR 中，<strong>+18.0%/yr 來自 EPS 複利</strong>、<strong>−9.3%/yr 來自估值 re-rate（負貢獻）</strong>、+1.5%/yr 來自淨買回。這檔的可抱性<strong>主要靠 EPS 複利</strong>（自然複利），但 re-rate <strong>是負拖累</strong>（現價 PE 40.5x → 5Y 末 25x 是必經 mean reversion）。<strong>質感判斷：EPS 引擎強但估值起點高 — 自然複利好抱，但中途會看到「EPS 漲、股價漲不動」的乏味期，PM 需有耐心扛 12-18 個月的「EPS 兌現但 PE 收縮」階段。</strong>
+</div>
+
+<p style="font-size:13px;color:var(--muted)"><strong>Guardrail 校驗：</strong>Base 列三分量加總 = 18.0 − 9.3 + 1.5 = <strong>10.2%/yr</strong>，§4 表格機率加權 IRR Base case ≈ 10.5%/yr（單獨）；偏差 0.3pp（≤ 2pp 容忍範圍） <span class="ok-tag">✅ 通過</span></p>
+
+<!-- ==================== §1 MENTAL MODELS 壓力測試 ==================== -->
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">
+TO: 投委會
+FROM: PM
+DATE: 2026-05-11
+RE: AMD（Advanced Micro Devices）｜ 衛星部位建議
+
+==========================================================
+THESIS（50 字以內）
+AMD 是 AI 加速器市場唯一 viable NVDA 第二供應商 —
+hyperscaler 從 single-source 走向 dual-source 是結構必經，
+吃 NVDA 不要的份額也夠飽。
+
+KEY DRIVERS
+1. AI 加速器 dual-source 結構固化（hyperscaler 採購紀律）
+2. CPU 端對 INTC 結構性勝出（server share 41% → 50% by 2026）
+
+R:R（5Y 機率加權）
+Bull (25%): +150% / IRR +20.1%/yr
+Base (45%): +65% / IRR +10.5%/yr
+Bear (30%): −45% / IRR −11.2%/yr
+加權 IRR ≈ +7.8%/yr（弱於大盤；進場價 $300 區可拉至 12-14%）
+
+主要風險
+1. NVDA Rubin VR200 (2300W TGP) perf/W 領先 ≥ 30% → hyperscaler 維持 90/10 分配
+2. ASIC（TPU/Trainium/Maia）取代 GPU inference cost-per-token 60%+ 優勢
+3. 現價 $455 RSI 79.84 / 4w +25-30% drift — 短期 mean reversion 機率 60%
+
+建議倉位
+新進：2.0%（衛星）；目標：4.0%（5Y）；進場價區間：$260-320
+進場節奏：3 批，條件式（等 RSI 回 50-60 / BB 中軌 / MI400 出貨確認）
+
+OPPORTUNITY COST
+vs NVDA core 6%：NVDA conviction 強，邊際資金不該換
+vs AVGO 衛星 3%：AVGO 護城河強且 PE 友善，AVGO 優於 AMD
+
+REVIEW TRIGGERS
+2026-08-05 Q2 法說｜2026-11 Oracle 50K MI450 部署確認
+保質期：至 2026-08-05（Q2 26 法說前）
+
+ONE-WAY DOOR 風險：低（衛星部位，個股風險 contained）
+==========================================================
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「AI 不可能永遠只有 NVDA 一家供應 — 雲端大客戶被掐脖子的痛已經夠了，現在 OpenAI 6GW、Oracle 50K MI450 都簽下來了。AMD 不用打贏 NVDA，只要當好『第二來源』就值現在的價，因為 AI 加速器市場 2028 年有 $500B+，AMD 只要拿 15-20% 就比 2025 整體營收還大。<strong>但現在不該追 — RSI 79、4 週 +28%、估值已 priced in 多。等回測 $300 區再分批進。</strong>」
+</div>
+
+<p><strong>壓力測試結果：</strong><span class="ok-tag">✅</span> 1 頁紙 memo 與 30 秒版本邏輯自洽且互相連結，thesis 與 §7 倉位/進場計畫一致。可進入後續章節。</p>
+
+<!-- ==================== PHASE B 矛盾 + 強制裁決 ==================== -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>共識清單（A1-A3 方向一致）</h3>
+<ul>
+  <li><strong>長期 AI 加速器 TAM 結構性成長</strong>（A1 護城河 + A2 產業 + A3 業務皆認可 $500B+ 2028 市場）</li>
+  <li><strong>CPU 對 INTC 結構性勝出</strong>（A1 護城河 vs A3 業務 — server share 41% → 50% by 2026）</li>
+  <li><strong>FY26 / FY27 EPS 顯著跳升路徑</strong>（A3 業務 + 共識；FY26 $6.76 → FY27 $11.22 → FY28 $14-20）</li>
+  <li><strong>ROCm 7.2 在 inference 端達到部分 parity</strong>（A1 + A2 ID 連動皆認可此里程碑，2026-03 釋出）</li>
+</ul>
+
+<h3>矛盾清單</h3>
+
+<div class="conflict-card">
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>AMD GPU 護城河相對 NVDA 是縮短還是擴大？</td>
+      <td>縮短（MLPerf MI355X 達 B200 111-115%；ROCm 7.2 parity）</td>
+      <td>擴大（NVDA Rubin 2300W TGP 暴力堆料 → perf/W gap 拉大；NVLink/NCCL 仍獨家）</td>
+      <td>有縮短跡象但難量化（Q1 26 DC +57% YoY，但 NVDA DC +75% YoY 仍快）</td>
+      <td><span class="no-tag">🔴 不可調和</span></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>當前估值（FPE 40.5x）合理嗎？</td>
+      <td>合理（護城河 8/10，CPU 翻身 + GPU 第二供應商已成型）</td>
+      <td>偏貴（AI ASIC 28% CAGR 可能在 inference 端結構性壓縮 GPU vendor 毛利）</td>
+      <td>偏貴（PEG 1.05 看似合理但 EPS 預估誤差大；FY28 EPS 區間 $14-20 跨度 40%）</td>
+      <td><span class="no-tag">🔴 不可調和</span></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>客戶集中度（OpenAI + Oracle + Meta + Microsoft）是風險還是 thesis 強化？</td>
+      <td>thesis 強化（hyperscaler 自主下單 = dual-source 結構驗證）</td>
+      <td>風險（任一客戶縮減合約 → 多季 visibility 動搖）</td>
+      <td>thesis 強化（OpenAI 6GW 多年合約 + 160M warrants 結構性綁定）</td>
+      <td><span class="warn-tag">🟡 可調和（程度差異）</span></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>短期動能過熱是時機問題還是 thesis 失敗訊號？</td>
+      <td>時機問題（thesis 完整、護城河趨勢未惡化）</td>
+      <td>時機問題（AI 板塊輪動，AMD beta 2.40 是放大鏡）</td>
+      <td>時機問題（QC-22 追高警示為主，QC-31 規定落 B 不是 C）</td>
+      <td><span class="warn-tag">🟡 可調和（皆認為是時機）</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>與既有 DD / ID 報告的交叉矛盾</h3>
+<div class="conflict-card">
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>moat_trend</td><td>本 DCA 判 → holding（CPU↑ + GPU↓ 互抵）</td><td>DD §9 寫「護城河趨勢加深」</td><td>DD 偏 CPU 端視角；本 DCA 平衡 CPU + GPU 雙視角，GPU 端 NVDA Rubin 反擊納入</td></tr>
+    <tr><td>2</td><td>5Y IRR base</td><td>本 DCA 7.8%/yr（價已 $455）</td><td>DD §13 5Y +55%（IRR ~9%/yr，基於 $355）</td><td>時間差（DD 5/5、本 DCA 5/11 後 +28% 起跌損益吸收）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>⚖ 強制裁決</h3>
+
+<div class="verdict-table">
+<table>
+  <thead><tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>GPU 護城河趨勢</td>
+      <td><strong>A2 略勝（→ 擴大）</strong> — 短期 6-12 個月 NVDA Rubin 出貨期內護城河 gap 會擴大，但中期 12-24 個月（MI400 + ROCm 8 釋出後）會回到縮短軌道</td>
+      <td>NVDA Rubin VR200 2300W TGP「被迫升級」事實本身證明 AMD MI400 已逼近威脅水平（NVDA 不會白白增加成本）；但 Rubin 出貨後客戶仍會優先採購（CUDA + NVLink 鎖定），AMD 拿到的是 spillover 訂單</td>
+      <td>(a) MLPerf v6.5（2026-10）AMD MI400 vs Rubin 在 GPT-OSS-120B 上達 100%+ perf parity → 確認 A1（縮短）<br>(b) Hyperscaler Q3/Q4 26 capex 法說中 AMD 採購分配實際數字達 ≥ 15% → 確認 A1<br>(c) NVDA Rubin Q3-Q4 26 出貨後 hyperscaler 仍維持 90:10 NVDA:AMD 分配 → 確認 A2</td>
+      <td>
+        <strong>(a) 若 MLPerf v6.5 (2026-10) AMD 達 100%+ B200 → §7a 升級至 2.5%</strong><br>
+        <strong>(b) 若 NVDA Rubin 出貨後 hyperscaler 維持 90:10 → §7a 降至 1.0%，加碼條件全部上提</strong>
+      </td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>估值合理性</td>
+      <td><strong>A2 + A3（→ 偏貴）</strong>，但承認 A1 的「合理」有部分依據</td>
+      <td>FPE 40.5x vs FY27 共識 EPS $11.22；歷史 5Y FPE 中位 ~28-32x；現價已 priced in FY27 EPS 全額兌現。若 FY28 EPS 落在 $14（區間下緣）則 forward PE 32.5x（合理），若落 $20（區間上緣）則 23x（便宜）— 區間跨度 40% = 不確定性巨大</td>
+      <td>(a) FY27 Q1 法說（2027-05）AMD DC 段 guide ≥ $9B → 共識會上修 FY28 EPS → 估值修正<br>(b) 股價回到 $300-320 區 → FPE FY27 27-29x（歷史中位） → 估值「合理」<br>(c) Q3/Q4 26 任一季 EPS miss 共識 -10% → forward PE 結構性壓縮至 30x 以下</td>
+      <td>
+        <strong>(a) 若股價回到 $300-320 + Q2 法說連續 beat → §7a 啟動第 1 批進場 0.7%</strong><br>
+        <strong>(b) 若 FY27 Q1 法說 DC miss 共識 -10% → §7a 全面暫停進場，等 FY27 Q2 重評</strong>
+      </td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>客戶集中度</td>
+      <td><strong>A1 + A3（→ thesis 強化為主）</strong>，但 A2 風險面承認需要監控</td>
+      <td>OpenAI 6GW + 160M warrants 是「結構性綁定」（OpenAI 自身利益綁在 AMD 股價 $600 達成上），Oracle 50K MI450 + Meta 6GW 也都是多年 binding。客戶集中但「黏度」極高</td>
+      <td>(a) 任一 anchor 客戶（OpenAI / Oracle / Meta / MS）公開縮減合約規模 ≥ 20% → 確認 A2 風險<br>(b) 2027-Q1 hyperscaler capex guide 2027 整體下修 ≥ 15% → 系統性結束風險<br>(c) OpenAI 自有 ASIC（與 Broadcom 合作）2027 takeoff → 結構性威脅</td>
+      <td>
+        <strong>(a) 若任一 anchor 客戶縮減 ≥ 20% → §7b 減碼 1 觸發，倉位降至 1.0%</strong><br>
+        <strong>(b) 若 2026-11 OpenAI 1GW 部署實證成功 → §7b 加碼 3 觸發，倉位升至 2.0%</strong>
+      </td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>動能過熱是時機 vs thesis</td>
+      <td><strong>全 A 軸一致（→ 時機問題）</strong></td>
+      <td>RSI 79.84 + 4w +25-30% 屬「動能過熱」典型訊號，與 thesis 完整性無關；歷史頻率 RSI &gt; 75 後 1 個月內回測 8-15% 機率 ~60%</td>
+      <td>(a) 1 個月內股價回測 BB 中軌 $340 以下 → 確認時機修復<br>(b) 1 個月內 RSI 跌至 50-60 區間 → 確認動能降溫<br>(c) 1 個月內 +15% 再漲至 $520+ → 動能延續，但 R:R 進一步惡化</td>
+      <td>
+        <strong>(a) 1 個月內回測 BB 中軌 $340 以下 → §7a 啟動第 1 批分批進場</strong><br>
+        <strong>(b) 1 個月內無回測 + 繼續 +15% 至 $520+ → §7a 全面暫停，重評至 Q2 法說後</strong>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ==================== §3 KEY DRIVERS ==================== -->
+<h2>§3 Key Drivers + 🔄 Consensus 分歧</h2>
+
+<h3>命脈 Drivers（限 1-2 個）</h3>
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td><strong>AI 加速器 hyperscaler dual-source 結構固化</strong>（需求側）</td>
+      <td>thesis 完全押在此 — 若 hyperscaler 重回 single-source（NVDA 一家），AMD GPU 業務直接被打回 niche；若 dual-source 結構固化（任一 hyperscaler 採購配比 ≥ 15% AMD），AMD 變 second sourcing must-have</td>
+      <td>(1) Q3/Q4 26 hyperscaler capex 法說中 AMD 採購占比；(2) MI400 出貨量 vs 訂單 backlog；(3) OpenAI / Oracle 第二代訂單續約</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>CPU 製程領先 + INTC 18A 量產風險</strong>（供給側）</td>
+      <td>x86 server CPU 端 AMD 已從 4% 走到 41%，下一波到 50% 由 INTC 18A 是否真的量產決定；若 INTC 18A 量產良率 &lt; 50%，AMD 再吃 5-10pp 市佔；若 INTC 翻身（18A 80%+ yield），AMD CPU 段成長放緩</td>
+      <td>(1) INTC 18A 量產良率法說（2026 H2 - 2027 H1）；(2) AMD EPYC Venice (Zen 6) 出貨節奏；(3) AMD server CPU revenue Q3/Q4 26 YoY</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>為什麼是這 2 個，而不是其他？</strong>因為 AMD 是「兩個 segment」公司：DC GPU（需求側 thesis 押這裡） + DC CPU（供給側 + 製程領先 push 這裡）。其他常見因素（Client PC、Gaming、Embedded）在 Q1 26 占合計 ~35% 但增速放緩，且不是 thesis 變化的命脈。<strong>Driver 1 不假設 driver 2 成立也能單獨被推翻</strong>（dual-source 結構即使 CPU 段表現差也可以成立 — 拿 NVDA 2024 為例：NVDA 沒 CPU 也能 hyperscaler 結構性扎根），故 driver 2 不是 driver 1 的 sub-component。<span class="ok-tag">✅ Driver 抽象層 guardrail 通過</span></p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+  <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>Client PC / Gaming segment 成長</td><td>合計占 Q1 26 revenue ~35% 但 YoY 23%（vs DC 57%），結構上邊緣；Q2 guide 已下調這兩段（記憶體成本上升）</td></tr>
+    <tr><td>Embedded（Xilinx）整合 synergy</td><td>占比 ~8%，雖然 ROIC 數字被 Xilinx goodwill 拖累 5 年，但對 thesis（AI 加速器 dual-source）無影響</td></tr>
+    <tr><td>單季毛利率波動 ±50bp</td><td>Non-GAAP GM Q1 55% + Q2 guide 56%，趨勢明確向上至 57% 長期目標 — 季度噪音不改變方向</td></tr>
+    <tr><td>分析師目標價共識 $382</td><td>共識落後現價 $455，反映分析師 lag；本案不依賴共識，依賴 §4 自建機率加權 EV</td></tr>
+    <tr><td>短期 forward P/E vs 同業比較</td><td>AMD vs NVDA vs INTC 三家在 AI cycle 不同階段，PE 直接比較會誤導 — 用 PEG（AMD 1.05）或 5Y IRR 比較才對</td></tr>
+  </tbody>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+
+<div class="consensus-card">
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>市場目前定價在什麼假設上</td>
+      <td>市場（共識中位 PT $382 + 現價 $455）定價在「FY27 EPS $11.22 全額兌現 + FY28 EPS $20（區間上緣） + AI 加速器 thesis 直線延伸 5 年」三件事都對。共識給 FY27 forward PE ~ 35x（vs 歷史中位 28-32x）— premium 已給滿</td>
+    </tr>
+    <tr>
+      <td>我認為的不同假設</td>
+      <td>我相信 FY28 EPS 大機率落在 $14-16（區間下緣到中段）— 因為 (1) NVDA Rubin 2300W 暴力堆料會壓縮 AMD GPU 的 perf/W 競爭力 perception，hyperscaler 雖採購但採購量會謹慎；(2) ASIC（TPU/Trainium）在 inference 端的成本優勢會在 2027 加速 GPU 替代</td>
+    </tr>
+    <tr>
+      <td>賣方為什麼錯（≥ 1 具體理由）</td>
+      <td>賣方把「MLPerf v6.0 AMD MI355X 達 B200 111-115%」當作「AMD 已 catch up」訊號 — 但這是 inference 單節點數字，<strong>multi-node training（NVLink + NCCL）仍是 NVDA 獨家領域，hyperscaler 訓練單仍 90%+ 給 NVDA</strong>。賣方用單一 KPI 線性外推全市場，忽略了 AMD inference 強 + training 弱的不對稱結構意味著 AMD GPU 段 mix 會偏向「便宜的那邊」，毛利結構天花板低於 NVDA DC</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p style="font-size:13px;color:var(--muted)"><strong>校驗：</strong>三題皆能寫出具體差異 → thesis 有 contrarian 來源（賣弱於 buy 認為的程度）。<strong>但本案 contrarian 程度中等</strong>，故 §7 倉位定 2% 而非 3% — 反映 alpha 來源存在但不極端。</p>
+
+<!-- ==================== §5 SINGLE THING ==================== -->
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<div class="card" style="border-left:4px solid #DC2626;background:#FFFBEB">
+<h3 style="border:none;margin-top:0;color:#B91C1C">Primary Trigger（§5 原版）</h3>
+<table>
+  <tbody>
+    <tr><td style="width:30%"><strong>事件描述</strong></td><td><strong>NVDA Rubin VR200 出貨後（H2 2026），任一 top-tier hyperscaler（OpenAI / Microsoft / Meta / Oracle）公開宣布「2027 AI 採購維持 90:10 NVDA:AMD 分配」或「縮減 AMD MI400 部署規模 ≥ 30%」</strong></td></tr>
+    <tr><td><strong>為什麼這個事件是致命的</strong></td><td>因為這直接證偽 thesis「dual-source 結構必經」— 若最大 hyperscaler 在 Rubin 出貨後仍維持單供應商邏輯，則 AMD GPU 業務天花板被釘死在 inference niche，FY27-30 EPS 預估全部需要下修 30-40%，PE 結構性壓縮至 20x 以下</td></tr>
+    <tr><td><strong>如何監測（資料來源、頻率）</strong></td><td>Hyperscaler 法說（AMZN / MSFT / META / GOOGL / Oracle）每季 capex guide 與 AI 採購分配話術；NVDA 法說 customer concentration 變化；半導體分析師 channel checks（Bernstein / Morgan Stanley / Citi）— 每月跟蹤</td></tr>
+    <tr><td><strong>目前離發生有多遠</strong></td><td>H2 2026 Rubin 出貨啟動後 6-12 個月內可見端倪；2027-Q1 hyperscaler 2027 全年 capex guide 是「single point of evidence」最集中時點（剛好對應 Q4 法說季 2027-02）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="card" style="border-left:4px solid #DC2626;background:#FFFBEB">
+<h3 style="border:none;margin-top:0;color:#B91C1C">Secondary Trigger（pre-mortem 派生，§6b 修正）</h3>
+<table>
+  <tbody>
+    <tr><td style="width:30%"><strong>事件描述</strong></td><td><strong>OpenAI 與 Broadcom 合作的自研 ASIC 在 2027 H2 量產且取代 ≥ 30% OpenAI 內部推論 workload，導致 OpenAI 在 2028 上半年向 AMD 縮減 6GW 合約規模 ≥ 30%</strong></td></tr>
+    <tr><td><strong>為什麼也是致命的</strong></td><td>OpenAI 6GW 是 AMD 5Y thesis 的「anchor customer」；若 OpenAI 自有 ASIC 量產後縮單，會 (1) 直接打破 AMD AI GPU 收入 visibility，(2) 觸發其他 hyperscaler（Meta 已有 MTIA、Microsoft 已有 Maia）加速自研路徑，連鎖反應極快</td></tr>
+    <tr><td><strong>如何監測</strong></td><td>OpenAI / Broadcom 任一公開合作里程碑（tape-out / first silicon / 量產確認）；OpenAI 內部推論 cost-per-token 法說數據；AMD 法說 OpenAI deal 收入認列節奏</td></tr>
+    <tr><td><strong>目前離發生有多遠</strong></td><td>Broadcom + OpenAI 合作 2025 已公開，tape-out 預估 2026 H2，量產 2027 H1，外部市場感受 2027 H2 — <strong>離本案保質期 (2026-08) 還很遠，但 5Y 持有期內必觀測</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p style="color:var(--muted);font-size:13px"><strong>§5 修正狀態：</strong>⚠ 已補 1 條 secondary trigger（OpenAI 自有 ASIC 量產 + 6GW 縮減）。原 primary trigger 抓的是「hyperscaler 採購分配 narrative」短期面，secondary 抓的是「客戶內部 vertical integration」結構面 — 兩條互補。</p>
+
+<!-- ==================== §6 WHAT I DON'T KNOW + PRE-MORTEM ==================== -->
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>§6a｜強迫面對自己的盲點</h3>
+<table>
+  <thead><tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>ROCm 8 / 9 能否在 2027-2028 達到 multi-node training NCCL parity</td>
+      <td>Inference 端 ROCm 7.2 parity 已達成（2026-03），thesis 不要求 training parity</td>
+      <td>若 training parity 永遠達不到，AMD GPU 結構性鎖在 inference + HPC niche，毛利天花板低於 NVDA 25-30%</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>hyperscaler 自研 ASIC 滲透速度（2024 ~12% → 2028E 35-45% 是真的嗎）</td>
+      <td>ASIC 替代速度為「漸進式」（每年 +5-7pp），AMD 有時間建立 inference 站位</td>
+      <td>若 ASIC 替代加速至每年 +10-15pp，AMD GPU 業務 2028 進入結構性衰退期</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>INTC 18A 量產良率（目前估計 50-65% 範圍）</td>
+      <td>INTC 18A 良率 &lt; 65% 維持 3 年，AMD CPU 段繼續吃 5-10pp 市佔</td>
+      <td>若 INTC 18A 1 年內衝 80%+ 良率且重拾 Apple/AWS 客戶，AMD CPU 段成長 stalls</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>OpenAI 6GW 合約 160M warrants 條件（$600 股價 + 6GW 部署）是否會觸發完全</td>
+      <td>OpenAI 與 AMD 利益綁定可持續到 5Y 末，warrants 是 thesis booster 不是 dilution</td>
+      <td>若 warrants 全部觸發，OpenAI 持股 ~10% 稀釋 EPS ~5-7%（已部分 priced in）</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>AMD FCF 轉換率（FY25 ~30% vs NVDA ~50%+）能否在 5Y 內提升至 40%+</td>
+      <td>AI ramp 期間 CAPEX 比率高是暫時的，2027 後 FCF margin 回到歷史 25-30%</td>
+      <td>若 FCF 轉換率持續低於 30%，buyback / dividend 空間受限，re-rate 上行受阻</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>§6b｜Pre-mortem（強制三段式）</h3>
+
+<h4>第一段｜故事倒推</h4>
+<div class="premortem">
+「假設 5 年後（2031）這個部位虧 50%（從 $455 → ~$230），最可能發生的故事是：<strong>2027 Q2，OpenAI 宣布其與 Broadcom 合作的自研 ASIC（代號 'Project Stargate Silicon'）首批 100K 部署上線，OpenAI 內部推論 cost-per-token 較 MI450 低 60%；同月，Microsoft Azure 跟進宣布 Maia 3 部署擴大 + 削減 AMD 採購規模 25%。2027 Q3，AMD MI400 量產良率傳出問題（HBM4 12-Hi yield 60-70% 拖累整體 die yield），Oracle 50K 部署延後 2 季。Q3 26 法說 DC 段營收較 guide 短 12%，毛利率 53%（vs 56% guide），市場重估 forward PE 從 40x 壓縮到 22x，股價短期 -45%。後續 2028-2030 進入「漫長兌現」期 — EPS 持續成長但不及預期、PE 持續壓縮，5Y 末 forward PE 18x × EPS $13 = $234，從 $455 跌 -49%。</strong>」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+  <thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td>
+      <td><span class="warn-tag">⚠ 部分重疊</span> — 原 §5 primary trigger（NVDA Rubin 出貨後 hyperscaler 維持 90:10 分配）只抓到「外部競爭」面；pre-mortem 故事的主軸是「客戶內部 vertical integration（OpenAI 自有 ASIC）」，這是 §5 漏抓的風險面向</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>已於 §5 區塊實際補 1 條 secondary trigger：</strong>「OpenAI 與 Broadcom 合作的自研 ASIC 在 2027 H2 量產且取代 ≥ 30% OpenAI 內部推論 workload，導致 OpenAI 在 2028 上半年向 AMD 縮減 6GW 合約規模 ≥ 30%」。<br><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger（HTML §5 區塊已 2 條 trigger，從原 1 條變 2 條）</strong></p>
+
+<h3>§6c｜路徑壓力測試（Max DD｜5Y）</h3>
+
+<div class="card" style="border-left:4px solid #CA8A04;background:#FEF9C3">
+<div class="maxdd-wrap">
+  <div class="maxdd-number">−45% ~ −60%</div>
+  <div style="flex:1">
+    <div class="maxdd-bar" title="0~−30 綠 / −30~−50 amber / <−50 紅">
+      <div class="marker" style="left:75%"></div>
+      <div class="marker" style="left:100%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+      <span>0%</span><span>−30%</span><span>−50%</span><span>−60%</span>
+    </div>
+  </div>
+  <div style="font-size:28px;font-weight:700;color:#92400E;text-align:center">🟡<div style="font-size:11px;color:var(--muted);margin-top:4px">需強信念扛中途</div></div>
+</div>
+
+<table style="margin-top:14px">
+  <tbody>
+    <tr><td style="width:30%"><strong>估計 Max DD 範圍</strong></td><td><strong class="mono">−45% ~ −60%</strong>（寬度 15pp，避免假精準）</td></tr>
+    <tr><td><strong>最可能觸發時點</strong></td><td>2027 Q2-Q3（MI400 量產第 6-9 個月，正逢 OpenAI ASIC 量產 + NVDA Rubin 出貨後 hyperscaler 採購分配重估期）；Beta 2.40 意味著大盤 -15% 拉動 AMD -36%，疊加個股利空可至 -60%</td></tr>
+    <tr><td><strong>觸發後最快多久恢復到峰值</strong></td><td><strong>18-30 個月</strong>（若僅是時機問題 + thesis 完整）；若 thesis 已破（OpenAI 縮單 ≥ 30%），則 5Y 內可能不會恢復峰值</td></tr>
+    <tr><td><strong>路徑風險評級</strong></td><td><span class="warn-tag">🟡 需強信念扛住</span>（−30 ~ −50%+ 中段 + 上界 −60% 觸 🔴 邊緣）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><strong>校驗：</strong>若 max DD 落在 −60%（從 $455 跌到 $182），我能否撐到復原？<strong>條件：(1) 部位不超過 portfolio 2%（衛星級別，個股風險 contained）；(2) 不使用槓桿；(3) §5 single thing trigger 未發生（否則應 §7b 減碼 1 / 清倉而非硬扛）；(4) 進場價在 $300 區（若現價 $455 進場 + max DD −60% = 帳面 -55%，扛起來更心痛）</strong>。Max DD 🟡 評級 → §7a 倉位上限自動下修（原計畫 3% → 強制 ≤ 2%），§7d 已標註中期路徑波動風險。</p>
+
+<!-- ==================== §8 REVIEW TRIGGERS ==================== -->
+<h2>§8 Review Triggers</h2>
+<table>
+  <thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Q2 26 法說</td><td>財報日期</td><td><strong>2026-08-05 預估</strong>（Q2 26 結束 6/27 + ~5 週）— 重點看 DC 段 guide ≥ $7B + MI400 出貨時程</td></tr>
+    <tr><td>2</td><td>Q3 26 法說</td><td>財報日期</td><td>2026-11-04 預估 — 重點看 MI400 首批出貨成績 + Oracle 50K 部署實證</td></tr>
+    <tr><td>3</td><td>NVDA Rubin VR200 量產出貨</td><td>產業事件</td><td>H2 2026（NVDA 法說已 guide）— 出貨後觀察 hyperscaler 採購配比</td></tr>
+    <tr><td>4</td><td>MLPerf v6.5 / v7.0 結果</td><td>產業事件</td><td>2026-10 預估 — AMD MI400 vs Rubin 第一次同台測試</td></tr>
+    <tr><td>5</td><td>價位觸發：BB 中軌回測</td><td>價位觸發</td><td>股價跌至 $340 以下 → 啟動 §7a 第 1 批進場</td></tr>
+    <tr><td>6</td><td>價位觸發：W52 高 −35%</td><td>價位觸發</td><td>股價跌至 $310 以下 或 RSI 跌至 50-60 → 啟動 §7a 第 2 批進場</td></tr>
+    <tr><td>7</td><td>§5 single thing trigger</td><td>thesis 觸發</td><td>hyperscaler Rubin 出貨後維持 90:10 NVDA:AMD 分配 → 觸發 §7b 減碼 1（倉位降至 1%）</td></tr>
+    <tr><td>8</td><td>§5 secondary trigger</td><td>thesis 觸發</td><td>OpenAI 自研 ASIC 量產 + 6GW 縮減 ≥ 30% → 觸發 §7b 減碼 2 / 清倉路徑</td></tr>
+  </tbody>
+</table>
+
+<p><strong>這份報告的保質期：</strong>至 <strong>2026-08-05</strong>（Q2 26 法說前有效）— 期間僅有股價波動會觸發 §7a 進場條件，thesis 結構性更新需等 Q2 法說後重評。<br>
+<strong>最可能發生的 upside 因素：</strong>Q2 26 DC guide ≥ $7B（vs Q1 $5.8B QoQ +20%）+ MI400 出貨時程確認 H2 26 不延後 — 任一發生會把 §4 Bull 機率從 25% 上調至 30-35%。<br>
+<strong>最可能發生的 downside 因素：</strong>動能 mean reversion（RSI 79.84 後 1 個月回測 8-15% 機率 ~60%）；若 1 個月內回測 BB 中軌 $340 以下 → 從 thesis 角度反而是好事，啟動 §7a 第 1 批進場。</p>
+
+<!-- ==================== PHASE A 折疊區塊 ==================== -->
+<h2>Phase A｜獨立研究階段（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 <span class="summary-conclusion">— AMD 護城河 8/10、moat_trend → holding（CPU↑ + GPU↓ 互抵）</span></summary>
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>主要護城河類型</td><td>(1) <strong>製程領先</strong>（fabless + TSMC 3nm/4nm 配額，vs INTC 18A 量產風險）；(2) <strong>軟硬整合 + 客戶綁定</strong>（OpenAI 6GW + 160M warrants = 結構性綁定）</td></tr>
+    <tr><td>持久性評分</td><td><strong>8/10</strong>，5 年穩固度：<strong>高</strong>（CPU 端對 INTC 結構性勝出可見度高）/ <strong>中</strong>（GPU 端對 NVDA 仍弱）</td></tr>
+    <tr><td>最大侵蝕風險</td><td>NVDA Rubin VR200 (2300W TGP) perf/W 領先 ≥ 30% → hyperscaler 維持 90:10 分配；時間軸：H2 2026 - 2027 H1</td></tr>
+    <tr><td>關鍵數據</td><td>毛利率 <strong>55% non-GAAP Q1 26</strong>（趨勢 ↑，從 2020 45% → 2024 53% → Q1 26 55%）、x86 server CPU 市佔 <strong>~41% Q1 26 revenue share</strong>（vs 2019 4%，趨勢 ↑↑）、AI GPU vs NVDA：<strong>MLPerf v6.0 MI355X 達 B200 111-115% offline inference</strong>（單節點 inference 接近 parity，但 multi-node training 仍 NVDA 獨家）</td></tr>
+    <tr><td><strong>moat_trend</strong></td><td><strong>→ holding</strong>（不是 ↑ widening，因 NVDA GPU 端仍領先且 Rubin 2300W 暴力堆料；不是 ↓ narrowing，因 CPU 端 server share 持續上升至 41% 且軟硬整合 OpenAI/Oracle 結構性合約已落地）<br><strong>12 個月內 sourced evidence：</strong><br>• CPU 護城河擴大：x86 server CPU 市佔從 2024 ~36% → 2025 Q2 41% → 2026 預估 45-50%（thefourthIQuarter.com 2026-02 The Register）<br>• GPU 護城河收窄但程度低：MLPerf v6.0（2026-04）MI355X 達 B200 111-115% offline，但 multi-node training MFU AMD 45% vs NVDA 50-55%（Silicon Analysts 2026 1Q）<br>• 客戶綁定深化：OpenAI 6GW + 160M warrants（2025-10 簽訂，2026 1GW 部署啟動）+ Oracle 50K MI450 Q3 26 + Meta 6GW 多年合約（公司 5/5 法說 + IR Press Release）<br>• 但 NVDA Rubin 2300W TGP「被迫升級」（從原計畫 1800W），表明 NVDA 在 perf 端反擊路徑明確（Tom's Hardware 2026-04）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>A1 獨立結論（一句話）：</strong>AMD 護城河 8/10 維持，moat_trend <strong>→ holding</strong> — CPU 端對 INTC 結構性勝出（21pp 市佔擴張 6 年），GPU 端對 NVDA 仍弱但 OpenAI/Oracle 結構綁定使 second-source 地位固化；兩面互抵 = 整體 holding 而非 widening。</p>
+
+<p style="font-size:13px;color:var(--muted)"><strong>Sourced data point 達標數：7/5 ✅</strong> (1) Q1 26 GM 55% non-GAAP / 53% GAAP (AMD IR 5/5 press release)；(2) server CPU 41% revenue share Q2 2025 + 預估 50% by 2026 (The Register 2026-02)；(3) MLPerf v6.0 MI355X 111-115% B200 offline (AMD blog 2026-04)；(4) NVDA Rubin VR200 從 1800W 升 2300W TGP (Tom's Hardware 2026-04)；(5) MFU 45% vs NVDA 50-55% (Silicon Analysts 1Q 2026)；(6) OpenAI 6GW + 160M warrants $600 strike (AMD IR press release 2025-10-06)；(7) Oracle 50K MI450 Q3 26 + Meta 6GW 多年合約 (OC3D + AMD IR 2026-05)</p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 <span class="summary-conclusion">— AI 加速器 TAM $500B+ 2028，runway_post_y5 🟢 寬</span></summary>
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>TAM 與成長</td><td>AI 加速器 TAM <strong>$500B by 2028</strong>（AMD forecast 2025-06 nextplatform.com，AMD 自家上修自 $400B）；Bernstein/nextplatform 估 $600B（更激進）；CAGR 67.5% (2023-2028 nextplatform.com)；inference accelerator 2026 首次超越 training（mlq.ai forecast）；2030 全堆疊（含 networking + memory + CPU）TAM &gt; $1.7T</td></tr>
+    <tr><td>供需判斷</td><td>目前供需<strong>偏緊</strong>（CoWoS-L 5.5x yield 98% 但 9.5x 2027 才量產；HBM4 12-Hi yield 60-70% 是 2026 H2 主要瓶頸 ID_HBM4CustomBaseDie）；未來 12 個月：供給端 ramp（Samsung 4nm HBM4 反攻 + TSMC N12FFC+ base die），但需求端 hyperscaler capex 2026 $680-720B 仍領先供給 — 結構偏緊</td></tr>
+    <tr><td>最大技術替代風險</td><td><strong>ASIC（TPU/Trainium/Maia）取代 GPU inference</strong> — ASIC 28% CAGR（Mordor Intelligence 2026），hyperscaler 自研 ASIC 占 AI capex: 2024 ~12-15% → 2028E 35-45%（ID_AIInferenceEconomics 2026-04-30 forecast）；威脅程度 ⚠ 中高（AMD 也是 ASIC 候選 via Pensando + custom 服務，部分對沖）</td></tr>
+    <tr><td>最大政策/地緣風險</td><td>美中半導體出口管制升級（H20 / B20 變體限制 → 影響 hyperscaler 中國業務 2-3% AMD 收入）；台海地緣 (TSMC 配額 + N2 量產 H2 2025 啟動 ID_LeadingEdgeNode 已 priced in)</td></tr>
+    <tr><td>議價權位置</td><td>對上游 TSMC <strong>中</strong>（3nm/4nm 配額有限，但 AMD 是 TSMC 最大客戶之一）；對下游 hyperscaler <strong>中-弱</strong>（OpenAI 6GW + 160M warrants 結構綁定但客戶集中度 ↑ 意味著任一客戶縮單影響大）</td></tr>
+    <tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong> — Y5 末（2030）AI 加速器 TAM $1T+ vs 2025 $70B = 14x 空間，AMD 即使 15% 分配 = $150B 年收入（vs FY25 $34.6B 整體營收 4x+）；S 曲線位置：早-中期（inference 普及才剛開始，agentic AI 是下一階段）；第二曲線銜接：FPGA/Xilinx adaptive computing（Edge AI ID_EdgeAI 2026-04-27） + Pensando DPU + Versal AI 在 2027 啟動</td></tr>
+  </tbody>
+</table>
+
+<p><strong>A2 獨立結論（一句話）：</strong>AI 加速器 TAM $500B-1T 5 年複利成長 + AMD second-source 結構性扎根 + Edge AI / FPGA 第二曲線銜接，runway_post_y5 <strong>🟢 寬</strong> — 5 年後仍有 5-10 年跑道；但中期（2-5 年）NVDA Rubin + ASIC 雙重結構擠壓需密切觀測。</p>
+
+<p style="font-size:13px;color:var(--muted)"><strong>Sourced data point 達標數：6/5 ✅</strong> (1) AI 加速器 $500B 2028 (AMD/nextplatform 2025-06)；(2) Inference 2026 超越 training (mlq.ai 2026 forecast)；(3) ASIC 28% CAGR (Mordor Intelligence 2026)；(4) Hyperscaler 自研 ASIC 35-45% 2028 (ID_AIInferenceEconomics 2026-04)；(5) NVDA Rubin VR200 2300W 升級 (Tom's Hardware 2026-04)；(6) HBM4 12-Hi yield 60-70% (ID_HBM4CustomBaseDie 2026-04-30)</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 <span class="summary-conclusion">— DC 引擎強、Xilinx ROIC 拖累、buyback $6B 不足以填估值</span></summary>
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>營收結構（Q1 26）</td><td>現金牛：<strong>Client + Gaming $3.6B（35%）</strong>（YoY +23%）；成長引擎：<strong>Data Center $5.8B（57%）</strong>（YoY +57%！）；拖累/新興：<strong>Embedded $0.87B（8%）</strong>（YoY +6%，Xilinx 整合慢）</td></tr>
+    <tr><td>客戶集中度</td><td>最大客戶 OpenAI（6GW 多年合約 ~$2-3B/yr 規模），<strong>top 4 hyperscaler（OpenAI + MS + Meta + Oracle）合計約 25-30% DC GPU 收入</strong>；風險 <strong>中-高</strong>（vs NVDA top 4 ~40-50%，AMD 略好但仍高）</td></tr>
+    <tr><td>定價權</td><td>ASP 趨勢 ↑（MI350 → MI355X → MI400 ASP 跨代 +30-50%，HBM4 432GB 配置 +50% memory capacity）；定價權 <strong>中</strong>（CPU 端對 INTC 強、GPU 端被 NVDA 設定上限）</td></tr>
+    <tr><td>未來金雞母</td><td><strong>MI400 / MI450 series（H2 2026 量產）</strong>，目前 DC 段 GPU 佔 ~50% 段內 = ~28% 全公司 revenue，潛在 TAM $500B 2028 × AMD share 15-20% = $75-100B/yr；預估成熟 <strong>3-4 年後</strong>（2029-2030 達 steady state）</td></tr>
+    <tr><td>財務體質</td><td>FCF 轉換率 ~30% (FY25 FCF $6.74B / Net Income ~$5.5B，但 GAAP 受 SBC 拖累)；毛利率 <strong>55% non-GAAP Q1 26</strong>（趨勢 ↑）；壓力測試：營收 -20% 可撐 <strong>6+ 季</strong>（cash $5.1B + revolver $1.5B + 弱 capex 結構）</td></tr>
+    <tr><td>資本配置紀律</td><td>管理層花錢中等：<strong>$6B 新買回 program (2025-05 board 批准)</strong>，FY25 buyback $1.5B 對應市值 ~$580B = 0.25% — 規模不足以填估值（NVDA buyback rate 4x AMD）；<strong>Xilinx $50B acquisition 5 年後仍未真正兌現 synergy</strong>（Embedded 段 YoY +6% 反映整合 stalled），GAAP ROIC 1.07% 2024 vs WACC 15.71% = <strong>結構性 destroying value（短期帳面）</strong>。但 Cash ROIC ~25%（排除 goodwill）回到正面</td></tr>
+    <tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR <strong>~18%/yr</strong>（FY25 $4.20 → FY30 $30 推算複利，含 buyback ~1.5%/yr 對 EPS 稀釋抵銷）<br>5Y 末 forward PE 預估 <strong>25x</strong> vs 當前 <strong>40.5x</strong>（re-rate 貢獻 = (25/40.5)^(1/5) − 1 = −9.3%/yr）<br>現金股息率 <strong>0%</strong>（AMD 不發股息）<br>淨買回率 <strong>~1.5%/yr</strong>（$6B program × ~3 年攤平 / 市值 $580B ≈ 0.35%/yr 帳面，但需扣 SBC 稀釋約 ~−2%/yr 後實際淨 +1.0-1.5%/yr 上限）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>A3 獨立結論（一句話）：</strong>DC 段（CPU + GPU）是壓倒性引擎（Q1 26 56% revenue、YoY +57%），但客戶集中、Xilinx ROIC 拖累、buyback 規模不足以對沖估值收縮 — 5Y IRR base 質感「EPS 強 + re-rate 拖累 + 股東報酬弱」，靠純自然複利好抱但中途 PE 壓縮會難看。</p>
+
+<p style="font-size:13px;color:var(--muted)"><strong>Sourced data point 達標數：8/6 ✅</strong> (1) Q1 26 Rev $10.3B / DC $5.8B +57% YoY (AMD IR 5/5)；(2) Q1 26 non-GAAP EPS $1.37 beat consensus $1.27-1.29 by 7.87% (stocktitan)；(3) Q2 26 guide $11.2B (AMD IR 5/5)；(4) Non-GAAP GM 55% Q1 26 (+170bp YoY) (AMD IR)；(5) FY27 consensus EPS $11.22 / Bernstein FY28 $14-20 (247wallst.com 2026-05-06)；(6) ROIC 1.07% 2024 vs WACC 15.71% (stock-analysis-on.net / gurufocus)；(7) $6B share repurchase program 2025-05 (Reuters / AMD)；(8) Operating Margin 35% 2029 long-term target / GM 57% target (longtermpick)</p>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據摘要（DD_AMD_20260506 + 多份 ID 連動） <span class="summary-conclusion">— DD 訊號燈 B、moat 8/10、5Y +55%；ID 母題 Phase II 中期</span></summary>
+
+<h4>DD 報告（DD_AMD_20260506.html）擷取</h4>
+<table>
+  <tbody>
+    <tr><td><strong>Quality Score</strong></td><td>8（複合品質分數）</td></tr>
+    <tr><td><strong>綜合訊號燈</strong></td><td><span style="background:#F59E0B;color:#fff;padding:2px 8px;border-radius:2px;font-weight:600">B 觀望</span>｜判定理由：thesis 完整（品質 B + 估值🟡 + MA ✅）但 MA stretched + 4w +45% drift 觸發 QC-22 追高警示</td></tr>
+    <tr><td><strong>三引擎目標價（5/5）</strong></td><td>短期 FY+1 $270 / 中期 FY+2 $393 / 長期 FY+5 $550</td></tr>
+    <tr><td><strong>Bear anchor</strong></td><td>短期 $182 / 中期 $253 / 長期 $356</td></tr>
+    <tr><td><strong>R:R ratio</strong></td><td>短期 -0.4x / 中期 +0.4x / 長期 ∞ (數學失效 QC-21)</td></tr>
+    <tr><td><strong>紅旗清單</strong></td><td>(1) Trailing PE 137x / Fwd PE 52x — EPS miss 觸發倍數壓縮；(2) 護城河對 NVDA 仍弱；(3) 4 週 +45% priced in 全部好消息；(4) Beta 2.40 市場 risk-off 跌速倍於大盤</td></tr>
+    <tr><td><strong>核心假設</strong></td><td>H1: AI 加速器 dual-source 結構 / H2: CPU 對 INTC 結構性勝出 / H3: ROCm 軟體 inference parity</td></tr>
+    <tr><td><strong>§8 長期成長性</strong></td><td>🟢 高確信 ｜ §9 護城河趨勢 加深 ｜ §8 F AI 風險 🟢 受益</td></tr>
+  </tbody>
+</table>
+
+<h4>ID 報告連動（多份）</h4>
+<table>
+  <tbody>
+    <tr><td><strong>ID_AIAcceleratorDemand_20260419</strong>（母題）</td><td>Phase II 訓練→推論混合期；non-consensus：ASIC 份額 35-40% vs 共識 20-25%；AMD 排序在 NVDA / AVGO 之後</td></tr>
+    <tr><td><strong>ID_CUDARocmMoat_20260501</strong>（子題）</td><td>ROCm 7.2 vLLM 出箱 parity 已驗證；MI355X MLPerf 6.0 達 B200 single-digit %；framework owner 才是 2027-2028 真贏家（META/GOOGL/OpenAI 主導 abstraction）</td></tr>
+    <tr><td><strong>ID_AIInferenceEconomics_20260430</strong>（母題）</td><td>非共識：真贏家排序 AVGO &gt; GOOG &gt; META &gt; NVDA &gt; MSFT（AMD 未進 top 5 explicit ranking，作為 NVDA 衛星補位）</td></tr>
+    <tr><td><strong>ID_HBM4CustomBaseDie_20260430</strong>（HBM 子題）</td><td>HBM4 12-Hi yield 60-70% 是 2026 H2 主要供給瓶頸，影響 AMD MI400 432GB 配置出貨時程</td></tr>
+    <tr><td><strong>ID_HyperscalerCloudBigThree_20260505</strong>（子題）</td><td>Big 4 hyperscaler 2026 capex $420-460B；AVGO Q1 客製加速器 +140% YoY > NVDA DC +75%；AMD 在 Big 4 採購中佔比上升但未進 top 3 vendor</td></tr>
+  </tbody>
+</table>
+
+<p style="color:var(--muted);font-size:13px"><strong>A4 是純數據輸入，不產出獨立結論。</strong>所有 ID 連動點將餵入 Phase B 矛盾分析（特別是 ID_AIInferenceEconomics 把 AMD 排在 NVDA 衛星補位 vs DD §9「護城河趨勢加深」存在程度差）。</p>
+</details>
+
+<!-- ==================== METADATA ==================== -->
+<section style="margin-top:48px;padding:20px;background:#F1F5F9;border-radius:4px;font-size:12px;color:var(--muted)">
+<p style="margin:0 0 8px"><strong>報告 metadata</strong></p>
+<p style="margin:0">DCA Schema: v1.1 ｜ 報告日期：2026-05-11 ｜ 標的：AMD (Advanced Micro Devices) ｜ 報告價格：$455.19 (5/10) ｜ DD 基底：DD_AMD_20260506.html (5/5, $355.26) ｜ ID 連動：ID_AIAcceleratorDemand_20260419, ID_CUDARocmMoat_20260501, ID_AIInferenceEconomics_20260430, ID_HBM4CustomBaseDie_20260430, ID_HyperscalerCloudBigThree_20260505 ｜ 保質期：2026-08-05（Q2 26 法說前）</p>
+<p style="margin:8px 0 0">⚠ 本報告為買側深度定見分析，不構成投資建議。所有判斷皆為條件化 / 機率加權，最終投資決策由讀者自行承擔。</p>
+</section>
+
+</main>
+
+</body>
+</html>

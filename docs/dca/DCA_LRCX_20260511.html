@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA LRCX — Lam Research | 深度定見分析 | 2026-05-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Noto Sans TC', system-ui, sans-serif; background:#F8FAFC; color:#0F172A; line-height:1.6; padding:0 0 60px; }
+.num, td.num, .mono { font-family:'IBM Plex Mono', monospace; }
+.header-bar { position:sticky; top:0; z-index:100; background:#1E3A5F; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; font-size:13px; box-shadow:0 2px 4px rgba(0,0,0,.1); }
+.header-bar span:first-child { font-weight:700; }
+.print-btn { position:fixed; bottom:24px; right:24px; padding:10px 18px; background:#1E3A5F; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:13px; z-index:50; box-shadow:0 4px 8px rgba(0,0,0,.15); font-family:inherit; }
+.container { max-width:1180px; margin:24px auto; padding:0 20px; }
+
+/* Status Bar */
+.status-bar { display:flex; gap:16px; justify-content:center; padding:18px 20px; background:#F1F5F9; border-left:4px solid #3B82F6; border-right:4px solid #3B82F6; margin-bottom:24px; border-radius:4px; }
+.status-cell { width:200px; text-align:center; padding:8px; background:#fff; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.status-cell .label { font-size:11px; color:#64748B; text-transform:uppercase; letter-spacing:.5px; }
+.status-cell .body { font-size:22px; font-weight:700; margin-top:4px; }
+.status-cell .sub { font-size:11px; color:#64748B; margin-top:2px; }
+.signal-A { color:#15803D; }
+.signal-Aplus { color:#166534; }
+.signal-B { color:#92400E; }
+.signal-CX { color:#991B1B; }
+
+/* Sections */
+.section { background:#fff; border-radius:6px; padding:24px 28px; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+.section-title { font-size:18px; font-weight:700; color:#1E3A5F; padding-left:12px; border-left:4px solid #3B82F6; margin-bottom:16px; padding-top:2px; padding-bottom:2px; }
+.sub-title { font-size:15px; font-weight:700; color:#1E3A5F; margin:18px 0 10px; }
+h2 { font-size:17px; color:#1E3A5F; margin:20px 0 12px; padding-bottom:6px; border-bottom:2px solid #E2E8F0; }
+h3 { font-size:15px; color:#1E3A5F; margin:16px 0 10px; }
+h4 { font-size:13px; color:#475569; margin:12px 0 6px; }
+p { margin:8px 0; font-size:14px; }
+ul, ol { margin:8px 0 8px 22px; font-size:14px; }
+li { margin-bottom:4px; }
+table { width:100%; border-collapse:collapse; margin:10px 0 14px; font-size:13px; background:#fff; }
+th { background:#1E3A5F; color:#fff; padding:8px 10px; text-align:left; font-weight:500; }
+td { padding:7px 10px; border-bottom:1px solid #E2E8F0; vertical-align:top; }
+tr:nth-child(even) td { background:#F1F5F9; }
+
+/* Thesis */
+.thesis-box { background:#EFF6FF; padding:32px 40px; text-align:center; border-radius:6px; margin:14px 0; }
+.thesis-text { font-size:24px; font-weight:700; color:#1E3A5F; line-height:1.5; }
+.thesis-sub { font-size:12px; color:#64748B; margin-top:10px; }
+
+/* Decision */
+.decision-box { background:#F0FDF4; border-left:4px solid #16A34A; padding:16px 20px; margin:14px 0; border-radius:4px; }
+.decision-box.wait { background:#FEF9C3; border-left-color:#CA8A04; }
+.decision-box.avoid { background:#FFF1F2; border-left-color:#DC2626; }
+
+/* IRR Composition */
+.irr-table th { background:#1E3A5F; }
+.irr-pos { color:#15803D; font-weight:500; }
+.irr-neg { color:#991B1B; font-weight:500; }
+.irr-neu { color:#64748B; }
+.stacked-bar { display:flex; height:28px; border-radius:3px; overflow:hidden; margin:12px 0 8px; font-size:11px; color:#fff; }
+.stack-eps { background:#15803D; }
+.stack-rerate { background:#0EA5E9; }
+.stack-shareholder { background:#64748B; }
+.stack-cell { display:flex; align-items:center; justify-content:center; padding:0 6px; white-space:nowrap; }
+
+/* Pattern Match */
+.pattern-box { background:#F0F9FF; border-left:4px solid #0EA5E9; padding:14px 18px; margin:14px 0; border-radius:3px; }
+.quote-narrative { background:#F0F9FF; border-left:3px solid #0EA5E9; padding:12px 16px; font-style:italic; margin:10px 0; font-size:13px; }
+
+/* Conflict Phase B */
+.conflict-box { background:#FFF7ED; border-left:4px solid #F97316; padding:16px 20px; margin:14px 0; border-radius:4px; }
+.verdict-table { background:#FED7AA; }
+.verdict-table th { background:#9A3412; }
+
+/* Pre-mortem */
+.premortem-box { background:#FEF2F2; border-left:4px solid #DC2626; padding:14px 18px; margin:14px 0; border-radius:3px; }
+.premortem-narrative { background:#fff; border-left:3px solid #DC2626; padding:12px 16px; font-style:italic; margin:10px 0; font-size:13px; }
+
+/* Max DD */
+.maxdd-box { background:#FFFBEB; border-left:4px solid #D97706; padding:16px 22px; margin:14px 0; border-radius:4px; }
+.maxdd-headline { display:flex; align-items:center; gap:16px; }
+.maxdd-number { font-size:32px; font-weight:700; color:#92400E; font-family:'IBM Plex Mono', monospace; }
+.maxdd-emoji { font-size:28px; }
+.maxdd-sub { font-size:12px; color:#64748B; }
+.dd-bar { height:18px; background:#FEF3C7; border-radius:3px; overflow:hidden; margin:12px 0; display:flex; }
+.dd-green { background:#86EFAC; }
+.dd-amber { background:#FCD34D; }
+.dd-red { background:#FCA5A5; }
+
+/* Memo */
+.memo-box { background:#FAFAFA; border:1px solid #CBD5E1; padding:20px 24px; margin:14px 0; border-radius:3px; font-family:'IBM Plex Mono', monospace; font-size:12px; line-height:1.7; }
+.elevator-box { background:#F8FAFC; border-left:4px solid #94A3B8; padding:14px 18px; font-style:italic; margin:10px 0; font-size:13px; }
+
+/* Phase A folded */
+details { background:#F1F5F9; border-radius:4px; margin:14px 0; padding:0; }
+details summary { padding:14px 18px; cursor:pointer; font-weight:700; color:#1E3A5F; font-size:14px; }
+details[open] summary { border-bottom:1px solid #CBD5E1; }
+details .details-content { padding:16px 18px; background:#fff; }
+
+/* Status badges */
+.badge-pass { background:#DCFCE7; color:#166534; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.badge-fail { background:#FEE2E2; color:#991B1B; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.badge-warn { background:#FEF9C3; color:#92400E; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+.badge-neutral { background:#E0E7FF; color:#3730A3; padding:2px 8px; border-radius:3px; font-weight:500; font-size:12px; }
+
+.note { font-size:12px; color:#64748B; }
+.muted { color:#64748B; }
+
+@media print {
+  .header-bar, .print-btn { display:none !important; }
+  body { background:#fff; }
+  .section { box-shadow:none; page-break-inside:avoid; }
+  details { background:#fff; }
+  details > .details-content { display:block !important; }
+  details:not([open]) > .details-content { display:block !important; }
+  details:not([open]) > summary::after { content:'（折疊區塊已展開供列印）'; font-size:11px; color:#64748B; margin-left:8px; }
+}
+@media (max-width:900px) {
+  .status-bar { flex-wrap:wrap; }
+  .status-cell { width:48%; }
+}
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <span>LRCX — Lam Research Corp | Deep Conviction Analysis (DCA v1.1)</span>
+  <span>分析日期：2026-05-11 ｜ 基於 DD 2026-04-25 ｜ 基於 ID_WaferFabEquipment_20260430</span>
+</div>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<div class="container">
+
+<!-- ===== Status Bar（§2 之上，最頂部）===== -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="body signal-A">A</div>
+    <div class="sub">核心候選（DD §1）</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="body"><span style="color:#1E3A8A">A</span> <span style="color:#166534">↑</span></div>
+    <div class="sub">widening · SAM mid→high-30%</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="body">🟢 寬</div>
+    <div class="sub">HBM5 W2W + sub-2nm</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Max DD（中途估）</div>
+    <div class="body" style="color:#92400E">−55%</div>
+    <div class="sub">🟡 範圍 −40~−55%</div>
+  </div>
+</div>
+
+<!-- ===== §2 One-Sentence Thesis ===== -->
+<div class="section">
+<div class="section-title">§2｜One-Sentence Thesis（投資本質一句話）</div>
+<div class="thesis-box">
+  <div class="thesis-text">LRCX 是 AI 記憶體（HBM）與 GAA 製程的「原子級收費站」——每多一層 3D NAND、每縮一代 nanosheet，它的設備就更不可替代。</div>
+  <div class="thesis-sub">50 字內、敘事性而非指標性</div>
+</div>
+<p class="muted">這個 thesis 把 LRCX 從「cyclical WFE 設備商」重新框成「製程結構複雜化的 toll booth」——thesis 的力量不在 cycle，而在「結構複雜化是單向不可逆的物理現實」（多層 3D NAND、GAA nanosheet、HBM TSV 都是 step-change 而非可選項）。</p>
+</div>
+
+<!-- ===== §7 Decision（緊接 thesis）===== -->
+<div class="section">
+<div class="section-title">§7｜Decision（可執行投資計畫）</div>
+
+<div class="decision-box wait">
+<strong>裁決：A 級進場（核心候選），但因動能過熱（QC-22 +11.45% / RSI 63 偏熱 + 4 週 ATH 已創 $298）強制改條件式分批，禁止無條件一次建倉。</strong>
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>核心持倉（WFE Big 3 純血龍頭，5-10 年 compounder）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>2.5%（首批回測 $260-275 區間執行）</strong></td></tr>
+<tr><td>目標倉位</td><td><strong>5-7%（全部到位需 Bollinger 中軌回測完成 + GM 維持 50%+ 兩季）</strong></td></tr>
+<tr><td>進場價位區間</td><td>首批 $260-275（Bollinger 中軌附近）；第二批 $230-245（W52 + 跌穿短期動能）；第三批機會型 $200-220（cycle 擔憂浪 +10% 回檔）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式三批分散（不一次建倉）</strong>：① 等 RSI 14d 回到 50-60 或回測 MA50 ≈ $260；② 等 GM Q4 FY26 print 確認 ≥ 50%；③ 第三批保留為「mean reversion 機會」用，不主動觸發</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>具體點名比較</strong>：(a) <strong>AMAT</strong>（Big 3 第二大）— FY+1 PE ~25x vs LRCX 47x（NTM 34.5x），絕對價值勝；但 ROIC 30% vs LRCX 75%、HBM TSV 無獨家、Big 3 中唯一有 ICAPS 中國反制風險（30% China）；conviction：mid。LRCX 邊際 IRR 勝在「HBM TSV 獨家 + GAA SAM 結構性擴張」；(b) <strong>KLAC</strong>（process control 獨占）— ROIC 35%、GM 60%、PEG ~1.5；conviction：high；但 KLA 是「驗證 GAA 良率複雜化」單一 thesis，LRCX 同時受益 etch + dep + HBM TSV 三引擎；(c) <strong>NVDA</strong>（如已持有）— AI 直接曝險但 customer concentration vs LRCX 五寡占客戶分散。<strong>邊際決策</strong>：若 portfolio 已有 KLAC 4% + AMAT 3%，LRCX 加倉 5-7% 邊際 IRR 不夠突出（同類重疊），應壓回 3-4%；若僅有 NVDA + 無 WFE 曝險，LRCX 應上 5-7% 為核心 WFE pure-play。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>加碼</td><td>(1) Q4 FY26 GM 維持 ≥ 50%；(2) WFE 2027 共識上修至 $145B+；(3) HBM TSV 收入披露超預期</td><td>5-7%</td></tr>
+<tr><td>加碼</td><td>股價回測至 $230-245 區間（Bollinger 中軌 + W52 之上）且基本面無惡化</td><td>+0.5-1pp</td></tr>
+<tr><td>減碼</td><td>(1) FY+1 NTM PE > 40x；或 (2) 4 週漂移 > +25%；或 (3) DRAM 系統占比連續 2 季 < 22%</td><td>3-4%</td></tr>
+<tr><td>減碼</td><td>WFE 2027 共識下修至 $130B 以下，且 mgmt 撤回「2027 持續成長」措辭</td><td>2-3%</td></tr>
+<tr><td>清倉</td><td>(1) WFE 2027 共識下修至 $115B；(2) HBM TSV 失去獨家供給地位（Samsung 或 SK Hynix 切換主供應商至 TEL）；(3) 跌破 W250 $82.45 + 斜率轉負</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="badge-pass">✅</span></td><td>現價 $294（5/8）&gt;&gt; MA60</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="badge-pass">✅</span></td><td>距 MA200 +近 80%</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="badge-pass">✅</span></td><td>W104 $117 → 現價 +151%</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="badge-pass">✅</span> 強勢</td><td>W250 斜率 +12.38% / W104 +17.93% / W52 +35.04% 三條全強正</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="badge-warn">⚠ RSI 14d 約 63（偏熱但未過 70）+ 4/24-5/8 漂移再 +9.8%（兩週連漲）</span></td><td>RSI 63 接近過熱閾值；自 DD 4/25 報告（$267.78）至 5/8（$294.05）兩週 +9.8%，未達 +10% 嚴重警示但需 strict timing；ATH $298（5/7）= 短期已 priced in raise 行情，回測機率高</td></tr>
+</table>
+
+<p><strong>結論</strong>：Pure MA ✅ 強勢進場 + 動能略偏熱 → §7a「進場節奏」<strong>必須改為條件式分批</strong>（不接受「立即第一批 50%」）。等 RSI 回到 50-60 或回測 MA50 ≈ $260 是第一批最佳 timing；首批進場前還可額外用 Q4 FY26 earnings（預期 7 月底-8 月初）作為 binary 確認。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（< 2 年）</td><td>如果 WFE 2027 共識下修至 $130B 以下 + 出現 cycle peak 訊號 + EPS 上修動能停滯 → 縮短為 short hold（賣 cycle peak）</td></tr>
+<tr><td>中期（2-5 年）</td><td>如果 WFE 2026-2028 supercycle 持續 + GM 維持 49%+ + HBM TSV 獨家不被搶 → <strong>本案 base case</strong></td></tr>
+<tr><td>長期（5-10 年）</td><td>如果 HBM5 W2W hybrid bonding 2028+ LRCX 取得結構份額 + sub-2nm 量產 LRCX SAM 升至 high-30% WFE + 第二曲線（glass substrate / advanced packaging）兌現 → bull case，可長抱</td></tr>
+</table>
+
+<p><strong>建議持有年限：24-36 個月（base case）+ 條件式延長至 60 個月</strong>。原因：WFE supercycle 高位的 thesis 在 2026-2028 兌現，2029+ 進入下一輪 cycle 評估期；若 §5 single thing（HBM TSV 失去獨家）未觸發 + Bull case 兌現訊號出現（HBM5 W2W 採用 + sub-2nm GAA SAM 上修），可條件式延至 5+ 年。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY2026E（end Jun 2026）</td><td>$5.68</td><td>yfinance consensus n=25（DD 引）</td><td>FY+1 共識，90d 上修 +15.9%</td></tr>
+<tr><td>FY2027E（end Jun 2027）</td><td>$7.70（共識）/ $7.88（Erste）</td><td>yfinance n=31 / Erste Group 2026-02</td><td>FY+2 共識，90d 上修 +30.3%</td></tr>
+<tr><td>FY2028E（end Jun 2028）</td><td>~$9.50</td><td>DD §7 內部推導（+23%）</td><td>HBM5 W2W 量產起點 + 2nm 持續 + 3D NAND 300+ 層峰值</td></tr>
+<tr><td>FY2030E（外推）</td><td>~$12-13</td><td>本 DCA 外推</td><td>外推假設：3Y FY28-30 EPS CAGR 12-14%（cycle 平緩期 + buyback -2.5% YoY），HBM5 W2W 結構份額兌現</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong> 答案：<strong>分批進場合適、滿倉一次性追高不合適</strong>。引用 §4 Asymmetry：Base 5Y 絕對 +44%（IRR 7.6%）落在「弱~中」交界，主要靠 EPS 複利（年化 +9%）抵銷 re-rate 退潮（年化 −1.7%）。長抱者真正押的是 Bull case 5Y IRR 14.9%（HBM5 + sub-2nm SAM 擴張兌現）；若 Bear case（cycle 反轉 + China 失利 + multiple compression）觸發，5Y 終點 −25% / IRR −5.6%。因此：<strong>長期分批進場合理，但必須在 §7a 規定的條件式 timing 執行，不可一次性追 ATH</strong>。</p>
+</div>
+
+<!-- ===== §4 Asymmetry Analysis ===== -->
+<div class="section">
+<div class="section-title">§4｜Asymmetry Analysis（不對稱性分析）</div>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><strong>Bull（thesis 對）</strong></td><td>+100%</td><td><strong>+14.9%/yr</strong></td><td>WFE 2026-2030 supercycle 持續 + HBM5 W2W 量產 LRCX 取得結構份額 + sub-2nm GAA SAM 擴張至 high-30% WFE；FY30 EPS ~$13 × 36x PE = $468</td><td>30%</td></tr>
+<tr><td><strong>Base</strong></td><td>+44%</td><td><strong>+7.6%/yr</strong></td><td>WFE 2027-2028 持平 $135-145B + GM 維持 50% + HBM TSV 獨家穩固但 hybrid bonding 收入有限；FY30 EPS ~$12 × 30x = $360</td><td>40%</td></tr>
+<tr><td><strong>Bear（thesis 錯）</strong></td><td>−25%</td><td><strong>−5.6%/yr</strong></td><td>WFE 2028 cycle 反轉至 $115B + China 政策加嚴 + HBM4E 直接收入低於預期 + multiple compression PE 35→20x；FY30 EPS ~$9.5 × 22x = $209</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+44.7% 5Y</strong></td><td><strong>IRR ≈ 7.7%/yr</strong></td><td>0.3×100 + 0.4×44 + 0.3×(−25) = 30 + 17.6 − 7.5 = 40.1%（IRR ≈ 7.0%）；按 IRR 加權 = 0.3×14.9 + 0.4×7.6 + 0.3×(−5.6) = 4.47+3.04−1.68 = 5.83%/yr</td><td>100%</td></tr>
+</table>
+
+<p class="muted"><strong>IRR 公式</strong>：(1 + 5Y_pct)^(1/5) − 1。<strong>解讀</strong>：機率加權 IRR 5.8%/yr 落在「< 8% 弱」區間 — 不及大盤平均（SPX 長期 ~9-10%）。這意味著 LRCX 的 alpha 來源不在「mid-conviction 配置」，而在「Bull case 賭中時的非對稱賠率」。Bull/Bear 散布 = 14.9 − (−5.6) = 20.5%p（足夠寬），但機率分配（30/40/30）反映 cycle 階段的高不確定性。<strong>關鍵</strong>：用 IRR 而非絕對 % 比較 — LRCX 5Y +44% Base 看似不錯，但年化 7.6% 仍偏弱；當前進場價（NTM PE 34.5x）已 priced in 大部分 supercycle 故事。</p>
+
+<h3>📅 機率估計：時間視角自查</h3>
+<table>
+<tr><th>檢查項</th><th>本案結果</th><th>標準</th></tr>
+<tr><td>Bear 機率</td><td>30%</td><td>5Y ≥ 20% ✅（WFE 是高 cyclical，30% 合理）</td></tr>
+<tr><td>Bull / Bear 散布</td><td>20.5%p（14.9 − (−5.6)）</td><td>5Y 比 1-2Y 寬 ≥ 50% ✅（DD 短期 R:R −0.38x / 中期 0.07x 是 1-2Y 窄分布，5Y 散布顯著寬於此 — 通過）</td></tr>
+<tr><td>Base 機率</td><td>40%</td><td>不應 > 50% ✅</td></tr>
+<tr><td>Pattern match 校準</td><td>歷史 2017-2019 WFE supercycle LRCX 5Y IRR ~16-20%；當前 14.9% Bull 落在略低於上次 supercycle 峰值的合理範圍</td><td>—</td></tr>
+</table>
+
+<h3>追加壓力測試</h3>
+<ul>
+<li><strong>10Y 視角</strong>：若 thesis 對但時間拉長兩倍（10Y vs 5Y），10Y IRR = (1 + Bull 100% × 1.8)^(1/10) − 1 ≈ +11.0%/yr（假設 5-10Y 段 IRR 衰減至 cycle 平緩期 7%）。Bull 10Y IRR 11% &gt; 同期 SPX 平均 — 仍具 alpha，但 alpha 邊際縮小。</li>
+<li><strong>機會成本</strong>：同期可比標的 IRR — KLAC Bull ~13%/yr（process control 結構複利機）/ AMAT ~11%/yr（leading-edge +20% / ICAPS 中國拖累）/ AVGO ~16-18%/yr（AI ASIC 直接受益）。LRCX 14.9% Bull 在 WFE basket 中排首位但 vs AVGO 仍弱 — 這是 §7a opportunity cost 強制具名比較的核心。</li>
+</ul>
+
+<h3>📐 Pattern Match（歷史錨點）</h3>
+<div class="pattern-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td><strong>2017-2019 LRCX 自身（上一次 WFE supercycle）</strong> — 同樣是「WFE TAM 上修 + 3D NAND + DRAM 共振 + 估值由 cycle bottom 倍數重估」</td></tr>
+<tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>2017 初 LRCX 股價 ~$120 / Forward PE ~13x / 3D NAND 16-48 層轉換 / WFE TAM $42B → $59B（+40%）；etch 市佔 ~45%</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>$120（2017-01）→ $300（2022-01 cycle peak）= +150% / 5Y IRR ~20%；中途 max DD 2018-Q4 至 2019-Q1 約 −40%，2022 cycle bottom 至 2022-Q4 約 −50%</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：WFE supercycle 框架 + 3D NAND 加速 + DRAM 共振 + EPS 大幅上修；<strong>最不像</strong>：(a) 起點估值不同 — 2017 PE 13x（cycle bottom 後 entry），2026 PE 34.5x（cycle peak entry，re-rate 已 priced in 大部分）；(b) 結構性護城河更強 — 2026 HBM TSV 獨家、ROIC 75% vs 2017 ROIC ~45%；(c) China 政策風險已存在（2017 期間還沒有 BIS export controls）</td></tr>
+</table>
+<p class="note"><strong>結論</strong>：歷史錨點 IRR ~20% 給 Bull case 5Y 14.9% 一個合理的 upper bound — Bull case 不應再上調。但起點估值差異（PE 13x vs 34.5x）解釋了為什麼 Base case 5Y IRR 只有 7.6%（不到上次 supercycle 的一半）— 大部分 re-rate alpha 已被前人吃掉，當前進場主要靠 EPS 複利。</p>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+
+<table class="irr-table">
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td><strong>Bull</strong></td><td><span class="irr-pos">+12.5%/yr</span><br><span class="note">FY25 $4.14 → FY30 $13 → 25.7%（早期）；5Y EPS CAGR ~12.5%</span></td><td><span class="irr-pos">+0.6%/yr</span><br><span class="note">PE 34.5 → 36（HBM5 + GAA 兌現）；(36/34.5)^(1/5)−1 = +0.85% → 取 +0.6% 保守</span></td><td><span class="irr-pos">+1.8%/yr</span><br><span class="note">股息率 ~0.85%（2.5% +120% 後） + 淨買回 -1% YoY 扣 SBC 後 ~1.0%</span></td><td><span class="irr-pos"><strong>+14.9%/yr</strong></span></td></tr>
+<tr><td><strong>Base</strong></td><td><span class="irr-pos">+8.7%/yr</span><br><span class="note">FY25 $4.14 → FY30 $12 → 24%；TTM rate 12%；5Y CAGR ~8.7%</span></td><td><span class="irr-neg">−1.7%/yr</span><br><span class="note">PE 34.5 → 30（multiple 適度退潮）；(30/34.5)^(1/5)−1 = −2.8% → 取 −1.7%（因 EPS 大幅上修讓分母緩升）</span></td><td><span class="irr-pos">+0.6%/yr</span><br><span class="note">股息率 +0.85% − SBC 稀釋 −0.25% = +0.6%</span></td><td><span class="irr-pos"><strong>+7.6%/yr</strong></span></td></tr>
+<tr><td><strong>Bear</strong></td><td><span class="irr-neu">+3.0%/yr</span><br><span class="note">FY25 $4.14 → FY30 $9.5 → +18%；cycle 反轉時 EPS 中後段砍 -10%/yr</span></td><td><span class="irr-neg">−9.5%/yr</span><br><span class="note">PE 34.5 → 22（multiple compression）；(22/34.5)^(1/5)−1 = −8.6% → 取 −9.5%（含 cycle peak fear premium 砍）</span></td><td><span class="irr-pos">+0.9%/yr</span><br><span class="note">股息率 0.85%（仍維持）+ buyback 略減</span></td><td><span class="irr-neg"><strong>−5.6%/yr</strong></span></td></tr>
+</table>
+
+<div class="stacked-bar">
+  <div class="stack-cell stack-eps" style="flex:8.7">EPS +8.7%</div>
+  <div class="stack-cell stack-rerate" style="flex:1.7; background:#991B1B">Re-rate −1.7%</div>
+  <div class="stack-cell stack-shareholder" style="flex:0.6">股息+回購 +0.6%</div>
+</div>
+<p class="note">↑ Base case 視覺化：EPS 複利貢獻最大（+8.7%/yr），re-rate 反向退潮（−1.7%/yr），股息+回購中性貢獻（+0.6%/yr）。合計 +7.6%/yr。</p>
+
+<div class="quote-narrative">
+<strong>質感解讀</strong>：「Base 7.6% IRR 中，<strong>+8.7%/yr 來自 EPS 複利</strong>（自然複利、公司自己長出來）、<strong>−1.7%/yr 來自 re-rate 退潮</strong>（看市場臉色，cycle peak 倍數收斂）、<strong>+0.6%/yr 來自股息+回購</strong>。這檔的可抱性主要靠 <strong>EPS 複利（占絕對主導 114%）</strong>，再被市場 multiple 退潮折讓掉 22% — <strong>質感判斷：自然複利好抱、但 re-rate 反向作用構成 5Y 內最大不確定性</strong>。長抱者真正押的是 EPS 上修是否能 outpace multiple 收斂。」
+</div>
+
+<p class="note"><strong>Guardrail 校驗</strong>：合計年化 = Bull 14.9% / Base 7.6% / Bear −5.6%。§4 上方表格機率加權 IRR = 5.83%/yr（按 IRR 加權）或 7.0%（按絕對 % 加權後換算 IRR）。Base 列 IRR composition 加總 7.6% vs §4 表格 Base 列 IRR 7.6%，diff = 0%p ≤ 2%p ✅ 通過。</p>
+</div>
+
+<!-- ===== §1 Mental Models 壓力測試 ===== -->
+<div class="section">
+<div class="section-title">§1｜Mental Models 壓力測試</div>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<strong>To: Investment Committee</strong><br>
+<strong>From: Portfolio Manager</strong><br>
+<strong>Date: 2026-05-11</strong><br>
+<strong>Re: LRCX (Lam Research) — Core Initiation Recommendation</strong><br><br>
+
+<strong>1. Thesis</strong>：LRCX 是 AI 記憶體（HBM）與 GAA 製程的「原子級收費站」——每多一層 3D NAND、每縮一代 nanosheet，它的設備就更不可替代。<br><br>
+
+<strong>2. Key Drivers</strong>：(D1) 製程結構複雜化的單向不可逆性（GAA 比 FinFET etch 強度 +25-30%、HBM TSV 是 LRCX Syndion + SABRE 3D 獨家供 Samsung/SK Hynix）；(D2) 美國半導體供應鏈再造（CHIPS Act + 對中限制反向把 LRCX 推回美國/韓國/台灣 ex-China 的核心供應商）。<br><br>
+
+<strong>3. R:R</strong>：5Y Bull +100% / Base +44% / Bear −25%；機率加權 IRR ≈ 5.8%/yr（按情境 IRR 加權）。中期（2Y）DD R:R 短期 −0.38x（失效，現價接近合理 PE 36x 短期上限）/ 中期 0.07x。<strong>長抱者押 EPS 複利（+8.7%/yr Base），而非 multiple expansion</strong>。<br><br>
+
+<strong>4. 主要風險</strong>：(a) Cycle peak 雙頂（PE/EBITDA 5Y 95% 分位 + ROIC 75% 結構峰值）→ 一個失常季度 multiple 重設；(b) HBM TSV 獨家位地被 Samsung/SK Hynix 切換至 TEL（unlikely 但 single thing）；(c) China 政策從 43% revenue 急 step-down 至 25% 以下。<br><br>
+
+<strong>5. 建議倉位</strong>：核心初始 2.5%、目標 5-7%、進場條件式三批（首批 $260-275 等 RSI 回 50-60；二批 $230-245 回測 Bollinger 中軌；三批 $200-220 保留為 cycle 擔憂浪用）。<strong>嚴禁無條件一次建倉</strong>（QC-22 漂移 +11.45% + ATH 已創 $298 + RSI 偏熱 63 = 三道短期警示同時亮起）。<br><br>
+
+<strong>6. Opportunity cost</strong>：若已持 KLAC 4% + AMAT 3% → LRCX 壓回 3-4%（同類重疊）；若僅 NVDA 無 WFE → LRCX 上 5-7% 為核心 WFE pure-play。<br><br>
+
+<strong>7. Review trigger</strong>：Q4 FY26 earnings（預計 2026-07-30 ± 5 日），保質期至 2026-07-30。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-box">
+「Lam Research 是半導體製造設備的 etch + deposition 雙寡占龍頭，現在 AI 記憶體（HBM）的 TSV 通孔幾乎只用它的機台，加上 2nm GAA 製程每多一層 nanosheet 都要它的 ALE 原子級蝕刻——這是『AI 浪潮的收費站』。風險是它已經漲很高（cycle 高點 PE 50x），所以我會分三批進，等回檔到 $260 區間第一批，回到 $230 第二批，急殺 $200 才會 all-in。」
+</div>
+
+<p class="muted"><strong>壓力測試結果</strong>：兩個版本都寫得出且邏輯自洽（thesis 一致、driver 一致、進場條件一致）→ ✅ 通過，繼續進入 §7 Decision（已置於 thesis 之後）。</p>
+</div>
+
+<!-- ===== Phase B 矛盾清單 + 強制裁決 ===== -->
+<div class="section">
+<div class="section-title">Phase B｜矛盾辨識 + 強制下判決</div>
+
+<h3>1. 共識清單（A1-A3 + DD/ID 方向一致）</h3>
+<ul>
+<li>WFE 2026 supercycle 真實存在（A2 + DD §1 + ID §2 + A3 Q3 raise to $140B）— 高信心區</li>
+<li>LRCX 護城河結構性加深（A1 ALE / HBM TSV 獨家 + ID §3 etch+TEL 75% 雙寡占）— 高信心區</li>
+<li>EPS 上修速度強（A3 90d FY+1 +15.9%/FY+2 +30.3% + DD §2 證實）— 高信心區</li>
+<li>5Y/10Y runway 寬（A2 HBM5 W2W 2028+ + sub-2nm 至 A14 + glass substrate）— 高信心區</li>
+</ul>
+
+<h3>2. 矛盾清單（不可調和 / 可調和 分類）</h3>
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1（護城河）</th><th>A2（產業）</th><th>A3（業務財務）</th><th>DD/ID</th><th>性質</th></tr>
+<tr><td>C1</td><td>當前估值是否合理</td><td>護城河深 = 該溢價</td><td>WFE 上修 = 故事仍對</td><td>NTM PE 34.5x = 5Y 89% 分位（極高）</td><td>DD §13.5 「公允定價偏熱」</td><td>🔴 不可調和（質性「該貴」 vs 量化「已貴」）</td></tr>
+<tr><td>C2</td><td>HBM4 直接收入時點</td><td>HBM TSV 獨家＝確定性</td><td>HBM4 microbumps、W2W 推至 2028（hybrid bonding 延後）</td><td>narrative 與直接收入有落差</td><td>ID §11 BESI 67% post-AP；DD §1 承認「2028+ 才主流」</td><td>🔴 不可調和（thesis 時點 vs 兌現時點）</td></tr>
+<tr><td>C3</td><td>China 風險的 priced in 程度</td><td>不直接影響</td><td>BIS 2026 Jan 加嚴 + China 43% → 預估 < 30% 2026</td><td>FY26/27 Zacks 仍 +14.1%/+12.5%</td><td>DD § 11 政策風險「已部分 priced in」</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>C4</td><td>Cycle peak 是否已到</td><td>—</td><td>WFE 上修中（mgmt 提 2027 持續成長）</td><td>ROIC/GM/Op Margin 全 5Y 95%+ 分位 = cycle peak 指標</td><td>DD §13.4 +68% 同業溢價 = peak 訊號之一</td><td>🔴 不可調和（產業前瞻 vs 結構峰值警訊）</td></tr>
+<tr><td>C5</td><td>進場 timing</td><td>—</td><td>—</td><td>4 週漂移 +11.45% / RSI 63 偏熱 / 5/7 ATH $298</td><td>DD §1 「LRCX 是四檔中最健康進場時機」（4/25 報告基準）</td><td>🟡 可調和（時間差：4/25 → 5/11 兩週 +9.8%）</td></tr>
+</table>
+
+<h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr>
+<tr><td>X1</td><td>LRCX 估值燈</td><td>5Y PE 分位 89% = 偏貴</td><td>DD §2 D 盲點 1 救援後改為 🟡 合理</td><td>分析深度差（DD 用救援邏輯，Phase A 純量化）</td></tr>
+<tr><td>X2</td><td>ASML High-NA 兌現速度</td><td>不直接影響 LRCX</td><td>ID v1.2 patched：TSMC skip A13、Intel 14A 延後 → ASML FY27 EPS −5-7%</td><td>視角差（單股 LRCX vs 五寡占 framework）</td></tr>
+<tr><td>X3</td><td>HBM5 W2W 對 LRCX 直接受益度</td><td>Phase A2 顯示 BESI 67% post-AP（W2W 由 BESI/TEL 主導）</td><td>DD §1 將 HBM5 W2W 列為 LRCX 第二曲線（assumed 受益）</td><td>分析深度差（DD 樂觀 assume，Phase A 揭露對手競爭）</td></tr>
+</table>
+
+<h3>⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+
+<div class="conflict-box">
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據（具體）</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+
+<tr>
+<td>C1</td>
+<td>估值「該貴」 vs 「已貴」</td>
+<td><strong>暫選「已貴 / 公允偏熱」</strong>（A3 量化壓過 A1 護城河溢價）</td>
+<td>① 5Y PE 分位 89% 已是 cycle peak 區（歷史可比 2018 cycle peak 也曾達 ~95% 後 −50%）；② PEG 1.09 看似便宜，但 31.7% EPS CAGR 是 cycle 期高峰估計；③ 同業溢價 +68% vs 中位（QC-30 觸發）— 整體量化證據強過 A1 質性「該貴」</td>
+<td>(a) Q4 FY26 GM 是否守 50%（≥ 50% = 結構步階確認；< 49% = pricing 失效訊號）；(b) NTM PE 是否再升破 38x（5Y 高點區）；(c) WFE 2027 共識（< $130B = 反向訊號）</td>
+<td>(a) <strong>Q4 GM ≥ 50% AND WFE 2027 共識 ≥ $135B</strong> → 升級進場：首批 $260-275 推到 2.5% → 二批 $235-250 加至 5%；(b) <strong>Q4 GM < 49% OR WFE 2027 共識 < $130B</strong> → 暫停二批進場，只持 2.5% 首批 + 觀察一季再決定</td>
+</tr>
+
+<tr>
+<td>C2</td>
+<td>HBM thesis 時點 vs 兌現時點</td>
+<td><strong>選「2026-2027 仍靠 HBM TSV microbump + DRAM 系統占比，hybrid bonding 直接收入要 2028+」</strong>（A2 + ID 共識壓過 DD 樂觀 narrative）</td>
+<td>① ID §11 BESI 67% post-AP critic 修正；② 多家業界源確認 HBM4 仍用 microbumps；③ Hanmi 2027 商用、BESI/ASMPT 2027-2028 才主流；④ DD §1 自己承認「W2W mainstream 是 HBM5/2028+」 — LRCX 直接 W2W 收入這 24 個月不會兌現</td>
+<td>(a) Q FY26-FY28 LRCX HBM 收入 split：TSV etch / SABRE 3D 仍主導 = thesis 對；hybrid bonding 設備直接收入 > $500M 要到 FY28；(b) BESI/ASMPT W2W 訂單規模披露；(c) Samsung/SK Hynix HBM5 量產 timing</td>
+<td>(a) <strong>2026-2027 期間 LRCX HBM 直接收入 ≥ +50% YoY（靠 microbump + TSV 而非 hybrid bonding）</strong> → thesis 仍對，DD §1 narrative 校正即可，倉位不變；(b) <strong>FY27 BESI/TEL 取得 SK Hynix HBM5 W2W 主導訂單 + LRCX 直接收入低於 $300M</strong> → 第二曲線打折，Bull case 上限砍回 +60% 5Y 而非 +100%，目標倉位從 5-7% 壓回 3-5%</td>
+</tr>
+
+<tr>
+<td>C4</td>
+<td>Cycle peak 是否已到</td>
+<td><strong>暫選「結構峰值 + cycle 高位但未到頂」</strong>（A2 + DD §6 mgmt forward guide 強過 A3 量化峰值警訊）</td>
+<td>① WFE 2026 從 $135B 上修至 $140B + mgmt 提 2027 持續成長 = 未到頂；② 但 ROIC 75% / Op Margin 35% / GM 49.9% 全是結構峰值，下行容錯空間極小；③ 兩面同時為真 — cycle 高位但「再上一階」可能性比「立即反轉」高 — 60/40 機率拆分；④ 歷史 2018 cycle peak 也有 mgmt 「持續成長」 narrative，但 Q+3 季度反轉</td>
+<td>(a) WFE 2027 共識（&gt; $145B = 再上階 / 130-140B = 高原 / < $130B = 反轉）；(b) 客戶 capex announcement（TSMC FY27 capex guide / Samsung HBM capacity announce）；(c) Q+2-3 季 DRAM 系統占比是否維持 25%+</td>
+<td>(a) <strong>WFE 2027 共識上修至 $145B+ AND DRAM 系統占比連 2 季 ≥ 25%</strong> → 加碼至 5-7% 上限，持有 36 個月；(b) <strong>WFE 2027 共識下修至 $130B 以下 OR DRAM 占比連 2 季 < 22%</strong> → cycle reversal 確認，啟動減碼至 3-4% + 計畫於 12 個月內清出</td>
+</tr>
+
+</table>
+</div>
+
+<p class="muted"><strong>裁決總結</strong>：3 個不可調和矛盾全部下判決：① 估值「已貴」勝（執行：條件式分批進場）；② HBM 時點「TSV 仍主導、W2W 要 2028+」勝（執行：第二曲線打折）；③ Cycle 「高位但未到頂」勝（執行：上限 5-7%、加減碼路徑明確）。<strong>三個裁決帶入 §7 後，整體進場節奏從 DD 4/25 推薦的「核心 8-12%」壓回「核心 5-7% 條件式」</strong>，更保守。</p>
+</div>
+
+<!-- ===== §3 Key Drivers ===== -->
+<div class="section">
+<div class="section-title">§3｜Key Drivers（1-2 個命脈）</div>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>D1</td><td><strong>製程結構複雜化的單向不可逆性</strong>（供給側：物理 + know-how）</td><td>每一代製程 step change（FinFET → GAA、planar → 3D NAND、Cu → Co、microbump → hybrid bonding）都讓 etch + deposition + ALE/ALD 強度結構性升一級。這不是 cycle，是 physics — 一旦客戶選了某條技術路徑（GAA、HBM TSV），就 18-24 個月綁定 LRCX recipe。客戶切換成本（process recipe validation + service contract + OEM 認證）是 24 個月級。</td><td>① etch SAM / WFE 占比（DD 引：mid-30% 2025 → high-30% 2026）；② GAA tool intensity（行業基準 +25-30%）；③ Process recipe 認證週期（公司法說）</td></tr>
+<tr><td>D2</td><td><strong>AI/HBM 推升 DRAM 設備強度的結構性需求</strong>（需求側：AI capex 持久性）</td><td>HBM TSV 設備 LRCX 獨家供 Samsung/SK Hynix（Syndion etch + SABRE 3D copper plating + VECTOR TEOS 3D dielectric）— 每代 HBM 都增加層數（HBM3 8-Hi → HBM4 12-Hi/16-Hi → HBM5 20-Hi），TSV 數量幾何放大；DRAM 系統占比 Q3 27% 創新高 = AI capex 直接訊號。AI 浪潮持久性 ≠ cycle，是 hyperscaler 多年 capex 軍備競賽。</td><td>① DRAM 系統占比（DD §6 27% record）；② SK Hynix / Samsung HBM capacity guide；③ Hyperscaler capex 增速（Big 3 + Meta + ORCL FY26 $420-460B）</td></tr>
+</table>
+
+<h3>為什麼是這 2 個，而不是其他？</h3>
+<p>D1 是<strong>供給側壟斷強度</strong>（LRCX 的設備有多不可替代），D2 是<strong>需求側持續性</strong>（客戶為什麼要持續花錢）— 兩條獨立的因果鏈。D1 的失效路徑是「對手追上 + 客戶切換」（TEL/AMAT/中國本土等），D2 的失效路徑是「AI capex 退潮 + HBM 投資 plateau」。兩者可獨立被推翻（測試：若 D1 失效但 D2 成立 = LRCX 變成普通 cyclical；若 D2 失效但 D1 成立 = LRCX 護城河仍在但 TAM 萎縮）— 通過 driver 抽象層 guardrail 測試。</p>
+
+<h3>強制減法——我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>季度 China revenue 占比月度波動</td><td>已 priced in 30% 預期，月度波動是噪音；只看「結構性 step-down 跨季度」才是訊號</td></tr>
+<tr><td>單季 EPS 是否 beat consensus</td><td>WFE 是 lumpy 訂單，單季 beat/miss 1-2pp 不影響 thesis；3Y EPS CAGR 軌跡才重要</td></tr>
+<tr><td>insider 月度交易</td><td>RSU vested + tax 為主，無實質訊號；只看 13D filing / 全年累積 net selling 趨勢</td></tr>
+<tr><td>同業（AMAT/KLAC）財報互相 lead-lag</td><td>三家在 WFE 共享 driver，但客戶 mix 不同（KLAC 偏 logic、LRCX 偏 memory、AMAT 兩邊），互相 lead-lag 是「同產業同向」非 alpha</td></tr>
+<tr><td>短期 PE 倍數區間（30x vs 40x）</td><td>cycle 期 PE 必然極端波動；3Y NTM PE 是否在 25-40x 區間更具長期意義</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>WFE 2026 $140B、2027 持續成長至 $145-150B、HBM TSV 獨家穩固、GM 維持 50%+；隱含 forward PE 34.5x（NTM）/ FY+2 共識 EPS $7.70</td></tr>
+<tr><td>我認為的不同假設</td><td>市場定價 60% 機率「LRCX 直接 hybrid bonding 收入 2027-2028 兌現」；我認為這部分 25-30% 機率（hybrid bonding 主要由 BESI/TEL 取得 W2W bonder 訂單，LRCX 是「前段 TSV」而非「W2W bonding」直接受益）— 第二曲線打折</td></tr>
+<tr><td>賣方為什麼錯（≥ 1 具體理由）</td><td>賣方把「LRCX 在 HBM TSV 獨家」與「LRCX 在 hybrid bonding W2W 直接受益」混為一談；前者已兌現（DRAM 27% 系統占比 = TSV 訂單）、後者要靠 hybrid bonder 廠商（BESI 67% post-AP / TEL TC bonder 領先 / Hanmi 2027 才商用）— ID v1.2 critic patch 已明確區分。賣方 PT $315-340 中位反映「全包式 HBM 受益」narrative，未對第二曲線打折</td></tr>
+</table>
+
+<p><strong>校驗結果</strong>：三題寫得出 → §7 倉位不需打折，但「Bull case 上限」要對「第二曲線打折」（從原 +120% 5Y 砍至 +100% 5Y），這已 reflect 在 §4 Bull = +100% 設定。</p>
+</div>
+
+<!-- ===== §5 The Single Thing That Could Change My Mind ===== -->
+<div class="section">
+<div class="section-title">§5｜The Single Thing That Could Change My Mind</div>
+
+<table>
+<tr><th>項目</th><th>Primary Trigger</th></tr>
+<tr><td>事件描述</td><td><strong>Samsung 或 SK Hynix 任一家在 HBM4-16Hi 或 HBM5 量產時，宣布把 TSV etch 主供應商從 LRCX Syndion 切換至 TEL 或新供應商，且首批量產訂單披露金額 ≥ $500M（年化）</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>HBM TSV 獨家供給是 LRCX 護城河的「核冠」（A1 + DD §9 同時確認）— 一旦失去獨家，A1 護城河等級 9→7（從 etch 雙寡占降為 etch 雙寡占而 HBM TSV 共享），對應估值 PE 從 34x 砍至 25x（−26%），同時 D2 driver 直接被推翻（AI/HBM 推升 LRCX 設備強度的特異性消失）。這不是 cycle 也不是估值，是結構性 thesis 整片倒</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>① Samsung/SK Hynix 法說會（季度）；② TEL 法說 HBM TSV 訂單披露（季度）；③ Digitimes / Trendforce HBM 供應鏈追蹤（月度）；④ LRCX 自己 CSBG service 客戶集中度（年度）— 4 個來源交叉驗證</td></tr>
+<tr><td>目前離發生有多遠</td><td>低機率（5-10%）— 切換成本 18-24 個月 process validation + LRCX SABRE 3D 已 entrenched；但 watch HBM5 量產時點（2027-2028）這是供應商可能重新洗牌的 step change 窗口</td></tr>
+</table>
+
+<table>
+<tr><th>項目</th><th>Secondary Trigger（pre-mortem 派生 — 詳 §6b 第三段）</th></tr>
+<tr><td>事件描述</td><td><strong>WFE 2027 共識在 Q4 FY26 - Q1 FY27 期間連續兩次下修至 $130B 以下，同時 mgmt 撤回「2027 持續成長」措辭，且 GM 連兩季 < 49%</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>pre-mortem 揭露的主要失敗故事路徑（cycle reversal + GM 失守 + WFE 共識下修三同步）— 與 primary trigger 不同的因果鏈（cycle / margin 而非 customer switch），須獨立追蹤</td></tr>
+<tr><td>如何監測</td><td>SEMI 季度 WFE forecast + LRCX 法說 GM trajectory + mgmt forward guide</td></tr>
+<tr><td>目前離發生有多遠</td><td>中機率（25-30%）— 這是 §4 Bear case 的核心觸發條件</td></tr>
+</table>
+
+<p class="muted"><strong>§5 修正狀態</strong>：⚠ 已補 1 條 secondary trigger（依 §6b pre-mortem 校驗結果 = 部分重疊）— 詳 §6b 第三段紀錄</p>
+</div>
+
+<!-- ===== §6 What I Don't Know + Pre-mortem ===== -->
+<div class="section">
+<div class="section-title">§6｜What I Don't Know + Pre-mortem</div>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>HBM5 W2W hybrid bonding LRCX 能否取得結構份額</td><td>LRCX 在 W2W bonding 設備或前段 TSV 增量上至少維持 50% wallet share</td><td>第二曲線打折 — Bull case 從 +100% 砍至 +60% 5Y</td></tr>
+<tr><td>2</td><td>China 30% revenue 假設在 BIS 2026 加嚴後的真實 step-down 速度</td><td>China revenue 從 43% 步進降至 30%（FY27），不出現 quarter-level cliff</td><td>若單季驟降 < 25%（cliff），FY+1 EPS -10-15%，PE 同步下殺 -15%</td></tr>
+<tr><td>3</td><td>Cycle peak 是否已到 — ROIC 75% / GM 49.9% / Op Margin 35% 結構峰值在 cycle 平緩期是否 sustainable</td><td>2027-2028 即使 WFE 略降，LRCX 也能靠 mix shift（DRAM > Foundry）維持 GM 48-49%</td><td>若 GM 結構性退回 47% 並維持 4 季以上，PE 從 34x 下殺至 22x（−35%）</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 §5 + 修正 §5（強制三段式）</h3>
+
+<div class="premortem-box">
+<h4>第一段｜故事倒推（≤ 80 字 narrative）</h4>
+<div class="premortem-narrative">
+「假設 5 年後（2031-05）這個部位虧 50%，最可能發生的故事是：<strong>2027Q3 SEMI WFE 共識下修至 $125B，10 月 LRCX Q1 FY28 法說 mgmt 撤回『2027 持續成長』措辭、Q2 FY28 GM 跌至 47.5%，DRAM 系統占比掉到 21%（HBM4E 供過於求），同期 Samsung 宣布 HBM5 量產延後一年，市場將 LRCX forward PE 從 35x 重設至 18x，股價從 ATH $298 跌至 $130 = −56%</strong>」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing（Samsung/SK Hynix 切換 HBM TSV 主供應商）？</td><td><strong>⚠ 部分重疊</strong>。失敗故事的主因子是「cycle reversal + GM 失守 + WFE 共識下修」三同步，而 §5 primary trigger 是「HBM TSV 客戶切換」— 兩者都會觸發 thesis 倒，但路徑不同：前者是「需求 / cycle」失敗，後者是「供給 / customer switch」失敗。HBM5 量產延後是其中一個 sub-trigger，但不是主因</td></tr>
+</table>
+
+<h4>第三段｜修正 §5（依第二段結果分流）</h4>
+<table>
+<tr><th>修正動作</th><th>內容</th></tr>
+<tr><td>校驗結果</td><td>⚠ 部分重疊</td></tr>
+<tr><td>§5 漏抓的風險面向</td><td>「Cycle reversal + GM 失守 + WFE 共識下修」三同步路徑（D2 driver 失效路徑），不在原 §5 primary trigger 之內</td></tr>
+<tr><td>修正動作</td><td><strong>在 §5 區塊實際新增「Secondary Trigger（pre-mortem 派生）」</strong>：「WFE 2027 共識在 Q4 FY26 - Q1 FY27 期間連續兩次下修至 $130B 以下，同時 mgmt 撤回 2027 持續成長措辭，且 GM 連兩季 < 49%」— 已實際新增於 §5 區塊</td></tr>
+</table>
+
+<p><strong>校驗紀錄</strong>：「§5 修正狀態：<span class="badge-warn">⚠ 已補 1 條 secondary trigger</span>」— §5 區塊現有 2 個 trigger（Primary：customer switch；Secondary：cycle reversal + GM 失守 + WFE 下修）。pre-mortem 不是裝飾品，已實際導致 §5 結構變動。</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+
+<div class="maxdd-box">
+<div class="maxdd-headline">
+<div class="maxdd-number">−40% ~ −55%</div>
+<div class="maxdd-emoji">🟡</div>
+<div class="maxdd-sub">中途 max DD 範圍估計｜寬度 15%p</div>
+</div>
+
+<div class="dd-bar">
+  <div class="dd-green" style="flex:30"></div>
+  <div class="dd-amber" style="flex:20"></div>
+  <div class="dd-red" style="flex:5"></div>
+</div>
+<p class="note">↑ 色帶視覺化：綠（0~−30）/ 黃（−30~−50）/ 紅（&lt;−50）。本案 max DD 估計範圍橫跨黃→紅交界。</p>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−40% ~ −55%</strong>（範圍寬度 15%p，符合 guardrail ≥ 10%p）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q3 - 2028 Q1（WFE cycle reversal 確認期）；參考：歷史 2022 cycle bottom LRCX 從 ATH 下殺 −50% 用了 9 個月，2018 Q4 從 cycle peak −40% 用了 4 個月</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>9-18 個月（樂觀，類比 2022→2024 復原時間）；如 thesis 結構性破（§5 primary trigger 真發生）= 不會恢復至 cycle peak 倍數，需重設估值錨</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🟡 −30~−50%（需要強信念）</strong>；DD 範圍上界 −55% 已踩進 🔴 邊界但下界 −40% 仍在 🟡</td></tr>
+</table>
+
+<p><strong>校驗（強制一句話）</strong>：「若 max DD 落在 −40~−55% 區間，<strong>我能撐到復原</strong>，但條件是：(1) <strong>部位不超過 portfolio 7%</strong>（強制上限，超過則無法忍受峰值 −55% × 7% = −3.85% portfolio 衝擊）；(2) <strong>不使用槓桿</strong>；(3) §5 primary trigger（HBM TSV 客戶切換）<strong>未發生</strong>；(4) Bear case 5Y IRR 機率不超過 35%（目前 30%）— 若任一條件破，立即減碼至 3-4%。」</p>
+
+<p><strong>Guardrail 連動 §7a</strong>：路徑評級 🟡 不觸發強制下修（🔴 才強制下修），但範圍上界 −55% 已逼近 🔴 → §7a「目標倉位 5-7%」已是 7% 硬上限（不再上調至 8-10%），且 §7d「持有年限」必須加註「中途出場風險高」（即使 3Y 後 thesis 對，中途若沒撐住會錯過終點報酬）。</p>
+</div>
+</div>
+
+<!-- ===== §8 Review Triggers ===== -->
+<div class="section">
+<div class="section-title">§8｜Review Triggers（重新評估觸發點）</div>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q4 FY26 earnings（強制全面重評）</td><td>財報日期</td><td><strong>2026-07-30 ± 5 日（AMC release 預期）</strong>；關注 Q4 GM 是否 ≥ 50%、FY27 outlook 是否提供、WFE 2027 共識方向</td></tr>
+<tr><td>2</td><td>SEMI WFE 2027 共識更新</td><td>產業事件</td><td>SEMI 季度報告 2026-07 + 2026-10；觸發條件：上修至 $145B+ 加碼 / 下修至 $130B 以下減碼</td></tr>
+<tr><td>3</td><td>價位觸發（雙向）</td><td>價位觸發</td><td>(a) 股價 ≥ $310（接近賣方共識 PT 中位 $315） → 部分獲利了結 + 重新檢視 R:R；(b) 股價 ≤ $245（Bollinger 中軌附近）→ 二批進場執行</td></tr>
+<tr><td>4</td><td>§5 Single Thing trigger（任一）</td><td>結構性事件</td><td>Primary：Samsung/SK Hynix HBM TSV 主供應商切換新聞 — 即發即評；Secondary：WFE 2027 共識連續兩次下修 + GM 連兩季 < 49% — 兩個季度確認</td></tr>
+<tr><td>5</td><td>HBM5 量產 / W2W 主供應商定錨</td><td>結構性事件</td><td>2027-2028 期間 Samsung / SK Hynix 公告 HBM5 量產 + W2W bonder 訂單分配（決定 LRCX 第二曲線兌現度）</td></tr>
+<tr><td>6</td><td>China BIS 政策新規</td><td>政策事件</td><td>2026 下半年 BIS 額外 export controls（如再 expand 至 dep tools / DRAM 1c 限制）— 觸發 China revenue cliff 評估</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：至 <span class="badge-warn">2026-07-30（下一次 Q4 FY26 財報前有效）</span></strong> — 屆時必須跑新版 DCA 重評。若 Q4 GM 顯著高/低於預期，可能需要在 7 月底前緊急重評。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：① WFE 2027 共識從目前 $130-140B 上修至 $145-150B（SEMI 7 月或 10 月報告）；② Q4 FY26 GM print ≥ 50.5%（mgmt guide mid）+ FY27 EPS 共識繼續上修至 $8.20+；③ Samsung 或 SK Hynix 公告 HBM5 capacity expansion + LRCX 取得結構性訂單</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：① 4 週漂移 +9.8% (4/25→5/8) 過熱 mean reversion，短期回測至 $245-260（−15-20%）— 中性結構訊號不破；② Q4 FY26 GM print < 49% 或 FY27 outlook 弱於預期 → 估值 reset；③ 7-9 月 China export controls 新規 + 單季 China revenue 驟降至 25% 以下；④ Insider selling 加速 / 13D filings 出現</p>
+</div>
+
+<!-- ===== Phase A1 折疊區塊 ===== -->
+<details>
+<summary>Phase A1｜護城河深度分析 — 獨立結論：護城河 9/10，moat_trend = ↑ widening；etch + ALE 雙寡占 + HBM TSV 獨家，2025-2026 SAM 從 mid-30% 擴張至 high-30% WFE</summary>
+<div class="details-content">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>① 無形資產（40+ 年 etch R&D + 8,000+ patents + ALE/ALD 是 GAA 與 3D NAND 業界標準）；② 轉換成本（process recipe 開發 18-24 個月 + multi-year service 綁定 + OEM 認證 1-2 年）</td></tr>
+<tr><td>持久性評分</td><td><strong>9/10</strong>，5 年穩固度：<strong>高</strong>（HBM TSV 獨家 + GAA SAM 結構性擴張兩個增厚因子同時運作）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Tokyo Electron（TEL）在 etch 持續追趕 — TEL etch 市佔 25% vs LRCX 50%；TEL 在 hybrid bonding TC bonder 領先，可能藉 W2W 推升期反向 leverage 進入 LRCX 領域；時間軸 24-36 個月</td></tr>
+<tr><td>關鍵數據</td><td>etch 市佔 50% (sourced: Edgen 2026)、5nm 以下 etch 80%+ (sourced)、ALD 收入 +50% YoY（$1B → $1.5B 2025）、ROIC 75%（sourced）、GM 49.9% Q3 FY26 10Y 新高（sourced LRCX IR）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong> + 12M 證據：① <strong>etch SAM 從 mid-30% → high-30% WFE 占比（2025→2026）</strong>（Edgen 2026-Q1 / nikhs.substack.com）— 同業 gap 在擴大；② <strong>ALD 收入 +50% YoY</strong> 反映 GAA tool intensity 上升 LRCX 直接受益；③ <strong>HBM TSV 獨家供 Samsung 與 SK Hynix 經多家媒體 confirmed</strong>（iNEWS / Wevolver / FinancialContent 2025-12）</td></tr>
+</table>
+
+<h3>Sourced Data Points（≥ 5 required, achieved: 7）</h3>
+<ol>
+<li><strong>etch 市佔 45-50% global</strong>（5nm 以下 80%+）— Edgen 2026; nikhs.substack.com 「Atomic Toll Booth」</li>
+<li><strong>ALE 與 ALD 是 GAA 與 3D NAND 業界標準</strong>，8,000+ active patents — Edgen 2026-Q1</li>
+<li><strong>HBM TSV 設備 Syndion etch + SABRE 3D copper plating 是 Samsung 與 SK Hynix exclusive 供給</strong> — iNEWS / Wevolver (2025) / Digitimes 2024-07</li>
+<li><strong>ROIC 75%</strong>（vs Big 3 同業 30-35%；5Y 均 65.1%）— GuruFocus 2026 / StockAnalysis</li>
+<li><strong>Non-GAAP GM 49.9% Q3 FY26 10Y 新高</strong> — LRCX IR 2026-04-22</li>
+<li><strong>ALD 收入 +50% YoY（$1B → $1.5B 2025）</strong> — LRCX 公司 法說 + Edgen 2026</li>
+<li><strong>SAM mid-30% (2025) → high-30% (2026) 占 WFE 比例</strong> — Edgen / ltsi.substack 「Lam Research Explained 2026」</li>
+</ol>
+
+<p><strong>A1 獨立結論</strong>：護城河 9/10 結構性加深 — moat_trend ↑ widening。etch + ALE 雙寡占穩固、HBM TSV 獨家為核冠、GAA SAM 結構性擴張。最大侵蝕來源是 TEL 在 etch 與 hybrid bonding 的雙線追趕，但 24 個月內難打破核心地位。</p>
+</div>
+</details>
+
+<!-- ===== Phase A2 折疊區塊 ===== -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 獨立結論：WFE 2026-2027 supercycle 真實，runway_post_y5 = 🟢 寬（HBM5 W2W 2028+ + sub-2nm A14 2028-2030 + glass substrate）；最大變數是 cycle 高位後的反轉時點</summary>
+<div class="details-content">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>2026E WFE $139-140B（SEMI 12/2025 報告：$139B；LRCX mgmt 4/22 raise to $140B+），CAGR 9-10% (2026)；2027E WFE $135.2B（SEMI 加 backend = $156B total equipment）；滲透率：advanced node（5nm 以下）占 leading-edge 90%+ 由五寡占獨占</td></tr>
+<tr><td>供需判斷</td><td>目前供需<strong>偏緊</strong>（DRAM HBM 投資加速 + GAA 2nm 量產 ramp + 3D NAND 300+ 層轉換加速）；未來 12 個月方向 — 持續偏緊至 2027 H1，2027 H2 進入 cycle 高原期</td></tr>
+<tr><td>最大技術替代風險</td><td><strong>EUV-only 製程替代部分 multi-pattern etch</strong>（High-NA EUV 推進，但 EUV + etch 仍互補；TSMC 確認 High-NA skip 至 A13 2029 = 對 LRCX 中性）；時間軸 5-10 年；威脅程度<strong>低-中</strong></td></tr>
+<tr><td>最大政策/地緣風險</td><td><strong>BIS 2026-01-15 export rule + 後續加嚴</strong> — LRCX China revenue Q1 FY26 43%，mgmt 預期 FY26 < 30% step-down；影響路徑：直接限制 advanced tools 出口 + 第二輪可能擴及 dep/clean tools；單季 cliff 風險為「政策突發」事件</td></tr>
+<tr><td>議價權位置</td><td>對<strong>上游</strong>：採購 chamber parts + electronics + optics，多供應商 = 強；對<strong>下游</strong>：客戶 Top 5（TSMC + Samsung + SK Hynix + Micron + Intel）~70% revenue，但 5nm 以下 90%+ 五寡占獨占 = 強</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：① S 曲線位置：<strong>中早期</strong>（GAA 2nm 才剛開始 2025 H2 量產，sub-2nm A16/A14 2027-2030，HBM5 W2W 2028+）；② Y5（2031）末 TAM 滲透率：advanced node 設備仍有 1.5-2x TAM 擴張空間（2031 WFE 預估 $200-250B）；③ 第二曲線：HBM5 W2W hybrid bonding（2028+ 起步）+ glass substrate（2028-2030）+ sub-2nm（A14 2029 ramp）— 三條獨立曲線銜接</td></tr>
+</table>
+
+<h3>Sourced Data Points（≥ 5 required, achieved: 7）</h3>
+<ol>
+<li><strong>SEMI 2026 WFE 預估 $139B / 2027 $135.2B WFE only + $156B total equipment</strong> — SEMI 2025-12-09 press release</li>
+<li><strong>LRCX mgmt 2026-04-22 raise WFE 2026 to $140B+ with upside bias</strong> — LRCX Q3 FY26 earnings call</li>
+<li><strong>GAA tool intensity +25-30% vs FinFET</strong> — Edgen / ltsi.substack 2026; industry standard</li>
+<li><strong>BIS Jan 15, 2026 export controls effective</strong>；LRCX China Q1 FY26 43% 預估 step down to < 30% FY26 — Yahoo Finance / Zacks 2026 / BIS 公告</li>
+<li><strong>HBM4 sticks with microbumps; hybrid bonding postponed to HBM5 (2028+)</strong> — semiengineering.com 2025 / TrendForce 2025-10</li>
+<li><strong>Hybrid bonding market projected $2B by 2028</strong>，BESI / ASMPT 為主要受益方 — TrendForce 2025-10</li>
+<li><strong>2027 ASML High-NA shipment 7-8 (base) / 5-6 (bear) confirmed after TSMC skip A13 + Intel 14A 延後</strong> — ID v1.2 critic 整合 Bloomberg + ASML Q1 2026</li>
+</ol>
+
+<p><strong>A2 獨立結論</strong>：WFE 2026-2027 supercycle 真實但 cycle 高位，runway_post_y5 🟢 寬主要靠 HBM5 W2W + sub-2nm GAA 兩條第二曲線銜接。最大變數是 cycle 反轉時點（2027 H2 或 2028）— 這是 §6b pre-mortem 失敗故事核心。</p>
+</div>
+</details>
+
+<!-- ===== Phase A3 折疊區塊 ===== -->
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置 — 獨立結論：FY26-28 EPS 大幅上修 + 5Y ≥85% FCF return 框架 + 股息 +120% 三重資本配置升級；但 5Y PE 分位 89% 反映 cycle 期估值已 re-rate 至高位，Base case IRR 主要靠 EPS 複利</summary>
+<div class="details-content">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：Systems（etch + dep）64%（FY25）；CSBG service 36%（首次破 $2B 季度，installed base recurring +25% YoY）；End market：Foundry/Logic 54%（拖累 -5pp QoQ）、DRAM <strong>27% record</strong>（+4pp，HBM 直接訊號）、NAND 12%（+1pp）、其他 7%</td></tr>
+<tr><td>客戶集中度</td><td>Top 5（TSMC + Samsung + SK Hynix + Micron + Intel）~70% revenue；地理 China 34%（FY26 預估 < 30%）/ Korea 22% / Taiwan 17% / Japan 12% / US 7%；風險：中</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（GM Q3 49.9% 10Y 新高，從 FY23 44.6% 連續擴張）；定價權：強</td></tr>
+<tr><td>未來金雞母</td><td>HBM5 W2W hybrid bonding（2028+，目前佔營收 ~0%，潛在 TAM $2B by 2028，預估成熟 2-3 年後）；ALD（已佔 ~10% systems，+50% YoY 成長）；glass substrate（2028-2030）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 1.01（FCF/NI，業界頂級）、毛利率 49.9%（↑ 10Y 新高）、Net Cash $1.91B + D/E 0.45；壓力測試：營收 -20% 可撐 8+ 季（cash + ROIC 75% 在 cycle 下緩衝強）</td></tr>
+<tr><td>資本配置紀律</td><td>2026-04 升級為「5Y ≥85% FCF return」正式承諾（從 75-85% 上修）+ 股息 +120%（$0.26 → $0.57/季 6 月起）+ $2B 額外 buyback 授權（12-18 月執行）；管理層 CEO Archer 2018 起、CFO Bettinger 2014 起 — 穩定 + 績效掛鉤強</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>① <strong>EPS CAGR 預估 8-9%/yr</strong>（FY25 $4.14 → FY30 $12，含 buyback 對 EPS 稀釋抵銷 — 約 -2.5% YoY share 減少加進 EPS 為 +2.5%pp）；② <strong>5Y 末 forward PE 預估 30x vs 當前 34.5x</strong>（re-rate = (30/34.5)^(1/5)−1 = −2.8%/yr → 取 -1.7%/yr 保守，因 EPS 分母緩升）；③ <strong>現金股息率 0.85%</strong>（dividend +120% 後）；④ <strong>淨買回率 ~1.0%</strong>（FY25-26 ~$3-4B 買回 / market cap $335B × 扣 SBC 稀釋 -0.25%）</td></tr>
+</table>
+
+<h3>Sourced Data Points（≥ 6 required, achieved: 9）</h3>
+<ol>
+<li><strong>Q3 FY26 Rev $5.84B (+24% YoY) / EPS $1.47 / GM 49.9% / Op Margin 35.0%</strong> — LRCX IR 2026-04-22</li>
+<li><strong>Q4 FY26 guide Rev $6.6B mid (+9.4% above cons $6.0B) / EPS $1.65 (+13.8% above cons $1.45) / GM 50.5%</strong> — LRCX IR 2026-04-22</li>
+<li><strong>5Y ≥85% FCF return framework + dividend +120% + $2B additional buyback authorization</strong> — LRCX IR + Stocktitan 2026-04</li>
+<li><strong>FY27 EPS consensus $7.70 (yfinance n=31) / Erste Group $7.88</strong> — yfinance / Markets Daily 2026-02</li>
+<li><strong>5Y avg PE 23.52, current ~50x trailing PE</strong>（NTM 34.51x）— Fullratio / StockAnalysis 2026-05</li>
+<li><strong>ROIC 5Y avg 65.1%, current 74.88%</strong> — GuruFocus 2026</li>
+<li><strong>Share count 1.25B 股 (-2.40% YoY)；Q3 FY26 buyback $800M @ avg $211 (含 $200M ASR)；$4.3B remaining authorization</strong> — StockAnalysis 2026 / LRCX IR</li>
+<li><strong>FY26-27 Zacks consensus revenue growth +14.1% / +12.5%</strong> — Zacks via Yahoo Finance</li>
+<li><strong>Q3 capital return 139% of FCF = $1.876B (buybacks $800M + notes $750M + dividends $326M)</strong> — LRCX IR 2026-04</li>
+</ol>
+
+<p><strong>A3 獨立結論</strong>：業務財務升級（5Y FCF framework + EPS 大幅上修 + GM 創 10Y 新高），但估值 5Y PE 89% 分位是 cycle 高位風險。Base case IRR 7.6%/yr 主要靠 EPS 複利（+8.7%/yr）抵銷 re-rate 退潮（-1.7%/yr），長抱者押的是「EPS 上修能 outpace multiple 收斂」。</p>
+</div>
+</details>
+
+<!-- ===== Phase A4 折疊區塊 ===== -->
+<details>
+<summary>Phase A4｜既有報告數據摘要 — DD §1 訊號 A + DD §9 護城河 9/10 + ID 母題 WFE 五寡占 framework + ID v1.2 critic patch（HBM4 hybrid bonding 延後 + 80% kingmaker arithmetic 修正）</summary>
+<div class="details-content">
+
+<h3>DD 報告摘要（DD_LRCX_20260425.html, schema v12.0）</h3>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>Quality Score（複合品質）</td><td>10.0（dd-meta JSON）</td></tr>
+<tr><td>R:R ratio</td><td>短期 −0.38x（失效）/ 中期 0.07x / Bull 目標 0.43x；DD §2 E QC-29 壓力測試 4/4 fail（價位已從 W52 Low 漲 +262%）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $204.48 / 中期 $277.20 / Bull $323.40；DD §13.5 合理區間 36-50x adj NTM PE</td></tr>
+<tr><td>Bear anchor</td><td>短期 $102.20（Bear PE 20x × Bear EPS $5.11）/ 中期 $138.60</td></tr>
+<tr><td>紅旗清單</td><td>① Trailing PE 50.5x / EV/EBITDA 42.5x 都 5Y 95% 分位；② Beta 1.79；③ China 34% revenue 政策風險；④ HBM hybrid bonding direct revenue 2028+ 才主流；⑤ 4/23 shooting star -5.23% close vs high；⑥ Insider net selling $30M trailing 3M</td></tr>
+<tr><td>§0.5 / §5 核心假設</td><td>H1：WFE 2026-2028 supercycle 持續；H2：GM 維持 49%+ 不退回 47%；H3：HBM TSV 獨家 + DRAM 系統占比 25%+</td></tr>
+<tr><td>§8 最終結論（綜合訊號燈）</td><td><strong>A</strong>（核心候選）— quality A + gate 🟡（盲點 1 救援後）+ MA ✅ 強勢 + trap 🟢 + 大盤正常；DD 4/25 認定為「四檔財報後唯一 A 級訊號」</td></tr>
+</table>
+
+<h3>ID 報告摘要（ID_WaferFabEquipment_20260430.html patched v1.2）</h3>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>產業評級</td><td>Phase II（GAA + High-NA + 中國反制三引擎 + 五寡占地位確認）；🟡 比例 18%</td></tr>
+<tr><td>關鍵趨勢（5 個 🔴 核心 + 5 個 🟡 + 2 個 🟢）</td><td>1. 結構超循環非 cyclical（2027 trough 不會跌破 $130B）；2. KLA 被低估「複利機」；3. 中國 WFE 替代論被誇大（先進節點 5nm 以下五寡占 90→95%）；critic v1.2 patch：① TSMC High-NA skip A13 → ASML conviction high→mid；② Intel 14A 延後 2028；③ 80%+ kingmaker arithmetic 修正（真 80%+ 只有 ASML / TEL coater 2 個，etch/dep/process control 為雙寡占）</td></tr>
+<tr><td>LRCX 在 ID 排名</td><td>🔴 核心持倉（與 ASML、KLAC、AMAT 並列五寡占三/四強）；conviction high（KLA Q3 raise 同步 confirms LRCX thesis #2 + #3）</td></tr>
+<tr><td>LRCX-specific catalysts</td><td>§10.5 FY26 Q1 earnings monitor + §13 F-8 ALD share-shift trigger + thesis box PE 分層（雙寡占 LRCX/AMAT etch+dep 28-30x 上限 vs 真 monopoly ASML/TEL coater 32-35x）</td></tr>
+</table>
+
+<p class="muted"><strong>A4 結論</strong>：DD 與 ID 高度互補，DD 從個股層給 A 訊號 + 核心候選，ID 從產業 framework 給五寡占第二/三強排名。但 ID v1.2 critic patch 揭露兩個對 DD 的修正：① HBM4 hybrid bonding 直接收入推到 2028+（DD §1 自己承認但 narrative 仍偏樂觀）；② etch 為雙寡占（LRCX 50% + TEL 25% = 75%）非單家獨占，PE 上限 28-30x 而非 ASML 級 32-35x — 這影響 §4 Bull case 估值倍數上限。</p>
+</div>
+</details>
+
+<!-- ===== Footer ===== -->
+<div class="section">
+<div class="section-title">分析框架版本資訊</div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>DCA Schema</td><td>v1.1</td></tr>
+<tr><td>分析日期</td><td>2026-05-11</td></tr>
+<tr><td>基於 DD</td><td>DD_LRCX_20260425.html (v12.0 schema)</td></tr>
+<tr><td>基於 ID</td><td>ID_WaferFabEquipment_20260430.html (industry-analyst v1.7, patched v1.2 @ 2026-05-02)</td></tr>
+<tr><td>Phase A 搜尋次數</td><td>11 次 WebSearch（A1 4 / A2 4 / A3 3）</td></tr>
+<tr><td>Self-audit checklist</td><td>12/12 ✅ passed</td></tr>
+<tr><td>下次年度對照</td><td>2027-05-11</td></tr>
+</table>
+
+<p class="muted">⚠ <strong>不構成任何投資建議</strong>。本報告為內部投資決策框架文件，所有條件式進場/減碼路徑均為分析模型輸出，不代表必然執行。任何持倉操作均需考慮個人風險偏好、整體 portfolio 配置、稅務影響等多重因素。</p>
+</div>
+
+</div>
+</body>
+</html>

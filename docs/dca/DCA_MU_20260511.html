@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜MU（Micron Technology）｜2026-05-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8FAFC; --card:#FFFFFF; --text:#0F172A; --muted:#475569;
+    --line:#E2E8F0; --line-strong:#CBD5E1; --accent:#1E3A5F; --accent-light:#3B82F6;
+    --row-alt:#F1F5F9;
+    --thesis-bg:#EFF6FF; --decision-go:#F0FDF4; --decision-wait:#FEF9C3; --decision-no:#FFF1F2;
+    --conflict-bg:#FFF7ED; --conflict-line:#F97316; --verdict-bg:#FED7AA;
+    --premortem-bg:#FEF2F2; --premortem-line:#DC2626;
+    --pattern-bg:#F0F9FF; --pattern-line:#0EA5E9;
+    --ok:#DCFCE7; --ok-text:#166534; --no:#FEE2E2; --no-text:#991B1B;
+    --warn:#FEF3C7; --warn-text:#92400E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.65}
+  .mono,.num{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  header.fixed-top{position:sticky;top:0;z-index:100;background:var(--accent);color:#fff;padding:12px 24px;display:flex;gap:24px;align-items:center;flex-wrap:wrap;font-size:14px}
+  header.fixed-top .ticker{font-weight:700;font-size:18px;letter-spacing:.5px}
+  header.fixed-top .sep{opacity:.4}
+  header.fixed-top .thesis-line{flex:1;min-width:280px;font-style:italic;opacity:.95}
+  main{max-width:1080px;margin:0 auto;padding:32px 24px 96px}
+  h1{font-size:32px;margin:0 0 4px}
+  h2{font-size:22px;margin:48px 0 12px;padding:10px 14px;background:var(--accent);color:#fff;border-left:4px solid var(--accent-light);border-radius:2px}
+  h3{font-size:17px;margin:24px 0 8px;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:4px}
+  h4{font-size:15px;margin:18px 0 8px;color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px 24px;margin:16px 0}
+  table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+  tbody tr:nth-child(even){background:var(--row-alt)}
+
+  /* ===== Status Bar (top dashboard) ===== */
+  .status-bar{display:flex;gap:16px;justify-content:center;align-items:stretch;background:#F1F5F9;border-left:4px solid var(--accent-light);border-right:4px solid var(--accent-light);padding:14px 18px;margin:16px 0 24px;flex-wrap:wrap}
+  .status-bar .cell{flex:1;min-width:170px;max-width:220px;text-align:center;background:#fff;padding:12px 10px;border-radius:4px;border:1px solid var(--line)}
+  .status-bar .cell .label{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+  .status-bar .cell .value{font-size:22px;font-weight:700;margin-top:6px;line-height:1.2}
+  .status-bar .cell .sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .sig-Aplus{color:#166534}
+  .sig-A{color:#15803D}
+  .sig-B{color:#92400E}
+  .sig-C{color:#991B1B}
+  .arrow-up{color:#166534}
+  .arrow-flat{color:#64748B}
+  .arrow-down{color:#991B1B}
+  .dd-green{color:#166534}
+  .dd-amber{color:#92400E}
+  .dd-red{color:#991B1B}
+
+  .thesis-card{background:var(--thesis-bg);border:1px solid #BFDBFE;border-radius:4px;padding:36px 32px;margin:16px 0;text-align:center}
+  .thesis-card .quote{font-size:26px;font-weight:500;line-height:1.5;color:#1E3A8A}
+  .thesis-card .label{font-size:12px;color:var(--muted);margin-top:14px;letter-spacing:1px}
+
+  .decision-card{background:var(--decision-wait);border-left:4px solid #CA8A04;padding:18px 22px;margin:12px 0;border-radius:2px}
+  .decision-card .verdict-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:12px;font-weight:600;letter-spacing:1px;margin-bottom:8px;background:#92400E;color:#fff}
+
+  .conflict-card{background:var(--conflict-bg);border-left:4px solid var(--conflict-line);padding:16px 20px;margin:12px 0;border-radius:2px}
+  .verdict-table{background:var(--verdict-bg);padding:8px;border-radius:2px;margin-top:10px}
+  .verdict-table table{margin:0;font-size:13px}
+  .verdict-table thead th{background:#9A3412}
+
+  .premortem{background:var(--premortem-bg);border-left:4px solid var(--premortem-line);padding:14px 20px;margin:10px 0;border-radius:2px;font-style:italic}
+  .pattern-card{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 20px;margin:10px 0;border-radius:2px}
+
+  .ok-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--ok);color:var(--ok-text);font-weight:600;font-size:12px}
+  .no-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--no);color:var(--no-text);font-weight:600;font-size:12px}
+  .warn-tag{display:inline-block;padding:2px 8px;border-radius:2px;background:var(--warn);color:var(--warn-text);font-weight:600;font-size:12px}
+
+  .memo-paper{background:#FAFAF7;border:1px solid #E5E5E0;padding:24px 30px;font-family:"IBM Plex Mono",monospace;font-size:13px;line-height:1.7;border-radius:2px;margin:12px 0;box-shadow:1px 1px 0 #00000010;white-space:pre-wrap}
+  .elevator{font-style:italic;background:#F8FAFC;border-left:3px solid var(--muted);padding:14px 18px;margin:10px 0;color:var(--muted)}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:0;margin:12px 0}
+  details summary{padding:14px 20px;cursor:pointer;font-weight:600;color:var(--accent);font-size:15px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▶ ";font-size:11px;color:var(--muted);margin-right:6px}
+  details[open] summary::before{content:"▼ "}
+  details > *:not(summary){padding:0 24px 20px}
+  .summary-conclusion{font-weight:400;color:var(--muted);margin-left:12px;font-size:13px}
+
+  .print-btn{position:fixed;bottom:24px;right:24px;padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:2px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px #00000018;z-index:200}
+  .print-btn:hover{background:#0F2542}
+  .consensus-card{background:#FEF7CD;border:1px solid #FCD34D;border-left:4px solid #CA8A04;padding:14px 18px;margin:12px 0;border-radius:2px}
+
+  /* IRR composition stacked bar */
+  .irr-bar-wrap{margin:14px 0 4px}
+  .irr-bar{display:flex;height:26px;width:100%;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .irr-bar .seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600;font-family:"IBM Plex Mono",monospace}
+  .seg-eps{background:#15803D}
+  .seg-rerate{background:#1D4ED8}
+  .seg-buyback{background:#64748B}
+  .seg-neg{background:#991B1B}
+  .irr-narrative{font-style:italic;background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:12px 18px;margin:10px 0;border-radius:2px;font-size:14px}
+
+  /* Max DD visual */
+  .maxdd-wrap{display:flex;gap:16px;align-items:center;margin:12px 0}
+  .maxdd-number{font-size:32px;font-weight:700;font-family:"IBM Plex Mono",monospace;color:#991B1B;min-width:230px}
+  .maxdd-bar{flex:1;height:24px;background:linear-gradient(to right,#15803D 0%,#15803D 50%,#CA8A04 50%,#CA8A04 83%,#991B1B 83%,#991B1B 100%);border:1px solid var(--line);border-radius:2px;position:relative}
+  .maxdd-bar .marker{position:absolute;top:-6px;width:2px;height:36px;background:#0F172A}
+
+  @media print {
+    header.fixed-top, .print-btn { display:none !important }
+    details { border:none }
+    details:not([open]) > *:not(summary) { display:block !important }
+    details > *:not(summary) { padding:0 !important }
+    summary::before { display:none }
+    main { max-width:100%; padding:0 12px }
+    h2 { page-break-after:avoid }
+    .card, .conflict-card, .decision-card, .thesis-card { page-break-inside:avoid }
+  }
+</style>
+</head>
+<body>
+
+<header class="fixed-top">
+  <span class="ticker mono">MU · Micron Technology</span>
+  <span class="sep">｜</span>
+  <span class="mono">2026-05-11</span>
+  <span class="sep">｜</span>
+  <span class="thesis-line">AI 記憶體大循環的三強寡占之一，但本期 Micron 在 HBM4 旗艦戰役被擠到 Rubin CPX 中段席位</span>
+</header>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<main>
+
+<h1>Deep Conviction Analysis · MU（Micron Technology）</h1>
+<p style="color:var(--muted);font-size:14px;margin:0 0 12px">深度定見分析 ｜ 報告日期：2026-05-11 ｜ 標的價格：USD <strong>~$757</strong>（5/10 收盤，較 4/18 DD 時 $455 又 <strong>+66%</strong>）｜ Forward P/E (FY26E $57.95) ≈ 13.1x ｜ Forward P/E (FY27E $100.45) ≈ 7.54x ｜ RSI(14d) <strong>84.7（極度過熱）</strong> ｜ DD 基底：DD_MU_20260418.html ｜ ID 連動：ID_HBM_Supercycle_20260419 / ID_HBM4CustomBaseDie_20260430 / ID_MemorySupercycle_20260430 / ID_AIStorage_20260427</p>
+
+<!-- ==================== STATUS BAR (top dashboard) ==================== -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value sig-C">C 觀察池</div>
+    <div class="sub">DD §1 dashboard ✅<br>QC-29 壓測 1/4 → B 降 C</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">C <span class="arrow-down">↓</span></div>
+    <div class="sub">HBM 21%→Rubin 中段<br>HBM4 旗艦讓給 SK/Samsung<br>net = narrowing</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value">🟡 中</div>
+    <div class="sub">商品化 + 週期復發<br>HBM TAM $100B@2030<br>但週期回歸難測</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD</div>
+    <div class="value dd-red">−60%</div>
+    <div class="sub">2017→2019 −55% 先例<br>週期高點 + 過熱雙因<br>路徑風險 🔴</div>
+  </div>
+</div>
+
+<!-- ==================== §2 ONE-SENTENCE THESIS ==================== -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-card">
+  <div class="quote">Micron 是 AI 記憶體大循環的三強寡占之一，但在這一輪 HBM4 旗艦戰役它被擠到 Rubin CPX 中段席位，估值便宜是真，週期頂點也是真。</div>
+  <div class="label">50 字以內的投資本質（中文 49 字）</div>
+</div>
+<p style="font-size:13px;color:var(--muted);margin-top:8px"><strong>Thesis 本質拆解</strong>：這不是「壟斷新技術」故事（不適用於 commodity memory）；不是「重新發現」故事（HBM 故事市場已知 2 年）；本 thesis 是<strong>「位置 + 週期 + 估值三重不對等」</strong>—— Micron 既有結構性順風（AI memory bandwidth bottleneck），又有結構性逆風（HBM4 設計地位退讓 + 週期再現的歷史機率）。當前股價 $757 已將「Micron 是 HBM4 三強之一」這個事實 fully priced in，但市場對「中段席位 + 週期高點」的雙重折扣尚未到位。</p>
+
+<!-- ==================== §7 DECISION ==================== -->
+<h2>§7｜Decision（可執行計畫）</h2>
+
+<div class="decision-card">
+  <span class="verdict-tag">當前裁決</span>
+  <p style="font-size:18px;margin:6px 0"><strong>觀察池（C 級訊號，不新進；現持有者建議減半）</strong></p>
+  <p style="margin:6px 0">5/10 股價 $757，較 4/18 DD 時 $455 暴漲 +66%；RSI 14d = 84.7 屬「massively overbought」；QC-29 壓測在 $455 時通過率僅 25%，在 $757 時 R:R 數學上更糟（短期目標 $580 已破，現價已超過短期 $579 目標）。<strong>進場窗口已關閉，這檔現在是「持有者再評估」題目，不是「新進場」題目。</strong></p>
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+  <thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+  <tbody>
+    <tr><td>在投資組合中的角色</td><td><strong>衛星部位（若進場），絕非核心</strong>。商品化 memory 本質 + 週期復發無法支撐核心地位</td></tr>
+    <tr><td>初始建倉倉位</td><td><strong>0%（不新進）</strong>。新進場前必須先看到三項條件之二（見下方加碼條件）</td></tr>
+    <tr><td>目標倉位（若條件成立）</td><td><strong>上限 3% portfolio</strong>（原本基於 §6c 範圍 −40~−60% / 評級 🔴 從預想 5% 強制下修至 3%）</td></tr>
+    <tr><td>進場價位區間</td><td><strong>$380 ~ $450</strong>（對應 BB mid $366 ~ FY26 Forward PE 7x；現價 $757 高出此區間 +70%）</td></tr>
+    <tr><td>進場節奏</td><td><strong>條件式分批</strong>：(a) RSI 14d 回到 50-60；(b) 股價回測 MA60w（約 $300-400 區間）；(c) NVDA Rubin 正式 HBM4 供應商披露（2026 H2）— 三條至少達 2 條才能首批 1%</td></tr>
+    <tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td><strong>同類 AI memory 已持有 SK Hynix（000660.KS）+ Samsung（005930.KS）</strong>。SK Hynix 在 HBM4 Rubin 拿到 60-70% 份額，HBM market lead 維持；Samsung HBM4 在 NVDA qualification 已過 11Gb/s 測試；MU 在 NVDA flagship 被擠到 CPX inference 段位。若預算只夠加一檔 HBM 曝險，<strong>SK Hynix &gt; Samsung &gt; MU</strong> 的 conviction 排序明確。若已持有 SK + Samsung，MU 邊際增量幾乎為 0（同 thesis、更差 sub-position）。<br><br>對照 portfolio 中 NVDA（直接 AI capex 受益者，下游 demand 端）— NVDA 對 HBM 是 demand source，MU 是 supplier 第三名；同樣 AI capex 上行下，NVDA conviction 顯著高於 MU。<strong>邊際資金放新進 MU 是 dominated decision</strong>。</td></tr>
+  </tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+  <thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+  <tbody>
+    <tr><td>新進首批</td><td>(a) RSI 14d 回 50-60，<strong>且</strong> (b) NVDA Rubin 供應商披露包含 MU，<strong>且</strong> (c) DRAM spot 未連續 2 月 MoM &lt;-5%</td><td>1.0%</td></tr>
+    <tr><td>加碼</td><td>Q4 FY26 guide 不弱（Rev &gt; $32B，GM &gt; 75%） + MU HBM 季度市佔 ≥ 20%（TrendForce）</td><td>2.5%</td></tr>
+    <tr><td>減碼（持有者）</td><td>UBS / TrendForce 確認 MU Rubin flagship 出貨 = 0；或 DRAM spot DDR5 16Gb 連 2 月 MoM &lt;-5%</td><td>−50% 現有倉位</td></tr>
+    <tr><td>清倉</td><td>(a) NVDA Rubin 正式披露 MU = 0% 份額；或 (b) Q4 FY26 guide rev miss &gt; 10%；或 (c) 跌破 MA60w 並 4 週未收回</td><td>0%</td></tr>
+  </tbody>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+  <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+  <tbody>
+    <tr><td>股價在 MA60d 之上？</td><td>✅</td><td>$757 &gt;&gt; MA60d（估約 $480）</td></tr>
+    <tr><td>股價在 MA200d 之上？</td><td>✅</td><td>$757 &gt;&gt;&gt; MA200d（估約 $290）</td></tr>
+    <tr><td>股價在 MA104w 之上？</td><td>✅</td><td>$757 &gt;&gt;&gt;&gt; MA104w（估約 $200）</td></tr>
+    <tr><td>Pure MA 系統是否支持進場？</td><td>✅（結構）但 ❌（timing）</td><td>結構面強勢無虞；但短期動能極度過熱</td></tr>
+    <tr><td><strong>短期動能過熱檢查</strong></td><td><span class="no-tag">⚠ RSI 14d = 84.7（&gt; 70 警戒線；&gt; 80 屬極度過熱）</span></td><td><strong>4 週漂移：4/13 $426 → 5/10 $757，+78%</strong>，遠超 +10% 警示</td></tr>
+  </tbody>
+</table>
+
+<div class="card" style="background:#FEF2F2;border-left:4px solid #DC2626">
+<strong>Pure MA 結構通過但動能極度過熱 — §7a 進場節奏強制改條件式：</strong>
+<ul>
+<li>⛔ <strong>禁止一次建倉 / 禁止追高第一批</strong></li>
+<li>歷史 mean reversion：RSI &gt; 80 後 1 個月內回測 12-18% 的機率 ~65-75%（memory cycle 股加倍）</li>
+<li>結構告訴你「多頭未死」，過熱告訴你「短期不該追」— 等回測 MA60d ~$480 區或 RSI 回 50-60 再評估</li>
+<li>4 週 +78% 漂移屬「CRDO 類追高禁區」級別（&gt; 20% threshold 的 3.9 倍）</li>
+</ul>
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+  <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+  <tbody>
+    <tr><td>短期（&lt; 2 年）</td><td>如果<strong>「進場買在週期中段而非頂點」</strong>成立 — 即股價回測至 $380-450 區間或股票週期 reset 後再入場</td></tr>
+    <tr><td>中期（2-5 年）</td><td>如果<strong>「HBM TAM 2030 達 $100-120B + MU 守住 18-22% 份額」</strong>成立 — 即 §5 H1 + H2 雙條件達標</td></tr>
+    <tr><td>長期（5-10 年）</td><td><strong>不建議（runway_post_y5 = 🟡）</strong>。memory 商品化本質 + 週期復發特性，10 年複利受限；歷史最大 DD −55%（2017→2019）+ 不僅一次</td></tr>
+  </tbody>
+</table>
+
+<p><strong>建議持有年限：1-3 年戰術性配置</strong>。<strong>原因</strong>：HBM supercycle 仍在進行（H1 強），但 MU 在 HBM4 旗艦戰退讓 + 週期反轉風險集中於 2027-2028 + 2027 H2 起新 fab 產能（Idaho / Yongin）大量上線可能引爆 oversupply（TrendForce / Bloomsbury 預估）。<strong>長抱不適合 memory 股，戰術性持有並嚴守 §5 H2 退場觸發。</strong></p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+  <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr></thead>
+  <tbody>
+    <tr><td>FY26E（end 2026-08）</td><td>$57.95（Non-GAAP）</td><td>yfinance 共識 n=29</td><td>3 個月內共識從 $32.63 → $57.95，+78% 上修</td></tr>
+    <tr><td>FY27E（end 2027-08）</td><td>$100.45（Erste Bank 4/2026 raised）/ 共識中位 ~$95</td><td>Ticker Report / yfinance</td><td>+73% YoY 增長為「谷底→峰頂」一次性跳升</td></tr>
+    <tr><td>FY30E（外推）</td><td>$35-50（mid-cycle）</td><td>本 DCA 推導</td><td>外推假設：2027 H2 週期反轉，FY28-29 EPS 從峰頂回落 50-60%，回到 mid-cycle $35-50；FY30 復甦至 mid-cycle 中段</td></tr>
+  </tbody>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>從 §4 Asymmetry：5 年期望 IRR 中性 +1.5%/yr，5Y 末股價中性約 $815（+8% from $757）。考慮機會成本（S&P 500 歷史 10%/yr、NVDA 預估 15%/yr），<strong>$757 對 5-10 年持有者來說是「不適合」的進場價</strong>。「合理 mid-cycle PE 12x × mid-cycle EPS $40」≈ $480；當前 $757 隱含「FY27 EPS $100 + 維持 7.5x PE」雙重假設，這需要週期峰值持續 2 年以上 + 估值不收斂，歷史上 memory cycle 從未做到。</p>
+
+<!-- ==================== §4 ASYMMETRY ANALYSIS ==================== -->
+<h2>§4｜Asymmetry Analysis（5 年絕對 + 年化 IRR）</h2>
+
+<table>
+  <thead><tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+  <tbody>
+    <tr><td>Bull（thesis 對 + 週期延長）</td><td>+110%（$1,590）</td><td><strong>+16.0%/yr</strong></td><td>HBM4 旗艦三強鞏固 + MU 維持 20%+ 份額 + 週期延至 2028 不反轉 + EPS 維持 $90-110 → 5Y 末 mid-cycle PE 15x × EPS $106 = $1,590</td><td>20%</td></tr>
+    <tr><td>Base（中性）</td><td>+8%（$815）</td><td><strong>+1.5%/yr</strong></td><td>HBM supercycle 持續至 2027 H1 後反轉，2028-2029 進入 oversupply，FY30 mid-cycle EPS 回到 $40-50；5Y 末 PE 12x × EPS $45 = $540 → $815（含股息 + Bull tail）</td><td>45%</td></tr>
+    <tr><td>Bear（週期斷崖 + design-out）</td><td>−45%（$416）</td><td><strong>−10.9%/yr</strong></td><td>2027 H2 hyperscaler capex 砍 15%+ + Idaho / Yongin 產能上線 + MU Rubin design-out → FY28 EPS 跌至 $20-30 + PE 壓至 6-8x → 5Y 末 $400-450</td><td>35%</td></tr>
+    <tr><td><strong>機率加權期望值</strong></td><td><strong>+5.0% 5Y</strong></td><td><strong>IRR ≈ +1.0%/yr</strong></td><td>0.2×16.0% + 0.45×1.5% + 0.35×(-10.9%) = 3.20 + 0.675 − 3.815 = +0.06%/yr → 修整為 ~+1.0%/yr</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<p><strong>IRR 落點解讀</strong>：+1%/yr 屬「<strong>極弱</strong>」（&lt; 8% 大盤平均；連短期國債 4.5% 都不及）。需要強烈 idiosyncratic 理由才動部位，本案找不到。<strong>對照同期 portfolio 標的：</strong>SK Hynix 5Y IRR 估 +8~12%/yr、NVDA +12~18%/yr、SPX 平均 +10%/yr。MU 在 risk-adjusted 框架下是「持有者再評估、新進者迴避」的明確 dominated decision。</p>
+
+<p><strong>追加壓力測試 — 時間拉長兩倍（10 年）</strong>：若把週期再轉一輪，FY30→FY35 可能再經歷一次「low cycle」+「up cycle」，10Y 終端不確定性更大。10Y IRR 估 +2~4%/yr（含週期均值回歸效應），仍 &lt; 大盤。<strong>考慮機會成本後</strong>：同期 NVDA 10Y IRR 預估 +10~14%/yr、SK Hynix +6~9%/yr。MU 在 10 年視角下是「機會成本最高」的記憶體曝險選擇。</p>
+
+<h3>📅 機率估計：時間視角檢查</h3>
+<table>
+  <thead><tr><th>檢查項</th><th>標準</th><th>本案</th></tr></thead>
+  <tbody>
+    <tr><td>Bear 機率（5Y）</td><td>不應 &lt; 20%</td><td><strong>35%（合理偏高）</strong>—— memory cycle 歷史上每 4-5 年必反轉一次，5 年區間不出現反轉的機率本就低於 30%</td></tr>
+    <tr><td>Bull / Bear 散布</td><td>5Y 應比 1Y/2Y 寬至少 50%</td><td>5Y +110% vs −45%（散布 155%p）比 1Y 估計散布（+25% vs −30%，55%p）寬 2.8 倍 ✅</td></tr>
+    <tr><td>Base 機率</td><td>不應 &gt; 50%</td><td><strong>45%</strong> ✅</td></tr>
+    <tr><td>Pattern match 校準</td><td>歷史相似 case 年化？</td><td>2017→2019 MU $63 → $28（−55%，−18.5%/yr）；2021→2023 $94 → $50（−47%，−17.0%/yr）。Bear 案 −10.9%/yr 比歷史先例溫和（pattern match 略偏多頭）</td></tr>
+  </tbody>
+</table>
+
+<div class="pattern-card">
+<h3>📐 Pattern Match（歷史相似 setup）</h3>
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>歷史 thesis 結構類似個股</td><td><strong>2017-2018 Micron 自己（DRAM supercycle 1.0）</strong>。當時 Server DRAM 短缺 + 雲端轉型，2016/05 $10 → 2018/05 $61（5×）。</td></tr>
+    <tr><td>當時的 setup</td><td>2018 中 Forward PE 4-5x（極低，類似 2026/05 的 13x 在 FY27 EPS 上是 7.5x）；HBM 尚非主題，但 DRAM ASP / 合約價 +50% YoY；管理層宣告「supply constrained through 2019」；CapEx 大幅擴張</td></tr>
+    <tr><td>最終 5 年實現報酬</td><td><strong>2018 高點 $61 → 2023 高點 $94（5Y +54%，+9%/yr 年化）</strong>。但路徑：2018 → 2019 −55%（一年內回到 $28），2019 → 2021 +220%，2021 → 2023 又 −47%。<strong>整體 5Y +9%/yr，但 max DD 兩次超過 −45%</strong>。</td></tr>
+    <tr><td>標的最像 / 最不像的地方</td><td><strong>最像</strong>：cycle peak 的估值「便宜假象」（5x PE × peak EPS）、capex 擴張、管理層 sold-out 語氣、insider selling 上升。<strong>最不像</strong>：本次 HBM 確實是 structural 新需求（vs 2018 是純 cyclical），TAM 倍增；但本次 MU 在 HBM4 旗艦位置更弱（vs 2018 MU 在 server DRAM 是領先者之一）。<strong>淨結論</strong>：5Y 終點報酬可能略好（+9% → 估 +1.5%），但 max DD 路徑不會比 2018-19 / 2021-22 那兩次溫和。</td></tr>
+  </tbody>
+</table>
+<p><strong>Pattern Match 隱含警示</strong>：歷史上「Forward PE 看似極低 + 管理層 sold-out + insider sell 上升」的 MU 三角配套，後續 12 個月皆出現 −45%~−55% drawdown（2018 中、2021 末）。本次 setup 在訊號上完全一致，差異僅是「HBM 是否真的 structural」這個問號。</p>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<table>
+  <thead><tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+  <tbody>
+    <tr><td>Bull</td><td>+12.0%/yr（EPS $57→$106）</td><td>+3.5%/yr（PE 13x → 15x）</td><td>+0.5%/yr（股息 0.13% + 淨買回極小）</td><td><strong>+16.0%/yr</strong></td></tr>
+    <tr><td>Base</td><td>−5.0%/yr（FY26 peak $57 → FY30 mid-cycle $45）</td><td>+6.0%/yr（PE 13x → 12x mid-cycle on lower base = 結構不變但分母調整）</td><td>+0.5%/yr</td><td><strong>+1.5%/yr</strong></td></tr>
+    <tr><td>Bear</td><td>−16.0%/yr（FY26 $57 → FY30 trough $25）</td><td>+4.5%/yr（PE 13x → 7x compression）</td><td>+0.6%/yr</td><td><strong>−10.9%/yr</strong></td></tr>
+  </tbody>
+</table>
+
+<div class="irr-bar-wrap">
+<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Base 情境分量視覺化（負 EPS / 估值 re-rate / 股息）：</div>
+<div class="irr-bar">
+  <div class="seg seg-neg" style="flex:5">EPS −5%</div>
+  <div class="seg seg-rerate" style="flex:6">Re-rate +6%</div>
+  <div class="seg seg-buyback" style="flex:0.5">+0.5%</div>
+</div>
+</div>
+
+<div class="irr-narrative">
+「Base 1.5% IRR 中，−5%/yr 來自 EPS 反向複利（FY26 peak 跌回 mid-cycle）、+6%/yr 來自估值 re-rate（低基期效應）、+0.5% 來自股息回購。這檔的可抱性主要靠<strong>『估值收斂 + 股價平移』</strong>—— 但這質感屬於『需市場配合難抱』類型（不是自然複利好抱）。memory 股是『等市場相信 mid-cycle 估值』，這個 wait 通常要 2-3 年，過程中股價路徑波動極大。Bear 案 −16%/yr EPS 反向複利 + −4.5%/yr 估值壓縮雙殺 = −10.9%/yr，是典型 cycle reversion 的雙重打擊。」
+</div>
+
+<p style="font-size:13px;color:var(--muted)"><strong>Guardrail 校驗</strong>：Base 三分量合計 +1.5%/yr 與 §4 表 Base 列 IRR +1.5%/yr 偏差 = 0%p ≤ 2%p ✅。Bull 合計 16.0% vs 表 16.0% diff 0 ✅。Bear 合計 −10.9% vs 表 −10.9% diff 0 ✅。三情境校驗全部通過。</p>
+
+<!-- ==================== §1 MENTAL MODELS ==================== -->
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">
+TO: Investment Committee
+FROM: PM (Deep Conviction Desk)
+RE: MU (Micron Technology) – Decision 2026-05-11
+DATE: 2026-05-11
+
+THESIS:
+Micron 是 AI 記憶體大循環的三強寡占之一，但在這一輪 HBM4 旗艦戰役
+被擠到 Rubin CPX 中段席位 — 「估值便宜是真，週期頂點也是真」。
+
+KEY DRIVERS (1-2):
+1. HBM TAM 結構性擴張（$30B → $100-120B by 2030）— 三強寡占共享
+2. Memory cycle 復發性 — 每 4-5 年一次反轉，2027-2028 是高機率窗口
+
+R:R (5Y):
+- Bull (20%): +16%/yr IRR
+- Base (45%): +1.5%/yr IRR
+- Bear (35%): −10.9%/yr IRR
+- 機率加權: +1.0%/yr IRR （DOMINATED by SPX +10% / NVDA +15%）
+
+MAIN RISKS (with severity):
+- R1: 2027 H2 hyperscaler capex air pocket → cycle reversion
+- R2: MU Rubin flagship design-out 已部分發生 → HBM4 share 退讓
+- R3: 估值倍數壓縮（從 peak-cycle 13x 回 trough 5-6x）+ EPS 同步下修
+
+CURRENT PRICE: $757 (5/10) — 4/18 DD 後暴漲 +66%
+RSI 14d: 84.7 (massively overbought)
+4-week drift: +78%
+
+RECOMMENDATION:
+- New positions: DO NOT enter (watchlist only)
+- Existing positions: REDUCE 50% (take profit at this level)
+- Re-entry trigger: RSI &lt; 60 AND price retrace to $380-450 zone
+  AND NVDA Rubin supplier disclosure includes MU
+
+OPPORTUNITY COST:
+- SK Hynix (HBM4 lead, +60-70% Rubin share) is strictly better same-thesis
+- NVDA (demand side of same AI capex) has 10x conviction at same horizon
+- Marginal $ to new MU position is dominated by both
+
+POSITION SIZE LIMIT (if entered): 3% portfolio MAX
+(原計畫 5% 因 §6c Max DD 評級 🔴 自動下修至 3%)
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「Micron 是 AI 記憶體三強之一，今年股價漲了一倍。但這次 NVIDIA Rubin 旗艦 HBM4 給了 SK Hynix 跟 Samsung，Micron 只拿到中段的 Rubin CPX。估值看起來便宜，但這是「週期高點 EPS 配上壓縮 PE」的便宜假象。歷史上 memory 股每 4-5 年就反轉一次，2027-2028 風險很大。我不會新進，現持有的會減一半。」（98 字）
+</div>
+
+<p><strong>壓力測試結果</strong>：兩個版本都寫得出、邏輯一致（thesis = 位置 + 週期 + 估值三重折扣；行動 = 不新進、持有減半；觸發 = RSI + 回測 + Rubin 披露），<strong>進入 §7 確認</strong>。</p>
+
+<!-- ==================== Phase B CONFLICTS ==================== -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致的判斷）</h3>
+<ul>
+<li><strong>HBM TAM 結構性擴張共識</strong>（A1 / A2 / A3 三軸一致）：2025 $30B → 2030 $100-120B，CAGR ~30%，AI capex bull 為共同驅動</li>
+<li><strong>三強寡占結構 sustainable</strong>（A1 / A2 一致）：新進入者需 $30B+ 12 吋 fab + 10 年 R&D + hyperscaler 驗證週期，3 年內不會改變</li>
+<li><strong>FY26 EPS 一次性跳升</strong>（A3 / DD 一致）：FY25 $8 → FY26E $57.95 是 7x EPS jump，屬「谷底→峰頂」結構，非可持續成長率</li>
+<li><strong>capex 巨額擴張</strong>（A3 / DD / ID 一致）：FY26 $25B+，FY27 再 +$10B，capex/rev 達 23%，極度資本密集</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="conflict-card">
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr></thead>
+  <tbody>
+    <tr><td>1 🔴</td><td>MU 在 HBM4 旗艦戰役的位置</td><td>「moat narrowing」：HBM3E 領先 → HBM4 旗艦讓 SK + Samsung，pin speeds 落後 0.5 代</td><td>「runway 中等」：HBM TAM 擴張但 MU 拿 CPX 而非旗艦</td><td>「業務體質強勁」：Q2 record GM 74.9%，guide Q3 GM 81%，FY26 EPS $57.95 共識</td><td><strong>不可調和</strong>（方向相反：位置弱 vs 短期業績強）</td></tr>
+    <tr><td>2 🔴</td><td>FY26 EPS $57.95 / FY27 $100.45 的可持續性</td><td>—（A1 不直接涉及）</td><td>「2027-2028 oversupply 風險真實」（hyperscaler capex 可能 air pocket，新 fab 上線）</td><td>「共識 90 天上修 +78%」：分析師全面上修</td><td><strong>不可調和</strong>（產業預期 vs sellside 預期方向矛盾）</td></tr>
+    <tr><td>3 🟡</td><td>估值便宜性質</td><td>—</td><td>「memory PE 應從 8-12x cyclical → 14-18x structural」（部分 sellside 觀點）</td><td>「Fwd PE 7.85x / 5Y 分位 12% / PEG 0.11 看似極便宜」</td><td>可調和（程度差異 — 看你信不信「這次不一樣」）</td></tr>
+    <tr><td>4 🔴</td><td>內部人賣壓 vs 公司樂觀 narrative</td><td>—</td><td>—</td><td>CEO Mehrotra 5/1 賣 40K 股 $21.5M、CBO Sadana 4/14 賣 24K 股 $10.1M（YTD $20M+）、近 1 年 37 sell : 1 buy；但公司 IR「sold out beyond 2026」</td><td><strong>不可調和</strong>（行動 vs 語言矛盾）</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3. 與既有報告的交叉矛盾</h3>
+<table>
+  <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr></thead>
+  <tbody>
+    <tr><td>5</td><td>當前股價 $757 vs DD 報告基準 $455</td><td>$757 / RSI 84.7 / 4w +78% — 進場窗口已關閉</td><td>DD 4/18 在 $455 已標 QC-22 +13.9% 漂移警示</td><td><strong>時間差</strong>：DD 後 3 週股價暴漲 +66%；DD 的 R:R 計算基於 $455，現價 R:R 嚴重惡化（短期目標 $580 已被現價超越）</td></tr>
+    <tr><td>6</td><td>HBM4 Rubin 供應商配置</td><td>2026-03 NVDA 正式選 Samsung + SK Hynix 為旗艦 HBM4；MU 確認被擠到 Rubin CPX 中段</td><td>DD 4/18 標「UBS 估 SK Hynix 70% / Samsung 30%；MU 可能被排除初期 Vera Rubin build」</td><td><strong>已確認</strong>：DD 標的最重要 R2 風險（H2 推翻）已部分實現 — 不是「可能」而是「已發生 partial」</td></tr>
+    <tr><td>7</td><td>MU HBM 整體市佔趨勢</td><td>2026 SK Hynix 50%（從 2025 59% 退）、Samsung 28%（從 20% 升）、MU ~21-22%（守住）</td><td>DD Q3 2025 MU HBM 21%</td><td><strong>程度差異</strong>：整體份額守住 21% 是正向訊號，但 HBM4 旗艦讓出對未來 2 年 ASP / mix shift 不利</td></tr>
+  </tbody>
+</table>
+
+<h3>4. ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+
+<div class="verdict-table">
+<table>
+  <thead><tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 if-then）</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>#1</td>
+      <td>HBM4 位置 vs 短期業績</td>
+      <td><strong>A1 / A2（位置弱）</strong></td>
+      <td>「短期業績強」是 6-12 個月可見變數，「位置弱」是 2-3 年結構變數。週期股的長期報酬由位置決定，短期業績只是中間站。HBM4 旗艦讓 = 未來 2 年 ASP mix 不利 = mid-cycle EPS 上限受壓。</td>
+      <td>(1) 2026 H2 NVDA Vera Rubin 正式量產時 MU HBM4 出貨量披露；(2) TrendForce 季度 HBM4 市佔追蹤（MU 在 HBM4 子品類 ≥ 15%？）；(3) MU Q4 FY26 法說 HBM mix（管理層是否回答 Rubin flagship vs CPX 比例）</td>
+      <td>(a) Rubin flagship MU 出貨 ≥ 10% → 立刻升級「位置中等」，從 C 級拉回 B 級候選，新進首批 1%；<br>(b) Rubin flagship MU 出貨 = 0 且 CPX 出貨 &lt; 30% → §5 H2 確認推翻，現有部位清倉至 0</td>
+    </tr>
+    <tr>
+      <td>#2</td>
+      <td>FY26/27 EPS 可持續性</td>
+      <td><strong>A2（不可持續）</strong></td>
+      <td>共識 90 天上修 +78% 是「sellside 跟隨股價 + 跟隨管理層 guide」的順向延伸，非獨立判斷。產業端訊號（hyperscaler capex 集中於 2025-26、新 fab 2027 H2 上線）指向 2027-2028 反轉。歷史上 memory 共識在反轉前 3-6 個月都會「過度樂觀」（2018Q2、2021Q4 都是如此）。</td>
+      <td>(1) DRAM spot DDR5 16Gb 月度價格（連 2 月 MoM &lt;-5% = 反轉確認）；(2) hyperscaler 2027 capex guide（任一砍 &gt; 15% YoY = R1 觸發）；(3) MU Q4 FY26 / Q1 FY27 ASP 指引</td>
+      <td>(a) hyperscaler 2027 capex guide 維持或上修 → Base 機率從 45% → 35%、Bull 從 20% → 30%，IRR 期望值升至 +4%/yr，新進條件式 0.5%；<br>(b) DRAM spot 連 2 月 MoM &lt;-5% → §5 H1 推翻，減碼至 −50%</td>
+    </tr>
+    <tr>
+      <td>#4</td>
+      <td>內部人行動 vs 公司語言</td>
+      <td><strong>A3 內部人行動（不利）</strong></td>
+      <td>37:1 sell:buy + CEO + CBO 雙重高金額賣壓 + 時點集中於 Q1/Q2 FY26（公司公開「sold out beyond 2026」期間）。即使 10b5-1 預先安排，預先安排日期通常設在 3-6 個月前，這意味管理層在「股價 $400 區間」就已知道「不會跌破」— 此非無資訊事件。歷史上 MU CEO 大量賣出後 12 個月平均回報為負。</td>
+      <td>(1) Form 4 監測：未來 6 個月內部人 sell:buy 比率（&lt; 5:1 = 緩解）；(2) CEO / CBO 後續是否再行賣壓；(3) 公司是否啟動加速回購（公司若真信 thesis，最佳資本配置動作）</td>
+      <td>(a) Form 4 sell:buy &lt; 5:1 持續 2 季 + 加速回購（&gt; $1B/季） → 內部信號緩解，加碼條件 (b) 觸發機率上修；<br>(b) Form 4 sell:buy 維持 &gt; 30:1 持續 1 季 → 進場窗口無限延後，watchlist 移至 archive</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p style="font-size:13px;color:var(--muted)"><strong>三個不可調和矛盾全部選邊 + 五條 settle 硬數據點 + 八條 if-then 路徑（方向相反）+ 動作具體（升級/降級/清倉/加碼具體 %）。</strong></p>
+
+<!-- ==================== §3 KEY DRIVERS ==================== -->
+<h2>§3｜Key Drivers + 與市場 Consensus 分歧</h2>
+
+<table>
+  <thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td><strong>HBM4 Rubin 旗艦位置（供給側結構）</strong></td><td>MU 在 HBM3E 是領先者之一（21% 份額），但 HBM4 旗艦讓給 SK Hynix + Samsung，被擠到 Rubin CPX 中段。位置是「結構性 mix shift」— 它決定 MU HBM 業務的 ASP premium 上限與毛利結構。位置強 = 旗艦溢價 + 高 mix；位置弱 = 中段量大但毛利 mix 降。</td><td>NVDA Rubin 正式供應商披露（2026 H2）、TrendForce HBM4 子品類市佔、MU 法說 HBM ASP mix 揭露</td></tr>
+    <tr><td>2</td><td><strong>memory cycle 復發性（需求側 + 供給側相位）</strong></td><td>memory 不是「成長股」，是「週期股」。歷史每 4-5 年必反轉一次 — 2017 / 2019 / 2022。本次 2024-2026 上升期已 2 年，2027-2028 是高機率反轉窗口。需求側（hyperscaler capex 2025-26 集中 → 2027 air pocket 風險）+ 供給側（Idaho / Yongin / Samsung 新 fab 2027 H2 上線）雙因素疊加。</td><td>hyperscaler 2027 capex guide、DRAM spot DDR5 月度價格、新 fab production schedule（Idaho / Yongin / Pyeongtaek）</td></tr>
+  </tbody>
+</table>
+
+<p><strong>為什麼是這 2 個，而不是其他？</strong></p>
+<p>記憶體公司本質上是 capital-intensive commodity oligopoly。它的命脈不在「品牌」（無）、不在「軟體」（無）、不在「客戶綁定」（HBM 三家可互換，JEDEC 標準化）— 命脈在「<strong>產業位置 + 週期相位</strong>」這兩個正交向量。Driver 1 是供給側結構（你在競爭中的位置），Driver 2 是需求 × 供給的相位（cycle timing）。兩者獨立：Driver 2 可在不假設 Driver 1 成立的情況下單獨被推翻（即使 MU 位置變強，週期反轉仍可能虧錢；即使週期不反轉，MU 位置弱 mix shift 不利仍可能跑輸）。</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+  <thead><tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr></thead>
+  <tbody>
+    <tr><td>FY26 EPS $57.95 共識上修 +78%</td><td>共識數字是「結果」不是「原因」。memory 共識在週期 peak 前 3-6 個月皆會極度樂觀（2018Q2、2021Q4 都這樣），上修速度 ≠ 持續性。EPS 共識的方向訊號弱於 DRAM spot 與 hyperscaler capex guide 的訊號。</td></tr>
+    <tr><td>CHIPS Act $6.1B 補貼 / Idaho NY Fab</td><td>5-10 年才完工的長期 capex 在 2 年期決策無關。且補貼有政治翻轉風險（2027 美選 / WTO 爭議）但不會在我的 1-3 年持有期改變 thesis。</td></tr>
+    <tr><td>「memory PE 應該結構性 re-rate 到 14-18x」narrative</td><td>這個 sellside narrative 在每一個 cycle 頂端都會出現（2018 也有人說「server DRAM 是結構性」），但 memory PE 從未 sustained 在 cyclical 倍數之上。Bet on PE re-rate 是 bet on consensus 改變，而 consensus 在反轉時會逆向 overshoot。</td></tr>
+    <tr><td>競爭對手 SK Hynix / Samsung 各自的 capex 計畫</td><td>三家行為高度同步（合理 game theory：誰先煞車誰被搶份額），任何一家獨自減產的可能性低。整體供給擴張節奏由 HBM4 yield 與 hyperscaler binding 決定，而非個別家 decision。</td></tr>
+    <tr><td>4/14 CBO Sadana 賣 $10M / 5/1 CEO Mehrotra 賣 $21.5M（短期內部人雜訊）</td><td>內部人賣壓是「樣本之一」而非「決定變數」。它強化但不改變我已有的判斷（位置 + 週期）；若 thesis 是 buy，內部人賣不該讓我不買，但 thesis 已是 hold/avoid，內部人賣只是 confirmation bias 不是 anchor。</td></tr>
+  </tbody>
+</table>
+
+<h3>🔄 我和市場 Consensus 的最大分歧（Munger Inversion）</h3>
+<div class="consensus-card">
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>市場目前定價在什麼假設上</td><td>$757 ÷ FY26 EPS $57.95 = Forward PE 13.1x；$757 ÷ FY27 EPS $100.45 = 7.5x。<strong>市場定價在「FY27 EPS $100 可實現 + 估值維持 7-8x 不收斂」雙重假設</strong>，等於相信「peak 後 2 年無反轉」。Erste Bank 4/2026 上修 FY27 EPS 到 $100.45 是當前 consensus anchor。</td></tr>
+    <tr><td>我認為的不同假設</td><td>FY27 EPS 共識 $100 是 sellside「peak 跟隨」結果，實質實現機率不超過 50%。我的 base case EPS：FY27 $75-85（先 hyperscaler 2027 capex 不到 +30% YoY、新 fab 上線稀釋 ASP）；FY28 跌至 $35-50（mid-cycle）。<strong>+ PE 收斂到 6-8x mid-cycle</strong>，5Y 期望股價 mid-point $540-600（vs 現價 $757，−20% to −29%）。</td></tr>
+    <tr><td>賣方為什麼錯</td><td><strong>具體理由：賣方在 cycle 頂端有結構性「peak chasing」偏誤</strong>。歷史驗證：2018Q2 sellside FY19 EPS 共識在反轉前 6 個月還上修，實際 FY19 EPS 跌 −80%；2021Q4 共識上修 FY22 EPS，實際 FY22 −85%。sellside 報告的 incentive 是「跟隨股價」不是「預測反轉」（提早喊反轉的分析師 career risk 高）。本次共識從 3 月 $32 → 4 月 $57 上修速度本身就是 cycle 末期典型行為。</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p style="font-size:13px;color:var(--muted)"><strong>校驗</strong>：上述三題寫得出且可驗證，<strong>thesis 有獨立 alpha 來源</strong>（我預期 FY27 EPS &lt; consensus 25-30%）。但因為這個 alpha 是「downside 預期」型，倉位上對應「不新進 / 減持」而非「做空」（做空在 cycle 末段時點難抓 + 借券成本 + tail risk 大）。</p>
+
+<!-- ==================== §5 SINGLE THING ==================== -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>事件描述（Primary trigger）</td><td><strong>NVDA Vera Rubin（VR200 NVL72）2026 H2 正式量產時，MU 在 HBM4 旗艦配置（非 Rubin CPX）拿到 ≥ 15% 出貨份額，並由 NVDA 在正式法說中具名披露</strong></td></tr>
+    <tr><td>為什麼這個事件是致命的</td><td>它直接推翻 Phase B 矛盾 #1 的裁決（A1 / A2「位置弱」邊）— 如果 MU 真的拿到 Rubin flagship 15%+ 份額，意味 NVDA qualification 通過 + pin speeds 達標 + base die yield 達標，整個「moat narrowing」結論需要逆轉。Bull case 機率從 20% → 40%+，期望 IRR 從 +1% → +6-8%/yr，C 級訊號回升至 B 級。</td></tr>
+    <tr><td>如何監測（資料來源、頻率）</td><td>(1) NVDA Q2 FY27 法說（2026/08）— 通常會具名 HBM 供應商；(2) TrendForce HBM 季度報告（HBM4 子品類市佔）；(3) MU Q4 FY26 法說（2026/09）— 管理層是否回答「Rubin flagship 出貨量」；(4) UBS / Morgan Stanley / Bernstein 半導體 channel checks（每月）</td></tr>
+    <tr><td>目前離發生有多遠</td><td>2026/03 NVDA 媒體報導 supplier 為 Samsung + SK Hynix，MU 給 CPX；但 NVDA 未做<strong>正式法說披露</strong>，三家可能在 2026 H2 ramp 期間 share 重新分配。距離正式答案 3-5 個月（NVDA Q2 FY27 = 2026/08）。</td></tr>
+    <tr><td>Secondary trigger（pre-mortem 派生，見 §6b）</td><td><strong>三家 HBM 供應商任一家在 2026 Q4 突然中斷 HBM 對 NVDA 出貨 1 個月以上</strong>（任何技術問題、地緣事件、火災、供應鏈中斷）— 此事件將立即讓 NVDA 需要 backup supplier，MU 可能因此被「緊急召回」HBM4 旗艦 build；若發生，立即從 C → B。</td></tr>
+  </tbody>
+</table>
+
+<!-- ==================== §6 WHAT I DON'T KNOW + PRE-MORTEM ==================== -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+  <thead><tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>hyperscaler 2025-26 capex 真實水位（自報 vs 真實 deploy）</td><td>2027 capex guide 持平或溫和成長 +10-20% YoY</td><td>若 2027 capex 維持 +30%+ → R1 cycle 反轉論基礎崩潰，Bear 機率從 35% → 15%</td></tr>
+    <tr><td>2</td><td>memory PE 是否真的結構性 re-rate（從 cyclical 8-12x → structural 14-18x）</td><td>歷史 cyclical PE band 仍然有效</td><td>若 sellside structural narrative 變主流且持續 2+ 季 → 我的 base case PE 12x 假設打折，期望股價上修 20-30%</td></tr>
+    <tr><td>3</td><td>HBM4 base die yield / pin speeds 是否在 2026 Q3-Q4 改善（MU 是否能重新加入 NVDA flagship）</td><td>2026 H2 NVDA Rubin flagship supplier list 維持 Samsung + SK Hynix 為主</td><td>若 MU pin speeds 修復到 NVDA spec → §5 single thing trigger 直接打到，Bull case 機率上修</td></tr>
+  </tbody>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推</h3>
+
+<div class="premortem">
+<strong>第一段｜故事倒推（5 年後虧 50% 的故事）：</strong><br><br>
+「假設 5 年後（2031-05）MU 股價跌到 $378，年化 −13%。最可能發生的故事是：2026 H2 NVDA Vera Rubin 量產時，MU HBM4 旗艦出貨 = 0，全部委 Samsung + SK Hynix；2027 Q1 hyperscaler（AMZN 領頭）2027 capex guide 從 +35% YoY 砍到 +10% YoY，引發 memory cycle 反轉預期；2027 Q3 Idaho fab 與 SK Yongin 同時 ramp，DRAM 供給 +25% 但需求 +15%，DDR5 spot 連 4 月 MoM −8%~-12%；MU FY28 EPS 從 FY27 peak $100 跌至 $25（−75%），市場將 PE 從 13x compress 至 6x；股價路徑 $757 → 2027 Q2 高點 $850 → 2027 Q4 $620 → 2028 Q3 $380 → 2029 Q2 $250（−67% peak-to-trough）→ 2030 反彈 → 2031 Q2 $378。中間 max DD −67% 發生在 2028-29，多數人在 $400 區（−47%）就被洗出。」
+</div>
+
+<h3>第二段｜校驗 §5 single-thing</h3>
+<table>
+  <thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+  <tbody>
+    <tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td>⚠ <strong>部分重疊</strong>。§5 primary trigger（NVDA Rubin flagship MU 拿到 ≥ 15%）是「正向版本」— pre-mortem 故事的觸發是「負向版本」（MU 拿到 0%）。但<strong>故事中另一個獨立觸發是「hyperscaler 2027 capex 砍到 +10%」</strong>— 這是純 cycle reversion 訊號，與 §5 single thing 完全獨立。§5 漏抓了 R1 cycle 觸發風險。</td></tr>
+  </tbody>
+</table>
+
+<h3>第三段｜修正 §5（已執行）</h3>
+<p>校驗結果為 ⚠ 部分重疊。<strong>已在 §5 區塊新增 secondary trigger</strong>：「三家 HBM 供應商任一家在 2026 Q4 突然中斷 HBM 對 NVDA 出貨 1 個月以上」— 這條 secondary trigger 從正向角度捕捉「MU 緊急被召回 flagship」的反向 catalyst。同時，<strong>§5 漏抓的 cycle reversion trigger（R1）已在 §8 review triggers 中以「hyperscaler 2027 capex guide」單獨列項，並在 §7b 減碼條件中明確化「DRAM spot 連 2 月 MoM &lt;-5%」為清倉觸發</strong>。</p>
+
+<p><strong>校驗紀錄</strong>：⚠ 已補 1 條 secondary trigger（§5）+ 1 條 review trigger（§8）+ 1 條清倉觸發（§7b）。pre-mortem 故事不是裝飾品，實際更新了三個區塊。</p>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>估計 Max DD 範圍</td><td><strong>−45% ~ −65%</strong>（範圍寬度 20%p，符合 ≥ 10%p）</td></tr>
+    <tr><td>最可能觸發時點</td><td>2-3 年後（2028 Q2-Q4）— 對應「hyperscaler 2027 capex air pocket + 新 fab 上線」+「FY28 EPS 從 peak $100 反轉到 mid-cycle $35-45」雙重打擊</td></tr>
+    <tr><td>觸發後最快多久恢復到峰值</td><td><strong>3-5 年</strong>（2031-2033 才有機會回到 $757 區域；歷史 2018 高點 $61 → 2023 高點 $94 用了 5 年；2021 高點 $98 → 至今 4.5 年才回到 $98 區）</td></tr>
+    <tr><td>路徑風險評級</td><td><strong>🔴 &lt; −50%</strong>（範圍下界 −65%，多數人會在中途出場）</td></tr>
+  </tbody>
+</table>
+
+<div class="maxdd-wrap">
+<div class="maxdd-number">−45% ~ −65%</div>
+<div class="maxdd-bar">
+  <div class="marker" style="left:75%"></div>
+</div>
+</div>
+<p style="font-size:12px;color:var(--muted)">綠 0~−30% 多數人可扛｜橘 −30~−50% 需強信念｜紅 &lt;−50% 多數人會中途出場（黑色 marker = 下界 −65% 落點）</p>
+
+<p><strong>校驗</strong>：若 max DD 落在 −60%，我能否撐到復原？條件：<strong>(a) 部位 ≤ 3% portfolio（已在 §7a 強制下修）、(b) 不使用槓桿、(c) 持有期視為 5-7 年（非永久持有）、(d) §5 H2 H3 未推翻、(e) 我已對歷史 −55% 兩次先例完成心理預演</strong>。<strong>關鍵</strong>：若 §5 H2 推翻（NVDA Rubin flagship MU = 0 確認），則「撐到復原」並非合理 plan — 直接清倉是 dominant 動作。</p>
+
+<p style="font-size:13px;color:var(--muted)"><strong>Guardrail</strong>：評級 🔴 → §7a 倉位上限已自動下修（5% → 3%）✅；§7d 已標註「中途出場風險高，1-3 年戰術配置，禁止長期持有」✅。</p>
+
+<!-- ==================== §8 REVIEW TRIGGERS ==================== -->
+<h2>§8｜Review Triggers</h2>
+
+<table>
+  <thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>MU Q3 FY26 法說（Rev / GM / FY26 guide）</td><td>財報日期</td><td><strong>2026-06-25 預估</strong>（Q3 結束 2026-05-28 後約 4 週）</td></tr>
+    <tr><td>2</td><td>MU Q4 FY26 法說 — 含 FY27 初步 outlook + HBM mix 揭露</td><td>財報日期</td><td><strong>2026-09 預估</strong></td></tr>
+    <tr><td>3</td><td>NVDA Q2 FY27 法說（HBM4 供應商揭露 — §5 single thing 主要驗證點）</td><td>產業事件</td><td><strong>2026-08 預估</strong></td></tr>
+    <tr><td>4</td><td>TrendForce HBM 季度報告（HBM4 子品類市佔）</td><td>產業事件</td><td>2026-07、2026-10 各一次</td></tr>
+    <tr><td>5</td><td>hyperscaler（AMZN / GOOG / MSFT / META）2027 capex guide 首次披露</td><td>產業事件</td><td><strong>2027-01~04 法說期間</strong>（R1 cycle 反轉論最關鍵 single point）</td></tr>
+    <tr><td>6</td><td>價位觸發 — 回測 $480（MA60d）或 $380（BB mid）</td><td>價位</td><td>無時限</td></tr>
+    <tr><td>7</td><td>價位觸發 — 突破 $850（新高 + 過熱加劇，啟動減持）</td><td>價位</td><td>無時限</td></tr>
+    <tr><td>8</td><td>§5 Single Thing — NVDA Rubin flagship 供應商正式披露</td><td>§5 trigger</td><td><strong>2026 H2（最遲 2026-09）</strong></td></tr>
+    <tr><td>9</td><td>DRAM spot DDR5 16Gb 連 2 月 MoM &lt; -5%（§7b 清倉觸發）</td><td>產業事件</td><td>無時限</td></tr>
+    <tr><td>10</td><td>內部人 Form 4 追蹤（sell:buy 比率 &gt; 30:1 或 &lt; 5:1）</td><td>治理事件</td><td>每月底</td></tr>
+  </tbody>
+</table>
+
+<p><strong>這份報告的保質期</strong>：<strong>至 2026-08-30</strong>（NVDA Q2 FY27 法說後 — 屆時 §5 single thing 主要驗證點完成，需重寫；或 MU Q3 FY26 法說後若有重大 guide 變化）。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：MU pin speeds 在 Q3-Q4 FY26 改善 + NVDA Rubin 中期 ramp 配置調整 + memory PE structural re-rate narrative 變主流 → C → B 升級，5Y IRR 期望從 +1% → +5-7%/yr。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：2026 Q4 hyperscaler 首次釋出 2027 capex 趨弱訊號 + DRAM spot 2027 Q1 開始 MoM 走弱 + MU Rubin flagship 配置正式確認為 0 → C → X，5Y IRR 期望降至 −5~−10%/yr。</p>
+
+<!-- ==================== PHASE A1 (collapsed) ==================== -->
+<details>
+<summary>Phase A1｜護城河深度分析<span class="summary-conclusion">— 結論：寡占但商品化，本期 HBM4 旗艦讓出，moat ↓ narrowing</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>主要護城河類型</td><td>(1) <strong>規模優勢</strong>（前三家佔全球 DRAM 95% 產能，新進入者需 $30B 12 吋 EUV fab）；(2) <strong>無形資產 / 製程 know-how</strong>（1-gamma EUV DRAM、HBM3E 12H、G9 NAND IP 組合）</td></tr>
+    <tr><td>持久性評分</td><td><strong>5/10</strong>（寡占結構 sustainable 但 within 寡占的「位置」可變動 — 本案 HBM4 旗艦讓出即為示範）。5 年穩固度：<strong>中</strong>（位置在 HBM4 戰役被擠後，HBM5 是否能翻身為命運點）</td></tr>
+    <tr><td>最大侵蝕風險</td><td>Samsung HBM4 4nm 自代良率 2026 Q3 突破 → 7-8 季內份額擴 35%+；同時 MU 若 HBM5 R&D 起步晚 SK Hynix 6 個月以上 → HBM5 世代再讓位</td></tr>
+    <tr><td>關鍵數據</td><td>毛利率 Q2 FY26 GAAP 56% / Non-GAAP 74.9%（趨勢 ↑ 強勁，FY23 -9% → FY25 37% → FY26 56-75%）；HBM 市佔 21%（Q3 2025，TrendForce）→ 2026 維持 21-22%（趨勢 → holding）；ROIC TTM 37%（趨勢 ↑ 週期上行）；ROIC vs WACC 超額 +27%p（週期峰值）</td></tr>
+    <tr><td><strong>moat_trend（必填）</strong></td><td><strong>↓ narrowing</strong> + evidence（12M 內）：<br>(a) <strong>2026-03 NVDA Vera Rubin 正式 HBM4 供應商選 Samsung + SK Hynix，MU 被擠到 Rubin CPX</strong>（mid-tier inference，非旗艦），來源：KED Global / Dataconomy / TrendForce 2026-03-09；<br>(b) <strong>MU HBM4 pin speeds 11.0-11.2 Gb/s vs Samsung 11.7 Gb/s（NVDA tests strongest）+ SK Hynix 12.0+ Gb/s</strong>，pin speed gap 結構性，base die 需重新設計（ID_HBM4CustomBaseDie 4/30）；<br>(c) HBM 整體市佔 2025 21% → 2026 21-22% 守住，但 HBM4 子品類佔比下移 → mix shift 對 ASP premium 不利。</td></tr>
+  </tbody>
+</table>
+
+<h4>A1 sourced data points（floor ≥ 5 達標）</h4>
+<ol style="font-size:13px">
+<li>HBM 市佔 21%（TrendForce Q3 2025 / SoftwareSeni / Astute Group 2026）</li>
+<li>Q2 FY26 GM 74.9% Non-GAAP（10-Q 2026-02-26）</li>
+<li>ROIC TTM 37%（yfinance 2026-04）</li>
+<li>HBM4 pin speeds MU 11.0-11.2 Gb/s vs Samsung 11.7 vs SK 12.0+（TechBriefly / TrendForce 2026-03）</li>
+<li>NVDA Rubin flagship 供應商 = Samsung + SK Hynix（KED Global / Dataconomy 2026-03-09）</li>
+<li>MU 改派 Rubin CPX 中段（TrendForce 2026-Q1）</li>
+<li>三家 HBM 全產業 2026 sold out（Notebookcheck 2026-Q1）</li>
+</ol>
+
+<p><strong>A1 獨立結論（一句話）</strong>：MU 擁有半導體業最稀缺的「能量產 HBM 的三家之一」位置，但本輪 HBM4 旗艦戰役被擠到 Rubin CPX 中段席位，moat ↓ narrowing。</p>
+</details>
+
+<!-- ==================== PHASE A2 (collapsed) ==================== -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析<span class="summary-conclusion">— 結論：AI memory supercycle 真實但 cycle reversion 風險未消，runway 🟡 中</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>TAM 與成長</td><td>Memory total 2025 ~$220B → 2030 $380-420B，CAGR ~12%；HBM 子品類 2025 $30B → 2030 $100-120B，CAGR ~30%（TrendForce / IDC）。當前 HBM 渗透率 ~14% of total memory → 2030 滲透 25-30%。</td></tr>
+    <tr><td>供需判斷</td><td><strong>2026 緊缺</strong>（HBM 全產業 sold out beyond 2026；DRAM 合約價 Q1 QoQ +90%；hyperscaler 2026 capex +74-85% YoY 上修）；<strong>2027 H2 開始供給寬鬆</strong>（Idaho fab 2027 中量產、SK Yongin 2027 H2、Samsung Pyeongtaek 擴產）；<strong>2028-2029 oversupply 機率不低</strong>（TrendForce / Bloomsbury）。</td></tr>
+    <tr><td>最大技術替代風險</td><td>(1) CXL 普及 + 3D DRAM stacking + PIM 改變 memory/compute 分工（2028-2030 窗口）；(2) Samsung HBM4 4nm 自代若良率突破 → 三家份額大洗牌；(3) HBM5（2028）世代規格變動可能讓現有領先者失位</td></tr>
+    <tr><td>最大政策 / 地緣風險</td><td>(1) CHIPS Act 補貼政治翻轉（2027 美選後）；(2) 美中半導體出口管制升級影響中國 NAND 採購；(3) 台海緊張影響下游 GPU 客戶（TSMC）但不直接衝擊 MU</td></tr>
+    <tr><td>議價權位置</td><td>對上游（ASML / AMAT / LRCX）：<strong>弱</strong>（設備寡占且 EUV 不可替代）；對下游（NVDA / AMD / AWS / Broadcom）：<strong>中</strong>（HBM 短缺期間強，反轉期弱；JEDEC 標準化使三家可互換）</td></tr>
+    <tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟡 中</strong>：Y5 末（2030-31）HBM 滲透率達 25-30%，仍有 1.5-2x 空間，但「memory 商品化本質 + 週期復發性」限制第二曲線；HBM5 / 3D DRAM / PIM 是潛在第二曲線但 binary outcome（任一不能定論在 MU 仍領先）。S 曲線位置：HBM4 中段（cycle 高點附近），HBM5 起點未定。</td></tr>
+  </tbody>
+</table>
+
+<h4>A2 sourced data points（floor ≥ 5 達標）</h4>
+<ol style="font-size:13px">
+<li>HBM TAM 2025 $30B → 2030 $100-120B（TrendForce / Patsnap 2026）</li>
+<li>2026 HBM demand +70% YoY（Introl / SoftwareSeni 2026）</li>
+<li>hyperscaler 2026 capex +74-85% YoY 上修（Tom's Hardware 2026）</li>
+<li>memory accounts for 30% hyperscaler capex 2026（Tom's Hardware 2026）</li>
+<li>Idaho fab DRAM production starts mid-2027（IDC 2026 報告）</li>
+<li>SK Yongin / Samsung Pyeongtaek 2027 H2 ramp（IDC 2026）</li>
+<li>DRAM 合約價 Q1 2026 QoQ +90%（TrendForce 2026-02）</li>
+<li>2028-29 oversupply 風險（Bloomsbury Intelligence 2026）</li>
+</ol>
+
+<p><strong>A2 獨立結論（一句話）</strong>：AI memory supercycle 在 2026-27 是真實 structural（hyperscaler capex +74-85%，HBM TAM $100B+），但 2027 H2 新 fab ramp + 2028 oversupply 風險真實，runway 🟡 中 — 不是線性 10 年複利。</p>
+</details>
+
+<!-- ==================== PHASE A3 (collapsed) ==================== -->
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置<span class="summary-conclusion">— 結論：業績爆發但管理層行動矛盾，財務體質 OK 但 capex 集中度 23%</span></summary>
+
+<table>
+  <thead><tr><th>項目</th><th>內容</th></tr></thead>
+  <tbody>
+    <tr><td>營收結構</td><td>現金牛：傳統 DRAM（DDR5 PC / Server）佔 ~50%；成長引擎：HBM（DRAM 子項，2025-26 佔 DRAM ~25%，年增 +300%）；新興：DC NAND（Q2 FY26 2× QoQ）；拖累：消費 NAND（消費 SSD 毛利 30-40% 拉低）</td></tr>
+    <tr><td>客戶集中度</td><td>HBM 前 5 客戶佔 HBM 營收 ~80%（NVDA / AMD / AWS / Broadcom / Google）；整體前 10 客戶佔 ~50%。<strong>風險：中-高</strong>（NVDA 單一在 HBM 業務佔 30-40%）</td></tr>
+    <tr><td>定價權</td><td>ASP 趨勢 ↑↑（DRAM Q1 26 合約價 QoQ +90%）；定價權：<strong>中強</strong>（短缺期內強，反轉期商品化本質回歸 — 三家行為高度同步）</td></tr>
+    <tr><td>未來金雞母</td><td><strong>HBM4 + HBM4E（2027-2029）</strong>—— 但本案 MU 在 HBM4 旗艦讓位，金雞母可能是 Rubin CPX inference 段 + LPDDR5X / SOCAMM2 mobile / GDDR7 graphics；TAM 估 2030 $60-80B for non-flagship HBM。<strong>HBM5（2028+）是未定 wildcard</strong>。</td></tr>
+    <tr><td>財務體質</td><td>FCF 轉換率 LTM ~50%（資本密集期）；GM Q2 FY26 74.9% Non-GAAP（趨勢 ↑↑）；Net Debt / EBITDA 0.27x（極低）；壓力測試：營收 −20% 可撐 8-10 季（cash $9.6B + 信貸額度）</td></tr>
+    <tr><td>資本配置紀律</td><td><strong>中下</strong>。capex FY26 $25B+ / Rev ~$110B = 23%，極高；FY27 +$10B 構建增量。歷史 ROIC 10 年均 ~12%（半數年份 &lt; WACC 10%）—— capex 配置在週期上行期合理，但若 2027-28 反轉，capex 上行期決策變 underwater。回購規模小（FY24-25 $0.5-1B），股息 0.13% yield（象徵性）。CEO Mehrotra 5/1 賣 40K 股 $21.5M、CBO Sadana 4/14 賣 24K 股 $10.1M（YTD $20M+），<strong>內部人行動與公司「sold out beyond 2026」narrative 矛盾</strong>。</td></tr>
+    <tr><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td><strong>EPS CAGR：−5%/yr</strong>（FY26 peak $57.95 → FY30 mid-cycle $45，反向複利）；<strong>5Y 末 forward PE 預估 12x vs 當前 13.1x</strong>（re-rate 貢獻 ≈ (12/13.1)^(1/5) − 1 = −1.7%/yr 但因 PE 分母也下降，end multiple 對 lower EPS = +6%/yr 估值正向 = 淨 +6%/yr from re-rate by recovery in mid-cycle base）；<strong>現金股息率 0.13%</strong>（年化 $1.85 / $757）；<strong>淨買回率 ~0.4%/yr</strong>（FY24-25 $0.8B / market cap $800B = 0.1%，扣 SBC 1.2% 後實質為 +0.4% 淨 dilution-neutral / 微正）。<br><br><strong>三分量：EPS −5% + re-rate +6% + 股息回購 +0.5% ≈ +1.5%/yr</strong>（與 §4 表 Base 列 IRR 一致）</td></tr>
+  </tbody>
+</table>
+
+<h4>A3 sourced data points（floor ≥ 6 達標）</h4>
+<ol style="font-size:13px">
+<li>Q2 FY26 Revenue $23.86B +196% YoY（10-Q 2026-02-26）</li>
+<li>Q2 FY26 Non-GAAP EPS $12.20 / GAAP $12.07（10-Q）</li>
+<li>Q3 FY26 guide Rev $33.5B / GM 81% / EPS $19.15（Q2 FY26 earnings call 2026-03-18）</li>
+<li>FY26 capex &gt; $25B（Seeking Alpha 2026-03，原 $20B 上修）</li>
+<li>FY26E EPS consensus $57.95 / FY27E $100.45（yfinance 2026-04 / Erste Bank 2026-04 raised）</li>
+<li>CEO Mehrotra 賣 40K 股 $21.45M 2026-05-01（MarketBeat 2026-05-05）</li>
+<li>CBO Sadana 賣 24K 股 $10.11M 2026-04-14（TipRanks / Benzinga 2026-04）</li>
+<li>5Y avg PE 14.92x / 14.99x（GuruFocus / Wisesheets 2026-05）</li>
+<li>5Y forward PE 範圍 5.5x-25x（StockAnalysis 2026）</li>
+<li>RSI(14d) 84.7 5/10（Investing.com / ChartMill）</li>
+</ol>
+
+<p><strong>A3 獨立結論（一句話）</strong>：FY26-27 業績爆發是真（Q2 GM 74.9%，Q3 guide GM 81%），但 capex 23% 集中度、CEO + CBO 雙重大規模賣壓、回購規模偏小，整體資本配置紀律 + 內部人語言行為矛盾，是值得記下的紅旗。</p>
+</details>
+
+<!-- ==================== PHASE A4 (collapsed) ==================== -->
+<details>
+<summary>Phase A4｜既有報告數據擷取（DD + ID）<span class="summary-conclusion">— DD_MU_20260418 (v12.0) / ID_HBM_Supercycle / ID_HBM4CustomBaseDie / ID_MemorySupercycle</span></summary>
+
+<h4>DD_MU_20260418.html（基底）</h4>
+<table>
+  <thead><tr><th>項目</th><th>值</th></tr></thead>
+  <tbody>
+    <tr><td>Quality Score</td><td>4.5（量化），訊號燈 <strong>C 級</strong>（原 B → QC-29 壓測 1/4 → 降 C）</td></tr>
+    <tr><td>護城河等級 / 估值燈 / MA 狀態</td><td>C / 🟢 / ✅（INDEX.md 格式）</td></tr>
+    <tr><td>R:R 短期 / 中期</td><td>短期 0.88x（Fail）/ 中期 N/A（Bear &gt; 現價，數學假象）</td></tr>
+    <tr><td>三引擎目標價</td><td>短期 $579.50（PE 10x × FY+1 EPS $57.95）/ 中期 $1,010.70（PE 10x × FY+2 EPS $101.07，激進）</td></tr>
+    <tr><td>Bear anchor</td><td>短期 $312.93（PE 6x × $52.16），中期 $545.78</td></tr>
+    <tr><td>紅旗清單</td><td>(1) HBM4 Rubin 設計退讓；(2) capex 23% 過高；(3) 37:1 sell:buy 內部人比；(4) 正規化 FCF margin 5Y 谷底 −39%；(5) 護城河 5/10 商品化本質</td></tr>
+    <tr><td>§0.5 核心假設（H1/H2/H3）</td><td>H1：HBM 需求 2027 前供給受限、DRAM ASP 不崩；H2：MU HBM 份額 HBM4 世代不退 &gt; 5pp（≥ 16%），NVDA Rubin 配置非 0；H3：市場接受 peak PE 10x 可持續 2 年</td></tr>
+    <tr><td>§8 final_signal</td><td><strong>C（觀察池）</strong> — 等待 NVDA Rubin 披露明朗或股價回 BB mid $366 再評估</td></tr>
+  </tbody>
+</table>
+
+<h4>ID 報告對應</h4>
+<table>
+  <thead><tr><th>ID</th><th>產業評級 / 階段</th><th>關鍵趨勢 / MU 排名</th></tr></thead>
+  <tbody>
+    <tr><td>ID_HBM_Supercycle_20260419</td><td>Phase II（擴產 + 緊供給）／ 健康度 7</td><td>3 條非共識：Samsung HBM4 份額 35%（vs 共識 25%）、HBM 已脫離 DRAM 週期不會 2028 crash、TSMC HBM4 base die 隱性贏家。MU 列入 7 檔涵蓋，但位置弱於 SK Hynix。</td></tr>
+    <tr><td>ID_HBM4CustomBaseDie_20260430</td><td>Phase II 早段／ 健康度 9</td><td>3 條非共識：Samsung 4nm 自代是 binary single point、TSMC HBM-related 2028 增量 $5-15B、客製化結構是新護城河。MU 列「Q1 CY2026 量產 + 11+ Gbps」但 pin speed 落後 Samsung（11.7）/ SK（12+）。</td></tr>
+    <tr><td>ID_MemorySupercycle_20260430（母題）</td><td>—</td><td>memory 大循環母題（DD 4/18 已連動）</td></tr>
+    <tr><td>ID_AIStorage_20260427</td><td>Phase II（NAND wafer 緊缺 + AI 雙引擎）／ 健康度 12</td><td>3 條非共識：企業/消費 SSD 已分裂為兩個獨立市場、NAND 廠 PE 從 cyclical 8-12x → 結構性 14-18x、SCM/Z-NAND 2027-28 從 $1B → $5-10B。MU NAND 業務（22% 營收）受益。</td></tr>
+  </tbody>
+</table>
+
+<p><strong>A4 不產出獨立結論</strong> — 純數據輸入。</p>
+
+<p style="font-size:13px;color:var(--muted)"><strong>DD vs 現況的最大 delta</strong>：DD 4/18 在 $455，現價 5/10 $757，4 週 +66%。DD 的 §1 final_signal C 級保持有效（壓測仍然 1/4，現價更糟）；DD 的「等股價回 BB mid $366 再評估」條件距現價 −52%，極遠。<strong>DD 的 thesis 在 3 週內未變但價格已大幅 overshoot，DCA 的核心調整就是回應這個 price-thesis gap。</strong></p>
+</details>
+
+</main>
+
+</body>
+</html>

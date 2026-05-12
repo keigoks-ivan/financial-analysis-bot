@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA — VIK (Viking Holdings) | 2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F8FAFC; --card:#FFFFFF; --title:#1E3A5F; --accent:#3B82F6;
+  --row-alt:#F1F5F9; --green-bg:#DCFCE7; --green-text:#166534;
+  --red-bg:#FEE2E2; --red-text:#991B1B; --yellow-bg:#FEF9C3; --yellow-text:#92400E;
+  --amber-text:#92400E; --gray-text:#64748B;
+  --warn-bg:#FFF7ED; --warn-border:#F97316; --warn-text:#C2410C;
+  --bull-bg:#F0FDF4; --bull-border:#16A34A;
+  --bear-bg:#FFF1F2; --bear-border:#DC2626;
+  --premort-bg:#FEF2F2; --premort-border:#DC2626;
+  --pattern-bg:#F0F9FF; --pattern-border:#0EA5E9;
+  --decision-amber:#FEF9C3; --decision-amber-border:#CA8A04;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);font-family:'Noto Sans TC',sans-serif;color:#1e293b;line-height:1.7;font-size:15px;}
+.header-bar{position:sticky;top:0;z-index:100;background:var(--title);color:#fff;padding:10px 32px;display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.header-bar .left span{margin-right:24px;}
+.container{max-width:1180px;margin:0 auto;padding:24px 20px 80px;}
+.section{background:var(--card);border-radius:2px;margin-bottom:20px;padding:26px 30px;border-left:4px solid var(--accent);}
+.section-title{color:var(--title);font-size:20px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;}
+.section-subtitle{color:var(--title);font-size:16px;font-weight:600;margin:18px 0 10px;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;}
+th{background:var(--title);color:#fff;padding:9px 11px;text-align:left;font-weight:500;}
+td{padding:8px 11px;border-bottom:1px solid #e2e8f0;vertical-align:top;}
+tr:nth-child(even) td{background:var(--row-alt);}
+.badge-green{background:var(--green-bg);color:var(--green-text);padding:2px 8px;border-radius:2px;font-weight:600;font-size:12.5px;}
+.badge-red{background:var(--red-bg);color:var(--red-text);padding:2px 8px;border-radius:2px;font-weight:600;font-size:12.5px;}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow-text);padding:2px 8px;border-radius:2px;font-weight:600;font-size:12.5px;}
+
+/* Status Bar */
+.status-bar{display:flex;gap:14px;justify-content:center;align-items:stretch;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:18px 14px;margin-bottom:18px;border-radius:2px;}
+.status-cell{flex:1 1 180px;max-width:220px;background:#fff;padding:12px 14px;border-radius:2px;text-align:center;border:1px solid #e2e8f0;}
+.status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.status-value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.status-sub{font-size:11.5px;color:#64748B;margin-top:4px;}
+.arrow-up{color:#166534;}
+.arrow-flat{color:#64748B;}
+.arrow-down{color:#991B1B;}
+.signal-A{color:#15803D;} .signal-Aplus{color:#166534;} .signal-B{color:#92400E;} .signal-C{color:#92400E;} .signal-X{color:#991B1B;}
+
+/* Thesis */
+.thesis-box{background:#EFF6FF;padding:36px 28px;text-align:center;border-radius:2px;margin:6px 0 14px;}
+.thesis-text{font-size:25px;font-weight:600;line-height:1.55;color:var(--title);}
+.thesis-note{font-size:12.5px;color:#64748B;margin-top:10px;letter-spacing:0.5px;}
+
+/* Decision */
+.decision-box{background:var(--decision-amber);border-left:4px solid var(--decision-amber-border);padding:18px 22px;margin:14px 0;}
+
+/* IRR composition */
+.irr-stacked{display:flex;height:38px;border-radius:2px;overflow:hidden;margin:10px 0 6px;border:1px solid #cbd5e1;}
+.irr-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12.5px;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+.irr-eps{background:#15803D;}
+.irr-rerate{background:#0EA5E9;}
+.irr-cap{background:#64748B;}
+
+/* Pattern */
+.pattern-box{background:var(--pattern-bg);border-left:4px solid var(--pattern-border);padding:14px 18px;margin:12px 0;}
+.qa-narrative{background:var(--pattern-bg);border-left:4px solid var(--pattern-border);padding:14px 18px;margin:10px 0;font-style:italic;font-size:14px;}
+
+/* Pre-mortem */
+.premort-box{background:var(--premort-bg);border-left:4px solid var(--premort-border);padding:16px 20px;margin:14px 0;}
+.premort-quote{border-left:3px solid var(--premort-border);padding:6px 14px;margin:10px 0;font-style:italic;background:#fff;}
+
+/* Conflict */
+.conflict-box{background:var(--warn-bg);border-left:4px solid var(--warn-border);padding:16px 20px;margin:14px 0;}
+.verdict-table{background:#FED7AA;padding:10px 14px;margin:12px 0;border-radius:2px;}
+
+/* Max DD */
+.maxdd-wrap{display:flex;gap:20px;align-items:center;margin:14px 0;}
+.maxdd-num{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#92400E;}
+.maxdd-bar{flex:1;height:18px;background:#e2e8f0;border-radius:2px;overflow:hidden;display:flex;}
+.maxdd-green{background:#15803D;height:100%;}
+.maxdd-amber{background:#CA8A04;height:100%;}
+.maxdd-red{background:#991B1B;height:100%;}
+.maxdd-rating{font-size:28px;font-weight:700;}
+
+/* memo / elevator */
+.memo-box{border:1px dashed #94a3b8;background:#FAFAF9;padding:22px 26px;margin:12px 0;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.85;border-radius:2px;}
+.elevator-box{border-left:3px solid var(--title);padding:10px 18px;margin:14px 0;font-style:italic;background:#F8FAFC;font-size:14.5px;}
+
+/* MA status */
+.ma-ok{background:var(--green-bg);color:var(--green-text);padding:2px 8px;border-radius:2px;font-weight:600;font-size:12.5px;}
+.ma-no{background:var(--red-bg);color:var(--red-text);padding:2px 8px;border-radius:2px;font-weight:600;font-size:12.5px;}
+
+details{margin:10px 0;border:1px solid #cbd5e1;border-radius:2px;background:#fff;}
+details summary{cursor:pointer;padding:12px 18px;font-weight:600;color:var(--title);background:#F1F5F9;border-radius:2px;}
+details[open] summary{border-bottom:1px solid #cbd5e1;}
+details > div{padding:14px 20px;}
+
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--title);color:#fff;border:none;padding:10px 20px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:14px;border-radius:2px;z-index:50;}
+@media print{.header-bar,.print-btn{display:none;} details{break-inside:avoid;} details > div{display:block !important;} body{font-size:12px;}}
+@media (max-width:900px){.status-bar{flex-wrap:wrap;}}
+p{margin:8px 0;} ul,ol{margin:8px 0 8px 20px;} li{margin:4px 0;}
+.note{color:#64748b;font-size:12.5px;}
+.kv-table th{width:30%;}
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+<div class="left">
+<span><strong>VIK</strong> Viking Holdings Ltd</span>
+<span>DCA 報告日：2026-05-11</span>
+<span>One-Sentence Thesis：嬰兒潮高端體驗 demand × 4 大造船廠 supply lock 的雙重壟斷</span>
+</div>
+<div class="right"><strong>DCA Schema v1.1</strong></div>
+</div>
+
+<div class="container">
+
+<!-- ============= STATUS BAR ============= -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">綜合訊號燈</div>
+    <div class="status-value signal-C">C</div>
+    <div class="status-sub">DD §1（衛星觀察）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-value">A <span class="arrow-flat">→</span></div>
+    <div class="status-sub">holding（Celebrity 2027 對沖）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-value">🟢 寬</div>
+    <div class="status-sub">TAM ×2 + 供給天花板</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（5Y 中途）</div>
+    <div class="status-value" style="color:#92400E">−45%</div>
+    <div class="status-sub">範圍 −35% ~ −45%</div>
+  </div>
+</div>
+
+<!-- ============= §2 THESIS ============= -->
+<div class="section">
+<div class="section-title">§2｜One-Sentence Thesis</div>
+<div class="thesis-box">
+  <div class="thesis-text">Viking 把「55+ 富裕族群想看世界但討厭小孩 / 賭場 / 推銷」這個 demand 結構，鎖進 4 家造船廠 24–42 個月排程的 supply 天花板。</div>
+  <div class="thesis-note">50 字以內的投資本質 · 需求側專注 × 供給側 lock-in 的雙壟斷</div>
+</div>
+<p class="note">這不是「cruise 龍頭」的故事，而是「全球唯一同時拿河輪 + 海輪 Conde Nast 雙料 5 連霸、客單價 2.5–3.5× 業界中位數的高端 niche」靠造船廠物理瓶頸把競爭者擋在 2028+ 之外的故事。</p>
+</div>
+
+<!-- ============= §7 DECISION ============= -->
+<div class="section">
+<div class="section-title">§7｜Decision — 可執行計畫</div>
+
+<div class="decision-box">
+<strong>決策摘要：</strong>追蹤池（C 訊號 / 進場觀望），不在當前 $80.6 動部位；建倉觸發必須等到 <strong>$70-$75</strong>（Fwd PE ≤ 18x）或 <strong>Q1 2026 法說（5/14）後 booking 曲線確認延續 +13% YoY</strong> 兩者之一。即使滿足條件，受 §6c Max DD 𭚦級壓制 + opportunity cost vs RCL，初始倉位 ≤ 3.5%。
+</div>
+
+<div class="section-subtitle">7a. 倉位與進場計畫</div>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>衛星持倉（high-conviction theme 但 timing 不對 + Max DD 路徑壓力）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.5%</strong>（觸發條件式進場後）</td></tr>
+<tr><td>目標倉位</td><td><strong>3.5%</strong>（從 6% 自動下修 — §6c 路徑風險 🟡 + 共識目標 $79 已壓在現價下方）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$70 ~ $75</strong>（對應 Fwd PE 16.8–18x × FY26e EPS $4.17）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong>：等 RSI 14d 從現 &gt;70 回到 50-60，或回測 W52 SMA $62.36 ±10%；禁止追高（QC-24：4/17 已有 +6.8% 跳空）</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>RCL（Royal Caribbean）：</strong>Fwd PE 14.2x、ROE 47.7%、Beta 1.94，相對 R:R 結構更好（mass + premium 雙引擎 + Celebrity River 進場是它的 upside）。「邊際資金放 VIK vs 加碼 RCL」測試 — 在 VIK $85 vs RCL 估值 disconnect 下，**邊際資金應加碼 RCL 而非進 VIK**。VIK 只在回到 $70-$75（PE 17x）區間才邊際 R:R 勝出。<strong>同類另對照：CCL Fwd PE 11.3x（cycle play）；NCLH 8.3x（深 value）— 三者比 VIK 對「估值-成長」更平衡。</strong></td></tr>
+</table>
+
+<div class="section-subtitle">7b. 加碼與減碼條件</div>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>初始建倉</td><td>股價 ≤ $75 連 5 日收盤 + RSI 14d ≤ 65</td><td>1.5%</td></tr>
+<tr><td>加碼</td><td>Q2 2026 法說 Net Yield YoY ≥ +6% 且 2027 advance booking ≥ +10% YoY</td><td>2.5%</td></tr>
+<tr><td>加碼至目標</td><td>Celebrity River 2027 開航前 12M booking 顯示 VIK 北美河輪市佔僅下滑 ≤ 1pp</td><td>3.5%</td></tr>
+<tr><td>減碼</td><td>Net Yield 連 2 季 YoY &lt; +3% 或 forward booking % 落後去年 &gt; 5pp</td><td>1.5%</td></tr>
+<tr><td>清倉</td><td>§5 Single Thing 觸發：Q4 2027/Q1 2028 2028-season booking 12 個月內落後 ≥ 10pp，或 Hagen 出現重大健康/離任事件</td><td>0%</td></tr>
+</table>
+
+<div class="section-subtitle">7c. Pure MA 相容性檢查 + 動能過熱</div>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 W52 SMA $62.36 之上？</td><td><span class="ma-ok">✅</span></td><td>現價 $80.64（5/11 close）= W52 + 29.3%</td></tr>
+<tr><td>股價在 W104 SMA 之上？</td><td><span class="ma-no">N/A</span></td><td>IPO 2024-05，歷史 &lt; 2Y，W104 不可得</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-ok">✅* W52-only</span></td><td>結構性多頭，但 W104 缺失降權重</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="ma-no">⚠ RSI &gt; 70</span></td><td>RSI 過去數週位於超買區；4/17 單日 +6.8% 跳空；5 月再上 $87 後回落 $80 — <strong>動能未冷卻</strong></td></tr>
+</table>
+<p><strong>結論</strong>：Pure MA 結構支持，但動能過熱 + 共識目標 $79 已在現價下方 → §7a 進場節奏<strong>強制改條件式</strong>，禁止無 timing 條件的一次建倉。歷史 mean reversion 頻率：RSI &gt; 75 後 1 個月內回測 8-15% 機率約 60%。</p>
+
+<div class="section-subtitle">7d. 建議持有年限</div>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>純 timing 套利（買在 $70 賣在 $100，cyc 兌現）— <strong>不建議</strong>，因 Conde Nast 品牌 + 4 廠 supply lock 應長抱</td></tr>
+<tr><td>中期（2-5 年）</td><td>主要持有區間。前提：① 2026 86% booked 兌現為 Net Yield +5-7%；② 2027 Celebrity River 進場不傷 ≥ 3pp 市佔；③ Q3 2027 Viking Brahmaputra（India）首航成功</td></tr>
+<tr><td>長期（5-10 年）</td><td>建議走到 7-8 年（2032-2033）— 對應 22 條 river + 25 條 ocean fleet 完整 ramp + 印度/亞太市場滲透</td></tr>
+</table>
+<p><strong>建議持有年限：5-7 年</strong>，原因：① runway_post_y5 = 🟢（Y5 末 luxury cruise TAM 滲透率仍 &lt; 30%，4 家造船廠物理 lock supply）；② Boomer 73M 健康可用窗 2025-2035 與持有期 90% 重疊；③ Hagen 80+ 接班議題在 Y5-Y7 內必發生，需動態評估。</p>
+
+<div class="section-subtitle">EPS 預測參考表</div>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>FY26E</td><td>$3.34（區間 $3.10-$3.70）</td><td>analyst consensus（10+ analysts via stockanalysis）</td><td>原 DD 用 $4.17 為 adj/non-GAAP；market consensus 用 GAAP，較保守</td></tr>
+<tr><td>FY27E</td><td>$4.08（區間 $3.66-$4.68）</td><td>consensus</td><td>Mira + Libra 2026 交付，2027 為 first full year</td></tr>
+<tr><td>FY28E</td><td>~$4.80-$5.20</td><td>外推（FY27 + 印度 ramp + 河輪 fleet +6%）</td><td>外推假設：Net Yield +5%、Capacity +7-9%、operating leverage 維持</td></tr>
+<tr><td>FY30E（外推）</td><td>~$6.50-$7.50</td><td>外推 — Viking $8.5B revenue / $2.0B earnings 2028 target，再外推 2 年</td><td>外推假設：CAGR 從 24% 放緩至 12-15%；多 supply 進場後 yield growth 壓低至 +3-4%</td></tr>
+</table>
+<p><strong>長期持有適不適合？</strong> §4 Base case 5Y 終值 +60-70% / IRR ~11%，加 §6c Max DD 中途 −35~−45%。對能承受 −45% drawdown 且 5-7 年不出場的長期 PM 來說合理；對 ≤ 2 年視角者**不適合**。當前股價 $80.6 隱含 FCF CAGR 14-16%，與共識相符，貴是合理的但無安全邊際。</p>
+</div>
+
+<!-- ============= §4 ASYMMETRY ============= -->
+<div class="section">
+<div class="section-title">§4｜Asymmetry Analysis（含 Pattern match + IRR Composition）</div>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><strong>Bull（thesis 全對）</strong></td><td>+120%</td><td><strong>+17.1%/yr</strong></td><td>2030 EPS $7.00 × 25x（高端品質溢價） = $175；booking 連 5 年 ≥ +10%，Celebrity 失敗，亞太/India 大放異彩</td><td>20%</td></tr>
+<tr><td>Base</td><td>+65%</td><td><strong>+10.5%/yr</strong></td><td>2030 EPS $6.30 × 21x = $132；Net Yield +4-5%/年，capacity +7-8%；Celebrity 拿走 2-3pp 河輪市佔但 VIK 海輪補</td><td>50%</td></tr>
+<tr><td><strong>Bear（thesis 錯）</strong></td><td>−45%</td><td><strong>−11.3%/yr</strong></td><td>2030 EPS $4.20 × 11x（向 RCL 中位收斂）= $46；Boomer 財富效應逆轉 + Celebrity 搶走 ≥ 5pp 河輪市佔 + Hagen 接班受阻</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+50.5% 5Y</strong></td><td><strong>IRR ≈ 8.5%/yr</strong></td><td>= 0.2×120 + 0.5×65 + 0.3×(-45)</td><td></td></tr>
+</table>
+<p><strong>IRR 落點解讀</strong>：8.5%/yr Base — 落在「弱-中之間」（&lt; 8% 為弱）。<strong>不及 SPX 長期 ~10% 預期</strong>，須有強烈 idiosyncratic 理由才動部位。idiosyncratic 理由＝品牌雙料 5 連霸 + 4 廠 supply lock，但這個信心被 §6c −35~−45% 中途痛 + 共識目標 $79 已壓在現價下方 dilute。</p>
+
+<p><strong>追加壓力測試</strong>：</p>
+<ul>
+<li><strong>10Y 延長</strong>：若 thesis 對但 horizon 10Y，IRR 從 17.1% 降至約 11-12%（2031-2035 Boomer 進入 80+，可用窗縮短；Gen X 接力但消費強度估算偏弱）；機會成本 = SPX 10Y ~10%、RCL 10Y ~13-15% — <strong>VIK 邊際 IRR 並不顯著勝出</strong>。</li>
+<li><strong>機會成本</strong>：同期可比 RCL 5Y IRR 估算 12-14%（PE 14.2x 起跑，Celebrity Royal 大盤反向受益）— 邊際資金應加 RCL 而非 VIK，除非 VIK 回到 $70-75。</li>
+</ul>
+
+<div class="section-subtitle">📅 機率估計：5Y 時間視角校驗</div>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本案實況</th><th>判定</th></tr>
+<tr><td>Bear 機率</td><td>5Y 視角 ≥ 20%（典型 25-30%）</td><td>30%</td><td>✅ 合格（VIK 為 IPO &lt; 2Y、無完整 recession 驗證）</td></tr>
+<tr><td>Bull / Bear 散布</td><td>5Y 應比 1Y 寬 ≥ 50%</td><td>Bull +120% vs Bear −45%，散布 165pp，1Y 視角散布約 60pp</td><td>✅ 寬度合理</td></tr>
+<tr><td>Base 機率</td><td>不應 &gt; 50%</td><td>50%</td><td>🟡 borderline；不上調是因為 Celebrity 2027 為已知未知 + Hagen 接班</td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似案例 IRR 對照</td><td>RCL 2014-2019 IPO-成熟期 IRR ~13%（見下）</td><td>⚠ VIK Base 10.5% &lt; RCL ~13% — 因 Celebrity entry 壓制 + 估值已 demand premium</td></tr>
+</table>
+
+<div class="section-subtitle">📐 Pattern Match — RCL 2014-2019 IPO-成熟期類比</div>
+<div class="pattern-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史 thesis 結構類似的個股</td><td><strong>Royal Caribbean（RCL）2014-2019</strong>：cruise 業中-高端轉型 + Quantum Class / Oasis Class 新船 supercycle + Net Yield 持續 +5-7%</td></tr>
+<tr><td>當時 setup</td><td>RCL 2014 Fwd PE 起跑 ~13x，市佔 ~22%，新船 backlog 5+ 條；Net Yield 從 $189 升至 $234（+24% 5Y）；Adj EPS $3.43 → $9.54</td></tr>
+<tr><td>5 年實現報酬（含 IRR）</td><td>$50（2014 初）→ $135（2019 高）= +170%（5Y），年化 ~22% IRR；但中途 2016 -35% drawdown（Zika + 油價）、2020 COVID 拆掉</td></tr>
+<tr><td>VIK 和它最像 / 最不像</td><td><strong>最像</strong>：新船 ramp + Net Yield 結構性升 + IPO/成熟期早期；<strong>最不像</strong>：VIK 起跑 Fwd PE 20.6x（vs RCL 13x）已 demand premium，Celebrity River 同時進場攪局，且 Hagen 80+ 接班議題（RCL Bayley 當時 50 多歲）</td></tr>
+</table>
+<p style="margin-top:8px"><strong>啟示</strong>：歷史相似 setup 的 RCL 走出 22% IRR，但 VIK 不能複製 — 因為起點貴 + 競爭結構變了。VIK 預期 Base IRR 10.5% 是「同 thesis 但晚進場」的合理折扣。<strong>這不是說會複製，而是告訴你 5Y 期望 IRR 估算不只憑感覺，是有錨點的</strong>。</p>
+</div>
+
+<div class="section-subtitle">🧬 IRR Composition — 5Y IRR 質感拆解</div>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td style="color:#15803D">+15.0%/yr</td><td style="color:#15803D">+2.0%/yr</td><td style="color:#64748B">0.0%/yr</td><td><strong>+17.0%/yr</strong></td></tr>
+<tr><td>Base</td><td style="color:#15803D">+13.0%/yr</td><td style="color:#991B1B">−2.5%/yr</td><td style="color:#64748B">0.0%/yr</td><td><strong>+10.5%/yr</strong></td></tr>
+<tr><td>Bear</td><td style="color:#15803D">+3.0%/yr</td><td style="color:#991B1B">−14.3%/yr</td><td style="color:#64748B">0.0%/yr</td><td><strong>−11.3%/yr</strong></td></tr>
+</table>
+
+<div class="irr-stacked" title="Base case stacked: EPS +13.0 / re-rate −2.5 / cap 0">
+  <div class="irr-seg irr-eps" style="width:84%">EPS +13.0%</div>
+  <div class="irr-seg irr-rerate" style="width:16%;background:#991B1B">re-rate −2.5%</div>
+</div>
+<p class="note">Base 視覺：13.0% EPS 複利貢獻 + (−2.5%) re-rate 拖累（PE 20.6 → 18x）= 10.5% 合計年化。</p>
+
+<div class="qa-narrative">
+「Base 10.5% IRR 中，<strong>13.0%/yr 全部來自 EPS 複利</strong>，−2.5%/yr 是估值 re-rate 拖累（PE 從 20.6x 收斂到 18x），股息+回購 = 0（公司明確說不發股息也不回購，現金留給 capex）。這檔的可抱性<strong>必須完全靠 EPS 複利</strong>（公司自己長出來，不靠市場配合）— 質感屬於『自然複利好抱』類，但前提是 EPS 兌現要硬。Re-rate 為負是 buffer：即使市場給更低 PE，EPS 複利還能撐 10% — 但若 EPS 連 2 季 miss，re-rate 會立刻變成 deeper 拖累。」
+</div>
+
+<p><strong>校驗</strong>：Base 三分量加總 13.0 + (−2.5) + 0 = 10.5%，與上表「機率加權年化 IRR 8.5%」對應 Base 列 10.5% 偏差 0.0%p ≤ 2%p。Bull 加總 17.0% ≈ 17.1%（diff 0.1）；Bear 加總 −11.3% = Bear 行 IRR（diff 0.0）。✅ 通過。</p>
+</div>
+
+<!-- ============= §1 Mental Models ============= -->
+<div class="section">
+<div class="section-title">§1｜Mental Models 壓力測試</div>
+
+<div class="section-subtitle">測試一：投委會 1 頁紙 Memo</div>
+<div class="memo-box">
+<strong>RE: Viking Holdings (NYSE: VIK) — Investment Committee Memo</strong><br>
+<strong>Date:</strong> 2026-05-11　|　<strong>Author:</strong> Sub-Agent DCA Analyst<br><br>
+
+<strong>Thesis（≤50 字）：</strong>Viking 把「55+ 富裕族群想看世界但討厭小孩 / 賭場 / 推銷」這個 demand 結構，鎖進 4 家造船廠 24–42 個月排程的 supply 天花板。<br><br>
+
+<strong>Key Driver（1 個，命脈）：</strong>Net Yield × Capacity 雙引擎乘數 — Net Yield $583（業界 2.5-3.5×）持續 +5-7%、Capacity 2026 +7% / 2028 22 條 river +12 條 ocean — 結構性 supply lock 創造 long-cycle pricing power。<br><br>
+
+<strong>R:R：</strong>Bull +120%（17.1% IRR），Base +65%（10.5% IRR），Bear −45%（−11.3% IRR）；機率加權 5Y +50%，IRR ~8.5%（弱-中）。Max DD 中途 −35% ~ −45% 🟡。<br><br>
+
+<strong>核心風險：</strong>① Celebrity River Cruises 2027 進場（10 → 20 ships by 2031）— 已知未知；② Hagen 80+ 接班議題（持股 50.4% 控股）；③ Boomer 財富效應逆轉（IPO &lt; 2Y 無 recession 驗證）；④ 估值已在 5Y 分位 95%，無安全邊際。<br><br>
+
+<strong>建議倉位：</strong>追蹤池（C 訊號）。觸發條件式進場 $70-$75（Fwd PE ≤ 18x）後初始 1.5%、目標 3.5%（衛星）。<strong>opportunity cost vs RCL（Fwd PE 14.2x）— 邊際資金應加 RCL 而非 VIK，除非 VIK 回到 $70-75。</strong>
+</div>
+
+<div class="section-subtitle">測試二：30 秒電梯簡報</div>
+<div class="elevator-box">
+「Viking 是 cruise 業的 LVMH — Conde Nast 河輪 + 海輪雙料 5 連霸，客單價 2.5 倍同業，ROIC 45% 全業界最高。但現價已經把好消息全 priced in，PE 20 倍是 RCL 的 1.5 倍。所以我喜歡 thesis，但不喜歡 timing — 等回到 $75 我會進場，現在加碼 RCL 更划算。」
+</div>
+
+<p><strong>壓力測試結果</strong>：✅ 兩個 narrative 都寫得出來且自洽 — thesis 是「demand + supply 雙鎖」，driver 是「Net Yield × Capacity 乘數」，verdict 是「等 timing」。邏輯一致，進入 §7 決策。</p>
+</div>
+
+<!-- ============= Phase B CONFLICTS ============= -->
+<div class="section">
+<div class="section-title">Phase B｜矛盾辨識 + 強制裁決</div>
+
+<div class="section-subtitle">1. 共識清單（A1-A3 方向一致）</div>
+<ul>
+<li>VIK 的<strong>品牌力是真實的且仍在加深</strong>（A1 Conde Nast 5 連 + A3 Net Yield +7.4% + repeat 54%）</li>
+<li>產業 TAM 仍處於早-中期擴張階段（A2 luxury cruise CAGR 9-12%、Boomer $84T transfer）</li>
+<li>VIK 短期 booking 能見度極高（A3 86% booked 2026、advance bookings +13% YoY）</li>
+<li>蹭船廠 supply 物理瓶頸是真實（A2 14-16 ships/yr 全球 cap）</li>
+</ul>
+
+<div class="section-subtitle">2. 矛盾清單</div>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>M1</td><td>moat 趨勢：加深 vs 持平</td><td>↗ Conde Nast 5 連 + ROIC 45.8% 持續擴大</td><td>→ Celebrity River 2027 進場為已知競爭威脅，moat 12-24M 受測試</td><td>—</td><td>🔴 不可調和（方向相反）</td></tr>
+<tr><td>M2</td><td>產業 TAM growth 力道</td><td>—</td><td>↑ TAM 9-12% CAGR、Boomer demographic supercycle</td><td>↘ 2026 yield guidance mid-single-digit vs FY25 +7.4% 已放緩</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>M3</td><td>capital allocation 紀律</td><td>—</td><td>—</td><td>🟡 capex 2026 $1.2B 大、無 buyback / 無 dividend — 完全 reinvest 模式</td><td>🟡 不算矛盾，但 IRR composition 影響大</td></tr>
+<tr><td>M4</td><td>估值是否合理</td><td>品質溢價合理</td><td>產業順風支持高倍數</td><td>🔴 Fwd PE 20.6x vs 同業中位 11.3x = +82% 溢價，超過合理上限 50-70%</td><td>🔴 不可調和</td></tr>
+</table>
+
+<div class="section-subtitle">3. 與既有報告（DD_VIK_20260418 / ID_LuxuryTravelCruise / ID_BoomerTravelSupercycle）的交叉矛盾</div>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr>
+<tr><td>X1</td><td>VIK 的 5Y IRR Base</td><td>+10.5%/yr</td><td>DD 估「長期 24M 目標 $120」= +40%（24M）= +18.4% IRR（過樂觀）</td><td>分析深度差 — DD 估「樂觀情境」、DCA 估「機率加權 Base」</td></tr>
+<tr><td>X2</td><td>moat_trend</td><td>→ holding（Celebrity 對沖）</td><td>DD §10 「加深」、ID §11 cruise sector demand 強</td><td>視角差 — DD 看品牌獎項 trend，DCA 加入競爭結構演變</td></tr>
+<tr><td>X3</td><td>進場價位</td><td>$70-75</td><td>DD §1 「$75 以下重估」</td><td>一致 ✅</td></tr>
+</table>
+
+<div class="section-subtitle">4. ⚖ 強制裁決（每個不可調和矛盾必填）</div>
+<div class="verdict-table">
+<table>
+<tr><th>#</th><th>矛盾</th><th>選哪邊</th><th>依據（不能是「直覺」）</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td>M1</td><td>moat ↗ vs →</td><td><strong>暫無法決定 → 給 12M settle 窗口</strong></td><td>Conde Nast 獎項與「實際市佔抗壓」不等價；Celebrity 是首次正面對撞，moat 強度真實的測試在 2027 開航前 12 個月（即 2026Q1-Q4）的<strong>北美河輪 booking 流向</strong></td><td>(1) Celebrity River 2027 開航 12 個月 booking 中，VIK 北美河輪市佔下滑 ≤ 1pp → moat ↗ 確認；(2) 下滑 1-3pp → moat → holding；(3) 下滑 ≥ 3pp → moat ↘ narrowing；data 來源：cruise industry quarterly 報告 + VIK IR 季報</td><td>(a) moat ↗ 確認 → VIK 進場觸發放寬至 Fwd PE 19x（$79）；(b) moat ↘ narrowing → 即使股價回到 $70 也不進，移出觀察池</td></tr>
+<tr><td>M4</td><td>估值合理 vs 過貴</td><td><strong>選 A3 / DD 「過貴」</strong></td><td>+82% 溢價超過合理 50-70% 上限是硬數據；ROIC 45.8% 與品牌雙料 5 連可支撐 50-70% 但非 82%；分位 ~95% 是 2Y 歷史最貴點</td><td>(1) Fwd PE 回到 17-18x（股價 $70-75）；(2) 同業 RCL 升至 Fwd PE 17-18x（cruise sector re-rate） 使溢價收斂；data 來源：weekly close + yfinance Fwd EPS</td><td>(a) 股價回到 $75 連 5 日 → 升級為小倉 1.5% 試倉；(b) RCL Fwd PE 升至 16-17x 且 VIK 不動 → 溢價自然收斂至 50-60%，VIK 可在 $80-83 試倉 1.0%</td></tr>
+</table>
+</div>
+
+<p><strong>這兩個裁決將直接帶入 §7 決策</strong>：M1 「暫無法決定」意味著 5/14 Q1 法說 + Q2-Q4 booking 流向是 settle 窗口；M4 「過貴」確認 $70-75 是建倉門檻。兩條 if-then 路徑（moat 維持 / moat 弱化）構成 §7b 加減碼 trigger 的骨架。</p>
+</div>
+
+<!-- ============= §3 KEY DRIVERS ============= -->
+<div class="section">
+<div class="section-title">§3｜Key Drivers + Consensus 分歧</div>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>需求側：55+ 富裕族群 wallet share + repeat-guest 留存</strong>（demographic supercycle）</td><td>VIK 90%+ 收入綁定 55+ 北美 + 歐洲富裕族群；54% repeat rate 是 long-cycle pricing power 的來源；Boomer $84T 財富 + Gen X 退休潮 2026-2035 是 10Y 結構性順風。<strong>沒有這個 demand 結構，全部 supply、品牌、capex 都失去意義。</strong></td><td>(1) Net Yield YoY；(2) 重複客率（公司每年披露）；(3) 前向預訂率 % vs 去年同期</td></tr>
+<tr><td>2</td><td><strong>供給側：4 大造船廠 24-42 個月物理 lock + Viking 110 個 docking station 控制</strong>（supply moat）</td><td>全球造船廠每年 14-16 條 cruise ship cap、Viking 自己控制 110 個 river docking station — 這兩個物理約束讓任何新進入者（Celebrity）即使 2027 啟動也要到 2031 才有 20 條船規模，而 VIK 同期已到 112 條 river 船。<strong>供給側壟斷讓 Net Yield 漲價能 stick。</strong></td><td>(1) 全球 cruise orderbook（cruiseindustrynews）；(2) Celebrity River fleet ramp 進度；(3) VIK 自身 fleet expansion delivery 進度</td></tr>
+</table>
+
+<p><strong>為什麼是這 2 個，而不是其他</strong>：林區「一句話」測試 — 「VIK 賣的是 demand × supply 的雙重壟斷」。Net Yield、Conde Nast 獎、ROIC、capex 都是這兩條因果鏈的<strong>衍生指標</strong>。Brand 是 driver 1（demand）的內生強化，capex 是 driver 2（supply）的執行手段。獨立 driver 必須來自獨立因果鏈 — 這兩條一個是需求側（人口結構 + wallet share），一個是供給側（物理產能 + 地理控制），通過正交性測試。</p>
+
+<div class="section-subtitle">⚖ Driver 抽象層 guardrail 自查</div>
+<p><strong>問題</strong>：driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？<br>
+<strong>答</strong>：可以 — 如果 Boomer demand 完全消失（driver 1 fail），driver 2 的 supply lock 還是事實但變沒意義（沒人需要船）；反過來，如果造船廠突然產能翻倍（driver 2 fail），driver 1 依然真實但 VIK 的 pricing power 會被攤薄。兩條獨立可測試。✅ 通過。</p>
+
+<div class="section-subtitle">強制減法 — 我認為不重要的事</div>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>燃油成本與航運通膨</td><td>VIK 客單價 $859/day，燃油佔比 &lt; 8%，pricing power 完全可吸收；同業 CCL/NCLH 因低端定位才會受傷</td></tr>
+<tr><td>歐洲 / 美國總體經濟短期波動</td><td>86% 已 booked 2026 鎖死，需要的是 2027-2028 booking 曲線，2026 短期 macro 為雜訊</td></tr>
+<tr><td>ESG/IMO 法規倒逼 Capex</td><td>cruise 業統一受影響，是 sector-wide cost，並非 idiosyncratic；且 VIK 的 LNG 船比例本來就高</td></tr>
+<tr><td>Q1/Q2 單季 EPS beat/miss</td><td>booking $6B / 86% booked 的 visibility 已 dominate 短期 noise，PM 應看 yield + booking flow，不看 quarterly EPS</td></tr>
+<tr><td>cruise stocks 短期 multi 收斂</td><td>VIK Fwd PE 20.6x 已是溢價最大化的狀態，short-term de-rate 是 entry opportunity 不是 thesis 風險</td></tr>
+</table>
+
+<div class="section-subtitle">🔄 我和市場 consensus 的最大分歧（Munger Inversion）</div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>市場給 Fwd PE 20.6x 隱含「VIK Net Yield growth +6-7% 永續、capacity ramp 不稀釋、Celebrity 進場無實質影響」— 等於把<strong>三件樂觀的事</strong>全部 price in</td></tr>
+<tr><td>我認為的不同假設</td><td>我認為市場低估了「Hagen 80+ 接班 + Celebrity 河輪 + 印度 ramp 失敗」這 3 條<strong>已知未知</strong>在 2027-2028 同時發生的機率（任 1 條觸發 PE 從 20x 壓到 16x = re-rate 拖累 −4%/yr）</td></tr>
+<tr><td>賣方為什麼錯（≥ 1 個具體理由）</td><td>賣方 16 家分析師<strong>沒有把 Hagen 接班風險量化</strong>（沒人在 EPS model 裡放接班 disruption discount）；且 Goldman 12/2025 升評為 Buy 時，價格還在 $65-70 區間，現在 $80 是市場自己跑上來而非分析師 upgrade — 賣方共識目標價 $79.25 已落後現價 1.7%</td></tr>
+</table>
+<p><strong>校驗</strong>：分歧三題能寫出來 — 但 alpha 來源是「時間 timing」而非「方向」。若 VIK 在 $70-75 進場、5/14 Q1 法說 + Celebrity 12M 觀察窗口（2026Q4）撞上正面證據，alpha 可兌現；若在 $80+ 追進，alpha 被 priced in。<strong>因此 §7 倉位上限再打 0.5× 折扣（從原計畫 6% → 3.5%）</strong>。</p>
+</div>
+
+<!-- ============= §5 SINGLE THING ============= -->
+<div class="section">
+<div class="section-title">§5｜The Single Thing That Could Change My Mind</div>
+
+<table>
+<tr><th>項目</th><th>內容（primary trigger）</th></tr>
+<tr><td>事件描述</td><td><strong>2027 Celebrity River Cruises 首航前 12 個月（即 2026Q4-2027Q3）的北美河輪 booking 流向</strong> — 若 VIK 北美河輪市佔（VIK river PCD ÷ 北美 river 總 PCD）在這個窗口下滑 ≥ 3pp（從現 ~50% 跌至 ≤ 47%），即代表 Celebrity 用「Royal Caribbean Group 既有 Captain's Club 高端客名單 + 大 marketing 火力」直接搶走 VIK 的核心客層</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>VIK 整個 thesis 的命脈在 driver 1（55+ 富裕北美客的 wallet share）。如果 Celebrity 可以在 12 個月內搶走 ≥ 3pp 河輪市佔，代表 Conde Nast 的「品牌雙料 5 連」其實沒有真正的 switching cost（消費者願意試新品牌） — moat ↘ narrowing 確認，Fwd PE 必須從 20x 壓到 14-15x（RCL 水準），同時 EPS 兌現速度減半。Bear case (Fwd PE 11x × $4.20 = $46) 觸發機率從 30% 升到 50%+。</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>① VIK 季報的 River segment booking metrics（每季）；② cruise industry quarterly 報告（NAOSH、cruiseindustrynews）；③ Royal Caribbean 季報的 Celebrity River booking disclosure（2026Q3 起應開始披露 advance booking）；④ 第三方分析（Investing.com SWOT、SeekingAlpha）</td></tr>
+<tr><td>目前離發生有多遠</td><td>關鍵窗口 = <strong>2026Q4 - 2027Q3</strong>（Celebrity River 首航前 12M）。今天 2026-05-11，距窗口開始 ~6 個月。<strong>5/14 Q1 法說 + 8 月 Q2 法說</strong>會給 2027 advance booking 早期 signal，但結構性訊號要 2026Q4 才會清楚。</td></tr>
+</table>
+
+<table>
+<tr><th>項目</th><th>內容（secondary trigger — 來自 §6b pre-mortem 校驗 ⚠ 部分重疊後補入）</th></tr>
+<tr><td>事件描述</td><td><strong>Torstein Hagen（CEO, 80+, 持股 50.4%）出現重大健康事件或宣布退休過渡計畫且接班人非家族成員 / 非長期同事</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>VIK 的 demand-side wallet share 部分綁定 Hagen 個人魅力與「Thinking Person's Cruise」品牌哲學。若接班斷層，CEO premium 蒸發；公司治理結構（dual-class share + 50.4% 控股）讓任何接班震盪都會被市場直接折價。</td></tr>
+<tr><td>如何監測</td><td>VIK 8-K 公告、proxy statement、Bloomberg/Reuters CEO 動態追蹤；頻率：實時 + 每年 10-K（管理層 risk factor）</td></tr>
+<tr><td>目前離發生有多遠</td><td>不可預測，但 Hagen 已 80+，actuarial 5Y 機率不可忽略；現在尚未有公開過渡計畫</td></tr>
+</table>
+
+<p class="note">兩個 trigger 並列保留：primary（Celebrity 市佔）= thesis 方向性測試；secondary（Hagen 接班）= governance risk 測試。任一觸發都會觸發 §7b 「清倉」動作。</p>
+</div>
+
+<!-- ============= §6 PRE-MORTEM ============= -->
+<div class="section">
+<div class="section-title">§6｜What I Don't Know + Pre-mortem（含 6c Max DD）</div>
+
+<div class="section-subtitle">6a. 強迫面對自己的盲點</div>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Boomer wealth effect 與消費強度延續至 2030+</td><td>美股 SPX 不出現 −30% 以上熊市（資產縮水不顯著）+ Boomer 退休後保有消費意願（非省吃儉用）</td><td>VIK 高端消費 demand 出現結構性下滑 → Net Yield +7% 降至 +1-2% → EPS 兌現速度減半，Bear case 觸發</td></tr>
+<tr><td>2</td><td>4 廠造船 supply lock 不會被破解</td><td>沒有中國造船廠強勢進入（中遠海運、招商局已開始 small/mid cruise build），或進入後品質夠不上高端定位</td><td>2029-2030 中國產能加上歐洲產能，全球年產能從 14-16 → 22-25，supply moat 失效，pricing power 削弱</td></tr>
+<tr><td>3</td><td>Hagen 接班順暢（無控制權真空）</td><td>Hagen 健康 5+ 年；或內部已有接班 plan（Tor Hagen Jr 或長期 COO Lars 等）</td><td>Hagen 健康事件 → dual-class 結構讓控制權落入 Cayman trust 受託人手中 → 戰略決策不確定，PE 立刻 −20%</td></tr>
+<tr><td>4</td><td>印度 / 亞太擴張（Brahmaputra 2027 / Ganges 2028）成功</td><td>印度高端 outbound travel 市場真實存在 + 地緣穩定 + 河輪船型適應印度 river system</td><td>$1.2B capex 部分 stranded，operating leverage 反向 — Net Yield 稀釋</td></tr>
+<tr><td>5</td><td>ESG / IMO 法規不會強制 retire 老船</td><td>2030 IMO Net-Zero Framework 為「漸進」非「一刀切」</td><td>VIK 部分老 river ship 若被要求 retire 或 retrofit，capex 突增 + capacity 縮減</td></tr>
+</table>
+
+<div class="section-subtitle">6b. Pre-mortem — 失敗故事倒推 + 校驗 + 修正 §5（三段式）</div>
+
+<div class="premort-box">
+<strong>第一段｜故事倒推（≤80 字 narrative）</strong>
+<div class="premort-quote">
+「假設 2031 年 5 月這個部位虧 50%，最可能發生的故事是：2027Q1 Hagen（時年 86）宣布健康因素退休，dual-class trust 接管期間管理層 churn；同時 Celebrity River 2027 首航搶走 4-5pp 北美河輪市佔（Royal Caribbean Captain's Club 1,200 萬會員導流）；2028 Q1 Viking Brahmaputra 印度首航因 monsoon + 衛生事件首季 occupancy 跌至 65%；市場一次性把 Fwd PE 從 20x 壓到 11x（向 RCL 收斂），股價從 $80 跌至 $40。」
+</div>
+</div>
+
+<div class="section-subtitle">第二段｜校驗 §5 single-thing</div>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td>⚠ <strong>部分重疊</strong> — Celebrity 市佔 = 原 §5 primary trigger ✅；但 <strong>Hagen 接班</strong>是失敗故事的<strong>另一個關鍵觸發</strong>，原 §5 沒涵蓋；印度失敗為次要</td></tr>
+</table>
+
+<div class="section-subtitle">第三段｜修正 §5（依校驗結果分流）</div>
+<p><strong>結果：⚠ 部分重疊 → 已在 §5 區塊補上 secondary trigger（Hagen 80+ 接班事件）</strong>。HTML 中 §5 現在顯示 2 個 trigger（primary: Celebrity 市佔；secondary: Hagen 接班）。<br>
+<strong>校驗紀錄</strong>：「§5 修正狀態：⚠ 已補 1 條 secondary trigger（Hagen 接班）」</p>
+
+<div class="section-subtitle">6c. 路徑壓力測試（Max DD｜必填）</div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−35% ~ −45%</strong>（peak-to-trough，5Y 期間最壞時點）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q4 - 2028 Q2 — Celebrity River 首航 + Hagen 接班議題 + 印度 ramp pressure 三事件同時或相繼觸發；對應股價：from peak $90-100（Bull path）到 trough $50-60</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>12-18 個月（若僅 Celebrity 壓力 + EPS 仍 +8-10% 兌現） / 24-36 個月（若 Hagen 接班震盪疊加） / 不會恢復（若 thesis 破 — Boomer wealth effect 逆轉）</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🟡 −30 ~ −50%（需要強信念）</strong></td></tr>
+</table>
+
+<div class="maxdd-wrap">
+  <div class="maxdd-num">−35% ~ −45%</div>
+  <div class="maxdd-bar">
+    <div class="maxdd-green" style="width:50%"></div>
+    <div class="maxdd-amber" style="width:35%"></div>
+    <div class="maxdd-red" style="width:15%"></div>
+  </div>
+  <div class="maxdd-rating">🟡</div>
+</div>
+<p class="note">色條視覺：bar 從 0% 開始，前 50% 綠（0~-30%）、35% amber（-30~-50%）、15% 紅（&lt;-50%）；範圍 −35~−45% 落在 amber 區間，評級 🟡 路徑需強信念。</p>
+
+<p><strong>校驗（必填一句話）</strong>：</p>
+<div class="premort-quote">
+「若 max DD 落在 −45%（amber 下緣），我能否撐到復原？條件：① 部位不超過 portfolio 3.5%（已從原計畫 6% 自動下修，符合 Guardrail 22）；② 不使用槓桿；③ §5 兩個 trigger 都未觸發（Celebrity 市佔 ≤ 1pp 下滑、Hagen 健康正常）；④ 進場價位 $70-75，−45% 意味著 trough $39-41，這個價位對應 Fwd PE 9-10x，已是 deep value reset，PM 有信心承受並可能加碼（§7b 觸發 加碼條件）。若上述條件 ① 或 ②  破，倉位再打 0.5× 折扣至 1.5%。」
+</div>
+
+<p><strong>路徑風險 🟡 對 §7a 倉位影響</strong>：原可能計畫 6% → 已自動下修至目標 3.5% / 初始 1.5%；§7d 在 「短期（&lt; 2 年）」欄已明示<strong>不建議</strong>，因為中途 −45% drawdown 對 &lt; 2Y 視角是 thesis-killer。</p>
+</div>
+
+<!-- ============= §8 REVIEW TRIGGERS ============= -->
+<div class="section">
+<div class="section-title">§8｜Review Triggers</div>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q1 2026 法說（Net Yield、2027 advance booking）</td><td>財報日期</td><td><strong>2026-05-14</strong>（已排程）</td></tr>
+<tr><td>2</td><td>Q2 2026 法說（2027 Celebrity River 競爭觀察）</td><td>財報日期</td><td>~ 2026-08-15</td></tr>
+<tr><td>3</td><td>Q3 2026 法說（2027 booking 初步走向 + 印度 Brahmaputra 進度）</td><td>財報日期</td><td>~ 2026-11-15</td></tr>
+<tr><td>4</td><td>Celebrity River 首航前 12 個月觀察窗口開啟</td><td>產業事件</td><td>2026Q4-2027Q3</td></tr>
+<tr><td>5</td><td>價位觸發：$75 連 5 日收盤 → 進場觸發</td><td>價位觸發</td><td>條件達成即啟動 1.5% 試倉</td></tr>
+<tr><td>6</td><td>價位觸發：$90 連 3 日收盤 → 估值 stretched 警示</td><td>價位觸發</td><td>觸發 → DD 重跑（Fwd PE 21x+ 已超 stretched）</td></tr>
+<tr><td>7</td><td>§5 Single Thing（Celebrity 市佔）</td><td>競爭事件</td><td>VIK 北美河輪市佔 ≤ 47%（從 ~50%）→ 立刻清倉</td></tr>
+<tr><td>8</td><td>§5 Single Thing (secondary)（Hagen 接班）</td><td>治理事件</td><td>8-K 公告 → 立刻清倉</td></tr>
+</table>
+
+<p><strong>這份報告的保質期</strong>：<strong>至 2026-08-15（Q2 2026 法說發布前）</strong>。屆時新的 booking 數據 + Celebrity 進場初期 signal 須觸發重評。最遲不超過 2026-11-15（Q3 法說）。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：5/14 Q1 法說披露 2027 advance booking 已 ≥ +15% YoY（強於 2026 的 +13%），且 Net Yield Q1 +6% — 共識 EPS 上修 5-10%，PE 可從 20.6x 撐到 22x，6 個月可見 +15-20% upside。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：5/14 Q1 法說披露 2026 yield guidance 下修至 +3-4%（從 mid-single-digit），市場立即把「Boomer demand 結構放緩」price in，PE 從 20.6x 壓到 17x = 17% 下行至 $66。Bear case 觸發機率上修。</p>
+</div>
+
+<!-- ============= PHASE A (折疊) ============= -->
+
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：A 級護城河，moat_trend → holding，Celebrity 2027 對沖品牌深化）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>品牌（Conde Nast 雙料 5 連 + U.S. News 2026 Best Luxury Cruise Line #1）</strong>；(2) <strong>規模 + 地理控制（110 個 river docking station 自有/控制 + 河輪業界最大 fleet）</strong></td></tr>
+<tr><td>持久性評分</td><td><strong>8/10</strong>，5 年穩固度：<strong>中-高</strong>（品牌 + supply lock 強，但 Celebrity 進場 + Hagen 接班為 2027-2028 真實測試）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Royal Caribbean Group 動用 Captain's Club 1,200 萬會員導流給 Celebrity River，2027-2028 兩年內可能搶走 3-5pp 北美河輪市佔</td></tr>
+<tr><td>關鍵數據</td><td>Adj 毛利率 22.6% YoY +22.6%（趨勢 ↑）、ROIC 45.8%（業界最高，2024 27.5% → 2025 45.8%，趨勢 ↑↑）、ROIC vs WACC 超額 ~35%p、Net Yield $583 +7.4%（趨勢 ↑）；54% 重複客率（業界最高）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>→ holding</strong> + 證據：12M 內 (a) 同業 ROIC gap 從 RCL 47.7% vs VIK 27.5%（差 +20.2pp，2024）擴大到 RCL 47.7% vs VIK 45.8% 並列（2025 EOY，差 +1.9pp） — 品牌力轉換為財務 outcome 加深 ↑；(b) 但 Celebrity River Cruises 2025/2026 announced 並 2027 開航，已 sold out 2027 首季 inaugural season + 計畫 2031 達到 20 條船 — 對 VIK 河輪正面衝擊 ↓。<strong>兩個 vector 對沖 → 淨值為 holding</strong>。</td></tr>
+</table>
+
+<p><strong>A1 sourced data points（≥ 5 floor 校驗）</strong>：</p>
+<ol>
+<li><strong>Conde Nast Readers' Choice 2025</strong>：VIK 河輪 #1 第 5 連、海輪 #1 第 5 連（來源：vikingcruises.com Conde Nast 2025 / SeekingAlpha 2026-Q1）— 數字 + 來源 + 日期 ✅</li>
+<li><strong>U.S. News 2026 Best Luxury Cruise Line</strong>：VIK 排名 #1（來源：stocktitan.net 2026/01 VIK news ranking）</li>
+<li><strong>ROIC 45.8% (FY25 EOY)</strong>：(來源：Viking IR Q4 2025 earnings 2026-03-03，business wire press release)；vs FY24 27.5%（DD §2）— 1 年 +18.3pp</li>
+<li><strong>Net Yield $583 +7.4% YoY (FY25)</strong>：(來源：Viking IR Q4 2025 press release)；Q3 2025 單季 Net Yield $617 史上最高（來源：Viking Q3 2025 press release）</li>
+<li><strong>54% repeat-guest rate (FY25)</strong>：(來源：Viking IR Q4 2025 transcript via Motley Fool 2026-03-03)</li>
+<li><strong>110 river docking station owned/controlled</strong>：CEO Hagen 在 Q4 2025 法說明確列為 "fairly protective things"（來源：Q4 2025 transcript / seatrade-cruise 2026/02）</li>
+<li><strong>ABPCD +5.5% YoY (2026 forward)</strong>：(來源：Viking IR Q4 2025 press release 2026-03-03)</li>
+</ol>
+<p>✅ <strong>達標 7 / 5 floor</strong></p>
+
+<p><strong>A1 獨立結論（一句話）</strong>：VIK 護城河強度 8/10（品牌雙料 5 連 + 110 docking station 控制 + ROIC 45.8% 業界最高），moat_trend = → holding（品牌深化與 Celebrity 2027 進場威脅對沖；ROIC 1 年 +18pp 為強加深證據，但 Celebrity 已賣完 2027 首季 inaugural 是強威脅證據）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析（獨立結論：🟢 順風，runway_post_y5 = 🟢 寬）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>Luxury cruise TAM <strong>$10.23B（2025）</strong>，CAGR <strong>9-12.32%</strong>（多 source）至 2032，2030 預估 $20-23B；Boomer + Gen X 滲透率仍 &lt; 30%；Cruise 總 TAM $9.84B → $25.06B 2033（CAGR 12.4%）</td></tr>
+<tr><td>供需判斷</td><td><strong>結構性供給偏緊</strong>（全球造船廠 cap 14-16 ships/yr，2027 orderbook 15 ships / 2028 13 ships 已 locked）；demand 端 86% pre-booked + advance booking +13% YoY → 未來 12M 供需偏緊延續</td></tr>
+<tr><td>最大技術替代風險</td><td>無實質技術替代（cruise 是體驗型 service，VR/AR 不可替代）。AI 對 cruise 為「行銷 + 定價工具」非替代品，VIK 直接受益</td></tr>
+<tr><td>最大政策/地緣風險</td><td><strong>IMO Net-Zero Framework</strong>：2025 MEPC 83 通過原則性協議，2030 目標 GHG -20-30%，但 2025 後期討論再起爭議；歐盟 ETS 每噸 CO2 €90 已實施 — VIK LNG 船較多影響小，但 capex 壓力存在</td></tr>
+<tr><td>議價權位置</td><td>對上游（4 家造船廠 Fincantieri / Meyer Werft / Meyer Turku / Chantiers）<strong>中</strong> — VIK 是大客戶但船廠時間就是 power；對下游（55+ 富裕客）<strong>強</strong> — Net Yield 業界 2.5-3.5×、54% 重複客、86% 預訂率</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong> — 判準：① S 曲線位置 = 中早期（Boomer demographic supercycle 至 2035-2040 才峰值，目前 2026 在前半段）；② Y5 末（2030）TAM 滲透率 ~25-28%（從目前 ~15% 提升）、仍有 3-4x 空間至飽和；③ 第二曲線：Gen X 退休（2026-2035）+ 印度 / 亞太 outbound luxury travel（Brahmaputra 2027、Ganges 2028 啟動，2029-2035 ramp）</td></tr>
+</table>
+
+<p><strong>A2 sourced data points（≥ 5 floor 校驗）</strong>：</p>
+<ol>
+<li><strong>Luxury cruise TAM $10.23B (2025), CAGR 12.32%</strong>（來源：maximizemarketresearch 2026-Q1）</li>
+<li><strong>Luxury cruise market $7.5B (2024) → $15B (2032) at 9% CAGR</strong>（來源：futuredatastats 2026）</li>
+<li><strong>Global cruise TAM $9.84B (2025) → $25.06B (2033), CAGR 12.4%</strong>（來源：Mordor Intelligence / Grand View 2026）</li>
+<li><strong>Global shipyard cap 14-16 cruise ships/yr</strong>（來源：cruiseindustrynews.com 2026-03 orderbook update）</li>
+<li><strong>2027 orderbook 15 ships / 27,860 berths</strong>（來源：cruiseindustrynews.com 2026-03）</li>
+<li><strong>2028 orderbook 13 ships / 30,770 berths</strong>（來源：cruiseindustrynews.com 2026-03）</li>
+<li><strong>Boomer leisure travel spending $120B annually</strong>（來源：The Freeman Mag / Citizens Bank survey 2025）</li>
+<li><strong>$84T Great Wealth Transfer through 2045</strong>（來源：Cerulli Associates / Fortune 2025-03 / Bankrate）</li>
+<li><strong>IMO 2030 GHG -20-30% target, MEPC 83 April 2025</strong>（來源：globalmaritimeforum.org / theicct.org 2025-07）</li>
+<li><strong>EU ETS €90/ton CO2 maritime (2025+)</strong>（來源：geopoliticsunplugged substack）</li>
+</ol>
+<p>✅ <strong>達標 10 / 5 floor</strong></p>
+
+<p><strong>A2 獨立結論（一句話）</strong>：產業順風 🟢，runway_post_y5 = 🟢 寬 — Y5 末 TAM 滲透率 ~25-28% 仍有 3-4x 空間，4 家造船廠物理 supply lock 至 2030+，Boomer demographic supercycle + Gen X 退休 + 印度/亞太第二曲線銜接清晰。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立結論：A 級體質，capex 重 / capital return 零）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：<strong>River 49.8%</strong> ($2.81B 2026 booking)；成長引擎：<strong>Ocean 48.3%</strong> ($2.73B +16% YoY)；新興：Expedition + 印度 river / 拖累：無顯著</td></tr>
+<tr><td>客戶集中度</td><td>無大客戶集中（B2C），但<strong>地理集中度高</strong>：北美 + 歐洲 ~85%；54% repeat-guest 構成穩定基本盤</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（Net Yield $543 → $583 +7.4% YoY、ABPCD +5.5% 2026 forward）；定價權 <strong>強</strong>（業界 2.5-3.5× peer）</td></tr>
+<tr><td>未來金雞母</td><td><strong>(1) Ocean fleet（25 條 2031 目標）+ Expedition</strong>（高毛利、deeper margin）；<strong>(2) India / 亞太</strong>（Brahmaputra 2027、Ganges 2028，目前佔 &lt; 1% TAM 估 $1B+）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 <strong>1.34</strong>（FCF $1.53B / NI $1.15B）；Adj Gross margin <strong>22.6%</strong> YoY +22.6%；壓力測試：營收 −20%，Net Debt 2.1B + Cash 3.8B 可撐 ~6 季（含 capex 暫停假設）</td></tr>
+<tr><td>資本配置紀律</td><td>2025 capex $990M、2026 capex $1.2B（淨 $70M after financing）—<strong>完全 reinvest 模式</strong>（無 buyback、無 dividend；管理層在 Q4 2025 法說明確說「too early」）；2025/10 issued $1.7B 5.875% notes due 2033 refinanced 2027 notes — <strong>maturity laddered 至 2028+</strong>；併購無；CEO Hagen 親身導向強</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td><strong>EPS CAGR 預估 13%/yr</strong>（FY25 $2.61 → FY30 ~$4.80-5.20，含 capacity +7%/yr ramp + Net Yield +4-5%）；<strong>5Y 末 forward PE 預估 18x vs 當前 20.6x</strong>（向同業中位 11.3x 與品質溢價 50-70% 收斂均值）→ re-rate 貢獻 = (18/20.6)^(1/5) - 1 = <strong>−2.7%/yr</strong>；<strong>現金股息率 0%</strong>（無發股息政策）；<strong>淨買回率 0%</strong>（無 buyback）。Base 合計 ≈ +10.3%/yr</td></tr>
+</table>
+
+<p><strong>A3 sourced data points（≥ 6 floor 校驗）</strong>：</p>
+<ol>
+<li><strong>FY25 Revenue $6.50B +21.9% YoY</strong>（來源：Viking IR Q4 2025 press release 2026-03-03）</li>
+<li><strong>FY25 Adj NI $1,165.1M +43.9% YoY</strong>（來源：同上）</li>
+<li><strong>FY25 FCF $1.53B</strong>（來源：DD §6 / Viking IR）</li>
+<li><strong>2026 advance booking $6.0B +13% YoY, 86% booked as of 2026-02-15</strong>（來源：Viking IR Q4 2025）</li>
+<li><strong>FY26E EPS $3.34（consensus 10+ analysts）</strong>（來源：stockanalysis.com / WallStreetZen 2026-Q1）</li>
+<li><strong>FY27E EPS $4.08（range $3.66-$4.68）</strong>（來源：stockanalysis.com / Investing.com）</li>
+<li><strong>FY26 capex $1.2B（淨 $70M after financing）</strong>（來源：Viking Q3 2025 transcript via Investing.com 2025-11）</li>
+<li><strong>Net leverage 1.1x (year-end 2025), net debt $2.1B</strong>（來源：Viking IR Q4 2025 press release）</li>
+<li><strong>$1.7B 5.875% senior unsecured notes due 2033 issued Oct 2025</strong>（來源：Viking IR / sahmcapital.com 2025-11）</li>
+<li><strong>Cash $3.8B + undrawn revolver $1.0B</strong>（來源：Viking Q4 2025）</li>
+<li><strong>No dividend / no buyback policy stated Q4 2025 call</strong>（來源：Viking Q4 2025 transcript via wallstreetzen.com）</li>
+<li><strong>2026 capacity +7% (River +6% / Ocean +9%); yield growth mid-single-digit guide</strong>（來源：Viking Q4 2025 press）</li>
+</ol>
+<p>✅ <strong>達標 12 / 6 floor</strong></p>
+
+<p><strong>A3 獨立結論（一句話）</strong>：A 級體質（FCF 轉換率 1.34、ROIC 45.8%、net leverage 1.1x）但<strong>完全 reinvest 模式</strong> — 0% 股息、0% buyback、capex 重（2026 $1.2B），5Y Base IRR composition 必須 100% 來自 EPS 複利（+13.0%/yr），estimated re-rate ~−2.7%/yr 是 buffer，shareholder return 為 0%。可抱性「自然複利好抱」但無防禦緩衝。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取（DD_VIK_20260418 + ID_LuxuryTravelCruise + ID_BoomerTravelSupercycle）</summary>
+<div>
+
+<table>
+<tr><th>來源</th><th>項目</th><th>數值</th></tr>
+<tr><td>DD_VIK_20260418</td><td>Quality Score（綜合）</td><td>8.5 / 10</td></tr>
+<tr><td>DD_VIK_20260418</td><td>R:R MA60 / MA200 / MA104w</td><td>短期 -5.3% / 中期 -2.8% / 長期 +39.9%（R:R 1.33x 僅長期）</td></tr>
+<tr><td>DD_VIK_20260418</td><td>三引擎目標價</td><td>保守 $60（Bear PE 16x）、中性 $83（PE 20x × FY+1 $4.17）、樂觀 $120（PE 24x × FY+2 $5.00）</td></tr>
+<tr><td>DD_VIK_20260418</td><td>Bear anchor</td><td>$60（QC-30 收斂 PE 16x × FY+1 EPS $4.17 × 0.9）</td></tr>
+<tr><td>DD_VIK_20260418</td><td>紅旗清單</td><td>(1) Fwd PE 5Y 分位 ~95% 透支；(2) QC-30 同業 +82% 溢價；(3) 共識目標 $79 低於現價；(4) Celebrity 2027 進場；(5) Hagen 80+ 接班</td></tr>
+<tr><td>DD_VIK_20260418</td><td>§0.5 核心假設 H1/H2/H3</td><td>H1 結構性 Boomer demand 強化；H2 capacity absorption 強化；H3 multiple 維持 18-22x <strong>削弱</strong>（v12.0 觸發）</td></tr>
+<tr><td>DD_VIK_20260418</td><td>§8 final_signal</td><td><strong>C</strong>（衛星觀察）</td></tr>
+<tr><td>ID_LuxuryTravelCruise_20260427</td><td>產業評級</td><td>10/10（Phase IV：嬰兒潮 + 4 廠 supply + 機場 concession 三層結構）</td></tr>
+<tr><td>ID_LuxuryTravelCruise_20260427</td><td>非共識</td><td>cruise demographics 結構性 demographic 順風非循環性；純 luxury cruise（VIK）是嬰兒潮獨佔非 mass cruise 子集</td></tr>
+<tr><td>ID_LuxuryTravelCruise_20260427</td><td>VIK 關聯</td><td>FY25 EBITDA +43.9% / 2026 86% booked，核心覆盤標的之一</td></tr>
+<tr><td>ID_BoomerTravelSupercycle_20260429</td><td>產業評級（母題）</td><td>18/18（Phase II 早中段，demographic supercycle 啟動 + 2030+ supply lock）</td></tr>
+<tr><td>ID_BoomerTravelSupercycle_20260429</td><td>VIK 排名</td><td>5 檔 basket（DAL/RCL/VIK/H/AENA/AXP）之一，2026-2030 預期 alpha vs SPX +6-9% 年化</td></tr>
+<tr><td>ID_BoomerTravelSupercycle_20260429</td><td>關鍵窗口</td><td>EBITDA peak 2029-2030（晚共識 2-3 年），supply lock 至 2030+</td></tr>
+</table>
+
+<p class="note">A4 純數據輸入，不產出獨立結論。Phase B 將以上 DD/ID 結論與 A1-A3 比對辨識交叉矛盾。</p>
+
+</div>
+</details>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印 / 存 PDF</button>
+
+</body>
+</html>

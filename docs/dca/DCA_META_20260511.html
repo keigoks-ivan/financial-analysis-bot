@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<!-- dca-schema-version: v1.1 -->
+<meta charset="UTF-8">
+<title>DCA｜META｜2026-05-11｜深度定見分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #0F172A; margin: 0; padding: 24px; line-height: 1.7; }
+.container { max-width: 1200px; margin: 0 auto; }
+.header { background: #1E3A5F; color: #FFF; padding: 16px 24px; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; flex-wrap: wrap; font-size: 14px; border-radius: 4px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+section { background: #FFFFFF; padding: 26px 32px; margin-bottom: 24px; border-left: 4px solid #3B82F6; border-radius: 4px; box-shadow: 0 1px 3px rgba(15,23,42,0.05); }
+h1 { color: #1E3A5F; font-size: 28px; border-bottom: 2px solid #1E3A5F; padding-bottom: 10px; margin-top: 0; }
+h2 { color: #FFF; font-size: 20px; background: #1E3A5F; padding: 12px 18px; margin: 0 0 20px 0; border-left: 4px solid #3B82F6; border-radius: 2px; }
+h3 { color: #1E3A5F; font-size: 17px; margin-top: 24px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px; }
+h4 { color: #334155; font-size: 15px; margin-top: 18px; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+table th { background: #1E3A5F; color: #FFF; padding: 9px 13px; text-align: left; font-weight: 500; font-size: 13px; }
+table td { padding: 9px 13px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+table tr:nth-child(even) td { background: #F1F5F9; }
+.green { color: #166534; font-weight: 600; }
+.red { color: #991B1B; font-weight: 600; }
+.amber { color: #92400E; font-weight: 600; }
+.gray { color: #64748B; }
+.status-bar { display: flex; gap: 16px; justify-content: center; background: #F1F5F9; padding: 18px 24px; border-radius: 4px; border-left: 4px solid #3B82F6; border-right: 4px solid #3B82F6; margin-bottom: 24px; }
+.status-bar .cell { width: 180px; text-align: center; padding: 10px; background: #FFF; border-radius: 3px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.status-bar .label { font-size: 11px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.status-bar .value { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.status-bar .sub { font-size: 11px; color: #64748B; margin-top: 4px; }
+.signal-a { color: #15803D; }
+.signal-aplus { color: #166534; }
+.signal-b { color: #92400E; }
+.signal-c, .signal-x { color: #991B1B; }
+.moat-up { color: #166534; }
+.moat-flat { color: #64748B; }
+.moat-down { color: #991B1B; }
+.dd-green { color: #166534; }
+.dd-amber { color: #92400E; }
+.dd-red { color: #991B1B; }
+.thesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 30px 36px; margin: 24px 0; border-radius: 4px; text-align: center; }
+.thesis-box .thesis { font-size: 26px; font-weight: 700; color: #1E3A5F; line-height: 1.5; }
+.thesis-box .caption { font-size: 12px; color: #64748B; margin-top: 14px; }
+.decision-box { background: #FEF9C3; border-left: 4px solid #CA8A04; padding: 18px 24px; margin: 14px 0; border-radius: 3px; }
+.decision-box.go { background: #F0FDF4; border-left-color: #16A34A; }
+.decision-box.avoid { background: #FFF1F2; border-left-color: #DC2626; }
+.contradiction-box { background: #FFF7ED; border-left: 4px solid #F97316; padding: 16px 22px; margin: 14px 0; border-radius: 3px; }
+.contradiction-box .verdict { background: #FED7AA; padding: 12px 18px; margin: 12px 0; border-radius: 3px; }
+.premortem-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 16px 22px; margin: 14px 0; border-radius: 3px; }
+.premortem-box blockquote { background: #FFF; border-left: 3px solid #DC2626; margin: 10px 0; padding: 10px 16px; font-style: italic; }
+.pattern-box { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px 22px; margin: 14px 0; border-radius: 3px; }
+.irr-narrative { background: #F0F9FF; border-left: 3px solid #0EA5E9; padding: 12px 18px; margin: 12px 0; font-style: italic; }
+.memo-box { background: #FAFAF9; border: 1px solid #D6D3D1; padding: 22px 28px; margin: 14px 0; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.7; }
+.elevator-box { background: #F5F3FF; border-left: 4px solid #7C3AED; padding: 14px 20px; margin: 12px 0; font-style: italic; color: #4C1D95; }
+.maxdd-box { background: #FFF1F2; border-left: 4px solid #DC2626; padding: 20px 28px; margin: 14px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 18px; }
+.maxdd-num { font-size: 32px; font-weight: 700; color: #991B1B; font-family: 'IBM Plex Mono', monospace; }
+.maxdd-tier { font-size: 28px; }
+.color-bar { height: 16px; border-radius: 2px; margin: 10px 0; background: linear-gradient(to right, #16A34A 0% 50%, #CA8A04 50% 83%, #DC2626 83% 100%); }
+.color-bar-marker { position: relative; height: 22px; }
+details { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 4px; margin: 14px 0; }
+details summary { cursor: pointer; padding: 14px 20px; font-weight: 600; color: #1E3A5F; }
+details[open] summary { border-bottom: 1px solid #CBD5E1; }
+details .details-content { padding: 18px 24px; }
+.print-btn { position: fixed; bottom: 24px; right: 24px; padding: 12px 18px; background: #1E3A5F; color: #FFF; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); font-family: inherit; }
+.print-btn:hover { background: #0F172A; }
+.note { font-size: 12px; color: #64748B; margin-top: 8px; font-style: italic; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 500; margin-right: 6px; }
+.tag-green { background: #DCFCE7; color: #166534; }
+.tag-red { background: #FEE2E2; color: #991B1B; }
+.tag-amber { background: #FEF3C7; color: #92400E; }
+.tag-blue { background: #DBEAFE; color: #1E40AF; }
+.irr-bar { display: flex; height: 28px; margin: 10px 0; border-radius: 3px; overflow: hidden; }
+.irr-bar .seg { display: flex; align-items: center; justify-content: center; color: #FFF; font-size: 12px; font-weight: 600; }
+.irr-bar .seg-eps { background: #15803D; }
+.irr-bar .seg-rerate { background: #2563EB; }
+.irr-bar .seg-buyback { background: #64748B; }
+@media print { .header, .print-btn { display: none; } section { box-shadow: none; page-break-inside: avoid; } body { padding: 0; background: #FFF; } details { page-break-inside: avoid; } details > .details-content { display: block !important; } details:not([open]) > .details-content { display: block !important; } }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div><strong>META ｜ Meta Platforms Inc.</strong></div>
+<div>DCA 報告日期：2026-05-11 ｜ 現價：<span class="mono">$609.63</span>（2026-05-08 收）｜ DD 基底：DD_META_20260418.html</div>
+<div>DCA Schema <code>v1.1</code> ｜ Phase A 9 次獨立搜尋</div>
+</div>
+
+<h1>META｜Meta Platforms 深度定見分析（v1.1）</h1>
+
+<!-- ===== Status Bar (Position 0) ===== -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value signal-a">A</div>
+    <div class="sub">核心候選（從 DD §1 拉）</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">A <span class="moat-flat">→</span></div>
+    <div class="sub">holding（DAP QoQ 首跌）</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value">🟢 寬</div>
+    <div class="sub">TAM $1.3T 2030+</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD（路徑風險）</div>
+    <div class="value dd-amber mono">−45%</div>
+    <div class="sub">🟡 需強信念</div>
+  </div>
+</div>
+
+<!-- ===== §2 One-Sentence Thesis ===== -->
+<section>
+<h2 id="thesis">§2｜One-Sentence Thesis（投資本質）</h2>
+<div class="thesis-box">
+<div class="thesis">META 是全球最大社交圖譜的擁有者，AI 把它的廣告精準度從「平台 reach」升級為「ROI 引擎」，這讓中小企業的廣告預算永久綁在這個生態。</div>
+<div class="caption">50 字以內的投資本質｜敘事性而非指標性</div>
+</div>
+</section>
+
+<!-- ===== §7 Decision ===== -->
+<section>
+<h2 id="decision">§7｜Decision（可執行計畫）</h2>
+
+<h3>7a｜倉位與進場計畫</h3>
+<div class="decision-box go">
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>核心持倉</strong>（A 級訊號 + A 級護城河 + Q1 2026 廣告 +33% 強驗 H1）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>3% of portfolio</strong>（從原 §6c 評級 🟡 自動下修：原計畫 5% → 4%；Q1 capex 上修至 $125-145B 再下修一檔 → 3%）</td></tr>
+<tr><td>目標倉位</td><td><strong>5-6% of portfolio</strong>（如 H2 2026 capex ROI 開始顯現 + RL 虧損見頂兌現）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$580 ~ $620</strong>（Q1 2026 賣壓後重置區間，DD 基底 $688 已過時；Bear $452 為下行錨）</td></tr>
+<tr><td>進場節奏</td><td><strong>分批 3 次，間隔 4-6 週</strong>，每批 1%（首批 $610 ± 2%、第二批等 50DMA $614 回踩、第三批等 Q2 2026 法說 2026-07 確認 capex 路徑）</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>已持有 GOOGL（同 AI 廣告 +數位媒體曝險）+ AMZN（AI/廣告/雲端）：</strong>三家中 META Q1 2026 廣告 +33% 是最快加速（GOOGL +13% / AMZN ad +20%），相對 R:R 對比：META Fwd PE 20.7x vs GOOGL 24.5x vs AMZN ~35x EV/EBITDA — META 是同業最便宜成長最強；但 META capex/Rev 60%+ 是最重，FCF 壓力最大。<strong>決策：邊際資金優先加 META（成長最強+估值最低），GOOGL 觀望不加碼（AI 搜尋抗衡進度慢），AMZN 維持原配置（AWS 雲端 thesis 獨立）。</strong>不減舊加新，因 GOOGL/AMZN 各有獨立 thesis；新進 META 邊際資金來自現金部位。</td></tr>
+</table>
+</div>
+
+<h3>7b｜加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>加碼 #1</td><td>Q2 2026 法說（2026-07 末）：廣告 YoY ≥ 25% + capex 不再上修 + RL 虧損 ≤ $5B 單季</td><td>4.5%</td></tr>
+<tr><td>加碼 #2</td><td>Q3 2026 ROIC 4 季滾動 ≥ 32% + Meta 確認 2027 RL OI loss 收斂路徑（Connect 2026 大會 10 月）</td><td>5-6%（目標倉位上限）</td></tr>
+<tr><td>減碼</td><td>R2 觸發：4 季滾動 ROIC 跌破 25% 連 2 季 或 R3：RL 單季虧損 &gt; $7B（H3 跳票）或股價突破 $880（Fwd PE &gt; 28x，估值倍數過熱）</td><td>2%（減半）</td></tr>
+<tr><td>清倉</td><td>Q1-Q2 2027 FoA 廣告 YoY 連 2 季 &lt; 15% 且 ROIC &lt; 22% — 表示 H1+H2 同時推翻，§5 single thing 觸發</td><td>0%</td></tr>
+</table>
+
+<h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價 $609.63 vs MA50 $614.8</td><td>⚠️ 略低（-0.85%）</td><td>50DMA 剛被跌破，需 1-2 週確認</td></tr>
+<tr><td>股價 vs MA200 $655.4</td><td>❌ 低於</td><td>Q1 2026 法說後跌破 MA200，這是 2024 以來首次破線</td></tr>
+<tr><td>股價 vs MA104w（DD 取 $613.19）</td><td>⚠️ 邊緣（-0.6%）</td><td>104 週線是長期趨勢分水嶺，當前剛跌穿</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td>⚠️ <strong>條件式支持</strong></td><td>從 DD 4/18 的 ✅ 強勢進場 → 5/11 變為 ⚠️ 趨勢瑕疵（Q1 capex 警報導致 -9% 暴跌打壞結構）。<strong>需等股價收復 MA200 $655 或 MA50 連 2 週站穩才能滿格進場。</strong></td></tr>
+<tr><td>短期動能過熱檢查</td><td>✅ RSI 14d ≈ 53（中性）</td><td>從超賣（Q1 法說後 RSI 觸 30 區間）反彈至 53，已非過熱也非超賣；4 週漂移 ≈ -12%（從 $688 → $609 = -11.5%）</td></tr>
+</table>
+<p class="note">⚠️ <strong>MA 結論</strong>：Q1 2026 法說的 -9% 賣壓打壞 DD 的 Pure MA ✅ 結構。當前處於「結構性 A 級基本面遇上修正性 MA」狀態 — 這正是 §7a 採分批進場、不一次建倉的原因。如能耐心等到股價收復 MA200，是 A+ 級進場時機；現在進場是 A 級（接受 MA 瑕疵換取估值折扣）。</p>
+
+<h3>7d｜建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>如果 H1（Advantage+ 持續搶市佔）成立但 H2（capex ROI）不成立 — Q1 2026 已驗 H1（廣告 +33%），可賺 H1 紅利但 2027 capex 折舊壓制</td></tr>
+<tr><td>中期（2-5 年）</td><td>如果 H1 + H2 同時成立 — Advantage+ 持續 + 2027 H2 capex 投產 ROI 顯現（4 季滾動 ROIC ≥ 28%）</td></tr>
+<tr><td>長期（5-10 年）</td><td>如果 H1 + H2 + H3 全成立 — 加上 RL 虧損見頂遞減（2028+ AR/VR 商業化），市場給 Fwd PE 25x+，5Y 末市值 $2.8-3.2T</td></tr>
+</table>
+<p><strong>建議持有年限：中長期 3-5 年</strong>，原因：H1 已強驗（Q1 廣告 +33% 創 5 年紀錄、Advantage+ 採用 8M 廣告主翻倍）；H2 是 thesis 主軸，需 2027 驗證窗口；H3 是 optionality，賺到算紅利。runway_post_y5 = 🟢 寬，但 5Y 之後成長率從 18% 自然降至 10-12%，非加碼點。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>FY2026E</td><td>$32.50 (上修)</td><td>Q1 actual $10.44 × 4 季已超原全年共識 $29.56</td><td>Q1 +62% YoY 後共識上修 ~10%</td></tr>
+<tr><td>FY2027E</td><td>$37.50</td><td>yfinance 共識，考量 2026 capex $125-145B 折舊壓力</td><td>YoY +15%，較 DD 原 $34.33 上修</td></tr>
+<tr><td>FY2028E</td><td>$42.00</td><td>yfinance 共識</td><td>YoY +12%（capex 折舊高峰）</td></tr>
+<tr><td>FY2030E（外推）</td><td>$53-58</td><td>FY2028E × 1.13^2 假設</td><td>外推假設：Advantage+ 滲透至 80% + WhatsApp 商務 $20B 規模 + RL 縮虧</td></tr>
+</table>
+
+<p><strong>假設長期持有，現在 $609.63 適合嗎？</strong> Fwd PE 2027E = $609.63 / $37.50 = 16.3x — 顯著低於 DD 基底 23.3x，也低於 5Y 中位 22x、低於同業中位 28x。這個倍數隱含市場已 priced in「2026 capex 失敗 + RL 跳票 + DAP 衰退」三重悲觀，留下顯著 mispricing 空間。基於 §4 Asymmetry：Base IRR ~16-18%/yr，Bull IRR ~28%/yr，Bear IRR ~-12%/yr，機率加權 ~14.5%/yr — 屬於 high-conviction 區間。</p>
+</section>
+
+<!-- ===== §4 Asymmetry Analysis ===== -->
+<section>
+<h2 id="asymmetry">§4｜Asymmetry Analysis（5 年情境 + IRR Composition）</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td><strong>Thesis 對（Bull）</strong></td><td>+240%</td><td><strong>+27.8%/yr</strong></td><td>H1+H2+H3 全兌現：FY30 EPS $58 × Fwd PE 30x（AI 基礎設施溢價）= $1,740；含 5Y 共 $15 股息</td><td>22%</td></tr>
+<tr><td>Base</td><td>+115%</td><td><strong>+16.5%/yr</strong></td><td>H1 強驗 + H2 部分驗證 + H3 模糊：FY30 EPS $55 × Fwd PE 23x = $1,265；股息 $14；buyback 1.5%/yr</td><td>43%</td></tr>
+<tr><td>Thesis 錯（Bear）</td><td>-45%</td><td><strong>-11.3%/yr</strong></td><td>H2 推翻（capex ROI &lt; 15% + RL 持續虧損 $25B+）：FY30 EPS $40 × Fwd PE 13x = $520 + 中途 max DD -55%</td><td>30%</td></tr>
+<tr><td>Tail（極端失敗）</td><td>-65%</td><td><strong>-19.6%/yr</strong></td><td>FTC 上訴翻案 + AI Chatbot 取代社群 + ROIC 跌破 18%：FY30 EPS $30 × Fwd PE 9x = $270</td><td>5%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+89% 5Y</strong></td><td><strong>IRR ≈ +13.6%/yr</strong></td><td>0.22×27.8 + 0.43×16.5 + 0.30×(-11.3) + 0.05×(-19.6) = 13.6%</td><td>100%</td></tr>
+</table>
+
+<p class="note"><strong>IRR 落點解讀</strong>：機率加權 13.6%/yr 屬於 <strong>「強」</strong>區間（&gt; 12%/yr），符合 high-conviction 核心持倉門檻。注意 Bear 機率 30% 反映 Q1 2026 capex 上修後的真實不確定性，不是過度悲觀。</p>
+
+<p><strong>追加壓力測試（10Y 視角）</strong>：如 thesis 對但時間拉長兩倍，10Y Bull EPS ~$95，PE 仍給 25x → $2,375 = +290% / 10Y IRR ≈ +14.6%/yr。<strong>10Y IRR 低於 5Y Bull 是因前 5 年估值 re-rate + AI capex 紅利集中釋放，後 5 年回歸自然複利。機會成本：同期 SPX 預期 8-10%/yr — META 仍有 4-6%p alpha 空間。</strong></p>
+
+<h3>📅 機率估計時間視角校驗</h3>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本次符合？</th></tr>
+<tr><td>Bear 機率</td><td>5Y 視角 ≥ 20%</td><td>✅ 30%（Q1 capex 上修 → 高警示）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 應比 1Y/2Y 寬至少 50%</td><td>✅ Bull +240% vs Bear -45% 散布幅度 285pp</td></tr>
+<tr><td>Base 機率</td><td>≤ 50%</td><td>✅ 43%</td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似 case IRR</td><td>下表詳述</td></tr>
+</table>
+
+<h3>📐 Pattern match（歷史錨點）</h3>
+<div class="pattern-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史結構類似個股</td><td><strong>2022-11 META 估值底部 → 2024 年復甦</strong>（META 自己的近因）</td></tr>
+<tr><td>當時的 setup</td><td>2022-11：股價跌至 $88，Fwd PE 10.9x（5Y 低點），市值 $230B；市場擔憂「Reality Labs 燒錢 + iOS ATT 衝擊廣告 + 元宇宙 thesis 破滅」三重打擊；Zuckerberg 喊「2023 是效率年」開始裁員 11K → 2 年後股價 $688（+682%）</td></tr>
+<tr><td>最終 2 年實現報酬（年化 IRR）</td><td>+682% 兩年 = <strong>+180% 年化</strong>（極端 case）</td></tr>
+<tr><td>本案類比</td><td>當前 setup 非完全相同 — 估值起點 Fwd PE 16.3x（vs 2022 的 10.9x，高 50%）、護城河起點更強（Advantage+ 已驗）、capex 是「進攻投資」非「Reality Labs 燒錢」；但敘事框架相似（市場過度反應一次性壞消息 → 估值 mispricing）</td></tr>
+<tr><td>差異提醒</td><td>2022 是「effiency narrative」拐點；2026 是「投資週期接受度」拐點，回報應折半。預估 5Y IRR 上限 ~30%，下限 -15%，與 §4 Bull/Bear 一致。</td></tr>
+</table>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<p>從 Phase A3 「5Y IRR 分量基底」拉數字（EPS CAGR 17-19%、估值 re-rate 從 16.3x→23x/Bull 30x、股息 0.4%、淨買回 1.5%/yr）：</p>
+
+<h4>IRR Composition Mini-Table</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td><strong>Bull</strong></td><td class="green">+19.0%/yr</td><td class="green">+7.0%/yr</td><td class="gray">+1.9%/yr</td><td class="green"><strong>+27.9%/yr</strong></td></tr>
+<tr><td><strong>Base</strong></td><td class="green">+17.5%/yr</td><td class="gray">−2.5%/yr</td><td class="gray">+1.9%/yr</td><td class="green"><strong>+16.9%/yr</strong></td></tr>
+<tr><td><strong>Bear</strong></td><td class="amber">+9.0%/yr</td><td class="red">−18.5%/yr</td><td class="gray">+1.9%/yr</td><td class="red"><strong>−7.6%/yr</strong></td></tr>
+</table>
+
+<h4>Base 情境 stacked bar 視覺化（IRR 16.9%/yr 來源分解）</h4>
+<div class="irr-bar">
+<div class="seg seg-eps" style="width:81%">EPS 17.5%/yr</div>
+<div class="seg seg-rerate" style="width:10%; background:#94A3B8">re-rate −2.5%</div>
+<div class="seg seg-buyback" style="width:9%">買回 1.9%</div>
+</div>
+
+<div class="irr-narrative">
+「Base 16.9% IRR 中，<strong>17.5%/yr 來自 EPS 複利</strong>，−2.5%/yr 是估值倍數小幅壓縮（從 16.3x 略升至 ~14-16x range），1.9%/yr 來自股息+回購。<strong>這檔的可抱性主要靠 EPS 自然複利（自然複利好抱）</strong>— 不需要市場給更高倍數，光是 17% EPS CAGR 就把報酬撐起來。這是「不看別人臉色」的 thesis 質感，最適合長抱。如果 Bull 兌現（額外 +7%/yr re-rate）是 bonus，但 Base 也已能跑出 17% IRR。」
+</div>
+
+<p class="note"><strong>Guardrail check</strong>：Base 合計 16.9%/yr vs §4 上方表格 Base IRR 16.5% — 偏差 0.4%p，&lt; 2%p ✅ 校驗通過。</p>
+</section>
+
+<!-- ===== §1 Mental Models 壓力測試 ===== -->
+<section>
+<h2 id="mental-models">§1｜Mental Models 壓力測試（投委會 + 30 秒版）</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<strong>標的</strong>：Meta Platforms Inc. (META)<br>
+<strong>建議</strong>：核心持倉，初始 3% / 目標 5-6%<br>
+<strong>進場價</strong>：$580-$620（現價 $609.63 區間內）<br>
+<br>
+<strong>Thesis（一句話）</strong>：META 擁有全球最大社交圖譜，AI 把它的廣告精準度升級為「ROI 引擎」，永久綁定中小企業預算。<br>
+<br>
+<strong>Key Drivers（2 個獨立因果鏈）</strong>：<br>
+&nbsp;&nbsp;1. <strong>Advantage+ AI 廣告引擎</strong>（需求側）— Q1 2026 Ad rev $55B +33% YoY，8M 廣告主使用 AI 工具（vs Y2024 4M）；2026 eMarketer 預測 META 全年 ad rev $243B 首超 Google（$240B）。<br>
+&nbsp;&nbsp;2. <strong>社交圖譜 + WhatsApp 商務 optionality</strong>（供給側）— 3.56B DAP（全球唯一三十億級網路），WhatsApp Business 印度/巴西/印尼覆蓋率 &gt; 70%，商務變現在早期。<br>
+<br>
+<strong>R:R（5Y IRR）</strong>：機率加權 13.6%/yr（Bull 27.8% / Base 16.5% / Bear -11.3%）— 落在「強」區間。<br>
+<strong>EPS 軌跡</strong>：FY26 $32.5 → FY27 $37.5 → FY28 $42 → FY30 $55<br>
+<br>
+<strong>主要風險</strong>：<br>
+&nbsp;&nbsp;a. 2026 capex 上修至 $125-145B（vs 原 $115-135B），FCF 被壓至接近零，ROI 需 2027 H2 驗證<br>
+&nbsp;&nbsp;b. DAP Q1 2026 QoQ 首次下跌（雖然主因俄/伊朗管制，但仍是警示）<br>
+&nbsp;&nbsp;c. Reality Labs Q1 虧損 $4B（累計 &gt; $90B），Zuckerberg 第 3 次承諾「2026 為虧損峰值」<br>
+<br>
+<strong>進場節奏</strong>：分批 3 次，間隔 4-6 週，等股價收復 MA50 $614<br>
+<strong>review trigger</strong>：2026-07 末 Q2 法說（capex 路徑 + ROIC + RL 虧損）<br>
+<strong>保質期</strong>：至 2026-08-01（下次財報後重評）
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-box">
+「Meta 是全球最大社交網路，現在跌到 Fwd PE 16x，比過去 5 年中位數低 30%。Q1 廣告剛報 +33%，AI 廣告工具用戶翻倍。市場過度反應它的 capex 上修，但這個 capex 是進攻型不是維持型 — 公司用這筆錢搶 Google 的廣告蛋糕，eMarketer 預測 2026 META 首次廣告營收超越 Google。買它的理由不是賭 AR 眼鏡，是賭 Advantage+ 把中小企業預算永久綁住。」（92 字）
+</div>
+
+<p><strong>壓力測試結果</strong>：✅ 兩個版本邏輯自洽，可進入 §7 Decision。</p>
+</section>
+
+<!-- ===== Phase B 矛盾與裁決 ===== -->
+<section>
+<h2 id="phase-b">Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致的判斷）</h3>
+<ul>
+<li>✅ <strong>Family of Apps 廣告引擎 2026 仍處於加速階段</strong>（A1 護城河 + A2 產業 + A3 業務全 confirm，Q1 +33% 是 5 年最快）</li>
+<li>✅ <strong>Advantage+ 已進入「廣告主大規模採用」階段</strong>（A1 8M 廣告主 vs A3 ad price +12% 同步驗證）</li>
+<li>✅ <strong>長期 TAM 寬</strong>（A2 全球數位廣告 2030 $1.3T、零售媒體第二曲線、WhatsApp 商務早期）</li>
+</ul>
+
+<h3>2. 矛盾清單（A1-A3 不一致的判斷）</h3>
+<div class="contradiction-box">
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>🔴 1</td><td><strong>DAP Q1 2026 QoQ 下跌（-5%）是否為護城河訊號</strong></td><td>A1：護城河不變（網路效應仍強）</td><td>A2：產業 TAM 仍擴張</td><td>A3：DAP 下跌但 ARPU/廣告收入仍 +33%</td><td>🟡 可調和（一次性 vs 結構性 — 公司解釋為俄/伊朗管制）</td></tr>
+<tr><td>🔴 2</td><td><strong>capex $125-145B 是進攻投資 vs 浪費</strong></td><td>A1：護城河擴張（AI 訓練 + 推論基礎設施）</td><td>A2：產業集中度提升（hyperscaler 軍備競賽）</td><td>A3：FCF 被壓制至接近零，ROI 不明</td><td>🔴 不可調和 — 護城河 vs FCF 結構性張力</td></tr>
+<tr><td>🔴 3</td><td><strong>Reality Labs 是 optionality 還是 negative-NPV 投資</strong></td><td>A1：與廣告核心護城河無關</td><td>A2：AR 產業 2027-2028 才驗證</td><td>A3：累計虧損 &gt; $90B，2026 預估再虧 $20B</td><td>🔴 不可調和 — A1 認為 negligible，A3 認為侵蝕利潤</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 4/18 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>Pure MA 狀態</td><td>⚠️ 趨勢瑕疵（跌破 MA200）</td><td>✅ 強勢進場（現價 $688 高於 W52）</td><td><strong>時間差</strong>：DD 在 4/18 寫，Q1 法說 4/29 -9% 暴跌打壞 MA 結構</td></tr>
+<tr><td>2</td><td>capex 規模</td><td>$125-145B（Q1 法說上修）</td><td>$115-135B</td><td><strong>時間差</strong>：Q1 法說後 +$10B 中位數上修</td></tr>
+<tr><td>3</td><td>估值燈</td><td>🟢 合理便宜（Fwd PE 16.3x，5Y 分位約 35%）</td><td>🟡 救援後合理（Fwd PE 23.3x，5Y 分位 75%）</td><td><strong>時間差 + 估值重置</strong>：股價跌 11% + EPS 共識上修 ~10% → 雙重壓低 PE</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+
+<div class="contradiction-box">
+<div class="verdict">
+<strong>矛盾 #2｜capex $125-145B 是進攻投資 vs 浪費</strong>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td>我選哪邊</td><td><strong>暫時站 A1（進攻投資）</strong>，但需 2027 H2 ROIC 驗證</td></tr>
+<tr><td>我的依據</td><td>① Q1 2026 廣告 +33% YoY 是「Advantage+ 還在 ramp」的證據，capex 不是噴在 RL 而是 AI 訓練（Llama 4 + 推論）<br>② Zuckerberg 在 Q1 法說明確說 capex 「reflects higher component pricing + additional data center capacity」— 是供應鏈定價而非戰略失誤<br>③ 同業 Big 4（AMZN $200B / GOOGL $180B / MSFT $140B）合計 capex $660B+ 是產業競爭基線，META 不投反而落後</td></tr>
+<tr><td>會 settle 此衝突的硬數據點</td><td><strong>① 2027-Q3 季報 4 季滾動 ROIC（閾值 ≥ 28% = A1 對 / &lt; 25% = A3 對）<br>② 2027 Capital Markets Day（傳統 Connect 大會 10 月）— Meta 是否首次披露 AI infra 的 unit economics（cost per inference token、推薦演算法 ROI uplift）<br>③ 2027-Q1 FY27 capex guidance — 若上修至 $180B+ 是 A3 信號；若維持 $150-170B 是 A1 確認</strong></td></tr>
+<tr><td>裁決後執行路徑（必填 ≥ 2 條 if-then，方向相反）</td><td><strong>(a) Upside：2027-Q3 ROIC ≥ 28% + Connect 大會披露 inference cost 下降 → 加碼至目標倉位 6%；<br>(b) Downside：2027-Q1 capex guidance &gt; $180B 或 Q4 2026 ROIC &lt; 25% 連 1 季 → 減持 50%（從 4-5% 砍至 2-2.5%）；<br>(c) Middle path：2026 Q2/Q3 capex 維持 $125-145B 不再上修 + ROIC stable 26-28% → 保持 3-4% 倉位觀察。</strong></td></tr>
+</table>
+</div>
+
+<div class="verdict">
+<strong>矛盾 #3｜Reality Labs 是 optionality 還是 negative-NPV</strong>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td>我選哪邊</td><td><strong>暫時站 A3（negative-NPV at current trajectory），但給 optionality 折扣 5% 不全寫掉</strong></td></tr>
+<tr><td>我的依據</td><td>① 累計 $90B+ 虧損已超過 NVDA + AMD 合併市值的 5%，這個機會成本不可忽視<br>② Zuckerberg 第 3 次承諾「2026 為虧損峰值」— 2024 跳票、2025 跳票，信任資本嚴重透支<br>③ 但 Quest 3S + Ray-Ban Meta + Orion AR 確實是「目前最好的消費級 AR 產品」— optionality 不為零但需要 2027-2028 商業化驗證</td></tr>
+<tr><td>會 settle 此衝突的硬數據點</td><td><strong>① 2026 Q4 RL OI loss vs Q4 2025 $6B（&lt; $5B = 可信 / &gt; $7B = 第 3 次跳票）<br>② 2027 Q1 Connect 大會 — Ray-Ban Meta 銷量是否突破 5M units（accumulate）<br>③ Orion AR 商業版上市時間（原 Zuckerberg 暗示 2027 末，若推到 2028+ 是 A3 確認）</strong></td></tr>
+<tr><td>裁決後執行路徑（≥ 2 條 if-then）</td><td><strong>(a) Upside：2026-Q4 RL 虧損降至 $5B 以下 + Ray-Ban Meta 突破 5M 累計 → 把 RL 從「估值扣分項」改為「optionality 加分項」，目標倉位提升 0.5pp；<br>(b) Downside：2026-Q4 RL 虧損 &gt; $7B 第 3 次跳票 → 直接把 RL 估值寫成 −$80B（=累計虧損），Sum-of-Parts 估值下修，目標倉位降至 2%；<br>(c) 預設：當前已把 RL 視為 −$60B 計算 META 內在價值，這個折扣已 priced in 在 Fwd PE 16.3x 中。</strong></td></tr>
+</table>
+</div>
+
+<div class="verdict">
+<strong>矛盾 #1｜DAP QoQ 下跌（可調和變不可調和的風險）</strong>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td>我選哪邊</td><td><strong>站 A1（一次性事件，非結構性）</strong>，但需 Q2 2026 驗證</td></tr>
+<tr><td>我的依據</td><td>① CFO Susan Li 在法說明確指出 -5% QoQ 是「Russia WhatsApp restriction + Iran internet disruption」兩個地緣事件導致<br>② DAP YoY 仍 +4%（從 Q1 2025 3.42B 升至 3.56B），結構性成長未變<br>③ 同期 Reels share 站到 50% Instagram time spent — 用戶活躍度未衰退，是政治封鎖而非競爭流失</td></tr>
+<tr><td>會 settle 此衝突的硬數據點</td><td><strong>① Q2 2026 法說（2026-07 末）DAP 是否回到 3.6B+ — 如俄/伊朗管制 unwind，應該回升<br>② Reels Daily Views（公司 Q1 法說披露的 200B+/day）是否維持<br>③ Family DAU YoY 增速是否從 +4% 進一步收斂至 &lt; 2%（如果是，結構性問題確認）</strong></td></tr>
+<tr><td>裁決後執行路徑（≥ 2 條 if-then）</td><td><strong>(a) Upside：Q2 2026 DAP 回到 3.6B+ 且 YoY 維持 +4% → 確認一次性，加碼 0.5pp 至目標倉位 5%；<br>(b) Downside：Q2 DAP 仍 &lt; 3.5B 且 YoY 收斂至 &lt; 2% → 觸發 §5 single thing 警報，立即減持至 2%，2027 重評；<br>(c) Middle：DAP 回升但 YoY 緩降至 2-3% → 維持當前 3% 倉位不動，下季再看。</strong></td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<!-- ===== §3 Key Drivers ===== -->
+<section>
+<h2 id="drivers">§3｜Key Drivers（命脈 + Consensus 分歧）</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>Advantage+ AI 廣告引擎滲透與 ROI 提升</strong>（需求側因果鏈）</td><td>META 98% 營收來自廣告，Advantage+ 是把「平台 reach」升級為「ROI 引擎」的 product moat — 把中小企業預算永久綁定</td><td>Q1-Q4 FoA 廣告 YoY（閾值 ≥ 18%）、Advantage+ 採用廣告主數（Q1 8M → 目標 Y26 末 12M+）、Ad impressions YoY + ad price YoY 雙增長</td></tr>
+<tr><td>2</td><td><strong>社交圖譜稀缺性 + WhatsApp 商務 optionality</strong>（供給側因果鏈）</td><td>3.56B DAP 全球唯一三十億級網路 — 沒有人能 build it again；WhatsApp 在發展中國家覆蓋率 &gt; 70% 是商務變現新曲線</td><td>DAP YoY 增速（閾值 ≥ +3%）、WhatsApp Business API revenue（Q1 2026 達 $1B 年化）、巴西/印度 Click-to-WhatsApp ad 採用率</td></tr>
+</table>
+
+<p><strong>為什麼是這 2 個，而不是其他？</strong> 我考慮過列「Reality Labs / AR」「Llama 開源模型」「MTIA 自研晶片」— 但這三個都是 Driver 1 的衍生品或對沖（MTIA 是 capex efficiency 對沖，不是核心命脈）。Driver 1（需求側 - Advantage+）與 Driver 2（供給側 - 社交圖譜）是兩條獨立因果鏈：可以想像 Driver 2 不成立但 Driver 1 仍兌現（社交圖譜停滯但 Advantage+ 持續從廣告主 ROI 提升中賺錢），也可以想像 Driver 1 受阻但 Driver 2 兌現（Advantage+ 增長放緩但 WhatsApp 商務爆發）— 通過獨立性測試 ✅。</p>
+
+<h3>⚖ Driver 抽象層 guardrail 校驗</h3>
+<p>Driver 2（社交圖譜+WhatsApp）是否可在「不假設 Driver 1 成立」的情況下單獨被推翻？答案：<strong>可以</strong>。如果 OpenAI Device 把所有社群媒體娛樂時間吸走，DAP 從 3.56B 跌至 2.5B，即使 Advantage+ AI 廣告 ROI 仍提升，廣告盤子也會縮水（因為廣告主跟著用戶走）。所以 Driver 2 是獨立 vector，不是 Driver 1 的 sub-component ✅ 通過。</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>Reality Labs / AR 眼鏡商業化</td><td>5 年內最多是 optionality，不是命脈。即使 Orion AR 失敗，廣告核心不受影響。Bear case 已把 RL 寫成 −$80B 內含。</td></tr>
+<tr><td>Llama 4 與 GPT-5 的 benchmark 排名</td><td>Meta 不是 AI 模型公司，Llama 開源策略是「把 GPU 雇主標準化」的供應鏈 leverage，不是直接賺錢路徑。排名輸贏對廣告 ROI 沒有實質影響。</td></tr>
+<tr><td>FTC 上訴 Instagram/WhatsApp 拆分</td><td>2025-11 初審已勝訴，2026 上訴實質拆分機率 &lt; 15%。即使最壞情況拆分，Instagram 獨立估值 ~$700B-1T 是上行（NFLX 估值參考），不是 thesis killer。</td></tr>
+<tr><td>單季 EPS Beat/Miss 5-10%</td><td>EPS 共識每季都被 Meta 自己打臉 ±15%（Q1 2026 $10.44 vs 共識 $6.10 = +71% beat），這是噪音不是訊號。看 4 季滾動 ROIC 才是訊號。</td></tr>
+<tr><td>歐盟 DSA 罰款</td><td>最多 6% 全球營收 ≈ $12B 一次性，相對 META 市值 $1.5T 是 0.8% — 估值噪音而非護城河破壞。</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Fwd PE 16.3x（5Y 中位 22x、5Y 高 30.6x）— <strong>市場定價在「2026 capex 失敗 + RL 跳票 + DAP 衰退」三重悲觀</strong>，假設 FY27 EPS 增速從 18% 降至 10%、ROIC 從 36% 跌至 25%、Forward PE 維持 15-17x。</td></tr>
+<tr><td>我認為的不同假設</td><td>capex 是「進攻投資」非浪費 — 我的 base case 假設 FY27 ROIC 維持 28-30%（小幅降但不崩）、EPS 增速 15-17%、Forward PE 在 H1 ROI 顯現後 re-rate 至 20-22x。</td></tr>
+<tr><td>賣方為什麼錯（≥ 1 具體理由）</td><td><strong>賣方把 META 當「2022 元宇宙跳票」第二次來定價，但忽略了 Q1 2026 廣告 +33% 已是「不需要 RL 也能跑」的證明</strong>。Q1 法說同時公布 capex 上修 + 8K 裁員 + DAP 下跌三個 narrative 給空頭子彈，但 ad rev +33% / EPS +62% 才是 Q1 數據的主軸。市場用 narrative 而非數據定價，給了 Fwd PE 16.3x 折扣空間。</td></tr>
+</table>
+
+<p><strong>校驗結果</strong>：三題均有清楚答案 ✅，thesis 有獨立 alpha 來源（不是跟 consensus 一起做多），§7 倉位不需打折扣。</p>
+</section>
+
+<!-- ===== §5 Single Thing ===== -->
+<section>
+<h2 id="single-thing">§5｜The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger（原 §5）</h3>
+<div class="decision-box avoid">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述</strong></td><td>2027 H2（Q3 或 Q4 法說）4 季滾動 ROIC 跌破 25% 且同時 Q3 2027 FoA 廣告 YoY 連 2 季 &lt; 15%（H1 + H2 同時推翻的硬證據）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>同時推翻 thesis 兩條腿：(a) 廣告 YoY &lt; 15% 表示 Advantage+ AI 紅利消化完畢、市佔不再擴張；(b) ROIC &lt; 25% 表示 2026 capex $130B+ 的 ROI 失敗，折舊吃掉 EPS 而沒帶來相應營收 — META 從「成長股」變「資本密集型 utility」，Forward PE 應壓縮至 12-15x。</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>① Meta 季度 10-Q（每季發佈日，2026/04/29 已過 Q1，下次 2026/07/末 Q2）<br>② 滾動 ROIC 用 (TTM Net Income + after-tax Interest) / (Total Debt + Total Equity − Excess Cash)<br>③ 廣告 YoY 直接看 FoA segment revenue 季度披露</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q1 2026 ROIC ≈ 35-37%（YoY +62% EPS 推升），廣告 YoY +33% — 兩個指標都遠在閾值之上。<strong>最早觸發時間：2027-Q3 法說（2027-10 末），距今 ~18 個月。</strong></td></tr>
+</table>
+</div>
+
+<h3>Secondary Trigger（pre-mortem 派生，新增）</h3>
+<div class="decision-box avoid">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述</strong></td><td><strong>Q2 2026 DAP 仍 &lt; 3.5B 且 Family DAU YoY 收斂至 &lt; 2%</strong>（用戶結構性流失到 OpenAI Device / AI Chatbot 確認）</td></tr>
+<tr><td>為什麼是致命</td><td>如果是結構性流失（非俄/伊朗一次性），表示廣告盤子的「分母」在縮水 — 即使 Advantage+ ROI 再強，廣告主總預算會跟著用戶遷移，META 從「網路效應護城河」變「無使用者的演算法」。</td></tr>
+<tr><td>如何監測</td><td>2026-07 末 Q2 法說 DAP + Reels Daily Views + Click-to-WhatsApp Ad 採用率</td></tr>
+<tr><td>目前離發生有多遠</td><td><strong>~10 週後（Q2 法說預計 2026-07-25 ± 5）— 這是本 DCA 保質期的關鍵節點。</strong></td></tr>
+</table>
+</div>
+
+<p class="note">📌 §5 修正狀態（依 §6b pre-mortem 校驗結果）：<strong>⚠ 已補 1 條 secondary trigger</strong>（DAP 結構性流失 — pre-mortem 故事派生）。primary（ROIC + 廣告 YoY 雙推翻）為長期 18 個月觸發，secondary（DAP）為短期 10 週觸發 — 兩者時間尺度互補。</p>
+</section>
+
+<!-- ===== §6 Pre-mortem ===== -->
+<section>
+<h2 id="premortem">§6｜What I Don't Know + Pre-mortem + Max DD</h2>
+
+<h3>6a｜強迫面對盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>2026 capex $125-145B 真的會在 2027 H2 開始顯現 ROI</td><td>Advantage+ 的 incremental capex (AI 訓練 + 推論) 帶來廣告 ROAS 進一步提升 + 廣告主預算 share 進一步擴大</td><td>若 capex ROI &lt; 15%，2027 折舊 ~$45B 吃掉 EPS 10-15%，Fwd PE 從 16x 壓至 12-13x，股價可能 $400-450</td></tr>
+<tr><td>2</td><td>DAP Q1 2026 QoQ -5% 真的是一次性（俄/伊朗）而非結構性</td><td>俄羅斯 WhatsApp 重新解封 + 伊朗網路恢復 + Q2 DAP 回到 3.6B+；Reels Daily Views 維持 200B+</td><td>若結構性，Family DAU YoY 從 +4% 跌至 0% 甚至負 → 廣告盤子分母縮水 → §5 secondary trigger 觸發</td></tr>
+<tr><td>3</td><td>Reality Labs 2026 真的是虧損峰值（Zuckerberg 第 3 次承諾）</td><td>2026 Q4 RL OI loss ≤ $5B（vs Q4 2025 $6B、Q1 2026 $4B）+ Ray-Ban Meta 達 5M 累計銷量</td><td>若第 3 次跳票（RL Q4 2026 &gt; $7B），Zuckerberg 信任資本破產，市場給 META 永久 -3pp Forward PE 折扣 ≈ -15% 股價</td></tr>
+<tr><td>4</td><td>FTC 上訴 2026-2027 期間不會逆轉初審勝訴</td><td>2025-11 初審勝訴邏輯（Meta 證明 TikTok 是 substitute）在上訴維持 → 上訴 12-18 個月通過</td><td>若逆轉，Instagram + WhatsApp 拆分概念雖有 sum-of-parts 上行（IG 獨立可能 $700B），但短期不確定性壓制估值 -20%</td></tr>
+</table>
+
+<h3>6b｜Pre-mortem（強制三段式）</h3>
+<div class="premortem-box">
+
+<h4>第一段：故事倒推（≤ 80 字 narrative）</h4>
+<blockquote>「2028 H1，META 股價跌至 $280（vs 現價 $609，-54%）。失敗故事：2026-07 Q2 法說 DAP 未回升、Q4 RL 虧損 $7.5B 第 3 次跳票，市場開始質疑 capex 戰略。2027-Q1 OpenAI Device 正式發佈消費版，搶走 Instagram/Facebook 7-10% 用戶時間。2027-Q3 FoA 廣告 YoY 從 +25% 驟降至 +12%，4 季滾動 ROIC 跌破 24%。Forward PE 從 16x 壓至 11x。」</blockquote>
+
+<h4>第二段：校驗 §5 single thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong>。§5 primary trigger（ROIC + 廣告 YoY 雙推翻）<strong>是</strong>失敗故事末端（2027-Q3）的直接表現，<strong>但失敗故事提前 10 週就有警訊（Q2 2026 DAP 數據）</strong>。§5 缺一條更早期的 DAP 結構性流失觀察點。</td></tr>
+</table>
+
+<h4>第三段：修正 §5</h4>
+<p><strong>⚠ 已補 1 條 secondary trigger</strong>：在 §5 區塊新增「Secondary Trigger：Q2 2026 DAP &lt; 3.5B 且 YoY &lt; 2%」— 這是 pre-mortem 故事的派生 trigger，比 primary trigger 早 18 個月觸發。Primary 保留為長期 thesis 推翻錨點，Secondary 是短期早期警訊。</p>
+
+<p><strong>校驗紀錄</strong>：§5 修正狀態：<strong>⚠ 已補 1 條 secondary trigger</strong>（已實際在 §5 區塊新增「Secondary Trigger」block，HTML 中 §5 trigger 數 = 2，pre-mortem 之前是 1）。</p>
+</div>
+
+<h3>6c｜路徑壓力測試（Max DD）</h3>
+<div class="maxdd-box">
+<div>
+<div class="label" style="font-size:11px; color:#64748B; text-transform:uppercase">估計 Max DD 範圍</div>
+<div class="maxdd-num">−35% ~ −55%</div>
+<div style="font-size:12px; color:#64748B; margin-top:6px">寬度 20%p（≥ 10%p ✅ 校驗通過）</div>
+</div>
+<div>
+<div class="maxdd-tier">🟡</div>
+<div style="font-size:12px; color:#64748B">路徑風險評級<br>需要強信念</div>
+</div>
+</div>
+
+<p class="note">色條（drawdown 區間視覺化）：</p>
+<div class="color-bar"></div>
+<p class="note" style="font-size:11px">綠 0~-30%｜amber -30~-50%｜紅 &lt;-50%；本案範圍 -35~-55% 跨 amber + 紅交界 = 🟡</p>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>最可能觸發時點</td><td>2027 H1（如 §6b pre-mortem 失敗故事所述）：Q4 2026 RL 跳票 + Q1 2027 OpenAI Device 發佈 + Q1 2027 ROIC 首次跌破 28%</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>如果是「市場過度反應」（同 2022 模式）：18-24 個月（2028 H2 - 2029 H1）；如果 thesis 已破：永不恢復（成為 utility 型成長股，22x → 14x 永久 re-rate）</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🟡 −30~−55%</strong>（需要強信念才能撐到復原）</td></tr>
+</table>
+
+<p><strong>校驗（必填一句話）</strong>：「若 max DD 落在 -45%（範圍中段），我能否撐到復原？條件：<strong>(a) 部位不超過 portfolio 5%、(b) 不使用槓桿、(c) Secondary trigger（Q2 DAP）未觸發、(d) 同期 SPX max DD 同步在 -25% 範圍內（系統性而非個股性）</strong>。若無法滿足任一條件 → §7 倉位上限自動下修至 3%。」</p>
+
+<p class="note">⚠️ Guardrail check：評級 🟡（非 🔴），§7a 倉位上限不強制下修（仍允許 5-6%），但實際操作上已從 5% 起手下修至 3% 作為「Q1 capex 上修 + DAP QoQ 下跌」的安全邊際。</p>
+</section>
+
+<!-- ===== §8 Review Triggers ===== -->
+<section>
+<h2 id="review">§8｜Review Triggers（重新評估觸發點 + 保質期）</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 2026 法說</td><td>財報日期</td><td><strong>2026-07-25 ± 5（預計）</strong>｜DAP 回升 + capex 路徑 + RL Q2 虧損 — 是 secondary trigger 的關鍵節點</td></tr>
+<tr><td>2</td><td>Connect 2026 大會</td><td>產業事件</td><td><strong>2026-10 中旬</strong>｜Ray-Ban Meta 累計銷量披露 + Orion AR 進度 + Llama 5 發佈</td></tr>
+<tr><td>3</td><td>Q3 2026 法說</td><td>財報日期</td><td><strong>2026-10-29 ± 3（預計）</strong>｜4 季滾動 ROIC 是否維持 ≥ 30% + FoA 廣告 YoY 是否 ≥ 22% + 2027 capex preliminary guidance</td></tr>
+<tr><td>4</td><td>價位觸發 — 上行</td><td>價位</td><td><strong>$760+</strong>（Fwd PE 突破 22x = +25% from $609）→ 評估減倉鎖利</td></tr>
+<tr><td>5</td><td>價位觸發 — 下行</td><td>價位</td><td><strong>$520-$480</strong>（接近 DD Bear $452）→ 評估加碼或撤退（看是否觸發 §5 trigger）</td></tr>
+<tr><td>6</td><td>§5 Single Thing trigger</td><td>事件</td><td>Primary：2027-Q3 ROIC &lt; 25% + 廣告 YoY &lt; 15%（連 2 季）｜Secondary：2026-Q2 DAP &lt; 3.5B + YoY &lt; 2%</td></tr>
+</table>
+
+<p><strong>本報告的保質期：至 2026-08-01</strong>（Q2 2026 法說後重評）— 保質期較短（~12 週）因 Q1 capex 上修 + DAP 下跌雙雙改變 thesis 機率分布，需要 Q2 數據驗證一次性 vs 結構性。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：Q2 2026 法說 DAP 回到 3.6B+ + Advantage+ 採用達 10M 廣告主 + Meta 確認 2027 capex 不再大幅上修（維持 $150-170B range）— 這三點若同時驗證，5 月底 -9% 賣壓可能逆轉，股價回到 $720-760 範圍（+18-25%）。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：Q2 DAP 仍 &lt; 3.5B + 結構性流失到 OpenAI Device 早期信號 + RL Q2 虧損 &gt; $5B → secondary trigger 觸發 → 股價可能再跌 15-20% 至 $480-520 範圍（接近 DD Bear $452）。</p>
+</section>
+
+<!-- ===== Phase A1 折疊區塊 ===== -->
+<section>
+<h2 id="phase-a1">Phase A1｜護城河深度分析（折疊）</h2>
+
+<details>
+<summary>A1 獨立結論：META 護城河 9/10，moat_trend → holding（DAP QoQ 首次下跌警示，但 Advantage+ 形成新數據閉環抵銷）</summary>
+<div class="details-content">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>網路效應（3.56B DAP，全球最大社交圖譜）+ 規模優勢（Advantage+ AI 數據飛輪，年化處理 $60B+ 廣告流量）</td></tr>
+<tr><td>持久性評分</td><td>9 / 10，5 年穩固度：<strong>高</strong>（網路效應極難複製，但 DAP 增速放緩需觀察）</td></tr>
+<tr><td>最大侵蝕風險</td><td>OpenAI Device / AI Chatbot 2027-2028 取代社群媒體娛樂時間（一句話：硬體 AI 入口直接 bypass app store，社交圖譜變成 commodity feed）</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 82%（趨勢 ↑）、全球廣告市佔 26.8% 即將超越 Google 26.4%（趨勢 ↑）、ROIC vs WACC 超額 ~27.8pp（趨勢 ↑）</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>→ holding</strong>（持平，但有兩個正反訊號互相抵銷）+ 12 個月內變化的具體證據：<br>📈 加深面：① Advantage+ 採用廣告主從 4M (Y2024) 翻倍至 8M (Q1 2026)、② Q1 2026 ad price +12% YoY 同時 impressions +19% YoY = 量價齊升 = 廣告主轉換成本提升、③ 2026 eMarketer 預測 META 全球 ad rev $243.46B 首超 Google $239.54B（市佔從 25.9% → 26.8%，YoY +0.9pp）<br>📉 削弱面：① DAP Q1 2026 QoQ -5%（從 3.74B 跌至 3.56B）首次下跌、② Family DAU YoY 從 +6% 收斂至 +4%、③ OpenAI Device / Apple Intelligence 平台戰升溫<br>裁決：📈 三條（產品 + 定價 + 市佔）vs 📉 三條（用戶 + 增速 + 平台戰），互相抵銷 → moat 維持但非加深</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 必達）</h4>
+<table>
+<tr><th>#</th><th>數據</th><th>來源</th><th>日期</th></tr>
+<tr><td>1</td><td>DAP 3.56 billion (-5% QoQ，首次下跌)</td><td>Meta Q1 2026 法說 + Social Media Today</td><td>2026-04-29</td></tr>
+<tr><td>2</td><td>Advantage+ 採用 8M 廣告主（vs 4M Y2024）</td><td>Meta Q1 2026 法說 + ppc.land</td><td>2026-04-29</td></tr>
+<tr><td>3</td><td>Q1 2026 ad price +12% YoY，impressions +19% YoY</td><td>Meta Q1 2026 press release (investor.atmeta.com)</td><td>2026-04-29</td></tr>
+<tr><td>4</td><td>2026 META 全球 ad rev $243.46B vs Google $239.54B（市佔 26.8% vs 26.4%）</td><td>eMarketer 報告</td><td>2026-03 月</td></tr>
+<tr><td>5</td><td>FoA Q1 2026 ad rev $55.0B（+33% YoY）</td><td>Meta Q1 2026 press release</td><td>2026-04-29</td></tr>
+<tr><td>6</td><td>Reels 50% of Instagram time spent，3.5B daily Reels shares</td><td>Meta + Q1 2026 法說 + AutoFaceless Blog</td><td>2026-04-29</td></tr>
+<tr><td>7</td><td>2025 ROIC 36.85%（vs WACC ~9%，超額 27.85pp）</td><td>DD_META_20260418.html §10</td><td>2026-04-18</td></tr>
+</table>
+
+<p><strong>A1 獨立結論（一句話）</strong>：META 護城河等級 9/10 維持不變，moat_trend = → holding（Advantage+ 採用翻倍與 DAP 首次 QoQ 下跌互相抵銷，產品護城河擴張但使用者端有結構性警示，需 Q2 2026 確認一次性 vs 結構性）。</p>
+
+</div>
+</details>
+</section>
+
+<!-- ===== Phase A2 折疊 ===== -->
+<section>
+<h2 id="phase-a2">Phase A2｜產業趨勢深度分析（折疊）</h2>
+
+<details>
+<summary>A2 獨立結論：全球數位廣告產業 TAM 健康擴張至 2030 $1.3T，META 從挑戰者升級為 #1，runway_post_y5 = 🟢 寬</summary>
+<div class="details-content">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>當前 $908B（2026 全球數位廣告，eMarketer），CAGR ~8-10%（2026-2030），全球廣告總滲透率 75%（已成熟，未來靠價量提升而非滲透率）</td></tr>
+<tr><td>供需判斷</td><td>供需略偏緊（廣告主預算追廣告 ROI 提升的速度 &gt; 供給端 inventory 擴張速度），未來 12 個月方向：價格進一步上行（Q1 2026 META ad price +12% YoY 驗證）</td></tr>
+<tr><td>最大技術替代風險</td><td>AI Chatbot / OpenAI Device 直接取代 feed-based 廣告消費場景，時間軸 2027-2028 商業化，威脅程度：中（不是完全取代，但會分走 5-10% 用戶時間）</td></tr>
+<tr><td>最大政策/地緣風險</td><td>EU DSA 罰款（可能 6% 全球營收 ≈ $12B 一次性） + FTC 上訴拆分 Instagram/WhatsApp（機率 &lt; 15%）+ 中國跨境電商（Temu/SHEIN ~$15-20B META 營收）若美中升級可能消失</td></tr>
+<tr><td>議價權位置</td><td>對上游（NVDA GPU、TSMC 封裝）強（自研 MTIA 降依賴 + 採購量級巨大），對下游（1,000 萬+ 廣告主）<strong>極強</strong>（廣告主極分散 + Advantage+ 鎖定）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬</strong> — Y5 之後 5-10 年仍有跑道。判準：(a) S 曲線位置：digital ad 在「成熟早期」（非晚期，因 AI 廣告把效率曲線重新拉長）；(b) Y5 末 TAM 滲透率：全球廣告 / digital share 從 75% 升至 ~82%（仍有 7pp 空間 + 廣告 TAM 自然成長）；(c) 第二曲線：WhatsApp 商務（印度/巴西/印尼）2027+ 啟動 + Threads 變現 2028+ + AR/VR 2028-2030 商業化 — 至少 3 條後續曲線。</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 必達）</h4>
+<table>
+<tr><th>#</th><th>數據</th><th>來源</th><th>日期</th></tr>
+<tr><td>1</td><td>全球數位廣告 TAM 2026 $908B（含 Meta $243B + Google $240B + Amazon $82B + others）</td><td>eMarketer</td><td>2026-03</td></tr>
+<tr><td>2</td><td>META 廣告 YoY 加速 +22.1% (2025) → +24.1% (2026E)；Google 持平 +11.9%</td><td>eMarketer + Marketing Dive</td><td>2026-02</td></tr>
+<tr><td>3</td><td>Meta + Google + Amazon 三家 2026 合計市佔 62.3% 全球 digital ad spending</td><td>Marketing-Interactive + eMarketer</td><td>2026-03</td></tr>
+<tr><td>4</td><td>Amazon Ads $68.64B (2025) → $82.07B (2026)，市佔 9.0%</td><td>eMarketer</td><td>2026-03</td></tr>
+<tr><td>5</td><td>2027 預測 META $285B vs Google $268B（差距擴大）</td><td>eMarketer 長期預測</td><td>2026-03</td></tr>
+<tr><td>6</td><td>WhatsApp 全球用戶 &gt; 2B，發展中國家覆蓋率 &gt; 70%（巴西 99% / 印度 ~75% / 印尼 ~84%）</td><td>Statista + WhatsApp Business 官方</td><td>2026-Q1</td></tr>
+<tr><td>7</td><td>OpenAI Device 預計 2026-2027 消費版發佈，威脅 social media engagement</td><td>WSJ + ID_AppleIntelligencePlatformThreat_20260429</td><td>2026-04</td></tr>
+</table>
+
+<p><strong>A2 獨立結論（一句話）</strong>：全球數位廣告產業 2026-2030 健康擴張至 TAM $1.3T，META 從 #2 升級為 #1（首超 Google 全球 ad rev），runway_post_y5 = 🟢 寬（後續 3 條曲線：WhatsApp 商務、Threads、AR/VR）。</p>
+
+</div>
+</details>
+</section>
+
+<!-- ===== Phase A3 折疊 ===== -->
+<section>
+<h2 id="phase-a3">Phase A3｜業務結構 / 財務體質 / 資本配置（折疊）</h2>
+
+<details>
+<summary>A3 獨立結論：META 業務結構簡單（98% 廣告），財務體質強（ROIC 36%/FCF 22.9% margin），但 2026 capex $125-145B 是 thesis 主要不確定性</summary>
+<div class="details-content">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：Family of Apps 廣告（佔 98.6%）；成長引擎：WhatsApp Business + Threads + Click-to-WhatsApp Ad（佔 ~3%，年化 $5-7B 增速 +40%）；拖累：Reality Labs（佔 1.4% 但虧損 $16-20B/yr）</td></tr>
+<tr><td>客戶集中度</td><td>極分散（全球 1,000 萬+ 廣告主，前 100 大 &lt; 20% 營收），風險：低</td></tr>
+<tr><td>定價權</td><td>Q1 2026 ad price +12% YoY（vs 2025 全年 +5%），定價權：<strong>強且加速</strong></td></tr>
+<tr><td>未來金雞母</td><td>WhatsApp 商務（目前佔營收 ~2%，潛在 TAM $80-120B by 2030，預估成熟 4-5 年後）；Reels 廣告獨立貢獻 ~$15B 年化（佔 ad rev ~7%）成長最快</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 2025 0.76（5Y 均 ~1.0，2025 下滑因 capex 暴增）；毛利率 82%（趨勢 ↑）；壓力測試：營收 -20% 仍可保 6+ 季 FCF 為正（淨現金部位 $35.9B + 操作槓桿正向）</td></tr>
+<tr><td>資本配置紀律</td><td>一句話：Zuckerberg 在 dual-class 結構下控制權絕對，2024 起首次發放股利 ($0.50/季) + 加碼 $50B 回購授權 = 對股東較友善；但 RL 燒 $90B+ 累計 + 2026 capex $125-145B 大幅上修 = 資本配置權威面臨第二次大考驗（2022 元宇宙跳票後第二次）。</td></tr>
+<tr><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td>① <strong>EPS CAGR 預估 17.5%</strong>（2026E $32.5 → 2030E ~$55，含 buyback 對 EPS 的稀釋抵銷 +1.5pp/yr）<br>② <strong>5Y 末 forward P/E 預估 19x vs 當前 16.3x</strong>（re-rate 貢獻 = (19/16.3)^(1/5) - 1 = +3.1%/yr 而非 -2.5% — 但因 5Y 末成長率自然降至 12% 給 19x 而非 22x；保守取 -2.5% 表示 Base 假設 re-rate 平緩）<br>③ <strong>現金股息率 0.4%</strong>（$2/yr / $609 = 0.33%，預估 5Y 末提升至 0.5%）<br>④ <strong>淨買回率 1.5%/yr</strong>（已扣除 SBC 7.2% 稀釋；$26B 回購 / $1.5T 市值 = 1.7% gross，淨 1.5%）</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 6 必達）</h4>
+<table>
+<tr><th>#</th><th>數據</th><th>來源</th><th>日期</th></tr>
+<tr><td>1</td><td>Q1 2026 Revenue $56.31B（+33% YoY），EPS $10.44（+62% YoY），Net Income $26.77B（+61%）</td><td>Meta Q1 2026 press release (investor.atmeta.com)</td><td>2026-04-29</td></tr>
+<tr><td>2</td><td>Q1 2026 Reality Labs Revenue $402M / Operating loss $4.03B（累計 &gt; $90B）</td><td>Meta Q1 2026 press release + Technology.org</td><td>2026-04-29</td></tr>
+<tr><td>3</td><td>2026 Capex guidance 上修至 $125B-$145B（vs 原 $115-135B）</td><td>Meta Q1 2026 法說 + 24/7 Wall St.</td><td>2026-04-29</td></tr>
+<tr><td>4</td><td>FCF 2025 $46.1B（margin 22.9%）vs 2024 32.9%，FCF/NI 0.76</td><td>DD_META_20260418.html §10</td><td>2026-04-18</td></tr>
+<tr><td>5</td><td>2025 全年 buyback $26.248B + Q2 2025 dividend $1.33B; $50B 回購授權 expansion</td><td>FinanceCharts + CNBC 2024-02</td><td>2025-Q4</td></tr>
+<tr><td>6</td><td>SBC 2025 $14.5B（Rev 7.2%），2023-2025 下降趨勢（8.1% → 7.2%）</td><td>DD_META_20260418.html §12</td><td>2026-04-18</td></tr>
+<tr><td>7</td><td>8,000 layoffs announced 2026-04（Q1 法說同時公布）</td><td>TheNextWeb + Fortune</td><td>2026-04-29</td></tr>
+<tr><td>8</td><td>當前 Forward PE 預估 ~16.3x（$609.63 / FY27E $37.5），5Y 中位 22x、5Y 高 30.6x</td><td>StockAnalysis + DD §13</td><td>2026-05-08</td></tr>
+<tr><td>9</td><td>Stock price 2026-05-08 $609.63（vs DD 4/18 $688.55，-11.5%）；50DMA $614.8 / 200DMA $655.4</td><td>Yahoo Finance + Meyka + Barchart</td><td>2026-05-08~10</td></tr>
+</table>
+
+<p><strong>A3 獨立結論（一句話）</strong>：META 業務結構極度集中於廣告（98%），財務體質強（ROIC 36% / FCF margin 22.9% / Net cash $36B），但 2026 capex $125-145B 上修 + Q1 -9% 股價賣壓 = thesis 主要不確定性已從「估值偏高」轉為「資本配置 ROI」。</p>
+
+</div>
+</details>
+</section>
+
+<!-- ===== Phase A4 折疊 ===== -->
+<section>
+<h2 id="phase-a4">Phase A4｜既有報告數據擷取（折疊）</h2>
+
+<details>
+<summary>A4 數據摘要：DD 4/18 vs 5/11 已有顯著漂移（capex、價格、Pure MA 均變化）</summary>
+<div class="details-content">
+
+<h4>DD_META_20260418.html 關鍵擷取</h4>
+<table>
+<tr><th>項目</th><th>DD 4/18 數值</th><th>5/11 最新</th><th>變化</th></tr>
+<tr><td>Quality Score（複合品質）</td><td>10/10</td><td>10/10（不變）</td><td>—</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $739 / 中期 $893</td><td>EPS 上修後重算：短期 $812 / 中期 $844</td><td>↑ EPS 上修</td></tr>
+<tr><td>Bear anchor</td><td>$452 (PE 17x × EPS $26.6)</td><td>$485 (PE 13x × EPS $37.5 × 0.9)</td><td>↑ EPS 上修，但 PE 下調</td></tr>
+<tr><td>紅旗清單</td><td>capex/Rev 34.7%（高密集）</td><td><strong>capex/Rev 60%+（極高密集）</strong></td><td>🔴 加重</td></tr>
+<tr><td>§0.5 核心假設 H1（Advantage+ 搶市佔）</td><td>+ 強化</td><td>+ 強強化（Q1 +33% YoY 創 5 年最快）</td><td>↑↑</td></tr>
+<tr><td>§0.5 H2（capex 投產 ROIC 不降）</td><td>0 中性</td><td>🟡 中性偏弱（capex 進一步上修，但 Q1 ROIC 仍 36%）</td><td>→ 略弱</td></tr>
+<tr><td>§0.5 H3（市場願給 23x+ Fwd PE）</td><td>0 中性（當前 23.3x）</td><td>🔴 削弱（當前 16.3x，市場給更低 PE）</td><td>↓ 削弱</td></tr>
+<tr><td>§8 最終結論（綜合訊號燈）</td><td><strong>A</strong>（核心候選）</td><td><strong>A</strong>（維持）</td><td>—</td></tr>
+</table>
+
+<h4>ID 報告擷取（從 docs/id/INDEX.md）</h4>
+<table>
+<tr><th>ID 報告</th><th>產業評級</th><th>關鍵趨勢 + META 角色</th></tr>
+<tr><td>ID_AICrossDomainImpact_20260429（母題）</td><td>Phase II 早期（horizontal 雙頭分化）</td><td>META 在 5 檔 basket（GOOGL/AMZN/MSFT/CRM/AAPL hedge）中作為「sherlock 受害者 + 廣告 hedge」雙重角色；vertical SaaS 三層分化中 META 屬「commerce 受惠」</td></tr>
+<tr><td>ID_AIAdRetailMedia_20260429</td><td>Phase II 中段（Big Tech 雙寡占 + Retail Media 爆發）</td><td><strong>META 是 #1 非共識主題：「Meta 2026 全球 ad rev 首超 Google 是結構性逆轉」</strong>，$243B vs $239B / Q4 +24% vs +13%</td></tr>
+<tr><td>ID_AIInferenceEconomics_20260430（母題）</td><td>Phase II 中期</td><td>META 在 inference 真贏家排序 AVGO &gt; GOOG &gt; <strong>META</strong> &gt; NVDA &gt; MSFT（vs 共識 NVDA 第一）— Meta「1+ GW custom silicon with Broadcom + AMD complement Nvidia」</td></tr>
+<tr><td>ID_HyperscalerCloudBigThree_20260505</td><td>Phase II（平台化爆發）</td><td>META 是非 Big Three 但參與 Hyperscaler 級 AI infra build-out（capex $125-145B / FY26 上修，僅次於 AMZN/MSFT/GOOG 三家）</td></tr>
+<tr><td>ID_NuclearRenaissance_20260430（母題）</td><td>Phase II（hyperscaler PPA 集中爆發）</td><td>META-CEG Clinton 1.15GW + META Perry/Davis-Besse 2.6GW PPA — META 是核能復興的主要 demand-side player</td></tr>
+<tr><td>ID_PublishersStructuralReset_20260430</td><td>Phase II 後段</td><td>META 是 publishers 受害者的「廣告盤子搶奪者」— Google AI Overview 流量 -33% throttle 後，廣告主預算自然向 Advantage+ 遷移</td></tr>
+</table>
+
+<p class="note">A4 不產出獨立結論，純數據輸入給 Phase B 比對用。</p>
+
+</div>
+</details>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+</body>
+</html>

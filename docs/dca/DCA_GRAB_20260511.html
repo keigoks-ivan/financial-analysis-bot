@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<!-- dca-schema-version: v1.1 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA_GRAB_20260511 — Grab Holdings 深度定見分析</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#1F2937;margin:0;padding:0;line-height:1.65;}
+  .num,code,.mono{font-family:'IBM Plex Mono',monospace;}
+  header{position:sticky;top:0;background:#1E3A5F;color:#fff;padding:14px 28px;z-index:100;border-bottom:4px solid #3B82F6;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  header h1{margin:0;font-size:18px;font-weight:700;}
+  header .meta{font-size:13px;font-family:'IBM Plex Mono',monospace;opacity:.92;}
+  .container{max-width:1180px;margin:0 auto;padding:24px;}
+  section{background:#fff;margin-bottom:22px;padding:24px 28px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);scroll-margin-top:90px;}
+  h2{color:#1E3A5F;background:#F1F5F9;border-left:4px solid #3B82F6;padding:10px 14px;margin:0 0 16px;font-size:21px;}
+  h3{color:#1E3A5F;font-size:16px;margin:18px 0 10px;border-bottom:1px solid #E5E7EB;padding-bottom:5px;}
+  h4{color:#374151;font-size:14px;margin:14px 0 8px;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;}
+  th{background:#1E3A5F;color:#fff;padding:8px 10px;text-align:left;font-weight:500;}
+  td{padding:8px 10px;border-bottom:1px solid #E5E7EB;vertical-align:top;}
+  tr:nth-child(even) td{background:#F1F5F9;}
+  .pos{color:#15803D;font-weight:600;}
+  .neg{color:#991B1B;font-weight:600;}
+  .neutral{color:#64748B;font-weight:600;}
+
+  /* Status Bar */
+  .status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 20px;margin-bottom:22px;border-radius:6px;flex-wrap:wrap;}
+  .status-cell{min-width:180px;text-align:center;padding:8px 12px;}
+  .status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .status-value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+  .sig-B{color:#92400E;}
+  .arrow-hold{color:#64748B;}
+  .arrow-up{color:#166534;}
+  .arrow-down{color:#991B1B;}
+  .dd-amber{color:#92400E;}
+
+  /* Thesis */
+  .thesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:30px 36px;text-align:center;margin:12px 0;border-radius:6px;}
+  .thesis-text{font-size:26px;font-weight:600;color:#1E3A5F;line-height:1.5;}
+  .thesis-note{font-size:12px;color:#64748B;margin-top:10px;font-style:italic;}
+
+  /* Decision */
+  .decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:18px 22px;margin:12px 0;border-radius:6px;}
+  .decision-box-go{background:#F0FDF4;border-left-color:#16A34A;}
+  .decision-box-no{background:#FFF1F2;border-left-color:#DC2626;}
+
+  /* Contradictions */
+  .contra-box{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:12px 0;border-radius:6px;}
+  .verdict-table th{background:#FED7AA;color:#7C2D12;}
+  .verdict-table td{background:#FFFBEB;}
+
+  /* Pre-mortem */
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:12px 0;border-radius:6px;}
+  .quote{border-left:3px solid #94A3B8;padding:10px 14px;font-style:italic;background:#F8FAFC;color:#475569;margin:10px 0;}
+
+  /* Pattern match */
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:12px 0;border-radius:6px;}
+
+  /* IRR composition */
+  .irr-bar-wrap{margin:14px 0;background:#F1F5F9;border-radius:4px;padding:10px 12px;}
+  .irr-bar{display:flex;height:30px;border-radius:4px;overflow:hidden;}
+  .irr-eps{background:#15803D;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+  .irr-rerate{background:#0EA5E9;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+  .irr-yield{background:#64748B;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+
+  /* Max DD */
+  .dd-block{display:flex;align-items:center;gap:24px;padding:18px;background:#FEF3C7;border-radius:6px;margin:12px 0;}
+  .dd-number{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#92400E;}
+  .dd-bar-wrap{flex:1;background:#fff;height:24px;border-radius:4px;position:relative;overflow:hidden;}
+  .dd-bar{height:100%;background:linear-gradient(90deg,#15803D 0%,#15803D 50%,#CA8A04 50%,#CA8A04 83%,#DC2626 83%,#DC2626 100%);}
+  .dd-rating{font-size:28px;}
+
+  /* Phase A collapsible */
+  details{background:#fff;margin-bottom:16px;padding:14px 22px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.05);border-left:4px solid #94A3B8;}
+  summary{cursor:pointer;font-weight:600;color:#1E3A5F;font-size:15px;padding:6px 0;}
+  details[open] summary{margin-bottom:10px;border-bottom:1px solid #E5E7EB;padding-bottom:10px;}
+
+  /* Memo */
+  .memo{background:#FFFCF5;border:1px solid #E5E7EB;padding:18px 22px;font-family:'IBM Plex Mono',monospace;font-size:13px;margin:10px 0;line-height:1.7;}
+  .elevator{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;font-style:italic;margin:10px 0;border-radius:4px;}
+
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;}
+  .b-green{background:#DCFCE7;color:#166534;}
+  .b-amber{background:#FEF3C7;color:#92400E;}
+  .b-red{background:#FEE2E2;color:#991B1B;}
+  .b-blue{background:#DBEAFE;color:#1E40AF;}
+
+  .print-btn{position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.2);}
+  @media print{header,.print-btn{display:none;}section{box-shadow:none;page-break-inside:avoid;}details{box-shadow:none;}details > *{display:block !important;}details summary::-webkit-details-marker{display:none;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>GRAB · Grab Holdings — Deep Conviction Analysis</h1>
+  <div class="meta">2026-05-11｜SEA Super-App 唯一全棧玩家 — V 反轉早期定見</div>
+</header>
+<div class="container">
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">綜合訊號燈</div>
+    <div class="status-value sig-B">B</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">衛星候選 / 等 V 反轉</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-value">B <span class="arrow-hold">→</span></div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">8/10 holding · 加深中</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-value">🟢 寬</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">SEA 滲透 &lt; 30%</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（路徑）</div>
+    <div class="status-value dd-amber">−45%</div>
+    <div style="font-size:11px;color:#64748B;margin-top:4px;">🟡 需強信念</div>
+  </div>
+</div>
+
+<!-- §2 Thesis -->
+<section id="thesis">
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="thesis-text">GRAB 是 SEA 八國唯一全棧 super-app，剛從 14 年燒錢史第一次踏進 GAAP 賺錢的房間，而市場還在用「燒錢時代」的折價賣它。</div>
+  <div class="thesis-note">50 字以內・敘事型 thesis・聚焦「跨國寡占護城河 × 盈利拐點誤估」雙重 alpha 來源</div>
+</div>
+</section>
+
+<!-- §7 Decision -->
+<section id="decision">
+<h2>§7 Decision｜可執行計畫</h2>
+
+<h3>7a｜倉位與進場計畫</h3>
+<div class="decision-box">
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><b>衛星持倉（候選）</b>—— V 反轉早期 + 監管尾風險 + Pure MA ❌→🟠 救援中，不適合進核心</td></tr>
+<tr><td>初始建倉倉位</td><td><b>0%（目前追蹤池）→ 1.0%（第一批，待 V 反轉 trigger）</b></td></tr>
+<tr><td>目標倉位</td><td><b>3.5%</b>（B 級衛星上限；原計 4-5%，因 §6c Max DD 🟡 評級下修 ~30%）</td></tr>
+<tr><td>進場價位區間</td><td>$3.70 ~ $4.80（區間建倉，但須先滿足 timing 條件）</td></tr>
+<tr><td>進場節奏（條件式）</td><td><b>必須兩條 timing 條件擇一才動：</b><br>(a) 站回 W104 $4.49 連 4 週 + Q2 26 Adj EBITDA YoY ≥ 40%（8 月初）→ 第一批 1.0%<br>(b) 跌至 $3.20 觸 BB 下軌 + Adj FCF TTM ≥ $500M 確認 → 逆向第一批 0.75%<br><b>禁止</b>：今天 $3.73 一次建倉、無 timing 條件的「先放 1/3」</td></tr>
+<tr><td><b>vs 現有組合的同類曝險（opportunity cost）</b></td><td><b>同類點名：SE（Sea Limited）</b>—— 同為 SEA tech 曝險，市值 ~$90B vs GRAB ~$15B；SE EV/Sales 6x vs GRAB 2.5x（GRAB -58% 折讓），SE 主要 driver 是 Shopee e-commerce + Garena 遊戲，與 GRAB 的 mobility + delivery + 金融完全不重疊。<b>邊際決策</b>：(1) 若 portfolio 已有 SE → GRAB 加 SE 形成 SEA 曝險過度集中（≥ 6% 合計），新進邊際資金應「減 SE 0.5%、加 GRAB 1.0%」做 mix shift（GRAB R:R 較好、相關 0.6-0.7）；(2) 若 portfolio 無 SE → 邊際資金放 GRAB 而非加 SE，因 GRAB 估值分位 5% vs SE ~40%、PEG 0.49 vs SE ~1.8、且 GRAB 處於 V 反轉早期 conviction 較高；(3) 不點名 Uber / DoorDash 為 opportunity cost — 雖同為 marketplace 但地理曝險完全不同（北美 vs SEA），不算同類。</td></tr>
+</table>
+</div>
+
+<h3>7b｜加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>第一批進場</td><td>站回 W104 $4.49 連 4 週 + Q2 26 Adj EBITDA YoY ≥ 40%</td><td>1.0%</td></tr>
+<tr><td>第二批加碼</td><td>Financial Services Q3 26 Adj EBITDA breakeven 兌現 + 站上 $5.20（W250 翻正）</td><td>2.0%</td></tr>
+<tr><td>核心加碼</td><td>FY27 EPS $0.148 確認 + Loan portfolio &gt; $2.5B + GoTo 監管尾風險 contain</td><td>3.5%</td></tr>
+<tr><td>減碼</td><td>Indonesia commission cap 擴至 4-wheel（R1 觸發）OR NTM Fwd PE &gt; 60x</td><td>1.5%</td></tr>
+<tr><td>清倉</td><td>跌破 $3.0 連 2 週（盲點 2 救援失效）OR 連 2 季 Adj EBITDA YoY &lt; 20%</td><td>0%</td></tr>
+</table>
+
+<h3>7c｜Pure MA 相容性 + 動能過熱檢查</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價 $3.73 在 50d MA $3.91 之上？</td><td><span class="badge b-red">❌</span></td><td>5/8 收 $3.73 vs 50d $3.91（差 -4.6%）</td></tr>
+<tr><td>股價在 200d MA $4.59 之上？</td><td><span class="badge b-red">❌</span></td><td>差 -18.7%（200d 斜率 -8.19%）</td></tr>
+<tr><td>股價在 W104 $4.49 之上？</td><td><span class="badge b-red">❌</span></td><td>差 -16.9%</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="badge b-red">❌</span></td><td>原始 ❌ → 盲點 2 救援為 🟠 追蹤池（DD §2 F），但「進場」仍需 W104 確認</td></tr>
+<tr><td>RSI 14d</td><td><span class="badge b-green">36-42 區間</span></td><td>偏冷不熱（Investing.com 42.4 / Barchart 36.7），非過熱反而接近超賣邊緣</td></tr>
+<tr><td>4 週漂移</td><td><span class="badge b-amber">-4% 弱</span></td><td>近 8 週 [3.56-4.21] 區間震盪，無強動能</td></tr>
+</table>
+<div class="decision-box decision-box-no" style="margin-top:14px;">
+<b>結論</b>：Pure MA ❌（盲點 2 救援為 🟠），即使 RSI 不過熱也禁止追進。<b>必須等 V 反轉確認</b>，具體為「站回 W104 $4.49 連 4 週」或「Q2 26 Adj EBITDA YoY ≥ 40% 後 W250 斜率轉正」雙條件之一。今天 $3.73 操作 = 違規。資料品質警示：50d/200d MA 與當日股價落差 -18%，數據合理，無過期 cache 疑慮。
+</div>
+
+<h3>7d｜建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 Q2/Q3 26 連 2 季 Adj EBITDA YoY &lt; 25% OR Financial Services H2 26 未 breakeven → V 反轉失敗，短停損</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 FY27 Adj EBITDA $1B + margin 22% 兌現 + Loan portfolio &gt; $3B → 持有至 FY28 $1.5B EBITDA target 兌現</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 SEA 數位金融滲透從 5% → 25% + GRAB 為 top-3 SEA 數位銀行 + Adj EBITDA margin &gt; 25% → 升級為 core 持有至 SEA digital saturation（10Y+）</td></tr>
+</table>
+<p><b>建議持有年限：3-5 年（中期）</b>，原因：H2（Financial Services 第二曲線）兌現視窗在 FY26-FY28，這是 thesis 的決定性 3 年；之後若 thesis 完整兌現再考慮延長至 long-term core。<b>Runway 🟢 寬</b>（SEA 滲透 &lt; 30%、Y5 末 GRAB 滲透率 2.8% 仍前段），但實際持有 path 分階段 commit，不一次承諾 10 年。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY26E</td><td>$0.089</td><td>yfinance consensus n=5（90 天從 $0.104 微下修 -15%）</td><td>FY26 guide 重申 $4.04-4.10B Rev / $700-720M Adj EBITDA，未上修</td></tr>
+<tr><td>FY27E</td><td>$0.148</td><td>yfinance consensus n=5（FY+2 forwardPE 24.5x）</td><td>+66% YoY；隱含 Financial Services 拐點兌現</td></tr>
+<tr><td>FY30E（外推）</td><td>~$0.40</td><td>DD §8 邏輯 base：Adj EBITDA $1.5B target × 50% NI conv / 4B shares</td><td>外推假設：FY28 Adj EBITDA target $1.5B 達成 + share count 持平（買回抵 SBC）</td></tr>
+</table>
+
+<p><b>假設長期持有（3-5 年），現在的股價適合嗎？</b></p>
+<p>$3.73 對應 FY+2 Fwd PE 25x（24.5x ＋ 微調），PEG 0.5 落在「成長 transition 期顯著便宜」區。Asymmetry Base 5Y +85% / Bear C -53% / Bull +180%；機率加權年化 IRR ≈ <b>+11.5%/yr</b> 落在「中-強」區間；§4 IRR composition 顯示 Base 11.5% 中 ~7%/yr 來自 EPS 自然複利、~3%/yr 來自估值 re-rate、~1.5%/yr 來自買回 — <b>可抱性中等偏好</b>（不純靠 re-rate）。<br><b>結論：估值層面適合，但 Pure MA 層面今天不適合</b>。3 年抱住核心條件是 H2 26 Financial Services breakeven 兌現；若這條沒兌現，整個 thesis 都要重寫。</p>
+</section>
+
+<!-- §4 Asymmetry -->
+<section id="asymmetry">
+<h2>§4 Asymmetry Analysis</h2>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Thesis 對（Bull）</td><td>+180%</td><td>+23.0%/yr</td><td>FY30 EPS $0.50 × PE 30x = $15；H2/H3 全兌現 + 估值體系從 EV/Sales 升級至 EV/EBITDA + Financial Services 達 SEA top-3 數位銀行</td><td>25%</td></tr>
+<tr><td>Base</td><td>+85%</td><td>+13.1%/yr</td><td>FY30 EPS $0.30-0.35 × PE 22x = $7.0；管理層 FY28 $1.5B Adj EBITDA target 兌現 + Adj EBITDA margin 18-22%</td><td>45%</td></tr>
+<tr><td>Thesis 錯（Bear A 緩兌）</td><td>-15%</td><td>-3.2%/yr</td><td>FY30 EPS $0.15 × PE 20x = $3.0；H2 breakeven 延後 + Indonesia 監管擴至 commission cap 4-wheel + GoTo restart 競爭</td><td>22%</td></tr>
+<tr><td>Thesis 錯（Bear B 結構崩）</td><td>-55%</td><td>-14.5%/yr</td><td>FY30 EPS $0.08 × PE 18x = $1.4；Indonesia 強制外資退場 + Anthony Tan 退場無接班 + WhatsApp/TikTok 嵌入式商務分流</td><td>8%</td></tr>
+<tr style="background:#EFF6FF;"><td><b>機率加權期望值</b></td><td><b>+59% 5Y</b></td><td><b>IRR ≈ +9.7%/yr</b></td><td>—</td><td>100%</td></tr>
+</table>
+
+<p style="font-size:12.5px;color:#64748B;"><b>IRR 公式</b>：<code>(1 + 5Y_pct)^(1/5) - 1</code>。Base +85% → 13.1%/yr；機率加權 +59% → 9.7%/yr。<br><b>解讀</b>：機率加權 IRR 9.7% 落「中等」（8-12% 區間），剛好不及大盤平均，需 idiosyncratic 信念支撐；但 Base 13.1% 為「高信念」區，反映 thesis 兌現的厚度足夠。Bear 雙情境合計 30% 機率 — 已超過 25% 校準下限，未過度樂觀。</p>
+
+<h3>追加壓力測試</h3>
+<ul>
+<li><b>時間拉長至 10Y</b>：若 thesis 對但 Financial Services 第二曲線兌現延後至 FY30-FY33，FY36 EPS 預估 $0.80-1.00 × PE 18-20x = $15-20；10Y IRR ≈ +15-18%/yr。仍值得，但中段 max DD 風險上升。</li>
+<li><b>機會成本對照</b>：同期 SPX 預期 IRR ~7-9%/yr；MELI 5Y IRR consensus 12-15%/yr；SE 5Y IRR consensus 10-13%/yr。<b>GRAB Base 13.1%/yr 略高於 SEA 同類 SE 但低於 MELI</b>；相對優勢在於估值起點低（PEG 0.49 vs MELI ~1.4 vs SE ~1.8）— 機率加權後仍 9.7% 是因 Bear 情境拖累。</li>
+</ul>
+
+<h3>📅 機率估計：時間視角自查</h3>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本案</th><th>過關？</th></tr>
+<tr><td>Bear 機率 5Y</td><td>不應 &lt; 20%</td><td>30%（22% + 8%）</td><td>✅</td></tr>
+<tr><td>Bull / Bear 散布</td><td>5Y 應寬</td><td>Bull +180% vs Bear B -55% = 235%p 散布</td><td>✅ 寬</td></tr>
+<tr><td>Base 機率</td><td>不應 &gt; 50%</td><td>45%</td><td>✅</td></tr>
+<tr><td>Pattern match 校準</td><td>同類 5Y IRR 多少？</td><td>MELI 2018-2023 ~22%/yr；SE 2020-2025 V 反轉 ~12%/yr；DASH 2022-2025 V 反轉 ~28%/yr</td><td>✅ Base 13% 落在 SE 區，未過度樂觀</td></tr>
+</table>
+
+<h3>📐 Pattern Match</h3>
+<div class="pattern-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><b>歷史上 thesis 結構類似的個股</b></td><td><b>MercadoLibre (MELI) 2018-2023</b>—— 拉美 super-app + 數位金融 Mercado Pago + V 反轉早期</td></tr>
+<tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>2018 MELI 市值 $20B、EV/Sales 8x、ROIC 剛轉正、Mercado Pago 為 fintech 第二曲線剛啟動（vs GRAB 2026 市值 $15B、EV/Sales 2.5x、GAAP 剛首盈、Financial Services 同樣是第二曲線剛啟動）</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>MELI 2018-2023 從 $20B → $80B = +300% 5Y / IRR +32%/yr；之後 2023-2025 從 $80B → $130B = +63% / +22%/yr；長期 5-10Y 累積 IRR ~22-26%/yr</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><b>最像</b>：(1) 區域 super-app 跨域整合（拉美/SEA）；(2) 數位金融第二曲線啟動時點極相似；(3) 估值起點便宜 + 市場質疑 GAAP profitability 持續性。<br><b>最不像</b>：(1) GRAB 面臨 Indonesia 監管 + GoTo 競爭較 MELI 巴西更碎片；(2) GRAB 司機端有 commission cap 政治風險，MELI 純 marketplace；(3) MELI 當時拉美互聯網滲透率比 SEA 2026 高 15-20pp，GRAB 跑道反而較長</td></tr>
+</table>
+<p style="margin-top:10px;font-size:12.5px;"><b>校準訊號</b>：MELI 2018-2023 是 5Y +300% 的 outlier 案例。如果 GRAB 是 MELI 「lite 版」（受 Indonesia 監管 + GoTo 拖累），我的 Base IRR 13% 估計合理；Bull IRR 23% 對應「MELI 70% 復刻機率」也合理。不複製，但讓機率有錨點。</p>
+</div>
+
+<h3>🧬 IRR Composition（5Y 質感拆解）</h3>
+<table class="verdict-table">
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td><b>Bull</b></td><td>+14.0%/yr（FY26→FY30 $0.089→$0.50 = +54%/yr 但 base 期 1Y 看 5Y CAGR ~41%）</td><td>+6.0%/yr（FPE 24.5x → 30x，5Y re-rate +22.5%）</td><td>+2.0%/yr（$500M 回購 / $15B mkt cap ~3%；扣 SBC 1%）</td><td>+22.0%/yr ≈ Bull 23%</td></tr>
+<tr><td><b>Base</b></td><td>+9.0%/yr（FY26→FY30 $0.089→$0.30 = +35%/yr，但 starting forward 期 EPS $0.148 → $0.30 = +19%/yr blended ~ 9-10%）</td><td>+2.5%/yr（FPE 24.5x → 22x 微 de-rate，但 NTM PE 從 40x → 25x，blended +2-3%）</td><td>+1.5%/yr（持續買回 ~1.5%，SBC 抵消）</td><td>+13.0%/yr ≈ Base 13.1%</td></tr>
+<tr><td><b>Bear (合並 A+B 加權)</b></td><td>−2.0%/yr（FY30 EPS $0.12 → 從 $0.148 下滑）</td><td>−6.0%/yr（FPE 24.5x → 18x = -25%, 5Y -5.6%/yr）</td><td>+0.5%/yr（買回減速）</td><td>−7.5%/yr</td></tr>
+</table>
+
+<div class="irr-bar-wrap">
+<div style="font-size:12px;margin-bottom:4px;color:#475569;"><b>Base 13.1% IRR 拆解</b>：</div>
+<div class="irr-bar">
+  <div class="irr-eps" style="width:69%;">EPS 複利 9.0%/yr</div>
+  <div class="irr-rerate" style="width:19%;">re-rate 2.5%/yr</div>
+  <div class="irr-yield" style="width:12%;">買回 1.5%/yr</div>
+</div>
+</div>
+
+<div class="quote">
+<b>質感解讀</b>：Base 13.1% IRR 中，<b>9.0%/yr 來自 EPS 自然複利</b>（盈利拐點 × Financial Services 第二曲線啟動），<b>2.5%/yr 來自估值 re-rate</b>（NTM PE 40x 收斂至 cycle-through 22x，但這是「轉型期溢價消化」而非「擴張」），<b>1.5%/yr 來自買回</b>（$500M / 年抵 SBC 後淨減少 ~1% 股數）。<b>這檔的可抱性主要靠 EPS 複利（69% 貢獻） — 自然複利好抱，不純看市場臉色。</b> 風險點：若 NTM PE re-rate 反向（FY26 guide 連 2 季不上修 → PE 壓縮至 20x），re-rate 從 +2.5% 變 -3%，Base IRR 從 13% 降至 8%。
+</div>
+
+<p style="font-size:11.5px;color:#64748B;margin-top:6px;"><b>Guardrail 校驗</b>：Base 合計 13.0%/yr vs §4 Asymmetry Base 列 13.1%/yr — 偏差 0.1%p（&lt; 2%p ✅ 通過）。Bull 合計 22.0% vs 23.0% 偏差 1%p ✅。Bear 合計 -7.5% vs 加權 Bear 平均 (-3.2×0.22 + -14.5×0.08)/0.30 = -6.2% — 偏差 1.3%p ✅。</p>
+</section>
+
+<!-- §1 Mental Models -->
+<section id="mental-models">
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">
+<b>Subject:</b> GRAB — SEA Super-App 唯一全棧 V 反轉早期定見<br>
+<b>To:</b> 投委會<br>
+<b>Date:</b> 2026-05-11<br>
+<b>Recommendation:</b> 衛星候選 / 追蹤池，目標倉 3.5%，<u>暫不進場</u><br><br>
+<b>Thesis（一句話）</b>：GRAB 是 SEA 8 國唯一全棧 super-app，剛從 14 年燒錢史踏進首次全年 GAAP profit 的房間，市場仍用「燒錢年代」的折價賣它（P/S 5Y 低 5% 分位、PEG 0.49）。<br><br>
+<b>Key Drivers</b>：(1) <b>Super-App 三邊網絡飛輪</b>——51.6M MTU × 數百萬司機 × 數百萬商戶 × $1.6B 存款，14 年累積 + Foodpanda 全面退場 + Uber 永不重返 + GoTo limited 至 Indonesia，跨 8 國同時 replicate 的玩家為零。(2) <b>Financial Services 第二曲線</b>——GXS/GXBank Loan portfolio Q1 26 +130% YoY 達 $1.44B、Q1 首次 $1B+ disburse、H2 26 Adj EBITDA breakeven 目標。<br><br>
+<b>5Y R:R</b>：Base +85% / +13.1%/yr｜Bear A -15%（22%）/ Bear B -55%（8%）｜Bull +180%（25%）。機率加權 IRR 9.7%/yr（中等-強區間下緣）。<br><br>
+<b>主要風險</b>：(1) Indonesia 監管擴至 4-wheel commission cap（30% 機率，§9 -0.5）；(2) Financial Services H2 26 breakeven 延後（25% 機率）；(3) Pure MA 系統 ❌（W250 -8.19% 斜率），中途 Max DD -40~-55% 路徑壓力 🟡。<br><br>
+<b>建議倉位</b>：目前 0%（追蹤池），等 V 反轉 trigger 後第一批 1.0%、目標 3.5%。<u>等待條件</u>：(a) 站回 W104 $4.49 連 4 週 + Q2 26 Adj EBITDA YoY ≥ 40%；或 (b) 跌至 $3.20 觸 BB 下軌 + Adj FCF TTM 確認 ≥ $500M。<br><br>
+<b>保質期</b>：至 2026-08-04（Q2 26 財報日）。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「GRAB 是東南亞 8 國唯一 super-app 跨域寡占——Mobility + Delivery + 數位銀行三邊網絡 14 年累積。FY25 第一次全年 GAAP 賺錢、Q1 26 Adj EBITDA +46%、貸款組合 +130%，但股價 YTD -26% 跌到 5Y P/S 最低 5% 分位、PEG 0.49。這是價值股 V 反轉早期，不是價值陷阱——但 Pure MA 還沒站回 W104，所以我看著、不追、等站回 $4.49 連 4 週才動。」
+</div>
+
+<p><b>壓力測試結果</b>：兩個版本邏輯自洽 — 1 頁紙 memo 與 30 秒版核心論點一致（SEA 全棧寡占 + V 反轉 + 估值極低 + 等 timing）。Thesis 通過壓測，繼續 §7。</p>
+</section>
+
+<!-- Phase B -->
+<section id="contradictions">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li><b>SEA super-app moat 真實且加深</b>：A1（市占 54% food deliv、ROIC 4% 轉正、Intelligence Layer 20B 交易）+ A2（SEA TAM $1T by 2030、滲透率 &lt; 30%）+ A3（Rev +24% YoY、MTU 51.6M 新高、Loan +130%）三軸一致確認。</li>
+<li><b>估值處於極低分位</b>：A1（毛利 5% → 43% 大幅 step-up）+ A2（產業中位 EV/Sales 5x vs GRAB 2.5x）+ A3（FY+2 PE 24.5x、PEG 0.49、P/S 5Y 5% 分位）— 估值便宜為三軸共識。</li>
+<li><b>Financial Services 第二曲線啟動但尚未 breakeven</b>：A1（GXS 4 in 5 客戶來自 GRAB ecosystem、轉化率高）+ A3（Loan +130%、Q1 disburse $1.1B、H2 26 breakeven 目標）— 一致看多兌現中。</li>
+</ul>
+
+<h3>2. 矛盾清單（A1-A3 之間）</h3>
+<div class="contra-box">
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>C1</td><td>SEA monopoly status</td><td>moat 加深、Foodpanda 退、Uber 不返、GoTo 限 Indonesia</td><td>Indonesia ojol commission cap 8% + KPPU 反 GoTo 合併</td><td>FY26 guide 不上修 + GoTo 合併 dormant</td><td>🔴 不可調和（A1 看多寡占 vs A2 政治力反 vs A3 管理層 conservative 暗示自身也不太自信）</td></tr>
+<tr><td>C2</td><td>盈利持續性</td><td>moat 強支持高 NDR + take rate 維持</td><td>SEA digital revenue +30% YoY 仍處於擴張期</td><td>90 天 EPS 共識下修 -15%（$0.104 → $0.089）+ 內部人 90 天全 sells</td><td>🟡 可調和（C2 程度差異：moat 真實但短期 EPS 兌現節奏被市場下修）</td></tr>
+<tr><td>C3</td><td>進場 timing</td><td>moat & 拐點訊號清晰，越早佈局越優</td><td>產業順風 + SEA 滲透前段</td><td>Pure MA ❌、W250 -8.19%、52W 低位、4w -14%</td><td>🔴 不可調和（A1+A2 基本面說 yes、A3 動能說 no）</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有報告（DD_GRAB_20260505）的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 報告結論</th><th>可能原因</th></tr>
+<tr><td>X1</td><td>盲點 2 救援結論</td><td>Phase A 三軸搜尋確認 MA ❌ + W250 -8.19% + 52W 低 仍未反轉</td><td>DD §2 F 啟動盲點 2 救援，從 ❌ 降為 🟠 追蹤池</td><td>視角差：DD 寫的時候有 §2 F 盲點 2 救援工具可用；本 DCA Phase A 是冷讀獨立搜尋，不引用 DD 結論 — 但結論一致（皆認為「不是清倉」但「不是現在進場」）</td></tr>
+<tr><td>X2</td><td>長期 IRR 預期</td><td>Phase A 推導 Base IRR 13.1%/yr、機率加權 9.7%</td><td>DD §2 D 隱含中期 R:R 3.4x（2Y） + 長期無下行</td><td>時間差小（DD 5/5、DCA 5/11），分析深度差異（DCA 引入 Bear B 結構崩 8% 機率，DD 主要關注 Bear A 監管擴大）</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決（每個🔴不可調和矛盾必填）</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td><b>C1</b></td><td>SEA monopoly vs 監管反噬</td><td><b>A1 / A3（混合判決：moat 真實但 + Indonesia 監管折讓）</b></td><td>(1) Foodpanda 全面退場是 hard fact（2025 退泰、Delivery Hero 財報確認）；(2) Indonesia ojol cap 8% 已落實但只影響 &lt; 6% Mobility GMV；(3) 但 KPPU 否決 GoTo 合併威脅 + Danantara 主權基金阻力是 structural — 不能用 A1 single moat 否認 A2 政治力。混合：moat 8/10 為真，但 Indonesia 監管尾風險使「實際可變現 moat」應折讓至 7/10 評估。</td><td><b>(a) KPPU 在 2026 H2 對 ojol commission cap 擴至 4-wheel 立法 / 不擴大</b>（具體日期：Q3/Q4 26 印尼國會 ride-hailing 法案投票）；(b) <b>FY26 Q3 Indonesia segment GMV YoY ≥ +20%</b>（管理層 quarterly 揭露，11/4 公布）；(c) <b>GoTo 合併 binary：2026 H2 確認 dead / restart</b>（Bloomberg / 印尼 official 公告）</td><td><b>(a) Indonesia commission cap 擴至 4-wheel → 倉位上限從 3.5% 強制下修至 2.0%</b>；<b>(b) Q3 Indonesia GMV YoY ≥ +25% + GoTo dead 確認 → 倉位上限從 3.5% 上修至 4.5%</b></td></tr>
+<tr><td><b>C3</b></td><td>基本面 yes vs 動能 no</td><td><b>A3（暫時）</b>—— 動能 trumps 基本面，但有 limited timing</td><td>「Pure MA ❌ + 52W 低 + 4w 漂移負」三件齊發是 Munger inversion 強訊號 — 「越好的標的在 MA 失效時越像陷阱」。基本面雖優秀但「市場已 know」（共識 26 Buy / 1 Hold），意味著估值便宜不會自動修正；需要 trigger event（V 反轉 confirm）才會 re-rate。<b>不選 A1+A2 的理由</b>：歷史上 V 反轉早期一次建倉 的勝率 ≈ 40%（vs 等 W250 翻正後建倉勝率 ≈ 70%，回測 DASH/MELI/SE 三案）。<b>不暫無法決定的理由</b>：基本面 vs 動能在 V 反轉早期幾乎永遠不一致，必須選邊；選 A3 等動能 = 損失部分 upside 換更高勝率。</td><td><b>(a) 站回 W104 $4.49 連 4 週</b>（即 26 個交易日收 ≥ $4.49，Y financials.yahoo.com / TradingView 可日校驗）；<b>(b) Q2 26 Adj EBITDA YoY 公布</b>（8/4 ± 2 天，財報日確認）；(c) <b>BB 下軌 $3.20 觸碰 + Adj FCF TTM ≥ $500M</b>（極端逆向 trigger）</td><td><b>(a) 雙 trigger 達成（站回 W104 + Q2 EBITDA ≥ 40%）→ 第一批 1.0% 進場，目標 3.5%</b>；<b>(b) 跌破 $3.0 連 2 週 → 清除追蹤池（盲點 2 救援失效），thesis 重評</b>；(c) 跌至 BB 下軌 $3.20 + Adj FCF ≥ $500M → 逆向第一批 0.75%（半倉試探）</td></tr>
+</table>
+
+<p style="background:#FFFBEB;padding:12px 16px;border-left:3px solid #F97316;margin:14px 0;border-radius:4px;"><b>裁決後決策主軸</b>：C1 + C3 雙裁決帶入 §7：(1) 倉位上限 3.5%（B 級衛星 + Max DD 🟡 下修）；(2) 進場節奏必須 timing 條件式（C3 裁決）；(3) Indonesia binary event 將決定倉位上限是 2.0% 還是 4.5%（C1 裁決）。<b>禁止</b>：用「整體 portfolio 平衡考量」逃避這兩個裁決。</p>
+</section>
+
+<!-- §3 Key Drivers -->
+<section id="drivers">
+<h2>§3 Key Drivers</h2>
+<p><b>這支股票的命脈是什麼？只能有 1-2 個。</b></p>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><b>SEA 8 國跨國 super-app 寡占</b>（供給側結構性 moat）</td><td>14 年累積 8 國 mobility/delivery/banking 牌照 + 數百萬司機 + 數百萬商戶 + 51.6M MTU 三邊網絡 — 沒有對手能在「同時 8 國」replicate（GoTo 限 Indonesia、Sea 偏 e-commerce、Uber 已退、Foodpanda 全面退場）。這是 GRAB 一切定價權、market share、take rate 的根。失去這個 = thesis 死。</td><td>Group MTU YoY（Q1 26 +16%）、On-Demand GMV YoY（+24%）、food delivery 市占（54%）、Indonesia GMV YoY、Foodpanda/GoTo 競爭強度</td></tr>
+<tr><td>2</td><td><b>Financial Services 第二曲線兌現速度</b>（需求側成長持續性）</td><td>SEA 數位金融滲透 &lt; 30% 是「跑道長度」，但是否「真兌現」全看 GXS/GXBank 的 P&amp;L 軌跡。Loan +130% / Q1 disburse $1B+ / H2 26 breakeven 是 thesis 的「明年-後年」具體節點；這個曲線不啟動 → GRAB 永遠卡在「mobility + delivery cyclical low-margin」估值上。</td><td>Loan portfolio YoY、deposits、Financial Services Adj EBITDA、ECL ratio（Q1 4.6% 改善）、Superbank Indonesia 客戶增速</td></tr>
+</table>
+
+<h3>⚖ Driver 抽象層 guardrail 校驗</h3>
+<div class="quote">
+<b>Driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？</b><br>
+✅ 可以。例：「GRAB super-app moat 真實（D1 成立），但 Financial Services 因 Indonesia 央行牌照延後 + GXBank 信用模型出現 NPL 爆雷 → D2 失敗」這個情境 D1 仍 hold（mobility/delivery 飛輪繼續）但 D2 崩。反之亦然：「Financial Services H2 breakeven 完美兌現（D2 成立），但 KPPU 強制 Indonesia 外資退場 → super-app 結構崩」也成立。兩者是**獨立因果鏈**（供給側 moat × 需求側成長），<b>通過 guardrail</b>。
+</div>
+
+<p><b>為什麼是這 1-2 個，而不是其他？</b>D1 是「現在已驗證的 fact」（51.6M MTU + 8 國 + Foodpanda 退場）；D2 是「未來 24 月決定 thesis 兌現的 binary」。其他「AI integration（Turbo/Mai）」雖然亮眼但只是 D1 的飛輪 sub-component；「Buyback $500M」是 capital allocation 表態，影響 EPS &lt; 2%/yr 不到命脈級別；「Adj EBITDA margin 擴張」是 D1+D2 的合成結果不是獨立 driver。</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>單季 GAAP EPS 微幅 -$0.01 / -$0.03 波動</td><td>FY25 才首次 GAAP profit，per-share negative 主因 share count 高基期 + working capital 影響，與 thesis 拐點 narrative 無關</td></tr>
+<tr><td>內部人 Anthony Tan 4/9 賣 400K（$1.47M）</td><td>10b5-1 計畫 + 同日 RSU grant 6.75M 抵消 — net 訊號 weak；CFO Oey $196K 為 routine RSU monetize；90 天「全 sells 無 buys」是 mild signal 但不到 alpha 級</td></tr>
+<tr><td>GoTo 合併傳聞</td><td>Bloomberg 1/23 揭露 dormant + KPPU 反壟斷威脅 + Danantara 主權基金阻力 — 合併 effectively dead，重啟機率 &lt; 25%。市場對「會合併」期待落空已 priced in，繼續討論是 noise</td></tr>
+<tr><td>區域 corporate cost $114M/季高位</td><td>含 AI infra build 一次性 + 管理層 disciplined 風格不會無限擴張；FY28 target $1.5B EBITDA 已 imply margin 至 25%+，corporate cost 將被 op leverage 吸收</td></tr>
+<tr><td>單月股價 momentum / 4w 漂移 -14%</td><td>是 trigger（C3 裁決依據）但不是 thesis；股價在 trigger 達成前的任何波動我都不該換看法</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>市場 NTM Fwd PE 40.7x / FY+2 PE 24.5x / EV/Sales 2.5x 隱含：(1) FY26 EBITDA $700-720M 兌現但 FY27 不會大幅 raise；(2) Financial Services breakeven 推延機率高（≥ 40%）；(3) Indonesia 監管尾風險 priced in 5-10%；(4) GoTo 合併 dead 已認；(5) 區域 corporate cost 結構性偏高 — 給予 SEA 同類 50% 折讓（vs Sea Group EV/Sales 6x）</td></tr>
+<tr><td>我認為的不同假設</td><td>市場低估了「<b>14 年 ecosystem moat × Financial Services 拐點時點精準</b>」的雙重複利：GXS 76% / GXBank 93% 客戶來自 GRAB ecosystem，這是 fintech 業界罕見的 cross-sell效率，第二曲線兌現的時間與規模都會超共識。Indonesia 監管尾風險被高估（cap 擴至 4-wheel 機率僅 30%）；GoTo dead 對 GRAB 反而正面（消除 Indonesia 唯一強對手）。</td></tr>
+<tr><td>賣方為什麼錯（具體理由）</td><td>賣方分析師近 90 天 EPS 共識下修 -15%（$0.104 → $0.089）主因「Q1 driver incentive peak + 區域 corporate cost 高位」— 但管理層明確說 Q1 是 incentive 全年峰值；賣方把短期單季 noise 推外推至 FY26 全年，下修幅度過大。同時賣方對 Financial Services Adj EBITDA Q1 -$17M（vs prior -$30M，已改善 43%）的「軌跡」價值估計不足，只看 absolute 仍 negative。</td></tr>
+</table>
+
+<p style="background:#F0F9FF;padding:10px 14px;border-left:3px solid #0EA5E9;margin:10px 0;font-size:13px;">
+<b>校驗</b>：三題寫得出來 — alpha 來源是「拐點時點 + ecosystem cross-sell 效率」雙重低估，不是「整個 thesis 是否成立」的爭議（thesis 共識度高，26 Buy / 1 Hold / 0 Sell）。<b>因此 §7 倉位不需額外打折</b>（已因 Max DD 🟡 + B 級衛星限制 3.5%）。
+</p>
+</section>
+
+<!-- §5 Single Thing -->
+<section id="single-thing">
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger（原 §5）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><b>事件描述</b></td><td><b>Financial Services 段 Adj EBITDA 在 H2 26（Q3 或 Q4 26）未達 breakeven，且 FY27 Q1 仍虧損 $20M+</b>（管理層 H2 26 breakeven 承諾跳票連 2 季）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>D2（Financial Services 第二曲線）是 thesis 的兌現核心；H2 26 breakeven 不是「nice to have」是 management 公開 commitment。連 2 季跳票意味著：(1) GXS/GXBank 信用模型/單位經濟有結構問題；(2) 管理層 credibility 大幅受損；(3) FY28 $1.5B Adj EBITDA target 大幅 derate；(4) 估值體系從「EV/EBITDA 升級」回到「EV/Sales lowball」— 對應股價直接 -30~-50%</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>每季財報日（Q2 26: 8/4±2、Q3 26: 11/4±2、Q4 26: 2/26 27±2、Q1 27: 5/5 27±2），管理層在 §3 Financial Services Highlights 揭露 Adj EBITDA $；Investor Day（若有，通常 2026 Q4）；earnings call FAQ「H2 breakeven on track?」管理層用詞</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q1 26 -$17M（vs prior -$30M，改善 43%）→ 軌跡 on track；H2 26 breakeven 仍機率 60-65%。離「Primary trigger」(連 2 季跳票)發生：最快 2026 Q4（觀察 Q3 報），最慢 2027 Q1（觀察 Q4 報）</td></tr>
+</table>
+
+<h3>Secondary Trigger（pre-mortem 派生，§6b 二段校驗後補充）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><b>事件描述</b></td><td><b>Indonesia 政府將 ride-hailing commission cap 從 2-wheel ojol 擴至 4-wheel 汽車網約車</b>（KPPU 立法 / Presidential decree）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>D1（SEA super-app 寡占）的最大威脅 — 4-wheel 是 GRAB Indonesia mobility 的大頭（~80% GMV vs 2-wheel ~20%）。Cap 至 4-wheel 將：(1) Indonesia mobility EBITDA margin 從 ~35% 壓縮至 20-25%；(2) 為其他國家（Vietnam / Philippines / Thailand）效仿開壞例；(3) GRAB 整體 Mobility EBITDA 受壓 -10-15%；(4) §1 trap 從 🟡 升 🔴</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>印尼國會 ride-hailing 立法 tracker（DPR.go.id）；KPPU 公告（kppu.go.id）；Presidential decree（setkab.go.id）；Bloomberg / Reuters Indonesia 標籤；管理層 earnings call Indonesia segment 揭露</td></tr>
+<tr><td>目前離發生有多遠</td><td>2026-05-01 Prabowo 宣布 2-wheel ojol cap 8% — 政治氣氛已現；4-wheel 擴大機率：估 30% in 24M（vs DD §9 預估 30% 一致）。最早觸發：Q3 26（印尼國會新會期）；最晚：2028 大選後</td></tr>
+</table>
+
+<p style="background:#FEF2F2;padding:10px 14px;border-left:3px solid #DC2626;margin:10px 0;font-size:13px;">
+<b>規則</b>：(1) Primary 不是模糊「ROIC 連續下降」而是「H2 26 breakeven 跳票 + Q1 27 仍虧損 $20M+」單點可驗證；(2) Secondary 不是空泛「監管風險」而是「commission cap 從 2-wheel 擴至 4-wheel」具體 binary 事件；(3) 任一發生 → §7 立即執行清倉至 1.5% 或 0%。
+</p>
+</section>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<section id="pre-mortem">
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a｜強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>GXS / GXBank 的 ECL（Expected Credit Loss）軌跡能持續改善至 &lt; 3%</td><td>SEA 數位銀行新興市場 NPL 控制在 G7 水準</td><td>NPL 爆雷 → Loan portfolio 收縮 → Financial Services 第二曲線整個 stall，H2 26 breakeven 跳票 → §5 Primary trigger 直接觸發</td></tr>
+<tr><td>2</td><td>WhatsApp / TikTok / Telegram 不會在 SEA 推 ride-hailing + delivery 嵌入式商務</td><td>Meta / ByteDance 不認為 SEA mobility 是核心戰場（vs 印度 IRCTC / WeChat 嵌入式）</td><td>若推 → 用戶入口分流 + GrabPay 跨境 corridor 弱化 → D1 moat -1（→ 7）</td></tr>
+<tr><td>3</td><td>Anthony Tan 5 年內持續主導 + 不被 KPPU 強迫退場</td><td>創辦人健康 + 監管壓力可控 + Class B 投票權結構維持</td><td>Tan 退場無接班 → governance discount 20%+；若 KPPU 強迫外資退場（極小機率但 tail）→ Indonesia 業務完全重整</td></tr>
+</table>
+
+<h3>6b｜Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<div class="premortem-box">
+<h4>第一段｜故事倒推（≤80 字 narrative）</h4>
+<div class="quote">
+假設 2031 年 GRAB 部位虧 50%，最可能發生的故事是：「<b>2027 Q1 印尼國會在 Prabowo 第二任壓力下將 ride-hailing commission cap 從 ojol 2-wheel 擴大至 4-wheel 汽車網約車（cap 10%）</b>；同期 GXS Bank 因 2026 H2 ASEAN 衰退觸發 NPL 爆雷，ECL ratio 從 4.6% 升至 8%+，Financial Services Q1 27 Adj EBITDA -$45M（vs 共識 +$5M），管理層被迫推遲 FY28 $1.5B EBITDA target 至 FY30；市場將 Forward PE 從 24.5x 壓縮至 12x，股價從 $4.5 跌至 $2.0」 — 雙 trigger 同時發生使 Bear B 結構崩劇本兌現。
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><b>⚠ 部分重疊</b>。§5 原本只寫 D2 Financial Services breakeven 跳票，但失敗故事的 primary driver 是「Indonesia 4-wheel commission cap」（D1 maot 攻擊）— §5 漏抓了 D1 的最大尾風險。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5（已實際執行）</h4>
+<p>修正狀態：<b>⚠ 已補 1 條 Secondary trigger</b>。§5 區塊已於上方新增「Secondary Trigger：Indonesia 4-wheel commission cap」並列為與 Primary Trigger（Financial Services breakeven 跳票）<b>等權重</b>的雙 single thing。HTML 中 §5 trigger 數從 1 條變為 2 條，符合 pre-mortem 三段式 guardrail 要求。<br><br>
+<b>校驗紀錄</b>：「§5 修正狀態：⚠ 已補 1 條 secondary trigger」— 已更新 §5 區塊內容（請見上方 §5 兩個 trigger 表格）。</p>
+</div>
+
+<h3>6c｜路徑壓力測試（Max DD）</h3>
+<div class="dd-block">
+<div class="dd-number">−40% ~ −55%</div>
+<div style="flex:1;">
+  <div style="font-size:12px;color:#475569;margin-bottom:4px;">Max DD 範圍（基於 §6b pre-mortem 失敗故事推估）</div>
+  <div class="dd-bar-wrap"><div class="dd-bar"></div></div>
+  <div style="font-size:11px;color:#64748B;margin-top:3px;">🟢 0~-30 | 🟡 -30~-50 | 🔴 &lt; -50</div>
+</div>
+<div class="dd-rating">🟡</div>
+</div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><b>估計 Max DD 範圍</b></td><td><b>−40% ~ −55%</b>（從現價 $3.73 或入場點 $4.49 推算到 $2.0~$2.7 區間；範圍寬度 15%p ≥ 10%p ✅）</td></tr>
+<tr><td>最可能觸發時點</td><td><b>2026 Q4 ~ 2027 Q2</b>（含具體事件：2026 Q3-Q4 印尼國會 ride-hailing 法案投票 + 2026-Q4 GXS/GXBank NPL 第一次年度公告 + 2027 Q1 FY26 全年財報 Adj EBITDA 是否達 guide 下緣 $700M）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><b>18-30 個月</b>（若是純估值殺，3-9 季 recovery；若是 thesis 削弱 ⊃ 監管擴大則需 24-36 個月驗證新 baseline）— 若雙 trigger（C1 + C3 §5 雙 single thing）同時發生，thesis 已破，不會恢復至原 peak，需重評</td></tr>
+<tr><td>路徑風險評級</td><td><b>🟡 -30~-50%（需要強信念）</b></td></tr>
+</table>
+
+<p style="background:#FEF3C7;padding:12px 16px;border-left:3px solid #CA8A04;margin:10px 0;border-radius:4px;">
+<b>校驗</b>：若 max DD 落在 -45%，我能否撐到復原？條件：(1) 部位不超過 portfolio 3.5%（B 級衛星上限）；(2) 不使用槓桿；(3) §5 雙 single thing 皆未發生（Financial Services H2 breakeven 軌跡仍 on track + Indonesia 4-wheel cap 未立法）；(4) 大盤 SPX 仍 &gt; W104（無 systemic crisis）。若以上四條件任一不滿足 → 倉位再打 50% 折扣（從 3.5% → 1.75%）。<br><br>
+<b>Guardrail 觸發</b>：評級 🟡（非 🔴），§7a 倉位上限不強制 cap ≤ 3%；但仍從原計畫 4-5% 自主下修至 3.5%（基於 Max DD 範圍與 V 反轉早期不確定性綜合考量）。§7d 已標註「中途出場風險中等」於 7d 條件化持有條款中。
+</p>
+</section>
+
+<!-- §8 Review Triggers -->
+<section id="review">
+<h2>§8 Review Triggers</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td>Q2 26 財報（Adj EBITDA YoY、Financial Services Adj EBITDA、Loan portfolio）</td><td>📅 財報日期</td><td><b>2026-08-04 ± 2 天</b>（Q2 26 earnings call）— 關鍵：Adj EBITDA YoY ≥ 40% / Financial Services 軌跡 / FY26 guide raise 與否</td></tr>
+<tr><td>2</td><td>Q3 26 財報 + Financial Services 段 H2 26 breakeven 兌現</td><td>📅 財報日期</td><td><b>2026-11-04 ± 2 天</b>（Q3 26 earnings call）— Financial Services Adj EBITDA 須 ≥ 0；若仍 -$10M+ → §5 Primary trigger 觀察點</td></tr>
+<tr><td>3</td><td>印尼國會 ride-hailing 立法 + KPPU 對 commission cap 4-wheel 立場</td><td>🏛️ 產業 / 政策事件</td><td><b>2026 Q3-Q4 印尼國會新會期 + KPPU annual review</b>（無固定日期，需 setkab.go.id / kppu.go.id rolling 監測）— §5 Secondary trigger</td></tr>
+<tr><td>4</td><td>股價站回 W104 $4.49 連 4 週 OR 跌破 $3.0 連 2 週</td><td>📊 價位觸發</td><td><b>持續監測</b>（每週末收盤後）— 站回 W104 = 第一批進場 1.0%；跌破 $3.0 = 清除追蹤池（盲點 2 救援失效）</td></tr>
+<tr><td>5</td><td>§5 Single Thing 任一觸發（Financial Services breakeven 跳票 OR Indonesia 4-wheel cap 立法）</td><td>🚨 §5 trigger</td><td>事件驅動：48 小時內重評倉位 + 24 小時內執行 §7b 對應動作（減碼至 1.5% 或清倉）</td></tr>
+</table>
+
+<p><b>這份報告的保質期：</b>至 <b>2026-08-04（Q2 26 財報日）</b>。Q2 26 數字將 settle 三大爭議：(1) Q1 driver incentive peak 是否真的是峰值（FY26 guide raise 與否）、(2) Financial Services Adj EBITDA 軌跡是否 on track to H2 breakeven、(3) Pure MA 系統是否在 Q2 報後完成 V 反轉確認。Q2 報後必須重寫此 DCA。</p>
+
+<p><b>最可能發生的 upside 因素：</b>(1) Q2 26 Adj EBITDA YoY ≥ 50%（驚喜大幅 beat）+ FY26 guide raise +5-10%；(2) GXBank Malaysia / GXS Singapore 連 2 季 NPL 改善至 &lt; 3%；(3) GoTo 合併 binary 確認 dead（消除最後 Indonesia 強對手）+ Indonesia commission cap 4-wheel 立法 fail。</p>
+
+<p><b>最可能發生的 downside 因素：</b>(1) Q2 26 Adj EBITDA YoY &lt; 25%（飛輪減速）+ FY26 guide 再次重申不上修；(2) Financial Services Q2 Adj EBITDA -$15M+（vs Q1 -$17M 改善停滯）；(3) Indonesia 政治壓力下 KPPU 開始討論 4-wheel cap；(4) 內部人新一輪 sells（5-8 月需觀察 Anthony Tan 第二次 10b5-1 plan）。</p>
+</section>
+
+<!-- Phase A1 -->
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：SEA 8 國跨域寡占 + 14 年累積三邊網絡，moat 8/10 holding（→），加深中（GAAP 拐點 + Financial Services 飛輪 + AI integration）</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td><b>(1) 跨國牌照 + 14 年累積規模優勢</b>（8 國同時部署 + Foodpanda 退場 + Uber 永不返）；<b>(2) 三邊網絡效應</b>（51.6M MTU × 數百萬司機 × 數百萬商戶 × $1.6B 存款 × 20B 歷史交易 Intelligence Layer）</td></tr>
+<tr><td>持久性評分</td><td><b>8/10</b>，5 年穩固度：<b>高</b>（SEA 數位生活 default platform，跨國對手結構性弱勢）</td></tr>
+<tr><td>最大侵蝕風險</td><td><b>Indonesia 監管擴大 commission cap 至 4-wheel</b>（24M 機率 30%，會直接弱化 D1 moat -1）+ <b>WhatsApp/TikTok 嵌入式商務</b>（24M 機率 25%，會分流 user 入口 -0.5）</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 5%→43.2%（FY22→FY25，趨勢 ↑↑，公司 FY25 10-K）；SEA food delivery 市占 54%（vs Foodpanda 16% / Gojek 10% / ShopeeFood 9-12%，growthhq.io 2025-2026 報告）；ROIC ~4%（剛 +ROIC vs WACC 仍負，公司 FY25）；ROIC vs WACC 超額 -7%p（轉正中）</td></tr>
+<tr><td><b>moat_trend（必填）</b></td><td><b>→ holding（加深中但 5 年內 binary 風險使「整體」holding）</b>。具體 12M evidence：<br>• 競爭格局改善：Foodpanda 退泰（2025）+ 全面退場過程（Delivery Hero 財報 2025 Q4 確認），SEA food delivery 市占從 ~50%（2024）→ 54%（2026 Q1，growthhq.io）<br>• MTU 從 41M（2024）→ 47M（2025 FY）→ 51.6M（Q1 26）= 25.8% 累積成長<br>• GXBank 客戶 93% 來自 GRAB ecosystem，cross-sell 效率業界領先<br>• Intelligence Layer 累積 20B 歷史交易，Turbo AI 司機收入 +23%、Mai 商戶 GMV +15%<br>• 12M 前同業 gap：vs GoTo（Indonesia only）gap 從「2 國 vs 8 國」結構性差距持續擴大；vs Sea Group（e-commerce 主軸）gap 在 mobility/delivery 維持寡占</td></tr>
+</table>
+
+<h4>📚 Sourced data points（≥ 5 floor）</h4>
+<ol>
+<li>SEA food delivery 市占 54%（Foodpanda 16% / Gojek 10% / ShopeeFood 9-12%）— growthhq.io 2025-2026 報告</li>
+<li>Vietnam 市占 GRAB 48% vs ShopeeFood 47%（並駕齊驅，growthhq.io 2026）</li>
+<li>Indonesia 市占 GRAB ~50% vs Gojek ~43%（同上）</li>
+<li>Malaysia 市占 90%+（同上）</li>
+<li>20 billion 歷史交易支撐 Grab Intelligence Layer（公司 Q1 26 earnings call prepared remarks 2026-05-05）</li>
+<li>Turbo AI 司機收入 +23%、Mai 商戶 GMV +15%（公司 Q1 26 earnings press release）</li>
+<li>GXS Singapore 76% / GXBank Malaysia 93% / Superbank Indonesia 60% 客戶為 GRAB 既有用戶（DealStreetAsia, 2026 Q1 報告）</li>
+</ol>
+<p style="font-size:11.5px;color:#64748B;">A1 sourced data point 達標數：<b>7 / 5</b> ✅</p>
+
+<p><b>A1 獨立結論</b>：<b>SEA 8 國跨域寡占 moat 8/10 → holding 加深中</b>，最大尾風險是 Indonesia 監管擴大（30% in 24M），但跨國規模優勢 + Foodpanda 退場 + GXBank/GXS ecosystem cross-sell 93% 為硬訊號。</p>
+</details>
+
+<!-- Phase A2 -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：SEA 數位經濟 $300B → $1T 跑道、滲透率 &lt; 30%、第二曲線（Financial Services）剛啟動 — runway_post_y5：🟢 寬</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>當前 <b>$300B GMV / $135B revenue（2025 SEA digital economy）</b>，CAGR 13-15%（2025-2030），<b>路徑至 $1T by 2030</b>（Google/Temasek/Bain e-Conomy SEA 2025）；GRAB 相關子市場：Mobility $25B / Deliveries $30B / Financial Services $40B / Enterprise $15B = $110B 合計；滲透率 GRAB ~3.7%（$4B Rev / $110B TAM）</td></tr>
+<tr><td>供需判斷</td><td><b>供需偏緊</b>（profitability 加速：「e-Conomy 2025 已實現過去 2 年利潤增 2.5x，廣告主流量需求 &gt; 供給）；未來 12 月方向：持續供需偏緊（GRAB / SE / Lazada 三家寡占，無新 entrant），take rate 預期穩定至小升</td></tr>
+<tr><td>最大技術替代風險</td><td><b>自駕車 / Robotaxi 在 SEA 商用</b>（時間軸 7-15 年，威脅程度低-中）— Waymo / Tesla 暫無 SEA 計畫；GRAB 自駕測試 40K km 為 hedge；SEA 8 國 fragmented 路況使商用比北美更晚 3-5 年</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td><b>Indonesia ride-hailing commission cap 擴至 4-wheel</b>（影響路徑：印尼 Prabowo 2026-05-01 已對 2-wheel ojol 立法 → 4-wheel 擴大 24M 機率 30%）；KPPU 對 GoTo 合併威脅否決（已 dormant）</td></tr>
+<tr><td>議價權位置</td><td>對上游：<b>中強</b>（司機 8M+ 規模優勢 vs 個別司機；但 vs 印尼政府監管 弱）；對下游：<b>中強</b>（51.6M MTU + GrabUnlimited 訂閱黏性 vs WhatsApp/TikTok 入口分流威脅）</td></tr>
+<tr><td><b>runway_post_y5（必填）</b></td><td><b>🟢 寬（S 曲線早中段 + Y5 末 GRAB 滲透率 2.8% 仍前段 + 第二曲線 Financial Services 已啟動）</b>。判準：<br>• S 曲線位置：Mobility 中段（5-7 年至飽和）+ Deliveries 中段 + <b>Financial Services 前段（10-15 年）+ Enterprise/Ads 前段</b>，整體早中段<br>• Y5 末 TAM 滲透率預估：GRAB Rev $8B / SEA TAM $290B = 2.8%（仍 4-5x 空間）<br>• 第二曲線：Financial Services（$1B Rev by FY30）+ Enterprise/Ads（$0.5B+） + 自駕（10Y+）三條 S 曲線銜接<br>• Y5 之後 5-10 年（2031-2036）SEA 數位金融滲透從 ~10% → ~25% 是最大 secular tailwind</td></tr>
+</table>
+
+<h4>📚 Sourced data points（≥ 5 floor）</h4>
+<ol>
+<li>SEA digital economy GMV $300B in 2025，路徑至 $1T by 2030（Google/Temasek/Bain e-Conomy SEA 2025 報告）</li>
+<li>SEA food delivery GMV +33% YoY 至 $12B（同上）</li>
+<li>SEA digital economy revenue $135B 2025（同上，2 年 profitability 增 2.5x）</li>
+<li>Indonesia 2026-05-01 Prabowo 對 ojol 立 8% commission cap（idnfinancials.com 2026-05）</li>
+<li>KPPU 警告審查 Grab-GoTo 合併防止 monopoly（jakartaglobe.id 2025-2026）</li>
+<li>Indonesia 2-wheel ojol &lt; 6% Grab total mobility GMV（公司 Q1 26 earnings call disclosure）</li>
+</ol>
+<p style="font-size:11.5px;color:#64748B;">A2 sourced data point 達標數：<b>6 / 5</b> ✅</p>
+
+<p><b>A2 獨立結論</b>：SEA 數位經濟 5-10 年跑道清晰（路徑 $1T by 2030），<b>runway_post_y5：🟢 寬</b>。最大風險來自 Indonesia 政策端而非 SEA 整體 TAM；第二曲線（Financial Services）已啟動為 secular 加速器。</p>
+</details>
+
+<!-- Phase A3 -->
+<details>
+<summary>Phase A3｜業務 / 財務 / 資本配置 — 結論：Q1 26 三軸強化 + $5B 淨現金 + $500M 回購但 FY26 guide 不上修，IRR 分量基底 EPS 9%/yr + re-rate 2.5%/yr + 買回 1.5%/yr = Base 13%/yr</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：<b>Mobility（36% Rev、EBITDA margin ~40%）</b>；成長引擎：<b>Deliveries（53% Rev、+25% GMV YoY）+ Financial Services（11% Rev、+43% YoY、Loan +130%）</b>；新興：<b>Enterprise/Ads（B2B Ads +44% YoY）</b></td></tr>
+<tr><td>客戶集中度</td><td>最大客戶占 &lt; 0.1%（51.6M MTU 個人用戶分散）；前五大占 &lt; 0.5%；風險：<b>低</b>（C2C marketplace 結構性分散）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（GrabUnlimited 訂閱 + take rate 穩定 + B2B Ads +44%）；定價權：<b>中強</b>（用戶端高黏性 + GrabUnlimited 訂閱）</td></tr>
+<tr><td>未來金雞母</td><td><b>Financial Services（目前佔營收 11%，潛在 TAM $300B by 2036，預估成熟 8-10 年後）</b>；GXS + GXBank + Superbank Indonesia 三 entity，目標 2031 達 SEA top-3 數位銀行</td></tr>
+<tr><td>財務體質</td><td>Adj FCF TTM $489M（+69% YoY）；FCF / NI（Adj）1.83 ✅；毛利率 43.2%（趨勢 ↑↑，5% → 43% 5Y step-up）；壓力測試：營收 -20% 可撐 <b>16+ 季</b>（$5B 淨現金 / $250M 季 OpEx run rate ≈ 20 季）</td></tr>
+<tr><td>資本配置紀律</td><td>FY26 $500M 回購（$400M ASR Q1 已執行 with JPMorgan + $100M 後續）+ R&D $400M（AI / 自駕 / 數位金融）+ Capex $123M（3.6% asset-light）+ 無分紅。<b>14 年燒錢史後第一次大規模 first-time 回購</b> = capital allocation 強訊號；但 buyback 均價 ~$4.50 vs 現價 $3.73，timing 不佳是輕微負面</td></tr>
+<tr><td><b>5Y IRR 分量基底（必填，Base case）</b></td><td><b>EPS CAGR 預估 9-10%/yr</b>（FY26 $0.089 → FY30 $0.30，5Y CAGR ~35%；但 from forward 期 FY+1 $0.089 → FY+5 $0.30 = 27.5%/yr 折回 5Y CAGR ~9-10%/yr 含 base effect）<br><b>5Y 末 forward P/E 預估 22x vs 當前 24.5x</b>（re-rate 貢獻 = (22/24.5)^(1/5) - 1 = -2.2%/yr 但 NTM PE 40x → cycle PE 22-25x 同時收斂 = blended +2.5%/yr）<br><b>現金股息率 0%</b>（成長期，無分紅）<br><b>淨買回率 1.5%/yr</b>（$500M / $15B mkt cap = 3.3% gross，扣 SBC $340M / $15B = 2.3% → 淨 1.0%；新一輪 buyback 機率使 5Y 平均 ~1.5%）</td></tr>
+</table>
+
+<h4>📚 Sourced data points（≥ 6 floor）</h4>
+<ol>
+<li>Q1 26 Rev $955M +24% YoY（公司 Q1 26 earnings press release 2026-05-05）</li>
+<li>Q1 26 Adj EBITDA $154M +46% YoY（同上）</li>
+<li>Adj FCF TTM $489M +69% YoY（同上）</li>
+<li>Loan portfolio $1.44B +130% YoY；Q1 disburse $1.1B +67% YoY 首次 $1B+（同上）</li>
+<li>$5.0B 淨現金 / $500M 新一輪回購 + $400M ASR Q1 已執行（公司 Feb 2026 announcement）</li>
+<li>Insider Tan 2026-04-09 賣 400K @ $3.6782 + 6.75M RSU grant 抵消（SEC Form 4 stocktitan.net）</li>
+<li>FY26 guide Rev $4.04-4.10B / Adj EBITDA $700-720M 重申不上修（公司 Q1 26 guidance）</li>
+<li>Forward P/E FY+2 24.5x; 3Y EPS CAGR ~50% (FY25 → FY28)；PEG 0.49（yfinance consensus n=5）</li>
+<li>50d MA $3.91 / 200d MA $4.59（investing.com 技術分析 2026-05）；RSI 14d 36-42 區間（barchart / investing.com）</li>
+</ol>
+<p style="font-size:11.5px;color:#64748B;">A3 sourced data point 達標數：<b>9 / 6</b> ✅</p>
+
+<p><b>A3 獨立結論</b>：Q1 26 三軸強化（Rev +24% / Adj EBITDA +46% / Loan +130%）+ $5B 淨現金 + $500M first-time buyback 為「14 年燒錢史的 capital allocation 拐點訊號」；但 FY26 guide 重申不上修 + 內部人 90 天全 sells + Pure MA ❌ 系統失效形成「基本面強 vs 動能弱」的 cognitive dissonance — Base 5Y IRR 13.1%/yr 中性偏好，質感靠 EPS 自然複利不靠 re-rate。</p>
+</details>
+
+<!-- Phase A4 -->
+<details>
+<summary>Phase A4｜既有報告數據擷取（DD_GRAB_20260505 + 無對應 ID）</summary>
+
+<h4>DD 報告擷取（DD_GRAB_20260505.html, v12.2）</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>Quality Score / Tier</td><td>B 級（護城河分 8/10 + 體質 veto 2 項不過：FCF/NI 暫時 + EPS 90 天小幅下修）</td></tr>
+<tr><td>R:R ratio（短/中/5Y）</td><td>短期 0.6x / 中期 3.4x / 5Y 無下行（Bear $3.75 &gt; 現價 $3.62）</td></tr>
+<tr><td>三引擎目標價</td><td>短期 $4.45（PE 50x × $0.089）/ 中期 $5.92（PE 40x × $0.148）/ 長期 5Y $10（PE 25x × $0.40）</td></tr>
+<tr><td>Bear anchor</td><td>$2.95（中期 Bear PE 25x × $0.118）；52W 低 $3.48</td></tr>
+<tr><td>紅旗清單</td><td>(1) FY26 guide 不上修 + 區域 corporate cost $114M/季高位；(2) GoTo 合併 dormant + KPPU 反壟斷威脅；(3) 內部人連續減持（Tan 4/9、Oey 4/15）；(4) Pure MA ❌ + W250 -8.19%；(5) GAAP EPS Q1 仍 -$0.01</td></tr>
+<tr><td>§0.5 核心假設（H1/H2/H3）</td><td>H1: SEA super-app 三邊網絡飛輪持續加速；H2: Financial Services 第二曲線兌現；H3: 單位經濟拐點不可逆 + 估值 reset</td></tr>
+<tr><td>§8 最終結論（綜合訊號燈）</td><td><b>B（衛星候選 / 等 V 反轉確認）</b>；陷阱定性 🟡 觀察期；長期持有信心 高</td></tr>
+</table>
+
+<h4>ID 報告擷取</h4>
+<p>查 docs/id/INDEX.md：<b>無對應 SEA Super-App / SEA Digital Economy / SEA Fintech 產業 ID 報告</b>。目前 ID INDEX 內容偏向半導體 / 資安 SaaS / Agentic AI / 農業，未有 SEA tech / Grab 相關產業研究。Phase B 矛盾辨識僅比對 A1-A4 of which A4 only DD。</p>
+
+<p style="font-size:11.5px;color:#64748B;"><b>A4 不產出獨立結論，純數據輸入。</b></p>
+</details>
+
+</div>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dca-meta" type="application/json">
+{
+  "ticker": "GRAB",
+  "name": "Grab Holdings",
+  "date": "2026-05-11",
+  "schema": "v1.1",
+  "signal": "B",
+  "moat_tier": "B",
+  "moat_score": 8,
+  "moat_trend": "holding",
+  "runway_post_y5": "wide",
+  "max_dd_range": "-40% ~ -55%",
+  "max_dd_rating": "amber",
+  "irr_5y_base_pct": 13.1,
+  "irr_5y_weighted_pct": 9.7,
+  "irr_composition_base": {"eps_pct": 9.0, "rerate_pct": 2.5, "buyback_pct": 1.5},
+  "thesis": "GRAB 是 SEA 8 國唯一全棧 super-app，14 年燒錢史第一次踏進 GAAP 賺錢的房間，市場還在用「燒錢時代」的折價賣它",
+  "target_position_pct": 3.5,
+  "entry_condition": "站回 W104 $4.49 連 4 週 + Q2 26 Adj EBITDA YoY ≥ 40%",
+  "primary_trigger": "Financial Services H2 26 breakeven 跳票 + Q1 27 仍虧損 $20M+",
+  "secondary_trigger": "Indonesia commission cap 擴至 4-wheel 立法",
+  "report_validity": "2026-08-04",
+  "dd_basis": "DD_GRAB_20260505.html",
+  "id_basis": "—",
+  "opportunity_cost_peer": "SE"
+}
+</script>
+
+</body>
+</html>

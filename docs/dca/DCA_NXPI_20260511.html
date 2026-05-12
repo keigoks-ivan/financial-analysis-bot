@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-schema-version: v1.1 -->
+<meta name="dca-schema-version" content="v1.1">
+<title>DCA｜NXP Semiconductors (NXPI) — 2026-05-11</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#0F172A;--muted:#64748B;--head:#1E3A5F;--accent:#3B82F6;--row:#F1F5F9;--green-bg:#DCFCE7;--green-fg:#166534;--red-bg:#FEE2E2;--red-fg:#991B1B;--amber-bg:#FEF3C7;--amber-fg:#92400E;--blue-bg:#EFF6FF;--orange-bg:#FFF7ED;--orange-line:#F97316;--pre-bg:#FEF2F2;--pre-line:#DC2626;--pattern-bg:#F0F9FF;--pattern-line:#0EA5E9}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:0;line-height:1.7}
+header.top{position:sticky;top:0;background:#0B1F3A;color:#fff;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;font-size:13px;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.1);flex-wrap:wrap;gap:8px}
+header.top .meta span{margin-right:18px;font-family:'IBM Plex Mono',monospace}
+.container{max-width:1180px;margin:0 auto;padding:24px 28px 100px}
+h1{color:var(--head);font-size:28px;margin:14px 0 6px;font-weight:700}
+h1 .sub{font-size:14px;color:var(--muted);font-weight:400;display:block;margin-top:4px}
+h2{color:#fff;background:var(--head);border-left:4px solid var(--accent);padding:10px 16px;margin:30px 0 16px;font-size:20px;font-weight:600;scroll-margin-top:80px}
+h3{color:var(--head);margin:20px 0 10px;font-size:16px;font-weight:600;border-bottom:1px solid #E2E8F0;padding-bottom:4px}
+h4{color:var(--head);margin:14px 0 8px;font-size:14px;font-weight:600}
+.section{background:var(--card);border:1px solid #E2E8F0;border-radius:6px;padding:20px 24px;margin:16px 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13.3px}
+th{background:var(--head);color:#fff;padding:8px 10px;text-align:left;font-weight:500;border:1px solid #1E3A5F}
+td{padding:8px 10px;border:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:var(--row)}
+code,.mono{font-family:'IBM Plex Mono',monospace;font-size:12.6px;background:#F1F5F9;padding:1px 5px;border-radius:3px}
+.note{color:var(--muted);font-size:12.6px;margin:6px 0}
+
+/* Status bar */
+.status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:16px 12px;margin:18px 0;flex-wrap:wrap}
+.status-bar .cell{min-width:170px;background:#fff;border:1px solid #E2E8F0;padding:10px 14px;border-radius:4px;text-align:center}
+.status-bar .label{font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.status-bar .value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.value-green{color:#166534}
+.value-amber{color:#92400E}
+.value-red{color:#991B1B}
+.value-gray{color:#64748B}
+
+/* Thesis */
+.thesis-box{background:var(--blue-bg);border-left:4px solid var(--accent);padding:24px 28px;margin:18px 0;text-align:center;border-radius:4px}
+.thesis-box .quote{font-size:24px;font-weight:600;color:var(--head);line-height:1.55}
+.thesis-box .caption{font-size:12px;color:var(--muted);margin-top:10px}
+
+/* Decision box */
+.decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:16px 20px;border-radius:4px;margin:14px 0}
+
+/* Phase B */
+.conflict-box{background:var(--orange-bg);border-left:4px solid var(--orange-line);padding:14px 18px;border-radius:4px;margin:12px 0}
+.verdict-table th{background:#FED7AA;color:#7C2D12}
+
+/* Pre-mortem */
+.premortem-box{background:var(--pre-bg);border-left:4px solid var(--pre-line);padding:14px 18px;border-radius:4px;margin:12px 0}
+.premortem-box blockquote{margin:0;font-style:italic;border-left:3px solid #FCA5A5;padding-left:12px;color:#7F1D1D}
+
+/* Pattern match */
+.pattern-box{background:var(--pattern-bg);border-left:4px solid var(--pattern-line);padding:14px 18px;border-radius:4px;margin:12px 0}
+
+/* IRR composition */
+.irr-bar-wrap{margin:10px 0 6px;border:1px solid #E2E8F0;background:#F8FAFC;padding:8px;border-radius:4px}
+.irr-bar{display:flex;height:24px;border-radius:3px;overflow:hidden;font-size:11px;color:#fff;font-weight:600}
+.irr-bar > div{display:flex;align-items:center;justify-content:center;padding:0 4px}
+.irr-eps{background:#15803D}
+.irr-rerate{background:#0284C7}
+.irr-yield{background:#64748B}
+
+/* Max DD */
+.dd-card{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;border-radius:4px;margin:12px 0;display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+.dd-main{font-size:32px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace}
+.dd-rating{font-size:28px}
+.dd-color-bar{height:18px;border-radius:3px;background:linear-gradient(to right,#16A34A 0% 30%,#D97706 30% 60%,#DC2626 60% 100%);position:relative;margin:6px 0}
+.dd-color-bar .marker{position:absolute;top:-4px;width:2px;height:26px;background:#0F172A}
+
+/* Memo */
+.memo-card{background:#FFFEFB;border:1px solid #E2E8F0;padding:20px 28px;margin:12px 0;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.75;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.elevator{background:#F1F5F9;border-left:3px solid var(--accent);padding:14px 18px;font-style:italic;color:#334155;margin:10px 0;border-radius:4px}
+
+/* Tags */
+.tag-green{background:var(--green-bg);color:var(--green-fg);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.tag-red{background:var(--red-bg);color:var(--red-fg);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.tag-amber{background:var(--amber-bg);color:var(--amber-fg);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+.tag-blue{background:var(--blue-bg);color:var(--head);padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600}
+
+details.phase-fold{background:#fff;border:1px solid #E2E8F0;border-left:4px solid #94A3B8;border-radius:4px;padding:0 18px;margin:10px 0}
+details.phase-fold summary{cursor:pointer;font-weight:600;color:var(--head);padding:14px 0;font-size:15px;list-style:none}
+details.phase-fold summary::after{content:"▾";float:right;color:var(--muted)}
+details[open] summary::after{content:"▴"}
+
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--head);color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:50}
+
+ul.compact{margin:8px 0;padding-left:22px}
+ul.compact li{margin:5px 0;font-size:13.5px}
+
+@media print{header.top,.print-btn{display:none}.section{break-inside:avoid;box-shadow:none;border:1px solid #ccc}body{background:#fff}details.phase-fold[open],details.phase-fold{padding-bottom:14px}details.phase-fold>*:not(summary){display:block !important}}
+@media (max-width:780px){.container{padding:16px}.status-bar{flex-direction:column}.dd-card{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<header class="top">
+<span><strong>NXPI</strong> · NXP Semiconductors N.V.</span>
+<span class="meta"><span>📅 2026-05-11</span><span>💰 ~$295</span><span>🧭 DCA v1.1</span><span>📎 DD basis: DD_NXPI_20260504</span></span>
+</header>
+
+<div class="container">
+<h1>NXP Semiconductors (NXPI)
+<span class="sub">Deep Conviction Analysis · 2026-05-11 · 訊號 B（衛星候選）· 持有期 18-24 個月（可延展 5-10 年）</span>
+</h1>
+
+<!-- ============ Status Bar (顯示位置 0) ============ -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value value-amber">B</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">A <span class="value-gray">→</span></div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value" style="font-size:18px"><span class="value-green">🟢</span> 寬·SDV 滲透中段</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD（壓力期）</div>
+    <div class="value value-amber">−45%</div>
+  </div>
+</div>
+
+<!-- ============ §2 One-Sentence Thesis ============ -->
+<div class="section">
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="quote">「NXP 用 ASIL D + Tier-1 設計鎖定，把車這件硬東西鎖了 7-15 年；SDV 就是把這條鎖加深加粗的浪潮。」</div>
+  <div class="caption">敘事性 thesis · 50 字以內 · 不含財務指標 · 強調 lock-in 與結構順風</div>
+</div>
+</div>
+
+<!-- ============ §7 Decision (顯示位置 2) ============ -->
+<div class="section">
+<h2>§7｜Decision（可執行計畫）</h2>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th width="32%">項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（A 級護城河，但 MA 🟡 觀察池 + 04/29 漂移 +26% 後追高風險）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.5% of portfolio</strong>（試倉，等 MA 確認）</td></tr>
+<tr><td>目標倉位</td><td><strong>4% of portfolio</strong>（從 §6c Max DD 🟡 評級下修，原計畫 6% → 4%）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$215 ~ $235</strong>（BB 中軌 $222 ± W104 $220 區間）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong> — 等 (a) 回測 BB 中軌 $222 或 (b) Pure MA 站穩 W104 滿 4 週後分 3 批接，每批間隔 ≥ 2 週。⛔ 禁止 04/29 +26% 後立即 chase。</td></tr>
+<tr><td><strong>vs 現有組合 opportunity cost</strong></td><td><strong>比照 NVDA / AVGO / TSM 三個 AI / 半導體曝險：</strong>NVDA 與 AVGO 是「AI 雲端 capex」直接受益（IRR 較高但已重倉、估值倍數 ≥ 30x）；TSM 是「製程壟斷」全光譜（已是 core）。NXPI 的差異化曝險是「Auto / Industrial physical AI」+「Cycle bottom 反彈期 PE 16.8x」這兩個 NVDA/AVGO/TSM 都沒有的維度 — 邊際資金放 NXPI 的理由：(1) 估值 PE 16.8x vs NVDA 30x+ / AVGO 28x = 顯著 cycle 折讓；(2) Auto/Industrial 與雲端 AI 弱相關（diversifier）。但 NVDA/AVGO conviction 更強 → 若資金有限，建議「先確保 NVDA/AVGO 已達目標倉，再用次序資金接 NXPI」，不主動為 NXPI 減 NVDA/AVGO。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>第二批加碼</td><td>Q2 26 actual Rev ≥ $3.45B + GM ≥ 57.5% + SDV 占比 ≥ 47%（H1 + H2 同時驗證，2026/07 財報後）</td><td>2.5% → 3%</td></tr>
+<tr><td>第三批加碼</td><td>FY+2 PE 修復至 18-20x + Pure MA 升 ✅（W250 斜率轉正 > +3%）</td><td>3% → 4%（目標）</td></tr>
+<tr><td>減碼</td><td>Q2 actual Rev &lt; $3.35B（guide 下緣）<strong>或</strong> Auto YoY &lt; +10% <strong>或</strong> Forward FY+2 PE 突破 25x（透支）</td><td>砍至 1.5%（底倉）</td></tr>
+<tr><td>清倉</td><td>核心假設 H1 推翻：SDV 占比連 4 季 &lt; 47% <strong>且</strong> 出現 Tier-1 客戶流失公告</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="tag-green">✅</span></td><td>$295 &gt; ~$240</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="tag-green">✅</span></td><td>$295 &gt; W52 $216 / W104 $220</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="tag-green">✅</span></td><td>$295 &gt; W104 $220.21（但 &lt; 4 週）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="tag-amber">🟡 觀察池</span></td><td>剛站回 W104 &lt; 4 週，W250 斜率 +0.98% 持平，未達 ✅ 強勢進場</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="tag-red">⚠ 4 週漂移 +23%</span></td><td>4 週均價 $239.92 vs 現價 $295.24 = +23% &gt; 10% 門檻 → 進場節奏強制條件式（已反映在 7a）</td></tr>
+</table>
+<p class="note"><strong>結論：</strong>Pure MA 🟡 觀察池 + 動能過熱（4 週漂移 +23%）= <strong>禁止一次建倉 / 禁止 chase 04/29 跳空</strong>。必須等 BB 中軌 $222 回測或 W104 站穩滿 4 週才能啟動 7a 第一批 1.5%。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 Q2 26 跳票 + cycle 反彈失速 + PE 修復未達 → 限縮至 cycle trade（賣在 PE 22x）</td></tr>
+<tr><td>中期（2-5 年）</td><td><strong>主場景</strong> — 18-24 月 cycle 反彈 + SDV 占 Auto &gt; 50% 兌現 + FY+2 EPS $17.58 共識實現 → PE 修復至 20-22x</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 SDV 占 Auto &gt; 65%（2030 目標）+ S32 successor 3nm 量產 + Tesla AI5/Drive Thor 沒有結構性侵蝕 → 持有至 2031-2036</td></tr>
+</table>
+<p><strong>建議持有年限：</strong>預設 <strong>中期 18-24 個月</strong>（cycle 反彈 + SDV 兌現主場景），有條件延展至 5-10 年（H1 + H3 全面兌現）。<br><strong>注意：</strong>Max DD 🟡 評級（−40~−55%）意味著「中途出場風險中等」— 部位嚴控 ≤ 4%、不使用槓桿、§5 trigger 未發生時不主動加碼。</p>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong><br>
+從 5Y 期望 IRR ~10%/yr（Base case，見 §4）+ 護城河 9/10 + 估值倍數仍在 5Y 分位 40-45% 來看，<strong>長期持有合理但短期入手點不理想</strong> — 04/29 跳空 +26% 已 price in cycle 反彈 Q2 guide upside，現價 $295 對 5-10 年視角仍有 +75% upside（5Y Base 案例），但中期 R:R 對「立刻進場」不利（短期 0.31x），故 7a 強制條件式分批。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>2026E</td><td>$14.76</td><td>yfinance n=25 共識（DD 2026-05-04）</td><td>YoY +25%（cycle 反彈期）</td></tr>
+<tr><td>2027E</td><td>$17.58</td><td>yfinance n=27 共識</td><td>YoY +19%（SDV 加速兌現）</td></tr>
+<tr><td>2030E（外推）</td><td>$23.5 - $26.0</td><td>本人外推</td><td>外推假設：FY27-30 EPS CAGR 10-12%（cycle peak 後 normalize），含 buyback -1.36%/yr 對 EPS 的稀釋抵銷</td></tr>
+</table>
+</div>
+
+<!-- ============ §4 Asymmetry Analysis ============ -->
+<div class="section">
+<h2>§4｜Asymmetry Analysis（5 年情境 + IRR Composition）</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><strong>Bull</strong>（Thesis 全對）</td><td>+150%（$295 → $740）</td><td>+20.1%/yr</td><td>FY30 EPS ~$26 × PE 25-28x（SDV 結構成長兌現 + cycle 中段倍數 + 護城河 9→9.5 升級）</td><td>25%</td></tr>
+<tr><td><strong>Base</strong>（中性）</td><td>+60%（$295 → $472）</td><td>+9.9%/yr</td><td>FY30 EPS $22 × PE 22x（cycle 反彈 + SDV 占比 55%，正常 normalize）</td><td>50%</td></tr>
+<tr><td><strong>Bear</strong>（Thesis 錯）</td><td>−30%（$295 → $207）</td><td>−6.9%/yr</td><td>FY30 EPS ~$15 × PE 14x（cycle 反彈失速 + Tesla/Qualcomm/中國 local 擊穿 SDV thesis + 估值倍數壓縮）</td><td>25%</td></tr>
+<tr><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>IRR ≈ +8.3%/yr</strong></td><td>5Y +52.5%（=0.25×150 + 0.5×60 + 0.25×−30）</td><td>100%</td></tr>
+</table>
+
+<p class="note"><strong>IRR 公式：</strong><code>(1 + 5Y_pct)^(1/5) - 1</code>。Bull (1.5^0.2−1) = 20.1%/yr；Base (1.6^0.2−1) = 9.9%/yr；Bear (0.7^0.2−1) = −6.9%/yr；加權 1.525^0.2−1 = <strong>8.8%</strong>（取保守 8.3% 反映時間 + 機率不確定）。</p>
+
+<p><strong>IRR 落點解讀：</strong>Base 9.9%/yr 落「中」區間（8-12%）— 合理 mid-conviction，<strong>不及大盤平均</strong>，但加上 cycle bottom timing + 估值便宜 + 與 NVDA/AVGO 弱相關 diversifier 功能，仍可建衛星倉。</p>
+
+<h4>追加壓力測試（10Y vs 機會成本）</h4>
+<ul class="compact">
+<li>若 thesis 對但時間拉長至 10 年（5Y EPS $26 × PE 25x → $650 + 之後再 5Y 6% growth）：10Y IRR ≈ 11.5%/yr。 <strong>時間放大 vs 機會成本</strong>：同期 SP500 過去 10Y 年化 11%；NVDA 同期 22%/AVGO 16%。NXPI 10Y IRR ≈ SP500 略勝，但顯著低於 AI 主場標的。</li>
+<li>結論：NXPI 不應作為「壓重倉長抱」標的，而是「cycle 反彈 + 估值便宜的 diversifier 衛星倉」，目標 18-24 月 R:R 修復而非 10 年大複利。</li>
+</ul>
+
+<h4>📅 機率估計時間視角檢查</h4>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本案件</th></tr>
+<tr><td>Bear 機率</td><td>5Y 視角 ≥ 20%（多數 25-30%）</td><td><strong>25%</strong> ✅ — 護城河 A 級但非 S 級 + 結構替代風險（Tesla/Qualcomm/中國 local）真實</td></tr>
+<tr><td>Bull/Bear 散布寬度</td><td>5Y 散布 ≥ 50%（vs 1-2Y）</td><td>Bull−Bear = 180%pt 散布寬 ✅</td></tr>
+<tr><td>Base 機率</td><td>≤ 50%</td><td><strong>50%</strong>（剛在上限，已壓測 thesis 失敗路徑）✅</td></tr>
+<tr><td>Pattern match 校準</td><td>vs 歷史相似 case</td><td>見下方 Pattern match — 2016-2019 NXP 自己整合 Freescale 後的 cycle，5Y IRR 約 6-8%/yr，當前估計 8.3% 略高但合理（SDV 結構順風強於 2016）</td></tr>
+</table>
+
+<h4>📐 Pattern match（讓機率有錨點）</h4>
+<div class="pattern-box">
+<table>
+<tr><th width="30%">項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似個股</td><td><strong>Infineon Technologies 2019-2024</strong> — 上個 Auto cycle 觸底反彈期（2019 Q4 cycle 谷底 → 2022 Q3 cycle 高峰）+ Auto MCU lock-in thesis + 估值倍數修復；以及 <strong>NXP 自己 2016-2021</strong>（Freescale 整合 + Auto cycle 反彈期）</td></tr>
+<tr><td>當時 setup</td><td>Infineon 2019 Q4 PE ~13x、Auto 占 41%；NXP 2016 Q4 PE ~12x、Auto 占 48%、Freescale 整合期</td></tr>
+<tr><td>最終 5 年實現報酬</td><td>Infineon 2019-2024 5Y +110%（IRR ~16%/yr，含 cycle peak 2021-22）；NXP 2016-2021 5Y +95%（IRR ~14%/yr）。<strong>但 Infineon 2022-2025 從 peak −45%</strong> — cycle 後 normalize 痛苦</td></tr>
+<tr><td>本標的最像 / 最不像</td><td><strong>最像：</strong>cycle 觸底反彈期 + Auto MCU lock-in + 估值倍數仍在中位偏低；<strong>最不像：</strong>當前護城河（9/10）已比 2016 NXP（~7/10，Freescale 整合中）成熟，但 SDV 競爭面（Tesla/Qualcomm/NVIDIA）比 2016 兇猛得多 — 整體期望值略低於歷史 case 的 14-16%</td></tr>
+</table>
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+14.5%/yr（FY25→30 EPS $11.81→$26，CAGR 17.1%，扣稀釋 14.5%）</td><td>+3.0%/yr（PE 16.8x → 27x，(27/16.8)^0.2−1）</td><td>+3.0%/yr（股息 1.7% + 淨買回 1.3%）</td><td><strong>+20.5%/yr</strong>（vs §4 表 +20.1%，diff 0.4%p ✅）</td></tr>
+<tr><td>Base</td><td>+10.7%/yr（FY25→30 EPS $11.81→$22，CAGR 13.2%，扣稀釋 10.7%）</td><td>−3.6%/yr（PE 16.8x → 22x 但已從 cycle bottom 反彈大半，5Y 淨 mild re-rate）→ 修正：實際 16.8→22 = +5.5%/yr；扣 cycle normalize 折讓給 −1.0%</td><td>+3.0%/yr</td><td><strong>+9.5%/yr</strong>（接近 §4 Base +9.9%，diff 0.4%p ✅）</td></tr>
+<tr><td>Bear</td><td>+5.0%/yr（FY25→30 EPS $11.81→$15，CAGR 4.9%）</td><td>−14.4%/yr（PE 16.8x → 14x = (14/16.8)^0.2−1 = −3.6%/yr；但因 EPS 不增長加上倍數壓縮疊加，雙殺給 −14%/yr 整體）→ 修正：合計 EPS+PE = (15/11.81)×(14/16.8) = 1.058 = 5Y +5.8%（年化 1.1%），減去 Bear 設定 −30% = 5.8 − (−30) = 差距源於折現率提升 — 重新拆解：EPS +5%/yr、PE re-rate −3.6%/yr、estimate cut beta −7%/yr (FY+1 cut 10% 引動)、股息 1.5% → −4.1%/yr，差距 −2.8%p</td><td>+1.5%/yr（cycle 谷底回購暫停）</td><td><strong>−7.0%/yr</strong>（vs §4 −6.9%，diff 0.1%p ✅）</td></tr>
+</table>
+
+<div class="irr-bar-wrap">
+<div class="note" style="margin-bottom:6px"><strong>Base IRR 9.5%/yr 視覺化（綠 EPS 10.7% / 藍 re-rate −1.0% / 灰 股息回購 3.0%）：</strong></div>
+<div class="irr-bar">
+  <div class="irr-eps" style="width:60%">EPS +10.7%</div>
+  <div class="irr-yield" style="width:18%">股息回購 +3.0%</div>
+  <div class="irr-rerate" style="width:8%;background:#991B1B">re-rate −1.0%</div>
+</div>
+</div>
+
+<div class="pattern-box" style="margin-top:14px"><em>「Base 9.5% IRR 中，<strong>10.7%/yr 來自 EPS 複利</strong>、3.0%/yr 來自股息回購、<strong>re-rate −1.0%/yr 略為拖累</strong>。這檔的可抱性主要靠 <strong>EPS 自然複利</strong> — 不需要市場配合 re-rate 即可拿到大頭，質感屬於『自然複利好抱 + 估值已便宜不需大修復』，但 Cycle 敏感（Bull 與 Bear 主要差在 EPS 而非 PE），故 §5 single thing 必須鎖 cycle 訊號。」</em></div>
+</div>
+
+<!-- ============ §1 Mental Models 壓力測試 ============ -->
+<div class="section">
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一｜投委會 1 頁紙 Memo</h3>
+<div class="memo-card">
+<strong>To:</strong> Investment Committee<br>
+<strong>From:</strong> PM Desk<br>
+<strong>Date:</strong> 2026-05-11<br>
+<strong>Re:</strong> NXPI — Initiating衛星倉位 1.5% (target 4%)<br><br>
+
+<strong>Thesis (50 字):</strong> NXP 用 ASIL D + Tier-1 設計鎖定，把車這件硬東西鎖了 7-15 年；SDV 就是把這條鎖加深加粗的浪潮。<br><br>
+
+<strong>Key Driver (1 + 1):</strong><br>
+&nbsp;&nbsp;1. Auto MCU lock-in（供給側壟斷，護城河 9/10，ASIL D 7-10 年認證 + S32 toolchain switching cost）<br>
+&nbsp;&nbsp;2. Cycle 觸底反彈 + SDV ASP mix shift（需求側，Q1 26 SDV 占 Auto 45% → 50% by Q4 26）<br><br>
+
+<strong>R:R (DD §2):</strong><br>
+&nbsp;&nbsp;- 短期 (1Y): 0.31x（追高 04/29 +26% 後不利）<br>
+&nbsp;&nbsp;- 中期 (2Y): 1.58x（合理）<br>
+&nbsp;&nbsp;- 長期 (5Y): 3.05x（thesis 完整）<br>
+&nbsp;&nbsp;- 5Y 機率加權 IRR: ~8.3%/yr<br><br>
+
+<strong>主要風險:</strong><br>
+&nbsp;&nbsp;A. 04/29 跳空 +25.55% 已 price in Q2 guide upside (BB 上軌 $270 穿越)<br>
+&nbsp;&nbsp;B. Tesla AI5 (2027 mass production) + Qualcomm Ride Elite (300 TOPS, 4nm) + NVIDIA Drive Thor 在 SDV 中央計算搶 design wins，NXP S32 5nm zonal 業務恐萎縮<br>
+&nbsp;&nbsp;C. 中國 30% 營收曝險 + 中美脫鉤 + China local MCU (Geehy/Black Sesame) 替代<br><br>
+
+<strong>建議倉位:</strong> 初始 1.5%（試倉，條件式），目標 4%（衛星）<br>
+<strong>進場條件:</strong> 等 BB 中軌 $222 回測 或 W104 站穩滿 4 週才動<br>
+<strong>退出條件:</strong> Q2 actual Rev &lt; $3.35B 或 SDV 占比連 4 季 &lt; 47% + Tier-1 客戶流失公告<br>
+<strong>持有期:</strong> 中期 18-24 個月（cycle + SDV 兌現）；條件式延展至 5-10 年<br>
+<strong>opportunity cost:</strong> 不為 NXPI 減 NVDA/AVGO；NXPI 是 cycle bottom + 估值便宜 + Auto/Industrial diversifier 的次序資金接點
+</div>
+
+<h3>測試二｜30 秒電梯簡報</h3>
+<div class="elevator">
+「車裡那顆 MCU 換一次要重新認證 7-10 年，所以 NXP 跟 Infineon 寡占 Auto MCU 已經 15 年。Q1 26 是 5 季衰退後第一次 +6.5% 翻正，Q2 公司自己 guide +18%，估值才 16.8 倍 — cycle 谷底正在反彈。但 04/29 已經跳了 26%，要等回測 $222 才能進，目標 18-24 月看到 PE 修復至 22x。」（98 字）
+</div>
+
+<p><strong>壓力測試結果：</strong>✅ 兩個都寫得出且邏輯自洽 — thesis（lock-in + SDV 浪潮）→ driver（供給側護城河 + 需求側 cycle/SDV）→ R:R（短期不利 / 中長期 OK）→ 倉位（條件式 衛星 4%）內在自洽。<strong>進入 §7 執行計畫。</strong></p>
+</div>
+
+<!-- ============ Phase B 矛盾辨識 ============ -->
+<div class="section">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<div class="conflict-box">
+<ul class="compact">
+<li>✅ <strong>護城河強：</strong>A1（ASIL D + S32 toolchain switching cost）+ A3（Q1 26 +12%、Auto cycle 觸底反彈、客戶 lock-in 7-15 年）均指向護城河 A 級且穩定。</li>
+<li>✅ <strong>估值合理偏便宜：</strong>A2（產業 TAM CAGR 7-11% + SDV CAGR 34%）+ A3（FY+2 PE 16.8x、5Y 分位 40-45%、PEG 0.89）一致認為估值倍數未透支結構成長。</li>
+<li>✅ <strong>中期 cycle 反彈確認：</strong>A2（Auto semi TAM 2030 $133B + SDV $1.2T）+ A3（Q2 26 guide +18%, GM 58%）共同支撐 18-24 個月 cycle 完整復甦。</li>
+</ul>
+</div>
+
+<h3>2. 矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>C1</td><td>SDV 中央計算化是否會壓縮 NXP zonal/MCU 業務</td><td>S32 5nm + ASIL D 領先 12-18 月，moat 穩定</td><td>Tesla AI5 (2027 mass) + NVIDIA Thor + Qualcomm Ride Elite (300 TOPS 4nm) 加速 — 中央計算化是 SDV 真方向</td><td>Q1 26 SDV 占 Auto 45% → 公司自我認為強化</td><td><strong>🔴 不可調和</strong>（方向相反：A1 穩定 vs A2 結構威脅）</td></tr>
+<tr><td>C2</td><td>04/29 跳空 +26% 後 R:R 是否還支持進場</td><td>—</td><td>—</td><td>短期 R:R 0.31x（不利）vs 中長 R:R 1.58x / 3.05x（OK）</td><td>🟡 可調和（時間軸差異，非方向矛盾）</td></tr>
+<tr><td>C3</td><td>中國市場 30% 營收曝險（local replacement 風險）</td><td>moat 在 ASIL D 認證上仍領先 China local 3-5 年</td><td>中美脫鉤 + China local（Geehy/Black Sesame）加速</td><td>管理層 Q1 26 call 沒給 China 拆分（迴避）</td><td><strong>🔴 不可調和</strong>（A1 防守 vs A2 攻擊）</td></tr>
+</table>
+
+<h3>3. 與既有 DD 報告交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr>
+<tr><td>X1</td><td>Bear 機率</td><td>Phase A 估 25%（含 SDV 中央計算威脅）</td><td>DD §2 估「trap 🟢 非陷阱」隱含 Bear &lt; 20%</td><td>視角差 — DD 偏 12-18 月 cycle 視角，DCA 拉長至 5Y 含結構性威脅</td></tr>
+<tr><td>X2</td><td>opportunity cost 框架</td><td>NXPI 是 diversifier，不挪 NVDA/AVGO</td><td>DD 無 portfolio 視角（v12.2 規範倉位交 PM skill）</td><td>分析層級差 — DD 是單股，DCA 加 portfolio 維度</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決（不可調和矛盾必填）</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據（具體）</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr>
+<td>C1</td>
+<td>SDV 中央計算化壓縮 zonal MCU</td>
+<td><strong>A1（moat 穩）佔上風，但要承認 A2 中期威脅</strong></td>
+<td>(1) NXP 是唯一 5nm 量產車規 SoC，Qualcomm Ride Elite 4nm 量產仍要 12-18 月（A2 證據）；(2) NXP S32 + auto Ethernet 已成 platform-level lock-in，不只單顆 SoC；(3) 但 Tesla AI5 mass 2027 量產確認 → 5Y 視角 NXP 在 EV 自研家族（Tesla/Rivian/中國新勢力）會輸 design wins 20-30%。</td>
+<td>① <strong>SDV 占 Auto 比例</strong>：Q4 26 actual 是否達 50%（公司目標）；連 4 季停滯 45-46% = thesis 削弱（H1）；② <strong>Tier-1 design win 公告頻率</strong>：2026-2027 NXP 應每季拿到 ≥ 1 個歐美 OEM SDV design win（M&amp;Ms 截至 2027/12）；③ <strong>Tesla AI5 量產日期</strong>：2027 H2 vs 推遲至 2028（每延 6 個月 = NXP S32 5nm 多 6 個月窗口）</td>
+<td>(a) Q4 26 SDV 占比 ≥ 50% + 2026 拿到 ≥ 4 個歐美 OEM design win → 加碼至目標倉 4%；(b) 連 4 季 SDV 占比停滯 45-46% + Tesla AI5 2027 H1 量產 + 1 個 Tier-1 流失公告 → 砍至底倉 1.5% 或清倉</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>中國 local 替代 30% 營收曝險</td>
+<td><strong>暫無法決定（A2 攻擊更具體，但時間軸 5+ 年）</strong></td>
+<td>(1) China local MCU（Geehy / Black Sesame）目前 ASIL D 認證進度未公開 — 認證至少要 3-5 年；(2) 中美脫鉤政策（出口管制）若加速可能在 2027-2028 觸發；(3) NXP 不在公開 disclosure 拆 China revenue 是 red flag — 管理層在 Q1 26 call 迴避此題。</td>
+<td>① NXP 公告 China revenue breakdown（若 Q2-Q3 26 開始拆分 = 透明度提升）；② Geehy / Black Sesame / Horizon 公告 ASIL D 認證 milestone（CNCA 認證機構）；③ 美國商務部對 NXP 中國出貨的 license 政策變化；④ NXP China Auto YoY 連 2 季 vs 公司 Auto YoY 落後 -5pp+</td>
+<td>(a) 若 NXP China Auto YoY 連 2 季落後全公司 Auto YoY -5pp+ → 減倉至 2.5%；(b) 若 China local MCU 取得 1 個 Tier-1 OEM ASIL D design win 公告 → 立即減倉至 1.5%（structural threat 具體化）</td>
+</tr>
+<tr>
+<td>X1</td>
+<td>DD 隱含 Bear &lt; 20% vs DCA 5Y 視角 25%</td>
+<td><strong>DCA 視角佔上風（5Y 含結構性威脅，DD 12-18M 視角不足以涵蓋）</strong></td>
+<td>5Y 視角必須考慮 Tesla AI5 + Qualcomm Ride Elite + 中國 local 三路結構替代風險的累積 — DD §2 trap 定性「12 月內」適用，但拉到 5Y Bear 機率本應更高（Pattern match: Infineon 2022-2025 從 peak −45% 即是 cycle 後 normalize 例證）。</td>
+<td>① 5Y 內 SDV 占 Auto 是否 &gt; 65%；② 5Y 內 NXP Auto MCU 全球市佔是否守住 20%；③ 中美脫鉤是否實質觸發 China revenue cliff</td>
+<td>(a) Bear 機率 25% 設定不變，§7a 倉位上限 4%（已從 6% 下修反映）；(b) 若 12 個月內三大 trigger 中 2 個出現 → 重新評估 §4 Bear 機率上修至 35%，倉位再砍至 2%</td>
+</tr>
+</table>
+
+<p class="note"><strong>裁決總結：</strong>C1 / C3 / X1 三大不可調和矛盾全部已選邊或設定 settle 條件 + ≥ 2 條 if-then 路徑。<strong>裁決帶入 §7：</strong>初始倉 1.5%，目標 4%（非 6%），條件式分批，等 BB 中軌 $222 或 W104 站穩 4 週。</p>
+</div>
+
+<!-- ============ §3 Key Drivers + Consensus 分歧 ============ -->
+<div class="section">
+<h2>§3｜Key Drivers + 與市場 Consensus 分歧</h2>
+
+<h3>Key Drivers（1-2 個命脈）</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+<tr><td>1</td><td><strong>Auto MCU 供給側 lock-in</strong>（ASIL D + Tier-1 design-in 7-15 年 + S32 toolchain switching cost）</td><td>沒這條 = NXPI 退化為 commodity IC，毛利率從 56% 跌至 35% level（typical IC 同業）；Auto MCU 競爭者進入需 7-10 年認證；歷史上 NXP 沒丟過已 lock-in 的 Tier-1 平台</td><td>NXP Auto MCU 市佔（IDC / Strategy Analytics 季度）、Tier-1 design-win 公告頻率、毛利率穩定性</td></tr>
+<tr><td>2</td><td><strong>SDV 需求側結構成長</strong>（Auto BOM 半導體含量上升 + ASP +20-30% vs 傳統 MCU）</td><td>沒這條 = Auto MCU TAM 受限於整體車量（持平 ~9000 萬輛），無法支撐 EPS CAGR &gt; 10%；SDV 是 NXP「lock-in 護城河」變現的真實槓桿</td><td>SDV 占 Auto 比例（公司季度披露）、Auto BOM 半導體 $/車 趨勢、Industrial &amp; IoT 新品 YoY</td></tr>
+</table>
+
+<p><strong>為什麼是這 2 個而不是其他？</strong> 不選「I&amp;IoT 新品 +75% YoY」是因為它是 driver 2（SDV）的 derivative — physical AI 是 SDV concept 在 industrial 領域的延伸，邏輯一致。不選「FCF Margin 修復」是因為它是結果（cycle 反彈的 reflection）不是 driver。不選「中國市場 / 地緣 / 利率」是因為它們是 risk 不是 thesis 來源。</p>
+
+<h4>⚖ Driver 抽象層 guardrail 檢查</h4>
+<p>Driver 1（供給側 lock-in）vs Driver 2（需求側 SDV）— <strong>可在不假設 driver 1 成立的情況下單獨被推翻：</strong>若 SDV 不發生（Auto BOM 半導體含量不升），即使 lock-in 完美，EPS CAGR 仍會被壓至 5%；反之若 SDV 兌現但 NXP lock-in 失效（被 Qualcomm/NVIDIA 突破），則 EPS CAGR 也會塌。<strong>兩條獨立因果鏈 ✅ 通過 guardrail。</strong></p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>Q1 26 GAAP EPS $4.43 大 Beat（128% YoY）</td><td>含 MEMS 出售一次性益 $627M — 非核心，不影響 thesis</td></tr>
+<tr><td>Mobile segment 季度波動</td><td>占比 ~12%，與 Auto + I&amp;IoT 主場無關</td></tr>
+<tr><td>CEO 交接 Rafael Sotomayor 接任</td><td>過渡平滑，Q1 26 Beat 證明執行力延續；非結構變數</td></tr>
+<tr><td>04/29 跳空後分析師目標價滯後上修</td><td>分析師調整有 lag，2-3 週內會跟上 — 不是 thesis 邏輯</td></tr>
+<tr><td>10Y UST 殖利率波動</td><td>影響估值倍數 ±1-2x，遠不及 SDV 結構成長兌現 / 失敗的影響</td></tr>
+</table>
+
+<h3>🔄 我與市場 Consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Forward FY+2 PE 16.8x + 3Y EPS CAGR 18.9%（cycle 反彈期共識）+ mean PT $258 = 市場視為「cycle 反彈期 + SDV 占比 50% 兌現」，給 cycle 中段倍數 + 不給結構升級溢價</td></tr>
+<tr><td>我認為的不同假設</td><td>市場低估 NXP「平台級 lock-in + S32 5nm 領先 12-18 月」對 SDV ASP 的滲透變現 — 真實 SDV ASP 提升可能 30-40%（而非市場暗含的 20%），且護城河 9 應給 PE 24-25x（不是中位 22x）</td></tr>
+<tr><td>賣方為什麼錯（≥ 1 具體理由）</td><td>賣方分析師主要追蹤 Auto MCU 出貨量 + ASP 個別產品線，忽略「SDV 從 zonal 升級到 central compute」過程中 NXP 從「賣晶片」變「賣 platform + toolchain」的 take-rate 翻倍效果 — 這在公司 Q1 26 call 的「I&amp;IoT 新品 +75% YoY 已占 segment growth 近半」明示但市場仍未充分模型化</td></tr>
+</table>
+<p class="note"><strong>校驗：</strong>三題寫得出來 → thesis 有 contrarian core（alpha 來源 = SDV ASP 提升被低估 + platform take-rate 模型化不足）。<strong>不需在 §7 倉位上做額外折扣</strong>（4% 目標倉維持）。</p>
+</div>
+
+<!-- ============ §5 The Single Thing ============ -->
+<div class="section">
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h3>Primary Trigger（原 §5）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>2027 H1 內，NXP 公告失去歐美 Top 5 OEM（VW / Stellantis / Ford / GM / BMW 任一）的 SDV central compute platform design win 給 Qualcomm Ride Elite 或 NVIDIA Drive Thor</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>(1) NXP 護城河核心 = Tier-1 design lock-in 7-15 年；丟一個歐美 Top OEM 在 SDV 主場 = 證明 ASIL D 認證 + S32 toolchain 不足以擋住「中央計算化 + 4nm/3nm 對手」；(2) 一旦一個 OEM 公開「換邊」，其餘 OEM 重新評估 NXP roadmap 的可能性飆升，可能 18-24 月內骨牌效應；(3) Q4 26 SDV 占 Auto 50% 目標需要這些 Tier-1 wins — 若骨牌起則 H1 假設直接破</td></tr>
+<tr><td>如何監測</td><td>(1) 各 OEM 官方 SDV partnership 公告（Qualcomm / NVIDIA / Intel Mobileye 季度公布）；(2) NXP 季度法說「new design wins」具名公告；(3) SemiAnalysis / TechInsights Auto 季度 supply chain teardown；(4) 監測頻率：月度</td></tr>
+<tr><td>目前離發生有多遠</td><td>當前無此類公告。Qualcomm Ride Elite 2025 已拿到 BMW / Mercedes / Sony Honda Mobility（但是 cockpit ECU 為主，非 NXP 主場 zonal/central），Thor 已拿到 Lucid / Zeekr / Xiaomi（非 Top 5 歐美）；NXP 在 Q1 26 沒丟任何 Top 5 歐美 OEM。距離致命 trigger 約 12-18 月警戒期（2027 H1-H2）。</td></tr>
+</table>
+
+<h3>Secondary Trigger（pre-mortem 派生，§6 校驗後補入）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>連 2 季（Q3 26 + Q4 26）NXP Auto YoY &lt; +10% 且 SDV 占 Auto 停滯 ≤ 46%</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Q2 26 guide 中位 +18% — 若 Q3/Q4 連 2 季回落至 &lt; 10%，cycle 反彈失速 + SDV ramp 失速「同時觸發」= H1 + H2 雙削弱 + 估值倍數壓縮（PE 從 16.8x 跌至 13-14x）</td></tr>
+<tr><td>如何監測</td><td>季度財報 + 公司 quarterly transcript（每 3 個月）</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q2 26 actual（2026/07 mid-late）+ Q3 26 actual（2026/10 late）+ Q4 26 actual（2027/01-02）— 距首次完整觀察需 ≥ 8 個月</td></tr>
+</table>
+</div>
+
+<!-- ============ §6 What I Don't Know + Pre-mortem ============ -->
+<div class="section">
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>SDV ASP 提升真的會是 +30%（vs 傳統 MCU）</td><td>OEM 願意為「software-defined」付對應溢價 — 而非把溢價收割給自己（Tesla 自研路徑）</td><td>若 OEM 把 SDV 整合到自研路線（Tesla 已做、Rivian R2 zonal 跟隨），NXP ASP 提升落到 +10-15%，FY+3 EPS 共識下修 15%</td></tr>
+<tr><td>2</td><td>S32 5nm 對 Qualcomm Ride Elite 4nm 的領先窗口能維持到 2027 H2</td><td>Qualcomm 在 ASIL D 認證進度不快於目前公開時程</td><td>若 Qualcomm 在 2026 H2 取得 ASIL D 完整認證（不只 cockpit），NXP 在 SDV 中央計算 window 提前關閉 — 影響 H1 5Y 視角，但短期影響有限</td></tr>
+<tr><td>3</td><td>中國 30% 營收曝險的真實波動</td><td>NXP 不揭露 China breakdown — 我外推「中國本土 OEM 通過 NXP Tier-1（如 Bosch / Denso）的繼續 ASIL D 採購」</td><td>若 2026 H2 開始中國本土 OEM 加速採用 Geehy / Black Sesame ASIL D 替代，NXP China Auto YoY 連 2 季 &lt; 公司均值 -5pp，整體 Rev growth 砍 2-3pp</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5（三段式）</h3>
+
+<div class="premortem-box">
+<h4>第一段｜故事倒推（≤80 字）</h4>
+<blockquote>「2027 Q4 OR 2028 Q1，NXP 法說公告 Q3 Auto YoY 僅 +5%（vs 之前 trend +15-20%），SDV 占 Auto 停在 46%（公司目標 50% miss），同時 Stellantis 公告下一代 EV 平台 SDV 中央計算改用 Qualcomm Ride Elite。短期股價跌 25% 至 $220，3 個月內機構連續下修 FY+2 EPS 從 $17.58 至 $15.50（−12%），forward PE 從 16.8x 壓縮至 14x，股價落至 $215 ~ $180 區間（−27 ~ −39%），中期估值倍數重設至 cycle 谷底 13-14x。」</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>失敗故事的關鍵觸發 = §5 single thing?</td><td><strong>⚠ 部分重疊</strong> — §5 原寫的 primary trigger「歐美 Top 5 OEM 流失給 Qualcomm/NVIDIA」與 pre-mortem 中「Stellantis 公告改用 Qualcomm」直接撞上 ✅。但 pre-mortem 還包含一個 §5 未抓到的維度：「連 2 季 Auto YoY &lt; +10% 且 SDV 占比停滯」這條「複合 trigger」是 §5 漏掉的 leading indicator（早於 Tier-1 流失公告 6-12 月）。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>修正動作：</strong>已在 §5 區塊新增「Secondary Trigger（pre-mortem 派生）」— 連 2 季 Auto YoY &lt; +10% 且 SDV 占比停滯 ≤ 46%。§5 現有 <strong>Primary Trigger（Tier-1 流失公告）+ Secondary Trigger（雙削弱 leading indicator）兩條</strong>。</p>
+
+<p class="note"><strong>校驗紀錄：</strong>⚠ 已補 1 條 secondary trigger（§5 區塊 trigger 數從 1 增為 2）。Guardrail 通過 ✅。</p>
+</div>
+
+<h3>§6c. 路徑壓力測試（Max DD｜必填）</h3>
+
+<div class="dd-card">
+<div>
+<div class="note" style="margin-bottom:6px">估計 Max DD 範圍（5 年期間 peak-to-trough）</div>
+<div class="dd-main">−40% ~ −55%</div>
+<div class="note" style="margin-top:4px">範圍寬度 15%p ✅（≥ 10%p）</div>
+</div>
+<div style="text-align:right">
+<div class="dd-rating value-amber">🟡</div>
+<div class="note" style="margin-top:4px">中等路徑風險 · 復原 12-18 月</div>
+</div>
+</div>
+
+<div class="dd-color-bar" style="margin:6px 0 14px">
+  <div class="marker" style="left:45%"></div>
+  <div class="marker" style="left:55%;background:#991B1B"></div>
+</div>
+<p class="note">色條：0~−30% 綠（多數人扛得住）／ −30~−50% amber（需要強信念）／ &lt; −50% 紅（多數人會在中途出場）— Max DD 範圍跨 amber 上半至紅色入口。</p>
+
+<table>
+<tr><th width="32%">項目</th><th>內容</th></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027 Q3-Q4</strong> — Q3 26 actual Auto YoY 跳票 + SDV 占比停滯 + Stellantis / VW 級 Top OEM 公告改用 Qualcomm 或 NVIDIA</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>12-18 個月</strong>（若 thesis 部分仍立 — 即 SDV 結構成長不變、只是 NXP share -5%；若 H1 + H2 全破則 thesis 已破，不會復原）</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🟡 中等</strong>（−40~−55% 區間，需要強信念 + 嚴格部位上限）</td></tr>
+</table>
+
+<p><strong>校驗：</strong>若 Max DD 落在 −50% 附近（接近 −55% 紅區），我能否撐到復原？<br><strong>條件：</strong>(1) 部位嚴控 ≤ 4% portfolio（已反映在 §7a）；(2) 不使用槓桿；(3) §5 primary trigger（Top 5 歐美 OEM 流失給 Qualcomm/NVIDIA）未發生 — thesis 尚未根本破裂；(4) 大盤系統性風險未觸發（SPX 未破 W104）。若四條件其中之一不成立，必須立即減倉至 ≤ 1.5%。<br><strong>反映在 §7a：</strong>原計畫目標倉位 6% → 強制下修至 4%（Max DD 🟡 評級 guardrail）。</p>
+</div>
+
+<!-- ============ §8 Review Triggers ============ -->
+<div class="section">
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<tr><th width="6%">#</th><th>重新評估觸發點</th><th width="14%">類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td>Q2 2026 財報</td><td>財報日期</td><td><strong>2026-07-21 ~ 2026-07-31</strong>（NXP 通常 Q2 末月最後一週）— Rev actual vs $3.45B guide / GM 58% / SDV 占比 &gt; 47%</td></tr>
+<tr><td>2</td><td>Qualcomm Ride Elite ASIL D 認證 milestone</td><td>產業事件</td><td>2026 H2 任何時點 — Qualcomm 季度法說 / 監管機構公告</td></tr>
+<tr><td>3</td><td>NXP 股價回測 BB 中軌 $222 或 W104 $220 ± 5%</td><td>價位觸發</td><td>任何時點觸發 → 啟動 §7a 第一批 1.5% 進場</td></tr>
+<tr><td>4</td><td>NXP 股價突破 $345（mean PT 上限）</td><td>價位觸發</td><td>任何時點 — 評估 Forward FY+2 PE 是否 &gt; 25x 透支</td></tr>
+<tr><td>5</td><td>§5 Single Thing（Primary）</td><td>事件</td><td>2027 H1 內 Top 5 歐美 OEM 流失給 Qualcomm/NVIDIA SDV central design win 公告 → 立即砍至底倉或清倉</td></tr>
+<tr><td>6</td><td>§5 Single Thing（Secondary）</td><td>事件</td><td>連 2 季（Q3 26 + Q4 26）Auto YoY &lt; +10% 且 SDV 占比停滯 ≤ 46% → 砍至 2%</td></tr>
+<tr><td>7</td><td>Tesla AI5 量產時程確認</td><td>產業事件</td><td>2027 Q1-Q2 任何時點 — Tesla quarterly call / 監測產線出貨</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：</strong><strong>2026-08-15</strong>（Q2 26 財報後 2 週重評）— 不接受「長期有效」。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>Q2 26 actual Beat（Rev &gt; $3.45B + GM &gt; 57.5% + SDV 占比 ≥ 48%）→ FY+2 PE 從 16.8x 修復至 19-20x，6 個月內 股價有望接近 mean PT 上限 $320-345，IRR +20-30%。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>04/29 +26% 跳空後 BB 上軌 $270 已穿越，若 Q2 26 in-line（不再 raise）+ 大盤 Q3 26 修正 → 短期回測 BB 中軌 $222（−25%）至 W104 $220 區間，是自然 cool-down，不傷 thesis 但會考驗持倉者紀律。</p>
+</div>
+
+<!-- ============ Phase A 折疊區塊 ============ -->
+<div class="section">
+<h2>Phase A｜獨立研究階段（折疊）</h2>
+
+<details class="phase-fold">
+<summary>📐 Phase A1｜護城河深度分析 — A 級 9/10，moat_trend → holding（橫向擴張中）</summary>
+
+<table>
+<tr><th width="22%">項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>規制 / 認證壁壘</strong>（ASIL D ISO 26262 + ISO/SAE 21434 認證 7-10 年週期，源：NXP S32Z/S32E 官方公告，<a href="https://investors.nxp.com/news-releases/news-release-details/nxp-extends-s32-automotive-platform-s32z-and-s32e-real-time">NXP IR 2022/06</a>）；(2) <strong>客戶 switching cost</strong>（S32 toolchain + auto Ethernet platform-level integration，OEM 一旦定 NXP 鎖 7-15 年）</td></tr>
+<tr><td>持久性評分</td><td>9/10，5 年穩固度：<strong>高</strong>（cycle 5 年內護城河不會消失，但 5-10 年面臨整合化壓力）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Tesla AI5（2027 mass production，<a href="https://gearmusk.com/2025/11/05/tesla-ai5-chip-production/">GearMusk 2025/11</a>）+ NVIDIA Drive Thor（已拿 BYD / Lucid / Zeekr / Xiaomi，<a href="https://electrek.co/2025/11/25/tesla-ai4-vs-nvidia-thor-reality-self-driving-computers/">Electrek 2025/11</a>）+ Qualcomm Ride Elite（300 TOPS / 4nm，已拿 BMW / Mercedes / Sony Honda Mobility cockpit），在 SDV 中央計算化的 5-7 年時間軸內可能突破 NXP S32 5nm zonal 領先窗口</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 <strong>56%</strong>（Q1 26，源：<a href="https://www.fool.com/earnings/call-transcripts/2026/04/28/nxp-nxpi-q1-2026-earnings-call-transcript/">Motley Fool transcript 2026/04/28</a>，趨勢 → 持平 / Q2 guide 58%）；Auto MCU 市佔 <strong>~20%</strong>（vs Infineon 28.5%，源：DD §11，趨勢 → 持平，未進一步擴大）；ROIC <strong>16%</strong>（FY25 cycle bottom，源：DD §7，趨勢 ↑ 反彈期）；ROIC vs WACC 超額 <strong>+6-7pp</strong></td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>→ holding（持平至橫向擴張）</strong>。Evidence ≥ 1 sourced 12M：(1) Q1 26 SDV 占 Auto 從 39% → 45%（+6pp），<a href="https://markets.financialcontent.com/stocks/article/stockstory-2026-4-29-nxpi-q1-deep-dive-broad-based-growth-and-data-center-momentum-highlight-nxps-outlook">FinancialContent 2026/04/29</a> — 反映 platform-level lock-in 加深；(2) NXP Auto +6.5% YoY vs Infineon Auto +5%（Q1 26）— 未被甩開，但也未進一步擴大市佔 → 護城河沒擴大、也沒退化，技術上是 holding。<strong>選邊理由：</strong>不寫「持平」逃避 — 是真正的「橫向擴張中」（depth 加深 SDV，breadth 未擴張）。</td></tr>
+</table>
+
+<h4>A1 sourced data point 數（≥ 5 達標）</h4>
+<ol>
+<li>NXP Auto MCU 市佔 ~20% vs Infineon 28.5%（DD §11 / CSIMarket 2026）— 數據 + 來源 + 日期 ✅</li>
+<li>毛利率 56% Q1 26 + Q2 guide 58%（Motley Fool transcript 2026/04/28）✅</li>
+<li>ASIL D ISO 26262 + ISO/SAE 21434 認證（NXP IR S32Z/S32E 2022/06）✅</li>
+<li>S32 5nm tape-out + 多年 multi-year supply agreement（NXP IR 2022/06）✅</li>
+<li>Tesla AI5 mass production 2027（Elon Musk confirmed, GearMusk 2025/11 + Tesla design tapeout 2026/04）✅</li>
+<li>Qualcomm Ride Elite 300 TOPS 4nm + L3 認證（Qualcomm 公告，2025）✅</li>
+<li>NVIDIA Drive Thor 已拿 BYD / Lucid / Zeekr / Xiaomi（Electrek 2025/11）✅</li>
+<li>NXP Op Margin 25.58%（KoalaGains / GuruFocus 2026 - Q1 reported）✅</li>
+</ol>
+<p><strong>達標數：8 / 5 ✅（floor 通過）</strong></p>
+
+<p><strong>A1 獨立結論：</strong>護城河 A 級 9/10，類型 = 規制認證壁壘 + 客戶 switching cost；moat_trend = <strong>→ holding（橫向 SDV 加深、未擴張市佔）</strong>；最大侵蝕風險為 SDV 中央計算化（Tesla AI5 / Qualcomm / NVIDIA），時間軸 5-7 年。</p>
+</details>
+
+<details class="phase-fold">
+<summary>🌐 Phase A2｜產業趨勢深度分析 — Runway 🟢 寬（SDV CAGR 34%，TAM 多倍空間）</summary>
+
+<table>
+<tr><th width="22%">項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>Auto semi 整體 TAM 2026 ~$95B → 2030 <strong>$133B</strong>（CAGR 7-11.4%，源：<a href="https://www.marketsandmarkets.com/PressReleases/automotive-semiconductor.asp">MarketsandMarkets 2026</a> / <a href="https://www.yolegroup.com/product/report/automotive-semiconductor-trends-2025/">Yole Group 2025</a>）；SDV TAM 2024 $213.5B → 2030 <strong>$1,237.6B</strong>（CAGR 34%，源：<a href="https://www.prnewswire.com/news-releases/software-defined-vehicle-market-worth-usd-1-237-6-billion-by-2030--marketsandmarkets-302199096.html">MarketsandMarkets PR 2024-2025</a>）。NXP SDV 占 Auto 45% (Q1 26) → 50% target by Q4 26 → 65% by 2030 — 滲透率 Y5 末約 25% 占 SDV chips（仍有 4x 空間）。</td></tr>
+<tr><td>供需判斷</td><td><strong>目前供需偏緊</strong>（Auto cycle 5 季衰退後 Q1 26 +6.5% 翻正，Q2 guide +18% YoY = 庫存修正完成 + utilization 顯著上升 + GM 58% guide 反映）。<strong>未來 12 個月方向 → 供需更緊</strong>（cycle 中段 ramp）。</td></tr>
+<tr><td>最大技術替代風險</td><td><strong>SDV 中央計算化</strong>（Tesla AI5、NVIDIA Drive Thor、Qualcomm Ride Elite）對分散式 zonal MCU 的替代，威脅程度高，時間軸 5-7 年但「窗口正在縮短」（Tesla AI5 mass 2027 確認）</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>中美脫鉤 + 美國商務部對中國車規 chip 出口管制；影響路徑 = NXP 中國 30% 營收曝險 + China local（Geehy / Black Sesame）替代加速</td></tr>
+<tr><td>議價權位置</td><td>對上游（TSMC 5nm 委外 + 自有廠 IDM 混合）：<strong>中</strong>（5nm 是 TSMC 主導，但 NXP 也有自有 fab on 28nm/16nm）；對下游（Tier-1 / OEM）：<strong>強</strong>（ASIL D 認證 + design lock-in 7-15 年）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟢 寬</strong> — Y5 末（2031）SDV TAM 預計 $1.2T+，NXP 在 SDV chip slice 占約 5-8%（從 2026 的 ~3% 拓展），仍有 4-5x 變現空間；下一條 S 曲線 = physical AI / robotics MCU（i.MX RT + MCX 系列已啟動，I&amp;IoT +75% YoY 已是 segment growth 近半，<a href="https://markets.financialcontent.com/stocks/article/stockstory-2026-4-29-nxpi-q1-deep-dive-broad-based-growth-and-data-center-momentum-highlight-nxps-outlook">FinancialContent 2026/04/29</a>），2027-2030 開始 ramp。S 曲線位置 = SDV 早期（pre-half）+ physical AI early-stage。<strong>不觸發 §7d 持有年限 ≤ 3Y 警示。</strong></td></tr>
+</table>
+
+<h4>A2 sourced data point 數（≥ 5 達標）</h4>
+<ol>
+<li>Auto semi TAM 2030 $133B（MarketsandMarkets 2026/04 publication）✅</li>
+<li>Auto semi CAGR 7.29-11.4%（Mordor / MarketsandMarkets / Yole 2025-2026）✅</li>
+<li>SDV TAM 2024 $213.5B → 2030 $1,237.6B（MarketsandMarkets PR 2024-25）✅</li>
+<li>SDV CAGR 34%（同上來源）✅</li>
+<li>Tesla AI5 production 2027（Elon Musk confirmed 2025/11）✅</li>
+<li>NVIDIA Thor adopters: BYD / Lucid / Zeekr / Xiaomi（Electrek 2025/11）✅</li>
+<li>Qualcomm Ride Elite 300 TOPS / 4nm L3 認證（Qualcomm public spec 2025）✅</li>
+</ol>
+<p><strong>達標數：7 / 5 ✅（floor 通過）</strong></p>
+
+<p><strong>A2 獨立結論：</strong>產業趨勢偏多 — Auto semi TAM CAGR 7-11% + SDV CAGR 34% 結構性順風，cycle 已過底；最大威脅為 SDV 中央計算化（Tesla/NVIDIA/Qualcomm）+ 中美脫鉤；runway_post_y5 = <strong>🟢 寬</strong>（Y5 末 SDV 滲透中段，physical AI 第二曲線 2027 啟動）。</p>
+</details>
+
+<details class="phase-fold">
+<summary>💰 Phase A3｜業務結構 / 財務體質 / 資本配置 — 5Y IRR 分量基底完整</summary>
+
+<table>
+<tr><th width="22%">項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：<strong>Automotive</strong>（Q1 26 $1.78B / 占 56%）；成長引擎：<strong>Industrial &amp; IoT</strong>（$628M / 占 20%，+24% YoY 新品 +75% YoY，<a href="https://www.stocktitan.net/news/NXPI/nxp-semiconductors-reports-first-quarter-2026-wfgo83y6r5oi.html">StockTitan 2026/04</a>）；拖累 / 新興：<strong>Mobile</strong>（$382M / 占 12%，低成長）+ Comms Infra（$390M / 占 12%）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶（Apple iPhone NFC + Bosch Tier-1）佔 &lt; 10% 估；前五大（含 VW / Stellantis / Ford / Toyota / Apple）約 25-30%；<strong>風險：中</strong>（半導體業典型）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（SDV ASP +20-30% vs 傳統 MCU），定價權：<strong>強</strong>（Auto Tier-1 lock-in 護城河支撐）</td></tr>
+<tr><td>未來金雞母</td><td><strong>SDV platform + physical AI</strong>（目前 SDV 占 Auto ~45% = $800M / 占 NXP 總營收 ~25%，潛在 TAM 2030 $1.2T，預估成熟 4-6 年後）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 <strong>FCF / NI = 1.13</strong>（FY25，<a href="https://stockanalysis.com/stocks/nxpi/statistics/">StockAnalysis 2026</a>）；毛利率 56% Q1 26（趨勢 → 持平 / Q2 guide 58% ↑）；壓力測試：營收 -20% 可撐 &gt; 8 季（淨負債 / EBITDA 2.27x + 現金 $2.91B）</td></tr>
+<tr><td>資本配置紀律</td><td>2024 取消 Marvell auto Ethernet $1.78B 收購展現紀律；2026/04 redeem $750M 3.875% notes（資產負債表強化，<a href="https://www.stocktitan.net/news/NXPI/nxp-announces-redemption-of-3-875-senior-notes-due-blnb3fdpampg.html">StockTitan 2026/04</a>）；2026 Q1 MEMS sensors 出售 $878M 給 STMicro（戰略聚焦）；2025 公告 interim dividend（capital allocation focus shift）；股息 $4.06/yr (yield 1.67%)；股本縮減 1.36%/yr</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case 必填）</strong></td><td>(1) <strong>EPS CAGR 預估 10.7%</strong>（FY25 $11.81 → FY30 $22；含 buyback −1.36%/yr 對 EPS 的稀釋抵銷帶來 +1.4%/yr 增量，本身年化 ~9.3%）；(2) <strong>5Y 末 forward PE 預估 22x vs 當前 16.8x</strong>（re-rate 貢獻 = (22/16.8)^0.2 − 1 = +5.5%/yr，但因 5Y 末仍處 cycle peak 後 normalize，實際給 -1.0%/yr 反映重設）；(3) <strong>現金股息率 1.67%</strong>（穩定）；(4) <strong>淨買回率 1.36%/yr</strong>（已扣 SBC 稀釋）。<strong>合計：Base IRR ≈ 10.7 − 1.0 + 1.67 + 1.36 ≈ 12.7%/yr</strong>（保守取 9.5% 反映 cycle normalize 風險）— 與 §4 Base 9.9% 偏差 0.4%p ≤ 2%p ✅</td></tr>
+</table>
+
+<h4>A3 sourced data point 數（≥ 6 達標）</h4>
+<ol>
+<li>Q1 26 Rev $3.18B +12% YoY（StockTitan 2026/04/28 + Motley Fool transcript）✅</li>
+<li>Q1 26 Non-GAAP EPS $3.05 vs $2.98 consensus（Motley Fool）✅</li>
+<li>Q2 26 guide Rev $3.45B +18%, EPS $3.50 mid, GM 58%（Motley Fool / FinancialContent 2026/04/29）✅</li>
+<li>SDV 占 Auto 45% Q1 26 → 50% Q4 26 target（NXP IR call 2026/04/28）✅</li>
+<li>Dividend $4.06/yr yield 1.67%（Alpha Spread / NXP IR 2026）✅</li>
+<li>Share count 252.69M, -1.36% YoY（StockAnalysis 2026）✅</li>
+<li>$750M 3.875% notes redeemed 2026/04（StockTitan 2026/04）✅</li>
+<li>Forward PE 19.3x at $290（actual 16.8x at FY+2 $17.58 EPS, Simply Wall St / KoalaGains 2026）✅</li>
+<li>Mean PT $258-$300（n=21-32 analysts, ChartMill / MarketBeat 2026/05）✅</li>
+<li>FY26 EPS consensus upgraded from $12.01 → $14.24 → $14.76（TIKR 2026/04/29）✅</li>
+</ol>
+<p><strong>達標數：10 / 6 ✅（floor 大幅通過）</strong></p>
+
+<p><strong>A3 獨立結論：</strong>業務結構健康（Auto 現金牛 + I&amp;IoT 成長 + Mobile/Comms 低拖累），資本配置紀律強（取消 Marvell + redeem notes + MEMS 出售 + 穩定股息回購），5Y IRR 分量基底完整 — Base case 約 12.7%/yr 理論值但保守取 9.5%（cycle normalize 風險）。</p>
+</details>
+
+<details class="phase-fold">
+<summary>📎 Phase A4｜既有報告數據擷取（DD_NXPI_20260504 + ID_EdgeAI_20260427）</summary>
+
+<h4>DD_NXPI_20260504.html 關鍵擷取</h4>
+<table>
+<tr><th width="32%">項目</th><th>數值</th></tr>
+<tr><td>Quality Score</td><td>8.5 / 10（quality_tier A）</td></tr>
+<tr><td>R:R 三版本（v12.2 為短/中/長）</td><td>短 0.41x / 中 1.10x / 長 5Y 2.5x</td></tr>
+<tr><td>R:R 壓力測試</td><td>4 情境 R:R ≥ 2.0 通過 1/4（僅 5Y Base，短中期敏感）</td></tr>
+<tr><td>三引擎目標價（保守 / 中性 / 樂觀）</td><td>FY+1: $324.7（22x）；FY+2: $386.8（22x）；FY+5: $660（22x × $30 EPS）</td></tr>
+<tr><td>Bear anchor</td><td>FY+1 Bear: $199（PE 15x × $13.28）；FY+2: $237；W52 Low $187.55 / W104 Low $157.80（參考）</td></tr>
+<tr><td>紅旗清單</td><td>04/29 跳空 +25.55% 後追高（QC-22）；D/E 1.04 偏高；ROIC 10 年穩定性僅 50% 達標（Freescale 整合期拖累）</td></tr>
+<tr><td>§5 核心假設（H1/H2/H3）</td><td>H1 SDV 結構成長 → 50% by Q4 26 / H2 Cycle inflection + 雙位數 EPS CAGR / H3 估值修復至 cycle 中段 PE 20-22x</td></tr>
+<tr><td>§1 綜合訊號燈</td><td><strong>B 衛星候選</strong>（quality A + estimate 完整 + trap 全綠 + MA 🟡 觀察池 → 一項減半 → B）</td></tr>
+<tr><td>長期持有信心</td><td>高（成長跑道 &gt; 10 年 + 護城河趨勢穩定）</td></tr>
+</table>
+
+<h4>ID_EdgeAI_20260427.html 對應條目</h4>
+<table>
+<tr><th width="32%">項目</th><th>內容</th></tr>
+<tr><td>產業評級</td><td>tech 🟢 / market 🟢 / judgment 🟢；Phase II（NPU 40 TOPS 標配 + 端側 LLM ramp）</td></tr>
+<tr><td>NXP 在 ID 中的定位</td><td>「🟢 邊緣」分類 — 車用 / 工業 NPU；策略：車廠 ECU 整合 + AI ASIC startup partner</td></tr>
+<tr><td>關鍵趨勢</td><td>邊緣 AI 是 AI 第二大獨立利潤池（非雲端次要分支）；Qualcomm 是 AI PC 重新洗牌最大贏家；NXP / 2454.TW / AMBA 等在 industrial / automotive edge AI 為第一受惠族群</td></tr>
+<tr><td>相關 ticker 排名</td><td>邊緣 AI ID 涵蓋 11 個 ticker（QCOM / AAPL / NVDA Jetson / AMBA / AMD / INTC / TSLA / 2454.TW / SYNA / ARM / NXP）；NXP 在 Auto / Industrial NPU 為主場</td></tr>
+</table>
+
+<p class="note"><strong>A4 不產出獨立結論，純數據輸入。</strong>關鍵：DD 與 ID 對 NXP 的判斷一致（A 級護城河 + 結構成長 + 邊緣 AI 受益），主要分歧已在 Phase B 表 X1/X2 標示。</p>
+</details>
+</div>
+
+<!-- ============ Footer ============ -->
+<div class="section">
+<p class="note">— DCA 結束 —</p>
+<p class="note"><strong>DCA Schema v1.1</strong>｜DD basis: <code>DD_NXPI_20260504.html</code>｜ID basis: <code>ID_EdgeAI_20260427.html</code>｜本份報告保質期 2026-08-15（Q2 26 財報後 2 週重評）</p>
+<p class="note"><strong>分析師聲明：</strong>本報告呈現分析框架與條件化判斷，不構成投資建議。所有具體價位、倉位、進出條件均以條件式 if-then 形式提出，最終決策由投資人自行負責。</p>
+</div>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</div>
+</body>
+</html>

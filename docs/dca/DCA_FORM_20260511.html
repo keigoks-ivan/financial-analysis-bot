@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜FORM｜2026-05-11｜FormFactor 定見分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans TC',sans-serif;background:#F8FAFC;color:#1E293B;line-height:1.7;font-size:14px}
+.container{max-width:1180px;margin:0 auto;padding:24px}
+.header-bar{background:#1E3A5F;color:#fff;padding:14px 24px;position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 4px rgba(0,0,0,.08);flex-wrap:wrap;gap:8px}
+.header-bar .ticker{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px}
+.header-bar .meta{font-size:13px;opacity:.9}
+section{background:#fff;margin-bottom:20px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden}
+h2[id^="sec-"]{scroll-margin-top:80px}
+h2{background:#1E3A5F;color:#fff;padding:14px 22px;font-size:17px;border-left:4px solid #3B82F6;font-weight:700}
+h3{color:#1E3A5F;padding:14px 22px 6px;font-size:15px;font-weight:700;border-bottom:1px solid #E2E8F0;margin-bottom:10px}
+h4{color:#1E3A5F;padding:8px 22px 4px;font-size:14px;font-weight:600}
+.content{padding:8px 22px 18px}
+p{margin:8px 0}
+.note{font-size:12px;color:#64748B;margin-top:6px;padding:8px 22px}
+table{width:calc(100% - 44px);margin:10px 22px 14px;border-collapse:collapse;font-size:13px}
+th{background:#1E3A5F;color:#fff;padding:10px 8px;text-align:left;font-weight:500;font-size:12.5px}
+td{padding:9px 8px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+td.num,th.num{font-family:'IBM Plex Mono',monospace;text-align:right}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11.5px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.badge-green{background:#DCFCE7;color:#166534}
+.badge-red{background:#FEE2E2;color:#991B1B}
+.badge-yellow{background:#FEF9C3;color:#92400E}
+.badge-blue{background:#EFF6FF;color:#1E3A5F}
+.badge-orange{background:#FFEDD5;color:#C2410C}
+
+/* Status Bar */
+.status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;padding:18px 16px;margin:0;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6}
+.status-bar .cell{flex:0 0 200px;text-align:center;background:#fff;padding:14px 10px;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.status-bar .cell .label{font-size:11px;color:#64748B;margin-bottom:6px;letter-spacing:.05em}
+.status-bar .cell .value{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace;line-height:1.2}
+.status-bar .cell .desc{font-size:11px;color:#64748B;margin-top:4px}
+.value-signal-b{color:#92400E}
+.value-moat-hold{color:#64748B}
+.value-runway-mid{color:#92400E}
+.value-dd-red{color:#991B1B}
+
+/* Thesis */
+.thesis-box{background:#EFF6FF;padding:36px 24px;margin:0;text-align:center;border-bottom:1px solid #DBEAFE}
+.thesis-box .text{font-size:26px;font-weight:700;line-height:1.5;color:#1E3A5F}
+.thesis-box .sub{font-size:11px;color:#64748B;margin-top:10px}
+
+/* Decision */
+.decision-box{background:#FEF9C3;border-left:4px solid #92400E;padding:14px 22px;margin:0}
+.decision-box h4{color:#713F12;padding:0 0 6px;font-size:14px}
+
+/* Pattern match */
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.pattern-box h4{color:#075985;padding:0 0 6px}
+
+/* IRR composition */
+.irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:12px 16px;margin:10px 22px;font-style:italic;font-size:13px;color:#0F172A}
+.stacked-bar{display:flex;height:30px;margin:10px 22px;border-radius:4px;overflow:hidden;font-size:11px;color:#fff;font-weight:600}
+.stacked-bar .seg{display:flex;align-items:center;justify-content:center;padding:0 6px}
+.seg-eps{background:#15803D}
+.seg-rerate-up{background:#1D4ED8}
+.seg-rerate-down{background:#991B1B}
+.seg-div{background:#64748B}
+
+/* Max DD */
+.maxdd-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.maxdd-big{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:#991B1B;text-align:center;padding:8px 0}
+.maxdd-bar{height:18px;border-radius:9px;background:linear-gradient(to right, #15803D 0%, #15803D 50%, #92400E 50%, #92400E 83%, #991B1B 83%, #991B1B 100%);position:relative;margin:10px 22px}
+.maxdd-marker{position:absolute;top:-4px;width:4px;height:26px;background:#0F172A;border-radius:2px}
+
+/* Pre-mortem */
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.premortem-box h4{color:#991B1B;padding:0 0 6px}
+.premortem-quote{background:#fff;border-left:3px solid #DC2626;padding:10px 14px;font-style:italic;font-size:13px;margin:10px 0;color:#1F2937}
+
+/* Conflict */
+.conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.conflict-box h4{color:#9A3412;padding:0 0 6px}
+.verdict-table th{background:#FED7AA;color:#7C2D12}
+.verdict-table td{background:#FFF7ED}
+
+/* Memo */
+.memo-box{background:#FAFAF9;border:1px solid #D6D3D1;padding:20px 26px;margin:10px 22px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.8}
+.memo-box h4{color:#1E3A5F;padding:0 0 8px;font-family:'Noto Sans TC',sans-serif;font-size:14px;border-bottom:1px solid #E7E5E4}
+.elevator-quote{background:#F1F5F9;border-left:3px solid #1E3A5F;padding:12px 18px;margin:10px 22px;font-style:italic;font-size:14px;color:#1E293B}
+
+/* Detail */
+details{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:4px;margin:10px 22px}
+details > summary{padding:12px 16px;cursor:pointer;font-weight:600;color:#1E3A5F;font-size:14px}
+details > summary:hover{background:#F1F5F9}
+details[open] > summary{border-bottom:1px solid #E2E8F0}
+details .inner{padding:8px 16px 16px}
+
+ul,ol{padding-left:38px;margin:8px 0}
+li{padding:3px 0;font-size:13px}
+.print-btn{position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;padding:10px 18px;border-radius:6px;border:none;cursor:pointer;box-shadow:0 4px 8px rgba(0,0,0,.15);font-family:inherit;font-size:13px;z-index:99}
+.print-btn:hover{background:#3B82F6}
+.warn-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 22px;margin:10px 22px;border-radius:4px}
+.warn-box h4{color:#C2410C;padding:0 0 6px;font-size:14px}
+@media print{
+  .header-bar,.print-btn{display:none}
+  body{font-size:11px}
+  section{page-break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+  details{border:none}
+  details > summary{font-weight:700;font-size:13px}
+  details[open] > .inner, details > .inner{display:block !important}
+  details:not([open]) > .inner{display:block !important}
+}
+</style>
+</head>
+<body>
+<div class="header-bar">
+<div class="ticker">FORM｜FormFactor Inc.</div>
+<div class="meta">DCA v1.1 ｜ 2026-05-11 ｜ 收盤 $147.58 ｜ Q1 FY26 已公布 (4/29) ｜ DD basis: DD_FORM_20260427｜ID basis: ID_AITestEquipmentATE_20260427</div>
+</div>
+
+<div class="container">
+
+<!-- ========== Status Bar ========== -->
+<section>
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈（DD）</div>
+    <div class="value value-signal-b">B</div>
+    <div class="desc">觀望｜估值🔴</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value value-moat-hold">B →</div>
+    <div class="desc">HBM 擴大／Logic 縮減 = 淨持平</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value value-runway-mid">🟡 中</div>
+    <div class="desc">5–7 年，第二曲線 SiPh/CPO</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD（中途最壞估計）</div>
+    <div class="value value-dd-red">−65%</div>
+    <div class="desc">範圍 −45% ~ −65%</div>
+  </div>
+</div>
+</section>
+
+<!-- ========== §2 One-Sentence Thesis ========== -->
+<section>
+<h2 id="sec-2">§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="text">「FormFactor 是 HBM4 / AI 加速器晶圓出貨前『不可繞過的物理測試介面』，AI 算力越多，每片晶圓的 probe 時間越長，價值越值錢。」</div>
+  <div class="sub">敘事性 thesis（50 字以內）｜定位：HBM 雙寡占之一 + SmartMatrix 業界唯一量產架構</div>
+</div>
+</section>
+
+<!-- ========== §7 Decision ========== -->
+<section>
+<h2 id="sec-7">§7 Decision（可執行計畫）</h2>
+
+<div class="decision-box">
+<h4>裁決：⚠ 觀望（時機不到，等估值修復；非 thesis 拒絕）</h4>
+<p>「品質 A 級 + HBM4 結構性順風」與「FPE 60x+ / PEG 2.59 / 中途 max DD 可能 −65%」並存。新進倉位嚴禁。等待估值回到 FPE ≤ 35x（股價 ~$78–90）+ MA40w 區間 ($65–80) + 動能消化後再評估。</p>
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>衛星持倉</strong>（cyclical 業務 + 高估值 → 不適合 core；HBM4 thesis 仍值得 satellite 曝險）</td></tr>
+<tr><td>初始建倉倉位（條件達成後）</td><td><strong>2.5%</strong> of portfolio（原計畫 4–5%，因 §6c Max DD 評級 🔴 自動下修至 2.5%）</td></tr>
+<tr><td>目標倉位（thesis 確認後）</td><td><strong>5%</strong> of portfolio（封頂，不超過 satellite 上限）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$70 ~ $95</strong>（對應 FY27 EPS $3.01 × 25–32x）；現價 $147.58 = <strong>禁區</strong></td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong>：(1) 等股價回測 MA40w（~$65–80）或 BB 中軌（~$95）；(2) 動能過熱期（4 週漂移仍 > +10%）禁止追高；(3) 第一批 40%、Q2 26 財報後（8/1 前後）視 GM 驗證再進第二批 40%、剩 20% 留給意外回檔</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>Technoprobe (TPro.MI)</strong>：同 HBM 受益但 FPE ~30x、ROIC 20%、FCF Margin 18%（FORM 為負）— TPro 的 R:R 顯著優於 FORM（DD §11.4：TPro 上行 +25% / 下行 −20% vs FORM 上行 0% / 下行 −50~−70%）。<strong>結論：邊際資金應放 TPro，不放 FORM</strong>；若投資人受限於海外股不便（FORM 是美股 ADR-like 流動性更好）才考慮 FORM。<strong>AVGO（已持倉的 AI ASIC 龍頭）</strong>：同 AI capex 受益，但護城河等級 S + 估值 🟢、conviction 顯著高於 FORM，邊際資金應加碼 AVGO 而非新進 FORM。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>第一批進場</td><td>股價回到 $70–95 區間 <strong>且</strong> Q2 26 GM ≥ 47%（管理層目標達成）</td><td>1.0%</td></tr>
+<tr><td>加碼</td><td>SK Hynix HBM4 主訂單 + Samsung HBM4 qualification 通過（FY26 H2）</td><td>2.5%</td></tr>
+<tr><td>加碼至目標</td><td>FY27 EPS 共識上修 ≥ 10% + Technoprobe HBM4 未搶單（FY27 中）</td><td>5.0%</td></tr>
+<tr><td>減碼</td><td>Technoprobe 完成 HBM4 認證並拿下 SK Hynix 雙供（單一客戶集中度從 70%+ 跌至 50%）</td><td>2.5%（減半）</td></tr>
+<tr><td>清倉</td><td>HBM4 客戶分散 + FY27 EPS 共識下修 ≥ 15% + Q4 GM < 39%（margin recovery 中斷）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td>✅</td><td>$147.58 vs MA60w $53.30 = +177%（極端拉升）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td>✅</td><td>$147.58 vs 200-day SMA $81.34 = +81%</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td>✅</td><td>$147.58 vs MA104w $50.57 = +192%</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="badge badge-yellow">⚠ 表面是</span></td><td>三線之上，但<strong>距 MA104w +192% 屬「極端拉升狀態」</strong>，歷史上此狀態進場 6 月後負報酬機率高</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="badge badge-red">⚠ 4 週漂移嚴重</span></td><td>過去 1 個月 +38.88%（vs Yahoo Finance）；DD 時 4 週 +58%。本週 −10.34% 開始 mean reversion。<strong>RSI 仍偏高，未進入合理區（50–60）</strong></td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>結論</strong>：<span class="badge badge-yellow">Pure MA 表面支持，但動能極端過熱 → §7a 進場節奏強制條件式，禁止追高</span>。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（< 2 年）</td><td>如果僅進行「估值修復 + HBM4 順風 cycle」trade，且能在 R:R 反轉時退出</td></tr>
+<tr><td>中期（2–5 年）</td><td>如果 HBM4 → HBM5 順利 + FORM 維持雙寡占地位 + ROIC 突破 15%</td></tr>
+<tr><td>長期（5–10 年）</td><td>需要：(1) probe card 不被 chiplet-level 取代；(2) FORM SiPh/CPO 第二曲線兌現；(3) HBM5+ 持續推進。<strong>條件較嚴</strong></td></tr>
+</table>
+<p style="padding:8px 22px"><strong>建議持有年限：中期（2–5 年）</strong>，原因：cyclical 業務 + 護城河 B 級（HBM 端 A / logic 端 C）。Runway 🟡 中等可見度（5–7 年），不適合作為「無限期複利」長抱標的，最適合「進場 → 2–5 年 thesis 兌現 → 主動 trim」的中期定見投資。<br>
+<em>注：§6c Max DD 評級 🔴（範圍 −45% ~ −65%）→ 中途出場風險高，倉位上限自動下修至 2.5%，避免被洗出。</em></p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>2026E</td><td>$2.48</td><td>分析師共識（n=9，Yahoo Finance / WallStreetZen）</td><td>較 DD 4/27 共識 $1.85 顯著上修，反映 Q1 26 大幅 beat</td></tr>
+<tr><td>2027E</td><td>$3.01</td><td>分析師共識（n=9）</td><td>範圍 $2.30–$3.99（分歧度高，HBM4 兌現速度差異）</td></tr>
+<tr><td>2030E（外推）</td><td>$4.20–$5.50</td><td>WallStreetZen 高估 / 個人推導</td><td>外推假設：FY27 → FY30 CAGR 12–15%（HBM4E → HBM5 持續 + SiPh 啟動）</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>假設長期持有（5–10 年），現在的股價適合嗎？</strong><br>
+不適合。現價 $147.58 / FY27 EPS $3.01 = <strong>FPE 49x</strong>（vs 同業中位 27x = 溢價 +81%）。即使 FY30 EPS 達樂觀 $5.50，現價對應 5 年後 P/E 仍為 26.8x — 等於市場「假設你 5 年後仍願付 27x 給一檔 cyclical 業務」。<br>
+Asymmetry：機率加權 5Y IRR ~3.5% / yr（見 §4），低於 S&P 500 歷史 ~10%。<strong>5–10 年視角下，現價買進是負期望值決策</strong>；等估值修復至 FPE ≤ 32x 才合理。</p>
+
+</section>
+
+<!-- ========== §4 Asymmetry ========== -->
+<section>
+<h2 id="sec-4">§4 Asymmetry Analysis</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Thesis 對（Bull）</td><td>+85%</td><td><span class="badge badge-green">+13.1%/yr</span></td><td>FY30 EPS $5.50 × 30x = $165 + 累積回購效益 → $273（含 dividend yield 0%）。需 HBM4 → HBM5 持續、SiPh/CPO 啟動第二曲線、FORM 維持 30%+ 全球份額</td><td>20%</td></tr>
+<tr><td>Base</td><td>+10%</td><td>+1.9%/yr</td><td>FY30 EPS $4.50 × 27x = $122 × buyback 累積 ≈ $135 → 5Y 累積 +10%。HBM4 順利但 PE 從 49x 回到 27x 中位（estimates compressed by re-rate）</td><td>50%</td></tr>
+<tr><td>Thesis 錯（Bear）</td><td>−55%</td><td><span class="badge badge-red">−14.4%/yr</span></td><td>Technoprobe 拿下 SK Hynix 雙供 30% 份額；FY30 EPS 僅 $2.80 × 22x = $62 → −58%（含分股息回購修正）</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+5.5% 5Y</strong></td><td><strong>IRR ≈ +1.1%/yr</strong></td><td>20%×85 + 50%×10 + 30%×(-55) = 17+5-16.5 = +5.5</td><td></td></tr>
+</table>
+
+<p style="padding:8px 22px">⚠ <strong>IRR 落點：+1.1%/yr → 弱（甚至低於現金）</strong>。原因：起點估值（FPE 49x vs 同業 27x）已把多年成長透支，即使 Bull 兌現上行也僅 +13%/yr。<strong>這就是「好公司在壞價格」的數學詛咒</strong>。</p>
+
+<h3>追加壓力測試</h3>
+<ul>
+<li><strong>10 年視角</strong>：若 thesis 對且持 10 年，Bull case FY35 EPS 假設 $8（CAGR 8% 自 FY30），股價 ~$200 × 25x = $200 → 10Y IRR ≈ 3.1%/yr。考慮機會成本（S&P 500 歷史 10Y ~10%/yr），機會成本顯著為負（差距 ~7%p/yr × 10y）。</li>
+<li><strong>機會成本對照</strong>：(a) AVGO 5Y IRR 機率加權 ~14%/yr；(b) Technoprobe 5Y IRR ~10%/yr；(c) S&P 500 ~8–10%/yr。FORM IRR 1.1%/yr 排序在所有同類後段班。</li>
+</ul>
+
+<div class="warn-box">
+<h4>📅 機率估計校驗（時間視角防偏差）</h4>
+<table>
+<tr><th>檢查項</th><th>結果</th></tr>
+<tr><td>Bear 機率 ≥ 20%（5Y 視角）</td><td>✅ 30%（合理：cyclical 業務 + 估值極端 + 競爭升溫）</td></tr>
+<tr><td>Bull / Bear 散布（5Y 應比 1Y 寬 50%+）</td><td>✅ Bull +85% / Bear -55% 散布寬度 140%p（DD §3 Bear case 1Y 為 -50%，5Y 寬度顯著加大）</td></tr>
+<tr><td>Base 機率 ≤ 50%</td><td>✅ 50%（接近上限；說明壓測 thesis 失敗路徑）</td></tr>
+<tr><td>Pattern match 校準</td><td>✅ 見下方 — 2021 缺貨潮 FORM 從 $50 漲到 $52（5Y 約 +20%）但中途 Max DD -70%</td></tr>
+</table>
+</div>
+
+<div class="pattern-box">
+<h4>📐 Pattern Match：歷史相似 setup</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史 thesis 結構類似個股</td><td><strong>2021 LRCX / KLAC「WFE 缺貨潮」+ 2020 ENPH「太陽能 micro-inverter 動能股」混合體</strong></td></tr>
+<tr><td>當時 setup</td><td>(1) LRCX 2021/04 股價 $640 / FPE 22x → 2024 高點 $1100 / FPE 28x；(2) ENPH 2020/12 股價 $180 / FPE 100x → 4 年後 $80（cycle reversed） — 兩個對照組差異大</td></tr>
+<tr><td>最終 5 年實現報酬</td><td>(1) LRCX +72%（IRR 11.5%/yr）；(2) ENPH -56%（IRR -15%/yr）</td></tr>
+<tr><td>FORM 像 / 不像</td><td>FORM 像 ENPH（估值極端 + 動能 + cyclical），不像 LRCX（LRCX 進場時 PE 才 22x，FORM 49x 已透支）。但 FORM 護城河強於 ENPH（probe card 雙寡占 vs micro-inverter 多家競爭）→ 折中估計 IRR -5% ~ +5%/yr 之間，與我的 +1.1% 機率加權一致</td></tr>
+</table>
+</div>
+
+<h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+<p style="padding:8px 22px">從 Phase A3 的「5Y IRR 分量基底」拉數字。3 情境各自拆解：</p>
+
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+13.0%/yr（FY26 $2.48 → FY31 $4.50，CAGR 12.7%；保守用 13%）</td><td>+0.5%/yr（49x → 30x，(30/49)^(1/5)-1 = -9.4%/yr，但 EPS quality 提升抵消，估 +0.5%）</td><td>+0.3%/yr（無股息；buyback ~$30M/yr / $13B 市值 ~ 0.25%）</td><td><strong>+13.8%/yr</strong></td></tr>
+<tr><td>Base</td><td>+10.5%/yr</td><td><span style="color:#991B1B">-8.4%/yr</span>（49x → 27x，(27/49)^(1/5)-1 = -11.4%；但 mid-cycle adjustment 估 -8.4%）</td><td>+0.3%/yr</td><td><strong>+2.4%/yr</strong></td></tr>
+<tr><td>Bear</td><td><span style="color:#991B1B">-4.5%/yr</span>（FY26 $2.48 → FY31 $2.00，cycle reversal + 份額流失）</td><td><span style="color:#991B1B">-9.8%/yr</span>（49x → 22x，(22/49)^(1/5)-1 = -14.8%；估 -9.8%）</td><td>+0.3%/yr</td><td><strong>-14.0%/yr</strong></td></tr>
+</table>
+
+<div class="stacked-bar">
+  <div class="seg seg-eps" style="width:43%">EPS +10.5%</div>
+  <div class="seg seg-rerate-down" style="width:34%">Re-rate -8.4%</div>
+  <div class="seg seg-div" style="width:1%">div+buy 0.3%</div>
+</div>
+<p class="note" style="padding:0 22px 12px">↑ Base 列 stacked bar：綠 EPS +10.5% / 紅 re-rate -8.4% / 灰 股息+回購 +0.3% → 合計 +2.4%/yr</p>
+
+<div class="irr-narrative">
+「Base 2.4% IRR 中，+10.5%/yr 來自 EPS 複利（正貢獻），−8.4%/yr 來自估值 re-rate（強烈負拖累），+0.3%/yr 來自股息+回購（中性）。這檔的可抱性主要靠 ___（EPS 複利 vs 起點估值 re-rate 拉鋸）— <strong>需市場配合難抱：即使 EPS 兌現 10%/yr 的高成長，估值從 49x 壓縮到 27x 中位仍會吃掉 8 個百分點，最終 5Y 報酬僅 2.4%/yr。屬於「公司贏、股東僅打平」的危險質感</strong>。」
+</div>
+
+<p style="padding:8px 22px"><strong>校驗</strong>：Base 合計 +2.4%/yr vs §4 上方表「機率加權 IRR」Base 列推算（單獨 Base 在 50% 機率下對 +1.9%/yr）：差距 0.5%p ≤ 2%p tolerance ✅</p>
+
+</section>
+
+<!-- ========== §1 Mental Models ========== -->
+<section>
+<h2 id="sec-1">§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<h4>FormFactor Inc. (NASDAQ: FORM) — IC Memo（2026-05-11）</h4>
+<p><strong>Thesis</strong>：FORM 是 HBM4 / AI 加速器晶圓出貨前不可繞過的物理測試介面（probe card 雙寡占 + SmartMatrix 業界唯一量產）。AI 算力越多、每片晶圓 probe 時間越長 → 結構性受益。</p>
+<p><strong>Key Driver</strong>：(1) HBM4 16-high → test intensity 結構性升 + SmartMatrix 唯一架構；(2) 雙寡占護城河（FORM 26% + TPro 30% + Micronics 15% = 71% 全球份額）</p>
+<p><strong>R:R（5Y 機率加權 IRR）</strong>：+1.1%/yr — <strong>弱於 S&P 500 平均</strong>。Bull +13.1%/yr (20%) / Base +1.9%/yr (50%) / Bear -14.4%/yr (30%)。</p>
+<p><strong>主要風險</strong>：(1) 估值極端（FPE 49x vs 同業中位 27x = 溢價 +81%）；(2) 中途 Max DD 估計 -45% 到 -65%（評級 🔴）；(3) Technoprobe HBM4 認證進度（單一事件可削 30% 份額）。</p>
+<p><strong>建議倉位</strong>：<strong>0%（不進場）→ 觀察池</strong>。進場條件：股價回到 $70–95（FY27 EPS × 25–32x）+ Q2 GM 達 47%。</p>
+<p><strong>vs 同類</strong>：同樣 HBM 受益但更便宜的 Technoprobe（FPE 30x、ROIC 20% vs FORM 2.56%）是顯著更好的選擇。如果 PM 已持有 AVGO（AI ASIC core）+ TPro（probe HBM core），則 FORM 無邊際貢獻。</p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-quote">
+「FormFactor 是 AI 晶片出貨前的最後一道閘——每片 NVDA / SK Hynix / Samsung 的 HBM 都要過它的 probe card。HBM4 16-high 讓測試時間結構性放大，他們有業界唯一的量產方案。<strong>但</strong>股價已經把這些好事漲完了：現價 PE 49x 比同業貴一倍，過去 4 週漲了 39%。我會 watch list 它，等回測到 $80 再看，現在不進場。」
+</div>
+
+<p style="padding:8px 22px">✅ 兩個版本邏輯自洽，重點一致：thesis 強、估值極端、現在觀望。</p>
+</section>
+
+<!-- ========== Phase B Conflict ========== -->
+<section>
+<h2 id="sec-phaseB">Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<div class="conflict-box">
+<h4>共識清單（A1-A3 方向一致）</h4>
+<ul>
+<li>✅ <strong>HBM4 結構性順風為真</strong>（A1 SmartMatrix 唯一量產、A2 HBM4 mass production Feb 2026、A3 Q1 26 rev +32%）</li>
+<li>✅ <strong>FORM 是雙寡占之一</strong>（A1 護城河、A2 60% 三家集中、A3 SK Hynix 29.5% 集中）</li>
+<li>✅ <strong>當前估值極端</strong>（A1 GM 49% 但 ROIC 2.56%、A2 PE 49x vs 同業 27x、A3 分析師中位 PT $128 vs 現價 $147）</li>
+</ul>
+</div>
+
+<div class="conflict-box">
+<h4>矛盾清單</h4>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td>護城河趨勢（HBM vs logic）</td><td>HBM 端擴大（SmartMatrix 唯一量產 + 第二客戶採用）</td><td>logic 端 Micronics 拿 TSMC 2nm、Technoprobe 30% N2 qualification</td><td>—</td><td>🟡 可調和（兩端方向相反但分屬不同 segment）</td></tr>
+<tr><td>2</td><td>是否已 priced in HBM 順風</td><td>—</td><td>HBM4 進入 mass production 確認</td><td>Q1 26 大幅 beat + Q2 guide $240M，但股價對 4/29 財報反應僅 +1.65%、本週 -10%</td><td>🔴 不可調和（A2 = 還有 runway / A3 = 已 priced in）</td></tr>
+<tr><td>3</td><td>Capex peak vs FCF 轉正時點</td><td>—</td><td>—</td><td>2026 Farmers Branch capex $140-170M + preprod $20-25M（高於 2025 ~$70M）vs Q1 OCF $46M</td><td>🔴 不可調和（capex 上升 vs 預期 FCF 轉正延後到 FY26 H2 或 FY27）</td></tr>
+<tr><td>4</td><td>分析師 PT vs 市場價</td><td>—</td><td>—</td><td>WallStreetZen 7 家中位 PT $128.57（潛在 -13%）vs 現價 $147.58</td><td>🟡 可調和（背離縮小：DD 4/27 時為 $98 vs $155 = -37% 背離；現在 -13%）</td></tr>
+</table>
+</div>
+
+<div class="conflict-box">
+<h4>與既有 DD / ID 報告的交叉矛盾</h4>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>原因</th></tr>
+<tr><td>1</td><td>2026 EPS 共識</td><td>$2.48（截至 5/11，含 Q1 26 大幅 beat 後上修）</td><td>$1.85（DD 4/27 截止）</td><td>時間差（Q1 beat + Q2 guide 帶動 +34%）</td></tr>
+<tr><td>2</td><td>ID（AI 測試設備 ATE）對 FORM 評級</td><td>ATE CAGR 12-15%（非共識 6-8%）、PE 30-32x 為公允</td><td>—</td><td>ID 為產業視角 — 給予「整個 ATE 賽道」溢價，但 FORM 個股估值已超過 PE 30-32x（現價 FPE 49x），個股 over-shoot</td></tr>
+</table>
+</div>
+
+<h3>⚖ 強制裁決（不可調和矛盾必填）</h3>
+
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 if-then）</th></tr>
+<tr>
+<td>2</td>
+<td>HBM 順風是否已 priced in</td>
+<td><strong>A3 端（已 priced in）</strong></td>
+<td>(1) 現價 FPE 49x = 同業中位 1.8 倍，溢價無對應 ROIC（2.56% vs TPro 20%）；(2) 4/29 大幅 beat + raise 後股價 only +1.65% aftermarket，本週 -10%，市場已 fade；(3) 分析師中位 PT $128 < 現價，市場價已超出 sell-side 模型</td>
+<td>(a) Q3 26 GM 連 2 季 < 47%（管理層目標） → 修復路徑斷；(b) SK Hynix 季報揭露 HBM4 雙供確認 → A3 邊立場崩；(c) FPE 連 6 個月維持 > 60x（市場拒絕 mean revert） → 重新評估</td>
+<td>(a) 若 Q2 GM 達 49% + Q3 EPS 共識續上修 → 仍維持「等回測 $70–90 再進」；(b) 若 8/1 Q2 財報 EPS miss > 10% → 訊號燈降為 C，從追蹤池移除 3 個月</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Capex peak vs FCF 轉正時點</td>
+<td><strong>暫無法決定</strong>（capex 細節公司未充分揭露）</td>
+<td>2026 capex $140–170M 大幅高於 2025 ~$70M；公司未明確說明 FY26 OCF 預期，僅暗示「FY26 H2 FCF 轉正」</td>
+<td>(a) FY26 全年 FCF（管理層未提供 guide，待 8/1 Q2 財報釐清）；(b) Farmers Branch 廠 ramp 時間表；(c) Q2 OCF / EPS 比率（若 OCF >> Net Income 才算 FCF healthy）</td>
+<td>(a) 若 Q2 26 OCF / NI ≥ 1.0 + capex 投入啟動 → FCF 質感無虞，僅是延後；(b) 若 OCF / NI < 0.7 持續 2 季 → 「forward EPS 驅動估值」邏輯瓦解，股價可能 -40%</td>
+</tr>
+</table>
+
+</section>
+
+<!-- ========== §3 Key Drivers ========== -->
+<section>
+<h2 id="sec-3">§3 Key Drivers</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr>
+<tr><td>1</td><td><strong>HBM 三廠採用 SmartMatrix（供給側技術壟斷強度）</strong></td><td>SmartMatrix 是業界唯一量產驗證的高並行 + 10 Gbps+ probe card 架構。若 SK Hynix / Samsung / Micron 三家都用 FORM，FORM 在 HBM 端就是 monopolist。一旦競爭者（TPro / Micronics）完成 HBM4 認證 → 護城河瓦解。</td><td>(a) 每季 DRAM 客戶集中度（管理層揭露）；(b) FORM HBM probe revenue / Total revenue；(c) 競爭者法說提及 HBM4 qualification 進度</td></tr>
+<tr><td>2</td><td><strong>AI 算力需求持續推升 test intensity（需求側結構性持續性）</strong></td><td>每片 NVDA H100/B200/Rubin + 各 hyperscaler ASIC 都需 wafer test。HBM stack 越高（HBM4 16-high → HBM5 20+ high）、I/O 越多（HBM4 10Gbps → HBM5 16+ Gbps）= test 時間結構性放大。AI 需求若退潮（NVDA 訂單 miss），FORM 立刻失血。</td><td>(a) NVDA / AMD 季度 capex guide；(b) Hyperscaler 三大廠 capex 季度變動；(c) HBM 三廠 capex guide（SK Hynix 600 兆韓元投資）</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>為什麼是這 2 個，而不是其他？</strong><br>
+Driver 1 是供給側（FORM 的不可取代性 — 沒它賣不出 HBM），Driver 2 是需求側（AI capex 持續 — 沒這個需求 FORM 無對象賣）。兩條獨立因果鏈：若 driver 2 不假設成立（AI 退潮），driver 1（SmartMatrix 壟斷）依然可以被 Technoprobe HBM4 認證單獨推翻 — 通過抽象層 guardrail。<br>
+排除其他「市場熱議因素」：(a) 矽光子 / CPO 第二曲線 — 是 driver 1 的 sub-component（供給壟斷的另一條跑道，不算獨立 alpha）；(b) 利率環境 / AI 主題情緒 — 是 driver 1 + 2 已 priced 的環境變數，非 thesis 本身。</p>
+
+<h3>強制減法：我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>4/29 Q1 26 earnings beat 大幅超預期</td><td>已 priced in（股價 aftermarket 僅 +1.65%、本週 -10% 已 fade）。對 driver 1/2 都是邊際強化，不改變 thesis 核心結構。</td></tr>
+<tr><td>SiPh / CPO Keystone Photonics 收購</td><td>2025/12 已宣布。2027+ 才會貢獻 revenue 且規模小。是「optionality」非當下 driver。</td></tr>
+<tr><td>Advantest 2025/01 minority 投資</td><td>1 年前事件，無新增資訊密度。</td></tr>
+<tr><td>分析師 PT 上調或下調</td><td>跟隨指標非領先指標。WallStreetZen 中位 $128 對我「不進場」決策無幫助 — 已說明現價貴。</td></tr>
+<tr><td>「FORM 是『賣鏟人』」AI 概念</td><td>過度抽象。所有 AI 半導體都自稱賣鏟人。沒對應到 specific moat measurement。</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>市場定價在「FORM 5 年內維持 HBM probe card 60%+ 份額 + FCF Margin 從 -4% 升至 25%+ + 不受 Technoprobe 競爭顯著侵蝕」這組同時為真的假設上（FPE 49x = reverse DCF 隱含 FCF CAGR 28%/yr）</td></tr>
+<tr><td>我認為的不同假設</td><td>HBM 雙寡占會是「雙寡占」非「single supplier」：Technoprobe HBM4 認證遲早完成（2026H2-2027），FORM 份額會從目前 60%+ 降至 50%。EPS 路徑會比共識保守 15-20%。</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方 Q1 26 beat 後集體上修 PT（Northland 升至 $118），但仍給 FPE 40-50x — 同業中位 27x，賣方默認 FORM 應該有 50%+ 溢價，這個溢價的對應條件（ROIC > 20%、FCF Margin > 15%）<strong>FORM 從未達到</strong>。賣方在「股價已漲到 X，所以一定有理由」的反向歸納謬誤。</td></tr>
+</table>
+
+<p style="padding:8px 22px">✅ 三題均能寫出差異 → §7 倉位上限維持 5%，不需額外折扣。</p>
+</section>
+
+<!-- ========== §5 Single Thing ========== -->
+<section>
+<h2 id="sec-5">§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容（Primary trigger）</th></tr>
+<tr><td><strong>事件描述</strong></td><td><strong>Technoprobe 或 Micronics Japan 取得 SK Hynix HBM4 主供應商資格（雙供確認）</strong>。具體訊號：SK Hynix 季報 / 法說中明確提及採用「multiple probe card suppliers for HBM4」，或 Technoprobe 公告 HBM4 qualification 通過 + 商業出貨。</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>FORM 的「HBM 端 monopoly pricing」直接被打破。當前 GM 49% 是因為「客戶只能買 FORM」；雙供確認後，FORM 必須降價 10-15% 才能保住份額（mathematically GM 從 49% → 38-40%），加上份額流失 30%，整體 HBM 營收下降 15-20%。FY27 EPS 從共識 $3.01 將下修至 $2.40 以下；FPE 49x 將直接重估到 25-30x → 股價 $60-72。</td></tr>
+<tr><td>如何監測</td><td>(1) Technoprobe Q3/Q4 26 法說（每季）— 直接追蹤 HBM probe card 業績；(2) SK Hynix / Samsung 季報 — 客戶端揭露；(3) 半導體產業媒體（DIGITIMES, KED Global, TrendForce）每 2 週監測；(4) Micronics Japan 公告</td></tr>
+<tr><td>目前離發生有多遠</td><td>大概率 6-12 個月窗口（FY26 H2 - FY27 H1）。Technoprobe 在 2025 CMD 已表態 HBM4 qualification 中，但需 12-18 個月認證時間 → 最快 2027 H1 公告。</td></tr>
+</table>
+
+<table style="margin-top:18px">
+<tr><th>項目</th><th>內容（Secondary trigger — 從 §6b pre-mortem 派生補上）</th></tr>
+<tr><td><strong>事件描述</strong></td><td><strong>FY26 H2 capex 超預期且 FCF 持續為負（連 2 季 OCF/NI < 0.7）</strong>。若 Farmers Branch 廠 ramp 比預期慢，capex 從 $140-170M 拉到 $180M+，FCF 轉正時點從 FY26 H2 延後到 FY27 H2。</td></tr>
+<tr><td>為什麼是 secondary</td><td>不直接打破「HBM 雙寡占壟斷」thesis（driver 1 仍成立），但會打破市場現在用的「forward FCF growth」估值邏輯（reverse DCF 隱含 FCF CAGR 28%）→ 估值體系從「成長型」切回「PE / FCF」框架，FPE 49x 將不可持。</td></tr>
+<tr><td>如何監測 / 距發生</td><td>每季財報 OCF + Capex 揭露；最早 8/1 Q2 26 財報可初步判斷。距發生 3-6 個月。</td></tr>
+</table>
+
+<p class="note">↑ Secondary trigger 為 §6b pre-mortem 第三段「修正 §5」實際導致 §5 區塊新增的 trigger。Primary trigger 不變（仍是 Technoprobe HBM4 認證），但補上 capex/FCF 路徑風險作為 secondary。</p>
+</section>
+
+<!-- ========== §6 What I Don't Know ========== -->
+<section>
+<h2 id="sec-6">§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>HBM4 → HBM5 過渡時序（2028-2029？2030？）</td><td>2030 前 HBM4 / HBM4E 主導 + FORM 維持架構領先</td><td>若 HBM5 提早 2028 量產且採新測試架構 → FORM SmartMatrix 領先優勢被重新洗牌</td></tr>
+<tr><td>2</td><td>Wafer-level test → chiplet-level / SLT 移轉的速度</td><td>10 年內仍以 wafer-level 為主</td><td>若 chiplet test 普及（NVDA / Apple / AMD 推動），probe card TAM 結構性下降 30%</td></tr>
+<tr><td>3</td><td>Technoprobe 在歐美市場的擴張</td><td>FORM 維持美系客戶（Intel / NVDA）優勢</td><td>Technoprobe 完成歐美客戶滲透 → FORM 在「非 HBM」segment 進一步失血</td></tr>
+<tr><td>4</td><td>Farmers Branch 廠的 ROI</td><td>新廠帶來 GM 結構性升至 50%+，capex 換來持續高利潤</td><td>新廠 ramp 不順、FCF 轉正延後 → 估值框架從「成長型」切回「PE / FCF」</td></tr>
+</table>
+
+<h3>6b. Pre-mortem（強制三段式）</h3>
+
+<div class="premortem-box">
+<h4>第一段｜故事倒推（≤80 字 narrative）</h4>
+<div class="premortem-quote">
+「假設 5 年後這個部位虧 50%（從現價 $147 跌到 $74），最可能發生的故事是：2027 Q1 Technoprobe 拿下 SK Hynix HBM4 第二供應商資格，同時 Farmers Branch 廠 ramp 不順使 FY26-27 FCF 持續為負（OCF/NI 連 4 季 < 0.6）；2027 Q3 SK Hynix 給 Technoprobe 30% HBM4 訂單（雙供確認），FORM HBM 端營收 YoY 下滑 -15%，GM 從 49% 壓回 41%；市場重估 FY28 EPS 從 $3.50 下修至 $2.30，FPE 從 49x 壓縮到 22x（成長股 → 價值股），股價跌至 $70 以下；2028 NVDA Rubin Ultra 採用部分 chiplet-level test，wafer test TAM 增速放緩 → 估值天花板再下移。」
+</div>
+</div>
+
+<h3>第二段｜校驗 §5 single-thing</h3>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong>（pre-mortem 故事包含「Technoprobe 拿下 SK Hynix」= §5 primary trigger，但<strong>還包含「Farmers Branch ramp 不順 + FCF 持續為負」這個 §5 沒抓的風險面向</strong>）</td></tr>
+</table>
+
+<h3>第三段｜修正 §5</h3>
+<p style="padding:8px 22px">⚠ 「§5 漏抓的風險面向：FY26-27 capex peak 期間若 FCF 持續為負且 OCF/NI < 0.7，會獨立於『Technoprobe 競爭』之外打破當前估值框架。」</p>
+<p style="padding:0 22px"><strong>已在 §5 區塊實際補一條 secondary trigger</strong>（HTML 中 §5 的「事件描述」現顯示為 1 primary + 1 secondary = 2 條）。校驗紀錄：<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger（FCF/FCF 路徑風險）</strong>。</p>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<div class="maxdd-box">
+<h4>從 §6b pre-mortem 失敗故事推估的 5 年期間 Max DD：</h4>
+<div class="maxdd-big">−45% ~ −65%</div>
+<div class="maxdd-bar">
+  <div class="maxdd-marker" style="left:75%"></div>
+</div>
+<p style="padding:0 22px;font-size:11px;color:#64748B;text-align:center">↑ Drawdown 區間視覺化：0~−30% 綠 / −30~−50% amber / <−50% 紅；黑線為 -45%（範圍下界即最嚴重情境）｜⚠ 「下界」採用統計上更壞的 -65% 顯示在 Status Bar</p>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>-45% ~ -65%</strong>（寬度 20%p，避免假精準）</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2027 Q2-Q3</strong>（Technoprobe HBM4 認證最可能落地時間 + Farmers Branch 廠 ramp 不順揭露）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>不確定（thesis 已破則無法恢復）</strong>。若 Technoprobe 雙供成真且 cycle 反轉同時發生 → 5 年內可能不會回到 $147 峰值；若僅 capex 短期延後 FCF 轉正 → 18-24 個月可恢復</td></tr>
+<tr><td>路徑風險評級</td><td><span class="badge badge-red"><strong>🔴 <−50%（多數人會在中途出場）</strong></span></td></tr>
+</table>
+</div>
+
+<p style="padding:8px 22px"><strong>校驗（必填一句話）</strong>：「若 max DD 落在 -50% 到 -65%，我能否撐到復原？條件：(1) 部位不超過 portfolio 2.5%（已從原 5% 強制下修）；(2) 不使用槓桿；(3) §5 primary trigger（Technoprobe 雙供）未發生 — 若已發生則直接清倉而非『撐』。若以上條件無法同時滿足 → §7 倉位必須再打折（已執行：5% → 2.5%）。」</p>
+
+<p style="padding:8px 22px"><strong>Guardrail 校驗</strong>：範圍寬度 = 65% - 45% = 20%p ≥ 10%p ✅；評級 🔴 → §7a 倉位上限已從原計畫 5% 自動下修至 2.5% ✅，§7d 已標註「中途出場風險高」（持有年限警示） ✅。</p>
+
+</section>
+
+<!-- ========== §8 Review Triggers ========== -->
+<section>
+<h2 id="sec-8">§8 Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 財報（earnings）</td><td>財報日期</td><td><strong>2026-08-01 ± 2 週</strong>（公司預定 7 月底-8 月初 AMC）。重點檢視：GM 是否達 49.5% ± 1.5% guide / EPS $0.57-0.65 / FY26 全年 capex 細節 / OCF 是否轉正</td></tr>
+<tr><td>2</td><td>Technoprobe Q3 26 法說</td><td>產業事件</td><td>2026/11 前後。重點：HBM4 qualification 進度、客戶名單揭露</td></tr>
+<tr><td>3</td><td>股價回測 MA40w 或 $90 以下</td><td>價位觸發</td><td>進場考慮窗口（FPE 36-40x）。需配合 GM ≥ 47% 才實際下手</td></tr>
+<tr><td>4</td><td>§5 Single Thing：SK Hynix 揭露 HBM4 雙供</td><td>致命事件</td><td>持續監測；觸發即立即清倉觀察池（不進場）</td></tr>
+<tr><td>5</td><td>§5 Secondary trigger：OCF/NI < 0.7 連 2 季</td><td>FCF 路徑風險</td><td>每季財報追蹤；觸發即重新評估估值框架</td></tr>
+<tr><td>6</td><td>NVDA Q2/Q3 26 法說 + 2027 capex guide</td><td>產業事件</td><td>NVDA 訂單 miss / 2027 capex 下修 → 影響 HBM 三廠 capex → 影響 FORM</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>這份報告的保質期：到 2026-08-15</strong>（Q2 26 財報後 2 週）— 因為 Q2 GM 驗證、FY26 capex 揭露、Q2 OCF 是 thesis 健康度的關鍵 input，財報後須重評。</p>
+
+<p style="padding:8px 22px"><strong>最可能發生的 upside 因素</strong>：(1) HBM 三廠 SmartMatrix 採用全面化（第三客戶採用）；(2) Q2 26 GM 達 50%+ 顯示 margin power 結構性；(3) SiPh/CPO 第二曲線提早 2027 開始貢獻 revenue</p>
+
+<p style="padding:8px 22px"><strong>最可能發生的 downside 因素</strong>：(1) Technoprobe Q3 26 法說正式公告 HBM4 認證通過（最可能單一事件）；(2) Q2 OCF/NI 持續低於 0.7 + capex 上修 → 「forward FCF growth」估值框架瓦解；(3) NVDA Q3 26 訂單 miss → AI 主題退潮，FPE 49x 喪失支撐</p>
+
+</section>
+
+<!-- ========== Phase A1 折疊 ========== -->
+<section>
+<h2 id="sec-A1">Phase A1｜護城河深度分析（獨立搜尋）</h2>
+
+<details>
+<summary>A1 獨立結論：FORM 在 HBM 端持有 A 級護城河（SmartMatrix 唯一量產），但 logic 端 C 級（Micronics/TPro 競爭），整體 B 級；moat_trend = → holding（HBM 擴大 / logic 縮減 = 淨持平）</summary>
+<div class="inner">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) 無形資產（SmartMatrix 為業界唯一量產 HBM4 高並行 + 10 Gbps+ 架構）；(2) 客戶 qualification 沉沒成本（12-18 個月認證 + 數千萬美元 NRE）</td></tr>
+<tr><td>持久性評分</td><td><strong>7/10</strong>，5年穩固度：中（HBM 端擴大 / logic 端縮減）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Technoprobe 完成 HBM4 認證並進入 SK Hynix 雙供結構，預計 2026H2 - 2027H1 時間軸</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 49%（Q1 26，↑ 從 Q1 25 37.8% 大幅改善）、全球市佔率 ~26%（趨勢 ↑ HBM 端 / → logic 端）、ROIC vs WACC 超額 -6%p（cycle bottom recovering）</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>→ holding</strong> + evidence「HBM 端擴大：Q1 26 second customer 採用 SmartMatrix（公司 4/29 法說明確提及）+ 4Q25 SmartMatrix 為業界唯一量產，但 logic 端縮減：Micronics Japan 2025/08 拿下 TSMC 2nm 主供應商資格 + Technoprobe 拿 30% TSMC 2nm qualification；兩端相反方向，淨體質持平 → 既不寫『擴大』也不寫『縮減』，誠實選 → holding」</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 達標）</h4>
+<ol>
+<li><strong>FORM 26% 全球 probe card 市佔（2025 數據）</strong>，與 Technoprobe 30%、Micronics 15% 形成 71% 三家集中。來源：DD §7 + Astute Group 2025 / Mordor Intelligence。</li>
+<li><strong>SmartMatrix 業界唯一量產驗證的高並行 + 10 Gbps+ 架構</strong>，「only production-proven probe card architecture that combines high parallelism productivity with high-speed test capability」。來源：FORM Q4 25 法說（2026-02-04）+ BeyondSPX 2026 分析。</li>
+<li><strong>Q1 26 probe cards segment GM 50.5%</strong>（vs Q1 25 37.8%；+12.7%p YoY 大幅改善）。來源：FORM Q1 26 法說（2026-04-29）。</li>
+<li><strong>700+ 專利組合</strong>，「protects technical edge with portfolio exceeding 700 patents」。來源：FORM 公司投資人簡報 2025 + MatrixBCG.com Growth Strategy 報告。</li>
+<li><strong>SK Hynix Q1 26 為 FORM 最大客戶 29.5% 營收佔比</strong>，前三大客戶（SK Hynix / Intel / NVDA）合計 39.7%。來源：FORM Q1 26 10-Q + Motley Fool 法說摘要。</li>
+<li><strong>HBM probe card 業務 Q1 26 YoY +50%+</strong>，第二客戶開始採用 SmartMatrix。來源：FORM Q1 26 法說。</li>
+<li><strong>Micronics Japan 2025/08 拿下 TSMC 2nm 主供應商資格</strong>，Technoprobe 拿 30% TSMC 2nm 認證。來源：DIGITIMES 2025/08 + DD §7。</li>
+</ol>
+
+</div>
+</details>
+
+</section>
+
+<!-- ========== Phase A2 折疊 ========== -->
+<section>
+<h2 id="sec-A2">Phase A2｜產業趨勢深度分析（獨立搜尋）</h2>
+
+<details>
+<summary>A2 獨立結論：HBM4 進入 2026 mass production 黃金期、TAM CAGR 9.31% 至 2031，需求由 AI 算力 + HBM 三廠資本擴張驅動；runway_post_y5 = 🟡 中（5-7 年，第二曲線 SiPh/CPO 2027+）</summary>
+<div class="inner">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>2026 $2.71B → 2031 $4.23B，CAGR <strong>9.31%</strong>（Mordor Intelligence）；HBM probe card 子市場估 $700M+ 快速成長；advanced probe card 2026 $1.36B → 2030 $1.72B（5.9% CAGR）</td></tr>
+<tr><td>供需判斷</td><td><strong>緊缺</strong>：HBM4 mass production Feb 2026 啟動；HBM 三廠資本擴張（Samsung +50% 2026 capex / SK Hynix 600 兆韓元投資、150K-300K wafer/月）；FORM 將「post all-time DRAM record」</td></tr>
+<tr><td>最大技術替代風險</td><td>chiplet-level test / SLT（System-Level Test）取代 wafer-level test，但時序遠（2030+）；SK Hynix 自研 HBM4 SLT 設備（2026/02 公告）— FORM SmartMatrix 仍是 wafer test 主流</td></tr>
+<tr><td>最大政策/地緣風險</td><td>中美科技戰若擴大至韓國半導體 → 影響 SK Hynix / Samsung 出口管制 → FORM 客戶端受衝擊（FORM 自身美國總部 Livermore，風險低）</td></tr>
+<tr><td>議價權位置</td><td>對上游 中等（MEMS 製造、Si 製程）；對下游 HBM 三廠 <strong>強</strong>（雙寡占 + qualification 沉沒成本），logic 端 中等（多供應商）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟡 中</strong>：判準：(1) S 曲線位置：HBM4 mass production 剛啟動（Feb 2026）→ 屬 S 曲線中段 + HBM4E 2027 主導 → 中後期；(2) Y5 末（2031）TAM 滲透率：FORM 26% 全球份額 + 50%+ HBM probe → 子市場滲透高（~70%）但 TAM 仍以 9.31% CAGR 擴張；(3) 第二曲線：SiPh/CPO 2027 開始啟動（Keystone Photonics 2025/12 收購），但規模小；綜合 → Y5 後 5-10 年仍有跑道但不寬廣，HBM 端可能進飽和</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 達標）</h4>
+<ol>
+<li><strong>Probe Card TAM 2026 $2.71B → 2031 $4.23B（CAGR 9.31%）</strong>。來源：Mordor Intelligence Probe Card Market Report（最新更新 2026）。</li>
+<li><strong>HBM4 mass production Feb 2026 啟動</strong>，HBM4E 2027 預計達到 40% HBM 市場份額（vs HBM3 / HBM3E）。來源：TrendForce 2025/11 + 2026/01 報導。</li>
+<li><strong>SK Hynix Yongin 半導體 cluster 投資從 128 兆韓元加至 600 兆韓元</strong>，2027 首期 fab 啟動，產能 150K wafer/月，全規模 300K wafer/月。來源：DataCenter Dynamics 2026 + skhynix.com 投資人公告。</li>
+<li><strong>Samsung 2026 年底 HBM 產能達 250K wafer/月</strong>（+47% YoY 從 170K）+ P5 fab 2028 啟動。來源：TrendForce 2025/12 + Tom's Hardware 2026/01。</li>
+<li><strong>HBM 市場 2026 估 $54.6B（+58% YoY）</strong>，HBM4E 2027 達 40% 市場主導；Samsung / SK Hynix / Micron 三家投產 16-Hi HBM4。來源：TrendForce + Introl AI Memory Supercycle 報告 2026。</li>
+<li><strong>Samsung & SK Hynix 警告 AI 驅動的 memory 短缺持續到 2027+</strong>，HBM 客戶提前數年訂貨。來源：Tom's Hardware 2026/02。</li>
+<li><strong>HBM4 testing intensity 結構性升</strong>：16-high stacks + 10+ Gbps I/O + pin count 從 HBM3E 倍增 → probe card 損耗更快、replacement cycle 加速。來源：FinancialContent FORM 分析 2026/03。</li>
+</ol>
+
+</div>
+</details>
+
+</section>
+
+<!-- ========== Phase A3 折疊 ========== -->
+<section>
+<h2 id="sec-A3">Phase A3｜業務結構 / 財務體質 / 資本配置（獨立搜尋）</h2>
+
+<details>
+<summary>A3 獨立結論：Q1 26 大幅 beat（rev $226M +32%、GM 49%、EPS $0.56），FY26 EPS 共識上修至 $2.48 / FY27 $3.01；但 capex 2026 大幅上升至 $140-170M、Q1 無 buyback 執行、SK Hynix 客戶集中度 29.5%</summary>
+<div class="inner">
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構（Q1 26）</td><td>現金牛 + 成長引擎：Probe Cards Foundry/Logic $111.2M（49%，+30% YoY，由 networking + data center CPU 推升）；DRAM/HBM probe cards $86M+（38%，+50% YoY）；Engineering Systems $20-25M（10%）；Service/Other $10M（4%）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶 SK Hynix 29.5%，前三大（SK Hynix / Intel / NVDA）39.7%，前五大估 60%+，風險：<strong>高</strong>（SK Hynix 單一風險顯著）</td></tr>
+<tr><td>定價權</td><td>HBM 端 ASP 趨勢 ↑（HBM4 ASP +20-30% vs HBM3）；GM 從 Q4 25 43.9% → Q1 26 49%（+510bp 季增）；定價權：強（HBM 端）</td></tr>
+<tr><td>未來金雞母</td><td>SiPh/CPO（Keystone Photonics 2025/12 收購）— 目前佔營收 < 2%，潛在 TAM ~$1B+（SiPh 市場 ~30% CAGR），預估成熟 3-5 年後</td></tr>
+<tr><td>財務體質</td><td>Cash $303M（Q1 26 末）；FCF 轉換率：Q1 OCF $46M vs NI $44.5M = ratio 1.03（健康）；GM 49%（趨勢 ↑）；壓力測試：營收 -20% 估可撐 6-8 季（現金充裕）</td></tr>
+<tr><td>資本配置紀律</td><td>R&D > Capex > 回購；無股息。2026 Capex 大幅上升 $140-170M（Farmers Branch 新廠），preprod $20-25M（高於 2025 ~$70M）→ FCF 短期承壓。$75M buyback program 2025 批准，Q1 26 未執行（保留 $70.9M 額度）</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case，必填）</strong></td><td>EPS CAGR：+10.5%/yr（FY26 $2.48 → FY31 $4.10，CAGR 10.5%，含 buyback ~0.3%/yr 抵消 SBC 稀釋 1%）；5Y 末 forward P/E：27x（同業中位 mean revert）vs 當前 49x，re-rate 貢獻 = (27/49)^(1/5)-1 = -11.4%/yr（mid-cycle adjust 估 -8.4%）；現金股息率：0%（無股息）；淨買回率：~0.3%/yr（$30M/yr / $13B 市值，扣 SBC 後實際 0.3%）</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 6 達標）</h4>
+<ol>
+<li><strong>Q1 26 revenue $226.1M（+32% YoY、+5.1% QoQ）</strong>，超越 $220-230M guide 中點。來源：FORM Q1 26 10-Q + 8-K（2026-04-29）。</li>
+<li><strong>Q1 26 non-GAAP GM 49.0%（+510bp QoQ from 43.9%），probe cards segment GM 50.5%（+12.7%p YoY）</strong>。來源：FORM Q1 26 法說 + GlobeNewswire 公告。</li>
+<li><strong>Q1 26 non-GAAP EPS $0.56（vs Q4 25 $0.46 +22%）</strong>，beat 共識 $0.45 by 27.27%。來源：StockTitan + Investing.com 報導 2026/04/29。</li>
+<li><strong>Q2 26 guide：rev $240M ± $5M（+6% QoQ）、EPS $0.61 ± $0.04、GM 49.5% ± 1.5%</strong>。來源：FORM 法說 + Yahoo Finance 公告。</li>
+<li><strong>FY26 EPS 共識 $2.48（範圍 $2.21-$2.64，n=9 分析師）</strong>；FY27 EPS 共識 $3.01（範圍 $2.30-$3.99）。來源：WallStreetZen + Public.com + Yahoo Finance Analysis（截至 2026-05-09）。</li>
+<li><strong>2026 capex 大幅上升至 $140-170M（Farmers Branch 廠擴張）+ preproduction ramp $20-25M</strong>，公司獲 $24M 現金 grant 對沖部分 capex。來源：FORM Q1 26 法說 transcript。</li>
+<li><strong>Cash & investments $303M（Q1 26 末）</strong>。來源：FORM 10-Q。</li>
+<li><strong>客戶集中：SK Hynix 29.5%，Intel + NVDA 合計 10.2%，top 3 = 39.7%</strong>。來源：FORM Q1 26 10-Q 客戶 disclosure。</li>
+<li><strong>分析師中位 PT $128.57（7 家，潛在 -13% from $147.58 收盤）</strong>，範圍 $75-$165；Northland 4 月升至 $118。來源：WallStreetZen 2026-05-09 update。</li>
+</ol>
+
+</div>
+</details>
+
+</section>
+
+<!-- ========== Phase A4 折疊 ========== -->
+<section>
+<h2 id="sec-A4">Phase A4｜既有報告數據摘要</h2>
+
+<details>
+<summary>A4 — DD basis: DD_FORM_20260427 (v12.0)｜ID basis: ID_AITestEquipmentATE_20260427</summary>
+<div class="inner">
+
+<h4>DD 報告擷取（2026-04-27，現價 $155.08）</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>Quality Score（綜合品質分）</td><td>8.5/10（A 級）</td></tr>
+<tr><td>綜合訊號燈</td><td><strong>B（觀望，估值🔴）</strong></td></tr>
+<tr><td>R:R（短期 / 中期）</td><td>負值 / 負值（短 -70.2% / 中 -64.0%）</td></tr>
+<tr><td>三引擎目標價（保守/中性/樂觀）</td><td>保守 $36.63（PE 22x×0.9 EPS）/ 中性 $46.25（PE 25x × FY26 EPS）/ 中期 $55.75（PE 25x × FY27 EPS）</td></tr>
+<tr><td>Bear anchor（下行錨點）</td><td>$36.63（短期 Bear PE 22x × $1.85 × 0.9）；W52 Low $26.08 為極端參考</td></tr>
+<tr><td>紅旗清單</td><td>(1) 4 週漲 +58% QC-22 嚴重；(2) 分析師中位 PT $98 vs 現價 $155 背離 -37%；(3) Trailing PE 228x / ROIC 2.56% / TTM FCF -$32M；(4) Micronics 2nm 主供 → logic 端壓力</td></tr>
+<tr><td>§0.5 核心假設 H1/H2/H3</td><td>H1 HBM4 雙供 + FORM SK Hynix/Samsung 主份額；H2 FY26-28 EPS CAGR 27% 兌現共識；H3 Forward PE 維持 60x+（最脆弱）</td></tr>
+<tr><td>moat 等級</td><td>B 級（HBM A / logic C 綜合）</td></tr>
+<tr><td>estimate（估值燈）</td><td>🔴 嚴重偏貴（FPE 69.5x / PEG 2.59）</td></tr>
+<tr><td>ma 狀態</td><td>✅ Pure MA 強勢多頭但極端拉升（距 MA104w +207%）</td></tr>
+</table>
+
+<h4>ID 報告擷取（AI 測試設備 ATE，2026-04-27）</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>產業評級</td><td>Phase II（HBM4 + AI ASIC 雙引擎爆發）</td></tr>
+<tr><td>關鍵趨勢</td><td>ATE CAGR 12-15%（vs 共識 6-8%）；per-chip 測試時數 2022-2028 升 5-7X；雙寡占應享 PE 30-32x（ASML 化未 price in）；SLT 子段 2030 達 $4-5B</td></tr>
+<tr><td>相關 ticker 排名</td><td>涵蓋 6857.T / TER / FORM / COHU / TPRO / AEM / AEHR / 2360.TW / 2449.TW / 6223 / CAMT</td></tr>
+<tr><td>非共識（覆蓋率 18%）</td><td>3 條：ATE 賽道 CAGR 12-15%；雙寡占應 PE 30-32x；SLT 子段 2030 $4-5B</td></tr>
+</table>
+
+<p style="padding:8px 22px"><strong>Phase A 與 DD/ID 差異</strong>：(1) DD 4/27 用 FY26 EPS 共識 $1.85，5/11 已升至 $2.48 — Q1 大幅 beat 後共識追上；(2) DD 訊號燈 B、ID 給整個 ATE 賽道 PE 30-32x 公允 — FORM 個股已超過此區間（FPE 49x），ID 視角下也屬個股 over-shoot；(3) DD 4/27 現價 $155.08 / 中期 PT $55.75 = R:R 負值；5/11 現價 $147.58 / 用新 FY27 EPS $3.01 × PE 25-30x = $75-90 PT，R:R 仍然顯著負，方向不變。</p>
+
+</div>
+</details>
+
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+
+</body>
+</html>

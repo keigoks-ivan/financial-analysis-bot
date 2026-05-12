@@ -70,3 +70,60 @@
 | 2026-05-08 | DDOG | Datadog 是雲端 native 應用的中央神經系統 — AI workload 爆發讓 monitoring layer 從成本中心變成 strategic must-have；5/7 +29.3% 急拉後 PE ~75x + RSI &gt; 75 + 4 週漂移 +25%，衛星 1.5% 試倉等 RSI 回 50-60 + 回測 $165-180（§5：OpenAI 50%+ workload 移自有為 6-18M 內 thesis killer） | DCA_DDOG_20260508.html | — | ID_TokenEconomics_20260427.html / ID_AIInferenceEconomics_20260430.html / ID_AgenticAICommercialization_20260429.html |
 | 2026-05-08 | ISRG | Intuitive Surgical 是 soft tissue 手術機器人事實壟斷者 — 12K installed base + 70K trained surgeons 構成 once-in-a-generation 醫療工作流 lock-in；Q1 26 Rev +23% / procedures +17%、$5B buyback authorized；Pure MA Stage 4 觀察期，核心 1.5% 試倉等站回 MA200 + RSI 55+（§5：Hugo 美國累計 procedures &gt; 100K + ISRG placement &lt; 5% 為 18-30M 內 thesis killer） | DCA_ISRG_20260508.html | DD_ISRG_20260418.html | — |
 | 2026-05-08 | BSX | BSX 是 AFib 治療的 PFA 先行者 — Watchman + Farapulse 雙引擎組合 = AFib 全棧 ecosystem，但 PFA 從壟斷走向四強競爭；5/7 -10.5% 至 52W 低、RSI 23 極度超賣、Forward PE 16.92（5Y 分位 0%），衛星 1.5% 試倉等 RSI 35+ + 紅 K 3 日確認 V 型反轉（§5：Abbott Volt H2 26 FDA + 三方夾擊讓 BSX PFA 美國 ≤ 30% + Watchman 跌破 60%） | DCA_BSX_20260508.html | DD_BSX_20260418.html | — |
+
+<!-- 2026-05-11 backfill: 53 DCAs upgraded to v1.1 (status bar / IRR composition / Max DD / moat trend / runway) -->
+
+# total: 53 rows / thesis missing: 0
+| 2026-05-11 | 2330TW | 綜合訊號燈（DD §1） A 觀望偏進場 | DCA_2330TW_20260511.html | DD_2330TW_20260504.html | — |
+| 2026-05-11 | 2454TW | 聯發科是 Google TPU 多供應商鏈中 cost-optimized 第二供應商，2027 ASIC 跨入多個 billion-USD — 但 4 週 +106% 把 5Y thesis 完全 pull-forward 到一個月 | DCA_2454TW_20260511.html | — | ID_AIASICDesignService_20260419.html / ID_EdgeAI_20260427.html |
+| 2026-05-11 | AAPL | 2.5B installed base × Services 飛輪 × AI 浪潮 distribution 強化（非 disruption）— 估值已 priced-in，等回撤 | DCA_AAPL_20260511.html | DD_AAPL_20260504.html | — |
+| 2026-05-11 | ADI | ADI 把實體世界的物理訊號精準轉成數位訊號，Industrial AI 與軟體定義車輛把這項能力的需求從零件升級成全棧 BoM。 | DCA_ADI_20260511.html | DD_ADI_20260427.html | — |
+| 2026-05-11 | ALAB | ALAB 賣的是 AI rack「血管系統」：把所有 GPU/CPU/Memory 接成一台機器，這事 NVDA 都要租 ALAB 的軟硬整合（COSMOS + Aries + Scorpio）來做。 | DCA_ALAB_20260511.html | DD_ALAB_20260506.html | ID_AINetworking_20260419.html |
+| 2026-05-11 | AMAT | 綜合訊號燈 X 迴避／清倉（估值🔴 + 追高已透支 FY+2 | DCA_AMAT_20260511.html | DD_AMAT_20260418.html | ID_WaferFabEquipment_20260430.html |
+| 2026-05-11 | AMD | AMD 是 AI 加速器市場唯一 viable 的 NVDA 第二供應商 — hyperscaler 從 single-source 走向 dual-source 是結構必經，吃 NVDA 不要的份額也夠飽。 | DCA_AMD_20260511.html | DD_AMD_20260506.html | — |
+| 2026-05-11 | AMZN | 綜合訊號燈 B 衛星候選｜DD 4/30 → DCA 5/11 | DCA_AMZN_20260511.html | DD_AMZN_20260430.html | ID_AIInferenceEconomics_20260430.html / ID_HyperscalerCloudBigThree_20260505.html |
+| 2026-05-11 | ANET | Arista 是把開放式以太網塑造成 AI 訓練/推論主場的軟體+矽片整合者， 而 hyperscaler 已被 EOS 鎖死多年。 | DCA_ANET_20260511.html | DD_ANET_20260506.html | ID_AIAcceleratorDemand_20260419.html / ID_AINetworking_20260419.html / ID_HyperscalerCloudBigThree_20260505.html |
+| 2026-05-11 | APH | APH 是 AI infra 連接器整合者 — 用 35 年 decentralized M&A 飛輪壟斷高速互連與光纖規模化能力。 | DCA_APH_20260511.html | DD_APH_20260504.html | ID_AINetworking_20260419.html |
+| 2026-05-11 | ASML | ASML 是全球唯一賣「先進製程入場券」的廠商 — AI capex 越大、晶片越小，它就越值錢。 | DCA_ASML_20260511.html | DD_ASML_20260418.html | — |
+| 2026-05-11 | AVGO | AVGO · Broadcom Inc Broadcom 同時握有 AI 的「大腦客製化」與「神經系統」，是 hyperscaler $1T capex 浪潮唯一雙引擎收稅人 | DCA_AVGO_20260511.html | DD_AVGO_20260418.html | — |
+| 2026-05-11 | BSX | BSX 是把「老化身體故障」轉成可植入裝置的全球前三大平台，但 PFA 賽道從獨家紅利進入三家分蛋糕階段，估值與信仰一起 reset。 | DCA_BSX_20260511.html | DD_BSX_20260418.html | — |
+| 2026-05-11 | CAMT | Camtek 是 HBM4 3D microbump 量測的「reference tool」，AI 記憶體軍備競賽放大了這個守門員位置的價值。 | DCA_CAMT_20260511.html | DD_CAMT_20260418.html | ID_AITestEquipmentATE_20260427.html |
+| 2026-05-11 | CDNS | Cadence 是 AI 時代每顆晶片設計流程的「無法繞過的工具收費站」，chiplet × Agentic AI 把 per-chip 投資從一次性費變成持續性多倍收費。 | DCA_CDNS_20260511.html | DD_CDNS_20260504.html | ID_AIEDAIP_20260427.html |
+| 2026-05-11 | CMG | Chipotle 從 throughput-comp 故事換骨成「店數複製」故事 — 買的是 AUV $3.13M 模板 × 4,000→7,000 北美 + 全球出海的 7-10 年單位經濟學引擎，而不是下一季 comp。 | DCA_CMG_20260511.html | — | — |
+| 2026-05-11 | CRDO | AI 萬卡集群的「最後一哩銅纜」必經之路，CRDO 在 AEC 主場仍是不可替代的收費站。 | DCA_CRDO_20260511.html | DD_CRDO_20260418.html | ID_AIAcceleratorDemand_20260419.html / ID_AINetworking_20260419.html |
+| 2026-05-11 | CRWD | CrowdStrike 把資安從「賣 endpoint 軟體」變成「賣 F500 的 cybersecurity wallet share」，而 AI 讓每個攻擊面都更值錢 | DCA_CRWD_20260511.html | DD_CRWD_20260418.html | — |
+| 2026-05-11 | CSCO | Cisco 是企業 IT 的網路系統商，現在用 Splunk 把『管網路』升級為『管 AI 時代的整個數位棧』。 | DCA_CSCO_20260511.html | DD_CSCO_20260427.html | — |
+| 2026-05-11 | DDOG | 2026-05-11｜雲端 native 應用的中央神經系統 — AI workload 讓 monitor 變 mission-critical | DCA_DDOG_20260511.html | — | — |
+| 2026-05-11 | EAT | Chili's 用比速食還便宜的 viral 餐點把流量從麥當勞搶回 sit-down，在零成長 casual dining 靠 share gain 吃成 #2，但這是 trade 不是 compound。 | DCA_EAT_20260511.html | DD_EAT_20260428.html | — |
+| 2026-05-11 | FORM | FormFactor 是 HBM4 / AI 加速器晶圓出貨前『不可繞過的物理測試介面』，AI 算力越多，每片晶圓的 probe 時間越長，價值越值錢。 | DCA_FORM_20260511.html | DD_FORM_20260427.html | — |
+| 2026-05-11 | GEV | GEV 把全球僅剩三家能造的 HA-class 燃氣輪機產能 變成 AI 用電浪潮中最稀缺的實體資產。 | DCA_GEV_20260511.html | DD_GEV_20260504.html | ID_AIDataCenter_20260419.html / ID_NuclearRenaissance_20260430.html |
+| 2026-05-11 | GOOGL | GOOGL 同時掌握「資訊需求端」（Search / YouTube / Android）與「AI 算力供給端」（TPU / Gemini / Cloud），是 AI 規模化變現時代唯一能把自己當客戶的整合商。 | DCA_GOOGL_20260511.html | DD_GOOGL_20260504.html | — |
+| 2026-05-11 | GRAB | GRAB 是 SEA 八國唯一全棧 super-app，剛從 14 年燒錢史第一次踏進 GAAP 賺錢的房間，而市場還在用「燒錢時代」的折價賣它。 | DCA_GRAB_20260511.html | DD_GRAB_20260505.html | — |
+| 2026-05-11 | ISRG | ISRG 把外科手術變成「平台 × 年金耗材 × 醫師訓練網絡」，全球滲透率仍 < 7%，這條雪坡至少還可滾 10 年。 | DCA_ISRG_20260511.html | DD_ISRG_20260418.html | ID_HumanoidIndustrialRobotics_20260427.html |
+| 2026-05-11 | KLAC | KLA 是半導體良率把關的「品管巨擘」，AI 把這份品管的價值放大成 monopoly economics。 | DCA_KLAC_20260511.html | DD_KLAC_20260418.html | ID_LeadingEdgeNode_20260419.html / ID_WaferFabEquipment_20260430.html |
+| 2026-05-11 | LLY | Lilly 用 $50B 美國產能、口服 GLP-1、retatrutide 三重激動劑，把全球肥胖治療變成自己的單一玩家市場。 | DCA_LLY_20260511.html | DD_LLY_20260504.html | ID_GLP1Master_20260429.html / ID_GLP1Treatment_20260428.html |
+| 2026-05-11 | LRCX | LRCX 是 AI 記憶體（HBM）與 GAA 製程的「原子級收費站」——每多一層 3D NAND、每縮一代 nanosheet，它的設備就更不可替代。 | DCA_LRCX_20260511.html | DD_LRCX_20260425.html | ID_WaferFabEquipment_20260430.html |
+| 2026-05-11 | LULU | 綜合訊號燈 B 試倉 deep-value bet（無既有 DD | DCA_LULU_20260511.html | — | — |
+| 2026-05-11 | MELI | 綜合訊號燈（DD §1） X MA 煞車追蹤池 | DCA_MELI_20260511.html | DD_MELI_20260418.html | ID_LATAMEcommerce_20260427.html / ID_StablecoinPayments_20260430.html |
+| 2026-05-11 | META | 2028 H1，META 股價跌至 $280（vs 現價 $609，-54%）。失敗故事：2026-07 Q2 法說 DAP 未回升、Q4 RL 虧損 $7.5B 第 3 次跳票，市場開始質疑 capex 戰略。2027-Q1 OpenAI Device 正式發佈消費版，搶走 Instagram/Facebook 7-10% 用戶時間。2027-Q3 FoA 廣告 YoY 從 +25% 驟降至 +12%，4 季滾動 ROIC 跌破 24%。Forward PE 從 16x 壓至 11x。 | DCA_META_20260511.html | DD_META_20260418.html | — |
+| 2026-05-11 | MRVL | MRVL 是 hyperscaler 「想擺脫 NVIDIA 但自己沒 SerDes / DSP / 多代 silicon IP」的稀缺接口公司，AI ASIC 浪潮把這個接口變成了通行費。 | DCA_MRVL_20260511.html | DD_MRVL_20260418.html | ID_AIASICDesignService_20260419.html / ID_AIAcceleratorDemand_20260419.html / ID_AINetworking_20260419.html / ID_SiliconPhotonicsCPO_20260419.html |
+| 2026-05-11 | MSFT | Microsoft 把 OS + Office + Azure + OpenAI 鎖成「企業 AI 預設入口」，每個 Copilot seat 都把客戶推得更深 | DCA_MSFT_20260511.html | DD_MSFT_20260418.html | — |
+| 2026-05-11 | MU | Micron 是 AI 記憶體大循環的三強寡占之一，但在這一輪 HBM4 旗艦戰役它被擠到 Rubin CPX 中段席位，估值便宜是真，週期頂點也是真。 | DCA_MU_20260511.html | DD_MU_20260418.html | — |
+| 2026-05-11 | NET | Cloudflare 是 AI agentic internet 的天然路由層 — anycast 全球邊緣使「inference 就近 + AI 流量治理」成為單一網絡可解的問題。 | DCA_NET_20260511.html | DD_NET_20260418.html | — |
+| 2026-05-11 | NFLX | Netflix 是全球策展長內容唯一具規模優勢的單一平台，現在多了廣告與 live event 兩條尚未兌現的營收曲線。 | DCA_NFLX_20260511.html | DD_NFLX_20260418.html | ID_AIAdRetailMedia_20260429.html / ID_AppleIntelligencePlatformThreat_20260429.html |
+| 2026-05-11 | NKE | NKE ｜ 2026-05-11 中段品牌 turnaround 中盤戰 — 北美 +3% 真 / 中國 -20% 真 / Wells Fargo 5/8 降至 Underperform PT$45 — 仍未脫盲 V 區 | DCA_NKE_20260511.html | — | — |
+| 2026-05-11 | NVDA | AI 基礎設施王者，CUDA + 製程 + 系統整合三層壘加，hyperscaler 雖試圖自研 ASIC 但無法整體取代 | DCA_NVDA_20260511.html | DD_NVDA_20260418.html | — |
+| 2026-05-11 | NXPI | NXP 用 ASIL D + Tier-1 設計鎖定，把車這件硬東西鎖了 7-15 年；SDV 就是把這條鎖加深加粗的浪潮。」 敘事性 thesis | DCA_NXPI_20260511.html | DD_NXPI_20260504.html | ID_EdgeAI_20260427.html |
+| 2026-05-11 | ONTO | AI advanced packaging（HBM4/CoWoS）量測剛性需求的 2nd derivative — 設備代際黏性 5-8 年。 | DCA_ONTO_20260511.html | DD_ONTO_20260506.html | ID_AdvancedPackaging_20260419.html |
+| 2026-05-11 | ON | onsemi 是 SiC 電力電子第二大廠，靠 200mm 良率紅利 + Wolfspeed 競爭真空，從 EV cycle 谷底跨入 AI DC 電源第二曲線。 | DCA_ON_20260511.html | DD_ON_20260505.html | ID_AIDCPowerElectronics_20260421.html |
+| 2026-05-11 | RCL | Thesis：嬰兒潮 cruise 結構性需求 × 私島雙引擎，duopoly 規模王在 supply lock 至 2031 的視窗放大盈利。 | DCA_RCL_20260511.html | DD_RCL_20260508.html | ID_BoomerTravelSupercycle_20260429.html / ID_LuxuryTravelCruise_20260427.html |
+| 2026-05-11 | RMS | Hermès 是世界上唯一能把「等不到」變成商業模式的公司——時間、家族與工藝鎖死的稀缺權，使它成為奢侈品週期裡少數還在加深的護城河。 | DCA_RMS_20260511.html | DD_RMS_20260418.html | ID_BoomerTravelSupercycle_20260429.html / ID_GlobalLuxury_20260427.html |
+| 2026-05-11 | SBUX | Starbucks 是全球都市「第三場所」的儀式品牌，Niccol turnaround 兌現中但估值已 priced in 完美執行。 | DCA_SBUX_20260511.html | DD_SBUX_20260429.html | ID_BeverageEnergyDrink_20260428.html / ID_FastCasualBifurcation_20260427.html / ID_GLP1RestaurantImpact_20260427.html / ID_USRestaurantChains_20260427.html |
+| 2026-05-11 | SE | SE 用一家公司同時擁有東南亞 6.5 億人口的購物、遊戲、銀行三條入口，是這個 leapfrog 大陸唯一能 cross-subsidize 的 super-app。 | DCA_SE_20260511.html | DD_SE_20260427.html | ID_GlobalEcommerce_20260427.html / ID_LATAMEcommerce_20260427.html |
+| 2026-05-11 | SNDK | NAND 商品被 5 家 hyperscaler 用 $42B take-or-pay 合約強行改寫為短期半 strategic asset；HBF 則是潛在的下一條曲線。 | DCA_SNDK_20260511.html | DD_SNDK_20260504.html | ID_AIStorage_20260427.html / ID_MemorySupercycle_20260430.html |
+| 2026-05-11 | TDY | Teledyne 把感測（thermal / 影像 / 海事 / 太空）變成國防與 AI 邊緣的「toll booth」。 | DCA_TDY_20260511.html | DD_TDY_20260427.html | ID_CommercialAerospace_20260427.html / ID_DefenseAerospaceUpgrade_20260427.html |
+| 2026-05-11 | TER | Teradyne 是 ATE 雙寡占其一， 而 AI 把「每顆晶片測試時數」變成了複利稅票。 | DCA_TER_20260511.html | DD_TER_20260504.html | ID_AITestEquipmentATE_20260427.html |
+| 2026-05-11 | TXN | TXN 用 $30B、6 年蓋出一座別人複製不了的 300mm Analog 巨型 fab，當 cycle 翻身時它變成 80,000 個小客戶的「電費 + 房租」收租人。 | DCA_TXN_20260511.html | DD_TXN_20260504.html | ID_AIDCPowerElectronics_20260421.html |
+| 2026-05-11 | TXRH | TXRH 是 casual dining 唯一靠 manager equity + $8.3M AUV 建構結構性 unit economics 護城河的價值型贏家，在 K-shaped 消費 + 牛肉 supercycle 中份額會持續向強者集中。 | DCA_TXRH_20260511.html | — | — |
+| 2026-05-11 | VIK | Viking 把「55+ 富裕族群想看世界但討厭小孩 / 賭場 / 推銷」這個 demand 結構，鎖進 4 家造船廠 24–42 個月排程的 supply 天花板。 | DCA_VIK_20260511.html | DD_VIK_20260418.html | — |
+| 2026-05-11 | VRT | VRT 是 AI 工廠的「物理可實現性」翻譯層 — NVIDIA Rubin 強制液冷 + 800V DC 把它從供應商升級為 reference architect。 | DCA_VRT_20260511.html | DD_VRT_20260425.html | — |

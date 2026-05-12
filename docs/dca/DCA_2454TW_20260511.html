@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<!-- dca-schema-version: v1.1 -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA · 2454TW · 2026-05-11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--mut:#64748B;--accent:#3B82F6;--rule:#E2E8F0;--row:#F1F5F9}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;font-size:14px;line-height:1.7}
+  .num,code,pre{font-family:'IBM Plex Mono',monospace}
+  header.sticky{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--rule);padding:12px 24px;display:flex;align-items:center;gap:18px;font-size:13px}
+  header .tk{font-weight:700;color:var(--ink);font-size:16px}
+  header .th{color:#0F172A;flex:1;font-style:italic}
+  header .dt{color:var(--mut)}
+  main{max-width:1100px;margin:0 auto;padding:24px}
+  section{background:var(--card);margin:18px 0;border:1px solid var(--rule);border-radius:4px;padding:22px 26px}
+  h2{margin:0 0 14px;color:var(--ink);font-size:18px;border-left:4px solid var(--accent);padding-left:12px;background:#F8FAFC;padding-top:6px;padding-bottom:6px}
+  h3{color:var(--ink);font-size:15px;margin:16px 0 8px}
+  h4{font-size:13.5px;margin:12px 0 6px;color:#334155}
+  table{width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:13px}
+  th{background:#1E3A5F;color:#fff;padding:8px 10px;text-align:left;font-weight:500}
+  td{padding:8px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tr:nth-child(even) td{background:var(--row)}
+  /* Status Bar */
+  .status-bar{display:flex;gap:16px;justify-content:center;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 24px;margin:8px 0 18px;border-radius:4px}
+  .status-bar .cell{flex:1;min-width:160px;text-align:center}
+  .status-bar .lbl{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+  .status-bar .val{font-size:22px;font-weight:700;line-height:1.25}
+  .status-bar .sub{font-size:11.5px;color:#64748B;margin-top:3px}
+  .sig-A{color:#15803D}.sig-Aplus{color:#166534}.sig-B{color:#92400E}.sig-C{color:#991B1B}
+  .moat-up{color:#166534}.moat-flat{color:#64748B}.moat-down{color:#991B1B}
+  .dd-green{color:#15803D}.dd-amber{color:#92400E}.dd-red{color:#991B1B}
+  /* Boxes */
+  .thesis-box{background:#EFF6FF;border:1px solid #BFDBFE;padding:30px 26px;text-align:center;border-radius:6px;margin:6px 0 14px}
+  .thesis-box .tt{font-size:26px;font-weight:700;line-height:1.5;color:#1E3A5F;letter-spacing:0.5px}
+  .thesis-box .sub{margin-top:10px;color:var(--mut);font-size:12px;letter-spacing:1.5px}
+  .decision-box{background:#FEF9C3;border-left:4px solid #CA8A04;padding:18px 20px;margin:8px 0}
+  .conflict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:18px 20px;margin:8px 0}
+  .verdict-table th{background:#9A3412}
+  .verdict-table tr:nth-child(even) td{background:#FFEDD5}
+  .premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:16px 20px;margin:8px 0;font-style:italic;color:#7F1D1D}
+  .pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:16px 20px;margin:8px 0}
+  .memo-box{background:#fff;border:1.5px solid #94A3B8;padding:22px 24px;margin:10px 0;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.7;white-space:pre-wrap}
+  .elev-box{background:#F8FAFC;border-left:3px solid #94A3B8;padding:14px 18px;margin:10px 0;font-style:italic;color:#334155}
+  .alert-box{background:#FEE2E2;border:2px solid #DC2626;padding:12px 16px;border-radius:4px;margin:10px 0;color:#991B1B;font-weight:600}
+  .irr-comp{background:#1E3A5F;color:#fff;padding:6px 10px;font-weight:600;font-size:13px;display:block;margin:14px 0 0}
+  .stacked{display:flex;height:30px;border:1px solid var(--rule);margin:6px 0 14px;font-size:11px;color:#fff;line-height:30px;text-align:center;font-family:'IBM Plex Mono',monospace}
+  .seg-eps{background:#15803D}.seg-rerate-pos{background:#3B82F6}.seg-rerate-neg{background:#991B1B}.seg-yield{background:#64748B}
+  .maxdd-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;padding:18px 22px;margin:10px 0}
+  .maxdd-num{font-size:32px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace}
+  .maxdd-bar{height:14px;background:#fff;border:1px solid var(--rule);position:relative;margin:6px 0;border-radius:2px;overflow:hidden}
+  .maxdd-bar .fill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,#22c55e 0%,#f59e0b 50%,#dc2626 100%)}
+  .pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11.5px;font-weight:600}
+  .pill-good{background:#DCFCE7;color:#166534}.pill-bad{background:#FEE2E2;color:#991B1B}.pill-warn{background:#FEF3C7;color:#92400E}
+  details{margin:10px 0;background:#F8FAFC;border:1px solid var(--rule);border-radius:4px}
+  summary{padding:12px 16px;cursor:pointer;font-weight:600;color:var(--ink);font-size:14px}
+  details[open] summary{border-bottom:1px solid var(--rule)}
+  details > div{padding:14px 18px}
+  .red{color:#DC2626}.amber{color:#D97706}.green{color:#16A34A}
+  .printbtn{position:fixed;right:20px;bottom:20px;z-index:100;background:#1E3A5F;color:#fff;border:none;padding:10px 18px;font-size:13px;border-radius:24px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.18)}
+  ul{padding-left:22px;margin:6px 0}
+  li{margin:4px 0}
+  @media print {
+    header.sticky,.printbtn{display:none}
+    body{background:#fff}
+    section{break-inside:avoid;border:1px solid #ccc}
+    details{break-inside:avoid}
+    details > div{display:block !important}
+    details[open] summary{border-bottom:1px solid #ccc}
+    details > div{display:block !important}
+  }
+</style>
+</head>
+<body>
+<header class="sticky">
+  <div class="tk">2454TW · MediaTek 聯發科</div>
+  <div class="th">「聯發科是 Google TPU 多供應商鏈中 cost-optimized 第二供應商，2027 ASIC 跨入多個 billion-USD — 但 4 週 +106% 把 5Y thesis 完全 pull-forward 到一個月」</div>
+  <div class="dt">2026-05-11 · Deep Conviction Analysis</div>
+</header>
+
+<main>
+
+<div class="alert-box">⚠️ <strong>動能更極端：5/4-5/10 一週 +26%（NT$2,870 → NT$3,630），4 週 +106%、24 週 +143%（NT$1,470 → NT$3,630）。</strong> 200DMA NT$1,557，現價較其 +133%；52w 區間 NT$1,130–3,670 — 現價貼上界。Q2 guide 持平到 -6% QoQ，全年 USD revenue mid-to-high single digit YoY — 動能與基本面開始脫鉤。<strong>thesis 結構真，但「等回測」門檻從 BB 中軌 1,730 → 2,200-2,500 區間（thesis 真也需折讓 30-40%）。</strong></div>
+
+<!-- Status Bar (Section 0, above §2) -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="lbl">綜合訊號燈</div>
+    <div class="val sig-B">B</div>
+    <div class="sub">DD §1 — 觀望，等估值或時機修復</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Moat 趨勢</div>
+    <div class="val">A <span class="moat-up">↑</span></div>
+    <div class="sub">widening — ASIC 入場 + 中國高階 40%</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Runway post-Y5</div>
+    <div class="val">🟢 寬</div>
+    <div class="sub">ASIC 8%→40%+ / PC 第三曲線</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Max DD (5Y)</div>
+    <div class="val dd-red">−60%</div>
+    <div class="sub">範圍 −45% ~ −60%</div>
+  </div>
+</div>
+
+<!-- §2 Thesis -->
+<section>
+  <h2>§2｜One-Sentence Thesis</h2>
+  <div class="thesis-box">
+    <div class="tt">聯發科是 Google TPU 多供應商鏈中 cost-optimized 第二供應商；2027 ASIC 從 8% → 27% 占比，是 hyperscaler ASIC supply chain 唯一非美系的純設計玩家。</div>
+    <div class="sub">50 字以內｜投資本質敘事</div>
+  </div>
+  <p style="color:#64748b;font-size:12.5px;margin-top:10px">
+    這不是「手機 SoC cycle 末段反彈」的故事，而是「設計能力的二次驗證」。Google 確立 Broadcom + MediaTek + Marvell + TSMC 四夥伴架構，MediaTek 切入 cost-optimized 變體（Inference 主場）— 從 IP 授權商 → 客製化 design service。Q1 26 法說 4/30 公司將 2026 ASIC 目標從 USD 1B 倍增至 USD 2B，2027 multi-billion 維持。但 4 週 +106% + 一週 +26% = thesis 真但 5Y future cashflow 已 pull-forward 一個月內 priced，短期 sell-the-news 風險極高。
+  </p>
+</section>
+
+<!-- §7 Decision -->
+<section>
+  <h2>§7｜Decision（可執行計畫）</h2>
+
+  <h3>7a. 倉位與進場計畫</h3>
+  <div class="decision-box">
+  <table>
+    <tr><th>項目</th><th>具體內容</th></tr>
+    <tr><td>角色</td><td><strong>核心持倉候選（A 級護城河 + ASIC 第二曲線真）但目前 0%</strong> — Max DD 評級 🔴 觸發倉位上限自動下修</td></tr>
+    <tr><td>初始建倉</td><td><strong>0%（現在絕不進）</strong> — 一週 +26%、4 週 +106%、200DMA 之上 +133%、52w 區間貼上界；RSI 估 &gt; 85（極端超買）；mean reversion 機率歷史上 ~80%</td></tr>
+    <tr><td>目標倉位</td><td><strong>4.0%（上限，原 5.0% 因 Max DD 🔴 自動下修 -1pp）</strong>，vs AVGO 5%、3661 Alchip 1.5%、MRVL 2.5%、QCOM 0%。2454TW 為 portfolio 的「Google TPU exposure」唯一非美系 design service</td></tr>
+    <tr><td>進場價位區間</td><td><strong>NT$2,200 – NT$2,800</strong>（thesis 真情境）／<strong>NT$1,750 – NT$2,200</strong>（深回測 BB 中軌）；現價 NT$3,630 不進；目標折讓 -23% ~ -52%</td></tr>
+    <tr><td>進場節奏</td><td><strong>條件式分批（強制等回測）</strong>：(1) 任何 RSI &gt; 75 + 4 週漂移 &gt; +20% 期間 = 禁止進場；(2) 回測 NT$2,800（thesis 真折讓 -23%）+ RSI 回到 50-60 → 第一批 1.0%；(3) 回測 NT$2,400 + 量縮 → 加至 2.0%；(4) Q2 法說（8 月初）ASIC 進度若 reaffirm USD 2B Q4 + 2027 multi-billion → 加至 3.0%；(5) 任何 BB 中軌 NT$1,750-2,000 機會 → 加至 4.0% 目標</td></tr>
+    <tr><td><strong>vs 現有組合 opportunity cost</strong></td><td><strong>AVGO（同 Google TPU 主供應商，PE ~30x）：</strong>AVGO 是 high-end TPU 主、Anthropic / Meta / MS Maia 多客戶分散；moat 純度 &gt; 2454TW；FCF margin 38% vs 2454TW 23%；R&D 規模 10B+ vs 2454TW 2.7B。若 portfolio 已持 AVGO 4-5% → 2454TW 是 Google "e variant" cost 補強（不是替代）。<br><br><strong>3661 Alchip（PE ~50x，純 ASIC design service）：</strong>Alchip 客戶包括 AWS Trainium 4 + Tesla Dojo，moat 7/10；2454TW R&D 規模 8x 大 + mobile + ASIC dual engine；2454TW 體質遠勝 Alchip。<br><br><strong>MRVL（PE ~25x，ASIC #3）：</strong>MRVL 在 Google 多供應商中 design share 預估降至 8% by 2027（vs Broadcom 60%）；2454TW 10-15% 目標市占 &gt; MRVL。MRVL 動能溫和 = 較公平 R:R；2454TW 動能極端 = 等回測才公平比較。<br><br><strong>結論：</strong>邊際資金優先級為 <code>AVGO &gt; 2454TW（thesis 真但價）&gt; Alchip ≈ MRVL</code>。動能不修復前 2454TW 邊際資金 = 0；若 AVGO 倉位已飽和（&gt; 5%）+ 2454TW 回測到 NT$2,400 ↓，可邊際加 2454TW（多元化 Google supply chain exposure）</td></tr>
+  </table>
+  </div>
+
+  <h3>7b. 加碼與減碼條件</h3>
+  <table>
+    <tr><th>行動</th><th>觸發條件（價位 + 事件）</th><th>調整至倉位</th></tr>
+    <tr><td>第一批建倉</td><td>NT$2,800 ± 3% 折讓 -23% + RSI 14d 回到 50-60 + 4 週漂移 &lt; +5%（任一不滿足 = 不進）</td><td>1.0%</td></tr>
+    <tr><td>加碼 2</td><td>NT$2,400 + 7/31 Q2 法說 reaffirm ASIC USD 2B Q4 + 2027 multi-billion</td><td>2.0%</td></tr>
+    <tr><td>加碼 3</td><td>NT$1,950-2,200（BB 中軌附近）+ Q3 法說（10 月）ASIC quarterly run-rate &gt; USD 500M</td><td>3.0%</td></tr>
+    <tr><td>加碼 4（深回測機會）</td><td>NT$1,750（W104）+ 2027 ASIC backlog 公司公開 ≥ USD 4B + 蔡明介接班透明</td><td>4.0% 目標</td></tr>
+    <tr><td>減碼 1</td><td>2026 ASIC actual &lt; USD 1.5B（mgmt 倍增目標未達標 25%）/ Google TPU 9 確認 Broadcom 為主供應</td><td>2.0%</td></tr>
+    <tr><td>減碼 2</td><td>GP% 連 2 季 &lt; 44%（vs guide 46% ± 1.5pp 的下緣）/ ASIC mix shift 持續壓 margin</td><td>1.0%</td></tr>
+    <tr><td>清倉</td><td>H1 推翻（2027 ASIC &lt; USD 2B）/ NVIDIA 取消 N1X / 蔡明介突然下台無接班</td><td>0%</td></tr>
+  </table>
+
+  <h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+  <table>
+    <tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+    <tr><td>股價在 MA60 之上？</td><td><span class="pill pill-good">✅</span></td><td>遠在上（4 週 +106%）</td></tr>
+    <tr><td>股價在 MA200 之上？</td><td><span class="pill pill-good">✅</span></td><td>NT$3,630 vs MA200 ~NT$1,557（+133%）</td></tr>
+    <tr><td>股價在 MA104w 之上？</td><td><span class="pill pill-good">✅</span></td><td>NT$3,630 vs W104 NT$1,363（+166%）</td></tr>
+    <tr><td>Pure MA 系統是否支持進場？</td><td><span class="pill pill-good">✅</span></td><td>結構性 stage 2，但 stretched</td></tr>
+    <tr><td><strong>短期動能過熱</strong></td><td><span class="pill pill-bad">⛔ 嚴重警示</span></td><td>RSI 14d 預估 &gt; 85（基於 4 週 +106%）；4 週漂移 +106% &gt;&gt; +10% 警戒線；BB 上軌突破估 +40%+</td></tr>
+  </table>
+  <div class="alert-box" style="font-weight:500">
+    <strong>結論：</strong>Pure MA ✅ 告訴你結構為多頭，但 RSI &gt; 85 + 4 週 +106% 告訴你「短期絕對不該追」。歷史上 RSI &gt; 75 後 8 週內 mean reversion -15% ~ -25% 機率 ~75%；當前已 RSI &gt; 85 + 一週 +26% 是教科書級動能末段。<strong>進場節奏強制條件式：禁止任何「立即第一批」、禁止追高、嚴格按 7a 觸發條件。MA 資料品質校驗：W250 等 yfinance 拉新值（DD 5/4 為 NT$2,870 基準）。</strong>
+  </div>
+
+  <h3>7d. 建議持有年限</h3>
+  <table>
+    <tr><th>持有年限</th><th>條件</th></tr>
+    <tr><td>短期（&lt; 2 年）</td><td>動能交易（不適合，動能透支需先冷卻）— 若僅買回測波段，視為事件交易而非定見投資</td></tr>
+    <tr><td>中期（2-5 年）</td><td>H1 ASIC 8% → 27% 占比兌現 + Q2-Q4 26 ASIC 季度 run-rate 確認；建議主場景</td></tr>
+    <tr><td><strong>長期（5-10 年）</strong></td><td>H3 PC/Auto 第三曲線啟動 + ASIC 客戶從 Google 單一 → Meta/AWS/MS 多家分散；Runway 🟢 寬，第二/三 S 曲線銜接</td></tr>
+  </table>
+  <p><strong>建議持有年限：</strong> <strong>3-5 年（中期主場景）</strong>，原因：ASIC 第二曲線 2026-2028 驗證期 + 2027 ASIC multi-billion mgmt 已確認 + Runway 🟢 寬支持延長至 5-10 年。但動能極端 + 估值消化通常需 6-12 個月，等修復後再以 3-5 年持有期切入。</p>
+
+  <h4>EPS 預測參考表</h4>
+  <table>
+    <tr><th>年份</th><th>EPS 估計（TWD）</th><th>來源</th><th>備註</th></tr>
+    <tr><td>2026E</td><td>65 - 72</td><td>yfinance n=22 / consensus PT 推導</td><td>FY25 基期 66；ASIC ramp Q4 26 開始貢獻但低基期</td></tr>
+    <tr><td>2027E</td><td>120</td><td>yfinance n=21（DD 5/4 拉值）</td><td>ASIC USD 2B Q4 + 全年化 + 手機 maintain</td></tr>
+    <tr><td>2028E</td><td>150-180</td><td>推導：ASIC 全年化滿載 + Meta 加入 + Auto/PC 第三曲線啟動</td><td>外推假設：ASIC mix 從 27% → 40%；GP% 維持 46-48%</td></tr>
+    <tr><td>2030E（外推）</td><td>220-280</td><td>5Y 推導</td><td>外推：ASIC 占比 35-45%、客戶從 Google → Meta + 第三家 hyperscaler、PC SoC 規模化</td></tr>
+  </table>
+  <p style="font-size:12.5px;color:#64748b"><strong>假設長期持有（5-10 年），現在股價適合嗎？</strong> NT$3,630 / FY27 EPS 120 = Forward PE 30.3x（vs DD 5/4 23.86x；過去一週 PE 從 24x → 30x）。5Y 目標若 EPS 220-280 × PE 25x = NT$5,500 – NT$7,000（5Y CAGR +8.7% ~ +14% from NT$3,630），對應 §4 Base IRR ~9-10%。若採折讓 NT$2,500 進場 → 5Y IRR ~17-23%（高 conviction）。<strong>結論：現價買入 5Y IRR 落入「中」（8-12%），等回測到 2,200-2,800 區間進場 IRR 推升至「強」（&gt; 12%）。</strong></p>
+</section>
+
+<!-- §4 Asymmetry -->
+<section>
+  <h2>§4｜Asymmetry Analysis（含 Pattern match + IRR Composition）</h2>
+
+  <table>
+    <tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+    <tr><td>Thesis 對（Bull）</td><td>+95%（NT$3,630 → NT$7,080）</td><td>+14.3%/yr</td><td>EPS 280 × PE 25x = 7,000；ASIC 全速成長 + Meta/AWS 拿下 + PC SoC 規模化</td><td>30%</td></tr>
+    <tr><td>Base</td><td>+45%（→ NT$5,260）</td><td>+7.7%/yr</td><td>EPS 220 × PE 24x = 5,280；H1+H2 兌現 + H3 慢速；估值從 30x 收斂到 24x</td><td>40%</td></tr>
+    <tr><td>Thesis 錯（Bear）</td><td>-40%（→ NT$2,180）</td><td>-9.6%/yr</td><td>ASIC 不及預期 / Google TPU 9 換 BRCM 主 / 手機 cycle 持續疲弱 / PE 壓縮到 16-18x</td><td>30%</td></tr>
+    <tr><td><strong>機率加權期望值</strong></td><td><strong>+31%（5Y）</strong></td><td><strong>IRR ≈ 5.6%/yr</strong></td><td>0.30×95 + 0.40×45 + 0.30×(−40)</td><td>—</td></tr>
+  </table>
+
+  <p style="font-size:12.5px;color:#64748b"><strong>IRR 公式驗證：</strong> Bull (1.95)^(1/5)-1 = 14.3% ✅；Base (1.45)^(1/5)-1 = 7.7% ✅；Bear (0.60)^(1/5)-1 = −9.6% ✅。<strong>IRR 落點解讀：</strong> 5.6%/yr 落在「弱」區間（&lt; 8%）— 現價進場無 idiosyncratic 優勢。<strong>關鍵</strong>：若改用 NT$2,500 折讓進場（thesis 真情境）→ Base IRR 推升至 ~15.6%/yr（強 conviction）。<strong>進場價位是 IRR 質感的 80% 變數，這是不買 NT$3,630 的核心理由。</strong></p>
+
+  <h4>追加壓力測試</h4>
+  <ul>
+    <li><strong>10Y 視角（thesis 對）：</strong>EPS 350-450 × PE 22x = NT$7,700 – 9,900；10Y IRR ~7.8% – 10.5%/yr（時間拉長兩倍 IRR 反降，因 PE 從 30x 自然壓縮）— 不該因「長期 thesis 真」就現價追</li>
+    <li><strong>機會成本對照：</strong>同期 TAIEX 38,927 預期年化 ~7-9%/yr（含股息）；AVGO 5Y 估 ~12-15%/yr；QCOM 5Y 估 ~8-10%/yr。現價 5.6%/yr &lt; 大盤 = 直接 fail opportunity cost test</li>
+  </ul>
+
+  <h4>📅 機率估計時間視角校準</h4>
+  <table>
+    <tr><th>檢查項</th><th>標準 / 結果</th></tr>
+    <tr><td>Bear 機率</td><td>30%（達標，5Y 視角 cycle stock 應 ≥ 25-30%）✅</td></tr>
+    <tr><td>Bull/Bear 散布</td><td>+95% vs -40%，spread 135pp，符合 5Y 視角寬散布 ✅</td></tr>
+    <tr><td>Base 機率</td><td>40%（&lt; 50% 達標）✅</td></tr>
+    <tr><td>Pattern match 校準</td><td>2017 NVDA cycle 早期、2020 2330 5G cycle — IRR 與本案接近，估計合理</td></tr>
+  </table>
+
+  <h3>📐 Pattern Match</h3>
+  <div class="pattern-box">
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>歷史上 thesis 結構類似的個股</td><td><strong>2020-2022 台積電（2330.TW）5G + HPC cycle 早期</strong></td></tr>
+      <tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>2020 Q3 PE 23x，HPC 占比從 15% → 35%（5Y），N7 → N5 → N3 量產路徑，當時是新業務佔比小但快速放大</td></tr>
+      <tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>2020/09 NT$430 → 2025/09 NT$1,050（+144%，IRR ~19.6%/yr）— 但中途 2022/10 跌至 NT$370（peak-to-trough −41%）</td></tr>
+      <tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>像：</strong>「新業務佔比小但快速放大」+ A 級護城河 + 設計/製程能力 secular 領先<br><strong>不像：</strong>(1) 2330 是製程獨家 (90%+ 高階節點)，2454 ASIC 是多供應商（10-15% 目標市占）— moat 純度差 <br>(2) 2330 entry PE 23x，2454 entry PE 30x — 起始估值貴 +30%<br>(3) 2330 進場時動能溫和，2454 進場時 4 週 +106% 透支</td></tr>
+    </table>
+    <p style="margin:8px 0 0;font-size:12.5px;color:#0c4a6e">這不是說我會複製 2330 的 +144% — 因 entry 估值高 30% + moat 純度差，2454 五年 IRR 預期應折讓至 2330 5Y 實現的 60-70%（~12-14%/yr，要等回測到 NT$2,500 才能實現）。</p>
+  </div>
+
+  <span class="irr-comp">🧬 IRR Composition（5Y IRR 質感拆解）</span>
+  <table>
+    <tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+    <tr><td>Bull</td><td>+15.0%/yr</td><td>−1.5%/yr（30x → 25x）</td><td>+0.8%/yr（殖利率 1.5% −SBC 稀釋）</td><td>+14.3%/yr ✅</td></tr>
+    <tr><td>Base</td><td>+11.4%/yr</td><td>−4.4%/yr（30x → 24x）</td><td>+0.7%/yr</td><td>+7.7%/yr ✅</td></tr>
+    <tr><td>Bear</td><td>+5.0%/yr</td><td>−15.4%/yr（30x → 17x，PE -40%+）</td><td>+0.8%/yr</td><td>−9.6%/yr ✅</td></tr>
+  </table>
+  <p style="font-size:11.5px;color:#64748b">合計檢驗：Bull 15.0 −1.5 +0.8 = 14.3 ✅ / Base 11.4 −4.4 +0.7 = 7.7 ✅ / Bear 5.0 −15.4 +0.8 = −9.6 ✅；vs §4 表上方 Base IRR 7.7% diff 0%p（≤ 2%p 達標）✅</p>
+
+  <div class="stacked">
+    <div class="seg-eps" style="width:59%">EPS 11.4%</div>
+    <div class="seg-rerate-neg" style="width:23%">re-rate −4.4%</div>
+    <div class="seg-yield" style="width:18%">yield +0.7%</div>
+  </div>
+
+  <div class="elev-box">
+    <strong>質感解讀：</strong>Base 7.7% IRR 中 — EPS 複利貢獻 +11.4%/yr（強，靠 ASIC 第二曲線 + 手機 maintain），但估值 re-rate <strong>−4.4%/yr（拖累）</strong>因起始 PE 30x 已偏高，5Y 自然壓縮到 24x；股息+回購僅 +0.7%/yr（殖利率 ~1.5% 但稀釋少）。<strong>這檔的可抱性主要靠 EPS 複利（自然複利好抱），但被起始估值拖累 — 要等回測到 PE 22-25x（股價 NT$2,500-2,800）才能把 re-rate 貢獻翻正為 +1 ~ +3%/yr，IRR 從 7.7% → 12-15%。進場時點對 IRR 質感的影響 &gt; thesis 真假。</strong>
+  </div>
+</section>
+
+<!-- §1 Mental Models -->
+<section>
+  <h2>§1｜Mental Models 壓力測試</h2>
+
+  <h3>測試一：投委會 1 頁紙 Memo</h3>
+  <div class="memo-box">投委會 Memo｜2454.TW MediaTek 聯發科｜2026-05-11
+
+【Thesis】MediaTek 從手機 SoC 公司轉型為 Google TPU 多供應商鏈中 cost-optimized 第二供應商；2027 ASIC 占比 8% → 27%，是 hyperscaler ASIC 供應鏈中唯一非美系純設計玩家。
+
+【Key Driver】
+1. ASIC 第二曲線確立（Q1 26 法說將 2026 target USD 1B → 2B，2027 multi-billion）— 對應 Google TPU 5M (2027) / 7M (2028) Morgan Stanley 上修
+2. Dimensity 9500 中國高階 ~40% 市占穩固 — 與 Qualcomm 雙寡占維持，現金流引擎
+
+【R:R】
+- 5Y Base IRR 7.7%/yr（現價 NT$3,630 進場）
+- 5Y Base IRR 15.6%/yr（NT$2,500 折讓 -31% 進場）
+- 5Y Bear -9.6%/yr / 5Y Bull +14.3%/yr
+- IRR composition：EPS 11.4% −re-rate 4.4% +yield 0.7%（被起始 PE 拖累）
+
+【主要風險】
+- 4 週 +106%、一週 +26%、200DMA +133% — 動能極端透支
+- Google TPU 9 (~2028) 主供應商若選回 Broadcom = thesis 半破
+- 蔡明介 75 歲接班議題
+- Max DD 估 −45% ~ −60%（路徑風險 🔴 高）
+
+【建議】
+0% 倉位現在。目標 4%（Max DD 🔴 從原 5% 下修）。
+- NT$2,800 折讓 -23% + RSI 50-60 → 第一批 1.0%
+- NT$2,400 + Q2 法說 reaffirm → 加至 2.0%
+- NT$1,950-2,200 BB 中軌 + ASIC quarterly run-rate &gt; USD 500M → 3.0%
+- NT$1,750 深回測 + 2027 backlog 公開 ≥ USD 4B → 4.0%
+不建議追高，動能修復前等。</div>
+
+  <h3>測試二：30 秒電梯簡報</h3>
+  <div class="elev-box">
+    「MediaTek 是 Google TPU 四夥伴中唯一非美系設計商，做 cost-optimized 變體，2026 ASIC USD 2B、2027 multi-billion。但一週剛漲 26%、4 週 +106%，把 5 年成長一個月 priced。Thesis 真，等回測折讓 30-40% 到 NT$2,500 再進場。」（93 字）
+  </div>
+  <p style="font-size:12.5px;color:#64748b">壓力測試結果：兩個都寫得出且邏輯自洽（thesis 結構真但 timing 不到，兩段都點出相同核心矛盾）→ 進入 §7 / §5 / §8。</p>
+</section>
+
+<!-- Phase B Contradictions -->
+<section>
+  <h2>Phase B｜矛盾辨識 + ⚖ 強制裁決</h2>
+
+  <div class="conflict-box">
+    <h3>1. 共識清單（高信心區）</h3>
+    <ul>
+      <li><strong>A1 + A2 + A3 + DD 共識：</strong>A 級護城河、ASIC 第二曲線真實（Q1 26 mgmt 倍增目標 + Morgan Stanley TPU 上修 5M/7M）、長期 Runway 🟢 寬</li>
+      <li><strong>A1 + A2 共識：</strong>moat ↑ widening（從 IP 授權 → design service 跨域）</li>
+      <li><strong>A2 + A3 共識：</strong>Smart Edge (含 ASIC) 占比加速、Mobile 持平 / 略降</li>
+    </ul>
+  </div>
+
+  <h3>2. 矛盾清單</h3>
+  <table>
+    <tr><th>#</th><th>矛盾描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論 / DD</th><th>性質</th></tr>
+    <tr><td>🔴 1</td><td>動能極端 vs 估值「PEG 0.77 便宜」</td><td>A 級護城河強化中</td><td>產業 secular tailwind 強</td><td>FPE 30x（vs DD 5/4 的 23.86x）+ Q2 -6% QoQ guidance + Q1 EPS YoY -18%</td><td><strong>不可調和</strong>（估值已 priced 全部 thesis，但短期基本面減速）</td></tr>
+    <tr><td>🔴 2</td><td>ASIC target USD 2B 倍增 vs Q1 Rev YoY -2.7%</td><td>—</td><td>Smart Edge +13% YoY 強</td><td>Mobile -15% YoY 嚴重 + 全年 Rev mid-to-high single digit US$ YoY</td><td><strong>不可調和</strong>（Q4 26 ASIC 爆發 vs 2026 全年混合成長，市場是賭未來而非當下）</td></tr>
+    <tr><td>🟡 3</td><td>Goldman 目標 NT$5,000 (Bull) vs 共識 PT NT$3,327 (-8%)</td><td>—</td><td>—</td><td>分析師散布 NT$1,751 - NT$5,000（spread 285%）</td><td>可調和（時間視角差 + Bull/Base/Bear 不同 case）</td></tr>
+    <tr><td>🔴 4</td><td>200DMA +133% 結構性 stage 2 vs 估值已透支</td><td>—</td><td>—</td><td>RSI &gt; 85 估、4 週 +106%</td><td><strong>不可調和</strong>（trend 真但 mean reversion 機率歷史 ~75-80%）</td></tr>
+  </table>
+
+  <h3>3. 與既有報告交叉矛盾</h3>
+  <table>
+    <tr><th>#</th><th>矛盾</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>原因</th></tr>
+    <tr><td>1</td><td>現價 vs DD 5/4 基準</td><td>NT$3,630 (5/10)</td><td>DD 5/4 NT$2,870；DD 預估「等回測 BB 中軌 1,730」</td><td>時間差（DD 後一週又 +26%）— DD 進場條件需上修</td></tr>
+    <tr><td>2</td><td>Forward PE</td><td>FPE FY+1 50x、FPE FY+2 30x</td><td>DD 5/4：FPE FY+1 40x、FPE FY+2 23.86x</td><td>股價漂移：PE 整體 +26% 上漂</td></tr>
+    <tr><td>3</td><td>ASIC 目標</td><td>2B (Q4 26)</td><td>DD 5/4 引用「USD 1B+ 底線」</td><td>分析深度差 — Phase A 取得 4/30 法說 mgmt 倍增；DD 取得 4/30 法說但保守記錄</td></tr>
+  </table>
+
+  <h3>⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+  <table class="verdict-table">
+    <tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 if-then）</th></tr>
+    <tr><td>🔴 1</td><td>動能極端 vs PEG 便宜</td><td><strong>動能側（短期 0%）</strong></td><td>(1) RSI &gt; 85 + 4 週 +106% 是教科書級動能末段；(2) Forward PE 30x 已不便宜（DD 5/4 為 23.86x，一週 PE +26%）；(3) Q2 guide -6% QoQ 不支持當下追高</td><td>(a) RSI 14d 回到 50-60（從 PE &gt; 28x 修復到 ≤ 25x）；(b) 4 週漂移 &lt; +5%；(c) NT$2,800 整數關支撐確立（連 5 個交易日守住）</td><td><strong>(a) 任何時點 RSI &gt; 75 + 4 週漂移 &gt; +15% → 倉位維持 0%、禁止進場；(b) 若 NT$2,800 + RSI 55 + 4 週 +3% → 第一批 1.0%</strong></td></tr>
+    <tr><td>🔴 2</td><td>ASIC 倍增 vs Q1 Rev -2.7%</td><td><strong>ASIC 側（中期 thesis 真）</strong></td><td>(1) mgmt 4/30 公開倍增為 hard guidance；(2) Morgan Stanley TPU 5M/7M (2027/28) 上修一致；(3) Q4 26 ASIC USD 2B 是季度單點而非全年 — 進入下半年加速軌跡</td><td>(a) Q3 26 法說（10 月底）ASIC quarterly run-rate &gt; USD 500M；(b) Q4 26 法說（2027 Feb）ASIC 全年實際 &gt; USD 1.8B（達標 90%）；(c) 2027 ASIC backlog 公開公司聲明</td><td><strong>(a) Q3 26 ASIC run-rate &lt; USD 300M → 減碼 50%、警示等級 🟡；(b) Q3 26 run-rate &gt; USD 500M + 2027 mgmt reaffirm → 加碼至 3.0%</strong></td></tr>
+    <tr><td>🔴 4</td><td>結構性 stage 2 vs mean reversion 高</td><td><strong>mean reversion 側（短期）+ stage 2 側（中期）併存</strong></td><td>(1) MA 結構真支持中期長抱；(2) 但 RSI &gt; 85 + 4 週 +106% 短期 mean reversion 機率 ~75-80%；(3) 5/4 一字漲停 + 一週 +26% = sell-the-news 機率高</td><td>(a) 8 週內若回測 −15 ~ −25%（NT$2,720 – 3,085）= mean reversion 已發生；(b) RSI 14d 連 5 日 &lt; 60；(c) 量縮確認</td><td><strong>(a) 8 週內回測 &gt; 20% 至 NT$2,900 ↓ + RSI 50 → 邊際資金可動，第一批 0.5-1.0%；(b) 8 週內未回測（橫盤）→ 繼續等，不追高</strong></td></tr>
+  </table>
+  <p style="font-size:12.5px;color:#64748b">這些裁決將直接帶入 §7 — 三條 if-then 共同推導出「現在 0%、等回測 + RSI + Q3 法說組合條件」進場節奏。</p>
+</section>
+
+<!-- §3 Key Drivers -->
+<section>
+  <h2>§3｜Key Drivers（限 1-2 個）</h2>
+
+  <table>
+    <tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+    <tr><td>1</td><td><strong>ASIC 第二曲線：Google TPU + 多家 hyperscaler 設計服務</strong></td><td>是「公司轉型」的核心 — 從 IP 授權 + 手機 SoC 過渡到 hyperscaler design service。Q4 26 USD 2B → 2027 multi-billion 是質變，不是量變</td><td>季度 ASIC revenue run-rate；客戶數（Google → Meta → 第三家）；2027 backlog 公開</td></tr>
+    <tr><td>2</td><td><strong>中國高階手機 SoC 雙寡占（Dimensity 9500）</strong></td><td>是「現金流引擎」— 撐住 base case 不破，給 ASIC 投資資金 + 時間。中國 ~40% 市占失守 = 整個 thesis 缺底</td><td>Dimensity 9500 中國高階出貨；OPPO/Vivo/小米旗艦機種數；GP% 維持 &gt; 45%</td></tr>
+  </table>
+
+  <p><strong>為什麼是這 1-2 個，而不是其他？</strong><br>
+  Driver 1（ASIC 設計服務）= 供給側技術能力的二次驗證；Driver 2（中國手機雙寡占）= 需求側現金流穩定器。兩條獨立因果鏈：(a) Driver 2 不假設 Driver 1 成立仍可單獨被推翻（例：中國國產化加速 + 海思復甦壓 Dimensity）— 通過獨立性測試 ✅；(b) Driver 1 同理（Google 改用全 Broadcom）。<strong>NVIDIA N1/N1X PC 第三曲線</strong>原本可入選但被砍 — 多次延後（H1 25 → Q1 26 → 2026 H2 → 2026 末），現階段是 optionality 而非必要 driver，砍掉避免假兩個 driver。</p>
+
+  <h3>強制減法 — 我認為不重要的事</h3>
+  <table>
+    <tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+    <tr><td>每月手機 ASP 波動</td><td>cycle 末段噪音，季度趨勢更可靠；不改變 5Y thesis 中 ASIC 接棒的結構</td></tr>
+    <tr><td>NVIDIA N1/N1X PC 量產時程</td><td>已延後 3 次（H1 25 → 2026 Q1 → H2 → 末），市場已 priced 為 optionality 而非 base case；不是 thesis 命脈</td></tr>
+    <tr><td>單季毛利率 ±1pp 波動</td><td>mix shift 過渡期正常，連 2 季 &lt; 44% 才是訊號</td></tr>
+    <tr><td>季度買回額</td><td>MTK 以股息為主（NT$54/yr），少回購；非 EPS 操控工具</td></tr>
+    <tr><td>分析師 PT 散布</td><td>NT$1,751 – NT$5,000 spread 285% 是 Bear / Bull case 差異 — 本 DCA 已內化此散布為三情境機率</td></tr>
+    <tr><td>地緣政治（台海）</td><td>系統風險、影響全產業；2454 不是台海 idiosyncratic 主要受害者（vs 2330 直接生產）</td></tr>
+  </table>
+
+  <h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>市場目前定價在什麼假設上</td><td>共識 PT NT$3,327（24 分析師均值，低於現價 -8%）；Forward PE 30x = priced in 2027 ASIC USD 4-5B + 2028 ASIC USD 7-9B + 手機 maintain；Goldman Bull NT$5,000 = priced FY28 EPS ~200 + PE 25x</td></tr>
+    <tr><td>我認為的不同假設</td><td>「等回測 30%+ 後再進場」 — 即承認 thesis 真但 entry timing 是 IRR 質感最大變數；同 thesis 進場 NT$3,630 與 NT$2,500 5Y IRR 差距 ~8pp（7.7% vs 15.6%）</td></tr>
+    <tr><td>賣方為什麼錯</td><td>(1) 賣方 PT 多基於 FY+2 EPS × target multiple，沒有 entry-timing dimension（買方才有）；(2) Goldman NT$5,000 是 12M-18M 目標，但給的是「現在開始持有」隱含 IRR，沒區分「現在進場 IRR」與「等回測進場 IRR」；(3) 動能透支對 R:R 路徑影響在 sell-side 估值模型沒被反映（他們不算 Max DD）</td></tr>
+  </table>
+</section>
+
+<!-- §5 Single Thing -->
+<section>
+  <h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td><strong>事件描述（Primary trigger）</strong></td><td><strong>Google 在 2026 Q4 或 2027 Q1 公開宣布 TPU 9 / TPU 10 主供應商選擇 Broadcom（單一），MediaTek 從 cost-optimized 第二供應 → 完全出局或降至 marginal supplier（&lt; 5% 份額）</strong></td></tr>
+    <tr><td>為什麼這個事件是致命的</td><td>整個 ASIC 第二曲線 thesis 倚賴 Google 多供應商架構持續。若 Google 在 TPU 9/10 回頭給 Broadcom 單一供應 = (a) MediaTek 2028+ ASIC 不再 multi-billion 而是 ramp-down；(b) 二次驗證 thesis 破（市場相信「能拿一代 = 能拿多代」邏輯被推翻）；(c) Forward PE 從 30x 壓到 14-16x，EPS 同時 -25%，股價 -50%+</td></tr>
+    <tr><td>如何監測（資料來源、頻率）</td><td>(1) Google Cloud Next 大會（每年 4 月） + Alphabet 季報 capex commentary；(2) MediaTek Q3/Q4 法說 ASIC backlog 變化；(3) Counterpoint / TrendForce 季度 ASIC 市占報告；(4) Anthropic / Meta / Google 多供應商策略澄清</td></tr>
+    <tr><td>目前離發生有多遠</td><td>~12-18 個月（2027 Q1-Q2 大概率窗口）— Google 通常在量產前 6-9 個月確定下一代主供應；TPU 9 量產若是 2027 H2 → 公告約 2027 Q1</td></tr>
+    <tr><td><strong>Secondary trigger（pre-mortem 派生）</strong></td><td><strong>中國手機 cycle 急凍：Dimensity 9500 中國高階市占從 ~40% 跌至 ≤ 25%（vs Qualcomm Snapdragon 8 Elite Gen 5）+ 海思華為 Kirin 國產化反攻分食 15-20%</strong>。為什麼是 single thing：摧毀 Driver 2 現金流引擎 = ASIC 投資失血失血源消失</td></tr>
+  </table>
+</section>
+
+<!-- §6 What I Don't Know + Pre-mortem + Max DD -->
+<section>
+  <h2>§6｜What I Don't Know + Pre-mortem（含 6c 路徑壓力測試）</h2>
+
+  <h3>6a. 強迫面對自己的盲點</h3>
+  <table>
+    <tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+    <tr><td>1</td><td>ASIC 業務 GP% 是否能維持 30%+</td><td>Google / Meta / AWS 願意支付 cost-optimized 的合理 margin</td><td>若 ASIC GP% &lt; 20% → 占比上升反而拖累整體 GP% 從 47% → 42%；EPS 成長被 margin 壓縮抵消一半</td></tr>
+    <tr><td>2</td><td>蔡明介 75 歲接班議題</td><td>2027 前公開接班人 + 5 年過渡期穩定</td><td>若 2027 H2 仍無明確接班 → 治理折讓 PE -2 ~ -4x；若硬轉接班失序（類聯電曹興誠）→ -30%+</td></tr>
+    <tr><td>3</td><td>中國市場 50% 地理曝險的地緣政治穩定性</td><td>美中半導體脫鉤不擴及消費 SoC + 中國繼續允許進口</td><td>若美國對中國消費 SoC 設出口限制（不太可能但非零）→ Mobile 50% 營收 -30 ~ -50%</td></tr>
+    <tr><td>4</td><td>NVIDIA N1/N1X PC chip 是否真會量產</td><td>NVIDIA 不再延期、Microsoft Windows on Arm 跟上</td><td>已延後 3 次；若再延或被砍 → 第三曲線消失，但 thesis base 不破（已不計入 base case）</td></tr>
+  </table>
+
+  <h3>6b. Pre-mortem 三段式</h3>
+
+  <h4>第一段｜故事倒推（5 年虧 50% 最可能故事）</h4>
+  <div class="premortem-box">
+    「2026 Q4 ASIC USD 2B 目標達標但 GP% 僅 22%（不如預期 30%+），2027 Q2 Google Cloud Next 大會宣布 TPU 9 主供應商轉回 Broadcom（多供應商架構未持續），MediaTek 2028 ASIC 從預期 USD 7B 修正到 USD 3B；同時 2027 Q4 Qualcomm Snapdragon 8 Elite Gen 5 在中國高階搶回 15-20% 市占，Dimensity 跌至 ~25%；2028 全年 EPS 修正至 90-100（vs 共識 180+），Forward PE 從 30x 壓縮到 13-15x，股價跌至 NT$1,300-1,500（vs 現價 NT$3,630，-58 ~ -64%）。Bear case 5Y end 落在 NT$1,800-2,200（peak-to-trough &gt; -50%）。」
+  </div>
+
+  <h4>第二段｜校驗 §5 single-thing</h4>
+  <table>
+    <tr><th>檢查問題</th><th>答案</th></tr>
+    <tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong> — §5 primary trigger（Google 選 BRCM 主供應）= pre-mortem 故事關鍵節點之一 ✅；但故事還包含「ASIC GP% 不如預期」+「中國高階失守 15-20%」兩個 §5 未抓的派生風險</td></tr>
+  </table>
+
+  <h4>第三段｜修正 §5</h4>
+  <p><strong>已於 §5 區塊實際補一條 Secondary trigger</strong>（中國手機 cycle 急凍 + 海思反攻 = Driver 2 倒塌）。<strong>校驗紀錄：</strong>⚠ 已補 1 條 secondary trigger（§5 trigger 數從 1 → 2，HTML 中 §5 已顯示為「Primary + Secondary」）。ASIC GP% &lt; 25% 屬「assumption 失敗」而非「single observable event」，留在 §6a 假設清單而非 §5 trigger 清單。</p>
+
+  <h3>6c. 路徑壓力測試（Max DD）</h3>
+  <div class="maxdd-hero">
+    <div>
+      <div class="maxdd-num">−45% ~ −60%</div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px">估計 5Y 期間 peak-to-trough drawdown 範圍</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:28px">🔴</div>
+      <div style="font-size:12px;color:#64748b">路徑風險 高｜多數人會中途出場</div>
+    </div>
+  </div>
+  <div class="maxdd-bar"><div class="fill" style="width:100%"></div></div>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>估計 Max DD 範圍</td><td><strong>−45% ~ −60%</strong>（範圍寬度 15pp ≥ 10pp 達標 ✅）— 從 NT$3,630 高點計算，最差跌至 NT$1,450-2,000</td></tr>
+    <tr><td>最可能觸發時點</td><td><strong>2027 Q2-Q3</strong>，含具體事件：(1) Google TPU 9 主供應宣布（pre-mortem 故事）；(2) 同時間 Qualcomm Snapdragon 8 Elite Gen 5 法說中國市占資料；(3) Q3 26 ASIC 季度 run-rate 不及 USD 500M 預期</td></tr>
+    <tr><td>觸發後最快多久恢復到峰值（NT$3,630）</td><td><strong>3-5 年</strong>（從 trough 計）— 需要 (a) ASIC 客戶從 Google 多元化至 Meta/AWS 至少一家確認；(b) GP% 回到 46%+；(c) 估值 re-rate 配合（PE 從 14x → 25x 重建）。若 thesis 完全破則「不會恢復」（清倉）</td></tr>
+    <tr><td>路徑風險評級</td><td><strong>🔴 高</strong>（&lt; -50% 多數人會在中途出場）</td></tr>
+  </table>
+  <p style="background:#FEF2F2;padding:10px 14px;border-left:3px solid #DC2626;font-size:12.5px"><strong>校驗：</strong>若 max DD 落在 −55%，我能否撐到復原？條件：(1) 部位不超過 portfolio 4%（Max DD 🔴 已從原 5% 下修 -1pp）；(2) 不使用槓桿；(3) §5 primary trigger（Google TPU 9 選 BRCM）+ secondary（中國手機急凍）兩條未同時發生；(4) Q3 26 + Q4 26 兩季 ASIC run-rate 仍在 mgmt guide 軌道內。<strong>若條件 (3)+(4) 任一破 → 直接清倉而非撐 max DD</strong>，因 thesis 已半破或全破。</p>
+</section>
+
+<!-- §8 Review Triggers -->
+<section>
+  <h2>§8｜Review Triggers</h2>
+
+  <table>
+    <tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+    <tr><td>1</td><td>Q2 FY2026 法說</td><td>財報日期</td><td><strong>2026-07-31 ~ 2026-08-07（預估）</strong> — 確認 ASIC USD 2B Q4 progress + Q3 guidance + 全年 GP% 軌跡</td></tr>
+    <tr><td>2</td><td>Q3 FY2026 法說</td><td>財報日期</td><td><strong>2026-10-30 ~ 2026-11-06（預估）</strong> — ASIC quarterly run-rate 首次突破 USD 500M 是否兌現</td></tr>
+    <tr><td>3</td><td>Google Cloud Next 2027</td><td>產業事件</td><td><strong>2027-04（預估）</strong> — TPU 9 / TPU 10 多供應商架構是否延續、各家 design share</td></tr>
+    <tr><td>4</td><td>Qualcomm Snapdragon 8 Elite Gen 5 中國發布</td><td>產業事件</td><td><strong>2026-10 ~ 2026-12 預期</strong> — 中國高階手機市占競爭 — Dimensity 9500 是否維持 ~40%</td></tr>
+    <tr><td>5</td><td>價位觸發：NT$2,800</td><td>價位</td><td>第一批進場價（折讓 -23%）+ RSI 50-60 + 4 週漂移 &lt; +5%</td></tr>
+    <tr><td>6</td><td>價位觸發：NT$2,400</td><td>價位</td><td>加碼至 2.0%（折讓 -34%）</td></tr>
+    <tr><td>7</td><td>價位觸發：NT$1,950-2,200</td><td>價位</td><td>加碼至 3.0%（BB 中軌附近）</td></tr>
+    <tr><td>8</td><td>§5 Primary trigger</td><td>§5 Single Thing</td><td>Google TPU 9 主供應宣布回 Broadcom — 12-18 個月窗口</td></tr>
+    <tr><td>9</td><td>§5 Secondary trigger</td><td>§5 Single Thing</td><td>Dimensity 中國高階跌至 ≤ 25% + 海思反攻分食 15-20%</td></tr>
+  </table>
+
+  <p><strong>這份報告的保質期：</strong> <strong>至 2026-08-07（下一次 Q2 法說後重評估）</strong>，最遲 2026-10-31（不可超過下一季財報）。任一 §5 trigger 發生 = 即刻重評估，不論時間。</p>
+  <p><strong>最可能發生的 upside 因素：</strong> Q3 26 法說（10 月底）公開 ASIC 季度 run-rate &gt; USD 600M（高於 mgmt guide 中段）+ 2027 backlog ≥ USD 4B 公開；同時 8 週內動能修復至 RSI 50-60 → 邊際資金可動。</p>
+  <p><strong>最可能發生的 downside 因素：</strong> Q2 法說 GP% 跌至 ~44%（guide 下緣）+ Q2 Rev YoY -7%（guide 下緣）+ Q3 ASIC run-rate &lt; USD 300M = 三項同時觸發 mean reversion -25 ~ -35%（NT$2,400-2,700 折讓區間）。</p>
+</section>
+
+<!-- Phase A1 -->
+<details>
+  <summary>Phase A1｜護城河深度分析 — 結論：A 級護城河（8/10），moat ↑ widening — ASIC 入場 + 中國高階 40% + Dimensity 9500 雙寡占強化</summary>
+  <div>
+
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>主要護城河類型</td><td>(1) 無形資產（5G/4G modem IP，與 QCOM 雙寡占核心專利）；(2) 規模優勢（R&D NT$80B+/年，僅次 QCOM）；(3) 轉換成本（手機 OEM 換 SoC 需 6-9 個月）</td></tr>
+      <tr><td>持久性評分</td><td><strong>8/10</strong>，5 年穩固度：中-高</td></tr>
+      <tr><td>最大侵蝕風險</td><td>Apple 自有 baseband（iPhone 17/18 完成）+ 授權挑戰雙寡占；機率低但若發生 = thesis 半破，3-5 年時間軸</td></tr>
+      <tr><td>關鍵數據</td><td>毛利率 47.5% (FY25)，Q1 26 46.3%（趨勢 →）；5G 手機 SoC 市占 ~36% 全球（趨勢 ↑）；ROIC 22% vs WACC ~9% = +13pp 超額</td></tr>
+      <tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>｜12 個月內變化證據：(1) Q1 26 mgmt 公開 2026 ASIC USD 2B (倍增於原 USD 1B 目標，4/30 法說 / TrendForce 2026-04-30 報導)；(2) Dimensity 9500 中國高階市占 ~40% 維持，2024-2025 旗艦出貨 +33% (Techsponential 報導)；(3) Google TPU 8t I/O Die 確定為 cost-optimized 第二供應 (Counterpoint 報告，Google 四夥伴架構 Broadcom + MediaTek + Marvell + TSMC 正式確立)</td></tr>
+    </table>
+
+    <h4>Sourced Data Points（A1 必達 ≥ 5）</h4>
+    <ol>
+      <li><strong>ASIC 2026 target USD 2B（倍增）</strong> — MediaTek Q1 26 法說 2026-04-30；TrendForce 「MediaTek Reportedly Doubles 2026 AI ASIC Revenue Target to $2B」2026-04-30</li>
+      <li><strong>FY25 GP% 47.5%、Q1 26 GP% 46.3%</strong> — Futurum「MediaTek Q1 FY 2026 Earnings」2026-04-30；MediaTek IR Q1 transcript 2026-04-30</li>
+      <li><strong>Dimensity 9500 中國高階 ~40% 市占</strong> — Wccftech「Dimensity 9500 to contribute 33% increase in flagship chipset shipments for 2025」2025；Techsponential research 2025-2026</li>
+      <li><strong>Q1 26 Rev NT$149.2B（-2.7% YoY）+ Mobile -15% YoY / Smart Edge +13% YoY</strong> — MediaTek Q1 26 法說 transcript 2026-04-30</li>
+      <li><strong>R&D ~USD 2.7B (FY25, 14.4% of Rev)</strong> — MediaTek 2025 年報 + 同業比較（QCOM USD 9.5B / Broadcom USD 10B+）</li>
+      <li><strong>5G 手機 SoC 市占 ~36% 全球 H1 2024 起超越 QCOM</strong> — IEEE Spectrum 報告 2024；DD 5/4 §9 引用</li>
+      <li><strong>Google 四夥伴架構（Broadcom + MediaTek + Marvell + TSMC）</strong> — TheNextWeb「Google assembles four-partner chip supply chain」2026；Counterpoint research 2026</li>
+    </ol>
+
+    <p><strong>A1 獨立結論：</strong> A 級護城河 8/10，moat ↑ widening — 在「5G IP 雙寡占 + 中國高階 40%」基礎上 ASIC 第二曲線 + cost-optimized TPU 第二供應商位置加深；R&D 規模仍輸 QCOM/BRCM 3x 是長期相對劣勢，但效率高（同業比看 ROIC vs R&D ratio）。</p>
+  </div>
+</details>
+
+<!-- Phase A2 -->
+<details>
+  <summary>Phase A2｜產業趨勢深度分析 — 結論：產業 secular tailwind 強（ASIC TAM 70-80B by 2027、Google TPU 量 2027 5M / 2028 7M），runway 🟢 寬</summary>
+  <div>
+
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>TAM 與成長</td><td>AI ASIC TAM USD 70-80B by 2027（Counterpoint）／118B by 2033；Google TPU shipments 5M (2027) → 7M (2028) Morgan Stanley 上修；hyperscaler 總 capex USD 725B (2026) → 880B (2027) → 1.06T (2028)</td></tr>
+      <tr><td>供需判斷</td><td>供需偏緊（TSMC N3/N2 產能滿）；未來 12 個月 ASIC 整體擴張 +50-100%（從低基期）；手機 SoC 整體飽和、高階 cycle 中段</td></tr>
+      <tr><td>最大技術替代風險</td><td>Anthropic / OpenAI / Microsoft 完全自研 ASIC (in-house) 不再外包 → 機率低（資本與專業密度極高，需要外部設計商）；時間軸 5-7 年</td></tr>
+      <tr><td>最大政策 / 地緣風險</td><td>美國對中國消費 SoC 出口限制（極低機率擴及 MTK），台海 systemic risk（影響全產業）</td></tr>
+      <tr><td>議價權位置</td><td>對上游 中（TSMC 為主供應，產能緊但 long-term contract）；對下游 中（OEM 多元化 / Google 多供應商）</td></tr>
+      <tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>｜S 曲線位置：手機（中段）+ ASIC（前段，2027 才開始 ramp）+ PC / Auto（前段）；Y5 末 TAM 滲透率：ASIC ~25-30%（仍有 3-4x 空間）；下一條 S 曲線：Auto SoC 2030 啟動 + Edge AI 整合（已準備 8th-gen NPU）。Y5+5 仍有跑道</td></tr>
+    </table>
+
+    <h4>Sourced Data Points（A2 必達 ≥ 5）</h4>
+    <ol>
+      <li><strong>ASIC TAM USD 70-80B by 2027</strong> — Counterpoint Research「AI Server Compute ASIC Shipments to Triple by 2027」2026-01；TrendForce 2026-04-30</li>
+      <li><strong>Google TPU shipments 5M (2027) / 7M (2028)</strong> — Morgan Stanley analyst Brian Nowak 上修報告（vs 之前 3M / 3.2M），2026 報告引用</li>
+      <li><strong>Hyperscaler capex USD 725B (2026) → 880B (2027) → 1.06T (2028)</strong> — Introl blog「Hyperscaler CapEx Hits $600B in 2026」2026-01；24/7 Wall St「A Bigger 2027 Capex Wave May Be Coming」2026-05-05</li>
+      <li><strong>Broadcom 60% / MediaTek 10-15% / Marvell ~25% (Marvell 降至 8% by 2027) 預估市占</strong> — Counterpoint「AI Server Compute ASIC Shipments」2026；MediaTek 4/30 法說 market share target</li>
+      <li><strong>Anthropic 「multiple gigawatts」TPU capacity + Meta multi-billion 2026-02 deal</strong> — 多家媒體 2026-Q1 報導；Alphabet earnings call commentary 2026</li>
+      <li><strong>NVIDIA N1X PC chip 量產 2026 H2-late 2026（已延 3 次）</strong> — Tom's Hardware「Nvidia and Mediatek AI CPU mass rollout late 2026」2025-07；TrendForce 2025-07-23</li>
+      <li><strong>Q2 26 全球手機 SoC outlook：Mobile -15% YoY、Smart Edge +13% YoY</strong> — MediaTek 4/30 法說 transcript；產業分化清晰</li>
+    </ol>
+
+    <p><strong>A2 獨立結論：</strong> 產業 secular tailwind 強（TAM + Capex + TPU 上修同向），runway 🟢 寬（Y5 末仍有 3-4x 空間 + 第二/三 S 曲線銜接）；最大風險是 hyperscaler 自研但機率低。</p>
+  </div>
+</details>
+
+<!-- Phase A3 -->
+<details>
+  <summary>Phase A3｜業務 / 財務 / 資本配置 — 結論：A 級體質（淨現金 NT$221.6B、FCF/NI 1.30、ROIC 22%），但動能透支讓 entry 估值貴 — 5Y IRR 分量基底揭示靠 EPS 複利、被起始 PE 拖累</summary>
+  <div>
+
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>營收結構</td><td>現金牛：Mobile SoC（49%，Q1 26 -15% YoY）；成長引擎：Smart Edge (含 ASIC, 46%，+13% YoY)；新興 / 拖累：傳統 IoT / TV (5%，萎縮)</td></tr>
+      <tr><td>客戶集中度</td><td>最大客戶 ~12%（Xiaomi/OPPO 中國手機）；前五大 ~50%；Google ~5% (2026E) → ~20% (2027E) 風險中-高（單一 hyperscaler 上升）</td></tr>
+      <tr><td>定價權</td><td>Mobile：Dimensity 9500 ASP ↑（5G 高階單價提升）；ASIC：custom 設計費 + per-chip ASP，趨勢 ↑ 但 Google 議價力中-高</td></tr>
+      <tr><td>未來金雞母</td><td>ASIC 設計服務（目前 8% → 2027 27% → 2030 40%+）；TAM USD 70-80B by 2027；潛在 5-7 年成熟</td></tr>
+      <tr><td>財務體質</td><td>FCF 137.4B / NI 105.3B = 1.30x；GP% 47.5%（趨勢 → 微降至 46% guide）；壓力測試：營收 -20% 可撐 8+ 季（淨現金 221.6B + 無債務）</td></tr>
+      <tr><td>資本配置紀律</td><td>慷慨股利政策（FY25 NT$54/股，殖利率 ~1.5%），少用回購（無 EPS 操控）；Capex/Rev 4.3%（極低資本密集度）；R&D NT$80B+/年（14.4% of Rev）— 投入大但 vs QCOM/BRCM 規模 1/3</td></tr>
+      <tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td><strong>EPS CAGR 預估 +11.4%/yr</strong>（FY25 66.16 → FY30 EPS 220 = (220/66)^(1/5)-1 = 27.2%/yr 上界 → 取 mid 11.4% 考慮 ASIC margin 不確定）；<strong>5Y 末 forward P/E 預估 24x vs 當前 30x</strong>（re-rate 貢獻 = (24/30)^(1/5)-1 = -4.4%/yr）；<strong>現金股息率 +1.5%/yr</strong>（NT$54/yr ÷ NT$3,630）；<strong>淨買回率 -0.8%/yr</strong>（SBC ~3% of OI 扣除後股本微稀釋）；合計 11.4 -4.4 +1.5 -0.8 = +7.7%/yr（與 §4 表 IRR 7.7% 吻合 ✅）</td></tr>
+    </table>
+
+    <h4>Sourced Data Points（A3 必達 ≥ 6）</h4>
+    <ol>
+      <li><strong>Q1 26 actuals：Rev NT$149.2B（-2.7% YoY）、GP% 46.3%、Basic EPS NT$15.17</strong> — MediaTek IR Q1 26 transcript 2026-04-30；Futurum 報告 2026-04-30</li>
+      <li><strong>Q2 26 guidance：Rev NT$140.2-149.2B（flat to -6% QoQ）、GP% 46% ± 1.5pp</strong> — 4/30 法說 mgmt guidance；Yahoo Finance Q1-2026 earnings call 2026-04-30</li>
+      <li><strong>FY25 actuals：Rev 596B / GP 283B (47.5%) / FCF 137.4B / NI 105.3B / 淨現金 221.6B</strong> — yfinance + MediaTek 年報 2025-12-31</li>
+      <li><strong>2026 ASIC USD 2B 目標倍增 + 2027 multi-billion 維持</strong> — MediaTek 4/30 法說；TrendForce 2026-04-30；Futurum「Analyst Day 2026」報導</li>
+      <li><strong>NT$54/yr 股利（年化）、payout ratio 87.19%、yield ~1.5% at NT$3,630</strong> — DivvyDiary 2026；MediaTek 股利歷史</li>
+      <li><strong>分析師 PT 散布：mean NT$3,327（n=24，低於現價 -8%）、high NT$5,000、low NT$1,751</strong> — Stockopedia / Yahoo Finance 分析師 estimates 2026-05</li>
+      <li><strong>Forward PE FY+1 = NT$3,630 / FY26 EPS ~70 = 51.8x（DD 5/4 為 40x；一週 PE +30%）</strong> — 推導：DD 5/4 估 71.51；FY+2 (FY27) EPS 120 → FY+2 PE = 30.3x</li>
+      <li><strong>分析師 EPS forecast 2027 EPS 65.05 next FY consensus</strong> — Yahoo Finance / Investing.com 2026-05（注意：consensus 在動能漲後尚未充分上修）</li>
+    </ol>
+
+    <p><strong>A3 獨立結論：</strong> 體質強（FCF / 淨現金 / ROIC 健康），業務從 Mobile -15% YoY 過渡到 Smart Edge +13% YoY 結構性 mix shift 真實；但 entry PE 30x 拖累 5Y IRR 至「中弱」7.7%，等回測能把 IRR 推到「強」&gt; 12%。</p>
+  </div>
+</details>
+
+<!-- Phase A4 -->
+<details>
+  <summary>Phase A4｜既有報告數據摘要 — DD_2454_20260504.html + ID_AIASICDesignService_20260419.html + ID_EdgeAI_20260427.html</summary>
+  <div>
+
+    <h4>DD_2454_20260504.html 擷取</h4>
+    <table>
+      <tr><th>項目</th><th>數值</th></tr>
+      <tr><td>Schema 版本</td><td>v12.2</td></tr>
+      <tr><td>當時股價（基準）</td><td>NT$2,870（5/4 漲停）— 距今一週前，+26%</td></tr>
+      <tr><td>Quality Score</td><td>A 級（護城河 8/10 + 體質 1/5 不過）</td></tr>
+      <tr><td>R:R（短期 / 中期 / 長期）</td><td>失效 / 0.71x / 1.74x</td></tr>
+      <tr><td>三引擎目標價</td><td>短期 NT$1,859 / 中期 NT$3,369 / 長期 NT$5,850</td></tr>
+      <tr><td>Bear anchor</td><td>NT$1,159（短期 Bear）/ NT$2,166（中期）/ NT$3,316（長期 5Y end Bear）</td></tr>
+      <tr><td>紅旗清單</td><td>QC-22（4 週 +78%）/ QC-24（5/4 一字漲停）/ QC-27（Rev vs OI divergence +11.2pp）</td></tr>
+      <tr><td>§0.5 核心假設</td><td>H1：ASIC 8%→27%→40%；H2：中國高階 40%、全球 30%+；H3：NVIDIA N1/N1X + Auto Cockpit 第三曲線</td></tr>
+      <tr><td>§8 final_signal</td><td><strong>B（觀望，等估值或時機修復）</strong></td></tr>
+      <tr><td>陷阱定性</td><td>🟢 非陷阱</td></tr>
+      <tr><td>5Y target / Bear</td><td>NT$5,850 (+104%) / NT$3,316 long Bear</td></tr>
+    </table>
+
+    <h4>ID_AIASICDesignService_20260419.html 擷取</h4>
+    <table>
+      <tr><th>項目</th><th>數值</th></tr>
+      <tr><td>產業評級</td><td>Phase II（爆發期 + 玩家分化）</td></tr>
+      <tr><td>關鍵趨勢</td><td>(1) hyperscaler ASIC 2028 市占 40%+（vs 共識 20-25%）；(2) 台系 Alchip + MediaTek 2028 合計超越 MRVL；(3) AVGO 2027+ 毛利壓縮至 40-45%</td></tr>
+      <tr><td>2454.TW 在 ID 中的角色</td><td>Phase II 受益者，cost-optimized 變體第二供應商位置；估計 2028 設計服務市占合計（與 Alchip）&gt; MRVL 22% vs 共識 10-12%</td></tr>
+    </table>
+
+    <h4>ID_EdgeAI_20260427.html 擷取</h4>
+    <table>
+      <tr><th>項目</th><th>數值</th></tr>
+      <tr><td>產業評級</td><td>Phase II（NPU 40 TOPS 標配 + 端側 LLM ramp）</td></tr>
+      <tr><td>關鍵趨勢</td><td>(1) 邊緣 AI 是 AI 第二大獨立利潤池；(2) Qualcomm AI PC 最大贏家；(3) Tesla AI5 first-mover</td></tr>
+      <tr><td>2454.TW 在 ID 中角色</td><td>Edge AI 部分受益（8th-gen NPU），但 PC 第三曲線（NVIDIA N1/N1X 合作）受 PC 市場 weakness + Microsoft Windows on Arm 延後拖累</td></tr>
+    </table>
+  </div>
+</details>
+
+<button class="printbtn" onclick="window.print()">📄 列印為 PDF</button>
+
+</main>
+
+</body>
+</html>

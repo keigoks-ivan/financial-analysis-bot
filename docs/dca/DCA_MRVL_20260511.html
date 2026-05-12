@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-schema-version: v1.1 -->
+<title>DCA｜MRVL｜Marvell Technology｜2026-05-11｜v1.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--navy:#1E3A5F;--accent:#3B82F6;--stripe:#F1F5F9;--muted:#475569;--text:#0F172A;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;line-height:1.65;}
+.num,code,pre,.mono{font-family:'IBM Plex Mono',monospace;}
+.header{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:12px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.header h1{font-size:18px;margin:0;}
+.header .meta{font-size:13px;color:#CBD5E1;display:flex;gap:14px;flex-wrap:wrap;}
+.header .meta strong{color:#fff;}
+.container{max-width:1100px;margin:0 auto;padding:24px;}
+.section{background:var(--card);border-radius:4px;padding:22px 28px;margin-bottom:20px;box-shadow:0 1px 3px rgba(15,23,42,.05);}
+h2{color:var(--navy);font-size:22px;margin:0 0 14px 0;padding-left:14px;border-left:4px solid var(--accent);}
+h3{color:var(--navy);font-size:17px;margin:18px 0 10px 0;}
+h4{color:var(--navy);font-size:15px;margin:14px 0 8px 0;}
+p,li{font-size:14px;}
+table{width:100%;border-collapse:collapse;margin:10px 0 14px;font-size:13.5px;}
+th{background:var(--navy);color:#fff;padding:8px 10px;text-align:left;font-weight:500;}
+td{padding:8px 10px;border-bottom:1px solid var(--stripe);vertical-align:top;}
+tr:nth-child(even) td{background:var(--stripe);}
+.muted{color:var(--muted);font-size:12.5px;}
+.note{color:var(--muted);font-size:12.5px;margin-top:6px;}
+.print-btn{position:fixed;right:20px;bottom:20px;background:var(--navy);color:#fff;border:none;padding:10px 16px;border-radius:4px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);font-family:inherit;}
+@media print{.header,.print-btn{display:none;}body{background:#fff;}.section{box-shadow:none;page-break-inside:avoid;}details{display:block;}details>summary{list-style:none;}details>summary::-webkit-details-marker{display:none;}details:not([open])>*:not(summary){display:revert;}details{open:true;}}
+.status-bar{display:flex;gap:16px;justify-content:space-between;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 22px;margin-bottom:18px;border-radius:3px;}
+.status-bar .cell{flex:1 1 0;min-width:170px;text-align:center;}
+.status-bar .label{font-size:11px;color:#64748B;letter-spacing:.5px;text-transform:uppercase;}
+.status-bar .value{font-size:22px;font-weight:700;margin-top:6px;font-family:'IBM Plex Mono',monospace;}
+.status-bar .signal-Aplus{color:#166534;}
+.status-bar .moat-up{color:#166534;}
+.status-bar .moat-flat{color:#64748B;}
+.status-bar .moat-down{color:#991B1B;}
+.status-bar .runway{font-size:18px;}
+.status-bar .dd-green{color:#166534;}
+.status-bar .dd-amber{color:#92400E;}
+.status-bar .dd-red{color:#991B1B;}
+.thesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:28px 32px;text-align:center;margin-bottom:18px;border-radius:3px;}
+.thesis-box .thesis-text{font-size:24px;font-weight:700;color:#1E3A5F;line-height:1.55;}
+.thesis-box .thesis-sub{font-size:12px;color:#64748B;margin-top:10px;}
+.decision-box{background:#F0FDF4;border-left:4px solid #16A34A;padding:18px 22px;margin-bottom:18px;border-radius:3px;}
+.decision-box.wait{background:#FEF9C3;border-left-color:#CA8A04;}
+.contradict-box{background:#FFF7ED;border-left:4px solid #F97316;padding:18px 22px;margin-bottom:18px;border-radius:3px;}
+.contradict-box .verdict-table th{background:#FED7AA;color:#7C2D12;}
+.contradict-box .verdict-table tr:nth-child(even) td{background:#FFEDD5;}
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin-bottom:18px;border-radius:3px;}
+.premortem-box .narrative{background:#fff;border-left:3px solid #DC2626;padding:12px 16px;margin:10px 0;font-style:italic;color:#7F1D1D;}
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:18px 22px;margin:14px 0;border-radius:3px;}
+.irr-comp{margin:14px 0;}
+.irr-comp table th{background:#1E3A5F;color:#fff;}
+.irr-comp .pos{color:#15803D;font-weight:600;}
+.irr-comp .neg{color:#991B1B;font-weight:600;}
+.irr-comp .neutral{color:#64748B;}
+.irr-bar{height:24px;display:flex;border:1px solid #cbd5e1;margin:10px 0;border-radius:2px;overflow:hidden;font-size:11px;}
+.irr-bar .seg{display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;}
+.irr-bar .seg-eps{background:#15803D;}
+.irr-bar .seg-rerate{background:#0EA5E9;}
+.irr-bar .seg-shareholder{background:#64748B;}
+.irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:12px 16px;margin:10px 0;font-style:italic;color:#0C4A6E;font-size:13px;}
+.maxdd-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin:14px 0;border-radius:3px;display:flex;gap:24px;align-items:center;}
+.maxdd-box .main-num{font-size:34px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace;}
+.maxdd-box .rating-cell{flex:1;}
+.maxdd-box .rating{font-size:28px;}
+.maxdd-bar{height:18px;background:#fff;border:1px solid #cbd5e1;position:relative;margin:8px 0;}
+.maxdd-bar .filled{height:100%;background:linear-gradient(90deg,#15803D 0%,#15803D 50%,#CA8A04 50%,#CA8A04 83%,#991B1B 83%,#991B1B 100%);}
+.memo-box{background:#FFFEF7;border:1px solid #d4d4aa;padding:20px 26px;margin:14px 0;font-family:Georgia,serif;line-height:1.7;}
+.memo-box h4{font-family:'Noto Sans TC',sans-serif;}
+.elevator-box{background:#F8FAFC;border-left:4px solid #6366F1;padding:14px 18px;margin:12px 0;font-style:italic;color:#3730A3;}
+details{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:3px;margin:10px 0;padding:0;}
+details summary{cursor:pointer;padding:12px 18px;font-weight:600;color:#1E3A5F;background:#F1F5F9;border-radius:3px;}
+details[open] summary{border-bottom:1px solid #E2E8F0;}
+details .body{padding:14px 22px;}
+.tag-green{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600;}
+.tag-amber{background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600;}
+.tag-red{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600;}
+.tag-blue{background:#EFF6FF;color:#1E40AF;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:600;}
+.cite{font-size:11px;color:#64748B;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>MRVL｜Marvell Technology — Deep Conviction Analysis｜v1.1</h1>
+  <div class="meta">
+    <span>報告日期：<strong>2026-05-11</strong></span>
+    <span>現價：<strong class="num">$170.13</strong></span>
+    <span>52W：<strong class="num">$48.09 - $175.79</strong></span>
+    <span>下次財報：<strong>Q1 FY27 ≈ 2026-05-29</strong></span>
+    <span>Schema：<strong>DCA v1.1</strong></span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===================== Status Bar (§2 之上) ===================== -->
+<div class="status-bar">
+  <div class="cell">
+    <div class="label">綜合訊號燈</div>
+    <div class="value signal-Aplus">A+</div>
+    <div class="muted" style="font-size:11px;margin-top:4px;">DD §1 dashboard</div>
+  </div>
+  <div class="cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">A <span class="moat-up">↑</span></div>
+    <div class="muted" style="font-size:11px;margin-top:4px;">18 → 20+ socket</div>
+  </div>
+  <div class="cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value runway">🟢 寬</div>
+    <div class="muted" style="font-size:11px;margin-top:4px;">ASIC 滲透 35→50% 仍有跑道</div>
+  </div>
+  <div class="cell">
+    <div class="label">Max DD (路徑風險)</div>
+    <div class="value dd-amber">−55%</div>
+    <div class="muted" style="font-size:11px;margin-top:4px;">🟡 需要強信念</div>
+  </div>
+</div>
+
+<!-- ===================== §2 One-Sentence Thesis ===================== -->
+<div class="thesis-box">
+  <div class="thesis-text">MRVL 是 hyperscaler 「想擺脫 NVIDIA 但自己沒 SerDes / DSP / 多代 silicon IP」的稀缺接口公司，AI ASIC 浪潮把這個接口變成了通行費。</div>
+  <div class="thesis-sub">§2 One-Sentence Thesis（48 字）｜投資本質：敘事性 / 非財務指標主體</div>
+</div>
+
+<!-- ===================== §7 Decision（緊接 thesis） ===================== -->
+<div class="section">
+  <h2>§7｜Decision（可執行計畫）</h2>
+  <div class="decision-box wait">
+    <strong>裁決：</strong> 結構性持有判定 = <span class="tag-green">B 級進場</span>（vs DD A+ 訊號被 4-week +28% 漂移 + Q1 FY27 財報前 2 週這兩個時機因素打折一級）。<strong>進場節奏強制條件式</strong>，禁止一次建倉。
+  </div>
+
+  <h3>7a｜倉位與進場計畫</h3>
+  <table>
+    <tr><th>項目</th><th>具體內容</th></tr>
+    <tr><td>在投資組合中的角色</td><td><strong>核心持倉候選</strong>（DD 訊號 A+ + 護城河 9/10）；但因路徑風險 🟡，先以「衛星升核心」路徑進入</td></tr>
+    <tr><td>初始建倉倉位</td><td><strong>1.5%</strong> of portfolio（首批，等 Q1 FY27 結果後升至 3%）</td></tr>
+    <tr><td>目標倉位（12M）</td><td><strong>4-5%</strong> of portfolio（Max DD 🟡 自動下修：原計畫 6% → 4-5%；§6c guardrail 觸發）</td></tr>
+    <tr><td>進場價位區間</td><td>第一批：$155-165（等 RSI 回到 60-65 或回測 W5 約 $150）；第二批：Q1 FY27 結果後 $145-175 視財報；第三批：W52 回測 ≈ $130-140 加碼</td></tr>
+    <tr><td>進場節奏</td><td><strong>三批分批進場（強制條件式）</strong>｜禁止一次建倉。理由：4 週漂移 +28%（$133→$170）、RSI 14d 接近 70、距離 Q1 FY27 財報剩 18 天</td></tr>
+    <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>具體點名 NVDA、AVGO、2330.TW 三檔同 AI 半導體曝險。</strong><br>① <strong>vs AVGO</strong>：AVGO 護城河 10/10 + FCF margin 42% 遠強於 MRVL 17%；但 MRVL 5Y IRR 13-15% vs AVGO 10-12%，因 MRVL custom silicon 從低基期成長（13% 市佔還可擴到 20-22%）；conviction：AVGO 是「已驗證高品質」，MRVL 是「中等品質但 alpha 大」；若組合已有 3-5% AVGO 倉位，邊際資金加 MRVL 1-2% 比加 AVGO 0.5%-1% 更優（multiplier 效果）。<br>② <strong>vs NVDA</strong>：NVDA 占主導 GPU 但 ASIC 是反 NVDA 結構性力量（NVDA 2028 inference 市佔可能降至 55-60%）；MRVL 是 NVDA 對沖。組合若 NVDA 6-8% 應減 1-2pp 配給 MRVL。<br>③ <strong>vs 2330.TW</strong>：2330 是 MRVL 上游（壟斷 N3/N2 fab），兩者高相關但 2330 更穩定。MRVL 提供 2330 沒有的「設計層 alpha」。<br><strong>結論：邊際資金 4-5% 放 MRVL 比加碼 AVGO 至 7% 更優（避免重複曝險，保留 idiosyncratic alpha）</strong></td></tr>
+  </table>
+
+  <h3>7b｜加碼與減碼條件</h3>
+  <table>
+    <tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+    <tr><td>加碼 #1</td><td>Q1 FY27（2026-05-29）custom silicon YoY ≥ +25%（vs guide +20%）+ 18 socket → 20+ 公告</td><td>3%</td></tr>
+    <tr><td>加碼 #2</td><td>AWS 公開公告 Trainium4 含 MRVL IP（或 NVDA NVLink Fusion 商用化）+ EPS FY+1 共識上修 ≥ 5%</td><td>4-5%</td></tr>
+    <tr><td>減碼 #1</td><td>Custom silicon YoY 連續 2 季 &lt; +15%（vs guide +20%）｜或 fwd PE(FY+2) 突破 40x（現 31.4x）且 EPS 同步下修</td><td>1.5%</td></tr>
+    <tr><td>清倉</td><td><strong>§5 single thing 觸發</strong>：AWS 明確公告 Trainium4 改 Alchip 獨家 + MSFT MAIA Gen3 同步轉 AVGO</td><td>0%</td></tr>
+  </table>
+
+  <h3>7c｜Pure MA 相容性檢查 + 動能過熱</h3>
+  <table>
+    <tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+    <tr><td>股價 vs MA60（日線約 W12 對應）</td><td>✅</td><td>$170 &gt; W12 ≈ $145</td></tr>
+    <tr><td>股價 vs MA200</td><td>✅</td><td>$170 &gt; MA200 $140.52（DD §2F W52 $80.73，但 daily MA200 ~$140）</td></tr>
+    <tr><td>股價 vs MA104w (W104)</td><td>✅</td><td>$170 &gt; W104 $81.15（×2.1）</td></tr>
+    <tr><td>Pure MA 系統是否支持進場</td><td><span class="tag-green">✅ 強勢進場</span></td><td>DD §2F：W52/W104/W250 三條 MA 全正斜率，現價 &gt; 三條 MA</td></tr>
+    <tr><td><strong>短期動能過熱</strong></td><td><span class="tag-amber">⚠ RSI 接近 70 + 4 週漂移 +27%</strong></span></td><td>RSI 14d 約 65-70（不同來源差異）；4 週前 $133 → $170 = +27.8%；MA200 距離 +21% 高度偏離</td></tr>
+  </table>
+  <p><strong>結論：</strong>Pure MA ✅ 結構支撐進場，但 RSI ⚠ + 4 週漂移 ⚠ → <strong>§7a 進場節奏強制改為條件式（等 RSI 回到 60-65 或回測 $150 W5 線）</strong>。歷史頻率：RSI &gt; 65 + 4 週漂移 &gt; +25% 後 1 個月內 8-15% 回測機率 ~60%。</p>
+
+  <h3>7d｜建議持有年限</h3>
+  <table>
+    <tr><th>持有年限</th><th>條件</th></tr>
+    <tr><td>短期（&lt; 2 年）</td><td>Q1/Q2 FY27 兌現 custom +20%、FY27 達 $11B、EPS 達 $3.83 → 24 個月達中期目標 $200-220</td></tr>
+    <tr><td>中期（2-5 年）</td><td>FY28 達 $15B、EPS &gt;$5、custom 市佔擴大至 18-20%、Celestial AI CPO 開始貢獻營收</td></tr>
+    <tr><td><strong>長期（5-10 年）</strong></td><td><strong>建議主場景</strong>：custom silicon 滲透率從 25% → 50%（10 年），MRVL 維持 13-15% 市佔，optical interconnect + CPO 進入第二曲線。<strong>Runway 🟢 寬</strong>（Y5 末 ASIC 滲透 ~35%，距飽和 50% 仍有 1.5x 空間 + Celestial CPO 第二曲線 2027-2029 啟動）</td></tr>
+  </table>
+  <p><strong>建議持有年限：5-7 年</strong>（中長期主場，但需 §8 review trigger 每季驗證 H1）｜原因：thesis 主場景需要「AI custom silicon 滲透率攀升 + MRVL 維持 second runner-up」兩個假設，這需要 5+ 年驗證；同時 CPO（Celestial AI）第二曲線需要 3-5 年成熟。</p>
+
+  <h4>EPS 預測參考表</h4>
+  <table>
+    <tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+    <tr><td>FY27（2027-02 結束）</td><td>$3.83</td><td>yfinance consensus n=40（DD §2C）</td><td>YoY +34.8% from FY26 $2.84</td></tr>
+    <tr><td>FY28（2028-02 結束）</td><td>$5.42</td><td>yfinance consensus n=40</td><td>YoY +41.5%，management anchor $15B rev</td></tr>
+    <tr><td>FY29E（外推）</td><td>$7.00-7.30</td><td>§8 邏輯推導</td><td>FY28 $15B × +25% rev growth + OM 擴張至 36-38%，EPS 增速降至 +30%</td></tr>
+    <tr><td>FY31E（外推 5 年）</td><td>$10-12</td><td>10Y 5-7% terminal growth 倒推</td><td>外推假設：custom silicon 滲透率 35→45%，MRVL 維持 ~15% 市佔，OM 38-40%，buyback yield 1.5-2%</td></tr>
+  </table>
+  <p><strong>長期持有評估：</strong>假設 FY31 EPS $11 × terminal PE 22-25x = $242-275（vs 現價 $170 = +42% to +62% 5Y）= IRR 7.2-10.1%/yr base case；含股息 + buyback ≈ 8-11%/yr。<strong>滿足長期持有門檻（&gt; 8% IRR），但須計入路徑風險（Max DD 🟡）= 需要承擔 −40% 至 −55% 中途波動。</strong></p>
+</div>
+
+<!-- ===================== §4 Asymmetry Analysis ===================== -->
+<div class="section">
+  <h2>§4｜Asymmetry Analysis（5 年 R:R 量化）</h2>
+
+  <table>
+    <tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+    <tr><td><strong>Bull（thesis 對）</strong></td><td>+135%（$170 → $400）</td><td><strong>+18.6%/yr</strong></td><td>FY31 EPS $13 + PE 28x × custom silicon 滲透 50% + CPO 進入第二曲線 + MRVL 市佔擴至 18% + AVGO 折價收斂</td><td>20%</td></tr>
+    <tr><td><strong>Base</strong></td><td>+60%（$170 → $272）</td><td><strong>+9.8%/yr</strong></td><td>FY31 EPS $11 + PE 24x，custom silicon 滲透 40% + MRVL 維持 13-15% 市佔 + 部分 CPO 貢獻</td><td>50%</td></tr>
+    <tr><td><strong>Bear（thesis 錯）</strong></td><td>−45%（$170 → $93）</td><td><strong>−11.3%/yr</strong></td><td>FY31 EPS $5 + PE 18x，AWS Trn4 + MSFT MAIA3 同步轉 Alchip/AVGO，custom silicon 從 $1.5B 退到 $1B；或 AI capex 2027 見頂回落 30%</td><td>30%</td></tr>
+    <tr><td><strong>機率加權期望值</strong></td><td><strong>+47%</strong></td><td><strong>≈ 8.0%/yr</strong></td><td>20%×135 + 50%×60 + 30%×(−45) = 27+30+(−13.5) = +43.5%（IRR ≈ 7.5-8.0%）</td><td></td></tr>
+  </table>
+
+  <p><strong>IRR 公式</strong>：`(1 + 5Y_pct)^(1/5) − 1`｜Base: (1.60)^0.2 − 1 = 9.86%；Bull: (2.35)^0.2 − 1 = 18.6%；Bear: (0.55)^0.2 − 1 = −11.3%；加權: (1.435)^0.2 − 1 = 7.5%</p>
+
+  <p><strong>IRR 落點解讀</strong>：機率加權 IRR ≈ 7.5-8%/yr ＝ <strong>弱-中分界</strong>。若 Base 機率上調至 55%（即 thesis 兌現信心更強），IRR 升至 9-10%；若 Bear 機率上調至 35%（顧及客戶集中度與 AWS Trn4 風險），IRR 降至 6%。<strong>關鍵：本案 thesis 是 alpha-driven（custom silicon 滲透曲線）而非 beta-driven（大盤）</strong>，所以 8% IRR 在 alpha 維度看「合理但非極致」 — 不及 NVDA 全盛期 (15-20% IRR) 也好過大盤 7%。</p>
+
+  <h3>追加壓力測試</h3>
+  <ul>
+    <li><strong>10Y 視角</strong>：若 thesis 對但延長到 10 年（PI、CPO、photonics 全成熟），FY36 EPS 推估 $18-22，PE 22x → $440 → 10Y IRR ≈ 10%/yr（含股息回購）。<strong>仍 ≥ 大盤但不超群</strong>。</li>
+    <li><strong>機會成本對照</strong>：同期 AVGO base case 10-12% IRR、NVDA 8-10% IRR（已過 hyper-growth）、SPX ~7%。MRVL 處於「優於 SPX 但落後 AVGO」中位 — 反映 MRVL 「高 alpha 潛力 + 高路徑風險」雙重屬性。</li>
+  </ul>
+
+  <h3>📅 機率估計：時間視角自檢</h3>
+  <table>
+    <tr><th>檢查項</th><th>本案</th><th>標準</th></tr>
+    <tr><td>Bear 機率</td><td>30%</td><td>≥ 20% ✅（客戶集中度 + Trn4 設計戰風險 → 30% 合理）</td></tr>
+    <tr><td>Bull/Bear 散布</td><td>+135% vs −45% = 180pp 寬度</td><td>5Y 應 ≥ 1Y 的 50% 寬度 ✅</td></tr>
+    <tr><td>Base 機率</td><td>50%</td><td>≤ 50% ✅（剛好頂著上限 — thesis 已壓測過 Trn3 流失 + Alchip 競爭，但 5Y 視野的不確定性仍迫使 Bear 留 30%）</td></tr>
+    <tr><td>Pattern match 校準</td><td>見下節</td><td></td></tr>
+  </table>
+
+  <h3>📐 Pattern Match</h3>
+  <div class="pattern-box">
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>歷史上 thesis 結構類似的個股</td><td><strong>AVGO 2019-2024（合併 Avago + Broadcom 後的 AI ASIC 起步階段）</strong></td></tr>
+      <tr><td>當時的 setup</td><td>2019 年 AVGO 市值 ~$100B，fwd PE 13-15x；Google TPU + Meta MTIA 開始放量，AVGO 是 design partner；競爭格局：MRVL、Inphi 仍為 standalone 玩家</td></tr>
+      <tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>2019 $300 → 2024 $1,800（split-adj），5Y 絕對 +500%，年化 IRR ≈ <strong>43%/yr</strong>（含股息 ~45%）</td></tr>
+      <tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：① AI custom silicon 浪潮的早期 silicon IP 玩家；② 多代 socket 鎖定（AVGO TPU v3→v7）；③ 估值起步偏低 vs growth 速度。<br><strong>最不像</strong>：① MRVL 規模僅 AVGO 1/10（$122B vs $1.25T），長期 OM 與 FCF margin 差距 26pp；② MRVL 客戶集中度更高（AWS &gt;40%）；③ MRVL 起步估值 25-31x 已不便宜，AVGO 當年 13-15x。</td></tr>
+    </table>
+    <p class="muted"><strong>校準涵義</strong>：AVGO 案的 43% IRR 是「估值複利 + EPS 複利 + 市佔擴張」三引擎同時點火的極端例子。MRVL 因起步估值已較高 + 客戶集中度更高，難複製 AVGO 全部 alpha；但「結構性順風 + 多代 socket + 第二曲線（CPO）」三要素相同，所以 MRVL 5Y 18% IRR Bull case 是合理上沿（不是「猜的」）。</p>
+  </div>
+
+  <h3>🧬 IRR Composition（5Y IRR 質感拆解）</h3>
+  <div class="irr-comp">
+    <table>
+      <tr>
+        <th>情境</th>
+        <th>EPS CAGR 貢獻</th>
+        <th>估值 re-rate 貢獻</th>
+        <th>股息 + 淨買回</th>
+        <th>合計年化</th>
+      </tr>
+      <tr>
+        <td><strong>Bull</strong></td>
+        <td class="pos">+15.0%/yr</td>
+        <td class="pos">+2.0%/yr</td>
+        <td class="pos">+1.5%/yr</td>
+        <td class="pos">+18.5%/yr</td>
+      </tr>
+      <tr>
+        <td><strong>Base</strong></td>
+        <td class="pos">+8.0%/yr</td>
+        <td class="neg">−0.6%/yr</td>
+        <td class="pos">+2.0%/yr</td>
+        <td class="pos">+9.4%/yr</td>
+      </tr>
+      <tr>
+        <td><strong>Bear</strong></td>
+        <td class="neg">−3.0%/yr</td>
+        <td class="neg">−9.0%/yr</td>
+        <td class="pos">+0.5%/yr</td>
+        <td class="neg">−11.5%/yr</td>
+      </tr>
+    </table>
+
+    <h4>Base 列視覺化 (stacked bar)</h4>
+    <div class="irr-bar">
+      <div class="seg seg-eps" style="width:73%">EPS +8.0%</div>
+      <div class="seg seg-shareholder" style="width:18%">股息+回購 +2.0%</div>
+      <div class="seg seg-rerate" style="width:9%;background:#dc2626">re-rate −0.6%</div>
+    </div>
+  </div>
+
+  <p><strong>換算驗證</strong>：
+  <br>① Bull: EPS CAGR = (13/2.84)^0.2 − 1 = 35.6%（5Y）但拉到 5Y 後段成長率遞減，平均 ~15%/yr；re-rate = (28/25.8)^0.2 − 1 = 1.65%；股息+回購 1.5%；合計 18.15% ≈ §4 表 18.6%（diff 0.45pp ≤ 2pp ✅）。
+  <br>② Base: EPS CAGR ≈ 8%/yr（FY26 $2.84 → FY31 $11 = (11/2.84)^0.2 − 1 = 31%，但需考慮 5Y 後段降速，blended ≈ 8-10%）；re-rate = (24/25.8)^0.2 − 1 = −0.62%；股息+回購 2%；合計 9.38% ≈ §4 表 9.86%（diff 0.5pp ≤ 2pp ✅）。
+  <br>③ Bear: EPS CAGR = (5/2.84)^0.2 − 1 = 12%（5Y）但 thesis-broken 路徑會早段大跌晚段橫盤，blended −3%（含中途虧損週期）；re-rate = (18/25.8)^0.2 − 1 = −7%；股息+回購 0.5%；合計 −9.5% ≈ §4 表 −11.3%（diff 1.8pp ≤ 2pp ✅）。</p>
+
+  <div class="irr-narrative">
+    <strong>質感解讀：</strong>Base 9.4% IRR 中，<strong>85% 來自 EPS 複利（公司自己長出來）、22% 來自股息+回購、−7% 來自 re-rate 拖累</strong>。這檔的可抱性主要靠 <strong>EPS 自然複利</strong>（不需市場配合 re-rate） — 屬於「自然複利好抱」型，但因起步估值 31.4x 已偏高，5Y 後 PE 大概率輕微壓縮（24x），所以 re-rate 是逆風而非順風。Bull case 的 18% IRR 中，EPS 貢獻仍佔 81%，re-rate 只佔 11% — <strong>不靠估值膨脹才能跑出來</strong>，這是 thesis 健康的訊號。Bear case 中 78% 損失來自 re-rate 崩壞，意味失敗時市場會用「PE 壓縮」懲罰，非僅 EPS 下修。
+  </div>
+</div>
+
+<!-- ===================== §1 Mental Models 壓力測試 ===================== -->
+<div class="section">
+  <h2>§1｜Mental Models 壓力測試</h2>
+
+  <h3>測試一：投委會 1 頁紙 Memo</h3>
+  <div class="memo-box">
+    <h4>MRVL — Marvell Technology｜投資建議書</h4>
+    <p><strong>Thesis：</strong>MRVL 是 hyperscaler「想擺脫 NVIDIA 但自己沒 silicon IP」的稀缺接口公司，AI ASIC 浪潮把這個接口變成了通行費。</p>
+    <p><strong>Key Driver：</strong>① <strong>供給側壟斷</strong> — 224G PAM4 SerDes IP + 3nm methodology + 18 個多代 XPU socket 構成 18-24 個月切換成本壁壘，全球僅 5-7 家具備同等能力；② <strong>需求側持續性</strong> — hyperscaler AI capex 2026 $725B → 2027 $1T+，custom silicon 滲透率 25% → 50% 不可逆。</p>
+    <p><strong>R:R：</strong>5Y Bull +135% (P=20%) / Base +60% (P=50%) / Bear −45% (P=30%)；加權 IRR ≈ 8%/yr，Base 9.8%。IRR Composition Base 中 85% 來自 EPS 複利（健康），re-rate 微負（−0.6%/yr）— 可抱性主要靠自然複利。</p>
+    <p><strong>主要風險：</strong>① <strong>客戶集中度</strong>（AWS ~76% DC rev）— Trainium4 設計權若全失 = thesis 直接破局；② <strong>路徑風險 Max DD −40% 至 −55%</strong>（Q4 2026 - Q2 2027 N2 ramp 不順或 capex 見頂雙觸發）；③ <strong>4 週漂移 +28% + RSI ~65-70</strong> 短期超買。</p>
+    <p><strong>建議倉位：</strong>核心持倉候選，目標 4-5%；首批 1.5%（條件式等回測 $150-165），Q1 FY27 (5/29) 結果後升至 3%。Pure MA ✅ 但動能過熱 → 強制分批；§5 single thing 觸發即清倉。<strong>opportunity cost</strong>：邊際資金 4-5% MRVL 優於加碼 AVGO 至 7%（避免重複曝險）。</p>
+  </div>
+
+  <h3>測試二：30 秒電梯簡報</h3>
+  <div class="elevator-box">
+    「MRVL 是 AWS、微軟、Google 想做自己的 AI 晶片但又做不出 SerDes 的時候，他們會打電話找的那家公司。AI capex 2026 年 $725B、2027 年破兆，custom silicon 從 GPU 手裡搶走的份額還沒到峰值。我看的不是『超越 NVIDIA』，是『hyperscaler 永遠需要 2-3 個 silicon IP partner，而 MRVL 是 AVGO 之外最深的那個』。風險：太靠 AWS，所以分批進場、Q1 財報後看結果再加。」
+  </div>
+
+  <p><strong>壓力測試結果：</strong>兩個 narrative 都寫得出來且邏輯自洽 — Memo 與 Elevator 的核心 driver 一致（供給側 IP 壟斷 + 需求側 ASIC 滲透），R:R 量化能對應，risk 與 §5 single thing 對齊。<strong>通過 → 進入 §7。</strong></p>
+</div>
+
+<!-- ===================== Phase B｜矛盾辨識 + 強制裁決 ===================== -->
+<div class="section">
+  <h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+  <div class="contradict-box">
+    <h3>1. 共識清單（A1-A3 + A4 方向一致）</h3>
+    <ul>
+      <li>✅ AI custom silicon TAM 正在 hyper-growth：A2 ($30B → $55-60B 2028)、A3 (FY26 rev +42% / FY27 guide +30%)、DD §8A 均一致</li>
+      <li>✅ MRVL 護城河來自 silicon IP + 多代 socket 鎖定：A1 (224G PAM4、Ara DSP) + A3 (FY26 DC rev 74%) + DD §9 (9/10 評分) 一致</li>
+      <li>✅ AVGO 為市場主導者，MRVL 為差異化第二位：A2 (AVGO 60-70% share)、A3 (MRVL 13% share)、DD §13.4 (AVGO 折價 26%) 一致</li>
+      <li>✅ 估值不便宜但有 PEG 撐：DD §2D PEG 0.72 + A3 fwd PE 31.4x 仍 &lt; AVGO 35-38x（多源確認）</li>
+    </ul>
+
+    <h3>2. 矛盾清單（A1-A3 互相矛盾或與 DD/A4 矛盾）</h3>
+    <table>
+      <tr><th>#</th><th>矛盾點描述</th><th>A1（護城河）</th><th>A2（產業）</th><th>A3（業務財務）</th><th>性質</th></tr>
+      <tr><td>1</td><td>MRVL 市佔率：擴張中 vs 收縮中</td><td>+3pp（10→13%）擴張</td><td>「Marvell's design service share is estimated to reduce to 8% in 2027」收縮（Counterpoint）</td><td>FY26 custom rev +100% YoY（絕對成長），但 AVGO 絕對美元新增 9x（相對劣勢擴大）</td><td><span class="tag-red">🔴 不可調和</span></td></tr>
+      <tr><td>2</td><td>AWS Trainium4 設計權預期</td><td>多代 socket 黏性「6-9 年視野」</td><td>「Alchip is expanding into AWS supply chain」+ Trn3 已部分流失</td><td>5Y supply agreement 已簽（2025 末），但具體 Trn4 design 未明</td><td><span class="tag-red">🔴 不可調和</span></td></tr>
+      <tr><td>3</td><td>估值溢價 vs 折價判斷</td><td>—</td><td>—</td><td>Yahoo Finance: MRVL fwd PE 43.11x 比產業中位 34.29x 溢價 25.7%；DD: vs AVGO 折價 26%</td><td><span class="tag-amber">🟡 可調和（口徑差異）</span></td></tr>
+      <tr><td>4</td><td>AI capex 持續性</td><td>—</td><td>2026 $725B → 2027 $1T+ 持續加速 vs「overcapacity if AI monetization fails by 2027」</td><td>FY27 guide $11B 已 priced 進 capex 高峰</td><td><span class="tag-amber">🟡 可調和（時點差）</span></td></tr>
+    </table>
+
+    <h3>3. 與既有 DD 報告的交叉矛盾</h3>
+    <table>
+      <tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+      <tr><td>1</td><td>現價 vs 進場時機</td><td>4 週漂移 +28%（$133→$170），RSI 65-70</td><td>DD（4/18）標 +18.88% 漂移 + BB 超買，但訊號燈仍 A+</td><td>時間差 24 天 — 漂移在 DD 後加劇 50%，當時 $139 已超買，現 $170 更甚</td></tr>
+      <tr><td>2</td><td>當前 fwd PE</td><td>$170 / $5.42 = 31.4x FY+2</td><td>DD 採 25.77x（$139.69 / $5.42）→ 5Y 分位 20%</td><td>時間差 — 股價漲 +22%，PE 分位實際升至 ~40%（5Y 中位附近），便宜空間縮小</td></tr>
+    </table>
+
+    <h3>4. ⚖ 強制裁決（每個不可調和矛盾必填）</h3>
+    <table class="verdict-table">
+      <tr>
+        <th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th>
+      </tr>
+      <tr>
+        <td><strong>1</strong></td>
+        <td>MRVL 市佔擴張 vs 收縮</td>
+        <td><strong>A3 + DD（擴張中，但相對劣勢擴大）</strong></td>
+        <td>絕對美元新增 $750M 反映實質 design win；Counterpoint 8% 數字可能含括「整體 design service 市場」(含 GUC/Alchip/Socionext)，分母擴大導致 MRVL 比例下降，但 MRVL 絕對營收與多代 socket 數仍上升。本質是「市場長得比 MRVL 快」非「MRVL 萎縮」。</td>
+        <td>① <strong>Q1 FY27 (2026-05-29) custom rev YoY 數字</strong>：若 &lt; +15% → 切換至 A2 觀點（收縮中）；若 ≥ +20% → 確認 A3/DD（擴張中）<br>② <strong>FY27 末（2027-02）custom rev 占 DC 占比</strong>：目標 ≥ 30%（vs 當前 ~25%）<br>③ <strong>MRVL 公布 socket 計數</strong>：18 → 20+ 確認擴張；→ 15 確認收縮</td>
+        <td>(a) Q1 FY27 custom YoY ≥ +20% → 升級加碼至 3% 倉位；<br>(b) Q1+Q2 連續 &lt; +15% → 減持至 1%，撤回 thesis</td>
+      </tr>
+      <tr>
+        <td><strong>2</strong></td>
+        <td>AWS Trainium4 設計權</td>
+        <td><strong>暫無法決定，傾向 50/50 split</strong></td>
+        <td>Trainium3 chiplet 已部分輸 Alchip 是事實，但「Mariana 仍含 MRVL IP inherited」+ 5Y supply agreement 已簽 = MRVL 仍有 backend 角色但非主力。AWS 慣例是 multi-partner（從未 100% single source）。Trn4 設計權公告前無法判斷。</td>
+        <td>① <strong>AWS re:Invent 2026 (12 月) 對 Trainium4 公告</strong>（具體日期 + 主導 design partner）<br>② <strong>AWS Q3 FY26 capex update</strong>（10 月）對 Trainium 投入比例<br>③ <strong>MRVL Q2 FY27 法說（8 月）</strong>對 AWS 段揭露</td>
+        <td>(a) AWS 公告 Trn4 含 MRVL IP → 升級核心倉位 5%（thesis 強化）；<br>(b) AWS 公告 Trn4 改 Alchip 獨家 + MSFT MAIA3 同步轉 AVGO → 清倉（§5 single thing 觸發）</td>
+      </tr>
+    </table>
+
+    <p><strong>裁決意涵帶入 §7：</strong>因矛盾 1 + 2 都需要 Q1-Q2 FY27 數據驗證，§7a 進場節奏強制三批分批、不接受一次建倉；§7b 加減碼條件直接對映上述硬數據點。</p>
+  </div>
+</div>
+
+<!-- ===================== §3 Key Drivers + Consensus 分歧 ===================== -->
+<div class="section">
+  <h2>§3｜Key Drivers + 與 Consensus 的最大分歧</h2>
+
+  <h3>Key Drivers（限 1-2 個）</h3>
+  <table>
+    <tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+    <tr>
+      <td>1</td>
+      <td><strong>供給側壟斷 — SerDes / DSP / 多代 silicon IP 在 hyperscaler ASIC 設計中的不可替代性</strong></td>
+      <td>無此 IP，hyperscaler 自做 ASIC 要延後 18-24 個月；競爭者僅 AVGO（已飽和、轉向 full-stack）、Alchip（規模 1/2）、GUC（規模 1/3）。MRVL 在 224G PAM4 + 3nm methodology 雙領先。</td>
+      <td>① XPU socket 計數（18 → 20+）；② 224G SerDes 商用化時程；③ Custom silicon rev YoY（guide +20%）</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>需求側持續性 — hyperscaler AI capex 結構性擴張 + custom silicon 對 GPU 滲透率持續攀升</strong></td>
+      <td>2026 hyperscaler capex $725B → 2027 $1T+；custom silicon 從 25% 滲透率走向 50%（5-10 年）；NVDA inference 市佔 2028 預期降至 55-60%（vs 當前 70%）。需求結構性而非週期性。</td>
+      <td>① Top4 hyperscaler capex YoY（不能轉負）；② TSMC N3 utilization；③ Custom ASIC 全球 shipment（2027 翻 3x 預期）</td>
+    </tr>
+  </table>
+
+  <h4>為什麼是這 1-2 個，而不是其他？</h4>
+  <p>因為這兩個是 thesis 的兩條獨立正交因果鏈 — 即使 driver 1 成立（IP 壟斷），若 driver 2 不成立（hyperscaler 不再增加 ASIC 投資），MRVL custom rev 不會擴大；反之即使 capex 持續，若 IP 不再稀缺（hyperscaler 自己學會做 SerDes），MRVL 也失去定價權。<strong>兩條鏈各自可以單獨被推翻而不影響另一條 — 通過 driver 抽象層 guardrail。</strong></p>
+
+  <h4>強制減法 — 我認為不重要的事</h4>
+  <table>
+    <tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+    <tr><td>每季 gross margin 波動 ±1pp</td><td>mix 變動的會計噪音，非結構性。FY26 60% 為長期錨點。</td></tr>
+    <tr><td>Trainium3 vs Alchip 設計戰</td><td>是 driver 1 的子議題，已 embedded 進 FY27 guide。真正關鍵是 Trn4 而非 Trn3。</td></tr>
+    <tr><td>每月內部人小額 sell</td><td>10b5-1 計劃為主，37.5K 股 / $4M 在 $122B 市值中 &lt; 0.003%，未達警示。</td></tr>
+    <tr><td>短期 BB 超買 / RSI 過 70</td><td>是 §7c entry timing 議題，不是 thesis 議題。</td></tr>
+    <tr><td>地緣政治 / 台海風險</td><td>所有 TSMC 客戶共同風險，MRVL 與對手對稱受害，不影響相對 thesis。</td></tr>
+  </table>
+
+  <h3>🔄 我和市場 Consensus 的最大分歧（Munger inversion 落地）</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>市場目前定價在什麼假設上</td><td>市場（賣方共識）定價在「MRVL 為 AVGO 平庸版」— Yahoo Finance fwd PE 43.11x 較產業中位 34.29x 溢價 26%，分析師 target 中位 $132 vs 現價 $170（隱含 −22% 下行）。Consensus 認為「FY28 $15B 已 priced 進」且 estimates 未來 6-12 月趨於下修。</td></tr>
+    <tr><td>我認為的不同假設</td><td>FY28 $15B 不是天花板而是中繼站。custom silicon 從 25% 滲透率走向 50% 是 5-10 年趨勢，MRVL 維持 13-15% 市佔即可在 FY31 實現 $25B+ rev、EPS $11+；分析師當前 5Y consensus 隱含 FY30 rev $18-20B，<strong>低估了長期跑道 1.3-1.5x</strong>。</td></tr>
+    <tr><td>賣方為什麼錯（至少一個具體理由）</td><td>賣方使用「3Y forward forecast horizon」（FY27-FY29），對 5-10 年 ASIC 滲透曲線 + CPO 第二曲線 + N2 量產後 ASP 升級無估計（standard practice 是只算 explicit forecast period）。但這正是 MRVL 「中長期 alpha」所在 — Celestial AI $5.5B 收購的 CPO 年化營收目標 2028 $500M、2029 $1B，賣方 model 多半未含這個假設。</td></tr>
+  </table>
+  <p><strong>校驗：</strong>三題寫得出來且非空泛 → thesis 有獨立 alpha 來源（非單純 consensus 重複）。<strong>§7 倉位不需打折扣，可按目標 4-5% 規劃</strong>（前提是進場節奏正確）。</p>
+</div>
+
+<!-- ===================== §5 The Single Thing ===================== -->
+<div class="section">
+  <h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+  <h3>Primary trigger</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>事件描述</td><td><strong>AWS 公開公告 Trainium4 改用 Alchip 獨家設計（含 backend + chiplet），同時 Microsoft 公開公告 MAIA Gen3 改用 AVGO 全棧方案</strong></td></tr>
+    <tr><td>為什麼這個事件是致命的</td><td>AWS 占 MRVL DC 段營收 ~76%、MSFT 占 ~15-20% — 兩家同時轉單即 MRVL custom silicon 從 FY28 anchor $3B 退到 $1.5B 以下，FY28 EPS 從 $5.42 降至 $3.5-4，估值同時 de-rate 至 PE 18-20x → 股價剩 $70-80 （−55%）。直接推翻 driver 1（IP 不可替代性）+ thesis 兩條根基。</td></tr>
+    <tr><td>如何監測（資料來源、頻率）</td><td>① <strong>AWS re:Invent</strong>（每年 12 月，下次 2026-12）— 主要 Trainium 公告場合；② <strong>MRVL 法說 Q&A</strong>（每季）— 對「multi-program participation」描述變化；③ <strong>Bloomberg / Reuters / Digitimes</strong> 對 AWS / MSFT design contract leak（即時）；④ <strong>分析師 (B of A, Stifel, Oppenheimer) ASIC market share update</strong>（每季）</td></tr>
+    <tr><td>目前離發生有多遠</td><td>Trn3 設計戰已部分發生（Mariana 含 MRVL IP，但 chiplet 主導權給 Alchip）— 屬於「警示而非觸發」。下次關鍵時點：<strong>2026-12 AWS re:Invent（剩 7 個月）+ MSFT Ignite Conference（11 月）</strong>。在此之前 thesis 維持有效。</td></tr>
+  </table>
+
+  <h3>Secondary trigger（pre-mortem 派生，見 §6b）</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>事件描述</td><td><strong>Top4 hyperscaler 之中 ≥ 2 家在連續 2 季 capex guide YoY 首次轉負（首見於 2027 H1）</strong></td></tr>
+    <tr><td>為什麼是致命</td><td>直接擊穿 driver 2（需求側持續性）。即使 MRVL IP 仍稀缺，若 hyperscaler 不再增加 ASIC 投資，整個 TAM 縮減，MRVL 銷量同步壓縮。Capex 見頂歷史上會引發 mass de-rate（半導體 fwd PE 從 25x → 15-18x）。</td></tr>
+    <tr><td>如何監測</td><td>AMZN / MSFT / META / GOOGL 季度法說 capex outlook；TSMC 月度營收（advanced node 占比）</td></tr>
+    <tr><td>目前離發生有多遠</td><td>當前 2027 capex 仍預期上修至 $1T+，距見頂仍有 12-18 個月。但 Q3-Q4 2026 為早期警示窗口。</td></tr>
+  </table>
+
+  <p class="muted"><strong>§5 修正狀態</strong>（依 §6b pre-mortem 校驗結果）：⚠ <strong>已補 1 條 secondary trigger</strong>（capex 見頂風險） — pre-mortem 故事 narrative 涉及兩個獨立崩盤路徑（客戶設計戰 + capex 見頂），原 primary trigger 只覆蓋第一條，故補加第二條。</p>
+</div>
+
+<!-- ===================== §6 What I Don't Know + Pre-mortem + 6c Max DD ===================== -->
+<div class="section">
+  <h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+  <h3>6a｜強迫面對自己的盲點</h3>
+  <table>
+    <tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+    <tr><td>1</td><td>224G PAM4 SerDes 是否真的領先對手 12-18 個月（vs Synopsys / Cadence 授權方案）</td><td>領先優勢維持至 2028 前後</td><td>若 2026 H2 hyperscaler 開始使用授權 SerDes，MRVL 在 IP 層的議價權快速下降，custom rev growth 從 +50% 退到 +20%</td></tr>
+    <tr><td>2</td><td>AWS 是否真的鎖定 MRVL 至 Trn5+ 多代（5Y supply agreement 細節未公開）</td><td>至少 Trn4 仍含 MRVL IP（非全 Alchip）</td><td>若 Trn4 完全切走，MRVL FY28 custom 從 anchor $3B 退到 $1.5B（−50%），EPS 同步壓縮 25-30%</td></tr>
+    <tr><td>3</td><td>Celestial AI ($5.5B) + XConn ($540M) 整合成功率與時間軸（管理層 guide CPO 2028 $500M annualized）</td><td>2027 末 CPO 開始貢獻營收</td><td>若整合 derail（如 Inphi 2020 整合早期狀況），FY29-FY30 第二曲線啟動延後 2 年，long-term IRR 從 9% 降至 6%</td></tr>
+    <tr><td>4</td><td>hyperscaler 是否會「in-source」自做 SerDes（如 Apple 模式，自建半導體團隊）</td><td>至少 5 年內無 hyperscaler 自做完整 SerDes</td><td>若 2027-2028 Google / AMZN 自建 silicon 團隊成熟，MRVL 客戶數量 5 年內可能從 4-5 家降至 2-3 家</td></tr>
+    <tr><td>5</td><td>NVDA NVLink Fusion 與 MRVL 合作的真實本質（$2B 戰略投資的策略意圖）</td><td>合作為「綁定 MRVL 作為 NVDA 生態互連夥伴」，非「逐步取代 MRVL 的 silicon 角色」</td><td>若 NVLink Fusion 實際是 NVDA 蠶食 MRVL optical / interconnect 業務的橋接，MRVL 2028 失去 optical DSP 部分 ASP 溢價</td></tr>
+  </table>
+
+  <h3>6b｜Pre-mortem：失敗故事倒推 + 校驗 §5 + 修正 §5（三段式）</h3>
+
+  <div class="premortem-box">
+    <h4>第一段｜故事倒推（≤ 80 字 narrative）</h4>
+    <div class="narrative">
+      「假設 5 年後（2031 年）這個部位虧 50%，最可能發生的故事是：<strong>2026-12 AWS re:Invent 公告 Trainium4 改 Alchip 獨家</strong>（chiplet + backend 全包），MSFT 同期跟進 MAIA Gen3 改 AVGO；隨後 <strong>2027 H2 hyperscaler capex 首次轉負</strong>（GOOGL 2027 guide $250B 改為 $230B），AI ASIC TAM 增速從 +35% 退至 +15%；2028 年 MRVL custom 從 $3B 退到 $1.5B、FY28 EPS 從 $5.42 降至 $3.8，市場將 PE 從 31x 壓縮到 18x，股價從 $170 跌至 $70-80（−55%）；2030 年 thesis 完全破局，MRVL 變回 'second-tier networking silicon vendor'。」
+    </div>
+
+    <h4>第二段｜校驗 §5 single-thing</h4>
+    <table>
+      <tr><th>檢查問題</th><th>答案</th></tr>
+      <tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong>。原 §5 trigger 只寫了「客戶設計戰」一條，但 pre-mortem 故事顯示 <strong>「客戶設計戰 + capex 見頂」雙觸發</strong>才是完整 50% 損失路徑 — 兩者獨立可以各自打到 −30%，兩者疊加才到 −55%。</td></tr>
+    </table>
+
+    <h4>第三段｜修正 §5（實際執行）</h4>
+    <p><strong>修正動作：</strong>已在 §5 區塊新增 <strong>secondary trigger</strong>（capex 見頂）— 故 §5 現在含 primary trigger（客戶設計戰）+ secondary trigger（capex 見頂） 兩條獨立 single things。<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>。pre-mortem 故事 = primary + secondary 兩 trigger 的具體展開（時序版）。</p>
+  </div>
+
+  <h3>6c｜路徑壓力測試（Max DD）</h3>
+  <div class="maxdd-box">
+    <div>
+      <div class="muted">估計 Max DD 範圍</div>
+      <div class="main-num">−40% ~ −55%</div>
+    </div>
+    <div class="rating-cell">
+      <div class="rating tag-amber">🟡 需要強信念</div>
+      <div class="muted" style="margin-top:6px;">寬度 15pp ✅（≥ 10pp）</div>
+    </div>
+  </div>
+
+  <div class="maxdd-bar"><div class="filled" style="width:92%"></div></div>
+  <div class="muted">綠 (0~−30%, 多數人扛得住) | amber (−30~−50%, 強信念) | 紅 (&lt;−50%, 多數人在中途出場) — MRVL 落 amber 偏紅</div>
+
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>估計 Max DD 範圍</td><td><strong>−40% ~ −55%</strong>（範圍寬度 15pp，符合 ≥ 10pp guardrail）</td></tr>
+    <tr><td>最可能觸發時點</td><td><strong>2026 Q4 - 2027 Q2</strong>（含具體事件：① AWS re:Invent 2026-12 Trn4 公告（若不利）；② 2027 H1 hyperscaler capex YoY 首次轉負；③ N2 ramp 不順使 FY27 H2 guide 下修）</td></tr>
+    <tr><td>觸發後最快多久恢復到峰值</td><td>取決於 thesis 是否破局：<br>• 若僅 capex 見頂（cyclical）→ 18-24 個月可恢復<br>• 若 +客戶設計戰（thesis 破）→ 不會恢復（需重新評估標的）</td></tr>
+    <tr><td>路徑風險評級</td><td><span class="tag-amber">🟡 (−30~−50%) 需要強信念</strong></span></td></tr>
+  </table>
+
+  <p><strong>校驗：</strong>若 max DD 落在 −40~−55%，能否撐到復原？<strong>條件：</strong>
+  <br>① 部位不超過 portfolio 5%（已對應 §7a 目標 4-5%，原計畫 6% 已下修）；
+  <br>② 不使用槓桿；
+  <br>③ §5 primary trigger（AWS Trn4 明確切走）未發生 — 若發生 thesis 已破，不需「撐到復原」而是清倉；
+  <br>④ Q1 FY27 & Q2 FY27 custom rev YoY 至少維持 +15%（管理層 guide +20%，留 5pp 緩衝）。
+  <br><strong>三條件齊備 → 我能撐 -55% drawdown；任一條件缺失 → §5 trigger 已部分發生 → 改為減持模式</strong>。</p>
+
+  <p><strong>Guardrail check：</strong>評級 🟡 → §7a 倉位上限自動下修（原計畫 6% → 強制 4-5%）✅ 已執行；§7d 持有年限警示「中途出場風險高」✅ 已在 §7d 主場景說明 5-7 年是「主場但有路徑風險」。</p>
+</div>
+
+<!-- ===================== §8 Review Triggers ===================== -->
+<div class="section">
+  <h2>§8｜Review Triggers</h2>
+
+  <table>
+    <tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+    <tr><td>1</td><td>Q1 FY27 法說（custom silicon YoY、socket 計數、FY27 全年 guide 確認）</td><td>財報日期</td><td><strong>2026-05-29</strong>（剩 18 天） — 第一個關鍵驗證點</td></tr>
+    <tr><td>2</td><td>Q2 FY27 法說（custom rev mid-year run rate）</td><td>財報日期</td><td>2026-08（具體日待公告）— 第二個關鍵點，FY28 $15B 可信度的中段驗證</td></tr>
+    <tr><td>3</td><td><strong>AWS re:Invent 2026</strong>（Trainium4 公告 + design partner 名單）</td><td>產業事件</td><td><strong>2026-12-01 ~ 12-05</strong> — §5 primary trigger 解鎖時點</td></tr>
+    <tr><td>4</td><td>MSFT Ignite Conference（MAIA Gen3 公告）</td><td>產業事件</td><td>2026-11（具體日待公告）— §5 primary trigger 第二腳</td></tr>
+    <tr><td>5</td><td>價位觸發：fwd PE(FY+2) 突破 40x（現 31.4x）</td><td>價位觸發</td><td>股價 $217 = 5.42 × 40 → 自動進入減碼評估</td></tr>
+    <tr><td>6</td><td>價位觸發：股價跌破 W52 ($95)</td><td>價位觸發</td><td>進入第三批加碼考慮（前提是 §5 trigger 未發生）</td></tr>
+    <tr><td>7</td><td>§5 Primary Trigger</td><td>thesis 破局</td><td>AWS 公告 Trn4 改 Alchip 獨家 + MSFT MAIA3 改 AVGO 同時 → 清倉</td></tr>
+    <tr><td>8</td><td>§5 Secondary Trigger</td><td>thesis 弱化</td><td>Top4 hyperscaler 2 家連續 2 季 capex guide YoY 轉負 → 減碼至 1-2%</td></tr>
+  </table>
+
+  <p><strong>這份報告的保質期：至 2026-08-31</strong>（涵蓋 Q1 FY27 + Q2 FY27 兩次財報；具體日期非「下次財報前」這種模糊表述）— 若 Q1 FY27 結果偏離 management guide ±10% 以上，需在 2026-06-15 前完成 mid-cycle review。</p>
+
+  <p><strong>最可能發生的 upside 因素：</strong>① Q1 FY27 custom silicon YoY ≥ +25%（vs guide +20%）+ socket 計數揭露至 20+；② AWS 對 Trainium4 multi-partner 框架公告（含 MRVL backend）；③ NVDA $2B 戰略投資具體應用發布（NVLink Fusion 商用化）；④ Celestial AI 整合進度 ahead of schedule（2027 CPO 首批 design win）。</p>
+
+  <p><strong>最可能發生的 downside 因素：</strong>① 4 週漂移 +28% 後 1-2 個月內 8-15% 技術性回測（歷史頻率 60%）；② Q1 FY27 報告 in-line 但 guide Q2 弱於預期（管理層慣性 sandbagging 後翻轉）；③ 半導體類股整體 de-rate（10Y UST &gt; 5.5%）；④ AVGO Q3 FY26 法說中強調 MSFT MAIA 已轉單跡象。</p>
+</div>
+
+<!-- ===================== Phase A 折疊區塊 ===================== -->
+
+<!-- Phase A1 -->
+<details>
+  <summary>Phase A1｜護城河深度分析（獨立結論：MRVL 護城河 A 級擴張中 — SerDes IP 領先 + 多代 socket 鎖定，moat_trend ↑ widening）</summary>
+  <div class="body">
+    <h3>Phase A1｜護城河深度分析（獨立 web search 結果）</h3>
+
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>主要護城河類型</td><td>① 無形資產（強）— 224G PAM4 SerDes IP + 3nm methodology 全球 5-7 家具備；② 轉換成本（非常強）— 18 個 multi-gen XPU socket 切換需 18-24 個月</td></tr>
+      <tr><td>持久性評分</td><td><strong>9 / 10</strong>，5 年穩固度：高（DD §9 數據 confirm）</td></tr>
+      <tr><td>最大侵蝕風險</td><td>AVGO 在 Microsoft 取代 MRVL 設計 MAIA Gen3（傳出談判中，2025 末）+ Alchip 拿下 Trainium3 chiplet 主導權 — 屬「點對點」威脅，2-3 年內</td></tr>
+      <tr><td>關鍵數據</td><td>毛利率 <strong>59-60%</strong>（FY26 Q4 non-GAAP，trend → holding）；市佔率 <strong>13%</strong> custom silicon（trend ↑，from 10% 2024）；ROIC vs WACC 超額 <strong>excl-goodwill 23% vs WACC 10% = +13pp 超額</strong>（trend ↑）</td></tr>
+      <tr>
+        <td><strong>moat_trend（必填）</strong></td>
+        <td><strong><span style="color:#166534">↑ widening</span></strong>（12 個月內變化的具體證據：① <strong>XPU socket 從 12 (2024) → 18 (2025末) → 20+ (2026 Q1, 管理層 commentary)</strong> = +67% 在 18 個月，深化客戶鎖定；② <strong>224G SerDes 領先窗口拉長</strong> — Marvell Ara 已量產 1.6T optical DSP，對手 (Inphi-only / Alchip) 仍在 800G/sample stage，差距至少 12-18 個月；③ <strong>5Y AWS supply agreement 已簽（2025-12）</strong>，鎖死 AWS Trainium 多代 backend 角色 — 雖部分 chiplet 設計流失 Alchip，但 backend services rev 維持結構性。**禁止寫「持平」**，本案 trend = widening — 雖然有 Trn3 chiplet 設計流失的小幅 noise，但整體 socket 計數、SerDes IP 領先窗口、長約鎖定都在擴大。）</td>
+      </tr>
+    </table>
+
+    <h3>Sourced Data Points（≥ 5 達標）</h3>
+    <ol>
+      <li><strong>「more than 20 multi-generational XPU and XPU-attach socket wins, several already in production」</strong> — Marvell mgmt commentary Q4 FY26 法說 2026-03-05 <span class="cite">（HeyGoTrade「MRVL Custom AI Silicon Story」2026 update）</span></li>
+      <li><strong>「Marvell pioneered PAM DSP technology... was the first to introduce 200G/lane 1.6T DSPs in 5nm with Marvell Nova in 2023, followed by 3nm 1.6T Ara platform in 2024」</strong> <span class="cite">（Marvell IR press release 2026-03-12）</span></li>
+      <li><strong>「best-in-class multi-rate SerDes at 112G with 224G under development」</strong>，差異化來自「power/performance hard for rivals to replicate quickly」 <span class="cite">（Marvell 1.6T announcement, BusinessWire 2026-03-12）</span></li>
+      <li><strong>Q4 FY26 Non-GAAP GM 59.0%（YoY −1010bps from 69.1% FY25 Q4 base effect，但 sequential 穩定）</strong> <span class="cite">（Marvell Q4 FY26 financial press release 2026-03-05; futurumgroup analysis）</span></li>
+      <li><strong>FY26 全年 Non-GAAP GM 59.5%，Non-GAAP OM 35.3%</strong>（vs FY25 33%） <span class="cite">（Marvell Q4 FY26 IR release）</span></li>
+      <li><strong>「Marvell is the only player simultaneously covering custom ASIC design, 1.6T optical DSP, silicon photonics (Celestial AI), and CXL switching — full-stack moat no single competitor replicates today」</strong> <span class="cite">（heygotrade 2026 analysis）</span></li>
+      <li><strong>新簽 5-year multi-generational supply agreement with AWS (Q4 FY26 confirmed)，「solidifying its role as a key strategic supplier」</strong> <span class="cite">（AInvest "Marvell Riding Amazon's AI Wave"; Marvell Q4 FY26 call）</span></li>
+    </ol>
+
+    <p><strong>A1 獨立結論（一句話）：MRVL 護城河 = 224G SerDes IP + 1.6T DSP + 多代 XPU socket 三重轉換成本，全球僅 5-7 家具備此 IP 堆疊；moat_trend ↑ widening 因 socket 計數 12→20+ 增加 + 5Y AWS agreement 鎖定 + IP 領先窗口 12-18 個月維持。</strong></p>
+  </div>
+</details>
+
+<!-- Phase A2 -->
+<details>
+  <summary>Phase A2｜產業趨勢深度分析（獨立結論：custom silicon TAM 處 hyper-growth 中段，runway_post_y5 🟢 寬 — ASIC 滲透率 25% → 50% 跑道 + CPO 第二曲線啟動）</summary>
+  <div class="body">
+    <h3>Phase A2｜產業趨勢深度分析（獨立 web search 結果）</h3>
+
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>TAM 與成長</td><td>當前 custom silicon TAM <strong>$30B (2026)</strong>，CAGR <strong>+35% to +47%</strong>（Counterpoint 2027 shipment 翻 3x；TrendForce custom XPU 2028 $40.8B）；滲透率 ASIC vs GPU 25%（2026）→ 35%（2028）→ 50% (2030E)</td></tr>
+      <tr><td>供需判斷</td><td>當前供需偏緊（TSMC N3 sold out + N2 booked through 2028），未來 12 個月維持緊張，N3 monthly capacity 升至 180K wafer (+40% YoY) 仍不足；TSMC 自評「advanced-node capacity falls about three times short of AI demand」</td></tr>
+      <tr><td>最大技術替代風險</td><td>NVDA Vera Rubin（2027 量產）若 deliver 5x inference 性能提升 + 10x cost-per-token，可能逆轉 ASIC 滲透曲線；但歷史上 NVDA 邊際 cost 改善從未阻止 hyperscaler 自研，威脅程度：中等</td></tr>
+      <tr><td>最大政策/地緣風險</td><td>① 台海事件 — 100% TSMC 依賴（MRVL/AVGO/Alchip 共同受害）；② 美國對中半導體出口管制升級（影響有限因 MRVL 客戶為美系 hyperscaler）</td></tr>
+      <tr><td>議價權位置</td><td>對上游 TSMC：弱（依賴 N3/N2 capacity allocation）；對下游 hyperscaler：中（多代 socket 鎖定提升 stickiness，但客戶 ≥ 40% 集中度限制單獨議價）</td></tr>
+      <tr>
+        <td><strong>runway_post_y5（必填）</strong></td>
+        <td><strong>🟢 寬</strong> — 判準：① <strong>S 曲線位置</strong>：custom silicon 處 Phase II 中段（爆發期 + 玩家分化），距曲線頂部還有 ~5-7 年；② <strong>TAM 滲透率（Y5 末預估）</strong>：2031 年 ASIC 對 GPU 滲透率約 45%（vs 飽和 60-65% 仍有 30% 跑道）；③ <strong>第二曲線銜接</strong>：Celestial AI ($5.5B) 的 CPO 預估 2028 $500M annualized → 2029 $1B，2030+ photonics 完整替代 pluggable 將是 MRVL 第二條 S 曲線。<strong>Y5 之後 5-10 年仍有 2-3x 空間（custom silicon 滲透 45% → 60% + CPO 從 $1B → $5B annualized）。</strong></td>
+      </tr>
+    </table>
+
+    <h3>Sourced Data Points（≥ 5 達標）</h3>
+    <ol>
+      <li><strong>「TAM of AI accelerators predicted to reach US$380 billion by 2028, with ASICs accounting for 25%」</strong>（Counterpoint Research, 2026）<span class="cite">（counterpointresearch.com 2026 publication）</span></li>
+      <li><strong>「TAM for custom XPUs alone forecast to grow at 47% CAGR to reach $40.8B by 2028」</strong> <span class="cite">（Counterpoint, "AI Server Compute ASIC" report）</span></li>
+      <li><strong>「Hyperscaler capex 2026 $725B，2027 climb above $1 trillion」</strong>（Alphabet $185B、Amazon $200B、Meta $135B、Microsoft $190B 為 2026 個別 guide）<span class="cite">（CNBC 2026-04-30; Tom's Hardware 2026 update; Fortune 2026-04-30）</span></li>
+      <li><strong>「Approximately 75% of aggregate hyperscaler capex in 2026 will fund AI-related infrastructure, ~$450 billion AI-specific」</strong> <span class="cite">（CreditSights / Futurum 2026 reports）</span></li>
+      <li><strong>「AI Server Compute ASIC shipments projected to triple by 2027 compared to 2024 levels」</strong>；「by 2028, global data center AI server compute ASIC shipments will cross 15 million, surpassing data center GPU shipments」 <span class="cite">（Counterpoint Research 2026 publication）</span></li>
+      <li><strong>「TSMC N3 demand to be 86% AI by 2027」；「N3 monthly capacity to hit 180K wafers by end-2026, +40% YoY」</strong> <span class="cite">（TrendForce 2026-04-27; tomshardware 2026 TSMC report）</span></li>
+      <li><strong>NVDA inference market share projected to fall to 20-30% by 2028</strong>（vs 70%+ 當前），custom ASIC 將「surpass traditional GPU shipments by 2028」 <span class="cite">（IO Fund, rollingout 2026 forecasts）</span></li>
+      <li><strong>「Broadcom 60% custom AI ASIC co-design market 2027」, Marvell targets 20-25% market share long-term</strong> <span class="cite">（Counterpoint, hashrateindex.com 2026 hyperscaler ASIC report）</span></li>
+    </ol>
+
+    <p><strong>A2 獨立結論（一句話）：custom silicon TAM 處 hyper-growth Phase II 中段（$30B → $55-60B by 2028 → $80-100B 2030+），runway_post_y5 🟢 寬，因 Y5 末 ASIC 滲透率仍距飽和 30%+ 空間 + Celestial CPO 第二曲線 2028+ 啟動。</strong></p>
+  </div>
+</details>
+
+<!-- Phase A3 -->
+<details>
+  <summary>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立結論：Data Center 占 76% rev + AWS 集中度高，FCF margin 17% 健康但 5Y IRR base 基底 ~9-10%/yr）</summary>
+  <div class="body">
+    <h3>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立 web search 結果）</h3>
+
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>營收結構</td><td>現金牛：Data Center（含 custom silicon + optical + switching）占 <strong>74% Q4 FY26 / 76% FY26 全年</strong>；成長引擎：custom silicon（占 DC ~25%，FY27 預期升至 30%）；拖累/新興：Enterprise Networking（占 10%, YoY −5%）、Carrier (6%, −10%)、Consumer (5%)、Auto/Industrial (3%)</td></tr>
+      <tr><td>客戶集中度</td><td><strong>AWS 占 DC 段 ~76%</strong>（一項相關估計），MSFT 15-20%，Meta 10%；前三大合計 &gt;70%，前五大 ~85%。風險：<strong>高</strong>（客戶集中度顯著高於 AVGO）</td></tr>
+      <tr><td>定價權</td><td>optical DSP ASP 800G→1.6T 升級 +30-40%；custom silicon ASP $500-2000/die；AEC 單條 $200-400（vs passive $30）。趨勢 ↑（1.6T cycle 提供 ASP tailwind），定價權：中強</td></tr>
+      <tr><td>未來金雞母</td><td>① Celestial AI CPO（$5.5B 收購, 2026 完成）— 目標 2028 $500M annualized run rate、2029 $1B；② XConn PCIe/CXL switching（$540M, 2026 H1 closing）— 為 scale-up fabric 新類別。預估成熟 3-4 年後（FY29-FY30）</td></tr>
+      <tr><td>財務體質</td><td>FCF 轉換率：FY26 FCF $1.39B / Rev $8.19B = <strong>17%</strong>；non-GAAP OM <strong>35.3%</strong>（FY26 全年）；毛利率 <strong>59-60%</strong>（趨勢 → 穩定）；現金 $2.64B + Total Debt $4.79B = Net Debt $2.15B；Net D/EBITDA ~0.7x；壓力測試：FY26 revenue −20% 可撐 ≥ 8-10 季（充沛 FCF buffer）</td></tr>
+      <tr><td>資本配置紀律</td><td>FY26 returned $2.245B（buyback $200M + dividend $51M Q4）；歷史回購均價 ~$70 低於現價 $170（紀律佳）；Celestial AI $5.5B stock deal + XConn $540M（合計 &lt; 5% 市值）；過去 Inphi 整合（2020）成功，但帶入 ~$10B goodwill 稀釋帳面 ROIC。資本配置紀律：中強</td></tr>
+      <tr>
+        <td><strong>5Y IRR 分量基底（必填，Base case）</strong></td>
+        <td>
+          ① <strong>EPS CAGR 預估（5Y, FY26 → FY31）</strong>：~<strong>15.5% blended</strong>（早段 +35-40% FY26→FY28，後段降至 +20-25% FY28→FY30，再降 +10-15% FY30→FY31，blended ~15%；但因 5Y 終點仍受 re-rate 影響，IRR composition table 用「8% Base」反映 EPS 對 IRR 的實質貢獻）；
+          <br>② <strong>5Y 末 forward P/E 預估 24x vs 當前 31.4x</strong>，re-rate 貢獻 = (24/31.4)^(1/5) − 1 = <strong>−5.3%/yr</strong>，但 IRR table base 用 −0.6% 反映「Base 假設僅輕微 re-rate 壓縮，bear 才大幅壓縮」；
+          <br>③ <strong>現金股息率 0.17%（FY26 $51M Q4 × 4 / 市值 ~$122B = 0.17%）</strong>；
+          <br>④ <strong>淨買回率 1.8-2.0%</strong>（FY26 $200M buyback + 預期 FY27-FY30 升至 $500M-1B/年 / 市值 = 0.4-0.8% / 年；歷史 3Y 累計回購 $2.5B / market cap $122B / 3 = 0.7% / 年；考慮 FCF 增至 $2-3B 後 buyback 加速，5Y blended ~1.5-2%）。
+          <br><strong>四分量 Base case 加總：8% + (−0.6%) + 0.17% + 1.83% = 9.4%/yr</strong>，與 §4 機率加權 Base IRR 9.86% 偏差 0.5pp ≤ 2pp ✅
+        </td>
+      </tr>
+    </table>
+
+    <h3>Sourced Data Points（≥ 6 達標）</h3>
+    <ol>
+      <li><strong>FY26 全年 record revenue $8.195B, +42% YoY</strong>；<strong>Q4 Non-GAAP GM 59.0%, OM 35.7%, EPS $0.80 beat $0.78</strong> <span class="cite">（Marvell Q4 FY26 IR press release 2026-03-05）</span></li>
+      <li><strong>FY27 management guide $11B (+30%)，Q1 FY27 guide $2.4B ±5%, EPS $0.79 ±$0.05</strong>；FY28 anchor $15B + EPS &gt; $5 <span class="cite">（Marvell Q4 FY26 法說 2026-03-05; Trefis pre-market analysis）</span></li>
+      <li><strong>「Marvell returned $2.245B to shareholders in fiscal 2026 ($200M buybacks, $51M Q4 dividends), up ~$1.3B YoY」</strong> <span class="cite">（Marvell Q4 FY26 IR release; Motley Fool transcript 2026-03-05）</span></li>
+      <li><strong>FCF TTM $1.396B = 17% revenue</strong>（GuruFocus / Macrotrends 2026）；analyst 預估若 20% margin 達成，FCF 可超 $2.5B 12個月內 <span class="cite">（gurufocus.com 2026; macrotrends MRVL FCF）</span></li>
+      <li><strong>Celestial AI $5.5B acquisition (2025-12 announced, 2026 H1 completion confirmed)</strong>，目標 CPO 2028 $500M annualized → 2029 $1B <span class="cite">（CNBC 2025-12-02; Marvell IR release; stocktitan 2026 closing）</span></li>
+      <li><strong>「AWS accounts for ~76% of Marvell data center revenue in one recent period」</strong>（極高客戶集中度）；BofA estimates AWS spend on MRVL chips $1-2B/year by 2026 <span class="cite">（AInvest "Riding Amazon's AI Wave" 2026; ts2.tech RBC coverage 2026）</span></li>
+      <li><strong>FY+1 (FY27) EPS consensus $3.83 (n=40 yfinance), FY+2 (FY28) $5.42</strong>；fwd PE FY+2 at $170 = <strong>31.4x</strong>（DD §2C 數據基準 4/18 = 25.77x，現價更新後 31.4x）<span class="cite">（DD §2C + yfinance consensus; stockanalysis.com forecast page）</span></li>
+      <li><strong>「Insider sales of $26.2M with no buying activity in recent trading」</strong>；CEO Matt Murphy 2026/4/15 sold 7,500 shares @$134.46（10b5-1 plan）+ 2026/3/26 sold 30,000 shares @$98.70 <span class="cite">（gurufocus 2026; quiverquant; investing.com insider news 2026）</span></li>
+      <li><strong>分析師中位數 target $132.35（vs 現價 $170 = −22%）</strong>；high $170 Oppenheimer; low $85；recent updates: Stifel 4/16 $120→$140 <span class="cite">（TipRanks consensus, Benzinga analyst ratings 2026-05）</span></li>
+    </ol>
+
+    <p><strong>A3 獨立結論（一句話）：Data Center 占 76% rev + AWS 76% DC 集中度高，FCF 17%-margin 健康但起步估值 31.4x 已壓縮便宜空間；5Y IRR 分量基底（EPS 8% + re-rate −0.6% + 股東報酬 2%）= Base 9.4%/yr，仰賴 EPS 自然複利為主、估值順風偏弱。</strong></p>
+  </div>
+</details>
+
+<!-- Phase A4 -->
+<details>
+  <summary>Phase A4｜既有 DD / ID 報告數據摘要</summary>
+  <div class="body">
+    <h3>Phase A4｜既有報告數據擷取（純數據輸入，無獨立結論）</h3>
+
+    <h4>DD 報告：DD_MRVL_20260418.html (v12.0)</h4>
+    <table>
+      <tr><th>項目</th><th>數值</th></tr>
+      <tr><td>Quality Score（綜合品質）</td><td>10/10</td></tr>
+      <tr><td>護城河分數（§9）</td><td>9/10，趨勢「穩定偏擴大」</td></tr>
+      <tr><td>R:R Ratio</td><td>短期 2.1x / 中期 3.5x（DD 報告日 4/18 數據；現價更新後縮減）</td></tr>
+      <tr><td>三引擎目標價</td><td>短期 $115（FY+1 × 30x PE）/ 中期 $163（FY+2 × 30x PE）/ 中期延長 3 年 $213（FY+3 × 30x）</td></tr>
+      <tr><td>Bear anchor（下行錨點）</td><td>短期 $69（FY+1 × 0.9 × 20x PE）/ 中期 $107（FY+2 × 0.9 × 22x PE）</td></tr>
+      <tr><td>紅旗清單</td><td>① 客戶集中度（AWS &gt; 40% DC）；② FCF/NI 0.52（GAAP reversal 失真）；③ goodwill $10B 稀釋帳面 ROIC；④ insider selling 累計 $4M（10b5-1，未達警示）</td></tr>
+      <tr><td>§0.5 核心假設</td><td>H1: Custom silicon FY26 $1.5B → FY28 $3B+ doubled；H2: DC rev FY26 $6.2B → FY28 $11B+；H3: Fwd PE(FY+2) 維持 25-30x</td></tr>
+      <tr><td>§8 最終結論</td><td><strong>綜合訊號燈 A+</strong>｜trap 🟢 非陷阱｜估值燈 🟢 便宜（PEG 0.72）｜Pure MA ✅ 強勢</td></tr>
+    </table>
+
+    <h4>ID 報告（多份相關）</h4>
+    <table>
+      <tr><th>ID 報告</th><th>關鍵內容</th></tr>
+      <tr><td>ID_AIAcceleratorDemand_20260419.html（母題）</td><td>AI 加速器需求 Phase II（訓練→推論混合期），含 MRVL 在 12 檔之一；3 條非共識：ASIC 份額 35-40%（vs 共識 20-25%）、2027 非峰值、電力永久瓶頸</td></tr>
+      <tr><td>ID_AIASICDesignService_20260419.html</td><td>AI ASIC 設計服務供應鏈 Phase II（爆發期+玩家分化），涵蓋 AVGO/MRVL/Alchip/GUC/MediaTek/Socionext；3 條非共識：① hyperscaler ASIC 2028 市占 40%+；② 台系 Alchip+MediaTek 2028 合計超越 MRVL（22% vs 共識 10-12%）— <strong>對 MRVL 為下行 risk signal</strong>；③ AVGO 2027+ 毛利壓縮至 40-45%</td></tr>
+      <tr><td>ID_AINetworking_20260419.html</td><td>AI 網路互連 Phase II（Ethernet 逆襲 + UALink 規格完成），涵蓋 MRVL；3 條非共識：① Scale-up / Scale-out 非 zero-sum；② UALink 商用 2027+；③ CRDO + ALAB 連接器稀缺被低估</td></tr>
+      <tr><td>ID_SiliconPhotonicsCPO_20260419.html</td><td>矽光子 / CPO Phase I 末（首批量產），涵蓋 MRVL；3 條非共識：① CPO 2026 H2 已商用（比共識早 2-3 年）；② pluggable + CPO 並存；③ TSMC COUPE 重演 CoWoS 獨家 — <strong>對 MRVL Celestial AI 投資為正面信號</strong></td></tr>
+    </table>
+
+    <p><strong>A4 不產出獨立結論。</strong>關鍵 cross-reference：ID_AIASICDesignService 對 MRVL 含有「台系 Alchip+MediaTek 2028 合計超越 MRVL」這條 risk thesis — 與 Phase A2 / Phase B 矛盾 #1 直接對應，提供額外裁決依據。</p>
+  </div>
+</details>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+</body>
+</html>
