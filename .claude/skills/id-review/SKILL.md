@@ -1,8 +1,8 @@
 ---
 name: id-review
-description: 對既有產業 DD（Industry DD / ID）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID**（那是 industry-analyst skill）；**也被 industry-analyst Step 8.7 強制呼叫**做新 ID 寫稿後的 mandatory critic gate。
-version: v1.2
-date: 2026-05-03
+description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst / industry-ds skill）；**也被 industry-analyst Step 8.7 與 industry-ds Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.3 起加 `--mode ds` 分支支援 DS 報告（檢查清單改為 DS-1 到 DS-6 的敘述結構正確性鎖點）。
+version: v1.3
+date: 2026-05-12
 ---
 
 # id-review skill v1.1
@@ -17,13 +17,38 @@ date: 2026-05-03
 
 ---
 
+## 【Mode Dispatch — ID vs DS】（v1.3 新增）
+
+本 skill 自 v1.3 起支援兩個模式，由 `--mode` 參數決定：
+
+| Mode | 對象 | Step-by-Step 走法 |
+|:---|:---|:---|
+| `--mode id`（預設，可省略） | `docs/id/ID_*.html` | 走原本 Step 1-7 流程 + ID-specific check list（§12 / §13 / §10.5 / cornerstone fact / thesis box / mega-sub_group） |
+| `--mode ds` | `docs/ds/DS_*.html` | 走 Step 1-7 但讀 DS 檔，套用 **DS-specific check list**（見本檔末 「【DS Mode 檢查清單】」段） |
+
+**自動 dispatch**：若 user 沒傳 `--mode`，skill 從檔名前綴判斷：
+- `ID_*.html` → mode id
+- `DS_*.html` → mode ds
+
+**Spawn 時明確指定**：被 industry-analyst Step 8.7 或 industry-ds Step 8.7 強制呼叫時，spawn prompt 必須明確含 `Mode: --mode {id|ds}` 字樣，由 critic agent 讀取 dispatch。
+
+DS 模式下：
+- 不檢查 §12 / §13 / §10.5（DS 沒有這些章節）
+- 不檢查 ID 銘文（DS 是 ds-meta 不是 id-meta）
+- 改檢查 DS 6 條（表格比 / history-future causality / supply-demand 平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）
+- Banner 寫到 §0 但格式略不同（見 DS Mode 段）
+- critic report 路徑：`docs/ds/_critic_{Theme}_{YYYYMMDD}.md`（不是 `docs/id/_critic_*`）
+
+---
+
 ## 【觸發】
 
 使用者表達以下任一意圖時觸發：
-- **修正意圖**：「改 ID_X」/「patch ID_X」/「修 ID_X 的錯」
-- **驗證意圖**：「review ID_X」/「audit ID_X」/「驗證這份 ID」
-- **健康度查詢**：「ID_X 還活著嗎」/「哪裡有大錯」/「要改什麼」
-- **明確 invocation**：`/id-review {file or theme}`
+- **修正意圖**：「改 ID_X」/「patch ID_X」/「修 ID_X 的錯」/ 「改 DS_X」/「patch DS_X」
+- **驗證意圖**：「review ID_X」/「audit ID_X」/「驗證這份 ID」/ 「review DS_X」/「驗證這份 DS」
+- **健康度查詢**：「ID_X 還活著嗎」/「哪裡有大錯」/「要改什麼」/「DS_X 還活著嗎」
+- **明確 invocation**：`/id-review {file or theme}`（自動 dispatch 模式）
+- **被 skill 強制呼叫**：industry-analyst Step 8.7（mode id）/ industry-ds Step 8.7（mode ds）
 
 不觸發：
 - 「ID_X 寫了什麼」/「介紹一下 X 產業」（純資訊查詢，直接回答即可）
@@ -654,7 +679,8 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 ## 【後續升級】
 
 - v1.1（2026-05-02）：加 Step 2 input mode dispatch (A/B/C) + Step 0/C1-C6 consolidation phase + Step 6 banner 寫法明確化（append vs rewrite）。觸發來源：2026-05-02 ID_AIInferenceEconomics 手動 patch 暴露 3 個 gap + 1 個缺漏概念（banner 累積 / consolidation）
-- v1.2（current，2026-05-03）：加 Step 6.5d PM Implication §0.7 re-assessment（5 bullet / j-logic 4 action / conviction pill sync + back-fill scenario 舊 ID）。觸發：ID_AIDataCenter v1.1 patch（commit f1c450b）— user 把臨時 PM block 升格為所有 ID 標準段落。
+- v1.2（2026-05-03）：加 Step 6.5d PM Implication §0.7 re-assessment（5 bullet / j-logic 4 action / conviction pill sync + back-fill scenario 舊 ID）。觸發：ID_AIDataCenter v1.1 patch（commit f1c450b）— user 把臨時 PM block 升格為所有 ID 標準段落。
+- v1.3（current，2026-05-12）：加 `--mode ds` 分支支援 industry-ds skill 產出的 DS 報告。新增「DS Mode 檢查清單」（DS-1 到 DS-6：表格比 / history-future causality / supply-demand 平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）+「DS Mode Banner 格式」。觸發：industry-ds skill v1.0 上線，需要 mandatory critic gate。
 - v1.3：跑熟後降為 mode (b) auto-patch 大錯
 - v1.3：加 cron 排程模式（weekly 自動跑所有 Q0 ID 的 critic，產 alert 但不 patch）
 - v1.4：跨 ID 一致性 reconcile（critic 找到 cross-ID 數字差異時，自動 patch 兩份 ID 的數字）
@@ -671,3 +697,105 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 5. **commit 訊息要結構化**：列大錯/cosmetic 分類 + portfolio implication
 6. **失敗不靜默**：validator fail / critic 找不到章節 / user skip 全部 → 都明確告訴 user
 7. **Banner 累積上限**：≥5 patch 標記、>2000 字、或 id_version ≥v1.5 → 進 consolidation flow（Step 0 → C1-C6），不再疊新 patch；此規則不可繞過
+
+---
+
+## 【DS Mode 檢查清單】（v1.3 新增）
+
+當 `--mode ds`，跑 Step 1-7 patch flow 但 **檢查清單改用以下 6 條**（取代 ID 模式的 §12/§13/cornerstone/thesis-box 檢查）。
+
+DS 沒有 §12 Non-Consensus（DS 有 §8 Non-Consensus 但敘述形式不是 tag 體系）、沒有 §13 Falsification metric table、沒有 §10.5 catalyst table（DS 的 catalyst 是 §10 敘述形式），所以原本 ID critic 的核心鎖點全部不適用。DS 改驗以下「敘述結構正確性」鎖點。
+
+### DS-1：表格比例硬限制
+
+| 項目 | Pass | Fail |
+|:---|:---|:---|
+| 表格數量 | ≤ 4 張 | > 4 張 |
+| 單表行數 | 每張 ≤ 8 行（不含表頭）| 任一張 > 8 行 |
+| 文字字元比例 | ≥ 80% | < 80% |
+
+**檢查方式**：
+```bash
+python3 << 'PY'
+import re
+html = open("docs/ds/DS_X.html").read()
+clean = re.sub(r'<(script|style)[^>]*>.*?</\1>', '', html, flags=re.DOTALL)
+tables = re.findall(r'<table[^>]*>.*?</table>', clean, flags=re.DOTALL)
+text_total = len(re.sub(r'\s+','',re.sub(r'<[^>]+>','',clean)))
+table_text = sum(len(re.sub(r'\s+','',re.sub(r'<[^>]+>','',t))) for t in tables)
+print(f"tables: {len(tables)}, ratio: {1-table_text/text_total:.1%}")
+PY
+```
+
+**Fail 處置**：🔴 CHANGES_CONCLUSION。表格 > 4 張或文字 < 78% → 大錯。78-80% → 🟡 PARTIAL（補敘述）。
+
+### DS-2：§1 → §3 / §5 / §6 因果鏈
+
+**Why**：DS 核心是因果敘事。§1 歷史寫完後，必須在 §3（未來供給）、§5（未來需求）、§6（推估）中有顯式回應 — 「歷史告訴我們 X，所以未來 Y」。
+
+**檢查方式**：人工讀 §1 提煉 2-3 個關鍵歷史事件 / 模式，然後 grep §3 / §5 / §6 是否回應。例：
+- §1 寫「2012 CUDA 把 NVDA 變平台公司」→ §3 / §5 / §6 至少一處要回應「軟體棧今天是否仍是 binding moat」
+
+**Fail 處置**：🔴（若 §6 推估完全脫離 §1 歷史）/ 🟡（若部分連結但不顯式）
+
+### DS-3：§3 + §5 → 供需平衡明確結論
+
+**Why**：DS 最大價值 — 把供需兩端合在一起、給出明確結論。模稜兩可 → §6 推估缺基礎。
+
+**檢查方式**：在 §5 結尾或 §6 開頭尋找 `.ds-bridge` 段落（或等價 prose 段落），確認出現以下三選一：
+- 「過剩 / surplus / oversupply」
+- 「平衡 / balance」
+- 「短缺 / shortage / undersupply」
+
+允許分時間段（「短期 X 中長期 Y」），但每段必須明確。
+
+**Fail 處置**：🔴 — 缺結論 → 阻擋發布。
+
+### DS-4：§6 三 horizon × 三情境 + trigger 完整
+
+**檢查項**：
+- 表格三列：12M / 3Y / 5Y+
+- 表格三欄：base / bull / bear
+- Trigger 欄非空（每 horizon 一個可量化 metric）
+- 表外有 ≥ 3 段敘述展開三個 horizon 的邏輯
+
+**Fail 處置**：🔴（缺 horizon 或 trigger）/ 🟡（敘述太薄）
+
+### DS-5：§10 Catalyst 雙路徑
+
+**Why**：catalyst 不只是列日期。每個節點必須寫「若達成 → X」「若落空 → Y」雙路徑，否則 catalyst 變單純時間表，喪失 falsification 價值。
+
+**檢查方式**：grep `<time>` 或 `class="ds-time"` 標記後 30 字內是否含「若達成 / 若落空」「if hit / if miss」「達成 / 落空」字眼。
+
+**Fail 處置**：🟡（部分節點有單路徑）/ 🔴（全部單路徑）
+
+### DS-6：§11 ticker 與 §3 / §5 敘述一致
+
+**Why**：§11 是 stock-analyst hook。若 §3 寫供給過剩、§11 把所有供應商標 🔴 beneficiary，邏輯不通。
+
+**檢查方式**：
+- 找 §11 標 🔴 beneficiary=true 的 ticker
+- 對每個這樣的 ticker，確認 §3（未來供給）或 §5（未來需求）有敘述支持「為何此 ticker 受益」
+- 同理對 🔴 beneficiary=false 的 ticker，確認有敘述支持「為何受害」
+
+**Fail 處置**：🟡（個別 ticker 缺對應）/ 🔴（系統性矛盾）
+
+---
+
+## 【DS Mode Banner 格式】（v1.3 新增）
+
+DS 模式下 banner 寫到 §0（thesis box 之上），格式：
+
+```html
+<div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:12px 16px;margin:8px 0 18px;border-radius:4px;font-size:13px;color:#78350F;line-height:1.65">
+  <strong>📌 Critic Patch（v{N}, {YYYY-MM-DD}）</strong><br>
+  🔴 大錯 ①：{patch summary} → 影響章節：§{X}<br>
+  🟢 cosmetic：{summary if any} → §{X}
+</div>
+```
+
+Banner 累積上限與 ID 相同（≥ 5 patch / > 2000 字 / ds_version ≥ v1.5 → consolidation）。
+
+DS critic report 路徑：`docs/ds/_critic_{Theme}_{YYYYMMDD}.md`（不放 `docs/id/_critic_*`）。
+
+DS 模式不檢查 `<script id="id-meta">` 而是 `<script id="ds-meta">`；validator 用 `scripts/validate_ds_meta.py`。

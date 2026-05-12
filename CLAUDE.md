@@ -56,6 +56,30 @@ Agent({
 - 索引：`docs/dca/INDEX.md`（skill 自動 append）
 - Research 頁同步：跑 `python scripts/update_dd_index.py` 後，「定見」欄會自動連到該 ticker 最新的 DCA 報告
 
+## Workflow: 產業 DS（敘述型產業研究）
+
+當用戶說「{主題} ds」/「ds {主題}」/「{產業} 敘述報告」/「分析 {產業} 的供需循環」/「{產業} 歷史與未來」/「discourse {industry}」時，自動觸發 `industry-ds` skill（`.claude/skills/industry-ds/`）。
+
+**定位**：與 `industry-analyst`（產業 ID）並列的姊妹 skill — ID 給 PM 表格 dashboard 快速決策、DS 給供需循環敘事深度準備。同 theme 可並存（DS `ds-meta.related_ids[]` 指向同主題 ID，§0 顯示 cross-link callout）。
+
+**章節骨架（不可動）**：§0 TL;DR → §1 歷史 → §2 現供 → §3 未供 → §4 現需 → §5 未需（含 TAM） → §6 短中長期推估 → §7 投資時鐘 → §8 Non-Consensus → §9 Kill Scenario → §10 Catalyst → §11 關聯個股。
+
+**硬性比例**：文字 ≥ 80%、表格 ≤ 20%（與 ID 的 ≥ 70% 表格反過來）。表格上限 4 張，每張 ≤ 8 行。
+
+**輸出**：
+- HTML：`docs/ds/DS_{Theme}_{YYYYMMDD}.html`
+- 索引：`docs/ds/INDEX.md` + `docs/ds/index.html`（skill 插入卡片到 subgroup-anchor 之後）
+- 分類頁：跑 `python3 scripts/build_ds_category_pages.py` 重新生成 15 個 `docs/ds/cat-{mega}.html`
+- 上站路徑：`https://research.investmquest.com/ds/`（與 `/id/` 並列）
+
+**Plumbing**：
+- `scripts/validate_ds_meta.py`：驗 `<script id="ds-meta">` 欄位（pre-commit hook 會跑）
+- `scripts/build_ds_category_pages.py`：mirror `build_id_category_pages.py`，從 `docs/ds/index.html` 產 cat-*.html
+- `scripts/init_ds_index.py`：一次性 bootstrap（從 `docs/id/index.html` 轉換出 `docs/ds/index.html`）
+- Taxonomy：完全共用 ID（`docs/id/taxonomy.md` 是單一資料源；`validate_ds_meta.py` import `validate_id_meta.TAXONOMY`）
+
+**Critic gate**：Step 8.7 強制 spawn `id-review` skill `--mode ds`（reuse 既有 id-review，加 6 條 DS-specific 檢查：表格比 / history-future causality / 供需平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）。Critic report 放 `docs/ds/_critic_{Theme}_{YYYYMMDD}.md`。
+
 ## Git pre-commit hook
 
 Repo 有 dd/id meta validator pre-commit hook。新 clone 啟用方式與 bypass 細節：見 `scripts/README.md`。
