@@ -6,8 +6,11 @@ Universe: top N (default 30) tickers by `combined` from docs/screener/latest.jso
 (matches screener.py's existing fetch_fundamentals inline behavior).
 
 4 fields per ticker:
-  - eps_cagr   : 1Y forward EPS growth   (yfinance earnings_estimate +1y row)
-  - rev_cagr   : 1Y forward revenue growth (yfinance revenue_estimate +1y row)
+  - eps_cagr   : Forward 2Y EPS CAGR. yfinance earnings_estimate has no +2y
+                 row, so we span FY-1 actual (yearAgoEps in 0y row) → FY+1
+                 consensus (avg in +1y row), exactly 2 fiscal years. Fallback
+                 anchors on trailingEps (~1.5-2Y span, less precise).
+  - rev_cagr   : Forward 2Y revenue CAGR (same FY-1 actual → FY+1 estimate).
   - roic       : NOPAT / Invested Capital (annual income_stmt + balance_sheet)
   - fcf_margin : TTM FCF / Revenue
 
@@ -128,30 +131,65 @@ def calc_roic(t, info=None):
         return None
 
 
+def _forward_2y_cagr(df, base_col, ttm_fallback):
+    """Forward 2Y CAGR using yfinance estimate dataframe (earnings or revenue).
+
+    Primary span: FY-1 actual (yearAgoEps/yearAgoRevenue in 0y row) →
+                  FY+1 consensus (avg in +1y row). Exactly 2 fiscal years.
+    Fallback anchor: ttm_fallback (trailingEps / totalRevenue). Less precise
+                    (~1.5-2Y span depending on FY calendar position) but
+                    usable when yearAgo column is missing or non-positive.
+    Returns None when no valid base or forward value is found, or when the
+    ratio is non-positive (e.g. negative-earnings recovery).
+    """
+    try:
+        if df is None or getattr(df, 'empty', True):
+            return None
+        if '+1y' not in df.index or 'avg' not in df.columns:
+            return None
+        fwd = df.loc['+1y', 'avg']
+        if not pd.notna(fwd) or fwd <= 0:
+            return None
+        base = None
+        if '0y' in df.index and base_col in df.columns:
+            v = df.loc['0y', base_col]
+            if pd.notna(v) and float(v) > 0:
+                base = float(v)
+        if base is None and ttm_fallback is not None:
+            try:
+                v = float(ttm_fallback)
+                if v > 0:
+                    base = v
+            except (TypeError, ValueError):
+                pass
+        if base is None or base <= 0:
+            return None
+        ratio = float(fwd) / base
+        if ratio <= 0:
+            return None
+        return ratio ** 0.5 - 1
+    except Exception:
+        return None
+
+
 def fetch_us_fundamentals(ticker: str) -> dict:
     out = {'ticker': ticker, 'rev_cagr': None, 'eps_cagr': None,
            'roic': None, 'fcf_margin': None}
     try:
         t = yf.Ticker(ticker)
-        try:
-            df = t.earnings_estimate
-            if df is not None and '+1y' in df.index and 'growth' in df.columns:
-                v = df.loc['+1y', 'growth']
-                if pd.notna(v):
-                    out['eps_cagr'] = float(v)
-        except Exception:
-            pass
-        try:
-            df = t.revenue_estimate
-            if df is not None and '+1y' in df.index and 'growth' in df.columns:
-                v = df.loc['+1y', 'growth']
-                if pd.notna(v):
-                    out['rev_cagr'] = float(v)
-        except Exception:
-            pass
         info = {}
         try:
             info = t.info or {}
+        except Exception:
+            pass
+        try:
+            out['eps_cagr'] = _forward_2y_cagr(
+                t.earnings_estimate, 'yearAgoEps', info.get('trailingEps'))
+        except Exception:
+            pass
+        try:
+            out['rev_cagr'] = _forward_2y_cagr(
+                t.revenue_estimate, 'yearAgoRevenue', info.get('totalRevenue'))
         except Exception:
             pass
         out['roic'] = calc_roic(t, info=info)
