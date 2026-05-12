@@ -22,7 +22,7 @@
 
 | 日期 | 主題 | 涵蓋 ticker | 歷史窗口 | 預測範圍 | 同 theme ID | 鮮度 | 檔名 | 備註 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| _（尚無 DS 報告，等首份 commit）_ | | | | | | | | |
+| 2026-05-12 | AI 加速器需求 — 從訓練週期到推論基建的供需循環（首篇 DS）| 10（4🔴 / 5🟡 / 1🟢）| 20 年 | 5 年 | ID_AIAcceleratorDemand_20260419 | 🟢🟢🟢 | DS_AIAcceleratorDemand_20260512.html | smoke test 首篇；critic 給 🟡 PARTIAL（DS-2 CUDA moat 因果橋）已 patch；3 條 non-consensus：① ASIC 滲透 2028 達 30-40%；② CUDA inference moat 半衰期 3-4 年；③ 電力是 5-15 年結構性 binding 不會 5 年解決 |
 
 ---
 

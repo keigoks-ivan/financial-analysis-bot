@@ -158,21 +158,33 @@ time:hover, strong.ds-time:hover{background:#DDD6FE}
 
 ## §0 TL;DR 段落範例
 
+**§0 內順序固定**：thesis box → cross-link callout（若有同 theme ID） → intro paragraph → 編輯記錄 details（若有 critic patch；預設 collapsed）。
+
 ```html
 <section id="s0" class="ds-body">
 <h2>§0 TL;DR</h2>
 
-<!-- 同 theme 有 ID 時必填的 callout -->
-<div class="ds-crosslink">
-  📊 本主題已有 ID 報告：<a href="../id/ID_AIAcceleratorDemand_20260419.html"><strong>ID_AIAcceleratorDemand_20260419</strong></a> — 表格 dashboard 視角，建議與本 DS 互補閱讀。
-</div>
-
+<!-- 1. Thesis box — §0 必填、放最前面（讀者第一眼看到核心 thesis） -->
 <div class="ds-thesis">
   <div class="label">核心 Thesis</div>
   <strong>AI 加速器需求進入「推論主導 + 結構性電力瓶頸 + 客製化 ASIC 蠶食」三軌混合期</strong>：訓練週期 2024-2025 高峰已過、推論 run-rate 2026-2027 取代訓練成 demand 主軸；供給端電力 lead time（2-3 年）已超過晶片 lead time，重新定義成本曲線；hyperscaler ASIC 2028 將佔加速器 capex 35-45%（共識 20-25%）。
 </div>
 
+<!-- 2. Cross-link callout — 若同 theme 有 ID 則必填 -->
+<div class="ds-crosslink">
+  📊 本主題已有 ID 報告：<a href="../id/ID_AIAcceleratorDemand_20260419.html"><strong>ID_AIAcceleratorDemand_20260419</strong></a> — 表格 dashboard 視角，建議與本 DS 互補閱讀。
+</div>
+
+<!-- 3. Intro paragraph — 展開 thesis 的 narrative bridge -->
 <p>本 DS 以 25 年產業史為起點，回顧 GPU 從遊戲卡到 AI 訓練工具、再到推論基建的三次轉折，據此推演未來 5 年供需平衡：現在供給以 NVDA / AMD / 自研 ASIC 三軌共存，但電力（不是晶片）才是未來 24-36 個月的硬限制；未來需求轉軸於 2026 H2 從訓練讓位給推論，TAM 由 $300B 擴至 $700B 但增速由 +60% YoY 降至 +25-30%；短中長期推估收斂於「base case 推論超越訓練成 demand 主軸 + ASIC 滲透 +15pp + 電力定 ASP 上限」。</p>
+
+<!-- 4. 編輯記錄（critic patch banner）— 若有 patch 則放 §0 末尾、預設 collapsed -->
+<details style="margin:18px 0 6px;font-size:12.5px;color:#6B7280">
+  <summary style="cursor:pointer;color:#7C3AED;font-weight:600;list-style:none">📌 編輯記錄（v1.1 critic patch）— 點開展開</summary>
+  <div style="margin-top:8px;padding:10px 14px;background:#FEF9C3;border-left:3px solid #F59E0B;border-radius:3px;color:#78350F;line-height:1.65">
+    <strong>v1.1（YYYY-MM-DD）</strong>：🟡 / 🔴 / 🟢 — {patch summary} → 影響章節：§{X}。critic report：<a href="_critic_{Theme}_{YYYYMMDD}.md" style="color:#7C3AED">_critic_{Theme}_{YYYYMMDD}.md</a>
+  </div>
+</details>
 </section>
 ```
 

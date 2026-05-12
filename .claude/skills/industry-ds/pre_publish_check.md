@@ -132,9 +132,9 @@ grep -c '<tr>' docs/ds/DS_{Theme}_{Date}.html | head -1
 
 ---
 
-## Gate 10 — 表格數 ≤ 4、行數 ≤ 8/張
+## Gate 10 — 表格數 ≤ 4、行數 ≤ 8/張（§11 例外可至 16）
 
-**Why**：80/20 文字表格比的 hard cap。表格過多 → 失去 DS 敘述本色。
+**Why**：80/20 文字表格比的 hard cap。表格過多 → 失去 DS 敘述本色。**例外**：§11 ticker reference table 是 stock-analyst hook，要列出完整 ticker 清單，允許至 16 行。
 
 **How**：
 ```bash
@@ -144,12 +144,18 @@ html = open(sys.argv[1]).read()
 tables = re.findall(r'<table[^>]*>.*?</table>', html, re.DOTALL)
 print(f'表格數: {len(tables)}')
 for i, t in enumerate(tables):
-    rows = len(re.findall(r'<tr[^>]*>', t)) - 1  # -1 for header
-    print(f'  表 {i+1}: {rows} 行')
+    tbody_m = re.search(r'<tbody>(.*?)</tbody>', t, re.DOTALL)
+    tbody = tbody_m.group(1) if tbody_m else t
+    rows = len(re.findall(r'<tr', tbody))
+    # 判斷是否為 §11 ticker table（含 .ds-tickers class 或 ticker 欄位）
+    is_s11 = 'ds-tickers' in t or 'depth-red' in t or 'depth-yellow' in t
+    cap = 16 if is_s11 else 8
+    status = 'OK' if rows <= cap else 'FAIL'
+    print(f'  表 {i+1}: {rows} 行（cap {cap}）— {status}')
 " docs/ds/DS_{Theme}_{Date}.html
 ```
 
-**Fail action**：把多餘的表格資訊轉為敘述段落；單表行數超標 → 合併 / 取捨。
+**Fail action**：把多餘的表格資訊轉為敘述段落；單表行數超標 → 合併 / 取捨。§11 若超過 16 行 → 把邊緣 ticker（🟢 深度）拆到表外文字描述。
 
 ---
 

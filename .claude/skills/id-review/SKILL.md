@@ -782,20 +782,23 @@ PY
 
 ---
 
-## 【DS Mode Banner 格式】（v1.3 新增）
+## 【DS Mode Banner 格式】（v1.3 新增，v1.3.1 微調）
 
-DS 模式下 banner 寫到 §0（thesis box 之上），格式：
+DS 模式下 banner 寫到 **§0 末尾**（不放 thesis box 之上，避免把 thesis 推到下方），且用 `<details>` 預設摺疊，讓讀者先看 thesis 不被 editorial note 干擾。格式：
 
 ```html
-<div style="background:#FEF3C7;border-left:4px solid #F59E0B;padding:12px 16px;margin:8px 0 18px;border-radius:4px;font-size:13px;color:#78350F;line-height:1.65">
-  <strong>📌 Critic Patch（v{N}, {YYYY-MM-DD}）</strong><br>
-  🔴 大錯 ①：{patch summary} → 影響章節：§{X}<br>
-  🟢 cosmetic：{summary if any} → §{X}
-</div>
+<details style="margin:18px 0 6px;font-size:12.5px;color:#6B7280">
+  <summary style="cursor:pointer;color:#7C3AED;font-weight:600;list-style:none">📌 編輯記錄（v{N} critic patch）— 點開展開</summary>
+  <div style="margin-top:8px;padding:10px 14px;background:#FEF9C3;border-left:3px solid #F59E0B;border-radius:3px;color:#78350F;line-height:1.65">
+    <strong>v{N}（{YYYY-MM-DD}）</strong>：🔴 / 🟡 / 🟢 — {patch summary} → 影響章節：§{X}。critic report：<a href="_critic_{Theme}_{YYYYMMDD}.md" style="color:#7C3AED">_critic_{Theme}_{YYYYMMDD}.md</a>
+  </div>
+</details>
 ```
 
-Banner 累積上限與 ID 相同（≥ 5 patch / > 2000 字 / ds_version ≥ v1.5 → consolidation）。
+**位置規則**：在 §0 內，必填順序為 thesis box → ds-crosslink callout（若有 related_ids） → intro paragraph → 編輯記錄 details（若有 patch）。Banner 一律 collapse-by-default。
 
-DS critic report 路徑：`docs/ds/_critic_{Theme}_{YYYYMMDD}.md`（不放 `docs/id/_critic_*`）。
+**累積上限與 ID 相同**：≥ 5 patch / > 2000 字 / ds_version ≥ v1.5 → consolidation flow（每個 patch 進到對應章節，§0 details 內留單行 "v{N} consolidated" marker）。
+
+**路徑**：DS critic report 路徑 `docs/ds/_critic_{Theme}_{YYYYMMDD}.md`（不放 `docs/id/_critic_*`）。
 
 DS 模式不檢查 `<script id="id-meta">` 而是 `<script id="ds-meta">`；validator 用 `scripts/validate_ds_meta.py`。
