@@ -597,33 +597,35 @@ function renderAthCard(b) {
   const stats = document.getElementById('ath-stats');
   const meta = document.getElementById('ath-meta');
   const topBadge = document.getElementById('ath-top-badge');
-  const base = b.S.length + b.A.length;       // Q✓ leaders ready
-  const cont = b.B.length;                    // Q✓ continuation
-  const ext  = b.E.length + b.P.length + b.W.length; // overheated / skip
-  const m    = b.M.length;                    // Q✗ momentum (watch)
+  const fresh = b.F.length;
+  const setup = b.S.length;
+  const trend = b.T.length;
+  const cont  = b.B.length;
+  const ext   = b.E.length;
+  const avoid = b.X.length;
   stats.innerHTML = `
-    <span class="badge b-base">Base S+A ${base}</span>
-    <span class="badge b-cont">Cont B ${cont}</span>
-    <span class="badge b-ext">Ext E/P/W ${ext}</span>
-    <span class="badge b-dormant">⚪ M ${m}</span>`;
-  const totalCandidates = base + cont + ext;
+    <span class="badge b-fresh">🌱 F ${fresh}</span>
+    <span class="badge b-base">⭐ S ${setup}</span>
+    <span class="badge b-cont">🌊 T ${trend}</span>
+    <span class="badge b-cont">📈 B ${cont}</span>
+    <span class="badge b-ext">🔥 E ${ext}</span>
+    <span class="badge b-dormant">⚠️ X ${avoid}</span>`;
+  const totalCandidates = fresh + setup + trend + cont + ext;
   topBadge.textContent = `${totalCandidates} 候選`;
-  meta.textContent = `Q✓ leaders ready ${base} · 已過熱 ${b.E.length} · 跳過 ${b.P.length + b.W.length} · 動能觀察 ${m}`;
+  meta.textContent = `進場池 F+S+T+B ${fresh + setup + trend + cont} · 過熱等回踩 ${ext} · 避開 ${avoid}`;
 }
 
 function renderTimingCard(b) {
   const stats = document.getElementById('timing-stats');
   const topBadge = document.getElementById('timing-top-badge');
-  const ready = b.S.length + b.A.length + b.B.length;
-  const wait = b.E.length;
-  const skip = b.P.length + b.W.length;
-  const watch = b.M.length;
+  const ready = b.F.length + b.S.length + b.T.length + b.B.length;
+  const wait  = b.E.length;
+  const skip  = b.X.length;
   stats.innerHTML = `
     <span class="badge b-base">🟢 進場 ${ready}</span>
     <span class="badge b-cont">🟡 等回踩 ${wait}</span>
-    <span class="badge b-ext">🔴 過熱 ${skip}</span>
-    <span class="badge b-dormant">⚪ Q✗ ${watch}</span>`;
-  const total = ready + wait + skip + watch;
+    <span class="badge b-ext">🔴 避開 ${skip}</span>`;
+  const total = ready + wait + skip;
   topBadge.textContent = `${total} signals`;
 }
 
