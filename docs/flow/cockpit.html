@@ -5,6 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>持倉 Cockpit · Flow Cockpit</title>
 <link rel="stylesheet" href="flow.css">
+<style>
+  .status-card {
+    border: 1px solid var(--border-light, #E2E8F0);
+    border-left: 3px solid var(--warn-strong, #D97706);
+    background: var(--bg-secondary, #F8FAFC);
+    border-radius: var(--radius-md, 6px);
+    padding: 14px 18px;
+    margin: 0 0 1.25rem;
+    line-height: 1.7;
+  }
+  .status-card.ready { border-left-color: var(--success-text, #166534); }
+  .status-card h4 { margin: 0 0 8px; font-size: 14px; font-weight: 500; }
+  .status-card p { margin: 4px 0; font-size: 13px; color: var(--text-secondary, #334155); }
+  .status-list { margin: 8px 0; padding: 0; list-style: none; font-size: 12px; font-family: 'IBM Plex Mono', monospace; line-height: 1.9; }
+  .status-list li { padding-left: 0; }
+  .status-list .ok { color: var(--success-text, #166534); }
+  .status-list .wait { color: var(--text-tertiary, #94A3B8); }
+  .status-foot { font-size: 11px; color: var(--text-tertiary, #94A3B8); margin-top: 10px; padding-top: 8px; border-top: 0.5px solid var(--border-light, #E2E8F0); }
+</style>
 </head>
 <body>
 <div class="container">
@@ -19,98 +38,45 @@
   <p class="adj-notice">📐 <strong>P&L 與 vs 200DMA 使用還原權息計算</strong>——含配息再投資的總報酬。</p>
 
   <p class="section-label">當前持倉</p>
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Ticker</th>
-        <th>Tier</th>
-        <th>%</th>
-        <th>進場日</th>
-        <th>Adj. P&L</th>
-        <th>vs 200DMA</th>
-        <th>Thesis 狀態</th>
-        <th>下次 Review</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>NVDA</strong></td>
-        <td><span class="badge b-tier1">T1</span></td>
-        <td>22%</td>
-        <td>2024-06</td>
-        <td class="v-success">+128%</td>
-        <td>+12%</td>
-        <td>✅ 成立</td>
-        <td>2026-08</td>
-      </tr>
-      <tr>
-        <td><strong>GOOGL</strong></td>
-        <td><span class="badge b-tier1">T1</span></td>
-        <td>18%</td>
-        <td>2025-01</td>
-        <td class="v-success">+34%</td>
-        <td>+8%</td>
-        <td>✅ 成立</td>
-        <td>2026-08</td>
-      </tr>
-      <tr>
-        <td><strong>AVGO</strong></td>
-        <td><span class="badge b-tier1">T1</span></td>
-        <td>15%</td>
-        <td>2024-11</td>
-        <td class="v-success">+62%</td>
-        <td>+15%</td>
-        <td>✅ 成立</td>
-        <td>2026-08</td>
-      </tr>
-      <tr>
-        <td><strong>RMS</strong></td>
-        <td><span class="badge b-tier2">T2</span></td>
-        <td>10%</td>
-        <td>2024-09</td>
-        <td>+8%</td>
-        <td>+2%</td>
-        <td><span class="b-review badge">⚠ 待 review</span></td>
-        <td><strong>今日</strong></td>
-      </tr>
-      <tr>
-        <td><strong>SE</strong></td>
-        <td><span class="badge b-tier2">T2</span></td>
-        <td>8%</td>
-        <td>2025-03</td>
-        <td class="v-success">+22%</td>
-        <td>+6%</td>
-        <td><span class="b-review badge">⚠ 待 review</span></td>
-        <td><strong>今日</strong></td>
-      </tr>
-      <tr>
-        <td colspan="8" class="placeholder">其他持倉待接資料</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <p class="section-label">⚠ 季度 THESIS REVIEW · 三題機制</p>
-  <div class="review-card">
-    <p class="review-target"><strong>RMS</strong> · 上次 review 90 天前 · Q1 財報已出</p>
-    <ol class="review-questions">
-      <li><strong>當初買進的 thesis 還成立嗎?</strong> 不看股價,只看敘事:[ 待回答 ]</li>
-      <li><strong>如果今天才看到這檔,我會用什麼價格買?</strong> 零基思考:[ 待回答 ]</li>
-      <li><strong>同樣的錢放在另一個 Tier 1 候選股,12 個月期望報酬誰更高?</strong> 機會成本:[ 待回答 ]</li>
-    </ol>
-    <p class="review-rule">→ 任一題答「否 / 不會 / 對方更高」 = <strong>降 Tier 或減倉</strong></p>
+  <div class="status-card">
+    <h4>⏳ 持倉資料目前未接入</h4>
+    <p>等 IBKR Flex Query token-based 同步（README Phase 4,尚未實作）。</p>
+    <p>接入後自動填入欄位:</p>
+    <ul class="status-list">
+      <li class="wait">  · ticker / tier (T1/T2/T3) / 倉位 % / 進場日</li>
+      <li class="wait">  · Adj. P&L (含配息再投資)</li>
+      <li class="wait">  · vs 200DMA (cross-ref docs/screener/latest.json)</li>
+      <li class="wait">  · Thesis 狀態 (cross-ref docs/dd/ 的 dd-meta signal)</li>
+      <li class="wait">  · 下次 Review = DD 日 + 90 天</li>
+    </ul>
+    <p class="status-foot">守住 README 鐵律 3:沒有資料寧可空白也不放假數據。</p>
   </div>
 
   <p class="section-label">🚨 證偽條件監控(自動)</p>
-  <table class="data-table">
-    <thead>
-      <tr><th>Ticker</th><th>跌破 200DMA?</th><th>200DMA 下彎?</th><th>EPS YoY 連 2 季負?</th><th>FCF Mgn 連 2 季降?</th><th>狀態</th></tr>
-    </thead>
-    <tbody>
-      <tr><td><strong>NVDA</strong></td><td>否</td><td>否</td><td>否</td><td>否</td><td>✅ 全部正常</td></tr>
-      <tr><td colspan="6" class="placeholder">其他持倉待接資料</td></tr>
-    </tbody>
-  </table>
-  <p class="disclaimer">證偽觸發任一項 → 強制進入「重新審視」狀態,避免溫水煮青蛙。</p>
+  <div class="status-card ready">
+    <h4>✅ Pipeline 就緒,等持倉接入後自動掃描</h4>
+    <p>4 條證偽條件的資料源狀態:</p>
+    <ul class="status-list">
+      <li class="ok">  ✓ 跌破 200DMA          — docs/screener/latest.json (vs_200ma_pct)</li>
+      <li class="ok">  ✓ 200DMA 下彎          — docs/screener/latest.json (trend_ok)</li>
+      <li class="ok">  ✓ EPS YoY 連 2 季負    — docs/screener/quarterly.json (eps_yoy_neg_streak ≥ 2)</li>
+      <li class="ok">  ✓ FCF Mgn 連 2 季降    — docs/screener/quarterly.json (fcf_margin_decline_streak ≥ 2)</li>
+    </ul>
+    <p>持倉接入瞬間,4/4 條件自動掃描;觸發任一項 → 強制進入「重新審視」狀態,避免溫水煮青蛙。</p>
+    <p class="status-foot">Quarterly pipeline 在 .github/workflows/weekly-quarterly-us.yml 每週六 00:00 UTC 跑。</p>
+  </div>
+
+  <p class="section-label">⚠ 季度 THESIS REVIEW · 三題機制</p>
+  <div class="status-card">
+    <h4>⏳ Review queue 待持倉接入後啟動</h4>
+    <p>自動偵測規則(等 Section 1 接入):</p>
+    <ul class="status-list">
+      <li class="wait">  · DD 日 > 60 天 → 列入待 review</li>
+      <li class="wait">  · PM HTML stale 標籤觸發 → 列入待 review</li>
+    </ul>
+    <p>三題本身(thesis 是否成立 / 零基思考 / 機會成本)是靜態 prompt,任一題答「否/不會/對方更高」= 降 tier 或減倉。</p>
+    <p class="status-foot">三題答案的持久化是已知短板(README:204),需要表單 + 寫回 GitHub,暫不處理。</p>
+  </div>
 
   <div class="footer-nav">
     <a href="timing-board.html">← Timing Board</a>
