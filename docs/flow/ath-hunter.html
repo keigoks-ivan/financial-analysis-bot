@@ -123,6 +123,7 @@
     margin-bottom: 8px;
   }
   .tier-name { font-size: 14px; font-weight: 500; }
+  .tier-rule { font-size: 11px; color: var(--text-tertiary); font-weight: 400; margin-left: 8px; }
   .tier-action { font-size: 11px; color: var(--text-tertiary); }
   .empty-tier {
     font-size: 12px;
@@ -173,19 +174,6 @@
       <p style="margin: 12px 0 0; padding-top: 10px; border-top: 0.5px solid var(--border-light); color: var(--text-tertiary);">
         判斷依據:SPY + QQQ + IWM 三指數獨立判斷,綜合輸出 dominant state。三指數一致 = unanimous;不一致取從嚴。
       </p>
-    </div>
-  </details>
-
-  <details class="info-box" style="margin-bottom: 1.5rem;">
-    <summary style="cursor: pointer; font-size: 13px; font-weight: 500;">📋 七層分類規則(點開展開)</summary>
-    <div style="margin-top: 12px; font-size: 12px; line-height: 1.8;">
-      <p style="margin: 0 0 8px;"><span class="badge tier-S">S · PRIME</span> &nbsp; 距 52W high &lt; 3% · VCP ≥ 85 · 收縮 3–5 次 · RS accel · Q✓ · 排名上升 · sector strong</p>
-      <p style="margin: 0 0 8px;"><span class="badge tier-A">A · SETUP</span> &nbsp; 距 52W high &lt; 8% · VCP ≥ 75 · 收縮 ≥ 2 · RS accel/steady · Q✓ · sector strong/neutral</p>
-      <p style="margin: 0 0 8px;"><span class="badge tier-B">B · CONTINUATION</span> &nbsp; 距 52W high 8–15% · 距 50DMA &lt; 12% · RS accel · Q✓</p>
-      <p style="margin: 0 0 8px;"><span class="badge tier-M">M · MOMENTUM</span> &nbsp; 距 52W high &lt; 8% · VCP ≥ 80 · RS accel · Q✗(動能極強但基本面差)</p>
-      <p style="margin: 0 0 8px;"><span class="badge tier-E">E · EXTENDED</span> &nbsp; 距 50DMA &gt; 20% 或 RSI &gt; 75 · RS accel/steady · Q✓(強勢過熱,等回踩)</p>
-      <p style="margin: 0 0 8px;"><span class="badge tier-P">🚀 P · PARABOLIC</span> &nbsp; 距 52W high &lt; 5% · 距 50DMA &gt; 20% · VCP &lt; 75 · RS accel · Q✗(拋物線飆漲,基本面不過 → 看不買)</p>
-      <p style="margin: 0;"><span class="badge tier-W">W · WEAKENING</span> &nbsp; 距 50DMA &gt; 20% 或 RSI &gt; 75 · RS fading/choppy(警示過熱,避開)</p>
     </div>
   </details>
 
@@ -427,13 +415,20 @@ function renderRegimeBanner(marketState) {
 }
 
 const TIER_META = {
-  S: { name: 'S · PRIME',        action: '優先全力 DD',           emoji: '⭐' },
-  A: { name: 'A · SETUP',        action: '主力候選池',           emoji: '🎯' },
-  B: { name: 'B · CONTINUATION', action: '加碼參考',             emoji: '📈' },
-  M: { name: 'M · MOMENTUM',     action: '觀察用,不建倉',       emoji: '👀' },
-  E: { name: 'E · EXTENDED',     action: '設提醒,等回踩',       emoji: '🔥' },
-  P: { name: 'P · PARABOLIC',    action: '看不買 · 拋物線階段', emoji: '🚀' },
-  W: { name: 'W · WEAKENING',    action: '避開',                emoji: '⚠️' }
+  S: { name: 'S · PRIME',        action: '優先全力 DD',           emoji: '⭐',
+       rule: '距 52W high &lt; 3% · VCP ≥ 85 · 收縮 3–5 次 · RS accel · Q✓ · 排名上升 · sector strong' },
+  A: { name: 'A · SETUP',        action: '主力候選池',           emoji: '🎯',
+       rule: '距 52W high &lt; 8% · VCP ≥ 75 · 收縮 ≥ 2 · RS accel/steady · Q✓ · sector strong/neutral' },
+  B: { name: 'B · CONTINUATION', action: '加碼參考',             emoji: '📈',
+       rule: '距 52W high 8–15% · 距 50DMA &lt; 12% · RS accel · Q✓' },
+  M: { name: 'M · MOMENTUM',     action: '觀察用,不建倉',       emoji: '👀',
+       rule: '距 52W high &lt; 8% · VCP ≥ 80 · RS accel · Q✗(動能極強但基本面差)' },
+  E: { name: 'E · EXTENDED',     action: '設提醒,等回踩',       emoji: '🔥',
+       rule: '距 50DMA &gt; 20% 或 RSI &gt; 75 · RS accel/steady · Q✓(強勢過熱,等回踩)' },
+  P: { name: 'P · PARABOLIC',    action: '看不買 · 拋物線階段', emoji: '🚀',
+       rule: '距 52W high &lt; 5% · 距 50DMA &gt; 20% · VCP &lt; 75 · RS accel · Q✗(拋物線飆漲,基本面不過 → 看不買)' },
+  W: { name: 'W · WEAKENING',    action: '避開',                emoji: '⚠️',
+       rule: '距 50DMA &gt; 20% 或 RSI &gt; 75 · RS fading/choppy(警示過熱,避開)' }
 };
 
 function fmtPct(v, d = 1) {
@@ -459,7 +454,10 @@ function renderTier(tier, stocks) {
     : '';
   const header = `
     <div class="tier-header">
-      <span class="tier-name"><span class="badge tier-${tier}">${meta.emoji} ${meta.name}</span></span>
+      <span class="tier-name">
+        <span class="badge tier-${tier}">${meta.emoji} ${meta.name}</span>
+        <span class="tier-rule">${meta.rule}</span>
+      </span>
       <span class="tier-action">→ ${meta.action} · ${stocks.length} 檔</span>
     </div>
   ` + note;
