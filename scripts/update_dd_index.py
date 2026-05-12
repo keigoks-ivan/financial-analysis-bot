@@ -267,41 +267,92 @@ def _extract_scenario_rows(html: str, anchor_idx: int) -> list[dict] | None:
     return scenarios
 
 
-def extract_dca_bear_with_pbear(dca_path) -> tuple[float, float] | None:
-    """Return (bear_5y_pct, p_bear_pct) from §4 scenario rows, or None.
+_DCA_CELL_RE = re.compile(
+    r'<div[^>]*class="(?:(?:status-)?cell)[^"]*"[^>]*>',
+    re.DOTALL,
+)
+_DCA_VALUE_RE = re.compile(
+    r'<div[^>]*class="(?:value|body|status-value|status-main)[^"]*"[^>]*>(.*?)</div>',
+    re.DOTALL,
+)
+_DCA_ARROWS = ("↑", "→", "↓")
 
-    - bear_5y = worst scenario's 5Y absolute return %
-    - p_bear  = worst scenario's probability % (the chance the thesis lands
-                in the worst bucket — appended as micro-label to the Bear cell)
 
-    For N scenarios, the worst is the one with the lowest 5Y return. Works
-    for 3-scenario (Bull/Base/Bear) and 4-scenario (Bull/Base/Bear/Tail)
-    DCAs alike.
+def _dca_find_arrow_in_html(html_fragment: str) -> "str | None":
+    """Find first moat trend arrow in html_fragment.
+
+    Prefers arrows found inside value/body/status-value/status-main divs
+    (the big display element) to avoid false hits from narrative text.
+    """
+    for vm in _DCA_VALUE_RE.finditer(html_fragment):
+        content = vm.group(1)
+        for arrow in _DCA_ARROWS:
+            if arrow in content:
+                return arrow
+    # Fallback: any arrow in the fragment
+    for arrow in _DCA_ARROWS:
+        if arrow in html_fragment:
+            return arrow
+    return None
+
+
+def extract_dca_moat_trend(dca_path) -> "str | None":
+    """Return the moat trend arrow (↑/→/↓) from a DCA HTML file, or None.
+
+    Extraction strategy (first hit wins):
+    1. Status Bar 2nd cell — authoritative moat_trend visual output.
+       Cell boundary detection uses class="cell"/"status-cell" divs.
+       Arrow search within the 2nd cell prefers value/body/status-value/
+       status-main div content to avoid stray arrows in narrative text.
+    2. Frequency count of literal '↑ widening', '→ holding', '↓ narrowing'
+       patterns across the whole file. The spec template lists each exactly
+       once as a guide; the chosen value gets repeated in Status Bar + Phase
+       A1 conclusion + §1 — so frequency wins.
+    3. Last resort: 'moat_trend [↑→↓]' keyword pattern.
     """
     try:
         html = Path(dca_path).read_text(encoding="utf-8")
     except OSError:
         return None
-    positions = sorted({
-        idx for kw in _DCA_EV_ANCHORS for idx in _dca_ev_find_all(html, kw)
-    })
-    for anchor_idx in positions:
-        if not _dca_ev_in_cell(html, anchor_idx):
-            continue
-        scenarios = _extract_scenario_rows(html, anchor_idx)
-        if not scenarios:
-            continue
-        worst = min(scenarios, key=lambda s: s["return"])
-        return worst["return"], worst["prob"]
+
+    # Strategy 1: status-bar 2nd cell
+    sb_idx = html.find('class="status-bar"')
+    if sb_idx >= 0:
+        sb_html = html[sb_idx : sb_idx + 3000]
+        cell_starts = [m.start() for m in _DCA_CELL_RE.finditer(sb_html)]
+        if len(cell_starts) >= 2:
+            end = cell_starts[2] if len(cell_starts) > 2 else len(sb_html)
+            second_cell = sb_html[cell_starts[1] : end]
+            arrow = _dca_find_arrow_in_html(second_cell)
+            if arrow:
+                return arrow
+
+    # Strategy 2: named pattern frequency
+    counts = {
+        "↑": len(re.findall(r"↑\s*widening", html)),
+        "→": len(re.findall(r"→\s*holding", html)),
+        "↓": len(re.findall(r"↓\s*narrowing", html)),
+    }
+    if any(v > 0 for v in counts.values()):
+        return max(counts, key=lambda k: counts[k])
+
+    # Strategy 3: explicit moat_trend keyword
+    m3 = re.search(r"moat_trend\s*([↑→↓])", html)
+    if m3:
+        return m3.group(1)
+
     return None
 
 
-def collect_dca_bear_maps() -> tuple[dict, dict]:
-    """Return ({ticker: bear_5y_pct}, {ticker: p_bear_pct}) for each
-    ticker's latest DCA. Tickers without parseable scenarios are omitted."""
+def collect_dca_moat_trend_map() -> dict:
+    """Return {ticker: arrow} for each ticker's latest DCA.
+
+    arrow is one of '↑'/'→'/'↓'. Tickers where extraction fails are omitted.
+    Mirrors collect_dca_bear_maps() scan pattern but returns a single dict.
+    """
     if not DCA_DIR.exists():
-        return {}, {}
-    latest: dict[str, tuple[str, Path]] = {}
+        return {}
+    latest: dict = {}
     for path in DCA_DIR.glob("DCA_*.html"):
         m = DCA_FILENAME_RE.match(path.name)
         if not m:
@@ -310,13 +361,12 @@ def collect_dca_bear_maps() -> tuple[dict, dict]:
         prev = latest.get(ticker)
         if prev is None or date_str > prev[0]:
             latest[ticker] = (date_str, path)
-    bear_map: dict[str, float] = {}
-    pbear_map: dict[str, float] = {}
+    out: dict = {}
     for ticker, (_, path) in latest.items():
-        result = extract_dca_bear_with_pbear(path)
-        if result is not None:
-            bear_map[ticker], pbear_map[ticker] = result
-    return bear_map, pbear_map
+        arrow = extract_dca_moat_trend(path)
+        if arrow is not None:
+            out[ticker] = arrow
+    return out
 
 
 def collect_dca_ev_map() -> dict:
@@ -1249,41 +1299,35 @@ def _verdict_to_signal(verdict_raw: str) -> str:
     return ""
 
 
-def _render_bear_cell(bear: float | None,
-                      p_bear: float | None = None) -> tuple[str, str]:
-    """(td_html, num_attr) for the §4 Bear 跌幅 cell.
+def _render_moat_trend_cell(arrow: "str | None") -> "tuple[str, str]":
+    """(td_html, num_attr) for the DCA moat trend column.
 
-    bear   = worst scenario's 5Y absolute return %
-    p_bear = worst scenario's probability % (optional, rendered as `(P:xx%)`
-             micro-label after the magnitude). Encodes the prob axis the old
-             confidence column used to carry, without taking a full column.
+    arrow: '↑' (widening) / '→' (holding) / '↓' (narrowing) / None.
+    Color scheme:
+      ↑ → #166534 green   (護城河正在擴大)
+      → → #64748B gray    (持平)
+      ↓ → #991B1B red     (護城河正在縮窄，silent thesis decay 警示)
+      None → #CBD5E1 gray (無 DCA)
+    num_attr for sorting (desc = widening first): ↑=3, →=2, ↓=1, None=0.
     """
-    if bear is None:
-        return '<td class="num-cell" style="color:#CBD5E1">—</td>', "0"
-    if bear >= -20:
-        color = "#166534"  # 淺 Bear，下檔保護強
-    elif bear >= -40:
-        color = "#92400E"
+    if arrow == "↑":
+        color, num_attr = "#166534", "3"
+    elif arrow == "→":
+        color, num_attr = "#64748B", "2"
+    elif arrow == "↓":
+        color, num_attr = "#991B1B", "1"
     else:
-        color = "#991B1B"  # 深 Bear
-    sign = "+" if bear > 0 else ("−" if bear < 0 else "")
-    text = f"{sign}{abs(bear):.0f}%"
-    if p_bear is not None:
-        pbear_html = (
-            f'<span style="font-size:10px;font-weight:400;opacity:0.75;'
-            f'margin-left:4px">(P:{p_bear:.0f}%)</span>'
-        )
-        text = f"{text}{pbear_html}"
-    return (
-        f'<td class="num-cell" style="color:{color};font-weight:600">{text}</td>',
-        f"{bear:.2f}",
+        return '<td class="num-cell" style="color:#CBD5E1;text-align:center">—</td>', "0"
+    td = (
+        f'<td class="num-cell" style="color:{color};font-size:18px;'
+        f'font-weight:700;text-align:center">{arrow}</td>'
     )
+    return td, num_attr
 
 
 def build_row_v12(entry: dict, dca_map: dict | None = None,
                    dca_ev_map: dict | None = None,
-                   dca_bear_map: dict | None = None,
-                   dca_pbear_map: dict | None = None) -> str:
+                   dca_moat_trend_map: dict | None = None) -> str:
     """Render one v12 row (data-* attrs + td cells) matching the hand-curated
     schema in docs/research/index.html. Missing fields render as '?' or 0.
 
@@ -1292,10 +1336,8 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     dca_ev_map: optional {ticker: ev_5y_pct} from collect_dca_ev_map(). When
     provided, the next cell after 定見 shows the parsed §4 5Y probability-
     weighted expected value; else '—'.
-    dca_bear_map / dca_pbear_map: optional {ticker: pct} from
-    collect_dca_bear_maps(). When provided, inject a single Bear cell after
-    the IRR cell — main number is the worst-scenario 5Y return, with a small
-    `(P:xx%)` micro-label encoding the worst-scenario probability.
+    dca_moat_trend_map: optional {ticker: arrow} from collect_dca_moat_trend_map().
+    When provided, inject a moat trend arrow cell (↑/→/↓) after the IRR cell.
     """
     sig = entry.get("signal", "") or "?"
     trap_emoji = entry.get("trap_emoji", "") or "?"
@@ -1451,14 +1493,11 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         ev_cell = f'<td class="num-cell" style="color:{ev_color};font-weight:600">{ev_text}</td>'
         ev_num_attr = f"{_irr:.2f}"
 
-    # Bear 5Y 跌幅 + P(bear) micro-label — the "下檔" axis (magnitude × prob).
-    _bear = (dca_bear_map or {}).get(_t_raw)
-    if _bear is None:
-        _bear = (dca_bear_map or {}).get(_t_norm)
-    _pbear = (dca_pbear_map or {}).get(_t_raw)
-    if _pbear is None:
-        _pbear = (dca_pbear_map or {}).get(_t_norm)
-    bear_cell, bear_num_attr = _render_bear_cell(_bear, _pbear)
+    # Moat trend arrow — DCA Phase A1 authoritative output.
+    _mt_arrow = (dca_moat_trend_map or {}).get(_t_raw)
+    if _mt_arrow is None:
+        _mt_arrow = (dca_moat_trend_map or {}).get(_t_norm)
+    moat_cell, moat_trend_num_attr = _render_moat_trend_cell(_mt_arrow)
 
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
@@ -1467,12 +1506,12 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-pct="{pct_num}" data-peg="{peg_num}"'
         f' data-eps-cagr="{eps_num_attr}"'
         f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-ev5y="{ev_num_attr}"'
-        f' data-bear="{bear_num_attr}"'
+        f' data-moat-trend="{moat_trend_num_attr}"'
         f' data-stress="{stress_frac}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
         f'{dca_cell}'
         f'{ev_cell}'
-        f'{bear_cell}'
+        f'{moat_cell}'
         f'<td class="num-cell">{date_disp}</td>'
         f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
@@ -1491,8 +1530,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
 
 def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
                         ev_5y: float | None,
-                        bear: float | None = None,
-                        p_bear: float | None = None) -> str:
+                        moat_trend_arrow: "str | None" = None) -> str:
     """Render a row for a ticker that has a DCA report but NO DD coverage.
 
     DD-derived columns render '—'. The ticker link points to the DCA file
@@ -1520,7 +1558,7 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         )
         ev_num_attr = f"{irr:.2f}"
 
-    bear_cell, bear_num_attr = _render_bear_cell(bear, p_bear)
+    moat_cell, moat_trend_num_attr = _render_moat_trend_cell(moat_trend_arrow)
 
     em = '<td class="num-cell" style="color:#CBD5E1">—</td>'
     return (
@@ -1530,7 +1568,7 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f' data-fpe="0" data-pe2y="0" data-pct="0" data-peg="0"'
         f' data-eps-cagr="0"'
         f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
-        f' data-bear="{bear_num_attr}"'
+        f' data-moat-trend="{moat_trend_num_attr}"'
         f' data-stress="0">\n'
         f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
         f'rel="noopener" title="僅 DCA 報告，無對應 DD（DD 已輪替/未建檔）">'
@@ -1539,7 +1577,7 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f'rel="noopener" title="Deep Conviction Analysis 投資決策報告" '
         f'style="text-decoration:none">📋</a></td>'
         f'{ev_cell}'
-        f'{bear_cell}'
+        f'{moat_cell}'
         f'<td class="num-cell">{dca_date}</td>'
         # 11 em-dashes to match DD-row schema:
         # signal, trap, triax, fpe, pe2y, pct, peg, eps_cagr, 2Y_upside,
@@ -1550,8 +1588,7 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
 
 
 def collect_dca_only_rows(entries, dca_map: dict, dca_ev_map: dict,
-                           dca_bear_map: dict | None = None,
-                           dca_pbear_map: dict | None = None) -> list:
+                           dca_moat_trend_map: dict | None = None) -> list:
     """Return list of HTML row strings for DCAs without matching DD entries.
 
     Picks tickers in dca_map whose normalized form does not appear in any
@@ -1574,9 +1611,8 @@ def collect_dca_only_rows(entries, dca_map: dict, dca_ev_map: dict,
             d = m.group(1)
             date_str = f"{d[:4]}-{d[4:6]}-{d[6:8]}"
         ev = dca_ev_map.get(ticker)
-        bear = (dca_bear_map or {}).get(ticker)
-        pbear = (dca_pbear_map or {}).get(ticker)
-        rows.append(build_row_dca_only(ticker, href, date_str, ev, bear, pbear))
+        moat_trend_arrow = (dca_moat_trend_map or {}).get(ticker)
+        rows.append(build_row_dca_only(ticker, href, date_str, ev, moat_trend_arrow))
     return rows
 
 
@@ -1728,11 +1764,11 @@ def update_index_v12_full(html: str, force_refresh_eps: bool = False) -> tuple:
     entries = _sort_v12_entries(collect_v12_entries(force_refresh_eps=force_refresh_eps))
     dca_map = collect_dca_map()
     dca_ev_map = collect_dca_ev_map()
-    dca_bear_map, dca_pbear_map = collect_dca_bear_maps()
-    dd_rows = [build_row_v12(e, dca_map, dca_ev_map, dca_bear_map, dca_pbear_map)
+    dca_moat_trend_map = collect_dca_moat_trend_map()
+    dd_rows = [build_row_v12(e, dca_map, dca_ev_map, dca_moat_trend_map)
                for e in entries]
     orphan_rows = collect_dca_only_rows(
-        entries, dca_map, dca_ev_map, dca_bear_map, dca_pbear_map
+        entries, dca_map, dca_ev_map, dca_moat_trend_map
     )
     if orphan_rows:
         print(f"  DCA-only rows (no DD coverage): {len(orphan_rows)} appended")
