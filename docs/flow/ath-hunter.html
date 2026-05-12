@@ -469,7 +469,7 @@ function renderTier(tier, stocks) {
   let rows;
   if (tier === 'S' || tier === 'A') {
     rows = stocks.map(s => `
-      <tr>
+      <tr id="row-${s.ticker}">
         <td><strong>${s.ticker}</strong></td>
         <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
         <td>$${fmtNum(s.price, 2)}</td>
@@ -496,7 +496,7 @@ function renderTier(tier, stocks) {
       </table>`;
   } else if (tier === 'B') {
     rows = stocks.map(s => `
-      <tr>
+      <tr id="row-${s.ticker}">
         <td><strong>${s.ticker}</strong></td>
         <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
         <td>$${fmtNum(s.price, 2)}</td>
@@ -523,7 +523,7 @@ function renderTier(tier, stocks) {
       if ((f.roic ?? 0) <= 0.12) reasons.push('ROIC');
       if ((f.fcf_margin ?? 0) <= 0.05) reasons.push('FCF');
       return `
-        <tr>
+        <tr id="row-${s.ticker}">
           <td><strong>${s.ticker}</strong></td>
           <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
           <td>$${fmtNum(s.price, 2)}</td>
@@ -545,7 +545,7 @@ function renderTier(tier, stocks) {
     rows = stocks.map(s => {
       const target = s.price && s.ma50_pct ? s.price / (1 + s.ma50_pct/100) : null;
       return `
-        <tr>
+        <tr id="row-${s.ticker}">
           <td><strong>${s.ticker}</strong></td>
           <td>$${fmtNum(s.price, 2)}</td>
           <td class="num-pos">${fmtPct(s.ma50_pct)}</td>
@@ -602,6 +602,19 @@ async function main() {
       buckets[t].sort((a, b) => (b.combined ?? b.rs_score ?? 0) - (a.combined ?? a.rs_score ?? 0));
     }
     for (const t of ['S','A','B','M','E','P','W']) renderTier(t, buckets[t]);
+
+    // Scroll to ticker from Action Queue (e.g. ath-hunter.html#GLW)
+    const hash = location.hash.slice(1);
+    if (hash) {
+      const row = document.getElementById(`row-${hash}`);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const origBg = row.style.background;
+        row.style.background = '#fff3cd';
+        row.style.transition = 'background 1s ease-out';
+        setTimeout(() => { row.style.background = origBg; }, 3000);
+      }
+    }
   } catch (err) {
     console.error(err);
     document.getElementById('stale-warning-slot').innerHTML =

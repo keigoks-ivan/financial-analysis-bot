@@ -455,13 +455,15 @@ async function fetchPrevHistory(todayIso) {
   return null;
 }
 
-function buildActionQueue(todayBuckets, prevBuckets, peaks) {
+function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
   const items = [];
+  const dd = spy && spy.drawdown_52w_high_pct;
+  const inCorrection = (dd != null && dd <= TRIGGER_DRAWDOWN_PCT)
+                    || (spy && TRIGGER_STATES.has(spy.state));
 
-  // 1) RS new high + accelerating leaders (rare, high priority).
-  // history 短時 (14 天) 很多 ticker 都會 at_new_high — sort by rs_score desc so the
-  // top RS leaders make it into the bounded action queue.
-  if (peaks && peaks.tickers) {
+  // 1) RS new high + accelerating leaders — only when SPY in correction.
+  // 平時 rs-board.html 是 dormant 的，往那裡送條目等於壞掉的連結。
+  if (inCorrection && peaks && peaks.tickers) {
     const rsItems = [];
     for (const [t, info] of Object.entries(peaks.tickers)) {
       if (info.at_new_high === true) {
@@ -678,7 +680,7 @@ async function main() {
     }
 
     // Action queue
-    const actions = buildActionQueue(today, prevBuckets, p);
+    const actions = buildActionQueue(today, prevBuckets, p, spy);
 
     // Trigger logic for RS Board
     const dd = spy.drawdown_52w_high_pct;
