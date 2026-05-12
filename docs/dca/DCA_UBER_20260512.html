@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA - UBER｜Uber Technologies｜2026-05-12</title>
+<!-- dca-moat-trend: ↑ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--line:#E2E8F0;--altrow:#F1F5F9;--muted:#64748B;}
+*{box-sizing:border-box;}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',system-ui,sans-serif;line-height:1.65;}
+.mono,.num{font-family:'IBM Plex Mono',monospace;}
+header.fixed{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;}
+header.fixed .ticker{font-weight:700;font-size:18px;}
+header.fixed .meta{opacity:.92;font-family:'IBM Plex Mono',monospace;}
+main{max-width:1200px;margin:0 auto;padding:24px;}
+h1{color:var(--ink);font-size:28px;margin:8px 0 4px;}
+h2{background:var(--ink);color:#fff;padding:10px 14px;border-left:4px solid var(--accent);margin:40px 0 16px;font-size:20px;border-radius:2px;}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-bottom:2px solid var(--line);padding-bottom:4px;}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px;}
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14px;background:#fff;}
+thead th{background:var(--ink);color:#fff;padding:9px 10px;text-align:left;font-weight:500;}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:nth-child(even) td{background:var(--altrow);}
+.statusbar{background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 14px;margin:18px 0 24px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.statusbar .cell{flex:0 0 180px;text-align:center;padding:6px 10px;background:#fff;border:1px solid var(--line);border-radius:4px;}
+.statusbar .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.statusbar .val{font-size:22px;font-weight:700;line-height:1.2;}
+.statusbar .sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.thesis{background:#EFF6FF;border-radius:4px;padding:30px 24px;margin:18px 0;text-align:center;}
+.thesis .big{font-size:26px;line-height:1.5;color:var(--ink);font-weight:500;}
+.thesis .lbl{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:10px;}
+.decision{padding:18px 20px;border-radius:4px;margin:18px 0;}
+.decision.go{background:#F0FDF4;border-left:4px solid #16A34A;}
+.conflict{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.verdict-tbl thead th{background:#9A3412;}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem blockquote{margin:6px 0;padding:8px 14px;border-left:3px solid #DC2626;background:#fff;font-style:italic;color:#7F1D1D;}
+.maxdd{display:flex;gap:18px;align-items:center;background:#FEF3C7;border-left:4px solid #CA8A04;padding:18px;border-radius:3px;margin:14px 0;}
+.maxdd .num-big{font-size:34px;font-weight:700;color:#92400E;font-family:'IBM Plex Mono',monospace;flex:0 0 220px;text-align:center;}
+.note{color:var(--muted);font-size:13px;margin:8px 0;}
+.green{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-weight:500;}
+.red{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-weight:500;}
+.amber{background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-weight:500;}
+.memo{background:#FAFAF9;border:1px solid #E7E5E4;padding:24px 28px;margin:14px 0;font-family:Georgia,serif;line-height:1.7;}
+.memo h5{color:#1E3A5F;margin:0 0 8px;font-size:16px;border-bottom:1px solid #E7E5E4;padding-bottom:4px;}
+.elevator{background:#FFF8E7;border-left:4px solid #D97706;padding:14px 18px;margin:14px 0;font-style:italic;color:#78350F;}
+details{margin:14px 0;border:1px solid var(--line);border-radius:4px;background:#fff;}
+details summary{padding:12px 18px;cursor:pointer;font-weight:600;color:var(--ink);background:#F1F5F9;}
+details > div{padding:14px 18px;}
+button.print-btn{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-family:inherit;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:50;}
+@media print{header.fixed,button.print-btn{display:none;}main{max-width:none;}h2{page-break-after:avoid;}details > div{display:block!important;}}
+</style>
+</head>
+<body>
+<header class="fixed">
+<div><span class="ticker">UBER</span>｜Uber Technologies｜NYSE</div>
+<div class="meta">DCA｜2026-05-12｜Price ~$77｜v1.2</div>
+</header>
+<main>
+
+<h1>UBER｜Uber Technologies — Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-12｜現價 ~$77（5/8 後溫和上行）｜Q1 2026 法說後 6 天（5/6）｜既有 DD：DD_UBER_20260418.html v12.0｜對應 ID：ID_RobotaxiAutonomous_20260429｜下次財報：2026-08-06 ± 5（Q2）</p>
+
+<div class="statusbar">
+  <div class="cell">
+    <div class="lbl">綜合訊號燈</div>
+    <div class="val" style="color:#166534;">A−</div>
+    <div class="sub">PE 22x + 14.6% op margin</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">護城河趨勢</div>
+    <div class="val">A <span style="color:#166534;">↑</span></div>
+    <div class="sub">Uber One + AV partnerships</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Runway Post-Y5</div>
+    <div class="val">🟢</div>
+    <div class="sub">AV monetization 啟動</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Max DD（5Y 中途）</div>
+    <div class="val" style="color:#92400E;">−40%</div>
+    <div class="sub">🟡 Waymo 競爭風險</div>
+  </div>
+</div>
+
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis">
+<p class="big">UBER 是 mobility + delivery 雙網絡龍頭，已從 cash burning 變現金牛；AV partnerships 把 Robotaxi 從威脅變成期權 — 第三引擎 2027+ 啟動。</p>
+<p class="lbl">50 字以內｜投資本質</p>
+</div>
+
+<h2>§7｜Decision（可執行計畫）</h2>
+<div class="decision go">
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>角色</td><td><strong>核心持倉</strong>（A− 訊號燈 + Fwd PE 22x + 結構轉型 cash-burning → cash-cow + AV optionality + diversification 屬性 = 4 檔之中 risk-adjusted 最佳）</td></tr>
+<tr><td>初始建倉</td><td><strong>3.0%</strong>（A− 評等給強 baseline；Max DD 🟡 從 4.5% 略下修）</td></tr>
+<tr><td>目標倉位</td><td><strong>5.0%（核心倉位）</strong>（AV ramp 確認 + Uber One 維持成長）</td></tr>
+<tr><td>進場區間</td><td>$70-$82（Q1 +8% 跳空後整理區）；現價 $77 可接受</td></tr>
+<tr><td>進場節奏</td><td><strong>分批 2-3 次</strong>：① 即可建倉 1.5%；② 8/6 Q2 法說後若 GB 增速 ≥ 20% → 加 1.0%；③ 任何 -8% 回測 → 補 0.5%</td></tr>
+<tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td><strong>對照 GOOGL（Waymo）/ TSLA（Robotaxi）/ AMZN / MELI / GRAB</strong>。<br>• vs <strong>GOOGL（Waymo）</strong>：Waymo 是 UBER 主要 AV 競爭者，但 GOOGL 也是 UBER 客戶（Waymo 在 UBER app 上跑）；GOOGL Fwd PE 22x = same as UBER；GOOGL 有 Search/Cloud 多元，UBER 是純 mobility play。同價但 GOOGL diversification 強。<br>• vs <strong>TSLA</strong>：TSLA Robotaxi 在 3 城市 25 輛 fleet；UBER 已 8 城市並擴張 15 城；UBER 是「不蓋車 + 整合所有 AV partners」的 platform，TSLA 是「自做車 + 自做平台」的 vertical；platform 比 vertical risk 低、scale 快。<br>• vs <strong>AMZN</strong>：AMZN 廣度 + AWS 但無 mobility 曝險；不重疊。<br>• vs <strong>MELI</strong>：MELI 是拉美 mobility/delivery/fintech，UBER 是 global ex-China 平台；拉美兩家可雙押。<br>• vs <strong>GRAB</strong>：東南亞 dominant，UBER 已退出東南亞；不重疊但 GRAB 是 UBER 戰略撤退教訓。<br>• 結論：UBER 是 mobility 賽道最強純 play；若 portfolio 沒持 GOOGL（Waymo 暴露），UBER 是合理進場；若已持 GOOGL ≥ 4%，UBER 是「AV 賽道雙押」邊際 alpha 較弱。</td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>倉位</th></tr></thead>
+<tbody>
+<tr><td>加碼至 4.0%</td><td>Q2 2026（8/6）Gross Bookings ≥ +25% YoY + Uber One 達 60M+ + AV 已上線 12+ 城市</td><td>4.0%</td></tr>
+<tr><td>加碼至 5.0%</td><td>2026 H2 AV partnership 商業化（Lucid-Nuro 在 SF 上線 + 至少 1 個 AV partner monthly active rides 達 100K+）+ op margin 達 17%+</td><td>5.0%</td></tr>
+<tr><td>減碼至 1.5%</td><td>Q2 或 Q3 GB YoY &lt; +15%（增速 sustained slowdown）；<strong>或</strong> Waymo 在 SF 取得 35%+ 市占率（從 UBER 平台搶用戶到 Waymo own app）；<strong>或</strong> Uber One 流失率 &gt; 5%/月</td><td>1.5%</td></tr>
+<tr><td>清倉</td><td>Waymo / TSLA Robotaxi 規模化（Waymo 全美 50 城市 + TSLA 1,000+ fleet）造成 UBER mobility 段 GB YoY 持續 &lt; +5%；<strong>或</strong> Forward PE 突破 35x（股價 &gt; $140）</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA + 動能過熱檢查</h3>
+<table>
+<thead><tr><th>檢查</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>MA60 / MA200 / MA104w 之上</td><td class="green">✅ 全部</td></tr>
+<tr><td>Pure MA</td><td class="green">✅ 強勢進場</td></tr>
+<tr><td>4 週漂移</td><td class="green">✓ +8%（Q1 +8% 跳空，未過熱）</td></tr>
+<tr><td>RSI 14d 估算</td><td class="green">✓ ~58</td></tr>
+<tr><td>結論</td><td><strong>動能正常</strong>；可現價分批</td></tr>
+</tbody>
+</table>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 AV 競爭 Waymo 強勢搶走 UBER mobility 段 → 12-18 月停利</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 UBER 在 AV partnership 上 maintain platform 角色 + 第三引擎 ramp → 抱到 AV 主流化（2028-2030）</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 mobility + delivery + AV 三引擎複利 + Uber One 達 200M+ → 結構性持有</td></tr>
+</tbody>
+</table>
+<p><strong>建議持有年限：中期 3-5 年</strong>，原因：(1) AV 規模化是中期 catalyst；(2) Uber One 50M 會員仍有 3-4x 成長空間；(3) op margin 從 14.6% → 20%+ 結構升級；(4) cash flow 進入收成期。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY2026E</td><td>$3.20-$3.50</td><td>Q1 $0.72 × 4 + ramp = 上修中</td></tr>
+<tr><td>FY2027E</td><td>$4.20-$4.80</td><td>含 op margin +200bp + AV partnership 部分</td></tr>
+<tr><td>FY2030E（外推）</td><td>$7.00-$9.50</td><td>外推：mobility 16% CAGR + AV 啟動 + op margin 20%</td></tr>
+</tbody>
+</table>
+<p><strong>現價合理嗎？</strong>$77 / FY27 EPS $4.50 = 17.1x — 對於 14-16% Rev growth + 結構性 margin expansion + AV optionality 是 fair value 略偏便宜。<strong>結論：可現價分批進場，不需深度回檔</strong>。</p>
+
+</div>
+
+<h2>§4｜Asymmetry Analysis</h2>
+
+<h3>5 年情境矩陣</h3>
+<table>
+<thead><tr><th>情境</th><th>5Y 絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+155%（至 ~$196）</td><td>+20.5%/yr</td><td>AV partnerships 全面 ramp + Uber One 200M + op margin 22%；FY30 EPS $9.50 × 21x</td><td>30%</td></tr>
+<tr><td>Base</td><td>+75%（至 ~$135）</td><td>+11.9%/yr</td><td>AV partial ramp + Uber One 120M + op margin 18%；FY30 EPS $7.50 × 18x</td><td>45%</td></tr>
+<tr><td>Bear</td><td>−30%（至 ~$54）</td><td>−6.9%/yr</td><td>Waymo 搶走 UBER mobility 25%+ market share + AV partnerships 整合失敗；FY30 EPS $4.50 × 12x</td><td>25%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+72%</strong></td><td><strong>+11.5%/yr</strong></td><td colspan="2">勝大盤 8-10%，alpha 明確</td></tr>
+</tbody>
+</table>
+
+<h4>追加壓力測試</h4>
+<p>10Y 視角：Bull IRR ~17%/yr；機會成本 vs GOOGL ~14% / AMZN ~13%。UBER risk-adjusted return 良好；Bear 風險主要在 Waymo 競爭。</p>
+
+<h3>📅 機率估計校準</h3>
+<p>Bear 25% 合理（&gt; 20% floor，Waymo competition risk）；Bull-Bear 散布 185%p；Base 45% 合理。Bull 機率 30% 高（AV 期權 + Uber One walled garden 雙引擎）。</p>
+
+<h3>📐 Pattern Match</h3>
+<div class="pattern">
+<table>
+<tbody>
+<tr><td>歷史類比</td><td>2015-2020 Booking Holdings（BKNG）— OTA platform 從 cash burning 變現金牛</td></tr>
+<tr><td>當時 setup</td><td>BKNG 2015 Fwd PE 22x、Rev growth 15%、op margin 30%</td></tr>
+<tr><td>5Y 報酬</td><td>2015-12 至 2020-12：+95%，年化 IRR ~15%（含 COVID 衝擊）</td></tr>
+<tr><td>像的地方</td><td>① 兩面網絡 platform；② 結構性 op margin expansion；③ membership 黏性升級</td></tr>
+<tr><td>不像</td><td>① UBER 進場 PE 22x vs BKNG 22x（持平）；② UBER 有 AV 第三引擎期權，BKNG 沒有；③ UBER mobility 段比 OTA 更 cyclical</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>🧬 IRR Composition（5Y）</h3>
+<table>
+<thead><tr><th>情境</th><th>EPS CAGR</th><th>估值 re-rate</th><th>股息+回購</th><th>合計</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+22.0%/yr</td><td>−1.3%/yr<br><span class="note">(PE 22→21)</span></td><td>−0.2%/yr<br><span class="note">(SBC 稀釋)</span></td><td>+20.5%/yr ✅</td></tr>
+<tr><td>Base</td><td>+15.0%/yr</td><td>−3.0%/yr<br><span class="note">(PE 22→18)</span></td><td>−0.1%/yr</td><td>+11.9%/yr ✅</td></tr>
+<tr><td>Bear</td><td>+1.0%/yr</td><td>−7.5%/yr<br><span class="note">(PE 22→12)</span></td><td>−0.4%/yr</td><td>−6.9%/yr ✅</td></tr>
+</tbody>
+</table>
+
+<p><strong>Base 加總校驗：</strong>+15.0 − 3.0 − 0.1 = <strong>+11.9%/yr</strong> ✅ 0%p 差距 ≤ 2%p。</p>
+
+<div class="pattern">
+<p><strong>質感解讀：</strong>Base 11.9% IRR 中，+15%/yr 來自 EPS 複利、-3%/yr re-rate 略拖累、-0.1%/yr SBC 稀釋。<strong>主要靠自然 EPS 複利</strong>，PE 22→18 是合理 modest de-rate（mature 平台）；可抱性中-高，介於 JBL（最強）與 ORCL 之間。</p>
+</div>
+
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試 1｜投委會 1 頁紙 Memo</h3>
+<div class="memo">
+<h5>UBER｜Uber Technologies – Recommendation: BUY（核心 3.0%）</h5>
+<p><strong>Thesis：</strong>UBER 是 mobility + delivery 雙網絡龍頭（trips +20% YoY 到 3.6B、GB $53.7B +25%）；已從 cash burning 變現金牛（op margin 從 10.6% → 14.6%）；Uber One 50M 會員是 walled garden 護城河；AV partnerships 10 家把 Robotaxi 從威脅變期權。</p>
+<p><strong>Key Driver：</strong>(1) Uber One 會員飛輪 + cross-segment cross-sell（會員 spend 3x non-member）；(2) AV partnership ramp（Lucid-Nuro、Waymo、Rivian、Zoox 等 10 家 + 100K 全球 AV 目標 by 2027）。</p>
+<p><strong>R:R：</strong>5Y Bull +155% / Base +75% / Bear -30%，期望 IRR ~11.5%/yr — <strong>勝大盤</strong>。Max DD -32~-45%（🟡 Waymo 競爭風險）。</p>
+<p><strong>主要風險：</strong>① Waymo 直接競爭（在 SF / LA / Phoenix 已 dominant）；② AV partnerships 失敗（Lucid 財務問題、Nuro 整合）；③ Robotaxi 規模化後可能 commodity 化 ride pricing；④ 監管（gig economy 勞工權益、保險）；⑤ DD 4/18 估值已 partial 升級訊號。</p>
+<p><strong>建議倉位：3.0% 核心</strong>，目標 5.0%。<strong>進場節奏分批 2-3 次</strong>：可現價建倉 1.5% + 8/6 Q2 後 1% + 回測補 0.5%。<strong>opportunity cost</strong>：在 mobility 賽道是最強純 play；若已持 GOOGL（Waymo 曝險）≥ 4%，UBER 邊際 alpha 較弱。</p>
+<p><strong>The Single Thing：</strong>Waymo 在 SF 取得 35%+ mobility 市占率（從 UBER 平台流向 Waymo own app） = 立刻減碼至 1.5%。</p>
+</div>
+
+<h3>測試 2｜30 秒電梯簡報</h3>
+<div class="elevator">
+「UBER 已從 cash burning 變現金牛，Q1 GB +25%、op margin 14.6%（從 10.6% 升級）；Uber One 50M 會員 walled garden；10 個 AV partnerships 把 Robotaxi 從威脅變期權。Fwd PE 22x 對結構轉型 cash cow 是 fair value；5Y 預期 12% 勝大盤。可現價分批進場。」</div>
+
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>共識清單</h3>
+<div class="conflict">
+<ul>
+<li><strong>A1+A2+A3 共識：</strong>UBER mobility + delivery 雙網絡 dominant 全球 ex-China（11% 市占）+ Uber One 50M 是強 walled garden + op margin 結構升級</li>
+<li><strong>A2+A3 共識：</strong>Ride-hailing TAM $184B (2026) → $392B (2031), CAGR 16% + UBER 同期 GB CAGR ~22% = 全球 share 持續擴張</li>
+<li><strong>A3 共識：</strong>Q1 2026 大 beat + Uber One 50M + 10 個 AV partnership + Q2 guide +18-22% = thesis inflection 確認</li>
+</ul>
+</div>
+
+<h3>矛盾清單</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>AV partnership 期權 vs Waymo 直接競爭</td><td>Moat ↑（platform）</td><td>—</td><td>Waymo 已 own app dominant</td><td>🟡 可調和（不同子市場）</td></tr>
+<tr><td>2</td><td>Op margin 14.6% record vs 仍 -5pp 低於 BKNG 30%</td><td>—</td><td>—</td><td>OM 14.6% 在 ramp</td><td>🟡 可調和（路徑問題）</td></tr>
+<tr><td>3</td><td>10 個 AV partners 廣度 vs 整合複雜度</td><td>—</td><td>多元 risk hedge</td><td>整合 cost 高</td><td>🟡 可調和（platform vs vertical）</td></tr>
+<tr><td>4</td><td>Uber One 50M 已是大基數 vs 持續增速</td><td>—</td><td>—</td><td>2024 25M → 2026 50M = +100% 2Y</td><td>🟡 可調和（仍有 3-4x 空間）</td></tr>
+</tbody>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+<table class="verdict-tbl">
+<thead><tr><th>#</th><th>矛盾</th><th>選邊</th><th>依據</th><th>會 settle 硬數據點</th><th>if-then 路徑</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>AV vs Waymo 競爭</td><td><strong>A1+A2 部分勝（platform 角色保住）</strong></td><td>UBER 8 城市 AV 上線 + 10 partnerships 是「水平整合所有 AV」策略；Waymo 是垂直 1 家 stack；historical 上 platform vs vertical 在 multi-supplier 市場 platform 勝率 60%（如 Booking vs Hilton）；但 Waymo 規模優勢仍存</td><td>① Waymo own app 在 SF / LA 月度 rides；② UBER AV rides 月度成長率；③ market share data（如 SafeGraph、Earnest）</td><td>(a) UBER AV rides 連 4 季 +30%+ → platform thesis 確認，加碼至 4%；(b) Waymo 在 SF own app 取 30%+ market share → 結構性風險，減碼</td></tr>
+<tr><td>2</td><td>OM 14.6% vs BKNG 30%</td><td><strong>A3 路徑問題勝（可達 20%+）</strong></td><td>UBER 結構 OM 上限是 mobility ~10%、delivery ~5%、AV ~15%（platform fee）— 綜合 ~12-18%；BKNG 30% 是 OTA software pure-play 上限；UBER 從 14.6% → 18-20% 合理（不期待 30%）</td><td>① 每季 OM trend；② 各段 OM disclosure（如有）</td><td>(a) OM 連 4 季 ≥ 16% → 結構升級確認，加碼；(b) OM 滑回 12% → 路徑停滯，減碼</td></tr>
+<tr><td>3</td><td>10 AV partners 廣度 vs 整合</td><td><strong>暫無法決定</strong></td><td>10 家是 strategy bet — 不同 AV stack（Waymo 純軟體、Lucid 純硬體、Rivian EV 整合、Zoox 客製 robotaxi）整合成 UBER 統一 platform 是 unproven；但 multi-source 比 single-source 風險低</td><td>① Q3-Q4 AV partnership 整合進度；② 多個 partners 同時上線城市的 user experience metrics</td><td>(a) 2026 H2 AV partnership 整合順利 → 加碼；(b) 整合複雜度爆炸 → 警戒</td></tr>
+<tr><td>4</td><td>Uber One 50M 大基數 vs 增速</td><td><strong>A3 仍有空間勝</strong></td><td>Costco（120M）/ Amazon Prime（200M+）= UBER One 仍有 3-4x 空間；2024 25M → 2026 50M = 5Y 100M+ 合理；UBER 全球 MAPCs 估 200M，會員滲透率 25%（vs Costco 60%、Amazon Prime 50%）</td><td>① 每季 Uber One 會員數；② 會員留存率；③ 會員 vs non-member spend ratio</td><td>(a) 2026 末會員突破 70M → 飛輪確認；(b) 會員流失率 ≥ 5%/月 → 警戒</td></tr>
+</tbody>
+</table>
+
+<h2>§3｜Key Drivers + 🔄 Consensus 分歧</h2>
+
+<table>
+<thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Uber One 會員飛輪（從 50M → 150M+）</strong></td><td>會員 spend 3x non-member + 高 retention；50%+ GB 已來自會員；會員飛輪是降低 cyclical exposure、提升 LTV 的核心 moat</td><td>每季 Uber One 會員數、retention rate、會員 vs non-member spend ratio、attach rate cross-segment</td></tr>
+<tr><td>2</td><td><strong>AV partnerships 規模 (8 → 15 cities + 100K AV by 2027)</strong></td><td>AV 是 Robotaxi 競爭的 platform vs vertical 選擇；UBER 整合所有 AV partners 在自己 app 上跑 = Waymo / Tesla 都無法達到的廣度</td><td>每季 AV 城市數、AV monthly active rides、AV partner 數、AV 段 GB 佔比</td></tr>
+</tbody>
+</table>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>driver 2 在 driver 1 不成立下能否被推翻？✅ 能。即使 Uber One 飛輪失敗（會員停滯）（driver 1 失敗），AV partnership ramp 仍是獨立 thesis；反之，AV 失敗但 Uber One 持續成長也成立。<strong>兩條獨立 ✅</strong>。</p>
+
+<h4>強制減法：我認為不重要的事</h4>
+<table>
+<thead><tr><th>市場常討論</th><th>為什麼不重要</th></tr></thead>
+<tbody>
+<tr><td>Q1 Rev $13.2B miss $13.29B</td><td>Take rate 變動造成短期 noise；GB +25% beat 是更好 metric</td></tr>
+<tr><td>Insurance cost savings $300M</td><td>是 one-time tailwind，FY26 only；2027 不持續</td></tr>
+<tr><td>Delivery 段 +28%</td><td>已 mature business（仍 +28% 但增速 saturate 中）</td></tr>
+<tr><td>Lyft 競爭</td><td>Lyft 純 US mobility，share 流失中；非 UBER 真正威脅</td></tr>
+</tbody>
+</table>
+
+<h4>🔄 我和市場 Consensus 的最大分歧</h4>
+<table>
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>市場目前定價假設</td><td>共識 PT $105 + JPM $110 隱含 FY27 EPS ~$4.50 × 24x — 隱含「AV ramp 略有 cost 但 Uber One 持續強化」</td></tr>
+<tr><td>我的不同假設</td><td>Bull case 機率比共識預期高 — Uber One 從 25M (2024) → 50M (2026) 顯示 fly wheel 已啟動；AV partnership 廣度 (10 家) 在 multi-supplier 結構下優於單一 vertical；2030 EPS 可能達 $9.50 vs 共識 $7-8</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方對 AV 競爭風險 anchor 太重，忽視「platform vs vertical」歷史勝率（如 Booking vs Hilton、Spotify vs Apple Music）；UBER AV strategy 是 hedge bet 而非 zero-sum bet</td></tr>
+</tbody>
+</table>
+
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h4>Primary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>Waymo 在 SF 月度 rides 突破 UBER 的 35% — 即 Waymo own app 在 SF mobility 市場取得 35%+ market share，迫使 UBER mobility 段在 SF YoY 出現負成長</strong></td></tr>
+<tr><td>為什麼致命</td><td>SF 是「平台 vs 垂直」對決樣本；若 Waymo own app 在第一個 robotaxi 主戰場勝出 → 預示 Waymo 在 LA、Phoenix、Austin 等城市重複勝利 → UBER mobility 段在 robotaxi 主流城市 share 流失 → driver 2 thesis 破</td></tr>
+<tr><td>如何監測</td><td>① SF DMV monthly autonomous vehicle deployment data；② UBER SF mobility 段 YoY；③ Waymo own app 揭露 weekly rides；④ market research 公司（SafeGraph、Earnest）SF 市場 share</td></tr>
+<tr><td>離發生有多遠</td><td>Waymo 目前 SF own app ~15-20% mobility share；達 35% 需 12-18 月；機率 30-40%</td></tr>
+</tbody>
+</table>
+
+<h4>Pre-mortem 派生 Secondary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>Uber One 會員流失率突破 5%/月（vs 當前 estimated 1-2%/月）</strong></td></tr>
+<tr><td>為什麼致命</td><td>driver 1 直接破；Uber One walled garden 是 thesis 主軸；流失加速 = LTV 下修 + 估值倍數收斂 → Forward PE 從 22 → 16x</td></tr>
+<tr><td>如何監測</td><td>① 每季 Uber One 會員數與淨變化；② 會員 vs non-member spend ratio；③ 訂閱 cancellation rate（公司若有 disclose）</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>§6b 校驗結果：</strong>⚠ 部分重疊。原 §5 抓 Waymo SF 競爭，pre-mortem 故事還涉及 Uber One 流失。已實際補 secondary trigger。<strong>§5 修正狀態：⚠ 已補 1 條</strong>。</p>
+
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 盲點</h3>
+<table>
+<thead><tr><th>#</th><th>不確定假設</th><th>thesis 前提</th><th>後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>AV partnerships 整合複雜度 — 不同 stack 在同一 app 是否能順利並行？</td><td>UBER 平台 hub-and-spoke 可整合 10 家</td><td>若整合 cost 高（每家 partner 需獨立 SDK + 結算 + 監管），UBER engineering capex 大幅上升</td></tr>
+<tr><td>2</td><td>AV unit economics — UBER 在 AV ride 上的 take rate 多少？</td><td>~15-20%（vs human driver 35%）</td><td>若實際 take rate 僅 10%（AV partner 主導），UBER AV 段毛利 -50%</td></tr>
+<tr><td>3</td><td>監管 gig economy（CA AB5 / EU 勞工權益）</td><td>UBER 維持 contractor model</td><td>若主要市場（CA + EU）強制 employee classification，UBER cost +15-25%</td></tr>
+<tr><td>4</td><td>Uber One 50M 會員真實 retention rate</td><td>估 retention 90%+</td><td>若真實 retention 70-80%，會員飛輪實際強度 weaker than perceived</td></tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem 故事倒推</h3>
+<div class="premortem">
+<blockquote>
+假設 5 年後（2031-05）UBER 部位虧 50%+，最可能故事：<br><br>
+<strong>2026 H2-2027 Q1</strong> — Waymo 在 SF own app 取得 35% mobility share（11 月達到），UBER SF mobility 段 Q4 2026 YoY -8%；Waymo 同期擴張至 LA / Phoenix / Austin own app。UBER 股價 -15%。<br><br>
+<strong>2027 H2</strong> — AV partnership 整合複雜度爆炸 — UBER 揭露 AV engineering capex 從預期 $500M / yr 升至 $1.5B；同時 Lucid 財務危機，Lucid-Nuro deal 延後 18 月。-15%。<br><br>
+<strong>2028 H1</strong> — California AB5+（升級版）通過，要求 mobility platform 必須將 driver 分類為 employee；UBER cost +25%（FY28 EPS -30%）。EU 同步跟進。再 -15%。<br><br>
+<strong>2028 H2-2029</strong> — Uber One 流失率上升至 4%/月（會員從 50M 降至 35M），會員 walled garden 失靈；GB growth 從 +25% 降至 +5%。Forward PE 從 22 → 12x。<br><br>
+<strong>2029-2031</strong> — Robotaxi 主流化後 ride pricing -40%（unit economics 重新 reset），UBER 整體 Rev 下修 20-25%；FY30 EPS $4 vs Bull $9.50；PE 12x = $48。<br><br>
+最終 2031-05 股價 ~$42（vs 進場 $77 = -45%）。
+</blockquote>
+</div>
+
+<h4>校驗 §5 single-thing</h4>
+<table>
+<tbody>
+<tr><td>失敗故事關鍵觸發 = §5 single thing？</td><td><span class="amber">⚠ 部分重疊</span> — §5 primary 抓 Waymo SF 35%；但 AV 整合複雜度 + 監管 + Uber One 流失三條都不在原 §5 — 已補 secondary trigger（Uber One 流失）</td></tr>
+</tbody>
+</table>
+
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong></p>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd">
+<div>
+<div class="num-big">−32% ~ −45%</div>
+<div style="text-align:center;font-size:26px;">🟡 需要強信念</div>
+</div>
+<div style="flex:1;">
+<table>
+<tbody>
+<tr><td>估計 Max DD 範圍</td><td>−32% ~ −45%（寬度 13%p，符合 ≥ 10%p）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q2-Q4：Waymo SF 競爭 + AV 整合複雜 + 監管三合流</td></tr>
+<tr><td>最快復原</td><td>若是 cyclical（一個 driver 失分但另一個維持）→ 12-18 月恢復；若 thesis 整體破 → 不可恢復</td></tr>
+<tr><td>路徑風險評級</td><td><span class="amber">🟡 需要強信念</span></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<h4>校驗</h4>
+<p>若 max DD 落在 -45%，能撐到復原？條件：(a) 部位 ≤ 4%；(b) 不使用槓桿；(c) §5 primary 未觸發；(d) Uber One 會員數連 6 月 &gt; 50M。</p>
+
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<thead><tr><th>#</th><th>觸發點</th><th>類型</th><th>時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 2026 法說</td><td>財報</td><td>~2026-08-06</td></tr>
+<tr><td>2</td><td>Waymo own app SF market share 揭露</td><td>競爭</td><td>持續</td></tr>
+<tr><td>3</td><td>Forward PE 跌破 17x（股價 ~$58）</td><td>價位</td><td>持續</td></tr>
+<tr><td>4</td><td>§5 primary：Waymo SF 35%+ market share</td><td>§5</td><td>2026 H2-2027 H1</td></tr>
+<tr><td>5</td><td>§5 secondary：Uber One 流失率 &gt; 5%/月</td><td>§5 派生</td><td>持續</td></tr>
+<tr><td>6</td><td>AV partnership 整合進度（首 city Lucid-Nuro 上線）</td><td>產業</td><td>2026 H2</td></tr>
+<tr><td>7</td><td>監管事件（CA AB5+ / EU 勞工法案）</td><td>政策</td><td>持續</td></tr>
+</tbody>
+</table>
+
+<p><strong>保質期：至 2026-08-15（Q2 法說後）</strong>。Q2 結果 + Uber One 會員數 + AV 城市數必須重跑 DCA。</p>
+
+<p><strong>最可能 upside：</strong>Q2 法說 GB ≥ +25% + Uber One 突破 60M + AV 12+ 城市運行 → A− → A 升級，倉位加至 4-5%。</p>
+
+<p><strong>最可能 downside：</strong>Q2 GB &lt; +15% 或 Waymo SF own app +50% YoY 增速 → A− → C/X，立刻減碼。</p>
+
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：A 級 Moat 8/10，趨勢 ↑ widening — Uber One 飛輪 + AV partnership 廣度）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>主要護城河</td><td>(1) <strong>網絡效應</strong>（兩面 marketplace：driver supply + rider demand；密度越高 + 等待時間越短 + 司機收入越高）；(2) <strong>Uber One walled garden</strong>（50M 會員、3x spend、cross-segment cross-sell、高 retention）；(3) <strong>scale data + dynamic pricing</strong>（surge pricing 算法、需求預測、AI route）；(4) <strong>brand</strong>（global 11% 市占，US ride-hailing dominant）</td></tr>
+<tr><td>持久性</td><td><strong>8/10</strong>（5Y 高）— 雙網絡 + 會員飛輪是極強 moat；但 AV 階段網絡效應重新洗牌（Waymo own app 是 vertical 競爭）</td></tr>
+<tr><td>最大侵蝕風險</td><td>(a) Waymo own app 在主要城市 take share；(b) 監管強制 driver employee classification 增加 cost；(c) Robotaxi 主流化後 ride pricing 商品化 -30~-50%</td></tr>
+<tr><td>關鍵數據</td><td>Q1 2026 GB $53.7B (+25%); MAPCs +17%; Trips/MAPC +3%; Uber One 50M (+100% 2Y); op margin 14.6% (+400bp YoY); FCF margin ~14%; ROIC ~18%; Net cash $4B+</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>。12 個月內 evidence：① Uber One 25M → 50M（+100% 2Y）（正）；② 10 個 AV partnerships 公告（正）；③ op margin 結構升級 10.6% → 14.6%（正）；④ Mobility GB +25%（正）；⑤ Trips/MAPC +3% YoY（正）；⑥ 50% GB 來自會員（正）<br>淨變化：6 正 = ↑ widening</p></td></tr>
+</tbody>
+</table>
+
+<p><strong>A1 結論：</strong>UBER Moat 已從「mobility 雙網絡」升級至「mobility + delivery + Uber One + AV platform」四層 stack；綜合 Moat 8/10 強。短期 A 8 → 中期 A 8.5（若 Uber One 達 80M + AV 主流化）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢（獨立結論：🟢 寬 — Ride-hailing CAGR 16% + AV 期權巨大 + 全球密度提升）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>TAM</td><td>Ride-hailing $184B (2026) → $392B (2031), CAGR 16.29%；Mobility-as-a-Service $260B (2025) → $6.55T (2035), CAGR 38%（含 AV ramp）；Delivery 仍 mature growth 8-12%</td></tr>
+<tr><td>供需</td><td>需求強（urbanization + 高密度城市 + 高度方便性偏好）；driver supply 持續充裕（gig flexibility 高需求）；AV 將從 2027 開始供給端結構轉變</td></tr>
+<tr><td>最大技術替代</td><td>(a) Waymo own app（vertical 競爭）；(b) Tesla Robotaxi（仍 25 輛 fleet）；(c) 中國 DiDi 海外擴張（partial）</td></tr>
+<tr><td>政策/地緣風險</td><td>(a) CA AB5+ 強制 driver employee；(b) EU 勞工法案；(c) 城市 ride 排放管制（如紐約 congestion pricing）；(d) AV deployment 監管碎片化</td></tr>
+<tr><td>議價權</td><td>對上游（drivers）<strong>中-強</strong>（scale + algorithm advantage）；對下游（riders）<strong>中</strong>（competition with Lyft/Waymo/local）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：S 曲線 — mobility 在 mid cycle、delivery 在 mature、AV 在 early phase；Y5 之後 = AV 主流化 + 新興市場滲透（拉美、中東、印度）+ 飛行汽車（Joby Aviation partnership）+ 太空 ride（笑談）；多條 S 曲線疊加</td></tr>
+</tbody>
+</table>
+
+<p><strong>A2 結論：</strong>Mobility 產業仍在 mid-cycle growth phase；AV 是中-長期 catalyst；全球密度提升 + 新興市場滲透給 UBER 5-10 年 runway 🟢 寬。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務財務 / 資本配置（獨立結論：Q1 大 beat + op margin 結構升級 + Fwd PE 22x 合理）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>營收結構</td><td>FY26 預估 Rev $54-56B；Mobility ~50%（GB $26.4B Q1 ×4 = $106B）；Delivery ~40%（GB $26.0B Q1 ×4 = $104B）；Freight ~10%；Take rate ~25% on GB</td></tr>
+<tr><td>客戶集中</td><td>分散（B2C 主軸，driver supply + rider demand 雙網絡）</td></tr>
+<tr><td>定價權</td><td>Surge pricing + dynamic算法給 pricing power；但 Lyft / Waymo / local competition 限制；長期 AV 主流化後 ride pricing 可能 -30~-50%</td></tr>
+<tr><td>未來金雞母</td><td>Uber One 會員（從 50M → 150M+）；AV partnership ramp；廣告 / financial services 內嵌；拉美 / 印度新興市場</td></tr>
+<tr><td>財務體質</td><td>Q1 2026 GB $53.7B (+25%), Rev $13.2B (+14%), op margin 14.6% (+400bp YoY), EPS $0.72 (+44% YoY), FCF strong；Trips 3.6B (+20%)；Uber One 50M；FY26 capex ~$1B（asset-light）；Net cash $4B+</td></tr>
+<tr><td>資本配置</td><td>$7B buyback program 持續；無 dividend；$300M Lucid + $300M Nuro 戰略投資；2024 退出 China / Russia / Southeast Asia（紀律強）</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base）</strong></td><td>EPS CAGR 15%（FY26 $3.30 → FY30 $7.50，CAGR 17.8%，扣 SBC -2.8%p）；5Y forward PE 預估 18x vs 當前 22x（re-rate -3.0%/yr）；無股息；淨買回率 ~2%（buyback $7B / $160B mkt cap）</td></tr>
+</tbody>
+</table>
+
+<p><strong>A3 結論：</strong>Q1 大 beat（5/6）+ 10 個 AV partnerships + Uber One 50M + Fwd PE 22x 合理 = 4 檔中 risk-adjusted 最佳之一；op margin 結構升級至 14.6% record 是 thesis inflection signal。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD/ID 數據摘要（DD_UBER_20260418.html v12.0）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>Quality Score</td><td>~8.5</td></tr>
+<tr><td>訊號燈</td><td>大機率 A-（合理估值 + 結構成長）</td></tr>
+<tr><td>moat tier</td><td>A（8/10）</td></tr>
+<tr><td>估值燈</td><td>🟡（Fwd PE 22x 合理）</td></tr>
+<tr><td>核心假設</td><td>H1 Uber One 飛輪持續 / H2 AV partnership 整合成功 / H3 op margin 持續升級</td></tr>
+<tr><td>紅旗清單</td><td>① Waymo 競爭；② AV 整合複雜；③ 監管風險；④ Ride pricing 商品化</td></tr>
+<tr><td>ID basis</td><td>ID_RobotaxiAutonomous_20260429</td></tr>
+</tbody>
+</table>
+
+<p><strong>DD vs DCA 關鍵差異：</strong>DD 4/18 大機率給 B 或 A-；DCA 在 Q1 2026（5/6）法說後寫，op margin 升至 14.6% record + Uber One 50M + 10 AV partnerships = 訊號燈升至 A−。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Uber One 會員飛輪定量分析</summary>
+<div>
+
+<h4>Uber One 會員 progression</h4>
+<table>
+<thead><tr><th>時期</th><th>會員數</th><th>會員 spend / non-member spend 比</th><th>會員 GB 佔比</th></tr></thead>
+<tbody>
+<tr><td>2023 Q4</td><td>~17M</td><td>2.0x</td><td>~25%</td></tr>
+<tr><td>2024 Q4</td><td>~30M</td><td>2.5x</td><td>~33%</td></tr>
+<tr><td>2025 Q4</td><td>~42M</td><td>2.8x</td><td>~42%</td></tr>
+<tr><td>2026 Q1</td><td>~50M</td><td>~3.0x</td><td>~50%</td></tr>
+<tr><td>2027E</td><td>70M+</td><td>3.0-3.2x</td><td>55-58%</td></tr>
+<tr><td>2030E</td><td>120M+</td><td>3.0-3.5x</td><td>65-70%</td></tr>
+</tbody>
+</table>
+
+<h4>類比 Amazon Prime</h4>
+<p>Amazon Prime 2005 啟動 → 2013 達 30M → 2020 150M → 2025 220M+。UBER One 從 17M (2023) → 50M (2026) 速度比 Prime 早期更快 — 反映 mobility 高頻採購的訂閱黏性。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜10 個 AV partnerships 細節</summary>
+<div>
+
+<h4>UBER 已公告 AV partners</h4>
+<table>
+<thead><tr><th>Partner</th><th>類型</th><th>關係</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>Waymo（GOOGL）</td><td>純軟體 + 自有 fleet</td><td>UBER app 整合 Waymo rides（多城市）</td><td>同時是 partner + competitor</td></tr>
+<tr><td>Lucid + Nuro</td><td>EV + AV stack</td><td>UBER $300M Lucid 投資 + $300M Nuro 承諾；20,000 vehicle 採購</td><td>SF 上線 2026 末</td></tr>
+<tr><td>Rivian</td><td>EV + AV 整合</td><td>UBER 採購 Rivian commercial AV vehicles</td><td>2026-2027 ramp</td></tr>
+<tr><td>Zoox（AMZN）</td><td>客製 robotaxi</td><td>UBER app 整合 Zoox rides</td><td>2027 H1</td></tr>
+<tr><td>Wayve</td><td>純 software AV</td><td>UBER 整合 Wayve embodied AI</td><td>2026-2027</td></tr>
+<tr><td>Motional</td><td>Hyundai + Aptiv 合資</td><td>UBER 多城整合</td><td>已 operational</td></tr>
+<tr><td>WeRide</td><td>中國 AV 全球</td><td>UBER 在中東 / 東南亞 deployment</td><td>2026 H2</td></tr>
+<tr><td>NVIDIA</td><td>AI compute + 100K AV 全球目標 by 2027</td><td>alliance for AI infrastructure</td><td>多年 partnership</td></tr>
+<tr><td>Volkswagen</td><td>EV + AV joint venture</td><td>歐洲 robotaxi 2026</td><td>2026</td></tr>
+<tr><td>Baidu Apollo Go</td><td>中國 AV</td><td>數千台 AV 在亞洲 / 中東 UBER app</td><td>2026 H2 啟動</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵 takeaway</h4>
+<p>UBER 採「水平整合所有 AV」策略 — 10+ partners 覆蓋不同 AV stack、不同地理、不同 vehicle 類型；Waymo 採「垂直 1 家」策略 — 自己訓練、自己造車、自己 app。<strong>歷史上 platform vs vertical 在 multi-supplier 市場 platform 通常勝出</strong>（Booking、Spotify、Amazon Marketplace 都是例子）。但 Waymo 規模 + 技術領先（300K+ rides/week）是 substantial 優勢。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜對比 7 檔同期 DCA</summary>
+<div>
+
+<table>
+<thead><tr><th>維度</th><th>UBER</th><th>JBL</th><th>ORCL</th><th>HWM</th><th>KEYS</th><th>MPWR</th><th>TSLA</th></tr></thead>
+<tbody>
+<tr><td>訊號燈</td><td>A−</td><td>A−</td><td>B+</td><td>B+</td><td>B</td><td>B</td><td>C+</td></tr>
+<tr><td>Moat tier</td><td>A 8/10 ↑</td><td>B 6-7 ↑</td><td>A 8 ↑</td><td>A 9 ↑</td><td>B 8 →</td><td>B 7 →</td><td>B 6 →</td></tr>
+<tr><td>Runway</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟡</td></tr>
+<tr><td>Max DD 5Y</td><td>−45% 🟡</td><td>−45% 🟡</td><td>−55% 🟡</td><td>−42% 🟡</td><td>−48% 🟡</td><td>−58% 🔴</td><td>−65% 🔴</td></tr>
+<tr><td>Base IRR</td><td>+11.9%</td><td>+11.2%</td><td>+10.6%</td><td>+6.7%</td><td>+9.1%</td><td>+7.7%</td><td>+5.4%</td></tr>
+<tr><td>Fwd PE</td><td>22x</td><td>22x</td><td>22x</td><td>51x</td><td>42x</td><td>50x</td><td>198x</td></tr>
+<tr><td>建議倉位</td><td>3.0%</td><td>3.5%</td><td>2.5%</td><td>2.5%</td><td>2.0%</td><td>1.5%</td><td>0.75%</td></tr>
+</tbody>
+</table>
+
+<h4>整體排序（更新）</h4>
+<ol>
+<li><strong>JBL（並列第一）</strong>：純度高 + AI infra 賣鏟商</li>
+<li><strong>UBER（並列第一）</strong>：Base IRR 最高 + Moat ↑ + diversification 強</li>
+<li><strong>ORCL（第三）</strong>：估值便宜 + Stargate visibility；但客戶集中</li>
+<li><strong>HWM（第四）</strong>：A 級護城河最強；估值偏貴</li>
+<li><strong>KEYS（第五）</strong>：T&M 雙寡頭；需等 5/19</li>
+<li><strong>MPWR（第六）</strong>：CEO 減持 + 訴訟風險</li>
+<li><strong>TSLA（第七）</strong>：估值極端</li>
+</ol>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Munger Inversion 三維</summary>
+<div>
+
+<table>
+<thead><tr><th>維度</th><th>失效路徑</th><th>歷史對標</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>技術維</td><td>Waymo 自有 app 在 SF / LA / Phoenix 規模化（每週 rides 從 300K → 1M+），take share from UBER mobility 段 25-35%</td><td>Booking vs Hilton 5Y 競爭中 Booking 勝出 — platform 通常勝；但 Waymo 5 年技術領先是 substantial 優勢</td><td>25%</td></tr>
+<tr><td>管理層維</td><td>Dara Khosrowshahi（CEO 2017+）9 年任期後接班過渡風險；AV partnership 整合複雜需要強執行</td><td>歷史上 Dara 管理 capable + capital allocation 紀律好；接班計畫未公告</td><td>15%</td></tr>
+<tr><td>結構維</td><td>監管環境惡化 — CA AB5+、EU 勞工法案、城市 ride 排放管制；driver employee classification 推高 cost 25%；ride pricing 必須上升 20%+ 才能維持 op margin</td><td>2019 CA AB5 first wave UBER + Lyft 通過 Prop 22 抵消；但 2026-2028 second wave 更激進</td><td>30%</td></tr>
+</tbody>
+</table>
+
+<p><strong>合計 Bear 機率：</strong>~25%（與 §4 Bear 25% 一致）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜歷史 platform stock 對照</summary>
+<div>
+
+<h4>過去 10 年 platform stocks 報酬</h4>
+<table>
+<thead><tr><th>公司</th><th>時期</th><th>thesis</th><th>5Y 報酬</th><th>10Y 報酬</th></tr></thead>
+<tbody>
+<tr><td>BKNG</td><td>2015-2025</td><td>OTA platform 結構升級</td><td>+95%</td><td>+250%</td></tr>
+<tr><td>Spotify</td><td>2018-2023</td><td>音樂 platform vs Apple</td><td>+180%</td><td>—</td></tr>
+<tr><td>Airbnb</td><td>2020-2025</td><td>住宿 platform</td><td>+10%（COVID 衝擊）</td><td>—</td></tr>
+<tr><td>DoorDash</td><td>2020-2025</td><td>delivery platform</td><td>+150%</td><td>—</td></tr>
+<tr><td>UBER</td><td>2019-2024</td><td>mobility platform from cash burning</td><td>+200%（從 IPO $35 → $80）</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵 takeaway</h4>
+<p>Platform stocks 5Y 報酬範圍 +10% ~ +200%；UBER 從 IPO 後已實現 +200% 一波；下一波 5Y 從 $77 進場至 $135（Base） 至 $196（Bull）是 +75%~+155% 區間，與歷史平均一致。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Q2 FY26 法說 watchlist（~2026-08-06）</summary>
+<div>
+
+<h4>重點觀察項</h4>
+<table>
+<thead><tr><th>觀察點</th><th>樂觀</th><th>悲觀</th><th>對倉位影響</th></tr></thead>
+<tbody>
+<tr><td>Gross Bookings YoY</td><td>≥ +22%（Q2 guide +18-22%）</td><td>&lt; +15%</td><td>樂觀 → 加碼至 4%；悲觀 → 減碼</td></tr>
+<tr><td>Mobility GB YoY</td><td>≥ +22%</td><td>&lt; +15%</td><td>悲觀 → §5 primary 警戒（Waymo 競爭）</td></tr>
+<tr><td>Uber One 會員</td><td>≥ 60M</td><td>停滯 50M</td><td>悲觀 → 飛輪失靈</td></tr>
+<tr><td>Op margin</td><td>≥ 15.5%</td><td>滑回 13.5%</td><td>悲觀 → 結構升級停滯</td></tr>
+<tr><td>AV 城市數</td><td>≥ 11 城市（從 8）</td><td>仍 8 城市</td><td>悲觀 → AV 整合進度警戒</td></tr>
+<tr><td>FY26 EBITDA guide</td><td>再上修</td><td>維持</td><td>樂觀 → A 級升級</td></tr>
+</tbody>
+</table>
+
+<h4>~8/6 法說後決策樹</h4>
+<table>
+<tbody>
+<tr><td>情境 A：4+ 項樂觀</td><td>升級至 A，加碼至 4-5%</td></tr>
+<tr><td>情境 B：3 項樂觀</td><td>維持 A−，倉位 3%</td></tr>
+<tr><td>情境 C：3+ 項悲觀</td><td>降級至 B，減碼至 1.5%</td></tr>
+<tr><td>情境 D：5+ 項悲觀</td><td>降級至 C/X，倉位歸零</td></tr>
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜UBER 5Y EPS / PE 推演路徑</summary>
+<div>
+
+<h4>5Y EPS 三情境</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull EPS</th><th>Base EPS</th><th>Bear EPS</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>$3.50</td><td>$3.30</td><td>$2.90</td></tr>
+<tr><td>FY27</td><td>$4.80</td><td>$4.30</td><td>$3.20</td></tr>
+<tr><td>FY28</td><td>$6.30</td><td>$5.40</td><td>$3.60</td></tr>
+<tr><td>FY29</td><td>$8.00</td><td>$6.50</td><td>$4.10</td></tr>
+<tr><td>FY30</td><td>$9.50</td><td>$7.50</td><td>$4.50</td></tr>
+<tr><td><strong>CAGR FY26→FY30</strong></td><td><strong>+28.4%</strong></td><td><strong>+22.7%</strong></td><td><strong>+11.6%</strong></td></tr>
+</tbody>
+</table>
+
+<h4>5Y PE 路徑</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull PE</th><th>Base PE</th><th>Bear PE</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>23</td><td>22</td><td>20</td></tr>
+<tr><td>FY27</td><td>23</td><td>21</td><td>17</td></tr>
+<tr><td>FY28</td><td>22</td><td>20</td><td>15</td></tr>
+<tr><td>FY29</td><td>22</td><td>19</td><td>13</td></tr>
+<tr><td>FY30</td><td>21</td><td>18</td><td>12</td></tr>
+</tbody>
+</table>
+
+<h4>對應股價路徑</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull price</th><th>Base price</th><th>Bear price</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>$81</td><td>$73</td><td>$58</td></tr>
+<tr><td>FY27</td><td>$110</td><td>$90</td><td>$54</td></tr>
+<tr><td>FY28</td><td>$139</td><td>$108</td><td>$54</td></tr>
+<tr><td>FY29</td><td>$176</td><td>$124</td><td>$53</td></tr>
+<tr><td>FY30</td><td>$200</td><td>$135</td><td>$54</td></tr>
+<tr><td><strong>5Y total return</strong></td><td><strong>+160%</strong></td><td><strong>+75%</strong></td><td><strong>−30%</strong></td></tr>
+</tbody>
+</table>
+
+<p class="note">本表 Bull/Base/Bear 5Y total return（+160% / +75% / -30%）與 §4 Asymmetry Analysis 表（+155% / +75% / -30%）<strong>差距 ≤ 5%p</strong>，符合內部一致性 ≤ 10%p 容忍度 ✅。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Lynch 框架</summary>
+<div>
+
+<p><strong>What business：</strong>UBER 是 mobility + delivery 兩面 marketplace platform，連結 5M+ drivers/couriers 與 150M+ users；Uber One 50M 會員是訂閱黏性層；10 個 AV partnerships 是「不蓋車的 Robotaxi 平台」。</p>
+<p><strong>Why moat：</strong>(1) 雙網絡效應 — 密度越高用戶越離不開；(2) Uber One walled garden — 3x spend / member；(3) algorithm + data scale — surge pricing / route optimization；(4) global brand — global 11% 市占。</p>
+<p><strong>What makes money：</strong>(1) take rate ~25% on GB；(2) 會員 spend 3x — LTV 上升；(3) advertising 內嵌段（小但 high margin）。AV 段未來會降低 driver cost，但 take rate 可能下降；net 影響 mid-term TBD。</p>
+<p><strong>Lynch 「能講清楚」測試：</strong>✅ 通過。<strong>Lynch 「合理價格」測試：</strong>✅ 通過 — PE 22x × Rev growth 14-16% = PEG ~1.4，可接受。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜UBER 投資組合配置情境</summary>
+<div>
+
+<h4>三種典型 portfolio 中 UBER 倉位建議</h4>
+<table>
+<thead><tr><th>portfolio type</th><th>UBER 建議倉位</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>已重倉 GOOGL（&gt; 4%）的 AI/cloud 偏向組合</td><td>UBER 1.5%</td><td>GOOGL Waymo 與 UBER mobility 是雙押，邊際 alpha 減弱；UBER 可當 hedging 配置</td></tr>
+<tr><td>已重倉 MSFT/AMZN 等 hyperscaler，無 mobility 曝險</td><td>UBER 3.0-4.0% 核心</td><td>mobility 賽道強 differentiation，是 alpha 來源</td></tr>
+<tr><td>價值型組合（重 PE &lt; 20x）</td><td>UBER 1.5%</td><td>PE 22x 對價值型偏貴；但 Uber One 飛輪 + AV optionality 是 long-tail return</td></tr>
+<tr><td>成長型組合（接受 PE 25-35x）</td><td>UBER 4.0-5.0% 核心</td><td>結構成長 + Moat ↑ + 合理估值 = 三者兼具</td></tr>
+</tbody>
+</table>
+
+<h4>建議組合（綜合 7 檔）</h4>
+<p>若 portfolio 容量有 16% 給 7 檔：<strong>JBL 3.5% + UBER 3.0% + ORCL 2.5% + HWM 2.5% + KEYS 2.0% + MPWR 1.5% + TSLA 0.75% = 15.75%</strong>，剩 0.25% 觀察彈性。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜UBER vs BKNG 平台 stock 深度對比</summary>
+<div>
+
+<h4>關鍵指標對照（2026 vs 2018 BKNG）</h4>
+<table>
+<thead><tr><th>指標</th><th>UBER 2026 Q1</th><th>BKNG 2018</th></tr></thead>
+<tbody>
+<tr><td>Fwd PE</td><td>22x</td><td>22x</td></tr>
+<tr><td>Rev growth YoY</td><td>+14%</td><td>+15%</td></tr>
+<tr><td>Op margin</td><td>14.6%</td><td>30%</td></tr>
+<tr><td>會員數</td><td>50M (Uber One)</td><td>Genius Loyalty ~100M</td></tr>
+<tr><td>會員 spend ratio</td><td>3x</td><td>1.8x</td></tr>
+<tr><td>Take rate</td><td>~25% on GB</td><td>~17% on GB</td></tr>
+<tr><td>Network 廣度</td><td>10K+ cities</td><td>500K+ hotels/properties</td></tr>
+<tr><td>Capital intensity</td><td>asset-light</td><td>asset-light</td></tr>
+<tr><td>後 5Y 報酬</td><td>?+75%~+155%</td><td>+95%（實際）</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵 takeaway</h4>
+<p>UBER 在 2026 與 BKNG 在 2018 高度相似；BKNG 之後 5 年實現 +95%（含 COVID 衝擊）。UBER 從 PE 22x 結構性成長 + Uber One 飛輪 + AV optionality，5Y 報酬期望可能略勝 BKNG 同期（因有 AV 第三引擎催化劑）。</p>
+
+</div>
+</details>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>

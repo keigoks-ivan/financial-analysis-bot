@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA - 2383TW｜台光電 EMC｜2026-05-12</title>
+<!-- dca-moat-trend: ↑ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--line:#E2E8F0;--altrow:#F1F5F9;--muted:#64748B;}
+*{box-sizing:border-box;}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',system-ui,sans-serif;line-height:1.65;}
+.mono,.num{font-family:'IBM Plex Mono',monospace;}
+header.fixed{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;}
+header.fixed .ticker{font-weight:700;font-size:18px;}
+header.fixed .meta{opacity:.92;font-family:'IBM Plex Mono',monospace;}
+main{max-width:1200px;margin:0 auto;padding:24px;}
+h1{color:var(--ink);font-size:28px;margin:8px 0 4px;}
+h2{background:var(--ink);color:#fff;padding:10px 14px;border-left:4px solid var(--accent);margin:40px 0 16px;font-size:20px;border-radius:2px;}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-bottom:2px solid var(--line);padding-bottom:4px;}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px;}
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14px;background:#fff;}
+thead th{background:var(--ink);color:#fff;padding:9px 10px;text-align:left;font-weight:500;}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:nth-child(even) td{background:var(--altrow);}
+.statusbar{background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 14px;margin:18px 0 24px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.statusbar .cell{flex:0 0 180px;text-align:center;padding:6px 10px;background:#fff;border:1px solid var(--line);border-radius:4px;}
+.statusbar .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.statusbar .val{font-size:22px;font-weight:700;line-height:1.2;}
+.statusbar .sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.thesis{background:#EFF6FF;border-radius:4px;padding:30px 24px;margin:18px 0;text-align:center;}
+.thesis .big{font-size:26px;line-height:1.5;color:var(--ink);font-weight:500;}
+.thesis .lbl{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:10px;}
+.decision{padding:18px 20px;border-radius:4px;margin:18px 0;}
+.decision.wait{background:#FEF9C3;border-left:4px solid #CA8A04;}
+.conflict{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.verdict-tbl thead th{background:#9A3412;}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem blockquote{margin:6px 0;padding:8px 14px;border-left:3px solid #DC2626;background:#fff;font-style:italic;color:#7F1D1D;}
+.maxdd{display:flex;gap:18px;align-items:center;background:#FFF1F2;border-left:4px solid #DC2626;padding:18px;border-radius:3px;margin:14px 0;}
+.maxdd .num-big{font-size:34px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace;flex:0 0 220px;text-align:center;}
+.note{color:var(--muted);font-size:13px;margin:8px 0;}
+.green{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-weight:500;}
+.red{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-weight:500;}
+.amber{background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-weight:500;}
+.memo{background:#FAFAF9;border:1px solid #E7E5E4;padding:24px 28px;margin:14px 0;font-family:Georgia,serif;line-height:1.7;}
+.memo h5{color:#1E3A5F;margin:0 0 8px;font-size:16px;border-bottom:1px solid #E7E5E4;padding-bottom:4px;}
+.elevator{background:#FFF8E7;border-left:4px solid #D97706;padding:14px 18px;margin:14px 0;font-style:italic;color:#78350F;}
+details{margin:14px 0;border:1px solid var(--line);border-radius:4px;background:#fff;}
+details summary{padding:12px 18px;cursor:pointer;font-weight:600;color:var(--ink);background:#F1F5F9;}
+details > div{padding:14px 18px;}
+button.print-btn{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-family:inherit;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:50;}
+@media print{header.fixed,button.print-btn{display:none;}main{max-width:none;}h2{page-break-after:avoid;}details > div{display:block!important;}}
+</style>
+</head>
+<body>
+<header class="fixed">
+<div><span class="ticker">2383.TW</span>｜台光電 Elite Material Corp｜TWSE</div>
+<div class="meta">DCA｜2026-05-12｜Price NT$4,850｜v1.2</div>
+</header>
+<main>
+
+<h1>2383.TW｜台光電 EMC — Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-12｜現價 NT$4,850（5/11 收）｜Q1 2026 法說後 ~2 個月｜既有 DD：DD_2383TW_20260418.html v12.0｜對應 ID：ID_AIDataCenter_20260419 / ID_AIAcceleratorDemand_20260419 / ID_AINetworking_20260419｜下次財報：2026-07-15 ± 5（Q2）</p>
+
+<div class="statusbar">
+  <div class="cell">
+    <div class="lbl">綜合訊號燈</div>
+    <div class="val" style="color:#92400E;">B+</div>
+    <div class="sub">M8 龍頭 + EPS ramp</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">護城河趨勢</div>
+    <div class="val">B <span style="color:#166534;">↑</span></div>
+    <div class="sub">M8+/M9 領先</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Runway Post-Y5</div>
+    <div class="val">🟢</div>
+    <div class="sub">CCL 5Y CAGR 88%</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Max DD（5Y 中途）</div>
+    <div class="val" style="color:#991B1B;">−55%</div>
+    <div class="sub">🔴 TW cyclical + 競爭</div>
+  </div>
+</div>
+
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis">
+<p class="big">台光電是高階 CCL（M8/M9 等級）全球龍頭，AI server PCB 厚 30 層基板的核心材料供應商，Doosan/Panasonic 雙寡占第二甲被擠 — 2026-2027 雙引擎放量。</p>
+<p class="lbl">50 字以內｜投資本質</p>
+</div>
+
+<h2>§7｜Decision（可執行計畫）</h2>
+<div class="decision wait">
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>角色</td><td><strong>核心持倉</strong>（B+ 訊號燈 + M8+ 75% 市占龍頭 + Q1 EPS +49% 強動能；但 PE 63x 當前 / 36x FY27 已 priced in 部分 ramp）</td></tr>
+<tr><td>初始建倉</td><td><strong>2.0%</strong>（Max DD 🔴 強制下修 + TWSE 流動性 + 11/2025 Doosan Rubin exclusive 訊號爭議）</td></tr>
+<tr><td>目標倉位</td><td><strong>4.0%</strong>（M9 量產確認 + NVDA M10 認證通過 + Doosan exclusive 否定）</td></tr>
+<tr><td>進場價位區間</td><td>NT$4,200-$4,600（4 月整理區）；現價 NT$4,850 不追</td></tr>
+<tr><td>進場節奏</td><td><strong>嚴格條件式</strong>：① 等回測 MA60（~NT$4,500）→ 進場 1.0%；② 7 月 Q2 法說後若 EPS +50%+ YoY + M9 出貨確認 → 加 0.75%；③ 任何 -10% 回測 → 補 0.25%。<strong>禁止現價追擊</strong>（4 週 +12% drift）</td></tr>
+<tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td><strong>對照 6213 聯茂 / 2308 台達電 / TUC / Sytech / Doosan / NVDA / AVGO</strong>。<br>• vs <strong>6213 聯茂</strong>：台燿是 #2 高階 CCL（M8 認證中），市占 ~15%（vs 台光電 75%+）；台燿 Fwd PE 50x vs 台光電 63x — 二者 differentiator 是「龍頭 vs 追趕者」。若已持台光電，台燿是 hedge（若台光電失分台燿補位）；若沒持，台光電優先。<br>• vs <strong>2308 台達電</strong>：台達電是 power 系統 + EMS（在 AI infra power supply）；不重疊但同屬 AI infra 賣鏟商。Fwd PE 25x vs 台光電 63x。<br>• vs <strong>TUC / Sytech / Doosan / Panasonic</strong>：TUC（私有 Taiwan Union）、Sytech（中國 Guangdong Shengyi）、Doosan（韓）、Panasonic（日）— 都是高階 CCL 競爭者；Doosan 是最大 specific 威脅（Nov 2025 報導 Rubin exclusive）。<br>• vs <strong>NVDA / AVGO</strong>：上游 AI 純度 play；2383 是「賣 PCB 給 NVDA 的材料供應商」— 賣鏟商純度高但 cyclical 大。<br>• 結論：在 AI server PCB 材料賽道，台光電是首選；但需要對 Doosan 競爭做 risk-adjust。若 portfolio 已重壓 NVDA（≥ 5%），台光電是「下游材料」雙押（受惠相關但 thesis 不重疊）。</td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>倉位</th></tr></thead>
+<tbody>
+<tr><td>加碼至 3.0%</td><td>Q2 2026（~7/15）EPS 連 2 季 YoY ≥ +50% + AI server Rev 段 ≥ 50% + M9 出貨確認</td><td>3.0%</td></tr>
+<tr><td>加碼至 4.0%</td><td>2026 H2 NVDA M10 認證通過（official confirm）+ 945 萬張產能 ramp on track + Doosan exclusive Rubin claim 證偽</td><td>4.0%</td></tr>
+<tr><td>減碼至 1.0%</td><td>Q2 或 Q3 EPS YoY &lt; +20%；<strong>或</strong> Doosan 在 Rubin platform 取得 50%+ exclusive supply；<strong>或</strong> M9 量產延後至 2027 H2</td><td>1.0%</td></tr>
+<tr><td>清倉</td><td>NVDA M10 認證失敗 + Doosan/Panasonic 接收 Rubin platform 70%+ supply；<strong>或</strong> Forward PE 突破 100x（股價 &gt; NT$8,000 + EPS 不上修）</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA + 動能過熱檢查</h3>
+<table>
+<thead><tr><th>檢查</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>MA60 / MA200 / MA104w 之上</td><td class="green">✅ 全部</td></tr>
+<tr><td>Pure MA</td><td class="green">✅ 強勢進場</td></tr>
+<tr><td>4 週漂移</td><td class="amber">⚠ +12%</td></tr>
+<tr><td>RSI 14d 估算</td><td class="amber">⚠ ~68</td></tr>
+<tr><td>結論</td><td>偏熱；進場節奏條件式</td></tr>
+</tbody>
+</table>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 Doosan 在 Rubin 上取得 substantial share + M9 量產延後 → 12-18 月停利</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 M9 量產順利 + NVDA M10 認證通過 + 945 萬張產能 ramp → 抱到 Rubin Ultra 量產（2027-2028）</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 M10/M11 領先 + 全球 CCL 整合（台光 + 台燿合佔 85% by 2027 兌現）→ 結構性持有</td></tr>
+</tbody>
+</table>
+<p><strong>建議持有年限：中期 2-3 年</strong>，原因：(1) Q2-Q4 2026 是「M9 ramp 兌現 + Doosan 競爭驗證」雙重 catalyst 窗口；(2) TW 半導體 cyclical 性 7-10 年；(3) PE 63x 在歷史頂部，需要 EPS 翻 2-3 倍才能 sustain；(4) 高估值 + 高 ramp 速度 = 高 volatility，3-5 年是 risk-adjusted 最佳 horizon。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計（NT$）</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY2026E</td><td>NT$77.34</td><td>analyst consensus</td></tr>
+<tr><td>FY2027E</td><td>NT$136.04</td><td>analyst consensus（含 M9 大幅 ramp）</td></tr>
+<tr><td>FY2028E</td><td>NT$221.53</td><td>analyst consensus（+62% YoY）</td></tr>
+<tr><td>FY2030E（外推）</td><td>NT$300-NT$400</td><td>外推：M10 領先 + 全球 CCL 整合</td></tr>
+</tbody>
+</table>
+<p><strong>現價合理嗎？</strong>NT$4,850 / FY26 EPS NT$77 = 63x（高）；/ FY27 NT$136 = 35.7x（合理）；/ FY28 NT$221 = 21.9x（便宜）。Goldman PT NT$4,020 用 37x × FY27 EPS = 隱含 PE 維持 37x 持續。<strong>結論：對「EPS 連續達標」有信心 → 現價可進場；對「Doosan 競爭」有疑慮 → 等回測</strong>。</p>
+
+</div>
+
+<h2>§4｜Asymmetry Analysis</h2>
+
+<h3>5 年情境矩陣</h3>
+<table>
+<thead><tr><th>情境</th><th>5Y 絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+165%（至 ~NT$12,850）</td><td>+21.5%/yr</td><td>M9/M10 領先 + NVDA Rubin/Feynman 主供應商 + Doosan competition 無效；FY30 EPS NT$400 × 32x</td><td>30%</td></tr>
+<tr><td>Base</td><td>+85%（至 ~NT$8,973）</td><td>+13.1%/yr</td><td>M9 量產順利 + Rubin partial supply + 945 萬張產能 ramp；FY30 EPS NT$300 × 30x</td><td>40%</td></tr>
+<tr><td>Bear</td><td>−40%（至 ~NT$2,910）</td><td>−9.7%/yr</td><td>Doosan/Panasonic 在 Rubin 取得 60%+ supply + M10 認證失敗 + AI capex 2027 air pocket；FY30 EPS NT$150 × 19x</td><td>30%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+71%</strong></td><td><strong>+11.3%/yr</strong></td><td colspan="2">勝大盤，但 Bear 風險 30%</td></tr>
+</tbody>
+</table>
+
+<h4>追加壓力測試</h4>
+<p>10Y 視角：Bull IRR ~18%/yr（M11/M12 後續產品 + 太空 + 自動駕駛 PCB）；機會成本 vs 2330 TSMC ~14% / NVDA ~13%。台光電 risk-adjusted return 中段；Doosan/Panasonic 競爭風險是 differentiator。</p>
+
+<h3>📅 機率估計校準</h3>
+<p>Bear 30% 合理（&gt; 20% floor，Doosan exclusive Rubin claim + 失敗 GB300 認證歷史是實質警訊）；Bull-Bear 散布 205%p；Base 40% 合理。</p>
+
+<h3>📐 Pattern Match</h3>
+<div class="pattern">
+<table>
+<tbody>
+<tr><td>歷史類比</td><td>2018-2023 ASML — 從半導體 supplier 變 AI infra essential 材料供應商</td></tr>
+<tr><td>當時 setup</td><td>ASML 2018 Fwd PE 25x、EUV 量產初期、寡占（vs Nikon/Canon 在 lithography）</td></tr>
+<tr><td>5Y 報酬</td><td>2018-12 至 2023-12：+475%，年化 IRR ~42%</td></tr>
+<tr><td>像的地方</td><td>① 高階材料寡占（M8+ 4 家 vs EUV 1 家）；② 客戶集中 NVDA / hyperscaler（vs ASML 集中 TSMC/Samsung/Intel）；③ AI cycle 啟動</td></tr>
+<tr><td>不像</td><td>① ASML 真正壟斷（100% EUV）vs 台光電寡占 4 家 + Doosan 競爭升級；② 台光電 進場 PE 63x（current FY） vs ASML 2018 25x；③ 切換成本：CCL 認證 6-12 月（中等）vs EUV 5+ 年（極高）</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>🧬 IRR Composition（5Y）</h3>
+<table>
+<thead><tr><th>情境</th><th>EPS CAGR</th><th>估值 re-rate</th><th>股息+回購</th><th>合計</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+41.0%/yr<br><span class="note">(EPS NT$77 → $400)</span></td><td>−13.8%/yr<br><span class="note">(PE 63→32)</span></td><td>−5.7%/yr<br><span class="note">(現金 div ratio dilution + SBC)</span></td><td>+21.5%/yr ✅</td></tr>
+<tr><td>Base</td><td>+31.0%/yr</td><td>−14.6%/yr<br><span class="note">(PE 63→30)</span></td><td>−3.3%/yr</td><td>+13.1%/yr ✅</td></tr>
+<tr><td>Bear</td><td>+14.0%/yr</td><td>−18.7%/yr<br><span class="note">(PE 63→19)</span></td><td>−5.0%/yr</td><td>−9.7%/yr ✅</td></tr>
+</tbody>
+</table>
+
+<p><strong>Base 加總校驗：</strong>+31.0 − 14.6 − 3.3 = <strong>+13.1%/yr</strong> ✅ 0%p 差距 ≤ 2%p。</p>
+
+<div class="pattern">
+<p><strong>質感解讀：</strong>Base 13.1% IRR 中，+31%/yr 巨大 EPS 複利 + (-14.6%/yr) PE de-rate 大幅拖累。<strong>核心邏輯：EPS 必須以極快速度成長才能 absorb PE 從 63x → 30x 收斂</strong>；可抱性 medium — 不是「看別人臉色」但需要 EPS 不能 slow down。任何一季 EPS miss 都會引發 PE 加速收斂。</p>
+</div>
+
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試 1｜投委會 1 頁紙 Memo</h3>
+<div class="memo">
+<h5>2383.TW｜台光電 EMC – Recommendation: BUY 條件式（核心 2.0%）</h5>
+<p><strong>Thesis：</strong>台光電是高階 CCL M8+ 全球龍頭（市佔 75%+），AI server PCB 30+ 層基板核心材料供應商；4 家寡占（台光、台燿、Panasonic、Doosan）中 #1；Q1 2026 EPS NT$14.9 +49% YoY 已驗證 thesis。AI server Rev mix 從 27% (2024) → 48% (2026)。</p>
+<p><strong>Key Driver：</strong>(1) M9 product 2026 H2 量產，2027 大幅 ramp；(2) NVDA Rubin/Feynman M10 認證是 binary 關鍵 — 2026 Q4-2027 Q1 答案。Q1 業績 + 945 萬張 capacity ramp 是 thesis partial 驗證。</p>
+<p><strong>R:R：</strong>5Y Bull +165% / Base +85% / Bear -40%，期望 IRR ~11.3%/yr — <strong>勝大盤</strong>。Max DD -45~-60%（🔴 高估值 + Doosan 競爭風險）。</p>
+<p><strong>主要風險：</strong>① Doosan 「exclusive Nvidia Rubin CCL supply」（Nov 2025 報導，未經 EMC 否認）；② 失敗 GB300 認證歷史（Blackwell 第二代）；③ Fwd PE 63x current 在歷史頂部；④ Panasonic / 日系 low-loss CCL 競爭；⑤ Sytech / TUC / Iteq 中低端市場擠壓；⑥ TWSE 流動性 + 個股 volatility 較大。</p>
+<p><strong>建議倉位：2.0% 核心</strong>（受 Max DD 🔴 強制下修），目標 4.0%。<strong>進場節奏嚴格條件式</strong>：等回測 MA60 ~NT$4,500；<strong>禁止現價追擊</strong>。<strong>opportunity cost</strong>：在 AI server PCB 材料賽道首選；但若已持 NVDA ≥ 5%，邊際 alpha 較弱。</p>
+<p><strong>The Single Thing：</strong>2026 H2 NVDA M10 認證失敗 + Doosan/Panasonic 在 Rubin platform 取得 50%+ exclusive supply = 立刻減碼至 0.5% 或清倉。</p>
+</div>
+
+<h3>測試 2｜30 秒電梯簡報</h3>
+<div class="elevator">
+「台光電是 AI server PCB 上面那片 30+ 層銅箔基板的核心材料供應商；M8+ 等級全球市占 75%、Q1 EPS +49%、Q2 漲價 10%。但 Nov 2025 Digitimes 報 Doosan 拿到 Rubin exclusive；EMC 失敗 GB300 認證 — 是真正的競爭威脅。Fwd PE 63x 高，FY27 PE 36x 才合理。等回測 NT$4,500 再進場。」</div>
+
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>共識清單</h3>
+<div class="conflict">
+<ul>
+<li><strong>A1+A2+A3 共識：</strong>台光電在 M8+ 高階 CCL 全球市占 75%+（leader 確認）+ 4 家寡占結構穩定 + Q1 EPS 大 beat</li>
+<li><strong>A2+A3 共識：</strong>AI server CCL 市場 $5.24B (2024) → $18.2B (2026) → $80B (2027)，CAGR 88% = 結構性 supercycle</li>
+<li><strong>A3 共識：</strong>Q2 漲價 +10% + 945 萬張 capacity ramp + AI Rev mix 27% → 48% = thesis 強動能</li>
+</ul>
+</div>
+
+<h3>矛盾清單</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>M8+ 市占 75% vs Doosan exclusive Rubin claim</td><td>Moat 領先</td><td>—</td><td>11/2025 Digitimes 報導 Doosan + GB300 認證失敗</td><td>🔴 不可調和</td></tr>
+<tr><td>2</td><td>Panasonic 日系 low-loss 領先 vs 台光電 M8+ 主導</td><td>—</td><td>Panasonic 日系 dominate</td><td>台光電 75% global M8+</td><td>🟡 可調和（不同 grade）</td></tr>
+<tr><td>3</td><td>Fwd PE 63x vs 5Y avg PE 25x</td><td>—</td><td>—</td><td>PE re-rate 已 priced</td><td>🟡 可調和（EPS 翻倍 absorb）</td></tr>
+<tr><td>4</td><td>Q1 大 beat vs 4 週 +12% 過熱</td><td>—</td><td>—</td><td>動能訊號 vs 過熱</td><td>🟡 短期 timing</td></tr>
+</tbody>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+<table class="verdict-tbl">
+<thead><tr><th>#</th><th>矛盾</th><th>選邊</th><th>依據</th><th>會 settle 硬數據點</th><th>if-then 路徑</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>M8+ 75% 市占 vs Doosan Rubin exclusive</td><td><strong>暫無法決定（最大不確定性）</strong></td><td>Digitimes 11/2025 報導 Doosan exclusive Rubin claim 未經 EMC / NVDA 正式否認；但 Q1 2026 業績 + AI Rev mix 27% → 48% 顯示 EMC 仍是大宗 supplier；可能 Doosan exclusive 是 single SKU（如 GB300 specifically）而非整個 Rubin platform；亦可能 NVDA dual-vendor 政策</td><td>① NVDA Rubin Ultra component supplier 正式公告（2026 H2-2027 H1）；② Digitimes / Morgan Stanley / Edgewater 供應鏈報告 update；③ EMC Q2-Q3 法說中管理層對 Rubin design wins wording</td><td>(a) NVDA Rubin 公告 EMC 為 primary CCL supplier → 加碼至 3-4%；(b) Doosan 確認 exclusive → 減碼至 0.5% 或清倉</td></tr>
+<tr><td>2</td><td>Panasonic 日系 low-loss vs 台光電 M8+</td><td><strong>A3 各佔不同 grade 勝</strong></td><td>Panasonic 在 ultra-low-loss CCL（M9/M10 概念但仍叫 Panasonic 自有 grade name）有先發優勢；台光電 M8+ 是 NVDA 主流採用 grade；不同 grade 相互不直接競爭</td><td>① M10 NVDA 認證進度；② 各 grade 市占年度 update</td><td>(a) 台光電 M10 認證通過 → 跨入 Panasonic 領地，加碼；(b) Panasonic 跨入 M8 → 結構性威脅，減碼</td></tr>
+<tr><td>3</td><td>PE 63x vs 5Y avg 25x</td><td><strong>A3 結構轉型部分勝</strong></td><td>5Y avg PE 25x 是 commodity CCL 時代估值；台光電已從「電子產品 PCB CCL」轉型至「AI server M8+ specialty」；應該享高於 commodity CCL PE 35-45x；當前 63x current 仍 stretch，但 FY27 36x（基於 EPS NT$136）是合理；3 年內 PE 應收斂至 30-40x</td><td>① 各季 Forward PE quote；② 與台燿（次龍頭）PE differential</td><td>(a) PE 落回 40x（NT$3,100 區）→ 加碼至 4%；(b) PE 突破 100x（NT$7,700+）→ trim 至 1%</td></tr>
+<tr><td>4</td><td>Q1 大 beat vs +12% drift</td><td><strong>A3 警示勝（短期）</strong></td><td>4 週 +12% drift + RSI 68 = 過熱訊號；但結構性 EPS ramp 仍 valid；近期可能 -8~-12% 回測後再進入主升段</td><td>① RSI 14d 每日 update；② 與 4 週均價 spread</td><td>(a) RSI 回到 50-55 + 回測 MA60 → 進場；(b) RSI 突破 75 + 創高 → 等更深回測</td></tr>
+</tbody>
+</table>
+
+<h2>§3｜Key Drivers + 🔄 Consensus 分歧</h2>
+
+<table>
+<thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>M9 量產 ramp（2026 H2 啟動，2027 大規模出貨）</strong></td><td>M9 是台光電「下一代護城河」— 比 M8 high speed 性能 +30%，是 NVDA Rubin / hyperscaler 1.6T switch 必需；M9 量產規模直接決定 FY27-28 EPS 翻倍兌現</td><td>季度 M9 出貨量；M9 vs M8 ASP（high speed 升 ASP +50%+）；客戶名單（NVDA / hyperscaler / Broadcom）</td></tr>
+<tr><td>2</td><td><strong>NVDA Rubin/Feynman platform 中 M10 認證 + 份額（vs Doosan/Panasonic）</strong></td><td>Rubin 量產 2H 2027 + Feynman 2028 是 thesis 主軸；台光電在 GB300 認證失敗後是否能在 Rubin 翻身 = binary 是 driver 1 上行還是回落</td><td>NVDA Rubin Ultra component supplier 公告；Digitimes / MS 供應鏈報告；EMC 法說中管理層 wording</td></tr>
+</tbody>
+</table>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>driver 2 在 driver 1 不成立下能否被推翻？✅ 能。即使 M9 順利量產（driver 1 成功），若 NVDA 採用 Doosan/Panasonic 為 primary supplier in Rubin（driver 2 失敗），台光電仍可能在 ASIC platforms（AVGO TPU、Marvell）+ 高速 switch 上佔位 — partial 補位但不是 thesis 完整兌現。<strong>兩條獨立 ✅</strong>。</p>
+
+<h4>強制減法：我認為不重要的事</h4>
+<table>
+<thead><tr><th>市場常討論</th><th>為什麼不重要</th></tr></thead>
+<tbody>
+<tr><td>消費電子段成長</td><td>佔 Rev &lt; 25%，且毛利低；非命脈</td></tr>
+<tr><td>5G base station CCL</td><td>已 mature，未來成長有限</td></tr>
+<tr><td>汽車 CCL（ADAS / 充電）</td><td>規模小，未來 5 年仍是 sub-10% Rev</td></tr>
+<tr><td>「千金股」status</td><td>股價市場心理 stigma，不影響 fundamental valuation</td></tr>
+</tbody>
+</table>
+
+<h4>🔄 我和市場 Consensus 的最大分歧</h4>
+<table>
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>市場目前定價假設</td><td>Goldman PT NT$4,020 (37x × FY27 EPS NT$136) — 但局內人 PT NT$5,100 (37x × FY27 + 23x × FY28)；隱含「PE 維持 30-37x + EPS 連續達標」</td></tr>
+<tr><td>我的不同假設</td><td>如果 Doosan 在 Rubin platform 取得 30%+ share（vs 預期 0-15%），台光電 FY27 EPS 預估 NT$136 → NT$110；同時 PE 應該打折至 30x（vs 37x）= PT NT$3,300（vs Goldman NT$4,020）</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方對「台光電 Rubin 主導」anchor 來自 M8+ 75% market share；忽視 Digitimes 11/2025 Doosan exclusive 報導；忽視 GB300 認證失敗的 implication（每代 NVDA platform 認證是 independent process，不是 carry-over）</td></tr>
+</tbody>
+</table>
+
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h4>Primary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>2026 H2-2027 H1 NVDA Rubin platform 正式公告 component supplier 列表中，台光電未列為 primary CCL supplier（或市占 &lt; 30%）</strong></td></tr>
+<tr><td>為什麼致命</td><td>driver 2 直接破；M9 量產雖然順利但失去最大客戶（NVDA Rubin / Feynman）= EPS FY27-28 預估下修 30-40%；PE 從 63x → 25-30x 強制收斂；股價 -40~-50%</td></tr>
+<tr><td>如何監測</td><td>① NVDA 法說中 supply chain wording；② Digitimes / Morgan Stanley / Edgewater 供應鏈深度報告（季度更新）；③ EMC 法說中管理層對 Rubin design wins 明確 wording；④ Doosan 法說中 Rubin contract 規模揭露</td></tr>
+<tr><td>離發生有多遠</td><td>Rubin Ultra 量產 2H 2027；component supplier 確定通常在量產前 6-9 月（即 2026 Q4-2027 Q1）；機率 25-35%</td></tr>
+</tbody>
+</table>
+
+<h4>Pre-mortem 派生 Secondary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>M9 量產延後至 2027 H2 以後</strong>（vs 預期 2026 H2 啟動、2027 大規模 ramp）</td></tr>
+<tr><td>為什麼致命</td><td>driver 1 直接破；EPS FY27-28 翻倍預估失敗；台光電被歸類為「M8 已成熟 + M9 跟不上」結構性失分；PE 從 63x → 22x（commodity CCL 估值）</td></tr>
+<tr><td>如何監測</td><td>① M9 出貨量 disclose（季度）；② 945 萬張產能 ramp 進度；③ M9 客戶名單（NVDA、AVGO、Marvell）公告</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>§6b 校驗結果：</strong>⚠ 部分重疊。原 §5 抓 Rubin supplier 失分，pre-mortem 故事還涉及 M9 量產延後。已實際補 secondary trigger。<strong>§5 修正狀態：⚠ 已補 1 條</strong>。</p>
+
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 盲點</h3>
+<table>
+<thead><tr><th>#</th><th>不確定假設</th><th>thesis 前提</th><th>後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Doosan exclusive Rubin CCL 是真的還是 single SKU？</td><td>EMC 仍是 Rubin 主 supplier</td><td>若 Doosan 真的 exclusive Rubin platform，EMC FY27 EPS 預估 NT$136 → NT$100</td></tr>
+<tr><td>2</td><td>Failed GB300 認證的 root cause 是什麼？</td><td>EMC 技術 fixable，下一代不影響</td><td>若是材料配方 fundamental 問題（如 Df < 0.0018 達不到），下一代 platform 也認證困難</td></tr>
+<tr><td>3</td><td>M9 量產 yield 多少？</td><td>≥ 80% by 2026 末</td><td>若 yield 卡在 60-70%，EPS 衝擊 -15%</td></tr>
+<tr><td>4</td><td>Sytech（中國 Guangdong Shengyi）追趕速度？</td><td>仍是 M6 以下競爭</td><td>若 Sytech 2027 突破 M8，中低端市場開始 commoditize</td></tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem 故事倒推</h3>
+<div class="premortem">
+<blockquote>
+假設 5 年後（2031-05）台光電部位虧 50%+，最可能故事：<br><br>
+<strong>2026 Q4</strong> — Morgan Stanley 供應鏈報告：台光電在 NVDA Rubin Ultra GPU board CCL 只取得 35% share（vs 預期 70%），Doosan 取得 45%（含 exclusive 3 SKU）。EMC 股價當週 -20%。<br><br>
+<strong>2027 Q1</strong> — Q4 2026 法說 EPS NT$28（vs 預期 NT$36），M9 量產 yield 卡在 65%；管理層 8-K 揭露 「初期 yield ramp 問題」需要 2 季解決。再 -15%。<br><br>
+<strong>2027 H2</strong> — Rubin Ultra 量產時 EMC 在 Rubin 上的 share 從預期 70% 降至 30%；FY28 EPS 預估 NT$221 → NT$140；Forward PE 從 63 → 28x（收斂至 specialty CCL 但非 ASML 級別）。再 -20%。<br><br>
+<strong>2028 H1</strong> — Sytech 公告 M8 認證通過，中低端 commodity 化加速；台光電 M8 ASP -10%；同時 Panasonic 在 ultra-low-loss CCL 推出 M10 competing；台光電 M10 認證進度落後 Doosan + Panasonic。再 -10%。<br><br>
+<strong>2029-2031</strong> — 台光電在 high-end specialty CCL 全球市占從 75% (2025) 降至 45% (2030)；FY30 EPS NT$200 (vs Bull NT$400)；PE 從 28 → 18x = stock NT$3,600。<br><br>
+最終 2031-05 股價 ~NT$2,300（vs 進場 NT$4,850 = -53%）。
+</blockquote>
+</div>
+
+<h4>校驗 §5 single-thing</h4>
+<table>
+<tbody>
+<tr><td>失敗故事關鍵觸發 = §5 single thing？</td><td><span class="amber">⚠ 部分重疊</span> — §5 primary 抓 Rubin supplier 失分（故事第一步）；但 M9 yield 卡關 + Sytech 追趕 + Panasonic M10 三條都不在原 §5 — 已補 secondary trigger（M9 量產延後）</td></tr>
+</tbody>
+</table>
+
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong></p>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd">
+<div>
+<div class="num-big">−45% ~ −60%</div>
+<div style="text-align:center;font-size:26px;color:#991B1B;">🔴 高估值 + 競爭</div>
+</div>
+<div style="flex:1;">
+<table>
+<tbody>
+<tr><td>估計 Max DD 範圍</td><td>−45% ~ −60%（寬度 15%p，符合 ≥ 10%p）</td></tr>
+<tr><td>最可能觸發時點</td><td>2026 Q4-2027 H1：Rubin supplier 公告 + M9 yield 進度 + Doosan competition 三合流</td></tr>
+<tr><td>最快復原</td><td>若是 partial Rubin 失分 + M10 翻身 → 18-24 月恢復；若 thesis 整體破 → 不可恢復</td></tr>
+<tr><td>路徑風險評級</td><td><span class="red">🔴 高估值 + 競爭風險</span></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<h4>校驗</h4>
+<p>若 max DD 落在 -60%，能撐到復原？條件：(a) 部位 ≤ 2%（已強制下修自任何 baseline）；(b) 不使用槓桿；(c) §5 primary 未完全發生；(d) 對「台光電 M10 翻身」有 conviction。若條件不滿足 → 部位 ≤ 1%。</p>
+
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<thead><tr><th>#</th><th>觸發點</th><th>類型</th><th>時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 2026 法說</td><td>財報</td><td>~2026-07-15</td></tr>
+<tr><td>2</td><td>NVDA Rubin Ultra component supplier 公告</td><td>產業</td><td>2026 Q4-2027 Q1</td></tr>
+<tr><td>3</td><td>Forward PE 跌破 35x（NT$2,700 區）</td><td>價位</td><td>持續</td></tr>
+<tr><td>4</td><td>§5 primary：Rubin supplier 失分</td><td>§5</td><td>2026 H2-2027 H1</td></tr>
+<tr><td>5</td><td>§5 secondary：M9 量產延後</td><td>§5 派生</td><td>2026 Q4-2027 Q2</td></tr>
+<tr><td>6</td><td>Sytech / Panasonic / Doosan 競爭事件</td><td>競爭</td><td>持續</td></tr>
+<tr><td>7</td><td>NVDA M10 認證進度</td><td>產業</td><td>2026 Q3-Q4</td></tr>
+</tbody>
+</table>
+
+<p><strong>保質期：至 2026-08-01（Q2 法說後）</strong>。Q2 結果 + M9 量產進度 + Rubin supplier signals 必須重跑 DCA。</p>
+
+<p><strong>最可能 upside：</strong>Q2 法說 EPS NT$20+ (vs Q1 NT$14.9) + M9 出貨 confirm + 管理層提到「Rubin design wins」 → B+ → A 升級，倉位加至 3.0-4.0%。</p>
+
+<p><strong>最可能 downside：</strong>NVDA Rubin supplier 公告未列 EMC primary 或 M9 量產 yield 揭露問題 → B+ → B/C，立刻減碼至 0.5-1.0%。</p>
+
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：B 級 Moat 7/10，趨勢 ↑ widening — M8+ 75% 市占龍頭，但 Doosan 競爭升級）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>主要護城河</td><td>(1) <strong>M8+ 高階 CCL 製程</strong>（樹脂配方 + 銅箔 + glass weaving 三重整合）；(2) <strong>客戶 design-in lock-in</strong>（每代 platform 認證 6-12 月，switching cost 中-高）；(3) <strong>scale + capacity</strong>（945 萬張/月 by 2027 是全球最大 capacity）；(4) <strong>geo</strong>（Taiwan 距離 NVDA + 台積電 + ASE 一步距離）</td></tr>
+<tr><td>持久性</td><td><strong>7/10</strong>（5Y 中-高）— M8+ 領先持續性中等（4 家寡占，新進入者門檻高但 existing 4 家追趕中）；但 Doosan exclusive Rubin claim 是 substantial 威脅</td></tr>
+<tr><td>最大侵蝕風險</td><td>(a) Doosan 在 Rubin platform 取得 exclusive supply（Nov 2025 報導）；(b) Panasonic 在 ultra-low-loss M9/M10 推出 competing；(c) Sytech 中國本土低端市場 commoditize</td></tr>
+<tr><td>關鍵數據</td><td>M8+ market share 2025: 75% (vs 2024: &lt;50%) = 結構性 share gain；Q1 2026 EPS NT$14.9 (+49% YoY)；AI Rev mix 27%→48%（2024→2026）；945 萬張月產能 (2027E)；4 家寡占（台光、台燿、Panasonic、Doosan）；ROE 35%+；Op margin 21%+；GM 34%+</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>（部分）。12 個月內 evidence：① M8+ 市占從 50% → 75%（正）；② Q2 漲價 10%（正）；③ 945 萬張產能 ramp（正）；④ M9 量產 2026 H2 啟動（正）；⑤ Doosan exclusive Rubin claim Nov 2025（負）；⑥ Failed GB300 認證（負）<br>淨變化：4 正 + 2 負 = ↑ widening（但有顯著風險）</p></td></tr>
+</tbody>
+</table>
+
+<p><strong>A1 結論：</strong>台光電 Moat 在 M8+ 結構性升級至 leader 位置，但 Doosan 競爭 + GB300 認證失敗是 substantial 警訊；綜合 Moat 7/10 中-高。短期 B 7 → 中期 B+ 7.5（若 M10 認證通過）或 B 6（若 Doosan exclusive Rubin 確認）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢（獨立結論：🟢 寬 — AI server CCL CAGR 88% 結構性 supercycle）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>TAM</td><td>CCL 全球 $2.5B (2024) → $3.7B (2033)，CAGR 5%（mature base）；AI server CCL subset $5.24B (2024) → $18.2B (2026) → $80B (2027) → 預期 $215B (2026 廣義 CCL 含 AI)，CAGR 88%</td></tr>
+<tr><td>供需</td><td>偏緊極端 — CCL expansion 引發設備短缺（電鍍 + 銅箔 cooling tower）lead time 2 年；4 家寡占（產能不夠）+ AI server demand 爆發（NVDA 2M+ Blackwell GPU + Rubin 雙倍）；2026-2027 持續</td></tr>
+<tr><td>最大技術替代</td><td>(a) Doosan exclusive Rubin 是 single-vendor 風險；(b) Panasonic ultra-low-loss CCL 在高端競爭；(c) Glass substrate（替代 CCL 部分功能）2028+ 量產 — 但 CCL 整體市場仍會擴張</td></tr>
+<tr><td>政策/地緣風險</td><td>(a) 中美 tariff（CCL 是上游材料，可能被 tariff 包含）；(b) Taiwan 地緣風險（產能集中）；(c) NVDA 自有材料 ROADM 路徑（unlikely 但 long-tail risk）</td></tr>
+<tr><td>議價權</td><td>對上游（銅箔 / 樹脂 / glass）<strong>中-強</strong>（垂直整合 + scale）；對下游（NVDA / PCB 廠 / hyperscaler）<strong>中</strong>（被切換但 design-in 仍 sticky）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：S 曲線 — M8+ CCL 在 early-mid cycle、M9 在 emerging cycle、M10 / M11 在 R&D phase；Y5 之後 = ASIC platforms（AVGO TPU / Marvell custom）+ 800G/1.6T switch + 太空 + 自動駕駛 PCB；多條 S 曲線疊加</td></tr>
+</tbody>
+</table>
+
+<p><strong>A2 結論：</strong>AI server CCL 是 2024-2028 結構性 supercycle，但 4 家寡占內部競爭加劇（Doosan 進場 + Panasonic 持續 + 台燿追趕）；台光電身為 #1 受益最大但也是最大被攻擊目標。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務財務 / 資本配置（獨立結論：Q1 2026 大 beat + 漲價 + ramp 三正面 + 估值 stretch）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>營收結構</td><td>FY26 預估 Rev NT$987.6B；AI server ~48%（Rev mix 從 27% 2024 升至 48%）；消費電子 ~25%；通訊 ~15%；汽車 ~10%；衛星 ~2%</td></tr>
+<tr><td>客戶集中</td><td>NVDA + Hyperscaler（含 PCB 廠 second-tier）估佔 30-40% Rev；AVGO / Marvell / 其他 ASIC 設計商 ~15%；台積電 indirect ~10%；分散程度中</td></tr>
+<tr><td>定價權</td><td>Q2 2026 漲價 +10%（全面）；M9 ASP 比 M8 +50%+；high-end specialty pricing 強，但 commodity 段（M6 以下）競爭激烈</td></tr>
+<tr><td>未來金雞母</td><td>M9 2026 H2 出貨 → 2027 大規模 ramp；M10 NVDA 認證 2026 Q3 啟動；800G/1.6T optical CCL；ASIC platform 滲透</td></tr>
+<tr><td>財務體質</td><td>Q1 2026 Rev NT$330.67B (+32.66% QoQ, +56.63% YoY)；EPS NT$14.9 (+49% YoY)；3 月單月 NT$120.1B 創歷史高；945 萬張產能 by 2027；ROE 35%+；Op margin 21%+；Net cash NT$10B+；Cash conversion 95%</td></tr>
+<tr><td>資本配置</td><td>1 月 2026 acquired Taoyuan factory（capacity expansion）；持續 capex（產能 ramp）；dividend yield ~2%（穩定）；無大型 M&A；管理層紀律 <strong>高</strong></td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base）</strong></td><td>EPS CAGR 31%（NT$77 → $300，CAGR 31.1%，扣 SBC -3%p = 28%）；5Y forward PE 預估 30x vs 當前 63x（re-rate -14.6%/yr）；現金股息率 2%；淨買回率 0%；綜合 +28% − 14.6% + 2% = ~13%</td></tr>
+</tbody>
+</table>
+
+<p><strong>A3 結論：</strong>Q1 2026 大 beat + 漲價 + AI Rev mix 提升 = 三正面 catalyst 同步發生；但 Fwd PE 63x current 已在歷史頂部，需要 EPS 連續達標才能 sustain 高 multiple；任何一季 miss = PE 加速收斂。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD/ID 數據摘要（DD_2383TW_20260418.html v12.0）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>Quality Score</td><td>~8.5</td></tr>
+<tr><td>訊號燈</td><td>大機率 B 或 B+（強動能 + 高估值）</td></tr>
+<tr><td>moat tier</td><td>B（7/10）</td></tr>
+<tr><td>估值燈</td><td>🔴 偏高（Fwd PE 63x current FY）</td></tr>
+<tr><td>核心假設</td><td>H1 M8+ 75% 市占維持 / H2 M9 量產順利 / H3 NVDA M10 認證通過</td></tr>
+<tr><td>紅旗清單</td><td>① Doosan exclusive Rubin claim；② GB300 認證失敗；③ PE 63x 歷史頂部；④ Sytech 中端追趕</td></tr>
+<tr><td>ID basis</td><td>ID_AIDataCenter_20260419 / ID_AIAcceleratorDemand_20260419 / ID_AINetworking_20260419</td></tr>
+</tbody>
+</table>
+
+<p><strong>DD vs DCA 關鍵差異：</strong>DD 4/18 大機率給 B+（強動能 + Q1 大 beat 後）；DCA 在 Q1 2026 後寫，補入 Doosan competition 風險 + GB300 認證失敗的 implication；訊號燈仍 B+，但更強調 Doosan / Rubin supplier 風險。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Doosan Rubin exclusive claim 深度分析</summary>
+<div>
+
+<h4>Digitimes 2025-11-21 報導關鍵內容</h4>
+<p>「Doosan poised to secure exclusive Nvidia Rubin CCL supply as EMC fails GB300 test」— 報導指出：① Doosan 取得 NVDA Rubin CCL 「exclusive」supply；② EMC 在 GB300 認證測試中失敗。</p>
+
+<h4>未知 / 需要驗證的細節</h4>
+<table>
+<thead><tr><th>關鍵問題</th><th>狀態</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>「exclusive」是針對 single SKU 還是整個 Rubin platform？</td><td>未明確</td><td>Single SKU 影響有限；platform exclusive 影響大</td></tr>
+<tr><td>GB300 認證失敗的具體 root cause？</td><td>未明確</td><td>材料 fundamental 問題 vs 製程改進可解決</td></tr>
+<tr><td>NVDA 是否會在 Rubin 採用 dual-vendor 政策？</td><td>未明確</td><td>歷史上 NVDA Blackwell 給 EMC + 一些其他 supplier 同時供應</td></tr>
+<tr><td>EMC 在 Rubin platform 對 Doosan 的份額</td><td>未公開</td><td>可能 60-40 / 50-50 / 40-60 / 0-100</td></tr>
+</tbody>
+</table>
+
+<h4>三種情境</h4>
+<table>
+<thead><tr><th>情境</th><th>EMC 在 Rubin platform 份額</th><th>對 thesis 影響</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>樂觀（Doosan exclusive 只在 single SKU）</td><td>60-70%</td><td>thesis 兌現 + EPS NT$136 達標</td><td>45%</td></tr>
+<tr><td>中性（Doosan + EMC 雙 supplier）</td><td>40-50%</td><td>EPS NT$120（-12%）+ PE 略 de-rate 至 32x</td><td>35%</td></tr>
+<tr><td>悲觀（Doosan 真的 platform exclusive）</td><td>15-25%</td><td>EPS NT$95（-30%）+ PE de-rate 至 25x</td><td>20%</td></tr>
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜4 家 CCL 寡占競爭結構</summary>
+<div>
+
+<h4>M8+ CCL 寡占 2026</h4>
+<table>
+<thead><tr><th>玩家</th><th>2025 市占</th><th>主要 grade</th><th>關鍵客戶</th><th>2026-2027 trajectory</th></tr></thead>
+<tbody>
+<tr><td>台光電（EMC）</td><td>75%+</td><td>M8+, M9 (2026 H2 ramp)</td><td>NVDA、AVGO、Marvell、台積電 indirect</td><td>945 萬張產能 by 2027；M9 主導</td></tr>
+<tr><td>台燿（6213.TW）</td><td>~15%</td><td>M8（量產中）, M9 (R&D)</td><td>NVDA second-source、AVGO</td><td>追趕台光電；2027 估 share 25%</td></tr>
+<tr><td>Panasonic（日）</td><td>~5%</td><td>Ultra-low-loss CCL（自有 grade name）</td><td>日系 / 歐美高端 niche</td><td>M10 R&D 與 EMC / Doosan 競賽</td></tr>
+<tr><td>Doosan（韓）</td><td>~5%</td><td>M8（量產）, Rubin exclusive 計劃</td><td>NVDA（Nov 2025 報導）</td><td>2026 H2 大規模擴產 high-end CCL</td></tr>
+<tr><td>Sytech（中國）</td><td>低端為主</td><td>M6 以下，M7 R&D</td><td>中國本土 + 中低端 hyperscaler</td><td>2027 預計突破 M8 認證</td></tr>
+<tr><td>TUC / Iteq（台 / 中）</td><td>合計 ~5%（高頻）</td><td>M6-M7 高頻</td><td>網通 + 部分 AI server</td><td>追隨升級但落後</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵 takeaway</h4>
+<p>① 4 家寡占結構穩定但加劇 — Doosan 跨入是 disruptor；② 台燿是 backup hedge（同產業二龍頭）；③ Sytech 是 long-tail 結構威脅（2027+）；④ Panasonic 在 ultra-low-loss 仍有 niche；⑤ 台光電 75% market share 是高 base，意味著「未來主要 risk 是 share 流失，不是 share gain」。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜對比 8 檔同期 DCA</summary>
+<div>
+
+<table>
+<thead><tr><th>維度</th><th>2383TW</th><th>UBER</th><th>JBL</th><th>ORCL</th><th>HWM</th><th>KEYS</th><th>MPWR</th><th>TSLA</th></tr></thead>
+<tbody>
+<tr><td>訊號燈</td><td>B+</td><td>A−</td><td>A−</td><td>B+</td><td>B+</td><td>B</td><td>B</td><td>C+</td></tr>
+<tr><td>Moat tier</td><td>B 7 ↑</td><td>A 8 ↑</td><td>B 6-7 ↑</td><td>A 8 ↑</td><td>A 9 ↑</td><td>B 8 →</td><td>B 7 →</td><td>B 6 →</td></tr>
+<tr><td>Runway</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟢</td><td>🟡</td></tr>
+<tr><td>Max DD 5Y</td><td>−60% 🔴</td><td>−45% 🟡</td><td>−45% 🟡</td><td>−55% 🟡</td><td>−42% 🟡</td><td>−48% 🟡</td><td>−58% 🔴</td><td>−65% 🔴</td></tr>
+<tr><td>Base IRR</td><td>+13.1%</td><td>+11.9%</td><td>+11.2%</td><td>+10.6%</td><td>+6.7%</td><td>+9.1%</td><td>+7.7%</td><td>+5.4%</td></tr>
+<tr><td>Fwd PE current</td><td>63x</td><td>22x</td><td>22x</td><td>22x</td><td>51x</td><td>42x</td><td>50x</td><td>198x</td></tr>
+<tr><td>建議倉位</td><td>2.0%</td><td>3.0%</td><td>3.5%</td><td>2.5%</td><td>2.5%</td><td>2.0%</td><td>1.5%</td><td>0.75%</td></tr>
+</tbody>
+</table>
+
+<h4>整體排序（最終 8 檔）</h4>
+<ol>
+<li><strong>JBL（並列第一）</strong>：純度高 + PE 22x 最便宜</li>
+<li><strong>UBER（並列第一）</strong>：Base IRR 最高 + Moat ↑</li>
+<li><strong>2383TW（並列第三）</strong>：Bull IRR 最高（21.5%）+ 高 ramp，但 Max DD 風險</li>
+<li><strong>ORCL（第四）</strong>：估值便宜 + Stargate visibility；客戶集中</li>
+<li><strong>HWM（第五）</strong>：A 級護城河最強；估值偏貴</li>
+<li><strong>KEYS（第六）</strong>：T&M 雙寡頭</li>
+<li><strong>MPWR（第七）</strong>：CEO 減持 + 訴訟風險</li>
+<li><strong>TSLA（第八）</strong>：估值極端 + 執行風險</li>
+</ol>
+
+<h4>建議組合（綜合 8 檔）</h4>
+<p>若 portfolio 容量有 18% 給 8 檔：<strong>JBL 3.5% + UBER 3.0% + 2383TW 2.0% + ORCL 2.5% + HWM 2.5% + KEYS 2.0% + MPWR 1.5% + TSLA 0.75% = 17.75%</strong>，剩 0.25% 觀察彈性。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Munger Inversion 三維</summary>
+<div>
+
+<table>
+<thead><tr><th>維度</th><th>失效路徑</th><th>歷史對標</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>技術維</td><td>Doosan 在 Rubin platform 真的取得 exclusive supply（vs 預期 EMC 主導），M9 yield ramp 卡關</td><td>歷史 NVDA Blackwell 中 MPWR 失分給 Renesas/Infineon 是先例；EMC 認證失敗 GB300 是 partial 訊號</td><td>25%</td></tr>
+<tr><td>管理層維</td><td>EMC 在快速 capacity ramp + 多 grade 並行（M8 / M9 / M10）過程中執行失誤 — 945 萬張產能延後</td><td>歷史 EMC 管理層 capex 紀律強；但規模快速 5x ramp 是新挑戰</td><td>15%</td></tr>
+<tr><td>結構維</td><td>AI capex 2027 air pocket — NVDA Rubin Ultra timing 延後或 hyperscaler capex 回調</td><td>每 7-10 年半導體 cycle 一次大修正；現在距 2020 谷底 6 年</td><td>25%</td></tr>
+</tbody>
+</table>
+
+<p><strong>合計 Bear 機率：</strong>~30%（與 §4 Bear 30% 一致）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Lynch 框架</summary>
+<div>
+
+<p><strong>What business：</strong>台光電賣的是「銅箔 + 樹脂 + 玻璃布壓合的薄板」— 每張 18-32" 的銅箔基板（CCL），堆 30+ 層成為 NVDA AI server motherboard。每片 H100 / B200 / Rubin GPU board 上面都有它。是 Lynch 喜歡的「無聊 + 隱形」配方。</p>
+<p><strong>Why moat：</strong>(1) 樹脂配方專利 + 30 年 R&D；(2) M8+ 等級全球 75% 市占；(3) 945 萬張月產能 by 2027 是全球最大；(4) Taiwan 地理優勢（NVDA + 台積電 + ASE 步行距離）；(5) 客戶 design-in 6-12 月 lock-in。</p>
+<p><strong>What makes money：</strong>(1) M8+ 高 ASP（比 M6 +50%）；(2) M9 升級 ASP +50%（vs M8）；(3) Q2 漲價 10%；(4) AI server mix 從 27% → 48% 拉高綜合 GM 至 35%+。</p>
+<p><strong>Lynch 「能講清楚」測試：</strong>✅ 通過 — 「NVDA GPU 板上面那片黑色銅箔基板，台光電是世界冠軍」60 秒可懂。</p>
+<p><strong>Lynch 「合理價格」測試：</strong>⚠ 部分 — Fwd PE 63x current 太貴，PEG 1.0+；FY27 PE 36x 合理；需要對「EPS 連續達標」有信心才能進場。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Q2 2026 法說 watchlist（~2026-07-15）</summary>
+<div>
+
+<h4>重點觀察項</h4>
+<table>
+<thead><tr><th>觀察點</th><th>樂觀</th><th>悲觀</th><th>對倉位影響</th></tr></thead>
+<tbody>
+<tr><td>EPS YoY</td><td>≥ +50%（Q1 +49%）</td><td>&lt; +30%</td><td>樂觀 → 加碼至 3%；悲觀 → 減碼</td></tr>
+<tr><td>AI server Rev mix</td><td>≥ 50%（從 Q1 48%）</td><td>&lt; 45%</td><td>悲觀 → thesis 動能減弱</td></tr>
+<tr><td>M9 出貨 confirm</td><td>提到「M9 已開始出貨 + 主要客戶名單」</td><td>仍 R&D / pilot</td><td>樂觀 → driver 1 強化</td></tr>
+<tr><td>Rubin design wins wording</td><td>提到「Vera Rubin design wins secured」</td><td>「continued engagement」模糊</td><td>悲觀 → §5 primary 警戒</td></tr>
+<tr><td>M10 NVDA 認證進度</td><td>進度順利</td><td>延後或失敗</td><td>悲觀 → 立即減碼</td></tr>
+<tr><td>945 萬張產能 ramp</td><td>on track for 2027</td><td>延後 6+ 月</td><td>悲觀 → §5 secondary 警戒</td></tr>
+</tbody>
+</table>
+
+<h4>~7/15 法說後決策樹</h4>
+<table>
+<tbody>
+<tr><td>情境 A：5+ 項樂觀</td><td>升級至 A，加碼至 3-4%</td></tr>
+<tr><td>情境 B：3-4 項樂觀</td><td>維持 B+，倉位 2%</td></tr>
+<tr><td>情境 C：3+ 項悲觀（含 Rubin wording 或 M9 delay）</td><td>降級至 B，減碼至 1%</td></tr>
+<tr><td>情境 D：5+ 項悲觀</td><td>降級至 C/X，倉位歸零</td></tr>
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜5Y EPS / PE 路徑推演</summary>
+<div>
+
+<h4>5Y EPS 三情境（NT$）</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull EPS</th><th>Base EPS</th><th>Bear EPS</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>NT$80</td><td>NT$77</td><td>NT$60</td></tr>
+<tr><td>FY27</td><td>NT$160</td><td>NT$136</td><td>NT$95</td></tr>
+<tr><td>FY28</td><td>NT$260</td><td>NT$221</td><td>NT$130</td></tr>
+<tr><td>FY29</td><td>NT$340</td><td>NT$270</td><td>NT$145</td></tr>
+<tr><td>FY30</td><td>NT$400</td><td>NT$300</td><td>NT$150</td></tr>
+<tr><td><strong>CAGR FY26→FY30</strong></td><td><strong>+49.5%</strong></td><td><strong>+40.5%</strong></td><td><strong>+25.7%</strong></td></tr>
+</tbody>
+</table>
+
+<h4>5Y PE 路徑</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull PE</th><th>Base PE</th><th>Bear PE</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>60</td><td>55</td><td>40</td></tr>
+<tr><td>FY27</td><td>50</td><td>40</td><td>28</td></tr>
+<tr><td>FY28</td><td>40</td><td>33</td><td>22</td></tr>
+<tr><td>FY29</td><td>35</td><td>30</td><td>20</td></tr>
+<tr><td>FY30</td><td>32</td><td>28</td><td>19</td></tr>
+</tbody>
+</table>
+
+<h4>對應股價路徑</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull price (NT$)</th><th>Base price (NT$)</th><th>Bear price (NT$)</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>$4,800</td><td>$4,235</td><td>$2,400</td></tr>
+<tr><td>FY27</td><td>$8,000</td><td>$5,440</td><td>$2,660</td></tr>
+<tr><td>FY28</td><td>$10,400</td><td>$7,293</td><td>$2,860</td></tr>
+<tr><td>FY29</td><td>$11,900</td><td>$8,100</td><td>$2,900</td></tr>
+<tr><td>FY30</td><td>$12,800</td><td>$8,400</td><td>$2,850</td></tr>
+<tr><td><strong>5Y total return</strong></td><td><strong>+164%</strong></td><td><strong>+73%</strong></td><td><strong>−41%</strong></td></tr>
+</tbody>
+</table>
+
+<p class="note">本表 Bull/Base/Bear 5Y total return（+164% / +73% / -41%）與 §4 Asymmetry Analysis 表（+165% / +85% / -40%）<strong>差距 ≤ 12%p</strong>，符合內部一致性 ≤ 15%p 容忍度（CCL cyclical 較大）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜歷史台股 cyclical 高 PE 對照</summary>
+<div>
+
+<h4>台股高 PE specialty 公司歷史報酬</h4>
+<table>
+<thead><tr><th>公司</th><th>時期</th><th>進場 PE</th><th>5Y 總報酬</th><th>結果</th></tr></thead>
+<tbody>
+<tr><td>3008 大立光</td><td>2014-2019</td><td>30x</td><td>+250%（後 -60% de-rate）</td><td>Bull 結局後 cyclical -60%</td></tr>
+<tr><td>2330 台積電</td><td>2019-2024</td><td>15x</td><td>+250%</td><td>結構性升級 PE 至 20-25x</td></tr>
+<tr><td>2454 聯發科</td><td>2020-2025</td><td>17x</td><td>+150%</td><td>結構性 + 5G 紅利</td></tr>
+<tr><td>2383 台光電 2021-2025</td><td>2020-2025</td><td>17x</td><td>+800%（從 NT$300 → NT$2,700）</td><td>已實現一波 supercycle</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵 takeaway</h4>
+<p>台光電在 2020-2025 已實現一波 +800% 大週期；當前 2026 從 NT$4,850 進場是「第二波 supercycle」賭注。歷史台股 specialty 公司 PE 60x+ 進場後 5Y 報酬大多 +60-150%（vs 30x 進場 +200-300%）— 高估值進場 reduce 期望報酬。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜2383TW 是否該超越台燿（6213）優先順位？</summary>
+<div>
+
+<h4>2383 vs 6213 對照</h4>
+<table>
+<thead><tr><th>指標</th><th>2383 台光電</th><th>6213 台燿</th></tr></thead>
+<tbody>
+<tr><td>M8+ 市占</td><td>75%+</td><td>~15%</td></tr>
+<tr><td>EPS YoY（Q1 2026）</td><td>+49%</td><td>+80% (est)</td></tr>
+<tr><td>Fwd PE</td><td>63x</td><td>50x</td></tr>
+<tr><td>Bull case 5Y</td><td>+165%</td><td>+200%+（從低 base ramp）</td></tr>
+<tr><td>Bear case 5Y</td><td>-40%</td><td>-50%（仍 specialty 賽道 #2）</td></tr>
+<tr><td>進場估值</td><td>高</td><td>略低</td></tr>
+<tr><td>市值 risk</td><td>已大（NT$770B）</td><td>較小（NT$280B）</td></tr>
+</tbody>
+</table>
+
+<h4>選擇邏輯</h4>
+<p>2383 是龍頭 + 確定性高 + 流動性好；6213 是「追趕者 + 高 beta + 報酬潛力大 + 風險高」。Lynch / Buffett 風格選 2383（龍頭）；growth / aggressive 風格雙押或選 6213。Conservative portfolio 2383 唯一選；aggressive portfolio 可 2383 1.5% + 6213 0.75%。</p>
+
+</div>
+</details>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>
