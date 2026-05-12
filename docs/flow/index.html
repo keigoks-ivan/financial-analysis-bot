@@ -406,6 +406,7 @@ function classify(stock) {
   const rsi = stock.rsi14 ?? 50;
   const vcp = stock.vcp_score ?? 0;
   const pb = stock.pullback_count ?? 0;
+  const rs = stock.rs_score ?? 0;
   const trend = stock.rs_trend;
   const rc = stock.rank_change;
   const ss = stock.sector_strength;
@@ -415,20 +416,18 @@ function classify(stock) {
   const fading = trend === 'fading';
   const choppy = trend === 'choppy';
   const rcUp = typeof rc === 'string' && (rc === 'NEW' || (rc.startsWith('-') && rc !== '—'));
-  const ssStrong = ss === 'strong';
   const ssOk = ss === 'strong' || ss === 'neutral';
   const overheated = d50 > 20 || rsi > 75;
-  // Tier F · FRESH BREAKOUT — 必須在 S 之前；同檔若也合 S，會優先標 F。
   if (dh < 3 && d50 >= 0 && d50 < 8 && vs200 < 30
       && vcp >= 70 && pb >= 2 && (accel || steady)
       && q && rcUp) return 'F';
-  if (dh < 3 && vcp >= 85 && pb >= 3 && pb <= 5 && accel && q && rcUp && ssStrong) return 'S';
-  if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'A';
+  if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'S';
+  if (dh < 5 && rs >= 80 && (accel || steady) && q && rcUp && !overheated && pb >= 1) return 'T';
   if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
-  if (dh < 8 && vcp >= 80 && accel && !q) return 'M';
   if (overheated && (accel || steady) && q) return 'E';
-  if (dh < 5 && d50 > 20 && vcp < 75 && accel && !q) return 'P';
-  if (overheated && (fading || choppy)) return 'W';
+  if (!q && (accel || steady) && dh < 8 && vcp >= 70) return 'X';
+  if (!q && accel && dh < 5 && d50 > 20 && vcp < 75) return 'X';
+  if (overheated && (fading || choppy)) return 'X';
   return null;
 }
 
@@ -508,19 +507,19 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
     }
   }
 
-  // 3) ATH new entries — tier S/A/B today but not yesterday
+  // 3) ATH new entries — tier S/T/B today but not yesterday
   if (prevBuckets) {
-    const prevSAB = new Set();
-    for (const t of ['S', 'A', 'B']) {
-      for (const ticker of prevBuckets[t]) prevSAB.add(ticker);
+    const prevSTB = new Set();
+    for (const t of ['S', 'T', 'B']) {
+      for (const ticker of (prevBuckets[t] || [])) prevSTB.add(ticker);
     }
-    for (const t of ['S', 'A', 'B']) {
-      for (const ticker of todayBuckets[t]) {
-        if (!prevSAB.has(ticker)) {
+    for (const t of ['S', 'T', 'B']) {
+      for (const ticker of (todayBuckets[t] || [])) {
+        if (!prevSTB.has(ticker)) {
           items.push({
             type: 'ATH',
             ticker,
-            desc: `新進 Tier ${t} · 通過 Q✓ 五條件`,
+            desc: `新進 Tier ${t} · 通過 Q✓`,
             link: `ath-hunter.html#${ticker}`,
             priority: 2,
           });
@@ -534,7 +533,7 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
 }
 
 function bucketRankings(rankings, fundamentals) {
-  const buckets = { F: [], S: [], A: [], B: [], M: [], E: [], P: [], W: [], byTicker: {} };
+  const buckets = { F: [], S: [], T: [], B: [], E: [], X: [], byTicker: {} };
   for (const stock of rankings) {
     const fund = fundamentals[stock.ticker] || null;
     stock.fund = fund;

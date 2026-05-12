@@ -8,12 +8,10 @@
 <style>
   .tier-F { background: #FFF4D6; color: #7A5500; }
   .tier-S { background: #EEEDFE; color: #3C3489; }
-  .tier-A { background: #EAF3DE; color: #27500A; }
+  .tier-T { background: #DCEEFB; color: #0D3D6C; }
   .tier-B { background: #E1F5EE; color: #085041; }
-  .tier-M { background: #F1EFE8; color: #444441; }
   .tier-E { background: #FAEEDA; color: #633806; }
-  .tier-P { background: #FDE2D5; color: #7A2B0A; }
-  .tier-W { background: #FCEBEB; color: #791F1F; }
+  .tier-X { background: #FCEBEB; color: #791F1F; }
   .sector-strong  { color: var(--success-text); font-weight: 500; }
   .sector-neutral { color: var(--warn-strong); }
   .sector-weak    { color: var(--danger-text); }
@@ -180,12 +178,10 @@
 
   <div id="tier-F" class="tier-section"></div>
   <div id="tier-S" class="tier-section"></div>
-  <div id="tier-A" class="tier-section"></div>
+  <div id="tier-T" class="tier-section"></div>
   <div id="tier-B" class="tier-section"></div>
-  <div id="tier-M" class="tier-section"></div>
   <div id="tier-E" class="tier-section"></div>
-  <div id="tier-P" class="tier-section"></div>
-  <div id="tier-W" class="tier-section"></div>
+  <div id="tier-X" class="tier-section"></div>
 
   <p class="disclaimer">
     資料來源:每日 06:00 TPE 自動掃描 · yfinance(auto_adjust=True)<br>
@@ -213,6 +209,7 @@ function classify(stock) {
   const rsi = stock.rsi14 ?? 50;
   const vcp = stock.vcp_score ?? 0;
   const pb = stock.pullback_count ?? 0;
+  const rs = stock.rs_score ?? 0;
   const trend = stock.rs_trend;
   const rc = stock.rank_change;
   const ss = stock.sector_strength;
@@ -226,23 +223,32 @@ function classify(stock) {
   // Treat new entries and improving ranks (negative numeric prefix) as "up".
   const rcUp = typeof rc === 'string'
     && (rc === 'NEW' || (rc.startsWith('-') && rc !== '—'));
-  const ssStrong = ss === 'strong';
   const ssOk = ss === 'strong' || ss === 'neutral';
   const overheated = d50 > 20 || rsi > 75;
 
-  // Tier F · FRESH BREAKOUT — 從 base 剛突破，尚未延伸（vs MA50/200 都還近）。
-  // 必須在 Tier S 之前檢查；同檔若也合 S，會優先標 F（綠線時刻優先於強勢續航）。
+  // F · FRESH BREAKOUT — 從 base 剛突破，尚未延伸（vs MA50/200 都還近）。
   if (dh < 3 && d50 >= 0 && d50 < 8 && vs200 < 30
       && vcp >= 70 && pb >= 2 && (accel || steady)
       && q && rcUp) return 'F';
-  if (dh < 3 && vcp >= 85 && pb >= 3 && pb <= 5 && accel && q && rcUp && ssStrong) return 'S';
-  if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'A';
+
+  // S · SETUP — VCP 合格 + 接近高點（合併原 S + A，vcp ≥ 75 統一）
+  if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'S';
+
+  // T · TRENDER — 平滑趨勢股（NVDA/AVGO 類，VCP 不夠但 RS 強且非過熱）
+  if (dh < 5 && rs >= 80 && (accel || steady) && q && rcUp
+      && !overheated && pb >= 1) return 'T';
+
+  // B · CONTINUATION — 回測加碼
   if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
-  if (dh < 8 && vcp >= 80 && accel && !q) return 'M';
+
+  // E · EXTENDED — 過熱但基本面 OK，等回踩
   if (overheated && (accel || steady) && q) return 'E';
-  // P · PARABOLIC — must come after M (which wants VCP ≥ 80) and before W
-  if (dh < 5 && d50 > 20 && vcp < 75 && accel && !q) return 'P';
-  if (overheated && (fading || choppy)) return 'W';
+
+  // X · AVOID — Q✗ 動能 / 拋物線 / 過熱走弱（合併原 M/P/W）
+  if (!q && (accel || steady) && dh < 8 && vcp >= 70) return 'X';     // 原 M
+  if (!q && accel && dh < 5 && d50 > 20 && vcp < 75) return 'X';       // 原 P
+  if (overheated && (fading || choppy)) return 'X';                     // 原 W
+
   return null;
 }
 
@@ -425,20 +431,16 @@ function renderRegimeBanner(marketState) {
 const TIER_META = {
   F: { name: 'F · FRESH',        action: '🎯 黃金切入點 · 立即 DD',  emoji: '🌱',
        rule: '距 52W high &lt; 3% · 距 50DMA &lt; 8% · 距 200DMA &lt; 30% · VCP ≥ 70 · 收縮 ≥ 2 · RS accel/steady · Q✓ · 排名上升（剛從 base 突破，尚未延伸）' },
-  S: { name: 'S · PRIME',        action: '優先全力 DD',           emoji: '⭐',
-       rule: '距 52W high &lt; 3% · VCP ≥ 85 · 收縮 3–5 次 · RS accel · Q✓ · 排名上升 · sector strong' },
-  A: { name: 'A · SETUP',        action: '主力候選池',           emoji: '🎯',
-       rule: '距 52W high &lt; 8% · VCP ≥ 75 · 收縮 ≥ 2 · RS accel/steady · Q✓ · sector strong/neutral' },
-  B: { name: 'B · CONTINUATION', action: '加碼參考',             emoji: '📈',
+  S: { name: 'S · SETUP',        action: '主力候選池 · 全力 DD',     emoji: '⭐',
+       rule: '距 52W high &lt; 8% · VCP ≥ 75 · 收縮 ≥ 2 · RS accel/steady · Q✓ · sector strong/neutral（VCP 教科書 setup）' },
+  T: { name: 'T · TRENDER',      action: '順勢搭車 · 部位 DD',       emoji: '🌊',
+       rule: '距 52W high &lt; 5% · RS ≥ 80 · RS accel/steady · Q✓ · 排名上升 · 非過熱（平滑趨勢股，無 VCP base 也能上）' },
+  B: { name: 'B · CONTINUATION', action: '加碼參考',                 emoji: '📈',
        rule: '距 52W high 8–15% · 距 50DMA &lt; 12% · RS accel · Q✓' },
-  M: { name: 'M · MOMENTUM',     action: '觀察用,不建倉',       emoji: '👀',
-       rule: '距 52W high &lt; 8% · VCP ≥ 80 · RS accel · Q✗(動能極強但基本面差)' },
-  E: { name: 'E · EXTENDED',     action: '設提醒,等回踩',       emoji: '🔥',
-       rule: '距 50DMA &gt; 20% 或 RSI &gt; 75 · RS accel/steady · Q✓(強勢過熱,等回踩)' },
-  P: { name: 'P · PARABOLIC',    action: '看不買 · 拋物線階段', emoji: '🚀',
-       rule: '距 52W high &lt; 5% · 距 50DMA &gt; 20% · VCP &lt; 75 · RS accel · Q✗(拋物線飆漲,基本面不過 → 看不買)' },
-  W: { name: 'W · WEAKENING',    action: '避開',                emoji: '⚠️',
-       rule: '距 50DMA &gt; 20% 或 RSI &gt; 75 · RS fading/choppy(警示過熱,避開)' }
+  E: { name: 'E · EXTENDED',     action: '設提醒 · 等回踩',          emoji: '🔥',
+       rule: '距 50DMA &gt; 20% 或 RSI &gt; 75 · RS accel/steady · Q✓（強勢過熱）' },
+  X: { name: 'X · AVOID',        action: '不建倉 · 避開',            emoji: '⚠️',
+       rule: 'Q✗（動能但體質差 / 拋物線）或 過熱走弱（合併原 M / P / W）' }
 };
 
 function fmtPct(v, d = 1) {
@@ -459,8 +461,8 @@ function renderTier(tier, stocks) {
   const meta = TIER_META[tier];
   const container = document.getElementById(`tier-${tier}`);
   if (!container) return;
-  const note = tier === 'P'
-    ? `<p style="font-size:11px;color:#7A2B0A;margin:-4px 0 8px;">⚠️ 基本面不過,僅作市場觀察,不建議建倉</p>`
+  const note = tier === 'X'
+    ? `<p style="font-size:11px;color:#791F1F;margin:-4px 0 8px;">⚠️ 基本面不過 或 過熱走弱,僅作市場觀察,不建議建倉</p>`
     : '';
   const header = `
     <div class="tier-header">
@@ -477,7 +479,7 @@ function renderTier(tier, stocks) {
   }
 
   let rows;
-  if (tier === 'F' || tier === 'S' || tier === 'A') {
+  if (tier === 'F' || tier === 'S' || tier === 'T') {
     rows = stocks.map(s => `
       <tr id="row-${s.ticker}">
         <td><strong>${s.ticker}</strong></td>
@@ -525,13 +527,18 @@ function renderTier(tier, stocks) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
-  } else if (tier === 'M' || tier === 'P') {
+  } else if (tier === 'X') {
+    // X · AVOID — 顯示原因（Q✗ 或 過熱走弱）
     rows = stocks.map(s => {
       const f = s.fund || {};
       const reasons = [];
-      if ((f.eps_cagr ?? 0) <= 0.15) reasons.push('EPS');
-      if ((f.roic ?? 0) <= 0.12) reasons.push('ROIC');
-      if ((f.fcf_margin ?? 0) <= 0.05) reasons.push('FCF');
+      if (!s.qcheck) {
+        if ((f.eps_cagr ?? 0) <= 0.15) reasons.push('EPS');
+        if ((f.roic ?? 0) <= 0.12) reasons.push('ROIC');
+        if ((f.fcf_margin ?? 0) <= 0.05) reasons.push('FCF');
+      }
+      if (s.rs_trend === 'fading' || s.rs_trend === 'choppy') reasons.push('RS ' + s.rs_trend);
+      if ((s.ma50_pct ?? 0) > 20) reasons.push('過熱');
       return `
         <tr id="row-${s.ticker}">
           <td><strong>${s.ticker}</strong></td>
@@ -547,11 +554,12 @@ function renderTier(tier, stocks) {
       <table class="data-table">
         <thead><tr>
           <th>Ticker</th><th>Sector</th><th>Adj. Price</th>
-          <th>距 52W</th><th>VCP</th><th>RS</th><th>Q✗ 原因</th>
+          <th>距 52W</th><th>VCP</th><th>RS</th><th>避開原因</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
   } else {
+    // E · EXTENDED — 過熱等回踩
     rows = stocks.map(s => {
       const target = s.price && s.ma50_pct ? s.price / (1 + s.ma50_pct/100) : null;
       return `
@@ -600,7 +608,7 @@ async function main() {
     // Market regime banner — v1.3 IBD-style from market_state.json
     renderRegimeBanner(mData);
 
-    const buckets = { F: [], S: [], A: [], B: [], M: [], E: [], P: [], W: [] };
+    const buckets = { F: [], S: [], T: [], B: [], E: [], X: [] };
     for (const stock of rankings) {
       const fund = fundamentals[stock.ticker] || null;
       stock.fund = fund;
@@ -611,7 +619,7 @@ async function main() {
     for (const t of Object.keys(buckets)) {
       buckets[t].sort((a, b) => (b.combined ?? b.rs_score ?? 0) - (a.combined ?? a.rs_score ?? 0));
     }
-    for (const t of ['F','S','A','B','M','E','P','W']) renderTier(t, buckets[t]);
+    for (const t of ['F','S','T','B','E','X']) renderTier(t, buckets[t]);
 
     // Scroll to ticker from Action Queue (e.g. ath-hunter.html#GLW)
     const hash = location.hash.slice(1);
@@ -629,7 +637,7 @@ async function main() {
     console.error(err);
     document.getElementById('stale-warning-slot').innerHTML =
       `<div class="stale-warning critical">❌ 資料載入失敗:${err.message}。請檢查 screener pipeline 是否正常運行。</div>`;
-    for (const t of ['F','S','A','B','M','E','P','W']) renderTier(t, []);
+    for (const t of ['F','S','T','B','E','X']) renderTier(t, []);
   }
 }
 
