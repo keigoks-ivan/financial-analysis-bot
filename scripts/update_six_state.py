@@ -12,7 +12,7 @@ Schedule: weekdays after US market close.
 import json
 import math
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -20,6 +20,7 @@ import pandas as pd
 import yfinance as yf
 
 OUTPUT = Path(__file__).parent.parent / "docs" / "six-state" / "index.html"
+STATE_JSON = Path(__file__).parent.parent / "docs" / "six-state" / "state.json"
 
 # ---------------------------------------------------------------------------
 # Data
@@ -666,6 +667,39 @@ def main():
     OUTPUT.write_text(html, encoding="utf-8")
     print(f"  Written to {OUTPUT}")
     print(f"  State: {data['state_info']['name']} | Exposure: {data['state_info']['exposure']}%")
+
+    # JSON sidecar — consumed by docs/flow/index.html "QQQ 六狀態" cell + QQQ Track section
+    state_json = {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "data_date": data["last_date"],
+        "state": data["state"],
+        "state_name": data["state_info"]["name"],
+        "state_desc": data["state_info"]["desc"],
+        "state_css": data["state_info"]["css"],
+        "exposure_pct": data["state_info"]["exposure"],
+        "allocation": {
+            "nq_pct": data["state_info"]["nq"],
+            "stock_pct": data["state_info"]["stock"],
+            "bond_pct": data["state_info"]["bond"],
+        },
+        "last_close": round(data["last_close"], 2),
+        "key_levels": {
+            "ma12": round(data["ma_vals"][12], 2),
+            "ma52": round(data["ma_vals"][52], 2),
+            "ma12_098": round(data["ma12_098"], 2),
+            "ma52_097": round(data["ma52_097"], 2),
+        },
+        "red_lights": {
+            "count": data["red_count"],
+            "total": 4,
+        },
+        "grid_enabled": data["state"] == "S2",
+    }
+    STATE_JSON.write_text(
+        json.dumps(state_json, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    print(f"  Sidecar JSON: {STATE_JSON}")
 
 
 if __name__ == "__main__":

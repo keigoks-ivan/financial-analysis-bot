@@ -246,28 +246,28 @@
   <div class="status-bar">
     <div class="status-header">
       <span class="label-tiny" id="status-timestamp">MARKET STATUS · ——</span>
-      <span class="label-tiny" id="status-update">last update ——</span>
+      <span class="label-tiny" id="status-update">載入中</span>
     </div>
     <div class="status-grid">
       <div class="status-cell">
-        <p class="label">SPY vs Adj. ATH</p>
-        <p class="value v-success" id="spy-dd">−2.1%</p>
-        <p class="meta" id="spy-meta">未進入加碼模式</p>
+        <p class="label">SPY 距 52w high</p>
+        <p class="value" id="spy-dd">——</p>
+        <p class="meta" id="spy-meta">載入中</p>
       </div>
       <div class="status-cell">
         <p class="label">QQQ 六狀態</p>
-        <p class="value" id="qqq-state">S1 巡航</p>
-        <p class="meta" id="qqq-meta">無 Grid 觸發</p>
+        <p class="value" id="qqq-state">——</p>
+        <p class="meta" id="qqq-meta">載入中</p>
       </div>
       <div class="status-cell">
         <p class="label">Pure MA</p>
-        <p class="value v-success" id="puma-state">站上 50DMA</p>
-        <p class="meta" id="puma-meta">綠燈持倉</p>
+        <p class="value" id="puma-state">——</p>
+        <p class="meta" id="puma-meta">載入中</p>
       </div>
       <div class="status-cell">
         <p class="label">Today's actions</p>
-        <p class="value v-warn" id="action-count">3 件</p>
-        <p class="meta" id="action-meta">需處理</p>
+        <p class="value" id="action-count">——</p>
+        <p class="meta" id="action-meta">載入中</p>
       </div>
     </div>
   </div>
@@ -281,6 +281,7 @@
     <div id="action-list">
       <!-- Items injected by JS -->
     </div>
+    <p style="font-size:10px;color:var(--text-tertiary);margin:8px 0 0;line-height:1.5;" id="action-footnote"></p>
   </div>
 
   <!-- Modules (vertical) -->
@@ -293,15 +294,13 @@
           <span class="icon">🎯</span>
           <span>1 · ATH Hunter</span>
         </div>
-        <span class="badge b-new">1 new</span>
+        <span class="badge b-new" id="ath-top-badge">—</span>
       </div>
-      <p class="module-desc">每日掃描通過五條件 + ATH 候選股。Base / Continuation / Extended 自動分類。</p>
-      <div class="module-stats">
-        <span class="badge b-base">Base 4</span>
-        <span class="badge b-cont">Continuation 7</span>
-        <span class="badge b-ext">Extended 3</span>
+      <p class="module-desc">每日掃描通過五條件 + ATH 候選股。S/A/B 為 Q✓ leader,E 過熱待回踩,P/W 跳過,M 是 Q✗ 動能觀察。</p>
+      <div class="module-stats" id="ath-stats">
+        <!-- badges injected -->
       </div>
-      <p class="module-meta">最近建倉:GOOGL · MELI · AVGO</p>
+      <p class="module-meta" id="ath-meta">—</p>
     </a>
 
     <a href="timing-board.html" class="module-card">
@@ -310,47 +309,44 @@
           <span class="icon">⏱</span>
           <span>2 · Timing Board</span>
         </div>
-        <span class="badge b-active">1 active</span>
+        <span class="badge b-active" id="timing-top-badge">—</span>
       </div>
       <p class="module-desc">馬上建倉 vs 等回測 規則化決策樹。距均線 + ATR + 距 adj. ATH 三維度。</p>
-      <div class="module-stats">
-        <span class="badge b-base">可進場 5</span>
-        <span class="badge b-cont">等回踩 6</span>
-        <span class="badge b-ext">過熱 3</span>
+      <div class="module-stats" id="timing-stats">
+        <!-- badges injected -->
       </div>
-      <p class="module-meta">決策樹:Base Breakout / Continuation / Extended</p>
+      <p class="module-meta">決策樹:🟢 進場 / 🟡 等回踩 / 🔴 過熱 / ⚪ Q✗ 觀察</p>
     </a>
 
-    <a href="cockpit.html" class="module-card">
+    <a href="cockpit.html" class="module-card dormant">
       <div class="module-card-header">
         <div class="module-title">
           <span class="icon">💼</span>
           <span>3 · 持倉 Cockpit</span>
         </div>
-        <span class="badge b-review">2 review</span>
+        <span class="badge b-dormant">等 IBKR Flex</span>
       </div>
       <p class="module-desc">Tier Matrix · Thesis 狀態 · 證偽條件 · 季度三題 review。</p>
       <div class="module-stats">
-        <span class="badge b-tier1">Tier 1: 3</span>
-        <span class="badge b-tier2">Tier 2: 3</span>
-        <span class="badge b-tier3">Tier 3: 1</span>
+        <span class="badge b-dormant">持倉:—</span>
+        <span class="badge b-dormant">證偽:pipeline 就緒</span>
       </div>
-      <p class="module-meta">證偽觸發:0 · 待 review:RMS / SE</p>
+      <p class="module-meta">等 IBKR Flex Query token 接入,4/4 證偽條件已 pipeline ready (latest.json + quarterly.json)。</p>
     </a>
 
-    <a href="rs-board.html" class="module-card dormant">
+    <a href="rs-board.html" class="module-card" id="rs-card">
       <div class="module-card-header">
         <div class="module-title">
           <span class="icon">🌊</span>
           <span>4 · 修正期 RS Board</span>
         </div>
-        <span class="badge b-dormant">休眠</span>
+        <span class="badge b-dormant" id="rs-top-badge">—</span>
       </div>
-      <p class="module-desc">SPY drawdown < −7% 自動點亮。顯示 RS 線創新高的領導股。平時不打擾。</p>
-      <div class="module-stats">
-        <span class="badge b-dormant">當前距觸發 −4.9%</span>
+      <p class="module-desc">SPY drawdown ≤ −7% 或 state ∈ {correction, under_pressure} 自動點亮。顯示 RS 線創新高的領導股。</p>
+      <div class="module-stats" id="rs-stats">
+        <!-- badges injected -->
       </div>
-      <p class="module-meta">觸發後加碼 Tier S → Tier A → 不加 Tier C</p>
+      <p class="module-meta">觸發後加碼 🟢 RS 新高 → 🟡 持平 → 🔴 不加碼</p>
     </a>
 
   </div>
@@ -362,9 +358,9 @@
         <span>📊</span>
         <span>QQQ 軌(獨立 mode)</span>
       </div>
-      <span class="badge b-ok">無動作</span>
+      <span class="badge" id="qqq-track-badge">—</span>
     </div>
-    <p class="qqq-detail">六狀態機 S1 巡航 · Pure MA 站上 50DMA · 無 Grid 加碼觸發</p>
+    <p class="qqq-detail" id="qqq-track-detail">載入中</p>
   </div>
 
   <!-- Footer -->
@@ -377,70 +373,334 @@
   </div>
 
   <p class="disclaimer">
-    本頁所有數據為示範用途。真實數據接入後將由 GitHub Actions 每日自動更新。<br>
+    所有數據由 GitHub Actions 每日自動更新 — 來源 /screener/latest.json + market_state.json + rs_peaks.json + /six-state/state.json。<br>
     本網站所有內容均由 AI 自動生成,僅供參考,不構成任何投資建議。
   </p>
 
 </div>
 
 <script>
-  // ============================================================
-  // 資料來源:第一版讀取 data.json(GitHub Actions 產生)
-  // 後續可接 Pipeline B / IBKR Flex Query
-  // ============================================================
-  const DEMO_DATA = {
-    timestamp_tpe: "2026-05-10 06:00 TPE",
-    last_update_minutes_ago: 2,
-    market: {
-      spy_drawdown_from_ath_pct: -2.1,
-      qqq_six_state: "S1 巡航",
-      qqq_grid_triggered: false,
-      pure_ma_state: "站上 50DMA",
-      pure_ma_color: "green"
-    },
-    actions: [
-      { type: "ATH",    ticker: "PLTR",  desc: "Base breakout 第 3 週 · 五條件全過", link: "ath-hunter.html#PLTR" },
-      { type: "REVIEW", ticker: "RMS",   desc: "Q1 財報已出 · 季度 Thesis Review 待回答", link: "cockpit.html#RMS" },
-      { type: "TIMING", ticker: "GOOGL", desc: "回踩至 21DMA · 進場 1/2 倉位訊號",       link: "timing-board.html#GOOGL" }
-    ]
-  };
+const MARKET_STATE_URL = '/screener/market_state.json';
+const LATEST_URL       = '/screener/latest.json';
+const FUNDAMENTALS_URL = '/screener/fundamentals.json';
+const RS_PEAKS_URL     = '/screener/rs_peaks.json';
+const SIX_STATE_URL    = '/six-state/state.json';
 
-  function renderStatus(d) {
-    document.getElementById("status-timestamp").textContent = "MARKET STATUS · " + d.timestamp_tpe;
-    document.getElementById("status-update").textContent = "last update " + d.last_update_minutes_ago + " min ago";
-    document.getElementById("spy-dd").textContent = (d.market.spy_drawdown_from_ath_pct >= 0 ? "+" : "") + d.market.spy_drawdown_from_ath_pct + "%";
-    document.getElementById("spy-meta").textContent = d.market.spy_drawdown_from_ath_pct < -7 ? "已進入加碼模式" : "未進入加碼模式";
-    document.getElementById("qqq-state").textContent = d.market.qqq_six_state;
-    document.getElementById("qqq-meta").textContent = d.market.qqq_grid_triggered ? "Grid 觸發" : "無 Grid 觸發";
-    document.getElementById("puma-state").textContent = d.market.pure_ma_state;
-    document.getElementById("action-count").textContent = d.actions.length + " 件";
-    document.getElementById("action-meta").textContent = d.actions.length === 0 ? "今日無事" : "需處理";
+const TRIGGER_DRAWDOWN_PCT = -7.0;
+const TRIGGER_STATES = new Set(['correction', 'under_pressure']);
+const MAX_ACTIONS = 5;
+
+// ---------- classify: keep in sync with ath-hunter.html ----------
+function calcQCheck(stock, fund) {
+  if (!fund) return false;
+  const e = fund.eps_cagr, r = fund.roic, f = fund.fcf_margin;
+  if (e == null || r == null || f == null) return false;
+  return e > 0.15 && r > 0.12 && f > 0.05;
+}
+function classify(stock) {
+  const dh = Math.abs(stock.dist_52w_high_pct ?? 999);
+  const d50 = stock.ma50_pct ?? 0;
+  const rsi = stock.rsi14 ?? 50;
+  const vcp = stock.vcp_score ?? 0;
+  const pb = stock.pullback_count ?? 0;
+  const trend = stock.rs_trend;
+  const rc = stock.rank_change;
+  const ss = stock.sector_strength;
+  const q = stock.qcheck;
+  const accel = trend === 'accelerating';
+  const steady = trend === 'steady';
+  const fading = trend === 'fading';
+  const choppy = trend === 'choppy';
+  const rcUp = typeof rc === 'string' && (rc === 'NEW' || (rc.startsWith('-') && rc !== '—'));
+  const ssStrong = ss === 'strong';
+  const ssOk = ss === 'strong' || ss === 'neutral';
+  const overheated = d50 > 20 || rsi > 75;
+  if (dh < 3 && vcp >= 85 && pb >= 3 && pb <= 5 && accel && q && rcUp && ssStrong) return 'S';
+  if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'A';
+  if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
+  if (dh < 8 && vcp >= 80 && accel && !q) return 'M';
+  if (overheated && (accel || steady) && q) return 'E';
+  if (dh < 5 && d50 > 20 && vcp < 75 && accel && !q) return 'P';
+  if (overheated && (fading || choppy)) return 'W';
+  return null;
+}
+
+function fmtPct(v, d = 1) {
+  if (v == null || isNaN(v)) return '—';
+  const s = v > 0 ? '+' : '';
+  return `${s}${v.toFixed(d)}%`;
+}
+
+function pureMaColor(vs50, vs200) {
+  if (vs50 == null || vs200 == null) return { label: '—', cls: '', meta: '資料不足' };
+  if (vs50 > 0 && vs200 > 0) return { label: '🟢 雙在均線上', cls: 'v-success', meta: '綠燈持倉' };
+  if (vs50 <= 0 && vs200 > 0) return { label: '🟡 跌破 50DMA', cls: 'v-warn', meta: '守 200DMA' };
+  return { label: '🔴 雙跌破', cls: 'v-danger', meta: '退出趨勢' };
+}
+
+// Probe history/YYYY-MM-DD.json walking back from yesterday up to 7 days
+async function fetchPrevHistory(todayIso) {
+  const d = new Date(todayIso + 'T00:00:00Z');
+  for (let i = 1; i <= 7; i++) {
+    d.setUTCDate(d.getUTCDate() - 1);
+    const ds = d.toISOString().slice(0, 10);
+    try {
+      const r = await fetch(`/screener/history/${ds}.json`);
+      if (r.ok) {
+        const j = await r.json();
+        return { date: ds, rankings: j.rankings || [] };
+      }
+    } catch {}
+  }
+  return null;
+}
+
+function buildActionQueue(todayBuckets, prevBuckets, peaks) {
+  const items = [];
+
+  // 1) RS new high + accelerating leaders (rare, high priority).
+  // history 短時 (14 天) 很多 ticker 都會 at_new_high — sort by rs_score desc so the
+  // top RS leaders make it into the bounded action queue.
+  if (peaks && peaks.tickers) {
+    const rsItems = [];
+    for (const [t, info] of Object.entries(peaks.tickers)) {
+      if (info.at_new_high === true) {
+        const stock = todayBuckets.byTicker[t];
+        if (stock && stock.rs_trend === 'accelerating') {
+          rsItems.push({
+            type: 'RS',
+            ticker: t,
+            desc: `RS 創 history 新高 · accelerating · rs_score ${stock.rs_score.toFixed(0)}`,
+            link: 'rs-board.html',
+            priority: 1,
+            _rsScore: stock.rs_score,
+          });
+        }
+      }
+    }
+    rsItems.sort((a, b) => (b._rsScore || 0) - (a._rsScore || 0));
+    for (const it of rsItems) items.push(it);
   }
 
-  function renderActions(actions) {
-    const container = document.getElementById("action-list");
-    const queueDiv = document.getElementById("action-queue");
-    if (actions.length === 0) {
-      queueDiv.classList.add("action-queue-empty");
-      container.innerHTML = '<div style="font-size:13px;">✅ 今日無 action,享受你的咖啡。</div>';
-      return;
+  // 2) ATH new entries — tier S/A/B today but not yesterday
+  if (prevBuckets) {
+    const prevSAB = new Set();
+    for (const t of ['S', 'A', 'B']) {
+      for (const ticker of prevBuckets[t]) prevSAB.add(ticker);
     }
-    container.innerHTML = actions.map(a => `
+    for (const t of ['S', 'A', 'B']) {
+      for (const ticker of todayBuckets[t]) {
+        if (!prevSAB.has(ticker)) {
+          items.push({
+            type: 'ATH',
+            ticker,
+            desc: `新進 Tier ${t} · 通過 Q✓ 五條件`,
+            link: `ath-hunter.html#${ticker}`,
+            priority: 2,
+          });
+        }
+      }
+    }
+  }
+
+  items.sort((a, b) => a.priority - b.priority);
+  return items.slice(0, MAX_ACTIONS);
+}
+
+function bucketRankings(rankings, fundamentals) {
+  const buckets = { S: [], A: [], B: [], M: [], E: [], P: [], W: [], byTicker: {} };
+  for (const stock of rankings) {
+    const fund = fundamentals[stock.ticker] || null;
+    stock.fund = fund;
+    stock.qcheck = calcQCheck(stock, fund);
+    const tier = classify(stock);
+    buckets.byTicker[stock.ticker] = stock;
+    if (tier) buckets[tier].push(stock.ticker);
+  }
+  return buckets;
+}
+
+function renderStatus(spy, sixState, actionsLen) {
+  const dd = spy.drawdown_52w_high_pct;
+  document.getElementById('spy-dd').textContent = fmtPct(dd);
+  document.getElementById('spy-dd').className = 'value ' + (dd != null && dd <= TRIGGER_DRAWDOWN_PCT ? 'v-danger' : (dd != null && dd < -3 ? 'v-warn' : 'v-success'));
+  document.getElementById('spy-meta').textContent =
+    dd != null && dd <= TRIGGER_DRAWDOWN_PCT ? '已進入加碼模式' : `距觸發 ${fmtPct(TRIGGER_DRAWDOWN_PCT - dd)}`;
+
+  const qqqEl = document.getElementById('qqq-state');
+  const qqqMeta = document.getElementById('qqq-meta');
+  if (sixState && sixState.state_name) {
+    qqqEl.textContent = sixState.state_name;
+    qqqMeta.textContent = sixState.grid_enabled ? 'Grid 啟用 · 觀察觸發' : '無 Grid 觸發';
+  } else {
+    qqqEl.textContent = '—';
+    qqqMeta.textContent = 'six-state/state.json 未就緒';
+  }
+
+  const ma = pureMaColor(spy.vs_50dma_pct, spy.vs_200dma_pct);
+  document.getElementById('puma-state').textContent = ma.label;
+  document.getElementById('puma-state').className = 'value ' + ma.cls;
+  document.getElementById('puma-meta').textContent = ma.meta;
+
+  document.getElementById('action-count').textContent = actionsLen + ' 件';
+  document.getElementById('action-count').className = 'value ' + (actionsLen > 0 ? 'v-warn' : 'v-success');
+  document.getElementById('action-meta').textContent = actionsLen === 0 ? '今日無事' : '需處理';
+}
+
+function renderActions(items) {
+  const container = document.getElementById('action-list');
+  const queueDiv = document.getElementById('action-queue');
+  const foot = document.getElementById('action-footnote');
+  if (items.length === 0) {
+    queueDiv.classList.add('action-queue-empty');
+    container.innerHTML = '<div style="font-size:13px;">✅ 今日無 action · 享受你的咖啡</div>';
+  } else {
+    queueDiv.classList.remove('action-queue-empty');
+    container.innerHTML = items.map(a => `
       <div class="action-item">
         <div class="action-item-left">
           <span class="badge b-${a.type.toLowerCase()}">${a.type}</span>
           <span><strong>${a.ticker}</strong> · ${a.desc}</span>
         </div>
         <a href="${a.link}">→ 處理</a>
-      </div>
-    `).join("");
+      </div>`).join('');
   }
+  foot.textContent = 'REVIEW(持倉 thesis 60 天 stale)+ TIMING(持倉個股回踩 21DMA)兩 type 等 IBKR Flex 接入後自動偵測。';
+}
 
-  // 嘗試讀取 data.json,失敗則用 DEMO_DATA
-  fetch("./data.json")
-    .then(r => r.ok ? r.json() : Promise.reject("no data.json"))
-    .then(data => { renderStatus(data); renderActions(data.actions); })
-    .catch(() => { renderStatus(DEMO_DATA); renderActions(DEMO_DATA.actions); });
+function renderAthCard(b) {
+  const stats = document.getElementById('ath-stats');
+  const meta = document.getElementById('ath-meta');
+  const topBadge = document.getElementById('ath-top-badge');
+  const base = b.S.length + b.A.length;       // Q✓ leaders ready
+  const cont = b.B.length;                    // Q✓ continuation
+  const ext  = b.E.length + b.P.length + b.W.length; // overheated / skip
+  const m    = b.M.length;                    // Q✗ momentum (watch)
+  stats.innerHTML = `
+    <span class="badge b-base">Base S+A ${base}</span>
+    <span class="badge b-cont">Cont B ${cont}</span>
+    <span class="badge b-ext">Ext E/P/W ${ext}</span>
+    <span class="badge b-dormant">⚪ M ${m}</span>`;
+  const totalCandidates = base + cont + ext;
+  topBadge.textContent = `${totalCandidates} 候選`;
+  meta.textContent = `Q✓ leaders ready ${base} · 已過熱 ${b.E.length} · 跳過 ${b.P.length + b.W.length} · 動能觀察 ${m}`;
+}
+
+function renderTimingCard(b) {
+  const stats = document.getElementById('timing-stats');
+  const topBadge = document.getElementById('timing-top-badge');
+  const ready = b.S.length + b.A.length + b.B.length;
+  const wait = b.E.length;
+  const skip = b.P.length + b.W.length;
+  const watch = b.M.length;
+  stats.innerHTML = `
+    <span class="badge b-base">🟢 進場 ${ready}</span>
+    <span class="badge b-cont">🟡 等回踩 ${wait}</span>
+    <span class="badge b-ext">🔴 過熱 ${skip}</span>
+    <span class="badge b-dormant">⚪ Q✗ ${watch}</span>`;
+  const total = ready + wait + skip + watch;
+  topBadge.textContent = `${total} signals`;
+}
+
+function renderRsCard(spy, triggered) {
+  const topBadge = document.getElementById('rs-top-badge');
+  const stats = document.getElementById('rs-stats');
+  const card = document.getElementById('rs-card');
+  const dd = spy.drawdown_52w_high_pct;
+  if (triggered) {
+    card.classList.remove('dormant');
+    topBadge.textContent = '🚨 觸發中';
+    topBadge.className = 'badge b-active';
+    stats.innerHTML = `<span class="badge b-active">SPY ${fmtPct(dd)} · state ${spy.state}</span>`;
+  } else {
+    card.classList.add('dormant');
+    topBadge.textContent = '💤 休眠';
+    topBadge.className = 'badge b-dormant';
+    const toTrigger = dd == null ? null : TRIGGER_DRAWDOWN_PCT - dd;
+    stats.innerHTML = `<span class="badge b-dormant">距觸發 ${fmtPct(toTrigger)}</span>`;
+  }
+}
+
+function renderQqqTrack(sixState, spy) {
+  const badge = document.getElementById('qqq-track-badge');
+  const detail = document.getElementById('qqq-track-detail');
+  if (!sixState || !sixState.state_name) {
+    badge.textContent = '資料未就緒';
+    badge.className = 'badge b-dormant';
+    detail.textContent = '/six-state/state.json 未產生';
+    return;
+  }
+  if (sixState.state === 'S2' || sixState.grid_enabled) {
+    badge.textContent = 'Grid 啟用';
+    badge.className = 'badge b-active';
+  } else {
+    badge.textContent = '無動作';
+    badge.className = 'badge b-ok';
+  }
+  const ma = pureMaColor(spy.vs_50dma_pct, spy.vs_200dma_pct);
+  detail.textContent = `六狀態機 ${sixState.state_name} · 曝險 ${sixState.exposure_pct}% (NQ ${sixState.allocation.nq_pct}% / 股 ${sixState.allocation.stock_pct}% / 債 ${sixState.allocation.bond_pct}%) · SPY ${ma.label}`;
+}
+
+async function main() {
+  try {
+    const [mRes, sRes, fRes, pRes, qRes] = await Promise.all([
+      fetch(MARKET_STATE_URL),
+      fetch(LATEST_URL),
+      fetch(FUNDAMENTALS_URL).catch(() => null),
+      fetch(RS_PEAKS_URL).catch(() => null),
+      fetch(SIX_STATE_URL).catch(() => null),
+    ]);
+    if (!mRes.ok) throw new Error(`market_state fetch failed: ${mRes.status}`);
+    if (!sRes.ok) throw new Error(`latest fetch failed: ${sRes.status}`);
+    const m = await mRes.json();
+    const s = await sRes.json();
+    const f = (fRes && fRes.ok) ? await fRes.json() : { fundamentals: {} };
+    const p = (pRes && pRes.ok) ? await pRes.json() : null;
+    const q = (qRes && qRes.ok) ? await qRes.json() : null;
+
+    const spy = (m.indices && m.indices.SPY) || {};
+    const rankings = s.rankings || s.data || [];
+    const fundamentals = f.fundamentals || f;
+    const todayIso = s.date || m.data_date || new Date().toISOString().slice(0, 10);
+
+    document.getElementById('status-timestamp').textContent = `MARKET STATUS · ${todayIso}`;
+    document.getElementById('status-update').textContent = `market_state ${m.data_date || '—'} · screener ${s.date || '—'}`;
+
+    // Today's bucketing
+    const today = bucketRankings(rankings, fundamentals);
+
+    // Previous trading day bucketing (for ATH new entries)
+    const prev = await fetchPrevHistory(todayIso);
+    let prevBuckets = null;
+    if (prev) {
+      const prevToday = bucketRankings(prev.rankings, fundamentals); // use today's fundamentals — close enough
+      prevBuckets = prevToday;
+    }
+
+    // Action queue
+    const actions = buildActionQueue(today, prevBuckets, p);
+
+    // Trigger logic for RS Board
+    const dd = spy.drawdown_52w_high_pct;
+    const rsTriggered = (dd != null && dd <= TRIGGER_DRAWDOWN_PCT) || TRIGGER_STATES.has(spy.state);
+
+    // Render
+    renderStatus(spy, q, actions.length);
+    renderActions(actions);
+    renderAthCard(today);
+    renderTimingCard(today);
+    renderRsCard(spy, rsTriggered);
+    renderQqqTrack(q, spy);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('status-timestamp').textContent = `MARKET STATUS · ❌ 資料載入失敗`;
+    document.getElementById('status-update').textContent = err.message;
+    document.getElementById('action-list').innerHTML =
+      `<div style="font-size:13px;color:var(--danger-text)">資料載入失敗: ${err.message}</div>`;
+  }
+}
+
+main();
 </script>
 </body>
 </html>
