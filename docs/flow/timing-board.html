@@ -34,57 +34,16 @@
        → 跳過,放觀察清單,等下次 base 重建</pre>
   </div>
 
-  <p class="section-label">🟢 可進場(立即執行)</p>
-  <table class="data-table">
-    <thead>
-      <tr><th>Ticker</th><th>Adj. Price</th><th>距 Adj. ATH</th><th>距 21DMA</th><th>距 50DMA</th><th>ATR%</th><th>分類</th><th>建議</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>GOOGL</strong></td>
-        <td>$215.40</td>
-        <td>−1.2%</td>
-        <td>+0.3%</td>
-        <td>+5.2%</td>
-        <td>2.8%</td>
-        <td><span class="badge b-cont">Cont</span></td>
-        <td>1/2 倉位 + 等首次回踩</td>
-      </tr>
-      <tr><td colspan="8" class="placeholder">預期顯示 5 檔</td></tr>
-    </tbody>
-  </table>
+  <div id="stale-warning-slot"></div>
 
-  <p class="section-label">🟡 等回踩(已過熱,等修正)</p>
-  <table class="data-table">
-    <thead>
-      <tr><th>Ticker</th><th>Adj. Price</th><th>距 Adj. ATH</th><th>距 50DMA</th><th>等待目標</th><th>觀察天數</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>NVDA</strong></td>
-        <td>$185.20</td>
-        <td>+0.0%</td>
-        <td>+18%</td>
-        <td>21DMA $172</td>
-        <td>—</td>
-      </tr>
-      <tr><td colspan="6" class="placeholder">預期顯示 6 檔</td></tr>
-    </tbody>
-  </table>
-
-  <p class="section-label">🔴 過熱(跳過,等 base 重建)</p>
-  <table class="data-table">
-    <thead>
-      <tr><th>Ticker</th><th>Adj. Price</th><th>距 50DMA</th><th>RSI</th><th>狀態</th></tr>
-    </thead>
-    <tbody>
-      <tr><td colspan="5" class="placeholder">預期顯示 3 檔</td></tr>
-    </tbody>
-  </table>
+  <div id="bucket-ready"></div>
+  <div id="bucket-wait"></div>
+  <div id="bucket-skip"></div>
 
   <p class="disclaimer">
-    Timing Board 僅針對通過五條件的 ATH 候選股,不涵蓋全市場。<br>
-    決策樹規則可在 GitHub Actions config 中調整門檻。
+    Timing Board 僅針對通過五條件的 ATH 候選股(S / A / B / E / P / W),不涵蓋全市場。<br>
+    資料來源:每日 06:00 TPE 自動掃描 · yfinance(auto_adjust=True) · 與 ATH Hunter 同源 (<code>/screener/latest.json</code>)。<br>
+    <span id="screener-timestamp">資料時間:載入中...</span>
   </p>
 
   <div class="footer-nav">
@@ -93,5 +52,207 @@
   </div>
 
 </div>
+
+<script>
+// Timing Board · v2 — reuses ATH Hunter classify() output, re-projects to 進場/等回踩/過熱 axis.
+// Classify logic kept in sync with ath-hunter.html (source of truth). If tier rules change there,
+// update here too — there is no shared module.
+
+const SCREENER_URL = '/screener/latest.json';
+const FUNDAMENTALS_URL = '/screener/fundamentals.json';
+
+function calcQCheck(stock, fund) {
+  if (!fund) return false;
+  const e = fund.eps_cagr, r = fund.roic, f = fund.fcf_margin;
+  if (e == null || r == null || f == null) return false;
+  return e > 0.15 && r > 0.12 && f > 0.05;
+}
+
+function classify(stock) {
+  const dh = Math.abs(stock.dist_52w_high_pct ?? 999);
+  const d50 = stock.ma50_pct ?? 0;
+  const rsi = stock.rsi14 ?? 50;
+  const vcp = stock.vcp_score ?? 0;
+  const pb = stock.pullback_count ?? 0;
+  const trend = stock.rs_trend;
+  const rc = stock.rank_change;
+  const ss = stock.sector_strength;
+  const q = stock.qcheck;
+  const accel = trend === 'accelerating';
+  const steady = trend === 'steady';
+  const fading = trend === 'fading';
+  const choppy = trend === 'choppy';
+  const rcUp = typeof rc === 'string' && (rc === 'NEW' || (rc.startsWith('-') && rc !== '—'));
+  const ssStrong = ss === 'strong';
+  const ssOk = ss === 'strong' || ss === 'neutral';
+  const overheated = d50 > 20 || rsi > 75;
+  if (dh < 3 && vcp >= 85 && pb >= 3 && pb <= 5 && accel && q && rcUp && ssStrong) return 'S';
+  if (dh < 8 && vcp >= 75 && pb >= 2 && (accel || steady) && q && ssOk) return 'A';
+  if (dh >= 8 && dh < 15 && d50 < 12 && accel && q) return 'B';
+  if (dh < 8 && vcp >= 80 && accel && !q) return 'M';
+  if (overheated && (accel || steady) && q) return 'E';
+  if (dh < 5 && d50 > 20 && vcp < 75 && accel && !q) return 'P';
+  if (overheated && (fading || choppy)) return 'W';
+  return null;
+}
+
+// Stage within 🟢 bucket: Base Breakout vs Continuation (at base) vs Continuation (extended)
+function readyStage(s) {
+  const dh = s.dist_52w_high_pct ?? -999;     // negative = below high; closer to 0 = nearer ATH
+  const m21 = s.ma21_pct ?? 0;
+  const m50 = s.ma50_pct ?? 0;
+  if (dh > -3 && m21 < 8) {
+    return { label: 'Base BO', advice: '1/2 倉位 + 等首次回踩 21DMA' };
+  }
+  if (m50 >= -3 && m50 <= 12) {
+    return { label: 'Cont · 近 50DMA', advice: '分批建倉(已回到 50DMA 附近)' };
+  }
+  return { label: 'Cont · 偏 ext', advice: '半倉先進 · 留 1/2 等回踩 50DMA' };
+}
+
+function fmtPct(v, d = 1) {
+  if (v == null || isNaN(v)) return '—';
+  const s = v > 0 ? '+' : '';
+  return `${s}${v.toFixed(d)}%`;
+}
+function fmtNum(v, d = 1) {
+  if (v == null || isNaN(v)) return '—';
+  return v.toFixed(d);
+}
+function pctClass(v) {
+  if (v == null || isNaN(v)) return '';
+  return v > 0 ? 'num-pos' : (v < 0 ? 'num-neg' : '');
+}
+function pullbackTarget(price, ma_pct) {
+  if (price == null || ma_pct == null) return null;
+  return price / (1 + ma_pct / 100);
+}
+
+function renderReady(stocks) {
+  const slot = document.getElementById('bucket-ready');
+  const header = `<p class="section-label">🟢 可進場(立即執行) · ${stocks.length} 檔</p>`;
+  if (stocks.length === 0) {
+    slot.innerHTML = header + `<div class="empty-tier" style="font-size:12px;color:var(--text-tertiary);font-style:italic;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-md);text-align:center;">本日無 S/A/B 級進場候選</div>`;
+    return;
+  }
+  const rows = stocks.map(s => {
+    const st = readyStage(s);
+    return `
+      <tr>
+        <td><strong>${s.ticker}</strong> <span style="font-size:10px;color:var(--text-tertiary)">${s.tier}</span></td>
+        <td>$${fmtNum(s.price, 2)}</td>
+        <td class="${pctClass(s.dist_52w_high_pct)}">${fmtPct(s.dist_52w_high_pct)}</td>
+        <td class="${pctClass(s.ma21_pct)}">${fmtPct(s.ma21_pct)}</td>
+        <td class="${pctClass(s.ma50_pct)}">${fmtPct(s.ma50_pct)}</td>
+        <td>${fmtNum(s.atr_pct, 1)}%</td>
+        <td>${st.label}</td>
+        <td style="font-size:11px">${st.advice}</td>
+      </tr>`;
+  }).join('');
+  slot.innerHTML = header + `
+    <table class="data-table">
+      <thead><tr>
+        <th>Ticker</th><th>Adj. Price</th><th>距 Adj. ATH</th><th>距 21DMA</th><th>距 50DMA</th><th>ATR%</th><th>分類</th><th>建議</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderWait(stocks) {
+  const slot = document.getElementById('bucket-wait');
+  const header = `<p class="section-label">🟡 等回踩(已過熱,等修正) · ${stocks.length} 檔</p>`;
+  if (stocks.length === 0) {
+    slot.innerHTML = header + `<div class="empty-tier" style="font-size:12px;color:var(--text-tertiary);font-style:italic;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-md);text-align:center;">本日無 E 級(Q✓ extended)候選</div>`;
+    return;
+  }
+  const rows = stocks.map(s => {
+    const t21 = pullbackTarget(s.price, s.ma21_pct);
+    const t50 = pullbackTarget(s.price, s.ma50_pct);
+    return `
+      <tr>
+        <td><strong>${s.ticker}</strong></td>
+        <td>$${fmtNum(s.price, 2)}</td>
+        <td class="${pctClass(s.dist_52w_high_pct)}">${fmtPct(s.dist_52w_high_pct)}</td>
+        <td class="${pctClass(s.ma50_pct)}">${fmtPct(s.ma50_pct)}</td>
+        <td style="font-size:11px">21DMA ${t21 ? '$' + fmtNum(t21, 2) : '—'} / 50DMA ${t50 ? '$' + fmtNum(t50, 2) : '—'}</td>
+        <td style="font-size:11px;color:var(--text-tertiary)">RSI ${fmtNum(s.rsi14, 0)}</td>
+      </tr>`;
+  }).join('');
+  slot.innerHTML = header + `
+    <table class="data-table">
+      <thead><tr>
+        <th>Ticker</th><th>Adj. Price</th><th>距 Adj. ATH</th><th>距 50DMA</th><th>等待目標</th><th>RSI</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderSkip(stocks) {
+  const slot = document.getElementById('bucket-skip');
+  const header = `<p class="section-label">🔴 過熱(跳過,等 base 重建) · ${stocks.length} 檔</p>`;
+  if (stocks.length === 0) {
+    slot.innerHTML = header + `<div class="empty-tier" style="font-size:12px;color:var(--text-tertiary);font-style:italic;padding:12px;background:var(--bg-secondary);border-radius:var(--radius-md);text-align:center;">本日無 P/W 級過熱候選</div>`;
+    return;
+  }
+  const rows = stocks.map(s => `
+    <tr>
+      <td><strong>${s.ticker}</strong> <span style="font-size:10px;color:var(--text-tertiary)">${s.tier}</span></td>
+      <td>$${fmtNum(s.price, 2)}</td>
+      <td class="${pctClass(s.ma50_pct)}">${fmtPct(s.ma50_pct)}</td>
+      <td>${fmtNum(s.rsi14, 0)}</td>
+      <td style="font-size:11px;color:var(--text-tertiary)">${s.tier === 'P' ? '拋物線 · Q✗' : '走弱 · RS ' + (s.rs_trend || '—')}</td>
+    </tr>`).join('');
+  slot.innerHTML = header + `
+    <table class="data-table">
+      <thead><tr>
+        <th>Ticker</th><th>Adj. Price</th><th>距 50DMA</th><th>RSI</th><th>狀態</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function main() {
+  try {
+    const [sRes, fRes] = await Promise.all([
+      fetch(SCREENER_URL),
+      fetch(FUNDAMENTALS_URL).catch(() => null)
+    ]);
+    if (!sRes.ok) throw new Error(`Screener fetch failed: ${sRes.status}`);
+    const sData = await sRes.json();
+    const fData = fRes && fRes.ok ? await fRes.json() : { fundamentals: {} };
+    const rankings = Array.isArray(sData) ? sData : (sData.rankings || sData.data || []);
+    const fundamentals = fData.fundamentals || fData.rankings || fData;
+    const sDate = sData.generated_at || sData.date || sData.updated_at || null;
+    document.getElementById('screener-timestamp').textContent = `資料時間:${sDate || '未知'}`;
+
+    const ready = [], wait = [], skip = [];
+    for (const stock of rankings) {
+      const fund = fundamentals[stock.ticker] || null;
+      stock.fund = fund;
+      stock.qcheck = calcQCheck(stock, fund);
+      const tier = classify(stock);
+      if (!tier) continue;
+      stock.tier = tier;
+      if (tier === 'S' || tier === 'A' || tier === 'B') ready.push(stock);
+      else if (tier === 'E') wait.push(stock);
+      else if (tier === 'P' || tier === 'W') skip.push(stock);
+      // M tier (Q✗ 動能股) excluded — 不該進場
+    }
+    ready.sort((a, b) => (b.combined ?? b.rs_score ?? 0) - (a.combined ?? a.rs_score ?? 0));
+    wait.sort((a, b) => (b.combined ?? b.rs_score ?? 0) - (a.combined ?? a.rs_score ?? 0));
+    skip.sort((a, b) => (b.ma50_pct ?? 0) - (a.ma50_pct ?? 0));
+    renderReady(ready);
+    renderWait(wait);
+    renderSkip(skip);
+  } catch (err) {
+    console.error(err);
+    document.getElementById('stale-warning-slot').innerHTML =
+      `<div style="font-size:12px;color:var(--danger-text);background:var(--danger-bg);border-left:3px solid var(--danger-text);padding:8px 12px;border-radius:4px;margin:0 0 1rem;">❌ 資料載入失敗:${err.message}。請檢查 screener pipeline。</div>`;
+    renderReady([]); renderWait([]); renderSkip([]);
+  }
+}
+
+main();
+</script>
 </body>
 </html>
