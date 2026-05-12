@@ -127,3 +127,9 @@
 | 2026-05-11 | TXRH | TXRH 是 casual dining 唯一靠 manager equity + $8.3M AUV 建構結構性 unit economics 護城河的價值型贏家，在 K-shaped 消費 + 牛肉 supercycle 中份額會持續向強者集中。 | DCA_TXRH_20260511.html | — | — |
 | 2026-05-11 | VIK | Viking 把「55+ 富裕族群想看世界但討厭小孩 / 賭場 / 推銷」這個 demand 結構，鎖進 4 家造船廠 24–42 個月排程的 supply 天花板。 | DCA_VIK_20260511.html | DD_VIK_20260418.html | — |
 | 2026-05-11 | VRT | VRT 是 AI 工廠的「物理可實現性」翻譯層 — NVIDIA Rubin 強制液冷 + 800V DC 把它從供應商升級為 reference architect。 | DCA_VRT_20260511.html | DD_VRT_20260425.html | — |
+| 2026-05-12 | LITE | LITE 是 1.6T AI 光通訊獨家 200G EML laser 製造商，NVIDIA 用 $2B 直投把它鎖成戰略 single source。 | DCA_LITE_20260512.html | DD_LITE_20260506.html | ID_AINetworking_20260419.html / ID_SiliconPhotonicsCPO_20260419.html |
+| 2026-05-12 | RMBS | RMBS 是 AI 記憶體子系統的 IP toll booth — DDR5 RCD 寡占 + HBM4 控制器業界第一，AI 加速器設計繞不開它。 | DCA_RMBS_20260512.html | DD_RMBS_20260427.html | ID_HBM_Supercycle_20260419.html / ID_MemorySupercycle_20260430.html / ID_HBM4CustomBaseDie_20260430.html |
+| 2026-05-12 | CIEN | CIEN 是 AI 數據中心之間長距光纖骨幹獨家供應商，WaveLogic 6 業界首發 1.6T，12-18 個月領先 Nokia / Cisco。 | DCA_CIEN_20260512.html | DD_CIEN_20260427.html | ID_AINetworking_20260419.html / ID_SiliconPhotonicsCPO_20260419.html / ID_AIDataCenter_20260419.html |
+| 2026-05-12 | CRM | CRM 是企業 CRM 全球壟斷者（Sales Cloud 22% > 後 4 名總和），Agentforce 把 seat-SaaS 轉成 consumption AI 平台。 | DCA_CRM_20260512.html | DD_CRM_20260418.html | ID_AgenticAIPlatform_20260424.html / ID_LLMVendorSecurityEconomics_20260423.html |
+| 2026-05-12 | INTC | INTC 是美國半導體製造國家戰略資產，Lip-Bu Tan 帶領 18A + 14A 客戶贏單推升 narrative，但執行兌現未證實。 | DCA_INTC_20260512.html | DD_INTC_20260427.html | ID_FoundryGeography_20260427.html / ID_LeadingEdgeNode_20260419.html / ID_HighNAEUV_20260505.html |
+| 2026-05-12 | ROK | ROK 是北美 PLC 龍頭 + reshoring capex supercycle 直接受惠者，全球被 Siemens 20% 壓制但裝機切換成本極高。 | DCA_ROK_20260512.html | DD_ROK_20260418.html | ID_AIDataCenter_20260419.html |
