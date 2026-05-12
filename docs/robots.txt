@@ -1,0 +1,86 @@
+# research.investmquest.com — crawler policy
+#
+# 預設：全部禁止（含 Google / Bing / 各 AI 訓練爬蟲）
+# 例外：放行「使用者主動把 URL 餵給 AI」型 fetcher（ChatGPT / Claude / Perplexity）
+#
+# 註：robots.txt 為自願遵守協議。守規矩的 bot 會照辦，惡意爬蟲不會。
+#     若要更強防護，需在 HTML 加 <meta name="robots" content="noindex">
+#     或改用 Cloudflare Access / Basic Auth 鎖站。
+
+# ── 1. 預設全擋 ──────────────────────────────────────────
+User-agent: *
+Disallow: /
+
+# ── 2. 放行：使用者主動觸發的 AI fetcher ─────────────────
+# 這類 bot 只在使用者於 ChatGPT/Claude/Perplexity 介面貼 URL 或要求分析時才抓取，
+# 不會自主爬整站、不會建索引、不會做模型訓練。
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# ── 3. 明確再次禁止（防 User-agent: * 被忽略時的雙保險）──
+# 搜尋引擎
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Googlebot-Image
+Disallow: /
+
+User-agent: Googlebot-News
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+User-agent: DuckDuckBot
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
+
+# AI 訓練爬蟲（會把內容收進模型訓練資料）
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+# AI 搜尋索引器（會被 SearchGPT / Perplexity 搜尋發現）
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
