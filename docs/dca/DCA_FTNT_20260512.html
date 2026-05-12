@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- dca-moat-trend: → -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA · FTNT · 2026-05-12 · Deep Conviction Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #0F172A; line-height: 1.65; }
+  .num, code, pre { font-family: 'IBM Plex Mono', monospace; }
+  header.sticky { position: sticky; top: 0; z-index: 100; background: #1E3A5F; color: #fff; padding: 10px 28px; font-size: 13px; letter-spacing: .04em; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  header.sticky b { font-size: 15px; letter-spacing: .12em; }
+  header.sticky span.thesis { color: #BFDBFE; font-weight: 400; margin-left: 12px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 24px 96px; }
+  h1 { font-size: 26px; color: #1E3A5F; border-bottom: 3px solid #1E3A5F; padding-bottom: 10px; margin: 8px 0 22px; }
+  h2 { font-size: 19px; color: #fff; background: #1E3A5F; border-left: 4px solid #3B82F6; padding: 9px 14px; margin: 30px 0 14px; letter-spacing: .04em; }
+  h3 { font-size: 15px; color: #1E3A5F; border-left: 3px solid #3B82F6; padding-left: 10px; margin: 18px 0 10px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 13.5px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  th { background: #1E3A5F; color: #fff; font-weight: 500; text-align: left; padding: 8px 10px; font-size: 12.5px; letter-spacing: .03em; }
+  td { padding: 8px 10px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  tr:hover td { background: #FEF9C3; }
+  .status-bar { display: flex; gap: 16px; justify-content: center; background: #F1F5F9; border-left: 4px solid #3B82F6; border-right: 4px solid #3B82F6; padding: 18px 12px; margin: 0 0 18px; }
+  .status-bar .cell { flex: 1; max-width: 180px; min-width: 160px; text-align: center; }
+  .status-bar .lbl { font-size: 11px; color: #64748B; letter-spacing: .08em; text-transform: uppercase; }
+  .status-bar .val { font-size: 22px; font-weight: 700; margin-top: 4px; font-family: 'IBM Plex Mono', monospace; }
+  .status-bar .sub { font-size: 11px; color: #64748B; margin-top: 2px; }
+  .thesis-box { background: #EFF6FF; border: 1px solid #BFDBFE; padding: 28px 32px; margin: 18px 0; text-align: center; border-radius: 4px; }
+  .thesis-box .body { font-size: 24px; font-weight: 700; color: #1E3A5F; line-height: 1.55; }
+  .thesis-box .tag { font-size: 11px; color: #64748B; letter-spacing: .12em; margin-top: 8px; }
+  .decision-wait { background: #FEF9C3; border-left: 4px solid #CA8A04; padding: 18px 22px; margin: 14px 0; }
+  .decision-buy { background: #F0FDF4; border-left: 4px solid #16A34A; padding: 18px 22px; margin: 14px 0; }
+  .decision-avoid { background: #FFF1F2; border-left: 4px solid #DC2626; padding: 18px 22px; margin: 14px 0; }
+  .conflict-block { background: #FFF7ED; border-left: 4px solid #F97316; padding: 16px 18px; margin: 14px 0; }
+  .verdict-block { background: #FED7AA; border-left: 4px solid #C2410C; padding: 14px 18px; margin: 12px 0; }
+  .premortem-block { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 16px 18px; margin: 12px 0; }
+  .premortem-block blockquote { margin: 6px 0; padding: 10px 14px; background: #fff; border-left: 3px solid #DC2626; font-style: italic; }
+  .pattern-block { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 14px 18px; margin: 12px 0; }
+  .irr-narrative { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 12px 16px; margin: 10px 0; font-style: italic; font-size: 13px; }
+  .maxdd-block { background: #FFF7ED; border-left: 4px solid #F97316; padding: 16px 18px; margin: 12px 0; }
+  .maxdd-main { font-size: 32px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; color: #C2410C; }
+  .maxdd-bar { height: 16px; background: linear-gradient(to right, #16A34A 0%, #16A34A 50%, #CA8A04 50%, #CA8A04 83%, #DC2626 83%, #DC2626 100%); border-radius: 3px; margin: 8px 0; }
+  .maxdd-bar-pointer { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #64748B; }
+  .memo-paper { background: #FAFAF9; border: 1px solid #D6D3D1; padding: 18px 22px; margin: 12px 0; font-size: 13.5px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+  .elevator { font-style: italic; background: #FEFCE8; border-left: 3px solid #CA8A04; padding: 10px 14px; margin: 10px 0; }
+  details { background: #fff; border: 1px solid #E2E8F0; border-radius: 4px; margin: 10px 0; padding: 0 14px; }
+  details summary { cursor: pointer; padding: 12px 0; font-weight: 600; color: #1E3A5F; font-size: 14px; }
+  details[open] summary { border-bottom: 1px solid #E2E8F0; margin-bottom: 10px; }
+  .badge-ok { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+  .badge-warn { background: #FEF3C7; color: #92400E; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+  .badge-bad { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 3px; font-size: 11.5px; font-weight: 600; }
+  .pos { color: #15803D; font-weight: 600; }
+  .neg { color: #991B1B; font-weight: 600; }
+  .neu { color: #64748B; }
+  .irr-bar { display: flex; height: 22px; border-radius: 3px; overflow: hidden; margin: 6px 0 4px; font-size: 11px; color: #fff; font-family: 'IBM Plex Mono', monospace; }
+  .irr-bar > div { display: flex; align-items: center; justify-content: center; }
+  .print-btn { position: fixed; right: 24px; bottom: 24px; background: #1E3A5F; color: #fff; padding: 12px 20px; border-radius: 26px; cursor: pointer; border: none; box-shadow: 0 4px 12px rgba(0,0,0,.18); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; letter-spacing: .04em; }
+  .print-btn:hover { background: #2563EB; }
+  @media print {
+    header.sticky, .print-btn { display: none; }
+    details { page-break-inside: avoid; }
+    details > * { display: block !important; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+<header class="sticky"><b>FTNT</b> · DCA · 2026-05-12 <span class="thesis">| 全球 firewall 唯一同時握有 ASIC 硬體護城河 + 平台訂閱二次曲線的稀缺 cybersecurity 廠</span></header>
+
+<main>
+  <h1>Deep Conviction Analysis · Fortinet (FTNT)</h1>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="cell"><div class="lbl">DD 訊號燈</div><div class="val" style="color:#15803D">B</div><div class="sub">觀望偏進場（DD 4/27, $84）</div></div>
+    <div class="cell"><div class="lbl">Moat 趨勢</div><div class="val">B <span style="color:#64748B">→</span></div><div class="sub">硬體 widening + 雲端 narrowing 互抵</div></div>
+    <div class="cell"><div class="lbl">Runway Post-Y5</div><div class="val">🟢</div><div class="sub">TAM 至 2034 仍 CAGR 9-11%</div></div>
+    <div class="cell"><div class="lbl">Max DD（5Y 估）</div><div class="val" style="color:#C2410C">−50%</div><div class="sub">2027 SASE 雲端切換</div></div>
+  </div>
+
+  <!-- §2 Thesis -->
+  <h2>§2 One-Sentence Thesis</h2>
+  <div class="thesis-box">
+    <div class="body">FTNT 是全球 firewall 龍頭中唯一同時握有「自研 ASIC 硬體護城河」與「平台訂閱二次曲線」的稀缺廠，AI 推動的流量檢測規模化讓硬體加速優勢被重新放大。</div>
+    <div class="tag">投資本質 · 50 字以內</div>
+  </div>
+
+  <!-- §7 Decision -->
+  <h2>§7 Decision｜可執行計畫</h2>
+  <div class="decision-wait">
+    <strong style="font-size:15px">🟡 觀望（不追現價）— 條件式建倉</strong>
+    <p style="margin:8px 0 0">DD 4/27 在 <span class="num">$84</span> 寫的 B 級訊號（中期 R:R 1.85x）。Q1 26 法說（5/6）後股價噴到 <span class="num">$114</span>，4 週漂移 +35%、52 週新高 <span class="num">$114.80</span> 撞高頂——此次 DCA 的核心動作不是「跟著買在新高」，而是<strong>等回測再執行 DD 原計畫</strong>。FPE 已從 25x 重估至 36.85x（5Y 中位 44x，仍低於歷史均值但已不便宜）。</p>
+  </div>
+
+  <h3>7a. 倉位與進場計畫</h3>
+  <table>
+    <tr><th>項目</th><th>具體內容</th></tr>
+    <tr><td>在組合中的角色</td><td>核心持倉（cybersecurity 平台稀缺曝險）</td></tr>
+    <tr><td>初始建倉倉位</td><td>0% — 目前條件未滿足</td></tr>
+    <tr><td>目標倉位</td><td><span class="num">4.0%</span> of portfolio（受 §6c Max DD 🟡 限制，從原本 6% 下修至 4%）</td></tr>
+    <tr><td>進場價位區間（條件式）</td><td><span class="num">$92 – $98</span>（FPE 29-31x，DD bear anchor 上沿 + 50% 回測由 $114 → $84 上漲帶）</td></tr>
+    <tr><td>進場節奏</td><td><strong>條件式三段式</strong>：(1) 第一段 1.5%：股價回測至 <span class="num">$98</span> + 14d RSI ≤ 60；(2) 第二段 1.5%：跌至 <span class="num">$92</span> + Q2 26 法說（8/5）SASE billings YoY ≥ 25%；(3) 第三段 1.0%：跌至 <span class="num">$85</span>（DD 寫稿區間）或 H1 + H2 雙確認</td></tr>
+    <tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td><strong>PANW（5.2% MC，FPE 45x）</strong>：成長更快（NGS ARR +33% vs FTNT SASE +31%），但估值溢價 22%、margin 32% vs FTNT 36%、ROIC 較低；FTNT 的邊際資金 vs PANW，<strong>FTNT 在 $92 以下 R:R 較佳，PANW 在 $200+ 已 priced-in</strong> → 建議「PANW 不增、FTNT 等回檔再開新倉」。<br>
+    <strong>CRWD（3.8% MC，FPE 75x）</strong>：純雲 SASE 純度高、但估值已 priced-in 2-3 年成長，FTNT 是「便宜的 NGFW 龍頭」+ 「SASE 慢成長 option」混合，邊際資金看回檔點選；CRWD 抓 pure-play 認知，FTNT 抓 ASIC + refresh cycle 認知，<strong>兩者不可互換</strong>。</td></tr>
+  </table>
+
+  <h3>7b. 加減碼條件</h3>
+  <table>
+    <tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+    <tr><td>加碼</td><td>$92 以下 + Q2 26 SASE billings ≥ 25%</td><td>3.0%</td></tr>
+    <tr><td>加碼</td><td>$85 以下 + product revenue 連 2 季 ≥ +20% YoY</td><td>4.0%（滿倉）</td></tr>
+    <tr><td>減碼</td><td>FPE ≥ 40x（接近 5Y 中位）</td><td>減半</td></tr>
+    <tr><td>清倉</td><td>連 2 季 product revenue YoY ≤ +5% 且 SASE billings YoY ≤ +15%（refresh cycle + SASE 雙破）</td><td>0%</td></tr>
+  </table>
+
+  <h3>7c. Pure MA 相容性 + 動能過熱</h3>
+  <table>
+    <tr><th>檢查</th><th>狀態</th><th>說明</th></tr>
+    <tr><td>股價 &gt; MA60</td><td><span class="badge-ok">✅</span></td><td>$114 &gt; MA50 $103.77</td></tr>
+    <tr><td>股價 &gt; MA200</td><td><span class="badge-ok">✅</span></td><td>$114 &gt; MA200 $101.62</td></tr>
+    <tr><td>股價 &gt; MA104w（週線）</td><td><span class="badge-ok">✅</span></td><td>52 週新高</td></tr>
+    <tr><td>Pure MA 結構支持？</td><td><span class="badge-ok">✅</span></td><td>強勢多頭排列</td></tr>
+    <tr><td><strong>4 週漂移</strong></td><td><span class="badge-bad">⚠ +35%</strong></span></td><td>$84 → $114 in &lt;2 weeks（Q1 26 法說 5/6 跳空）— <strong>動能過熱嚴重</strong></td></tr>
+    <tr><td>14d RSI</td><td><span class="badge-warn">⚠ 可能 &gt; 70</td><td>data 顯示 46.6 但是法說前數值；當前估計 70+</td></tr>
+  </table>
+  <p style="background:#FEE2E2;border-left:3px solid #DC2626;padding:10px 14px;margin:10px 0;font-size:13px"><strong>結論</strong>：Pure MA 結構雖通過，但短期動能極度過熱（4 週漂移 +35% 遠超 +10% 警戒線）。Mean reversion 機率歷史上 &gt;60%——<strong>禁止一次建倉、禁止無條件追價</strong>。7a 強制改條件式三段式進場。</p>
+
+  <h3>7d. 建議持有年限</h3>
+  <table>
+    <tr><th>持有年限</th><th>條件</th></tr>
+    <tr><td>短期 (&lt;2y)</td><td>僅在 firewall refresh cycle 兌現窗口（FY26 Q3-Q4 product YoY ≥ +25%）兼有 swing trading</td></tr>
+    <tr><td>中期 (2-5y)</td><td>SASE ARR 翻倍至 $3B+、SecOps ARR 達 $1B+；DD H1 + H2 兌現</td></tr>
+    <tr><td>長期 (5-10y) ✓</td><td>cybersec TAM CAGR 9-11% 至 2034、AI workload 持續推動 throughput 升級、ASIC 摩爾紅利疊加</td></tr>
+  </table>
+  <p><strong>建議持有年限：5-7 年（中長期）</strong>。原因：護城河 → holding（不退化）、TAM runway 至 2034 仍寬、margin profile 業內最佳。但<strong>非 SaaS 高成長型</strong>——拉長到 10Y 需配 PANW / CRWD 等 pure-play 平衡。</p>
+
+  <p><strong>EPS 預測（參考）</strong></p>
+  <table>
+    <tr><th>年份</th><th>EPS</th><th>來源</th><th>備注</th></tr>
+    <tr><td>2026E</td><td><span class="num">$3.13</span></td><td>公司指引 $3.10-3.16（5/6 raised）</td><td>+8% YoY</td></tr>
+    <tr><td>2027E</td><td><span class="num">$3.50-3.70</span></td><td>分析師 consensus（FactSet 推估）</td><td>+12-18%（SASE/SecOps 加速）</td></tr>
+    <tr><td>2030E</td><td><span class="num">$4.80-5.50</span></td><td>外推</td><td>假設 EPS CAGR 11-13%，含 ~3% buyback yield</td></tr>
+  </table>
+
+  <p><strong>長期 5-10 年持有，$114 進場合理嗎？</strong> §4 機率加權 5Y EV ≈ <span class="num">+43.5%</span>（IRR <span class="num">~7.5%/yr</span>）——<strong>低於大盤平均 (~10%)，且未含機會成本</strong>。若 vs PANW（IRR 8-10%）/ CRWD（IRR 6-8%）邊際差別不大但 FTNT 路徑風險最低。$114 「不該追」但「等回檔到 $92-98」就是合理的長期持有起點。</p>
+
+  <!-- §4 Asymmetry Analysis -->
+  <h2>§4 Asymmetry Analysis｜5Y 不對稱性</h2>
+
+  <h3>4 前奏｜為什麼用 5Y 而非 1Y？</h3>
+  <p>FTNT 故事的核心 driver（refresh wave + SASE ramp）是<strong>多季 - 多年</strong>的兌現節奏，不是季度事件。同時 ASIC 製程更新（NP7 → NP8）也是 3-5 年級別的競爭門檻。1Y 內 FTNT 上漲很可能 driven by 估值 +/- beats，但 5Y 才能驗證 thesis；故 §4 用 5Y 為主要對齊期。</p>
+
+  <table>
+    <tr><th>情境</th><th>5Y 絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+    <tr><td>Bull</td><td class="pos">+101%</td><td class="pos">+15.0%/yr</td><td>SASE/SecOps ARR 從 $1.6B → $4-5B、refresh cycle 帶 product +25% CAGR、FPE 維持 32x</td><td>30%</td></tr>
+    <tr><td>Base</td><td class="pos">+40%</td><td class="pos">+7.0%/yr</td><td>SASE +25% / product +15% CAGR、FPE 壓回 28x（接近 5Y 低位）、buyback 3%</td><td>50%</td></tr>
+    <tr><td>Bear</td><td class="neg">−34%</td><td class="neg">−8.0%/yr</td><td>SASE pure-play (CRWD/ZS) 整合 NGFW、hyperscaler edge 替代 FortiGate refresh、FPE 壓到 20x</td><td>20%</td></tr>
+    <tr><td><strong>機率加權</strong></td><td><strong class="pos">+43.5% 5Y</strong></td><td><strong class="pos">IRR ≈ 7.5%/yr</strong></td><td>—</td><td></td></tr>
+  </table>
+
+  <p><strong>IRR 落點解讀</strong>：Base 7.0%/yr <strong>弱於 8-12%/yr 中段門檻</strong>——主要原因是 $114 已 priced in 大部分近期亮點。$92-98 區間進場可拉到 ≈10%/yr。</p>
+
+  <p><strong>10Y 壓力測試</strong>：若 thesis 對但時間拉長到 10Y，Bull case 大概 7-8%/yr（複利紅利攤平），Base 大概 6%/yr——已劣於同期 SPX 平均。<strong>結論：FTNT 是「在好價買進的中質成長股」，不是「不擇時的長期複利雪球」。</strong></p>
+
+  <div class="pattern-block">
+    <h3 style="border:none;padding:0;margin:0 0 8px;color:#0C4A6E">📐 Pattern Match｜歷史相似 setup</h3>
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>歷史 case</td><td><strong>CSCO 2003-2008 路由器 + Catalyst 升級週期 + 服務轉型</strong>（同樣是「硬體龍頭 + 訂閱化二次曲線」混合敘事）</td></tr>
+      <tr><td>當時 setup</td><td>CSCO 2003: 60% 路由器市占、開始服務化、FPE ~22x</td></tr>
+      <tr><td>5Y 實現報酬</td><td>+57%（年化 ~9.4%）— 中段成長 + 估值未顯著重估，因「平台轉型」需 catalysts 兌現</td></tr>
+      <tr><td>FTNT 最像 / 最不像</td><td>最像：硬體龍頭 + ASIC + 平台拓展；最不像：FTNT 在 AI workload 賽道有結構紅利（CSCO 當年是穩態網路），潛在 IRR 上行高於 CSCO</td></tr>
+    </table>
+    <p style="margin:8px 0 0;font-size:13px"><strong>校準</strong>：CSCO 9.4%/yr 是個合理錨點；FTNT Base 7%/yr 偏低反映 $114 已 priced-in，等回檔到 $95 進場可拉至 ≈10-11%/yr，更接近 CSCO 歷史路徑。</p>
+  </div>
+
+  <h3>🧬 IRR Composition（5Y 質感拆解）</h3>
+  <table>
+    <tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息+回購</th><th>合計年化</th></tr>
+    <tr><td>Bull</td><td class="pos">+16.0%/yr</td><td class="neg">−2.8%/yr</td><td class="pos">+1.8%/yr</td><td class="pos">+15.0%/yr</td></tr>
+    <tr><td>Base</td><td class="pos">+12.0%/yr</td><td class="neg">−5.0%/yr</td><td class="neu">→ 0%/yr</td><td class="pos">+7.0%/yr</td></tr>
+    <tr><td>Bear</td><td class="pos">+4.0%/yr</td><td class="neg">−12.0%/yr</td><td class="neu">→ 0%/yr</td><td class="neg">−8.0%/yr</td></tr>
+  </table>
+
+  <div class="irr-bar">
+    <div style="width:63%;background:#15803D">EPS +12%</div>
+    <div style="width:26%;background:#991B1B">re-rate −5%</div>
+    <div style="width:11%;background:#64748B">div+回購 0%</div>
+  </div>
+  <p style="font-size:11px;color:#64748B;margin:-2px 0 8px">Base 列 IRR 質感視覺化（綠=EPS 複利，紅=re-rate，灰=股東回饋）</p>
+
+  <div class="irr-narrative">
+    Base 7.0%/yr 中，<strong>+12%/yr 來自 EPS 複利（占絕對貢獻 95%）</strong>，<strong>−5%/yr 來自估值 re-rate</strong>（FPE 36.8→28，因 $114 已部分 priced-in 後續成長），股息+回購接近 0（buyback 抵銷 SBC 後淨值微薄）。<strong>這檔的可抱性主要靠 EPS 自然複利</strong>——但需要「在合理 FPE 進場」（≤30x）才能避免 re-rate drag 把複利吃掉一半。$114 當前 FPE 36.8x 是<strong>進場時點的硬性 disadvantage</strong>。
+  </div>
+
+  <!-- §1 Mental Models -->
+  <h2>§1 Mental Models 壓力測試</h2>
+
+  <h3>測試一｜投委會 1 頁紙 Memo</h3>
+  <div class="memo-paper">
+    <p style="margin:0 0 8px"><strong>FTNT｜Fortinet · cybersecurity 平台 + ASIC 硬體龍頭</strong></p>
+    <p style="margin:0 0 6px"><strong>Thesis</strong>：全球 firewall 唯一同時握有自研 ASIC（NP7/SP5）+ 平台訂閱二次曲線的稀缺廠，AI workload 流量檢測規模化重新放大硬體加速優勢。</p>
+    <p style="margin:0 0 6px"><strong>Key Driver</strong>：(1) <span class="num">1B+</span> FortiGate 安裝基礎 + 2026-27 EOL refresh（硬體側）；(2) SASE+SecOps ARR <span class="num">$1.6B</span> 持續 +25%（平台側）。兩條獨立因果鏈。</p>
+    <p style="margin:0 0 6px"><strong>5Y EV IRR</strong>：<span class="num">7.5%/yr</span>（$114 進場）→ <span class="num">~10%/yr</span>（$95 進場）。<strong>低於 8-12% 中段</strong>。</p>
+    <p style="margin:0 0 6px"><strong>主要風險</strong>：(a) Hyperscaler edge（AWS Network Firewall / GOOGL Cloud Armor）跳過 NGFW refresh；(b) SASE pure-play（CRWD/ZS）整合 NGFW 至 cloud edge；(c) Max DD 5Y 估計 <span class="num">−35% ~ −50%</span>（🟡）。</p>
+    <p style="margin:0"><strong>建議倉位</strong>：條件式三段式至 <span class="num">4.0%</span>（受 Max DD 🟡 限制）；現在 0%，等回測 $98 / $92 / $85 分批進。</p>
+  </div>
+
+  <h3>測試二｜30 秒電梯</h3>
+  <div class="elevator">
+    「FTNT 是全球 55% 市占的 firewall 龍頭，靠自家 ASIC 在 AI workload 時代越來越值錢。但 Q1 法說（5/6）後股價噴 35%、FPE 從 25x 漲到 37x——好公司，但現在追會把長期複利的紅利提前透支。等回測 $95 是合理進場。」
+  </div>
+
+  <!-- Phase B 矛盾與裁決 -->
+  <h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+  <h3>共識區（A1-A3 方向一致）</h3>
+  <ul>
+    <li>護城河形態清晰：ASIC + 80% GM + 1B 安裝基礎，三軸皆指向「結構性優勢未弱化」</li>
+    <li>2026 firewall refresh wave 是事實（多個 SKU EOL 2026-27 + Q1 26 product +41%）</li>
+    <li>SASE 業務維持 +25-31% billings 成長（已連續 4 季）</li>
+  </ul>
+
+  <h3>矛盾清單</h3>
+  <div class="conflict-block">
+    <table>
+      <tr><th>#</th><th>矛盾</th><th>性質</th></tr>
+      <tr><td>🔴 1</td><td>A1 護城河「ASIC widening」 vs A2「SASE 純雲 (CRWD/ZS) 在雲端側 narrowing FTNT 邊界」</td><td>不可調和（方向相反）</td></tr>
+      <tr><td>🔴 2</td><td>A2 firewall refresh wave 2026-27 vs A3 Q1 26 product +41% 已部分透支</td><td>不可調和（量化分歧）</td></tr>
+      <tr><td>🟡 3</td><td>DD（4/27 寫於 $84）中期 R:R 1.85x vs 當前 $114 估值已將 DD 中期目標 $119 透支 96%</td><td>可調和（時間差）</td></tr>
+    </table>
+  </div>
+
+  <h3>⚖ 強制裁決</h3>
+  <div class="verdict-block">
+    <table>
+      <tr><th>#</th><th>我選哪邊</th><th>依據（非直覺）</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（if-then）</th></tr>
+      <tr>
+        <td>🔴 1</td>
+        <td>A1 對於企業 on-prem + branch（70%+ 市場），A2 對於 cloud-only edge（30% 且 grow 快）</td>
+        <td>Gartner 2025 Hybrid Mesh Firewall MQ：FTNT execution 第一、PANW vision 第一——說明 hybrid mesh 是未來，純雲只是 sub-segment。FTNT 60%+ G2000 hybrid 客戶基礎是 cloud-pure 廠難複製</td>
+        <td>季度監測：(a) FTNT G2000 客戶數 vs CRWD F500 客戶數（從 1,939 vs ~500），若 FTNT G2000 連兩季 -1% → A2 對；(b) Gartner MQ 排名變動（2026 H2 公布）；(c) Hyperscaler-bundled NGFW 取代 FortiGate 公開 case ≥ 3 個</td>
+        <td>(a) ↑ FTNT G2000 客戶連 2 季 +3% + 新 hyperscaler 整合協議 → 升級小倉測試至 3.0% 並延後減持；(b) ↓ G2000 客戶連 2 季 -1% 或 hyperscaler 公開取代 3+ case → 啟動減持，先減 1.5%</td>
+      </tr>
+      <tr>
+        <td>🔴 2</td>
+        <td>A2 對 — refresh wave 2026-27 仍是分散兌現的多季 catalyst，Q1 26 +41% 只是頭批</td>
+        <td>EOL 2026-27 SKU 名單跨多個型號等級（FG-200E/500E/600E 等），不可能 1 季全部 refresh。Q1 +41% 高基數源於 G7G 新品（5/6 發表）+ 高端機型，中低端 refresh 還在後面</td>
+        <td>季度監測：(a) Product revenue YoY in Q2/Q3 26（若 +25-35% 區間 → A2 對）；(b) 公司公告 G7G SKU 銷售節奏；(c) 中端 FG-100/200 系列實際出貨量</td>
+        <td>(a) Q2 26 product YoY ≥ +25% → 確認 refresh 為「多季 wave」，升級至 4.0% 滿倉；(b) Q2 26 product YoY ≤ +10%（Q1 +41% 反轉）→ 「one-time pull-in」，減倉至 2.0%</td>
+      </tr>
+      <tr>
+        <td>🟡 3</td>
+        <td>DD 邏輯對，但時間錯（4/27 $84 寫的目標 $119 已在 $114 全部 priced-in）</td>
+        <td>DD 寫稿至今 2 週 +35% 等於 1.7 年的 12%/yr 報酬已實現——後續一年內若無 H1+H2 雙確認，下行風險 &gt; 上行</td>
+        <td>(a) 是否 FPE 維持 35x 以上：若是 → 估值高度提前透支；(b) Q2 26 法說（2026-08-05）是否再次大 beat</td>
+        <td>(a) FPE 維持 ≥ 35x 且 Q2 法說平淡（beat 幅度 &lt; 5%）→ 不要追，等回測 $95；(b) FPE 回到 30x 以下且 Q2 大 beat → 條件式第一段 $98 啟動</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- §3 Key Drivers -->
+  <h2>§3 Key Drivers + 🔄 Consensus 分歧</h2>
+  <table>
+    <tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr>
+    <tr><td>1</td><td><strong>FortiGate 1B 安裝基礎 + 2026-27 EOL refresh（硬體側）</strong></td><td>FTNT 是市場上唯一可同時供應 NP7 + SP5 ASIC 加速器的 firewall 廠，refresh cycle 是 5-7 年一次的結構性事件；硬體 GM 67% × 服務 GM 87% 雙引擎決定 80% blended GM 上限</td><td>季度 product revenue YoY、G7G 出貨量、EOL SKU 替換率</td></tr>
+    <tr><td>2</td><td><strong>SASE + SecOps ARR 從 $1.6B → $4B+（平台側）</strong></td><td>SaaS 訂閱化是估值倍數 re-rate 的唯一通道（純硬體 PE 15x、純 SaaS PE 40x），SASE+SecOps 是 FTNT 從「硬體 +9% growth」突破到「平台 +15% growth」的轉折點</td><td>SASE billings YoY、SecOps ARR、Unified SASE 客戶數佔比</td></tr>
+  </table>
+
+  <p><strong>Driver 抽象層校驗</strong>：Driver 1（硬體 / 供給側 ASIC）與 Driver 2（平台 / 需求側 SaaS）來自獨立因果鏈——「即使 G7G refresh 失敗，SASE 仍可獨立達標」可成立（反之亦然）。<span class="badge-ok">✅ 通過 sub-component 測試</span></p>
+
+  <h3>Driver 1 深度｜FortiGate refresh wave 的「次世代」獨特性</h3>
+  <p>過往 firewall refresh wave（2014-2016、2019-2020）的主要驅動是「上一代設備過時 / 不支援新標準」。2026-27 這一波的<strong>結構性差異</strong>在於三件事：</p>
+  <ol style="font-size:13.5px">
+    <li><strong>AI workload throughput 衝擊</strong>：97% 企業預期 AI workload 大幅增加連線需求（Cisco 2026 Industrial AI 報告）— 既有 FortiGate 100E/200E 系列無法吃下 400Gbps+ 加密流量檢測，必須升級到 3500G/400G</li>
+    <li><strong>Quantum-safe + AI inspection 強制升級</strong>：FortiOS 8.0（2026-05 發表）需要 NP7 + SP5 ASIC 才能完整跑 quantum-safe 加密 + AI 模型在線 inference；老舊 NP4/NP5 設備功能受限</li>
+    <li><strong>監管推動</strong>：NIST CSF 2.0 + EU NIS2 強化安全可觀測性要求 → 老舊設備無法 produce 足夠的 telemetry 給 SOC / SIEM 整合</li>
+  </ol>
+  <p style="font-size:13.5px"><strong>這三個結構性差異</strong>意味著 2026-27 refresh 不是 optional upgrade 而是 mandatory compliance + capacity 雙驅動，<strong>替換率可能比過往兩波 (~35-40%) 高至 50%+</strong>。但 driver 2 的「SASE 平台訂閱化」是讓 FTNT 估值倍數能維持 30x+ 的關鍵，沒這個 driver，FTNT 仍會回到「純硬體 CSCO 估值 16x」區間。</p>
+
+  <h3>Driver 2 深度｜為什麼 SASE billings +31% 比競爭對手更值錢</h3>
+  <p>表面看 FTNT SASE billings +31% 與 PANW NGS +33% 接近，但兩者品質有本質差異：</p>
+  <table>
+    <tr><th>項目</th><th>FTNT SASE</th><th>PANW NGS</th></tr>
+    <tr><td>cross-sell 來源</td><td>1B+ FortiGate 安裝基礎 internal upgrade</td><td>外部 net new logo + 部分 NGFW base</td></tr>
+    <tr><td>CAC（客戶獲取成本）</td><td>低（既有 channel + ASIC 上拉效應）</td><td>高（需大量 sales force + Direct Touch）</td></tr>
+    <tr><td>毛利率</td><td>~80%（service GM 86.8% 主導）</td><td>~75%</td></tr>
+    <tr><td>沉降風險</td><td>低（SASE 與 FortiGate 同期續約）</td><td>中（NGS 獨立合約）</td></tr>
+  </table>
+  <p style="font-size:13px"><strong>意義</strong>：FTNT SASE 的每一 dollar billings 都比 PANW NGS 同樣 dollar 帶來更多 contribution margin。這是 §4 IRR composition 中 FTNT EPS CAGR 能維持 12-16% 的核心理由（margin 結構性優勢）。</p>
+
+  <h3>強制減法｜我認為不重要的</h3>
+  <table>
+    <tr><th>市場常討論</th><th>為什麼不重要</th></tr>
+    <tr><td>地緣政治 / 中國市場敞口</td><td>FTNT APAC ~25%，中國 &lt; 5%，地緣風險敏感度遠低於同業</td></tr>
+    <tr><td>對 GenAI / LLM 的 vendor 依賴</td><td>FTNT 用自家 FortiAI（500+ 專利）、不依賴外部 LLM，獨立性高</td></tr>
+    <tr><td>季度 EPS beat magnitude</td><td>FTNT 過去 4 季 EPS beat $0.10-0.20 是常態，1 季偏離不改 thesis</td></tr>
+  </table>
+
+  <h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td>市場目前定價在什麼假設</td><td>$114、FPE 36.85x 已 imply「Q1 +41% product 是長期 run rate 起點」+「SASE 維持 +30% 至 2028」+「FTNT 邊界不被雲端 SASE 蠶食」三同時成立</td></tr>
+    <tr><td>我認為的不同假設</td><td>Q1 +41% 有 ~10-15% 是 G7G 預訂 + 大客戶 pull-in（非可重複），實際 multi-quarter run rate +25%；SASE growth 2027 開始受 CRWD/ZS 蠶食 → +20-23%；長期 FPE 不應 &gt; 28x（5Y 低位）</td></tr>
+    <tr><td>賣方為什麼錯（具體理由）</td><td>賣方在 Q1 法說後集體調升 PT（RBC $107→？、其他普遍 $115-130），但忽略了：(a) 上述 pull-in 效應；(b) hybrid mesh firewall 雖 FTNT 第一，但 Vision 端 PANW 領先（意指 5 年後 PANW 可能 catch up on execution）；(c) FPE 36x 已是 cybersecurity 平台廠標準價，無進一步 re-rate 空間</td></tr>
+  </table>
+
+  <h3>§3 補充｜為什麼 Driver 不是「Q1 26 法說 +41% product」這個短期信號？</h3>
+  <p>市場在 5/6 法說後集體將 FTNT 故事改寫為「product +41% 是 refresh wave 加速的證據」，但這是短期 surprise 而非結構性驅動。Driver 應該是<strong>結構性、可重複、跨多季的因素</strong>：</p>
+  <ul style="font-size:13.5px">
+    <li>Q1 26 product +41% 中，估計 10-15% 來自 G7G 早期預訂（5/6 一次性 release surge）、5-8% 來自大客戶 multi-year refresh deal pull-in、其餘 18-23% 才是 organic refresh</li>
+    <li>真正的「refresh wave 結構性 driver」應觀察跨 4 個季度的 YoY 平均：若 FY26 全年 product +30% YoY → wave 真實；若 Q2/Q3 跌回 +15-20% → Q1 是 pull-in</li>
+    <li><strong>結論</strong>：Driver 1（1B 安裝基礎 + EOL refresh）是 5-7 年結構故事，Q1 一次 surprise 不是 Driver 而是 catalyst signal——本 DCA 把它放在 §8 監測列而非 §3 Driver 列</li>
+  </ul>
+
+  <!-- §5 Single Thing -->
+  <h2>§5 The Single Thing That Could Change My Mind</h2>
+  <table>
+    <tr><th>項目</th><th>Primary Trigger</th><th>Secondary Trigger（pre-mortem 派生）</th></tr>
+    <tr><td>事件描述</td><td><strong>SASE pure-play (CRWD 或 ZS) 與 hyperscaler 整合 NGFW 至 cloud edge，且公開出現 ≥ 3 家 G2000 客戶用 cloud-native SASE 取代 FortiGate refresh</strong></td><td><strong>FTNT 自家 ASIC 在 N3/N2 製程節點落後競爭對手 ≥ 2 代</strong>（NP7 目前 N5、若 NP8 卡關 → ASIC 護城河消失）</td></tr>
+    <tr><td>為什麼致命</td><td>FTNT 整體 thesis 的底層假設是「ASIC + 安裝基礎 = 防護壁壘」。若雲端 edge 可以取代物理 FortiGate，refresh wave 失靈、安裝基礎變沉沒成本</td><td>ASIC 領先 5-10x 是 FTNT 唯一不可複製的優勢；若製程落後 → 競爭對手 (Intel/Marvell DPUs 等) 可 catch up，blended GM 從 80% 壓到 65-70%</td></tr>
+    <tr><td>如何監測</td><td>Gartner Magic Quadrant 排名（季度）、hyperscaler 官方公告（AWS/GOOGL re:Invent / Cloud Next）、FTNT 法說 G2000 客戶數變化</td><td>FTNT 法說 ASIC roadmap 公告（每年 Accelerate 大會）、競爭對手 NPU/DPU 性能 benchmark</td></tr>
+    <tr><td>目前離發生有多遠</td><td>2-3 年（目前 cloud-pure SASE 仍主要服務 cloud-only 客戶，hybrid mesh 仍 on-prem 強勢）</td><td>3-5 年（NP7 領先優勢仍在，但 N3 製程 2027 內成本壓力大）</td></tr>
+  </table>
+
+  <!-- §6 What I Don't Know + Pre-mortem -->
+  <h2>§6 What I Don't Know + Pre-mortem</h2>
+
+  <h3>6a. 強迫面對盲點</h3>
+  <table>
+    <tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>不成立後果</th></tr>
+    <tr><td>1</td><td>2026-27 firewall refresh wave 大小</td><td>refresh 涵蓋 25%+ 安裝基礎</td><td>refresh ≤ 15% → product revenue 平庸（+10% YoY）、Base IRR 5-6%/yr</td></tr>
+    <tr><td>2</td><td>SASE billings +30% 能否持續 5 年</td><td>FTNT 在 hybrid SASE 仍是 Top 3</td><td>SASE +18-20% → Base case 落空，估值壓回 FPE 20x</td></tr>
+    <tr><td>3</td><td>Hyperscaler cloud edge 取代速度</td><td>未來 5 年仍是「補充而非替代」</td><td>3 年內取代啟動 → max DD 落在 −55% 而非 −50%</td></tr>
+  </table>
+
+  <h3>6b. Pre-mortem：失敗故事 + 校驗 §5 + 修正 §5（三段式）</h3>
+  <div class="premortem-block">
+    <p><strong>第一段｜故事倒推</strong></p>
+    <blockquote>
+      假設 5 年後（2031 Q2）這個部位虧 50%，最可能的故事是：「2027 Q3 起 AWS Network Firewall + Azure Firewall Premium 在大型 G2000 客戶端形成 30%+ 滲透，FortiGate refresh 開始延後或被跳過；2028 FTNT product revenue YoY 從 +40% 反轉到 -10%、SASE 因 CRWD Falcon Cloud Security 整合 NGFW 而 growth slow 到 +15%；同時 NP8 卡在 N3 量產延遲，blended GM 從 80% 壓到 73%；市場重估 FPE 從 36x 壓到 18x，股價從 $114 跌到 $58（-50%）。」
+    </blockquote>
+    <p><strong>第二段｜校驗 §5 single-thing</strong></p>
+    <table>
+      <tr><th>檢查問題</th><th>答案</th></tr>
+      <tr><td>失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="badge-warn">⚠ 部分重疊</span></td></tr>
+    </table>
+    <p style="font-size:13px"><strong>分析</strong>：§5 primary trigger（SASE pure-play + hyperscaler 整合 NGFW）抓到了主路徑，但失敗故事還包含「NP8 製程卡關 + GM 壓縮」這條<strong>內部供應鏈風險</strong>路徑，§5 未涵蓋。</p>
+    <p><strong>第三段｜修正 §5</strong></p>
+    <p style="font-size:13px"><strong>修正狀態</strong>：<span class="badge-warn">⚠ 已補 1 條 secondary trigger</span>——「FTNT 自家 ASIC 在 N3/N2 製程節點落後 ≥ 2 代」已加入 §5 表格右欄。</p>
+  </div>
+
+  <h3>6b 補充｜失敗故事的多版本（cross-check）</h3>
+  <p>Pre-mortem 的關鍵不是單一故事，而是「多條失敗路徑是否都 trace 到同一個 root cause」。以下是 3 條獨立失敗路徑：</p>
+  <table>
+    <tr><th>失敗路徑</th><th>root cause</th><th>機率</th><th>是否 §5 抓到</th></tr>
+    <tr><td>路徑 A：Hyperscaler cloud edge 取代 FortiGate refresh</td><td>雲端 SASE 競爭蠶食企業 NGFW 需求</td><td>20-25%</td><td>✅ §5 primary trigger</td></tr>
+    <tr><td>路徑 B：NP8 製程卡關 + GM 壓縮</td><td>內部供應鏈/技術風險</td><td>10-15%</td><td>⚠ §5 secondary trigger（pre-mortem 補上）</td></tr>
+    <tr><td>路徑 C：管理層執行失誤（CEO Ken Xie 退休 / 大型 M&A 失敗）</td><td>治理風險</td><td>5-8%</td><td>❌ §5 未涵蓋</td></tr>
+  </table>
+  <p style="font-size:13px"><strong>結論</strong>：路徑 A 與 B 已被 §5 雙 trigger 涵蓋；路徑 C（治理風險）機率較低且難以預先 trigger，採「Q4 26 / 2027 H1 看 CEO 接班計畫」作為長期 watchlist。<strong>整體 Max DD 估計 (−35% ~ −50%) 主要 driven by 路徑 A，部分 by 路徑 B；路徑 C 為 tail risk 加成 ~5%。</strong></p>
+
+  <h3>6c. 路徑壓力測試（Max DD）</h3>
+  <div class="maxdd-block">
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>估計 Max DD 範圍</td><td><span class="maxdd-main">−35% ~ −50%</span></td></tr>
+      <tr><td>最可能觸發時點</td><td>2027 Q3 - 2028 Q1（hyperscaler cloud edge 滲透加速 + NP8 製程進度公告 + 重估事件）</td></tr>
+      <tr><td>觸發後最快多久恢復峰值</td><td>18-30 個月（若 thesis 未破：refresh wave 仍在 + SASE 在 +20% 區間 → 估值修復；若 thesis 破：永不恢復）</td></tr>
+      <tr><td>路徑風險評級</td><td><span class="badge-warn" style="font-size:14px">🟡 −35~−50%（需強信念）</span></td></tr>
+    </table>
+    <div class="maxdd-bar"></div>
+    <div class="maxdd-bar-pointer">0% &mdash;&mdash;&mdash; −30%（綠/扛住）&mdash;&mdash;&mdash; −50%（黃/強信念）&mdash;&mdash;&mdash; −60%（紅/難扛）</div>
+    <p style="margin:10px 0 0;font-size:13px"><strong>校驗</strong>：若 Max DD 落在 −50%，能撐到復原嗎？條件：(a) 部位不超過 4%（已在 §7a 強制）；(b) 不使用槓桿；(c) 進場區間 ≤ $98（FPE 31x，已有 17% 安全邊際）；(d) §5 primary trigger 未發生。若進場價在 $114（FPE 36.85x），Max DD 從 $114 下挖 −50% 至 $57，<strong>絕大多數人會在 −30% 區間（$80）被洗出，無法等到復原</strong>——這是「FPE 36.8x 不該追」的核心理由。</p>
+  </div>
+
+  <!-- §8 Review Triggers -->
+  <h2>§8 Review Triggers</h2>
+  <table>
+    <tr><th>#</th><th>觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+    <tr><td>1</td><td>Q2 26 法說</td><td>財報日期</td><td><strong>2026-08-05</strong>（檢查 SASE billings、product YoY、G2000 客戶數）</td></tr>
+    <tr><td>2</td><td>Gartner Hybrid Mesh Firewall MQ 2026</td><td>產業事件</td><td><strong>2026-09</strong> 預期發布（檢查 FTNT execution / vision 兩軸排名）</td></tr>
+    <tr><td>3</td><td>$98 / $92 / $85 三段價位觸發</td><td>價位觸發</td><td>條件式進場啟動點，每個價位再評估</td></tr>
+    <tr><td>4</td><td>§5 primary trigger</td><td>Single Thing</td><td>Hyperscaler-bundled NGFW 取代 FortiGate G2000 case ≥ 3 件</td></tr>
+    <tr><td>5</td><td>§5 secondary trigger</td><td>Single Thing</td><td>NP8 製程 roadmap 公告（FTNT Accelerate 大會 2026-10/11）</td></tr>
+  </table>
+
+  <p><strong>報告保質期</strong>：至 <span class="num">2026-08-05</span>（Q2 26 法說前有效）。後將依 SASE 進度與 product YoY 重新評估三情境機率。</p>
+
+  <p><strong>最可能 upside 因素</strong>：Q2 26 法說 SASE billings 再超 +30% + G2000 客戶數 +3% + management 拉高 FY26 guide → FPE 維持 36x、股價突破 $120</p>
+  <p><strong>最可能 downside 因素</strong>：Q2 26 product YoY 跌至 +15%（Q1 +41% 屬 one-time pull-in）→ FPE 壓回 30x、股價回測 $95</p>
+
+  <h3>三情境的「故事」narrative（不只是數字）</h3>
+  <table>
+    <tr><th>情境</th><th>故事</th></tr>
+    <tr><td>Bull (+15%/yr)</td><td>2026-27 refresh wave 全面兌現（替換率 50%+）、SASE+SecOps 從 $1.6B → $5B ARR、FTNT 在 Gartner Hybrid Mesh Firewall MQ 2026/27 維持 execution + vision 雙第一、NP8 N3 製程 2027 量產 → FPE 維持 32x、5Y 末股價 ~$230</td></tr>
+    <tr><td>Base (+7%/yr)</td><td>refresh wave 中度兌現（替換率 35-40%）、SASE 從 +30% 降至 +22%、FY26 EPS $3.13 → FY30 EPS ~$5.0、FPE 從 36.85x 壓回 28x、5Y 末股價 ~$160</td></tr>
+    <tr><td>Bear (-8%/yr)</td><td>2027 起 hyperscaler cloud edge 形成 25%+ G2000 滲透、FortiGate refresh 從 +40% 反轉到 -10%、SASE growth slow 到 +15%、NP8 製程卡關、FPE 壓回 18-20x（CSCO 化）、5Y 末股價 ~$75</td></tr>
+  </table>
+  <p style="font-size:13px"><strong>機率分配的依據</strong>：Bull 30% 反映 refresh wave 確實在 Q1 已啟動（+41% product），但 +30% wave 全程兌現需要 8 季持續，base rate 偏低；Base 50% 是「DD 寫稿時的合理 expectation」+ Q1 surprise 提前 priced-in 部分 upside；Bear 20% 是 hyperscaler 競爭 + NP8 風險的合計概率。</p>
+
+  <h3>12 個月 catalyst 時間軸</h3>
+  <table>
+    <tr><th>日期</th><th>事件</th><th>影響權重</th><th>方向</th></tr>
+    <tr><td>2026-06</td><td>Gartner SASE MQ 重估</td><td>中</td><td>FTNT execution 升降影響 SASE 競爭定位</td></tr>
+    <tr><td>2026-08-05</td><td><strong>Q2 26 法說（核心）</strong></td><td>高</td><td>product YoY + SASE billings → §7b 兩個加碼條件之一</td></tr>
+    <tr><td>2026-09</td><td>Gartner Hybrid Mesh Firewall MQ 2026</td><td>中</td><td>execution 與 vision 軸排名變化</td></tr>
+    <tr><td>2026-10/11</td><td><strong>FortiNet Accelerate 2026 大會</strong></td><td>高</td><td>NP8 / SP6 roadmap 是否公告（§5 secondary trigger 校驗點）</td></tr>
+    <tr><td>2026-11</td><td>Q3 26 法說</td><td>高</td><td>中低端 SKU refresh 是否啟動</td></tr>
+    <tr><td>2027-02</td><td>Q4 26 + FY26 全年 + FY27 guide</td><td>極高</td><td>thesis 12 個月最大決策點：H1 / H2 雙確認 or 失敗</td></tr>
+  </table>
+  <p style="font-size:13px"><strong>關鍵窗口</strong>：2026 Q4 - 2027 Q1（FY26 全年結束 + FY27 guide 公布）是 thesis 兌現 / 失敗的決策窗口。$92-98 條件式進場點在此之前若觸發，會有 3-6 個月「等 thesis 兌現」的等待期——這是條件式進場與「即刻 4% 滿倉」的本質差別。</p>
+
+  <h3>§7 補充｜為什麼是 4% 而不是 6% 或 2%？</h3>
+  <p>初始計畫的目標倉位是 6%（基於 DD B 訊號 + Quality Score 9.5 + 估值 🟡 公允），但本 DCA 三個 guardrail 把它壓回 4%：</p>
+  <ul style="font-size:13.5px">
+    <li><strong>Guardrail 1（§6c 路徑風險 🟡）</strong>：Max DD −50% 屬「需強信念」級別，組合中超過 5% 的單檔會在中途出場機率變高 → 強制 ≤ 4%</li>
+    <li><strong>Guardrail 2（§4 Base IRR 7%/yr）</strong>：低於 8-12% 中段門檻 1%p，每 1%p 低於門檻 → 倉位下修 0.5%（從 6% → 5.5% → 5%）</li>
+    <li><strong>Guardrail 3（DCA 與 DD 時間差 + 估值重估）</strong>：DD 在 $84 寫的進場區間已被 +35% 透支，DCA 修正後須採條件式 → 進一步壓回 4%</li>
+  </ul>
+  <p style="font-size:13.5px">為什麼不下修到 2%？— 因為(a) ASIC + 1B 安裝基礎護城河 → holding，(b) cybersec 行業 runway 🟢 寬，(c) 估值仍是 cybersec 業內最便宜（PANW 45x / CRWD 75x / ZS 52x 對比 FTNT 36.85x）。若 thesis 兌現，4% 倉位在 5Y +101% bull case 可貢獻 +4%p 組合 IRR——對中長期組合而言是合理 size。</p>
+
+  <!-- Phase A 折疊 -->
+  <h2>Phase A｜獨立研究階段（折疊）</h2>
+
+  <details>
+    <summary>Phase A1｜護城河深度分析 ｜ <em>結論：FTNT 護城河 → holding（硬體 ASIC widening、雲端 SASE 邊界 narrowing 互抵）</em></summary>
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>主要護城河</td><td>(1) 自研 ASIC（NP7 / SP5）— 5-10x performance + 顯著更低 power；(2) 1B+ FortiGate 安裝基礎與軟硬一體（FortiOS 8.0 + FortiGuard Labs）</td></tr>
+      <tr><td>持久性</td><td><strong>8/10</strong>，5 年穩固度：高（硬體側）/ 中（雲端 SASE 側）</td></tr>
+      <tr><td>最大侵蝕風險</td><td>SASE 純雲廠商（CRWD / ZS）將 NGFW 整合進 cloud-native edge，未來 3 年雲端 SASE 蠶食 FortiGate refresh 機會</td></tr>
+      <tr><td>關鍵數據</td><td>毛利率 <span class="num">80.3%</span>（Q4 25，→ 趨勢）｜ firewall 市占 <span class="num">55%</span>（市場領先）｜ ROIC 超 WACC <span class="num">+20%p</span></td></tr>
+      <tr><td>moat_trend</td><td><strong>→ holding</strong>（硬體 widening + 雲端 narrowing 互抵）— 同業 NGFW execution gap Gartner MQ 2025 仍 FTNT 第一（5/6 公告）；雲端側 CRWD Falcon NGFW 試點 2025 H2 啟動但尚未取代 FortiGate</td></tr>
+    </table>
+    <p><strong>Sourced data points（≥ 5）</strong>：</p>
+    <ol style="font-size:13px">
+      <li>FTNT firewall 市占 <span class="num">55%</span>（Forrester / Mexico Business News 2025）</li>
+      <li>Gross margin <span class="num">80.3%</span> Q4 25（公司 PR 2026-02）</li>
+      <li>ROIC vs WACC 超額 <span class="num">+20%p</span>（Klover.ai 2026）</li>
+      <li>NP7 + SP5 ASIC（公司 PR 2026-05-06，G7G 系列）</li>
+      <li>500+ AI 專利（Klover.ai / 公司 FortiAI 解決方案 2026）</li>
+      <li>G2000 客戶 <span class="num">1,939</span>、F100 <span class="num">100</span>（公司 2024 10-K updated）</li>
+      <li>Gartner Hybrid Mesh Firewall MQ Leader 2025（SDxCentral 2025）</li>
+    </ol>
+    <p><strong>A1 獨立結論</strong>：FTNT 護城河 → holding；硬體 ASIC 領域 widening、雲端 SASE 邊界 narrowing；整體未弱化但有 split 跡象。</p>
+  </details>
+
+  <details>
+    <summary>Phase A2｜產業趨勢深度分析 ｜ <em>結論：cybersec TAM 2030+ runway 仍寬，但 hyperscaler edge 是 5-7 年內最大競爭威脅</em></summary>
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>TAM 與成長</td><td>cybersec TAM 2025: <span class="num">$227.59B</span>、2030: <span class="num">$351.92B</span>（CAGR <span class="num">9.1%</span>），到 2034 <span class="num">$699B</span>（Fortune Business Insights）</td></tr>
+      <tr><td>網路安全 sub-TAM</td><td>2025 <span class="num">$24.95B</span> → 2031 <span class="num">$47.37B</span>（CAGR <span class="num">11.28%</span>）；hardware firewall 2025 <span class="num">$22.87B</span> → 2031 <span class="num">$41.62B</span>（CAGR <span class="num">10.52%</span>）</td></tr>
+      <tr><td>供需判斷</td><td>供需偏緊（DC capex +57% in 2025、AI workload 推動 throughput 升級），未來 12 個月仍 oversupplied on demand side</td></tr>
+      <tr><td>最大技術替代風險</td><td>Hyperscaler cloud-native edge（AWS Network Firewall / Azure Firewall Premium / GOOGL Cloud Armor），未來 3-5 年蠶食企業 NGFW refresh，威脅程度：高</td></tr>
+      <tr><td>政策/地緣風險</td><td>低（FTNT US 公司、APAC 25%、中國 &lt; 5%）；NIST CSF 2.0 + EU NIS2 推升 cybersec 需求</td></tr>
+      <tr><td>議價權位置</td><td>對上游 (TSMC / Marvell) <strong>中</strong>；對下游 (G2000 / mid-market) <strong>強</strong></td></tr>
+      <tr><td>runway_post_y5</td><td><strong>🟢 寬</strong>：Y5 末 cybersec TAM 仍 CAGR ~9-11%（到 2034 持續成長至 $699B）；下一條 S 曲線（agentic AI security / AI-SPM）2026 H2 已啟動</td></tr>
+    </table>
+    <p><strong>Sourced data points（≥ 5）</strong>：</p>
+    <ol style="font-size:13px">
+      <li>cybersec TAM 2030 <span class="num">$351.92B</span> @ CAGR <span class="num">9.1%</span>（Yahoo Finance 2025）</li>
+      <li>網路安全 sub-TAM CAGR <span class="num">11.28%</span> 2026-31（Mordor Intelligence）</li>
+      <li>Hardware firewall TAM CAGR <span class="num">10.52%</span> 2026-31（Valuates Reports）</li>
+      <li>DC capex +57% 2025（Dell'Oro Group）</li>
+      <li>FortiGate G7G 系列發表 2026-05-06（FortiNet PR）</li>
+      <li>EOL 2026-27 多 SKU 名單（FortiNet 官方 lifecycle 文件）</li>
+      <li>Gartner SASE Magic Quadrant Leader 2025（FortiNet）</li>
+    </ol>
+    <p><strong>A2 獨立結論</strong>：cybersec 行業 5-10 年仍 secular growth，runway 🟢；但雲端 SASE 是 sub-segment 主戰場，hyperscaler edge 是真實競爭威脅。</p>
+  </details>
+
+  <details>
+    <summary>Phase A3｜業務 / 財務 / 資本配置 ｜ <em>結論：80% GM + 33% Op Margin 是 cybersec 業內最佳；FY26 EPS guide $3.10-3.16 中段</em></summary>
+    <table>
+      <tr><th>項目</th><th>內容</th></tr>
+      <tr><td>營收結構</td><td>Service 67% 訂閱化（FY25），Product 33%；現金牛 = service（GM 86.8%），成長引擎 = SASE/SecOps（ARR 合計 $1.6B），拖累 = nil（無弱業務）</td></tr>
+      <tr><td>客戶集中度</td><td>低（G2000 1,939 客戶分散）；前 5 大 &lt;10%；風險：低</td></tr>
+      <tr><td>定價權</td><td>ASP ↑（Q1 26 提價低個位數）；定價權：<strong>強</strong>（80%+ GM 是定價權實證）</td></tr>
+      <tr><td>未來金雞母</td><td>SASE + SecOps：目前 ARR $1.6B（佔總 billings 36%），潛在 TAM $50B+ at 2031；預估 3-5 年到達 $4-5B ARR</td></tr>
+      <tr><td>財務體質</td><td>FCF FY25 <span class="num">$2.21B</span>（FCF margin ~33%）；毛利率 80.3%（穩定 +）；壓力測試：營收 -20% 仍可正向 FCF（無債務、$3B+ cash）</td></tr>
+      <tr><td>資本配置紀律</td><td>buyback authorization 累計 <span class="num">$10.25B</span>（2027-02 expiry，$1.38B 剩餘 as of 2026-02），管理層花得相當紀律；無大型併購（小型 AI/SOAR 整合 only），CAPEX 效率高</td></tr>
+      <tr><td>5Y IRR 分量基底（Base）</td><td>EPS CAGR <span class="num">+12%/yr</span>（含 ~3% buyback yield）｜ 5Y 末 FPE <span class="num">28x</span> vs 當前 <span class="num">36.85x</span>（re-rate <span class="num">−5.0%/yr</span>）｜ 股息 <span class="num">0%</span>｜ 淨買回 ~3%（已含在 EPS CAGR）</td></tr>
+    </table>
+    <p><strong>Sourced data points（≥ 6）</strong>：</p>
+    <ol style="font-size:13px">
+      <li>Q1 26 rev <span class="num">$1.85B</span> +20% YoY（公司 PR 2026-05-06）</li>
+      <li>Q1 26 product rev <span class="num">$645M</span> +41% YoY（公司 PR 2026-05-06）</li>
+      <li>Q1 26 service rev <span class="num">$1.21B</span> +11% YoY（公司 PR）</li>
+      <li>Q1 26 billings <span class="num">$2.09B</span> +31% YoY（公司 PR）</li>
+      <li>SASE billings +31% YoY（公司 Q1 26 transcript）</li>
+      <li>SecOps ARR <span class="num">$463M</span> +35% YoY（Q2 25 公司 PR）</li>
+      <li>FY25 FCF <span class="num">$2.21B</span>（公司 FY25 報告）</li>
+      <li>Buyback authorization <span class="num">$10.25B</span>（公司 FY25 PR 2026-02）</li>
+      <li>FPE <span class="num">36.85x</span>（GuruFocus 2026-05-11）</li>
+      <li>FY26 EPS guide <span class="num">$3.10-3.16</span>（公司 PR 2026-05-06）</li>
+      <li>Non-GAAP GM 80%-81% guide FY26（公司）</li>
+    </ol>
+    <p><strong>A3 獨立結論</strong>：FY26 EPS guide 中段 $3.13、buyback 紀律強、FCF margin 33%——是 cybersec 業內最強財務體質；但 $114 FPE 36.85x 已 priced-in 大部分近期成長。</p>
+  </details>
+
+  <details>
+    <summary>Phase A 補充｜競爭格局矩陣 + ASIC 深度技術解讀</summary>
+
+    <h3>同業競爭矩陣（5 家對照）</h3>
+    <table>
+      <tr><th>項目</th><th>FTNT</th><th>PANW</th><th>CRWD</th><th>ZS</th><th>CSCO Security</th></tr>
+      <tr><td>核心定位</td><td>Hybrid Mesh / NGFW + SASE</td><td>SASE + XDR + Cloud-native NGFW</td><td>Endpoint + Cloud Security + Falcon NGFW</td><td>SSE + ZTNA pure-cloud</td><td>NGFW + Splunk integration</td></tr>
+      <tr><td>FY26 Revenue（B）</td><td>~$7.7-7.9B</td><td>~$9.5B</td><td>~$5.2B</td><td>~$2.9B</td><td>~$5B（security）</td></tr>
+      <tr><td>Gross Margin</td><td><strong class="pos">80.3%</strong></td><td>74-76%</td><td>76-78%</td><td>78-80%</td><td>~66%（hardware-heavy）</td></tr>
+      <tr><td>Op Margin（non-GAAP）</td><td><strong class="pos">33-36%</strong></td><td>~28%</td><td>~22%</td><td>~22%</td><td>~22%</td></tr>
+      <tr><td>FPE 2026-05</td><td>36.85x</td><td>~45x</td><td>~75x</td><td>~52x</td><td>~16x（whole co）</td></tr>
+      <tr><td>SASE 增速</td><td>+31% billings</td><td>+33% NGS</td><td>+25-30% Falcon Flex</td><td>+22-25%</td><td>+10-15%</td></tr>
+      <tr><td>結構性護城河</td><td>ASIC + 1B 安裝基礎</td><td>Vision（平台整合）</td><td>Endpoint moat + AI Agent</td><td>Inline SSE 唯一</td><td>網路設備分銷</td></tr>
+      <tr><td>主要弱勢</td><td>純雲 SASE 滲透慢</td><td>硬體較弱</td><td>Network firewall 仍補課</td><td>無 endpoint</td><td>分裂銷售體</td></tr>
+    </table>
+    <p style="font-size:13px"><strong>關鍵解讀</strong>：FTNT 是表中<strong>唯一同時擁有 GM &gt; 80% + Op Margin &gt; 33%</strong> 的廠商。FPE 36.85x 雖看似不便宜，但對 PANW（45x）/ CRWD（75x）/ ZS（52x）仍是<strong>cybersec 平台廠中最便宜</strong>，這是 FTNT 在 $84 → $114 重估的核心邏輯。但同時，CSCO（FPE 16x）證明<strong>純硬體會被估值打折</strong>——FTNT 必須維持 SaaS 訂閱化故事才不會回 CSCO 估值區間。</p>
+
+    <h3>ASIC 護城河技術深度</h3>
+    <table>
+      <tr><th>項目</th><th>FTNT NP7 / SP5</th><th>競爭對手</th></tr>
+      <tr><td>製程節點</td><td>NP7: TSMC N5 (2024) / SP5: TSMC N6</td><td>PANW: 通用 x86 + DPU (Intel/Marvell) / CRWD: 純軟體 / Intel: N4/N5 NPU</td></tr>
+      <tr><td>性能 vs 通用 CPU</td><td>5-10x throughput, &lt; 1/3 power</td><td>x86 baseline; DPU 約 3-5x</td></tr>
+      <tr><td>研發投入 (annual)</td><td>~$300M+ on ASIC R&D</td><td>少數對手 (Intel/Marvell) 投入更高但散在多產品線</td></tr>
+      <tr><td>客製化深度</td><td>FortiOS + ASIC + FortiGuard 三層共設計</td><td>純軟體廠無 ASIC 共設計</td></tr>
+      <tr><td>升級節奏</td><td>3-4 年一次大版（NP6 → NP7 已過 ~3 年）</td><td>x86: Intel/AMD 2 年一代</td></tr>
+      <tr><td>關鍵風險</td><td>NP8 製程 N3 量產時程（2027？）</td><td>—</td></tr>
+    </table>
+    <p style="font-size:13px"><strong>意義</strong>：ASIC 是 FTNT 在 hybrid mesh 場景無人能複製的優勢。但 AI workload 推升流量 (10x by 2030) → 對手 (Intel/Marvell) 也在投資 NPU，<strong>5-7 年後 ASIC gap 可能從 5-10x 壓到 2-3x</strong>。這是 §5 secondary trigger（NP8 落後）的核心依據。</p>
+
+    <h3>2026-27 EOL 名單（部分）</h3>
+    <table>
+      <tr><th>SKU 系列</th><th>EOL 期</th><th>安裝基礎估算</th></tr>
+      <tr><td>FortiGate 100E/200E</td><td>2026-2027</td><td>中小企業大量部署，~150K 台</td></tr>
+      <tr><td>FortiGate 500E/600E</td><td>2026-2027</td><td>中大型企業，~80K 台</td></tr>
+      <tr><td>FortiGate 1500D/2000E</td><td>2027</td><td>data center，~30K 台</td></tr>
+      <tr><td>FortiSwitch / FortiAP 早期型號</td><td>2026-2027</td><td>數十萬 unit</td></tr>
+    </table>
+    <p style="font-size:13px"><strong>意義</strong>：refresh wave 不是「一個季度的事件」而是「3-4 個季度分布的 ramp」。Q1 26 product +41% 是<strong>頭批高端 (3500G/400G) 出貨</strong>，中低端 (FG-100/200) 預計 Q3 26 - Q1 27 才大規模換新。這對應 §7b「Q2 26 product YoY ≥ +25%」加碼條件——若中段 SKU 換新如期啟動，YoY 應維持高位。</p>
+  </details>
+
+  <details>
+    <summary>Phase A4｜既有 DD / ID 報告數據摘要</summary>
+    <table>
+      <tr><th>來源</th><th>關鍵數據</th></tr>
+      <tr><td>DD_FTNT_20260427.html</td><td>Quality Score 9.5/10（A 級）｜ R:R 1.85x（中期）｜ 三引擎目標價 保守 $107 / 中性 $119 / 樂觀 N/A ｜ 訊號燈 <strong>B（觀望偏進場 / 試倉 15-20% 底倉）</strong>｜ 核心假設 H1（SASE +30%+ 至 FY28）H2（2026 refresh + product +20% YoY in FY26 H2）H3（FPE 維持 25-30x）</td></tr>
+      <tr><td>ID_AICybersecurityDoubleEdge_20260423.html</td><td>產業評級：Phase II（Agentic SOC 爆發 + AI-SPM 併購終局 + 毛利分歧）｜ 19% confidence ｜ FTNT 列入 13 檔覆蓋</td></tr>
+      <tr><td>ID_CybersecurityPlatformConsolidation_20260423.html</td><td>母題：Phase II（平台化爆發 + 2026 M&A 潮）｜ 非共識：CRWD 7/19 受益者是 FTNT + SentinelOne（非 MSFT）</td></tr>
+    </table>
+    <p><strong>DD/ID 對 thesis 的支持</strong>：兩份 ID 都將 FTNT 列為 cybersec platform consolidation 的受益者；DD 在 $84 寫的 B 訊號至 $114 時 R:R 大幅壓縮（DD 寫稿之後股價 +35%）。<strong>DCA 對 DD 的修正</strong>：DCA 接 DD baseline，但因 Q1 26 大 beat + 價格暴衝，將「進場時機」從「現在試倉 15-20% 底倉」改為「條件式三段式回測 $98 / $92 / $85」。</p>
+  </details>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA - HWM｜Howmet Aerospace｜2026-05-12</title>
+<!-- dca-moat-trend: ↑ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--line:#E2E8F0;--altrow:#F1F5F9;--muted:#64748B;}
+*{box-sizing:border-box;}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',system-ui,sans-serif;line-height:1.65;}
+.mono,.num{font-family:'IBM Plex Mono',monospace;}
+header.fixed{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;}
+header.fixed .ticker{font-weight:700;font-size:18px;}
+header.fixed .meta{opacity:.92;font-family:'IBM Plex Mono',monospace;}
+main{max-width:1200px;margin:0 auto;padding:24px;}
+h1{color:var(--ink);font-size:28px;margin:8px 0 4px;}
+h2{background:var(--ink);color:#fff;padding:10px 14px;border-left:4px solid var(--accent);margin:40px 0 16px;font-size:20px;border-radius:2px;}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-bottom:2px solid var(--line);padding-bottom:4px;}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px;}
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14px;background:#fff;}
+thead th{background:var(--ink);color:#fff;padding:9px 10px;text-align:left;font-weight:500;}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:nth-child(even) td{background:var(--altrow);}
+.statusbar{background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 14px;margin:18px 0 24px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.statusbar .cell{flex:0 0 180px;text-align:center;padding:6px 10px;background:#fff;border:1px solid var(--line);border-radius:4px;}
+.statusbar .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.statusbar .val{font-size:22px;font-weight:700;line-height:1.2;}
+.statusbar .sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.thesis{background:#EFF6FF;border-radius:4px;padding:30px 24px;margin:18px 0;text-align:center;}
+.thesis .big{font-size:26px;line-height:1.5;color:var(--ink);font-weight:500;}
+.thesis .lbl{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:10px;}
+.decision{padding:18px 20px;border-radius:4px;margin:18px 0;}
+.decision.go{background:#F0FDF4;border-left:4px solid #16A34A;}
+.decision.wait{background:#FEF9C3;border-left:4px solid #CA8A04;}
+.conflict{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.verdict-tbl thead th{background:#9A3412;}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem blockquote{margin:6px 0;padding:8px 14px;border-left:3px solid #DC2626;background:#fff;font-style:italic;color:#7F1D1D;}
+.maxdd{display:flex;gap:18px;align-items:center;background:#FEF3C7;border-left:4px solid #CA8A04;padding:18px;border-radius:3px;margin:14px 0;}
+.maxdd .num-big{font-size:34px;font-weight:700;color:#92400E;font-family:'IBM Plex Mono',monospace;flex:0 0 220px;text-align:center;}
+.note{color:var(--muted);font-size:13px;margin:8px 0;}
+.green{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-weight:500;}
+.red{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-weight:500;}
+.amber{background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-weight:500;}
+.memo{background:#FAFAF9;border:1px solid #E7E5E4;padding:24px 28px;margin:14px 0;font-family:Georgia,serif;line-height:1.7;}
+.memo h5{color:#1E3A5F;margin:0 0 8px;font-size:16px;border-bottom:1px solid #E7E5E4;padding-bottom:4px;}
+.elevator{background:#FFF8E7;border-left:4px solid #D97706;padding:14px 18px;margin:14px 0;font-style:italic;color:#78350F;}
+details{margin:14px 0;border:1px solid var(--line);border-radius:4px;background:#fff;}
+details summary{padding:12px 18px;cursor:pointer;font-weight:600;color:var(--ink);background:#F1F5F9;}
+details > div{padding:14px 18px;}
+button.print-btn{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-family:inherit;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:50;}
+@media print{header.fixed,button.print-btn{display:none;}main{max-width:none;}h2{page-break-after:avoid;}details > div{display:block!important;}}
+</style>
+</head>
+<body>
+<header class="fixed">
+<div><span class="ticker">HWM</span>｜Howmet Aerospace｜NYSE</div>
+<div class="meta">DCA｜2026-05-12｜Price ~$285｜v1.2</div>
+</header>
+<main>
+
+<h1>HWM｜Howmet Aerospace — Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-12｜現價 ~$285（5/8 收盤 $277.89 + 後 3 個交易日溫和上行）｜Q1 2026 法說後 5 天（5/7）｜既有 DD：DD_HWM_20260418.html v12.0（X 訊號燈）｜對應 ID：尚無專屬航太 ID（建議建立）｜下次財報：2026-07-31（Q2）</p>
+
+<div class="statusbar">
+  <div class="cell">
+    <div class="lbl">綜合訊號燈</div>
+    <div class="val" style="color:#92400E;">B+</div>
+    <div class="sub">Q1 大 beat + guide raise</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">護城河趨勢</div>
+    <div class="val">A <span style="color:#166534;">↑</span></div>
+    <div class="sub">CAM 收購擴 fastener</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Runway Post-Y5</div>
+    <div class="val">🟢</div>
+    <div class="sub">MRO 2030 capacity crunch</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Max DD（5Y 中途）</div>
+    <div class="val" style="color:#92400E;">−42%</div>
+    <div class="sub">🟡 cyclical aerospace</div>
+  </div>
+</div>
+
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis">
+<p class="big">HWM 是 jet engine 高溫旋轉件的唯一可信供應商，每架 LEAP/GTF 飛機飛幾千小時都得回它買零件，吃 OEM 量產 + 老化機隊 MRO 雙引擎。</p>
+<p class="lbl">50 字以內｜投資本質</p>
+</div>
+
+<h2>§7｜Decision（可執行計畫）</h2>
+<div class="decision wait">
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>角色</td><td><strong>核心持倉候選</strong>（A 級護城河 9/10、ROIC 21%、現金牛特性 — 但訊號燈 B+ 因估值已 priced in）</td></tr>
+<tr><td>初始建倉</td><td><strong>2.5%</strong>（Max DD 🟡 從 3.5% 略下修；A 護城河給高 baseline）</td></tr>
+<tr><td>目標倉位</td><td><strong>5.0%（核心倉位上限）</strong>（PEG ≤ 2.0 + Q2 兌現 + Boeing 737 MAX 月產達 50+）</td></tr>
+<tr><td>進場區間</td><td>$245-$270（5/7 Q1 跳空前的整理區）；現價 $285 不追</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong>：① 等回 MA60（約 $260）→ 進場 1.5%；② Q2 法說 7/31 後 beat + 回測未破 → 加碼 1.0%；<strong>禁止現價追擊</strong>（4 週 +11% drift）</td></tr>
+<tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td><strong>對照 GE Aerospace / TDG / RTX / TXT</strong>。<br>• vs <strong>GE Aerospace（GE）</strong>：GE 是 engine OEM（LEAP 50%、GE9X 100%）；HWM 是 GE 上游 supplier（90%+ 結構件）。GE Aerospace FY26E PE 45x vs HWM 51x — 兩者重疊度高，若選一檔，<strong>GE 是更下游（更貼近用戶 + spares share 較高），HWM 是上游卡位（更高 GM）</strong>。<br>• vs <strong>TDG（TransDigm）</strong>：TDG 是商用飛機零件 aftermarket toll booth，60% Rev 來自 aftermarket vs HWM ~20%。TDG PE 35x，spares 占比更高、cycle 韌性更強；HWM 是 OEM-cycle 雙引擎，但週期敏感度較高。<br>• vs <strong>RTX（Raytheon Technologies）</strong>：RTX 是國防 + Pratt & Whitney + Collins 三引擎，GTF 風波拖累 — vs HWM 純 supplier 較安全；RTX PE 22x vs HWM 51x，估值差 2.3x 但 HWM 成長更快。<br>• vs <strong>TXT（Textron）</strong>：TXT 是 business jet + Bell helicopter + defense，cycle pure-play；HWM 是 commercial-heavy。不直接重疊。<br>• 結論：若 portfolio 已持 GE，HWM 進場是「雙押」（supplier + OEM），建議 GE/HWM 二選一；若沒持，<strong>GE 排在 HWM 前優先級</strong>（aftermarket share 較高、estimates 較保守）；若兩者都不選，TDG 是另一條軸線。</td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>倉位</th></tr></thead>
+<tbody>
+<tr><td>加碼至 3.5%</td><td>Q2'26（7/31）Engine Products YoY ≥ +25% + CAM 整合 first quarter (Q2'26 partial) 顯示 EBITDA margin ≥ 22%</td><td>3.5%</td></tr>
+<tr><td>加碼至 5.0%</td><td>Boeing 737 MAX 月產達 50+ confirmed + 787 月產達 10+ confirmed + GTF/LEAP MRO 2030 capacity crunch 數據持續證實</td><td>5.0%</td></tr>
+<tr><td>減碼至 1.5%</td><td>Q2 或 Q3 Engine Products YoY &lt; +10%；<strong>或</strong> Boeing 737 MAX production rate cut（FAA 重新 limit）；<strong>或</strong> CAM 整合公告 EBITDA margin &lt; 18%</td><td>1.5%</td></tr>
+<tr><td>清倉</td><td>2026-2027 出現 commercial aero downturn 訊號（airline ASM growth flat 連 2 季 + Boeing/Airbus order book net cancellation）；<strong>或</strong> Forward PE 突破 60x（股價 &gt; $310 + EPS 不上修）</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA + 動能過熱檢查</h3>
+<table>
+<thead><tr><th>檢查</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>MA60 / MA200 / MA104w 之上</td><td class="green">✅ 全部</td></tr>
+<tr><td>Pure MA</td><td class="green">✅ 強勢進場</td></tr>
+<tr><td>4 週漂移</td><td class="amber">⚠ +11%（5/7 跳空 +8.4%）</td></tr>
+<tr><td>RSI 14d 估算</td><td class="amber">⚠ ~67</td></tr>
+<tr><td>結論</td><td>偏熱不極端；進場節奏改條件式</td></tr>
+</tbody>
+</table>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 Boeing 737 MAX 產量未達 52/月 by 2027 → 12-18 月停利</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 LEAP/GTF MRO 週期 2026-2030 持續高峰（Bain 預測） → 抱到 2030 capacity crunch peak</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 H2 氣 capable engine 設計（HWM 投入中）+ 太空 propulsion 兌現 → 結構性持有</td></tr>
+</tbody>
+</table>
+<p><strong>建議持有年限：中期 3-5 年</strong>，原因：(1) MRO 週期 2026 peak + extend 至 2030；(2) Commercial aero ramp 中期週期（Boeing 737 MAX 完整 ramp 至 52/月需 2027-2028）；(3) Cycle 敏感，10 年外推 GR shock 風險高。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY2026E</td><td>$4.88-$5.00</td><td>公司 5/7 raise 至此區間（vs 原 $4.35-4.55）</td></tr>
+<tr><td>FY2027E</td><td>$5.80-$6.30</td><td>含 Boeing 737 MAX 52/月 + CAM full year</td></tr>
+<tr><td>FY2030E（外推）</td><td>$7.50-$9.00</td><td>外推假設：MRO peak 2026-2030、Boeing 全面 ramp、GTF/LEAP shop visit 2x</td></tr>
+</tbody>
+</table>
+<p><strong>現價合理嗎？</strong>$285 / FY27 $6 = 47.5x；歷史 5Y aerospace cycle peak PE 28-35x — 現價 vs 歷史顯著偏貴。但 spares mix 從 11% → 20%（doubling 5 年）+ MRO capacity crunch 結構性 = 是否「重新評價」的合理倍數待時間驗證。期望 IRR 7.5%/yr，等回測 $245-260 才是有 alpha 的 entry。</p>
+
+</div>
+
+<h2>§4｜Asymmetry Analysis</h2>
+
+<h3>5 年情境矩陣</h3>
+<table>
+<thead><tr><th>情境</th><th>5Y 絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+85%（至 ~$525）</td><td>+13.1%/yr</td><td>Boeing 全面 ramp + MRO capacity crunch 持續 + H2 engine 新一代 design wins；FY30 EPS $9 × 58x</td><td>25%</td></tr>
+<tr><td>Base</td><td>+38%（至 ~$394）</td><td>+6.7%/yr</td><td>FY30 EPS $7.5 × 53x（PE 略 de-rate 51→53 ≈ flat）；MRO cycle 兌現如預期</td><td>50%</td></tr>
+<tr><td>Bear</td><td>−32%（至 ~$194）</td><td>−7.5%/yr</td><td>2027-2028 出現 commercial aero soft landing（airline 訂單回調 -20%）+ Boeing 737 MAX 再次 FAA 限制；FY30 EPS $5.5 × 35x</td><td>25%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+33%</strong></td><td><strong>+5.9%/yr</strong></td><td colspan="2">略低於大盤，alpha 弱（但 cyclical 進入「正循環初段」）</td></tr>
+</tbody>
+</table>
+
+<h4>追加壓力測試</h4>
+<p>10Y 視角：MRO 高峰結束（2030+）+ 下一代 hydrogen engine 設計週期啟動 → Bull IRR ~12%/yr；機會成本 vs GE Aerospace ~11%/yr / TDG ~10%/yr — HWM 略低於 GE。</p>
+
+<h3>📅 機率估計校準</h3>
+<p>Bear 25% 合理（&gt; 20% floor；commercial aero 是 cyclical，每 7-10 年有 20%+ 回調）；Bull-Bear 散布 117%p；Base 50% 在 limit 邊緣（aerospace 結構性 visibility 高）。</p>
+
+<h3>📐 Pattern Match</h3>
+<div class="pattern">
+<table>
+<tbody>
+<tr><td>歷史類比</td><td>2014-2019 TDG（TransDigm）— 商用飛機後市場 aftermarket toll booth 重新評價週期</td></tr>
+<tr><td>當時 setup</td><td>Fwd PE 22x（2014）、aftermarket 60% Rev、收購驅動成長</td></tr>
+<tr><td>5Y 報酬</td><td>2014-12 至 2019-12：+115%，年化 IRR ~16.5%</td></tr>
+<tr><td>像的地方</td><td>① 商用航太結構件壟斷 supplier；② 併購整合擴 content per aircraft；③ MRO/spares 結構性成長</td></tr>
+<tr><td>不像</td><td>① TDG aftermarket 60% vs HWM 20% — TDG 週期韌性遠強；② TDG 進場 PE 22x vs HWM 現 51x — 貴 2.3x；③ TDG 自由現金流動率 25%+ vs HWM 17% — TDG 純度更高</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>🧬 IRR Composition（5Y）</h3>
+<table>
+<thead><tr><th>情境</th><th>EPS CAGR</th><th>估值 re-rate</th><th>股息+回購</th><th>合計</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+12.5%/yr</td><td>+0.5%/yr<br><span class="note">(PE 51→58)</span></td><td>+0.1%/yr</td><td>+13.1%/yr ✅</td></tr>
+<tr><td>Base</td><td>+10.0%/yr</td><td>−3.4%/yr<br><span class="note">(PE 51→43)</span></td><td>+0.1%/yr</td><td>+6.7%/yr ✅</td></tr>
+<tr><td>Bear</td><td>+1.5%/yr</td><td>−9.0%/yr<br><span class="note">(PE 51→30)</span></td><td>+0.0%/yr</td><td>−7.5%/yr ✅</td></tr>
+</tbody>
+</table>
+
+<p><strong>Base 加總校驗：</strong>+10.0 − 3.4 + 0.1 = <strong>+6.7%/yr</strong> ✅ 0%p 差距 ≤ 2%p。</p>
+
+<div class="pattern">
+<p><strong>質感解讀：</strong>Base 6.7% IRR 主要靠 EPS 複利（+10%/yr），但 estimation 必須對抗顯著 PE de-rate（-3.4%/yr）— 因為現在 PE 51x 在歷史航太 peak 27-32x 之上。可抱性中等：MRO 結構性週期 + ROIC 21% 是好資產，但「進場估值過高」的稀釋會大幅減弱複利效果。看別人臉色（即市場願意維持 PE 51x 的能力）比 MPWR/KEYS 更高。</p>
+</div>
+
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試 1｜投委會 1 頁紙 Memo</h3>
+<div class="memo">
+<h5>HWM｜Howmet Aerospace – Recommendation: HOLD（衛星 2.5%，可選核心候選）</h5>
+<p><strong>Thesis：</strong>HWM 是 jet engine 高溫旋轉件唯一可信 supplier，90%+ 結構件市佔；spares 從 11%→20% Rev = 結構轉型為 aftermarket annuity。Q1 2026（5/7）Rev +19%、EPS +42%、guide 大幅 raise = thesis inflection 已驗證。</p>
+<p><strong>Key Driver：</strong>(1) LEAP/GTF fleet 與 shop visit ramp；(2) Boeing 737 MAX/787 production cadence。Q1 commercial aero +31%、gas turbines +39% 已給強信號。</p>
+<p><strong>R:R：</strong>5Y Bull +85% / Base +38% / Bear -32%，期望 IRR ~5.9%/yr — 略低於大盤。中途 Max DD -28~-42%（🟡 需強信念）。</p>
+<p><strong>主要風險：</strong>① Fwd PE 51x vs 歷史 peak 28-35x — 估值是最大爭議；② cyclical aerospace 7-10 年 cycle peak 風險；③ CAM $1.8B 整合風險；④ Boeing 737 MAX 再次 FAA 限制；⑤ DD 4/18 X 訊號 + 5/7 跳空 +8.4% drift 警示。</p>
+<p><strong>建議倉位：2.5%</strong>，目標 5.0%（核心倉位）。<strong>進場節奏條件式</strong>：等 MA60 回測 ~$260；<strong>禁止現價追擊</strong>。<strong>opportunity cost</strong>：GE 排前，TDG 次選，HWM 第三。</p>
+<p><strong>The Single Thing：</strong>Boeing 737 MAX 在 2026 H2-2027 H1 被 FAA 再次 limit production rate（從 42/月降至 ≤ 35/月）= 立刻減碼至 1%。</p>
+</div>
+
+<h3>測試 2｜30 秒電梯簡報</h3>
+<div class="elevator">
+「HWM 是 jet engine 高溫旋轉件唯一可信 supplier，每架 LEAP/GTF 飛機每飛幾千小時都得回它買零件；spares 從 11% 變 20% of Rev 是結構轉型，未來 5 年從週期性 supplier 變 aftermarket annuity。Q1 大 beat 已驗證。但 PE 51x 在歷史 peak 之上，等 $260 回測再進場才有 alpha。」</div>
+
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>共識清單</h3>
+<div class="conflict">
+<ul>
+<li><strong>A1+A2+A3 共識：</strong>HWM 90%+ 結構件市佔、ROIC 21% 遠超產業 3.92%、1,170+ 專利 = A 級護城河結構穩定</li>
+<li><strong>A2+A3 共識：</strong>MRO peak 2026 + 持續至 2030（Bain）+ shop visit demand &gt; supply 17% = TAM 結構支撐</li>
+<li><strong>A3 共識：</strong>Q1 2026 三向 beat + FY26 guide raise = thesis 已 partial 驗證</li>
+</ul>
+</div>
+
+<h3>矛盾清單</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>A 級護城河 + ROIC 21% vs PE 51x 估值</td><td>Moat 9/10</td><td>—</td><td>PE 51x（歷史 peak 28-35x）</td><td>🔴 不可調和</td></tr>
+<tr><td>2</td><td>MRO peak 2026 vs cycle 過早見頂風險</td><td>—</td><td>Bain 預測 peak 2026 +持續</td><td>Q1 +19% Rev growth high</td><td>🟡 可調和</td></tr>
+<tr><td>3</td><td>CAM 收購 strategic vs 整合風險</td><td>—</td><td>—</td><td>$1.8B (~20% mkt cap)，FY26 Rev $485-495M</td><td>🟡 可調和</td></tr>
+<tr><td>4</td><td>DD 4/18 X vs DCA 5/12 B+</td><td>—</td><td>—</td><td>Q1 beat + guide raise 推升訊號燈</td><td>🟡 時間差</td></tr>
+</tbody>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+<table class="verdict-tbl">
+<thead><tr><th>#</th><th>矛盾</th><th>選邊</th><th>依據</th><th>會 settle 硬數據點</th><th>if-then 路徑</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>A 護城河 vs PE 51x</td><td><strong>A3 估值風險勝（部分）</strong></td><td>A 級護城河支持「premium PE 35-40x」，不是「peak PE 51x」；當前 -10pp PE 是 sentiment 推高；歷史 cyclical aerospace peak 後 12-18 個月 -25~-35% de-rate</td><td>① 每季 Forward PE quote；② vs GE / TDG / RTX PE differential（同類）</td><td>(a) PE 落回 38x（股價 ~$215）→ 加碼至 5%；(b) PE 突破 60x（股價 &gt; $330）→ trim 至 1%</td></tr>
+<tr><td>2</td><td>MRO peak 2026 vs 過早見頂</td><td><strong>A2 部分勝</strong></td><td>Bain 預測 + Aviation Week 多篇報告支持「2026 capacity crunch peak 但持續至 2030」；shop visit demand &gt; supply 17% 是結構性而非短期；但 cycle 也可能短於預期</td><td>① 每季 Engine Products commercial aero YoY；② Bain / Oliver Wyman MRO outlook update（每年）</td><td>(a) Commercial aero YoY 連 2 季 ≥ +25% → 確認 cycle 強勁；(b) YoY 跌至 &lt; +10% → cycle 提前見頂，減碼</td></tr>
+<tr><td>3</td><td>CAM 整合風險</td><td><strong>暫無法決定</strong></td><td>4/6 完成，整合 3-9 個月才看得清；Stanley Black & Decker 出售動機 = 與 SB&D 主業偏離（家居工具），不代表 CAM 業務不好；HWM 表示 EBITDA margin &gt; 20% pre-synergy</td><td>① Q2'26（7/31）首季 CAM 在 HWM 報表內表現；② Q3-Q4 全年整合進度</td><td>(a) Q2 CAM segment OM ≥ 22% → 整合順利，加碼；(b) OM &lt; 18% → 整合有問題，flat</td></tr>
+<tr><td>4</td><td>DD X vs DCA B+</td><td><strong>Phase A 勝</strong></td><td>Q1 大 beat + guide raise + CAM 完成三大 catalyst 同步發生 = 訊號燈基礎變化；但 DD 對估值頂部與漂移警示仍 valid</td><td>① Q2'26 7/31 法說；② DD 重跑（建議 Q2 後）</td><td>(a) Q2 維持 +20%+ Rev → DCA B+ 確認；(b) Q2 miss → 回 C/X，倉位歸零</td></tr>
+</tbody>
+</table>
+
+<h2>§3｜Key Drivers + 🔄 Consensus 分歧</h2>
+
+<table>
+<thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>LEAP/GTF fleet size × shop visit cadence</strong></td><td>每架 LEAP/GTF 飛機飛 8,000-12,000 小時就要回 HWM 買 turbine blade + structural castings；fleet 3,500 架→7,000 架 by 2030 = 2x；shop visit cadence 因「teething issues」+ 2x = 4x spares 需求</td><td>季度 Engine Products commercial aero spares 細項；CFM / Pratt 每季 shop visit 數據；MRO TAT</td></tr>
+<tr><td>2</td><td><strong>Boeing 737 MAX + 787 production cadence ramp</strong></td><td>Boeing 是 HWM 第一大 OEM 客戶；737 MAX 從 42/月 → 52/月 = +24% 量；787 從 7/月 → 10/月 = +43% 量；雙重 ramp 帶來 OEM segment 2-3 年強 visibility</td><td>Boeing 月度 delivery report；737 MAX 7/10 認證 timeline；FAA production rate cap</td></tr>
+</tbody>
+</table>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>driver 2 在 driver 1 不成立下能否被推翻？✅ 能。即使 MRO cycle 平淡（driver 1 失敗），Boeing 737 MAX ramp 仍是獨立的 OEM 收入軸；反之，Boeing 不 ramp 但 spares cycle 繼續，也成立。<strong>兩條獨立 ✅</strong>。</p>
+
+<h4>強制減法：我認為不重要的事</h4>
+<table>
+<thead><tr><th>市場常討論</th><th>為什麼不重要</th></tr></thead>
+<tbody>
+<tr><td>Defense aerospace +13%</td><td>Rev 占比 ~15%，穩健 base 但成長率低於 commercial；非命脈</td></tr>
+<tr><td>Gas turbines +39%</td><td>Rev 占比 ~10%；電力市場 cyclical，AI DC power 受益但非結構性</td></tr>
+<tr><td>Brunner $120M / Savannah divestiture $230M</td><td>小規模 portfolio adjustment，影響 &lt; 2% Rev</td></tr>
+<tr><td>Dividend +487% over 5 years</td><td>絕對 yield 仍 0.18% 極低；無實質 cash return policy；非估值 driver</td></tr>
+</tbody>
+</table>
+
+<h4>🔄 我和市場 Consensus 的最大分歧</h4>
+<table>
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>市場目前定價假設</td><td>Deutsche $320 / Susquehanna $330 / BTIG $300 PT — 隱含 FY27 EPS $6 × 50-55x PE；市場已 priced in「PE 51x 是新常態 + spares 結構轉型已確認」</td></tr>
+<tr><td>我的不同假設</td><td>Aerospace cycle 7-10 年週期歷史不會被結構轉型完全消除；2028-2029 commercial aero 訂單可能短期回調（airline ROIC 壓力 + Boeing/Airbus order book），HWM PE 應該收斂至 38-42x</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方對 commercial aero 結構性看法過於樂觀 — 2008/2020 cycle 都教過「即使結構需求強，cyclical 修正幅度仍可 -25%+」；當前 PT 隱含 cycle 不存在 = 系統性偏多</td></tr>
+</tbody>
+</table>
+
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h4>Primary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>Boeing 737 MAX 在 2026 H2-2027 H1 因 quality issue 或 FAA action 被 limit production rate（從 42/月降至 ≤ 35/月）持續 &gt; 6 個月</strong></td></tr>
+<tr><td>為什麼致命</td><td>driver 2 直接破；Engine Products 約 35-40% Rev 與 Boeing 737 MAX 相關；rate cut -17% × 35% Rev = 整體 Rev -6%，但市場會 over-react 至 -15~-25%（cycle 見頂訊號）</td></tr>
+<tr><td>如何監測</td><td>① Boeing 月度 delivery report；② FAA 每月 production rate 公告；③ Boeing 法說 cadence guidance</td></tr>
+<tr><td>離發生有多遠</td><td>Boeing 5 月 quality control programme 仍在驗收，若 H2 2026 出現新缺陷（如 fuselage / door plug 類）可能觸發；機率 25-35%</td></tr>
+</tbody>
+</table>
+
+<h4>Pre-mortem 派生 Secondary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>Airline 投資 cycle 回調 — IATA 月度 RPK growth 連續 6 月 &lt; +3%（vs 歷史 5-7%）</strong></td></tr>
+<tr><td>為什麼致命</td><td>airline 訂單回調 = Boeing/Airbus order book net cancellation = HWM 2027-2028 OEM segment 增長預期下修；spares cycle 仍會延續但 OEM 段失分</td></tr>
+<tr><td>如何監測</td><td>IATA monthly RPK report；major airline (DAL, UAL, AAL, LUV, RYA) capex guidance</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>§6b 校驗結果：</strong>⚠ 部分重疊。原 §5 抓 Boeing rate cut，pre-mortem 故事還涉及 airline 訂單回調。已實際補 secondary trigger。<strong>§5 修正狀態：⚠ 已補 1 條</strong>。</p>
+
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 盲點</h3>
+<table>
+<thead><tr><th>#</th><th>不確定假設</th><th>thesis 前提</th><th>後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>LEAP/GTF teething issues 是否會在 2027-2028 後消退？</td><td>需要 teething issues 持續存在 → spares 需求高位</td><td>若 issues 消退（OEM 品質改進 + USM 替代），spares 需求 2028+ 下修 20-30%</td></tr>
+<tr><td>2</td><td>CAM 整合是否能維持 EBITDA margin &gt; 20%？</td><td>SB&D 出售前 CAM 是 underloved subsidiary</td><td>若整合 margin 拉到 18-19%（vs 公司整體 32%）= 暫時稀釋；若 &lt; 16% = 結構問題</td></tr>
+<tr><td>3</td><td>Hydrogen / SAF（永續航空燃料）engine 是否要 HWM 重新投資？</td><td>新一代 engine 仍用 nickel/titanium 高溫合金</td><td>若 2032+ hydrogen engine 採用新材料（陶瓷複合 CMC），HWM 護城河 partial reset</td></tr>
+<tr><td>4</td><td>中國商用航太（COMAC C919 / C929）獨立供應鏈是否會擠 HWM？</td><td>中國 fully independent supply chain 仍需 10+ 年</td><td>若 2030 中國本土 supplier（AVIC 子公司）能供應 C919 高溫件，HWM 失去 7-10% Rev 潛力</td></tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem 故事倒推</h3>
+<div class="premortem">
+<blockquote>
+假設 5 年後（2031-05）HWM 部位虧 50%，最可能故事：<br><br>
+<strong>2026 Q4</strong> — Boeing 在 737 MAX 9 新批次發現 quality 問題（類似 2024 door plug），FAA 12/2026 issue production cap 限制 35/月持續 9 個月。HWM 股價當週 -15%。<br><br>
+<strong>2027 Q2</strong> — Airline RPK growth 因 2027 H1 經濟降溫降至 +2%（vs 預期 +5%），Boeing/Airbus order book 出現 net cancellation。HWM 2028 outlook 下修，PE 從 51 → 38x。<br><br>
+<strong>2027 Q4</strong> — CAM 整合年回顧，HWM 揭露 CAM segment EBITDA margin 17%（vs guide &gt; 20%），市場將 CAM $1.8B 視為「Stanley Black & Decker 把問題 subsidiary 賣給 HWM」。HWM 8-K 提到「integration timeline 延長 18 個月」。再 -10%。<br><br>
+<strong>2028 H1</strong> — GE / Pratt 公告 LEAP/GTF 引擎改進設計，teething issues 解決，spares 預期 2028 從 +25% → +8%。HWM spares mix 增速放緩，分析師將 HWM 重新分類為「mature cyclical」而非「結構轉型」。PE 38 → 25x。<br><br>
+<strong>2029-2031</strong> — Hydrogen engine 設計 finalize（Airbus ZEROe 2030），採用 CMC 陶瓷複合材料而非 nickel/titanium，HWM 在新一代 engine 上的份額預期 &lt; 50%（vs 過去 90%）。長期 thesis 重設。<br><br>
+最終 2031-05 股價 ~$143（vs 進場 $285 = -50%）。
+</blockquote>
+</div>
+
+<h4>校驗 §5 single-thing</h4>
+<table>
+<tbody>
+<tr><td>失敗故事關鍵觸發 = §5 single thing？</td><td><span class="amber">⚠ 部分重疊</span> — §5 primary 抓 Boeing rate cut（故事第一步）；但 airline cycle 回調 + CAM 整合失敗 + Hydrogen engine 材料替代三條都不在原 §5 — 已補 secondary trigger（airline cycle）</td></tr>
+</tbody>
+</table>
+
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong></p>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd">
+<div>
+<div class="num-big">−28% ~ −42%</div>
+<div style="text-align:center;font-size:26px;">🟡 需要強信念</div>
+</div>
+<div style="flex:1;">
+<table>
+<tbody>
+<tr><td>估計 Max DD 範圍</td><td>−28% ~ −42%（寬度 14%p，符合 ≥ 10%p）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q2-Q4：Boeing rate cut + airline RPK 降溫 + CAM 整合問題三合流</td></tr>
+<tr><td>最快復原</td><td>若是 cyclical 修正（airline 訂單回升） → 12-18 月恢復；若 thesis 結構性受損（Hydrogen engine 材料替代）→ 不可恢復</td></tr>
+<tr><td>路徑風險評級</td><td><span class="amber">🟡 需要強信念</span></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<h4>校驗</h4>
+<p>若 max DD 落在 -42%，能撐到復原？條件：(a) 部位 ≤ 3%；(b) 不使用槓桿；(c) §5 primary trigger 未發生；(d) commercial aero 結構性需求（fleet 老化）未變化。任一不滿足 → 倉位再打折至 1.5%。</p>
+
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<thead><tr><th>#</th><th>觸發點</th><th>類型</th><th>時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 2026 法說</td><td>財報</td><td>2026-07-31</td></tr>
+<tr><td>2</td><td>Boeing 737 MAX 月產量 / FAA action</td><td>產業/法規</td><td>每月 delivery report</td></tr>
+<tr><td>3</td><td>Forward PE 跌破 38x（$215 區）</td><td>價位</td><td>持續</td></tr>
+<tr><td>4</td><td>§5 primary：Boeing rate cut &lt; 35/月持續 6 個月</td><td>§5</td><td>2026 H2-2027 H1</td></tr>
+<tr><td>5</td><td>§5 secondary：IATA RPK YoY 連 6 月 &lt; +3%</td><td>§5 派生</td><td>持續</td></tr>
+<tr><td>6</td><td>CAM 整合進度（OM 揭露）</td><td>整合事件</td><td>Q2'26 / Q4'26 / FY27 Q1</td></tr>
+<tr><td>7</td><td>Bain / Oliver Wyman MRO outlook</td><td>產業</td><td>每年 Q4 update</td></tr>
+</tbody>
+</table>
+
+<p><strong>保質期：至 2026-08-15（Q2 法說 + 餘溫）</strong>。Q2 結果 + CAM 整合首季數據 + Boeing rate 須重跑 DCA。</p>
+
+<p><strong>最可能 upside：</strong>Q2 Engine Products YoY ≥ +30% + CAM EBITDA margin ≥ 22% + Boeing 737 MAX 月產維持 42+ → B+ → A 升級，倉位加至 3.5%。</p>
+
+<p><strong>最可能 downside：</strong>Boeing 737 MAX 出現新 quality issue 觸發 FAA action，<strong>或</strong> CAM 首季 OM &lt; 18%，<strong>或</strong> Q2 Engine Products YoY &lt; +15% → B+ → C/X 降級。</p>
+
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：A 級 Moat 9/10，趨勢 ↑ widening — CAM 收購 + spares mix 提升）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>主要護城河</td><td>(1) <strong>製造製程護城河</strong>（single-crystal casting 單晶鑄造 turbine blade，全球僅 5 家能做；directional solidified 加工製程 30+ 年累積）；(2) <strong>專利 IP</strong>（1,170+ 專利，含 high-temperature alloy + 加工方法）；(3) <strong>OEM 設計鎖定</strong>（每代 engine design 9-12 個月共同開發週期，switching cost 極高）；(4) <strong>垂直整合 titanium/nickel 原料</strong></td></tr>
+<tr><td>持久性</td><td><strong>9/10</strong>（5Y 高）— 高溫合金 + single-crystal 製程進入門檻極高；過去 30 年無新進者；中國 AVIC 仍距離 5+ 年</td></tr>
+<tr><td>最大侵蝕風險</td><td>CMC（陶瓷複合材料）2030+ 用於下一代 engine — HWM 已投入但不是 leader；潛在 share 流失 30-40%</td></tr>
+<tr><td>關鍵數據</td><td>90%+ 結構/旋轉件市佔；GAAP GM 28%（vs 過去 25%，趨勢 ↑）；Adj EBITDA margin 32.0%（Q1'26）vs 27% (FY24) 趨勢 ↑；ROIC 21.10%（Mar 2026）vs 產業 median 3.92%（超額 +17pp）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>。12 個月內 evidence：① CAM $1.8B 收購（4/6/2026 完成）—  content per aircraft +20%（fasteners + fluid fittings 新增）（正）；② Brunner $120M（額外 fastener supplier）（正）；③ Adj EBITDA margin +320bp YoY（structural margin expansion，pricing power 強）（正）；④ Engine Products EBITDA margin 36.6%（+400bp）（極強訊號）（正）；⑤ Savannah forging divest $230M（聚焦核心，紀律好）（正）；⑥ 1,170+ 專利（持續創新）（正）<br>淨變化：6 正 + 0 負 = ↑ widening</td></tr>
+</tbody>
+</table>
+
+<p><strong>A1 結論：</strong>HWM 護城河結構穩固且 CAM 後 ↑ widening；A 級 9/10 結構穩。短期 A 9 → 中期 A+ 10（看 CAM 整合與 hydrogen engine 投入是否成功）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢（獨立結論：🟢 寬 — MRO 2030 capacity crunch + Boeing/Airbus ramp 雙引擎）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>TAM</td><td>Engine MRO $24.1B（2024）→ $34.5B（2030），CAGR 4.80%；Jet engine MRO total $58.3B by 2033 (CAGR ~6%)；Commercial aircraft engines TAM 2030 $135B (CAGR ~7%)</td></tr>
+<tr><td>供需</td><td>偏緊極端 — shop visit demand &gt; supply 17% by 2030（Bain 預測）；TAT（turnaround time）legacy engine +35%、new gen engine +150% vs pre-pandemic = 結構供給瓶頸</td></tr>
+<tr><td>最大技術替代</td><td>CMC（陶瓷複合材料）2030+ 用於下一代 engine — 但 HWM 已投入研究；軟著陸機率高</td></tr>
+<tr><td>政策/地緣風險</td><td>中國商用航太自主化（COMAC C919/C929）— 但仍依賴美/法 engine 10+ 年；俄烏戰 + 中東衝突 impact 國防 segment（正面）</td></tr>
+<tr><td>議價權</td><td>對上游（titanium / nickel 原料）<strong>中-強</strong>（垂直整合）；對下游（GE / Pratt / Rolls-Royce）<strong>強</strong>（90% 市佔 sole-source）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：MRO 2030 peak 預測 → 2035+ 持續；下一條 S 曲線 = Hydrogen engine（Airbus ZEROe 2030+，HWM 投入中）+ Supersonic（Boom Overture）+ 太空 propulsion（SpaceX 第二代）；Y5+ 結構性需求仍寬</td></tr>
+</tbody>
+</table>
+
+<p><strong>A2 結論：</strong>商用航太 + MRO 2026-2030 是結構超級週期 + cyclical ramp 雙重；2030 之後新一代 hydrogen/CMC engine 是過渡風險也是機會。產業 runway 🟢 寬但 cycle 敏感度仍存。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務財務 / 資本配置（獨立結論：Q1 大 beat + guide raise + CAM 完成，但 PE 51x 已 priced in）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>營收結構</td><td>FY25 Rev $8.3B → FY26 guide $9.575-9.725B；Engine Products ~54%、Fastening Systems ~20%、Engineered Structures ~16%、Forged Wheels ~10%；spares from 11% (2020) → 20% (2025) → 預估 30% by 2030</td></tr>
+<tr><td>客戶集中</td><td>Boeing + Airbus + GE + Pratt + Lockheed + Raytheon = ~70% Rev；風險 <strong>中-高</strong>（OEM 寡占客戶）</td></tr>
+<tr><td>定價權</td><td>Adj EBITDA margin 32%（+320bp YoY）= 結構性 pricing power 升級；spares vs OEM 5-8x margin 比 = mix shift 正面</td></tr>
+<tr><td>未來金雞母</td><td>Engine spares aftermarket（30% Rev by 2030）；CAM fastener / fluid fittings（FY26 $485-495M）；Hydrogen engine（2030+）；太空 propulsion（2027+）</td></tr>
+<tr><td>財務體質</td><td>Q1 2026 Rev $2.31B (+19%), Adj EPS $1.22 (+42%), FCF $359M record；FY25 OpCF $1.88B / FCF $1.43B / NI $1.7B；EBITDA margin 32%, OM 26%；淨負債 ~1x EBITDA；CAM $1.8B 用 $1.2B 公司債融資</td></tr>
+<tr><td>資本配置</td><td>Div +487% over 5Y（但 yield 仍 0.18% 極低）；buyback 持續；CAM $1.8B（4/6 完成）+ Brunner $120M + Savannah divest $230M = strategic portfolio adjustment；管理層紀律 <strong>高</strong></td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base）</strong></td><td>EPS CAGR 10%（FY25 ~$4.50 → FY30 $7.5，CAGR 10.7%）；5Y forward PE 預估 43x vs 當前 51x（re-rate -3.4%/yr）；現金股息率 0.18%；淨買回率 ~0%（多用於 acquisition）</td></tr>
+</tbody>
+</table>
+
+<p><strong>A3 結論：</strong>Q1 大 beat（5/7）+ FY26 guide 大幅上修 + CAM 完成 = 三大正面 catalyst 同步發生；但現價 PE 51x 已 priced in 共識上修空間。進場 alpha 弱，需等回測 PE 38x。</p>
+
+<h4>A3 補充：分析師 PT 散布（5/7 後）</h4>
+<table>
+<thead><tr><th>機構</th><th>原 PT</th><th>新 PT</th><th>升幅</th><th>對應 PE × FY27 EPS</th></tr></thead>
+<tbody>
+<tr><td>Deutsche Bank</td><td>$278</td><td>$320</td><td>+15%</td><td>~52x × $6.15</td></tr>
+<tr><td>Susquehanna</td><td>$300</td><td>$330</td><td>+10%</td><td>~54x × $6.10</td></tr>
+<tr><td>BTIG</td><td>$275</td><td>$300</td><td>+9%</td><td>~50x × $6.00</td></tr>
+<tr><td>共識中位</td><td>—</td><td>$315</td><td>—</td><td>~52x × $6.10</td></tr>
+</tbody>
+</table>
+<p class="note">共識隱含 PE 維持 50-54x — 顯著高於歷史 cyclical aerospace peak 28-35x；賣方 priced in 「結構轉型已確認 + cycle 不存在」。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD/ID 數據摘要（DD_HWM_20260418.html v12.0）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>Quality Score</td><td>10.0（max）</td></tr>
+<tr><td>訊號燈</td><td>X（gate 🔴 過熱）</td></tr>
+<tr><td>moat tier</td><td>A（9/10）</td></tr>
+<tr><td>估值燈</td><td>🔴（PE 5Y 分位 99%、PEG 2.67）</td></tr>
+<tr><td>MA 狀態</td><td>✅ 強勢進場</td></tr>
+<tr><td>R:R 短期</td><td>-41.6%（目標 ~$149）</td></tr>
+<tr><td>R:R 中期</td><td>-29.4%（目標 ~$181）</td></tr>
+<tr><td>核心假設</td><td>H1 LEAP/GTF MRO 持續 / H2 Boeing 737 MAX 完整 ramp / H3 估值回歸 35x</td></tr>
+<tr><td>紅旗清單</td><td>① PE 5Y 分位 99%；② PEG 2.67；③ Bear case 嚴格；④ CAM 整合風險</td></tr>
+<tr><td>ID basis</td><td>無專屬航太 ID（建議建立 ID_CommercialAerospace 或 ID_EngineMRO）</td></tr>
+</tbody>
+</table>
+
+<p><strong>DD vs DCA 關鍵差異：</strong>DD 4/18 給 X（PE 99% 分位拒絕）；DCA 在 Q1 2026（5/7）法說後寫，PE 從 54.8x → 51x（EPS $4.65 → $5.00 上修），PEG 從 2.67 → 2.45 略有改善但仍偏熱；訊號燈升至 B+。但 PE 仍歷史頂部 + 漂移 + cyclical 風險三大警示仍 valid。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜HWM 過去 10 年三波 cycle 對照（2014-2026）</summary>
+<div>
+
+<h4>HWM/前身 Alcoa Arconic Howmet 演化</h4>
+<table>
+<thead><tr><th>週期</th><th>時期</th><th>事件</th><th>5Y 報酬</th></tr></thead>
+<tbody>
+<tr><td>Pre-spin（Alcoa）</td><td>2014-2019</td><td>Alcoa 拆分 Arconic (2016) → Arconic 再拆分 Howmet (2020)</td><td>NM</td></tr>
+<tr><td>Spin-off + COVID 谷底</td><td>2020-2022</td><td>HWM 獨立 2020；COVID commercial aero 谷底 $13；2022 復甦至 $40</td><td>+210%</td></tr>
+<tr><td>Boeing 復甦 + AI gas turbine</td><td>2023-2026</td><td>737 MAX ramp、787 cycle、AI gas turbine 新引擎、CAM 收購</td><td>+475% (2023-05 至 2026-05)</td></tr>
+</tbody>
+</table>
+
+<h4>進場 timing 比較</h4>
+<p>① HWM 2020-2022 spin-off 進場（PE 18x → 26x）5Y 報酬 +210% — 是 best entry；② 2023-2024 mid-cycle 進場（PE 26x → 40x）5Y 報酬可能 +80~+120%；③ 2026 現在進場（PE 51x），歷史 base rate 5Y 報酬 +30~+60% — 已 mid-late cycle</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜對比 KEYS / MPWR 同期 DCA</summary>
+<div>
+
+<h4>HWM vs KEYS vs MPWR（2026-05-12 同日 DCA）</h4>
+<table>
+<thead><tr><th>維度</th><th>HWM</th><th>KEYS</th><th>MPWR</th></tr></thead>
+<tbody>
+<tr><td>訊號燈</td><td>B+</td><td>B</td><td>B</td></tr>
+<tr><td>Moat tier / 趨勢</td><td>A 9/10 / ↑</td><td>B 8/10 / →</td><td>B 7/10 / →</td></tr>
+<tr><td>Runway 🟢/🟡/🔴</td><td>🟢 寬</td><td>🟢 寬</td><td>🟢 寬</td></tr>
+<tr><td>Max DD 5Y</td><td>−42% 🟡</td><td>−48% 🟡</td><td>−58% 🔴</td></tr>
+<tr><td>5Y Base IRR</td><td>+6.7%/yr</td><td>+9.1%/yr</td><td>+7.7%/yr</td></tr>
+<tr><td>機率加權 IRR</td><td>+5.9%/yr</td><td>+7.6%/yr</td><td>+6.0%/yr</td></tr>
+<tr><td>ROIC</td><td>21.1% (Mar'26)</td><td>7.4% (Spirent 稀釋)</td><td>25.5% (Dec'25)</td></tr>
+<tr><td>客戶集中度</td><td>中-高</td><td>分散</td><td>集中</td></tr>
+<tr><td>建議倉位</td><td>2.5% (目標 5.0%)</td><td>2.0% (目標 3.5%)</td><td>1.5% (目標 3.0%)</td></tr>
+</tbody>
+</table>
+
+<h4>整體取捨</h4>
+<p>HWM 護城河 A 級最強，但<strong>進場估值 PE 51x 是三檔中最貴的</strong>；MPWR Bear case 最深、KEYS 中庸。若 portfolio 容量只能 1 檔，先選 KEYS（Bull-Base IRR 較均衡 + opportunity cost 較低）；HWM 是次選（A 護城河 + 結構轉型故事）；MPWR 排第三（Bear 風險高 + CEO 警示）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜LEAP/GTF engine 故障與 spares cycle 量化（Bain / Aviation Week）</summary>
+<div>
+
+<h4>新一代 engine 維修頻率 vs 上一代</h4>
+<table>
+<thead><tr><th>項目</th><th>CFM56（上一代）</th><th>LEAP-1A/1B（CFM 新代）</th><th>Pratt GTF PW1100G</th><th>差異 implication</th></tr></thead>
+<tbody>
+<tr><td>飛行小時間隔 1st shop visit</td><td>~20,000-25,000h</td><td>~15,000-18,000h</td><td>~12,000-15,000h（teething）</td><td>新引擎 shop visit 頻率 +25-40%</td></tr>
+<tr><td>shop visit cost</td><td>~$3-4M</td><td>~$5-6M</td><td>~$6-7M（含 PMC powder issue）</td><td>單次 shop visit 成本 +50-75%</td></tr>
+<tr><td>HWM 在 shop visit cost 中佔比</td><td>~25-30%</td><td>~30-35%</td><td>~30-35%</td><td>HWM 份額在新代略升</td></tr>
+<tr><td>fleet 規模（2026）</td><td>~14,000 架（去庫存中）</td><td>~3,500 架</td><td>~1,500 架</td><td>新代 fleet 翻倍週期 2026-2030</td></tr>
+<tr><td>fleet 規模（2030）</td><td>~10,000（退役中）</td><td>~7,000+</td><td>~3,500</td><td>新代 5Y 成長 2-2.3x</td></tr>
+</tbody>
+</table>
+
+<h4>HWM spares 收入推估</h4>
+<table>
+<thead><tr><th>年份</th><th>spares mix %</th><th>對應 spares Rev</th><th>OEM Rev</th><th>spares EBITDA margin</th></tr></thead>
+<tbody>
+<tr><td>2020</td><td>11%</td><td>~$0.6B</td><td>~$4.4B</td><td>~35%</td></tr>
+<tr><td>2025</td><td>20%</td><td>~$1.7B</td><td>~$6.6B</td><td>~40%</td></tr>
+<tr><td>2030 estimate</td><td>28-32%</td><td>~$3.2-3.6B</td><td>~$8.0-8.5B</td><td>~42-44%</td></tr>
+</tbody>
+</table>
+
+<p class="note">spares 結構轉型是 HWM thesis 的核心：spares EBITDA margin 比 OEM 高 5-8pp，2030 spares ~30% Rev × 高 margin = 整體 EBITDA margin 從 32% → 35-37% 結構升級 — 這是支持「PE 從 30s 升到 40s+ 是新常態」的主要論據。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Boeing / Airbus 月產量 & HWM 對應 implication</summary>
+<div>
+
+<h4>商用飛機月產量演進</h4>
+<table>
+<thead><tr><th>機型</th><th>2025</th><th>2026 (target)</th><th>2027 (target)</th><th>2028 (target)</th><th>HWM 對應 content per aircraft</th></tr></thead>
+<tbody>
+<tr><td>Boeing 737 MAX</td><td>~35/月</td><td>42-47/月</td><td>52/月</td><td>52/月</td><td>~$2-3M（含 fastener + engine 結構件）</td></tr>
+<tr><td>Boeing 787</td><td>~7/月</td><td>10/月</td><td>10-12/月</td><td>14/月</td><td>~$5-7M（含 titanium ingot + engine 件）</td></tr>
+<tr><td>Airbus A320 family</td><td>~50/月</td><td>60-65/月</td><td>70-75/月</td><td>75-80/月</td><td>~$1.5-2M</td></tr>
+<tr><td>Airbus A350</td><td>~6/月</td><td>10/月</td><td>12/月</td><td>12/月</td><td>~$4-5M</td></tr>
+</tbody>
+</table>
+
+<h4>HWM OEM segment Rev 推估</h4>
+<table>
+<thead><tr><th>年份</th><th>737 MAX</th><th>787</th><th>A320</th><th>A350</th><th>合計 OEM 主軸</th></tr></thead>
+<tbody>
+<tr><td>2026E</td><td>~$1.0B</td><td>~$0.7B</td><td>~$1.3B</td><td>~$0.5B</td><td>~$3.5B</td></tr>
+<tr><td>2027E</td><td>~$1.4B</td><td>~$0.9B</td><td>~$1.6B</td><td>~$0.6B</td><td>~$4.5B</td></tr>
+<tr><td>2028E</td><td>~$1.5B</td><td>~$1.1B</td><td>~$1.8B</td><td>~$0.6B</td><td>~$5.0B</td></tr>
+</tbody>
+</table>
+<p class="note">OEM 主軸 2026-2028 從 $3.5B → $5.0B = +43% 累計增量 = +12.5% CAGR；加上 spares 段 +20% CAGR、defense +10% CAGR = 整體 Rev CAGR 13% 區間，與 Bull case 假設一致。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜2030+ Hydrogen engine 過渡風險矩陣</summary>
+<div>
+
+<h4>下一代 engine 材料替代 timeline</h4>
+<table>
+<thead><tr><th>技術路徑</th><th>時間軸</th><th>HWM 投入</th><th>競爭威脅</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>CMC（陶瓷複合）部分替代</td><td>2028-2032 量產</td><td>已投入研究（過去 5 年 R&D 高峰）</td><td>GE / Pratt 自建 CMC capacity；Carpenter Technology</td><td>40% (high)</td></tr>
+<tr><td>Hydrogen engine（H2-combustion）</td><td>2030-2035 Airbus ZEROe 商用</td><td>HWM 高溫合金仍需要但 design 全新</td><td>新 supplier 進場機會</td><td>25% (medium)</td></tr>
+<tr><td>Electric / Hybrid（短程）</td><td>2030+</td><td>HWM 無曝險</td><td>新進入者主導</td><td>20% (low-medium)</td></tr>
+<tr><td>Sustainable Aviation Fuel (SAF)</td><td>2026+</td><td>SAF 用現有 engine，HWM 不需重設</td><td>無</td><td>—（不威脅）</td></tr>
+</tbody>
+</table>
+
+<h4>過渡情境機率加權</h4>
+<table>
+<tbody>
+<tr><td>Bull（HWM 在 CMC + Hydrogen 都保住 80%+ 份額）</td><td>30%</td></tr>
+<tr><td>Base（CMC 失 30% / Hydrogen 仍主導）</td><td>50%</td></tr>
+<tr><td>Bear（CMC 失 50% + Hydrogen 失 30%）</td><td>20%</td></tr>
+</tbody>
+</table>
+<p class="note">2030+ 風險主要在 Y5 之後，當前 5Y horizon 內影響 &lt; 10% IRR；長 horizon（10Y+）才會顯化。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜FY27 Q2 法說 watchlist（2026-07-31）</summary>
+<div>
+
+<h4>重點觀察項</h4>
+<table>
+<thead><tr><th>觀察點</th><th>樂觀</th><th>悲觀</th><th>對倉位影響</th></tr></thead>
+<tbody>
+<tr><td>Engine Products commercial aero YoY</td><td>≥ +30%（Q1 +31%）</td><td>&lt; +18%</td><td>樂觀 → 加碼至 3.5%；悲觀 → 維持 2.5% 或減</td></tr>
+<tr><td>Engine Products EBITDA margin</td><td>≥ 36% 維持</td><td>&lt; 33%</td><td>悲觀 → 結構性 margin 壓力訊號</td></tr>
+<tr><td>CAM segment 首季 OM</td><td>≥ 22%（含 partial synergy）</td><td>&lt; 18%</td><td>悲觀 → §5 secondary trigger 啟動</td></tr>
+<tr><td>FY26 guide</td><td>再次上修 Rev/EPS</td><td>維持目前 raised guide 不變</td><td>樂觀 → A 級升級候選</td></tr>
+<tr><td>Boeing rate 言論</td><td>提到「Boeing 737 MAX 月產順利 ramp 至 47+」</td><td>提到「Boeing 議價 delay 或 supply chain 拖累」</td><td>悲觀 → §5 primary 警戒</td></tr>
+<tr><td>spares mix %</td><td>≥ 22%（持續向 30% 結構轉型）</td><td>≤ 19% flat</td><td>悲觀 → 結構轉型 thesis 動搖</td></tr>
+</tbody>
+</table>
+
+<h4>7/31 法說後決策樹</h4>
+<table>
+<tbody>
+<tr><td>情境 A：5+ 項樂觀</td><td>升級至 A，加碼至 3.5-5.0%</td></tr>
+<tr><td>情境 B：3-4 項樂觀</td><td>維持 B+，倉位 2.5%</td></tr>
+<tr><td>情境 C：2+ 項悲觀（含 Engine OM 或 CAM OM）</td><td>降級至 B，減碼至 1.5-2.0%</td></tr>
+<tr><td>情境 D：4+ 項悲觀</td><td>降級至 C/X，倉位歸零</td></tr>
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Lynch 風格 thesis 解構</summary>
+<div>
+
+<h4>Lynch 框架</h4>
+<p><strong>What business：</strong>HWM 賣的是「飛機飛得起來的零件」— 引擎 turbine blade、結構性 titanium 鑄件、fastener — 都是「壞了不能飛」的 mission-critical 零件，每架飛機都需要、每次飛行週期都會磨損。</p>
+<p><strong>Why moat：</strong>因為高溫合金 single-crystal 鑄造製程 30 年累積，全球僅 4-5 家能做，且每代新 engine 都要 9-12 個月 design-in；switching 等於放棄整個 engine 認證；OEM 不會冒這個險。Lynch 喜歡的「無聊產業 + 隱形龍頭」配方完美符合。</p>
+<p><strong>What makes money：</strong>(1) OEM 段（54% Rev，飛機新造）跟著 Boeing/Airbus 月產量複利；(2) Spares 段（20% Rev，越來越大）是 aftermarket annuity，每架老化飛機都付費；(3) CAM 新增 fastener + fluid fittings = content per aircraft +20%；(4) Gas turbine 段（AI DC power）是新加 cyclical upside。</p>
+<p><strong>Lynch 的「能講清楚」測試：</strong>✅ 通過 — 我能用 60 秒讓朋友理解「飛機翅膀引擎裡的零件 HWM 卡位 90%，飛機越多越好賣，飛機越老越要修」。</p>
+<p><strong>但 Lynch 也會警告：</strong>「最好的故事 + 最貴的價格 = 平庸的報酬。」HWM 故事 A 級但 PE 51x 是 Lynch 會婉拒的價格。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Munger Inversion 三維</summary>
+<div>
+
+<table>
+<thead><tr><th>維度</th><th>失效路徑</th><th>歷史對標</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>技術維</td><td>2030+ Hydrogen / CMC engine 全面替代 nickel/titanium 高溫合金，HWM 失去新一代 engine 90% 份額</td><td>過去 50 年 jet engine 都用 nickel/titanium；2010s 開始 CMC 進入 hot section 但仍 partial；fundamental 物理限制讓 100% 替代 unlikely &lt; 2035</td><td>15%</td></tr>
+<tr><td>管理層維</td><td>CAM $1.8B 整合在 18 個月內 EBITDA margin 拖累 &gt; -2pp，CEO John Plant（Spin-off CEO，年齡 70+）面臨更換</td><td>HWM 歷史 M&A track record 強；但 CAM 規模是過去最大；CEO 任期已 5+ 年，接班計畫尚未公告</td><td>20%</td></tr>
+<tr><td>結構維</td><td>Cyclical aerospace 在 2027-2028 出現 hard landing — airline industry profit margin -50%，Boeing/Airbus order book net cancel</td><td>2008 / 2020 都發生過，每 7-10 年一次；現在距離 2020 谷底 6 年，cycle 風險上升</td><td>25%</td></tr>
+</tbody>
+</table>
+
+<p><strong>合計 Bear 機率：</strong>~30-40%（部分重疊，最終 §4 Bear 25% 略保守）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜歷史 cyclical aerospace cycle 對照（2000-2026）</summary>
+<div>
+
+<h4>商用航太週期歷史</h4>
+<table>
+<thead><tr><th>週期</th><th>低點時期</th><th>主要驅動</th><th>HWM/Alcoa 同期股價衝擊</th><th>恢復時間</th></tr></thead>
+<tbody>
+<tr><td>9/11 危機</td><td>2001-2002</td><td>商務旅遊崩跌、保險暴漲</td><td>Alcoa 從 $40 → $18 = -55%</td><td>3 年</td></tr>
+<tr><td>金融海嘯</td><td>2008-2009</td><td>airline 信貸危機、減少訂單</td><td>Alcoa 從 $40 → $5 = -88%</td><td>2-3 年（但永未回到高點）</td></tr>
+<tr><td>737 MAX grounding</td><td>2019-2020</td><td>FAA grounding + COVID</td><td>HWM 從 $35 → $13 = -63%</td><td>2 年</td></tr>
+<tr><td>2024-2027 預測週期</td><td>未發生</td><td>—</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵 takeaway</h4>
+<p>過去 25 年商用航太每 7-10 年有一次重大 cyclical 修正，平均 -55~-65%；HWM/前身雖然護城河 A 級，但仍會被 cycle 拖下水。當前 PE 51x 完全沒 priced in cycle 風險 — 這是進場最大爭議。當前距離上次大週期低點（2020 COVID）已 6 年，cycle peak 風險逐年上升。</p>
+
+</div>
+</details>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>

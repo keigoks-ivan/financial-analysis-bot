@@ -16,6 +16,10 @@
 
 | Date | Ticker | Thesis | Filename | DD basis | ID basis |
 |:---|:---|:---|:---|:---|:---|
+| 2026-05-12 | MPWR | MPWR 用 BCD 製程把 48V→800V AI 電力架構從「板級模組」吃成「晶片級整合」，是少數靠製程而非靠規模建立護城河的類比公司 | DCA_MPWR_20260512.html | DD_MPWR_20260418.html | ID_AIDCPowerElectronics_20260421.html / ID_AIDataCenter_20260419.html / ID_Transformers_20260419.html |
+| 2026-05-12 | KEYS | KEYS 是高頻訊號驗證的雙寡頭之一，5G/6G/AI 1.6T 所有 design 都得通過它的儀器，等於對通訊基建升級收 toll | DCA_KEYS_20260512.html | DD_KEYS_20260418.html | ID_AINetworking_20260419.html / ID_SiliconPhotonicsCPO_20260419.html / ID_QuantumComputing_20260427.html |
+| 2026-05-12 | HWM | HWM 是 jet engine 高溫旋轉件唯一可信供應商，每架 LEAP/GTF 飛機飛幾千小時都得回它買零件，吃 OEM 量產+老化機隊 MRO 雙引擎 | DCA_HWM_20260512.html | DD_HWM_20260418.html | — |
+| 2026-05-12 | JBL | JBL 把 mobility 賣給 BYD 後輕裝轉型 AI 基建專門 EMS，吃 hyperscaler 液冷 server+光學連接+半導體設備三波結構需求 | DCA_JBL_20260512.html | DD_JBL_20260418.html | ID_AIDataCenter_20260419.html / ID_AINetworking_20260419.html |
 | 2026-05-06 | 2330TW | TSMC 是 AI 時代唯一供應頂尖製程的 silicon bottleneck，A16 + CoWoS 雙寡占讓它成為 AI 產業鏈的 toll booth | DCA_2330TW_20260506.html | DD_2330TW_20260504.html | ID_LeadingEdgeNode_20260419.html / ID_HighNAEUV_20260505.html / ID_CoWoSCoPoS_20260501.html / ID_CoPoSFOPLPRace_20260505.html |
 | 2026-05-07 | MRVL | Marvell 是 AI infra 中 NVDA 不碰、AVGO 吃不下的第二供應商，客製 ASIC + 1.6T 光學雙引擎是稀缺全棧替代源 | DCA_MRVL_20260507.html | DD_MRVL_20260418.html | ID_AIAcceleratorDemand_20260419.html / ID_AIASICDesignService_20260419.html / ID_AINetworking_20260419.html / ID_SiliconPhotonicsCPO_20260419.html |
 | 2026-05-07 | 2330TW | TSMC 是 AI 浪潮 silicon toll booth，N2 + CoWoS 雙寡占，hyperscaler $725B capex 必經之地 | DCA_2330TW_20260507.html | DD_2330TW_20260504.html | ID_LeadingEdgeNode_20260419.html / ID_HighNAEUV_20260505.html / ID_CoWoSCoPoS_20260501.html / ID_HBM4CustomBaseDie_20260430.html / ID_FoundryGeography_20260427.html |
@@ -133,3 +137,6 @@
 | 2026-05-12 | CRM | CRM 是企業 CRM 全球壟斷者（Sales Cloud 22% > 後 4 名總和），Agentforce 把 seat-SaaS 轉成 consumption AI 平台。 | DCA_CRM_20260512.html | DD_CRM_20260418.html | ID_AgenticAIPlatform_20260424.html / ID_LLMVendorSecurityEconomics_20260423.html |
 | 2026-05-12 | INTC | INTC 是美國半導體製造國家戰略資產，Lip-Bu Tan 帶領 18A + 14A 客戶贏單推升 narrative，但執行兌現未證實。 | DCA_INTC_20260512.html | DD_INTC_20260427.html | ID_FoundryGeography_20260427.html / ID_LeadingEdgeNode_20260419.html / ID_HighNAEUV_20260505.html |
 | 2026-05-12 | ROK | ROK 是北美 PLC 龍頭 + reshoring capex supercycle 直接受惠者，全球被 Siemens 20% 壓制但裝機切換成本極高。 | DCA_ROK_20260512.html | DD_ROK_20260418.html | ID_AIDataCenter_20260419.html |
+| 2026-05-12 | FTNT | FTNT 是全球 firewall 龍頭中唯一同時握有自研 ASIC 硬體護城河與平台訂閱二次曲線的稀缺廠，AI 推動的流量檢測規模化讓硬體加速優勢被重新放大。 | DCA_FTNT_20260512.html | DD_FTNT_20260427.html | ID_AICybersecurityDoubleEdge_20260423.html / ID_CybersecurityPlatformConsolidation_20260423.html |
+| 2026-05-12 | PLTR | PLTR 是企業 AI 唯一可審計、grounded、有 ontology 結構的「決策層作業系統」，從政府蔓延到商業，重新定義 AI 之上的工作流座標系。 | DCA_PLTR_20260512.html | DD_PLTR_20260505.html | ID_AgenticAIPlatform_20260424.html / ID_AICrossDomainImpact_20260429.html |
+| 2026-05-12 | FICO | FICO 是 40 年事實壟斷的 credit score 標準，正面臨 VantageScore + FHFA「Lender Choice」雙刀切開定價權，但 Platform 軟體 + 規模壟斷未崩 — 是「moat 受傷但未死」的修復賭局。 | DCA_FICO_20260512.html | DD_FICO_20260418.html | — |

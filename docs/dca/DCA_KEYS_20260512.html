@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA - KEYS｜Keysight Technologies｜2026-05-12</title>
+<!-- dca-moat-trend: → -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--line:#E2E8F0;--altrow:#F1F5F9;--muted:#64748B;}
+*{box-sizing:border-box;}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',system-ui,sans-serif;line-height:1.65;}
+.mono,.num{font-family:'IBM Plex Mono',monospace;}
+header.fixed{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;}
+header.fixed .ticker{font-weight:700;font-size:18px;}
+header.fixed .meta{opacity:.92;font-family:'IBM Plex Mono',monospace;}
+main{max-width:1200px;margin:0 auto;padding:24px;}
+h1{color:var(--ink);font-size:28px;margin:8px 0 4px;}
+h2{background:var(--ink);color:#fff;padding:10px 14px;border-left:4px solid var(--accent);margin:40px 0 16px;font-size:20px;border-radius:2px;}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-bottom:2px solid var(--line);padding-bottom:4px;}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px;}
+.card{background:var(--card);padding:18px 22px;border:1px solid var(--line);border-radius:4px;margin-bottom:18px;}
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14px;background:#fff;}
+thead th{background:var(--ink);color:#fff;padding:9px 10px;text-align:left;font-weight:500;}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:nth-child(even) td{background:var(--altrow);}
+.statusbar{background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 14px;margin:18px 0 24px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+.statusbar .cell{flex:0 0 180px;text-align:center;padding:6px 10px;background:#fff;border:1px solid var(--line);border-radius:4px;}
+.statusbar .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.statusbar .val{font-size:22px;font-weight:700;line-height:1.2;}
+.statusbar .sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.thesis{background:#EFF6FF;border-radius:4px;padding:30px 24px;margin:18px 0;text-align:center;}
+.thesis .big{font-size:26px;line-height:1.5;color:var(--ink);font-weight:500;}
+.thesis .lbl{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:10px;}
+.decision{padding:18px 20px;border-radius:4px;margin:18px 0;}
+.decision.wait{background:#FEF9C3;border-left:4px solid #CA8A04;}
+.conflict{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.verdict-tbl thead th{background:#9A3412;}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem blockquote{margin:6px 0;padding:8px 14px;border-left:3px solid #DC2626;background:#fff;font-style:italic;color:#7F1D1D;}
+.maxdd{display:flex;gap:18px;align-items:center;background:#FEF3C7;border-left:4px solid #CA8A04;padding:18px;border-radius:3px;margin:14px 0;}
+.maxdd .num-big{font-size:34px;font-weight:700;color:#92400E;font-family:'IBM Plex Mono',monospace;flex:0 0 220px;text-align:center;}
+.tag-B{background:#FEF3C7;color:#92400E;padding:3px 10px;border-radius:4px;font-weight:600;}
+.note{color:var(--muted);font-size:13px;margin:8px 0;}
+.green{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-weight:500;}
+.red{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-weight:500;}
+.amber{background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-weight:500;}
+.memo{background:#FAFAF9;border:1px solid #E7E5E4;padding:24px 28px;margin:14px 0;font-family:Georgia,serif;line-height:1.7;}
+.memo h5{color:#1E3A5F;margin:0 0 8px;font-size:16px;border-bottom:1px solid #E7E5E4;padding-bottom:4px;}
+.elevator{background:#FFF8E7;border-left:4px solid #D97706;padding:14px 18px;margin:14px 0;font-style:italic;color:#78350F;}
+details{margin:14px 0;border:1px solid var(--line);border-radius:4px;background:#fff;}
+details summary{padding:12px 18px;cursor:pointer;font-weight:600;color:var(--ink);background:#F1F5F9;}
+details > div{padding:14px 18px;}
+button.print-btn{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-family:inherit;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:50;}
+@media print{header.fixed,button.print-btn{display:none;}main{max-width:none;}h2{page-break-after:avoid;}details > div{display:block!important;}}
+</style>
+</head>
+<body>
+<header class="fixed">
+<div><span class="ticker">KEYS</span>｜Keysight Technologies｜NYSE</div>
+<div class="meta">DCA｜2026-05-12｜Price $367｜v1.2</div>
+</header>
+<main>
+
+<h1>KEYS｜Keysight Technologies — Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-12｜現價 $367（最新 quote）｜Q1 FY'26 法說後 78 天（2/23）｜既有 DD：DD_KEYS_20260418.html v12.0（X 訊號燈）｜對應 ID：ID_AINetworking_20260419 / ID_SiliconPhotonicsCPO_20260419 / ID_QuantumComputing_20260427｜下次財報：2026-05-19（Q2 FY'26）</p>
+
+<div class="statusbar">
+  <div class="cell">
+    <div class="lbl">綜合訊號燈</div>
+    <div class="val" style="color:#92400E;">B</div>
+    <div class="sub">Q1 FY26 大 beat 推升 X→B</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">護城河趨勢</div>
+    <div class="val">B <span style="color:#64748B;">→</span></div>
+    <div class="sub">Spirent 整合中</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Runway Post-Y5</div>
+    <div class="val">🟢</div>
+    <div class="sub">6G+NTN 2030+ 接棒</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Max DD（5Y 中途）</div>
+    <div class="val" style="color:#92400E;">−48%</div>
+    <div class="sub">🟡 需要強信念</div>
+  </div>
+</div>
+
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis">
+<p class="big">KEYS 是高頻訊號驗證的雙寡頭之一，5G/6G/AI 1.6T 所有 design 都得通過它的儀器，等於對通訊基建升級收 toll。</p>
+<p class="lbl">50 字以內｜投資本質</p>
+</div>
+
+<h2>§7｜Decision（可執行計畫）</h2>
+<div class="decision wait">
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<thead><tr><th>項目</th><th>具體內容</th></tr></thead>
+<tbody>
+<tr><td>角色</td><td><strong>衛星持倉</strong>（B 訊號燈：Q1 大 beat 驗證 thesis 但現價已 priced in 5/19 Q2）</td></tr>
+<tr><td>初始建倉</td><td><strong>2.0%</strong>（受 Max DD 🟡 影響從 3% 略下修）</td></tr>
+<tr><td>目標倉位</td><td><strong>3.5%</strong>（PEG 落回 1.5 + Q2 兌現後）</td></tr>
+<tr><td>進場價位區間</td><td>$310-$340（W52 + Q2 法說可能拉回）；現價 $367 不追</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批</strong>：① 等 5/19 Q2 法說後，若 beat 但股價 -5~-10% 回測 → 進場 1.0%；② Bollinger 中軌 或 RSI 14d ≤ 55 觸發 → 再加 1.0%；<strong>禁止 5/19 前現價追擊</strong>（4 週 +22% drift 過熱）</td></tr>
+<tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td><strong>邊際資金應對照 TER / NI / VRT</strong>。<br>• vs <strong>TER（Teradyne）</strong>：TER 是 ATE 寡頭，AI ASIC test 直接受益；KEYS 是 design phase 驗證、TER 是 manufacturing test — 互補不重疊。TER FY26 Fwd PE 30x vs KEYS 42x，TER R:R 較優。若已持 TER ≥ 2%，KEYS 進場有 marginal 重疊但仍有獨立 alpha（6G + Spirent）。<br>• vs <strong>NI（已被 Emerson 收購）</strong>：Now part of Emerson, 不可比；KEYS 在 RF/microwave 比 NI 強。<br>• vs <strong>VRT（Vertiv）</strong>：VRT 是 AI DC 電力/散熱純 play，與 KEYS thesis 不重疊；若 portfolio AI DC 曝險來自 VRT，KEYS 是補位「驗證」這條空白。<br>• 結論：若 portfolio 已持 TER + VRT，KEYS 進場是「6G 押注」的新角度；若兩者都沒持，KEYS 排在 TER 後優先級。</td></tr>
+</tbody>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<thead><tr><th>行動</th><th>觸發條件</th><th>倉位</th></tr></thead>
+<tbody>
+<tr><td>加碼至 3.0%</td><td>Q2 FY26（5/19）Rev beat + Orders 連 2 季 YoY ≥ +25%</td><td>3.0%</td></tr>
+<tr><td>加碼至 3.5%</td><td>2026 H2 6G 標準正式 ratified + Pentagon FY27 budget T&M line 上修</td><td>3.5%</td></tr>
+<tr><td>減碼至 1.0%</td><td>Q2 或 Q3 Orders YoY &lt; +10%；<strong>或</strong> Spirent 整合公告 GM 拖累 &gt; -2pp；<strong>或</strong> AI Ethernet 訂單於 Q3 H2 出現 air pocket</td><td>1.0%</td></tr>
+<tr><td>清倉</td><td>Forward PE 突破 50x（股價 &gt; $430）；<strong>或</strong> 6G 標準 2028 後仍未 ratified</td><td>0%</td></tr>
+</tbody>
+</table>
+
+<h3>7c. Pure MA + 動能過熱檢查</h3>
+<table>
+<thead><tr><th>檢查</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>MA60 / MA200 / MA104w 之上</td><td class="green">✅ 全部</td></tr>
+<tr><td>Pure MA 系統</td><td class="green">✅ 強勢進場（W250 斜率 +4.02%）</td></tr>
+<tr><td>4 週漂移</td><td class="amber">⚠ +22% (Feb 24 跳空後堆疊)</td></tr>
+<tr><td>RSI 14d 估算</td><td class="amber">⚠ ~72（極端區）</td></tr>
+<tr><td>結論</td><td><strong>過熱明確</strong>；進場節奏必須條件式</td></tr>
+</tbody>
+</table>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+<tbody>
+<tr><td>短期（&lt; 2 年）</td><td>若 6G 標準 ratified 延後超過 2028 → 12-18 月停利</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 AI Ethernet 1.6T → 3.2T 連續週期維持 + Spirent 整合順利 → 抱到 2028 6G</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 NTN（非地面網路）+ 6G ratified + 量子通訊 design phase 啟動 → 結構性持有</td></tr>
+</tbody>
+</table>
+<p><strong>建議持有年限：中期 3-5 年</strong>，原因：（1）T&M 雙寡頭結構穩定，但 cycle 性高（5G 2019-2022, AI 2024-2027, 6G 2028+）；（2）Spirent 整合風險未 fully de-risk；（3）ROIC TTM 7.4% 偏低（Spirent acquisition 稀釋），需要 3-5 年看 ROIC 恢復至 12-15%。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY2026E</td><td>$8.59-$9.20</td><td>公司 guide $8.59 + Q1 beat = consensus 上修中</td></tr>
+<tr><td>FY2027E</td><td>$10.50-$11.50</td><td>含 Spirent 整合 + 6G 早期投資</td></tr>
+<tr><td>FY2030E（外推）</td><td>$15-$18</td><td>外推假設：6G ratified 2028 → 量產驗證 capex 2029-2032</td></tr>
+</tbody>
+</table>
+
+<p><strong>現價合理嗎？</strong>$367 / FY27 EPS $11 = 33.4x Fwd PE — 高於同業 TER 30x / Anritsu 22x；5Y 期望 IRR ~9.5%/yr（見 §4）= 略勝大盤但 alpha 弱。等 PE ≤ 30x（$330 區間）才有 idiosyncratic alpha。</p>
+
+</div>
+
+<h2>§4｜Asymmetry Analysis</h2>
+
+<h3>5 年情境矩陣</h3>
+<table>
+<thead><tr><th>情境</th><th>5Y 絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+125%（至 ~$825）</td><td>+17.6%/yr</td><td>6G 2028 ratified + AI 訂單 CAGR 25% + Spirent 整合奇效；FY30 EPS $18 × 46x</td><td>22%</td></tr>
+<tr><td>Base</td><td>+55%（至 ~$570）</td><td>+9.1%/yr</td><td>FY30 EPS $16 × 36x（PE 從 42→36 略 de-rate）</td><td>48%</td></tr>
+<tr><td>Bear</td><td>−35%（至 ~$238）</td><td>−8.3%/yr</td><td>6G 延後至 2030+、Spirent 商譽減損、AI cycle peak 2027 → PE 50→22；FY30 EPS $12 × 22x</td><td>30%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+44%</strong></td><td><strong>+7.6%/yr</strong></td><td colspan="2">不及大盤，alpha 來源弱</td></tr>
+</tbody>
+</table>
+
+<h4>追加壓力測試</h4>
+<p>10Y 視角：6G + 量子 + NTN 三條曲線疊加，Bull IRR ~14%/yr；機會成本 vs TER ~11% / VRT ~12% — KEYS Base 9.1% 中段</p>
+
+<h3>📅 機率估計校準</h3>
+<p>Bear 30% 合理（&gt; 20% floor，AI cycle peak 風險 + Spirent 商譽風險 + 6G ratification 風險合計）；Bull-Bear 散布 160%p；Base 48% 不超 50%。</p>
+
+<h3 class="pattern-h">📐 Pattern Match</h3>
+<div class="pattern">
+<table>
+<tbody>
+<tr><td>歷史類比</td><td>2014-2019 KLAC（KLA Corp）— 從 inspection only 擴張至 inspection+metrology+process control</td></tr>
+<tr><td>當時 setup</td><td>Fwd PE 17x、Spirent 等量級併購 Orbotech $3.4B（2019），AI cycle 啟動前</td></tr>
+<tr><td>5Y 報酬</td><td>2019-12 至 2024-12：+220%（含股息），年化 IRR ~26%</td></tr>
+<tr><td>像的地方</td><td>① T&M 雙寡頭結構（KLA vs AMAT/LRCX 在 inspection）；② 併購擴張類型（Orbotech vs Spirent，都是 wireline/通訊類）；③ AI 週期啟動</td></tr>
+<tr><td>不像</td><td>① 進場 PE：KLAC 2019 17x vs KEYS 現 42x（貴 2.5x）；② KEYS R&D 19% Rev 比 KLA 12% 高 — capital intensity 較重；③ KLA 的競爭結構更壟斷</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>🧬 IRR Composition（5Y）</h3>
+<table>
+<thead><tr><th>情境</th><th>EPS CAGR</th><th>估值 re-rate</th><th>股息+回購</th><th>合計</th></tr></thead>
+<tbody>
+<tr><td>Bull</td><td>+15.0%/yr</td><td>+1.8%/yr<br><span class="note">(PE 42→46)</span></td><td>+0.8%/yr</td><td>+17.6%/yr ✅</td></tr>
+<tr><td>Base</td><td>+12.5%/yr</td><td>−3.1%/yr<br><span class="note">(PE 42→36)</span></td><td>−0.3%/yr<br><span class="note">(R&D 投入 + SBC 稀釋)</span></td><td>+9.1%/yr ✅</td></tr>
+<tr><td>Bear</td><td>+6.5%/yr</td><td>−13.5%/yr<br><span class="note">(PE 42→22)</span></td><td>−1.3%/yr</td><td>−8.3%/yr ✅</td></tr>
+</tbody>
+</table>
+
+<p><strong>Base 加總校驗：</strong> +12.5 − 3.1 − 0.3 = <strong>+9.1%/yr</strong> ✅ 0%p 差距 ≤ 2%p。</p>
+
+<div class="pattern">
+<p><strong>質感解讀：</strong>Base 9.1% IRR 中，+12.5%/yr 來自 EPS 複利、-3.1%/yr re-rate 拖累、-0.3%/yr R&D/SBC 投入回流。<strong>主要靠自然 EPS 複利</strong>，但 KEYS 比 MPWR 更耗 capex（R&D 19% vs MPWR 9%）= 「複利成本」高。可抱性中等，需要等 ROIC 從 Spirent 稀釋的 7.4% 恢復至 12-15%。</p>
+</div>
+
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試 1｜投委會 1 頁紙 Memo</h3>
+<div class="memo">
+<h5>KEYS｜Keysight Technologies – Recommendation: HOLD（衛星 2.0%）</h5>
+<p><strong>Thesis：</strong>5G/6G/AI 高頻訊號 design phase 驗證的雙寡頭之一，等於對通訊基建升級收 toll。GM 65% 護城河靠 brand/switching cost/標準制定話語權三層支撐。</p>
+<p><strong>Key Driver：</strong>(1) AI Ethernet 800G→1.6T→3.2T 設計週期；(2) 6G ratification 時間表 + Pentagon 6G program of record 啟動。Q1 FY26 wireline 首次超 wireless 已確認 inflection。</p>
+<p><strong>R:R：</strong>5Y Bull +125% / Base +55% / Bear -35%，期望 IRR ~7.6%/yr，僅勝大盤 — alpha 弱。中途 Max DD -35~-50%（🟡 需強信念）。</p>
+<p><strong>主要風險：</strong>① 4 週 +22% drift 過熱；② Spirent 整合風險（商譽 $2B 級）；③ ROIC TTM 7.4% 偏低（v.s. MPWR 25%）；④ 6G ratification 延後（2028 → 2030+）；⑤ DD 4/18 X 訊號（PE ≥ 95% 分位）只被 Q1 beat 部分救贖。</p>
+<p><strong>建議倉位：2.0% 衛星</strong>，目標 3.5%。<strong>進場節奏條件式</strong>：等 5/19 Q2 法說後回測；<strong>禁止追擊</strong>。<strong>opportunity cost</strong>：先排 TER + VRT，KEYS 第三。</p>
+<p><strong>The Single Thing：</strong>2027-2028 6G 標準正式 ratification 延後超過 12 個月 = 立刻減碼至 1%。</p>
+</div>
+
+<h3>測試 2｜30 秒電梯簡報</h3>
+<div class="elevator">
+「KEYS 是 5G、6G、AI 1.6T 通訊基建驗證的雙寡頭，design 階段所有高頻訊號都必須通過它的儀器。Q1 FY26 wireline 訂單首次超過 wireless 是 AI cycle inflection；但現價 Fwd PE 42x 太貴，5Y 預期年化 9.6%，僅勝大盤一點點。等 5/19 Q2 後回測 $330 才是有 alpha 的進場點。」</div>
+
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>共識清單</h3>
+<div class="conflict">
+<ul>
+<li><strong>A1+A2+A3 共識：</strong>KEYS 在 T&M 雙寡頭中（vs Rohde & Schwarz）市佔 29.87%、GM 65%、Spirent 收購完成 = 結構性強化</li>
+<li><strong>A2+A3 共識：</strong>AI interconnect TAM $200B by 2030 + Q1 wireline 首次 &gt; wireless = AI cycle inflection 確認</li>
+<li><strong>A3 共識：</strong>Q1 FY26 Rev +23% Orders +30% EPS +19% 三向 beat = 業績 inflection 確認</li>
+</ul>
+</div>
+
+<h3>矛盾清單</h3>
+<table>
+<thead><tr><th>#</th><th>矛盾</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ROIC 7.4% 偏低 vs Moat 8/10 高</td><td>Moat 8</td><td>—</td><td>ROIC 7.4%</td><td>🔴 不可調和</td></tr>
+<tr><td>2</td><td>Spirent 整合風險 vs AI/6G 雙引擎</td><td>Moat 加深</td><td>Runway 🟢</td><td>商譽 $2B 級</td><td>🟡 可調和</td></tr>
+<tr><td>3</td><td>分析師 PT $384 vs 估值 5Y 分位 100%</td><td>—</td><td>—</td><td>Fwd PE 42 vs 5Y range 17-47.6</td><td>🔴 不可調和</td></tr>
+<tr><td>4</td><td>DD 4/18 X 訊號 vs DCA B</td><td>—</td><td>—</td><td>Q1 大 beat 後估值改善</td><td>🟡 時間差</td></tr>
+</tbody>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+<table class="verdict-tbl">
+<thead><tr><th>#</th><th>矛盾</th><th>選邊</th><th>依據</th><th>會 settle 硬數據點</th><th>if-then 路徑</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ROIC 7.4% vs Moat 8</td><td><strong>暫無法決定（Spirent 暫時稀釋）</strong></td><td>ROIC TTM 7.4% 包含 Spirent goodwill $2B；剔除後 ~12-13%；2 年內若 ROIC 回升至 14%+ 則 Moat 8 確認，未回則重估</td><td>① FY27 全年 ROIC（2027/11 公告）；② Q4 FY26 invested capital 變動</td><td>(a) FY27 ROIC ≥ 14% → 升級加倉至 3.5%（Moat 8 確認）；(b) FY27 ROIC &lt; 11% → 減碼至 1.5%（Spirent 整合失敗）</td></tr>
+<tr><td>2</td><td>Spirent 整合風險 vs 雙引擎</td><td><strong>A1+A2 勝</strong></td><td>$1.46B 收購價 + Viavi 拿走 40% 後 KEYS 留下 60% 高 margin 部分（NTN + 6G + satellite emulation）；管理層 track record 強（Ixia 2017、ESI 2019、Sanjole 2020 都成功）</td><td>① Spirent 1 年後 segment margin（Communications Solutions 細分）；② AI 訂單 retention</td><td>(a) FY27 CSG segment OM ≥ 28%（vs FY25 25%）→ 整合成功，加碼；(b) OM &lt; 23% → 整合稀釋，減碼</td></tr>
+<tr><td>3</td><td>PT $384 vs 估值頂部</td><td><strong>A3 勝（估值風險）</strong></td><td>Goldman $384 隱含 PE 44x × FY27 EPS $8.7 — 與 5Y range 17-47.6 上緣同高；歷史上 KEYS PE 47x 區（2021）後 12 個月 -30% de-rate；現在再上空間有限</td><td>① Forward PE 季度 quote；② 與 TER / Anritsu PE differential</td><td>(a) PE 落回 30x 區（$310）→ 加碼至 3.5%；(b) PE 突破 50x（$430）→ trim 一半至 1%</td></tr>
+<tr><td>4</td><td>DD X vs DCA B</td><td><strong>Phase A 部分勝</strong></td><td>Q1 結果 + Spirent 已完成 + analyst PT 集體上修 = 訊號燈基礎變化；但 DD 4/18 對估值頂部與漂移警示仍 valid，需在倉位上反映</td><td>① Q2 5/19 法說；② DD 重跑</td><td>(a) Q2 維持 +25%+ Rev → DCA B 確認；(b) Q2 miss → 回到 C/X，倉位歸零</td></tr>
+</tbody>
+</table>
+
+<h2>§3｜Key Drivers + 🔄 Consensus 分歧</h2>
+
+<table>
+<thead><tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>AI Ethernet 800G→1.6T→3.2T 設計週期</strong></td><td>每次 speed 升級 = 全產業重新驗證 = 等同新的儀器銷售大週期；Q1 FY26 wireline 首次超 wireless 是 AI Ethernet 換代節點</td><td>季度 Communications Solutions 中 wireline orders YoY；NVDA / Marvell / Cisco 高速網卡 design tape-out 數</td></tr>
+<tr><td>2</td><td><strong>6G 標準化與 Pentagon 6G 啟動時程</strong></td><td>KEYS 是 6G 標準制定（3GPP）+ Pentagon 6G program 的 anchor 供應商；6G 一旦 ratified（預計 2028），啟動 2029-2033 5 年 capex 週期</td><td>3GPP Release 21（6G initial）正式發布日期；Pentagon FY27-FY28 budget 中 6G line item</td></tr>
+</tbody>
+</table>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>driver 2 在 driver 1 不成立的情況下能否被推翻？✅ 能。即使 AI cycle 2027 結束、wireline 降溫（driver 1 失敗），6G ratification 仍是獨立軸；反之，6G 延後不影響 AI 訂單。兩條獨立 ✅。</p>
+
+<h4>強制減法：我認為不重要的事</h4>
+<table>
+<thead><tr><th>市場常討論</th><th>為什麼不重要</th></tr></thead>
+<tbody>
+<tr><td>Aerospace/Defense FY25 +18%</td><td>佔 Rev ~25%；穩健 base 但非命脈</td></tr>
+<tr><td>量子計算驗證</td><td>仍是 R&D phase，到 2030+ 才大規模商業化</td></tr>
+<tr><td>Automotive radar test</td><td>佔比 &lt; 10%，TAM 小</td></tr>
+<tr><td>每季財報指標差異</td><td>單季 EPS beat $0.10-$0.20 屬噪音</td></tr>
+</tbody>
+</table>
+
+<h4>🔄 我和市場 Consensus 的最大分歧</h4>
+<table>
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>市場目前定價假設</td><td>Goldman $384 PT 假設 PE 維持 44x × FY27 EPS $8.7；隱含「6G 從 2027 開始 priced in + AI 訂單持續 25%+ CAGR」</td></tr>
+<tr><td>我的不同假設</td><td>6G ratification 延後至 2028 H2（vs 共識 2027 H2）— 2026-2027 仍然是 AI single-engine、PE 應該收斂至 35x</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方對 3GPP 標準時程歷史上樂觀 — 5G ratified 2018 vs 原計劃 2017、初版規格延後 9 個月；6G 標準複雜度（sub-THz、AI native、NTN）比 5G 高，按歷史 base rate 應該延後 12-18 個月</td></tr>
+</tbody>
+</table>
+
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<h4>Primary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>3GPP Release 21（6G 初版規格）正式公告延後至 2028 Q4 之後</strong>（vs 目前共識 2027 Q4-2028 Q1）</td></tr>
+<tr><td>為什麼致命</td><td>driver 2 直接破；2029-2033 6G capex 週期被推到 2030 H2 之後 = KEYS Bull case 整個重設；股價會從 6G premium 退回 AI single-engine 估值（PE 42 → 28）</td></tr>
+<tr><td>如何監測</td><td>① 3GPP TSG plenary meeting 公告（每年 12 月 / 6 月）；② IEEE Globecom / MWC keynote 中 6G timing 言論</td></tr>
+<tr><td>離發生有多遠</td><td>2026 Q4-2027 Q2 為決定性窗口（Release 21 工作組進度公告）</td></tr>
+</tbody>
+</table>
+
+<h4>Pre-mortem 派生 Secondary Trigger</h4>
+<table>
+<tbody>
+<tr><td>事件描述</td><td><strong>Spirent 整合 8-K：第二年 FY27 出現 goodwill impairment &gt; $300M 或 CSG segment OM 跌破 22%</strong></td></tr>
+<tr><td>為什麼致命</td><td>$1.46B 收購若失敗 = 管理層 capital allocation 紀律失分；DD 4/18 提到的 GM 持續下滑（FY23→FY25 -2.5pp）會被市場解讀為結構性 — Moat 8 重評</td></tr>
+<tr><td>如何監測</td><td>① FY27 Q4 / FY28 Q1 法說中 Spirent 細項；② 8-K filing 中 impairment 揭露</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>§6b 校驗結果：</strong>⚠ 部分重疊 — 原 §5 抓 6G ratification，pre-mortem 故事還涉及 Spirent 整合失敗。已實際補一條 secondary trigger（上方表）。<strong>修正狀態：⚠ 已補 1 條 secondary trigger</strong>。</p>
+
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 盲點</h3>
+<table>
+<thead><tr><th>#</th><th>不確定的假設</th><th>thesis 前提</th><th>不成立的後果</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>6G ratification 2027-2028 — 3GPP 是否準時？</td><td>需要 sub-THz 頻譜分配 + AI-native 架構標準化 + 主要國家 spectrum 釋出</td><td>延後 1 年 = 6G capex 週期推到 2030+；KEYS 失去 1.5 年 premium</td></tr>
+<tr><td>2</td><td>Spirent 60% 留存部分 GM 是否能維持 Keysight 級別（65%）？</td><td>NTN + satellite emulation 是否能 leverage Keysight 既有 software platform</td><td>若 Spirent 留存部分 GM 50-55%，公司整體 GM -2~-3pp，OM 跟著 -2pp</td></tr>
+<tr><td>3</td><td>AI Ethernet 訂單持續性 — 是 2-3 年週期還是 5 年週期？</td><td>NVDA / hyperscaler capex 維持高位</td><td>若 2027 AI capex peak 後 -20%，KEYS wireline orders YoY 從 +30% 降至 -5%</td></tr>
+<tr><td>4</td><td>ROIC 7.4% 是否真的只是 Spirent 暫時稀釋？</td><td>Spirent 收購商譽 $2B 級若 5-7 年回收</td><td>若實際是結構性下降（R&D 強度過高），則公司估值 multiple 結構性下修</td></tr>
+</tbody>
+</table>
+
+<h3>6b. Pre-mortem 故事倒推</h3>
+<div class="premortem">
+<blockquote>
+假設 5 年後（2031-05）KEYS 部位虧 50%，最可能故事：<br><br>
+<strong>2027 Q2</strong> — 3GPP TSG plenary 公告 Release 21 工作組進度延後 9 個月，正式發布從 2027 Q4 推到 2028 Q3。KEYS 6G premium 開始撤退，股價當週 -12%。<br><br>
+<strong>2027 Q4</strong> — Spirent 整合一年回顧，FY27 CSG segment OM 21%（vs FY25 25%），管理層 8-K 揭露「整合 timeline 延長 18 個月」；同時 NVDA / hyperscaler 公告 2028 AI capex flat（從 +25% → 0%）= AI 訂單見頂。雙重失分股價 -20%。<br><br>
+<strong>2028 H1</strong> — KEYS FY28 guide 隱含 Rev YoY 4%（共識預期 18%），市場重新將其分類為「mature cyclical」而非「AI growth」。Forward PE 從 42 → 24x。<br><br>
+<strong>2029-2031</strong> — 6G 雖然 ratified（2028 Q3）但量產驗證 ramp 延後 2 年（vs 5G 經驗），KEYS Communications 段 5 年 CAGR 4%（vs 預期 12%）。FY30 EPS $12（vs Base case $16）× PE 22 = $264。<br><br>
+最終 2031-05 股價 ~$185（vs 進場 $367 = -50%）。
+</blockquote>
+</div>
+
+<h4>校驗 §5 single-thing</h4>
+<table>
+<tbody>
+<tr><td>失敗故事中關鍵觸發 = §5 寫的 single thing？</td><td><span class="amber">⚠ 部分重疊</span> — §5 primary 抓 6G ratification 延後是失敗故事第一步；但 Spirent 整合失敗 + AI cycle 見頂兩條都不在原 §5 — 已補 secondary trigger（見 §5 第二張表）</td></tr>
+</tbody>
+</table>
+
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong></p>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd">
+<div>
+<div class="num-big">−35% ~ −50%</div>
+<div style="text-align:center;font-size:26px;">🟡 需要強信念</div>
+</div>
+<div style="flex:1;">
+<table>
+<tbody>
+<tr><td>估計 Max DD 範圍</td><td>−35% ~ −50%（寬度 15%p，符合 ≥ 10%p）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q2-Q4：6G 延後公告 + AI cycle peak + Spirent 整合失分三合流</td></tr>
+<tr><td>最快復原</td><td>若 6G 2028 Q3 ratified 後啟動 capex → 18-24 月恢復；若 6G 延至 2030+ → 結構性 -40% 不可恢復</td></tr>
+<tr><td>路徑風險評級</td><td><span class="amber">🟡 需要強信念</span>（-50% 區間中等難度撐住）</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<h4>校驗</h4>
+<p>若 max DD 落在 -50%，能撐到復原？條件：(a) 部位 ≤ 2.5%；(b) 不使用槓桿；(c) 6G 路徑未破。若三條件其一破 → 倉位再打折至 1.5%。</p>
+
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<thead><tr><th>#</th><th>觸發點</th><th>類型</th><th>時間/條件</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Q2 FY26 財報</td><td>財報</td><td>2026-05-19</td></tr>
+<tr><td>2</td><td>3GPP Release 21 進度公告</td><td>產業</td><td>2026 Q4 / 2027 Q1 plenary</td></tr>
+<tr><td>3</td><td>Forward PE 跌破 30x（$310 區）</td><td>價位</td><td>持續</td></tr>
+<tr><td>4</td><td>§5 primary：6G ratification 延後 &gt; 12M</td><td>§5</td><td>2027 Q4-2028 Q3</td></tr>
+<tr><td>5</td><td>§5 secondary：Spirent goodwill impairment / CSG OM 跌破 22%</td><td>§5 派生</td><td>FY27 Q4 / FY28 Q1</td></tr>
+<tr><td>6</td><td>Pentagon FY27 / FY28 6G program of record</td><td>產業</td><td>2026/12 budget 公告</td></tr>
+</tbody>
+</table>
+
+<p><strong>保質期：至 2026-05-25（Q2 FY26 法說後）</strong> — Q2 結果 + Q3 guide 必須重跑 DCA。</p>
+
+<p><strong>最可能 upside：</strong>Q2 法說 wireline orders 連 2 季 YoY ≥ +35% + 管理層提到「6G initial designs at customer R&D labs」 → B → A 升級。</p>
+
+<p><strong>最可能 downside：</strong>Spirent 第一份整合進度報告（預計 FY26 Q3）顯示 OM 拖累 &gt; -3pp，<strong>或</strong> 3GPP 公告延後 → B → C/X，立刻減碼。</p>
+
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：B 級 Moat 8/10，趨勢 → holding — Spirent 整合中 + GM 略微壓力）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>主要護城河</td><td>(1) <strong>Switching cost</strong>（PathWave software platform + 客戶工作流訓練投資高，更換成本 6-18M）；(2) <strong>Brand / IP</strong>（HP 1939 起家，T&M 半世紀 reputation，premium pricing 來源）；(3) <strong>Scale R&D</strong>（FY25 $1.007B R&D = ~19% Rev，比 Anritsu / R&S 高 60%+）</td></tr>
+<tr><td>持久性</td><td><strong>8/10</strong>（5Y 高）— T&M 雙寡頭結構穩定 30+ 年；但 GM FY23→FY25 -2.5pp 提示有 cost 壓力</td></tr>
+<tr><td>最大侵蝕風險</td><td>中國本土 T&M（Rigol / 中電 41 所）追趕中端市場（&lt; 50GHz 區段），對 Anritsu 衝擊 &gt; 對 KEYS；但長期高端（&gt; 110GHz / sub-THz / 6G）KEYS + R&S 雙寡頭仍穩</td></tr>
+<tr><td>關鍵數據</td><td>GM FY25 65%（vs FY23 67.5% -2.5pp）；OM 26%；T&M 市佔 29.87%（Q1'25）；ROIC TTM 7.4%（Spirent 稀釋）；剔除商譽 ROIC ~12-13%</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>→ holding</strong>。12 個月內 evidence：① Spirent $1.46B 整合完成 10/15/2025（正：擴 wireline + NTN + 6G）；② AI Ethernet 1.6T 平台 3/10/2026 發布（正：design phase 獨家）；③ GM 連 2 年下滑（負：cost 壓力）；④ 國防 segment +18% FY25（正：sticky revenue）；⑤ Pentagon 6G program 啟動推進（正）；⑥ 中國本土 T&M 對 R&S 低端市佔侵蝕（負，但對 KEYS 影響小）<br>淨變化：4 正 + 2 負 = → holding</td></tr>
+</tbody>
+</table>
+
+<p><strong>A1 結論：</strong>KEYS Moat 8 結構穩，Spirent 整合是 +1 補強 NTN/6G，但 GM 下滑 -2.5pp 是 yellow flag。短期 Moat 8 → 中期 7.5-8.5（看 Spirent 整合）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢（獨立結論：🟢 寬 — T&M 市場 5.6% CAGR + AI/6G 雙引擎）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>TAM</td><td>T&M 全球 $37.7B（2025）→ $65B（2035）= 5.6% CAGR；AI interconnect TAM $200B by 2030；800G+ 光模組 60% shipments 2026</td></tr>
+<tr><td>供需</td><td>偏緊 — AI cycle + Pentagon defense modernization + 6G R&D 啟動同時拉動；未來 12 個月持續</td></tr>
+<tr><td>最大技術替代</td><td>軟體驗證（NI LabVIEW + Cadence Spectre RF + Synopsys VCS RF）對 hardware T&M 部分蠶食 — 中期威脅但需要 RF/microwave physical layer 仍只能 hardware</td></tr>
+<tr><td>政策/地緣風險</td><td>中國對美 T&M 出口管制（中國是 KEYS 13% Rev，2024 已開始管制 high-end RF 出口至中國研究院）— 已 partial priced in</td></tr>
+<tr><td>議價權</td><td>對上游（半導體 + 光學模組）<strong>中</strong>；對下游（hyperscaler + telecom OEM + 國防）<strong>強</strong>（沒有 second-source）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：S 曲線 — 5G 已成熟、AI 正爆發（中期）、6G 是下一條曲線（2028+）、量子通訊 + NTN 是第三條曲線（2030+）；Y5 末（2031）AI interconnect 滲透率 ~60% 仍有空間；多條 S 曲線疊加</td></tr>
+</tbody>
+</table>
+
+<p><strong>A2 結論：</strong>T&M 是「不被市場注意但每代技術升級都受益」的傭兵位置；2026-2030 是 AI single-engine，2028-2033 加入 6G double-engine，2030+ 加上 NTN/量子 = 結構性 supercycle 雛形。但相比 GPU/晶圓代工，KEYS β 較低、成長較慢 — 是 high-quality compounder 而非 hypergrowth。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務財務 / 資本配置（獨立結論：Q1 FY26 大 beat，但 ROIC 偏低 + 現價已 priced in）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>營收結構</td><td>FY25 Rev $5.37B；Communications Solutions Group (CSG) ~60%（含 commercial + A&D）；Electronic Industrial Solutions Group (EISG) ~40%。Q1 FY26 Commercial Comms $758M（+33% YoY），A&D 段 FY25 +18%</td></tr>
+<tr><td>客戶集中</td><td>Top10 customers ~28% Rev；NVDA / Marvell / Cisco / Lockheed / 國防部 partial 為主要；分散度比 MPWR 好</td></tr>
+<tr><td>定價權</td><td>GM 65% 維持但 -2.5pp 累積 = pricing power <strong>強但有 cost 壓力</strong></td></tr>
+<tr><td>未來金雞母</td><td>6G（2028+ ratified 後啟動）、AI Ethernet 1.6T→3.2T、Spirent NTN+satellite、量子通訊驗證（2030+）</td></tr>
+<tr><td>財務體質</td><td>Q1 FY26 Rev $1.60B (+23%), EPS $2.17 beat, Orders $1.65B (+30%), FCF $407M；FY25 Rev $5.37B (vs $4.98B), FCF $1.28B；GM 65%, OM 26%, R&D $1.007B (~19%)；ROIC TTM 7.4%（Spirent 稀釋）；Net cash 仍正（Spirent acquisition 用部分現金）</td></tr>
+<tr><td>資本配置</td><td>$1.5B 新 buyback 公告；上輪 buyback 9.57M 股 / $1.39B 完成；Spirent $1.46B（10/15/2025 收）；無 dividend；M&A track record：Ixia 2017 / ESI 2019 / Sanjole 2020 / Spirent 2025 — 紀律良好</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base）</strong></td><td>EPS CAGR 12.5%（FY25 ~$8.10 → FY30 $16，CAGR 14.6%，扣 SBC -2.1pp）；5Y forward PE 預估 36x vs 當前 42x（re-rate 貢獻 (36/42)^(1/5)-1 = -3.1%/yr）；無股息；淨買回率 ~1.0%（已扣 SBC 1.3%）= 淨 -0.3%</td></tr>
+</tbody>
+</table>
+
+<p><strong>A3 結論：</strong>Q1 FY26（2/23）大 beat + analyst PT 集體上修（Goldman $384、JPM $360）= 業績 inflection 確認；但 ROIC 7.4% 偏低（Spirent 暫時稀釋）+ 現價 $367 已 priced in 共識 12 月 PT — 進場 alpha 弱，需要等 5/19 後回測或 PE 回到 30x。</p>
+
+<h4>A3 補充：分析師 PT 散布（5/1 後）</h4>
+<table>
+<thead><tr><th>機構</th><th>新 PT</th><th>對應 PE × FY27 EPS</th></tr></thead>
+<tbody>
+<tr><td>Goldman Sachs</td><td>$384</td><td>~37x × $10.4 = $385</td></tr>
+<tr><td>JPMorgan</td><td>$360</td><td>~35x × $10.3</td></tr>
+<tr><td>共識中位</td><td>$370</td><td>~36x × $10.3</td></tr>
+</tbody>
+</table>
+<p class="note">共識隱含 PE 維持 35-37x — 比 MPWR 賣方共識 60x PE 保守；但仍高於歷史 5Y mid PE 32x。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD/ID 數據摘要（DD_KEYS_20260418.html v12.0）</summary>
+<div>
+
+<table>
+<tbody>
+<tr><td>Quality Score</td><td>8.5</td></tr>
+<tr><td>訊號燈</td><td>X（迴避，gate 🔴 過熱）</td></tr>
+<tr><td>moat tier</td><td>B（8/10）</td></tr>
+<tr><td>估值燈</td><td>🔴（PE 分位 100% + PEG 2.07）</td></tr>
+<tr><td>MA 狀態</td><td>✅ 強勢進場（W250 +4.02%）</td></tr>
+<tr><td>R:R 短期</td><td>-0.76x（目標 $222.75 vs 現價 $334.34 @ 4/18）</td></tr>
+<tr><td>R:R 中期</td><td>-0.56x（目標 $258.25）</td></tr>
+<tr><td>核心假設</td><td>H1 AI Ethernet 設計週期持續 / H2 6G 2027-2028 ratification / H3 Spirent 整合成功</td></tr>
+<tr><td>紅旗清單</td><td>① PE 5Y 分位 100% 極端；② 4 週 +14% drift；③ GM 累計 -2.5pp；④ Bear case 嚴格</td></tr>
+<tr><td>ID basis</td><td>ID_QuantumComputing_20260427 + 隱含 ID_AINetworking + ID_SiliconPhotonicsCPO</td></tr>
+</tbody>
+</table>
+
+<p><strong>DD vs DCA 關鍵差異：</strong>DD 4/18 給 X（PE 分位 100% 直接拒絕）；DCA 在 Q1 FY26 法說後寫，PE 從 37.5x → 30.5x（EPS 從 $8.91 → $9-10 上修），PEG 從 2.07 → 1.75-1.8 改善至 🟠/🟡，訊號燈解禁至 B。但 4 週 +22% 過熱、ROIC 偏低、6G ratification 風險三大警示仍 valid。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜競爭格局深度分析（KEYS vs R&S / Anritsu / NI / VIAVI-Spirent）</summary>
+<div>
+
+<h4>T&M 競爭五力分析</h4>
+<table>
+<thead><tr><th>對手</th><th>強項</th><th>弱項</th><th>與 KEYS 的差距趨勢</th></tr></thead>
+<tbody>
+<tr><td>Rohde & Schwarz（私有）</td><td>德國工程精密度、歐洲國防客戶（Rheinmetall, Leonardo, Airbus）lock-in、5G/6G 標準參與度 #2</td><td>美國國防滲透弱、AI Ethernet 平台落後、R&D scale 小 KEYS 40%</td><td>近 3 年穩定；KEYS 在 1.6T AI Ethernet 領先 12-18 月</td></tr>
+<tr><td>Anritsu（日本上市）</td><td>價格敏感市場（亞洲、新興市場）、5G mobile 出貨量大、scope 廣</td><td>高端 sub-THz / 6G 落後、defense 滲透低、GM ~55% vs KEYS 65%</td><td>KEYS 拉開差距；Anritsu 5G 紅利消退中</td></tr>
+<tr><td>NI / Emerson（合併後）</td><td>軟體驗證生態（LabVIEW 30 年）、Automotive radar 強</td><td>RF/microwave hardware 弱、6G 投入有限、被 Emerson 收購後 strategic focus 不清</td><td>NI 失去 T&M 純度後 share 流向 KEYS + R&S</td></tr>
+<tr><td>VIAVI + 接手 Spirent 高速 Ethernet 部分</td><td>Wireline carrier 測試強、剛收 Spirent 高速 Ethernet 業務（FTC 強制 divest）</td><td>R&D scale 小、無 6G 標準制定參與、Spirent divest 部分整合風險</td><td>對 KEYS Comms 段 high-end 影響有限；mid-end 競爭加劇</td></tr>
+<tr><td>中國本土（Rigol、中電 41 所）</td><td>價格優勢（25-40% 低 KEYS）、本土 telecom 客戶（Huawei, ZTE）保護</td><td>&lt; 50GHz 區段為主；高端 RF/microwave 仍買 KEYS（出口管制反推中國依賴）</td><td>侵蝕 Anritsu 中低端 &gt; 影響 KEYS</td></tr>
+</tbody>
+</table>
+
+<h4>KEYS Spirent 整合進度（10/2025 收盤後）</h4>
+<table>
+<thead><tr><th>整合面向</th><th>狀態</th><th>關鍵 milestone</th></tr></thead>
+<tbody>
+<tr><td>組織</td><td>已併入 CSG（Communications Solutions Group）</td><td>FY26 Q1 已開始 reporting under CSG</td></tr>
+<tr><td>產品線</td><td>NTN（非地面網路）+ Satellite emulation + Positioning 為主</td><td>FY26 Q2-Q4 segment margin 應該逐季改善</td></tr>
+<tr><td>FTC divestiture</td><td>高速 Ethernet 測試 + Network security testing + RF channel emulation 賣給 VIAVI（~40% Spirent Rev）</td><td>2026 Q1 完成（已過）</td></tr>
+<tr><td>新增 TAM</td><td>$1.5B（管理層宣告）</td><td>2030 之前實現</td></tr>
+<tr><td>歷史整合 track record</td><td>Ixia 2017（成功）/ ESI 2019（成功）/ Sanjole 2020（成功）— 3/3 成功</td><td>Spirent 規模 5x Ixia，挑戰較大</td></tr>
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜FY26 Q2 法說 watchlist（2026-05-19）</summary>
+<div>
+
+<h4>重點觀察項</h4>
+<table>
+<thead><tr><th>觀察點</th><th>樂觀情境</th><th>悲觀情境</th><th>對倉位影響</th></tr></thead>
+<tbody>
+<tr><td>Wireline 訂單 YoY</td><td>≥ +40%（Q1 已 +33%）</td><td>&lt; +15%</td><td>樂觀 → 加碼至 3.0%；悲觀 → 維持 2.0% 或減</td></tr>
+<tr><td>Aerospace/Defense 訂單</td><td>≥ +20%</td><td>flat-up &lt; +5%</td><td>樂觀 → 加碼 reasoning；悲觀 → 觀察</td></tr>
+<tr><td>Spirent 整合段 OM</td><td>≥ 27%（接近 KEYS 整體 OM 26%）</td><td>≤ 20%</td><td>悲觀 → 觸發 §5 secondary trigger</td></tr>
+<tr><td>FY26 全年 guide 上修</td><td>Rev guide 從 $6.1B → $6.3B+，EPS $8.59 → $9.20+</td><td>維持原 guide 不變或下修</td><td>樂觀 → B 升 A；悲觀 → B 維持，觀察 Q3</td></tr>
+<tr><td>6G design phase 客戶</td><td>管理層提到「6G design wins at multiple customers」</td><td>「continued R&D engagement」之類模糊 wording</td><td>樂觀 → Driver 2 強化；悲觀 → 維持但提升 §5 trigger 警戒</td></tr>
+<tr><td>FY27 outlook 言論</td><td>提到「sustained growth into FY27」</td><td>提到「moderating growth as AI capex peaks」</td><td>悲觀 → 觸發 §5 trigger</td></tr>
+</tbody>
+</table>
+
+<h4>5/19 法說後決策樹</h4>
+<table>
+<tbody>
+<tr><td>情境 A：4 項以上樂觀</td><td>升級至 B+ / A，加碼至 3.0-3.5%</td></tr>
+<tr><td>情境 B：2-3 項樂觀，其他中性</td><td>維持 B，倉位 2.0%</td></tr>
+<tr><td>情境 C：2 項悲觀（含 Spirent OM 或 6G wording）</td><td>降級至 C，減碼至 1.0% 或觀察</td></tr>
+<tr><td>情境 D：3+ 項悲觀</td><td>降級至 X，清倉</td></tr>
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜Patrick Lynch 風格 thesis 解構（用一句話講清楚為什麼買）</summary>
+<div>
+
+<h4>Lynch 框架：是「what business」、「why moat」、「what makes money」</h4>
+<p><strong>What business：</strong>KEYS 賣的是「不犯錯保險」— 通訊晶片設計、6G 基地台 prototype、AI Ethernet 1.6T transceiver、衛星 modem，這些東西出貨前都必須通過「驗證」這一關，KEYS 是這道驗證的 anchor 供應商之一（與 R&S 雙寡頭）。</p>
+<p><strong>Why moat：</strong>因為「驗證錯誤」的代價極高 — AI Ethernet 1.6T 通道 design bug 可能讓整個 NVL72 機櫃損失千萬美元；6G base station 設計錯誤可能撤回全球部署。客戶不會為了省 10% 儀器成本去買一個「probably works」的替代品 — 這是 mission-critical 的 sticky 採購。</p>
+<p><strong>What makes money：</strong>(1) 儀器本身 GM 65%；(2) 配套 PathWave 軟體 license 是 recurring；(3) 校驗服務 / 維修 / 升級是 annuity；(4) 6G 標準制定參與讓 KEYS 在新規格上市前 12-18 月就有「準產品」競爭優勢。</p>
+<p><strong>Lynch 的「能講清楚」測試：</strong>✅ 通過 — 我能用 60 秒讓朋友理解為什麼 KEYS 有護城河，比起需要 5 分鐘解釋 BCD 製程的 MPWR，KEYS 的 thesis 更接近 Lynch 偏好的「無聊產業 + 隱形龍頭」配方。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜歷史財務週期 + 5G/6G/AI 三波對照</summary>
+<div>
+
+<h4>KEYS 過去 10 年三波技術超級週期</h4>
+<table>
+<thead><tr><th>週期</th><th>時期</th><th>核心驅動</th><th>Rev CAGR</th><th>EPS CAGR</th><th>PE 區間</th><th>5Y 報酬</th></tr></thead>
+<tbody>
+<tr><td>4G + IoT</td><td>2014-2018</td><td>LTE deployment, IoT 早期</td><td>+3%</td><td>+8%</td><td>15-22x</td><td>+45%</td></tr>
+<tr><td>5G + AI 早期</td><td>2019-2023</td><td>5G NR ratified、5G handset/base station validation、Hyperscale data center 第一波</td><td>+10%</td><td>+18%</td><td>18-47x</td><td>+155%</td></tr>
+<tr><td>AI Ethernet + 6G + Spirent</td><td>2024-2028E</td><td>800G/1.6T AI Ethernet、6G R&D phase、A&D defense modernization、Spirent acquisition</td><td>+12%</td><td>+15-18%</td><td>30-47x</td><td>?+80-150%</td></tr>
+</tbody>
+</table>
+
+<h4>關鍵 takeaway</h4>
+<p>① KEYS 5G 週期 5Y 報酬 +155% 是過去 20 年最大週期；AI/6G 週期是否能複製？答案：<strong>取決於 6G 何時 ratified</strong>。若 2027-2028 ratified，會疊加 AI cycle，可能複製甚至超越 5G；若延後至 2030+，AI single-engine 不夠強。</p>
+<p>② 進場 timing 比較：5G 週期初啟動點 PE ~18x（2019），$95；當前 AI/6G 週期 PE 42x（2026），$367 — <strong>當前進場 starting valuation 比 5G 進場高 2.3x，5Y 報酬可能只有 5G 的 50-60%（即 70-90%）</strong>。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜KEYS 反向情境：Munger Inversion 三維</summary>
+<div>
+
+<table>
+<thead><tr><th>維度</th><th>失效路徑</th><th>歷史對標</th><th>機率</th></tr></thead>
+<tbody>
+<tr><td>技術維</td><td>6G 標準碎片化：中美兩套不相容標準分裂市場，KEYS 必須同時支援兩套儀器架構 → R&D 投入翻倍但 TAM 沒翻倍</td><td>2018-2020 5G 早期一度中美差異化但最終收斂於 3GPP；6G AI-native 元素讓碎片化機率上升</td><td>20%</td></tr>
+<tr><td>管理層維</td><td>Spirent 整合在 18 個月內 OM 拖累 &gt; -3pp，CEO Satish Dhanasekaran 面臨更換壓力</td><td>歷史 M&A track record 3/3 成功；但 Spirent 規模 5x 過去最大</td><td>15%</td></tr>
+<tr><td>結構維</td><td>軟體模擬完全取代 hardware T&M：到 2030 大部分 design phase 可在 NI LabVIEW + Cadence + Synopsys 純軟體驗證</td><td>EDA 進步 + sub-Layer 1 仍需 hardware；歷史上完全替代 binary 風險低</td><td>10%</td></tr>
+</tbody>
+</table>
+
+<p><strong>合計 Bear 機率：</strong>~30%（與 §4 Bear 機率 30% 一致）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜訊號燈 X→B 升級條件路徑（DD 4/18 → DCA 5/12）</summary>
+<div>
+
+<h4>從 DD 4/18 到 DCA 5/12 期間發生了什麼？</h4>
+<table>
+<thead><tr><th>事件</th><th>日期</th><th>對訊號燈影響</th></tr></thead>
+<tbody>
+<tr><td>DD_KEYS_20260418 publish</td><td>2026-04-18</td><td>X（gate 🔴 過熱，PE 5Y 分位 100%）</td></tr>
+<tr><td>Q1 FY26 法說 Rev $1.60B / EPS $2.17 雙 beat</td><td>2026-02-23（追溯）</td><td>EPS 共識自 $8.91 → $9.20+；PE 分母上修</td></tr>
+<tr><td>Stock +23% 跳空 Feb 24</td><td>2026-02-24</td><td>從 $260 → $301，但仍低於 DD 當時 $334</td></tr>
+<tr><td>Spirent acquisition 整合公布</td><td>2025-10-15</td><td>已 priced in，但 FTC divest VIAVI 細節改善</td></tr>
+<tr><td>AI Ethernet 1.6T platform 發布</td><td>2026-03-10</td><td>Driver 1 強化，產品競爭力可見</td></tr>
+<tr><td>Goldman raises PT $322 → $384</td><td>2026-04-14</td><td>賣方共識上修</td></tr>
+<tr><td>JPMorgan PT $360</td><td>2026-04-16</td><td>賣方共識上修</td></tr>
+<tr><td>4 週 +22% drift（5/12 vs 4/14）</td><td>2026-04-14 至 2026-05-12</td><td>過熱警示加強，但 PE 從 37.5 → 30.5 改善</td></tr>
+<tr><td>Stock $334.34 → $367（4/18 → 5/12）</td><td>4 週</td><td>+10%；entry 變更貴但仍可接受</td></tr>
+<tr><td>DCA 5/12 升級至 B</td><td>2026-05-12</td><td>條件：PE 從 100% 分位 → 80% 分位；PEG 從 2.07 → 1.75；driver 1+2 evidence 強化</td></tr>
+</tbody>
+</table>
+
+<h4>下次評估的 trigger event</h4>
+<table>
+<thead><tr><th>Trigger</th><th>方向</th><th>對訊號燈影響</th></tr></thead>
+<tbody>
+<tr><td>2026-05-19 Q2 FY26 法說</td><td>樂觀（Rev beat + guide 上修）</td><td>B → A+ 升級條件</td></tr>
+<tr><td>2026-05-19 Q2 FY26 法說</td><td>悲觀（Rev miss 或 Spirent 拖累）</td><td>B → C/X 降級</td></tr>
+<tr><td>2026 H2 6G workshop 公告</td><td>3GPP Release 21 on track</td><td>Driver 2 強化，PE re-rate 上限延後</td></tr>
+<tr><td>2026 H2 6G workshop 公告</td><td>3GPP Release 21 延後 &gt; 12M</td><td>§5 primary trigger，立刻 B → C</td></tr>
+<tr><td>FY27 Q4 / FY28 Q1 Spirent 整合年回顧</td><td>OM ≥ 27%</td><td>B → A 結構性升級</td></tr>
+<tr><td>FY27 Q4 / FY28 Q1 Spirent 整合年回顧</td><td>OM &lt; 22%</td><td>§5 secondary trigger，B → C</td></tr>
+</tbody>
+</table>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜對比 MPWR 同期 DCA — 兩檔差異與配置選擇</summary>
+<div>
+
+<h4>KEYS vs MPWR（同日 DCA，2026-05-12）</h4>
+<table>
+<thead><tr><th>維度</th><th>KEYS</th><th>MPWR</th><th>取捨建議</th></tr></thead>
+<tbody>
+<tr><td>訊號燈</td><td>B</td><td>B</td><td>相同</td></tr>
+<tr><td>Moat tier / 趨勢</td><td>B 8/10 / →</td><td>B 7/10 / →</td><td>KEYS 護城河結構略強</td></tr>
+<tr><td>Runway Post-Y5</td><td>🟢 寬（6G + NTN + 量子）</td><td>🟢 寬（800V + Feynman）</td><td>相當</td></tr>
+<tr><td>Max DD（5Y 中途）</td><td>−48% 🟡</td><td>−58% 🔴</td><td>KEYS 較好抱</td></tr>
+<tr><td>5Y Base IRR</td><td>+9.1%/yr</td><td>+7.7%/yr</td><td>KEYS 略優</td></tr>
+<tr><td>機率加權 IRR</td><td>+7.6%/yr</td><td>+6.0%/yr</td><td>KEYS 較優</td></tr>
+<tr><td>客戶集中度風險</td><td>分散（Top10 ~28%）</td><td>集中（NVDA + 1 hyperscaler ~30-35%）</td><td>KEYS 較好</td></tr>
+<tr><td>CEO 警示</td><td>無</td><td>Hsing 6M 賣 $255M</td><td>KEYS 較好</td></tr>
+<tr><td>未決訴訟</td><td>無重大</td><td>25-cv-00220 進行中</td><td>KEYS 較好</td></tr>
+<tr><td>進場節奏</td><td>等 5/19 Q2 後</td><td>等回 MA60 / RSI ≤ 55</td><td>KEYS timing 更明確（5/19）</td></tr>
+<tr><td>建議倉位</td><td>2.0%（目標 3.5%）</td><td>1.5%（目標 3.0%）</td><td>KEYS 略大</td></tr>
+</tbody>
+</table>
+
+<h4>整體取捨</h4>
+<p>若 portfolio 只能持一檔，<strong>KEYS 排在 MPWR 之前</strong> — 原因：(1) Max DD 較淺、(2) 客戶集中度低、(3) 沒有 CEO / 訴訟風險、(4) Bull-Base IRR 略優。但 MPWR 有「Rubin 70% 份額」這條 binary 高 reward catalyst，若實現會在 12-18 個月內爆發；KEYS 是「sustainable compounder」配置型。</p>
+<p>若 portfolio 已持 NVDA / AVGO / 2330 重倉，<strong>KEYS 是更好的補位</strong>（與這些不重疊；MPWR 是 NVDA-co exposure 雙押）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>補充｜情境細節 — 三條 EPS 路徑 + PE 演化推導</summary>
+<div>
+
+<h4>5 年 EPS 路徑（FY25 base $8.10）</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull EPS</th><th>Base EPS</th><th>Bear EPS</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>$9.30</td><td>$8.80</td><td>$8.40</td></tr>
+<tr><td>FY27</td><td>$11.20</td><td>$10.30</td><td>$9.40</td></tr>
+<tr><td>FY28</td><td>$13.50</td><td>$12.00</td><td>$10.30</td></tr>
+<tr><td>FY29</td><td>$16.20</td><td>$14.00</td><td>$11.40</td></tr>
+<tr><td>FY30</td><td>$18.00</td><td>$16.00</td><td>$12.00</td></tr>
+<tr><td><strong>CAGR FY25→FY30</strong></td><td><strong>+17.3%</strong></td><td><strong>+14.6%</strong></td><td><strong>+8.2%</strong></td></tr>
+</tbody>
+</table>
+
+<h4>5 年 PE 路徑（FY25 PE 42x）</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull PE</th><th>Base PE</th><th>Bear PE</th></tr></thead>
+<tbody>
+<tr><td>FY26</td><td>44</td><td>40</td><td>35</td></tr>
+<tr><td>FY27</td><td>46</td><td>38</td><td>30</td></tr>
+<tr><td>FY28</td><td>45</td><td>37</td><td>26</td></tr>
+<tr><td>FY29</td><td>46</td><td>36</td><td>24</td></tr>
+<tr><td>FY30</td><td>46</td><td>36</td><td>22</td></tr>
+</tbody>
+</table>
+
+<h4>對應股價路徑（FY EPS × FY PE）</h4>
+<table>
+<thead><tr><th>FY</th><th>Bull price</th><th>Base price</th><th>Bear price</th></tr></thead>
+<tbody>
+<tr><td>FY26（2026/11）</td><td>$409</td><td>$352</td><td>$294</td></tr>
+<tr><td>FY27（2027/11）</td><td>$515</td><td>$391</td><td>$282</td></tr>
+<tr><td>FY28（2028/11）</td><td>$608</td><td>$444</td><td>$268</td></tr>
+<tr><td>FY29（2029/11）</td><td>$745</td><td>$504</td><td>$274</td></tr>
+<tr><td>FY30（2030/11）</td><td>$828</td><td>$576</td><td>$264</td></tr>
+<tr><td><strong>5Y total return</strong></td><td><strong>+125%</strong></td><td><strong>+57%</strong></td><td><strong>−28%</strong></td></tr>
+</tbody>
+</table>
+
+<h4>路徑機率對照 §4</h4>
+<p>本表 Bull/Base/Bear 5Y total return（+125% / +57% / -28%）與 §4 Asymmetry Analysis 表（+125% / +55% / -35%）<strong>差距 ≤ 7%p</strong>，符合內部一致性 ≤ 10%p 容忍度。</p>
+
+</div>
+</details>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>
