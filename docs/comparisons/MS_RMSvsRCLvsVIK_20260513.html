@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS RMS vs RCL vs VIK 2026-05-13 | 多標的對比分析</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", Roboto, sans-serif; background: #ffffff; color: #1a1d24; line-height: 1.8; font-size: 16px; font-weight: 400; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+p { color: #1a1d24; margin: 14px 0; font-weight: 400; }
+li { color: #1a1d24; font-weight: 400; }
+strong { color: #000000; font-weight: 700; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+.report-header { border-bottom: 2px solid #d0d8e0; padding-bottom: 16px; margin-bottom: 24px; }
+.report-header h1 { font-size: 28px; color: #0a1628; margin: 0 0 8px; font-weight: 700; }
+.report-meta { font-size: 14px; color: #4a5568; font-weight: 500; }
+.report-meta span { margin-right: 16px; }
+.toc-nav { position: sticky; top: 0; background: #ffffff; padding: 14px 20px; border-bottom: 2px solid #d0d8e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 0 -20px 28px; z-index: 100; }
+.toc-nav a { color: #1565c0; text-decoration: none; margin-right: 16px; font-size: 14px; font-weight: 600; display: inline-block; padding: 4px 2px; }
+.toc-nav a:hover { color: #c2410c; }
+section { margin-bottom: 36px; padding-top: 16px; }
+h2 { font-size: 24px; color: #0a1628; border-left: 4px solid #1565c0; padding-left: 12px; margin: 0 0 18px; font-weight: 700; }
+h3 { font-size: 18px; color: #c2410c; margin: 22px 0 12px; font-weight: 700; }
+h4 { font-size: 16px; color: #15803d; margin: 16px 0 10px; font-weight: 700; }
+.verdict-card { background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%); border: 1px solid #90caf9; border-left: 4px solid #15803d; border-radius: 8px; padding: 22px 26px; margin-bottom: 22px; }
+.verdict-card .verdict-label { font-size: 13px; color: #4a5568; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+.verdict-card .verdict-pick { font-size: 32px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.verdict-card .verdict-timeframe { font-size: 15px; color: #c2410c; margin-bottom: 14px; font-weight: 600; }
+.verdict-card ul { margin: 8px 0 0; padding-left: 22px; }
+.verdict-card li { margin-bottom: 10px; font-size: 15px; color: #1a1d24; line-height: 1.7; }
+.verdict-card p { color: #1a1d24; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 15px; background: #ffffff; border: 1px solid #d0d8e0; border-radius: 6px; overflow: hidden; }
+th { background: #f1f5f9; color: #0a1628; padding: 12px 14px; text-align: left; border-bottom: 2px solid #cbd5e1; font-weight: 700; font-size: 14px; }
+td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; color: #1a1d24; vertical-align: top; font-weight: 400; }
+tr:hover { background: #f8fafc; }
+tr:last-child td { border-bottom: none; }
+.rank-1 { color: #15803d; font-weight: 700; }
+.rank-2 { color: #475569; font-weight: 700; }
+.rank-3 { color: #c2410c; font-weight: 700; }
+.signal { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.signal-green { background: #dcfce7; color: #166534; }
+.signal-yellow { background: #fef3c7; color: #92400e; }
+.signal-red { background: #fee2e2; color: #991b1b; }
+.signal-grey { background: #e2e8f0; color: #475569; }
+.callout { background: #eff6ff; border-left: 4px solid #1565c0; padding: 16px 20px; margin: 18px 0; border-radius: 4px; font-size: 15px; color: #1a1d24; line-height: 1.75; }
+.callout strong { color: #000000; font-weight: 700; }
+.callout-warn { background: #fff7ed; border-left-color: #c2410c; }
+.callout-key { background: #f0fdf4; border-left-color: #15803d; }
+.callout-danger { background: #fef2f2; border-left-color: #991b1b; }
+.irr-bar { display: flex; height: 40px; border-radius: 4px; overflow: hidden; margin: 10px 0 4px; background: #e2e8f0; border: 1px solid #cbd5e1; }
+.irr-segment { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 8px; }
+.irr-eps { background: #15803d; }
+.irr-rerate-pos { background: #1565c0; }
+.irr-rerate-neg { background: #b91c1c; color: #ffffff; }
+.irr-buyback { background: #c2410c; }
+.irr-eps-neg { background: #7f1d1d; color: #ffffff; }
+.irr-dividend { background: #64748b; }
+.irr-legend { font-size: 14px; color: #334155; margin-bottom: 16px; line-height: 1.7; }
+.timeframe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; }
+.tf-card { background: #f8fafc; border: 1px solid #d0d8e0; border-radius: 6px; padding: 16px 18px; }
+.tf-card .tf-label { font-size: 12px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+.tf-card .tf-winner { font-size: 20px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.tf-card .tf-reason { font-size: 14px; color: #1a1d24; line-height: 1.65; font-weight: 400; }
+.report-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #d0d8e0; font-size: 13px; color: #4a5568; text-align: center; line-height: 1.7; }
+@media print { body { background: #ffffff; color: #000000; } .toc-nav { display: none; } }
+@media (max-width: 768px) {
+  body { font-size: 17px; line-height: 1.85; }
+  .container { padding: 16px 16px 40px; }
+  .report-header h1 { font-size: 22px; }
+  h2 { font-size: 21px; } h3 { font-size: 18px; } h4 { font-size: 17px; }
+  p, li { font-size: 16px; }
+  table { font-size: 14px; }
+  th, td { padding: 12px 10px; }
+  .toc-nav { padding: 14px 16px; margin: 0 -16px 24px; }
+  .toc-nav a { margin-right: 14px; font-size: 14px; padding: 6px 2px; }
+  .callout, .verdict-card { font-size: 15px; }
+  .verdict-card li { font-size: 15px; }
+  .irr-segment { font-size: 12px; }
+  .tf-card .tf-reason { font-size: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="report-header">
+<h1>📊 MS RMS vs RCL vs VIK｜多標的對比分析</h1>
+<div class="report-meta">
+<span>📅 2026-05-13</span>
+<span>📐 來源：DCA_RMS_20260511 + DCA_RCL_20260511 + DCA_VIK_20260511</span>
+<span>🎯 四層時間框架對比，主推 3-5 年 view</span>
+</div>
+</header>
+
+<nav class="toc-nav">
+<a href="#sA">§A Dashboard</a>
+<a href="#sB1">§B.1 &lt;12M</a>
+<a href="#sB2">§B.2 2-3Y</a>
+<a href="#sB3">§B.3 3-5Y</a>
+<a href="#sB4">§B.4 5-10Y</a>
+<a href="#sC">§C IRR 質感</a>
+<a href="#sD">§D Bear/MaxDD</a>
+<a href="#sE">§E 最終裁決</a>
+</nav>
+
+<!-- §A Dashboard -->
+<section id="sA">
+<h2>§A 對比 Dashboard</h2>
+
+<div class="verdict-card">
+<div class="verdict-label">綜合裁決（3-5 年中長期 view）</div>
+<div class="verdict-pick">推薦：RCL（Royal Caribbean Group）</div>
+<div class="verdict-timeframe">3-5 年中期 — 核心持倉 5-6% 配置（初始 3.5%，分批 3 次）</div>
+<ul>
+<li><strong>理由 1（三檔中唯一 A 訊號 + 進場 timing 立即可動）：</strong>原 DCA 綜合訊號燈 A（核心候選）、現價 $276 在進場區間 $258-285 中段、Pure MA 長線 W104 ✅（短中線未過）、RSI 14d 38.6 偏弱非過熱、Q1 26 已 beat $0.41 + Adj EBITDA margin 38% +300bps YoY。對照 RMS 訊號 X（MA ❌ 三條全失守需等 €1,500 或 W104 站回）、VIK 訊號 C（RSI &gt;70 動能過熱需回測 $70-75）。RCL 是三檔中唯一「可以今天就建第一批」的標的。</li>
+<li><strong>理由 2（IRR composition 三層複合 + Moat 唯一 ↑ widening）：</strong>Base IRR +12.0%/yr 中 EPS +11.6%/yr 主動力（占 95%）+ Re-rate +2.8%/yr（FPE 15.7x → 18x cyclical 天花板）+ Div+Buyback +1.5%/yr（$1/季股息 + $2B buyback 已啟動 $836M）三層複合結構。對照 RMS Base +8.4% 主要靠 EPS +9% 但受 super cycle 結束逆風、VIK Base +10.5% 純 EPS +13% 但無股息無回購 cushion + Re-rate -2.5% 拖累。RCL Moat B+ 8/10 ↑ widening（私島矩陣 2→8 by 2028）是三檔中唯一加深 — 對照 RMS S 10/10 → holding、VIK A 9/10 → holding（Celebrity 2027 對沖）。</li>
+<li><strong>理由 3（Bear case 性質最可控 + Pattern Match 對標強樣本）：</strong>Bear case 純執行風險（Caribbean Net Yield 季度可監測 + Perfect Day Mexico 工程進度可追蹤），無 RMS 的「家族第七代接班空懸 + super cycle 結束範式」或 VIK 的「Celebrity River 競爭範式 + Hagen 80+ 接班治理」雙重範式焦慮。Pattern Match 對標 MAR 2014-2019（5Y +110% / +16% IRR）+ RCL 自身 2014-2019（5Y +95% / +14% IRR），歷史對標在三檔中時間軸最對應且樣本最強。</li>
+</ul>
+<p style="margin-top:14px; font-size:13px; color:#c2410c;">
+<strong>進場條件（條件式分批 3 次）：</strong>① 立即建第一批 1.5%（RSI 38 偏弱、長線 MA104w ✅）；② Q2 26 法說（2026-07-29）若 Net Yield CC ≥ +2.0% 達 guide 中位 + FY26 EPS guidance 重申 ≥ $17.10 → 加 1.0% 至 2.5%；③ Perfect Day Mexico 工程進度官方更新（2026 Q4 法說）若 on-track → 加 1.0% 至 3.5%（衛星上限）。減碼觸發：Net Yield CC 連 2 季 &lt; 0%；清倉觸發：Caribbean Net Yield -3% YoY 連 2 季 + CCL/NCLH 公開降價。
+</p>
+</div>
+
+<h3>三檔基本資料對比</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>RMS (Hermès)</th><th>RCL (Royal Caribbean)</th><th>VIK (Viking Holdings)</th></tr>
+</thead>
+<tbody>
+<tr><td>產業</td><td>奢侈品（quiet luxury + heritage）</td><td>Cruise（mass + premium 雙引擎 + 私島）</td><td>Cruise（pure luxury / 高端 niche）</td></tr>
+<tr><td>現價（5/8-5/12 收）</td><td>EUR 1,661</td><td>$276</td><td>$80.64</td></tr>
+<tr><td>市值規模</td><td>~€247B</td><td>~$74B</td><td>~$33B</td></tr>
+<tr><td>Fwd PE（FY+1）</td><td>37.29x（on FY26 €45.61）</td><td><span class="rank-1">15.73x（on FY26 $17.33）</span></td><td>20.6x（on FY26 $3.34 cons）</td></tr>
+<tr><td>5Y PE 分位</td><td>~10%</td><td><span class="rank-1">~20%（FPE 15.7x vs 5Y 均 19.64x）</span></td><td>~95%（PE 最貴位置）</td></tr>
+<tr><td>原 DCA 訊號燈</td><td><span class="signal signal-red">X（MA 失效 + 估值🟠）</span></td><td><span class="rank-1">A（核心候選）</span></td><td><span class="signal signal-yellow">C（衛星觀察）</span></td></tr>
+<tr><td>護城河 / 趨勢</td><td><span class="rank-1">S 10/10 → holding</span></td><td>B+ 8/10 ↑ widening（私島 2→8）</td><td>A 9/10 → holding（Celebrity 對沖）</td></tr>
+<tr><td>Runway Post-Y5</td><td><span class="signal signal-green">🟢 寬</span></td><td><span class="signal signal-green">🟢 寬（cruise 滲透 &lt;3%）</span></td><td><span class="signal signal-green">🟢 寬（TAM ×2 + 供給天花板）</span></td></tr>
+<tr><td>Max DD（5Y 估）</td><td><span class="signal signal-yellow">🟡 −30~−42%</span></td><td><span class="signal signal-yellow">🟡 −35~−55%</span></td><td><span class="signal signal-yellow">🟡 −35~−45%</span></td></tr>
+<tr><td>5Y IRR Bull / Base / Bear</td><td>+14.3 / +8.4 / -6.9</td><td><span class="rank-1">+16.7 / +12.0 / -5.4</span></td><td>+17.1 / +10.5 / -11.3</td></tr>
+<tr><td>5Y IRR（機率加權）</td><td>+5.5%/yr</td><td><span class="rank-1">+10.2%/yr</span></td><td>+8.5%/yr</td></tr>
+<tr><td>10Y IRR 壓力測試</td><td>+10.7%/yr</td><td>+11.8%/yr</td><td>+11-12%/yr</td></tr>
+<tr><td>Pure MA 狀態</td><td><span class="signal signal-red">❌ 三條全失守</span></td><td><span class="signal signal-yellow">中短線未過 / 長線 W104 ✅</span></td><td><span class="signal signal-yellow">W52 ✅ +29.3% / W104 IPO 不足</span></td></tr>
+<tr><td>短期動能</td><td>RSI ~38-42 偏弱 / 4w -4.95%</td><td><span class="rank-1">RSI 14d 38.6 偏弱非過熱 / 4w 近 0%</span></td><td><span class="signal signal-red">RSI &gt;70 過熱 / 4/17 跳空 +6.8%</span></td></tr>
+<tr><td>進場條件距離</td><td>€1,450-1,580（距現價 -5~-13%）</td><td><span class="rank-1">$258-285（現價 $276 在區間中段）</span></td><td>$70-75（距現價 -7~-13%）</td></tr>
+<tr><td>EPS 共識 90d 軌跡</td><td><span class="signal signal-red">FY26 -4.4% 連 4 季下修</span></td><td><span class="rank-1">FY26 guidance 維持 $17.10-17.50</span></td><td><span class="signal signal-yellow">FY26 cons $3.34 vs DD $4.17 分歧</span></td></tr>
+<tr><td>建議持有年限</td><td>中期至長期（3-7 年）</td><td>中期 3-4 年（核心 5-6%）</td><td>5-7 年</td></tr>
+<tr><td>股息率 / 回購</td><td>1.6% / 0% 回購（家族控股）</td><td><span class="rank-1">1.4% + $2B buyback 已啟動</span></td><td>0% / 0%（完全 reinvest）</td></tr>
+<tr><td>Bear case 性質</td><td><span class="signal signal-red">範式（super cycle 結束）+ 治理（家族接班）</span></td><td><span class="signal signal-green">純執行風險（季度可監測）</span></td><td><span class="signal signal-red">競爭範式（Celebrity）+ 治理（Hagen 接班）</span></td></tr>
+<tr><td>建倉上限</td><td>4-6%（核心，下修自 7-8%）</td><td><span class="rank-1">5-6%（核心，初始 3.5%）</span></td><td>3.5%（衛星，初始 1.5%）</td></tr>
+</tbody>
+</table>
+
+<h3>四層時間框架排序速覽</h3>
+<div class="timeframe-grid">
+<div class="tf-card">
+<div class="tf-label">&lt; 12M 短期</div>
+<div class="tf-winner">🥇 RCL</div>
+<div class="tf-reason">唯一 A 訊號 + 進場區間中段 + 動能不過熱 + Q1 26 已 beat $0.41；RMS X 訊號需等 €1,500、VIK RSI &gt;70 過熱需回測</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">2-3Y 中期</div>
+<div class="tf-winner">🥇 RCL</div>
+<div class="tf-reason">Perfecta 2027 EPS $24 路徑清晰 + Pattern Match MAR 2014-2019 (+16% IRR) 強樣本；VIK Celebrity 12M binary、RMS 估值修復 36+ 個月路徑爭議</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">3-5Y 中長期</div>
+<div class="tf-winner">🥇 RCL</div>
+<div class="tf-reason">IRR composition 三層複合 (EPS +11.6 + Re-rate +2.8 + Div+Buyback +1.5)；Moat 唯一 ↑ widening；Base IRR +12.0% 三檔最高</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">5-10Y 長期</div>
+<div class="tf-winner">🥇 RMS</div>
+<div class="tf-reason">唯一 S 級護城河 + 175 年品牌 + 家族治理 + 無 cycle 風險；compound machine 純度最高，但需先等 entry timing 與 super cycle settle</div>
+</div>
+</div>
+
+<div class="callout callout-key">
+<strong>核心洞察：</strong>三檔同屬「嬰兒潮 demographic supercycle + 高端體驗消費」basket（ID_BoomerTravelSupercycle 母題下 cruise 規模王 + cruise pure luxury + heritage luxury），但<strong>時間軸切換敏感度高</strong> — RCL 在短期 / 中期 / 中長期三層全勝（A 訊號 + IRR 質感 + 進場 timing 三項齊全），RMS 唯一在 5-10Y 長期視角下勝出（S 級護城河 + 175 年 compound machine 純度）。VIK 在四層都不是首選 — DCA 自身原文「邊際資金應加 RCL 而非 VIK，除非 VIK 回到 $70-75」。<strong>若用戶問 3-5Y view，答案是 RCL；若拉到 5-10Y，首選變 RMS — 這是這次比較的關鍵時間軸 alpha</strong>。
+</div>
+
+</section>
+
+<!-- §B.1 -->
+<section id="sB1">
+<h2>§B.1 短期視角（&lt; 12 個月）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>Pure MA 狀態、EPS 共識 90d 軌跡、進場條件距離、動能過熱程度、最近一季催化（Q1 26 兌現）、estimated PE re-rate 空間
+</div>
+
+<h3>對比表</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>RMS</th><th>RCL</th><th>VIK</th></tr>
+</thead>
+<tbody>
+<tr><td>Pure MA 狀態</td><td>❌ 三條全失守（距 W104 -23.7%、MA200 -20.63%、MA60 -3.4%）</td><td><span class="rank-1">中短線未過 / 長線 W104 ✅（$276 vs MA104w ~$210）</span></td><td>W52 ✅ +29.3%（IPO &lt; 2Y，W104 N/A）但「過於延伸」</td></tr>
+<tr><td>RSI 14d</td><td>~38-42 偏弱（接近超賣，反向反彈基礎）</td><td><span class="rank-1">38.6 偏弱非過熱（跌深可能反彈位置）</span></td><td><span class="signal signal-red">&gt; 70 過熱（4/17 跳空 +6.8%）</span></td></tr>
+<tr><td>4 週漂移</td><td>-4.95%（弱動能）</td><td><span class="rank-1">近 0%（區間震盪）</span></td><td>5 月再上 $87 後回落 $80（動能未冷卻）</td></tr>
+<tr><td>進場條件距離</td><td>€1,450-1,580（距現價 -5~-13%）</td><td><span class="rank-1">$258-285（現價 $276 在區間中段，立即可動）</span></td><td>$70-75（距現價 -7~-13%）</td></tr>
+<tr><td>EPS 共識 90d 軌跡</td><td><span class="signal signal-red">FY26 -4.4% 連 4 季下修最猛</span></td><td><span class="rank-1">FY26 guidance 維持 $17.10-17.50（含 $0.62 fuel headwind）</span></td><td><span class="signal signal-yellow">FY26 cons $3.34 vs DD adj $4.17 分歧</span></td></tr>
+<tr><td>Q1 26 最近催化</td><td>organic +5.6% miss 共識 7.1%；Asia +2.2%（CFO "flatlining"）、ME -13.4%</td><td><span class="rank-1">Rev $4.5B +11% YoY / Adj EPS $3.60 beat guide midpoint $0.37 / EBITDA margin 38% +300bps</span></td><td>Q1 法說 5/14 預定（報告寫稿前未揭露）— 後續驗證指標</td></tr>
+<tr><td>下次財報 binary</td><td>Q2 2026（2026-07-30）— Leather cc ≥ 8% + Asia cc 轉正</td><td>Q2 26（2026-07-29）— Net Yield CC ≥ +2.0% + FY26 guide 維持/上修</td><td>Q1 2026（2026-05-14）— 2027 advance booking + Net Yield 軌跡</td></tr>
+<tr><td>原 DCA 訊號燈</td><td><span class="signal signal-red">X 等待</span></td><td><span class="rank-1">A 核心候選</span></td><td><span class="signal signal-yellow">C 觀望</span></td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 RCL</span> — 三檔中唯一「A 訊號 + 進場條件已滿足 + 動能不過熱 + 最近 Q1 26 已 beat」四項齊全的標的。RCL DCA §7a 原文「立即建第一批 1.5%（RSI 38 偏弱、MA 訊號分歧 → 不是無條件追高）」+「§7c Pure MA 長線（MA104w）支持，中短線（MA60/MA200）尚未轉強 — 為『回撤後尚未確認反轉』狀態」。Q1 26 Adj EBITDA margin 38% +300bps YoY 是私島 margin uplift 開始顯化在 group 層級的關鍵訊號。短期可立即建第一批 1.5%。</li>
+<li><span class="rank-2">🥈 RMS</span> — X 訊號明確不該動但動能已 mean revert 至超賣邊緣，提供技術反彈基礎。RMS DCA §7c 原文「Pure MA 不支持進場且動能仍偏弱（非過熱）」+「進場節奏必須條件式（事件 + 價位雙錨），禁止無條件追價」。短期主要 catalyst 是 Q2 2026 法說（7/30）— Leather cc 是否守住 ≥ 8% + Asia cc 是否轉正 ≥ +5%。等 €1,450-1,580 區間（距現價 -5~-13%）才有合理 R:R 建第一批。</li>
+<li><span class="rank-3">🥉 VIK</span> — 短期最劣勢的標的：動能過熱（RSI &gt;70）+ 共識目標 $79 已壓在現價 $80 下方 + 5/14 Q1 法說 binary 風險 + 4/17 跳空 +6.8% 未消化。VIK DCA §7c 原文「歷史 mean reversion 頻率：RSI &gt; 75 後 1 個月內回測 8-15% 機率約 60%」。VIK DCA 自身結論「opportunity cost vs RCL — 邊際資金應加 RCL 而非 VIK，除非 VIK 回到 $70-75」— 短期同類選擇中 VIK 是被自己 DCA 點名 dominated 的。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>短期 &lt; 12M 視角下，<strong>「能否立即進場」與「動能轉折是否同步」</strong>是決定性的兩個維度。三檔的 Pure MA 結構分別呈現三種狀態：RMS 三條 MA 全失守、RCL 中短線未過但長線 W104 ✅、VIK W52 ✅ 但 W104 IPO 不足。在這個 spread 下，RCL 是「結構性多頭已成形、戰術上等回測中」的最佳狀態。</p>
+<p>RCL 短期勝出的具體理由不是「最便宜」（RMS 5Y PE 分位 10% 比 RCL 20% 更便宜）而是「可進場性」。RCL 進場區間 $258-285 距現價 $276 數學上 0~-7%，現價在區間中段意味著「等待成本接近零」。對照 RMS 需 -5~-13% 才到進場區、VIK 需 -7~-13% 才到進場區，兩者都需要 ≥1 個月 mean reversion 才能等到 trigger。</p>
+<p>RMS 短期排第二的關鍵矛盾是「進場條件可達但 EPS 軌跡仍惡化」。RMS DCA §3 Munger Inversion 原文「sell-side 因 FY2017-2024 連續上修慣性，仍未調整至 Berenberg 框架（"super cycle 結束" 才半年）；12M target 通常落後 6 個月才校準」。短期內共識不會自己止穩，必須等 Q2 2026 Leather cc 數字實際出現 + Asia cc 不繼續下滑（CFO "flatlining" 不是底部信號）。短期動能 RSI ~38 偏弱反而給「跌深可能反彈」可能性 — 但結構性 thesis 短期仍 painful。</p>
+<p>VIK 短期排第三的根本問題是「動能與進場條件雙重不利」。VIK DCA §7a 原文「禁止追高（QC-24：4/17 已有 +6.8% 跳空）」+「歷史 mean reversion 頻率：RSI &gt; 75 後 1 個月內回測 8-15% 機率約 60%」。共識目標 $79.25 已落後現價 1.7%（Goldman 12/2025 升評為 Buy 時，價格還在 $65-70 區間，現在 $80 是市場自己跑上來而非分析師 upgrade — VIK DCA 原文）。5/14 Q1 法說是 binary：若披露 2026 yield guidance 下修至 +3-4%（從 mid-single-digit）→ 17% 下行至 $66；若披露 2027 advance booking ≥ +15% YoY → 6 個月可見 +15-20% upside。短期 binary 風險高。</p>
+
+</section>
+
+<!-- §B.2 -->
+<section id="sB2">
+<h2>§B.2 中期視角（2-3 年）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>拐點催化兌現節奏、估值修復至 5Y 中位、PE re-rate 紅利空間、Pattern Match 對標強度、第二曲線啟動時點精準度
+</div>
+
+<h3>拐點催化對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>RMS</th><th>RCL</th><th>VIK</th></tr>
+</thead>
+<tbody>
+<tr><td>主要拐點催化</td><td>H2 兌現：FY27 OI margin 回 13-15% + Credit AUM 達 €30B + 投資週期收斂</td><td><span class="rank-1">Perfecta 2027 EPS $24 路徑 + Perfect Day Mexico 2027 Q4 開幕 + Royal Beach Club Santorini 2027+</span></td><td>2026 86% booked + Mira/Libra 2026 交付 + Brahmaputra 2027 印度首航</td></tr>
+<tr><td>催化兌現節奏</td><td>連續 4 季 EPS miss 後仍未止穩；估值修復路徑 18-24M vs 36+M 爭議未 settle</td><td><span class="rank-1">Q1 26 已 beat 啟動正向勢頭；Perfecta 路徑為 3 年 timeline 清晰</span></td><td>Celebrity River 2027 進場為 binary 不利事件 + Hagen 80+ 接班為 tail</td></tr>
+<tr><td>2-3Y 主要 catalyst window</td><td>Q3 26 (2026/11) Asia cc 轉正 ≥ +5% + H1 26 Margin ≥ 40%</td><td><span class="rank-1">Q2-Q4 26 Net Yield CC 軌跡 + Perfect Day Mexico 工程進度（2026 Q4 法說）</span></td><td>Celebrity River 首航前 12M 觀察窗口（2026Q4-2027Q3）— binary 風險窗口</td></tr>
+<tr><td>共識上修紅利空間</td><td><span class="signal signal-yellow">大但時點遙遠（共識目標 €2,180-2,370 但 EPS 已 90d -4.4%）</span></td><td><span class="rank-1">中（FY27 cons $19.98 vs JPM model $21.25 vs Perfecta target $24 — cons 仍 conservative）</span></td><td>小（共識目標 $79 已壓在現價 $80 下方）</td></tr>
+<tr><td>Fwd PE 修復空間</td><td>37x → 36x（Base 估，re-rate 紅利接近零）</td><td><span class="rank-1">15.7x → 18x cyclical 天花板 (+15% re-rate)</span></td><td>20.6x → 18x mean revert (-12% re-rate 拖累)</td></tr>
+<tr><td>Pattern Match 對標</td><td>Hermès 自己 2008-2014 (+250%, 28.5%/yr)；但起跑 PE 24x vs 今 37x 估值修復空間窄</td><td><span class="rank-1">MAR 2014-2019 (+110%, 16% IRR) + RCL 自身 2014-2019 (+95%, 14% IRR) 雙樣本</span></td><td>RCL 2014-2019 (+170%, 22% IRR)；但起跑 PE 13x vs VIK 20.6x，無法複製</td></tr>
+<tr><td>2-3Y view IRR 預期</td><td>+5~10%/yr（拐點兌現 + 估值修復雙條件需同步）</td><td><span class="rank-1">+12~16%/yr（Perfecta 路徑兌現 + 私島 destination re-rate 開始顯化）</span></td><td>+8~15%/yr（若 Celebrity 12M 影響 ≤ 1pp 市佔則上升至 15%，若 ≥ 3pp 則跌至 0%）</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 RCL</span> — 2-3Y 中期是 RCL 的「sweet spot」：Perfecta 2027 EPS $24 路徑是 3 年 timeline 內最清晰的 catalyst chain。RCL DCA §3 原文「真正能影響市場願意給 RCL 比 CCL/NCLH 高 30% 估值倍數的兩個變量是：① Perfecta 證明 RCL 是執行力最強的規模王；② 私島矩陣證明 RCL 是 destination 公司不是 cruise 公司」。Pattern Match MAR 2014-2019 (+16% IRR) 是 asset-light + loyalty pricing + 全球 demand secular 的歷史對標 — 與 RCL 私島 ≈ franchise + Crown & Anchor loyalty + cruise demographics 高度相似。2-3Y view IRR 期望 +12-16%/yr 為三檔最高。</li>
+<li><span class="rank-2">🥈 VIK</span> — 中期 binary 風險高但賠率對應佳。VIK DCA §5 原文「2027 Celebrity River Cruises 首航前 12 個月（即 2026Q4-2027Q3）的北美河輪 booking 流向 — 若 VIK 北美河輪市佔下滑 ≥ 3pp（從現 ~50% 跌至 ≤ 47%）→ moat ↘ narrowing 確認，Fwd PE 必須從 20x 壓到 14-15x（RCL 水準）；下滑 ≤ 1pp → moat ↗ 確認」。中期 IRR 區間 [0%, +15%] 完全由 Celebrity 12M binary 決定。Pattern Match RCL 2014-2019 (+22% IRR) 是強樣本但 VIK 起跑 PE 20.6x vs RCL 當時 13x — VIK DCA 自評「同 thesis 但晚進場的合理折扣」。</li>
+<li><span class="rank-3">🥉 RMS</span> — 中期最 painful 路徑：估值修復 18-24M vs 36+M 路徑爭議未 settle，連續 4 季 EPS miss 後仍未止穩。RMS DCA Phase B 強制裁決 #2 原文「選 A2 — 36+ 個月，並打折 sell-side 12M target」+「(1) Berenberg 2025/10 calling super cycle 結束有實質供需數據支撐（2 年連續衰退是 30 年第 3 次）；(2) Bain 2026 forecast 中位 5% vs 歷史 6%；(3) sell-side target 通常落後修正」。Pattern Match Hermès 自己 2008-2014 +250% 是強樣本但「起跑 PE 24x vs 今 37x，估值修復空間明顯較窄」— 預期「方向類似但幅度減半」+50~95% 5Y。中期 IRR +5-10%/yr 弱於 SPX 平均。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>2-3Y 中期視角下，<strong>拐點 catalyst 兌現的「可控性」+ Pattern Match 對標強度</strong>是分水嶺。三檔的中期 catalyst 性質截然不同：</p>
+<p><strong>RCL 的中期 catalyst 是「執行兌現追蹤」</strong>：Perfecta 2027 EPS $24 + Perfect Day Mexico 開幕兩條 catalyst 都是「季度可監測、可漸進兌現」（季度 Net Yield CC + 工程進度更新）。Pattern Match MAR 2014-2019 對標的「執行可信度」優於 VIK 的 RCL 2014-2019 對標（VIK 起跑估值更貴使路徑窄化）。RCL DCA §4 IRR composition 原文「Base 12.2% IRR 中，11.6%/yr 來自 EPS 複利（占 ~95%）、2.8%/yr 來自估值 re-rate、1.5%/yr 來自股息+回購」— 中期 view 下 EPS 主動力 + 估值 re-rate 紅利 + 股東回饋三層複合是三檔中最穩健的中期 IRR 結構。</p>
+<p>VIK 排第二的核心邏輯是「Celebrity 12M binary 是 thesis-defining moment」。VIK DCA Phase B 矛盾 M1 強制裁決原文「暫無法決定 → 給 12M settle 窗口」+「(1) Celebrity River 2027 開航 12 個月 booking 中，VIK 北美河輪市佔下滑 ≤ 1pp → moat ↗ 確認；(2) 下滑 1-3pp → moat → holding；(3) 下滑 ≥ 3pp → moat ↘ narrowing」。中期 2-3Y 結束時 VIK thesis 會被 Celebrity 12M 數據 settle — 若 moat ↗ 確認則 PE 可上修至 22x = Bull case +120%；若 moat ↘ 則 PE 壓至 14x = Bear case -45%。賠率寬但路徑窄，需要 binary 決定的時間軸 window。</p>
+<p>RMS 在 2-3Y 中期排第三的具體原因：RMS DCA §6b Pre-mortem 故事原文「2026 H2 Asia cc 確認結構惡化（Q3 cc -2%、Q4 -5%），2027 Q1 Axel Dumas 因健康因素提前退休、第七代接班空窗，2027 中 sell-side 翻轉、共識 EPS 從 €52.74 直接下修至 €40（-24%）、Fwd PE 從 33x 壓縮到 22x」— 中期 Bear 故事的觸發路徑明確且可能。RMS Pattern Match Hermès 2008-2014 +250% 對標雖然方向對但 RMS DCA 自評「期待 50-95%（5Y）而非 250% — 不期待複製，因為起跑 PE 24x vs 今 37x 估值修復空間明顯較窄、中國當時是順風今天是逆風、規模是 2009 的 ~6x 邊際成長空間較小」。中期賠率三檔中最差。</p>
+
+</section>
+
+<!-- §B.3 -->
+<section id="sB3">
+<h2>§B.3 中長期視角（3-5 年）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>TAM 滲透曲線位置、護城河趨勢（↑/→/↓）、EPS 5Y CAGR 可兌現性、IRR composition 質感（複利占比 vs re-rate 配合 vs 股東回饋）、單變數可證偽性
+</div>
+
+<h3>IRR composition 質感對比（核心打分）</h3>
+<table>
+<thead>
+<tr><th>5Y Base IRR 分量</th><th>RMS</th><th>RCL</th><th>VIK</th></tr>
+</thead>
+<tbody>
+<tr><td>EPS CAGR 貢獻</td><td>+9.0%/yr（FY25 €43.87 → FY30 ~€70，含 buyback 微稀釋抵銷接近零）</td><td>+11.6%/yr（FY25 $15.61 → FY30 $27）</td><td><span class="rank-1">+13.0%/yr（FY25 $2.61 → FY30 ~$4.80-5.20）</span></td></tr>
+<tr><td>估值 re-rate 貢獻</td><td>-0.5%/yr（PE 37x → 36x，中性微負）</td><td><span class="rank-1">+2.8%/yr（PE 15.7x → 18x cyclical 天花板）</span></td><td>-2.5%/yr（PE 20.6x → 18x mean revert）</td></tr>
+<tr><td>股息 + 淨買回</td><td>+1.6%/yr（€26/股 / €1,661 = 1.6% 股息 + 0% 回購）</td><td><span class="rank-1">+1.5%/yr（$4/yr 1.4% 股息 + $2B buyback $836M 已執行）</span></td><td>0%/yr（無股息無回購 — 完全 reinvest）</td></tr>
+<tr><td>合計 5Y Base IRR</td><td>+10.1%/yr（Base case 三分量合計，§4 表 Base 8.4%）</td><td><span class="rank-1">+15.9%/yr gross / +12.2% net（§4 表 Base 12.0%）</span></td><td>+10.5%/yr</td></tr>
+<tr><td>5Y IRR（機率加權）</td><td>+5.5%/yr（Bull 22% / Base 48% / Bear 30%）</td><td><span class="rank-1">+10.2%/yr（Bull 25% / Base 50% / Bear 25%）</span></td><td>+8.5%/yr（Bull 20% / Base 50% / Bear 30%）</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>IRR 質感差異識別（這次比較的核心 alpha）：</strong>
+<ul>
+<li><strong>RMS +10.1% IRR (Base case)：</strong>EPS +9%/yr 主動力 + Re-rate -0.5% 中性 + Div +1.6% cushion。質感 = <strong>「自然 EPS 複利 + 股息 cushion，但 EPS CAGR 動力最弱」</strong>。RMS DCA §4 原文「Base 10.1% IRR 中，89% 來自 EPS 複利 — 屬於不需要市場配合也能拿到的報酬，質感比 LVMH/Kering 那種靠 re-rate 才有 alpha 的奢侈品同業好得多」。但機率加權僅 +5.5% 因 Bear 30% (-6.9% IRR) 拖累。</li>
+<li><strong>RCL +15.9% IRR (Base gross)：</strong>EPS +11.6%/yr 主動力 + Re-rate +2.8% 紅利 + Div+Buyback +1.5% 股東回饋。質感 = <strong>「三層複合動力，唯一有 PE re-rate 紅利」</strong>。RCL DCA §4 IRR Composition 原文「Base 12.2% IRR 中，11.6%/yr 來自 EPS 複利（占 ~95%）、2.8%/yr 來自估值 re-rate、1.5%/yr 來自股息+回購。這檔的可抱性主要靠 EPS 複利 — Perfecta 達標即可自然兌現 — 屬於自然複利好抱型；不需市場大幅配合 re-rate，但需 cycle 不破」。</li>
+<li><strong>VIK +10.5% IRR (Base case)：</strong>EPS +13.0%/yr 為三檔最強動力 + Re-rate -2.5% 拖累 + 0 股東回饋。質感 = <strong>「純 EPS 複利但無 cushion，估值 re-rate 為負拖累」</strong>。VIK DCA §4 原文「這檔的可抱性必須完全靠 EPS 複利（公司自己長出來，不靠市場配合）— 質感屬於自然複利好抱類，但前提是 EPS 兌現要硬。Re-rate 為負是 buffer：即使市場給更低 PE，EPS 複利還能撐 10% — 但若 EPS 連 2 季 miss，re-rate 會立刻變成 deeper 拖累」。</li>
+</ul>
+</div>
+
+<h3>對比表</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>RMS</th><th>RCL</th><th>VIK</th></tr>
+</thead>
+<tbody>
+<tr><td>護城河 5Y 預判</td><td><span class="rank-1">S 10/10 → holding（自身穩定 + 相對同業 gap 擴大 10-19pp）</span></td><td>B+ 8/10 ↑ widening（私島矩陣 2→8 by 2028 為唯一加深）</td><td>A 9/10 → holding（Celebrity 2027 對沖：ROIC 1 年 +18pp 加深 vs Celebrity sold out 2027 首季 inaugural 威脅）</td></tr>
+<tr><td>TAM 滲透位置</td><td>奢侈品 TAM 2035 €525-640B / Hermès 占比 4.4% → 5.5%（量擴張 + Asia 修復後）</td><td>Cruise 滲透 &lt;3% / 全球 42M passenger by 2030 vs 31.7M 2024（CAGR 6.2%）</td><td>Luxury cruise TAM $10.23B (2025) → $20-23B by 2030（CAGR 9-12%）</td></tr>
+<tr><td>EPS 5Y CAGR 可兌現性</td><td>中（FY26 €45.61 → FY30 €70+ 需 Asia 修復 + Margin 守住 38%+ 雙條件）</td><td><span class="rank-1">高（Perfecta 2027 EPS $24 為 management public commitment，cons FY27 $19.98 仍 conservative）</span></td><td>高（VIK 自定 2028 $8.5B revenue / $2.0B earnings target，已有 86% 2026 booked 鎖定）</td></tr>
+<tr><td>單變數可證偽性</td><td>Leather cc 連 2 季 &lt; 6% 為 primary trigger（季度可監測）</td><td><span class="rank-1">Caribbean Net Yield CC 連 2 季 &lt; 0% + 同業 yield war 為 primary trigger</span></td><td>VIK 北美河輪市佔下滑 ≥ 3pp 為 primary trigger（需 Celebrity 12M 觀察窗口）</td></tr>
+<tr><td>Pattern Match 5Y 末</td><td>Hermès 2008-2014 +250%（但起跑 PE 24x vs 今 37x，期待 +50-95%）</td><td><span class="rank-1">MAR 2014-2019 +110% (+16% IRR) + RCL 2014-2019 +95% (+14% IRR) 雙樣本</span></td><td>RCL 2014-2019 +170% (+22% IRR)（但起跑 PE 13x vs VIK 20.6x，預期同 thesis 晚進場的合理折扣）</td></tr>
+<tr><td>3-5Y view 結構性勝出</td><td>S 級護城河 + 175 年品牌（compound machine 純度最高但 EPS 動力最弱）</td><td><span class="rank-1">IRR 三層複合 + Moat 唯一 ↑ widening + Pattern Match 強樣本</span></td><td>EPS 動力最強 +13%/yr 但缺股東回饋 cushion + Re-rate 負拖累</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 RCL</span> — 3-5Y 中長期是 RCL 的「絕對 sweet spot」：唯一 Moat ↑ widening + IRR 三層複合（EPS + Re-rate + Div+Buyback）+ Pattern Match 雙重強樣本 + Base IRR +12.0% 三檔最高。RCL DCA Phase B 強制裁決 #2 原文「PE 天花板有結構性限制：RCL Pre-COVID FPE 11-15x、5Y 均 19.64x（含 COVID 異常拉高）；MAR pattern match 顯示 asset-light 才有 25-30x 空間，RCL Icon-class 重 capex 會被市場折價」— 但 5Y 末 PE 18x 已 conservative（vs 5Y avg 19.64x），仍有 +2.8%/yr re-rate 紅利。3-5Y 持有期間是「Perfecta 兌現 + 私島矩陣 destination 升級」雙引擎兌現 window。</li>
+<li><span class="rank-2">🥈 VIK</span> — EPS CAGR 動力最強（+13%/yr 三檔最高）但缺結構性 cushion。VIK DCA §4 原文「Base 10.5% IRR 中，13.0%/yr 全部來自 EPS 複利（公司自己長出來，不靠市場配合）— 質感屬於自然複利好抱類，但前提是 EPS 兌現要硬」。Re-rate -2.5%/yr 是 buffer 但只有在 EPS 完美達標時才能維持，若 EPS miss → re-rate 加速崩潰至 Bear case -14.3%。3-5Y view 賠率寬 [-11.3%, +17.1%] 但路徑窄。</li>
+<li><span class="rank-3">🥉 RMS</span> — Moat 最高但 IRR 質感受連續 4 季 EPS 共識下修拖累。RMS DCA §4 原文「Base 10.1% IRR 中，89% 來自 EPS 複利，re-rate 貢獻接近中性（−0.5%），股息 +1.6%」+「IRR 5.5%/yr 屬弱於大盤平均（SPX 長期 ~9-10%），這個數字告訴我們：在現價 €1,661 上，不該動部位」。S 級護城河 + 175 年品牌的長期 compound machine 質量無人能及，但 3-5Y view 受 super cycle 結束 + Asia 拐點不確定性 + EPS 共識下修壓制，機率加權 IRR +5.5% 是三檔中最低。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>3-5Y view 是這次對比的 alpha 集中地。三檔 Moat 評級分別為 S 10/10 / B+ 8/10 / A 9/10 — 表面上 RMS 質性最強，但「3-5Y 持有期間能否安心抱住」的差別取決於 IRR 質感與賠率不對等而非 Moat 評分絕對值。</p>
+<p><strong>RCL 的 IRR 三層複合是這次比較的核心洞察</strong>：三檔中只有 RCL 同時具備「EPS 主動力 +11.6%/yr + 估值 re-rate 紅利 +2.8%/yr + 股東回饋 +1.5%/yr」三層動力。VIK 雖然 EPS +13%/yr 為三檔最強，但 Re-rate -2.5% 拖累 + 0 股東回饋使三層中只有一層動力；RMS 雖然有 Div +1.6% 股息 cushion，但 EPS +9%/yr 動力最弱 + Re-rate -0.5% 中性使三層動力強度不及 RCL。<strong>3-5Y view 下，三層複合動力意味著「任一條失效仍有兩條撐」— 即使 Perfecta 部分達標（EPS 動力部分弱化）、cyclical PE 天花板被嚴格執行（re-rate 紅利減半），股東回饋 +1.5% 仍提供基本盤</strong>。</p>
+<p>VIK 排第二的具體原因：VIK DCA Phase B 矛盾 M3 原文「capital allocation 紀律：🟡 capex 2026 $1.2B 大、無 buyback / 無 dividend — 完全 reinvest 模式」+「不算矛盾，但 IRR composition 影響大」。意思是 VIK 的 capital allocation 選擇本身使 IRR composition 結構性少了股東回饋這條腿 — 5Y 持有期間需要「Net Yield × Capacity 乘數」完全自跑，沒有股東回饋的緩衝。Pattern Match RCL 2014-2019 +22% IRR 是強樣本但 VIK 起跑 PE 20.6x vs RCL 13x — VIK DCA 自評「期待 Base IRR 10.5% 是同 thesis 但晚進場的合理折扣」。</p>
+<p>RMS 排第三的核心是「Moat 最強但 IRR 機率分佈最差」。RMS DCA §4 機率分佈 Bull 22% / Base 48% / Bear 30% — Bear 30% (-6.9%/yr) 是三檔中 Bear 機率最高（VIK Bear 30% 但更負 -11.3%、RCL Bear 25%）。RMS DCA Phase B 強制裁決 #2 + #3 兩個都選保守邊（A2 36+ 個月修復 + A2 Asia 還會再滑），使 3-5Y view 的「等待成本」明顯高於 RCL/VIK。RMS DCA §7d 原文「建議持有年限 3-7 年。原因：(1) DD H3 假設『估值修復路徑 18-24 個月』需中期 horizon；(2) Boomer demographic supercycle 至 2030+ 是 5-10Y 順風；(3) 護城河趨勢未動搖。關鍵：必須等 entry timing，否則中長期報酬率被進場價過高吃掉一半」。<strong>3-5Y view RMS 的「Moat 最強 vs IRR 質感最差」的矛盾凸顯 — Moat 質性的優越在 3-5Y view 沒有時間放大，要到 5-10Y view 才會 dominate</strong>。</p>
+
+</section>
+
+<!-- §B.4 -->
+<section id="sB4">
+<h2>§B.4 長期視角（5-10 年）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>Runway post-Y5、第二/第三 S 曲線、範式風險（產業結構重塑 / 治理斷層）、護城河 10 年抗風險、創辦人 alignment、10Y 機會成本
+</div>
+
+<h3>10Y 結構性對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>RMS</th><th>RCL</th><th>VIK</th></tr>
+</thead>
+<tbody>
+<tr><td>Runway Post-Y5 評級</td><td><span class="signal signal-green">🟢 寬</span></td><td><span class="signal signal-green">🟢 寬</span></td><td><span class="signal signal-green">🟢 寬</span></td></tr>
+<tr><td>10Y IRR 預估</td><td><span class="rank-1">+10.7%/yr（FY2035 EPS €115 × PE 40x = €4,600）</span></td><td>+11.8%/yr（5Y 末 $600 → 10Y 末 ~$842）</td><td>+11-12%/yr（Bull）/ 加權 ~10%/yr</td></tr>
+<tr><td>主要 S 曲線數量</td><td><span class="rank-1">4 條（Leather 46% + 高珠寶 + Quiet luxury + Boomer wealth）+ 工坊擴張 +7%/yr 至 2035+</span></td><td>4 條（Royal Caribbean + Silversea + Celebrity + 私島 destination 升級 + Icon 6/7 2030+）</td><td>3 條（River + Ocean 25 條 2031 + 印度/亞太 Brahmaputra/Ganges）</td></tr>
+<tr><td>Y5 末 TAM 滲透度</td><td>奢侈品 TAM 2035 €525-640B / Hermès 占 5.5% target（從 4.4% 升）</td><td><span class="rank-1">Cruise 滲透 ~3.5-4% by 2031（vs 全球旅遊 5.5%+ 占比）</span></td><td>Luxury cruise TAM 滲透 ~25-28%（從目前 ~15% 提升，仍有 3-4x 空間至飽和）</td></tr>
+<tr><td>商業模式長期持久性</td><td><span class="rank-1">175 年品牌 + 配貨制 + 工坊 + 家族治理（皆 10+ 年難複製）</span></td><td>4 廠造船廠 supply lock 至 2031 + 私島 50 年租約 + cruise demographic 至 2035</td><td>4 廠造船 supply lock + 110 docking station 控制 + Conde Nast 雙料 5 連</td></tr>
+<tr><td>10 年範式風險（5-10Y）</td><td><span class="signal signal-yellow">中（Apple/Nubank LatAm super-app 30% 機率 + 中國中產 reset + 家族第七代接班空懸）</span></td><td><span class="signal signal-yellow">中（中國造船廠加速進入 + AI 個人化旅遊代理替代 + 嬰兒潮 demographic peak 提前）</span></td><td><span class="signal signal-red">高（Celebrity River + Hagen 80+ 接班 + 印度 ramp 失敗 + IMO 環保法規 + IPO &lt; 2Y 無 recession 驗證）</span></td></tr>
+<tr><td>10 年 Pattern Match 校驗</td><td><span class="rank-1">Hermès 自己 1995-2024 30 年穩定 compound 12-15%/yr（含 2008/2015/2025 三次衰退）</span></td><td>RCL 2010-2020 cycle +400%（但 COVID 拆掉），cyclical 標的</td><td>RCL 2014-2024 IPO-成熟期，但 VIK IPO 2024 仍 in-progress</td></tr>
+<tr><td>創辦人 alignment</td><td><span class="rank-1">家族 67% 控股 + 27 年 100% 內部投資 + 無短期股東主義</span></td><td>機構治理 + Liberty Capital 退出後管理層執行記錄 Trifecta 達標</td><td>Hagen 80+ + dual-class share + 50.4% 控股 + 接班議題未公開</td></tr>
+<tr><td>10Y 機會成本對比</td><td>SPX ~9-10%/yr / CFR ~11-13% / 同類 LVMH ~8-10%</td><td>SPX ~9-10%/yr / ID_BoomerTravelSupercycle basket 預期 ~12-13%</td><td>SPX ~9-10%/yr / RCL 12-14% — VIK 邊際 IRR 不顯著勝出</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 RMS</span> — 5-10Y view 是 RMS 的「絕對 dominant」時間軸。175 年品牌 + 配貨制 + 工坊訓練 + 家族 67% 控股 + 永不出售承諾五重結構性鎖定，是三檔中唯一能在 10 年視角下「compound machine 純度」最高的標的。RMS DCA Phase A1 原文「無形資產 — 1837 年品牌、189 年家族傳承、Birkin/Kelly 名字本身的地位信號（拍賣紀錄單包 &gt; $400k）；轉換成本 — 配貨制讓客戶必須投入 3-5 年 + €30-100k 累積購買記錄才能獲得 Birkin 分配，跳船 = 全部歸零的隱形時間成本」。10Y view 下，3-5Y view 的「短期 super cycle 結束」逆風已 mostly absorbed，EPS 複利成為主導 — RMS DCA §4 10Y 壓力測試原文「FY2035 EPS €115（10Y CAGR 10%）× PE 40x = €4,600，10Y IRR ~10.7%。10 年比 5 年更友善（時間有利於 compound machine）」。</li>
+<li><span class="rank-2">🥈 RCL</span> — 10Y IRR 預估 +11.8%/yr 為三檔中 base case 最高，但持久性受 cruise cyclical 性質拖累。RCL DCA §7d 原文「長期（5-10 年）：嬰兒潮 demographic peak 2029-2030（ID_BoomerTravelSupercycle 母題）+ cruise 滲透率 3%→5%（CLIA 路徑）→ 10Y target $800-1000；但需確認 Capex/Rev 在 2028+ 降至 &lt;20%、ROIC 穩定 17%+」。10Y view 下需要兩個獨立條件：(1) 嬰兒潮 demographic peak 時點推遲至 2029-2030（vs 共識 2027）；(2) 私島矩陣 destination 升級為市場接受的 PE re-rate framework（從 cyclical 15x 至 destination asset light 20-22x）。範式風險中等（中國造船廠 + AI 個人化旅遊代理皆為 10Y+ 遠期）。</li>
+<li><span class="rank-3">🥉 VIK</span> — 10Y view 範式風險集中度最高。VIK DCA §6a 列出五條盲點：「Boomer wealth effect 與消費強度延續至 2030+ / 4 廠造船 supply lock 不會被破解 / Hagen 接班順暢（無控制權真空）/ 印度/亞太擴張成功 / ESG / IMO 法規不會強制 retire 老船」— 三條範式 tail risk 累積機率在 10Y 視角下顯著高於 RMS/RCL。Hagen 80+ + dual-class share 50.4% 控股使「actuarial 5Y 機率不可忽略」(VIK DCA 原文)，10Y 範圍內 Hagen 接班 + Celebrity 競爭 + 印度 ramp 三事件累積範式風險最大。10Y view 加權 IRR ~10% 不顯著勝出 RCL 12-14%。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>5-10Y view 是「architecture optionality」與「範式風險集中度」的決定戰場。三檔的 Runway 都 🟢 寬，但 architecture 結構差異顯著：</p>
+<p><strong>RMS 的長期 compound machine 純度在 10Y view 下放大優勢</strong>：175 年品牌歷史 + 家族治理結構 + 配貨制商業模式 + 工坊擴張節奏 — 這四維皆為「越久越深」結構（rather than 越久越弱）。RMS 自身 1995-2024 30 年穩定 compound 12-15%/yr（含三次衰退）是三檔中唯一已驗證的長期樣本。RMS DCA §7d 原文「長期（5-10 年）：運用『奢侈品 compound machine』全部複利效益：護城河 widening + 第二曲線（高珠寶、boomer demographic 5-10Y peak）= 10Y IRR ~10-11%。runway_post_y5 🟢 寬支撐此 horizon」。10Y view 下，3-5Y view 的「估值修復 36+ 個月」逆風已被時間吸收，EPS 複利 +10%/yr 直接 dominant — 此時 RMS 的 S 級護城河 + 175 年品牌的長期累積優勢才能完全顯現。</p>
+<p>RCL 排第二的具體原因是「cyclical 性質限制長期持久性」。RCL DCA §6c 原文「觸發後最快多久恢復到峰值：18-24 個月（若 Perfect Day Mexico 最終 2029 開幕、Caribbean 供需 2028 Q4 重新平衡）；若 thesis 結構性破壞（盲點 2 變實 — 市場永遠用 cyclical 框架）→ 5 年內可能無法恢復峰值」。10Y view 下，cruise demographic 在 2029-2030 peak 後將進入「Gen X 接力期」— 而 Gen X 消費強度估算偏弱（VIK DCA §6a 盲點 1 提及）。RCL 私島 destination 升級若能成功 re-rate framework 為 destination asset light premium，則 10Y view 持續 dominant；若仍卡在 cyclical 框架，PE 上限 18-20x 限制長期上行。</p>
+<p>VIK 在 5-10Y view 排第三的核心是「範式風險集中度 + IPO &lt; 2Y 無 recession 驗證」。VIK DCA §6a 盲點 1 原文「Boomer wealth effect 與消費強度延續至 2030+：前提：美股 SPX 不出現 −30% 以上熊市（資產縮水不顯著）+ Boomer 退休後保有消費意願（非省吃儉用）；不成立後果：VIK 高端消費 demand 出現結構性下滑 → Net Yield +7% 降至 +1-2% → EPS 兌現速度減半，Bear case 觸發」。10Y 範圍內 SPX 進入 ≥1 次 -30% 熊市的機率不可忽略。Hagen 80+ + dual-class 接班是 governance tail；Celebrity 競爭是 competitive tail；印度 ramp 是 execution tail — 三 tail risk 累積使 10Y view 持有期間焦慮為三檔中最高。<strong>5-10Y view 是這次比較中「首選變動」最劇烈的時間軸 — RCL 從 3-5Y 第一變成第二、RMS 從 3-5Y 第三變成第一，這個時間軸切換 alpha 是核心洞察</strong>。</p>
+
+</section>
+
+<!-- §C IRR Composition -->
+<section id="sC">
+<h2>§C IRR Composition 質感對比（縱深層 — 3-5Y view 真正的 alpha）</h2>
+
+<div class="callout callout-key">
+<strong>本節核心：</strong>三檔 5Y Base IRR 數字差距看起來只有 4%p（10.1 / 12.2 / 10.5），但 IRR 質感（怎麼來、靠什麼）的差異決定了「能不能安心抱住 5 年」與「Bull-Bear 對稱性」。三層複合動力（EPS + Re-rate + 股東回饋）的 RCL vs 兩層動力（EPS + 股息）的 RMS vs 單層動力（純 EPS）的 VIK，質感本質完全不同。
+</div>
+
+<h3>三檔 Base case IRR 分量視覺化</h3>
+
+<p><strong>RCL Base +15.9%/yr (gross) / +12.2%/yr (net)</strong> — EPS +11.6% 主動力（95%）+ Re-rate +2.8% 紅利 + Div+Buyback +1.5% 股東回饋 三層複合</p>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="flex:1160">EPS +11.6%</div>
+<div class="irr-segment irr-rerate-pos" style="flex:280">Re-rate +2.8%</div>
+<div class="irr-segment irr-buyback" style="flex:150">Div+Buyback +1.5%</div>
+</div>
+<div class="irr-legend">📊 質感解讀：<strong>「三層複合動力型 — 三檔中唯一」</strong>。RCL DCA §4 IRR Composition 原文「這檔的可抱性主要靠 EPS 複利 — Perfecta 達標即可自然兌現 — 屬於『自然複利好抱』型；不需市場大幅配合 re-rate，但需 cycle 不破。質感優於純 re-rate 故事，但仍劣於『無 capex 的純 royalty』標的（如 MAR / V / MA）」。<strong>關鍵：三層中任一條失效仍有兩條撐 — Perfecta 部分達標仍有 PE re-rate + Buyback 撐；PE 卡在 cyclical 仍有 EPS 自跑 + Buyback 撐</strong>。</div>
+
+<p style="margin-top:24px;"><strong>VIK Base +10.5%/yr</strong> — EPS +13.0% 為三檔最強動力但 Re-rate -2.5% 拖累 + 0 股東回饋</p>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="flex:1300">EPS +13.0%</div>
+<div class="irr-segment irr-rerate-neg" style="flex:250">Re-rate -2.5%</div>
+</div>
+<div class="irr-legend">📊 質感解讀：<strong>「純 EPS 自跑但無 cushion 型」</strong>。VIK DCA §4 原文「Base 10.5% IRR 中，13.0%/yr 全部來自 EPS 複利，−2.5%/yr 是估值 re-rate 拖累（PE 從 20.6x 收斂到 18x），股息+回購 = 0（公司明確說不發股息也不回購，現金留給 capex）。這檔的可抱性必須完全靠 EPS 複利（公司自己長出來，不靠市場配合）— 質感屬於『自然複利好抱』類，但前提是 EPS 兌現要硬。Re-rate 為負是 buffer：即使市場給更低 PE，EPS 複利還能撐 10% — 但若 EPS 連 2 季 miss，re-rate 會立刻變成 deeper 拖累」。<strong>風險：若 EPS 動力減弱（Celebrity 影響 + 印度 ramp 受阻），唯一動力消失</strong>。</div>
+
+<p style="margin-top:24px;"><strong>RMS Base +10.1%/yr (Base case 三分量) / +8.4%/yr (§4 表 Base)</strong> — EPS +9.0% 動力最弱 + Re-rate -0.5% 中性 + Div +1.6% cushion</p>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="flex:900">EPS +9.0%</div>
+<div class="irr-segment irr-rerate-neg" style="flex:50">-0.5%</div>
+<div class="irr-segment irr-dividend" style="flex:160">Div +1.6%</div>
+</div>
+<div class="irr-legend">📊 質感解讀：<strong>「EPS 自然複利 + 股息 cushion，但 EPS 動力最弱」</strong>。RMS DCA §4 IRR Narrative 原文「Base 10.1% IRR 中，89% 來自 EPS 複利，re-rate 貢獻接近中性（−0.5%），股息 +1.6%。這檔的可抱性主要靠 EPS 自然複利（自己長出來）— 屬於『不需要市場配合也能拿到的報酬』，質感比 LVMH/Kering 那種『靠 re-rate 才有 alpha』的奢侈品同業好得多。長抱者賭的是公司本身的複利機器、而非市場給的 PE 慷慨」。<strong>但 EPS +9%/yr 是三檔中最弱動力 — 5-10Y view 因 Boomer wealth + 高珠寶第二曲線 + 工坊擴張 +7%/yr 可拉至 +12-15%/yr，但 3-5Y view EPS 動力受限</strong>。</div>
+
+<h3>單變數可證偽性與「賭什麼」</h3>
+<table>
+<thead>
+<tr><th>標的</th><th>Base case 真正在賭什麼</th><th>單變數可證偽性</th><th>賭中 / 賭錯的不對等</th></tr>
+</thead>
+<tbody>
+<tr><td>RMS</td><td>「Leather cc 守住 ≥ 8% + Asia cc 12 個月內回正 + PE 維持 ~37x 不過度壓縮 + 家族第七代順利接班」四條件</td><td>中（Leather cc 季度可監測；Asia cc 季度可監測；PE 軌跡每日可觀察；但「super cycle 結束 vs 週期性」需 36+ 個月 settle）</td><td><strong>不對等中等</strong> — 賭錯 5Y IRR -6.9%/yr，賭中 +14.3%/yr，加權後 +5.5%/yr（Bear 30% 機率三檔最高）</td></tr>
+<tr><td>RCL</td><td><span class="rank-1">「Perfecta 2027 EPS $24 達標 + Caribbean Net Yield 不出現 yield war + Perfect Day Mexico on-track + Net Debt/EBITDA 降至 &lt; 2.5x」四條件</span></td><td><span class="rank-1">高（Net Yield 季度公司 disclosed metric；Perfect Day Mexico 工程進度 2026 Q4 法說可追蹤；Net Debt/EBITDA 季度可觀察；EPS guide vs actual 半年確認）</span></td><td><span class="rank-1">不對等最佳 — 賭錯 5Y IRR -5.4%/yr，賭中 +16.7%/yr，加權後 +10.2%/yr；Bull/Bear 散布 [-5.4%, +16.7%] = 22.1pp 最窄、Bear 機率 25% 最低</span></td></tr>
+<tr><td>VIK</td><td>「Celebrity River 12M booking VIK 北美河輪市佔下滑 ≤ 1pp + Hagen 健康至 2030 + 印度 Brahmaputra/Ganges 成功」三條件</td><td>中（Celebrity 12M 需 2026Q4-2027Q3 觀察窗口；Hagen 健康為 binary 不可預測；印度首航 2027 Q3 才驗證）</td><td><strong>不對等最差</strong> — 賭錯 5Y IRR -11.3%/yr（Bear 最深），賭中 +17.1%/yr，加權後 +8.5%/yr；Bear 30% 機率與 RMS 並列最高但 Bear IRR 更負</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>核心：RCL 的 IRR 質感與賠率不對等是三檔之首。</strong>3-5Y view 真正的 alpha 不在「誰 IRR 數字最高」，而在「IRR 怎麼生成 + Bull-Bear 對稱性 + 賭中賭錯的相對代價」。RCL 是三檔中唯一「IRR 三層複合動力 + Pattern Match 雙重強樣本 + 進場 timing 已滿足 + Bear case 純執行風險可監測」四項齊全的標的。RMS 在 5Y view 的 alpha 來自「Moat 質性最強」但被 Bear 30% (-6.9%) 拖累；VIK 在 5Y view 的 alpha 來自「EPS 動力最強 +13%/yr」但被 Re-rate -2.5% 拖累 + 缺股東回饋 cushion。<strong>RCL 是三檔中「賠率最高 + 賭錯損失最小 + 可監測度最高」的相對 dominant 選擇</strong>。
+</div>
+
+</section>
+
+<!-- §D Bear / MaxDD -->
+<section id="sD">
+<h2>§D Bear Case + Max DD 路徑對比</h2>
+
+<div class="callout">
+<strong>本節核心：</strong>區分「執行風險」（可監測可證偽，1-2 季可看出）與「範式風險」（模糊，5-10 年才能 settle）。範式風險檔案在 5-10Y view 下不利，因為持有期間會有持續焦慮 — 即使最終 thesis 對，過程中很多 ambiguous moment 會誘發中途出場。
+</div>
+
+<h3>三檔 §5 Single Thing 對比</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>RMS</th><th>RCL</th><th>VIK</th></tr>
+</thead>
+<tbody>
+<tr><td>§5 Primary Trigger</td><td>Leather Goods cc 連 2 季 &lt; 6%（最早 Q2+Q3 2026 公告後 2026-10-X 確認）</td><td>Caribbean Net Yield CC 連 2 季 &lt; 0% + 同業 CCL/NCLH 公開降價 &gt; 5%</td><td>Celebrity River 首航前 12 個月 VIK 北美河輪市佔下滑 ≥ 3pp（2026Q4-2027Q3 窗口）</td></tr>
+<tr><td>§5 Secondary Trigger</td><td>Axel Dumas 非預期辭任 + 第七代接班空懸 ≥ 6 個月 + H51/H52 信託受挑戰</td><td>Perfect Day Mexico 軟開幕延後 &gt; 12 個月 + Capex 超支 &gt; 30%</td><td>Hagen 80+ 重大健康事件或退休過渡計畫且接班非家族/長期同事</td></tr>
+<tr><td>觸發時點距離</td><td>~6 個月（Q3 26 預計 2026/11 公布最早確認）</td><td>~3 個月（Q2 26 2026-07-29 第一次驗證）</td><td>~6 個月（5/14 Q1 法說早期 signal，但結構性訊號 2026Q4 才清楚）</td></tr>
+<tr><td>Bear case 性質</td><td><span class="signal signal-red">範式（super cycle 結束）+ 治理（家族接班空懸）</span></td><td><span class="signal signal-green">純執行風險（Net Yield 季度 + Perfect Day 工程進度）</span></td><td><span class="signal signal-red">競爭範式（Celebrity）+ 治理（Hagen 接班）+ 執行（印度 ramp）</span></td></tr>
+<tr><td>持有過程焦慮</td><td>高（super cycle 結束需 36+ 個月 settle，Asia 拐點為進行式 ambiguous）</td><td><span class="rank-1">低（季度公司 disclosed metrics 可精準追蹤）</span></td><td>高（Celebrity 12M 窗口 + Hagen 80+ 接班皆 binary 不可預測時點）</td></tr>
+</tbody>
+</table>
+
+<h3>Max DD 路徑對比</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>RMS</th><th>RCL</th><th>VIK</th></tr>
+</thead>
+<tbody>
+<tr><td>Max DD 範圍</td><td>−30% ~ −42%（從現價 €1,661，下界較淺）</td><td>−35% ~ −55%（下界較深）</td><td>−35% ~ −45%（從現價 $80.6 範圍中等）</td></tr>
+<tr><td>路徑風險評級</td><td><span class="signal signal-yellow">🟡 中度</span></td><td><span class="signal signal-yellow">🟡 中度（含 -50% 下界）</span></td><td><span class="signal signal-yellow">🟡 中度</span></td></tr>
+<tr><td>觸發時點</td><td>2027 Q1-Q2（Asia cc 結構性 + sell-side 集中下修；或 Dumas 退休黑天鵝）</td><td>2027 Q3 ~ 2028 Q1（Caribbean yield war + Perfect Day Mexico 延宕雙殺）</td><td>2027 Q4 - 2028 Q2（Celebrity River 首航 + Hagen 接班議題 + 印度 ramp pressure 三事件相繼）</td></tr>
+<tr><td>觸發後復原時間</td><td>18-30 個月（前提：H1 + H2 假設 intact、Leather cc 不破 6%）</td><td>18-24 個月（若 Perfect Day Mexico 2029 開幕、Caribbean 供需 2028 Q4 重新平衡）</td><td>12-18 個月（若僅 Celebrity 壓力）/ 24-36 個月（Hagen 接班震盪疊加）/ 不會恢復（Boomer wealth 逆轉）</td></tr>
+<tr><td>三條件需同時滿足才能撐到復原</td><td>(a) 部位 ≤ 6%；(b) 不槓桿；(c) §5 trigger 未發生；(d) Pure MA 救援為 🟠 而非 ❌</td><td>(a) 部位 ≤ 5%；(b) 不槓桿；(c) §5 trigger 未完全觸發；(d) basket 相關度 0.4-0.6</td><td>(a) 部位 ≤ 3.5%；(b) 不槓桿；(c) §5 兩 trigger 都未觸發；(d) 進場價 $70-75 trough -45% = $39-41 接受度</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序（Max DD 路徑風險 — 越低越好）</h3>
+<ol>
+<li><span class="rank-1">🥇 RCL（風險最可控）</span> — Bear case 為純執行風險（Caribbean Net Yield 季度公司 disclosed + Perfect Day Mexico 工程進度可追蹤），無範式或治理 binary 焦慮。RCL DCA §6c 校驗條件原文「(a) 部位不超過 portfolio 5%（已設 3.5% 起步、目標 5-6%）；(b) 不使用槓桿；(c) §5 single thing 未完全觸發（Caribbean Net Yield 連 2 季 &lt; 0% 才清倉）；(d) 與 ID_BoomerTravelSupercycle basket 內 DAL/H/AENA 相關度 0.4-0.6 → 不會全部同時 drawdown 50%」。Pattern Match RCL 2014-2019 (+95%, 14% IRR) 已驗證歷史 cycle through 路徑可控。觸發後復原時間 18-24 個月（對標 META 2022Q4 → 2023Q4 12 個月復活為樂觀錨點，cruise cyclical 性質使略長）。</li>
+<li><span class="rank-2">🥈 RMS（範圍最窄但 Bear 性質含治理）</span> — Max DD 範圍 -30~-42% 為三檔中最窄（下界 -42% vs RCL -55% vs VIK -45%），且為三檔中唯一含「股息 cushion」的標的。RMS DCA §6c 校驗條件原文「若 max DD 落在 −42%（即股價跌至 €960-980 區），我能否撐到復原？條件：(1) 部位上限 ≤ portfolio 6%、(2) 不使用槓桿、(3) §5 primary trigger（Leather cc 連 2 季 &lt; 6%）未發生、(4) §5 secondary trigger（家族治理失效）未發生」。但 Bear case 含「進行式範式風險」— Berenberg 2025/10 已 calling super cycle 結束、Asia +2.2% CFO "flatlining" — 持有過程焦慮中等偏高。</li>
+<li><span class="rank-3">🥉 VIK（範式風險集中度最高）</span> — Max DD -45% 中位，但 Bear case 性質為三檔中最複雜（競爭範式 + 治理範式 + 執行風險三層）。VIK DCA §6c 校驗條件原文「若 max DD 落在 −45%（amber 下緣），我能否撐到復原？條件：① 部位不超過 portfolio 3.5%（已從原計畫 6% 自動下修，符合 Guardrail 22）；② 不使用槓桿；③ §5 兩個 trigger 都未觸發（Celebrity 市佔 ≤ 1pp 下滑、Hagen 健康正常）；④ 進場價位 $70-75，−45% 意味著 trough $39-41，這個價位對應 Fwd PE 9-10x，已是 deep value reset」。Hagen 80+ + dual-class trust 接管期間管理層 churn 是「不可預測時點」的 binary 事件 — 5Y 持有期間「Hagen 健康為 binary 不可預測時點」(VIK DCA §5 secondary)是三檔中最焦慮的 ambiguous moment 來源。</li>
+</ol>
+
+<div class="callout callout-key">
+<strong>關鍵風險不對等：</strong>三檔都標 🟡 Max DD 評級，但 Bear case 性質截然不同。RCL Bear 為純執行風險（Net Yield 季度數據 + 工程進度可追蹤）— 觸發即清倉，路徑明確；RMS Bear 含「super cycle 結束 vs 週期性」的範式爭議 + 家族第七代接班治理 tail；VIK Bear 含 Celebrity 競爭範式 + Hagen 接班治理 + 印度 ramp 執行 三層 binary。<strong>5Y 持有期間「能否抱住 trough」的差別在於 Bear case 觸發後是「可監測可追蹤的執行兌現」（RCL）vs「需 36+ 個月 settle 的範式爭議」（RMS）vs「Hagen binary + Celebrity binary 雙重不可預測」（VIK）</strong>。
+</div>
+
+</section>
+
+<!-- §E -->
+<section id="sE">
+<h2>§E 最終裁決</h2>
+
+<h3>四層時間框架最終排序矩陣</h3>
+<table>
+<thead>
+<tr><th>時間軸</th><th>第一名</th><th>第二名</th><th>第三名</th><th>關鍵分水嶺</th></tr>
+</thead>
+<tbody>
+<tr><td>&lt; 12M 短期</td><td><span class="rank-1">🥇 RCL</span></td><td>🥈 RMS</td><td>🥉 VIK</td><td>進場 timing 可達性 + 動能不過熱 + EPS 共識軌跡方向</td></tr>
+<tr><td>2-3Y 中期</td><td><span class="rank-1">🥇 RCL</span></td><td>🥈 VIK</td><td>🥉 RMS</td><td>拐點 catalyst 兌現節奏 + Pattern Match 對標強度</td></tr>
+<tr><td>3-5Y 中長期</td><td><span class="rank-1">🥇 RCL</span></td><td>🥈 VIK</td><td>🥉 RMS</td><td>IRR composition 質感（三層複合 vs 純 EPS vs EPS+股息）</td></tr>
+<tr><td>5-10Y 長期</td><td><span class="rank-1">🥇 RMS</span></td><td>🥈 RCL</td><td>🥉 VIK</td><td>Moat 長期持久性 + 範式風險集中度 + 創辦人 alignment</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>排序穩定度洞察（這次比較的核心 alpha）：</strong>RCL 在 &lt; 12M / 2-3Y / 3-5Y 三層全勝，但 5-10Y view 換成 RMS — <strong>這是這次比較中「首選變動最劇烈」的時間軸切換</strong>。原因：RMS 的 S 級護城河 + 175 年品牌 + 家族治理 + 工坊擴張節奏在 10Y view 下放大優勢（3-5Y view 的「super cycle 結束」逆風已被時間吸收），而 RCL 的 cruise cyclical 性質在 10Y view 下開始限制（Caribbean supply 2031 後 lock 失效 + AI 個人化旅遊代理 10Y+ 遠期 + 嬰兒潮 demographic peak 2029-2030 後進入 Gen X 接力期）。VIK 在四層都不是首選 — 短期動能過熱 + 中期 Celebrity 12M binary + 中長期 IRR 質感缺 cushion + 長期範式風險集中度最高。<strong>若用戶問 3-5Y view，答案是 RCL；若拉到 5-10Y，首選變 RMS — 這個時間軸切換 alpha 是這次比較的關鍵洞察</strong>。
+</div>
+
+<h3>推薦標的（3-5Y 主視角）</h3>
+<div class="verdict-card">
+<div class="verdict-label">最終推薦</div>
+<div class="verdict-pick">RCL（Royal Caribbean Group）</div>
+<div class="verdict-timeframe">3-5 年中期 — 核心持倉 5-6% 配置（初始 3.5%，分批 3 次）</div>
+<ul>
+<li><strong>三檔中唯一 A 訊號 + 進場 timing 立即可動：</strong>原 DCA 綜合訊號燈 A（核心候選）、現價 $276 在進場區間 $258-285 中段、Pure MA 長線 W104 ✅（中短線未過為「回撤後尚未確認反轉」狀態，不是趨勢破壞）、RSI 14d 38.6 偏弱非過熱、Q1 26 已 beat $0.41 + Adj EBITDA margin 38% +300bps YoY。對照 RMS X 訊號需等 €1,500 或 W104 站回、VIK RSI &gt;70 過熱需回測 $70-75。RCL 是三檔中唯一今天就可以建第一批 1.5% 的標的。</li>
+<li><strong>IRR composition 三層複合 + Moat 唯一 ↑ widening：</strong>Base IRR +12.0%/yr 中 EPS +11.6%/yr 主動力（占 95%）+ Re-rate +2.8%/yr（FPE 15.7x → 18x cyclical 天花板）+ Div+Buyback +1.5%/yr（$1/季股息 + $2B buyback 已啟動 $836M）三層複合結構為三檔中唯一。Moat B+ 8/10 ↑ widening（私島矩陣 2→8 by 2028）是三檔中唯一加深 — 對照 RMS S 10/10 → holding、VIK A 9/10 → holding（Celebrity 2027 對沖）。</li>
+<li><strong>Bear case 性質最可控 + Pattern Match 對標強樣本：</strong>Bear case 純執行風險（Caribbean Net Yield 季度可監測 + Perfect Day Mexico 工程進度可追蹤），無 RMS 的「家族第七代接班空懸 + super cycle 結束範式」或 VIK 的「Celebrity River 競爭範式 + Hagen 80+ 接班治理」雙重範式焦慮。Pattern Match 對標 MAR 2014-2019 (+110%, 16% IRR) + RCL 自身 2014-2019 (+95%, 14% IRR) 為三檔中時間軸最對應且樣本最強。</li>
+</ul>
+<p style="margin-top:14px; font-size:13px; color:#c2410c;">
+<strong>進場條件（條件式分批 3 次）：</strong>① 立即建第一批 1.5%（RSI 38 偏弱 + 長線 MA104w ✅）；② Q2 26 法說（2026-07-29）若 Net Yield CC ≥ +2.0% 達 guide 中位 + FY26 EPS guidance 重申 ≥ $17.10 → 加 1.0% 至 2.5%；③ Perfect Day Mexico 工程進度官方更新（2026 Q4 法說）若 on-track → 加 1.0% 至 3.5%（衛星上限）。減碼觸發：Net Yield CC 連 2 季 &lt; 0%；清倉觸發：Caribbean Net Yield -3% YoY 連 2 季 + CCL/NCLH 公開降價。
+</p>
+</div>
+
+<h3>不選 RMS 的具體理由</h3>
+<ol>
+<li><strong>5Y IRR 機率加權最低（+5.5%/yr 弱於 SPX ~9-10%）：</strong>三檔中唯一機率加權 5Y IRR 弱於大盤平均。RMS DCA §4 原文「IRR 解讀：5.5%/yr 屬『弱於大盤平均』。這個數字告訴我們：在現價 €1,661 上，不該動部位。需股價跌至 €1,500 區或 thesis 強化（Q2 2026 Leather cc ≥ 8% + Asia 回 ≥ +5%）才能把機率分佈往 Bull 拉、Bear 壓低，IRR 才有 8-10%/yr 的 base case 入場價值」。Bull 22% / Base 48% / Bear 30% 中 Bear 機率為三檔中並列最高（與 VIK 30% 並列），且 Bear -6.9% 的拖累使加權 IRR 顯著低於 RCL +10.2%。</li>
+<li><strong>進場 timing 最差（X 訊號 + EPS 共識 90d 連 4 季下修）：</strong>RMS DCA 原 DD 4/18 訊號為 X（MA ❌ 系統失效 + 估值燈 🟠）。Pure MA 三條全失守（距 W104 -23.7%、MA200 -20.63%、MA60 -3.4%）+ EPS 共識 90d -4.4% 連 4 季下修，需等 €1,450-1,580 區間（距現價 -5~-13%）才有合理 R:R。對照 RCL 進場區間已在現價 -7~0%、VIK 也在 -7~-13% — RMS 進場 timing 並非最差但搭配 X 訊號的「需等事件 + 價位雙錨」使可動性低。</li>
+<li><strong>Bear case 含進行式範式 + 治理 tail 雙風險：</strong>Bear case 含「super cycle 結束 vs 週期性」範式爭議（Berenberg 2025/10 框架 + 2025 是 30 年第 3 次 luxury 連兩年衰退）+ 家族第七代接班空懸（Axel Dumas 1970 生，第七代候選人不明）+ Asia +2.2% CFO "flatlining" 進行式風險。3-5Y view 持有期間「super cycle 結束需 36+ 個月 settle」是 painful 的 ambiguous 等待。</li>
+<li><strong>3-5Y view 受 EPS 動力最弱拖累：</strong>EPS CAGR +9%/yr 為三檔中最弱（vs RCL +11.6% / VIK +13%）。RMS 的長期 compound machine 優勢需要 5-10Y view 才能顯現（FY2035 EPS €115 × PE 40x = €4,600，10Y IRR 10.7%）— 3-5Y view 受「估值修復 36+ 個月路徑爭議」+「Asia 拐點不確定性」拖累，EPS 動力被短期共識下修壓制。<strong>RMS 在 3-5Y view 排第三、5-10Y view 排第一 — 這意味本標的不適合 3-5Y view 進場，而適合 5-10Y view 持有</strong>。</li>
+</ol>
+
+<h3>不選 VIK 的具體理由</h3>
+<ol>
+<li><strong>短期動能過熱 + 進場條件距離較遠：</strong>RSI &gt; 70 過熱 + 4/17 跳空 +6.8% 未消化 + 共識目標 $79 已壓在現價 $80 下方。VIK DCA §7c 原文「Pure MA 結構支持，但動能過熱 + 共識目標 $79 已在現價下方 → §7a 進場節奏強制改條件式，禁止無 timing 條件的一次建倉。歷史 mean reversion 頻率：RSI &gt; 75 後 1 個月內回測 8-15% 機率約 60%」。進場區 $70-75 需現價 -7~-13%。</li>
+<li><strong>IRR composition 缺 cushion + Bear case 最深（-11.3%/yr）：</strong>Base IRR +10.5% 中 EPS +13%/yr 為三檔最強動力但 Re-rate -2.5% 拖累 + 0 股息 0 回購使三層中只有一層動力。VIK DCA §4 原文「Base 10.5% IRR 中，13.0%/yr 全部來自 EPS 複利（公司自己長出來，不靠市場配合），股息+回購 = 0（公司明確說不發股息也不回購，現金留給 capex）」。Bear case 5Y IRR -11.3%/yr 為三檔中最深（vs RCL -5.4% / RMS -6.9%），Bull/Bear 散布 [-11.3%, +17.1%] = 28.4pp 為三檔中最寬。</li>
+<li><strong>Bear case 範式風險集中度最高（競爭 + 治理 + 執行三層 binary）：</strong>Celebrity River 2027 進場為已知未知 + Hagen 80+ 接班議題（持股 50.4% 控股，dual-class trust 接管期間管理層 churn）+ 印度 Brahmaputra/Ganges 2027-2028 ramp 三條範式 tail risk。VIK DCA §6a 五條盲點中三條為範式：「Boomer wealth effect 與消費強度延續 + 4 廠造船 supply lock 不會被破解 + Hagen 接班順暢」— 10Y 範圍內累積範式風險為三檔中最高。</li>
+<li><strong>opportunity cost 被自身 DCA 點名 dominated by RCL：</strong>VIK DCA §7a 原文「邊際資金應加碼 RCL 而非 VIK，除非 VIK 回到 $70-75」+ VIK DCA §4 IRR Composition narrative 原文「估值已在 5Y 分位 95%，無安全邊際」。RCL DCA 同樣點名「vs VIK 邊際資金優先 RCL 而非 VIK」— 兩份 DCA 雙重 cross-confirm「邊際資金優先 RCL」的相對選擇。</li>
+</ol>
+
+<h3>時間軸切換敏感度測試</h3>
+<table>
+<thead>
+<tr><th>時間軸假設</th><th>首選變嗎？</th><th>主因</th></tr>
+</thead>
+<tbody>
+<tr><td>3-5Y → 5-10Y</td><td><span class="signal signal-yellow">首選變 RMS（從 RCL → RMS）</span></td><td>RMS S 級護城河 + 175 年品牌 + 家族治理在 10Y view 下放大優勢；RCL cruise cyclical 性質在 10Y view 下開始限制（嬰兒潮 demographic peak 2029-2030 後 Gen X 接力期）</td></tr>
+<tr><td>3-5Y → 2-3Y 中期</td><td>不變（RCL）</td><td>Perfecta 2027 EPS $24 + Perfect Day Mexico 2027 Q4 雙 catalyst 在 2-3Y 視角內最清晰；VIK Celebrity 12M binary、RMS 估值修復 36+ 個月路徑爭議</td></tr>
+<tr><td>3-5Y → &lt; 12M 短期</td><td>不變（RCL）</td><td>RCL 唯一進場 timing 立即可動（區間中段 + RSI 38 偏弱 + Q1 26 已 beat），對照 RMS X 訊號 + VIK 動能過熱</td></tr>
+<tr><td>「已持有 RCL 想加碼第二檔」</td><td><span class="signal signal-yellow">換成 RMS（避免 cruise 同類過度集中）</span></td><td>RCL + VIK 為「mass cruise + pure luxury cruise」同 cruise basket，basket 內 0.6+ 相關度；RCL + RMS 為「cruise demographic + luxury heritage」不同曝險，相關度 0.3-0.4 提供分散</td></tr>
+<tr><td>「已持有 ID_BoomerTravelSupercycle basket (DAL/H/AENA/AXP)」</td><td>不變（RCL）— 補位邏輯</td><td>RCL 屬 basket 內 cruise 規模 leg，補位完整化 basket；VIK 為 cruise pure luxury 第二 leg 但邊際資金優先 RCL</td></tr>
+<tr><td>「純動能 12M 持有視角」</td><td>不變（RCL）— 但 VIK 上升至第二</td><td>RCL 短期動能與基本面同向轉正；VIK 動能過熱但若 5/14 法說 surprise 上修則可能爆發 +15-20% 6 個月</td></tr>
+</tbody>
+</table>
+
+<h3>進場條件與監測指標總表</h3>
+<table>
+<thead>
+<tr><th>檢查項</th><th>條件</th><th>頻率</th></tr>
+</thead>
+<tbody>
+<tr><td>RCL 立即建倉</td><td>現價在 $258-285 區間 → 建第一批 1.5%（RSI 38 偏弱 + 長線 MA104w ✅）</td><td>立即</td></tr>
+<tr><td>RCL Q2 26 earnings</td><td>2026-07-29 — Net Yield CC ≥ +2.0% 達 guide 中位 + FY26 EPS guidance 重申 ≥ $17.10 → 加碼至 2.5%</td><td>季度</td></tr>
+<tr><td>RCL Perfect Day Mexico 進度</td><td>2026 Q4 法說（2027-01 預估）— 軟開幕 2027 Q4 是否仍 on-track + Capex 是否超支 → 加碼至 3.5%</td><td>季度</td></tr>
+<tr><td>RCL 風險監測（§5 primary trigger）</td><td>Caribbean Net Yield CC 連 2 季 &lt; 0% + CCL/NCLH 公開降價 → 立即清倉</td><td>季度</td></tr>
+<tr><td>RCL 產業監測</td><td>CCL Q2 26 法說（2026-06 末）— 是否啟動 yield war + Celebration Key 私島 onboard spend 對比；RCL Net Debt/EBITDA 是否降至 &lt; 2.5x</td><td>季度</td></tr>
+<tr><td>替代標的監測</td><td>RMS Q2 2026 法說（2026-07-30）— Leather cc ≥ 8% + Asia cc 轉正 + 股價回 €1,500 區 → RMS 升級進場候選；VIK 站回 $70-75 + 5/14 Q1 法說 Net Yield ≥ +6% → VIK 升級進場候選</td><td>季度 + 重大事件</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>一句話 takeaway：</strong>三檔同屬「嬰兒潮 demographic supercycle + 高端體驗消費」basket，但本質結構差異顯著 — <strong>RCL 是「IRR 三層複合動力 + 進場 timing 已滿足 + Bear case 純執行風險可監測」三項齊全的當前最佳標的；RMS 是「Moat 最強但 IRR 質感受 super cycle 結束逆風 + 家族接班治理 tail 雙重拖累」的 5-10Y 視角才適合進場的標的；VIK 是「EPS 動力最強但缺股東回饋 cushion + 範式風險集中度最高 + 被自身 DCA 點名 dominated by RCL」的觀望標的</strong>。三檔自身 DCA 的 opportunity cost 段都直接或間接點名「邊際資金優先 RCL」（RMS DCA 點名 CFR Richemont 為奢侈品 basket 內優先；VIK DCA 點名邊際資金優先 RCL；RCL DCA 點名 vs VIK 優先 RCL）— 三方一致 cross-confirm 的相對排序。<strong>3-5Y view 推薦 RCL；若拉到 5-10Y，首選變 RMS（compound machine 純度）；若已持 RCL 想加碼第二檔，建議 RMS 而非 VIK（避免 cruise basket 過度集中）</strong>。
+</div>
+
+</section>
+
+<div class="report-footer">
+<p>本報告由 multi-stock-comparator-v1 skill 自動生成，基於本地 DCA 報告抽取維度。<br>
+資料來源：DCA_RMS_20260511.html / DCA_RCL_20260511.html / DCA_VIK_20260511.html<br>
+免責聲明：本內容由 AI 自動生成，僅供參考，不構成任何投資建議。投資涉及風險。</p>
+</div>
+
+</div>
+</body>
+</html>
