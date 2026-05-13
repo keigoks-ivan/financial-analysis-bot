@@ -90,6 +90,10 @@ h2{color:#1F2937;border-left:4px solid #475569;padding-left:12px;margin:36px 0 1
 h3{color:#374151;margin:22px 0 8px;font-size:15px;font-weight:600}
 p{margin:12px 0;line-height:1.85}
 .ds-body p{text-align:justify;text-justify:inter-character;hyphens:auto}
+.ds-body ul,.ds-body ol{margin:10px 0 16px;padding-left:26px;line-height:1.75}
+.ds-body li{margin:6px 0;padding-left:2px}
+.ds-body li::marker{color:#6B7280}
+.ds-body li strong{color:#1F2937}
 strong{color:#1F2937;font-weight:700}
 em{color:#374151;font-style:normal;font-weight:600}
 
