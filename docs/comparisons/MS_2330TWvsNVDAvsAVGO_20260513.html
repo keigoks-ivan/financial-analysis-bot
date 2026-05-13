@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS 2330TW vs NVDA vs AVGO 2026-05-13 | 多標的對比分析</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", Roboto, sans-serif; background: #ffffff; color: #1a1d24; line-height: 1.8; font-size: 16px; font-weight: 400; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+p { color: #1a1d24; margin: 14px 0; font-weight: 400; }
+li { color: #1a1d24; font-weight: 400; }
+strong { color: #000000; font-weight: 700; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+.report-header { border-bottom: 2px solid #d0d8e0; padding-bottom: 16px; margin-bottom: 24px; }
+.report-header h1 { font-size: 28px; color: #0a1628; margin: 0 0 8px; font-weight: 700; }
+.report-meta { font-size: 14px; color: #4a5568; font-weight: 500; }
+.report-meta span { margin-right: 16px; }
+.toc-nav { position: sticky; top: 0; background: #ffffff; padding: 14px 20px; border-bottom: 2px solid #d0d8e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 0 -20px 28px; z-index: 100; }
+.toc-nav a { color: #1565c0; text-decoration: none; margin-right: 16px; font-size: 14px; font-weight: 600; display: inline-block; padding: 4px 2px; }
+.toc-nav a:hover { color: #c2410c; }
+section { margin-bottom: 36px; padding-top: 16px; }
+h2 { font-size: 24px; color: #0a1628; border-left: 4px solid #1565c0; padding-left: 12px; margin: 0 0 18px; font-weight: 700; }
+h3 { font-size: 18px; color: #c2410c; margin: 22px 0 12px; font-weight: 700; }
+h4 { font-size: 16px; color: #15803d; margin: 16px 0 10px; font-weight: 700; }
+.verdict-card { background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%); border: 1px solid #90caf9; border-left: 4px solid #15803d; border-radius: 8px; padding: 22px 26px; margin-bottom: 22px; }
+.verdict-card .verdict-label { font-size: 13px; color: #4a5568; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+.verdict-card .verdict-pick { font-size: 32px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.verdict-card .verdict-timeframe { font-size: 15px; color: #c2410c; margin-bottom: 14px; font-weight: 600; }
+.verdict-card ul { margin: 8px 0 0; padding-left: 22px; }
+.verdict-card li { margin-bottom: 10px; font-size: 15px; color: #1a1d24; line-height: 1.7; }
+.verdict-card p { color: #1a1d24; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 15px; background: #ffffff; border: 1px solid #d0d8e0; border-radius: 6px; overflow: hidden; }
+th { background: #f1f5f9; color: #0a1628; padding: 12px 14px; text-align: left; border-bottom: 2px solid #cbd5e1; font-weight: 700; font-size: 14px; }
+td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; color: #1a1d24; vertical-align: top; font-weight: 400; }
+tr:hover { background: #f8fafc; }
+tr:last-child td { border-bottom: none; }
+.rank-1 { color: #15803d; font-weight: 700; }
+.rank-2 { color: #475569; font-weight: 700; }
+.rank-3 { color: #c2410c; font-weight: 700; }
+.signal { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.signal-green { background: #dcfce7; color: #166534; }
+.signal-yellow { background: #fef3c7; color: #92400e; }
+.signal-red { background: #fee2e2; color: #991b1b; }
+.signal-grey { background: #e2e8f0; color: #475569; }
+.callout { background: #eff6ff; border-left: 4px solid #1565c0; padding: 16px 20px; margin: 18px 0; border-radius: 4px; font-size: 15px; color: #1a1d24; line-height: 1.75; }
+.callout strong { color: #000000; font-weight: 700; }
+.callout-warn { background: #fff7ed; border-left-color: #c2410c; }
+.callout-key { background: #f0fdf4; border-left-color: #15803d; }
+.irr-bar { display: flex; height: 40px; border-radius: 4px; overflow: hidden; margin: 10px 0 4px; background: #e2e8f0; border: 1px solid #cbd5e1; }
+.irr-segment { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 8px; }
+.irr-eps { background: #15803d; }
+.irr-rerate-pos { background: #1565c0; }
+.irr-rerate-neg { background: #b91c1c; color: #ffffff; }
+.irr-buyback { background: #c2410c; }
+.irr-legend { font-size: 14px; color: #334155; margin-bottom: 16px; line-height: 1.7; }
+.timeframe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; }
+.tf-card { background: #f8fafc; border: 1px solid #d0d8e0; border-radius: 6px; padding: 16px 18px; }
+.tf-card .tf-label { font-size: 12px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+.tf-card .tf-winner { font-size: 20px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.tf-card .tf-reason { font-size: 14px; color: #1a1d24; line-height: 1.65; font-weight: 400; }
+.report-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #d0d8e0; font-size: 13px; color: #4a5568; text-align: center; line-height: 1.7; }
+@media print { body { background: #ffffff; color: #000000; } .toc-nav { display: none; } }
+@media (max-width: 768px) {
+  body { font-size: 17px; line-height: 1.85; }
+  .container { padding: 16px 16px 40px; }
+  .report-header h1 { font-size: 22px; }
+  h2 { font-size: 21px; } h3 { font-size: 18px; } h4 { font-size: 17px; }
+  p, li { font-size: 16px; }
+  table { font-size: 14px; }
+  th, td { padding: 12px 10px; }
+  .toc-nav { padding: 14px 16px; margin: 0 -16px 24px; }
+  .toc-nav a { margin-right: 14px; font-size: 14px; padding: 6px 2px; }
+  .callout, .verdict-card { font-size: 15px; }
+  .verdict-card li { font-size: 15px; }
+  .irr-segment { font-size: 12px; }
+  .tf-card .tf-reason { font-size: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="report-header">
+<h1>📊 MS 2330.TW vs NVDA vs AVGO | 多標的對比分析</h1>
+<div class="report-meta">
+<span>📅 2026-05-13</span>
+<span>📐 來源:3 份 DCA + 最新股價(5/12 收盤)</span>
+<span>🎯 預設四層時間框架,主推 3-5 年 view</span>
+</div>
+</header>
+
+<nav class="toc-nav">
+<a href="#sA">§A Dashboard</a>
+<a href="#sB1">§B.1 &lt;12M</a>
+<a href="#sB2">§B.2 2-3Y</a>
+<a href="#sB3">§B.3 3-5Y</a>
+<a href="#sB4">§B.4 5-10Y</a>
+<a href="#sC">§C IRR 質感</a>
+<a href="#sD">§D Bear/MaxDD</a>
+<a href="#sE">§E 最終裁決</a>
+</nav>
+
+<!-- §A Dashboard -->
+<section id="sA">
+<h2>§A 對比 Dashboard</h2>
+
+<div class="verdict-card">
+<div class="verdict-label">綜合裁決(3-5 年中長期 view)</div>
+<div class="verdict-pick">推薦:2330.TW</div>
+<div class="verdict-timeframe">適用時間框架:3-5 年(中長期複利持有)</div>
+<ul>
+<li><strong>理由 1(IRR 結構最穩固):</strong>Pattern Match ASML 2017-22 已驗證 +465%(supply-side monopoly + cyclical → platform monopoly re-rate);Base IRR 9.3%/yr 來自「EPS +12% 複利 + PE +4% 認知轉換 re-rate」,不依賴會隨股價變動的「進場估值便宜」紅利</li>
+<li><strong>理由 2(護城河 5 年後 10/10):</strong>N2 yield 65% vs Samsung 40% / Intel 60%、A16 backside power 2026 Q4 量產、CoWoS sold out 至 2027;5 年內結構性追上機率低 < 15%</li>
+<li><strong>理由 3(進場條件可達 + Pure MA 穩固):</strong>等回測 TWD 2,100-2,180(距現價 -2~-7%);Pure MA 三條全多頭 + 三條斜率全強正,結構性多頭</li>
+</ul>
+<p style="margin-top:14px; font-size:13px; color:#c2410c;">
+<strong>進場條件:</strong>條件式分批 — ① 跌至 2,180 進首批 30%(1.5% portfolio);② RSI 14d 回到 60 以下 + 4 週漂移 < +5% 進 40%;③ Bollinger 中軌測試後補滿 30%。目標倉位 6-8%(核心持倉)
+</p>
+</div>
+
+<h3>三檔基本資料對比</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>2330.TW</th><th>NVDA</th><th>AVGO</th></tr>
+</thead>
+<tbody>
+<tr><td>現價(5/12 收盤)</td><td>TWD 2,255</td><td>$220.78</td><td>$419.30</td></tr>
+<tr><td>Fwd PE(FY+1)</td><td><span class="rank-1">~18.7x</span></td><td>~27.7x</td><td>~37.4x</td></tr>
+<tr><td>5Y PE 分位</td><td>~50%</td><td>~25-30%</td><td>~高位</td></tr>
+<tr><td>PEG</td><td><span class="rank-1">0.65</span></td><td>~1.15</td><td>0.76</td></tr>
+<tr><td>護城河評分</td><td><span class="rank-1">9-10/10 S 級</span></td><td>10/10 training / 7/10 inference</td><td>9/10</td></tr>
+<tr><td>護城河趨勢</td><td><span class="signal signal-green">↑ widening</span></td><td><span class="signal signal-yellow">→ training holding</span></td><td><span class="signal signal-yellow">→ 70%→50% 市占 cap</span></td></tr>
+<tr><td>Runway post-Y5</td><td><span class="signal signal-green">🟢 寬(2030+ A14)</span></td><td><span class="signal signal-green">🟢 寬(物理AI/sovereign)</span></td><td><span class="signal signal-yellow">🟡 中(GM 收斂期)</span></td></tr>
+<tr><td>Pure MA 狀態</td><td><span class="signal signal-green">✅ 全多頭</span></td><td>已突破 MA50 + 動能加速</td><td><span class="signal signal-green">✅ MA 多頭</span></td></tr>
+<tr><td>動能評估</td><td>4 週漂移 +12.3% 偏熱</td><td><span class="signal signal-red">🔴 近 5 日 +12.4% 加速突破 ATH</span></td><td><span class="signal signal-red">🔴 RSI 80-84 嚴重超買</span></td></tr>
+<tr><td>EPS 共識方向</td><td>FY26 +47% / FY27 +24%</td><td>FY27 +72% / FY28 +20%</td><td>FY27 ~+50% / FY28 +20%</td></tr>
+<tr><td>5Y IRR(Base 加權)</td><td>9.3%/yr</td><td><span class="rank-1">10-11%/yr</span></td><td>5.2%/yr</td></tr>
+<tr><td>Bear case 跌幅</td><td>-47%</td><td>-25%</td><td>-30~-45%</td></tr>
+<tr><td>進場條件觸發?</td><td>等回測 2,100-2,180(-2~-7%)</td><td><span class="signal signal-red">已過 $220 進場區,等回測 $200-205 MA50</span></td><td>等回測 $385-405 + RSI < 65</td></tr>
+<tr><td>原報告綜合訊號</td><td>A(觀望偏進場)</td><td>A+(核心位)</td><td>A(等回測)</td></tr>
+</tbody>
+</table>
+
+<h3>四層時間框架排序速覽</h3>
+<div class="timeframe-grid">
+<div class="tf-card">
+<div class="tf-label">&lt; 12M 短期</div>
+<div class="tf-winner">🥇 2330</div>
+<div class="tf-reason">三檔中唯一「進場條件距離近 + 估值便宜 + Pure MA 多頭」三項齊全</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">2-3Y 中期</div>
+<div class="tf-winner">🥇 NVDA</div>
+<div class="tf-reason">Rubin/Rubin Ultra/Feynman 三世代 cadence + PE 修復空間 +16-37% 最大</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">3-5Y 中長期</div>
+<div class="tf-winner">🥇 2330</div>
+<div class="tf-reason">Pattern Match ASML 已驗證 + 護城河 5 年後 10/10 + 變數獨立性 + IRR 結構穩固</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">5-10Y 長期</div>
+<div class="tf-winner">🥇 2330</div>
+<div class="tf-reason">supply-side monopoly 結構性最硬 + 地緣折扣已 priced + 範式風險最低</div>
+</div>
+</div>
+
+<div class="callout callout-key">
+<strong>核心洞察:</strong>三檔角色完全不重疊 — <strong>2330 是 supply-side toll booth、NVDA 是 demand-side toll booth、AVGO 是 custom ASIC 服務商 + VMware cash machine</strong>。可同時持有作為 AI infra basket。若邊際資金只能加碼一檔,3-5Y view 答案是 2330。NVDA 中期(2-3Y)估值修復短打仍最強但需等回測 $200-205。AVGO 適合衛星倉位等回測。
+</div>
+
+</section>
+
+<!-- §B.1 -->
+<section id="sB1">
+<h2>§B.1 短期視角(&lt; 12 個月)</h2>
+
+<div class="callout">
+<strong>本層核心評估維度:</strong>Pure MA 狀態、進場條件距離、估值 5Y 分位、動能過熱程度、下次財報 binary 距離
+</div>
+
+<h3>對比表</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>2330.TW</th><th>NVDA</th><th>AVGO</th></tr>
+</thead>
+<tbody>
+<tr><td>進場條件距離</td><td><span class="rank-1">跌至 2,100-2,180(-2~-7%,可達)</span></td><td><span class="signal signal-red">已過進場區,需等回測 $200-205</span></td><td>跌至 $385-405(-2~-8%,可達)</td></tr>
+<tr><td>Fwd PE</td><td><span class="rank-1">18.7x(便宜)</span></td><td>27.7x(便宜但 5Y 分位升至 25-30%)</td><td>37.4x(已 priced)</td></tr>
+<tr><td>5Y PE 分位</td><td>~50%</td><td>~25-30%</td><td>~高位</td></tr>
+<tr><td>下次財報日</td><td>2026-07-17</td><td><span class="rank-1">2026-05-27(最近)</span></td><td>2026-06-03</td></tr>
+<tr><td>近 5 日動能</td><td>持平</td><td><span class="signal signal-red">+12.4% 加速</span></td><td>持平/微跌</td></tr>
+<tr><td>短期 R:R</td><td>0.6x(等回測)</td><td><span class="signal signal-red">已透支,短期 R:R 接近 0</span></td><td>1.2x(等回測)</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 2330</span> — 三檔中唯一「進場條件距離近(-2~-7%)+ 估值便宜(PE 18.7x)+ Pure MA 結構性多頭」三項齊全;等回測 2,100-2,180 即可建首批 1.5%</li>
+<li><span class="rank-2">🥈 NVDA</span> — 5/27 Q1 FY27 財報是短期最大 binary;**現價已過進場點,短期 R:R 接近 0**,等回測 $200-205 MA50 區再追</li>
+<li><span class="rank-3">🥉 AVGO</span> — RSI 80-84 嚴重超買、現價接近 ATH;需等回測 $385-405 + RSI < 65 才有進場意義</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>短期 12 個月內,**進場時機 + 動能狀態**是決定性因素。2330 在這層勝出的關鍵不是「最便宜」,而是「**進場條件未觸發但距離近**」— 等回測 2,100-2,180 區間(-2~-7%)即可建首批,且 Pure MA 三條全多頭結構性多頭已確認。</p>
+<p>NVDA 短期落到第二的核心問題是**進場點消失**。Rubin/Feynman 三世代 cadence 沒變、5/27 Q1 FY27 財報仍是 binary,但近 5 日 +12.4% 加速突破 ATH,**現價已遠超原進場區 $185-190**(+16%),短期 R:R 接近 0。等回測 MA50 區 $200-205 才有意義,但需要回測幅度 -7~-9% 才會發生。若 5/27 財報 beat-and-raise 直接衝 $230+,進場點可能更難等到。</p>
+<p>AVGO 在短期最差不是基本面差,而是**現價 $419 仍緊貼 ATH $437 + RSI 80-84 嚴重超買持續未解**。即使 6/3 財報強勁,動能透支需要時間消化,歷史上 RSI > 75 後 1 個月內 mean reversion 8-15% 機率 60%。</p>
+
+</section>
+
+<!-- §B.2 -->
+<section id="sB2">
+<h2>§B.2 中期視角(2-3 年)</h2>
+
+<div class="callout">
+<strong>本層核心評估維度:</strong>拐點催化兌現、產品 cadence 明確度、估值修復至 5Y 中位、PE re-rate 紅利
+</div>
+
+<h3>拐點催化對比</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>核心催化事件</th><th>觸發時間</th><th>兌現信心</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>A16 backside power 量產 + N2 ASP 連 4 年漲價 + HPC 占比突破 65%</td><td>2026 Q4 - 2027 H2</td><td>中高(TSMC N+1 時程穩定)</td></tr>
+<tr><td>NVDA</td><td>Rubin Q4 26 sampling → 2027 Q1 量產 → Rubin Ultra 2027 → Feynman 2028 三世代 cadence</td><td>2026 Q4 - 2028</td><td><span class="rank-1">高(roadmap 明確、backlog 已 lock)</span></td></tr>
+<tr><td>AVGO</td><td>OpenAI 10GW 2026 H2 ramp → 2029 完成 + Anthropic 1GW→3GW + Google TPU v7→v8</td><td>2026 H2 - 2029</td><td>中(5 客戶分散,但 self-design 風險)</td></tr>
+</tbody>
+</table>
+
+<h3>估值修復空間對比</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>當前 Fwd PE</th><th>5Y 中位 / 目標 PE</th><th>修復空間</th><th>觸發前提</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>18.7x</td><td>25x(platform monopoly framing)</td><td>+34%(認知轉換)</td><td>從 cyclical foundry → platform monopoly 認知轉換</td></tr>
+<tr><td>NVDA</td><td>27.7x</td><td>32-38x(Bull case 終端)</td><td><span class="rank-1">+16-37%(空間仍最大)</span></td><td>Rubin/Feynman cadence 兌現 + AI bubble 不 pop</td></tr>
+<tr><td>AVGO</td><td>37.4x</td><td>23-28x(mean reversion)</td><td><span class="signal signal-red">逆風 -25~-38%</span></td><td>GM 從 75% → 65% 是 base case</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 NVDA</span> — Rubin/Rubin Ultra/Feynman 三世代 cadence 明確,FY27-FY28 EPS +20-72% 雙引擎成長 + PE re-rate +16-37% 空間,2-3Y 期望 +50-80%</li>
+<li><span class="rank-2">🥈 2330</span> — A16 + N2 漲價 + HPC 占比 65% 三催化兌現,從 cyclical → platform monopoly 認知轉換是 PE re-rate alpha 來源(ASML 2017-22 對標)</li>
+<li><span class="rank-3">🥉 AVGO</span> — 5 客戶 ramp 真實但 37.4x PE 已 priced 多年成長,2-3Y 內若 GM 開始 mean reversion 至 65%,PE 倍數壓縮抵銷 EPS 成長</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>2-3 年中期 view 下,「**產品 cadence 明確度 + 估值修復空間**」雙重決定排序。NVDA 三世代 cadence 有清楚時程錨點,每一代都是新增 catalyst。配合 Forward PE 27.7x(仍低於歷史平均 54x 與 Semis 中位 34x),EPS 成長 + PE 修復雙引擎能解釋 Bull case +170%。</p>
+<p>2330 在這層第二是因為 PE re-rate 故事**取決於市場認知轉換**(從 cyclical foundry 18.6x → platform monopoly 25x)。這個轉換不是事件驅動,需要 multi-quarter 證據(N2 ASP 連 4 年漲價 + A16 客戶名單 + Q2 法說 GM 守 65.5-67.5%)滲透才會發生。對標 ASML 2017-22 的 PE re-rate(20x → 40x+)花了 5 年。</p>
+<p>AVGO 在這層第三的關鍵問題是**估值已 priced multi-year growth**。Forward PE 37.4x 隱含 FY27-30 EPS CAGR > 20% + GM 維持 75%。即使 base case GM 漸進至 65%,PE 從 37x → 25-28x 的 mean reversion 是 base case 逆風,倍數壓縮 -25~-34% 會抵銷 EPS 成長。AVGO 的「VMware $27B FCF cash machine」提供下行保護,但抵銷不了 PE 壓縮速度。</p>
+
+</section>
+
+<!-- §B.3 -->
+<section id="sB3">
+<h2>§B.3 中長期視角(3-5 年)— 預設答題層</h2>
+
+<div class="callout callout-key">
+<strong>本層是「複利持有」的核心時間框架。</strong>核心評估維度:TAM 滲透位置、護城河趨勢、EPS 5Y CAGR 可兌現性、IRR composition 質感、Pattern Match 5Y 對標、變數獨立性。
+</div>
+
+<h3>TAM / 結構性受益對比</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>主要 TAM 結構</th><th>5Y 後倍數</th><th>受益強度</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>Hyperscaler capex $725B 2026 → $1T+ 累計 2027-30(全部 chip 過 TSMC)</td><td>~2x</td><td><span class="rank-1">silicon-side toll booth(無替代)</span></td></tr>
+<tr><td>NVDA</td><td>AI 訓練 + 推論市場;Hyperscaler $710B capex 75% 流向 GPU/networking</td><td>~2-3x</td><td><span class="rank-1">demand-side toll booth(training 90% / inference 65-75%)</span></td></tr>
+<tr><td>AVGO</td><td>Custom ASIC TAM $70-100B by 2027(AVGO 70% 市占,FY28 後降至 50%)</td><td>~3-4x</td><td>強但市占有 cap(50-55%)</td></tr>
+</tbody>
+</table>
+
+<h3>護城河 5 年後預判</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>現在</th><th>趨勢</th><th>5 年後</th><th>核心威脅</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>S 級 9-10/10</td><td><span class="signal signal-green">↑ widening</span></td><td><span class="rank-1">10/10(N2+A16+CoWoS 三層獨家)</span></td><td>Intel 18A 拿下 NVDA Tier-1 dual-source(機率 < 15%)</td></tr>
+<tr><td>NVDA</td><td>10/10 training / 7/10 inference</td><td><span class="signal signal-yellow">→ training holding / inference 受壓</span></td><td>9/10 training / 5-6/10 inference</td><td>AMD ROCm 在 frontier training 追上(3-5 年)+ custom silicon 蠶食</td></tr>
+<tr><td>AVGO</td><td>9/10</td><td><span class="signal signal-yellow">→ holding 但 GM 收斂</span></td><td>8/10(IP 仍核心、市占從 70%→50%)</td><td>hyperscaler 自研(OpenAI/Anthropic 3-5 年成熟)+ Alchip/MRVL 切入</td></tr>
+</tbody>
+</table>
+
+<h3>EPS 5 年複利兌現難度</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>5Y EPS 目標</th><th>核心依賴變數</th><th>變數獨立性</th><th>兌現難度</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>FY25 ~50 → FY30E ~175 (CAGR ~28%)</td><td>① N2 ASP 漲價 ② HPC 占比 70%</td><td><span class="rank-1">高(供給+需求兩條獨立鏈)</span></td><td>中(TSMC 執行紀錄極強)</td></tr>
+<tr><td>NVDA</td><td>FY26 $4.77 → FY30E $12-14 (CAGR ~22-24%)</td><td>① CUDA + 全棧 ② Hyperscaler capex 持續</td><td><span class="rank-1">高(供給+需求兩條獨立鏈)</span></td><td>中(已 prove 數年連續執行)</td></tr>
+<tr><td>AVGO</td><td>FY26 ~$8 → FY30E $20-25 (CAGR ~22%)</td><td>① 5 客戶 ramp ② VMware FCF ③ GM mean reversion 速度</td><td>中(GM 路徑橫跨兩 driver)</td><td>中高(GM 路徑敏感)</td></tr>
+</tbody>
+</table>
+
+<h3>Pattern Match 對標</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>歷史對標</th><th>對標 5Y 報酬</th><th>對標相似度</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td><span class="rank-1">ASML 2017-2022(EUV monopoly platform 化)</span></td><td>+465%(CAGR 41%)</td><td>高:supply-side monopoly + 技術節點 lead 2-3 年 + 客戶從多元變寡頭 + 估值仍 cyclical framing</td></tr>
+<tr><td>NVDA</td><td>Cisco 1995-2000 + Intel 1995-2010 雙重</td><td>Cisco +700% / Intel +500%(但都 5 年後 -75%~-85%)</td><td>中:Secular tech dominator + 結構性 capex 受益;NVDA 起點 PE 27.7x 雖比 Cisco/Intel 1996 起點高,但 CUDA 護城河比 IOS/x86 更深</td></tr>
+<tr><td>AVGO</td><td>NVDA 2022-2027 早期 + Cisco 1990s 末</td><td>NVDA 2022-27 +800%,但 AVGO 起點 PE 37.4x vs NVDA 2022 起點 22x</td><td>中:同為 AI 半導體早期受益,但估值已 price in 多年成長,上行倍數 attenuated</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>Pattern Match 關鍵:</strong>2330 的 ASML 2017-2022 對標是**最乾淨的歷史對應**(supply-side monopoly + 技術節點 lead + cyclical framing 被 re-rate),且已驗證 +465%。即使 2330 只跑出 ASML 一半就是 +200%/5Y(IRR 25%/yr),遠超 NVDA Base 10-11%/yr 和 AVGO 5%/yr。**這是 3-5Y view 下最強的單一論據**。
+</div>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 2330</span> — Pattern Match 已驗證 + 護城河 5 年後 10/10 + 變數獨立性最強 + IRR composition 不依賴「進場估值便宜」這種會變的紅利</li>
+<li><span class="rank-2">🥈 NVDA</span> — IRR 10-11%/yr 略高於 2330 的 9.3%/yr,但雙引擎順風 IRR 質感優勢縮窄(PE re-rate 推力從 +8-12%/yr 縮至 +5-9%/yr)+ Bear case 下行擴大至 -25%</li>
+<li><span class="rank-3">🥉 AVGO</span> — IRR 5.2%/yr 三檔最低 + EPS 順風被 PE 逆風抵銷 + 客戶集中度與自研滲透雙重風險</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>3-5 年 view 下,**IRR 質感 + Pattern Match 已驗證 + 變數獨立性**三者疊加,2330 結構性勝出。2330 的 alpha 來自「supply-side monopoly + 從 cyclical foundry framing 被 re-rate 為 platform monopoly」這個 thesis,Pattern Match ASML 2017-22 已是**真實已跑完的歷史案例**(+465%/5Y / IRR 41%/yr),即使只跑出一半就是 +200%/5Y(IRR 25%/yr),仍遠超 NVDA 與 AVGO 的 Base IRR。</p>
+<p>NVDA 在這層第二的核心問題是 IRR composition 對「進場估值起點」敏感。從 27.7x 起點 → 32-38x 終端 = +16-37% re-rate 紅利,Base IRR ~10-11%/yr。Bear case 下行 -25%(壓縮空間擴大)。NVDA 仍是極強標的,Rubin/Feynman cadence 與長期 thesis 未變,但**進場估值決定 IRR 質感**,當前不是最佳建倉時點。</p>
+<p>AVGO 在這層第三**不是因為 AVGO 不好**(基本面 quality 強、$27B FCF cash machine),而是因為**進場估值 37.4x 已 priced multi-year growth**。3-5Y EPS CAGR 22% 是強的,但 PE 從 37x → 25-28x 的 mean reversion 是 base case(GM 從 75% → 65%),倍數壓縮 -25~-34% 會抵銷 EPS 成長,導致機率加權 IRR 僅 5.2%/yr。AVGO 是「下行保護優先」型 quality 標的,不是「倍數擊球」型。</p>
+
+</section>
+
+<!-- §B.4 -->
+<section id="sB4">
+<h2>§B.4 長期視角(5-10 年)</h2>
+
+<div class="callout">
+<strong>本層核心評估維度:</strong>Runway post-Y5、第二/第三 S 曲線、範式風險、護城河 10 年抗風險、結構性 vs 範式性威脅
+</div>
+
+<h3>Runway + 第二曲線對比</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>Runway post-Y5</th><th>第二曲線</th><th>第三曲線</th><th>10Y IRR Base</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td><span class="signal signal-green">🟢 寬至 2030+ A14</span></td><td>A14/A12 backside power(2028-2030)</td><td>CoPoS / FOPLP 先進封裝(2028-2030)</td><td><span class="rank-1">~11.6%/yr</span></td></tr>
+<tr><td>NVDA</td><td><span class="signal signal-green">🟢 寬</span></td><td>物理 AI / robotics($50B+ TAM by 2030)</td><td>Sovereign AI($100B+ TAM)+ Omniverse</td><td>~14-15%/yr Bull case</td></tr>
+<tr><td>AVGO</td><td><span class="signal signal-yellow">🟡 中(GM 收斂期)</span></td><td>矽光子 CPO(與 LITE/COHR 共生)</td><td>VMware 訂閱續約 + 新主題擴張</td><td>~10-12%/yr(視 GM 路徑)</td></tr>
+</tbody>
+</table>
+
+<h3>範式風險評估(5-10Y view 的決定性差異)</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>主要範式風險</th><th>觸發機率(10Y)</th><th>觸發後影響</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>① 兩岸地緣衝突(Polymarket 16% 穩定)② Intel 18A 拿下 NVDA Tier-1 dual-source</td><td>地緣 ~15-20% / Intel ~15%</td><td>地緣:極嚴重 / Intel:中等(PE compression 30-40%)</td></tr>
+<tr><td>NVDA</td><td>① Hyperscaler 2027-2028 capex digestion ② AI bubble pop ③ AMD ROCm 追上 frontier training</td><td>capex digestion ~25% / AMD 追上 ~20%</td><td>capex digestion:嚴重(-30~-40%)/ AMD 追上:中等</td></tr>
+<tr><td>AVGO</td><td>① OpenAI 縮減 10GW co-design ② VMware bridge renewal 失敗 ③ GM 加速壓至 50%</td><td>OpenAI 縮減 ~25% / VMware churn ~15% / GM 加速 ~20%</td><td>OpenAI 縮減:嚴重 / VMware churn:中等 / GM 加速:嚴重</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warn">
+<strong>2330 的地緣風險特殊性:</strong>不像 NVDA/AVGO 是商業性範式風險,2330 面對的是**binary 地緣事件 + Polymarket 16% 穩定機率**。一旦觸發是 catastrophic,但機率穩定且**已部分 priced in 當前 PE 18.7x**(vs ASML 2017 PE ~25x、AVGO 37.4x)。地緣折扣是長期持有 2330 的「已知風險溢價」,不是隱性 surprise。
+</div>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 2330</span> — supply-side monopoly 結構性最硬,N2+A16+A14 演進至 2030+;Pattern Match ASML 2017-22 已 prove +465%;地緣折扣已 priced</li>
+<li><span class="rank-2">🥈 NVDA</span> — 10Y Bull case 仍極具吸引力,但範式風險(capex digestion + AI bubble + AMD 追趕)中途會反覆觸發焦慮但無法定論</li>
+<li><span class="rank-3">🥉 AVGO</span> — GM mean reversion 是長期結構性逆風,VMware cash machine 是下行保護但抵銷不了估值倍數壓縮</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>5-10 年 view 下,**結構性壟斷的硬度 + 範式風險的可控性**決定排序。2330 在這層勝出的關鍵是「**silicon-side ASML**」這個身份 — 全世界 90%+ 先進晶片必須過 TSMC,N2/A16/A14 的技術 lead 至少 2-3 年,競爭對手在 10 年內結構性追上的機率低。地緣風險是真實 binary tail,但 Polymarket 16% 穩定機率告訴你這已被市場 priced,不是 hidden surprise。</p>
+<p>NVDA 在 10 年 view 下落到第二,核心問題是**「AI 訓練端 5 年無替代」的假設在 10 年期內無法 100% 確定**。CUDA 18 年累積護城河深,但 AMD ROCm + OpenAI Triton + Microsoft 自研都在加速,5-10 年期間隨時可能有 inflection point。Bull case 仍極具吸引力,但 base case 路徑比 2330 多 noise。</p>
+<p>AVGO 在 10 年 view 落到第三的根本問題是**結構性 GM mean reversion**。AVGO 80% GM 高峰是「hyperscaler 早期合作議價弱」的時代產物,5-10 年內 mean reversion 至 60-65% 是 base case 甚至 40-45%。即使 EPS 仍成長,PE 倍數從 37x → 23-28x 的壓縮會吃掉大部分上行。</p>
+
+</section>
+
+<!-- §C -->
+<section id="sC">
+<h2>§C IRR Composition 質感對比(縱深層)</h2>
+
+<div class="callout callout-key">
+<strong>本章核心 alpha:</strong>三檔的 IRR 質感差異極大。2330 是「EPS 為主 + 結構性 re-rate」、NVDA 是「EPS + re-rate 雙引擎順風」、AVGO 是「EPS 順風但被 PE 壓縮抵銷」— 完全不同的投資結構。
+</div>
+
+<h3>各檔 Base IRR 拆解</h3>
+
+<h4>2330.TW — Base IRR: 9.3%/yr(5Y EV +57%)</h4>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="width: 75%;">EPS +12%</div>
+<div class="irr-segment irr-rerate-pos" style="width: 25%;">re-rate +4%</div>
+</div>
+<div class="irr-legend">EPS 複利 12%/yr 為主貢獻 + 部分 PE re-rate(18.7x → 22-25x platform premium)。**混合型,結構性 re-rate** — EPS 自然複利為基底,PE re-rate 是「市場認知轉換」紅利,不依賴 5Y 低位修復。Bull case +92%/5Y 來自 re-rate(到 25x)疊加 EPS 翻倍。</div>
+
+<h4>NVDA — Base IRR: 10-11%/yr(5Y EV +60-70%)</h4>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="width: 70%;">EPS +18-22%</div>
+<div class="irr-segment irr-rerate-pos" style="width: 25%;">re-rate +5-9%</div>
+<div class="irr-segment irr-buyback" style="width: 5%;">+0.5%</div>
+</div>
+<div class="irr-legend">EPS 複利 18-22%/yr + PE re-rate +5-9%(27.7x → 32-38x Bull case 終端)+ 小幅 buyback。**雙引擎順風型** — EPS 強勁複利仍是核心,re-rate 仍是順風但起點 27.7x 比 5Y 低位區的紅利略縮窄。</div>
+
+<h4>AVGO — Base IRR: 5.2%/yr(5Y EV +25-30%)</h4>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="width: 75%;">EPS +22%</div>
+<div class="irr-segment irr-rerate-neg" style="width: 25%;">re-rate -5%</div>
+</div>
+<div class="irr-legend">EPS 複利 22%/yr 被 PE 壓縮 -5%/yr 抵銷(37.4x → 23-28x mean reversion)。**EPS 順風但被估值逆風抵銷** — EPS 表現會很好,但 PE 倍數壓縮吃掉大部分 alpha。AVGO 的 quality 是真的,但**進場估值決定 IRR 質感**。</div>
+
+<h3>「靠自己跑」vs「靠市場配合」對比</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>EPS 複利占比</th><th>PE re-rate 占比</th><th>是否靠市場配合?</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>75%</td><td>+25%(順風,認知轉換)</td><td>部分靠(認知轉換需時間但確定性高)</td></tr>
+<tr><td>NVDA</td><td>70%</td><td>+25%(順風但空間中等)</td><td>靠市場配合 25%</td></tr>
+<tr><td>AVGO</td><td>~120%(EPS 占比超過 IRR 4 倍多)</td><td><span class="signal signal-red">-25%(逆風)</span></td><td>需扛市場逆風(PE 壓縮)</td></tr>
+</tbody>
+</table>
+
+<h3>單變數 vs 多變數兌現結構</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>核心依賴變數</th><th>變數數量</th><th>獨立性測試</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>① 製程獨家窗口(供給) ② Hyperscaler capex 持續(需求)</td><td>2 條獨立</td><td><span class="rank-1">✅ 強(供給+需求兩條獨立鏈)</span></td></tr>
+<tr><td>NVDA</td><td>① CUDA + 全棧 vertical(供給) ② Hyperscaler capex 持續(需求)</td><td>2 條獨立</td><td><span class="rank-1">✅ 強(供給+需求兩條獨立鏈)</span></td></tr>
+<tr><td>AVGO</td><td>① 5 客戶 ramp(需求,單一面) ② VMware FCF(獨立 cash machine) ③ GM mean reversion 速度</td><td>3 條(2 條獨立 + GM 路徑風險)</td><td>中(GM 路徑橫跨兩 driver)</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>核心洞察:</strong>3-5Y view 下,**2330 的 IRR 質感最穩定** — 不依賴「進場估值起點便宜」這種隨股價波動的紅利,而是「Pattern Match 已驗證的 platform monopoly re-rate」這種結構性 alpha。NVDA 雖然 Base IRR 略高,但 IRR 質感對「進場估值起點」敏感,股價波動 5-10% 就足以改變 IRR composition 中 PE 修復引擎的推力。**結構性 alpha > 機會性 alpha**,長期持有應該選結構穩固的標的。
+</div>
+
+</section>
+
+<!-- §D -->
+<section id="sD">
+<h2>§D Bear Case + Max DD 路徑對比</h2>
+
+<h3>§5 Single Thing 對比</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>Primary Trigger</th><th>觸發時間軸</th><th>監測頻率</th><th>風險類型</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>Intel 18A yield > 80% + 拿下 NVDA Tier-1 主力 GPU dual-source</td><td>2027-2028</td><td>季度 + Intel 法說</td><td><span class="signal signal-yellow">執行 + 地緣雙重(獨立)</span></td></tr>
+<tr><td>NVDA</td><td>Big 4 hyperscaler 2027 capex 連 2 季 YoY 負成長(AI bubble pop)</td><td>2027-2028</td><td>季度</td><td><span class="signal signal-green">執行風險(需求面 binary 可觀測)</span></td></tr>
+<tr><td>AVGO</td><td>OpenAI 縮減或取消 10GW co-design 合作(2027 H1)</td><td>2027 H1</td><td>OpenAI Dev Day(11 月)+ AVGO 季度</td><td><span class="signal signal-yellow">執行風險(連鎖反應強)</span></td></tr>
+</tbody>
+</table>
+
+<h3>Max DD 路徑對比</h3>
+<table>
+<thead>
+<tr><th>檔別</th><th>Bear 5Y 跌幅</th><th>評級</th><th>觸發後 PE</th><th>復原路徑</th></tr>
+</thead>
+<tbody>
+<tr><td>2330</td><td>-47%(2,255 → 1,200)</td><td><span class="signal signal-red">🔴 深(地緣 binary)</span></td><td>12x(cyclical foundry framing 退回)</td><td>要 capex cycle 重啟,2-3 年</td></tr>
+<tr><td>NVDA</td><td>-25%(220 → 165)</td><td><span class="signal signal-yellow">🟡 中(壓縮空間中等)</span></td><td>18x(PE 壓縮空間中等)</td><td>1-2 季 hyperscaler capex 重新加速即可</td></tr>
+<tr><td>AVGO</td><td>-30~-45%(419 → 234-300)</td><td><span class="signal signal-yellow">🟡 中(連鎖反應風險)</span></td><td>16-18x(GM 壓縮 + PE 壓縮雙殺)</td><td>需要新 anchor client 或 GM 穩定,12-24 個月</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>核心洞察:</strong>3-5Y 持有 view 下,**Bear case 跌幅由「進場估值起點 + 觸發機率」共同決定**。NVDA -25% 是因為當前 PE 27.7x 仍有壓縮空間。AVGO 的 -30~-45% 主要是進場估值 37.4x 高 + 連鎖反應放大。2330 的 -47% 看似最深,但**Bear 觸發機率僅 15%(含地緣)**,且地緣是 binary 已 priced,執行風險的下行有限。**進場估值是 Bear case 跌幅的最大決定因素**。
+</div>
+
+</section>
+
+<!-- §E -->
+<section id="sE">
+<h2>§E 最終裁決</h2>
+
+<h3>四層時間框架最終排序矩陣</h3>
+<table>
+<thead>
+<tr><th>時間框架</th><th>第一名</th><th>第二名</th><th>第三名</th><th>核心理由</th></tr>
+</thead>
+<tbody>
+<tr><td>&lt; 12M 短期</td><td><span class="rank-1">2330</span></td><td>NVDA</td><td>AVGO</td><td>三檔中唯一進場條件距離近 + 估值便宜 + Pure MA 多頭</td></tr>
+<tr><td>2-3Y 中期</td><td><span class="rank-1">NVDA</span></td><td>2330</td><td>AVGO</td><td>NVDA Rubin/Feynman 三世代 cadence + PE 修復空間 +16-37% 最大</td></tr>
+<tr style="background:rgba(102,187,106,0.1);"><td><strong>3-5Y 中長期(預設答題層)</strong></td><td><span class="rank-1">2330</span></td><td>NVDA</td><td>AVGO</td><td><strong>Pattern Match 已驗證 + 護城河 5 年後 10/10 + 變數獨立性 + IRR 結構穩固</strong></td></tr>
+<tr><td>5-10Y 長期</td><td><span class="rank-1">2330</span></td><td>NVDA</td><td>AVGO</td><td>supply-side monopoly 結構性最硬 + Pattern Match ASML 已 prove + 地緣已 priced</td></tr>
+</tbody>
+</table>
+
+<h3>推薦標的:2330.TW(3-5 年 view)</h3>
+
+<p>3-5 年 view 下,2330 是**結構最穩固**的標的。四個關鍵理由:</p>
+
+<p><strong>第一,Pattern Match 是真正已驗證的歷史對應。</strong>ASML 從 2017 EUV 量產到 2022 estimated PE 40x+ 跑出 +465%(IRR 41%/yr),完整對應「supply-side monopoly + 從 cyclical equipment maker 框架被 re-rate 為 platform monopoly」這個 thesis 結構。即使 2330 只跑出 ASML 一半就是 +200%/5Y(IRR 25%/yr),仍遠超 NVDA Base 10-11%/yr 和 AVGO 5%/yr。**這是 3-5Y view 下最強的單一論據**。</p>
+
+<p><strong>第二,護城河 5 年後預判 10/10 是三檔中唯一「向上 + 確定」的。</strong>N2 yield 65% vs Samsung 40% / Intel 60%(領先 5-25pp);A16 backside power 2026 Q4 量產(2-3 年內 Samsung/Intel 無法追上);CoWoS sold out 至 2027;N2 連續 4 年漲價 +3-5%。最大威脅 Intel 18A 拿下 NVDA Tier-1 dual-source 機率 < 15%,時間軸 2027-2028 可監測。對比 NVDA 訓練端 90%+ 但推論端受 AMD/custom silicon 蠶食,AVGO 70%→50% 市占 cap 已確認。</p>
+
+<p><strong>第三,IRR composition 不依賴「進場估值起點便宜」。</strong>2330 的 IRR 9.3%/yr 來自「EPS +12% 複利 + PE +4% 認知轉換 re-rate」,這個結構不隨短期股價波動。NVDA 的 IRR 雖然略高(10-11%/yr),但 IRR composition 對進場估值極度敏感 — 股價漲 10% 就會讓 Base IRR 降 2-3pp。**結構性 alpha > 機會性 alpha**,長期持有應該選結構穩固的標的。</p>
+
+<p><strong>第四,進場條件可達 + Pure MA 結構穩固。</strong>2330 進場條件 2,100-2,180 距現價 2,255 約 -2~-7%,等回測即可建首批 1.5%(skill guardrail 強制條件式分批)。Pure MA 三條全多頭(W52/W104/W250)+ 三條斜率全強正(+19.6%/+13.8%/+9.1%),結構性多頭未變。對比 NVDA 進場條件 $185-190 距現價 $220.78 已 +16%,**進場點完全消失**,只能等回測 MA50 區 $200-205。</p>
+
+<h3>為什麼不選其他檔(逐一點名)</h3>
+
+<h4>不選 NVDA(3-5Y view):</h4>
+<ul>
+<li><strong>IRR 質感優勢縮窄:</strong>NVDA Forward PE 27.7x 雖仍便宜(比歷史平均 54x 低 49%、比 Semis 中位 34x 低 19%),但 5Y 分位已升至 25-30%,「5 年最便宜進場機會」變成「便宜但非極端便宜」。re-rate 紅利 +5-9%/yr,Base IRR ~10-11%/yr。</li>
+<li><strong>進場點消失:</strong>原進場區 $185-190 距現價 $220.78 已 +16%,等同進場條件被 invalidate。等回測 MA50 區 $200-205 需要 -7~-9% 回測,可能要等 5/27 財報結果。</li>
+<li><strong>Bear case 下行 -25%:</strong>起點 PE 27.7x 仍有壓縮空間至 18x,下行保護中等。</li>
+<li><strong>NVDA 真正勝場是 2-3Y 中期 view:</strong>Rubin/Rubin Ultra/Feynman 三世代 cadence + PE 修復空間 +16-37% 仍是三檔最大,但這是「估值修復短打」不是長期複利持有。</li>
+<li><strong>10Y view 範式風險:</strong>capex digestion + AI bubble pop + AMD ROCm 追趕,中途會反覆觸發焦慮但無法定論,長期持有成本高。</li>
+</ul>
+
+<h4>不選 AVGO(3-5Y view):</h4>
+<ul>
+<li><strong>進場估值最差(PE 37.4x):</strong>已 priced multi-year growth,FY30E EPS $22 中位 × 19x = 現價,即使 GM 從 75% → 65% 是 base case,PE 從 37x → 25-28x 的 mean reversion 會抵銷大部分 EPS 成長。**IRR 結構是 EPS 順風被 PE 逆風抵銷**,機率加權僅 5.2%/yr。</li>
+<li><strong>動能嚴重超買(RSI 80-84):</strong>歷史上 RSI > 75 後 1 個月內 mean reversion 8-15% 機率 60%。現價 $419 仍緊貼 ATH $437,**不適合現價建倉**,必須等回測 $385-405 + RSI < 65。</li>
+<li><strong>OpenAI 10GW co-design 是單點脆弱:</strong>FY27-29 AI 收入大部分依賴 OpenAI 10GW ramp,但 Sam Altman 公開表達「希望降低對任何單一供應商的依賴」。如果 2027 H1 OpenAI 縮減 10GW 至 5GW+,連鎖反應觸發 -30~-45% drawdown。</li>
+<li><strong>GM mean reversion 是長期結構性逆風:</strong>80% 高峰 GM 是時代產物,5-10 年內 mean reversion 至 60-65% 是 base case,40-45% 是 stress case。**EPS 表現會好但估值倍數壓縮會吃掉大部分上行**。</li>
+<li><strong>AVGO 是「下行保護優先」型 quality 標的:</strong>VMware $27B FCF cash machine 提供配息 + 還債 + buyback 三軌資本配置,適合作為**衛星倉位**(等回測 5-6%),不適合**核心建倉**(尤其在 RSI 80-84 + PE 37.4x 雙警示下)。</li>
+</ul>
+
+<h3>時間軸切換敏感度測試</h3>
+<div class="callout callout-warn">
+<strong>若時間軸縮短到 2-3 年估值修復短打,首選會變嗎?</strong><br>
+<strong>會。</strong>2-3Y view 首選變 <strong>NVDA</strong>,因為 Rubin/Rubin Ultra/Feynman 三世代 cadence + PE 從 27.7x 修復到 32-38x 是三檔中最大 PE re-rate 空間(+16-37%),且每季有 Now Assist 進度可驗證。但這是估值修復短打不是長期複利持有。<br><br>
+<strong>若時間軸縮短到 12 個月以內,首選會變嗎?</strong><br>
+<strong>不會,仍是 2330。</strong>2330 在 12M view 也是第一,因為「進場條件距離近(-2~-7%)+ 估值便宜(PE 18.7x)+ Pure MA 結構多頭」三項齊全。NVDA 短期 +12.4% 後進場點消失,AVGO RSI 嚴重超買等回測。<br><br>
+<strong>結論:</strong>2330 在 12M / 3-5Y / 5-10Y 三個時間框架都是第一,只有 2-3Y 中期估值修復短打讓位給 NVDA。**2330 是全方位首選**。NVDA 的 quality 仍極強,但需等回測 $200-205 MA50 區或 5/27 財報後再進。AVGO 適合衛星倉(等回測 $385-405 + RSI < 65)。
+</div>
+
+<h3>進場條件與監測指標(2330 為例)</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>內容</th></tr>
+</thead>
+<tbody>
+<tr><td>進場觸發條件</td><td>條件式分批:① 跌至 TWD 2,180 進首批 30%(1.5% portfolio);② RSI 14d 回到 60 以下 + 4 週漂移 < +5% 進 40%;③ Bollinger 中軌測試後補滿 30%</td></tr>
+<tr><td>初始倉位建議</td><td>4-5% of portfolio(核心持倉下限切入)</td></tr>
+<tr><td>目標倉位</td><td>6-8% of portfolio(thesis 持續驗證 + Bollinger 中軌回測完成後加滿)</td></tr>
+<tr><td>加碼條件</td><td>跌至 TWD 1,950 + thesis 三個假設未削弱 → 加至 6%;跌至 TWD 1,750 + Q2 法說正常 + 沒地緣黑天鵝 → 加至 8%</td></tr>
+<tr><td>減碼條件</td><td>突破 TWD 2,800 + FPE FY+2 > 25x + EPS 共識 90 天連續下修 > 5% → 4%;HPC 季度 YoY 連 2 季 < 20% → 3%</td></tr>
+<tr><td>清倉條件(§5 single thing)</td><td>Intel 18A yield > 80% + 拿下 NVDA Tier-1 主力 GPU dual-source → 清倉;地緣軍事衝突 / 美方供應鏈直接管制 → 全清</td></tr>
+<tr><td>主要監測指標</td><td>① 2026-07-17 Q2 法說(GM 守 65.5-67.5% + N2 ASP 公告);② 4 大 Hyperscaler 季度 capex guidance;③ Intel Q2/Q3 法說 18A yield + 客戶簽約;④ A16 backside power 量產時程(2026 Q4)</td></tr>
+<tr><td>下次重評時機</td><td>2026-07-17 Q2 法說前必須跑新一份 DCA</td></tr>
+</tbody>
+</table>
+
+<h3>三檔同時持有的 portfolio 角色設計</h3>
+<div class="callout callout-key">
+三檔角色完全不重疊,可同時持有作為 AI infra basket。建議配置(以 portfolio 100% 為基礎):<br><br>
+<strong>1. 2330(核心 4-5% 進場,目標 6-8%):</strong>邊際資金首選。supply-side monopoly + Pattern Match 已驗證 + Pure MA 結構穩固 + 進場條件可達。等回測 TWD 2,100-2,180 進首批。<br>
+<strong>2. NVDA(核心 4-5% 持有,但暫不追加):</strong>已過進場點,等回測 $200-205 MA50 區或 5/27 財報後再決定加碼。Rubin cadence 與長期 thesis 未變,2-3Y 中期 view 仍極強。<br>
+<strong>3. AVGO(衛星 3.0%,目標 5.5%):</strong>等回測 $385-405 + RSI < 65 進首批 1.5%。custom ASIC + VMware cash machine 與 NVDA / 2330 完全互補。<br><br>
+**邊際資金優先順序:2330 > NVDA > AVGO**(若僅能加一檔,3-5Y view 加 2330;2-3Y 中期 view 等 NVDA 回測加 NVDA)。三檔合計 ≤ 25% portfolio 避免單一主題過度集中。
+</div>
+
+<h3>一句話 Takeaway</h3>
+<div class="callout callout-key">
+<strong>3-5 年 view 首選是 2330(Pattern Match 已驗證 + 結構性 alpha 不依賴進場估值 + 進場條件可達);NVDA 仍是極強標的但近期股價已過進場點,等回測 $200-205;AVGO 等回測 $385-405 + RSI < 65 進衛星倉。**結構性 alpha > 機會性 alpha,長期持有應該選結構穩固的標的**。</strong>
+</div>
+
+</section>
+
+<footer class="report-footer">
+本報告基於 3 份 DCA 報告自動生成 | InvestMQuest Research | Multi-Stock Comparator<br>
+資料來源:DCA_2330TW_20260507.html · DCA_NVDA_20260507.html · DCA_AVGO_20260507.html<br>
+股價數據:2026-05-12 收盤 · 生成時間:2026-05-13
+</footer>
+
+</div>
+</body>
+</html>
