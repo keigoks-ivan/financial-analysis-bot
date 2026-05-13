@@ -80,6 +80,21 @@ Agent({
 
 **Critic gate**：Step 8.7 強制 spawn `id-review` skill `--mode ds`（reuse 既有 id-review，加 6 條 DS-specific 檢查：表格比 / history-future causality / 供需平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）。Critic report 放 `docs/ds/_critic_{Theme}_{YYYYMMDD}.md`。
 
+## Workflow: 多股對比（multi-stock comparator）
+
+當用戶說「比較 {T1} {T2} 用 DCA」/「比較 {T1} {T2} {T3} 看 DD」/「多檔比較」/「同類對比」/「該選哪一家」/「DCA 對比分析」時，自動觸發 `multi-stock-comparator-v1` skill（`.claude/skills/multi-stock-comparator-v1/`）。
+
+**定位**：消費端 skill — 假設目標 ticker 的 DCA / DD 已存在（`docs/dca/` / `docs/dd/`），不自動觸發 `stock-analyst` 或 `deep-conviction-analyst`。對 2-5 檔執行四層時間框架（<12M / 2-3Y / 3-5Y / 5-10Y）橫向打分，每層獨立排序 + 判斷邏輯，最後給推薦標的 + 不選其他檔的具體理由。
+
+**輸出**：
+- HTML：`docs/comparisons/MS_{T1}vs{T2}_{YYYYMMDD}.html`（4 檔以上用底線連接：`MS_T1_T2_T3_T4_YYYYMMDD.html`）
+- 索引：`docs/comparisons/index.html`（skill 在 `<ul class="reports">` 最上方 insert `<li>` 卡片；首份報告產出後自動移除 `.empty-state` div）
+- 上站路徑：`https://research.investmquest.com/comparisons/`
+
+**股價來源**：固定走 `WebSearch`（`scripts/fetch_prices.py` 是 weekly GitHub Actions batch，不收 ticker 參數，無法 ad-hoc）。報告日 >3 天時重抓現價並重算 Fwd PE / PEG（v1.3 無痕呈現規則）。
+
+**Plumbing**：無 pre-commit validator（與 DCA 同政策）；無 build script（listing 是 skill-appended，類似 `push-earnings` 模式）；目前無 `push-comparisons` skill，git flow 是手動 `add / commit / push`。
+
 ## Git pre-commit hook
 
 Repo 有 dd/id meta validator pre-commit hook。新 clone 啟用方式與 bypass 細節：見 `scripts/README.md`。
