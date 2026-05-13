@@ -1631,6 +1631,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     else:
         gate_cell = '<td class="num-cell" style="color:#94A3B8">—</td>'
 
+    _munger_gate_num = str(munger_pass) if munger_pass is not None else "0"
     return (
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_iso}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
@@ -1639,7 +1640,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         f' data-eps-cagr="{eps_num_attr}"'
         f' data-upside="{entry.get("upside", 0) or 0}" data-upside5y="{entry.get("upside_5y", 0) or 0}"'
         f' data-ev5y="{ev_num_attr}"'
-        f' data-moat-trend="{_mt_num}">\n'
+        f' data-moat-trend="{_mt_num}" data-munger-gate="{_munger_gate_num}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
         f'{date_cell}'
         f'{dca_cell}'
@@ -1707,7 +1708,7 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f' data-fpe="0" data-pe2y="0" data-peg="0"'
         f' data-eps-cagr="0"'
         f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
-        f' data-moat-trend="{_mt_num}">\n'
+        f' data-moat-trend="{_mt_num}" data-munger-gate="0">\n'
         f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
         f'rel="noopener" title="僅 DCA 報告，無對應 DD（DD 已輪替/未建檔）">'
         f'{ticker}</a></td>'
