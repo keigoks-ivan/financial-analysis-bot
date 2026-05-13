@@ -1,4 +1,4 @@
-# DS Pre-Publish Check — 11 道閘門
+# DS Pre-Publish Check — 14 道閘門（v1.1）
 
 寫稿完成後、commit 前、Step 8.7 critic gate 前，逐項跑過。任一 fail → 返工，不可發布。
 
@@ -202,6 +202,159 @@ PY
 
 ---
 
+## Gate 12（v1.1 新）— 量化斷言必附 source-tag + T1 占比 ≥ 50%
+
+**Why**：DS v1.0 沒強制 source-tag；DS_AIAcceleratorDemand 全文 0 個 source-tag，所有量化斷言（McKinsey CAGR、AVGO 60%、NVDA top-5 55-60%、FERC 1500-2000 GW）無出處 → PM 無法獨立驗證。v1.1 移植 ID 的 `<span class="source-tag">[T1:]` 設計，每個量化斷言必附 tag。
+
+**規則**（QC-DS13）：
+- 任何 % / $ / GW / 倍數 / 市占 / 增長率 / TAM / 用戶數 / 訂單數 / capex / 員工數 數字 → 鄰近 80 字符內必須有 `<span class="source-tag">`
+- 全文 T1 + T1-zh 占比 ≥ 50%
+- 免標：純結構性敘述（"NVDA 主導 GPU 市場"）、廣為人知歷史事件（"ChatGPT 2022-11 發布"）、純定性判斷、引用自前段已標的同一數字
+
+**How（兩段檢查）**：
+
+```bash
+# Part A: 算 source-tag 總數 + tier 分佈
+python3 << 'PY'
+import re, sys
+html = open("docs/ds/DS_{Theme}_{Date}.html").read()
+tags = re.findall(r'<span class="source-tag">\[(T[12]|T3-[ABC]|T1-zh|T2-zh|T3-zh|T4)[:：]', html)
+from collections import Counter
+counts = Counter(tags)
+total = sum(counts.values())
+t1 = counts.get('T1', 0) + counts.get('T1-zh', 0)
+t1_share = t1 / total if total else 0
+print(f"Source-tag total: {total}")
+print(f"  T1+T1-zh: {t1} ({t1_share:.1%})")
+print(f"  T2+T2-zh: {counts.get('T2',0)+counts.get('T2-zh',0)}")
+print(f"  T3-A: {counts.get('T3-A',0)}, T3-B: {counts.get('T3-B',0)}, T3-C: {counts.get('T3-C',0)}, T3-zh: {counts.get('T3-zh',0)}")
+print(f"  T4: {counts.get('T4',0)}")
+print("PASS" if t1_share >= 0.50 else f"FAIL: T1 share {t1_share:.1%} < 50%")
+PY
+
+# Part B: 找量化數字附近 80 字符內是否有 source-tag
+python3 << 'PY'
+import re
+html = open("docs/ds/DS_{Theme}_{Date}.html").read()
+# 剝 script/style/source-tag 內含 URL 的數字
+clean = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+clean = re.sub(r'<style[^>]*>.*?</style>', '', clean, flags=re.DOTALL)
+clean = re.sub(r'<span class="source-tag">.*?</span>', 'XSRCTAGX', clean, flags=re.DOTALL)
+# 找關鍵量化模式
+patterns = [
+    (r'\$\s?\d+(\.\d+)?\s?[BMK]?', '$amount'),
+    (r'\d+(\.\d+)?\s?%', 'percentage'),
+    (r'\d+(\.\d+)?\s?(GW|TW|MW)', 'capacity'),
+    (r'\d+(\.\d+)?\s?(倍|x|×)', 'multiple'),
+]
+missing = 0
+samples = []
+for pat, label in patterns:
+    for m in re.finditer(pat, clean):
+        # check 80 char window
+        start = max(0, m.start() - 80)
+        end = min(len(clean), m.end() + 80)
+        window = clean[start:end]
+        if 'XSRCTAGX' not in window:
+            missing += 1
+            if len(samples) < 5:
+                samples.append((label, m.group(), clean[max(0,m.start()-30):min(len(clean),m.end()+30)]))
+print(f"量化斷言無 source-tag 鄰近: {missing} 處")
+for label, num, ctx in samples:
+    print(f"  [{label}] {num} — ...{ctx}...")
+print("PASS (≤ 3 misses allowed for non-quantitative context)" if missing <= 3 else "FAIL")
+PY
+```
+
+**Fail action**：補 source-tag。若某數字真無 T1 可得 → 用 T2/T3 + 在文末加 ⚠️ source-warning aside。T1 占比過低 → 補 IR / earnings transcript / 行業協會 source 取代 T3 個股 report。
+
+---
+
+## Gate 13（v1.1 新）— §5/§6/§7/§9/§11 推導可追溯性
+
+**Why**：DS v1.0 §5/§6 bull/bear case 給絕對數字但不寫推導 — PM 看不出 bull case +20% 來自哪個 input 變動。v1.1 從 stock-analyst v12.2 移植「推導可追溯性原則」 — 任何結論數字必附 ≤ 3 行推導（input → calculation → implication）。
+
+**規則**（QC-DS16）：以下章節的結論數字必附「推導：」行或等效標記（如「→」「換算」「計算」開頭的短行）：
+- §5 TAM 三情境（base/bull/bear）+ CAGR
+- §6 三 horizon × 三 case 全部 cell
+- §7 phase 轉換的量化閾值
+- §9 三條 Kill Scenario 的 trigger metric
+- §11 ticker depth 閾值
+
+**How**：
+
+```bash
+python3 << 'PY'
+import re
+html = open("docs/ds/DS_{Theme}_{Date}.html").read()
+# Locate each section
+sections = {}
+for m in re.finditer(r'<h2[^>]*>§(\d+)\s*[^<]+</h2>(.*?)(?=<h2[^>]*>§|\Z)', html, re.DOTALL):
+    sections[int(m.group(1))] = m.group(2)
+
+required = [5, 6, 7, 9, 11]
+for sec in required:
+    body = sections.get(sec, '')
+    # count derivation markers
+    derive_count = len(re.findall(r'推導[：:]', body))
+    arrow_count = len(re.findall(r'→', body))
+    # count quantitative claims
+    num_count = len(re.findall(r'\$\d|\d+%|\d+ GW|\d+\.\d+ 倍', body))
+    print(f"§{sec}: 量化數字 {num_count} 處, 推導行 {derive_count} 條, → 箭頭 {arrow_count} 個")
+    if num_count > 3 and derive_count == 0 and arrow_count < num_count // 2:
+        print(f"  FAIL §{sec}: 結論數字無對應推導行")
+PY
+```
+
+**Fail action**：在結論數字鄰近段內補一行「推導：input1 + input2 → calc → implication」。例：
+- ❌ 「bull case TAM $340B」
+- ✅ 「bull case TAM $340B（推導：hyperscaler capex $720B × workload mix 35% × accelerator ratio 1.33 → $340B；對比 base $280B 的 +20% 來自 capex 兌現度從 100% 上修至 120%）」
+
+---
+
+## Gate 14（v1.1 新）— §11 ticker depth 閾值時間限定
+
+**Why**：DS v1.0 §11 caption 寫「🔴 = AI rev ≥ 40%」沒指明 current vs forward-looking → AMD 當前 ~8% AI rev 被標 🔴（forecast 2027-2028）讓讀者困惑。v1.1 強制時間基準明示 + forward-looking 必附 current actual 對照欄。
+
+**規則**（QC-DS18）：§11 caption 或表頭如有「>X%」「≥Y%」「by YYYY」「forecast」字樣 → 必須在同 caption 或下方 footnote 註明時間基準。若是 forward-looking → 表格每行另列「current YYYY actual」欄。
+
+**How**：
+
+```bash
+python3 << 'PY'
+import re
+html = open("docs/ds/DS_{Theme}_{Date}.html").read()
+# 抓 §11 整段
+m = re.search(r'<h2[^>]*>§11[^<]*</h2>(.*?)(?=<h2|\Z)', html, re.DOTALL)
+if not m:
+    print("FAIL: §11 not found")
+    exit()
+s11 = m.group(1)
+# 找閾值字樣
+threshold_words = re.findall(r'≥\s*\d+%|>\s*\d+%|≥\s*\$\d+', s11)
+# 找時間限定字樣
+time_markers = re.findall(r'as of \d{4}|by 20\d{2}|2026[Q-]?\d?\s?actual|current|forward.looking|forecast', s11, re.IGNORECASE)
+print(f"§11 閾值字樣: {len(threshold_words)} 個 ({threshold_words[:3]})")
+print(f"§11 時間限定字樣: {len(time_markers)} 個 ({time_markers[:3]})")
+if threshold_words and not time_markers:
+    print("FAIL: §11 有閾值但無時間限定")
+elif threshold_words:
+    # check current actual column
+    has_current_col = bool(re.search(r'current.*actual|當前.*實際|2026.*actual', s11, re.IGNORECASE))
+    if 'by 20' in s11.lower() or 'forecast' in s11.lower() or 'projected' in s11.lower():
+        print(f"§11 forward-looking 閾值: {'有' if has_current_col else '無'} current actual 對照欄")
+        if not has_current_col:
+            print("FAIL: forward-looking 閾值但無對照欄")
+PY
+```
+
+**Fail action**：
+- 若是 current actual 閾值 → caption 加「as of 2026-Q1」
+- 若是 forward-looking 閾值 → caption 加「by 2028 forecast」+ 表格加 current actual 對照欄
+- 範例：`🔴 = projected AI rev ≥ 40% by 2028。AMD 雖 current 8%，但 projected 45% → 標 🔴`
+
+---
+
 ## Gate 8.7（不在編號內，但 mandatory）— Critic gate
 
 完成 Gate 1-11 後，**強制呼叫 id-review skill --mode ds**：
@@ -218,11 +371,15 @@ Save critic report to docs/ds/_critic_{Theme}_{Date}.md."
 })
 ```
 
-Critic 額外檢查（在 Gate 1-11 之外）：
+Critic 額外檢查（在 Gate 1-14 之外）：
 - DS-specific anti-patterns（見 SKILL.md「常見錯誤」段）
 - §8 三條 Non-Consensus thesis 是否真有市場差異（不是 strawman）
 - §9 三條 Kill Scenario 是否真正能 falsify thesis（不是稻草人）
 - §10 Catalyst 是否真有具體日期 + 雙路徑
+- **DS-2 升級（v1.1）**：§1 inflection 必須閉合在 §3 或 §5，不可延後到 §8
+- **DS-7（v1.1）**：抽 5 個量化斷言驗 source-tag + tier + URL 可達；計算 T1 占比
+- **DS-8（v1.1）**：抽 §6 base/bull/bear 各一格驗推導 input 可追到 §2-§5
+- **DS-9（v1.1）**：§1 每段含日期 + 量化錨點
 
 Critic 結果：
 - 🔴 **CHANGES_CONCLUSION**：阻擋發布
@@ -231,7 +388,7 @@ Critic 結果：
 
 ---
 
-## Quick reference — 全部 11 Gates
+## Quick reference — 全部 14 Gates（v1.1）
 
 | Gate | 檢查內容 | Auto / Manual |
 |:---:|:---|:---:|
@@ -240,10 +397,13 @@ Critic 結果：
 | 3 | ds-meta validator pass | Auto (validate_ds_meta.py) |
 | 4 | mega + sub_group 在白名單 | Auto (含於 Gate 3) |
 | 5 | related_ids 對應 ID 存在 | Auto (shell loop) |
-| 6 | §1 → §3 / §5 / §6 因果鏈 | Manual |
+| 6 | §1 → §3 / §5 / §6 因果鏈（v1.1 強化：閉合在 §3/§5） | Manual |
 | 7 | §3 + §5 供需平衡明確結論 | Manual + grep |
 | 8 | §6 三 horizon × 三情境 + trigger 完整 | Manual |
 | 9 | §11 ≥ 3 ticker + depth + DD link | Auto (grep) |
 | 10 | 表格 ≤ 4 張 + 行數 ≤ 8 | Auto (inline Python) |
 | 11 | 文字比例 ≥ 80% | Auto (inline Python) |
-| 8.7 | id-review --mode ds critic | Mandatory spawn |
+| **12** | source-tag 完整性 + T1 占比 ≥ 50% | Auto (inline Python) |
+| **13** | §5/§6/§7/§9/§11 推導可追溯性 | Auto (inline Python) |
+| **14** | §11 ticker depth 閾值時間限定 | Auto (inline Python) |
+| 8.7 | id-review --mode ds critic（含 DS-7/8/9） | Mandatory spawn |

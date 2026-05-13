@@ -1,24 +1,29 @@
 #!/usr/bin/env python3
-"""Validate ID HTML files against source domain blacklist (M1 / QC-I27).
+"""Validate ID + DS HTML files against source domain blacklist (M1 / QC-I27 / QC-DS15).
 
-Scans `<a href="...">` URLs in `docs/id/ID_*.html` and flags any matching
-the blacklist defined in `docs/id/_source_tier_lists.md`. Blacklist contains
-SEO content farms, PR auto-publish sites, and social/wiki sources that must
-not be cited as fact sources.
+Scans `<a href="...">` URLs in `docs/id/ID_*.html` and `docs/ds/DS_*.html`,
+flags any matching the blacklist defined in `docs/id/_source_tier_lists.md`.
+DS shares the same source-tier hierarchy as ID by design (industry-ds v1.1).
+
+Optionally reports `<span class="source-tag">[T1/T2/...]` tier distribution
+to support Gate 12 (DS) and QC-I7 (ID) — T1 share check.
 
 Usage:
   python scripts/validate_source_blacklist.py            # strict: exit 1 on hit
   python scripts/validate_source_blacklist.py --report   # exit 0 always
   python scripts/validate_source_blacklist.py FILE...    # specific files
+  python scripts/validate_source_blacklist.py --show-tiers  # also print source-tag tier distribution
 """
 import argparse
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).parent.parent
 ID_DIR = ROOT / "docs" / "id"
+DS_DIR = ROOT / "docs" / "ds"
 
 # Blacklist — exact domain or subdomain match → CI fail
 BLACKLIST = {
@@ -87,6 +92,12 @@ GREY_LIST = {
 
 URL_RE = re.compile(r'href="(https?://[^"]+)"', re.IGNORECASE)
 
+# source-tag tier extractor — same span pattern shared by ID and DS (industry-ds v1.1)
+SOURCE_TAG_TIER_RE = re.compile(
+    r'<span class="source-tag">\s*\[(T1|T2|T3-A|T3-B|T3-C|T4|T1-zh|T2-zh|T3-zh|T3\.5-zh|T4-zh)[:：]',
+    re.IGNORECASE,
+)
+
 
 def normalize_domain(url: str) -> str:
     """Extract eTLD+1 (or full host for known multi-domain sites)."""
@@ -135,10 +146,23 @@ def scan_file(path: Path) -> dict:
         elif domain_matches(host, GREY_LIST):
             grey_hits.append((host, url))
 
+    # source-tag tier counts — used by Gate 12 (DS) and QC-I7 (ID)
+    tiers = SOURCE_TAG_TIER_RE.findall(text)
+    tier_counts = Counter(t.lower() for t in tiers)
+    total_tags = sum(tier_counts.values())
+    t1_count = tier_counts.get("t1", 0) + tier_counts.get("t1-zh", 0)
+    t1_share = (t1_count / total_tags) if total_tags else 0.0
+
     return {
         "status": "ok" if not blacklist_hits else "blacklist_hit",
         "blacklist": blacklist_hits,
         "grey": grey_hits,
+        "source_tags": {
+            "total": total_tags,
+            "by_tier": dict(tier_counts),
+            "t1_count": t1_count,
+            "t1_share": t1_share,
+        },
     }
 
 
@@ -149,13 +173,14 @@ def main():
                         help="exit 0 always; only report findings")
     parser.add_argument("--show-grey", action="store_true",
                         help="also show grey-list hits in output")
+    parser.add_argument("--show-tiers", action="store_true",
+                        help="show <span class='source-tag'> tier distribution per file")
     args = parser.parse_args()
 
-    targets = (
-        [Path(p) for p in args.files]
-        if args.files
-        else sorted(ID_DIR.glob("ID_*.html"))
-    )
+    if args.files:
+        targets = [Path(p) for p in args.files]
+    else:
+        targets = sorted(ID_DIR.glob("ID_*.html")) + sorted(DS_DIR.glob("DS_*.html"))
 
     failed = []
     grey_total = 0
@@ -189,8 +214,23 @@ def main():
                 seen_urls.add(url)
                 print(f"    [{host}] {url}")
 
+        if args.show_tiers:
+            tags = result.get("source_tags", {})
+            total = tags.get("total", 0)
+            if total > 0:
+                t1_share = tags["t1_share"]
+                t1_flag = "✅" if t1_share >= 0.50 else "⚠️"
+                kind = "ID" if path.name.startswith("ID_") else "DS"
+                print(f"\n📑 {path.name} ({kind}): {total} source-tag(s)")
+                for tier, cnt in sorted(tags["by_tier"].items()):
+                    print(f"    {tier}: {cnt}")
+                print(f"    {t1_flag} T1+T1-zh share: {t1_share:.1%}"
+                      f" ({'PASS' if t1_share >= 0.50 else 'FAIL — must ≥ 50% (QC-I7 / QC-DS13)'})")
+            else:
+                print(f"\n📑 {path.name}: 0 source-tag (skill not v1.1 yet?)")
+
     print(f"\n--- Summary ---")
-    print(f"Scanned         : {len(targets)} ID file(s)")
+    print(f"Scanned         : {len(targets)} file(s) (ID + DS)")
     print(f"Blacklist hits  : {len(failed)} file(s)")
     print(f"Grey-list hits  : {grey_total} URL(s) "
           f"({'shown' if args.show_grey else 'use --show-grey to display'})")

@@ -1,11 +1,11 @@
 ---
 name: id-review
-description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst / industry-ds skill）；**也被 industry-analyst Step 8.7 與 industry-ds Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.3 起加 `--mode ds` 分支支援 DS 報告（檢查清單改為 DS-1 到 DS-6 的敘述結構正確性鎖點）。
-version: v1.3
-date: 2026-05-12
+description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst / industry-ds skill）；**也被 industry-analyst Step 8.7 與 industry-ds Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.3 起加 `--mode ds` 分支支援 DS 報告。v1.4（搭配 industry-ds v1.1）：DS-mode 檢查清單從 6 條擴為 9 條（新增 DS-7 source-tag 抽查、DS-8 §6 推導抽查、DS-9 §1 雙錨點；DS-2 升級為「因果閉合在 §3/§5」）。
+version: v1.4
+date: 2026-05-13
 ---
 
-# id-review skill v1.1
+# id-review skill v1.4
 
 ## 【角色定位】
 
@@ -35,7 +35,7 @@ date: 2026-05-12
 DS 模式下：
 - 不檢查 §12 / §13 / §10.5（DS 沒有這些章節）
 - 不檢查 ID 銘文（DS 是 ds-meta 不是 id-meta）
-- 改檢查 DS 6 條（表格比 / history-future causality / supply-demand 平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）
+- 改檢查 **DS 9 條**（v1.4：原 6 條 + DS-7/8/9 新增）：DS-1 表格比 / DS-2 因果閉合（升級）/ DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / **DS-7 source-tag** / **DS-8 推導抽查** / **DS-9 §1 雙錨點**
 - Banner 寫到 §0 但格式略不同（見 DS Mode 段）
 - critic report 路徑：`docs/ds/_critic_{Theme}_{YYYYMMDD}.md`（不是 `docs/id/_critic_*`）
 
@@ -680,7 +680,8 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 
 - v1.1（2026-05-02）：加 Step 2 input mode dispatch (A/B/C) + Step 0/C1-C6 consolidation phase + Step 6 banner 寫法明確化（append vs rewrite）。觸發來源：2026-05-02 ID_AIInferenceEconomics 手動 patch 暴露 3 個 gap + 1 個缺漏概念（banner 累積 / consolidation）
 - v1.2（2026-05-03）：加 Step 6.5d PM Implication §0.7 re-assessment（5 bullet / j-logic 4 action / conviction pill sync + back-fill scenario 舊 ID）。觸發：ID_AIDataCenter v1.1 patch（commit f1c450b）— user 把臨時 PM block 升格為所有 ID 標準段落。
-- v1.3（current，2026-05-12）：加 `--mode ds` 分支支援 industry-ds skill 產出的 DS 報告。新增「DS Mode 檢查清單」（DS-1 到 DS-6：表格比 / history-future causality / supply-demand 平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）+「DS Mode Banner 格式」。觸發：industry-ds skill v1.0 上線，需要 mandatory critic gate。
+- v1.3（2026-05-12）：加 `--mode ds` 分支支援 industry-ds skill 產出的 DS 報告。新增「DS Mode 檢查清單」（DS-1 到 DS-6：表格比 / history-future causality / supply-demand 平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）+「DS Mode Banner 格式」。觸發：industry-ds skill v1.0 上線，需要 mandatory critic gate。
+- v1.4（current，2026-05-13）：DS-mode 檢查清單從 6 條擴為 9 條。DS-2 升級為「因果閉合在 §3 或 §5，不可延後到 §8」；新增 DS-7（source-tag 抽查 + T1 占比 + 黑名單）、DS-8（§6 base/bull/bear 推導抽查）、DS-9（§1 雙錨點 — 日期 + 量化）。觸發：industry-ds v1.1 上線，DS_AIAcceleratorDemand v1.0 暴露 5 個系統性弱點（無 footnote、無推導、§1 口語錨點、§11 forward-looking 閾值無時間標、§3 因果延後到 §8），需要對應 critic 鎖點。
 - v1.3：跑熟後降為 mode (b) auto-patch 大錯
 - v1.3：加 cron 排程模式（weekly 自動跑所有 Q0 ID 的 critic，產 alert 但不 patch）
 - v1.4：跨 ID 一致性 reconcile（critic 找到 cross-ID 數字差異時，自動 patch 兩份 ID 的數字）
@@ -729,14 +730,21 @@ PY
 
 **Fail 處置**：🔴 CHANGES_CONCLUSION。表格 > 4 張或文字 < 78% → 大錯。78-80% → 🟡 PARTIAL（補敘述）。
 
-### DS-2：§1 → §3 / §5 / §6 因果鏈
+### DS-2：§1 → §3 / §5 / §6 因果鏈（v1.4 升級：必須閉合在 §3 或 §5）
 
-**Why**：DS 核心是因果敘事。§1 歷史寫完後，必須在 §3（未來供給）、§5（未來需求）、§6（推估）中有顯式回應 — 「歷史告訴我們 X，所以未來 Y」。
+**Why**：DS 核心是因果敘事。§1 歷史寫完後，必須在 §3（未來供給）或 §5（未來需求）中有顯式回應 — 「歷史告訴我們 X，所以未來 Y」。**v1.4 升級**：v1.3 critic 只抓「§1 是否被 §3/§5/§6 引用」，但 AI Accelerator DS v1.0 暴露漏網之魚 — CUDA 護城河答案延後到 §8 Non-Consensus（不是 §3 或 §5），破壞了「歷史 → 未來」因果 spine。v1.4 改為「§1 inflection 必須在 §3 或 §5 找到對應回答段（≥ 50 字符）；若答案出現在 §6/§7/§8/§9 → 仍 fail」。
 
-**檢查方式**：人工讀 §1 提煉 2-3 個關鍵歷史事件 / 模式，然後 grep §3 / §5 / §6 是否回應。例：
-- §1 寫「2012 CUDA 把 NVDA 變平台公司」→ §3 / §5 / §6 至少一處要回應「軟體棧今天是否仍是 binding moat」
+**檢查方式**：
+1. 人工讀 §1 提煉 2-3 個關鍵 inflection point（歷史事件 / 技術代際 / 護城河形成節點）
+2. 對每個 inflection，在 §3（未來供給）+ §5（未來需求）中 grep 是否有顯式回應段（≥ 50 字符）
+3. 若 §3/§5 均無回應、但 §6/§7/§8/§9 有回答 → 標 PARTIAL_ERROR（破壞 spine 但非完全脫節）
 
-**Fail 處置**：🔴（若 §6 推估完全脫離 §1 歷史）/ 🟡（若部分連結但不顯式）
+**範例 fail**：§1 寫「2012 年 CUDA 把 NVDA 變平台公司」→ §3 / §5 完全沒回應「CUDA 在 inference 階段是否仍是 binding moat」，卻把答案放在 §8 Non-Consensus（「市場認為 CUDA 不可動搖、我們認為 ROCm 已縮短差距」）→ 🟡 PARTIAL_ERROR：要求把 §8 內容前置一部分到 §3。
+
+**Fail 處置**：
+- 🔴 CHANGES_CONCLUSION：§6 推估完全脫離 §1 歷史（無任何 trace）
+- 🟡 PARTIAL_ERROR（v1.4 新）：§1 → §3/§5 不閉合但 §8/§9 有回應 → 要求把答案前置到 §3 或 §5
+- 🟢 COSMETIC：部分連結但不顯式 → 補敘述橋段
 
 ### DS-3：§3 + §5 → 供需平衡明確結論
 
@@ -779,6 +787,86 @@ PY
 - 同理對 🔴 beneficiary=false 的 ticker，確認有敘述支持「為何受害」
 
 **Fail 處置**：🟡（個別 ticker 缺對應）/ 🔴（系統性矛盾）
+
+### DS-7（v1.4 新）：source-tag 完整性 + T1 占比 ≥ 50%
+
+**Why**：DS v1.0 沒強制 source-tag，導致 DS_AIAcceleratorDemand 全文 0 個 source-tag — McKinsey CAGR、AVGO 60%、NVDA top-5 55-60%、FERC 1500-2000 GW、MLPerf 6.0 gap 全部斷言無出處。v1.1 移植 ID skill 設計後，critic 必須抽查驗證實際落實率。
+
+**檢查方式**：
+1. **抽樣驗證**：隨機抽 5 個量化斷言（%、$、GW、市占、TAM、capex、用戶數）→ 逐一驗：
+   - 鄰近 80 字符內是否有 `<span class="source-tag">` 標籤
+   - tier 標籤（T1/T2/T3-A/T3-B/T3-C/T4）是否正確（對照來源類別 — 賣方 primer ≠ T1）
+   - URL 是否可達（HTTP 200，不是 404 / paywall block）
+2. **T1 占比**：
+   ```python
+   import re, sys
+   html = open(sys.argv[1]).read()
+   tags = re.findall(r'<span class="source-tag">\[(T[12]|T3-[ABC]|T1-zh|T2-zh|T3-zh|T4)[:：]', html)
+   from collections import Counter
+   counts = Counter(tags)
+   total = sum(counts.values())
+   t1 = counts.get('T1', 0) + counts.get('T1-zh', 0)
+   t1_share = t1 / total if total else 0
+   ```
+3. **黑名單來源**：`python3 scripts/validate_source_blacklist.py docs/ds/DS_X.html --report`（v1.4 起 source-blacklist 也掃 DS）
+
+**Fail 處置**：
+- 🔴：source-tag 總數 = 0 或 < 5（DS 至少需 ≥ 15 個 source-tag 才算合格報告）
+- 🔴：T1 占比 < 30%（嚴重不可審計）
+- 🟡：T1 占比 30-50%（要求補 T1 來源換掉 T3 個股 report）
+- 🟡：抽 5 個量化斷言有 ≥ 2 個無 source-tag
+- 🟢：抽到的 source URL 有 1 個 404
+
+### DS-8（v1.4 新）：§6 推導可追溯性抽查
+
+**Why**：DS v1.0 §5/§6 bull/bear case 給絕對數字但不寫推導 — PM 無法獨立判斷 bull case +20% 來自哪個 input 變動。v1.1 從 stock-analyst v12.2 移植「推導可追溯性原則」 — §6 三 case 必須附 input → calc → implication 推導。
+
+**檢查方式**：
+1. 從 §6 表格中**隨機抽 base / bull / bear 各一格**
+2. 對每個抽到的 cell：
+   - 表外緊鄰段落（同 horizon 的敘述展開段）是否有「推導：」字串或等效推導行（「→」「換算」「計算」開頭的短行）
+   - 推導行中提到的 input 數字（如「hyperscaler capex $600B」「workload mix 35%」「accelerator ratio 1.33」），是否能在 §2/§3/§4/§5 找到對應出處（不是憑空假設）
+   - bull / bear 偏離 base 的程度是否由「某個 input 假設改變」推出（不是無理由的 ±20%）
+
+**範例 fail**：
+- 表格寫「base case 2028 NVDA share 60-65%」、「bull 70-75%」、「bear 45-50%」
+- 表外段落只寫「base 假設 ASIC 滲透率穩定、bull 假設 CUDA inference 護城河持續、bear 假設 ASIC 加速」
+- 但沒寫「ASIC 滲透率 30% → NVDA 62% / 20% → NVDA 72% / 45% → NVDA 47%」這種具體映射
+- → 🟡 PARTIAL_ERROR：要求把每個 case 對應的 input 數字寫出來
+
+**Fail 處置**：
+- 🔴：§6 完全沒有推導行（所有 cell 都是黑盒）
+- 🟡：部分 cell 有推導但 input 數字無法追到 §2-§5
+- 🟢：推導存在但不夠精確
+
+### DS-9（v1.4 新）：§1 雙錨點（日期 + 量化）
+
+**Why**：DS v1.0 §1 只要求「2-3 個歷史轉折點」但沒規定錨點精度。AI Accelerator DS v1.0 出現「ChatGPT-Hopper 配給」這種口語式錨點 — 沒有 H100 launch 具體日期（2023-03）、沒有 ChatGPT MAU 100M 達成時間（2023-01-31）、沒有當時的 lead time 數字。v1.1 強制每個 inflection 段必含具體日期 + 量化錨點。
+
+**檢查方式**：對 §1 每個 inflection point 段落（通常 2-4 段）正則檢查：
+```python
+import re
+# 抓 §1 全文
+s1 = re.search(r'<h2[^>]*>§1[^<]*</h2>(.*?)(?=<h2|\Z)', html, re.DOTALL).group(1)
+# 拆段落
+paragraphs = re.findall(r'<p[^>]*>(.*?)</p>', s1, re.DOTALL)
+for i, p in enumerate(paragraphs):
+    text = re.sub(r'<[^>]+>', '', p)
+    has_date = bool(re.search(r'\b(19|20)\d{2}(-\d{2})?\b', text))
+    has_number = bool(re.search(r'\d+\s*%|\$\s?\d+|\d+\s?(GW|TFLOPS|GB|MAU|B|M)|\d+x|\d+\s?倍', text))
+    if not (has_date and has_number):
+        print(f"§1 段 {i+1}: 缺 {'日期' if not has_date else ''} {'量化錨點' if not has_number else ''}")
+```
+
+**範例 fail**：
+- ❌「過去幾年 AI 加速器需求快速成長」← 無日期、無量化
+- ❌「ChatGPT 興起後，H100 變稀缺品」← 有事件但無日期 + 無量化
+- ✅「**2022-11-30 ChatGPT 發布**，兩個月內 **MAU 衝破 1 億**；**2023-03 H100 launch** 時 hyperscaler 已開始大量採購；**2023-Q3 NVDA DC 營收同比 +279%**，第一次出現 **12+ 個月 lead time 配給**」
+
+**Fail 處置**：
+- 🔴：§1 完全無日期錨點（所有段都是「過去」「最近」這類模糊表述）
+- 🟡：部分段有日期但無量化錨點（或反之）
+- 🟢：有日期但精度太低（只到 decade）
 
 ---
 
