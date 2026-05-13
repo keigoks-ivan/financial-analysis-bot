@@ -22,7 +22,8 @@
 
 | 日期 | 主題 | 涵蓋 ticker | 歷史窗口 | 預測範圍 | 同 theme ID | 鮮度 | 檔名 | 備註 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| 2026-05-12 | AI 加速器需求 — 從訓練週期到推論基建的供需循環（首篇 DS）| 10（4🔴 / 5🟡 / 1🟢）| 20 年 | 5 年 | ID_AIAcceleratorDemand_20260419 | 🟢🟢🟢 | DS_AIAcceleratorDemand_20260512.html | smoke test 首篇；critic 給 🟡 PARTIAL（DS-2 CUDA moat 因果橋）已 patch；3 條 non-consensus：① ASIC 滲透 2028 達 30-40%；② CUDA inference moat 半衰期 3-4 年；③ 電力是 5-15 年結構性 binding 不會 5 年解決 |
+| 2026-05-13 | **canonical · v1.1 spec 完整版** — AI 加速器需求：25 年史下的供需循環、ASIC 蠶食路徑與電力結構性 binding | 16（4🔴 / 8🟡 / 4🟢）| 25 年 | 5 年 | ID_AIAcceleratorDemand_20260419 | 🟢🟢🟢 | DS_AIAcceleratorDemand_20260513.html | **ds_version v1.2**（v1.0 重寫 → v1.1 critic patch → v1.2 skill v1.1 retrofit）。三軸 sonnet 並行研究 + 90 source-tag（T1+T1-zh 52.8%）+ 12 ds-derive 推導行 + §1 雙錨點 + §2 baseline + §3 因果閉合 + §11 forward-looking + Current AI rev 對照欄。Critic v1.4 跑兩輪：第一輪 🟡 P1/P2 patch（§6 §8 anchor）、第二輪 🟡 F-1/F-3/F-4 patch（OpenAI 數字降級 T2、§6 derive 對齊、§5 Cisco 引用）。三條 non-consensus：① ASIC 真正攻擊 inference 不是 training（Wintel/ARM 結構類比 5-10 年時間尺度）；② 電力 10-15 年結構性 binding（變壓器 128-160 週 + PJM 8 年 queue + Cleveland-Cliffs 單一 GOES）；③ 2026-27 capex pullback trigger 是 OpenAI $14B 經濟學不是 scaling laws plateau |
+| 2026-05-12 | **historical reference · v1.1 spec 升級範本** — AI 加速器需求：從訓練週期到推論基建的供需循環 | 10（4🔴 / 5🟡 / 1🟢）| 20 年 | 5 年 | ID_AIAcceleratorDemand_20260419 | 🟢 retrofit demo | DS_AIAcceleratorDemand_20260512.html | **ds_version v1.2**（v1.0 smoke test → v1.1 critic patch → v1.2 skill v1.1 retrofit @ 2026-05-13）。作用：show v1.1 spec 怎麼在實檔上回填（source-tag / 推導行 / §1 日期錨 / §2 baseline / §11 forward-looking 全示範一遍），future DS 寫稿可拿來對照。內容已被 5-13 supersede，保留純粹做 spec 範本 + 歷史 audit trail。 |
 
 ---
 

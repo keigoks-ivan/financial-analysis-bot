@@ -210,7 +210,7 @@ def t_strip_articles(html: str) -> str:
 
 
 def t_count_badges(html: str) -> str:
-    """Reset cat-head .count badges and cat-jump .n badges to 0."""
+    """Reset cat-head .count badges, cat-jump .n badges, and cat-summary-grid .cs-count badges to 0."""
     html = re.sub(
         r'(<span class="count">)\s*\d+\s*份(</span>)',
         r"\g<1>0 份\g<2>",
@@ -228,6 +228,26 @@ def t_count_badges(html: str) -> str:
         r"\g<1>0\g<2>",
         html,
     )
+    # cat-summary-grid .cs-count badges — reset to 0 with cs-empty class and 建議補建 suffix
+    html = re.sub(
+        r'<span class="cs-count(?:\s+cs-empty)?">.*?</span>',
+        '<span class="cs-count cs-empty">0 份 · 建議補建</span>',
+        html,
+    )
+    # Inject .cs-count.cs-empty CSS rule if not already present
+    _empty_rule = ".cs-count.cs-empty{background:#FEF3C7;color:#92400E}"
+    if _empty_rule not in html:
+        html = html.replace(
+            ".cs-count{display:inline-block;",
+            ".cs-count{display:inline-block;",
+            # no-op replacement used as anchor; actual insert below
+        )
+        html = re.sub(
+            r"(\.cs-count\{[^}]+\})",
+            r"\1\n" + _empty_rule,
+            html,
+            count=1,
+        )
     return html
 
 
