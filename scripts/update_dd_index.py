@@ -1306,6 +1306,135 @@ def _verdict_to_signal(verdict_raw: str) -> str:
     return ""
 
 
+def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None]":
+    """Extract Munger §7 evaluation from a DD HTML file.
+
+    Returns (emoji, pass_count):
+      emoji:      🟢/🟡/🔴 from 'Munger 三維評級' paragraph (or None).
+      pass_count: count of rows classified as PASS in the gate table (0-11),
+                  or None if section not found / total != 11.
+
+    Gate table location patterns (priority order):
+      1. <h3>/<h4> named '門檻檢核表'
+      2. <h3>/<h4> named 'Munger 護城河維度...' (AMD/RCL style)
+      3. <h3>/<h4> named 'Munger 三維護城河...' (ETN style)
+      4. <div class='section-title'> containing §7 (2330TW style)
+
+    Pass/partial/fail detection:
+      PASS    = ✅ / ✓✓ / single ✓ / class=pass/beat / badge-beat / 是(standalone)
+      PARTIAL = 部分 / 接近 / 邊緣 / ⚠️ / 🟡 / warn-cell (not counted in pass)
+      FAIL    = ❌ / 否 / 高 / 低 / 擴張中 / class=fail
+    Special row '護城河強度': cell may be numeric → ≥8 pass / 6-7 partial / <6 fail.
+    """
+    td_pat_check = re.compile(r"<td[^>]*>.*?</td>", re.DOTALL | re.IGNORECASE)
+    tr_pat_check = re.compile(r"<tr[^>]*>(.*?)</tr>", re.DOTALL | re.IGNORECASE)
+
+    h_patterns = [
+        re.compile(r"<h[34][^>]*>門檻檢核表</h[34]>", re.IGNORECASE),
+        re.compile(r"<h[34][^>]*>Munger\s+護城河維度[^<]*</h[34]>", re.IGNORECASE),
+        re.compile(r"<h[34][^>]*>Munger\s+三維護城河[^<]*</h[34]>", re.IGNORECASE),
+        # single-line div.section-title that mentions §7 (no DOTALL to avoid greedy span)
+        re.compile(r"<div[^>]*section-title[^>]*>[^<]*§7[^<]*</div>", re.IGNORECASE),
+    ]
+
+    gate_start: "int | None" = None
+    gate_section: "str | None" = None
+
+    for pat in h_patterns:
+        m = pat.search(dd_text)
+        if not m:
+            continue
+        table_end = dd_text.find("</table>", m.end())
+        if table_end == -1:
+            continue
+        candidate = dd_text[m.start(): table_end + 8]
+        has_3col = any(
+            len(list(td_pat_check.finditer(tr.group(1)))) >= 3
+            for tr in tr_pat_check.finditer(candidate)
+        )
+        if has_3col:
+            gate_start = m.start()
+            gate_section = candidate
+            break
+
+    if gate_start is None or gate_section is None:
+        return (None, None)
+
+    # Munger三維評級 emoji — DOTALL search within 5000 chars of header
+    munger_emoji: "str | None" = None
+    em = re.search(r"Munger\s+三維評級.*?([🟢🟡🔴])", dd_text[gate_start: gate_start + 5000], re.DOTALL)
+    if em:
+        munger_emoji = em.group(1)
+
+    # Parse gate table rows
+    tr_pat = re.compile(r"<tr[^>]*>(.*?)</tr>", re.DOTALL | re.IGNORECASE)
+    td_pat = re.compile(r"<td[^>]*>(.*?)</td>", re.DOTALL | re.IGNORECASE)
+    tag_pat = re.compile(r"<[^>]+>", re.DOTALL)
+
+    pass_c = fail_c = partial_c = 0
+
+    for tr in tr_pat.finditer(gate_section):
+        tds = list(td_pat.finditer(tr.group(1)))
+        if len(tds) < 3:
+            continue
+        raw3 = tds[2].group(1)
+        cell_text = tag_pat.sub("", raw3).strip()
+        cell_html = raw3
+        label = tag_pat.sub("", tds[0].group(1)).strip()
+
+        # Special row: 護城河強度 — cell may be numeric score
+        if any(k in label for k in ("護城河強度", "護城河強")):
+            nums = re.findall(r"\d+", cell_text)
+            if nums:
+                val = int(nums[0])
+                if val >= 8:
+                    pass_c += 1
+                elif val >= 6:
+                    partial_c += 1
+                else:
+                    fail_c += 1
+            elif re.search(r"[✅✓]", cell_text):
+                pass_c += 1
+            elif "⚠️" in cell_text:
+                partial_c += 1
+            else:
+                fail_c += 1
+            continue
+
+        is_partial = (
+            "部分" in cell_text or "接近" in cell_text or "邊緣" in cell_text
+            or "warn-cell" in cell_html or "🟡" in cell_text or "⚠️" in cell_text
+        )
+        is_pass = (
+            "✅" in cell_text or "✓✓" in cell_text
+            or 'class="pass"' in cell_html or 'class="beat"' in cell_html
+            or "badge-beat" in cell_html
+        )
+        if not is_pass and not is_partial and re.search(r"✓", cell_text):
+            is_pass = True
+        if not is_pass and not is_partial and cell_text == "是":
+            is_pass = True
+        is_fail = (
+            "❌" in cell_text or cell_text in ("否", "高", "低", "擴張中")
+            or bool(re.match(r"^否", cell_text))
+            or 'class="fail"' in cell_html
+        )
+
+        if is_partial:
+            partial_c += 1
+        elif is_pass:
+            pass_c += 1
+        elif is_fail:
+            fail_c += 1
+        else:
+            fail_c += 1
+
+    total = pass_c + partial_c + fail_c
+    if total != 11:
+        return (munger_emoji, None)
+    return (munger_emoji, pass_c)
+
+
 def _render_moat_trend_cell(arrow: "str | None") -> "tuple[str, str]":
     """(td_html, num_attr) for the DCA moat trend column.
 
@@ -1353,10 +1482,10 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     ma_state = entry.get("ma_state", "") or "?"
     fpe = entry.get("fpe", "")
     peg = entry.get("peg", "")
-    upside = entry.get("upside", "")
-    upside_5y = entry.get("upside_5y", "")
     eps_cagr = entry.get("eps_cagr_2y_value")
     pe_2y = entry.get("pe_2y_value")
+    munger_emoji = entry.get("munger_emoji")
+    munger_pass = entry.get("munger_pass")
 
     # Numeric data attrs (for sorting); fallback to 0 when empty.
     rank = _SIGNAL_RANK.get(sig, 0)
@@ -1370,49 +1499,13 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         peg_num = float(peg) if peg else 0.0
     except ValueError:
         peg_num = 0.0
-    try:
-        up_num = float(upside) if upside else 0.0
-    except ValueError:
-        up_num = 0.0
-    try:
-        up5y_num = float(upside_5y) if upside_5y else None
-    except ValueError:
-        up5y_num = None
     # CSS classes
     verdict_cls = _VERDICT_CSS.get(sig, "verdict-hold")
     trap_cls, trap_label = _TRAP_CSS.get(trap_emoji, ("trap-watch", trap_emoji))
 
-    # Upside cell color (matches hand-curated convention)
-    if up_num >= 30:
-        u_color = "#166534"  # deep green
-    elif up_num >= 0:
-        u_color = "#15803D"  # green
-    else:
-        u_color = "#991B1B"  # red
-    up_sign = "+" if up_num > 0 else ""
-    up_cell_text = f"{up_sign}{up_num:.0f}%" if upside else "?"
-
-    # 5Y upside cell
-    if up5y_num is not None:
-        u5y_sign = "+" if up5y_num > 0 else ""
-        if up5y_num >= 50:
-            u5y_color = "#166534"
-        elif up5y_num >= 0:
-            u5y_color = "#15803D"
-        else:
-            u5y_color = "#991B1B"
-        up5y_cell_text = f"{u5y_sign}{up5y_num:.0f}%"
-    else:
-        u5y_color = ""
-        up5y_cell_text = "—"
-
-    # Cell display values (fallback strings when missing)
+    # Cell display values
     fpe_disp = f"{fpe}x" if fpe else "?"
     peg_disp = f"{peg}" if peg else "?"
-    triax_disp = f"{moat}/{val_emoji}/{ma_state}"
-
-    up5y_style = f"color:{u5y_color};font-weight:600" if u5y_color else "color:#94A3B8"
-    up5y_num_attr = f"{up5y_num:.0f}" if up5y_num is not None else "0"
 
     # EPS CAGR (2Y) cell — yfinance live consensus (FY+2 vs FY-1 actual).
     if eps_cagr is None:
@@ -1449,7 +1542,13 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         pe2y_cell = f'<td class="num-cell" style="color:{pe2y_color};font-weight:600">{pe_2y:.1f}x</td>'
         pe2y_num_attr = f"{pe_2y:.1f}"
 
-    date_disp = entry.get("date") or "—"
+    # Date: compact MM-DD display with ISO tooltip; data-date keeps full ISO for sort.
+    date_iso = entry.get("date") or ""
+    if date_iso and len(date_iso) == 10:
+        date_compact = date_iso[5:]   # MM-DD
+        date_cell = f'<td class="num-cell"><span title="{date_iso}">{date_compact}</span></td>'
+    else:
+        date_cell = f'<td class="num-cell">{date_iso or "—"}</td>'
 
     # Normalize ticker for DCA lookup: DD entries use "2330.TW" with dot,
     # DCA filenames strip non-alphanumeric ("2330TW"). Try both forms.
@@ -1494,30 +1593,65 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     _mt_arrow = (dca_moat_trend_map or {}).get(_t_raw)
     if _mt_arrow is None:
         _mt_arrow = (dca_moat_trend_map or {}).get(_t_norm)
-    moat_cell, moat_trend_num_attr = _render_moat_trend_cell(_mt_arrow)
+    _mt_num = {"↑": "3", "→": "2", "↓": "1"}.get(_mt_arrow or "", "0")
+
+    # Four-axis cell: {moat}{arrow}/{val}/{ma}  e.g. "S↑/🟢/✅"
+    # Arrow is embedded inline with color span (tight to the moat letter, no space).
+    if _mt_arrow == "↑":
+        arrow_span = '<span style="color:#166534">↑</span>'
+    elif _mt_arrow == "→":
+        arrow_span = '<span style="color:#64748B">→</span>'
+    elif _mt_arrow == "↓":
+        arrow_span = '<span style="color:#991B1B">↓</span>'
+    else:
+        arrow_span = ""
+    four_axis_html = f'{moat}{arrow_span}/{val_emoji}/{ma_state}'
+    four_axis_cell = f'<td class="num-cell">{four_axis_html}</td>'
+
+    # §7 門檻 cell: {emoji} {pass}/11, colour-coded background by pass count.
+    if munger_pass is not None:
+        eff_emoji = munger_emoji
+        if eff_emoji is None:
+            if munger_pass >= 9:
+                eff_emoji = "🟢"
+            elif munger_pass >= 6:
+                eff_emoji = "🟡"
+            else:
+                eff_emoji = "🔴"
+        if munger_pass >= 9:
+            gate_bg = "background:#DCFCE7;color:#166534"
+        elif munger_pass >= 6:
+            gate_bg = "background:#FEF9C3;color:#854D0E"
+        else:
+            gate_bg = "background:#FEE2E2;color:#991B1B"
+        gate_cell = (
+            f'<td class="num-cell" style="{gate_bg};font-weight:600;border-radius:4px">'
+            f'{eff_emoji} {munger_pass}/11</td>'
+        )
+    else:
+        gate_cell = '<td class="num-cell" style="color:#94A3B8">—</td>'
 
     return (
-        f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
+        f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_iso}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
         f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
         f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-peg="{peg_num}"'
         f' data-eps-cagr="{eps_num_attr}"'
-        f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-ev5y="{ev_num_attr}"'
-        f' data-moat-trend="{moat_trend_num_attr}">\n'
+        f' data-upside="{entry.get("upside", 0) or 0}" data-upside5y="{entry.get("upside_5y", 0) or 0}"'
+        f' data-ev5y="{ev_num_attr}"'
+        f' data-moat-trend="{_mt_num}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
+        f'{date_cell}'
         f'{dca_cell}'
         f'{ev_cell}'
-        f'{moat_cell}'
-        f'<td class="num-cell">{date_disp}</td>'
         f'<td><span class="{verdict_cls}"><strong>{sig}</strong></span></td>'
         f'<td><span class="{trap_cls}">{trap_label}</span></td>'
-        f'<td class="num-cell">{triax_disp}</td>'
+        f'{four_axis_cell}'
+        f'{gate_cell}'
         f'<td class="num-cell">{fpe_disp}</td>'
         f'{pe2y_cell}'
         f'<td class="num-cell">{peg_disp}</td>'
-        f'{eps_cell}'
-        f'<td class="num-cell" style="color:{u_color};font-weight:600">{up_cell_text}</td>'
-        f'<td class="num-cell" style="{up5y_style}">{up5y_cell_text}</td>\n'
+        f'{eps_cell}\n'
         f'</tr>'
     )
 
@@ -1530,6 +1664,10 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
     DD-derived columns render '—'. The ticker link points to the DCA file
     (since there is no DD). data-rank=0 keeps these rows sorted to the
     bottom in the default signal-desc view.
+
+    Column order (12 cols, matches build_row_v12 new schema):
+      1 Ticker  2 DD日期  3 定見  4 5Y IRR
+      5-12: signal trap 四軸 §7門檻 fpe pe2y peg eps-cagr (8 em-dashes)
     """
     if ev_5y is None:
         ev_cell = '<td class="num-cell" style="color:#CBD5E1">—</td>'
@@ -1552,7 +1690,14 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         )
         ev_num_attr = f"{irr:.2f}"
 
-    moat_cell, moat_trend_num_attr = _render_moat_trend_cell(moat_trend_arrow)
+    _mt_num = {"↑": "3", "→": "2", "↓": "1"}.get(moat_trend_arrow or "", "0")
+
+    # Compact date display (MM-DD with ISO tooltip)
+    if dca_date and len(dca_date) == 10:
+        date_compact = dca_date[5:]
+        date_cell = f'<td class="num-cell"><span title="{dca_date}">{date_compact}</span></td>'
+    else:
+        date_cell = f'<td class="num-cell">{dca_date or "—"}</td>'
 
     em = '<td class="num-cell" style="color:#CBD5E1">—</td>'
     return (
@@ -1562,19 +1707,17 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f' data-fpe="0" data-pe2y="0" data-peg="0"'
         f' data-eps-cagr="0"'
         f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
-        f' data-moat-trend="{moat_trend_num_attr}">\n'
+        f' data-moat-trend="{_mt_num}">\n'
         f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
         f'rel="noopener" title="僅 DCA 報告，無對應 DD（DD 已輪替/未建檔）">'
         f'{ticker}</a></td>'
+        f'{date_cell}'
         f'<td class="num-cell"><a href="{dca_href}" target="_blank" '
         f'rel="noopener" title="Deep Conviction Analysis 投資決策報告" '
         f'style="text-decoration:none">📋</a></td>'
         f'{ev_cell}'
-        f'{moat_cell}'
-        f'<td class="num-cell">{dca_date}</td>'
-        # 9 em-dashes to match DD-row schema:
-        # signal, trap, triax, fpe, pe2y, peg, eps_cagr, 2Y_upside, 5Y_upside.
-        f'{em}{em}{em}{em}{em}{em}{em}{em}{em}\n'
+        # 8 em-dashes: signal, trap, 四軸, §7門檻, fpe, pe2y, peg, eps-cagr
+        f'{em}{em}{em}{em}{em}{em}{em}{em}\n'
         f'</tr>'
     )
 
@@ -1640,6 +1783,9 @@ def collect_v12_entries(force_refresh_eps: bool = False):
         if cache_miss or force_refresh_eps:
             cache_dirty = True
 
+        # §7 Munger gate table — extract for all DDs (runs once per DD file)
+        munger_emoji, munger_pass = extract_munger_threshold(text)
+
         if meta:
             stress = meta.get("stress", {}) or {}
             entry = {
@@ -1661,6 +1807,8 @@ def collect_v12_entries(force_refresh_eps: bool = False):
                 "stress_total": int(stress.get("total", 4) or 4),
                 "eps_cagr_2y_value": eps_metrics["eps_cagr_2y_pct"],
                 "pe_2y_value": eps_metrics["pe_2y"],
+                "munger_emoji": munger_emoji,
+                "munger_pass": munger_pass,
             }
             entries.append(entry)
             continue
@@ -1691,6 +1839,8 @@ def collect_v12_entries(force_refresh_eps: bool = False):
             "stress_total": st,
             "eps_cagr_2y_value": eps_metrics["eps_cagr_2y_pct"],
             "pe_2y_value": eps_metrics["pe_2y"],
+            "munger_emoji": munger_emoji,
+            "munger_pass": munger_pass,
         })
 
     # Persist cache if any ticker was fetched (auto-backfill on new DD or refresh)
