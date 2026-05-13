@@ -1352,11 +1352,9 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     val_emoji = entry.get("val_emoji", "") or "?"
     ma_state = entry.get("ma_state", "") or "?"
     fpe = entry.get("fpe", "")
-    pct = entry.get("pct", "")
     peg = entry.get("peg", "")
     upside = entry.get("upside", "")
     upside_5y = entry.get("upside_5y", "")
-    sp, st = entry.get("stress_pass", 0), entry.get("stress_total", 4)
     eps_cagr = entry.get("eps_cagr_2y_value")
     pe_2y = entry.get("pe_2y_value")
 
@@ -1369,10 +1367,6 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     except ValueError:
         fpe_num = 0.0
     try:
-        pct_num = float(pct) if pct else 0.0
-    except ValueError:
-        pct_num = 0.0
-    try:
         peg_num = float(peg) if peg else 0.0
     except ValueError:
         peg_num = 0.0
@@ -1384,8 +1378,6 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         up5y_num = float(upside_5y) if upside_5y else None
     except ValueError:
         up5y_num = None
-    stress_frac = sp / st if st else 0.0
-
     # CSS classes
     verdict_cls = _VERDICT_CSS.get(sig, "verdict-hold")
     trap_cls, trap_label = _TRAP_CSS.get(trap_emoji, ("trap-watch", trap_emoji))
@@ -1416,10 +1408,8 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
 
     # Cell display values (fallback strings when missing)
     fpe_disp = f"{fpe}x" if fpe else "?"
-    pct_disp = f"{pct}%" if pct else "?"
     peg_disp = f"{peg}" if peg else "?"
     triax_disp = f"{moat}/{val_emoji}/{ma_state}"
-    stress_disp = f"{sp}/{st}"
 
     up5y_style = f"color:{u5y_color};font-weight:600" if u5y_color else "color:#94A3B8"
     up5y_num_attr = f"{up5y_num:.0f}" if up5y_num is not None else "0"
@@ -1510,11 +1500,10 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         f'<tr class="searchable" data-ticker="{entry["ticker"]}" data-date="{date_disp}"'
         f' data-signal="{sig}" data-trap="{trap_emoji}"'
         f' data-rank="{rank}" data-trap-rank="{trap_rank}" data-quality="{quality}"'
-        f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-pct="{pct_num}" data-peg="{peg_num}"'
+        f' data-fpe="{fpe_num}" data-pe2y="{pe2y_num_attr}" data-peg="{peg_num}"'
         f' data-eps-cagr="{eps_num_attr}"'
         f' data-upside="{up_num}" data-upside5y="{up5y_num_attr}" data-ev5y="{ev_num_attr}"'
-        f' data-moat-trend="{moat_trend_num_attr}"'
-        f' data-stress="{stress_frac}">\n'
+        f' data-moat-trend="{moat_trend_num_attr}">\n'
         f'  <td><a href="{entry["href"]}" class="ticker-link" target="_blank" rel="noopener">{entry["ticker"]}</a></td>'
         f'{dca_cell}'
         f'{ev_cell}'
@@ -1525,12 +1514,10 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
         f'<td class="num-cell">{triax_disp}</td>'
         f'<td class="num-cell">{fpe_disp}</td>'
         f'{pe2y_cell}'
-        f'<td class="num-cell">{pct_disp}</td>'
         f'<td class="num-cell">{peg_disp}</td>'
         f'{eps_cell}'
         f'<td class="num-cell" style="color:{u_color};font-weight:600">{up_cell_text}</td>'
-        f'<td class="num-cell" style="{up5y_style}">{up5y_cell_text}</td>'
-        f'<td class="num-cell">{stress_disp}</td>\n'
+        f'<td class="num-cell" style="{up5y_style}">{up5y_cell_text}</td>\n'
         f'</tr>'
     )
 
@@ -1572,11 +1559,10 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f'<tr class="searchable" data-ticker="{ticker}" data-date="{dca_date}"'
         f' data-signal="" data-trap=""'
         f' data-rank="0" data-trap-rank="0" data-quality="0"'
-        f' data-fpe="0" data-pe2y="0" data-pct="0" data-peg="0"'
+        f' data-fpe="0" data-pe2y="0" data-peg="0"'
         f' data-eps-cagr="0"'
         f' data-upside="0" data-upside5y="0" data-ev5y="{ev_num_attr}"'
-        f' data-moat-trend="{moat_trend_num_attr}"'
-        f' data-stress="0">\n'
+        f' data-moat-trend="{moat_trend_num_attr}">\n'
         f'  <td><a href="{dca_href}" class="ticker-link" target="_blank" '
         f'rel="noopener" title="僅 DCA 報告，無對應 DD（DD 已輪替/未建檔）">'
         f'{ticker}</a></td>'
@@ -1586,10 +1572,9 @@ def build_row_dca_only(ticker: str, dca_href: str, dca_date: str,
         f'{ev_cell}'
         f'{moat_cell}'
         f'<td class="num-cell">{dca_date}</td>'
-        # 11 em-dashes to match DD-row schema:
-        # signal, trap, triax, fpe, pe2y, pct, peg, eps_cagr, 2Y_upside,
-        # 5Y_upside, stress.
-        f'{em}{em}{em}{em}{em}{em}{em}{em}{em}{em}{em}\n'
+        # 9 em-dashes to match DD-row schema:
+        # signal, trap, triax, fpe, pe2y, peg, eps_cagr, 2Y_upside, 5Y_upside.
+        f'{em}{em}{em}{em}{em}{em}{em}{em}{em}\n'
         f'</tr>'
     )
 
@@ -2202,8 +2187,9 @@ def update_index(entries, dry_run: bool = False, force_refresh_eps: bool = False
     original_html = html
 
     # v12 mode: page uses <tbody id="dd-tbody-v12"> with rows that include
-    # sortable data-* attrs (data-signal / data-fpe / data-pct / data-peg /
-    # data-upside / data-stress) — schema incompatible with v11 build_rows().
+    # sortable data-* attrs (data-signal / data-fpe / data-pe2y / data-peg /
+    # data-eps-cagr / data-upside / data-upside5y / data-ev5y / data-moat-trend)
+    # — schema incompatible with v11 build_rows().
     # Strategy: APPEND-ONLY. Add rows for v12 DDs not yet in the table; never
     # overwrite existing hand-curated rows so QA tweaks survive.
     v12_mode = '<tbody id="dd-tbody-v12">' in html
