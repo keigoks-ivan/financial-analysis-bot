@@ -98,7 +98,7 @@ strong{color:#1F2937;font-weight:700}
 em{color:#374151;font-style:normal;font-weight:600}
 
 /* 表格樣式 — DS 用得少，刻意小巧 */
-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;background:#fff;box-shadow:0 1px 3px rgba(76,29,149,.06)}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;background:#fff;box-shadow:0 1px 3px rgba(31,41,55,.06)}
 th{background:#1F2937;color:#fff;padding:8px 10px;text-align:left;font-weight:500;font-size:12.5px}
 td{padding:8px 10px;border-bottom:1px solid #E5E7EB;vertical-align:top;font-size:13px}
 tr:hover td{background:#F9FAFB}
