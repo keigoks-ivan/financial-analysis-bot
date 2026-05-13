@@ -144,3 +144,4 @@
 | 2026-05-12 | FTNT | FTNT 是全球 firewall 龍頭中唯一同時握有自研 ASIC 硬體護城河與平台訂閱二次曲線的稀缺廠，AI 推動的流量檢測規模化讓硬體加速優勢被重新放大。 | DCA_FTNT_20260512.html | DD_FTNT_20260427.html | ID_AICybersecurityDoubleEdge_20260423.html / ID_CybersecurityPlatformConsolidation_20260423.html |
 | 2026-05-12 | PLTR | PLTR 是企業 AI 唯一可審計、grounded、有 ontology 結構的「決策層作業系統」，從政府蔓延到商業，重新定義 AI 之上的工作流座標系。 | DCA_PLTR_20260512.html | DD_PLTR_20260505.html | ID_AgenticAIPlatform_20260424.html / ID_AICrossDomainImpact_20260429.html |
 | 2026-05-12 | FICO | FICO 是 40 年事實壟斷的 credit score 標準，正面臨 VantageScore + FHFA「Lender Choice」雙刀切開定價權，但 Platform 軟體 + 規模壟斷未崩 — 是「moat 受傷但未死」的修復賭局。 | DCA_FICO_20260512.html | DD_FICO_20260418.html | — |
+| 2026-05-13 | MELI | MELI 是拉美唯一同時鎖定商業、支付、信用、物流四引擎的飛輪生態，把 4.5 億 unbanked 人口的金融數位化變成自己的複利引擎。 | DCA_MELI_20260513.html | DD_MELI_20260513.html | ID_LATAMEcommerce_20260427.html / ID_StablecoinPayments_20260430.html |

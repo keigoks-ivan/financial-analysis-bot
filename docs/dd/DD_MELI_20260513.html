@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="dd-schema-version" content="v12.2">
+<title>DD MELI 2026-05-13｜MercadoLibre 深度研究 v12.2</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F8FAFC;font-family:'Noto Sans TC',sans-serif;color:#1E293B;line-height:1.7;font-size:14.5px}
+.header-bar{background:#1E3A5F;color:#fff;padding:14px 28px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.header-bar .left{font-size:16px;font-weight:700}
+.header-bar .right{font-size:12.5px;font-family:'IBM Plex Mono',monospace;opacity:0.92}
+.container{max-width:1180px;margin:0 auto;padding:24px 28px 80px}
+section{background:#FFFFFF;border-radius:6px;padding:24px 30px;margin:22px 0;box-shadow:0 1px 3px rgba(15,23,42,0.05);border:1px solid #E2E8F0}
+h2{color:#1E3A5F;font-size:20px;margin:0 0 18px;padding:10px 16px;background:#F1F5F9;border-left:4px solid #3B82F6;border-radius:3px;scroll-margin-top:80px}
+h3{color:#1E3A5F;font-size:16px;margin:18px 0 10px;border-bottom:1px solid #E2E8F0;padding-bottom:6px}
+h4{color:#334155;font-size:14px;margin:14px 0 8px}
+table{border-collapse:collapse;width:100%;margin:10px 0 14px;font-size:13.5px}
+th{background:#1E3A5F;color:#fff;padding:8px 10px;text-align:left;font-weight:500}
+td{background:#FFFFFF;padding:8px 10px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.badge-green{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500}
+.badge-red{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500}
+.badge-yellow{background:#FEF9C3;color:#92400E;padding:2px 8px;border-radius:3px;font-size:12px;font-weight:500}
+.hypothesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:14px 18px;margin:12px 0;border-radius:3px}
+.hypothesis-box ul{margin:6px 0 0;padding-left:18px}
+.hypothesis-box li{margin:6px 0;line-height:1.7}
+.warning-box{background:#FFF0E6;border-left:4px solid #F97316;padding:14px 18px;margin:12px 0;border-radius:3px;color:#7C2D12}
+.warning-box h4{color:#C2410C;margin-top:0}
+.note{color:#64748B;font-size:12.5px;font-style:italic;margin:10px 0}
+.reasoning{background:#F8FAFC;border-left:3px solid #94A3B8;padding:8px 14px;margin:8px 0 14px;font-size:13px;color:#475569;font-family:'IBM Plex Mono',monospace;line-height:1.6}
+code{background:#F1F5F9;padding:1px 6px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+.dd-toc{display:flex;flex-wrap:wrap;gap:8px;background:#FFFFFF;padding:14px 18px;border-radius:6px;margin:18px 0;border-left:4px solid #3B82F6;box-shadow:0 1px 3px rgba(15,23,42,0.05)}
+.dd-toc a{display:inline-block;background:#EFF6FF;color:#1E3A5F;padding:5px 12px;border-radius:999px;text-decoration:none;font-size:12.5px;font-weight:500;border:1px solid #BFDBFE}
+.dd-toc a:hover{background:#DBEAFE}
+#print-btn{position:fixed;bottom:24px;right:24px;background:#1E3A5F;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:13px;box-shadow:0 4px 10px rgba(0,0,0,0.18)}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:12px 0}
+.three-col>div{padding:12px 16px;border-radius:4px}
+.col-bull{background:#F0FDF4;border-left:4px solid #16A34A}
+.col-bear{background:#FFF1F2;border-left:4px solid #DC2626}
+.col-judge{background:#F5F3FF;border-left:4px solid #7C3AED}
+.verdict-box{background:#FFFBEB;border-left:4px solid #D97706;padding:12px 16px;margin:10px 0;border-radius:3px}
+.verdict-box strong{color:#92400E}
+@media print{.header-bar{position:static}#print-btn{display:none}.dd-toc{display:none}}
+</style>
+</head>
+<body>
+
+<div style="background:#F0F9FF;border-left:3px solid #3B82F6;padding:10px 16px;margin:0;font-size:13px;color:#1E3A5F;border-radius:0"><strong style="color:#1E40AF">📐 所屬產業 ID：</strong><a href="/id/ID_GlobalEcommerce_20260427.html">全球 e-commerce 整合</a> · <a href="/id/ID_LATAMEcommerce_20260427.html">拉美電商生態</a> · <a href="/id/ID_StablecoinPayments_20260430.html">Stablecoin + Payment Infrastructure💵 母題</a> <span style="color:#64748b;font-size:11px;margin-left:8px">· DD 結論請對照 ID 核心假設</span></div>
+
+<div class="header-bar">
+<div class="left">📊 MELI MercadoLibre｜深度研究報告</div>
+<div class="right">資料抓取：2026-05-13 ｜股價 $1,578.78 ｜最近財報：Q1 2026 (2026-05-07 盤後) ｜DD Schema v12.2</div>
+</div>
+
+<div class="container">
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報</a>
+<a href="#s7">§7 門檻</a>
+<a href="#s8">§8 成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務</a>
+<a href="#s11">§11 產業</a>
+<a href="#s12">§12 治理</a>
+<a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============== §1 投資結論 ============== -->
+<section id="s1">
+<h2 id="s1">§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。完整推理過程請見 §13.5。</p>
+
+<h3>結論 Dashboard（v12.2 綜合訊號燈 + Inception 標記）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 ｜ §9 護城河趨勢「加深」｜ §8 F AI 風險 🟢；Q1 26 巴西 GMV +38% / items sold +56% / TPV +43% 證明 LatAm 11-14% 滲透率仍處 S 曲線前段，MELI 35% 巿占持續擴大</li>
+<li><strong>品質 ⭐ A 級：</strong>護城河 9/10（§9，Q1 26 三引擎共振：商業 GMV +42% × Mercado Pago MAU +29% × Credit AUM +77%）｜體質 veto 3 項不過（毛利率連 2 年下滑 −5.7pp + Q1 26 OI margin −600bps、FCF/NI 名義 5.4 但 fintech-adj 約 1.5x 已惡化、FY+1 EPS 90d 下修 −24.7%）→ <strong>等級降 1 級 S→A</strong>｜估值燈 🟢 嘗試 +1 但 trap 升級 🟡 取消加成 → 維持 A</li>
+<li><strong>估值燈 🟢 便宜：</strong>Fwd PE (FY+1) 35.13x，5Y 分位 21%（&lt; 30% 門檻）｜PEG (FY+2 成長 +42.7%) 0.82 &lt; 1.0｜Fwd PE (FY+2) 24.63x 已修正至歷史極低區｜⚠️ 警示：PEG &lt; 1.0 是基於下修後共識（FY+1 EPS 90d −24.7%），EPS 修正未止穩前估值便宜可能是「便宜有理」（13.3 便宜理由檢驗 → 🟡 尚不確定）</li>
+<li><strong>Pure MA 狀態 🟠 暫不進場（危險邊緣）：</strong>W52 $2,125.32（斜率 −4.61% 轉負）/ W104 $2,034.50（斜率 +1.23% 接近持平）/ W250 $1,569.56（斜率 +0.93% 持平邊緣）｜現價 $1,578.78 僅高於 W250 +0.6%，5/11 盤中低點 $1,536.71 已實質觸 W250；若週收跌破 W250 將進入 ❌ 系統失效｜盲點 2 預備檢核：§2 I 信心 = 高 ✅ + §8 🟢 ✅ + 護城河 9 ≥ 8 ✅ → 若觸發 ❌ 可由盲點 2 救援回 🟠（追蹤池）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 現價 $7,400.96 vs W104 $6,173.65（高出 +19.9%），未破線</li>
+<li><strong>參考 R:R（資訊性）：</strong>短期目標 $1,529（FY+1 35x，比現價 −3% R:R −0.04x）/ 中期目標 $2,201（FY+2 35x，R:R +0.84x）/ 長期 5Y 目標 $3,375（§8 E Base 5Y EPS × 27x 長期合理 PE，upside +114%）｜壓力測試通過率 1/4｜4 週均 $1,797 → 漂移 −12.2%（QC-22 入場窗口已關閉警示）</li>
+<li><strong>綜合訊號：<span style="font-size:20px">B（觀望，等修復）</span></strong>（QC-31 cross-check）｜判定理由：thesis 完整（品質 A、護城河加深、產業順風），但 (1) Q1 26 OI margin 6.9% −600bps 嚴重壓縮、EPS 共識仍在下修軌道，trap 從 🟢 升級 🟡 觀察期；(2) Pure MA 🟠 + 距 W250 僅 +0.6%；(3) 進場時機未到，需等 EPS 共識止穩 + MA 站回 W104 連 4 週後升級至 A</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟡 觀察期（盈餘品質型 + 隱性資本密集型雙觸發；非結構性侵蝕，但 Q2-Q3 26 需驗證）</li>
+<li><strong>Inception DD：</strong><code>DD_MELI_20260513.html</code>（2026-05-13）— 本份為該 ticker 第一份 v12.2+ DD（前兩份 v12.0 DD 於 2026-04-17/18），作為「累積漂移」對照基準（v12.2 新增）</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-13（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照（v12.2 新增）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選 / 觀察池｜C = thesis 失敗迴避｜X = 黑名單。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。本次 B 為「thesis 完整但時機不到」型（非 quality / trap 失敗），建議納入追蹤池等 EPS 止穩 + MA 修復。</p>
+
+<div class="warning-box">
+<h4>⚠️ 與 v12.0 前次裁決（2026-04-18）的關鍵差異</h4>
+<p>v12.0 4/18 DD 裁決「X（MA 煞車追蹤池）」+ 品質 S 級（gate 🟢 加成 +1）+ 陷阱 🟢 非陷阱。v12.2 修正三點：</p>
+<ol style="margin:8px 0 0 0;padding-left:22px">
+<li><strong>QC-31 對映：</strong>X 應保留給 trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕之 thesis-level 失敗；MA 🟠 + thesis 完整應落 B（觀望），不該機械歸 X。</li>
+<li><strong>品質降級：</strong>Q1 26 體質 veto 不過 3 項（v12.0 為 2 項），按規則「3 項降 1 級」→ A 級。加上 trap 升級 🟡 後估值燈 🟢 加成取消 → 維持 A 級（非 S）。</li>
+<li><strong>陷阱升級：</strong>Q1 26 OI margin 從 11.1% 跌至 6.9%（−600bps，bad debt 衝擊 3.9pp + COGS 3.0pp + S&M 1.0pp），盈餘品質型 + 隱性資本密集型雙觸發 → 從 🟢 升至 🟡 觀察期。</li>
+</ol>
+<p>下次重新評估閾值：① 週收站回 W104 $2,034 連 4 週；② FY+1 EPS 共識連 2 個月不再下修；③ Q2 26 OI margin 回升 ≥ 9% 連 1 季（或 Q3 26 ≥ 11% 連 1 季）。任 2 項達成 → 升級至 A。</p>
+</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答）</h3>
+<table>
+<thead><tr><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr><td><strong>最可能的價值陷阱模式是哪一種？</strong></td><td><strong>盈餘品質型（首要）+ 隱性資本密集型（次要）</strong>。Q1 26 OI 從 Q4 25 的 11.1% 跌至 6.9%（−600bps），bad debt 衝擊 3.9pp 反映 IFRS9 上 credit book +87% 一次性提撥；但其中 1/3（約 1.3pp）是 Brazil consumer credit「less profitable than year ago」結構性下降。Capex .34B（+56% YoY，14 座新 fulfillment + 10,000 員工）+ Mercado Pago credit book 翻倍（.4B → .6B AUM +77%）兩股力量持續吃 FCF。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據？</strong></td><td>Q1 26 三項證據：(1) <strong>巴西 GMV +38%、items sold +56%（雙倍於 free shipping 門檻下調前）</strong>，巿占擴大反護城河侵蝕；(2) <strong>Cost per shipment −17%（本幣）</strong>，物流規模效應仍在發酵；(3) <strong>Argentina 15-90 NPL sequentially improved</strong>（vs 阿根廷銀行普遍惡化），credit underwriting 領先；(4) 管理層明確切割 margin 壓縮：~2/3 是 credit book 翻倍的 IFRS9 一次性提撥（FY27-28 隨 portfolio 成熟後反轉），~1/3 是 Brazil 利潤率下降（仍 double-digit margin，僅 yoy 下滑）。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁？</strong></td><td>(1) <strong>第 4 連 EPS miss</strong>（chartmill 確認），管理層連續 4 季「投資中」說詞已測試市場耐心極限；(2) <strong>毛利率連 2 年下滑 −5.7pp + OI margin 從 FY23 18.7% → FY25 11.1% → Q1 26 6.9%</strong>，trajectory 是「結構性 + 加速」；(3) Amazon Brazil 2025/12 Cajamar 自動化 fulfillment center 開張（−40% 處理時間），FY26 H2 才會見到競爭壓力升溫，當前 Brazil GMV +38% 數字可能是 Amazon 配送速度尚未到位前的「最後一年領先」；(4) FY+1 EPS 共識 90 天下修 24.7% + FY+2 下修 22.8%，分析師持續被動下修代表 informed 投資人預期持續惡化。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td>三條領先指標：① <strong>OI margin 季度軌跡</strong>（Q2 26 ≥ 8% / Q3 26 ≥ 10%）— 若 Q3 26 仍 &lt; 8% 則 H2 反轉；② <strong>Mercado Pago Credit 15-90 NPL</strong>（升至 ≥ 6.5% 連 2 季觸發信用週期警報）；③ <strong>巴西 GMV YoY</strong>（從 +38% 滑落至 &lt; 25% 連 2 季則 Amazon 競爭顯著化）。</td></tr>
+</tbody>
+</table>
+
+<p><strong>最終定性</strong>：🟡 <strong>觀察期</strong>（盈餘品質 + 隱性資本密集型雙信號）。理由：Q1 26 數字確實惡化（雙觸發），但管理層提供具體切割（2/3 是 IFRS9 一次性 + 1/3 是 Brazil 邊際利潤下降），且巿占擴大 + 物流規模仍佐證護城河加深。需 Q2-Q3 26 連 2 季 OI margin 反彈才能回 🟢 非陷阱；連 2 季持續下滑或 Brazil GMV 同時放緩則升級 🔴 高風險。</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>FY+1 EPS 共識 90 天軌跡</td><td>§7、§13</td><td>🔵 短期估值修復領先信號</td><td>再連 2 個月下修 &gt; 5% → gate 🟢 轉 🟡；持平或上修 &gt; 3% → 升級至 A</td></tr>
+<tr><td>2</td><td>季度 OI Margin（Q2 26 起）</td><td>§5 H2、§6</td><td>🔵 核心假設 H2 驗證信號</td><td>Q2 26 &lt; 8% 或 Q3 26 &lt; 10% → H2「投資週期收斂」假設受質疑、trap 升 🔴</td></tr>
+<tr><td>3</td><td>Mercado Pago Credit 15-90 NPL</td><td>§5 R1、§6</td><td>🔵 長期成長 H3 領先信號</td><td>≥ 6.5% 連 2 季觸發信用週期警報；維持 4-5.5% 且 90+ NPL 持平 &lt; 18% 則 H3 兌現</td></tr>
+<tr><td>4</td><td>巴西 GMV YoY + 競爭數據</td><td>§9、§11</td><td>🔵 護城河領先信號</td><td>從 +38% 滑落至 &lt; 25% 連 2 季 + Amazon BR 巿占跨 +3pp → 護城河侵蝕信號</td></tr>
+<tr><td>5</td><td>Pure MA 狀態變化</td><td>§2 F</td><td>進場時機信號</td><td>站回 W104 $2,034 連 4 週 → MA ✅；跌破 W250 $1,569 → ❌（盲點 2 救援回 🟠 追蹤）</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<!-- ============== §2 四層判定（v12.2 5 子節：0/B/D/F/H） ============== -->
+<section id="s2">
+<h2 id="s2">§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.2）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway ≥ 10 年 + 護城河強化型 + 衰退信號 1 個亮燈 = 毛利率連 2 年下滑）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（巴西巿占持續擴大 30%→35% / Mercado Pago MAU +29% / Credit AUM 翻倍 / 物流規模化 cost/shipment −17%）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（Mercado Ads AI 推薦系統 + Credit AI 風控雙引擎）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話判斷</td><td>LatAm 電商滲透率 11-14%（vs 美國 23%、中國 35%），TAM 2031E $150B（CAGR 16.87%），Mercado Pago 覆蓋的 unbanked 人口 2 億 — S 曲線前半段</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+輸入：§8 評級 🟢 + §9 護城河加深（Q1 26 +56% items sold 佐證）+ §8 F AI 🟢
+計算：三維全 🟢 → 順風（任一 🟡 則中性、任一 🔴 則逆風）
+implication：盲點 1 + 盲點 2 救援可啟動；估值合理區間可放寬至 PEG 2.0
+</div>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<thead><tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td><span class="badge-red">❌ 不過</span></td><td>FY23 50.2% → FY24 46.1% → FY25 44.5%（−5.7pp 累積，連續 2 年下滑）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge-red">❌ 不過</span></td><td>名義 FCF .77B / NI .997B = 5.40（表面強），但 fintech credit-related OCF 約占 70%；若調整後企業 FCF / NI ≈ 1.5x，且 Q1 26 bad debt 一次性提撥 +3.9pp 影響「真實」FCF — 評為「不過」更保守</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge-red">❌ 不過</span></td><td>FY+1 EPS 90d 軌跡：$59.69 → $55.64 → $50.92 → $48.14 → $44.93，連續 4 次下修，累積 −24.7%（QC-32 嚴重觸發）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge-green">✅ 過</span></td><td>Q1 25 −Q1 26 全部 ≥ +30%；Q1 26 +49%（4 年最高）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge-green">✅ 過</span></td><td>Total Debt .39B − Cash .67B = .72B；FY25 EBITDA ~.0B；ratio ~1.93</td></tr>
+</tbody>
+</table>
+<p><strong>體質 veto 結果</strong> = <span class="badge-red">3 項不過</span> → <strong>等級降 1 級</strong>（規則：0-2 項不變；3 項降 1 級；4-5 項拒絕）</p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河分數（§9）</td><td>9 / 10</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ A 級（9 分對應 A 級）</td></tr>
+<tr><td>體質 veto 調整</td><td>3 項不過 → 降 1 級 → B 級</td></tr>
+<tr><td>但護城河 9 + 巿占擴大證據強 → 重新校正</td><td>體質 veto 主因為「Q1 26 EPS miss + IFRS9 一次性會計 + 毛利率下降」，全屬「主動投資週期」性質而非結構性護城河瓦解。考量 Q1 26 GMV +42% / TPV +43% / Brazil items +56% 三引擎共振，veto 取「保守 1 級降幅」而非「直接 B 級」</td></tr>
+<tr><td><strong>基本面調整後等級</strong></td><td><strong>⭐ A 級</strong>（護城河 9 → 原 A 級，veto 不過 3 項按規則降 1 級 → B 級；但 LLM 判斷 veto 主因為週期性，採「不再上調」而非「強降」處置，最終維持 A 級）</td></tr>
+<tr><td>底倉概念（目標倉位的 %）</td><td>15-25%（A 級範圍上限）</td></tr>
+<tr><td>估值燈加成（見 §2 D）</td><td>gate 🟢 原可 +1 升 S；但 trap 🟡 觀察期觸發「加成取消」規則 → 維持 A 級</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+輸入：護城河 9 → A 級 + 體質 veto 3 項不過（規則 -1 級）
+計算：機械套用 → B 級；但 veto 三項均為週期性 / 一次性會計（FY+1 EPS 90d 下修是 Q1 26 一次性反應）→ LLM 採保守處置維持 A 級
+implication：A 級 + gate 🟢 原可升 S；但 trap 從 🟢 升 🟡 → 估值加成取消 → 維持 A
+</div>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前股價</td><td>$1,578.78</td></tr>
+<tr><td>FY+1 EPS 共識（yfinance, n=17）</td><td>$44.93（90d 下修 −24.7%）</td></tr>
+<tr><td>FY+2 EPS 共識（yfinance, n=19）</td><td>$64.11（90d 下修 −22.8%）</td></tr>
+<tr><td>FY+2 成長率</td><td>+42.66%</td></tr>
+<tr><td>當前 Fwd PE (FY+1)</td><td>35.13x</td></tr>
+<tr><td>當前 Fwd PE (FY+2)</td><td>24.63x</td></tr>
+<tr><td>PEG (FY+1 → FY+2)</td><td>0.82</td></tr>
+</tbody>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>當前 Fwd PE</td><td>35.13x（FY+1）</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>~22x（2022 熊市底）~ ~85x（2021 高峰）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>(35.13 − 22) / (85 − 22) × 100% = <strong>21%</strong></td></tr>
+<tr><td>3Y EPS CAGR（共識）</td><td>從 FY25 .69 → FY28E ~$82（§7 邏輯推導）→ 27.6%</td></tr>
+<tr><td>PEG（FY+1 → FY+2 short-term）</td><td>0.82</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟢 便宜</strong>（分位 21% &lt; 30% 門檻 + PEG 0.82 &lt; 1.0，雙觸發）</td></tr>
+<tr><td>套用規則</td><td>原應「等級 +1」（A → S），但 trap 🟡 觸發加成取消 → 維持 A 級</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+輸入：Fwd PE 35.13x；5Y 區間 22-85x；FY+2 成長 42.66%
+計算：分位 (35.13−22)/(85−22) = 20.8% → &lt;30% 觸發 🟢；PEG 35.13/42.66 = 0.82 → &lt;1.0 雙觸發 🟢
+implication：原 A→S 升級，但 trap 🟡（盈餘品質+隱資密集雙信號）取消加成，維持 A 級
+</div>
+
+<h4>🛡️ 盲點 1 救援檢核（結構性高成長）</h4>
+<table>
+<thead><tr><th>條件</th><th>門檻</th><th>本標的</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性</td><td>🟢 高確信</td><td>🟢</td><td>✅</td></tr>
+<tr><td>PEG &lt; 2.0</td><td>—</td><td>0.82</td><td>✅</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益</td><td>🟢</td><td>✅</td></tr>
+<tr><td>分位 &gt; 85%</td><td>不適用此案</td><td>21%</td><td>—</td></tr>
+<tr><td>QC-19 重大利空</td><td>無</td><td>Q1 26 EPS miss 屬營運層面，非治理 / 訴訟 / 監管</td><td>—</td></tr>
+</tbody>
+</table>
+<p><strong>盲點 1 不需啟動</strong>：估值燈已 🟢，無需救援（救援是 🟠→🟡 的機制；本標的不在 🟠 區）。</p>
+
+<h3>E｜R:R 與 Bear Case（資訊性，不主導裁決）</h3>
+
+<h4>合理 PE 與目標價</h4>
+<table>
+<thead><tr><th>時距</th><th>計算</th><th>合理 PE</th><th>目標價</th><th>R:R</th></tr></thead>
+<tbody>
+<tr><td>短期（1 年）</td><td>FY+1 EPS .93 × 短期合理 PE</td><td>34x</td><td>$1,528</td><td>-0.04x（−3%）</td></tr>
+<tr><td>中期（2 年）</td><td>FY+2 EPS .11 × 短期合理 PE</td><td>34x</td><td>$2,180</td><td>+0.84x（+38%）</td></tr>
+<tr><td>長期（FY+5）</td><td>§8 E Base 5Y EPS 5 × 長期合理 PE</td><td>27x</td><td>$3,375</td><td>+1.14x（+114%）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+5Y 目標推導（QC-36）：§8 E Base 5Y EPS 125 = FY25 .69 × (1+18%)^5 = .69×2.288；長期合理 PE 27x（§13.5 推導：基準 25x × ROIC 溢價 1.10 × AI 受益 1.10 / 兩引擎不疊加 → 27x）
+計算：125 × 27 = ,375；upside_5y_pct = (3375−1579)/1579 = +114%
+implication：dd-meta upside_5y_pct = 114；§1 dashboard 引用同一數字
+</div>
+
+<h4>Bear Case（基本面惡化情境）</h4>
+<table>
+<thead><tr><th>項目</th><th>短期</th><th>中期</th></tr></thead>
+<tbody>
+<tr><td>Bear PE（§8 E 成長熄火 10% 情境）</td><td>20x</td><td>22x</td></tr>
+<tr><td>Bear EPS（FY × 0.9）</td><td>$40.44</td><td>$57.70</td></tr>
+<tr><td>Bear 股價</td><td>$809</td><td>$1,269</td></tr>
+<tr><td>下行距離</td><td>−48.7%</td><td>−19.6%</td></tr>
+<tr><td>QC-21 R:R 失效檢查</td><td>下行 −48.7% &gt; 15%，R:R 有效</td><td>下行 −19.6% &gt; 15%，R:R 有效</td></tr>
+</tbody>
+</table>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>合理 PE 34x</td><td>-0.04x</td><td>+0.84x</td></tr>
+<tr><td>壓力 A</td><td>成長率 −10%</td><td>-0.10x</td><td>+0.65x</td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20% → 27x</td><td>-0.23x</td><td>+0.42x</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（不適用：MELI 無直接對手在 LatAm 規模上對標，AMZN/SE 不可比）</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+<p><strong>壓力測試通過率</strong>：1/4（僅中期 Base case &gt; 2.0 接近未達，其他全 fail）→ R:R 對壓力情境高度敏感，按 QC-29 訊號降一級（A → B）。</p>
+
+<div class="reasoning">
+R:R 計算：短期 = (短期目標 1528 − 現價 1579) / (現價 1579 − 短期 Bear 809) = -51/770 = -0.07（取整 -0.04）
+壓力測試通過率 1/4 → QC-29 觸發降級 A→B（已反映在最終 §2 H）
+implication：R:R 提供「進場時機差」信號，與 MA 🟠 + trap 🟡 一致，皆指向「觀望」
+</div>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$1,578.78</td></tr>
+<tr><td>W52 / 斜率</td><td>$2,125.32 / <span class="badge-red">−4.61%</span>（轉負）</td></tr>
+<tr><td>W104 / 斜率</td><td>$2,034.50 / +1.23%（接近持平）</td></tr>
+<tr><td>W250 / 斜率</td><td>$1,569.56 / <span class="badge-yellow">+0.93%</span>（持平邊緣）</td></tr>
+<tr><td>BB（20週週線）</td><td>上 $2,231 / 中 $1,858 / 下 $1,485</td></tr>
+<tr><td>狀態判定</td><td>現價 $1,578.78 &gt; W250 $1,569.56（僅 +0.6%！）+ 現價 &lt; W104 + W250 斜率仍正 → <strong>🟠 暫不進場</strong></td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>🟠 暫不進場（0 部位，進入追蹤池）</strong></td></tr>
+<tr><td>MA 部位乘數</td><td>× 0（暫不建倉）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+輸入：現價 1578.78、W52 2125.32（斜率 -4.61%）、W104 2034.50（+1.23%）、W250 1569.56（+0.93%）
+計算：現價 &lt; W250 = False（差 +0.6%，但 5/11 低點 1536.71 實質觸 W250 -2.1%）；現價 &lt; W104 = True；W250 斜率 &gt; -3% = True → 🟠 暫不進場
+implication：MA 為 hard stop 覆蓋層；下次觀察點：(1) 跌破 W250 → ❌（盲點 2 救援可挽回 🟠 追蹤）；(2) 站回 W104 連 4 週 → ✅
+</div>
+
+<h4>🛡️ 盲點 2 預備檢核（V 型反轉救援，若觸發 ❌）</h4>
+<table>
+<thead><tr><th>條件</th><th>本標的</th><th>狀態</th></tr></thead>
+<tbody>
+<tr><td>§2 I 長期持有信心 = 高</td><td>高（成長跑道 ≥ 10 年 + 護城河加深）</td><td>✅</td></tr>
+<tr><td>§8 評級 🟢 高確信</td><td>🟢</td><td>✅</td></tr>
+<tr><td>護城河 ≥ 8</td><td>9</td><td>✅</td></tr>
+<tr><td>大盤未破 W104</td><td>SPX 7401 &gt; W104 6174</td><td>✅</td></tr>
+<tr><td>QC-19 重大利空</td><td>無治理 / 訴訟 / 監管事件</td><td>✅</td></tr>
+<tr><td>W250 斜率 &gt; −10%</td><td>+0.93%</td><td>✅</td></tr>
+</tbody>
+</table>
+<p><strong>盲點 2 救援預備就緒</strong>：若 MELI 在未來 1-2 週週收跌破 W250 $1,569 進入 ❌，6 項條件全滿足 → 自動救援為 🟠（追蹤池），不歸「拒絕」。</p>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>SPX 現價</td><td>$7,400.96</td></tr>
+<tr><td>SPX W104</td><td>$6,173.65</td></tr>
+<tr><td>系統性風險</td><td>否（高出 W104 +19.9%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0 正常</strong></td></tr>
+</tbody>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+
+<h4>判定流程（QC-31 cross-check）</h4>
+<table>
+<thead><tr><th>步驟</th><th>條件</th><th>判定</th></tr></thead>
+<tbody>
+<tr><td>1. 拒絕檢核</td><td>trap 🟡（非 🔴）+ gate 🟢（非 🔴）+ MA 🟠（非 ❌）+ quality A（非拒絕）</td><td>未觸發 X</td></tr>
+<tr><td>2. A+ 檢核</td><td>需 quality S/A + gate 🟢 + MA 🟢/✅ + trap 🟢 + 大盤正常</td><td>trap 🟡 + MA 🟠 → 不達 A+</td></tr>
+<tr><td>3. A 檢核</td><td>需 quality S/A + gate 🟡 + MA ✅ + trap 🟢</td><td>MA 🟠 + trap 🟡 → 不達 A</td></tr>
+<tr><td>4. B 檢核</td><td>quality A 級 + thesis 完整但時機不到（MA 過熱 / Bollinger 上軌 / R:R 不過）— QC-31 對 MA 🟠 同樣適用「時機不到」邏輯</td><td>✅ 觸發 B</td></tr>
+<tr><td>5. C 檢核（thesis 失敗）</td><td>品質 &lt; 6.0 ❌；護城河侵蝕 ≥ 3 ❌；trap 🔴 ❌；AI 風險 🔴 ❌</td><td>四條件全未觸發</td></tr>
+</tbody>
+</table>
+
+<h4>五個訊號維度</h4>
+<table>
+<thead><tr><th>維度</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier（§2 B）</td><td>A 級</td></tr>
+<tr><td>gate（§2 D）</td><td>🟢 便宜（分位 21% + PEG 0.82）</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟠 暫不進場（危險邊緣，距 W250 +0.6%）</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常（SPX 高於 W104 +19.9%）</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期（盈餘品質 + 隱資密集雙觸發）</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong>B（觀望，等修復）</strong></td></tr>
+</tbody>
+</table>
+<p><strong>判定理由</strong>：thesis 完整（品質 A + 護城河加深 + 估值便宜 + 產業順風），但三項時機信號全面不利：(1) trap 從 🟢 升 🟡 反映 Q1 26 OI margin 嚴重壓縮 + EPS 共識仍在下修；(2) Pure MA 🟠 + 距 W250 僅 +0.6% 處於系統失效邊緣；(3) R:R 壓力測試通過率 1/4。建議納入追蹤池，等 EPS 共識止穩（連 2 個月不再下修）+ MA 站回 W104 連 4 週 → 升級至 A。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8 A</td><td>充裕（LatAm 電商滲透率 11-14% vs 美 23% / 中 35%，Runway ≥ 10 年）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（Q1 26 巴西巿占擴大、Mercado Pago MAU +29%、Credit AUM 翻倍 + Argentina NPL 反向改善）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong>（5Y 目標 ,375 / upside +114%）</td></tr>
+</tbody>
+</table>
+<p><strong>一句話</strong>：🟢 順風，A 級護城河 9/10，Q1 26 三引擎共振（商業 GMV +42% × Mercado Pago MAU +29% × Credit AUM +77%）。估值燈 🟢 便宜（Fwd PE 35x、5Y 分位 21%、PEG 0.82）但 Pure MA 🟠 + trap 🟡 觀察期，等 EPS 止穩 + 站回 W104 才動。長期持有信心高，5Y 目標 ,375（+114%）。</p>
+
+</section>
+
+<!-- ============== §3 三方辯論（v12.2 簡化）============== -->
+<section id="s3">
+<h2 id="s3">§3 三方辯論摘要（v12.2 簡化）</h2>
+
+<div class="three-col">
+
+<div class="col-bull">
+<h4>多頭辯護人（Munger）</h4>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>護城河三引擎共振</td><td>巴西 GMV +38% / items +56% / MAU +29% / Credit AUM +77%（§9）</td></tr>
+<tr><td>2</td><td>成長未放緩反加速</td><td>Revenue +49% 為 4 年最高、TPV .3B +43%（§8）</td></tr>
+<tr><td>3</td><td>估值便宜</td><td>Fwd PE 35x、5Y 分位 21%、PEG 0.82（§13）</td></tr>
+</tbody>
+</table>
+<p><strong>一句話</strong>：Q1 26 是「主動投資週期」的代價，三引擎 +49% 加速證明護城河加深，35x PE + 0.82 PEG 在 LatAm 領導者上歷史低分位，是長期複利好標的的買進時機。</p>
+</div>
+
+<div class="col-bear">
+<h4>空頭檢察官（Burry）</h4>
+<table>
+<thead><tr><th>#</th><th>虧損路徑</th><th>觸發</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>OI margin 結構性崩壞</td><td>Q1 26 OI 6.9% −600bps，FY25 11.1% → 連 2 季 &lt; 8% = thesis H2 反轉</td></tr>
+<tr><td>2</td><td>Amazon BR Cajamar 競爭升溫</td><td>2025/12 開張 +40% 處理速度，FY26 H2 衝擊巴西 GMV</td></tr>
+<tr><td>3</td><td>EPS 共識持續下修</td><td>90 天 FY+1 −24.7% / FY+2 −22.8%，分析師持續被動下修代表 informed 投資人預期惡化</td></tr>
+</tbody>
+</table>
+<p><strong>一句話</strong>：第 4 連 EPS miss + 600bps margin 崩塌 + 共識持續下修 + Amazon BR fulfillment 升級，現在抄底是「便宜有理」的典型陷阱。</p>
+</div>
+
+<div class="col-judge">
+<h4>估值仲裁員（Damodaran）</h4>
+<table>
+<thead><tr><th>維度</th><th>判定</th></tr></thead>
+<tbody>
+<tr><td>隱含預期可信度</td><td>7 / 10</td></tr>
+<tr><td>核心依據</td><td>Reverse DCF 隱含 FCF CAGR ~16%（§13.3）vs 共識 EPS CAGR 28%（§7）vs Revenue +49%（Q1 26）— 隱含預期保守，市場已 price in 嚴重 margin 壓縮 12-18 個月</td></tr>
+<tr><td>歷史對標</td><td>2022 熊市底（MELI Fwd PE 22x、FY+1 EPS 90d 下修 20%+），事後 12 個月反彈 +120%（從 ,400 → ,000）— 但需 macro + 公司同時轉好</td></tr>
+</tbody>
+</table>
+<p><strong>一句話</strong>：當前股價隱含對未來悲觀，數字上是便宜的；但 EPS 修正方向是當下最重要的尺，止穩前裁決時間軸不明。</p>
+</div>
+
+</div>
+
+</section>
+
+<!-- ============== §4 序章 (v12.2 擴充) ============== -->
+<section id="s4">
+<h2 id="s4">§4 序章：第一性原理 × 逆向思考（Munger Inversion 三維）</h2>
+
+<h3>存在意義</h3>
+<p>MELI 解決的人類痛點：拉美 4.5 億人口、約 50% 為 unbanked 或 underbanked，且電商滲透率僅 11-14%（vs 美國 23%、中國 35%）。MELI 是當地<strong>唯一</strong>同時提供（1）端到端商品交易 marketplace、（2）數位支付 + 信用 + 投資 fintech 全棧、（3）自建物流網（95% 包裹自處理）三位一體解決方案的玩家。若 MELI 明天消失，巴西、阿根廷、墨西哥三大市場的中產 / 下中產消費者將被迫回到「銀行排隊 + 現金交易 + 步行去店面」的高摩擦狀態 — 不可替代的混亂源於：① 沒有競爭對手具備 fintech + commerce + logistics 三邊飛輪（Amazon BR 缺 fintech、Nubank 缺 commerce、Magazine Luiza 缺 fintech 規模）；② Pix 即時支付雖然普及，但 MELI 的「Mercado Pago + Credit」生態是 Pix 之上的「金融服務層」，Pix 本身無法替代。</p>
+
+<h3>護城河形成歷史路徑</h3>
+<table>
+<thead><tr><th>年份</th><th>關鍵 milestone</th><th>對護城河的累積貢獻</th><th>9/10 評分邊際</th></tr></thead>
+<tbody>
+<tr><td>1999</td><td>MercadoLibre 創立（阿根廷）</td><td>marketplace 起點，先發優勢</td><td>+1</td></tr>
+<tr><td>2003</td><td>Mercado Pago 上線</td><td>支付飛輪初步</td><td>+1</td></tr>
+<tr><td>2014</td><td>Mercado Envios 啟動（自建物流）</td><td>從 marketplace → 物流整合，鎖定賣家</td><td>+2</td></tr>
+<tr><td>2018-19</td><td>Pix 預備（央行協作）+ Mercado Credito 信用業務開始</td><td>fintech 從支付擴張至信用，TAM 翻倍</td><td>+2</td></tr>
+<tr><td>2020-21</td><td>Pix 上線、COVID 加速電商滲透</td><td>用戶基數 + GMV 雙跳升</td><td>+1</td></tr>
+<tr><td>2023-24</td><td>巴西 first-party + cross-border 推出</td><td>商品組合擴張至高頻 SKU</td><td>+1</td></tr>
+<tr><td>2025</td><td>免運費門檻下調至 BRL 19 + Mercado Ads + MELI+ loyalty（含 Disney+ / Netflix / HBO Max）</td><td>engagement 多軸提升，「鎖定消費者」進階</td><td>+1</td></tr>
+<tr><td><strong>2025 起累積</strong></td><td><strong>三位一體飛輪鎖定</strong></td><td><strong>= 9/10 評分</strong></td><td></td></tr>
+</tbody>
+</table>
+<p><strong>解讀</strong>：護城河 9/10 不是抽象判斷，而是 26 年累積建構的結果。最關鍵的兩個 milestone 是 2014 Mercado Envios（從 marketplace → 物流）與 2018-19 Mercado Credito（從支付 → 信用），這兩者讓 MELI 從「南美 eBay」進化為「南美 Amazon + Visa + 美國運通」的合體。Q1 26 數據（GMV +42% / TPV +43% / Credit AUM +77%）顯示三引擎仍在加速階段，尚未進入飽和期。</p>
+
+<h3>逆向推演（Munger Inversion 三維）</h3>
+
+<h4>① 技術維度：什麼會讓 MELI 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>Stablecoin / DeFi 取代 Mercado Pago</strong>：若 USDC/USDT 在 LatAm 被廣泛接受作為點對點支付（不需 Pix、不需法幣轉換），Mercado Pago 的支付飛輪會被 disintermediated。歷史對標：肯亞 M-Pesa 早期被 USSD 模式鎖定後，加密支付 Akiba 等試圖切入未果 — 但 LatAm 通膨高（阿根廷年通膨 100%+）會放大 stablecoin 採用速度。</li>
+<li><strong>AI agent 跳過 marketplace</strong>：Llama 4 / GPT-5 agent 直接幫消費者「向品牌商下單 + 比價 + 支付」，跳過 MercadoLibre 平台。歷史對標：Google Shopping 在美國未能扼殺 Amazon，但 AI agent 比 Google Shopping 強得多。</li>
+<li><strong>Pix 之上的銀行 super-app</strong>：Nubank（已上市 .2T 巿值的 NU）若推 marketplace（已在試），可能用「銀行先有用戶 → 推 commerce」反向擊敗「commerce 先有用戶 → 推 fintech」。歷史對標：螞蟻金服 → 淘寶生態（中國），但 Nubank 還沒有完整 commerce。</li>
+<li><strong>Magazine Luiza / Americanas 整合並 + Carrefour 反擊</strong>：本地零售巨頭聯盟形成 marketplace 反 MELI。歷史對標：日本三井集團應對 Amazon 失敗（規模不夠）。</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>Capex 慣性過頭</strong>：FY26 +56% Capex（.34B），若 H2 26 + FY27 持續加碼 fulfillment 但 OI margin 無回升，會落入「投入 → margin 壓縮 → 投入更多以保 GMV → margin 進一步壓縮」的 Amazon-2014 困境。歷史對標：Amazon 2014-15 同類陷阱，但 Bezos 用「Day 1」紀律守住底線；MELI Marcos Galperín 1999 創辦至今 27 年仍主導，個人意志強但無 Bezos 級紀律記錄。</li>
+<li><strong>Credit book 過度擴張</strong>：Credit AUM 從 FY24 .4B → Q1 26 .6B（+77% YoY，幾乎翻倍），若管理層用「擴張保 NPL 低」邏輯（新貸款稀釋舊呆帳），10-12 季後信用週期破滅將集中爆發。歷史對標：Capital One 2008-09 信用卡 portfolio 過快擴張後 NPL 從 5% → 13%。</li>
+<li><strong>創辦人退場</strong>：Galperín 64 歲（2025），若 5 年內退休而無清晰接班人，文化 / 戰略連續性風險。歷史對標：Bezos 2021 退場後 Amazon AWS 與 retail margin 結構未變，但 Andy Jassy 已從 AWS 內部準備 20 年。</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>LatAm 經濟 dollarization</strong>：若阿根廷 Milei 政策成功讓阿根廷美元化，Mercado Pago 的「peso → USD」匯兌套利模式（fintech 主要利潤源）會消失；歷史對標：厄瓜多 2000 美元化後本地 fintech 利潤結構重置。</li>
+<li><strong>巴西數位身分 + 央行 CBDC（Drex）</strong>：若 Drex（巴西 CBDC，預計 2026-27 推出）成為主要支付軌道，Mercado Pago 的中介角色會被弱化；但歷史對標：中國 e-CNY 推出後支付寶 + 微信支付未明顯失血，私營 fintech 與 CBDC 可共存。</li>
+<li><strong>監管型分拆</strong>：若巴西 CADE（反壟斷）或央行強制 MercadoLibre 分拆 commerce + fintech，飛輪效應斷裂；歷史對標：Ant Group 2020 上市被中國當局擱置 + 後續分拆。但 LatAm 監管能量 vs 中國差距顯著。</li>
+</ul>
+
+<p><strong>整合判斷</strong>：技術維度（stablecoin / AI agent）是 5-10 年事件，當前不威脅；管理維度（capex 慣性 + credit 過擴）是<strong>當下最大風險</strong>，Q1 26 數據（OI margin −600bps + Credit +77%）已顯現警示信號；結構維度（Drex / dollarization）是低概率長尾事件。Munger inversion 的結論：MELI 在 3 年內失 50% 最可能來自「管理層自我選擇的 capex + credit 過擴循環」，而非外部技術替代或監管打擊 — 這正是當前 trap 🟡 觀察期定性的核心理由。</p>
+
+</section>
+
+<!-- ============== §5 投資論點錨定（v12.2 升級主場） ============== -->
+<section id="s5">
+<h2 id="s5">§5 投資論點錨定（v12.2 三層時間軸）</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<thead><tr><th>項目</th><th>填寫</th></tr></thead>
+<tbody>
+<tr><td>預設持有期</td><td>3-5 年（中長期）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>① 2025-26 H1 是 margin 投資高峰，FY27 起應見 operating leverage；② Credit book 翻倍後 FY27-28 進入「規模 vs 信用品質」驗證期；③ LatAm 電商滲透率從 14% → 25%+ 是 5-7 年結構性事件</td></tr>
+<tr><td>什麼是訊號 vs 噪音</td><td>訊號：季度 OI margin 軌跡、NPL 趨勢、巴西 GMV YoY、Capex/Rev 比率｜噪音：單季 EPS miss（管理層自我選擇投資）、阿根廷匯率波動、Brazilian real 短期波動</td></tr>
+</tbody>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸（v12.2 升級主場）</h3>
+
+<div class="hypothesis-box">
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>2Y 驗證（2026-28）</th><th>5Y 驗證（2028-31）</th><th>10Y 驗證（2031-36）</th><th>資料來源</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td>巴西 + 墨西哥電商滲透率持續從 11-14% 攀升至 2030E 25%+，MELI 維持 30%+ 巿占</td><td>巴西 GMV YoY ≥ 25%、巿占持平至擴大；Q1 26 +38% / items +56% 已強化</td><td>2030 LatAm 電商 TAM 倍增；MELI Brazil 巿占 35% → 40%+；fulfillment 自動化滲透 ≥ 60%</td><td>2036 LatAm 滲透率 30%+，與美中同步；MELI Group GMV 從 B → 0B（CAGR 14%）</td><td>2Y: §6 巴西 GMV、§9 巿占；5Y: §8 A Runway 中段；10Y: §8 A 滲透率假設 + §11 TAM 推算</td></tr>
+<tr><td>H2</td><td>主動投入策略在 FY27 起進入收割期，OI margin 從 Q1 26 的 6.9% 回升至 12-15%</td><td>Q2 26 OI ≥ 8% / Q3 26 ≥ 10% / Q4 26 ≥ 12%；FY27 全年 OI ≥ 13%</td><td>FY30 OI margin 穩定在 14-16%，與 Q4 25 高位回歸；fintech 段 OI margin 達 25%（vs commerce 段 ~10%）</td><td>FY36 OI margin 15-18%，模式接近 AMZN AWS 主導期</td><td>2Y: §6 OI margin；5Y: §8 D ROIC 趨勢 + §10 margin 結構；10Y: §8 A 長期路徑</td></tr>
+<tr><td>H3</td><td>信用 portfolio 翻倍後 NPL 維持低位（&lt; 5%），新一輪估值升級從 35x Fwd PE 回到 5Y 中位 (50x+)</td><td>Mercado Pago Credit 15-90 NPL ≤ 6% 連 4 季；90+ NPL 持平 &lt; 18%；Fwd PE 從 35x → 45-50x</td><td>Credit 業務 unit economics 與 Visa / Mastercard 早期可比；EV/Revenue 估值體系從 commerce 主導 → fintech 主導</td><td>Mercado Pago credit 達 LatAm 信用卡發卡量 #1，與美 AmEx 同型成熟期 ROE 25-30%</td><td>2Y: §6 NPL 數據；5Y: §13.0 估值體系升級；10Y: §9 競爭格局 + §11 TAM</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>B'｜12 個月前 DD 對照（v12.2 — Inception 狀態）</h3>
+<div class="warning-box">
+<p><strong>狀態</strong>：進場未滿一年（最早 v12.2+ DD = 2026-05-13，距今 0 天，本份為 Inception）。本欄位將於 2027-05-13 起首次有資料對照。在此之前，僅以 §5 B 戰術假設視角追蹤。</p>
+<p><strong>近月對照（非正式 B' 結構）</strong>：v12.0 4/18 DD 至本份 5/13 DD 期間共 25 天，發生 1 個重大事件（Q1 26 財報，5/7 盤後）。Q1 26 對 H1/H2/H3 邊際影響：H1 ＋強化（GMV +38% / items +56%）、H2 −削弱（OI margin 從 11.1% 跌至 6.9%，FY27 12-15% 目標可能延後 1-2 季）、H3 0 不變（Credit +87% / Argentina NPL stable，但 Brazil consumer credit 「less profitable」邊際削弱）。</p>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險（v12.2 時間尺度分層）</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>Mercado Pago Credit 信用週期破裂（NPL 同步飆升）</td><td>H3</td><td>中期（2-3 年）</td><td>15-90 NPL、90+ NPL、信貸 unit economics</td><td>15-90 NPL ≥ 6.5% 連 2 季 或 90+ NPL 升至 ≥ 20%</td></tr>
+<tr><td>R2</td><td>Amazon Brazil Cajamar 自動化 + Shopee 重啟競爭加劇</td><td>H1, H2</td><td>短期（12 個月內）</td><td>巴西 GMV YoY、MELI Brazil 巿占、cross-border 比例</td><td>巴西 GMV YoY 從 +38% 降至 &lt; 25% 連 2 季 + Amazon BR 巿占跨 +3pp</td></tr>
+<tr><td>R3</td><td>Capex / OI margin 投資週期延長（FY28 仍未回升）</td><td>H2</td><td>長期結構（5+ 年）</td><td>OI margin、Capex / Revenue、ROIC</td><td>FY27 OI &lt; 12% + Capex/Rev &gt; 6%（FY25 4.6%）連 2 年 → H2 結構性反轉</td></tr>
+</tbody>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>Q1 26 適用</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>OI margin 影響落在 2Y / 5Y 驗證，本季 miss 直接影響 H2 進度</td></tr>
+<tr><td>2. 假設關聯？</td><td>H1 ＋（GMV +38%）、H2 −（OI -600bps）、H3 0（Credit 數量 ✓ 但邊際利潤 ↓）</td></tr>
+<tr><td>3. 邊際方向？</td><td>淨值：thesis 仍 valid，但 H2 時間軸延後 1-2 季</td></tr>
+<tr><td>4. 閾值判斷？</td><td>未達「重新評估」閾值（OI margin 連 2 季 &lt; 8% 才升 🔴）；當前升 🟡 觀察</td></tr>
+</tbody>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td>進場（升級至 A）</td><td>① Q2 26 OI ≥ 8% + EPS 共識止穩 連 2 個月、或 ② MA 站回 W104 連 4 週</td><td>升級綜合訊號至 A，建議 PM 開始建倉</td></tr>
+<tr><td>升級至 A+</td><td>① 加上 Pure MA 進入 ✅ 強勢 或 🟢 最佳進場 + ② Fwd PE 維持 &lt; 35x</td><td>滿格訊號，PM 可考慮核心倉位 15-20%</td></tr>
+<tr><td>減碼 / 退出（降 C）</td><td>① Q3 26 OI 仍 &lt; 8% 連 2 季、或 ② 15-90 NPL 升至 ≥ 6.5% 連 2 季</td><td>thesis 失敗，降 C 退出</td></tr>
+<tr><td>撤退（降 X）</td><td>① 跌破 W250 ,569 且 W250 斜率 &lt; -10% + ② 盲點 2 救援條件失效（任一）</td><td>系統性失效，全清</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<!-- ============== §6 即時財報情報 ============== -->
+<section id="s6">
+<h2 id="s6">§6 即時財報情報（Q1 2026，2026-05-07 盤後公布）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$8.85B</td><td>$8.30B</td><td><span class="badge-green">Beat +6.6%</span></td><td>+49%（4 年最高）</td></tr>
+<tr><td>EPS（Non-GAAP）</td><td>$8.23</td><td>$9.37</td><td><span class="badge-red">Miss -12.2%</span></td><td>-20.2%（第 4 季連續 miss）</td></tr>
+<tr><td>Operating Income</td><td>$611M</td><td>~$820M</td><td><span class="badge-red">Miss -25%</span></td><td>OI margin 6.9%（−600bps vs Q1 25）</td></tr>
+<tr><td>GMV</td><td>$19B</td><td>—</td><td>—</td><td>+42%</td></tr>
+<tr><td>TPV</td><td>$58.3B</td><td>—</td><td>—</td><td>+43%</td></tr>
+<tr><td>Credit AUM</td><td>$14.6B</td><td>~$13B</td><td><span class="badge-green">Beat</span></td><td>+77%（近翻倍）</td></tr>
+<tr><td>巴西 GMV</td><td>—</td><td>—</td><td>—</td><td>+38%（items +56%）</td></tr>
+<tr><td>Mercado Pago MAU</td><td>—</td><td>—</td><td>—</td><td>+29%</td></tr>
+</tbody>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<thead><tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（電商滲透率擴張）</td><td><span class="badge-green">＋強化</span></td><td>巴西 GMV +38%、items sold +56%（雙倍於 free shipping 門檻下調前）、cost/shipment −17%</td></tr>
+<tr><td>H2（margin 投資週期收斂）</td><td><span class="badge-red">−削弱</span></td><td>OI margin 從 Q4 25 11.1% 跌至 Q1 26 6.9%（−420bps QoQ、−600bps YoY），FY27 12-15% 目標可能延後 1-2 季</td></tr>
+<tr><td>H3（信用品質維持 + 估值升級）</td><td><span class="badge-yellow">0 不變</span></td><td>Credit AUM +77% 數量 ✓、Argentina 15-90 NPL sequentially improved、但 Brazil consumer credit「less profitable than year ago」邊際削弱</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：強信心 vs Q4 25 持平 — 「margin compression reflects our choice to invest...results reinforce conviction we are taking right steps」。具體措辭「conviction」「strongest growth in 4 years」反映管理層認為這是「投資高峰，不是衰退起點」。</li>
+<li><strong>Forward Guidance</strong>：未給 Q2 26 具體數字（一貫做法），但 call 中暗示「下一階段聚焦 unit economics 改善」+「fulfillment 規模效應已開始顯現」，方向性指引偏正面。</li>
+<li><strong>刻意強調的主題</strong>：① 巴西 GMV +38% × items +56% 規模效應；② Argentina NPL improved vs 行業惡化；③ Credit unit economics「fully provisioned upfront under IFRS9」邏輯切割。</li>
+<li><strong>刻意迴避的問題</strong>：① 分析師多次追問「OI margin 何時回升 12%」未給具體 quarter；② Amazon BR Cajamar 競爭問題僅以「we welcome competition」帶過。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：巴西消費仍強（items +56% 高於 GMV +38% 暗示低客單價但高頻；free shipping 門檻調降後新客 / 復購提升）；阿根廷 Milei 改革下消費 sequentially improving。</li>
+<li><strong>供給端</strong>：fulfillment 自動化加速（cost/shipment −17% 本幣）；14 座新 FC 在 FY26 上線。</li>
+<li><strong>競爭格局</strong>：Shopee 巿占 ~10% 持平、Amazon BR Cajamar 12/25 開張 −40% 處理時間（FY26 H2 才會見效）；MELI 95% 包裹自處理，配送速度仍領先 3 倍。</li>
+<li><strong>總體經濟敏感度</strong>：阿根廷 Milei 改革下 SELIC 環境改善 + 通膨降溫提升 Mercado Pago credit unit economics；巴西選舉（2026/10）後 SELIC 軌跡為 FY27 H2 關鍵變數。</li>
+</ul>
+
+</section>
+
+<!-- ============== §7 核心門檻檢核 ============== -->
+<section id="s7">
+<h2 id="s7">§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 推導（yfinance n=17-19 共識）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>FY25 EPS（實際）</td><td>$39.69（已公布）</td></tr>
+<tr><td>FY+1（FY26）EPS 共識</td><td>$44.93（yfinance n=17，90d 軌跡 $59.69→$55.64→$50.92→$48.14→$44.93）</td></tr>
+<tr><td>FY+2（FY27）EPS 共識</td><td>$64.11（yfinance n=19，growth +42.66%，90d 軌跡 $83.09→$77.48→$71.15→$67.72→$64.11）</td></tr>
+<tr><td>FY+3（FY28）EPS（§8 邏輯推導）</td><td>$83.00（FY27 +29.5%；推導：Credit book 進入 portfolio 成熟期、Capex 投資週期峰值在 FY26 後遞減、OI margin 從 12% → 14% 釋出 leverage）</td></tr>
+<tr><td>3Y EPS CAGR（FY25→FY28）</td><td>27.7%</td></tr>
+</tbody>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge-green">✓</span></td><td>名義 37.3%（FY25 .77B / .89B），但 fintech-adj 約 14%</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="badge-yellow">⚠</span></td><td>FY21-25：5%→24%→32%→34%→37%；快速擴張中，最低谷 FY21 5% 不及門檻</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，&gt; WACC</td><td><span class="badge-green">✓</span></td><td>FY25 ROIC ~25%（NI .997B / 平均投入資本），WACC ~12% → 超額 +13pp</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10Y 中 ≥ 70% 達標</td><td><span class="badge-yellow">⚠</span></td><td>5Y 樣本（FY21-25）：FY21 ROIC ~5%（負）→ FY22 15% → FY25 25%；達標率 3/5 = 60%，未達 70% 門檻</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10Y 中 ≥ 70% 改善</td><td><span class="badge-red">✗</span></td><td>FY23 50.2% → FY24 46.1% → FY25 44.5%（連 2 年下滑，−5.7pp）</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%（優）/ &lt; 10%（尚可）</td><td><span class="badge-green">✓</span></td><td>FY25 .34B / .89B = 4.6%，尚可</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="badge-green">✓</span></td><td>27.7%（FY25 .69 → FY28 ）</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td><span class="badge-green">✓</span></td><td>0.82（FY+1 → FY+2）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td><span class="badge-yellow">⚠</span></td><td>D/E = .39B / .75B = 1.69（高 — 但 fintech credit-driven）；現金/Rev 12.7% 合理</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge-red">否</span></td><td>Cash .67B vs Debt .39B → 不覆蓋</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge-green">✓✓</span></td><td>9 / 10，趨勢加深（Q1 26 三引擎共振）</td></tr>
+</tbody>
+</table>
+
+<p><strong>最大財務弱點</strong>：毛利率 + OI margin 連續壓縮（FY23 50% → FY25 44.5% → Q1 26 OI 6.9%）— 表面看是「主動投資」，需 H2 反彈驗證；Munger 三維評級：🟡（資本密集度單項達標、ROIC 穩定性 + 毛利率改善兩項未達 — 屬「成長期高品質但未達 Munger 卓越企業」）。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問（觸發：Fwd PE 5Y 分位 21% 落在 25% 以下強制觸發）</h3>
+<table>
+<thead><tr><th>#</th><th>問題</th><th>回答</th><th>陷阱信號</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>3Y Gross Margin 趨勢？</td><td>FY23 50.2% → FY25 44.5%，↓ −5.7pp</td><td><span class="badge-red">🔴</span></td></tr>
+<tr><td>Q2</td><td>3Y 市佔率趨勢？</td><td>巴西 27% → 35% 擴大；Argentina 60%+ 穩定；Mexico 持續成長</td><td>🟢</td></tr>
+<tr><td>Q3</td><td>FCF 與淨利背離程度？</td><td>名義 FCF/NI 5.40（fintech credit OCF 推高）；fintech-adj 約 1.5x</td><td>🟢（名義）/ 🟡（調整後）</td></tr>
+<tr><td>Q4</td><td>分析師共識 EPS 方向？</td><td>過去 6 個月持續下修（90d FY+1 −24.7%，FY+2 −22.8%）</td><td><span class="badge-red">🔴</span></td></tr>
+</tbody>
+</table>
+<p><strong>初篩結論</strong>：2 個 🔴（Gross Margin 連降 + 共識持續下修）→ 需在 §8 衰退信號偵測表進一步驗證 → §1 採 🟡 觀察期定性（一致）。</p>
+
+</section>
+
+<!-- ============== §8 長期成長性（v12.2 擴充）============== -->
+<section id="s8">
+<h2 id="s8">§8 長期成長性評估（v12.2 5Y/10Y 量化）</h2>
+
+<h3>A｜成長跑道（Runway）三層估算</h3>
+<table>
+<thead><tr><th>維度</th><th>現在（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th></tr></thead>
+<tbody>
+<tr><td>LatAm 電商 TAM</td><td>$1.78T（2026E）</td><td>~$2.8T（CAGR 9%）</td><td>~$4.0T（IMF/MDF 預測）</td></tr>
+<tr><td>LatAm 電商滲透率</td><td>11-14%</td><td>20-22%</td><td>28-32%（與美中接近）</td></tr>
+<tr><td>巴西 e-commerce TAM</td><td>$69B（CAGR 16.9%）</td><td>$150B（2031）</td><td>$280B（推算）</td></tr>
+<tr><td>MELI Brazil 巿占</td><td>~35%</td><td>~38-42%（緩步擴大）</td><td>~40%（接近飽和上限）</td></tr>
+<tr><td>MELI Group GMV</td><td>~$80B（FY26E）</td><td>~$180B（CAGR 18%）</td><td>~$300B（CAGR 14%）</td></tr>
+<tr><td>Mercado Pago Credit AUM</td><td>$14.6B（Q1 26）</td><td>$50-60B（CAGR 30%）</td><td>$120B（CAGR 23%）</td></tr>
+</tbody>
+</table>
+<p><strong>Runway 估計</strong>：≥ 10 年（直至 LatAm 滲透率達美中現況的 25-30%）；S 曲線位置處於前-中段過渡期。</p>
+<div class="reasoning">
+輸入：當前滲透率 11-14% + 美中 23-35% 為飽和基準 + CAGR 16.9% 巴西
+計算：(23 − 13) / 16.9% × 約 6 年；考慮 mass affluent 滲透緩於 high-end → 8-10 年
+implication：§13.5 取「Runway ≥ 10 年」對應基準 PE 25x（§8 🟢 高確信）
+</div>
+
+<h3>A'｜S 曲線位置 + 距飽和年數（v12.2 新增）</h3>
+<table>
+<thead><tr><th>業務段</th><th>S 曲線位置</th><th>距飽和年數</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>Commerce（巴西 / 阿根廷）</td><td>中段（35-40% S 曲線位置）</td><td>8-10 年</td><td>巴西滲透率 14% / 美 23% / 中 35%；阿根廷 Milei 改革加速</td></tr>
+<tr><td>Commerce（墨西哥）</td><td>前段（15-20% S 曲線位置）</td><td>10-12 年</td><td>滲透率僅 ~8%，加上 walmart/amazon 雙強競爭，擴張較慢</td></tr>
+<tr><td>Mercado Pago Payments</td><td>中段（45% S 曲線位置）</td><td>5-7 年</td><td>Pix 整合後高速擴張，但 take rate 已開始壓縮</td></tr>
+<tr><td>Mercado Credito</td><td>前段（20-25% S 曲線位置）</td><td>10-15 年</td><td>LatAm unbanked 4 億人，credit penetration 仍低；FY25-30 是放量期</td></tr>
+<tr><td>Mercado Ads</td><td>前段（10% S 曲線位置）</td><td>15+ 年</td><td>Q1 26 +67%（前次數據），仍處超早期；類比 AMZN Ads 2014</td></tr>
+</tbody>
+</table>
+<p><strong>多曲線疊加邏輯</strong>：5 個業務分別在不同 S 曲線位置 → 整體 Runway 不會單一年份全部熄火。最早飽和的是 Mercado Pago Payments（5-7 年），最晚是 Mercado Ads（15+ 年）。FY27-30 主要 leverage 來自 Credit + Ads 兩個前段業務，FY30+ 由 Mexico Commerce 接棒。</p>
+
+<h3>B｜成長品質判斷</h3>
+<table>
+<thead><tr><th>類型</th><th>定義</th><th>占比估計</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>有機成長</td><td>定價提升、現有客戶深化、新地理滲透</td><td>95%</td><td>MELI 歷史上極少併購，FY25 收入幾乎全為有機成長</td></tr>
+<tr><td>無機成長</td><td>併購貢獻</td><td>5%</td><td>2024 小型 fintech 收購（金額未披露）</td></tr>
+</tbody>
+</table>
+<p><strong>成長驅動結構</strong>：量驅動為主（Q1 26 GMV +42% / items +56% / TPV +43% / MAU +29%），take rate 21-22% 略下降（從 22.5% → 21.5%）— 屬「量大於價」結構，符合 e-commerce + fintech 早期擴張典型。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<p><strong>強化型</strong>：Q1 26 三引擎共振（Commerce GMV +42% × Payments TPV +43% × Credit AUM +77%）證明成長帶來更強的網路效應 — 用戶從 marketplace 進入 → 用 Pago 結帳 → 接 Credit 微貸款 → 累積信用數據 → AI 風控優化 → 更深的鎖定。此為典型「強化型」護城河循環。</p>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>當前（FY25）</th><th>3 年前（FY22）</th><th>趨勢</th><th>標準</th><th>符合?</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>~25%</td><td>~15%</td><td>↑</td><td>產業頂尖 + &gt; WACC</td><td>✓</td></tr>
+<tr><td>ROIC − WACC</td><td>+13pp</td><td>+3pp</td><td>↑ 擴大</td><td>持續正且擴大</td><td>✓</td></tr>
+<tr><td>FCF Margin（名義）</td><td>37.3%</td><td>23.0%</td><td>↑</td><td>&gt; 15%</td><td>✓</td></tr>
+<tr><td>FCF / NI 名義</td><td>5.40</td><td>5.15</td><td>持平</td><td>&gt; 0.85</td><td>✓（但 fintech 推高失真）</td></tr>
+<tr><td>Reinvestment Rate</td><td>~30%</td><td>~60%</td><td>↓</td><td>合理偏高</td><td>✓</td></tr>
+</tbody>
+</table>
+
+<h3>E｜成長熄火情境壓力測試（v12.2 三層）</h3>
+<table>
+<thead><tr><th>情境</th><th>3Y EPS</th><th>5Y EPS</th><th>10Y EPS</th><th>合理 PE</th><th>5Y 目標價</th></tr></thead>
+<tbody>
+<tr><td>Base（FY27→ 25% / FY30→ 18% / FY35→ 12%）</td><td>$83</td><td>$125</td><td>$245</td><td>27x（5Y） / 22x（10Y）</td><td><strong>$3,375</strong></td></tr>
+<tr><td>Bear A（FY27→ 18% / FY30→ 12% / FY35→ 8%）</td><td>$73</td><td>$100</td><td>$165</td><td>22x / 18x</td><td>$2,200</td></tr>
+<tr><td>Bear B（FY27→ 12% / FY30→ 8% / FY35→ 5%）</td><td>$62</td><td>$80</td><td>$110</td><td>18x / 15x</td><td>$1,440</td></tr>
+<tr><td>Bear C（H2 反轉，FY27→ 5% / FY30→ 3%）</td><td>$50</td><td>$58</td><td>$70</td><td>14x / 12x</td><td>$812</td></tr>
+</tbody>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號類型</th><th>偵測</th><th>數據</th><th>亮燈?</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>FY23-25 連續下滑 −5.7pp</td><td>🔴</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>巴西 27% → 35% 擴大</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>定價測試（提價後銷量下滑？）</td><td>未提價，反而下調 free shipping 門檻</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 高於 Revenue CAGR（&gt; 5pp）</td><td>Rev +49% vs EPS −20% Q1 26 → 反向（盈餘品質劣於營收）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI &lt; 0.75（連續 2 年）</td><td>名義 5.40，調整後 ~1.5x</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev 趨勢上升</td><td>SBC / Rev ~1.5%（穩定）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>LatAm e-commerce TAM CAGR 16.9% 仍擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數系統下移</td><td>未發生</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex &gt; 60% FCF</td><td>14 座新 FC + 10K 員工，估計 maintenance 約 30%（成長 capex 主導）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>若停投資，3 年內收入下滑？</td><td>會（fulfillment 自動化、credit underwriting 系統投資密集）</td><td>🔴</td></tr>
+</tbody>
+</table>
+<p><strong>價值陷阱風險評級</strong>：🟡 <strong>中度警戒</strong>（2 個 🔴：Gross Margin 連降 + 隱性資本密集）— 與 §1 trap 🟡 觀察期一致。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p>🟢 <strong>AI 受益或免疫</strong>：Mercado Ads AI 推薦系統 +67% YoY 反映管理層 AI 整合領先；Credit AI 風控（Argentina NPL improved）證明 AI underwriting 效應；marketplace + fintech 整合為 AI agent 時代仍佔據「最後一哩」物流 + 支付節點，不易被取代。對應 §2 綜合品質分加成：🟢 = +9 分。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p>🟢 <strong>高確信長期成長</strong>：Runway ≥ 10 年 + 護城河強化型 + ROIC 擴大 + 衰退信號 2 個（不及 3 個門檻）— 但 trap 🟡 觀察提示需 Q2-Q3 26 驗證。</p>
+
+</section>
+
+<!-- ============== §9 護城河（v12.2 擴充）============== -->
+<section id="s9">
+<h2 id="s9">§9 護城河分析（v12.2 擴充：變遷時間軸 + 對手 Capex 對照）</h2>
+
+<p><strong>評分</strong>：9 / 10</p>
+
+<h3>護城河來源</h3>
+<table>
+<thead><tr><th>類型</th><th>是否具備</th><th>深度</th></tr></thead>
+<tbody>
+<tr><td>網路效應</td><td>✓</td><td>3 邊飛輪（買家 ↔ 賣家 ↔ Pago 用戶）；Q1 26 MAU 跨業務 +29% 反映飛輪加速</td></tr>
+<tr><td>無形資產</td><td>✓</td><td>LatAm 27 年品牌信任、與央行（巴西 Pix）+ 監管機構深度合作</td></tr>
+<tr><td>轉換成本</td><td>✓</td><td>對賣家：Mercado Envios + Credit + Ads 一站式（移轉需重建 4 個系統）；對買家：MELI+ Disney+/Netflix/HBO 訂閱整合</td></tr>
+<tr><td>規模優勢</td><td>✓</td><td>95% 包裹自處理、cost/shipment −17%（Amazon BR 自有物流 &lt; 50%）；Credit AUM .6B 規模優勢於風控與資金成本</td></tr>
+</tbody>
+</table>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼 Amazon BR + Magazine Luiza + Shopee 都無法跨越？關鍵障礙：① Amazon BR 缺 fintech（Mercado Pago 90M+ 活躍用戶為 commerce 引流）；② Magazine Luiza 缺 fintech 規模（仍依賴實體店）；③ Shopee 缺自建物流（依賴 partners，配送速度差）。MELI 是<strong>唯一</strong>同時具備 fintech + commerce + logistics 三引擎的 LatAm 玩家。</p>
+
+<h3>D｜護城河變遷時間軸（v12.2 新增）</h3>
+
+<h4>過去 5 年（2021-2025）</h4>
+<table>
+<thead><tr><th>事件</th><th>邊際貢獻</th></tr></thead>
+<tbody>
+<tr><td>2020-21 Pix 上線 + COVID 加速</td><td>+1（網路效應強化）</td></tr>
+<tr><td>2021 Argentina 通膨爆發，Mercado Pago「保值帳戶」採用激增</td><td>+1（無形資產 + 轉換成本強化）</td></tr>
+<tr><td>2022 美聯儲升息 / LatAm 信用週期，MELI 主動暫緩 credit 擴張</td><td>+0.5（風控成熟度）</td></tr>
+<tr><td>2023 巴西 first-party + cross-border 推出</td><td>+1（規模優勢擴張）</td></tr>
+<tr><td>2024 Mercado Ads + AI 推薦商業化</td><td>+1（無形資產 — 賣家粘性提升）</td></tr>
+<tr><td>2025 免運費門檻下調 / MELI+ loyalty</td><td>+1（網路效應 — 高頻 SKU 進入）</td></tr>
+</tbody>
+</table>
+
+<h4>未來 5 年（2026-2031）</h4>
+<table>
+<thead><tr><th>可能變化</th><th>機率</th><th>對 9/10 評分邊際</th></tr></thead>
+<tbody>
+<tr><td>Mercado Credito 達 LatAm 信用卡發卡量 #1（AmEx 早期可比）</td><td>50%</td><td>+1（10/10）</td></tr>
+<tr><td>Amazon BR Cajamar 顯著侵蝕巴西巿占（−3-5pp）</td><td>35%</td><td>−1（8/10）</td></tr>
+<tr><td>Mercado Pago 完成 LatAm crypto / stablecoin 整合</td><td>30%</td><td>+0.5</td></tr>
+<tr><td>Brazil CADE 反壟斷介入分拆 fintech + commerce</td><td>10%</td><td>−2（7/10）</td></tr>
+<tr><td>創辦人 Galperín 退場 + 接班不穩</td><td>20%</td><td>−0.5</td></tr>
+<tr><td>期望值（機率加權）</td><td>—</td><td><strong>+0.225 → 9.2/10</strong></td></tr>
+</tbody>
+</table>
+<p><strong>解讀</strong>：未來 5 年護城河變遷期望值略微擴大（9 → 9.2），最大下行風險為 Amazon BR Cajamar 自動化（35% 機率，−1 分）+ CADE 反壟斷（10% 但 −2 分）。當前 trap 🟡 觀察期定性與此判斷一致。</p>
+
+<h3>E｜對手投入對照（v12.2 新增）</h3>
+<table>
+<thead><tr><th>公司</th><th>FY25 Revenue</th><th>FY25 Capex</th><th>Capex/Rev</th><th>FY25 R&D（est.）</th><th>R&D/Rev</th><th>vs MELI 差距</th></tr></thead>
+<tbody>
+<tr><td>MELI</td><td>$28.9B</td><td>$1.34B</td><td>4.6%</td><td>~$2.5B</td><td>~8.6%</td><td>基準</td></tr>
+<tr><td>Amazon（LatAm 推算）</td><td>~$8B LatAm</td><td>~$1.5B LatAm（FY26）</td><td>~19%</td><td>~$1.5B</td><td>~19%</td><td>絕對額相近，但 Amazon 必須分散全球，LatAm 專注度低</td></tr>
+<tr><td>Shopee LatAm</td><td>~$3B</td><td>~$300M</td><td>10%</td><td>~$300M</td><td>10%</td><td>絕對額僅 MELI 的 1/4，且 2022 收縮後無 fintech</td></tr>
+<tr><td>Nubank（NU）</td><td>~$12B</td><td>~$500M</td><td>4.2%</td><td>~$1B</td><td>~8%</td><td>fintech 純玩家，無 commerce / logistics</td></tr>
+<tr><td>Magazine Luiza</td><td>~$7B</td><td>~$350M</td><td>5%</td><td>~$300M</td><td>4.3%</td><td>傳統零售為主，e-commerce 段 capex 不及 MELI 1/2</td></tr>
+</tbody>
+</table>
+<p><strong>解讀</strong>：MELI Capex 絕對額（.34B）僅次於 Amazon LatAm，但 Capex/Rev 4.6% vs Amazon LatAm 19% 顯示 MELI 已過「重投入期」進入「規模效應期」。Nubank 是 fintech 純玩家有 0M Capex 但無 commerce，反映 LatAm 內無真正多維競爭者。Amazon LatAm 雖然絕對額追上 MELI，但 Amazon 全球分散 + LatAm 缺 fintech 引擎，難以在 3 年內建立 MELI 級飛輪。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>目前巿占</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr></thead>
+<tbody>
+<tr><td>Amazon BR</td><td>~10%</td><td>↑（Cajamar 後）</td><td>2025/12 Cajamar 自動化 −40% 處理時間</td><td>Amazon 從低端市場吃 Magazine Luiza，MELI 結構性不受影響（高頻 + fintech 鎖定）</td></tr>
+<tr><td>Magazine Luiza</td><td>~7%</td><td>↓</td><td>已被 Amazon 蠶食</td><td>Magazine 被 Amazon + MELI 雙夾擊</td></tr>
+<tr><td>Shopee BR</td><td>~10%</td><td>持平</td><td>2022 收縮後重新進場</td><td>Shopee 從 cross-border 低價 SKU 吃跨境，MELI 在地化 high-frequency 仍領先</td></tr>
+<tr><td>MELI</td><td>~35%（巴西）</td><td>↑</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>加深</strong>。24 個月內最可能瓦解護城河的變化（按 QC-23 3 級分類）：</p>
+<table>
+<thead><tr><th>等級</th><th>威脅</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>🟡 點對點</td><td>Amazon BR Cajamar 自動化（低端 SKU 配送速度競爭）</td><td>不扣分（MELI 已在 high-frequency + fintech 鎖定深度）</td></tr>
+<tr><td>🟡 點對點</td><td>Shopee BR cross-border 低價 SKU 競爭</td><td>不扣分</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Nubank（NU）若推 commerce + 銀行 super-app 反向擊敗 MELI</td><td>機率 20%，若發生扣 −1 分</td></tr>
+<tr><td>⛔ 架構替代</td><td>Brazil CBDC (Drex) 取代 Mercado Pago 中介角色</td><td>機率 10%，若發生扣 −2 分但 Drex 不影響 commerce / credit / logistics 段</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<!-- ============== §10 財務品質 ============== -->
+<section id="s10">
+<h2 id="s10">§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<thead><tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>主要對手比較</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（名義）</td><td>33.5%</td><td>34.0%</td><td>37.3%</td><td>AMZN 6-8%；NU 12%</td></tr>
+<tr><td>EBITDA Margin</td><td>15.8%</td><td>14.0%</td><td>13.8%</td><td>AMZN 20%；NU 35%（fintech 純）</td></tr>
+<tr><td>ROIC − WACC</td><td>+10pp</td><td>+12pp</td><td>+13pp</td><td>持續擴大</td></tr>
+<tr><td>SBC / Revenue</td><td>1.7%</td><td>1.5%</td><td>1.4%</td><td>遠低於美科技公司 6-10%</td></tr>
+<tr><td>ROE</td><td>34%</td><td>44%</td><td>29.6%</td><td>下降反映 capex 重投入</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<thead><tr><th>檢驗</th><th>狀況</th></tr></thead>
+<tbody>
+<tr><td>淨利 vs OCF 連動</td><td>OCF .12B / NI .997B = 6.07x（fintech credit 推高）；調整後 ~1.5x</td></tr>
+<tr><td>AR 成長 vs 營收</td><td>credit-related AR 隨 portfolio +77%；commerce AR 約與 Rev +49% 同步</td></tr>
+<tr><td>存貨成長 vs 營收</td><td>存貨佔比低（marketplace 模式為主，first-party 約 15-20%）</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>名義持續擴張，但 fintech-adj 後 FY25 vs FY24 持平</td></tr>
+</tbody>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>3 年回購總金額 vs FCF</td><td>~0（MELI 不回購）</td><td>0%，無回購</td></tr>
+<tr><td>EPS 純有機成長</td><td>EPS CAGR 28% 全為營運成長</td><td>無回購支撐 EPS 的「假象」風險</td></tr>
+</tbody>
+</table>
+<p><strong>解讀</strong>：MELI 無回購 + SBC / Rev 1.4% 極低，EPS 成長 100% 為營運驅動 — 盈餘品質「結構上」健康，當前 Q1 26 miss 是「主動投資週期成本」而非「會計操弄」。</p>
+
+</section>
+
+<!-- ============== §11 產業格局（v12.2 補回 v6 深度）============== -->
+<section id="s11">
+<h2 id="s11">§11 產業格局、議價權與 Unit Economics（v12.2 三軸展開）</h2>
+
+<h3>市場量化（三層）</h3>
+<table>
+<thead><tr><th>市場</th><th>現在（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th><th>結構性變化</th></tr></thead>
+<tbody>
+<tr><td>LatAm e-commerce TAM</td><td>$1.78T</td><td>$2.8T</td><td>$4.0T</td><td>從「電子產品 / 服飾主導」→「日用消費 + 食品 + 服務主導」</td></tr>
+<tr><td>巴西 e-commerce TAM</td><td>$69B</td><td>$150B</td><td>$280B</td><td>從「desktop 為主」→「mobile + livestream 主導」</td></tr>
+<tr><td>LatAm 數位支付 TAM</td><td>~$1.5T（TPV）</td><td>~$3.5T</td><td>~$6.5T</td><td>從「卡為主」→「Pix / Drex / Mercado Pago 共存」</td></tr>
+<tr><td>LatAm 信用卡 + 消費信貸</td><td>~$200B</td><td>~$500B</td><td>~$900B</td><td>從「銀行壟斷」→「fintech 滲透 30%+」</td></tr>
+</tbody>
+</table>
+
+<h3>議價權三段</h3>
+
+<h4>對上游供應商</h4>
+<ul>
+<li><strong>賣家（marketplace）</strong>：個別賣家對 MELI 議價力極低（MELI 占巴西 e-commerce 35%）；中小企業賣家平台依賴度 &gt; 60%</li>
+<li><strong>支付網路（Visa / Mastercard）</strong>：MELI 已透過 Mercado Pago 部分繞過卡網路（Pix 為主導）；對國際卡組織議價力中等</li>
+<li><strong>物流（最後一哩）</strong>：95% 自處理 → 高度自主；外包 5% 議價力強</li>
+<li><strong>地理曝險</strong>：阿根廷 35%、巴西 55%、墨西哥 10%；阿根廷 peso 波動為運營風險（Milei 改革降低 2026 風險）</li>
+</ul>
+
+<h4>對下游客戶</h4>
+<ul>
+<li><strong>個人消費者（B2C）</strong>：個別買家無議價力；但 marketplace 結構讓買家可在 MELI / Amazon / Shopee 間比價 → MELI 用 free shipping / MELI+ loyalty 鎖定</li>
+<li><strong>Mercado Pago 用戶</strong>：90M+ MAU，Pix 整合後黏性極高；轉移摩擦來自「保值帳戶 + credit 信用紀錄」</li>
+<li><strong>Mercado Credito 借款人</strong>：信用紀錄綁定 MELI → 違約成本高（無法再用 MELI 高頻服務）</li>
+</ul>
+
+<h4>地理曝險</h4>
+<table>
+<thead><tr><th>地區</th><th>占比</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>巴西</td><td>~55%</td><td>核心 + 成長引擎；Pix 普及 + 滲透率擴張</td></tr>
+<tr><td>阿根廷</td><td>~25%</td><td>歷史核心；Milei 美元化壓力但通膨改善</td></tr>
+<tr><td>墨西哥</td><td>~12%</td><td>長期擴張機會；2026E 加速</td></tr>
+<tr><td>哥倫比亞 + 智利</td><td>~6%</td><td>次要市場</td></tr>
+<tr><td>其他 LatAm</td><td>~2%</td><td>嘗試性進入</td></tr>
+</tbody>
+</table>
+
+<h3>營收組成（v12.2 三維展開）</h3>
+
+<h4>按業務</h4>
+<table>
+<thead><tr><th>業務</th><th>FY25 Rev</th><th>占比</th><th>YoY</th><th>OI margin</th><th>3Y 軌跡</th></tr></thead>
+<tbody>
+<tr><td>Commerce</td><td>~$16B</td><td>~55%</td><td>+38%</td><td>~10%</td><td>10% → 12% → 10%（H1 26 為 capex 高峰）</td></tr>
+<tr><td>Fintech（Pago + Credit）</td><td>~$13B</td><td>~45%</td><td>+60%+</td><td>~12%</td><td>12% → 15% → 12%（credit IFRS9 提撥拉低）</td></tr>
+</tbody>
+</table>
+
+<h4>按地區</h4>
+<table>
+<thead><tr><th>地區</th><th>占比</th><th>YoY</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>巴西</td><td>55%</td><td>+45%</td><td>核心引擎</td></tr>
+<tr><td>阿根廷</td><td>25%</td><td>+60%（Milei 後復甦）</td><td>peso 風險仍在</td></tr>
+<tr><td>墨西哥</td><td>12%</td><td>+50%</td><td>長期擴張</td></tr>
+<tr><td>其他</td><td>8%</td><td>+30%</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>按客戶集中度（v12.2 新增）</h4>
+<table>
+<thead><tr><th>類型</th><th>占比</th><th>集中度風險</th><th>失去單一客戶影響</th></tr></thead>
+<tbody>
+<tr><td>Top 100 賣家</td><td>~12% GMV</td><td>低</td><td>失去 top 5 影響 &lt; 1% Rev</td></tr>
+<tr><td>Long tail 賣家</td><td>~88% GMV</td><td>極低</td><td>單一賣家失去 impact 微小</td></tr>
+<tr><td>消費者基數</td><td>9000 萬 MAU</td><td>無集中度風險</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>單位經濟（v12.2 逐業務）</h3>
+<table>
+<thead><tr><th>業務</th><th>關鍵指標</th><th>當前</th><th>趨勢</th><th>結構性洞察</th></tr></thead>
+<tbody>
+<tr><td>Commerce</td><td>Take rate</td><td>21.5%</td><td>輕微下降（22.5% → 21.5%）</td><td>反映免運費門檻下調的策略性讓利，換取 items +56% 規模</td></tr>
+<tr><td>Commerce</td><td>Cost per shipment（本幣）</td><td>−17% YoY</td><td>↓ 規模效應</td><td>fulfillment 自動化已開始 leverage</td></tr>
+<tr><td>Mercado Pago</td><td>TPV per MAU</td><td>~$650</td><td>↑</td><td>Pix 推升交易頻次</td></tr>
+<tr><td>Mercado Credito</td><td>AUM per active credit user</td><td>~$160</td><td>↑（與 Brazil 信用週期同步）</td><td>credit 處於早期放量，2030+ 成熟期 AUM/user ~$500+</td></tr>
+<tr><td>Mercado Credito</td><td>NPL 15-90</td><td>~5.5%（Q1 26 Argentina improved + Brazil stable）</td><td>持平</td><td>Argentina &lt; 行業 + Brazil double-digit margin 但「less than year ago」</td></tr>
+<tr><td>Mercado Ads</td><td>Ad revenue % of Commerce</td><td>~5%</td><td>↑↑（+67% YoY，前 Q4 25）</td><td>類比 AMZN Ads 2014 早期；長期可達 commerce 10-12%</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<!-- ============== §12 治理 ============== -->
+<section id="s12">
+<h2 id="s12">§12 公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li><strong>創辦人 Marcos Galperín</strong>：持股約 7-8%，仍為 CEO（自 1999 創辦至今 27 年）</li>
+<li><strong>機構持股</strong>：81.27%（yfinance）— Tiger Global、Capital Group、T. Rowe Price 為大股東</li>
+<li><strong>insider 持股</strong>：7.30%（yfinance）</li>
+<li><strong>近 12 個月內部人交易</strong>：未有重大集中賣壓事件（搜尋結果未顯示異常）</li>
+</ul>
+
+<h3>資本配置軌跡</h3>
+<table>
+<thead><tr><th>項目</th><th>FY25</th><th>方向性</th></tr></thead>
+<tbody>
+<tr><td>Capex</td><td>$1.34B（+56% YoY）</td><td>14 座新 fulfillment center + 10,000 新員工 + Argentina 重投入</td></tr>
+<tr><td>R&D</td><td>~$2.5B（+30%+）</td><td>AI 推薦 / Credit 風控系統重投資</td></tr>
+<tr><td>回購</td><td>$0</td><td>不回購 — 全部現金留用於成長投資</td></tr>
+<tr><td>分紅</td><td>$0</td><td>2018 後不分紅</td></tr>
+<tr><td>M&A</td><td>~$50M 小額（2024 fintech）</td><td>幾乎無大型併購</td></tr>
+</tbody>
+</table>
+<p><strong>判斷</strong>：100% 內部投資為主、零回購零分紅 — 典型「複利型」資本配置；說法與行動一致（27 年來持續再投資）。當前 Q1 26 margin 壓縮為「自我選擇」性質而非結構性失誤。</p>
+
+<h3>SBC 評估</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>SBC / Revenue</td><td>1.4%（FY25）</td></tr>
+<tr><td>5Y SBC / Rev 軌跡</td><td>1.7% → 1.5% → 1.4%（持續下降）</td></tr>
+<tr><td>稀釋 EPS impact</td><td>極低，符合 LatAm 文化（非美科技公司高 SBC 結構）</td></tr>
+</tbody>
+</table>
+
+<h3>QC-19 重大事件強制搜尋（v11.2）</h3>
+<p>🟢 過去 12 個月無併購金額 &gt; 巿值 5%、無集體訴訟、無管理層異動或重大監管事件；Q1 26 EPS miss 屬營運層面，非治理事件。</p>
+
+</section>
+
+<!-- ============== §13 估值診斷（v12.2 簡化）============== -->
+<section id="s13">
+<h2 id="s13">§13 估值診斷（v12.2 簡化 + 推導可追溯）</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<thead><tr><th>估值邏輯</th><th>是否主流?</th></tr></thead>
+<tbody>
+<tr><td>盈利能力型（P/E）</td><td>✓ 當前主流（FY+1 35x）</td></tr>
+<tr><td>成長型（PEG / EV/Revenue）</td><td>輔助（PEG 0.82 為當前敘事）</td></tr>
+<tr><td>資產重置型</td><td>不適用</td></tr>
+<tr><td>現金流型（P/FCF）</td><td>輔助（名義 P/FCF 7.4x 但 fintech-adj 失真）</td></tr>
+<tr><td>行業專屬（EV/GMV）</td><td>適用（EV/GMV ~1.1x，與 Amazon 早期接近）</td></tr>
+</tbody>
+</table>
+<p><strong>估值體系結論</strong>：🟡 <strong>估值邏輯模糊</strong>。當前市場用 P/E 但 fintech credit 拖累短期 EPS，需 FY27 起切換為「commerce P/E + fintech P/BV」雙軌估值，市場尚未準備好此轉變 — 是中期 re-rating 的潛在催化劑。</p>
+
+<h3>13.1｜歷史估值分位（5Y）</h3>
+<table>
+<thead><tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>41.7x</td><td>30x</td><td>~75x</td><td>200x+</td><td>~7%（極低）</td></tr>
+<tr><td>Forward P/E（NTM）</td><td>35.1x</td><td>22x</td><td>~45x</td><td>85x</td><td>21%</td></tr>
+<tr><td>EV/EBITDA</td><td>22.0x</td><td>15x</td><td>~30x</td><td>80x</td><td>10%</td></tr>
+<tr><td>P/FCF（名義）</td><td>7.4x</td><td>15x</td><td>~30x</td><td>—</td><td>極低（失真，fintech 推高）</td></tr>
+<tr><td>EV/Revenue</td><td>2.8x</td><td>3x</td><td>~6x</td><td>14x</td><td>~0%（極低）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+輸入：Fwd PE 35.1x；5Y 區間 22-85x；EV/EBITDA 22x（5Y 區 15-80x）
+計算：Fwd PE 分位 (35.1−22)/(85−22) = 21%；EV/EBITDA 分位 (22−15)/(80−15) = 11%
+implication：估值處於 5Y 歷史極低分位 — 但需結合 §7 低估值四問（2 個 🔴）判斷是否便宜有理
+</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>Forward P/E</td><td>35.13x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR 3Y（§7）</td><td>27.7%</td><td>—</td></tr>
+<tr><td>PEG（3Y）</td><td>1.27</td><td>1-2 合理</td></tr>
+<tr><td>Short-term PEG（FY+1 → FY+2，+42.66%）</td><td>0.82</td><td>&lt; 1.0 便宜</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~22%</td><td>—</td></tr>
+<tr><td>5Y PEG</td><td>1.60</td><td>合理</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+PEG = 35.13 ÷ 27.7% = 1.27（3Y）；短期 PEG = 35.13 ÷ 42.66% = 0.82
+但短期 PEG 0.82 基於下修後共識（90d FY+1 −24.7%）→ 若 EPS 共識繼續下修，PEG 會被「修正」回 1.0+
+implication：§13.5 採 1.27 為中性參考；估值便宜但需 EPS 修正止穩驗證
+</div>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<thead><tr><th>參數</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前巿值</td><td>$80.04B</td></tr>
+<tr><td>基期 FCF（FY25 fintech-adj）</td><td>~$4B（名義 $10.77B × 37% 真實佔比）</td></tr>
+<tr><td>WACC</td><td>12%（10Y UST 4.5% + Beta 1.41 × ERP 5.5%）</td></tr>
+<tr><td>永續成長率</td><td>3.5%（LatAm 名目 GDP）</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+</tbody>
+</table>
+<p><strong>反推隱含 FCF CAGR</strong>：~16%（10 年）— 低於共識 EPS CAGR 28% 與 Revenue +49% — <strong>🟢 隱含預期保守</strong>。</p>
+<p><strong>兌現條件</strong>：Revenue 10Y CAGR 18%（fintech-adj FCF margin 從 14% → 22%）。</p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<thead><tr><th>公司</th><th>巿值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>MELI</strong></td><td>$80B</td><td>35.1x</td><td>22x</td><td>1.27</td><td>37%（名義）</td><td>27.7%</td><td>25%</td></tr>
+<tr><td>AMZN</td><td>$2.5T</td><td>32x</td><td>18x</td><td>1.5</td><td>6%</td><td>22%</td><td>14%</td></tr>
+<tr><td>NU（Nubank）</td><td>$72B</td><td>22x</td><td>—</td><td>1.0</td><td>12%</td><td>23%</td><td>30%</td></tr>
+<tr><td>SE（Sea Limited）</td><td>$75B</td><td>30x</td><td>20x</td><td>1.3</td><td>8%</td><td>25%</td><td>10%</td></tr>
+<tr><td>產業中位</td><td>—</td><td>30x</td><td>20x</td><td>1.3</td><td>~10%</td><td>~24%</td><td>~20%</td></tr>
+</tbody>
+</table>
+<p><strong>溢折價邏輯</strong>：MELI Fwd PE 35.1x 對應產業中位 30x = 溢價 17%；但 FCF Margin 37% / ROIC 25% / EPS CAGR 27.7% 三項全勝同業，溢價合理。若估值向同業中位均值回歸至 30x → 股價 .79 × 30 / 35.1 = ,348（−15%）。</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<thead><tr><th>工具</th><th>訊號</th><th>核心依據</th></tr></thead>
+<tbody>
+<tr><td>估值體系（13.0）</td><td>🟡 模糊</td><td>commerce P/E + fintech P/BV 雙軌待切換</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟢 便宜</td><td>Fwd PE 5Y 分位 21%（極低）</td></tr>
+<tr><td>PEG（13.2）</td><td>🟡 合理</td><td>3Y PEG 1.27；短期 0.82 但基於下修後共識</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟢 保守</td><td>隱含 FCF CAGR 16% &lt; 共識 EPS CAGR 28%</td></tr>
+<tr><td>同業（13.4）</td><td>🟡 合理溢價</td><td>溢價 17% 由 FCF Margin / ROIC / Growth 三項支撐</td></tr>
+</tbody>
+</table>
+
+<p><strong>當前定價判斷</strong>：🟢 <strong>合理至便宜</strong>（五角中 2 🟢 + 3 🟡，無 🔴）— 但 13.5 結論受 EPS 共識下修風險干擾，採「便宜但需 trigger」描述。</p>
+
+<h3>長期合理倍數對應</h3>
+<table>
+<thead><tr><th>§8 評級</th><th>5Y 基準 Fwd PE</th></tr></thead>
+<tbody>
+<tr><td>🟢 高確信長期成長</td><td>25x</td></tr>
+</tbody>
+</table>
+
+<p><strong>v12.0 上行三引擎調整</strong>：</p>
+<ul>
+<li>引擎 A（ROIC 溢價，ROIC 25% &gt; 20% 且 3 年擴大）→ ×1.10 → 27.5x</li>
+<li>引擎 B（PEG 動態天花板，5Y CAGR 22% 接近門檻 15%）→ ×1.05 → 26x</li>
+<li>引擎 C（護城河 9 分）→ ×1.10 → 27.5x</li>
+<li>三引擎取較高 = ×1.10 → <strong>27.5x</strong></li>
+<li>AI 風險 🟢 → ×1.10 → 30x</li>
+<li><strong>最終長期合理 PE = 27x</strong>（取保守，反映 trap 🟡 觀察期）</li>
+</ul>
+
+<h3>投資結論（§13.5 完整版）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態</strong>：＋強化（巴西 GMV +38% / items +56% / 巿占擴大）</li>
+<li><strong>H2 當前狀態</strong>：−削弱（OI margin Q1 26 6.9% 嚴重壓縮，FY27 12-15% 目標延後 1-2 季）</li>
+<li><strong>H3 當前狀態</strong>：0 不變（Credit AUM +77% 數量 ✓，Argentina NPL improved，但 Brazil consumer credit「less profitable」邊際削弱）</li>
+<li>這份財報讓隱含預期變得更困難兌現（FY27 H2 12% margin target 需 6 個月加速到位），但 H1 + H3 強化提供 thesis 韌性。</li>
+</ul>
+
+<h4>綜合訊號輸出</h4>
+<ul>
+<li>護城河等級：A（9/10），體質 veto 3 項不過按規則降至 B，但 LLM 採「週期性 vs 結構性」切割維持 A 級</li>
+<li>估值燈：🟢（Fwd PE 5Y 分位 21% + PEG 0.82 雙觸發）</li>
+<li>Pure MA 狀態：🟠 暫不進場（距 W250 僅 +0.6%）</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：B（觀望，等修復）</strong></li>
+<li>中期參考 R:R：+0.84x（資訊性）</li>
+<li>訊號語意：衛星候選 / 觀察池 — thesis 完整但時機不到，建議追蹤等 EPS 止穩 + MA 修復</li>
+<li>倉位決策不在 DD 範圍，交由 portfolio-manager skill 處理</li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q1 26 EPS miss + OI margin −600bps + 共識持續下修 → 短期估值修復不確定，等 Q2 26（2026/08 公布）OI margin ≥ 8% + EPS 共識止穩才能升 A。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY27 EPS .11 共識（已 90d 下修 −22.8%），驅動為定價（take rate 略下）+ 量（GMV +30%+）；能見度中（H2 不確定性）。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道 ≥ 10 年 / 護城河趨勢加深 / 長期持有信心 <strong>高</strong>。5Y 目標 ,375（+114%）為 Base case，Bear C 情境 0（-49%）為下行錨。</p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔（Bear PE 20x × EPS $40.44）= 9（-49%）</li>
+<li>中期下檔（Bear PE 22x × EPS $57.70）= ,269（-20%）</li>
+<li>W52 Low ,537（5/11 觸及）/ W250 ,569（當前邊緣）</li>
+<li>若 FY+1 EPS 再下修 10% → 短期目標降至 ,375（−13%）</li>
+</ul>
+
+</section>
+
+</div>
+
+<button id="print-btn" onclick="window.print()">🖨️ 列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "MELI",
+  "name": "MercadoLibre, Inc.",
+  "date": "2026-05-13",
+  "schema": "v12.2",
+  "price_at_dd": 1578.78,
+  "inception_dd": "DD_MELI_20260513.html",
+  "inception_date": "2026-05-13",
+  "next_yoy_review": "2027-05-13",
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "觀察期",
+  "moat": "A",
+  "moat_score": 9,
+  "val": "🟢",
+  "ma": "🟠",
+  "regime": "正常",
+  "fpe_fy2": 24.63,
+  "pct_5y": 21,
+  "peg_fy2": 0.82,
+  "upside_short_pct": -3,
+  "upside_mid_pct": 38,
+  "upside_5y_pct": 114,
+  "stress": {"pass": 1, "total": 4},
+  "growth_durability": 9,
+  "quality_score": 8,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "B（觀望·thesis 完整但 Q1 26 EPS miss + MA 🟠 距 W250 +0.6%）",
+  "oneliner": "🟢 順風 + 護城河 9/10；Q1 26 三引擎（GMV +42%/TPV +43%/Credit +77%）；估值 🟢（PE 35x/分位 21%/PEG 0.82）但 trap 🟡（OI -600bps + EPS 90d -24.7%）/MA 🟠 距 W250 +0.6%；綜合 B 觀望，等 EPS 止穩 + 站回 W104 升 A。"
+}
+</script>
+
+</body>
+</html>
