@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETN Deep Conviction Analysis · 2026-05-13</title>
+<!-- dca-moat-trend: ↑ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--card:#FFFFFF;--alt:#F1F5F9;--good:#15803D;--great:#166534;--amber:#92400E;--bad:#991B1B;--bear:#DC2626;--soft:#64748B;--th:#1E3A5F;}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#0F172A;margin:0;padding:0;line-height:1.7;font-size:15px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 28px 80px}
+header.head{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--ink);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;z-index:50;font-size:14px}
+header.head .tk{font-weight:700;font-size:18px;color:var(--ink)}
+header.head .thesis-head{color:var(--soft);font-style:italic;max-width:60%;text-align:right}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:6px;border:none;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(30,58,95,.3);z-index:60}
+.print-btn:hover{background:#162B47}
+h1{color:var(--ink);font-size:28px;margin:0 0 8px}
+h2{color:#fff;background:var(--ink);padding:12px 16px;font-size:19px;margin:36px 0 18px;border-left:6px solid var(--accent)}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-left:4px solid var(--accent);padding-left:10px}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px}
+table{border-collapse:collapse;width:100%;margin:12px 0 18px;background:#fff;font-size:14px}
+th{background:var(--th);color:#fff;text-align:left;padding:9px 11px;font-weight:500}
+td{padding:9px 11px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:var(--alt)}
+.card{background:var(--card);border:1px solid #E2E8F0;border-left:4px solid var(--accent);padding:18px 20px;margin:14px 0;border-radius:2px}
+.card.green{border-left-color:var(--good);background:#F0FDF4}
+.card.yellow{border-left-color:#CA8A04;background:#FEFCE8}
+.card.red{border-left-color:var(--bear);background:#FFF1F2}
+.card.orange{border-left-color:#F97316;background:#FFF7ED}
+.card.blue{border-left-color:#0EA5E9;background:#F0F9FF}
+.card.pre{border-left-color:#DC2626;background:#FEF2F2}
+.tag{display:inline-block;padding:2px 9px;font-size:12px;border-radius:3px;font-weight:500}
+.tag.win{background:#DCFCE7;color:var(--great)}
+.tag.lose{background:#FEE2E2;color:var(--bad)}
+.tag.warn{background:#FEF3C7;color:#92400E}
+.statusbar{display:flex;gap:16px;justify-content:center;background:var(--alt);border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:18px 12px;margin:20px 0 10px;border-radius:4px}
+.sb-cell{flex:1;min-width:170px;max-width:200px;text-align:center;background:#fff;padding:12px 8px;border-radius:4px;border:1px solid #E2E8F0}
+.sb-label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sb-body{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.sb-sub{font-size:12px;color:var(--soft);margin-top:4px}
+.thesis-box{background:#EFF6FF;padding:28px 24px;border-radius:8px;text-align:center;margin:14px 0 24px;border:1px solid #BFDBFE}
+.thesis-box .big{font-size:24px;line-height:1.6;color:var(--ink);font-weight:500}
+.thesis-box .small{margin-top:8px;font-size:12px;color:var(--soft)}
+.decision{background:#F0FDF4;border-left:4px solid var(--good);padding:18px 20px;margin:14px 0;border-radius:2px}
+.decision.wait{background:#FEF9C3;border-left-color:#CA8A04}
+.decision.avoid{background:#FFF1F2;border-left-color:var(--bear)}
+.confl{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0}
+.confl table th{background:#9A3412}
+.verdict{background:#FED7AA;padding:14px 16px;border-radius:4px;margin:10px 0}
+.verdict table th{background:#7C2D12}
+.memo{background:#FFFFFF;border:1px solid #94A3B8;padding:22px 26px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin:14px 0;border-radius:2px}
+.elevator{background:#F1F5F9;border-left:3px solid var(--soft);padding:12px 18px;font-style:italic;margin:14px 0;font-size:14px;color:#334155}
+details{margin:12px 0;background:#fff;border:1px solid #CBD5E1;border-radius:4px;padding:0}
+details summary{cursor:pointer;padding:14px 18px;font-weight:500;color:var(--ink);background:#F1F5F9;border-radius:4px}
+details[open] summary{border-bottom:1px solid #CBD5E1}
+details > div{padding:16px 20px}
+.pos{color:var(--great);font-weight:600}
+.neg{color:var(--bad);font-weight:600}
+.neu{color:var(--soft)}
+.warn-cell{color:#92400E;font-weight:500}
+.ok-cell{color:var(--great);font-weight:500}
+.maxdd-headline{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.composition-bar{display:flex;height:28px;border-radius:4px;overflow:hidden;margin:10px 0;border:1px solid #CBD5E1;background:#F8FAFC}
+.composition-bar span{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+.cb-eps{background:#15803D}
+.cb-rerate-pos{background:#0EA5E9}
+.cb-rerate-neg{background:#A78BFA}
+.cb-shy{background:#64748B}
+.note{font-size:12px;color:var(--soft);font-style:italic}
+ul{padding-left:20px}
+li{margin:4px 0}
+.kbd{background:#F1F5F9;padding:1px 6px;border-radius:3px;font-family:'IBM Plex Mono',monospace;font-size:13px;border:1px solid #CBD5E1}
+@media print{
+  .print-btn,header.head{display:none}
+  details{break-inside:avoid}
+  details > div{display:block !important}
+  details:not([open]) > div{display:block !important}
+  body{font-size:13px}
+}
+</style>
+</head>
+<body>
+<header class="head">
+  <span class="tk">ETN · Eaton Corporation plc</span>
+  <span class="thesis-head">Eaton 把 AI 資料中心電力從「電網到晶片」整合成寡頭壁壘，hyperscaler 9 年 backlog 是 capex 轉化為毛利的鎖定通道 · 2026-05-13</span>
+</header>
+
+<div class="wrap">
+
+<h1>ETN｜Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-13 · 現價 $401.51 (5/9) · 報告類型：DCA（Phase A 三軸獨立研究 + Phase B 強制裁決 + Phase C 投資決策）</p>
+
+<!-- ============== STATUS BAR ============== -->
+<div class="statusbar">
+  <div class="sb-cell">
+    <div class="sb-label">綜合訊號燈</div>
+    <div class="sb-body" style="color:#D97706">B</div>
+    <div class="sb-sub">衛星候選</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Moat 趨勢</div>
+    <div class="sb-body" style="color:var(--great)">A ↑</div>
+    <div class="sb-sub">widening · 12M</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Y5+ Runway</div>
+    <div class="sb-body">🟢 寬</div>
+    <div class="sb-sub">第二曲線 2027+</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Max DD (5Y)</div>
+    <div class="sb-body" style="color:var(--bad)">−60%</div>
+    <div class="sb-sub">🔴 中途出場高風險</div>
+  </div>
+</div>
+
+<!-- ============== §2 THESIS ============== -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="big">Eaton 把 AI 資料中心電力從「電網到晶片」整合成寡頭壁壘，hyperscaler 9 年 backlog 是 capex 結構性轉化為毛利的鎖定通道。</div>
+  <div class="small">46 字 · 敘事性，非財務指標</div>
+</div>
+
+<!-- ============== §7 DECISION ============== -->
+<h2>§7｜Decision（不是 Buy/Wait/Avoid，是可執行計畫）</h2>
+
+<div class="decision wait">
+  <strong>裁決：等待回撤進場（條件式建倉，不一次性）</strong> ｜ 主因：valuation 已 priced-in（PE 31x vs 10Y median 26.4x）+ RSI 66 接近過熱 + 🔴 Max DD 評級 → 倉位上限自動下修。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在組合中的角色</td><td><strong>衛星部位</strong>（DD §1 訊號燈 B + 估值已 stretched + Max DD 🔴）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.5% of portfolio</strong>（原計畫 3%，因 §6c Max DD 🔴 評級自動下修 50%）</td></tr>
+<tr><td>目標倉位</td><td>3.0% of portfolio（若 FY27 Boyd accretive Y2 達標 + Electrical Op Margin > 30%）</td></tr>
+<tr><td>進場價位區間</td><td>$360 ~ $385（PE 24~27x × FY26 EPS midpoint $14.5；mean reversion 至 10Y median + AI premium）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批：</strong>(a) 等股價回到 $360-$385 區間 <em>且</em> RSI(14d) 回到 50-60 區間 → 進首批 0.7%；(b) Q2 26 ER DC orders YoY 維持 +50%+ 且股價未破 $395 → 加碼 0.8%。<strong>禁止一次性建倉</strong>（RSI 66 + 4 週漂移過熱）</td></tr>
+<tr><td><strong>Opportunity cost vs 現有同類曝險</strong></td><td>
+<strong>比較標的：</strong><br>
+1. <strong>VRT（Vertiv）：</strong>純 pure-play AI DC + 液冷 first-mover，R:R 短期 +0.3x（vs ETN -0.7x），但 fwd PE ~50x 比 ETN 更 stretched。同 hyperscaler 客戶池。<br>
+2. <strong>GEV（GE Vernova）：</strong>gas turbine 18-24M lead time + grid 設備 + AI DC 隱性受益，cyclical 但 R:R 更佳，PE 29x 偏向工業正常區間。<br>
+3. <strong>Delta（2308.TW）：</strong>電力電子 ASP 鎖定 NVDA co-develop，AI 加速器 server PSU 800V 龍頭。<br>
+<strong>邊際資金裁決：</strong>若 portfolio 已持 VRT > 3% → 加 ETN 是疊高同主題曝險（hyperscaler capex correlation > 0.7），建議改加 GEV 取得分散；若未持 VRT → ETN 是「電力 stack 完整性」中庸選擇但 timing 不對 → 等 PE 回到 25x 再進。<br>
+<strong>結論：</strong>當前邊際資金優先 GEV（R:R 較佳 + multiple 較合理），ETN 等回撤窗口。
+</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位 / 事件）</th><th>調整至倉位</th></tr>
+<tr><td>首批進場</td><td>股價回到 $360-$385 AND RSI(14) 回到 50-60</td><td>0.7%</td></tr>
+<tr><td>加碼 #1</td><td>Q2 26 ER（2026-08）DC orders YoY ≥ +50% AND FY26 organic guide 維持 10%+</td><td>1.5%</td></tr>
+<tr><td>加碼 #2</td><td>FY27 Q1 ER Boyd Rev > $400M（達 $1.7B 全年 1/4 進度）AND Electrical Op Margin > 30%</td><td>3.0%</td></tr>
+<tr><td>減碼</td><td>Big 4 hyperscaler 連續 2 季 capex YoY < +15% OR ETN DC orders 連 2 季 YoY < +50%</td><td>0.7%</td></tr>
+<tr><td>清倉</td><td>FY27 Boyd 商譽減損 ≥ $500M OR FY27 Electrical Op Margin < 25% OR §5 Single Thing 觸發</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性 + 動能過熱檢查</h3>
+<table>
+<tr><th>檢查項</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="tag win">✅</span></td><td>$401 vs MA60 估計 ~$385</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="tag win">✅</span></td><td>$401 vs MA200 估計 ~$355</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="tag win">✅</span></td><td>2Y MA 估計 ~$310（52w low $311.9）</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td><span class="tag win">✅ 通過</span></td><td>Investing.com 12 indicators Strong Buy；MA5-MA200 均多頭排列</td></tr>
+<tr><td><strong>短期動能過熱</strong></td><td><span class="tag warn">⚠ RSI(14d) = 66.18</span></td><td>接近 70 過熱閾值；52w high $435 / 現價 $401 = 92% high range；4 週漂移估計 +5~+8%（未過 +10%）但 RSI 已警示</td></tr>
+</table>
+<div class="card yellow">
+<strong>動能過熱結論：</strong>Pure MA 多頭結構確認但 RSI 過熱 → §7a 進場節奏<strong>必須條件式</strong>（等 RSI 回到 50-60 + 股價回 $360-$385）；<strong>禁止一次性建倉</strong>（mean reversion 1M 內回測 8-15% 歷史機率 ~60%）。
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 hyperscaler capex 未削減 + Boyd 整合無 major mishap → +30~50% upside（但 valuation overhang 限制 multiple expansion）</td></tr>
+<tr><td><strong>中期（2-5 年）</strong> ⭐ 建議</td><td>AI DC 結構性 build-out 持續至 2030 + ETN 維持 chip-to-grid 整合性 + Boyd accretive Y2 → +50~80%（IRR 8-12%/yr Base）</td></tr>
+<tr><td>長期（5-10 年）</td><td>達成 grid-to-chip 寡頭地位 + 800V DC 完整滲透 + Mobility 拆分後純 Electrical 倍數重估 28-32x → +150%+，但需過 2027-28 hyperscaler capex 第二次循環</td></tr>
+</table>
+<div class="card blue">
+<strong>建議持有：中期 2-5 年</strong>。原因：(1) AI DC 超級週期 thesis 5-7 年 horizon，未到 5-10 年成熟期；(2) Boyd 整合需 24-36M 顯現綜效；(3) Mobility 拆分 2027 Q1 完成後純 Electrical 才能 fully re-rate；(4) Y5+ runway 雖🟢 寬，但 2030 後第二波 capex 不確定性需重評。
+</div>
+
+<h4>EPS 預測參考表（IRR composition 基底）</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>2026E（adj）</td><td>$13.05 ~ $13.50（mid $13.28）</td><td>Eaton 2026 guide（Q1 ER raised）</td><td>Boyd 整合年，含 ~9 個月 Boyd contribution</td></tr>
+<tr><td>2027E</td><td>$15.42（consensus 22 分析師）</td><td>StockAnalysis 共識</td><td>Boyd 全年 + Mobility 拆分後 stub</td></tr>
+<tr><td>2028E</td><td>$17.46（consensus）</td><td>StockAnalysis 共識</td><td>FY28 forecast EPS growth +13%</td></tr>
+<tr><td>2030E（外推）</td><td>$20.50 ~ $21.00</td><td>本 DCA 外推</td><td>假設：FY27-30 EPS CAGR 12%/yr（Base case）；Bull 17%/yr → $26+；Bear 4%/yr → $17</td></tr>
+</table>
+
+<div class="card">
+<strong>5-10 年持有適合性論述：</strong>當前 $401 對應 fwd PE 31x（FY26 mid）/ 25.8x（FY27）/ 22.9x（FY28），現價已 priced-in 至 FY27 中性結果。<strong>長期合理：</strong>若 EPS 真能 CAGR 12-15% 5 年（達 FY30 $20-23），且 PE 回到 24-26x 區間，目標價 $500-580 = 5Y +25~45%（IRR 4.5-7.7%/yr）。<strong>但 IRR 弱於 SPX 平均</strong>（~8%）→ 必須有 idiosyncratic alpha（Boyd 整合 + 800V DC moat 兌現）才值得 5Y 鎖定。<strong>結論：</strong>長期持有需等更好價位（$360-385）才能把 IRR 拉到 10%+/yr。
+</div>
+
+<!-- ============== §4 ASYMMETRY ============== -->
+<h2>§4｜Asymmetry Analysis（R:R + IRR composition）</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><span class="pos">Bull（Thesis 對）</span></td><td>+130%</td><td>+18.1%/yr</td><td>EPS FY30 $26+（CAGR 17%）+ PE 維持 31x；hyperscaler 持續 capex + Boyd 完美整合 + 800V DC moat 鎖定</td><td>25%</td></tr>
+<tr><td>Base</td><td>+50%</td><td>+8.4%/yr</td><td>EPS FY30 $20（CAGR 12%）+ PE 回到 24x；hyperscaler 緩慢減速但維持 +15%/yr capex + Boyd 達 80% synergy</td><td>45%</td></tr>
+<tr><td><span class="neg">Bear（Thesis 錯）</span></td><td>-25%</td><td>-5.6%/yr</td><td>EPS FY30 $17（CAGR 4%）+ PE 壓縮至 18x；hyperscaler 2027 H2 砍 20% capex + Boyd 商譽減損 + Mobility 拆分後 stub 估值不利</td><td>30%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+47.5%</strong></td><td><strong>IRR ≈ 8.1%/yr</strong></td><td>=（0.25×130）+（0.45×50）+（0.30×-25）</td><td></td></tr>
+</table>
+
+<div class="card">
+<strong>IRR 落點解讀：</strong>機率加權 5Y IRR <strong>8.1%/yr</strong> → 落在「弱-中」邊緣（&lt; 8% 弱 / 8-12% 中）。<strong>不及 SPX 平均的隱含 IRR 強烈警示</strong>：當前股價反映「Base case 機率被市場估到 60%+」，但本 DCA 把 Bear 機率拉到 30%（vs 共識 ~20%）= 我比賣方更悲觀，反映 hyperscaler 2027 H2 capex 不確定性 + Boyd 22.5x premium 整合風險。
+</div>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>10Y 視角：</strong>若 thesis 對但時間拉長 10 年，Bull/Base/Bear 機率分布 ≈ 30/45/25。EPS FY36 假設 $30-40（CAGR 9-11% from FY30 base），PE 回到 22x → 5-10Y annualised IRR ~9-11%/yr。<strong>持有期延長不顯著改善 IRR</strong>，因 Boyd + Mobility 整合短期 multiple compression 已 priced-in 大部分長期 alpha。</li>
+<li><strong>機會成本（同期可比標的）：</strong>VRT 共識 IRR ~10-12%/yr（更高 multiple risk）；GEV ~9-11%/yr（cyclical drag）；Delta（2308.TW）~12-15%/yr（NVDA co-develop premium 較強）。<strong>ETN 8.1% IRR 在同類中排中後段</strong>。</li>
+</ul>
+
+<h4>機率估計：時間視角自我校驗</h4>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本案實際</th><th>狀態</th></tr>
+<tr><td>Bear 機率（5Y）</td><td>≥ 20%（強護城河 + 短期已兌現 15-20%）</td><td>30%</td><td><span class="tag win">✅ 達標</span>（hyperscaler 5Y 衰退路徑必然存在）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 比 1Y 寬至少 50%</td><td>Bull +130% vs Bear -25%，總散布 155pp（vs 1Y 估計 ±25% 散布 50pp）= 3.1x 寬度</td><td><span class="tag win">✅ 達標</span></td></tr>
+<tr><td>Base 機率</td><td>不應 > 50%</td><td>45%</td><td><span class="tag win">✅ 達標</span></td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似 case IRR 對照</td><td>NVDA 2017-2022 8% IRR（中段）</td><td>本案 8.1% IRR 與 pattern 一致 <span class="tag win">✅</span></td></tr>
+</table>
+
+<h4>Pattern Match（讓機率有錨點）</h4>
+<div class="card blue">
+<strong>類比案例：NVDA 2017-2022（早期 AI 賭局 → multiple compression → 再爆發）</strong>
+<table>
+<tr><th>項目</th><th>NVDA 2017-2022</th><th>ETN 現在</th><th>差異</th></tr>
+<tr><td>Setup</td><td>2017 初期 PE 35x、市佔 GPU 70%、CUDA moat 確立</td><td>2026 fwd PE 31x、DC power top 4、800V DC + chip-to-grid moat 確立</td><td>類似（multiple stretched + moat 確立）</td></tr>
+<tr><td>過熱訊號</td><td>2018Q4 RSI > 75 + 4 週漂移 +25% → crypto crash 觸發 -56% drawdown</td><td>2026Q2 RSI 66 + 4 週漂移 +7% → 待觸發</td><td>ETN 過熱程度較輕，但結構性高估</td></tr>
+<tr><td>5Y 實現</td><td>+340%（含 2018 -56% 大回檔，年化 +34%）</td><td>本 Bull +130%（年化 +18%）</td><td>ETN 的 Bull 比 NVDA 保守 60%，反映「電力寡頭」TAM 比「AI GPU 壟斷」更受限</td></tr>
+<tr><td>關鍵相似</td><td>moat 確立但 valuation 透支 → 一次大回測後才是真正 entry</td><td>同樣 setup</td><td><strong>$360-385 是 ETN 版的「NVDA 2018Q4 $33 點」</strong></td></tr>
+</table>
+<strong>結論：</strong>不是說我會複製 NVDA 結果（電力 vs AI 晶片 TAM 差 10x），而是<strong>「moat 確立但 valuation 透支」的 setup 通常需要先過一次回測才打開長期 IRR</strong>。這支撐 §7a「條件式進場 + 等回撤」決策。
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+17.0%/yr</td><td>+0.0%/yr（PE 31x 維持）</td><td>+2.5%/yr</td><td>+19.5%/yr</td></tr>
+<tr><td>Base</td><td>+12.0%/yr</td><td>−5.0%/yr（PE 31→24x，−22% in 5y）</td><td>+2.5%/yr</td><td><strong>+9.5%/yr</strong></td></tr>
+<tr><td>Bear</td><td>+4.0%/yr</td><td>−10.4%/yr（PE 31→18x，−42% in 5y）</td><td>+2.5%/yr</td><td>−3.9%/yr</td></tr>
+</table>
+
+<div class="composition-bar" title="Base case stacked bar">
+  <span class="cb-eps" style="width:72%">EPS +12.0%/yr</span>
+  <span class="cb-rerate-neg" style="width:18%">re-rate −5%/yr</span>
+  <span class="cb-shy" style="width:10%">SHY +2.5%/yr</span>
+</div>
+
+<div class="card blue">
+<strong>質感解讀：</strong>Base 9.5% IRR 中，<strong>12%/yr 來自 EPS 複利</strong>（占 ~127% — re-rate 是負貢獻所以分量比超過 100%），<strong>−5%/yr 來自估值 re-rate</strong>（PE 31x 回到 24x 是 valuation drag），<strong>+2.5%/yr 來自股息+回購</strong>。這檔的可抱性<strong>主要靠 EPS 自然複利</strong>（公司自己長出來，不看市場臉色），但<strong>5Y 內 PE 大概率 mean reversion</strong>，所以「進場時點」比「等多久」更重要——這就是為何 §7a 強制條件式進場（等 PE 回到 25x 區間，re-rate drag 才能歸零，IRR 才能拉到 14%/yr 真正 high conviction）。
+</div>
+
+<div class="card">
+<strong>Guardrail 校驗：</strong>Base 列合計 9.5%/yr vs §4 機率加權年化 IRR Base 列推算 ~8.4%/yr，差 1.1%p <strong>≤ 2pp 容忍 ✅</strong>。差距主要在 Base re-rate 估計（−5%/yr 假設 PE 回到 24x；§4 Base 假設 PE 回到 24x 但 absolute upside +50% 隱含 EPS CAGR 略低於 12%）。
+</div>
+
+<!-- ============== §1 MENTAL MODELS PRESSURE TEST ============== -->
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">
+TO: Investment Committee<br>
+FROM: PM<br>
+RE: ETN — Eaton Corporation plc · 2026-05-13<br>
+<br>
+THESIS: Eaton 把 AI 資料中心電力從「電網到晶片」整合成寡頭壁壘，hyperscaler 9 年 backlog 是 capex 結構性轉化為毛利的鎖定通道。<br>
+<br>
+KEY DRIVER (1): Hyperscaler AI capex 持續性（MSFT/AMZN/META/GOOG Big 4 共 ~$600B 2026 capex，其中 75% AI-related）— driver 是「需求側」。<br>
+KEY DRIVER (2): Electrical Americas Op Margin 擴張軌跡（Q4 25 31.6% 創高，仍有 350bp room to peer）— driver 是「供給側轉化效率」。<br>
+<br>
+R/R: Bull +130%（25%）/ Base +50%（45%）/ Bear -25%（30%）→ 5Y IRR 8.1% 加權。<br>
+ENTRY: $360-$385（fwd PE 25-27x × FY26 EPS $14.5）—— 等回撤，禁一次建倉。<br>
+EXIT: §5 Single Thing 觸發 → 連 2 季 hyperscaler capex YoY < +10% → 清倉。<br>
+RISKS:<br>
+  R1. Boyd 22.5x 整合 premium + LT debt $8.76B → $18.54B（+112%）執行風險（中度）<br>
+  R2. Hyperscaler 2027 H2 capex 結構性減速（25% 機率）<br>
+  R3. Mobility 拆分後 stub 估值不利 + 重組成本超預期<br>
+<br>
+POSITION SIZE: 初始 1.5%（衛星）→ 目標 3.0%（if Boyd Y2 accretive + Op Margin > 30%）<br>
+HOLDING PERIOD: 中期 2-5 年<br>
+<br>
+WHY NOT JUST BUY VRT INSTEAD? VRT pure-play AI DC R/R 短期較強但 fwd PE 50x more stretched；ETN 是「電力 stack 完整性 + Boyd 液冷」trade-off 較均衡，但 timing 不對 → 待回撤。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「Eaton 是全球 AI 資料中心電力裝置的寡頭，從變壓器、開關櫃、UPS 到 NVIDIA 800V DC 機櫃內部供電都做。Q1 26 資料中心訂單 YoY 暴增 240%，backlog 等於未來 9 年的訂單已經先綁定，連 Boyd 液冷剛買下整合進來。但問題是市場已經 priced-in 太多——本益比 31x 比 10 年中位數 26x 貴 50%。所以我會等股價回到 $360-$385、本益比 25x 區間再開始建倉，初始 1.5% 衛星部位。」
+</div>
+
+<div class="card">
+<strong>壓力測試結果：</strong>1 頁紙 memo + 30 秒版本邏輯自洽，且 30 秒版本直接點出「moat 強、但 timing 不對」這個 alpha 來源 → 進入 §3 Drivers + §5 Single Thing。
+</div>
+
+<!-- ============== PHASE B 矛盾 + 強制裁決 ============== -->
+<h2>Phase B｜矛盾辨識 + 強制下判決</h2>
+
+<h3>1. 共識清單（Phase A1-A3 方向一致）</h3>
+<div class="card green">
+<ul>
+<li><strong>AI DC 超級週期確立</strong>：A1（DC orders Q1 26 +240%）+ A2（US DC demand 75 GW → 134 GW 2030 +77%）+ A3（FY26 organic guide 8% → 10%）三軸同向。</li>
+<li><strong>chip-to-grid 完整 stack 寡頭地位</strong>：A1（Brightlayer + Boyd thermal + 800V DC NVIDIA partner）+ A2（NA top 5 collective 62% share）+ A3（FCF $3.6B 支撐持續 capex + M&A）。</li>
+<li><strong>Electrical Op Margin 創高</strong>：A1（Q4 25 31.6%，+310bps YoY）+ A3（FY25 segment margin 24.0% 連續創高）</li>
+</ul>
+</div>
+
+<h3>2. 矛盾清單</h3>
+<div class="confl">
+<table>
+<tr><th>#</th><th>矛盾描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td>Moat ↑ 強化 vs Valuation 已 priced-in</td><td>moat widening（Boyd + NVDA + backlog）</td><td>TAM 持續擴張</td><td>fwd PE 31x = 10Y median 26.4x +18% premium，10Y peak</td><td><strong>🔴 不可調和</strong></td></tr>
+<tr><td>2</td><td>Hyperscaler capex 持續 vs 2027 結構性減速風險</td><td>9 年 backlog 已鎖定</td><td>+165% 2030 demand</td><td>DD R2: Big 4 capex 連 2 季 < +15% 為 trigger</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>3</td><td>Boyd 強化 vs 整合溢價過高</td><td>Boyd 液冷 + chip-to-grid 完整</td><td>液冷 TAM 加速</td><td>22.5x EV/EBITDA + LT debt +112%</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>4</td><td>ETN 在 800V DC 是否有獨有 moat</td><td>NVDA 800V DC partner（co-design Beam Rubin DSX）</td><td>NVDA 31 個 partner 列表 + Vertiv/Schneider 都在</td><td>—</td><td><strong>🔴 不可調和</strong></td></tr>
+</table>
+</div>
+
+<h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
+<div class="confl">
+<table>
+<tr><th>#</th><th>矛盾</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>R:R 評估</td><td>5Y IRR 8.1%/yr（弱-中邊緣）</td><td>DD R:R 短期 -0.7x / 中 +0.05x / 長 +0.5x（壓力測試 1/4）</td><td>視角差：DD 用三引擎 target 給出絕對 $ R:R，DCA 用 IRR composition 給時間加權 — 兩者結論一致（短期不該進）</td></tr>
+<tr><td>2</td><td>moat trend</td><td>↑ widening（NVDA + Boyd + backlog 三同步）</td><td>DD §5 H1 強化（Q1 26 print 後）</td><td>視角一致 ✅</td></tr>
+<tr><td>3</td><td>Bear 機率</td><td>30%（hyperscaler 2027 H2 capex 減速）</td><td>DD R2 機率 25%</td><td>程度差：DCA 比 DD 略悲觀 5pp（反映 NVDA 31 partner 列表稀釋 ETN moat 獨有性）</td></tr>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（每個不可調和矛盾必選邊）</h3>
+<div class="verdict">
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td>1</td><td>Moat ↑ vs PE stretched</td><td><strong>A3</strong>（valuation 已 priced-in）</td><td>10Y median PE 26.4x → 現 31x（+17.4% premium），位於 10Y 99% 百分位。即使 EPS 維持 17% CAGR（Bull），5Y re-rate drag 0%；若 EPS 落到 Base 12% CAGR，re-rate drag -5%/yr，IRR 從 14.5% 拉到 9.5%。「moat 強化」已 fully priced-in 至 forward 倍數，邊際資金應等回撤而非追高。</td><td><strong>1. PE 回到 25-27x（股價 $340-$370 區間）AND Q2 26 DC orders YoY 維持 +50%+</strong><br>2. OR FY26 organic guide 從 10% 下修至 < 8%（thesis 削弱信號）</td><td>(a) PE 回 25-27x + DC orders +50% 維持 → <strong>啟動小倉測試 1.5%</strong>，分批至 3% 目標<br>(b) PE 突破 35x OR FY26 organic 下修 → <strong>不進場（已 priced-in 過度樂觀）</strong>，等下一輪財報重評</td></tr>
+<tr><td>4</td><td>ETN 800V DC moat 是否獨有</td><td><strong>A1 但折扣</strong>（Boyd 整合性 + 9 年 backlog 是真 differentiator，但 single-vendor 800V DC moat 不成立）</td><td>NVDA 31 partner 列表（含 ABB/Schneider/Vertiv/Eaton 全在）= 800V DC 是「開放 ecosystem 准入券」非 ETN 獨佔。ETN 真正 moat 是：(1) 9 年 DC backlog（被 specified 進專案）；(2) Boyd 液冷整合進 Electrical Global（grid-to-chip 全棧唯一）；(3) Brightlayer 軟體 attach。但「co-design 獨家性」< 共識預期。</td><td><strong>1. FY27 Electrical Op Margin 維持 > 30%（vs ABB ~16% / Schneider ~17% / Vertiv ~19%）</strong>—1000bps+ 領先 = moat 真正確立<br>2. OR FY27 Boyd Rev > $1.7B 且 GM > Eaton 平均（Boyd 整合協同效應兌現）</td><td>(a) FY27 Op Margin > 30% + Boyd accretive Y2 達標 → <strong>升級至 3% core 部位</strong>（衛星 → 核心過渡）<br>(b) FY27 Op Margin < 25% OR Boyd 商譽減損 ≥ $500M → <strong>清倉</strong>（moat thesis 破裂）</td></tr>
+</table>
+</div>
+
+<div class="card orange">
+<strong>裁決總結：</strong>兩個 unresolvable 矛盾分別處理 timing（#1）+ moat 持久性（#4），兩者共同指向<strong>「條件式進場 + Boyd 整合驗證 gate」</strong>——即 §7a 採衛星 1.5% 起步、目標 3.0%，分批解鎖。<strong>禁止</strong>把「moat 強化 + AI 超級週期 + Q1 大爆」當成 unconditional 進場理由。
+</div>
+
+<!-- ============== §3 KEY DRIVERS ============== -->
+<h2>§3｜Key Drivers（命脈是什麼）</h2>
+
+<h3>3a. 1-2 個 Key Drivers</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+<tr><td>1</td><td><strong>Hyperscaler AI capex 持續性</strong>（需求側）</td><td>Big 4 hyperscaler（MSFT/AMZN/META/GOOG）合計 ~$450B AI-related capex（2026）是 ETN Electrical Americas DC orders 240% 暴增的單一上游驅動。若 Big 4 砍 capex，ETN backlog 兌現節奏放緩（即使 9 年 backlog 不變，年度兌現量會縮）</td><td>Big 4 季度 capex YoY；MSFT Azure / AMZN AWS / META AI 訓練 capex guide；NVDA 季度 GPU 出貨量；ETN 季度 DC orders YoY</td></tr>
+<tr><td>2</td><td><strong>Electrical Americas Op Margin trajectory</strong>（供給側轉化效率）</td><td>命脈是「capex 流入能不能轉成 GM/Op Margin 結構性擴張」。Q4 25 Op Margin 31.6% 創高 + 310bps YoY = 真正的 alpha 來源；若 capacity expansion 稀釋 incremental margin（H3 風險），thesis 即使對也不會兌現。</td><td>季度 Electrical Americas Op Margin；segment GM；incremental margin（rev growth / EBIT growth）；Boyd 整合 cost synergy 進度</td></tr>
+</table>
+
+<div class="card">
+<strong>為什麼是這 2 個，而不是其他？</strong>市場常討論的「800V DC partnership」「Mobility 拆分」「ROIC 13%+」都是次要驅動——若 hyperscaler 砍 capex（driver 1），即使 800V DC 卡位最深也賺不到錢；若 Op Margin（driver 2）不擴張，即使 EPS 名目成長也是 multiple compression 收尾。<strong>這兩個 driver 是 ETN thesis 兩條完全獨立的因果鏈</strong>（需求 vs 供給轉化）。
+</div>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<div class="card">
+<strong>測試問題：driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？</strong><br>
+✅ 是。範例：假設 hyperscaler capex 凍結（driver 1 死），但 Boyd 整合 cost synergy 仍可獨立兌現（Electrical Americas existing rev base 仍可 expand margin 從 cost out）→ driver 2 可獨立存活。反之，若 hyperscaler capex 暴增（driver 1 活），但 capacity expansion 稀釋 incremental margin（driver 2 死）→ thesis 也不會 fully play out。<br>
+<strong>結論：</strong>兩條因果鏈正交，driver 2 不是 driver 1 的 sub-component ✅。
+</div>
+
+<h3>3b. 強制減法——市場常討論但我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>800V DC partnership 獨家性</td><td>NVDA 31 個 partner 都有 800V DC 卡位，這只是「ecosystem 准入券」非 single-vendor moat（見 Phase B 矛盾 #4 裁決）</td></tr>
+<tr><td>Mobility 拆分後 stub 估值升級</td><td>拆分本身是 zero-sum 估值切割，純 Electrical 倍數重估的 alpha 早已 priced-in 至當前 fwd PE 31x</td></tr>
+<tr><td>Brightlayer 軟體 attach</td><td>recurring revenue 規模太小（占總營收 < 3%），無法 move the needle</td></tr>
+<tr><td>大宗商品成本（銅 / 鋼）</td><td>ETN GM 38% 反映已能 pass-through 至 hyperscaler 客戶，cost pass-through 是普遍實踐非 differentiator</td></tr>
+<tr><td>「美國再工業化」narrative</td><td>narrative 太 broad，無法量化至 ETN 訂單增量；真正驅動是 hyperscaler AI capex 而非廣義 reshoring</td></tr>
+</table>
+
+<h3>🔄 我和市場 Consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Forward PE 31x × FY27 consensus EPS $15.42 = $478（vs 現價 $401，隱含 19% upside）。共識假設：(1) hyperscaler capex 不會在 2027 H2 結構性減速；(2) Boyd 整合 Y2 fully accretive；(3) Mobility 拆分後純 Electrical re-rate 至 28-32x。</td></tr>
+<tr><td>我認為的不同假設</td><td>共識把 12 年 DC backlog 等同 12 年 EPS visibility，但<strong>實際 backlog 兌現節奏依賴 grid 互連速度</strong>（PJM 平均 7 年 IOA→commissioning，transformer 2-4 年 lead time）— 真正影響 EPS 的是前 3-4 年 backlog，後 8 年是「optionality」非「visibility」。同時，Boyd 22.5x premium 在 hyperscaler 減速場景下會出現商譽減損風險。</td></tr>
+<tr><td>賣方為什麼錯</td><td>(1) <strong>Backlog 質量 vs 數量混淆：</strong>9 年 DC backlog 中，前 3 年是已 contracted + grid power secured；4-9 年是 specified 但 grid + permit 未確定（PJM 21+ GW engineering procurement 顯示 bottleneck）。賣方把 backlog 線性外推。(2) <strong>Boyd integration optimism：</strong>22.5x EV/EBITDA 是 best case，假設 cross-sell + cost synergy 100% 兌現，但工業 M&A 歷史 base rate 為 60-70% synergy 兌現。(3) <strong>Hyperscaler capex 線性外推：</strong>2026 capex +36% 不可線性外推至 2027-30，AI ROI 證明窗口在 2027 H2。</td></tr>
+</table>
+
+<div class="card">
+<strong>分歧結論：</strong>三題都有明確差異 → thesis 有獨立 alpha 來源（valuation timing + backlog quality + Boyd integration risk）。<strong>§7 倉位不需額外打折</strong>（分歧夠強，1.5% 起步 → 3% 目標是合理 sizing）。
+</div>
+
+<!-- ============== §5 SINGLE THING ============== -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<div class="card pre">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述（Primary trigger）</strong></td><td><strong>MSFT / AMZN / META / GOOG 四家 hyperscaler 中 ≥ 3 家在連續 2 個 quarterly earnings 中 forward capex guidance YoY < +10%</strong>（vs 當前 +30~40%）— 結構性減速確認，非單季 noise。</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>ETN 50% revenue 來自 Electrical Americas，其中 ~30% 直接綁定 hyperscaler AI DC orders。若 Big 4 capex 從 +35% YoY 暴跌至 +10%，ETN DC orders YoY 將從 +240% 跌至 +50% 以內，FY27-28 EPS consensus 將被砍 20-30%（從 $15.42 → $11-12），同時 fwd PE 將從 31x 壓縮至 18-22x（mean reversion + recession discount）→ 股價同時受 EPS + multiple 雙殺，-50% 以上 downside。</td></tr>
+<tr><td>如何監測</td><td>(a) MSFT 季度 ER「Azure capex guide」（每季 4/7/10/1 月）；(b) AMZN AWS capex commentary；(c) META FY capex guide（年初 + 年中 update）；(d) GOOG Capex guide。資料來源：直接讀 earnings call transcript（Motley Fool / SeekingAlpha）；頻率：每季一次（4 個來源）。</td></tr>
+<tr><td>目前離發生有多遠</td><td>當前 Big 4 capex 仍 +30~40% YoY，2026 FY guide 顯示 capex 持續加碼（MSFT FY26 capex $80B+，AMZN $100B+）。觸發距離：~6-12 個月（最快 2026 Q3-Q4 earnings 出現首個 deceleration 訊號；2027 Q1-Q2 確認結構性減速）。</td></tr>
+</table>
+</div>
+
+<div class="card pre">
+<strong>Secondary trigger（從 §6 pre-mortem 派生，2026-05-13 補入）：</strong> Boyd Thermal 在 FY27 Q1 ER 揭露 ≥ $500M 商譽 / 無形資產減損（impairment）— 確認 22.5x EV/EBITDA 整合溢價的 thesis 破裂，driver 2（Op Margin trajectory）獨立 die。<strong>監測：</strong>FY27 Q1 ER（2027-05 預期）。
+</div>
+
+<!-- ============== §6 WHAT I DON'T KNOW + PRE-MORTEM ============== -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Boyd Thermal 整合 cost synergy 是否 100% 達標</td><td>FY27 Y2 fully accretive + Boyd Rev $1.7B 維持</td><td>若 synergy 只達 60%：EPS FY27 從 $15.42 → ~$14.50（-6%），fwd PE 27x → 23x，股價 -15-20%；若揭露商譽減損：-30~40%</td></tr>
+<tr><td>2</td><td>PJM grid 互連 bottleneck 對 ETN backlog 兌現節奏的真實 impact</td><td>backlog 兌現節奏維持 10-12% organic growth/yr</td><td>若 grid bottleneck 拖慢兌現至 6-7%/yr（vs guide 10%）：FY28 EPS consensus 砍 10%，5Y 累計 -15-20%</td></tr>
+<tr><td>3</td><td>Mobility 拆分後 stub 估值 + 純 Electrical multiple re-rating 幅度</td><td>純 Electrical fwd PE 28-32x（vs 當前 blended 31x）</td><td>若拆分後純 Electrical 只給 25x（市場不認同 chip-to-grid premium），同步 stub 估值不利 → 拆分當年 -15% drawdown</td></tr>
+<tr><td>4</td><td>Vertiv / Schneider / ABB 在 800V DC ecosystem 中是否會搶走 ETN 市佔</td><td>ETN 維持 NA DC power top 4 + GR 1-2pp/yr</td><td>若 Vertiv 在液冷 first-mover + 800V DC release 2H 26 搶下 hyperscaler 訂單：FY28 DC backlog 增速從 +48% 降至 +25%</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5（三段式）</h3>
+
+<div class="card pre">
+<strong>第一段｜故事倒推（≤80 字 narrative）：</strong><br>
+「假設 5 年後（2031-05）這個部位虧 50%。最可能故事是：<strong>2027 Q2-Q3 AI 訓練 ROI 證明窗口未達預期，MSFT / AMZN / META / GOOG 四家中 3 家在 FY28 capex guide 中砍 15-25%</strong>（從 $700B → $550B 全年），<strong>ETN FY27 Q3 ER 揭露 DC orders YoY 從 +100% 暴跌至 +20%</strong>。<strong>同時 Boyd 整合在 FY27 Q1 揭露 $600M 商譽減損</strong>（22.5x EV/EBITDA premium 不可持續），FY28 EPS consensus 從 $17 下修至 $13。Fwd PE 從 31x 壓縮至 18x（recession + multiple compression 雙殺），股價從 $410 → $230（-44%），峰值前 $470 → 谷底 $200（peak-to-trough -57%）。Mobility 拆分被推遲，純 Electrical re-rate 失敗。」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="tag warn">⚠ 部分重疊</span>。<strong>主 trigger 是 hyperscaler capex 暴跌（= §5 primary）</strong>，但 <strong>Boyd 商譽減損 $600M 是獨立 trigger，§5 原版未抓到</strong>。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<div class="card pre">
+<strong>狀態：⚠ 部分重疊 → 已補 1 條 secondary trigger</strong>。Boyd 商譽減損 ≥ $500M 已加入 §5 區塊作為 Secondary trigger，監測時點：FY27 Q1 ER（2027-05 預期）。<br>
+<br>
+<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>。Primary（hyperscaler capex 結構性減速）+ Secondary（Boyd 商譽減損）。前者反映 driver 1 死，後者反映 driver 2 死，覆蓋兩條因果鏈獨立 kill scenario。
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−45% ~ −60%</strong>（寬度 15pp）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q2-Q3（hyperscaler capex 結構性減速確認）+ FY27 Q1 ER（Boyd 商譽減損揭露）— 兩個 trigger 可能 stacked 出現</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>若 thesis 仍對（chip-to-grid 寡頭地位未破）：18-24 個月恢復至 trough 前峰值；若 thesis 破裂（Op Margin < 25%）：5+ 年不恢復或 thesis 重寫</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🔴 &lt; −50%（多數人會在中途出場）</strong></td></tr>
+</table>
+
+<div class="card pre">
+<strong>Max DD headline：</strong>
+<div class="maxdd-headline" style="color:var(--bad)">−45% ~ −60%</div>
+<div style="height:18px;background:linear-gradient(to right,#15803D 0%,#15803D 16%,#CA8A04 16%,#CA8A04 50%,#DC2626 50%,#DC2626 100%);border-radius:4px;margin:10px 0"></div>
+<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--soft)"><span>0%</span><span>−30%</span><span>−50%</span><span>−60%</span></div>
+</div>
+
+<div class="card pre">
+<strong>校驗（必填一句話）：</strong>「若 max DD 落在 −45~−60%，能否撐到復原？條件：<strong>(1) 部位 ≤ 3% portfolio</strong>（即使 -60% drawdown，組合層面 -1.8%，可承受）；<strong>(2) 不使用槓桿</strong>；<strong>(3) §5 single-thing 未觸發</strong>（若觸發即清倉而非死扛）。<strong>結論：</strong>需在 §7a 上限 ≤ 3% 才能容忍此 Max DD profile，且必須是條件式進場（避免在 $410 高位被 -60% 套住——應在 $360-385 進場，max DD 從那個 base 起算 -45%~-60% → 谷底 $145-$210，仍是可承受區間）。」
+</div>
+
+<div class="card pre">
+<strong>Guardrail：🔴 評級已觸發 §7a 倉位上限自動下修</strong>（原計畫 3% → 強制 ≤ 1.5% 起步，目標 ≤ 3.0%），並在 §7d 標註「中途出場風險高」。
+</div>
+
+<!-- ============== §8 REVIEW TRIGGERS ============== -->
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td><strong>2026 Q2 ER</strong>（ETN）</td><td>財報日期</td><td><strong>2026-08 預期</strong>。觀察：(a) DC orders YoY 是否維持 +50%+（vs Q1 26 +240%）；(b) FY26 organic guide 是否維持 10%+；(c) Electrical Americas Op Margin 是否 > 30%；(d) Boyd 整合 9 個月後 Rev 是否達 $1.0B+ (60% of $1.7B full-year guide)</td></tr>
+<tr><td>2</td><td><strong>Big 4 hyperscaler 季度 capex guide</strong></td><td>產業事件</td><td>MSFT (2026-07 + 2026-10) / AMZN (2026-08 + 2026-11) / META (2026-07 + 2026-10) / GOOG (2026-07 + 2026-10)。觸發條件：≥ 3 家連 2 季 YoY capex < +15% → §5 single thing primary trigger</td></tr>
+<tr><td>3</td><td><strong>股價觸發 $370</strong></td><td>價位觸發</td><td>進入合理進場區間下緣（PE 25x × FY26 EPS $14.5），同時 RSI(14) 需回到 50-60 區間 → 條件式啟動小倉 0.7%</td></tr>
+<tr><td>4</td><td><strong>§5 Single Thing Primary</strong></td><td>Thesis kill</td><td>Big 4 hyperscaler ≥ 3 家連 2 季 capex YoY < +10% → 即清倉</td></tr>
+<tr><td>5</td><td><strong>§5 Single Thing Secondary</strong>（pre-mortem 派生）</td><td>Thesis kill</td><td>Boyd Thermal 商譽 / 無形資產減損 ≥ $500M（最可能在 FY27 Q1 ER 2027-05 揭露）→ 即清倉</td></tr>
+</table>
+
+<div class="card yellow">
+<strong>這份報告的保質期：至 2026-08-01</strong>（下一次 Q2 ER 發布前有效）。Q2 ER 後必須重評，重點：(a) DC orders 動能是否延續 +50%+；(b) hyperscaler Q2 capex guide 是否首次出現 deceleration 訊號；(c) Boyd 9 個月整合進度。
+</div>
+
+<div class="card">
+<strong>最可能發生的 upside 因素：</strong>(1) NVDA Rubin 平台 2027 ramp 帶動 800V DC 真正放量，ETN 直接受益；(2) Q2 26 ER DC orders 維持 +100%+ → 共識 EPS 上修 → fwd PE 維持 31x、股價追隨 EPS 上修至 $450+；(3) Boyd 整合提前進度 + cross-sell 在 hyperscaler 客戶 first wins 揭露。
+</div>
+
+<div class="card">
+<strong>最可能發生的 downside 因素：</strong>(1) AI 訓練 ROI 證明窗口 2027 H2 開啟，1-2 家 Big 4 砍 FY28 capex 15%+ → ETN -25~30% gap down；(2) Boyd 整合在 H2 26 / H1 27 揭露 cost overrun + integration delay；(3) Mobility 拆分過程重組成本超預期、推遲時程；(4) Vertiv 在液冷 + 800V DC 同時搶下 1-2 個 hyperscaler 大單，ETN backlog 增速從 +48% 降至 +25%。
+</div>
+
+<!-- ============== PHASE A (折疊) ============== -->
+<h2>Phase A｜獨立研究結論（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 ｜ A1 結論：ETN 護城河從「電力設備寡頭」進化至「chip-to-grid 全棧整合者」moat ↑ widening</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>規模 + 行業專業 know-how</strong>（NA DC power top 5 collective 62% share，markets and markets）；(2) <strong>客戶綁定（specified-in moat）</strong>—9 年 DC backlog 表示客戶在設計階段已 spec ETN，switching cost 極高（DCD Eaton press release 2026/03/12）</td></tr>
+<tr><td>持久性評分</td><td><strong>8/10</strong>，5 年穩固度：<strong>高</strong>。理由：backlog visibility 9 年 + Boyd 液冷整合 + 800V DC 卡位 + grid 連接是地理性 moat（無法輕易 substitute）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Vertiv 在液冷 first-mover（CDU first-to-market） + 800V DC release 2H 26 同時搶下 ≥ 2 個 hyperscaler 主架構單，2027 起 ETN backlog 增速從 +48% 降至 +20-25%</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 ~38%（趨勢 ↑）；NA market share ~13-15%（top 5 collective 62%，趨勢 →）；ROIC 13.39% (Dec 2025) → 14.93% (recent)（GuruFocus），WACC ~8% → 超額 5.4-7%p（趨勢 ↑）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>。12 個月內證據：(1) Q1 26 DC orders +240% YoY = 同業 Vertiv +35-40% / Schneider +25-30% 同期，ETN gap 擴大；(2) Boyd Thermal $9.5B 3/12/26 完成 = 從「電力設備商」進化至「chip-to-grid 全棧」唯一 vendor；(3) NVIDIA GTC 3/16/26 共同發表 Beam Rubin DSX co-design 模組 = co-engineering integration（vs Vertiv/Schneider 是 reference design partner）</td></tr>
+</table>
+
+<h4>Sourced data points（A1：7 個，floor ≥ 5 ✅）</h4>
+<ol>
+<li>DC backlog 9 年（Eaton press release 2026/03，DCD 2026/03 + Klover.ai 2026-Q1）— 業界最長 visibility</li>
+<li>NA top 5 collective 62% data center power share（marketsandmarkets 2026），ETN 為其中之一</li>
+<li>NVDA 800V DC 31 partner 列表（CNESA 2025-11）— ETN 在其中，含 Beam Rubin DSX co-design（DCD 2026-03-17）</li>
+<li>Q4 2024 Electrical Op Margin 31.6% record + 310bps YoY（Eaton ER）</li>
+<li>Q1 26 DC orders +240% YoY（Eaton Q1 26 ER 2026-05-05），DC revenue +50% YoY</li>
+<li>ROIC 13.39% (Dec 2025) / 14.93% recent（GuruFocus）— vs 工業中位 10-11%</li>
+<li>Electrical backlog +48% YoY Q1 26 → Electrical Americas $14.5B（Eaton Q1 26 ER）</li>
+</ol>
+
+<p><strong>A1 獨立結論（一句話）：</strong>ETN 護城河類型從「電力設備寡頭」進化至「chip-to-grid 全棧整合者」，moat_trend ↑ widening；持久性 8/10，最大侵蝕來自 Vertiv 液冷 + 800V DC release 2H 26 競爭。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 ｜ A2 結論：AI DC 電力 super-cycle Phase II 中段，runway_post_y5 🟢 寬</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>US DC power demand：75.8 GW (2025) → 108 GW (2028) → <strong>134.4 GW (2030)</strong>（S&P Global / Goldman Sachs）—CAGR 12.2%。全球 DC power demand 2030 vs 2023 +165%（Goldman Sachs）。電力設備 TAM 隱含 2026 ~$45B → 2030 $80B+</td></tr>
+<tr><td>供需判斷</td><td>當前供需<strong>嚴重偏緊</strong>，未來 12 個月方向<strong>持續偏緊</strong>。Transformer lead time 2-4 年（Power Magazine 2026）；PJM 145,777 MW capacity auction 6.6 GW 短缺 vs reliability requirements 2027-28；PJM 21+ GW engineering procurement + 8.2 GW under construction (2026-01)</td></tr>
+<tr><td>最大技術替代風險</td><td>SMR（small modular reactor）2028+ 商業化 → 改變 DC 電力 sourcing 模式（從 grid 互連 → on-site nuclear），降低 ETN 在 substation / transformer 部分需求。但 chip-level 仍需 ETN 設備，moat 部分受影響非全破。時間軸：2028-2030</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>美國 grid 互連改革（FERC Order 2023 + 2026 supplemental ruling）若加速 grid build-out → ETN 短期受益但長期 commoditization 加速；中國電力設備（如 TBEA、Pinggao）若進入北美市場（雖目前受 CFIUS 限制）</td></tr>
+<tr><td>議價權位置</td><td>對上游：<strong>中</strong>（銅 / 鋼 / 變壓器矽鋼 cost pass-through OK，但 long-lead components 受限）；對下游：<strong>強</strong>（hyperscaler 9 年 backlog spec-in，pricing power 強）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>。判準：(1) S 曲線位置：<strong>早-中期</strong>（current 2025 ~$45B → 2030 ~$80B → 2035 ~$130B+ 隱含 8-10% CAGR 至 2035）；(2) Y5 末 (2030) TAM 滲透率 ~50-60% of long-run forecast；(3) 第二曲線：800V DC（2027+）、SMR + microgrid（2028+）、edge AI（2028+）— 三條接續</td></tr>
+</table>
+
+<h4>Sourced data points（A2：8 個，floor ≥ 5 ✅）</h4>
+<ol>
+<li>Goldman 165% power demand +increase by 2030 vs 2023（Goldman Sachs Insights 2026）</li>
+<li>US DC power demand 75.8 GW (2025) → 108 GW (2028) → 134.4 GW (2030)（S&P Global / EIA）</li>
+<li>Hyperscaler capex $600B 2026 / $450B AI（Goldman Sachs / JLL 2026 outlook）+36% YoY 2025-26</li>
+<li>PJM 145,777 MW capacity auction 6.6 GW 短缺 reliability 2027-28（Spotlight PA 2026-01）</li>
+<li>PJM 21+ GW engineering procurement + 8.2 GW under construction（PJM 2026-01）</li>
+<li>Transformer lead time 2-4 年（Power Magazine 2026 / Orrick guide 2025-11）</li>
+<li>NVIDIA 800V DC 31 core industry chain（CNESA 2025-11-25）— ABB / Schneider / Eaton / Vertiv / Delta / Infineon / STM / Navitas 等</li>
+<li>32 GW US DC under construction, 70% AI-related（Eaton mgmt Q1 26 ER 2026-05-05）</li>
+</ol>
+
+<p><strong>A2 獨立結論（一句話）：</strong>AI DC 電力產業處於 super-cycle Phase II 中段，供需嚴重偏緊（transformer 2-4 年 lead time + PJM 6.6 GW 短缺），runway_post_y5 🟢 寬（Y5 末 ~50-60% TAM 滲透 + 第二曲線 800V DC/SMR/edge AI 2027-28 接續）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務 / 財務 / 資本配置 ｜ A3 結論：FCF 強、margin 創高，但 Boyd 22.5x premium + LT debt +112% 是估值已 priced-in 的最大張力</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構（FY25 $27.4B）</td><td><strong>現金牛：</strong>Electrical Global ~32%（含 Boyd 整合進來）+ Aerospace ~12%；<strong>成長引擎：</strong>Electrical Americas ~46%（含 hyperscaler DC orders）；<strong>拖累 / 新興：</strong>Vehicle + eMobility ~10%（Q1 27 拆分）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶 < 10%（hyperscaler 分散），前五大估 ~25-30%（含 MSFT/AMZN/META/GOOG/Apple/部分大型 colo），風險：<strong>中</strong>（concentration 集中在「hyperscaler basket」非 single customer）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（switchgear / UPS lead time 18-24M + spec-in 鎖定使 hyperscaler 接受年度漲價），<strong>定價權強</strong>（Op Margin 連續創高反映）</td></tr>
+<tr><td>未來金雞母</td><td>(1) <strong>Boyd Thermal liquid cooling</strong>（current ~4% rev 占比，FY26 Rev $1.7B / FY28 預估 $2.5B，TAM ~$15B by 2030，預估成熟 4-5 年）；(2) <strong>800V DC architecture</strong>（current 0% rev，2027+ ramp，TAM ~$8-12B by 2030，預估成熟 5-7 年）；(3) <strong>Brightlayer 軟體</strong>（< 3% rev，recurring 高 margin）</td></tr>
+<tr><td>財務體質</td><td>FCF Margin <strong>13.1%</strong>（$3.6B / $27.4B FY25）；GM ~38%（連續創高）；Net Debt/EBITDA ~2.4x post-Boyd（vs pre-Boyd 0.9x）；壓力測試：若 revenue -20%，FCF estimated $2.0B 仍正，可撐 ~3 季 debt service + dividend</td></tr>
+<tr><td>資本配置紀律</td><td>FY25：Capex $919M（+13.7% YoY，反映 capacity expansion）；Dividend $4.16/share（+10.6%）；Buyback $1.9B（-25.3% YoY，理由：Boyd 整合預備）；M&A：Boyd $9.5B（22.5x EV/EBITDA 為 industry M&A 史上高位之一）。<strong>評價：</strong>capex 增速合理（capacity 對應需求暴增），buyback 暫緩合理（保留現金 + debt headroom 為 Boyd 整合），但 Boyd premium 過高需 cost synergy 100% 兌現才划算</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td><strong>EPS CAGR FY25-30 預估 12.0%/yr</strong>（含 buyback 對 EPS 稀釋抵銷 ~1pp，gross 13% / net 12%）；<strong>5Y 末 fwd PE 預估 24x vs 當前 31x</strong>，re-rate 貢獻 = (24/31)^(1/5)-1 = <strong>-5.0%/yr</strong>；<strong>現金股息率 1.0%</strong>（$4.16/$410）；<strong>淨買回率 1.5%/yr</strong>（已扣 SBC ~0.5%）— 合計 SHY +2.5%/yr</td></tr>
+</table>
+
+<h4>Sourced data points（A3：11 個，floor ≥ 6 ✅）</h4>
+<ol>
+<li>FY25 revenue $27.4B（Eaton 10-K / stocktitan 2026-Q1）</li>
+<li>FY25 FCF $3.6B + Operating CF $4.5B（stocktitan 2026-Q1）</li>
+<li>FY25 Capex $919M (+13.7% YoY)（stocktitan）</li>
+<li>FY25 Dividend $4.16/share (+10.6% YoY)（stocktitan）</li>
+<li>FY25 Buyback $1.9B (-25.3% YoY)（stocktitan）</li>
+<li>Forward PE 30-31x (May 2026)（Yahoo Finance / GuruFocus）</li>
+<li>10-yr median PE 26.41x / 10-yr range 10.77-41.72x（financecharts.com）— 現價位於 10Y 99% percentile</li>
+<li>FY26 EPS guide $13.05-$13.50 adj，midpoint $13.28（Eaton Q1 26 ER）</li>
+<li>FY27 EPS consensus $15.42（StockAnalysis 22 分析師）</li>
+<li>FY28 EPS consensus $17.46（StockAnalysis）</li>
+<li>Boyd Thermal $9.5B = 22.5x EV/EBITDA 2026E（Bloomberg 2025-11-03 / DCD 2026-03）— Boyd Rev $1.7B 2026 forecast</li>
+</ol>
+
+<p><strong>A3 獨立結論（一句話）：</strong>ETN 財務體質工業頂級（FCF margin 13.1% + Electrical Op Margin 31.6%），資本配置紀律合理，但 Boyd 22.5x EV/EBITDA 整合溢價 + LT debt +112% 翻倍 + fwd PE 31x 位於 10Y 99% percentile = 估值已 priced-in 大部分 thesis，邊際資金等回撤是合理紀律。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD / ID 報告數據擷取（純輸入，不產出結論）</summary>
+<div>
+
+<h4>DD 報告擷取（DD_ETN_20260506.html）</h4>
+<table>
+<tr><th>項目</th><th>DD 結論</th></tr>
+<tr><td>綜合訊號燈</td><td><strong>B</strong>（衛星候選；quality B + gate 🟡 + trap 🟡 + MA ✅）</td></tr>
+<tr><td>R:R（$410.86 計）</td><td>短期 <strong>-0.7x</strong>（負）｜中期 <strong>+0.05x</strong>（中性偏負）｜長期 5Y <strong>+0.5x</strong>｜壓力測試通過率 <strong>1/4</strong></td></tr>
+<tr><td>三引擎目標價</td><td>保守 $361.6 / 中性 $426.0 / 樂觀 $529.4（基於 FY+2 EPS $15.49 × 27.5x）</td></tr>
+<tr><td>Bear anchor</td><td>未明示，但 R:R 短期 -0.7x 隱含 ~$330-340 範圍</td></tr>
+<tr><td>紅旗清單</td><td>(1) Boyd 整合溢價 22.5x + LT debt +112% 翻倍；(2) Hyperscaler 2027 H2 capex 結構性減速（25% 機率）；(3) Mobility 拆分重組成本 + 短期管理層分心；(4) FY26 EPS 共識 7d 內從 $13.30 → $13.15 微下修</td></tr>
+<tr><td>三核心假設</td><td>H1: AI DC 電氣化超級週期持續（Q1 26 +強化）；H2: Boyd + Mobility 戰略轉型（Q1 26 +強化）；H3: FCF/ROIC/margin 維持工業頂級（Q1 26 0 不變）</td></tr>
+</table>
+
+<h4>ID 報告擷取</h4>
+<table>
+<tr><th>ID</th><th>產業評級</th><th>ETN 相關結論</th></tr>
+<tr><td>ID_AIDataCenter_20260419</td><td>Phase II（基建爆發 + 電力瓶頸）/ 19%</td><td>「Eaton Boyd Thermal 是結構轉型」3 條非共識之一</td></tr>
+<tr><td>ID_Transformers_20260419</td><td>Phase II 後期 / 19%</td><td>「Eaton 的電氣 + Boyd thermal + SST 三輪驅動 hybrid 定位被低估」（注：2026-04-21 patch lead time + Eaton 獨家性校正）</td></tr>
+<tr><td>ID_LiquidCooling_20260419</td><td>Phase II / 18%</td><td>ETN 在液冷透過 Boyd 整合進入，但 Vertiv first-mover CDU 仍領先</td></tr>
+<tr><td>ID_AIDCPowerElectronics_20260421</td><td>Phase II / 19%</td><td>「Vertiv $15B backlog 是 mix-shift 啟動」非共識；ETN 在此 ID 中 share 排第 3-4</td></tr>
+</table>
+
+</div>
+</details>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+
+</body>
+</html>

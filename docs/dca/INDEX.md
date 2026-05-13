@@ -150,3 +150,6 @@
 | 2026-05-13 | COHR | Coherent 用 6 吋 InP 晶圓 + NVIDIA 鎖定，把 AI 光通訊變成所有 hyperscaler 都得繳「過路費」的物理瓶頸。 | DCA_COHR_20260513.html | DD_COHR_20260418.html | ID_SiliconPhotonicsCPO_20260419.html / ID_AINetworking_20260419.html |
 | 2026-05-13 | FN | Fabrinet 是少數能做 1.6T 次微米光學對位的「中立 Switzerland 組裝商」，被 OEM/EMS 兩邊放棄、所以贏。 | DCA_FN_20260513.html | DD_FN_20260505.html | ID_SiliconPhotonicsCPO_20260419.html |
 | 2026-05-13 | GLW | Corning 用 175 年材料科學累積，把「玻璃」變成 AI 神經系統 + Solar 國產化 + 半導體 packaging 三條雙曲線同跑的稀缺材料壟斷。 | DCA_GLW_20260513.html | DD_GLW_20260429.html | ID_GlassSubstrate_20260420.html / ID_CoPoSFOPLPRace_20260505.html |
+| 2026-05-13 | ETN | Eaton 把 AI 資料中心電力從「電網到晶片」整合成寡頭壁壘，hyperscaler 9 年 backlog 是 capex 結構性轉化為毛利的鎖定通道。 | DCA_ETN_20260513.html | DD_ETN_20260506.html | ID_AIDataCenter_20260419.html / ID_Transformers_20260419.html / ID_LiquidCooling_20260419.html |
+| 2026-05-13 | APP | AppLovin 用 AXON 即時 ML 引擎把 mobile gaming 廣告的 ROAS 黑箱優勢拉到 e-commerce + CTV，成為 Meta/Google 雙寡占之外稀有的第三條 AI 廣告中樞。 | DCA_APP_20260513.html | DD_APP_20260418.html | ID_AIAdRetailMedia_20260429.html |
+| 2026-05-13 | CAT | Caterpillar 是百年工業寡頭，AI DC on-site power 把 reciprocating engines 從 cyclical 工具升級為結構性第二曲線。 | DCA_CAT_20260513.html | DD_CAT_20260504.html | ID_HeavyMachineryMining_20260427.html |

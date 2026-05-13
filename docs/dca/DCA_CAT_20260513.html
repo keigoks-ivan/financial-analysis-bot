@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAT Deep Conviction Analysis · 2026-05-13</title>
+<!-- dca-moat-trend: ↑ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--card:#FFFFFF;--alt:#F1F5F9;--good:#15803D;--great:#166534;--amber:#92400E;--bad:#991B1B;--bear:#DC2626;--soft:#64748B;--th:#1E3A5F;}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#0F172A;margin:0;padding:0;line-height:1.7;font-size:15px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 28px 80px}
+header.head{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--ink);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;z-index:50;font-size:14px}
+header.head .tk{font-weight:700;font-size:18px;color:var(--ink)}
+header.head .thesis-head{color:var(--soft);font-style:italic;max-width:60%;text-align:right}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:6px;border:none;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(30,58,95,.3);z-index:60}
+.print-btn:hover{background:#162B47}
+h1{color:var(--ink);font-size:28px;margin:0 0 8px}
+h2{color:#fff;background:var(--ink);padding:12px 16px;font-size:19px;margin:36px 0 18px;border-left:6px solid var(--accent)}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-left:4px solid var(--accent);padding-left:10px}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px}
+table{border-collapse:collapse;width:100%;margin:12px 0 18px;background:#fff;font-size:14px}
+th{background:var(--th);color:#fff;text-align:left;padding:9px 11px;font-weight:500}
+td{padding:9px 11px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:var(--alt)}
+.card{background:var(--card);border:1px solid #E2E8F0;border-left:4px solid var(--accent);padding:18px 20px;margin:14px 0;border-radius:2px}
+.card.green{border-left-color:var(--good);background:#F0FDF4}
+.card.yellow{border-left-color:#CA8A04;background:#FEFCE8}
+.card.red{border-left-color:var(--bear);background:#FFF1F2}
+.card.orange{border-left-color:#F97316;background:#FFF7ED}
+.card.blue{border-left-color:#0EA5E9;background:#F0F9FF}
+.card.pre{border-left-color:#DC2626;background:#FEF2F2}
+.tag{display:inline-block;padding:2px 9px;font-size:12px;border-radius:3px;font-weight:500}
+.tag.win{background:#DCFCE7;color:var(--great)}
+.tag.lose{background:#FEE2E2;color:var(--bad)}
+.tag.warn{background:#FEF3C7;color:#92400E}
+.statusbar{display:flex;gap:16px;justify-content:center;background:var(--alt);border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:18px 12px;margin:20px 0 10px;border-radius:4px}
+.sb-cell{flex:1;min-width:170px;max-width:200px;text-align:center;background:#fff;padding:12px 8px;border-radius:4px;border:1px solid #E2E8F0}
+.sb-label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sb-body{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.sb-sub{font-size:12px;color:var(--soft);margin-top:4px}
+.thesis-box{background:#EFF6FF;padding:28px 24px;border-radius:8px;text-align:center;margin:14px 0 24px;border:1px solid #BFDBFE}
+.thesis-box .big{font-size:24px;line-height:1.6;color:var(--ink);font-weight:500}
+.thesis-box .small{margin-top:8px;font-size:12px;color:var(--soft)}
+.decision{background:#F0FDF4;border-left:4px solid var(--good);padding:18px 20px;margin:14px 0;border-radius:2px}
+.decision.wait{background:#FEF9C3;border-left-color:#CA8A04}
+.decision.avoid{background:#FFF1F2;border-left-color:var(--bear)}
+.confl{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0}
+.confl table th{background:#9A3412}
+.verdict{background:#FED7AA;padding:14px 16px;border-radius:4px;margin:10px 0}
+.verdict table th{background:#7C2D12}
+.memo{background:#FFFFFF;border:1px solid #94A3B8;padding:22px 26px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin:14px 0;border-radius:2px}
+.elevator{background:#F1F5F9;border-left:3px solid var(--soft);padding:12px 18px;font-style:italic;margin:14px 0;font-size:14px;color:#334155}
+details{margin:12px 0;background:#fff;border:1px solid #CBD5E1;border-radius:4px;padding:0}
+details summary{cursor:pointer;padding:14px 18px;font-weight:500;color:var(--ink);background:#F1F5F9;border-radius:4px}
+details[open] summary{border-bottom:1px solid #CBD5E1}
+details > div{padding:16px 20px}
+.pos{color:var(--great);font-weight:600}
+.neg{color:var(--bad);font-weight:600}
+.neu{color:var(--soft)}
+.warn-cell{color:#92400E;font-weight:500}
+.ok-cell{color:var(--great);font-weight:500}
+.maxdd-headline{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.composition-bar{display:flex;height:28px;border-radius:4px;overflow:hidden;margin:10px 0;border:1px solid #CBD5E1;background:#F8FAFC}
+.composition-bar span{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+.cb-eps{background:#15803D}
+.cb-rerate-pos{background:#0EA5E9}
+.cb-rerate-neg{background:#A78BFA}
+.cb-shy{background:#64748B}
+.note{font-size:12px;color:var(--soft);font-style:italic}
+ul{padding-left:20px}
+li{margin:4px 0}
+@media print{
+  .print-btn,header.head{display:none}
+  details{break-inside:avoid}
+  details > div{display:block !important}
+  details:not([open]) > div{display:block !important}
+  body{font-size:13px}
+}
+</style>
+</head>
+<body>
+<header class="head">
+  <span class="tk">CAT · Caterpillar Inc.</span>
+  <span class="thesis-head">Caterpillar 是百年工業寡頭，AI DC 把 reciprocating engines 從 cyclical 工具升級成「結構性 on-site power」第二曲線 · 2026-05-13</span>
+</header>
+
+<div class="wrap">
+
+<h1>CAT｜Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-13 · 現價 $912.14 (5/12) · ATH $931.35 (5/7) · 12M +176% · backlog $63B (+79% YoY) · capacity 3x by 2027-29</p>
+
+<!-- ============== STATUS BAR ============== -->
+<div class="statusbar">
+  <div class="sb-cell">
+    <div class="sb-label">綜合訊號燈</div>
+    <div class="sb-body" style="color:#D97706">B</div>
+    <div class="sb-sub">時機極差，等回撤</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Moat 趨勢</div>
+    <div class="sb-body" style="color:var(--great)">A ↑</div>
+    <div class="sb-sub">widening · P&E pivot</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Y5+ Runway</div>
+    <div class="sb-body">🟢 寬</div>
+    <div class="sb-sub">P&E 主引擎延伸 2030+</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Max DD (5Y)</div>
+    <div class="sb-body" style="color:var(--bad)">−60%</div>
+    <div class="sb-sub">🔴 cycle + valuation 雙刃</div>
+  </div>
+</div>
+
+<!-- ============== §2 THESIS ============== -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="big">Caterpillar 是百年工業寡頭，AI DC on-site power 把 reciprocating engines 從 cyclical 工具升級為結構性第二曲線。</div>
+  <div class="small">42 字 · 敘事性，非財務指標</div>
+</div>
+
+<!-- ============== §7 DECISION ============== -->
+<h2>§7｜Decision（不是 Buy/Wait/Avoid，是可執行計畫）</h2>
+
+<div class="decision wait">
+  <strong>裁決：絕對禁止現價追高，等大幅回撤才考慮進場（條件式建倉，不一次性）</strong> ｜ 主因：(1) DD §1 R:R 短中長 0/4 全敗 + 12M +176% + RSI 過熱 + Bollinger 上軌外；(2) fwd PE 36x = 5Y 平均 18.2x 的 2.0x（5Y 82nd percentile）；(3) 🔴 Max DD 評級 + Bear case -60%（cyclical + multiple compression 雙殺）→ 初始倉位下修至 1.0%。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在組合中的角色</td><td><strong>衛星部位</strong>（DD §1 訊號燈 B + R:R 0/4 全敗 + cyclical 風險 + Max DD 🔴）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.0% of portfolio</strong>（原計畫 2.5%，因 §6c Max DD 🔴 + cyclical drawdown -60% Bear case 自動下修 60%）</td></tr>
+<tr><td>目標倉位</td><td>2.5% of portfolio（若 AI DC P&E orders 維持 +30%+ YoY 至 2027 + CI/RI margin 守住 22%/18%+）</td></tr>
+<tr><td>進場價位區間</td><td><strong>$700 ~ $760</strong>（DD 建議 BB 中軌 $702；fwd PE 24-26x × FY26 EPS $29 = 接近 5Y 平均上緣；vs 現價 $912 需回撤 -17% ~ -23%）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批：</strong>(a) 等股價回到 $700-$760 區間 <em>且</em> RSI(14d) 回到 50-60 區間 → 進首批 0.5%；(b) Q3 26 ER（2026/10）P&E orders YoY 維持 +30%+ 且 CI EBITDA margin 不破 22% → 加碼 0.5%。<strong>絕對禁止現價 $900+ 建倉</strong>（12M +176% + 距 ATH 2% + Bollinger 上軌外）</td></tr>
+<tr><td><strong>Opportunity cost vs 現有同類曝險</strong></td><td>
+<strong>比較標的：</strong><br>
+1. <strong>GEV（GE Vernova）：</strong>gas turbine + grid 設備 AI DC 直接受益，fwd PE 29x，2026 YTD +65%（vs CAT +53%）但 R:R 較均衡，gas turbine 18-24M lead time = 更明確 visibility。<br>
+2. <strong>ETN（Eaton）：</strong>chip-to-grid 整合性 + Boyd 液冷 + NVIDIA 800V DC，fwd PE 31x。<br>
+3. <strong>DE（Deere）：</strong>cycle bottom contrarian（Q1 FY26 EPS $2.42 vs Street $2.02），fwd PE ~22x 較合理。<br>
+4. <strong>CMI（Cummins）：</strong>diesel/gas engine pure-play AI DC backup power + on-site，fwd PE 16-18x，但比 CAT 缺整套服務生態。<br>
+<strong>邊際資金裁決：</strong>若想曝險 AI DC on-site power → GEV 是「gas turbine 純度最高 + 更明確 lead time」首選；CAT 是「百年工業寡頭 + service 生態 + multi-segment」但時機極差。若已持 GEV + ETN → 不需再加 CAT（同 AI DC 電力主題 correlation 高）；若無 AI DC 電力曝險 → DE / CMI 是「cycle 合理估值」較佳替代。<strong>結論：</strong>當前邊際資金優先 GEV（R:R 較佳）+ CMI（估值合理）；CAT 等回測 $700-$760 才進場。
+</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位 / 事件）</th><th>調整至倉位</th></tr>
+<tr><td>首批進場</td><td>股價回到 $700-$760 AND RSI(14) 回到 50-60</td><td>0.5%</td></tr>
+<tr><td>加碼 #1</td><td>Q3 26 ER（2026/10）P&E orders YoY 維持 +30%+ AND CI EBITDA margin &gt; 22%</td><td>1.0%</td></tr>
+<tr><td>加碼 #2</td><td>FY27 enterprise sales CAGR 走勢仍接 6-9% guide AND 大型 recip engine backlog 維持 &gt; +50% YoY</td><td>2.5%</td></tr>
+<tr><td>減碼</td><td>連 2 季 hyperscaler capex YoY &lt; +15% OR CI EBITDA margin 連 2 季 YoY -150bps</td><td>0.5%</td></tr>
+<tr><td>清倉</td><td>P&E 用戶端銷售連 2 季 YoY &lt; +20%（vs Q1 26 +32%）OR 中國 SANY/XCMG 北美工程機械市佔 &gt; 5%（H2 摧毀）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性 + 動能過熱檢查</h3>
+<table>
+<tr><th>檢查項</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="tag win">✅</span></td><td>$912 vs MA60 估計 ~$850</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="tag win">✅</span></td><td>$912 vs MA200 估計 ~$700（強勢上漲 12M）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="tag win">✅</span></td><td>2Y MA 估計 ~$430</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td><span class="tag win">✅ 通過</span></td><td>ChartMill Technical 10/10；20/26 indicators bullish</td></tr>
+<tr><td><strong>短期動能極度過熱</strong></td><td><span class="tag lose">🔴 RSI overbought + BB 上軌外 + 12M +176%</strong></td><td>距 ATH $931 僅 2%；4 週漂移估計 +8~+15%；RSI 過熱；Bollinger 上軌外 +2.3%（DD 表）— <strong>動能過熱嚴重警示</strong></td></tr>
+</table>
+
+<div class="card red">
+<strong>動能 + MA 結論：</strong>Pure MA 結構多頭強烈 ✅，但動能過熱 🔴（RSI overbought + BB 上軌外 + 12M +176%）→ §7a 進場節奏<strong>必須條件式 + 等回撤至少 -15%</strong>（回測 $760-$700 即 BB 中軌附近）；<strong>絕對禁止 $900+ 追高建倉</strong>（mean reversion 從 BB 上軌外回測 BB 中軌歷史機率 &gt; 70%）。
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 hyperscaler P&E orders 維持 +30%+ + CI 軟著陸 → +25-40% upside（從 $760 進場），但 valuation overhang 限制 multiple expansion</td></tr>
+<tr><td><strong>中期（2-5 年）</strong> ⭐ 建議</td><td>P&E 成 CAT 最大成長引擎（FY27 P&E Rev &gt; $32B / capacity 3x 2027-29 兌現）+ CI/RI cycle 軟著陸 → +60-100%（IRR 10-15%/yr Base，從 $760 起算）</td></tr>
+<tr><td>長期（5-10 年）</td><td>達成 P&E 成 CAT 最大 segment（占 ≥ 40%）+ 中國競爭被限制在亞太 + 全球基建超級週期延長 → +150~200%，但 cyclical 風險不會消失（CI/RI 每 6-7 年仍會 cycle 一次）</td></tr>
+</table>
+<div class="card blue">
+<strong>建議持有：中期 2-5 年</strong>。原因：(1) P&E pivot 從 reciprocating engine capacity 3x 兌現需 24-36M；(2) AI DC on-site power 是 2026-30 中期 secular 機會；(3) CAT 是 cyclical compounder—5-10 年內必經歷 1 次 cycle drawdown，需要 entry timing 把握住 cycle 啟動點而非 cycle 高點；(4) Y5+ runway 🟢 寬但 dependent on cycle 起伏。
+</div>
+
+<h4>EPS 預測參考表（IRR composition 基底）</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>2026E（adj）</td><td>$25.00 ~ $26.50（mid $25.75）</td><td>Q1 26 $5.54 × 4.5x 季度推算 + Q4 季節性 + capacity expansion drag</td><td>Q1 26 已實現 $5.54，全年 +20% YoY 預估</td></tr>
+<tr><td>2027E</td><td>$29.14（consensus）</td><td>TIKR / Wall St consensus 19 分析師</td><td>P&E ramp + capacity 部分兌現</td></tr>
+<tr><td>2028E</td><td>$32.00 ~ $33.50（mid $32.75）</td><td>外推 12% CAGR</td><td>capacity 接近 3x 達標，AI DC orders 持續</td></tr>
+<tr><td>2030E（外推）</td><td>$38 ~ $42（Base $40）</td><td>本 DCA 外推</td><td>假設：FY26-30 EPS CAGR 11.6%/yr Base（含 buyback +1pp）；Bull 16%/yr → $50；Bear 0%/yr → $26（cycle 反轉場景）</td></tr>
+</table>
+
+<div class="card">
+<strong>5-10 年持有適合性論述：</strong>當前 $912 對應 fwd PE 36x（FY26 mid）/ 31x（FY27）/ 28x（FY28）/ 22x（FY30）— 若 EPS 真能 CAGR 11.6%（Base），<strong>5Y end P/E 仍 22x</strong>（高於 5Y 平均 18x）= 即使達 Base case，valuation 仍偏貴。<strong>長期合理進場：</strong>$700-$760 對應 FY26 fwd PE 24-26x（接近 5Y 平均上緣），thesis 兌現 + PE 維持 25-28x = 5Y +60-100%（IRR 10-15%/yr）。<strong>$912 現價進場：</strong>thesis 即使對，IRR 也壓縮至 5-8%/yr。
+</div>
+
+<!-- ============== §4 ASYMMETRY ============== -->
+<h2>§4｜Asymmetry Analysis（R:R + IRR composition）</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><span class="pos">Bull（Thesis 對）</span></td><td>+110%</td><td>+16.0%/yr</td><td>EPS FY30 $50（CAGR 16%）+ PE 28x；P&E pivot 成功 + capacity 3x 兌現 + CI/RI cycle 軟著陸 + 中國競爭被限制</td><td>25%</td></tr>
+<tr><td>Base</td><td>+54%</td><td>+9.0%/yr</td><td>EPS FY30 $40（CAGR 11.6%）+ PE 25x；P&E 達標但 CI/RI 中度 cycle 反轉 + 中國競爭 mid-single share 北美</td><td>40%</td></tr>
+<tr><td><span class="neg">Bear（Thesis 錯）</span></td><td>-49%</td><td>-12.6%/yr</td><td>EPS FY30 $26（CAGR 0%）+ PE 14x；hyperscaler 2027 砍 capex 25% + 全美基建延期 + tariff drag + 中國 SANY/XCMG 北美 share &gt; 8% + cycle 反轉重疊</td><td>35%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+32%</strong></td><td><strong>IRR ≈ 5.7%/yr</strong></td><td>=（0.25×110）+（0.40×54）+（0.35×-49）</td><td></td></tr>
+</table>
+
+<div class="card">
+<strong>IRR 落點解讀：</strong>機率加權 5Y IRR <strong>5.7%/yr</strong> → 落在「弱」區間（&lt; 8%/yr 弱）。<strong>不及 SPX 平均的強烈警示</strong>：當前股價反映「Bull case 機率被市場估到 50%+」，但本 DCA 把 Bear 機率拉到 35% 反映 cyclical 風險 + valuation 透支。<strong>從 $760 進場可改變 IRR 至 ~10%/yr</strong>（同樣 EPS / PE 路徑，僅 entry price 差異）→ 這就是為何 §7a 強制等回撤。
+</div>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>10Y 視角：</strong>10Y 期間 CAT 至少會經歷 1 次完整 cycle（2031-32 預期），Bull/Base/Bear 路徑分布趨平，10Y IRR Base case ~8-10%/yr，Bull case 14%/yr，Bear case 0%/yr。<strong>10Y 視角不顯著優於 5Y</strong>，因 cyclical 風險中期實現。</li>
+<li><strong>機會成本（同期可比標的）：</strong>GEV ~9-12%/yr（gas turbine 更明確 visibility + 估值較佳）；ETN ~8-10%/yr；CMI ~8-11%/yr（估值合理）；DE ~10-12%/yr（cycle bottom contrarian）。<strong>CAT 5.7% IRR 是同類中最弱</strong>，純粹因 entry price 不對。</li>
+</ul>
+
+<h4>機率估計：時間視角自我校驗</h4>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本案實際</th><th>狀態</th></tr>
+<tr><td>Bear 機率（5Y）</td><td>≥ 20%（強護城河 + 短期已兌現 15-20%）</td><td>35%</td><td><span class="tag win">✅ 達標</span>（cyclical + valuation 雙刃，Bear 比平均更高合理）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 比 1Y 寬至少 50%</td><td>Bull +110% vs Bear -49%，總散布 159pp（vs 1Y ±25% 散布 50pp）= 3.2x 寬度</td><td><span class="tag win">✅ 達標</span></td></tr>
+<tr><td>Base 機率</td><td>不應 > 50%</td><td>40%</td><td><span class="tag win">✅ 達標</span></td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似 case IRR 對照</td><td>CAT 2007-2012（commodity supercycle + GFC 反彈）5Y IRR ~6%/yr</td><td>本案 5.7% IRR 與 pattern 一致 <span class="tag win">✅</span></td></tr>
+</table>
+
+<h4>Pattern Match（讓機率有錨點）</h4>
+<div class="card blue">
+<strong>類比案例：CAT 2010-2014（commodity supercycle 高峰 → 2014 油價崩跌）</strong>
+<table>
+<tr><th>項目</th><th>CAT 2010-2014</th><th>CAT 現在</th><th>差異</th></tr>
+<tr><td>Setup</td><td>2010-2011：commodity supercycle 高峰，mining capex 暴增，CAT 股價 $44 → $116 (+164% in 2y)，fwd PE 18x → 22x</td><td>2024-2026：AI DC supercycle 啟動，P&E orders 暴增，CAT 股價 $330 → $912 (+176% in 12m)，fwd PE 18x → 36x</td><td>類似 setup（supercycle + 估值擴張），但本次估值更激進（PE 36x vs 22x）</td></tr>
+<tr><td>過熱訊號</td><td>2011-04 RSI &gt; 75 + 距 ATH 5%</td><td>2026-05 RSI overbought + BB 上軌外 + 距 ATH 2%</td><td>本次過熱更深</td></tr>
+<tr><td>5Y 實現</td><td>2010-04 $116 進場 → 2014-04 $103（-11% 絕對，IRR -2.3%）+ 2015-2016 進一步 -40% to $58</td><td>本 Base case +54%（從 $912 進場）</td><td>本次有 AI DC 結構性 driver，但仍不可低估 cyclical 反轉</td></tr>
+<tr><td>關鍵相似</td><td>supercycle 高峰追高 = 5Y IRR 偏低 / 負；等回測 cycle 中點才是合理 entry</td><td>同樣 setup</td><td><strong>$700-$760 是 CAT 現在版的「2009 $30 → $116 中段」</strong></td></tr>
+</table>
+<strong>結論：</strong>不是說我會複製 2010-2014 結果（AI DC 是真實結構性 driver），而是<strong>「supercycle 高峰追高 = 5Y IRR 風險偏 Bear」base rate</strong>。即使 thesis 對，entry price 也決定一切。歷史上 CAT 在 PE &gt; 30x 進場的 5Y IRR 平均 0~3%/yr。
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+16.0%/yr</td><td>−4.9%/yr（PE 36→28x，−22% in 5y）</td><td>+4.5%/yr</td><td>+15.6%/yr</td></tr>
+<tr><td>Base</td><td>+11.6%/yr</td><td>−7.0%/yr（PE 36→25x，−31% in 5y）</td><td>+4.5%/yr</td><td><strong>+9.1%/yr</strong></td></tr>
+<tr><td>Bear</td><td>+0.0%/yr</td><td>−17.1%/yr（PE 36→14x，−61% in 5y）</td><td>+4.5%/yr</td><td>−12.6%/yr</td></tr>
+</table>
+
+<div class="composition-bar" title="Base case stacked bar">
+  <span class="cb-eps" style="width:53%">EPS +11.6%/yr</span>
+  <span class="cb-rerate-neg" style="width:32%">re-rate −7.0%/yr</span>
+  <span class="cb-shy" style="width:15%">SHY +4.5%/yr</span>
+</div>
+
+<div class="card blue">
+<strong>質感解讀：</strong>Base 9.1% IRR 中，<strong>11.6%/yr 來自 EPS 複利</strong>（占 ~127%），<strong>−7.0%/yr 來自估值 re-rate</strong>（PE 36x → 25x 大幅 compression），<strong>+4.5%/yr 來自股息+回購</strong>（FY25 buyback $5.2B + dividend $2.7B 高 SHY）。這檔的可抱性<strong>主要靠 EPS 複利 + 高 SHY 補貼 re-rate drag</strong>，但<strong>re-rate 是最大 IRR 殺手</strong>（占 -7%/yr）。若從 $760 進場（PE 27x base），re-rate drag 縮至 -1.5%/yr，IRR 拉到 ~14.5%/yr — <strong>entry price 對 CAT IRR 的影響遠大於 ETN/APP</strong>。
+</div>
+
+<div class="card">
+<strong>Guardrail 校驗：</strong>Base 列合計 9.1%/yr vs §4 機率加權年化 IRR Base 列推算 ~9.0%/yr，差 0.1%p <strong>≤ 2pp 容忍 ✅</strong>。完全匹配。
+</div>
+
+<!-- ============== §1 MENTAL MODELS PRESSURE TEST ============== -->
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">
+TO: Investment Committee<br>
+FROM: PM<br>
+RE: CAT — Caterpillar Inc. · 2026-05-13<br>
+<br>
+THESIS: Caterpillar 是百年工業寡頭，AI DC on-site power 把 reciprocating engines 從 cyclical 工具升級為結構性第二曲線。<br>
+<br>
+KEY DRIVER (1): AI DC on-site power generation 採用率（hyperscaler 把 reciprocating engines / gas turbines 從 backup 升級為 prime power）。Driver 是「需求側 use case 轉型」。<br>
+KEY DRIVER (2): CAT Construction + Resource Industries cycle 軟著陸（margin 守住 22%/18%+）。Driver 是「供給側 cycle 韌性」。<br>
+<br>
+R/R: Bull +110%（25%）/ Base +54%（40%）/ Bear -49%（35%）→ 5Y IRR 5.7% 加權（從 $912 進場）。<br>
+ENTRY: $700-$760（fwd PE 24-26x × FY26 EPS $25.75）—— 等回撤 -15% ~ -23%。<br>
+EXIT: §5 Single Thing 觸發 → P&E orders 連 2 季 YoY &lt; +20% → 清倉。<br>
+RISKS:<br>
+  R1. AI DC capex 2027 digestion → P&E orders 退潮（35% 機率）<br>
+  R2. Construction / Resource cycle 反轉（中度機率）<br>
+  R3. Tariff cost drag → margin compression（已實現 LTM EBIT 17.4% vs 20.9% 2024）<br>
+  R4. 中國 SANY/XCMG 進入北美市場 share &gt; 5%（長期 5+ 年）<br>
+  R5. Capacity 3x expansion 執行風險（CAPEX 大幅上升 / cost overrun）<br>
+<br>
+POSITION SIZE: 初始 1.0%（衛星）→ 目標 2.5%（if cycle 軟著陸 + P&E 達標）<br>
+HOLDING PERIOD: 中期 2-5 年<br>
+<br>
+WHY NOT JUST BUY GEV INSTEAD? GEV gas turbine 更明確 lead time（18-24M backlog）+ 估值較合理（PE 29x vs CAT 36x）+ 12M YTD +65% vs CAT +53% R:R 相當 → GEV 是更純粹的 AI DC on-site power play。CAT 是 100 年寡頭 + multi-segment + service ecosystem，但 cyclical drag 讓中期 R:R 不如 GEV。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「Caterpillar 是全球工程機械 + 採礦設備 + Power & Energy 100 年寡頭。Q1 2026 業績爆炸—Rev +22%、EPS +30%、backlog $63B +79%—把大型柴油/天然氣發動機產能擴張至 2024 年 3 倍，全部給 AI 資料中心 on-site power 用。但問題是股價 12 個月 +176% 已從 $330 反彈到 $912，本益比 36x 是 5 年平均 18x 的 2 倍。所以我會等回到 $700-$760 區間（本益比 25x）再開始建倉 1%，而不是現在追高。」
+</div>
+
+<div class="card">
+<strong>壓力測試結果：</strong>1 頁紙 + 30 秒邏輯自洽，且 30 秒版本直接點出「moat 強、thesis 對、但時機極差」這個 alpha 來源 → 進入 §3 Drivers + §5 Single Thing。
+</div>
+
+<!-- ============== PHASE B 矛盾 + 強制裁決 ============== -->
+<h2>Phase B｜矛盾辨識 + 強制下判決</h2>
+
+<h3>1. 共識清單（Phase A1-A3 方向一致）</h3>
+<div class="card green">
+<ul>
+<li><strong>百年寡頭 moat 確立：</strong>A1（全球 market share 16.3% + Komatsu 10.7% + 經銷網路 $20B+ replicate cost）+ A2（CAT/GEV/CMI/Komatsu 寡占 70%+ 全球 heavy machinery）+ A3（FCF $11.7B FY25 + capital return $7.9B）三軸同向。</li>
+<li><strong>AI DC P&E pivot 真實：</strong>A1（capacity 3x 2027-29 + Microsoft/NVIDIA WV 2GW + Atlas Energy through 2029）+ A2（hyperscaler on-site power 從 backup 升 prime）+ A3（Q1 26 P&E user end +32% / Power Gen +48%）三軸同向。</li>
+<li><strong>2030 enterprise CAGR target 上修：</strong>A1（capacity expansion 3x = 物理性 supply 擴張）+ A2（hyperscaler capex secular）+ A3（target 從 5-7% → 6-9% raised）三軸同向。</li>
+</ul>
+</div>
+
+<h3>2. 矛盾清單</h3>
+<div class="confl">
+<table>
+<tr><th>#</th><th>矛盾描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td>P&E AI DC 結構性 vs 仍受 hyperscaler capex cycle 影響</td><td>capacity 3x 物理性 expansion + 8-yr engine cycle</td><td>hyperscaler capex 2027 H2 可能減速</td><td>backlog $63B 高度 visibility</td><td>🟡 可調和（程度差異）</td></tr>
+<tr><td>2</td><td>百年寡頭 moat vs 中國 SANY/XCMG 競爭</td><td>$20B+ 經銷網路 replicate cost</td><td>中國低價 30-40%、share 5.8% rising</td><td>LTM EBIT margin 17.4% (-350bps from 2024)</td><td>🟡 可調和（局部市場差異）</td></tr>
+<tr><td>3</td><td>thesis 完整 vs valuation 嚴重透支</td><td>moat ↑ widening + AI DC 結構性</td><td>—</td><td>fwd PE 36x = 5Y 平均 18x 的 2x，5Y 82nd percentile</td><td><strong>🔴 不可調和</strong></td></tr>
+<tr><td>4</td><td>capacity 3x 是 OEM 物理性 supply unlock vs 是否真的 demand match</td><td>capacity 3x 反映需求</td><td>P&E target raised from 2x to 3x = signal demand 持續</td><td>2026 capex $3.5B + 2027-29 incremental capex 為 capacity expansion</td><td><strong>🔴 不可調和</strong>（執行 vs demand 假設）</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有 DD / ID 報告的交叉矛盾</h3>
+<div class="confl">
+<table>
+<tr><th>#</th><th>矛盾</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>R:R 評估</td><td>5Y IRR 5.7%/yr 弱（從 $912 進場）</td><td>DD R:R 0/4 全敗（短中長皆負，目標價均 ≤ 現價）</td><td>視角一致 ✅，皆指向「時機極差」</td></tr>
+<tr><td>2</td><td>moat 評分</td><td>A 級 ↑ widening</td><td>DD: A 級護城河</td><td>視角一致 ✅</td></tr>
+<tr><td>3</td><td>進場條件</td><td>等 $700-$760</td><td>DD: 等 BB 中軌 $702 或 W52 $546</td><td>本 DCA 給較寬鬆條件 $700-$760，因 §6c Max DD 已考慮</td></tr>
+<tr><td>4</td><td>產業地位</td><td>CAT 是 AI DC on-site power 隱性受益者</td><td>ID_HeavyMachineryMining_20260427: 「CAT 是 AI Data Center 隱性受益者（P&E segment 為最快成長 segment）」</td><td>視角一致 ✅</td></tr>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（每個不可調和矛盾必選邊）</h3>
+<div class="verdict">
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td>3</td><td>thesis 完整 vs valuation 嚴重透支</td><td><strong>A3</strong>（valuation 已透支 thesis）</td><td>fwd PE 36x = 5Y 平均 18.2x 的 2.0x，落在 5Y 82nd percentile。即使 EPS 維持 16% CAGR（Bull），re-rate drag -4.9%/yr，IRR 從 21% 拉到 15.6%。若 EPS 落到 Base 11.6%，re-rate drag -7%/yr，IRR 從 16% 拉到 9.1%。「moat ↑ 強化」+「thesis 完整」已 fully priced-in 至 forward 倍數，邊際資金應等回撤而非追高。</td><td><strong>1. PE 回到 24-27x（股價 $700-$760）AND Q3 26 P&E orders YoY 維持 +30%+</strong><br>2. OR FY27 enterprise CAGR 走勢 &lt; 6-9% guide 下緣（thesis 削弱）</td><td>(a) PE 回 24-27x + P&E orders +30% 維持 → <strong>啟動小倉 0.5%</strong>，分批至 2.5% 目標<br>(b) PE 突破 40x OR Q3 26 P&E orders 跌至 +15% → <strong>不進場</strong>（thesis + valuation 雙信號削弱）</td></tr>
+<tr><td>4</td><td>capacity 3x 是 supply unlock vs demand 假設</td><td><strong>A1 偏重，但折扣</strong>（CAT 不可能 spec 3x capacity without 7+ yr demand commitment，但 demand 仍受 hyperscaler cycle 影響）</td><td>3x capacity expansion 需 $5B+ capex（2027-29），CAT 不會 spec 沒 commitment 的 capacity；customer commitments 已 extending into 2028。但 hyperscaler 訂單可以「rolling pushout」（推遲交付），即使 capacity 達標 demand 也可能在 2028-30 出現 air pocket。</td><td><strong>1. FY27 P&E user end Rev 維持 &gt; +25% YoY（vs Q1 26 +32%）</strong><br>2. OR 大型 recip engine backlog 維持 +50% YoY+（vs 當前 $63B +79%）</td><td>(a) FY27 P&E +25%+ 兌現 → <strong>升級至 2.5% target 部位</strong><br>(b) FY27 P&E &lt; +15% YoY OR 大型 recip engine backlog YoY 轉負 → <strong>清倉</strong>（capacity 3x 是 white elephant 假設破裂）</td></tr>
+</table>
+</div>
+
+<div class="card orange">
+<strong>裁決總結：</strong>兩個 unresolvable 矛盾分別處理 valuation timing（#3）+ demand 真實性（#4），兩者共同指向<strong>「條件式進場 + cycle 中段 entry + demand 兌現 gate」</strong>——即 §7a 採衛星 1.0% 起步、目標 2.5%，分批解鎖。<strong>禁止</strong>把「Q1 26 +176% 12M reversal + capacity 3x announcement」當成 unconditional 進場理由——這在當前 $912 已 priced-in 過度樂觀。
+</div>
+
+<!-- ============== §3 KEY DRIVERS ============== -->
+<h2>§3｜Key Drivers（命脈是什麼）</h2>
+
+<h3>3a. 1-2 個 Key Drivers</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+<tr><td>1</td><td><strong>AI DC on-site power generation 採用率</strong>（需求側 use case 轉型）</td><td>命脈是「hyperscaler 把 reciprocating engines / gas turbines 從 backup 升級為 prime power」這個 use case shift 是否真實。若 hyperscaler 把這當 5-10 yr 結構性方案（vs 短期 grid 互連 bridge），CAT P&E 業務從 26% rev → 38%+ 2030 順利兌現；若只是 2-3 yr 臨時方案，capacity 3x = 過剩 supply。</td><td>季度 P&E 用戶端 Rev YoY；hyperscaler 大型 recip engine backlog 增速；hyperscaler on-site power vs grid 採購比例；EIA / EPRI on-site power 滲透率</td></tr>
+<tr><td>2</td><td><strong>Construction + Resource Industries cycle 軟著陸</strong>（供給側 cycle 韌性）</td><td>命脈是「CI/RI margin 是否能維持 22%/18%+ 在 cycle 中段」。LTM EBIT margin 已從 2024 20.9% 跌至 17.4%（-350bps）= 邊際 margin pressure 已出現。若 CI 軟著陸 + RI replacement cycle 順利，FY27 margin 守住；若 CI/RI cycle 反轉重疊，margin 崩跌至 14-15% → EPS dive。</td><td>季度 CI EBITDA margin；RI orders YoY；季度 LTM EBIT margin；US infrastructure spending；商品 (銅、鐵礦) prices</td></tr>
+</table>
+
+<div class="card">
+<strong>為什麼是這 2 個，而不是其他？</strong>市場常討論的「Solar Turbines 整合」「Vertiv 合作」「Service 業務 recurring」都是次要驅動——若 driver 1（P&E demand）退潮，再多 Solar Turbines 整合也救不了 P&E EPS；若 driver 2（CI/RI margin）崩，即使 P&E 強，整體 EPS 仍會被拖累。<strong>這兩個 driver 是 CAT thesis 的兩條獨立因果鏈</strong>（成長引擎 P&E vs 基礎 cyclical CI/RI）。
+</div>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<div class="card">
+<strong>測試問題：driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？</strong><br>
+✅ 是。範例：假設 P&E 暴增（driver 1 活），但 CI 因 tariff drag + 美國基建延期出現 margin 崩潰（driver 2 死）→ 整體 EPS 仍 -10%（P&E 占比 26%，CI 占比 ~42%）。反之，若 CI/RI 軟著陸（driver 2 活），但 hyperscaler 砍 P&E orders（driver 1 死），P&E 從 +32% 跌至 -5% YoY → 整體 Rev growth 從 +12% 降至 +3%。<strong>結論：</strong>兩條因果鏈正交，driver 2 不是 driver 1 的 sub-component ✅。
+</div>
+
+<h3>3b. 強制減法——市場常討論但我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>Solar Turbines + Vertiv 合作</td><td>合作是 marketing reach 擴張，不是 EPS driver；真正 EPS source 是 recip engine 物理性 capacity expansion</td></tr>
+<tr><td>$63B backlog visibility</td><td>backlog 兌現節奏受 capacity expansion 速度 cap，2027 前 capacity 不可能 fully ramp，backlog 量並非短期 EPS unlock</td></tr>
+<tr><td>Capital return $7.9B FY25 (buyback + div)</td><td>已成熟，SHY 4.5%/yr 是 baseline 而非 alpha source</td></tr>
+<tr><td>Q1 26 EPS +30% YoY beat</td><td>已 priced-in 至 $912 + 12M +176%；單季 surprise 不再是 alpha</td></tr>
+<tr><td>Tariff 影響</td><td>已部分實現（LTM EBIT margin 17.4% vs 20.9% 2024 -350bps），需觀察是否 stable 或進一步惡化</td></tr>
+</table>
+
+<h3>🔄 我和市場 Consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Fwd PE 36x × FY26 EPS $25.75 = $927（vs 現價 $912，隱含 fully priced-in）。Analyst consensus target $714 mean (-22% from $912) = 多數 analyst 認為 overvalued。共識假設：(1) P&E pivot 兌現 5 年；(2) CI/RI 軟著陸（no cycle reversion through 2028）；(3) 中國 SANY/XCMG 北美 share 維持低位 (&lt;3%)；(4) tariff 影響 mild。</td></tr>
+<tr><td>我認為的不同假設</td><td>共識把 12 個月反彈 +176% 視為「結構性 re-rate」，但<strong>歷史上 CAT 在 PE &gt; 30x 進場的 5Y IRR 平均 0~3%/yr</strong>。capacity 3x = $5B+ capex 不可逆，若 2028-30 hyperscaler 砍 on-site power 採用，CAT 將出現「underutilized capacity」白象問題（類似 2014 commodity supercycle 反轉後 mining 設備）。Bear 機率 35% (vs 共識 ~15%)。</td></tr>
+<tr><td>賣方為什麼錯</td><td>(1) <strong>把 cyclical re-rate 當 structural：</strong>2010-2014 同樣的 setup（commodity supercycle + capacity expansion + fwd PE 22x），最終 5Y IRR -2.3%。賣方忽略 base rate。(2) <strong>capacity 3x 假設 demand match：</strong>CAT 不會 spec 3x capacity without 7+ yr demand commitment 沒錯，但 hyperscaler 也可以 rolling pushout 訂單 → capacity 達標但 demand 出現 air pocket (2028-30)。(3) <strong>低估中國 SANY/XCMG 進入北美風險：</strong>中國 30-40% 低價 + 全球化擴張 + tariff 制裁可能被部分繞道（如墨西哥裝配廠），北美 share 5+ 年內可能達 5-8%。</td></tr>
+</table>
+
+<div class="card">
+<strong>分歧結論：</strong>三題都有明確差異 → thesis 有獨立 alpha 來源（valuation timing + capacity 假設真實性 + 中國競爭低估）。<strong>§7 倉位不需額外打折</strong>（分歧夠強，1.0% 起步 → 2.5% 目標是合理 sizing）。
+</div>
+
+<!-- ============== §5 SINGLE THING ============== -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<div class="card pre">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述（Primary trigger）</strong></td><td><strong>CAT P&E 用戶端銷售連續 2 個季度 YoY &lt; +20%</strong>（vs Q1 26 +32%）— 反映 hyperscaler AI DC capex 結構性減速 + on-site power 採用率退坡。</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>CAT P&E 業務占 ~26% Rev 但 ~35% incremental growth；Q1 26 +32% 是 thesis 核心數據。若連 2 季 &lt; +20%，意味 (a) hyperscaler 砍 AI DC capex；(b) on-site power 從 prime 退回 backup；(c) capacity 3x expansion 變白象（overinvestment）。FY28 EPS 從 consensus $32 → $25（-22%），fwd PE 從 36x 壓縮至 18x（mean reversion），股價同時受 EPS + multiple 雙殺，-50% downside。</td></tr>
+<tr><td>如何監測</td><td>(a) CAT 季度 ER 中 Energy & Transportation 揭露 P&E 用戶端 Rev YoY；(b) Big 4 hyperscaler 季度 capex YoY；(c) Power-eng / Data Center Dynamics 報導 hyperscaler on-site power 採購；(d) CAT 大型 recip engine backlog YoY。頻率：每季一次。</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q1 26 P&E +32% / 大型 recip engine backlog +71% YoY = 仍強勁。觸發距離：~12-18 個月（最快 2027 Q1-Q2 出現 deceleration 訊號；2027 H2 確認）。中間有 Big 4 hyperscaler capex 2027 outlook 揭露（2026 Q4 - 2027 Q1）作為提前訊號。</td></tr>
+</table>
+</div>
+
+<div class="card pre">
+<strong>Secondary trigger（從 §6 pre-mortem 派生，2026-05-13 補入）：</strong> <strong>中國 SANY / XCMG 北美工程機械市佔跨年度突破 5%</strong>（vs 當前 ~1-2%）— 結構性 share loss 訊號，直接威脅 driver 2（CI margin 守住 22%+）。<strong>監測：</strong>Statista / Off-Highway Research 季度 / 年度 share 報告。
+</div>
+
+<!-- ============== §6 WHAT I DON'T KNOW + PRE-MORTEM ============== -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>AI DC on-site power 是「結構性 5-10 yr 方案」vs「臨時 2-3 yr bridge」</td><td>hyperscaler 把 on-site power 當 5+ yr 長期方案（規避 grid 互連 7+ yr 等待）</td><td>若是 2-3 yr bridge：CAT P&E capacity 3x 變過剩；FY28-29 utilization 跌至 60%；GM -500bps；EPS -25%</td></tr>
+<tr><td>2</td><td>CI/RI cycle 在 FY27-28 是否軟著陸</td><td>美國基建延長 + 商品週期 mild cycle / EBITDA margin 守住 22%/18%+</td><td>若 Hard cycle 反轉（tariff + commodity dive 同時打擊）：CI margin 跌至 17%、RI 跌至 13%，整體 EBIT margin -400bps，EPS -25%</td></tr>
+<tr><td>3</td><td>中國 SANY/XCMG/Zoomlion 進入北美速度</td><td>中國低價 30-40% 仍受 USTR tariff + CFIUS 限制 + dealer network 障礙</td><td>若中國繞道 (墨西哥裝配 / 隱性合資)：北美 share 5-8%（vs 當前 1-2%），CAT 北美 GM -200bps，EPS -10%</td></tr>
+<tr><td>4</td><td>capacity 3x 執行風險（capex cost overrun + supply chain）</td><td>$3.5B FY26 capex + 2027-29 capacity expansion 不超預期 + ramp 順利</td><td>若 cost overrun 50%+ 或 ramp 推遲 12+ 個月：FCF 短期被吃掉、buyback 暫緩、ROIC 下滑</td></tr>
+<tr><td>5</td><td>Service / Parts 業務 secular growth</td><td>Service 占 ~25% Rev 維持 high-margin recurring，FY27 達 $24B target</td><td>若 service revenue 達不到 target：margin compression 從 -350bps 進一步加深至 -500bps</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5（三段式）</h3>
+
+<div class="card pre">
+<strong>第一段｜故事倒推（≤80 字 narrative）：</strong><br>
+「假設 5 年後（2031-05）這個部位虧 50%。最可能故事是：<strong>2027 Q2-Q3 hyperscaler Big 4 砍 FY28 AI DC capex 20%</strong>（AI 訓練 ROI 證明不足），<strong>CAT P&E 用戶端銷售 YoY 從 +30% 跌至 +5%</strong>，capacity 3x 變過剩 supply。<strong>同時 Construction Industries 受 tariff drag + 美國基建延期</strong>，CI EBITDA margin 從 22% 跌至 17%。<strong>2027-28 中國 SANY/XCMG 透過墨西哥裝配繞道進入北美</strong>，CAT 北美 market share 從 35% 跌至 30%。<strong>FY28 EPS 從 consensus $32 → 實際 $22</strong>，fwd PE 從 36x 壓縮至 14x，股價從 $912 → $310（-66%），峰值前 $931 → 谷底 $290（peak-to-trough -69%）。」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="tag warn">⚠ 部分重疊</span>。<strong>主 trigger 是 hyperscaler 砍 AI DC capex → P&E orders 退潮（= §5 primary）</strong>，但 <strong>中國 SANY/XCMG 進入北美 share &gt; 5% 是獨立 trigger，§5 原版未抓到</strong>。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<div class="card pre">
+<strong>狀態：⚠ 部分重疊 → 已補 1 條 secondary trigger</strong>。中國 SANY/XCMG 北美 market share 跨年度突破 5%（vs 當前 1-2%）已加入 §5 區塊作為 Secondary trigger，監測時點：Statista / Off-Highway Research 年度 share 報告（每年發布）。<br>
+<br>
+<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>。Primary（P&E orders 退潮，driver 1 死）+ Secondary（中國北美 share &gt; 5%，driver 2 死）。兩者覆蓋兩條獨立 kill scenario：成長引擎 + 基礎 cyclical。
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−40% ~ −60%</strong>（寬度 20pp）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q2-Q3（hyperscaler 砍 AI DC capex 顯露）+ 2027 H2（CI/RI cycle 反轉同步 + tariff drag 升級）— 兩個 trigger 可能 stacked</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>若僅 P&E 暫時減速（thesis 仍對長期）：18-30 個月恢復；若雙重打擊（P&E 退潮 + CI/RI 反轉）：3-5 年或不恢復，需 cycle 完整輪替</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🔴 &lt; −50%（多數人會在中途出場）</strong></td></tr>
+</table>
+
+<div class="card pre">
+<strong>Max DD headline：</strong>
+<div class="maxdd-headline" style="color:var(--bad)">−40% ~ −60%</div>
+<div style="height:18px;background:linear-gradient(to right,#15803D 0%,#15803D 18%,#CA8A04 18%,#CA8A04 50%,#DC2626 50%,#DC2626 100%);border-radius:4px;margin:10px 0"></div>
+<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--soft)"><span>0%</span><span>−30%</span><span>−50%</span><span>−60%</span></div>
+</div>
+
+<div class="card pre">
+<strong>校驗（必填一句話）：</strong>「若 max DD 落在 −40~−60%，能否撐到復原？條件：<strong>(1) 部位 ≤ 2.5% portfolio</strong>（即使 -60% drawdown，組合層面 -1.5%，可承受）；<strong>(2) 不使用槓桿</strong>；<strong>(3) §5 single-thing 未觸發</strong>（若觸發即清倉而非死扛）；<strong>(4) 從 $700-$760 進場而非 $912 追高</strong>（從 $912 -60% = $365；從 $750 -60% = $300 反而更接近 W52 low $546）。<strong>結論：</strong>需在 §7a 上限 ≤ 2.5% 才能容忍此 Max DD profile，且必須是條件式進場（避免被 -60% 套住）。」
+</div>
+
+<div class="card pre">
+<strong>Guardrail：🔴 評級已觸發 §7a 倉位上限自動下修</strong>（原計畫 2.5% → 強制 ≤ 1.0% 起步，目標 ≤ 2.5%），並在 §7d 標註「中途出場風險高 + cycle 不確定性」。
+</div>
+
+<!-- ============== §8 REVIEW TRIGGERS ============== -->
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td><strong>2026 Q2 ER</strong>（CAT）</td><td>財報日期</td><td><strong>2026-08 預期</strong>。觀察：(a) P&E 用戶端 Rev YoY 是否維持 +30%+（vs Q1 26 +32%）；(b) Power Generation Rev YoY（vs Q1 26 +48%）；(c) CI EBITDA margin 是否守住 22%；(d) RI orders YoY 是否仍正</td></tr>
+<tr><td>2</td><td><strong>Big 4 hyperscaler 季度 capex guide</strong></td><td>產業事件</td><td>MSFT (2026-07 + 2026-10) / AMZN (2026-08 + 2026-11) / META / GOOG。觸發條件：≥ 3 家連 2 季 capex YoY &lt; +15% → §5 single thing primary trigger</td></tr>
+<tr><td>3</td><td><strong>股價觸發 $760</strong></td><td>價位觸發</td><td>進入合理進場區間上緣（PE 26x × FY26 EPS $25.75）+ 同時 RSI(14) 回到 50-60 → 條件式啟動小倉 0.5%</td></tr>
+<tr><td>4</td><td><strong>中國 SANY/XCMG 北美 share 更新</strong></td><td>產業事件 / Thesis kill</td><td>每年 Statista / Off-Highway Research 報告（通常 Q2-Q3 發佈）。若跨年度突破 5% → 觸發 §5 secondary</td></tr>
+<tr><td>5</td><td><strong>§5 Single Thing Primary</strong></td><td>Thesis kill</td><td>CAT P&E 用戶端銷售連 2 季 YoY &lt; +20% → 即清倉</td></tr>
+<tr><td>6</td><td><strong>§5 Single Thing Secondary</strong>（pre-mortem 派生）</td><td>Thesis kill</td><td>中國 SANY/XCMG 北美 market share 跨年度 &gt; 5% → 即清倉</td></tr>
+</table>
+
+<div class="card yellow">
+<strong>這份報告的保質期：至 2026-08-01</strong>（下一次 Q2 ER 發布前有效）。Q2 ER 後必須重評，重點：(a) P&E 動能是否延續 +30%+；(b) hyperscaler Q2 capex guide 是否首次出現 deceleration 訊號；(c) CI/RI cycle margin profile；(d) capacity 3x 進度更新。
+</div>
+
+<div class="card">
+<strong>最可能發生的 upside 因素：</strong>(1) Q2 26 ER P&E orders 維持 +30%+ + Power Generation Rev +40%+ → 共識 EPS FY27 上修 → fwd PE 維持 36x、股價追隨 EPS 至 $1,050+；(2) 更多 hyperscaler 簽 multi-year on-site power partnership（vs Atlas Energy / WV Microsoft-NVIDIA 案例）；(3) Solar Turbines + Vertiv 合作首次披露 multi-billion 規模 contract；(4) CI 受美國基建延期反而成補位（建商 backlog 充足）。
+</div>
+
+<div class="card">
+<strong>最可能發生的 downside 因素：</strong>(1) AI 訓練 ROI 證明窗口 2027 H2 開啟，1-2 家 Big 4 砍 FY28 capex 15%+ → CAT -25~30% gap down；(2) CI/RI cycle 在 2027 同時反轉（tariff drag + commodity prices 跌 + 美國基建延期）；(3) 中國 SANY/XCMG 透過墨西哥裝配繞道 USTR tariff 進入北美；(4) capacity 3x expansion cost overrun 50%+ 或 ramp 推遲 12+ 個月；(5) Service Rev FY27 未達 $24B target → margin compression 進一步加深。
+</div>
+
+<!-- ============== PHASE A (折疊) ============== -->
+<h2>Phase A｜獨立研究結論（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 ｜ A1 結論：CAT 是百年工業寡頭，moat ↑ widening（AI DC P&E pivot），但 cyclical drag + 中國競爭使絕對等級維持 A 級</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>規模 + 經銷網路 moat</strong>—全球 16.3% market share + dealer network $20B+ replicate cost（Morningstar）；(2) <strong>客戶 switching cost 高</strong>—訓練、零件庫存、維護生態、digital tools 整合（Morningstar / Beanvest）；(3) <strong>service / parts recurring revenue</strong>—高 margin (~70%+)，客戶 stickiness</td></tr>
+<tr><td>持久性評分</td><td><strong>8/10</strong>，5 年穩固度：<strong>高</strong>。理由：經銷網路 + service ecosystem 替代難度極高，但 cyclical 業務本質不變 + 中國低價競爭緩慢 erode</td></tr>
+<tr><td>最大侵蝕風險</td><td>中國 SANY/XCMG/Zoomlion 透過墨西哥裝配 + 全球化擴張在新興市場（拉美 / 非洲 / 東南亞）30-40% 低價優勢逐步進入北美邊際市場</td></tr>
+<tr><td>關鍵數據</td><td>全球 share 16.3% (2025, SWOTPal) vs Komatsu 10.7% vs XCMG 5.8%；FY25 OCF $11.7B（CAT ER）；FY25 buyback $5.2B + div $2.7B = capital return $7.9B；LTM EBIT margin 17.4% (vs 20.9% 2024)</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>。12 個月內證據：(1) capacity 3x by 2027-29 announcement（Manufacturing Dive 2026/4）= 物理性 supply unlock 超越同業；(2) Microsoft / NVIDIA WV 2GW alliance（Caterpillar IR 2026）+ Atlas Energy through 2029 + Meta DC 配置 = blue-chip 客戶集群擴張；(3) Vertiv-CAT collaboration（NAM 2026）= 跨產業整合 (gen+cooling)</td></tr>
+</table>
+
+<h4>Sourced data points（A1：7 個，floor ≥ 5 ✅）</h4>
+<ol>
+<li>Global market share 16.3% / 17% (2025)（Statista / SWOTPal）</li>
+<li>Komatsu 10.7% / XCMG 5.8% market share (2025)（SWOTPal）</li>
+<li>Dealer network $20B+ to replicate（Morningstar）</li>
+<li>Q1 26 P&E user end Rev +32% YoY（CAT Q1 26 ER 2026/4/30）</li>
+<li>Q1 26 Power Generation Rev +48% YoY → $2.82B（BigGo Q1 26）</li>
+<li>Backlog $63B +79% YoY Q1 26（multiple sources）</li>
+<li>Vertiv-CAT partnership for AI DC end-to-end power+cooling（NAM / PowerMag / Caterpillar IR 2026）</li>
+</ol>
+
+<p><strong>A1 獨立結論（一句話）：</strong>CAT 是全球工程機械 / 採礦 / Power & Energy 百年寡頭（16.3% 全球 share + dealer network $20B+ replicate cost），moat_trend ↑ widening（AI DC P&E pivot + capacity 3x + Vertiv 合作 + blue-chip 客戶集群），但 cyclical 業務本質 + 中國競爭使絕對等級維持 A 級而非 S 級。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 ｜ A2 結論：heavy machinery + AI DC on-site power 雙引擎 Phase II 啟動，但 cycle 風險不變，runway_post_y5 🟢 寬</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>全球 heavy machinery TAM ~$220B + AI DC on-site power 子領域 ~$25-40B 2030（CAT P&E 目標 3x by 2030）；US DC power demand 75.8 GW → 134.4 GW 2030 (+77% S&P Global)。CAT 2024-30 enterprise CAGR 6-9% raised guide</td></tr>
+<tr><td>供需判斷</td><td>當前 heavy machinery 供需<strong>偏緊</strong>（grid 互連 7+ yr 等待逼 hyperscaler 採 on-site power），未來 12 個月方向<strong>持續偏緊</strong>但 capacity expansion 起步緩解</td></tr>
+<tr><td>最大技術替代風險</td><td>(1) SMR (small modular reactor) 2028+ 商業化 → on-site power 從 reciprocating engine → nuclear，降低 CAT 需求；(2) Fuel cells / hydrogen 2030+；但 5-10 yr 視角內 reciprocating engine 仍主流</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>(1) Tariff 影響（已實現 -350bps EBIT margin）；(2) 中國 SANY/XCMG 透過墨西哥繞道；(3) 環保法規（EPA Tier 4 / EU Stage V）緊縮 → reciprocating engine 排放 cap</td></tr>
+<tr><td>議價權位置</td><td>對上游（鋼鐵 / 零件 / supplier）：<strong>強</strong>（百年規模採購 + multi-source）；對下游（建商 / 礦商 / hyperscaler）：<strong>強</strong>（spec-in + service stickiness + 替代難）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>。判準：(1) S 曲線位置：P&E <strong>早期</strong>（current 26% rev → 38%+ 2030 預估）；(2) Y5 末 TAM 滲透率：AI DC on-site power 結構性滲透 ~50%；(3) 第二曲線：Solar Turbines + Service 業務 2030+、Autonomy + Connected fleet 2027+、reach 進入 SMR / hydrogen ready engines 2030+</td></tr>
+</table>
+
+<h4>Sourced data points（A2：7 個，floor ≥ 5 ✅）</h4>
+<ol>
+<li>CAT 2030 power gen target 3x 2024 levels (raised from 2x)（Manufacturing Dive 2026/4）</li>
+<li>2030 enterprise sales CAGR target 6-9% (raised from 5-7%)（Manufacturing Dive / Yahoo）</li>
+<li>2026 capex $3.5B / ME&T capex 4-5% of MP&E sales through 2030（Yahoo / Manufacturing Dive）</li>
+<li>CAT engines on 2 GW WV data center (Microsoft/NVIDIA)（Power-eng 2026）</li>
+<li>Meta DC gas turbines + reciprocating engines（Power-eng 2026）</li>
+<li>Atlas Energy CAT agreement through 2029（BusinessWire 2026/3）</li>
+<li>Vertiv-CAT collaboration AI DC power+cooling（NAM / Manufacturing Digital 2026）</li>
+</ol>
+
+<p><strong>A2 獨立結論（一句話）：</strong>heavy machinery + AI DC on-site power 雙引擎 Phase II 啟動（2030 P&E target 3x raised + 2030 enterprise CAGR 6-9% raised），supply 偏緊（grid 互連 7+ yr 等待逼 on-site power），runway_post_y5 🟢 寬（P&E 從 26% → 38%+ rev mix + Service ecosystem 第二曲線），但 cyclical 風險（CI/RI）+ 中國競爭 + tariff 不變。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務 / 財務 / 資本配置 ｜ A3 結論：FCF $11.7B FY25 + capital return $7.9B 頂級工業財務，但 fwd PE 36x = 5Y 平均 2x 嚴重透支 thesis</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構（FY25 ~$67B est）</td><td><strong>現金牛：</strong>Construction Industries ~42% rev + Resource Industries ~19% rev；<strong>成長引擎：</strong>Power & Energy ~26% rev（Q1 26 +22%，AI DC + oil/gas 雙拉）；<strong>拖累 / 新興：</strong>Financial Products ~10% rev + Solar Turbines（被吸入 P&E）</td></tr>
+<tr><td>客戶集中度</td><td>無單一客戶 &gt; 5%（多元化最徹底之一）；hyperscaler 累積佔 P&E ~25-30%；mining 4 大客戶占 RI ~30-40%；客戶集中度<strong>低</strong></td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（百年品牌 + spec-in moat），但 LTM EBIT margin 17.4%（vs 20.9% 2024 -350bps）顯示 tariff cost 蠶食 pass-through</td></tr>
+<tr><td>未來金雞母</td><td>(1) <strong>大型 reciprocating engines</strong>（current ~8% rev，FY30 預估 ~15-20% rev，capacity 3x 兌現需 4-5 年）；(2) <strong>Solar Turbines（gas turbine）</strong>（current ~5% rev，AI DC + CCHP 受益，5-7 年成熟）；(3) <strong>Service / Parts</strong>（current ~22% rev，FY27 target $24B，high-margin recurring）</td></tr>
+<tr><td>財務體質</td><td>FY25 OCF $11.7B；EOY cash $10.0B；ME&T FCF Q1 26 ~$600M（+$350M YoY）；Total debt 含 Cat Financial ~$33B；Net Debt/EBITDA ~1.5x（low）；GM 28.8% Q1 26 (vs 32.5% 2024，受 tariff 影響)</td></tr>
+<tr><td>資本配置紀律</td><td>FY25 buyback $5.2B（占 OCF 44%）+ Dividend $2.7B = capital return $7.9B；FY26 capex $3.5B（含 capacity 3x 起步）；2027-29 incremental capex 為 P&E expansion；<strong>評價：</strong>百年配置紀律 + cyclical 穩健 buyback 模式，但 capacity 3x 是 thesis-driven 賭注</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td><strong>EPS CAGR FY25-30 預估 11.6%/yr</strong>（含 buyback 對 EPS 稀釋抵銷 ~1.5pp，gross 10% / net 11.6%）；<strong>5Y 末 fwd PE 預估 25x vs 當前 36x</strong>，re-rate 貢獻 = (25/36)^(1/5)-1 = <strong>-7.0%/yr</strong>；<strong>現金股息率 1.5%</strong>；<strong>淨買回率 3.0%/yr</strong>（FY25 $5.2B buyback / market cap ~$440B = 1.2%/yr，未來 10 年 averaged buyback 加速可達 3-4%/yr）— SHY 合計 +4.5%/yr</td></tr>
+</table>
+
+<h4>Sourced data points（A3：15 個，floor ≥ 6 ✅）</h4>
+<ol>
+<li>FY25 Q4 Rev $19.1B +18% YoY（CAT Q4 25 ER）</li>
+<li>FY25 OCF $11.7B（CAT Q4 25 ER）</li>
+<li>FY25 Cash EOY $10.0B（CAT Q4 25 ER）</li>
+<li>FY25 Buyback $5.2B（CAT Q4 25 ER）</li>
+<li>FY25 Dividend $2.7B（CAT Q4 25 ER）</li>
+<li>Q4 25 OP margin 13.9% vs Q4 24 18.0%（margin pressure）（CAT Q4 25 ER）</li>
+<li>Q1 26 Rev $17.4B +22% YoY（BigGo / Motley Fool 2026/4/30）</li>
+<li>Q1 26 adj EPS $5.54 +30% YoY beat（Motley Fool）</li>
+<li>Backlog $63B +79% YoY Q1 26（BigGo）</li>
+<li>2030 Enterprise CAGR target 6-9% (raised from 5-7%)（Manufacturing Dive 2026/4）</li>
+<li>2030 Power Gen target 3x 2024 levels (raised from 2x)（Manufacturing Dive）</li>
+<li>2026 capex $3.5B（Yahoo / Manufacturing Dive 2026/4）</li>
+<li>Forward PE 36.62 / 35.89（GuruFocus / StockAnalysis 2026/5/7）</li>
+<li>5Y avg PE 18.24 / 3Y avg PE 18.33（fullratio.com）</li>
+<li>2027 EPS consensus $29.14 (19 analysts)（TIKR / StockAnalysis）+ LTM EBIT margin 17.4% from 20.9% 2024（Simply Wall St）</li>
+</ol>
+
+<p><strong>A3 獨立結論（一句話）：</strong>CAT 財務體質頂級工業（FCF $11.7B + capital return $7.9B + Net Debt/EBITDA 1.5x），資本配置紀律一流（百年模式），但 fwd PE 36x = 5Y 平均 18.2x 的 2.0x（5Y 82nd percentile）= 估值嚴重透支 thesis，邊際資金等回撤至 $700-$760（PE 24-26x）是合理紀律。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD / ID 報告數據擷取（純輸入，不產出結論）</summary>
+<div>
+
+<h4>DD 報告擷取（DD_CAT_20260504.html）</h4>
+<table>
+<tr><th>項目</th><th>DD 結論</th></tr>
+<tr><td>綜合訊號燈</td><td><strong>B</strong>（觀望；thesis 完整 A 級護城河但估值🔴 + R:R 0/4 全敗 = 時機極差。QC-31: 估值🔴 + thesis 完整 = 落 B）</td></tr>
+<tr><td>R:R</td><td>短期 <strong>-0.36x</strong>｜中期 <strong>-0.05x</strong> 至 <strong>-0.13x</strong>｜長期 5Y <strong>+0.40x</strong>｜壓力測試通過率 <strong>0/4</strong>（所有情境 R:R 均負）</td></tr>
+<tr><td>三引擎目標價</td><td>短中長 R:R 全負 — 各時距目標價均 ≤ 現價，反映「估值已預支 5 年成長」</td></tr>
+<tr><td>Bear anchor</td><td>等 BB 中軌 $702 或 W52 low $546</td></tr>
+<tr><td>紅旗清單</td><td>(1) AI DC capex 2027 digestion；(2) Construction/Resource cycle 反轉；(3) Tariff cost drag；(4) Capacity 3x 執行風險；(5) 中國 SANY/XCMG 進入北美</td></tr>
+<tr><td>三核心假設</td><td>H1: P&E 成主引擎，AI DC reciprocating engines 延伸 2030+（Q1 26 ＋＋ 大幅強化）；H2: CI 軟著陸（Q1 26 +強化）；H3: RI cycle 高峰可控（Q1 26 +強化）</td></tr>
+</table>
+
+<h4>ID 報告擷取</h4>
+<table>
+<tr><th>ID</th><th>產業評級</th><th>CAT 相關結論</th></tr>
+<tr><td>ID_HeavyMachineryMining_20260427</td><td>Phase II（基建超級週期 + 銅/鋰需求 + 自動駕駛採礦）/ 18%</td><td>「CAT 是 AI Data Center 隱性受益者（P&E segment 為最快成長 segment + $51B backlog +71% YoY；vs 共識當週期股）」3 條非共識之一</td></tr>
+</table>
+
+</div>
+</details>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+
+</body>
+</html>

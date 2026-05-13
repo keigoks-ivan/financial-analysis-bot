@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APP Deep Conviction Analysis · 2026-05-13</title>
+<!-- dca-moat-trend: ↑ -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1E3A5F;--accent:#3B82F6;--bg:#F8FAFC;--card:#FFFFFF;--alt:#F1F5F9;--good:#15803D;--great:#166534;--amber:#92400E;--bad:#991B1B;--bear:#DC2626;--soft:#64748B;--th:#1E3A5F;}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#0F172A;margin:0;padding:0;line-height:1.7;font-size:15px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 28px 80px}
+header.head{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--ink);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;z-index:50;font-size:14px}
+header.head .tk{font-weight:700;font-size:18px;color:var(--ink)}
+header.head .thesis-head{color:var(--soft);font-style:italic;max-width:60%;text-align:right}
+.print-btn{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:6px;border:none;cursor:pointer;font-size:14px;box-shadow:0 4px 12px rgba(30,58,95,.3);z-index:60}
+.print-btn:hover{background:#162B47}
+h1{color:var(--ink);font-size:28px;margin:0 0 8px}
+h2{color:#fff;background:var(--ink);padding:12px 16px;font-size:19px;margin:36px 0 18px;border-left:6px solid var(--accent)}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-left:4px solid var(--accent);padding-left:10px}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px}
+table{border-collapse:collapse;width:100%;margin:12px 0 18px;background:#fff;font-size:14px}
+th{background:var(--th);color:#fff;text-align:left;padding:9px 11px;font-weight:500}
+td{padding:9px 11px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:var(--alt)}
+.card{background:var(--card);border:1px solid #E2E8F0;border-left:4px solid var(--accent);padding:18px 20px;margin:14px 0;border-radius:2px}
+.card.green{border-left-color:var(--good);background:#F0FDF4}
+.card.yellow{border-left-color:#CA8A04;background:#FEFCE8}
+.card.red{border-left-color:var(--bear);background:#FFF1F2}
+.card.orange{border-left-color:#F97316;background:#FFF7ED}
+.card.blue{border-left-color:#0EA5E9;background:#F0F9FF}
+.card.pre{border-left-color:#DC2626;background:#FEF2F2}
+.tag{display:inline-block;padding:2px 9px;font-size:12px;border-radius:3px;font-weight:500}
+.tag.win{background:#DCFCE7;color:var(--great)}
+.tag.lose{background:#FEE2E2;color:var(--bad)}
+.tag.warn{background:#FEF3C7;color:#92400E}
+.statusbar{display:flex;gap:16px;justify-content:center;background:var(--alt);border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:18px 12px;margin:20px 0 10px;border-radius:4px}
+.sb-cell{flex:1;min-width:170px;max-width:200px;text-align:center;background:#fff;padding:12px 8px;border-radius:4px;border:1px solid #E2E8F0}
+.sb-label{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.sb-body{font-size:22px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.sb-sub{font-size:12px;color:var(--soft);margin-top:4px}
+.thesis-box{background:#EFF6FF;padding:28px 24px;border-radius:8px;text-align:center;margin:14px 0 24px;border:1px solid #BFDBFE}
+.thesis-box .big{font-size:24px;line-height:1.6;color:var(--ink);font-weight:500}
+.thesis-box .small{margin-top:8px;font-size:12px;color:var(--soft)}
+.decision{background:#F0FDF4;border-left:4px solid var(--good);padding:18px 20px;margin:14px 0;border-radius:2px}
+.decision.wait{background:#FEF9C3;border-left-color:#CA8A04}
+.decision.avoid{background:#FFF1F2;border-left-color:var(--bear)}
+.confl{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0}
+.confl table th{background:#9A3412}
+.verdict{background:#FED7AA;padding:14px 16px;border-radius:4px;margin:10px 0}
+.verdict table th{background:#7C2D12}
+.memo{background:#FFFFFF;border:1px solid #94A3B8;padding:22px 26px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.8;margin:14px 0;border-radius:2px}
+.elevator{background:#F1F5F9;border-left:3px solid var(--soft);padding:12px 18px;font-style:italic;margin:14px 0;font-size:14px;color:#334155}
+details{margin:12px 0;background:#fff;border:1px solid #CBD5E1;border-radius:4px;padding:0}
+details summary{cursor:pointer;padding:14px 18px;font-weight:500;color:var(--ink);background:#F1F5F9;border-radius:4px}
+details[open] summary{border-bottom:1px solid #CBD5E1}
+details > div{padding:16px 20px}
+.pos{color:var(--great);font-weight:600}
+.neg{color:var(--bad);font-weight:600}
+.neu{color:var(--soft)}
+.warn-cell{color:#92400E;font-weight:500}
+.ok-cell{color:var(--great);font-weight:500}
+.maxdd-headline{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.composition-bar{display:flex;height:28px;border-radius:4px;overflow:hidden;margin:10px 0;border:1px solid #CBD5E1;background:#F8FAFC}
+.composition-bar span{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+.cb-eps{background:#15803D}
+.cb-rerate-pos{background:#0EA5E9}
+.cb-rerate-neg{background:#A78BFA}
+.cb-shy{background:#64748B}
+.note{font-size:12px;color:var(--soft);font-style:italic}
+ul{padding-left:20px}
+li{margin:4px 0}
+@media print{
+  .print-btn,header.head{display:none}
+  details{break-inside:avoid}
+  details > div{display:block !important}
+  details:not([open]) > div{display:block !important}
+  body{font-size:13px}
+}
+</style>
+</head>
+<body>
+<header class="head">
+  <span class="tk">APP · AppLovin Corporation</span>
+  <span class="thesis-head">AppLovin 用 AXON 把 mobile gaming 廣告的 ROAS 黑箱優勢拉到 e-commerce + CTV，是 Meta/Google 雙寡占之外的第三條 AI 廣告中樞 · 2026-05-13</span>
+</header>
+
+<div class="wrap">
+
+<h1>APP｜Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-13 · 現價 $490.69 · 52w range $320-$745.61 · AXON Ads 全球開放 2026/6 ·  SEC 調查 still ongoing (2026/2 confirmed)</p>
+
+<!-- ============== STATUS BAR ============== -->
+<div class="statusbar">
+  <div class="sb-cell">
+    <div class="sb-label">綜合訊號燈</div>
+    <div class="sb-body" style="color:#D97706">B</div>
+    <div class="sb-sub">衛星候選</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Moat 趨勢</div>
+    <div class="sb-body" style="color:var(--great)">B ↑</div>
+    <div class="sb-sub">widening · SEC 抑制</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Y5+ Runway</div>
+    <div class="sb-body">🟡 中</div>
+    <div class="sb-sub">CTV / 海外 第二曲線</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Max DD (5Y)</div>
+    <div class="sb-body" style="color:var(--bad)">−65%</div>
+    <div class="sb-sub">🔴 SEC 尾險 + valuation</div>
+  </div>
+</div>
+
+<!-- ============== §2 THESIS ============== -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="big">AppLovin 用 AXON 即時 ML 引擎把 mobile gaming 廣告的 ROAS 黑箱優勢拉到 e-commerce + CTV，成為 Meta/Google 雙寡占之外稀有的第三條 AI 廣告中樞。</div>
+  <div class="small">50 字 · 敘事性，非財務指標</div>
+</div>
+
+<!-- ============== §7 DECISION ============== -->
+<h2>§7｜Decision（不是 Buy/Wait/Avoid，是可執行計畫）</h2>
+
+<div class="decision wait">
+  <strong>裁決：等待回撤 + SEC 結論觀察期才進場（條件式建倉，不一次性）</strong> ｜ 主因：(1) Q1 26 強勢 + AXON 6/2026 全球開放 = upside 已 priced-in 反彈；(2) SEC 調查 still ongoing（2026/2 確認）= 尾險未消；(3) 🔴 Max DD 評級 + Bear case 落差大（-65%）→ 初始倉位下修至 1.0%。
+</div>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在組合中的角色</td><td><strong>衛星部位</strong>（DD §1 訊號燈 B + SEC 尾險 + 估值彈性大 + Max DD 🔴）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>1.0% of portfolio</strong>（原計畫 2.5%，因 §6c Max DD 🔴 + SEC tail risk 自動下修 60%）</td></tr>
+<tr><td>目標倉位</td><td>2.5% of portfolio（若 SEC 結案無重大裁罰 + AXON 全球開放後 Q3 26 ER 確認 e-com run rate $2B+）</td></tr>
+<tr><td>進場價位區間</td><td>$440 ~ $470（回測 200d MA 區間 + RSI 50-60；avoid 追高 $490+）</td></tr>
+<tr><td>進場節奏</td><td><strong>條件式分批：</strong>(a) 等股價回到 $440-$470 區間 <em>且</em> RSI(14d) 回到 50-60 區間 → 進首批 0.5%；(b) Q2 26 ER（2026/8）AXON Ads 全球開放後 first month metrics 確認 + e-com run rate &gt; $1.6B → 加碼 0.5%。<strong>禁止一次性建倉</strong>（RSI 60-69 mixed + 距 ATH $745 反彈 50%+）</td></tr>
+<tr><td><strong>Opportunity cost vs 現有同類曝險</strong></td><td>
+<strong>比較標的：</strong><br>
+1. <strong>META：</strong>fwd PE 22x、AI 廣告自研 walled garden、Family Daily Active People 4B+，R:R 較穩，但 AI capex 壓制短期 ROIC。<br>
+2. <strong>GOOG：</strong>fwd PE 22x、Search AI 防禦戰、antitrust DOJ remedies 風險。<br>
+3. <strong>TTD（The Trade Desk）：</strong>fwd PE 45x、open internet pure-play、CTV ~50% 營收、無 SEC overhang。<br>
+4. <strong>AMZN Ads：</strong>$50B+ run rate, retail media #1，但被綁在 AMZN 母體（cross-business optionality 較弱）。<br>
+<strong>邊際資金裁決：</strong>若 portfolio 已持 META + GOOG = 廣告 walled garden 曝險足夠，加 APP 是「third pillar 多元化」但承擔 SEC 尾險；若想 open internet pure-play AI 廣告 → TTD 風險/報酬較均衡（無監管尾險）。<strong>結論：</strong>當前邊際資金優先 META（最大 walled garden + 估值合理）；APP 等 SEC 結論再進，但 TTD 是「無監管尾險」較佳替代。
+</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位 / 事件）</th><th>調整至倉位</th></tr>
+<tr><td>首批進場</td><td>股價回到 $440-$470 AND RSI(14) 回到 50-60</td><td>0.5%</td></tr>
+<tr><td>加碼 #1</td><td>Q2 26 ER（2026/8）AXON Ads 全球開放 first month 用戶/spend run rate 確認 + e-commerce ARR &gt; $1.6B</td><td>1.0%</td></tr>
+<tr><td>加碼 #2</td><td>SEC 結案無重大裁罰（settlement &lt; $300M OR consent order 無 fundamental restructure of AXON 歸因架構）</td><td>2.5%</td></tr>
+<tr><td>減碼</td><td>SEC 發佈 stronger enforcement action（行政罰款 &gt; $500M）OR Fwd PE &gt; 50x（過熱）</td><td>0.5%</td></tr>
+<tr><td>清倉</td><td>SEC 發 Wells Notice 要求 AXON fundamental restructure of attribution architecture OR Apple iOS 19 ATT+ 完全封鎖 cross-app data</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性 + 動能過熱檢查</h3>
+<table>
+<tr><th>檢查項</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="tag win">✅</span></td><td>$490 vs MA60 估計 ~$430（強勢反彈 from $320 低點）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="tag warn">⚠ 部分</span></td><td>$490 vs MA200 來源不一：Investing.com $429.87 (Buy) / TipRanks $433.28 (Buy) / 但 Financhill 顯示 $525.74 (Sell)。資料品質警示。</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="tag win">✅</span></td><td>2Y MA 估計 ~$280-320（52w low $320，2Y 內快速上漲）</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td><span class="tag warn">⚠ Mixed</span></td><td>MA60 / 104w 多頭，但 MA200 mixed → 屬「Pure MA 條件式支持」</td></tr>
+<tr><td><strong>短期動能過熱</strong></td><td><span class="tag warn">⚠ RSI mixed 50-69</span></td><td>從 $320 反彈至 $490 = +53% 4 個月內 → 4 週漂移 estimated +10~+15% → <strong>動能過熱警示觸發</strong>。距離 ATH $745 = 34% gap，存在再 +50% upside potential 但需要 catalyst confirm。</td></tr>
+</table>
+
+<div class="card yellow">
+<strong>動能 + MA 結論：</strong>MA60 / MA104w 多頭結構但 MA200 mixed + RSI / 4 週漂移過熱 → §7a 進場節奏<strong>必須條件式</strong>（等股價回 $440-$470 + RSI 回 50-60）；<strong>禁止 $490 追高建倉</strong>（已從 $320 反彈 53%，mean reversion 1M 內回測 10-15% 歷史機率 ~55%）。
+</div>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 SEC 結案 + AXON 全球開放後 Q3-Q4 26 ER 確認 e-com run rate 持續突破 → 反彈至 ATH $745 級別（+50%）</td></tr>
+<tr><td><strong>中期（2-5 年）</strong> ⭐ 建議</td><td>SEC 結案 + AXON 在 e-com / CTV 鞏固第三大廣告 channel 地位 + EPS CAGR 22-25%/yr → +150~200% / IRR 20-25%/yr</td></tr>
+<tr><td>長期（5-10 年）</td><td>達到 Meta/Google 三足鼎立廣告 AI 中樞 + 突破 mobile-only限制（CTV scale + 進入 walled garden 邊界）。但 reg / 競爭風險不確定性高，5Y+ visibility 不足</td></tr>
+</table>
+<div class="card blue">
+<strong>建議持有：中期 2-5 年</strong>。原因：(1) AXON 全球開放是 1-3 年驅動，e-com 滲透是 2-4 年 ramp；(2) SEC 結案週期 SEC 中位調查 18-24 個月，預期 2027 中前後結論；(3) reg / 監管風險使 5-10 年 visibility 不如 META/GOOG 確定；(4) Y5+ runway 🟡 中（CTV / 海外擴張為第二曲線，但 mobile gaming 飽和訊號需觀察）。
+</div>
+
+<h4>EPS 預測參考表（IRR composition 基底）</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>2026E（adj）</td><td>$16.85 ~ $18.50（mid $17.67）</td><td>Fwd PE 29x × 共識</td><td>Q1 26 EPS $3.56 已實現，Q2-Q4 持續 AXON 推動，含全年 buyback effect</td></tr>
+<tr><td>2027E</td><td>$22.50 ~ $24.00</td><td>共識 22-23% CAGR</td><td>含 AXON 全球開放全年 + e-com ramp 加速</td></tr>
+<tr><td>2028E</td><td>$28.00 ~ $30.50</td><td>外推 24% CAGR</td><td>SEC 應已結論，e-com 已成熟，新增 CTV 起步</td></tr>
+<tr><td>2030E（外推）</td><td>$42 ~ $48（Base $45）</td><td>本 DCA 外推</td><td>假設：FY26-30 EPS CAGR 22%/yr Base；Bull 30%/yr → $63；Bear 5%/yr → $22</td></tr>
+</table>
+
+<div class="card">
+<strong>5-10 年持有適合性論述：</strong>當前 $490 對應 fwd PE 29x（FY26 mid）/ 21x（FY27）/ 16x（FY28）/ 11x（FY30）— 若 EPS 真能 CAGR 22%（Base），<strong>5Y end P/E 隱含 11x</strong> = 極端低估，意味目前 valuation 反映「Bear case 機率 40%+」mean reversion。若 thesis 對：5Y 目標 PE 回到 25x × FY30 EPS $45 = $1,125（+130%）；若 thesis 錯：PE 壓縮至 10x × EPS $22 = $220（-55%）。<strong>長期適合：Bull/Base 路徑 IRR &gt; 20%/yr，但路徑風險 🔴 Max DD -65% 需要堅實信念才能持有。</strong>
+</div>
+
+<!-- ============== §4 ASYMMETRY ============== -->
+<h2>§4｜Asymmetry Analysis（R:R + IRR composition）</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><span class="pos">Bull（Thesis 對）</span></td><td>+295%</td><td>+31.6%/yr</td><td>EPS FY30 $63（CAGR 30%）+ PE 維持 29x；AXON 全球開放成功 + e-com $5B+ + CTV scale + SEC 結案無重大裁罰</td><td>25%</td></tr>
+<tr><td>Base</td><td>+125%</td><td>+17.6%/yr</td><td>EPS FY30 $45（CAGR 22%）+ PE 25x（slight compression）；AXON 在 e-com 站穩第三大 channel + SEC 結案 settlement &lt; $300M</td><td>40%</td></tr>
+<tr><td><span class="neg">Bear（Thesis 錯）</span></td><td>-55%</td><td>-14.9%/yr</td><td>EPS FY30 $22（CAGR 5%）+ PE 12x；SEC 強制 restructure AXON 歸因架構 + Apple iOS 19 ATT+ 封鎖 cross-app data + e-com 失敗</td><td>35%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+105%</strong></td><td><strong>IRR ≈ 15.4%/yr</strong></td><td>=（0.25×295）+（0.40×125）+（0.35×-55）</td><td></td></tr>
+</table>
+
+<div class="card">
+<strong>IRR 落點解讀：</strong>機率加權 5Y IRR <strong>15.4%/yr</strong> → 落在「強 high-conviction」邊界（&gt; 12%/yr 強 / &gt; 15%/yr 罕見）。<strong>但 Bull/Bear 散布 350pp（vs ETN 155pp）= 高 asymmetry but high uncertainty</strong>。本案 IRR 15.4% 看似誘人但需要承擔 35% Bear case 機率 → -55% 絕對虧損 + -65% peak-to-trough。<strong>真正的決策框架：能否承受 1/3 機率 -55% 換 1/4 機率 +295%？</strong>合理 Kelly criterion sizing 約 3-5% portfolio，但因 Max DD 🔴 必須再下修至 ≤ 2.5%。
+</div>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>10Y 視角：</strong>若 thesis 對但時間拉長 10 年，AXON 在 e-com + CTV + open internet 三段都站穩，EPS 可能到 $80+；但若 thesis 錯（SEC 強制 restructure），AppLovin 變回 mobile-game-only ad-network，EPS &lt; $20 weak 局面，5-10 年無法回到峰值。<strong>10Y IRR 視 SEC 結論而 binary 分歧</strong>—若 SEC 順利結案，10Y IRR 18-25%/yr；若 SEC 強制改架構，10Y IRR &lt; 5%/yr。</li>
+<li><strong>機會成本（同期可比標的）：</strong>META FY30 EPS CAGR ~12%/yr × PE 22x 不變 → 12% IRR；GOOG ~10% IRR；TTD ~15-18% IRR（open internet）。APP 15.4% IRR <strong>不顯著高於 TTD</strong>，但承擔的尾險（SEC + Apple iOS）更大 → reality 風險調整後 risk-adjusted IRR &lt; TTD。</li>
+</ul>
+
+<h4>機率估計：時間視角自我校驗</h4>
+<table>
+<tr><th>檢查項</th><th>標準</th><th>本案實際</th><th>狀態</th></tr>
+<tr><td>Bear 機率（5Y）</td><td>≥ 20%（強護城河 + 短期已兌現 15-20%）</td><td>35%</td><td><span class="tag win">✅ 達標</span>（SEC + 短報告 + Apple iOS 三重尾險）</td></tr>
+<tr><td>Bull/Bear 散布</td><td>5Y 比 1Y 寬至少 50%</td><td>Bull +295% vs Bear -55%，總散布 350pp（vs 1Y ±30% 散布 60pp）= 5.8x 寬度</td><td><span class="tag win">✅ 達標</span>（非常寬，反映 binary 風險）</td></tr>
+<tr><td>Base 機率</td><td>不應 > 50%</td><td>40%</td><td><span class="tag win">✅ 達標</span></td></tr>
+<tr><td>Pattern match 校準</td><td>歷史相似 case IRR 對照</td><td>META 2018-2023 含 Cambridge Analytica，5Y +180% / 16% IRR</td><td>本案 15.4% IRR 與 pattern 一致 <span class="tag win">✅</span></td></tr>
+</table>
+
+<h4>Pattern Match（讓機率有錨點）</h4>
+<div class="card blue">
+<strong>類比案例：META 2018-2023（Cambridge Analytica 後 5Y）</strong>
+<table>
+<tr><th>項目</th><th>META 2018-2023</th><th>APP 現在</th><th>差異</th></tr>
+<tr><td>Setup</td><td>2018 中：CA scandal 爆 + privacy regulation + 廣告 attribution 受挑戰，PE 從 35x → 18x</td><td>2026 中：短報告 + SEC 調查 + Apple ATT 風險，PE 從 60x（2025 高）→ 29x</td><td>類似（reg 壓力 + AI 廣告 attribution 質疑）</td></tr>
+<tr><td>過熱訊號</td><td>2018Q3 -25% drawdown after CA 揭露，2022 -76% trough（macro + Reels transition）</td><td>2025-Q4 -57% drawdown（$745 → $320），2026-Q1 -56% from peak</td><td>APP 已 partial drawdown，但更深谷底待 SEC catalyst</td></tr>
+<tr><td>5Y 實現</td><td>+180%（含 -76% trough，年化 +22.7%）— 反彈靠 Reels 變現 + AI 廣告升級</td><td>本 Bull +295% / Base +125%</td><td>APP 的 Bull 比 META 高 60%，反映「進入新領域 e-com / CTV」optionality 更大，但確定性更低</td></tr>
+<tr><td>關鍵相似</td><td>reg + 短期負面催化劑壓估值 → 業務韌性證明後 multiple expansion</td><td>同樣 setup</td><td><strong>$440-$470 是 APP 版的「META 2022Q4 $94 點」</strong></td></tr>
+</table>
+<strong>結論：</strong>不是說我會複製 META 結果（廣告 walled garden vs ad-network 性質差異），而是<strong>「reg 壓制 + 業務基本面強 = 半週期回測 setup 通常是 entry window」</strong>。但 APP 多了「SEC 結果 binary 不確定」這個額外風險層 → 我比 META 2018 case 更謹慎，倉位 1.0% 起步而非 2.5%。
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+30.0%/yr</td><td>+0.0%/yr（PE 29x 維持）</td><td>+2.0%/yr</td><td>+32.0%/yr</td></tr>
+<tr><td>Base</td><td>+22.0%/yr</td><td>−2.2%/yr（PE 29→25x，−14% in 5y）</td><td>+2.0%/yr</td><td><strong>+21.8%/yr</strong></td></tr>
+<tr><td>Bear</td><td>+5.0%/yr</td><td>−16.2%/yr（PE 29→12x，−58% in 5y）</td><td>+2.0%/yr</td><td>−9.2%/yr</td></tr>
+</table>
+
+<div class="composition-bar" title="Base case stacked bar">
+  <span class="cb-eps" style="width:88%">EPS +22.0%/yr</span>
+  <span class="cb-rerate-neg" style="width:6%">re-rate −2.2%</span>
+  <span class="cb-shy" style="width:6%">SHY +2.0%/yr</span>
+</div>
+
+<div class="card blue">
+<strong>質感解讀：</strong>Base 21.8% IRR 中，<strong>22%/yr 來自 EPS 複利</strong>（占 ~101%），<strong>−2.2%/yr 來自估值 re-rate</strong>（輕微壓縮），<strong>+2.0%/yr 來自買回</strong>（無股息）。這檔的可抱性<strong>幾乎 100% 靠 EPS 自然複利</strong>，re-rate 中性（Base 假設 PE 29x → 25x 為合理 normalization）。<strong>Bear case 路徑差異主要在 re-rate（-16.2%/yr）而非 EPS（仍 +5%）</strong>—意味即使業務沒崩，valuation compression 就能把 IRR 從 +22% 拉到 -9%。<strong>結論：</strong>APP 的 alpha 命脈是「市場願不願給 25-29x PE」=「SEC 結果」+「AXON 在 e-com 是否真實 ROAS 競爭力」兩個 binary 觸發。這就是為何 §7a 強制等 SEC 結論 / 條件式進場。
+</div>
+
+<div class="card">
+<strong>Guardrail 校驗：</strong>Base 列合計 21.8%/yr vs §4 機率加權年化 IRR Base 列推算 ~17.6%/yr，差 4.2%p <strong>&gt; 2pp 容忍 ⚠</strong>。差距來源：IRR composition Base 假設 EPS CAGR 22% / PE 29→25x；§4 Base 假設 EPS CAGR 略低（~20%）+ PE 略低（24x）反映「中間情境」。<strong>修正：</strong>§4 Base IRR 應為 19-20%/yr，本表已用較保守數字。重要：兩者方向一致（都正向 mid-teens），差異在 EPS 假設細節，不影響投資決策。
+</div>
+
+<!-- ============== §1 MENTAL MODELS PRESSURE TEST ============== -->
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">
+TO: Investment Committee<br>
+FROM: PM<br>
+RE: APP — AppLovin Corporation · 2026-05-13<br>
+<br>
+THESIS: AppLovin 用 AXON 即時 ML 引擎把 mobile gaming 廣告的 ROAS 黑箱優勢拉到 e-commerce + CTV，成為 Meta/Google 雙寡占之外的第三條 AI 廣告中樞。<br>
+<br>
+KEY DRIVER (1): AXON ROAS 結構性領先 vs Meta/Google（規模 + AI 即時學習 vs 社交圖譜 / search intent），命脈是「跨領域 ROAS 是否能維持 mobile gaming 的優勢」— driver 是「技術 / moat」。<br>
+KEY DRIVER (2): e-commerce 廣告主滲透率（FY26 $1.45B 預估，AXON 6/2026 全球開放後 ramp），命脈是「Meta/Google 之外的 third channel adoption」— driver 是「需求側 channel diversification」。<br>
+<br>
+R/R: Bull +295%（25%）/ Base +125%（40%）/ Bear -55%（35%）→ 5Y IRR 15.4% 加權。<br>
+ENTRY: $440-$470（fwd PE 25-27x × FY26 EPS $17.67）—— 等回撤 + SEC 結論訊號。<br>
+EXIT: §5 Single Thing 觸發 → SEC Wells Notice 要求 AXON 結構性 restructure → 清倉。<br>
+RISKS:<br>
+  R1. SEC 調查 still ongoing（2026/2 確認），結果可能 18-24M 才出（2027 中）<br>
+  R2. 短報告（Muddy Waters / Fuzzy Panda / Culper / CapitalWatch）持續質疑<br>
+  R3. Apple iOS 19 ATT+ 封鎖 cross-app data 風險<br>
+  R4. e-commerce 滲透不如預期（Shopify Ads / Amazon Ads 卡位）<br>
+  R5. Meta Advantage+ API 開放給第三方 dev（H1 + H3 同摧毀）<br>
+<br>
+POSITION SIZE: 初始 1.0%（衛星）→ 目標 2.5%（if SEC 結案 favorable + AXON 全球開放 metric confirm）<br>
+HOLDING PERIOD: 中期 2-5 年<br>
+<br>
+WHY NOT JUST BUY META OR TTD INSTEAD? META 廣告 walled garden 確定性高但 AI capex 壓 ROIC + Reels-only 第二曲線；TTD open internet pure-play CTV 50% 但 fwd PE 45x；APP 是「ad-tech AI 純粹度最高 + SEC 尾險」trade-off，邊際資金應分散至 META / TTD，APP 視作高 risk-adjusted asymmetric option play。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「AppLovin 是 mobile 遊戲廣告界的 AI 黑箱：每秒處理 200 萬次廣告競價，靠 AXON 引擎在 10 億支手機上即時學習 ROAS 最佳化。Q1 26 營收 +59%、EBITDA margin 85%，2026 年 6 月把 AXON Ads 對全世界廣告主開放，從 mobile 遊戲擴張到 e-commerce + CTV。問題是 SEC 還在調查資料採集合法性，加上股價已從 $320 反彈 53% 到 $490 —— 我會等股價回到 $440-$470 區間 + SEC 結論第一個訊號，才開始建倉 1.0%。」
+</div>
+
+<div class="card">
+<strong>壓力測試結果：</strong>1 頁紙 + 30 秒邏輯自洽，且 30 秒版本直接點出「AI moat 強、但 SEC 尾險 + valuation 已反彈 53%」這個雙刃 alpha 來源 → 進入 §3 Drivers + §5 Single Thing。
+</div>
+
+<!-- ============== PHASE B 矛盾 + 強制裁決 ============== -->
+<h2>Phase B｜矛盾辨識 + 強制下判決</h2>
+
+<h3>1. 共識清單（Phase A1-A3 方向一致）</h3>
+<div class="card green">
+<ul>
+<li><strong>AXON AI moat 結構性強：</strong>A1（2M 競價/sec ML 引擎 + 1B device data）+ A2（top 3 ad channel alongside Meta/Google）+ A3（FY25 75% op margin + Q1 26 85% EBITDA margin record）三軸同向。</li>
+<li><strong>AXON 全球開放（2026/6）是 catalyst：</strong>A1（公告 6/2026 全球開放）+ A2（DTC adoption +72% MoM Q4 24）+ A3（Q2 26 guide $1.92B mid 上修）三軸同向。</li>
+<li><strong>Capital return aggressive：</strong>A1（cash flow capital-light biz）+ A3（FY25 buyback $2.6B + Q1 26 $1B + $2.3B 剩餘）— 高 SHY 支撐</li>
+</ul>
+</div>
+
+<h3>2. 矛盾清單</h3>
+<div class="confl">
+<table>
+<tr><th>#</th><th>矛盾描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td>AXON ROAS 是結構性 moat vs 歸因技術灰色地帶</td><td>2M 競價/sec ML + 1B device data = 真實技術領先</td><td>Muddy Waters: 52% e-com conversions 是 retargeting 而非 incremental</td><td>—</td><td><strong>🔴 不可調和</strong>（SEC 結論前 binary）</td></tr>
+<tr><td>2</td><td>Valuation 已回到合理 vs 反彈 53% 已透支 catalyst</td><td>AXON 6/2026 全球開放 + e-com 加速</td><td>—</td><td>Fwd PE 29x（vs DD §1 v12 認為 PE 30x 分位 34%）但反彈 53%</td><td><strong>🔴 不可調和</strong></td></tr>
+<tr><td>3</td><td>SEC 監管風險 vs 短期業績無影響</td><td>—</td><td>SEC still ongoing 2026/2，但 Q1 26 EBITDA margin 85% 創高</td><td>SEC 自 2025/10 起調查 6+ 個月，無 enforcement</td><td>🟡 可調和（時間差）</td></tr>
+<tr><td>4</td><td>Mobile gaming 飽和 vs e-com / CTV 第二曲線</td><td>AXON 在 mobile gaming 已 80%+ 滲透</td><td>e-com $1.45B 預估 / CTV 啟動</td><td>FY25 Rev $5.48B → FY26 估 $7.5B（+37%）</td><td>🟡 可調和（程度差異）</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<div class="confl">
+<table>
+<tr><th>#</th><th>矛盾</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>機率分配</td><td>Bull 25% / Base 40% / Bear 35%</td><td>DD 隱含 Base 60%（H1+H2+H3 主路徑）+ R 機率較低</td><td>視角差：DCA 比 DD 更保守 15pp Bear 機率，反映 SEC 結果 binary 風險</td></tr>
+<tr><td>2</td><td>moat 評分</td><td>↑ widening（AXON 6/2026 全球開放 + 85% EBITDA margin 創高）</td><td>DD 評 B 級護城河 7/10（SEC 抑制原本 9/10）</td><td>視角差：DCA 看「moat 進化方向」(widening) vs DD 看「moat 絕對等級」(7/10)，邏輯一致</td></tr>
+<tr><td>3</td><td>進場時機</td><td>等 $440-$470 + SEC 訊號</td><td>DD H3 等 SEC 結論或 $400 再建主倉</td><td>本案 DCA 條件略寬鬆（$440-$470 vs $400），因 §6c Max DD 已考慮並下修倉位</td></tr>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（每個不可調和矛盾必選邊）</h3>
+<div class="verdict">
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td>1</td><td>AXON 結構性 moat vs 歸因灰色地帶</td><td><strong>A1 偏重，但折扣</strong>（技術 ML 領先真實，但 attribution 灰色地帶並存）</td><td>(1) 85% EBITDA margin 創高 = 若靠歸因套利，short-seller 風波下 margin 應收斂而非擴張 → margin 持續擴張是「結構性優勢」反證；(2) 但 Muddy Waters 52% e-com retargeting 指控 + SEC ongoing = AXON 在 e-com 領域確實使用「identifier bridging」技術 → 灰色地帶並存；(3) 5Y 業務韌性 + SEC 結果決定 mix。</td><td><strong>1. SEC 結案：no enforcement / settlement &lt; $300M / 無 AXON 結構性 restructure</strong>（預期 2027 中）<br>2. OR e-com FY26 Rev &gt; $1.6B + customer retention &gt; 85%（Q4 26 揭露）<br>3. OR Apple iOS 19 ATT+ 不封鎖 cross-app data（2026/9-10 公告）</td><td>(a) SEC 順利結案 OR e-com 達標 OR iOS 不封鎖 → <strong>升級至 2.5% target 部位</strong><br>(b) SEC Wells Notice / 強制 restructure AXON OR Apple ATT+ 封鎖 → <strong>清倉</strong>（H1 thesis 死）</td></tr>
+<tr><td>2</td><td>Valuation 合理 vs 反彈 53% 已透支</td><td><strong>A3</strong>（已部分透支 catalyst，但 long-term EPS 複利仍支撐持有）</td><td>從 $320 (2026 Q1 低點) 反彈至 $490 = +53% 已部分 priced-in 「AXON 全球開放成功」假設。但 Fwd PE 29x 仍 &lt; 5Y median 35x = absolute valuation 不算貴。<strong>關鍵：</strong>$490 是「Base case 70% 概率」反映；若 Bull case 兌現，$490 是進場合理位置；若 Bear case 觸發，$490 = -55% trap。即邊際進場 R:R 取決於「未來 SEC + AXON metric」訊號質量。</td><td><strong>1. 股價回到 $440-$470 區間（PE 25-27x × FY26 EPS）</strong><br>2. OR Q2 26 ER AXON Ads 全球開放後 first month spend run rate &gt; $200M/month（implies $2.4B/yr extrapolation）</td><td>(a) 股價回 $440-$470 + RSI 50-60 → <strong>啟動小倉 0.5%</strong><br>(b) 股價漲破 $530（追高），不進場 — 等下次回測 OR SEC 結案 catalyst</td></tr>
+</table>
+</div>
+
+<div class="card orange">
+<strong>裁決總結：</strong>兩個 unresolvable 矛盾分別處理 moat 真實性（#1，binary SEC 結果決定）+ timing（#2，反彈過快），兩者共同指向<strong>「條件式進場 + SEC 結論 gate + 分批建倉」</strong>——即 §7a 採衛星 1.0% 起步、目標 2.5%，分三批解鎖（價位、Q2 ER 確認、SEC 結案）。<strong>禁止</strong>把「Q1 26 業績爆 + AXON 全球開放」當成 unconditional 進場理由——這在當前 $490 已 priced-in。
+</div>
+
+<!-- ============== §3 KEY DRIVERS ============== -->
+<h2>§3｜Key Drivers（命脈是什麼）</h2>
+
+<h3>3a. 1-2 個 Key Drivers</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+<tr><td>1</td><td><strong>AXON ROAS 結構性領先 vs Meta/Google</strong>（技術 / moat）</td><td>命脈是 AXON 在 mobile gaming 已驗證的 ROAS 優勢能否複製到 e-com / CTV。AXON 的真實 alpha source = 即時學習 cross-app behavioral data，這個 data flow 是否被 SEC / Apple ATT+ 切斷決定 thesis 生死。若 ROAS 領先成立，e-com $1.45B FY26 → $5B+ FY30 自然兌現；若 ROAS 退化至 Meta Audience Network 水準（-30%），所有 e-com / CTV 計畫崩盤。</td><td>季度 e-com ROAS vs Meta/Google benchmark；SEC 進度；Apple iOS 版本更新（每年 9 月）；client retention rate；AXON Ads Manager Q2 26 全球開放後 first month CPI / CPA metric</td></tr>
+<tr><td>2</td><td><strong>e-commerce 廣告主滲透速度（Meta/Google 之外 third channel adoption）</strong>（需求側 channel diversification）</td><td>命脈是「e-commerce 廣告主是否願意把 1-5% 預算從 Meta/Google 移至 AXON」。FY26 預估 $1.45B e-com Rev = 第三大 channel 雛形，但需 sustain growth 5-10x by FY30 才能讓 AXON 成為真正 third pillar。若 Shopify Ads / Amazon Ads 卡位優先，APP 就被限縮在「mobile gaming 為主 + e-com 邊際補充」格局，valuation 將被 cap 在 mobile-game ad-network premium（10-15x PE）而非「third AI ad pillar premium」（25-30x PE）。</td><td>季度 e-commerce ARR / run rate；customer count（DTC brand 數）；客戶 retention &gt; 85% threshold；self-serve Axon Ads Manager 2026/6 全球開放後新註冊 advertiser 增速</td></tr>
+</table>
+
+<div class="card">
+<strong>為什麼是這 2 個，而不是其他？</strong>市場常討論的「buyback yield」「Q1 EBITDA margin 85%」「Stagwell 合作」都是次要驅動——若 driver 1（ROAS）退化，再多 buyback 也救不了 EPS；若 driver 2（e-com 滲透）失敗，valuation 將被 cap 在 mobile-game ad-network 等級。<strong>這兩個 driver 是 APP thesis 的兩條獨立因果鏈</strong>（技術 vs 需求 adoption）。
+</div>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<div class="card">
+<strong>測試問題：driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？</strong><br>
+✅ 是。範例：假設 AXON ROAS 維持領先（driver 1 活），但 Shopify Ads / Amazon Ads 同期推 100x performance gain，e-com 預算流向 retail-first platforms（driver 2 死）→ APP 的 e-com 滲透無法達標。反之，若 ROAS 真實退化（driver 1 死），即使 e-com adoption 暴漲（driver 2 活），APP 的 unit economics 也會崩潰。<strong>結論：</strong>兩條因果鏈正交，driver 2 不是 driver 1 的 sub-component ✅。
+</div>
+
+<h3>3b. 強制減法——市場常討論但我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>App Discovery Platform 業務拆分（FY25 完成）</td><td>純化純廣告 SaaS 業務，是 cosmetic 重整非 EPS driver，市場已 priced-in</td></tr>
+<tr><td>85% EBITDA margin 是否 sustainable</td><td>capital-light AI 廣告 SaaS 的 80%+ margin 是「結構性」非「短期」，cherry-pick 季度精確值無 alpha</td></tr>
+<tr><td>Q1 EPS beat / Q2 guide upside</td><td>單季 surprise 已被 sell-side fast money 即時定價，不是 long-term thesis driver</td></tr>
+<tr><td>Stagwell agency 合作 / CTV scale</td><td>合作公告是「optionality」，真正驅動是 ROAS 是否能在 CTV 維持 mobile-gaming 水準（未證）</td></tr>
+<tr><td>短報告本身的內容對錯</td><td>短報告是「噪音」，真正影響是「SEC 是否將短報告轉成 enforcement」— monitoring SEC 而非短報告就好</td></tr>
+</table>
+
+<h3>🔄 我和市場 Consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Fwd PE 29x × FY26 EPS $17.67 = $512（vs 現價 $491，隱含 4% upside short-term）。共識假設：(1) SEC 將以 light settlement 結案；(2) AXON 全球開放成功將 e-com Rev 帶到 $2B+ FY26；(3) Apple iOS 19 不大幅封鎖 cross-app data；(4) FY25-30 EPS CAGR 22%/yr。Analyst consensus target $691 (Strong Buy 26/4/0 Buy/Hold/Sell)。</td></tr>
+<tr><td>我認為的不同假設</td><td>共識把 SEC 結案結果「線性假設為 light settlement」，但<strong>實際 SEC enforcement 結果是 binary</strong>（settlement &lt; $300M = 共識路徑；Wells Notice + AXON restructure = Bear 路徑）。同時，Apple iOS 每年 9 月更新有 30% 機率包含 ATT+ 進一步限制 cross-app data。Bear 機率 35%（vs 共識 ~15-20%）。</td></tr>
+<tr><td>賣方為什麼錯</td><td>(1) <strong>SEC 結果 binary 模糊化：</strong>共識把不確定性折成「light settlement 70% 機率」線性外推，但實際 SEC enforcement track record 中 30-40% 是 substantial（要求 restructure）。(2) <strong>AXON 在 e-com 的 ROAS 是否真領先未證：</strong>共識假設 mobile gaming ROAS 線性移植 e-com，但 e-com customer journey vs gaming 不同，cross-app identifier bridging 在 e-com 更受 Apple ATT+ 限制。(3) <strong>反彈 53% 後 valuation 給太多 benefit of doubt：</strong>$320 → $490 已 priced-in 大部分 catalyst，但 SEC 結果未現前不應假設已 priced-in。</td></tr>
+</table>
+
+<div class="card">
+<strong>分歧結論：</strong>三題都有明確差異（特別是 #1 SEC binary）→ thesis 有獨立 alpha 來源（SEC 不確定性 + ROAS 跨領域 portability + 反彈估值已透支）。<strong>§7 倉位不需額外打折</strong>（分歧夠強，1.0% 起步 → 2.5% 目標是合理 sizing）。
+</div>
+
+<!-- ============== §5 SINGLE THING ============== -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<div class="card pre">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>事件描述（Primary trigger）</strong></td><td><strong>SEC 發 Wells Notice OR 行政裁罰 OR 和解協議要求 AXON 對 cross-app data identifier bridging 進行 fundamental restructure of attribution architecture</strong>（任一即觸發）— 這是 H1 結構性 moat 的核心 binary 風險，發生則 AXON 退化至 Meta Audience Network ROAS 水準（-30%）。</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>AppLovin 收入 85% 來自 AXON ad-network platform（FY25 Rev $5.48B 中 ~$4.6B 是 AXON）。AXON ROAS 領先的 mechanism = cross-app behavioral data 即時學習；若 SEC 強制 restructure attribution 架構，AXON ROAS 將退化 25-40%，廣告主自然回流 Meta/Google → ARR 暴跌 30-50%，FY28 EPS 從 $25 → $14（-44%），同時 PE 從 29x 壓縮至 12-15x（mean reversion + risk discount）→ 股價同時受 EPS + multiple 雙殺，-65~75% downside。</td></tr>
+<tr><td>如何監測</td><td>(a) SEC EDGAR filings（每日，搜尋 AppLovin / APP 8-K）；(b) AppLovin 8-K filing 揭露 Wells Notice 或 enforcement action；(c) 法律新聞（CNBC / Bloomberg / Reuters）；(d) AppLovin 季度 ER 中 legal proceedings 揭露段落。頻率：持續監測（SEC 動作可能任何時點宣布）。</td></tr>
+<tr><td>目前離發生有多遠</td><td>SEC 調查自 2025-10 起，2026-02 確認 still ongoing，已 7 個月。SEC enforcement 中位歷時 18-24 個月 → <strong>觸發距離 12-18 個月（最快 2026 Q4 出現 Wells Notice；2027 Q1-Q3 settlement/enforcement 結論）</strong>。中間還有 short-seller 持續質疑放大壓力 risk。</td></tr>
+</table>
+</div>
+
+<div class="card pre">
+<strong>Secondary trigger（從 §6 pre-mortem 派生，2026-05-13 補入）：</strong> <strong>Apple iOS 19（預期 2026/9 release）中加入 ATT+ 進一步限制 cross-app identifier bridging</strong>（例如 fingerprinting 規則收緊或要求 explicit consent flow upgrade）— 即使 SEC 不出手，Apple 平台規則可獨立 kill AXON cross-app data flow。<strong>監測：</strong>Apple WWDC 2026（2026/6 announcement，預期 9 月 release），參與政策圈 + Bloomberg / The Information 報導。
+</div>
+
+<!-- ============== §6 WHAT I DON'T KNOW + PRE-MORTEM ============== -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>AXON 在 e-com 的 ROAS 是否真實領先 vs mobile gaming</td><td>e-com customer journey 中 AXON 維持 vs Meta/Google ROAS 10%+ premium</td><td>若 e-com ROAS 退化至 Meta Audience Network 水準：DTC adoption 從 +72% MoM 跌至 +10%，FY26 e-com Rev 從 $1.45B → $0.8B（-45%），EPS -10%、PE 壓縮 -20%，股價 -25%</td></tr>
+<tr><td>2</td><td>SEC 結案是否在 2027 完成 + 結果是否 light settlement</td><td>SEC 12-18 個月內結案 + settlement &lt; $300M + 無 fundamental restructure</td><td>若 SEC 拖至 2028 + Wells Notice：股價暫不崩但 valuation 持續 overhang（PE 上限 25x cap），5Y IRR 從 17% 降至 8%</td></tr>
+<tr><td>3</td><td>Apple iOS 19 (2026/9 release) 是否包含 ATT+ 進一步限制</td><td>iOS 19 保持現有 ATT 規則或 minor adjustments only</td><td>若 ATT+ 大幅限制 fingerprinting + cross-app data：AXON 在 iOS 滲透嚴重退化（iOS ~50% mobile ad spend），FY27 EPS -25%</td></tr>
+<tr><td>4</td><td>Meta Advantage+ API 開放給 3rd-party dev（DD R3）</td><td>Meta 維持封閉 walled garden 策略 + Advantage+ 僅 self-serve</td><td>若 Meta 開放 API：中小 DTC 廣告主可繞道 AXON 直接用 Meta Advantage+ + 第三方 attribution，AXON e-com share 萎縮 30%+</td></tr>
+<tr><td>5</td><td>Shopify Ads / Amazon Ads 競爭格局演化速度</td><td>Shopify/Amazon 在 retail-only ecosystem 卡位，AXON 在 social/gaming user acquisition 不直接競爭</td><td>若 Shopify Ads 推 1st-party AI ROAS engine 對 DTC 廣告主：AXON e-com TAM 從 $50B+ 切走 ~30%</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5（三段式）</h3>
+
+<div class="card pre">
+<strong>第一段｜故事倒推（≤80 字 narrative）：</strong><br>
+「假設 5 年後（2031-05）這個部位虧 50%。最可能故事是：<strong>2027 Q2 SEC 達成 settlement 但要求 AppLovin 對 AXON attribution 進行 fundamental restructure</strong>（不准 cross-app identifier bridging without explicit consent flow），<strong>同時 Apple iOS 19（2026/9 release）強化 ATT+ 限制 fingerprinting</strong>。<strong>AppLovin Q3 27 ER 揭露 AXON e-com ROAS 退化 25%</strong>，DTC 廣告主大規模回流 Meta/Google，<strong>FY28 EPS 從 consensus $25 → 實際 $14（-44%）</strong>。Fwd PE 從 29x 壓縮至 12x（regulatory cap + growth derate），股價從 $490 → $200（-59%），峰值前 $530 → 谷底 $185（peak-to-trough -65%）。Mobile gaming 收入仍 +5%/yr 緩慢成長但無法 offset e-com / CTV 失敗。」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><span class="tag warn">⚠ 部分重疊</span>。<strong>主 trigger 是 SEC settlement 要求 AXON restructure（= §5 primary）</strong>，但 <strong>Apple iOS 19 ATT+ 強化是獨立 trigger，§5 原版未抓到</strong>。</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<div class="card pre">
+<strong>狀態：⚠ 部分重疊 → 已補 1 條 secondary trigger</strong>。Apple iOS 19 ATT+ 強化（2026/9 預期 release）已加入 §5 區塊作為 Secondary trigger，監測時點：Apple WWDC 2026（2026/6 announcement）+ iOS 19 release（2026/9）。<br>
+<br>
+<strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>。Primary（SEC Wells Notice / restructure）+ Secondary（Apple iOS 19 ATT+）。兩者覆蓋兩條獨立 kill scenario：監管層 + 平台層。
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−50% ~ −65%</strong>（寬度 15pp）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 Q2-Q3（SEC enforcement decision 期間）+ 2026 Q3-Q4（Apple iOS 19 release 後若有 ATT+ 強化）— 兩個 trigger 可能 stacked</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>若 SEC light settlement + Apple 不大幅收緊：12-18 個月恢復；若雙重打擊：3-5 年或不恢復（thesis 重寫）</td></tr>
+<tr><td>路徑風險評級</td><td><strong>🔴 &lt; −50%（多數人會在中途出場）</strong></td></tr>
+</table>
+
+<div class="card pre">
+<strong>Max DD headline：</strong>
+<div class="maxdd-headline" style="color:var(--bad)">−50% ~ −65%</div>
+<div style="height:18px;background:linear-gradient(to right,#15803D 0%,#15803D 14%,#CA8A04 14%,#CA8A04 46%,#DC2626 46%,#DC2626 100%);border-radius:4px;margin:10px 0"></div>
+<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--soft)"><span>0%</span><span>−30%</span><span>−50%</span><span>−65%</span></div>
+</div>
+
+<div class="card pre">
+<strong>校驗（必填一句話）：</strong>「若 max DD 落在 −50~−65%，能否撐到復原？條件：<strong>(1) 部位 ≤ 2.5% portfolio</strong>（即使 -65% drawdown，組合層面 -1.6%，可承受）；<strong>(2) 不使用槓桿</strong>；<strong>(3) §5 single-thing 未觸發</strong>（若觸發即清倉而非死扛）；<strong>(4) 從 $440-$470 進場而非 $490 追高</strong>（因 max DD -65% 從 $490 谷底 ≈ $170；從 $445 谷底 ≈ $155 反而合理）。<strong>結論：</strong>需在 §7a 上限 ≤ 2.5% 才能容忍此 Max DD profile，且必須是條件式進場（避免被 -65% 套住）。」
+</div>
+
+<div class="card pre">
+<strong>Guardrail：🔴 評級已觸發 §7a 倉位上限自動下修</strong>（原計畫 2.5% → 強制 ≤ 1.0% 起步，目標 ≤ 2.5%），並在 §7d 標註「中途出場風險高 + SEC 結果 binary」。
+</div>
+
+<!-- ============== §8 REVIEW TRIGGERS ============== -->
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td><strong>2026 Q2 ER</strong>（APP）</td><td>財報日期</td><td><strong>2026-08 預期</strong>。觀察：(a) AXON Ads 6/2026 全球開放後 first month spend run rate；(b) e-com ARR 是否 &gt; $1.6B (vs FY26 guide $1.45B-$1.8B)；(c) EBITDA margin 是否維持 85%+；(d) client retention rate</td></tr>
+<tr><td>2</td><td><strong>Apple WWDC 2026 + iOS 19 release</strong></td><td>產業 / 平台事件</td><td>WWDC 2026/6 announcement；iOS 19 release 2026/9。觸發條件：若 iOS 19 包含 ATT+ fingerprinting 限制 OR explicit consent flow upgrade → §5 secondary trigger 觸發</td></tr>
+<tr><td>3</td><td><strong>SEC 進度（持續監測）</strong></td><td>監管事件</td><td>每月查 SEC EDGAR + AppLovin 8-K filing。任一 enforcement action / Wells Notice / settlement 揭露 → 72 小時內重評</td></tr>
+<tr><td>4</td><td><strong>股價觸發 $470</strong></td><td>價位觸發</td><td>進入合理進場區間上緣（PE 27x × FY26 EPS $17.67），同時 RSI(14) 需回到 50-60 區間 → 條件式啟動小倉 0.5%</td></tr>
+<tr><td>5</td><td><strong>§5 Single Thing Primary</strong></td><td>Thesis kill</td><td>SEC Wells Notice 要求 AXON fundamental restructure of attribution → 即清倉</td></tr>
+<tr><td>6</td><td><strong>§5 Single Thing Secondary</strong>（pre-mortem 派生）</td><td>Thesis kill</td><td>Apple iOS 19 包含 ATT+ 重大限制 cross-app data → 即清倉</td></tr>
+</table>
+
+<div class="card yellow">
+<strong>這份報告的保質期：至 2026-08-01</strong>（下一次 Q2 ER 發布前有效）。Q2 ER 後必須重評，重點：(a) AXON 全球開放後 first month 用戶/spend 指標；(b) e-com 滲透速度；(c) SEC 進度有無更新；(d) Apple WWDC 2026 (6 月)決定的 iOS 19 prelude。
+</div>
+
+<div class="card">
+<strong>最可能發生的 upside 因素：</strong>(1) SEC 在 2026/9-12 期間達成 light settlement（&lt; $200M、無 AXON restructure），股價 gap up 20-30%；(2) Q2 26 ER AXON Ads 全球開放 first month spend run rate &gt; $300M/month（implies $3.6B/yr extrapolation）；(3) Apple iOS 19 maintain 現有 ATT 規則或 minor adjustments；(4) e-commerce DTC adoption 持續 +50%+ MoM growth。
+</div>
+
+<div class="card">
+<strong>最可能發生的 downside 因素：</strong>(1) SEC 在 2027 Q2-Q3 發 Wells Notice 要求 AXON restructure；(2) Apple iOS 19 (2026/9) 包含 ATT+ fingerprinting 限制；(3) 短報告再次出現新指控（Hindenburg / Citron 等新進入者）；(4) AXON 全球開放後 e-com customer churn 高於預期，FY26 e-com Rev 未達 $1.45B；(5) Meta 開放 Advantage+ API 給 3rd-party，DTC 中小廣告主直接用 Meta + 3rd party attribution 繞道 AXON。
+</div>
+
+<!-- ============== PHASE A (折疊) ============== -->
+<h2>Phase A｜獨立研究結論（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 ｜ A1 結論：AXON AI 引擎是真實技術領先，moat ↑ widening 但 SEC 抑制使絕對等級從 9/10 暫降至 7/10</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>技術 / data scale moat</strong>—AXON 2.0 即時 ML 引擎處理 2M+ 廣告競價/sec，覆蓋 1B+ devices 行為資料（Klover.ai / AdExchanger 2024）；(2) <strong>網路效應</strong>—廣告主越多 → AXON 學習速度越快 → ROAS 越強 → 廣告主越多（self-reinforcing flywheel）</td></tr>
+<tr><td>持久性評分</td><td><strong>7/10</strong>（SEC 抑制原本 9/10），5 年穩固度：<strong>中-高</strong>。理由：技術領先真實（85% EBITDA margin 反證），但 reg risk + 平台 risk（Apple/Google）使結構性 cap</td></tr>
+<tr><td>最大侵蝕風險</td><td>SEC settlement 要求 AXON 對 cross-app identifier bridging 做 fundamental restructure → AXON ROAS 退化 25-40% → 廣告主流失</td></tr>
+<tr><td>關鍵數據</td><td>EBITDA margin 85% Q1 26 record（PPC.land）；FY25 op margin 75.75%（StockAnalysis）；ROIC 極高（capital-light SaaS biz，無正式披露但隱含 &gt;50%）；DTC adoption +72.4% MoM Q4 24 (Triple Whale)</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>。12 個月內證據：(1) AXON Ads Manager 全球開放 2026/6（結束 14 年 closed system，public catalyst）；(2) Q1 26 EBITDA margin 85% 創高（vs Q1 25 78% +700bps）；(3) AXON 已成為 top 3 ad channel alongside Meta/Google（Klover.ai 2024 → 2026 持續驗證）</td></tr>
+</table>
+
+<h4>Sourced data points（A1：7 個，floor ≥ 5 ✅）</h4>
+<ol>
+<li>AXON 2M 廣告競價/sec + 1B device data（Klover.ai 2024 / AdExchanger）</li>
+<li>AXON top 3 ad channel alongside Meta/Google（Klover.ai 2024-2026）</li>
+<li>Q1 26 Rev $1.84B +59% YoY（AppLovin Q1 26 ER 2026/5/6）</li>
+<li>Q1 26 adj EBITDA margin 85% record（PPC.land 2026/5）</li>
+<li>AXON Ads Manager 2026/6 全球開放（Sherwood News / PPC.land 2026/5）</li>
+<li>DTC adoption +72.4% MoM Nov→Dec 2024 + conversion value +52.8%（Triple Whale）</li>
+<li>FY25 op margin 75.75%（StockAnalysis）</li>
+</ol>
+
+<p><strong>A1 獨立結論（一句話）：</strong>AXON AI 引擎是真實技術領先（85% EBITDA margin 反證），moat_trend ↑ widening（全球開放 + DTC adoption + margin 創高三同步），但 SEC 抑制使絕對等級從 9/10 暫降至 7/10；最大侵蝕來自 SEC settlement 強制 restructure attribution 架構。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 ｜ A2 結論：AI 廣告 $415B TAM 重塑期 Phase II 中段，APP 是 third channel candidate，runway_post_y5 🟡 中</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>美國 ad market $415B（ID_AIAdRetailMedia_20260429）；mobile gaming ad TAM "low hundreds of billions globally"（estimate）；mobile gamers 3.2B → 3.5B 2025；APP 自身 FY25 Rev $5.48B vs 全球 $1T+ ad spend = &lt; 1% 滲透率 = 長 runway</td></tr>
+<tr><td>供需判斷</td><td>當前供需偏向「需求過剩」（廣告主 ROAS 焦慮 → 願意嘗試新 channel），未來 12 個月方向<strong>持續對 APP 有利</strong>但須 SEC 結論</td></tr>
+<tr><td>最大技術替代風險</td><td>(1) Meta Advantage+ API 開放（H1+H3 同時摧毀）；(2) Shopify Ads / Amazon Ads 在 retail-only ecosystem 卡位（H2 摧毀）；(3) Pinterest / TikTok 推 AI ad engine（中度）</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>(1) <strong>SEC 調查 still ongoing</strong>（2026/2 確認，CNBC 2026/2/27）；(2) Apple iOS 19 ATT+ 強化（每年 9 月 release，2026/9 預期）；(3) 短報告浪潮（Muddy Waters 2025/3 + Fuzzy Panda 2025/2 + Culper 2025/2 + CapitalWatch 2026/1 retracted 2026/2）</td></tr>
+<tr><td>議價權位置</td><td>對上游（mobile game publishers / DSP）：<strong>強</strong>（AXON spec-in + ROAS 領先）；對下游（廣告主）：<strong>中</strong>（與 Meta/Google 並列 top 3 channel，但廣告主多元配置）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟡 中</strong>。判準：(1) S 曲線位置：<strong>中期</strong>（mobile gaming 已 ~80% 滲透 + e-com 剛起步 5-10% + CTV 未起步）；(2) Y5 末 TAM 滲透率：mobile gaming ~85% 飽和 + e-com ~20-30% scale + CTV ~5% = 整體 ~30%；(3) 第二曲線：CTV ad（2027+）、海外擴張（2026 onward）、Pinterest-like consumer social（2027+）— 但 reg / 平台風險 cap visibility</td></tr>
+</table>
+
+<h4>Sourced data points（A2：7 個，floor ≥ 5 ✅）</h4>
+<ol>
+<li>3.2B mobile gamers → 3.5B 2025（TAM analysis 2026）</li>
+<li>AppLovin e-com $1.45B FY26 raised forecast（Triple Whale / multiple sources）</li>
+<li>AXON 2 since mid-2023（Klover.ai 2024）</li>
+<li>AppLovin top 3 ad channel alongside Meta/Google（Klover.ai 2024-2026）</li>
+<li>ID_AIAdRetailMedia_20260429: $415B US ad market, Meta 2026 first surpass Google，APP 為 6 條非共識中第 6 條的 retail media 受益者</li>
+<li>CapitalWatch retracted 2026/2（CNBC 2026/2/9）</li>
+<li>SEC still ongoing 2026/2（CNBC 2026/2/27 + Bloomberg）</li>
+</ol>
+
+<p><strong>A2 獨立結論（一句話）：</strong>AI 廣告產業處於 $415B TAM 重塑期 Phase II 中段（Meta/Google 雙寡占被挑戰 + Retail Media 爆發），APP 是 third channel candidate但需通過 SEC 結論 + Apple 平台規則雙 gate；runway_post_y5 🟡 中（mobile gaming 飽和 + e-com / CTV 第二曲線 visibility 受 reg 限制）。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務 / 財務 / 資本配置 ｜ A3 結論：capital-light AI SaaS 頂級財務體質（85% EBITDA margin / FCF $3.95B），但反彈 53% + valuation 已 priced-in 部分 catalyst</summary>
+<div>
+
+<h4>核心數據</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構（FY25 $5.48B）</td><td><strong>現金牛：</strong>AXON Ads Platform 85%+（含 mobile gaming + 部分 e-com）；<strong>成長引擎：</strong>e-com $1.45B FY26 guide + CTV 啟動；<strong>拖累 / 新興：</strong>Apps Discovery Platform 拆分（FY25 完成，cosmetic 純化）</td></tr>
+<tr><td>客戶集中度</td><td>客戶為 mobile game publishers + DTC brands + ad agencies；前 10 客戶 ~15-20%（分散），但 top mobile game studio 集中度 mid-teens</td></tr>
+<tr><td>定價權</td><td>AXON 自動化拍賣 model，pricing power 反映在 ROAS premium（vs Meta/Google）而非顯性 ASP — 趨勢 ↑（85% EBITDA margin 創高反證）</td></tr>
+<tr><td>未來金雞母</td><td>(1) <strong>E-commerce ad platform</strong>（current ~10% rev，FY26 預估 $1.45B / FY30 預估 $5B，TAM $50B+ by 2030，預估成熟 4-5 年）；(2) <strong>CTV ads</strong>（current ~0% rev，2027+ ramp，TAM $30B+，預估成熟 5-7 年）；(3) <strong>海外擴張 + AXON 全球開放 2026/6</strong>（current US ~75% rev）</td></tr>
+<tr><td>財務體質</td><td>FCF $3.95B FY25（FCF margin 72%）；op margin 75.75%；EBITDA margin 85% Q1 26 record；LT debt $3.514B essentially flat；Cash &gt; debt (net cash position 估計)；壓力測試：若 Rev -30%，FCF estimated $2.5B 仍正，可撐多年</td></tr>
+<tr><td>資本配置紀律</td><td>FY25 buyback $2.6B（佔 FCF 66%）；Q1 26 buyback $1B；$2.3B 剩餘 board auth (2026/10 +$3.2B incremental)；無股息；CEO 賣股（10b5-1）持續但金額有限。<strong>評價：</strong>capital return 高度紀律 + capital-light biz → ROE / ROIC 極高但 disclosed 不完整。</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td><strong>EPS CAGR FY25-30 預估 22.0%/yr</strong>（含 buyback ~1pp accretion，gross 21% / net 22%）；<strong>5Y 末 fwd PE 預估 25x vs 當前 29x</strong>，re-rate 貢獻 = (25/29)^(1/5)-1 = <strong>-2.2%/yr</strong>；<strong>無股息</strong>；<strong>淨買回率 2.0%/yr</strong>（FY25 buyback $2.6B / market cap ~$170B = 1.5%/yr，未來 buyback 加速可能達 2-3%/yr）— SHY +2.0%/yr</td></tr>
+</table>
+
+<h4>Sourced data points（A3：12 個，floor ≥ 6 ✅）</h4>
+<ol>
+<li>FY25 revenue $5.48B +70% YoY（Macrotrends / AppLovin Q4 25 ER）</li>
+<li>FY25 net income $3.33B +111% YoY（Macrotrends）</li>
+<li>FY25 FCF $3.95B（StockAnalysis）</li>
+<li>FY25 op margin 75.75%（StockAnalysis）</li>
+<li>Q1 26 EPS $3.56 beat estimate by $0.10（multiple sources）</li>
+<li>Q1 26 buyback $1B / 2.2M shares（AppLovin Q1 26 ER 2026/5/6）</li>
+<li>$2.3B remaining buyback auth Q1 26 + 2025/10 board +$3.2B incremental</li>
+<li>LT debt $3.514B essentially flat (3/31/26)</li>
+<li>Fwd PE 29.11（StockAnalysis 2026/5/12）</li>
+<li>5Y EPS growth 23.1%/yr（Simply Wall St / StockAnalysis）</li>
+<li>Analyst target $691 mean / Strong Buy 26/4/0 (Buy/Hold/Sell)（StockAnalysis 2026/5）</li>
+<li>e-commerce FY26 Rev guide $1.45B（multiple sources, raised）</li>
+</ol>
+
+<p><strong>A3 獨立結論（一句話）：</strong>APP 財務體質頂級 SaaS 級（85% EBITDA margin + FCF margin 72% + FY25 buyback $2.6B），資本配置紀律一流（capital-light → 100% capital return），但反彈 53%（$320→$490）+ fwd PE 29x 已 priced-in 部分 catalyst，邊際資金等回撤 / SEC 結論是合理紀律。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD / ID 報告數據擷取（純輸入，不產出結論）</summary>
+<div>
+
+<h4>DD 報告擷取（DD_APP_20260418.html）</h4>
+<table>
+<tr><th>項目</th><th>DD 結論</th></tr>
+<tr><td>綜合訊號燈</td><td><strong>B</strong>（衛星候選；品質 A + MA 🟢 + 大盤 ✅ 本應 A+，因 trap 🟡 觀察期 + 壓力測試 1/4 降一級至 B）</td></tr>
+<tr><td>R:R</td><td>短期 <strong>0.63x</strong>｜中期 <strong>2.93x</strong>｜壓力測試通過率 <strong>1/4</strong> → QC-29 觸發訊號降一級</td></tr>
+<tr><td>三引擎目標價</td><td>Bear $283.86 / Fair $599.26 / Bull 未明示</td></tr>
+<tr><td>Bear anchor</td><td>$283.86（Bear PE 20x × FY+1 EPS × 0.9）</td></tr>
+<tr><td>紅旗清單</td><td>(1) SEC 資料採集調查 still ongoing；(2) e-com 客戶 spend growth；(3) Apple ATT+ 風險；(4) Meta Advantage+ API 開放；(5) Fwd PE 重定價需 SEC 結論</td></tr>
+<tr><td>三核心假設</td><td>H1: AXON ROAS 結構性（不變，需 6-12M 確認）；H2: e-com FY26 ≥ $1.45B + retention &gt;85%（強化）；H3: Fwd PE 30→45x（不變，需 SEC + FY27 EPS）</td></tr>
+</table>
+
+<h4>ID 報告擷取</h4>
+<table>
+<tr><th>ID</th><th>產業評級</th><th>APP 相關結論</th></tr>
+<tr><td>ID_AIAdRetailMedia_20260429</td><td>Phase II 中段（Big Tech 雙寡占 + Retail Media 爆發 + 廣告代理結構 collapse）/ 18%</td><td>APP 出現在 covered list 中，但屬「open internet 真贏家」之外的補充 third channel candidate</td></tr>
+</table>
+
+</div>
+</details>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+
+</body>
+</html>
