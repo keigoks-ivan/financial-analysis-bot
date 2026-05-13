@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS CRDO vs ALAB vs CIEN 2026-05-13 | 多標的對比分析</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", Roboto, sans-serif; background: #ffffff; color: #1a1d24; line-height: 1.8; font-size: 16px; font-weight: 400; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+p { color: #1a1d24; margin: 14px 0; font-weight: 400; }
+li { color: #1a1d24; font-weight: 400; }
+strong { color: #000000; font-weight: 700; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+.report-header { border-bottom: 2px solid #d0d8e0; padding-bottom: 16px; margin-bottom: 24px; }
+.report-header h1 { font-size: 28px; color: #0a1628; margin: 0 0 8px; font-weight: 700; }
+.report-meta { font-size: 14px; color: #4a5568; font-weight: 500; }
+.report-meta span { margin-right: 16px; }
+.toc-nav { position: sticky; top: 0; background: #ffffff; padding: 14px 20px; border-bottom: 2px solid #d0d8e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 0 -20px 28px; z-index: 100; }
+.toc-nav a { color: #1565c0; text-decoration: none; margin-right: 16px; font-size: 14px; font-weight: 600; display: inline-block; padding: 4px 2px; }
+.toc-nav a:hover { color: #c2410c; }
+section { margin-bottom: 36px; padding-top: 16px; }
+h2 { font-size: 24px; color: #0a1628; border-left: 4px solid #1565c0; padding-left: 12px; margin: 0 0 18px; font-weight: 700; }
+h3 { font-size: 18px; color: #c2410c; margin: 22px 0 12px; font-weight: 700; }
+h4 { font-size: 16px; color: #15803d; margin: 16px 0 10px; font-weight: 700; }
+.verdict-card { background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%); border: 1px solid #90caf9; border-left: 4px solid #15803d; border-radius: 8px; padding: 22px 26px; margin-bottom: 22px; }
+.verdict-card .verdict-label { font-size: 13px; color: #4a5568; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+.verdict-card .verdict-pick { font-size: 32px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.verdict-card .verdict-timeframe { font-size: 15px; color: #c2410c; margin-bottom: 14px; font-weight: 600; }
+.verdict-card ul { margin: 8px 0 0; padding-left: 22px; }
+.verdict-card li { margin-bottom: 10px; font-size: 15px; color: #1a1d24; line-height: 1.7; }
+.verdict-card p { color: #1a1d24; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 15px; background: #ffffff; border: 1px solid #d0d8e0; border-radius: 6px; overflow: hidden; }
+th { background: #f1f5f9; color: #0a1628; padding: 12px 14px; text-align: left; border-bottom: 2px solid #cbd5e1; font-weight: 700; font-size: 14px; }
+td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; color: #1a1d24; vertical-align: top; font-weight: 400; }
+tr:hover { background: #f8fafc; }
+tr:last-child td { border-bottom: none; }
+.rank-1 { color: #15803d; font-weight: 700; }
+.rank-2 { color: #475569; font-weight: 700; }
+.rank-3 { color: #c2410c; font-weight: 700; }
+.signal { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.signal-green { background: #dcfce7; color: #166534; }
+.signal-yellow { background: #fef3c7; color: #92400e; }
+.signal-red { background: #fee2e2; color: #991b1b; }
+.signal-grey { background: #e2e8f0; color: #475569; }
+.callout { background: #eff6ff; border-left: 4px solid #1565c0; padding: 16px 20px; margin: 18px 0; border-radius: 4px; font-size: 15px; color: #1a1d24; line-height: 1.75; }
+.callout strong { color: #000000; font-weight: 700; }
+.callout-warn { background: #fff7ed; border-left-color: #c2410c; }
+.callout-key { background: #f0fdf4; border-left-color: #15803d; }
+.callout-danger { background: #fef2f2; border-left-color: #991b1b; }
+.irr-bar { display: flex; height: 40px; border-radius: 4px; overflow: hidden; margin: 10px 0 4px; background: #e2e8f0; border: 1px solid #cbd5e1; }
+.irr-segment { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 8px; }
+.irr-eps { background: #15803d; }
+.irr-rerate-pos { background: #1565c0; }
+.irr-rerate-neg { background: #b91c1c; color: #ffffff; }
+.irr-buyback { background: #c2410c; }
+.irr-eps-neg { background: #7f1d1d; color: #ffffff; }
+.irr-legend { font-size: 14px; color: #334155; margin-bottom: 16px; line-height: 1.7; }
+.timeframe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; }
+.tf-card { background: #f8fafc; border: 1px solid #d0d8e0; border-radius: 6px; padding: 16px 18px; }
+.tf-card .tf-label { font-size: 12px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+.tf-card .tf-winner { font-size: 20px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.tf-card .tf-reason { font-size: 14px; color: #1a1d24; line-height: 1.65; font-weight: 400; }
+.report-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #d0d8e0; font-size: 13px; color: #4a5568; text-align: center; line-height: 1.7; }
+@media print { body { background: #ffffff; color: #000000; } .toc-nav { display: none; } }
+@media (max-width: 768px) {
+  body { font-size: 17px; line-height: 1.85; }
+  .container { padding: 16px 16px 40px; }
+  .report-header h1 { font-size: 22px; }
+  h2 { font-size: 21px; } h3 { font-size: 18px; } h4 { font-size: 17px; }
+  p, li { font-size: 16px; }
+  table { font-size: 14px; }
+  th, td { padding: 12px 10px; }
+  .toc-nav { padding: 14px 16px; margin: 0 -16px 24px; }
+  .toc-nav a { margin-right: 14px; font-size: 14px; padding: 6px 2px; }
+  .callout, .verdict-card { font-size: 15px; }
+  .verdict-card li { font-size: 15px; }
+  .irr-segment { font-size: 12px; }
+  .tf-card .tf-reason { font-size: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="report-header">
+<h1>📊 MS CRDO vs ALAB vs CIEN｜多標的對比分析</h1>
+<div class="report-meta">
+<span>📅 2026-05-13</span>
+<span>📐 來源：DCA_CRDO_20260511 + DCA_ALAB_20260511 + DCA_CIEN_20260512</span>
+<span>🎯 AI 連接層三檔對比，主推 3-5 年 view</span>
+</div>
+</header>
+
+<nav class="toc-nav">
+<a href="#sA">§A Dashboard</a>
+<a href="#sB1">§B.1 &lt;12M</a>
+<a href="#sB2">§B.2 2-3Y</a>
+<a href="#sB3">§B.3 3-5Y</a>
+<a href="#sB4">§B.4 5-10Y</a>
+<a href="#sC">§C IRR 質感</a>
+<a href="#sD">§D Bear/Max DD</a>
+<a href="#sE">§E 最終裁決</a>
+</nav>
+
+<!-- ============================= §A Dashboard ============================= -->
+<section id="sA">
+<h2>§A 對比 Dashboard</h2>
+
+<div class="verdict-card">
+<div class="verdict-label">最終推薦</div>
+<div class="verdict-pick">🥇 ALAB (Astera Labs)</div>
+<div class="verdict-timeframe">適用時間框架：3-5 年｜倉位：衛星 1.5% 起、目標 4%｜進場：$170-180 → $150-160 分批</div>
+<p style="color:#1a1d24;margin:14px 0 10px;font-weight:600">主要理由（三條）：</p>
+<ul>
+<li><strong>IRR 質感最乾淨</strong>：Base 12.4%/yr 中 EPS 複利 +18.5%/yr 是基底，multiple compression −6.5%/yr 可控；vs CIEN 的 EPS +19% 被 re-rate −32% 完全吃掉、vs CRDO 的 EPS +13% 天花板較低。三檔中唯一兼具「EPS 引擎強 + 倍數壓縮可承受」</li>
+<li><strong>多產品線分散風險</strong>：Aries retimer + Scorpio AI fabric switch + Leo CXL + Taurus AEC 四條獨立路徑，vs CRDO 主要靠 AEC 主場 + DustPhotonics（兩條，且 SerDes IP 已部分失分），vs CIEN 主要靠 WL6 1.6T 一條（且面臨 Cisco/Nokia 2027 三足鼎立）</li>
+<li><strong>護城河 ↑ widening</strong>：Q1 FY26 GM 76.3% 持續擴張、PCIe Gen 6 佔比 0%（2024）→ 33%+（2026 Q1）、NVDA NVLink Fusion 主動公告 ALAB 配套；COSMOS 軟體深度提供 5+ 年 lock-in，最像 Cadence/Synopsys 在 EDA 的 Foundation 位置</li>
+</ul>
+<p style="margin-top:14px;font-weight:600;color:#c2410c">進場條件：等回測 $170-180（BB 中軌 / MA60）配 Q3 FY26 Rev YoY &gt; 70%，禁止當前 $199 一次建倉（4W 漂移 +44.7% 觸 QC-22 動能過熱）</p>
+</div>
+
+<h3>三檔基本資料</h3>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>CRDO（Credo Technology）</th>
+<th>ALAB（Astera Labs）</th>
+<th>CIEN（Ciena）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>現價</strong></td>
+<td class="rank-2">$188.51（5/11）</td>
+<td class="rank-2">$199.00（5/10）</td>
+<td class="rank-3">$587.50（5/11）</td>
+</tr>
+<tr>
+<td><strong>產品定位</strong></td>
+<td>AEC（Active Electrical Cable）AI rack scale-out 短距互連</td>
+<td>PCIe retimer + AI Fabric Switch；rack scale-up 內部連接器</td>
+<td>WaveLogic 6 1.6T coherent；跨 DC 長距光纖骨幹</td>
+</tr>
+<tr>
+<td><strong>綜合訊號燈</strong></td>
+<td><span class="signal signal-yellow">B（衛星候選）</span></td>
+<td><span class="signal signal-yellow">B（觀望偏進場）</span></td>
+<td><span class="signal signal-yellow">B（觀望）</span></td>
+</tr>
+<tr>
+<td><strong>Quality / Moat</strong></td>
+<td>5.5 / <strong>B → holding</strong>（從 A 降至 B；AEC ↑ vs SerDes IP ↓ 抵銷）</td>
+<td>9 / <strong>A ↑ widening</strong>（COSMOS 軟硬整合 + GM 76.3% 持續擴張）</td>
+<td>10/10 / <strong>A ↑ widening</strong>（WL6 12-18 月 lead + 90+ 客戶委約）</td>
+</tr>
+<tr>
+<td><strong>Fwd PE</strong></td>
+<td class="rank-1">40x（FY+2 $4.71）— 三檔中最低</td>
+<td class="rank-2">51x（FY+1 $4.20）；PEG 1.38</td>
+<td class="rank-3">77x（FY+1 $8.45）／TTM 313x — 三檔中最高</td>
+</tr>
+<tr>
+<td><strong>Runway post-Y5</strong></td>
+<td><span class="signal signal-green">🟢 寬</span>（AEC TAM $30B by 2030）</td>
+<td><span class="signal signal-green">🟢 寬</span>（PCIe7/UALink3 第二曲線）</td>
+<td><span class="signal signal-yellow">🟡 中</span>（3.2T 2030+，但 Nokia-Infinera + Cisco-Acacia 收斂）</td>
+</tr>
+<tr>
+<td><strong>Max DD（5Y 路徑）</strong></td>
+<td><span class="signal signal-yellow">🟡 −40~−55%</span></td>
+<td><span class="signal signal-yellow">🟡 −40~−55%</span></td>
+<td><span class="signal signal-red">🔴 −50~−70%</span></td>
+</tr>
+<tr>
+<td><strong>5Y IRR（Bull / Base / Bear）</strong></td>
+<td>+25% / +12% / −13.7%</td>
+<td>+16.9% / +12.4% / −12.4%</td>
+<td>−3.2% / −12.9% / −25.8% ⛔</td>
+</tr>
+<tr>
+<td><strong>機率加權 IRR</strong></td>
+<td class="rank-2"><strong>+8.5%/yr</strong>（20/50/30）</td>
+<td class="rank-1"><strong>+9.7%/yr</strong>（25/50/25）</td>
+<td class="rank-3"><strong>−12.3%/yr</strong>（25/50/25）— 連 Bull 都是負</td>
+</tr>
+<tr>
+<td><strong>動能 / Pure MA</strong></td>
+<td>✅ 三線正；RSI &gt;70 過熱、4W +17%（累計 +62%）</td>
+<td>✅ 三線正；RSI 60-69、4W +44.7%</td>
+<td>✅ 三線正；RSI &gt;78 極端、1Y +750%、距 MA104w +300%（dot-com 級）</td>
+</tr>
+<tr>
+<td><strong>進場價區</strong></td>
+<td>$120-150（理想 $130 / Fwd PE 28x）</td>
+<td>$170-180（第一批）／$150-160（第二批）</td>
+<td>$327 → $295 → $236（−44~−60%）</td>
+</tr>
+<tr>
+<td><strong>建議持有年限</strong></td>
+<td>中期 2-5 年</td>
+<td>中期 3-5 年</td>
+<td>中期 3-5 年</td>
+</tr>
+</tbody>
+</table>
+
+<h3>四層時間框架排序速覽</h3>
+<div class="timeframe-grid">
+<div class="tf-card">
+<div class="tf-label">&lt; 12M 短期</div>
+<div class="tf-winner">🥇 ALAB</div>
+<div class="tf-reason">動能熱（4W +44.7%）但估值最合理（51x vs CIEN 77x、CRDO 40x）；三檔皆動能過熱，但 CIEN 是 1990s dot-com 級警示</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">2-3 年中期</div>
+<div class="tf-winner">🥇 ALAB</div>
+<div class="tf-reason">拐點時程最清晰（Scorpio + Leo 多元化已有時間表）；CRDO 拐點 conditional（DustPhotonics 18 月內兌現 $500M）；CIEN multiple 壓縮吞噬 EPS</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">3-5 年中長期</div>
+<div class="tf-winner">🥇 ALAB</div>
+<div class="tf-reason">IRR composition 最乾淨；moat ↑ widening；4 條獨立 driver 路徑；CRDO moat 已從 A 降 B 天花板降；CIEN 即使 EPS Bull 24% 仍 -2.7% IRR</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">5-10 年長期</div>
+<div class="tf-winner">🥇 ALAB</div>
+<div class="tf-reason">COSMOS 軟體 + NVLink Fusion + UALink 配套 = Foundation 黏著層（Cadence/Synopsys 在 EDA 的位置）；CRDO 需 M&amp;A 才能撐 10Y；CIEN 10Y 即使 Bull 也只 −4%/yr</div>
+</div>
+</div>
+
+<div class="callout callout-key">
+<strong>🎯 一句話結論</strong>：ALAB 在四層時間框架皆第一，CRDO 全部第二，CIEN 全部第三 — 這是少見的全勝排序，<strong>時間軸切換敏感度測試也不改首選順序</strong>。差異不在「誰是好公司」（三檔 thesis 都對），而在「IRR 質感是否被估值起點吞噬」。
+</div>
+</section>
+
+<!-- ============================= §B.1 < 12M 短期 ============================= -->
+<section id="sB1">
+<h2>§B.1 短期視角 ＜ 12 個月</h2>
+
+<h3>核心評估維度（優先順序）</h3>
+<ol>
+<li>Pure MA 結構（六狀態機）</li>
+<li>EPS 共識軌跡 90 天修正方向</li>
+<li>最近一季催化（beat / miss / guide）</li>
+<li>估值起點 + PE re-rate 空間（短期 mean reversion 風險）</li>
+<li>動能過熱程度（RSI、4W 漂移、距 MA104w 偏離度）</li>
+</ol>
+
+<h3>三檔橫向對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>CRDO</th><th>ALAB</th><th>CIEN</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Pure MA</td>
+<td>✅ 三線全正、斜率正</td>
+<td>✅ 三線全正、斜率正</td>
+<td>✅ 三線全正、斜率正</td>
+</tr>
+<tr>
+<td>4W 漂移</td>
+<td>+17%（DD 已警示 +45%，累計 +62%）</td>
+<td>+44.7%（觸 QC-22 動能過熱）</td>
+<td>+13%（從 $520 → $587；1Y +750%）</td>
+</tr>
+<tr>
+<td>RSI 14d</td>
+<td>&gt;70（已進過熱區）</td>
+<td>60-69（接近過熱但未破）</td>
+<td>&gt;78（極端過熱）</td>
+</tr>
+<tr>
+<td>距 MA104w</td>
+<td>+132%（$188 / $81）</td>
+<td>—（IPO 才 2 年，MA104w 不適用）</td>
+<td>+300%（$587 / ~$147）— dot-com 級偏離</td>
+</tr>
+<tr>
+<td>Fwd PE 起點</td>
+<td class="rank-1">40x FY+2（三檔最低）</td>
+<td class="rank-2">51x FY+1；PEG 1.38</td>
+<td class="rank-3">77x FY+1 / TTM 313x</td>
+</tr>
+<tr>
+<td>最近一季財報</td>
+<td>Q3 FY26 Rev +201.5% YoY、EPS +396%；GM 68.6%（連 5 季擴大）</td>
+<td>Q1 FY26 Rev $308M +93% YoY beat；GM 76.3%（vs industry forecast 58%，alpha +35pp）</td>
+<td>Q1 FY26 Rev $1.43B +33% YoY、EPS $1.35 +111%；backlog $7B（1.4x annual rev）</td>
+</tr>
+<tr>
+<td>EPS 共識 90d 修正</td>
+<td>FY26 +19%、FY27 +25%（強上修）</td>
+<td>FY27 +17% post-print（強上修）</td>
+<td>FY27 +23%（90 天從 $6.87 → $8.45）</td>
+</tr>
+<tr>
+<td>賣方共識 TP / 現價</td>
+<td>$200（n=17）vs $188.51 = +6%（接近）</td>
+<td>$220 vs $199 = +11%</td>
+<td>$339（14家中位）vs $587 = <strong>−42%</strong>；Stifel $585（outlier）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>排序 + 判斷邏輯</h3>
+<table>
+<thead><tr><th>排序</th><th>標的</th><th>判斷邏輯</th></tr></thead>
+<tbody>
+<tr>
+<td class="rank-1">🥇 第一</td>
+<td><strong>ALAB</strong></td>
+<td>動能熱（4W +44.7%）但估值起點最合理。三檔皆 Pure MA ✅ 且都有動能過熱問題，差異在「估值是否能撐住短期回檔」。ALAB 51x FPE FY27 + PEG 1.38 雖貴但有 EPS 增長 +47% YoY 支撐；vs CIEN 77x FPE 連 Bull 都負 IRR，vs CRDO 40x FPE 但 4W 累計 +62% 動能透支已深。<strong>短期最不容易踩到 mean reversion 陷阱</strong>。</td>
+</tr>
+<tr>
+<td class="rank-2">🥈 第二</td>
+<td><strong>CRDO</strong></td>
+<td>估值起點最低（FPE FY+2 40x）+ Q3 FY26 三引擎全爆，但 4W 漂移 +17% 進一步累計到 +62%（DD 警示後又漲 13%）使動能透支較深。賣方共識 TP $200 vs 現價 $188 + 6%，upside 已 priced in；R:R 短期 -0.14x 不利。</td>
+</tr>
+<tr>
+<td class="rank-3">🥉 第三</td>
+<td><strong>CIEN</strong></td>
+<td>1Y +750% + 距 MA104w +300% 是 1990s JDSU dot-com 級警示，RSI &gt;78 極端過熱。14 家 Wall St 中位 TP $339 = <strong>−42%</strong> 意味賣方已認為估值不合理（僅 Stifel $585 outlier）。Q1 大幅 beat 後股價反 sell-on-news 也是訊號。<strong>短期 mean reversion 風險最大</strong>，DCA 估歷史此偏離度後 6-12 月回測 40-60% 機率 &gt; 70%。</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-warn">
+<strong>⚠ 重要短期判讀</strong>：三檔皆 Pure MA ✅ 結構多頭，但都動能過熱。DCA 各別建議的進場節奏皆為「<strong>條件式分批</strong>」 — CRDO 等 $130（−31%）、ALAB 等 $170-180（−10~−15%）、CIEN 等 $327（−44%）。<strong>不該當前一次建倉任何一檔</strong>，差異只在「等回測的折讓幅度」。
+</div>
+</section>
+
+<!-- ============================= §B.2 2-3Y 中期 ============================= -->
+<section id="sB2">
+<h2>§B.2 中期視角 2-3 年</h2>
+
+<h3>核心評估維度（優先順序）</h3>
+<ol>
+<li>拐點催化兌現時程（margin path、產品週期、客戶擴散）</li>
+<li>EPS 共識止穩或加速</li>
+<li>估值修復至 5Y 中位（multiple 重估方向）</li>
+<li>PE re-rate 紅利或壓縮幅度</li>
+<li>Pattern Match（類似 setup 歷史 5Y 報酬）</li>
+</ol>
+
+<h3>三檔橫向對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>CRDO</th><th>ALAB</th><th>CIEN</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>2-3Y EPS 路徑</td>
+<td>FY26 $3.31 → FY28 ~$6.3（mid-cycle）；2Y CAGR ~38%</td>
+<td>FY26 $2.85 → FY28 $5.50；2Y CAGR ~39%</td>
+<td>FY26 $5.50 → FY28 $10-11；2Y CAGR ~37%</td>
+</tr>
+<tr>
+<td>拐點催化 #1</td>
+<td>DustPhotonics SiPho 整合（FY27 optical &gt; $500M 管理層 guide）</td>
+<td>Scorpio P 兩家新 hyperscaler 2026 Q4 量產（時間表已確定）</td>
+<td>WL6 客戶累計 100+（目前 90+，2026-03 截止）</td>
+</tr>
+<tr>
+<td>拐點催化 #2</td>
+<td>Top 1 客戶占比 &lt; 35%（客戶擴散；當前 39%）</td>
+<td>Leo CXL 第二家 hyperscaler 部署（除 Microsoft 外）</td>
+<td>FY27 backlog $9B+（當前 $7B）</td>
+</tr>
+<tr>
+<td>拐點性質</td>
+<td><strong>Conditional bet</strong>：DustPhotonics 18 個月內必須兌現 $500M 否則資本配置質疑升溫</td>
+<td><strong>時間表 deterministic</strong>：Scorpio P 已綁定兩家新 hyperscaler，量產時程明確</td>
+<td><strong>Conditional bet</strong>：backlog $9B 取決於 1.6T cycle 提前 vs Cisco/Nokia 進入</td>
+</tr>
+<tr>
+<td>PE 起點 → 2-3Y 預估</td>
+<td>40x → 38x（微壓 −0.5%/yr）</td>
+<td>51x → 42x（中度壓縮 −4%/yr）</td>
+<td>77x → 30-40x（大幅壓縮 −15~−20%/yr）</td>
+</tr>
+<tr>
+<td>Pattern Match</td>
+<td><strong>IPHI 2015-2020</strong>（CRDO 創辦人同班底）：5Y 有機 IRR +35%/yr；但 IPHI 起步市值 $700M vs CRDO $30B，TAM 擴張空間有限</td>
+<td><strong>NVDA 2018-2020</strong>（Data Center 起飛）：5Y IRR +38%/yr；但 ALAB 起步 PE 51x vs NVDA 2018 PE 40x 更貴 + history 較短，合理打折至 +12-17%</td>
+<td><strong>JDSU 2000 + NVDA 2018 之間</strong>：JDSU 2001-2006 5Y IRR −23%/yr（thesis 對但估值起點太高）；NVDA 2018-2023 5Y +35%/yr。CIEN 落點偏 JDSU 一側（光通訊 + 1.6T 首發 + 1Y +750%）</td>
+</tr>
+<tr>
+<td>賣方上修動能</td>
+<td>Goldman / Mizuho / Jefferies 4 月已 raise；Mizuho FY27 +75% bullish</td>
+<td>Q1 法說後 EPS 共識 post-print 上修 17%（pre-print $3.59 → post $4.20）</td>
+<td>Stifel 5/5 raise to $585（追平股價）；但與 Wall St 共識 $339 spread 73% 不合理</td>
+</tr>
+</tbody>
+</table>
+
+<h3>排序 + 判斷邏輯</h3>
+<table>
+<thead><tr><th>排序</th><th>標的</th><th>判斷邏輯</th></tr></thead>
+<tbody>
+<tr>
+<td class="rank-1">🥇 第一</td>
+<td><strong>ALAB</strong></td>
+<td><strong>拐點時程最具 deterministic 性質</strong>。Scorpio P 兩家新 hyperscaler FY26 Q4 量產時間表已確定（vs CRDO 的 DustPhotonics 整合是 conditional、CIEN 的 1.6T cycle 取決於 Cisco/Nokia 時程）。multiple 壓縮 −4%/yr 可控（51x → 42x 是「成熟化」非「結構性貶值」）。Pattern Match NVDA 2018 校準合理。<strong>2-3Y 視角下 ALAB 是「能見度最高、IRR 兌現概率最高」</strong>。</td>
+</tr>
+<tr>
+<td class="rank-2">🥈 第二</td>
+<td><strong>CRDO</strong></td>
+<td>EPS 引擎強（2Y CAGR ~38%）+ 估值起點最低（FPE 40x），但拐點 conditional — DustPhotonics 整合必須 18 月內兌現 $500M 否則 H2 客戶擴散假設動搖。Pattern Match IPHI 後段 3.3x 5Y 給 Bull 上限 +27%/yr，但 entry valuation 高於 IPHI 當年壓低空間。<strong>2-3Y 視角依賴 Q4 FY26（2026-06-03）財報驗證</strong>。</td>
+</tr>
+<tr>
+<td class="rank-3">🥉 第三</td>
+<td><strong>CIEN</strong></td>
+<td><strong>EPS 引擎強（+19% CAGR Base）但 multiple compression −15~−20%/yr 完全吃掉 IRR</strong>。即使 backlog 上修至 $9B + WL6 100+ 客戶兌現，PE 77x → 30-40x 是 mathematical certainty（光通訊歷史 PE 區間 18-22x）。Pattern Match JDSU 一側校準悲觀。Wall St 共識 TP $339 已認證估值問題。<strong>2-3Y 視角下 CIEN 的 thesis 兌現 ≠ 股價上漲</strong>，這是 valuation 起點極端的代價。</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout">
+<strong>2-3Y 判讀關鍵</strong>：CIEN 的問題不是「公司不好」（Quality 10/10 + Moat A ↑），是「77x PE 已 priced in 太多」— 即使所有拐點催化兌現，multiple compression 也會吃掉大部分 IRR。ALAB 與 CRDO 是「公司好 + 估值合理 / 偏貴」雙條件，CIEN 是「公司滿分 + 估值極端透支」。
+</div>
+</section>
+
+<!-- ============================= §B.3 3-5Y 中長期 ============================= -->
+<section id="sB3">
+<h2>§B.3 中長期視角 3-5 年</h2>
+
+<h3>核心評估維度（優先順序）</h3>
+<ol>
+<li>TAM 滲透曲線位置（S 曲線早 / 中 / 晚期）</li>
+<li>護城河趨勢（↑ widening / → holding / ↓ narrowing）</li>
+<li>EPS 5Y CAGR 兌現性</li>
+<li>IRR composition 質感（EPS vs re-rate vs shareholder return）</li>
+<li>單變數可證偽性（單一觸發點打破 thesis）</li>
+</ol>
+
+<h3>三檔橫向對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>CRDO</th><th>ALAB</th><th>CIEN</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>TAM 位置（S 曲線）</td>
+<td>AEC TAM $738M（2025）→ $3.57B by 2034（CAGR 23.8%）<br>已走 ~20%，仍 4.8x 空間</td>
+<td>AI Infrastructure 2.0 connectivity TAM $12B by 2028；scale-up（NVLink + UALink）$5B<br>S 曲線早-中期，仍 2-3x 空間</td>
+<td>Coherent optical $15B → $25-30B by 2030（CAGR 10-15%）<br>1.6T peak 預估 2028，Y5 末（2031）<strong>已過 peak</strong></td>
+</tr>
+<tr>
+<td>Moat trend（必填）</td>
+<td><strong>→ holding (B)</strong>：AEC ↑ widening vs SerDes IP ↓ narrowing 抵銷；從 A 降 B</td>
+<td><strong>↑ widening (A)</strong>：GM 76.3% 持續擴張 + PCIe Gen 6 佔比快速上升 + NVDA NVLink Fusion 主動公告配套</td>
+<td><strong>↑ widening (A 8/10)</strong>：90+ 客戶委約、market share +2pp YoY；<strong>但 2027+ 因 Cisco/Nokia 1.6T 上市可能轉 → holding</strong></td>
+</tr>
+<tr>
+<td>5Y EPS CAGR Base</td>
+<td>+13%/yr（從 FY27 起算）</td>
+<td>+18.5%/yr（從 FY26 run-rate 起算）</td>
+<td>+19%/yr（從 TTM 起算）</td>
+</tr>
+<tr>
+<td>5Y forward PE 預估</td>
+<td>40x → 38x（−0.5%/yr）</td>
+<td>51x → 37x（−6.5%/yr）</td>
+<td>77x → 22x（−32%/yr）— mathematical compression</td>
+</tr>
+<tr>
+<td>5Y IRR composition Base</td>
+<td>EPS +13% / re-rate −0.5% / div −0.5% = <strong>+12%/yr</strong></td>
+<td>EPS +18.5% / re-rate −6.5% / div +0.4% = <strong>+12.4%/yr</strong></td>
+<td>EPS +19% / re-rate −32% / div +0.3% = <strong>−12.9%/yr</strong></td>
+</tr>
+<tr>
+<td>「靠誰跑」</td>
+<td><strong>純 EPS 引擎</strong>（自然複利、不需市場配合）— 一柱擎天</td>
+<td><strong>EPS 引擎強 + 倍數壓縮抵銷</strong>（需 EPS 守住 18% 門檻）</td>
+<td><strong>EPS 引擎被 multiple 完全吃掉</strong>（即使 EPS Bull 24% 仍 −2.7% IRR）</td>
+</tr>
+<tr>
+<td>單變數可證偽（§5 primary）</td>
+<td>第二個 hyperscaler ASIC SerDes IP 改 Synopsys（12-18 月 40%）</td>
+<td>NVDA Feynman 2027 GTC Fall chip-to-chip 改 interposer optical（17 月）</td>
+<td>Cisco/Nokia 1.6T commercial GA + hyperscaler 贏單（6-15 月）</td>
+</tr>
+<tr>
+<td>5 年後護城河預判</td>
+<td>AEC 主場壟斷 ↑ vs SerDes IP ↓ 持續抵銷；護城河從「全棧」收斂為「應用層」</td>
+<td>4 條獨立 driver 路徑（Aries + Scorpio + Leo + Taurus）；COSMOS 軟體深度可累積；2028+ silicon photonics 是長線威脅</td>
+<td>從「業界唯一 1.6T」退化為「業界三選一 3.2T」；定價權結構性下降</td>
+</tr>
+</tbody>
+</table>
+
+<h3>排序 + 判斷邏輯</h3>
+<table>
+<thead><tr><th>排序</th><th>標的</th><th>判斷邏輯</th></tr></thead>
+<tbody>
+<tr>
+<td class="rank-1">🥇 第一</td>
+<td><strong>ALAB</strong></td>
+<td><strong>IRR 質感最乾淨 + 護城河仍 ↑ widening + 多 driver 分散</strong>。Base 12.4%/yr 中 EPS +18.5% 是引擎主體（自然複利），−6.5% multiple 壓縮可承受。4 條獨立 driver（Aries / Scorpio / Leo / Taurus）使 thesis 不依賴單一變數 — 即使 Aries retimer 業務被 Broadcom 壓縮 ASP，Scorpio + Leo 仍可承接。NVDA NVLink Fusion 主動配套 = 即便最大潛在威脅也選擇合作，是 moat ↑ widening 強證據。</td>
+</tr>
+<tr>
+<td class="rank-2">🥈 第二</td>
+<td><strong>CRDO</strong></td>
+<td><strong>純 EPS 引擎、不靠市場配合的 12%/yr 是「自然複利好抱」型</strong>，理論上比 ALAB 更乾淨（不需擔心 multiple 壓縮）。但 moat → holding (B) 意味護城河天花板已部分鎖死 — Bull 25% 對應「DustPhotonics + 客戶擴散 + QC-23 反證」三條同時兌現，機率 20% vs ALAB Bull 16.9% × 25% 機率，加權後 ALAB 略勝。IRR composition 質感比 ALAB 略簡單（不需 re-rate），但天花板較低。</td>
+</tr>
+<tr>
+<td class="rank-3">🥉 第三</td>
+<td><strong>CIEN</strong></td>
+<td><strong>Quality 10/10 + Moat ↑ 但 IRR composition 致命 — 即使 Bull case 都負</strong>。EPS 引擎 +19%/yr 本身強勁（不弱於 ALAB），但 multiple 壓縮 −32%/yr 是 mathematical certainty — 從 TTM PE 313x 收斂到光通訊歷史 22x 是物理規律，不是預測。Bull case「PE 28x、EPS $16」對應 5Y −15% / −3.2%/yr，三檔中唯一<strong>連 Bull 都是負 IRR</strong>。3-5Y 視角下 CIEN 不是壞公司，是<strong>不能在 $587 買的好公司</strong>。</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>3-5Y 核心洞察</strong>：三檔的差異不在 EPS 引擎（CRDO +13% / ALAB +18.5% / CIEN +19% 都不錯），<strong>在 multiple 壓縮對 IRR 的吞噬程度</strong>。CRDO 起點最低（40x）→ 壓縮 0；ALAB 中間（51x）→ 壓縮 −6.5%；CIEN 極端（77x / TTM 313x）→ 壓縮 −32%。<strong>這是「估值起點對 5Y IRR 的決定性影響」教科書級案例</strong>。
+</div>
+</section>
+
+<!-- ============================= §B.4 5-10Y 長期 ============================= -->
+<section id="sB4">
+<h2>§B.4 長期視角 5-10 年</h2>
+
+<h3>核心評估維度（優先順序）</h3>
+<ol>
+<li>Runway post-Y5（Y5 後 TAM 滲透率與下一條 S 曲線）</li>
+<li>第二 / 第三 S 曲線可見度</li>
+<li>範式風險（AI agent / 平台替代 / 技術換代）</li>
+<li>護城河 10 年抗風險強度</li>
+<li>創辦人 alignment + 資本配置紀律</li>
+</ol>
+
+<h3>三檔橫向對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>CRDO</th><th>ALAB</th><th>CIEN</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Runway post-Y5</td>
+<td><span class="signal signal-green">🟢 寬</span>：AEC TAM 仍 4x 空間至 2034</td>
+<td><span class="signal signal-green">🟢 寬</span>：PCIe7（2028）、UALink 3.0（2030+）、Leo CXL 多曲線並行</td>
+<td><span class="signal signal-yellow">🟡 中</span>：3.2T 2030+ 但競爭結構從壟斷轉三足鼎立</td>
+</tr>
+<tr>
+<td>第二 S 曲線</td>
+<td>DustPhotonics SiPho（已併購 $1.3B，FY27 ramp）+ PCIe Gen6 retimer + 自研下一代 SerDes</td>
+<td>UALink 3.0 + chip-level optical（需 M&amp;A）+ Leo CXL memory expansion</td>
+<td>3.2T（2030+）+ Nubis Communications inside-DC（2028+ 才看效益）</td>
+</tr>
+<tr>
+<td>10Y 範式風險</td>
+<td><strong>中度</strong>：CPO 過渡 2027-2028 是 AEC 在 scale-up 長線替代壓力（執行可監測）</td>
+<td><strong>中度</strong>：NVDA Feynman interposer optical 2028+ 是 chip-to-chip 範式風險；ALAB 主場 CPU-GPU 介面短中期仍以電為主</td>
+<td><strong>低-中度</strong>：CPO 主要在 inside DC + chip-to-chip，CIEN 主場 inter-DC long-haul 結構不變；但商業範式（三足鼎立）是必然</td>
+</tr>
+<tr>
+<td>護城河 10 年抗風險</td>
+<td><strong>中-低</strong>：護城河已從 A 降至 B，QC-23 持續演化；需 M&amp;A 才能撐 10Y 地位</td>
+<td><strong>中-高</strong>：COSMOS 軟體深度可累積 5+ 年；NVLink Fusion 黏著層 = Foundation 角色；4 條獨立 driver 路徑</td>
+<td><strong>中</strong>：Network effect 強（一旦 deploy WL6 5+ 年 lock-in）但競爭結構轉壞；3.2T cycle 領先優勢從 12-18 月壓縮至 3-6 月</td>
+</tr>
+<tr>
+<td>創辦人 alignment</td>
+<td>創辦人 Bill Brennan + CTO 來自 Inphi（同班底）；技術背景強</td>
+<td>Founder CEO Jitendra Mohan + CTO Casey Morrison；2024 IPO，創辦人動能仍盛</td>
+<td>成熟管理階層 CEO Patrick Nettles 自 1992 起；25+ 年公司歷史</td>
+</tr>
+<tr>
+<td>10Y Bull IRR</td>
+<td>+14-16%/yr（前 5 年爆量 + 後 5 年回歸 8-10%）</td>
+<td>+9.6-14.2%/yr（成熟期 PE 必然壓縮）</td>
+<td><strong>−4.0%/yr</strong>（連 Bull case EPS $22 都 −33% 累計）</td>
+</tr>
+<tr>
+<td>10Y 機會成本</td>
+<td>vs SPY ~8-9%/yr：略勝</td>
+<td>vs SPY 8-9%、NVDA 14-16%、AVGO 12-15%：偏弱</td>
+<td>vs SPY 8-9%：<strong>連 10Y Bull 都打不過大盤</strong></td>
+</tr>
+</tbody>
+</table>
+
+<h3>排序 + 判斷邏輯</h3>
+<table>
+<thead><tr><th>排序</th><th>標的</th><th>判斷邏輯</th></tr></thead>
+<tbody>
+<tr>
+<td class="rank-1">🥇 第一</td>
+<td><strong>ALAB</strong></td>
+<td><strong>COSMOS 軟體 + NVLink Fusion + UALink 配套使 ALAB 處於 AI rack 連接層 Foundation 黏著層位置</strong>，類似 Cadence/Synopsys 在 EDA 的角色（但歷史更短，IPO 才 2 年是弱點）。4 條獨立 driver 路徑（Aries / Scorpio / Leo / Taurus）為 10Y 提供多元化保障 — 即使 Aries 業務在 2028+ silicon photonics 衝擊下萎縮，Scorpio + Leo 已可承接。創辦人 CEO Jitendra Mohan 動能仍盛。<strong>10Y Bull +14% 與 Base 9.6% 之間範圍合理</strong>。</td>
+</tr>
+<tr>
+<td class="rank-2">🥈 第二</td>
+<td><strong>CRDO</strong></td>
+<td>AEC 主場結構性持續（TAM 仍 4x 空間至 2034）+ 同團隊 IPHI 5Y +35%/yr 經驗值校準，理論上有強長期 setup。但 <strong>SerDes IP 整棧已失（QC-23）使敘事天花板降低</strong> — 從「全棧壟斷」收斂為「應用層壟斷」，moat 已從 A 降 B。10Y 維持地位需要：(a) DustPhotonics SiPho 整合成功；(b) 再做一次 M&amp;A 補 chip-level optical；(c) CPO 過渡期保有架構話語權 — 三條件機率僅 30-40%。10Y Bull +14-16% 略勝大盤但不及 ALAB 的 Foundation 角色穩定。</td>
+</tr>
+<tr>
+<td class="rank-3">🥉 第三</td>
+<td><strong>CIEN</strong></td>
+<td><strong>10Y 即使 Bull case 都打不過大盤（−4%/yr vs SPY +8%）</strong>，這是 Quality 10/10 公司在 $587 進場的代價。商業範式風險（三足鼎立）是商業結構必然 — Nokia-Infinera 整合（2025 完成）+ Cisco-Acacia 都會在 2027 後追上，CIEN 從「業界唯一 1.6T」退化為「業界三選一 3.2T」是時間問題。runway 🟡 中（Y5 末已過 1.6T peak）使 10Y 不利於 CIEN。<strong>10Y 視角下 CIEN 應該在 $295 以下持有，$587 不該長期抱</strong>。</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout">
+<strong>5-10Y 判讀關鍵</strong>：ALAB 的 Foundation 黏著層角色 + 4 條 driver 是 10Y 視角下最強的「結構性 alpha 來源」。CRDO 需要主動 M&amp;A 才能維持 10Y 地位，CIEN 即使商業模式不變也因競爭結構轉壞 + 估值極端而 10Y Bull 負報酬。<strong>三檔皆是 AI 連接層受惠者，但只有 ALAB 的 10Y 角色明確</strong>。
+</div>
+</section>
+
+<!-- ============================= §C IRR Composition 質感對比 ============================= -->
+<section id="sC">
+<h2>§C IRR Composition 質感對比（縱深層）</h2>
+
+<p>3-5Y 視角真正的 alpha 不在 IRR 數字本身，而在 IRR 的「組成質感」 — 是靠 EPS 自然複利？還是靠市場給更高倍數？這決定了「能不能抱住」。三檔同為 AI 連接層 thesis，但 IRR composition 質感差異巨大。</p>
+
+<h3>三檔 Base case IRR 分量拆解</h3>
+<table>
+<thead>
+<tr><th>公司</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股東回報（股息 + 淨買回）</th><th>合計年化（Base）</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CRDO</strong></td>
+<td>+13.0%/yr（FY26 $3.31 → FY30 $8.5）</td>
+<td>−0.5%/yr（PE 40x → 38x，輕微壓縮）</td>
+<td>−0.5%/yr（SBC 17.6% 稀釋）</td>
+<td><strong>+12.0%/yr</strong></td>
+</tr>
+<tr>
+<td><strong>ALAB</strong></td>
+<td>+18.5%/yr（從 FY26 EPS run-rate 起算 5Y）</td>
+<td>−6.5%/yr（PE 51x → 37x，成熟化）</td>
+<td>+0.4%/yr（FY26 H2 啟動小 buyback 部分抵銷 SBC）</td>
+<td><strong>+12.4%/yr</strong></td>
+</tr>
+<tr>
+<td><strong>CIEN</strong></td>
+<td>+19.0%/yr（EPS $1.88 TTM → $13 FY31）</td>
+<td><strong>−32.0%/yr</strong>（PE 313x → 22x，極端壓縮）</td>
+<td>+0.3%/yr（FY25 buyback $334M / yr ~0.6% yield）</td>
+<td><strong>−12.9%/yr</strong></td>
+</tr>
+</tbody>
+</table>
+
+<h3>視覺化 — 各檔 Base case IRR 結構</h3>
+
+<h4>CRDO Base +12.0%/yr — 「EPS 一柱擎天」型</h4>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="width: 100%;">EPS +13.0% / re-rate −0.5% / div −0.5%</div>
+</div>
+<div class="irr-legend">EPS 複利是<strong>唯一引擎</strong>，估值與 SBC 都是輕微逆風但接近中性。三檔中質感最簡單、最不依賴市場配合。前提：QC-23 不擴散、AEC 主場 +13% EPS CAGR 兌現。</div>
+
+<h4>ALAB Base +12.4%/yr — 「EPS 強引擎 + 倍數壓縮平衡」型</h4>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="width: 73%;">EPS +18.5%</div>
+<div class="irr-segment irr-rerate-neg" style="width: 25%;">re-rate −6.5%</div>
+<div class="irr-segment irr-buyback" style="width: 2%;">+0.4%</div>
+</div>
+<div class="irr-legend">EPS 引擎強勁（+18.5% &gt; CRDO 的 +13%），但需克服 −6.5% multiple 壓縮才能保持淨報酬。<strong>抱者必須緊盯 EPS CAGR 是否守住 18% 門檻 — 這是 thesis 命脈</strong>。若 EPS 掉到 +12% 以下，Base case 立即翻負。但 ALAB 多 driver（4 條）使 EPS 引擎韌性高，這是 thesis 比 CRDO 強的根本原因。</div>
+
+<h4>CIEN Base −12.9%/yr — 「EPS 引擎被 multiple 完全吞噬」型</h4>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="width: 37%;">EPS +19.0%</div>
+<div class="irr-segment irr-rerate-neg" style="width: 62%;">re-rate −32.0%</div>
+<div class="irr-segment irr-buyback" style="width: 1%;">+0.3%</div>
+</div>
+<div class="irr-legend"><strong>EPS 引擎不弱（+19% 強於 ALAB +18.5%、CRDO +13%）</strong>，但 multiple compression −32%/yr 是<strong>數學必然</strong>（TTM PE 313x 收斂到光通訊歷史 22x 是物理規律，不是預測）。即使 EPS Bull case +24%/yr 兌現，仍 −2.7%/yr Bull IRR — 這是 valuation 起點極端的結構性問題。<strong>$587 不能買；$295 以下 multiple compression 大部分已發生，EPS 複利淨值才會浮現</strong>。</div>
+
+<h3>三檔 IRR 質感分類</h3>
+<table>
+<thead>
+<tr><th>類型</th><th>標的</th><th>本質</th><th>「能不能抱」判讀</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>自然複利好抱型</td>
+<td><strong>CRDO</strong></td>
+<td>EPS 自然複利為主，估值與 SBC 中性</td>
+<td><strong>最容易抱</strong> — 不需市場配合就有 12%/yr；但天花板被 moat → holding 鎖死</td>
+</tr>
+<tr>
+<td>EPS 強引擎 + 倍數壓縮型</td>
+<td><strong>ALAB</strong></td>
+<td>EPS +18.5% 強勁但被 multiple −6.5% 部分吃掉</td>
+<td><strong>需主動監測 EPS</strong> — 若 EPS 守住 18% 門檻則 12.4%/yr 達成；若掉到 12% 以下 Base 翻負</td>
+</tr>
+<tr>
+<td>EPS 被 multiple 吞噬型</td>
+<td><strong>CIEN</strong></td>
+<td>EPS +19% 引擎強但 multiple −32% 完全吃掉</td>
+<td><strong>不能在 $587 抱</strong> — 即使 Bull 都負 IRR；需等回測 $295 以下讓 multiple compression 大部分發生才能進場</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>§C 核心洞察</strong>：三檔 EPS 引擎都不弱（13-19%/yr 區間），<strong>真正決定 IRR 的不是 EPS 而是 multiple 路徑</strong>。CRDO 起點 40x → 微壓；ALAB 起點 51x → 中度壓縮；CIEN 起點 77x → 極端壓縮。這是 valuation 起點的決定性影響 — 即使 thesis 全對，估值起點極端也會吃掉 alpha。
+</div>
+
+<div class="callout callout-warn">
+<strong>「靠自己跑」vs「靠市場配合」</strong>：CRDO 12% IRR 完全靠 EPS 自己跑（不需市場配合）— 最乾淨。ALAB 12.4% 中 EPS 跑 +18.5% 但市場壓 −6.5% — 需 EPS 引擎韌性。CIEN 是<strong>反例</strong>：EPS 跑 +19% 但市場壓 −32% 完全吃掉 — 押 multiple 不收斂是反「均值回歸」的賭注。
+</div>
+</section>
+
+<!-- ============================= §D Bear Case + Max DD 路徑對比 ============================= -->
+<section id="sD">
+<h2>§D Bear Case + Max DD 路徑對比</h2>
+
+<h3>三檔 §5 Single Thing + 風險性質</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>CRDO</th><th>ALAB</th><th>CIEN</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>§5 Primary trigger</strong></td>
+<td>第二個 hyperscaler 公告下一代 ASIC SerDes IP 改 Synopsys / Cadence / 自研（MSFT MAIA、Google TPU v7、Trainium4 任一）</td>
+<td>NVDA Feynman 2027 GTC Fall chip-to-chip 連接技術選擇 — 若全採 interposer optical 不保留 PCIe</td>
+<td>Cisco（Acacia）或 Nokia 2026 EOY 前公告 1.6T coherent commercial GA + 拿下 ≥ 1 個 hyperscaler 大單</td>
+</tr>
+<tr>
+<td><strong>離發生多遠</strong></td>
+<td>12-18 個月（MSFT Ignite 2026/11、Trainium4 2026Q4-2027Q1）</td>
+<td>~17 個月（NVDA GTC Fall 2027/10）</td>
+<td>6-15 個月（Cisco 2026 H2 + Nokia 2026 H2-2027 H1 catalyst window）</td>
+</tr>
+<tr>
+<td><strong>觸發機率</strong></td>
+<td>40%（QC-23 第一例已發生 = Trainium3）</td>
+<td>30-40%（NVDA 已對 silicon photonics $4B 投資）</td>
+<td><strong>50%+</strong>（Nokia-Infinera 整合已啟動，Cisco-Acacia 在 coherent pluggable）</td>
+</tr>
+<tr>
+<td><strong>§5 Secondary trigger</strong></td>
+<td>連 2 季 Non-GAAP GM &lt; 63%（MRVL Golden Cable 降價戰兌現）</td>
+<td>Broadcom 2026 Q3 公告 PCIe 6.0 retimer 量產 + ASP &lt; ALAB Aries 6 −15-20%</td>
+<td>Q2 FY26 法說 actual Rev &lt; $1.45B + backlog QoQ flat / 縮減（2026-06-04）</td>
+</tr>
+<tr>
+<td><strong>風險性質分類</strong></td>
+<td><strong>執行風險 + 部分範式</strong>：QC-23 具名既成事實，第二例是「會否擴散」的執行可監測</td>
+<td><strong>執行風險（Broadcom）+ 中度範式風險（NVDA Feynman 2028+）</strong>：兩條獨立路徑，Broadcom 更近</td>
+<td><strong>主要範式風險</strong>：競爭結構演化（Nokia-Infinera + Cisco-Acacia 三足鼎立）是商業必然，不是「會否發生」是「何時發生」</td>
+</tr>
+<tr>
+<td><strong>Max DD 範圍</strong></td>
+<td>−40% ~ −55% <span class="signal signal-yellow">🟡</span></td>
+<td>−40% ~ −55% <span class="signal signal-yellow">🟡</span></td>
+<td>−50% ~ −70% <span class="signal signal-red">🔴</span></td>
+</tr>
+<tr>
+<td><strong>觸發後復原時程</strong></td>
+<td>18-30 個月（若 secondary thesis 兌現）；若 §5 primary 真觸發 → thesis 已破不會恢復</td>
+<td>18-30 個月（若 thesis 仍成立）；若 §5 primary 觸發 → thesis 已破</td>
+<td>18-30 個月（multiple compression）；若 §5 primary 觸發 → <strong>thesis 結構性受傷，4+ 年或永久不恢復</strong></td>
+</tr>
+<tr>
+<td><strong>路徑風險評級</strong></td>
+<td>🟡 中度 — 多數人在 −40% 出現停損衝動</td>
+<td>🟡 中度 — 需強信念扛 −55%</td>
+<td><strong>🔴 高度</strong> — DD &lt; −50% 多數人會中途出場，需極強信念 + 嚴格倉位（DCA 自動下修衛星上限至 1%）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>執行風險 vs 範式風險判讀</h3>
+<table>
+<thead><tr><th>標的</th><th>風險性質</th><th>5-10Y 持有期間焦慮程度</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>CRDO</strong></td>
+<td><strong>多數為執行風險</strong>（QC-23 擴散、MRVL 圍剿可由季度法說數字監測）；CPO 過渡期是少量範式風險</td>
+<td><strong>中等</strong>：每季可看出 trigger 是否兌現；持有期間有「明確 review point」</td>
+</tr>
+<tr>
+<td><strong>ALAB</strong></td>
+<td><strong>執行風險（Broadcom）+ 中度範式風險（NVDA Feynman silicon photonics）</strong>：兩條獨立路徑，Broadcom 更近且可監測；Feynman 2028+ 是 chip-to-chip 介面範式但 ALAB 主場 CPU-GPU 仍以電為主</td>
+<td><strong>中等</strong>：Broadcom 風險每季可監測；NVDA Feynman 2027 GTC 是單一 catalyst point</td>
+</tr>
+<tr>
+<td><strong>CIEN</strong></td>
+<td><strong>主要為範式風險</strong>（Cisco/Nokia 三足鼎立是商業結構必然；multiple compression 是數學必然）— 「會發生」不是「可能發生」</td>
+<td><strong>高</strong>：5-10Y 持有期間會有持續焦慮 — 每次 Cisco / Nokia 法說都是潛在 catalyst；multiple compression 漸進發生使股價持續逆風</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-danger">
+<strong>⚠ §D 核心結論</strong>：CIEN 的 Bear case 屬於「<strong>結構性受傷後無恢復路徑</strong>」 — 若 Cisco/Nokia 真在 2026 EOY 前 1.6T GA + hyperscaler 贏單，CIEN 從「業界唯一」退化為「業界三選一」是永久性，不是 cycle 性。CRDO 與 ALAB 的 Bear 至少是「執行風險可監測 + 復原可能」型，這是三檔風險質感最大差異。
+</div>
+</section>
+
+<!-- ============================= §E 最終裁決 ============================= -->
+<section id="sE">
+<h2>§E 最終裁決</h2>
+
+<h3>四層時間框架最終排序矩陣</h3>
+<table>
+<thead>
+<tr><th>時間框架</th><th>🥇 第一</th><th>🥈 第二</th><th>🥉 第三</th></tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>&lt; 12M 短期</strong></td>
+<td class="rank-1">ALAB（動能熱但估值最合理）</td>
+<td class="rank-2">CRDO（估值最低但動能累積透支）</td>
+<td class="rank-3">CIEN（dot-com 級極端透支）</td>
+</tr>
+<tr>
+<td><strong>2-3Y 中期</strong></td>
+<td class="rank-1">ALAB（拐點時程最 deterministic）</td>
+<td class="rank-2">CRDO（EPS 純複利）</td>
+<td class="rank-3">CIEN（multiple 吞噬 EPS）</td>
+</tr>
+<tr>
+<td><strong>3-5Y 中長期</strong></td>
+<td class="rank-1">ALAB（IRR 質感最乾淨 + moat ↑）</td>
+<td class="rank-2">CRDO（純 EPS 引擎但 moat 天花板低）</td>
+<td class="rank-3">CIEN（連 Bull 都負 IRR）</td>
+</tr>
+<tr>
+<td><strong>5-10Y 長期</strong></td>
+<td class="rank-1">ALAB（Foundation 黏著層）</td>
+<td class="rank-2">CRDO（主場壟斷但需 M&amp;A 撐 10Y）</td>
+<td class="rank-3">CIEN（10Y Bull 都打不過大盤）</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>🎯 ALAB 在四層時間框架全部第一 — 三檔少見的「全勝排序」</strong>。時間軸切換敏感度測試：若從 3-5Y 拉到 5-10Y，首選不變（仍 ALAB，Foundation 角色更明顯）；若縮到 &lt;12M，首選也不變（仍 ALAB，估值起點最合理）。<strong>三檔在四層皆 ALAB &gt; CRDO &gt; CIEN — 排序對時間軸切換不敏感</strong>。
+</div>
+
+<h3>推薦標的：ALAB（Astera Labs）</h3>
+
+<div class="verdict-card">
+<div class="verdict-label">最終推薦</div>
+<div class="verdict-pick">🥇 ALAB</div>
+<div class="verdict-timeframe">適用時間框架：3-5 年｜倉位：衛星 1.5% → 4%（目標）｜進場：條件式分批</div>
+
+<h4 style="color:#15803d;margin:14px 0 6px">主要理由（三條）：</h4>
+<ul>
+<li><strong>IRR 質感最乾淨</strong>：Base 12.4%/yr 中 EPS 複利 +18.5%/yr 是基底（vs CRDO +13% 強、vs CIEN +19% 但被 −32% multiple 完全吃掉）；multiple compression −6.5%/yr 可控（51x → 37x 是成熟化非崩盤）；股東回報 +0.4%/yr 從 buyback 部分抵銷 SBC 稀釋</li>
+<li><strong>多 driver 分散風險</strong>：Aries PCIe retimer + Scorpio AI Fabric Switch + Leo CXL Memory + Taurus AEC = 4 條獨立路徑；vs CRDO 2 條（AEC + DustPhotonics）、vs CIEN 1 條（WL6 1.6T）；單一變數失效不致命</li>
+<li><strong>護城河 ↑ widening 證據鏈完整</strong>：Q1 FY26 GM 76.3% 持續擴張、PCIe Gen 6 佔比 0% → 33%+ 純先發優勢落實、NVDA NVLink Fusion 主動公告 ALAB 配套（最大潛在威脅選擇合作）、COSMOS 軟體深度 = AI rack 連接 Foundation 黏著層位置</li>
+</ul>
+
+<h4 style="color:#15803d;margin:14px 0 6px">進場條件（嚴格條件式）：</h4>
+<ul>
+<li><strong>第一批 1.5%</strong>：股價回測 $170-180（BB 中軌 / MA60 區間）+ Q3 FY26 Rev YoY &gt; 70%</li>
+<li><strong>第二批 2.5%</strong>：股價回測 $150-160（W52 mid）+ H2 26 Scorpio P 兩家新 hyperscaler 量產確認</li>
+<li><strong>目標倉位 4%</strong>（衛星上限）</li>
+<li><strong>禁止當前 $199 一次建倉</strong> — 4W 漂移 +44.7% 觸 QC-22 動能過熱</li>
+</ul>
+</div>
+
+<h3>不選 CRDO 的具體理由</h3>
+<ol>
+<li><strong>Moat 已從 A 降至 B（QC-23 雙扣具體）</strong>：Trainium3 PCIe SerDes = Synopsys（SemiAnalysis 2025/12 確認）+ MRVL Golden Cable Initiative 2025/12 啟動 — 兩個負向 evidence 都是具名既成事實，使 CRDO 從「全棧壟斷」收斂為「應用層壟斷」，護城河天花板比 ALAB 低一級</li>
+<li><strong>Bull case 機率加權後優勢給 ALAB</strong>：CRDO Bull +25% × 20% 機率 = 5.0；ALAB Bull +16.9% × 25% 機率 = 4.2 — CRDO Bull 上限較高但機率折扣後優勢縮小；加上 Base case ALAB 12.4% &gt; CRDO 12%，總分 ALAB 略勝</li>
+<li><strong>Connectivity 純度與軟體深度劣勢</strong>：CRDO 是純 IC 設計（AEC + DSP），ALAB 是 IC + 軟體（COSMOS suite）+ Foundation 角色（NVLink Fusion 配套）；長期 lock-in 強度差一級</li>
+<li><strong>同 thesis 重複曝險</strong>：若已持有 ALAB 4% 衛星，CRDO 加進去是 AI 連接層 thesis 重複曝險（DCA 報告自己提到「CRDO 不應擠掉 ALAB 既有部位」）；邊際資金集中 ALAB 最大化 alpha</li>
+</ol>
+
+<h3>不選 CIEN 的具體理由</h3>
+<ol>
+<li><strong>連 Bull case 都負 IRR（−3.2%/yr）</strong>：機率加權 5Y IRR −12.3%/yr 是三檔中唯一全 scenarios 負；即使 thesis 全部兌現股價也跌 — 這是 1Y +750% 後 valuation 已 priced in 全部 upside 的典型 setup</li>
+<li><strong>Max DD 🔴 −70% 評級</strong>（vs CRDO / ALAB 🟡 −55%）：路徑風險中位數已壓倉位上限至 1% 衛星；多數人在 −50% 會中途出場，需極強信念才能撐到復原</li>
+<li><strong>範式風險是商業結構必然</strong>：Cisco（Acacia）2026 H2-2027 H1 + Nokia-Infinera 整合 EUR 200M synergies 2027 兌現 — 三足鼎立不是「會否發生」是「何時發生」；CIEN 從「業界唯一 1.6T」退化為「業界三選一」是時間問題</li>
+<li><strong>Wall St 共識已認證估值不合理</strong>：14 家中位 TP $339 vs 現價 $587 = −42%；只有 Stifel $585 outlier；賣方共識已預期至少 −42% 回檔</li>
+<li><strong>正確姿態是「等對的價」非「不能買」</strong>：CIEN 是 Quality 10/10 + Moat A ↑ 真正的好公司，但 $587 是 fair value 的 3.2x；DCA 建議等回測 $327（−44%）啟動 1.0%、$295 加 1.0%、$236 滿倉 3% — <strong>當前 0% 是正確的</strong></li>
+</ol>
+
+<h3>用戶問題重新審視</h3>
+
+<div class="callout">
+<p><strong>用戶問：「比較 CRDO ALAB CIEN 用 DCA」</strong> — 不限定特定時間框架，三檔屬同主題（AI 連接層）但不同子分類（CRDO 短距 AEC、ALAB rack 內部 PCIe/UALink、CIEN 跨 DC long-haul）。</p>
+<p><strong>本 DCA 對比結論</strong>：</p>
+<ul>
+<li>若<strong>單選一檔</strong>（3-5Y view）：<strong>ALAB</strong>，因 IRR 質感最乾淨 + moat ↑ widening + 多 driver 分散</li>
+<li>若<strong>不能接受 multiple 壓縮風險</strong>（純複利好抱型）：<strong>CRDO</strong>，因純 EPS 引擎不需市場配合就有 12%/yr</li>
+<li>若<strong>等回測進場</strong>（價值買點）：<strong>CIEN</strong>，但僅在 $295 以下才合理（fair value upside +4%/5Y + EPS 複利 = 6-8%/yr）；當前 $587 連 Bull 都負 IRR</li>
+<li>若<strong>已持有 ALAB 4% 衛星</strong>：不建議再加 CRDO（同 thesis 重複曝險）；CIEN 等回測再進場</li>
+</ul>
+</div>
+
+<h3>監測指標（ALAB 進場後的 review triggers）</h3>
+<table>
+<thead><tr><th>#</th><th>時間點</th><th>監測項目</th><th>對應動作</th></tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>2026-08-05（估）</td>
+<td>Q2 FY26 法說：Rev YoY 守 +85% / GM 守 73% / Q3 guide 是否續 raise</td>
+<td>若三條全達標 → 維持條件式分批；若 GM &lt; 72% → R1 預警</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2026 Q3-Q4</td>
+<td>Broadcom 季法說：PCIe 6.0 retimer 量產公告 + ASP guide（§5 secondary trigger）</td>
+<td>若 Broadcom 公告 2026 H2-2027 H1 量產 + 客戶名單包含 MSFT / Meta → 減碼至 1.5%</td>
+</tr>
+<tr>
+<td>3</td>
+<td>2027-02（估）</td>
+<td>Q4 FY26 法說：Top 5 客戶占比 / FY27 guide / Scorpio + Leo + Taurus 合計占比 ≥ 30%</td>
+<td>若 Top 5 降至 70% 以下 + UALink 2027 商用 hyperscaler ≥ 3 家 → 加碼至 4%；若 Top 5 仍 &gt; 75% → 維持 1.5-2%</td>
+</tr>
+<tr>
+<td>4</td>
+<td>2027-10</td>
+<td>NVDA GTC Fall 2027：Feynman chip-to-chip 連接技術公告（§5 primary trigger）</td>
+<td>若保留 PCIe interface for CPU-GPU → 加碼至 4%；若全 interposer optical + ALAB 無 chip-level optical 收購應對 → 減碼至 1.5% 觀察 12 月</td>
+</tr>
+<tr>
+<td>5</td>
+<td>價位觸發</td>
+<td>$170-180 啟動第一批 1.5%；$150-160 加滿至 4%；突破 $336（FPE 80x）減碼評估</td>
+<td>嚴格價位 trigger</td>
+</tr>
+</tbody>
+</table>
+
+<h3>一句話 takeaway</h3>
+<div class="callout callout-key" style="font-size:17px;line-height:1.85">
+<strong>ALAB 是 IRR 質感最乾淨 + 護城河仍 ↑ widening + 4 條 driver 分散的衛星 conviction；CRDO 是合理 ROI 但護城河見頂的「滿意但天花板低」選擇；CIEN 是 Quality 10/10 但連 Bull case 都負 IRR 的「等對的價」標的</strong>。三檔同 thesis 不建議同時持有 — 邊際資金集中 ALAB 等回測 $170-180 進場最大化 alpha；CRDO 等 $130；CIEN 等 $295。
+</div>
+</section>
+
+<div class="report-footer">
+📊 多標的對比分析 v1.4-cc-tuned｜資料來源：DCA_CRDO_20260511 + DCA_ALAB_20260511 + DCA_CIEN_20260512<br>
+本報告為買側 PM 分析框架輸出，不構成投資建議。三檔皆有 Pure MA ✅ 動能過熱共同特徵，所有結論皆假設「條件式分批進場」執行。
+</div>
+
+</div>
+</body>
+</html>
