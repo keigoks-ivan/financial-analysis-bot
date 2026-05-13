@@ -254,9 +254,9 @@ def t_count_badges(html: str) -> str:
 def t_help_box(html: str) -> str:
     """Update the bottom helper box (如何新增產業 ID → DS) + freshness legend."""
     new_box = (
-        '<div style="margin-top:32px;padding:14px 18px;background:#F5F3FF;'
-        'border-left:4px solid #7C3AED;border-radius:6px;font-size:12.5px;'
-        'color:#4C1D95;line-height:1.65">\n'
+        '<div style="margin-top:32px;padding:14px 18px;background:#F9FAFB;'
+        'border-left:4px solid #475569;border-radius:6px;font-size:12.5px;'
+        'color:#1F2937;line-height:1.65">\n'
         '    <strong>🚀 如何新增產業 DS：</strong><br>\n'
         '    對 Claude Code 說「{主題} ds」或「ds {主題}」即自動觸發 '
         '<code>industry-ds</code> skill；產出會自動放入對應類別。<br>\n'
@@ -265,7 +265,7 @@ def t_help_box(html: str) -> str:
         '  </div>'
     )
     html = re.sub(
-        r'<div style="margin-top:32px;padding:14px 18px;background:#F5F3FF;[^"]*"[^>]*>\s*'
+        r'<div style="margin-top:32px;padding:14px 18px;background:#F9FAFB;[^"]*"[^>]*>\s*'
         r'<strong>🚀 如何新增產業 ID.*?</div>',
         new_box,
         html,

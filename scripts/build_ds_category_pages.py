@@ -273,14 +273,14 @@ def generate_cat_page(
 /* Cat page extras */
 .cat-breadcrumb{padding:12px 0 8px;font-size:.8rem;color:#6B7280}
 .cat-breadcrumb a{color:#6B7280;text-decoration:none}
-.cat-breadcrumb a:hover{color:#4C1D95;text-decoration:underline}
-.cat-breadcrumb strong{color:#4C1D95}
-.cat-page-h1{color:#4C1D95;font-size:1.6rem;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
+.cat-breadcrumb a:hover{color:#1F2937;text-decoration:underline}
+.cat-breadcrumb strong{color:#1F2937}
+.cat-page-h1{color:#1F2937;font-size:1.6rem;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
 .cat-page-hint{color:#6B7280;font-size:.88rem;margin:0 0 12px}
-.cat-jump a.active{background:#7C3AED;color:#fff;border-color:#7C3AED}
+.cat-jump a.active{background:#475569;color:#fff;border-color:#475569}
 .cat-page-footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#9CA3AF;font-size:.72rem;text-align:center}
 .cat-head{cursor:default !important}
-.cat-head:hover{background:linear-gradient(90deg,#F5F3FF,#fff) !important}
+.cat-head:hover{background:linear-gradient(90deg,#F9FAFB,#fff) !important}
 """
     adapted_head = adapted_head.replace("</style>", cat_css + "\n</style>", 1)
 
