@@ -23,11 +23,106 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 DD_DIR = ROOT / "docs" / "dd"
+RESEARCH_HTML = ROOT / "docs" / "research" / "index.html"
 META_RE = re.compile(r'<script id="dd-meta"[^>]*>(.*?)</script>', re.DOTALL)
+# Parse <tr class="searchable" data-ticker=...> rows from the research table —
+# the user-visible source of truth for moat-trend / munger-gate / signal.
+TABLE_ROW_RE = re.compile(
+    r'<tr class="searchable"\s+([^>]*?)>',
+    re.DOTALL,
+)
+
+
+def _build_table_attrs_map(table_html: str | None = None) -> dict:
+    """Parse research table <tr> rows; return {ticker: {signal, moat_trend, munger_gate}}.
+
+    moat_trend: int (3=↑, 2=→, 1=↓, 0=unknown — matches data-moat-trend convention).
+    munger_gate: int (0-11 or 0 if missing).
+
+    Source priority:
+      1. Explicit table_html arg (in-memory fresh table from update_dd_index)
+      2. Disk file docs/research/index.html (standalone runs)
+    """
+    if table_html is None:
+        try:
+            table_html = RESEARCH_HTML.read_text(encoding="utf-8")
+        except Exception:
+            return {}
+    out = {}
+    for m in TABLE_ROW_RE.finditer(table_html):
+        attrs = m.group(1)
+        t = re.search(r'data-ticker="([^"]+)"', attrs)
+        if not t:
+            continue
+        sig = re.search(r'data-signal="([^"]*)"', attrs)
+        mt = re.search(r'data-moat-trend="(\d+)"', attrs)
+        mg = re.search(r'data-munger-gate="(\d+)"', attrs)
+        out[t.group(1)] = {
+            "signal": sig.group(1) if sig else "",
+            "moat_trend": int(mt.group(1)) if mt else 0,
+            "munger_gate": int(mg.group(1)) if mg else 0,
+        }
+    return out
+
+
+_table_attrs_cache: dict | None = None
+
+
+def _get_table_attrs():
+    global _table_attrs_cache
+    if _table_attrs_cache is None:
+        _table_attrs_cache = _build_table_attrs_map()
+    return _table_attrs_cache
+
+
+def set_table_html(table_html: str) -> None:
+    """Called by update_dd_index to inject the fresh in-memory table HTML
+    before render() runs, so the moat-quality cards see the same table
+    bytes that will be written to disk."""
+    global _table_attrs_cache
+    _table_attrs_cache = _build_table_attrs_map(table_html)
+
+# ---------------------------------------------------------------------------
+# DCA IRR helpers
+# ---------------------------------------------------------------------------
+_dca_irr_cache = None
+
+
+def _get_dca_irr_map():
+    global _dca_irr_cache
+    if _dca_irr_cache is None:
+        try:
+            from update_dd_index import collect_dca_ev_map, compute_dca_irr
+            ev_map = collect_dca_ev_map()
+            _dca_irr_cache = {t: compute_dca_irr(ev) for t, ev in ev_map.items()}
+        except Exception:
+            _dca_irr_cache = {}
+    return _dca_irr_cache
+
+
+def _irr_str(ticker):
+    irr_map = _get_dca_irr_map()
+    irr = irr_map.get(ticker)
+    if irr is None:
+        _t_norm = re.sub(r"[^A-Za-z0-9]", "", ticker).upper()
+        irr = irr_map.get(_t_norm)
+    if irr is None:
+        return "IRR —"
+    if irr > 0:
+        sign = "+"
+    elif irr < 0:
+        sign = "-"
+    else:
+        sign = ""
+    return f"IRR {sign}{abs(irr):.1f}%/yr"
 
 
 def load_records():
-    """Return {ticker: meta_dict} keyed by latest DD per ticker."""
+    """Return {ticker: meta_dict} keyed by latest DD per ticker.
+
+    For filter-relevant fields (signal / moat-trend / §7 munger), the
+    research table is the source of truth — see _build_table_attrs_map.
+    """
     records = {}
     for p in sorted(DD_DIR.glob("DD_*.html")):
         try:
@@ -47,6 +142,18 @@ def load_records():
         t = d["ticker"]
         if t not in records or d["date"] > records[t]["date"]:
             records[t] = d
+    # Overlay table-attrs (signal / moat_trend / munger_gate) — single source
+    # of truth = the rendered research table.
+    table_attrs = _get_table_attrs()
+    for t, r in records.items():
+        ta = table_attrs.get(t)
+        if ta:
+            r["signal"] = ta["signal"] or r.get("signal")
+            r["_moat_trend_int"] = ta["moat_trend"]  # 3=↑, 2=→, 1=↓, 0=unknown
+            r["_munger_pass"] = ta["munger_gate"]
+        else:
+            r["_moat_trend_int"] = 0
+            r["_munger_pass"] = 0
     return records
 
 
@@ -107,6 +214,15 @@ def x_cohort(records):
     return val_red, ma_brake
 
 
+def _is_trend_up(r):
+    """Per data-moat-trend convention: 3 = ↑."""
+    return r.get("_moat_trend_int") == 3
+
+
+def _is_munger_green(r):
+    return isinstance(r.get("_munger_pass"), int) and r["_munger_pass"] >= 9
+
+
 def _sig_class(s):
     return {"A+": "Aplus", "A": "A", "B": "B", "C": "C", "X": "X"}.get(s, "X")
 
@@ -126,14 +242,61 @@ def _truncate(s, n=50):
     return s[:n].rstrip() + "…"
 
 
+def _moat_card_lis(pool, n=5):
+    """Render <li> rows for a moat-quality pool, ranked by 5Y 期望 IRR descending.
+    Tickers without DCA IRR are excluded (cannot rank)."""
+    irr_map = _get_dca_irr_map()
+    enriched = []
+    for r in pool:
+        t = r["ticker"]
+        irr = irr_map.get(t)
+        if irr is None:
+            _t_norm = re.sub(r"[^A-Za-z0-9]", "", t).upper()
+            irr = irr_map.get(_t_norm)
+        if irr is None:
+            continue
+        enriched.append((r, irr))
+    enriched.sort(key=lambda x: -x[1])
+    if not enriched:
+        return '<li style="color:#94A3B8;font-style:italic;list-style:none">符合條件的標的：0 檔</li>'
+    rows = ""
+    for r, irr in enriched[:n]:
+        ticker_html = _ticker_link(r["ticker"], r.get("_path", ""))
+        moat = escape(str(r.get("moat", "?")))
+        sig = escape(str(r.get("signal", "?")))
+        mp = r.get("_munger_pass")
+        mp_str = f"{mp}/11" if isinstance(mp, int) else "?"
+        sign = "+" if irr > 0 else ("-" if irr < 0 else "")
+        irr_str = f"IRR {sign}{abs(irr):.1f}%/yr"
+        meta = f'({irr_str}) · {sig} · {moat}↑ · 🟢 {mp_str}'
+        rows += (
+            f'<li><span class="lead">{ticker_html}</span>'
+            f'<span class="meta">{meta}</span></li>'
+        )
+    return rows
+
+
 def render(records):
     sig_dist = signal_distribution(records)
     latest = latest_updates(records)
     peg = peg_cheapest(records)
     pct = pct5y_cheapest(records)
-    ups = upside_top(records)
-    ups5y = upside_5y_top(records)
     val_red, ma_brake = x_cohort(records)
+    # Moat-quality cohorts ranked by 5Y 期望 IRR (excludes C/X verdicts)
+    sa_pool = [
+        r for r in records.values()
+        if r.get("signal") in ("A+", "A", "B")
+        and r.get("moat") in ("S", "A")
+        and _is_trend_up(r)
+        and _is_munger_green(r)
+    ]
+    bc_pool = [
+        r for r in records.values()
+        if r.get("signal") in ("A+", "A", "B")
+        and r.get("moat") in ("B", "C")
+        and _is_trend_up(r)
+        and _is_munger_green(r)
+    ]
 
     progress_count = sum(c for s, c in sig_dist if s in ("A+", "A"))
     watch_count = next((c for s, c in sig_dist if s == "B"), 0)
@@ -168,20 +331,11 @@ def render(records):
         for r in pct
     )
 
-    ups_lis = "".join(
-        f'<li><span class="lead">{_ticker_link(r["ticker"], r.get("_path", ""))}</span>'
-        f'<span class="meta">+{r["upside_mid_pct"]:.1f}% · {escape(str(r.get("signal", "?")))}</span></li>'
-        for r in ups
-    )
-
-    ups5y_lis = "".join(
-        f'<li><span class="lead">{_ticker_link(r["ticker"], r.get("_path", ""))}</span>'
-        f'<span class="meta">{r["upside_5y_pct"]:+.0f}% · {escape(str(r.get("signal", "?")))}</span></li>'
-        for r in ups5y
-    )
-
     val_red_str = " · ".join(escape(t) for t in val_red) if val_red else "—"
     ma_brake_str = " · ".join(escape(t) for t in ma_brake) if ma_brake else "—"
+
+    sa_lis = _moat_card_lis(sa_pool)
+    bc_lis = _moat_card_lis(bc_pool)
 
     return f'''<div class="auto-stats">
   <h3>
@@ -216,13 +370,13 @@ def render(records):
     </div>
 
     <div class="stats-cell">
-      <div class="stats-label">🚀 中期 Upside 最高（A+/A/B）</div>
-      <ol>{ups_lis}</ol>
+      <div class="stats-label">🛡️ 護城河 S/A 擴大 + §7 🟢（依 5Y 期望 IRR 排序）</div>
+      <ol>{sa_lis}</ol>
     </div>
 
     <div class="stats-cell">
-      <div class="stats-label">📈 5Y Upside 最高（排除 X）</div>
-      <ol>{ups5y_lis}</ol>
+      <div class="stats-label">🛡️ 護城河 B/C 擴大 + §7 🟢（依 5Y 期望 IRR 排序）</div>
+      <ol>{bc_lis}</ol>
     </div>
 
     <div class="stats-cell x-cohort">

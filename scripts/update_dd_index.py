@@ -2434,7 +2434,8 @@ def update_index(entries, dry_run: bool = False, force_refresh_eps: bool = False
     try:
         import sys as _sys
         _sys.path.insert(0, str(Path(__file__).parent))
-        from aggregate_dd_stats import load_records as _load_recs, render as _render_stats
+        from aggregate_dd_stats import load_records as _load_recs, render as _render_stats, set_table_html as _set_table_html
+        _set_table_html(new_html)  # 直接抓現在表格有的（in-memory fresh table）
         stats_html = _render_stats(_load_recs())
         new_html = re.sub(
             r'<!-- DD_AUTO_STATS_START -->.*?<!-- DD_AUTO_STATS_END -->',
