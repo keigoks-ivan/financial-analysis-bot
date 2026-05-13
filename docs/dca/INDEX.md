@@ -153,3 +153,4 @@
 | 2026-05-13 | ETN | Eaton 把 AI 資料中心電力從「電網到晶片」整合成寡頭壁壘，hyperscaler 9 年 backlog 是 capex 結構性轉化為毛利的鎖定通道。 | DCA_ETN_20260513.html | DD_ETN_20260506.html | ID_AIDataCenter_20260419.html / ID_Transformers_20260419.html / ID_LiquidCooling_20260419.html |
 | 2026-05-13 | APP | AppLovin 用 AXON 即時 ML 引擎把 mobile gaming 廣告的 ROAS 黑箱優勢拉到 e-commerce + CTV，成為 Meta/Google 雙寡占之外稀有的第三條 AI 廣告中樞。 | DCA_APP_20260513.html | DD_APP_20260418.html | ID_AIAdRetailMedia_20260429.html |
 | 2026-05-13 | CAT | Caterpillar 是百年工業寡頭，AI DC on-site power 把 reciprocating engines 從 cyclical 工具升級為結構性第二曲線。 | DCA_CAT_20260513.html | DD_CAT_20260504.html | ID_HeavyMachineryMining_20260427.html |
+| 2026-05-13 | PANW | PANW 把企業 cyber 從 30+ 廠商工具拼裝整併為三平台一家供應商，AI agent 爆炸 + identity 新邊界讓 platformization 經濟學變不可逆。 | DCA_PANW_20260513.html | DD_PANW_20260427.html | ID_CybersecurityPlatformConsolidation_20260423.html / ID_AICybersecurityDoubleEdge_20260423.html / ID_IdentityNewPerimeter_20260423.html |
