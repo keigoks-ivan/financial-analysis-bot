@@ -147,3 +147,6 @@
 | 2026-05-13 | MELI | MELI 是拉美唯一同時鎖定商業、支付、信用、物流四引擎的飛輪生態，把 4.5 億 unbanked 人口的金融數位化變成自己的複利引擎。 | DCA_MELI_20260513.html | DD_MELI_20260513.html | ID_LATAMEcommerce_20260427.html / ID_StablecoinPayments_20260430.html |
 | 2026-05-13 | NOW | ServiceNow 是 Fortune 500 內 85% 客戶共用的「工作流動脈」，AI agentic 表面是威脅、實則讓 Now Platform 從工單系統升級為 AI 治理樞紐。 | DCA_NOW_20260513.html | DD_NOW_20260427.html | ID_AICrossDomainImpact_20260429.html / ID_AgenticAIPlatform_20260424.html |
 | 2026-05-13 | SE | SE 用一家公司同時擁有東南亞 6.5 億人口的購物、遊戲、銀行三條入口，是 leapfrog 大陸唯一能 cross-subsidize 的 super-app | DCA_SE_20260513.html | DD_SE_20260513.html | ID_GlobalEcommerce_20260427.html + ID_LATAMEcommerce_20260427.html |
+| 2026-05-13 | COHR | Coherent 用 6 吋 InP 晶圓 + NVIDIA 鎖定，把 AI 光通訊變成所有 hyperscaler 都得繳「過路費」的物理瓶頸。 | DCA_COHR_20260513.html | DD_COHR_20260418.html | ID_SiliconPhotonicsCPO_20260419.html / ID_AINetworking_20260419.html |
+| 2026-05-13 | FN | Fabrinet 是少數能做 1.6T 次微米光學對位的「中立 Switzerland 組裝商」，被 OEM/EMS 兩邊放棄、所以贏。 | DCA_FN_20260513.html | DD_FN_20260505.html | ID_SiliconPhotonicsCPO_20260419.html |
+| 2026-05-13 | GLW | Corning 用 175 年材料科學累積，把「玻璃」變成 AI 神經系統 + Solar 國產化 + 半導體 packaging 三條雙曲線同跑的稀缺材料壟斷。 | DCA_GLW_20260513.html | DD_GLW_20260429.html | ID_GlassSubstrate_20260420.html / ID_CoPoSFOPLPRace_20260505.html |

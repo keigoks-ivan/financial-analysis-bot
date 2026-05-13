@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- dca-moat-trend: ↑ -->
+<title>DCA — FN 2026-05-13 | Fabrinet Deep Conviction Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC; --card:#FFFFFF; --ink:#0F172A; --ink2:#334155; --ink3:#64748B;
+  --primary:#1E3A5F; --accent:#3B82F6; --line:#E2E8F0;
+  --green:#15803D; --green-bg:#F0FDF4; --green-dark:#166534;
+  --amber:#92400E; --amber-bg:#FEF9C3;
+  --red:#991B1B; --red-bg:#FEF2F2; --red-dark:#DC2626;
+  --blue-bg:#EFF6FF; --slate-bg:#F1F5F9;
+  --orange:#F97316; --orange-bg:#FFF7ED; --orange-dark:#FED7AA;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans TC',-apple-system,sans-serif;font-size:15px;line-height:1.7}
+.num,.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:24px}
+.head{padding:18px 24px;background:var(--primary);color:#fff;border-radius:6px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.head h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.head .meta{font-size:13px;color:#CBD5E1}
+.print-btn{position:fixed;bottom:18px;right:18px;background:var(--primary);color:#fff;border:none;padding:10px 16px;border-radius:24px;cursor:pointer;font-size:13px;box-shadow:0 4px 12px rgba(30,58,95,.3);font-family:inherit}
+.print-btn:hover{background:#0F2540}
+.statusbar{background:var(--slate-bg);border-left:4px solid var(--accent);border-right:4px solid var(--accent);border-radius:4px;padding:14px 18px;margin:18px 0;display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.sb-cell{min-width:180px;text-align:center;padding:6px 10px}
+.sb-label{font-size:11px;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;font-weight:500}
+.sb-value{font-size:22px;font-weight:700;margin-top:4px;letter-spacing:-.01em}
+.sb-v-aplus{color:var(--green-dark)} .sb-v-a{color:var(--green)} .sb-v-b{color:var(--amber)} .sb-v-c{color:var(--red)}
+.arrow-up{color:var(--green-dark)} .arrow-flat{color:var(--ink3)} .arrow-down{color:var(--red)}
+.dd-green{color:var(--green-dark)} .dd-amber{color:var(--amber)} .dd-red{color:var(--red)}
+section{background:var(--card);border-radius:6px;padding:18px 22px;margin:16px 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+h2{color:var(--primary);font-size:18px;border-left:4px solid var(--accent);padding-left:10px;margin:0 0 14px;letter-spacing:-.01em}
+h3{color:var(--primary);font-size:15px;margin:18px 0 8px;font-weight:600}
+h4{color:var(--ink2);font-size:14px;margin:14px 0 6px;font-weight:600}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+th{background:var(--primary);color:#fff;padding:9px 11px;text-align:left;font-weight:500;font-size:12.5px}
+td{padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:nth-child(even) td{background:var(--slate-bg)}
+.thesis-block{background:var(--blue-bg);padding:24px 28px;border-radius:6px;text-align:center;margin:14px 0}
+.thesis-title{font-size:11px;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px}
+.thesis-body{font-size:24px;font-weight:600;line-height:1.55;color:var(--primary);letter-spacing:-.01em}
+.thesis-note{font-size:12px;color:var(--ink3);margin-top:10px;font-style:italic}
+.decision{background:var(--green-bg);border-left:4px solid var(--green);padding:14px 18px;border-radius:4px;margin:12px 0}
+.decision-wait{background:var(--amber-bg);border-left:4px solid var(--amber)}
+.decision-avoid{background:var(--red-bg);border-left:4px solid var(--red)}
+.tag-pass{display:inline-block;background:var(--green-bg);color:var(--green);padding:2px 9px;border-radius:3px;font-size:11.5px;font-weight:600}
+.tag-fail{display:inline-block;background:var(--red-bg);color:var(--red);padding:2px 9px;border-radius:3px;font-size:11.5px;font-weight:600}
+.tag-warn{display:inline-block;background:var(--amber-bg);color:var(--amber);padding:2px 9px;border-radius:3px;font-size:11.5px;font-weight:600}
+.conflict{background:var(--orange-bg);border-left:4px solid var(--orange);padding:14px 18px;border-radius:4px;margin:10px 0}
+.verdict-tbl{background:var(--orange-dark)!important}
+.verdict-tbl th{background:#C2410C}
+.pattern-block{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;border-radius:4px;margin:10px 0}
+.premortem-block{background:var(--red-bg);border-left:4px solid var(--red-dark);padding:14px 18px;border-radius:4px;margin:10px 0;font-style:italic}
+.maxdd-block{background:var(--red-bg);border-left:4px solid var(--red-dark);padding:18px 22px;border-radius:4px;margin:14px 0;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.maxdd-figure{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--red)}
+.maxdd-bar{height:18px;background:linear-gradient(to right, var(--green) 0% 30%, var(--amber) 30% 60%, var(--red) 60% 100%);border-radius:3px;position:relative;margin:8px 0;flex:1;max-width:340px}
+.maxdd-cursor{position:absolute;top:-4px;width:2px;height:26px;background:var(--ink);border-radius:1px}
+.memo{background:#FAFAF9;border:1px solid var(--line);padding:18px 22px;border-radius:4px;margin:10px 0;font-family:'IBM Plex Mono',monospace;font-size:13.5px;line-height:1.85}
+.elevator{background:var(--slate-bg);padding:14px 20px;border-left:4px solid var(--accent);border-radius:4px;font-style:italic;margin:10px 0}
+details{background:var(--slate-bg);border-radius:4px;margin:8px 0;padding:0}
+details summary{cursor:pointer;padding:12px 16px;font-weight:600;color:var(--primary);font-size:14px;list-style:none}
+details summary::after{content:" ▾";color:var(--ink3)}
+details[open] summary::after{content:" ▴"}
+details > div{padding:0 16px 16px}
+.irr-mini{margin:14px 0}
+.irr-mini table th, .irr-mini table td{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px}
+.irr-mini .pos{color:var(--green-dark);font-weight:600}
+.irr-mini .neg{color:var(--red);font-weight:600}
+.irr-mini .neutral{color:var(--ink3)}
+.bar-stack{display:flex;height:24px;border-radius:3px;overflow:hidden;margin:12px 0;font-size:11px;color:#fff;font-weight:600;align-items:center}
+.bar-eps{background:var(--green)} .bar-rerate-pos{background:var(--accent)} .bar-rerate-neg{background:var(--red-dark)} .bar-div{background:var(--ink3)}
+.bar-stack span{padding:0 6px;line-height:24px;white-space:nowrap}
+.callout{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:12px 16px;border-radius:4px;margin:10px 0;font-size:13px;font-style:italic;color:var(--primary)}
+.src{font-size:11px;color:var(--ink3);font-style:italic}
+.src a{color:var(--accent);text-decoration:none}
+.derive{display:block;font-size:12.5px;background:#F5F3FF;border-left:3px solid #A78BFA;padding:6px 10px;margin:6px 0;color:#5B21B6;border-radius:3px}
+.derive::before{content:"推導：";font-weight:700;color:#4C1D95}
+.foot{text-align:center;color:var(--ink3);font-size:12px;padding:24px 0;border-top:1px solid var(--line);margin-top:24px}
+@media print{.print-btn{display:none}body{background:#fff}section{box-shadow:none;border:1px solid var(--line)}details{break-inside:avoid}details[open]{padding-bottom:8px}details > div{display:block !important}.head{position:static}}
+@media (max-width:720px){.thesis-body{font-size:18px}.maxdd-figure{font-size:24px}.statusbar{flex-direction:column;gap:8px}.sb-cell{min-width:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="head">
+  <div>
+    <h1>FN · Fabrinet — Deep Conviction Analysis</h1>
+    <div class="meta">2026-05-13 · 第 2/3 批次 · Skill v12.x</div>
+  </div>
+  <div class="meta" style="text-align:right">
+    <div>NYSE: FN · 報告日股價 $634-650</div>
+    <div>DD basis: DD_FN_20260505.html · ID: SiliconPhotonicsCPO</div>
+  </div>
+</header>
+
+<!-- ====== Status Bar ====== -->
+<div class="statusbar">
+  <div class="sb-cell">
+    <div class="sb-label">綜合訊號燈</div>
+    <div class="sb-value sb-v-b">B</div>
+    <div class="src">觀望（DD §8：B 級觀望，等回測 $552）</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Moat 等級 + 趨勢</div>
+    <div class="sb-value">C <span class="arrow-up">↑</span></div>
+    <div class="src">6/10，HPC 多元化 + Building 10 擴產</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Runway Post-Y5</div>
+    <div class="sb-value">🟡 中</div>
+    <div class="src">CPO 結構替代是 cliff 風險</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Max DD（5Y 估）</div>
+    <div class="sb-value dd-red">−65%</div>
+    <div class="src">範圍 −45% ~ −65%，🔴 評級</div>
+  </div>
+</div>
+
+<!-- ====== §2 Thesis ====== -->
+<section>
+  <h2>§2 One-Sentence Thesis</h2>
+  <div class="thesis-block">
+    <div class="thesis-title">The Investment Essence — ≤ 50 字</div>
+    <div class="thesis-body">Fabrinet 是少數能做 1.6T 次微米光學對位的「中立 Switzerland 組裝商」，被 OEM/EMS 兩邊放棄、所以贏。</div>
+    <div class="thesis-note">敘事 thesis：OEM 自製不划算（量太小）、大 EMS 做不來（技術太細）→ FN 卡在中間獨享市場</div>
+  </div>
+</section>
+
+<!-- ====== §7 Decision ====== -->
+<section>
+  <h2>§7 Decision — 可執行計畫</h2>
+
+  <h3>§7a 倉位與進場計畫</h3>
+  <div class="decision decision-wait">
+    <table>
+      <tr><th style="width:34%">項目</th><th>內容</th></tr>
+      <tr><td>在組合中角色</td><td><strong>衛星持倉</strong>（B-tier 訊號，moat C 6/10 不到 core）</td></tr>
+      <tr><td>初始建倉倉位</td><td>0%（等 timing）→ 第一批 1.0%（受 CPO cliff 風險限制）</td></tr>
+      <tr><td>目標倉位</td><td>1.5-2.0%（Max DD 🔴 評級 + Moat C 雙重下修 — 比 COHR 更謹慎）</td></tr>
+      <tr><td>進場價位區間</td><td><strong>$520-$580</strong>（DD 建議 Bollinger 中軌 $552，5Y R:R 1.10 邊際過 1.0）<span class="derive">當前 $634-650 vs DD bear $400-500、短期 R:R -0.08x / 中期 +0.12x 全失效。等回測至 $552-580 才有合理 R:R 進場。</span></td></tr>
+      <tr><td>進場節奏</td><td>⚠ <strong>條件式</strong> — 等股價回測 BB 中軌附近且 RSI 14d &lt; 60。若 RSI &gt; 70 不進場</td></tr>
+      <tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>對標 COHR + AVGO + 既有同類：</strong>(1) <strong>vs COHR</strong>：兩家都是光通訊鏈 — COHR moat B (8/10) 高於 FN moat C (6/10)，因 COHR 有上游 InP wafer IP、FN 純組裝。<strong>邊際資金應優先放 COHR</strong>，不應同時持有兩家光通訊單純 play；(2) <strong>vs AVGO</strong>：AVGO ASIC + 光元件雙曝險 + 軟體（VMware）+ 高 GM，FN 是純 hardware contract manufacturer GM 12% — 同樣金額放 AVGO 風險調整後報酬更好；(3) <strong>vs LITE</strong>：FN 沒有 IP，但 LITE 有 EML + 設計能力 — 同類比較 LITE 略優。<strong>結論：若組合中已有 COHR 或 AVGO 任一家 ≥ 2%，FN 邊際 conviction 應降至 1% 以下；若都沒有，FN 可至 1.5-2%（仍受 Moat C + Max DD 🔴 限制不到 core 水位）</strong>。</td></tr>
+    </table>
+  </div>
+
+  <h3>§7b 加碼與減碼條件</h3>
+  <table>
+    <thead><tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr></thead>
+    <tbody>
+      <tr><td class="tag-pass">加碼</td><td>股價回測 $520-580 + Q4 FY26 GM 連 2 季 &gt; 12.5%（H2 規模效應兌現）</td><td>1.5%</td></tr>
+      <tr><td class="tag-pass">加碼</td><td>FY27 H1 新 hyperscaler datacom 客戶營收 &gt; 15%（NVDA 集中度結構性下降至 25-30%）</td><td>2.0%</td></tr>
+      <tr><td class="tag-warn">減碼</td><td>Datacom 部門 QoQ 連 2 季 &lt; 0%（vs 全公司 +7%）— DD §6 領先指標</td><td>0.75%</td></tr>
+      <tr><td class="tag-fail">清倉</td><td>NVIDIA Spectrum-X 2H26 CPO 出貨 mix &gt; 50%（結構替代確認）<strong>或</strong> Building 10 投產後 6 個月 GM 仍 &lt; 12%</td><td>0%</td></tr>
+    </tbody>
+  </table>
+
+  <h3>§7c Pure MA + 動能過熱</h3>
+  <table>
+    <thead><tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>股價在 MA60 之上？</td><td><span class="tag-pass">✅</span></td><td>$634 vs MA60 估 $555</td></tr>
+      <tr><td>股價在 MA200 之上？</td><td><span class="tag-pass">✅</span></td><td>$634 vs MA200 估 $390</td></tr>
+      <tr><td>股價在 MA104w 之上？</td><td><span class="tag-pass">✅</span></td><td>$634 vs MA104w 估 $270</td></tr>
+      <tr><td>Pure MA 系統支持進場？</td><td><span class="tag-pass">✅ 結構多頭</span></td><td>三條 MA 斜率全正</td></tr>
+      <tr><td><strong>短期動能過熱</strong></td><td><span class="tag-warn">⚠ 52w high $734、近期 +4.5%</span></td><td>距 52w high 13%，RSI 推估偏高但非極端</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>結論</strong>：Pure MA 結構多頭支持「持有方向」，但 DD QC-22 觸發顯示已偏離長期均值。§7a 進場節奏條件式（等 RSI &lt; 60 且回測至 BB 中軌附近）。FN 比 COHR 更克制 — 因 moat C 等級無法支撐高溢價，回撤幅度可能更大。</div>
+
+  <h3>§7d 建議持有年限</h3>
+  <table>
+    <thead><tr><th>持有年限</th><th>條件</th></tr></thead>
+    <tbody>
+      <tr><td>短期（&lt; 2 年）</td><td>若 Building 10 + Texas 投產順利 + 1.6T 訂單持續超預期 → 目標 $750-850</td></tr>
+      <tr><td>中期（2-5 年）</td><td>若 HPC 多元化（AWS Trainium + 其他 hyperscaler）讓 NVDA 集中度降至 25%、且 GM 推升至 13-14% → 持有但謹慎</td></tr>
+      <tr><td>長期（5-10 年）</td><td>若 FN 成功切入 CPO 組裝（laser pre-alignment、PIC fiber attach 等）→ 持有；若被 CPO bypass → 清倉</td></tr>
+    </tbody>
+  </table>
+  <p><strong>建議持有年限</strong>：<strong>2-3 年中期</strong>（比 COHR 短）。原因：(1) FN 的 moat 是 process knowledge 不是 IP — 不像 COHR 有上游 InP wafer 結構性壁壘；(2) CPO 結構替代風險在 2027-2028 是真實 cliff，5Y+ 持有需明確 CPO 切入證據；(3) AWS HPC 多元化是強化點但時間軸 2-3 年內就會驗證 — 持有 5Y+ 必須等到第二條 S 曲線（CPO 組裝或量子通訊光元件）成型才合理。</p>
+
+  <h4>EPS 預測參考表</h4>
+  <table>
+    <thead><tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr></thead>
+    <tbody>
+      <tr><td>FY26E（6 月止）</td><td>$11.50-12.00</td><td>YTD Q1-Q3 累積 ~$8.50 + Q4 估 $3.00-3.50 <span class="src">[T1: FN Q3 FY26 press release]</span></td><td>Non-GAAP；GAAP 略低</td></tr>
+      <tr><td>FY27E</td><td>$15.50-16.50</td><td>Sell-side consensus $16.29 <span class="src">[T2: simplywall.st FN forecast 2026-05]</span></td><td>1.6T ramp 主貢獻年</td></tr>
+      <tr><td>FY28E</td><td>$18.50-20.00</td><td>Sell-side &gt; $19 共識 <span class="src">[T2: stockanalysis.com]</span></td><td>HPC + Building 10 全載</td></tr>
+      <tr><td>FY30E（外推）</td><td>$23-27</td><td>5Y EPS CAGR 18%（base case）</td><td>CPO 路徑與中國 catch-up 雙重變數</td></tr>
+    </tbody>
+  </table>
+  <p>長期持有評估：當前 $634 / FY27E $16 = forward P/E 39x。若 5Y 末 P/E 壓至 25x（合理 EMS+ 精密製造倍數）+ EPS $25（base），合理價 $625 — 與當前持平。<strong>純 EPS 複利不足以撐 5Y 雙位 IRR，依賴 P/E 維持 30x+</strong>。CPO 風險一旦兌現，P/E 可能壓回 15-17x（Jabil/Sanmina 軌道）→ 此即 Bear case 跌至 $284 的數學機制。</p>
+</section>
+
+<!-- ====== §4 Asymmetry ====== -->
+<section>
+  <h2>§4 Asymmetry Analysis</h2>
+  <table>
+    <thead><tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr></thead>
+    <tbody>
+      <tr><td class="dd-green"><strong>Bull</strong>（thesis 完全兌現）</td><td>+180%</td><td>+23.0%/yr</td><td>1.6T+CPO 漸進 + FN 切入 CPO 組裝 + HPC 多元化 + EPS CAGR 25% + P/E 維持 35x</td><td>25%</td></tr>
+      <tr><td><strong>Base</strong></td><td>+58%</td><td>+9.6%/yr</td><td>1.6T 兌現 + CPO 漸進採用 + EPS CAGR 18% + P/E 從 39x 重定錨至 25x</td><td>50%</td></tr>
+      <tr><td class="dd-red"><strong>Bear</strong>（thesis 受傷）</td><td>−47%</td><td>−12.4%/yr</td><td>CPO 提前至 2027 全面 + FN 卡在 pluggable + EPS CAGR 5% + P/E 壓至 15x</td><td>25%</td></tr>
+      <tr style="background:var(--blue-bg);font-weight:700"><td>機率加權期望值</td><td><strong>+62% 5Y</strong></td><td><strong>IRR ≈ +10.2%/yr</strong></td><td>EV 落在「中」（8-12% mid-conviction）</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="derive">Bull case 推導：EPS CAGR 25% 假設 FY26 $11.75 → FY30 $29，P/E 維持 35x（HPC 多元化讓市場願付 sticky multiple）→ (1+0.23)^5 - 1 = +180%。</div>
+  <div class="derive">Base case 推導：EPS CAGR 18% 假設 FY26 $11.75 → FY30 $23（CPO 漸進蠶食 10-15% pluggable share），P/E re-rate 39 → 25 即 (25/39)^(1/5) - 1 = -8.4%/yr → 18 - 8.4 = +9.6%/yr。</div>
+  <div class="derive">Bear case 推導：CPO 2027 全面採用導致 FN datacom revenue 從成長轉持平，EPS CAGR 跌至 5%（仍正因 telecom + HPC + automotive 撐底），P/E 壓至 EMS 軌道 15x = (15/39)^(1/5) - 1 = -17.4%/yr → 5 - 17.4 = -12.4%/yr。注意：FN bear case 比 COHR bear（-13%/yr）稍輕，因為 FN 有 telecom + HPC + automotive 三條腿撐住。</div>
+
+  <h3>📅 機率時間視角檢查</h3>
+  <table>
+    <thead><tr><th>檢查項</th><th>本案數字</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>Bear 機率 ≥ 20%（5Y 視角）</td><td>25%</td><td><span class="tag-pass">✅</span>（CPO 風險真實）</td></tr>
+      <tr><td>Bull/Bear 散布寬度 ≥ 50%</td><td>+180 ~ -47% = 227%p</td><td><span class="tag-pass">✅</span></td></tr>
+      <tr><td>Base 機率 ≤ 50%</td><td>50%（剛好上限）</td><td><span class="tag-warn">⚠ 邊界</span></td></tr>
+      <tr><td>Pattern match 校準</td><td>見下</td><td><span class="tag-pass">✅</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>📐 Pattern Match — 歷史相似 setup</h3>
+  <div class="pattern-block">
+    <table>
+      <thead><tr><th style="width:30%">項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>歷史相似 thesis</td><td><strong>2017-2020 ASE Technology（3711.TW）「OSAT pivot to advanced packaging」</strong> — 從 traditional packaging 轉型成 CoWoS / FOPLP / advanced packaging，受 NVDA + AMD 訂單拉動，但中段卡在「製造 know-how moat 是否能撐住 NVDA 直接內製」</td></tr>
+        <tr><td>當時 setup</td><td>2017 ASE PE 15-18x，advanced packaging 占 ~20%；2018-2019 NVDA crypto crash + 2020 COVID 中 PE 跌到 10-12x；2021-2023 CoWoS supercycle PE 重 re-rate 至 22-28x；股價 5Y +220%</td></tr>
+        <tr><td>5Y 實現報酬</td><td>2017-2022 ASE 年化 ~26% IRR（含 -42% drawdown 路徑）</td></tr>
+        <tr><td>與 FN 最像</td><td>都是「process knowledge moat + 大客戶集中度高 + 結構替代風險」；NVDA 在兩個 case 都是 catalyst 但同時是 single-point-of-failure</td></tr>
+        <tr><td>最不像</td><td>ASE 有規模優勢（OSAT 龍頭）、且 advanced packaging 沒有 CPO 這種「跳過 OSAT」的 architectural disruption；FN 面對的 CPO 風險比 ASE 面對的任何威脅都更結構性</td></tr>
+        <tr><td>校準訊號</td><td>ASE 2018 crypto crash 給出 -42% drawdown，但 thesis 對最終 5Y +220%。FN 預估 Max DD -45~-65%、5Y Base +58% — 與 ASE 路徑「中途痛 + 終點仍贏」結構一致，但 FN 終點 magnitude 較小，因 CPO 是真實 cliff</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>🧬 IRR Composition — 5Y IRR 質感拆解</h3>
+  <div class="irr-mini">
+    <table>
+      <thead><tr><th>情境</th><th>EPS CAGR</th><th>估值 re-rate</th><th>股息 + 淨買回</th><th>合計年化</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Bull</strong></td><td class="pos">+25.0%</td><td class="neg">−2.1%</td><td class="pos">+0.1%</td><td class="pos">+23.0%</td></tr>
+        <tr><td><strong>Base</strong></td><td class="pos">+18.0%</td><td class="neg">−8.4%</td><td class="pos">+0.1%</td><td class="pos">+9.6%</td></tr>
+        <tr><td><strong>Bear</strong></td><td class="pos">+5.0%</td><td class="neg">−17.4%</td><td class="pos">+0.1%</td><td class="neg">−12.4%</td></tr>
+      </tbody>
+    </table>
+    <div class="bar-stack">
+      <span class="bar-eps" style="width:67%">EPS +18%</span>
+      <span class="bar-rerate-neg" style="width:33%">Re-rate −8.4%</span>
+    </div>
+    <p class="src">Base stacked bar：EPS 複利 +18%/yr 是主要動力，P/E 壓縮 −8.4%/yr 拖累，股息+回購 ~0.1%/yr（FY25 買回 $125.7M 但流通股下降只 1.9% — 對 EPS 邊際影響小）。</p>
+  </div>
+  <div class="callout">
+    <strong>質感解讀</strong>：FN Base 9.6% IRR 中，<strong>+18%/yr 全部來自 EPS 複利</strong>（process 升級 + capacity 擴張），<strong>−8.4%/yr 被 P/E 壓縮吃掉</strong>。比 COHR 好的地方：FN P/E 壓縮幅度較小（39x → 25x vs COHR 75x → 30x），表示 FN 起始估值較不極端。但<strong>結論一致 — 不是「自然複利好抱」型，是「需市場配合 + 結構替代風險」雙重不確定</strong>。
+  </div>
+
+  <h3>追加壓力測試</h3>
+  <ul>
+    <li><strong>10Y 拉長視角</strong>：若 thesis 延伸 10 年，包含 CPO 全週期 + FN 是否成功切入 CPO 組裝、量子通訊等新 S 曲線。Base case 10Y EPS CAGR 降至 12% + P/E 壓回 20x → 10Y abs +95% / IRR ~6.9%/yr。10Y 中段大概率經歷 CPO disruption 的 dressing-down phase。</li>
+    <li><strong>機會成本</strong>：同期 S&P 7-9%、QQQ 9-12%、NVDA 12-18%、AVGO 10-14%、COHR 11.2%。<strong>FN 10.2% 略高於大盤但低於同類光通訊 IP holder — 沒有強烈 idiosyncratic 理由 over-allocate</strong>。對比 COHR：FN moat C vs COHR moat B，FN runway 🟡 vs COHR 🟢 — 結構上 FN 應分得更小邊際資金。</li>
+  </ul>
+</section>
+
+<!-- ====== §1 Mental Models 壓力測試 ====== -->
+<section>
+  <h2>§1 Mental Models 壓力測試</h2>
+
+  <h3>測試一：1 頁紙投委會 Memo</h3>
+  <div class="memo">
+<strong>To: 投委會</strong>
+<strong>From: PM</strong>
+<strong>Date: 2026-05-13</strong>
+<strong>Re: FN（Fabrinet）衛星部位提案 — 比 COHR 更謹慎</strong>
+
+THESIS（50 字）
+Fabrinet 是少數能做 1.6T 次微米光學對位的「中立 Switzerland 組裝商」，被 OEM/EMS 兩邊放棄、所以贏。
+
+KEY DRIVERS
+1. 1.6T pluggable transceiver 組裝市場 — 競爭者結構性少（OEM 自製不划算、大 EMS 做不來）；NVDA 27.6% + Cisco 18.2% 兩大客戶 + AWS Trainium 多元化拉動。
+2. 25 年 process knowledge + Thailand cleanroom 規模壁壘 — 新客戶 re-qualification 12-18 個月，無法 commodity 化。
+
+R:R（5Y）
+Bull +180% / Base +58% / Bear -47% — EV +62% / IRR ~10.2%/yr。
+中途 Max DD 估 -45 ~ -65%（路徑風險 🔴）。
+
+主要風險
+1. NVDA Spectrum-X 2H26 CPO 出貨 mix > 50% — 結構替代確認，立刻清倉。
+2. NVDA + Cisco 集中度 45.8%；若 NVDA 直接內製或轉至 vertical integrator → COHR 是首要客戶轉移目標。
+3. Building 10 投產後 GM 沒突破 12.5% → 規模效應失效，thesis #2 受傷。
+
+建議倉位
+衛星 1.5-2.0%（比 COHR 更小 — moat C vs B、runway 🟡 vs 🟢）：
+條件式進場：等股價回測 $520-580（Bollinger 中軌附近）。
+
+保質期
+至 2026-08-15（Q4 FY26 earnings 前）。
+  </div>
+
+  <h3>測試二：30 秒電梯簡報</h3>
+  <div class="elevator">
+    「FN 是光通訊產業的 Switzerland — OEM 自製不划算、大 EMS 做不來，只有 FN 做得來 1.6T 次微米光學對位。NVIDIA + Cisco + AWS 是它三大客戶。但風險在 CPO — NVDA 自己 2027 可能跳過 pluggable 直接 CPO，FN 在這條 path 上沒 IP 保護。現在 $634，等回到 $550 才是合理進場點。比 COHR 更謹慎 — moat 不夠厚。」
+  </div>
+
+  <div class="callout">
+    <strong>壓力測試結果</strong>：兩個測試都寫得出且自洽 — thesis 純敘事（中立組裝商）；KR 1-2 個獨立因果鏈（需求 vs 供給）；風險清楚、Max DD 已下修倉位。<strong>通過 → 進入 §7</strong>。
+  </div>
+</section>
+
+<!-- ====== Phase B 矛盾 ====== -->
+<section>
+  <h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+  <h3>共識清單</h3>
+  <ul>
+    <li>1.6T pluggable 在 2026-2027 是 demand 主軸（A1 + A2 + A3 一致）</li>
+    <li>FN 25 年 process knowledge moat 在當下仍有效（A1 結論 + A3 客戶集中度說明）</li>
+    <li>HPC（AWS Trainium）多元化是強化點（A1 + A3 一致）</li>
+  </ul>
+
+  <h3>矛盾清單</h3>
+  <table>
+    <thead><tr><th>#</th><th>矛盾點</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><strong>FN 是否能切入 CPO 組裝</strong></td>
+        <td>Cleanroom + 次微米對位是 CPO 也需要的能力（A1 結論偏正）</td>
+        <td>CPO 偏好 vertical integrator（Broadcom / NVDA / COHR）非 contract manufacturer（A2 結論偏負）</td>
+        <td>當前 HPC 業務（AWS Trainium）已驗證可做 advanced compute assembly（A3 結論偏正）</td>
+        <td><strong>🟡 可調和</strong>（分層思考 — CPO laser pre-alignment + PIC fiber attach FN 可做，但完整 CPO module 整合不可能）</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>客戶集中度是否為 thesis-killer</strong></td>
+        <td>Process know-how + 25 年累積讓 NVDA 不易轉移（A1）</td>
+        <td>AWS Trainium 進入 + 越多 hyperscaler dual-sourcing 顯示集中度可降（A2）</td>
+        <td>NVDA 27.6% + Cisco 18.2% 是 risk（A3 10-K 揭露）</td>
+        <td><strong>🟡 可調和</strong>（時間問題 — 2-3 年內可從 45% → 30-35%）</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>估值是 priced-in 還是早期</strong></td>
+        <td>Moat ↑ widening + 多元化進行中（A1 結論支持持續 re-rate）</td>
+        <td>Optical 13.67% CAGR + AI optical +57% YoY（A2 結論支持多頭）</td>
+        <td>P/E 55x TTM、52-w high $734、5Y median PE 25x（A3 結論：嚴重 over-valued）</td>
+        <td><strong>🔴 不可調和</strong>（A3 vs A1+A2 對「現價合理性」結論相反）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>與既有 DD/ID 報告交叉</h3>
+  <table>
+    <thead><tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 結論</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>進場時機</td><td>等回撤至 $520-580</td><td>DD 推薦 BB 中軌 $552</td><td>一致</td></tr>
+      <tr><td>2</td><td>持有定位</td><td>衛星 1.5-2%</td><td>DD final_signal B（觀望）</td><td>一致</td></tr>
+      <tr><td>3</td><td>CPO 風險</td><td>🔴 結構性 cliff、單一最大 catalyst</td><td>DD §6 領先指標 #1：NVDA Spectrum-X 2H26 CPO mix &gt; 50% = 立刻清倉</td><td>完全一致</td></tr>
+    </tbody>
+  </table>
+
+  <h3>⚖ 強制裁決</h3>
+  <table class="verdict-tbl">
+    <thead><tr><th>#</th><th>矛盾</th><th>選邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後路徑（≥ 2 if-then）</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>FN 切入 CPO</td>
+        <td><strong>A2（偏負，FN 在 CPO 時代 margin 會被吃）</strong></td>
+        <td>CPO 模組架構偏好 vertical integrator（COHR / NVDA / Broadcom 自帶 laser + silicon photonics）；FN 純組裝者在 CPO 時代角色被壓縮為 PCB 廠或 sub-assembly — 結構性 margin 降級</td>
+        <td>(a) <strong>NVDA Quantum-X / Spectrum-X 採用 FN 做 CPO module assembly</strong>（任一場合公告）→ thesis #1 切入成功、加碼至 2.5%；(b) <strong>NVDA 2H26 公告 CPO 模組組裝交給 Foxconn 或自建</strong> → 觸發 §9 反方 #1、減碼至 0.5% 並評估清倉</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>客戶集中度</td>
+        <td><strong>A3（中性偏負，但 AWS 多元化是緩衝）</strong></td>
+        <td>NVDA 27.6% 是 risk 但每年實際 -5pp（FY24 35.1% → FY25 27.6% = -7.5pp）顯示已在改善；AWS Trainium HPC $107M Q3 持續攀升；automotive $100M 突破</td>
+        <td>(a) <strong>FY27 H1 NVDA 占比降至 22% 以下</strong>（多元化兌現）→ thesis 強化、Pos +0.5%；(b) <strong>FY27 H1 NVDA 占比反升至 32%</strong>（多元化失敗）→ 減碼至 1%</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>估值</td>
+        <td><strong>A3（已 over-priced）</strong></td>
+        <td>P/E 55x TTM 遠高於 5Y median 25x；當前 $634 vs GF Value $348（over 86.6%）；52-w high $734 距 13%；DD QC-22 觸發 + 短中期 R:R 全失效</td>
+        <td>(a) <strong>股價回測至 $552-580</strong>（BB 中軌）→ 啟動條件式進場 1.0%；(b) <strong>股價突破 $700+</strong>（再漲 10%+）→ 完全不追，等下一個 cycle 或 -30%+ 回撤</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ====== §3 Key Drivers ====== -->
+<section>
+  <h2>§3 Key Drivers + 🔄 Consensus 分歧</h2>
+
+  <table>
+    <thead><tr><th>#</th><th>Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><strong>1.6T pluggable transceiver 組裝需求</strong>（需求側）</td>
+        <td>AI optical TAM +57% YoY 衝 $26B（2026）；52-week 800G lead time 顯示供給仍緊；FN 為 NVDA 主要組裝 partner</td>
+        <td>(1) NVDA 季度 capex；(2) Hyperscaler 4 家 $400B 2026 capex 中 35% 用於 networking；(3) FN datacom + telecom QoQ progression；(4) Building 10 投產進度</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>25 年光通訊 process knowledge + Thailand cleanroom 規模壁壘</strong>（供給側）</td>
+        <td>Sub-micron 對位 + Class 100-10000 cleanroom 是 generalist EMS（Foxconn / Jabil）做不來、OEM 內製成本不合的「中間地帶」；新客戶 re-qualification 12-18 個月</td>
+        <td>(1) Non-GAAP GM 季趨勢（target 13-14%）；(2) 新客戶 ramp 速度；(3) HPC 業務從 $15M → $85M → $107M progression（已驗證可做 AI compute）</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout"><strong>為什麼是這 2 個</strong>：Driver 1 是「需求側 — 客戶是否來下單」，Driver 2 是「供給側 — FN 是否能維持稀缺地位」。兩者獨立 — 即使 Driver 1 大爆發（hyperscaler capex 翻倍）但 Driver 2 失效（中國 EMS 突破 sub-micron），FN 仍會失去議價權；同樣 Driver 2 強但 Driver 1 因 CPO 提前被 bypass，thesis 也崩。通過 guardrail 4b。</div>
+
+  <h3>強制減法</h3>
+  <table>
+    <thead><tr><th>市場常討論的因素</th><th>為什麼不重要</th></tr></thead>
+    <tbody>
+      <tr><td>Automotive 業務（$100M Q3 突破）</td><td>絕對量小 + EV 市場 cyclical，邊際 thesis 影響趨零</td></tr>
+      <tr><td>單季 EPS beat/miss</td><td>FN 過往 4-5 季連續 beat，市場已 price-in beat behavior；單季 noise 不改 5Y</td></tr>
+      <tr><td>FX 影響</td><td>Thai baht volatility 對 GM 影響 ±50bps，是 noise 不是 signal</td></tr>
+      <tr><td>Cash $306M-$900M</td><td>0 long-term debt，capital structure 已 optimal，無 deleverage / leverage drama 可玩</td></tr>
+    </tbody>
+  </table>
+
+  <h3>🔄 我和市場 consensus 的最大分歧</h3>
+  <table>
+    <thead><tr><th style="width:30%">項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>市場目前定價在</td><td>Forward P/E 39x（on FY27E EPS $16.29）= 假設 EPS CAGR 22-25% 維持至 2030 + P/E 不會 mean-revert 至 25x 歷史均值（過去 5 年 PE median）</td></tr>
+      <tr><td>我的不同假設</td><td>EPS CAGR 18%（Base，含 CPO 漸進蠶食）+ P/E re-rate 至 25x（mean revert）— 不是 EPS 不到，是市場願意付的 multiple 不會永遠在 40x。FN 本質是 contract manufacturer，歷史上沒有任何 contract manufacturer 維持 PE &gt; 30x 超過 3 年</td></tr>
+      <tr><td>賣方為什麼錯（具體理由）</td><td>賣方目標價 $749-763 假設 P/E 維持 45x 且 EPS 衝 $17 — 但 contract manufacturer 歷史教訓（Jabil PE 12-16x, Sanmina 10-14x, Plexus 14-18x, ASE 14-22x）都顯示「process knowledge moat」即使存在，也不足以撐住「軟體 / IP company」級 multiple。賣方把 FN 當「AI infrastructure name」而非「contract manufacturer」— 這個 mental model 在 NVDA Rubin Ultra 後將被矯正</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>校驗</strong>：本 thesis 有獨立 alpha 來源 — 不是賭「EPS 大爆發」，而是賭「估值 normalize 早於賣方預期」。alpha 來自 entry discipline + 對 CPO 風險的權重評估，不是 thesis direction。</div>
+</section>
+
+<!-- ====== §5 Single Thing ====== -->
+<section>
+  <h2>§5 The Single Thing That Could Change My Mind</h2>
+  <table>
+    <thead><tr><th style="width:25%">項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>事件描述（Primary trigger）</td>
+        <td><strong>NVIDIA Spectrum-X（2H26 量產，預估 2026-Q4）出貨 mix 中 CPO 模組占比超過 50%</strong>，且 FN 未獲指定為 CPO 模組組裝夥伴（被 Foxconn / NVDA 自建 / Broadcom 自有產線取代）</td>
+      </tr>
+      <tr>
+        <td>為什麼這個事件是致命的</td>
+        <td>FN 80%+ 估值合理性建立在 1.6T pluggable transceiver 組裝是 hyperscaler scale-out 主流。Spectrum-X 是 NVDA scale-out 旗艦交換器；若它優先採 CPO 路徑且 FN 未獲組裝資格，意味著 (1) FN 失去 NVDA scale-out 27.6% 收入主軸；(2) 市場立刻 re-price FN 為「dying tech 組裝商」P/E 從 39x 壓至 EMS 軌道 15-17x；(3) NVDA 路徑是規格定錨，其他 hyperscaler 跟進</td>
+      </tr>
+      <tr>
+        <td>如何監測</td>
+        <td>NVIDIA GTC（2026-10）+ Spectrum-X 量產發表會（2026 Q4）+ NVDA 季度法說 scale-out 採購 commentary；FN 季度法說 datacom segment QoQ progression；FN 是否進入 NVDA 認證的 CPO 組裝廠列表（官方 press release / 認證網頁）</td>
+      </tr>
+      <tr>
+        <td>目前離發生有多遠</td>
+        <td>Spectrum-X 2H26 為第一個檢核點；NVDA Quantum-X CPO 在 2025 H2 已商用但只用 scale-up；Spectrum-X 為 scale-out 首發 CPO 是真正 cliff。<strong>主要 watch point：2026-08 ~ 2026-12 期間 NVDA + FN 各自法說的 scale-out 採購 commentary</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Secondary trigger（v1.1 §6 補加）</strong></td>
+        <td><strong>FN Building 10（Thailand）投產後連 2 季 Non-GAAP GM 仍 ≤ 12.0%</strong>（即規模效應未兌現）。這代表 Driver 2「process knowledge 規模壁壘 → margin 擴張」假設失效，FN 結構性卡在 contract manufacturer 軌道，無法升級 multiple</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ====== §6 What I Don't Know + Pre-mortem ====== -->
+<section>
+  <h2>§6 What I Don't Know + Pre-mortem</h2>
+
+  <h3>§6a 強迫面對盲點</h3>
+  <table>
+    <thead><tr><th>#</th><th>不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td>NVDA 不會把 1.6T transceiver 組裝轉給 Foxconn 或自建</td>
+        <td>FN 25 年 process 累積優勢能讓 NVDA 認為 switching cost &gt; outsourcing cost</td>
+        <td>NVDA 集中度 27.6% 一夜消失 → FN datacom revenue -50%</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>Building 10 + Texas 投產能把 GM 從 12.1% 推升至 13-14%</td>
+        <td>規模 + 自動化能 outpace FX + 人工成本上升</td>
+        <td>規模效應失效 → GM 卡 12% → P/E 不會 re-rate，反而 mean revert 至 25x</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>FN 能切入 CPO 組裝（laser pre-alignment、PIC fiber attach）</td>
+        <td>CPO 仍需要 sub-micron 對位 + FN 的 cleanroom 與 process knowledge 適配</td>
+        <td>FN 在 CPO 時代僅供 sub-assembly（PCB 等）→ margin compression 至個位數</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>§6b Pre-mortem — 三段式</h3>
+
+  <h4>第一段｜故事倒推</h4>
+  <div class="premortem-block">
+    「假設 5 年後（2031 年中）FN 部位虧 50%，最可能發生的故事是：2026 Q4 NVIDIA Spectrum-X 發表會宣告 scale-out 採 50%+ CPO 比例，且 CPO 模組組裝交給自家或 Foxconn。FN 雖然仍負責剩餘 50% pluggable 與 1.6T scale-out fallback，但市場立刻把 FN re-rate 為「dying tech contract manufacturer」。同時 Building 10 投產後 GM 仍卡 12.0%（因 FX 與人工成本抵消規模效應）。FY28 EPS 從共識 $19 下修至 $11，市場 P/E 從 39x 壓至 17x → 股價從 $634 跌至 $187，−70%。」
+  </div>
+
+  <h4>第二段｜校驗 §5 single-thing</h4>
+  <table>
+    <thead><tr><th>檢查問題</th><th>答案</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>上面失敗故事的關鍵觸發事件，是否就是 §5 寫的 single thing？</td>
+        <td>⚠ <strong>部分重疊</strong> — 失敗故事包含兩個獨立 trigger（NVDA CPO + Building 10 GM 失效），但原 §5 只寫 NVDA CPO 那條</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4>第三段｜修正 §5</h4>
+  <div class="callout">
+    <strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>（Building 10 投產後 GM ≤ 12.0% 連 2 季）。本節已在 §5 區塊實際補一條 secondary trigger。Pre-mortem 故事中的兩個 trigger 都有對應 §5 監測點 — 不再裝飾品。
+  </div>
+
+  <h3>§6c 路徑壓力測試 — Max DD</h3>
+  <div class="maxdd-block">
+    <div>
+      <div class="src" style="margin-bottom:6px">5Y 期間最壞時點 DD 估計範圍</div>
+      <div class="maxdd-figure">−45% ~ −65%</div>
+      <div class="maxdd-bar">
+        <div class="maxdd-cursor" style="left:45%"></div>
+        <div class="maxdd-cursor" style="left:65%"></div>
+      </div>
+      <div class="src">綠 0~−30% / amber −30~−50% / 紅 &lt;−50%</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:32px">🔴</div>
+      <div style="font-weight:600">中途出場風險高</div>
+      <div class="src">復原時間：18-30 個月（若 thesis 仍 intact）</div>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>項目</th><th>內容</th></tr></thead>
+    <tbody>
+      <tr><td>估計 Max DD 範圍</td><td><strong>−45% ~ −65%</strong>（寬度 20%p）</td></tr>
+      <tr><td>最可能觸發時點</td><td>2026 Q4 - 2027 Q2 — NVDA Spectrum-X 發表會前後</td></tr>
+      <tr><td>觸發後最快復原時間</td><td>若 thesis intact：18-30 個月（類比 ASE 2018 crypto crash）；若 thesis broken：不會復原</td></tr>
+      <tr><td>路徑風險評級</td><td><span class="tag-fail">🔴 &lt;−50%</span> — 多數人會在中途出場</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>校驗</strong>：若 Max DD 落在 −55% 區間，能否撐到復原？<strong>條件：</strong>(1) 倉位 ≤ 2%（已在 §7a 從原規劃 3-4% 強制下修至 1.5-2%）；(2) 不使用槓桿；(3) §5 任一 trigger 未發生（NVDA CPO 主流 OR Building 10 GM 失效）— 任一發生就是 thesis 失效，清倉非撐。<strong>FN 比 COHR 更嚴 — 因 moat C 等級不足以撐住極端不確定性</strong>。</p>
+</section>
+
+<!-- ====== §8 Review Triggers ====== -->
+<section>
+  <h2>§8 Review Triggers</h2>
+  <table>
+    <thead><tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>FN Q4 FY26 earnings</td><td>財報日期</td><td><strong>2026-08-15 ± 1 週</strong> — Datacom QoQ、Non-GAAP GM、Building 10 進度 commentary</td></tr>
+      <tr><td>2</td><td>NVIDIA GTC + Spectrum-X 發表會</td><td>產業事件</td><td><strong>2026-10 GTC + 2026 Q4 Spectrum-X 量產</strong>，CPO 比例 + FN 是否在認證列表</td></tr>
+      <tr><td>3</td><td>股價突破 $700 / 跌破 $530</td><td>價位觸發</td><td>$700+ → 不追、可能完全錯過 cycle；$530- → §7b 加碼條件可能觸發</td></tr>
+      <tr><td>4</td><td>§5 Primary：NVDA Spectrum-X CPO mix</td><td>The Single Thing</td><td><strong>2026 Q4 - 2027 Q1</strong>（Spectrum-X 量產初期）</td></tr>
+      <tr><td>5</td><td>§5 Secondary：Building 10 投產後 GM</td><td>The Single Thing</td><td>2026-Q4 Building 10 投產 → 連 2 季 GM 數據（2027 Q1-Q2）</td></tr>
+    </tbody>
+  </table>
+  <p><strong>本報告保質期</strong>：至 <strong>2026-08-15</strong>（FN Q4 FY26 earnings 前有效）。期間若 §5 任一 trigger 發生 → 立刻重評。</p>
+  <p><strong>最可能 upside 因素</strong>：NVIDIA 2026-10 GTC 明確指定 FN 為 1.6T pluggable + 部分 CPO 組裝夥伴 + Building 10 投產 Q4 GM 突破 12.5% → Bull case 機率從 25% 升至 35%。</p>
+  <p><strong>最可能 downside 因素</strong>：Spectrum-X CPO 比例超預期（&gt; 60%）且 FN 未被指定 + datacom QoQ 連 2 季為負 → Bear case 機率從 25% 升至 40%。</p>
+</section>
+
+<!-- ====== Phase A1 折疊 ====== -->
+<details>
+  <summary>Phase A1｜護城河深度分析 — 結論：C 等級 (6/10) ↑ widening，process knowledge + Thailand cleanroom 為主</summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>主要護城河類型</td><td>(1) <strong>Process knowledge moat</strong> — 25 年累積的次微米光學對位 + 高 yield 經驗；(2) <strong>規模 / cleanroom 壁壘</strong> — 2M sq ft + Class 100-10000 cleanroom，generalist EMS 無法複製</td></tr>
+        <tr><td>持久性評分</td><td><strong>6/10</strong>（DD moat = C 6/10），5 年穩固度：<strong>中</strong> — Process moat 在當前 1.6T pluggable 世代有效，但 CPO 時代結構替代是 cliff</td></tr>
+        <tr><td>最大侵蝕風險</td><td>CPO 架構替代 — 一旦 hyperscaler 採 CPO，FN 從「核心組裝商」降級為「sub-assembly 供應商」，margin 從 12% 壓至個位數</td></tr>
+        <tr><td>關鍵數據</td><td>GM Q3 FY26 12.1%（穩多季，↑ 從 Q3 FY25 12.0%）<span class="src">[T1: FN Q3 FY26 press release 2026-05-04]</span>；OM Q3 FY26 10.7%（↑ from 10.2% YoY）<span class="src">[T1: FN Q3 FY26]</span>；2M sq ft cleanroom + Building 10 2026 投產（+2M sq ft，doubles 1.6T capacity）<span class="src">[T2: investseekers Fabrinet moat]</span>；Texas $150M facility for 1.6T/3.2T <span class="src">[T2: exoswan Silicon Photonics stocks]</span></td></tr>
+        <tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>。Sourced 12M evidence：(1) HPC 業務從 $15M (Q1 FY26) → $85.6M (Q2) → $107M (Q3) = +613% in 3 quarters，驗證 advanced compute assembly 能力 <span class="src">[T1: FN Q3 FY26 transcript]</span>；(2) Building 10 開幕 2026 doubles 1.6T capacity，add up to $2.4B yearly production <span class="src">[T2: ainvest Fabrinet AI optical packaging]</span>；(3) AWS Trainium primary partner 認證 <span class="src">[T2: marketminute Silicon Backbone 2026-04]</span>；(4) Operating margin Q3 FY26 升至 10.7%（↑ +50bps YoY）；(5) Automotive 突破 $100M 多元化裡程碑</td></tr>
+      </tbody>
+    </table>
+    <p><strong>A1 獨立結論</strong>：FN 護城河 C 級 (6/10)、moat ↑ widening，源於 process knowledge + cleanroom 規模 + 多元化（HPC / automotive）；最大侵蝕風險是 CPO 結構替代（2026-2028 cliff），所以 moat 等級不到 B。</p>
+    <p><strong>Sourced data points</strong>: 9 / target ≥ 5 ✓</p>
+  </div>
+</details>
+
+<!-- ====== Phase A2 折疊 ====== -->
+<details>
+  <summary>Phase A2｜產業趨勢深度分析 — TAM 13.67% CAGR / AI optical +57% YoY / CPO 2-3 年 cliff 風險</summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>TAM 與成長</td><td>光通訊 transceiver TAM $15.42B（2026）→ $29.26B（2031）= <strong>13.67% CAGR</strong> <span class="src">[T3-A: Mordor Intelligence 2026]</span>；AI optical $26B（2026 +57% YoY from $16.5B）<span class="src">[T2: Electronics Weekly 2026-04]</span>；hyperscaler $400B 2026 capex 中 35% 用於 networking <span class="src">[T2: TrendForce 2026-04]</span></td></tr>
+        <tr><td>供需判斷</td><td><strong>需求遠超供給至少至 2027</strong> — 800G transceiver lead time 已達 52 週 <span class="src">[T2: TrendForce]</span>；hyperscaler dual-sourcing 增加；FN book-to-bill 強</td></tr>
+        <tr><td>最大技術替代風險</td><td><strong>CPO 2-3 年 from volume，2028+ 大量</strong> <span class="src">[T2: chipstrat optics primer 2026]</span>。NVDA Quantum-X 2025 H2 已商用（scale-up）、Spectrum-X 2H26 為 scale-out 首發</td></tr>
+        <tr><td>最大政策 / 地緣風險</td><td>美國對 Innolight / Eoptolink 加強 SE Asia 轉口稽查 — 對 FN 中性偏正（FN 是 Thailand-based 合法製造）；中國 Innolight 已測 3.2T optical engines</td></tr>
+        <tr><td>議價權位置</td><td>對上游：中（laser / chip 來自 COHR / LITE / Broadcom — 採購議價中性）；對下游：中-強（NVDA / Cisco 25 年合作關係 + switching cost 12-18 個月）</td></tr>
+        <tr><td><strong>runway_post_y5</strong></td><td><strong>🟡 中</strong>。判準：(1) S 曲線位置 — 光通訊產業中期；(2) Y5 末 TAM 滲透率 — pluggable 仍有 60%+ 但持續被 CPO 蠶食；(3) 第二曲線 — automotive + HPC 多元化已啟動但量級小、CPO 組裝切入不確定；comparison：vs COHR 🟢 寬 — FN 較窄因無 IP 護城河、CPO 是真實 cliff</td></tr>
+      </tbody>
+    </table>
+    <p><strong>A2 獨立結論</strong>：光通訊 TAM 13.67% CAGR 中性多頭，但 FN 在 CPO 時代結構性 cliff 是 5Y+ runway 的最大不確定性；runway 🟡 中等。</p>
+    <p><strong>Sourced data points</strong>: 8 / target ≥ 5 ✓</p>
+  </div>
+</details>
+
+<!-- ====== Phase A3 折疊 ====== -->
+<details>
+  <summary>Phase A3｜業務 / 財務 / 資本配置 — Q3 FY26 rev $1.21B +39% YoY、現金 fortress、Anderson-like 紀律</summary>
+  <div>
+    <table>
+      <thead><tr><th>項目</th><th>內容</th></tr></thead>
+      <tbody>
+        <tr><td>營收結構（Q3 FY26）</td><td>Optical communications 73% / $888.7M（+35% YoY）：其中 telecom $628.3M / datacom $260.4M / DCI $196.9M；Non-optical 27% / $326M（+52% YoY）含 HPC $107M、automotive $100M+ <span class="src">[T1: FN Q3 FY26 press release 2026-05-04]</span></td></tr>
+        <tr><td>客戶集中度</td><td>FY25：NVIDIA 27.6% / Cisco 18.2%；Q4 FY25 兩家共 46% <span class="src">[T1: FN 10-K filed 2025-08-19]</span>；FY24：NVDA 35.1% / Cisco 13.4%（NVDA 占比 -7.5pp YoY，多元化進行中）。<strong>風險：高</strong></td></tr>
+        <tr><td>定價權</td><td><strong>中</strong> — GM Q3 FY26 Non-GAAP 12.1%（穩多季，target 12.5-13%）；OM 10.7% 改善；管理層歸 FX 為短期壓力。長期 process 升級 + 規模能否推 GM 至 13-14% 是核心觀察點</td></tr>
+        <tr><td>未來金雞母</td><td><strong>1.6T pluggable 組裝 + HPC（AWS Trainium 等）+ CPO 組裝（若切入）</strong>；HPC 從 $15M → $107M 三季 +613% 證明可做；Building 10 doubles 1.6T capacity to $2.4B/yr</td></tr>
+        <tr><td>財務體質</td><td>FY25 FCF $207.3M / capex $121.1M；Q3 FY26 capex 季度 ~$45-52M；現金 $306-900M（不同來源差異） / <strong>$0 long-term debt</strong>；FY25 buyback $125.7M / 流通股 -1.9% <span class="src">[T1: FN FY25 10-K]</span>；leverage 0 — fortress balance sheet。壓力測試：營收 -30% 仍可撐 ≥ 10 季</td></tr>
+        <tr><td>資本配置紀律</td><td>(1) 持續 capex 加碼（Building 10 + Texas）；(2) 系統性 buyback（FY25 $125.7M）；(3) 不發股息；(4) 無 M&A 噪音 — Tom Mitchell 領導下「focused execution」風格</td></tr>
+        <tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR 18%（從 FY26E $11.75 → FY30E $23）；5Y 末 forward P/E 預估 25x vs 當前 39x → re-rate 貢獻 (25/39)^(1/5) - 1 = <strong>−8.4%/yr</strong>；現金股息率 0%；淨買回率 ~+0.1%/yr（FY25 -1.9% in one year 但 SBC 抵消大半，淨 +0.05% 對 EPS）<span class="src">[T2: marketbeat / stockanalysis FN forecast 2026-05]</span></td></tr>
+      </tbody>
+    </table>
+    <p><strong>A3 獨立結論</strong>：FN 業務多元化進行中（HPC 7x 三季）、財務 fortress（cash &gt; debt by far）、資本配置克制；最大不確定性在 P/E（forward 39x 偏高，5Y median 25x）— Bull/Base/Bear 主要分歧在 P/E。</p>
+    <p><strong>Sourced data points</strong>: 10 / target ≥ 6 ✓</p>
+  </div>
+</details>
+
+<!-- ====== Phase A4 折疊 ====== -->
+<details>
+  <summary>Phase A4｜既有 DD/ID 報告數據擷取 — DD 訊號 B（觀望）、moat C 6/10</summary>
+  <div>
+    <h4>DD 報告 — DD_FN_20260505.html</h4>
+    <table>
+      <thead><tr><th>欄位</th><th>數值</th></tr></thead>
+      <tbody>
+        <tr><td>Quality Score</td><td>6.0 / 10</td></tr>
+        <tr><td>Moat</td><td>C（6 / 10）</td></tr>
+        <tr><td>final_signal</td><td><strong>B</strong>（vs prior C 級 → upgrade）</td></tr>
+        <tr><td>Verdict</td><td>B 級觀望（estate 改善 🔴→🟠 + Q3 大 beat，但 CPO 替代風險未解，等回測 BB 中軌 $552）</td></tr>
+        <tr><td>R:R 短期</td><td>-0.08x（失效）</td></tr>
+        <tr><td>R:R 中期</td><td>+0.12x（失效）</td></tr>
+        <tr><td>R:R 長期 5Y</td><td>+1.10x（邊際過 1.0）</td></tr>
+        <tr><td>Bear anchor 短期</td><td>$400</td></tr>
+        <tr><td>Bear anchor 中期</td><td>$500</td></tr>
+        <tr><td>Bear case 5Y 最壞</td><td>$284（若 CPO 確認 + EMS multiple 17x → -60%）</td></tr>
+        <tr><td>陷阱定性</td><td>🟡 觀察期（CPO 是中期 Damocles 之劍）</td></tr>
+        <tr><td>領先指標 #1</td><td>NVIDIA Spectrum-X 2H26 CPO mix &gt; 50% = ⛔ 立刻清倉</td></tr>
+        <tr><td>領先指標 #2</td><td>Datacom QoQ 連 2 季 &lt; 0%（vs 全公司 +7%）</td></tr>
+        <tr><td>領先指標 #3</td><td>Building 10 投產後連 2 季 GM &gt; 12.5%</td></tr>
+      </tbody>
+    </table>
+
+    <h4>ID 報告擷取</h4>
+    <table>
+      <thead><tr><th>ID</th><th>FN 角色 / 深度</th><th>備註</th></tr></thead>
+      <tbody>
+        <tr><td>ID_SiliconPhotonicsCPO_20260419</td><td>列為 8 支相關 ticker 之一</td><td>CPO 議題下 FN 是「組裝層」風險受體</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>A4 結論</strong>：DD 訊號 B 與 Phase A 結論一致；DD 核心領先指標（NVDA Spectrum-X CPO mix）正是 Phase A §5 single thing；DD moat C 比 Phase A1 評估略低但方向一致（process knowledge moat 但 CPO cliff 風險限制等級）。</p>
+  </div>
+</details>
+
+<footer class="foot">
+  <p>📋 Deep Conviction Analysis · FN · 2026-05-13 · v12.x skill</p>
+  <p>本報告基於 Phase A 三軸獨立 web search（27 sourced points）+ Phase B 強制裁決 + Phase C 決策框架 + 既有 DD 交叉驗證。比 COHR 更保守 — moat C / runway 🟡 / Max DD -65% 三重風險訊號。保質期至 2026-08-15。</p>
+  <p style="margin-top:8px"><a href="../research/" style="color:var(--accent);text-decoration:none">← 回研究首頁</a> · <a href="./INDEX.md" style="color:var(--accent);text-decoration:none">DCA 索引</a> · <a href="../dd/DD_FN_20260505.html" style="color:var(--accent);text-decoration:none">基礎 DD</a></p>
+</footer>
+
+</div>
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+</body>
+</html>
