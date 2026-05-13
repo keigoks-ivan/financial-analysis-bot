@@ -1,6 +1,6 @@
 ---
 name: id-review
-description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst / industry-ds skill）；**也被 industry-analyst Step 8.7 與 industry-ds Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.3 起加 `--mode ds` 分支支援 DS 報告。v1.4（搭配 industry-ds v1.1）：DS-mode 檢查清單從 6 條擴為 9 條（新增 DS-7 source-tag 抽查、DS-8 §6 推導抽查、DS-9 §1 雙錨點；DS-2 升級為「因果閉合在 §3/§5」）。
+description: 對既有產業報告（Industry DD / ID 或 Industry Discourse / DS）跑 cold-review critic 並 patch 大錯。觸發：用戶要求「改 / review / audit / patch / 驗證」某份既存 ID / DS 報告，或詢問「這份 ID 還活著嗎 / 哪裡有大錯 / 要改什麼」。本 skill 把「critic 跑 + 大錯/cosmetic 分類 + user-in-the-loop patch + commit & push」這個工作流固化下來。**不寫新 ID 或 DS**（那是 industry-analyst / industry-ds skill）；**也被 industry-analyst Step 8.7 與 industry-ds Step 8.7 強制呼叫**做新報告寫稿後的 mandatory critic gate。v1.3 起加 `--mode ds` 分支支援 DS 報告。v1.4.1（搭配 industry-ds v1.2）：DS-mode 檢查清單 8 條（v1.4 原 9 條移除 DS-7，因 source-tag 從 inline 改為 §末 aside 後與 Gate 12 重疊）— DS-1 表格比 / DS-2 因果閉合（§3 或 §5）/ DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / DS-8 §6 推導抽查 / DS-9 §1 雙錨點。
 version: v1.4
 date: 2026-05-13
 ---
@@ -35,7 +35,7 @@ date: 2026-05-13
 DS 模式下：
 - 不檢查 §12 / §13 / §10.5（DS 沒有這些章節）
 - 不檢查 ID 銘文（DS 是 ds-meta 不是 id-meta）
-- 改檢查 **DS 9 條**（v1.4：原 6 條 + DS-7/8/9 新增）：DS-1 表格比 / DS-2 因果閉合（升級）/ DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / **DS-7 source-tag** / **DS-8 推導抽查** / **DS-9 §1 雙錨點**
+- 改檢查 **DS 8 條**（v1.4.1：v1.4 9 條移除 DS-7，因 industry-ds v1.2 把 source-tag 從 inline 移至 §末 aside，Gate 12 已涵蓋結構檢查 + T1 占比；DS-7 ~80% 與 Gate 12 重疊）：DS-1 表格比 / DS-2 因果閉合（升級）/ DS-3 供需平衡 / DS-4 §6 三情境 / DS-5 §10 雙路徑 / DS-6 §11 一致性 / ~~DS-7~~（已移除）/ **DS-8 推導抽查** / **DS-9 §1 雙錨點**
 - Banner 寫到 §0 但格式略不同（見 DS Mode 段）
 - critic report 路徑：`docs/ds/_critic_{Theme}_{YYYYMMDD}.md`（不是 `docs/id/_critic_*`）
 
@@ -681,7 +681,8 @@ industry-analyst skill 在 publish 前必須跑 critic gate（Step 8.7，介於 
 - v1.1（2026-05-02）：加 Step 2 input mode dispatch (A/B/C) + Step 0/C1-C6 consolidation phase + Step 6 banner 寫法明確化（append vs rewrite）。觸發來源：2026-05-02 ID_AIInferenceEconomics 手動 patch 暴露 3 個 gap + 1 個缺漏概念（banner 累積 / consolidation）
 - v1.2（2026-05-03）：加 Step 6.5d PM Implication §0.7 re-assessment（5 bullet / j-logic 4 action / conviction pill sync + back-fill scenario 舊 ID）。觸發：ID_AIDataCenter v1.1 patch（commit f1c450b）— user 把臨時 PM block 升格為所有 ID 標準段落。
 - v1.3（2026-05-12）：加 `--mode ds` 分支支援 industry-ds skill 產出的 DS 報告。新增「DS Mode 檢查清單」（DS-1 到 DS-6：表格比 / history-future causality / supply-demand 平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）+「DS Mode Banner 格式」。觸發：industry-ds skill v1.0 上線，需要 mandatory critic gate。
-- v1.4（current，2026-05-13）：DS-mode 檢查清單從 6 條擴為 9 條。DS-2 升級為「因果閉合在 §3 或 §5，不可延後到 §8」；新增 DS-7（source-tag 抽查 + T1 占比 + 黑名單）、DS-8（§6 base/bull/bear 推導抽查）、DS-9（§1 雙錨點 — 日期 + 量化）。觸發：industry-ds v1.1 上線，DS_AIAcceleratorDemand v1.0 暴露 5 個系統性弱點（無 footnote、無推導、§1 口語錨點、§11 forward-looking 閾值無時間標、§3 因果延後到 §8），需要對應 critic 鎖點。
+- v1.4（2026-05-13）：DS-mode 檢查清單從 6 條擴為 9 條。DS-2 升級為「因果閉合在 §3 或 §5，不可延後到 §8」；新增 DS-7（source-tag 抽查 + T1 占比 + 黑名單）、DS-8（§6 base/bull/bear 推導抽查）、DS-9（§1 雙錨點 — 日期 + 量化）。觸發：industry-ds v1.1 上線，DS_AIAcceleratorDemand v1.0 暴露 5 個系統性弱點（無 footnote、無推導、§1 口語錨點、§11 forward-looking 閾值無時間標、§3 因果延後到 §8），需要對應 critic 鎖點。
+- v1.4.1（current，2026-05-13）：移除 DS-7（source-tag 抽查）。觸發：industry-ds v1.2 把 inline `<span class="source-tag">` 移至每節末 `<aside class="ds-refs">`，pre-publish Gate 12 已更新為 aside 結構檢查 + T1 占比。DS-7 原本三個功能（URL 可達性抽查 / tier mis-tag 偵測 / ≥15 sources 底線）與 Gate 12 重疊度 ~80%，剩 20% 為低頻 redundancy；保留會誤 fail v1.2 報告（aside 內無 inline tag）。DS-8/DS-9 編號保留不動。
 - v1.3：跑熟後降為 mode (b) auto-patch 大錯
 - v1.3：加 cron 排程模式（weekly 自動跑所有 Q0 ID 的 critic，產 alert 但不 patch）
 - v1.4：跨 ID 一致性 reconcile（critic 找到 cross-ID 數字差異時，自動 patch 兩份 ID 的數字）
@@ -788,34 +789,9 @@ PY
 
 **Fail 處置**：🟡（個別 ticker 缺對應）/ 🔴（系統性矛盾）
 
-### DS-7（v1.4 新）：source-tag 完整性 + T1 占比 ≥ 50%
+### DS-7：已移除（v1.4.1，2026-05-13）
 
-**Why**：DS v1.0 沒強制 source-tag，導致 DS_AIAcceleratorDemand 全文 0 個 source-tag — McKinsey CAGR、AVGO 60%、NVDA top-5 55-60%、FERC 1500-2000 GW、MLPerf 6.0 gap 全部斷言無出處。v1.1 移植 ID skill 設計後，critic 必須抽查驗證實際落實率。
-
-**檢查方式**：
-1. **抽樣驗證**：隨機抽 5 個量化斷言（%、$、GW、市占、TAM、capex、用戶數）→ 逐一驗：
-   - 鄰近 80 字符內是否有 `<span class="source-tag">` 標籤
-   - tier 標籤（T1/T2/T3-A/T3-B/T3-C/T4）是否正確（對照來源類別 — 賣方 primer ≠ T1）
-   - URL 是否可達（HTTP 200，不是 404 / paywall block）
-2. **T1 占比**：
-   ```python
-   import re, sys
-   html = open(sys.argv[1]).read()
-   tags = re.findall(r'<span class="source-tag">\[(T[12]|T3-[ABC]|T1-zh|T2-zh|T3-zh|T4)[:：]', html)
-   from collections import Counter
-   counts = Counter(tags)
-   total = sum(counts.values())
-   t1 = counts.get('T1', 0) + counts.get('T1-zh', 0)
-   t1_share = t1 / total if total else 0
-   ```
-3. **黑名單來源**：`python3 scripts/validate_source_blacklist.py docs/ds/DS_X.html --report`（v1.4 起 source-blacklist 也掃 DS）
-
-**Fail 處置**：
-- 🔴：source-tag 總數 = 0 或 < 5（DS 至少需 ≥ 15 個 source-tag 才算合格報告）
-- 🔴：T1 占比 < 30%（嚴重不可審計）
-- 🟡：T1 占比 30-50%（要求補 T1 來源換掉 T3 個股 report）
-- 🟡：抽 5 個量化斷言有 ≥ 2 個無 source-tag
-- 🟢：抽到的 source URL 有 1 個 404
+原 v1.4 source-tag 抽查 + T1 占比 + 黑名單檢查。industry-ds v1.2 把 inline source-tag 改為 §末 `<aside class="ds-refs">`，pre-publish Gate 12 已更新為 aside 結構檢查 + T1 占比，DS-7 與 Gate 12 重疊度 ~80%，剩 20% 為 redundancy → 移除。編號保留 gap，不 renumber DS-8/DS-9（git 歷史看得出 DS-7 曾存在）。
 
 ### DS-8（v1.4 新）：§6 推導可追溯性抽查
 

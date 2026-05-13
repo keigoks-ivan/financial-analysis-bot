@@ -1,4 +1,4 @@
-# 產業敘述（DS）HTML Template v1.0
+# 產業敘述（DS）HTML Template v1.2
 
 ## 檔名規則
 
@@ -17,14 +17,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="ds-skill-version" content="v1.0">
+<meta name="ds-skill-version" content="v1.2">
 <meta name="ds-theme" content="{THEME_CAMELCASE}">
 <meta name="ds-publish-date" content="{YYYY-MM-DD}">
 <title>產業敘述 — {THEME 中文}（{YYYY-MM-DD}）</title>
 <script id="ds-meta" type="application/json">
 {
   "theme": "{THEME 敘述}",
-  "skill_version": "v1.0",
+  "skill_version": "v1.2",
   "ds_version": "v1.0",
   "publish_date": "{YYYY-MM-DD}",
   "thesis_type": "mixed",
@@ -53,7 +53,7 @@
 <header class="ds-head">
   <div class="ds-badge">產業敘述 · Industry Discourse</div>
   <h1>{THEME 中文}</h1>
-  <p class="ds-meta">發布日：{YYYY-MM-DD} ｜ 涵蓋股票：{N} ｜ 歷史窗口：{H} 年 ｜ 預測範圍：{F} 年 ｜ v1.0</p>
+  <p class="ds-meta">發布日：{YYYY-MM-DD} ｜ 涵蓋股票：{N} ｜ 歷史窗口：{H} 年 ｜ 預測範圍：{F} 年 ｜ v1.2</p>
 </header>
 
 <section id="s0"> ... TL;DR + cross-link callout ... </section>
@@ -70,7 +70,7 @@
 <section id="s11"> ... 關聯個股清單 ... </section>
 
 <footer class="ds-foot">
-  <p>產業敘述報告 · industry-ds v1.0 · {THEME} · {YYYY-MM-DD}</p>
+  <p>產業敘述報告 · industry-ds v1.2 · {THEME} · {YYYY-MM-DD}</p>
   <p><a href="/research/">← 回研究首頁</a> · <a href="/ds/">所有產業 DS 報告</a> · <a href="/id/">產業 ID 報告</a></p>
 </footer>
 </body></html>
@@ -133,10 +133,17 @@ time:hover, strong.ds-time:hover{background:#DDD6FE}
 .ds-tickers .depth-yellow{color:#D97706;font-weight:700}
 .ds-tickers .depth-green{color:#059669;font-weight:700}
 
-/* Source tag */
-.src{color:#6B7280;font-size:11px}
-.src a{color:#7C3AED;text-decoration:none}
-.src a:hover{text-decoration:underline}
+/* §末 references aside（v1.2：取代 inline source-tag） */
+.ds-refs{margin:28px 0 8px;padding:10px 14px;background:#FAFAF9;border-left:2px solid #D1D5DB;border-radius:3px;font-size:12px;color:#6B7280;line-height:1.7}
+.ds-refs .ds-refs-label{color:#4B5563;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:700}
+.ds-refs ol{margin:0;padding-left:20px}
+.ds-refs li{margin:3px 0}
+.ds-refs a{color:#7C3AED;text-decoration:none}
+.ds-refs a:hover{text-decoration:underline}
+.ds-refs .tier{display:inline-block;color:#4B5563;font-weight:600;margin-right:6px;font-size:11px}
+
+/* T3-only section warning */
+.source-warning{background:#FEF3C7;border-left:3px solid #F59E0B;padding:10px 14px;margin:14px 0;font-size:12px;color:#78350F;border-radius:3px}
 
 /* Footer */
 .ds-foot{margin-top:48px;padding-top:18px;border-top:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-align:center;line-height:1.8}
@@ -203,6 +210,16 @@ time:hover, strong.ds-time:hover{background:#DDD6FE}
 <div class="ds-implication">
 GPU 的三次轉折暗示了第四次：從遊戲卡 → 訓練工具 → 推論基建。每次轉折都重洗 capex 受益者排序。本 DS §3-§6 將推估第四次轉折下，誰被擠出、誰擠進來。歷史告訴我們，每次轉折的核心都不是晶片本身，而是「軟體 + 規模 + 供應鏈整合」三者誰先建立。
 </div>
+
+<!-- v1.2: 節末 aside 列本節所有引用來源（deduped by URL） -->
+<aside class="ds-refs">
+  <span class="ds-refs-label">本節參考來源</span>
+  <ol>
+    <li><span class="tier">[T1]</span><a href="https://developer.nvidia.com/cuda-toolkit-archive">NVIDIA CUDA Toolkit Archive — v1.0 release 2006-11</a></li>
+    <li><span class="tier">[T1]</span><a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks">Krizhevsky et al., NIPS 2012 — AlexNet 15.3% top-5 error</a></li>
+    <li><span class="tier">[T1]</span><a href="https://blogs.nvidia.com/blog/openai-deep-learning-dgx-1/">NVIDIA Blog — DGX-1 delivered to OpenAI 2016-08-15</a></li>
+  </ol>
+</aside>
 </section>
 ```
 
@@ -304,6 +321,13 @@ GPU 的三次轉折暗示了第四次：從遊戲卡 → 訓練工具 → 推論
   </tbody>
 </table>
 
-<p><span class="src">深度說明：🔴 核心（營收 > 40% 受該 theme 影響）｜ 🟡 次要（10-40%）｜ 🟢 邊緣（< 10%）</span></p>
+<p style="font-size:12px;color:#6B7280">深度說明：🔴 核心（營收 > 40% 受該 theme 影響）｜ 🟡 次要（10-40%）｜ 🟢 邊緣（< 10%）</p>
+
+<aside class="ds-refs">
+  <span class="ds-refs-label">本節參考來源</span>
+  <ol>
+    <li><span class="tier">[T1]</span><a href="URL">Source title — {ticker} AI revenue breakdown</a></li>
+  </ol>
+</aside>
 </section>
 ```

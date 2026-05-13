@@ -1,4 +1,4 @@
-# DS Pre-Publish Check — 14 道閘門（v1.1）
+# DS Pre-Publish Check — 14 道閘門（v1.2）
 
 寫稿完成後、commit 前、Step 8.7 critic gate 前，逐項跑過。任一 fail → 返工，不可發布。
 
@@ -202,71 +202,70 @@ PY
 
 ---
 
-## Gate 12（v1.1 新）— 量化斷言必附 source-tag + T1 占比 ≥ 50%
+## Gate 12（v1.2 修訂）— 每節含量化斷言的 `<section>` 末必有 `<aside class="ds-refs">` + T1 占比 ≥ 50%
 
-**Why**：DS v1.0 沒強制 source-tag；DS_AIAcceleratorDemand 全文 0 個 source-tag，所有量化斷言（McKinsey CAGR、AVGO 60%、NVDA top-5 55-60%、FERC 1500-2000 GW）無出處 → PM 無法獨立驗證。v1.1 移植 ID 的 `<span class="source-tag">[T1:]` 設計，每個量化斷言必附 tag。
+**Why**：v1.0 無 source 強制；v1.1 的 inline `<span class="source-tag">` 解決可審計性但 39 條 inline tag 破壞閱讀流；v1.2 把 source 移至節末 `<aside class="ds-refs">`：正文乾淨、可審計性保留。本 gate 確保每節量化斷言有對應 aside，且全文 T1 占比不低於 50%。
 
 **規則**（QC-DS13）：
-- 任何 % / $ / GW / 倍數 / 市占 / 增長率 / TAM / 用戶數 / 訂單數 / capex / 員工數 數字 → 鄰近 80 字符內必須有 `<span class="source-tag">`
-- 全文 T1 + T1-zh 占比 ≥ 50%
-- 免標：純結構性敘述（"NVDA 主導 GPU 市場"）、廣為人知歷史事件（"ChatGPT 2022-11 發布"）、純定性判斷、引用自前段已標的同一數字
+- 每個含量化斷言（%、$、GW、倍數、市占、增長率、TAM、用戶數、capex 等）的 `<section>` 末必有 `<aside class="ds-refs">` 且 ≥ 1 條 `<li>`
+- 全文所有 `.ds-refs` 條目的 T1 + T1-zh 占比 ≥ 50%
+- 正文中**不應有** `<span class="source-tag">` — 視為遷移未完成的殘留，需清除
 
 **How（兩段檢查）**：
 
 ```bash
-# Part A: 算 source-tag 總數 + tier 分佈
+# Part A: 算 aside 條目總數 + tier 分佈 + T1 占比
 python3 << 'PY'
-import re, sys
-html = open("docs/ds/DS_{Theme}_{Date}.html").read()
-tags = re.findall(r'<span class="source-tag">\[(T[12]|T3-[ABC]|T1-zh|T2-zh|T3-zh|T4)[:：]', html)
+import re
 from collections import Counter
-counts = Counter(tags)
+html = open("docs/ds/DS_{Theme}_{Date}.html").read()
+
+# 找所有 <aside class="ds-refs"> 內的 tier 標記
+tiers = re.findall(r'<span class="tier">\[(T[12]|T3-[ABC]|T1-zh|T2-zh|T3-zh|T4)\]</span>', html)
+counts = Counter(tiers)
 total = sum(counts.values())
 t1 = counts.get('T1', 0) + counts.get('T1-zh', 0)
 t1_share = t1 / total if total else 0
-print(f"Source-tag total: {total}")
+print(f"Aside refs total: {total}")
 print(f"  T1+T1-zh: {t1} ({t1_share:.1%})")
 print(f"  T2+T2-zh: {counts.get('T2',0)+counts.get('T2-zh',0)}")
 print(f"  T3-A: {counts.get('T3-A',0)}, T3-B: {counts.get('T3-B',0)}, T3-C: {counts.get('T3-C',0)}, T3-zh: {counts.get('T3-zh',0)}")
 print(f"  T4: {counts.get('T4',0)}")
 print("PASS" if t1_share >= 0.50 else f"FAIL: T1 share {t1_share:.1%} < 50%")
+
+# 確認無殘留 inline source-tag
+inline_tags = re.findall(r'<span class="source-tag">', html)
+if inline_tags:
+    print(f"WARNING: {len(inline_tags)} inline source-tag殘留 — 需遷移至 aside（用 retrofit_ds_references.py）")
 PY
 
-# Part B: 找量化數字附近 80 字符內是否有 source-tag
+# Part B: 確認每個含量化斷言的 <section> 都有 aside
 python3 << 'PY'
 import re
 html = open("docs/ds/DS_{Theme}_{Date}.html").read()
-# 剝 script/style/source-tag 內含 URL 的數字
-clean = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
-clean = re.sub(r'<style[^>]*>.*?</style>', '', clean, flags=re.DOTALL)
-clean = re.sub(r'<span class="source-tag">.*?</span>', 'XSRCTAGX', clean, flags=re.DOTALL)
-# 找關鍵量化模式
-patterns = [
-    (r'\$\s?\d+(\.\d+)?\s?[BMK]?', '$amount'),
-    (r'\d+(\.\d+)?\s?%', 'percentage'),
-    (r'\d+(\.\d+)?\s?(GW|TW|MW)', 'capacity'),
-    (r'\d+(\.\d+)?\s?(倍|x|×)', 'multiple'),
-]
-missing = 0
-samples = []
-for pat, label in patterns:
-    for m in re.finditer(pat, clean):
-        # check 80 char window
-        start = max(0, m.start() - 80)
-        end = min(len(clean), m.end() + 80)
-        window = clean[start:end]
-        if 'XSRCTAGX' not in window:
-            missing += 1
-            if len(samples) < 5:
-                samples.append((label, m.group(), clean[max(0,m.start()-30):min(len(clean),m.end()+30)]))
-print(f"量化斷言無 source-tag 鄰近: {missing} 處")
-for label, num, ctx in samples:
-    print(f"  [{label}] {num} — ...{ctx}...")
-print("PASS (≤ 3 misses allowed for non-quantitative context)" if missing <= 3 else "FAIL")
+
+# 量化模式
+quant_pat = re.compile(r'\$\s?\d|\d+(\.\d+)?\s?%|\d+\s?(GW|TW|MW|B|T)|\d+(\.\d+)?\s?(倍|x|×)')
+# 找所有 section
+sections = re.finditer(r'<section[^>]*id="(s\d+)"[^>]*>(.*?)</section>', html, re.DOTALL)
+
+missing_aside = []
+for m in sections:
+    sec_id = m.group(1)
+    body = m.group(2)
+    has_quant = bool(quant_pat.search(body))
+    has_aside = bool(re.search(r'<aside class="ds-refs">', body))
+    if has_quant and not has_aside:
+        missing_aside.append(sec_id)
+
+if missing_aside:
+    print(f"FAIL: 以下節含量化斷言但無 aside: {missing_aside}")
+else:
+    print(f"PASS: 所有含量化斷言的節都有 aside")
 PY
 ```
 
-**Fail action**：補 source-tag。若某數字真無 T1 可得 → 用 T2/T3 + 在文末加 ⚠️ source-warning aside。T1 占比過低 → 補 IR / earnings transcript / 行業協會 source 取代 T3 個股 report。
+**Fail action**：每節末加 `<aside class="ds-refs">` 列出該節來源（tier + URL + claim summary）。若某數字真無 T1 可得 → 用 T2/T3 + 節末加 `<aside class="source-warning">` 警示。T1 占比過低 → 補 IR / earnings transcript / 行業協會 source 取代 T3 個股 report。
 
 ---
 
@@ -377,7 +376,7 @@ Critic 額外檢查（在 Gate 1-14 之外）：
 - §9 三條 Kill Scenario 是否真正能 falsify thesis（不是稻草人）
 - §10 Catalyst 是否真有具體日期 + 雙路徑
 - **DS-2 升級（v1.1）**：§1 inflection 必須閉合在 §3 或 §5，不可延後到 §8
-- **DS-7（v1.1）**：抽 5 個量化斷言驗 source-tag + tier + URL 可達；計算 T1 占比
+- **DS-7（v1.2 修訂）**：抽 2 節（隨機選含量化斷言的節），確認其 `<aside class="ds-refs">` 存在、條目 tier 正確、URL 可達；計算全文 aside T1 占比 ≥ 50%
 - **DS-8（v1.1）**：抽 §6 base/bull/bear 各一格驗推導 input 可追到 §2-§5
 - **DS-9（v1.1）**：§1 每段含日期 + 量化錨點
 
@@ -388,7 +387,7 @@ Critic 結果：
 
 ---
 
-## Quick reference — 全部 14 Gates（v1.1）
+## Quick reference — 全部 14 Gates（v1.2）
 
 | Gate | 檢查內容 | Auto / Manual |
 |:---:|:---|:---:|
@@ -397,13 +396,13 @@ Critic 結果：
 | 3 | ds-meta validator pass | Auto (validate_ds_meta.py) |
 | 4 | mega + sub_group 在白名單 | Auto (含於 Gate 3) |
 | 5 | related_ids 對應 ID 存在 | Auto (shell loop) |
-| 6 | §1 → §3 / §5 / §6 因果鏈（v1.1 強化：閉合在 §3/§5） | Manual |
+| 6 | §1 → §3 / §5 / §6 因果鏈（閉合在 §3/§5） | Manual |
 | 7 | §3 + §5 供需平衡明確結論 | Manual + grep |
 | 8 | §6 三 horizon × 三情境 + trigger 完整 | Manual |
 | 9 | §11 ≥ 3 ticker + depth + DD link | Auto (grep) |
 | 10 | 表格 ≤ 4 張 + 行數 ≤ 8 | Auto (inline Python) |
 | 11 | 文字比例 ≥ 80% | Auto (inline Python) |
-| **12** | source-tag 完整性 + T1 占比 ≥ 50% | Auto (inline Python) |
+| **12** | 每節含量化斷言必有 `<aside class="ds-refs">`；全文 aside T1 占比 ≥ 50%（v1.2 修訂）| Auto (inline Python) |
 | **13** | §5/§6/§7/§9/§11 推導可追溯性 | Auto (inline Python) |
 | **14** | §11 ticker depth 閾值時間限定 | Auto (inline Python) |
 | 8.7 | id-review --mode ds critic（含 DS-7/8/9） | Mandatory spawn |
