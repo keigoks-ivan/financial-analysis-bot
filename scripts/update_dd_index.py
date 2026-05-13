@@ -1609,16 +1609,16 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     four_axis_cell = f'<td class="num-cell">{four_axis_html}</td>'
 
     # §7 門檻 cell: {emoji} {pass}/11, colour-coded background by pass count.
+    # Pure threshold derivation (ignoring DD-extracted munger_emoji) so that
+    # emoji and background always agree — threshold ≥ 8 = green, ≥ 6 = yellow.
     if munger_pass is not None:
-        eff_emoji = munger_emoji
-        if eff_emoji is None:
-            if munger_pass >= 9:
-                eff_emoji = "🟢"
-            elif munger_pass >= 6:
-                eff_emoji = "🟡"
-            else:
-                eff_emoji = "🔴"
-        if munger_pass >= 9:
+        if munger_pass >= 8:
+            eff_emoji = "🟢"
+        elif munger_pass >= 6:
+            eff_emoji = "🟡"
+        else:
+            eff_emoji = "🔴"
+        if munger_pass >= 8:
             gate_bg = "background:#DCFCE7;color:#166534"
         elif munger_pass >= 6:
             gate_bg = "background:#FEF9C3;color:#854D0E"

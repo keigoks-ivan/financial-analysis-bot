@@ -34,10 +34,12 @@ TABLE_ROW_RE = re.compile(
 
 
 def _build_table_attrs_map(table_html: str | None = None) -> dict:
-    """Parse research table <tr> rows; return {ticker: {signal, moat_trend, munger_gate}}.
+    """Parse research table <tr> rows; return {ticker: {signal, moat_trend, munger_gate, eps_cagr, ev5y}}.
 
     moat_trend: int (3=↑, 2=→, 1=↓, 0=unknown — matches data-moat-trend convention).
     munger_gate: int (0-11 or 0 if missing).
+    eps_cagr: float (2Y EPS CAGR %; 0.0 if missing/non-numeric).
+    ev5y: float (DCA §4 prob-weighted 5Y annualized IRR %; 0.0 if missing/no DCA).
 
     Source priority:
       1. Explicit table_html arg (in-memory fresh table from update_dd_index)
@@ -57,10 +59,22 @@ def _build_table_attrs_map(table_html: str | None = None) -> dict:
         sig = re.search(r'data-signal="([^"]*)"', attrs)
         mt = re.search(r'data-moat-trend="(\d+)"', attrs)
         mg = re.search(r'data-munger-gate="(\d+)"', attrs)
+        ec = re.search(r'data-eps-cagr="([^"]*)"', attrs)
+        ev = re.search(r'data-ev5y="([^"]*)"', attrs)
+        try:
+            eps_cagr_val = float(ec.group(1)) if ec else 0.0
+        except (ValueError, AttributeError):
+            eps_cagr_val = 0.0
+        try:
+            ev5y_val = float(ev.group(1)) if ev else 0.0
+        except (ValueError, AttributeError):
+            ev5y_val = 0.0
         out[t.group(1)] = {
             "signal": sig.group(1) if sig else "",
             "moat_trend": int(mt.group(1)) if mt else 0,
             "munger_gate": int(mg.group(1)) if mg else 0,
+            "eps_cagr": eps_cagr_val,
+            "ev5y": ev5y_val,
         }
     return out
 
@@ -142,8 +156,8 @@ def load_records():
         t = d["ticker"]
         if t not in records or d["date"] > records[t]["date"]:
             records[t] = d
-    # Overlay table-attrs (signal / moat_trend / munger_gate) — single source
-    # of truth = the rendered research table.
+    # Overlay table-attrs (signal / moat_trend / munger_gate / eps_cagr / ev5y) —
+    # single source of truth = the rendered research table.
     table_attrs = _get_table_attrs()
     for t, r in records.items():
         ta = table_attrs.get(t)
@@ -151,9 +165,13 @@ def load_records():
             r["signal"] = ta["signal"] or r.get("signal")
             r["_moat_trend_int"] = ta["moat_trend"]  # 3=↑, 2=→, 1=↓, 0=unknown
             r["_munger_pass"] = ta["munger_gate"]
+            r["_eps_cagr"] = ta["eps_cagr"]   # float; 0.0 = missing
+            r["_ev5y"] = ta["ev5y"]           # float; 0.0 = no DCA
         else:
             r["_moat_trend_int"] = 0
             r["_munger_pass"] = 0
+            r["_eps_cagr"] = 0.0
+            r["_ev5y"] = 0.0
     return records
 
 
@@ -163,7 +181,7 @@ def signal_distribution(records):
     return [(s, counts.get(s, 0)) for s in order]
 
 
-def latest_updates(records, n=8):
+def latest_updates(records, n=3):
     return sorted(records.values(), key=lambda r: r["date"], reverse=True)[:n]
 
 
@@ -184,6 +202,28 @@ def pct5y_cheapest(records, n=5):
         and isinstance(r.get("pct_5y"), (int, float))
     ]
     return sorted(pool, key=lambda r: r["pct_5y"])[:n]
+
+
+def eps_cagr_top(records, n=5):
+    """Top n by 2Y EPS CAGR; excludes X and zero/missing values."""
+    pool = [
+        r for r in records.values()
+        if r.get("signal") != "X"
+        and isinstance(r.get("_eps_cagr"), float)
+        and r["_eps_cagr"] > 0
+    ]
+    return sorted(pool, key=lambda r: -r["_eps_cagr"])[:n]
+
+
+def irr_high(records, n=5, threshold=12):
+    """Tickers with 5Y prob-weighted IRR >= threshold; excludes X and zero/missing."""
+    pool = [
+        r for r in records.values()
+        if r.get("signal") != "X"
+        and isinstance(r.get("_ev5y"), float)
+        and r["_ev5y"] >= threshold
+    ]
+    return sorted(pool, key=lambda r: -r["_ev5y"])[:n]
 
 
 def upside_top(records, n=5):
@@ -220,7 +260,7 @@ def _is_trend_up(r):
 
 
 def _is_munger_green(r):
-    return isinstance(r.get("_munger_pass"), int) and r["_munger_pass"] >= 9
+    return isinstance(r.get("_munger_pass"), int) and r["_munger_pass"] >= 8
 
 
 def _sig_class(s):
@@ -281,6 +321,8 @@ def render(records):
     latest = latest_updates(records)
     peg = peg_cheapest(records)
     pct = pct5y_cheapest(records)
+    cagr_top = eps_cagr_top(records)
+    irr_top = irr_high(records)
     val_red, ma_brake = x_cohort(records)
     # Moat-quality cohorts ranked by 5Y 期望 IRR (excludes C/X verdicts)
     sa_pool = [
@@ -331,6 +373,21 @@ def render(records):
         for r in pct
     )
 
+    cagr_lis = "".join(
+        f'<li><span class="lead">{_ticker_link(r["ticker"], r.get("_path", ""))}</span>'
+        f'<span class="meta">+{r["_eps_cagr"]:.1f}% · {escape(str(r.get("signal", "?")))}</span></li>'
+        for r in cagr_top
+    )
+
+    if irr_top:
+        irr_lis = "".join(
+            f'<li><span class="lead">{_ticker_link(r["ticker"], r.get("_path", ""))}</span>'
+            f'<span class="meta">IRR +{r["_ev5y"]:.1f}%/yr · {escape(str(r.get("signal", "?")))}</span></li>'
+            for r in irr_top
+        )
+    else:
+        irr_lis = '<li style="color:#94A3B8;font-style:italic;list-style:none">符合條件的標的：0 檔</li>'
+
     val_red_str = " · ".join(escape(t) for t in val_red) if val_red else "—"
     ma_brake_str = " · ".join(escape(t) for t in ma_brake) if ma_brake else "—"
 
@@ -367,6 +424,16 @@ def render(records):
     <div class="stats-cell">
       <div class="stats-label">📉 5Y P/E 分位最便宜（排除 X）</div>
       <ol>{pct_lis}</ol>
+    </div>
+
+    <div class="stats-cell">
+      <div class="stats-label">🚀 2Y EPS CAGR 最高（排除 X）</div>
+      <ol>{cagr_lis}</ol>
+    </div>
+
+    <div class="stats-cell">
+      <div class="stats-label">💪 5Y 期望 IRR ≥ 12%（排除 X）</div>
+      <ol>{irr_lis}</ol>
     </div>
 
     <div class="stats-cell">
