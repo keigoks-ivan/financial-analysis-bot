@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS MU vs SNDK vs GLW 2026-05-13 | 多標的對比分析</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", Roboto, sans-serif; background: #ffffff; color: #1a1d24; line-height: 1.8; font-size: 16px; font-weight: 400; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+p { color: #1a1d24; margin: 14px 0; font-weight: 400; }
+li { color: #1a1d24; font-weight: 400; }
+strong { color: #000000; font-weight: 700; }
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+.report-header { border-bottom: 2px solid #d0d8e0; padding-bottom: 16px; margin-bottom: 24px; }
+.report-header h1 { font-size: 28px; color: #0a1628; margin: 0 0 8px; font-weight: 700; }
+.report-meta { font-size: 14px; color: #4a5568; font-weight: 500; }
+.report-meta span { margin-right: 16px; }
+.toc-nav { position: sticky; top: 0; background: #ffffff; padding: 14px 20px; border-bottom: 2px solid #d0d8e0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin: 0 -20px 28px; z-index: 100; }
+.toc-nav a { color: #1565c0; text-decoration: none; margin-right: 16px; font-size: 14px; font-weight: 600; display: inline-block; padding: 4px 2px; }
+.toc-nav a:hover { color: #c2410c; }
+section { margin-bottom: 36px; padding-top: 16px; }
+h2 { font-size: 24px; color: #0a1628; border-left: 4px solid #1565c0; padding-left: 12px; margin: 0 0 18px; font-weight: 700; }
+h3 { font-size: 18px; color: #c2410c; margin: 22px 0 12px; font-weight: 700; }
+h4 { font-size: 16px; color: #15803d; margin: 16px 0 10px; font-weight: 700; }
+.verdict-card { background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%); border: 1px solid #90caf9; border-left: 4px solid #15803d; border-radius: 8px; padding: 22px 26px; margin-bottom: 22px; }
+.verdict-card .verdict-label { font-size: 13px; color: #4a5568; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+.verdict-card .verdict-pick { font-size: 32px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.verdict-card .verdict-timeframe { font-size: 15px; color: #c2410c; margin-bottom: 14px; font-weight: 600; }
+.verdict-card ul { margin: 8px 0 0; padding-left: 22px; }
+.verdict-card li { margin-bottom: 10px; font-size: 15px; color: #1a1d24; line-height: 1.7; }
+.verdict-card p { color: #1a1d24; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 15px; background: #ffffff; border: 1px solid #d0d8e0; border-radius: 6px; overflow: hidden; }
+th { background: #f1f5f9; color: #0a1628; padding: 12px 14px; text-align: left; border-bottom: 2px solid #cbd5e1; font-weight: 700; font-size: 14px; }
+td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; color: #1a1d24; vertical-align: top; font-weight: 400; }
+tr:hover { background: #f8fafc; }
+tr:last-child td { border-bottom: none; }
+.rank-1 { color: #15803d; font-weight: 700; }
+.rank-2 { color: #475569; font-weight: 700; }
+.rank-3 { color: #c2410c; font-weight: 700; }
+.signal { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 13px; font-weight: 700; }
+.signal-green { background: #dcfce7; color: #166534; }
+.signal-yellow { background: #fef3c7; color: #92400e; }
+.signal-red { background: #fee2e2; color: #991b1b; }
+.signal-grey { background: #e2e8f0; color: #475569; }
+.callout { background: #eff6ff; border-left: 4px solid #1565c0; padding: 16px 20px; margin: 18px 0; border-radius: 4px; font-size: 15px; color: #1a1d24; line-height: 1.75; }
+.callout strong { color: #000000; font-weight: 700; }
+.callout-warn { background: #fff7ed; border-left-color: #c2410c; }
+.callout-key { background: #f0fdf4; border-left-color: #15803d; }
+.callout-danger { background: #fef2f2; border-left-color: #991b1b; }
+.irr-bar { display: flex; height: 40px; border-radius: 4px; overflow: hidden; margin: 10px 0 4px; background: #e2e8f0; border: 1px solid #cbd5e1; }
+.irr-segment { display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 8px; }
+.irr-eps { background: #15803d; }
+.irr-rerate-pos { background: #1565c0; }
+.irr-rerate-neg { background: #b91c1c; color: #ffffff; }
+.irr-buyback { background: #c2410c; }
+.irr-eps-neg { background: #7f1d1d; color: #ffffff; }
+.irr-legend { font-size: 14px; color: #334155; margin-bottom: 16px; line-height: 1.7; }
+.timeframe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 18px 0; }
+.tf-card { background: #f8fafc; border: 1px solid #d0d8e0; border-radius: 6px; padding: 16px 18px; }
+.tf-card .tf-label { font-size: 12px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 700; }
+.tf-card .tf-winner { font-size: 20px; font-weight: 700; color: #15803d; margin-bottom: 10px; }
+.tf-card .tf-reason { font-size: 14px; color: #1a1d24; line-height: 1.65; font-weight: 400; }
+.report-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #d0d8e0; font-size: 13px; color: #4a5568; text-align: center; line-height: 1.7; }
+@media print { body { background: #ffffff; color: #000000; } .toc-nav { display: none; } }
+@media (max-width: 768px) {
+  body { font-size: 17px; line-height: 1.85; }
+  .container { padding: 16px 16px 40px; }
+  .report-header h1 { font-size: 22px; }
+  h2 { font-size: 21px; } h3 { font-size: 18px; } h4 { font-size: 17px; }
+  p, li { font-size: 16px; }
+  table { font-size: 14px; }
+  th, td { padding: 12px 10px; }
+  .toc-nav { padding: 14px 16px; margin: 0 -16px 24px; }
+  .toc-nav a { margin-right: 14px; font-size: 14px; padding: 6px 2px; }
+  .callout, .verdict-card { font-size: 15px; }
+  .verdict-card li { font-size: 15px; }
+  .irr-segment { font-size: 12px; }
+  .tf-card .tf-reason { font-size: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="report-header">
+<h1>📊 MS MU vs SNDK vs GLW｜多標的對比分析</h1>
+<div class="report-meta">
+<span>📅 2026-05-13</span>
+<span>📐 來源：DCA_MU_20260511 + DCA_SNDK_20260511 + DCA_GLW_20260513</span>
+<span>🎯 四層時間框架對比，主推 3-5 年 view</span>
+</div>
+</header>
+
+<nav class="toc-nav">
+<a href="#sA">§A Dashboard</a>
+<a href="#sB1">§B.1 &lt;12M</a>
+<a href="#sB2">§B.2 2-3Y</a>
+<a href="#sB3">§B.3 3-5Y</a>
+<a href="#sB4">§B.4 5-10Y</a>
+<a href="#sC">§C IRR 質感</a>
+<a href="#sD">§D Bear/MaxDD</a>
+<a href="#sE">§E 最終裁決</a>
+</nav>
+
+<!-- §A Dashboard -->
+<section id="sA">
+<h2>§A 對比 Dashboard</h2>
+
+<div class="verdict-card">
+<div class="verdict-label">綜合裁決（3-5 年中長期 view）</div>
+<div class="verdict-pick">推薦：GLW</div>
+<div class="verdict-timeframe">適用時間框架：3-5 年（核心-衛星混合 3.5-4.5% 配置）</div>
+<ul>
+<li><strong>理由 1（唯一 IRR composition 質感正向）：</strong>Base IRR +7.3%/yr 中，EPS 複利 +18.0%/yr 為主動力、股息+回購 +2.0%/yr 提供 cushion，僅 PE re-rate −12.7%/yr 拖累。三檔中唯一「靠自己 EPS 跑」而非「靠市場配合 / 靠 cycle 配合」，且唯一有股息現金流。MU Base EPS −5%/yr 反向複利、SNDK Base EPS −12%/yr 衰退 — 兩檔的「便宜 PE」都是 peak earnings 的算術假象。</li>
+<li><strong>理由 2（Moat A 8/10 ↑ widening，唯一護城河結構性升級）：</strong>175 年材料累積 + 11,000+ 專利 + Springboard 三條 S 曲線（Optical AI + Solar 美國本土化 + Glass substrate AI packaging）。對照組 MU Moat C ↓ narrowing（HBM4 旗艦讓給 SK/Samsung、被擠到 Rubin CPX 中段）、SNDK Moat C ↑ widening 但本質仍 NAND 商品（Y5 末 TAM CAGR 僅 5.32% 已飽和）。</li>
+<li><strong>理由 3（進場條件距離最近 + Max DD 路徑風險最淺）：</strong>進場區 $155-175 距現價 ~$195 僅 −12~−21%；MU 進場區 $380-450 距現價 $757 需 −47%；SNDK 進場區 $650-820 距現價 $1,562 需 −47~−58%。Max DD 評級 GLW 🟡 −35~−55% vs MU 🔴 −45~−65% vs SNDK 🔴 −40~−72% — GLW 是唯一「等回測能等到 + 中途出場風險可控」的標的。</li>
+</ul>
+<p style="margin-top:14px; font-size:13px; color:#c2410c;">
+<strong>進場條件：</strong>等股價回測 $155-175（Bollinger 中軌附近，距現價 −12~−21%）+ Q2 2026 Optical Communications YoY &gt; 30% 維持 → 首批 2.0% portfolio；2026-05-06 Investor Day 後若 Springboard 延伸至 2030 + 新 hyperscaler 合約 ≥ $5B 確認 → 加碼至 4.5%。
+</p>
+</div>
+
+<h3>三檔基本資料對比</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>MU (Micron)</th><th>SNDK (SanDisk)</th><th>GLW (Corning)</th></tr>
+</thead>
+<tbody>
+<tr><td>現價（5/10-5/12 收）</td><td>~$757</td><td>~$1,562</td><td>~$195</td></tr>
+<tr><td>Fwd PE（FY+1）</td><td>13.1x（on FY26 $57.95）</td><td>~24x（on FY26 $64.63）</td><td>51x（on FY26 $3.82）</td></tr>
+<tr><td>Fwd PE（FY+2）</td><td><span class="rank-1">7.5x（on FY27 $100.45）</span></td><td>8.6x（on FY27 $166-182）</td><td>34x（on FY28 Core $5.75）</td></tr>
+<tr><td>PE 便宜性質</td><td><span class="signal signal-yellow">peak EPS 假象</span></td><td><span class="signal signal-yellow">peak EPS 假象</span></td><td><span class="signal signal-yellow">EPS 真實但估值偏高</span></td></tr>
+<tr><td>5Y PE 分位</td><td>12%（極低）</td><td>—（spin-off 樣本不足）</td><td>~高位（5Y median 14-18x）</td></tr>
+<tr><td>原 DCA 訊號燈</td><td><span class="signal signal-red">C 觀察池</span></td><td><span class="signal signal-yellow">B 強烈觀望</span></td><td><span class="signal signal-yellow">B 觀望</span></td></tr>
+<tr><td>護城河 / 趨勢</td><td>C 5/10 / <span class="signal signal-red">↓ narrowing</span></td><td>C 5/10 / <span class="signal signal-yellow">↑ widening (cyclical)</span></td><td><span class="rank-1">A 8/10 / ↑ widening</span></td></tr>
+<tr><td>Runway Post-Y5</td><td><span class="signal signal-yellow">🟡 中</span></td><td><span class="signal signal-red">🔴 窄</span></td><td><span class="signal signal-green">🟢 寬（三條 S 曲線）</span></td></tr>
+<tr><td>Max DD（5Y 估）</td><td><span class="signal signal-red">🔴 −45~−65%</span></td><td><span class="signal signal-red">🔴 −40~−72%</span></td><td><span class="signal signal-yellow">🟡 −35~−55%</span></td></tr>
+<tr><td>5Y IRR（機率加權）</td><td>+1.0%/yr</td><td><span class="signal signal-red">−13.4%/yr</span></td><td><span class="rank-1">+10.0%/yr</span></td></tr>
+<tr><td>10Y IRR（壓力測試）</td><td>+2~4%/yr</td><td><span class="signal signal-red">−7.0%/yr</span></td><td><span class="rank-1">+8.6%/yr</span></td></tr>
+<tr><td>Pure MA 結構</td><td>✅ 多頭</td><td>✅ 多頭</td><td>✅ 全多頭</td></tr>
+<tr><td>動能過熱</td><td><span class="signal signal-red">🔴 RSI 84.7 極度過熱 / 4w +78%</span></td><td><span class="signal signal-red">🔴 RSI 75-81 / 4w +132%</span></td><td><span class="signal signal-yellow">🟡 1Y +200% 但 4w 已收斂</span></td></tr>
+<tr><td>進場區間</td><td>$380-450（距現價 −47%）</td><td>$650-820（距現價 −47~−58%）</td><td><span class="rank-1">$155-175（距現價 −12~−21%）</span></td></tr>
+<tr><td>建議持有年限</td><td>1-3 年戰術配置</td><td>1.5-3 年 cycle play</td><td><span class="rank-1">3-5 年中長期</span></td></tr>
+<tr><td>股息率</td><td>0.13%（象徵性）</td><td>0%</td><td><span class="rank-1">~1.1% + 系統回購</span></td></tr>
+<tr><td>Bear case 性質</td><td><span class="signal signal-red">範式+執行混合</span></td><td><span class="signal signal-yellow">執行風險</span></td><td><span class="signal signal-green">執行風險</span></td></tr>
+<tr><td>建倉上限</td><td>3%（衛星）</td><td>4%（衛星）</td><td><span class="rank-1">3.5-4.5%（核心-衛星）</span></td></tr>
+</tbody>
+</table>
+
+<h3>四層時間框架排序速覽</h3>
+<div class="timeframe-grid">
+<div class="tf-card">
+<div class="tf-label">&lt; 12M 短期</div>
+<div class="tf-winner">🥇 GLW</div>
+<div class="tf-reason">唯一進場條件可達（−12~−21%）+ 動能已收斂 + 股息 cushion；MU/SNDK 進場區距現價皆 ≥ −47%、RSI 75-85 動能末段</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">2-3Y 中期</div>
+<div class="tf-winner">🥇 GLW</div>
+<div class="tf-reason">Springboard $5.75B by 2028 拐點催化（NVDA $3.2B + Meta $6B 已 secured）；MU/SNDK 2-3Y 中期遇 cycle 反轉窗口（2027-2028）</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">3-5Y 中長期</div>
+<div class="tf-winner">🥇 GLW</div>
+<div class="tf-reason">唯一 IRR composition 正向質感（EPS +18% 自跑 + 股息+回購 +2%）；Moat A ↑ widening；對標 GLW 2010-2015 第二波 pattern +50%</div>
+</div>
+<div class="tf-card">
+<div class="tf-label">5-10Y 長期</div>
+<div class="tf-winner">🥇 GLW</div>
+<div class="tf-reason">175 年材料平台 + 多條 S 曲線（CPO/Glass substrate/Solar/量子）；MU 商品化本質週期復發、SNDK 純 NAND Y5 末已飽和（CAGR 5.32%）</div>
+</div>
+</div>
+
+<div class="callout callout-key">
+<strong>核心洞察：</strong>三檔表面上都是「AI 受惠 + 估值看似便宜」，但本質結構完全不同 — <strong>MU/SNDK 是 memory cycle 兩兄弟（不同品類但同物理）、GLW 是材料平台</strong>。MU 在 HBM4 旗艦戰役被擠到 Rubin CPX 中段（DCA 自評 Moat ↓ narrowing 是三檔中唯一窄化）；SNDK 拿到 $42B take-or-pay 結構性合約但本質仍 NAND 商品（Y5 末 TAM CAGR 僅 5.32%）；GLW 是三檔中唯一「進場可達 + IRR 質感正向 + 不靠 cycle 配合」的標的。<strong>任何時間軸（&lt;12M / 2-3Y / 3-5Y / 5-10Y）下，GLW 都是首選；只有「1-2 年純動能 cycle play 視角」下 SNDK 才有 alpha，但 4w +132% 漂移使現價 timing 極差</strong>。
+</div>
+
+</section>
+
+<!-- §B.1 -->
+<section id="sB1">
+<h2>§B.1 短期視角（&lt; 12 個月）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>Pure MA 狀態、進場條件距離、動能過熱程度、最近季度催化（5/27 NVDA / 7/29 GLW Q2 / 8/4 SNDK Q4 / 6/25 MU Q3）、估值 5Y 分位
+</div>
+
+<h3>對比表</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>MU</th><th>SNDK</th><th>GLW</th></tr>
+</thead>
+<tbody>
+<tr><td>進場條件距離</td><td><span class="signal signal-red">$380-450（−47%，遙遠）</span></td><td><span class="signal signal-red">$650-820（−47~−58%，最遠）</span></td><td><span class="rank-1">$155-175（−12~−21%，可達）</span></td></tr>
+<tr><td>RSI 14d</td><td><span class="signal signal-red">84.7（極度過熱）</span></td><td><span class="signal signal-red">75-81（過熱）</span></td><td><span class="signal signal-yellow">偏高但收斂中</span></td></tr>
+<tr><td>4 週漂移</td><td><span class="signal signal-red">+78%</span></td><td><span class="signal signal-red">+132%（最極端）</span></td><td><span class="signal signal-yellow">已收斂</span></td></tr>
+<tr><td>Pure MA 結構</td><td>✅ 三條 MA 全多頭</td><td>✅ 多頭（樣本不足）</td><td>✅ 全多頭 + 斜率全正</td></tr>
+<tr><td>5Y PE 分位</td><td>12%（極低，但 peak EPS）</td><td>—（spin-off 後樣本不足）</td><td>高位（vs 5Y median 14-18x）</td></tr>
+<tr><td>短期 R:R</td><td><span class="signal signal-red">DD §1 壓測 1/4 → 0.88x Fail</span></td><td><span class="signal signal-red">DD §1 壓測 0/4 → 0.31x Fail</span></td><td><span class="signal signal-yellow">DD §8 verdict 觀望（估值🟠）</span></td></tr>
+<tr><td>下次財報 binary</td><td>2026-06-25 Q3 FY26</td><td>2026-08-04 Q4 FY26（key：GM ≥ 79%）</td><td>2026-07-29 Q2 2026（key：Optical YoY &gt; 30%）</td></tr>
+<tr><td>內部人賣壓</td><td><span class="signal signal-red">CEO+CBO YTD $20M+ / 37:1 sell:buy</span></td><td>—</td><td>—</td></tr>
+<tr><td>進場可行性</td><td>無（窗口已關閉）</td><td>無（4w +132% 為 v12.2 框架以來最差時機）</td><td><span class="rank-1">條件式可達</span></td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 GLW</span> — 三檔中唯一「進場條件距離可達（−12~−21%）+ 動能已收斂 + Pure MA 全多頭」三項齊全。Q2 2026 earnings（7/29 ± 1 週）是關鍵 binary，但即使 miss 也有 1.1% 股息 + 多元化 cushion；若 5/6 Investor Day 後 Solar 段持續虧損則減碼觸發但不清倉。</li>
+<li><span class="rank-2">🥈 SNDK</span> — 短期 thesis 動能最強（$42B backlog + GM 78% 史上最高 + Q3 FY26 +251% YoY），但 4w +132% 為「v12.2 框架以來最差時機」（DCA §7c 原文）。動能末段，若 5/27 之後類股輪動則 mean reversion 觸發 −20~−35%。<strong>「最強 thesis + 最差 timing」的結合 — 短期排第二而非第一是因為「能否進場」比「漲不漲」更重要</strong>。</li>
+<li><span class="rank-3">🥉 MU</span> — RSI 84.7 極度過熱 + DD 短期目標 $580 已被現價 $757 超越 + 4/13-5/10 4 週 +78% drift +「短期目標已破」三項負面齊全。DCA 明確結論：「進場窗口已關閉」+「現持有者建議減半」。短期內部人賣壓（CEO Mehrotra 5/1 賣 $21.5M、CBO Sadana 4/14 賣 $10.1M、37:1 sell:buy）為 confirmation bias。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>短期 &lt;12M 視角下，<strong>「能否進場」與「動能可持續性」</strong>是決定性的兩個維度。三檔的 Pure MA 結構都 ✅ 多頭，但 GLW 是三檔中唯一「等回測能等到」的標的：</p>
+<p>GLW 進場區 $155-175 距現價 $195 僅 −12~−21%，搭配 1.1% 股息 + 175 年材料平台基本盤，是「等回測能達到、即使等不到也不會 FOMO 受傷」的標的。短期 4w drift 雖然 1Y +200% 但已開始收斂、RSI 比 MU/SNDK 都低。</p>
+<p>SNDK 在動能末段的問題不是 thesis 錯，而是 4w +132% 漂移超過 v1.3 框架以來所有先例。DCA §7c 原文「歷史頻率 RSI &gt; 75 後 1 個月內回測 8-15% 機率約 60%，本標的 +132% drift 過熱程度遠超平均，回測幅度可能更大」— 短期排第二不是因為 thesis 弱（SNDK $42B backlog 是 unique alpha），而是因為 timing 極端。等回測 $700-820 才有合理 R:R。</p>
+<p>MU 在短期最差的關鍵不是「估值貴」而是「DD 短期目標已破 + 現價更糟」。DD 4/18 在 $455 時短期目標 $580、Bear anchor $312.93；現價 $757 已超越短期目標 +30%。DCA §7c 明確標「⛔ 禁止一次建倉、禁止追高第一批」+「歷史 mean reversion：RSI &gt; 80 後 1 個月內回測 12-18% 的機率 ~65-75%（memory cycle 股加倍）」。內部人 37:1 sell:buy + CEO/CBO 雙重高金額賣壓使「公司 sold out beyond 2026 narrative」與「管理層行動」明顯背離。</p>
+
+</section>
+
+<!-- §B.2 -->
+<section id="sB2">
+<h2>§B.2 中期視角（2-3 年）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>拐點催化兌現、估值修復至 5Y 中位、PE re-rate 紅利、Pattern Match 對標、cycle 反轉風險窗口
+</div>
+
+<h3>拐點催化對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>MU</th><th>SNDK</th><th>GLW</th></tr>
+</thead>
+<tbody>
+<tr><td>主要拐點催化</td><td>HBM TAM $30B→$100-120B by 2030（已部分 priced）</td><td>NAND ASP cycle 上行 + $42B take-or-pay LTA + HBF 第二曲線 optionality</td><td>Springboard $5.75B by 2028（NVDA $3.2B + Meta $6B + 2 新 hyperscaler 多年合約）</td></tr>
+<tr><td>催化兌現節奏</td><td>2026 H2 NVDA Rubin flagship 揭露為 binary（高機率不利）</td><td>2026Q4-2027Q1 為「cycle 第 8-9 季」反轉風險窗口</td><td>2026-05-06 Investor Day + Q2-Q4 2026 Solar 段執行追蹤</td></tr>
+<tr><td>2-3Y 結構性風險窗口</td><td><span class="signal signal-red">2027-2028 cycle reversion 高機率（歷史 4-5 年週期）</span></td><td><span class="signal signal-red">2027 H2 capex 回流 + Idaho/Yongin 新 fab 上線</span></td><td><span class="signal signal-yellow">Solar 段虧損可能延後達標但不致 thesis 死</span></td></tr>
+<tr><td>FY27/FY28 EPS 可持續性</td><td><span class="signal signal-yellow">FY27 $100 共識為 sellside「peak chasing」結果</span></td><td><span class="signal signal-red">FY27 $166-182 peak / FY28 estimated $60-100（cycle 反轉視速度而定）</span></td><td><span class="signal signal-green">FY27 Core $4.80 / FY28 Core $5.75 由 mgmt guide 直接支撐</span></td></tr>
+<tr><td>Pattern Match 對標</td><td>2017-2018 MU 自己（DRAM supercycle 1.0）— 5Y +9%/yr 但兩次 −47%~−55% drawdown</td><td>Micron 2017Q4-2019 cycle peak compression — 5Y +2~4%/yr，中途 −47% 與 −50% drawdown 雙底</td><td>Corning 2003-2008（深 bear 後 +2000%）/ 2010-2015 第二波（+50%）— 當前對標 2010-2015 路徑</td></tr>
+<tr><td>2-3Y view IRR</td><td>cycle peak compression 期 — 估 0~+5%/yr</td><td><span class="signal signal-yellow">cycle play 視角可能 +15~30%/yr（若 timing 對）</span></td><td>+7~10%/yr（Springboard 兌現 base case）</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 GLW</span> — 2-3Y 中期是 GLW 的「sweet spot」：Springboard $5.75B by 2028 增量計畫已被 NVDA $3.2B（5/2026）+ Meta $6B（1/2026）+ 2 家新 hyperscaler 多年合約「數學上覆蓋」（DCA §B.4 verdict 1 推導：合約合計 ~$12B &gt; $5.75B 增量目標）。拐點催化是「執行兌現追蹤」而非「cycle binary」，路徑可控可監測。</li>
+<li><span class="rank-2">🥈 SNDK</span> — 中期 thesis 的 alpha 在「$42B take-or-pay 是否真實改變 NAND 商品本質」這個二元賭。DCA 自身判定機率：cycle 延長 8-10 季 30% / cycle 反轉 normalize 50% / cycle 急轉 20%。<strong>2-3Y cycle play 視角下 IRR 可能 +15-30%/yr</strong>（DCA §4 追加壓力測試原文），但時點極差（現價 $1,562 已比 DD 5/4 snapshot $1,187 又 +32%）。排第二是因為「正期望但需 timing 配合」。</li>
+<li><span class="rank-3">🥉 MU</span> — 中期最危險的不是「估值貴」而是「FY27 EPS $100 共識本身是 sellside peak chasing」。DCA §3 Munger Inversion 原文：「2018Q2 sellside FY19 EPS 共識在反轉前 6 個月還上修，實際 FY19 EPS 跌 −80%；2021Q4 共識上修 FY22 EPS，實際 FY22 −85%」。MU 2-3Y view 處在「FY26 $58 → FY27 $100 → FY28 跌回 mid-cycle $35-50」的 binary 之中，賣方共識上修的速度（90 天 +78%）本身就是 cycle 末期典型行為。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>2-3Y 中期視角下，<strong>拐點催化兌現的「可控性」</strong>是分水嶺。GLW 的拐點是「Springboard 增量達標率追蹤」— 季度可監測、可漸進兌現、4 條腿（Optical / Solar / Glass substrate / Display 重組）任一兌現都撐住基線。MU/SNDK 的拐點是 cycle binary — 無法分批兌現，反轉時刻往往是 1-2 季內完成。</p>
+<p>SNDK 排第二的具體理由：DCA §4 追加壓力測試明確「<strong>只在 1-2 年 cycle play 視角下才有 alpha（短期 Q4/Q1 兌現 → 6-12 個月期望值可能 +20% ~ +35%），但必須以 1-2 年計時且嚴格進場時機</strong>」。中期 thesis 是「LTA 結構性改寫商品 + HBF 第二曲線」，但 §6b pre-mortem 顯示 LTA 在 cycle reversal 時實際執行率 60-70%、價格被砍 25-40%（歷史 DRAM LTA 2018-2019 教訓）。Backlog 名目 $42B 不等於現金折現 $42B。</p>
+<p>MU 在 2-3Y 中期最差的關鍵在 §3 強制減法原文：「memory PE 應該結構性 re-rate 到 14-18x narrative 在每一個 cycle 頂端都會出現（2018 也有人說 server DRAM 是結構性），但 memory PE 從未 sustained 在 cyclical 倍數之上」。MU 中期賠率不僅依賴 cycle 不反轉（已 2 年上升期），還依賴 HBM4 Rubin 中段位置撐 mid-cycle EPS（DCA Bull case 機率僅 20%）。中期賠率三檔中最差。</p>
+
+</section>
+
+<!-- §B.3 -->
+<section id="sB3">
+<h2>§B.3 中長期視角（3-5 年）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>TAM 滲透曲線位置、護城河趨勢（↑/→/↓）、EPS 5Y CAGR 可兌現性、IRR composition 質感（複利占比 vs re-rate 配合）、單變數可證偽性
+</div>
+
+<h3>IRR composition 質感對比（核心打分）</h3>
+<table>
+<thead>
+<tr><th>5Y Base IRR 分量</th><th>MU</th><th>SNDK</th><th>GLW</th></tr>
+</thead>
+<tbody>
+<tr><td>EPS CAGR 貢獻</td><td><span class="signal signal-red">−5.0%/yr（FY26 peak $58 → FY30 mid-cycle $45 反向複利）</span></td><td><span class="signal signal-red">−12.0%/yr（FY27 peak $182 → FY30 normalized $45 衰退）</span></td><td><span class="rank-1">+18.0%/yr（Springboard 三條 S 曲線正向複利）</span></td></tr>
+<tr><td>估值 re-rate 貢獻</td><td>+6.0%/yr（PE 13x → 12x mid-cycle on lower base，靠市場配合）</td><td>−3.3%/yr（PE 21x → 15x cycle midpoint 壓縮）</td><td>−12.7%/yr（PE 51x → 25x mean revert）</td></tr>
+<tr><td>股息 + 淨買回</td><td>+0.5%/yr（0.13% 股息 + 微正淨買回）</td><td>+0.8%/yr（無股息 + buyback $2B/yr ÷ 市值 $200B）</td><td><span class="rank-1">+2.0%/yr（1.1% 股息 + 0.9% 系統回購）</span></td></tr>
+<tr><td>合計 5Y Base IRR</td><td>+1.5%/yr（弱正）</td><td><span class="signal signal-red">−14.5%/yr（強負）</span></td><td><span class="rank-1">+7.3%/yr（穩健）</span></td></tr>
+<tr><td>5Y IRR（機率加權）</td><td>+1.0%/yr（Bull 20% / Base 45% / Bear 35%）</td><td><span class="signal signal-red">−13.4%/yr（Bull 20% / Base 50% / Bear 30%）</span></td><td><span class="rank-1">+10.0%/yr（Bull 30% / Base 50% / Bear 20%）</span></td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>關鍵差異識別：</strong>三檔的 Base IRR 來源結構完全不同 —
+<ul>
+<li><strong>MU +1.5% IRR：</strong>EPS 反向複利 −5%/yr + 估值 re-rate +6%/yr 抵消 → <strong>「靠市場 mid-cycle PE 收斂」</strong>而非「靠自然 EPS 複利」。質感 = 需市場配合難抱型。</li>
+<li><strong>SNDK −14.5% IRR：</strong>EPS 衰退 −12%/yr + 估值 de-rate −3.3%/yr 雙殺 → <strong>「EPS 從 cycle peak 反轉 + PE 從 21x 壓回 15x」</strong>雙重打擊。質感 = 不可抱型（需 cycle + 市場 + entry 三重配合）。</li>
+<li><strong>GLW +7.3% IRR：</strong>EPS 複利 +18%/yr 為主動力 + 股息+回購 +2%/yr cushion + 估值壓縮 −12.7%/yr 拖累 → <strong>「靠自己 EPS 自跑 + 股東現金回饋 + 估值壓縮為唯一拖累」</strong>。質感 = 自然複利好抱型（即使 PE 壓縮，EPS 自跑仍正回報）。</li>
+</ul>
+</div>
+
+<h3>對比表</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>MU</th><th>SNDK</th><th>GLW</th></tr>
+</thead>
+<tbody>
+<tr><td>護城河 5Y 預判</td><td><span class="signal signal-red">↓ narrowing → 持平或續弱</span></td><td><span class="signal signal-yellow">↑ widening 但 cycle 反轉時 +1 短期強化將溶解 → 5Y 末偏 ↓</span></td><td><span class="rank-1">↑ widening 持續（材料平台 + 多條 S 曲線）</span></td></tr>
+<tr><td>TAM 滲透位置</td><td>HBM TAM $100-120B by 2030（仍擴張，但 MU 位置中段）</td><td><span class="signal signal-red">NAND TAM CAGR 5.32% 已飽和（Y5 末 SNDK 預估營收可能低於現在）</span></td><td><span class="rank-1">Optical TAM $20B by 2030 + Solar 美國本土化 + Glass substrate 2028+ 規模化</span></td></tr>
+<tr><td>EPS 5Y CAGR 可兌現性</td><td>低（FY26 peak 一次性，FY30 反轉至 mid-cycle）</td><td><span class="signal signal-red">最低（FY27 peak $182 → FY30 normalized $45 = 衰退）</span></td><td><span class="rank-1">高（mgmt guide $5.75 by 2028 + Q1 Optical +36% / Solar +80% / Core OM 20.2% 已驗證）</span></td></tr>
+<tr><td>Pattern Match 5Y 末</td><td>2018-2023 MU 自己：+9%/yr 但兩次 −47%~−55%</td><td>Micron 2017Q4-2022：+2~4%/yr 中途兩次 ~−50% drawdown</td><td>Corning 2010-2015 第二波：穩定 +50%（無 deep drawdown）</td></tr>
+<tr><td>單變數可證偽性</td><td>NVDA Rubin flagship 揭露為主 single trigger</td><td>NAND ASP MoM 連 2 月轉負為主 single trigger</td><td>Springboard 達標率 &lt; 80% 為主 single trigger</td></tr>
+<tr><td>3-5Y view IRR 期望</td><td>+1~3%/yr 弱</td><td><span class="signal signal-red">−10~−15%/yr 強負</span></td><td><span class="rank-1">+7~10%/yr 穩健</span></td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 GLW</span> — 唯一 IRR composition 正向質感的標的。EPS +18%/yr 為主動力意味著「即使 PE 從 51x 壓縮到 25x，EPS 自跑仍能蓋過估值壓縮」。3-5Y view 是 GLW 的「黃金窗口」：Springboard 三條 S 曲線陸續兌現（Optical AI 已驗證 +36% YoY、Solar +80% 起飛、Glass substrate 2028+ 滲透）+ 1.1% 股息 + 系統回購使等待過程持有成本最低。</li>
+<li><span class="rank-2">🥈 MU</span> — Base IRR +1.5% 弱正但仍正；對照 SNDK −14.5% 強負，MU 在 3-5Y 視角是「相對較好」但絕對水準仍弱。MU 的問題在於 +6%/yr re-rate 貢獻是「靠市場接受 mid-cycle PE 12x」這個假設（DCA §4 IRR Composition 原文「需市場相信 mid-cycle 估值，這個 wait 通常要 2-3 年，過程中股價路徑波動極大」）。質感是「估值收斂 + 股價平移」非自然複利好抱。</li>
+<li><span class="rank-3">🥉 SNDK</span> — 3-5Y view 是 SNDK 的「最劣勢時間軸」。DCA §4 原文「5Y 機率加權 IRR −13.4%/yr 落入強負期望」+「即使 HBF 兌現（10Y +50% 拉長視角），10Y IRR 仍為 −7.0%/yr 負（5Y NAND CAGR 僅 5.32% 不足以 outrun 起始估值壓力）」。FY30 normalized EPS $45 × PE 15x = $675 vs 現價 $1,562 = −57%。Y5 末實質營收（$10-11B）可能低於 FY26 cycle peak。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>3-5Y view 是這次對比的 alpha 集中地。三檔在這個時間軸的差異最大 — 不是「賠率高低」差異，而是「賠率為正 vs 為負」的根本差異。</p>
+<p><strong>GLW 的 IRR 質感是這次比較的核心洞察</strong>：三檔中只有 GLW 是「EPS 自跑型」，其他兩檔都是「靠 cycle / 靠市場配合型」。MU Base case 中 EPS 是反向複利（−5%/yr）、SNDK Base case 中 EPS 是衰退（−12%/yr）— 這兩檔的 5Y Base IRR 在數學上若想為正，必須依賴「估值 re-rate」這個我們無法控制的外部變數。GLW 即使估值從 51x 壓回 25x（這已經是相對嚴厲的假設）、EPS 仍能補回大部分缺口。</p>
+<p>SNDK 在 3-5Y view 是「Pattern Match 對標歷史最不利」的時間軸 — Micron 2017Q4 cycle peak 後 5Y 平盤（+2~4%/yr）但中途兩次 −47% / −50% drawdown。本次 SNDK 的 setup 比 Micron 2017Q4 更極端：Forward PE 8.6x（cycle peak compression）與當時 Micron 4-6x 同樣便宜假象、GM 78% 史上最高與 Micron 2018Q2 GM 高峰類似、4w 漂移 +132% 比 Micron 2017Q4 ~+60% 更極端。歷史 5Y 終點報酬僅 +9-20% 累計（即 1.7~3.7%/yr）。</p>
+<p>MU 排第二的關鍵不是「+1.5% IRR 不錯」而是「相對 SNDK 較好」。絕對水準上，MU 5Y IRR +1% 仍 dominated by S&P 500 +10% / NVDA +15% / SK Hynix +8-12%（這是 MU DCA §7a opportunity cost 原文）。<strong>3-5Y view 的「相對排名」與「絕對接受度」是兩件事，MU 在三檔中排第二但不代表「值得進場」</strong>。</p>
+
+</section>
+
+<!-- §B.4 -->
+<section id="sB4">
+<h2>§B.4 長期視角（5-10 年）</h2>
+
+<div class="callout">
+<strong>本層核心評估維度：</strong>Runway post-Y5、第二/第三 S 曲線、範式風險（AI agent / 平台替代）、護城河 10 年抗風險、創辦人 / 管理層 alignment、10Y 機會成本
+</div>
+
+<h3>10Y 結構性對比</h3>
+<table>
+<thead>
+<tr><th>維度</th><th>MU</th><th>SNDK</th><th>GLW</th></tr>
+</thead>
+<tbody>
+<tr><td>Runway Post-Y5 評級</td><td><span class="signal signal-yellow">🟡 中</span></td><td><span class="signal signal-red">🔴 窄</span></td><td><span class="rank-1">🟢 寬</span></td></tr>
+<tr><td>10Y IRR 預估</td><td>+2~4%/yr（含週期均值回歸）</td><td><span class="signal signal-red">−7.0%/yr（HBF 兌現後仍負）</span></td><td><span class="rank-1">+8.6%/yr（10Y abs +130%）</span></td></tr>
+<tr><td>主要 S 曲線數量</td><td>2 條（HBM + LPDDR/GDDR）</td><td>1 條（NAND，HBF 是 optionality）</td><td><span class="rank-1">4 條（CPO + Glass substrate + Solar + 量子光元件）</span></td></tr>
+<tr><td>Y5 末 TAM 飽和度</td><td>HBM 滲透 25-30%（仍擴張 1.5-2x 空間）</td><td><span class="signal signal-red">NAND TAM 2031 $76B / SNDK share ~12-15% = 年化 $10-11B（低於 FY26E $24B 年化）</span></td><td><span class="rank-1">Optical 中段 / Solar 起飛期 / Glass substrate 早段</span></td></tr>
+<tr><td>商品化本質</td><td><span class="signal signal-red">商品（JEDEC 標準化 + 三家可互換）</span></td><td><span class="signal signal-red">商品（NAND 標準化）</span></td><td><span class="rank-1">材料平台（175 年累積 + 11,000+ 專利）</span></td></tr>
+<tr><td>10 年週期復發風險</td><td><span class="signal signal-red">高（每 4-5 年必反轉一次，2017/2019/2022 三次先例）</span></td><td><span class="signal signal-red">高（同 memory cycle 物理）</span></td><td><span class="signal signal-yellow">中（材料公司 cycle 較緩，2008/2022 兩次 ~−50%）</span></td></tr>
+<tr><td>範式風險（5-10Y）</td><td><span class="signal signal-yellow">CXL / 3D DRAM / PIM 改變 memory/compute 分工（2028-2030 窗口）</span></td><td><span class="signal signal-yellow">SCM / ReRAM / MRAM 蠶食 NAND inference 角色（2028+ 尾部）</span></td><td><span class="signal signal-green">材料平台 architecture 抗範式變化（任一條 S 曲線失效不致死）</span></td></tr>
+<tr><td>10Y 機會成本對比</td><td>SPX 10%/yr / NVDA 12-18%/yr / SK Hynix 6-9%/yr — MU dominated</td><td>SPX 8-10% / MU 0-5% — SNDK dominated by all</td><td>S&P 7-9% / QQQ 9-12% / 同類 COHR 11.2% / FN 10.2% — GLW competitive</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序</h3>
+<ol>
+<li><span class="rank-1">🥇 GLW</span> — 5-10Y view 是 GLW 的「絕對 dominant」時間軸。175 年材料平台 + 11,000+ 專利 + 多條 S 曲線 architecture 提供「即使任一條曲線失效，仍有 3 條腿撐」的結構性緩衝。GLW 自身 2003-2023 的歷史就是「材料公司 cycle reset 後找下一條 S 曲線復興」的教科書（光纖 → LCD → Gorilla → AI optics + Solar + Glass substrate）。10Y IRR +8.6%/yr 接近 S&P 平均，且 Max DD 路徑風險（🟡 −35~−55%）顯著淺於另兩檔（🔴 −60%+）。</li>
+<li><span class="rank-2">🥈 MU</span> — Runway 🟡 中是「商品化本質 + 週期復發特性，10 年複利受限」（MU DCA §7d 原文）。HBM TAM 結構性擴張至 $100-120B by 2030 是支撐長期賠率的關鍵，但 MU 在 HBM4 旗艦戰役被擠到 Rubin CPX 中段這個位置決定了「MU 不會 capture 結構性 TAM 擴張的最佳分潤」。10Y IRR +2~4%/yr 不及 SPX 平均，dominated by NVDA / SK Hynix 同期同類選擇。<strong>MU DCA §7d 原文明確「不建議長期持有」</strong>。</li>
+<li><span class="rank-3">🥉 SNDK</span> — 5-10Y view 是 SNDK 的「絕對劣勢」時間軸。Runway 🔴 窄的具體含義（DCA §A2 原文）：「NAND TAM 2031 $76B × SNDK share 12-15% = $10-11B 年化（vs FY26E $24B 年化）— Y5 末實質營收可能低於現在」。HBF 為唯一第二曲線但 5Y 內僅貢獻 $5-7B（不足以填補 NAND 反轉缺口），10Y 才有機會反超。<strong>SNDK DCA §7d 明確「長期 5-10 年 ❌ 不建議」</strong>。</li>
+</ol>
+
+<h3>為什麼這個排序</h3>
+<p>5-10Y view 是 architecture 差異最明顯的時間軸。GLW 與 MU/SNDK 的差別不是「公司執行力」差別，而是「商業模式 architecture」差別 — <strong>材料平台 vs 商品週期</strong>。</p>
+<p>GLW 175 年材料累積的具體含義：歷史上 GLW 在光纖泡沫（1999-2002 −99%）後重生於 LCD 玻璃、LCD 飽和（2011-2014 −50%）後重生於 Gorilla Glass、Gorilla Glass 成熟（2018-2023 −25%）後現正重生於 AI optics + Solar + Glass substrate。每一輪 cycle reset 後都能找到下一條 S 曲線。這個 architecture optionality 是 MU/SNDK 沒有的（兩家在「DRAM/NAND 商品化」這個單一 architecture 內，cycle reversion 只能等下一輪 cycle）。</p>
+<p>MU 排第二的核心邏輯：HBM 結構性擴張（$30B → $100-120B by 2030）的事實本身為正，但 MU 在 HBM4 旗艦戰役被擠到 Rubin CPX 中段的位置決定了「不會分到最高品質的 ASP mix」。10Y view 下，SK Hynix（HBM4 lead 60-70%）與 Samsung（4nm 自代潛在 binary upside）是 HBM 結構擴張的 prime 受益者，MU 是中段位置受益者。<strong>10Y IRR +2~4%/yr 並非「賠錢」而是「機會成本最高」— 同類選擇下 NVDA / SK Hynix 都更好</strong>。</p>
+<p>SNDK 排第三的具體原因：DCA §A2 明確標 Runway 🔴 + Y5 末實質營收 $10-11B 低於 FY26E $24B。這意味著「即使 SNDK 完美執行所有 thesis（cycle 延長 + HBF 兌現 + LTA 結構持續）」，5 年後的營收絕對值仍會低於今天。NAND TAM CAGR 5.32% 已飽和，是這個結論的根本物理。</p>
+
+</section>
+
+<!-- §C IRR Composition -->
+<section id="sC">
+<h2>§C IRR Composition 質感對比（縱深層 — 3-5Y view 真正的 alpha）</h2>
+
+<div class="callout callout-key">
+<strong>本節核心：</strong>多數對比工具只看 IRR 數字，不看「IRR 怎麼來」。IRR 質感決定「是否可抱」— 靠自己 EPS 跑的 IRR 是「自然複利好抱」、靠估值 re-rate 配合的 IRR 是「需市場配合難抱」、靠 cycle 配合 + 估值 re-rate + entry 三重變數的 IRR 是「幾乎不可抱」。
+</div>
+
+<h3>三檔 Base case IRR 分量視覺化</h3>
+
+<p><strong>GLW Base +7.3%/yr</strong> — EPS 複利 +18% 為主動力、股息+回購 +2% cushion、PE 壓縮 −12.7% 為唯一拖累</p>
+<div class="irr-bar">
+<div class="irr-segment irr-eps" style="flex:1800">EPS +18.0%</div>
+<div class="irr-segment irr-rerate-neg" style="flex:1270">Re-rate −12.7%</div>
+<div class="irr-segment irr-buyback" style="flex:200">股息+回購 +2.0%</div>
+</div>
+<div class="irr-legend">📊 質感解讀：<strong>「自然複利好抱型」</strong> — 即使 PE 壓縮至 25x（mean revert 至 specialty materials 軌道）、EPS +18%/yr 仍能補回大部分缺口；股息 + 回購 +2% 是三檔中唯一現金回饋。<strong>等待過程中持有成本最低</strong>。</div>
+
+<p style="margin-top:24px;"><strong>MU Base +1.5%/yr</strong> — EPS 反向複利（−5%）+ 估值 re-rate 救援（+6%）+ 微正股息</p>
+<div class="irr-bar">
+<div class="irr-segment irr-eps-neg" style="flex:500">EPS −5.0%</div>
+<div class="irr-segment irr-rerate-pos" style="flex:600">Re-rate +6.0%</div>
+<div class="irr-segment irr-buyback" style="flex:50">+0.5%</div>
+</div>
+<div class="irr-legend">📊 質感解讀：<strong>「需市場配合難抱型」</strong> — FY26 peak EPS 跌回 mid-cycle 是 EPS 反向複利；+6% re-rate 救援依賴「市場相信 mid-cycle PE 12x」這個假設（DCA §4 原文「這個 wait 通常要 2-3 年，過程中股價路徑波動極大」）。<strong>賭市場給你估值收斂的時機 — 而 memory PE 從未 sustained 在 cyclical 倍數之上</strong>。</div>
+
+<p style="margin-top:24px;"><strong>SNDK Base −14.5%/yr</strong> — EPS 衰退（−12%）+ 估值 de-rate（−3.3%）雙殺</p>
+<div class="irr-bar">
+<div class="irr-segment irr-eps-neg" style="flex:1200">EPS −12.0%</div>
+<div class="irr-segment irr-rerate-neg" style="flex:330">Re-rate −3.3%</div>
+<div class="irr-segment irr-buyback" style="flex:80">+0.8%</div>
+</div>
+<div class="irr-legend">📊 質感解讀：<strong>「不可抱型」</strong> — EPS 從 FY27 peak $182 → FY30 normalized $45 是 −12%/yr 衰退（cycle reversion 物理），PE 21x → 15x cycle midpoint 壓縮再加 −3.3%/yr。<strong>需要「cycle 配合 + 市場配合 + entry 正確」三重變數同時對 — 任一錯就 −15%/yr 起跳</strong>。Buyback +0.8% 救援極微（cycle reversal 時可能暫停）。</div>
+
+<h3>單變數可證偽性與「賭什麼」</h3>
+<table>
+<thead>
+<tr><th>標的</th><th>Base case 真正在賭什麼</th><th>單變數可證偽性</th><th>賭中 / 賭錯的不對等</th></tr>
+</thead>
+<tbody>
+<tr><td>MU</td><td>「Memory PE 結構性 re-rate 至 mid-cycle 12-14x + HBM4 share 守住 21%」</td><td>中（NVDA Rubin flagship 揭露為主 single trigger，2026 H2 可知）</td><td><strong>不對等差</strong> — 賭錯 5Y IRR −10.9%/yr，賭中 +16.0%/yr，加權後 +1.0%/yr</td></tr>
+<tr><td>SNDK</td><td>「NAND cycle 延 8-10 季 + $42B LTA 結構性鎖定 + HBF 兌現」三重條件</td><td>低（三變數獨立，cycle ASP MoM 為主 trigger）</td><td><strong>不對等最差</strong> — 賭錯 5Y IRR −31.5%/yr，賭中 +2.8%/yr，加權後 −13.4%/yr</td></tr>
+<tr><td>GLW</td><td>「Springboard 達標率 ≥ 80% + Solar 段執行不出大錯 + PE re-rate 至 25x 而非 16x」</td><td><span class="rank-1">高（Springboard 季度可監測、Q1 已 +36% Optical 驗證、3 條腿任一強即支撐 thesis）</span></td><td><span class="rank-1">不對等最佳 — 賭錯 5Y IRR −10.5%/yr，賭中 +21.3%/yr，加權後 +10.0%/yr</span></td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>核心：GLW 的 IRR 質感與賠率不對等是三檔之首。</strong>3-5Y view 的真正 alpha 不在「誰 IRR 數字最高」，而在「IRR 怎麼生成 + Bull-Bear 對稱性 + 賭中賭錯的相對代價」。GLW 是三檔中唯一「Bull > 賠率最佳、Bear 損失最淺、Base 為正、靠自己跑」四項齊全的標的。
+</div>
+
+</section>
+
+<!-- §D Bear / MaxDD -->
+<section id="sD">
+<h2>§D Bear Case + Max DD 路徑對比</h2>
+
+<div class="callout">
+<strong>本節核心：</strong>區分「執行風險」（可監測可證偽，1-2 季可看出）與「範式風險」（模糊，5-10 年才能 settle）。範式風險檔案在 5-10Y view 下不利，因為持有期間會有持續焦慮。
+</div>
+
+<h3>三檔 §5 Single Thing 對比</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>MU</th><th>SNDK</th><th>GLW</th></tr>
+</thead>
+<tbody>
+<tr><td>§5 Primary Trigger</td><td>NVDA Vera Rubin 2026 H2 量產時 MU HBM4 旗艦出貨 ≥ 15%（正向版本）</td><td>NAND 月度 ASP YoY 連 2 個月 MoM 轉負</td><td>Q2 2026 earnings 顯示 Springboard 增量達標率 &lt; 80%（Solar 段虧損 + Optical YoY 跌破 +25%）</td></tr>
+<tr><td>§5 Secondary Trigger</td><td>三家 HBM 供應商任一突然中斷出貨 1+ 月（MU 緊急召回）</td><td>5 家 hyperscaler 任一公開要求重新議定 LTA 價格條款</td><td>10Y UST &gt; 5.5% + SOX -20%（PE 系統壓縮 R3 完整觸發）</td></tr>
+<tr><td>觸發時點距離</td><td>3-5 個月（2026-08 NVDA Q2 FY27 法說）</td><td>6-9 個月（2026Q4 - 2027Q1 cycle 第 8-9 季）</td><td>2-3 個月（2026-07-29 Q2 2026 earnings）</td></tr>
+<tr><td>Bear case 性質</td><td><span class="signal signal-red">範式 + 執行混合</span></td><td><span class="signal signal-yellow">純執行風險（cycle reversion）</span></td><td><span class="signal signal-green">純執行風險（Springboard 達標率）</span></td></tr>
+<tr><td>持有過程焦慮</td><td>高（HBM4 位置 = 範式問題，5-10 年才能 settle）</td><td>中（cycle 物理是已知，可預警）</td><td>低（Springboard 季度可追蹤）</td></tr>
+</tbody>
+</table>
+
+<h3>Max DD 路徑對比</h3>
+<table>
+<thead>
+<tr><th>項目</th><th>MU</th><th>SNDK</th><th>GLW</th></tr>
+</thead>
+<tbody>
+<tr><td>Max DD 範圍</td><td>−45% ~ −65%</td><td><span class="signal signal-red">−40% ~ −72%（下界最深）</span></td><td><span class="rank-1">−35% ~ −55%</span></td></tr>
+<tr><td>路徑風險評級</td><td><span class="signal signal-red">🔴 含 &lt; −50% 區段</span></td><td><span class="signal signal-red">🔴 含 &lt; −50% 區段 + 下界最深</span></td><td><span class="signal signal-yellow">🟡 -35~-55%</span></td></tr>
+<tr><td>觸發時點</td><td>2028 Q2-Q4（hyperscaler 2027 capex air pocket + 新 fab 上線）</td><td>2027 Q4 - 2028 Q2（cycle 反轉第 8-10 季）</td><td>5Y 中段（Springboard 達標率不全 + Display OLED 加速）</td></tr>
+<tr><td>觸發後復原時間</td><td>3-5 年（歷史 2018→2023 用了 5 年；2021→至今 4.5 年才回</td><td><span class="signal signal-red">不會復原（thesis 已破）— 即使下一輪 cycle peak 也無法回 $1,562</span></td><td><span class="rank-1">2-3 年（材料公司 cycle 較緩，可待下一條 S 曲線）</span></td></tr>
+<tr><td>歷史 Pattern Match Max DD</td><td>2018 −55% / 2021 −47%（兩次先例）</td><td>Micron 2017Q4 後 −47% / 2021 後 −50%</td><td>2008 LCD −50% / 2022 成長股殺估值 −45%</td></tr>
+</tbody>
+</table>
+
+<h3>本層排序（Max DD 路徑風險 — 越低越好）</h3>
+<ol>
+<li><span class="rank-1">🥇 GLW（風險最低）</span> — 唯一 🟡 路徑風險評級。Max DD 上界 −35% 較淺、下界 −55% 可控；Bear case 是純執行風險（Springboard 達標率追蹤），可季度監測可漸進兌現；觸發後 2-3 年可復原。3.5-4.5% 配置 + 不槓桿 + 5Y 持有期可撐。</li>
+<li><span class="rank-2">🥈 MU</span> — Max DD 路徑 🔴 但下界 −65% 略好於 SNDK。問題在 Bear case 性質：HBM4 位置變化是「範式問題」（DRAM 結構 mix shift，5-10 年才能 settle），這意味持有期間會有持續焦慮，多數人在 −40% 區段就會被洗出。MU DCA §6c 原文「若 §5 H2 推翻（NVDA Rubin flagship MU = 0 確認），則『撐到復原』並非合理 plan — 直接清倉是 dominant 動作」。</li>
+<li><span class="rank-3">🥉 SNDK（風險最高）</span> — Max DD 下界 −72% 為三檔最深。SNDK DCA §6c 原文「不會恢復（thesis 已破）— 即使下一輪 cycle peak（2029-2030）EPS 也僅 normalized $50-80，無法支撐回到 $1,562 高點所需的 PE × EPS 乘積」。這是三檔中唯一「Max DD 觸發後 = 不可逆」的標的。SNDK DCA §7a 明確下修倉位上限至 ≤ 4%。</li>
+</ol>
+
+<div class="callout callout-danger">
+<strong>關鍵風險不對等：</strong>SNDK Bear case 雖然是「純執行風險」（NAND ASP MoM 可監測），但路徑下界 −72% 後「不會復原」是這次比較中最致命的特徵。即使能精準在 trigger 觸發時清倉（DCA §7b 預設動作），仍意味「投入 $1,562 起 = 上限 +15% / 下限 −72%」的賠率結構 — 對 5Y buy-and-hold 絕對 dominated。對照 GLW 同期：上限 +163% / 下限 −42.5%，賠率結構截然不同。
+</div>
+
+</section>
+
+<!-- §E -->
+<section id="sE">
+<h2>§E 最終裁決</h2>
+
+<h3>四層時間框架最終排序矩陣</h3>
+<table>
+<thead>
+<tr><th>時間軸</th><th>第一名</th><th>第二名</th><th>第三名</th><th>關鍵分水嶺</th></tr>
+</thead>
+<tbody>
+<tr><td>&lt; 12M 短期</td><td><span class="rank-1">🥇 GLW</span></td><td>🥈 SNDK</td><td>🥉 MU</td><td>進場條件距離 + 動能可持續性</td></tr>
+<tr><td>2-3Y 中期</td><td><span class="rank-1">🥇 GLW</span></td><td>🥈 SNDK</td><td>🥉 MU</td><td>拐點催化兌現可控性</td></tr>
+<tr><td>3-5Y 中長期</td><td><span class="rank-1">🥇 GLW</span></td><td>🥈 MU</td><td>🥉 SNDK</td><td>IRR composition 質感（EPS 自跑 vs 靠 cycle/PE 配合）</td></tr>
+<tr><td>5-10Y 長期</td><td><span class="rank-1">🥇 GLW</span></td><td>🥈 MU</td><td>🥉 SNDK</td><td>Runway + 多 S 曲線 architecture</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>排序穩定度洞察：</strong>GLW 在四層全部第一，<strong>排序不對時間軸敏感</strong>。MU 與 SNDK 的排名在 &lt;12M / 2-3Y vs 3-5Y / 5-10Y 之間有「中段交換」— SNDK 在短中期排第二（cycle play 動能 alpha 強），但在 3-5Y / 5-10Y 排第三（NAND TAM 飽和 + 不可復原 Max DD）；MU 反之。<strong>用戶若主問「短中期 cycle play」，SNDK 第二位置成立；若問「3-5Y / 5-10Y 中長期」（DCA 預設視角），MU 第二位置成立</strong>。但兩者都不是首選。
+</div>
+
+<h3>推薦標的（3-5Y 主視角）</h3>
+<div class="verdict-card">
+<div class="verdict-label">最終推薦</div>
+<div class="verdict-pick">GLW（Corning）</div>
+<div class="verdict-timeframe">3-5 年中長期 — 核心-衛星混合 3.5-4.5% 配置</div>
+<ul>
+<li><strong>IRR 質感唯一正向：</strong>Base IRR +7.3%/yr，EPS +18%/yr 為主動力，股息+回購 +2%/yr cushion，PE 壓縮 −12.7%/yr 為唯一拖累。是三檔中唯一「靠自己跑 + 股東現金回饋 + 估值壓縮可承受」的標的。</li>
+<li><strong>進場可達 + Max DD 路徑風險最淺：</strong>進場區 $155-175 距現價 −12~−21%，搭配 1.1% 股息 cushion 使等待過程持有成本低；Max DD 🟡 −35~−55% 為三檔中最淺、唯一非 🔴 評級。</li>
+<li><strong>Architecture 結構性勝出：</strong>175 年材料平台 + 11,000+ 專利 + 三條 S 曲線（Optical AI + Solar 美國本土化 + Glass substrate AI packaging），對照 MU/SNDK 商品週期 architecture。10Y IRR +8.6%/yr 為三檔中唯一接近 S&P 平均的選擇。</li>
+</ul>
+<p style="margin-top:14px; font-size:13px; color:#c2410c;">
+<strong>進場條件（必須條件式分批）：</strong>① 股價回測 $155-175 區間（Bollinger 中軌附近）→ 首批 2.0%；② 2026-07-29 Q2 2026 earnings 顯示 Optical YoY &gt; 30% 維持 + Core OM ≥ 20% → 加碼至 3.5%；③ 5/6 Investor Day 揭露 Springboard 延伸至 2030 + 2 家新 hyperscaler 合約 $5B+ 確認 → 加碼至 4.5%。減碼：Optical YoY 連 2 季 &lt; 15% 或 Forward PE 突破 65x → 2.0%。清倉：Springboard 信用破滅（IR Day 下修 ≥ 20% 增量目標）。
+</p>
+</div>
+
+<h3>不選 MU 的具體理由</h3>
+<ol>
+<li><strong>Moat ↓ narrowing 是三檔中唯一護城河窄化的：</strong>HBM4 旗艦戰役 MU 被擠到 Rubin CPX 中段（KED Global / Dataconomy 2026-03-09 報導 NVDA Vera Rubin 正式 HBM4 供應商為 Samsung + SK Hynix），pin speeds 11.0-11.2 Gb/s 結構性落後 Samsung 11.7 與 SK Hynix 12.0+。SNDK 短期 ↑ widening、GLW Moat A 持續 ↑ widening — MU 是反向。</li>
+<li><strong>IRR composition 質感差：</strong>Base IRR +1.5% 中，EPS 為 −5%/yr 反向複利、+6%/yr re-rate 救援依賴「市場相信 mid-cycle PE 12x」這個外部假設（memory PE 從未 sustained 在 cyclical 倍數之上 — DCA §3 強制減法原文）。質感是「需市場配合難抱型」，賭機率比 GLW 差。</li>
+<li><strong>進場條件距離最遠：</strong>$380-450 距現價 $757 需 −47%。DCA §7c 明確「⛔ 禁止一次建倉、禁止追高第一批」+「歷史 mean reversion：RSI &gt; 80 後 1 個月內回測 12-18% 機率 ~65-75%（memory cycle 股加倍）」。同時 CEO Mehrotra 5/1 賣 $21.5M + CBO Sadana 4/14 賣 $10.1M + 37:1 sell:buy = 內部人賣壓最強。</li>
+<li><strong>Opportunity cost dominated by 同類選擇：</strong>MU DCA §7a 自身原文「若預算只夠加一檔 HBM 曝險，SK Hynix &gt; Samsung &gt; MU 的 conviction 排序明確」；§4 IRR 落點解讀原文「+1%/yr 屬極弱（&lt; 8% 大盤平均；連短期國債 4.5% 都不及）」。MU 在 risk-adjusted 框架下是「持有者再評估、新進者迴避」的明確 dominated decision（DCA 原文）。</li>
+</ol>
+
+<h3>不選 SNDK 的具體理由</h3>
+<ol>
+<li><strong>5Y IRR 強負期望（−13.4%/yr）：</strong>三檔中唯一機率加權 5Y IRR 為負的標的。SNDK DCA §4 原文「機率加權年化 IRR −13.4%/yr 落入強負期望，對 5Y buy-and-hold 為大幅負值。表面便宜 PE 7x 純粹是 cycle peak earnings 算術假象」。即使 1-2 年 cycle play 視角 +15-30%/yr 可能，但現價 timing 極差（4w +132%）使 cycle play alpha 也難捕捉。</li>
+<li><strong>Runway 🔴 窄 + Y5 末實質營收可能低於現在：</strong>SNDK DCA §A2 原文「NAND TAM 2031 $76B × SNDK share 12-15% = $10-11B 年化（vs FY26E $24B 年化）— Y5 末實質營收可能低於現在」。NAND TAM CAGR 僅 5.32% 已飽和，HBF 為唯一第二曲線但 5Y 內僅貢獻 $5-7B 不足以填補 NAND 反轉缺口。長期 5-10Y SNDK DCA 明確標 ❌ 不建議。</li>
+<li><strong>Max DD 下界 −72% 為三檔最深且「不會復原」：</strong>SNDK DCA §6c 原文「不會恢復（thesis 已破）— 即使下一輪 cycle peak（2029-2030）EPS 也僅 normalized $50-80，無法支撐回到 $1,562 高點所需的 PE × EPS 乘積」。這是三檔中唯一「Max DD 觸發後 = 不可逆」的標的，賠率不對等最差。</li>
+<li><strong>opportunity cost 被自身 DCA 點名 dominated by MU：</strong>SNDK DCA §7a 原文「邊際資金應優先放 MU 而非 SNDK（同 cycle play 賠率，MU 多一條 HBM 曲線且非純商品）」、Phase B C4 矛盾原文「MU 為邊際資金首選」。換言之：<strong>SNDK 連自身 DCA 都建議「先把 MU 放滿再考慮 SNDK」</strong>，而我們本次比較進一步發現連 MU 也 dominated by GLW — 雙重 dominated decision。</li>
+</ol>
+
+<h3>時間軸切換敏感度測試</h3>
+<table>
+<thead>
+<tr><th>時間軸假設</th><th>首選變嗎？</th><th>主因</th></tr>
+</thead>
+<tbody>
+<tr><td>3-5Y → 5-10Y</td><td><span class="rank-1">不變，GLW 更明顯 dominant</span></td><td>GLW Runway 🟢 vs MU 🟡 vs SNDK 🔴 差距在 10Y 視角下放大；GLW 多條 S 曲線 architecture 抗範式變化</td></tr>
+<tr><td>3-5Y → 2-3Y 中期</td><td>不變（GLW）</td><td>Springboard $5.75B by 2028 拐點催化在 2-3Y 視角內兌現，MU/SNDK 反而遇 cycle 反轉風險窗口</td></tr>
+<tr><td>3-5Y → &lt;12M 短期</td><td>不變（GLW）</td><td>GLW 唯一進場可達（−12~−21%），MU/SNDK 進場區距現價皆 ≥ −47%</td></tr>
+<tr><td>「我已持 SK Hynix 或 NVDA」</td><td>不變（GLW）— 但選擇基於不同邏輯</td><td>GLW 與 SK Hynix / NVDA 屬「材料 vs 算力 vs HBM」不同籃，無曝險衝突；MU/SNDK 與 SK Hynix 同 memory 籃，邊際資金已重複曝險</td></tr>
+<tr><td>「純 1-2 年動能 cycle play」</td><td><span class="signal signal-yellow">換成 SNDK，但 timing 極差</span></td><td>SNDK 短中 cycle play 動能最猛（$42B backlog + GM 78% 史上最高 + 4w +132%），但現價追高為 v12.2 框架以來最差時機。<strong>純動能視角下 SNDK 第一，但執行紀律會否定此選擇</strong></td></tr>
+</tbody>
+</table>
+
+<h3>進場條件與監測指標總表</h3>
+<table>
+<thead>
+<tr><th>檢查項</th><th>條件</th><th>頻率</th></tr>
+</thead>
+<tbody>
+<tr><td>GLW 價位觸發</td><td>股價回測 $155-175 區間（Bollinger 中軌）</td><td>每日</td></tr>
+<tr><td>GLW Q2 2026 earnings</td><td>2026-07-29 ± 1 週 — Optical YoY &gt; 30% + Core OM ≥ 20%</td><td>季度</td></tr>
+<tr><td>GLW Springboard 達標率</td><td>季度 mgmt 公佈（增量達標率 ≥ 80% 為健康）</td><td>季度</td></tr>
+<tr><td>GLW 風險監測</td><td>Solar segment 季 net income trajectory（轉盈時點）；Hemlock wafer 日產量；10Y UST 突破 5.5%</td><td>季度 + 即時</td></tr>
+<tr><td>替代標的監測</td><td>SK Hynix (000660.KS) — HBM4 lead 60-70% 份額；NVDA — 5/27 Q1 FY27 法說後若回測 $200-205 為 dominant 同期同類選擇</td><td>季度 + 重大事件</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-key">
+<strong>一句話 takeaway：</strong>三檔的對比實質上是「材料平台 vs 商品週期」的對比 — GLW 在四層全部第一不是「GLW 完美」而是「另兩檔結構性都不適合 buy-and-hold」。<strong>MU 與 SNDK 都被各自 DCA 標為「不適合長抱、條件式進場、現價追高 dominated」</strong>，而我們本次比較進一步發現：MU 的「dominated by SK Hynix / NVDA」與 SNDK 的「dominated by MU」兩條 opportunity cost 鏈結合後，<strong>等同於「memory cycle 兩兄弟都 dominated」</strong>，而 GLW 與這個 dominated chain 完全脫鉤（材料平台 architecture）。3-5Y view 推薦 GLW；若已持 SK Hynix / NVDA / 2330.TW 等 AI infra core，GLW 仍可作補位（不重複曝險）；若無同類，GLW 可作核心-衛星混合至 4.5%。
+</div>
+
+</section>
+
+<div class="report-footer">
+<p>本報告由 multi-stock-comparator-v1 skill 自動生成，基於本地 DCA 報告抽取維度。<br>
+資料來源：DCA_MU_20260511.html (v1.1) / DCA_SNDK_20260511.html (v1.1) / DCA_GLW_20260513.html<br>
+免責聲明：本內容由 AI 自動生成，僅供參考，不構成任何投資建議。投資涉及風險。</p>
+</div>
+
+</div>
+</body>
+</html>
