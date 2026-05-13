@@ -79,35 +79,35 @@
 ## 共用 CSS（貼到 `<style>`）
 
 ```css
-body{font-family:-apple-system,'Noto Sans TC','Noto Serif TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:24px;max-width:880px;margin:0 auto;font-size:15px;line-height:1.85}
-.ds-head{border-bottom:3px solid #7C3AED;padding-bottom:14px;margin-bottom:28px}
-.ds-badge{display:inline-block;background:#7C3AED;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:6px}
-h1{color:#4C1D95;font-size:26px;margin:4px 0;letter-spacing:-.02em;line-height:1.3}
+body{font-family:-apple-system,'Noto Sans TC','Noto Serif TC',sans-serif;background:#FAFAF9;color:#111827;margin:0;padding:24px;max-width:880px;margin:0 auto;font-size:15px;line-height:1.85}
+.ds-head{border-bottom:3px solid #475569;padding-bottom:14px;margin-bottom:28px}
+.ds-badge{display:inline-block;background:#475569;color:#fff;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.5px;margin-bottom:6px}
+h1{color:#1F2937;font-size:26px;margin:4px 0;letter-spacing:-.02em;line-height:1.3}
 .ds-meta{color:#6B7280;font-size:12.5px;margin:6px 0}
 
 /* DS 的核心是文字：把段落間距、字體大小、行高都調整到適合長文閱讀 */
-h2{color:#4C1D95;border-left:4px solid #7C3AED;padding-left:12px;margin:36px 0 14px;font-size:19px;font-weight:700;letter-spacing:-.01em}
-h3{color:#5B21B6;margin:22px 0 8px;font-size:15px;font-weight:600}
+h2{color:#1F2937;border-left:4px solid #475569;padding-left:12px;margin:36px 0 14px;font-size:19px;font-weight:700;letter-spacing:-.01em}
+h3{color:#374151;margin:22px 0 8px;font-size:15px;font-weight:600}
 p{margin:12px 0;line-height:1.85}
 .ds-body p{text-align:justify;text-justify:inter-character;hyphens:auto}
-strong{color:#4C1D95;font-weight:700}
-em{color:#5B21B6;font-style:normal;font-weight:600}
+strong{color:#1F2937;font-weight:700}
+em{color:#374151;font-style:normal;font-weight:600}
 
 /* 表格樣式 — DS 用得少，刻意小巧 */
 table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px;background:#fff;box-shadow:0 1px 3px rgba(76,29,149,.06)}
-th{background:#4C1D95;color:#fff;padding:8px 10px;text-align:left;font-weight:500;font-size:12.5px}
+th{background:#1F2937;color:#fff;padding:8px 10px;text-align:left;font-weight:500;font-size:12.5px}
 td{padding:8px 10px;border-bottom:1px solid #E5E7EB;vertical-align:top;font-size:13px}
-tr:hover td{background:#FAF5FF}
+tr:hover td{background:#F9FAFB}
 caption{caption-side:top;color:#6B7280;font-size:11.5px;text-align:left;padding:4px 0 8px;font-style:normal}
 
 /* TL;DR thesis box（§0 唯一允許的 callout 容器） */
-.ds-thesis{background:linear-gradient(135deg,#F5F3FF 0%,#EDE9FE 100%);border-left:4px solid #7C3AED;padding:16px 20px;margin:18px 0 24px;border-radius:6px;font-size:14.5px;color:#1E1B4B;line-height:1.75}
-.ds-thesis .label{display:inline-block;background:#7C3AED;color:#fff;padding:2px 9px;border-radius:3px;font-size:10.5px;letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:8px}
-.ds-thesis strong{color:#4C1D95}
+.ds-thesis{background:linear-gradient(135deg,#F9FAFB 0%,#F3F4F6 100%);border-left:4px solid #475569;padding:16px 20px;margin:18px 0 24px;border-radius:6px;font-size:14.5px;color:#111827;line-height:1.75}
+.ds-thesis .label{display:inline-block;background:#475569;color:#fff;padding:2px 9px;border-radius:3px;font-size:10.5px;letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:8px}
+.ds-thesis strong{color:#1F2937}
 
 /* Cross-link callout (§0 if related_ids exists) */
-.ds-crosslink{background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;margin:8px 0 18px;border-radius:4px;font-size:13px;color:#4C1D95;line-height:1.7}
-.ds-crosslink a{color:#7C3AED;font-weight:600}
+.ds-crosslink{background:#F9FAFB;border-left:4px solid #475569;padding:10px 14px;margin:8px 0 18px;border-radius:4px;font-size:13px;color:#1F2937;line-height:1.7}
+.ds-crosslink a{color:#475569;font-weight:600}
 .ds-crosslink a:hover{text-decoration:underline}
 
 /* 章末「💡 對投資的意義」段落 */
@@ -120,8 +120,8 @@ caption{caption-side:top;color:#6B7280;font-size:11.5px;text-align:left;padding:
 .ds-bridge strong{color:#155E75}
 
 /* Catalyst 時間錨點（§10 用） */
-time, strong.ds-time{display:inline;background:#EDE9FE;color:#5B21B6;padding:1px 6px;border-radius:3px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600;letter-spacing:.5px;white-space:nowrap}
-time:hover, strong.ds-time:hover{background:#DDD6FE}
+time, strong.ds-time{display:inline;background:#F3F4F6;color:#374151;padding:1px 6px;border-radius:3px;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600;letter-spacing:.5px;white-space:nowrap}
+time:hover, strong.ds-time:hover{background:#E5E7EB}
 
 /* §10 雙路徑（若達成 / 若落空） */
 .ds-path-positive{color:#166534;font-weight:600}
@@ -138,7 +138,7 @@ time:hover, strong.ds-time:hover{background:#DDD6FE}
 .ds-refs .ds-refs-label{color:#4B5563;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:700}
 .ds-refs ol{margin:0;padding-left:20px}
 .ds-refs li{margin:3px 0}
-.ds-refs a{color:#7C3AED;text-decoration:none}
+.ds-refs a{color:#475569;text-decoration:none}
 .ds-refs a:hover{text-decoration:underline}
 .ds-refs .tier{display:inline-block;color:#4B5563;font-weight:600;margin-right:6px;font-size:11px}
 
@@ -147,7 +147,7 @@ time:hover, strong.ds-time:hover{background:#DDD6FE}
 
 /* Footer */
 .ds-foot{margin-top:48px;padding-top:18px;border-top:1px solid #E5E7EB;color:#6B7280;font-size:12px;text-align:center;line-height:1.8}
-.ds-foot a{color:#7C3AED;text-decoration:none}
+.ds-foot a{color:#475569;text-decoration:none}
 .ds-foot a:hover{text-decoration:underline}
 
 @media (max-width:720px){
@@ -187,9 +187,9 @@ time:hover, strong.ds-time:hover{background:#DDD6FE}
 
 <!-- 4. 編輯記錄（critic patch banner）— 若有 patch 則放 §0 末尾、預設 collapsed -->
 <details style="margin:18px 0 6px;font-size:12.5px;color:#6B7280">
-  <summary style="cursor:pointer;color:#7C3AED;font-weight:600;list-style:none">📌 編輯記錄（v1.1 critic patch）— 點開展開</summary>
+  <summary style="cursor:pointer;color:#475569;font-weight:600;list-style:none">📌 編輯記錄（v1.1 critic patch）— 點開展開</summary>
   <div style="margin-top:8px;padding:10px 14px;background:#FEF9C3;border-left:3px solid #F59E0B;border-radius:3px;color:#78350F;line-height:1.65">
-    <strong>v1.1（YYYY-MM-DD）</strong>：🟡 / 🔴 / 🟢 — {patch summary} → 影響章節：§{X}。critic report：<a href="_critic_{Theme}_{YYYYMMDD}.md" style="color:#7C3AED">_critic_{Theme}_{YYYYMMDD}.md</a>
+    <strong>v1.1（YYYY-MM-DD）</strong>：🟡 / 🔴 / 🟢 — {patch summary} → 影響章節：§{X}。critic report：<a href="_critic_{Theme}_{YYYYMMDD}.md" style="color:#475569">_critic_{Theme}_{YYYYMMDD}.md</a>
   </div>
 </details>
 </section>

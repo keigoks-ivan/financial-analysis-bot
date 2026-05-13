@@ -134,7 +134,7 @@ CSS（HTML 模板已含）：
 .ds-refs .ds-refs-label{color:#4B5563;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;font-weight:700}
 .ds-refs ol{margin:0;padding-left:20px}
 .ds-refs li{margin:3px 0}
-.ds-refs a{color:#7C3AED;text-decoration:none}
+.ds-refs a{color:#475569;text-decoration:none}
 .ds-refs a:hover{text-decoration:underline}
 .ds-refs .tier{display:inline-block;color:#4B5563;font-weight:600;margin-right:6px;font-size:11px}
 .source-warning{background:#FEF3C7;border-left:3px solid #F59E0B;padding:10px 14px;margin:14px 0;font-size:12px;color:#78350F;border-radius:3px}
@@ -426,7 +426,7 @@ DS 的研究分三軸，每軸最少 3-5 次 search，最多 8 次（避免無�
 - 若同 theme 有 ID → 加 callout：
 
 ```html
-<div style="background:#F5F3FF;border-left:4px solid #7C3AED;padding:10px 14px;margin:8px 0 14px;border-radius:4px;font-size:13px;color:#4C1D95">
+<div style="background:#F9FAFB;border-left:4px solid #475569;padding:10px 14px;margin:8px 0 14px;border-radius:4px;font-size:13px;color:#1F2937">
   📊 本主題已有 ID 報告：<a href="../id/ID_{Theme}_{YYYYMMDD}.html"><strong>ID_{Theme}_{YYYYMMDD}</strong></a> — 表格 dashboard 視角，建議與本 DS 互補閱讀。
 </div>
 ```
