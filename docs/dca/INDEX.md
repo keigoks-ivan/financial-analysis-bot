@@ -146,3 +146,4 @@
 | 2026-05-12 | FICO | FICO 是 40 年事實壟斷的 credit score 標準，正面臨 VantageScore + FHFA「Lender Choice」雙刀切開定價權，但 Platform 軟體 + 規模壟斷未崩 — 是「moat 受傷但未死」的修復賭局。 | DCA_FICO_20260512.html | DD_FICO_20260418.html | — |
 | 2026-05-13 | MELI | MELI 是拉美唯一同時鎖定商業、支付、信用、物流四引擎的飛輪生態，把 4.5 億 unbanked 人口的金融數位化變成自己的複利引擎。 | DCA_MELI_20260513.html | DD_MELI_20260513.html | ID_LATAMEcommerce_20260427.html / ID_StablecoinPayments_20260430.html |
 | 2026-05-13 | NOW | ServiceNow 是 Fortune 500 內 85% 客戶共用的「工作流動脈」，AI agentic 表面是威脅、實則讓 Now Platform 從工單系統升級為 AI 治理樞紐。 | DCA_NOW_20260513.html | DD_NOW_20260427.html | ID_AICrossDomainImpact_20260429.html / ID_AgenticAIPlatform_20260424.html |
+| 2026-05-13 | SE | SE 用一家公司同時擁有東南亞 6.5 億人口的購物、遊戲、銀行三條入口，是 leapfrog 大陸唯一能 cross-subsidize 的 super-app | DCA_SE_20260513.html | DD_SE_20260513.html | ID_GlobalEcommerce_20260427.html + ID_LATAMEcommerce_20260427.html |
