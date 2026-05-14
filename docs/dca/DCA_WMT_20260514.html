@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>WMT Deep Conviction｜2026-05-14</title>
+<!-- dca-moat-trend: ↑ -->
+<!-- dca-verdict: 觀望 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; line-height: 1.7; padding: 24px; max-width: 1080px; margin: 0 auto; font-size: 14.5px; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+.num { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+.pos { color: #15803D; font-weight: 600; }
+.neg { color: #991B1B; font-weight: 600; }
+.neu { color: #64748B; }
+header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+header .ticker { font-size: 24px; font-weight: 700; letter-spacing: 1px; }
+header .meta { font-size: 12px; color: #CBD5E1; }
+.thesis-block { background: #EFF6FF; padding: 28px 32px; border-radius: 6px; text-align: center; margin: 20px 0; border-left: 4px solid #3B82F6; }
+.thesis-block .thesis { font-size: 22px; font-weight: 700; color: #1E3A5F; line-height: 1.5; }
+.thesis-block .label { font-size: 11px; color: #64748B; margin-top: 8px; }
+.status-bar { background: #F1F5F9; padding: 14px 8px; border-left: 4px solid #3B82F6; border-right: 4px solid #3B82F6; border-radius: 6px; margin: 12px 0 20px 0; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.status-cell { width: 148px; text-align: center; padding: 6px 4px; }
+.status-cell .label { font-size: 11px; color: #64748B; margin-bottom: 6px; }
+.status-cell .body { font-size: 22px; font-weight: 700; }
+.section { background: #FFFFFF; border-radius: 6px; padding: 22px 26px; margin: 18px 0; border-left: 4px solid #3B82F6; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.section h2 { color: #1E3A5F; background: #1E3A5F; color: #fff; padding: 10px 16px; border-radius: 4px; font-size: 17px; margin-bottom: 16px; border-left: 4px solid #3B82F6; }
+.section h3 { color: #1E3A5F; font-size: 15px; margin: 16px 0 10px 0; padding-left: 8px; border-left: 3px solid #60A5FA; }
+.section h4 { color: #334155; font-size: 14px; margin: 12px 0 6px 0; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+table th { background: #1E3A5F; color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; border: 1px solid #1E3A5F; }
+table td { padding: 8px 12px; border: 1px solid #E2E8F0; vertical-align: top; }
+table tr:nth-child(even) td { background: #F1F5F9; }
+ul, ol { margin: 8px 0 8px 24px; }
+li { margin: 4px 0; }
+.decision-watch { background: #FEF9C3; border-left: 4px solid #92400E; padding: 18px 22px; border-radius: 6px; margin: 14px 0; }
+.verdict-chip-watch { display: inline-block; padding: 6px 20px; border-radius: 4px; font-size: 18px; font-weight: 700; background: #92400E; color: #fff; border-left: 4px solid #78350F; margin-bottom: 8px; }
+.chip-sub { font-size: 13px; color: #475569; font-style: italic; display: block; margin-bottom: 16px; }
+.contradiction-block { background: #FFF7ED; border-left: 4px solid #F97316; padding: 16px 20px; border-radius: 6px; margin: 14px 0; }
+.contradiction-block table th { background: #C2410C; }
+.verdict-table td { background: #FED7AA !important; }
+.premortem-block { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 16px 20px; border-radius: 6px; margin: 14px 0; }
+.premortem-block blockquote { background: #fff; padding: 12px 16px; border-left: 3px solid #DC2626; margin: 10px 0; font-style: italic; }
+.pattern-block { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px 20px; border-radius: 6px; margin: 14px 0; }
+.pattern-block table th { background: #0369A1; }
+.irr-comp-block { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px 20px; border-radius: 6px; margin: 14px 0; }
+.irr-comp-block .interp { font-style: italic; padding: 10px 14px; background: #fff; border-left: 3px solid #0EA5E9; margin-top: 12px; font-size: 13px; }
+.maxdd-block { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 16px 20px; border-radius: 6px; margin: 14px 0; }
+.maxdd-headline { font-size: 32px; font-weight: 700; color: #92400E; }
+.bar-stack { width: 100%; height: 16px; border-radius: 3px; overflow: hidden; display: flex; margin: 8px 0; background: #E2E8F0; }
+.bar-stack > div { color: #fff; font-size: 11px; padding: 0 6px; line-height: 16px; }
+.memo-block { border: 2px dashed #94A3B8; padding: 16px 20px; border-radius: 4px; background: #FAFAFA; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.6; margin: 14px 0; }
+.elevator { background: #FFF; padding: 12px 18px; border-left: 4px solid #6366F1; font-style: italic; margin: 10px 0; }
+details { background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 4px; padding: 12px 18px; margin: 10px 0; }
+details > summary { cursor: pointer; font-weight: 600; color: #1E3A5F; font-size: 14.5px; }
+details[open] > summary { margin-bottom: 12px; }
+.tag-green { color: #166534; font-weight: 600; }
+.tag-yellow { color: #92400E; font-weight: 600; }
+.tag-red { color: #991B1B; font-weight: 600; }
+.print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #fff; padding: 10px 16px; border-radius: 4px; cursor: pointer; border: none; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+@media print { .print-btn { display: none; } header { display: none; } details { page-break-inside: avoid; } details:not([open]) > *:not(summary) { display: block !important; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="ticker">WMT｜Walmart Inc.</div>
+    <div class="meta">Deep Conviction Analysis · 2026-05-14 · Skill v1.3</div>
+  </div>
+  <div style="text-align: right;">
+    <div style="font-size: 13px;">One-Sentence Thesis</div>
+    <div class="meta">美國民生消費的 distribution 壟斷者，正在把 toll booth 升級成 ad + automation 雙引擎</div>
+  </div>
+</header>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="status-cell"><div class="label">DD 訊號燈</div><div class="body" style="color: #92400E;">B</div></div>
+  <div class="status-cell"><div class="label">Moat 趨勢</div><div class="body">A<span style="color: #166534;">↑</span></div></div>
+  <div class="status-cell"><div class="label">Runway Post-Y5</div><div class="body" style="font-size: 16px;">🟢 寬</div></div>
+  <div class="status-cell"><div class="label">Max DD（5Y）</div><div class="body" style="color: #92400E;">−50%</div></div>
+  <div class="status-cell"><div class="label">DCA 裁決</div><div class="body" style="color: #92400E;">觀望</div></div>
+</div>
+
+<!-- §2 Thesis -->
+<div class="thesis-block">
+  <div class="thesis">WMT 把美國 70% 家庭每週採購這個 toll booth 升級成 ad-driven 高邊際機器 — 規模 + 數據 + 自動化是 3 重複利</div>
+  <div class="label">— 50 字以內的投資本質 —</div>
+</div>
+
+<!-- §7 Decision -->
+<div class="section">
+<h2>§7｜Decision（投資決策）</h2>
+<div class="decision-watch">
+  <span class="verdict-chip-watch">觀望</span>
+  <span class="chip-sub">FPE 44x 為 5Y 90+ 分位 + Q2 FY27 法說（2026-08-21）為 binary 驗證 + 等股價回測 $95-100 (FPE 32-35x) 才有合理 R:R</span>
+
+<h3>7a｜倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>條件式核心持倉（民生消費 + retail media + automation 主題）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0% of portfolio</strong>（觸發前不持有）</td></tr>
+<tr><td>目標倉位</td><td>條件成立後 <strong>4-6% of portfolio</strong>（Max DD 🟡 評級已下修，原 7-8% → 4-6%）</td></tr>
+<tr><td>進場價位區間</td><td>$95-$110（FPE 32-37x × FY27 EPS $2.97 = $95-110）— 即股價需從現價 $131.09 再 -16% 至 -27%</td></tr>
+<tr><td>進場節奏</td><td><strong>觸發條件</strong>（任 1 即可建倉 1.5% / 等其他補到 4-6%）：<br>(a) 股價回測 $110 以下 (FPE ≤ 37x) + Q2 FY27 法說 (2026-08-21) 確認 Walmart Connect ad +30%+ + US comp +3%+<br>(b) 股價回測 $95-100 (FPE 32-34x) — 直接合理進場區間（regardless of 短期 catalyst）<br>(c) Q2 + Q3 FY27 連 2 季 US e-comm operating profit margin ≥ 3%（首次 sustained profitability verified） + Walmart Connect rev > $8.5B FY27 run rate</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>Portfolio 若已持有 <strong>COST (Costco)</strong>（同 wide-moat retail，FPE 38x，5Y EPS CAGR 13.32% vs WMT 6.05%）：邊際資金優先 COST 已經有更純的 membership flywheel + 更高 EPS CAGR + 更穩 multiple；WMT 的 incremental edge = retail media（Walmart Connect $6.4B vs COST 廣告極小）+ 更廣 demographics（COST 高端 / WMT 中低端）。判斷：<strong>WMT 與 COST 是 complement 而非 substitute</strong> — WMT 進場為「retail media + 民生 GLP-1 hedge」alpha，COST 為「membership compounder」alpha。若已 COST 6%，WMT 補 4% 合計 10% retail 主題上限。若 portfolio 持 <strong>AMZN</strong>（更大 cap 同 e-comm + ad，FPE 35x），WMT 是 AMZN 的 brick-mortar pure-play hedge — 仍可並存（AMZN ad $68B / WMT ad $6.4B = 10x scale 差但 WMT 增速 6x 快）。</td></tr>
+</table>
+
+<h3>7b｜加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首批）</td><td>(a)/(b)/(c) 任 1 觸發 + R:R ≥ 1.5x（股價 ≤ $105）</td><td>1.5%</td></tr>
+<tr><td>加碼</td><td>Q2 + Q3 + Q4 FY27 連 3 季 Walmart Connect +30%+ + US comp +3%+ + Sam's Club membership +7%+ + 股價 < $115</td><td>4-6%（目標倉位）</td></tr>
+<tr><td>減碼</td><td>Walmart Connect ad rev YoY 連 2 季 < +25% （DD §5 H1 trigger）<br>**或** US comp 連 2 季 < +3% （DD §5 H2 trigger）<br>**或** Furner CEO 任一季 EPS miss > 5%</td><td>降至 1.5%</td></tr>
+<tr><td>清倉</td><td>Walmart Connect 連 3 季 < +20% （ad mix shift thesis 失效）<br>**或** GLP-1 grocery basket 影響加速 — Cornell 跟蹤指數連 2 季 grocery -8%+（vs 當前 -5.3% 6 個月）<br>**或** Furner 連 2 季 EPS miss > 5% + guidance 大幅下修</td><td>0%</td></tr>
+</table>
+
+<h3>7c｜Pure MA 相容性檢查 + 動能</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA50 之上？</td><td><span class="tag-yellow">⚠</span></td><td>$131.09 ≈ MA50（橫盤近 1 個月）— 中性</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="tag-green">✅</span></td><td>$131.09 > MA200（5/12 報導 above 200d）— 長期趨勢仍多</td></tr>
+<tr><td>股價在 MA52w 之上？</td><td><span class="tag-green">✅</span></td><td>52 週區間 high $131-135，當前接近 high — 趨勢強</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="tag-green">⚠ ✅</span></td><td>2/3 通過（MA50 中性、MA200/MA52w 多）— Pure MA 偏支持但不完全</td></tr>
+<tr><td>短期動能過熱檢查</td><td><span class="tag-yellow">⚠</span></td><td>股價接近 52 週高點 + FPE 44x = 動能 priced in；4 週漂移估計 +5-8%（不過熱但偏熱）；估值 🔴 = 隱性「動能過熱」訊號</td></tr>
+</table>
+<p style="margin-top: 8px; font-size: 13px;"><strong>Pure MA 偏支持但估值🔴 為主要 soft veto。</strong>即使 MA200 + MA52w 雙多，FPE 44x 為 5Y 90+ 分位的「估值動能過熱」是 condition「等回測」的真實理由 — Pure MA 通過告訴你「結構是多頭」，但估值🔴 告訴你「這個多頭已 priced in 完美未來 3 年」。</p>
+
+<h3>7d｜建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td><strong>短期（&lt; 2 年）</strong></td><td>如 multiple compression 加速（Costco 2025 -5% pattern 重演）→ 短期投機部位即出（5Y IRR 7.7% 不夠 absorbing 短期 multiple risk）</td></tr>
+<tr><td><strong>中期（2-5 年）</strong></td><td>如 Walmart Connect 持續 +35%+/yr + Sam's Club mix shift + automation peak 2026-2027 → 中期 EPS 複利（10%/yr Base）+ multiple 緩慢 mean revert（44→36x）</td></tr>
+<tr><td><strong>長期（5-10 年）</strong>（建議）</td><td>如 Walmart Connect 兌現 $20B+ FY30（vs 當前 $6.4B = 3x runway） + automation peak 後 OP margin 從 4.4% 升至 5.5%+ + Sam's Club 維持 7%+ 增長 → 真正的 retail toll booth 升級為 high-margin platform，long-term compounder</td></tr>
+</table>
+<p style="margin-top: 10px;"><strong>建議持有年限：長期（5-10 年）</strong>，原因：(a) Wide moat (moat_score 8.0) + runway_post_y5 🟢 寬 = 真正可長抱的 compounder（vs SPOT/TPR 中期定位），(b) Walmart Connect $6.4B 對標 AMZN $68B = 10x 結構性 runway，(c) automation peak 2026-2027 後 margin expansion 是 5-10Y EPS 主要 driver，(d) 民生消費非 cyclical（GLP-1 是長期次要 headwind 但可控）。<strong>但</strong>長抱前提是合理進場價（FPE ≤ 35x），現價 FPE 44x 進場 = 抱 5Y 也只賺 +38%，不值 long-term commitment。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備註</th></tr>
+<tr><td>FY26 (1/31/2026 已過)</td><td>$2.50-2.60</td><td>Walmart FY26 raised guide</td><td>+12.6% YoY</td></tr>
+<tr><td>FY27E</td><td>$2.97</td><td>Stockanalysis.com 共識（2026-05）</td><td>+15-19% YoY，Walmart Connect 持續 +40%+ 為主要 driver</td></tr>
+<tr><td>FY28E</td><td>$3.32</td><td>同源</td><td>+12% YoY</td></tr>
+<tr><td>FY29E</td><td>$3.62</td><td>同源</td><td>+9% YoY（成長率自然遞減）</td></tr>
+<tr><td>FY30E</td><td>$3.72</td><td>同源</td><td>+3% YoY（已過 capex peak，OP margin expansion 接管）</td></tr>
+<tr><td>FY31E（5Y 從 FY26）</td><td>$4.10</td><td>外推</td><td>外推假設：Walmart Connect FY30 $20B + automation OP margin +50bps + Sam's membership +7%/yr，5Y EPS CAGR 10.4%</td></tr>
+</table>
+
+<p style="margin-top: 12px;"><strong>5-10 年持有股價適合嗎？</strong>當前 $131.09，FY26 FPE 44.69x，TTM PE 47.74x。歷史 5Y avg PE ~28x，10Y avg ~22x。<strong>當前 FPE 為 5Y 90+ 分位、10Y 95+ 分位 — 估值🔴極端，需 multiple compression 至 32-36x 才能合理化</strong>。Base case 5Y IRR 7.7%/yr 落在「弱-中段」門檻（8% 弱以下）— 不及大盤平均，需強烈 idiosyncratic 理由才動部位。10Y IRR 預估 6-7%/yr（複利減弱 + multiple 已壓縮無 re-rate 空間）。<strong>結論：當前價位 5Y 不夠便宜，需股價回測 $95-110 區間 R:R 才能升至 1.5-2.0x</strong>（見 §4 Asymmetry & §6c Max DD）。長期 compounder 質地一流，但「對的價格」是進場 prerequisite。</p>
+</div>
+</div>
+
+<!-- §4 Asymmetry Analysis -->
+<div class="section">
+<h2>§4｜Asymmetry Analysis｜5Y 不對稱性（$131.09 進場基準）</h2>
+<table>
+<tr><th>情境</th><th>5Y 絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull</td><td class="pos">+80%</td><td class="pos">+12.5%/yr</td><td>Walmart Connect $20B+ FY31 + automation OP margin +100bps + GLP-1 影響可控 + Sam's Club membership +10%/yr → FY31 EPS $5.0 × FPE 40x = $200；含 1.0% div + 0.5% net buyback</td><td>25%</td></tr>
+<tr><td>Base</td><td class="pos">+45%</td><td class="pos">+7.7%/yr</td><td>Walmart Connect 持續 +30%/yr + automation peak ramp + US comp +3-4% sustained → FY31 EPS $4.10 × FPE 36x = $147（capital +12% + 1.0% div × 5 + buyback 0.3%/yr）</td><td>50%</td></tr>
+<tr><td>Bear</td><td class="neg">−18%</td><td class="neg">−3.9%/yr</td><td>Multiple compression to 5Y avg + GLP-1 grocery -10%+ / 6 個月 + e-commerce profitability fragile → FY31 EPS $3.50（5Y CAGR 7%）× FPE 22x = $77（5Y avg multiple compression + EPS 略低於共識）</td><td>25%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong class="pos">+38% 5Y</strong></td><td><strong class="pos">IRR ≈ +6.65%/yr</strong></td><td>—</td><td></td></tr>
+</table>
+
+<p><strong>IRR 落點解讀</strong>：Base 7.7%/yr 落在「弱-中段」邊界（&lt;8% 弱、8-12% 中），EV 6.65%/yr 同 Base 偏弱 — 機率分配對稱（Bull 25% / Bear 25%）反映「優質公司但估值已 priced in」現狀。<strong>邊際進場價</strong>：若股價回測 $100（FPE 34x），Base IRR 升至 +13-14%/yr（強），EV 升至 +12%/yr（合理進場區）。當前 $131.09 EV 6.65% = 「等對的價格」。</p>
+
+<p><strong>10Y 壓力測試</strong>：把窗口拉到 10Y，Bull EPS $7.0 × 35x = $245（+87% / +6.5%/yr）、Base $5.5 × 28x = $154（+18% / +1.7%/yr）、Bear $4.5 × 18x = $81（-38% / -4.6%/yr）。10Y EV ≈ +1.5%/yr 顯著低於 5Y EV 6.65% — 因 Y6-Y10 multiple compression 加速 + EPS 成長率 single-digit 不足以抵銷。<strong>10Y 比 5Y 更弱，因 WMT 是「mature quality 但已 priced in 完美 5Y」的標的，不是「Y10 還能 outsized 複利的 underpriced compounder」</strong>。</p>
+
+<p><strong>機會成本對比</strong>：同期可比 COST FPE 38x、5Y EPS CAGR 13.32%、5Y IRR ~10-12%/yr — 高於 WMT。AMZN FPE 35x、CAGR 18%、5Y IRR ~12-15%/yr — 顯著高於 WMT。SPY S&P 500 5Y avg total return ~10%/yr。<strong>WMT 在 retail peer 與 broad market 中都不是該 universe 的最佳選擇</strong>，需 idiosyncratic 理由（民生 GLP-1 hedge / retail media pure play）才動部位。</p>
+
+<div class="pattern-block">
+<h3 style="border:none;padding:0;margin:0 0 8px;color:#0C4A6E">📐 Pattern Match｜歷史相似 setup</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史 case</td><td><strong>Costco 2018-2023</strong>（已 premium FPE 28x → 45x，5Y total return ~180% / +23%/yr）+ <strong>Microsoft 2017-2022</strong>（mature business + multi-engine growth + cloud 升級 thesis，FPE 22x → 32x）</td></tr>
+<tr><td>當時 setup</td><td>Costco 2018: FPE 28x、membership $3.6B、5Y EPS CAGR 12%；MSFT 2017: FPE 22x、Office + Azure 雙引擎、5Y EPS CAGR 18%</td></tr>
+<tr><td>5Y 實現報酬</td><td>Costco 2018→2023: $200 → $560 = +180% (+23%/yr) — multiple 從 28x → 45x 為主要 driver，但 2025 -5.4% 為 multiple 末段擠壓警示；MSFT 2017→2022: $63 → $244 = +287% (+31%/yr) — EPS + multiple 雙升</td></tr>
+<tr><td>WMT 最像 / 最不像</td><td><strong>最像 Costco 2023 末段</strong>：(a) Multiple 已從合理 28x 漲至 44-47x（priced in 完美 mix shift），(b) Membership-like flywheel 強（Walmart Connect ad + Sam's Club 替代品），(c) 成長率自然遞減已開始（Q1 FY26 +2.5% vs 歷史 +5%）；<strong>不像 MSFT 2017-2022</strong>：(a) WMT 沒有 MSFT 那樣的雙位數 EPS CAGR 18%（WMT 5Y 6%、未來 5Y 10-13%），(b) 沒有 cloud 那樣的高 GM 30%+ 結構性 mix shift，(c) 不是 enterprise SaaS 80% GM 等級</td></tr>
+</table>
+<p style="margin:8px 0 0;font-size:13px"><strong>校準</strong>：Costco 2018→2023 +23%/yr 是合理上限參照（assuming WMT 同樣享受 5Y multiple expansion）— 但 2025 Costco -5% 暴露了 multiple 末段擠壓的風險。WMT 5Y Bull +12.5%/yr 對應 partial 兌現 Costco 路徑（multiple 不再擴張，靠 EPS 複利）；Base +7.7%/yr 對應 multiple 開始 mean revert；Bear -3.9%/yr 對應 GLP-1 + 自動化失序 + multiple 大幅 compression。</p>
+</div>
+
+<div class="irr-comp-block">
+<h3 style="border:none;padding:0;margin:0 0 8px;color:#0C4A6E">🧬 IRR Composition｜5Y IRR 質感拆解</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td class="pos">+13.0%/yr</td><td class="neg">−1.9%/yr</td><td class="pos">+1.5%/yr</td><td class="pos">+12.6%/yr</td></tr>
+<tr><td>Base</td><td class="pos">+10.4%/yr</td><td class="neg">−4.0%/yr</td><td class="pos">+1.3%/yr</td><td class="pos">+7.7%/yr</td></tr>
+<tr><td>Bear</td><td class="pos">+7.0%/yr</td><td class="neg">−12.5%/yr</td><td class="pos">+1.0%/yr</td><td class="neg">−4.5%/yr</td></tr>
+</table>
+<div class="bar-stack" title="Base case 7.7%/yr 拆解">
+  <div style="background: #15803D; width: 67.5%;">EPS 10.4</div>
+  <div style="background: #3B82F6; width: 26.0%; color: #fff;">re-rate −4.0</div>
+  <div style="background: #94A3B8; width: 8.4%;">div+bb 1.3</div>
+</div>
+<div class="interp">
+Base 7.7% IRR 中（與 §4 Base IRR 7.7% 偏差 0%p ≤ 2%p ✅），<strong>10.4%/yr 來自 EPS 複利</strong>（Walmart Connect +30%/yr + automation OP margin expansion + Sam's membership growth），<strong>-4.0%/yr 來自估值 re-rate（FPE 44x → 36x mean reversion）</strong>，1.3%/yr 來自股息 1.0% + 淨 buyback 0.3%。這檔的可抱性<strong>主要靠 EPS 自然複利</strong>（自然複利好抱），但<strong>multiple compression 是 5Y 主要 friction —「需市場耐心容忍 mean revert」</strong>。質感：<strong>EPS 主導，但 valuation 風險明顯壓制 5Y 報酬</strong>，需更便宜進場才能讓 EPS 複利充分顯現。
+</div>
+</div>
+
+</div>
+
+<!-- §1 Mental Models -->
+<div class="section">
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-block">
+<strong>WMT｜投委會 Memo｜2026-05-14</strong><br><br>
+<strong>Thesis</strong>：WMT 把美國 70% 家庭每週採購這個 toll booth 升級成 ad-driven 高邊際機器 — 規模 + 數據 + 自動化是 3 重複利。<br><br>
+<strong>Key Drivers</strong>：(1) Walmart Connect retail media business（$6.4B FY26 +46%，runway 至 AMZN $68B 規模 = 10x），(2) Automation + supply chain peak investment 2026-2027 後 OP margin expansion +50-100bps<br><br>
+<strong>R:R</strong>：5Y EV 6.65%/yr（Base +45%, Bull +80% @25%, Bear -18% @25%）；機率加權偏弱（&lt;8% 弱門檻），「優質公司但已 priced in」<br><br>
+<strong>主要風險</strong>：(1) FPE 44x 為 5Y 90+ 分位 — multiple compression 是 -4 to -12.5%/yr 拖累，(2) GLP-1 grocery basket -5.3% / 6 個月（Cornell 研究），長期食品營收 headwind 加速，(3) 新 CEO Furner 2026/2/1 接任，前 4 季財報執行風險<br><br>
+<strong>建議倉位</strong>：當前 0% / 觀望。等股價 $95-110 區間進場（FPE 32-37x）。Pure MA 偏支持但估值🔴 強制條件式進場。<br><br>
+<strong>建議持有年限</strong>：長期 5-10 年（wide moat + retail media 3x runway + automation OP margin lever），但<strong>長抱 prerequisite 是合理進場價</strong>。<br><br>
+<strong>保質期</strong>：至 2026-08-21（Q2 FY27 法說）— Walmart Connect ad 增速 + US comp 是 thesis 第一個 binary 驗證點。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「WMT 是美國民生 toll booth — 21% 雜貨市占（Kroger + Costco 加起來都比不上）、$1T market cap、$713B 營收、Walmart Connect 廣告 $6.4B +46% YoY 在追 Amazon。問題：股票太貴了，FPE 44x 是 5 年 90+ 分位，要靠 multiple compression 4%/yr 才能合理化。Pure MA 偏支持但估值🔴。等股價回到 $100 以下、FPE 35x、Q2 FY27 法說 8/21 確認 ad 業務還在 +30%+，再進。」</div>
+
+<p style="margin-top: 12px; font-size: 13px;"><strong>壓力測試結果</strong>：兩個版本邏輯自洽。1 頁紙 memo 重點落在「優質但 priced in + multiple compression risk」；30 秒版本傳達「toll booth + ad runway + 估值🔴 + Wait for entry」四要素。✅ 通過，繼續 §7。</p>
+</div>
+
+<!-- Phase B -->
+<div class="section">
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li><strong>Wide moat 結構性升級</strong>：A1 cost leadership + 21% grocery share + 90% population proximity / A2 retail media TAM 5x runway / A3 Walmart Connect $6.4B +46% — 三軸一致認為「moat ↑ widening 已驗證」</li>
+<li><strong>FCF 機器穩定</strong>：A1 規模經濟 + 連 50+ 年盈利 / A2 retail TAM 4-6%/yr 中段 / A3 OP income $31.1B + 75bps margin 紀律 — 三軸一致「公司 FCF 結構性穩」</li>
+<li><strong>長期 runway 寬</strong>：A1 e-commerce 達成首次 profitability Q1 26 / A2 online grocery 2034 4x runway / A3 automation peak 2026-2027 ramp + Sam's Club mix shift — 三軸一致「Y5+ 仍有結構性 driver」</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="contradiction-block">
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>🔴 1</td><td>Wide moat valuation 是否 priced in</td><td>moat_score 8.0 wide + ↑ widening 結構真實</td><td>retail media TAM 5x runway 真實但 sector 整體 mature</td><td>FPE 44x 為 5Y 90+ 分位 = 已 priced in 5+ 年完美 mix shift</td><td>不可調和（A1+A2 說 fundamental 強，A3 說股價已 reflect optimum scenario）</td></tr>
+<tr><td>🔴 2</td><td>GLP-1 對 grocery business 的影響速度</td><td>WMT 透過 pharmacy + nutrition shift 部分 hedge</td><td>Cornell -5.3% 6 個月 / Numerator -10% snack / 23% → 35% household by 2030 = 結構性</td><td>WMT CEO McMillon 已承認「some margin pressure」</td><td>不可調和（A1 說 hedge 中, A2/A3 說已實質受傷）</td></tr>
+<tr><td>🟡 3</td><td>Furner 新 CEO 執行風險 vs Doug McMillon 過渡平滑</td><td>Furner 18 年 WMT 老將 + Walmart US president 任內表現強</td><td>retail sector 換 CEO 平均第一年 EPS miss 比例 ~30-40% (sector trends)</td><td>Q1 FY26 已 +2.5% rev / +4.3% OP / e-comm profitable = early Furner era 表現強</td><td>可調和（程度差異）— Furner 至少 4 季可能有單季 miss 但結構性 transition 風險低</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有 DD/ID 報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD/ID 報告結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>moat 評分</td><td>A↑ widening（moat_score 8.0 wide moat）</td><td>DD §0.5 moat = "B"（letter rating 保守）</td><td>分析深度差：DD letter rating 偏 conservative，DCA 用 moat_score 8.0 對應 wide moat 標準</td></tr>
+<tr><td>2</td><td>5Y IRR 評估</td><td>Base 7.7%/yr（弱-中段邊界）</td><td>DD upside_short_pct = -35% 短期 R:R 不足</td><td>視角差：DD 看短期 R:R 不足直接 B 觀望，DCA 看 5Y 視角更包容（仍中段）</td></tr>
+<tr><td>3</td><td>retail media + GLP-1 雙引擎</td><td>retail media + GLP-1 hedge 雙重升級 thesis</td><td>ID_AIAdRetailMedia: Walmart Connect $4.4B → $15-20B 2030 是 sector 中最 underrated growth；ID_GLP1PackagedFood: WMT 是 packaged food 受影響者</td><td>同方向（DCA 與 ID 一致 — retail media 強 + GLP-1 是 headwind）</td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決</h3>
+<div class="contradiction-block">
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑</th></tr>
+<tr class="verdict-table"><td>1</td><td>Wide moat valuation 是否 priced in</td><td><strong>A3 略勝 A1+A2</strong>（valuation 風險權重更高）</td><td>歷史 case：Costco 2018-2023 在 FPE 28x 進場後 5Y +180%；當前 WMT FPE 44x 進場 = 5Y +30-50% 是 fair upper bound（sector multiple compression 已開始 — Costco 2025 -5%）。Mean reversion to 30-36x 是 base case，需 EPS upgrade cycle 5+ 年才能消化當前估值。</td><td>(a) 股價 ≤ $110 (FPE ≤ 37x)<br>(b) Q2 FY27 法說 (2026-08-21) Walmart Connect 連 1 季 +35%+ + US comp +3.5%+<br>(c) FY28 EPS 共識上修至 $3.50+ (從當前 $3.32)</td><td>(a) 股價 $110 + Q2 ad +35% → 進場 1.5%<br>(b) 股價 < $100 → 直接合理進場區 → 進場 4-6% 一次到位</td></tr>
+<tr class="verdict-table"><td>2</td><td>GLP-1 對 grocery business 影響速度</td><td><strong>A2+A3 勝 A1</strong>（GLP-1 結構性 headwind，hedge 不足）</td><td>Cornell 數據明確：-5.3% / 6 個月 + 35% household by 2030 = 5-10Y 累積 grocery -10-15%。Walmart 的 hedge（pharmacy + GLP-1 prescription business 自己賣）能抵 1-2pp 但抵不到 5pp。WMT CEO 已承認 margin pressure。</td><td>(a) WMT pharmacy 季度 GLP-1 prescription 數量 (mgmt 偶爾揭露)<br>(b) WMT US grocery 同店成長率 vs 全 sector平均（若 WMT 跑輸 sector 1pp+ → GLP-1 受傷比 hedge 多）<br>(c) Cornell 後續研究 — 12 個月、24 個月 cumulative impact</td><td>(a) WMT US grocery 同店連 2 季 < sector 1pp+ → GLP-1 確認 net negative → 減持 50%<br>(b) WMT US grocery 同店持平 sector + pharmacy GLP-1 +50%/yr → hedge 兌現 → 加碼至目標倉位</td></tr>
+<tr class="verdict-table"><td>3</td><td>Furner 新 CEO 執行風險</td><td><strong>A1+A3 勝 A2</strong>（Furner 內部老將，過渡風險低）</td><td>Furner 已 18 年 Walmart + 4 年 Walmart US President 任內 e-commerce profitability 達成。McMillon 是 mentor + 仍在 Board。Q1 FY26 (early Furner era) 表現強 (+2.5% rev / +4.3% OP) = early proof point。retail sector CEO 換手 EPS miss 30-40% 平均適用 outside hire，不適用 internal 老將。</td><td>(a) Furner 前 4 季 EPS quarterly beat/miss<br>(b) Walmart Connect 在 Furner 任內維持 +35%+/yr 增速<br>(c) 任何 strategic pivot announcements (Furner vs McMillon vision differences)</td><td>(a) Furner 4 季全 beat → 過渡平滑 → 加碼可信賴<br>(b) Furner 任 1 季 miss > 5% → CEO transition risk 具現化 → 維持 0%</td></tr>
+</table>
+</div>
+
+</div>
+
+<!-- §3 Key Drivers -->
+<div class="section">
+<h2>§3｜Key Drivers</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>Walmart Connect 高邊際 ad 業務的「mix shift」</strong></td><td>WMT 核心 retail business margin ~4.4% (mature low-margin)，Walmart Connect ad 業務 margin ~80%+ (digital ad)。$6.4B (FY26) → $20B+ (FY30 預估) = 多 $14B 的 high-margin revenue，貢獻 OP income +$11B = 從 $31B 升至 $42B = 35% OP income growth from 1 driver。沒有這個，WMT 就只是「cost leadership 的 mature retailer」，無法支撐 FPE 30x+。</td><td>Walmart Connect quarterly ad rev YoY %、global ad rev / total rev %、Sam's Club Connect 進度</td></tr>
+<tr><td>2</td><td><strong>Automation + supply chain peak investment 後的 OP margin expansion</strong></td><td>當前 capex 3-3.5% sales = $22B/yr，70%+ 投 tech + automation；2026-2027 是 capex peak，2028+ 開始享受 OP margin expansion +50-100bps。23 of 42 regional DC 自動化升級中。Symbotic $520M Q1 26 投資是 automation 加速。沒有這個，WMT 純靠 retail margin (4.4%) 無法抵銷 GLP-1 + e-commerce 競爭壓力。</td><td>Capex / sales ratio、OP margin trend、自動化 DC 完成數 (23 → 42 進度)、unit economics 改善</td></tr>
+</table>
+
+<p style="margin-top: 10px;"><strong>為什麼是這 1-2 個，而不是其他？</strong>WMT 是 mature business，core retail growth 只有 3-4%/yr — 不是命脈（因為市場已 priced in）。真正能改變 5Y EPS trajectory 的是 (1) Walmart Connect 高邊際 mix shift 提升 OP margin（這是「廣告轉收 toll」邏輯）和 (2) automation 後 cost leverage（這是「壓低 unit cost」邏輯）。其他常被討論的「Sam's Club membership growth」是 driver 1 的 sub-component (Sam's Connect 是 Walmart Connect 的一部分)、「e-commerce growth」是 driver 1+2 的 enabler、「international expansion」（特別 India 的 Flipkart）是長期 optionality 但非 5Y 命脈。</p>
+
+<h3>Driver 抽象層 guardrail 校驗</h3>
+<p>Driver 2 (automation OP margin expansion) 是否可在 Driver 1 (Walmart Connect mix shift) 不成立的情況下單獨被推翻？<strong>Yes</strong> — 即使 Walmart Connect 增速放緩至 +20%/yr，automation peak 後的 OP margin lever 仍可獨立兌現 +50bps（through unit cost 降低 + labor productivity）。但反之，若 Driver 1 失敗，Walmart Connect 不會單獨救 WMT 的 5Y EPS — 因為其他都是 low-margin core retail。兩條獨立因果鏈，但 Driver 1 是 primary value driver、Driver 2 是 secondary EPS lever。✅</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>季度 e-commerce growth %</td><td>e-commerce 已達 profitability Q1 FY26 = 結構性 binary 已通過；後續 +21% growth 是 nice-to-have 但不改 thesis</td></tr>
+<tr><td>Sam's Club membership 細部 growth %</td><td>Sam's 是 Walmart Connect mix shift 的 sub-component，獨立看 +7-13% 不改變 WMT thesis（Walmart Connect 才是真正 driver）</td></tr>
+<tr><td>關稅/tariff 對採購成本影響</td><td>WMT 規模 + 全球供應鏈 diversification 可吸收 50-100bps 關稅成本；MS 已表達「price 不會大幅升」</td></tr>
+<tr><td>季度 EPS beat/miss ±5%</td><td>WMT EPS quality 已 stable 多年，單季 beat/miss 不改 long-term EPS trajectory（除非連 2 季 miss > 5% = Furner 警訊）</td></tr>
+<tr><td>Flipkart India IPO timing</td><td>India e-commerce 目前 < 5% WMT EPS contribution，IPO timing 是 noise，long-term thesis 依 US Walmart Connect + automation 而非 India</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>FY26 EPS $2.50-2.60 + FPE 44x = priced in 「Walmart Connect 持續 +35-45%/yr 5+ 年 + automation OP margin +50-100bps + GLP-1 hedge 完美 + Furner 平滑接班」。市場已 fully reflect 「retail toll booth 升級為 high-margin platform」最樂觀情景</td></tr>
+<tr><td>我認為的不同假設</td><td>市場低估了 5Y 末 multiple compression 的速度。當前 FPE 44x 是「Costco 2023 末段」式估值 — 歷史上這個 level 的 multiple 1-2 年內會回到 35-38x 區間（mean revert）。即使 EPS 完美兌現，multiple 從 44x → 36x = 股價 -18% 即時反映。<strong>市場高估了 multiple 持久性、低估了「mature retail high-multiple cycle 的自然消退」</strong>。Costco 2025 -5.4% return 已是首個警示</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方 model 普遍假設 FY30 FPE 維持 38-44x（與當前一致），這對「Walmart Connect 完美執行」而言合理，但忽略了 (a) retail sector 即使 best-in-class 也很難 sustain FPE 40x+ 5 年（COST 2018→2023 從 28x → 45x 後即陷入 multiple compression cycle），(b) 大型 mature retailer FPE 上限歷史經驗 35-38x，超過此區間需「結構性 mix shift」逾 50% 才合理（WMT 即使 FY30 ad rev $20B，仍只占 total rev 2.5% — 不夠改變 valuation framework）。一旦 FY28 OP margin 兌現後 EPS upgrade cycle 結束，multiple 會自動 mean revert，2030 fair value 估計 FPE 32-36x，顯著低於賣方 38-44x</td></tr>
+</table>
+
+</div>
+
+<!-- §5 Single Thing -->
+<div class="section">
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Primary Trigger（事件描述）</strong></td><td><strong>Walmart Connect ad revenue YoY 增速連 2 季 < +25%（即 Q2 FY27 + Q3 FY27）</strong>。當前 FY26 +46% / Q1 FY26 +31%（DD §5 H1 trigger 一致）。Q2 FY27 法說 2026-08-21 為第一個 binary 驗證，Q3 FY27 法說 2026-11 為第二個。連 2 季 < 25% = mix shift thesis 結構性轉折 confirmed。</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>WMT thesis 全壓在「Walmart Connect 高邊際 mix shift 5+ 年」這個假設上。Walmart Connect 增速放緩 = (a) high-margin revenue 增量被 cap，OP margin expansion 從 +50bps 自動降至 +20bps，(b) FPE 從 44x 自動壓至 28-32x（市場意識到「toll booth 升級 platform」沒兌現），(c) double whammy 約 -40~-50% 股價下行。No way to recover within 2 yr 因 retail core 業務 4-5%/yr 成長無法接力。</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>Walmart 季度 earnings release（每季，~5 月 / 8 月 / 11 月 / 2 月）；eMarketer + Insider Intelligence retail media tracker（每季）；Walmart Connect press releases（不定期）</td></tr>
+<tr><td>目前離發生有多遠</td><td><strong>Q2 FY27 法說 2026-08-21</strong>（即 14 週後）— 這是 binary trigger，無法迴避。Q1 FY26 +31% 已是首次減速跡象（vs FY25 +46%），Q2 FY27 < 25% 將是首次警訊（一次性），連 2 季為結構性</td></tr>
+<tr><td><strong>Secondary Trigger（從 §6b pre-mortem 補入）</strong></td><td><strong>Furner CEO 任 2 季 EPS miss > 5% **或** Q3 FY27 強制 guidance 下修（FY28 OP income growth 從 +5%+ 降至 +3%-）</strong>。這條是「new CEO execution risk」的 binary trigger（vs primary trigger 是「ad business 結構性放緩」）。</td></tr>
+</table>
+
+</div>
+
+<!-- §6 Pre-mortem -->
+<div class="section">
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Walmart Connect 5 年複利 +30%+/yr 可持續</td><td>retail media TAM 5x runway 真實 + WMT 在第二大占位（vs AMZN）</td><td>EPS CAGR 從 10% 降至 6%；FPE 44x → 28x = -36% (Bear case)</td></tr>
+<tr><td>2</td><td>FPE 44x 至少維持 2-3 年</td><td>EPS upgrade cycle 持續 + retail sector 普遍 multiple expansion</td><td>單季 organic miss → multiple 從 44x → 35x = 股價 -20% 即時反映（即使 EPS 不變）</td></tr>
+<tr><td>3</td><td>GLP-1 對 WMT grocery 影響可控</td><td>WMT pharmacy + nutrition shift hedge 抵銷 60%+ 食品銷售下滑</td><td>若 hedge 只抵 30%, 食品 -3%/yr cumulative 5Y = -14%, EPS -10%</td></tr>
+<tr><td>4</td><td>Furner CEO 平滑接班 + 新策略 vision 不大幅 pivot</td><td>Furner 維持 McMillon mix shift + automation roadmap，無激進 reorg</td><td>若 Furner 推 risky M&A 或 cut Walmart Connect investment → thesis 失效</td></tr>
+<tr><td>5</td><td>Automation peak 兌現帶來真實 OP margin 改善</td><td>2026-2027 capex peak 後 2028+ OP margin +50bps 真實顯現</td><td>若 automation ROI 慢於預期（如 Symbotic $520M 5 年才回本），EPS upgrade cycle 拉長 2 年</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<div class="premortem-block">
+<h4>第一段｜故事倒推</h4>
+<blockquote>
+假設 5 年後（2031-05），WMT 部位從 $131.09 進場虧損 50%（即 $66）。最可能發生的故事是：<strong>2026 H2 - 2027 H1 Walmart Connect ad rev 增速從 +46% (FY26) 急速減速至 +30% (Q2 FY27)，再至 +22% (Q3 FY27)。同期，市場意識到「mature retailer 的 retail media 增速天花板已近」 → FPE 從 44x 壓縮至 28x。同期 GLP-1 user adoption 加速（從 11M → 18M Q4 26），WMT grocery 同店連 2 季 +1.5% (vs 共識 +3%)，CEO Furner 在 Q3 FY27 法說宣布 FY28 OP income guide 下修至 +3%（vs 共識 +5.5%）。雙殺：股價從 $131 跌至 $66（-50%）。同期 Costco 因 membership flywheel 純度更高，FPE 維持 35x，WMT 相對折價擴大至 -25%（vs 當前 +15%）。</strong>
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong>：§5 primary trigger（Walmart Connect ad 連 2 季 < +25%）= 失敗故事中的「第一張骨牌」（已涵蓋）。但失敗故事還包含 (a) Furner FY28 guide 下修（CEO execution + strategic pivot risk），這是「leadership transition」而非「ad business」風險，§5 沒抓到</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger</strong>（Furner CEO 任 2 季 EPS miss > 5% **或** Q3 FY27 guidance 下修）。此 secondary trigger 已加入 §5 表格。第三張骨牌（GLP-1 加速）已在 Phase B 矛盾 #2 涵蓋，不再單獨列為 §5 trigger，避免 §5 過度膨脹失去「single decisive event」精神。</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd-block">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><span class="maxdd-headline">−35% ~ −50%</span> <span style="font-size: 28px; float: none;">🟡</span></td></tr>
+<tr><td>最可能觸發時點</td><td>1-2 年後（2027 Q1-Q3）— 當 (a) Walmart Connect 連 2 季 < +25% verified + (b) Multiple compression 加速 (FPE 44 → 30) + (c) Furner 至少 1 季 EPS miss 三件事 Q4 26-Q3 27 同期發生時</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>3-5 年（assuming Walmart Connect 找到 secondary monetization model + Furner pivot 成功 + GLP-1 hedge 兌現）；若 toll booth 升級 platform thesis 失敗 → 不會恢復至 $135 高點</td></tr>
+<tr><td>路徑風險評級</td><td>🟡 −30~−50%（需要強信念 + 可控倉位才能撐到復原）</td></tr>
+</table>
+<div class="bar-stack" style="height: 24px; margin-top: 12px;">
+  <div style="background: #15803D; width: 60%;">0~−30% 可承受</div>
+  <div style="background: #92400E; width: 30%;">−30~−50% 強信念區（WMT 預估區間）</div>
+  <div style="background: #991B1B; width: 10%;">&lt;−50%</div>
+</div>
+<p style="margin-top: 10px; font-size: 13px;"><strong>校驗</strong>：若 max DD 落在 −50%，能否撐到復原？條件：(a) 部位不超過 portfolio 5%（單檔上限，已從原預估 7-8% 下修），(b) 不使用槓桿，(c) §5 primary trigger（Walmart Connect ad 連 2 季 < +25%）+ secondary trigger（Furner EPS miss）未同時發生 — 任一發生即減持。<strong>若兩件事同期發生 → 結構性破壞 → 應在 -25% 即出場，避免抱到 -50%</strong>（即 §7b「清倉」條件）。倉位上限 4-6%（已從原預估 7-8% 下修）反映 🟡 評級 + 估值🔴 雙重 caution。</p>
+</div>
+
+</div>
+
+<!-- §8 Review Triggers -->
+<div class="section">
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY27 法說（Walmart Connect ad +30%+ 確認、US comp +3%+、Furner 第 3 季財報）</td><td>財報日期</td><td><strong>2026-08-21</strong>（estimated；binary trigger — primary §5）</td></tr>
+<tr><td>2</td><td>Q3 FY27 法說（Walmart Connect 連 2 季驗證、FY28 EPS guide）</td><td>財報日期</td><td>2026-11-18（estimated）— §5 primary trigger 第 2 個 data point</td></tr>
+<tr><td>3</td><td>Cornell + Numerator GLP-1 grocery basket 後續研究</td><td>產業事件</td><td>每季更新；24-month cumulative impact 預期 2026-Q4 公布</td></tr>
+<tr><td>4</td><td>Q4 FY27 法說（Furner CEO 第一個完整年表現）</td><td>財報日期</td><td>2027-02-19（estimated）— Furner 平滑接班的 final verdict</td></tr>
+<tr><td>5</td><td>股價回測 $95-110 區間</td><td>價位觸發</td><td>當前 $131.09 距 -16%~-27%；達成則進入合理 R:R 進場區</td></tr>
+<tr><td>6</td><td>股價跌破 MA200 + FPE < 35x</td><td>價位觸發</td><td>Pure MA 警訊 — 進入「等更深回測」watchlist</td></tr>
+<tr><td>7</td><td>Walmart Connect Sam's Club Connect 滲透進度</td><td>產業事件</td><td>季度數字 — Sam's Club ad 是 Walmart Connect 第二曲線</td></tr>
+</table>
+
+<p style="margin-top: 12px;"><strong>這份報告的保質期：</strong>至 <strong>2026-08-21（Q2 FY27 法說）</strong>。Q2 是 §5 primary trigger 的 binary 驗證點 — 通過後 thesis 升級（進場條件第一個達成），失敗則 thesis 重 sequence（重新評估是否撤退至 0 / 等更深價格回測 $95 以下）。</p>
+
+<p style="margin-top: 8px;"><strong>最可能發生的 upside 因素：</strong>(a) Q2 FY27 Walmart Connect +35%+；(b) Sam's Club Connect 啟動 + 早期 traction；(c) automation peak 提前兌現 OP margin +50bps；(d) GLP-1 hedge 透過 pharmacy + nutrition tools 比預期強（WMT 已宣布 4/16 weight management services expansion）</p>
+
+<p style="margin-top: 4px;"><strong>最可能發生的 downside 因素：</strong>(a) Q2 FY27 Walmart Connect < 30%（首次警訊）；(b) Multiple compression 加速 — FPE 44 → 36 在 Q2 26 - Q4 26 三季完成；(c) Furner 任 1 季 EPS miss > 5%；(d) GLP-1 24-month Cornell 數據顯示 -10%+ cumulative grocery impact</p>
+
+</div>
+
+<!-- Phase A1 -->
+<details>
+<summary>📊 Phase A1｜護城河深度分析（獨立結論：WMT 是 wide moat (8.0/10) cost leadership + retail media + omnichannel 三層護城河結構性升級，moat_trend = ↑ widening）</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>Cost leadership + scale</strong>（$713B revenue, 270M weekly customers, 21% US grocery share）；(2) <strong>Omnichannel</strong>（90% US population within 10 miles of store, 23/42 DC 自動化升級中, e-commerce Q1 26 first profitability）；(3) <strong>Retail media network</strong>（Walmart Connect $6.4B FY26 +46%, sector #2 後 AMZN）</td></tr>
+<tr><td>持久性評分</td><td><strong>8/10</strong>（A 級 — wide moat by every standard），5 年穩固度：高（1-5 年穩固）；10 年仍受 GLP-1 + e-commerce 競爭壓力但結構穩</td></tr>
+<tr><td>最大侵蝕風險</td><td>(a) <strong>GLP-1 對 grocery basket 的長期負面影響</strong>（Cornell -5.3% / 6 個月，35% 家庭 by 2030）；(b) <strong>Amazon e-commerce + ad business 持續加速</strong>（AMZN ad $68B vs WMT $6.4B = 10x scale，AMZN Prime 飛輪威脅）</td></tr>
+<tr><td>關鍵數據</td><td>FY26 OP income <strong>$31.1B</strong>、Walmart Connect <strong>$6.4B (+46% YoY)</strong>、US grocery share <strong>21%</strong>（vs Kroger 8.3% + Costco 8% combined），Q1 FY26 US e-commerce <strong>+21%</strong>（首次 profitability），Sam's Club membership <strong>+7.1%</strong>，Sam's Scan & Go <strong>36% adoption (+450bps)</strong>，US population proximity <strong>90% within 10 miles</strong>，5Y total return <strong>+196.39% (+23.96%/yr)</strong></td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>（retail media + automation + e-commerce profitability 三線升級）<br>• <strong>擴大方向</strong>：Walmart Connect $6.4B (+46% YoY 連續加速)；US e-commerce Q1 26 首次 profitability = -10 年虧損 → 結構性轉折；Sam's Club membership +7.1% + Plus penetration 升 = 第二曲線；automation 23/42 DC 完成中（cost leverage 持續強化）<br>• <strong>收窄方向</strong>：GLP-1 對食品 basket 的長期 -5%/yr 累積壓力（Cornell + Numerator data 已驗證）；Amazon ad scale 10x 的競爭威脅<br>• <strong>Net</strong>：scale + retail media + automation 升級 widely 強化 moat，GLP-1 是 long-term headwind 但 5Y window 內可吸收 → A1 整體判斷 ↑ widening</td></tr>
+</table>
+
+<h4>Sourced Data Points（達標：8 ≥ 5）</h4>
+<ol>
+<li><strong>FY26 revenue $713B + OP income $31.1B</strong>（Motley Fool 2026-03-01）</li>
+<li><strong>270M weekly customers</strong>（同源）</li>
+<li><strong>US grocery share 21% (vs Kroger 8.3%, Costco 8%)</strong>（Supermarket News + 2026 statistics）</li>
+<li><strong>Walmart Connect $6.4B FY26 +46% YoY</strong>（ALM Corp 2026 + Marketplace Pulse）</li>
+<li><strong>Q1 FY26 US e-commerce +21% + first profitability</strong>（Walmart Q1 FY26 release 2025-05-15）</li>
+<li><strong>Sam's Club U.S. membership income +7.1% YoY</strong>（Yahoo Finance + Sam's Club fee hike report 2026）</li>
+<li><strong>Sam's Club Scan & Go 36% adoption (+450bps)</strong>（同源）</li>
+<li><strong>5Y total return +196.39% / +23.96%/yr CAGR</strong>（FinanceCharts 2026）</li>
+</ol>
+
+<p style="margin-top: 10px;"><strong>A1 獨立結論：</strong>WMT 是 wide moat (8.0/10) cost leadership + retail media + omnichannel 三層護城河，moat_trend = ↑ widening 主要靠 Walmart Connect + e-commerce profitability + Sam's Club mix shift 三線升級。但 GLP-1 是長期 headwind 需 monitor。</p>
+
+</details>
+
+<!-- Phase A2 -->
+<details>
+<summary>📊 Phase A2｜產業趨勢深度分析（獨立結論：US grocery TAM 4-6%/yr 中段成長 + 線上雜貨 4x 2034 + 零售媒體 5x 2030 三股順風，runway_post_y5 🟢 寬）</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>US grocery TAM ~$1.5T (2025) growing 3-4%/yr；US online grocery <strong>$217B (2025) → $893B (2034), CAGR 17.02%</strong>（Mordor Intelligence）；US retail media <strong>$71B (2026), 15.6%/yr</strong>（Statista）；global retail media <strong>$145B (2026) → $231B (2030)</strong>（同源）；滲透率：online grocery 從 2024 ~12% → 2034 ~35%</td></tr>
+<tr><td>供需判斷</td><td>需求側 grocery 持續穩定（民生剛需），但 GLP-1 加速 -5.3% / 6 個月 (Cornell)；供給側 WMT + AMZN 雙寡占加速（線上 grocery 80%+ 集中於兩家），新進入者 viable 路徑只剩 instant delivery (Instacart) niche。未來 12 個月：偏緊（WMT 仍 leader + AMZN 補位）</td></tr>
+<tr><td>最大技術替代風險</td><td>(a) <strong>Amazon Prime + Whole Foods + Fresh + 1P</strong>：AMZN ad scale 10x WMT，Prime 200M+ subs，AMZN 在 e-commerce 仍領先；(b) <strong>Instacart + Shipt + DoorDash for groceries</strong>：last mile delivery 提供 alternative，但平台模式 GM 比 retailer 直營低；(c) <strong>Algorithmic pricing AI</strong>：未來 5 年 dynamic pricing 工具讓中小 retailer (Albertsons) 縮小 cost gap</td></tr>
+<tr><td>最大政策/地緣風險</td><td>(a) <strong>GLP-1 expansion via Medicare/Medicaid</strong>（2025-2027 政策方向影響 user 從 11M → 25M by 2030）；(b) <strong>FTC antitrust on retail media</strong>（如 AMZN ad 案件 expand to WMT）；(c) <strong>Tariffs on China imports</strong>（WMT 部分採購 50-100bps 成本壓力，但已部分 hedged）</td></tr>
+<tr><td>議價權位置</td><td>對上游（CPG 供應商）<strong>強</strong>（規模議價 + private label 替代）；對下游（消費者）<strong>強</strong>（low-cost 心智壟斷 + ad spend 不影響 sticker price）；對 channel（marketplace sellers）<strong>強</strong>（Walmart marketplace 雖小於 AMZN 但對 sellers 議價權升）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong> — Y5 末（2031）Walmart Connect 預估 $20B（vs FY26 $6.4B = 3x runway，仍只占 AMZN $68B 的 30%，scale up 至 50% 仍可長 5 年）；US e-commerce profitability Q1 26 達成 = 進入「scale + monetize」階段；Sam's Club Plus penetration 升 + automation peak 後 OP margin lever。<strong>但</strong>：(a) GLP-1 對 grocery basket 5Y 累積 -10-15% 是長期 headwind；(b) AMZN ad scale 10x 的結構壓制不會消失。<strong>S 曲線位置</strong>：中段（core retail mature、retail media 中段成長、automation 早段）</td></tr>
+</table>
+
+<h4>Sourced Data Points（達標：6 ≥ 5）</h4>
+<ol>
+<li><strong>US online grocery $217B (2025) → $893B (2034), CAGR 17.02%</strong>（Mordor Intelligence + Market Data Forecast）</li>
+<li><strong>US retail media $71B (2026), 15.6%/yr growth</strong>（Statista 2026）</li>
+<li><strong>Global retail media $145B (2026) → $231B (2030)</strong>（ALM Corp 2026）</li>
+<li><strong>Walmart + Amazon = 89% incremental retail media share</strong>（同源）</li>
+<li><strong>GLP-1 households -5.3% grocery within 6 months (Cornell + Numerator study Dec 2025)</strong>（Modern Retail + Grocery Dive）</li>
+<li><strong>23% US households GLP-1 user → 35% food units by 2030</strong>（Grocery Dive 2026）</li>
+</ol>
+
+<p style="margin-top: 10px;"><strong>A2 獨立結論：</strong>US grocery sector 3-4%/yr 中段成長、線上雜貨 17%/yr 強增長、retail media 15-16%/yr 強增長 — WMT 在所有 3 個 sub-sector 都是 #1 或 #2 player。runway_post_y5 = 🟢 寬反映「3 條 S 曲線」結構，但 GLP-1 是長期 headwind 需 monitor。</p>
+
+</details>
+
+<!-- Phase A3 -->
+<details>
+<summary>📊 Phase A3｜業務 / 財務 / 資本配置（獨立結論：FY26 OP income $31.1B + Walmart Connect $6.4B 為 mix shift 雙引擎，但估值 FPE 44x 為 5Y 90+ 分位 priced in 完美執行）</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：<strong>Walmart US 65% rev (~$464B FY26)</strong>，US grocery 占 ~$285B = 59% of US rev = 40% of total；成長引擎：<strong>Walmart Connect $6.4B (+46%)</strong> + <strong>e-commerce $54B+ (+22%)</strong> + <strong>Sam's Club $84B (+5%)</strong>；國際 ~25% rev (Walmex + Walmart Canada + Flipkart)</td></tr>
+<tr><td>客戶集中度</td><td>沒有單一客戶（B2C），但<strong>地理集中</strong>：US 75%+ revenue + Mexico ~12% + India/Other ~13%；中產階級客群為主，受 GLP-1 上層滲透影響相對小（vs Costco 高端）；風險：低</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 → 持平（low-cost 心智品牌不允許大幅提價，WMT 哲學 EDLP）；但定價權體現於：(a) Sam's Club membership fee +20% (May 2026 從 $50 → $60), (b) Plus subscription +9% (從 $110 → $120), (c) Walmart Connect ad rate 自然上升；定價權：<strong>強</strong>（透過 mix shift 而非 sticker price 加價）</td></tr>
+<tr><td>未來金雞母</td><td><strong>Walmart Connect 從 $6.4B → $20B+ FY30</strong>（mgmt 內部 KPI implies 30%+ CAGR）；<strong>Sam's Club Plus penetration 升至 40%+</strong>（vs 當前 ~30%）；<strong>e-commerce profitability 從 Q1 FY26 0% → Q4 FY27 5%+</strong>（OP margin 改善 driver）；<strong>Flipkart India IPO + 全球擴張</strong>（5-10 年 long-term option）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 <strong>FCF/NI ~0.7-0.9x</strong>（capex peak 期間，2028+ 升至 1.0+）、毛利率 <strong>~24-25%</strong>（低 GM but stable）、Net Cash 中等（debt $46B vs cash $9B），FY26 capex <strong>$22B (3-3.5% sales)</strong>，壓力測試：營收 -15% 可撐 8-10 季（cash + 信用額度充足）</td></tr>
+<tr><td>資本配置紀律</td><td><strong>Capex peak 2026-2027</strong>（70% tech + automation + supply chain）+ <strong>持續 dividend (1.0% yield，~50 年連續發放紀錄 包括 split-adjusted)</strong> + <strong>buyback $2-3B/yr 規模</strong>（小於 Costco 但穩定）；近期 <strong>Symbotic $520M Q1 26 收購</strong>顯示 automation 加速；管理層 capital discipline 紀律一流（McMillon 任內 + Furner 接班保持）</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>• <strong>EPS CAGR 預估</strong>：FY26 $2.50 → FY31 $4.10 = <strong>10.4%/yr</strong>（含 SBC ~0.3%/yr 稀釋抵銷後 + buyback EPS boost ~0.3%/yr）<br>• <strong>5Y 末 forward PE 預估</strong>：<strong>36x（vs 當前 44x）</strong> = re-rate 貢獻 <strong>(36/44)^(1/5) - 1 = -3.96%/yr</strong> 偏壓縮（mean reversion to 5Y avg ~28-32x 區間，Bull 維持 40x）<br>• <strong>現金股息率</strong>：<strong>1.0%/yr</strong>（current div yield，預期持平）<br>• <strong>淨買回率</strong>：<strong>$2-3B / $1.05T cap = 0.2-0.3%/yr</strong>（小規模 buyback）<br>• <strong>合計 Base IRR ≈ 10.4% + (-4.0%) + 1.0% + 0.3% = 7.7%/yr</strong>（弱-中段邊界）</td></tr>
+</table>
+
+<h4>Sourced Data Points（達標：12 ≥ 6）</h4>
+<ol>
+<li><strong>FY26 revenue $713B, OP income $31.1B</strong>（Motley Fool 2026-03）</li>
+<li><strong>Q1 FY26 revenue $165.6B (+2.5% / +4.0% CC), US comp +4.5%, US e-comm +21%</strong>（Walmart Q1 FY26 release 2025-05-15）</li>
+<li><strong>Q1 FY26 OP income $7.1B (+4.3%), Adj EPS $0.61, e-commerce first profitability</strong>（同源）</li>
+<li><strong>FY26 guide: net sales +3-4%, adj EPS $2.50-2.60, OP +3.5-5.5%</strong>（同源）</li>
+<li><strong>Capex 3-3.5% sales = $22B FY26</strong>（Constellation Research 2026 + Walmart investor release）</li>
+<li><strong>Walmart Connect $6.4B FY26 +46%</strong>（ALM Corp + Marketplace Pulse 2026）</li>
+<li><strong>5Y EPS CAGR 6.05% (vs Costco 13.32%)</strong>（FinanceCharts 2026）</li>
+<li><strong>FY27 EPS $2.97, FY28 $3.32, FY29 $3.62, FY30 $3.72</strong>（Stockanalysis.com 2026-05）</li>
+<li><strong>Forward PE 44.69 / TTM PE 47.74 (May 2026)</strong>（Gurufocus + Stockanalysis）</li>
+<li><strong>Stock $131.09 May 2026, above MA200, near 52w high</strong>（Public.com / CNN 2026-05-12）</li>
+<li><strong>Market cap $1.05T, 7.97B shares</strong>（同源）</li>
+<li><strong>Symbotic $520M Q1 26 automation deal</strong>（DTC Dispatch 2026-02-23）</li>
+</ol>
+
+<p style="margin-top: 10px;"><strong>A3 獨立結論：</strong>WMT FY26 已展現 wide-moat retail toll booth + retail media + automation 三引擎協同（OP income $31.1B + Walmart Connect $6.4B + e-commerce profitability）。但估值 FPE 44x 為 5Y 90+ 分位 + 10Y 95+ 分位 = 已 priced in 完美執行 5+ 年，Base IRR 7.7%/yr 落在「弱-中段」邊界 — 需股價回測 $95-110 才能到強 R:R。</p>
+
+</details>
+
+<!-- Phase A4 -->
+<details>
+<summary>📋 Phase A4｜既有報告數據摘要（DD_WMT_20260427 + ID_GlobalEcommerce / ID_AIAdRetailMedia / ID_GLP1PackagedFood / ID_DiscountRetailKShape）</summary>
+
+<h4>DD_WMT_20260427.html 關鍵擷取</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>Quality Score（複合品質分數）</td><td><strong>8.5 / 10 = A 級邊界</strong>（護城河 8.0/10 wide moat + 成長持久性 8.0/10 + 體質 +2.5 全 5 過）</td></tr>
+<tr><td>Moat Score（單列）</td><td><strong>8.0 / 10</strong>（wide moat — cost leadership + retail media + omnichannel）</td></tr>
+<tr><td>R:R ratio</td><td>upside_short_pct = -35%（短期 R:R 嚴重不足，估值🔴 極端）</td></tr>
+<tr><td>Bear anchor</td><td>未明確 quote（DD 提到 multiple compression + Furner 執行風險為主要 Bear catalyst）</td></tr>
+<tr><td>紅旗清單</td><td>R1 estimated value 🔴 極端（FPE 44x 為 5Y 90+ 分位）、R2 Walmart Connect 增速放緩風險、R3 Furner 新 CEO 執行風險、R4 GLP-1 grocery basket 結構性 headwind</td></tr>
+<tr><td>§0.5 核心假設 H1</td><td><strong>Walmart Connect 廣告營收 YoY 增速 ≥ +25%</strong>（連 2 季 < +25% = 動能轉折）</td></tr>
+<tr><td>§0.5 核心假設 H2</td><td><strong>美國同店銷售（剔除汽油）≥ +3%</strong>（連 2 季 < +3% = 警訊）</td></tr>
+<tr><td>§0.5 核心假設 H3</td><td><strong>Furner 新 CEO 季度執行平穩</strong>（任一季 EPS miss > 5% 或 guidance 大幅下修 = 失敗）</td></tr>
+<tr><td>綜合訊號燈</td><td><strong>B 觀望</strong>（估值🔴 + thesis 完整）— "等 PE 28-30x（~$95-100）再進場"（DD 結論完全與 DCA 一致）</td></tr>
+<tr><td>Munger 三維評級</td><td>(從 DD 推論)：毛利率改善 ✅ + FCF/NI ≥ 0.7 ✅ + ROIC stable ✅ — 估計 9-10/11 區間（高分但具體未列）</td></tr>
+</table>
+
+<h4>ID 報告交叉</h4>
+<table>
+<tr><th>ID 報告</th><th>WMT 相關結論</th></tr>
+<tr><td>ID_GlobalEcommerce_20260427</td><td>WMT 列為 e-commerce 整合中第二陣營（vs AMZN 全球 leader），但 advertising profit pool 是真結構性 alpha — Walmart Connect 結構性受惠</td></tr>
+<tr><td>ID_AIAdRetailMedia_20260429</td><td><strong>Walmart Connect $4.4B → $15-20B 2030 是 sector 中最 underrated growth</strong>（直接驗證 DCA 中 Driver 1 thesis）</td></tr>
+<tr><td>ID_GLP1PackagedFood_20260428</td><td>WMT 是 packaged food / grocery 主要 retailer，受 GLP-1 grocery basket -5.3% 衝擊（Cornell + Numerator）— 但 WMT 透過 pharmacy + nutrition shift 可部分 hedge</td></tr>
+<tr><td>ID_DiscountRetailKShape_20260430</td><td>WMT 列為 K-shape barbell 中產 anchor（vs TJX 為 trade-down 受益者）— rural 加碼 + 中產 stable</td></tr>
+</table>
+
+</details>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>
