@@ -24,6 +24,8 @@ from typing import Optional
 
 ROOT = Path(__file__).parent.parent
 DD_DIR = ROOT / "docs" / "dd"
+DCA_DIR = ROOT / "docs" / "dca"
+DCA_MANIFEST = ROOT / "scripts" / "dca_verdict_manifest.json"
 RESEARCH_HTML = ROOT / "docs" / "research" / "index.html"
 META_RE = re.compile(r'<script id="dd-meta"[^>]*>(.*?)</script>', re.DOTALL)
 # Parse <tr class="searchable" data-ticker=...> rows from the research table —
@@ -317,6 +319,84 @@ def _moat_card_lis(pool, n=5):
     return rows
 
 
+def render_dca_verdict_card() -> str:
+    """Return HTML for the DCA Verdict 分布 stats-cell.
+
+    Reads dca_verdict_manifest.json (preferred) or falls back to scanning
+    docs/dca/DCA_*.html head comments. Groups by ticker, takes the latest
+    report per ticker, tallies 進場 / 觀望 / 迴避.
+    """
+    from datetime import date as _date
+
+    ticker_latest: dict = {}  # ticker -> (datestr, verdict)
+
+    # --- primary: manifest ---
+    if DCA_MANIFEST.exists():
+        try:
+            manifest = json.loads(DCA_MANIFEST.read_text(encoding="utf-8"))
+            for filename, info in manifest.items():
+                m = re.match(r'^DCA_(.+)_(\d{8})\.html$', filename)
+                if not m:
+                    continue
+                ticker, datestr = m.group(1), m.group(2)
+                verdict = info.get("verdict", "")
+                if verdict and (ticker not in ticker_latest or datestr > ticker_latest[ticker][0]):
+                    ticker_latest[ticker] = (datestr, verdict)
+        except Exception:
+            pass
+
+    # --- fallback: scan HTML files ---
+    if not ticker_latest and DCA_DIR.exists():
+        _verdict_re = re.compile(r'<!--\s*dca-verdict:\s*([^-]+?)\s*-->')
+        for p in sorted(DCA_DIR.glob("DCA_*.html")):
+            m = re.match(r'^DCA_(.+)_(\d{8})\.html$', p.name)
+            if not m:
+                continue
+            ticker, datestr = m.group(1), m.group(2)
+            try:
+                head = p.read_text(encoding="utf-8")[:2000]
+            except Exception:
+                continue
+            vm = _verdict_re.search(head)
+            if not vm:
+                continue
+            verdict = vm.group(1).strip()
+            if ticker not in ticker_latest or datestr > ticker_latest[ticker][0]:
+                ticker_latest[ticker] = (datestr, verdict)
+
+    if not ticker_latest:
+        return ""
+
+    counts: Counter = Counter(v for _, (__, v) in ticker_latest.items())
+    n_enter = counts.get("進場", 0)
+    n_watch = counts.get("觀望", 0)
+    n_avoid = counts.get("迴避", 0)
+    n_total = len(ticker_latest)
+
+    today = _date(2026, 5, 14)
+    active_30 = sum(
+        1 for _, (datestr, _v) in ticker_latest.items()
+        if (_date(int(datestr[:4]), int(datestr[4:6]), int(datestr[6:8])) - today).days >= -30
+    )
+
+    return (
+        f'<div class="stats-cell">\n'
+        f'      <div class="stats-label">DCA Verdict 分布</div>\n'
+        f'      <div class="signal-bar">'
+        f'<span class="sig-pill sig-enter">進場 · {n_enter}</span>'
+        f'<span class="sig-pill sig-watch">觀望 · {n_watch}</span>'
+        f'<span class="sig-pill sig-avoid">迴避 · {n_avoid}</span>'
+        f'</div>\n'
+        f'      <div style="margin-top:10px;font-size:11.5px;color:#64748B">'
+        f'{n_total} unique tickers ｜ 最近 30 天活躍：{active_30} 檔'
+        f'</div>\n'
+        f'      <div style="margin-top:6px;font-size:10.5px;color:#94A3B8;font-style:italic">'
+        f'Backfill 期間部分歷史報告經保守分類；新 DCA 自 2026-05-14 起套嚴格 verdict 矩陣'
+        f'</div>\n'
+        f'    </div>'
+    )
+
+
 def render(records):
     sig_dist = signal_distribution(records)
     latest = latest_updates(records)
@@ -403,6 +483,8 @@ def render(records):
     bc_lis = _moat_card_lis(bc_pool)
     sa_dd_rejected_lis = _moat_card_lis(sa_dd_rejected_pool, n=10)
 
+    dca_verdict_card = render_dca_verdict_card()
+
     return f'''<div class="auto-stats">
   <h3>
     📊 DD 組合快照
@@ -419,6 +501,8 @@ def render(records):
         進場候選 (A+/A)：{progress_count} 檔 ｜ 觀望 (B)：{watch_count} 檔 ｜ 拒絕 (C/X)：{avoid_count} 檔
       </div>
     </div>
+
+    {dca_verdict_card}
 
     <div class="stats-cell stats-cell-stacked">
       <div class="stats-label">最近 DD 更新（最新 {len(latest)} 檔）</div>
