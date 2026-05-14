@@ -517,18 +517,56 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 
 ---
 
-### §7｜Decision（必填，不是 Buy/Wait/Avoid，是可執行計畫）
+### §7｜Decision（必填）
+
+#### 裁決晶片（Verdict Chip）— §7 最頂行必須輸出
+
+每份 DCA 必須在 §7 最頂行輸出一個且僅一個裁決晶片，由下方決策矩陣產出。
+裁決同時寫入 Status Bar 第 5 格與 HTML <head> 機讀標記，三處必須一致。
+
+| 裁決 | 色彩（背景 / 前景 / 左線） | 含義 |
+|:---|:---|:---|
+| 進場 | #166534 / #fff / #14532D | 立即加入或增加部位（含條件式進場） |
+| 觀望 | #92400E / #fff / #78350F | 不行動；列出重啟觸發條件或維持理由 |
+| 迴避 | #991B1B / #fff / #7F1D1D | 結構性不持有；§7a-7d 全部 N/A，改輸出「不持有理由」+「重啟條件 OR 永久迴避」 |
+
+晶片正下方副標籤（13px、#475569、斜體）：一句話概括等待條件（觀望）或迴避核心原因（迴避）。
+
+#### 決策矩陣（執行 §7 時必須套用）
+
+| 優先序 | 條件 | 裁決 |
+|:---:|:---|:---:|
+| 1（Hard Veto） | DD 訊號燈 = X | 迴避 |
+| 2（Hard Veto） | Phase B 強制裁決：thesis 不可調和不成立 | 迴避 |
+| 3（Hard Veto） | moat_trend ↓ **且** moat 等級 ≤ B | 迴避 |
+| 4（Soft Veto） | Pure MA ❌（§7c 第 4 行不支持） | ≥ 觀望 |
+| 5（Soft Veto） | 動能過熱（RSI 14d > 70 或 4 週漂移 > +10%） | ≥ 觀望 |
+| 6（Soft Veto） | DD 訊號燈 = C | ≥ 觀望 |
+| 7（Soft Veto） | runway_post_y5 = 🔴 | ≥ 觀望（§7d ≤ 3Y 警示） |
+| 8（Baseline） | 無 Hard Veto + DD ≥ B + 估值 = 🟠 | 觀望（等估值） |
+| 9（Baseline） | 無 Veto + DD ≥ B + 估值 ≤ 🟡 + MA ✅ | 進場 |
+| 10（Baseline） | 無 Veto + DD ≥ A + MA ✅ + 估值 🟢/🟡 | 進場 |
+
+衝突解決：max-severity wins — 任一 Hard Veto 命中 → 直接鎖定迴避；
+Soft Veto 命中 → 上限觀望（不得輸出進場）。
 
 #### 7a. 倉位與進場計畫
 
+> 分支規則：根據裁決晶片，§7a-7d 行為如下：
+> - 進場 → 全部欄位完整填寫
+> - 觀望 → §7a「初始建倉倉位」= 0%；「目標倉位」= 條件成立後 __%；
+>           「進場節奏」改為「觸發條件：___」；§7b 只填「進場條件」path
+> - 迴避 → §7a 整表替換為「不持有理由」（≥ 2 條具體論點，對應命中的 Veto）
+>           +「重啟條件」（具體事件/數字門檻 OR 標記「永久迴避」）；§7b/7c/7d 全 N/A，不輸出空表格
+
 | 項目 | 具體內容 |
 |:---|:---|
-| 在投資組合中的角色 | 核心持倉 / 衛星持倉 / 投機部位 |
+| 在投資組合中的角色 | 核心持倉 / 衛星持倉 / 投機部位 / 不持有 |
 | 初始建倉倉位 | __% of portfolio |
 | 目標倉位 | __% of portfolio |
 | 進場價位區間 | $__ ~ $__ |
 | 進場節奏 | 一次建倉 / 分批（幾次、間隔） |
-| **vs 現有組合的同類曝險（opportunity cost）** | **___（具體點名 portfolio 中已持有的同類，比較 R:R 或 conviction 強度，說明為何邊際資金放新標的更優；若已持有同類但 conviction 較弱 → 該減舊加新還是兩個都減？）** |
+| **vs 現有組合的同類曝險（opportunity cost）** | **___（具體點名 portfolio 中已持有的同類，比較 R:R 或 conviction 強度，說明為何邊際資金放新標的更優；若已持有同類但 conviction 較弱 → 該減舊加新還是兩個都減？）**（進場與觀望必填；迴避時整行省略，由「不持有理由」取代） |
 
 > **Deepening 點 E**：絕對 value 高 ≠ 該買 — 真正的決策是「邊際資金放這支 vs 加碼現有部位」。沒這一行就只是孤立估值，不是 portfolio 決策。
 
@@ -570,6 +608,10 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 
 **建議持有年限：** ___，原因：___
 
+> 迴避路徑終止點：裁決 = 迴避時，§7d 整節替換為：
+> - 不持有理由（1-3 句，對應決策矩陣命中的 Veto）
+> - 重啟觀察條件（具體：若 ___ 發生 → 重新啟動 DCA 流程；或標記「結構性迴避，無重啟條件」）
+
 **EPS 預測參考表**
 
 | 年份 | EPS 估計 | 來源 | 備注 |
@@ -602,9 +644,9 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 
 ## 【最終自檢清單｜寫完必跑（防偷懶最後一道閘）】
 
-> **Deepening 點 G**：Guardrails 16-22 是「寫的時候不准違規」，這份自檢清單是「寫完後對照確認沒違規」。Skill 在輸出 HTML **之前**必須在對話中靜默列出此 13 條的 ✅/❌ 狀態，任一 ❌ 必須回頭補完才能呼叫 Write 工具。
+> **Deepening 點 G**：Guardrails 16-22 是「寫的時候不准違規」，這份自檢清單是「寫完後對照確認沒違規」。Skill 在輸出 HTML **之前**必須在對話中靜默列出此 17 條的 ✅/❌ 狀態，任一 ❌ 必須回頭補完才能呼叫 Write 工具。
 
-**13 條檢查項（HTML 輸出前必須逐條報告 ✅/❌ + 實際數據）**：
+**17 條檢查項（HTML 輸出前必須逐條報告 ✅/❌ + 實際數據）**：
 
 ```
 □ Phase A1 sourced data point 數 ≥ 5？實際數：__（必須含具體數字 + 來源 + 日期）
@@ -619,8 +661,13 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 □ Phase A2 runway_post_y5 ∈ {🟢, 🟡, 🔴}？若 🔴，§7d 是否反映「持有年限 ≤ 3Y 警示」？
 □ §4 IRR composition 三分量加總（EPS + re-rate + 股息回購）與「機率加權年化 IRR」Base 列偏差 ≤ 2%p？
 □ §6c Max DD 為範圍（非單點），寬度 ≥ 10%p？若評級 🔴，§7a 倉位是否自動下修？
-□ Status Bar（§2 之上）含 4 格：訊號燈 / moat ↑→↓ / runway 🟢🟡🔴 / max DD −__%？
-□ HTML `<head>` 含機器可讀標記 `<!-- dca-moat-trend: ↑/→/↓ -->`（單一箭頭，無多餘文字）？
+□ Status Bar（§2 之上）含 5 格：訊號燈 / moat ↑→↓ / runway 🟢🟡🔴 / max DD −__% / DCA 裁決？
+□ HTML <head> 含 <!-- dca-moat-trend: ↑/→/↓ -->（單一箭頭）？
+□ HTML <head> 含 <!-- dca-verdict: 進場|觀望|迴避 -->（三選一）？
+□ §7 裁決晶片 ∈ {進場/觀望/迴避}，且與 Status Bar 第 5 格 + head marker 三處一致？
+□ 裁決 = 觀望 → §7a 初始倉位 = 0% 且 §7b 含具體觸發條件？
+   裁決 = 迴避 → §7a-7d 全為 N/A 且「不持有理由」≥ 2 條具體論點？
+□ 裁決與決策矩陣優先序一致？（Pure MA ❌ 或動能過熱 → 不得進場；DD = X → 強制迴避）
 ```
 
 **輸出格式範例**（Skill 必須在呼叫 Write 之前在對話中輸出）：
@@ -665,7 +712,7 @@ HTML 必須包含所有 Phase 和 § 的完整分析內容，不得摘要化。
 
 | 顯示位置 | 章節 | 說明 |
 |:---|:---|:---|
-| **0（§2 之上，最頂部）** | **Status Bar** | **dashboard 一字排開 4 項：訊號燈 / moat ↑→↓ / runway 🟢🟡🔴 / max DD −__%**（4 個維度各自獨立，不要文字敘述） |
+| **0（§2 之上，最頂部）** | **Status Bar** | **dashboard 一字排開 5 項：訊號燈 / moat ↑→↓ / runway 🟢🟡🔴 / max DD −__% / DCA 裁決**（5 個維度各自獨立，不要文字敘述） |
 | 1 | §2 One-Sentence Thesis | 一句話 thesis 緊接 status bar |
 | 2 | §7 Decision（完整，含 7a opportunity cost） | 可執行計畫緊接 thesis |
 | 3 | §4 Asymmetry Analysis（含 Pattern match + IRR composition） | R:R 數字支撐決策 |
@@ -693,13 +740,22 @@ HTML 必須包含所有 Phase 和 § 的完整分析內容，不得摘要化。
     <!-- dca-moat-trend: ↑ -->   <!-- 或 → 或 ↓，三選一 -->
     ```
     這給 research generator 的 extractor 一個 deterministic primary anchor，避免 status-bar CSS class 多樣化導致解析失敗。**禁止省略 / 寫多個 / 寫 holding 之類的文字** — 必須是單一 Unicode 箭頭。
-  - 一行 4 格 grid（`display:flex; gap:16px; justify-content:center`），各格固定寬度 ~180px
+  - **DCA 裁決機讀標記（v1.3 必填）**：HTML `<head>` 內緊接 dca-moat-trend 之後加一行：
+    ```html
+    <!-- dca-verdict: 進場 -->   <!-- 或 觀望 或 迴避，三選一 -->
+    ```
+    禁止省略 / 寫多個 / 寫其他文字 — 必須是三個詞之一。
+    與 Status Bar 第 5 格 + §7 裁決晶片三處必須完全一致。
+  - 一行 5 格 grid（`display:flex; gap:12px; justify-content:center`），各格固定寬度 ~148px（原 4 格 × 180px → 5 格 × 148px，總寬不變）
   - 每格上方標籤（11px，#64748B），下方主體（22px，粗體）
-  - 4 格內容：
+  - 5 格內容：
     1. **訊號燈**：A+/A/B/C/X（從 DD §1 dashboard 拉，色階：A+ 深綠 #166534 / A 綠 #15803D / B amber #92400E / C/X 紅 #991B1B）
     2. **Moat 趨勢**：等級（S/A/B/C）+ 緊接箭頭 ↑/→/↓（從 Phase A1 `moat_trend`），箭頭色：↑ 綠 #166534 / → 灰 #64748B / ↓ 紅 #991B1B
     3. **Runway Post-Y5**：🟢/🟡/🔴 emoji + 一句話（從 Phase A2 `runway_post_y5`），最多 12 字
     4. **Max DD**：`−__%`（從 §6c 範圍取下界，例範圍 −35~−55% → 顯示 `−55%`），色：≥−30% 綠 / −30~−50% amber / <−50% 紅
+    5. **DCA 裁決**：進場 / 觀望 / 迴避（從本份 DCA §7 裁決晶片拉取，三處必須一致）
+       色階：進場 #166534 / 觀望 #92400E / 迴避 #991B1B（皆配白字）
+       格內上方標籤：「DCA 裁決」；下方主體：裁決文字 22px 粗體
   - 整條 Status Bar 底色 #F1F5F9（淺灰藍），左右兩端各加 4px accent 線 #3B82F6
   - 任一格資料缺失（極罕見，當 DCA legacy 重建時可能發生）→ 顯示 "—"，不要砍格
 
@@ -709,8 +765,15 @@ HTML 必須包含所有 Phase 和 § 的完整分析內容，不得摘要化。
   - 下方小字標注「50 字以內的投資本質」
 
 - **Decision 區塊**（§7）：
-  - 背景淺綠 #F0FDF4（進場）/ 淺黃 #FEF9C3（觀望）/ 淺紅 #FFF1F2（迴避）
-  - 左側 4px 線對應顏色
+  - 背景：進場 #F0FDF4 / 觀望 #FEF9C3 / 迴避 #FFF1F2
+  - 左側 4px 線：進場 #166534 / 觀望 #92400E / 迴避 #991B1B
+  - 裁決晶片（§7 標題下方、§7a 之上）：
+    display:inline-block; padding:6px 20px; border-radius:4px;
+    font-size:18px; font-weight:700; border-left:4px solid [對應左線色];
+    margin-bottom:8px
+  - 晶片副標籤（緊接晶片下方）：
+    font-size:13px; color:#475569; font-style:italic;
+    display:block; margin-bottom:16px
 
 - **矛盾區塊**（Phase B）：
   - 底色 #FFF7ED（淺橘）
