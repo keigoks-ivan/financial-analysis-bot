@@ -1337,13 +1337,16 @@ def _verdict_to_signal(verdict_raw: str) -> str:
     return ""
 
 
-def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None]":
+def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None, int | None]":
     """Extract Munger §7 evaluation from a DD HTML file.
 
-    Returns (emoji, pass_count):
-      emoji:      🟢/🟡/🔴 from 'Munger 三維評級' paragraph (or None).
-      pass_count: count of rows classified as PASS in the gate table (0-11),
-                  or None if section not found / total != 11.
+    Returns (emoji, pass_count, total_count):
+      emoji:       🟢/🟡/🔴 from 'Munger 三維評級' paragraph (or None).
+      pass_count:  count of rows classified as PASS in the gate table,
+                   or None if section not found / parse failed.
+      total_count: actual number of evaluated rows in the table (any count
+                   in range 5-15 accepted; old-schema DDs may have 7-10 rows),
+                   or None if section not found / parse failed.
 
     Gate table location patterns (priority order):
       1. <h3>/<h4> named '門檻檢核表'
@@ -1361,11 +1364,13 @@ def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None]":
     tr_pat_check = re.compile(r"<tr[^>]*>(.*?)</tr>", re.DOTALL | re.IGNORECASE)
 
     h_patterns = [
-        re.compile(r"<h[34][^>]*>門檻檢核表</h[34]>", re.IGNORECASE),
+        re.compile(r"<h[34][^>]*>門檻檢核表[^<]*</h[34]>", re.IGNORECASE),  # broader: allows suffix like （含 Munger 維度）— covers 3017.TW
         re.compile(r"<h[34][^>]*>Munger\s+護城河維度[^<]*</h[34]>", re.IGNORECASE),
         re.compile(r"<h[34][^>]*>Munger\s+三維護城河[^<]*</h[34]>", re.IGNORECASE),
         # single-line div.section-title that mentions §7 (no DOTALL to avoid greedy span)
         re.compile(r"<div[^>]*section-title[^>]*>[^<]*§7[^<]*</div>", re.IGNORECASE),
+        # h2-level §7 section headers — covers APP, KEYS, 6146T, 6857T, BESI, CAMT, DELL etc.
+        re.compile(r"<h2[^>]*>[^<]*§7[^<]*(?:門檻|核心門檻)[^<]*</h2>", re.IGNORECASE),
     ]
 
     gate_start: "int | None" = None
@@ -1389,7 +1394,7 @@ def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None]":
             break
 
     if gate_start is None or gate_section is None:
-        return (None, None)
+        return (None, None, None)
 
     # Munger三維評級 emoji — DOTALL search within 5000 chars of header
     munger_emoji: "str | None" = None
@@ -1461,9 +1466,10 @@ def extract_munger_threshold(dd_text: str) -> "tuple[str | None, int | None]":
             fail_c += 1
 
     total = pass_c + partial_c + fail_c
-    if total != 11:
-        return (munger_emoji, None)
-    return (munger_emoji, pass_c)
+    # Accept any table with 5-15 rows; reject pathological counts (0 or 30+).
+    if total < 5 or total > 15:
+        return (munger_emoji, None, None)
+    return (munger_emoji, pass_c, total)
 
 
 def _render_moat_trend_cell(arrow: "str | None") -> "tuple[str, str]":
@@ -1517,6 +1523,7 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     pe_2y = entry.get("pe_2y_value")
     munger_emoji = entry.get("munger_emoji")
     munger_pass = entry.get("munger_pass")
+    munger_total = entry.get("munger_total") or 11
 
     # Numeric data attrs (for sorting); fallback to 0 when empty.
     rank = _SIGNAL_RANK.get(sig, 0)
@@ -1639,25 +1646,26 @@ def build_row_v12(entry: dict, dca_map: dict | None = None,
     four_axis_html = f'{moat}{arrow_span}/{val_emoji}/{ma_state}'
     four_axis_cell = f'<td class="num-cell">{four_axis_html}</td>'
 
-    # §7 門檻 cell: {emoji} {pass}/11, colour-coded background by pass count.
-    # Pure threshold derivation (ignoring DD-extracted munger_emoji) so that
-    # emoji and background always agree — threshold ≥ 8 = green, ≥ 6 = yellow.
+    # §7 門檻 cell: {emoji} {pass}/{total}, colour-coded background by pass %.
+    # Thresholds are percentage-based so old-schema DDs (≠ 11 rows) render correctly:
+    #   pct ≥ 0.73 (≈ 8/11 baseline) → green
+    #   pct ≥ 0.55 (≈ 6/11 baseline) → yellow
+    #   else → red
     if munger_pass is not None:
-        if munger_pass >= 8:
+        _gate_total = munger_total if munger_total else 11
+        pct = munger_pass / _gate_total if _gate_total > 0 else 0.0
+        if pct >= 0.73:
             eff_emoji = "🟢"
-        elif munger_pass >= 6:
-            eff_emoji = "🟡"
-        else:
-            eff_emoji = "🔴"
-        if munger_pass >= 8:
             gate_bg = "background:#DCFCE7;color:#166534"
-        elif munger_pass >= 6:
+        elif pct >= 0.55:
+            eff_emoji = "🟡"
             gate_bg = "background:#FEF9C3;color:#854D0E"
         else:
+            eff_emoji = "🔴"
             gate_bg = "background:#FEE2E2;color:#991B1B"
         gate_cell = (
             f'<td class="num-cell" style="{gate_bg};font-weight:600;border-radius:4px">'
-            f'{eff_emoji} {munger_pass}/11</td>'
+            f'{eff_emoji} {munger_pass}/{_gate_total}</td>'
         )
     else:
         gate_cell = '<td class="num-cell" style="color:#94A3B8">—</td>'
@@ -1816,7 +1824,7 @@ def collect_v12_entries(force_refresh_eps: bool = False):
             cache_dirty = True
 
         # §7 Munger gate table — extract for all DDs (runs once per DD file)
-        munger_emoji, munger_pass = extract_munger_threshold(text)
+        munger_emoji, munger_pass, munger_total = extract_munger_threshold(text)
 
         if meta:
             stress = meta.get("stress", {}) or {}
@@ -1841,6 +1849,7 @@ def collect_v12_entries(force_refresh_eps: bool = False):
                 "pe_2y_value": eps_metrics["pe_2y"],
                 "munger_emoji": munger_emoji,
                 "munger_pass": munger_pass,
+                "munger_total": munger_total,
             }
             entries.append(entry)
             continue
@@ -1873,6 +1882,7 @@ def collect_v12_entries(force_refresh_eps: bool = False):
             "pe_2y_value": eps_metrics["pe_2y"],
             "munger_emoji": munger_emoji,
             "munger_pass": munger_pass,
+            "munger_total": munger_total,
         })
 
     # Persist cache if any ticker was fetched (auto-backfill on new DD or refresh)
