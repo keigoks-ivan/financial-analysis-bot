@@ -392,8 +392,16 @@ def render(records):
     val_red_str = " · ".join(escape(t) for t in val_red) if val_red else "—"
     ma_brake_str = " · ".join(escape(t) for t in ma_brake) if ma_brake else "—"
 
-    sa_lis = _moat_card_lis(sa_pool)
+    sa_dd_rejected_pool = [
+        r for r in records.values()
+        if r.get("signal") in ("C", "X")
+        and r.get("moat") in ("S", "A")
+        and _is_trend_up(r)
+        and _is_munger_green(r)
+    ]
+    sa_lis = _moat_card_lis(sa_pool, n=10)
     bc_lis = _moat_card_lis(bc_pool)
+    sa_dd_rejected_lis = _moat_card_lis(sa_dd_rejected_pool, n=10)
 
     return f'''<div class="auto-stats">
   <h3>
@@ -440,6 +448,11 @@ def render(records):
     <div class="stats-cell">
       <div class="stats-label">🛡️ 護城河 S/A 擴大 + §7 🟢（依 5Y 期望 IRR 排序）</div>
       <ol>{sa_lis}</ol>
+    </div>
+
+    <div class="stats-cell">
+      <div class="stats-label">⚠️ 護城河 S/A 擴大 + §7 🟢 但 DD ❌（依 5Y 期望 IRR 排序）</div>
+      <ol>{sa_dd_rejected_lis}</ol>
     </div>
 
     <div class="stats-cell">
