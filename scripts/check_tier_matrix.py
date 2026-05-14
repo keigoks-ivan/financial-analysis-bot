@@ -501,14 +501,16 @@ def build_alert_html(report: dict) -> str:
     alerts_html = "\n  ".join(alerts)
 
     return f"""{INJECTION_MARKER_START}
-<div style="background:linear-gradient(135deg,#FEF3C7,#FEFCE8);border-left:6px solid #CA8A04;border-radius:8px;padding:14px 18px;margin:14px 0;color:#713F12;font-size:13px;line-height:1.7">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+<details style="background:linear-gradient(135deg,#FEF3C7,#FEFCE8);border-left:6px solid #CA8A04;border-radius:8px;padding:14px 18px;margin:14px 0;color:#713F12;font-size:13px;line-height:1.7">
+  <summary style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none">
     <strong>🎯 Tier Matrix 健康度：⚠️ 需要 PM 級 review</strong>
     <span style="font-size:11px;color:#92400E">最新 {publish_date} · {matrix_total} 檔 · {days_since} 天前</span>
+  </summary>
+  <div style="margin-top:8px">
+    {alerts_html}
+    <div style="margin-top:8px;font-size:12px"><a href="/id/tier_matrix.html" style="color:#7C3AED;font-weight:600">→ 查看 / 更新 Tier Matrix</a></div>
   </div>
-  {alerts_html}
-  <div style="margin-top:8px;font-size:12px"><a href="/id/tier_matrix.html" style="color:#7C3AED;font-weight:600">→ 查看 / 更新 Tier Matrix</a></div>
-</div>
+</details>
 {INJECTION_MARKER_END}"""
 
 
