@@ -2488,6 +2488,21 @@ def update_index(entries, dry_run: bool = False, force_refresh_eps: bool = False
     except Exception as e:
         print(f"WARN: DD_AUTO_STATS injection skipped — {e}")
 
+    # Inject DCA auto-stats panel (mirrors DD_AUTO_STATS, reads docs/dca/)
+    try:
+        from aggregate_dca_stats import load_dca_records, render as render_dca_stats
+        _dca_records = load_dca_records()
+        _dca_stats_html = render_dca_stats(_dca_records)
+        new_html = re.sub(
+            r'<!-- DCA_AUTO_STATS_START -->.*?<!-- DCA_AUTO_STATS_END -->',
+            f'<!-- DCA_AUTO_STATS_START -->\n    {_dca_stats_html}\n    <!-- DCA_AUTO_STATS_END -->',
+            new_html,
+            flags=re.DOTALL,
+        )
+        print("DCA_AUTO_STATS injected.")
+    except Exception as e:
+        print(f"WARN: DCA_AUTO_STATS injection skipped — {e}")
+
     # Inject DD freshness panel (yfinance scan, cached 6h)
     try:
         from check_dd_earnings_freshness import (
