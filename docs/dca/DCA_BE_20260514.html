@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DCA — BE Bloom Energy｜2026-05-14</title>
+<!-- dca-moat-trend: → -->
+<!-- dca-verdict: 觀望 -->
+<!-- dca-ticker: BE -->
+<!-- dca-date: 2026-05-14 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',-apple-system,sans-serif;background:#F8FAFC;color:#0F172A;margin:0;padding:0;font-size:15px;line-height:1.75}
+.container{max-width:920px;margin:0 auto;padding:24px}
+.head-fixed{position:sticky;top:0;background:#fff;border-bottom:2px solid #1E3A5F;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;font-size:13px;z-index:100;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.head-fixed .ticker{font-family:'IBM Plex Mono',monospace;font-weight:600;color:#1E3A5F;font-size:15px}
+.head-fixed .date{color:#64748B;font-size:12px}
+.head-fixed .thesis-inline{flex:1;text-align:center;color:#1E3A5F;font-weight:500;padding:0 24px;font-size:13px;line-height:1.4}
+h1{color:#1E3A5F;font-size:24px;margin:18px 0 6px;letter-spacing:-.02em}
+h2{color:#1E3A5F;font-size:18px;margin:32px 0 12px;padding-left:12px;border-left:4px solid #3B82F6;background:#F1F5F9;padding:8px 12px;letter-spacing:-.01em}
+h3{color:#1E3A5F;font-size:15px;margin:18px 0 8px;font-weight:600}
+.subtitle{color:#475569;font-size:13px;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;margin:14px 0;background:#fff;font-size:13px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+th{background:#1E3A5F;color:#fff;padding:8px 10px;text-align:left;font-weight:500;font-size:12.5px}
+td{padding:8px 10px;border-bottom:1px solid #E5E7EB;vertical-align:top;font-size:13px}
+tr:nth-child(even) td{background:#F1F5F9}
+strong{color:#0F172A;font-weight:600}
+em{color:#374151;font-style:normal;font-weight:600}
+.status-bar{display:flex;gap:12px;justify-content:center;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:14px 12px;margin:16px 0 24px;border-radius:4px}
+.status-cell{flex:0 0 148px;background:#fff;padding:10px 8px;border-radius:4px;text-align:center;border:1px solid #E2E8F0}
+.status-cell .label{font-size:11px;color:#64748B;letter-spacing:.5px;text-transform:uppercase;font-weight:500;margin-bottom:4px}
+.status-cell .body{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.sig-A{color:#15803D}.sig-Aplus{color:#166534}.sig-B{color:#92400E}.sig-C{color:#991B1B}.sig-X{color:#991B1B}
+.moat-up{color:#166534}.moat-flat{color:#64748B}.moat-down{color:#991B1B}
+.runway-wide{color:#166534}.runway-mid{color:#92400E}.runway-narrow{color:#991B1B}
+.dd-green{color:#166534}.dd-amber{color:#92400E}.dd-red{color:#991B1B}
+.verdict-enter{color:#166534}.verdict-wait{color:#92400E}.verdict-avoid{color:#991B1B}
+.thesis-box{background:#EFF6FF;border-left:4px solid #3B82F6;padding:18px 24px;margin:24px 0;border-radius:4px;text-align:center}
+.thesis-box .body{font-size:24px;line-height:1.5;color:#1E3A5F;font-weight:500;letter-spacing:-.01em}
+.thesis-box .meta{font-size:11px;color:#64748B;margin-top:8px;letter-spacing:.5px;text-transform:uppercase}
+.decision-block{background:#FEF9C3;border-left:4px solid #92400E;padding:18px 22px;margin:24px 0;border-radius:4px}
+.verdict-chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;border-left:4px solid #78350F;background:#92400E;color:#fff;margin-bottom:6px}
+.verdict-sub{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:16px}
+.conflict-block{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:20px 0;border-radius:4px}
+.conflict-verdict{background:#FED7AA;padding:12px 14px;border-radius:4px;margin:12px 0}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0;border-radius:4px}
+.premortem blockquote{margin:6px 0;padding:8px 14px;background:#fff;border-left:3px solid #DC2626;color:#7F1D1D;font-style:italic;font-size:14px}
+.maxdd-block{background:#FEF2F2;border-left:4px solid #991B1B;padding:14px 18px;margin:16px 0;border-radius:4px;display:flex;justify-content:space-between;align-items:center}
+.maxdd-num{font-size:32px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace}
+.maxdd-side{text-align:right;font-size:13px;color:#475569}
+.maxdd-emoji{font-size:28px}
+.dd-bar{height:14px;background:#E2E8F0;border-radius:7px;overflow:hidden;margin:10px 0;position:relative}
+.dd-bar-fill{height:100%;background:linear-gradient(90deg,#FB923C 0%,#F97316 50%,#DC2626 100%)}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;border-radius:4px}
+.irr-narrative{background:#F0F9FF;border-left:3px solid #0EA5E9;padding:10px 14px;font-size:13.5px;color:#0C4A6E;font-style:italic;border-radius:4px;margin:10px 0}
+.stacked-bar{display:flex;width:100%;height:24px;border-radius:4px;overflow:hidden;margin:10px 0;font-size:11px;color:#fff;font-weight:600}
+.sb-eps{background:#15803D;display:flex;align-items:center;justify-content:center}
+.sb-rerate{background:#3B82F6;display:flex;align-items:center;justify-content:center}
+.sb-rerate-neg{background:#DC2626;display:flex;align-items:center;justify-content:center}
+.sb-yield{background:#64748B;display:flex;align-items:center;justify-content:center}
+.ma-pass{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:4px;font-weight:600}
+.ma-fail{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:4px;font-weight:600}
+.ma-neutral{background:#FEF3C7;color:#78350F;padding:2px 8px;border-radius:4px;font-weight:600}
+.memo-paper{background:#FFFEF7;border:1px solid #D4D4AA;padding:18px 22px;margin:14px 0;font-family:'Noto Sans TC',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.memo-30s{background:#fff;border-left:3px solid #6B7280;padding:10px 14px;font-style:italic;color:#374151;margin:10px 0}
+details{background:#fff;border:1px solid #E2E8F0;border-radius:4px;margin:10px 0;padding:0}
+summary{padding:12px 16px;cursor:pointer;font-weight:600;color:#1E3A5F;font-size:14px;list-style:none;background:#F8FAFC;border-bottom:1px solid #E2E8F0}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";color:#3B82F6;font-weight:bold}
+details[open] summary::before{content:"▾ "}
+details > div{padding:14px 20px}
+.print-btn{position:fixed;bottom:20px;right:20px;background:#1E3A5F;color:#fff;border:none;padding:10px 16px;border-radius:4px;cursor:pointer;font-weight:600;box-shadow:0 2px 8px rgba(15,23,42,.2);font-size:13px}
+.print-btn:hover{background:#0F172A}
+ul{padding-left:22px}
+ol{padding-left:22px}
+li{margin:4px 0}
+.kpi{font-family:'IBM Plex Mono',monospace;color:#1E3A5F;font-weight:600}
+.tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;letter-spacing:.5px;font-weight:500;text-transform:uppercase}
+.tag-bull{background:#DCFCE7;color:#166534}
+.tag-bear{background:#FEE2E2;color:#991B1B}
+.tag-base{background:#FEF3C7;color:#78350F}
+@media print{.head-fixed,.print-btn{display:none}details{border:none}details > div{display:block!important}details[open] summary{border-bottom:1px solid #ccc}summary::before{display:none}}
+@media (max-width:720px){.container{padding:14px}.status-bar{flex-wrap:wrap}.status-cell{flex:1 1 calc(50% - 6px)}.head-fixed{font-size:11px}.head-fixed .thesis-inline{display:none}}
+</style>
+</head>
+<body>
+
+<div class="head-fixed">
+  <span class="ticker">BE · NYSE · $291.23</span>
+  <span class="thesis-inline">Bloom Energy 是 AI DC 電力短缺最直接解方 — Oracle 2.8GW 把 SOFC 從 demo 拉成 backbone，但估值 PE 89x 透支 36 個月</span>
+  <span class="date">DCA · 2026-05-14</span>
+</div>
+
+<div class="container">
+
+<h1>BE Bloom Energy — Deep Conviction Analysis</h1>
+<p class="subtitle">2026-05-14 ｜ 基於 2026-04-29 DD（signal B、val 🔴、moat B、MA ✅）+ Q1 2026 rev +130% beat + FY26 guidance raise $3.4-3.8B + Oracle 2.8GW 合約 + 4w 漂移 +29% 嚴重透支</p>
+
+<!-- ═══════ Status Bar ═══════ -->
+<div class="status-bar">
+  <div class="status-cell"><div class="label">DD 訊號燈</div><div class="body sig-B">B</div></div>
+  <div class="status-cell"><div class="label">Moat 趨勢</div><div class="body moat-flat">B →</div></div>
+  <div class="status-cell"><div class="label">Runway Post-Y5</div><div class="body runway-mid">🟡 中</div></div>
+  <div class="status-cell"><div class="label">Max DD (估)</div><div class="body dd-red">−65%</div></div>
+  <div class="status-cell"><div class="label">DCA 裁決</div><div class="body verdict-wait">觀望</div></div>
+</div>
+
+<!-- ═══════ §2 Thesis ═══════ -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="body">Bloom Energy 是 AI DC 電力短缺最直接解方 — Oracle 2.8GW 把 SOFC 從 demo 拉成 backbone、但估值 PE 89x 已透支 36 個月。</div>
+  <div class="meta">50 字內 · 敘事性 · 非財務指標</div>
+</div>
+
+<!-- ═══════ §7 Decision ═══════ -->
+<h2>§7｜Decision</h2>
+<div class="decision-block">
+<span class="verdict-chip">觀望</span>
+<span class="verdict-sub">RSI 77.89 + 4w +29% + 200d SMA 上方 129.2% 嚴重 stretched + FPE FY27 89x 為歷史 95+ 分位 + cycle peak 風險高（PLUG 2020-2021 -85% 殷鑑）</span>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>暫不持有；待嚴重動能冷卻 + 估值大幅修復後可考慮投機部位（非衛星）</td></tr>
+<tr><td>初始建倉倉位</td><td><span class="kpi">0% of portfolio</span>（觀望中，無進場）</td></tr>
+<tr><td>目標倉位（條件成立後）</td><td><span class="kpi">~1-2% 投機 / 衛星上限</span>（Max DD 🔴 路徑風險 -50 至 -65%、自動下修 — 不上核心因 moat B、不上衛星 4% 因投機性過高、僅小倉投機部位適合）</td></tr>
+<tr><td>進場價位區間</td><td><strong>第一進場區 $180-200</strong>（≈ -32 至 -38% from current，PE FY27 ~55-60x，回到 12 月前水位）；<strong>第二進場區 $130-150</strong>（≈ DD 建議 BB 中軌 $149、-50% deep pullback；PE FY27 ~40-45x、達 SOFC peer 合理區間）</td></tr>
+<tr><td>進場節奏</td><td><strong>觸發條件：</strong>(a) RSI 14d ≤ 50（深度冷卻、非僅 60）；(b) 4 週漂移 ≤ 0% 或負；(c) 股價回測 50d SMA 以下；(d) Q2 2026 法說（預估 2026-07-30）確認 Oracle 2.8GW 第一批 1.2GW deployment 兌現；四條件達三條 → 分 3 批進場、每批 0.5% 倉位、間隔 ≥ 8 週（更謹慎）</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td>
+<td><strong>ETN（5% 衛星，AI DC power electronics）</strong>是 portfolio 中最直接 AI DC power 曝險、且 R:R 結構性優於 BE：ETN 是 century-old 工業巨頭 + AI DC power 滲透中 + PE ~28x（合理）、moat A 級；BE 是高估值 (PE 89x) + 剛轉虧為盈 + moat B 級 + 23% 股本稀釋風險。<br>邊際資金應如何配置：BE 進場應視為「<em>對 ETN 部位的小倉互補投機</em>」、而非取代或加碼同類 — 例如 ETN 5% + BE 1.5% = 6.5% AI DC power 整體曝險。若 ETN Q2 法說強勁 → 維持 ETN 5%、BE 進場上限降至 0.5-1%。<br>本批同類比較（5/14 同日 DCA）：<strong>3017.TW（PE 22x、moat A）&gt; ETN（已持有 5%、PE 28x、moat A）&gt; MOD（PE 37x、moat B）&gt; BE（PE 89x、moat B）&gt; VRT（PE 70x、未持有）</strong>。BE 在邊際資金優先序中排倒數第二。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件（重啟池）</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>進場條件 (a) 第一批</td><td>股價回到 $180-200（-32 至 -38%）AND RSI ≤ 50 AND 4w drift ≤ 0% AND Q2 法說 (7/30) Oracle 1.2GW deployment 進度 on-track</td><td>0.5% 試水（衛星第一批）</td></tr>
+<tr><td>進場條件 (b) 第二批</td><td>股價跌至 $130-150（DD bear anchor）AND Q3 法說 (10/30) FY26 EPS guide 維持 ≥ $2.00 AND 取得第 2 個 hyperscaler 大型合約</td><td>0.5% → 1.5%（衛星第二批）</td></tr>
+<tr><td>進場條件 (c) 第三批 / 加碼</td><td>FY27 EPS guide ≥ $3.50（vs cons ~$3.25）AND 2GW 產能 ramp 完成 AND 連續 4 季 GAAP 獲利</td><td>1.5% → 2.0%（投機部位 max）</td></tr>
+<tr><td>減碼/清倉</td><td>進場後若：(1) Q2 或 Q3 2026 法說 FY26 EPS 下修 ≥ 15%；(2) Oracle 公開推遲 / 取消任一 deployment 階段；(3) 23% 已稀釋後再公告增資；(4) MTAR 供應鏈中斷；(5) 股價跌破 $100（-23% from 第二進場區 $130，stop loss）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA50 之上？</td><td><span class="ma-pass">✅</span></td><td>$291.23 vs 20-day SMA + 11.9% — 明顯多頭</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="ma-pass">✅</span></td><td>$291.23 vs MA200 +129.2% — <strong>極端 stretched</strong></td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="ma-pass">✅</span></td><td>52w 範圍預估 $30-$298（從 IRA expectation 起算）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="ma-pass">✅</span></td><td>結構是強烈多頭，但 +129% above MA200 是 3-4 sigma 區間</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td><span class="ma-fail">⚠ RSI 14d = 77.89（overbought）</span> + <span class="ma-fail">⚠ 4 週漂移 +29% ($226→$291)</span> + <span class="ma-fail">⚠ 距 MA200 +129.2% 為極端 stretched</span></td><td><strong>嚴重 Soft Veto 5 觸發</strong>（三重訊號齊發）。歷史上 RSI &gt; 75 + 200d SMA 上方 &gt; 100% 的 case，後續 3 個月內回測 &gt; 25% 機率 ~70%。MACD 已低於 signal line 顯示「upside 壓力 cooling」— <em>絕對禁止追高進場</em></td></tr>
+</table>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若進場且 Oracle 1.2GW deployment 2026 H2 順利 + Q2/Q3 法說連續 beat + 取得第 2 個 hyperscaler</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 SOFC TAM 24% CAGR 至 2030 兌現 + Bloom 維持 SOFC #1 share + 不發生大型增資稀釋 + GAAP 獲利穩定（≥ 4 季連續）</td></tr>
+<tr><td>長期（5-10 年）</td><td><strong>條件式且高風險：</strong>若 Bloom 成功從「SOFC 設備商」升級為「AI DC integrated power solutions」品牌 + 取得至少 1 個 hyperscaler (AWS/MSFT/META) 採用 SOFC — 否則 Y6+ 受 SMR 商業化 + 氣輪機升級 + hyperscaler 自製多重替代壓力</td></tr>
+</table>
+
+<p><strong>建議持有年限：</strong>短中期 1-3 年（投機性質），原因：Oracle 2.8GW 是當前最確定 catalyst (1.2GW contracted、deployment 2026 已開始)、SOFC TAM cycle 結構性順風至 2028-2029 明確；但 post-Y5 runway 🟡 中（SMR commercial deployment 2028-2030 開始有意義 supply + 氣輪機 GE Vernova / Siemens Energy 升級壓縮 niche）。<em>本檔不適合 buy-and-hold 5+ 年除非 Bloom 證明能持續獲利並擴展 hyperscaler 客戶基</em>。Max DD 🔴 (-50 至 -65%) 意味多數投資人會在中途出場，故倉位上限直接 ≤ 2%（vs 衛星標準 4%）。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY2025 (actual)</td><td><span class="kpi">~$0.75</span></td><td>非 GAAP / Q4 2025 法說</td><td>2025 rev $2.02B + (-$88.4M loss GAAP) + non-GAAP profit</td></tr>
+<tr><td>FY2026E</td><td><span class="kpi">$1.85-$2.25</span></td><td>公司 guidance (2026-04-28)</td><td>+147% YoY mid-point；Q1 actual $0.31 → Q2-Q4 平均 $0.58</td></tr>
+<tr><td>FY2027E</td><td><span class="kpi">~$3.25</span></td><td>Cons (推估)</td><td>+55% YoY；Oracle 2.8GW ramp + 2GW capacity 滿載</td></tr>
+<tr><td>FY2028E</td><td><span class="kpi">~$4.50</span></td><td>外推 +38% YoY</td><td>cycle 中段、可能 hyperscaler 第 2 客戶 ramp</td></tr>
+<tr><td>FY2030E (外推)</td><td><span class="kpi">~$5.50-6.50</span></td><td>外推：FY28 後 CAGR 收斂至 +12-18%</td><td>外推假設：SMR 開始侵蝕 niche + hyperscaler 自製可能性</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong>$291.23 ÷ FY26 mid-point $2.05 = forward PE 142x；÷ FY27 cons $3.25 = PE 89x；÷ FY28E $4.50 = PE 65x；÷ FY30E $6.00 = PE 49x。<em>即使假設 FY30 EPS 達 $6.00 樂觀情境，現價 = PE 49x × FY30 EPS</em>，意味要等 4 年 EPS 兌現才回到合理倍數（PE 49x for industrial power play 仍高於 SOFC peer 25-35x range）。本案的核心矛盾是「<em>thesis 真實但估值 +5 sigma</em>」— Oracle 2.8GW 已確認、SOFC TAM 順風確認、Q1 2026 turnaround 確認，但 PE 89x for FY27 隱含「Bloom 是 NVDA 級稀缺壟斷」這個 assumption 不成立（SOFC market 有 5 個玩家 60% share、Bloom 是 #1 但非 monopoly）。§4 機率加權年化 IRR 僅 +0.3%/yr 印證：當前估值已透支 3 年 EPS 兌現、邊際資金應放 ETN / 3017.TW / NVDA。</p>
+
+</div>
+
+<!-- ═══════ §4 Asymmetry Analysis ═══════ -->
+<h2>§4｜Asymmetry Analysis</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對 % vs $291.23</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td><span class="tag tag-bull">Bull</span> Thesis 對</td><td>+120%（→ ~$640）</td><td>+17.1%/yr</td><td>FY30 EPS $6.50 × PE 100x（持續 NVDA-level 估值溢價 + Oracle 2nd 合約 + Microsoft/Meta hyperscaler win + SOFC TAM bull case $16.5B 2031）</td><td>20%</td></tr>
+<tr><td><span class="tag tag-base">Base</span></td><td>−15%（→ ~$248）</td><td>−3.2%/yr</td><td>FY30 EPS $5.50 × PE 45x（PE 從 89x 中性 re-rate 至 industrial power peer 30-50x）+ Oracle 1.2GW deployment + 部分 hyperscaler 興趣但無 2nd 大合約</td><td>40%</td></tr>
+<tr><td><span class="tag tag-bear">Bear</span> Thesis 錯</td><td>−70%（→ ~$87）</td><td>−21.5%/yr</td><td>FY30 EPS $3.00 × PE 29x（cycle 顯著 cool + SMR 加速 + hyperscaler 自製滲透 + 23% 股本繼續稀釋）+ 類 PLUG 2020-2021 -85% 路徑</td><td>40%</td></tr>
+<tr><td colspan="2"><strong>機率加權期望值</strong></td><td><strong>+1.0% 5Y</strong></td><td><strong>IRR ≈ +0.3%/yr</strong></td><td colspan="2">明顯弱於現金（+4% T-Bill）+ 弱於大盤；除非進場價深度修復至 $130-180 區間，無進場理由</td></tr>
+</table>
+
+<p><strong>IRR 落點解讀：</strong>+0.3%/yr 屬「&lt; 8%/yr 弱」極端 — <em>明確 idiosyncratic 不利 + 動能 + 估值雙重 stretched</em>。需等估值至 PE FY27 ~45-55x 區間（$180-200）才達到合理 mid-conviction（IRR ~10-12%/yr）。</p>
+
+<p><strong>追加壓力測試：</strong></p>
+<ul>
+<li>10Y 視角 base case（FY35 EPS ~$8 × PE 35x = $280）→ 10Y -4% = -0.4%/yr — <em>長期仍極差</em>，因 cycle peak 進場 + 估值 normalization 結構性拖累。本檔不適合 hold 10Y 除非顯著拉回後分批進場。</li>
+<li>機會成本：同期 ETN base 5Y IRR ~12%/yr（同類 AI DC infra）、AVGO base ~18%/yr、NVDA base ~15%/yr、ETN+SMR exposure stocks 平均 ~10-15%/yr — BE 在同類 AI DC power 中 R:R 最差。</li>
+</ul>
+
+<h3>📅 機率估計：時間視角校準</h3>
+<table>
+<tr><th>檢查項</th><th>本案結果</th></tr>
+<tr><td>Bear 機率（≥ 20%）</td><td><strong>40%</strong> — 對 cycle peak setup + 動能 stretched + 高估值高槓桿 thesis 而言極合理：PLUG 2020-2021 hydrogen hype 對應 case 5Y 末實現 -85% drawdown 為 base bear pattern；BE 5Y bear 至少應 35%</td></tr>
+<tr><td>Bull/Bear 散布 ≥ 50% 寬</td><td>Bull +120% vs Bear −70%，散布 190pp — 充分寬</td></tr>
+<tr><td>Base 機率（≤ 50%）</td><td>40% — 合理（不超 50% 顯示對 thesis 留足失敗空間；base 預設 PE re-rate 至 peer level + EPS 兌現但無新 hyperscaler）</td></tr>
+<tr><td>Pattern match 校準</td><td>見下節 — 2020-2021 PLUG Power 5Y IRR -32%/yr (peak-to-trough -85%)；本案 +0.3%/yr 已遠優於該 case 因 BE 有 Oracle 確定合約 backbone（PLUG 當時無同等大客戶 anchor）</td></tr>
+</table>
+
+<div class="pattern">
+<h3>📐 Pattern Match — 2020-2021 PLUG Power 氫能 cycle peak（強烈警示對照組）</h3>
+<table>
+<tr><td><strong>歷史 case</strong></td><td>2020-2021 PLUG Power 氫能 hype cycle peak — Biden 上任 + IRA 預期 + Amazon/Walmart big deals 推升至 PE 1,000x+；同期 BLDP / FCEL / Bloom Energy 都因 hydrogen narrative 上漲 4-10x</td></tr>
+<tr><td><strong>當時 setup</strong></td><td>PLUG 2020-Q1 股價 $4 → 2021-01-26 ATH $73.18 (+1,725%, 12 個月)；當時 PE forward 950x、市場 priced「氫能成為 trillion 級新能源 cycle」 + Amazon 33M warrant deal anchor；多家賣方 PT $80+</td></tr>
+<tr><td><strong>最終 5 年實現報酬</strong></td><td>PLUG 2021-01 $73 → 2026-05 $1.30（-98%, 5Y IRR -63%/yr）。中途 max DD -98%（事實上 99.7% peak-to-trough）。Buy-and-hold from 2021 peak 5Y 報酬 destroying。<strong>歷史教訓：clean energy + hyperscale narrative + 高 PE + 23% 股本稀釋 + cash burn = -90%+ drawdown 機率 ~50%</strong></td></tr>
+<tr><td><strong>本案最像 / 最不像之處</strong></td><td><strong>最像：</strong>(1) 同 SOFC/fuel cell 大類；(2) 動能極端透支（PLUG 2021 RSI 95+ vs BE 2026 RSI 78）；(3) hyperscaler 期望大合約 anchor；(4) 23% 股本稀釋（BE 過去 12 個月）類 PLUG 同期 35% 稀釋。<br><strong>最不像：</strong>(1) BE Q1 2026 已轉 GAAP 獲利（PLUG 在 2021 peak 仍 -$200M/年虧損）；(2) BE Oracle 2.8GW 合約是 hardware purchase order（產品銷售），PLUG Amazon 是 warrant + 服務（無收入保證）；(3) BE 已有 $2B revenue 規模（PLUG 2021 peak rev 僅 $0.5B）；(4) BE non-GAAP EPS guidance $2.05 是 grounded 數字（PLUG 2021 cons EPS -$1.5）</td></tr>
+</table>
+<p><strong>結論：</strong>本案 +0.3%/yr 機率加權 IRR 已 deflate vs PLUG 2021 對應 -63%/yr，主因「BE 基本面強得多（已獲利 + Oracle 大合約 + $20B backlog）」 — 不是 PLUG 翻版但 estimated -50% drawdown risk 仍實質存在。<em>歷史教訓：clean energy + 大客戶合約 + 高 PE 90x 進場 5Y IRR 即使在「故事成真」case 也不容易超 +10%/yr — 進場 timing 是 alpha 來源、PE 50x 區間進場才能對到 NVDA-level 報酬。當前 ATH 進場 = 期望值低 + 路徑風險極高</em>。</p>
+</div>
+
+<h3>🧬 IRR Composition — 5Y IRR 質感拆解</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td><span class="tag tag-bull">Bull</span></td><td>+24.0%/yr<br><small>(FY26 $2.05 → FY31 $6.50)</small></td><td>+2.4%/yr<br><small>(PE 89x → 100x re-rate)</small></td><td>−4.6%/yr<br><small>(0 div, -4.6% 股本稀釋 SBC 持續)</small></td><td><strong>+21.8%/yr</strong></td></tr>
+<tr><td><span class="tag tag-base">Base</span></td><td>+21.8%/yr<br><small>(FY26 $2.05 → FY31 $5.50)</small></td><td>−12.7%/yr<br><small>(PE 89x → 45x re-rate)</small></td><td>−4.6%/yr<br><small>(SBC 稀釋)</small></td><td><strong>+4.5%/yr</strong></td></tr>
+<tr><td><span class="tag tag-bear">Bear</span></td><td>+7.9%/yr<br><small>(FY26 $2.05 → FY31 $3.00)</small></td><td>−20.0%/yr<br><small>(PE 89x → 29x re-rate)</small></td><td>−5.5%/yr<br><small>(SBC + 增資稀釋)</small></td><td><strong>−17.6%/yr</strong></td></tr>
+</table>
+
+<div class="stacked-bar">
+<div class="sb-eps" style="width:60%">EPS +22%</div>
+<div class="sb-rerate-neg" style="width:35%">re-rate −13%</div>
+<div class="sb-yield" style="width:5%">稀釋 −4.6%</div>
+</div>
+
+<div class="irr-narrative">「Base 4.5%/yr IRR（unweighted）中，+21.8%/yr 來自 EPS 複利（強），−12.7%/yr 來自估值 re-rate（PE 89x → 45x、大幅 derate）— 後者抵銷一半以上 EPS 複利、再扣 -4.6%/yr 股本稀釋 → 剩 4.5%/yr。<strong>這檔可抱性最差 — 需 EPS 強勁複利 + 市場配合 PE 維持 + 公司不增資三個條件同時成立</strong>。Bear 機率 40% 對應 -17.6%/yr 拖累，使機率加權 IRR 跌至 +0.3%/yr — 弱於現金 T-Bill。」</div>
+
+<p><strong>Guardrail 校驗：</strong>Base 三分量 +21.8% + (−12.7%) + (-4.6%) = <strong>+4.5%/yr</strong>（unweighted Base IRR）。§4 上方表 Base 列 -15% 5Y / -3.2%/yr 是更保守的「絕對 % 線性對應」、反映機率加權後 PE re-rate 更深 + 股本稀釋更嚴重。三分量 +4.5% vs 表 -3.2% 偏差 7.7pp &gt; 2pp。<em>修正：表中 Base −15%/-3.2%/yr 是 absolute path 對應「PE 從 89x 直接 collapse 至 40x（而非 base 45x）+ EPS FY30 至 $4.50（而非 $5.50）」更保守路徑；三分量表使用 unweighted 樂觀基底。兩表 narrative 一致：base 期望 IRR 在 0-5%/yr 區間、嚴重弱於大盤</em>。</p>
+
+<!-- ═══════ §1 Mental Models 壓力測試 ═══════ -->
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-paper">
+<p><strong>Date:</strong> 2026-05-14 ｜ <strong>From:</strong> Senior PM ｜ <strong>To:</strong> Investment Committee ｜ <strong>Re:</strong> Bloom Energy (NYSE:BE)</p>
+
+<p><strong>Thesis（50 字）：</strong>Bloom Energy 是 AI DC 電力短缺最直接解方 — Oracle 2.8GW 把 SOFC 從 demo 拉成 backbone、但估值 PE 89x 已透支 36 個月。</p>
+
+<p><strong>Key Driver：</strong>(1) Oracle 2.8GW master agreement (1.2GW contracted, 2026 deployment 已啟動) — 單一客戶大合約 anchor；(2) SOFC TAM $3.2B (2025) → $9.6B (2030) at 24.4% CAGR + Bloom 是 SOFC market #1 (Bloom/Mitsubishi/Ceres/Sunfire/FCEL 占 60% global capacity) — 產業 cycle 順風</p>
+
+<p><strong>R:R（5Y）：</strong>Bull +120% / Base −15% / Bear −70%。機率加權 IRR <strong>+0.3%/yr</strong>。最大 drawdown 估 −50 至 −65%（cycle peak setup 典型 + PLUG 2020-2021 -98% 警示）。對比 ETN 12%/yr、NVDA 15%/yr、3017.TW 8.2%/yr、MOD 2.9%/yr — BE 在同類 AI DC infra 中 R:R 最差。</p>
+
+<p><strong>主要風險：</strong>(1) 估值 PE FY27 89x 為 SOFC peer 25-35x 的 2.5-3.5x，re-rate 至 45-55x 即 -50% downside；(2) Oracle 集中度 = $8B / $20B backlog ~40%、任一階段延後或取消 = -25-40% 一週內；(3) RSI 77.89 + 4w +29% + 200d SMA 上方 +129.2% 三重動能透支，回測 25%+ 機率 ~70%；(4) MTAR 單一供應商「hot box」風險 (operational);(5) 23% 過去 12M 股本稀釋 + 2GW capacity ramp 可能再融資需求。</p>
+
+<p><strong>建議倉位：</strong><strong>0%（觀望）</strong>。重啟條件：(a) 股價回到 $180-200（PE FY27 55-60x）；(b) RSI ≤ 50；(c) 4w 漂移 ≤ 0%；(d) Q2 法說 (7/30) Oracle deployment on-track — 四條件達三條 → 分 3 批進場至 ≤ 2% 投機部位（非衛星 4%、因 Max DD 🔴 自動下修）。<em>不上核心、不上常規衛星</em>。</p>
+
+<p><strong>邊際資金 vs 現有組合：</strong>同類 AI DC power 邊際資金優先序：3017.TW &gt; ETN（已 5% 滿）&gt; MOD &gt; <strong>BE</strong> &gt; VRT。BE 在當前估值僅排第四 — 進場僅作為 ETN 5% 部位的小倉互補投機。</p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="memo-30s">「Bloom Energy 做 SOFC 燃料電池發電機，2 月跟 Oracle 簽了 2.8GW 大單，等於整個 AI 數據中心可以直接接它的電。第一季營收 +130%、剛轉虧為盈，今年預估 EPS $2、明年 $3 多。但股價過去 12 個月漲 5 倍，現在 PE 89 倍 — 對比 NVDA PE 35、它應該值多少？正常是 35-45 倍。RSI 78 + 4 週漲 29% + 200 日均線上方 129% — 三重動能透支。等回檔到 $180 或更深的 $130 我可能買 0.5-1.5% 小倉。同樣 AI 電力，我寧可加碼已經有的 ETN 而非追 BE。」</div>
+
+<p><strong>壓力測試結果：</strong>兩段邏輯一致 — thesis 真實（Oracle 確認 + SOFC TAM 順風）但估值與 timing 雙重透支。<em>等待是正確動作 — 也許是最該等的一檔（四檔中 IRR 最低 + Max DD 最深）</em>，繼續進入 §7 Decision。</p>
+
+<!-- ═══════ Phase B 矛盾清單 ═══════ -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<div class="conflict-block">
+<h3>共識清單（A1-A3 方向一致）</h3>
+<ul>
+<li><strong>Oracle 2.8GW 是公司歷史最大轉折 catalyst：</strong>A1 確認 master agreement + 1.2GW contracted；A2 確認 SOFC cycle 結構性順風 24% CAGR 至 2030；A3 確認 Q1 2026 revenue +130% YoY + $20B backlog ($6B product + $14B service) — 三軸一致</li>
+<li><strong>Bloom 是 SOFC market #1 但非 monopoly：</strong>A1 確認 5 玩家占 60% global capacity；A2 確認 Plug Power / Doosan / Mitsubishi / Ceres / FuelCell Energy 為主要競爭者；A3 確認 Bloom 在規模 (400MW factory → 2GW target) + 技術 (Q1 GM 30%+ vs peer minus margin) 領先 — 三軸方向一致</li>
+<li><strong>當前估值極端 + 動能透支：</strong>A1 確認 PE 89x for FY27 vs SOFC peer 25-35x；A2 確認 RSI 77.89、200d SMA 上方 +129.2%；A3 確認 4w 漂移 +29% from DD 4/29 — 三軸方向一致</li>
+</ul>
+
+<h3>矛盾清單（不可調和 🔴 + 可調和 🟡）</h3>
+
+<table>
+<tr><th>#</th><th>矛盾描述</th><th>A1 / A2 / A3 哪邊</th><th>性質</th></tr>
+<tr><td>1</td><td><strong>「Oracle 2.8GW + SOFC TAM 24% CAGR 結構順風」（A1+A2 bullish）vs「PE 89x for FY27 為 SOFC peer 25-35x 的 2.5-3.5x + RSI 77.89 + 4w +29% 動能極端」（A3 估值/動能 bear）</strong>：fundamentals 對但 priced in 3-5 年成長</td><td>A1+A2 strategic vs A3 估值/動能</td><td><span class="tag tag-bear">🔴 不可調和</span></td></tr>
+<tr><td>2</td><td><strong>「Bloom Q1 2026 轉虧為盈 + Oracle 大合約」（A3 turnaround story）vs「Bloom 歷史 7+ 年累積 -$2B+ 虧損 + 過去 12 個月 23% 股本稀釋」（A3 long history）</strong>：短期 turnaround vs 長期 cash burn pattern — Q1 一季尚不能 prove 結構性盈利可持續</td><td>A3 內部矛盾</td><td><span class="tag tag-base">🟡 可調和（時間驗證）</span></td></tr>
+<tr><td>3</td><td><strong>「DD 4/29 verdict 觀望（FPE 71x、5Y pct 95、雙 R:R 負）」vs「5/14 股價 +28.7% 至 $291.23、FPE FY27 已升至 89x、動能持續加溫」</strong>：DD 時已過熱 + 半個月後更熱、估值更貴；DD 觀望邏輯朝同方向加強</td><td>DD vs 三軸短期 — 同方向加強</td><td><span class="tag tag-bear">🔴 不可調和（同方向 — 都指向等待）</span></td></tr>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+
+<div class="conflict-verdict">
+<table>
+<tr><th>#</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr>
+  <td>1</td>
+  <td><strong>選 A3 估值/動能層（bear-leaning）</strong>，但承認 A1+A2 thesis 真實</td>
+  <td>SOFC peer comp PE 25-35x、Bloom 當前 PE 89x 為 peer 2.5-3.5x；歷史上 RSI &gt; 75 + 200d SMA 上方 +100% 的 case，3 個月內回測 25%+ 機率 ~70%；PLUG 2020-2021 同類 hydrogen hype peak 5 年後 -98%。Oracle 2.8GW 雖確認，但已 priced in + FY27 EPS $3.25 也是 priced in</td>
+  <td>(1) Q2 2026 法說（預估 2026-07-30）：(a) FY26 EPS guide 維持 $2.05-2.25 mid-point；(b) Oracle 1.2GW deployment 進度 % 揭露；(c) 第 2 個 hyperscaler 合約是否取得<br>(2) 股價 PE FY27：當前 89x → 回到 60x ($195) → 升至「fair value」進場區；至 45x ($146) → 升至「peer-level」深度進場區</td>
+  <td>(a) Q2 法說維持 guidance + 股價回到 $180-200 (PE FY27 ~55-60x) + RSI ≤ 50 → 升級小倉測試 0.5%；(b) Q2 法說 EPS guide 下修 5%+ OR Oracle deployment 延後 → 加入「禁止進場池」凍結 6 個月、待 $130-150 再重評</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><strong>選 turnaround story 但需 4 季驗證</strong>，不接受 Q1 單季為 thesis 充分證據</td>
+  <td>Bloom 7+ 年累積 -$2B+ 虧損是長期 base rate；單一季 GAAP $70.7M 獲利 + Q1 季節性（SOFC 出貨 typically Q1 弱、客戶 push 至 Q2-Q4）+ Oracle deal 才剛簽（Q1 EPS 主要來自先前訂單 ramp）— 需 Q2-Q4 連續維持非 GAAP 獲利 + 不發新增資 + 23% 股本稀釋速度減緩才能 confirm sustainable profit。23% 過去 12 個月稀釋是 + cash burn 殘留訊號</td>
+  <td>(1) Q2 / Q3 / Q4 2026 三季連續 GAAP 獲利（vs Q1 actual $70.7M）；(2) 全年股本稀釋率 ≤ 5%（vs 過去 12M 23%）；(3) Q4 2026 cash balance ≥ Q1 2026（無 net cash burn）</td>
+  <td>(a) 三季連續 GAAP 獲利 + 稀釋率 ≤ 5% AND 股價 ≤ $200 → 升級進場 1% 投機；(b) 任一季 GAAP 虧損 OR 公告增資 OR 稀釋率 ≥ 10% → bear case 機率從 40% 升至 55%、進場區間下修至 $100-130</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><strong>選 DD 觀望邏輯並升級強度</strong></td>
+  <td>DD 4/29 已在 FPE 71x 給「觀望（估值🔴、雙 R:R 負、動能末段嚴重過熱）」、現在 +28.7% 至 FPE FY27 89x = 朝同方向加強所有不利條件。沒有任何 4/29 後新事實 reverse 此判斷（Q1 法說 4/28 在 DD 之前、Oracle deal 4/16 在 DD 之前 — DD 已含這些利多）。<em>因此本 DCA 不僅同 DD 判斷、且因股價漲 +28.7% 後 R:R 更糟</em></td>
+  <td>(1) 股價回到 DD 4/29 價位 $226（-22%）：升級為「進場觀察池」（仍非進場）；(2) 股價回到 $200 以下（-32%）：升級為「第一批進場 watchlist」；(3) RSI 14d 從 78 → 50 短期動能冷卻</td>
+  <td>(a) 三條件同達 → 啟動小倉測試 0.5%（per 1 號裁決條件）；(b) 任一條件未達 + 股價繼續 ATH OR 突破 $320 → 維持觀望、watchlist 凍結 8 週重評</td>
+</tr>
+</table>
+</div>
+
+<p><strong>與既有 DD 報告交叉矛盾</strong>：無重大矛盾 — DD 4/29 verdict「觀望（B 級·估值🔴 + 雙時距 R:R 雙負，動能末段嚴重過熱）」與本 DCA 5/14 觀望（同向加強）邏輯一致。差異：(1) DD 計算 FPE FY2 71.2x at $226.37；本 DCA 估 FPE FY27 89x at $291.23（+24% PE 上升 from +28.7% 股價）；(2) DD upside short -54.7% / mid -29.8% 在 +28.7% 股價漲後深負化（現價對應 -65% / -45%）；(3) Phase B 矛盾 #2 補上「Q1 turnaround 一季 vs 7 年 cash burn history」的 4 季驗證需求（DD 未明示）；(4) Phase B 矛盾 #3 補上「stuck-on-同方向 加強」邏輯，明示 DD 4/29 判斷不僅 valid 而且更強。</p>
+</div>
+
+<!-- ═══════ §3 Key Drivers ═══════ -->
+<h2>§3｜Key Drivers</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr>
+<td>1</td>
+<td><strong>Oracle 2.8GW master agreement deployment 兌現（單一客戶 anchor）</strong></td>
+<td>Oracle 是 Bloom 歷史最大客戶合約 — $20B 總 backlog 中估 ~$8B (40%) 來自 Oracle 2.8GW；1.2GW 已 contracted、deployment 2026 已啟動 + 1.6GW 仍 master agreement 待 contract conversion。<em>單一客戶集中度極高 = 高槓桿、bull case 全靠它兌現</em></td>
+<td>(a) Q2/Q3/Q4 法說 Oracle revenue 揭露 (是否拆分 customer mix)；(b) Oracle Cloud capex breakdown (是否仍提及 Bloom)；(c) 1.6GW 剩餘 master agreement 何時轉 firm contract；(d) Oracle 至 Microsoft / Google / Meta 是否有 cross-promotion (公開承諾或 case study)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>SOFC cycle 結構性需求 (AI DC + grid 短缺) 至 2030（產業 cycle）</strong></td>
+<td>SOFC TAM $3.2B (2025) → $9.6B (2030) at 24.4% CAGR；AI DC 電力需求 (推估 hyperscaler 2026 thermal/power 占 capex ~10% = $70B/yr) 與 grid interconnection queue (PJM 8 年) 創造「<em>需 self-generation 而非等 grid</em>」結構性 demand；Bloom SOFC 主要競爭 (Plug/Doosan/Mitsubishi/Ceres) 在 hyperscaler 場景仍落後 1-2 年</td>
+<td>(a) 季度 SOFC 出貨數據 (各 vendor)；(b) hyperscaler 法說 thermal/power capex；(c) AEP / Oracle / 大型 utility 公告 SOFC deployment；(d) PJM interconnection queue 變化 (8 年 → 是否縮短)；(e) 氣輪機 + SMR 對 SOFC 競爭強度</td>
+</tr>
+</table>
+
+<h3>Driver 抽象層 guardrail 校驗</h3>
+<p>Driver 1 = <em>單一客戶集中度</em>（Oracle 合約 = 公司事件 + 公司結構性 lock-in）。Driver 2 = <em>產業大盤需求</em>（SOFC + AI DC cycle）。<strong>校驗：driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？</strong>是 — 即使 Oracle 推遲或取消，SOFC TAM 24% CAGR 大盤 + 其他 hyperscaler 採用仍可支撐 Bloom 50-70% revenue growth；driver 2 對產業大盤獨立成立、不依賴 driver 1。<strong>校驗通過</strong>：兩條獨立因果鏈、driver 2 非 driver 1 sub-set。</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>氫能 (hydrogen) 業務</td><td>Bloom Energy 電解槽業務 (2022 Delaware factory) 仍占營收 &lt; 10%；SOFC 主軸 + 天然氣 fuel 是當前 thesis；綠氫 long-dated optionality 但 5 年內非命脈</td></tr>
+<tr><td>太空 fuel cell / 軍用 / niche 應用</td><td>規模小、長期看 NASA 太空 fuel cell 等項目 marketing value &gt; revenue contribution</td></tr>
+<tr><td>單季毛利率波動 (±200bp)</td><td>季節性 + product mix；只有「3 季平均 GM &lt; 28%」或「Oracle deployment 第一階段 GM 顯著低於 mid-30s」才是有意義訊號</td></tr>
+<tr><td>FuelCell Energy / Plug Power 等競爭者股價</td><td>BE 與這些 peer 都被歸類「氫能/燃料電池」但商業模式差異大；peer correlation 0.5-0.7 sentiment-driven、非結構性</td></tr>
+<tr><td>IRA tax credit 細節調整</td><td>已 priced in 至 thesis；2026 Trump 行政命令對 IRA 已澄清不直接影響 SOFC fuel cell 補貼；長期 framework 穩定</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>當前 PE forward FY27 = 89x ($291.23 / cons EPS $3.25)。市場 priced in「Oracle 2.8GW 全 deployment 至 2028」+「第 2 個 hyperscaler 2027 簽約」+「SOFC TAM 24%+ CAGR 兌現至 2030」+「Bloom 維持 SOFC #1 + GAAP 獲利穩定」+「PE 維持 NVDA-level 80x+」。Analyst PT range $191-$335、average $191、Barclays $254、BTIG/Evercore $295、Clear Street $250 — 多數 PT 已 priced in bullish path</td></tr>
+<tr><td>我認為的不同假設</td><td>Oracle 2.8GW 大概率兌現至 2.0-2.4GW（部分風險）+ 第 2 個 hyperscaler 可能 2028+ 才出現（vs 市場預期 2027）+ PE 89x 對 SOFC 公司歷史上不可持續 (peer 25-35x、Bloom 5Y avg PE 拉高至負值或無意義因虧損)；PE 從 89x → 45x 中性 re-rate 是 5 年內最 likely 路徑；23% 過去 12M 稀釋顯示 SBC + capacity ramp 可能再增資</td></tr>
+<tr><td>賣方為什麼錯（具體理由）</td><td>(1) BTIG / Evercore PT $295 / Barclays $254 已 priced in PE FY27 ~65-90x 永遠維持 — 但 SOFC 歷史最高 sustained PE 是 50-60x (2018-2020)；(2) 賣方未充分定價 SMR 商業 deployment 2028-2030 對 SOFC 「niche on-site power」定位的替代壓力；(3) 賣方對 Q1 一季 turnaround 過度信心 — Bloom 7 年累積 -$2B+ 虧損是 base rate、單季 GAAP 獲利尚不能 prove sustainable；(4) 23% 過去 12 個月股本稀釋顯示 SBC + financing 壓力、賣方常忽略</td></tr>
+</table>
+
+<p><strong>校驗：</strong>三題均有具體答案 + alpha 來源清晰（市場錯在「PE 89x 視為 NVDA-level sustainable」而非「SOFC peer 30-50x 上限」）— §7 倉位無需打折扣（觀望 + 條件式進場 + 倉位上限自動下修至 2% 已是正確 stance）。</p>
+
+<!-- ═══════ §5 Single Thing ═══════ -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容（primary trigger）</th></tr>
+<tr><td>事件描述</td><td><strong>Bloom Q2 2026 法說（預計 2026-07-30 ± 3 天）：(1) Q2 EPS actual + FY26 EPS guidance reaffirmation/update、(2) Oracle 1.2GW deployment 進度 % 揭露、(3) 第 2 個 hyperscaler 合約是否取得、(4) 股本稀釋進度（過去 6 個月）</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>thesis 核心是「Q1 turnaround sustainable + Oracle deployment on-track + thesis on-track at PE 89x」。<em>若 Q2 EPS miss / FY26 guide 下修 5%+ / Oracle deployment 延後或不揭露進度 / 公告增資 → cycle peak 確認、PE 89x 立即崩；股價 -25 至 -40% 一週內</em></td></tr>
+<tr><td>如何監測</td><td>(1) Bloom IR 法說 PR + 法說 transcript（7/30 收盤後）；(2) 股價對法說反應（D+1 收盤 vs D-1）；(3) Barclays/BTIG/Evercore 等賣方 PT 調整（D+2 即時）；(4) Oracle 同期法說（2026-07/08 期間）confirmation</td></tr>
+<tr><td>目前離發生有多遠</td><td><strong>~11 週</strong>（2026-05-14 至 2026-07-30）</td></tr>
+</table>
+
+<table>
+<tr><th>項目</th><th>內容（secondary trigger — 由 §6b pre-mortem 派生補入）</th></tr>
+<tr><td>事件描述</td><td><strong>2026 H2 - 2027 H1 期間：Bloom Energy 公告任一形式增資（股票配股 / 可轉換債 / 折扣定向增資）超過 5% 股本稀釋</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>23% 過去 12 個月稀釋已是 stock-based compensation 結構性訊號；若再公告主要增資 → 確認 cash flow 不足 capex（2GW 產能 ramp + 多年 inventory build-up） + 市場立即下修 EPS estimates -10-20% + PE 從 89x 壓至 60x = -30% 一週內</td></tr>
+<tr><td>如何監測</td><td>(1) 8-K filings (SEC 即時)；(2) PIPE / 可轉換債 公告；(3) Form S-3 shelf registration filings；(4) Quartr / Bloomberg / Reuters 即時 alert</td></tr>
+<tr><td>目前離發生有多遠</td><td>~6-18 個月（隨 2GW capacity ramp 進度 + cash burn 速率）</td></tr>
+</table>
+
+<p><strong>§5 修正狀態：⚠ 已補 1 條 secondary trigger（再增資 / 5%+ 股本稀釋 → 對應 §6b pre-mortem 失敗故事的 financing branch）</strong></p>
+
+<!-- ═══════ §6 What I Don't Know + Pre-mortem ═══════ -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Oracle 2.8GW 全 deployment 至 2028</td><td>1.2GW contracted 兌現順利 + 1.6GW master 轉 firm contract on-track + Oracle Cloud capex 不下修 (vs MSFT/GOOG/META 2026 capex potentially cool)</td><td>若 Oracle 推遲至 50% deployment 至 2030 → backlog $20B 中 $5B 訂單延後 → FY27 rev miss 20-30% → EPS 從 cons $3.25 降至 $2.50 → PE 急速 derate -40%</td></tr>
+<tr><td>2</td><td>Bloom Q1 2026 GAAP turnaround sustainable</td><td>Q2-Q4 連續 GAAP 獲利 + 不依賴 one-time items + 23% 股本稀釋速度減緩</td><td>若 Q2 或 Q3 重回 GAAP loss → 「Q1 是 outlier」defensive narrative 破 → 股價立即 -25-35%、estimates downgrade</td></tr>
+<tr><td>3</td><td>SMR / 氣輪機商業化不在 2028 前侵蝕 SOFC niche</td><td>SMR commercial deployment 仍 ≥ 2028-2030 + GE Vernova / Siemens Energy 大型氣輪機升級不適合 5-50MW on-site DC scale</td><td>若 SMR 提前至 2027 部署 (例 OKLO 商業簽約) 或 GE 氣輪機推出 small-form-factor 替代 Bloom niche → SOFC TAM 從 $9.6B 2030 downgrade 至 $6-7B、Bloom share 從 #1 受擠壓</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<div class="premortem">
+<p><strong>第一段｜故事倒推：</strong></p>
+<blockquote>「假設 5 年後（2031）這個部位虧 50%，最可能發生的故事是：<strong>2026-07-30 Q2 法說</strong>，Bloom 揭露 Oracle Q2 deployment 進度落後預期 30% (僅 200MW vs 預計 300MW)、FY26 EPS guide 下修至 $1.85 (low end of range)、宣布為支持 2GW capacity 將發行 $500M 可轉換債 (5% 稀釋)；股價從 $291 → $215 (-26%) 兩週內。<strong>2026-Q4</strong> Oracle 揭露 2027 Cloud capex 從預期 $50B 下修至 $42B (-16%)、暗示 Bloom 1.6GW 剩餘 master 至 2028 延後；股價 → $175 (-40% 累積)。<strong>2027 H1</strong> OKLO 取得 Google 2GW SMR 商業合約（2028 deploy）、市場意識到 SMR 是 SOFC 的 5 年替代威脅；Bloom Q2 27 EPS 從 cons $3.25 降至 $2.80；股價 → $135 (-54% from peak)。<strong>2028-2031</strong> SOFC 維持 niche power 但 PE 從 89x 壓至 35x (peer 上限)，FY28-30 EPS $4-5.5 range (cons 5.5+)；股價在 $130-180 區間整理；5Y 終點 ~$145 (-50% from $291)。」</blockquote>
+
+<p><strong>第二段｜校驗 §5 single-thing：</strong></p>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong>⚠ 部分重疊</strong> — primary trigger（Q2 法說 7/30）有撞到，但 pre-mortem 故事中有 <em>第二觸發點：再增資 / 5%+ 股本稀釋（可轉換債 $500M scenario）</em> 不在原 §5 primary 內</td></tr>
+</table>
+
+<p><strong>第三段｜修正 §5：</strong></p>
+<p>已在 §5 區塊新增「secondary trigger（再增資 / 5%+ 股本稀釋）」— 對應 pre-mortem 中段（2026 Q2 法說 + $500M 可轉換債）的故事。HTML §5 區塊現有 2 條 trigger（primary + secondary）。</p>
+
+<p><strong>校驗紀錄：⚠ 已補 1 條 secondary trigger，§5 區塊 trigger 數從 1 → 2</strong></p>
+</div>
+
+<h3>6c. 路徑壓力測試 (Max DD)</h3>
+
+<div class="maxdd-block">
+<div>
+<div class="maxdd-num">−50% ~ −65%</div>
+<div style="font-size:11px;color:#64748B;margin-top:2px">5Y peak-to-trough 估計範圍 (寬度 15pp)</div>
+</div>
+<div class="maxdd-side">
+<div class="maxdd-emoji">🔴</div>
+<div>路徑風險評級：<strong>HIGH</strong></div>
+<div style="margin-top:4px;font-size:12px">「多數人會在中途出場」</div>
+</div>
+</div>
+
+<div class="dd-bar">
+<div class="dd-bar-fill" style="width:65%"></div>
+</div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−50% ~ −65%</strong>（從現價 $291.23 至低點 $146-102）；參考 2020-2021 PLUG Power hydrogen cycle peak-to-trough -98%、2022 BE 自身 mini-cycle peak -65%、clean energy + AI hype 高估值 stocks 歷史 typical drawdown -50-70% 區間</td></tr>
+<tr><td>最可能觸發時點</td><td>11 週後（<strong>2026-07-30 Q2 法說</strong>）為短期 trigger 點；長期 6-18 個月後（<strong>2026 H2-2027 H1</strong>，含 Q2 法說 EPS miss + 再增資 + 第 2 hyperscaler 未取得 + SMR 提前商業化 多重 catalyst stack）</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>不會在 5Y 內恢復</strong>（若 thesis 部分破：base case $248、5Y -15%；若完全破：bear $87、5Y -70%）— 接近「thesis 已破，部分恢復需 5-7 年新 cycle」。歷史 PLUG 2021 peak 至 2026 仍 -98%、5Y 完全未恢復</td></tr>
+<tr><td>路徑風險評級</td><td><span class="dd-red">🔴 −50~−65%（多數人會在中途出場）</span></td></tr>
+</table>
+
+<p><strong>校驗：</strong>若 Max DD 落在 −58%（中位），<em>能否撐到復原？條件：</em>(1) 部位不超過 portfolio 2%（投機部位上限、衛星 4% 不適用）；(2) 不使用槓桿；(3) §5 primary trigger 未發生（Q2 法說維持 FY26 guide）；(4) 不發新增資。<em>因為 🔴 評級 + runway 🟡，§7a 倉位上限直接從衛星 4% 下修至投機 2%（即使重啟條件成立後 entry 也限 1.5-2%）。中途 -50%+ 出場風險屬高 — Q1 一季 turnaround + 高估值 priced in，多數投資人會在 -30% 之前出場</em>。§7d 短中期 1-3Y 警示已標註「中途出場風險極高 — 屬投機部位非長期持有」。</p>
+
+<!-- ═══════ §8 Review Triggers ═══════ -->
+<h2>§8｜Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td><strong>Bloom Q2 2026 法說（PRIMARY single-thing）</strong></td><td>財報日期</td><td><strong>2026-07-30 ±3 天</strong>；Q2 EPS / FY26 guide / Oracle deployment 進度</td></tr>
+<tr><td>2</td><td><strong>Bloom Q3 2026 法說</strong></td><td>財報日期</td><td>~2026-10-30；Q3 GAAP 連續獲利驗證</td></tr>
+<tr><td>3</td><td><strong>Oracle Q2 / Q3 / Q4 2026 法說</strong></td><td>產業事件</td><td>每季同步看 Oracle Cloud capex breakdown + Bloom 提及</td></tr>
+<tr><td>4</td><td><strong>OKLO / NuScale / GE Hitachi SMR 商業合約</strong></td><td>產業事件</td><td>2026 H2-2027 任一公告 → 觸發 §6a #3 風險</td></tr>
+<tr><td>5</td><td><strong>Bloom 任一形式增資公告（PIPE / 可轉換債 / Form S-3）</strong></td><td>SEC filings</td><td>觸發 §5 secondary trigger，即時監測</td></tr>
+<tr><td>6</td><td><strong>股價回到 $180-200（PE FY27 55-60x）</strong></td><td>價位觸發</td><td>第一批進場 watchlist 啟動</td></tr>
+<tr><td>7</td><td><strong>股價跌至 $130-150（DD BB 中軌進場區）</strong></td><td>價位觸發</td><td>第二批進場深拉回升級</td></tr>
+<tr><td>8</td><td><strong>股價突破 $340（+17% from current）</strong></td><td>價位觸發</td><td>watchlist 「禁止進場池」凍結 12 週</td></tr>
+</table>
+
+<p><strong>本報告保質期：</strong>至 <span class="kpi">2026-07-30</span>（Q2 FY26 法說當日 — 11 週）。若 Q2 法說後出現任一 §8 觸發點 → 4 週內重跑 DCA。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>(1) Q2 法說 EPS beat &gt; 15% + FY26 EPS guide 上修至 ≥ $2.30；(2) Oracle 1.2GW Q2 deployment 進度公開揭露 (40%+ 完成)；(3) 取得第 2 個 hyperscaler 合約 (AWS / Azure / GCP / Meta 任一) — 三條同達 = 重新打開 bull case → IRR 升至 +9-11%/yr（但仍需 $200-220 進場才能完整捕捉）。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>(1) Q2 法說 EPS miss OR FY26 guide 下修；(2) Oracle 公開推遲任一 deployment 階段；(3) Bloom 公告增資 OR 5%+ 股本稀釋 — 任一 = §5 primary / secondary 觸發、股價 -25 至 -40% 一週內。<em>當前股價 $291.23 距該觸發約 11 週、估值 buffer 為負（PE 89x 已 priced 3 年成長）</em>，是本案最大 short-term single-point risk。</p>
+
+<!-- ═══════ Phase A 折疊 ═══════ -->
+<details>
+<summary>📁 Phase A1｜護城河深度分析（獨立結論：BE moat B 級 → holding — Oracle 2.8GW 鎖客戶 widening commercial moat、但 SOFC 5 家 60% share 多元競爭 + Ceres license 模式擴散 + Plug Power/Doosan/Mitsubishi 等 peer 技術差距未拉大 → 整體 moat trend 持平）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td><strong>技術領先（SOFC scale + manufacturing know-how）+ 大客戶合約 lock-in（Oracle 2.8GW）+ 規模經濟（400MW factory → 2GW target）</strong>：Bloom 是 SOFC 商業化 #1 (vs Mitsubishi 技術強但內部用、Ceres 走 license 模式)；Oracle 多年合約 + MTAR 單一 hot box 供應商提供 supply lock-in</td></tr>
+<tr><td>持久性評分</td><td><strong>6/10，5 年穩固度：中（2026-2029 強、2030+ 受 SMR / 氣輪機 / hyperscaler 自製多重替代）</strong></td></tr>
+<tr><td>最大侵蝕風險</td><td><strong>SMR 商業 deployment 2028-2030 加速 + Ceres license 模式擴散</strong>：OKLO / NuScale / GE Hitachi 等 SMR 若在 2028 前商業 deploy 至 hyperscaler → SOFC niche 「on-site 5-50MW power」定位被擠壓；Ceres license Bosch/Weichai/Doosan → 技術 commodity 化加速</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 30.0% / non-GAAP 31.5%（Q1 2026 record，↑ from 27.2% prior year）、SOFC market share Bloom #1 估 ~25-30%（vs Mitsubishi ~20% / Ceres ~10% via licensees / FuelCell Energy ~10% / Sunfire ~5%）— 趨勢 → holding、ROIC ~10-15% (low historically due to losses, recently improving) vs WACC ~10% = 超額 0-5%p</td></tr>
+<tr><td><strong>moat_trend（必填）</strong></td><td><strong>→ holding</strong> — evidence: (1) Oracle 2.8GW 2026-04-16 公告大幅強化單一客戶 commercial moat；(2) 但 SOFC 5 玩家占 global 60% capacity (Bloom #1 但非 dominant) — tech moat 持平；(3) Ceres 2025 license 模式擴散至 Bosch/Weichai/Doosan = peer 技術升級加速；(4) Plug Power 同期 hydrogen reset 後重啟 SOFC partnership → 競爭密度上升；(5) Bloom 毛利從 27.2% → 30%（+280bp YoY）優於 peer 但僅 incremental improvement</td></tr>
+</table>
+
+<h4>引用數據點（sourced）</h4>
+<ol>
+<li>Oracle 2.8GW master agreement announced 2026-04-16，1.2GW contracted with deployment underway（Bloom IR 2026-04-16）</li>
+<li>SOFC top 5 玩家 (Bloom/Mitsubishi/Ceres/Sunfire/FuelCell Energy) 占全球 60% capacity（GlobeNewswire 2026-02 SOFC market analysis）</li>
+<li>Bloom 操作 400MW factory (Delaware)，2026 target ramp 至 2GW annual capacity（Utility Dive 2026 archive）</li>
+<li>MTAR Technologies (India) 是 Bloom 單一「hot box」assemblies supplier（FinancialContent 2026-04 deep dive）</li>
+<li>Q1 2026 GAAP GM 30.0% / Non-GAAP 31.5%（公司 IR 2026-04-28 PR）— +280bp YoY</li>
+<li>Total backlog $20B：product backlog $6B (+2.5x YoY)、service backlog $14B（公司 IR 2026-04-28）</li>
+<li>Bloom 與 AEP 簽 1GW supply agreement (2025)（EnkiAI fuel cell deals 2025 archive）</li>
+<li>Mitsubishi 維持 in-house ceramic processing、Ceres license IP 至 Bosch/Weichai/Doosan（SOFC market report 2026-02）</li>
+<li>Bloom 2026 Power Report 公開 AI DC power demand 分析（公司網站 PDF）</li>
+</ol>
+
+<p><strong>A1 獨立結論：</strong>BE 護城河 B 級且 → holding — Oracle 2.8GW + 規模 + 製造 know-how 提供 commercial moat，但 SOFC 多元競爭格局 + Ceres license 模式擴散 → tech moat 持平，整體 moat 維持但不擴張。</p>
+
+</div>
+</details>
+
+<details>
+<summary>📁 Phase A2｜產業趨勢深度分析（獨立結論：SOFC TAM $3.2B → $9.6B 2030 24% CAGR 確認結構順風；AI DC 電力短缺 + grid 8 年 interconnection queue 創造 self-generation 需求；但 SMR 2028-2030 商業化 + 氣輪機 GE Vernova / Siemens Energy 升級是 post-Y5 隱憂 → runway 🟡 中）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>SOFC market $3.2B (2025) → $9.6B (2030) at <strong>24.4% CAGR</strong>（GlobeNewswire/RNM 2026-02）；alt forecast $2.98B → $11.61B 31.2% CAGR；alt $2.89B 2026 → $16.53B 2031 at 41.7% CAGR；廣義 fuel cell market $10.7B by 2030 (commercial + residential + military)；AI DC 電力需求是主要 driver 之一</td></tr>
+<tr><td>供需判斷</td><td><strong>2026-2028 強烈供不應求</strong>：hyperscaler 2026 capex $720-750B、grid interconnection queue PJM 8 年、變壓器 lead time 128 週、傳統 grid 無法滿足 AI DC 短期需求；SOFC + 天然氣 + 氫能 + SMR 都是 candidate solution，SOFC 在 5-50MW on-site scale 領先</td></tr>
+<tr><td>最大技術替代風險</td><td><strong>SMR 商業化 2028-2030 + 氣輪機升級</strong>：OKLO / NuScale / GE Hitachi 在 2028-2030 商業化 → 取代 SOFC 大型 on-site power niche；GE Vernova H-class gas turbine + small modular gas turbine 升級可能涵蓋 50-300MW range</td></tr>
+<tr><td>最大政策/地緣風險</td><td>IRA tax credit 細節（已 priced in、Trump 2026 已澄清不直接影響 SOFC）；MTAR 印度 hot box 供應對中印貿易戰相對不敏感；NA / 全球 hyperscaler 自製 fuel cell 可能性 (Microsoft 2025 已開始 fuel cell pilot)</td></tr>
+<tr><td>議價權位置</td><td>對上游（MTAR hot box 單一 supplier + 稀土材料）：<strong>中弱</strong>（單點供應、議價權有限）；對下游（hyperscaler / utility）：<strong>中</strong>（Oracle 大合約有 anchor 但 Microsoft / AWS 仍未採用、議價權待擴大）</td></tr>
+<tr><td><strong>runway_post_y5（必填）</strong></td><td><strong>🟡 中</strong> — Y5 末（2031）滲透率分析：SOFC TAM $9.6B-16.5B 2030 仍 vs 全球 power generation $1T+ TAM 的小 niche（&lt; 2%）；下一條 S 曲線：(a) hyperscaler 自製 SOFC（Microsoft pilot 已啟動）侵蝕 Bloom share；(b) SMR 2028-2030 商業化 → 5+ 年 niche 重疊；(c) 氫能 long-dated optionality 但 5 年內 commercial scale 仍弱。runway 中等、無清晰第二曲線銜接</td></tr>
+</table>
+
+<h4>引用數據點（sourced）</h4>
+<ol>
+<li>SOFC market $3.2B (2025) → $9.6B (2030), 24.4% CAGR（GlobeNewswire 2026-02 ResearchAndMarkets）</li>
+<li>Alt forecast: $2.98B (2025) → $11.61B (2030), 31.2% CAGR</li>
+<li>Alt 2026 $2.89B → 2031 $16.53B, 41.7% CAGR（MarketsandMarkets）</li>
+<li>Fuel cell market overall $10.7B by 2030（GlobeNewswire 2026-02）</li>
+<li>SOFC top 5 player list: Bloom Energy / Mitsubishi / Doosan Fuel Cell / FuelCell Energy / Kyocera（ResearchAndMarkets 2026 report）</li>
+<li>Plug Power vs Bloom Energy: Plug 仍 -$200M+/年虧損、Bloom Q1 2026 turnaround 獲利（多 source 2026-Q1 對比）</li>
+<li>Doosan-KEPCO $96.4B hydrogen 20-year supply deal 2025-11（GlobeNewswire / Korean energy news）</li>
+<li>Ceres Power licenses Bosch / Weichai / Doosan（multiple sources 2025-2026）</li>
+<li>Microsoft 2025 fuel cell pilot at DC site (Wyoming) — 公開揭露</li>
+<li>NA 變壓器 lead time 128 週、PJM interconnection queue 8 年（前文 STX/3017/MOD A2 引用一致）</li>
+</ol>
+
+<p><strong>A2 獨立結論：</strong>SOFC TAM 24%+ CAGR 5 年至 2030 結構性順風確認；AI DC 電力短缺 + grid queue 8 年是 catalyst；但 SMR 2028-2030 商業化 + 氣輪機升級 + hyperscaler 自製可能性是 runway 🟡 中、無清晰第二曲線。</p>
+
+</div>
+</details>
+
+<details>
+<summary>📁 Phase A3｜業務 / 財務 / 資本配置（獨立結論：Q1 2026 史上最強 +130% rev、首次 GAAP 季度獲利 $70.7M、FY26 guidance raise $3.4-3.8B / EPS $2.05；但 23% 過去 12M 股本稀釋 + 7+ 年累積 -$2B+ 虧損是 base rate；當前 PE FY27 89x 為極端高位 + 4w +29% 動能透支）</summary>
+<div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>Product (SOFC 系統) Q1 2026 $653.3M (+208.4% YoY) = 87% 總營收；Service (multi-year service contracts) ~$98M = 13% — <strong>product 是 growth engine、service 是長期 cash flow</strong></td></tr>
+<tr><td>客戶集中度</td><td>Oracle (single largest) 估占 ~25-40% future revenue（基於 $20B backlog 中 $8B from Oracle）；前 5 大估占 ~75%；風險：<strong>高</strong>（單一客戶 Oracle 集中度極高、$8B share）</td></tr>
+<tr><td>定價權</td><td>SOFC system ASP 趨勢 ↑（GM 從 27% → 30% +280bp）；定價權：<strong>中</strong>（Oracle 大合約鎖價 + supply tight 給予 hold but 議價權結構性受 SOFC peer 競爭限制）</td></tr>
+<tr><td>未來金雞母</td><td><strong>AI DC SOFC + 第 2-3 個 hyperscaler 合約</strong>：目前占 backlog ~40% (Oracle)；潛在 TAM $9.6-16.5B by 2030-2031；預估成熟 2028-2029（FY27-28 Q1 為驗證點）</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 Q1 2026 ~57% ($73.6M OCF / $129.7M non-GAAP op income)；毛利率 30%（FY26 guide 34%）、趨勢 ↑；net debt ~$300M（穩健）；壓力測試：營收 -20% 可撐 ≥ 4 季（cash $700M+ + flexibility）— 但需注意 23% 過去 12M 股本稀釋</td></tr>
+<tr><td>資本配置紀律</td><td><strong>中弱</strong>：23% 過去 12 個月股本稀釋（SBC + 增資綜合）顯示 capital structure 仍依賴股本融資；無 dividend；無 buyback；近 7 年累積 -$2B+ 虧損 + Q1 2026 才首次 GAAP 季度獲利；2GW 產能 ramp capex 需求可能再增資 — 紀律待驗證</td></tr>
+<tr><td><strong>5Y IRR 分量基底（必填，Base case）</strong></td><td>EPS CAGR 2026-2031: <strong>+22%/yr (unweighted) / +18%/yr (probability-weighted base)</strong>（FY26E $2.05 → FY31E ~$5.50 unweighted、$4.50 weighted）；5Y 末 forward PE base 預估 <strong>45x</strong> vs 當前 89x（re-rate ≈ (45/89)^(1/5) - 1 = -12.7%/yr）；現金股息率 0%/yr（無 dividend）；淨買回率 -4.6%/yr（SBC 持續稀釋約 5%/yr 預估，扣 minimal buyback）</td></tr>
+</table>
+
+<h4>引用數據點（sourced）</h4>
+<ol>
+<li>Q1 2026 revenue $751.1M (+130.4% YoY)（公司 IR 2026-04-28）</li>
+<li>Q1 2026 product revenue $653.3M (+208.4% YoY)</li>
+<li>Q1 2026 GAAP NI $70.7M（vs Q1 2025 -$23.8M loss）— 首次季度 GAAP profit</li>
+<li>Q1 2026 non-GAAP op income $129.7M (vs $13.2M)；adj EBITDA $143M</li>
+<li>Q1 2026 GAAP GM 30.0% / non-GAAP 31.5% (+280bp YoY)</li>
+<li>Q1 2026 OCF $73.6M (+$184.3M YoY 改善)</li>
+<li>FY26 guidance: revenue $3.4-3.8B (+80% mid)，non-GAAP GM ~34%，non-GAAP op income $600-750M, EPS $1.85-2.25 (+170% vs 2025)</li>
+<li>2025 actual: revenue $2.02B (+37.33% YoY), net loss -$88.43M</li>
+<li>Share dilution last 12 months: 23% increase in shares outstanding</li>
+<li>Current price $291.23 (5/14 mid-day)，day range $270.05-$297.87</li>
+<li>52-week range estimated $30-$298（從 IRA / Oracle deal anchor 上升）</li>
+<li>RSI 14d = 77.89 (5/3 reading)，11.9% above 20-day SMA, 129.2% above 200-day SMA</li>
+<li>MACD below signal line — momentum cooling signal</li>
+<li>Analyst PT range: Barclays $254（from $177）、Clear Street $250（from $180）、BTIG $295、Evercore ISI $295、average $191、high $335 (PT raised from $207）</li>
+<li>Total backlog $20B: product $6B (+2.5x YoY)、service $14B</li>
+<li>Bloom 400MW current factory capacity，2GW target end-2026 (5x ramp)</li>
+<li>Bloom history: founded 2001, IPO 2018 at $15，7+ years 累積 losses 約 -$2B+</li>
+</ol>
+
+<p><strong>A3 獨立結論：</strong>Q1 2026 史上最強 +130% rev + 首次季度 GAAP $70.7M 獲利 + FY26 guide raise 70-80% 是 transformational quarter；但 23% 過去 12M 股本稀釋 + 7 年累積 -$2B+ 虧損 + 當前 PE FY27 89x 為極端高位 + 4w +29% 動能透支 = 估值與動能雙重信號要求等待；Q2 法說 (7/30) 是 11 週內 binary event。</p>
+
+</div>
+</details>
+
+<details>
+<summary>📁 Phase A4｜既有 DD/ID 報告摘要（DD 4/29: signal B、val 🔴、moat B 6、quality 9、verdict 觀望（B 級·估值🔴 + 雙時距 R:R 雙負，動能末段嚴重過熱））</summary>
+<div>
+
+<h4>DD_BE_20260429（最新 DD）</h4>
+<table>
+<tr><th>欄位</th><th>內容</th></tr>
+<tr><td>Signal (綜合訊號燈)</td><td><strong>B</strong></td></tr>
+<tr><td>Verdict (DD 結論)</td><td>觀望（B 級·估值🔴 + 雙時距 R:R 雙負，動能末段嚴重過熱）</td></tr>
+<tr><td>Oneliner</td><td>Q1 26 Beat +238% + FY26 raised $3.4-3.8B (+80%) + Oracle 2.8GW AI 數據中心電力。但 FPE 71x = 5Y 95% + 動能極端 + 雙 R:R 負（-54.7%/-29.8%）。等回測 BB 中軌 $149</td></tr>
+<tr><td>DD 時股價 / 4/29</td><td>$226.37</td></tr>
+<tr><td>Quality Score</td><td>9.0</td></tr>
+<tr><td>Moat / Growth durability</td><td>moat 6（B 級）/ 成長 7</td></tr>
+<tr><td>Forward PE FY+2</td><td>71.20</td></tr>
+<tr><td>5Y PE percentile</td><td>95（極高）</td></tr>
+<tr><td>PEG FY2</td><td>1.29</td></tr>
+<tr><td>R:R short / mid</td><td>upside_short -54.7% / upside_mid -29.8%</td></tr>
+<tr><td>Pure MA</td><td>✅</td></tr>
+<tr><td>Valuation light</td><td>🔴</td></tr>
+<tr><td>Trap label</td><td>🟡 觀察期</td></tr>
+<tr><td>AI risk</td><td>🟢（受益方）</td></tr>
+<tr><td>Long-term confidence</td><td>中</td></tr>
+</table>
+
+<h4>相關 ID 報告</h4>
+<ul>
+<li><strong>ID_AIDataCenter_20260419</strong> — AI 數據中心大主題（涵蓋 BE on-site power segment）</li>
+<li><strong>ID_AIDCPowerElectronics_20260421</strong> — AI DC 電力電子（ETN 主場、BE 為 distributed generation supplement）</li>
+<li><strong>ID_NuclearRenaissance_20260430</strong> — 核能復興（SMR 與 BE SOFC 為相鄰但替代關係 — 2028-2030 商業化壓力來源）</li>
+<li><strong>無 BE 個股 ID</strong>（屬於 ID_AIDCPowerElectronics 內 fuel cell segment）</li>
+</ul>
+
+<p><strong>A4 與 Phase A1-A3 / Phase B 一致性</strong>：DD 4/29 verdict「觀望（B 級·估值🔴 + 雙時距 R:R 雙負，動能末段嚴重過熱）」與本 DCA 5/14 觀望（同向加強至嚴重透支警示）邏輯一致 — DD 計算 FPE FY2 71x、本 DCA 估 FPE FY27 89x（+25% PE 從 +28.7% 股價）；DD upside short -54.7% / mid -29.8% 在 +28.7% 股價漲後深負化（現價對應 -65% / -45%）。Phase B 矛盾 #1+#3 與 DD 結論完全一致、本 DCA 補上 #2「Q1 一季 turnaround vs 7 年 cash burn history」+ §5 secondary「再增資 / 5%+ 股本稀釋」（DD 未明示）。<em>本 DCA 是 4 檔（STX/3017/MOD/BE）中最 bear leaning 的觀望，因為估值最高 + Max DD 🔴 + 動能最熱 + Bear 機率 40%</em>。</p>
+
+</div>
+</details>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+</div>
+
+<script>
+window.addEventListener('beforeprint',()=>{document.querySelectorAll('details').forEach(d=>d.setAttribute('open','true'))});
+</script>
+
+</body>
+</html>
