@@ -187,20 +187,49 @@ def classify_from_keywords(html: str) -> tuple:
 
 
 def extract_subtitle(section7: str, verdict: str) -> str:
-    """Try to extract a short subtitle sentence."""
-    plain = re.sub(r"<[^>]+>", "", section7)
-    # For 觀望: find sentence with 等/觸發
+    """Extract a short, balanced, sentence-bounded subtitle. Returns '' if no clean match."""
+    plain = re.sub(r"<!--.*?-->", "", section7, flags=re.DOTALL)
+    plain = re.sub(r"<[^>]+>", " ", plain)
+    plain = re.sub(r"\s+", " ", plain).strip()
+
+    STOP = r"。！？；\n,，、\|｜"
+
     if verdict == "觀望":
-        for pat in [r"等[^。；\n]{5,50}", r"觸發條件[^。；\n]{5,50}", r"等待[^。；\n]{5,50}"]:
-            m = re.search(pat, plain)
-            if m:
-                return m.group(0)[:60].strip()
-    # For 迴避: find sentence about thesis/護城河/估值
-    if verdict == "迴避":
-        for pat in [r"thesis[^。；\n]{5,50}", r"護城河[^。；\n]{5,50}", r"估值[^。；\n]{5,50}", r"不進場[^。；\n]{5,50}"]:
-            m = re.search(pat, plain)
-            if m:
-                return m.group(0)[:60].strip()
+        patterns = [
+            rf"等待?[^{STOP}]{{5,60}}",
+            rf"觸發條件[：:][^{STOP}]{{5,60}}",
+            rf"條件式[^{STOP}]{{5,60}}",
+        ]
+    elif verdict == "迴避":
+        patterns = [
+            rf"不持有[^{STOP}]{{5,80}}",
+            rf"結構性[^{STOP}]{{5,80}}",
+            rf"護城河[^{STOP}]{{5,80}}",
+            rf"thesis\s*[^{STOP}]{{5,80}}",
+            rf"估值[^{STOP}]{{5,80}}",
+        ]
+    else:
+        return ""
+
+    for pat in patterns:
+        for m in re.finditer(pat, plain):
+            text = m.group(0).strip()
+            text = re.sub(r"[，,、\s]+$", "", text)
+            if text.count("（") != text.count("）"):
+                continue
+            if text.count("(") != text.count(")"):
+                continue
+            if re.search(r"\+\d+\.?\d*%/yr", text) or re.search(r"%\+\d+%", text):
+                continue
+            if re.search(r"\$\d{2,}.*\$\d{2,}", text):
+                continue
+            if len(text) > 70:
+                cut = re.search(r"^.{20,68}?[）)]", text)
+                if cut:
+                    text = cut.group(0)
+                else:
+                    text = text[:60].rstrip()
+            return text
     return ""
 
 
@@ -539,8 +568,126 @@ def inject_file(html: str, verdict: str, subtitle: str) -> tuple[str, str]:
 # 3. Main
 # ─────────────────────────────────────────────
 
+def is_subtitle_broken(text: str) -> str:
+    """Detect known breakage patterns in a subtitle string. Returns reason or ''."""
+    if not text:
+        return ""
+    if re.match(r"^[）)\]】」』]", text):
+        return "starts-with-closing-punct"
+    if text.count("（") != text.count("）"):
+        return "unmatched-cn-parens"
+    if text.count("(") != text.count(")"):
+        return "unmatched-en-parens"
+    # paren order broken (close appears before matching open)
+    cn_open = text.find("（"); cn_close = text.find("）")
+    if cn_close >= 0 and (cn_open < 0 or cn_close < cn_open):
+        return "cn-paren-order"
+    en_open = text.find("("); en_close = text.find(")")
+    if en_close >= 0 and (en_open < 0 or en_close < en_open):
+        return "en-paren-order"
+    if re.search(r"[A-Z]{2,}$", text):
+        return "truncated-mid-acronym"
+    if re.search(r"\d+DM$|\d+DMA\s*\$?$", text):
+        return "truncated-DMA"
+    if re.search(r"\+\d+\.?\d*%/yr", text):
+        return "table-cell-junk"
+    if re.search(r"%\+\d+%", text):
+        return "table-cell-junk"
+    if "thesis)" in text and "-->" in text:
+        return "html-comment-fragment"
+    if re.search(r"\$\d{2,}.*\$\d{2,}.*\$\d{2,}", text):
+        return "multi-dollar-junk"
+    return ""
+
+
+def is_new_subtitle_acceptable(text: str) -> bool:
+    """Check that a candidate subtitle doesn't leak into adjacent sections."""
+    if not text:
+        return False
+    if is_subtitle_broken(text):
+        return False
+    LEAK_MARKERS = ["7a.", "7b.", "7c.", "7d.", "§6", "§7", "§8",
+                    "倉位與進場計畫", "加碼與減碼條件", "Pure MA 相容性",
+                    "建議持有年限", "Review Triggers", "Mental Models",
+                    "持有年限 條件", "項目 具體內容", "SATELLITE", "CORE ·",
+                    "目標倉位", "進場節奏", "投組角色", "vs 現有組合",
+                    "判定：", "Max DD 🟡", "Max DD 🔴", "Max DD 🟢",
+                    "QC-", "of portfolio"]
+    for marker in LEAK_MARKERS:
+        if marker in text:
+            return False
+    return True
+
+
+def refresh_subtitles_only(files: list) -> dict:
+    """Re-extract subtitles ONLY for files with detectably broken existing subtitles.
+    Preserves clean existing subtitles. Idempotent."""
+    sub_div_re = re.compile(
+        r'(<div class="verdict-subtitle"[^>]*>)(.*?)(</div>)', re.DOTALL
+    )
+    stats = {"updated": 0, "cleared": 0, "kept": 0, "no_div": 0, "broken_unfixed": 0}
+    manifest_updates = {}
+
+    for fpath in files:
+        fname = Path(fpath).name
+        with open(fpath, "r", encoding="utf-8") as f:
+            html = f.read()
+        m = re.search(r"<!--\s*dca-verdict:\s*(進場|觀望|迴避)\s*-->", html)
+        if not m:
+            continue
+        verdict = m.group(1)
+        existing = sub_div_re.search(html)
+        if not existing:
+            stats["no_div"] += 1
+            continue
+
+        old_inner = existing.group(2).strip()
+        breakage = is_subtitle_broken(old_inner)
+        if not breakage:
+            stats["kept"] += 1
+            continue
+
+        # Try fresh extraction
+        section7 = find_section7_text(html) or html
+        candidate = extract_subtitle(section7, verdict)
+        if is_new_subtitle_acceptable(candidate):
+            new_html = html[:existing.start(2)] + candidate + html[existing.end(2):]
+            with open(fpath, "w", encoding="utf-8") as f:
+                f.write(new_html)
+            manifest_updates[fname] = {"reason": breakage, "old": old_inner[:80], "new": candidate}
+            stats["updated"] += 1
+        else:
+            # No clean replacement — remove the broken subtitle div entirely (chip alone is fine)
+            new_html = html[:existing.start()] + html[existing.end():]
+            with open(fpath, "w", encoding="utf-8") as f:
+                f.write(new_html)
+            manifest_updates[fname] = {"reason": breakage, "old": old_inner[:80], "new": "<removed>"}
+            stats["cleared"] += 1
+
+    return {"stats": stats, "changes": manifest_updates}
+
+
 def main():
+    refresh_mode = "--refresh-subtitles" in sys.argv
+
     files = sorted(glob.glob(str(DCA_DIR / "DCA_*.html")))
+
+    if refresh_mode:
+        result = refresh_subtitles_only(files)
+        stats = result["stats"]
+        print(f"\n{'='*60}\nSubtitle Refresh Summary (broken-only mode)\n{'='*60}")
+        print(f"Total files scanned     : {len(files)}")
+        print(f"  kept (clean)          : {stats['kept']}")
+        print(f"  updated (was broken)  : {stats['updated']}")
+        print(f"  cleared (no replacement): {stats['cleared']}")
+        print(f"  no subtitle div       : {stats['no_div']}")
+        print(f"\nAll changes:")
+        for k, v in result["changes"].items():
+            print(f"  {k} [{v['reason']}]")
+            print(f"    old: {v['old']}")
+            print(f"    new: {v['new']}")
+        return
+
     manifest = {}
 
     counts = {"進場": 0, "觀望": 0, "迴避": 0}
