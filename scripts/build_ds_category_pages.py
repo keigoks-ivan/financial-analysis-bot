@@ -277,7 +277,7 @@ def generate_cat_page(
 .cat-breadcrumb strong{color:#1F2937}
 .cat-page-h1{color:#1F2937;font-size:1.6rem;font-weight:800;letter-spacing:-.03em;margin:0 0 4px}
 .cat-page-hint{color:#6B7280;font-size:.88rem;margin:0 0 12px}
-.cat-jump a.active{background:#475569;color:#fff;border-color:#475569}
+.cat-jump a.active{background:#047857;color:#fff;border-color:#047857}
 .cat-page-footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #E5E7EB;color:#9CA3AF;font-size:.72rem;text-align:center}
 .cat-head{cursor:default !important}
 .cat-head:hover{background:linear-gradient(90deg,#F9FAFB,#fff) !important}
