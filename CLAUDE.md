@@ -41,6 +41,15 @@ Agent({
 
 詳細 4-repo 表格 + 每個 repo 的 generator/workflow/commit author：見 `.claude/notes/site-composition.md`。
 
+## Workflow: 每次 DD / DCA 必同步 research 頁（DD 組合快照）
+
+任何 DD（`docs/dd/`）或 DCA（`docs/dca/`）的新增、修改、補 patch 後，**commit 前必跑** `python scripts/update_dd_index.py`，以同時更新：
+- `docs/research/index.html` 主表（dd-tbody-v12 整段重生 from dd-meta JSON）
+- DD 組合快照（DD_AUTO_STATS：訊號分布、最新 8 筆、PEG 便宜 top 5、5Y P/E 分位、2Y upside、X cohort 拆分、DCA Verdict 分布、護城河面板）
+- 同跑 `DD_STALE_FRESH` / `PM_LAST_RUN` / `PM_HOLDINGS` / `PM_ACTIONS` 五段標記注入
+
+把 `docs/research/index.html` 與 DD/DCA 新檔**併入同一 commit**，避免 research 頁滯後於底層報告。stock-analyst skill §2164 與 deep-conviction-analyst skill §68 已內建此步，但**手動 patch / 補 metadata / 改 DCA Verdict** 這類 skill-外路徑也必須遵守此規則。
+
 ## Workflow: push earnings / 發布財報
 
 當用戶說「push earnings」/「發布財報」/「發佈財報」/「發布新財報」/「更新 earnings index」時，自動觸發 `push-earnings` skill（`.claude/skills/push-earnings/`），照其 9 個 steps 執行。
