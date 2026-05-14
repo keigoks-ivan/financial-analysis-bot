@@ -20,6 +20,7 @@ import sys
 from collections import Counter
 from html import escape
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).parent.parent
 DD_DIR = ROOT / "docs" / "dd"
@@ -33,7 +34,7 @@ TABLE_ROW_RE = re.compile(
 )
 
 
-def _build_table_attrs_map(table_html: str | None = None) -> dict:
+def _build_table_attrs_map(table_html: Optional[str] = None) -> dict:
     """Parse research table <tr> rows; return {ticker: {signal, moat_trend, munger_gate, eps_cagr, ev5y}}.
 
     moat_trend: int (3=↑, 2=→, 1=↓, 0=unknown — matches data-moat-trend convention).
@@ -79,7 +80,7 @@ def _build_table_attrs_map(table_html: str | None = None) -> dict:
     return out
 
 
-_table_attrs_cache: dict | None = None
+_table_attrs_cache: Optional[dict] = None
 
 
 def _get_table_attrs():
