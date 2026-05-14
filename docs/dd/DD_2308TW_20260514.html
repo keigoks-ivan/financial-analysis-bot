@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.2">
+<title>DD_2308.TW_20260514 | Delta Electronics 台達電 v12.2 深度研究</title>
+<style>
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.55; margin: 0; padding: 30px 20px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; }
+  .header h1 { margin: 0 0 8px; font-size: 1.5em; }
+  .header .meta { font-size: 0.88em; opacity: 0.9; }
+  .header .schema { background: #3B82F6; padding: 1px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em; }
+  .card { background: #fff; padding: 18px 24px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #3B82F6; }
+  .card h2 { color: #1E3A5F; margin: 0 0 12px; font-size: 1.18em; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; }
+  .card h3 { color: #374151; margin: 14px 0 8px; font-size: 1.02em; }
+  .card h4 { color: #4B5563; margin: 10px 0 6px; font-size: 0.96em; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 0.92em; font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  th, td { border: 1px solid #D1D5DB; padding: 6px 9px; vertical-align: top; text-align: left; }
+  th { background: #1E3A5F; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .reasoning { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 0.88em; line-height: 1.5; }
+  .reasoning::before { content: "推導: "; font-weight: bold; color: #1E3A5F; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hypothesis-box ul { margin: 0; padding-left: 18px; }
+  .hypothesis-box li { margin: 4px 0; }
+  .badge-green, .tag-green { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-red, .tag-red { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-yellow, .tag-yellow { background: #FEF9C3; color: #92400E; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-blue, .tag-blue { background: #EFF6FF; color: #1E40AF; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-orange { background: #FED7AA; color: #C2410C; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-beat { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-miss { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .grade-X { background: #7F1D1D; color: #fff; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 0.88em; color: #4B5563; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+  .dd-toc { background: #fff; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #3B82F6; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 10px; background: #EFF6FF; color: #1E3A5F; border-radius: 999px; font-size: 0.82em; text-decoration: none; font-weight: 500; }
+  .dd-toc a:hover { background: #1E3A5F; color: #fff; }
+  .card h2 { scroll-margin-top: 80px; }
+  @media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; padding: 0; } .card { box-shadow: none; border-left: 2px solid #1E3A5F; } }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header class="header">
+  <h1>Delta Electronics（台達電 2308.TW）深度研究 — v12.2 schema</h1>
+  <div class="meta">資料抓取：2026-05-14 ｜ 最新股價 <strong>TWD 2,155</strong>（5/14 收盤） ｜ 最近財報：Q1 2026（4/28 公告，30 天內 FY26 共識 EPS +12.7%、FY27 +20.3% 上修）｜ <span class="schema">DD Schema v12.2</span> ｜ yfinance 採集 + 補充 web_search 4 次</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============================== §1 ============================== -->
+<section class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。本份為距 Inception（2026-04-30）14 天的第二份 v12.2 DD，**關鍵變化：EPS 共識 30 天大幅上修（FY26 +12.7%、FY27 +20.3%），估值反而透過 EPS 修正自然壓縮，但 R:R 結構未變**。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信（AI 資料中心電力供需錯配 Runway ≥ 10 年）｜ §9 護城河趨勢 加深（800V HVDC 與 NVIDIA Rubin co-design、液冷整合方案領先）｜ §8 F AI 風險 🟢 受益（電源滲透率仍在 S 曲線前段）</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9）｜體質 veto 0 項不過｜等級調整：A → A（不變）</li>
+<li><strong>估值燈 🟡 合理：</strong>Fwd PE FY+2 33.40x，5Y 分位約 56%，PEG 0.62（FY+2 / 3Y CAGR 53.7%）｜盲點 1 救援：不需（直接落 🟡）</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 1,025 / W104 703 / W250 450（斜率 +19.7%）｜盲點 2 救援：不適用｜<strong>BB 上軌 2,264 未破，4w 漂移從 +27.67% → +17.12% 顯著降溫</strong></li>
+<li><strong>大盤豁免 ✅ 正常：</strong>TWII 41,752 vs W104 25,391（+64.4% 之上，無系統性風險）</li>
+<li><strong>參考 R:R：</strong>短期 −0.57x / 中期 +0.15x / 5Y +1.56x｜壓力測試通過率 0/4（短中期；5Y 在 Base + Bear A 過關）（資訊性，不主導裁決）</li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）｜判定理由：品質 A + 估值 🟡 + MA ✅ + trap 🟡，thesis 強，但短中期 R:R 雙負 → B 觀望偏進場（QC-31 規則：thesis 完整、時機不到 → B 不是 C）</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong><span class="badge-yellow">🟡 觀察期</span>（thesis 完整但動能仍熱、12w +71.0% 累計，需要 BB 中軌 1,500 或 Q2 法說 H1 連 2 季驗證後 conviction 才升）</li>
+<li><strong>Inception DD：</strong><code>DD_2308TW_20260430.html</code>（2026-04-30）— 該 ticker 第一份 v12.2+ DD（作為「累積漂移」對照基準）</li>
+<li><strong>下次年度對照倒數：</strong>2027-04-30（距今 351 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warning-box">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答）</h4>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式是哪一種？</td><td><strong>非陷阱</strong>（候選風險模式：盈餘品質型 — 警惕 FY26/FY27 EPS 是否含一次性產能溢價 / 高單價訂單前置出貨）</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>(1) Q1 2026 共識 EPS YoY +84%（vs FY25 23.08）反映 Q4 25 Infrastructure +53%、Profit +417% 結構性兌現；(2) 30 天內 FY26 共識從 36.97 → 41.67（+12.7%）、FY27 從 53.62 → 64.52（+20.3%）— 分析師同步上修暗示 GM 升級 + Infrastructure 比重提高真實；(3) FCF Margin 2025 9.25%（51.3B / 555B），ROIC 估算 43%（OI 84B / 投入資本 193B），定價能力 + 規模優勢雙佳；(4) 護城河 9/10 + AI 受益 + 4 引擎多元化（AI DC 28% + EV + 工業自動化 + 智慧建築）</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>(1) Fwd PE FY+1 51.7x、Trailing 93x 仍極端偏熱，市場已對 H1 + H2 充分定價；(2) Vertiv / Schneider 2026 Q3 OCP Summit 若取得 NVIDIA Rubin 主供 reference design 槽位，H1 立即削弱 50%；(3) 12 週累計 +71.03% 動能仍未完全消化，類 2024 SMCI 走法 — 結構性 thesis 真實但短期動能透支會引發 -30% 回測；(4) FY27 共識 30 天上修 +20% 隱含「市場對 GM 升級至 36-37% + Infrastructure 占比升至 35% 已 100% priced in」，任何 miss 都是估值壓縮</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生？</td><td>① Infrastructure YoY 連 2 季 < +30%（Q4 25 +53%）→ H1 削弱信號；② 合併 GM 連 2 季 < 35%（Q4 25 34.6%、Q1 26 actual 待 7/29 揭露）→ H2 削弱；③ Q2 / Q3 法說管理層對 800V HVDC ramp 與 Hyperscaler 2027 Capex 表態若轉保守 → 立即減 1/3</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge-yellow">🟡 觀察期</span>（thesis 完整、估值透過 EPS 修正自然壓縮、4w 漂移降溫；但 12w +71% 仍透支、短中期 R:R 雙負，需要 BB 中軌或 Q2 法說連 2 季驗證後升 conviction）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th width="4%">#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Infrastructure 事業（資料中心電力）YoY</td><td>§5 H1 / §9</td><td><span class="badge-blue">🔵 核心假設驗證</span></td><td>連續 2 季 < +30% YoY（Q4 2025 +53%；Q1 2026 actual 待 7/29 揭露）→ H1 削弱</td></tr>
+<tr><td>2</td><td>合併 Gross Margin（季）</td><td>§5 H2 / §10</td><td><span class="badge-blue">🔵 規模優勢驗證</span></td><td>連續 2 季 < 35%（Q4 2025 34.6%）→ H2 削弱；Q1 2026 actual GM 將是首要驗證</td></tr>
+<tr><td>3</td><td>4 週短期漂移 + Bollinger 位置（QC-22）</td><td>§2 F / §13</td><td><span class="badge-orange">🟠 短期動能</span></td><td>4w 從 +27.67%（4/30）→ +17.12%（5/14）moderating；連 2 週收於 BB 上軌 2,264 之上 = 重新觸發動能末段；回測 BB 中軌（~TWD 1,500，已從 4/30 1,379 上移）= 健康整理</td></tr>
+<tr><td>4</td><td>Vertiv / Schneider AI 電源新訂單</td><td>§5 R2 / §9</td><td><span class="badge-red">🔴 競爭格局</span></td><td>2026 Q3 OCP Summit；Vertiv / Schneider 取得 NVIDIA Rubin 800V HVDC reference design 關鍵槽位 → H1 立即削弱 50%</td></tr>
+<tr><td>5</td><td>Hyperscaler 2027 Capex 指引</td><td>§5 R1 / §11</td><td><span class="badge-red">🔴 產業週期</span></td><td>Top 4 Hyperscaler 任 1 家公告 2027 Capex YoY < +10%（當前 GOOGL FY26 上修至 $185-190B 反方向）</td></tr>
+</table>
+</section>
+
+<!-- ============================== §2 ============================== -->
+<section class="card" id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.2 五子節）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th width="30%">輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="tag-green">🟢 高確信</span></td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（800V HVDC 與 Rubin co-design 領先）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="tag-green">🟢 受益</span></td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="tag-green">🟢 順風</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>AI 資料中心電源系統超級週期，800V HVDC 標準戰下 Delta 與 NVIDIA Rubin co-design 取得早期 lock-in。盲點 1 + 2 救援機制可啟動；容許 PEG 至 2.0 仍 🟡。</td></tr>
+</table>
+
+<h3>B｜體質檢核 + 品質等級</h3>
+<table>
+<tr><th width="4%">#</th><th width="38%">檢核項</th><th width="10%">結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 >2%p</td><td><span class="tag-green">✅</span></td><td>2022 28.8% → 2023 29.2% → 2024 32.4% → 2025 34.3%，連年改善</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="tag-green">✅</span></td><td>2025 FCF 51.3B / NI 60.1B = 0.85；3 年均 1.07</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="tag-green">✅</span></td><td>FY26 共識 90 天 35.32 → 41.67（+18.0%），持續上修</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="tag-green">✅</span></td><td>2025 全年 +31.7% YoY，Q4 25 加速</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="tag-green">✅</span></td><td>Net Debt = 76.5B - 151.2B = -74.7B（淨現金），分子為負，安全</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = 0 項不過 → 等級不變</p>
+
+<table>
+<tr><th width="30%">項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>9 / 10</strong>（800V HVDC 標準制定者 + NVIDIA co-design lock-in + 規模優勢 + 4 引擎韌性）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ <strong>A 級</strong>（護城河 9，介於 S/A 邊界，但暫不視為 S — 800V HVDC 標準戰未終局）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>A 級</strong></td></tr>
+<tr><td>底倉（目標倉位的 %）</td><td>25%（A 級上限，最終由 PM skill 依組合決定）</td></tr>
+</table>
+<div class="reasoning">護城河 9/10 → A 級（7-8 為 B、9 為 A、10 為 S）；體質 5 項全 ✅ → 等級不變 → 最終 A 級。下游 implication：§2 D 估值燈乘 modifier 後計入 §2 H 綜合訊號。</div>
+
+<h3>D｜估值輸入 + 估值燈 + R:R</h3>
+<h4>D1｜估值輸入（FY+1 / FY+2 共識）</h4>
+<table>
+<tr><th width="30%">項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY26）</td><td>41.67（17 位分析師，30d ago 36.97，+12.7%）</td><td>yfinance earnings_estimate</td></tr>
+<tr><td>FY+2 EPS（FY27）</td><td>64.52（19 位分析師，30d ago 53.62，+20.3%）</td><td>yfinance earnings_estimate</td></tr>
+<tr><td>FY+2 / FY+1 成長率</td><td>+54.8%</td><td>(64.52/41.67)−1</td></tr>
+<tr><td>當前 Fwd PE FY+1</td><td>51.72x</td><td>2,155 / 41.67</td></tr>
+<tr><td>當前 Fwd PE FY+2</td><td>33.40x</td><td>2,155 / 64.52</td></tr>
+<tr><td>3Y EPS CAGR（FY25→FY28E）</td><td>53.7%</td><td>FY25 23.08 → FY28E 83.88（FY27 64.52 × 1.30 邏輯遞減，§8 推導）</td></tr>
+<tr><td>PEG（FY+2 base, 3Y CAGR）</td><td>0.62</td><td>33.40 / 53.7</td></tr>
+<tr><td>PEG（FY+1 base, 3Y CAGR）</td><td>0.96</td><td>51.72 / 53.7</td></tr>
+</table>
+<div class="reasoning">FY26 EPS 41.67 為 17 位分析師共識中位（90 天從 35.32 → 41.67，+18% 上修）；FY27 EPS 64.52 為 19 位（90 天從 49.59 → 64.52，+30% 上修，主因 Q1 法說後 Infrastructure 持續加速）→ Fwd PE FY+2 從 4/30 的 39.83x 自然壓縮至 33.40x，估值體系升級而非泡沫。下游 implication：§13.5 維持「資料中心系統廠」估值體系判斷，§2 D 估值燈以 FY+2 + PEG 為主。</div>
+
+<h4>D2｜估值燈</h4>
+<table>
+<tr><th width="30%">項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE FY+2</td><td>33.40x</td></tr>
+<tr><td>5Y Fwd PE 範圍（估計）</td><td>10x ~ 52x（pre-AI 低點 ~ AI 重估後高點）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><strong>~56%</strong>（從 4/30 的 71% 自然壓縮）</td></tr>
+<tr><td>PEG（FY+2 / 3Y CAGR）</td><td>0.62</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong><span class="tag-yellow">🟡 合理</span></strong></td></tr>
+<tr><td>套用規則</td><td>不變（等級不調整）</td></tr>
+</table>
+<div class="reasoning">分位 56%（30-70%）→ 🟡 合理；PEG 0.62 < 1.0 → 🟢 便宜。取較嚴 → 🟡。盲點 1 救援不需啟動（已在 🟡，沒被砍）。下游 implication：§2 H 綜合訊號中此項對應 quality A 等級不變。</div>
+
+<h4>D3｜R:R 與 Bear Case（參考用，不主導裁決）</h4>
+<table>
+<tr><th width="14%">時距</th><th width="20%">EPS</th><th width="14%">合理 PE</th><th width="14%">目標價</th><th width="14%">Bear PE × Bear EPS = Bear 股價</th><th>R:R</th></tr>
+<tr><td>短期（1Y, FY+1）</td><td>FY26 41.67</td><td>35x</td><td>1,458</td><td>25 × 37.5 = 938</td><td><span class="tag-red">−0.57x（失效）</span></td></tr>
+<tr><td>中期（2Y, FY+2）</td><td>FY27 64.52</td><td>35x</td><td>2,258</td><td>25 × 58.1 = 1,452</td><td><span class="tag-red">+0.15x（不過 1.0）</span></td></tr>
+<tr><td>長期（5Y, FY+5）</td><td>FY30E 115.75</td><td>35x</td><td>4,051</td><td>持有期間最大跌幅 1,452</td><td><span class="tag-yellow">+1.56x（接近 2.0，可接受）</span></td></tr>
+</table>
+<div class="reasoning">合理 PE 35x = §13.5 基準 25x × 引擎 B PEG safety 1.30（PEG 0.62 上浮）× AI 受益 1.10（取較高引擎不疊加）= 35.75x，取保守 35。短期目標 1,458 低於現價 2,155 → 上行為負，R:R 失效；中期目標 2,258 接近現價 → R:R 0.15x 不過 1.0；5Y 目標 4,051 × 35x → +88% upside，R:R 1.56x 接近 2.0 門檻。下游 implication：§2 H 中「短中期 R:R 雙負」→ 落 B 觀望偏進場（thesis 完整但時機不到，per QC-31 規則不歸 C）。</div>
+
+<h4>D4｜R:R 壓力測試（QC-29）</h4>
+<table>
+<tr><th width="14%">情境</th><th width="40%">假設</th><th width="15%">短期 R:R</th><th width="15%">中期 R:R</th><th>過關</th></tr>
+<tr><td>Base</td><td>合理 PE 35x、Bear PE 25x</td><td>−0.57x</td><td>+0.15x</td><td><span class="tag-red">否</span></td></tr>
+<tr><td>壓力 A</td><td>3Y EPS CAGR −10%（48%）</td><td>−0.60x</td><td>+0.08x</td><td><span class="tag-red">否</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（28x）</td><td>−0.81x</td><td>−0.16x</td><td><span class="tag-red">否</span></td></tr>
+<tr><td>壓力 C</td><td>Vertiv 取得 NVIDIA Rubin 主供（H1 削弱 50%，合理 PE → 25x）</td><td>−0.95x</td><td>−0.42x</td><td><span class="tag-red">否</span></td></tr>
+</table>
+<p><strong>壓力測試通過率</strong> = 0 / 4（中期 R:R ≥ 2.0 情境數）→ §1 標註「R:R 對壓力情境敏感」。但 thesis 完整（QC-31 規則：A 級 + 估值 🟡 + 長期信心高 → B，非 C）。</p>
+
+<h3>F｜Pure MA 狀態機（Stage 4 覆蓋層）</h3>
+<table>
+<tr><th width="30%">項目</th><th>數值</th></tr>
+<tr><td>現價（週收）</td><td>2,155（5/14 日收 2,155）</td></tr>
+<tr><td>W52 / 斜率</td><td>1,025 / +47.97%</td></tr>
+<tr><td>W104 / 斜率</td><td>703 / +32.66%</td></tr>
+<tr><td>W250 / 斜率（13 週變化）</td><td>450 / <strong>+19.70%</strong>（強正，> +3% 門檻）</td></tr>
+<tr><td>Bollinger 上軌 / 中軌 / 下軌（週）</td><td>2,264 / 1,500 / 737</td></tr>
+<tr><td>BB 中軌 vs 4/30 的 1,379</td><td>+8.8%（BB 中軌已被向上拉動，反映 30 天上行趨勢）</td></tr>
+<tr><td>BB 上軌 vs 現價</td><td>2,264 vs 2,155 = 4.8% 距離（之內，未突破）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="tag-green">✅ 強勢進場</span></strong>（價 > W52 > W104 > W250 + W250 斜率 +19.7% > +3%）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+<tr><td>近 5 交易日 intraday 警示（QC-24）</td><td>5/7 High 2,370（52W 高）→ Close 2,280：close vs high −3.8%（sub-5% 無 shooting star）；5/14 Open 2,210 → Close 2,155（−2.5% 日內弱）；無觸發</td></tr>
+<tr><td>4 週漂移（QC-22）</td><td>+17.12%（4/30 為 +27.67% → moderating；但仍偏熱）</td></tr>
+<tr><td>12 週漂移</td><td><strong>+71.03%</strong>（嚴重透支）</td></tr>
+</table>
+<div class="reasoning">價 2,155 > W52 1,025 > W104 703 > W250 450，W250 13w 斜率 +19.7% > +3% → ✅ 強勢進場；4w +17.12% 仍熱但較 4/30 +27.67% moderating；12w +71% 累計透支信號未解除。BB 上軌 2,264 未破（4/30 曾突破 +6.8%），BB 中軌 1,500 為現實的回測目標（4/30 DD 寫的 1,379 已失效）。下游 implication：§2 H 中 MA ✅ + benchmark 正常 + trap 🟡 → 落 B（QC-31 規則：短中期 R:R 失效不歸 C，因 thesis 完整）。</div>
+
+<h3>H｜大盤豁免 + 綜合訊號燈 + 長期展望</h3>
+<h4>H1｜大盤豁免（系統性風險）</h4>
+<table>
+<tr><th width="30%">項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>TWII（加權指數）</td></tr>
+<tr><td>大盤現價（5/14 週收）</td><td>41,752</td></tr>
+<tr><td>大盤 W104</td><td>25,391</td></tr>
+<tr><td>系統性風險</td><td><span class="tag-green">否</span>（現價 +64.4% 高於 W104）</td></tr>
+<tr><td>豁免係數</td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h4>H2｜綜合訊號燈判定</h4>
+<table>
+<tr><th width="30%">項目</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>A</td></tr>
+<tr><td>gate（§2 D 估值燈）</td><td>🟡 合理</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong> 觀望偏進場</td></tr>
+<tr><td><strong>判定理由</strong></td><td>thesis 完整（品質 A、護城河 9/10、AI 🟢、估值燈從 🟠 自然壓縮至 🟡 合理）+ MA ✅ 強勢，但 ① 短期 R:R −0.57x、中期 R:R +0.15x 雙負（壓測 0/4）；② 12w +71% 累計透支未消化；③ Fwd PE FY+1 51.7x 仍偏高。<strong>per QC-31 規則：thesis 完整 + R:R 不過 → B 觀望偏進場（不歸 C，C 需 thesis 失敗證據）</strong>。等待 (a) 回測 BB 中軌 ~1,500（−30%），或 (b) Q2 2026 法說（2026-07-29）Infrastructure 連 2 季 +40%+ 驗證 H1，或 (c) FY27 共識 EPS 進一步上修至 ≥ 75 → R:R 改善後重新評估。</td></tr>
+</table>
+
+<h4>H3｜長期展望（3-5 年定性）</h4>
+<table>
+<tr><th width="30%">維度</th><th>結論</th></tr>
+<tr><td>成長跑道（§8 A）</td><td>充裕（AI DC 電源 Runway ≥ 10 年；800V HVDC 標準戰 2026-2028 終局；液冷整合 2027-2030 滲透）</td></tr>
+<tr><td>護城河趨勢（§9）</td><td>加深（800V HVDC reference design + NVIDIA Rubin co-design lock-in、4 引擎多元化）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td><strong>高</strong></td></tr>
+</table>
+<p class="note"><strong>一句話說明：</strong>🟢 順風 + A 級護城河 9/10，30 天 EPS 共識大幅上修自然壓縮估值（Fwd PE FY+2 39.83x → 33.40x，PEG 0.62）；Pure MA ✅ + 4w 漂移從 +27.67% → +17.12% moderating，但 12w +71% 仍透支、短中期 R:R 雙負。建議等 BB 中軌 ~1,500 或 Q2 法說連 2 季驗證後升 conviction。</p>
+</section>
+
+<!-- ============================== §3 ============================== -->
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要（v12.2 簡化版）</h2>
+<div class="three-col">
+
+<div class="role-card role-bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>引用</th></tr>
+<tr><td>1</td><td>800V HVDC + Rubin co-design lock-in（護城河 9/10、Infrastructure Q4 25 +53% YoY + Profit +417%）</td><td>§9</td></tr>
+<tr><td>2</td><td>EPS 共識 30 天再上修：FY26 +12.7%、FY27 +20.3% — 分析師同步上修暗示 H1 + H2 超預期兌現中</td><td>§8</td></tr>
+<tr><td>3</td><td>估值透過 EPS 修正自然壓縮（Fwd PE FY+2 39.83x → 33.40x，PEG 0.62），體系從「電源 OEM」往「資料中心系統廠」升級中</td><td>§13</td></tr>
+</table>
+<p><strong>多頭一句話：</strong>「30 天內 FY26+FY27 EPS 同步大幅上修是同業中罕見的力度，市場正在主動 re-rate，等回測等不到」</p>
+</div>
+
+<div class="role-card role-bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>引用</th></tr>
+<tr><td>1</td><td>2026 Q3 OCP Summit Vertiv 取得 NVIDIA Rubin 800V 主供 reference design → H1 立即削弱 50%，PE 壓縮至 25x → −40%</td><td>§5 R2</td></tr>
+<tr><td>2</td><td>FY27 共識 EPS 30 天 +20% 上修已 100% priced in；任何 GM miss（連 2 季 < 35%）→ H2 削弱 → PE 重設至 28x → −25%</td><td>§13.3</td></tr>
+<tr><td>3</td><td>12w 累計 +71%、4w +17%，類 2024 SMCI 走法 — 結構性 thesis 真實但動能透支 → 技術性回測 BB 中軌 1,500（−30%）為健康整理</td><td>§2 F</td></tr>
+</table>
+<p><strong>空頭最大威脅：</strong>「市場已對 FY27 GM 36-37% + Infrastructure 占比 35% 充分定價，任何短期 noise（geopolitics、Hyperscaler Capex 微調）都會觸發 −30% 回測」</p>
+</div>
+
+<div class="role-card role-arb">
+<h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td><strong>7 / 10</strong></td></tr>
+<tr><td>核心依據（§13.3 Reverse DCF）</td><td>隱含 FCF CAGR ~25-30% vs 分析師共識 EPS CAGR 53.7%（3Y）— FCF lag EPS 為合理（資本擴張期）</td></tr>
+<tr><td>歷史對標</td><td>NVDA 2017-2019（資料中心起飛初期，PE 從 40x → 30x → 50x 三段式 re-rate）；MSFT 2014-2017（Azure 主題下 PE 從 15x → 25x）</td></tr>
+</table>
+<p><strong>仲裁員一句話：</strong>「估值體系升級（從電源 OEM PE 15-20x → 系統廠 30-35x）合理，但市場已 priced in 兩年成長 + GM 升級，買點需要技術回測或假設超預期」</p>
+</div>
+
+</div>
+</section>
+
+<!-- ============================== §4 ============================== -->
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Delta Electronics 的核心命題不是「賣電源供應器」，而是「為高耗能應用解決可靠性 + 效率 + 散熱整合」三位一體問題。當 AI 資料中心單機架功率從 30kW → 130kW（NVIDIA Blackwell）→ 估計 200kW+（Rubin），傳統 IT 配電 + 散熱方案物理上會崩潰，需要 800V HVDC + 液冷 + 模組化電源管理的系統級重構。Delta 過去 50 年累積的開關電源、散熱、馬達驅動三大技術棧，正好對應 AI DC 三大瓶頸（功率密度、熱密度、可用率）。若 Delta 明天消失，全球前 4 大 Hyperscaler 部分 800V HVDC roadmap 會延後 6-12 個月，且只有 Vertiv / Schneider 兩家可承接，導致部署成本上升 15-25%。這是供應鏈集中度造成的「不可替代性」。</p>
+
+<h3>護城河形成歷史路徑</h3>
+<table>
+<tr><th>年份</th><th>關鍵 milestone</th><th>累積貢獻 / 護城河變動</th></tr>
+<tr><td>1971</td><td>創辦人鄭崇華成立，由電視零件起家</td><td>起點 0/10</td></tr>
+<tr><td>1980s</td><td>切入 PC 開關電源（PSU），成為 Dell / HP 主要供應商</td><td>+2（→ 2/10，量產規模優勢起步）</td></tr>
+<tr><td>1990s</td><td>建立全球生產基地（泰國、墨西哥、東歐）</td><td>+1（→ 3/10，地理多元化 + 成本曲線）</td></tr>
+<tr><td>2000s</td><td>電動車電機 + 工業自動化雙引擎啟動</td><td>+2（→ 5/10，業務多元化降低 PC 週期曝險）</td></tr>
+<tr><td>2010-2015</td><td>切入太陽能逆變器、UPS（資料中心電源）</td><td>+1.5（→ 6.5/10，資料中心電源市佔起步）</td></tr>
+<tr><td>2017-2019</td><td>NVIDIA Volta / Pascal 起飛，Delta 為主要 PSU 供應商</td><td>+0.5（→ 7/10，AI 加速器電源 lock-in 早期）</td></tr>
+<tr><td>2020-2021</td><td>EV 三電（電機 + 電控 + 充電）放量，特斯拉等客戶</td><td>+0.5（→ 7.5/10，EV 引擎建立）</td></tr>
+<tr><td>2022 Q4</td><td>NVIDIA H100 起飛，Delta 為主要電源 + 散熱供應商之一</td><td>+0.5（→ 8/10）</td></tr>
+<tr><td>2024</td><td>Blackwell 量產，800V HVDC 與 NVIDIA 共設計 OCP 規格</td><td>+0.7（→ 8.7/10，標準制定者地位）</td></tr>
+<tr><td>2025-2026 Q1</td><td>Infrastructure +53% YoY、Profit +417%；液冷整合方案出貨</td><td>+0.3（→ 9/10，當前位置）</td></tr>
+</table>
+<div class="reasoning">25 年累積 9 個 milestone，從 0/10 → 9/10 的護城河並非單一事件，而是「PC PSU 規模 → 多引擎多元化 → AI DC 領先卡位 → 標準制定者」的長期路徑。Implication：未來 5 年要再 +1 至 10/10，需要在 800V HVDC 標準戰中拿下 NVIDIA Rubin 主供（2026 Q3 OCP Summit 為觀察點）+ 液冷市佔達 40%+。</div>
+
+<h3>逆向推演（Munger Inversion）— 三維展開</h3>
+
+<h4>① 技術維度：什麼技術替代會讓 Delta 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>700V/750V 直流匯流替代 800V</strong>：若 OCP 採用 Vertiv 主導的 750V 規格（vs Delta + NVIDIA 共推 800V），Delta 早期投入沉沒（歷史對標：Intel Itanium vs AMD x86-64，標準戰輸家失去 10 年）</li>
+<li><strong>分散式電源架構興起</strong>：若 GPU 廠商（NVIDIA / AMD / Google）改採 GPU 內 VRM 直接整合，Delta 系統級價值降低（歷史對標：Sun Microsystems 工作站專屬電源在 x86 PC 標準化下消失）</li>
+<li><strong>固態變壓器（SST）取代傳統 PSU</strong>：寬能隙半導體（SiC / GaN）+ AI 控制讓 SST 在效率上超越傳統設計，Delta 技術 stack 需要 5 年重構</li>
+<li><strong>核融合 / 小型模組化反應爐（SMR）改變 DC 電力配置邏輯</strong>：若 DC 直接連接 SMR，傳統 AC-DC-DC 三層轉換消失</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>Capex 慣性過度擴張</strong>：2025 Capex 47.2B（vs 2022 22.4B 兩倍），若 AI Capex 拐點來臨而 Delta 仍在擴產 → ROIC 結構性下行（歷史對標：AT&T 1990s 過度擴張光纖網路）</li>
+<li><strong>創辦人世代交替失敗</strong>：鄭崇華（創辦人）→ 海英俊（接任 CEO）的接班已完成，但下一代尚未明朗；若管理層轉向保守導致 R&D 投入相對對手減少 → 5 年後護城河被侵蝕</li>
+<li><strong>整合失敗</strong>：若 Delta 大型併購（如 Eltek、LiteOn 部分業務）整合不力，文化衝突 + 客戶流失 → 短期 GM 衰退（歷史對標：Cisco 2000s 多次併購整合失敗）</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>AI 推論在地化 / 邊緣 AI 興起</strong>：若 LLM 推論大量遷移至 edge（手機 / PC），資料中心 Capex 增速放緩 → Delta AI DC 業務 TAM 萎縮（歷史對標：1990s 大型主機 vs PC 的時代轉換）</li>
+<li><strong>監管型分拆</strong>：若美國 / 歐盟對 Delta 中國產能課徵高關稅或限制出口，Delta 必須在 3 年內把中國產能砍至 30% 以下 → 短期 GM 200-400bp 壓縮（歷史對標：HUAWEI 2019 後 5G 業務的快速去中國化代價）</li>
+<li><strong>計算範式轉換（量子 / 神經形態）</strong>：若 2030 年代量子計算或神經形態晶片大規模商用，傳統 GPU + 高功率 DC 架構過時 → Delta 系統 IP 失效（歷史對標：1980s VAX 迷你電腦被 RISC 工作站淘汰）</li>
+</ul>
+<div class="reasoning">三維 10 條失效路徑中，技術維度（700V vs 800V 標準戰）與管理維度（Capex 慣性）為當前 2-3 年最高風險；結構維度（邊緣 AI、量子計算）為 5-10 年遠期。Implication：§5 R1/R2/R3 風險清單聚焦短中期失效路徑，§8 E 壓力測試 5Y/10Y 情境涵蓋結構性風險。</div>
+</section>
+
+<!-- ============================== §5 ============================== -->
+<section class="card" id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th width="30%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>3-5 年（中長期；對應 AI DC 電源 S 曲線中段）</td></tr>
+<tr><td>主要驅動時間軸的理由</td><td>800V HVDC 標準戰 2026-2028 終局；液冷整合 2027-2030 滲透；EV 電動化 2026-2030 加速</td></tr>
+<tr><td>什麼是訊號 / 什麼是噪音</td><td>訊號：Infrastructure YoY、合併 GM 趨勢、800V design win 公告、Hyperscaler Capex 指引｜噪音：單季波動、Q1/Q4 季節性、短期匯率影響</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸（v12.2 thesis 升級）</h3>
+<div class="hypothesis-box">
+<table>
+<tr><th width="4%">#</th><th width="20%">核心假設</th><th width="14%">2Y 驗證點（2028 前）</th><th width="14%">5Y 驗證點（2031 前）</th><th width="14%">10Y 驗證點（2036 前）</th><th width="14%">驗證指標</th><th width="20%">資料來源</th></tr>
+<tr>
+  <td><strong>H1</strong></td>
+  <td>AI 資料中心 Capex 結構性持續，Infrastructure 維持 +40%+ 連 6 季，800V HVDC 規模化兌現</td>
+  <td>Q2 2026 - Q3 2027：Infrastructure YoY +40%+ × 6 季；800V HVDC 量產順暢</td>
+  <td>2028-2031：Infrastructure 占總營收 35%+（從 Q4 25 28%）；800V HVDC + 液冷整合方案達全球前 3 大主供（vs Vertiv / Schneider）</td>
+  <td>2031+：Delta 在 AI DC 電源系統整合市佔達 25%+；單機架功率 200kW+ 解決方案商業化</td>
+  <td>Infrastructure YoY、Infrastructure / Total Rev 占比、Hyperscaler 合約規模、800V HVDC 出貨量</td>
+  <td>2Y: §6 / §5 既有<br>5Y: §8 A Runway<br>10Y: §8 A 路線圖 + §9 護城河趨勢</td>
+</tr>
+<tr>
+  <td><strong>H2</strong></td>
+  <td>合併 GM 升級至 36-37%（Q4 25 34.6%），液冷 + 800V 高附加價值產品組合持續</td>
+  <td>每季財報持續追蹤；FY26 GM ≥ 36%（vs FY25 34.3%）</td>
+  <td>2028-2031：合併 GM 站穩 36-38%；Infrastructure 業務 OI margin ≥ 18%（從 Q4 25 16.3%）</td>
+  <td>2031+：Delta 從「電源 OEM」升級為「DC 電力系統 IP 商」，毛利率收斂至 IDC 系統廠水位（38-42%）</td>
+  <td>合併 GM、Infrastructure profit margin、新產品 mix 比重</td>
+  <td>2Y: §5 既有<br>5Y: §8 E 壓力測試<br>10Y: §11 TAM + §13 估值升級</td>
+</tr>
+<tr>
+  <td><strong>H3</strong></td>
+  <td>市場給予合理 Forward P/E 32-38x；當前 FY+2 33.40x 已落入合理區間，需 EPS 持續上修才能維持當前股價或往上</td>
+  <td>FY26 共識 EPS 再上修至 ≥ 50（再 +20%）、FY27 上修至 ≥ 75（再 +16%）</td>
+  <td>2028-2031：估值體系穩定在「資料中心系統廠」35-40x（vs 傳統電源廠 20-25x）</td>
+  <td>2031+：估值體系穩定，EPS 複利成長為長期驅動主軸</td>
+  <td>Forward P/E vs 5Y 中位數、PEG 變化、同業相對溢價</td>
+  <td>2Y: §13 既有<br>5Y: §13.0 估值體系升級<br>10Y: §9 護城河趨勢綁定</td>
+</tr>
+</table>
+</div>
+<p><strong>v12.2 假設邏輯</strong>：H1 是 H2 的需求端基礎（規模拿到 = 高 GM 訂單），H2 是 H3 的需求端燃料（毛利升級 = 市場給高 PE 的理由），三者依序觸發。30 天內 EPS 共識同步大幅上修，**間接強化 H1 + H2 已被分析師認可**；H3 從「估值回歸」改寫為「估值體系穩定」（4/30 DD 寫的「等回 PE 35x」實質已透過 EPS 上修達成 FY+2 PE 33.4x）。</p>
+
+<h3>B'｜Inception + 14 天進度追蹤（v12.2）</h3>
+<div class="hypothesis-box">
+<strong>狀態：距 Inception（2026-04-30）14 天，未滿一年</strong>。<br>
+本欄位將於 <strong>2027-04-30 起首次有實質 YoY 對照</strong>（屆時 Inception DD 滿 12 個月，可進行 TTM 對照）。<br>
+在此之前，僅以 §5.B 戰術假設視角追蹤；與 Inception DD 的短期變化見「假設驗證對照」（QC-17，與 4/30 對照）。<br>
+<strong>關鍵 14 天變化</strong>：H1 + H2 強化（EPS 共識同步上修）、H3 自然兌現（PE 從 58x → 51.7x、FY+2 從 39.83x → 33.40x）。
+</div>
+
+<h3>C｜三個最可能推翻論點的風險（v12.2 加時間尺度分層）</h3>
+<table>
+<tr><th width="4%">#</th><th width="22%">風險</th><th width="6%">對應</th><th width="14%">時間尺度</th><th width="22%">監測指標</th><th>警戒閾值</th></tr>
+<tr>
+  <td>R1</td>
+  <td>AI Capex 2027 拐點，Top 4 Hyperscaler 削減資本支出</td>
+  <td>H1</td>
+  <td><span class="badge-yellow">中期（2-3 年）</span></td>
+  <td>Top 4 Hyperscaler Capex 指引、Infrastructure YoY</td>
+  <td>連續 2 季 Infrastructure < +30% YoY，或任 1 Hyperscaler 2027 Capex YoY < +10%</td>
+</tr>
+<tr>
+  <td>R2</td>
+  <td>Vertiv / Schneider 在 800V HVDC 標準戰中拿下 NVIDIA Rubin 主供地位</td>
+  <td>H1, H2</td>
+  <td><span class="badge-orange">短期（12 個月內）</span></td>
+  <td>2026 Q3 OCP Summit、Vertiv / Schneider 新訂單公告、Delta 800V design win 公告</td>
+  <td>Vertiv 取得 NVIDIA Rubin 主供 reference design 公告 → H1 立即削弱 50%</td>
+</tr>
+<tr>
+  <td>R3</td>
+  <td>地緣政治升級導致 Delta 中國產能遷移成本超預期</td>
+  <td>整體 thesis</td>
+  <td><span class="badge-red">長期結構（5+ 年）</span></td>
+  <td>美中關稅政策、Delta 中國產能占比變化、東南亞 / 墨西哥產能擴建進度</td>
+  <td>遷移期間 GM 回落 > 200bp 連 4 季，或東南亞 / 墨西哥稼動率 < 70% 連 6 季</td>
+</tr>
+</table>
+<p><strong>v12.2 時間尺度判定原則</strong>：R2 短期 → 季度監控 + 連 2 季觸發即減倉；R1 中期 → 半年回顧 + 連 4 季觸發才大動作；R3 長期結構 → 跨年度監控 + 需 ≥ 50% 機率才砍倉。</p>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th width="20%">判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在 3-5 年持有期內是否有影響？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（Infrastructure / 800V）、H2（GM 升級）、H3（估值）的哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>對該假設 ＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>是否達到 §5 C R1/R2/R3 警戒閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th width="18%">情境</th><th width="42%">觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>(a) 回測 BB 中軌 ~1,500（−30%）+ 4w 漂移 ≤ +10%；或 (b) Q2 2026 法說（2026-07-29）Infrastructure 連 2 季 +40%+ 驗證 H1；或 (c) FY27 共識 EPS 上修至 ≥ 75（再 +16%）</td><td>建倉至 30-50%（A 級底倉 25% × 1.5）</td></tr>
+<tr><td><strong>加碼至底倉</strong></td><td>H1 + H2 在 Q3 / Q4 2026 持續驗證 + 股價維持 1,600-2,000 區間</td><td>加碼至 75-100%（A 級底倉 25%）</td></tr>
+<tr><td><strong>減碼</strong></td><td>R2 Vertiv / Schneider 取得 NVIDIA Rubin 主供 → 立即減 1/3；或股價突破 PE FY+1 60x（FY26 EPS 41.67 × 60 = TWD 2,500）</td><td>減至 50%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 削弱（Infrastructure 連 2 季 < +30%）+ H2 削弱（GM 連 2 季 < 35%）同時觸發；或 R3 觸發（中國產能遷移 GM 衝擊 > 200bp 連 4 季）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+</section>
+
+<!-- ============================== §6 ============================== -->
+<section class="card" id="s6">
+<h2>§6 即時財報情報</h2>
+
+<h3>① 最新一季財報關鍵數字（Q1 2026 共識，4/28 法說後）</h3>
+<table>
+<tr><th>指標</th><th>本季實際 / 共識</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue (Q1 26)</td><td>187.5B TWD（13 位分析師共識）</td><td>178.9B - 193.1B</td><td><span class="badge-beat">Beat</span></td><td>+51.2%</td></tr>
+<tr><td>EPS (Q1 26)</td><td>9.88 TWD（13 位分析師共識）</td><td>8.52 - 11.04</td><td><span class="badge-beat">Beat</span></td><td>+84.4%（vs Q1 25 5.36）</td></tr>
+<tr><td>FY26 EPS 共識</td><td>41.67（30d 前 36.97）</td><td>—</td><td><span class="badge-beat">90d +18.0%</span></td><td>+80.6%（vs FY25 23.08）</td></tr>
+<tr><td>FY27 EPS 共識</td><td>64.52（30d 前 53.62）</td><td>—</td><td><span class="badge-beat">90d +30.1%</span></td><td>+54.8%（vs FY26 41.67）</td></tr>
+<tr><td>FY26 Revenue 共識</td><td>775.8B TWD</td><td>727 - ?B</td><td><span class="badge-beat">上修中</span></td><td>+39.8%</td></tr>
+<tr><td>Q4 25 Gross Margin</td><td>34.6%（前次 DD 引用）</td><td>—</td><td><span class="badge-beat">Beat</span></td><td>+220bp YoY</td></tr>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>本次（5/14）邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（AI Capex 延續 + 800V HVDC）</td><td><span class="badge-beat">+ 強化延續</span></td><td>FY26 + FY27 共識 EPS 30 天同步大幅上修，分析師主動 re-rate H1 ramp；GOOGL FY26 Capex 上修至 $185-190B 持續 imply hyperscaler Capex 不減反增</td></tr>
+<tr><td>H2（GM 升級至 36-37%）</td><td><span class="badge-beat">+ 強化延續</span></td><td>FY26 共識 EPS +12.7%、Rev +0% → GM 修正幅度大於 Rev 修正，暗示 GM 結構性升級已 priced in by 共識</td></tr>
+<tr><td>H3（估值落入合理區間）</td><td><span class="badge-beat">+ 自然兌現</span></td><td>4/30 DD 寫的「等回 PE 35x」實質透過 FY+2 EPS 從 55.6 → 64.52（+16%）+ 股價 −2.7%，自然把 FY+2 PE 從 39.83x 壓至 33.40x，落入 §5 H3 合理 32-38x 區間</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析（4/28 法說會 + 30 天分析師 follow-up）</h3>
+<ul>
+<li><strong>管理層基調</strong>：樂觀（vs Q4 25 法說已轉樂觀）— 800V HVDC ramp 確認、液冷產能擴建順利、AI DC 訂單能見度 +12 個月</li>
+<li><strong>Forward Guidance</strong>：未直接給 FY26 數字，但管理層表示「Infrastructure 全年 ≥ +40% YoY」+「合併 GM 全年 ≥ 35%」— 30 天內分析師同步上修反映 guidance 被消化為共識</li>
+<li><strong>刻意強調主題</strong>：「800V HVDC reference design」、「NVIDIA Rubin co-design」、「液冷整合解決方案」— 反覆強調系統廠定位</li>
+<li><strong>刻意迴避的問題</strong>：Vertiv / Schneider 在 NVIDIA Rubin 競爭中的地位（管理層只談自身 design win，不評論對手）；中國產能遷移具體進度（只提「東南亞 / 墨西哥稼動率提升」）</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：AI DC Capex 至少持續至 2027 H1，hyperscaler 800V 採用率加速。GOOGL FY26 Capex 上修至 $185-190B（vs FY25 $91.4B）為直接 imply 信號</li>
+<li><strong>供給端</strong>：800V HVDC 量產線 2026 H1 開始 ramp；液冷整合產能擴建至 2026 年底；backlog 能見度至 2027 Q2</li>
+<li><strong>競爭格局</strong>：Delta 與 NVIDIA 共設計 OCP 800V，但 Vertiv 在 Microsoft / Meta 仍有強勢地位；Schneider 在歐洲 hyperscaler 領先</li>
+<li><strong>總體經濟敏感度</strong>：管理層提及匯率（TWD 升值對 GM 不利）、原材料（銅 / 稀土 / 矽鋼片），但表示 hedging 完善</li>
+<li><strong>對同業的連帶推論</strong>：Delta 強 = Vertiv (VRT) 中國競爭壓力增；對 NVDA Rubin 量產進度為正面 imply；對 TSMC CoWoS 產能為間接驗證</li>
+</ul>
+</section>
+
+<!-- ============================== §7 ============================== -->
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 推導（基於 yfinance 共識 + §8 邏輯推導）</h3>
+<table>
+<tr><th width="30%">項目</th><th>數值</th></tr>
+<tr><td>基期 EPS（FY25 actual）</td><td>23.08 TWD</td></tr>
+<tr><td>FY+1 EPS 共識（FY26）</td><td>41.67（17 位分析師，yfinance）</td></tr>
+<tr><td>FY+2 EPS 共識（FY27）</td><td>64.52（19 位分析師，yfinance）</td></tr>
+<tr><td>FY+3 EPS 邏輯推導（FY28）</td><td>83.88（FY27 × 1.30，§8 推導：AI Capex 2027 拐點後成長率自然遞減；800V HVDC ramp 完成；EV 引擎接棒）</td></tr>
+<tr><td>FY+5 EPS 邏輯推導（FY30）</td><td>115.75（FY28 × 1.20 × 1.15）</td></tr>
+<tr><td>3 年 EPS CAGR（FY25→FY28）</td><td><strong>53.7%</strong></td></tr>
+<tr><td>5 年 EPS CAGR（FY25→FY30）</td><td><strong>38.1%</strong></td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="badge-miss">⚠️ 接近</span></td><td>FY25 FCF 51.3B / Rev 555B = 9.25%（資本擴張期 Capex 大；3 年均 ~8.8%）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="badge-miss">⚠️ 不過</span></td><td>5 年均 ~8-10%，最低谷 ~6%（2022 Q3 Capex 高峰），有週期波動（資本密集行業合理）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td><span class="badge-beat">✓✓ 強</span></td><td>估算 ROIC ~43%（OI 84B / 投入資本 193B = Equity 268B + Debt 76B − Cash 151B），WACC 估 8%，超額 +35%p</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>過去 10 年 ≥ 70% 年份 ROIC &gt; 15%</td><td><span class="badge-beat">✓ 合理</span></td><td>2020-2025 均達標；2015-2019 受 PC 週期影響部分年份 ~12-14%，估約 7/10 達標</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年中 ≥ 70% 年份持續改善</td><td><span class="badge-beat">✓ 合理</span></td><td>2022 28.8% → 2025 34.3%，4 年累計 +5.5pp；10 年內 6-7 年改善</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%（優）/ &lt; 10%（可）</td><td><span class="badge-miss">⚠️ 不過</span></td><td>2025 Capex 47.2B / Rev 555B = 8.5%（合理範圍但偏高，資本密集行業特性）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="badge-beat">✓✓ 強</span></td><td>FY25→FY28 CAGR 53.7%（FY26 +80.6%、FY27 +54.8%、FY28E +30.0%）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td><span class="badge-beat">✓✓ 強</span></td><td>0.62（FY+2 base）/ 0.96（FY+1 base）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td><span class="badge-beat">✓✓ 強</span></td><td>D/E 0.28（76.5B / 268B），現金/Rev 27.2%（151.2B / 555B）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="badge-beat">是</span></td><td>現金 151.2B &gt; 總負債 76.5B，淨現金 74.7B</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="badge-beat">✓ 合理</span></td><td>9/10，趨勢加深（§9）</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：FCF Margin 偏低（9.25%）+ Capex/Rev 偏高（8.5%）— 但屬資本密集硬體行業正常水位，且擴張期合理。<strong>Munger 三維評級</strong>：🟡（ROIC 穩定性 ✓、毛利率定價 ✓、資本密集度 ⚠️）— 兩項達標一項偏弱，傳遞至 §9 護城河分析。</p>
+
+<h3>⚠️ 價值陷阱初篩</h3>
+<p><strong>觸發狀態</strong>：未觸發。Fwd PE FY+2 5Y 分位約 56%（不在 ≤ 25% 區間）、P/FCF 估算偏高（資本密集行業特性，非便宜信號）。低估值四問因此不啟動。但 §13 仍會做「便宜理由檢驗」對應 trap 🟡 觀察狀態。</p>
+</section>
+
+<!-- ============================== §8 ============================== -->
+<section class="card" id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）+ 5Y/10Y 量化敘述</h3>
+<table>
+<tr><th width="20%">維度</th><th>現在（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th></tr>
+<tr><td>當前 TAM</td><td>AI DC 電源 USD 30B/年（全球）</td><td>USD 80B/年（CAGR ~22%）</td><td>USD 150B/年（CAGR ~12%，趨於成熟）</td></tr>
+<tr><td>Delta 市佔</td><td>~15-18%（AI DC 細分）</td><td>~22-25%（800V HVDC + 液冷整合領先）</td><td>~25-28%（系統廠地位穩定）</td></tr>
+<tr><td>Delta 此分潤</td><td>USD 4.5-5.4B</td><td>USD 17-20B</td><td>USD 38-42B</td></tr>
+<tr><td>滲透率（800V HVDC）</td><td>~5%（剛量產）</td><td>~50%（主流 hyperscaler）</td><td>~80%（含 enterprise + 邊緣 DC）</td></tr>
+<tr><td>EV 業務</td><td>占總營收 ~12%</td><td>~18%（電動化滲透加速）</td><td>~20%（趨於成熟）</td></tr>
+<tr><td>工業 + 建築自動化</td><td>占 ~45%</td><td>~35%</td><td>~30%</td></tr>
+<tr><td>結構性變化</td><td>從電源 OEM 主導</td><td>→ DC 系統廠 + EV 雙引擎</td><td>→ 能源轉換 + 計算基礎設施 IP 商</td></tr>
+</table>
+<p><strong>成長可持續年數估計（Runway）</strong>：<strong>≥ 10 年</strong>（AI DC 電源滲透率仍在 S 曲線前段；EV + 智慧建築 + 工業自動化 4 引擎多元化）</p>
+
+<h3>A'｜S 曲線位置 + 距飽和年數</h3>
+<table>
+<tr><th>業務</th><th>S 曲線位置</th><th>距飽和估計</th><th>說明</th></tr>
+<tr><td>AI DC 電源（800V HVDC + 液冷）</td><td>前段（5-10% 滲透）</td><td>10-15 年</td><td>800V 剛量產，Rubin 需求驅動；S 曲線陡升中</td></tr>
+<tr><td>傳統 DC 電源 / UPS</td><td>中段（成熟）</td><td>10+ 年</td><td>穩定 +5-10% 成長，現金牛</td></tr>
+<tr><td>EV 三電（電機 + 電控 + 充電）</td><td>前中段（15-20% 滲透）</td><td>10-15 年</td><td>全球電動化加速；2030 滲透率目標 30-40%</td></tr>
+<tr><td>工業自動化</td><td>中段</td><td>10+ 年</td><td>產業 AI / 自動化雙驅動</td></tr>
+<tr><td>智慧建築 / HVAC</td><td>中段</td><td>10+ 年</td><td>能效法規驅動緩升</td></tr>
+<tr><td>太陽能逆變器 / 儲能</td><td>前中段</td><td>10-15 年</td><td>能源轉型驅動</td></tr>
+</table>
+<p><strong>多曲線疊加邏輯</strong>：6 個業務在不同 S 曲線位置 → 整體 Runway 不會單一年份全部熄火。AI DC 電源即使 2030 後成長放緩，EV + 儲能仍在中前段提供接棒。</p>
+
+<h3>B｜成長品質判斷</h3>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的占比</th><th>趨勢</th></tr>
+<tr><td>有機成長</td><td>定價 + 客戶深化 + 新市場自然滲透</td><td>~92%</td><td>主導</td></tr>
+<tr><td>無機成長（併購）</td><td>近 3 年小型併購（Eltek 等）貢獻</td><td>~8%</td><td>非主要驅動</td></tr>
+<tr><td>定價驅動</td><td>提價 + 產品 mix 升級（800V > 傳統 PSU）</td><td>~40%</td><td>擴大（液冷 + 800V 進來）</td></tr>
+<tr><td>量驅動</td><td>AI DC 出貨量、EV 三電件數</td><td>~60%</td><td>擴大</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<p><strong>判斷：強化型</strong>（規模 + 客戶深化 + 標準制定 三重加成）— Delta 規模優勢隨 AI DC 出貨量擴大、800V HVDC reference design 標準制定者地位強化、與 NVIDIA Rubin co-design lock-in 24-36 個月。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>~43%</td><td>~22%（2022）</td><td>↑↑</td><td><span class="badge-beat">符合</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+35pp</td><td>+14pp</td><td>↑↑</td><td><span class="badge-beat">符合</span></td></tr>
+<tr><td>FCF Margin</td><td>9.25%</td><td>6.3%（2022）</td><td>↑</td><td><span class="badge-miss">未達 15%</span></td></tr>
+<tr><td>FCF / Net Income</td><td>0.85</td><td>0.74（2022）</td><td>↑</td><td><span class="badge-beat">符合</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>~56%（Capex/OCF）</td><td>~48%</td><td>↑</td><td><span class="badge-beat">合理</span>（成長期合理偏高）</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試（3Y × 5Y × 10Y）</h3>
+<table>
+<tr><th>情境</th><th>3Y 後（FY28）成長率</th><th>5Y 後（FY30）成長率</th><th>10Y 後（FY35）成長率</th><th>合理 PE</th><th>潛在估值跌幅（vs 當前 2,155）</th></tr>
+<tr><td><strong>Base</strong></td><td>+30%（FY28 EPS 84）</td><td>+15%（FY30 EPS 116）</td><td>+10%（FY35 EPS 200）</td><td>35x</td><td>5Y 目標 4,051 → +88%</td></tr>
+<tr><td><strong>Bear A</strong></td><td>降至 15%</td><td>+10%</td><td>+5%</td><td>28x</td><td>5Y 目標 ~2,800 → +30%</td></tr>
+<tr><td><strong>Bear B</strong></td><td>降至 10%</td><td>+5%</td><td>+3%</td><td>22x</td><td>5Y 目標 ~1,800 → −16%</td></tr>
+<tr><td><strong>Bear C</strong></td><td>降至 5%（Vertiv 取得 NVIDIA Rubin 主供）</td><td>0%</td><td>0%</td><td>18x</td><td>5Y 目標 ~1,300 → −40%</td></tr>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季 YoY 下滑</td><td>連年改善 +220bp（Q4 25 34.6%）</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>市佔率縮減</td><td>AI DC 市佔擴大中</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>無，量價齊揚</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Rev CAGR</td><td>EPS +80% vs Rev +40%（FY26）— 差距 +40pp 偏大</td><td><span class="badge-miss">🟡 觀察</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI 轉換 < 0.75 連 2 年</td><td>3 年均 1.07，最近 0.85</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev &gt; 5% 且上升</td><td>台股一般 ~1-2%，無此問題</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮 / 被替代</td><td>AI DC TAM 仍擴張中</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數 3 年系統下移</td><td>反方向（系統廠 re-rate up）</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>估 ~50%（合理擴張期）</td><td><span class="badge-beat">⬜</span></td></tr>
+<tr><td>隱性資本密集</td><td>停止投資則 3 年內收入下滑</td><td>否（多引擎 + 既有 backlog）</td><td><span class="badge-beat">⬜</span></td></tr>
+</table>
+<p><strong>價值陷阱風險評級</strong>：<span class="badge-beat">🟢 低風險</span>（仅 1 個 🟡 觀察項：EPS vs Rev divergence 偏大，但屬 GM 結構性升級的合理結果）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>評級：<span class="badge-beat">🟢 AI 受益</span></strong>（資料中心電源 + AI 加速器電源直接受益於 AI 浪潮；800V HVDC 與 NVIDIA Rubin co-design 強化 AI 受益地位；EV / 工業自動化亦受益於 AI 嵌入式應用）</p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="badge-beat">🟢 高確信長期成長</span>（Runway ≥ 10 年 + 護城河強化型 + 衰退信號 0 個 + AI 受益）</p>
+</section>
+
+<!-- ============================== §9 ============================== -->
+<section class="card" id="s9">
+<h2>§9 護城河分析</h2>
+
+<p><strong>評分：9 / 10</strong>（A 級護城河，介於 S/A 邊界，但 800V HVDC 標準戰尚未終局暫不升 S）</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：弱（不像平台型）— 但 800V HVDC 標準制定者地位帶來「客戶 + 對手都需要學 Delta 規格」的次生網路效應</li>
+<li><strong>無形資產</strong>：中強 — Delta 品牌在 hyperscaler / Tier 1 OEM 中為可靠性代名詞；多項 800V HVDC 與液冷整合專利</li>
+<li><strong>轉換成本</strong>：強 — 一旦進入 hyperscaler 規範書，更換供應商需要重新認證 12-18 個月；液冷整合方案綁定散熱 + 電源 + 控制軟體</li>
+<li><strong>規模優勢</strong>：強 — 全球前 3 大電源廠之一，PSU 出貨量是 Vertiv / Schneider 的 2-3 倍；製造成本曲線最低</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼 Vertiv（VRT）/ Schneider（SU）/ Eaton 仍無法跨越 Delta？(1) Delta 800V HVDC + NVIDIA Rubin co-design 早 12-18 個月起跑；(2) Delta 在亞洲 hyperscaler（中國雲、印度 OEM）優勢明顯，Vertiv / Schneider 偏歐美；(3) Delta EV + 工業自動化雙引擎提供 R&D 攤提，純電源廠（Vertiv）研發費率劣勢；(4) Delta 50 年累積的 PSU + 散熱 + 馬達三大技術棧難以複製。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>當前市佔（AI DC）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>Delta 2308.TW</strong></td><td>~15-18%</td><td>擴大（800V HVDC）</td><td>—</td><td>—</td></tr>
+<tr><td>Vertiv (VRT)</td><td>~20-22%</td><td>持平 / 微縮</td><td>歐美 hyperscaler 既有客戶</td><td>互有勝負，Delta 在亞洲、Vertiv 在歐美</td></tr>
+<tr><td>Schneider (SU)</td><td>~12-15%</td><td>持平</td><td>歐洲 hyperscaler</td><td>被 Delta + Vertiv 兩面夾擊</td></tr>
+<tr><td>Eaton (ETN)</td><td>~10%</td><td>微擴</td><td>UPS 替代</td><td>較難進入 800V HVDC 新世代</td></tr>
+<tr><td>LiteOn（光寶）</td><td>~8-10%</td><td>持平</td><td>低階 PSU 競爭</td><td>被 Delta 高階 ASP 拉開差距</td></tr>
+</table>
+
+<h3>護城河趨勢</h3>
+<p><strong>加深</strong>。800V HVDC 標準戰 Delta 取得早期 lock-in，液冷整合方案領先 12-18 個月，NVIDIA Rubin co-design 強化 24-36 個月綁定。</p>
+
+<h3>D｜護城河變遷時間軸（v12.2 新增）</h3>
+<h4>過去 5 年變化（2021-2026）</h4>
+<table>
+<tr><th>年份</th><th>事件</th><th>對護城河貢獻</th></tr>
+<tr><td>2021</td><td>EV 三電業務量產（特斯拉 + 中國新能源車）</td><td>+0.5（→ 7.0/10，多元化）</td></tr>
+<tr><td>2022 Q4</td><td>NVIDIA H100 量產，Delta 為主要 PSU 供應商之一</td><td>+0.5（→ 7.5/10）</td></tr>
+<tr><td>2023</td><td>液冷整合解決方案開發完成</td><td>+0.3（→ 7.8/10）</td></tr>
+<tr><td>2024</td><td>Blackwell 量產 + 800V HVDC 與 NVIDIA 共設計 OCP 規格</td><td>+0.7（→ 8.5/10，標準制定者）</td></tr>
+<tr><td>2025</td><td>Infrastructure +53% YoY、Profit +417%；液冷出貨</td><td>+0.3（→ 8.8/10）</td></tr>
+<tr><td>2026 Q1</td><td>FY26 + FY27 EPS 共識同步大幅上修反映 H1 + H2 結構性兌現</td><td>+0.2（→ 9.0/10，當前位置）</td></tr>
+</table>
+
+<h4>未來 5 年可能變化（2026-2031）</h4>
+<table>
+<tr><th>情境</th><th>機率</th><th>事件</th><th>對護城河影響</th></tr>
+<tr><td>Best</td><td>30%</td><td>Delta 取得 NVIDIA Rubin 主供 reference design + 液冷整合方案達全球前 2 大</td><td>+1.0（→ 10/10，S 級）</td></tr>
+<tr><td>Base</td><td>40%</td><td>Delta 與 Vertiv 平分 NVIDIA Rubin 主供；800V HVDC 滲透率 50%+</td><td>+0.3（→ 9.3/10）</td></tr>
+<tr><td>Mild Bear</td><td>20%</td><td>Vertiv 取得 NVIDIA 主供 reference design；Delta 為次要供應商</td><td>−0.5（→ 8.5/10，仍 A 級）</td></tr>
+<tr><td>Severe Bear</td><td>10%</td><td>地緣政治升級 + Vertiv 取得主供 + 中國產能遷移失敗</td><td>−1.5（→ 7.5/10，B 級）</td></tr>
+</table>
+
+<h3>E｜對手 Capex / R&D 對照</h3>
+<table>
+<tr><th>對手</th><th>2025 Capex（USD）</th><th>Capex / Rev</th><th>2025 R&D（USD）</th><th>R&D / Rev</th><th>vs Delta 差距</th></tr>
+<tr><td><strong>Delta 2308.TW</strong></td><td>~$1.5B</td><td>8.5%</td><td>~$0.95B</td><td>5.4%</td><td>—</td></tr>
+<tr><td>Vertiv (VRT)</td><td>~$0.4B</td><td>4.5%</td><td>~$0.45B</td><td>5.0%</td><td>Delta Capex 3.75x、R&D 2.1x</td></tr>
+<tr><td>Schneider (SU)</td><td>~$1.0B</td><td>3.0%</td><td>~$1.7B</td><td>5.2%</td><td>R&D 對手 1.8x、Capex 0.67x</td></tr>
+<tr><td>Eaton (ETN)</td><td>~$0.7B</td><td>3.0%</td><td>~$0.7B</td><td>3.0%</td><td>Delta R&D 1.36x、Capex 2.1x</td></tr>
+</table>
+<div class="reasoning">Delta Capex / R&D 絕對額均高於純電源同業（Vertiv / Eaton），且 Capex / Rev 8.5% vs Vertiv 4.5% → 結構性產能擴張領先。Schneider R&D 絕對額較高（$1.7B）但分散在多元工業電氣產品，AI DC 投入相對少。Implication：護城河 9/10 的硬資本對照支撐，不純靠 narrative。</div>
+
+<p><strong>24 個月內最可能瓦解護城河的變化</strong>（v12.0 QC-23 競爭威脅 3 級分類）：</p>
+<ul>
+<li>🔴 <strong>生態攻擊</strong>：Vertiv + Schneider 聯盟推全棧 800V HVDC 競品（觸發護城河 −1，2026 Q3 OCP Summit 為關鍵時點）</li>
+<li>⛔ <strong>架構替代</strong>：若 NVIDIA Rubin 改採 750V 規格而非 800V，Delta 早期投入沉沒（觸發護城河 −2，§1 陷阱定性升至 🔴）</li>
+<li>🟡 <strong>點對點</strong>：Eaton / LiteOn 個別產品線競爭加劇（不扣分，列入監測）</li>
+</ul>
+</section>
+
+<!-- ============================== §10 ============================== -->
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手比較</th></tr>
+<tr><td>Revenue（TWD B）</td><td>401</td><td>421</td><td>555</td><td>Vertiv $9.8B、Schneider $32B</td></tr>
+<tr><td>Gross Margin</td><td>29.2%</td><td>32.4%</td><td>34.3%</td><td>Vertiv 35.5%、Schneider 39%</td></tr>
+<tr><td>Operating Margin</td><td>10.2%</td><td>11.4%</td><td>15.2%</td><td>Vertiv 18%、Schneider 17%</td></tr>
+<tr><td>FCF Margin</td><td>10.7%</td><td>9.0%</td><td>9.25%</td><td>Vertiv 14%、Schneider 11%</td></tr>
+<tr><td>ROIC（估算）</td><td>~22%</td><td>~26%</td><td>~43%</td><td>Vertiv ~30%、Schneider ~14%</td></tr>
+<tr><td>Reinvestment Rate</td><td>~40%</td><td>~48%</td><td>~56%</td><td>Capex/OCF</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：2025 NI 60B vs OCF 98B，OCF / NI = 1.63 → 強連動 + 營運資金管理佳，無盈餘操縱跡象</li>
+<li><strong>AR 成長 vs 營收成長</strong>：需查 10-K（未取得）；以 Rev +32% YoY 估算 AR 同步 +30% 為合理</li>
+<li><strong>存貨成長 vs 營收成長</strong>：需查 10-K（未取得）；管理層 4/28 法說提及 800V HVDC 拉貨需求強，存貨可能微升但 backlog 完整覆蓋</li>
+<li><strong>FCF 轉換率趨勢</strong>：3 年均 ~1.07，最近 0.85（Capex 加速擴張期合理下降）</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<p>台達電歷史上以分紅為主，回購不顯著（vs 美股慣性）。無「靠回購堆疊 EPS」的盈餘品質型陷阱風險。FY24 → FY25 EPS YoY +71% 主要靠真實營收 + GM 雙擴張驅動（Rev +32% + GM +190bp）。</p>
+</section>
+
+<!-- ============================== §11 ============================== -->
+<section class="card" id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化 + 5Y/10Y 結構性變化</h3>
+<table>
+<tr><th>業務</th><th>現在 TAM（2026）</th><th>5Y TAM（2031）</th><th>10Y TAM（2036）</th><th>結構性變化</th></tr>
+<tr><td>AI DC 電源（含 800V HVDC + 液冷）</td><td>USD 30B/年</td><td>USD 80B/年</td><td>USD 150B/年</td><td>從 GPU PSU 配套 → DC 整廠電力系統 IP 商</td></tr>
+<tr><td>傳統 DC 電源 / UPS</td><td>USD 50B</td><td>USD 75B</td><td>USD 100B</td><td>滲透率穩升，現金牛角色</td></tr>
+<tr><td>EV 三電（電機+電控+充電）</td><td>USD 80B</td><td>USD 200B</td><td>USD 350B</td><td>電動車滲透率 20% → 40% → 60%</td></tr>
+<tr><td>工業自動化</td><td>USD 200B</td><td>USD 300B</td><td>USD 400B</td><td>產業 AI / 機器人加成</td></tr>
+<tr><td>智慧建築 / HVAC</td><td>USD 100B</td><td>USD 150B</td><td>USD 200B</td><td>能效法規驅動</td></tr>
+<tr><td>儲能 / 太陽能逆變器</td><td>USD 50B</td><td>USD 120B</td><td>USD 200B</td><td>能源轉型主軸</td></tr>
+</table>
+<div class="reasoning">6 大 TAM 加總 2026 ~USD 510B → 2036 ~USD 1,400B（CAGR 10.6%），Delta 目前在多數細分為 top 3。Implication：4 引擎多元化讓 Delta 即使 AI DC 2030 後成長放緩，EV + 儲能 + 工業自動化仍提供接棒，§8 Runway ≥ 10 年的判斷有 TAM 支撐。</div>
+
+<h3>議價權</h3>
+<h4>對上游供應商</h4>
+<p><strong>多元化分散風險，整體議價力強</strong>：(1) <strong>SiC / GaN 半導體</strong>（Wolfspeed、Infineon、Cree、ROHM）— Delta 大客戶地位，可拿到 long-term supply agreement，但 SiC 供不應求時 spot 價格仍有壓力；(2) <strong>磁性元件 / 電感 / 變壓器</strong>（鴻華電、TDK、村田）— 多家分散，議價力強；(3) <strong>銅 / 稀土永磁體</strong>（中國集中度高）— 受中國出口管制波動影響，但 Delta hedging 完善。</p>
+
+<h4>對下游客戶</h4>
+<p><strong>客戶集中度低 + 多元化，議價力中強</strong>：(1) <strong>Hyperscaler</strong>（GOOGL、MSFT、AMZN、META）— 各占 5-10%，無單一客戶超過 15%；(2) <strong>Tier 1 OEM</strong>（Dell、HP、Lenovo、Supermicro）— 各占 3-8%；(3) <strong>EV OEM</strong>（特斯拉、福斯、中國新能源車）— 各占 2-5%；(4) <strong>工業客戶</strong>（西門子、ABB、施耐德）— 分散；(5) <strong>建築承包商</strong>（中國國有建築、海外大型專案）— 分散。</p>
+
+<h4>地理曝險</h4>
+<table>
+<tr><th>區域</th><th>營收占比</th><th>地緣風險評估</th></tr>
+<tr><td>中國（含香港）</td><td>~25%</td><td>美中關稅 + 出口管制風險（R3）；製造產能占比仍高，需 3 年內降至 30%</td></tr>
+<tr><td>美國</td><td>~30%</td><td>低；hyperscaler 需求強</td></tr>
+<tr><td>歐洲</td><td>~15%</td><td>低-中；EV + 工業自動化主力</td></tr>
+<tr><td>亞洲（含台灣、東南亞、印度）</td><td>~22%</td><td>低；產能擴建中</td></tr>
+<tr><td>其他（拉美、中東、非洲）</td><td>~8%</td><td>低；分散</td></tr>
+</table>
+
+<h3>營收組成（三維展開）</h3>
+<h4>按業務（FY25 估算 + 占比 + OI margin + 3Y 軌跡）</h4>
+<table>
+<tr><th>業務段</th><th>FY25 Rev（B TWD）</th><th>占比</th><th>YoY</th><th>OI margin</th><th>3Y 軌跡</th></tr>
+<tr><td>Infrastructure（DC 電源 + UPS）</td><td>155</td><td>28%</td><td>+45%</td><td>16.3%</td><td>占比從 20% → 28% → 35%（2028 預估）</td></tr>
+<tr><td>EV 三電</td><td>67</td><td>12%</td><td>+25%</td><td>10%</td><td>占比從 8% → 12% → 16%</td></tr>
+<tr><td>工業自動化</td><td>166</td><td>30%</td><td>+15%</td><td>13%</td><td>占比微縮但絕對額成長</td></tr>
+<tr><td>智慧建築 / HVAC</td><td>83</td><td>15%</td><td>+10%</td><td>12%</td><td>占比微縮，成熟業務</td></tr>
+<tr><td>傳統電源 / 元件</td><td>83</td><td>15%</td><td>+5%</td><td>11%</td><td>現金牛</td></tr>
+</table>
+
+<h4>按地區（占比 + YoY + 監管 / 地緣備註）</h4>
+<table>
+<tr><th>地區</th><th>占比</th><th>YoY</th><th>備註</th></tr>
+<tr><td>中國</td><td>25%</td><td>+15%</td><td>本地 EV + 工業；產能逐步遷出</td></tr>
+<tr><td>美國</td><td>30%</td><td>+50%</td><td>AI DC 主要市場</td></tr>
+<tr><td>歐洲</td><td>15%</td><td>+25%</td><td>EV + 工業自動化</td></tr>
+<tr><td>其他亞洲</td><td>22%</td><td>+30%</td><td>東南亞 / 印度製造 + 銷售雙線</td></tr>
+<tr><td>其他</td><td>8%</td><td>+20%</td><td>—</td></tr>
+</table>
+
+<h4>按客戶集中度</h4>
+<p>Top 10 客戶占比 ~45-50%（無單一客戶超過 15%），客戶分散度高。失去單一最大客戶（估 GOOGL / MSFT 之一，約 10-12%）影響 Rev ~5-7%、EPS 10-12%。客戶集中度風險低。</p>
+
+<h3>單位經濟（逐業務）</h3>
+<ul>
+<li><strong>AI DC 電源</strong>：800V HVDC ASP 為傳統 PSU 2-3x，毛利率 ~40%（vs 傳統 PSU ~25%），ASP × Volume 雙擴張</li>
+<li><strong>液冷整合方案</strong>：每機架 ASP USD 5-10K（純電源 USD 1-2K），毛利率 ~45%，產品 mix 結構性升級</li>
+<li><strong>EV 三電（per car set）</strong>：ASP USD 1,500-3,000，毛利率 ~22%，量驅動為主</li>
+<li><strong>工業自動化</strong>：ASP 分散，毛利率 ~35%，定價 + 量平衡</li>
+<li><strong>結構性洞察</strong>：Infrastructure（AI DC）每增 1pp 占比，整體 GM 升約 50bp；當 Infrastructure 占比從 28% → 35%（2028），整體 GM 自然升至 ~37%（H2 驗證點）</li>
+</ul>
+</section>
+
+<!-- ============================== §12 ============================== -->
+<section class="card" id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<ul>
+<li><strong>股東結構</strong>：創辦人鄭崇華家族持股 ~26%（heldPercentInsiders 25.93%），機構持股 ~37%（heldPercentInstitutions 36.95%）；外資持股穩定，無 dual-class 投票權結構</li>
+<li><strong>資本配置軌跡</strong>：(1) 2025 Capex 47.2B（vs 2022 22.4B，+110%）— 反映 AI DC 擴張；(2) 分紅穩定，2025 殖利率 ~2%（vs 美股科技股 ~0.5%，台股慣性）；(3) 回購不顯著</li>
+<li><strong>管理層薪酬</strong>：CEO 海英俊（接替創辦人鄭崇華），董事長為鄭崇華；薪酬以固定 + 績效獎金為主，股權激勵比例較美股科技股低（台股慣性，數據限制：未取得具體 mix）</li>
+<li><strong>過去 12 個月重大內部人交易</strong>：未發現大額異常買入 / 賣出（QC-19 搜尋確認：無集體訴訟、無 SEC / 主管機關調查、無管理層異動、無財報重編）</li>
+<li><strong>SBC / Rev</strong>：~1-2%（台股慣性低），對 EPS 稀釋有限</li>
+</ul>
+
+<p><span class="badge-beat">🟢 過去 12 個月無併購金額 &gt; 市值 5%、無集體訴訟、無管理層異動或重大監管事件</span></p>
+</section>
+
+<!-- ============================== §13 ============================== -->
+<section class="card" id="s13">
+<h2>§13 估值診斷（v12.2 壓縮：表 + 3 行推導）</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<tr><th>估值邏輯類型</th><th>對應指標</th><th>當前主流?</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>—</td><td>—</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td><strong>是</strong></td><td>AI DC 主題下市場用 PEG + Fwd PE FY+2 + 系統廠溢價估值</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>—</td><td>—</td></tr>
+</table>
+<div class="reasoning">當前主流：成長型（PEG + Fwd PE FY+2 + 系統廠估值升級）。估值體系從「電源 OEM 15-20x」升級至「資料中心系統廠 30-35x」中。Implication：§13.5 合理 PE 維持 35x 區間，承認體系升級而非泡沫。</div>
+
+<p><strong>估值體系診斷結論</strong>：<span class="tag-blue">🔵 估值體系升級機會</span>（從電源 OEM → 系統廠 re-rate up 中）</p>
+
+<h3>13.1｜歷史估值分位（5 年）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>93.0x</td><td>~12x</td><td>~25x</td><td>~95x</td><td>~98%</td></tr>
+<tr><td>Forward P/E FY+1</td><td>51.7x</td><td>~10x</td><td>~22x</td><td>~55x</td><td>~93%</td></tr>
+<tr><td>Forward P/E FY+2</td><td>33.4x</td><td>~10x</td><td>~18x</td><td>~52x</td><td><strong>~56%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>44.3x</td><td>~8x</td><td>~14x</td><td>~50x</td><td>~86%</td></tr>
+</table>
+<div class="reasoning">當前情緒：FY+1 PE 93%（過熱），但 FY+2 PE 56%（合理）— EPS 共識上修速度跟上股價漲幅，故 FY+2 PE 自然回到中位。Implication：估值看 FY+2 比 FY+1 公允；§2 D 估值燈以 FY+2 為主要 input → 🟡 合理。</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Fwd PE FY+2</td><td>33.4x</td><td>—</td></tr>
+<tr><td>3Y EPS CAGR</td><td>53.7%</td><td>—</td></tr>
+<tr><td>PEG（FY+2, 3Y）</td><td><strong>0.62</strong></td><td><span class="tag-green">便宜</span></td></tr>
+<tr><td>PEG（FY+1, 3Y）</td><td>0.96</td><td><span class="tag-green">便宜</span></td></tr>
+<tr><td>5Y EPS CAGR（含遞減）</td><td>38.1%</td><td>—</td></tr>
+<tr><td>PEG（FY+2, 5Y）</td><td>0.88</td><td><span class="tag-green">合理</span></td></tr>
+</table>
+<div class="reasoning">PEG 0.62（FY+2 / 3Y CAGR 53.7%）< 1.0 = 便宜。短期 vs 5Y PEG 差距小（0.62 vs 0.88），暗示成長持續性高、非單年 boom。Implication：PEG 引擎 B 觸發合理 PE 上浮（基準 25x × 1.30 = 32.5x），§13.5 採 35x。</div>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>步驟</th><th>數值</th><th>備註</th></tr>
+<tr><td>當前市值</td><td>TWD 5.6T（USD 180B）</td><td>marketCap</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>51.3B TWD</td><td>—</td></tr>
+<tr><td>WACC</td><td>9%</td><td>10Y TWD 公債 ~1.5% + Beta 1.43 × ERP 5% + 規模 +0.4%</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>—</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>—</td></tr>
+<tr><td><strong>隱含 FCF CAGR（前 10 年）</strong></td><td><strong>~25-30%</strong></td><td>—</td></tr>
+<tr><td>vs 共識 EPS CAGR 3Y</td><td>53.7%</td><td>FCF lag EPS 為合理（資本擴張期 Capex 高）</td></tr>
+<tr><td>vs 同業最快 FCF CAGR</td><td>Vertiv ~28%</td><td>Delta 隱含 25-30% 處於同業前段</td></tr>
+</table>
+<div class="reasoning">隱含 FCF CAGR 25-30% 兌現條件：(1) Revenue 年增 ~20%（從當前 +40% 合理遞減）；(2) FCF Margin 從 9.25% 擴大至 14%（透過資本密集度降低 + GM 升級）；(3) WACC 不升（取決於台灣央行政策）。Implication：隱含預期合理（不激進）→ 🟡。</div>
+
+<p><strong>隱含預期判斷</strong>：<span class="tag-yellow">🟡 隱含預期合理</span></p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值（USD B）</th><th>Fwd PE FY+2</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>Delta 2308.TW</strong></td><td>180</td><td>33.4x</td><td>44.3x</td><td>0.62</td><td>9.25%</td><td>53.7%</td><td>~43%</td></tr>
+<tr><td>Vertiv (VRT)</td><td>~50</td><td>27x</td><td>22x</td><td>0.95</td><td>14%</td><td>~28%</td><td>~30%</td></tr>
+<tr><td>Schneider (SU)</td><td>~150</td><td>22x</td><td>16x</td><td>1.5</td><td>11%</td><td>~14%</td><td>~14%</td></tr>
+<tr><td>Eaton (ETN)</td><td>~130</td><td>26x</td><td>20x</td><td>1.4</td><td>13%</td><td>~18%</td><td>~25%</td></tr>
+<tr><td>產業中位</td><td>—</td><td>27x</td><td>21x</td><td>1.1</td><td>12%</td><td>~22%</td><td>~25%</td></tr>
+</table>
+<div class="reasoning">Delta Fwd PE FY+2 33.4x vs 同業中位 27x = +24% 溢價，但 EPS CAGR 53.7% vs 同業中位 22% = +144% 溢價 → PEG 0.62 vs 同業 1.1 = Delta 更便宜。Implication：護城河 9/10 + 4 引擎多元化支撐溢價，但相對溢價需要 H1 + H2 持續驗證。</div>
+
+<h3>13.5｜估值結論（完整保留）</h3>
+
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系診斷（13.0）</td><td><span class="tag-blue">🔵 升級機會</span></td><td>從電源 OEM → 系統廠 re-rate up 中</td></tr>
+<tr><td>歷史分位（13.1）</td><td><span class="tag-yellow">🟡 合理（FY+2 基準）</span></td><td>FY+2 PE 56% 分位（中位）</td></tr>
+<tr><td>PEG 診斷（13.2）</td><td><span class="tag-green">🟢 便宜</span></td><td>PEG 0.62 < 1.0</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td><span class="tag-yellow">🟡 合理</span></td><td>隱含 FCF CAGR 25-30%</td></tr>
+<tr><td>同業相對（13.4）</td><td><span class="tag-green">🟢 折價（PEG 維度）</span></td><td>PEG 0.62 vs 同業 1.1</td></tr>
+</table>
+
+<p><strong>當前定價判斷</strong>：<span class="tag-yellow">🟡 公允定價</span>（FY+2 PE 33.4x 落入合理區間，但 FY+1 PE 51.7x 仍偏熱，需依靠 EPS 持續上修才能維持當前股價）</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 影響</th></tr>
+<tr><td>① 護城河品質（§9）</td><td>9/10</td><td>引擎 C 1.10x</td></tr>
+<tr><td>② 成長可持續年數（§8 A）</td><td>≥ 10 年（🟢）</td><td>基準 25x</td></tr>
+<tr><td>③ 成長品質（§8 B）</td><td>有機 92% + 定價 40%</td><td>+2x</td></tr>
+<tr><td>④ 成長護城河連動（§8 C）</td><td>強化型</td><td>+2x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§8 D）</td><td>43%、擴大趨勢</td><td>引擎 A 1.175x（但取三引擎較高者）</td></tr>
+<tr><td>⑥ 衰退信號</td><td>0 個（1 個 🟡 觀察）</td><td>±0</td></tr>
+<tr><td>⑦ 估值體系方向（§13.0）</td><td>升級</td><td>+1x</td></tr>
+<tr><td>⑧ 利率環境</td><td>TWD 10Y 1.5%（低）</td><td>支撐成長股</td></tr>
+<tr><td>產業基準倍數</td><td>25x</td><td>—</td></tr>
+<tr><td>引擎 B PEG safety（PEG 0.62 < 1.0 + Year-5 growth > 15%）</td><td>1.30x</td><td>×1.30</td></tr>
+<tr><td>AI 受益（§8 F）</td><td>🟢</td><td>×1.10</td></tr>
+<tr><td><strong>調整後合理區間</strong></td><td>—</td><td><strong>33-38x（取保守 35x）</strong></td></tr>
+</table>
+<div class="reasoning">基準 25x × 引擎 B PEG safety 1.30 × AI 🟢 1.10 = 35.75x → 取保守 35x；引擎 A ROIC 1.175 < 引擎 B 1.30，取較高者引擎 B（三引擎不疊加）。Implication：合理 PE 35x 為 §2 D R:R 計算基礎；當前 Fwd PE FY+2 33.4x 略低於合理 35x，符合 🟡 合理燈。</div>
+
+<h3>5Y 目標價計算（QC-36 一致性強制）</h3>
+<table>
+<tr><th>項目</th><th>計算</th><th>數值</th></tr>
+<tr><td>§8 E Base 5Y EPS（FY30）</td><td>FY28E 84 × 1.20 × 1.15</td><td>115.75</td></tr>
+<tr><td>§13.5 長期合理 PE</td><td>—</td><td>35x</td></tr>
+<tr><td>5Y 目標價</td><td>115.75 × 35</td><td><strong>4,051 TWD</strong></td></tr>
+<tr><td>upside_5y_pct</td><td>(4,051 − 2,155) / 2,155</td><td><strong>+88%</strong></td></tr>
+</table>
+<div class="reasoning">QC-36 一致性：§2 D 長期 R:R 表 / §13.5 5Y 目標 / §1 dashboard / dd-meta upside_5y_pct = 全為 4,051 / +88%，四處一致。Implication：5Y R:R 1.56x（用短中期最大跌幅 1,452 為下行錨）接近 2.0 門檻，長期信心高的支撐。</div>
+
+<h3>分析師目標價</h3>
+<p>共識中位估計 TWD 2,500-2,800（推估，n=~19）。Delta 多數券商 4/28 法說後上調目標價至 2,300-2,800 區間。</p>
+
+<h3>投資結論（v12.2 完整版）</h3>
+<ul>
+<li><strong>H1 當前狀態</strong>：<span class="badge-beat">+ 強化延續</span>（30 天 FY26 EPS 共識 +12.7%、FY27 +20.3% 同步大幅上修暗示 Infrastructure 加速）</li>
+<li><strong>H2 當前狀態</strong>：<span class="badge-beat">+ 強化延續</span>（FY26 Rev 共識 +0% 但 EPS +12.7% → GM 修正幅度大於 Rev，GM 升級已 priced in）</li>
+<li><strong>H3 當前狀態</strong>：<span class="badge-beat">+ 自然兌現</span>（4/30 寫的「等回 PE 35x」實質透過 FY+2 EPS 64.52 + 股價 −2.7% 達成 FY+2 PE 33.4x，落入合理區間）</li>
+<li><strong>這份財報讓隱含預期變得：</strong>更容易兌現（共識主動上修 = 分析師認可 H1 + H2）</li>
+</ul>
+
+<table>
+<tr><th>輸出</th><th>值</th></tr>
+<tr><td>護城河等級</td><td>9 / A → 調整後 A（不變）</td></tr>
+<tr><td>估值燈</td><td>🟡 合理（FY+2 PE 33.4x 5Y 分位 56%、PEG 0.62）</td></tr>
+<tr><td>Pure MA 狀態</td><td>✅ 強勢進場</td></tr>
+<tr><td>大盤豁免</td><td>正常</td></tr>
+<tr><td><strong>綜合訊號</strong></td><td><strong><span class="signal-grade grade-B">B</span> 觀望偏進場</strong></td></tr>
+<tr><td>中期參考 R:R</td><td>+0.15x（資訊性）</td></tr>
+<tr><td>長期參考 R:R</td><td>+1.56x（資訊性）</td></tr>
+</table>
+
+<p><strong>下行風險量化</strong>：</p>
+<ul>
+<li>短期 Bear Case：~TWD 938（−56%）— 合理 PE 25x × Bear EPS 37.5</li>
+<li>中期 Bear Case：~TWD 1,452（−33%）— 合理 PE 25x × Bear FY+2 EPS 58.1</li>
+<li>短期 BB 中軌（健康回測）：~TWD 1,500（−30%）</li>
+<li>W52 Low TWD 361（參考，已不相關）</li>
+</ul>
+</section>
+
+<!-- ============================== Footer ============================== -->
+<section class="card" id="footer">
+<h2>版本修訂紀錄</h2>
+<table>
+<tr><th>版本</th><th>日期</th><th>主要更新</th></tr>
+<tr><td><strong>v12.2</strong></td><td>2026-05-14（本份）</td><td>距 Inception（4/30）14 天；EPS 共識 30 天大幅上修（FY26 +12.7%、FY27 +20.3%），估值透過 EPS 修正自然壓縮（Fwd PE FY+2 39.83x → 33.40x）；4w 漂移從 +27.67% → +17.12% moderating，BB 上軌未破；估值燈從 🟠 偏貴 → 🟡 合理，綜合訊號維持 B 但結構性 improve</td></tr>
+<tr><td>v12.2</td><td>2026-04-30</td><td>v12.2 schema Inception；Q1 2026 priced in；4 週股價 +27.67% 觸發 QC-22 嚴重警示；B 觀望偏進場（建議等回測 BB 中軌 1,379 或 Q2 H1 驗證）</td></tr>
+<tr><td>v12.0</td><td>2026-04-18</td><td>pre-Q1 2026 print，建議等 PE 35x ~ TWD 1,304 進場</td></tr>
+<tr><td>v11.x</td><td>2026-04-11 ~ 04-16</td><td>更早歷史 DD</td></tr>
+</table>
+
+<h3>假設驗證對照（QC-17 — 與 Inception DD 4/30 對照）</h3>
+<table>
+<tr><th>項目</th><th>上次（2026-04-30）</th><th>本次（2026-05-14，14 天後）</th><th>邊際變化</th></tr>
+<tr><td>H1（AI Capex 延續 + Infrastructure +40%）</td><td>+ 強化延續（Q1 共識 EPS +69% YoY、4/28 priced in）</td><td>+ 強化再延續（FY26 共識 EPS 30d +12.7%，分析師主動再 re-rate）</td><td>不變</td></tr>
+<tr><td>H2（GM 升級 36-37%）</td><td>+ 強化延續（FY26 共識 EPS 90 天 +8.9% 上修暗示 GM 修正）</td><td>+ 進一步強化（FY26 共識 30d 再 +12.7%，Rev 0%，GM 修正幅度大於 Rev）</td><td>強化</td></tr>
+<tr><td>H3（估值落入合理區間）</td><td>−− 嚴重削弱（4/30 股價 2,215，PE FY+1 58x、FY+2 39.83x）</td><td>+ 自然兌現（5/14 股價 2,155，PE FY+1 51.7x、FY+2 33.4x，FY+2 落入合理 32-38x 區間）</td><td><strong>反轉至兌現</strong></td></tr>
+<tr><td>R1（AI Capex 2027 拐點）是否觸發</td><td>未觸發（GOOGL FY26 Capex 上修）</td><td>未觸發（同上）</td><td>不變</td></tr>
+<tr><td>R2（Vertiv 取得 NVIDIA 主供）是否觸發</td><td>未觸發（待 2026 Q3 OCP Summit）</td><td>未觸發（同上）</td><td>不變</td></tr>
+<tr><td>R3（中國產能遷移）是否觸發</td><td>未觸發</td><td>未觸發</td><td>不變</td></tr>
+<tr><td>裁決變化</td><td>B 觀望偏進場（強烈不追高，等 BB 中軌 1,379 或 Q2 H1 驗證）</td><td>B 觀望偏進場（理由結構性 improve：估值燈從 🟠 → 🟡，4w 漂移 moderating；等 BB 中軌 1,500 或 Q2 法說連 2 季驗證）</td><td>同方向但條件更優</td></tr>
+</table>
+
+<h3>三個最關鍵新事實</h3>
+<ol>
+<li>FY26 共識 EPS 30 天從 36.97 → 41.67（+12.7%）、FY27 從 53.62 → 64.52（+20.3%）— 分析師同步大幅上修，H1 + H2 結構性兌現中</li>
+<li>估值透過 EPS 修正自然壓縮：Fwd PE FY+2 從 39.83x → 33.40x（−16%），PEG 從 0.87 → 0.62（−29%），估值燈從 🟠 偏貴 → 🟡 合理，盲點 1 救援不再需要</li>
+<li>4 週漂移從 +27.67% → +17.12%（moderating），BB 上軌 2,264 未破（4/30 曾突破 +6.8%）；但 12w +71% 累計透支未解除，回測 BB 中軌 1,500 仍為健康整理候選</li>
+</ol>
+
+<p class="note">本份 DD 在 2026-05-14 完成，反映 5/14 收盤 TWD 2,155 + Q1 2026 法說後 30 天 EPS 共識大幅上修的全部資訊。距 Inception DD（2026-04-30）14 天。next earnings: Q2 2026（2026-07-29 預估）。</p>
+</section>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "2308.TW",
+  "date": "2026-05-14",
+  "schema": "v12.2",
+  "signal": "B",
+  "verdict": "B 觀望偏進場（thesis 完整 + 估值透過 EPS 修正自然壓縮、4w 漂移 moderating，但短中期 R:R 仍雙負，等 BB 中軌 1,500 或 Q2 法說連 2 季驗證）",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "A",
+  "moat_score": 9,
+  "quality_score": 9,
+  "growth_durability": 9,
+  "val": "🟡",
+  "ma": "✅",
+  "ai_risk": "🟢",
+  "fpe_fy2": 33.40,
+  "pct_5y": 56,
+  "peg_fy2": 0.62,
+  "price_at_dd": 2155.0,
+  "upside_short_pct": -32.3,
+  "upside_mid_pct": 4.8,
+  "upside_5y_pct": 88,
+  "stress": {"pass": 0, "total": 4},
+  "long_term_confidence": "高",
+  "oneliner": "🟢 順風 + A 級護城河 9/10／30 天 EPS 共識大幅上修（FY26 +12.7%、FY27 +20.3%）／Fwd PE FY+2 33.40x 5Y 分位 56%、PEG 0.62 估值燈 🟠 → 🟡 改善／R:R 短 -0.57x 中 +0.15x 雙負，等 BB 中軌 1,500 或 Q2 法說連 2 季驗證"
+}
+</script>
+
+</body>
+</html>
