@@ -1,8 +1,8 @@
 ---
 name: deep-conviction-analyst
-version: v1.2
-released: 2026-05-12
-description: "對單一個股執行深度定見分析（Deep Conviction Analysis / DCA），位於 DD 之上的『投資決策層』 — 假設 stock-analyst 的個股 DD 與 industry-analyst 的產業 ID 已存在，本 skill 透過 Phase A 三軸獨立搜尋（護城河 / 產業趨勢 / 業務財務）+ Phase B 矛盾辨識 + Phase C 基金經理決策框架，產出可執行的單檔 HTML 投資決策報告。觸發：用戶說『幫我跑 {ticker} dca』、『{ticker} dca』、『{ticker} 定見』、『deep conviction {ticker}』、『conviction analysis {ticker}』、『最終判斷 {ticker}』、『該不該進場 {ticker}』、『買不買 {ticker}』。輸出 docs/dca/DCA_{TICKER}_{YYYYMMDD}.html。"
+version: v1.3
+released: 2026-05-15
+description: "對單一個股執行深度定見分析（Deep Conviction Analysis / DCA），位於 DD 之上的『投資決策層』 — 假設 stock-analyst 的個股 DD 與 industry-analyst 的產業 ID 已存在，本 skill 透過 Phase A 三軸獨立搜尋（護城河 / 產業趨勢 / 業務財務）+ Phase B 矛盾辨識 + Phase C 基金經理決策框架，產出可執行的單檔 HTML 投資決策報告。v1.3 變更：Phase A4 DD 擷取改 dd-meta JSON 為 primary source（structured；HTML fallback）+ 章節 references modernize（§5.B 假設、§1 結論 — 對齊 DD v9.2+ 編號）+ 砍 obsolete「MA60/MA200/MA104w R:R」+「三引擎目標價」(v10.0 已廢除)；§5 Single Thing 加 DCA vs DD §5.F cross-check rule（v12.3 新增）；Phase A1 護城河可選 adopt execution + pricing power 二維拆解（v12.3 DD 強制框架，DCA 推薦對齊但保留獨立性）。觸發：用戶說『幫我跑 {ticker} dca』、『{ticker} dca』、『{ticker} 定見』、『deep conviction {ticker}』、『conviction analysis {ticker}』、『最終判斷 {ticker}』、『該不該進場 {ticker}』、『買不買 {ticker}』。輸出 docs/dca/DCA_{TICKER}_{YYYYMMDD}.html。"
 ---
 
 # 深度定見分析師（Deep Conviction Analyst）
@@ -133,7 +133,23 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 | 關鍵數據 | 毛利率 __%（趨勢 ↑/→/↓）、市佔率 __%（趨勢 ↑/→/↓）、ROIC vs WACC 超額 __%p |
 | **moat_trend（必填）** | **↑ widening / → holding / ↓ narrowing** + 12 個月內變化的具體證據（≥ 1 個 sourced data point，例：「2024 vs 2025 同業 gap 從 8%p 擴大到 12%p（公司 4Q25 法說 vs 同業均值）」）。**禁止寫「持平」當逃避** — 任何體系都在動，必須選邊。 |
 
-**A1 獨立結論（一句話）：** ___（必含 moat_trend 結論）
+**Optional：二維護城河拆解**（v1.3 新增，DCA 保留獨立性 — **可選，不強制**）：
+
+當 DD v12.3+ §9 已用 execution + pricing power 二維框架（`dd-meta.moat_execution` + `dd-meta.moat_pricing_power` 存在）→ DCA Phase A1 推薦加做獨立評估，便於 Phase B 矛盾辨識：
+
+| 維度 | DD §9 評分 | DCA 獨立評估 | Alignment |
+|:---|:---:|:---:|:---|
+| Execution moat | DD __/10 | DCA __/10 | aligned / partial / diverge |
+| Pricing power moat | DD __/10 | DCA __/10 | aligned / partial / diverge |
+| **合併** | DD __/10 | DCA __/10 | — |
+
+**判斷規則**：
+- 若 DD 為 single-axis（SaaS / 銀行 / 保險 / 寡占公用事業）→ DCA 維持 single-axis + narrative
+- 若 DD 二維 vs DCA 二維 任一維度 diverge ≥ 1pp → 移入 Phase B 矛盾辨識，強制下判決
+- 若 DD 無 v12.3 sub-scores（v12.2 及之前 DD）→ DCA Phase A1 保留 single-axis evaluation
+- **DCA 不強制接受 DD 框架** — 若 DCA 認為某業務不適合二維（即使 DD 用了），可選擇 single-axis + narrative 說明
+
+**A1 獨立結論（一句話）：** ___（必含 moat_trend 結論；若用二維，附 alignment 結論）
 
 ---
 
@@ -220,21 +236,53 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 
 從該 ticker 已存在的個股 DD 報告（`docs/dd/DD_{TICKER}_*.html` 取最新）和產業 ID 報告（`docs/id/INDEX.md` 對照）中擷取關鍵數據點：
 
-**DD 報告擷取項目：**
-- Quality Score（複合品質分數）
-- R:R ratio（MA60 / MA200 / MA104w 三版本）
-- 三引擎目標價（保守/中性/樂觀）
-- Bear anchor（下行錨點）
-- 紅旗清單
-- §0.5 核心假設（H1/H2/H3）
-- §8 最終結論（綜合訊號燈：A+/A/B/C/X）
+**DD 報告擷取項目（v12.0+ 介面，v1.3 modernized）：**
 
-**ID 報告擷取項目：**
+**Primary source — `<script id="dd-meta" type="application/json">` block**（structured，可程式化解析；v12.1+ 所有 DD 都有此 block）：
+
+| 欄位 | 用途 | DCA 引用位置 |
+|:---|:---|:---|
+| `signal` (A+/A/B/C/X) | DD 綜合訊號燈 | Phase B 對照、§7 decision matrix |
+| `verdict` (text) | DD 最終裁決 narrative | Phase A4 context |
+| `trap` (🟢/🟡/🔴) + `trap_label` | 陷阱定性 | §1 trap 一致性 check |
+| `moat` (S/A/B/C/拒絕) + `moat_score` (1-10) | 護城河等級 + 分數 | Phase A1 cross-check |
+| `moat_execution` + `moat_pricing_power` (optional, v12.3+) | 二維 sub-scores | Phase A1 二維 adoption（可選，見下方護城河表） |
+| `val` (🟢/🟡/🟠/🔴) | 估值燈 | §4 Asymmetry valuation input |
+| `fpe_fy2`, `pct_5y`, `peg_fy2` | 估值數據 | §4 model inputs |
+| `ma` (✅/🟡/🟠/❌) | Pure MA 狀態 | §7c MA 相容檢查 |
+| `price_at_dd` | DD 寫時股價 | §7 進場價區間錨點 |
+| `upside_short_pct` / `upside_mid_pct` / `upside_5y_pct` | R:R 三時距 % | §4 Asymmetry 對照 |
+| `stress.pass` / `stress.total` | 壓測通過率（v12.3 後簡化為 base+bear 2/2）| §4 conviction grade 校驗 |
+| `ai_risk` (🟢/🟡/🔴) | AI 取代風險 | Phase A2 對照 |
+| `long_term_confidence` (高/中/低) | 長期持有信心 | §7d 持有年限校準 |
+| `oneliner` (≤ 200 chars) | DD 一句話總結 | Phase A4 quick read |
+
+**HTML supplementary**（僅當 dd-meta missing 或 insufficient 時 fallback）：
+- **§1 投資結論**：核心裁決 narrative + dashboard 8-bullet + 「這是價值陷阱嗎」4 問
+- **§5 投資論點錨定**：5.A 持有期 / 5.B 三個核心假設 H1/H2/H3（含 sourced floor + 漂移觸發 — v12.3 加強）/ 5.B' 12 個月對照 / 5.C 三個風險 R1-R3（時間尺度 ⚡🔥🐢，v12.3 新增）/ **5.F single thing**（v12.3 新增，DCA §5 必須 cross-check — 見 §5 區塊）
+- **§9 護城河分析**：execution + pricing power 二維評分（v12.3 新增）、24 個月威脅 QC-23 三級分類
+- **§8 衰退信號偵測表**（紅旗 / chip 陷阱信號）
+
+**DD 章節編號 reference**（v9.2+ 統一編號，DCA Phase A4 引用須對齊）：
+- §1 = 投資結論（含 trap 定性）
+- §5 = 投資論點錨定（5.A 持有期 / 5.B 假設 / 5.C 風險 / 5.F single thing）
+- §8 = 長期成長性（含 8.G 衰退信號 / 8.H 客戶結構深度 v12.3）
+- §9 = 護城河分析（v12.3 強制二維拆解）
+- §10 = 財務品質
+- §11 = 產業格局
+- §12 = 治理 + 資本配置
+- §13 = 估值診斷（v12.3 後僅 13.1 / 13.2 / 13.4 + 結論段）
+
+**ID 報告擷取項目（不變）：**
 - 產業評級
 - 關鍵趨勢
 - 相關 ticker 排名
 
-**若無既有報告：** 標記「無既有報告可引用」，Phase B 僅比對 A1-A3。
+**Fallback chain**：
+- (1) dd-meta JSON parse 成功 → 用 structured 欄位 ✓ (v12.0+ DD 99% 命中)
+- (2) dd-meta missing 或 JSON parse error → fallback HTML extract，DCA HTML Phase A4 區塊明標「dd-meta missing, used HTML fallback — 數據可能不完整」
+- (3) v11.x 及以前 DD 完全無 dd-meta → HTML extract 用 v9.2+ 章節編號（§1/§5/§9 等），不嘗試 cross-check §5.F single thing
+- (4) 無既有 DD 報告 → 標記「無既有報告可引用」，Phase B 僅比對 A1-A3
 
 **A4 不產出獨立結論，純數據輸入。**
 
@@ -436,6 +484,18 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 - ❌ 禁止模糊表述：「ROIC 連續下降 3 年」（太慢、太模糊）
 - ❌ 禁止不可觀測的事件：「市場情緒轉變」
 - ✅ 必須是明確、單點、可驗證的：「Intel 18A 良率突破 80% 並取得 Apple 訂單」
+
+#### 🔗 Cross-check with DD §5.F single thing（v12.3+ 強制，v1.3 新增）
+
+DD v12.3 起 §5.F 加入了 single thing 概念（從 DCA borrowed back）。DCA §5 與 DD §5.F 必須有對應關係，**禁止各自寫不相關 trigger**：
+
+| Alignment 狀態 | 規則 |
+|:---|:---|
+| **✅ Aligned** | DD §5.F 與 DCA §5 指向同一事件 → 註明「DD §5.F 一致，DCA confirm」+ 加強監測 detail（資料來源、頻率、最近 status） |
+| **⚠ Partial** | DD §5.F 與 DCA §5 部分重疊（如同一 mechanism 但不同 trigger point） → 註明分歧並寫「兩者都監測」 |
+| **❌ Diverge** | DD §5.F 與 DCA §5 完全不同 → 必須說明 **why DCA picks different trigger**（如：DD 從執行風險角度、DCA 從 PM 部位風險角度），並標 "DCA 認為 DD §5.F = secondary, DCA §5 = primary" 或反之 |
+
+**禁止**：寫 DCA §5 而完全不 reference DD §5.F（DD 已存在時）。若 DD 無 §5.F（v12.2 之前的 DD），DCA §5 為唯一 single thing，標 "no DD §5.F counterpart, DCA §5 stand-alone"。
 
 ---
 
