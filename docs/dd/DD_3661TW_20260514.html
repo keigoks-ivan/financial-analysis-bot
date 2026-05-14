@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.2">
+<title>DD_3661.TW_20260514 | Alchip 世芯-KY v12.2 深度研究</title>
+<style>
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.55; margin: 0; padding: 30px 20px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; }
+  .header h1 { margin: 0 0 8px; font-size: 1.5em; }
+  .header .meta { font-size: 0.88em; opacity: 0.9; }
+  .header .schema { background: #3B82F6; padding: 1px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em; }
+  .card { background: #fff; padding: 18px 24px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #3B82F6; }
+  .card h2 { color: #1E3A5F; margin: 0 0 12px; font-size: 1.18em; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; }
+  .card h3 { color: #374151; margin: 14px 0 8px; font-size: 1.02em; }
+  .card h4 { color: #4B5563; margin: 10px 0 6px; font-size: 0.96em; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 0.92em; font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  th, td { border: 1px solid #D1D5DB; padding: 6px 9px; vertical-align: top; text-align: left; }
+  th { background: #1E3A5F; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .reasoning { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 0.88em; line-height: 1.5; }
+  .reasoning::before { content: "推導: "; font-weight: bold; color: #1E3A5F; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hypothesis-box ul { margin: 0; padding-left: 18px; }
+  .hypothesis-box li { margin: 4px 0; }
+  .badge-green, .tag-green { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-red, .tag-red { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-yellow, .tag-yellow { background: #FEF9C3; color: #92400E; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-blue, .tag-blue { background: #EFF6FF; color: #1E40AF; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-orange { background: #FED7AA; color: #C2410C; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-beat { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-miss { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .grade-X { background: #7F1D1D; color: #fff; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 0.88em; color: #4B5563; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+  .dd-toc { background: #fff; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #3B82F6; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 10px; background: #EFF6FF; color: #1E3A5F; border-radius: 999px; font-size: 0.82em; text-decoration: none; font-weight: 500; }
+  .dd-toc a:hover { background: #1E3A5F; color: #fff; }
+  .card h2 { scroll-margin-top: 80px; }
+  @media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; padding: 0; } .card { box-shadow: none; border-left: 2px solid #1E3A5F; } }
+</style>
+</head>
+<body>
+
+<!-- DD_META_START
+{
+  "ticker": "3661.TW",
+  "company": "Alchip Technologies / 世芯-KY",
+  "report_date": "2026-05-14",
+  "price_at_report": 4830,
+  "currency": "TWD",
+  "schema": "v12.2",
+  "final_signal": "B",
+  "trap_verdict": "🟡 觀察期",
+  "quality_tier": "A",
+  "gate": "🟡",
+  "ma_status": "✅",
+  "long_term_confidence": "高",
+  "moat_score": 8,
+  "moat_trend": "加深",
+  "ai_risk": "🟢",
+  "industry_position": "🟢 順風",
+  "inception_dd": true,
+  "related_ds": "DS_AIASICDesignService_20260514.html"
+}
+DD_META_END -->
+
+<div class="container">
+
+<header class="header">
+  <h1>Alchip Technologies（世芯-KY 3661.TW）深度研究 — v12.2 schema</h1>
+  <div class="meta">資料抓取：2026-05-14 ｜ 最新股價 <strong>TWD 4,830</strong>（5/14 收盤） ｜ 最近財報：Q1 FY26（2026-05-08 公告，EPS 17.23 GM 50% beat）｜ <span class="schema">DD Schema v12.2</span> ｜ yfinance 採集 + 補充 web_search 7 次</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============================== §1 ============================== -->
+<section class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。本份為 3661.TW 首份 v12.2+ Inception DD（之前無歷史 DD），對應姊妹研究 <code>docs/ds/DS_AIASICDesignService_20260514.html</code> 已詳述產業結構（AVGO 60% 峰值、Alchip + MediaTek 接力、TPU 8 雙軌）。</p>
+
+<div class="warning-box">
+<h4>⚠️ 入場窗口可能已關閉 — QC-22 / QC-24 雙警示同時觸發</h4>
+<ul>
+<li><strong>QC-22 漂移檢查：</strong>現價 TWD 4,830 vs 4 週前均 TWD 4,188.75 = <strong>+15.31% 漂移</strong>（在 4 週內，漂移大於 +10% 但 &lt; +20% → 進入「入場窗口可能已關閉」警示區間）</li>
+<li><strong>QC-24 Intraday 訊號：</strong><strong>5/12 衝高 5,640（52W high）後收 5,310</strong> = close vs high −5.85%（&gt; 5% 閾值）= 經典 shooting star；隨後 <strong>5/13 開 5,115 跌至收 4,780</strong>（單日 −10%）；雖 5/14 反彈收 4,830 但量縮無力</li>
+<li><strong>Bollinger 上軌穿透：</strong>週線 BB 上軌 4,646.50，現價 4,830 已突破 <strong>+3.95%</strong>（QC-22 ⚠️ 動能末段訊號）</li>
+<li><strong>建議進場區間：</strong>等回測 BB 中軌 ~TWD 3,535（−27%）或 W52 ~TWD 3,441（−29%）；或等 Q2 FY26 法說（2026-07-29 預期）H2 ramp 確認再行動</li>
+</ul>
+</div>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信（ASIC 設計服務 2030E $85B TAM，2026-2027 ASIC 單元數 hyperscaler 自研超越 GPU）｜ §9 護城河趨勢 加深（Alchip 從 Marvell 手中接下 Trainium 3/4，CoWoS 配額 5K → 70K wafers / 28% 整體配額）｜ §8 F AI 風險 🟢 受益（純 AI ASIC 設計服務 pure-play）</li>
+<li><strong>品質 A 級：</strong>護城河 8/10（§9）（execution moat 強 7-8 + pricing power moat 弱：AWS dual-track Anita/Mariana 證實 leverage 在客戶端）｜體質 veto 1 項不過（FCF/NI 2024 0.115 極低，但 3 年均 1.26 過關）｜等級調整：A → A（護城河仍歸 A 級）</li>
+<li><strong>估值燈 🟡 合理：</strong>Fwd PE NTM 31.7x（FY+1 FY26 36.0x / FY+2 FY27 27.1x），5Y 分位約 24%，PEG（Fwd PE FY+2 / 3Y CAGR FY26-29 ~24%）1.13。<strong>注意：5Y 分位 24% 反映 turnkey design service business model 結構性折價，非市場誤判</strong>｜盲點 1 救援：不需（已落 🟡 不被砍）</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>價 4,830 &gt; W52 3,440 &gt; W104 3,018 &gt; W250 2,177（斜率 +7.94% 強正）｜盲點 2 救援：不適用｜<strong>但 BB 上軌 4,646 已破 +4%、4w 漂移 +15.31%、5/12 shooting star、5/13 −10% = 短期 stretched 警示</strong></li>
+<li><strong>大盤豁免 ✅ 正常：</strong>TWII 41,752 vs W104 25,391（+64.4% 之上，無系統性風險）</li>
+<li><strong>參考 R:R：</strong>短期 −0.19x（reverse, R:R 失效）/ 中期 +0.56x / 5Y +1.67x｜壓力測試通過率 0/4（資訊性，不主導裁決，但觸發 QC-29 降級檢核）</li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）｜判定理由：品質 A 級（護城河 8 仍歸 A）+ 估值 🟡 + MA ✅ + trap 🟡 + Mariana economics 揭露後 IRR 結構轉弱 → QC-31 thesis 完整下維持 B 觀望（不歸 C）</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong><span class="badge-yellow">🟡 觀察期</span>（thesis 完整、客戶結構強健、產業結構 inflection；但短期動能透支 + AWS 客戶集中 ~70% + FY26 H2 80% 兌現風險集中，需 Q3 26 NRE 與 wafer-out 雙線確認）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warning-box">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答）</h4>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式是哪一種？</td><td><strong>非陷阱</strong>（候選風險模式：盈餘品質型 — FY26 EPS 134 集中 80% 在 H2，若 Q3-Q4 Trainium 3 量產不如預期則 FY26 miss → 估值倍數壓縮）</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>(1) <strong>Q1 FY26 已驗證 NRE 高 GM 結構性升級</strong>：GM 從 2024 19.6% / 2025 26.4% → Q4 25 42.2% → Q1 26 <strong>50.0%</strong>，符合「NRE + 高階 wafer markup mix shift」邏輯；(2) FY26 / FY27 EPS 共識 30 天內大幅上修（FY26 +16.1%、FY27 +6.3%），分析師同步信任 H2 ramp；(3) DS 確認 <strong>Alchip 從 Marvell 手中接下 Trainium 3 + 4 設計服務 socket</strong>，是 AWS-Trainium 設計服務鏈 sole-source backend（Mariana 與 Anita 兩個 tape-out 中 Alchip lead Anita 並協助 Mariana）；(4) CoWoS 配額 5K → 70K wpm = 28% 全市場配額，是「capacity-rationed」市場下的稀缺資源 lock-in；(5) Trainium 4 已 lock 至 2027 + 2nm tapeout 2026 末，多年 visibility 已建立</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>(1) <strong>AWS 客戶集中度極高（~70%+ 營收）</strong>，類似 2025 Intel Gaudi 3 案例（原 60% 營收客戶在 2025 砍 30%+ 訂單導致 Alchip 全年 Rev −38%）；(2) <strong>Trainium 4 前端設計 Annapurna 自製</strong>，Alchip 只剩 backend physical + package = NRE 單價可能降至 Trainium 3 的 50-70%；(3) 短期股價 4w +15%、12w +95%（從 2,500 → 4,830），技術面已透支 H2 H1 兌現後的 next leg；(4) FY26 H2 集中 80% 是 binary risk — 若 H2 ramp 延後一季則 FY26 EPS 從 134 → 100（−25%）→ Fwd PE 重評；(5) DS 提及「AVBO 60% 已是定義性峰值」對應的反面是「Alchip 12-14% 也已是設計服務四強中 Alchip 角色的「peak share」」 — 進一步擴張需要拿下 META / MSFT，目前無 design win；(6) <strong>Q1 26 GM 50% 是 NRE-only artifact</strong>，H2 production-heavy 後 GM 自然回落 35-40%；(7) <strong>Mariana 經濟學揭露</strong>（Anita ~500-600K vs Mariana ~800-900K units）顯示 Alchip 對 Trainium 3 的 share-of-profit-pool 比 socket announce 暗示的小 20-30%</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否正在發生？</td><td>① <strong>AWS 訂單訊號</strong>：Q3 FY26 法說（2026-11 預期）若 Trainium 3 wafer-out 量未達 1.5M 單元 H2 跑量 → H1 削弱；② <strong>NRE / Production 比重</strong>：FY26 H2 GM 若 < 40%（vs Q1 50%）→ 顯示低毛利 wafer-out 已蠶食高毛利 NRE mix；③ <strong>下一代客戶 announce</strong>：2027-Q1 前若無 META / MSFT design win 公告 → AWS-only dependency 風險固化</td></tr>
+</table>
+<p><strong>最終定性：</strong><span class="badge-yellow">🟡 觀察期</span>（thesis 完整、產業 inflection 真實、Q1 FY26 NRE GM 50% 已具體驗證；但短期動能末段 + 客戶集中 + H2 binary risk，需要 Q3 26 雙線驗證後再升 conviction）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th width="4%">#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>FY26 H2 營收 ramp（Q3 + Q4 26）</td><td>§5 H1 / §6</td><td><span class="badge-blue">🔵 核心假設驗證</span></td><td>Q3 FY26 Rev 若 &lt; TWD 18B（共識隱含 Q3 ≈ 25B、Q4 ≈ 27B）→ FY26 H1 假設削弱；連 2 季 EPS YoY 不達 +50% → 整體削弱</td></tr>
+<tr><td>2</td><td>合併 Gross Margin（季）— NRE / Production mix</td><td>§5 H2 / §10</td><td><span class="badge-blue">🔵 mix shift 驗證</span></td><td>FY26 H2 GM 若 &lt; 40%（vs Q1 26 actual 50%）→ 顯示低毛利 wafer-out 蠶食 NRE mix，營收成長但 OP 不對應放大</td></tr>
+<tr><td>3</td><td>4 週短期漂移 + Bollinger 位置（QC-22）</td><td>§2 F / §13</td><td><span class="badge-orange">🟠 短期動能</span></td><td>4w 漂移 +15.31%（在 +10-20% 警示區）；連 2 週收於 BB 上軌 4,647 之上 = 動能末段確認；回測 BB 中軌（~TWD 3,535）= 健康整理觸發進場</td></tr>
+<tr><td>4</td><td>Trainium 4 NRE 啟動 + 2nm tapeout</td><td>§5 R1 / §9</td><td><span class="badge-red">🔴 競爭格局</span></td><td>2026 Q3 前公告 Trainium 4 第一輪 NRE 簽約金額（市場估 USD 8-12B over 3Y）；2026 末 2nm tapeout 完成；任 1 項落後 6 個月 → 削弱 FY27 假設</td></tr>
+<tr><td>5</td><td>AWS Mariana 變體佔比 + Annapurna 內製化進度</td><td>§5 R2 / §11</td><td><span class="badge-red">🔴 客戶集中</span></td><td>SemiAnalysis 揭露 Mariana 與 Anita 比重；若 Mariana &gt; 50% → Annapurna 內製化加速 → Alchip NRE 議價權削弱；任公告 META 或 MSFT design win = 客戶多元化正面信號（升 A）</td></tr>
+</table>
+</section>
+
+<!-- ============================== §2 ============================== -->
+<section class="card" id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.2 五子節）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th width="30%">輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="tag-green">🟢 高確信</span></td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（從 5% market share → 12-14% 2026E → 15-17% 2027E）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="tag-green">🟢 受益</span>（純 AI ASIC 設計服務 pure-play）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="tag-green">🟢 順風</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>AI ASIC 設計服務 inflection year — Alchip 在 AVGO 60% 峰值之外躍升為四強第二，AWS Trainium 3/4 sole-source backend lead + CoWoS 60K wpm 配額。盲點 1 + 2 救援機制可啟動（但本份不需）。</td></tr>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th width="4%">#</th><th width="38%">檢核項</th><th width="10%">結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="tag-green">✅</span></td><td>2023 22.3% → 2024 19.6% → 2025 26.4% → Q4 25 42.2% → Q1 26 50.0%；雖 2024 vs 2023 下滑 2.7pp 但 2025 反轉並加速上升，2024 為產品 mix 一次性稀釋</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="tag-yellow">⚠️</span></td><td>3 年均 1.26 ✓ 但年度波動極大：2022 −0.88 / 2023 +1.82 / 2024 +0.115 / 2025 +2.25。ASIC NRE + wafer-out 業務性質 lumpy，視為 ✅ 但記註腳</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="tag-green">✅</span></td><td>FY26 共識 90 天 130.47 → 60d 119.24 → 30d 115.50 → current 134.14（+16.1% 30 天內上修）持續上修</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="tag-yellow">⚠️</span></td><td>2025 全年 Rev YoY −40.5%（Intel Gaudi 3 切單 30%+），Q1-Q3 25 連續負成長；但 Q4 25 Rev 4.73B vs Q4 24 13.07B 仍 −64%，4 季 YoY 全為負。視為 ❌ 但 Q1 26 actual 已轉正待 H2 確認</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="tag-green">✅</span></td><td>Total Debt 0.33B / Cash 32.63B → Net Debt = −32.3B（淨現金 ~ USD 1B），分子為負，極度安全</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = <span class="badge-yellow">1 項警示（#4 營收 4 季全負）</span>，但已過 2 項閾值（≥ 3 才降級）→ 等級不變</p>
+
+<h3>B｜品質等級（護城河單一決定）</h3>
+<table>
+<tr><th width="30%">項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>8 / 10</strong>（execution moat strong：CoWoS 28% 配額 + Trainium socket lock + Synopsys 224G partnership；pricing power moat constrained：AWS Annapurna dual-track Anita/Mariana 保留 leverage，Mariana 經濟學對 Alchip 不利）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ <strong>A 級</strong>（護城河 8 = execution moat 7-8 強 + pricing power moat 弱 / AWS dual-track strategy）</td></tr>
+<tr><td>體質 veto 調整</td><td>1 項警示 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>A 級</strong></td></tr>
+<tr><td>底倉（目標倉位的 %）</td><td>25%（A 級上限，最終由 PM skill 依組合決定）</td></tr>
+</table>
+<div class="reasoning">護城河 8/10（execution moat 強 + pricing power moat 弱 — AWS dual-track Anita/Mariana 結構確認客戶保留議價權；CoWoS 28% 配額是配給型 scale 優勢仍真實）→ A 級。體質 5 項中 4 ✅ + 1 ⚠️（4 季 Rev 連負）但 Q1 26 已轉正 → 等級不變，最終 A 級。下游 implication：§2 D 估值燈套 modifier 後計入 §2 H 綜合訊號。</div>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th width="30%">項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY26）</td><td>134.14（14 位分析師，30d ago 115.50，<strong>+16.1%</strong>）</td><td>yfinance earnings_estimate</td></tr>
+<tr><td>FY+2 EPS（FY27）</td><td>178.02（13 位分析師，30d ago 167.48，<strong>+6.3%</strong>）</td><td>yfinance earnings_estimate</td></tr>
+<tr><td>FY+1 YoY 成長</td><td><strong>+98.7%</strong>（vs FY25 actual 67.51）</td><td>yfinance growth</td></tr>
+<tr><td>FY+2 YoY 成長</td><td>+32.7%</td><td>(178.02 / 134.14) − 1</td></tr>
+<tr><td>FY+3E EPS（FY28 推導）</td><td>~213（Trainium 4 ramp full year + 2nm 客戶起跑，YoY ~+20%，§8 邏輯推導）</td><td>§8 邏輯推導</td></tr>
+<tr><td>當前 Fwd PE FY+1（FY26）</td><td><strong>36.0x</strong></td><td>4,830 / 134.14</td></tr>
+<tr><td>當前 Fwd PE FY+2（FY27）</td><td><strong>27.1x</strong></td><td>4,830 / 178.02（yfinance forwardPE 27.13）</td></tr>
+<tr><td>NTM Fwd PE（blend 7/12 FY26 + 5/12 FY27）</td><td>31.7x</td><td>4,830 / 152.43</td></tr>
+<tr><td>Trailing PE</td><td>71.5x</td><td>4,830 / 67.51（FY25 transition year 低基期）</td></tr>
+<tr><td>3Y EPS CAGR（FY26 → FY29）</td><td>~24%</td><td>FY26 134 → FY29E 256（FY28 213 × 1.20 → FY29 256, 假設成長放緩至 +15%）</td></tr>
+<tr><td>PEG（Fwd PE FY+2 / 3Y CAGR）</td><td>1.13</td><td>27.1 / 24</td></tr>
+<tr><td>PEG（Fwd PE FY+2 / FY+2 growth +32.7%）</td><td>0.83</td><td>27.1 / 32.7</td></tr>
+</table>
+<div class="reasoning">FY26 EPS 134.14 為 14 位分析師共識中位（30 天內從 115.50 → 134.14，+16.1% 強力上修，主因 Q1 26 NRE GM 50% beat + 5/12 Anthropic 1GW Trainium 確認）；FY27 EPS 178.02 為 13 位（30 天 +6.3%）→ 共識持續上修代表市場已對 H2 ramp 有信心。FY28E 由 §8 邏輯推導：Trainium 4 backend NRE 全年 + 2nm 第一波客戶（end-2026 tapeout 後 H2 量產）→ YoY +20%。PEG 使用 FY+2 base + 3Y CAGR FY26-29，給予「post-transition normalized base」估值，避免從 FY25 異常低基期 inflate growth。下游 implication：§2 D 估值燈以 5Y 分位 + PEG 取較嚴。</div>
+
+<h3>D｜估值燈（v12.0 取代 R:R 裁決）</h3>
+<table>
+<tr><th width="30%">項目</th><th>數值</th></tr>
+<tr><td>當前 NTM Fwd PE</td><td>31.7x</td></tr>
+<tr><td>5Y Fwd PE 範圍（估計）</td><td>15x ~ 70x（2025 transition 低點 ~ 2023 AI hype 高點）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><strong>~24%</strong>（31.7 − 15 / 55 × 100%）</td></tr>
+<tr><td>PEG（取較嚴）</td><td>1.13（FY+2 / 3Y CAGR）</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong><span class="tag-yellow">🟡 合理</span></strong></td></tr>
+<tr><td>套用規則</td><td>不變（等級不調整）</td></tr>
+</table>
+<div class="reasoning">5Y 分位 24%（&lt; 30% 應 🟢）但 PEG 1.13（&gt; 1.0 但 &lt; 2.0 應 🟡）。取較嚴 → 🟡 合理。盲點 1 救援不需啟動（未跌至 🟠）。注意 5Y 分位偏低反映 2024-2025 transition year 估值壓縮造成的「歷史視覺折扣」，PEG 1.13 是更真實的當前定價判斷。下游 implication：§2 H 綜合訊號中此項對應 quality A 等級不變，但 trap 🟡 將觸發等級減半至 B。</div>
+
+<h3>E｜R:R 與 Bear Case（參考用，不主導裁決）</h3>
+<h4>參考目標價（資訊性）</h4>
+<table>
+<tr><th width="14%">時距</th><th width="20%">EPS</th><th width="14%">合理 PE</th><th width="14%">目標價</th><th width="14%">Bear PE × Bear EPS = Bear 股價</th><th>R:R</th></tr>
+<tr><td>短期（1Y, FY26）</td><td>134.14</td><td>32.3x</td><td>4,328</td><td>18 × 121 = 2,178</td><td><span class="tag-red">−0.19x（reverse，失效）</span></td></tr>
+<tr><td>中期（2Y, FY27）</td><td>178.02</td><td>32.3x</td><td>5,750</td><td>20 × 160 = 3,200</td><td><span class="tag-yellow">+0.56x（不過 1.0）</span></td></tr>
+<tr><td>長期（5Y, FY30E）</td><td>~287</td><td>32.3x</td><td>9,272</td><td>持有期最大跌幅 ~2,178</td><td><span class="tag-yellow">+1.67x（接近 2.0）</span></td></tr>
+</table>
+<div class="reasoning">合理 PE 32.3x = §13.5 基準 25x × <strong>Engine A ROIC 1.175</strong>（2024 ROIC 51.9% / 2025 68.5%，&gt; 20% 且 3 年擴大）× AI 受益 1.10（取 Engine A 較高，不疊加 Engine C 1.10）= 32.3x。FY30E EPS 推導：FY26 134 → FY27 178 → FY28 213 (+20%) → FY29 256 (+20%) → FY30 287 (+12%, 假設 ASIC 設計服務週期見頂後成長放緩)。短期目標 4,328 低於現價 4,830 → 上行為負，R:R 失效（QC-21 規則：下行距離 &gt; 5% 但 R:R reverse，標註失效）。中期目標 5,750 → R:R 0.56x 不過 1.0。5Y 目標 9,272 → R:R 1.67x 接近 2.0 但不達標。<strong>本份 R:R 全面不過，但 thesis 完整，per QC-31 規則：thesis 完整 + R:R 不過 = B 觀望（不歸 C）</strong>。下游 implication：§2 H 綜合訊號 B，需等回測 BB 中軌或 H2 兌現再升 A。</div>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<tr><th width="14%">情境</th><th width="40%">假設</th><th width="15%">短期 R:R</th><th width="15%">中期 R:R</th><th>過關</th></tr>
+<tr><td>Base</td><td>報告假設（FY26 134, FY27 178, FY30 287; 合理 PE 32.3x）</td><td>−0.19x</td><td>0.56x</td><td><span class="tag-red">✗</span></td></tr>
+<tr><td>壓力 A</td><td>EPS 成長 −10%（FY26 → 121, FY27 → 160, FY30 → 258）</td><td>−0.30x</td><td>0.21x</td><td><span class="tag-red">✗</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE −20%（25.8x，倍數壓縮至 ASIC peer median）</td><td>−0.41x</td><td>0.27x</td><td><span class="tag-red">✗</span></td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂（合理 PE 升至 AVGO 同業 40x，反向 upside scenario）</td><td>+0.27x</td><td>+1.05x</td><td><span class="tag-yellow">部分 過</span></td></tr>
+</table>
+<p><strong>壓力測試通過率</strong> = 0 / 4 情境短期 + 0 / 4 情境中期 R:R ≥ 2.0；長期 1.67x 接近 2.0 但 base case 仍不過。QC-29 規定：通過率 &lt; 75% → 綜合訊號降一級。但本份在 §2 H 已落 B，已是 QC-31 thesis-level 完整下的最低訊號（不歸 C），故 QC-29 「降一級」在此 case 為「維持 B、不升 A」邏輯。</p>
+
+<h3>F｜Pure MA 狀態機（v12.0 Stage 4 覆蓋層）</h3>
+
+<h4>F1｜MA 數值與斜率</h4>
+<table>
+<tr><th width="30%">項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>TWD 4,830</td></tr>
+<tr><td>W52 SMA / 斜率（13w）</td><td>3,440.62 / <strong>+7.63%</strong></td></tr>
+<tr><td>W104 SMA / 斜率（13w）</td><td>3,017.87 / <strong>+1.52%</strong></td></tr>
+<tr><td>W250 SMA / 斜率（13w）</td><td>2,176.67 / <strong>+7.94%</strong>（強正）</td></tr>
+<tr><td>Bollinger 上 / 中 / 下（週 20）</td><td>4,646.50 / 3,534.75 / 2,423.00</td></tr>
+<tr><td>52W 高 / 低</td><td>5,640 / 2,480</td></tr>
+<tr><td>104W 低</td><td>2,480（與 52W 低相同，2025-04 谷底）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="tag-green">✅ 強勢進場</span></strong>（價 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率 &gt; +3%）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+</table>
+
+<h4>F2｜短期動能警示（QC-22 + QC-24）</h4>
+<table>
+<tr><th width="20%">警示類型</th><th>數據</th><th>狀態</th></tr>
+<tr><td>QC-22 4w 漂移</td><td>現價 4,830 vs 4 週前均 4,188.75 = <strong>+15.31%</strong></td><td><span class="tag-yellow">⚠️ 警示區間（+10% ~ +20%）</span></td></tr>
+<tr><td>Bollinger 上軌穿透</td><td>現價 4,830 vs BB 上軌 4,646.50 = <strong>+3.95% 突破</strong></td><td><span class="tag-yellow">⚠️ 動能末段</span></td></tr>
+<tr><td>QC-24 5/12 shooting star</td><td>O 5,555 / H 5,640（52W 新高）/ L 5,300 / C 5,310；H−C = <strong>−5.85%</strong> &gt; 5% 閾值</td><td><span class="tag-red">🔴 衝高回落</span></td></tr>
+<tr><td>QC-24 5/13 −10% 單日</td><td>O 5,115（gap down −3.7%）/ H 5,135 / L 4,780 / C 4,780；當日範圍 −6.5%；vs 5/12 C −10.0%</td><td><span class="tag-red">🔴 動能末段</span></td></tr>
+<tr><td>5/14 反彈量縮</td><td>C 4,830 反彈 +1.0% 但量 3.18M（vs 5/13 3.23M），無放量確認</td><td><span class="tag-yellow">⚠️ 整理待確認</span></td></tr>
+</table>
+<div class="reasoning">Pure MA 狀態機從週線結構看是 ✅ 強勢進場（W250 斜率 +7.94% 強正 + 多頭排列），但短期 daily / weekly intraday 訊號全面警示：BB 上軌外、4w +15.31% 漂移、5/12 shooting star（52W 高 5,640 後收 5,310 −5.85%）、5/13 −10% 單日。雖然狀態機未觸發降級（仍 ✅），但 §1 必須額外加註「入場窗口可能已關閉」警示。下游 implication：§2 H 訊號雖然 MA 仍 ✅，但 trap 因短期動能末段升至 🟡，最終 final_signal 落 B 而非 A。</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th width="30%">項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>^TWII（台灣加權指數）</td></tr>
+<tr><td>大盤現價</td><td>41,751.75</td></tr>
+<tr><td>大盤 W104 SMA</td><td>25,391.35</td></tr>
+<tr><td>系統性風險</td><td>否（現價 &gt; W104 +64.4%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈（v12.0 取代「最終倉位」輸出）</h3>
+<table>
+<tr><th width="30%">維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>A</td></tr>
+<tr><td>gate（§2 D 估值燈）</td><td>🟡 合理</td></tr>
+<tr><td>ma_status（§2 F Pure MA）</td><td>✅ 強勢進場（但短期 stretched 警示）</td></tr>
+<tr><td>benchmark_regime（§2 G 大盤）</td><td>正常</td></tr>
+<tr><td>trap（§1 陷阱定性）</td><td>🟡 觀察期</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+</table>
+<p><strong>判定理由</strong>：</p>
+<ol>
+<li><strong>步驟 1 拒絕檢核</strong>：trap 🟡（非 🔴）、gate 🟡（非 🔴）、MA ✅（非 ❌）、quality A（非拒絕）→ <span class="tag-green">不拒絕</span></li>
+<li><strong>步驟 2 A+ 條件</strong>：要求 gate 🟢，本份 🟡 → <span class="tag-red">不過</span></li>
+<li><strong>步驟 3 A 條件</strong>：要求 trap 🟢，本份 🟡 → <span class="tag-red">不過</span></li>
+<li><strong>步驟 4 B 條件</strong>：quality A 級有一項訊號減半（trap 🟡 + 短期動能末段 + QC-29 R:R 壓測 0/4）→ <span class="tag-yellow">✓ B</span></li>
+<li><strong>QC-31 cross-check</strong>：thesis 失敗 4 條件均未觸發（品質 A、無護城河侵蝕 ≥ 3、trap 非 🔴、AI 非 🔴）→ <span class="tag-green">維持 B，不歸 C</span></li>
+</ol>
+<p>核心邏輯：thesis 完整（產業 🟢 + 護城河 9 + AI 🟢 + 共識持續上修），但短期技術面動能末段（BB 上軌外 + 4w 漂移 +15.3% + 5/12 shooting star + 5/13 −10%）+ FY26 H2 80% binary risk + AWS 客戶集中。建議等回測 BB 中軌 ~3,535 或 W52 ~3,441 + Q3 FY26 法說（2026-11 預期）H2 ramp 雙線確認後升 A。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th width="30%">維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（ASIC 設計服務 2030E $85B TAM，Alchip 15-17% share 隱含 USD 12-15B 2030 Rev = 5-6× FY26）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（CoWoS 配額 lock + Trainium 3/4 sole-source backend + 2nm 客戶起跑 + Synopsys 224G SerDes 結盟）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</table>
+<p>一句話：Alchip 是 AI ASIC 設計服務鏈中 2026-2027 inflection 的最大相對受益者（市占從 5% 跳級到 15%+ = 結構性 step function），但 AWS 70%+ 集中度 + Annapurna 內製化長期路徑是核心結構性風險，長期投資需綁定「2027-2028 客戶多元化（META / MSFT design win）」這個動態驗證點。</p>
+</section>
+
+<!-- ============================== §3 ============================== -->
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要</h2>
+
+<div class="three-col">
+
+<div class="role-card role-bull">
+<h4>【多頭辯護人｜Munger 模式】</h4>
+<table>
+<tr><th>#</th><th>論據</th><th>數字佐證</th></tr>
+<tr><td>1</td><td>結構性 step function（護城河）</td><td>市佔 5% → 12-14% 2026 → 15-17% 2027；CoWoS 配額從 5K → 70K wpm（14× 提升）</td></tr>
+<tr><td>2</td><td>NRE 高 GM 升級驗證</td><td>GM 從 2024 19.6% → Q1 26 50.0%；mix 從 wafer-out 轉向 NRE + 高階 markup</td></tr>
+<tr><td>3</td><td>估值在四強最便宜</td><td>Fwd PE FY+2 27.1x vs MediaTek 44x / GUC 130x+ / AVGO ~40x / MRVL ~35x</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「在 ASIC 設計服務從 AVGO 寡占走向四強分軌的 inflection year，Alchip 是 28% CoWoS 配額 + Trainium 3/4 sole-source backend 的 sole-source winner，估值卻是四強最便宜。」</p>
+</div>
+
+<div class="role-card role-bear">
+<h4>【空頭檢察官｜Burry 模式】</h4>
+<table>
+<tr><th>#</th><th>虧損情境</th><th>對應風險</th></tr>
+<tr><td>1</td><td>H2 26 Trainium 3 量產延後一季 → FY26 EPS 134 → 100，Fwd PE 重評至 25x → 股價 2,500（−48%）</td><td>§5 R1</td></tr>
+<tr><td>2</td><td>Trainium 4 Annapurna 全面內製化 → Alchip 從 lead → backend co-supplier → NRE 單價 50% 折扣 → FY28 EPS miss 30%</td><td>§5 R1 / §9</td></tr>
+<tr><td>3</td><td>短期動能末段 + BB 上軌外 + shooting star + 12w +95% → 技術面回測 BB 中軌 3,535 = −27% from 4,830</td><td>§13.3</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「2025 Intel Gaudi 3 砍單 30% 導致 Alchip 全年 Rev −38% 的劇本，可能在 2027 重現 — 這次是 AWS 把 Trainium 4 拉回 Annapurna 內製化。」</p>
+</div>
+
+<div class="role-card role-arb">
+<h4>【估值仲裁員｜Damodaran 模式】</h4>
+<table>
+<tr><th>維度</th><th>數字</th><th>評分</th></tr>
+<tr><td>vs 過去 3 年實際 FCF CAGR</td><td>隱含 25% vs 歷史 −15% to +200%（極端 lumpy）</td><td>1.5 / 2</td></tr>
+<tr><td>vs 共識 EPS CAGR</td><td>隱含 25% vs 共識 FY26-29 ~24%</td><td>1.7 / 2</td></tr>
+<tr><td>vs 同業最快 CAGR</td><td>vs MediaTek ASIC growth +500%+ FY26-27</td><td>1.0 / 2</td></tr>
+<tr><td>達成條件苛刻度</td><td>需 H2 ramp 80% + Trainium 4 NRE 持續 + 2nm 客戶起跑（3 個條件同時）</td><td>1.0 / 2</td></tr>
+<tr><td>歷史先例</td><td>無先例 — ASIC 設計服務從未出現「2 年 EPS 4×」的 step function</td><td>0.8 / 2</td></tr>
+</table>
+<p><strong>隱含預期可信度評分：6.0 / 10</strong></p>
+<p><strong>仲裁員一句話</strong>：「市場已 priced in 25% 5Y CAGR，共識自身就在 22-24% 區間 — 隱含預期與共識重合但無 cushion，任何 catalyst 落後 1 季就會壓縮 multiple。」</p>
+</div>
+
+</div>
+
+<h4>裁決</h4>
+<table>
+<tr><td><strong>多頭最強論據</strong></td><td>結構性 step function（市佔 5% → 15% + CoWoS 配額 14×）+ NRE GM 從 20% → 50% 驗證</td></tr>
+<tr><td><strong>空頭最大威脅</strong></td><td>Annapurna Trainium 4 內製化（front-end 已自製） + AWS 70%+ 集中度</td></tr>
+<tr><td><strong>估值仲裁員評分</strong></td><td>6.0 / 10（隱含預期與共識重合，但 cushion 已用盡）</td></tr>
+<tr><td><strong>裁決</strong></td><td><span class="badge-yellow"><strong>觀望偏進場</strong></span>（thesis 完整但時機不到，等回測 BB 中軌或 Q3 26 H2 雙線確認）</td></tr>
+<tr><td><strong>裁決理由</strong></td><td>Alchip 是 AI ASIC 設計服務 2026 inflection year 的最大相對 alpha 來源，產業位置 🟢 順風 + 護城河 9 + 估值 🟡 + AI 🟢 + 共識 30 天 +16% 上修，thesis 多項驗證點齊備。但短期技術面 BB 上軌穿透 + 4w 漂移 +15.3% + 5/12 shooting star + 5/13 −10% 單日 = 動能末段四連發；加上 FY26 H2 80% 集中 + AWS 客戶集中 + QC-29 R:R 壓測 0/4 → 進場時機未到。建議追蹤池等回測 BB 中軌 ~3,535（−27%）+ Q3 FY26 法說 H2 ramp 雙線確認後升 A 級進場。</td></tr>
+</table>
+
+<h4>自我檢核（QC-13 反向攻擊）</h4>
+<ul>
+<li>✅ <strong>多頭論據是否依賴「市場最終會認識到」？</strong>否 — 共識 30 天 +16% 上修已是「市場正在認識」的反向證明，但同時意味 cushion 已用盡，不能再依賴「市場 catch up」</li>
+<li>⚠️ <strong>空頭威脅是否在 MA 觸發止損前發生？</strong>是 — Trainium 4 內製化是 2-3 年慢變數，但 H2 ramp 延後是 1-2 季快變數，2027 Q1 前可能已透過 EPS guide 體現</li>
+<li>✅ <strong>仲裁員評分 6.0 / 10 是否足夠安全邊際？</strong>否 — 6.0 / 10 代表「隱含預期 ≈ 共識」，cushion 不足。需等回測（價格進場安全邊際）或 H2 兌現（基本面安全邊際）任一補強</li>
+</ul>
+</section>
+
+<!-- ============================== §4 ============================== -->
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Alchip 解決的問題不是「設計 AI 晶片」，而是「<strong>當 hyperscaler 想自研矽，卻沒有完整的 backend physical design + advanced packaging integration 能力時，誰能幫他們把架構規格從 RTL 走完到 wafer-out</strong>」。在 2026 的世界，AWS 有 Annapurna（front-end SoC architecture）、Google 有 TPU 內部團隊、Meta 有 MTIA 團隊，但 backend 階段（physical implementation、CoWoS interposer 整合、CoWoS / SoIC 配額分配、yield optimization、IP 採購整合）需要的是「<strong>10+ 年 ASIC tape-out 經驗 + TSMC 配額議價權 + Synopsys/Cadence IP 採購規模優勢</strong>」的設計服務 partner。Alchip 在 ASIC 設計服務鏈中扮演的角色是「<strong>AWS 自研矽從 spec 到 chip 的 backend executor</strong>」 — 若它消失，AWS Trainium 3 的 RDL interposer 工程能力（Marvell 已驗證做不好）將找不到第二個能在 6 個月內接手的設計服務商，AWS 2026 H2 整個 Project Rainier 將延後 1-2 季。這個價值是不可被替代的「<strong>capacity-allocated execution capability</strong>」。</p>
+
+<h3>逆向推演（Munger Inversion）— 3 年內虧損 50% 路徑</h3>
+<ul>
+<li><strong>地緣政治曝險</strong>：總部新竹 + 設計團隊 80%+ 在台灣，極端兩岸情境下 design tape-out 中斷直接擊穿 AWS H2 Trainium 3 量產。但這也是 ASE / TSMC / AVGO（透過 TSMC）的共同風險，非個股獨有。</li>
+<li><strong>技術替代風險</strong>：<strong>Annapurna 自製化加速</strong> — 2025 Q1 Trainium 3 Mariana 變體已是 Annapurna 直接 own 的 tape-out（vs Anita 由 Alchip lead），代表 AWS 已具備複製 Alchip backend 工作的能力。若 2027 Trainium 4.5 / 5 完全內製化、Alchip 退到 secondary supplier，NRE 單價可能跌 50-70%。</li>
+<li><strong>管理層失職</strong>：Alchip 創辦人 Kenneth Tai（戴尚義）為核心 SoC 設計專家、現任董事長兼 CEO；過去資本配置紀錄優（無重大併購失誤、capex 控制在 Rev 5-8%）。風險點：dual-class 股權集中（內部人 3.6% + 機構 40%），少數股東保護不強。</li>
+<li><strong>價值陷阱路徑（4 選 1）</strong>：<span class="badge-yellow"><strong>盈餘品質型</strong></span> — 2024 NI 6.45B vs FCF 0.74B（FCF/NI 0.115）顯示「<em>盈餘已實現但現金未到</em>」結構；2025 反向（NI 5.60 vs FCF 12.62）只是 working capital timing。若 H2 26 wafer-out 大量 ramp 後 AR 暴增、FCF 與 NI 持續背離 &gt; 2 季 → 盈餘品質型陷阱信號真實。</li>
+</ul>
+</section>
+
+<!-- ============================== §5 ============================== -->
+<section class="card" id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸</h3>
+<table>
+<tr><th width="30%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>24-36 個月</strong>（橫跨 Trainium 3 ramp 2026-2027 + Trainium 4 NRE 啟動 + 2nm 第一波客戶）</td></tr>
+<tr><td>主要驅動時間軸</td><td>FY26-FY28 EPS 134 → 178 → 213 三年 step function；2027 Q3 OCP / Re:Invent 為 Trainium 4 + META / MSFT 新 design win 公告窗口</td></tr>
+<tr><td>訊號 vs 噪音</td><td>持有期 24-36 個月 → <strong>訊號</strong>：H2 26 ramp 量、Trainium 4 NRE 金額、CoWoS 配額是否續延、2nm 客戶 announce；<strong>噪音</strong>：單季 Rev miss/beat ±10%、4w 短期動能、外資每月目標價調整</td></tr>
+</table>
+
+<h3>B｜三個核心假設</h3>
+<table>
+<tr><th width="5%">#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
+<tr><td>H1</td><td><strong>FY26 H2 Trainium 3 量產順利</strong>：80% 全年 Rev 集中 Q3-Q4，Q3 Rev ≥ TWD 22B、Q4 Rev ≥ TWD 25B，全年 EPS 達 134</td><td>Q3 FY26 法說 Rev YoY；FY26 全年 EPS</td><td>2026-11（Q3 法說）/ 2027-03（FY 法說）</td></tr>
+<tr><td>H2</td><td><strong>Trainium 4 backend lead 持續 + 2nm 第一波 tapeout</strong>：FY27 EPS 達 178（+33%），FY28 達 213（+20%）</td><td>2026 Q4 announce Trainium 4 NRE 金額；2026 末 2nm tapeout 完成</td><td>2026-12 / 2027-Q1</td></tr>
+<tr><td>H3</td><td><strong>客戶多元化突破 AWS 70% 集中</strong>：FY27-28 至少新增 META MTIA 或 MSFT Maia 一個 1B+ design win</td><td>新客戶 design win announce</td><td>2027-Q2 ~ 2028-Q1</td></tr>
+</table>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th width="5%">#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Trainium 4 Annapurna 全面內製化（front-end 已自製，2027 後 backend 也轉內製）</td><td>H1, H2</td><td>Mariana / Anita 比重；Trainium 4 NRE 金額 vs Trainium 3 對比</td><td>Mariana 占比 &gt; 50% 或 Trainium 4 NRE &lt; Trainium 3 的 50%</td></tr>
+<tr><td>R2</td><td>AWS 訂單異動（類 2025 Intel Gaudi 3 砍 30% 案例重演）</td><td>H1</td><td>AWS Anthropic 1GW deal 是否擴大；Project Rainier 進度</td><td>AWS 任 1 季 Rev share 不增反降</td></tr>
+<tr><td>R3</td><td>競爭者反攻（MediaTek 拿下 META MTIA 或 MSFT Maia；Marvell 救回 Trainium 4 backend）</td><td>H3</td><td>競爭者 design win announce；客戶 RFQ 招標</td><td>任 1 個原 Alchip 客戶（包括潛在新客戶）轉手 MediaTek / GUC</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>持有期 24-36 個月 → 高權重變數：FY26 H2 Rev ramp、FY27 EPS guide、客戶多元化進度、CoWoS 配額延續。低權重變數：單季 GM ±2pp、4w 短期動能、外資目標價單月調整。</p>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th width="14%">情境</th><th width="40%">觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>① 回測 BB 中軌 ~TWD 3,535（−27% from 4,830）或 W52 ~3,441；② 4w 漂移 ≤ +5%；③ Q3 FY26 Rev YoY ≥ +200%（H1 兌現確認）</td><td>建倉 70%（核心倉），首次進場</td></tr>
+<tr><td>加碼</td><td>FY26 全年 EPS 達 134 ± 5%（兌現 H1）+ FY27 共識繼續上修至 ≥ 185（兌現 H2 早期信號）</td><td>加碼至 100%</td></tr>
+<tr><td>減碼</td><td>R1 任一觸發（Mariana &gt; 50% 或 T4 NRE &lt; T3 50%）→ 結構性削弱</td><td>減至 30%（衛星部位）</td></tr>
+<tr><td>撤退</td><td>H1 確定失敗（FY26 EPS &lt; 110） + AWS 訂單下修公告 + 競爭者搶下原 Alchip 客戶</td><td>清倉</td></tr>
+</table>
+</section>
+
+<!-- ============================== §6 ============================== -->
+<section class="card" id="s6">
+<h2>§6 即時財報情報（Q1 FY26 公告 2026-05-08）</h2>
+
+<h3>① Q1 FY26 關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue（TWD）</td><td>4.15B</td><td>~4.0B 共識</td><td><span class="badge-beat">Beat 小幅</span></td><td>+9.0%（Q1 25 ~3.8B 估）</td></tr>
+<tr><td>EPS（GAAP）</td><td>17.23</td><td>~14.80 共識</td><td><span class="badge-beat">Beat +16.4%</span></td><td>+7.6%（Q1 25 16.02）</td></tr>
+<tr><td>Gross Margin</td><td><strong>50.0%</strong></td><td>~40%</td><td><span class="badge-beat">大 Beat +10pp</span></td><td>+~30pp（Q1 25 ~20%）</td></tr>
+<tr><td>Q2 FY26 Guidance（Rev）</td><td>~6.9B 共識</td><td>—</td><td>—</td><td>+5.1%（Q2 25 6.57B）</td></tr>
+<tr><td>FY26 Guidance（管理層 commentary）</td><td>80% 全年 Rev 集中 H2，Q2 開始 3nm AI accelerator production ramp</td><td>—</td><td>—</td><td>—</td></tr>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>本季邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（FY26 H2 ramp）</td><td><span class="tag-green">＋強化</span></td><td>管理層明確 H2 80% Rev guidance + Q2 開始 3nm AI accelerator production ramp = AWS Trainium 3 量產時程確認</td></tr>
+<tr><td>H2（Trainium 4 + 2nm）</td><td><span class="tag-green">＋強化</span></td><td>NRE 強勁帶動 GM 50%（管理層明示「strong NRE and automotive ramp driving future growth」）= 設計專案 backlog 健康</td></tr>
+<tr><td>H3（客戶多元化）</td><td><span class="tag-yellow">0 中性</span></td><td>本季無新客戶 design win announce；automotive ramp 是 non-AI 業務小幅貢獻</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：樂觀</strong>（vs 上季 Q4 25 也是樂觀；連續樂觀代表 H2 ramp 信心穩固）</li>
+<li><strong>Forward Guidance</strong>：未給具體 Q2 / FY 數字，但 reaffirm 「80% FY26 Rev in H2」+ 「Q2 onwards 3nm AI accelerator production resumes」 = 與 4 月外資 estimates 一致</li>
+<li><strong>刻意強調主題</strong>：(a) NRE 強勁（<strong>注意：Q1 26 GM 50% 是 NRE-heavy quarter artifact，H2 production ramp 後預估回落 35-40%，非結構性新 baseline</strong>）；(b) automotive ramp；(c) H2 visibility</li>
+<li><strong>刻意迴避問題</strong>：(a) Trainium 4 具體 NRE 金額；(b) Mariana vs Anita 比重；(c) META / MSFT 新客戶進度（每次 IR call 都被問但未具體回答）</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：Q2 開始 3nm AI accelerator production resumes = AWS Trainium 3 量產進入大規模 ramp，與外資估 2026 全年 Trainium 3 出貨 1.5-1.7M 單元一致</li>
+<li><strong>供給端</strong>：CoWoS 配額 60K wpm + N3 配額已 secure，不是 capacity-binding</li>
+<li><strong>競爭格局</strong>：Marvell Q1 FY26 XPU guide +20% YoY（per DS）vs Alchip 等 200%+ ramp → 結構性差距固化</li>
+<li><strong>總體經濟敏感度</strong>：AWS Capex（2026 USD $200B+）+ Hyperscaler AI capex 整體仍上修 → 尾風</li>
+<li><strong>對同業連帶推論</strong>：MediaTek Q1 FY26（Futurum 報導）顯示 ASIC 部門「ramp visibility」與 Alchip 同向；GUC Q1 26 Rev +63% YoY 也呼應「ASIC 設計服務鏈集體上行」</li>
+</ul>
+</section>
+
+<!-- ============================== §7 ============================== -->
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 強制搜尋協議結果</h3>
+<table>
+<tr><th width="20%">項目</th><th>數值</th></tr>
+<tr><td>基期 FY25 EPS（GAAP, actual）</td><td>67.51 TWD</td></tr>
+<tr><td>FY26E EPS（yfinance, n=14）</td><td>134.14 TWD（+98.7% YoY）</td></tr>
+<tr><td>FY27E EPS（yfinance, n=13）</td><td>178.02 TWD（+32.7% YoY）</td></tr>
+<tr><td>FY28E EPS（§8 邏輯推導）</td><td>~213 TWD（+20% YoY，Trainium 4 全年 + 2nm 起跑）</td></tr>
+<tr><td>3Y EPS CAGR（FY25 → FY28E）</td><td><strong>+47.4%</strong></td></tr>
+<tr><td>3Y EPS CAGR（FY26 → FY29E, post-transition normalized）</td><td><strong>+22-24%</strong>（更具參考價值）</td></tr>
+<tr><td>口徑差距說明</td><td>不適用（台股法定口徑，GAAP only）</td></tr>
+</table>
+
+<h3>Munger 三維護城河搜尋結果</h3>
+<ul>
+<li><strong>FCF Margin</strong>：2022 −11.7% / 2023 19.8% / 2024 1.4% / 2025 40.8% → 3 年均 ~21%（&gt; 15% 過關），但 lumpy</li>
+<li><strong>ROIC</strong>：2022 26% / 2023 33% / 2024 52% / 2025 68%（持續擴大）</li>
+<li><strong>毛利率趨勢</strong>：2022 32.3% / 2023 22.3% / 2024 19.6% / 2025 26.4% / Q1 26 50.0%（U 型反轉）</li>
+<li><strong>Capex / Rev</strong>：2025 8.6% / 2024 5.0% / 3 年均 ~6%（中等資本密集）</li>
+<li><strong>D/E ratio</strong>：0.33B / 40.81B = 0.008（極低）</li>
+<li><strong>Cash / Rev</strong>：32.63B / 30.93B = 105%（極高，winter 撐倉用）</li>
+</ul>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="tag-green">✓</span></td><td>2025 FCF Margin 40.8%（3 年均 ~21%）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5 年均值 &gt; 15%；單年最低谷 &gt; 10%</td><td><span class="tag-yellow">⚠️</span></td><td>5 年均約 17%，最低谷 2022 −11.7%（< 10% 警示）；ASIC lumpy 性質</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且 &gt; WACC</td><td><span class="tag-green">✓</span></td><td>2025 ROIC 68% vs WACC ~10%，超額 +58pp</td></tr>
+<tr><td>ROIC 穩定性</td><td>10 年中 ≥ 70% ROIC &gt; 15%</td><td><span class="tag-green">✓</span></td><td>過去 5 年均 &gt; 25%（5 年樣本）</td></tr>
+<tr><td>毛利率定價能力</td><td>10 年中 ≥ 70% 持續改善</td><td><span class="tag-yellow">⚠️</span></td><td>2023-2024 連 2 年下滑（22.3 → 19.6），2025 反轉，5 年中 3 年改善（60%）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5% 優，&lt; 10% 尚可</td><td><span class="tag-green">✓</span></td><td>3 年均 ~6%，尚可</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="tag-green">✓</span></td><td>FY26-29 ~22-24%（normalized base）/ FY25-28 47%（含 transition 回升）</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td><span class="tag-green">✓</span></td><td>1.13（Fwd PE FY+2 / 3Y CAGR FY26-29）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7；Cash/Rev 10-50%</td><td><span class="tag-green">✓</span></td><td>D/E 0.008（極低）；Cash/Rev 105%（&gt; 50% 上限但屬「保守儲糧」非異常）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="tag-green">✓</span></td><td>32.63B cash vs 0.33B debt = 100x 覆蓋</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td><span class="tag-green">✓</span></td><td>8 / 10（§9，execution moat 強 + pricing power moat 弱），趨勢加深</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：FCF lumpy + 毛利率非線性（2023-24 連 2 年下滑後 2025 反轉）— ASIC 設計服務本質決定，非結構性問題；Munger 三維評級：<span class="badge-yellow">🟡 兩項達標</span>（ROIC 強健 + 資本密集適中，FCF 與毛利率 lumpy）</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p>觸發條件：Fwd PE NTM 31.7x 5Y 分位 ~24%（≤ 25% 輕度觸發 🟡）→ 四問簡答</p>
+<table>
+<tr><th width="5%">#</th><th>問題</th><th>回答</th><th>陷阱信號？</th></tr>
+<tr><td>Q1</td><td>過去 3 年 GM 趨勢</td><td>↑ 升至 50%（2025 26.4 → Q1 26 50）但 2024 vs 2023 −2.7pp</td><td>🟢 整體升</td></tr>
+<tr><td>Q2</td><td>過去 3 年市佔率趨勢</td><td>2024 ~5% → 2025 ~7% → 2026E 12-14%（per DS）</td><td>🟢 持續擴大</td></tr>
+<tr><td>Q3</td><td>FCF / NI 背離</td><td>3 年均 1.26，年度 lumpy（2022 −0.88 / 2023 1.82 / 2024 0.12 / 2025 2.25）</td><td>🟡 注意 lumpy</td></tr>
+<tr><td>Q4</td><td>分析師 EPS 方向</td><td>過去 6 個月 FY26 從 130 → 134（+3%），30 天內 +16% 強力上修</td><td>🟢 持續上修</td></tr>
+</table>
+<p><strong>初篩結論</strong>：0 個 🔴 + 1 個 🟡（FCF lumpy 性）→ 低估值是「<strong>2024-2025 transition year 估值壓縮造成的歷史視覺折扣</strong>」，PEG 1.13 是更真實的當前定價，PEG &lt; 2 過關，繼續深入。</p>
+</section>
+
+<!-- ============================== §8 ============================== -->
+<section class="card" id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道 Runway</h3>
+<table>
+<tr><th>維度</th><th>數據</th></tr>
+<tr><td>當前 AI ASIC 設計服務 TAM（2026E）</td><td>~$30B USD（per Counterpoint / Yole 2026 中位估）</td></tr>
+<tr><td>2030E TAM</td><td>$85B USD（per Yole 2030 中性估）</td></tr>
+<tr><td>當前 Alchip 市佔（2025）</td><td>~5-7%</td></tr>
+<tr><td>2026E Alchip 市佔</td><td>12-14%（per DS）</td></tr>
+<tr><td>2027E Alchip 市佔</td><td>15-17%（per DS）</td></tr>
+<tr><td>2030E 隱含市佔（樂觀 mid-case）</td><td>~17%（穩定四強第二）</td></tr>
+<tr><td>2030E 隱含 Rev（USD）</td><td>$85B × 17% = $14.5B（vs FY26 USD ~$2.2B → 6.6× over 4 年）</td></tr>
+<tr><td><strong>Runway</strong></td><td><strong>≥ 10 年</strong>（ASIC 設計服務鏈本身在 2030 仍在擴張，且 Alchip 在四強中位置穩固）</td></tr>
+</table>
+
+<h3>B｜成長品質</h3>
+<table>
+<tr><th>類型</th><th>判斷</th></tr>
+<tr><td>有機 vs 無機</td><td>100% 有機（無重大併購）</td></tr>
+<tr><td>定價 vs 量</td><td>量 ~ 65%（wafers + chip 出貨）+ 定價 ~ 35%（NRE mix shift 至 3nm/2nm 高階）</td></tr>
+<tr><td>業務組成（per DS + 估算）</td><td>AWS Trainium ~70%、IDM (Intel/其他) ~10%、Automotive + Networking + 中國 cloud ~20%</td></tr>
+</table>
+
+<h3>C｜成長護城河連動</h3>
+<p><span class="badge-green"><strong>強化型</strong></span>：Alchip 規模越大 → CoWoS 配額議價權越強 → 更多客戶選擇 Alchip → 配額更大。Q1 26 GM 50%（從 2024 19.6% 翻倍）證明定價權正在強化，而非 wafer-out 量增稀釋毛利。</p>
+
+<h3>D｜ROIC × FCF</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>68% (2025)</td><td>26% (2022)</td><td><span class="tag-green">↑ 加倍</span></td><td><span class="tag-green">✓</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+58pp</td><td>+16pp</td><td><span class="tag-green">↑ 持續擴大</span></td><td><span class="tag-green">✓</span></td></tr>
+<tr><td>FCF Margin</td><td>40.8% (2025)</td><td>−11.7% (2022)</td><td><span class="tag-yellow">↑ 但 lumpy</span></td><td><span class="tag-green">✓</span></td></tr>
+<tr><td>FCF / NI</td><td>2.25 (2025)</td><td>−0.88 (2022)</td><td><span class="tag-yellow">↑ 但 lumpy</span></td><td><span class="tag-yellow">部分 ✓</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>Capex/OCF ~17%（2025）</td><td>~36% (2024)</td><td><span class="tag-green">合理</span></td><td><span class="tag-green">✓</span></td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>成長特徵</th><th>合理 Fwd PE 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>放緩但 &gt; 市場</td><td>25x</td><td>~−18%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>回歸市場</td><td>20x</td><td>~−35%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>成熟期</td><td>15x</td><td>~−52%</td></tr>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>類型</th><th>偵測指標</th><th>數據</th><th>亮燈</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>Q1 26 50% vs Q1 25 ~20% (+30pp)</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔流失</td><td>2025 → 2026 市佔 5% → 12-14%（per DS）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>定價能力測試</td><td>NRE 定價持續上行（GM 從 20 → 50%）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR vs Rev CAGR 差距 &gt; 5%</td><td>FY26 EPS +99% / Rev +129% → EPS &lt; Rev = 健康</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>2024 0.115 ✗ / 2025 2.25 ✓（單年偏離 lumpy 但 3 年均 1.26）</td><td><span class="tag-yellow">🟡 注意</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且上升</td><td>無公開揭露（台股口徑），但 ASIC 設計服務 SBC ratio 通常 1-3%</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮 / 被替代</td><td>TAM 2026E $30B → 2030E $85B（+183%）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數系統下移</td><td>ASIC 設計服務 sector 2024 重估後仍在高位（MediaTek 44x、GUC 130x+）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>2025 Capex/FCF 21%（&lt; 60%）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新產能 → 3 年內 Rev 下滑？</td><td>NRE-based business 不受 maintenance capex 限制</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級</strong>：1 個 🟡 → <span class="badge-yellow">🟡 中度警戒</span>（FCF lumpy 性需在 §10 正面回應；其餘 9 個信號均未亮燈，無系統性陷阱）</p>
+
+<h3>長期成長性綜合評級：<span class="badge-green">🟢 高確信長期成長</span></h3>
+<p>Runway ≥ 10 年 + 100% 有機 + 強化型護城河 + ROIC 持續擴大 + 衰退信號 1 個（FCF lumpy）；FCF lumpy 是 ASIC 設計服務商業模式特性，非結構性惡化。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong><span class="badge-green">🟢 AI 受益或免疫</span></strong></p>
+<ul>
+<li>核心業務 100% 是「AI ASIC 設計服務」，是 AI 浪潮的核心受益者</li>
+<li>過去 2 年 AI 相關營收從 ~30% → ~80%（per DS + Alchip IR）</li>
+<li>公司 AI 策略：直接服務 hyperscaler 自研矽，與 AWS Annapurna / Google TPU / Meta MTIA 整合至 backend</li>
+<li>評級分數對應：🟢 = 9 分</li>
+</ul>
+</section>
+
+<!-- ============================== §9 ============================== -->
+<section class="card" id="s9">
+<h2>§9 護城河分析</h2>
+
+<h3>評分：<strong>8 / 10</strong>（execution dimension 7-8 / pricing power dimension constrained by AWS dual-track）</h3>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：中等 — 越多 hyperscaler 選擇 Alchip backend，TSMC + Synopsys 等 ecosystem partner 越願意給 Alchip 優先配額與 IP 折扣；但 hyperscaler 是 high-stakes single buyer，網路效應強度有限</li>
+<li><strong>無形資產</strong>：強 — (a) 5 代 Trainium tape-out 經驗（從 Trainium 1 2020 → 4 2027）= 不可複製的「<em>execution track record</em>」；(b) Synopsys 224G SerDes 戰略 partnership = IP 採購規模優勢；(c) CoWoS 60K wpm 配額 lock = 28% 整體 CoWoS 配額</li>
+<li><strong>轉換成本</strong>：高 — 一旦選定 design house，從 RTL spec → tape-out → mass production 切換 backend partner 需 6-12 個月重來 + 風險巨大（Marvell Trainium 2 RDL interposer 失誤就是最好的反向案例）</li>
+<li><strong>規模優勢</strong>：強 — 配額型 scale：Alchip 拿到 70K wpm CoWoS 是 Marvell + MediaTek + GUC 的總和。在「capacity-rationed」市場中，配額本身就是護城河</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼資本充足的對手（如 Marvell、GUC、SiTime）無法跨越？(1) Marvell Trainium 2 RDL interposer 執行失誤代表 backend physical design 不是有錢就能做好的；(2) GUC 是 TSMC affiliate 但偏向 Google ecosystem（Axion CPU + TPU 周邊），無 AWS hyperscale 訓練 ASIC 經驗；(3) MediaTek 強在 IP（SerDes + WiFi）但 backend physical 是新進入者，2026 才剛拿下 TPU 8i；(4) CoWoS 配額已被 NVIDIA + AVGO + Alchip 三家鎖死 70%+，新進入者要等 2027 H2 第二家先進封裝廠商上線才可能搶到配額。</p>
+
+<h3>Execution Moat vs Pricing Power Moat</h3>
+<p>Alchip 的護城河必須區分為兩個 dimension，否則容易導致 IRR overestimation：</p>
+<ul>
+<li><strong>Execution moat（強，7-8/10）</strong>：5 代 Trainium tape-out 經驗 + RDL interposer know-how（Marvell Trainium 2 失誤就是反向證明）+ Synopsys 224G SerDes partnership + CoWoS 28% 配額 lock。這個 dimension 是 thesis-period alpha 的 driver — 12-18 個月內 AWS 找不到替代者。</li>
+<li><strong>Pricing power moat（弱，constrained）</strong>：AWS Annapurna 對 Trainium 3 採 Anita（Alchip lead）+ Mariana（Annapurna own）雙軌結構，per SemiAnalysis Mariana ~800-900K units 為 majority volume，Anita ~500-600K 為 minority。Mariana economics 對 Alchip 不利（Annapurna 直接買 wafer + Alchip 只收 backend 設計費 + 沒 wafer markup）。Dual-track 本質就是 AWS 保留對 Alchip 議價權的機制。這個 dimension 限制 mature state 的 margin / multiple ceiling。</li>
+</ul>
+<p>合併評分 8/10 反映 execution moat 強 + pricing power moat 弱的綜合 — 12-18 個月 inflection alpha 真實，但 5+ 年 long-term IRR ceiling 受 pricing power constraint cap。</p>
+
+<h3>市佔競爭表（per DS 表 2.1）</h3>
+<table>
+<tr><th>競爭對手</th><th>2025 市佔</th><th>2026E 市佔</th><th>2027E 方向</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>Broadcom (AVGO)</strong></td><td>~58%</td><td>~60%</td><td>↘ 50-55%</td><td>TPU 8 拆軌、META 對 GUC 試水</td><td>被 Alchip + MediaTek 蠶食</td></tr>
+<tr><td><strong>Marvell (MRVL)</strong></td><td>~14%</td><td>~10-12%</td><td>↘ 8-10%</td><td>Trainium 3/4 socket 流失</td><td>被 Alchip 吃掉 socket</td></tr>
+<tr><td><strong>Alchip (3661)</strong></td><td>~7%</td><td>~12-14%</td><td>↗ 15-17%</td><td>Annapurna 內製化長期路徑</td><td>從 Marvell 接手 + 從 AVGO 邊角搶</td></tr>
+<tr><td><strong>MediaTek (2454)</strong></td><td>~5%</td><td>~10%</td><td>↗ 13-15%</td><td>從零到 step function</td><td>從 AVGO 邊角搶（TPU 8i）</td></tr>
+<tr><td><strong>GUC (3443)</strong></td><td>~6%</td><td>~5-6%</td><td>→ 5-7%</td><td>Google ecosystem 二供</td><td>持平，等 META 試水</td></tr>
+</table>
+
+<h3>護城河趨勢：<span class="badge-green">加深</span></h3>
+
+<h3>24 個月內最可能瓦解護城河的威脅（QC-23 分級）</h3>
+<table>
+<tr><th>等級</th><th>威脅</th><th>影響</th></tr>
+<tr><td><span class="badge-yellow">🟡 點對點</span></td><td>Marvell 救回 Trainium 4 backend secondary slot（per DS, T4 雙 tape-out 模式）</td><td>NRE 單價競爭，幾 pp 市佔影響，護城河不扣分</td></tr>
+<tr><td><span class="badge-red">🔴 生態攻擊</span></td><td>Synopsys + Alchip vs Cadence + GUC 兩大設計工具鏈分軌；Cadence 若挖角 Alchip 核心客戶（如 AWS 部分產品線轉 GUC）</td><td>護城河 −1 分（從 9 → 8）</td></tr>
+<tr><td>⛔ 架構替代</td><td>Annapurna 完全自製 backend（front-end 已自製）+ AWS 直接管理 TSMC tape-out + CoWoS allocation</td><td>護城河 −2 分（從 9 → 7），陷阱定性升至 🔴 高風險</td></tr>
+</table>
+<p>當前狀態：⛔ 架構替代是 3-5 年慢變數（Annapurna 需擴大設計團隊 5x，且 AWS 直接管理 TSMC 等於放棄 ecosystem leverage），但 🔴 生態攻擊是 12-24 個月可能發生的（GUC 拿下 META MTIA 部分後端就是現實）。需密切監測。</p>
+</section>
+
+<!-- ============================== §10 ============================== -->
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>Q1 26（YTD）</th><th>主要對手比較</th></tr>
+<tr><td>Revenue YoY</td><td>+122%</td><td>+71%</td><td>−40.5%</td><td>+9.0%（vs Q1 25）</td><td>vs MRVL XPU +20% 2026 / vs GUC +63% Q1 26</td></tr>
+<tr><td>Gross Margin</td><td>22.3%</td><td>19.6%</td><td>26.4%</td><td><strong>50.0%</strong></td><td>vs AVGO semi 68% / MRVL 62% / GUC 38%</td></tr>
+<tr><td>Operating Margin</td><td>13.6%</td><td>13.1%</td><td>17.4%</td><td>~33%（估算）</td><td>vs AVGO ~50% / MRVL 36% / GUC ~15%</td></tr>
+<tr><td>Net Income Margin</td><td>10.9%</td><td>12.4%</td><td>18.1%</td><td>~35%（估算）</td><td>—</td></tr>
+<tr><td>FCF Margin</td><td>19.8%</td><td>1.4%</td><td>40.8%</td><td>—</td><td>—</td></tr>
+<tr><td>ROIC</td><td>33%</td><td>52%</td><td>68%</td><td>—</td><td>vs AVGO ~25% / MRVL ~12%</td></tr>
+<tr><td>FCF / NI</td><td>1.82</td><td>0.115 ⚠️</td><td>2.25</td><td>—</td><td>3 年均 1.26 過 0.7 門檻</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：3 年均 OCF/NI = 1.45（健康），但年度 lumpy。2024 OCF 3.36B vs NI 6.45B（OCF/NI 0.52 ⚠️）反映 working capital tied up；2025 反向（OCF 15.27B vs NI 5.60B → 2.73 拐回）。lumpy 性是 ASIC NRE / wafer-out 業務週期特徵，非操縱跡象</li>
+<li><strong>AR 成長 vs 營收成長</strong>：無公開資料明確分解，但 2025 OCF 大爆發代表 AR collection 健康</li>
+<li><strong>存貨成長 vs 營收成長</strong>：2025 Capex 2.65B 略升（vs 2024 2.61B）反映 H2 ramp 庫存準備；尚未失控</li>
+<li><strong>FCF 轉換率趨勢</strong>：3 年均 0.85 健康，年度 lumpy</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<p>Alchip 為成長期 ASIC 設計服務商，過去 3 年無大規模庫藏股 / 回購，主要把現金保留作 working capital。資本配置紀律保守：(1) 32.63B cash on balance sheet（FY26 Rev ~70B 的 47%），代表保守儲糧；(2) 過去 3 年股利政策穩定（per Digrin），未過度分配。</p>
+</section>
+
+<!-- ============================== §11 ============================== -->
+<section class="card" id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>2026E AI ASIC 設計服務 TAM</td><td>USD ~$30B</td></tr>
+<tr><td>2030E TAM</td><td>USD $85B（Yole 中性估）</td></tr>
+<tr><td>CAGR 2026-2030</td><td>~30%</td></tr>
+<tr><td>當前 ASIC 設計服務鏈整體滲透率</td><td>~28%（2026 ASIC 單元數估超越 GPU，但收入仍小於 1/3）</td></tr>
+<tr><td>供需狀態</td><td>緊缺（CoWoS 配額 / N3 配額 binding）→ 2027 H2 才鬆動</td></tr>
+</table>
+
+<h3>議價權</h3>
+<ul>
+<li><strong>對上游 TSMC / Synopsys</strong>：中等議價權。Alchip 是 TSMC top 5 customers（per 2024 揭露），CoWoS / N3 配額穩定；Synopsys 224G SerDes 戰略 partnership 給予 IP 採購折扣。但 TSMC 在配額分配上仍有最終話語權。</li>
+<li><strong>對下游客戶（AWS / META / MSFT 等）</strong>：強議價權（在 backend execution 環節），弱議價權（在客戶選擇 design house 環節）。AWS 持有 Mariana 變體與 Annapurna 內製化選項 = 議價權部分被 hedge。</li>
+<li><strong>地理曝險</strong>：總部新竹 + 設計團隊 80%+ 在台灣，極端兩岸情境風險集中。但這也是 ASIC 設計服務鏈共同風險，非個股獨有。</li>
+</ul>
+
+<h3>營收組成（估算 + per DS）</h3>
+<table>
+<tr><th>業務段</th><th>FY26E 占比</th><th>成長性</th></tr>
+<tr><td>AWS Trainium 3/4 NRE + Wafer markup</td><td>~70%</td><td>+200% 2026 YoY</td></tr>
+<tr><td>IDM（Intel + 其他）</td><td>~10%</td><td>持平至小幅衰退</td></tr>
+<tr><td>Automotive + Networking</td><td>~10%</td><td>+30% YoY</td></tr>
+<tr><td>中國 cloud + 其他</td><td>~10%</td><td>+50% YoY</td></tr>
+</table>
+
+<h3>Unit Economics</h3>
+<ul>
+<li><strong>NRE 單價</strong>：Trainium 3 估 USD 5-10M / 專案（含 Anita full design）；2nm 預估 USD 15-25M / 專案</li>
+<li><strong>Wafer markup</strong>：每片 wafer 抽 5-15% markup（Q1 26 NRE 高 GM 反映 mix 偏 NRE 重）</li>
+<li><strong>客戶 LTV</strong>：每個 hyperscaler 設計專案週期 18-24 個月，但 follow-on 機率 70%+（per Alchip 5 代 Trainium）</li>
+<li><strong>新客戶 CAC</strong>：需 6-12 個月 RFP + 試做 → 競爭壁壘極高</li>
+</ul>
+</section>
+
+<!-- ============================== §12 ============================== -->
+<section class="card" id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>① 股東/股權結構</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>內部人持股</td><td>3.62%（含創辦人 Kenneth Tai 戴尚義）</td></tr>
+<tr><td>機構持股</td><td>40.22%（外資 + 投信 + 自營商）</td></tr>
+<tr><td>散戶 + 其他</td><td>~56%</td></tr>
+<tr><td>Dual-class 投票權</td><td>單一股權結構（非 dual-class）</td></tr>
+</table>
+
+<h3>② 資本配置方向</h3>
+<table>
+<tr><th>項目</th><th>近 3 年數據</th><th>趨勢</th></tr>
+<tr><td>Capex / Revenue</td><td>2023 10.7% / 2024 5.0% / 2025 8.6%</td><td>中等資本密集，與 Rev 成長同步</td></tr>
+<tr><td>回購</td><td>無大規模庫藏股</td><td>—</td></tr>
+<tr><td>分紅</td><td>2024 全年股利 TWD 32（殖利率 ~0.8% on TWD 4,000）</td><td>低殖利率，重再投資</td></tr>
+<tr><td>現金儲備</td><td>32.63B TWD（FY25 Rev 的 105%）</td><td>極保守，可承受 1.5 年完全沒 Rev 仍營運</td></tr>
+</table>
+
+<h3>③ 管理層薪酬結構</h3>
+<p>數據限制：台股口徑 SBC 揭露不詳，僅能從董監事酬勞約占稅前淨利 1-2% 推估（vs 美股 SBC/Rev 通常 5-15% 顯著較低）。</p>
+
+<h3>④ 過去 12 個月重大內部人交易</h3>
+<p>數據限制：未取得具體交易明細。建議用戶查 TWSE 重大訊息頁面。但從 insider 3.62% 持股穩定推估，內部人未大規模減持。</p>
+
+<h3>過去 12 個月重大事件（QC-19）</h3>
+<ul>
+<li>🟢 過去 12 個月無併購金額 &gt; 市值 5%（Alchip 無重大併購，符合 ASIC 設計服務專注本業特性）</li>
+<li>🟢 無集體訴訟 / 證券詐欺訴訟（無公開搜尋結果）</li>
+<li>🟢 無 CEO / CFO 離職、SEC 調查、財報重編</li>
+<li>🟢 無主要客戶流失公告</li>
+<li>🟡 注意：2025 年 Intel Gaudi 3 砍單 30%+（Alchip 60% 營收客戶在 2025 大幅縮減訂單）導致 Alchip 全年 Rev −38%，但此事件已在 2025 完整反映於財務數據，2026 Q1 已轉正</li>
+</ul>
+</section>
+
+<!-- ============================== §13 ============================== -->
+<section class="card" id="s13">
+<h2>§13 估值診斷</h2>
+
+<h3>13.0｜估值體系診斷：市場現在用哪把尺？</h3>
+<table>
+<tr><th>估值邏輯</th><th>對應指標</th><th>是否為當前主流</th><th>理由</th></tr>
+<tr><td>盈利能力型</td><td>P/E、EV/EBITDA</td><td>✓ 部分</td><td>市場用 Fwd PE FY+2 27.1x 定價</td></tr>
+<tr><td>成長型</td><td>PEG、EV/Revenue</td><td>✓ 主流</td><td>共識用 FY26 +99% / FY27 +33% 成長率支撐 Fwd PE 27x</td></tr>
+<tr><td>資產重置型</td><td>P/B</td><td>✗</td><td>輕資產業務</td></tr>
+<tr><td>現金流型</td><td>P/FCF</td><td>部分</td><td>FCF lumpy，不主流</td></tr>
+<tr><td>行業專屬</td><td>EV/Backlog（NRE）</td><td>新興</td><td>市場開始用 NRE backlog 預測 forward 估值</td></tr>
+</table>
+<p><strong>當前主流邏輯</strong>：成長型 PEG，輔以 Fwd PE FY+2。</p>
+
+<h3>估值邏輯漂移偵測</h3>
+<p><strong>情境一：從成長型 → 盈利能力型升級</strong></p>
+<ul>
+<li>觸發條件：FY27 EPS 178 + FY28 213 達標後，3Y CAGR FY26-29 收斂至 22-24% → 市場開始用 P/E 而非 PEG 定價</li>
+<li>本標的是否存在：是。當 EPS 進入穩態（FY28+）後，估值體系從 PEG 升級至 P/E。對應 Fwd PE 從 27x → 收斂至 30-35x（per §13.5 合理倍數）</li>
+</ul>
+
+<p><strong>結論</strong>：<span class="badge-blue">🔵 估值體系升級機會</span>（從 transition year 壓制 → 穩態 P/E 升級）</p>
+
+<h3>13.1｜歷史估值分位（5Y 框架）</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>71.5x</td><td>15x（2025 低點）</td><td>35x</td><td>~120x（2024 高峰）</td><td>~54%</td></tr>
+<tr><td>Forward P/E（NTM）</td><td>31.7x</td><td>15x</td><td>35x</td><td>70x</td><td><strong>~24%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>45.8x</td><td>10x</td><td>30x</td><td>80x</td><td>~51%</td></tr>
+<tr><td>P/FCF</td><td>31.4x（lumpy）</td><td>—</td><td>—</td><td>—</td><td>—（lumpy 不適用）</td></tr>
+<tr><td>P/S</td><td>12.8x</td><td>4x</td><td>8x</td><td>20x</td><td>~55%</td></tr>
+</table>
+<p><strong>解讀</strong>：</p>
+<ol>
+<li>Fwd PE NTM 24% 分位（低位）但 EV/EBITDA / P/S 在中位 50%。差異來源：FY26 EPS 預估快速跳升（+99%），但 Rev 與 EBITDA 仍在 ramp 早期</li>
+<li>上次處於 24% 分位是 2025 transition year（Intel Gaudi 3 砍單後），與現在的差異：現在是「<em>下一個成長週期前奏</em>」，而非「<em>產業衰退中段</em>」</li>
+<li>當前分位主要驅動：Q1 26 NRE GM 50% beat + 共識 30 天 +16% 上修，但股價尚未完全反映 EPS 上修</li>
+</ol>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E（FY+2 FY27）</td><td>27.1x</td><td></td></tr>
+<tr><td>FY+2 YoY 成長率</td><td>+32.7%</td><td></td></tr>
+<tr><td>PEG（Fwd PE / FY+2 growth）</td><td>0.83</td><td>🟢 便宜</td></tr>
+<tr><td>3Y EPS CAGR（FY26 → FY29, normalized）</td><td>~24%</td><td></td></tr>
+<tr><td>PEG（Fwd PE / 3Y CAGR）</td><td>1.13</td><td>🟡 合理（取較嚴）</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~22%</td><td></td></tr>
+<tr><td>PEG（5Y）</td><td>1.23</td><td>🟡 合理</td></tr>
+</table>
+<p><strong>Price-to-Growth 矩陣落點</strong>：當前 Fwd PE 27x + 成長率 24% → 落於「合理偏便宜」象限，未進入「過熱」區間（如 GUC PE 130x + growth 60% = PEG 2.2 過熱）也未進入「衰退陷阱」區間。</p>
+
+<h3>13.3｜Reverse DCF</h3>
+<table>
+<tr><th>參數</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前市值</td><td>USD ~$12.4B（396.5B TWD / 32）</td><td>yfinance</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>USD ~$395M（12.62B TWD）</td><td>yfinance cashflow</td></tr>
+<tr><td>WACC</td><td>10.5%</td><td>10Y UST 1.5% + Beta 1.17 × ERP 6% + TW country premium 2%</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>科技類典型</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</table>
+
+<p><strong>反推隱含 FCF CAGR</strong>：使 DCF 現值 = $12.4B，所需的前 10 年 FCF CAGR = <strong>~22-25%</strong></p>
+
+<table>
+<tr><th>比較基準</th><th>數值</th><th>相對位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>~75%（2023 6.05 → 2025 12.62，但 2024 0.74 異常）</td><td>實際變化幅度大，難參考</td></tr>
+<tr><td>共識 EPS CAGR（FY26-29, normalized）</td><td>~24%</td><td>FCF CAGR ≈ EPS CAGR ✓</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>vs MediaTek ASIC +500% YoY（但 base 小）</td><td>不直接可比</td></tr>
+</table>
+
+<p><strong>兌現條件</strong>：隱含 FCF CAGR 22-25% 需要 (a) Revenue 年增 25%+（per FY26-29）（b) FCF Margin 保持 30%+ stable（vs 3 年均 ~21%，需要 NRE mix 持續抬升）（c) Trainium 4 + 2nm 雙線兌現</p>
+
+<p><strong>隱含預期判斷</strong>：<span class="badge-yellow">🟡 隱含預期合理</span>（與共識重合，無大幅 cushion 但也無激進預期）</p>
+
+<h3>便宜理由檢驗（觸發 🟡 輕度，5 問簡答）</h3>
+<table>
+<tr><th>#</th><th>問題</th><th>回答</th><th>結論</th></tr>
+<tr><td>Q1</td><td>市場為何給低倍數</td><td>2024-2025 transition year 估值壓制；Intel Gaudi 3 砍單 + 2025 Rev −40% 創造歷史視覺折扣</td><td>理由暫時，已 reversing</td></tr>
+<tr><td>Q2</td><td>有財務數據支撐嗎</td><td>2025 GM 反轉 + Q1 26 50% + 共識持續上修</td><td>無數據支撐悲觀</td></tr>
+<tr><td>Q3</td><td>護城河仍完整？</td><td>9/10，CoWoS 配額 + Trainium socket lock</td><td>完整</td></tr>
+<tr><td>Q4</td><td>FCF 品質被誤解？</td><td>FCF lumpy（ASIC 業務特性）被市場短期 mis-price</td><td>部分被誤解</td></tr>
+<tr><td>Q5</td><td>催化劑？</td><td>Q3 FY26 H2 ramp 兌現；Trainium 4 NRE announce；2nm tapeout</td><td>有明確催化劑</td></tr>
+</table>
+<p><strong>檢驗結論</strong>：<span class="badge-yellow">🟡 尚不確定</span>（市場誤判部分（Inflection α 未 priced in）+ 折價合理部分（turnkey design service mature multiple cap）並存，需區分短期 vs 長期）</p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值（USD）</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>GM</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>3661 Alchip</strong></td><td>$12.4B</td><td>27.1x（FY+2）</td><td>45.8x</td><td>0.83 / 1.13</td><td>50%（Q1 26）</td><td>22-24%</td><td>68%</td></tr>
+<tr><td>2454 MediaTek</td><td>~$110B</td><td>44.3x</td><td>~28x</td><td>~1.5</td><td>46%</td><td>~30%</td><td>~25%</td></tr>
+<tr><td>3443 GUC</td><td>~$23B</td><td>50x（FY26 EPS 42）</td><td>~80x</td><td>~3.0</td><td>38%</td><td>~46%</td><td>~30%</td></tr>
+<tr><td>AVGO</td><td>~$1.5T</td><td>~40x</td><td>~35x</td><td>~1.3</td><td>68%（semi）</td><td>~30%</td><td>~25%</td></tr>
+<tr><td>MRVL</td><td>~$75B</td><td>~35x</td><td>~25x</td><td>~2.0</td><td>62%</td><td>~17%</td><td>~12%</td></tr>
+<tr><td>3035 Faraday</td><td>~$1.5B</td><td>~40x</td><td>~25x</td><td>~2.0</td><td>~30%</td><td>~20%</td><td>~25%</td></tr>
+<tr><td>產業中位</td><td>—</td><td><strong>~40x</strong></td><td>~30x</td><td>~1.8</td><td>~48%</td><td>~25%</td><td>~24%</td></tr>
+</table>
+
+<p><strong>同業溢折價邏輯</strong>：3 個 peer group 對比：(a) vs IP companies (AVGO/MRVL/MediaTek) 中位 40x → Alchip 折價 32%，但這個比較<strong>有 business model bias</strong>，不適合直接 anchor；(b) vs Taiwan design service peers (GUC 50x、Faraday 33-55x) 中位 ~42x → Alchip 折價 35%，這是更合理的 reference frame，反映 Alchip 在 Taiwan 設計服務同業中也屬便宜；(c) 但 turnkey design service mature multiple 全部都受 business model cap，AVGO/MRVL 的高 multiple 是 IP company tier 不可移植。</p>
+
+<h3>同主題橫向比較</h3>
+<table>
+<tr><th>問題</th><th>3661 Alchip</th><th>2454 MediaTek（最強競爭）</th></tr>
+<tr><td>主假設兌現上行空間</td><td>5Y 9,272（+92%）</td><td>2027 ASIC USD $6-7B 全部兌現 +80%</td></tr>
+<tr><td>主假設部分落空時跌幅</td><td>−27% 回測 BB 中軌</td><td>多元化（手機 + WiFi 60% Rev）緩衝較大，估 −15%</td></tr>
+<tr><td>風報比</td><td>R:R 5Y 1.67x</td><td>~1.3x（受手機週期拖累）</td></tr>
+</table>
+<p><strong>結論</strong>：<span class="badge-yellow">🥈 此標的為 Taiwan 設計服務同業相對便宜，但絕對 mature multiple 受 turnkey 模式限制</span> — 短期相對 alpha 真實，長期 IRR 受 business model cap；AWS 70% 集中度 binary risk 比 MediaTek 多元化大。長期投資人 conviction 高且能接受 binary risk 者，Alchip 是首選；對 binary risk 敏感者，MediaTek 是更穩 alternative。</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
+<tr><td>估值體系（13.0）</td><td>🔵 升級機會</td><td>從 transition year 壓制 → 穩態 P/E 升級</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🟢 便宜</td><td>Fwd PE NTM 5Y 分位 ~24%</td></tr>
+<tr><td>PEG（13.2）</td><td>🟡 合理</td><td>取較嚴 1.13（3Y normalized base）</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 合理</td><td>隱含 22-25% ≈ 共識 24%</td></tr>
+<tr><td>同業相對（13.4）</td><td>🟡 部分合理</td><td>Fwd PE FY+2 27.1x vs 設計服務同業 GUC 50x / Faraday 33-55x = 仍折價 20-40%，但 vs IP company AVGO 40x / MRVL 35x 反映 business model 折扣合理（非全部 inflection alpha 都會兌現為 multiple expansion）</td></tr>
+</table>
+
+<p><strong>§2 D 交叉驗證</strong>：當前 Fwd PE FY+2 27.1x vs §2 D 合理 PE 32.3x（FY+2）= <strong>−16% 折價</strong> → 估值維度上不貴。但短中期 R:R 雙負反映「合理價目標仍低於當前」是因為已先漲超過。</p>
+
+<p><strong>當前定價判斷</strong>：<span class="badge-yellow">🟡 公允定價</span> — 估值維度上 Alchip Fwd PE FY+2 27.1x 在 Taiwan 設計服務同業（GUC 50x、Faraday 33-55x）中相對便宜，但<strong>絕對 mature multiple 受 turnkey design service business model 結構性 cap（穩態 20-25x forward），不會 re-rate 至 IP company tier 35-40x</strong>。短期 Inflection α 真實，但長期 IRR cap 在 business model。</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+<tr><th>因素</th><th>判斷結果</th><th>對目標 PE 影響</th></tr>
+<tr><td>① 護城河品質（§9）</td><td>9 / 10</td><td>+3x</td></tr>
+<tr><td>② 成長跑道（§8A）</td><td>≥ 10 年（🟢）</td><td>+3x</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>100% 有機 + 強化型</td><td>+2x</td></tr>
+<tr><td>④ 成長護城河連動（§8C）</td><td>強化型</td><td>+1x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§8D）</td><td>68%, 持續擴大</td><td>+1x</td></tr>
+<tr><td>⑥ 衰退信號（§8 表）</td><td>1 個 🟡（FCF lumpy）</td><td>−1x</td></tr>
+<tr><td>⑦ 估值體系（§13.0）</td><td>🔵 升級</td><td>+1x</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 1.5%（低）</td><td>+1x</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td><strong>22x</strong>（ASIC 設計服務 sector）</td><td><strong>調整後合理區間 31-37x</strong></td></tr>
+</table>
+
+<p><strong>分析師目標價參考</strong>：</p>
+<ul>
+<li>TradingView 共識（外資為主）：中位 5,623 / 高 6,215 / 低 3,755（n=13）</li>
+<li>台資券商：元大 4,500 / 富邦 4,140 / 國票 4,405 / 永豐 4,310 / 群益 3,495（區間操作）/ 花旗 4,200，平均 ~4,175</li>
+<li>外資 vs 台資差距：+34%（外資更樂觀）。若採信外資中位 5,623，當前 4,830 還有 +16% 上行；若採信台資平均 4,175，當前已超過 −13%</li>
+</ul>
+
+<h3>長期合理倍數對應表（v9.0）</h3>
+<table>
+<tr><th>§8 評級</th><th>5 年後基準 Fwd PE</th></tr>
+<tr><td>🟢 高確信</td><td><strong>25x</strong>（本標的適用）</td></tr>
+</table>
+
+<p><strong>本標的基準長期合理倍數：25x</strong>（引用 §8 🟢 高確信）</p>
+
+<p><strong>v9.0 上行三引擎</strong>：</p>
+<ul>
+<li>引擎 A ROIC 溢價：ROIC 68% &gt; 20% 且 3 年擴大 → <strong>× 1.175</strong></li>
+<li>引擎 B PEG 動態天花板：Year-5 forward growth ~15-20%，按品質 9 分查表 → ~1.20x</li>
+<li>引擎 C 護城河溢價：護城河 9 → 1.10x</li>
+<li>取最高 = <strong>引擎 A 1.175</strong></li>
+</ul>
+
+<p><strong>AI 風險疊加</strong>：🟢 → × 1.10</p>
+
+<p><strong>最終長期合理倍數 = 25 × 1.175 × 1.10 = 32.3x</strong></p>
+
+<h3>投資結論（§13.5 完整版）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li>H1（FY26 H2 ramp）：<strong>強化</strong>（Q1 26 GM 50% + 管理層 reaffirm 80% H2 + 30 天 FY26 EPS +16% 上修）</li>
+<li>H2（Trainium 4 + 2nm）：<strong>強化</strong>（Q1 NRE 強勁 + Synopsys 224G SerDes partnership announce + 2nm tapeout 進度 on track）</li>
+<li>H3（客戶多元化）：<strong>不變</strong>（無新客戶 design win，但 Anthropic 1GW deal 是 AWS 既有客戶擴張，不算多元化）</li>
+<li>這份財報讓隱含預期變得<strong>更容易兌現</strong>（共識持續上修代表市場已 catch up）</li>
+</ul>
+
+<h4>綜合訊號輸出（v12.0：不輸出倉位 %）</h4>
+<ul>
+<li>護城河等級：A 級（護城河 8，execution moat 強 + pricing power moat 弱） → 調整後 A 級</li>
+<li>估值燈：🟡 合理（Fwd PE 5Y 分位 24%，PEG 1.13 取較嚴）</li>
+<li>Pure MA 狀態：✅ 強勢進場（但短期 stretched）</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：B</strong>（取自 §2 H）</li>
+<li>中期參考 R:R：0.56x（資訊性，不主導裁決）</li>
+<li>訊號語意：B = 衛星候選；本份是「核心 thesis 完整但時機不到」之衛星級 B</li>
+<li>倉位 % 決策不在本 DD 範圍，交由 portfolio-manager skill 決定</li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q1 26 大幅 beat（EPS +16.4%，GM +10pp）+ Q2 26E EPS 22.77（+42% YoY）+ Q3 26E EPS 41.72（+160% YoY）= 短期信號強勁，支撐 H2 ramp 兌現。但短期技術面 BB 上軌穿透 + 4w 漂移 +15.3% + 5/12 shooting star 反向警示。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY26 / FY27 EPS 共識（134 / 178）由 NRE mix shift + Trainium 3 量產驅動，能見度<strong>高</strong>（共識 30 天 +16% 上修 + 14 位 / 13 位分析師覆蓋）。引用 §8B：定價驅動 35% + 量驅動 65%，定價驅動比重提升是 GM 50% 的核心。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道 ≥ 10 年 + 護城河趨勢加深 + 長期持有信心 <strong>高</strong>。引用 §2 I：Alchip 在 AI ASIC 設計服務 4 強分軌格局中位置穩固第二，2030 隱含 Rev 6-7× FY26。風險是 AWS 70% 集中度需在 2027-28 透過客戶多元化突破。</p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔 Bear（FY26 EPS −10% × 18x PE）：~2,178 → 距現價 4,830 為 −55%</li>
+<li>中期下檔 Bear（FY27 EPS −10% × 20x PE）：~3,200 → 距現價 −34%</li>
+<li>W52 Low：2,480（參考）</li>
+<li>W104 Low：2,480（與 W52 重合，2025 transition 谷底）</li>
+<li>若 FY26 EPS 下修 10%（→ 121） + Fwd PE 從 32.3x 壓縮至 20x：股價 = 121 × 20 = 2,420（−50%）</li>
+</ul>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "3661.TW",
+  "date": "2026-05-14",
+  "schema": "v12.2",
+  "signal": "B",
+  "verdict": "B 觀望偏進場（thesis 完整：產業 🟢 + 護城河 8/10 widening + AI 🟢 + 共識 30 天 +16% 上修，但 QC-22 4w +15.31% + QC-24 5/12 shooting star + Mariana 經濟學揭露後 IRR 結構轉弱 + QC-29 R:R 0/4 → 等回測 BB 中軌 ~3,535 或 Q3 法說 H2 雙線確認）",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "A",
+  "moat_score": 8,
+  "quality_score": 8,
+  "growth_durability": 9,
+  "val": "🟡",
+  "ma": "✅",
+  "ai_risk": "🟢",
+  "fpe_fy2": 27.1,
+  "pct_5y": 24,
+  "peg_fy2": 1.13,
+  "price_at_dd": 4830.0,
+  "upside_short_pct": -10.4,
+  "upside_mid_pct": 19.0,
+  "upside_5y_pct": 92,
+  "stress": {"pass": 0, "total": 4},
+  "long_term_confidence": "高",
+  "oneliner": "🟢 + A 護城河 8（execution 強 / AWS dual-track 壓 pricing power）｜Q1 GM 50% NRE artifact H2 回落 35-40%｜Fwd PE 27x vs GUC 50x 折價但 turnkey cap｜R:R 短/中 -0.19/0.56 雙負 + 4w +15.3% 末段，等 BB 中軌 3,535 或 Q3 H2 確認"
+}
+</script>
+
+</body>
+</html>
