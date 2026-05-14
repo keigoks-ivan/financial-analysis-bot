@@ -60,6 +60,7 @@ _DCA_EV_ANCHORS = (
     "機率加權EV(5Y)",
     "期望值（機率加權）",
     "期望值(機率加權)",
+    "機率加權",  # bare label — must be last so longer anchors win
 )
 _DCA_EV_CELL_CLOSE_RE = re.compile(
     r"</(td|th|p|h[1-6]|li|div|section|tr|article)\b", re.IGNORECASE
@@ -70,6 +71,17 @@ _DCA_EV_TR_CLOSE_RE = re.compile(r"</tr\s*>", re.IGNORECASE)
 # as the 5Y EV.
 _DCA_EV_OUR_IRR_RE = re.compile(
     r"\s*/\s*IRR\s*[~≈]?\s*[+\-−]?\s*\d+(?:\.\d+)?\s*%(?:\s*/\s*(?:yr|年))?"
+)
+# Detects annualized-return markers in <strong> text or trailing context.
+# Used to skip IRR/yr cells in _from_window's <strong> scan.
+_DCA_EV_IRR_MARKER_RE = re.compile(
+    r"/\s*(?:yr|年)|CAGR|年化|IRR", re.IGNORECASE
+)
+# Strips "X%/yr" and "IRR ≈ X%/yr" patterns from flat window text so the
+# signed-percent parser doesn't land on the annualized value first.
+_DCA_EV_STRIP_ANNUALIZED_RE = re.compile(
+    r"(?:IRR\s*[≈~]?\s*)?[+\-−]?\s*\d+(?:\.\d+)?\s*%\s*/\s*(?:yr|年)",
+    re.IGNORECASE,
 )
 
 
@@ -156,13 +168,22 @@ def extract_dca_ev_5y(dca_path) -> float | None:
             text = _DCA_EV_OUR_IRR_RE.sub("", _strip_tags(sm.group(1)))
             if "期望值" in text and "%" not in text and "x" not in text:
                 continue
+            # Skip annualized rows: reject if text or immediate trailing context
+            # contains /yr, /年, CAGR, 年化, or IRR — those are IRR cells, not 5Y absolute.
+            trail = _strip_tags(window[sm.end() : sm.end() + 30])
+            if _DCA_EV_IRR_MARKER_RE.search(text) or _DCA_EV_IRR_MARKER_RE.search(trail):
+                continue
             pct = _parse_pct(text)
             if pct is not None:
                 return pct
             mult = _parse_mult(text)
             if mult is not None:
                 return mult
-        flat = _DCA_EV_OUR_IRR_RE.sub("", _strip_tags(window))
+        # Strip annualized patterns (e.g. "+8.4%/yr") before the signed-percent
+        # search so the parser doesn't land on an IRR/yr value in flat text.
+        flat = _DCA_EV_STRIP_ANNUALIZED_RE.sub(
+            "", _DCA_EV_OUR_IRR_RE.sub("", _strip_tags(window))
+        )
         for kw in _DCA_EV_ANCHORS:
             flat = flat.replace(kw, "", 1)
         pct = _parse_pct(flat)
@@ -173,8 +194,18 @@ def extract_dca_ev_5y(dca_path) -> float | None:
     positions = sorted({
         idx for kw in _DCA_EV_ANCHORS for idx in _dca_ev_find_all(html, kw)
     })
+    _BARE_KW = "機率加權"
+    _LONGER_ANCHORS = set(_DCA_EV_ANCHORS) - {_BARE_KW}
+
     for anchor_idx in positions:
         if not _dca_ev_in_cell(html, anchor_idx):
+            continue
+        # Guard: if matched by the bare "機率加權" anchor (not a longer variant),
+        # skip if trailing context contains "IRR" — that's the annualized row.
+        is_bare = not any(
+            html[anchor_idx:].startswith(a) for a in _LONGER_ANCHORS
+        )
+        if is_bare and "IRR" in html[anchor_idx + len(_BARE_KW): anchor_idx + len(_BARE_KW) + 15]:
             continue
         ev = _from_window(_dca_ev_row_window(html, anchor_idx))
         if ev is not None:
