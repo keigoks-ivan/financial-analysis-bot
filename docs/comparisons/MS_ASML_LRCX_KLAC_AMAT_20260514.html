@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASML vs LRCX vs KLAC vs AMAT — WFE 五寡占四檔 DCA 對比｜2026-05-14</title>
+<meta name="description" content="WFE 五寡占四檔（ASML / LRCX / KLAC / AMAT）DCA 對比分析 — 四層時間框架（<12M / 2-3Y / 3-5Y / 5-10Y）橫向打分。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#ffffff; --bg-soft:#f7f8fa; --bg-card:#fbfcfd;
+  --border:#d0d8e0; --border-light:#e5e7eb;
+  --text:#1a1d24; --text-2:#475569; --text-3:#94a3b8;
+  --blue:#1565c0; --orange:#c2410c; --green:#15803d; --red:#991b1b; --amber:#92400e;
+  --gold:#fef3c7; --silver:#f1f5f9; --bronze:#ffedd5;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:'Inter','Noto Sans TC','PingFang TC','Microsoft JhengHei','Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.7; font-size:14.5px;
+  -webkit-font-smoothing:antialiased;
+}
+.num, .mono, code { font-family:'IBM Plex Mono',monospace; }
+.container { max-width:1200px; margin:0 auto; padding:24px 28px 80px; }
+
+/* Sticky nav */
+.topnav {
+  position:sticky; top:0; z-index:100; background:#ffffff;
+  border-bottom:1px solid var(--border-light);
+  padding:10px 28px; display:flex; gap:18px; align-items:center; font-size:13px;
+  box-shadow:0 1px 4px rgba(15,23,42,.04);
+}
+.topnav .brand { font-weight:700; color:var(--text); letter-spacing:-.01em; }
+.topnav .crumb { color:var(--text-3); }
+.topnav nav { margin-left:auto; display:flex; gap:14px; font-family:'IBM Plex Mono',monospace; font-size:12px; }
+.topnav nav a { color:var(--text-2); text-decoration:none; padding:4px 0; }
+.topnav nav a:hover { color:var(--blue); }
+
+/* Hero */
+.hero { padding:24px 0 16px; border-bottom:1px solid var(--border-light); margin-bottom:24px; }
+.hero .eyebrow {
+  display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--blue); background:#eff6ff; padding:3px 10px; border-radius:20px;
+  font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+}
+.hero h1 { font-size:30px; font-weight:800; letter-spacing:-.02em; margin-top:14px; color:var(--text); line-height:1.25; }
+.hero .meta { font-size:13px; color:var(--text-2); margin-top:10px; line-height:1.7; }
+.hero .meta code { font-size:12px; background:var(--bg-soft); padding:2px 6px; border-radius:3px; }
+
+/* Sections */
+h2 {
+  font-size:22px; font-weight:700; color:var(--text); margin:40px 0 14px;
+  padding:10px 14px; background:var(--bg-soft);
+  border-left:4px solid var(--blue); letter-spacing:-.005em;
+}
+h3 { font-size:17px; font-weight:700; color:var(--text); margin:22px 0 10px; }
+h4 { font-size:14px; font-weight:600; color:var(--text-2); margin:14px 0 8px; text-transform:uppercase; letter-spacing:.05em; }
+
+p { margin:8px 0; }
+ul, ol { margin:8px 0 12px 22px; }
+li { margin:5px 0; }
+
+/* Tables */
+table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+th { background:#1f2937; color:#fff; padding:9px 11px; text-align:left; font-weight:500; font-size:12.5px; }
+td { padding:9px 11px; border-bottom:1px solid var(--border-light); border-right:1px solid var(--border-light); vertical-align:top; }
+td:last-child { border-right:none; }
+tr:last-child td { border-bottom:1px solid var(--border); }
+tr:nth-child(even) td { background:var(--bg-soft); }
+table.tight td, table.tight th { padding:6px 9px; font-size:12.5px; }
+
+/* Status bar (dashboard) */
+.status-grid {
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;
+  margin:16px 0 24px;
+}
+.status-cell {
+  background:#fff; border:1px solid var(--border); border-radius:6px;
+  padding:14px 12px; text-align:center;
+}
+.status-cell .label {
+  font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:.06em;
+  font-weight:600; font-family:'IBM Plex Mono',monospace;
+}
+.status-cell .ticker { font-size:18px; font-weight:800; color:var(--text); margin-top:6px; letter-spacing:.02em; }
+.status-cell .signal { font-size:24px; font-weight:800; margin-top:4px; }
+.status-cell .sub { font-size:11px; color:var(--text-2); margin-top:3px; }
+
+.sig-Aplus { color:#166534; }
+.sig-A { color:#15803d; }
+.sig-B { color:#c2410c; }
+.sig-X { color:#991b1b; }
+
+/* Verdict box */
+.verdict-box {
+  background:linear-gradient(180deg,#eff6ff 0%, #f8fafc 100%);
+  border:1px solid #bfdbfe; border-left:4px solid var(--blue);
+  padding:20px 26px; margin:18px 0; border-radius:6px;
+}
+.verdict-box .label {
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--blue); letter-spacing:.1em; text-transform:uppercase; font-weight:600;
+}
+.verdict-box .pick {
+  font-size:28px; font-weight:800; color:var(--text); letter-spacing:-.02em; margin-top:6px;
+}
+.verdict-box .pick .ticker-tag {
+  background:var(--green); color:#fff; padding:3px 14px; border-radius:5px;
+  font-size:24px; margin-right:10px; font-family:'IBM Plex Mono',monospace;
+}
+.verdict-box .reasoning { margin-top:14px; font-size:14px; color:var(--text); line-height:1.75; }
+.verdict-box ol { margin-top:10px; }
+
+/* Ranking cards */
+.rank-grid {
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;
+  margin:18px 0;
+}
+.rank-card {
+  background:#fff; border:1px solid var(--border); border-radius:6px;
+  padding:14px 14px; position:relative; overflow:hidden;
+}
+.rank-card .rank-label {
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--text-3); letter-spacing:.08em; text-transform:uppercase; font-weight:600;
+}
+.rank-card .rank-period { font-size:14px; font-weight:700; color:var(--text); margin-top:4px; }
+.rank-card .rank-list { margin-top:10px; }
+.rank-card .rank-row { font-size:13px; padding:4px 0; display:flex; align-items:baseline; gap:8px; }
+.rank-card .medal { font-size:14px; flex-shrink:0; }
+.rank-card .ticker-name { font-weight:700; font-family:'IBM Plex Mono',monospace; font-size:13px; min-width:50px; }
+.rank-card .reason { font-size:12px; color:var(--text-2); }
+
+/* Color tints */
+.tint-green { background:#dcfce7; color:#166534; padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-yellow { background:#fef9c3; color:var(--amber); padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-orange { background:#ffedd5; color:var(--orange); padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-red { background:#fee2e2; color:var(--red); padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-blue { background:#dbeafe; color:#1e3a8a; padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+
+/* Callout boxes */
+.box-alpha {
+  background:#f0f9ff; border-left:4px solid #0ea5e9;
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+.box-warn {
+  background:#fef9c3; border-left:4px solid var(--amber);
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+.box-danger {
+  background:#fee2e2; border-left:4px solid var(--red);
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+.box-good {
+  background:#dcfce7; border-left:4px solid var(--green);
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+
+/* IRR stack bar */
+.stack-row { display:flex; align-items:center; margin:6px 0; font-size:12.5px; gap:10px; }
+.stack-row .ticker-label { width:64px; font-weight:700; font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
+.stack-bar {
+  flex:1; height:22px; display:flex; border-radius:3px; overflow:hidden;
+  background:#f1f5f9; border:1px solid var(--border-light); position:relative;
+}
+.stack-seg { display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:600; }
+.seg-eps { background:#15803d; }
+.seg-rerate-pos { background:#1565c0; }
+.seg-rerate-neg { background:#991b1b; }
+.seg-shr { background:#64748b; }
+.stack-row .total { width:80px; text-align:right; font-family:'IBM Plex Mono',monospace; font-weight:600; flex-shrink:0; }
+
+/* Footnote */
+.footnote { font-size:12px; color:var(--text-2); font-style:italic; margin-top:6px; }
+hr { border:none; border-top:1px solid var(--border-light); margin:24px 0; }
+
+@media (max-width:900px) {
+  .status-grid { grid-template-columns:repeat(2, 1fr); }
+  .rank-grid { grid-template-columns:repeat(2, 1fr); }
+  .topnav nav { display:none; }
+}
+@media print {
+  .topnav { display:none; }
+  body { background:#fff; }
+}
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <span class="brand">InvestMQuest Research</span>
+  <span class="crumb">/ comparisons / ASML vs LRCX vs KLAC vs AMAT</span>
+  <nav>
+    <a href="#sA">§A Dashboard</a>
+    <a href="#sB1">&lt;12M</a>
+    <a href="#sB2">2-3Y</a>
+    <a href="#sB3">3-5Y</a>
+    <a href="#sB4">5-10Y</a>
+    <a href="#sC">IRR</a>
+    <a href="#sD">Bear</a>
+    <a href="#sE">裁決</a>
+  </nav>
+</div>
+
+<div class="container">
+
+<div class="hero">
+  <span class="eyebrow">Multi-Stock Comparator · DCA Sources</span>
+  <h1>ASML vs LRCX vs KLAC vs AMAT — WFE 五寡占四檔 DCA 對比</h1>
+  <div class="meta">
+    報告日：2026-05-14｜分析師：買側 PM｜資料來源：四檔 DCA 報告（2026-05-11 寫稿）<br>
+    Source files：<code>DCA_ASML_20260511.html</code> ·  <code>DCA_LRCX_20260511.html</code> ·  <code>DCA_KLAC_20260511.html</code> ·  <code>DCA_AMAT_20260511.html</code>｜股價已校正至 5/14 開盤
+  </div>
+</div>
+
+<!-- ============================================
+     §A  Dashboard
+============================================= -->
+<h2 id="sA">§A｜對比 Dashboard（綜合一覽）</h2>
+
+<h3>四檔基本資料對照</h3>
+
+<table>
+<tr>
+  <th>項目</th>
+  <th>ASML</th>
+  <th>LRCX</th>
+  <th>KLAC</th>
+  <th>AMAT</th>
+</tr>
+<tr>
+  <td>身分（在 WFE 籃中的角色）</td>
+  <td>EUV 唯一供應商<br>（先進製程入場券）</td>
+  <td>Etch + ALE/ALD 雙寡占<br>+ HBM TSV 獨家</td>
+  <td>Process Control 寡占<br>（良率把關 58%）</td>
+  <td>WFE 廣度第一<br>（Deposition/CMP/Implant 80%+）</td>
+</tr>
+<tr>
+  <td>最新股價（5/14 開盤）</td>
+  <td class="num">$1,525</td>
+  <td class="num">$297</td>
+  <td class="num">$1,855</td>
+  <td class="num">$443</td>
+</tr>
+<tr>
+  <td>市值</td>
+  <td class="num">~$600B</td>
+  <td class="num">~$372B</td>
+  <td class="num">~$242B</td>
+  <td class="num">~$355B</td>
+</tr>
+<tr>
+  <td>Fwd PE / 5Y 分位</td>
+  <td class="num"><span class="tint-green">~32x / 25%</span></td>
+  <td class="num"><span class="tint-orange">~34.8x / 89%</span></td>
+  <td class="num"><span class="tint-red">~38.1x / 97%</span></td>
+  <td class="num"><span class="tint-red">~39.7x / 99%</span></td>
+</tr>
+<tr>
+  <td>5Y EPS CAGR（DCA Base）</td>
+  <td class="num">~10.0%/yr</td>
+  <td class="num">~8.7%/yr</td>
+  <td class="num">~9.5%/yr</td>
+  <td class="num">~9.0%/yr</td>
+</tr>
+<tr>
+  <td>護城河（DCA A1）</td>
+  <td><span class="tint-green">S 10/10 ↑</span></td>
+  <td><span class="tint-green">A 9/10 ↑</span></td>
+  <td><span class="tint-green">S 9.5/10 ↑</span></td>
+  <td><span class="tint-green">S 9.5/10 ↑</span></td>
+</tr>
+<tr>
+  <td>Runway Post-Y5</td>
+  <td>🟢 寬</td>
+  <td>🟢 寬</td>
+  <td>🟢 寬</td>
+  <td>🟢 寬</td>
+</tr>
+<tr>
+  <td>Pure MA + 動能</td>
+  <td><span class="tint-green">✅ + RSI 56 中性</span></td>
+  <td><span class="tint-yellow">✅ + RSI 63 略熱</span></td>
+  <td><span class="tint-red">✅ + RSI 70+ 過熱</span></td>
+  <td><span class="tint-red">✅ + RSI 73 極熱</span></td>
+</tr>
+<tr>
+  <td>4 週漂移</td>
+  <td class="num">+5.1%</td>
+  <td class="num">+9.8%</td>
+  <td class="num">+15.7%</td>
+  <td class="num">+29.0%</td>
+</tr>
+<tr>
+  <td>5Y IRR（Bull / Base / Bear）</td>
+  <td class="num">+15.4 / +9.1 / −9.7</td>
+  <td class="num">+14.9 / +7.6 / −5.6</td>
+  <td class="num">+14.3 / +7.0 / −9.7</td>
+  <td class="num">+13.7 / +4.6 / −14.5</td>
+</tr>
+<tr>
+  <td>5Y 機率加權 IRR</td>
+  <td class="num"><span class="tint-green">+6.9%/yr</span></td>
+  <td class="num"><span class="tint-yellow">+5.8%/yr</span></td>
+  <td class="num"><span class="tint-yellow">+6.0%/yr</span></td>
+  <td class="num"><span class="tint-red">+1.9%/yr</span></td>
+</tr>
+<tr>
+  <td>Max DD 範圍</td>
+  <td class="num"><span class="tint-yellow">−30 ~ −45% 🟡</span></td>
+  <td class="num"><span class="tint-yellow">−40 ~ −55% 🟡</span></td>
+  <td class="num"><span class="tint-yellow">−40 ~ −55% 🟡</span></td>
+  <td class="num"><span class="tint-red">−45 ~ −59% 🔴</span></td>
+</tr>
+<tr>
+  <td>DCA 訊號燈（綜合）</td>
+  <td><span class="sig-Aplus" style="font-weight:800;">A+</span></td>
+  <td><span class="sig-A" style="font-weight:800;">A</span></td>
+  <td><span class="sig-B" style="font-weight:800;">B</span></td>
+  <td><span class="sig-X" style="font-weight:800;">X</span></td>
+</tr>
+<tr>
+  <td><strong>DCA Verdict</strong></td>
+  <td><span class="tint-green" style="font-size:13px;">進場</span></td>
+  <td><span class="tint-yellow" style="font-size:13px;">觀望</span></td>
+  <td><span class="tint-yellow" style="font-size:13px;">觀望</span></td>
+  <td><span class="tint-red" style="font-size:13px;">觀望 / 等回檔</span></td>
+</tr>
+</table>
+
+<div class="footnote">註：所有 DCA 數據以 2026-05-11 報告日為基準；現價已校正至 2026-05-14 開盤，Fwd PE 已按比例重算（5Y 分位保留報告日 ranking — 三天的價格漂移不會撼動 5Y 區間相對位置）。</div>
+
+<h3>四層時間框架排序（一覽）</h3>
+
+<div class="rank-grid">
+  <div class="rank-card" style="border-top:3px solid var(--blue);">
+    <div class="rank-label">短期 view</div>
+    <div class="rank-period">&lt; 12 個月</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">ASML</span><span class="reason">唯一進場 + 動能不熱</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">LRCX</span><span class="reason">A 訊號 + 動能略熱</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">KLAC</span><span class="reason">B 訊號 + 過熱要回測</span></div>
+      <div class="rank-row"><span style="font-family:monospace;">4</span><span class="ticker-name">AMAT</span><span class="reason">X 訊號 + 動能極熱</span></div>
+    </div>
+  </div>
+  <div class="rank-card" style="border-top:3px solid var(--blue);">
+    <div class="rank-label">中期 view</div>
+    <div class="rank-period">2-3 年</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">ASML</span><span class="reason">High-NA ramp + 估值最便宜</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">LRCX</span><span class="reason">HBM TSV + DRAM 27% record</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">KLAC</span><span class="reason">Services 14% CAGR 但 PE 透支</span></div>
+      <div class="rank-row"><span style="font-family:monospace;">4</span><span class="ticker-name">AMAT</span><span class="reason">HBM ramp 但 R:R 雙時距負</span></div>
+    </div>
+  </div>
+  <div class="rank-card" style="border-top:3px solid var(--blue);">
+    <div class="rank-label">中長期 view</div>
+    <div class="rank-period">3-5 年</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">ASML</span><span class="reason">EUV monopoly + IRR 質感最乾淨</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">KLAC</span><span class="reason">PC intensity 從 9% → 11-13%</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">LRCX</span><span class="reason">GAA SAM mid → high-30%</span></div>
+      <div class="rank-row"><span style="font-family:monospace;">4</span><span class="ticker-name">AMAT</span><span class="reason">廣度但無單項 80%+ 護城河</span></div>
+    </div>
+  </div>
+  <div class="rank-card" style="border-top:3px solid var(--blue);">
+    <div class="rank-label">長期 view</div>
+    <div class="rank-period">5-10 年</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">ASML</span><span class="reason">2030 EUR 60B vision + Hyper-NA</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">KLAC</span><span class="reason">三條獨立 S 曲線銜接</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">LRCX</span><span class="reason">HBM5 W2W 被 BESI/TEL 蠶食</span></div>
+      <div class="rank-row"><span style="font-family:monospace;">4</span><span class="ticker-name">AMAT</span><span class="reason">Kinex 競爭 + ICAPS 政策風險</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="box-alpha">
+<strong>核心 alpha 觀察：</strong>排序對時間軸<strong>極不敏感</strong> — ASML 四層全部第一，AMAT 四層全部第四。中段 LRCX 與 KLAC 在 3-5Y / 5-10Y 互換排名（LRCX 在 3-5Y 第三是因為 HBM TSV 已兌現，5-10Y 第三是因為 BESI/TEL W2W 競爭風險揭露；KLAC 中長期靠 process control intensity 升級結構性勝出）。
+</div>
+
+<div class="verdict-box">
+<div class="label">綜合裁決卡片</div>
+<div class="pick"><span class="ticker-tag">ASML</span>四層全勝 + 唯一進場 verdict</div>
+<div class="reasoning">
+<strong>適用時間框架：</strong>全時間軸通用，但中長期（3-5Y / 5-10Y）優勢最大。
+<ol>
+  <li><strong>唯一 DCA 進場 verdict</strong>（其餘三檔皆觀望或迴避）— 「動能未過熱（RSI 56 + 4w +5%） + Pure MA ✅ 強勢」是四檔中唯一健康的進場時機。</li>
+  <li><strong>估值全班最便宜</strong>（Fwd PE 5Y 分位 ~25% vs LRCX 89% / KLAC 97% / AMAT 99%） — 不需要押「市場給更高倍數」，邊際資金進去靠 EPS 自然複利就能跑出 base IRR。</li>
+  <li><strong>IRR composition 最乾淨</strong>（Base 9.1% 中 EPS 貢獻 +10.0%/yr，re-rate 僅 −1.9%/yr） — 「公司自己長出來」的可抱性最強，最不依賴市場配合。</li>
+  <li><strong>護城河 10/10 + Max DD −45% 最淺</strong> — 全班最深護城河（EUV 100% monopoly）配上最低路徑風險（部分原因是估值已下緩衝，部分是 monopoly economics 在 cycle 下抗壓力強）。</li>
+</ol>
+<strong>進場條件：</strong>當前可分批進場（首批 0.8% portfolio，可從 $1,440-$1,500 區建立）；Q2 2026 法說（~2026-07-15）為節點 1，Q3 2026（~2026-10-15）為節點 2。
+</div>
+</div>
+
+<!-- ============================================
+     §B  四層獨立打分
+============================================= -->
+<h2 id="sB1">§B.1｜短期（&lt; 12M）— Pure MA + EPS revision + 最近催化</h2>
+
+<h3>該層最關鍵的 5 個維度</h3>
+<ol>
+  <li><strong>動能過熱程度</strong>（RSI 14d + 4 週漂移）— 短期最關鍵的進場 timing 門檻</li>
+  <li><strong>Pure MA 系統</strong>（MA60 / MA200 / W104）— 是否仍在多頭結構</li>
+  <li><strong>估值 5Y 分位</strong>（Fwd PE）— PE 是否處於 5Y 高位（短期回檔機率）</li>
+  <li><strong>EPS revision 軌跡</strong>（90d 上修幅度）— 近期催化是否仍在</li>
+  <li><strong>DCA Verdict / 訊號燈</strong>— 該檔自身 DCA 報告是否允許進場</li>
+</ol>
+
+<table>
+<tr>
+  <th>維度</th><th>ASML</th><th>LRCX</th><th>KLAC</th><th>AMAT</th>
+</tr>
+<tr>
+  <td>RSI 14d</td>
+  <td class="num"><span class="tint-green">55.94 中性</span></td>
+  <td class="num"><span class="tint-yellow">~63 偏熱</span></td>
+  <td class="num"><span class="tint-red">70.13 過熱</span></td>
+  <td class="num"><span class="tint-red">~72.8 極熱</span></td>
+</tr>
+<tr>
+  <td>4 週漂移</td>
+  <td class="num">+5.1%</td>
+  <td class="num">+9.8%</td>
+  <td class="num">+15.7%</td>
+  <td class="num">+29.0%</td>
+</tr>
+<tr>
+  <td>Pure MA 系統</td>
+  <td>✅ 強勢</td>
+  <td>✅ 強勢（W250 +12.4%）</td>
+  <td>✅ 強勢</td>
+  <td>✅ 三線多頭（W104 +104%）</td>
+</tr>
+<tr>
+  <td>Fwd PE 5Y 分位</td>
+  <td class="num"><span class="tint-green">~25%（便宜）</span></td>
+  <td class="num"><span class="tint-orange">89%（cycle peak）</span></td>
+  <td class="num"><span class="tint-red">97%（透支 6 年）</span></td>
+  <td class="num"><span class="tint-red">99%（透支 FY+2）</span></td>
+</tr>
+<tr>
+  <td>EPS 90d 上修</td>
+  <td class="num">FY26 +16%（Q1 beat 帶動）</td>
+  <td class="num">FY+1 +15.9% / FY+2 +30.3%</td>
+  <td class="num">FY27 +10.8%</td>
+  <td class="num">FY26 +15.5%</td>
+</tr>
+<tr>
+  <td>最近催化</td>
+  <td>Q1 2026 法說 beat + bookings 強</td>
+  <td>Q3 FY26 beat + GM 49.9% 10Y 新高</td>
+  <td>Q3 FY26 beat + 2030 vision 重申</td>
+  <td>追高末段（5/14 法說當天）</td>
+</tr>
+<tr>
+  <td>DCA Verdict</td>
+  <td><span class="tint-green">進場</span></td>
+  <td><span class="tint-yellow">觀望（條件式分批）</span></td>
+  <td><span class="tint-yellow">觀望（等 FPE 30x）</span></td>
+  <td><span class="tint-red">觀望（等回檔）</span></td>
+</tr>
+<tr>
+  <td><strong>排序</strong></td>
+  <td><strong>🥇 第一</strong></td>
+  <td><strong>🥈 第二</strong></td>
+  <td><strong>🥉 第三</strong></td>
+  <td><strong>4 第四</strong></td>
+</tr>
+</table>
+
+<h3>為什麼這個排序？</h3>
+
+<p>短期視角下，「<strong>進場 timing 健康度</strong>」是唯一重要的維度。其他三檔的基本面（EPS revision、moat trend、財務體質）都沒有問題，但 timing 全部被動能與估值雙重透支吃掉。<strong>ASML 是四檔中唯一一個四象限同時打勾的標的</strong>：動能未過熱、估值便宜、EPS 90d 上修 +16%、DCA 自己給「進場」verdict。</p>
+
+<p>三檔觀望組內部的細緻排序：LRCX 雖然 4w +9.8% 略熱，但 EPS 90d 上修速度（FY+1 +15.9% / FY+2 +30.3%）是四檔中最快的，DCA 訊號 A 級也比 KLAC 的 B 級乾淨；KLAC 與 AMAT 在估值上同時透支（97% vs 99% 分位），但 AMAT 4w +29% 是 KLAC（+15.7%）接近兩倍的動能透支，且 AMAT 自身 DCA 直接給 X 級訊號 — 這是 DCA 體系中「拒絕」級別，與另三檔的「A+/A/B」是分類性的差別，不是程度差。</p>
+
+<div class="box-warn">
+<strong>歷史警示：</strong>四檔中 KLAC + AMAT 在 RSI ≥ 70 後 1 個月內回測 8-15% 的歷史機率 ~60%。AMAT 自己 DCA 引用兩個歷史錨點（2018-03 FPE 17x 5Y 分位 85% → 下殺 -48%；2021-12 FPE 22x 5Y 分位 95% → 下殺 -55%）— <strong>當前 99% 分位是 AMAT 自身史上最熱位置</strong>，pattern match 警示燈最強。
+</div>
+
+<!-- ============== B2 ============== -->
+<h2 id="sB2">§B.2｜中期（2-3Y）— 拐點催化 + 估值修復 + PE re-rate</h2>
+
+<h3>該層最關鍵的 5 個維度</h3>
+<ol>
+  <li><strong>2026-2027 拐點催化兌現度</strong>（High-NA / HBM TSV / Kinex / 2nm GAA 等技術節點）</li>
+  <li><strong>EPS 共識上修能否止穩或持續</strong>（FY+1 / FY+2 軌跡）</li>
+  <li><strong>估值修復至 5Y 中位的空間</strong>（即 multiple expansion 還是 compression）</li>
+  <li><strong>PE re-rate 紅利</strong>（2-3Y IRR composition 中估值貢獻方向）</li>
+  <li><strong>Pattern Match 中期錨點</strong>（歷史 2-3Y 同質 setup）</li>
+</ol>
+
+<table>
+<tr>
+  <th>維度</th><th>ASML</th><th>LRCX</th><th>KLAC</th><th>AMAT</th>
+</tr>
+<tr>
+  <td>2026-2027 主拐點</td>
+  <td>High-NA EUV 出貨啟動（2026 +50% YoY）</td>
+  <td>HBM TSV ramp + DRAM 27% record</td>
+  <td>Services 14% CAGR + advanced packaging</td>
+  <td>HBM $1.5B → $3B FY27（待驗證）</td>
+</tr>
+<tr>
+  <td>2027 共識</td>
+  <td>EPS €36.58（+17% YoY）／2030 EUR 60B vision</td>
+  <td>EPS $7.70 共識 / Erste $7.88</td>
+  <td>EPS $48.16（90d +10.8%）</td>
+  <td>EPS $14.07（90d +15.5%）</td>
+</tr>
+<tr>
+  <td>當前 PE → 5Y 中位空間</td>
+  <td class="num"><span class="tint-green">~32x → 38x 上行</span></td>
+  <td class="num"><span class="tint-orange">~35x → 23x 下行</span></td>
+  <td class="num"><span class="tint-red">~38x → 25x 下行</span></td>
+  <td class="num"><span class="tint-red">~40x → 18x 大幅下行</span></td>
+</tr>
+<tr>
+  <td>PE re-rate 5Y 貢獻（Base）</td>
+  <td class="num"><span class="tint-yellow">−1.9%/yr 微壓</span></td>
+  <td class="num"><span class="tint-orange">−1.7%/yr 微壓</span></td>
+  <td class="num"><span class="tint-red">−4.7%/yr 顯著壓縮</span></td>
+  <td class="num"><span class="tint-red">−5.9%/yr 嚴重壓縮</span></td>
+</tr>
+<tr>
+  <td>Pattern Match 錨點</td>
+  <td>2015-2020 ASML（EUV 從 0→1）+ AMAT 1995-2005（300mm 過渡）</td>
+  <td>2017-2019 LRCX（WFE supercycle，PE 13x → cycle peak）</td>
+  <td>2020-2022 ASML（高位 FPE 40x，3Y 報酬 −15%）</td>
+  <td>2018 + 2021 AMAT 自身（FPE 99% 分位後 −48% / −55% drawdown）</td>
+</tr>
+<tr>
+  <td>Pattern Match 啟示</td>
+  <td>monopoly 維持期 + High-NA 二次 ramp，IRR 質感從雙引擎變 EPS 主導</td>
+  <td>EPS CAGR 在 cycle 期高峰估計（31.7%），歷史 5Y IRR ~20% 給 Bull case 上限 14.9%</td>
+  <td>頂峰 FPE 進場常吃 1-2 年負報酬，但護城河護身者 3-5 年內復原</td>
+  <td>5Y 報酬 +87%（2018 case），但中途 max DD -48%</td>
+</tr>
+<tr>
+  <td><strong>排序</strong></td>
+  <td><strong>🥇 第一</strong></td>
+  <td><strong>🥈 第二</strong></td>
+  <td><strong>🥉 第三</strong></td>
+  <td><strong>4 第四</strong></td>
+</tr>
+</table>
+
+<h3>為什麼這個排序？</h3>
+
+<p>中期視角下，<strong>「估值已便宜」vs「估值靠 EPS 上修才能消化」是分水嶺</strong>。ASML 在 32x（5Y 分位 25%）進場，PE re-rate 5Y 貢獻 −1.9%/yr 接近中性 — 不依賴市場給更高倍數，但市場給更高倍數的空間（上行至 5Y 中位 38x）反而是 upside；其他三檔在 89-99% 分位進場，PE re-rate 全部負貢獻：LRCX −1.7%（cycle 期降溫，溫和）、KLAC −4.7%（從 38x 壓回 25x 中位）、AMAT −5.9%（從 40x 壓回 18x 中位，最劇烈）。</p>
+
+<p>LRCX vs KLAC 在中期排第二、第三的關鍵在 <strong>EPS 上修速度差</strong>：LRCX FY+1 +15.9% / FY+2 +30.3% 是四檔中最快，這個 EPS 軌跡可以跟上 PE 微壓的速度（Base IRR Composition 中 EPS +8.7% / 估值 −1.7% 接近抵銷）；KLAC FY27 共識 +10.8% 慢一拍，且其 PE 從 38x 壓到 25x 中位的 re-rate 4.7%/yr 比 EPS 9.5%/yr 吃掉一半。AMAT 最差不是 EPS 不夠（90d +15.5% 與 LRCX 相當），是 <strong>EPS 上修跟 PE 同步擴張</strong>（DCA 引：90 天 FY26 EPS 從 $9.58 → $11.07 +15.5%，股價卻從 $337 → $443 +31%，意思是 PE 從 32x 擴張到 39x — 這是動能末段的典型訊號）。</p>
+
+<!-- ============== B3 ============== -->
+<h2 id="sB3">§B.3｜中長期（3-5Y）— TAM + 護城河趨勢 + EPS 兌現 + IRR 質感</h2>
+
+<h3>該層最關鍵的 5 個維度</h3>
+<ol>
+  <li><strong>TAM 滲透曲線位置</strong>（S 曲線早 / 中 / 晚期）</li>
+  <li><strong>護城河趨勢</strong>（↑ widening / → flat / ↓ narrowing）</li>
+  <li><strong>EPS 5Y CAGR 可兌現性</strong>（不是單純樂觀估，是可證偽性）</li>
+  <li><strong>IRR composition 質感</strong>（複利占比 vs re-rate 占比 vs 股東回報占比）</li>
+  <li><strong>單變數可證偽性</strong>（thesis 失敗路徑的可監測性）</li>
+</ol>
+
+<table>
+<tr>
+  <th>維度</th><th>ASML</th><th>LRCX</th><th>KLAC</th><th>AMAT</th>
+</tr>
+<tr>
+  <td>TAM S 曲線位置</td>
+  <td>中段（EUV 滲透 ~10%, 仍有 5-10x 空間）</td>
+  <td>中早期（GAA 2nm 才起 ramp）</td>
+  <td>Phase II 中段（PC intensity 從 9% → 11-13%）</td>
+  <td>Phase II 中段（先進製程 ~28% 滲透）</td>
+</tr>
+<tr>
+  <td>護城河趨勢與量化證據</td>
+  <td>S ↑ widening（High-NA 啟動 + 同業 zero entry）</td>
+  <td>A ↑ widening（etch SAM mid → high-30% + ROIC 75%）</td>
+  <td>S ↑ widening（PC 市佔 53% → 58% / 12M +5pp）</td>
+  <td>S ↑ widening（但「廣度第一」，無單項 80%+ 獨家）</td>
+</tr>
+<tr>
+  <td>5Y EPS CAGR 兌現可信度</td>
+  <td class="num"><span class="tint-green">10.0%/yr（EUR 60B vision 部分兌現）</span></td>
+  <td class="num"><span class="tint-yellow">8.7%/yr（cycle 期高峰估）</span></td>
+  <td class="num"><span class="tint-green">9.5%/yr（services lock-in 強）</span></td>
+  <td class="num"><span class="tint-yellow">9.0%/yr（HBM $3B 達標未驗證）</span></td>
+</tr>
+<tr>
+  <td>IRR composition（Base, %/yr）</td>
+  <td class="num">EPS +10.0 / Re-rate −1.9 / 股東回報 +1.0 = <span class="tint-green">+9.1</span></td>
+  <td class="num">EPS +8.7 / Re-rate −1.7 / 股東回報 +0.6 = <span class="tint-yellow">+7.6</span></td>
+  <td class="num">EPS +9.5 / Re-rate −4.7 / 股東回報 +2.5 = <span class="tint-yellow">+7.3</span></td>
+  <td class="num">EPS +9.0 / Re-rate −5.9 / 股東回報 +1.5 = <span class="tint-red">+4.6</span></td>
+</tr>
+<tr>
+  <td>EPS 複利占 Base IRR 比重</td>
+  <td class="num"><span class="tint-green">110%（最高 — re-rate 中性偏負）</span></td>
+  <td class="num"><span class="tint-yellow">114%（高，但 cycle 期高估）</span></td>
+  <td class="num"><span class="tint-orange">130%（看似高，但 re-rate 吞 64%）</span></td>
+  <td class="num"><span class="tint-red">196%（極端依賴 EPS，re-rate 吞 128%）</span></td>
+</tr>
+<tr>
+  <td>單變數可證偽性</td>
+  <td>MATCH Act 立法（可監測，季度）+ High-NA recognized rev（季度）</td>
+  <td>HBM TSV 主供應商切換（季度）+ WFE 2027 共識 + GM &lt; 49%</td>
+  <td>Services YoY &lt; 10% 連 2 季 + China &lt; $500M/季</td>
+  <td>Semi Systems GM &lt; 46% 連 2 季 + BIS ICAPS 升級</td>
+</tr>
+<tr>
+  <td><strong>排序</strong></td>
+  <td><strong>🥇 第一</strong></td>
+  <td><strong>🥉 第三</strong></td>
+  <td><strong>🥈 第二</strong></td>
+  <td><strong>4 第四</strong></td>
+</tr>
+</table>
+
+<h3>為什麼這個排序？關鍵在 IRR 質感</h3>
+
+<p>3-5Y 視角真正的 alpha 不在「Bull 多少 / Base 多少」這個數字，<strong>而在這個數字怎麼長出來</strong>。看四檔 Base IRR composition：</p>
+
+<h4>EPS 複利 vs Re-rate vs 股東回報三引擎拆解（Base case, %/yr）</h4>
+
+<div style="background:var(--bg-soft); padding:14px 18px; border-radius:4px; margin:10px 0;">
+
+<div class="stack-row">
+  <div class="ticker-label">ASML</div>
+  <div class="stack-bar">
+    <div class="stack-seg seg-eps" style="width:77%;">EPS +10.0</div>
+    <div class="stack-seg seg-rerate-neg" style="width:15%;">Re-rate −1.9</div>
+    <div class="stack-seg seg-shr" style="width:8%;">+1.0</div>
+  </div>
+  <div class="total">= +9.1%/yr</div>
+</div>
+
+<div class="stack-row">
+  <div class="ticker-label">LRCX</div>
+  <div class="stack-bar">
+    <div class="stack-seg seg-eps" style="width:79%;">EPS +8.7</div>
+    <div class="stack-seg seg-rerate-neg" style="width:15%;">Re-rate −1.7</div>
+    <div class="stack-seg seg-shr" style="width:6%;">+0.6</div>
+  </div>
+  <div class="total">= +7.6%/yr</div>
+</div>
+
+<div class="stack-row">
+  <div class="ticker-label">KLAC</div>
+  <div class="stack-bar">
+    <div class="stack-seg seg-eps" style="width:57%;">EPS +9.5</div>
+    <div class="stack-seg seg-rerate-neg" style="width:28%;">Re-rate −4.7</div>
+    <div class="stack-seg seg-shr" style="width:15%;">+2.5</div>
+  </div>
+  <div class="total">= +7.3%/yr</div>
+</div>
+
+<div class="stack-row">
+  <div class="ticker-label">AMAT</div>
+  <div class="stack-bar">
+    <div class="stack-seg seg-eps" style="width:55%;">EPS +9.0</div>
+    <div class="stack-seg seg-rerate-neg" style="width:36%;">Re-rate −5.9</div>
+    <div class="stack-seg seg-shr" style="width:9%;">+1.5</div>
+  </div>
+  <div class="total">= +4.6%/yr</div>
+</div>
+
+</div>
+
+<p><strong>關鍵洞察</strong>：四檔 EPS 引擎都在 8.7-10.0%/yr 區間（差不到 1.3%p），<strong>真正分出勝負的是估值 re-rate 段</strong> — ASML / LRCX 的 −1.7~−1.9%/yr 是「便宜進場 + 略微降溫」的中性壓力；KLAC 的 −4.7%/yr 是「從 38x 壓回 25x 中位」的顯著拖累；AMAT 的 −5.9%/yr 是「從 40x 壓回 18x 中位」的劇烈壓縮，吞掉了 EPS 引擎的 66%。</p>
+
+<p><strong>LRCX vs KLAC 在 3-5Y 排第二、第三的原因</strong>：表面上 LRCX Base IRR 7.6 略高於 KLAC 7.3，看似 LRCX 該排第二。但實際看「<strong>EPS 兌現可信度</strong>」與「<strong>thesis 結構性</strong>」：</p>
+<ul>
+  <li>LRCX 8.7% EPS CAGR 中很大比重來自「cycle 高位的高峰估計」 — DCA 自己承認 FY+2 共識 +30.3% 上修是 cycle 高峰，且 §6a 盲點 3 寫明「ROIC 75% / GM 49.9% / Op Margin 35% 全 5Y 95%+ 分位」會在 cycle 平緩期回到 47-48% GM；換句話說 LRCX 的 EPS 引擎是「cycle 高位的延展」而非「結構性升級」。</li>
+  <li>KLAC 9.5% EPS CAGR 較少依賴 cycle — 其中 services（佔營收 22%）以 14% CAGR 至 2030 是 cycle-resilient 的 recurring 收入（57k installed base + 80% multi-year contract），這部分結構性貢獻比 LRCX 的「cycle 期 etch ASP 升級」更耐 cycle 反轉。</li>
+  <li>更關鍵的是 <strong>thesis 性質</strong>：KLAC 的 process control intensity 從 9% → 11-13% 是<strong>跨 cycle 的單向 step change</strong>（不會隨 cycle 反轉而退回 9%）；LRCX 的 etch SAM mid-30% → high-30% 部分受惠於 GAA tool intensity（結構性），但 HBM TSV 占比的可持續性繫於 HBM 量產 cycle。</li>
+</ul>
+
+<p>所以 KLAC 在 3-5Y 排第二、LRCX 第三，雖然 Base IRR 數字 LRCX 略高 — 但這個排序看的是「<strong>thesis 韌性</strong>」而非「<strong>數字</strong>」。</p>
+
+<div class="box-alpha">
+<strong>Pattern Match 在 3-5Y 視角的應用：</strong>ASML DCA 引「2015-2020 ASML 自身（EUV 從 0→1）」歷史 5Y IRR ~32%，給 Bull case 14.9% 一個合理上限（當前是 1→3 monopoly 維持期，不再是 0→1）；LRCX 引「2017-2019 LRCX 自身上次 supercycle」5Y IRR ~20%，給 Bull 14.9% upper bound — <strong>但起點 PE 13x vs 34.5x 差異</strong>，解釋為什麼 Base 只有 7.6%（不到上次的一半），re-rate alpha 已被前人吃掉。
+</div>
+
+<!-- ============== B4 ============== -->
+<h2 id="sB4">§B.4｜長期（5-10Y）— Runway post-Y5 + 範式風險 + 第二曲線</h2>
+
+<h3>該層最關鍵的 5 個維度</h3>
+<ol>
+  <li><strong>Y5 末 TAM 滲透率</strong>（仍有多少 runway）</li>
+  <li><strong>第二 / 第三 S 曲線銜接</strong>（Y5 後增量在哪裡）</li>
+  <li><strong>範式風險</strong>（被 platform 替代 / 技術換軌 / AI agent 重塑）</li>
+  <li><strong>10 年護城河抗風險</strong>（即使 cycle 反覆，moat 是否能 hold）</li>
+  <li><strong>創辦人 / 管理層 alignment + 資本配置紀律</strong>（10 年抱誰）</li>
+</ol>
+
+<table>
+<tr>
+  <th>維度</th><th>ASML</th><th>LRCX</th><th>KLAC</th><th>AMAT</th>
+</tr>
+<tr>
+  <td>Y5（2031）末 TAM 滲透</td>
+  <td>EUV 500 台 vs fab 安裝基礎 5000 = ~10%（仍 5-10x 空間）</td>
+  <td>先進製程設備 28% 滲透，仍 3x 空間</td>
+  <td>PC 佔 WFE 11-13%，仍 +200-400bp 空間</td>
+  <td>先進製程 28% 滲透 + 廣度第一</td>
+</tr>
+<tr>
+  <td>第二 / 第三 S 曲線</td>
+  <td>Hyper-NA EUV（2030+）+ Mistral AI（軟體, 7-10Y）</td>
+  <td>HBM5 W2W hybrid bonding（2028+，BESI/TEL 主導）+ glass substrate</td>
+  <td>Advanced packaging（$11.5B TAM 2030）+ glass substrate + CPO 三條獨立曲線</td>
+  <td>Kinex hybrid bonding（待 SK Hynix → TSMC/Samsung 採用）+ OLED Gen 8.6</td>
+</tr>
+<tr>
+  <td>範式風險</td>
+  <td class="num"><span class="tint-yellow">中（地緣政治 binary）+ NIL 替代極遠</span></td>
+  <td class="num"><span class="tint-yellow">中（TEL etch + BESI W2W 雙線追趕）</span></td>
+  <td class="num"><span class="tint-yellow">中（ONTO 在 advanced packaging 蠶食）</span></td>
+  <td class="num"><span class="tint-orange">中高（BESI W2W 替代 Kinex 60%+ 機率）</span></td>
+</tr>
+<tr>
+  <td>10Y 護城河抗風險</td>
+  <td>S 級 + technical lock-in 20 年（Zeiss/Cymer 全資）</td>
+  <td>A 級 + process recipe 18-24M 切換成本</td>
+  <td>S 級 + 57k installed base + 53 季正 YoY services</td>
+  <td>S 級 + 30 年工藝知識 + reference tool 地位</td>
+</tr>
+<tr>
+  <td>管理層 + 資本配置</td>
+  <td>€12B 2026-28 buyback + €7.50 股息 +17% YoY + 紀律收購（2013 Cymer 後無大併購）</td>
+  <td>5Y ≥85% FCF return + 股息 +120% + $2B 額外 buyback；CEO 2018 起</td>
+  <td>$11B buyback 授權 + 股息 17 連年加碼 +21% + R&D 13-15% 行業最高</td>
+  <td>$10B buyback + 股息穩定加碼 + BESI 9% 持股策略性</td>
+</tr>
+<tr>
+  <td>10Y IRR 壓力測試（DCA 自評）</td>
+  <td>Bull 10Y +10.9%/yr（EUR 60B + Hyper-NA）</td>
+  <td>Bull 10Y +11.0%/yr（cycle 平緩期）</td>
+  <td>Bull 10Y +8.9%/yr（與大盤打平）</td>
+  <td>Bull 10Y +7.5%/yr（不及大盤）</td>
+</tr>
+<tr>
+  <td><strong>排序</strong></td>
+  <td><strong>🥇 第一</strong></td>
+  <td><strong>🥉 第三</strong></td>
+  <td><strong>🥈 第二</strong></td>
+  <td><strong>4 第四</strong></td>
+</tr>
+</table>
+
+<h3>為什麼這個排序？關鍵是第二曲線的「結構獨立性」</h3>
+
+<p>10 年視角下，<strong>單一護城河的深度遠不如「第二、第三 S 曲線數量」重要</strong> — 因為 10 年內某條曲線必然會放緩 / 被挑戰，所以重點是「銜接是否多元」。</p>
+
+<ul>
+  <li><strong>ASML 第一</strong>：Hyper-NA EUV（2030+ R&D 中）+ Mistral AI 投資（軟體 / embedded computing，7-10Y option）+ 2030 EUR 60B vision 之後仍有 sub-1nm A6/A4 路徑（2032-2035）。範式風險（NIL 替代）被產業共識否定，地緣政治雖是 binary 但已有 §5 single thing 監測 trigger。10Y IRR Bull 10.9% 是四檔最高。</li>
+  <li><strong>KLAC 第二</strong>：三條<strong>結構性獨立</strong>的第二曲線 — advanced packaging（$11.5B TAM 2030）、glass substrate、CPO（co-packaged optics）— 任兩條兌現就足以承接 Y5 後。Process control intensity 從 9% → 11-13% 是跨技術節點累積（GAA → A16 → A12 → A14 → ...），是「越複雜 KLAC 越值錢」的單向通膨。services lock-in 在 10Y 視角下變強而非變弱（57k 工具裝機底是 cumulative 累積）。</li>
+  <li><strong>LRCX 第三</strong>：第二曲線只有 HBM5 W2W hybrid bonding + glass substrate 兩條，且 HBM5 W2W 直接收入已被 ID critic 揭露 BESI 67% post-AP 主導 — 即 LRCX 在 HBM 第二曲線的「等位點」（leverage point）不如 thesis 樂觀推測。LRCX DCA Phase B C2 矛盾自己裁決「HBM 時點選擇 TSV 仍主導、W2W 要 2028+」，等於 self-acknowledge 第二曲線打折。</li>
+  <li><strong>AMAT 第四</strong>：Kinex hybrid bonding 雖然獨家，但<strong>競爭威脅最大</strong>（BESI 標準 die-to-die 工具 60%+ HBM 訂單機率），AMAT 9% BESI 持股是對沖但不擔保毛利；ICAPS 28% 曝險加上 WFE 仍 cyclical 部分；OLED Gen 8.6 是長期 option 但非命脈。10Y IRR Bull 7.5% <strong>不及大盤</strong>。</li>
+</ul>
+
+<div class="box-alpha">
+<strong>10Y 視角排序的關鍵 alpha：</strong>3-5Y vs 5-10Y 排序看起來不變（都是 ASML / KLAC / LRCX / AMAT 順序），但 <strong>LRCX 在 5-10Y 的 ranking 落差比 3-5Y 大</strong> — 3-5Y 仍接近第二（IRR 7.6 vs KLAC 7.3 差 0.3%p），5-10Y 隨 HBM5 W2W 兌現窗口接近，BESI/TEL 主導 W2W 的風險越來越具體，LRCX 自身 DCA 已 acknowledge 該風險。<strong>排序對時間軸敏感的點：LRCX 在 5-10Y 視角下 thesis 結構性退化。</strong>
+</div>
+
+<!-- ============================================
+     §C  IRR Composition 質感對比
+============================================= -->
+<h2 id="sC">§C｜IRR Composition 質感對比（縱深層）</h2>
+
+<p>3-5Y view 真正的 alpha 不在 IRR 數字，而在 IRR 怎麼來的。這是這個對比框架的核心差異化 — 多數對比工具只看 IRR，不看質感。</p>
+
+<h3>三引擎拆解（Base / Bull / Bear, %/yr）</h3>
+
+<table>
+<tr>
+  <th>情境</th><th>檔別</th><th>EPS CAGR</th><th>PE re-rate</th><th>股息+回購</th><th>合計</th><th>解讀</th>
+</tr>
+<tr><td rowspan="4"><strong>Bull</strong></td>
+  <td><strong>ASML</strong></td><td class="num">+13.5</td><td class="num">+0.8</td><td class="num">+1.1</td><td class="num"><strong>+15.4</strong></td>
+  <td>三引擎全正，且 re-rate 接近中性 — Bull 不靠估值賭博</td>
+</tr>
+<tr><td><strong>LRCX</strong></td><td class="num">+12.5</td><td class="num">+0.6</td><td class="num">+1.8</td><td class="num"><strong>+14.9</strong></td>
+  <td>類似 ASML 結構，但 EPS 較低（GM peak 限制）</td>
+</tr>
+<tr><td><strong>KLAC</strong></td><td class="num">+11.2</td><td class="num">+0.5</td><td class="num">+2.5</td><td class="num"><strong>+14.2</strong></td>
+  <td>股東回報引擎最強（buyback + 股息 17 連年）</td>
+</tr>
+<tr><td><strong>AMAT</strong></td><td class="num">+12.0</td><td class="num">0.0</td><td class="num">+1.7</td><td class="num"><strong>+13.7</strong></td>
+  <td>Bull 已假設 PE 維持 30x，已是樂觀邊界</td>
+</tr>
+<tr><td rowspan="4"><strong>Base</strong></td>
+  <td><strong>ASML</strong></td><td class="num">+10.0</td><td class="num">−1.9</td><td class="num">+1.0</td><td class="num"><strong>+9.1</strong></td>
+  <td><span class="tint-green">EPS 占 110% — 自然複利好抱</span></td>
+</tr>
+<tr><td><strong>LRCX</strong></td><td class="num">+8.7</td><td class="num">−1.7</td><td class="num">+0.6</td><td class="num"><strong>+7.6</strong></td>
+  <td><span class="tint-yellow">EPS 占 114% — 但 cycle 期高估</span></td>
+</tr>
+<tr><td><strong>KLAC</strong></td><td class="num">+9.5</td><td class="num">−4.7</td><td class="num">+2.5</td><td class="num"><strong>+7.3</strong></td>
+  <td><span class="tint-orange">re-rate 吞 64% EPS — 需市場配合中等難抱</span></td>
+</tr>
+<tr><td><strong>AMAT</strong></td><td class="num">+9.0</td><td class="num">−5.9</td><td class="num">+1.5</td><td class="num"><strong>+4.6</strong></td>
+  <td><span class="tint-red">re-rate 吞 66% EPS — 強力反噬，業務做得好 ≠ 股價好</span></td>
+</tr>
+<tr><td rowspan="4"><strong>Bear</strong></td>
+  <td><strong>ASML</strong></td><td class="num">+0.5</td><td class="num">−9.7</td><td class="num">+0.5</td><td class="num"><strong>−8.7</strong></td>
+  <td>Bear 主要靠 re-rate 殺價（PE 30 → 22x）</td>
+</tr>
+<tr><td><strong>LRCX</strong></td><td class="num">+3.0</td><td class="num">−9.5</td><td class="num">+0.9</td><td class="num"><strong>−5.6</strong></td>
+  <td>Bear 中 EPS 仍正（cycle 韌性）— 四檔中 Bear 最佳</td>
+</tr>
+<tr><td><strong>KLAC</strong></td><td class="num">+2.5</td><td class="num">−13.5</td><td class="num">+1.5</td><td class="num"><strong>−9.5</strong></td>
+  <td>Bear 主要靠 re-rate 殺價（PE 37 → 18x，幅度最大）</td>
+</tr>
+<tr><td><strong>AMAT</strong></td><td class="num">+5.0</td><td class="num">−21.0</td><td class="num">+1.5</td><td class="num"><strong>−14.5</strong></td>
+  <td>Bear 中 re-rate 殺 21%/yr 史詩級反噬（PE 39 → 14x）</td>
+</tr>
+</table>
+
+<div class="box-alpha">
+<strong>關鍵差異化觀察：</strong>
+<ul>
+  <li><strong>「靠自己跑」vs「靠市場配合」</strong>：ASML / LRCX Base case re-rate 貢獻僅 −1.7~−1.9%/yr 接近中性，意思是這兩檔的 IRR 主要靠公司自己跑（EPS 複利），不需要市場配合（給更高倍數）；KLAC / AMAT re-rate −4.7%/yr / −5.9%/yr 等於「公司跑得不錯，但你必須說服市場別把估值壓回中位」 — 這不是 alpha，是賭注。</li>
+  <li><strong>Bear case 的 re-rate 暴力差距</strong>：ASML Bear PE 30 → 22x（壓 27%）；LRCX Bear PE 34.5 → 22x（壓 36%）；KLAC Bear PE 37 → 18x（壓 51%）；AMAT Bear PE 39 → 14x（壓 64%）。<strong>當前進場價越高，Bear 中 re-rate 殺得越狠 — 這是「估值是 floor」的具體含義</strong>。</li>
+  <li><strong>Bear case 中 LRCX 最佳（−5.6%/yr）的非顯而易見原因</strong>：不是 LRCX 體質特別好，而是 LRCX 在 cycle 反轉時 EPS 仍正（+3.0%/yr，cycle 韌性），而 ASML / KLAC / AMAT 在 Bear 時 EPS 接近零。LRCX 的這個特性對組合配置有暗示 — 即使首選不是 LRCX，<strong>portfolio 中已持有 LRCX 的 case 不要急著減</strong>（Bear-resilient）。</li>
+</ul>
+</div>
+
+<!-- ============================================
+     §D  Bear case 對比
+============================================= -->
+<h2 id="sD">§D｜Bear Case + Max DD 路徑對比</h2>
+
+<h3>四檔 §5 Single Thing + Bear 性質</h3>
+
+<table>
+<tr>
+  <th>檔別</th>
+  <th>§5 Single Thing（DCA 自評）</th>
+  <th>Bear 性質</th>
+  <th>觸發機率</th>
+  <th>觸發時間軸</th>
+  <th>Max DD 評級</th>
+</tr>
+<tr>
+  <td><strong>ASML</strong></td>
+  <td>MATCH Act 兩院過 + 荷蘭妥協 + ASML 指引下修 ≥ 10%（三條件同時）</td>
+  <td><span class="tint-yellow">範式風險 / 政策 binary</span></td>
+  <td class="num">~15-20%</td>
+  <td class="num">2026 H2 - 2028</td>
+  <td class="num"><span class="tint-yellow">−30 ~ −45% 🟡（最淺）</span></td>
+</tr>
+<tr>
+  <td><strong>LRCX</strong></td>
+  <td>Primary：Samsung/SK Hynix 切換 HBM TSV 主供應商<br>Secondary：WFE 2027 共識 &lt; $130B + GM &lt; 49% 連 2 季</td>
+  <td><span class="tint-yellow">執行 + 結構混合</span></td>
+  <td class="num">5-10% / 25-30%</td>
+  <td class="num">2027 Q3-Q4</td>
+  <td class="num"><span class="tint-yellow">−40 ~ −55% 🟡</span></td>
+</tr>
+<tr>
+  <td><strong>KLAC</strong></td>
+  <td>Primary：Services YoY &lt; 10% 連 2 季<br>Secondary：China 季度 &lt; $500M</td>
+  <td><span class="tint-yellow">執行風險 / 季度可監測</span></td>
+  <td class="num">~5% / ~25%</td>
+  <td class="num">2027 Q2-Q4</td>
+  <td class="num"><span class="tint-yellow">−40 ~ −55% 🟡</span></td>
+</tr>
+<tr>
+  <td><strong>AMAT</strong></td>
+  <td>Primary：BIS 升級涵蓋 ICAPS/power/sensor<br>Secondary：Semi Systems GM &lt; 46% 連 2 季</td>
+  <td><span class="tint-orange">三重風險疊加：cycle + 政策 + 護城河量化</span></td>
+  <td class="num">~30%</td>
+  <td class="num">2026 Q4 - 2027 Q3</td>
+  <td class="num"><span class="tint-red">−45 ~ −59% 🔴（最深）</span></td>
+</tr>
+</table>
+
+<h3>誰是執行風險，誰是範式風險？</h3>
+
+<table>
+<tr>
+  <th>檔別</th>
+  <th>主要風險類型</th>
+  <th>1-2 季內可看出？</th>
+  <th>10 年內持有焦慮程度</th>
+</tr>
+<tr>
+  <td><strong>ASML</strong></td>
+  <td><span class="tint-yellow">範式 / 政治 binary</span>（MATCH Act 通過 → 全球 monopoly 變西方 only）</td>
+  <td>否 — 立法週期 6-18 個月，且過程中會有「快過了」「又卡了」反覆訊號</td>
+  <td>中（地緣政治持續焦慮，但已有具體 monitor 標的）</td>
+</tr>
+<tr>
+  <td><strong>LRCX</strong></td>
+  <td><span class="tint-green">執行 + 結構混合</span>（GM / WFE 共識 / HBM TSV 主供應商切換）</td>
+  <td>是 — 季報 GM、SEMI WFE forecast、Samsung/SK Hynix HBM 訂單揭露</td>
+  <td>低（風險可量化、可監測、季度可見）</td>
+</tr>
+<tr>
+  <td><strong>KLAC</strong></td>
+  <td><span class="tint-green">執行風險 / 季度可監測</span>（Services YoY + China 季度）</td>
+  <td>是 — 兩個 trigger 都是季度 10-Q 直接揭露</td>
+  <td>低（風險可量化、可監測、季度可見）</td>
+</tr>
+<tr>
+  <td><strong>AMAT</strong></td>
+  <td><span class="tint-orange">三重疊加</span>（BIS 政治 + WFE cycle + Semi GM 量化）</td>
+  <td>部分 — BIS 政策不可預測，cycle 反轉要 2-3 季確認，GM 是 lagging</td>
+  <td>高（多重風險同時運作，難以單一 monitor）</td>
+</tr>
+</table>
+
+<div class="box-warn">
+<strong>10 年持有焦慮對排序的暗示：</strong>5-10Y 視角下，<strong>持有期間的焦慮程度</strong>與最終報酬一樣重要。範式風險檔案在 5-10Y view 下不利，因為持有期間會有持續焦慮 — ASML 的 MATCH Act 雖然 binary 但有具體 monitor、立法週期透明（每月可查 US Congress 進度），不是「黑箱式焦慮」；AMAT 的三重風險疊加（政治不可預測 + cycle 滯後 + 護城河量化 lagging）才是最難抱的 case — 即使最終報酬 OK，<strong>持有過程中很可能因為短期 ambiguous moment 而提前出場</strong>。
+</div>
+
+<h3>Max DD 觸發後的復原時間</h3>
+
+<table>
+<tr>
+  <th>檔別</th>
+  <th>觸發後復原時間（DCA 自評）</th>
+  <th>復原條件</th>
+</tr>
+<tr><td><strong>ASML</strong></td><td>~18 個月（pattern：2024 H2 PE 42x → 25x 6 個月跌 + 12 個月恢復 90%）</td><td>thesis 未破 + MATCH Act 未通過</td></tr>
+<tr><td><strong>LRCX</strong></td><td>9-18 個月（類比 2022→2024 復原時間）</td><td>§5 primary 未發生 + Bear 機率 ≤ 35%</td></tr>
+<tr><td><strong>KLAC</strong></td><td>18-30 個月（2028 H2 - 2029 H2）</td><td>Services 仍 +10-13%（lock-in 完整）+ 護城河市佔 &gt; 50%</td></tr>
+<tr><td><strong>AMAT</strong></td><td>18-30 個月（歷史 2018 / 2021 兩次都 30 個月才回峰）</td><td>§5 primary 與 secondary 都未發生 + 進場價 ≤ $325</td></tr>
+</table>
+
+<!-- ============================================
+     §E  最終裁決
+============================================= -->
+<h2 id="sE">§E｜最終裁決</h2>
+
+<h3>四層時間框架最終排序矩陣</h3>
+
+<table>
+<tr>
+  <th>檔別</th>
+  <th>&lt; 12M 短期</th>
+  <th>2-3Y 中期</th>
+  <th>3-5Y 中長期</th>
+  <th>5-10Y 長期</th>
+  <th>綜合</th>
+</tr>
+<tr style="background:#dcfce7;"><td><strong>ASML</strong></td><td>🥇</td><td>🥇</td><td>🥇</td><td>🥇</td><td><strong>四層全勝</strong></td></tr>
+<tr><td><strong>LRCX</strong></td><td>🥈</td><td>🥈</td><td>🥉</td><td>🥉</td><td>中段，5-10Y 退化</td></tr>
+<tr><td><strong>KLAC</strong></td><td>🥉</td><td>🥉</td><td>🥈</td><td>🥈</td><td>中段，越長越好</td></tr>
+<tr style="background:#fee2e2;"><td><strong>AMAT</strong></td><td>4</td><td>4</td><td>4</td><td>4</td><td><strong>四層全敗</strong></td></tr>
+</table>
+
+<h3>用戶問題重新審視</h3>
+
+<p>用戶問：「比較 ASML LRCX KLAC AMAT 用 DCA — 不要偷懶，資料要正確完整，推論邏輯要嚴謹。」這是個「<strong>四檔選一</strong>」的決策問題，沒有指定時間軸。</p>
+
+<p>四層獨立分析下，<strong>排序對時間軸極不敏感</strong>（ASML 四層全勝，AMAT 四層全敗），所以這不是「短期選 X 長期選 Y」的 case — <strong>是「任何時間軸都選 ASML」</strong>。</p>
+
+<h3>推薦標的：<span style="color:var(--green); font-weight:800;">ASML</span></h3>
+
+<div class="verdict-box">
+<div class="label">明確點名 + 不選其他的具體理由</div>
+<div class="reasoning">
+<strong>選 ASML 的理由（7 條）：</strong>
+<ol>
+  <li><strong>四層時間框架全部第一</strong>，不是邊際勝出而是 dominant choice 級別（沒有任何維度被其他三檔超過）</li>
+  <li><strong>唯一 DCA 進場 verdict</strong>（其餘三檔皆觀望 / 迴避）</li>
+  <li><strong>估值 5Y 分位 25% 全班最便宜</strong>（vs LRCX 89% / KLAC 97% / AMAT 99%）</li>
+  <li><strong>動能最健康</strong>（RSI 56 中性 + 4w +5%，唯一沒有過熱訊號）</li>
+  <li><strong>IRR composition 最乾淨</strong>（Base 9.1% 中 EPS +10% / re-rate −1.9%，自然複利好抱）</li>
+  <li><strong>護城河 10/10 全班最深</strong>（EUV 100% monopoly + High-NA exclusive，技術代差 widening）</li>
+  <li><strong>Max DD −45% 全班最淺 🟡</strong>，且 §5 single thing trigger 條件嚴格（三條件同時）— Bear 觸發機率僅 ~15-20%</li>
+</ol>
+</div>
+</div>
+
+<h4>不選 LRCX 的具體理由（5 條）</h4>
+<ul>
+  <li><strong>動能略熱</strong>：RSI 63 + 4w +9.8%，DCA 自己強制條件式分批進場（不接受立即建倉）</li>
+  <li><strong>Cycle 高位風險</strong>：ROIC 75% / GM 49.9% / Op Margin 35% 全 5Y 95%+ 分位 = 結構峰值，cycle 反轉時 GM 退回 47-48% 是基本面風險</li>
+  <li><strong>HBM5 第二曲線打折</strong>：ID critic patch 揭露 BESI 67% post-AP 主導 W2W，LRCX 直接 hybrid bonding 收入 2028+ 才兌現 — 第二曲線時間軸延後</li>
+  <li><strong>5Y 機率加權 IRR 5.8%/yr 四檔最低</strong>（vs ASML 6.9 / KLAC 6.0 / AMAT 1.9 — LRCX 不是最差但接近末段）</li>
+  <li><strong>5-10Y 視角下 thesis 結構性退化</strong>（HBM5 W2W 競爭威脅越靠近兌現期越具體）</li>
+</ul>
+
+<h4>不選 KLAC 的具體理由（5 條）</h4>
+<ul>
+  <li><strong>B 訊號燈（衛星不放 core）</strong>：DCA 自評 B 級 + 估值 gate 觸發降一級</li>
+  <li><strong>估值已透支 6 年成長</strong>：Fwd PE 38.1x（5Y 分位 97% 接近極端）/ PEG 1.68 對週期股偏貴（歷史 0.8-1.5）</li>
+  <li><strong>IRR composition re-rate 吞 64% EPS</strong>（Base IRR 7.3 中，EPS +9.5% 被 re-rate −4.7% 抵銷 — 需要「市場願意維持 28x 倍數」才能撐這個 base）</li>
+  <li><strong>動能過熱 + 6/12 將 10-for-1 split</strong>（split 不影響估值但會放大短期 retail flow，timing 更不確定）</li>
+  <li><strong>KLAC DCA 自己 §7a 寫「邊際資金優先加 AMAT 不是 KLAC」+ 4. 強制裁決「若 FPE 突破 42x + RSI &gt; 80 連 2 週 → 不進場 + 將 ASML 部位減半轉現金」</strong> — KLAC 自己的決策建議是「現價不要進場」</li>
+</ul>
+
+<h4>不選 AMAT 的具體理由（6 條）</h4>
+<ul>
+  <li><strong>X 訊號燈（迴避級）</strong>：DCA 系統中 X 是「拒絕」分類，與 A+/A/B 是分類性差別不是程度差</li>
+  <li><strong>追高末段</strong>：4w 漂移 +29% + RSI 72.8 是四檔中動能最極端的位置，AMAT 自身 DCA 引用兩個歷史錨點（2018 / 2021）都從 FPE 99% 分位下殺 48-55%</li>
+  <li><strong>5Y 機率加權 IRR 僅 +1.9%/yr 不及大盤零頭</strong>（vs 同期 SPX 9-10% 預期）</li>
+  <li><strong>Max DD −45 ~ −59% 🔴 路徑風險最高</strong>，DCA 自評「多數人會中途出場」</li>
+  <li><strong>10Y IRR Bull 7.5% 仍不及大盤</strong> — 即使 thesis 對且持滿 10 年，AMAT 都不能跑贏 SPX</li>
+  <li><strong>AMAT 自己 DCA opportunity cost 段明確點名「邊際資金應加 LRCX/KLAC 不是 AMAT」</strong>（在 WFE 籃中 conviction 排第 3）— AMAT 自評在 WFE 籃中 conviction 末段</li>
+</ul>
+
+<h3>進場條件與監測指標</h3>
+
+<table>
+<tr>
+  <th>項目</th>
+  <th>ASML 進場計畫</th>
+</tr>
+<tr>
+  <td>當前可動作？</td>
+  <td><span class="tint-green">是 — Pure MA ✅ + 動能未過熱 + 估值 5Y 25% 分位</span></td>
+</tr>
+<tr>
+  <td>初始建倉</td>
+  <td>0.8% portfolio（DCA §7a 建議分批 3 次，間隔 4-6 週）</td>
+</tr>
+<tr>
+  <td>目標倉位</td>
+  <td>4.0% portfolio（H1 假設驗證後上修）</td>
+</tr>
+<tr>
+  <td>進場價區間</td>
+  <td>$1,440-$1,525（當前 $1,525 為中性區，可分批起手）</td>
+</tr>
+<tr>
+  <td>核心監測指標</td>
+  <td>
+    ① Q2 2026 法說（~2026-07-15）— bookings 是否續強 ≥ €5B<br>
+    ② High-NA 全年 recognized revenue（需 +50% YoY 過關閾值 ~€2B）<br>
+    ③ MATCH Act 立法進度（每月跟）— 若參議院通過 → 觸發 §5 single thing 評估<br>
+    ④ 四大 hyperscaler 季度 capex YoY（&lt; +5% 為警報線）
+  </td>
+</tr>
+<tr>
+  <td>清倉條件</td>
+  <td>MATCH Act 兩院過 + 荷蘭妥協（中國 2027 營收 &lt; 5%）+ §5 single thing 觸發 — 三條件同時成立</td>
+</tr>
+<tr>
+  <td>下次重評時點</td>
+  <td>2026-07-15（Q2 2026 法說後）</td>
+</tr>
+</table>
+
+<h3>時間軸切換敏感度測試</h3>
+
+<table>
+<tr>
+  <th>時間軸假設</th>
+  <th>首選會變嗎？</th>
+  <th>原因</th>
+</tr>
+<tr>
+  <td>3-5Y view（用戶問題核心）</td>
+  <td><strong>ASML</strong></td>
+  <td>四層全勝，3-5Y 視角 IRR composition 質感最乾淨</td>
+</tr>
+<tr>
+  <td>拉長到 5-10Y</td>
+  <td><strong>ASML</strong>（不變）</td>
+  <td>10Y IRR Bull 10.9%/yr 仍最高 + 第二曲線（Hyper-NA + Mistral AI）銜接</td>
+</tr>
+<tr>
+  <td>壓縮到 &lt; 12M 短期</td>
+  <td><strong>ASML</strong>（不變）</td>
+  <td>唯一進場 verdict + 動能不熱 + 估值最便宜</td>
+</tr>
+<tr>
+  <td>只看 IRR 數字（不看質感）</td>
+  <td>ASML（Base 9.1% 仍最高）</td>
+  <td>數字面 ASML 仍排第一，但差距收窄至 LRCX 7.6 / KLAC 7.3</td>
+</tr>
+<tr>
+  <td>只看 Bear case（保守視角）</td>
+  <td><strong>LRCX</strong>（−5.6%/yr 最佳）</td>
+  <td>LRCX Bear 中 EPS 仍正 — 唯一一個排序會改變的 view</td>
+</tr>
+<tr>
+  <td>用戶已重倉 ASML（5%+）</td>
+  <td><strong>KLAC</strong>（補位）</td>
+  <td>4 檔中 KLAC 與 ASML 重疊度最低（process control 主場，與 ASML EUV monopoly 互補），thesis 多元化最佳</td>
+</tr>
+</table>
+
+<div class="box-good">
+<strong>一句話 takeaway：</strong>四檔 WFE 五寡占中，ASML 是唯一一個「<strong>任何時間軸 + 任何視角</strong>」都站第一的標的 — 不是邊際勝出（差 0.5%p IRR），是 dominant choice（四層全勝 + 唯一進場 verdict + 估值最便宜 + 護城河最深 + Max DD 最淺）。AMAT 是同一籃中 dominant 的反面（四層全敗 + X 訊號 + 估值最貴 + Max DD 最深）。中段 LRCX / KLAC 在 3-5Y 互換，KLAC 越長越好、LRCX 越長越差 — 若 portfolio 已重倉 ASML 或 EUV 曝險，邊際資金加 KLAC 作為 process control 補位，比加 LRCX / AMAT 更乾淨。
+</div>
+
+<h3>時間軸切換的「真正 alpha」</h3>
+
+<p>本對比的真正 alpha 不在「選誰」（ASML 在所有 view 下都是第一，沒有懸念），而在揭露兩件事：</p>
+
+<ol>
+  <li><strong>「四層全勝」是少見的 dominant 狀態</strong> — 通常多檔對比會有 trade-off（短期選 A、長期選 B），ASML 這次沒有 trade-off 是因為「估值便宜（5Y 25% 分位）+ 護城河最深（10/10）+ 動能健康（RSI 56）」三個維度同時站對齊。歷史上這種對齊在 ASML 自身只發生過幾次（2015 EUV ramp 期、2022 Q4 cycle bottom），都是後驗 5Y CAGR 32%+ 的進場點。</li>
+  <li><strong>WFE 籃中的「估值階梯」</strong>：ASML 5Y 25% 分位 → LRCX 89% → KLAC 97% → AMAT 99%。這個階梯不是隨機，反映「同產業 thesis 強度排序」反向 — ASML 因為地緣政治擔憂（MATCH Act）被估值折讓，LRCX 因為 HBM TSV 故事被追捧，KLAC 因為「複利機」共識被估值溢價，AMAT 因為「最完整賣鏟者」narrative 被追到 PE 99% 分位。<strong>市場給的「故事好壞」與「估值便宜程度」反向 — 這正是 contrarian alpha 的來源</strong>。</li>
+</ol>
+
+<hr>
+
+<div class="footnote">
+本報告基於四份 2026-05-11 寫稿 DCA 報告（deep-conviction-analyst v1.1）+ 5/14 開盤股價校正。Fwd PE 採報告日 / 現價比例重算，5Y 分位保留報告日 ranking。所有分析不構成投資建議。報告保質期：2026-07-15（ASML Q2 2026 法說前）。<br>
+DCA 來源：<code>docs/dca/DCA_ASML_20260511.html</code>｜<code>docs/dca/DCA_LRCX_20260511.html</code>｜<code>docs/dca/DCA_KLAC_20260511.html</code>｜<code>docs/dca/DCA_AMAT_20260511.html</code>
+</div>
+
+</div>
+
+</body>
+</html>
