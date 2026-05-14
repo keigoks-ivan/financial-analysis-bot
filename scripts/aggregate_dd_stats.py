@@ -379,6 +379,35 @@ def render_dca_verdict_card() -> str:
         if (_date(int(datestr[:4]), int(datestr[4:6]), int(datestr[6:8])) - today).days >= -30
     )
 
+    # Collect 進場 tickers sorted by date DESC, newest first
+    # ticker_latest[ticker] = (datestr, verdict); filename is reconstructed
+    enter_list = sorted(
+        [
+            (datestr, ticker, f"DCA_{ticker}_{datestr}.html")
+            for ticker, (datestr, verdict) in ticker_latest.items()
+            if verdict == "進場"
+        ],
+        key=lambda x: x[0],
+        reverse=True,
+    )
+
+    # Build the 進場 subline HTML
+    enter_subline = ""
+    if enter_list:
+        MAX_SHOW = 3
+        shown = enter_list[:MAX_SHOW]
+        links = " · ".join(
+            f'<a href="/dca/{escape(fn)}" target="_blank" rel="noopener">{escape(tk)}</a>'
+            for _, tk, fn in shown
+        )
+        extra = len(enter_list) - MAX_SHOW
+        suffix = f" …+{extra} more" if extra > 0 else ""
+        enter_subline = (
+            f'      <div style="margin-top:8px;font-size:11.5px;color:#475569">'
+            f'進場：{links}{suffix}'
+            f'</div>\n'
+        )
+
     return (
         f'<div class="stats-cell">\n'
         f'      <div class="stats-label">DCA Verdict 分布</div>\n'
@@ -387,6 +416,7 @@ def render_dca_verdict_card() -> str:
         f'<span class="sig-pill sig-watch">觀望 · {n_watch}</span>'
         f'<span class="sig-pill sig-avoid">迴避 · {n_avoid}</span>'
         f'</div>\n'
+        f'{enter_subline}'
         f'      <div style="margin-top:10px;font-size:11.5px;color:#64748B">'
         f'{n_total} unique tickers ｜ 最近 30 天活躍：{active_30} 檔'
         f'</div>\n'
