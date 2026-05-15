@@ -41,6 +41,7 @@ from dd_screener_quality import (  # noqa: E402
 from dd_screener_ma import compute_ma_snapshot  # noqa: E402
 from update_dd_index import (  # noqa: E402
     collect_dca_ev_map,
+    collect_dca_moat_trend_map,
     compute_dca_irr,
 )
 
@@ -58,7 +59,6 @@ CRITERIA = [
 
 PRESETS = {
     "MLB": {"fcf": 10.0, "roic": 15.0, "eps2y": 15.0, "peg": 2.0, "de": 0.7},
-    "3A":  {"fcf": 8.0,  "roic": 12.0, "eps2y": 12.0, "peg": 2.5, "de": 1.0},
 }
 
 DEFAULT_FILTER = {"moat_min": 9.5, "directions": ["↑", "→"]}
@@ -208,13 +208,29 @@ def _ev5y_for(ticker: str, dca_ev_map: dict) -> float | None:
     return round(compute_dca_irr(ev), 2)
 
 
+def _moat_trend_for(ticker: str, dca_trend_map: dict, fallback: str) -> str:
+    """Resolve moat trend arrow per DCA Phase A1; fallback when no DCA arrow.
+
+    `dca_trend_map` keys are normalized (no dots, e.g. "2330TW").
+    """
+    arrow = dca_trend_map.get(ticker)
+    if arrow is None:
+        arrow = dca_trend_map.get(ticker.replace(".", ""))
+    return arrow or fallback
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
     dca_ev_map: dict,
+    dca_trend_map: dict,
     skip_ma: bool,
 ) -> dict:
-    """Add quality + MA + ev5y_pct + pass_count + fail_criteria to a loader entry."""
+    """Add quality + MA + ev5y_pct + pass_count + fail_criteria to a loader entry.
+
+    Also overrides moat_trend with DCA Phase A1 authoritative arrow (the loader
+    defaults all 98 to ↑ because dd-meta rarely carries this field; DCA does).
+    """
     t = entry["ticker"]
     quality, source = get_quality_for_ticker(t, qgm_index)
     pass_count, fails = evaluate_criteria(quality)
@@ -227,9 +243,14 @@ def enrich_ticker(
         except Exception:
             ma = _empty_ma()
 
+    # Override the loader's "↑" default with DCA Phase A1 arrow; "→" when DCA
+    # has none (conservative — don't assume strengthening without evidence).
+    moat_trend = _moat_trend_for(t, dca_trend_map, fallback="→")
+
     return {
         **entry,
         **quality,
+        "moat_trend": moat_trend,
         "pass_count": pass_count,
         "fail_criteria": fails,
         "quality_source": source,
@@ -256,12 +277,16 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     dca_ev_map = collect_dca_ev_map()
     print(f"  Step 3    DCA EV map: {len(dca_ev_map)} tickers (for 5Y IRR column)")
 
+    # DCA Phase A1 moat trend arrows (94/98 typical coverage; dd-meta rarely carries this)
+    dca_trend_map = collect_dca_moat_trend_map()
+    print(f"  Step 3    DCA moat-trend map: {len(dca_trend_map)} tickers")
+
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, skip_ma): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, skip_ma): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):

@@ -26,8 +26,7 @@ and bumping `schema_version`.**
   ],
 
   "presets": {
-    "MLB": {"fcf": 10.0, "roic": 15.0, "eps2y": 15.0, "peg": 2.0, "de": 0.7},
-    "3A":  {"fcf": 8.0,  "roic": 12.0, "eps2y": 12.0, "peg": 2.5, "de": 1.0}
+    "MLB": {"fcf": 10.0, "roic": 15.0, "eps2y": 15.0, "peg": 2.0, "de": 0.7}
   },
 
   "default_filter": {
@@ -125,7 +124,7 @@ Each entry in `stocks[]`:
 |---|---|---|
 | `moat_score` | number 1-10 | required (skip ticker if absent) |
 | `moat_grade` | "S"/"A"/"B"/"C"/"X" | required |
-| `moat_trend` | "↑"/"→"/"↓" | **default "↑"** (only 3/98 have explicit `moat_trend`) |
+| `moat_trend` | "↑"/"→"/"↓" | Overridden by DCA Phase A1 arrow at build time (94/98 coverage); fallback **"→"** when no DCA arrow (conservative — assume stable, not strengthening) |
 | `signal` | "A+"/"A"/"B"/"C"/"X" | required |
 | `trap` | emoji | required |
 | `val` | emoji | required |
@@ -186,8 +185,8 @@ All MA values in price units. `null` for any field when history < required.
 - Filter chips:
   - Moat: `[S]` (≥9.5) / `[A]` (≥8) / `[B]` (≥6) / `[All]`
   - Direction: `[↑+→]` (default) / `[↑ only]` / `[Any]`
-  - Preset: `[MLB]` (default) / `[3A]` / `[Custom]`
-  - Custom mode reveals 5 sliders + S-tier toggle, recomputes `pass_count` client-side using `presets[preset]` thresholds
+  - Preset: `[MLB]` (default) / `[Custom]`
+  - Custom mode reveals 5 sliders + S-tier toggle, recomputes `pass_count` client-side using either `presets.MLB` thresholds or user-mutated Custom values
 
 ## File location
 
