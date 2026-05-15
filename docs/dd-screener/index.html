@@ -44,6 +44,15 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 .filter-label{font-size:11px;color:#5a7a9a;font-weight:600;margin-right:2px}
 .chip{padding:4px 11px;border:1px solid #dce8f5;border-radius:999px;font-size:11px;cursor:pointer;background:#fff;color:#5a7a9a;user-select:none}
 .chip.active{background:#1e3a5f;color:#fff;border-color:#1e3a5f}
+#search-ticker{padding:3px 9px;border:1px solid #dce8f5;border-radius:6px;font-size:11px;width:140px;font-family:inherit;color:#1e3a5f;outline:none}
+#search-ticker:focus{border-color:#1e3a5f}
+#search-clear{padding:3px 7px;border:1px solid #dce8f5;border-radius:6px;font-size:10px;background:#fff;color:#94a3b8;cursor:pointer;font-family:inherit}
+#search-clear:hover{color:#1e3a5f;border-color:#94a3b8}
+.search-panel{background:#fff;border:1px solid #1e3a5f;border-radius:10px;margin-bottom:16px;overflow:hidden}
+.search-panel-head{background:#1e3a5f;color:#fff;padding:6px 14px;font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.search-panel-head .badge-bypass{background:rgba(255,255,255,.18);border-radius:4px;padding:1px 7px;font-size:9px;font-weight:500}
+.search-panel-body{overflow-x:auto}
+.search-panel.hidden{display:none}
 /* Custom preset panel */
 .custom-panel{background:#f8fbff;border:1px solid #dce8f5;border-top:none;padding:12px 32px}
 .custom-panel.hidden{display:none}
@@ -189,6 +198,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <span class="chip active" data-filter="preset" data-value="MLB">[QGM MLB]</span>
       <span class="chip" data-filter="preset" data-value="Custom">[Custom]</span>
     </div>
+    <div class="filter-group" style="margin-left:auto">
+      <span class="filter-label">查 ticker</span>
+      <input type="text" id="search-ticker" placeholder="例：NVDA / 2330.TW" autocomplete="off"
+        title="輸入後在上方顯示該檔資料，不受其他 chip 篩選影響" />
+      <button type="button" id="search-clear" title="清除">✕</button>
+    </div>
   </div>
 </div>
 
@@ -226,6 +241,15 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 </div>
 
 <div class="section">
+  <!-- Search panel — hidden until user types; bypasses all chip filters -->
+  <div class="search-panel hidden" id="search-panel">
+    <div class="search-panel-head">
+      <span><span id="search-count">0</span> 筆查詢結果</span>
+      <span class="badge-bypass">不受 Moat / Direction / Preset / Tab 影響</span>
+    </div>
+    <div class="search-panel-body" id="search-panel-body"></div>
+  </div>
+
   <div class="tab-bar-wrap">
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="tab-5">完全符合 (<span id="cnt-5">—</span>)</button>
@@ -253,7 +277,8 @@ var state = {
   customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
   customSOnly: true,
   sortKey: null,     // null = default order (pass_count → moat → ev5y); else column key
-  sortDir: 'desc'    // 'asc' | 'desc'
+  sortDir: 'desc',   // 'asc' | 'desc'
+  searchQuery: ''    // ticker substring lookup; bypasses chip filters
 };
 
 // Raw data from latest.json
@@ -546,6 +571,48 @@ function renderAll() {
   document.getElementById('cnt-4').textContent   = s4.length;
   document.getElementById('cnt-3').textContent   = s3.length;
   document.getElementById('cnt-all').textContent = sAll.length;
+
+  // Search panel rendered separately (bypasses all filters)
+  renderSearch();
+}
+
+// ── Search panel (ticker lookup, bypasses all chip filters & tabs) ─────────
+function renderSearch() {
+  var panel = document.getElementById('search-panel');
+  var body  = document.getElementById('search-panel-body');
+  var count = document.getElementById('search-count');
+  if (!panel || !body) return;
+
+  var q = (state.searchQuery || '').trim().toUpperCase();
+  if (!q || !DATA) {
+    panel.classList.add('hidden');
+    return;
+  }
+
+  // Case-insensitive substring match on ticker. Common typo "2330" → 2330.TW
+  // is also accepted because indexOf works on raw uppercased ticker incl. dot.
+  var hits = (DATA.stocks || []).filter(function(s) {
+    return (s.ticker || '').toUpperCase().indexOf(q) !== -1;
+  });
+
+  count.textContent = hits.length;
+  panel.classList.remove('hidden');
+
+  if (!hits.length) {
+    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。可輸入完整或部分代碼（例：NVDA / NV / 2330 / 2330.TW），不分大小寫。</p>';
+    return;
+  }
+
+  // Render via buildTable but force MLB thresholds + default sort so the
+  // numbers in the search result reflect the universe baseline, not the
+  // user's Custom panel or active column sort.
+  var saved = { preset: state.preset, sortKey: state.sortKey, sortDir: state.sortDir };
+  state.preset  = 'MLB';
+  state.sortKey = null;
+  body.innerHTML = buildTable(hits);
+  state.preset  = saved.preset;
+  state.sortKey = saved.sortKey;
+  state.sortDir = saved.sortDir;
 }
 
 function updateHeroBadge() {
@@ -628,11 +695,28 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
   });
 });
 
+// ── Search input (ticker lookup) ───────────────────────────────────────────
+(function() {
+  var input = document.getElementById('search-ticker');
+  var clear = document.getElementById('search-clear');
+  if (!input || !clear) return;
+  input.addEventListener('input', function() {
+    state.searchQuery = input.value;
+    if (DATA) renderSearch();
+  });
+  clear.addEventListener('click', function() {
+    input.value = '';
+    state.searchQuery = '';
+    if (DATA) renderSearch();
+    input.focus();
+  });
+})();
+
 // ── Sortable headers (event delegation — survives table re-renders) ────────
 document.addEventListener('click', function(e) {
   var th = e.target.closest('th.sortable');
   if (!th) return;
-  if (!e.target.closest('.compare-wrap')) return; // limit to result tables
+  if (!e.target.closest('.compare-wrap')) return; // limit to main tabs (not search panel)
   var key = th.getAttribute('data-sort-key');
   if (!key) return;
   if (state.sortKey === key) {
