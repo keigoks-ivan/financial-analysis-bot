@@ -176,27 +176,23 @@ def build_takeaway(stocks: list[dict]) -> dict:
         if len(edge_cases) >= 5:
             break
 
-    # Summary: lead with pass-cohort split, then top thematic exposure.
+    # Summary: just the pass-cohort split. Industry breakdown lives in
+    # `sector_breakdown` and the FE renders it as labelled chips below
+    # — keep the summary line readable.
     total_candidates = len(pass5) + len(pass4) + len(pass3)
     base = (
         f"{len(pass5)}/{len(stocks)} 完全符合"
         if pass5
         else f"0/{len(stocks)} 完全符合"
     )
-    counts_str = f"差一條 {len(pass4)}、差二條 {len(pass3)}（共 {total_candidates} 候選）"
-
-    if sector_breakdown:
-        top_megas = sector_breakdown[:2]
-        meta_str = " + ".join(
-            f"{m['sector']}({m['count']})" for m in top_megas
-        )
-        summary = f"{base} — top mega 暴露：{meta_str}（單檔可跨 mega）。{counts_str}。"
-    else:
-        summary = f"{base} — {counts_str}。"
+    summary = (
+        f"{base} · 差一條 {len(pass4)} 檔 · 差二條 {len(pass3)} 檔"
+        f"（共 {total_candidates} 候選）"
+    )
 
     return {
         "summary": summary,
-        "basis": "MLB preset · universe-level (未套用 Moat / Direction filter；切換 chip 不會更新此面板)",
+        "basis": "依預設條件計算（MLB 閾值，全 universe；切換上方 Moat / Direction chip 不會更新此面板）",
         "top_tickers_by_signal": top_tickers_by_signal,
         "sector_breakdown": sector_breakdown,
         "edge_cases": edge_cases,
