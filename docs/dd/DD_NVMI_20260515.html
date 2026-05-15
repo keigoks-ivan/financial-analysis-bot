@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.2">
+<title>NVMI Nova Ltd — DD v12.2｜2026-05-15</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8FAFC; --card: #FFFFFF; --ink: #1E3A5F; --line: #E2E8F0;
+  --accent: #3B82F6; --green: #DCFCE7; --gtxt: #166534;
+  --red: #FEE2E2; --rtxt: #991B1B; --yellow: #FEF9C3; --ytxt: #92400E;
+  --blue: #EFF6FF; --btxt: #1E3A5F;
+}
+* { box-sizing: border-box; }
+body { font-family: 'Noto Sans TC', sans-serif; background: var(--bg); color: #1F2937; margin: 0; padding: 0; line-height: 1.7; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+header.site { position: sticky; top: 0; z-index: 100; background: #FFFFFF; border-bottom: 1px solid var(--line); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+header.site .left { font-weight: 700; color: var(--ink); }
+header.site .right { color: #64748B; }
+.dd-toc { background: #FFFFFF; border-left: 4px solid var(--accent); margin: 16px 24px; padding: 12px 18px; border-radius: 0 8px 8px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.dd-toc-title { font-weight: 700; color: var(--ink); font-size: 13px; margin-bottom: 8px; }
+.dd-toc a { display: inline-block; background: var(--blue); color: var(--ink); text-decoration: none; padding: 4px 11px; margin: 3px 4px 3px 0; border-radius: 999px; font-size: 12px; }
+.dd-toc a:hover { background: #DBEAFE; }
+main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+section { background: var(--card); border-left: 4px solid var(--accent); padding: 24px 28px; margin-bottom: 22px; border-radius: 0 8px 8px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); scroll-margin-top: 90px; }
+section h2 { color: var(--ink); border-bottom: 2px solid var(--line); padding-bottom: 8px; margin-top: 0; font-size: 22px; scroll-margin-top: 90px; }
+section h3 { color: var(--ink); margin-top: 24px; font-size: 17px; }
+section h4 { color: var(--ink); margin-top: 18px; font-size: 15px; }
+table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+th, td { padding: 9px 11px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { background: var(--ink); color: #FFFFFF; font-weight: 600; }
+tr:nth-child(even) td { background: #F1F5F9; }
+.beat, .pass { background: var(--green); color: var(--gtxt); padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.miss, .fail { background: var(--red); color: var(--rtxt); padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.neutral { background: var(--yellow); color: var(--ytxt); padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.hypothesis-box { background: var(--blue); border-left: 4px solid var(--accent); padding: 14px 18px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+.hypothesis-box h4 { margin: 0 0 8px 0; color: var(--ink); }
+.warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 14px 18px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+.warning-box h4 { margin: 0 0 8px 0; color: #C2410C; }
+.reasoning { background: #F8FAFC; border-left: 3px solid #94A3B8; padding: 8px 12px; margin: 8px 0; font-size: 13.5px; color: #475569; }
+.reasoning b { color: var(--ink); }
+.debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+.debate-card { padding: 14px 16px; border-radius: 0 6px 6px 0; }
+.debate-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+.debate-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+.debate-judge { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+.debate-card h4 { margin: 0 0 8px 0; }
+.rr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+.rr-card { padding: 14px; border-radius: 0 6px 6px 0; }
+.rr-short { background: #F0F9FF; border-left: 4px solid #0284C7; }
+.rr-mid { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+.rr-long { background: #ECFDF5; border-left: 4px solid #059669; }
+.rr-card h4 { margin: 0 0 6px 0; color: var(--ink); }
+.note { font-size: 12.5px; color: #64748B; padding: 8px 12px; background: #F8FAFC; border-radius: 4px; }
+ul li { margin-bottom: 6px; }
+.btn-print { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: #FFFFFF; border: none; padding: 12px 18px; border-radius: 999px; cursor: pointer; font-family: inherit; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+.btn-print:hover { background: #2C4A75; }
+@media print { header.site, .dd-toc, .btn-print { display: none; } section { box-shadow: none; page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="left">NVMI · Nova Ltd · DD Schema v12.2</div>
+  <div class="right">資料抓取：2026-05-15 ｜ 最新股價 <span class="mono">$556.11</span> ｜ 最近財報 Q1 26（2026-05-14）｜ yfinance 採集 + 補搜 7 次</div>
+</header>
+
+<nav class="dd-toc">
+  <div class="dd-toc-title">章節導覽</div>
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 即時財報</a>
+  <a href="#s7">§7 門檻檢核</a>
+  <a href="#s8">§8 長期成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務品質</a>
+  <a href="#s11">§11 產業 / 議價權</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值診斷</a>
+</nav>
+
+<main>
+
+<!-- ============ §1 ============ -->
+<section id="s1">
+<h2>§1 投資結論 — 一頁式 Executive Summary</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。Q1 2026 財報剛於昨日（5/14）公布，股價當日 +10%、衝上 52W 新高 $565，本份 DD 即為「Q1 後重評」。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><b>產業風向燈 🟢 順風：</b>§8 長期成長性 🟢 高確信（2nm GAA + 先進封裝 + HBM 三條 S 曲線同時推進）｜ §9 護城河趨勢「加深」（GAA 提升計量強度，每片晶圓 metrology 步驟增加）｜ §8 F AI 風險 🟢 受益（先進封裝、HBM 都是 AI 直接驅動需求）。一句話：metrology TAM 結構性擴張，Nova 在「光學 + 材料 + 化學」三平台架構同步搶份。</li>
+<li><b>品質 B 級：</b>護城河 8/10（§9，特化 niche moat 但全球前 5 大 metrology 玩家中排第 4-5）｜體質 veto 0/5 項不過｜等級調整：B 不變。</li>
+<li><b>估值燈 🔴 過熱：</b>Fwd PE 53.8x（FY26 GAAP 共識 $10.33），5Y 分位估 95-100%（歷史峰值），PEG 2.5（FY26 PE ÷ FY25-FY28 共識 CAGR ~19.5%）｜盲點 1 救援：<b>否</b>（PEG ≥ 2.0 卡關，雖然 §8 🟢 + AI 🟢 但 PEG 條件不過）。</li>
+<li><b>Pure MA 狀態 ✅ 強勢進場：</b>$556 > W52 $351 > W104 $281 > W250 $183｜W250 斜率 +12.1%（13 週）強正、W52 +24.4%、W104 +15.5%｜盲點 2 救援：N/A（不需救援，狀態本身就強）。<b>但 Bollinger Band 上軌 $560 緊貼現價 $556，價格在 2σ 邊緣，短期回測機率高</b>。</li>
+<li><b>大盤豁免 ✅ 正常：</b>SPX 現價 7,501 vs W104 6,175（高 21.5%），無系統性風險。</li>
+<li><b>參考 R:R（資訊性，不主導裁決）：</b>短期 –0.2x（Bear ≈ 現價 + 5% 已是 W52 平均）｜中期 1.1x ｜長期 1.6x ｜壓力測試 通過率 1/4（FY26 已被股價透支大半）。</li>
+<li><b>綜合訊號：<span style="font-size:20px; background:#FEF9C3; padding:3px 10px; border-radius:6px; color:#92400E;">B（觀望）</span></b>（取自 §2 H）｜判定理由：thesis 完整（品質 B、護城河 8、AI 🟢、財報 +10% beat）但估值燈 🔴 + Bollinger 上軌觸及 → QC-31 規則 5「估值🔴 ≠ C」，落 B 觀望等修復，禁止追高。</li>
+<li><b>長期持有信心：高</b>（§2 I：成長跑道 ≥ 10 年充裕 / 護城河加深 / Q1 26 beat 重新加速 H1→Q2 26 mid +19% YoY）｜<b>陷阱定性：🟢 非陷阱</b>（4 項低估值四問 0 個紅燈；但「便宜理由」反過來不適用 — 這檔是「貴有貴的理由」型，非陷阱型）。</li>
+<li><b>Inception DD：</b><code>DD_NVMI_20260515.html</code>（2026-05-15，本份為 Inception，前次 2026-04-14 為 v9.0 不計）— 後續 DD 引用此份作為「累積漂移」對照基準。</li>
+<li><b>下次年度對照倒數：</b>2027-05-15（距今 365 天）— 屆時 §5.B' 開始有實質 YoY 對照。</li>
+</ul>
+</div>
+
+<p class="note"><b>訊號語意：</b>A+ = 核心候選滿格｜A = 核心候選｜<b>B = 衛星候選（thesis 完整但時機不到）</b>｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式是哪一種？</td><td><b>非陷阱（但屬「貴有貴的理由」型）</b>。低估值四問 0 紅燈 — GM 改善、市佔擴張、FCF/NI 0.84、共識上修。問題不是「便宜有理」，而是「貴得透支」。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據？</td><td>Q1 26 Rev +10% YoY + Q2 26 guide +19% YoY，加速兌現；GAA 量產（TSMC N2 已啟動、Intel 18A H2'25 HVM、Samsung SF2 yields 50-60%）每片晶圓 metrology 步驟結構性增加；先進封裝 FY25 +60% YoY 佔 20% 產品營收；管理層 Q2 給出全公司歷史最高的 mid-teens WFE outperformance 目標。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁？</td><td>並非「便宜陷阱」反駁，而是「估值陷阱」反駁：FPE 54x 已 price in 多年成長；分析師中位 PT $505 < 現價 $556（–8.8% downside per consensus）；若 H2 26 WFE 成長未達預期、FY27 共識 EPS $12.49 下修 10%，PE 可壓至 40x 以下→股價可跌至 $440 區（–21% drawdown）。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否發生？</td><td>① <b>季營收 YoY < 12%</b>連續 2 季（破壞「outperform WFE」敘事）<br>② <b>先進封裝佔產品營收 < 18%</b>（H1 thesis 削弱信號）<br>③ KLA 整合計量方案在 GAA 首次取單（R2 觸發）</td></tr>
+</table>
+
+<p><b>最終定性：<span class="pass">🟢 非陷阱</span></b> — Thesis 完整、財報強勢，但估值已透支大半。本份 DD 的核心結論是「等修復進場，禁止追高」，非「迴避」。</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>季營收 YoY vs WFE YoY 差距</td><td>§5 H1</td><td>🔵 核心假設驗證</td><td>差距 &lt; 8%p 連 2 季（喪失 outperform 敘事）</td></tr>
+<tr><td>2</td><td>先進封裝產品營收 YoY 與佔比</td><td>§5 H2 / §11</td><td>🔵 長期成長領先信號</td><td>YoY &lt; 30% 或佔比 &lt; 18%</td></tr>
+<tr><td>3</td><td>Forward P/E（FY26 GAAP 共識基礎）</td><td>§13.1 / §2 D</td><td>估值信號</td><td>跌破 35x = 進場觸發；突破 60x = 減倉觸發</td></tr>
+</table>
+
+</section>
+
+<!-- ============ §2 ============ -->
+<section id="s2">
+<h2>§2 四層判定：產業風向燈 × 品質 × 估值燈 × Pure MA</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="pass">🟢 高確信</span></td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="pass">🟢 AI 受益</span></td></tr>
+<tr><td><b>產業風向燈</b></td><td><b><span class="pass">🟢 順風</span></b></td></tr>
+<tr><td>一句話判斷</td><td>2nm GAA 量產 × HBM 堆疊代際翻倍 × 先進封裝 chiplet 化 — 三條獨立 S 曲線同時拉升 metrology TAM；Nova 在光學/材料/化學三平台架構搶份，FY25 +31% YoY 遠超 WFE ~10% 即為 thesis 驗證。</td></tr>
+</table>
+
+<h3>B｜品質等級（護城河單一決定，含體質 veto）</h3>
+
+<h4>體質檢核（veto 制）</h4>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td><span class="pass">✅</span></td><td>GM FY23 56.3% / FY24 57.6% / FY25 57.4%，三年穩定在 57% 區間，Q1 26 57.7%</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="pass">✅</span></td><td>FY25 FCF $217.9M / NI $259.2M = 0.84</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="pass">✅</span></td><td>FY26E EPS 90d 前 $9.72 → 現 $10.33（+6.3% 上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="pass">✅</span></td><td>Q2'25 +50% / Q3'25 +33% / Q4'25 +14% / Q1'26 +10% — 全部為正</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="pass">✅</span></td><td>Total Debt $799M（含 2025 發行可轉債）− Cash $215M = ND $584M。EBITDA proxy（OI $253M + D&amp;A ~$30M）= $283M → ND/EBITDA <b>2.06x</b>，仍在門檻內</td></tr>
+</table>
+
+<div class="reasoning">
+<b>結論：</b>5/5 全過，體質 veto = 0 項不過 → 等級不變。需注意 Total Debt 從 FY24 $236M 暴增至 FY25 $799M，主要為 2025 發行 $500M 可轉債（換股價遠高於現價時稀釋風險低，但若股價橫盤需觀察 dilution 路徑）。
+</div>
+
+<h4>護城河等級</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><b>8 / 10</b></td></tr>
+<tr><td>護城河原始等級</td><td><b>B 級</b>（7-8 分區間）</td></tr>
+<tr><td>體質 veto 調整</td><td>不變（0/5 不過）</td></tr>
+<tr><td><b>調整後等級</b></td><td><b>B 級</b></td></tr>
+<tr><td>底倉</td><td>15%（目標倉位的）</td></tr>
+</table>
+
+<div class="reasoning">
+<b>推導：</b>NVMI 是「特化 niche 強護城河」型，光學/材料/化學三平台架構是同業最廣（CAMT 偏 bump inspection 單一、ONTO 偏 metal/X-ray 雙平台）<br>
+→ 但全球 metrology 市場 KLA 17.5% market share 領先，前 5 大佔 58.4%，Nova 約 4-5% niche 玩家<br>
+→ 給 8/10 不給 9/10：特化平台強 + 客戶 GAA reference tool 地位，但絕對市佔仍小於 KLA 4 倍 → §13.5 implication：合理 PE 給 22-25x（B 級基準 20x × 三引擎調整）
+</div>
+
+<h3>D｜估值燈（v12.0 取代 R:R 裁決）</h3>
+
+<h4>估值輸入</h4>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>當前 Fwd PE（FY26 GAAP）</td><td><b>53.8x</b></td><td>$556.11 ÷ $10.33（yfinance 0y 共識，n=8）</td></tr>
+<tr><td>當前 Fwd PE（FY27 GAAP）</td><td>44.5x</td><td>$556.11 ÷ $12.49（yfinance +1y 共識）</td></tr>
+<tr><td>5Y Fwd PE 範圍（推估）</td><td>~15x（2022 cycle 底） → ~54x（當前）</td><td>2025/8 ~35x（GuruFocus）→ 2026/5 ~54x，9 個月內溢出 54%</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><b>~95-100%（歷史峰值）</b></td><td>54x ≈ 5Y 區間頂部</td></tr>
+<tr><td>3Y EPS CAGR（FY25 → FY28E 推估）</td><td>~19.5%（GAAP）</td><td>FY25 $7.96 → FY26 $10.33 (+30%) → FY27 $12.49 (+21%) → FY28 推估 $14.5 (+16%) → CAGR ($14.5/$7.96)^(1/3)−1</td></tr>
+<tr><td>PEG（FPE 53.8 ÷ CAGR 19.5%）</td><td><b>2.76</b></td><td>遠高於 2.0 合理門檻</td></tr>
+<tr><td><b>估值燈</b></td><td><b><span class="fail">🔴 過熱</span></b></td><td>分位 &gt; 85% 且 PEG &gt; 2.5（兩條件同時觸發）</td></tr>
+</table>
+
+<div class="reasoning">
+<b>推導：</b>FPE 53.8x 在「&gt; 85% 分位 OR PEG &gt; 2.5」雙條件下，取較嚴 → 🔴<br>
+<b>盲點 1 救援檢核：</b>① §8 🟢 ✅ ② PEG &lt; 2.0 ❌（2.76 不過）③ AI 🟢 ✅ → 二項不過 → <b>救援不啟動</b>，🔴 不救回 🟡<br>
+→ §2 H implication：gate 🔴 進入訊號燈拒絕路徑，但 QC-31 規則 5「估值🔴 ≠ C」+ thesis 完整 → 落 B（觀望，等修復）
+</div>
+
+<h4>E｜R:R 與 Bear Case（參考用，不主導裁決）</h4>
+
+<table>
+<tr><th>項目</th><th>短期（12M / FY26）</th><th>中期（24M / FY27）</th><th>長期（5Y / FY30）</th></tr>
+<tr><td>FY EPS（共識）</td><td>$10.33（GAAP）</td><td>$12.49</td><td>$22.0（推估）</td></tr>
+<tr><td>合理 PE</td><td>32x（B 級 + 三引擎 1.6x）</td><td>30x</td><td>25x</td></tr>
+<tr><td>目標價</td><td>$331</td><td>$375</td><td>$550</td></tr>
+<tr><td>Bear PE</td><td>22x（成長熄火至 10%）</td><td>20x</td><td>18x</td></tr>
+<tr><td>Bear EPS（×0.9）</td><td>$9.30</td><td>$11.24</td><td>$19.8</td></tr>
+<tr><td>Bear 股價</td><td>$205</td><td>$225</td><td>$356</td></tr>
+<tr><td><b>R:R 計算</b></td><td>(331−556)/(556−205) = <b>−0.64x ❌</b></td><td>(375−556)/(556−225) = <b>−0.55x ❌</b></td><td>(550−556)/(556−356) = <b>−0.03x ❌</b></td></tr>
+</table>
+
+<div class="reasoning">
+<b>推導：</b>三個時間軸的「合理 PE × 共識 EPS」目標價均低於現價 → R:R 全部負值<br>
+本檔不是「便宜想進」型，而是「賣方共識追不上股價」型 — 共識中位 PT $505 < 現價 $556 也佐證此點<br>
+→ §1 implication：R:R 數字無進場意義；正確路徑是等 FPE 修復至 35-40x 區間（對應 ~$360-$415）再評估進場
+</div>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<tr><th>情境</th><th>假設</th><th>中期目標價</th><th>R:R</th></tr>
+<tr><td>Base</td><td>FY27 $12.49 × 30x</td><td>$375</td><td>−0.55x</td></tr>
+<tr><td>壓力 A</td><td>EPS −10% × 30x</td><td>$337</td><td>−0.66x</td></tr>
+<tr><td>壓力 B</td><td>FY27 EPS × PE −20% 至 24x</td><td>$300</td><td>−0.77x</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂 50%（PE → 25x）</td><td>$312</td><td>−0.74x</td></tr>
+</table>
+
+<p><b>壓力測試通過率：0/4</b>（無一情境 R:R ≥ 2.0）— 本指標僅作資訊性，最終訊號燈仍取自 QC-31 thesis-level 對映表。</p>
+
+<h3>F｜Pure MA 狀態機（v12.0 Stage 4 覆蓋層）</h3>
+
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$556.11</td></tr>
+<tr><td>W52 / 13W 斜率</td><td>$351.16 / <b>+24.39%</b></td></tr>
+<tr><td>W104 / 13W 斜率</td><td>$280.51 / <b>+15.46%</b></td></tr>
+<tr><td>W250 / 13W 斜率</td><td>$182.97 / <b>+12.11%</b></td></tr>
+<tr><td>Bollinger（20W）</td><td>上 $560.31 / 中 $460.87 / 下 $361.43</td></tr>
+<tr><td><b>Pure MA 狀態</b></td><td><b><span class="pass">✅ 強勢進場</span></b></td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+</table>
+
+<div class="reasoning">
+<b>判定：</b>價 $556 &gt; W52 &gt; W104 &gt; W250 + W250 斜率 +12% &gt; 3% → 標準「✅ 強勢進場」<br>
+<b>不取 🟢 最佳進場：</b>規則要求「價 &lt; W52」（拉回 50W 均線下方）才落 🟢；現價遠在 W52 上方，明顯在多頭趨勢延伸中段<br>
+<b>⚠️ Bollinger 警示：</b>BB 上軌 $560，現價 $556 = BB 2σ 邊緣，短期回測中軌 $461 機率高（–17% 空間）<br>
+<b>近 5 日 intraday 警示（QC-24）：</b>5/14 OHLC = 519 / 565 / 507 / 556，盤中區間 11.2%，最終收 $556（高 565 −1.6%），算「強勢消化」非「shooting star」（收盤距高點 &lt; 5%），<b>非</b> 紅旗
+</div>
+
+<h3>G+H｜大盤豁免 + 綜合訊號燈</h3>
+
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤 / 現價 / W104</td><td>^GSPC 7,501 / W104 6,175（高 21.5%，無系統性風險）</td></tr>
+<tr><td>豁免係數</td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h4>綜合訊號燈判定</h4>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>B</td></tr>
+<tr><td>gate（§2 D）</td><td>🔴 過熱</td></tr>
+<tr><td>ma_status（§2 F）</td><td>✅ 強勢進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+<tr><td><b>初判路徑（§2 H 內部表）</b></td><td>步驟 1 觸發 X（gate 🔴）</td></tr>
+<tr><td><b>QC-31 cross-check</b></td><td>thesis 完整（品質 B + 護城河 8 + 長期信心高 + AI 🟢）+ 估值🔴 為「時機」而非「thesis 失敗」→ <b>降級為 B（觀望）</b></td></tr>
+<tr><td><b>final_signal</b></td><td><b><span style="background:#FEF9C3; color:#92400E; padding:3px 10px; border-radius:4px;">B</span></b></td></tr>
+</table>
+
+<div class="reasoning">
+<b>判定理由：</b>QC-31 規則 5「估值🔴 + 4 週動能爆衝 + 品質 B 一律落 B 等修復，不歸 C」明確覆寫 §2 H 步驟 1 的機械 X<br>
+→ B 訊號語意：thesis 完整可關注，但禁止此價進場；等 Bollinger 回測中軌（~$461）或 FPE 修復至 35-40x（~$360-$415）才再評估
+</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8 A</td><td><b>充裕</b>（GAA 5+ 代際 + HBM 4-5 代際 + 先進封裝 chiplet 10+ 年 runway）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td><b>加深</b>（每代節點所需 metrology 步驟翻倍）</td></tr>
+<tr><td>長期持有信心</td><td>綜合</td><td><b>高</b></td></tr>
+</table>
+
+<p class="hypothesis-box" style="margin-top:8px;"><b>一句話說明（用於 INDEX.md 備註欄）：</b><br>
+🟢 順風，B 級護城河 8/10，metrology 三平台 + GAA reference tool 地位。<br>
+估值燈 🔴 過熱（FPE 54x 5Y 頂部、PEG 2.76）+ Pure MA ✅ 強勢但 Bollinger 上軌 → 進場時機極差。<br>
+建議等 Bollinger 中軌 ~$461 或 FPE 修復至 35-40x 區間（~$360-$415）再評估。</p>
+
+</section>
+
+<!-- ============ §3 三方辯論 ============ -->
+<section id="s3">
+<h2>§3 三方辯論摘要</h2>
+
+<div class="debate-grid">
+<div class="debate-card debate-bull">
+<h4>多頭辯護人｜Munger 模式</h4>
+<table>
+<tr><th>#</th><th>論據</th></tr>
+<tr><td>1</td><td>三平台架構（光學/材料/化學）是 metrology 同業最廣，CAMT 偏 bump 單線，ONTO 偏 X-ray 雙線 → 客戶要全套必選 Nova（§9）</td></tr>
+<tr><td>2</td><td>FY25 Rev +31% 遠超 WFE +5%，FY26 Q1 +10% Q2 guide +19% YoY = 加速兌現「outperform WFE」敘事；HBM4 + N2 + 18A 三波量產 2026-2027 全面上場（§8）</td></tr>
+<tr><td>3</td><td>FCF 28% margin + 5Y 收入 CAGR 30%+ 雙引擎 = 巴菲特定義的「合理價格買偉大公司」現在唯一缺的只是「合理價格」（§13）</td></tr>
+</table>
+<p><b>多頭一句話：</b>長期 thesis 完整無破口，問題僅在進場價。</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h4>空頭檢察官｜Burry 模式</h4>
+<table>
+<tr><th>#</th><th>路徑</th></tr>
+<tr><td>1</td><td>WFE 2027 cycle 進入消化期（韓國 HBM capex 已過峰、中國成熟製程 over-build 風險），Nova 季 YoY 跌至個位數，市場 PE 殺至 30x → 股價回 $375（–33%）</td></tr>
+<tr><td>2</td><td>KLA 整合計量方案在 GAA 首次取單（Marvell-style 生態攻擊）→ Nova H2 thesis 削弱 → PE 殺至 22-25x（同業 CAMT 34x 都過貴的環境裡 Nova 沒理由獨自溢價）</td></tr>
+<tr><td>3</td><td>2025 發行的 $500M 可轉債若股價橫盤 1-2 年，到期前轉股稀釋；現股 31.8M、轉股潛在 ~1M 股 +3% dilution，配合 FY27 EPS 下修 10% → 雙重壓力</td></tr>
+</table>
+<p><b>空頭最大威脅：</b>WFE 拐點 + KLA 反撲雙殺，估值與 EPS 同時下修。</p>
+</div>
+
+<div class="debate-card debate-judge">
+<h4>估值仲裁員｜Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td><b>4 / 10</b></td></tr>
+<tr><td>核心依據（引用 §13.3 步驟三）</td><td>當前股價隱含 10Y FCF CAGR ~17.5%；過去 3 年實際 FCF CAGR ~30%（基期低）；前向共識 EPS CAGR 19.5% → 隱含 CAGR 接近共識但須維持 10 年連續</td></tr>
+<tr><td>歷史對標</td><td>ASML 2021 高峰 FPE 52x → 2022 cycle bottom 22x（–58%），Nova 與 ASML 相似 cyclical metrology 屬性</td></tr>
+</table>
+<p><b>仲裁員一句話：</b>數字端看不出立即破口，但歷史告訴你 metrology 設備股的 PE 是 cyclical 不是 secular。</p>
+</div>
+</div>
+
+</section>
+
+<!-- ============ §4 序章 ============ -->
+<section id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Nova 解決的長期不可逆痛點：<b>晶圓製造的「測量精度極限」</b>。每縮一個製程節點（5nm → 3nm → 2nm → 1.4nm），晶體管結構從 FinFET → GAA → CFET 演進，原子層級的 patterning / film thickness / chemical composition 必須在製程中即時量測，否則良率崩塌。Nova 是少數能同時提供「光學散射」、「X 射線螢光」、「化學殘留量測」三種獨立物理原理的廠商；若 Nova 明天消失，2nm 以下節點的良率 ramp 會出現 6-12 個月延遲（客戶須拼湊其他廠商三類儀器接管，整合期可能 2 年）。</p>
+
+<h3>護城河形成歷史路徑</h3>
+<table>
+<tr><th>年份</th><th>關鍵 milestone</th><th>對護城河累積貢獻</th></tr>
+<tr><td>1993</td><td>創立於以色列，專注 OCD（Optical Critical Dimension）光學散射計量</td><td>+1 光學平台基石</td></tr>
+<tr><td>2000</td><td>NASDAQ 上市，與 KLA 在 28nm 節點開始客戶分流</td><td>+1 客戶基盤奠定</td></tr>
+<tr><td>2018</td><td>收購 ReVera（Materials Metrology / XPS）— 進入材料計量</td><td>+2 二平台架構成形</td></tr>
+<tr><td>2021</td><td>收購 ancosys（化學計量）— 三平台齊備</td><td>+2 三平台壟斷形成</td></tr>
+<tr><td>2023</td><td>Metrion（材料計量旗艦）獲兩家全球邏輯龍頭採用</td><td>+1 reference tool 地位</td></tr>
+<tr><td>2024-2025</td><td>FY25 Rev +31%、GAA reference tool 自封「foundational partner」</td><td>+1 GAA structural lock-in</td></tr>
+<tr><td><b>當前評分</b></td><td><b>累積至 8/10</b></td><td>三平台 niche moat + reference tool 地位完整</td></tr>
+</table>
+
+<h3>逆向推演（Munger Inversion）三維展開</h3>
+
+<h4>① 技術維度：什麼會讓 Nova 3 年內失去 50% 價值？</h4>
+<ul>
+<li><b>KLA 推出整合三平台方案 + 與 ASML 綁定</b>：歷史對標 — KLA 2019 整合 Tencor 後吃下 inspection 主導地位；若 KLA 把光學 + X-ray 整合至同一 platform，Nova 三平台優勢直接被吃掉</li>
+<li><b>EUV scanner 內建即時計量（in-situ metrology）</b>：ASML 若把 metrology 整合進 EUV 工具，獨立 metrology TAM 萎縮；歷史對標 — Applied 早期 etch 工具整合 OES 計量分走 Lam 子市場</li>
+<li><b>AI 預測模型取代物理計量</b>：客戶用機器學習從 in-line process 數據預測，繞過部分 metrology 步驟；類似 GOOGL Search 被 AI chat 蠶食邏輯</li>
+<li><b>2nm GAA yield issue 解決於虛擬計量（virtual metrology）</b>：Intel / TSMC 自研 metrology 演算法，外購減少；歷史對標 — Apple 自研 modem 後 QCOM 失去 50% iPhone modem 收入</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><b>Capex 慣性過度擴張</b>：2025 發行 $500M 可轉債推升 Total Debt 至 $799M，若管理層用於高估值併購（如 2021 EUV-related 過熱併購），可能像 Cisco 2000 年代燒掉 reserves 的路徑</li>
+<li><b>創辦人/CEO 退場後文化斷裂</b>：CEO Gabriel Waisman 2020 接任，目前 6 年；若 2027-2028 退場接班，metrology 是 R&D-heavy 業務，文化斷裂可能延誤 1.4nm 節點 timing</li>
+<li><b>FRT-style 整合失敗</b>：CAMT 2023 整合 FRT 經歷 18 個月磨合期才釋放綜效；若 Nova 後續做大型併購，整合期可能同樣拉長並讓客戶轉投 ONTO/CAMT</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><b>2nm 節點為極限 / 進入 chiplet 時代取代 monolithic scaling</b>：若節點微縮自 2030 後停止，metrology TAM 結構性封頂；歷史對標 — Intel 2015 後 14nm → 10nm 卡關五年，TEL/AMAT 訂單同步停滯</li>
+<li><b>監管型分拆 / 反壟斷</b>：美中科技戰升級至 Israeli equipment makers，Nova 對中國市場銷售被禁；歷史對標 — ASML EUV 對中國禁運後 H 系列在中國營收幾乎清零</li>
+<li><b>計算範式轉換到量子 / neuromorphic</b>：若 2030 後主流計算改用非矽基方案，傳統 fab metrology 整體 TAM 萎縮；類似 Intel 在 GPU 時代失去 CPU 王者地位</li>
+</ul>
+
+<p><b>價值陷阱路徑判斷：</b>若 Nova 未來變成陷阱，最可能路徑是<b>「隱性資本密集型」+ 「產業結構衰退型」雙觸發</b> — WFE 進入長 cycle 消化期 + 三平台優勢被 KLA 整合稀釋，使 ROIC 從 20% 結構性下行至 8-10%，估值倍數同步殺至 20x 以下。</p>
+
+</section>
+
+<!-- ============ §5 投資論點錨定 ============ -->
+<section id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><b>3-5 年</b>（長期 thesis 為主）</td></tr>
+<tr><td>主要驅動理由</td><td>2nm GAA 量產 ramp（2025-2028）+ HBM4/5 量產（2026-2030）+ 先進封裝 chiplet 化（2025-2035）三條 S 曲線重疊期；倉位節奏由估值決定，thesis 由時間決定</td></tr>
+<tr><td>時間軸決定的訊號 vs 噪音</td><td>單季 Rev YoY 波動 = 噪音；TTM Rev / WFE 差距 = 訊號；FPE 短期擴張 = 噪音；FPE 5Y 分位修復 = 訊號</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>驗證指標</th><th>資料來源</th></tr>
+<tr><td>H1</td><td>GAA + 先進封裝帶動 metrology intensity 結構性提升</td><td>Nova Rev YoY ≥ WFE YoY + 10%p 連續 8 季</td><td>Metrology TAM 5Y CAGR ≥ 10% vs WFE CAGR ≤ 7%</td><td>1.4nm CFET 量產時 metrology 步驟 / 晶圓 ≥ 5nm 的 1.5 倍</td><td>Rev / WFE 比、metrology 步驟數</td><td>2Y: §6 季財報 / 5Y: §8 A Runway / 10Y: §11 TAM 路線圖</td></tr>
+<tr><td>H2</td><td>Nova 三平台架構讓全球前 5 大代工廠 / IDM 必選</td><td>FY26 先進封裝佔產品營收 ≥ 25%（vs FY25 20%）</td><td>市佔率從 ~4-5% 提升至 6%+（隱含 Nova Rev CAGR &gt; TAM CAGR ≥ 5%p）</td><td>三平台中至少兩個成為 1.4nm GAA generation 的 standard reference tool</td><td>產品營收結構、市佔</td><td>2Y: 季財報 / 5Y: 年報 §1 strategic / 10Y: 客戶 design win 公告</td></tr>
+<tr><td>H3</td><td>估值修復至合理區間後支持 5Y 翻倍報酬</td><td>FPE 從 54x 修復至 35-40x 後再從這個 base 出發</td><td>FY30 EPS ≥ $22.0 + PE 25x → 股價 $550 區（vs 現價 持平 = 5Y 報酬 0%）</td><td>FY35 EPS ≥ $40 + PE 22x → 股價 $880 區（vs 現價 +58%）</td><td>FPE 軌跡、EPS 兌現</td><td>2Y: §13.1 / 5Y: §13.5 / 10Y: §8 E 壓測</td></tr>
+</table>
+
+<div class="reasoning">
+<b>H3 重要說明：</b>當前股價 $556 已 price in 大約 2028 年才該到的 EPS 水準；本檔的中長期挑戰不是「Nova 能不能成長」，而是「估值能不能修復」+ 「修復前能不能避免追高被套」
+</div>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<div class="hypothesis-box">
+<b>狀態：本份為 Inception DD（v12.2+）</b>。前份 DD（DD_NVMI_20260414.html）為 v9.0 schema，judgement layer 不同（採「進場/底倉 25%」直接倉位語言，v12.0+ 改為訊號燈），不適合直接 YoY 對照。本欄位將於 2027-05-15 起首次有實質資料對照。<br>
+<br>
+<b>但作為 institutional memory 記錄</b>：v9.0 DD（2026-04-14，股價 $507、FPE 51x）已標註「股價 12M +171%、短期催化劑已被定價」。一個月後 Q1 26 beat + Q2 guide raise，股價再 +10% 至 $556、FPE 升至 54x — <b>v9.0 的警示已部分驗證（追高風險）</b>。本份 v12.2 DD 把訊號從 v9.0「進場 + 底倉 25%」明確降至「B 觀望」，反映 1 個月內估值的進一步透支。
+</div>
+
+<h3>C｜三個最可能推翻論點的風險（含時間尺度）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>WFE 2027 進入長 cycle 消化期（HBM capex 過峰 + 中國 over-build）</td><td>H1</td><td>中期（2-3 年）</td><td>全球 WFE YoY、SEMI World Fab Forecast</td><td>WFE YoY &lt; 0% 連 2 季 = 警戒；連 4 季 = 大動作減倉</td></tr>
+<tr><td>R2</td><td>KLA 推出整合三平台方案在 GAA 首次取單</td><td>H2</td><td>長期結構（3-5 年）</td><td>KLA 新品發佈、Nova 客戶集中度變化</td><td>KLA 三平台整合工具 + Nova 季 Rev 連續 2 季下滑</td></tr>
+<tr><td>R3</td><td>估值壓縮（PE 修復過程，獨立於基本面）</td><td>H3</td><td>短期（12 月內）</td><td>Fwd P/E 趨勢</td><td>Fwd P/E &lt; 35x = 進場觸發；&gt; 60x = 減倉觸發</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>每當新事件出現，用以下框架判斷對論點影響，而非直覺反應：</p>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在 3-5 年持有期內有影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（intensity）/ H2（市佔）/ H3（估值）哪個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到 §5C 警戒閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場（首次建倉）</td><td>FPE ≤ 35x（對應 ~$362）且 H1 + H2 未削弱（季 Rev YoY ≥ 12%）</td><td>建倉至底倉 15%（B 級目標倉位的）</td></tr>
+<tr><td>加碼（雙確認）</td><td>FPE ≤ 30x 且 §5 B' 假設 H1 + H2 同時兌現（連 2 季）</td><td>加碼至目標倉位 100%（即 B 級 15% 滿配）</td></tr>
+<tr><td>減碼（風險觸發）</td><td>R1 觸發（WFE YoY &lt; 0% 連 2 季）或 FPE &gt; 60x</td><td>減半倉，等待修復</td></tr>
+<tr><td>撤退（thesis 失敗）</td><td>R2 確認（KLA 取單 + Nova 季 Rev 連 2 季 −）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+</section>
+
+<!-- ============ §6 即時財報 ============ -->
+<section id="s6">
+<h2>§6 即時財報情報</h2>
+
+<h3>① Q1 2026 財報關鍵數字（2026-05-14 公布）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$235.3M</td><td>$235M（mid guide）</td><td><span class="beat">Beat</span></td><td>+10%</td></tr>
+<tr><td>EPS (GAAP)</td><td>$2.04</td><td>$1.96（mid guide）</td><td><span class="beat">Beat</span></td><td>+5%</td></tr>
+<tr><td>EPS (Non-GAAP)</td><td>$2.33</td><td>$2.19（mid guide）</td><td><span class="beat">Beat $0.13</span></td><td>+8%</td></tr>
+<tr><td>Gross Margin</td><td>57.7%</td><td>56%（guide）</td><td><span class="beat">+170bp</span></td><td>+90bp YoY</td></tr>
+<tr><td>Operating Margin</td><td>~29%</td><td>—</td><td>—</td><td>持平</td></tr>
+</table>
+
+<h3>② Q2 2026 Guidance</h3>
+<table>
+<tr><th>指標</th><th>Q2 26 Guide</th><th>QoQ 中點</th><th>YoY 中點</th><th>對共識</th></tr>
+<tr><td>Revenue</td><td>$245-255M（mid $250M）</td><td>+6%</td><td><b>+19%</b></td><td>高於共識 3.8%</td></tr>
+<tr><td>EPS (GAAP)</td><td>$2.10-2.24</td><td>+6%</td><td>+11%</td><td>—</td></tr>
+<tr><td>EPS (Non-GAAP)</td><td>$2.34-2.48</td><td>+3%</td><td>+8%</td><td>高於共識</td></tr>
+<tr><td>GM</td><td>57% GAAP / 59% Non-GAAP</td><td>持平</td><td>+30bp</td><td>—</td></tr>
+</table>
+
+<h3>③ 財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（intensity 提升）</td><td><span class="beat">＋ 強化</span></td><td>Q1 Rev YoY +10%、Q2 guide YoY +19%（vs WFE YoY +9% est）= re-acceleration 加速；管理層明確「expect to outperform WFE mid-teens growth」</td></tr>
+<tr><td>H2（三平台市佔）</td><td><span class="beat">＋ 強化</span></td><td>Q1「all-time highs across service revenue and multiple product lines」；GM 從 57.4% 升至 57.7% = mix 持續向高 ASP 產品傾斜</td></tr>
+<tr><td>H3（估值維持）</td><td><span class="miss">－ 削弱</span></td><td>股價 +10% 至 $556 = FPE 升至 54x（vs 4/14 51x）；分析師中位 PT $505 已被現價超越 → 估值 thesis 從 v9.0 的「市場容忍 45-55x」進入「市場過度透支」階段</td></tr>
+</table>
+
+<h3>④ Earnings Call 語氣解析</h3>
+<ul>
+<li><b>管理層基調：</b>CEO Gabriel Waisman 用「robust demand and technology leadership」，明確要求 outperform mid-teens WFE growth — 比 v9.0 DD 提到的「H2 加速」更積極</li>
+<li><b>Forward Guidance：</b>Q2 mid $250M 高於 Q4'25 + Q1'26 base 且明顯加速，FY26 隱含可達 $1.03-1.05B（vs 共識 $1.03B）— 共識可能進一步上修</li>
+<li><b>刻意強調的主題：</b>「先進記憶體（HBM）」+「邏輯 GAA」雙引擎；服務營收創新高（黏性升高）</li>
+<li><b>刻意迴避：</b>對 KLA 整合計量威脅未直接回應；可轉債未來轉股策略未說明</li>
+</ul>
+
+<h3>⑤ 產業 Imply 萃取</h3>
+<ul>
+<li><b>需求端：</b>HBM4 量產 + N2/18A GAA ramp 推升 metrology intensity，客戶 backlog 強</li>
+<li><b>供給端：</b>未提及產能限制 → 供給端不是瓶頸</li>
+<li><b>競爭格局：</b>GM 57.7% 維持 = 定價權未受競爭壓力（CAMT FY25 GM ~50%，Nova 高 7-8pp）</li>
+<li><b>總體經濟敏感度：</b>管理層未提及宏觀風險，暗示需求結構性而非景氣循環</li>
+<li><b>對同業推論：</b>ONTO Q1 26 同樣 beat + 上修全年 +30% → metrology 設備產業整體 cycle 向上，Nova 個股 alpha 來自三平台組合</li>
+</ul>
+
+</section>
+
+<!-- ============ §7 門檻檢核 ============ -->
+<section id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS 共識（yfinance 取得）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>備註</th></tr>
+<tr><td>基期 FY25 GAAP EPS</td><td>$7.96</td><td>實際公布</td></tr>
+<tr><td>FY26E（0y）</td><td>$10.33（n=8, YoY +19.83%）</td><td>yfinance 共識；EPS Trend 90d 前 $9.72 → 現 $10.33（+6.3% 上修）</td></tr>
+<tr><td>FY27E（+1y）</td><td>$12.49（n=8, YoY +20.95%）</td><td>yfinance 共識；90d 前 $11.45 → 現 $12.49（+9.1% 上修）</td></tr>
+<tr><td>FY28E（邏輯推導）</td><td>$14.5（YoY ~16%）</td><td>§8A Runway 充裕 + §8B 定價 mix 改善 + 假設 OI margin 從 29% 升至 31% → 推導</td></tr>
+<tr><td><b>3Y EPS CAGR（FY25 → FY28E）</b></td><td><b>22.1%</b></td><td>($14.5/$7.96)^(1/3)−1 — GAAP</td></tr>
+</table>
+
+<h3>Munger 護城河門檻表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>數據</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="pass">✅</span></td><td>FY25 FCF margin 24.7%（$217.9M / $880.6M）</td></tr>
+<tr><td>5Y 正規化 FCF Margin</td><td>均值 &gt; 15%；谷底 &gt; 10%</td><td><span class="pass">✅</span></td><td>5Y 估值區間 17-28%，谷底 ~17%（FY22 cycle 底）</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%</td><td><span class="pass">✅</span></td><td>~20-23%（TTM）&gt;&gt; WFE 7-8%</td></tr>
+<tr><td>10Y ROIC 穩定性</td><td>≥ 70% 年份 ROIC &gt; 15%</td><td><span class="pass">✅</span></td><td>~7-8/10 年達標（2022 cycle 底略低於 15%）</td></tr>
+<tr><td>10Y 毛利率定價能力</td><td>≥ 70% 年份持續改善</td><td><span class="pass">✅</span></td><td>GM 從 FY16 ~50% 提升至 FY25 57.4% = 7pp 改善</td></tr>
+<tr><td>資本密集度（Capex/Rev）</td><td>&lt; 5% 優 / &lt; 10% 可</td><td><span class="pass">✅</span></td><td>FY25 Capex $27.7M / Rev $880.6M = 3.1% — 極輕資產</td></tr>
+<tr><td>EPS CAGR（未來 3Y）</td><td>&gt; 20%</td><td><span class="pass">✅</span></td><td>22.1% GAAP（見上）</td></tr>
+<tr><td>PEG（FY26 GAAP）</td><td>&lt; 2</td><td><span class="fail">❌</span></td><td>53.8 / 22.1 = <b>2.43 — 過貴</b></td></tr>
+<tr><td>負債安全性 D/E</td><td>&lt; 0.7</td><td><span class="neutral">⚠️</span></td><td>Total Debt $799M / Equity $1,318M = 0.61（接近上限，FY24 仍 0.25 → 暴增係因可轉債）</td></tr>
+<tr><td>現金 / Revenue</td><td>10-50%</td><td><span class="pass">✅</span></td><td>$215M / $880M = 24.4%</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分</td><td><span class="neutral">8/10</span></td><td>剛好門檻</td></tr>
+</table>
+
+<p><b>最大財務弱點：</b>2025 發行 $500M 可轉債推升 Total Debt 3.4 倍，雖然 ND/EBITDA 2.06x 仍安全，但 dilution 路徑需追蹤。<br>
+<b>Munger 三維評級：</b><span class="pass">🟢 三項全達標（ROIC 穩定 + 定價能力 + 低資本密集）</span></p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p><b>觸發判定：</b>Fwd PE 5Y 分位 ~95-100%，<b>非 ≤ 25% 分位 → 不觸發低估值四問</b>。本檔屬於「高估值貴有貴的理由」型，反向檢查另有 §13.5「便宜理由檢驗」（同樣不觸發）。<b>低估值風險評級：N/A — 本檔不是便宜陷阱型，是估值透支型</b>。</p>
+
+</section>
+
+<!-- ============ §8 ============ -->
+<section id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算 — 三層時間軸量化</h3>
+<table>
+<tr><th>維度</th><th>現在（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th></tr>
+<tr><td>Metrology TAM（億美元）</td><td>~$109</td><td>~$160-180</td><td>~$250-300</td></tr>
+<tr><td>Nova 市佔</td><td>~4-5%</td><td>5-6%</td><td>6-8%</td></tr>
+<tr><td>Nova 隱含 Rev</td><td>~$880M（FY25 actual）</td><td>~$1.6-2.0B</td><td>~$2.5-3.5B</td></tr>
+<tr><td>結構性變化</td><td>FinFET + GAA + 先進封裝三主題並進</td><td>2nm/1.4nm GAA 主導，HBM5/6 量產，CFET 試產</td><td>CFET / monolithic 3D 主導，metrology 步驟 / 晶圓比 5nm 翻倍</td></tr>
+</table>
+
+<p><b>解讀：</b>v9.0 DD 預估 Runway ≥ 10 年；v12.2 引入三層時間軸後，5Y → 10Y 路徑明確，但 5Y 後（2031+）的市佔提升幅度高度依賴 H2 三平台是否成為 1.4nm reference tool。<b>Runway 結論：≥ 10 年（高確信）</b>。</p>
+
+<h3>A'｜S 曲線位置 + 距飽和年數</h3>
+<table>
+<tr><th>業務</th><th>S 曲線位置</th><th>距產業飽和年數</th><th>佐證</th></tr>
+<tr><td>邏輯製程 metrology（GAA / 2nm）</td><td>中前段</td><td>8-10 年</td><td>N2 / 18A 2025 量產，1.4nm / 1.0nm 2028-2032，CFET 2030+ 為下一代起點</td></tr>
+<tr><td>記憶體 metrology（HBM）</td><td>前段</td><td>10+ 年</td><td>HBM4 2026 量產，HBM5 2028，HBM6 2030+；每代堆疊翻倍 metrology 步驟翻倍</td></tr>
+<tr><td>先進封裝 metrology（CoWoS / chiplet）</td><td>前段</td><td>10+ 年</td><td>CoWoS-L 2025 主流，chiplet 標準化 2027-2030，多 die 整合層級不斷加深</td></tr>
+<tr><td>材料計量（Metrion）</td><td>前段</td><td>10+ 年</td><td>「兩家全球邏輯龍頭採用」尚未滲透 IDM 全量</td></tr>
+<tr><td>化學計量（ancosys）</td><td>前段</td><td>10+ 年</td><td>2021 併入仍在 ramp，2nm 化學浴需求剛起</td></tr>
+</table>
+
+<p><b>多曲線疊加邏輯：</b>5 個業務在 S 曲線不同位置 → 整體 Runway 不會單一年份全部熄火；最關鍵的是邏輯製程 metrology（最大營收貢獻）剩 8-10 年，其餘新引擎都還 10 年以上。</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~85%</td><td>FY25 主要靠光學平台擴張 + 先進封裝 +60% YoY + 服務收入創新高</td></tr>
+<tr><td>無機成長</td><td>~15%</td><td>2021 ancosys（化學）+ 2018 ReVera（材料）整合貢獻持續釋放</td></tr>
+</table>
+
+<h4>② 定價 vs 量驅動</h4>
+<table>
+<tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
+<tr><td>定價驅動</td><td>~40%</td><td>擴大 — 高階 ASP 工具 mix 上升，GM 從 56% 升至 58%</td></tr>
+<tr><td>量驅動</td><td>~60%</td><td>穩定 — WFE 出貨數量年增 mid-single 至 low-teens</td></tr>
+</table>
+
+<p><b>3Y 趨勢：</b>定價貢獻提升（mix shift to advanced node tools），量貢獻穩定但受 WFE cycle 影響有波動。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>判斷</th><th>佐證</th></tr>
+<tr><td><b>強化型</b>（最佳）</td><td><span class="pass">✅ 是</span></td><td>每代節點 metrology 步驟翻倍 = 客戶依賴度升高；reference tool 地位 = 切換成本指數上升</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th><th>標準</th><th>符合?</th></tr>
+<tr><td>ROIC</td><td>~22%（TTM）</td><td>~18%</td><td>↑</td><td>&gt; 15% 且 &gt; WACC</td><td><span class="pass">✅</span></td></tr>
+<tr><td>ROIC − WACC（超額）</td><td>~12-13%p</td><td>~9%p</td><td>↑</td><td>持續正且擴大</td><td><span class="pass">✅</span></td></tr>
+<tr><td>FCF Margin</td><td>24.7%</td><td>~17%</td><td>↑</td><td>&gt; 15%</td><td><span class="pass">✅</span></td></tr>
+<tr><td>FCF / NI 轉換率</td><td>0.84</td><td>0.70</td><td>↑</td><td>&gt; 85% 輕資本</td><td><span class="neutral">⚠️</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>~10%</td><td>~9%</td><td>↑</td><td>合理偏高</td><td><span class="pass">✅</span></td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試 — 三層時間軸</h3>
+<table>
+<tr><th>時間軸</th><th>Base 假設</th><th>Bear A：成長放緩</th><th>Bear B：cycle 中間</th><th>Bear C：結構性減速</th></tr>
+<tr><td>3Y（2028）</td><td>FY28 EPS $14.5 × 30x = $435</td><td>$13.0 × 28x = $364</td><td>$11.5 × 24x = $276</td><td>$10.0 × 20x = $200</td></tr>
+<tr><td>5Y（2030）</td><td>FY30 EPS $22.0 × 25x = $550</td><td>$19.0 × 23x = $437</td><td>$16.5 × 20x = $330</td><td>$14.0 × 18x = $252</td></tr>
+<tr><td>10Y（2035）</td><td>FY35 EPS $40 × 22x = $880</td><td>$32 × 20x = $640</td><td>$26 × 18x = $468</td><td>$20 × 16x = $320</td></tr>
+</table>
+
+<p><b>累積複利落差：</b>3Y Base $435（vs 現價 $556 = −22%）；10Y Base $880（+58%）。<b>本檔 5Y 內報酬可能持平甚至為負，但 10Y 後仍有結構性 upside</b>—這就是「估值透支但 thesis 完整」的數字含義。</p>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>57.7% vs 57.6% Q1'25 — 升</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>市佔縮減</td><td>FY25 Rev +31% &gt; WFE +5% = 擴大</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑?</td><td>GM 升 + Rev YoY +10-19% — 提價量同升</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Rev CAGR（差距 &gt; 5%p）</td><td>EPS +29% / Rev +31% = 差距 −2pp（EPS 略慢）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FY25 0.84 / FY24 0.71 — 接近但不破</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且上升</td><td>~3% 區間穩定</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>Metrology TAM 2026 $109B → 2031 $135-180B 擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數 3Y 系統性下移</td><td>同業 KLAC FPE 36x、CAMT 34x、ONTO 28-43x — 處於高位</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex &gt; 60% FCF</td><td>Capex/FCF 12.7%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停投資 3Y 後 Rev 下滑?</td><td>Q1/Q2 26 加速 — 反向證明 invest 有效</td><td>⬜</td></tr>
+</table>
+
+<p><b>價值陷阱風險評級：<span class="pass">🟢 低風險（0 個亮燈）</span></b></p>
+
+<p><b>長期成長性綜合評級：<span class="pass">🟢 高確信長期成長</span></b>（Runway ≥ 10 年 + 有機 + 定價驅動為主 + 護城河強化型 + ROIC 擴大 + 衰退信號 0 個）</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><b><span class="pass">🟢 AI 受益</span></b> — 核心業務（先進製程 metrology + 先進封裝 metrology + HBM metrology）<b>全部 AI 直接驅動</b>。AI accelerator 需求 → 2nm GAA + HBM4 + CoWoS-L → metrology intensity 翻倍。Nova 是 AI infrastructure 鏟子賣家二階供應商。AI 評級對長期 PE 給予 ×1.10 加分。</p>
+
+</section>
+
+<!-- ============ §9 護城河 ============ -->
+<section id="s9">
+<h2>§9 護城河分析</h2>
+
+<p><b>評分：8 / 10</b>（B 級護城河 7-8 區間，給 8 上緣 — 特化 niche 完整 + reference tool 地位 + 三平台架構同業最廣，但全球前 5 大 metrology 玩家 NVMI 排第 4-5，KLA 4 倍領先限制絕對 ceiling）。</p>
+
+<h3>護城河來源</h3>
+<ul>
+<li><b>網路效應：</b>弱 — metrology 不是平台型業務，沒有 user-to-user network 效應</li>
+<li><b>無形資產：</b>強 — 三平台技術專利（光學散射、X-ray、化學浴量測）；reference tool 認證 = 客戶不會在製程關鍵節點換廠商</li>
+<li><b>轉換成本：</b>極強 — fab 一旦把 Nova metrology data feed 進製程控制 loop，切換需要 12-24 個月驗證新工具 + 重建 process recipe = 客戶不敢動</li>
+<li><b>規模優勢：</b>中等 — R&D 規模 vs KLA 不對等（NVMI FY25 R&D ~$150M vs KLAC ~$1.3B），但在 niche 細分上 R&D / TAM 比例反而高於 KLA</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼 KLA / AMAT / ASML 資本充足卻仍未跨入 Nova 的三平台組合？答案是「不值得」：KLA 集中在 inspection 主導（更大市場），AMAT 集中在 deposition / etch（核心業務），ASML 集中在 EUV scanner（壟斷地位）。對它們而言，metrology 三平台 niche 是 $1-2B Rev 機會，但需 5-10 年投入 + KLA 已有部分 metrology 業務（OCD），ROI 不如本業。Nova 在此 niche 處於「太小不值得 KLA 全力打、又太關鍵客戶不能放棄」的甜蜜點。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>當前市佔</th><th>3Y 趨勢</th><th>核心威脅</th><th>誰吃誰</th></tr>
+<tr><td>KLA</td><td>~17.5%</td><td>持平 / 略增</td><td>整合三平台方案的潛在威脅（R2 風險）</td><td>KLA → Nova 30%（最大威脅）</td></tr>
+<tr><td>ONTO Innovation</td><td>~4-5%</td><td>擴大（FY26 guide +30% Rev）</td><td>X-ray 平台直接競爭；Rigaku 27% 入股強化 X-ray</td><td>ONTO ↔ Nova 50%（雙向）</td></tr>
+<tr><td>Camtek</td><td>~3-4%</td><td>擴大（FRT 整合）</td><td>bump inspection 為主，與 Nova 重疊小</td><td>CAMT 30% Nova（次要）</td></tr>
+<tr><td>Applied Materials</td><td>~10%</td><td>持平</td><td>etch / deposition 內建 in-situ metrology 風險</td><td>AMAT → Nova 20%（長期）</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸（v12.2 新增）</h3>
+
+<h4>過去 5 年護城河變化</h4>
+<table>
+<tr><th>年份</th><th>事件</th><th>邊際影響</th></tr>
+<tr><td>2021</td><td>ancosys 整合完成，化學平台齊備</td><td>+0.8 分（三平台壟斷形成）</td></tr>
+<tr><td>2022</td><td>WFE cycle 底；Nova Rev −9% 但守住客戶</td><td>+0.2 分（cycle stress test 通過）</td></tr>
+<tr><td>2023</td><td>Metrion 被兩家全球邏輯龍頭採用</td><td>+0.6 分（reference tool 地位確立）</td></tr>
+<tr><td>2024</td><td>GAA「foundational partner」自封</td><td>+0.4 分（GAA structural lock-in）</td></tr>
+<tr><td>2025</td><td>FY25 Rev +31%、先進封裝 +60% YoY</td><td>+0.3 分（新引擎驗證）</td></tr>
+<tr><td>2025</td><td>$500M 可轉債發行 — 為未來併購準備（雙刃劍）</td><td>−0.2 分（dilution / capital allocation 不確定）</td></tr>
+<tr><td><b>累積 5 年</b></td><td></td><td><b>+2.1 分（從 ~6 升至 8）</b></td></tr>
+</table>
+
+<h4>未來 5 年可能變化（含機率）</h4>
+<table>
+<tr><th>情境</th><th>機率</th><th>邊際影響</th></tr>
+<tr><td>1.4nm CFET 量產 Nova 三平台被選為 reference tool（任一）</td><td>50%</td><td>+1 分</td></tr>
+<tr><td>HBM5/6 客戶 design win 補齊 SK Hynix + Samsung + Micron 三家</td><td>60%</td><td>+0.5 分</td></tr>
+<tr><td>KLA 推出整合三平台方案在 GAA 取單（R2 觸發）</td><td>20%</td><td>−1.5 分</td></tr>
+<tr><td>大型併購（&gt; $300M）整合失敗</td><td>15%</td><td>−0.5 分</td></tr>
+<tr><td>中國地緣禁運擴大至 Israeli equipment</td><td>10%</td><td>−0.8 分</td></tr>
+<tr><td><b>期望值（機率加權）</b></td><td></td><td><b>+0.5 / +0.3 / −0.3 = 淨 +0.5 分</b></td></tr>
+</table>
+
+<p><b>5Y 後護城河預估：8.5（B 級偏 A 級邊界）</b> — 主要 upside 來自 1.4nm reference tool 卡位，主要 downside 來自 KLA 反撲。</p>
+
+<h3>E｜對手投入 vs Nova Capex / R&amp;D 對照</h3>
+<table>
+<tr><th>公司</th><th>Capex FY25</th><th>R&amp;D FY25</th><th>R&amp;D / Rev</th><th>vs Nova 差距</th></tr>
+<tr><td>Nova (NVMI)</td><td>$27.7M</td><td>~$150M（est）</td><td>17%</td><td>基準</td></tr>
+<tr><td>KLA</td><td>~$0.6B</td><td>~$1.3B</td><td>~12%</td><td>R&amp;D 絕對額 8.7 倍</td></tr>
+<tr><td>Applied Materials</td><td>~$1.0B</td><td>~$3.2B</td><td>~12%</td><td>R&amp;D 絕對額 21 倍</td></tr>
+<tr><td>ONTO Innovation</td><td>~$50M</td><td>~$160M</td><td>~13%</td><td>R&amp;D 約等</td></tr>
+<tr><td>Camtek</td><td>~$30M</td><td>~$60M</td><td>~13%</td><td>R&amp;D 約 0.4 倍</td></tr>
+</table>
+
+<p><b>解讀：</b>Nova R&amp;D 絕對額遠小於 KLA / AMAT，但在 metrology niche 上 R&amp;D / Rev 比例反而最高（17%）。「規模優勢」護城河論述成立的關鍵是「niche 內 R&amp;D 集中度」而非「絕對額」。若 KLA 把 metrology R&amp;D ratio 從 12% 提升至 20%，Nova 規模優勢會被吃掉 — 這是 R2 的核心機制。</p>
+
+<h3>護城河趨勢</h3>
+<p><b>加深</b>（每代節點 metrology 步驟翻倍 + reference tool 切換成本指數上升）</p>
+
+<h3>24 個月最可能瓦解的變化（QC-23 三級分類）</h3>
+<table>
+<tr><th>等級</th><th>事件</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>ONTO X-ray 與 Rigaku 整合後在 chiplet 細分搶單</td><td>不扣分（單一細分市佔影響 1-2%p）</td></tr>
+<tr><td>🟡 點對點</td><td>CAMT FRT 整合在 SiC / 先進封裝細分搶單</td><td>不扣分</td></tr>
+<tr><td>🔴 生態攻擊</td><td>KLA 推出三平台整合方案 + 與 ASML 綁定（類 Marvell Golden Cable Initiative）</td><td>護城河 −1 分（&gt; R2 風險）</td></tr>
+<tr><td>⛔ 架構替代</td><td>EUV scanner 內建 in-situ metrology（ASML 自研）</td><td>護城河 −2 分（&gt; R2 加強版）</td></tr>
+</table>
+
+</section>
+
+<!-- ============ §10 ============ -->
+<section id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>主要對手（KLA / CAMT）</th></tr>
+<tr><td>Revenue（$M）</td><td>513</td><td>672</td><td><b>881</b></td><td>—</td></tr>
+<tr><td>FCF Margin</td><td>~17%</td><td>32.4%</td><td>24.7%</td><td>KLA 32% / CAMT 25%</td></tr>
+<tr><td>EBITDA Margin</td><td>~30%</td><td>~30%</td><td>~32%</td><td>KLA 38% / CAMT 33%</td></tr>
+<tr><td>ROIC − WACC</td><td>+7%p</td><td>+10%p</td><td>+12-13%p</td><td>KLA +18%p / CAMT +10%p</td></tr>
+<tr><td>SBC / Revenue</td><td>~3%</td><td>~3%</td><td>~3%</td><td>低於同業</td></tr>
+<tr><td>ROE</td><td>~22%</td><td>~22%</td><td>~22%</td><td>KLA &gt; 50% / CAMT 24%</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>檢驗項</th><th>數據</th><th>結論</th></tr>
+<tr><td>淨利 vs OCF 連動</td><td>FY25 NI $259M / OCF $246M = 95%</td><td><span class="pass">健康</span></td></tr>
+<tr><td>AR / Rev 比較</td><td>需更詳細數據，但 GM 升 + Rev YoY +10-31% 強</td><td>無明顯應收膨脹</td></tr>
+<tr><td>存貨 / Rev</td><td>未取得詳細，但 backlog 強 + Rev guide 加速</td><td>暫未見庫存積壓</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>0.70 → 0.84 改善</td><td>但離 0.85 仍差一點點</td></tr>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>3Y 回購總額 vs 3Y FCF</td><td>Nova 不大規模回購（成長股策略）</td><td>無回購驅動 EPS 風險</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>EPS CAGR ≈ Rev CAGR（同步）</td><td>有機成長為主</td></tr>
+<tr><td>Rev CAGR vs EPS CAGR</td><td>FY23-25 Rev CAGR ~31% / EPS CAGR ~29%</td><td>同步，無數學陷阱</td></tr>
+</table>
+
+</section>
+
+<!-- ============ §11 ============ -->
+<section id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics</h2>
+
+<h3>市場量化 — 三層時間軸結構性變化</h3>
+<table>
+<tr><th>項目</th><th>現在（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th><th>結構性變化</th></tr>
+<tr><td>Metrology + Inspection TAM</td><td>$109B</td><td>$150-180B</td><td>$250-300B</td><td>從 inspection 主導 → metrology 強度提升（GAA / 3D-NAND 推升）</td></tr>
+<tr><td>Advanced Packaging metrology</td><td>$8-10B</td><td>$25-30B</td><td>$50-60B</td><td>從 traditional WLP → chiplet / 3D stacking 主導</td></tr>
+<tr><td>HBM metrology</td><td>$3-5B</td><td>$10-15B</td><td>$20-30B</td><td>從 HBM3 → HBM6 每代堆疊翻倍</td></tr>
+<tr><td>Nova 隱含營收 mix</td><td>邏輯 50% / 記憶體 25% / 先進封裝 20% / 服務 5%</td><td>邏輯 40% / 記憶體 30% / 先進封裝 25% / 服務 5%</td><td>邏輯 35% / 記憶體 30% / 先進封裝 30% / 服務 5%</td><td>先進封裝佔比結構性提升</td></tr>
+</table>
+
+<h3>議價權三段獨立</h3>
+
+<h4>對上游</h4>
+<ul>
+<li><b>光學元件供應商（Zeiss / Nikon 鏡頭等）</b>：集中度高，但 Nova 採購量小，議價力中等</li>
+<li><b>X-ray tube / detector</b>：集中度極高（Rigaku 等少數玩家），ONTO 27% 入股 Rigaku 後給 Nova 帶來潛在採購風險，議價力<b>偏弱</b></li>
+<li><b>化學浴感測器</b>：分散，議價力高</li>
+<li><b>軟體 / AI 算法</b>：內部研發為主，無 supplier 風險</li>
+</ul>
+
+<h4>對下游</h4>
+<ul>
+<li><b>TSMC（最大客戶，估 25-30% Rev）</b>：客戶集中度高，但 Nova 已是 GAA reference tool，切換成本極高，<b>議價力強</b></li>
+<li><b>Samsung Foundry + Memory</b>：估 15-20% Rev，GAA Pyeongtaek 量產驅動，議價力強</li>
+<li><b>Intel Foundry</b>：估 5-10% Rev，18A 客戶 ramp 中</li>
+<li><b>SK Hynix + Micron（HBM）</b>：估 10-15% Rev 合計，HBM4 量產驅動</li>
+<li><b>中國成熟製程廠（SMIC / Hua Hong）</b>：估 10-15% Rev，受 export control 影響但 mature node 未禁</li>
+</ul>
+
+<h4>地理曝險</h4>
+<table>
+<tr><th>區域</th><th>FY25 估計 Rev 占比</th><th>地緣風險</th></tr>
+<tr><td>台灣（TSMC 為主）</td><td>~30-35%</td><td>中等（中台關係，但 TSMC 全球擴廠分散）</td></tr>
+<tr><td>韓國（SK / Samsung）</td><td>~20-25%</td><td>低</td></tr>
+<tr><td>美國（Intel / Micron / Phoenix fabs）</td><td>~15-20%</td><td>低（地緣安全）</td></tr>
+<tr><td>中國</td><td>~15-20%</td><td><b>高</b>（export control 風險，目前 mature node 未禁但可能擴大）</td></tr>
+<tr><td>歐洲 / 其他</td><td>~5-10%</td><td>低</td></tr>
+</table>
+
+<h3>營收組成三維展開</h3>
+
+<h4>按業務（FY25 估算）</h4>
+<table>
+<tr><th>業務段</th><th>FY25 Rev 估</th><th>占比</th><th>YoY</th><th>OI margin 估</th><th>3Y 軌跡</th></tr>
+<tr><td>光學計量（OCD）</td><td>$500M</td><td>57%</td><td>+25%</td><td>32%</td><td>穩定擴張</td></tr>
+<tr><td>材料計量（Metrion / ReVera）</td><td>$200M</td><td>23%</td><td>+45%</td><td>30%</td><td>加速擴張</td></tr>
+<tr><td>化學計量（ancosys）</td><td>$80M</td><td>9%</td><td>+30%</td><td>25%</td><td>穩定擴張</td></tr>
+<tr><td>服務 + 升級</td><td>$100M</td><td>11%</td><td>+25%</td><td>40%</td><td>結構性提升</td></tr>
+</table>
+
+<h4>按客戶集中度</h4>
+<table>
+<tr><th>項目</th><th>數據</th><th>風險</th></tr>
+<tr><td>Top 1 客戶（TSMC）</td><td>~25-30%</td><td>中等 — 切換成本高但集中度高</td></tr>
+<tr><td>Top 5 客戶</td><td>~70%</td><td>集中但典型 metrology 玩家結構</td></tr>
+<tr><td>Top 10 客戶</td><td>~85%</td><td>長尾客戶比例小</td></tr>
+<tr><td>失去 TSMC 影響</td><td>−25-30% Rev + 觸發 PE 重評</td><td>但 thesis 完全反轉概率 &lt; 5%（GAA reference tool）</td></tr>
+</table>
+
+<h3>單位經濟逐業務</h3>
+<ul>
+<li><b>光學 OCD：</b>單台 ASP ~$2-3M，毛利率 ~60%，年出貨估 200-250 台 → 趨勢上：ASP 提升（高階節點）+ volume 穩定</li>
+<li><b>材料計量（Metrion）：</b>單台 ASP ~$3-5M，毛利率 ~58%，年出貨估 50-80 台 → 趨勢：volume 加速、reference tool 階段</li>
+<li><b>化學計量：</b>單台 ASP ~$0.5-1M，毛利率 ~55%，年出貨估 100-150 台 → 趨勢：穩定</li>
+<li><b>服務 + 升級：</b>recurring revenue，毛利率 65%+，安裝基數累積 = 結構性穩定增長</li>
+</ul>
+
+<p><b>結構性洞察：</b>Service 佔比若從 11% 提升至 15-20%（10 年路徑），整體公司 GM 可從 57% → 60%+，每 1pp GM 提升 ≈ $0.30 EPS 槓桿。</p>
+
+</section>
+
+<!-- ============ §12 ============ -->
+<section id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>① 股東 / 股權結構</h3>
+<ul>
+<li>機構持股 75.8%（高度機構化）</li>
+<li>內部人持股 0.10%（極低，CEO Gabriel Waisman 2020 接任無創辦人持股優勢）</li>
+<li>無 dual-class 股，one-share-one-vote</li>
+<li>無控股股東，公司治理偏向 institutional governance</li>
+</ul>
+
+<h3>② 資本配置方向（FY25）</h3>
+<table>
+<tr><th>用途</th><th>金額</th><th>判斷</th></tr>
+<tr><td>R&amp;D 投入</td><td>~$150M（17% of Rev）</td><td>合理偏高 — niche 玩家須維持 R&amp;D 強度</td></tr>
+<tr><td>Capex</td><td>$27.7M（3.1% of Rev）</td><td>輕資本</td></tr>
+<tr><td>分紅 / 回購</td><td>無大規模分紅；偶有回購</td><td>成長股策略</td></tr>
+<tr><td>併購 / 戰略投資</td><td>2025 發行 $500M 可轉債（為未來併購準備）</td><td>需追蹤 deployment</td></tr>
+</table>
+
+<h3>③ 管理層薪酬結構</h3>
+<p>典型 Israeli high-tech 公司結構：固定薪 + 績效獎金 + RSU 股權激勵 ~50% 比例。SBC / Rev 3% 區間，稀釋影響小。<b>數據限制：</b>具體 CEO comp breakdown 需從 20-F 取得，本次 web_search 未取得完整細節。</p>
+
+<h3>④ 過去 12 個月重大事件（QC-19）</h3>
+<ul>
+<li><b>無集體訴訟</b>（class action lawsuit）</li>
+<li><b>無 SEC 調查 / 財報重編</b></li>
+<li><b>無 CEO / CFO 離職</b>（Gabriel Waisman CEO、Guy Kizner CFO 在任）</li>
+<li><b>無大型併購</b>（&gt; 市值 5% 即 $880M+ 規模的併購），但 2025 發行 $500M 可轉債可能為未來併購準備</li>
+<li><b>標的代碼混淆：</b>"Nova Labs"（crypto SEC 處罰）與 Nova Ltd (NVMI, 半導體) 不同公司</li>
+<li><b>正面確認：🟢 過去 12 個月無併購金額 &gt; 市值 5%、無集體訴訟、無管理層異動或重大監管事件</b></li>
+</ul>
+
+</section>
+
+<!-- ============ §13 ============ -->
+<section id="s13">
+<h2>§13 估值診斷</h2>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<tr><th>邏輯類型</th><th>是否主流?</th><th>理由</th></tr>
+<tr><td>盈利能力（P/E）</td><td>✅ 主流</td><td>市場用 FPE 53.8x 定價，反映高成長預期</td></tr>
+<tr><td>成長型（PEG / EV/Rev）</td><td>輔助</td><td>PEG 2.76 高於同業，市場給予「品質溢價」</td></tr>
+</table>
+
+<div class="reasoning">
+<b>估值漂移偵測：</b>2025/8 FPE ~35x → 2026/5 FPE 54x = 9 個月內 PE 擴張 54%。EPS 同期僅上修 6-9%，說明 PE 擴張遠超 EPS 修正 → <b>市場進入 narrative-driven 估值階段</b>（從盈利估值升級為 narrative 估值，是估值體系下修風險的前兆）。<br>
+→ <b>結論：🟡 估值邏輯模糊 — narrative 與 EPS 脫鉤，下修風險升高</b>
+</div>
+
+<h3>13.1｜歷史估值分位（5Y）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>70.0x</td><td>~18x</td><td>~30x</td><td>~70x</td><td>~100%</td></tr>
+<tr><td>Forward P/E (NTM)</td><td>53.8x</td><td>~15x</td><td>~28x</td><td>~54x</td><td><b>~95-100%</b></td></tr>
+<tr><td>EV/EBITDA</td><td>57.0x</td><td>~14x</td><td>~25x</td><td>~57x</td><td>~100%</td></tr>
+<tr><td>P/FCF</td><td>81x</td><td>~22x</td><td>~38x</td><td>~80x</td><td>~100%</td></tr>
+</table>
+
+<div class="reasoning">
+<b>推導：</b>當前 FPE 53.8x ≈ 5Y 區間頂部（推估 15x cycle 底 → 54x AI 巔峰，分位 ~95-100%）<br>
+GuruFocus 同步顯示「Significantly Overvalued」，與本表一致<br>
+→ §13.5 implication：估值體系若 mean-reverts，PE 殺至 30x（5Y 中位）= 股價 $310（−44%）即為 base case 下行
+</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E (FY26 GAAP)</td><td>53.8x</td><td>—</td></tr>
+<tr><td>3Y EPS CAGR (FY25-28 GAAP)</td><td>22.1%</td><td>—</td></tr>
+<tr><td><b>PEG (3Y, GAAP)</b></td><td><b>2.43</b></td><td><span class="fail">&gt; 2 貴</span></td></tr>
+<tr><td>5Y EPS CAGR (incl. Runway 遞減)</td><td>~17%</td><td>FY25-30 → $7.96 → $22.0</td></tr>
+<tr><td>PEG (5Y, GAAP)</td><td>3.16</td><td><span class="fail">&gt;&gt; 2 過貴</span></td></tr>
+<tr><td>3Y vs 5Y PEG</td><td>2.43 vs 3.16</td><td>5Y 更貴 = 近期成長率將遞減，估值未反映此漸進</td></tr>
+</table>
+
+<div class="reasoning">
+<b>推導：</b>無論 3Y 或 5Y PEG 都遠高於 2.0 合理門檻；5Y PEG 3.16 暗示「市場相信 Nova 永遠維持 22% 成長」，但 §8 A Runway 表明 5Y 後成長將自然遞減至 17-19%<br>
+→ §13.5 implication：合理 PEG ≤ 2.0 對應合理 FPE ≤ 44x（用 22% CAGR）= 股價 ≤ $455
+</div>
+
+<h3>13.3｜Reverse DCF</h3>
+<h4>固定參數</h4>
+<table>
+<tr><th>參數</th><th>數值</th></tr>
+<tr><td>當前市值</td><td>$17.67B</td></tr>
+<tr><td>基期 FCF（FY25）</td><td>$217.9M</td></tr>
+<tr><td>WACC</td><td>11.3%（10Y UST 4.2% + Beta 1.78 × ERP 4%）</td></tr>
+<tr><td>永續成長率</td><td>3.0%</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+</table>
+
+<h4>反推隱含 FCF CAGR</h4>
+<p>使 DCF 現值 = $17.67B 所需前 10 年 FCF CAGR ≈ <b>17.5%</b></p>
+
+<h4>可信度對照</h4>
+<table>
+<tr><th>比較</th><th>數值</th><th>位置</th></tr>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>~30%（基期低）</td><td>隱含低於歷史</td></tr>
+<tr><td>共識 EPS CAGR (3Y)</td><td>22%</td><td>隱含略低於共識</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>ONTO ~25% / KLA ~10%</td><td>隱含合理</td></tr>
+</table>
+
+<div class="reasoning">
+<b>推導：</b>隱含 17.5% FCF CAGR 維持 10 年是激進但非不可能；關鍵不是「能不能」，而是「10 年連續複合」的可信度<br>
+歷史對標：ASML 2010-2020 維持 ~18% FCF CAGR 但伴隨 EUV 黃金週期；Nova 是否能複製還未驗證<br>
+→ 判斷：<b>🟡 隱含預期合理但對成長要求接近上限</b>
+</div>
+
+<p><b>便宜理由檢驗：</b>本檔不觸發「便宜理由檢驗」（不便宜，5Y FPE 分位 95-100%）。反向不適用。</p>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><b>NVMI</b></td><td><b>$17.7B</b></td><td><b>53.8x</b></td><td>57.0x</td><td>2.43</td><td>24.7%</td><td>22%</td><td>~22%</td></tr>
+<tr><td>KLAC</td><td>$140B</td><td>36.0x</td><td>40.6x</td><td>~2.0</td><td>32%</td><td>~18%</td><td>~50%</td></tr>
+<tr><td>CAMT</td><td>$8B</td><td>34.5x</td><td>30.4x</td><td>~1.7</td><td>25%</td><td>~20%</td><td>~25%</td></tr>
+<tr><td>ONTO</td><td>$12B</td><td>27.7x（stockanalysis） / 42.6x（gurufocus）</td><td>~30x</td><td>~1.4-2.1</td><td>25%</td><td>~28%</td><td>~18%</td></tr>
+<tr><td>產業中位</td><td>—</td><td>~36x</td><td>~31x</td><td>~1.8</td><td>~26%</td><td>~22%</td><td>~25%</td></tr>
+</table>
+
+<div class="reasoning">
+<b>溢折價邏輯：</b><br>
+① 溢價 = NVMI FPE 53.8x vs 中位 36x = <b>+49% 溢價</b><br>
+② 護城河（8 vs 中位）、成長（22% vs 22%）、資本效率（ROIC 22% vs 中位 25%）— Nova 三項都不獨自頂尖 → 不支撐 49% 溢價<br>
+③ 若估值向中位均值回歸（36x），股價將降至 $372（−33%）<br>
+→ §13.5 implication：合理 PE 應在 30-35x（B 級 + 三引擎 + AI 加分），溢價不應超過 +5-10%
+</div>
+
+<h4>同主題橫向風報比</h4>
+<table>
+<tr><th>問題</th><th>NVMI</th><th>最強競爭（ONTO）</th></tr>
+<tr><td>主假設完全兌現 upside</td><td>FY30 $550 = 持平</td><td>FY30 ~$350（est）= +30%</td></tr>
+<tr><td>主假設部分落空 downside</td><td>Bear FY27 $225 = −60%</td><td>Bear FY27 ~$180 = −33%</td></tr>
+<tr><td>R:R 綜合</td><td>−0.04x</td><td>1.0x</td></tr>
+</table>
+
+<p><b>最終橫向比較結論：<span class="fail">❌ 同主題有更佳標的</span></b> — 純估值角度，ONTO（FPE 28x）和 CAMT（FPE 34x）的進場 R:R 比 NVMI 好。但 Nova 的長期 thesis（三平台 + reference tool）若 5 年內估值修復至合理區間，仍有結構性 alpha。</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<tr><th>工具</th><th>訊號</th><th>依據</th></tr>
+<tr><td>估值體系（13.0）</td><td>🟡 模糊</td><td>narrative 與 EPS 脫鉤</td></tr>
+<tr><td>歷史分位（13.1）</td><td>🔴 過熱</td><td>FPE 5Y 分位 95-100%</td></tr>
+<tr><td>PEG（13.2）</td><td>🔴 貴</td><td>PEG 2.43 / 5Y PEG 3.16</td></tr>
+<tr><td>Reverse DCF（13.3）</td><td>🟡 合理偏高</td><td>隱含 17.5% FCF CAGR 接近上限</td></tr>
+<tr><td>同業相對（13.4）</td><td>🔴 溢價無支撐</td><td>+49% 溢價 vs 中位</td></tr>
+</table>
+
+<h4>§2 D 交叉驗證</h4>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 FPE</td><td>53.8x</td></tr>
+<tr><td>§2 D 合理 PE（B 級基準 20x × 三引擎 1.5x + AI ×1.1）</td><td>~33x</td></tr>
+<tr><td>FPE vs 合理 PE</td><td><b>+63% 高估</b></td></tr>
+<tr><td>歷史分位是否降權?</td><td><b>不降權</b>（PEG &gt; 1.0 + FPE &gt; 合理 PE，🔴 不救）</td></tr>
+</table>
+
+<p><b>當前定價判斷：<span class="fail">🔴 明顯貴</span></b>（五角全紅或偏紅，§2 D 交叉驗證 +63% 高估）</p>
+
+<h4>估值倍數定錨</h4>
+<table>
+<tr><th>因素</th><th>判斷</th><th>對 PE 影響</th></tr>
+<tr><td>① 護城河（§9）</td><td>8/10</td><td>基準倍數 +1x</td></tr>
+<tr><td>② 成長 Runway（§8A）</td><td>≥ 10 年 🟢</td><td>+5x</td></tr>
+<tr><td>③ 成長品質（§8B）</td><td>定價 40% / 量 60%</td><td>持平</td></tr>
+<tr><td>④ 護城河連動（§8C）</td><td>強化型</td><td>+3x</td></tr>
+<tr><td>⑤ ROIC 可維持性（§8D）</td><td>+12-13%p 擴大</td><td>+2x</td></tr>
+<tr><td>⑥ 衰退信號（§8）</td><td>0 個</td><td>持平</td></tr>
+<tr><td>⑦ 估值體系（§13.0）</td><td>🟡 模糊</td><td>−1x</td></tr>
+<tr><td>⑧ 利率環境</td><td>10Y UST 4.2%</td><td>持平</td></tr>
+<tr><td><b>產業基準倍數</b></td><td><b>22x（B 級）</b></td><td><b>合理區間 28-35x</b></td></tr>
+</table>
+
+<h4>長期合理倍數（5Y 後）</h4>
+<table>
+<tr><th>§8 評級</th><th>5Y 基準</th><th>三引擎 + AI 調整</th><th>本檔長期 PE</th></tr>
+<tr><td>🟢 高確信</td><td>25x</td><td>引擎 B（PEG 動態）× 1.0 + AI 🟢 × 1.10</td><td><b>~25-28x</b></td></tr>
+</table>
+
+<h4>分析師目標價參考</h4>
+<ul>
+<li>高 $525 / 中位 <b>$505</b> / 低 $453（n=13 ratings: 7 Buy, 1 Hold, 0 Sell）</li>
+<li><b>中位 PT $505 低於現價 $556（−8.8% downside per consensus）</b> — 共識追不上股價 = 估值已透支領先</li>
+<li>分歧點：分析師多基於 FY27 EPS 12.49 × ~40x PE 給目標，現價隱含 FY27 PE 44.5x</li>
+</ul>
+
+<h4>投資結論</h4>
+
+<h5>財報信號與假設校準（引用 §5 B'）</h5>
+<ul>
+<li><b>H1：強化</b>（Q1/Q2 加速兌現 metrology intensity）</li>
+<li><b>H2：強化</b>（GM 升 + 服務新高 + 三平台 mix）</li>
+<li><b>H3：削弱</b>（估值進入歷史頂部，分析師共識已不再追逐）</li>
+<li>這份 Q1 26 財報讓「隱含預期更困難兌現」，因為股價已預支了 FY27-28 大部分 EPS 成長空間</li>
+</ul>
+
+<h5>綜合訊號輸出（v12.0：引用 §2 H）</h5>
+<ul>
+<li>護城河等級：8/10 → 調整後：B 級不變</li>
+<li>估值燈：🔴 過熱（FPE 5Y 分位 95-100%、PEG 2.43）</li>
+<li>Pure MA 狀態：✅ 強勢進場（Bollinger 上軌警示）</li>
+<li>大盤豁免：✅ 正常</li>
+<li><b>綜合訊號：B（觀望）</b>（取自 §2 H，QC-31 cross-check 修正）</li>
+<li>中期參考 R:R：−0.55x（資訊性，估值透支）</li>
+<li><b>倉位 % 決策不在本 DD 範圍</b>，交由 portfolio-manager skill 基於組合狀態決定</li>
+</ul>
+
+<h5>① 短期信號（0-12 月）</h5>
+<p>Q1 26 beat + Q2 guide 大幅上修，短期基本面強。但股價 +10% 後 FPE 升至 54x，Bollinger 上軌觸及。短期下修機率高（−15% 至 BB 中軌 $461 區間），<b>不是進場時機</b>。</p>
+
+<h5>② 中期成長確信度（1-2 年）</h5>
+<p>FY26/27 EPS 共識上修軌跡明確（90d 內 +6-9%），driver = 定價（mix shift）+ 量（WFE outperform）；能見度高。</p>
+
+<h5>③ 長期持有信心（3-5 年）</h5>
+<p>成長跑道充裕 / 護城河加深 / <b>長期持有信心：高</b>。問題僅在「進場價」不在「進場標的」。</p>
+
+<h5>下行風險量化</h5>
+<ul>
+<li>短期 Bear $205 距現價 −63%（FY26 EPS −10% × PE 22x）</li>
+<li>中期 Bear $225 距現價 −60%（FY27 EPS −10% × PE 20x）</li>
+<li>BB 中軌 $461 距現價 −17%（短期最可能回測位）</li>
+<li>FY26 EPS 下修 10% + PE 至 35x → 股價 ~$325（−42%）</li>
+</ul>
+
+</section>
+
+<!-- ============ dd-meta ============ -->
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "NVMI",
+  "schema": "v12.2",
+  "date": "2026-05-15",
+  "price_at_dd": 556.11,
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "非陷阱",
+  "moat": "B",
+  "val": "🔴",
+  "ma": "✅",
+  "fpe_fy2": 44.5,
+  "pct_5y": 95,
+  "peg_fy2": 2.43,
+  "upside_short_pct": -40,
+  "upside_mid_pct": -33,
+  "upside_5y_pct": -1,
+  "stress": {
+    "pass": 0,
+    "total": 4
+  },
+  "moat_score": 8,
+  "moat_execution": 8,
+  "moat_pricing_power": 8,
+  "growth_durability": 9,
+  "quality_score": 8,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "B 觀望 — thesis 完整但估值🔴過熱+Bollinger上軌，等BB中軌~$461或FPE修復至35-40x（~$360-$415）再評估進場",
+  "oneliner": "🟢 順風，B級護城河8/10，metrology三平台+GAA reference tool地位。估值燈🔴過熱（FPE 54x 5Y頂部、PEG 2.43）+Pure MA ✅但Bollinger上軌→進場時機極差。建議等BB中軌~$461或FPE修復至35-40x區間（~$360-$415）再評估。"
+}
+</script>
+
+</main>
+
+<button class="btn-print" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>
