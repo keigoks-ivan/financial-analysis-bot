@@ -399,7 +399,7 @@ function buildTable(stocks) {
     '<th class="left">Moat</th>' +
     criteriaHeaders +
     '<th>通過</th>' +
-    '<th>Upside</th>' +
+    '<th title="DCA §4 機率加權年化 IRR（5 年期）— 與 /research/ 表格同源">5Y IRR</th>' +
     '<th>MA</th>' +
     '<th>Links</th>' +
     '</tr></thead><tbody>';
@@ -419,15 +419,21 @@ function buildTable(stocks) {
       return '<td style="' + cellStyle(flag) + '">' + display + '</td>';
     }).join('');
 
-    // Upside display
-    var upside = s.upside_mid_pct;
-    var upsideHtml;
-    if (upside !== null && upside !== undefined) {
-      upsideHtml = '<span class="upside-green">+' + upside.toFixed(1) + '%</span>';
-    } else if (s.upside_5y_pct !== null && s.upside_5y_pct !== undefined) {
-      upsideHtml = '<span class="upside-green">+' + s.upside_5y_pct.toFixed(1) + '%/yr</span>';
+    // 5Y IRR (DCA §4 annualized) — color band mirrors /research/ table:
+    //   ≥12% strong  / 8-12% mid (beats SPX)  / 0-8% weak  / <0 negative
+    var irr = s.ev5y_pct;
+    var irrHtml;
+    if (irr === null || irr === undefined) {
+      irrHtml = '<span class="upside-na">—</span>';
     } else {
-      upsideHtml = '<span class="upside-na">—</span>';
+      var irrColor;
+      if (irr >= 12)      irrColor = '#166534';
+      else if (irr >= 8)  irrColor = '#15803D';
+      else if (irr >= 0)  irrColor = '#92400E';
+      else                irrColor = '#991B1B';
+      var sign = irr > 0 ? '+' : (irr < 0 ? '−' : '');
+      irrHtml = '<span style="color:' + irrColor + ';font-weight:600">'
+        + sign + Math.abs(irr).toFixed(1) + '%/yr</span>';
     }
 
     // Links
@@ -453,7 +459,7 @@ function buildTable(stocks) {
       '<td class="left" style="font-size:11px">' + moatHtml + '</td>' +
       criteriaHtml +
       '<td>' + passLabel(pc) + '</td>' +
-      '<td>' + upsideHtml + '</td>' +
+      '<td>' + irrHtml + '</td>' +
       '<td>' + maBadge(s.ma) + '</td>' +
       '<td>' + ddLink + dcaLink + '</td>' +
       '</tr>';

@@ -89,6 +89,7 @@ Each entry in `stocks[]`:
 
   "upside_mid_pct": 8.3,
   "upside_5y_pct": null,
+  "ev5y_pct": 9.50,
 
   "dd_path":  "/dd/DD_NVDA_20260418.html",
   "dd_date":  "2026-04-18",
@@ -128,8 +129,9 @@ Each entry in `stocks[]`:
 | `signal` | "A+"/"A"/"B"/"C"/"X" | required |
 | `trap` | emoji | required |
 | `val` | emoji | required |
-| `upside_mid_pct` | number | null if missing |
-| `upside_5y_pct` | number | null if missing |
+| `upside_mid_pct` | number | null if missing (retained for legacy/fallback; FE no longer displays) |
+| `upside_5y_pct` | number | null if missing (rarely populated in dd-meta) |
+| `ev5y_pct` | number | DCA §4 機率加權 5Y EV → annualized IRR (%); **primary 5Y IRR column source**, mirrors `/research/` table. null if no DCA or §4 unparseable. |
 | `dd_path` | "/dd/DD_*.html" | absolute path from site root |
 | `dd_date` | "YYYY-MM-DD" | from dd-meta `date` |
 | `dca_path` | "/dca/DCA_*.html" or null | latest DCA in `docs/dca/` matching ticker |
@@ -165,13 +167,19 @@ All MA values in price units. `null` for any field when history < required.
 `stocks[]` sorted by:
 1. `pass_count` DESC (5 → 4 → 3 → ...)
 2. `moat_score` DESC
-3. `upside_mid_pct` DESC (nulls last)
+3. `ev5y_pct` DESC (nulls last) — 5Y IRR is the decision-relevant ranking metric
 4. `ticker` ASC
 
 ## Front-end render rules
 
 - Tab grouping: `tab-5` = `pass_count===5`, `tab-4` = `===4`, `tab-3` = `===3`, `tab-all` = all sorted
 - Cell coloring: green if criterion pass, red if fail, gray if `null`
+- 5Y IRR column shows `ev5y_pct` with color band mirroring `/research/`:
+  - ≥12 → strong green (#166534)
+  - 8-12 → mid green (#15803D, beats SPX)
+  - 0-8 → amber (#92400E)
+  - <0 → red (#991B1B)
+  - null → "—" (no DCA or §4 unparseable)
 - DD link: `dd_path`; DCA link: `dca_path` (hide if null)
 - Source badge mapping: `qgm-us` → blue, `qgm-tw` → green, `yfinance` → gray, `yfinance-eu` → orange
 - MA badge: show `above_w52 && above_w250 && slope_w250_pct > 0` → "🟢 healthy"; mixed → "🟡 mixed"; below w52 → "🔴 weak"

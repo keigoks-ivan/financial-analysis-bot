@@ -39,6 +39,10 @@ from dd_screener_quality import (  # noqa: E402
     load_qgm_index,
 )
 from dd_screener_ma import compute_ma_snapshot  # noqa: E402
+from update_dd_index import (  # noqa: E402
+    collect_dca_ev_map,
+    compute_dca_irr,
+)
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
@@ -101,12 +105,12 @@ def build_takeaway(stocks: list[dict]) -> dict:
     pass4 = [s for s in stocks if s["pass_count"] == 4]
     pass3 = [s for s in stocks if s["pass_count"] == 3]
 
-    # Top tickers among pass_5 by signal rank → upside_mid_pct
+    # Top tickers among pass_5 by signal rank → 5Y IRR (DCA §4 annualized)
     top_5 = sorted(
         pass5,
         key=lambda s: (
             -_signal_rank(s["signal"]),
-            -(s.get("upside_mid_pct") or -1e9),
+            -(s.get("ev5y_pct") if s.get("ev5y_pct") is not None else -1e9),
             s["ticker"],
         ),
     )
@@ -165,10 +169,14 @@ def build_takeaway(stocks: list[dict]) -> dict:
 
 
 def _sort_key(s: dict) -> tuple:
+    # In-tab ordering: pass_count desc → moat_score desc → 5Y IRR desc (nulls last)
+    # → ticker asc. 5Y IRR is preferred over upside_mid_pct because it's
+    # the directly investment-decision-relevant metric shown in the FE.
+    irr = s.get("ev5y_pct")
     return (
         -s["pass_count"],
         -(s.get("moat_score") or 0),
-        -(s.get("upside_mid_pct") if s.get("upside_mid_pct") is not None else -1e9),
+        -(irr if irr is not None else -1e9),
         s["ticker"],
     )
 
@@ -186,12 +194,27 @@ def _empty_ma() -> dict:
     }
 
 
+def _ev5y_for(ticker: str, dca_ev_map: dict) -> float | None:
+    """Resolve DCA §4 5Y EV → annualized IRR (%) for one ticker.
+
+    `dca_ev_map` keys are filename-normalized (no dots, e.g. "2330TW"), so
+    "2330.TW" must fall back to the dot-stripped form.
+    """
+    ev = dca_ev_map.get(ticker)
+    if ev is None:
+        ev = dca_ev_map.get(ticker.replace(".", ""))
+    if ev is None:
+        return None
+    return round(compute_dca_irr(ev), 2)
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
+    dca_ev_map: dict,
     skip_ma: bool,
 ) -> dict:
-    """Add quality + MA + pass_count + fail_criteria to a loader entry."""
+    """Add quality + MA + ev5y_pct + pass_count + fail_criteria to a loader entry."""
     t = entry["ticker"]
     quality, source = get_quality_for_ticker(t, qgm_index)
     pass_count, fails = evaluate_criteria(quality)
@@ -210,6 +233,7 @@ def enrich_ticker(
         "pass_count": pass_count,
         "fail_criteria": fails,
         "quality_source": source,
+        "ev5y_pct": _ev5y_for(t, dca_ev_map),
         "ma": ma,
     }
 
@@ -228,12 +252,16 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     qgm_index = load_qgm_index()
     print(f"  Step 3    QGM index: {len(qgm_index)} entries ({sum(1 for s,_ in qgm_index.values() if s=='qgm-us')} US, {sum(1 for s,_ in qgm_index.values() if s=='qgm-tw')} TW)")
 
+    # DCA §4 EV map → 5Y annualized IRR per ticker (96/98 typical coverage)
+    dca_ev_map = collect_dca_ev_map()
+    print(f"  Step 3    DCA EV map: {len(dca_ev_map)} tickers (for 5Y IRR column)")
+
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, skip_ma): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, skip_ma): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
