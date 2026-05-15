@@ -60,6 +60,7 @@ _DCA_EV_ANCHORS = (
     "機率加權EV(5Y)",
     "期望值（機率加權）",
     "期望值(機率加權)",
+    "5Y 累積",      # IRR decomposition table total row (catches hand-written DCAs)
     "機率加權",  # bare label — must be last so longer anchors win
 )
 _DCA_EV_CELL_CLOSE_RE = re.compile(
@@ -170,7 +171,11 @@ def extract_dca_ev_5y(dca_path) -> float | None:
                 continue
             # Skip annualized rows: reject if text or immediate trailing context
             # contains /yr, /年, CAGR, 年化, or IRR — those are IRR cells, not 5Y absolute.
-            trail = _strip_tags(window[sm.end() : sm.end() + 30])
+            # Clip trailing context to within current </td> so "年化" in the *next*
+            # cell (e.g. separate IRR column) doesn't poison the check.
+            _trail_raw = window[sm.end() : sm.end() + 80]
+            _td_end = re.search(r"</td\s*>", _trail_raw, re.IGNORECASE)
+            trail = _strip_tags(_trail_raw[: _td_end.start()] if _td_end else _trail_raw[:30])
             if _DCA_EV_IRR_MARKER_RE.search(text) or _DCA_EV_IRR_MARKER_RE.search(trail):
                 continue
             pct = _parse_pct(text)
