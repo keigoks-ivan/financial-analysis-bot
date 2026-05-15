@@ -149,7 +149,7 @@ def load_dd_universe(
         ticker, name, sector,
         moat_score, moat_grade, moat_trend,
         signal, trap, val,
-        upside_mid_pct, upside_5y_pct,
+        upside_mid_pct, upside_5y_pct, fpe_fy2,
         dd_path, dd_date,
         dca_path, dca_date
     """
@@ -203,6 +203,9 @@ def load_dd_universe(
         upside_mid_pct = meta.get("upside_mid_pct")
         upside_5y_pct = meta.get("upside_5y_pct")
 
+        # ── 2Y forward P/E (FY+2; same value the /research/ table shows) ─
+        fpe_fy2 = meta.get("fpe_fy2")
+
         # ── dd_path / dd_date ─────────────────────────────────────────────
         dd_filename = path.name
         dd_path = f"/dd/{dd_filename}"
@@ -223,6 +226,7 @@ def load_dd_universe(
             "val": val_field,
             "upside_mid_pct": upside_mid_pct,
             "upside_5y_pct": upside_5y_pct,
+            "fpe_fy2": fpe_fy2,
             "dd_path": dd_path,
             "dd_date": dd_date,
             "dca_path": dca_path,

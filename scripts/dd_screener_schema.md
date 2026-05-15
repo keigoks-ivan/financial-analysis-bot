@@ -116,6 +116,7 @@ Each entry in `stocks[]`:
 | `val` | emoji | required |
 | `upside_mid_pct` | number | null if missing (retained for legacy/fallback; FE no longer displays) |
 | `upside_5y_pct` | number | null if missing (rarely populated in dd-meta) |
+| `fpe_fy2` | number | FY+2 Forward P/E from dd-meta. Displayed in the screener's 2Y P/E column (right of PEG); mirrors `/research/` `data-pe2y`. |
 | `ev5y_pct` | number | DCA §4 機率加權 5Y EV → annualized IRR (%); **primary 5Y IRR column source**, mirrors `/research/` table. null if no DCA or §4 unparseable. |
 | `dd_path` | "/dd/DD_*.html" | absolute path from site root |
 | `dd_date` | "YYYY-MM-DD" | from dd-meta `date` |

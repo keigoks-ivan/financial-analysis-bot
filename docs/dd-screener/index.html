@@ -417,9 +417,16 @@ function buildTable(stocks) {
   var criteria = getCriteria();
   stocks = _sortStocks(stocks);
 
-  // Build header from criteria — every column data-driven for sort
+  // Build header from criteria — every column data-driven for sort.
+  // 2Y P/E (fpe_fy2) is injected right after the PEG criterion so the
+  // valuation metrics cluster together (FCF / ROIC / EPS / PEG / 2Y P/E
+  // / D/E). Matches the field /research/ shows as `data-pe2y`.
   var criteriaHeaders = criteria.map(function(c) {
-    return _thSortable(c.label, c.key);
+    var th = _thSortable(c.label, c.key);
+    if (c.key === 'peg') {
+      th += _thSortable('2Y P/E', 'fpe_fy2', {title: 'FY+2 Forward P/E — 與 /research/ 表格同源'});
+    }
+    return th;
   }).join('');
 
   var thead = '<table class="tbl"><thead><tr>' +
@@ -444,7 +451,14 @@ function buildTable(stocks) {
         var decimals = (c.unit === 'x') ? 2 : 1;
         display = v.toFixed(decimals) + c.unit;
       }
-      return '<td style="' + cellStyle(flag) + '">' + display + '</td>';
+      var html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
+      // 2Y P/E injected after PEG — no pass/fail (informational only)
+      if (c.key === 'peg') {
+        var pe = s.fpe_fy2;
+        var peDisplay = (pe === null || pe === undefined) ? '—' : pe.toFixed(1);
+        html += '<td>' + peDisplay + '</td>';
+      }
+      return html;
     }).join('');
 
     // 5Y IRR (DCA §4 annualized) — color band mirrors /research/ table:
