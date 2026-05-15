@@ -168,7 +168,12 @@ All MA values in price units. `null` for any field when history < required.
   - null → "—" (no DCA or §4 unparseable)
 - DD link: `dd_path`; DCA link: `dca_path` (hide if null)
 - Source badge mapping: `qgm-us` → blue, `qgm-tw` → green, `yfinance` → gray, `yfinance-eu` → orange
-- MA badge: show `above_w52 && above_w250 && slope_w250_pct > 0` → "🟢 healthy"; mixed → "🟡 mixed"; below w52 → "🔴 weak"
+- MA badge:
+  - Both `above_w52` and `above_w250` null → "— n/a" (no data at all)
+  - `above_w250` null only (newer IPO, < 5y history; e.g. ARM / NU / VIK / SNDK) → "🟢 W52↑ · W250 N/A" or "🔴 W52↓ · W250 N/A" depending on W52
+  - `above_w52 && above_w250 && slope_w250_pct > 0` → "🟢 healthy"
+  - `above_w52 && above_w250` (slope flat/down) → "🟡 mixed"
+  - below either MA → "🔴 weak"
 - Filter chips:
   - Moat: `[S]` (≥9.5) / `[A]` (≥8) / `[B]` (≥6) / `[All]`
   - Direction: `[↑+→]` (default) / `[↑ only]` / `[Any]`
