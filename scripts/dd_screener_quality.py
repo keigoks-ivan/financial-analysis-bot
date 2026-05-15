@@ -153,7 +153,15 @@ def _yf_ticker_for(dd_ticker: str) -> str:
 
 
 def _yf_peg(t) -> Optional[float]:
-    """Forward PEG from yfinance .info (with TTM fallback)."""
+    """Forward PEG from yfinance .info (with TTM fallback).
+
+    Fallback path: when yfinance doesn't populate pegRatio / trailingPegRatio
+    (common after their 2024-2025 schema churn), compute manually as
+    forwardPE / eps2y_growth_pct.  Guards:
+      - Ignore when EPS 2Y CAGR > 300% (distorted recovery base, e.g. SNDK
+        emerging from a near-zero-earnings trough — PEG is meaningless).
+      - Ignore when computed PEG > 10 or PEG < 0.
+    """
     try:
         info = t.info or {}
         peg = info.get("pegRatio") or info.get("trailingPegRatio")
@@ -161,17 +169,63 @@ def _yf_peg(t) -> Optional[float]:
             return float(peg)
     except Exception:
         pass
+    # Manual fallback: forwardPE / eps_growth_pct
+    try:
+        info = t.info or {}
+        fpe = info.get("forwardPE")
+        if fpe is None or float(fpe) <= 0:
+            return None
+        cagr = _forward_2y_cagr(
+            t.earnings_estimate, "yearAgoEps", info.get("trailingEps")
+        )
+        if cagr is None or cagr <= 0:
+            return None
+        # Guard: skip distorted recovery bases (CAGR > 300% means base ≈ 0)
+        if cagr > 3.0:
+            return None
+        growth_pct = cagr * 100.0
+        if growth_pct <= 0:
+            return None
+        computed = float(fpe) / growth_pct
+        # Ignore absurd values — near-zero growth makes PEG meaningless
+        if computed <= 0 or computed > 10:
+            return None
+        return round(computed, 2)
+    except Exception:
+        pass
     return None
 
 
 def _yf_de(t) -> Optional[float]:
-    """Total Debt / Stockholders Equity from balance sheet, with .info fallback."""
+    """Total Debt / Stockholders Equity from balance sheet, with .info fallback.
+
+    Zero-debt companies (e.g. ANET, ISRG, 6146.T) report Total Debt as NaN in
+    yfinance's balance sheet — _row() returns None for NaN.  We detect this by
+    checking whether the balance sheet *row exists* (NaN) vs *is absent* (no
+    row).  When the row exists but is NaN and equity is positive, D/E = 0.0.
+
+    Negative equity (e.g. FICO, DELL, SBUX — heavy buyback programs) makes D/E
+    mathematically undefined and economically misleading; we return None so the
+    screener shows "—" rather than a spurious negative ratio.
+    """
     try:
         bs = t.balance_sheet
         debt = _row(bs, "Total Debt")
         equity = _row(bs, "Stockholders Equity") or _row(bs, "Total Equity")
-        if debt is not None and equity and equity > 0:
+        if debt is not None and equity is not None and equity > 0:
             return float(debt) / float(equity)
+        # Zero-debt detection: "Total Debt" row present but NaN → debt = 0
+        if debt is None and equity is not None and equity > 0:
+            # Confirm the row actually exists in the balance sheet (NaN) rather
+            # than being absent entirely.  _row() returns None for both cases,
+            # so we check the index directly.
+            if bs is not None and not bs.empty:
+                has_debt_row = any(
+                    "total debt" in str(r).lower() for r in bs.index
+                )
+                if has_debt_row:
+                    # Row present but NaN → no financial debt, D/E = 0
+                    return 0.0
     except Exception:
         pass
     # Fallback: yfinance .info debtToEquity is expressed as percent (e.g. 70 = 0.7)
@@ -180,6 +234,24 @@ def _yf_de(t) -> Optional[float]:
         de_pct = info.get("debtToEquity")
         if de_pct is not None:
             return float(de_pct) / 100.0
+    except Exception:
+        pass
+    # Last-resort zero-debt detection: info.totalDebt == 0 with positive equity.
+    # Covers tickers (e.g. 6146.T) where no "Total Debt" row appears in the
+    # balance sheet at all — not a NaN row but genuinely absent — yet the
+    # summary-level info field confirms zero financial debt.
+    try:
+        info = t.info or {}
+        total_debt_info = info.get("totalDebt")
+        if total_debt_info is not None and float(total_debt_info) == 0:
+            # Verify equity is positive before returning 0.0
+            try:
+                bs = t.balance_sheet
+                equity = _row(bs, "Stockholders Equity") or _row(bs, "Total Equity")
+                if equity is not None and equity > 0:
+                    return 0.0
+            except Exception:
+                pass
     except Exception:
         pass
     return None
@@ -242,13 +314,32 @@ def get_quality_for_ticker(
 
     Returns:
         (quality_dict, source_tag)
-        source_tag ∈ {"qgm-us", "qgm-tw", "yfinance", "yfinance-eu"}
+        source_tag ∈ {"qgm-us", "qgm-tw", "qgm-us+yf-de", "yfinance", "yfinance-eu"}
+
+    QGM gap-fill for D/E: QGM sometimes stores debt_to_equity.value = None
+    (e.g. ANET — a zero-debt company where QGM uses nd_ebitda as its gate
+    metric instead).  nd_ebitda is not a D/E proxy, so when QGM D/E is None
+    we fall through to a targeted yfinance D/E fetch and tag the source as
+    "qgm-us+yf-de" so the blend is auditable.
     """
     # QGM first
     hit = qgm_index.get(dd_ticker)
     if hit is not None:
         tag, hfd = hit
-        return _extract_qgm_quality(hfd), tag
+        quality = _extract_qgm_quality(hfd)
+        # Gap-fill: QGM D/E is None → try yfinance for D/E only
+        if quality.get("de") is None:
+            try:
+                yf_t = _yf_ticker_for(dd_ticker)
+                t = yf.Ticker(yf_t)
+                de_val = _yf_de(t)
+                if de_val is not None:
+                    quality = dict(quality)
+                    quality["de"] = _dec(de_val, 3)
+                    tag = f"{tag}+yf-de"
+            except Exception:
+                pass
+        return quality, tag
 
     # yfinance fallback
     yf_t = _yf_ticker_for(dd_ticker)
@@ -278,6 +369,19 @@ def main() -> None:
         ("BESI", "expect yfinance-eu (BESI.AS)"),
         ("6857.T", "expect yfinance"),
         ("INVALID_TICKER_XYZ", "expect yfinance all-None"),
+        # Gap-fill regression tests (previously missing PEG or D/E)
+        ("ANET",    "QGM D/E gap: expect qgm-us+yf-de, de=0.0 (zero-debt)"),
+        ("ALAB",    "yfinance PEG gap: expect manual PEG ~1.08"),
+        ("FN",      "yfinance PEG gap: expect manual PEG ~1.43"),
+        ("CRDO",    "yfinance PEG gap: expect manual PEG ~0.19"),
+        ("VIK",     "yfinance PEG gap: expect manual PEG ~0.78"),
+        ("3661.TW", "yfinance PEG gap: expect manual PEG ~0.41"),
+        ("SNDK",    "yfinance PEG gap: expect None (657% CAGR = distorted recovery base)"),
+        ("FICO",    "yfinance D/E gap: expect None (negative equity)"),
+        ("DELL",    "yfinance D/E gap: expect None (negative equity)"),
+        ("SBUX",    "yfinance D/E gap: expect None (negative equity)"),
+        ("ISRG",    "yfinance D/E gap: expect 0.0 (zero-debt, Total Debt row NaN)"),
+        ("6146.T",  "yfinance D/E gap: expect 0.0 (zero-debt, no debt rows)"),
     ]
 
     for t, note in samples:
