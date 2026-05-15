@@ -51,7 +51,7 @@ OUTPUT_PATH = OUTPUT_DIR / "latest.json"
 CRITERIA = [
     {"key": "fcf",   "label": "FCF≥10%",  "threshold": 10.0, "invert": False, "unit": "%"},
     {"key": "roic",  "label": "ROIC≥15%", "threshold": 15.0, "invert": False, "unit": "%"},
-    {"key": "eps2y", "label": "EPS≥15%",  "threshold": 15.0, "invert": False, "unit": "%"},
+    {"key": "eps2y", "label": "EPS 2Y CAGR≥15%",  "threshold": 15.0, "invert": False, "unit": "%"},
     {"key": "peg",   "label": "PEG≤2.0",  "threshold": 2.0,  "invert": True,  "unit": "x"},
     {"key": "de",    "label": "D/E≤0.7",  "threshold": 0.7,  "invert": True,  "unit": "x"},
 ]
