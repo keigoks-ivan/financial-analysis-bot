@@ -284,13 +284,10 @@ function getCriteria() {
 }
 
 function computePassCount(stock) {
-  // When preset is MLB or 3A, use server pass_count unless we're filtering
-  // with custom thresholds that differ from server. For MLB/3A we trust server.
-  if (state.preset !== 'Custom') {
-    return typeof stock.pass_count === 'number' ? stock.pass_count : 0;
-  }
-  // Custom: recompute client-side
-  var t = state.customThresholds;
+  // Always recompute client-side via active thresholds (preset or custom).
+  // For MLB this matches the server's pre-computed pass_count; for 3A or
+  // Custom this yields a different count so the tabs actually reshuffle.
+  var t = getThresholds();
   var crit = [
     {key:'fcf',   invert:false, t: t.fcf},
     {key:'roic',  invert:false, t: t.roic},
