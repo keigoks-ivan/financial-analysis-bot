@@ -81,9 +81,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 .tbl td{vertical-align:middle}
 .tbl th.sortable{cursor:pointer;user-select:none}
 .tbl th.sortable:hover{background:#e4eefb;color:#1e3a5f}
-.tbl th.sortable .sort-ind{display:inline-block;margin-left:3px;opacity:.5;font-size:9px}
+.tbl th.sortable .sort-ind{display:inline;font-size:9px;color:#1e3a5f;white-space:nowrap}
 .tbl th.sortable.sort-active{color:#1e3a5f}
-.tbl th.sortable.sort-active .sort-ind{opacity:1}
 .tbl td{padding:8px 12px;font-size:12px;border-bottom:1px solid #f0f5fb;text-align:right;font-variant-numeric:tabular-nums;color:#1e3a5f;white-space:nowrap}
 .tbl td.left{text-align:left;font-weight:600}
 .tbl tr:hover td{background:#f8fbff}
@@ -420,12 +419,13 @@ function _thSortable(label, key, opts) {
   opts = opts || {};
   var cls = 'sortable';
   if (opts.left) cls += ' left';
+  // Show indicator only when this column is the active sort key — idle ▾
+  // markers were noisy and forced wrapped headers into a 3rd line.
+  // Use NBSP so the symbol stays glued to the last word's line.
   var ind = '';
   if (state.sortKey === key) {
     cls += ' sort-active';
-    ind = '<span class="sort-ind">' + (state.sortDir === 'asc' ? '▲' : '▼') + '</span>';
-  } else {
-    ind = '<span class="sort-ind">▾</span>';
+    ind = ' <span class="sort-ind">' + (state.sortDir === 'asc' ? '▲' : '▼') + '</span>';
   }
   var titleAttr = opts.title ? ' title="' + opts.title.replace(/"/g, '&quot;') + '"' : '';
   return '<th class="' + cls + '" data-sort-key="' + key + '"' + titleAttr + '>' + label + ind + '</th>';
