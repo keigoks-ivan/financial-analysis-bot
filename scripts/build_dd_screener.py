@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+from dd_meta_reader import iter_id_metas  # noqa: E402
 from dd_screener_dd_loader import load_dd_universe  # noqa: E402
 from dd_screener_quality import (  # noqa: E402
     EU_SUFFIX_MAP,
@@ -99,8 +100,38 @@ def _signal_rank(signal: str) -> int:
     return {"A+": 5, "A": 4, "B": 3, "C": 2, "X": 1}.get(signal, 0)
 
 
+def _build_ticker_mega_map() -> dict[str, set[str]]:
+    """Return {ticker_upper: set(mega)} from ID files' related_tickers.
+
+    dd-meta `industry` field is sparse (1/98 today) so derive sector
+    concentration from ID's `mega` taxonomy instead. Multi-mega tickers
+    (e.g. NVDA spans semi/cloud/industrial/space) are counted in each
+    mega — concentration figure represents thematic exposure, not
+    mutually-exclusive bucket assignment.
+    """
+    out: dict[str, set[str]] = {}
+    id_dir = ROOT / "docs" / "id"
+    for _, idm in iter_id_metas(id_dir):
+        mega = (idm.get("mega") or "").strip()
+        if not mega:
+            continue
+        for rt in idm.get("related_tickers") or []:
+            t = (rt.get("ticker") or "").upper().strip()
+            if not t:
+                continue
+            out.setdefault(t, set()).add(mega)
+            # Alias dot-stripped form (2330.TW → 2330TW) for DD-style lookup.
+            out.setdefault(t.replace(".", ""), set()).add(mega)
+    return out
+
+
 def build_takeaway(stocks: list[dict]) -> dict:
-    """Generate rule-based narrative from finalized stock list."""
+    """Generate rule-based narrative from finalized stock list.
+
+    This is a UNIVERSE-LEVEL snapshot computed against MLB thresholds.
+    It does NOT reflect the user's current Moat / Direction chip choice —
+    tab counts in the FE handle that. The `basis` field makes this explicit.
+    """
     pass5 = [s for s in stocks if s["pass_count"] == 5]
     pass4 = [s for s in stocks if s["pass_count"] == 4]
     pass3 = [s for s in stocks if s["pass_count"] == 3]
@@ -116,11 +147,22 @@ def build_takeaway(stocks: list[dict]) -> dict:
     )
     top_tickers_by_signal = [s["ticker"] for s in top_5[:3]]
 
-    # Sector breakdown: only meaningful when sector is non-empty.
-    sectors = Counter(s["sector"] for s in pass5 if s["sector"])
+    # Mega-based concentration via ID cross-reference (more meaningful than
+    # the near-empty dd-meta `industry` field).
+    ticker_megas = _build_ticker_mega_map()
+    mega_counter: Counter[str] = Counter()
+    for s in pass5:
+        t = s["ticker"].upper()
+        megas = (
+            ticker_megas.get(t)
+            or ticker_megas.get(t.replace(".", ""))
+            or set()
+        )
+        for m in megas:
+            mega_counter[m] += 1
     sector_breakdown = [
-        {"sector": sec, "count": n}
-        for sec, n in sectors.most_common(5)
+        {"sector": mega, "count": n}
+        for mega, n in mega_counter.most_common(5)
     ]
 
     # Edge cases: pass_4 candidates with S-tier moat (品質卓越但卡 1 條 QGM 硬閾值)
@@ -134,29 +176,27 @@ def build_takeaway(stocks: list[dict]) -> dict:
         if len(edge_cases) >= 5:
             break
 
-    # Summary line — narrative version of the counts
+    # Summary: lead with pass-cohort split, then top thematic exposure.
     total_candidates = len(pass5) + len(pass4) + len(pass3)
-    if pass5:
-        if sector_breakdown:
-            top_sec = sector_breakdown[0]
-            summary = (
-                f"{len(pass5)}/{len(stocks)} 完全符合 — "
-                f"top 集中於 {top_sec['sector']}（{top_sec['count']} 檔）。"
-                f"差一條 {len(pass4)} 檔、差兩條 {len(pass3)} 檔。"
-            )
-        else:
-            summary = (
-                f"{len(pass5)}/{len(stocks)} 完全符合 — "
-                f"差一條 {len(pass4)}、差兩條 {len(pass3)}（共 {total_candidates} 候選）。"
-            )
-    else:
-        summary = (
-            f"0/{len(stocks)} 完全符合 — "
-            f"差一條 {len(pass4)} 為最接近 setup（共 {total_candidates} 候選）。"
+    base = (
+        f"{len(pass5)}/{len(stocks)} 完全符合"
+        if pass5
+        else f"0/{len(stocks)} 完全符合"
+    )
+    counts_str = f"差一條 {len(pass4)}、差二條 {len(pass3)}（共 {total_candidates} 候選）"
+
+    if sector_breakdown:
+        top_megas = sector_breakdown[:2]
+        meta_str = " + ".join(
+            f"{m['sector']}({m['count']})" for m in top_megas
         )
+        summary = f"{base} — top mega 暴露：{meta_str}（單檔可跨 mega）。{counts_str}。"
+    else:
+        summary = f"{base} — {counts_str}。"
 
     return {
         "summary": summary,
+        "basis": "MLB preset · universe-level (未套用 Moat / Direction filter；切換 chip 不會更新此面板)",
         "top_tickers_by_signal": top_tickers_by_signal,
         "sector_breakdown": sector_breakdown,
         "edge_cases": edge_cases,
