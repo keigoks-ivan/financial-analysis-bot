@@ -96,12 +96,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 /* MA badges */
 .ma-badge{font-size:9px;font-weight:600;display:block;margin-top:2px;white-space:nowrap}
 /* Takeaway card */
-.takeaway-card{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:16px;font-size:12px;line-height:1.7;color:#1e3a5f;margin-bottom:24px}
-.takeaway-card strong{color:#0f2a45}
-.takeaway-card .ta-row{margin-top:8px}
-.takeaway-card .ta-sector-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.takeaway-card .ta-sector-item{background:#f0f5fb;border:1px solid #dce8f5;border-radius:5px;padding:2px 8px;font-size:11px}
-.takeaway-card .ta-edge{margin-top:4px;padding-left:14px;list-style:disc;font-size:11px;color:#5a7a9a}
 /* Loading / error states */
 .state-msg{padding:40px 24px;text-align:center;color:#94a3b8;font-size:13px;line-height:1.8}
 .state-msg code{background:#f0f5fb;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:11px}
@@ -248,9 +242,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <div id="tab-all" class="tab-content"><p class="state-msg">載入中...</p></div>
   </div>
 
-  <div class="takeaway-card" id="takeaway-card">
-    <p class="state-msg">載入中...</p>
-  </div>
 </div>
 
 <script>
@@ -504,58 +495,6 @@ function buildTable(stocks) {
   return thead + rows + '</tbody></table>';
 }
 
-// ID taxonomy: mega code → display label (matches docs/id/taxonomy.md 表 1)
-var MEGA_LABELS = {
-  semi:       '🔷 半導體',
-  bio:        '🧬 生技醫療',
-  cloud:      '☁️ 雲端 SaaS',
-  energy:     '⚡ 能源 / EV',
-  consumer:   '🛍️ 消費精品',
-  finance:    '🏦 金融 FinTech',
-  industrial: '🔧 工業航太',
-  staples:    '🥫 必選消費',
-  reits:      '🏢 REITs',
-  space:      '🛰️ 太空',
-  housing:    '🏠 住房',
-  transport:  '✈️ 運輸旅遊',
-  materials:  '⛏️ 材料礦業',
-  agri:       '🌾 農業食品',
-  macro:      '🌐 跨域地緣'
-};
-
-function renderTakeaway(ta) {
-  if (!ta) return;
-  var card = document.getElementById('takeaway-card');
-  if (!card) return;
-
-  var topTickers = (ta.top_tickers_by_signal || []).join('、');
-  var sectorList = (ta.sector_breakdown || []).map(function(sb) {
-    var label = MEGA_LABELS[sb.sector] || sb.sector;
-    return '<span class="ta-sector-item">' + label + ' (' + sb.count + ')</span>';
-  }).join('');
-  var edgesHtml = '';
-  if (ta.edge_cases && ta.edge_cases.length) {
-    edgesHtml = '<div class="ta-row"><strong>邊緣案例：</strong><ul class="ta-edge">' +
-      ta.edge_cases.map(function(e) { return '<li>' + e + '</li>'; }).join('') +
-      '</ul></div>';
-  }
-
-  var basisHtml = ta.basis
-    ? '<div class="ta-basis" style="font-size:10px;color:#94a3b8;margin-top:6px">' + ta.basis + '</div>'
-    : '';
-
-  var sectorRow = sectorList
-    ? '<div class="ta-row"><strong title="從每檔 ticker 對應的產業 DD (ID) 反查；一檔可同屬多個產業（如 MSFT 兼跨雲端 + 半導體 + 能源），所以加總可能超過 17 檔">產業分布：</strong><div class="ta-sector-list">' + sectorList + '</div></div>'
-    : '';
-
-  card.innerHTML =
-    '<div><strong>Take-away：</strong> ' + (ta.summary || '') + '</div>' +
-    (topTickers ? '<div class="ta-row"><strong>Top 信號（A+ → A，IRR 排序）：</strong> ' + topTickers + '</div>' : '') +
-    sectorRow +
-    edgesHtml +
-    basisHtml;
-}
-
 function renderAll() {
   if (!DATA) return;
 
@@ -597,7 +536,6 @@ function showError(msg) {
   ['tab-5','tab-4','tab-3','tab-all'].forEach(function(id) {
     document.getElementById(id).innerHTML = errHtml;
   });
-  document.getElementById('takeaway-card').style.display = 'none';
   document.getElementById('hero-badge').innerHTML = '<strong>資料未就緒</strong>';
 }
 
@@ -709,7 +647,6 @@ fetch('./latest.json')
     }
 
     updateHeroBadge();
-    renderTakeaway(data.takeaway);
     renderAll();
   })
   .catch(function(err) {

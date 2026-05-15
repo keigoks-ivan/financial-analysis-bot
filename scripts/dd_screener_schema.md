@@ -42,21 +42,7 @@ and bumping `schema_version`.**
     "no_data": 12
   },
 
-  "stocks": [ /* see below */ ],
-
-  "takeaway": {
-    "summary": "12/98 完全符合 — 集中在 AI 半導體（5）+ 大科技（3）...",
-    "top_tickers_by_signal": ["NVDA", "ASML", "GOOGL"],
-    "sector_breakdown": [
-      {"sector": "半導體",   "count": 5},
-      {"sector": "大科技",   "count": 3},
-      {"sector": "半導體設備", "count": 2}
-    ],
-    "edge_cases": [
-      "LLY 差 FCF+D/E — 品質卓越但嚴格 QGM 硬閾值會誤殺",
-      "RMS 差 EPS+PEG — 奢侈品低成長 + 高估值，moat S 但量化篩會擋"
-    ]
-  }
+  "stocks": [ /* see below */ ]
 }
 ```
 

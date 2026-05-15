@@ -6,8 +6,7 @@ Pipeline:
   Step 3    hybrid quality data (QGM + yfinance)  (dd_screener_quality)
   Step 4    MA snapshot                            (dd_screener_ma)
   Step 5    compute pass/fail per criterion
-  Step 6    rule-based take-away
-  Step 7    write docs/dd-screener/latest.json
+  Step 6    write docs/dd-screener/latest.json
 
 Output schema: scripts/dd_screener_schema.md (locked v1.0)
 
@@ -32,7 +31,6 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from dd_meta_reader import iter_id_metas  # noqa: E402
 from dd_screener_dd_loader import load_dd_universe  # noqa: E402
 from dd_screener_quality import (  # noqa: E402
     EU_SUFFIX_MAP,
@@ -89,114 +87,6 @@ def evaluate_criteria(quality: dict) -> tuple[int, list[str]]:
         else:
             fails.append(c["key"])
     return passes, fails
-
-
-# ---------------------------------------------------------------------------
-# Step 6: rule-based take-away
-# ---------------------------------------------------------------------------
-
-
-def _signal_rank(signal: str) -> int:
-    return {"A+": 5, "A": 4, "B": 3, "C": 2, "X": 1}.get(signal, 0)
-
-
-def _build_ticker_mega_map() -> dict[str, set[str]]:
-    """Return {ticker_upper: set(mega)} from ID files' related_tickers.
-
-    dd-meta `industry` field is sparse (1/98 today) so derive sector
-    concentration from ID's `mega` taxonomy instead. Multi-mega tickers
-    (e.g. NVDA spans semi/cloud/industrial/space) are counted in each
-    mega — concentration figure represents thematic exposure, not
-    mutually-exclusive bucket assignment.
-    """
-    out: dict[str, set[str]] = {}
-    id_dir = ROOT / "docs" / "id"
-    for _, idm in iter_id_metas(id_dir):
-        mega = (idm.get("mega") or "").strip()
-        if not mega:
-            continue
-        for rt in idm.get("related_tickers") or []:
-            t = (rt.get("ticker") or "").upper().strip()
-            if not t:
-                continue
-            out.setdefault(t, set()).add(mega)
-            # Alias dot-stripped form (2330.TW → 2330TW) for DD-style lookup.
-            out.setdefault(t.replace(".", ""), set()).add(mega)
-    return out
-
-
-def build_takeaway(stocks: list[dict]) -> dict:
-    """Generate rule-based narrative from finalized stock list.
-
-    This is a UNIVERSE-LEVEL snapshot computed against MLB thresholds.
-    It does NOT reflect the user's current Moat / Direction chip choice —
-    tab counts in the FE handle that. The `basis` field makes this explicit.
-    """
-    pass5 = [s for s in stocks if s["pass_count"] == 5]
-    pass4 = [s for s in stocks if s["pass_count"] == 4]
-    pass3 = [s for s in stocks if s["pass_count"] == 3]
-
-    # Top tickers among pass_5 by signal rank → 5Y IRR (DCA §4 annualized)
-    top_5 = sorted(
-        pass5,
-        key=lambda s: (
-            -_signal_rank(s["signal"]),
-            -(s.get("ev5y_pct") if s.get("ev5y_pct") is not None else -1e9),
-            s["ticker"],
-        ),
-    )
-    top_tickers_by_signal = [s["ticker"] for s in top_5[:3]]
-
-    # Mega-based concentration via ID cross-reference (more meaningful than
-    # the near-empty dd-meta `industry` field).
-    ticker_megas = _build_ticker_mega_map()
-    mega_counter: Counter[str] = Counter()
-    for s in pass5:
-        t = s["ticker"].upper()
-        megas = (
-            ticker_megas.get(t)
-            or ticker_megas.get(t.replace(".", ""))
-            or set()
-        )
-        for m in megas:
-            mega_counter[m] += 1
-    sector_breakdown = [
-        {"sector": mega, "count": n}
-        for mega, n in mega_counter.most_common(5)
-    ]
-
-    # Edge cases: pass_4 candidates with S-tier moat (品質卓越但卡 1 條 QGM 硬閾值)
-    edge_cases: list[str] = []
-    for s in sorted(pass4, key=lambda x: (-x["moat_score"], x["ticker"])):
-        if s["moat_score"] >= 9.5 and s["fail_criteria"]:
-            fail_names = "+".join(s["fail_criteria"]).upper()
-            edge_cases.append(
-                f"{s['ticker']} 差 {fail_names} — S 級護城河卡 QGM 硬閾值"
-            )
-        if len(edge_cases) >= 5:
-            break
-
-    # Summary: just the pass-cohort split. Industry breakdown lives in
-    # `sector_breakdown` and the FE renders it as labelled chips below
-    # — keep the summary line readable.
-    total_candidates = len(pass5) + len(pass4) + len(pass3)
-    base = (
-        f"{len(pass5)}/{len(stocks)} 完全符合"
-        if pass5
-        else f"0/{len(stocks)} 完全符合"
-    )
-    summary = (
-        f"{base} · 差一條 {len(pass4)} 檔 · 差二條 {len(pass3)} 檔"
-        f"（共 {total_candidates} 候選）"
-    )
-
-    return {
-        "summary": summary,
-        "basis": "依預設條件計算（MLB 閾值，全 universe；切換上方 Moat / Direction chip 不會更新此面板）",
-        "top_tickers_by_signal": top_tickers_by_signal,
-        "sector_breakdown": sector_breakdown,
-        "edge_cases": edge_cases,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -342,10 +232,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     # Source-tag breakdown
     src_counts = Counter(s["quality_source"] for s in enriched)
     print(f"  Step 5    quality sources: {dict(src_counts)}")
-
-    # Step 6: take-away
-    takeaway = build_takeaway(enriched)
-    print(f"  Step 6    take-away: pass5={sum(1 for s in enriched if s['pass_count']==5)} "
+    print(f"  Step 5    pass distribution: pass5={sum(1 for s in enriched if s['pass_count']==5)} "
           f"pass4={sum(1 for s in enriched if s['pass_count']==4)} "
           f"pass3={sum(1 for s in enriched if s['pass_count']==3)}")
 
@@ -377,7 +264,6 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
         "default_filter": DEFAULT_FILTER,
         "summary": summary,
         "stocks": enriched,
-        "takeaway": takeaway,
     }
 
     print(f"\n  ✓ Elapsed: {time.time()-t0:.0f}s")

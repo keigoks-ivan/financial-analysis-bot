@@ -47,8 +47,9 @@ Agent({
 - `docs/research/index.html` 主表（dd-tbody-v12 整段重生 from dd-meta JSON）
 - DD 組合快照（DD_AUTO_STATS：訊號分布、最新 8 筆、PEG 便宜 top 5、5Y P/E 分位、2Y upside、X cohort 拆分、DCA Verdict 分布、護城河面板）
 - 同跑 `DD_STALE_FRESH` / `PM_LAST_RUN` / `PM_HOLDINGS` / `PM_ACTIONS` 五段標記注入
+- **自動觸發** `scripts/build_dd_screener.py`（rebuild `docs/dd-screener/latest.json`），讓 `/research/` 與 `/dd-screener/` 兩個頁面 universe 永遠一致。yfinance 失敗時 screener rebuild 會 warn 但不 abort research sync；要離線跑加 `--skip-dd-screener`。
 
-把 `docs/research/index.html` 與 DD/DCA 新檔**併入同一 commit**，避免 research 頁滯後於底層報告。stock-analyst skill §2164 與 deep-conviction-analyst skill §68 已內建此步，但**手動 patch / 補 metadata / 改 DCA Verdict** 這類 skill-外路徑也必須遵守此規則。
+把 `docs/research/index.html`、`docs/dd-screener/latest.json`、DD/DCA 新檔**併入同一 commit**，避免任一頁面滯後於底層報告。stock-analyst skill §2164 與 deep-conviction-analyst skill §68 已內建此步，但**手動 patch / 補 metadata / 改 DCA Verdict** 這類 skill-外路徑也必須遵守此規則。
 
 ## Workflow: push earnings / 發布財報
 

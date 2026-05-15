@@ -15,6 +15,7 @@ import argparse
 import datetime as dt
 import json
 import re
+import sys
 from pathlib import Path
 
 DOCS = Path(__file__).parent.parent / "docs"
@@ -2636,6 +2637,12 @@ def main():
         action="store_true",
         help="Show unified diff of changes without writing the file.",
     )
+    parser.add_argument(
+        "--skip-dd-screener",
+        action="store_true",
+        help="Skip the auto-trigger of scripts/build_dd_screener.py at the end "
+             "(use when you want only the research index sync — e.g. offline).",
+    )
     args = parser.parse_args()
 
     index_data = parse_index_md()
@@ -2656,6 +2663,36 @@ def main():
             print(f"\nUpdated {INDEX_HTML}")
     else:
         print("\nFailed to update index.html")
+
+    # Auto-trigger DD Screener rebuild so /research/ and /dd-screener/ stay in
+    # lockstep. New DD/DCA additions are picked up via the stateless glob in
+    # build_dd_screener.py. Failure here (e.g. yfinance network blip) must NOT
+    # abort the research-sync caller — it's a separate, supplementary page.
+    if args.dry_run or args.skip_dd_screener:
+        return
+    import subprocess  # local import — only used in this terminal hook
+    screener_script = Path(__file__).resolve().parent / "build_dd_screener.py"
+    if not screener_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {screener_script.name} (rebuild /dd-screener/ to match universe)")
+    try:
+        subprocess.run(
+            [sys.executable, str(screener_script)],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(
+            f"\n⚠ DD Screener rebuild failed (exit {e.returncode}). "
+            f"/research/ sync succeeded; rerun `python3 {screener_script}` "
+            f"manually if /dd-screener/ needs to refresh.",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ DD Screener rebuild errored: {e}. "
+            f"/research/ sync succeeded.",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":
