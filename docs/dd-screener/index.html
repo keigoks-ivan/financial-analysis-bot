@@ -69,6 +69,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 .tbl thead{position:sticky;top:0;z-index:3}
 .tbl th{background:#f0f6ff;font-size:10px;letter-spacing:.04em;color:#5a7a9a;font-weight:700;padding:9px 12px;text-align:right;border-bottom:2px solid #dce8f5;white-space:nowrap}
 .tbl th.left{text-align:left}
+.tbl th.sortable{cursor:pointer;user-select:none}
+.tbl th.sortable:hover{background:#e4eefb;color:#1e3a5f}
+.tbl th.sortable .sort-ind{display:inline-block;margin-left:3px;opacity:.5;font-size:9px}
+.tbl th.sortable.sort-active{color:#1e3a5f}
+.tbl th.sortable.sort-active .sort-ind{opacity:1}
 .tbl td{padding:8px 12px;font-size:12px;border-bottom:1px solid #f0f5fb;text-align:right;font-variant-numeric:tabular-nums;color:#1e3a5f;white-space:nowrap}
 .tbl td.left{text-align:left;font-weight:600}
 .tbl tr:hover td{background:#f8fbff}
@@ -176,6 +181,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <span class="chip active" data-filter="moat" data-value="S">[S]</span>
       <span class="chip" data-filter="moat" data-value="A">[A]</span>
       <span class="chip" data-filter="moat" data-value="B">[B]</span>
+      <span class="chip" data-filter="moat" data-value="C">[C]</span>
       <span class="chip" data-filter="moat" data-value="All">[All]</span>
     </div>
     <div class="filter-group">
@@ -250,11 +256,13 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
 var state = {
-  moat:    'S',      // S | A | B | All
+  moat:    'S',      // S | A | B | C | All
   dir:     'updown', // updown | up | any
   preset:  'MLB',    // MLB | Custom
   customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
-  customSOnly: true
+  customSOnly: true,
+  sortKey: null,     // null = default order (pass_count → moat → ev5y); else column key
+  sortDir: 'desc'    // 'asc' | 'desc'
 };
 
 // Raw data from latest.json
@@ -309,20 +317,12 @@ function passFlag(stock, criterion) {
   return criterion.invert ? v <= t : v >= t;
 }
 
-function moatMin() {
-  if (state.preset === 'Custom' && !state.customSOnly) {
-    // No moat chip override when Custom S-Only is off — defer to chip
-    return chipMoatMin();
-  }
-  if (state.preset === 'Custom' && state.customSOnly) return 9.5;
-  return chipMoatMin();
-}
-
-function chipMoatMin() {
-  if (state.moat === 'S') return 9.5;
-  if (state.moat === 'A') return 8.0;
-  if (state.moat === 'B') return 6.0;
-  return 0;
+function moatChipPass(stock) {
+  // Exact grade-letter match (e.g. [A] = only moat_grade==="A").
+  // [All] passes everything. moat_grade '?' / null is treated as no match
+  // for specific letters and only shows under [All].
+  if (state.moat === 'All') return true;
+  return (stock.moat_grade || '') === state.moat;
 }
 
 function dirFilter(stock) {
@@ -333,10 +333,16 @@ function dirFilter(stock) {
 }
 
 function applyFilters(stocks) {
-  var mMin = moatMin();
+  // Custom S-Only is a separate score-based override (>=9.5) used only in
+  // Custom preset; the Moat chip is ignored in that mode for clarity.
+  var customSOnly = state.preset === 'Custom' && state.customSOnly;
   return stocks.filter(function(s) {
-    var score = typeof s.moat_score === 'number' ? s.moat_score : 0;
-    if (score < mMin) return false;
+    if (customSOnly) {
+      var score = typeof s.moat_score === 'number' ? s.moat_score : 0;
+      if (score < 9.5) return false;
+    } else if (!moatChipPass(s)) {
+      return false;
+    }
     if (!dirFilter(s)) return false;
     return true;
   });
@@ -381,21 +387,56 @@ function passLabel(pc) {
   return '<span class="' + cls + '">' + pc + '/5</span>';
 }
 
+function _thSortable(label, key, opts) {
+  opts = opts || {};
+  var cls = 'sortable';
+  if (opts.left) cls += ' left';
+  var ind = '';
+  if (state.sortKey === key) {
+    cls += ' sort-active';
+    ind = '<span class="sort-ind">' + (state.sortDir === 'asc' ? '▲' : '▼') + '</span>';
+  } else {
+    ind = '<span class="sort-ind">▾</span>';
+  }
+  var titleAttr = opts.title ? ' title="' + opts.title.replace(/"/g, '&quot;') + '"' : '';
+  return '<th class="' + cls + '" data-sort-key="' + key + '"' + titleAttr + '>' + label + ind + '</th>';
+}
+
+function _sortStocks(stocks) {
+  if (!state.sortKey) return stocks;  // honour caller's default order
+  var key = state.sortKey;
+  var dir = state.sortDir === 'asc' ? 1 : -1;
+  return stocks.slice().sort(function(a, b) {
+    var av = a[key];
+    var bv = b[key];
+    // null/undefined always sink to bottom regardless of direction
+    var aNull = av === null || av === undefined;
+    var bNull = bv === null || bv === undefined;
+    if (aNull && bNull) return 0;
+    if (aNull) return 1;
+    if (bNull) return -1;
+    if (typeof av === 'string') return dir * av.localeCompare(bv);
+    return dir * (av - bv);
+  });
+}
+
 function buildTable(stocks) {
   if (!stocks.length) return '<p style="padding:20px;color:#94a3b8;font-size:12px">（無符合資料）</p>';
 
   var criteria = getCriteria();
-  // Build header from criteria
+  stocks = _sortStocks(stocks);
+
+  // Build header from criteria — every column data-driven for sort
   var criteriaHeaders = criteria.map(function(c) {
-    return '<th>' + c.label + '</th>';
+    return _thSortable(c.label, c.key);
   }).join('');
 
   var thead = '<table class="tbl"><thead><tr>' +
-    '<th class="left">Ticker</th>' +
-    '<th class="left">Moat</th>' +
+    _thSortable('Ticker', 'ticker', {left: true}) +
+    _thSortable('Moat', 'moat_score', {left: true, title: '依護城河 score 排序'}) +
     criteriaHeaders +
-    '<th>通過</th>' +
-    '<th title="DCA §4 機率加權年化 IRR（5 年期）— 與 /research/ 表格同源">5Y IRR</th>' +
+    _thSortable('通過', 'pass_count') +
+    _thSortable('5Y IRR', 'ev5y_pct', {title: 'DCA §4 機率加權年化 IRR（5 年期）— 與 /research/ 表格同源'}) +
     '<th>MA</th>' +
     '<th>Links</th>' +
     '</tr></thead><tbody>';
@@ -593,6 +634,23 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
     var target = btn.getAttribute('data-tab');
     document.getElementById(target).classList.add('active');
   });
+});
+
+// ── Sortable headers (event delegation — survives table re-renders) ────────
+document.addEventListener('click', function(e) {
+  var th = e.target.closest('th.sortable');
+  if (!th) return;
+  if (!e.target.closest('.compare-wrap')) return; // limit to result tables
+  var key = th.getAttribute('data-sort-key');
+  if (!key) return;
+  if (state.sortKey === key) {
+    state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    state.sortKey = key;
+    // Sensible default per column: ticker ascending; everything else descending
+    state.sortDir = (key === 'ticker') ? 'asc' : 'desc';
+  }
+  if (DATA) renderAll();
 });
 
 // ── Data fetch ────────────────────────────────────────────────────────────
