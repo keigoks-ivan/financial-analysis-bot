@@ -62,14 +62,14 @@ Schema breakdown (latest DD per ticker):
 | CDNS | DD_CDNS_20260504.html | v12.2 | 50.1 | pending | – | under-80kb (50.1kb) |
 | CIEN | DD_CIEN_20260427.html | v12.0 | 68.2 | pending | – | under-80kb (68.2kb) |
 | CLS | DD_CLS_20260428.html | v12.1 | 73.4 | pending | – | under-80kb (73.4kb) |
-| CMG | DD_CMG_20260516.html | v12.3 | 78.2 | in_progress | win-20260516-1355-78dc | under-80kb (78.2kb) |
+| CMG | DD_CMG_20260516.html | v12.3 | 78.2 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | COHR | DD_COHR_20260418.html | v12.0 | 63.9 | pending | – | under-80kb (63.9kb) |
 | COST | DD_COST_20260427.html | v12.1 | 57.0 | pending | – | under-80kb (57.0kb) |
 | CRDO | DD_CRDO_20260516.html | v12.3 | 79.7 | skip | – | in flight (other window) |
 | CRM | DD_CRM_20260418.html | v12.0 | 65.4 | pending | – | under-80kb (65.4kb) |
 | CRWD | DD_CRWD_20260418.html | v12.0 | 60.2 | pending | – | under-80kb (60.2kb) |
 | CSCO | DD_CSCO_20260427.html | v12.0 | 54.8 | pending | – | under-80kb (54.8kb) |
-| DDOG | DD_DDOG_20260516.html | v12.3 | 78.4 | in_progress | win-20260516-1355-78dc | under-80kb (78.4kb) |
+| DDOG | DD_DDOG_20260516.html | v12.3 | 78.4 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | DELL | DD_DELL_20260418.html | v12.0 | 49.4 | pending | – | under-80kb (49.4kb) |
 | DIS | DD_DIS_20260516.html | v12.3 | 102.2 | skip | – | in flight (other window) |
 | EAT | DD_EAT_20260428.html | v12.1 | 81.7 | pending | – | – |
@@ -94,7 +94,7 @@ Schema breakdown (latest DD per ticker):
 | LITE | DD_LITE_20260506.html | v12.2 | 82.6 | pending | – | – |
 | LLY | DD_LLY_20260504.html | v12.2 | 95.9 | pending | – | – |
 | LRCX | DD_LRCX_20260425.html | v12.0 | 67.7 | pending | – | under-80kb (67.7kb) |
-| LULU | DD_LULU_20260516.html | v12.3 | 78.2 | in_progress | win-20260516-1355-78dc | under-80kb (78.2kb) |
+| LULU | DD_LULU_20260516.html | v12.3 | 78.2 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | MA | DD_MA_20260516.html | v12.3 | 85.3 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca 51.0kb |
 | MAR | DD_MAR_20260414.html | pre-v12 | 70.4 | pending | – | pre-v12-heavy; under-80kb (70.4kb) |
 | MELI | DD_MELI_20260513.html | v12.2 | 86.4 | pending | – | – |
