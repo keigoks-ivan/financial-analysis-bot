@@ -40,13 +40,13 @@ Schema breakdown (latest DD per ticker):
 | 3661TW | DD_3661TW_20260514.html | v12.2 | 84.3 | pending | – | – |
 | 6146T | DD_6146T_20260420.html | v12.0 | 23.5 | pending | – | under-80kb (23.5kb) |
 | 6857T | DD_6857T_20260420.html | v12.0 | 24.5 | pending | – | under-80kb (24.5kb) |
-| AAPL | DD_AAPL_20260504.html | v12.2 | 81.4 | in_progress | win-20260516-1549-eeec | re-claimed after release |
+| AAPL | DD_AAPL_20260504.html | v12.2 | 81.4 | pending | – | released by win-20260516-1403-6a45 (batch focus on ALAB) |
 | ADI | DD_ADI_20260427.html | v12.1 | 62.6 | pending | – | under-80kb (62.6kb) |
 | AENA | DD_AENA_20260428.html | v12.1 | 80.1 | pending | – | – |
 | ALAB | DD_ALAB_20260506.html | v12.3 | 100.3 | done | win-20260516-1403-6a45 | legacy_full v12.2→v12.3: §2 D R:R 瘦身 + §7 砍低估值四問 + §13 砍 13.0/13.3/13.5 + §5.F single thing 新增 (FY27 Q3 新 hyperscaler 量產 binary event) + §8.H 客戶結構 (top-1 >70% / top-3 ~86% 引 FY25 10-K) + §9 F 二維 moat (execution 9 + pricing 9 → A) + §12 M&A 5Y track (aiXscale Photonics 2026-01 $74M) + SBC ex-EPS ⚠️ (FY24 59% IPO 後常態) + dd-meta moat_execution/pricing sub-scores; verdict 不變 B; DCA cascade 2 files (QC-29/0/4 + MA60/200/104w stress label 修正) |
 | AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 1 anchor fix in DCA_AMAT_20260511 (§13.5 → v12.0 source attribution + v12.3 §13.4 peer cross-ref) |
-| AMD | DD_AMD_20260506.html | v12.2 | 82.9 | in_progress | win-20260516-1549-eeec | re-claimed after release |
-| AMZN | DD_AMZN_20260430.html | v12.1 | 97.6 | in_progress | win-20260516-1549-eeec | – |
+| AMD | DD_AMD_20260506.html | v12.2 | 82.9 | pending | – | released by win-20260516-1403-6a45 (batch focus on ALAB) |
+| AMZN | DD_AMZN_20260430.html | v12.1 | 97.6 | pending | – | – |
 | ANET | DD_ANET_20260506.html | v12.2 | 79.1 | pending | – | under-80kb (79.1kb) |
 | APH | DD_APH_20260504.html | v12.3 | 107.9 | done | win-20260516-1413-083f | legacy_full v12.2→v12.3 (pilot): §2 9→7 子節 + §7 砍低估值/便宜理由四問 + §13 砍 13.0/13.3/13.5 + §5.F NVDA cable-free binary event + §8.B price/vol split + §8.H top-1 <10% (10-K FY2024) + top-5 25-30% data-gap aside + §9 二維 execution 9 / pricing 8 + §10 peer compare + ex-buyback EPS CAGR + FCF lumpiness 非 lumpy + §11 議價權三段 (上/下/地緣) + §12 M&A 5Y track (CIT $2.025B / CCS $10.5B etc) + SBC ex-EPS 3.0% < 5pp 無⚠️ + §13.4 connector tier (TEL/Sensata/Aptiv/Molex 避 AVGO/MRVL 錯 tier); verdict 不變 A; DCA cascade clean 2 files (56.4 + 59.4 KB) 0 broken anchors |
 | APP | DD_APP_20260418.html | v12.0 | 61.7 | pending | – | under-80kb (61.7kb) |
@@ -72,7 +72,7 @@ Schema breakdown (latest DD per ticker):
 | DDOG | DD_DDOG_20260516.html | v12.3 | 78.4 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | DELL | DD_DELL_20260418.html | v12.0 | 49.4 | pending | – | under-80kb (49.4kb) |
 | DIS | DD_DIS_20260516.html | v12.3 | 102.2 | skip | – | in flight (other window) |
-| EAT | DD_EAT_20260428.html | v12.3 | 82.2 | done | win-20260516-1420-1db7 | legacy_full v12.1→v12.3 (sonnet sub-agent): §3.B 三層時間軸 + sourced floor + §3.C 時間尺度 ⚡🔥🐢 + §5.F Chili's FY26 SSS ≥ +4%/quarter binary + §7 二維 execution 6/pricing 4 + QC-23 (🟡 TXRH/🔴 CMG/⛔ GLP-1+居家) + §8.H demand concentration framing (concept 88%/12%, geographic 95%/5%) + §9 議價權三段 (上/下/地緣) + 營收三維 + §10 M&A 5Y near-zero (Maggiano's strategic review, no closed deals) + SBC ex-EPS gap 5.4% near 5pp 不⚠️ + §11.4 casual dining peer tier (TXRH/DRI/CAKE/BLMN, 排除 CMG/MCD/SBUX) + §12 R:R 3 number + Bear anchor 2/2 stress; verdict 不變 B; DCA cascade 2 files (53.4/65.8 KB) 三引擎目標價→PEG 安全網法 |
+| EAT | DD_EAT_20260428.html | v12.1 | 81.7 | in_progress | win-20260516-1420-1db7 | – |
 | EBAY | DD_EBAY_20260516.html | v12.3 | 105.7 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca-under-50kb (49.1kb) pre-existing |
 | ETN | DD_ETN_20260506.html | v12.2 | 79.4 | pending | – | under-80kb (79.4kb) |
 | FICO | DD_FICO_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
@@ -91,13 +91,13 @@ Schema breakdown (latest DD per ticker):
 | JBL | DD_JBL_20260418.html | v12.0 | 53.7 | pending | – | under-80kb (53.7kb) |
 | KEYS | DD_KEYS_20260418.html | v12.0 | 59.9 | pending | – | under-80kb (59.9kb) |
 | KLAC | DD_KLAC_20260516.html | v12.3 | 82.3 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 4 anchor fixes (QC-29/0/4 stress→v12.3 2/2; MA60/200/104w→短期/中期) + v12.3 reconciliation block in DCA_KLAC_20260507 (under-floor remediation 49.8→51.7 KB) |
-| LITE | DD_LITE_20260506.html | v12.3 | 94.8 | done | win-20260516-1420-1db7 | legacy_full v12.2→v12.3 (sonnet sub-agent): §2 D R:R QC-29 砍 + §7 砍低估值四問 + §13 砍 13.0/13.3/13.5 + §5.F 1.6T cloud transceiver Q1-Q3 FY27 binary + §8.H top-1 16%/top-2 31.4% (引 FY25 10-K) + §9 F 二維 execution 8/pricing 6 (composite 7 → B 上緣) + QC-23 in §9.D + §12 M&A 5Y (Oclaro 2018 $1.8B / NeoPhotonics 2022 $918M / Cloud Light 2023 $750M) + SBC ex-EPS ⚠️ FY24 9.5% / FY25 10.8% + §13.4 optical tier corrected (COHR/CIEN/FN, excluded NVDA/AVGO/MRVL); verdict 不變 B; DCA cascade 1 file 55KB MA60/200/104w label fixed |
+| LITE | DD_LITE_20260506.html | v12.2 | 82.6 | in_progress | win-20260516-1420-1db7 | – |
 | LLY | DD_LLY_20260504.html | v12.2 | 95.9 | in_progress | win-20260516-1441-1e69 | – |
 | LRCX | DD_LRCX_20260425.html | v12.0 | 67.7 | pending | – | under-80kb (67.7kb) |
 | LULU | DD_LULU_20260516.html | v12.3 | 78.2 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | MA | DD_MA_20260516.html | v12.3 | 85.3 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca 51.0kb |
 | MAR | DD_MAR_20260414.html | pre-v12 | 70.4 | pending | – | pre-v12-heavy; under-80kb (70.4kb) |
-| MELI | DD_MELI_20260513.html | v12.3 | 90.8 | done | win-20260516-1420-1db7 | legacy_full v12.2→v12.3 (sonnet sub-agent): §2 E QC-29 砍 + §7 砍低估值 + §13 砍 13.0/13.3/13.5 + §5.F Q2 26 OI margin ≥ 8% binary + §8.H data-gap 顯式記錄 (10-K no customer ≥ 5%, geographic concentration Brazil 55%+Argentina 25% 替代 framing) + §9 F 二維 execution 9/pricing 7 + QC-23 (🟡 Amazon BR/🟡 Shopee/🔴 Nubank/⛔ Drex) + §12 M&A 5Y (FY2020-2025 純 organic 無大型併購, MacroTrends 數據) + SBC FY24 1.26% Rev (低於警示) + §13.3 peer tier corrected (SE/NU, 移除 AMZN/MAG7); verdict 不變 B; DCA cascade 3 files (50.4/58.0/50.7 KB after under-floor remediation 48.8→50.7 KB on 20260513) |
+| MELI | DD_MELI_20260513.html | v12.2 | 86.4 | in_progress | win-20260516-1420-1db7 | – |
 | META | DD_META_20260516.html | v12.3 | 75.6 | skip | – | in flight (other window) |
 | MOD | DD_MOD_20260427.html | v12.0 | 65.8 | pending | – | under-80kb (65.8kb) |
 | MPWR | DD_MPWR_20260418.html | v12.0 | 67.5 | pending | – | under-80kb (67.5kb) |
@@ -112,14 +112,14 @@ Schema breakdown (latest DD per ticker):
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
 | NVMI | DD_NVMI_20260515.html | v12.2 | 73.8 | pending | – | under-80kb (73.8kb) |
 | NXPI | DD_NXPI_20260504.html | v12.2 | 103.4 | in_progress | win-20260516-1441-1e69 | – |
-| ON | DD_ON_20260505.html | v12.3 | 111.3 | done | win-20260516-1414-59b1 | legacy_full v12.2→v12.3 (sub-agent): §2 9→7 子節 + §7 砍低估值/便宜理由四問 + §13 砍 13.0/13.3/13.5 + §5.F (Q2 26 GAAP GM ≥ 39% binary) + §8.B M&A 5Y (GT 2021 ✅ / Quantenna 2019 ⚠️ / Allegro 2025 ❌ $6.9B abandoned) + §8.H top-1 distributor ~10-12% (10-K FY24) + §9 二維 execution 7 / pricing 6 → B + §10 ex-buyback EPS CAGR 22.2% + FCF lumpiness FY23 trough + §11 議價權三段 (上游 GT vertical / 下游 OEM dual-source / 地緣 Bucheon + 台 OSAT 50% 東北亞) + §12 SBC FY25 2.40% Rev + §13.4 peer tier mid-tier power semi (STM/IFX/MCHP/NXP 17-19x); verdict 不變 B; 22 inline source URLs; DCA cascade 2 files (07: 46.3KB pre-existing under-floor, anchor edit additive; 11: 58.0KB) |
-| ONTO | DD_ONTO_20260506.html | v12.2 | 99.4 | pending | – | – |
+| ON | DD_ON_20260505.html | v12.3 | 111.3 | done | win-20260516-1414-59b1 | legacy_full v12.2→v12.3: §2 9→7 子節 + §7 砍低估值/便宜理由四問 + §13 砍 13.0/13.3/13.5 + §5.F (Q2 26 GAAP GM ≥ 39% binary) + §8.B M&A 5Y (GT 2021 ✅ / Quantenna 2019 ⚠️ / Allegro 2025 ❌) + §8.H top-1 distributor ~10-12% (10-K FY24) + §9 二維 execution 7 / pricing 6 → B + §10 ex-buyback EPS CAGR 22.2% + FCF lumpiness FY23 trough + §11 議價權三段 (上/下/地緣) + §12 SBC FY25 2.40% Rev + §13.4 peer tier mid-tier power semi (STM/IFX/MCHP/NXP 17-19x); verdict 不變 B; 22 inline source URLs; DCA cascade 2 files (07: 46.3KB pre-existing under-floor; 11: 58.0KB) |
+| ONTO | DD_ONTO_20260506.html | v12.2 | 99.4 | in_progress | win-20260516-1555-c02c | legacy_full v12.2→v12.3 |
 | ORCL | DD_ORCL_20260418.html | v12.0 | 60.3 | pending | – | under-80kb (60.3kb) |
 | PANW | DD_PANW_20260427.html | v12.0 | 70.4 | pending | – | under-80kb (70.4kb) |
-| PLTR | DD_PLTR_20260505.html | v12.2 | 82.6 | in_progress | win-20260516-1447-0ce8 | – |
+| PLTR | DD_PLTR_20260505.html | v12.2 | 82.6 | pending | – | – |
 | PYPL | DD_PYPL_20260323.html | pre-v12 | 54.4 | pending | – | pre-v12-heavy; under-80kb (54.4kb) |
-| QCOM | DD_QCOM_20260504.html | v12.2 | 81.6 | in_progress | win-20260516-1447-0ce8 | – |
-| RCL | DD_RCL_20260508.html | v12.2 | 98.0 | pending | – | – |
+| QCOM | DD_QCOM_20260504.html | v12.2 | 81.6 | pending | – | – |
+| RCL | DD_RCL_20260508.html | v12.2 | 98.0 | in_progress | win-20260516-1555-c02c | legacy_full v12.2→v12.3 |
 | RMBS | DD_RMBS_20260427.html | v12.0 | 73.4 | pending | – | under-80kb (73.4kb) |
 | RMS | DD_RMS_20260418.html | v12.0 | 99.2 | pending | – | – |
 | ROK | DD_ROK_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
@@ -127,7 +127,7 @@ Schema breakdown (latest DD per ticker):
 | SBUX | DD_SBUX_20260429.html | v12.1 | 90.2 | pending | – | – |
 | SE | DD_SE_20260513.html | v12.2 | 87.2 | pending | – | – |
 | SIMO | DD_SIMO_20260427.html | v12.1 | 69.2 | pending | – | under-80kb (69.2kb) |
-| SNDK | DD_SNDK_20260504.html | v12.2 | 96.7 | in_progress | win-20260516-1447-0ce8 | – |
+| SNDK | DD_SNDK_20260504.html | v12.2 | 96.7 | in_progress | win-20260516-1555-c02c | legacy_full v12.2→v12.3 |
 | SPOT | DD_SPOT_20260429.html | v12.1 | 87.8 | pending | – | – |
 | STM | DD_STM_20260504.html | v12.2 | 70.3 | pending | – | under-80kb (70.3kb) |
 | STRL | DD_STRL_20260505.html | v12.2 | 79.9 | pending | – | under-80kb (79.9kb) |
