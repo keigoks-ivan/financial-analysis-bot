@@ -83,7 +83,7 @@ Schema breakdown (latest DD per ticker):
 | GEV | DD_GEV_20260504.html | v12.2 | 71.8 | pending | – | under-80kb (71.8kb) |
 | GFS | DD_GFS_20260427.html | v12.1 | 75.7 | pending | – | under-80kb (75.7kb) |
 | GLW | DD_GLW_20260429.html | v12.1 | 70.5 | pending | – | under-80kb (70.5kb) |
-| GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | pending | – | – |
+| GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | in_progress | win-20260516-1441-1e69 | – |
 | GRAB | DD_GRAB_20260505.html | v12.2 | 65.7 | pending | – | under-80kb (65.7kb) |
 | HWM | DD_HWM_20260418.html | v12.0 | 76.6 | pending | – | under-80kb (76.6kb) |
 | INTC | DD_INTC_20260427.html | v12.0 | 82.4 | pending | – | – |
@@ -92,7 +92,7 @@ Schema breakdown (latest DD per ticker):
 | KEYS | DD_KEYS_20260418.html | v12.0 | 59.9 | pending | – | under-80kb (59.9kb) |
 | KLAC | DD_KLAC_20260516.html | v12.3 | 82.3 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 4 anchor fixes (QC-29/0/4 stress→v12.3 2/2; MA60/200/104w→短期/中期) + v12.3 reconciliation block in DCA_KLAC_20260507 (under-floor remediation 49.8→51.7 KB) |
 | LITE | DD_LITE_20260506.html | v12.2 | 82.6 | in_progress | win-20260516-1420-1db7 | – |
-| LLY | DD_LLY_20260504.html | v12.2 | 95.9 | pending | – | – |
+| LLY | DD_LLY_20260504.html | v12.2 | 95.9 | in_progress | win-20260516-1441-1e69 | – |
 | LRCX | DD_LRCX_20260425.html | v12.0 | 67.7 | pending | – | under-80kb (67.7kb) |
 | LULU | DD_LULU_20260516.html | v12.3 | 78.2 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | MA | DD_MA_20260516.html | v12.3 | 85.3 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca 51.0kb |
@@ -111,7 +111,7 @@ Schema breakdown (latest DD per ticker):
 | NU | DD_NU_20260515.html | v12.3 | 78.0 | done | win-20260516-1400-1792 | dca-only: 1 file audited, 1 anchor fix in DCA_NU_20260515 (QC-29 label removed; substantive 2/4 stress data preserved as it matches DD dd-meta) |
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
 | NVMI | DD_NVMI_20260515.html | v12.2 | 73.8 | pending | – | under-80kb (73.8kb) |
-| NXPI | DD_NXPI_20260504.html | v12.2 | 103.4 | pending | – | – |
+| NXPI | DD_NXPI_20260504.html | v12.2 | 103.4 | in_progress | win-20260516-1441-1e69 | – |
 | ON | DD_ON_20260505.html | v12.2 | 90.6 | in_progress | win-20260516-1414-59b1 | legacy_full v12.2→v12.3 |
 | ONTO | DD_ONTO_20260506.html | v12.2 | 99.4 | pending | – | – |
 | ORCL | DD_ORCL_20260418.html | v12.0 | 60.3 | pending | – | under-80kb (60.3kb) |
