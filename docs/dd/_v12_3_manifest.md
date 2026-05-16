@@ -37,7 +37,7 @@ Schema breakdown (latest DD per ticker):
 | 2383TW | DD_2383TW_20260418.html | v12.0 | 73.2 | pending | – | under-80kb (73.2kb) |
 | 2454 | DD_2454_20260504.html | v12.2 | 59.8 | pending | – | under-80kb (59.8kb) |
 | 3017 | DD_3017_20260504.html | v12.2 | 80.5 | in_progress | win-20260516-1753-881c | re-claimed after release |
-| 3661TW | DD_3661TW_20260514.html | v12.2 | 84.3 | pending | – | – |
+| 3661TW | DD_3661TW_20260514.html | v12.2 | 84.3 | in_progress | win-20260516-1803-0187 | legacy_full v12.2→v12.3 (TW Alchip) |
 | 6146T | DD_6146T_20260420.html | v12.0 | 23.5 | pending | – | under-80kb (23.5kb) |
 | 6857T | DD_6857T_20260420.html | v12.0 | 24.5 | pending | – | under-80kb (24.5kb) |
 | AAPL | DD_AAPL_20260504.html | v12.3 | 83.1 | done | win-20260516-1549-eeec | legacy_full v12.2→v12.3 (sonnet sub-agent): §2 D R:R QC-29 砍 + §7 砍低估值 + §13 砍 13.0/13.3/13.5 + §5.F iPhone 18 AI adoption ≥ 50% (2026-09 trigger) + §5.B sourced floor (iPhone ASP ≥ $950 / Services ≥ $130B / FPE floor 24x) + §5.C ⚡🔥🐢 + §8.H data-gap reframe (10-K no customer ≥ 10%, geographic Americas 42%/China 16%/Europe 25%, product iPhone 52%/Services 24%) + §9 F 二維 execution 9 / pricing 9 + QC-23 ⛔ Apple Intelligence vs Gemini 架構 (15%/24M) + §12 M&A 5Y (Pixelmator 2024 / DarwinAI 2024 / 7 AI startups 2025, organic-first) + SBC FY24 2.99% / FY25 2.88% (低於警示) ex-EPS gap ~10% 由 16.5B share count 主導 + §13.4 mega-cap platform tier (MSFT/GOOGL/META/AMZN, excluded chip-only); verdict 不變 B; DCA cascade 2 files (57.4/64.9 KB) QC-29 + MA60/200/104w label fixed |
