@@ -31,12 +31,12 @@ Schema breakdown (latest DD per ticker):
 | ticker | latest_dd | schema | size_kb | status | claimed_by | notes |
 |---|---|---|---|---|---|---|
 | 2308 | DD_2308_20260325.html | pre-v12 | 53.4 | pending | – | pre-v12-heavy; under-80kb (53.4kb) |
-| 2308TW | DD_2308TW_20260514.html | v12.2 | 84.0 | pending | – | stale-reset 20260516 (win-20260516-1753-881c rate-limit died) |
+| 2308TW | DD_2308TW_20260514.html | v12.3 | 91.4 | done | win-20260516-1753-881c | legacy_full v12.2→v12.3 (sonnet sub-agent — recovered after stale-reset): §2 9→7 + §2.E QC-29 砍 + §7/§13 砍 + §5.F Delta AI PSU 全球市佔 <45% (Q2 2027 trigger, post Vertiv 800V) + §5.B sourced floor + §5.C ⚡🔥🐢 + §8.B 定價/量 + §8.H NVIDIA ~12-15% Rev co-design + hyperscalers top-5 + 公司未具名 + §9 二維 execution 9↑ / pricing 8→ → A (9/10) + QC-23 (⛔ chiplet PSU / 🔴 Vertiv+Schneider / 🟡 Wisetech) + §10 ROIC ~43% vs peer 25% + §11 議價權三段 + §12 SBC TW ~1-2% Rev gap <3pp + M&A near-zero post-Eltek 2014 + §13.4 工業電源 tier (VRT/SU/ETN); verdict 不變 B; DCA 1 file 62.8KB 0 broken anchors |
 | 2330 | DD_2330_20260409.html | pre-v12 | 53.0 | pending | – | pre-v12-heavy; under-80kb (53.0kb) |
 | 2330TW | DD_2330TW_20260514.html | v12.3 | 82.4 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 0 broken anchor; DCA_2330TW_20260506 (49.8KB) pre-existing under-floor, unedited |
 | 2383TW | DD_2383TW_20260418.html | v12.0 | 73.2 | pending | – | under-80kb (73.2kb) |
 | 2454 | DD_2454_20260504.html | v12.2 | 59.8 | pending | – | under-80kb (59.8kb) |
-| 3017 | DD_3017_20260504.html | v12.2 | 80.5 | pending | – | stale-reset 20260516 (win-20260516-1753-881c rate-limit died) |
+| 3017 | DD_3017_20260504.html | v12.3 | 91.8 | done | win-20260516-1753-881c | legacy_full v12.2→v12.3 (sonnet re-spawn — recovered after stale-reset): §2 9→7 + §2.E QC-29 砍 + §7/§13 砍 + §5.F NVIDIA Rubin Ultra MCCP AVC sole/dual-source 2026 Q3-Q4 binary (target 5,760→6,500+ or -20-30%) + §5.B + §5.C + §8.B + §8.H 客戶 A 占 XX% (公司未具名) top-5 est 65-75% dual-track MSFT/AWS grow-with Google/Meta + §9 二維 execution 8↑ / pricing 7→ → A (7.5) + QC-23 (⛔ on-chip microfluidic / 🔴 雙鴻 / 🟡 點對點) + §10 + §11 三段 + §12 SBC TW 員工酬勞 ~5-8% gap ~3% + §13.4 TW thermal tier (3324/2421/3653/8996); verdict 不變 A; no-dca |
 | 3661TW | DD_3661TW_20260514.html | v12.3 | 111.0 | done | win-20260516-1803-0187 | legacy_full v12.2→v12.3 (sub-agent, TW Alchip, +29.4 KB): §2 9→7 + §2.E QC-29 stress 0/4→2/2 + §7 砍 + §13 砍 13.0/13.3/13.5 + §5.F AWS Trainium 2 wafer-out OR Intel design win binary + §8.H TW 匿名 (Customer A AWS 40-50% / Customer B Intel 10-15%) + §9 二維 execution 8 / pricing 5 → 8 + §11 議價權三段 + §13.4 TW ASIC design service tier (GUC/Faraday, ⛔ AVGO/MRVL 錯 tier) — Alchip 27.1x vs TW tier 中位 42x 折價 35%; verdict 不變 B; DCA cascade 1 file (51.5 KB) 2 anchor patches |
 | 6146T | DD_6146T_20260420.html | v12.0 | 23.5 | pending | – | under-80kb (23.5kb) |
 | 6857T | DD_6857T_20260420.html | v12.0 | 24.5 | pending | – | under-80kb (24.5kb) |
