@@ -33,7 +33,7 @@ Schema breakdown (latest DD per ticker):
 | 2308 | DD_2308_20260325.html | pre-v12 | 53.4 | pending | – | pre-v12-heavy; under-80kb (53.4kb) |
 | 2308TW | DD_2308TW_20260514.html | v12.2 | 84.0 | pending | – | – |
 | 2330 | DD_2330_20260409.html | pre-v12 | 53.0 | pending | – | pre-v12-heavy; under-80kb (53.0kb) |
-| 2330TW | DD_2330TW_20260514.html | v12.3 | 82.4 | dca_only | – | – |
+| 2330TW | DD_2330TW_20260514.html | v12.3 | 82.4 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 0 broken anchor; DCA_2330TW_20260506 (49.8KB) pre-existing under-floor, unedited |
 | 2383TW | DD_2383TW_20260418.html | v12.0 | 73.2 | pending | – | under-80kb (73.2kb) |
 | 2454 | DD_2454_20260504.html | v12.2 | 59.8 | pending | – | under-80kb (59.8kb) |
 | 3017 | DD_3017_20260504.html | v12.2 | 80.5 | pending | – | – |
@@ -44,14 +44,14 @@ Schema breakdown (latest DD per ticker):
 | ADI | DD_ADI_20260427.html | v12.1 | 62.6 | pending | – | under-80kb (62.6kb) |
 | AENA | DD_AENA_20260428.html | v12.1 | 80.1 | pending | – | – |
 | ALAB | DD_ALAB_20260506.html | v12.2 | 93.7 | pending | – | – |
-| AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | dca_only | – | – |
+| AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 1 anchor fix in DCA_AMAT_20260511 (§13.5 → v12.0 source attribution + v12.3 §13.4 peer cross-ref) |
 | AMD | DD_AMD_20260506.html | v12.2 | 82.9 | pending | – | – |
 | AMZN | DD_AMZN_20260430.html | v12.1 | 97.6 | pending | – | – |
 | ANET | DD_ANET_20260506.html | v12.2 | 79.1 | pending | – | under-80kb (79.1kb) |
 | APH | DD_APH_20260504.html | v12.2 | 91.9 | pending | – | – |
 | APP | DD_APP_20260418.html | v12.0 | 61.7 | pending | – | under-80kb (61.7kb) |
 | ARM | DD_ARM_20260427.html | v12.1 | 78.4 | pending | – | under-80kb (78.4kb) |
-| ASML | DD_ASML_20260515.html | v12.3 | 100.6 | dca_only | – | – |
+| ASML | DD_ASML_20260515.html | v12.3 | 100.6 | done | win-20260516-1349-cd3c | dca-only: 2 files audited, 0 broken anchor |
 | AVGO | DD_AVGO_20260418.html | v12.0 | 56.3 | pending | – | under-80kb (56.3kb) |
 | BE | DD_BE_20260429.html | v12.1 | 88.1 | pending | – | – |
 | BESI | DD_BESI_20260420.html | v12.0 | 30.4 | pending | – | under-80kb (30.4kb) |
@@ -62,21 +62,21 @@ Schema breakdown (latest DD per ticker):
 | CDNS | DD_CDNS_20260504.html | v12.2 | 50.1 | pending | – | under-80kb (50.1kb) |
 | CIEN | DD_CIEN_20260427.html | v12.0 | 68.2 | pending | – | under-80kb (68.2kb) |
 | CLS | DD_CLS_20260428.html | v12.1 | 73.4 | pending | – | under-80kb (73.4kb) |
-| CMG | DD_CMG_20260516.html | v12.3 | 78.2 | dca_only | – | under-80kb (78.2kb) |
+| CMG | DD_CMG_20260516.html | v12.3 | 78.2 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | COHR | DD_COHR_20260418.html | v12.0 | 63.9 | pending | – | under-80kb (63.9kb) |
 | COST | DD_COST_20260427.html | v12.1 | 57.0 | pending | – | under-80kb (57.0kb) |
 | CRDO | DD_CRDO_20260516.html | v12.3 | 79.7 | skip | – | in flight (other window) |
 | CRM | DD_CRM_20260418.html | v12.0 | 65.4 | pending | – | under-80kb (65.4kb) |
 | CRWD | DD_CRWD_20260418.html | v12.0 | 60.2 | pending | – | under-80kb (60.2kb) |
 | CSCO | DD_CSCO_20260427.html | v12.0 | 54.8 | pending | – | under-80kb (54.8kb) |
-| DDOG | DD_DDOG_20260516.html | v12.3 | 78.4 | dca_only | – | under-80kb (78.4kb) |
+| DDOG | DD_DDOG_20260516.html | v12.3 | 78.4 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | DELL | DD_DELL_20260418.html | v12.0 | 49.4 | pending | – | under-80kb (49.4kb) |
 | DIS | DD_DIS_20260516.html | v12.3 | 102.2 | skip | – | in flight (other window) |
 | EAT | DD_EAT_20260428.html | v12.1 | 81.7 | pending | – | – |
-| EBAY | DD_EBAY_20260516.html | v12.3 | 105.7 | dca_only | – | – |
+| EBAY | DD_EBAY_20260516.html | v12.3 | 105.7 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca-under-50kb (49.1kb) pre-existing |
 | ETN | DD_ETN_20260506.html | v12.2 | 79.4 | pending | – | under-80kb (79.4kb) |
 | FICO | DD_FICO_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
-| FIX | DD_FIX_20260516.html | v12.3 | 87.8 | dca_only | – | – |
+| FIX | DD_FIX_20260516.html | v12.3 | 87.8 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca 55.6kb |
 | FN | DD_FN_20260505.html | v12.2 | 73.2 | pending | – | under-80kb (73.2kb) |
 | FORM | DD_FORM_20260427.html | v12.0 | 70.9 | pending | – | under-80kb (70.9kb) |
 | FTNT | DD_FTNT_20260427.html | v12.0 | 65.8 | pending | – | under-80kb (65.8kb) |
@@ -90,25 +90,25 @@ Schema breakdown (latest DD per ticker):
 | ISRG | DD_ISRG_20260418.html | v12.0 | 62.2 | pending | – | under-80kb (62.2kb) |
 | JBL | DD_JBL_20260418.html | v12.0 | 53.7 | pending | – | under-80kb (53.7kb) |
 | KEYS | DD_KEYS_20260418.html | v12.0 | 59.9 | pending | – | under-80kb (59.9kb) |
-| KLAC | DD_KLAC_20260516.html | v12.3 | 82.3 | dca_only | – | – |
+| KLAC | DD_KLAC_20260516.html | v12.3 | 82.3 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 4 anchor fixes (QC-29/0/4 stress→v12.3 2/2; MA60/200/104w→短期/中期) + v12.3 reconciliation block in DCA_KLAC_20260507 (under-floor remediation 49.8→51.7 KB) |
 | LITE | DD_LITE_20260506.html | v12.2 | 82.6 | pending | – | – |
 | LLY | DD_LLY_20260504.html | v12.2 | 95.9 | pending | – | – |
 | LRCX | DD_LRCX_20260425.html | v12.0 | 67.7 | pending | – | under-80kb (67.7kb) |
-| LULU | DD_LULU_20260516.html | v12.3 | 78.2 | dca_only | – | under-80kb (78.2kb) |
-| MA | DD_MA_20260516.html | v12.3 | 85.3 | dca_only | – | – |
+| LULU | DD_LULU_20260516.html | v12.3 | 78.2 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
+| MA | DD_MA_20260516.html | v12.3 | 85.3 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca 51.0kb |
 | MAR | DD_MAR_20260414.html | pre-v12 | 70.4 | pending | – | pre-v12-heavy; under-80kb (70.4kb) |
 | MELI | DD_MELI_20260513.html | v12.2 | 86.4 | pending | – | – |
 | META | DD_META_20260516.html | v12.3 | 75.6 | skip | – | in flight (other window) |
 | MOD | DD_MOD_20260427.html | v12.0 | 65.8 | pending | – | under-80kb (65.8kb) |
 | MPWR | DD_MPWR_20260418.html | v12.0 | 67.5 | pending | – | under-80kb (67.5kb) |
 | MRVL | DD_MRVL_20260418.html | v12.0 | 73.8 | pending | – | under-80kb (73.8kb) |
-| MSFT | DD_MSFT_20260515.html | v12.3 | 86.7 | dca_only | – | – |
+| MSFT | DD_MSFT_20260515.html | v12.3 | 86.7 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_MSFT_20260507 (QC-29 3/3 stress→v12.3 stress 2/2) + v12.3 reconciliation block (under-floor remediation 47.2→50.0 KB) |
 | MU | DD_MU_20260418.html | v12.0 | 71.3 | pending | – | under-80kb (71.3kb) |
-| NET | DD_NET_20260515.html | v12.3 | 77.5 | dca_only | – | under-80kb (77.5kb) |
-| NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | dca_only | – | – |
-| NKE | DD_NKE_20260516.html | v12.3 | 80.7 | dca_only | – | – |
+| NET | DD_NET_20260515.html | v12.3 | 77.5 | in_progress | win-20260516-1400-1792 | under-80kb (77.5kb) |
+| NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_NFLX_20260511 (QC-29 0/4 stress→v12.3 stress 2/2) |
+| NKE | DD_NKE_20260516.html | v12.3 | 80.7 | in_progress | win-20260516-1358-e570 | – |
 | NOW | DD_NOW_20260427.html | v12.0 | 80.4 | pending | – | – |
-| NU | DD_NU_20260515.html | v12.3 | 78.0 | dca_only | – | under-80kb (78.0kb) |
+| NU | DD_NU_20260515.html | v12.3 | 78.0 | in_progress | win-20260516-1400-1792 | under-80kb (78.0kb) |
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
 | NVMI | DD_NVMI_20260515.html | v12.2 | 73.8 | pending | – | under-80kb (73.8kb) |
 | NXPI | DD_NXPI_20260504.html | v12.2 | 103.4 | pending | – | – |
@@ -139,7 +139,7 @@ Schema breakdown (latest DD per ticker):
 | TSM | DD_TSM_20260323.html | pre-v12 | 48.4 | pending | – | pre-v12-heavy; under-80kb (48.4kb) |
 | TXN | DD_TXN_20260504.html | v12.2 | 78.7 | pending | – | under-80kb (78.7kb) |
 | UBER | DD_UBER_20260418.html | v12.0 | 63.1 | pending | – | under-80kb (63.1kb) |
-| V | DD_V_20260516.html | v12.3 | 98.5 | dca_only | – | – |
-| VIK | DD_VIK_20260515.html | v12.3 | 73.8 | dca_only | – | under-80kb (73.8kb) |
+| V | DD_V_20260516.html | v12.3 | 98.5 | in_progress | win-20260516-1358-e570 | – |
+| VIK | DD_VIK_20260515.html | v12.3 | 73.8 | in_progress | win-20260516-1358-e570 | under-80kb (73.8kb) |
 | VRT | DD_VRT_20260425.html | v12.0 | 96.7 | pending | – | – |
 | WMT | DD_WMT_20260427.html | v12.1 | 56.2 | pending | – | under-80kb (56.2kb) |

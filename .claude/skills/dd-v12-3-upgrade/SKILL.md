@@ -1,7 +1,7 @@
 ---
 name: dd-v12-3-upgrade
 description: 對既有 DD 報告做 v12.3 升級的 batch worker。每呼叫一次處理 N 檔（預設 3），用 docs/dd/_v12_3_manifest.md claim 協調多 window 並行。對 legacy DD（v12.0/12.1/12.2/pre-v12）做 body patch + dd-meta bump；對已是 v12.3 的 DD 只做 DCA cascade audit。所有 patch 須通過 anti-laziness gate（DD ≥ 80KB / DCA ≥ 50KB / 數字必引 source / 章節 checklist 齊備）。每 5 batch 觸發 cold-review sub-agent 抽查品質。觸發語：「跑 v12.3 升級 N 檔」「v12.3 batch」「升級 DD 到 v12.3」「dd-v12-3-upgrade」「/dd-v12-3-upgrade [N]」。
-version: v1.0
+version: v1.1
 ---
 
 # DD v12.3 Batch Upgrade Worker
@@ -11,6 +11,8 @@ version: v1.0
 把既有 DD（`docs/dd/DD_*.html`）batch upgrade 到 v12.3 schema + body。每個 window 一次處理 N 個 ticker（預設 3），透過共享 manifest 協調多 window 並行。**不寫新 DD**（那是 stock-analyst skill）；**不重跑 DCA**（那是 deep-conviction-analyst skill）；本 skill 只做 patch 與 cascade audit。
 
 **核心原則**：寧可 data-gap 標記也不准瞎填假數字。寧可 batch 退回也不准灌水通過 80KB gate。
+
+**核心 stance：跑完結論可以不一樣** — v12.3 加進來的 §5.F single-thing / §9 二維 moat / §11 三段議價權 / §12 SBC 真實稀釋 是新的證據維度。**不強求 post-v12.3 verdict 與升級前 verdict 相同**，只要求**內部一致**（§1 ↔ §2 ↔ §13 結論三處 verdict 字面同步）。verdict 變了務必留痕（§1 變更紀錄句 + manifest notes + commit log），重大降級（A+/A → C/X）強制觸發 cold review。
 
 —
 
@@ -225,9 +227,18 @@ git pull --rebase
 
 **C. 章節完整度 checklist**：上面 §5.F / §8.H / §9 兩軸 / §11 三段 / §12 SBC + M&A / §13.4 的「必含 N 元素」全部勾完才算過。漏一條就 reject。
 
-**D. 推論邏輯嚴謹**：
+**D. 推論邏輯嚴謹（內部一致，不綁定舊結論）**：
 - §1 結論 verdict（A+/A/B/C/X）必須能由 §2 + §13 + §9 + §10 + §13.4 五個輸入推導出來。在 §1 末段加 1 句：「signal 推導：[§2 訊號] × [§13 估值燈] × [§9 護城河] × [§10 財務] × [§13.4 peer 相對] = [verdict]」
 - §13 結論段必須與 §1 verdict 一致；不一致 → 哪個對哪個錯要明確
+- **跑完結論可以不一樣**：post-v12.3 verdict 不需要與升級前 verdict 相同。v12.3 新增的 §5.F single-thing / §9 兩軸 moat / §11 三段議價權 / §12 SBC 真實稀釋 可能合理地推出不同的 verdict（例：v12.0 寫 A，v12.3 §9 二維拆解後 execution 6 / pricing 8 → 整合 B；或 §12 SBC ex-EPS gap 揭露 8pp → A 降 C）
+- 只要求**內部一致**（§1 ↔ §2 ↔ §13 結論三處同 verdict 字面），**不要求對齊舊 verdict**
+
+**D.1 Verdict shift 文件化（若 verdict 變了，務必留痕）**：
+- 在 §1 末段加 1 句：「verdict 變更紀錄：v12.X → v12.3 由 [A] 改為 [B]，主因：[§9 二維 / §12 SBC / §13.4 peer tier 換 / ...]」（沒變則寫「verdict 不變 [X]」）
+- dd-meta JSON 的 `signal` 欄位寫 v12.3 後的新 verdict（不留舊值）
+- manifest `notes` 標 `verdict-shift A→B` 或 `verdict-same`
+- commit message 必須包一行：「verdict shifts: T1 A→B, T2 same, T3 X→C」（PM 從 git log 一眼掃到 thesis 變動）
+- 若 verdict 從 A+/A 掉到 C/X（重大降級）→ manifest `notes` 額外標 `⚠️-major-downgrade`，**cold review 必須對該 ticker 觸發**（不等 5 batch 週期，見 §7.3）
 
 **E. data-gap 處理**：若任何章節「公開資料真的不夠」無法滿 checklist → **不要瞎填湊數**。在該章節結尾加：
 ```html
@@ -268,7 +279,15 @@ ls docs/dca/DCA_<TICKER>_*.html 2>/dev/null
 - (b) IRR 重算（用 `update_dd_index.py` 內 `compute_dca_irr`）
 - (c) 同類 DD §5.F 對照
 
-### 6.4 舊版 DCA 標 TODO
+### 6.4 DD verdict 變更 → DCA TODO 強制
+
+若該 ticker 升級後 verdict 變了（manifest `notes` 含 `verdict-shift`），在每個對應 DCA 檔尾加：
+```html
+<!-- TODO: 對應 DD 升級到 v12.3 後 verdict 由 X 改為 Y（[主因簡述，例：§9 二維 execution 6 / pricing 8 → 整合 B]）；本 DCA 的 IRR / 部位建議 / opportunity cost 基於舊 verdict，建議擇期重跑 /<ticker> dca -->
+```
+**不要在這次 batch 順手重跑 DCA** — 只標 TODO，留給用戶在下個 PM 週期決定是否重跑。
+
+### 6.6 舊版 DCA 標 TODO
 
 若 DCA 是 v1.2 以前的舊版本（無 `dca-meta` 或 verdict 欄位殘缺）→ 在檔尾加：
 ```html
@@ -276,7 +295,7 @@ ls docs/dca/DCA_<TICKER>_*.html 2>/dev/null
 ```
 **不要在這次 batch 順手重跑 DCA**（會把 batch 撐爆）。
 
-### 6.5 DCA cascade 完整度 checklist
+### 6.7 DCA cascade 完整度 checklist
 1. 該 ticker 所有 DCA 檔都已掃過（用 `grep -c '<TICKER>' docs/dca/DCA_<TICKER>_*.html` 確認 hit 數）
 2. 每處 anchor 替換後語意通順（自檢：把改完段落朗讀一遍）
 3. file size ≥ 50 KB
@@ -307,9 +326,11 @@ grep -E '5\.F|8\.H|moat_execution|議價權.*上游|SBC' docs/dd/DD_<T>_*.html |
 
 對 patch 的每個 ticker，從 §8.H / §11 / §12 / §13.4 各抽 1 個寫的數字，**目視確認**該數字旁有 source citation（`(10-K FY2024)` / `(2026Q1 earnings call)` / `(Reuters URL)` 等）。沒 citation → patch 退回，補 source 或改寫成有依據的敘述。
 
-### 7.3 第三層：cold review（每 5 batch 觸發 1 次）
+### 7.3 第三層：cold review
 
-維護 batch counter：讀 `docs/dd/_v12_3_manifest.md` 中 `done` 數量。每完成 5 個 batch（即 done 數 ÷ 3 = 5 整數倍），spawn cold-review sub-agent：
+**觸發條件**（任一即觸發）：
+- 每 5 batch 週期（讀 `docs/dd/_v12_3_manifest.md` 中 `done` 數，每除 3 為 5 整數倍）
+- **major-downgrade 強制**：該 batch 任一 ticker `notes` 標 `⚠️-major-downgrade`（verdict 從 A+/A 掉到 C/X）→ 不等 5 batch 週期，立即對該 ticker 觸發
 
 ```
 Agent({
@@ -317,12 +338,13 @@ Agent({
   subagent_type: "general-purpose",
   model: "sonnet",
   prompt: "你是 v12.3 patch 品質的冷讀 reviewer（與 patch agent 不同 model）。
-讀 docs/dd/<latest patched>.html 完整。檢核 5 條：
+讀 docs/dd/<latest patched>.html 完整。檢核 6 條：
 (1) §8.H 客戶 top-1/5/10 數字是否有 inline source citation（filings / earnings call / 媒體 URL）
 (2) §9 兩軸 score 的 evidence 是否真有具體依據還是空話（檢查是否引 §9 narrative 段落或外部資料）
 (3) §11 三段議價權每段是否真的「對象明確 + 槓桿 + 近期案例」三元素齊備，且每段 ≥ 60 字獨立段落
 (4) §12 SBC % of revenue + EPS ex-SBC + M&A 5Y 表是否真實財報數字（隨機抽 1 數字 cross-verify）
-(5) §1 verdict 推導鏈是否與 §2/§13/§9/§10/§13.4 一致
+(5) §1 verdict 推導鏈是否**內部一致**（§1 / §2 / §13 結論三處 verdict 字面同步）；**不檢查**是否與舊版 verdict 相同 — 新分析可能合理推出不同結論
+(6) 若 §1 verdict 變更紀錄存在（『verdict 變更紀錄：v12.X → v12.3 由 X 改為 Y，主因：...』），理由是否與 §9 / §12 / §13.4 新增或重做的章節呼應（不是隨意改）
 
 輸出格式：PASS / WARN / FAIL + 每條的具體問題（含行號）。
 存報告到 docs/dd/_critic_v12_3_<ticker>_<YYYYMMDD>.md。"
@@ -367,9 +389,10 @@ git add docs/dd/_critic_v12_3_*.md 2>/dev/null
 git commit -m "$(cat <<'EOF'
 DD v12.3 upgrade batch: <T1> + <T2> + <T3> (+ DCA cascade)
 
-- <T1>: <關鍵改動，例：§9 二維 8/9 + §8.H top-1 87% (10-K)>
-- <T2>: <關鍵改動>
-- <T3>: <關鍵改動>
+verdict shifts: <T1> A→B, <T2> same, <T3> X→C
+- <T1>: <main changes — e.g. §9 二維 8/6 → final B; §8.H top-1 87% (10-K)>
+- <T2>: <main changes — verdict 不變 A>
+- <T3>: ⚠️ major downgrade — <main driver, e.g. §12 SBC ex-EPS gap 12pp → §13 conclusion C>
 
 Window: <window-id>
 
@@ -379,6 +402,11 @@ EOF
 
 git push
 ```
+
+**Commit message 規範**：
+- 第 2 段必含 `verdict shifts: ...` 行（PM 從 git log 一眼掃到 thesis 變動）
+- per-ticker bullet 寫 1-2 個關鍵新發現（§9 二維分數、§8.H 客戶引述、§12 SBC gap、verdict 變更主因）
+- major-downgrade ticker 在 bullet 開頭加 ⚠️
 
 **禁止 stage 的東西**（即使顯示 untracked）：
 - `docs/id/ID_*.html`（industry-analyst skill 的 in-progress）
@@ -471,6 +499,10 @@ grep -c "v12.3" docs/research/index.html
 - [ ] §5.F / §8.H / §9 兩軸 / §11 三段 / §12 SBC + M&A / §13.4 peer tier checklist 全勾
 - [ ] 所有數字有 inline source（隨機抽 4 個目視確認）
 - [ ] §1 verdict 推導鏈句子寫上
+- [ ] §1 末段「verdict 變更紀錄」句子寫上（變 → 寫主因；不變 → 寫「verdict 不變 [X]」）
+- [ ] 若 verdict 變了：dd-meta `signal` 改新值、manifest notes 標 `verdict-shift A→B`、對應 DCA 加 TODO comment
+- [ ] 若 major-downgrade（A+/A → C/X）：manifest notes 標 `⚠️-major-downgrade`，cold review 已對該 ticker 觸發（不等 5 batch 週期）
+- [ ] commit message 含 `verdict shifts: ...` 行
 - [ ] manifest 3 ticker → done
 - [ ] `update_dd_index.py` 跑過
 - [ ] commit + push 成功（沒 stage 任何 ID HTML 或 cache）
