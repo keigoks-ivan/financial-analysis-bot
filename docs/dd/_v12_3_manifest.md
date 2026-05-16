@@ -90,7 +90,7 @@ Schema breakdown (latest DD per ticker):
 | ISRG | DD_ISRG_20260418.html | v12.0 | 62.2 | pending | – | under-80kb (62.2kb) |
 | JBL | DD_JBL_20260418.html | v12.0 | 53.7 | pending | – | under-80kb (53.7kb) |
 | KEYS | DD_KEYS_20260418.html | v12.0 | 59.9 | pending | – | under-80kb (59.9kb) |
-| KLAC | DD_KLAC_20260516.html | v12.3 | 82.3 | in_progress | win-20260516-1349-e2c6 | – |
+| KLAC | DD_KLAC_20260516.html | v12.3 | 82.3 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 4 anchor fixes (QC-29/0/4 stress→v12.3 2/2; MA60/200/104w→短期/中期) + v12.3 reconciliation block in DCA_KLAC_20260507 (under-floor remediation 49.8→51.7 KB) |
 | LITE | DD_LITE_20260506.html | v12.2 | 82.6 | pending | – | – |
 | LLY | DD_LLY_20260504.html | v12.2 | 95.9 | pending | – | – |
 | LRCX | DD_LRCX_20260425.html | v12.0 | 67.7 | pending | – | under-80kb (67.7kb) |
@@ -102,11 +102,11 @@ Schema breakdown (latest DD per ticker):
 | MOD | DD_MOD_20260427.html | v12.0 | 65.8 | pending | – | under-80kb (65.8kb) |
 | MPWR | DD_MPWR_20260418.html | v12.0 | 67.5 | pending | – | under-80kb (67.5kb) |
 | MRVL | DD_MRVL_20260418.html | v12.0 | 73.8 | pending | – | under-80kb (73.8kb) |
-| MSFT | DD_MSFT_20260515.html | v12.3 | 86.7 | in_progress | win-20260516-1349-e2c6 | – |
+| MSFT | DD_MSFT_20260515.html | v12.3 | 86.7 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_MSFT_20260507 (QC-29 3/3 stress→v12.3 stress 2/2) + v12.3 reconciliation block (under-floor remediation 47.2→50.0 KB) |
 | MU | DD_MU_20260418.html | v12.0 | 71.3 | pending | – | under-80kb (71.3kb) |
 | NET | DD_NET_20260515.html | v12.3 | 77.5 | dca_only | – | under-80kb (77.5kb) |
-| NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | in_progress | win-20260516-1349-e2c6 | – |
-| NKE | DD_NKE_20260516.html | v12.3 | 80.7 | dca_only | – | – |
+| NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_NFLX_20260511 (QC-29 0/4 stress→v12.3 stress 2/2) |
+| NKE | DD_NKE_20260516.html | v12.3 | 80.7 | in_progress | win-20260516-1358-e570 | – |
 | NOW | DD_NOW_20260427.html | v12.0 | 80.4 | pending | – | – |
 | NU | DD_NU_20260515.html | v12.3 | 78.0 | dca_only | – | under-80kb (78.0kb) |
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
@@ -139,7 +139,7 @@ Schema breakdown (latest DD per ticker):
 | TSM | DD_TSM_20260323.html | pre-v12 | 48.4 | pending | – | pre-v12-heavy; under-80kb (48.4kb) |
 | TXN | DD_TXN_20260504.html | v12.2 | 78.7 | pending | – | under-80kb (78.7kb) |
 | UBER | DD_UBER_20260418.html | v12.0 | 63.1 | pending | – | under-80kb (63.1kb) |
-| V | DD_V_20260516.html | v12.3 | 98.5 | dca_only | – | – |
-| VIK | DD_VIK_20260515.html | v12.3 | 73.8 | dca_only | – | under-80kb (73.8kb) |
+| V | DD_V_20260516.html | v12.3 | 98.5 | in_progress | win-20260516-1358-e570 | – |
+| VIK | DD_VIK_20260515.html | v12.3 | 73.8 | in_progress | win-20260516-1358-e570 | under-80kb (73.8kb) |
 | VRT | DD_VRT_20260425.html | v12.0 | 96.7 | pending | – | – |
 | WMT | DD_WMT_20260427.html | v12.1 | 56.2 | pending | – | under-80kb (56.2kb) |
