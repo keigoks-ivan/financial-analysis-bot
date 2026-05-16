@@ -40,12 +40,12 @@ Schema breakdown (latest DD per ticker):
 | 3661TW | DD_3661TW_20260514.html | v12.2 | 84.3 | pending | – | – |
 | 6146T | DD_6146T_20260420.html | v12.0 | 23.5 | pending | – | under-80kb (23.5kb) |
 | 6857T | DD_6857T_20260420.html | v12.0 | 24.5 | pending | – | under-80kb (24.5kb) |
-| AAPL | DD_AAPL_20260504.html | v12.2 | 81.4 | in_progress | win-20260516-1403-6a45 | – |
+| AAPL | DD_AAPL_20260504.html | v12.2 | 81.4 | pending | – | released by win-20260516-1403-6a45 (batch focus on ALAB) |
 | ADI | DD_ADI_20260427.html | v12.1 | 62.6 | pending | – | under-80kb (62.6kb) |
 | AENA | DD_AENA_20260428.html | v12.1 | 80.1 | pending | – | – |
 | ALAB | DD_ALAB_20260506.html | v12.2 | 93.7 | in_progress | win-20260516-1403-6a45 | – |
 | AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 1 anchor fix in DCA_AMAT_20260511 (§13.5 → v12.0 source attribution + v12.3 §13.4 peer cross-ref) |
-| AMD | DD_AMD_20260506.html | v12.2 | 82.9 | in_progress | win-20260516-1403-6a45 | – |
+| AMD | DD_AMD_20260506.html | v12.2 | 82.9 | pending | – | released by win-20260516-1403-6a45 (batch focus on ALAB) |
 | AMZN | DD_AMZN_20260430.html | v12.1 | 97.6 | pending | – | – |
 | ANET | DD_ANET_20260506.html | v12.2 | 79.1 | pending | – | under-80kb (79.1kb) |
 | APH | DD_APH_20260504.html | v12.2 | 91.9 | pending | – | – |
@@ -112,7 +112,7 @@ Schema breakdown (latest DD per ticker):
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
 | NVMI | DD_NVMI_20260515.html | v12.2 | 73.8 | pending | – | under-80kb (73.8kb) |
 | NXPI | DD_NXPI_20260504.html | v12.2 | 103.4 | pending | – | – |
-| ON | DD_ON_20260505.html | v12.2 | 90.6 | pending | – | – |
+| ON | DD_ON_20260505.html | v12.2 | 90.6 | in_progress | win-20260516-1414-59b1 | legacy_full v12.2→v12.3 |
 | ONTO | DD_ONTO_20260506.html | v12.2 | 99.4 | pending | – | – |
 | ORCL | DD_ORCL_20260418.html | v12.0 | 60.3 | pending | – | under-80kb (60.3kb) |
 | PANW | DD_PANW_20260427.html | v12.0 | 70.4 | pending | – | under-80kb (70.4kb) |
