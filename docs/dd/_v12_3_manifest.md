@@ -104,11 +104,11 @@ Schema breakdown (latest DD per ticker):
 | MRVL | DD_MRVL_20260418.html | v12.0 | 73.8 | pending | – | under-80kb (73.8kb) |
 | MSFT | DD_MSFT_20260515.html | v12.3 | 86.7 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_MSFT_20260507 (QC-29 3/3 stress→v12.3 stress 2/2) + v12.3 reconciliation block (under-floor remediation 47.2→50.0 KB) |
 | MU | DD_MU_20260418.html | v12.0 | 71.3 | pending | – | under-80kb (71.3kb) |
-| NET | DD_NET_20260515.html | v12.3 | 77.5 | in_progress | win-20260516-1400-1792 | under-80kb (77.5kb) |
+| NET | DD_NET_20260515.html | v12.3 | 77.5 | done | win-20260516-1400-1792 | dca-only: 2 files audited, 0 broken anchor; DCA_NET_20260508 (49.1KB) pre-existing under-floor, unedited |
 | NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_NFLX_20260511 (QC-29 0/4 stress→v12.3 stress 2/2) |
 | NKE | DD_NKE_20260516.html | v12.3 | 80.7 | done | win-20260516-1358-e570 | dca-cascade clean (2 DCAs, 0 broken anchor) |
 | NOW | DD_NOW_20260427.html | v12.0 | 80.4 | pending | – | – |
-| NU | DD_NU_20260515.html | v12.3 | 78.0 | in_progress | win-20260516-1400-1792 | under-80kb (78.0kb) |
+| NU | DD_NU_20260515.html | v12.3 | 78.0 | done | win-20260516-1400-1792 | dca-only: 1 file audited, 1 anchor fix in DCA_NU_20260515 (QC-29 label removed; substantive 2/4 stress data preserved as it matches DD dd-meta) |
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
 | NVMI | DD_NVMI_20260515.html | v12.2 | 73.8 | pending | – | under-80kb (73.8kb) |
 | NXPI | DD_NXPI_20260504.html | v12.2 | 103.4 | pending | – | – |
