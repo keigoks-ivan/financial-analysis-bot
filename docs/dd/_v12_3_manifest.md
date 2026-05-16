@@ -86,7 +86,7 @@ Schema breakdown (latest DD per ticker):
 | GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | pending | – | released by win-20260516-1441-1e69 (sub-agent stream timeout before patch applied; file unchanged) |
 | GRAB | DD_GRAB_20260505.html | v12.2 | 65.7 | pending | – | under-80kb (65.7kb) |
 | HWM | DD_HWM_20260418.html | v12.0 | 76.6 | pending | – | under-80kb (76.6kb) |
-| INTC | DD_INTC_20260427.html | v12.0 | 82.4 | pending | – | – |
+| INTC | DD_INTC_20260427.html | v12.0 | 82.4 | in_progress | win-20260516-1620-67d3 | legacy_full v12.0→v12.3 |
 | ISRG | DD_ISRG_20260418.html | v12.0 | 62.2 | pending | – | under-80kb (62.2kb) |
 | JBL | DD_JBL_20260418.html | v12.0 | 53.7 | pending | – | under-80kb (53.7kb) |
 | KEYS | DD_KEYS_20260418.html | v12.0 | 59.9 | pending | – | under-80kb (59.9kb) |
@@ -107,7 +107,7 @@ Schema breakdown (latest DD per ticker):
 | NET | DD_NET_20260515.html | v12.3 | 77.5 | done | win-20260516-1400-1792 | dca-only: 2 files audited, 0 broken anchor; DCA_NET_20260508 (49.1KB) pre-existing under-floor, unedited |
 | NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_NFLX_20260511 (QC-29 0/4 stress→v12.3 stress 2/2) |
 | NKE | DD_NKE_20260516.html | v12.3 | 80.7 | done | win-20260516-1358-e570 | dca-cascade clean (2 DCAs, 0 broken anchor) |
-| NOW | DD_NOW_20260427.html | v12.0 | 80.4 | pending | – | – |
+| NOW | DD_NOW_20260427.html | v12.0 | 80.4 | in_progress | win-20260516-1620-67d3 | legacy_full v12.0→v12.3 |
 | NU | DD_NU_20260515.html | v12.3 | 78.0 | done | win-20260516-1400-1792 | dca-only: 1 file audited, 1 anchor fix in DCA_NU_20260515 (QC-29 label removed; substantive 2/4 stress data preserved as it matches DD dd-meta) |
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
 | NVMI | DD_NVMI_20260515.html | v12.2 | 73.8 | pending | – | under-80kb (73.8kb) |
@@ -124,7 +124,7 @@ Schema breakdown (latest DD per ticker):
 | RMS | DD_RMS_20260418.html | v12.0 | 99.2 | in_progress | win-20260516-1558-ceca | – |
 | ROK | DD_ROK_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
 | ROP | DD_ROP_20260330.html | pre-v12 | 91.4 | pending | – | pre-v12-heavy |
-| SBUX | DD_SBUX_20260429.html | v12.1 | 90.2 | pending | – | – |
+| SBUX | DD_SBUX_20260429.html | v12.1 | 90.2 | in_progress | win-20260516-1620-67d3 | legacy_full v12.1→v12.3 |
 | SE | DD_SE_20260513.html | v12.2 | 87.2 | in_progress | win-20260516-1610-9762 | – |
 | SIMO | DD_SIMO_20260427.html | v12.1 | 69.2 | pending | – | under-80kb (69.2kb) |
 | SNDK | DD_SNDK_20260504.html | v12.3 | 107.4 | done | win-20260516-1555-c02c | legacy_full v12.2→v12.3 (sub-agent): §2 9→7 子節 + §7 砍低估值/便宜理由 + §13 砍 13.0/13.3/13.5 + §5.F NAND ASP ≥ +30% Q3 FY27 + BiCS10 量產 hyperscaler 認證 binary + §5.B sourced floor + §8.B 5Y M&A near-zero (post-spin Feb 2025, WDC era separate) + Kioxia 合併概率 25% + §8.H top-1 < 10% (10-K) + top-10 40% Q1 FY26 vs 53% YoY (10-Q 2025-11-07) diversifying + dual-track hyperscaler + cyclical risk + §9 二維 execution 6 / pricing 2 (NAND commodity, pricing power LOW) → composite ~5 + QC-23 (🟡 Micron/Samsung / 🔴 China YMTC / ⛔ MRAM tech transition) + §10 FCF lumpiness FY23 trough -$932M peak-trough $11B (商品 cycle natural lumpy not red flag) + ex-buyback EPS CAGR gap <5pp + §12 SBC GAAP $23.03 vs Non-GAAP $23.41 gap 1.6% < 5pp + §13.4 NAND pure-play tier (Kioxia ideal peer, exclude WDC/NTAP cross-tier); verdict 不變 B; stress 0/4 → 2/2 框架更新; DCA_SNDK_20260511 line 430 已被 win-1447-0ce8 註記 §13.5 reference TODO |
