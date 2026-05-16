@@ -31,12 +31,12 @@ Schema breakdown (latest DD per ticker):
 | ticker | latest_dd | schema | size_kb | status | claimed_by | notes |
 |---|---|---|---|---|---|---|
 | 2308 | DD_2308_20260325.html | pre-v12 | 53.4 | pending | – | pre-v12-heavy; under-80kb (53.4kb) |
-| 2308TW | DD_2308TW_20260514.html | v12.2 | 84.0 | pending | – | – |
+| 2308TW | DD_2308TW_20260514.html | v12.2 | 84.0 | in_progress | win-20260516-1753-881c | – |
 | 2330 | DD_2330_20260409.html | pre-v12 | 53.0 | pending | – | pre-v12-heavy; under-80kb (53.0kb) |
 | 2330TW | DD_2330TW_20260514.html | v12.3 | 82.4 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 0 broken anchor; DCA_2330TW_20260506 (49.8KB) pre-existing under-floor, unedited |
 | 2383TW | DD_2383TW_20260418.html | v12.0 | 73.2 | pending | – | under-80kb (73.2kb) |
 | 2454 | DD_2454_20260504.html | v12.2 | 59.8 | pending | – | under-80kb (59.8kb) |
-| 3017 | DD_3017_20260504.html | v12.2 | 80.5 | pending | – | released by win-20260516-1622-d060 (sub-agent rate-limited before patch started) |
+| 3017 | DD_3017_20260504.html | v12.2 | 80.5 | in_progress | win-20260516-1753-881c | re-claimed after release |
 | 3661TW | DD_3661TW_20260514.html | v12.2 | 84.3 | pending | – | – |
 | 6146T | DD_6146T_20260420.html | v12.0 | 23.5 | pending | – | under-80kb (23.5kb) |
 | 6857T | DD_6857T_20260420.html | v12.0 | 24.5 | pending | – | under-80kb (24.5kb) |
@@ -83,7 +83,7 @@ Schema breakdown (latest DD per ticker):
 | GEV | DD_GEV_20260504.html | v12.2 | 71.8 | pending | – | under-80kb (71.8kb) |
 | GFS | DD_GFS_20260427.html | v12.1 | 75.7 | pending | – | under-80kb (75.7kb); released by win-20260516-1647-aad5 (sub-agent hit msg rate-limit) |
 | GLW | DD_GLW_20260429.html | v12.1 | 70.5 | pending | – | under-80kb (70.5kb) |
-| GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | pending | – | released twice (1441 sub-agent stream timeout; 1622 sub-agent rate-limited before patch started) |
+| GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | in_progress | win-20260516-1753-881c | re-claimed after 2x release |
 | GRAB | DD_GRAB_20260505.html | v12.2 | 65.7 | pending | – | under-80kb (65.7kb) |
 | HWM | DD_HWM_20260418.html | v12.0 | 76.6 | pending | – | under-80kb (76.6kb) |
 | INTC | DD_INTC_20260427.html | v12.3 | 103.0 | done | win-20260516-1620-67d3 | legacy_full v12.0→v12.3 (sub-agent): §2 9→7 (A→B 併入) + §2.E QC-29 4 情境砍 stress 1/4→0/2 + §7 砍 4Q + §13 砍 13.0/13.3/13.5 + §5.F 18A external customer ≥ 5K wafers/mo by Q4 2026 OR FY27 Foundry external rev ≥ $5B binary + §5.B sourced floor 2Y/5Y/10Y + §5.C ⚡🔥🐢 + §8.B 5Y M&A 8 deals (Altera divested $4.46B Silver Lake / Mobileye 2017 spinoff / Habana $2B / Tower abandoned ❌ / Granulate 2022 / NetSpeed 2018 / Moovit 2020 / NAND 2020 sold) + §8.H Dell 19%/Lenovo 11%/HP 10% (10-K) + dual-track in-house ARM risk (Graviton/Cobalt/Axion/MTIA) + §9 二維 execution 5 / pricing 4 (both ↓) + QC-23 (🟡 AMD/ARM / 🔴 NVDA AI 取代 + hyperscaler in-house / ⛔ 18A 失敗 → foundry rebuild 失敗) + §10 peer comp (AMD/TSMC/NVDA/QCOM) + ex-buyback EPS CAGR + FCF lumpiness severely lumpy (5Y rolling -$2B variance 5.5x) + §11 議價權三段 (上游 ASML EUV / 下游 PC OEM + hyperscaler / 地緣 CHIPS Act $8.5B + China export) + §12 M&A cumulative -$10.5B losses (Altera -$8B / Habana -$1.5B / Granulate -$650M / Tower -$353M) + SBC ex-EPS gap 13-16% ⚠️ + §13.4 IDM+Foundry hybrid "no ideal peer" segment-weighted FPE 18-20x; verdict 不變 C (avoid); DCA cascade 1 file clean (59.8 KB, 0 broken anchor) |
