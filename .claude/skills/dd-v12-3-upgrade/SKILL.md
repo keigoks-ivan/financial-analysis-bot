@@ -1,7 +1,7 @@
 ---
 name: dd-v12-3-upgrade
 description: 對既有 DD 報告做 v12.3 升級的 batch worker。每呼叫一次處理 N 檔（預設 3），用 docs/dd/_v12_3_manifest.md claim 協調多 window 並行。對 legacy DD（v12.0/12.1/12.2/pre-v12）做 body patch + dd-meta bump；對已是 v12.3 的 DD 只做 DCA cascade audit。所有 patch 須通過 anti-laziness gate（DD ≥ 80KB / DCA ≥ 50KB / 數字必引 source / 章節 checklist 齊備）。每 5 batch 觸發 cold-review sub-agent 抽查品質。觸發語：「跑 v12.3 升級 N 檔」「v12.3 batch」「升級 DD 到 v12.3」「dd-v12-3-upgrade」「/dd-v12-3-upgrade [N]」。
-version: v1.1
+version: v1.2
 ---
 
 # DD v12.3 Batch Upgrade Worker
@@ -488,6 +488,21 @@ grep -c "v12.3" docs/research/index.html
 | 寫「依 industry 通常」當推估基礎 | 違嚴謹度 D；要寫具體 |
 | 跳過 Step 5 sync 直接 commit | research index 滯後，違 CLAUDE.md |
 
+### 12.1 已觀察到的真實偷工模式（2026-05-16 cold review 抓到，務必避免）
+
+對首批 ~50 ticker 隨機 cold review 4 檔（MRVL/AAPL/AMZN/LLY），**3/4 有「manifest 寫已做但 body 沒做」的偽完成**。這是 anti-laziness gate 沒擋到的盲區，是 patcher 的偷工高發區。**寫 manifest notes 前，務必對 body 做這些 grep 驗證**：
+
+| 偷工模式 | 真實案例 | grep 驗證指令 |
+|---|---|---|
+| **§13.4 peer table 是空殼** `<table>` 內無 `<tr>`，manifest 卻寫「點名 3-5 家 peer」 | AAPL §13.4：manifest 寫 mega-cap platform tier (MSFT/GOOGL/META/AMZN)，DD body 的 `<table>` 整個是空（L888-889） | `awk '/§13\.4/,/<\/table>/' docs/dd/DD_<T>_*.html \| grep -c "<tr>"` 應 ≥ 4 |
+| **§11 三段用 `<li>` bullet** 違 v12.3 ≥ 60 字獨立段落硬規格 | AMZN §11：用 `<li>` 三條 30-40 字 bullet，違規 | `awk '/§11.*議價權/,/<\/section>/' docs/dd/DD_<T>_*.html \| grep -E "<p>[^<]{60,}.*議價\|<p>[^<]{60,}.*上游"` 應有 3 段獨立 `<p>` |
+| **§8.H 整節缺失** dd-meta 標完成但 body 沒寫 top-1/5/10 子節 | LLY §8.H：dd-meta 標 3 wholesaler，body 整個 `<h3>客戶結構深度</h3>` 子節缺失 | `grep -c "top-1\\|top-5\\|top-10\\|客戶結構深度" docs/dd/DD_<T>_*.html` 應 ≥ 3 |
+| **§9 manifest 護城河等級 vs dd-meta `moat` 不一致** | AMZN：manifest 寫「composite 9 → S 級」但 dd-meta JSON `"moat": "A"` | `grep -E '"moat":\s*"[SABCX]"' docs/dd/DD_<T>_*.html` vs §9 body 結論段比對 |
+| **SBC % 三處數字不一致**（§10 / §12 / 計算值對不上） | AAPL：§10=2.6% / §12=2.88% / 實算=3.09%（$12.863B/$416.16B） | 同一數字若在 ≥ 2 處出現，必須一致；改完用 `grep "SBC" docs/dd/DD_<T>_*.html \| grep -oE "[0-9]+\.[0-9]+%"` 看是否有衝突 |
+| **M&A 金額用初報估算值，沒更新到 closing 後條款** | MRVL Celestial AI 用 CNBC 2026-04-20 初報 $2.5B，未更新到 2026-02 closing 後 $3.25B upfront / 最高 $5.5B | 對所有 5Y M&A 用 WebSearch cross-verify 至少 1 個（最新 / 最大金額那筆），優先看公司 8-K 而非媒體初報 |
+
+**心法**：manifest notes 是「自報」，body 是「事實」。Cold review 比對的就是這兩者的 gap。**寫 notes 前先回 DD body 用 grep 驗證每一條，再下筆寫 notes**。
+
 —
 
 ## 13. 完成檢查清單（每個 batch 結束自檢）
@@ -497,6 +512,12 @@ grep -c "v12.3" docs/research/index.html
 - [ ] `validate_dd_meta.py` 對 3 ticker 都過
 - [ ] dd-meta JSON `schema: v12.3` + `<meta name="dd-schema-version" content="v12.3">`
 - [ ] §5.F / §8.H / §9 兩軸 / §11 三段 / §12 SBC + M&A / §13.4 peer tier checklist 全勾
+- [ ] **§13.4 peer table 真有 ≥ 3 `<tr>` 行**（不是空 `<table>`；參 §12.1 grep 指令）
+- [ ] **§11 三段是獨立 `<p>` 段落 ≥ 60 字**（不是 `<li>` bullet）
+- [ ] **§8.H 真有 top-1 / top-5 / top-10 子節**（不只 dd-meta 標完成）
+- [ ] **manifest 護城河等級 vs dd-meta `moat` 欄位字面一致**
+- [ ] **同一數字（SBC% / 客戶% / 金額）在 DD 多處出現時值一致**
+- [ ] **M&A 5Y 表至少 1 個金額已 cross-verify 公司 8-K / 官方公告**（非媒體初報）
 - [ ] 所有數字有 inline source（隨機抽 4 個目視確認）
 - [ ] §1 verdict 推導鏈句子寫上
 - [ ] §1 末段「verdict 變更紀錄」句子寫上（變 → 寫主因；不變 → 寫「verdict 不變 [X]」）
