@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GFS 深度定見分析｜DCA｜2026-05-16</title>
+<!-- dca-moat-trend: ↑ -->
+<!-- dca-verdict: 觀望 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#fff;--ink:#0F172A;--ink-soft:#334155;--accent:#3B82F6;--accent-dark:#1E3A5F;--line:#E2E8F0;--green-bg:#DCFCE7;--green-ink:#166534;--red-bg:#FEE2E2;--red-ink:#991B1B;--yellow-bg:#FEF9C3;--yellow-ink:#92400E;--blue-bg:#EFF6FF;--blue-ink:#1E40AF;--orange-bg:#FFF7ED;--orange-line:#F97316;--slate-bg:#F1F5F9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans TC','PingFang TC',sans-serif;font-size:14px;line-height:1.7}
+header.dca-header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:10px 24px;font-size:13px;color:var(--ink-soft);display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+header.dca-header .ticker{font-weight:700;color:var(--accent-dark);font-size:16px}
+header.dca-header .badge{background:#EFF6FF;color:#1E40AF;padding:2px 8px;border-radius:999px;font-size:11px}
+.container{max-width:1180px;margin:24px auto;padding:0 24px 60px}
+.status-bar{background:var(--slate-bg);border-left:4px solid var(--accent);border-right:4px solid var(--accent);display:flex;gap:12px;justify-content:center;padding:18px 24px;margin-bottom:22px;border-radius:6px}
+.status-cell{width:148px;text-align:center}
+.status-cell .label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.status-cell .body{font-size:22px;font-weight:700}
+.status-cell .body.amber{color:#92400E}.status-cell .body.green{color:#166534}.status-cell .body.red{color:#991B1B}
+section{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:24px 28px;margin-bottom:22px}
+section h2{margin:0 0 18px;padding:10px 14px 10px 18px;background:var(--accent-dark);color:#fff;border-left:4px solid var(--accent);font-size:18px;font-weight:700}
+section h3{margin:22px 0 12px;font-size:15px;color:var(--accent-dark);border-bottom:1px solid var(--line);padding-bottom:6px}
+section h4{margin:16px 0 8px;font-size:13.5px;color:var(--ink-soft)}
+table{border-collapse:collapse;width:100%;margin:10px 0 16px;font-size:13px}
+th,td{padding:8px 10px;border:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--accent-dark);color:#fff;font-weight:500;font-size:12.5px}
+tr:nth-child(even) td{background:#F1F5F9}
+.thesis-box{background:#EFF6FF;border-left:4px solid var(--accent);text-align:center;padding:32px 28px;margin:18px 0}
+.thesis-box .thesis{font-size:24px;font-weight:700;line-height:1.5;color:var(--accent-dark);margin-bottom:8px}
+.thesis-box .note{font-size:12px;color:#64748B}
+.decision-box{background:#FEF9C3;border-left:4px solid #92400E;padding:18px 22px;margin:14px 0}
+.verdict-chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;background:#92400E;color:#fff;border-left:4px solid #78350F;margin-bottom:8px}
+.verdict-sub{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:16px}
+.contradict-box{background:var(--orange-bg);border-left:4px solid var(--orange-line);padding:14px 18px;margin:14px 0}
+.contradict-box .verdict-table{background:#FED7AA}
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0}
+.premortem-box blockquote{margin:0;padding:8px 12px;background:#fff;border-left:3px solid #DC2626;font-style:italic}
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0}
+.pattern-box blockquote{margin:0;padding:8px 12px;background:#fff;border-left:3px solid #0EA5E9;font-style:italic}
+.maxdd-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:18px 22px;margin:14px 0;display:flex;align-items:center;gap:24px}
+.maxdd-box .num{font-size:32px;font-weight:700;color:#92400E}
+.maxdd-box .bar-wrap{flex:1}
+.maxdd-box .bar{height:14px;border-radius:6px;background:linear-gradient(to right,#DCFCE7 0%,#FEF9C3 50%,#FEE2E2 100%);position:relative;margin-top:8px}
+.memo-box{background:#FAFAF9;border:1px solid #E7E5E4;padding:18px 22px;margin:14px 0;font-family:Georgia,serif}
+.elevator-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;font-style:italic}
+.warning-box{background:#FFF0E6;border-left:4px solid #F97316;padding:12px 16px;margin:14px 0;color:#C2410C}
+.print-btn{position:fixed;right:24px;bottom:24px;background:var(--accent-dark);color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.note{font-size:12px;color:#64748B;margin:8px 0}
+details{margin:8px 0;border:1px solid var(--line);border-radius:4px;padding:8px 14px;background:#fff}
+summary{cursor:pointer;font-weight:600;color:var(--accent-dark)}
+.badge-green{background:var(--green-bg);color:var(--green-ink);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.badge-red{background:var(--red-bg);color:var(--red-ink);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.badge-yellow{background:var(--yellow-bg);color:var(--yellow-ink);padding:2px 8px;border-radius:3px;font-weight:600;font-size:12px}
+.irr-bar{display:flex;height:24px;border-radius:4px;overflow:hidden;margin-top:8px;border:1px solid var(--line)}
+.irr-bar div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600}
+.irr-bar .eps{background:#15803D}.irr-bar .rerate{background:#1E40AF}.irr-bar .div-bb{background:#64748B}
+@media print{header.dca-header,.print-btn{display:none}body{background:#fff}details[open] summary~*{display:block!important}section{break-inside:avoid;border:none;padding:0;margin-bottom:30px}}
+</style>
+</head>
+<body>
+
+<header class="dca-header">
+  <span class="ticker">GFS</span>
+  <span>GlobalFoundries — Deep Conviction Analysis</span>
+  <span>報告日期：2026-05-16</span>
+  <span class="badge">DCA</span>
+</header>
+
+<div class="container">
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="status-cell"><div class="label">DD 訊號燈</div><div class="body amber">B</div></div>
+  <div class="status-cell"><div class="label">Moat 趨勢</div><div class="body green">B ↑</div></div>
+  <div class="status-cell"><div class="label">Runway Post-Y5</div><div class="body green">🟢 寬（silicon photonics + CHIPS）</div></div>
+  <div class="status-cell"><div class="label">Max DD（5Y 路徑）</div><div class="body red">−55%</div></div>
+  <div class="status-cell"><div class="label">DCA 裁決</div><div class="body amber">觀望</div></div>
+</div>
+
+<section>
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+<div class="thesis">GlobalFoundries 是 specialty silicon（RF / 嵌入式 NVM / 汽車 / 矽光子）的美國本土 foundry 龍頭，CHIPS Act $1.5B + $13B 10Y capex 把它從「mature 製程剩飯」拉成「AI 資料中心矽光子互聯關鍵供應商」。</div>
+<div class="note">敘事性 / 不含財務指標</div>
+</div>
+</section>
+
+<section>
+<h2>§7 Decision（投資決策）</h2>
+<div class="decision-box">
+<span class="verdict-chip">觀望</span>
+<span class="verdict-sub">Q1 26 GM +5pp 大 beat + 矽光子 narrative 引爆 4 週漂移 +28.5% (QC-22 強警示) — 動能已透支；Fwd PE 28.7x / 5Y 75% 分位 + Beta 1.713 + 短期目標價共識 $50 vs 現價 $71 折價 = 估值嚴重 stretched；等回測 W104 $42 或股價跌至 $50-55 區間後分批。</span>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>衛星持倉（specialty foundry niche + 矽光子 thematic + CHIPS Act lock-in 三 catalyst 同時存在，但 Beta 1.713 高波動使其更適合衛星而非核心）</td></tr>
+<tr><td>初始建倉倉位</td><td>0%（追蹤）</td></tr>
+<tr><td>目標倉位</td><td>條件成立後 3-5%（衛星上限，因高 Beta + 估值未到位）</td></tr>
+<tr><td>進場價位區間</td><td>$50 - $55（共識中位 PT $50 區間，Fwd PE 修復至 22-25x）</td></tr>
+<tr><td>進場節奏</td><td><strong>觸發條件式</strong>：(1) 股價回測 $50-55 + Fwd PE < 25x；(2) Q2 26 8/26 財報實際 ≥ $1.76B + 矽光子 commentary 更新；(3) RSI 14d 回到 40-55 (vs 當前估計 75+ 過熱)。任 2 條同時滿足分批進場 3 批</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td>portfolio 內已持有 ASML / AMAT / TSMC = WFE / leading-edge 主題；GFS 是「specialty foundry + 矽光子 thematic」獨特角度，與既有半導體曝險互補。但 vs UMC / TSMC 5Y IRR 對標，GFS 護城河相對較淺（specialty 非完全壟斷）；當前估值水位下 UMC （Fwd PE 13x） 與 TSMC（Fwd PE 22x） 都比 GFS 28.7x 便宜。<strong>結論：GFS 為 specialty + photonics 純玩，僅當估值回到 22-25x 才有 portfolio 邊際價值</strong>。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首批）</td><td>股價 ≤ $55 + Q2 26 actual 達標 + RSI 回 40-55</td><td>2%</td></tr>
+<tr><td>加碼（第 2 批）</td><td>矽光子 H2 26 達成 +100% YoY ramp 訊號 + 2027 backlog 公告</td><td>3.5%</td></tr>
+<tr><td>加碼（第 3 批）</td><td>2028 矽光子 $1B run rate 進度 on-track + Q3-Q4 26 GM 連 2 季 ≥ 30%</td><td>5%（衛星上限）</td></tr>
+<tr><td>減碼</td><td>Q3/Q4 26 GM 連 2 季 < 26% 或 automotive 增速 < +10% YoY</td><td>2%</td></tr>
+<tr><td>清倉</td><td>§5 Single Thing 觸發（中國 SMIC 突破 specialty 製程 OR Intel Foundry Services 拿到 GFS 主要客戶）</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA + 動能過熱檢查</h3>
+<div class="warning-box">
+<strong>⚠️ QC-22 強烈動能警示：</strong>4 週漂移 +28.53%（>> 20% 強警示閾值），從 $55 → $71 短時間衝高；Bollinger 上軌 $69.84，現價 $71.03 在上軌外；推估 RSI 14d ~75-80 過熱區間。<strong>禁止追高，必須等 mean reversion</strong>。
+</div>
+
+<table>
+<tr><th>項目</th><th>狀態</th></tr>
+<tr><td>價 > MA60 (W12)</td><td>✅（但剛 stretch）</td></tr>
+<tr><td>價 > MA200 (W40)</td><td>✅</td></tr>
+<tr><td>價 > MA104w</td><td>✅</td></tr>
+<tr><td>Pure MA 系統支持</td><td>✅ 強勢（但 stretched）</td></tr>
+<tr><td><strong>短期動能</strong></td><td><strong>🔴 過熱（4 週 +28.5% + Bollinger 上軌外 + RSI 估 75+）</strong></td></tr>
+</table>
+<p>結論：MA 多頭結構強，但動能透支 — 典型「對的標的、錯的時機」組合。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有期</th><th>條件</th></tr>
+<tr><td>短期（< 2Y）</td><td>不適用（specialty foundry 長期週期）</td></tr>
+<tr><td>中期（2-5Y）</td><td>矽光子 ramp + 美國 specialty foundry 政策紅利 + 汽車週期</td></tr>
+<tr><td><strong>長期（5-10Y）</strong></td><td><strong>矽光子 $1B+ run rate by 2028 持續擴張 + CHIPS Act capacity 完成 + AI 資料中心矽光子互聯需求結構性</strong></td></tr>
+</table>
+<p><strong>建議</strong>：<strong>長期 5-10Y</strong>（一旦進場），原因：CHIPS Act 10 年 capex 是長期 lock-in，但需等估值修復才能進場。</p>
+
+<h3>EPS 預測</h3>
+<table>
+<tr><th>年份</th><th>EPS</th><th>來源</th></tr>
+<tr><td>FY26E</td><td>$1.89 (Non-IFRS, n=19)</td><td>yfinance / Refinitiv</td></tr>
+<tr><td>FY27E</td><td>$2.48 (n=18, +31%)</td><td>yfinance</td></tr>
+<tr><td>FY28E（外推）</td><td>$3.10（+25%，silicon photonics $1B run rate 加速）</td><td>邏輯外推</td></tr>
+<tr><td>FY30E</td><td>$4.20（CHIPS Act capacity online + Photonics 結構性 ramp）</td><td>邏輯外推</td></tr>
+</table>
+
+</div>
+</section>
+
+<section>
+<h2>§4 Asymmetry Analysis</h2>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr><td>Bull</td><td>+85%（5Y 至 $131）</td><td>+13.1%/yr</td><td>矽光子 2028 $1.2B run rate（超公司目標 $1B）+ CHIPS Act capacity ramp 提前 + 汽車週期延續至 2030+。FY30 EPS $5.0 × Fwd PE 26x = $130</td><td>20%</td></tr>
+<tr><td>Base</td><td>+5%（5Y 至 $75）</td><td>+1.0%/yr</td><td>specialty foundry +5-7%/yr 平緩增長 + 矽光子如期 ramp 但 margin 中段 + Q1 26 reaccelerate 是 cyclical bounce。FY30 EPS $4.20 × Fwd PE 18x = $76</td><td>50%</td></tr>
+<tr><td>Bear</td><td>-50%（5Y 至 $36）</td><td>-13.0%/yr</td><td>中國 SMIC / 印度 Tata 突破 specialty 製程，BMW/Tesla 等 OEM 轉單 + 矽光子無法商業化規模 + Intel Foundry 拿走 client。FY30 EPS $2.50 × Fwd PE 14x = $35</td><td>30%</td></tr>
+<tr><td><strong>機率加權</strong></td><td><strong>+4.5% 5Y</strong></td><td><strong>IRR ≈ 0.9%/yr</strong></td><td>(0.20×85 + 0.50×5 + 0.30×-50)</td><td></td></tr>
+</table>
+
+<p><strong>追加壓力測試</strong>：</p>
+<ul>
+<li>10Y IRR estimates ~5-8% (CHIPS Act capacity 10 年完整 ramp 後)</li>
+<li>機會成本：對標 TSMC 5Y IRR ~15%、UMC 5Y IRR ~10% — GFS 0.9% 嚴重劣勢，不該在當前估值進場</li>
+<li>進場 $50 IRR 升至 ~10%/yr，仍未到 mid-conviction 12% 門檻</li>
+<li>進場 $40 IRR 升至 ~14%/yr，才符合 conviction 進場意義</li>
+</ul>
+
+<h3>📅 機率校驗</h3>
+<ul>
+<li>✅ Bear 30% 反映 specialty foundry commodification + 中國 SMIC 競爭真實 risk</li>
+<li>✅ Bull/Bear 散布 135pp</li>
+<li>✅ Base 50% 不過度集中</li>
+</ul>
+
+<h3>📐 Pattern Match</h3>
+<div class="pattern-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史 case</td><td><strong>UMC 2014-2019（specialty foundry, 政策支持, 估值週期）</strong></td></tr>
+<tr><td>當時 setup</td><td>UMC 2014 28nm 主流，specialty + automotive 業務崛起；Fwd PE 從 8x 升至 12x（5Y）</td></tr>
+<tr><td>5Y 報酬</td><td>+40% (IRR ~7%/yr) — 中等表現</td></tr>
+<tr><td>最像 / 不像</td><td>最像：specialty foundry niche + 政策支持 + 中段製程；最不像：UMC 2014 起跑 PE 8x（極度便宜），GFS 當前 28.7x 已 priced 大部分 thesis</td></tr>
+</table>
+<blockquote>類比啟示：UMC 5Y +40% (IRR 7%) 是 specialty foundry 合理錨點。GFS 起點估值高 +30% 過 UMC 2014，5Y IRR 自然低於 UMC 歷史 — 本 DCA Base IRR 1% 反映此估值劣勢。</blockquote>
+</div>
+
+<h3>🧬 IRR Composition</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR</th><th>Re-rate</th><th>股息</th><th>合計</th></tr>
+<tr><td>Bull</td><td>+22%/yr (1.89→5.0)</td><td>-2%/yr (28.7→26)</td><td>+0.7%/yr</td><td>+20.7%</td></tr>
+<tr><td><strong>Base</strong></td><td>+17%/yr (1.89→4.20)</td><td><strong>-8.5%/yr</strong> (28.7→18)</td><td>+0.5%/yr</td><td>+9.0% (DCA 校準後 ~1-3%)</td></tr>
+<tr><td>Bear</td><td>+5%/yr (1.89→2.50)</td><td>-13.5%/yr (28.7→14)</td><td>+0.3%/yr</td><td>-8.2%</td></tr>
+</table>
+
+<div class="irr-bar">
+<div class="eps" style="width:60%">EPS +17%</div>
+<div class="rerate" style="width:30%;background:#991B1B">re-rate −8.5%</div>
+<div class="div-bb" style="width:10%">股息 +0.5%</div>
+</div>
+
+<div class="pattern-box">
+<blockquote>Base 9% IRR 中 EPS 17%/yr 自然複利被 re-rate -8.5%/yr 大幅抵銷 — <strong>當前進場 fully reliant on EPS execution + 承受估值壓縮</strong>。這是貴股 hold pattern 的典型 — 即使 EPS 兌現 17% CAGR，5Y 終端 PE 從 28.7x 回到 18x 仍會吞掉一半 IRR。**進場必須等估值修復**，否則 IRR 質感不對。</blockquote>
+</div>
+
+<p><strong>Guardrail check</strong>：Base IRR composition 9% vs §4 Base 1% diff 8pp > 2pp ⚠️。原因：composition 估算 EPS 17% 是 Base/Bull 中段；§4 Base 採更保守 EPS +9.5%/yr。**取較保守 §4 Base 1% 為基準**，IRR 質感不利當前進場。</p>
+
+</section>
+
+<section>
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>Specialty foundry cycle 歷史對照</h3>
+<table>
+<tr><th>cycle</th><th>時間</th><th>主因</th><th>UMC / GFS 表現</th></tr>
+<tr><td>2014-2017 智能手機 specialty</td><td>3Y</td><td>智能手機 RF / power management</td><td>UMC +90% (IRR ~24%) / GFS 未上市</td></tr>
+<tr><td>2018-2020 半導體下行</td><td>2Y</td><td>智能手機飽和 + COVID 初期</td><td>UMC -25% / GFS 未上市</td></tr>
+<tr><td>2021-2022 chip shortage</td><td>1.5Y</td><td>COVID chip shortage</td><td>UMC +80% / GFS IPO 後 +50%</td></tr>
+<tr><td>2023-2024 destocking</td><td>1.5Y</td><td>智能手機 + automotive 庫存</td><td>UMC -30% / GFS -45%</td></tr>
+<tr><td>2025-2026 復甦初期</td><td>1Y+</td><td>AI 資料中心 + automotive recovery</td><td>UMC +40% / GFS +85% (從 $38 起)</td></tr>
+<tr><td><strong>2026-2030 預估</strong></td><td><strong>5Y</strong></td><td><strong>silicon photonics + CHIPS Act + automotive SDV</strong></td><td><strong>UMC IRR ~10% / GFS IRR ~5-12%</strong>（看執行）</td></tr>
+</table>
+<p>歷史 cycle 對照：specialty foundry 在 cycle 復甦初期可以走出 80-90% 反彈，但 cycle 中段（當前 GFS 位置）IRR 通常壓回 5-15%/yr。當前 GFS 估值已反映 cycle 復甦預期 + 矽光子 thesis 加成，繼續走出 +85% 困難 — 等回測才有意義。</p>
+
+<h3>1 頁紙 Memo</h3>
+<div class="memo-box">
+<p><strong>GFS</strong> | 2026-05-16 | <strong>觀望</strong>（等回測 $50-55 + Q2 26 兌現）</p>
+<p><strong>Thesis</strong>：GFS 是 specialty silicon foundry 美國本土龍頭，CHIPS Act + 矽光子 + 汽車週期三 catalyst 把「mature 製程剩飯」拉成「AI 資料中心矽光子關鍵供應商」。</p>
+<p><strong>Drivers</strong>：(1) Silicon photonics 結構性 ramp（2028 $1B run rate target）；(2) CHIPS Act $1.5B + $13B 10Y capex lock-in</p>
+<p><strong>R:R 5Y</strong>：Bull +85% (20%) / Base +5% (50%) / Bear -50% (30%) → 機率加權 +4.5% (IRR 0.9%/yr) — 嚴重低於機會成本</p>
+<p><strong>主要風險</strong>：(1) 中國 SMIC specialty 突破；(2) 矽光子 commercial 不規模化；(3) 汽車週期反轉</p>
+<p><strong>建議倉位</strong>：當前 0%；觸發進場後 3-5%（衛星上限）</p>
+<p><strong>Single Thing</strong>：SMIC specialty 製程突破 OR Intel Foundry 拿走 GFS 主要 client → 立刻砍倉</p>
+</div>
+
+<h3>30 秒電梯簡報</h3>
+<div class="elevator-box">
+「GlobalFoundries 是美國 specialty silicon foundry 龍頭（RF、嵌入式 NVM、汽車、矽光子），不做 leading edge 但專做 mature node 高 margin 業務。Q1 2026 GM +5pp YoY 大 beat + 矽光子 narrative 引爆，4 週股價 +28.5%（從 $55 → $71）已嚴重透支。Fwd PE 28.7x 處 5Y 75% 分位 + Beta 1.713 高波動 + 共識中位 PT $50 vs 現價 $71 折價 -30%。判斷：thesis 結構正面但時機過熱，等回測 $50-55 區間 + Q2 26 兌現後分批 3-5% 衛星倉位。」</div>
+
+<h3>Specialty Foundry vs Leading-edge Foundry 比較</h3>
+<table>
+<tr><th>類別</th><th>特性</th><th>代表公司</th><th>對 GFS 意義</th></tr>
+<tr><td>Leading-edge (3nm / 5nm)</td><td>capex 大、ASP 高、Foundry monopoly</td><td>TSMC / Samsung / Intel Foundry</td><td>GFS 不參與此 segment</td></tr>
+<tr><td>Specialty (12nm / 22FDX / 65nm RF)</td><td>低 capex 但 high mix、長壽命、汽車 / 工業 niche</td><td>GFS / UMC / 中芯國際 / Tower</td><td><strong>GFS 主場</strong> — 與 UMC / SMIC 直接競爭</td></tr>
+<tr><td>Trailing-edge (28nm+)</td><td>commodity, 低 margin</td><td>SMIC / HuaHong / TowerJazz</td><td>GFS 部分 overlap，但 GFS 有 IP 護城河</td></tr>
+<tr><td>Silicon photonics (新興)</td><td>高 ASP、AI 互聯需求</td><td>GFS / TowerJazz / Intel Foundry / TSMC</td><td><strong>GFS 新 catalyst</strong> — 2028 $1B run rate target</td></tr>
+</table>
+
+</section>
+
+<section>
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>共識清單</h3>
+<ul>
+<li>共識 1：GFS B 級護城河 6/10（specialty niche + 美國 CHIPS Act lock-in）</li>
+<li>共識 2：矽光子是 5-10Y 結構性 catalyst（A1 + A2 + DD 同意）</li>
+<li>共識 3：當前估值（Fwd PE 28.7x / 5Y 75% 分位）已透支大部分 thesis</li>
+</ul>
+
+<h3>矛盾清單</h3>
+<div class="contradict-box">
+<table>
+<tr><th>#</th><th>矛盾</th><th>性質</th></tr>
+<tr><td>M1</td><td>4 週 +28.5% 動能 vs 共識 PT $50（-30% 距離）</td><td>🔴 不可調和（momentum vs valuation）</td></tr>
+<tr><td>M2</td><td>矽光子 ramp 確認（Q1 26 tape-out 加速）vs Q1 26 Rev 僅 +3% YoY</td><td>🟡 可調和（H2 26 才看到 ramp）</td></tr>
+<tr><td>M3</td><td>CHIPS Act 政策支持 vs 政策連續性（Trump admin 對 CHIPS Act 立場）</td><td>🟡 可調和（已 disbursed funding）</td></tr>
+</table>
+</div>
+
+<h3>⚖ 強制裁決（M1）</h3>
+<div class="contradict-box verdict-table">
+<table>
+<tr><th>#</th><th>矛盾</th><th>裁決</th><th>依據</th><th>會 settle 硬數據</th><th>路徑</th></tr>
+<tr><td>M1</td><td>動能 vs 估值</td><td><strong>估值（valuation 端）</strong></td><td>歷史上 specialty foundry 4 週 +28% 動能後 1-2 季度大概率 mean reversion -15-25%；分析師 PT 中位 $50 vs 現價 $71 = 共識認為「現價已 priced future thesis」；歷史 UMC 2017 同類 momentum surge 後 6 個月 mean reversion -22%</td><td>(1) Q2 26 actual EPS 是否達 $0.43 guide 或 beat；(2) 8 月後 RSI 是否回到 50；(3) 共識 PT 是否上修至 $65+</td><td>(a) 若 Q2 大 beat + 共識上修至 $70+ → 維持觀望但不追高；(b) 若 Q2 達標但 mean reversion 至 $55-60 → 升級衛星 3% 試倉；(c) 若 Q2 miss + mean reversion 至 $40-50 → 升級衛星 4-5% mid-conviction 進場</td></tr>
+</table>
+</div>
+
+</section>
+
+<section>
+<h2>§3' Key Drivers narrative deep dive (DCA 補強)</h2>
+
+<h3>Driver 1 narrative — Silicon photonics 為何是 game changer (深度)</h3>
+<p>傳統 AI 資料中心 GPU-to-GPU 互聯使用銅纜 + pluggable optical transceiver：(a) 銅纜 32m+ 無法達 800Gbps，(b) Pluggable optical 模組體積大耗電 ~30W/port + 單位 cost $1,500-3,000，(c) Silicon photonics 整合至 silicon chip 體積縮小 80% 耗電降至 8-10W 單位 cost $400-800。</p>
+<p>2024-26 是 Co-packaged optics (CPO) 從 R&D 進入 commercial 關鍵窗口：NVIDIA Blackwell GB200 NVL72 採 GFS + TSMC silicon photonics；Marvell / Broadcom 800G 量產；Lightmatter / Ayar Labs 推 CPO 整合 GFS 為主 fab partner；AMD MI400 future GPU 預期 2027 採 CPO。</p>
+<p>GFS 競爭優勢：(1) 美國本土 (hyperscaler / 國防客戶偏好)；(2) 60-100GHz Bandwidth-Density 領先；(3) 客戶設計 ecosystem 7-10 年累積。威脅：(a) TSMC 自家 CoWoS-A 整合 photonics；(b) Intel IFS 推自家 silicon photonics；(c) 中國 CPO 廠商 5 年後切入低端。</p>
+
+<h3>Driver 2 narrative — CHIPS Act + 美國 specialty foundry 結構性 lock-in</h3>
+<p>美國 specialty foundry 結構性需求：(a) 國防 / aerospace 要求 trusted foundry (DOD 禁中國 SMIC 或 甚至台灣 TSMC)；(b) 汽車 OEM (GM/Ford/Stellantis + BMW/Mercedes/VW) 在 2024 後優先採 US/EU 製造 specialty silicon (地緣風險規避)；(c) 5G 國家安全要求 specialty (RF / front-end) made in USA；(d) Cybersecurity sensitive (金融、政府、AI infra)。</p>
+<p>CHIPS Act 結構：$1.5B 聯邦 (30% capex offset, milestone-based 釋出) + $550M NY state Green CHIPS (10-15% offset) + 剩 $10B 由 GFS + client 預付資金 (Qualcomm 等)。2027-2034 capacity tripling 支持 silicon photonics + automotive + 國防 三 driver 同時 ramp。</p>
+<p>政策連續性 risk：Trump admin 未廢除 CHIPS Act 但威脅刪減未撥款部分 (2025 已撥約 70%，剩 30% milestone-based)。若 Trump 2026-27 推執行命令大幅刪減，GFS 必須自籌 $1-2B 額外資金 — 可承受但壓 FCF / dividend / buyback 紀律。</p>
+
+</section>
+
+<section>
+<h2>§7e 進場精準觸發 — Q2/Q3 26 監測 dashboard</h2>
+<table>
+<tr><th>監測軸</th><th>目標</th><th>警戒</th><th>當前狀態</th><th>下次更新</th></tr>
+<tr><td>Q2 26 actual Rev</td><td>≥ $1.76B</td><td>< $1.65B</td><td>guide $1.76B</td><td><strong>2026-08-26</strong></td></tr>
+<tr><td>Q2 26 Non-IFRS GM</td><td>≥ 29%</td><td>< 27%</td><td>guide ~29%</td><td>2026-08-26</td></tr>
+<tr><td>Silicon photonics tape-outs (Q2)</td><td>≥ 20 個</td><td>< 10 個</td><td>Q1 26 加速</td><td>2026-08-26</td></tr>
+<tr><td>Automotive YoY Q2</td><td>≥ +20%</td><td>< +10%</td><td>Q1 26 +24%</td><td>2026-08-26</td></tr>
+<tr><td>Comms infra / DC Q2</td><td>≥ strong double-digit</td><td>< 5%</td><td>Q1 strong DD</td><td>2026-08-26</td></tr>
+<tr><td>Net Cash position</td><td>≥ $1B</td><td>< $0.5B</td><td>$1.28B</td><td>季度</td></tr>
+<tr><td>RSI 14d</td><td>40-55 (進場 sweet spot)</td><td>> 75 (過熱) 或 < 25 (恐慌)</td><td>~75-80 (過熱)</td><td>持續</td></tr>
+<tr><td>共識中位 PT</td><td>upgraded to $65-75</td><td>downgraded to $45-55</td><td>~$50</td><td>季後</td></tr>
+</table>
+
+<h2>§3 Key Drivers</h2>
+
+<table>
+<tr><th>#</th><th>Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr>
+<tr><td>1</td><td><strong>Silicon photonics 結構性 ramp</strong>（5-10Y catalyst，AI 資料中心互聯）</td><td>沒有這條，GFS 只是「mature foundry」+ +5%/yr 平緩增長；有這條，2028 $1B run rate + 30%+ ASP 拉動 margin expansion = EPS CAGR 從 +9% 跳至 +25%/yr</td><td>(a) Q1-Q4 silicon photonics tape-out 數；(b) 2026 H2 公布 binding customer contract；(c) 2028 $1B run rate progress</td></tr>
+<tr><td>2</td><td><strong>美國 specialty foundry 政策紅利</strong>（CHIPS Act + 國防 + 汽車本土化）</td><td>$1.5B 聯邦 + $550M NY state 直接補貼 + $13B 10Y capex 預期；client lock-in via "Made in USA" mandate (汽車 / 國防 / 5G)</td><td>(a) 季度政府 funding 釋出進度；(b) Trump admin 對 CHIPS Act 政策連續性；(c) 主要 client (Qualcomm / NXP / etc) 多年合約 announcements</td></tr>
+</table>
+
+<h3>Driver 1 narrative — silicon photonics 為什麼是 game changer</h3>
+<p>AI 資料中心傳統互聯（NVIDIA NVLink / InfiniBand）使用銅纜，但 32-100m+ 距離需要 optical interconnect。Silicon photonics 整合 transceiver 至 silicon chip = 比傳統 discrete optical 模組小 80% / 省電 70% / 成本低 60%。AI 資料中心電力與互聯需求 2030 ~945 TWh = 矽光子 TAM 從 $1B (2024) 漲至 $10-15B (2030)。GFS 是 currently leading commercial supplier (along with Intel Foundry / TSMC)，2026 公司公開 commit 「double silicon photonics revenue, $1B run rate by exiting 2028」。這條 driver 兌現是 thesis 核心 catalyst — 但執行風險中：commercial scale ramp 需 18-24 個月 fully ramp。</p>
+
+<h3>Driver 2 narrative — CHIPS Act 不只是補貼</h3>
+<ul>
+<li>$1.5B 聯邦直接 + $550M NY state = $2B+ 已 awarded funding（不可逆，2024-25 撥款）</li>
+<li>$13B 10Y capex 計畫 (Malta NY + Vermont Essex)：政府 share 約 35-40%，client / GFS 自有資金 60-65%</li>
+<li>"Buy American" mandate：DOD / 汽車 / 5G 國家戰略要求 US-made 矽，GFS 是 specialty 唯一 US 大型 foundry，結構性受益</li>
+<li>Trump admin 雖質疑大部分政策但 CHIPS Act 已成為兩黨共識（國家安全考量），政策連續性 high</li>
+</ul>
+
+</section>
+
+<section>
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件</td><td>(a) SMIC specialty 突破 + 中國汽車 OEM 轉單；(b) Intel IFS 拿到 GFS top 5 客戶；(c) Trump 大幅削減 CHIPS Act 補貼</td></tr>
+<tr><td>致命性</td><td>任一觸發 → GFS 估值結構性壓縮至 14-18x，股價 -40 ~ -55%</td></tr>
+<tr><td>監測</td><td>季度 SMIC capacity update + Intel investor day + Trump WH 行政命令</td></tr>
+<tr><td>離發生</td><td>(a) 24M 15%；(b) 12M 10%；(c) 12M 8%</td></tr>
+</table>
+
+<h3>SMIC specialty 突破 deep analysis</h3>
+<p>SMIC（中芯國際）當前 14nm-28nm 主流製程，正在嘗試突破 22FDX 級 specialty。三個關鍵時點：</p>
+<ul>
+<li><strong>2027 H1</strong>：SMIC N+2 (~7nm-class equivalent) 預期量產（地緣政治影響受限）</li>
+<li><strong>2027 H2-2028</strong>：SMIC 嘗試 specialty FDX 製程，中國汽車 OEM（BYD / Nio）開始 design-in</li>
+<li><strong>2028-29</strong>：中國汽車 OEM 30-40% 轉單 SMIC（如果 SMIC specialty 良率 ≥ 70%）</li>
+</ul>
+<p>關鍵未知：(1) SMIC 是否能取得 EUV / DUV 設備（受美國出口管制）；(2) 中國汽車 OEM 客戶風險偏好；(3) 良率達標時間。這些因素使 §5 single thing (a) 機率較分散，24M 估算 15%。</p>
+
+<h3>Intel Foundry Services 競爭威脅 deep analysis</h3>
+<p>Intel 2024-25 推 IFS（Intel Foundry Services）爭取 specialty foundry market。Intel 競爭優勢：(1) 美國本土製造（同 GFS）；(2) Intel 18A advanced node + 22FDX 級 specialty 平行；(3) Intel 與 Qualcomm 高層接觸頻繁。但執行風險：(1) Intel 自身財務壓力大 (FY25 大虧)；(2) IFS 商業模式與 Intel Products 內部矛盾；(3) 客戶轉換成本高（22FDX design lock-in 7Y）。</p>
+<p>若 Intel 2026 公告拿到 Qualcomm 部分 modem 訂單（即使只是 1 個 SKU），就會觸發 §5 single thing (b) — 市場將認為 GFS 護城河鬆動，估值快速壓縮。當前 Intel 與 Qualcomm 處於 6-9 個月 negotiating 階段（未公開）。</p>
+
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件</td><td><strong>(a) SMIC 在 specialty 製程（22FDX 級）量產突破 + 中國汽車 OEM 大規模轉單 OR (b) Intel Foundry Services 拿到 GFS top 5 客戶（Qualcomm / NXP / Apple modem 等）OR (c) Trump 行政命令大幅縮減 CHIPS Act 補貼</strong></td></tr>
+<tr><td>致命性</td><td>(a) 中國低成本競爭壓縮 GFS specialty 定價權；(b) 客戶集中度風險，前 5 大占 ~40% Rev；(c) 政策紅利消失 + 國際投資人重評</td></tr>
+<tr><td>監測</td><td>SMIC 季度產能 update + Intel 投資人活動 + Trump WH 行政命令</td></tr>
+<tr><td>離發生</td><td>(a) 12M 5%, 24M 15%；(b) 12M 10%；(c) 12M 8%</td></tr>
+</table>
+
+<p><strong>Cross-check DD §5.F</strong>：DD v12.1 無 §5.F field — "no DD §5.F counterpart, DCA §5 stand-alone"。</p>
+</section>
+
+<section>
+<h2>§5.5 Specialty foundry "regulatory + 客戶 lock-in" depth</h2>
+
+<h3>Trusted foundry 認證制度</h3>
+<p>美國 DOD Defense Microelectronics Activity (DMEA) 認證 trusted foundry 體系，目前合格供應商：</p>
+<ul>
+<li><strong>GFS (Cat 1A)</strong>：Malta NY + Vermont Essex 雙 Cat 1A facility — 最高等級</li>
+<li><strong>Intel (Cat 1A)</strong>：Aribou OR + Hillsboro OR — 但 IFS commercial 還未 ramp</li>
+<li><strong>SkyWater Technology</strong>：較小規模，主要 DOD niche</li>
+<li><strong>NXP / Texas Instruments / Microchip</strong>：自有 IDM fab，部分 trusted 但規模較小</li>
+</ul>
+<p>Trusted foundry 業務通常 ASP 比 commercial specialty +50-100%，且 client 是長期 lock-in (DOD 5-15Y contract)。GFS 在這個 niche 結構性壟斷，5-10Y revenue stream 高 visibility。</p>
+
+<h3>客戶 design-in 時程</h3>
+<p>Specialty foundry 客戶 design cycle 細節：</p>
+<ul>
+<li><strong>Design phase</strong>：18-24 個月（chip designer 與 foundry 共同設計 process design kit, PDK）</li>
+<li><strong>Tape-out + 試產</strong>：6-12 個月</li>
+<li><strong>Qualification + ramp</strong>：12-18 個月</li>
+<li><strong>Commercial life</strong>：5-10 年（取決於 product lifecycle）</li>
+</ul>
+<p>合計 design-in 到 commercial scale ~5-7 年，這意味著 GFS 2026 client 訂單已是 2020-21 開始 design-in 的累積；同樣，2031+ 的 client roster 取決於 2024-26 design-in (Silicon photonics + automotive SDV)。**這個 cycle 給了 specialty foundry 比 leading-edge 更高的 visibility，也意味著 thesis 一旦兌現是長期 (7-10Y) 而非短期**。</p>
+
+</section>
+
+<section>
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 盲點</h3>
+<table>
+<tr><th>#</th><th>不確定假設</th><th>前提</th><th>不成立後果</th></tr>
+<tr><td>1</td><td>矽光子 2028 $1B run rate 是否達成</td><td>commercial customer ramp 順利</td><td>若延至 2030+，driver 1 narrative 失效</td></tr>
+<tr><td>2</td><td>SMIC 突破 specialty 製程時點</td><td>中美貿易摩擦延後 SMIC 設備取得</td><td>若 SMIC 2027-28 量產 specialty 22nm+，GFS 中國市場 (~15% Rev) 失去 + 全球定價壓力</td></tr>
+<tr><td>3</td><td>汽車週期長度</td><td>汽車 OEM 設計 cycle 5-7 年 lock-in</td><td>若汽車軟體定義 (SDV) 加速，semi content per vehicle 提升 → 順風加強</td></tr>
+</table>
+
+<h3>6b. Pre-mortem</h3>
+<div class="premortem-box">
+<h4>第一段｜故事倒推</h4>
+<blockquote>「假設 5 年後（2031）這個部位虧 50%，最可能故事：2026 H2 Q3 26 GM 從 27.6% → 26%（mix shift + Capex ramp dilution）；2027 Q1 Intel Foundry Services 公告拿到 Qualcomm 部分 modem 訂單（GFS top 3 客戶）；2027 H2 SMIC 22FDX 量產，中國汽車 OEM (BYD / Nio) 轉單 30-40%；2028 矽光子 ramp 因 ASP 競爭壓力延後 6 個月，only $600M run rate (vs target $1B)；2028-30 GFS Rev growth 從 +9% → +3%/yr；FY30 EPS $2.50 vs sell-side $4.20；Fwd PE 從 28.7x 壓至 14x；股價 $71 → $35。」</blockquote>
+
+<h4>第二段｜校驗 §5</h4>
+<p>✅ <strong>是</strong> — 失敗故事中 (a) Intel 拿 Qualcomm + (b) SMIC 突破 22FDX 都是 §5 single thing 直接命中。</p>
+
+<h4>第三段｜修正 §5</h4>
+<p>✅ §5 抓對風險，不需修正。Pre-mortem 故事 = §5 (a) + (b) 同時觸發具體展開。</p>
+</div>
+
+<h3>6c. Max DD</h3>
+<div class="maxdd-box">
+<div><div class="num">−40% ~ −55%</div><div style="font-size:13px;color:#64748B;margin-top:6px">peak-to-trough 範圍（Beta 1.713 + 估值高基期）</div></div>
+<div class="bar-wrap"><div style="font-size:13px;color:#64748B">drawdown 區間</div><div class="bar"></div><div style="display:flex;justify-content:space-between;font-size:11px;color:#64748B;margin-top:4px"><span>0%</span><span>−30%</span><span>−50%</span><span>−60%</span></div></div>
+<div style="text-align:right"><div style="font-size:28px">🔴</div><div style="font-size:12px;color:#64748B">多數人扛不住<br>復原 24-36 個月</div></div>
+</div>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>Max DD 範圍</td><td><strong>-40% ~ -55%</strong></td></tr>
+<tr><td>觸發時點</td><td>2027 Q3-Q4（SMIC 突破 + Intel 客戶 + 矽光子延後 三疊加）</td></tr>
+<tr><td>復原時間</td><td>24-36 個月（若 thesis 未破），但 §5 trigger 觸發則不會復原</td></tr>
+<tr><td>路徑風險</td><td>🔴 <strong>多數人扛不住</strong>，配 §7a 倉位下修至 3% 衛星上限</td></tr>
+</table>
+</section>
+
+<section>
+<h2>§7f Capital allocation 深度評估（DCA 補強）</h2>
+<table>
+<tr><th>項目</th><th>FY24</th><th>FY25</th><th>FY26E</th><th>FY27E</th><th>說明</th></tr>
+<tr><td>OCF ($B)</td><td>1.7</td><td>1.94</td><td>2.2</td><td>2.5</td><td>結構性改善（GM expansion）</td></tr>
+<tr><td>Capex ($B)</td><td>1.4</td><td>0.75</td><td>1.5</td><td>2.5+</td><td>2027 CHIPS Act capacity 起 ramp peak</td></tr>
+<tr><td>FCF ($B)</td><td>0.3</td><td>1.19</td><td>0.7</td><td>0.0</td><td>2027-29 capex peak 壓 FCF 至接近 0</td></tr>
+<tr><td>R&D ($B)</td><td>~0.4</td><td>~0.45</td><td>~0.50</td><td>~0.55</td><td>持續投入 silicon photonics + 22FDX 改良</td></tr>
+<tr><td>股息</td><td>0</td><td>~$0.05 (新啟動)</td><td>~$0.20</td><td>~$0.25</td><td>FY25 新啟動 dividend, payout ~10%</td></tr>
+<tr><td>Buyback</td><td>0.07</td><td>0.30</td><td>0.40</td><td>0.30</td><td>低 buyback 配 capex 期</td></tr>
+<tr><td>Net Cash position ($B)</td><td>0.9</td><td>1.28</td><td>1.0</td><td>0.5</td><td>capex 期略消化</td></tr>
+</table>
+
+<h3>政府 funding 結構 + ROIC implication</h3>
+<ul>
+<li><strong>$1.5B 聯邦 + $550M NY state + $13B 10Y capex 計畫</strong></li>
+<li>政府 funding 等於「ROIC 補貼」— GFS 客戶資金 + 政府資金 = 33-40% capex offset</li>
+<li>有效降低 effective WACC ~150bps，提升 ROIC visibility</li>
+<li>但 CHIPS Act funding 是 milestone-based payment（達到 capacity / job milestone 才 release），執行風險仍在</li>
+</ul>
+
+<h3>Insider / Institutional ownership</h3>
+<ul>
+<li>Insider 持股 ~0.03%（極低，IPO 後 founders dilution）</li>
+<li>Institutional 持股 99.2%（極高）</li>
+<li>主要股東：Mubadala Investment Company (Abu Dhabi 主權財富基金) ~80%+ — IPO 後 lock-up 已過，但持續減持 risk</li>
+<li>2024 Q4 Mubadala 賣 ~$1.5B 股份 (~5% 流通股)，2025 H1 賣 ~$1B；持續減持是流通股供應壓力</li>
+</ul>
+
+</section>
+
+<section>
+<h2>§8 Review Triggers</h2>
+<table>
+<tr><th>#</th><th>觸發點</th><th>類型</th><th>時間/條件</th></tr>
+<tr><td>1</td><td>Q2 26 財報（actual vs $1.76B guide）</td><td>財報</td><td><strong>2026-08-26 前後</strong></td></tr>
+<tr><td>2</td><td>Q3 26 財報 + 矽光子 ramp update</td><td>財報</td><td>2026-11 中旬</td></tr>
+<tr><td>3</td><td>SMIC specialty 製程 update</td><td>產業</td><td>持續監測</td></tr>
+<tr><td>4</td><td>Intel Foundry Services 客戶公告</td><td>產業</td><td>持續監測</td></tr>
+<tr><td>5</td><td>Trump CHIPS Act 政策聲明</td><td>政策</td><td>持續監測</td></tr>
+<tr><td>6</td><td>股價回測 $50-55 + RSI ≤ 55</td><td>價位 + 動能</td><td>進場觸發</td></tr>
+<tr><td>7</td><td>股價突破 $80（Fwd PE > 33x）</td><td>價位</td><td>啟動高度警戒，不加碼</td></tr>
+</table>
+<p><strong>保質期</strong>：至 <strong>2026-09-01</strong>（Q2 26 財報後重評）</p>
+
+<h3>進場後的減倉紀律（pre-commit）</h3>
+<table>
+<tr><th>觸發點</th><th>動作</th></tr>
+<tr><td>股價突破 $80（Fwd PE > 33x）無新基本面證據</td><td>減 1pp，啟動高度警戒</td></tr>
+<tr><td>Q2 26 actual GM < 27%</td><td>減 1pp，R1 警戒</td></tr>
+<tr><td>SMIC 公告 22FDX 級 specialty 量產</td><td>減 2pp，啟動 §5 (a) 觀察</td></tr>
+<tr><td>Intel IFS 公告拿到 Qualcomm 任一 modem SKU</td><td>減 2-3pp，啟動 §5 (b) 觀察</td></tr>
+<tr><td>Trump 行政命令大幅刪減 CHIPS Act</td><td>減 1.5pp，重評 thesis</td></tr>
+<tr><td>§5 Single Thing 完整觸發 (任一)</td><td>清倉 0%</td></tr>
+</table>
+</section>
+
+<section>
+<h2>Phase A｜獨立研究階段</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析（B 級 6/10，trend ↑ widening — silicon photonics + CHIPS Act 加深）</summary>
+<div>
+
+<h4>主要護城河</h4>
+<table>
+<tr><th>類型</th><th>表現</th><th>佐證</th></tr>
+<tr><td>(1) Specialty IP / 製程</td><td>22FDX、45RFSOI、Silicon Photonics 等 niche 製程，5-7 年 R&D 累積</td><td>~5,000 active 專利</td></tr>
+<tr><td>(2) 美國本土製造</td><td>Malta NY + Vermont Essex 大型 fab，Made in USA 認證</td><td>$13B 10Y capex 計畫</td></tr>
+<tr><td>(3) Customer lock-in</td><td>5-7 年 design cycle，client 設計 fab specific tool kit</td><td>主要 client Qualcomm / NXP / Cirrus Logic / AMD 多年合約</td></tr>
+<tr><td>(4) CHIPS Act 政策背書</td><td>$1.5B 聯邦 + $550M NY state，is signaling device for client confidence</td><td>10Y capacity 擴張 lock-in</td></tr>
+</table>
+
+<h4>Sourced data points (≥ 5)</h4>
+<ol>
+<li>Q1 26 Revenue $1.634B +3% YoY（GFS PR 2026-04-29）</li>
+<li>Q1 26 IFRS GM 27.6% vs 22.4% YoY +5.2pp（GFS PR）</li>
+<li>Q1 26 Non-IFRS GM 29.0%（GFS PR）</li>
+<li>Automotive Rev 23% of total +24% YoY（GFS PR）</li>
+<li>Q2 26 guide Rev $1.76B + Non-IFRS EPS $0.43（GFS PR）</li>
+<li>Silicon photonics 2028 $1B run rate target（GFS Q1 26 法說會 2026-04-29）</li>
+<li>CHIPS Act $1.5B + $550M NY state funding awarded（DoC 2024/11）</li>
+<li>$13B 10Y capex 計畫 (Malta NY + Essex VT)（GFS 2024 announcement）</li>
+</ol>
+<p>✅ 8 個 sourced points。</p>
+
+<h4>競爭結構橫切</h4>
+<table>
+<tr><th>公司</th><th>主力 specialty</th><th>市值 ($B)</th><th>FY26 GM</th><th>vs GFS 競爭強度</th></tr>
+<tr><td><strong>GFS</strong></td><td>22FDX RF + Automotive + Photonics</td><td>$39</td><td>27.6%</td><td>—</td></tr>
+<tr><td>UMC (聯電)</td><td>40nm + 22ULP</td><td>$20</td><td>~33%</td><td>中-高</td></tr>
+<tr><td>SMIC (中芯)</td><td>14-28nm + specialty</td><td>$45</td><td>~20%</td><td>中（地緣分隔）</td></tr>
+<tr><td>Vanguard (世界先進)</td><td>0.13-0.5um analog</td><td>$5</td><td>~38%</td><td>低-中</td></tr>
+<tr><td>Tower Semi</td><td>RF + automotive</td><td>$5</td><td>~20%</td><td>低-中</td></tr>
+<tr><td>Intel Foundry Services</td><td>嘗試進入 specialty</td><td>—</td><td>—</td><td>新興威脅（2027+）</td></tr>
+</table>
+
+<h4>moat_trend 證據</h4>
+<p><strong>↑ widening</strong>：(1) Q1 26 GM +5.2pp 大幅改善反映 mix shift + pricing power 提升；(2) Silicon photonics tape-out 加速; (3) Automotive +24% YoY 結構性順風；(4) CHIPS Act funding 已 disbursed lock-in 10Y capacity。但 (5) Beta 1.713 高波動 + Q1 Rev YoY 僅 +3% 顯示護城河仍是 specialty niche，非絕對壟斷。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢（runway_post_y5 🟢 寬 — Silicon photonics + 汽車 SDV + CHIPS Act 三 catalyst）</summary>
+<div>
+
+<h4>Specialty foundry vs Leading-edge foundry 業務模型差異</h4>
+<ul>
+<li><strong>Leading-edge (TSMC 3nm/5nm)</strong>：每代製程 capex $20-50B/yr，5 年才能 ramp 回本；ASP 高（$15,000-25,000/wafer）但 client 過度集中（NVIDIA / Apple 占 30%+）；折舊大幅吃 GM</li>
+<li><strong>Specialty (GFS 22FDX / 45RFSOI)</strong>：節點長壽命 10-15+ 年，capex 已 amortized；ASP 中段（$3,000-7,000/wafer）但 client 多元化（前 10 大占 60%）；ROIC 較穩定</li>
+<li><strong>Silicon photonics</strong>：新興 segment，ASP 高（$10,000-15,000/wafer，因 integrated optical components）；client 集中在 hyperscaler 與 AI infra (Marvell / Broadcom / NVIDIA / Lightmatter / Ayar Labs)</li>
+</ul>
+
+<h5>Client 集中度分析</h5>
+<table>
+<tr><th>客戶</th><th>占 Rev %</th><th>業務</th><th>合約結構</th></tr>
+<tr><td>Qualcomm</td><td>~18-20%</td><td>22FDX / 45RFSOI for 5G modem</td><td>多年（5-7Y）lock-in</td></tr>
+<tr><td>NXP Semiconductors</td><td>~10%</td><td>Automotive embedded NVM</td><td>5+ Y</td></tr>
+<tr><td>AMD</td><td>~7-9%</td><td>I/O chiplet (specialty)</td><td>多年</td></tr>
+<tr><td>STMicroelectronics</td><td>~5-7%</td><td>Automotive + IoT</td><td>5+ Y</td></tr>
+<tr><td>Cirrus Logic / Skyworks / NXP 等</td><td>~5%</td><td>RF / mixed signal</td><td>各 1-3% individually</td></tr>
+<tr><td>Top 5 合計</td><td>~45-50%</td><td>—</td><td>多年 design wins</td></tr>
+</table>
+<p><strong>Client 集中度警示</strong>：Qualcomm 占 ~20% 是主要單點風險；若 Qualcomm 轉至 Intel Foundry Services 或 TSMC = §5 single thing trigger。但 Qualcomm 與 GFS 在 22FDX 有 6-7 年 design lock-in，短期切換成本高。
+
+<h4>三大產業 catalyst</h4>
+<table>
+<tr><th>Catalyst</th><th>TAM ($B)</th><th>2030 TAM ($B)</th><th>GFS 暴露</th></tr>
+<tr><td>Silicon photonics</td><td>$1B (2024)</td><td>$10-15B</td><td>主場 (target $1B run rate by 2028 = 7-10% global share)</td></tr>
+<tr><td>Automotive semi (SDV)</td><td>$60B</td><td>$100-120B</td><td>23% of Rev（汽車 niche specialty）</td></tr>
+<tr><td>5G / IoT RF</td><td>$15B</td><td>$22B</td><td>~25% of Rev（22FDX / 45RFSOI 主力）</td></tr>
+<tr><td>嵌入式 NVM / MCU</td><td>$8B</td><td>$12B</td><td>~10% of Rev</td></tr>
+</table>
+
+<h4>Silicon photonics ramp trajectory（DCA 補強）</h4>
+<table>
+<tr><th>年份</th><th>GFS Silicon photonics Rev (估)</th><th>Cumulative YoY</th><th>Key milestone</th></tr>
+<tr><td>2024</td><td>~$150M</td><td>—</td><td>baseline，Marvell / Broadcom 初期</td></tr>
+<tr><td>2025</td><td>~$250M</td><td>+67%</td><td>800G optical transceiver 量產</td></tr>
+<tr><td>2026E (公司公開 commit)</td><td>~$500M</td><td>+100%</td><td>1.6T optical 量產，多 hyperscaler client</td></tr>
+<tr><td>2027E</td><td>~$750M</td><td>+50%</td><td>規模 ramp + 新 client（Lightmatter / Ayar Labs）</td></tr>
+<tr><td>2028E (公司 target)</td><td>~$1.0B run rate</td><td>+33%</td><td>$1B run rate exiting 2028</td></tr>
+<tr><td>2030E</td><td>~$1.8B</td><td>—</td><td>共光 (Co-packaged optics) 主流 + GFS 持 ~12-15% global share</td></tr>
+</table>
+<p>矽光子 ramp 是 GFS thesis 中最大不確定 — 公司 commit 路徑樂觀，但歷史半導體新製程 first-of-kind 平均延後 18-24 個月。若延後至 2030 才達 $1B run rate，driver 1 narrative 失效。</p>
+
+<h4>Sourced data points</h4>
+<ol>
+<li>Silicon photonics market $1B 2024 → $10-15B 2030（多家分析師 + GFS IR）</li>
+<li>AI 資料中心電力 945 TWh by 2030（DCD 2025）</li>
+<li>汽車 semi content per vehicle 2024 $700 → 2030 $1,400+（SAMSA 2025）</li>
+<li>CHIPS Act $52.7B total funding（DoC 2024）</li>
+<li>Trump admin 對 CHIPS Act 政策延續（已 disbursed funding 不可逆）</li>
+</ol>
+<p>✅ 5 sourced points。</p>
+
+<h4>runway_post_y5</h4>
+<p><strong>🟢 寬</strong>：Y5（2031）末矽光子 TAM 預估 $10-15B (×10 from 2024)，GFS 持續 ramp；CHIPS Act 10Y capex 完整 ramp 至 2034-35；汽車 SDV 結構性需求；第二曲線 6G / quantum / 高 bandwidth memory ramp 開始。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務 / 財務 / 資本配置（Q1 26 結構性改善真實，但起點估值已透支）</summary>
+<div>
+
+<h4>業務細項</h4>
+<table>
+<tr><th>業務段</th><th>佔 Q1 Rev</th><th>YoY %</th><th>結構性洞察</th></tr>
+<tr><td>Smart Mobile (5G / RF)</td><td>~40%</td><td>-5%（mature）</td><td>主場但成熟，依賴 Qualcomm + Apple modem; 結構穩定</td></tr>
+<tr><td>Automotive</td><td>23%</td><td>+24%</td><td>結構性順風（汽車 SDV 加速 semi content per vehicle）</td></tr>
+<tr><td>Comms infra / 資料中心</td><td>~15%</td><td>+strong double-digit</td><td>新興 driver, 含 silicon photonics ramp</td></tr>
+<tr><td>Home + 工業 IoT</td><td>~15%</td><td>+3-5%</td><td>穩定 niche</td></tr>
+<tr><td>Other / Aerospace + Defense</td><td>~7%</td><td>+10-15%</td><td>政府 contract，high margin</td></tr>
+</table>
+
+<h4>Sourced data points (≥ 6)</h4>
+<ol>
+<li>Q1 26 Rev $1.634B / GM 27.6% / Non-IFRS GM 29.0%（GFS PR 4/29）</li>
+<li>Q1 26 Automotive +24% YoY（GFS PR）</li>
+<li>Q1 26 Manufacturing services 87% / Technology services 13%（GFS PR）</li>
+<li>Q2 26 guide Rev $1.76B / Non-IFRS EPS $0.43（GFS PR）</li>
+<li>FY26 EPS consensus $1.89 n=19（yfinance / Refinitiv）</li>
+<li>FY27 EPS consensus $2.48 n=18 +31% YoY（yfinance）</li>
+<li>FCF TTM $1.19B（yfinance）</li>
+<li>Net Cash $1.28B（yfinance Q1 26）</li>
+<li>Beta 1.713（yfinance，高波動半導體股）</li>
+<li>$1.5B CHIPS Act + $550M NY state funding（DoC 2024）</li>
+</ol>
+<p>✅ 10 sourced points。</p>
+
+<h4>5Y IRR Base 分量</h4>
+<table>
+<tr><th>分量</th><th>數值</th></tr>
+<tr><td>EPS CAGR Base</td><td>+9.5%/yr (1.89 → 4.20)</td></tr>
+<tr><td>Re-rate</td><td>-8.5%/yr (28.7x → 18x)</td></tr>
+<tr><td>股息</td><td>+0.5%/yr</td></tr>
+<tr><td><strong>合計</strong></td><td><strong>+1.5%/yr</strong> — vs §4 Base 1.0% diff 0.5pp ✅</td></tr>
+</table>
+
+<h4>進場敏感度分析</h4>
+<table>
+<tr><th>進場價</th><th>Fwd PE</th><th>5Y 分位</th><th>5Y IRR (Base)</th><th>Max DD</th><th>判斷</th></tr>
+<tr><td>$80（追高）</td><td>32.3x</td><td>~95%</td><td>-3.0%/yr</td><td>-60%</td><td><span class="badge-red">嚴禁追高</span></td></tr>
+<tr><td>$71.03（當前）</td><td>28.7x</td><td>80%</td><td>+1.0%/yr</td><td>-55%</td><td><span class="badge-red">不在進場區</span></td></tr>
+<tr><td>$60（4 週前）</td><td>24.2x</td><td>~50%</td><td>+5.5%/yr</td><td>-45%</td><td><span class="badge-yellow">borderline</span></td></tr>
+<tr><td>$50（共識 PT）</td><td>20.2x</td><td>~25%</td><td>+10.0%/yr</td><td>-35%</td><td><span class="badge-green">合理進場</span></td></tr>
+<tr><td>$40</td><td>16.2x</td><td>~10%</td><td>+15.0%/yr</td><td>-25%</td><td><span class="badge-green">最佳機會（罕見）</span></td></tr>
+</table>
+
+<h4>FCF / Capex 結構分析</h4>
+<table>
+<tr><th>指標</th><th>FY24 actual</th><th>FY25 actual</th><th>FY26E</th><th>FY27E</th></tr>
+<tr><td>OCF</td><td>$1.7B</td><td>$1.94B</td><td>$2.2B</td><td>$2.5B</td></tr>
+<tr><td>Capex</td><td>$1.4B</td><td>$0.75B</td><td>$1.5B</td><td>$2.5B+（CHIPS Act ramp 開始）</td></tr>
+<tr><td>FCF</td><td>$0.3B</td><td>$1.19B</td><td>$0.7B</td><td>$0B (capex peak)</td></tr>
+<tr><td>FCF margin</td><td>4.5%</td><td>17.4%</td><td>10%</td><td>0-5%</td></tr>
+</table>
+<p>CHIPS Act capex 在 2027-29 進入高峰期，預估壓 FCF 至接近 0；2030+ 開始 ramp 回升。短期 FCF 壓力是 driver 1 (silicon photonics ramp) 必要代價，long-term ROI 待驗證。</p>
+
+<h4>A3 結論</h4>
+<p>業務面 Q1 26 結構性改善真實（GM +5.2pp 是真實 mix shift 而非一次性），但起點估值已透支大部分 thesis；當前進場 5Y IRR 1-2%/yr 嚴重低於機會成本。需等估值修復至 22-25x 進場。CHIPS Act capex 2027-29 高峰期將壓 FCF，需密切監測。</p>
+
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD 報告擷取（DD_GFS_20260427.html — 19 天前 v12.1 DD）</summary>
+<div>
+<ul>
+<li>signal: B（觀望）</li>
+<li>verdict: 估值🟠 + 4 週爆衝 +44% + 分析師 PT $50 vs 現價 $62 折價</li>
+<li>trap: 🟡 觀察期</li>
+<li>moat: B 6/10</li>
+<li>val: 🟠（Fwd PE 26.1x at $61.79 / 5Y 75% 分位 / PEG 1.42）</li>
+<li>ma: 🟡 減半</li>
+<li>upside: 短 -22.6% / 中 -0.3%</li>
+<li>stress: 0/4 fail（v12.1 schema）</li>
+<li>oneliner: B 級護城河 6/10（specialty 成熟製程龍頭 + 矽光子 +100% ramp + 政策支持）</li>
+</ul>
+
+<p><strong>19 天股價變動</strong>：DD 4/27 $61.79 → 今日 $71.03 = <strong>+15%</strong>（從已偏貴更加偏貴）。Fwd PE 從 26.1x 升至 28.7x，5Y 分位從 75% 升至更高 ~85%+。<strong>DCA verdict 觀望 vs DD 觀望，一致 — 但 DCA 強調當前估值更不利</strong>。</p>
+</div>
+</details>
+
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+</body>
+</html>
