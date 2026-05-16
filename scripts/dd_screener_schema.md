@@ -7,11 +7,16 @@ This schema is the integration contract between the build pipeline and the
 front-end. **Do not change field names / types without updating both sides
 and bumping `schema_version`.**
 
+v1.1 (additive, backward-compatible): adds `timing` block per stock — joined
+from `docs/screener/latest.json` daily snapshot. Same source as
+`flow/ath-hunter.html` consumes, so DD Screener's 起漲點 chip and Flow's ATH
+classification stay in lock-step (zero data drift). null for non-US (TW/JP/EU).
+
 ## Top-level shape
 
 ```json
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "run_timestamp": "2026-05-15T08:00:00+08:00",
   "as_of": "2026-05-15",
   "universe_size": 98,
@@ -92,6 +97,13 @@ Each entry in `stocks[]`:
     "drift_4w_pct": 3.2,
     "above_w52": true,
     "above_w250": true
+  },
+
+  "timing": {
+    "dist_52w_high_pct": -3.2,
+    "ma50_pct": 4.1,
+    "vs_200ma_pct": 18.5,
+    "rs_score": 87.4
   }
 }
 ```
@@ -148,6 +160,18 @@ All MA values in price units. `null` for any field when history < required.
 - `drift_4w_pct` = (price_now / price_4w_ago - 1) × 100, **percent**
 - `above_w52` / `above_w250` = bool; null if w52/w250 null
 
+### Timing snapshot (v1.1 — joined from `docs/screener/latest.json`)
+US-only daily-cron snapshot. `null` (the whole `timing` block) when ticker is
+non-US (TW/JP/EU) or screener `latest.json` missing. Same source consumed by
+`flow/ath-hunter.html` — zero data drift across pages.
+
+| Field | Type | Notes |
+|---|---|---|
+| `dist_52w_high_pct` | number | % distance from 52-week high (adjusted close). 0 = at high; negative = below. 起漲點 sweet spot: `[-7, 0]`. |
+| `ma50_pct` | number | % distance from 50-day MA. 起漲點 sweet spot: `[0, +5]` (just reclaimed, not extended). |
+| `vs_200ma_pct` | number | % distance from 200-day MA. Long-term trend gauge. |
+| `rs_score` | number 0-100 | Percentile RS rating vs SPY (multi-timeframe weighted). 起漲點 threshold: ≥ 80. |
+
 ### Output sort order
 
 `stocks[]` sorted by:
@@ -178,6 +202,7 @@ All MA values in price units. `null` for any field when history < required.
   - Moat: `[S]` (≥9.5) / `[A]` (≥8) / `[B]` (≥6) / `[All]`
   - Direction: `[↑+→]` (default) / `[↑ only]` / `[Any]`
   - Preset: `[MLB]` (default) / `[Custom]`
+  - 時機 (v1.1): `[Any]` (default, no timing filter) / `[起漲點]` (requires `dist_52w_high_pct ∈ [-7, 0]` ∩ `ma50_pct ∈ [0, +5]` ∩ `rs_score ≥ 80`; rows with null `timing` block are filtered out)
   - Custom mode reveals 5 sliders + S-tier toggle, recomputes `pass_count` client-side using either `presets.MLB` thresholds or user-mutated Custom values
 
 ## File location

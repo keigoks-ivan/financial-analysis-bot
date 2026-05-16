@@ -104,6 +104,19 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 .src-yfinance-eu{background:#fed7aa;color:#9a3412}
 /* MA badges */
 .ma-badge{font-size:9px;font-weight:600;display:block;margin-top:2px;white-space:nowrap}
+/* Timing cells (v1.1 — joined from screener/latest.json) */
+.tmg-sweet{background:#dcfce7;color:#166534;font-weight:700}
+.tmg-warm{background:#fef9c3;color:#854d0e;font-weight:600}
+.tmg-cool{background:#f1f5f9;color:#64748b}
+.tmg-hot{background:#fed7aa;color:#9a3412;font-weight:700}
+.tmg-na{background:#f8fafc;color:#94a3b8}
+.tmg-bull-strong{color:#166534;font-weight:700}
+.tmg-bull{color:#15803D;font-weight:600}
+.tmg-mid{color:#64748b}
+.tmg-weak{color:#94a3b8}
+.qichi-banner{background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border:1px solid #f59e0b;border-radius:8px;padding:8px 14px;margin:0 0 12px 0;font-size:11px;color:#92400e;display:flex;align-items:center;gap:8px}
+.qichi-banner.hidden{display:none}
+.qichi-banner b{font-weight:700}
 /* Takeaway card */
 /* Loading / error states */
 .state-msg{padding:40px 24px;text-align:center;color:#94a3b8;font-size:13px;line-height:1.8}
@@ -170,8 +183,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 <div class="hero">
   <div class="hero-inner">
     <div>
-      <div class="hero-h1">DD Screener — S 級護城河 × QGM MLB</div>
-      <div class="hero-sub">98 檔 DD universe 套 S 級護城河（≥ 9.5/10）+ 護城河 ↑/→ + QGM MLB 5 條件（FCF/ROIC/EPS/PEG/D/E）</div>
+      <div class="hero-h1">DD Screener — S 級護城河 × QGM MLB × 起漲點</div>
+      <div class="hero-sub">DD universe 套 S 級護城河（≥ 9.5/10）+ 護城河 ↑/→ + QGM MLB 5 條件（FCF/ROIC/EPS/PEG/D/E）+ 起漲點 timing（距 ATH / 距 50DMA / RS — 與 Flow ATH Hunter 同源）</div>
     </div>
     <div class="hero-badge" id="hero-badge"><strong>載入中...</strong></div>
   </div>
@@ -197,6 +210,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <span class="filter-label">Preset</span>
       <span class="chip active" data-filter="preset" data-value="MLB">[QGM MLB]</span>
       <span class="chip" data-filter="preset" data-value="Custom">[Custom]</span>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label">時機</span>
+      <span class="chip active" data-filter="timing" data-value="any">[Any]</span>
+      <span class="chip" data-filter="timing" data-value="qichi" title="起漲點：距ATH ∈ [-7%, 0%] ∩ ma50 ∈ [0%, +5%] ∩ RS ≥ 80">[起漲點]</span>
     </div>
     <div class="filter-group" style="margin-left:auto">
       <span class="filter-label">查 ticker</span>
@@ -250,6 +268,11 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <div class="search-panel-body" id="search-panel-body"></div>
   </div>
 
+  <!-- 起漲點 banner — shows when timing chip is active -->
+  <div class="qichi-banner hidden" id="qichi-banner">
+    🎯 <b>起漲點 模式</b>：距ATH ∈ [-7%, 0%] ∩ 距50DMA ∈ [0%, +5%] ∩ RS ≥ 80。資料源 <code>/screener/latest.json</code>（每日 06:00 TPE 更新，與 Flow ATH Hunter 同源）。非美股（TW/JP/EU）無 timing 資料自動排除。
+  </div>
+
   <div class="tab-bar-wrap">
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="tab-5">完全符合 (<span id="cnt-5">—</span>)</button>
@@ -274,11 +297,21 @@ var state = {
   moat:    'S',      // S | A | B | C | All
   dir:     'updown', // updown | up | any
   preset:  'MLB',    // MLB | Custom
+  timing:  'any',    // any | qichi (起漲點)
   customThresholds: { fcf: 10, roic: 15, eps2y: 15, peg: 2.0, de: 0.7 },
   customSOnly: true,
   sortKey: null,     // null = default order (pass_count → moat → ev5y); else column key
   sortDir: 'desc',   // 'asc' | 'desc'
   searchQuery: ''    // ticker substring lookup; bypasses chip filters
+};
+
+// 起漲點 thresholds (v1 骨感版 — 上線一週後依名單長度調整)
+var QICHI_THRESHOLDS = {
+  dist_52w_high_min: -7,  // dist_52w_high_pct ∈ [-7, 0]
+  dist_52w_high_max: 0,
+  ma50_min: 0,            // ma50_pct ∈ [0, +5]
+  ma50_max: 5,
+  rs_min: 80              // rs_score ≥ 80
 };
 
 // Raw data from latest.json
@@ -348,6 +381,23 @@ function dirFilter(stock) {
   return true; // any
 }
 
+function qichiPass(stock) {
+  // 起漲點 = 距ATH ∈ [-7, 0] ∩ 距50DMA ∈ [0, +5] ∩ RS ≥ 80.
+  // Tickers with no timing block (non-US: TW/JP/EU) are filtered out — we
+  // can't claim a 起漲點 without screener data.
+  if (state.timing !== 'qichi') return true;
+  var t = stock.timing;
+  if (!t) return false;
+  var d = t.dist_52w_high_pct, m = t.ma50_pct, r = t.rs_score;
+  if (d === null || d === undefined) return false;
+  if (m === null || m === undefined) return false;
+  if (r === null || r === undefined) return false;
+  if (d < QICHI_THRESHOLDS.dist_52w_high_min || d > QICHI_THRESHOLDS.dist_52w_high_max) return false;
+  if (m < QICHI_THRESHOLDS.ma50_min || m > QICHI_THRESHOLDS.ma50_max) return false;
+  if (r < QICHI_THRESHOLDS.rs_min) return false;
+  return true;
+}
+
 function applyFilters(stocks) {
   // Custom S-Only is a separate score-based override (>=9.5) used only in
   // Custom preset; the Moat chip is ignored in that mode for clarity.
@@ -360,6 +410,7 @@ function applyFilters(stocks) {
       return false;
     }
     if (!dirFilter(s)) return false;
+    if (!qichiPass(s)) return false;
     return true;
   });
 }
@@ -404,6 +455,42 @@ function cellStyle(flag) {
   return flag ? 'background:#dcfce7;color:#166534' : 'background:#fee2e2;color:#dc2626';
 }
 
+// Timing cell formatters (v1.1) — colour bands aligned with 起漲點 sweet spots.
+// distATH: 0 = at high; negative = below. Sweet spot [-7, 0]; cool [-15, -7];
+//          deep [-∞, -15] = grey; above ATH = orange (extended).
+function fmtDistAth(v) {
+  if (v === null || v === undefined) return '<td class="tmg-na">—</td>';
+  var cls;
+  if (v > 2) cls = 'tmg-hot';
+  else if (v >= -7) cls = 'tmg-sweet';
+  else if (v >= -15) cls = 'tmg-warm';
+  else cls = 'tmg-cool';
+  var sign = v > 0 ? '+' : (v < 0 ? '−' : '');
+  return '<td class="' + cls + '">' + sign + Math.abs(v).toFixed(1) + '%</td>';
+}
+// ma50_pct: 0 = on MA; positive = above. Sweet spot [0, +5]; ok [+5, +15];
+//           extended [+15, ∞]; below 50DMA = grey (broken trend).
+function fmtMa50(v) {
+  if (v === null || v === undefined) return '<td class="tmg-na">—</td>';
+  var cls;
+  if (v < 0) cls = 'tmg-cool';
+  else if (v <= 5) cls = 'tmg-sweet';
+  else if (v <= 15) cls = 'tmg-warm';
+  else cls = 'tmg-hot';
+  var sign = v > 0 ? '+' : (v < 0 ? '−' : '');
+  return '<td class="' + cls + '">' + sign + Math.abs(v).toFixed(1) + '%</td>';
+}
+// rs_score: 0-100 percentile rank vs SPY. ≥80 strong; ≥60 ok; <60 weak.
+function fmtRs(v) {
+  if (v === null || v === undefined) return '<td class="tmg-na">—</td>';
+  var cls;
+  if (v >= 80) cls = 'tmg-bull-strong';
+  else if (v >= 60) cls = 'tmg-bull';
+  else if (v >= 40) cls = 'tmg-mid';
+  else cls = 'tmg-weak';
+  return '<td class="' + cls + '">' + v.toFixed(0) + '</td>';
+}
+
 function fmtVal(v, unit, decimals) {
   if (v === null || v === undefined) return '—';
   var d = typeof decimals === 'number' ? decimals : 1;
@@ -431,13 +518,26 @@ function _thSortable(label, key, opts) {
   return '<th class="' + cls + '" data-sort-key="' + key + '"' + titleAttr + '>' + label + ind + '</th>';
 }
 
+function _pluck(stock, key) {
+  // Support dotted paths (e.g. "timing.dist_52w_high_pct") so the new v1.1
+  // timing columns can sort without flattening the nested block.
+  if (key.indexOf('.') === -1) return stock[key];
+  var parts = key.split('.');
+  var v = stock;
+  for (var i = 0; i < parts.length; i++) {
+    if (v === null || v === undefined) return undefined;
+    v = v[parts[i]];
+  }
+  return v;
+}
+
 function _sortStocks(stocks) {
   if (!state.sortKey) return stocks;  // honour caller's default order
   var key = state.sortKey;
   var dir = state.sortDir === 'asc' ? 1 : -1;
   return stocks.slice().sort(function(a, b) {
-    var av = a[key];
-    var bv = b[key];
+    var av = _pluck(a, key);
+    var bv = _pluck(b, key);
     // null/undefined always sink to bottom regardless of direction
     var aNull = av === null || av === undefined;
     var bNull = bv === null || bv === undefined;
@@ -474,6 +574,9 @@ function buildTable(stocks) {
     _thSortable('通過', 'pass_count') +
     _thSortable('5Y IRR', 'ev5y_pct', {title: 'DCA §4 機率加權年化 IRR（5 年期）— 與 /research/ 表格同源'}) +
     '<th>MA</th>' +
+    _thSortable('距ATH', 'timing.dist_52w_high_pct', {title: '距 52w high (還原權息) — 起漲點 sweet spot ∈ [-7%, 0%]'}) +
+    _thSortable('vs50DMA', 'timing.ma50_pct', {title: '距 50DMA — 起漲點 sweet spot ∈ [0%, +5%]'}) +
+    _thSortable('RS', 'timing.rs_score', {title: 'RS rating vs SPY (0-100 percentile) — 起漲點 門檻 ≥ 80'}) +
     '<th>Links</th>' +
     '</tr></thead><tbody>';
 
@@ -530,6 +633,7 @@ function buildTable(stocks) {
     var moatTrend = s.moat_trend || '→';
     var moatHtml = moatGrade + ' ' + moatScore + ' ' + moatTrend;
 
+    var tmg = s.timing || {};
     return '<tr>' +
       '<td class="left">' +
         '<span class="ticker-nm">' + s.ticker + '</span>' +
@@ -540,6 +644,9 @@ function buildTable(stocks) {
       '<td>' + passLabel(pc) + '</td>' +
       '<td>' + irrHtml + '</td>' +
       '<td>' + maBadge(s.ma) + '</td>' +
+      fmtDistAth(tmg.dist_52w_high_pct) +
+      fmtMa50(tmg.ma50_pct) +
+      fmtRs(tmg.rs_score) +
       '<td>' + ddLink + dcaLink + '</td>' +
       '</tr>';
   }).join('');
@@ -649,6 +756,7 @@ document.querySelectorAll('.chip[data-filter]').forEach(function(chip) {
     if (filterName === 'moat')   state.moat   = val;
     if (filterName === 'dir')    state.dir    = val;
     if (filterName === 'preset') state.preset = val;
+    if (filterName === 'timing') state.timing = val;
 
     // Show/hide custom panel
     var panel = document.getElementById('custom-panel');
@@ -657,6 +765,15 @@ document.querySelectorAll('.chip[data-filter]').forEach(function(chip) {
         panel.classList.remove('hidden');
       } else {
         panel.classList.add('hidden');
+      }
+    }
+
+    // Show/hide 起漲點 banner
+    if (filterName === 'timing') {
+      var banner = document.getElementById('qichi-banner');
+      if (banner) {
+        if (val === 'qichi') banner.classList.remove('hidden');
+        else banner.classList.add('hidden');
       }
     }
 
