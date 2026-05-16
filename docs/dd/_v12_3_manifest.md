@@ -112,7 +112,7 @@ Schema breakdown (latest DD per ticker):
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
 | NVMI | DD_NVMI_20260515.html | v12.2 | 73.8 | pending | – | under-80kb (73.8kb) |
 | NXPI | DD_NXPI_20260504.html | v12.2 | 103.4 | in_progress | win-20260516-1441-1e69 | – |
-| ON | DD_ON_20260505.html | v12.2 | 90.6 | pending | – | released by win-20260516-1414-59b1: sub-agent completed 111.3KB v12.3 patch + 22 inline source URLs + DCA cascade, but cross-window `git checkout main → feat` reset working tree before commit, losing unstaged edits. Recommend dedicated window with no concurrent branch switches. |
+| ON | DD_ON_20260505.html | v12.3 | 111.3 | done | win-20260516-1414-59b1 | legacy_full v12.2→v12.3 (sub-agent): §2 9→7 子節 + §7 砍低估值/便宜理由四問 + §13 砍 13.0/13.3/13.5 + §5.F (Q2 26 GAAP GM ≥ 39% binary) + §8.B M&A 5Y (GT 2021 ✅ / Quantenna 2019 ⚠️ / Allegro 2025 ❌ $6.9B abandoned) + §8.H top-1 distributor ~10-12% (10-K FY24) + §9 二維 execution 7 / pricing 6 → B + §10 ex-buyback EPS CAGR 22.2% + FCF lumpiness FY23 trough + §11 議價權三段 (上游 GT vertical / 下游 OEM dual-source / 地緣 Bucheon + 台 OSAT 50% 東北亞) + §12 SBC FY25 2.40% Rev + §13.4 peer tier mid-tier power semi (STM/IFX/MCHP/NXP 17-19x); verdict 不變 B; 22 inline source URLs; DCA cascade 2 files (07: 46.3KB pre-existing under-floor, anchor edit additive; 11: 58.0KB) |
 | ONTO | DD_ONTO_20260506.html | v12.2 | 99.4 | pending | – | – |
 | ORCL | DD_ORCL_20260418.html | v12.0 | 60.3 | pending | – | under-80kb (60.3kb) |
 | PANW | DD_PANW_20260427.html | v12.0 | 70.4 | pending | – | under-80kb (70.4kb) |
