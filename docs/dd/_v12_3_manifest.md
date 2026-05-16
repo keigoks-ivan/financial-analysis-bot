@@ -85,7 +85,7 @@ Schema breakdown (latest DD per ticker):
 | GLW | DD_GLW_20260429.html | v12.1 | 70.5 | pending | – | under-80kb (70.5kb) |
 | GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | in_progress | win-20260516-1753-881c | re-claimed after 2x release |
 | GRAB | DD_GRAB_20260505.html | v12.2 | 65.7 | pending | – | under-80kb (65.7kb) |
-| HWM | DD_HWM_20260418.html | v12.0 | 76.6 | pending | – | under-80kb (76.6kb) |
+| HWM | DD_HWM_20260418.html | v12.0 | 76.6 | in_progress | win-20260516-1754-b2de | under-80kb (76.6kb) |
 | INTC | DD_INTC_20260427.html | v12.3 | 103.0 | done | win-20260516-1620-67d3 | legacy_full v12.0→v12.3 (sub-agent): §2 9→7 (A→B 併入) + §2.E QC-29 4 情境砍 stress 1/4→0/2 + §7 砍 4Q + §13 砍 13.0/13.3/13.5 + §5.F 18A external customer ≥ 5K wafers/mo by Q4 2026 OR FY27 Foundry external rev ≥ $5B binary + §5.B sourced floor 2Y/5Y/10Y + §5.C ⚡🔥🐢 + §8.B 5Y M&A 8 deals (Altera divested $4.46B Silver Lake / Mobileye 2017 spinoff / Habana $2B / Tower abandoned ❌ / Granulate 2022 / NetSpeed 2018 / Moovit 2020 / NAND 2020 sold) + §8.H Dell 19%/Lenovo 11%/HP 10% (10-K) + dual-track in-house ARM risk (Graviton/Cobalt/Axion/MTIA) + §9 二維 execution 5 / pricing 4 (both ↓) + QC-23 (🟡 AMD/ARM / 🔴 NVDA AI 取代 + hyperscaler in-house / ⛔ 18A 失敗 → foundry rebuild 失敗) + §10 peer comp (AMD/TSMC/NVDA/QCOM) + ex-buyback EPS CAGR + FCF lumpiness severely lumpy (5Y rolling -$2B variance 5.5x) + §11 議價權三段 (上游 ASML EUV / 下游 PC OEM + hyperscaler / 地緣 CHIPS Act $8.5B + China export) + §12 M&A cumulative -$10.5B losses (Altera -$8B / Habana -$1.5B / Granulate -$650M / Tower -$353M) + SBC ex-EPS gap 13-16% ⚠️ + §13.4 IDM+Foundry hybrid "no ideal peer" segment-weighted FPE 18-20x; verdict 不變 C (avoid); DCA cascade 1 file clean (59.8 KB, 0 broken anchor) |
 | ISRG | DD_ISRG_20260418.html | v12.0 | 62.2 | pending | – | under-80kb (62.2kb) |
 | JBL | DD_JBL_20260418.html | v12.0 | 53.7 | pending | – | under-80kb (53.7kb) |
@@ -101,9 +101,9 @@ Schema breakdown (latest DD per ticker):
 | META | DD_META_20260516.html | v12.3 | 75.6 | skip | – | in flight (other window) |
 | MOD | DD_MOD_20260427.html | v12.0 | 65.8 | pending | – | under-80kb (65.8kb) |
 | MPWR | DD_MPWR_20260418.html | v12.0 | 67.5 | pending | – | under-80kb (67.5kb) |
-| MRVL | DD_MRVL_20260418.html | v12.0 | 73.8 | pending | – | under-80kb (73.8kb) |
+| MRVL | DD_MRVL_20260418.html | v12.0 | 73.8 | in_progress | win-20260516-1754-b2de | under-80kb (73.8kb) |
 | MSFT | DD_MSFT_20260515.html | v12.3 | 86.7 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_MSFT_20260507 (QC-29 3/3 stress→v12.3 stress 2/2) + v12.3 reconciliation block (under-floor remediation 47.2→50.0 KB) |
-| MU | DD_MU_20260418.html | v12.0 | 71.3 | pending | – | under-80kb (71.3kb) |
+| MU | DD_MU_20260418.html | v12.0 | 71.3 | in_progress | win-20260516-1754-b2de | under-80kb (71.3kb) |
 | NET | DD_NET_20260515.html | v12.3 | 77.5 | done | win-20260516-1400-1792 | dca-only: 2 files audited, 0 broken anchor; DCA_NET_20260508 (49.1KB) pre-existing under-floor, unedited |
 | NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_NFLX_20260511 (QC-29 0/4 stress→v12.3 stress 2/2) |
 | NKE | DD_NKE_20260516.html | v12.3 | 80.7 | done | win-20260516-1358-e570 | dca-cascade clean (2 DCAs, 0 broken anchor) |
