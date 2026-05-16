@@ -40,12 +40,12 @@ Schema breakdown (latest DD per ticker):
 | 3661TW | DD_3661TW_20260514.html | v12.2 | 84.3 | pending | – | – |
 | 6146T | DD_6146T_20260420.html | v12.0 | 23.5 | pending | – | under-80kb (23.5kb) |
 | 6857T | DD_6857T_20260420.html | v12.0 | 24.5 | pending | – | under-80kb (24.5kb) |
-| AAPL | DD_AAPL_20260504.html | v12.2 | 81.4 | pending | – | – |
+| AAPL | DD_AAPL_20260504.html | v12.2 | 81.4 | in_progress | win-20260516-1403-6a45 | – |
 | ADI | DD_ADI_20260427.html | v12.1 | 62.6 | pending | – | under-80kb (62.6kb) |
 | AENA | DD_AENA_20260428.html | v12.1 | 80.1 | pending | – | – |
-| ALAB | DD_ALAB_20260506.html | v12.2 | 93.7 | pending | – | – |
+| ALAB | DD_ALAB_20260506.html | v12.2 | 93.7 | in_progress | win-20260516-1403-6a45 | – |
 | AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 1 anchor fix in DCA_AMAT_20260511 (§13.5 → v12.0 source attribution + v12.3 §13.4 peer cross-ref) |
-| AMD | DD_AMD_20260506.html | v12.2 | 82.9 | pending | – | – |
+| AMD | DD_AMD_20260506.html | v12.2 | 82.9 | in_progress | win-20260516-1403-6a45 | – |
 | AMZN | DD_AMZN_20260430.html | v12.1 | 97.6 | pending | – | – |
 | ANET | DD_ANET_20260506.html | v12.2 | 79.1 | pending | – | under-80kb (79.1kb) |
 | APH | DD_APH_20260504.html | v12.2 | 91.9 | pending | – | – |
@@ -106,7 +106,7 @@ Schema breakdown (latest DD per ticker):
 | MU | DD_MU_20260418.html | v12.0 | 71.3 | pending | – | under-80kb (71.3kb) |
 | NET | DD_NET_20260515.html | v12.3 | 77.5 | in_progress | win-20260516-1400-1792 | under-80kb (77.5kb) |
 | NFLX | DD_NFLX_20260516.html | v12.3 | 86.2 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_NFLX_20260511 (QC-29 0/4 stress→v12.3 stress 2/2) |
-| NKE | DD_NKE_20260516.html | v12.3 | 80.7 | in_progress | win-20260516-1358-e570 | – |
+| NKE | DD_NKE_20260516.html | v12.3 | 80.7 | done | win-20260516-1358-e570 | dca-cascade clean (2 DCAs, 0 broken anchor) |
 | NOW | DD_NOW_20260427.html | v12.0 | 80.4 | pending | – | – |
 | NU | DD_NU_20260515.html | v12.3 | 78.0 | in_progress | win-20260516-1400-1792 | under-80kb (78.0kb) |
 | NVDA | DD_NVDA_20260418.html | v12.0 | 55.1 | pending | – | under-80kb (55.1kb) |
@@ -139,7 +139,7 @@ Schema breakdown (latest DD per ticker):
 | TSM | DD_TSM_20260323.html | pre-v12 | 48.4 | pending | – | pre-v12-heavy; under-80kb (48.4kb) |
 | TXN | DD_TXN_20260504.html | v12.2 | 78.7 | pending | – | under-80kb (78.7kb) |
 | UBER | DD_UBER_20260418.html | v12.0 | 63.1 | pending | – | under-80kb (63.1kb) |
-| V | DD_V_20260516.html | v12.3 | 98.5 | in_progress | win-20260516-1358-e570 | – |
-| VIK | DD_VIK_20260515.html | v12.3 | 73.8 | in_progress | win-20260516-1358-e570 | under-80kb (73.8kb) |
+| V | DD_V_20260516.html | v12.3 | 98.5 | done | win-20260516-1358-e570 | dca-cascade clean (1 DCA, 0 broken anchor); dca 51.9kb |
+| VIK | DD_VIK_20260515.html | v12.3 | 73.8 | done | win-20260516-1358-e570 | under-80kb (73.8kb); dca-cascade 3 DCAs, 1 anchor fix in 20260515 (QC-29 4 情境 → v12.3 base+bear 2 情境); dca-under-50kb (48.96kb) pre-existing |
 | VRT | DD_VRT_20260425.html | v12.0 | 96.7 | pending | – | – |
 | WMT | DD_WMT_20260427.html | v12.1 | 56.2 | pending | – | under-80kb (56.2kb) |
