@@ -138,6 +138,14 @@
   .b-ath { background: var(--success-bg); color: var(--success-text); }
   .b-review { background: var(--warn-bg); color: var(--warn-text); }
   .b-timing { background: var(--info-bg); color: var(--info-text); }
+  /* QICHI 起漲點 — DD-covered × screener-active intersection (PR3) */
+  .b-qichi { background: #fde68a; color: #92400e; font-weight: 700; }
+  .action-item .dd-pill {
+    font-size: 10px; padding: 1px 6px; border-radius: 4px;
+    background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;
+    text-decoration: none; margin-left: 6px; white-space: nowrap;
+  }
+  .action-item .dd-pill:hover { background: #dbeafe; }
   .b-base { background: var(--success-bg); color: var(--success-text); }
   .b-cont { background: var(--warn-bg); color: var(--warn-text); }
   .b-ext { background: var(--danger-bg); color: var(--danger-text); }
@@ -388,10 +396,24 @@ const LATEST_URL       = '/screener/latest.json';
 const FUNDAMENTALS_URL = '/screener/fundamentals.json';
 const RS_PEAKS_URL     = '/screener/rs_peaks.json';
 const SIX_STATE_URL    = '/six-state/state.json';
+// PR3: read DD universe for 起漲點 intersection + 📄 DD pill on action items.
+const DD_SCREENER_URL  = '/dd-screener/latest.json';
 
 const TRIGGER_DRAWDOWN_PCT = -7.0;
 const TRIGGER_STATES = new Set(['correction', 'under_pressure']);
 const MAX_ACTIONS = 5;
+
+// 起漲點 (qichi) thresholds — must stay in lock-step with dd-screener/index.html
+// state.QICHI_THRESHOLDS so Cockpit's QICHI items == DD Screener's 起漲點 chip.
+const QICHI = {
+  dist_min: -7, dist_max: 0,   // dist_52w_high_pct ∈ [-7, 0]
+  ma50_min: 0,  ma50_max: 5,   // ma50_pct ∈ [0, +5]
+  rs_min: 80,                  // rs_score ≥ 80
+  moat_grade: 'S',             // S only
+};
+
+// DD universe map (built in main()) — {ticker: {dd_path, moat_grade, timing}}
+const DD_BY_TICKER = Object.create(null);
 
 // ---------- classify: keep in sync with ath-hunter.html ----------
 function calcQCheck(stock, fund) {
@@ -462,11 +484,43 @@ async function fetchPrevHistory(todayIso) {
   return null;
 }
 
+// PR3: scan DD universe for 起漲點 candidates. Highest-conviction action type
+// — quality-vetted (S moat + DD-covered) + at the precise timing sweet spot.
+function buildQichiActions() {
+  const items = [];
+  for (const ticker of Object.keys(DD_BY_TICKER)) {
+    const e = DD_BY_TICKER[ticker];
+    if (!e.timing) continue;
+    if (e.moat_grade !== QICHI.moat_grade) continue;
+    const t = e.timing;
+    const d = t.dist_52w_high_pct, m = t.ma50_pct, r = t.rs_score;
+    if (d == null || m == null || r == null) continue;
+    if (d < QICHI.dist_min || d > QICHI.dist_max) continue;
+    if (m < QICHI.ma50_min || m > QICHI.ma50_max) continue;
+    if (r < QICHI.rs_min) continue;
+    items.push({
+      type: 'QICHI',
+      ticker,
+      desc: `🎯 起漲點 · dist ${d.toFixed(1)}% / ma50 +${m.toFixed(1)}% / RS ${r.toFixed(0)} · S 級護城河`,
+      link: `ath-hunter.html#${ticker}`,
+      priority: 0,
+      _rsScore: r,
+    });
+  }
+  items.sort((a, b) => (b._rsScore || 0) - (a._rsScore || 0));
+  return items;
+}
+
 function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
   const items = [];
   const dd = spy && spy.drawdown_52w_high_pct;
   const inCorrection = (dd != null && dd <= TRIGGER_DRAWDOWN_PCT)
                     || (spy && TRIGGER_STATES.has(spy.state));
+
+  // 0) QICHI — DD-covered × 起漲點 intersection. Top priority because this
+  //    is the highest-conviction action: quality + timing both vetted.
+  //    May be empty (strict v1 thresholds — typically 0-5 hits).
+  for (const it of buildQichiActions()) items.push(it);
 
   // 1) RS new high + accelerating leaders — only when SPY in correction.
   // 平時 rs-board.html 是 dormant 的，往那裡送條目等於壞掉的連結。
@@ -481,7 +535,7 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
             ticker: t,
             desc: `RS 創 history 新高 · accelerating · rs_score ${stock.rs_score.toFixed(0)}`,
             link: 'rs-board.html',
-            priority: 1,
+            priority: 2,
             _rsScore: stock.rs_score,
           });
         }
@@ -491,8 +545,8 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
     for (const it of rsItems) items.push(it);
   }
 
-  // 2) Fresh Breakout (Tier F) — 黃金切入點，priority 0（高於 RS、ATH）。
-  // 不論市場狀態都顯示，因為這是最稀有也最高訊號的事件。
+  // 2) Fresh Breakout (Tier F) — 黃金切入點。priority 1 below QICHI but
+  //    above generic ATH new entries. 不論市場狀態都顯示。
   if (prevBuckets) {
     const prevF = new Set(prevBuckets.F || []);
     for (const ticker of todayBuckets.F || []) {
@@ -502,7 +556,7 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
           ticker,
           desc: `🌱 Tier F 新鮮突破 · 黃金切入點`,
           link: `ath-hunter.html#${ticker}`,
-          priority: 0,
+          priority: 1,
         });
       }
     }
@@ -522,7 +576,7 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
             ticker,
             desc: `新進 Tier ${t} · 通過 Q✓`,
             link: `ath-hunter.html#${ticker}`,
-            priority: 2,
+            priority: 3,
           });
         }
       }
@@ -531,6 +585,14 @@ function buildActionQueue(todayBuckets, prevBuckets, peaks, spy) {
 
   items.sort((a, b) => a.priority - b.priority);
   return items.slice(0, MAX_ACTIONS);
+}
+
+// PR3: 📄 DD pill on action items when ticker is in DD universe. Lets user
+// jump from action queue → full DD thesis in one click.
+function ddPill(ticker) {
+  const e = DD_BY_TICKER[ticker];
+  if (!e || !e.dd_path) return '';
+  return ` <a class="dd-pill" href="${e.dd_path}" target="_blank" title="開啟此 ticker 的完整 DD 報告">📄 DD</a>`;
 }
 
 function bucketRankings(rankings, fundamentals) {
@@ -586,12 +648,12 @@ function renderActions(items) {
       <div class="action-item">
         <div class="action-item-left">
           <span class="badge b-${a.type.toLowerCase()}">${a.type}</span>
-          <span><strong>${a.ticker}</strong> · ${a.desc}</span>
+          <span><strong>${a.ticker}</strong>${ddPill(a.ticker)} · ${a.desc}</span>
         </div>
         <a href="${a.link}">→ 處理</a>
       </div>`).join('');
   }
-  foot.textContent = 'REVIEW(持倉 thesis 60 天 stale)+ TIMING(持倉個股回踩 21DMA)兩 type 等 IBKR Flex 接入後自動偵測。';
+  foot.textContent = 'QICHI = DD-covered × 起漲點 交集（dist [-7%, 0%] ∩ ma50 [0%, +5%] ∩ RS ≥ 80 ∩ S moat），最高 conviction。REVIEW(持倉 thesis 60 天 stale)+ TIMING(持倉個股回踩 21DMA)兩 type 等 IBKR Flex 接入後自動偵測。';
 }
 
 function renderAthCard(b) {
@@ -671,12 +733,13 @@ function renderQqqTrack(sixState, spy) {
 
 async function main() {
   try {
-    const [mRes, sRes, fRes, pRes, qRes] = await Promise.all([
+    const [mRes, sRes, fRes, pRes, qRes, ddRes] = await Promise.all([
       fetch(MARKET_STATE_URL),
       fetch(LATEST_URL),
       fetch(FUNDAMENTALS_URL).catch(() => null),
       fetch(RS_PEAKS_URL).catch(() => null),
       fetch(SIX_STATE_URL).catch(() => null),
+      fetch(DD_SCREENER_URL).catch(() => null),  // PR3 — DD overlay
     ]);
     if (!mRes.ok) throw new Error(`market_state fetch failed: ${mRes.status}`);
     if (!sRes.ok) throw new Error(`latest fetch failed: ${sRes.status}`);
@@ -685,6 +748,23 @@ async function main() {
     const f = (fRes && fRes.ok) ? await fRes.json() : { fundamentals: {} };
     const p = (pRes && pRes.ok) ? await pRes.json() : null;
     const q = (qRes && qRes.ok) ? await qRes.json() : null;
+
+    // PR3: hydrate DD universe → DD_BY_TICKER (drives QICHI items + 📄 DD pill).
+    // Graceful — if dd-screener data missing, QICHI section is empty and pills
+    // are hidden, but everything else still works.
+    if (ddRes && ddRes.ok) {
+      try {
+        const ddData = await ddRes.json();
+        for (const st of (ddData.stocks || [])) {
+          if (!st.ticker) continue;
+          DD_BY_TICKER[st.ticker] = {
+            dd_path: st.dd_path || null,
+            moat_grade: st.moat_grade || null,
+            timing: st.timing || null,
+          };
+        }
+      } catch (e) { /* keep DD_BY_TICKER empty */ }
+    }
 
     const spy = (m.indices && m.indices.SPY) || {};
     const rankings = s.rankings || s.data || [];
