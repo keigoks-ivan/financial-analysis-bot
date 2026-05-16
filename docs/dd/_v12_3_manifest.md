@@ -116,9 +116,9 @@ Schema breakdown (latest DD per ticker):
 | ONTO | DD_ONTO_20260506.html | v12.2 | 99.4 | pending | – | – |
 | ORCL | DD_ORCL_20260418.html | v12.0 | 60.3 | pending | – | under-80kb (60.3kb) |
 | PANW | DD_PANW_20260427.html | v12.0 | 70.4 | pending | – | under-80kb (70.4kb) |
-| PLTR | DD_PLTR_20260505.html | v12.2 | 82.6 | pending | – | – |
+| PLTR | DD_PLTR_20260505.html | v12.2 | 82.6 | in_progress | win-20260516-1447-0ce8 | – |
 | PYPL | DD_PYPL_20260323.html | pre-v12 | 54.4 | pending | – | pre-v12-heavy; under-80kb (54.4kb) |
-| QCOM | DD_QCOM_20260504.html | v12.2 | 81.6 | pending | – | – |
+| QCOM | DD_QCOM_20260504.html | v12.2 | 81.6 | in_progress | win-20260516-1447-0ce8 | – |
 | RCL | DD_RCL_20260508.html | v12.2 | 98.0 | pending | – | – |
 | RMBS | DD_RMBS_20260427.html | v12.0 | 73.4 | pending | – | under-80kb (73.4kb) |
 | RMS | DD_RMS_20260418.html | v12.0 | 99.2 | pending | – | – |
@@ -127,7 +127,7 @@ Schema breakdown (latest DD per ticker):
 | SBUX | DD_SBUX_20260429.html | v12.1 | 90.2 | pending | – | – |
 | SE | DD_SE_20260513.html | v12.2 | 87.2 | pending | – | – |
 | SIMO | DD_SIMO_20260427.html | v12.1 | 69.2 | pending | – | under-80kb (69.2kb) |
-| SNDK | DD_SNDK_20260504.html | v12.2 | 96.7 | pending | – | – |
+| SNDK | DD_SNDK_20260504.html | v12.2 | 96.7 | in_progress | win-20260516-1447-0ce8 | – |
 | SPOT | DD_SPOT_20260429.html | v12.1 | 87.8 | pending | – | – |
 | STM | DD_STM_20260504.html | v12.2 | 70.3 | pending | – | under-80kb (70.3kb) |
 | STRL | DD_STRL_20260505.html | v12.2 | 79.9 | pending | – | under-80kb (79.9kb) |
