@@ -33,7 +33,7 @@ Schema breakdown (latest DD per ticker):
 | 2308 | DD_2308_20260325.html | pre-v12 | 53.4 | pending | – | pre-v12-heavy; under-80kb (53.4kb) |
 | 2308TW | DD_2308TW_20260514.html | v12.2 | 84.0 | pending | – | – |
 | 2330 | DD_2330_20260409.html | pre-v12 | 53.0 | pending | – | pre-v12-heavy; under-80kb (53.0kb) |
-| 2330TW | DD_2330TW_20260514.html | v12.3 | 82.4 | in_progress | win-20260516-1349-cd3c | – |
+| 2330TW | DD_2330TW_20260514.html | v12.3 | 82.4 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 0 broken anchor; DCA_2330TW_20260506 (49.8KB) pre-existing under-floor, unedited |
 | 2383TW | DD_2383TW_20260418.html | v12.0 | 73.2 | pending | – | under-80kb (73.2kb) |
 | 2454 | DD_2454_20260504.html | v12.2 | 59.8 | pending | – | under-80kb (59.8kb) |
 | 3017 | DD_3017_20260504.html | v12.2 | 80.5 | pending | – | – |
@@ -44,14 +44,14 @@ Schema breakdown (latest DD per ticker):
 | ADI | DD_ADI_20260427.html | v12.1 | 62.6 | pending | – | under-80kb (62.6kb) |
 | AENA | DD_AENA_20260428.html | v12.1 | 80.1 | pending | – | – |
 | ALAB | DD_ALAB_20260506.html | v12.2 | 93.7 | pending | – | – |
-| AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | in_progress | win-20260516-1349-cd3c | – |
+| AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 1 anchor fix in DCA_AMAT_20260511 (§13.5 → v12.0 source attribution + v12.3 §13.4 peer cross-ref) |
 | AMD | DD_AMD_20260506.html | v12.2 | 82.9 | pending | – | – |
 | AMZN | DD_AMZN_20260430.html | v12.1 | 97.6 | pending | – | – |
 | ANET | DD_ANET_20260506.html | v12.2 | 79.1 | pending | – | under-80kb (79.1kb) |
 | APH | DD_APH_20260504.html | v12.2 | 91.9 | pending | – | – |
 | APP | DD_APP_20260418.html | v12.0 | 61.7 | pending | – | under-80kb (61.7kb) |
 | ARM | DD_ARM_20260427.html | v12.1 | 78.4 | pending | – | under-80kb (78.4kb) |
-| ASML | DD_ASML_20260515.html | v12.3 | 100.6 | in_progress | win-20260516-1349-cd3c | – |
+| ASML | DD_ASML_20260515.html | v12.3 | 100.6 | done | win-20260516-1349-cd3c | dca-only: 2 files audited, 0 broken anchor |
 | AVGO | DD_AVGO_20260418.html | v12.0 | 56.3 | pending | – | under-80kb (56.3kb) |
 | BE | DD_BE_20260429.html | v12.1 | 88.1 | pending | – | – |
 | BESI | DD_BESI_20260420.html | v12.0 | 30.4 | pending | – | under-80kb (30.4kb) |
