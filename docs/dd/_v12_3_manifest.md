@@ -53,7 +53,7 @@ Schema breakdown (latest DD per ticker):
 | ARM | DD_ARM_20260427.html | v12.1 | 78.4 | pending | – | under-80kb (78.4kb) |
 | ASML | DD_ASML_20260515.html | v12.3 | 100.6 | done | win-20260516-1349-cd3c | dca-only: 2 files audited, 0 broken anchor |
 | AVGO | DD_AVGO_20260418.html | v12.0 | 56.3 | pending | – | under-80kb (56.3kb) |
-| BE | DD_BE_20260429.html | v12.1 | 88.1 | pending | – | – |
+| BE | DD_BE_20260429.html | v12.1 | 88.1 | in_progress | win-20260516-1610-9762 | – |
 | BESI | DD_BESI_20260420.html | v12.0 | 30.4 | pending | – | under-80kb (30.4kb) |
 | BSX | DD_BSX_20260418.html | v12.0 | 102.2 | in_progress | win-20260516-1558-ceca | – |
 | BWXT | DD_BWXT_20260505.html | v12.2 | 61.9 | pending | – | under-80kb (61.9kb) |
@@ -125,10 +125,10 @@ Schema breakdown (latest DD per ticker):
 | ROK | DD_ROK_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
 | ROP | DD_ROP_20260330.html | pre-v12 | 91.4 | pending | – | pre-v12-heavy |
 | SBUX | DD_SBUX_20260429.html | v12.1 | 90.2 | pending | – | – |
-| SE | DD_SE_20260513.html | v12.2 | 87.2 | pending | – | – |
+| SE | DD_SE_20260513.html | v12.2 | 87.2 | in_progress | win-20260516-1610-9762 | – |
 | SIMO | DD_SIMO_20260427.html | v12.1 | 69.2 | pending | – | under-80kb (69.2kb) |
 | SNDK | DD_SNDK_20260504.html | v12.2 | 96.7 | in_progress | win-20260516-1555-c02c | legacy_full v12.2→v12.3 |
-| SPOT | DD_SPOT_20260429.html | v12.1 | 87.8 | pending | – | – |
+| SPOT | DD_SPOT_20260429.html | v12.1 | 87.8 | in_progress | win-20260516-1610-9762 | – |
 | STM | DD_STM_20260504.html | v12.2 | 70.3 | pending | – | under-80kb (70.3kb) |
 | STRL | DD_STRL_20260505.html | v12.2 | 79.9 | pending | – | under-80kb (79.9kb) |
 | STX | DD_STX_20260429.html | v12.1 | 63.1 | pending | – | under-80kb (63.1kb) |
