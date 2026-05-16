@@ -66,7 +66,7 @@ Schema breakdown (latest DD per ticker):
 | COHR | DD_COHR_20260418.html | v12.0 | 63.9 | pending | – | under-80kb (63.9kb) |
 | COST | DD_COST_20260427.html | v12.1 | 57.0 | pending | – | under-80kb (57.0kb) |
 | CRDO | DD_CRDO_20260516.html | v12.3 | 79.7 | skip | – | in flight (other window) |
-| CRM | DD_CRM_20260418.html | v12.0 | 65.4 | pending | – | under-80kb (65.4kb) |
+| CRM | DD_CRM_20260418.html | v12.0 | 65.4 | in_progress | win-20260516-1848-d9e8 | under-80kb (65.4kb); legacy_full v12.0→v12.3 |
 | CRWD | DD_CRWD_20260418.html | v12.0 | 60.2 | pending | – | under-80kb (60.2kb) |
 | CSCO | DD_CSCO_20260427.html | v12.0 | 54.8 | pending | – | under-80kb (54.8kb) |
 | DDOG | DD_DDOG_20260516.html | v12.3 | 78.4 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
