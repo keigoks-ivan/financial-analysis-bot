@@ -43,12 +43,12 @@ Schema breakdown (latest DD per ticker):
 | AAPL | DD_AAPL_20260504.html | v12.2 | 81.4 | pending | – | released by win-20260516-1403-6a45 (batch focus on ALAB) |
 | ADI | DD_ADI_20260427.html | v12.1 | 62.6 | pending | – | under-80kb (62.6kb) |
 | AENA | DD_AENA_20260428.html | v12.1 | 80.1 | pending | – | – |
-| ALAB | DD_ALAB_20260506.html | v12.2 | 93.7 | in_progress | win-20260516-1403-6a45 | – |
+| ALAB | DD_ALAB_20260506.html | v12.3 | 100.3 | done | win-20260516-1403-6a45 | legacy_full v12.2→v12.3: §2 D R:R 瘦身 + §7 砍低估值四問 + §13 砍 13.0/13.3/13.5 + §5.F single thing 新增 (FY27 Q3 新 hyperscaler 量產 binary event) + §8.H 客戶結構 (top-1 >70% / top-3 ~86% 引 FY25 10-K) + §9 F 二維 moat (execution 9 + pricing 9 → A) + §12 M&A 5Y track (aiXscale Photonics 2026-01 $74M) + SBC ex-EPS ⚠️ (FY24 59% IPO 後常態) + dd-meta moat_execution/pricing sub-scores; verdict 不變 B; DCA cascade 2 files (QC-29/0/4 + MA60/200/104w stress label 修正) |
 | AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 1 anchor fix in DCA_AMAT_20260511 (§13.5 → v12.0 source attribution + v12.3 §13.4 peer cross-ref) |
 | AMD | DD_AMD_20260506.html | v12.2 | 82.9 | pending | – | released by win-20260516-1403-6a45 (batch focus on ALAB) |
 | AMZN | DD_AMZN_20260430.html | v12.1 | 97.6 | pending | – | – |
 | ANET | DD_ANET_20260506.html | v12.2 | 79.1 | pending | – | under-80kb (79.1kb) |
-| APH | DD_APH_20260504.html | v12.2 | 91.9 | pending | – | – |
+| APH | DD_APH_20260504.html | v12.2 | 91.9 | in_progress | win-20260516-1413-083f | – |
 | APP | DD_APP_20260418.html | v12.0 | 61.7 | pending | – | under-80kb (61.7kb) |
 | ARM | DD_ARM_20260427.html | v12.1 | 78.4 | pending | – | under-80kb (78.4kb) |
 | ASML | DD_ASML_20260515.html | v12.3 | 100.6 | done | win-20260516-1349-cd3c | dca-only: 2 files audited, 0 broken anchor |
