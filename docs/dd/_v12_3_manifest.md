@@ -74,7 +74,7 @@ Schema breakdown (latest DD per ticker):
 | DIS | DD_DIS_20260516.html | v12.3 | 102.2 | skip | – | in flight (other window) |
 | EAT | DD_EAT_20260428.html | v12.1 | 81.7 | in_progress | win-20260516-1420-1db7 | – |
 | EBAY | DD_EBAY_20260516.html | v12.3 | 105.7 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca-under-50kb (49.1kb) pre-existing |
-| ETN | DD_ETN_20260506.html | v12.2 | 79.4 | pending | – | under-80kb (79.4kb) |
+| ETN | DD_ETN_20260506.html | v12.2 | 79.4 | in_progress | win-20260516-1626-64b8 | under-80kb (79.4kb) |
 | FICO | DD_FICO_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
 | FIX | DD_FIX_20260516.html | v12.3 | 87.8 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca 55.6kb |
 | FN | DD_FN_20260505.html | v12.2 | 73.2 | pending | – | under-80kb (73.2kb) |
@@ -130,14 +130,14 @@ Schema breakdown (latest DD per ticker):
 | SNDK | DD_SNDK_20260504.html | v12.3 | 107.4 | done | win-20260516-1555-c02c | legacy_full v12.2→v12.3 (sub-agent): §2 9→7 子節 + §7 砍低估值/便宜理由 + §13 砍 13.0/13.3/13.5 + §5.F NAND ASP ≥ +30% Q3 FY27 + BiCS10 量產 hyperscaler 認證 binary + §5.B sourced floor + §8.B 5Y M&A near-zero (post-spin Feb 2025, WDC era separate) + Kioxia 合併概率 25% + §8.H top-1 < 10% (10-K) + top-10 40% Q1 FY26 vs 53% YoY (10-Q 2025-11-07) diversifying + dual-track hyperscaler + cyclical risk + §9 二維 execution 6 / pricing 2 (NAND commodity, pricing power LOW) → composite ~5 + QC-23 (🟡 Micron/Samsung / 🔴 China YMTC / ⛔ MRAM tech transition) + §10 FCF lumpiness FY23 trough -$932M peak-trough $11B (商品 cycle natural lumpy not red flag) + ex-buyback EPS CAGR gap <5pp + §12 SBC GAAP $23.03 vs Non-GAAP $23.41 gap 1.6% < 5pp + §13.4 NAND pure-play tier (Kioxia ideal peer, exclude WDC/NTAP cross-tier); verdict 不變 B; stress 0/4 → 2/2 框架更新; DCA_SNDK_20260511 line 430 已被 win-1447-0ce8 註記 §13.5 reference TODO |
 | SPOT | DD_SPOT_20260429.html | v12.1 | 87.8 | in_progress | win-20260516-1610-9762 | – |
 | STM | DD_STM_20260504.html | v12.2 | 70.3 | pending | – | under-80kb (70.3kb) |
-| STRL | DD_STRL_20260505.html | v12.2 | 79.9 | pending | – | under-80kb (79.9kb) |
+| STRL | DD_STRL_20260505.html | v12.2 | 79.9 | in_progress | win-20260516-1626-64b8 | under-80kb (79.9kb) |
 | STX | DD_STX_20260429.html | v12.1 | 63.1 | pending | – | under-80kb (63.1kb) |
 | TDY | DD_TDY_20260427.html | v12.0 | 41.6 | pending | – | under-80kb (41.6kb) |
 | TER | DD_TER_20260504.html | v12.2 | 67.4 | pending | – | under-80kb (67.4kb) |
 | TPR | DD_TPR_20260427.html | v12.1 | 69.8 | pending | – | under-80kb (69.8kb) |
 | TSLA | DD_TSLA_20260418.html | v12.0 | 75.4 | pending | – | under-80kb (75.4kb) |
 | TSM | DD_TSM_20260323.html | pre-v12 | 48.4 | pending | – | pre-v12-heavy; under-80kb (48.4kb) |
-| TXN | DD_TXN_20260504.html | v12.2 | 78.7 | pending | – | under-80kb (78.7kb) |
+| TXN | DD_TXN_20260504.html | v12.2 | 78.7 | in_progress | win-20260516-1626-64b8 | under-80kb (78.7kb) |
 | UBER | DD_UBER_20260418.html | v12.0 | 63.1 | pending | – | under-80kb (63.1kb) |
 | V | DD_V_20260516.html | v12.3 | 98.5 | done | win-20260516-1358-e570 | dca-cascade clean (1 DCA, 0 broken anchor); dca 51.9kb |
 | VIK | DD_VIK_20260515.html | v12.3 | 73.8 | done | win-20260516-1358-e570 | under-80kb (73.8kb); dca-cascade 3 DCAs, 1 anchor fix in 20260515 (QC-29 4 情境 → v12.3 base+bear 2 情境); dca-under-50kb (48.96kb) pre-existing |
