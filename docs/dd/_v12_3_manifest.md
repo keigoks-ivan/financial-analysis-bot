@@ -55,7 +55,7 @@ Schema breakdown (latest DD per ticker):
 | AVGO | DD_AVGO_20260418.html | v12.0 | 56.3 | pending | – | under-80kb (56.3kb) |
 | BE | DD_BE_20260429.html | v12.1 | 88.1 | pending | – | – |
 | BESI | DD_BESI_20260420.html | v12.0 | 30.4 | pending | – | under-80kb (30.4kb) |
-| BSX | DD_BSX_20260418.html | v12.0 | 102.2 | pending | – | – |
+| BSX | DD_BSX_20260418.html | v12.0 | 102.2 | in_progress | win-20260516-1558-ceca | – |
 | BWXT | DD_BWXT_20260505.html | v12.2 | 61.9 | pending | – | under-80kb (61.9kb) |
 | CAMT | DD_CAMT_20260514.html | v12.2 | 69.7 | pending | – | under-80kb (69.7kb) |
 | CAT | DD_CAT_20260504.html | v12.2 | 60.3 | pending | – | under-80kb (60.3kb) |
@@ -121,7 +121,7 @@ Schema breakdown (latest DD per ticker):
 | QCOM | DD_QCOM_20260504.html | v12.2 | 81.6 | pending | – | – |
 | RCL | DD_RCL_20260508.html | v12.2 | 98.0 | in_progress | win-20260516-1555-c02c | legacy_full v12.2→v12.3 |
 | RMBS | DD_RMBS_20260427.html | v12.0 | 73.4 | pending | – | under-80kb (73.4kb) |
-| RMS | DD_RMS_20260418.html | v12.0 | 99.2 | pending | – | – |
+| RMS | DD_RMS_20260418.html | v12.0 | 99.2 | in_progress | win-20260516-1558-ceca | – |
 | ROK | DD_ROK_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
 | ROP | DD_ROP_20260330.html | pre-v12 | 91.4 | pending | – | pre-v12-heavy |
 | SBUX | DD_SBUX_20260429.html | v12.1 | 90.2 | pending | – | – |
@@ -141,5 +141,5 @@ Schema breakdown (latest DD per ticker):
 | UBER | DD_UBER_20260418.html | v12.0 | 63.1 | pending | – | under-80kb (63.1kb) |
 | V | DD_V_20260516.html | v12.3 | 98.5 | done | win-20260516-1358-e570 | dca-cascade clean (1 DCA, 0 broken anchor); dca 51.9kb |
 | VIK | DD_VIK_20260515.html | v12.3 | 73.8 | done | win-20260516-1358-e570 | under-80kb (73.8kb); dca-cascade 3 DCAs, 1 anchor fix in 20260515 (QC-29 4 情境 → v12.3 base+bear 2 情境); dca-under-50kb (48.96kb) pre-existing |
-| VRT | DD_VRT_20260425.html | v12.0 | 96.7 | pending | – | – |
+| VRT | DD_VRT_20260425.html | v12.0 | 96.7 | in_progress | win-20260516-1558-ceca | – |
 | WMT | DD_WMT_20260427.html | v12.1 | 56.2 | pending | – | under-80kb (56.2kb) |
