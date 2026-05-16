@@ -36,13 +36,13 @@ Schema breakdown (latest DD per ticker):
 | 2330TW | DD_2330TW_20260514.html | v12.3 | 82.4 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 0 broken anchor; DCA_2330TW_20260506 (49.8KB) pre-existing under-floor, unedited |
 | 2383TW | DD_2383TW_20260418.html | v12.0 | 73.2 | pending | – | under-80kb (73.2kb) |
 | 2454 | DD_2454_20260504.html | v12.2 | 59.8 | pending | – | under-80kb (59.8kb) |
-| 3017 | DD_3017_20260504.html | v12.2 | 80.5 | pending | – | – |
+| 3017 | DD_3017_20260504.html | v12.2 | 80.5 | in_progress | win-20260516-1622-d060 | – |
 | 3661TW | DD_3661TW_20260514.html | v12.2 | 84.3 | pending | – | – |
 | 6146T | DD_6146T_20260420.html | v12.0 | 23.5 | pending | – | under-80kb (23.5kb) |
 | 6857T | DD_6857T_20260420.html | v12.0 | 24.5 | pending | – | under-80kb (24.5kb) |
 | AAPL | DD_AAPL_20260504.html | v12.3 | 83.1 | done | win-20260516-1549-eeec | legacy_full v12.2→v12.3 (sonnet sub-agent): §2 D R:R QC-29 砍 + §7 砍低估值 + §13 砍 13.0/13.3/13.5 + §5.F iPhone 18 AI adoption ≥ 50% (2026-09 trigger) + §5.B sourced floor (iPhone ASP ≥ $950 / Services ≥ $130B / FPE floor 24x) + §5.C ⚡🔥🐢 + §8.H data-gap reframe (10-K no customer ≥ 10%, geographic Americas 42%/China 16%/Europe 25%, product iPhone 52%/Services 24%) + §9 F 二維 execution 9 / pricing 9 + QC-23 ⛔ Apple Intelligence vs Gemini 架構 (15%/24M) + §12 M&A 5Y (Pixelmator 2024 / DarwinAI 2024 / 7 AI startups 2025, organic-first) + SBC FY24 2.99% / FY25 2.88% (低於警示) ex-EPS gap ~10% 由 16.5B share count 主導 + §13.4 mega-cap platform tier (MSFT/GOOGL/META/AMZN, excluded chip-only); verdict 不變 B; DCA cascade 2 files (57.4/64.9 KB) QC-29 + MA60/200/104w label fixed |
 | ADI | DD_ADI_20260427.html | v12.1 | 62.6 | pending | – | under-80kb (62.6kb) |
-| AENA | DD_AENA_20260428.html | v12.1 | 80.1 | pending | – | – |
+| AENA | DD_AENA_20260428.html | v12.1 | 80.1 | in_progress | win-20260516-1622-d060 | – |
 | ALAB | DD_ALAB_20260506.html | v12.3 | 100.3 | done | win-20260516-1403-6a45 | legacy_full v12.2→v12.3: §2 D R:R 瘦身 + §7 砍低估值四問 + §13 砍 13.0/13.3/13.5 + §5.F single thing 新增 (FY27 Q3 新 hyperscaler 量產 binary event) + §8.H 客戶結構 (top-1 >70% / top-3 ~86% 引 FY25 10-K) + §9 F 二維 moat (execution 9 + pricing 9 → A) + §12 M&A 5Y track (aiXscale Photonics 2026-01 $74M) + SBC ex-EPS ⚠️ (FY24 59% IPO 後常態) + dd-meta moat_execution/pricing sub-scores; verdict 不變 B; DCA cascade 2 files (QC-29/0/4 + MA60/200/104w stress label 修正) |
 | AMAT | DD_AMAT_20260515.html | v12.3 | 104.2 | done | win-20260516-1349-cd3c | dca-only: 3 files audited, 1 anchor fix in DCA_AMAT_20260511 (§13.5 → v12.0 source attribution + v12.3 §13.4 peer cross-ref) |
 | AMD | DD_AMD_20260506.html | v12.3 | 84.9 | done | win-20260516-1549-eeec | legacy_full v12.2→v12.3 (sonnet sub-agent): §2 D QC-29 砍 + §7 砍低估值/便宜理由 + §13 砍 13.0/13.3/13.5 + §5.F MI355X/MI450 Helios H2 2026 量產 + 3 家 hyperscaler design-win binary + §5.B sourced floor (DC YoY ≥ 30% / server CPU 市佔 ≥ 38% / FPE ≥ 20x) + §8.B price/vol 30%/70% + 5Y M&A (Xilinx $35B / Pensando $1.9B / Silo $665M / ZT $4.9B / Enosemi) + §8.H top-1 MSFT ~12-15% (10-K data-gap explicit, hyperscaler ASIC 四大 in-house risk 分析) + §9 二維 execution 8 / pricing 6 + QC-23 (🟡 INTC / 🔴 NVDA Rubin / ⛔ ASIC) + §12 M&A integration table + SBC FY25 4.1%, Non-GAAP vs GAAP gap 38.5% ⚠️ (主因 Xilinx amortization $2B+/yr) + §13.4 NVDA/INTC direct peer, AVGO 列參考非 anchor; verdict 不變 B; DCA cascade 1 file (69.5 KB) §5 cross-ref note |
@@ -83,7 +83,7 @@ Schema breakdown (latest DD per ticker):
 | GEV | DD_GEV_20260504.html | v12.2 | 71.8 | pending | – | under-80kb (71.8kb) |
 | GFS | DD_GFS_20260427.html | v12.1 | 75.7 | pending | – | under-80kb (75.7kb) |
 | GLW | DD_GLW_20260429.html | v12.1 | 70.5 | pending | – | under-80kb (70.5kb) |
-| GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | pending | – | released by win-20260516-1441-1e69 (sub-agent stream timeout before patch applied; file unchanged) |
+| GOOGL | DD_GOOGL_20260504.html | v12.2 | 99.2 | in_progress | win-20260516-1622-d060 | re-claimed after release |
 | GRAB | DD_GRAB_20260505.html | v12.2 | 65.7 | pending | – | under-80kb (65.7kb) |
 | HWM | DD_HWM_20260418.html | v12.0 | 76.6 | pending | – | under-80kb (76.6kb) |
 | INTC | DD_INTC_20260427.html | v12.0 | 82.4 | in_progress | win-20260516-1620-67d3 | legacy_full v12.0→v12.3 |
