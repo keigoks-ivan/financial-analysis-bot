@@ -46,6 +46,7 @@ from update_dd_index import (  # noqa: E402
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
+SCREENER_LATEST = ROOT / "docs" / "screener" / "latest.json"
 
 # Locked v1.0 criteria — matches scripts/dd_screener_schema.md
 CRITERIA = [
@@ -120,6 +121,35 @@ def _empty_ma() -> dict:
     }
 
 
+def load_screener_timing_map() -> dict[str, dict]:
+    """Build {ticker: {dist_52w_high_pct, ma50_pct, vs_200ma_pct, rs_score}} from
+    `docs/screener/latest.json` so DD universe can be joined with the same
+    daily-cron price snapshot that `flow/ath-hunter.html` consumes.
+
+    Non-US DD tickers (TW/JP/EU) will not appear here — caller treats as null.
+    """
+    if not SCREENER_LATEST.exists():
+        print(f"  WARN: {SCREENER_LATEST} not found — timing fields will be null", file=sys.stderr)
+        return {}
+    try:
+        data = json.loads(SCREENER_LATEST.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"  WARN: failed to parse {SCREENER_LATEST}: {exc}", file=sys.stderr)
+        return {}
+    out: dict[str, dict] = {}
+    for r in data.get("rankings", []) or []:
+        t = r.get("ticker")
+        if not t:
+            continue
+        out[t] = {
+            "dist_52w_high_pct": r.get("dist_52w_high_pct"),
+            "ma50_pct": r.get("ma50_pct"),
+            "vs_200ma_pct": r.get("vs_200ma_pct"),
+            "rs_score": r.get("rs_score"),
+        }
+    return out
+
+
 def _ev5y_for(ticker: str, dca_ev_map: dict) -> float | None:
     """Resolve DCA §4 5Y EV → annualized IRR (%) for one ticker.
 
@@ -150,12 +180,15 @@ def enrich_ticker(
     qgm_index: dict,
     dca_ev_map: dict,
     dca_trend_map: dict,
+    screener_timing: dict,
     skip_ma: bool,
 ) -> dict:
-    """Add quality + MA + ev5y_pct + pass_count + fail_criteria to a loader entry.
+    """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
     Also overrides moat_trend with DCA Phase A1 authoritative arrow (the loader
     defaults all 98 to ↑ because dd-meta rarely carries this field; DCA does).
+
+    `timing` joins `docs/screener/latest.json` by ticker — null for TW/JP/EU.
     """
     t = entry["ticker"]
     quality, source = get_quality_for_ticker(t, qgm_index)
@@ -173,6 +206,8 @@ def enrich_ticker(
     # has none (conservative — don't assume strengthening without evidence).
     moat_trend = _moat_trend_for(t, dca_trend_map, fallback="→")
 
+    timing = screener_timing.get(t)
+
     return {
         **entry,
         **quality,
@@ -182,6 +217,7 @@ def enrich_ticker(
         "quality_source": source,
         "ev5y_pct": _ev5y_for(t, dca_ev_map),
         "ma": ma,
+        "timing": timing,
     }
 
 
@@ -207,12 +243,17 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     dca_trend_map = collect_dca_moat_trend_map()
     print(f"  Step 3    DCA moat-trend map: {len(dca_trend_map)} tickers")
 
+    # Screener daily-cron timing snapshot — same source as flow/ath-hunter.html.
+    # US tickers join here; TW/JP/EU stay null (screener is US-only).
+    screener_timing = load_screener_timing_map()
+    print(f"  Step 3    screener timing map: {len(screener_timing)} tickers (for 起漲點 detection)")
+
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, skip_ma): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, skip_ma): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
@@ -254,7 +295,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     tz_taipei = timezone(timedelta(hours=8))
     now = datetime.now(tz_taipei)
     doc = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "run_timestamp": now.isoformat(timespec="seconds"),
         "as_of": now.strftime("%Y-%m-%d"),
         "universe_size": len(enriched),

@@ -201,6 +201,15 @@
 const SCREENER_URL = '/screener/latest.json';
 const FUNDAMENTALS_URL = '/screener/fundamentals.json';
 const MARKET_STATE_URL = '/screener/market_state.json';
+// DD universe map for 📄 DD pill (PR2 — bidirectional bridge to DD Screener).
+const DD_SCREENER_URL = '/dd-screener/latest.json';
+const DD_PATH_MAP = Object.create(null);  // populated in main()
+
+function ddPill(ticker) {
+  var p = DD_PATH_MAP[ticker];
+  if (!p) return '';
+  return ' <a href="' + p + '" target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;padding:1px 5px;border:1px solid #dbeafe;border-radius:4px;background:#eff6ff;margin-left:4px;display:inline-block" title="開啟此 ticker 的完整 DD 報告">📄 DD</a>';
+}
 
 function classify(stock) {
   const dh = Math.abs(stock.dist_52w_high_pct ?? 999);
@@ -482,7 +491,7 @@ function renderTier(tier, stocks) {
   if (tier === 'F' || tier === 'S' || tier === 'T') {
     rows = stocks.map(s => `
       <tr id="row-${s.ticker}">
-        <td><strong>${s.ticker}</strong></td>
+        <td><strong>${s.ticker}</strong>${ddPill(s.ticker)}</td>
         <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
         <td>$${fmtNum(s.price, 2)}</td>
         <td class="${pctClass(s.dist_52w_high_pct)}">${fmtPct(s.dist_52w_high_pct)}</td>
@@ -509,7 +518,7 @@ function renderTier(tier, stocks) {
   } else if (tier === 'B') {
     rows = stocks.map(s => `
       <tr id="row-${s.ticker}">
-        <td><strong>${s.ticker}</strong></td>
+        <td><strong>${s.ticker}</strong>${ddPill(s.ticker)}</td>
         <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
         <td>$${fmtNum(s.price, 2)}</td>
         <td>${fmtPct(s.dist_52w_high_pct)}</td>
@@ -541,7 +550,7 @@ function renderTier(tier, stocks) {
       if ((s.ma50_pct ?? 0) > 20) reasons.push('過熱');
       return `
         <tr id="row-${s.ticker}">
-          <td><strong>${s.ticker}</strong></td>
+          <td><strong>${s.ticker}</strong>${ddPill(s.ticker)}</td>
           <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
           <td>$${fmtNum(s.price, 2)}</td>
           <td>${fmtPct(s.dist_52w_high_pct)}</td>
@@ -564,7 +573,7 @@ function renderTier(tier, stocks) {
       const target = s.price && s.ma50_pct ? s.price / (1 + s.ma50_pct/100) : null;
       return `
         <tr id="row-${s.ticker}">
-          <td><strong>${s.ticker}</strong></td>
+          <td><strong>${s.ticker}</strong>${ddPill(s.ticker)}</td>
           <td>$${fmtNum(s.price, 2)}</td>
           <td class="num-pos">${fmtPct(s.ma50_pct)}</td>
           <td>${fmtNum(s.rsi14, 0)}</td>
@@ -586,12 +595,24 @@ function renderTier(tier, stocks) {
 
 async function main() {
   try {
-    const [sRes, fRes, mRes] = await Promise.all([
+    const [sRes, fRes, mRes, ddRes] = await Promise.all([
       fetch(SCREENER_URL),
       fetch(FUNDAMENTALS_URL).catch(() => null),
-      fetch(MARKET_STATE_URL).catch(() => null)
+      fetch(MARKET_STATE_URL).catch(() => null),
+      fetch(DD_SCREENER_URL).catch(() => null)
     ]);
     if (!sRes.ok) throw new Error(`Screener fetch failed: ${sRes.status}`);
+    // Build DD path map for 📄 DD pill (graceful — if dd-screener data missing,
+    // pills just don't render). v1.1 only — older latest.json lacks dd_path
+    // but that's harmless: ddPill() returns '' for any ticker without entry.
+    if (ddRes && ddRes.ok) {
+      try {
+        const ddData = await ddRes.json();
+        for (const st of (ddData.stocks || [])) {
+          if (st.ticker && st.dd_path) DD_PATH_MAP[st.ticker] = st.dd_path;
+        }
+      } catch (e) { /* keep DD_PATH_MAP empty; pills will be hidden */ }
+    }
     const sData = await sRes.json();
     const fData = fRes && fRes.ok ? await fRes.json() : { fundamentals: {}, generated_at: null };
     const mData = mRes && mRes.ok ? await mRes.json() : null;
