@@ -211,11 +211,17 @@ def build_index_payload(df):
     high_52w = float(df['Close'].max())
     drawdown_52w_high_pct = round((close / high_52w - 1) * 100, 1) if high_52w > 0 else None
 
+    # 1-day return for SPY/QQQ/IWM — consumed by Flow ATH Hunter's "1d vs SPY"
+    # column. close_change_pct is already computed in compute_indicators.
+    last_chg = df['close_change_pct'].iloc[-1]
+    close_change_pct = round(float(last_chg), 2) if pd.notna(last_chg) else None
+
     return {
         'state': state,
         'state_since': since,
         'days_in_state': trading_days_between(df, since),
         'close': round(close, 2),
+        'close_change_pct': close_change_pct,
         'vs_50dma_pct': round((close / ma50 - 1) * 100, 1) if ma50 else None,
         'vs_200dma_pct': round((close / ma200 - 1) * 100, 1) if ma200 else None,
         'drawdown_52w_high_pct': drawdown_52w_high_pct,
