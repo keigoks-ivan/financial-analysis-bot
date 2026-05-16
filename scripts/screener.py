@@ -292,10 +292,18 @@ def calc_vcp(closes, highs, lows, volumes):
 def calc_extra_indicators(closes, highs, lows, price):
     """MA21%/MA50%/52W high%/RSI14/ATR% on adjusted close. Returns dict with None for any insufficient-data field."""
     out = {'ma21_pct': None, 'ma50_pct': None, 'dist_52w_high_pct': None,
-           'rsi14': None, 'atr_pct': None}
+           'rsi14': None, 'atr_pct': None, 'close_change_pct': None}
 
     if len(closes) < 2 or price <= 0:
         return out
+
+    # 1-day return (today close vs prior close) — surfaces single-day relative
+    # weakness that EMA-smoothed rs_score dampens. Consumed by Flow ATH Hunter's
+    # "1d vs SPY" column to flag stocks that under-performed SPY yesterday even
+    # when their multi-week RS still looks healthy.
+    prev_close = closes.iloc[-2]
+    if prev_close > 0:
+        out['close_change_pct'] = round((price / prev_close - 1) * 100, 2)
 
     if len(closes) >= 21:
         ma21 = closes.iloc[-21:].mean()
@@ -458,7 +466,7 @@ def main():
             vcp = {'score': 0, 'pullback_count': 0, 'last_pullback_pct': 0,
                    'dist_from_high_pct': 0, 'atr_ratio': 1.0, 'vol_ratio': 1.0, 'trend_ok': False}
             extras = {'ma21_pct': None, 'ma50_pct': None, 'dist_52w_high_pct': None,
-                      'rsi14': None, 'atr_pct': None}
+                      'rsi14': None, 'atr_pct': None, 'close_change_pct': None}
 
         combined = round(rs_score * 0.6 + vcp['score'] * 0.4, 1)
 
@@ -485,6 +493,7 @@ def main():
             'dist_52w_high_pct': extras['dist_52w_high_pct'],
             'rsi14': extras['rsi14'],
             'atr_pct': extras['atr_pct'],
+            'close_change_pct': extras['close_change_pct'],
         })
 
     # Sort by combined score

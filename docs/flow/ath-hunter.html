@@ -211,6 +211,30 @@ function ddPill(ticker) {
   return ' <a href="' + p + '" target="_blank" style="font-size:10px;color:#2563eb;text-decoration:none;padding:1px 5px;border:1px solid #dbeafe;border-radius:4px;background:#eff6ff;margin-left:4px;display:inline-block" title="開啟此 ticker 的完整 DD 報告">📄 DD</a>';
 }
 
+// PR4: 1-day relative move vs SPY. Surfaces single-day under-performance that
+// EMA-smoothed rs_score dampens — addresses the NVDA case where Tier T fires
+// despite NVDA -4.4% vs SPY -1.2% (NVDA 3× SPY drop, but multi-week RS stays
+// high). Populated from market_state.json in main().
+let SPY_CHANGE_PCT = null;
+
+function fmtVsSpy(stockChg) {
+  if (stockChg == null || SPY_CHANGE_PCT == null) {
+    return '<td style="color:#94a3b8">—</td>';
+  }
+  const rel = stockChg - SPY_CHANGE_PCT;
+  // Color tiers: >+1pp strong green, +0.3~+1 mild green, ±0.3 neutral grey,
+  // -0.3~-1.5 mild red, <-1.5 bold red (significant 1d weakness).
+  let color, weight = 'normal';
+  if (rel >= 1) { color = '#15803D'; weight = 'bold'; }
+  else if (rel >= 0.3) { color = '#16a34a'; }
+  else if (rel >= -0.3) { color = '#64748B'; }
+  else if (rel >= -1.5) { color = '#dc2626'; }
+  else { color = '#991B1B'; weight = 'bold'; }
+  const sign = rel > 0 ? '+' : (rel < 0 ? '−' : '');
+  const title = `今日 1d: ${stockChg.toFixed(2)}% · SPY: ${SPY_CHANGE_PCT.toFixed(2)}% · 相對強度 ${sign}${Math.abs(rel).toFixed(2)}pp`;
+  return `<td title="${title}" style="color:${color};font-weight:${weight}">${sign}${Math.abs(rel).toFixed(1)}pp</td>`;
+}
+
 function classify(stock) {
   const dh = Math.abs(stock.dist_52w_high_pct ?? 999);
   const d50 = stock.ma50_pct ?? 0;
@@ -495,6 +519,7 @@ function renderTier(tier, stocks) {
         <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
         <td>$${fmtNum(s.price, 2)}</td>
         <td class="${pctClass(s.dist_52w_high_pct)}">${fmtPct(s.dist_52w_high_pct)}</td>
+        ${fmtVsSpy(s.close_change_pct)}
         <td>${fmtNum(s.vcp_score, 0)}</td>
         <td>${s.pullback_count ?? '—'}</td>
         <td>${fmtNum(s.rs_score, 0)}</td>
@@ -509,7 +534,8 @@ function renderTier(tier, stocks) {
       <table class="data-table">
         <thead><tr>
           <th>Ticker</th><th>Sector</th><th>Adj. Price</th>
-          <th>距 52W</th><th>VCP</th><th>#PB</th>
+          <th>距 52W</th><th title="昨日相對 SPY 漲跌 (pp)">1d vs SPY</th>
+          <th>VCP</th><th>#PB</th>
           <th>RS</th><th>趨勢</th><th>Sector</th>
           <th>EPS 2Y</th><th>ROIC</th><th>FCF</th><th>Q✓</th>
         </tr></thead>
@@ -522,6 +548,7 @@ function renderTier(tier, stocks) {
         <td style="font-size:11px;color:var(--text-tertiary)">${s.sector || '—'}</td>
         <td>$${fmtNum(s.price, 2)}</td>
         <td>${fmtPct(s.dist_52w_high_pct)}</td>
+        ${fmtVsSpy(s.close_change_pct)}
         <td class="${pctClass(s.ma50_pct)}">${fmtPct(s.ma50_pct)}</td>
         <td class="${pctClass(s.ma21_pct)}">${fmtPct(s.ma21_pct)}</td>
         <td>${fmtNum(s.rs_score, 0)}</td>
@@ -531,7 +558,8 @@ function renderTier(tier, stocks) {
       <table class="data-table">
         <thead><tr>
           <th>Ticker</th><th>Sector</th><th>Adj. Price</th>
-          <th>距 52W</th><th>距 50DMA</th><th>距 21DMA</th>
+          <th>距 52W</th><th title="昨日相對 SPY 漲跌 (pp)">1d vs SPY</th>
+          <th>距 50DMA</th><th>距 21DMA</th>
           <th>RS</th><th>趨勢</th>
         </tr></thead>
         <tbody>${rows}</tbody>
@@ -616,6 +644,13 @@ async function main() {
     const sData = await sRes.json();
     const fData = fRes && fRes.ok ? await fRes.json() : { fundamentals: {}, generated_at: null };
     const mData = mRes && mRes.ok ? await mRes.json() : null;
+
+    // PR4: pull SPY 1d return so 「1d vs SPY」 column can render relative move.
+    // Falls back to null gracefully — fmtVsSpy() will show "—" for all rows.
+    if (mData && mData.indices && mData.indices.SPY) {
+      const v = mData.indices.SPY.close_change_pct;
+      if (typeof v === 'number') SPY_CHANGE_PCT = v;
+    }
 
     const rankings = Array.isArray(sData) ? sData : (sData.rankings || sData.data || []);
     const fundamentals = fData.fundamentals || fData.rankings || fData;
