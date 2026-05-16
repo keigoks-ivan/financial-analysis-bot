@@ -72,7 +72,7 @@ Schema breakdown (latest DD per ticker):
 | DDOG | DD_DDOG_20260516.html | v12.3 | 78.4 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | DELL | DD_DELL_20260418.html | v12.0 | 49.4 | pending | – | under-80kb (49.4kb) |
 | DIS | DD_DIS_20260516.html | v12.3 | 102.2 | skip | – | in flight (other window) |
-| EAT | DD_EAT_20260428.html | v12.1 | 81.7 | pending | – | – |
+| EAT | DD_EAT_20260428.html | v12.1 | 81.7 | in_progress | win-20260516-1420-1db7 | – |
 | EBAY | DD_EBAY_20260516.html | v12.3 | 105.7 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca-under-50kb (49.1kb) pre-existing |
 | ETN | DD_ETN_20260506.html | v12.2 | 79.4 | pending | – | under-80kb (79.4kb) |
 | FICO | DD_FICO_20260418.html | v12.0 | 68.9 | pending | – | under-80kb (68.9kb) |
@@ -91,13 +91,13 @@ Schema breakdown (latest DD per ticker):
 | JBL | DD_JBL_20260418.html | v12.0 | 53.7 | pending | – | under-80kb (53.7kb) |
 | KEYS | DD_KEYS_20260418.html | v12.0 | 59.9 | pending | – | under-80kb (59.9kb) |
 | KLAC | DD_KLAC_20260516.html | v12.3 | 82.3 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 4 anchor fixes (QC-29/0/4 stress→v12.3 2/2; MA60/200/104w→短期/中期) + v12.3 reconciliation block in DCA_KLAC_20260507 (under-floor remediation 49.8→51.7 KB) |
-| LITE | DD_LITE_20260506.html | v12.2 | 82.6 | pending | – | – |
+| LITE | DD_LITE_20260506.html | v12.2 | 82.6 | in_progress | win-20260516-1420-1db7 | – |
 | LLY | DD_LLY_20260504.html | v12.2 | 95.9 | pending | – | – |
 | LRCX | DD_LRCX_20260425.html | v12.0 | 67.7 | pending | – | under-80kb (67.7kb) |
 | LULU | DD_LULU_20260516.html | v12.3 | 78.2 | done | win-20260516-1355-78dc | dca-cascade clean (0 broken anchors); 2 dcas ≥ 50kb |
 | MA | DD_MA_20260516.html | v12.3 | 85.3 | done | win-20260516-1350-2107 | dca-cascade clean (0 broken anchors); dca 51.0kb |
 | MAR | DD_MAR_20260414.html | pre-v12 | 70.4 | pending | – | pre-v12-heavy; under-80kb (70.4kb) |
-| MELI | DD_MELI_20260513.html | v12.2 | 86.4 | pending | – | – |
+| MELI | DD_MELI_20260513.html | v12.2 | 86.4 | in_progress | win-20260516-1420-1db7 | – |
 | META | DD_META_20260516.html | v12.3 | 75.6 | skip | – | in flight (other window) |
 | MOD | DD_MOD_20260427.html | v12.0 | 65.8 | pending | – | under-80kb (65.8kb) |
 | MPWR | DD_MPWR_20260418.html | v12.0 | 67.5 | pending | – | under-80kb (67.5kb) |
