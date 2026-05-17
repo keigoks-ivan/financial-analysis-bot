@@ -108,11 +108,15 @@ A2_MA50 = (0.0, 5.0)
 A2_RS_MIN = 80.0
 
 # Angle 1 composite weights
+# v1.1 (2026-05-17): EV5Y 0.45 → 0.30 per user — DCA §4 5Y 估計天生噪音大,
+# 不該主導 composite。省下的 0.15 對半分給 quality_score 與 1/FwdPE
+# (兩者最客觀:quality_score 由 FCF/ROIC/EPS 數字算出, 1/FwdPE 為市場+共識)。
+# Moat 維持 0.30 (不拉高) 因為 moat 已在 angle 4 獨立計票, 避免重複計分。
 COMPOSITE_WEIGHTS = {
     "moat": 0.30,
-    "growth_ev5y": 0.45,
-    "quality_score": 0.10,
-    "fwdpe_inv": 0.15,
+    "growth_ev5y": 0.30,
+    "quality_score": 0.175,
+    "fwdpe_inv": 0.225,
 }
 
 # Angle 6 Jensen window thresholds (two-stage, per FIX 修正 1)
