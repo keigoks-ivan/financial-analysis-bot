@@ -115,6 +115,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 .tmg-mid{color:#64748b}
 .tmg-weak{color:#94a3b8}
 .qichi-banner{background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border:1px solid #f59e0b;border-radius:8px;padding:8px 14px;margin:0 0 12px 0;font-size:11px;color:#92400e;display:flex;align-items:center;gap:8px}
+/* Column footnote */
+.col-footnote{background:#f8fafc;border:1px solid #dce8f5;border-radius:8px;padding:20px 24px;margin-top:24px}
+.col-footnote h3{font-size:12px;font-weight:700;color:#5a7a9a;letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px}
+.col-footnote ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.col-footnote li{font-size:11px;color:#5a7a9a;line-height:1.65;padding-left:12px;border-left:2px solid #dce8f5}
+.col-footnote li strong{color:#1e3a5f;font-weight:700}
+.col-footnote li em{font-style:normal;color:#7a9ab5;font-weight:600}
+.col-footnote li code{background:#f0f5fb;border:1px solid #dce8f5;border-radius:3px;padding:1px 4px;font-family:monospace;font-size:10px;color:#1e3a5f}
 .qichi-banner.hidden{display:none}
 .qichi-banner b{font-weight:700}
 /* Takeaway card */
@@ -289,6 +297,103 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <div id="tab-3" class="tab-content"><p class="state-msg">載入中...</p></div>
     <div id="tab-all" class="tab-content"><p class="state-msg">載入中...</p></div>
   </div>
+
+  <!-- ══ Column Documentation Footnote ══════════════════════════════════════
+       Placed outside .compare-wrap so JS table re-renders never move it.
+  ═══════════════════════════════════════════════════════════════════════════ -->
+  <div class="col-footnote">
+    <h3>表格欄位說明</h3>
+    <ul>
+
+      <li><strong>Ticker</strong>：股票代碼（正規格式）。
+        <br><em>來源：</em><code>dd-meta JSON</code> → <code>scripts/dd_screener_dd_loader.py</code>
+        <br><em>格式：</em>美股 <code>NVDA</code> / 台股 <code>2330.TW</code> / 日股 <code>6857.T</code> / 歐股 <code>RMS</code>（帶交易所後綴的 EU 用內部 suffix map 轉換，DD 名稱保留無後綴形式）
+      </li>
+
+      <li><strong>Moat（護城河等級 + 分數 + 趨勢）</strong>：護城河評等，格式 <code>等級 分數 趨勢</code>，例如 <code>S 9.8 ↑</code>。
+        <br><em>來源：</em><code>dd-meta JSON</code>（<code>moat_grade</code> / <code>moat_score</code>）；趨勢箭頭以 <strong>DCA Phase A1</strong> 為 authoritative source（<code>scripts/update_dd_index.py</code> <code>collect_dca_moat_trend_map()</code>），無 DCA 時 fallback <code>→</code>（保守假設：穩定）
+        <br><em>等級：</em><code>S</code>（≥ 9.5）/ <code>A</code>（≥ 8）/ <code>B</code>（≥ 6）/ <code>C</code>（≥ 4）/ <code>X</code>（護城河存疑）
+        <br><em>趨勢：</em><code>↑</code> 加深 / <code>→</code> 穩定 / <code>↓</code> 縮窄
+      </li>
+
+      <li><strong>FCF（FCF Margin）</strong>：TTM 自由現金流 / 營收，百分比。
+        <br><em>來源：</em>優先 <code>docs/qgm/latest.json</code> 或 <code>docs/qgm-tw/latest.json</code>（<code>hard_filter_details.fcf_margin.value</code>）；不在 QGM 中的 ticker 走 <code>scripts/dd_screener_quality.py</code> → <code>fundamentals_us.calc_fcf_margin()</code>（yfinance）
+        <br><em>QGM MLB 門檻：</em><code>≥ 10%</code>（綠色通過 / 紅色不過 / 灰色無資料）
+      </li>
+
+      <li><strong>ROIC</strong>：NOPAT / Invested Capital，百分比。
+        <br><em>來源：</em>同 FCF — QGM <code>hard_filter_details.roic.value</code> 優先；fallback <code>fundamentals_us.calc_roic()</code>（yfinance）
+        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
+      </li>
+
+      <li><strong>EPS 2Y CAGR</strong>：前瞻 2 年 EPS 複合成長率，百分比。
+        <br><em>來源：</em>QGM <code>hard_filter_details.eps_cagr_2y_fwd.value</code> 優先；fallback <code>fundamentals_us._forward_2y_cagr()</code>（yfinance earnings estimates）
+        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
+      </li>
+
+      <li><strong>PEG</strong>：前瞻 PEG（Forward PE / EPS 2Y CAGR%）。
+        <br><em>來源：</em>QGM <code>hard_filter_details.peg.value</code> 優先；fallback <code>yfinance .info pegRatio</code>；再 fallback 手算 <code>forwardPE / eps_growth_pct</code>（EPS CAGR > 300% 或 PEG > 10 時回傳 <code>null</code>，避免失真）
+        <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（上限；愈低愈好）
+      </li>
+
+      <li><strong>2Y P/E</strong>：FY+2 Forward P/E（資訊欄，無通過門檻顏色）。
+        <br><em>來源：</em><code>dd-meta JSON</code> <code>fpe_fy2</code> 欄位，與 <code>/research/</code> 表格 <code>data-pe2y</code> 同源
+        <br><em>規則：</em>純數字顯示，不參與 pass/fail 計分，僅供估值參考
+      </li>
+
+      <li><strong>D/E（Debt/Equity）</strong>：Total Debt / Stockholders Equity。
+        <br><em>來源：</em>QGM <code>hard_filter_details.debt_to_equity.value</code> 優先；QGM 有 D/E 缺口（如 ANET 零負債）時補抓 yfinance balance sheet；Negative equity（如 FICO / DELL / SBUX）回傳 <code>null</code>（負值無意義），顯示「—」
+        <br><em>QGM MLB 門檻：</em><code>≤ 0.7x</code>（上限）
+      </li>
+
+      <li><strong>通過（Pass Count）</strong>：以上 5 條 QGM-MLB 門檻（FCF / ROIC / EPS / PEG / D/E）通過的數量。
+        <br><em>計算：</em>client-side 即時計算，隨 Custom preset 的 slider 數值同步更新
+        <br><em>顏色：</em><code>5/5</code> 深綠 / <code>4/5</code> 黃棕 / <code>3/5</code> 淡黃 / <code>&lt; 3</code> 紅
+        <br><em>Tab 分組：</em>完全符合（5/5）/ 差一條（4/5）/ 差兩條（3/5）/ 全部
+      </li>
+
+      <li><strong>5Y IRR</strong>：DCA §4 機率加權 5 年期預期價值 → 年化 IRR（%）。
+        <br><em>來源：</em><code>scripts/update_dd_index.py</code> <code>collect_dca_ev_map()</code> 解析最新 DCA HTML 的 §4 EV 數字，換算公式 <code>IRR = (EV/100 + 1)^(1/5) - 1</code>；無 DCA 或 §4 無法解析時顯示「—」
+        <br><em>顏色：</em>≥ <code>12%/yr</code> 深綠 / <code>8–12%</code> 中綠 / <code>0–8%</code> 琥珀 / &lt; <code>0%</code> 紅
+      </li>
+
+      <li><strong>MA（長期均線健康度）</strong>：股價相對 W52（1 年）與 W250（5 年）週均線的位置與斜率。
+        <br><em>來源：</em><code>scripts/dd_screener_ma.py</code> → yfinance 抓 5Y 週線資料（<code>1wk</code> interval）
+        <br><em>計算：</em><code>w52</code> = 52 週 SMA / <code>w250</code> = 250 週 SMA / <code>slope_w250_pct</code> = W250 現值 vs 4 週前 W250 的漲幅% / <code>drift_4w_pct</code> = 股價 4 週漲跌%
+        <br><em>燈號：</em>🟢 healthy（W52 ↑ ∩ W250 ↑ ∩ slope > 0）/ 🟡 mixed（W52 ↑ ∩ W250 ↑，slope 平或負）/ 🔴 weak（跌破任一 MA）/ ⚪ n/a（歷史不足，如 ARM / NU / VIK / SNDK 上市 &lt; 5 年，改依 W52 判斷並標示 W250 N/A）
+      </li>
+
+      <li><strong>距 ATH（距 52 週高點）</strong>：當前股價離 52 週調整後收盤最高點的百分比距離。0% = 站在 52 週高；負值 = 低於高點。
+        <br><em>來源：</em>美股 — <code>docs/screener/latest.json</code> <code>dist_52w_high_pct</code>（每日 06:00 TPE 更新，與 Flow ATH Hunter 同源）；非美股及不在 screener universe 的 DD ticker — <code>build_dd_screener.py</code> <code>compute_yfinance_timing_fallback()</code> 批量抓 300d 日線計算（<code>timing_source: "yfinance_fallback"</code>）；TW / JP / EU 若 fallback 也無法取得則顯示「—」
+        <br><em>顏色：</em>🟢 sweet <code>[-7%, 0%]</code> 起漲點甜區 / 🟡 warm <code>[-15%, -7%]</code> base 築底 / ⚪ cool <code>&lt; -15%</code> 深度回調 / 🟠 hot <code>&gt; +2%</code> extended 已突破延伸
+      </li>
+
+      <li><strong>vs 50DMA（距 50 日均線）</strong>：當前股價相對 50 日 SMA 的百分比偏離。正值 = 股價在均線上方。
+        <br><em>來源：</em>同「距 ATH」— screener <code>ma50_pct</code> 優先；fallback yfinance 批量抓 300d 日線，取末 50 根收盤均值計算
+        <br><em>顏色：</em>🟢 sweet <code>[0%, +5%]</code> 剛收復均線、未過熱 / 🟡 warm <code>[+5%, +15%]</code> 延伸但可控 / 🟠 hot <code>&gt; +15%</code> 過熱 / ⚪ cool <code>&lt; 0%</code> 跌破 50 日均線（趨勢受壓）
+      </li>
+
+      <li><strong>RS（Relative Strength Score）</strong>：相對強度評分 0–100，相對 S&amp;P500 全體成份股的百分位排名（多時間框架加權）。
+        <br><em>來源：</em>美股在 screener universe — <code>docs/screener/latest.json</code> <code>rs_score</code>（EMA 平滑的 1w/4w/13w 加權複合分數，與 Flow ATH Hunter 同源）；不在 screener universe 的 DD ticker — fallback 批量抓 300d 日線，計算原始 1w/4w/13w 報酬率，對全 screener universe（~511 股）做百分位排名後加權（公式：<code>r1w×0.2 + r4w×0.3 + r13w×0.5 + trend_bonus ±5</code>）；TW / JP 本地上市股對同一美股 universe 排名（跨幣種，方法上有 FX 雜訊，以一致性優先）
+        <br><em>顏色：</em>深綠 <code>≥ 80</code> 強勢 / 中綠 <code>60–79</code> OK / 灰 <code>40–59</code> 中性 / 淺灰 <code>&lt; 40</code> 弱勢
+        <br><em>起漲點門檻：</em><code>≥ 80</code>
+      </li>
+
+      <li><strong>Links（DD / DCA / 🎯 Flow）</strong>：快速連結。
+        <br><em>DD：</em>連到 <code>docs/dd/DD_{TICKER}_{YYYYMMDD}.html</code>（最新版，路徑來自 <code>dd-meta</code>）
+        <br><em>DCA：</em>連到 <code>docs/dca/DCA_{TICKER}_{YYYYMMDD}.html</code>（最新版，路徑來自 filename scan）；無 DCA 時隱藏
+        <br><em>🎯 Flow：</em>有 timing 資料（screener universe）的美股才顯示，連到 <code>/flow/ath-hunter.html#{ticker}</code>；TW / JP / EU 無此連結
+      </li>
+
+      <li><strong>資料來源 badge（QGM-US / QGM-TW / YF / YF-EU）</strong>：顯示在 Ticker 旁，標示 5 條 QGM-MLB 質量欄位（FCF / ROIC / EPS / PEG / D/E）的實際資料來源。
+        <br><em>🔵 QGM-US：</em><code>docs/qgm/latest.json</code>（每週 GitHub Actions 跑 QGM 美股宇宙，~511 股）
+        <br><em>🟢 QGM-TW：</em><code>docs/qgm-tw/latest.json</code>（台股宇宙）
+        <br><em>⚪ YF：</em>yfinance 臨時抓取（不在 QGM 宇宙的美股、日股等）
+        <br><em>🟠 YF-EU：</em>yfinance + EU 交易所後綴（如 <code>RMS.PA</code> / <code>AENA.MC</code> / <code>BESI.AS</code>）
+      </li>
+
+    </ul>
+  </div><!-- /.col-footnote -->
 
 </div>
 
