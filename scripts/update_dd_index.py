@@ -2675,11 +2675,13 @@ def main():
     if not screener_script.exists():
         return
     print(f"\n→ Auto-trigger: {screener_script.name} (rebuild /dd-screener/ to match universe)")
+    screener_ok = False
     try:
         subprocess.run(
             [sys.executable, str(screener_script)],
             check=True,
         )
+        screener_ok = True
     except subprocess.CalledProcessError as e:
         print(
             f"\n⚠ DD Screener rebuild failed (exit {e.returncode}). "
@@ -2691,6 +2693,34 @@ def main():
         print(
             f"\n⚠ DD Screener rebuild errored: {e}. "
             f"/research/ sync succeeded.",
+            file=sys.stderr,
+        )
+
+    # Event-driven trigger for DD Alpha Ranker fundamental layer (angles 1/3/4).
+    # Per TASK §修正 7: must run only after update_dd_index + build_dd_screener
+    # fully succeed — never on half-stale data. Failure here is non-fatal
+    # (alpha-rank is supplementary).
+    if not screener_ok:
+        return
+    alpha_script = Path(__file__).resolve().parent / "dd_alpha_ranker.py"
+    if not alpha_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {alpha_script.name} --layers fundamental")
+    try:
+        subprocess.run(
+            [sys.executable, str(alpha_script), "--layers", "fundamental"],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(
+            f"\n⚠ Alpha Ranker fundamental layer failed (exit {e.returncode}). "
+            f"Other layers (momentum/jensen) still reflect their last state. "
+            f"Rerun `python3 {alpha_script} --layers fundamental` manually.",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ Alpha Ranker errored: {e}.",
             file=sys.stderr,
         )
 
