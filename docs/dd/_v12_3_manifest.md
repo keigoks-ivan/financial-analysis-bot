@@ -99,7 +99,7 @@ Schema breakdown (latest DD per ticker):
 | MAR | DD_MAR_20260414.html | pre-v12 | 70.4 | pending | – | pre-v12-heavy; under-80kb (70.4kb) |
 | MELI | DD_MELI_20260513.html | v12.2 | 86.4 | pending | – | – |
 | META | DD_META_20260516.html | v12.3 | 75.6 | skip | – | in flight (other window) |
-| MOD | DD_MOD_20260427.html | v12.0 | 65.8 | pending | – | under-80kb (65.8kb) |
+| MOD | DD_MOD_20260427.html | v12.0 | 65.8 | in_progress | win-20260517-0849-4abc | under-80kb (65.8kb); legacy_full v12.0→v12.3 |
 | MPWR | DD_MPWR_20260418.html | v12.0 | 67.5 | pending | – | under-80kb (67.5kb) |
 | MRVL | DD_MRVL_20260418.html | v12.0 | 73.8 | pending | – | under-80kb (73.8kb) |
 | MSFT | DD_MSFT_20260515.html | v12.3 | 86.7 | done | win-20260516-1349-e2c6 | dca-only: 2 files audited, 1 anchor fix in DCA_MSFT_20260507 (QC-29 3/3 stress→v12.3 stress 2/2) + v12.3 reconciliation block (under-floor remediation 47.2→50.0 KB) |
