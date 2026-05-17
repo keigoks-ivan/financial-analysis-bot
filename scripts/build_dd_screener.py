@@ -15,17 +15,59 @@ Usage:
   python3 scripts/build_dd_screener.py --top 10    # smoke-test first 10 tickers
   python3 scripts/build_dd_screener.py --dry-run   # don't write file
   python3 scripts/build_dd_screener.py --no-ma     # skip MA fetch (faster smoke)
+
+Timing fallback (added 2026-05-17):
+  DD tickers not in the S&P500/NQ100 screener universe (e.g. ALAB, MRVL, SPOT,
+  TW/JP local listings) receive timing data from a yfinance batch fetch instead of
+  docs/screener/latest.json.
+
+  rs_score methodology for fallback tickers:
+    - Fetch 300d daily closes for all missing tickers in one yf.download() call.
+    - Use docs/screener/latest.json rankings as the reference population: each
+      ranking entry already carries rs_1w/rs_4w/rs_13w (EMA-smoothed percentile
+      scores). These are treated as the "anchored" distribution.
+    - For each missing ticker compute raw r1w/r4w/r13w returns, then percentile-rank
+      them against the union of (screener smoothed scores + missing ticker raw scores).
+      This is an approximation (no EMA smoothing for fallback tickers) but consistent
+      with the page's existing framing (all scores are relative to the same ~511-stock
+      US universe).
+    - TW/JP local-listings (2330.TW, etc.) are ranked against the same US universe.
+      This is noisy because of JPY/TWD FX effects but chosen for consistency over a
+      parallel methodology. The timing_source field is set to "yfinance_fallback" for
+      all fallback tickers so the FE can surface caveats if needed.
+    - Tickers that yfinance refuses to serve for any metric get timing=null for that
+      metric (never raises, graceful degradation).
 """
 from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
+import warnings
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+
+warnings.filterwarnings("ignore")
+
+try:
+    import numpy as np
+    import pandas as pd
+    import yfinance as yf
+except ImportError:
+    import subprocess
+    subprocess.check_call([sys.executable, "-m", "pip", "install",
+                           "yfinance>=0.2.40", "pandas", "numpy", "-q"])
+    import numpy as np
+    import pandas as pd
+    import yfinance as yf
+
+logging.getLogger("yfinance").setLevel(logging.CRITICAL)
+logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+logging.getLogger("peewee").setLevel(logging.CRITICAL)
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "scripts"
@@ -122,11 +164,15 @@ def _empty_ma() -> dict:
 
 
 def load_screener_timing_map() -> dict[str, dict]:
-    """Build {ticker: {dist_52w_high_pct, ma50_pct, vs_200ma_pct, rs_score}} from
-    `docs/screener/latest.json` so DD universe can be joined with the same
-    daily-cron price snapshot that `flow/ath-hunter.html` consumes.
+    """Build {ticker: {dist_52w_high_pct, ma50_pct, vs_200ma_pct, rs_score,
+    rs_1w, rs_4w, rs_13w, timing_source}} from `docs/screener/latest.json`.
 
-    Non-US DD tickers (TW/JP/EU) will not appear here — caller treats as null.
+    Also carries rs_1w/rs_4w/rs_13w so compute_yfinance_timing_fallback() can
+    use the screener's EMA-smoothed sub-scores as the reference population for
+    percentile-ranking the 34 DD tickers that aren't in the screener universe.
+
+    Non-US DD tickers (TW/JP/EU) will not appear here — caller falls back to
+    compute_yfinance_timing_fallback() for them.
     """
     if not SCREENER_LATEST.exists():
         print(f"  WARN: {SCREENER_LATEST} not found — timing fields will be null", file=sys.stderr)
@@ -146,7 +192,201 @@ def load_screener_timing_map() -> dict[str, dict]:
             "ma50_pct": r.get("ma50_pct"),
             "vs_200ma_pct": r.get("vs_200ma_pct"),
             "rs_score": r.get("rs_score"),
+            # Sub-scores for RS reference population (used by fallback only)
+            "rs_1w": r.get("rs_1w"),
+            "rs_4w": r.get("rs_4w"),
+            "rs_13w": r.get("rs_13w"),
+            "timing_source": "screener",
         }
+    return out
+
+
+def _calc_return(closes: "pd.Series", days: int) -> float | None:
+    """Return % return over last N trading days; None if insufficient history."""
+    if len(closes) < days + 1:
+        return None
+    v = float(closes.iloc[-1])
+    vn = float(closes.iloc[-(days + 1)])
+    if vn == 0:
+        return None
+    return (v / vn - 1) * 100.0
+
+
+def _percentile_rank_value(val: float, population: list[float]) -> float:
+    """Percentile rank (0-100) of val within population (including val itself)."""
+    if not population:
+        return 50.0
+    return sum(1 for x in population if x <= val) / len(population) * 100.0
+
+
+def compute_yfinance_timing_fallback(
+    missing_tickers: list[str],
+    screener_data: dict[str, dict],
+) -> dict[str, dict]:
+    """Batch-fetch timing fields for DD tickers not in the screener universe.
+
+    For dist_52w_high_pct / ma50_pct / vs_200ma_pct: computed directly from
+    ~300d daily closes via yfinance.
+
+    For rs_score: each missing ticker's r1w/r4w/r13w **raw % returns** are
+    percentile-ranked against **raw % returns** from the full screener universe
+    (~511 tickers), fetched via yfinance in the same batch.  This is
+    methodologically correct — apples-to-apples raw vs raw — unlike the
+    previous approach that mixed raw returns against screener's already-EMA-
+    smoothed percentile-rank values (0-100 range vs -50/+50 range).
+
+    No EMA smoothing is applied to fallback tickers (no prior history).
+    Fallback tickers get timing_source="yfinance_fallback".
+
+    TW/JP local listings are ranked against the same US universe by design
+    (consistent methodology; FX noise documented in module docstring).
+
+    Never raises — returns empty dict for tickers that yfinance fails on.
+    """
+    if not missing_tickers:
+        return {}
+
+    # Resolve yfinance tickers (EU suffix mapping) for missing DD tickers
+    yf_map: dict[str, str] = {}  # dd_ticker -> yf_ticker
+    for t in missing_tickers:
+        yf_map[t] = _yf_ticker_for_ma(t)
+
+    # Build full universe: screener tickers + missing DD tickers
+    screener_tickers: list[str] = list(screener_data.keys())
+    all_yf_tickers = list(set(list(yf_map.values()) + screener_tickers))
+    print(
+        f"  [fallback] Fetching {len(all_yf_tickers)} tickers "
+        f"({len(screener_tickers)} screener universe + {len(yf_map)} missing) ...",
+        file=sys.stderr,
+    )
+
+    try:
+        raw = yf.download(
+            all_yf_tickers,
+            period="300d",
+            interval="1d",
+            group_by="ticker",
+            progress=False,
+            threads=True,
+            auto_adjust=True,
+        )
+    except Exception as exc:
+        print(f"  [fallback] yf.download failed: {exc}", file=sys.stderr)
+        return {}
+
+    # Helper: extract Close series for a yf ticker from the multi-ticker frame.
+    # Captures `raw` (the yfinance DataFrame) and `all_yf_tickers` from enclosing scope.
+    # IMPORTANT: never use `raw` as a local variable name in this function's outer
+    # scope after this point — it would shadow the DataFrame for this closure.
+    def _get_closes(yf_ticker: str) -> "pd.Series | None":
+        try:
+            if len(all_yf_tickers) == 1:
+                # Single-ticker download returns flat columns
+                closes = raw["Close"].dropna()
+            else:
+                # Multi-ticker: top level is ticker name
+                closes = raw[yf_ticker]["Close"].dropna()
+            if closes.empty:
+                return None
+            return closes
+        except (KeyError, TypeError):
+            return None
+
+    # Compute raw returns for the full screener universe to use as reference population.
+    # These are raw % returns (apples-to-apples with missing tickers' raw returns).
+    ref_r1w: list[float] = []
+    ref_r4w: list[float] = []
+    ref_r13w: list[float] = []
+    for sc_t in screener_tickers:
+        closes = _get_closes(sc_t)
+        if closes is None:
+            continue
+        v1 = _calc_return(closes, 5)
+        v4 = _calc_return(closes, 21)
+        v13 = _calc_return(closes, 63)
+        if v1 is not None and v4 is not None and v13 is not None:
+            ref_r1w.append(v1)
+            ref_r4w.append(v4)
+            ref_r13w.append(v13)
+    print(
+        f"  [fallback] Reference population: {len(ref_r1w)} tickers with full raw returns",
+        file=sys.stderr,
+    )
+
+    # Compute raw returns for missing tickers
+    missing_raw: dict[str, dict] = {}  # dd_ticker -> {r1w, r4w, r13w}
+    for dd_t, yf_t in yf_map.items():
+        closes = _get_closes(yf_t)
+        if closes is None:
+            continue
+        r1w = _calc_return(closes, 5)
+        r4w = _calc_return(closes, 21)
+        r13w = _calc_return(closes, 63)
+        if r1w is not None and r4w is not None and r13w is not None:
+            missing_raw[dd_t] = {"r1w": r1w, "r4w": r4w, "r13w": r13w}
+
+    # Combined reference population: screener universe raw returns + missing tickers' raw returns.
+    # Both sides are now raw % returns — methodologically correct.
+    all_r1w = ref_r1w + [v["r1w"] for v in missing_raw.values()]
+    all_r4w = ref_r4w + [v["r4w"] for v in missing_raw.values()]
+    all_r13w = ref_r13w + [v["r13w"] for v in missing_raw.values()]
+
+    # Build output
+    out: dict[str, dict] = {}
+    for dd_t, yf_t in yf_map.items():
+        closes = _get_closes(yf_t)
+        timing: dict = {
+            "dist_52w_high_pct": None,
+            "ma50_pct": None,
+            "vs_200ma_pct": None,
+            "rs_score": None,
+            "timing_source": "yfinance_fallback",
+        }
+
+        if closes is not None and len(closes) > 1:
+            price = float(closes.iloc[-1])
+
+            # dist_52w_high_pct: last close vs trailing 252-day max
+            window = min(252, len(closes))
+            high_52w = float(closes.iloc[-window:].max())
+            if high_52w > 0:
+                timing["dist_52w_high_pct"] = round((price / high_52w - 1) * 100, 1)
+
+            # ma50_pct: last close vs 50-day SMA
+            if len(closes) >= 50:
+                ma50 = float(closes.iloc[-50:].mean())
+                if ma50 > 0:
+                    timing["ma50_pct"] = round((price / ma50 - 1) * 100, 1)
+
+            # vs_200ma_pct: last close vs 200-day SMA
+            if len(closes) >= 200:
+                ma200 = float(closes.iloc[-200:].mean())
+                if ma200 > 0:
+                    timing["vs_200ma_pct"] = round((price / ma200 - 1) * 100, 1)
+
+        # rs_score via percentile rank against combined population
+        if dd_t in missing_raw and all_r1w:
+            _raw_ret = missing_raw[dd_t]  # renamed to avoid shadowing outer `raw` DataFrame
+            pr1w = _percentile_rank_value(_raw_ret["r1w"], all_r1w)
+            pr4w = _percentile_rank_value(_raw_ret["r4w"], all_r4w)
+            pr13w = _percentile_rank_value(_raw_ret["r13w"], all_r13w)
+            # Persistence formula matches screener.py (no EMA — no prior history)
+            persistence = pr1w * 0.2 + pr4w * 0.3 + pr13w * 0.5
+            # Trend bonus (matches screener.py logic)
+            if pr1w > pr4w > pr13w:
+                bonus = 5.0
+            elif pr1w >= pr4w >= pr13w:
+                bonus = 2.0
+            elif pr1w < pr4w < pr13w:
+                bonus = -5.0
+            else:
+                bonus = 0.0
+            timing["rs_score"] = round(min(100.0, persistence + bonus), 1)
+
+        out[dd_t] = timing
+
+    succeeded = sum(1 for v in out.values() if v.get("dist_52w_high_pct") is not None)
+    print(f"  [fallback] Done: {succeeded}/{len(missing_tickers)} tickers got dist_52w_high_pct", file=sys.stderr)
     return out
 
 
@@ -181,6 +421,7 @@ def enrich_ticker(
     dca_ev_map: dict,
     dca_trend_map: dict,
     screener_timing: dict,
+    timing_fallback: dict,
     skip_ma: bool,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
@@ -188,7 +429,9 @@ def enrich_ticker(
     Also overrides moat_trend with DCA Phase A1 authoritative arrow (the loader
     defaults all 98 to ↑ because dd-meta rarely carries this field; DCA does).
 
-    `timing` joins `docs/screener/latest.json` by ticker — null for TW/JP/EU.
+    `timing` joins `docs/screener/latest.json` by ticker — for tickers not in
+    the screener universe (TW/JP/EU + niche US), falls back to `timing_fallback`
+    computed by compute_yfinance_timing_fallback() from a yfinance batch fetch.
     """
     t = entry["ticker"]
     quality, source = get_quality_for_ticker(t, qgm_index)
@@ -206,7 +449,17 @@ def enrich_ticker(
     # has none (conservative — don't assume strengthening without evidence).
     moat_trend = _moat_trend_for(t, dca_trend_map, fallback="→")
 
+    # Timing: prefer screener (EMA-smoothed, consistent); fall back to yfinance
+    # batch for tickers not in the screener universe.
     timing = screener_timing.get(t)
+    if timing is None:
+        timing = timing_fallback.get(t)  # may still be None if yfinance failed
+
+    # Strip internal sub-score fields from timing dict before storing — they
+    # are only needed for RS reference population computation, not for the FE.
+    if timing is not None:
+        timing = {k: v for k, v in timing.items()
+                  if k not in ("rs_1w", "rs_4w", "rs_13w")}
 
     return {
         **entry,
@@ -248,12 +501,23 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     screener_timing = load_screener_timing_map()
     print(f"  Step 3    screener timing map: {len(screener_timing)} tickers (for 起漲點 detection)")
 
+    # Identify DD tickers missing from the screener universe and compute their
+    # timing fields via a yfinance batch fetch (fallback path).
+    all_dd_tickers = [e["ticker"] for e in universe]
+    missing_from_screener = [t for t in all_dd_tickers if t not in screener_timing]
+    print(f"  Step 3    timing fallback needed: {len(missing_from_screener)} tickers not in screener universe")
+    timing_fallback: dict[str, dict] = {}
+    if missing_from_screener:
+        timing_fallback = compute_yfinance_timing_fallback(missing_from_screener, screener_timing)
+        fb_ok = sum(1 for v in timing_fallback.values() if v.get("dist_52w_high_pct") is not None)
+        print(f"  Step 3    timing fallback: {fb_ok}/{len(missing_from_screener)} tickers backfilled")
+
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, skip_ma): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
