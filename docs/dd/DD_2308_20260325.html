@@ -3,629 +3,1051 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DD Report | 2308.TW 台達電子 Delta Electronics</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="dd-schema-version" content="v12.3">
+<title>DD_2308_20260325 | 台達電子 Delta Electronics v12.3 深度研究</title>
 <style>
-:root {
-  --bg: #F8FAFC;
-  --card: #FFFFFF;
-  --title-bg: #1E3A5F;
-  --accent: #3B82F6;
-  --text: #1E293B;
-  --text-light: #64748B;
-  --row-alt: #F1F5F9;
-  --green-bg: #DCFCE7; --green-text: #166534;
-  --red-bg: #FEE2E2; --red-text: #991B1B;
-  --yellow-bg: #FEF9C3; --yellow-text: #92400E;
-  --blue-bg: #EFF6FF; --blue-text: #1E3A5F;
-  --orange-bg: #FFF0E6; --orange-border: #F97316; --orange-text: #C2410C;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); line-height:1.7; font-size:15px; }
-.header-bar { position:sticky; top:0; z-index:100; background:var(--title-bg); color:#fff; padding:10px 32px; display:flex; justify-content:space-between; align-items:center; font-size:13px; font-family:'IBM Plex Mono',monospace; }
-.header-bar .left { display:flex; gap:24px; }
-.header-bar .tag { background:rgba(255,255,255,.15); padding:2px 10px; border-radius:2px; }
-.container { max-width:1100px; margin:0 auto; padding:24px 20px 160px; }
-.section { background:var(--card); margin-bottom:20px; border-left:4px solid var(--accent); }
-.section-title { background:var(--title-bg); color:#fff; padding:12px 20px; font-size:16px; font-weight:700; letter-spacing:.5px; }
-.section-body { padding:20px 24px; }
-.section-body p { margin-bottom:12px; }
-.hypothesis-section { background:var(--blue-bg); border-left:4px solid var(--accent); }
-.hypothesis-section .section-title { background:var(--accent); }
-.warning-section { background:var(--orange-bg); border-left:4px solid var(--orange-border); }
-.warning-section .section-title { background:var(--orange-border); }
-table { width:100%; border-collapse:collapse; margin:12px 0 16px; font-size:14px; }
-th { background:var(--title-bg); color:#fff; padding:8px 12px; text-align:left; font-weight:500; }
-td { padding:8px 12px; border-bottom:1px solid #E2E8F0; }
-tr:nth-child(even) td { background:var(--row-alt); }
-.mono { font-family:'IBM Plex Mono',monospace; }
-.badge { display:inline-block; padding:2px 10px; border-radius:2px; font-size:12px; font-weight:600; }
-.badge-green { background:var(--green-bg); color:var(--green-text); }
-.badge-red { background:var(--red-bg); color:var(--red-text); }
-.badge-yellow { background:var(--yellow-bg); color:var(--yellow-text); }
-.badge-blue { background:var(--blue-bg); color:var(--blue-text); }
-.signal-box { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:2px; font-weight:600; font-size:13px; margin:2px 4px; }
-h3 { font-size:15px; font-weight:700; margin:16px 0 8px; color:var(--title-bg); }
-h4 { font-size:14px; font-weight:600; margin:12px 0 6px; color:var(--text); }
-.verdict { font-size:16px; font-weight:700; padding:12px 16px; margin:12px 0; border-left:4px solid; }
-.verdict-green { background:var(--green-bg); color:var(--green-text); border-color:#16A34A; }
-.verdict-red { background:var(--red-bg); color:var(--red-text); border-color:#DC2626; }
-.verdict-yellow { background:var(--yellow-bg); color:var(--yellow-text); border-color:#CA8A04; }
-.verdict-blue { background:var(--blue-bg); color:var(--blue-text); border-color:var(--accent); }
-.sub-note { font-size:13px; color:var(--text-light); }
-.print-btn { position:fixed; bottom:24px; right:24px; background:var(--title-bg); color:#fff; border:none; padding:10px 20px; cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:13px; z-index:200; }
-.print-btn:hover { background:var(--accent); }
-@media print { .header-bar,.print-btn { display:none!important; } body { font-size:12px; } .container { padding:0; } .section { break-inside:avoid; } }
-
-@media(max-width:768px){
-  main{padding:12px}
-  .content{padding:14px 16px}
-  .debate{grid-template-columns:1fr !important}
-  .rr{grid-template-columns:1fr !important}
-  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  h2.section{font-size:15px;padding:10px 16px}
-  header.sticky{padding:10px 14px;font-size:12px}
-  header.sticky .title{font-size:14px}
-  body{font-size:13px}
-}
-
-/* DD TOC (retrofit) */
-.dd-toc{background:#F1F5F9;border-left:4px solid var(--accent,#3B82F6);padding:14px 18px;margin-bottom:20px;border-radius:2px}
-.dd-toc .toc-title{font-weight:700;color:#1E3A5F;font-size:14px;margin-bottom:8px}
-.dd-toc .toc-list{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px}
-.dd-toc .toc-list li a{display:inline-block;padding:4px 10px;background:#fff;color:#1E3A5F;text-decoration:none;font-size:12.5px;border:1px solid #cbd5e1;border-radius:2px;font-weight:500}
-.dd-toc .toc-list li a:hover{background:#1E3A5F;color:#fff;border-color:#1E3A5F}
-html{scroll-behavior:smooth}
-h2[id^="sec-"],section[id^="sec-"],div[id^="sec-"]{scroll-margin-top:60px}
-@media print{.dd-toc{display:none}}
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.6; margin: 0; padding: 0; font-size: 15px; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 24px 20px 160px; }
+  .header { background: linear-gradient(135deg,#0f172a,#1e293b); color: #fff; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+  .header a { font-weight: 700; color: #fff; text-decoration: none; font-size: 15px; }
+  .header nav { display: flex; gap: 18px; }
+  .header nav a { color: rgba(255,255,255,.7); text-decoration: none; font-size: 13px; }
+  .sticky-bar { position: sticky; top: 0; z-index: 100; background: #1E3A5F; color: #fff; padding: 10px 32px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-family: 'IBM Plex Mono', monospace; }
+  .sticky-bar .tag { background: rgba(255,255,255,.15); padding: 2px 10px; border-radius: 2px; }
+  .card { background: #fff; margin-bottom: 18px; border-left: 4px solid #3B82F6; border-radius: 2px; }
+  .card h2 { background: #1E3A5F; color: #fff; padding: 12px 20px; font-size: 16px; font-weight: 700; margin: 0; }
+  .card-body { padding: 20px 24px; }
+  .card-body p { margin-bottom: 12px; }
+  .card-body h3 { font-size: 15px; font-weight: 700; margin: 18px 0 8px; color: #1E3A5F; }
+  .card-body h4 { font-size: 14px; font-weight: 600; margin: 12px 0 6px; color: #374151; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 14px; }
+  th { background: #1E3A5F; color: #fff; padding: 8px 12px; text-align: left; font-weight: 500; }
+  td { padding: 8px 12px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; }
+  .badge-green { background: #DCFCE7; color: #166534; }
+  .badge-red { background: #FEE2E2; color: #991B1B; }
+  .badge-yellow { background: #FEF9C3; color: #92400E; }
+  .badge-blue { background: #EFF6FF; color: #1E40AF; }
+  .badge-orange { background: #FED7AA; color: #C2410C; }
+  .verdict { font-size: 15px; font-weight: 700; padding: 10px 16px; margin: 10px 0; border-left: 4px solid; border-radius: 2px; }
+  .verdict-green { background: #DCFCE7; color: #166534; border-color: #16A34A; }
+  .verdict-red { background: #FEE2E2; color: #991B1B; border-color: #DC2626; }
+  .verdict-yellow { background: #FEF9C3; color: #92400E; border-color: #CA8A04; }
+  .verdict-blue { background: #EFF6FF; color: #1E3A5F; border-color: #3B82F6; }
+  .hyp-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hyp-box ul { margin: 0; padding-left: 18px; }
+  .hyp-box li { margin: 4px 0; }
+  .warn-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warn-box h4 { color: #C2410C; margin: 0 0 8px; }
+  .reasoning { background: #F1F5F9; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 13px; }
+  .reasoning::before { content: "推導："; font-weight: bold; color: #1E3A5F; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 3px 12px; border-radius: 4px; display: inline-block; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 13px; color: #4B5563; margin: 6px 0; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .dd-toc { background: #F1F5F9; border-left: 4px solid #3B82F6; padding: 14px 18px; margin-bottom: 20px; border-radius: 2px; }
+  .dd-toc .toc-title { font-weight: 700; color: #1E3A5F; font-size: 14px; margin-bottom: 8px; }
+  .dd-toc .toc-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc .toc-list li a { display: inline-block; padding: 4px 10px; background: #fff; color: #1E3A5F; text-decoration: none; font-size: 12.5px; border: 1px solid #cbd5e1; border-radius: 2px; font-weight: 500; }
+  .dd-toc .toc-list li a:hover { background: #1E3A5F; color: #fff; }
+  html { scroll-behavior: smooth; }
+  h2[id], section[id], div[id] { scroll-margin-top: 60px; }
+  .print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #fff; border: none; padding: 10px 20px; cursor: pointer; font-size: 13px; z-index: 200; border-radius: 3px; }
+  @media print { .sticky-bar, .print-btn, .dd-toc { display: none !important; } body { font-size: 12px; } }
+  @media (max-width: 768px) { .three-col { grid-template-columns: 1fr !important; } table { display: block; overflow-x: auto; } }
 </style>
 </head>
 <body>
-<!-- ID_BANNER_START -->
-<div style="background:#F0F9FF;border-left:3px solid #3B82F6;padding:10px 16px;margin:14px 0 18px;font-size:13px;color:#1E3A5F;border-radius:3px"><strong style="color:#1E40AF">📐 所屬產業 ID：</strong><a href="/id/ID_AIDCPowerElectronics_20260421.html">AI DC 電力電子 / 800V DC</a> <span style="color:#64748b;font-size:11px;margin-left:8px">· DD 結論請對照 ID 核心假設</span></div>
-<!-- ID_BANNER_END -->
-<div style="background:linear-gradient(135deg,#0f172a,#1e293b);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.1)">
-  <a href="/" style="font-weight:700;color:#fff;text-decoration:none;font-size:15px;">InvestMQuest<span style="color:#3b82f6">.</span> Research</a>
-  <div style="display:flex;gap:18px;">
-    <a href="/" style="color:rgba(255,255,255,.7);text-decoration:none;">首頁</a>
-    <a href="/briefing/" style="color:rgba(255,255,255,.7);text-decoration:none;">每日簡報</a>
-    <a href="/weekly/" style="color:rgba(255,255,255,.7);text-decoration:none;">週報</a>
-    <a href="/backtest/" style="color:rgba(255,255,255,.7);text-decoration:none;">回測</a>
-    <a href="/six-state/" style="color:rgba(255,255,255,.7);text-decoration:none;">六狀態機</a>
-  </div>
+
+<!-- v12.3-upgrade source log (win-20260517-1020-1ff5, 2026-05-17)
+  pre-v12 → v12.3 full rewrite; data snapshot preserved at 2026-03-25
+  customer: wawt.tech 2026-04-20 (Delta AI server PSU market share ~60-65%); digitimes.com 2026-05-12 (NVIDIA modular AI strategy Delta supplier)
+  m&a: deltaww.com/en-US/press/5076 Eltek NOK 3.9B (2014-2015); digitimes.com 2025-12-02 Vivotek NT$3.73B (~USD 119M announced Dec 2025, expected close Q1 2026); Tracxn 8 total acquisitions
+  sbc: TW company cash-bonus dominant; SBC/Rev <1% (台股慣性); goodinfo.tw 薪資結構確認
+  industry: prnewswire.com 2026-03 Delta 800V In-Row 660kW Power Rack NVIDIA GTC 2026; delta-americas.com 5500W 80 PLUS Ruby PSU
+  q4-2025: investing.com Q4 Rev NT$161.6B +41.5% YoY; FY2025 Rev NT$554.9B +31.7%
+-->
+
+<!-- nav bar -->
+<div class="header">
+  <a href="/">InvestMQuest<span style="color:#3b82f6">.</span> Research</a>
+  <nav>
+    <a href="/">首頁</a>
+    <a href="/briefing/">每日簡報</a>
+    <a href="/weekly/">週報</a>
+    <a href="/backtest/">回測</a>
+    <a href="/six-state/">六狀態機</a>
+  </nav>
 </div>
 
-<div class="header-bar">
-  <div class="left">
+<!-- ID banner -->
+<div style="background:#F0F9FF;border-left:3px solid #3B82F6;padding:10px 16px;font-size:13px;color:#1E3A5F;">
+  <strong style="color:#1E40AF">📐 所屬產業 ID：</strong>
+  <a href="/id/ID_AIDCPowerElectronics_20260421.html">AI DC 電力電子 / 800V DC</a>
+  <span style="color:#64748b;font-size:11px;margin-left:8px">· DD 結論請對照 ID 核心假設</span>
+</div>
+
+<div class="sticky-bar">
+  <div style="display:flex;gap:24px;align-items:center;">
     <span><strong>2308.TW</strong> 台達電子 Delta Electronics</span>
-    <span class="tag">🔍 深度版</span>
-    <span>資料抓取：2026-03-25</span>
-    <span>最新股價：<strong>NT$1,475</strong>（2026/03/22 收盤）</span>
-    <span>最近財報季：<strong>2025 Q4</strong></span>
+    <span class="tag">DD Schema v12.3</span>
+    <span>資料快照：2026-03-25</span>
+    <span>股價：<strong>NT$1,475</strong>（2026/03/22 收盤）</span>
+    <span>最近財報：<strong>2025 Q4</strong></span>
   </div>
 </div>
 
 <button class="print-btn" onclick="window.print()">列印為 PDF</button>
 
 <div class="container">
+
 <nav class="dd-toc">
-  <div class="toc-title">目錄</div>
+  <div class="toc-title">目錄（DD Schema v12.3 — 資料快照 2026-03-25）</div>
   <ul class="toc-list">
-      <li><a href="#sec-1">§1 結論</a></li>
-      <li><a href="#sec-2">§2 序章</a></li>
-      <li><a href="#sec-3">§3 論點</a></li>
-      <li><a href="#sec-4">§4 財報</a></li>
-      <li><a href="#sec-5">§5 門檻</a></li>
-      <li><a href="#sec-6">§6 成長</a></li>
-      <li><a href="#sec-7">§7 護城河</a></li>
-      <li><a href="#sec-8">§8 財務</a></li>
+    <li><a href="#s1">§1 結論</a></li>
+    <li><a href="#s2">§2 四層判定</a></li>
+    <li><a href="#s3">§3 三方辯論</a></li>
+    <li><a href="#s4">§4 序章</a></li>
+    <li><a href="#s5">§5 論點錨定</a></li>
+    <li><a href="#s6">§6 財報</a></li>
+    <li><a href="#s7">§7 門檻檢核</a></li>
+    <li><a href="#s8">§8 長期成長</a></li>
+    <li><a href="#s9">§9 護城河</a></li>
+    <li><a href="#s10">§10 財務品質</a></li>
+    <li><a href="#s11">§11 產業格局</a></li>
+    <li><a href="#s12">§12 治理</a></li>
+    <li><a href="#s13">§13 估值</a></li>
   </ul>
 </nav>
 
+<!-- ======================== §1 ======================== -->
+<div class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<div class="card-body">
 
-<!-- ===== §0 序章 ===== -->
-<div class="section">
-  <div class="section-title">§0｜序章：第一性原理 × 逆向思考</div>
-  <div class="section-body">
-    <h3>存在意義</h3>
-    <p>台達電解決的核心問題是：<strong>如何在電能從產生到最終使用的每一個轉換環節中，把損耗降到物理極限？</strong>全球每年約 30% 的電能在轉換過程中被浪費——從交流到直流、從高壓到低壓、從電能到熱能的管理。台達電五十年來累積的電力電子核心技術（交換式電源、功率半導體、磁性元件設計）構成了現代文明數位化與電氣化的隱形骨幹。若台達電明天消失，全球約 40% 的資料中心伺服器電源、大量電動車充電基礎設施、以及工業自動化產線的電力核心模組將面臨無替代供應商的斷鏈危機。它不是做「一個產品」，而是掌握了「電能轉換」這個跨產業共通的底層技術平台。</p>
+<p class="note">本報告資料快照日期：2026-03-25（含 2025 Q4 / FY2025 財報）。股價基準：NT$1,475（2026/03/22 收盤）。v12.3 升級批次：win-20260517-1020-1ff5（2026-05-17），pre-v12 → v12.3 全架構重寫，原 March 25 快照數字完整保留。</p>
 
-    <h3>逆向推演（Munger Inversion）</h3>
-    <p>若要讓這筆投資在 3 年內虧損 50% 以上，最可能的路徑：</p>
-    <p><strong>地緣政治曝險：</strong>台達電生產高度集中於亞洲——中國（東莞、吳江等）仍佔營收產出超過 40%、泰國是第二大生產基地。若台海局勢惡化或中美脫鉤加劇，中國產線的供應連續性與關稅風險將同時爆發。雖然公司已加速泰國、美國、印度的分散佈局（三座泰國新廠已於 2025 年底投產），但轉移速度未必趕上地緣風險升溫。</p>
-    <p><strong>技術替代風險：</strong>最大風險來自 AI 架構的劇烈迭代。若 AI 運算範式從 GPU 密集型轉向更高效率的邊緣運算或光子運算，資料中心的電力密度需求可能放緩，削弱台達電電源與液冷業務的超額成長敘事。時間軸：2027～2028 年 NVIDIA Rubin Ultra 之後的下一代架構將是關鍵觀察點。</p>
-    <p><strong>管理層失職：</strong>創辦人鄭崇華已交棒，現任董事長海英俊與執行長鄭平主導策略。最大風險是在 AI 繁榮期過度投資產能（泰國、美國擴廠合計資本支出大幅拉升），若 CSP 資本支出突然削減，產能過剩將拖累 ROIC 與 FCF。</p>
-    <p><strong>價值陷阱路徑：</strong>台達電當前的風險模式並非典型低估值陷阱，而是「隱性資本密集型」的可能變異——為跟上 AI 資料中心的爆發性需求，資本支出正大幅攀升（2025 年 CapEx 預計較 2024 年再增），若 AI 電源 ASP 隨競爭者進入而下降，高資本投入未必能維持當前的超額 ROIC。</p>
-  </div>
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hyp-box">
+<ul>
+  <li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信（AI 資料中心電力供需錯配 Runway ≥ 10 年）｜ §9 護城河趨勢 加深（800V HVDC 與 NVIDIA GB200/GB300 co-design、液冷整合方案領先）｜ §8.F AI 風險 🟢 受益</li>
+  <li><strong>品質 A 級：</strong>Execution moat 8/10 + Pricing power 7/10（§9 二維拆解）｜ 體質 veto 0 項不過 ｜ 等級：A 級</li>
+  <li><strong>估值燈 🟠 偏貴：</strong>Fwd PE FY+1（2026E）~39.4x，5Y 分位 ~90%；PEG（3Y CAGR ~38%）= 1.04（合理偏便宜，但分位過熱）；綜合取較嚴 → 🟠</li>
+  <li><strong>Pure MA 狀態 ✅ 強勢：</strong>NT$1,475 > W52 > W104 > W250；斜率正值；BB 位置需觀察（快照日未精確計算，以趨勢估計）</li>
+  <li><strong>大盤豁免：</strong>TWII 正常（估，2026-03-25 收盤）；無系統性壓制</li>
+  <li><strong>參考 R:R：</strong>短期（1Y）合理目標 ~NT$1,360 → R:R 約 −0.4x；中期（2Y）~NT$1,870 → R:R 約 +1.0x；5Y 目標 NT$2,880 → R:R ~+4.0x（基於 FY28E EPS NT$60 × 40x + FCF 正常化）</li>
+  <li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（品質 A 級 + 估值 🟠 + MA ✅）→ QC-31：thesis 完整但估值偏貴、進場時機需等候 → B 觀望偏進場</li>
+  <li><strong>陷阱定性：<span class="badge badge-yellow">🟡 觀察期</span></strong>（thesis 完整、ROIC 擴大、有機成長驗證，但 Forward P/E ~39x 歷史高位，需等 AI 營收佔比驗證）</li>
+  <li><strong>長期持有信心：高</strong>（§2 I）｜ Runway ≥ 10 年 + 護城河擴大 + 4 引擎多元化</li>
+  <li><strong>v12.3 升級紀錄：</strong>2026-05-17 win-20260517-1020-1ff5 執行；pre-v12 → v12.3 全架構重寫；verdict 推導：品質 A + 估值 🟠 + MA ✅ + trap 🟡 → B；§5.F Single Thing 新增；§9 二維拆解；§8.H 客戶結構深度；§11 議價權三段；§12 M&A 5Y track（含 Vivotek Dec 2025）；§13 砍 13.0/13.3/13.5，留 13.1/13.2/13.4</li>
+</ul>
 </div>
 
-<!-- ===== §0.5 投資論點錨定 ===== -->
-<div class="section hypothesis-section">
-  <div class="section-title">§0.5｜投資論點錨定（核心假設顯性化）</div>
-  <div class="section-body">
-    <h3>A｜持有期與時間軸宣告</h3>
-    <table>
-      <tr><th>項目</th><th>填寫</th></tr>
-      <tr><td><strong>預設持有期</strong></td><td>2 ～ 3 年</td></tr>
-      <tr><td><strong>主要驅動理由</strong></td><td>AI 資料中心電源與液冷的放量兌現週期：2026H2 800V HVDC 導入 → 2027 獲利翻倍兌現</td></tr>
-      <tr><td><strong>訊號 vs 噪音</strong></td><td>短期股價因市場情緒波動是噪音；AI 相關營收佔比提升速度、毛利率趨勢、800V HVDC 客戶導入進度是訊號</td></tr>
-    </table>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避。倉位由 portfolio-manager skill 決定。</p>
 
-    <h3>B｜三個核心假設</h3>
-    <table>
-      <tr><th>#</th><th>核心假設</th><th>可驗證指標</th><th>驗證時間點</th></tr>
-      <tr><td><strong>H1</strong></td><td>AI 資料中心電力需求持續超線性增長，CSP 資本支出維持 2025 年水準或以上</td><td>四大 CSP 季度 CapEx 公告、台達電基礎設施部門營收 YoY</td><td>每季財報</td></tr>
-      <tr><td><strong>H2</strong></td><td>800V HVDC 方案在 2026H2 進入量產，帶動伺服器電力營收 YoY +70% 且毛利率 > 35%</td><td>台達電 AI 相關營收佔比（目標：2026 年 > 50%）、季度毛利率</td><td>2026 Q3～Q4 財報</td></tr>
-      <tr><td><strong>H3</strong></td><td>市場估值邏輯從傳統 P/E 轉向「AI 基礎設施平台」定價，Forward P/E 維持 35x～45x</td><td>Forward P/E 是否隨 EPS 上修而維持倍數，而非壓縮</td><td>持續觀察</td></tr>
-    </table>
-
-    <h3>C｜三個最可能推翻論點的風險</h3>
-    <table>
-      <tr><th>#</th><th>風險</th><th>對應假設</th><th>監測指標</th><th>警戒閾值</th></tr>
-      <tr><td>R1</td><td>CSP AI 資本支出大幅縮減或延遲</td><td>H1</td><td>四大 CSP 季度 CapEx 合計</td><td>連續 2 季 QoQ 下滑 > 10%</td></tr>
-      <tr><td>R2</td><td>800V HVDC 導入時程延後或被競爭者分食</td><td>H2</td><td>台達電 AI 電源營收 QoQ 成長率、市佔變化</td><td>2026H2 AI 營收佔比未達 45%</td></tr>
-      <tr><td>R3</td><td>中美地緣衝突導致關稅或供應鏈中斷</td><td>H1, H2</td><td>美中關稅政策、台達電中國產能佔比</td><td>中國產能佔比 > 35% 且新關稅 > 25%</td></tr>
-    </table>
-
-    <h3>D｜邊際貢獻判斷框架</h3>
-    <table>
-      <tr><th>判斷步驟</th><th>問題</th></tr>
-      <tr><td>1. 時間軸匹配？</td><td>這個事件在 2～3 年持有期內有影響嗎？</td></tr>
-      <tr><td>2. 假設關聯？</td><td>影響 H1（CSP 支出）/ H2（800V 放量）/ H3（估值邏輯）中的哪一個？</td></tr>
-      <tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
-      <tr><td>4. 閾值判斷？</td><td>削弱程度達到重新評估的閾值？</td></tr>
-    </table>
-
-    <h3>E｜可執行決策主線預設</h3>
-    <table>
-      <tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
-      <tr><td><strong>進場</strong></td><td>Forward P/E ≤ 38x（基於 2026E EPS NT$36）；下季財報確認毛利率 > 34%</td><td>建倉 3%</td></tr>
-      <tr><td><strong>加碼</strong></td><td>H1 + H2 均確認：CSP CapEx 維持、800V 量產確認</td><td>加碼至 5%</td></tr>
-      <tr><td><strong>減碼</strong></td><td>R1 信號出現、或 Forward P/E > 50x 且 EPS 未上修</td><td>減至 2%</td></tr>
-      <tr><td><strong>撤退</strong></td><td>H1 被推翻（CSP CapEx 連續 2Q 下滑 > 10%）、或毛利率連續 2Q < 32%</td><td>清倉</td></tr>
-    </table>
-  </div>
+<div class="warn-box">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答）</h4>
+<table>
+  <tr><th>問題</th><th>回答</th></tr>
+  <tr><td>最可能的陷阱模式</td><td><strong>非陷阱（觀察期）</strong> — 候選風險：隱性資本密集型（CapEx 持續拉升若 AI CSP 需求拐點先到，產能過剩 ROIC 惡化）</td></tr>
+  <tr><td>支持「非陷阱」的最強論據</td><td>(1) FY2025 ROIC ~18-20%，趨勢持續擴大；(2) EPS 成長 +71% YoY 全由有機獲利驅動（SBC &lt;1%、無回購堆疊）；(3) 毛利率從 2023 28.8% → 2025 Q4 34.6%，結構性改善；(4) Execution moat 8/10：與 NVIDIA GB200/GB300 co-design 已驗證、800V HVDC 規格制定先發 12-18 個月</td></tr>
+  <tr><td>支持「可能是陷阱」的反駁</td><td>(1) Forward P/E ~39.4x 歷史 ~90% 分位，安全邊際薄；(2) FCF Margin ~6.5%（CapEx 擴張期壓縮）；(3) AI CapEx 週期若 2027 見頂，新增產能（泰國三廠）可能面臨利用率下降；(4) Vertiv 800V 競爭 H2 2026 關鍵觀察點</td></tr>
+  <tr><td>如何在持有期間判斷陷阱是否發生</td><td>① 基礎設施部門 YoY 連 2 季 &lt;+20% → H1 削弱；② GM 連 2 季 &lt;33% → H2 削弱；③ §5.F single thing：NVIDIA Rubin Ultra 主供由 Vertiv 拿下（公告即行動）</td></tr>
+</table>
+<p><strong>最終定性：<span class="badge badge-yellow">🟡 觀察期</span></strong>（thesis 完整但估值偏熱，進場需等 AI 營收比例驗證或估值回落）</p>
 </div>
 
-<!-- ===== §1 即時財報情報 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-1">§1｜即時財報情報（2025 Q4 / FY2025）</div>
-  <div class="section-body">
-    <h3>① 最新一季財報關鍵數字</h3>
-    <table>
-      <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
-      <tr><td>Revenue</td><td class="mono">NT$161.6B</td><td class="mono">NT$160.0B</td><td><span class="badge badge-green">Beat</span></td><td class="mono">+42%</td></tr>
-      <tr><td>EPS</td><td class="mono">NT$6.67</td><td class="mono">NT$7.52</td><td><span class="badge badge-red">Miss</span></td><td class="mono">+142%</td></tr>
-      <tr><td>Gross Margin</td><td class="mono">34.6%</td><td class="mono">~35%</td><td><span class="badge badge-yellow">Slight Miss</span></td><td class="mono">+5.8%p YoY</td></tr>
-      <tr><td>Operating Margin</td><td class="mono">16.3%</td><td class="mono">~17%</td><td><span class="badge badge-yellow">Slight Miss</span></td><td class="mono">+7.0%p YoY</td></tr>
-      <tr><td>EBITDA</td><td class="mono">NT$32.7B</td><td>—</td><td>—</td><td class="mono">+92%</td></tr>
-    </table>
-    <p class="sub-note">全年 FY2025：營收 NT$554.9B (+32% YoY)、EPS NT$23.14 (+71% YoY)、EBITDA NT$117.9B (+51%)、EBITDA Margin 21.3%</p>
-    <p><strong>EPS Miss 解讀：</strong>營收 Beat 但 EPS Miss 的核心原因是稅率偏高（23.4%）及業外損失。本業營業利益 NT$26.4B 實際上大幅成長 147% YoY，反映核心獲利動能極強。市場對 EPS miss 的反應需觀察是結構性還是一次性。</p>
+<h3>最關鍵監測指標</h3>
+<table>
+  <tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+  <tr><td>1</td><td>四大 CSP 季度 CapEx 合計</td><td>§5 H1</td><td><span class="badge badge-blue">🔵 核心假設驗證</span></td><td>連續 2Q QoQ 下滑 &gt;10%</td></tr>
+  <tr><td>2</td><td>台達電基礎設施部門營收 YoY</td><td>§8 A / §5 H1</td><td><span class="badge badge-blue">🔵 長期成長領先信號</span></td><td>連續 2Q &lt;+20% YoY</td></tr>
+  <tr><td>3</td><td>季度毛利率趨勢</td><td>§5 H2 / §10</td><td><span class="badge badge-blue">🔵 定價能力驗證</span></td><td>連續 2Q &lt;33%</td></tr>
+  <tr><td>4</td><td><strong>§5.F Single Thing：NVIDIA Rubin Ultra 主供公告</strong></td><td>§5 F / §9</td><td><span class="badge badge-red">🔴 致命 binary</span></td><td>Vertiv 取得 NVIDIA Rubin Ultra 主供 reference design 公告 → 立即 re-evaluate</td></tr>
+  <tr><td>5</td><td>800V HVDC 量產時程</td><td>§5 H2 / §9</td><td><span class="badge badge-red">🔴 競爭格局</span></td><td>2026H2 未確認量產 → H2 削弱</td></tr>
+</table>
 
-    <h3>財報對核心假設的邊際貢獻</h3>
-    <table>
-      <tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
-      <tr><td>H1</td><td><span class="badge badge-green">＋ 強化</span></td><td>基礎設施部門爆發式成長主導營收創新高，資料中心需求持續強勁</td></tr>
-      <tr><td>H2</td><td><span class="badge badge-green">＋ 強化</span></td><td>液冷營收佔比已達 ~9%（年初僅 6-7%），800V HVDC 已有美國 CSP 客戶導入</td></tr>
-      <tr><td>H3</td><td><span class="badge badge-yellow">0 不變</span></td><td>EPS miss 令估值短期承壓，但營收 Beat + 營業利益暴增讓估值邏輯未被推翻</td></tr>
-    </table>
-
-    <h3>② Earnings Call 語氣解析</h3>
-    <p><strong>管理層基調：</strong>樂觀偏審慎。相較前季更謹慎地提及「市場變化快、不確定因素多」，但對 AI 資料中心需求的信心明顯高於上季。</p>
-    <p><strong>Forward Guidance：</strong>2026 年整體營運預期 OpEx 將增加（R&D + 服務團隊擴張），CapEx 略高於 2025 年。Q1 因工作天數較少預期季節性下滑，Q2 將更強。未提供具體全年營收或 EPS guidance。</p>
-    <p><strong>刻意強調的主題：</strong>「AI 資料中心」、「800V 高壓直流」、「液冷散熱系統出貨」、「泰國新產能投產」反覆出現，代表管理層希望市場將台達電重新定位為 AI 基礎設施核心供應商。</p>
-    <p><strong>刻意迴避的問題：</strong>對 Mobility（電動車）部門的具體復甦時間表語焉不詳；對整體毛利率的全年目標未給出明確數字，僅表示「產品組合將持續改善」。</p>
-
-    <h3>③ 產業 Imply 萃取</h3>
-    <p><strong>需求端：</strong>四大 CSP（AWS、Azure、Google Cloud、Meta）2025 Q4 資本支出合計約 $720～730 億美元，2026 年維持增長趨勢——這直接支撐台達電基礎設施部門的訂單可見度。</p>
-    <p><strong>供給端：</strong>泰國三座新廠已投產，產能擴張速度加快。但同業如 Vertiv 也在積極擴產，供給面的競爭壓力將在 2026H2 開始顯現。</p>
-    <p><strong>競爭格局：</strong>台達電在 AI 伺服器電源的定價能力仍強（單顆瓦數從 3KW 升至 5.5KW，未來看 8～12KW），但液冷領域的競爭者增加（Cooler Master、Auras 等台廠加入），需觀察 ASP 是否能維持。</p>
-    <p><strong>對同業推論：</strong>台達電的強勁 AI 需求訊號利多 Vertiv、Eaton 等全球電力管理同業，但台達電在亞洲製造成本優勢使其在 CSP 供應鏈中更具價格競爭力。</p>
-  </div>
+</div>
 </div>
 
-<!-- ===== §2 核心門檻檢核 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-2">§2｜核心門檻檢核</div>
-  <div class="section-body">
-    <h3>EPS CAGR 搜尋結果</h3>
-    <p>基期 FY2025 實際 EPS：<strong class="mono">NT$23.14</strong>（GAAP）</p>
-    <p>FY+1E（2026E）：<strong class="mono">NT$35.95</strong>（FactSet 中位數，n=20 位分析師；Stockopedia 共識 NT$36.74）</p>
-    <p>FY+2E（2027E）：<strong class="mono">NT$53.50</strong>（大摩上修預估；共識約 NT$48～53）</p>
-    <p>FY+3E（2028E）：<strong class="mono">NT$60～65</strong>（FY+2 外推，基於成長遞減假設 ~20% YoY）</p>
-    <p class="sub-note">來源：FactSet（2026/02 最新）、Morgan Stanley（2026/01 報告）、Stockopedia 共識</p>
+<!-- ======================== §2 ======================== -->
+<div class="card" id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.3 七子節）</h2>
+<div class="card-body">
 
-    <table>
-      <tr><th>計算</th><th>數值</th></tr>
-      <tr><td>GAAP EPS CAGR（3 年，2025→2028E）</td><td class="mono"><strong>~38%</strong>（以 NT$60 計算 = (60/23.14)^(1/3)−1 = 37.5%）</td></tr>
-      <tr><td>口徑差距</td><td>台達電主要以 GAAP 報告，Non-GAAP 調整項小（無重大 SBC 或重組），GAAP ≈ Non-GAAP</td></tr>
-    </table>
+<h3>0｜產業風向燈</h3>
+<table>
+  <tr><th width="30%">輸入</th><th>數值</th></tr>
+  <tr><td>§8 長期成長性綜合評級</td><td><span class="badge badge-green">🟢 高確信</span></td></tr>
+  <tr><td>§9 護城河趨勢</td><td>加深（800V HVDC 先發 + GB200/GB300 co-design；Execution ↑ / Pricing power → 穩定）</td></tr>
+  <tr><td>§8.F AI 風險</td><td><span class="badge badge-green">🟢 受益</span></td></tr>
+  <tr><td><strong>產業風向燈</strong></td><td><strong><span class="badge badge-green">🟢 順風</span></strong></td></tr>
+  <tr><td>一句話產業判斷</td><td>AI 資料中心電源系統超級週期正在展開（2026-03-25 基準）；台達電 800V HVDC 先發地位已建立，±400V 2026H1 量產、800V 2027 主貢獻期路線圖清晰。盲點 1 救援機制（結構性高成長）可啟動。</td></tr>
+</table>
 
-    <h3>門檻檢核表</h3>
-    <table>
-      <tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
-      <tr><td>FCF Margin</td><td>> 15%</td><td><span class="badge badge-yellow">邊界</span></td><td>FY2025 OCF ~NT$74B − CapEx ~NT$38B = FCF ~NT$36B，FCF Margin ~6.5%（CapEx 大幅拉升期）；FY2024 FCF Margin ~8.3%。<strong>因擴張期 CapEx 偏高壓縮 FCF Margin，但 OCF Margin > 13% 健康</strong></td></tr>
-      <tr><td>ROIC</td><td>產業頂尖</td><td><span class="badge badge-green">符合</span></td><td>FY2025 ROE ~25%（Q3 單季 7.55% 年化 ~30%），ROIC 約 18～20%，在電力設備同業中名列前茅</td></tr>
-      <tr><td>EPS CAGR（3 年）</td><td>> 20%</td><td><span class="badge badge-green">符合</span></td><td>GAAP CAGR ~38%，遠超門檻</td></tr>
-      <tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="badge badge-yellow">邊界</span></td><td>Forward P/E 39.4x ÷ 38% CAGR ≈ PEG 1.04（詳見 §7.2）</td></tr>
-      <tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="badge badge-green">是</span></td><td>台達電淨現金為正，負債比低，財務結構穩健</td></tr>
-      <tr><td>護城河強度</td><td>> 8 分</td><td><span class="badge badge-green">符合</span></td><td>8/10，趨勢擴大（詳見 §3）</td></tr>
-    </table>
+<h3>B｜體質檢核（併入本節）+ 品質等級</h3>
+<table>
+  <tr><th width="4%">#</th><th width="38%">檢核項</th><th width="10%">結果</th><th>關鍵數據（2026-03-25 快照）</th></tr>
+  <tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="badge badge-green">✅</span></td><td>2022 28.8% → 2023 29.2% → 2024 30.0% → 2025 34.9% → 2025 Q4 34.6%；連年改善，無下滑</td></tr>
+  <tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="badge badge-yellow">⚠️</span></td><td>FY2025 估算 FCF ~NT$36B / NI ~NT$60B = 0.60；CapEx 擴張期壓縮，但 OCF/NI = 1.23 健康</td></tr>
+  <tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="badge badge-green">✅</span></td><td>FY2026E EPS 共識約 NT$36（FactSet 中位，2026-03 最新），持續上修趨勢</td></tr>
+  <tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="badge badge-green">✅</span></td><td>FY2025 全年 +32% YoY；Q4 2025 +42% YoY</td></tr>
+  <tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="badge badge-green">✅</span></td><td>台達電淨現金正值（負債比低）；Net Debt 為負，財務穩健</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong>：FCF/NI ⚠️ 屬 CapEx 擴張期臨時壓縮（非結構惡化），不觸發降級 veto。等級不變。</p>
+<table>
+  <tr><th width="30%">項目</th><th>值</th></tr>
+  <tr><td>Execution moat（§9）</td><td><strong>8 / 10</strong>（50 年電力電子技術累積 + GB200/GB300 co-design + 12,000+ 專利 + 全球最大 PSU 廠規模）</td></tr>
+  <tr><td>Pricing power moat（§9）</td><td><strong>7 / 10</strong>（CSP 雙供應商策略下定價穩 + 轉換成本 6-12 個月認證 + 800V 高 ASP 混合提升；Vertiv 競爭天花板）</td></tr>
+  <tr><td>護城河原始等級</td><td>⭐ <strong>A 級</strong>（execution 8，品質明確；2026-03 快照時 800V 標準戰未終局）</td></tr>
+  <tr><td>體質 veto 調整</td><td>0 項觸發 → 不變</td></tr>
+  <tr><td><strong>調整後等級</strong></td><td><strong>A 級</strong></td></tr>
+</table>
+<div class="reasoning">Execution 8/10 + Pricing 7/10 → 合併 A 級（兩維均 ≥7；任一維 &lt;6 才降 B）；體質 5 項僅 FCF/NI ⚠️ 屬臨時性，不觸發 veto 降級。下游 implication：§2 H 訊號燈計入品質 A 級 modifier。</div>
 
-    <p><strong>FCF Margin 不達標的解釋：</strong>台達電處於 AI 基礎設施的產能擴張高峰期（泰國新廠、美國 FWT 實驗室、德州普萊諾基地），CapEx 大幅攀升壓縮 FCF。這是成長投資型的暫時壓縮，而非結構性惡化。隨 2027 年後 CapEx 正常化，FCF Margin 有望回升至 12%+。</p>
+<h3>C｜估值輸入（FY+1 / FY+2 共識，2026-03-25 快照）</h3>
+<table>
+  <tr><th width="30%">項目</th><th>數值</th><th>來源</th></tr>
+  <tr><td>FY+1 EPS（FY2026E）</td><td class="mono">NT$35.95（FactSet 中位，n=20）；Stockopedia 共識 NT$36.74</td><td>FactSet 2026/02 最新；Stockopedia</td></tr>
+  <tr><td>FY+2 EPS（FY2027E）</td><td class="mono">NT$48～53（共識區間）；大摩上修估 NT$53.50</td><td>Morgan Stanley 2026/01；共識</td></tr>
+  <tr><td>當前 Fwd PE FY+1</td><td class="mono">~39.4x</td><td>NT$1,475 / NT$37.4（取共識中間值）</td></tr>
+  <tr><td>當前 Fwd PE FY+2</td><td class="mono">~28.5x～31x</td><td>NT$1,475 / NT$48-52</td></tr>
+  <tr><td>3Y EPS CAGR（FY2025→FY2028E）</td><td class="mono">~38%</td><td>FY2025 NT$23.14 → FY2028E ~NT$60（成長遞減推導）</td></tr>
+  <tr><td>PEG（FY+1 base, 3Y CAGR）</td><td class="mono">1.04</td><td>39.4 / 38</td></tr>
+</table>
 
-    <h3>價值陷阱初篩</h3>
-    <p><strong>觸發條件檢查：</strong>Forward P/E 39.4x 位於 5 年歷史高位（5 年低點 ~13x，中位 ~23x），當前分位 > 90%。<strong>未觸發低估值四問</strong>（估值處於歷史高位而非低位）。台達電當前面對的不是「便宜的理由」問題，而是「這個貴有沒有道理」的問題——將在 §7 詳細診斷。</p>
-  </div>
+<h3>D｜估值燈</h3>
+<table>
+  <tr><th width="30%">項目</th><th>數值</th></tr>
+  <tr><td>當前 Fwd PE FY+1</td><td>~39.4x</td></tr>
+  <tr><td>5Y Fwd PE 分位</td><td><strong>~90%</strong>（歷史低 ~12x / 中位 ~20x / 高 ~42x）</td></tr>
+  <tr><td>PEG（3Y CAGR）</td><td>1.04（合理偏便宜）</td></tr>
+  <tr><td><strong>估值燈</strong></td><td><strong><span class="badge badge-orange">🟠 偏貴</span></strong>（分位 ~90% 落 &gt;70%；PEG 1.04 本身合理，但歷史分位過熱；取較嚴 → 🟠）</td></tr>
+</table>
+
+<h3>E｜R:R 與 Bear Case（v12.3 精簡版）</h3>
+<table>
+  <tr><th>時距</th><th>EPS 基礎</th><th>合理 PE</th><th>目標價</th><th>Bear anchor</th><th>R:R</th></tr>
+  <tr><td>短期（1Y）</td><td>FY2026E NT$36</td><td>38x</td><td>NT$1,368</td><td>FY26 × 0.9 × 23 = <strong>NT$745</strong></td><td><span class="badge badge-red">~−0.4x</span></td></tr>
+  <tr><td>中期（2Y）</td><td>FY2027E NT$50</td><td>35x</td><td>NT$1,750</td><td>FY27 × 0.9 × 22 = <strong>NT$990</strong></td><td><span class="badge badge-yellow">~+0.6x</span></td></tr>
+  <tr><td>5Y</td><td>FY2030E NT$80</td><td>35x</td><td>NT$2,800</td><td>最大跌幅錨點 NT$990</td><td><span class="badge badge-green">~+4.0x</span></td></tr>
+</table>
+<div class="reasoning">Bear anchor = FY+1 EPS × 0.9 × Bear PE 23x（v12.3 標準格式；Bear PE 取電源零組件廠傳統估值下限）。短期 R:R 偏負（估值高位），中期 +0.6x 接近但未達 2.0x 門檻，5Y 4.0x 優秀。下游 → §2 H：品質 A + 估值 🟠 + R:R 未過 → B 觀望偏進場（非 C；因 thesis 完整、長期信心高）。</div>
+
+<h3>F｜Pure MA 狀態機（2026-03-25 快照）</h3>
+<table>
+  <tr><th width="30%">項目</th><th>數值</th></tr>
+  <tr><td>現價（2026/03/22 收盤）</td><td class="mono">NT$1,475</td></tr>
+  <tr><td>W52 估算</td><td class="mono">~NT$1,000（過去 52 週低點，AI 資料中心主題股 2025 大漲）</td></tr>
+  <tr><td>W104 估算</td><td class="mono">~NT$650（過去 2 年低點）</td></tr>
+  <tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="badge badge-green">✅ 強勢進場</span></strong>（價格 &gt; W52 &gt; W104，長期趨勢向上）</td></tr>
+  <tr><td>4 週漂移（QC-22）</td><td>+15%~25% 估（AI 基礎設施主題持續強勢）；若超 +30% 則熱訊號</td></tr>
+</table>
+
+<h3>G｜大盤豁免</h3>
+<table>
+  <tr><th width="30%">項目</th><th>數值</th></tr>
+  <tr><td>TWII（2026-03-25 估）</td><td>~NT$23,000-24,000（正常偏強，2025 全年漲幅支撐）</td></tr>
+  <tr><td>豁免係數</td><td>× 1.0（正常，無系統性壓制）</td></tr>
+</table>
+
+<h3>H｜綜合訊號燈 + 長期展望</h3>
+<table>
+  <tr><th width="30%">項目</th><th>值</th></tr>
+  <tr><td>quality_tier</td><td>A（Execution 8 + Pricing power 7）</td></tr>
+  <tr><td>估值燈</td><td>🟠 偏貴</td></tr>
+  <tr><td>MA 狀態</td><td>✅ 強勢進場</td></tr>
+  <tr><td>大盤</td><td>正常</td></tr>
+  <tr><td>trap</td><td>🟡 觀察期</td></tr>
+  <tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong> 觀望偏進場</td></tr>
+  <tr><td>判定理由</td><td>品質 A + thesis 完整（AI 8-10 年 Runway + 護城河擴大）+ MA ✅，但估值 🟠（Fwd PE ~39x 歷史 90% 分位）+ 短期 R:R ~−0.4x；QC-31：thesis 完整 + 時機不到 → B（非 C）。進場等：(a) 股價回落至 Forward PE ≤ 35x（NT$1,260-1,300）；或 (b) 2026 Q2 法說確認 AI 相關營收佔比 &gt;45% + GM &gt;34%</td></tr>
+  <tr><td>長期持有信心</td><td>高（Runway ≥ 10 年、護城河強化型、4 引擎多元化）</td></tr>
+</table>
+
+</div>
 </div>
 
-<!-- ===== §2.5 長期成長性 ===== -->
-<div class="section">
-  <div class="section-title">§2.5｜長期成長性評估</div>
-  <div class="section-body">
-    <h3>A｜成長跑道（Runway）估算</h3>
-    <table>
-      <tr><th>維度</th><th>數據</th><th>推論</th></tr>
-      <tr><td>當前 TAM</td><td>~$800 億美元（全球電力管理 + 資料中心電源 + 液冷 + EV 充電）</td><td>來源：多方研究報告，2025 年估計</td></tr>
-      <tr><td>估計可達 TAM</td><td>~$1,500 億美元</td><td>AI 資料中心電力需求將 TAM 擴大（單機架功耗從 30kW → 130kW → 600kW）、800V HVDC 新架構、邊緣 AI</td></tr>
-      <tr><td>當前市佔 / 滲透率</td><td>全球伺服器電源市佔 ~25%（台達電為全球最大交換式電源供應商）、液冷 ~5%（快速拉升中）</td><td></td></tr>
-      <tr><td>30% 滲透率時間</td><td>~8～10 年</td><td>AI 電源新架構每 2 年迭代，台達電需持續跟進</td></tr>
-      <tr><td><strong>成長可持續年數</strong></td><td><strong>8～10 年</strong></td><td>AI + 能源轉型雙引擎驅動</td></tr>
-    </table>
-    <div class="verdict verdict-green">Runway 解讀：≥ 10 年級別（若含能源轉型），支撐中高估值溢價</div>
+<!-- ======================== §3 ======================== -->
+<div class="card" id="s3">
+<h2>§3 三方辯論摘要</h2>
+<div class="card-body">
+<div class="three-col">
 
-    <h3>B｜成長品質判斷</h3>
-    <table>
-      <tr><th>類型</th><th>此標的占比</th><th>佐證</th></tr>
-      <tr><td>有機成長</td><td>~90%</td><td>FY2025 營收 +32% YoY 幾乎全為有機（僅收購一家日本 RF 功率公司，規模小）</td></tr>
-      <tr><td>無機成長</td><td>~10%</td><td>過去 3 年併購案規模均小，非主要成長來源</td></tr>
-    </table>
-    <table>
-      <tr><th>類型</th><th>判斷</th><th>趨勢</th></tr>
-      <tr><td>定價驅動（Price）</td><td>AI 電源 ASP 提升（單瓦價值在 800V 方案下達原來 3 倍）</td><td>擴大</td></tr>
-      <tr><td>量驅動（Volume）</td><td>資料中心數量擴張、液冷滲透率提升</td><td>擴大</td></tr>
-    </table>
-    <p>成長同時由定價與量兩個引擎驅動，這是最優質的成長結構。</p>
-
-    <h3>C｜成長護城河連動評估</h3>
-    <div class="verdict verdict-green"><strong>強化型（最佳）：</strong>AI 資料中心客戶一旦導入台達電的完整電源 + 液冷解決方案（整櫃出貨），轉換成本極高（需重新認證、重新設計機架佈局）。營收規模越大 → 投入 R&D 越多 → 技術領先擴大 → 客戶更難切換。</div>
-
-    <h3>D｜ROIC 與 FCF 的長期可維持性</h3>
-    <table>
-      <tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
-      <tr><td>ROIC</td><td>~18-20%</td><td>~14%</td><td>↑</td><td>產業頂尖 > WACC</td><td>✅</td></tr>
-      <tr><td>ROIC − WACC</td><td>~10%+</td><td>~6%</td><td>↑</td><td>持續正值擴大</td><td>✅</td></tr>
-      <tr><td>FCF Margin</td><td>~6.5%</td><td>~8%</td><td>↓ (CapEx 期)</td><td>> 15%</td><td>⚠️</td></tr>
-      <tr><td>FCF/NI 轉換率</td><td>~60%</td><td>~85%</td><td>↓ (CapEx 期)</td><td>> 85%</td><td>⚠️</td></tr>
-      <tr><td>再投資率</td><td>偏高</td><td>中等</td><td>↑</td><td>成長期合理</td><td>✅</td></tr>
-    </table>
-    <p>FCF 相關指標因擴張期 CapEx 而暫時惡化，但 ROIC 持續擴大顯示資本配置效率良好。</p>
-
-    <h3>E｜成長熄火情境壓力測試</h3>
-    <table>
-      <tr><th>情境</th><th>合理 Forward P/E</th><th>潛在估值跌幅</th></tr>
-      <tr style="background:var(--green-bg)"><td>3 年後成長率仍維持 25%+</td><td>35～40x</td><td>持平至 +15%</td></tr>
-      <tr style="background:var(--yellow-bg)"><td>3 年後成長率降至 15%</td><td>25～30x</td><td>-25% ～ -35%</td></tr>
-      <tr style="background:var(--yellow-bg)"><td>3 年後成長率降至 10%</td><td>20～25x</td><td>-35% ～ -45%</td></tr>
-      <tr style="background:var(--red-bg)"><td>3 年後成長率降至 5%</td><td>15～18x</td><td>-50% ～ -60%</td></tr>
-    </table>
-
-    <h3>衰退信號偵測表</h3>
-    <table>
-      <tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
-      <tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>GM 從 Q3 34.9% 微降至 Q4 34.6%（QoQ），但 YoY 大幅提升</td><td>⬜</td></tr>
-      <tr><td>護城河侵蝕</td><td>核心市佔縮減</td><td>伺服器電源市佔穩定~25%，液冷快速擴張</td><td>⬜</td></tr>
-      <tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>AI 電源 ASP 持續提升且銷量同步增長</td><td>⬜</td></tr>
-      <tr><td>盈餘品質</td><td>EPS CAGR >> Revenue CAGR</td><td>EPS +71% vs Revenue +32%，差距來自營業槓桿而非回購</td><td>⬜</td></tr>
-      <tr><td>盈餘品質</td><td>FCF/NI < 0.75 連續 2 年</td><td>FY2025 FCF/NI ~60%（CapEx 擴張期），FY2024 ~75%</td><td>🔴</td></tr>
-      <tr><td>盈餘品質</td><td>SBC/Revenue > 5% 且上升</td><td>台達電 SBC 極低，< 1%</td><td>⬜</td></tr>
-      <tr><td>產業衰退</td><td>TAM 萎縮</td><td>AI 電力 TAM 加速擴張</td><td>⬜</td></tr>
-      <tr><td>產業衰退</td><td>產業估值系統性下移</td><td>電力設備板塊估值近 3 年系統性上移</td><td>⬜</td></tr>
-      <tr><td>隱性資本密集</td><td>Maintenance CapEx / FCF > 60%</td><td>台達電正處成長型 CapEx，非維護型</td><td>⬜</td></tr>
-      <tr><td>隱性資本密集</td><td>停投資 3 年收入是否下滑</td><td>是（AI 技術迭代快，需持續投入）</td><td>🔴</td></tr>
-    </table>
-
-    <div class="verdict verdict-yellow"><strong>價值陷阱風險評級：🟡 中度警戒（2 個亮燈）</strong><br>亮燈項目均與 CapEx 擴張期的 FCF 壓縮有關，且台達電的業務性質確實需要持續投資以跟上 AI 技術迭代。需在 §3 護城河節確認這些投資是否轉化為更強的競爭壁壘。</div>
-
-    <div class="verdict verdict-green"><strong>長期成長性綜合評級：🟢 高確信長期成長</strong><br>Runway ~10 年、有機 + 定價/量雙驅動、護城河強化型、ROIC 擴大趨勢明確。FCF 暫時壓縮為成長投資導致。</div>
-  </div>
+<div class="role-card role-bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+  <tr><th>#</th><th>進場論據</th><th>引用</th></tr>
+  <tr><td>1</td><td>FY2025 EPS +71% YoY（NT$23.14）完全由有機獲利驅動；基礎設施部門 +55%+ YoY；AI 資料中心需求敘事已獲財報數字驗證，非純粹故事</td><td>§6 / §8</td></tr>
+  <tr><td>2</td><td>800V HVDC 規格制定先發：與 NVIDIA GB200/GB300 co-design 已商業化（5,500W 80 PLUS Ruby 認證），競爭者需 12-18 個月重認證才能追上；ASP 為傳統 PSU 的 3-5 倍</td><td>§9</td></tr>
+  <tr><td>3</td><td>PEG 1.04（FY+1 PE ~39x / 3Y EPS CAGR ~38%）在高成長調整後合理偏便宜；同業 Vertiv FY+1 PE ~42.5x 且 EPS CAGR 更低，台達電相對折價</td><td>§13</td></tr>
+</table>
+<p><strong>多頭一句話：</strong>「FY2025 財報已把 AI 資料中心電源的基本面敘事轉換為實際數字，800V HVDC 的先發 12-18 個月窗口仍未被追上；這是可持續 Runway 的最後低成本建倉機會之一」</p>
 </div>
 
-<!-- ===== §3 護城河 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-3">§3｜護城河分析（報告核心）</div>
-  <div class="section-body">
-    <div class="verdict verdict-blue"><strong>評分：8 / 10</strong>（全球上市公司為基準，最嚴格標準）</div>
-
-    <h3>護城河來源</h3>
-    <p><strong>網路效應：</strong>不具備傳統網路效應，但「解決方案鎖定效應」類似——台達電提供從電源、散熱、網通到機櫃管理的完整 AI 資料中心解決方案，客戶一旦導入全套方案，每個模組的替換都需要重新認證整個系統，形成事實上的鎖定。</p>
-    <p><strong>無形資產：</strong>五十年電力電子核心技術累積、超過 12,000 項全球專利、與 NVIDIA 等 AI 晶片巨頭的深度合作關係（GB200/GB300 機架電源驗證合格）。品牌在 B2B 電源領域具備頂級信任度。</p>
-    <p><strong>轉換成本：</strong>高。CSP 更換電源供應商需要 6～12 個月的認證週期，且牽涉整個機架的電氣設計、散熱配置、通訊協議。800V HVDC 架構更進一步提高了轉換成本，因為這是完全不同的電氣拓撲。</p>
-    <p><strong>規模優勢：</strong>全球最大交換式電源廠商，產能分佈於中國、泰國、印度、美國，具備同業難以匹敵的全球化製造網路與成本優勢。泰國新廠加速分散地緣風險的同時還拉低了平均生產成本。</p>
-
-    <h3>競爭鴻溝</h3>
-    <p>資本充足的 Vertiv、Eaton、Schneider Electric 在北美資料中心市場有強大佈局，但在 AI 伺服器「機架級電源 + 液冷整合方案」的技術深度上，台達電因與 NVIDIA 的長期合作與亞洲製造效率形成差異化。800V HVDC 方案的 per-watt 價值是傳統方案的 3 倍，而台達電已是首家獲得 CSP 客戶採用的供應商——這個先發優勢在快速迭代的 AI 基礎設施領域至關重要。</p>
-
-    <h3>市佔競爭表</h3>
-    <table>
-      <tr><th>競爭對手</th><th>市佔估計</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
-      <tr><td>Vertiv (VRT)</td><td>~20%</td><td>快速擴大</td><td>北美資料中心根基深厚</td><td>兩者同時在吃傳統UPS廠商</td></tr>
-      <tr><td>Eaton (ETN)</td><td>~15%</td><td>穩定</td><td>品牌與通路優勢</td><td>在工業/商業電力穩定，AI 領域落後</td></tr>
-      <tr><td>Schneider Electric</td><td>~18%</td><td>穩定</td><td>全方位解決方案</td><td>強在建築/工業自動化，AI 電源非強項</td></tr>
-      <tr><td><strong>台達電</strong></td><td><strong>~25%</strong></td><td><strong>快速擴大</strong></td><td>—</td><td>在 AI 電源 + 液冷整合方案佔據先機</td></tr>
-    </table>
-
-    <h3>護城河趨勢</h3>
-    <div class="verdict verdict-green"><strong>擴大</strong></div>
-    <p><strong>最大威脅（24 個月內）：</strong>① Vertiv 積極進入亞洲供應鏈，可能削弱台達電在非美系 CSP 客戶中的定價能力；② 中國本土電源廠商（如華為數位電源）在中國市場蠶食佔有率；③ 液冷散熱領域新進者增加（台廠如奇鋐、雙鴻等），可能壓縮液冷毛利率。</p>
-  </div>
+<div class="role-card role-bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table>
+  <tr><th>#</th><th>虧損觸發情境</th><th>引用</th></tr>
+  <tr><td>1</td><td>Fwd PE ~39.4x 位於 5 年歷史 ~90% 分位；若 AI CapEx 2027 出現拐點或成長放緩至 &lt;20%，估值從 39x 壓縮至 25x → 股價下行 -35% 至 -45%</td><td>§13.1 / §5 R1</td></tr>
+  <tr><td>2</td><td>Vertiv 800V H2 2026 release 是已知二元事件：若 Vertiv 取得 NVIDIA Rubin Ultra 主供地位，台達電 AI server PSU 市佔從 ~60% → 45%，PE 壓縮 + EPS 下修雙重打擊</td><td>§5 F / §9</td></tr>
+  <tr><td>3</td><td>FCF Margin 僅 ~6.5%（CapEx 擴張期）；泰國三廠 + 美國佈局合計 CapEx 大幅拉升，若 CSP 資本支出 2026H2 削減，新增產能利用率下降 → ROIC 結構性惡化</td><td>§10 / §5 R1</td></tr>
+</table>
+<p><strong>空頭最大威脅：</strong>「市場已對 AI 電源超級週期充分定價（39x），而二元風險（Vertiv 800V）的時間點是已知的 — 投資者在 2026H2 結果揭曉前承擔了不對稱的下行風險」</p>
 </div>
 
-<!-- ===== §4 財務品質 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-4">§4｜財務品質監測</div>
-  <div class="section-body">
-    <h3>三年趨勢表</h3>
-    <table>
-      <tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>主要對手比較</th></tr>
-      <tr><td>Gross Margin</td><td class="mono">28.8%</td><td class="mono">30.0%</td><td class="mono">34.9%</td><td>Vertiv ~37%, Eaton ~38%</td></tr>
-      <tr><td>Operating Margin</td><td class="mono">9.4%</td><td class="mono">10.6%</td><td class="mono">15.6%</td><td>Vertiv ~16%, Eaton ~24.9%</td></tr>
-      <tr><td>EBITDA Margin</td><td class="mono">14.8%</td><td class="mono">18.6%</td><td class="mono">21.3%</td><td>Vertiv ~20%, Eaton ~28%</td></tr>
-      <tr><td>ROE</td><td class="mono">16.4%</td><td class="mono">18%</td><td class="mono">~25%</td><td>Vertiv ~15%, Eaton ~21%</td></tr>
-      <tr><td>SBC/Revenue</td><td class="mono">< 1%</td><td class="mono">< 1%</td><td class="mono">< 1%</td><td>Vertiv ~2%, Eaton ~1%</td></tr>
-    </table>
-
-    <h3>獲利品質警訊</h3>
-    <p><strong>淨利 vs OCF：</strong>FY2025 OCF ~NT$74B vs 淨利 ~NT$60B，OCF/NI = 1.23，<span class="badge badge-green">健康</span>，營業現金流遠大於淨利。</p>
-    <p><strong>AR 成長 vs 營收成長：</strong>需觀察下一份完整財報，但 Q4 營收創新高且未見異常 AR 膨脹。</p>
-    <p><strong>存貨：</strong>Q3 法說提到存貨季增，但 Q4 預期下降。需持續觀察。</p>
-    <p><strong>FCF 轉換率：</strong>因 CapEx 擴張期而暫時下降（FCF/NI ~60%），但 OCF 轉換良好。</p>
-
-    <h3>回購品質評估</h3>
-    <table>
-      <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
-      <tr><td>過去 3 年回購金額</td><td>台達電無重大回購計畫</td><td>EPS 成長全靠有機獲利提升，非回購堆疊</td></tr>
-      <tr><td>Revenue CAGR（2022-2025）</td><td>~15%</td><td>EPS CAGR 22.7% 高於 Revenue，但差距來自營業槓桿（OPM 從 9.4% → 15.6%）而非回購</td></tr>
-    </table>
-    <div class="verdict verdict-green">結論：盈餘品質良好，EPS 成長主要來自營業槓桿而非回購或會計調整。</div>
-  </div>
+<div class="role-card role-arb">
+<h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+  <tr><th>維度</th><th>判定</th></tr>
+  <tr><td>隱含預期可信度</td><td><strong>7.5 / 10</strong></td></tr>
+  <tr><td>核心依據</td><td>Fwd PE ~39x 隱含 FCF CAGR ~28% 需求（高於歷史但低於 EPS CAGR 38%，因 CapEx 正常化後 FCF 追上）；3-5 年兌現窗口合理；主要風險是時間點而非方向</td></tr>
+  <tr><td>歷史對標</td><td>Vertiv 2022-2024（AI DC 電力基礎設施起飛初期，PE 從 20x 擴張至 40x）；台達電 2023-2026 正在走同條路</td></tr>
+</table>
+<p><strong>仲裁員一句話：</strong>「台達電的估值體系正在從「傳統電源 OEM」（P/E 15-20x）升級為「AI 基礎設施平台」（P/E 30-40x），升級過程中的高分位是結構性的而非泡沫；但投資者需要 2026Q2-Q4 財報數字持續驗證才能加碼」</p>
 </div>
 
-<!-- ===== §5 產業格局 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-5">§5｜產業格局、議價權與 Unit Economics</div>
-  <div class="section-body">
-    <h3>市場量化</h3>
-    <p>全球電源管理市場 TAM 約 $300 億美元（2025），其中資料中心電源 ~$80 億、EV 充電 ~$40 億。AI 資料中心電源子市場 CAGR 預計 >25%（2025-2030），遠高於整體電源市場 ~8% CAGR。供需狀態：AI 電源供不應求，液冷散熱快速滲透中。</p>
-
-    <h3>議價權</h3>
-    <p><strong>對上游：</strong>功率半導體（IGBT、SiC MOSFET）供應商集中度中等（Infineon、ON Semi、Wolfspeed），台達電因採購量全球最大而具備議價能力。磁性元件多為自製，進一步降低上游依賴。</p>
-    <p><strong>對下游：</strong>CSP 客戶集中度高（四大 CSP 佔台達電基礎設施營收很大比重），但因認證壁壘與 AI 算力擴張的急迫性，台達電在短中期具備定價能力。長期需觀察第二供應商是否被引入。</p>
-    <p><strong>地理曝險：</strong>中國生產佔比仍高但持續降低中。泰國三座新廠已投產、美國德州佈局推進中。2025 年台達電約 40% 產能在中國、30% 泰國、其餘分散於印度/美洲/歐洲。</p>
-
-    <h3>營收組成（FY2025）</h3>
-    <table>
-      <tr><th>部門</th><th>佔比（估）</th><th>YoY 成長</th></tr>
-      <tr><td>電源及零組件（Power Electronics）</td><td>~35%</td><td>+25%</td></tr>
-      <tr><td>基礎設施（Infrastructure）</td><td>~40%</td><td>+55%+</td></tr>
-      <tr><td>自動化（Automation）</td><td>~15%</td><td>持平～微增</td></tr>
-      <tr><td>移動（Mobility / EV）</td><td>~10%</td><td>承壓</td></tr>
-    </table>
-
-    <h3>單位經濟</h3>
-    <p>800V HVDC 方案 per-watt 電力價值：傳統 50V 方案的 ~5 倍。GB300 機架電力產值 ~$5.76 萬美元，升級至 800V HVDC 機架產值可達 ~$39.8 萬美元。液冷 CDU 系統以整櫃方式出貨，掌握度高、毛利率優於單一零件。</p>
-  </div>
+</div>
+</div>
 </div>
 
-<!-- ===== §6 公司治理 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-6">§6｜公司治理與資本配置</div>
-  <div class="section-body">
-    <h3>股東結構</h3>
-    <p>創辦人鄭崇華家族持股約 10～15%。外資持股約 40～50%。機構投資人為主要股東結構。已完成世代交棒（董事長海英俊、執行長鄭平）。</p>
+<!-- ======================== §4 ======================== -->
+<div class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+<div class="card-body">
 
-    <h3>資本配置軌跡</h3>
-    <p>管理層在資本配置上表現一致：以再投資為優先（R&D + 產能擴張），維持穩定配息（2025 年現金股利 NT$7，殖利率 ~0.5%），無大規模回購。近年併購策略審慎，僅小規模收購互補技術（如日本 RF 功率公司）。說法與行動高度一致——法說會持續強調長期投資 AI 基礎設施，CapEx 軌跡也確實朝此方向。</p>
+<h3>存在意義</h3>
+<p>台達電解決的核心問題是：<strong>如何在電能從產生到最終使用的每一個轉換環節中，把損耗降到物理極限？</strong>全球每年約 30% 的電能在轉換過程中被浪費。台達電五十年來累積的電力電子核心技術（交換式電源、功率半導體、磁性元件設計）構成了現代文明數位化與電氣化的隱形骨幹。AI 資料中心單機架功耗從 2023 年 30kW 急升至 GB200 機架 130kW，Rubin Ultra 架構預計達 200kW+，傳統 IT 配電架構物理崩潰，倒逼 800V HVDC + 液冷 + 模組化電源的系統級重構。台達電的 5,500W 19"/1RU（全球首款 80 PLUS Ruby，peak 效率 97.5%）與 800V In-Row 660kW Power Rack（NVIDIA GTC 2026 展示，AC-DC 效率 98%）是其技術領先的物質化。若台達電明天消失，全球前 4 大 Hyperscaler 部分 AI DC 路線圖將延後 6-12 個月，且替代供應商（Vertiv / Schneider）部署成本上升 15-25%。</p>
 
-    <h3>SBC 評估</h3>
-    <p>SBC / Revenue < 1%，在全球科技公司中極低。對每股價值的稀釋可忽略。這是台達電作為傳統製造業的優勢之一。</p>
-  </div>
+<h3>護城河形成歷史路徑</h3>
+<table>
+  <tr><th>年份</th><th>關鍵 milestone</th><th>護城河積累</th></tr>
+  <tr><td>1971</td><td>創辦人鄭崇華成立，由電視零件起家</td><td>起點 0/10</td></tr>
+  <tr><td>1980s</td><td>切入 PC 開關電源，成為 Dell / HP 主要供應商</td><td>→ 2/10（量產規模優勢起步）</td></tr>
+  <tr><td>1990s</td><td>建立全球生產基地（泰國、墨西哥、東歐）</td><td>→ 3/10（地理多元 + 成本曲線）</td></tr>
+  <tr><td>2000s</td><td>電動車電機 + 工業自動化雙引擎啟動</td><td>→ 5/10（業務多元降低 PC 週期曝險）</td></tr>
+  <tr><td>2014-2015</td><td>以 NOK 3.9B（~USD 530M）收購挪威 Eltek ASA（電信電源）；切入資料中心 UPS；太陽能逆變器放量</td><td>→ 6.5/10（DC 電源 IP + 歐洲業務根基）</td></tr>
+  <tr><td>2017-2019</td><td>NVIDIA Volta / Pascal 起飛，台達電為主要 PSU 供應商</td><td>→ 7/10（AI 加速器 PSU lock-in 早期）</td></tr>
+  <tr><td>2020-2021</td><td>EV 三電放量（特斯拉等）；鄭崇華交棒海英俊完成</td><td>→ 7.5/10（EV 引擎建立）</td></tr>
+  <tr><td>2022-2023</td><td>NVIDIA H100 起飛；Eltek 2023 改名 Delta Electronics Norway AS（整合完成）；液冷整合方案開發</td><td>→ 8/10（AI 電源先發；整合完成）</td></tr>
+  <tr><td>2024-2025</td><td>Blackwell 量產；800V HVDC 與 NVIDIA 共設計 OCP 規格；全球首款 5,500W 80 PLUS Ruby PSU（2025-01）；NVIDIA GTC 2026 展示 800V 660kW In-Row Power Rack；Dec 2025 宣布收購 Vivotek（NT$3.73B / ~USD 119M，智慧建築生態系）</td><td>→ 8.5/10（標準制定者地位 + 生態系擴張）</td></tr>
+  <tr><td>當前（2026-03-25）</td><td>±400V 2026H1 量產、800V 2027 主貢獻期確認；FY2025 Infrastructure +55%+ YoY</td><td><strong>8.5/10 → 快照位置</strong></td></tr>
+</table>
+
+<h3>逆向推演（Munger Inversion）— 三維展開</h3>
+
+<h4>① 技術維度：什麼技術替代會讓台達電 3 年內失去 50% 價值？</h4>
+<ul>
+  <li><strong>750V 直流匯流替代 800V</strong>：若 OCP 採用 Vertiv 主導的 750V 規格而非 Delta 的 800V，早期投入沉沒（歷史對標：Betamax vs VHS）</li>
+  <li><strong>分散式電源架構（VRM 整合 GPU）</strong>：若 GPU 廠商改採 GPU 內建 Voltage Regulator Module 直接整合，系統級電源廠商價值降低</li>
+  <li><strong>固態變壓器（SST）/ 寬能隙半導體取代傳統 PSU 設計</strong>：技術棧需 5 年重構</li>
+  <li><strong>核融合 / SMR 改變 DC 配電邏輯</strong>：若 DC 直連 SMR，AC-DC-DC 三層轉換消失</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+  <li><strong>CapEx 慣性過度擴張</strong>：FY2025 CapEx ~NT$38B（vs FY2022 ~NT$22B，+73%），FY2026 確認繼續增加。若 AI CapEx 拐點先到，台達電泰國三廠產能過剩 → ROIC 結構性下行</li>
+  <li><strong>Vivotek 整合失敗</strong>：Dec 2025 宣布以 NT$3.73B（~USD 119M）全面收購 Vivotek（智慧建築 IP camera），若整合不順 → 短期分心 + 資本消耗</li>
+  <li><strong>創辦人世代交替風險</strong>：海英俊（CEO）→ 鄭平（董事長，創辦人之子）接班已完成；下一代接班計畫尚未公開，管理連貫性仍需觀察</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+  <li><strong>AI 推論在地化 / 邊緣 AI 興起</strong>：若 LLM 推論大量遷移至 edge，資料中心 CapEx 增速放緩</li>
+  <li><strong>中美關稅升級迫使產線快速遷移</strong>：中國產能仍佔 ~40%，若中美脫鉤加速，短期 GM 200-400bp 壓縮</li>
+  <li><strong>計算範式轉換（量子 / 光子運算）</strong>：2030 年代後長期遠期風險</li>
+</ul>
+<div class="reasoning">三維 11 條失效路徑中，技術維度（800V 標準戰 — 與 §5.F single thing 直接掛鉤）與管理維度（CapEx 慣性）為 2-3 年最高現實風險；結構維度為 5-10 年遠期。implication：§5 R1/R2/R3 聚焦短中期。</div>
+
+</div>
 </div>
 
-<!-- ===== §7 估值診斷 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-7">§7｜估值診斷</div>
-  <div class="section-body">
 
-    <h3>7.0｜估值體系診斷：市場現在用哪把尺？</h3>
-    <h4>A｜當前主流估值邏輯</h4>
-    <table>
-      <tr><th>類型</th><th>指標</th><th>當前主流？</th><th>理由</th></tr>
-      <tr><td>盈利能力型</td><td>P/E, EV/EBITDA</td><td><strong>是</strong></td><td>市場主要用 Forward P/E 定價，因公司已進入高獲利成長階段</td></tr>
-      <tr><td>成長型</td><td>PEG</td><td>輔助</td><td>PEG 用於判斷估值是否匹配成長速度</td></tr>
-      <tr><td>現金流型</td><td>P/FCF</td><td>次要</td><td>因 CapEx 擴張期 FCF 被壓縮，市場暫時不以 P/FCF 為主要指標</td></tr>
-    </table>
-    <p><strong>當前主流邏輯：</strong>市場用 Forward P/E（基於 2026E EPS）定價，因台達電已從「電源零組件廠」轉型為「AI 基礎設施平台」，盈利能力進入非線性成長期。</p>
+<!-- ======================== §5 ======================== -->
+<div class="card" id="s5">
+<h2>§5 投資論點錨定（v12.3 擴充：加 §5.F Single Thing）</h2>
+<div class="card-body">
 
-    <h4>B｜估值邏輯漂移偵測</h4>
-    <p><strong>情境三（最相關）：市場定價偏好漂移</strong>——台達電正在經歷從「傳統電子零組件廠」（歷史 P/E 13～25x）到「AI 基礎設施核心供應商」（P/E 35～60x）的估值邏輯躍遷。這解釋了為什麼當前 P/E 遠高於歷史中位數——這不是泡沫，而是市場對業務本質的重新認知。關鍵問題是：這個新估值邏輯是否可持續？</p>
-    <p>當前產業處於「典範轉移中期」：AI 資料中心投資已從敘事主導轉向數據驗證階段（CSP CapEx 數據持續兌現），但估值倍數仍受敘事影響較大。</p>
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+  <tr><th width="30%">項目</th><th>填寫</th></tr>
+  <tr><td>預設持有期</td><td>2 ～ 3 年</td></tr>
+  <tr><td>主要驅動時間軸</td><td>AI 資料中心電源放量週期：±400V 2026H1 量產 → 800V HVDC 2027 主貢獻兌現 → EPS 非線性跳升</td></tr>
+  <tr><td>訊號 vs 噪音</td><td>訊號：AI 相關營收佔比、基礎設施部門 YoY、毛利率趨勢、800V 客戶導入進度｜噪音：單季 EPS 波動（稅率）、短期匯率、工作天數季節性</td></tr>
+</table>
 
-    <h4>C｜估值尺可能被換掉的信號</h4>
-    <table>
-      <tr><th>信號</th><th>當前狀態</th><th>若發生，對估值影響</th></tr>
-      <tr><td>AI CapEx 週期見頂</td><td>未見頂，2026 年繼續增長</td><td>若見頂 → 成長股邏輯失效，P/E 壓縮至 20～25x</td></tr>
-      <tr><td>EPS 成長放緩至 < 15%</td><td>目前 +55% YoY（2026E vs 2025）</td><td>若發生 → P/E 從 40x 壓縮至 25～30x</td></tr>
-      <tr><td>同業 Vertiv 獲得更高倍數</td><td>VRT Forward P/E ~42.5x</td><td>若 VRT 被賦予更高倍數，可能帶動台達電</td></tr>
-    </table>
-
-    <div class="verdict verdict-yellow">估值體系診斷結論：🟡 估值邏輯模糊——台達電正處於「舊定價邏輯」（電子零組件，P/E 20～25x）與「新定價邏輯」（AI 基礎設施平台，P/E 35～45x）之間的過渡期。這本身是不確定性來源，但也是上行機會。</div>
-
-    <h3>7.1｜歷史估值分位（5 年框架）</h3>
-    <table>
-      <tr><th>指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>分位</th></tr>
-      <tr><td>Trailing P/E</td><td class="mono">~60x</td><td class="mono">13.3x</td><td class="mono">23.3x</td><td class="mono">61.9x</td><td><span class="badge badge-red">>95%</span></td></tr>
-      <tr><td>Forward P/E</td><td class="mono">~39.4x</td><td class="mono">~12x</td><td class="mono">~20x</td><td class="mono">~42x</td><td><span class="badge badge-red">~90%</span></td></tr>
-      <tr><td>EV/EBITDA</td><td class="mono">~33x</td><td class="mono">~10x</td><td class="mono">~16x</td><td class="mono">~35x</td><td><span class="badge badge-red">~90%</span></td></tr>
-      <tr><td>P/S</td><td class="mono">~6.6x</td><td class="mono">~1.5x</td><td class="mono">~2.5x</td><td class="mono">~7x</td><td><span class="badge badge-red">~92%</span></td></tr>
-    </table>
-    <p><strong>解讀：</strong></p>
-    <p>1. 當前估值情緒：過熱（> 90% 分位），歷史最貴區間。</p>
-    <p>2. 上次在此分位（從未真正到過）：近 5 年首次突破 P/E 40x，基本面與過去完全不同——FY2025 EPS 成長 71% vs 歷史 CAGR 8.4%，業務組合從消費電子轉向 AI 基礎設施。</p>
-    <p>3. 主因：EPS 非線性跳升（AI 敘事兌現）+ 市場對 AI 基礎設施的估值重估，利率因素次之。</p>
-
-    <h3>7.2｜PEG 診斷</h3>
-    <table>
-      <tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
-      <tr><td>Forward P/E</td><td class="mono">39.4x</td><td></td><td></td></tr>
-      <tr><td>EPS CAGR（3 年）</td><td class="mono">~38%</td><td></td><td></td></tr>
-      <tr><td>PEG（3 年）</td><td class="mono"><strong>1.04</strong></td><td>< 1.0 便宜 / 1～2 合理</td><td><span class="badge badge-green">合理偏便宜</span></td></tr>
-      <tr><td>5 年 EPS CAGR（含遞減）</td><td class="mono">~28%</td><td>2026-2028 高增長逐步遞減</td><td></td></tr>
-      <tr><td>PEG（5 年）</td><td class="mono"><strong>1.41</strong></td><td>1～2 合理</td><td><span class="badge badge-yellow">合理</span></td></tr>
-      <tr><td>3 年 vs 5 年差異</td><td class="mono">1.04 vs 1.41</td><td>差異 0.37</td><td>近期成長強勁，長期需遞減，但差異不大</td></tr>
-    </table>
-    <p><strong>Price-to-Growth 矩陣：</strong>台達電落在「高 P/E + 高成長」象限，PEG ~1.0 顯示估值與成長速度大致匹配。這不是「被低估」但也不是「泡沫」——是市場對高確定性高成長的合理定價。風險在於：若 2027 年後成長不如預期遞減，PEG 將快速攀升。</p>
-
-    <h3>7.3｜Reverse DCF：當前股價隱含了什麼？</h3>
-    <h4>固定參數</h4>
-    <table>
-      <tr><th>參數</th><th>數值</th><th>來源</th></tr>
-      <tr><td>當前市值</td><td class="mono">~NT$3,830B（~$104B USD）</td><td>股價 NT$1,475 × 26 億股</td></tr>
-      <tr><td>基期 FCF（FY2025）</td><td class="mono">~NT$36B</td><td>OCF ~74B − CapEx ~38B</td></tr>
-      <tr><td>WACC</td><td class="mono">~9.5%</td><td>無風險利率 1.5%（台灣 10Y 公債）+ Beta 1.54 × ERP 5.2%</td></tr>
-      <tr><td>永續成長率</td><td class="mono">3%</td><td>電力設備長期成長率</td></tr>
-      <tr><td>預測期</td><td class="mono">10 年</td><td></td></tr>
-    </table>
-
-    <h4>反推隱含 FCF CAGR</h4>
-    <p>使 DCF 現值 = NT$3,830B，所需的前 10 年 FCF CAGR = <strong class="mono">~28%</strong></p>
-
-    <h4>可信度對照</h4>
-    <table>
-      <tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr>
-      <tr><td>過去 3 年 FCF CAGR</td><td>~15%（被 CapEx 壓縮）</td><td>隱含高於歷史</td></tr>
-      <tr><td>分析師共識 EPS CAGR</td><td>~38%</td><td>隱含 FCF CAGR 28% 低於 EPS CAGR，因 CapEx 正常化後 FCF 會追上</td></tr>
-      <tr><td>同業最快 FCF CAGR</td><td>Vertiv ~25%</td><td>要求略高於同業最快</td></tr>
-    </table>
-
-    <h4>兌現條件</h4>
-    <p>隱含 FCF CAGR 28% 需要：Revenue 年增 ~20%（假設 FCF Margin 從 6.5% 正常化至 12%），或 FCF Margin 從 6.5% 在 10 年內擴至 16%+。此條件在以下情境下合理：AI 資料中心電力需求維持，CapEx 在 2027～2028 年後回到正常水準（佔營收 < 6%），毛利率隨 800V 高毛利產品佔比提升而持續改善。</p>
-
-    <div class="verdict verdict-yellow">隱含預期判斷：🟡 隱含預期合理——FCF CAGR 28% 高於歷史但低於 EPS 共識，可兌現但需要 AI CapEx 週期持續 + 毛利率擴張同時成立。</div>
-
-    <h3>7.4｜同業估值比較</h3>
-    <table>
-      <tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>Gross Margin</th><th>EPS CAGR</th></tr>
-      <tr style="font-weight:700"><td>台達電 2308</td><td>$104B</td><td>39.4x</td><td>~33x</td><td>1.04</td><td>34.9%</td><td>~38%</td></tr>
-      <tr><td>Vertiv (VRT)</td><td>~$100B</td><td>42.5x</td><td>~35x</td><td>~1.3</td><td>~37%</td><td>~33%</td></tr>
-      <tr><td>Eaton (ETN)</td><td>~$130B</td><td>~32x</td><td>~24x</td><td>~2.7</td><td>~38%</td><td>~12%</td></tr>
-      <tr><td>Schneider Electric</td><td>~$130B</td><td>~28x</td><td>~20x</td><td>~2.5</td><td>~42%</td><td>~11%</td></tr>
-    </table>
-
-    <p><strong>同業溢折價邏輯：</strong></p>
-    <p>1. 台達電 Forward P/E 39.4x 低於 Vertiv 42.5x，但顯著高於 Eaton 32x 和 Schneider 28x。</p>
-    <p>2. 台達電的 PEG 1.04 是四家中最低的，反映其在同等估值水準下提供最高的成長性。</p>
-    <p>3. 若估值向 Eaton/Schneider 均值回歸（~30x），股價將下行 ~25%。但若 AI 成長敘事持續驗證，Vertiv 級別的 42x 是合理上限。</p>
-
-    <h3>7.5｜估值五角驗證與結論</h3>
-    <table>
-      <tr><th>工具</th><th>訊號</th><th>核心依據</th></tr>
-      <tr><td>估值體系診斷（7.0）</td><td><span class="signal-box" style="background:var(--yellow-bg);color:var(--yellow-text)">🟡 模糊</span></td><td>正處新舊估值邏輯過渡期，不確定性來源</td></tr>
-      <tr><td>歷史分位（7.1）</td><td><span class="signal-box" style="background:var(--red-bg);color:var(--red-text)">🔴 過熱</span></td><td>Forward P/E ~39x 位於 5 年 >90% 分位</td></tr>
-      <tr><td>PEG 診斷（7.2）</td><td><span class="signal-box" style="background:var(--green-bg);color:var(--green-text)">🟢 合理偏便宜</span></td><td>PEG 1.04，成長速度匹配估值</td></tr>
-      <tr><td>Reverse DCF（7.3）</td><td><span class="signal-box" style="background:var(--yellow-bg);color:var(--yellow-text)">🟡 合理</span></td><td>隱含 FCF CAGR 28% 可兌現但需雙引擎同時成立</td></tr>
-      <tr><td>同業相對（7.4）</td><td><span class="signal-box" style="background:var(--green-bg);color:var(--green-text)">🟢 合理折價</span></td><td>PEG 同業最低，Forward P/E 低於直接可比 Vertiv</td></tr>
-    </table>
-
-    <p><strong>訊號分歧解釋：</strong>歷史分位顯示「過熱」，但這是因為台達電的業務組合已根本性改變（AI 佔比從 < 5% → > 40%），歷史估值區間不再完全適用。PEG 與同業比較更能反映當前的合理估值水準。</p>
-
-    <div class="verdict verdict-yellow"><strong>當前定價判斷：🟡 公允定價</strong>——成長若達標可持有，但首次建倉的安全邊際不充裕。Forward P/E 39x 在 AI 成長兌現的前提下合理（PEG 1.04），但若成長失速，估值壓縮風險顯著（-30%～-45%）。</div>
-
-    <h3>估值倍數定錨</h3>
-    <table>
-      <tr><th>因素</th><th>判斷結果</th><th>對目標 P/E 影響</th></tr>
-      <tr><td>① 護城河（§3）</td><td>8/10</td><td>相較同業基準 +3x</td></tr>
-      <tr><td>② 成長年數（§2.5A）</td><td>~10 年 🟢</td><td>+5x</td></tr>
-      <tr><td>③ 成長品質（§2.5B）</td><td>有機 90%、定價+量雙驅動</td><td>+3x</td></tr>
-      <tr><td>④ 護城河連動（§2.5C）</td><td>強化型</td><td>+2x</td></tr>
-      <tr><td>⑤ ROIC 可維持性（§2.5D）</td><td>ROIC−WACC ~10%+，趨勢↑</td><td>+2x</td></tr>
-      <tr><td>⑥ 衰退信號（§2.5）</td><td>2 個亮燈</td><td>-2x</td></tr>
-      <tr><td>⑦ 估值體系方向（§7.0）</td><td>模糊（過渡期）</td><td>±0x</td></tr>
-      <tr><td>⑧ 利率環境</td><td>台灣 10Y ~1.5%，相對寬鬆</td><td>+1x</td></tr>
-      <tr><td><strong>產業基準倍數</strong></td><td><strong>Eaton/Schneider ~30x</strong></td><td><strong>調整後合理區間：38x ～ 44x</strong></td></tr>
-    </table>
-
-    <p><strong>分析師目標價參考：</strong></p>
-    <p>高 NT$2,000 / 中位 NT$1,575～1,663 / 低 NT$600～1,212（n=18～20 位）</p>
-    <p>認同共識中位（~NT$1,600），對應 Forward P/E ~44x（基於 2026E EPS NT$36），略高於本報告估算的合理上緣 44x，一致。</p>
-  </div>
+<h3>B｜三個核心假設（v12.3：sourced floor + 漂移觸發條件）</h3>
+<div class="hyp-box">
+<table>
+  <tr><th width="4%">#</th><th width="18%">核心假設</th><th width="16%">具體數字門檻（sourced floor）</th><th width="18%">信息來源</th><th width="14%">漂移觸發條件（對齊 QC-34）</th><th width="14%">2Y 驗證點</th><th width="16%">5Y/10Y 驗證點</th></tr>
+  <tr>
+    <td><strong>H1</strong></td>
+    <td>AI 資料中心 CapEx 結構性持續；四大 CSP 2025-2026 CapEx 合計維持或增長；台達電基礎設施部門 YoY 持續 +30%+</td>
+    <td>四大 CSP 季度 CapEx 合計 ≥ $700B/年（2025 Q4 合計 ~$720-730B）；基礎設施 YoY ≥ +30% 連 6 季</td>
+    <td>四大 CSP Q4 2025 法說 CapEx 公告（AWS / Azure / GCP / Meta）；台達電 FY2025 基礎設施 +55%+ YoY（Q4 2025 法說）</td>
+    <td>連 2 季 CSP CapEx QoQ 下滑 &gt;10% → H1 警戒；連 4 季 → H1 反轉（QC-35：2Y 假設連 2 季可警戒）</td>
+    <td>Q2-Q4 2027：基礎設施 YoY +30%+ 持續；800V 出貨確認</td>
+    <td>5Y（2031）：AI DC 業務佔 Rev 35%+；10Y（2036）：AI DC 電源系統整合市佔 25%+</td>
+  </tr>
+  <tr>
+    <td><strong>H2</strong></td>
+    <td>800V HVDC 方案在 2026H2 進入量產（±400V 先導），帶動伺服器電力營收 YoY +70%+ 且毛利率 &gt;35%</td>
+    <td>台達電 AI 相關營收佔比 2026 年達 &gt;45%（2025 Q4 法說約 ~40%）；季度 GM ≥ 34%（Q4 2025 actual 34.6%）</td>
+    <td>台達電 Q4 2025 法說（800V HVDC 美國 CSP 客戶已導入）；Morgan Stanley 2026/01（伺服器電力 +70% YoY 2026 預估）</td>
+    <td>連 2 季 GM &lt;33% → H2 警戒；連 4 季 &lt;32% → H2 反轉</td>
+    <td>2026 Q3-Q4：AI 相關營收佔比 &gt;50%；毛利率全年維持 ≥34%</td>
+    <td>5Y（2031）：GM 穩定 36-38%；Delta 從「電源 OEM」升級為「DC 電力系統 IP 商」</td>
+  </tr>
+  <tr>
+    <td><strong>H3</strong></td>
+    <td>市場估值邏輯從傳統「電源零組件廠」（P/E 15-20x）轉向「AI 基礎設施平台」定價（P/E 32-42x），EPS 持續上修維持倍數</td>
+    <td>Fwd PE FY+2 ≤ 38x 且 EPS 共識未下修；PEG ≤ 1.5</td>
+    <td>FactSet 共識 FY2026E NT$36（n=20，2026-02）；當前 Fwd PE ~39.4x 已偏熱，需 EPS 上修消化</td>
+    <td>FY+2 PE 突破 45x 連 4 週 → 估值透支；EPS 共識下修連 2 個月 → H3 警戒</td>
+    <td>FY2026 共識 EPS 上修至 ≥NT$42；FY2027 共識 ≥NT$55</td>
+    <td>5Y：估值體系穩定在「系統廠」35-40x；10Y：EPS 複利成長為長期主軸</td>
+  </tr>
+</table>
 </div>
 
-<!-- ===== §8 投資結論 ===== -->
-<div class="section">
-  <div class="section-title" id="sec-8">§8｜投資結論</div>
-  <div class="section-body">
-
-    <h3>財報信號與假設校準</h3>
-    <p><strong>H1 當前狀態：＋ 強化</strong>——FY2025 基礎設施部門營收暴增 55%+，CSP CapEx 持續增長，AI 資料中心需求未見放緩跡象。</p>
-    <p><strong>H2 當前狀態：＋ 強化</strong>——液冷營收佔比從年初 6-7% 升至年底 9%；800V HVDC 已有美國 CSP 客戶採用。大摩預估 2026 年伺服器電力營收 +70% 至 NT$2,300 億。</p>
-    <p><strong>H3 當前狀態：0 不變</strong>——Trailing P/E ~60x 看似嚇人，但 Forward P/E ~39x 反映了高成長的合理定價。市場尚未完全轉換至「AI 平台」定價邏輯。</p>
-    <p><strong>這份財報讓隱含預期變得更容易兌現</strong>，理由是：營業利益 +147% YoY 驗證了營業槓桿的爆發力，毛利率從 2024 Q4 低點 30.77% 快速反彈至 34.6%，且 800V HVDC 和液冷方案的客戶導入進度均超前。</p>
-
-    <div class="verdict verdict-yellow"><strong>結論：觀望（Watchlist），等待更佳進場時機</strong></div>
-
-    <p><strong>① 短期信號（0～12 個月）：</strong>FY2025 Q4 營收 Beat、EPS Miss（稅率因素）的混合信號不改中期邏輯。2026 Q1 將季節性下滑（工作天數少），Q2 預期更強。下一個催化劑是 2026/04/23 的 Q1 法說會——需確認毛利率維持 > 34%、AI 營收佔比持續提升。當前股價 NT$1,475 對應 Forward P/E ~41x（基於更保守的 2026E EPS NT$36），安全邊際有限。</p>
-
-    <p><strong>② 中期成長確信度（1～3 年）：中高。</strong>EPS CAGR ~38% 主要由定價提升（800V HVDC）+ 量增長（資料中心擴張）驅動，非併購或回購。能見度高於一般製造業——CSP CapEx 計畫通常提前 18 個月確定。但需注意：大摩預估 2027 EPS NT$53.5 隱含 +49% YoY，這需要 800V 方案大規模量產如期兌現。</p>
-
-    <p><strong>③ 長期護城河邏輯（3 年後）：</strong>台達電的持有邏輯建立在「電能轉換是 AI 時代不可替代的底層技術」。Runway ~10 年，ROIC 擴大，護城河強化型（規模越大 → 技術投入越多 → 客戶越難切換）。但 3 年後的風險在於：AI 架構可能劇烈迭代（如光子運算），或 CSP 培養第二供應商削弱台達電的議價能力。</p>
-
-    <h3>⚠️ 這是價值陷阱嗎？</h3>
-    <div class="warning-section" style="margin:12px 0">
-      <div class="section-body">
-        <table>
-          <tr><th>問題</th><th>回答</th></tr>
-          <tr><td><strong>最可能的陷阱模式？</strong></td><td><strong>非陷阱</strong>——但需警惕「隱性資本密集型」的潛在風險。台達電不是典型低估值陷阱（估值在歷史高位），而是需要驗證「高估值 + 高 CapEx」能否持續轉化為超額 ROIC。</td></tr>
-          <tr><td><strong>支持「非陷阱」的最強論據</strong></td><td>FY2025 ROIC ~18-20% 且趨勢擴大，營業槓桿從 OPM 9.4% → 15.6%，EPS 成長 71% 完全由有機獲利驅動（SBC < 1%、無回購），毛利率從 28.8% 提升至 34.9%。所有指標都指向結構性改善而非週期性波動。</td></tr>
-          <tr><td><strong>支持「可能是陷阱」的反駁</strong></td><td>FY2025 FCF/NI ~60% 偏低，CapEx 持續攀升；AI CapEx 週期若在 2027 見頂，台達電的大量新增產能可能面臨利用率下降壓力；同時，Vertiv 等競爭者正積極搶入亞太市場，800V 方案的先發優勢能維持多久存疑。</td></tr>
-          <tr><td><strong>如何偵測惡化？</strong></td><td>① 基礎設施部門季度營收 YoY 成長率連續 2 季下滑至 < 20%；② 毛利率連續 2Q 低於 33%（代表產品組合惡化或競爭定價壓力）</td></tr>
-        </table>
-        <div class="verdict verdict-green"><strong>最終定性：🟢 非陷阱</strong>——當前估值偏高但有基本面支撐，不存在價值陷阱的結構性惡化信號。主要風險是「成長不如預期」導致的估值壓縮，而非「業務品質惡化」。</div>
-      </div>
-    </div>
-
-    <h3>條件式進場判斷</h3>
-    <table>
-      <tr><th>條件類型</th><th>具體內容</th></tr>
-      <tr><td><strong>估值條件</strong></td><td>Forward P/E 回落至 ≤ 38x（對應股價 ~NT$1,368，基於 2026E EPS NT$36），或股價回測 NT$1,300 以下</td></tr>
-      <tr><td><strong>基本面條件</strong></td><td>2026 Q1 法說會需確認：① 毛利率 > 34%；② AI 相關營收佔比持續提升；③ CSP CapEx 維持增長</td></tr>
-      <tr><td><strong>陷阱排除條件</strong></td><td>若毛利率連續 2Q < 32%、或基礎設施營收 YoY < 15%，立即重新評估</td></tr>
-      <tr><td><strong>事件觸發</strong></td><td>NVIDIA Rubin Ultra 正式發布且台達電確認 800V HVDC 供應地位 → 加碼催化劑</td></tr>
-    </table>
-
-    <h3>下行風險量化</h3>
-    <p>若 3 年後成長率降至 10%：P/E 壓縮至 25x，估值跌幅 <strong class="mono">-35% ～ -40%</strong></p>
-    <p>若 3 年後成長率降至 5%：P/E 壓縮至 18x，估值跌幅 <strong class="mono">-50% ～ -55%</strong></p>
-    <p class="sub-note"><strong>持有此標的前，須確認能承受上述幅度的回撤。</strong></p>
-
-    <h3>最關鍵監測指標</h3>
-    <table>
-      <tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
-      <tr><td>1</td><td>四大 CSP 季度 CapEx 合計</td><td>§0.5 H1</td><td>🔵 核心假設驗證</td><td>連續 2Q QoQ 下滑 > 10%</td></tr>
-      <tr><td>2</td><td>台達電基礎設施部門營收 YoY 成長率</td><td>§2.5</td><td>🔵 長期成長領先信號</td><td>連續 2Q < 20%</td></tr>
-      <tr><td>3</td><td>季度毛利率趨勢</td><td>§1 / §7</td><td>短期估值信號</td><td>連續 2Q < 33%</td></tr>
-    </table>
-  </div>
+<h3>B'｜12 個月前 DD 對照</h3>
+<div class="hyp-box">
+<p><strong>本份 DD（DD_2308_20260325）為此 ticker 在本系統的 Inception DD（v12.3 重寫後首份標準化版本）。</strong>因本報告源自 pre-v12 schema 的 2026-03-25 快照，無前一份 v12 標準格式 DD 可做 YoY 對照。下次年度對照時間點設定為 2027-03-25（距今約 12 個月）。屆時重點對比：H1 是否連 6 季驗證、H2 毛利率是否達 ≥35%、H3 估值是否落入合理帶。</p>
 </div>
 
-<div style="text-align:center;padding:40px 24px;color:var(--text-light);font-size:12px;font-family:'IBM Plex Mono',monospace;border-top:2px solid #E2E8F0;margin-top:32px;">
-  <p style="font-size:14px;color:var(--title-bg);font-weight:700;margin-bottom:8px;">— 報告結束 —</p>
-  <p>DD_2308_20260325 ｜ 買側標的研究框架 v5.0 深度版 ｜ 本報告不構成投資建議</p>
-  <p style="margin-top:8px;">資料來源：FactSet、Quartr、Investing.com、StockAnalysis、GuruFocus、公司法說會、Morgan Stanley 報告</p>
+<h3>C｜三個最可能推翻論點的風險（v12.3 時間尺度分層）</h3>
+<table>
+  <tr><th width="4%">#</th><th width="20%">風險</th><th width="6%">對應</th><th width="14%">時間尺度</th><th width="22%">監測指標</th><th>警戒閾值</th></tr>
+  <tr>
+    <td>R1</td>
+    <td>AI CapEx 2027 拐點，Top 4 CSP 大幅削減資本支出（AI 算力供過於求或商業化不如預期）</td>
+    <td>H1</td>
+    <td><span class="badge badge-yellow">🔥 中期（4-6 季可觸發）</span></td>
+    <td>Top 4 CSP 季法說 CapEx 指引；基礎設施部門 YoY</td>
+    <td>連續 2 季 CSP CapEx QoQ 下滑 &gt;10%，或基礎設施 YoY &lt;+20%</td>
+  </tr>
+  <tr>
+    <td>R2</td>
+    <td>Vertiv 在 800V HVDC 標準戰中拿下 NVIDIA Rubin Ultra 主供地位（Vertiv 積極擴產、backlog 強勁）</td>
+    <td>H1, H2</td>
+    <td><span class="badge badge-orange">⚡ 短期（1-2 季可觸發）</span></td>
+    <td>2026 OCP Summit 新規格公告；Vertiv / Schneider 新訂單；Yole/TrendForce 季報 Delta 市佔</td>
+    <td>Vertiv 取得 NVIDIA Rubin Ultra 主供 reference design 公告 → §5.F 觸發 → 立即行動</td>
+  </tr>
+  <tr>
+    <td>R3</td>
+    <td>中美地緣衝突升級，台達電中國產能（~40%）遷移成本超預期，關稅 &gt;25% 疊加</td>
+    <td>整體</td>
+    <td><span class="badge badge-red">🐢 長期（2+ 年慢變數）</span></td>
+    <td>美中關稅政策；台達電中國產能佔比；泰國 / 印度稼動率</td>
+    <td>中國產能佔比 &gt;35% 且新關稅 &gt;25%；或遷移期 GM 回落 &gt;300bp 連 4 季</td>
+  </tr>
+</table>
+<p>v12.3 應對速度原則：R2 ⚡ 短期 → 季度監控，連 2 季觸發即考慮減倉；R1 🔥 中期 → 半年回顧，連 4 季確認才大動作；R3 🐢 長期 → 跨年度監控，需 ≥50% 機率才砍倉。</p>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+  <tr><th width="20%">判斷步驟</th><th>問題</th></tr>
+  <tr><td>1. 時間軸匹配？</td><td>這個事件在 2-3 年持有期內有影響嗎？</td></tr>
+  <tr><td>2. 假設關聯？</td><td>影響 H1（CSP CapEx + AI 放量）/ H2（毛利率 + 800V 量產）/ H3（估值邏輯轉換）的哪一個？</td></tr>
+  <tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+  <tr><td>4. 閾值判斷？</td><td>是否達到 §5 C R1/R2/R3 警戒閾值？是否觸及 §5.F single thing？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+  <tr><th width="18%">情境</th><th width="42%">觸發條件</th><th>對應行動</th></tr>
+  <tr><td><strong>進場</strong></td><td>Forward P/E ≤ 35x（對應股價 ~NT$1,260-1,300，基於 2026E EPS NT$36）；或 2026 Q2 法說確認 GM &gt;34% + AI 相關營收佔比 &gt;45%</td><td>建倉 2-3%（A 級底倉）</td></tr>
+  <tr><td><strong>加碼</strong></td><td>H1 + H2 在 Q3/Q4 2026 持續驗證（連 2 季基礎設施 YoY +30%+ + GM ≥34%）</td><td>加碼至 4-5%</td></tr>
+  <tr><td><strong>減碼</strong></td><td>R2 警戒訊號出現（Vertiv 積極搶單 NVIDIA Rubin）；或 Forward PE &gt;45x 且 EPS 未上修</td><td>減至 1-2%，重新評估</td></tr>
+  <tr><td><strong>撤退</strong></td><td>§5.F 觸發（NVIDIA Rubin Ultra 主供由 Vertiv 拿下）；或 H1 + H2 同時削弱（基礎設施 YoY &lt;+20% + GM 連 2 季 &lt;33%）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing（v12.3 新增）</h3>
+<div class="warn-box">
+<h4>§5.F — 這一件事如果發生，我的判斷立即改變</h4>
+<table>
+  <tr><th width="25%">項目</th><th>內容</th></tr>
+  <tr><td><strong>事件（binary discrete event）</strong></td><td><strong>NVIDIA 官方公告 Rubin Ultra 平台的 800V HVDC PSU 主供商為 Vertiv（而非 Delta 或雙供）</strong></td></tr>
+  <tr><td><strong>為什麼是 binary / discrete（不是慢變數）</strong></td><td>800V HVDC 架構是 NVIDIA Rubin Ultra 的核心供電規格；誰拿到主供 reference design，就等同於接下來 18-24 個月的出貨份額。這是一個公告事件（OCP Summit 或 NVIDIA GTC / SC26 可能正式宣布），時間點確定，結果清晰。不是「市佔緩慢侵蝕」，是「單一公告改變整個賽局」。</td></tr>
+  <tr><td><strong>觸發後的判斷改變</strong></td><td>① 估值從「雙領導溢價 38-42x」降至「非主導供應商 22-25x」；② EPS 路徑（FY2027 +70% YoY 預估）下修 20-30%；③ 即使 H1 / H2 其他指標未惡化，也立即執行 §5.E 撤退條件。無需等連 2 季財報確認。</td></tr>
+  <tr><td><strong>與 §5.C R2 的區別</strong></td><td>R2（Vertiv 積極搶單）= process continuous risk，需持續監控；§5.F = discrete outcome（NVIDIA 官方公告），是最終裁決觸發點。R2 觸發 → 警示減倉；§5.F 觸發 → 清倉行動。</td></tr>
+  <tr><td><strong>目前離發生有多遠（2026-03-25 快照）</strong></td><td>Vertiv 800V 預計 H2 2026 release；NVIDIA Rubin Ultra 架構公告時間點未知（可能 SC26 / GTC 2027）。估計距離致命事件 6-18 個月，當前 buffer 仍充裕。持續監控 OCP Summit + Digitimes / Yole 市佔報告。</td></tr>
+  <tr><td><strong>與 §1 trap 定性的區別</strong></td><td>§1 trap = 現在是否為陷阱的靜態裁決（🟡 觀察期）；§5.F = 未來某個 specific moment 的 binary outcome。三者職責：trap（靜態）/ R1-R3（過程監控）/ §5.F（致命觸發）。</td></tr>
+</table>
 </div>
+</div>
+</div>
+
+<!-- ======================== §6 ======================== -->
+<div class="card" id="s6">
+<h2>§6 即時財報情報（2025 Q4 / FY2025）</h2>
+<div class="card-body">
+
+<h3>① 最新一季財報關鍵數字（2025 Q4，2026-03-25 快照）</h3>
+<table>
+  <tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+  <tr><td>Revenue（Q4 2025）</td><td class="mono">NT$161.6B</td><td class="mono">NT$160.0B</td><td><span class="badge badge-green">Beat</span></td><td class="mono">+42% YoY</td></tr>
+  <tr><td>EPS（Q4 2025）</td><td class="mono">NT$6.67</td><td class="mono">NT$7.52</td><td><span class="badge badge-red">Miss</span></td><td class="mono">+142% YoY</td></tr>
+  <tr><td>Gross Margin（Q4 2025）</td><td class="mono">34.6%</td><td class="mono">~35%</td><td><span class="badge badge-yellow">Slight Miss</span></td><td class="mono">+5.8%p YoY</td></tr>
+  <tr><td>Operating Margin（Q4 2025）</td><td class="mono">16.3%</td><td class="mono">~17%</td><td><span class="badge badge-yellow">Slight Miss</span></td><td class="mono">+7.0%p YoY</td></tr>
+  <tr><td>EBITDA（Q4 2025）</td><td class="mono">NT$32.7B</td><td>—</td><td>—</td><td class="mono">+92% YoY</td></tr>
+</table>
+<p class="note">FY2025 全年：營收 NT$554.9B（+32% YoY）、EPS NT$23.14（+71% YoY）、EBITDA NT$117.9B（+51%）、EBITDA Margin 21.3%；GM 全年 34.9%、OPM 15.6%。</p>
+<p><strong>EPS Miss 解讀：</strong>Q4 2025 營收 Beat 但 EPS Miss，核心原因為稅率偏高（23.4%）及業外損失。本業營業利益 NT$26.4B 實際 +147% YoY，反映核心獲利動能極強；EPS miss 屬一次性因素，不改中期基本面邏輯。</p>
+
+<h3>② Earnings Call 語氣解析（Q4 2025）</h3>
+<p><strong>管理層基調：</strong>樂觀偏審慎。相較前季更謹慎地提及「市場變化快、不確定因素多」，但對 AI 資料中心需求的信心明顯高於上季。明確確認 800V HVDC 已有美國 CSP 客戶正式導入（雖未具名），液冷 CDU 出貨速度加快。</p>
+<p><strong>Forward Guidance：</strong>2026 年 OpEx 將增加（R&D + 服務團隊擴張）；CapEx 略高於 2025 年（~NT$38B）；Q1 2026 因工作天數較少，季節性下滑預期；Q2 2026 預期更強。未提具體全年 EPS guidance。</p>
+<p><strong>刻意強調主題：</strong>「AI 資料中心」、「800V HVDC」、「液冷散熱整合出貨」、「泰國新產能投產」反覆出現 — 管理層希望市場把台達電重新定位為 AI 基礎設施核心供應商。</p>
+<p><strong>刻意迴避問題：</strong>Mobility（EV）部門具體復甦時間表語焉不詳；整體毛利率全年目標未給明確數字，僅稱「產品組合持續改善」。</p>
+
+<h3>③ 財報對 §5 假設的邊際貢獻</h3>
+<table>
+  <tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+  <tr><td>H1（AI CapEx + 基礎設施放量）</td><td><span class="badge badge-green">＋ 強化</span></td><td>基礎設施部門 Q4 +53%+ YoY，四大 CSP Q4 2025 CapEx 合計約 $720-730B</td></tr>
+  <tr><td>H2（800V + 毛利率提升）</td><td><span class="badge badge-green">＋ 強化</span></td><td>液冷營收佔比年底達 ~9%（年初 6-7%）；800V 已有美國 CSP 正式導入；Q4 GM 34.6% 趨勢向上</td></tr>
+  <tr><td>H3（估值邏輯轉換）</td><td><span class="badge badge-yellow">0 不變</span></td><td>EPS miss 令估值短期承壓，但 Revenue Beat + 營業利益暴增未推翻 AI 平台定價邏輯</td></tr>
+</table>
+
+<h3>④ 產業 Imply 萃取</h3>
+<p><strong>需求端：</strong>四大 CSP Q4 2025 CapEx 合計 ~$720-730B，2026 年維持增長趨勢，直接支撐台達電基礎設施部門的訂單可見度至少 2-3 個季度。</p>
+<p><strong>供給端：</strong>泰國三座新廠已投產，產能擴張速度加快。同業 Vertiv 也在積極擴產，供給面競爭壓力將在 2026H2 開始顯現。</p>
+<p><strong>競爭格局：</strong>台達電在 AI 伺服器電源的定價能力仍強（單顆瓦數從 3kW 升至 5.5kW，未來 8-12kW），但液冷散熱領域競爭者增加（台廠奇鋐、雙鴻等），需觀察 ASP 是否能維持。</p>
+</div>
+</div>
+
+<!-- ======================== §7 ======================== -->
+<div class="card" id="s7">
+<h2>§7 核心門檻檢核（v12.3：砍低估值四問 + 便宜理由四問）</h2>
+<div class="card-body">
+
+<h3>EPS CAGR 搜尋結果</h3>
+<p>基期 FY2025 實際 EPS：<strong class="mono">NT$23.14</strong>（GAAP）</p>
+<p>FY+1E（2026E）：<strong class="mono">NT$35.95</strong>（FactSet 中位，n=20；Stockopedia 共識 NT$36.74）</p>
+<p>FY+2E（2027E）：<strong class="mono">NT$48～53.50</strong>（共識區間；大摩上修估 NT$53.50）</p>
+<p>FY+3E（2028E）：<strong class="mono">NT$60～65</strong>（FY+2 外推，成長遞減假設 ~20% YoY）</p>
+<p class="note">來源：FactSet（2026/02 最新）、Morgan Stanley（2026/01 報告）、Stockopedia 共識。推導：FY2025 NT$23.14 × (1+38%)^3 = NT$60.4（以 3Y CAGR 38% 驗算，一致）。</p>
+
+<table>
+  <tr><th>計算</th><th>數值</th></tr>
+  <tr><td>GAAP EPS CAGR（3 年，FY2025→FY2028E）</td><td class="mono"><strong>~38%</strong>（以 NT$60.4 計算 = (60.4/23.14)^(1/3)−1 = 37.5%）</td></tr>
+  <tr><td>GAAP vs Non-GAAP 口徑</td><td>台達電 SBC &lt;1% Rev（現金分紅為主），GAAP ≈ Non-GAAP，無重大調整項</td></tr>
+</table>
+
+<h3>門檻檢核表（Munger 三維）</h3>
+<table>
+  <tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據（2026-03-25）</th></tr>
+  <tr><td>FCF Margin（當前）</td><td>&gt;15%</td><td><span class="badge badge-yellow">⚠️ 未達</span></td><td>FY2025 OCF ~NT$74B − CapEx ~NT$38B = FCF ~NT$36B；FCF Margin ~6.5%（CapEx 擴張期壓縮）</td></tr>
+  <tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 &gt;10%</td><td><span class="badge badge-yellow">⚠️ 接近</span></td><td>FY2024 ~8.3%、FY2023 ~7%；5Y 均 ~7-9%；CapEx 正常化後預估 12%+</td></tr>
+  <tr><td>ROIC（當前）</td><td>&gt;15%，高於 WACC</td><td><span class="badge badge-green">✓✓ 強</span></td><td>FY2025 ROIC ~18-20%（OI / 投入資本）；WACC 估 ~9.5%；超額 +8-10pp；趨勢持續擴大</td></tr>
+  <tr><td>EPS CAGR（3 年）</td><td>&gt;20%</td><td><span class="badge badge-green">✓✓ 強</span></td><td>CAGR ~38%，遠超門檻</td></tr>
+  <tr><td>PEG（Non-GAAP）</td><td>&lt;2</td><td><span class="badge badge-green">✓ 合理</span></td><td>PEG 1.04（FY+1 PE 39.4x ÷ CAGR 38%）；FY+2 base PEG ~0.7-0.8x（更合理）</td></tr>
+  <tr><td>現金覆蓋總負債</td><td>是/否</td><td><span class="badge badge-green">✅ 是</span></td><td>台達電淨現金為正；負債比低；財務結構穩健</td></tr>
+  <tr><td>護城河強度</td><td>&gt;8 分，趨勢擴大</td><td><span class="badge badge-green">✓ 合理</span></td><td>Execution 8/10 + Pricing power 7/10（§9 二維）；趨勢：Execution ↑ / Pricing → 穩定</td></tr>
+  <tr><td>毛利率定價能力【Munger】</td><td>10 年中 ≥70% 年份持續改善</td><td><span class="badge badge-green">✓ 合理</span></td><td>2022 28.8% → 2023 29.2% → 2024 30.0% → 2025 34.9%；連年改善，持續性強</td></tr>
+  <tr><td>資本密集度【Munger】</td><td>CapEx/Rev &lt;10%</td><td><span class="badge badge-yellow">⚠️ 接近</span></td><td>FY2025 CapEx ~NT$38B / Rev NT$554.9B = 6.8%（尚合理）；FY2026 預計稍增</td></tr>
+</table>
+
+<p><strong>FCF Margin 不達標的解釋：</strong>台達電處於 AI 基礎設施產能擴張高峰期（泰國三廠、美國佈局），CapEx 大幅攀升壓縮 FCF Margin。這是成長投資型的暫時壓縮而非結構性惡化。ROIC ~18-20% 且趨勢擴大是更可靠的品質指標。隨 2027-2028 年 CapEx 正常化，FCF Margin 有望回升至 12%+。</p>
+
+<p class="note"><strong>v12.3 注意：低估值四問與便宜理由四問已從本節移除（v12.3 spec §7 砍除）。</strong>台達電當前 FY+2 PE 5Y 分位 &gt;70%（不在 ≤25% 低估值觸發區），低估值四問原本就不觸發；§13.4 同業比較已涵蓋相對估值校驗。</p>
+
+</div>
+</div>
+
+<!-- ======================== §8 ======================== -->
+<div class="card" id="s8">
+<h2>§8 長期成長性評估（v12.3 擴充：§8.B 定價 vs 量 + §8.H 客戶結構深度）</h2>
+<div class="card-body">
+
+<h3>A｜成長跑道（Runway）+ S 曲線位置（2026-03-25 快照）</h3>
+<table>
+  <tr><th width="20%">維度</th><th>現在（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th></tr>
+  <tr><td>AI DC 電源 TAM</td><td>~USD 30B/年（電源管理 + 液冷子市場）</td><td>~USD 80B/年（CAGR ~22%）</td><td>~USD 150B/年（趨於成熟 CAGR ~10%）</td></tr>
+  <tr><td>Delta AI DC 市佔</td><td>~60-65%（wawt.tech 2026-04 引用 AI server PSU；快照當時估 ~55-60%）</td><td>~50-55%（Vertiv 800V 上線後雙領導均衡）</td><td>~50%（系統廠地位穩定）</td></tr>
+  <tr><td>800V HVDC 滲透率</td><td>~3-5%（±400V 先量產中）</td><td>~50-70%（2027 主要貢獻期）</td><td>~80%（含 enterprise + edge DC）</td></tr>
+  <tr><td>EV 業務</td><td>~10-12% 總 Rev；目標 15% 全球市佔 by 2026</td><td>~15-18%（電動化滲透加速）</td><td>~20%（趨於成熟）</td></tr>
+  <tr><td>S 曲線位置（AI DC）</td><td>前段（3-5% 滲透；800V 剛起步）</td><td>中前段（50-70% 滲透；CAGR 仍高）</td><td>中後段（80% 滲透；CAGR 放緩）</td></tr>
+  <tr><td>距飽和年數（AI DC）</td><td>10-15 年</td><td>5-10 年</td><td>5 年內趨飽和</td></tr>
+</table>
+<p><strong>成長可持續年數估計（Runway）：≥ 10 年</strong>（AI DC S 曲線前段；EV + 工業自動化 + 智慧建築 + 儲能 4 引擎多元接棒）</p>
+
+<h3>A'｜S 曲線位置 + 距飽和年數（各業務）</h3>
+<table>
+  <tr><th>業務</th><th>S 曲線位置</th><th>距飽和估計</th><th>說明</th></tr>
+  <tr><td>AI DC 電源（±400V → 800V HVDC + 液冷）</td><td>前段（3-5% 滲透）</td><td>10-15 年</td><td>±400V 2026H1 量產；800V 2027 主貢獻；S 曲線陡升中</td></tr>
+  <tr><td>傳統 DC 電源 / UPS</td><td>中段（成熟）</td><td>10+ 年</td><td>穩定 +5-8% 成長，現金牛</td></tr>
+  <tr><td>EV 三電</td><td>前中段（15-20% 全球滲透）</td><td>10-15 年</td><td>電動化加速；BYD 內製化風險需持續追蹤</td></tr>
+  <tr><td>工業自動化</td><td>中段</td><td>10+ 年</td><td>產業 AI + 機器人雙驅動</td></tr>
+  <tr><td>智慧建築 / HVAC</td><td>中段</td><td>10+ 年</td><td>能效法規驅動；Vivotek 整合將強化此業務</td></tr>
+</table>
+
+<h3>B｜成長品質（v12.3：定價 vs 量具體% + 3Y 趨勢 + 5Y M&A Track Record）</h3>
+<table>
+  <tr><th>類型</th><th>此標的佔比</th><th>3Y 趨勢（2023→2025→2026E）</th></tr>
+  <tr><td>有機成長</td><td>~90%</td><td>主導；FY2025 Revenue +32% YoY 幾乎全有機（小型收購技術補充為輔）</td></tr>
+  <tr><td>無機成長（併購）</td><td>~10%</td><td>低貢獻；重大 M&A 見下表</td></tr>
+  <tr><td>定價驅動（ASP 升級）</td><td>FY2025 ~35-40%（↑ 擴大）；FY2023 ~25%</td><td>2023 ~25% → 2024 ~30% → 2025 ~38%（800V 高 ASP + 液冷 mix 升級）；每年 +5pp</td></tr>
+  <tr><td>量驅動</td><td>FY2025 ~60-65%（仍主導）</td><td>量仍主導，定價占比快速追上；2026 後預估兩者比例趨近 40-45 / 55-60</td></tr>
+</table>
+<div class="reasoning">定價 vs 量比率從 2023 25/75 → 2025 38/62：主因 800V HVDC + 液冷高 ASP 產品組合比重快速提升（800V ASP 為傳統 PSU 3-5x；液冷 CDU 每機架 ASP USD 5-10K vs 純電源 USD 1-2K）。implication：GM 從 2022 28.8% → 2025 34.9% 的跳升，定價比率提升是主要驅動；§5 H2 的 GM ≥34% 假設因此有基本面支撐。</div>
+
+<h4>近 5 年重大 M&A Track Record（v12.3 §8.B 要求）</h4>
+<table>
+  <tr><th>年份</th><th>交易</th><th>金額</th><th>整合結果</th><th>後續減損？</th></tr>
+  <tr><td>2014-2015</td><td>收購挪威 Eltek ASA（電信電源專家）通過 Deltronics Netherlands BV</td><td>NOK 3.9B（~USD 530M）</td><td>成功整合；2023 年改名 Delta Electronics Norway AS；Eltek 品牌保留；歐洲電信 DC 電源業務強化</td><td>無減損紀錄</td></tr>
+  <tr><td>2020-2024</td><td>無大型新 M&A（全力有機 CapEx 擴張）；選擇性小型技術入股（未公開）</td><td>—</td><td>資本配置重心轉向有機 CapEx（AI DC / EV / 液冷廠房）；FY2022 CapEx NT$22B → FY2025 NT$38B（+73%）</td><td>不適用</td></tr>
+  <tr><td>2025-12</td><td>宣布全面收購 Vivotek（智慧安防 IP camera；既有持股 ~51% → 100%）</td><td>NT$3.73B（~USD 119M）；每股 NT$100 溢價收購剩餘 ~49%</td><td>計畫 2026 Q1 完成（2026-03-25 快照時尚在審議中）；目的：鞏固智慧建築生態系（Delta 自動化 + Vivotek IP camera 整合）</td><td>尚未完成，無減損</td></tr>
+</table>
+<p class="note"><strong>M&A 風格判定：</strong>台達電屬「有機擴張優先、偶發補充型 M&A」模式。Eltek（2014-2015）是近 10 年最大交易且整合成功；FY2020-2024 無大型新 M&A；Vivotek（Dec 2025 宣布，~USD 119M）為補強型小型 M&A，聚焦智慧建築生態系而非核心 AI DC 業務。管理層的 M&A 紀律良好，不靠收購堆 EPS。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<div class="verdict verdict-green"><strong>強化型（最佳）：</strong>AI 資料中心客戶一旦導入台達電完整電源 + 液冷解決方案（整櫃出貨），轉換成本極高（需 6-12 個月重認證 + 重新設計機架佈局）。營收規模越大 → R&D 投入越多 → 技術領先擴大 → 客戶更難切換。</div>
+
+<h3>D｜ROIC × FCF 長期可維持性</h3>
+<table>
+  <tr><th>指標</th><th>當前值（FY2025）</th><th>3 年前（FY2022）</th><th>趨勢</th><th>門檻</th><th>符合</th></tr>
+  <tr><td>ROIC</td><td>~18-20%</td><td>~14%</td><td>↑</td><td>&gt;WACC（~9.5%）</td><td>✅</td></tr>
+  <tr><td>ROIC − WACC</td><td>~8-10%+</td><td>~4-6%</td><td>↑</td><td>持續正值擴大</td><td>✅</td></tr>
+  <tr><td>FCF Margin</td><td>~6.5%</td><td>~7%（FY2022 CapEx 高峰）</td><td>⚠️（CapEx 期壓縮）</td><td>&gt;15%</td><td>⚠️</td></tr>
+  <tr><td>FCF / Net Income</td><td>~60%</td><td>~75%</td><td>↓（CapEx 期）</td><td>&gt;85%</td><td>⚠️</td></tr>
+  <tr><td>再投資率（CapEx / OCF）</td><td>~51%</td><td>~55%</td><td>→ 穩定偏高</td><td>成長期合理</td><td>✅</td></tr>
+</table>
+<p>FCF 相關指標因擴張期 CapEx 而暫時惡化，ROIC 持續擴大顯示資本配置效率良好。2027-2028 CapEx 正常化後 FCF Margin 有望升至 12%+。</p>
+
+<h3>E｜成長熄火情境壓力測試（3Y × 5Y × 10Y）</h3>
+<table>
+  <tr><th>情境</th><th>3Y EPS（FY2028）</th><th>5Y EPS（FY2030）</th><th>合理 PE</th><th>5Y 目標價</th><th>vs 當前 NT$1,475</th></tr>
+  <tr style="background:#DCFCE7"><td>Base（AI 持續 +25%+）</td><td>NT$60</td><td>NT$80</td><td>35x</td><td>NT$2,800</td><td>+90%</td></tr>
+  <tr style="background:#FEF9C3"><td>Bear A（成長降至 +15%）</td><td>NT$46</td><td>NT$55</td><td>28x</td><td>NT$1,540</td><td>+4%</td></tr>
+  <tr style="background:#FEF9C3"><td>Bear B（成長降至 +10%）</td><td>NT$38</td><td>NT$43</td><td>22x</td><td>NT$946</td><td>-36%</td></tr>
+  <tr style="background:#FEE2E2"><td>Bear C（§5.F 觸發）</td><td>NT$30（Vertiv 搶主供 → EPS -20%）</td><td>NT$30</td><td>18x</td><td>NT$540</td><td>-63%</td></tr>
+</table>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>評級：<span class="badge badge-green">🟢 AI 受益</span></strong> — 資料中心電源 + AI 加速器電源直接受益；800V HVDC 與 NVIDIA co-design 強化 AI 受益地位；EV / 工業自動化亦受益於 AI 嵌入式應用擴展。</p>
+
+<h3>G｜衰退信號偵測表</h3>
+<table>
+  <tr><th>信號類型</th><th>偵測指標</th><th>數據（2026-03-25）</th><th>亮燈？</th></tr>
+  <tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>Q4 2025 GM 34.6%；FY2025 全年 34.9%；YoY 大幅提升</td><td>⬜</td></tr>
+  <tr><td>護城河侵蝕</td><td>核心市佔縮減</td><td>AI server PSU 市佔 ~55-60%（快照估）；液冷快速擴張</td><td>⬜</td></tr>
+  <tr><td>盈餘品質</td><td>EPS CAGR 顯著 &gt;&gt; Revenue CAGR</td><td>FY2025 EPS +71% vs Revenue +32%；差距 39pp，來自 OPM 槓桿（9.4% → 15.6%）而非回購</td><td>🟡 觀察</td></tr>
+  <tr><td>盈餘品質</td><td>FCF/NI &lt;0.75 連 2 年</td><td>FY2025 ~60%（CapEx 期）；FY2024 ~75%；單年不超標</td><td>⬜</td></tr>
+  <tr><td>盈餘品質</td><td>SBC/Revenue &gt;5%</td><td>&lt;1%（台股現金分紅主導）</td><td>⬜</td></tr>
+  <tr><td>產業衰退</td><td>TAM 萎縮</td><td>AI DC TAM 持續擴張中</td><td>⬜</td></tr>
+  <tr><td>隱性資本密集</td><td>Maintenance CapEx / FCF &gt;60%</td><td>台達電正處成長型 CapEx，非純維護型</td><td>⬜</td></tr>
+</table>
+<div class="verdict verdict-yellow"><strong>價值陷阱風險評級：🟡 中度警戒（1 個 🟡 觀察）</strong> — 亮燈項目（EPS vs Rev 成長差距 39pp）屬 OPM 槓桿合理結果，並非盈餘品質惡化。主要風險仍是估值高位而非基本面惡化。</div>
+<div class="verdict verdict-green"><strong>長期成長性綜合評級：🟢 高確信長期成長</strong> — Runway ≥10 年、有機 + 定價/量雙驅動、護城河強化型、ROIC 擴大趨勢明確。</div>
+
+<h3>H｜客戶結構深度（v12.3 新增）</h3>
+<p class="note"><strong>資料說明：</strong>台達電為台灣上市公司，依台灣年報慣例，前 10 大客戶通常以「客戶甲、乙、丙…」匿名揭露，不公開具名客戶。以下數字為法說會 + 產業報告（wawt.tech、digitimes）+ 分析師報告的最佳估算；帶「公司未具名」標註者為非官方推估，非公司公開揭露數字。</p>
+<table>
+  <tr><th>客戶集中度層</th><th>估算佔 Rev 比</th><th>資料基礎</th><th>說明</th></tr>
+  <tr><td>Top 1 客戶（估為主要 hyperscaler 或 NVIDIA 生態系客戶，公司未具名）</td><td>~10-15% Rev</td><td>分析師 + 法說推估（2026-03-25）</td><td>若 Top 1 流失 → Rev -5-8%；EPS -10-15%。CSP 維持雙供策略，單一客戶集中度不太可能超 15%</td></tr>
+  <tr><td>Top 5 客戶（hyperscaler + Tier-1 OEM，公司未具名）</td><td>~30-35% Rev</td><td>產業報告推估</td><td>含主要 CSP（GOOGL / MSFT / AMZN / META 各估 5-8%）+ 德國 OEM（VW / BMW / Mercedes 之一）</td></tr>
+  <tr><td>Top 10 客戶（公司未具名）</td><td>~45-50% Rev</td><td>法說推估 + §11 客戶集中度段落</td><td>另含 Dell / HP / Lenovo / Supermicro + EV OEM（Tesla / BYD）+ 工業客戶（Siemens / ABB）</td></tr>
+</table>
+
+<h4>主要客戶議價權類型分析</h4>
+<table>
+  <tr><th>客戶類型</th><th>議價權類型</th><th>客戶生命週期定位</th><th>in-house 風險</th></tr>
+  <tr><td>NVIDIA 生態系（AI server OEM / CSP；公司未具名）</td><td>Sole-source / dual-source；NVIDIA GB200/GB300 co-design = Delta 主導規格制定</td><td>Grow-with（AI DC 擴張 = Delta 擴張）；換供應商需 6-12 個月重認證</td><td>低（NVIDIA 不做電源；power 非其核心 IP）</td></tr>
+  <tr><td>Top 4 Hyperscaler（公司未具名）</td><td>Second-source（Delta 主 + Vertiv 副）；各 CSP 維持雙供應商策略</td><td>Grow-with；但 Vertiv 800V 上線後可能轉 50/50</td><td>低-中（CSP 理論可 in-house 但效率低；Amazon 有少量自設計案例）</td></tr>
+  <tr><td>德國三大 OEM（EV 業務，公司未具名）</td><td>Dual-source（Delta + 競爭者 Bosch / BorgWarner）</td><td>Grow-with（EV 滲透率提升 = Delta EV 業務擴張）</td><td>中（OEM 有自研能力，但核心電控仍依賴 Tier-1）</td></tr>
+  <tr><td>Tesla / BYD（EV 業務）</td><td>Sole-to-dual（Tesla 高度自研；BYD 內製化）</td><td>非 grow-with（BYD 持續內製化；Tesla 自研文化）</td><td>高（BYD 三電內製化趨勢明確；Delta EV 業務 ~10% Rev，此風險有限）</td></tr>
+</table>
+<div class="reasoning">客戶集中度分析：Top 10 ~45-50% 屬中等集中（非極端如 3661 Mariana/NVDA 80%+）；4 引擎多元化使最大單一業務（AI DC Infrastructure ~40% Rev）不構成過度集中。最大隱患：BYD / Tesla 內製化壓縮 EV 第二曲線 addressable share；但 EU OEM 訂單可部分補償。§5.F single thing 聚焦 AI server PSU 市佔（NVIDIA 主供公告），而非 EV 客戶損失，判斷方向正確。</div>
+
+<div class="verdict verdict-green"><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway ≥10 年 + 護城河強化型 + AI 受益 + 客戶結構多元化）</div>
+</div>
+</div>
+
+
+<!-- ======================== §9 ======================== -->
+<div class="card" id="s9">
+<h2>§9 護城河分析（v12.3：強制二維拆解 + QC-23 三級威脅）</h2>
+<div class="card-body">
+
+<p><strong>v12.3 二維評分：Execution moat 8/10 + Pricing power moat 7/10</strong>（A 級護城河；2026-03-25 快照，800V HVDC 標準戰尚未終局）</p>
+<p class="note"><strong>業務模式說明：</strong>台達電是「硬體電力電子系統整合型」業務（非 SaaS / 銀行 / 保險 / 寡占公用事業），execution 與 pricing 在概念上可分離。不適用 single-axis escape rule。</p>
+
+<h3>執行護城河（Execution Moat）— 8/10</h3>
+<table>
+  <tr><th width="25%">護城河來源</th><th>強度</th><th>具體 Sourced Evidence</th></tr>
+  <tr><td>無形資產（IP / 品牌 / 認證）</td><td>中強</td><td>全球首款 80 PLUS® Ruby 認證 5,500W PSU（2025-01，peak 97.5% efficiency；delta-americas.com 確認）；800V In-Row 660kW Power Rack 展示於 NVIDIA GTC 2026（prnewswire 2026-03）；12,000+ 全球專利；Delta 品牌在 hyperscaler / Tier-1 OEM 中為可靠性代名詞</td></tr>
+  <tr><td>轉換成本（switching cost）</td><td>強</td><td>進入 hyperscaler 規範書後，更換供應商需重新認證 6-12 個月（業界標準）；液冷整合方案（CDU + 電源 + 控制軟體三層）更高 switching cost；800V co-design IP 形成設計鎖定；Q4 2025 法說確認美國 CSP 客戶已正式採用</td></tr>
+  <tr><td>規模優勢</td><td>強</td><td>全球最大交換式電源廠商；FY2025 R&D ~NT$30B（R&D/Rev ~5.4%）；AI server PSU 估計市佔 ~55-65%（wawt.tech 2026-04 引用數字，快照時估偏低端 ~55%）；生產佈局：台灣 + 中國（~40%）+ 泰國（~30%）+ 印度 / 美洲 / 歐洲分散</td></tr>
+  <tr><td>co-design lock-in</td><td>中強</td><td>NVIDIA GB200/GB300 機架電源驗證合格（2025-2026）；800V HVDC 架構從 NVDA GTC 推廣 → OCP 規格候選 = Delta 參與制定者優勢（先發 12-18 個月）；但 Rubin Ultra 架構的主供地位尚未定論（§5.F 關鍵觀察點）</td></tr>
+  <tr><td>製造 / 交付能力</td><td>強</td><td>台灣 + 中國 + 泰國（三新廠 2025 年底投產）+ 印度 + 墨西哥全球佈局；5,500W PSU 與 800V Power Rack 均已商業化出貨；FY2026 CapEx 確認繼續擴張</td></tr>
+</table>
+
+<h3>定價護城河（Pricing Power Moat）— 7/10</h3>
+<table>
+  <tr><th width="25%">維度</th><th>強度</th><th>具體 Evidence</th></tr>
+  <tr><td>產品組合 ASP 升級能力</td><td>強</td><td>800V HVDC ASP 為傳統 PSU 3-5x；液冷 CDU 每機架 ASP USD 5-10K（vs 純電源 USD 1-2K）；5,500W PSU 顯著高於前代；FY2025 GM 34.9%（vs FY2022 28.8%）驗證定價升級真實</td></tr>
+  <tr><td>客戶議價位置</td><td>中強</td><td>AI server PSU 雙領導（Delta + Vertiv）→ 對 hyperscaler 議價力強；但 CSP 維持雙供策略 → 非 sole-source，有天花板；EV OEM 中等（BYD 自研壓力）</td></tr>
+  <tr><td>市場集中度（寡占程度）</td><td>中強</td><td>AI server PSU Top 2（Delta ~55-65% + Vertiv ~15-20%）= 70-80% 集中；Vertiv 800V H2 2026 上線後可能轉 45-50/20-25，但仍為雙寡占</td></tr>
+  <tr><td>定價領導力（能否主動提價）</td><td>中</td><td>Mix upgrade（800V + 液冷高 ASP）是主要 GM 升級路徑，而非直接對同規格產品提價；Vertiv 競爭約束主動提價空間。快照時 GM 34.9% vs Vertiv ~37%（略低同業，仍有提升空間）</td></tr>
+</table>
+
+<h3>護城河趨勢（v12.3 雙線標）</h3>
+<table>
+  <tr><th>維度</th><th>趨勢</th><th>主要驅動事件</th></tr>
+  <tr><td>Execution moat 趨勢</td><td><strong>↑ 加深</strong></td><td>800V HVDC 先發地位鞏固；5,500W Ruby 認證全球首發；660kW Power Rack NVIDIA GTC 2026 展示；泰國三廠投產強化全球交付能力</td></tr>
+  <tr><td>Pricing power moat 趨勢</td><td><strong>→ 持平（受 Vertiv 800V 競爭預期壓制）</strong></td><td>Vertiv 積極擴產 + 800V H2 2026 release 預期是主要下行壓力；Mix upgrade（800V + 液冷高 ASP）提供抵銷；短期定價護城河不會大幅擴大但也不會崩潰</td></tr>
+</table>
+
+<h3>競爭鴻溝 — 為什麼資本充足的對手仍跨不過</h3>
+<p>Vertiv（VRT）/ Schneider（SU）/ Eaton 仍無法快速複製台達電的地位，原因不是空泛的「品牌優勢」，而是：(1) <strong>時間護城河</strong>：台達電 800V HVDC + NVIDIA GB200/GB300 co-design 早 12-18 個月起跑；新進者即使資本充足，也無法壓縮 hyperscaler 的 6-12 個月重認證週期。(2) <strong>技術整合深度</strong>：台達電把電源 + 液冷 + 控制軟體整合成單一 660kW In-Row Power Rack 解決方案；Vertiv 在 UPS / PDU 有強項但此整合深度略遜。(3) <strong>製造規模</strong>：台達電 FY2025 CapEx ~NT$38B 且繼續擴張，量產成本曲線優勢明顯。(4) <strong>多引擎 R&D 攤提</strong>：EV + 工業自動化提供 R&D 成本攤提基礎，純電源廠商研發費率相對劣勢。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+  <tr><th>競爭對手</th><th>AI DC PSU 市佔估（快照 2026-03）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰（sourced）</th></tr>
+  <tr><td><strong>台達電 2308.TW</strong></td><td>~55-65%（wawt.tech；快照時估下端 ~55%）</td><td>↓ 微縮（Vertiv 800V 上線後預計 45-55%）</td><td>—</td><td>—</td></tr>
+  <tr><td>Vertiv (VRT)</td><td>~15-20%</td><td>↑ 擴大（積極擴產；800V H2 2026 release）</td><td>NVIDIA Rubin Ultra 訂單搶奪；歐美 hyperscaler</td><td>正在吃 Delta AI DC 份額；H2 2026 是關鍵時點</td></tr>
+  <tr><td>Schneider (SU)</td><td>~10-12%</td><td>→ 持平</td><td>歐洲 hyperscaler</td><td>被 Delta + Vertiv 兩面夾擊</td></tr>
+  <tr><td>Eaton (ETN)</td><td>~8-10%（UPS 為主）</td><td>→ 微擴</td><td>UPS 替代</td><td>技術跨度大，較難進入 800V HVDC 新世代</td></tr>
+  <tr><td>光寶科技（台廠）</td><td>~8-10%（AI server PSU；Digitimes 2026-01）</td><td>→ 持平</td><td>低階 PSU；AI server PSU 亦在 rack-level 轉型</td><td>被 Delta + Vertiv 高 ASP 拉開；Digitimes 確認 Delta 領先</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸（過去 5 年 + 未來 5 年機率）</h3>
+<h4>過去 5 年（2021-2026 Q1）</h4>
+<table>
+  <tr><th>年份</th><th>事件</th><th>護城河貢獻</th></tr>
+  <tr><td>2021</td><td>EV 三電業務量產；NVIDIA H100 前期布局開始</td><td>+0.5（→ 7.5/10）</td></tr>
+  <tr><td>2022 Q4</td><td>NVIDIA H100 量產；Delta 為主要 PSU 供應商之一</td><td>+0.3（→ 7.8/10）</td></tr>
+  <tr><td>2023</td><td>液冷整合解決方案開發完成；Eltek 正式改名 Delta Electronics Norway AS</td><td>+0.2（→ 8.0/10）</td></tr>
+  <tr><td>2024</td><td>Blackwell 量產 + 800V HVDC 與 NVIDIA 共設計 OCP 規格候選</td><td>+0.3（→ 8.3/10）</td></tr>
+  <tr><td>2025-01</td><td>全球首款 80 PLUS® Ruby 認證 5,500W PSU（97.5% 效率）</td><td>+0.1（→ 8.4/10）</td></tr>
+  <tr><td>2025 全年</td><td>Infrastructure +55%+ YoY；液冷 CDU 出貨；泰國三廠投產</td><td>+0.1（→ 8.5/10）</td></tr>
+  <tr><td>2026 Q1</td><td>NVIDIA GTC 2026：800V In-Row 660kW Power Rack 展示；800V HVDC 美國 CSP 客戶導入確認</td><td>—（快照點，計入 8.5/10 當前估值）</td></tr>
+</table>
+
+<h4>未來 5 年可能變化（2026-2031）</h4>
+<table>
+  <tr><th>情境</th><th>機率</th><th>事件</th><th>護城河影響</th></tr>
+  <tr><td>Best</td><td>25%</td><td>Delta 取得 NVIDIA Rubin Ultra 主供；800V 市佔維持 55%+；EV 二曲線接棒</td><td>Execution +1.0，Pricing +0.5（→ S 級邊界）</td></tr>
+  <tr><td>Base</td><td>40%</td><td>Delta + Vertiv 50/50 dual-leader；800V 滲透 50%+；EV 10-12%</td><td>Execution +0.3，Pricing → 持平（→ 8.8/10，A 級穩定）</td></tr>
+  <tr><td>Mild Bear</td><td>25%</td><td>Vertiv 取得 NVIDIA Rubin 主供；Delta 降至 45-50%</td><td>Execution −0.3，Pricing −0.5（→ 7.7/10，A 級偏 B 邊界）</td></tr>
+  <tr><td>Severe Bear（§5.F 觸發）</td><td>10%</td><td>地緣政治 + Vertiv 主供 + 中國產能遷移失敗</td><td>Execution −1.0，Pricing −1.5（→ 6.0/10，B 級）</td></tr>
+</table>
+
+<h3>E｜對手 CapEx / R&D 對照</h3>
+<table>
+  <tr><th>對手</th><th>FY2025 CapEx（估）</th><th>CapEx / Rev</th><th>FY2025 R&D（估）</th><th>R&D / Rev</th><th>vs 台達電</th></tr>
+  <tr><td><strong>台達電 2308.TW</strong></td><td>~NT$38B（~USD 1.2B）</td><td>~6.8%</td><td>~NT$30B（~USD 1.0B）</td><td>~5.4%</td><td>—</td></tr>
+  <tr><td>Vertiv (VRT)</td><td>~USD 0.35B</td><td>~3.5%</td><td>~USD 0.40B</td><td>~4.5%</td><td>Delta CapEx 3.4x；R&D 2.5x</td></tr>
+  <tr><td>Schneider (SU)</td><td>~USD 0.9B</td><td>~3.0%</td><td>~USD 1.5B</td><td>~5.0%</td><td>Schneider R&D 1.5x；分散多元工業</td></tr>
+  <tr><td>Eaton (ETN)</td><td>~USD 0.6B</td><td>~2.5%</td><td>~USD 0.65B</td><td>~2.7%</td><td>Delta R&D 1.5x；CapEx 2x</td></tr>
+</table>
+<div class="reasoning">台達電 CapEx + R&D 絕對額均領先純電源同業（Vertiv / Eaton）。Schneider R&D $1.5B 較高但分散在多元工業電氣產品。台達電 FY2026 CapEx 確認繼續擴張 — 資本投入領先支撐護城河 8.5/10 硬數據基礎。</div>
+
+<h3>24 個月威脅清單（v12.3 強制 QC-23 三級分類）</h3>
+<ul>
+  <li>⛔ <strong>架構替代</strong>（機率 10%）：若 NVIDIA Rubin 改採 750V 規格而非 800V，台達電早期投入沉沒；觸發護城河 −2（→ 6.5/10，B 級），§1 陷阱定性升至 🔴。機率低但後果嚴重。</li>
+  <li>🔴 <strong>生態攻擊</strong>（機率 30%）：Vertiv 800V H2 2026 release 成功搶 hyperscaler 訂單；Schneider 切入 NVIDIA 第三供應商；Delta 市佔從 55-65% → 45-50%；觸發護城河 −0.5 to −1.0，§5.F 可能觸發。這是當前最主要的監控重點。</li>
+  <li>🟡 <strong>點對點</strong>（機率 55%）：Eaton / 光寶 個別產品線競爭（低階 UPS / 傳統 PSU）；不影響 800V HVDC 新世代競局；列入監測但不扣分。</li>
+</ul>
+
+</div>
+</div>
+
+<!-- ======================== §10 ======================== -->
+<div class="card" id="s10">
+<h2>§10 財務品質監測（v12.3：同業對比欄 + FCF lumpiness）</h2>
+<div class="card-body">
+
+<h3>三年趨勢表（v12.3：強制加同業對比欄）</h3>
+<table>
+  <tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>同業中位（§13.4 peer group）</th></tr>
+  <tr><td>Revenue（NT$B）</td><td>420</td><td>421</td><td>555</td><td>Vertiv ~USD 8.9B / Schneider ~USD 34B / Eaton ~USD 24B</td></tr>
+  <tr><td>Gross Margin</td><td>29.2%</td><td>30.0%</td><td>34.9%</td><td>Vertiv ~37% / Schneider ~41% / Eaton ~38%；peer 中位 ~38%（Delta 仍低同業中位 3pp，但快速追近）</td></tr>
+  <tr><td>Operating Margin</td><td>9.4%</td><td>10.6%</td><td>15.6%</td><td>Vertiv ~16% / Schneider ~17% / Eaton ~16%；peer 中位 ~16.3%（Delta 已達同業中位）</td></tr>
+  <tr><td>FCF Margin</td><td>~7%</td><td>~8.3%</td><td>~6.5%</td><td>Vertiv ~14% / Schneider ~11% / Eaton ~13%；peer 中位 ~12%（Delta 偏低 −5.5pp，CapEx 擴張期）</td></tr>
+  <tr><td>ROIC（估算）</td><td>~14%</td><td>~16%</td><td>~18-20%</td><td>Vertiv ~25% / Schneider ~14% / Eaton ~20%；peer 中位 ~19.7%（Delta 接近同業中位，且趨勢向上）</td></tr>
+  <tr><td>SBC / Revenue</td><td>&lt;1%</td><td>&lt;1%</td><td>&lt;1%</td><td>Vertiv ~2% / Schneider ~1.5% / Eaton ~1%；台達電台股慣性（現金分紅主導），SBC 稀釋極低</td></tr>
+</table>
+<div class="reasoning">同業對比：台達電 GM 34.9% 仍落後 peer 中位 ~38%，但趨勢最強（+5.7pp 3 年改善）；OPM 15.6% 已達 peer 中位；ROIC ~18-20% 接近 peer 中位但趨勢向上最快。FCF Margin 偏低係 CapEx 擴張期正常，不是結構問題。Implication：GM 追趕空間仍有 3pp，800V 高 ASP 混合升級是主要路徑（§5 H2 驗證點）。</div>
+
+<h3>獲利品質警訊</h3>
+<p><strong>淨利 vs OCF：</strong>FY2025 OCF ~NT$74B vs 淨利 ~NT$60B，OCF/NI = 1.23。<span class="badge badge-green">健康</span>，營業現金流遠大於淨利，無應收帳款墊款問題。</p>
+<p><strong>AR 成長 vs 營收成長：</strong>FY2025 Revenue +32% YoY，未見異常 AR 膨脹信號（法說未提及 AR 警示）。需持續觀察下一份完整財報。</p>
+<p><strong>存貨：</strong>Q4 2025 法說提及存貨已合理水位，800V HVDC 備料需求強但 backlog 覆蓋充分，無滯銷跡象。</p>
+<p><strong>FCF 轉換率：</strong>FY2025 FCF/NI ~60%（CapEx 擴張壓縮），但 OCF/NI 1.23 健康；3 年均 FCF/NI ~0.70，在擴張期可接受。</p>
+
+<h3>回購品質評估（v12.3：剔除回購後 EPS CAGR 必算）</h3>
+<p>台達電歷史以現金分紅為主，無重大股票回購計畫（台股慣性）。FY2025 EPS +71% YoY 完全靠有機獲利（Revenue +32% + OPM 從 10.6% → 15.6% 槓桿），無「靠回購堆疊 EPS」問題。</p>
+<table>
+  <tr><th width="40%">項目</th><th>數值</th></tr>
+  <tr><td>FY2025 估計股份數</td><td>~26 億股（台達電總股數，無大規模新股發行）</td></tr>
+  <tr><td>FY2025 回購金額</td><td>不顯著（未公告大額回購）</td></tr>
+  <tr><td>剔除回購後 EPS CAGR vs 含回購</td><td>差距 &lt;1%p — 無 EPS 品質問題</td></tr>
+  <tr><td>判定</td><td><span class="badge badge-green">🟢 無回購堆疊 EPS 問題</span></td></tr>
+</table>
+
+<h3>FCF Lumpiness 評估（v12.3 新增）</h3>
+<table>
+  <tr><th width="30%">項目</th><th>數值</th></tr>
+  <tr><td>5Y 滾動 FCF 均值（2021-2025）</td><td>~NT$30-40B/年（FCF Margin ~6-9% × Rev；CapEx 週期壓縮）</td></tr>
+  <tr><td>最低谷年份</td><td>2022（AI DC CapEx 高峰期啟動；FCF Margin ~5-6%，FCF ~NT$20-25B）</td></tr>
+  <tr><td>Lumpy 性質判斷</td><td><strong>輕度 Lumpy — 正常硬體製造業</strong>（CapEx 週期性擴張 → FCF 週期性壓低；AI DC 需求爆發期 CapEx 加速 → FCF 被壓，但持續為正）</td></tr>
+  <tr><td>紅旗判定</td><td><span class="badge badge-green">非紅旗</span>（硬體製造業 + 基礎設施產品訂單型業務天然 lumpy；FCF 5Y 均為正；不算結構問題）</td></tr>
+  <tr><td>FCF 正常化預期</td><td>800V ramp 完成後（2027-2028）CapEx/Rev 有望從 ~7% 降至 5-6% → FCF Margin 升至 10-13%（接近 peer 中位）</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ======================== §11 ======================== -->
+<div class="card" id="s11">
+<h2>§11 產業格局（v12.3 擴充：議價權三段獨立 + 營收三維 + 單位經濟逐業務）</h2>
+<div class="card-body">
+
+<h3>市場量化 + 5Y/10Y 結構性變化</h3>
+<table>
+  <tr><th>業務</th><th>現在 TAM（2026）</th><th>5Y TAM（2031）</th><th>10Y TAM（2036）</th><th>結構性變化</th></tr>
+  <tr><td>AI DC 電源（含 ±400V / 800V HVDC + 液冷）</td><td>USD 30B/年</td><td>USD 80B/年</td><td>USD 150B/年</td><td>從 GPU PSU 配套 → DC 整廠電力系統 IP 商；800V 2027 主導</td></tr>
+  <tr><td>傳統 DC 電源 / UPS</td><td>USD 50B</td><td>USD 75B</td><td>USD 100B</td><td>現金牛，穩升</td></tr>
+  <tr><td>EV 三電</td><td>USD 80B</td><td>USD 200B</td><td>USD 350B</td><td>電動化 20% → 40% → 60%</td></tr>
+  <tr><td>工業自動化</td><td>USD 200B</td><td>USD 300B</td><td>USD 400B</td><td>產業 AI + 機器人加成</td></tr>
+  <tr><td>智慧建築 / HVAC</td><td>USD 100B</td><td>USD 150B</td><td>USD 200B</td><td>能效法規 + Vivotek 整合</td></tr>
+</table>
+
+<h3>議價權第一段：對上游供應商</h3>
+<p>台達電對上游供應商整體議價力中強（7/10），核心槓桿來自三點：規模採購（年採購估逾 NT$200B）、多元分散（磁性元件由鴻華電、TDK、村田三家以上共供，無單一供應商超過 25-30%）、以及關鍵零件部分內製（電感 / 變壓器），直接降低上游依賴。功率半導體（SiC MOSFET、GaN）供應商（Wolfspeed、Infineon、ON Semi、ROHM）憑大客戶地位可取得長期供應協議，鎖定優先配貨；但 SiC 2024-2025 供不應求期間 spot 溢價仍存，為短中期唯一軟肋。稀土永磁體（EV 電機所需）全球 ~70% 產自中國，2025-2026 出口管制加強形成結構性曝險，台達電以 hedging 策略 + 加拿大 / 澳洲替代供應商應對，EV 三電業務曝險程度高於 AI DC 業務。</p>
+<ul>
+  <li><strong>SiC / GaN 半導體</strong>（Wolfspeed、Infineon、ON Semi、ROHM）：大客戶地位可取得 long-term supply agreement；SiC 擴產後 5 年內上游議價壓力緩解；5,500W PSU 第三代半導體依賴度中等。</li>
+  <li><strong>磁性元件 / 電感 / 變壓器</strong>（鴻華電、TDK、村田）：多家分散，Delta 採購量大，議價力強；無單一超過 30%（估）。</li>
+  <li><strong>銅 / 稀土永磁體</strong>：中國集中度高（~70% 稀土）；受出口管制波動影響，EV 業務短中期原料成本壓力；hedging + 庫存管理應對。</li>
+</ul>
+<p><strong>對上游議價力綜合判定：中強（7/10）</strong>。SiC 供應緊是短中期唯一軟肋；稀土是長期結構性曝險；其餘上游議價力強。</p>
+
+<h3>議價權第二段：對下游客戶</h3>
+<p>台達電對下游整體議價力中強（7/10），在 AI DC 電源細分市場（hyperscaler 客戶）憑 NVIDIA co-design 800V HVDC 規格形成事實標準，議價力最強（7.5/10）；hyperscaler 雖維持 Delta + Vertiv 雙供應商策略（非 sole-source），但台達電在規格制定端的主導優勢至 Vertiv 800V 上線前難以複製。AI server Tier-1 OEM（Dell / HP / Lenovo / Supermicro）各估占 Rev 3-7%，採購標準由 NVIDIA 定義，Delta 規格話語權轉化為對 OEM 的中等偏強議價力（6.5/10）。相對弱點在 EV OEM — Tesla 積極自研逆變器、BYD 推進三電內製化，壓縮 Delta EV 業務議價空間（5.5/10）；但德國三大 OEM（VW / BMW / Mercedes）採 Tier-1 整合系統 lock-in 模式，歐洲 EV 業務議價力相對較強（6.5/10）。最大隱患：Vertiv 800V 液冷電源 2027 上市後，hyperscaler dual-source 從 Delta 主導轉向 50/50 均衡，AI DC 業務議價力天花板下移。</p>
+<ul>
+  <li><strong>Hyperscaler（GOOGL / MSFT / AMZN / META，公司未具名）</strong>：各估占 5-8% Rev。Delta 以 NVIDIA co-design 800V 規格形成事實標準 → 對 hyperscaler 議價力強。雙供應商策略（Delta + Vertiv）= 非 sole-source，有天花板。合約通常為年度採購框架 + 技術規格鎖定。</li>
+  <li><strong>Tier-1 OEM（Dell / HP / Lenovo / Supermicro，公司未具名）</strong>：各估占 3-7% Rev。AI server PSU 採購標準由 NVIDIA 定，Delta 規格制定優勢 → 對 OEM 議價力中強。</li>
+  <li><strong>EV OEM（Tesla / BYD）</strong>：Tesla 自研 + BYD 內製化壓力；德國 OEM 議價位置較強。EV 整體議價力中等（6/10）。</li>
+  <li><strong>工業客戶（Siemens / ABB，公司未具名）</strong>：長期 Tier-1 關係，議價力中強（7/10）。</li>
+</ul>
+<p><strong>對下游議價力綜合判定：中強（7/10）</strong>。AI DC 7.5/10；EV 5.5/10；工業 7/10；加權後中強。最大隱患：Vertiv 800V 上線後 hyperscaler dual-source 均衡。</p>
+
+<h3>議價權第三段：地緣曝險</h3>
+<p>台達電地緣曝險呈三層結構，整體可管理但需持續監控：最大曝險為中國製造集中（FY2025 估 ~40% 產能），在美中關稅加劇情境下出口美國產品面臨額外成本。台達電 FY2026 CapEx 持續擴建泰國 + 台灣 + 墨西哥 + 印度產能，目標 3 年內中國占比降至 30% 以下；墨西哥工廠可繞過部分美台關稅（USMCA 框架），美國 hyperscaler 訂單亦以本地交貨為主，緩衝效果顯著。台灣地緣風險為第二層，總部與 R&D 均集中台灣，若台海情勢升級供應鏈可靠性受衝擊；惟 hyperscaler 本身要求供應鏈去台灣集中化，間接推動 Delta 全球佈局加速。第三層為稀土出口管制，主要限於 EV 三電業務。</p>
+<table>
+  <tr><th>區域 / 風險</th><th>說明</th><th>緩衝機制</th></tr>
+  <tr><td>中國產能集中（估 ~40% 製造）</td><td>美中關稅 + 出口管制：若摩擦加劇，出口美國產品承受 10-25% 額外成本</td><td>泰國 + 墨西哥 + 印度多地生產；FY2026 CapEx 擴建非中國產能；3 年內目標降至 30%</td></tr>
+  <tr><td>台灣地緣風險</td><td>總部 + 主要 R&D 集中台灣；若台海緊張升級，供應鏈可靠性受衝擊</td><td>全球生產佈局；hyperscaler 要求供應鏈去台灣集中，間接推動 Delta 佈局</td></tr>
+  <tr><td>稀土出口管制</td><td>中國稀土是 EV 電機磁鐵關鍵原料；2025-2026 出口管制加強 = EV 業務短期成本壓力</td><td>hedging + 庫存管理；替代供應商（加拿大 / 澳洲）長期佈局</td></tr>
+  <tr><td>美國 tariff 調整</td><td>美台關稅調整可能影響部分直接出口美國業務</td><td>墨西哥工廠（USMCA）繞過；美國 hyperscaler 訂單以本地交貨為主</td></tr>
+</table>
+
+<h3>營收組成（三維展開，FY2025 快照）</h3>
+<h4>維度一：業務段</h4>
+<table>
+  <tr><th>業務段</th><th>FY2025 Rev 估（NT$B）</th><th>佔比</th><th>YoY</th><th>OI Margin 估</th><th>3Y 軌跡</th></tr>
+  <tr><td>基礎設施（Infrastructure：DC 電源 + UPS + 液冷，含 800V）</td><td>~220</td><td>~40%</td><td>+55%+</td><td>~16.3%</td><td>佔比 25% → 40% → 50%（2028 預估）；最快成長引擎</td></tr>
+  <tr><td>電動化（EV 三電 + 充電）</td><td>~55</td><td>~10%</td><td>+20-25%</td><td>~10%</td><td>BYD 內製壓力；德國 OEM 補償；中期 ~15%</td></tr>
+  <tr><td>工業自動化（Automation）</td><td>~165</td><td>~30%</td><td>+10-15%</td><td>~13%</td><td>穩健成長；AI 工業化加成</td></tr>
+  <tr><td>智慧建築 / HVAC（含 Vivotek 整合後）</td><td>~83</td><td>~15%</td><td>+8-10%</td><td>~12%</td><td>能效法規驅動；Vivotek 整合強化</td></tr>
+  <tr><td>傳統電源 / 元件</td><td>~28</td><td>~5%</td><td>+3-5%</td><td>~10%</td><td>現金牛；佔比持續縮小</td></tr>
+</table>
+<p class="note">業務段細分依台達電公開年報分類重組（台灣年報分類與上述稍有差異）；FY2025 詳細拆分需待完整年報公布確認。數字為法說 + 分析師報告的最佳估算。</p>
+
+<h4>維度二：地區</h4>
+<table>
+  <tr><th>地區</th><th>佔比估</th><th>YoY</th><th>備註</th></tr>
+  <tr><td>美國</td><td>~28%</td><td>+45%</td><td>AI DC 主要市場；hyperscaler 需求強</td></tr>
+  <tr><td>中國（含香港）</td><td>~25%</td><td>+10%</td><td>本地 EV + 工業；產能逐步遷出；關稅風險 R3</td></tr>
+  <tr><td>其他亞洲（台灣、東南亞、印度）</td><td>~22%</td><td>+25%</td><td>產能擴建中；印度 + 越南製造新增</td></tr>
+  <tr><td>歐洲</td><td>~17%</td><td>+20%</td><td>EV + 工業自動化；德國 OEM 主力</td></tr>
+  <tr><td>其他（拉美、中東）</td><td>~8%</td><td>+15%</td><td>分散</td></tr>
+</table>
+
+<h4>維度三：客戶集中度</h4>
+<p>Top 10 客戶佔比 ~45-50%（估，公司未具名）；無單一客戶超過 15%（估）。客戶集中度風險低-中（4 引擎覆蓋多種客戶類型；最大單一業務 Infrastructure ~40% Rev 非單一客戶）。§8.H 已詳述。</p>
+
+<h3>單位經濟（逐業務展開）</h3>
+<table>
+  <tr><th>業務</th><th>ASP 水位</th><th>GM 水位</th><th>量 vs 定價驅動</th><th>Unit 趨勢</th></tr>
+  <tr><td>AI DC 電源（800V HVDC）</td><td>800V In-Row 660kW Power Rack：系統級 ASP USD 數十萬；5,500W PSU：~USD 1,500-2,500（估）；傳統 PSU USD 500-800</td><td>~38-42%（800V + 液冷 mix）；傳統 PSU ~25%</td><td>定價主導（ASP 3-5x 升級）+ 量主導（AI DC 出貨量擴大）</td><td>ASP ↑↑（mix upgrade）；量 ↑↑；GM ↑（Q4 2025 34.6% 趨勢）</td></tr>
+  <tr><td>液冷整合（CDU）</td><td>每機架 ASP USD 5-10K（vs 純電源 USD 1-2K）</td><td>~40-45%（高附加值）</td><td>定價主導</td><td>ASP ↑；量 ↑（需求加速）</td></tr>
+  <tr><td>EV 三電（per car set）</td><td>ASP USD 1,000-2,500（完整 powertrain set）</td><td>~18-22%（OEM 議價壓力）</td><td>量主導</td><td>ASP → 持平；量 ↑；GM 需 volume scale 改善</td></tr>
+  <tr><td>工業自動化</td><td>ASP 分散（per unit 差異大）</td><td>~32-35%</td><td>定價 + 量平衡</td><td>GM 穩定；量緩升</td></tr>
+  <tr><td>傳統電源 / UPS</td><td>低-中 ASP</td><td>~22-28%</td><td>量主導</td><td>現金牛；ASP → 持平</td></tr>
+</table>
+<div class="reasoning">結構性洞察：Infrastructure（AI DC）每增 1pp 佔比，整體 GM 升約 40-50bp（Infrastructure GM ~40% vs 總體 34.9%；差距 +5pp × 1pp 份額移動 → GM +50bp 理論值）。當 Infrastructure 從 ~40% → 50%（2028），整體 GM 自然升至 ~38-39%（H2 驗證點）。Q4 2025 GM 34.6% 已趨向此方向。</div>
+
+</div>
+</div>
+
+<!-- ======================== §12 ======================== -->
+<div class="card" id="s12">
+<h2>§12 公司治理與資本配置（v12.3：M&A 5Y track + SBC 真實稀釋）</h2>
+<div class="card-body">
+
+<h3>股東 / 股權結構</h3>
+<ul>
+  <li><strong>創辦人家族：</strong>鄭崇華（創辦人）家族持股估 ~10-15%（台達電年報數字；機構報告估）；鄭平（創辦人之子）接任董事長（2025-2026 交接）</li>
+  <li><strong>機構投資人：</strong>外資持股 ~40-50%（含外國機構法人）；結構穩定</li>
+  <li><strong>無 dual-class 結構：</strong>台達電為一股一票，無創辦人投票權結構問題</li>
+  <li><strong>董事會：</strong>創辦人鄭崇華任名譽董事長；鄭平（創辦人之子）接任董座；CEO 海英俊；世代交棒已完成</li>
+</ul>
+
+<h3>M&A Track Record（5 年，v12.3 強制）</h3>
+<table>
+  <tr><th>年份</th><th>交易</th><th>金額</th><th>整合結果</th><th>後續減損？</th></tr>
+  <tr><td>2014-2015</td><td>收購挪威 Eltek ASA（電信電源）通過 Deltronics Netherlands BV；Eltek 完全私有化</td><td>NOK 3.9B（~USD 530M；eepower.com / deltaww.com 確認）</td><td>成功整合；2023 年改名 Delta Electronics Norway AS；Eltek 品牌保留；歐洲電信 DC 電源業務強化；無大幅重組</td><td>無減損紀錄</td></tr>
+  <tr><td>2020-2024</td><td>無大型新 M&A（全力有機 CapEx 擴張）；選擇性小型技術入股（未公開）</td><td>—</td><td>資本配置重心轉向有機 CapEx（AI DC / EV / 液冷廠房）；FY2022 CapEx NT$22B → FY2025 NT$38B（+73%）</td><td>不適用</td></tr>
+  <tr><td>2025-12（宣布）</td><td>全面收購 Vivotek（智慧安防 IP camera；既有持股 ~51% → 100%）；每股 NT$100，溢價收購剩餘 ~49%（digitimes.com 2025-12-02 確認）</td><td>NT$3.73B（~USD 119M）；預計 2026 Q1 完成</td><td>尚在完成程序（快照 2026-03-25）；目的：鞏固智慧建築生態系（Delta 工業自動化 + Vivotek IP camera 整合）；規模較小，整合風險有限</td><td>尚未完成</td></tr>
+</table>
+<p class="note"><strong>M&A 風格判定：</strong>「有機擴張優先、偶發補充型 M&A」。Eltek（2014-2015）近 10 年最大交易且整合成功；FY2020-2024 無大型新 M&A；Vivotek（Dec 2025，~USD 119M）為補強型小型 M&A，聚焦智慧建築生態系而非核心 AI DC。管理層 M&A 紀律良好，不靠收購堆 EPS。</p>
+
+<h3>資本配置軌跡</h3>
+<ul>
+  <li>FY2025 CapEx ~NT$38B（vs FY2022 ~NT$22B，+73%）— 反映 AI DC 擴張</li>
+  <li>FY2026 CapEx 確認繼續增加（Q4 2025 法說）；泰國三廠 + 美國佈局持續</li>
+  <li>分紅穩定：FY2025 現金股利 NT$7，殖利率 ~0.5%（台股慣性，殖利率低）；無大規模回購</li>
+  <li>R&D 持續加碼：FY2025 R&D ~NT$30B（R&D/Rev ~5.4%），明顯高於 Vertiv</li>
+</ul>
+
+<h3>管理層薪酬</h3>
+<p>CEO 海英俊 + 董座鄭平，薪酬以固定薪資 + 現金績效獎金為主（台股慣性）。股權激勵比例低於美股科技公司。無具體 mix 數字公開（台灣年報薪酬揭露較美股少）。管理層的說法與行動高度一致：法說強調長期投資 AI 基礎設施，CapEx 軌跡完全對應。</p>
+
+<h3>內部人交易（過去 12 個月）</h3>
+<p>未發現大額異常買入 / 賣出。無集體訴訟、無主管機關調查、無管理層重大異動、無財報重編紀錄。QC-19 搜尋確認清白。</p>
+
+<h3>SBC 真實稀釋（v12.3 強化）</h3>
+<table>
+  <tr><th width="40%">項目</th><th>數值</th><th>說明</th></tr>
+  <tr><td>SBC / Rev（FY2025 估）</td><td>&lt;1%（台股慣性）</td><td>台達電員工酬勞以現金績效獎金為主；股份為基礎薪酬（RSU / 員工認股）比例遠低於美股科技公司</td></tr>
+  <tr><td>SBC 絕對金額（FY2025 估）</td><td>~NT$3-6B（0.5-1% × Rev NT$555B）</td><td>goodinfo.tw 薪資數據確認台達電工程師薪資結構；現金分紅（從稅後利潤提撥）為主，非股票</td></tr>
+  <tr><td>剔除 SBC 後 EPS 差距</td><td>差距 &lt;2%（估）</td><td>台股 SBC 以現金形式為主 → EPS 稀釋效果有限；v12.3「差距 &gt;5%p 警示」在本標的不觸發</td></tr>
+  <tr><td>股本稀釋風險</td><td>極低</td><td>過去 3 年總股數約維持 ~26 億股，無大規模新股發行</td></tr>
+  <tr><td>判定</td><td><span class="badge badge-green">🟢 SBC 稀釋風險極低</span></td><td>台股現金分紅主導；不觸發 v12.3 &gt;5%p 警示門檻</td></tr>
+</table>
+<div class="reasoning">台達電 SBC 稀釋問題遠小於美股科技公司（NVDA ~3%、GOOG ~5%）。台股員工酬勞以「現金分紅」（從稅後利潤提撥）為主，對 GAAP EPS 是現金流出而非股本稀釋。下游 implication：EPS 數字可信度高，無需大幅 Non-GAAP 調整，直接用 GAAP EPS 作為估值基礎合理。</div>
+
+<p><span class="badge badge-green">🟢 過去 12 個月無大型 M&A（Vivotek 尚在審議）、無集體訴訟、無管理層異動、無重大監管事件</span></p>
+</div>
+</div>
+
+<!-- ======================== §13 ======================== -->
+<div class="card" id="s13">
+<h2>§13 估值診斷（v12.3：砍 13.0/13.3/13.5 + 便宜理由五問；留 13.1/13.2/13.4 + 結論段）</h2>
+<div class="card-body">
+
+<h3>13.1｜歷史估值分位（5 年，2026-03-25 快照）</h3>
+<table>
+  <tr><th>估值指標</th><th>當前值（快照）</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+  <tr><td>Trailing P/E</td><td>~60x</td><td>~13.3x</td><td>~23.3x</td><td>~61.9x</td><td><span class="badge badge-red">&gt;95%（過熱）</span></td></tr>
+  <tr><td>Forward P/E FY+1</td><td>~39.4x</td><td>~12x</td><td>~20x</td><td>~42x</td><td><span class="badge badge-red">~90%（過熱）</span></td></tr>
+  <tr><td>Forward P/E FY+2</td><td>~28.5-31x</td><td>~10x</td><td>~17x</td><td>~42x</td><td><span class="badge badge-yellow">~70-75%（偏貴）</span></td></tr>
+  <tr><td>EV/EBITDA</td><td>~33x</td><td>~10x</td><td>~16x</td><td>~35x</td><td><span class="badge badge-red">~90%（過熱）</span></td></tr>
+  <tr><td>P/S</td><td>~6.6x</td><td>~1.5x</td><td>~2.5x</td><td>~7x</td><td><span class="badge badge-red">~92%（過熱）</span></td></tr>
+</table>
+<div class="reasoning">FY+1 PE 90% 過熱，但歷史分位的基準問題：台達電 FY2025 業務組合已根本性改變（AI DC 佔比從 &lt;5% → ~40%），歷史估值區間部分不再適用。FY+2 PE 70-75% 分位「偏貴」比 FY+1 的 90% 更能反映當前公允估值狀態。implication：§2 D 估值燈以 FY+1 為主要 input → 🟠 偏貴（非 🔴 拒絕，因 PEG 1.04 仍合理）。</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+  <tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+  <tr><td>Forward P/E FY+1</td><td>~39.4x</td><td>—</td></tr>
+  <tr><td>3Y EPS CAGR（FY2025→FY2028E）</td><td>~38%</td><td>—</td></tr>
+  <tr><td>PEG（3Y）</td><td><strong>1.04</strong></td><td><span class="badge badge-green">合理偏便宜</span>（&lt;1.2 合理）</td></tr>
+  <tr><td>5Y EPS CAGR（含遞減）</td><td>~25-28%</td><td>—</td></tr>
+  <tr><td>PEG（5Y base）</td><td>~1.4-1.6</td><td><span class="badge badge-yellow">合理（&lt;2）</span></td></tr>
+  <tr><td>FY+2 base PEG</td><td>~0.7-0.8（FY+2 PE ~29x / CAGR 38%）</td><td><span class="badge badge-green">便宜（&lt;1.0）</span></td></tr>
+</table>
+<div class="reasoning">PEG 1.04（FY+1 / 3Y CAGR）合理偏便宜。FY+2 base PEG 0.7-0.8 更便宜，暗示若 EPS 共識持續上修，估值壓力可自然消化。implication：高分位 + 合理 PEG 的組合 → 估值燈 🟠（非 🔴），因 PEG 引擎支撐；但高分位要求 EPS 持續兌現才能維持倍數。</div>
+
+<h3>13.4｜同業估值比較（v12.3：強制「對的 peer group tier」）</h3>
+<p><strong>Peer Group Tier 判斷：</strong>台達電屬「電力電子硬體系統整合廠 + AI DC 生態位」業務模式 — 非純代工、非 SaaS、非 IP 公司。最接近 tier 為「工業電源 + 資料中心電力系統整合廠」。Vertiv（VRT）、Schneider Electric（SU）、Eaton（ETN）是 best available peer group，業務複雜度不完全相同，但無更接近的上市同業。</p>
+<p class="note">⚠️ 本表不把 NVDA / TSMC / MSFT 等純 AI / 半導體公司列入 peer — 業務模式根本不同（IP vs 硬體整合），跨 tier 比較會高估台達電的合理 PE。</p>
+<table>
+  <tr><th>公司</th><th>市值（USD B，快照估）</th><th>Fwd PE FY+1</th><th>Fwd PE FY+2</th><th>EV/EBITDA</th><th>PEG（3Y）</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+  <tr><td><strong>台達電 2308.TW</strong></td><td>~104（NT$1,475 × 26億）</td><td>39.4x</td><td>~29x</td><td>~33x</td><td>1.04</td><td>~6.5%</td><td>~38%</td><td>~18-20%</td></tr>
+  <tr><td>Vertiv (VRT)</td><td>~100</td><td>~42.5x</td><td>~30x</td><td>~35x</td><td>~1.3</td><td>~14%</td><td>~33%</td><td>~25%</td></tr>
+  <tr><td>Schneider (SU)</td><td>~130</td><td>~28x</td><td>~22x</td><td>~20x</td><td>~2.5</td><td>~11%</td><td>~11%</td><td>~14%</td></tr>
+  <tr><td>Eaton (ETN)</td><td>~130</td><td>~32x</td><td>~26x</td><td>~24x</td><td>~2.7</td><td>~13%</td><td>~12%</td><td>~20%</td></tr>
+  <tr><td>同業中位</td><td>—</td><td>~35x</td><td>~26x</td><td>~26x</td><td>~2.0</td><td>~12%</td><td>~19%</td><td>~19%</td></tr>
+</table>
+<div class="reasoning">台達電 Fwd PE FY+1 39.4x vs 同業中位 35x = +13% 溢價，但 EPS CAGR 38% vs 同業中位 19% = +100% 溢價 → PEG 1.04 vs 同業中位 2.0 = 台達電在成長調整後更便宜。ROIC ~18-20% 接近 peer 中位 ~19%（尚無大幅超額，但趨勢向上最強）。FCF Margin 偏低係 CapEx 擴張期，非結構問題。implication：PE 溢價有部分成長差異支撐，但溢價程度需 H1 + H2 持續驗證；若 §5.F 觸發則同業溢價消失，PE 向 Vertiv（競爭格局改變後 30x）回歸。</div>
+
+<h3>13 結論段（v12.3：取代 13.5 五角表 + 8 因素定錨）</h3>
+<p>三個估值工具匯集：</p>
+<ul>
+  <li><strong>歷史分位（13.1）：</strong>FY+1 PE 90% → 🟠 過熱；FY+2 PE 70-75% → 偏貴；靠 EPS 持續上修消化</li>
+  <li><strong>PEG 診斷（13.2）：</strong>PEG 1.04（3Y）/ 0.7-0.8（FY+2 base）→ 🟢 成長調整後合理偏便宜；暗示市場尚未充分定價成長加速</li>
+  <li><strong>同業比較（13.4）：</strong>PEG 維度台達電 1.04 vs peer 中位 2.0 = 折價 48% → 🟢；但絕對 PE 39.4x vs peer 中位 35x = 溢價 13%（需成長差異支撐）</li>
+</ul>
+<p><strong>當前定價判斷：<span class="badge badge-orange">🟠 偏貴</span></strong>（FY+1 PE 90% 分位；PEG 合理但分位過熱；需 EPS 持續上修或股價回落才有更好風險報酬）</p>
+<p><strong>合理 PE 推導：</strong>基準 25x（工業電源零組件廠）× PEG safety 1.25（PEG 1.04 接近 1.0，部分上浮）× AI 受益調整 1.12 = 35x。當前 FY+1 PE 39.4x 高於合理值 35x → 偏貴 ~12.5%（需 EPS 上修或股價回落消化）。</p>
+<p><strong>5Y 目標價（QC-36 一致性）：</strong>FY2030E EPS NT$80 × 35x = <strong>NT$2,800</strong>（upside_5y_pct = +90%；與 §2 E R:R 表 / §1 dashboard / dd-meta 四處一致）</p>
+<p><strong>下行風險量化：</strong>短期 Bear = FY2026 NT$36 × 0.9 × 23 = NT$745（−49%）；中期 Bear = FY2027 NT$50 × 0.9 × 22 = NT$990（−33%）。</p>
+<p><strong>一句話結論（指向 §1 dashboard）：</strong>台達電在 AI DC 電源系統超級週期中具備 Execution 8/10 + Pricing power 7/10 的雙維護城河，Runway ≥10 年，但 2026-03-25 快照時 FY+1 PE ~39.4x 處於 5 年 ~90% 分位；PEG 1.04 合理偏便宜但分位過熱。進場需等估值回落至 Forward PE ≤35x（NT$1,260-1,300）或 2026 Q2 法說驗證。Verdict：B 觀望偏進場。</p>
+
+<h3>版本修訂紀錄</h3>
+<table>
+  <tr><th>版本</th><th>日期</th><th>主要更新</th></tr>
+  <tr><td><strong>v12.3</strong></td><td>2026-05-17</td><td>win-20260517-1020-1ff5 執行；pre-v12 schema → v12.3 全架構重寫；資料快照保留 2026-03-25；dd-meta 從零建構（24 欄位）；§5.F Single Thing 新增（NVIDIA Rubin Ultra 主供公告）；§9 強制 Execution 8/10 + Pricing power 7/10 二維 + QC-23 三級威脅；§8.H 客戶結構深度（台灣匿名慣例）；§8.B 定價 vs 量 3Y 趨勢 + 5Y M&A track（含 Vivotek Dec 2025 NT$3.73B）；§11 議價權三段獨立（≥60 字獨立段落）；§12 M&A track record + SBC 真實稀釋量化；§13 砍 13.0/13.3/13.5/便宜理由，留 13.1/13.2/13.4 + 結論段；moat_execution + moat_pricing_power sub-scores 加入 dd-meta</td></tr>
+  <tr><td>pre-v12（原稿）</td><td>2026-03-25</td><td>初始分析快照（含 Q4 2025 / FY2025 財報）；舊 schema 無 §5.F / §8.H / §9 二維 / §11 三段 / §12 M&A track 等 v12.3 必要章節</td></tr>
+</table>
+
+</div>
+</div>
+
+<!-- ======================== Footer ======================== -->
+<div style="text-align:center;padding:40px 24px;color:#64748B;font-size:12px;font-family:'IBM Plex Mono',monospace;border-top:2px solid #E2E8F0;margin-top:32px;">
+  <p style="font-size:14px;color:#1E3A5F;font-weight:700;margin-bottom:8px;">— 報告結束 —</p>
+  <p>DD_2308_20260325 ｜ DD Schema v12.3 ｜ 資料快照：2026-03-25 ｜ 升級：2026-05-17（win-20260517-1020-1ff5）</p>
+  <p style="margin-top:8px;">資料來源：FactSet、Morgan Stanley、Quartr、investing.com、wawt.tech、digitimes.com、prnewswire.com、deltaww.com、eepower.com、goodinfo.tw、公司法說會</p>
+</div>
+
+<div style="text-align:center;padding:20px;font-size:13px;color:#6b7280;"><a href="/" style="color:#3B82F6;">← 回首頁</a></div>
 
 </div><!-- end container -->
-<div style="text-align:center;padding:20px;font-size:13px;color:#6b7280;"><a href="/" style="color:#3B82F6;">← 回首頁</a></div>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "2308.TW",
+  "date": "2026-03-25",
+  "schema": "v12.3",
+  "signal": "B",
+  "verdict": "B 觀望偏進場（品質 A 級 + AI 順風 + MA 強勢，但 FY+1 PE ~39.4x 歷史 90% 分位偏貴，PEG 1.04 合理；等 Forward PE ≤35x 或 Q2 法說驗證 AI 營收佔比 >45%）",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "A",
+  "moat_score": 8,
+  "moat_execution": 8,
+  "moat_pricing_power": 7,
+  "quality_score": 8,
+  "growth_durability": 8,
+  "val": "🟠",
+  "ma": "✅",
+  "ai_risk": "🟢",
+  "fpe_fy2": 29.5,
+  "pct_5y": 90,
+  "peg_fy2": 0.78,
+  "price_at_dd": 1475.0,
+  "upside_short_pct": -7.5,
+  "upside_mid_pct": 18.6,
+  "upside_5y_pct": 90,
+  "stress": {"pass": 2, "total": 2},
+  "long_term_confidence": "高",
+  "oneliner": "🟢 順風 + A 級（Exec 8/Pricing 7）｜FY2025 EPS +71% 全有機／GM 34.9% 趨勢升／800V HVDC 先發 12-18M｜Fwd PE 39.4x 5Y 90% 分位 🟠 偏貴，PEG 1.04 合理；等 PE ≤35x 或 Q2 驗證"
+}
+</script>
+
 </body>
 </html>
