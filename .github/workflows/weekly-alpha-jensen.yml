@@ -1,0 +1,45 @@
+name: Weekly Alpha Jensen (angle 6)
+
+on:
+  schedule:
+    # Sunday 19:00 UTC — runs 1 hour after weekly-dd-screener (18:00 UTC) so
+    # docs/dd-screener/latest.json is fresh before this OLS pass uses its universe.
+    - cron: "0 19 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rank:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run alpha ranker — jensen layer
+        run: python scripts/dd_alpha_ranker.py --layers jensen
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/dd-screener/alpha-rank.html docs/dd-screener/alpha-rank.json docs/dd-screener/alpha-rank-state/jensen.json docs/dd-screener/alpha-rank-snapshots/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "data: alpha-rank Jensen layer ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi
