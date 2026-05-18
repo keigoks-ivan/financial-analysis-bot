@@ -230,8 +230,14 @@ def pillar_growth(s: dict) -> tuple[float, dict]:
 
 def pillar_entry(s: dict) -> tuple[float, dict, str]:
     """C = 0.30·(1-pct_5y/100) + 0.25·MA + 0.20·pullback + 0.15·trend + 0.10·val
-    Returns (score, breakdown, ma_label)."""
-    pct_5y = _safe_float(s.get("pct_5y"))
+    Returns (score, breakdown, ma_label).
+
+    v1.3: pct_5y 用 live_pct_5y_est (從 dd 寫後價格漂移推估) 取代 frozen pct_5y。
+    估算缺值時 fallback 回 frozen pct_5y。"""
+    # 優先用 live 估算（unfreeze 估值欄）；缺值 fallback 回 frozen pct_5y
+    pct_5y_live = _safe_float(s.get("live_pct_5y_est"))
+    pct_5y_frozen = _safe_float(s.get("pct_5y"))
+    pct_5y = pct_5y_live if pct_5y_live is not None else pct_5y_frozen
     ma_snapshot = s.get("ma") or {}
     timing = s.get("timing") or {}
     val_field = s.get("val", "")
@@ -285,11 +291,16 @@ def is_vetoed(s: dict) -> Optional[str]:
 
 # ── rationale strings ─────────────────────────────────────────────────────────
 def entry_rationale(s: dict, breakdown: dict, ma_label: str) -> str:
-    """Tier A 進場 rationale — 三段，挑該檔最強的訊號。"""
+    """Tier A 進場 rationale — 三段，挑該檔最強的訊號。
+
+    v1.3: PE 分位優先顯示 live 估算；DD frozen 值 fallback。"""
     parts: list[str] = []
-    pct_5y = _safe_float(s.get("pct_5y"))
+    pct_5y_live = _safe_float(s.get("live_pct_5y_est"))
+    pct_5y_frozen = _safe_float(s.get("pct_5y"))
+    pct_5y = pct_5y_live if pct_5y_live is not None else pct_5y_frozen
     if pct_5y is not None:
-        parts.append(f"PE {pct_5y:.0f} 分位")
+        label_suffix = "" if pct_5y_live is not None else " (DD)"
+        parts.append(f"PE {pct_5y:.0f} 分位{label_suffix}")
     if ma_label != "—":
         parts.append(f"MA {ma_label}")
     dist = _safe_float((s.get("timing") or {}).get("dist_52w_high_pct"))
@@ -324,13 +335,16 @@ def wait_hint(s: dict, breakdown: dict, ma_label: str) -> str:
     gap = {k: targets[k] - weighted[k] for k in targets}
     bottleneck = max(gap, key=gap.get)
 
-    pct_5y = _safe_float(s.get("pct_5y"))
+    pct_5y_live = _safe_float(s.get("live_pct_5y_est"))
+    pct_5y_frozen = _safe_float(s.get("pct_5y"))
+    pct_5y = pct_5y_live if pct_5y_live is not None else pct_5y_frozen
     dist = _safe_float((s.get("timing") or {}).get("dist_52w_high_pct"))
     vs200 = _safe_float((s.get("timing") or {}).get("vs_200ma_pct"))
 
     if bottleneck == "pct_5y":
         if pct_5y is not None:
-            return f"等 PE 分位降至 < 40（現 {pct_5y:.0f}）"
+            suffix = "" if pct_5y_live is not None else " (DD)"
+            return f"等 PE 分位降至 < 40（現 {pct_5y:.0f}{suffix}）"
         return "等 PE 分位資料補齊"
     if bottleneck == "ma":
         return f"等 MA 回穩（現 {ma_label}）"

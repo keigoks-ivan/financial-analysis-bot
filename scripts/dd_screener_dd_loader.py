@@ -219,6 +219,8 @@ def load_dd_universe(
         moat_execution = meta.get("moat_execution")
         moat_pricing_power = meta.get("moat_pricing_power")
         ai_risk = meta.get("ai_risk")
+        # v1.3: price_at_dd 用於 live FwdPE drift 計算 (live_fpe ≈ fpe_fy2 × price_now/price_at_dd)
+        price_at_dd = meta.get("price_at_dd")
 
         # ── dd_path / dd_date ─────────────────────────────────────────────
         dd_filename = path.name
@@ -247,6 +249,7 @@ def load_dd_universe(
             "growth_durability": growth_durability,
             "quality_score": quality_score,
             "ai_risk": ai_risk,
+            "price_at_dd": price_at_dd,
             "dd_path": dd_path,
             "dd_date": dd_date,
             "dca_path": dca_path,

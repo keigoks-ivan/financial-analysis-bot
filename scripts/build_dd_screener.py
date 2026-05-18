@@ -415,6 +415,60 @@ def _moat_trend_for(ticker: str, dca_trend_map: dict, fallback: str) -> str:
     return arrow or fallback
 
 
+def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
+    """Compute live FwdPE estimate from price drift since DD write.
+
+    Assumption: consensus FY+2 EPS unchanged since DD. Valid for ~30-90 days;
+    for stale DDs (> 6 months), drift overstates expensiveness because EPS
+    estimates typically grow over time.
+
+    Returns dict with:
+      live_fpe_est: fpe_fy2 × (price_now / price_at_dd), None if inputs missing
+      pe_drift_pct: % change from DD-time fpe_fy2 (= price drift if EPS static)
+      dd_age_days: days since DD write date
+      live_pct_5y_est: estimated current 5Y FwdPE percentile (heuristic — assumes
+                       typical 60% relative range; cyclicals will be off)
+    """
+    out = {
+        "live_fpe_est": None,
+        "pe_drift_pct": None,
+        "dd_age_days": None,
+        "live_pct_5y_est": None,
+    }
+    fpe = entry.get("fpe_fy2")
+    p_dd = entry.get("price_at_dd")
+    p_now = ma.get("price") if ma else None
+    pct_5y = entry.get("pct_5y")
+    dd_date = entry.get("dd_date")
+
+    if dd_date:
+        try:
+            d = datetime.strptime(dd_date, "%Y-%m-%d").date()
+            out["dd_age_days"] = (datetime.now().date() - d).days
+        except (TypeError, ValueError):
+            pass
+
+    if fpe is None or p_dd is None or p_now is None or p_dd <= 0 or fpe <= 0:
+        return out
+
+    drift_factor = p_now / p_dd
+    out["live_fpe_est"] = round(fpe * drift_factor, 2)
+    out["pe_drift_pct"] = round((drift_factor - 1) * 100, 1)
+
+    # Heuristic live pct_5y: assume the 5Y FwdPE range has relative width ~60%
+    # centered on fpe_dd, so [low, high] = [fpe·(1−0.6·pct/100), fpe·(1+0.6·(1−pct/100))].
+    # Then live_pct_5y = (live_fpe − low) / (high − low) × 100, clamped [0, 100].
+    # Caveat: cyclicals / high-growth stocks have much wider ranges.
+    if pct_5y is not None and 0 <= pct_5y <= 100:
+        REL_WIDTH = 0.6
+        low = fpe * (1 - REL_WIDTH * pct_5y / 100)
+        high = fpe * (1 + REL_WIDTH * (100 - pct_5y) / 100)
+        if high > low:
+            live_pct = (out["live_fpe_est"] - low) / (high - low) * 100
+            out["live_pct_5y_est"] = round(max(0, min(100, live_pct)), 1)
+    return out
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
@@ -432,6 +486,9 @@ def enrich_ticker(
     `timing` joins `docs/screener/latest.json` by ticker — for tickers not in
     the screener universe (TW/JP/EU + niche US), falls back to `timing_fallback`
     computed by compute_yfinance_timing_fallback() from a yfinance batch fetch.
+
+    v1.3: also computes live_fpe_est / pe_drift_pct / dd_age_days / live_pct_5y_est
+    from price drift since DD write (unfreezes valuation columns).
     """
     t = entry["ticker"]
     quality, source = get_quality_for_ticker(t, qgm_index)
@@ -461,6 +518,8 @@ def enrich_ticker(
         timing = {k: v for k, v in timing.items()
                   if k not in ("rs_1w", "rs_4w", "rs_13w")}
 
+    pe_drift = _compute_live_pe_drift(entry, ma)
+
     return {
         **entry,
         **quality,
@@ -471,6 +530,7 @@ def enrich_ticker(
         "ev5y_pct": _ev5y_for(t, dca_ev_map),
         "ma": ma,
         "timing": timing,
+        **pe_drift,  # live_fpe_est, pe_drift_pct, dd_age_days, live_pct_5y_est
     }
 
 

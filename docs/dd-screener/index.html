@@ -342,6 +342,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <li><strong>2Y P/E</strong>：FY+2 Forward P/E（資訊欄，無通過門檻顏色）。
         <br><em>來源：</em><code>dd-meta JSON</code> <code>fpe_fy2</code> 欄位，與 <code>/research/</code> 表格 <code>data-pe2y</code> 同源
         <br><em>規則：</em>純數字顯示，不參與 pass/fail 計分，僅供估值參考
+        <br><em>v1.3 Live drift：</em>當 DD 寫入後股價漂移 ≥ 10% 時，欄位多顯示「→ live (±X%)」估算。公式 <code>live_fpe = fpe_fy2 × (price_now / price_at_dd)</code>，假設 FY+2 EPS 估算未被 revise（30-90 天內合理；半年以上會高估「變貴」程度，因 EPS 通常年增）。綠色 = 變便宜、橘 = 變貴、紅 = 變貴 ≥ 15%。Hover 看完整 tooltip。
       </li>
 
       <li><strong>D/E（Debt/Equity）</strong>：Total Debt / Stockholders Equity。
@@ -702,11 +703,33 @@ function buildTable(stocks) {
         display = v.toFixed(decimals) + c.unit;
       }
       var html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
-      // 2Y P/E injected after PEG — no pass/fail (informational only)
+      // 2Y P/E injected after PEG — no pass/fail (informational only).
+      // v1.3: if live_fpe_est differs meaningfully from DD fpe_fy2 (price drift since DD),
+      // show as "DD → live (±drift%)" with green/amber color. Heuristic:
+      //   |drift| ≥ 10% → show drift inline with color
+      //   |drift| <  10% → show DD value only (avoid clutter)
       if (c.key === 'peg') {
         var pe = s.fpe_fy2;
-        var peDisplay = (pe === null || pe === undefined) ? '—' : pe.toFixed(1);
-        html += '<td>' + peDisplay + '</td>';
+        var liveFpe = s.live_fpe_est;
+        var drift = s.pe_drift_pct;
+        var ddAge = s.dd_age_days;
+        var peDisplay;
+        var tooltip = '';
+        if (pe === null || pe === undefined) {
+          peDisplay = '—';
+        } else if (liveFpe !== null && liveFpe !== undefined && drift !== null && Math.abs(drift) >= 10) {
+          var driftColor = drift < 0 ? '#166534' : (drift > 15 ? '#991B1B' : '#92400E');
+          var sign = drift > 0 ? '+' : '';
+          peDisplay = pe.toFixed(1) + '<span style="font-size:9px;color:' + driftColor + ';margin-left:3px">→' +
+                       liveFpe.toFixed(1) + ' (' + sign + drift.toFixed(0) + '%)</span>';
+          tooltip = ' title="DD ' + pe.toFixed(1) + 'x ' + (ddAge != null ? '(' + ddAge + '天前)' : '') + ' → live est ' + liveFpe.toFixed(1) + 'x (price drift ' + sign + drift.toFixed(1) + '%, EPS held static)"';
+        } else {
+          peDisplay = pe.toFixed(1);
+          if (liveFpe !== null && liveFpe !== undefined && ddAge != null) {
+            tooltip = ' title="DD ' + pe.toFixed(1) + 'x (' + ddAge + '天前); price drift since DD: ' + (drift > 0 ? '+' : '') + (drift != null ? drift.toFixed(1) : '0') + '%"';
+          }
+        }
+        html += '<td' + tooltip + '>' + peDisplay + '</td>';
       }
       return html;
     }).join('');
