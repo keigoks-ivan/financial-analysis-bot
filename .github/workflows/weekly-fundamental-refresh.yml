@@ -1,0 +1,66 @@
+name: Weekly Fundamental Refresh
+
+# 基本面層每週日跑一次。
+# 整合原先：weekly-alpha-jensen.yml (Sun 19:00 UTC)
+#
+# 跑 Sun 18:00 UTC = Mon 02:00 Taipei：
+#   - dd_alpha_ranker.py --layers fundamental → Angle 1 多因子 + 3 GARP + 4 護城河
+#   - dd_alpha_ranker.py --layers jensen      → Angle 6 Jensen α (5Y weekly OLS vs SPY)
+#
+# 為何週度而非每日：
+#   - 基本面層讀 dd-meta 內的 moat_score / quality_score / fpe_fy2 / pct_5y
+#     等靜態數字，DD/DCA 不重寫就不會變
+#   - Jensen 用 5Y weekly closes，day-over-day 幾乎不會變動
+#   - 每日跑只是反覆寫出同樣 JSON，浪費 ~5min Actions 時間
+#
+# 即時刷新仍由 update_dd_index.py 在 DD/DCA 寫入時負責 cascade。
+# 非基本面（價格驅動）每日由 daily-non-fundamental-refresh.yml 處理。
+
+on:
+  schedule:
+    - cron: "0 18 * * 0"  # Sun 18:00 UTC = Mon 02:00 Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Alpha-Rank fundamental layer (Angle 1 多因子 + 3 GARP + 4 護城河)
+        run: python scripts/dd_alpha_ranker.py --layers fundamental
+
+      - name: Alpha-Rank jensen layer (Angle 6 Jensen α)
+        run: python scripts/dd_alpha_ranker.py --layers jensen
+        continue-on-error: true
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/dd-screener/alpha-rank.html \
+                  docs/dd-screener/alpha-rank.json \
+                  docs/dd-screener/alpha-rank-state/ \
+                  docs/dd-screener/alpha-rank-snapshots/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: Weekly fundamental refresh ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi

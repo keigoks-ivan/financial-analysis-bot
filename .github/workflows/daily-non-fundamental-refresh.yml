@@ -1,0 +1,80 @@
+name: Daily Non-Fundamental Refresh
+
+# 非基本面（價格驅動）資料每日刷新。
+# 整合原先：daily-alpha-momentum.yml + daily-quality-entry.yml + weekly-dd-screener.yml
+#
+# 跑 Tue-Sat 09:00 Taipei = Tue-Sat 01:00 UTC：
+#   - 美股 Mon-Fri 21:00 UTC 收盤 → 01:00 UTC 跑時資料已 settle 4hr
+#   - 台股 Mon-Fri 05:30 UTC 收盤 → 同樣已 settle
+#   - 週日 / 週一 (台灣) 跳過 — 沒新行情
+#
+# 跑的順序：
+#   1. build_dd_screener.py                       → latest.json (MA + timing 重整；
+#                                                    fundamentals 重讀但無變更則 no-op diff)
+#   2. dd_alpha_ranker.py --layers momentum       → alpha-rank Angle 2 起漲點 + 5 RS
+#   3. build_quality_entry.py                     → entry sub-score 跟著 timing 漂移
+#
+# 涵蓋頁面：
+#   - /dd-screener/                  (client-side fetch latest.json)
+#   - /dd-screener/alpha-rank.html   (Angle 2/5 重新渲染；1/3/4/6 用既有 state)
+#   - /dd-screener/quality-entry.html
+#
+# 基本面層（dd_alpha_ranker --layers fundamental jensen）跑在
+# weekly-fundamental-refresh.yml，避免每日浪費 ~5min 算同樣的數字。
+
+on:
+  schedule:
+    - cron: "0 1 * * 2-6"  # Tue-Sat 01:00 UTC = Tue-Sat 09:00 Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Step 1 — DD Screener latest.json (MA + timing refresh)
+        run: python scripts/build_dd_screener.py
+
+      - name: Step 2 — Alpha-Rank momentum layer (Angle 2 起漲點 + 5 RS)
+        run: python scripts/dd_alpha_ranker.py --layers momentum
+        continue-on-error: true
+
+      - name: Step 3 — Quality-Entry screener
+        run: python scripts/build_quality_entry.py
+        continue-on-error: true
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/dd-screener/latest.json \
+                  docs/dd-screener/alpha-rank.html \
+                  docs/dd-screener/alpha-rank.json \
+                  docs/dd-screener/alpha-rank-state/ \
+                  docs/dd-screener/alpha-rank-snapshots/ \
+                  docs/dd-screener/quality-entry.html \
+                  docs/dd-screener/quality-entry.json \
+                  docs/dd-screener/quality-entry-snapshots/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(TZ=Asia/Taipei date +"%Y-%m-%d")
+            git commit -m "data: Daily non-fundamental refresh ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi
