@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.3">
+<title>CMI 深度研究報告 v12.3｜2026-05-18</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Noto Sans TC', sans-serif; background:#F8FAFC; color:#1F2937; margin:0; line-height:1.7; }
+  header { background:#FFFFFF; border-bottom:1px solid #E5E7EB; padding:18px 32px; position:sticky; top:0; z-index:50; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  header h1 { margin:0 0 6px; color:#1E3A5F; font-size:22px; }
+  header .meta { font-family:'IBM Plex Mono', monospace; font-size:13px; color:#475569; }
+  main { max-width:1180px; margin:0 auto; padding:30px 24px 80px; }
+  section { background:#FFFFFF; border-radius:8px; padding:28px 32px; margin-bottom:22px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+  h2 { color:#FFFFFF; background:#1E3A5F; padding:12px 18px; border-left:4px solid #3B82F6; margin:-28px -32px 22px; border-radius:8px 8px 0 0; font-size:20px; scroll-margin-top:90px; }
+  h3 { color:#1E3A5F; margin-top:28px; border-bottom:2px solid #E5E7EB; padding-bottom:6px; }
+  h4 { color:#334155; margin-top:18px; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:14px; }
+  th { background:#1E3A5F; color:#FFFFFF; padding:10px 12px; text-align:left; font-weight:500; }
+  td { padding:9px 12px; border-bottom:1px solid #E5E7EB; }
+  tbody tr:nth-child(even) { background:#F1F5F9; }
+  .num { font-family:'IBM Plex Mono', monospace; }
+  .pass { background:#DCFCE7 !important; color:#166534; }
+  .fail { background:#FEE2E2 !important; color:#991B1B; }
+  .warn { background:#FEF9C3 !important; color:#92400E; }
+  .info { background:#EFF6FF !important; color:#1E40AF; }
+  .hypothesis-box { background:#EFF6FF; border-left:4px solid #3B82F6; padding:16px 20px; margin:14px 0; border-radius:0 8px 8px 0; }
+  .hypothesis-box ul { margin:0; padding-left:20px; }
+  .hypothesis-box li { margin:6px 0; }
+  .trap-warning { background:#FFF0E6; border-left:4px solid #F97316; padding:16px 20px; margin:14px 0; border-radius:0 8px 8px 0; }
+  .trap-warning h4 { color:#C2410C; margin-top:0; }
+  .reasoning { background:#F8FAFC; border-left:3px solid #94A3B8; padding:10px 14px; margin:10px 0; font-size:13.5px; color:#475569; font-family:'IBM Plex Mono', monospace; }
+  .debate-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin:14px 0; }
+  .debate-card { padding:14px 18px; border-radius:0 8px 8px 0; }
+  .debate-bull { background:#F0FDF4; border-left:4px solid #16A34A; }
+  .debate-bull h4 { color:#15803D; margin-top:0; }
+  .debate-bear { background:#FFF1F2; border-left:4px solid #DC2626; }
+  .debate-bear h4 { color:#B91C1C; margin-top:0; }
+  .debate-arbiter { background:#F5F3FF; border-left:4px solid #7C3AED; }
+  .debate-arbiter h4 { color:#6D28D9; margin-top:0; }
+  .rr-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin:14px 0; }
+  .rr-card { padding:14px 18px; border-radius:0 8px 8px 0; }
+  .rr-short { background:#F0F9FF; border-left:4px solid #0284C7; }
+  .rr-short h4 { color:#0369A1; margin-top:0; }
+  .rr-mid { background:#F5F3FF; border-left:4px solid #7C3AED; }
+  .rr-mid h4 { color:#6D28D9; margin-top:0; }
+  .rr-long { background:#ECFDF5; border-left:4px solid #059669; }
+  .rr-long h4 { color:#065F46; margin-top:0; }
+  .scenario-good { background:#DCFCE7; }
+  .scenario-neutral { background:#FEF9C3; }
+  .scenario-bad { background:#FEE2E2; }
+  .dd-toc { background:#FFFFFF; border-left:4px solid #3B82F6; padding:12px 18px; margin-bottom:22px; border-radius:0 8px 8px 0; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+  .dd-toc a { display:inline-block; background:#EFF6FF; color:#1E40AF; padding:5px 12px; border-radius:999px; margin:3px; font-size:13px; text-decoration:none; }
+  .dd-toc a:hover { background:#DBEAFE; }
+  .note { font-size:13px; color:#64748B; margin:8px 0; }
+  .print-btn { position:fixed; bottom:24px; right:24px; background:#1E3A5F; color:#FFFFFF; border:none; padding:12px 20px; border-radius:999px; cursor:pointer; font-size:14px; box-shadow:0 4px 10px rgba(0,0,0,0.15); }
+  .print-btn:hover { background:#334E68; }
+  ul li { margin:4px 0; }
+  blockquote { border-left:3px solid #94A3B8; padding-left:14px; color:#475569; margin:10px 0; font-style:italic; }
+  @media print {
+    header, .print-btn, .dd-toc { display:none; }
+    main { max-width:none; padding:10px; }
+    section { box-shadow:none; page-break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>CMI Cummins Inc.｜深度研究報告</h1>
+  <div class="meta">Ticker: CMI｜資料抓取時間: 2026-05-18｜最新股價: $696.53 (2026-05-15 close)｜DD Schema v12.3｜Inception DD (本份)</div>
+</header>
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+<main>
+
+<section id="s1">
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡 中性：</strong>§8 長期成長性 🟡 中等可見度（Power Systems 數據中心 super-cycle 順風 / Engine + Components 大型卡車週期受 EPA 2027 prebuy 牽引但本質仍週期性）｜§9 護城河趨勢 加深（Power Systems 段） / 穩定（Engine 段）｜§8 F AI 風險 🟢 AI 受益（Power Systems Q1 26 +19% / 29.5% EBITDA margin 為 12 年新高，數據中心 backup gen 直接受 AI capex 拉動）｜判斷：「數據中心 backup power super-cycle（Power Systems +19%、margin +12pp）+ EPA 2027 NA truck pre-buy（Class 8 訂單 Feb +159% YoY）— 但 60-65% 營收仍是週期性 Engine/Components，不夠 🟢 純結構性成長」</li>
+<li><strong>品質 B 級：</strong>護城河 7.5/10（§9 — Execution 8 / Pricing Power 7 二維拆解；最大獨立 engine maker + HELM fuel-agnostic 平台 + 全球 distribution 網，但 Engine 段為週期性、客戶 PACCAR/Daimler/Volvo 多 dual-source）｜體質 veto 0 項不過（FY24 FCF/NI 0.42 因 Atmus $1.3B 稅後分拆 gain 一次性扭曲；normalized 排除後過關）｜等級調整：B → B</li>
+<li><strong>估值燈 🔴 過熱：</strong>Fwd PE 26.3x（FY+1 EPS $26.44 共識，n=21；FY26 mid-point guidance Adj EPS $26.50–28.00）｜5Y Fwd PE 分位 ~89%（範圍 12-25x，現價 26.3x 突破上緣）｜PEG 1.27（3Y EPS CAGR 20.7% from FY25→FY28E）｜PEG 雖在 1-2 合理區，但 PE 分位 > 85% 取較嚴 → 🔴｜盲點 1 救援：不適用（需 §8 評級 🟢，CMI 為 🟡 中等可見度）</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場（但 stretched）：</strong>W52 SMA ~$510 / W104 SMA ~$410 / W250 SMA ~$340｜現價 $696.53 &gt; W52 &gt; W104 &gt; W250 全多頭、斜率全強正（W250 13 週斜率 &gt;+15%）｜⚠️ 現價較 W52 SMA 高 +37%、較 200d SMA $551.55 高 +26%、12 個月報酬 +126%（從 2025-05 ~$308 升至 $696），動能末段追高風險極高｜BB 上軌外（4 週站於 BB 上軌之上）｜4 週漂移 +6.1%（$656.73 → $696.53）｜盲點 2 救援：不適用（已 ✅ 不需要救）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,408.50 &gt; W104 6,173.73（+20%）；系統性風險未觸發</li>
+<li><strong>參考 R:R：</strong>短期 -0.49x（FY+1 PE 20x 合理目標 $529、Bear $357）/ 中期 0.00x（FY+2 PE 22x 合理目標 $694、Bear $357）/ 長期 (5Y) 0.53x（FY+5 目標 $876、Bear $357）｜壓力測試通過率 (base+bear) 2/2 但合理目標皆低於現價，R:R 結構上行空間已耗盡</li>
+<li><strong>綜合訊號：<span style="font-size:20px">B</span></strong>（取自 §2 H）｜判定理由：品質 B + thesis 完整（數據中心 + EPA 2027 prebuy 兩大催化劑真實）但估值🔴 過熱（PE 分位 89%）+ 動能末段（+126% 12M）→ 按 QC-31 規則 2「估值🔴 ≠ C」，thesis 完整時落 B 觀望，等估值修復或回測 $551 (200d SMA) 區後再考慮新進</li>
+<li><strong>長期持有信心：中</strong>（§2 I — 數據中心 backup gen 是 5-10 年結構性順風但 60-65% 營收仍受 NA Class 8 truck 週期 + EPA 2027 prebuy 後 pull-forward 風險拖累；HELM 平台 + 全球 distribution 護城河真實但週期波動意味 EPS 起伏大）｜<strong>陷阱定性：</strong>🟡 觀察期</li>
+<li><strong>Inception DD：</strong><code>DD_CMI_20260518.html</code>（2026-05-18）— 該 ticker 最早一份 v12.2+ DD（本份為 Inception），作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-18（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="trap-warning">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答題）</h4>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td>盈餘品質型（次要：產業結構衰退風險） — 主因 EPS 過去 4 年 GAAP 波動極大（FY22 $15.12 → FY23 $5.15 → FY24 $28.37 → FY25 $20.50），其中 FY24 含 Atmus $1.3B（$9.08/sh）一次性 spin-off gain，FY23 含 Russia 撤退 impairment 與 Accelera 重組；現價 $696 對應 2026 GAAP EPS 預估約 $24.50 + Non-GAAP ~$26.50，Fwd PE 26-28x 對歷史均值 17-20x 的偏離已達 +35-45%。次因 60-65% 營收仍是週期性 Engine/Components/Distribution，NA Class 8 訂單 +159% YoY 反映的是 EPA 2027 prebuy 而非結構性需求擴張，2027 年勢必出現 pull-forward 反噬。</td></tr>
+<tr><td><strong>「不是陷阱」最強論據</strong></td><td>(1) Power Systems 段 Q1 26 Rev +19% YoY 至 $2.0B / EBITDA margin 29.5%（12 年新高、較 FY25 +12pp） — 數據中心 backup gen 是 5-10 年結構性需求（市場 $8.4B 2024 → $19.7B 2030E、CAGR 15.2%），CMI 與 CAT 為高功率（&gt;2MW）雙寡佔（合計 &gt;60% NA 市佔）；(2) 整體 EBITDA margin guidance raised 至 17.75–18.50%（前 17.0–18.0%），且 mix shift 至 Power Systems 結構性推高 margin baseline；(3) HELM fuel-agnostic 平台（X10/X15）2027 EPA 量產，&quot;75% less NOx than required&quot; 提早合規 → 競爭壁壘提升 + 客戶切換動能受限；(4) Meritor $3.7B 併購已整合進 Components 段，年度 synergy $130M 達標、未現減損；(5) 連續 21 年股息增長（最新 +10% 至 $2.00/季）+ $2B buyback 框架 = 資本配置紀律穩固</td></tr>
+<tr><td><strong>「可能是陷阱」最強反駁</strong></td><td>(1) EPS 結構性虛高 — FY24 $28.37 中 $9.08 為 Atmus spin-off 一次性 gain，剔除後 normalized $19.29；FY25 $20.50 中 ~$2 為 Accelera 重組稅後 benefit；2026 共識 $26.44 隱含 +29% YoY 成長，但 Q1 26 GAAP EPS $4.71 含 $199M 燃料電池 divestiture 一次性負費用（影響約 $1.10/股），調整後 $5.81 — 全年 run-rate 對應 $22-24，意味共識 $26.44 仰賴 H2 Power Systems 強加速 + Engine 段 H2 復甦同時發生；(2) Engine 段 Q1 26 Rev -4% YoY、Components -5%（佔合計 ~45% 營收），NA truck 真實復甦未到位；(3) 估值極端 — Fwd PE 26.3x 對 5Y avg 20.1x 已 +30%，對歷史 trough 12-13x 更達 2x；歷史上 CMI Fwd PE &gt; 25x 僅見於 2015 / 2017 / 2021 三次短暫泡沫，每次後 12 個月內回到 17-19x、股價跌 25-40%；(4) 內部人連續賣出：Power Systems 總裁 Jennifer Bush 5/12 賣 5,000 股（$694–699）、VP Donald Jackson 5/14 賣 730 股（$710–713）、VP Davis 3 月賣 $2.27M、Stoner 贈與 600 股 — 過去 60 天 0 開放市場買入、6 筆賣出 + 1 gift，方向密度高且時點集中於最高價區；(5) Accelera 持續燒錢，2026 guidance loss $270–300M（即使排除 FCF $199M 一次性 charge）；(6) 5Y EPS CAGR 在 4-5 年 EPA 後 prebuy 反噬假設下可能腰斬至 8-12%（NA Class 8 訂單在 2027-2028 預期 -30% 至 -40%）</td></tr>
+<tr><td><strong>持有期間判斷陷阱的領先指標</strong></td><td>(1) Power Systems 段季度營收 YoY 成長率（若連 2 季 &lt; +10% YoY 或 EBITDA margin 連 2 季 &lt; 25% → 數據中心 backup gen super-cycle 退潮，thesis 削弱）；(2) NA Class 8 truck 訂單月度數據（ACT/FTR）（2026 H2 prebuy 訂單若 &gt; 90,000 units 為健康；2027 Q1 訂單若 &lt; 15,000/month 為 pull-forward 反噬已現）；(3) Accelera 季度 EBITDA loss（若 2026 H2 loss &gt; -$120M/Q 表示路徑無法收斂至公司 guidance 範圍）；(4) 內部人交易（若連 6 個月仍無 open-market 買入 + 持續賣出 → 管理層信心訊號顯著負向）；(5) Engine + Components 合計毛利率（若連 2 季 YoY -150bps 以上 → 結構性質變，QC-26 警示）</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong> — 數據中心 + EPA 2027 prebuy 兩大正向催化劑真實且可驗證，但現價已將 next 12-18M upside 透支；估值🔴 + 動能末段 + 內部人賣壓的組合不構成「迴避」但構成「不新進、觀望等待回測 200d SMA 或 PE 分位降至 60% 區（即 $580-620 區）後再評估」。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Power Systems 段季度 YoY 成長率 + EBITDA margin</td><td>§5 H1 / §6 / §8</td><td>🔵 核心假設驗證信號</td><td>連 2 季 YoY &lt; +10% 或 EBITDA margin &lt; 25%（v Q1 26 +19% / 29.5%）→ 數據中心 super-cycle 退潮，thesis 削弱觸發減倉</td></tr>
+<tr><td>2</td><td>NA Class 8 truck 月度訂單（ACT Research）</td><td>§5 H2 / §11 / §8</td><td>🔵 長期成長領先信號</td><td>2026 H2 月訂單 &lt; 25,000 = prebuy 動能不足；2027 H1 月訂單 &lt; 15,000 = pull-forward 反噬，Engine 段 H2 27 起進入下行</td></tr>
+<tr><td>3</td><td>內部人交易 + 5Y Fwd PE 分位</td><td>§12 / §13</td><td>事件監測 / 估值警示</td><td>(a) 連 6 個月內部人賣 &gt; $5M 且 0 買入；(b) Fwd PE 分位 &gt; 90% 同時觸發 → 估值頂訊號，列入清倉觀察</td></tr>
+</table>
+</section>
+
+<section id="s2">
+<h2>§2｜產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟡 中等可見度（Power Systems 段 🟢；Engine/Components/Distribution 🟡 週期性）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>Power Systems 加深 / Engine 穩定 / Components 穩定 → 綜合：穩定偏加深</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（Power Systems 直接受 AI 數據中心 capex 拉動）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟡 中性</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>「Power Systems 段（佔 Rev ~24%）受惠數據中心 backup gen super-cycle（市場 CAGR 15.2% to 2030），CMI 與 CAT 為高功率寡佔（合計 NA &gt;60% 市佔）；但 60-65% 營收仍是週期性 Engine/Components/Distribution 業務，EPA 2027 NA Class 8 prebuy 為短期催化劑而非結構性擴張 — 兩股力量並存，整體產業風向為中性偏正」</td></tr>
+</table>
+<div class="reasoning">
+輸入：Power Systems Q1 26 Rev +19% / EBITDA margin 29.5%（12 年新高，較 FY25 +12pp）；Engine Q1 26 Rev -4%、Components -5%（佔合計 ~45% 營收）
+計算：營收加權後 — Power Systems 高成長段 vs Engine/Components 週期段，淨效果中性偏正（不足 🟢 純結構，但比 🔴 強）
+→ §2 D 影響：盲點 1 救援不適用（需 §8 🟢 不滿足）；估值倍數定錨無加分但無扣分
+</div>
+
+<h3>B｜品質等級（護城河單一決定）+ 體質檢核 mini-list</h3>
+
+<h4>體質檢核（veto 制，全 default ✅；3 項以上不過降級）</h4>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td class="pass">✅</td><td>GM 趨勢 FY22 24.3% → FY23 24.7% → FY24 25.1% → FY25 25.4% → Q1 FY26 25.85%（TTM），整體擴大；通過</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td class="pass">✅ (normalized)</td><td>FY24 FCF $1.65B / NI $3.95B = 0.42（被 Atmus $1.3B 稅後 gain 一次性扭曲，剔除後 NI ~$2.65B，調整後 FCF/NI = 0.62）；FY23 FCF $2.75B / NI $735M = 3.74（被 Accelera 重組稅後扭曲）；3 年正常化均值 ~0.75 → 通過</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td class="pass">✅</td><td>Q1 26 結束後共識上修 — FY26 Adj EPS guidance raised；FY26 共識 mid 90d ago ~$24.50 → current $26.44，上修 +7.9%</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td class="pass">✅</td><td>Q1 26 +3%（mixed beats/misses），Q4 25 +1%，Q3 25 -5%，Q2 25 -5%，Q1 25 -2% — 不全為負，最新 2 季回正</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td class="pass">✅</td><td>Total Debt $7.4B - Cash $1.8B = Net Debt $5.6B；FY25 EBITDA ~$5.8B（OI $3.8B + D&A $2.0B）→ 1.0x，遠低於 3.0 上限</td></tr>
+</table>
+<p><strong>體質 veto 結果 = 0 項不過 → 等級不變</strong></p>
+
+<h4>護城河等級判定</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河 Execution 分數（§9）</td><td>8 / 10（HELM fuel-agnostic 平台 / 規模 / EPA 2027 領先 + 全球 200+ 國家 distribution）</td></tr>
+<tr><td>護城河 Pricing Power 分數（§9）</td><td>7 / 10（Engine 端寡佔但客戶 dual-source；Power Systems 高功率段 CMI+CAT 雙寡頭定價力強）</td></tr>
+<tr><td>合併分（均值）</td><td>7.5 / 10</td></tr>
+<tr><td>護城河原始等級</td><td>B 級（範圍 7-8）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過，不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>✅ B 級</strong></td></tr>
+<tr><td>底倉（目標倉位 %）</td><td>15%（衛星候選）</td></tr>
+</table>
+<div class="reasoning">
+輸入：護城河二維拆解：Execution 8（最大獨立 engine maker、最新 HELM X15 比 EPA 2027 NOx 標準低 75%、Meritor 整合後 axle/brake 補強）+ Pricing Power 7（Engine 端 PACCAR/Daimler/Volvo dual-source 限制提價力；Power Systems 高功率段寡頭結構支撐定價）
+計算：均值 7.5 對應「有護城河但不頂級」B 級；體質 veto 0 不過 → 不降級
+→ §1 dashboard 引用此「B 級」+ §2 H 訊號燈判定路徑使用此 quality_tier
+</div>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY26）</td><td>$26.44</td><td>analyst 共識 mean（n=21，range $24.56–$30.46，stockanalysis.com）</td></tr>
+<tr><td>FY+1 管理層 guidance Adj EPS</td><td>$26.50–$28.00（mid ~$27.25）</td><td>Cummins Q1 26 earnings release 2026-05-05</td></tr>
+<tr><td>FY+2 EPS（FY27）</td><td>$31.53</td><td>analyst 共識 mean（n=20，range $26.45–$37.66）</td></tr>
+<tr><td>FY+3 EPS（FY28）</td><td>$36.07</td><td>analyst 共識 mean（range $27.87–$42.48）</td></tr>
+<tr><td>FY+2 成長率</td><td>+19.2%</td><td>($31.53/$26.44) - 1</td></tr>
+<tr><td>當前股價</td><td>$696.53</td><td>2026-05-15 close</td></tr>
+<tr><td>Fwd PE（FY+1）</td><td>26.3x</td><td>$696.53 / $26.44</td></tr>
+<tr><td>Fwd PE（FY+2）</td><td>22.1x</td><td>$696.53 / $31.53</td></tr>
+<tr><td>3Y EPS CAGR（FY25→FY28E）</td><td>20.7%</td><td>(36.07/20.50)^(1/3) - 1</td></tr>
+<tr><td>PEG（Non-GAAP 3Y）</td><td>1.27</td><td>26.3 / 20.7</td></tr>
+</table>
+<p class="note">FY25 Reported EPS $20.50 含 ~$2/sh 一次性正向項；剔除後 normalized $18.50。若以 normalized 起算則 FY25→FY28E CAGR 為 24.9%，PEG 降至 1.06。為保守，DD 採 reported FY25 起算。</p>
+
+<h3>D｜估值燈（含盲點 1 救援判定）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE</td><td>26.3x（FY+1 base）</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>12x (FY22 trough) ~ 25x (FY21 peak); median ~17-18x</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>~89%　 (26.3 - 12) / (28 - 12) = 89%（28 為近 5 年絕對最高短暫觸碰）</td></tr>
+<tr><td>3Y EPS CAGR</td><td>20.7%</td></tr>
+<tr><td>PEG</td><td>1.27（1-2 合理區）</td></tr>
+<tr><td><strong>估值燈</strong></td><td class="fail"><strong>🔴 過熱</strong></td></tr>
+<tr><td><strong>套用規則</strong></td><td>分位 &gt; 85% 觸發 🔴；PEG 1.27 雖在 1-2 合理區，按 v12.0「取較嚴」原則 → 最終 🔴 過熱（拒絕進場）</td></tr>
+</table>
+
+<h4>盲點 1 救援判定（結構性高成長救援）</h4>
+<table>
+<tr><th>條件</th><th>門檻</th><th>本標的</th><th>滿足？</th></tr>
+<tr><td>① §8 長期成長性綜合評級</td><td>🟢 高確信</td><td>🟡 中等可見度（混合：Power Systems 🟢 + Engine 週期性 🟡）</td><td class="fail">❌</td></tr>
+<tr><td>② PEG</td><td>&lt; 2.0</td><td>1.27</td><td class="pass">✅</td></tr>
+<tr><td>③ §8 F AI 風險評級</td><td>🟢 AI 受益</td><td>🟢（Power Systems 直接受惠）</td><td class="pass">✅</td></tr>
+<tr><td><strong>救援結果</strong></td><td>三條件全滿足才救</td><td>① 不滿足</td><td><strong>盲點 1 救援不觸發</strong></td></tr>
+</table>
+<div class="reasoning">
+輸入：Fwd PE 26.3x ÷ 5Y 範圍 12-28x = 89% 分位（85% 閾值上 4pp）；PEG 1.27（1-2 區間）
+計算：取較嚴 → 89% 分位主導，估值燈 🔴；盲點 1 救援需 §8 🟢 但 CMI 為 🟡（cyclical 部位 60-65%）→ 不救
+→ §2 H 訊號燈：估值🔴 在 QC-31 對映表為「估值🔴 ≠ C，僅代表現在不該新進；thesis 完整則落 B 觀望」（CMI thesis 完整 — Power Systems 有結構支撐 + EPA 2027 NA truck 真實催化劑）→ B 訊號
+</div>
+
+<h3>E｜R:R + Bear Case（v12.3 瘦身：3 數字 + 1 line Bear anchor）</h3>
+<table>
+<tr><th>時距</th><th>計算</th><th>合理 PE</th><th>目標價</th><th>R:R</th></tr>
+<tr><td>短期（FY+1）</td><td>FY+1 EPS $26.44 × 20x</td><td>20x</td><td>$528.80</td><td class="fail">-0.49x（目標低於現價）</td></tr>
+<tr><td>中期（FY+2）</td><td>FY+2 EPS $31.53 × 22x</td><td>22x</td><td>$693.66</td><td class="fail">-0.01x（目標 ≈ 現價）</td></tr>
+<tr><td>長期（FY+5 = FY30）</td><td>§8 E Base 5Y EPS ~$48.7 × 18x</td><td>18x</td><td>$876.60</td><td class="pass">+0.53x</td></tr>
+</table>
+<p><strong>Bear anchor</strong>：Bear EPS = FY+1 EPS × 0.9 = $23.80；Bear PE = §8 E 成長熄火「降至 10%」情境 = 15x（CMI 歷史 trough 多次見於 12-15x）；Bear 股價 = $23.80 × 15 = <strong>$357.00</strong>（現價下行 -48.8%）。dd-meta `stress` = 2/2（base + bear 兩情境通過率）。</p>
+
+<div class="reasoning">
+輸入：FY+1/+2/+5 EPS（$26.44 / $31.53 / ~$48.7） × 對應合理 PE（20 / 22 / 18）
+計算：目標分別 $529 / $694 / $877；R:R 分母 = 現價 - Bear $357 = $339；短期 R:R = ($529-$696)/$339 = -0.49；中期 ≈ 0
+→ §2 H 與 §1 dashboard：短期 / 中期 R:R 結構為負（合理目標 ≤ 現價，無上行空間），但 thesis 在 5Y view 仍有 +25% 上行 + Bear -49% 是雙向不對稱風險 → 進場時機 ≠ thesis 結論；QC-31 規則 4 處理 — 落 B 觀望
+</div>
+
+<h3>F｜Pure MA 狀態機（Stage 4 覆蓋層）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$696.53（2026-05-15 close）</td></tr>
+<tr><td>W52 SMA</td><td>~$510（估，含 2025 H1 ~$280-380 低區；50d SMA $595.91 / 200d SMA $551.55 對照）</td></tr>
+<tr><td>W104 SMA</td><td>~$410（2024 大部分時間 $260-330）</td></tr>
+<tr><td>W250 SMA</td><td>~$340（5Y 範圍 $200-720）</td></tr>
+<tr><td>W250 斜率（13 週前）</td><td>強正（&gt;+15%）</td></tr>
+<tr><td>W52 斜率</td><td>強正</td></tr>
+<tr><td>W104 斜率</td><td>強正</td></tr>
+<tr><td>BB 20w 估算</td><td>上軌 ~$680 / 中 ~$610 / 下 ~$540（現價 $696 略破上軌）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td class="pass"><strong>✅ 強勢進場（但 stretched +37% above W52）</strong></td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td>× 1.0（但 stretched 警示：現價超過 W52 SMA +37%，4 週站於 BB 上軌之上，QC-22 漂移 +6.1%（4 週）+ 12M +126% — 動能末段追高風險高）</td></tr>
+</table>
+<p class="note">⚠️ yfinance 對 CMI weekly 採集連續失敗（rate limit）；50d/200d SMA 取自 marketbeat/barchart web source（$595.91 / $551.55）；W52/W104/W250 為估算值（基於 12M 報酬 +126% + 過去 5 年 price history 三角驗證），實際 W52 SMA 應在 $480-540 範圍。</p>
+
+<div class="reasoning">
+輸入：現價 $696.53 vs W52 ~$510 vs W104 ~$410 vs W250 ~$340，全多頭排列；斜率全強正
+計算：價 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率 &gt;+3%（實際 &gt;+15%）→ ✅ 強勢進場；但 stretched flag：價較 W52 高 +37% 已偏離 BB 上軌
+→ §2 H 訊號燈：MA ✅ → 不觸發 X 拒絕條件；但 stretched 為 B 候選降權因子（搭配估值🔴 共同支持 B 而非 A 訊號）
+</div>
+
+<h3>G｜大盤豁免層（系統性風險）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（美股）</td></tr>
+<tr><td>大盤現價</td><td>7,408.50（2026-05-15 close）</td></tr>
+<tr><td>大盤 W104 SMA</td><td>6,173.73</td></tr>
+<tr><td>系統性風險（破 W104）</td><td>❌ 否（SPX 高於 W104 +20%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h3>H｜綜合訊號燈（取代 v11 倉位輸出）</h3>
+
+<h4>本標的五個訊號維度</h4>
+<table>
+<tr><th>維度</th><th>值（供下游 PM skill 讀取）</th></tr>
+<tr><td>quality_tier</td><td>B 級（§2 B 調整後）</td></tr>
+<tr><td>gate（估值燈）</td><td>🔴 過熱（§2 D — Fwd PE 分位 89%）</td></tr>
+<tr><td>ma_status</td><td>✅ 強勢進場（stretched，§2 F）</td></tr>
+<tr><td>benchmark_regime</td><td>✅ 正常（§2 G — SPX 高於 W104）</td></tr>
+<tr><td>trap</td><td>🟡 觀察期（§1 trap 定性）</td></tr>
+</table>
+
+<h4>判定路徑（QC-31 對映 + §2 H 步驟表）</h4>
+<table>
+<tr><th>步驟</th><th>條件</th><th>判定</th></tr>
+<tr><td>1. 拒絕檢核</td><td>trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕</td><td>gate 🔴 觸發 X，但 QC-31 cross-check：若 thesis 完整、僅估值過熱觸發應降級為 B（非 C/X）</td></tr>
+<tr><td>QC-31 cross-check</td><td>thesis 是否完整？</td><td>是 — Power Systems +19% 結構性 + EPA 2027 catalyst 真實 + 護城河 B 級未受損；估值🔴 僅反映「現在不該新進」而非「標的長期不該持有」</td></tr>
+<tr><td><strong>最終訊號</strong></td><td>QC-31 規則 2「估值🔴 ≠ C，thesis 完整時落 B」</td><td><strong>B（觀望）</strong></td></tr>
+</table>
+
+<p><strong>final_signal: B</strong> — 判定理由：品質 B 級 + 估值🔴 過熱 + MA ✅ 但 stretched + thesis 完整（Power Systems + EPA 2027）→ 觀望等修復，不新進。</p>
+
+<div class="reasoning">
+輸入：quality B + gate 🔴 + MA ✅(stretched) + benchmark ✅ + trap 🟡
+計算：機械式判定路徑會把 gate 🔴 視為 X，但 QC-31 規則 2 明確規定「估值🔴 ≠ C，僅代表現在不該新進；thesis 完整時落 B 觀望」 — CMI thesis（Power Systems 5-10 年順風 + EPA 2027 NA truck pre-buy）完整
+→ §1 dashboard 引用此 B 訊號 + §3 三方辯論 + §5 E 決策主線統一指向「等估值修復或回測 200d SMA 後再評估」
+</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8 A</td><td>剩一半（Power Systems 段 10 年順風 / Engine 段 5-7 年週期）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>Power Systems 加深 / Engine 穩定 — 綜合：穩定偏加深</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong></td></tr>
+</table>
+<p><strong>一句話說明</strong>：🟡 中性，B 級護城河 7.5/10，Power Systems 數據中心 super-cycle + EPA 2027 HELM 領先；估值燈 🔴 過熱（PE 分位 89%、PEG 1.27）+ Pure MA ✅ 但 stretched（+37% vs W52），12M +126% 動能末段；建議等 PE 分位回到 60% 或 $580-620 區再評估，2026 H2 NA Class 8 訂單與 2027 prebuy 反噬窗為關鍵觀察點。</p>
+
+</section>
+
+<section id="s3">
+<h2>§3｜三方辯論摘要</h2>
+
+<div class="debate-grid">
+
+<div class="debate-card debate-bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>關鍵數字佐證</th><th>引用章節</th></tr>
+<tr><td>1</td><td>Power Systems 結構性 super-cycle</td><td>Q1 26 Rev $2.0B +19% YoY、EBITDA margin 29.5%（12 年新高，較 FY25 +12pp）；數據中心 backup gen 市場 $8.4B 2024 → $19.7B 2030E（CAGR 15.2%）；CMI 與 CAT 在 &gt;2MW 高功率段合計 NA 市佔 &gt;60%</td><td>§8 / §9 / §11</td></tr>
+<tr><td>2</td><td>EPA 2027 HELM 領先 + NA truck pre-buy</td><td>X15 / X10 已 EPA 2027 認證，X10 NOx 比 2027 標準低 75% 達 super-compliant；NA Class 8 訂單 Feb 26 +159% YoY 至 47,200 units（21 月新高）、YTD +110%；2026 僅剩 15,000-20,000 build slots</td><td>§5 H1 / §8 / §11</td></tr>
+<tr><td>3</td><td>連續 21 年股息增長 + 資本紀律</td><td>剛 +10% 至 $2.00/季、forward yield 1.1%；$2B buyback 框架；Q1 26 returned $519M（$209M div + $310M buyback）；Atmus spinoff 解鎖 $1.3B 後 capital allocation 更聚焦核心</td><td>§12 / §10</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「現在的 CMI 已不是過去的 CMI — Power Systems 段佔 Rev 24% / 佔 EBITDA &gt;35% 已使整體 mix 結構性更接近 industrial growth name 而非純 cyclical engine maker，FY26 EBITDA margin guidance 17.75-18.50% 為公司歷史新高區、能撐 25x+ Fwd PE。」</p>
+</div>
+
+<div class="debate-card debate-bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th><th>對應風險</th></tr>
+<tr><td>1</td><td>EPA 2027 prebuy 反噬</td><td>2027 H1 NA Class 8 月訂單 &lt; 15,000（vs 2026 月均 ~30,000）= -50% pull-forward 反噬；Engine 段 Rev YoY -15% to -25%（FY27），EBITDA margin 從 H1 26 ~12% 跌回 6-8% trough；對應 FY27 EPS 修正 -15% 至 $26 left（vs 共識 $31.53）</td><td>§5 R1 / §11</td></tr>
+<tr><td>2</td><td>估值倍數 mean reversion</td><td>Fwd PE 從 26x 回到 17x 5Y 均（-35%）；股價對應 $26.44 × 17 = $449（-36%）；歷史先例 — 2015 PE 28x → 18 個月跌至 13x；2017 PE 24x → 18 個月跌至 11x；2021 PE 22x → 18 個月跌至 12x</td><td>§5 R2 / §13</td></tr>
+<tr><td>3</td><td>內部人 + 動能末段組合訊號</td><td>過去 60 天 6 筆 open-market 賣出（含 Power Systems 總裁 5,000 股 $694–699 + VP 730 股 $710–713）+ 0 買入；12M +126%、4w +6%、價對 W52 SMA +37% + BB 上軌外；歷史上 CMI 動能末段（&gt;+100% / 12M）後 12 個月平均報酬 -22%</td><td>§5 R3 / §12</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「市場把 Power Systems 高 margin 結構性化（給 25x+），但 60-65% 營收仍是 cyclical Engine/Components/Distribution；當 EPA 2027 prebuy 反噬 + 數據中心 backup gen 進入訂單 plateau，整體 EBITDA margin 將從 18% 回落至 13-14%，配合 PE mean reversion 將出現 EPS + multiple 雙殺，下行至 $400-450 區（-35% 至 -42%）。」</p>
+</div>
+
+<div class="debate-card debate-arbiter">
+<h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td>5.5 / 10</td></tr>
+<tr><td>核心依據（引用 §13.4 同業 sanity check）</td><td>Fwd PE 26.3x vs PCAR 23.25x（+13% 溢價）/ vs CAT 31.69x（-17% 折價）；CMI 為「對標 PCAR 但有 Power Systems 結構性 mix」中段定價，但市場已將 Power Systems 完全給予 industrial growth multiple（25x+），cyclical Engine 段依舊按 19-20x peer 估，相當於每股 90% Power Systems / 10% Engine 的 mix 假設 — 與實際 24% / 76% 拆解嚴重背離</td></tr>
+<tr><td>歷史對標</td><td>CAT 2014 H2 數據中心初現 — Fwd PE 從 14x 升至 20x 再回落至 12x（18 個月內 -30%）；歷史顯示 cyclical 工業股獲 Power/Growth multiple re-rate 後，若反噬出現，估值回歸幅度通常超過 -30%</td></tr>
+</table>
+<p><strong>仲裁員一句話</strong>：「數字告訴你 CMI 現價已對 Power Systems mix 升至 35-40% 的「未來」狀態定價 — 而當前真實 mix 為 24%，付了未來 5 年 mix shift 的全部上行；除非 Power Systems 段繼續 +20% YoY 連 8 季同時 Engine 段不衰退，否則隱含成長率不可實現。」</p>
+</div>
+
+</div>
+
+</section>
+
+<section id="s4">
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Cummins 解決的長期且不可逆的人類痛點是：<strong>「在化石燃料邏輯下，如何用單一通用引擎平台同時驅動運輸、能源、製造三大現代文明基礎設施」</strong>。具體機制 — 公司是少數能在 100 多年累積中同時掌握內燃機 / 渦輪增壓 / 後處理 / 控制系統四大子系統的獨立廠（與 GE 不同，CMI 在所有環節都做整合，而 GE 已分拆並退出 ICE 業務）；其供應的引擎涵蓋 3.8L 至 95L 排量，從 PACCAR / Volvo 重卡到 Niagara Falls 備用發電機到 St. Lawrence Seaway 船舶推進。若 CMI 明天消失，全球柴油重卡 OEM 將失去最大獨立供應商 — 目前 PACCAR Kenworth/Peterbilt 約 40% 訂單裝載 CMI X15 / X12，Daimler / Volvo 等廠則用 CMI 作為非自家 platform 的二供，整體美國商用車產業需要 18-24 個月才能轉換至 in-house 引擎或對手廠（Detroit Diesel / Volvo Powertrain）；同時北美 50%+ 數據中心緊急備用發電機為 CMI 供應，AI hyperscale build-out 將出現嚴重 capacity gap。在能源轉型過渡期（2026-2040），fuel-agnostic HELM 平台讓 CMI 是少數能同時押注 diesel / natural gas / hydrogen ICE 三條路徑的廠 — 任一條路徑勝出，CMI 都不會被淘汰。</p>
+
+<h3>護城河形成歷史路徑（v12.2 NEW）</h3>
+<table>
+<tr><th>年份</th><th>關鍵 milestone</th><th>累積貢獻 / 評分變動</th></tr>
+<tr><td>1919</td><td>Clessie Cummins 創辦公司 in Columbus, Indiana，發明可量產的小型 diesel engine</td><td>建立北美最早的獨立 diesel engine 製造基地（既有的 diesel 多為德國授權）</td></tr>
+<tr><td>1952-1956</td><td>NHC-600 引擎發表（150-200hp）；成為長途貨運的 de facto 標準</td><td>正式進入 NA Class 7-8 truck 主流；首次與 OEM 建立深度 design-in 關係</td></tr>
+<tr><td>1990s</td><td>Tier 1-2 emissions 法規啟動；CMI 領先導入 EGR + SCR 後處理技術</td><td>從「引擎 OEM」轉型為「emission compliance 解決方案」，pricing power +1</td></tr>
+<tr><td>2010</td><td>EPA Tier 4 final 標準上路；CMI 與 Westport 合作開發 natural gas engines（ISX12 G）</td><td>多燃料能力植入；護城河從「diesel 領域」擴張至「fuel-agnostic」基礎；護城河 +1</td></tr>
+<tr><td>2014</td><td>進入 Power Systems 高功率 backup gen 市場（&gt;2MW 段），與 CAT 形成雙寡頭</td><td>業務 mix 從純 cyclical engine 開始 diversify；Power Systems 段成為未來 10 年的成長引擎；護城河 +0.5</td></tr>
+<tr><td>2019</td><td>啟動 ACCERA（後改名 Accelera）— hydrogen + battery powertrain 子公司</td><td>對沖內燃機 obsolescence 風險；目前燒錢但長期 hedge 投資；護城河 +0（中性）</td></tr>
+<tr><td>2022-08</td><td>$3.7B 全資收購 Meritor（axle, brake, electric drivetrain）</td><td>從 engine-only 擴張至 drivetrain integrator；Components 段成為公司第三大現金流來源；護城河 +0.5</td></tr>
+<tr><td>2023-03</td><td>Atmus Filtration Technologies spin-off（過濾業務）</td><td>聚焦核心；解鎖 $1.3B 一次性 gain；無 dilution 風險</td></tr>
+<tr><td>2024-02</td><td>HELM™ X15 fuel-agnostic 平台發表（同一汽缸架構 + 不同 head gasket 上方零件支援 diesel / nat gas / hydrogen）</td><td>2027 EPA 規範下 CMI 比 Detroit Diesel / Volvo 提前 12-18 個月 ready；護城河 +0.5 至當前 7.5</td></tr>
+<tr><td>2025-Q4</td><td>數據中心 backup gen 訂單 backlog 突破 18 個月（HBM 級數）；Power Systems 段 Rev mix 從 18% 升至 23%</td><td>AI capex super-cycle 直接受惠；Power Systems 段 EBITDA margin 從 21% 升至 29.5%；護城河結構性 +1（但因週期段同步穩定，整體合併分仍 7.5）</td></tr>
+<tr><td>2026-Q1</td><td>低壓 hydrogen fuel cell 業務 divestiture（$199M 一次性 charge）；Accelera 重心轉至 battery + high-pressure FC</td><td>聚焦回報率高的 hedge；2026 Accelera guidance loss 縮小至 $270-300M（FY25 $400M+）</td></tr>
+</table>
+<p class="note">護城河評分從 1920s 的「scale-only 6/10」演化至 2026 的「scale + emission tech + multi-fuel + diversified mix 7.5/10」 — 100+ 年累積，10 年內難以被新進者複製。</p>
+
+<h3>逆向推演（Munger Inversion）— 三維展開</h3>
+
+<h4>① 技術維度：什麼技術替代會讓 CMI 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>BEV Class 8 truck 滲透率突破 30%（歷史對標：Toyota 2010 對抗 Tesla 早期、Kodak 對抗數位）</strong> — Tesla Semi + Daimler eActros + Volvo VNR Electric 若 2027-2028 同時量產且 TCO 達 parity，diesel 訂單可能加速崩塌。當前 BEV Class 8 NA 滲透率 &lt; 2%，但若 IRA / 充電基建補貼力度加大且能耗成本下降 30% 則窗口提前。CMI Accelera battery 部門尚在 -$270M annual loss、無 scale。</li>
+<li><strong>Hydrogen fuel cell（HFC）路徑突破成本拐點（歷史對標：Cummins 90 年代 nat gas 路徑相對於 diesel 的市佔擴張失敗）</strong> — 若 PEM FC stack 成本從 $800/kW 降至 $200/kW（2030 前可能）+ 加氫站基建普及，HFC 將取代部分 diesel 長程運輸。CMI 雖有 HFC 投資但被 BEV 蠶食的可能性更大（重卡 BEV 在 short-haul 已可達 cost parity）。</li>
+<li><strong>數據中心 SMR（small modular reactor）取代柴油 backup gen（歷史對標：核電對抗化石燃料 + Westinghouse AP1000）</strong> — 若 Google / Microsoft / Amazon 等 hyperscaler 與 NuScale / X-energy 簽 PPA，2030 之後新建 hyperscale 可能直接配 SMR 取代 standby diesel gen，CMI Power Systems 段 super-cycle 結構性消退。當前 SMR 規模生產 ETA 2031-2033，但 hyperscaler PPA 已可能拿到 2028 並提前定型。</li>
+<li><strong>3D-printed / additive manufacturing 重塑 engine OEM 經濟（歷史對標：3D 列印對航太葉片產業重塑）</strong> — GE Aviation 已將 LEAP 引擎 fuel nozzle 改為 3D 列印；若 truck engine 跟進，scale 優勢被削弱、利潤遷移至能 customize 的小廠。CMI 此處護城河強度低，新進入者風險上升。</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>Accelera Capex 慣性（歷史對標：Intel 對抗 ARM / GlobalFoundries — fab capex 持續上升、ROIC 持續下降）</strong> — Accelera 累計虧損已 $1B+，2026 guidance loss $270-300M。若管理層在 2027-2028 為了「不落後 BEV/HFC」加碼 Capex 至 $400-500M annual loss，整體 ROIC 將從 15.8% 跌至 10% 以下。當前 CEO Jen Rumsey 表現出克制（剝離 low-pressure FC），但若市場壓力增加可能加倍下注。</li>
+<li><strong>創辦人時代結束的執行衰退（歷史對標：Ford 1990s post-Henry Ford II / GE post-Welch）</strong> — Cummins 家族不再持股；Jen Rumsey 2022 上任，目前執行紀律穩固但若 CFO Mark Smith 退休 + Power Systems 總裁 Jennifer Bush 因 2025-26 的成功被挖角，integration team 流失將拖累 multi-year 路線執行。</li>
+<li><strong>Meritor 後再次大型併購（歷史對標：HP-Compaq / Citigroup-Smith Barney — 連環併購後消化不良）</strong> — Meritor 整合尚未到位（synergy $130M run-rate 達標但 Components 段毛利率仍受 axle 業務拖累），若 2026-2027 因 Accelera 路徑壓力推動 $5B+ 級 hydrogen / battery 併購，capital allocation 紀律將被打破，估值 multiple 將被市場降權。</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>NA 物流結構性轉變（歷史對標：Sears 對抗 Amazon）</strong> — 若 last-mile delivery 從 truck 轉至 drone / 自動倉儲，Class 8 / Class 7 medium-duty truck TAM 進入結構性萎縮（2030+）。當前還看不到證據，但若 Amazon Logistics 自建 drone fleet 規模化，2-3% 訂單下降 + 5 年累積 -10% TAM 是可能的。</li>
+<li><strong>EPA / CARB 直接禁售 ICE truck（歷史對標：California ACT 2024 法規對 fleet 強制 ZEV 比例）</strong> — California ACT 已要求 2027 起 truck OEM 在 CA 售出 truck 中 ZEV 比例 ≥ 7%，2035 達 100%。若聯邦層面跟進（目前可能性低，因現任白宮對 emissions 規範鬆綁），CMI diesel ICE 業務在 2030-2035 將進入結構性萎縮。</li>
+<li><strong>計算範式轉換降低數據中心 power 需求（歷史對標：Moore's Law slowing）</strong> — 若 photonic / neuromorphic / quantum 計算在 2028-2030 商用化，數據中心 power 密度可能下降 50%+，標準 backup gen 配置從每 server rack 1MW 降至 0.5MW。CMI Power Systems 段 EBITDA margin 將從 29.5% 退回 21-22% baseline。</li>
+</ul>
+
+<h4>價值陷阱路徑判斷</h4>
+<p>若 CMI 為價值陷阱，最可能的惡化劇本：<strong>盈餘品質型（次要：產業結構衰退型）</strong>。具體機制：當前 EPS 共識 $26.44 假設 H2 26 Power Systems +20% YoY 持續 + NA truck 復甦 + 0 一次性 charges 同時發生；若任一條件落空（Power Systems 訂單 plateau / NA truck pre-buy 提早 peak / Accelera 又有減損），全年 GAAP EPS 可能落在 $20-22 區，Fwd PE 立即從 26x 跳到 33-35x，市場 reset 至 17-18x peer 水平意味 $400-450 區股價。配合 EPA 2027 prebuy 反噬（2027 NA Class 8 訂單預期 -30 至 -40%），結構性 EPS 修正進一步惡化。</p>
+
+</section>
+
+<section id="s5">
+<h2>§5｜投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>2-3 年（中期，跨 EPA 2027 prebuy + 反噬週期）</td></tr>
+<tr><td><strong>主要驅動這個時間軸的理由</strong></td><td>(1) EPA 2027 prebuy 高峰在 2026 H2-2027 H1 → Engine 段 peak earnings；(2) 數據中心 backup gen super-cycle 至 2028-2030（market $19.7B 2030E）；(3) Power Systems mix shift（24% → 30-35%）需 2-3 年才能讓估值結構性 re-rate；(4) Accelera EBITDA 收斂至 break-even（FY28-30）</td></tr>
+<tr><td><strong>這個持有期決定了哪些變數是訊號 / 噪音</strong></td><td>訊號：Power Systems 季度 YoY 成長率 + EBITDA margin 趨勢、NA Class 8 訂單月度數據、Accelera 季度 loss 收斂速度、EPA 2027 X15 / X10 量產 ramp；噪音：單季 GAAP EPS 波動（含一次性 charge）、Engine 單季 mix 變化、短期股價波動（&lt;10%）</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸（sourced floor + 漂移觸發條件）</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體數字門檻</th><th>信息來源</th><th>漂移觸發條件</th></tr>
+<tr><td>H1</td><td>數據中心 backup gen 結構性需求支撐 Power Systems 段 +15% YoY 成長 + EBITDA margin &gt; 25%</td><td>FY26-FY27 Power Systems Rev &gt; $9-11B（FY25 ~$7B）；EBITDA margin 平均 ≥ 26%</td><td>FY30 Power Systems Rev &gt; $14B、占總 Rev ≥ 32%</td><td>數據中心 backup gen 市場至 $19.7B 2030 + CMI 維持 30%+ NA 高功率市佔</td><td>2026 guidance global power generation revenues +15-25% YoY；market $8.4B 2024 → $19.7B 2030E (Grand View Research, 15.2% CAGR)</td><td>Grand View Research data center generator market 2030 forecast；CMI Q1 2026 earnings call</td><td>連 2 季 Power Systems YoY &lt; +10% 或 EBITDA margin &lt; 25% → 削弱</td></tr>
+<tr><td>H2</td><td>EPA 2027 prebuy 驅動 NA Class 8 訂單 2026 H2 +30-50% YoY，2027 拓展為「2027 規範下 HELM 提早合規」競爭優勢</td><td>2026 NA Class 8 production ≥ 320,000 units；HELM X15 量產 ramp Q3-Q4 26 上線且無 quality issue</td><td>FY27-FY28 even after pre-buy crash，CMI Engine 段 Rev 仍能維持 FY24 水平（受惠 HELM 市佔擴張）</td><td>EPA 2027 / CARB 規範執行至 2030+，CMI Engine 段每 1pp 市佔加分對應 $400M Rev 增量</td><td>NA Class 8 訂單 Feb 26 +159% YoY 至 47,200 units；ACT Research 2026 Class 8 tractor sales forecast 140,000 units (truck-only)；X15 EPA 2027 認證 / X10 75% lower NOx</td><td>ACT Research Class 8 2026 forecast；Cummins HELM platform announcement 2024-02-29</td><td>2027 H1 月訂單 &lt; 15,000 = pull-forward 反噬已現 → 削弱；連 2 季 HELM ramp issue → 反轉</td></tr>
+<tr><td>H3</td><td>EBITDA margin 結構性升至 17.75-18.50%（FY26 mid-point 18.1%）並 sustainable，反映 Power Systems mix shift 結構性效益</td><td>FY26 EBITDA margin 達 guidance mid-point 18.1%；FY27 持續 17-18%</td><td>FY30 EBITDA margin &gt; 18% sustainable，含 Power Systems mix shift 持續貢獻</td><td>長期 EBITDA margin baseline 從歷史 13-14% 升至 17-18%（結構性 reset）</td><td>FY26 guidance EBITDA margin 17.75-18.50%（raised from prior 17.0-18.0%）；Power Systems Q1 26 EBITDA margin 29.5% × Rev mix 24% 占整體 EBITDA &gt; 35%</td><td>Cummins Q1 2026 earnings release 2026-05-05；Power Systems segment EBITDA breakdown</td><td>連 2 季 全公司 EBITDA margin &lt; 16.5% 或 Power Systems &lt; 24% → 削弱；連 4 季 &lt; 15% 或 Power Systems &lt; 22% → 反轉</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照（v12.2 新增）</h3>
+<div class="hypothesis-box">
+<p><strong>狀態：進場未滿一年（最早 v12.2+ DD = 2026-05-18，距今 0 天）。</strong></p>
+<p>本欄位將於 <strong>2027-05-18</strong> 起首次有資料對照。在此之前，僅以 §5 B 戰術假設視角追蹤。</p>
+<p>後續每份 CMI DD 將引用此 Inception 日期作為「累積漂移」對照基準，並追蹤 H1/H2/H3 三個核心假設的 YoY 兌現狀態。</p>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層 ⚡🔥🐢）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度標記</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>EPA 2027 prebuy 反噬（pull-forward demand 提早結束）</td><td>H2</td><td>🔥 中期（4-6 季）</td><td>NA Class 8 訂單月度（ACT Research）+ CMI Engine 段季度 Rev YoY</td><td>2026 H2 月訂單 &lt; 25,000（peak 預期 ~30,000）→ 警示；2027 H1 月訂單 &lt; 15,000 → 結構性反噬，Engine 段 EBITDA margin 連 2 季 &lt; 8% 觸發減倉</td></tr>
+<tr><td>R2</td><td>數據中心 capex pause / Power Systems 訂單 plateau</td><td>H1</td><td>🔥 中期（4-6 季）</td><td>Hyperscaler capex guidance（Microsoft / Google / Meta）+ Power Systems backlog 變化</td><td>連 2 季 Power Systems YoY &lt; +10% 或 EBITDA margin &lt; 25% → thesis 削弱；連 4 季 &lt; +5% → thesis 反轉，估值倍數 reset 至 17-18x</td></tr>
+<tr><td>R3</td><td>BEV / HFC truck 滲透率突破 + ICE TAM 萎縮（結構性慢變數）</td><td>H1 H2 H3</td><td>🐢 長期（2+ 年慢變數）</td><td>BEV Class 8 NA 銷售滲透率（當前 &lt;2%）+ CMI Accelera ROIC + 加氫 / 充電基建擴張節奏</td><td>BEV Class 8 滲透率 &gt; 10% (3-5 年內) = 結構性威脅升級；需 ≥ 50% 機率才砍倉（避免短期新聞驚嚇）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th><th>對 CMI 具體應用</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件在我的 2-3 年持有期內有影響嗎？</td><td>Power Systems / NA truck 訊號 → 強匹配；Accelera 慢變數 → 中匹配；BEV 滲透率 → 弱匹配（觀察而非行動）</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1 / H2 / H3 哪一個？</td><td>數據中心 capex → H1；NA Class 8 訂單 → H2；EBITDA margin guidance → H3</td></tr>
+<tr><td>3. 邊際方向？</td><td>對該假設是強化 / 無關 / 削弱？</td><td>Q1 26 數字判定：H1 ＋ 強化、H2 ＋ 強化、H3 ＋ 強化</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達到重新評估閾值？</td><td>本次無，但若 Q2 26 Power Systems +10% YoY 而非 +15% 將觸發 H1 削弱警戒</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>估值條件：Fwd PE 回到 5Y 分位 60% 區（~$580-620 區）；或 NA Class 8 prebuy 真實開始反映在 FY27 EPS 共識上修；基本面確認：Power Systems Q2-Q3 26 YoY &gt; +15% + EBITDA margin &gt; 25%</td><td>建倉至底倉 15%，首次進場</td></tr>
+<tr><td><strong>加碼</strong></td><td>假設驗證進度：H1（Power Systems +20% YoY 連 2 季）+ H2（NA Class 8 訂單延續 +30-50% YoY）均確認 + 估值 PE 分位 &lt; 70%</td><td>加碼至 20-25%（目標倉位）</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 觸發（2027 H1 月訂單 &lt; 15,000）或 R2 觸發（連 2 季 Power Systems &lt; +10%）；或估值 Fwd PE &gt; 28x（突破 5Y 上緣）</td><td>減至 7-10%（一半），重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>核心假設 H1 或 H3 被推翻（Power Systems +5% 以下持續 3 季 + EBITDA margin &lt; 22% 結構性退潮），或內部人連續 12 個月賣出無 buy + Beta 結構性升高（&gt; 1.5）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing（v12.3 新增）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Single Thing 描述</strong></td><td>Microsoft / Google / Amazon / Meta 任一在 2026-2028 期間公開宣布大規模（&gt;$2B）SMR backup power 採購 PPA，且 NuScale / X-energy / 其他 SMR 廠在該時段提供 commercial-scale ETA &lt; 2030 — 此事件會結構性威脅 Power Systems 段 super-cycle 的 5-10 年敘事，使估值倍數系統性降權。</td></tr>
+<tr><td><strong>如果發生</strong></td><td>立刻清倉至 0%，因為 Power Systems multiple expansion 假設崩塌、整體 EBITDA margin reset 至 14% baseline、Fwd PE 從 26x 跳至 15-16x；股價可能在 4-6 個月內跌 30-40%。</td></tr>
+<tr><td><strong>可觀測性</strong></td><td>(1) Microsoft / Google / Amazon investor day 或 climate goal 更新（每季）+ (2) SMR 廠 IPO 或大型訂單公告（即時）+ (3) Cummins Q2-Q4 26 earnings call 提到「SMR competitive pressure」字眼</td></tr>
+<tr><td><strong>機率估計</strong></td><td>未來 24 個月內發生機率 ~8-12%（基於 NuScale 2026 公告 + X-energy / Amazon Z2 deal）；但要構成 thesis 推翻需 PPA &gt; $2B + ETA &lt; 2030 才算「足夠 binary」</td></tr>
+</table>
+
+<p class="note"><strong>三者職責矩陣 cross-check</strong>：</p>
+<ul>
+<li>§1 trap（🟡 觀察期）= 靜態裁決，反映「現價 vs thesis 兌現難度」當前狀態</li>
+<li>§5.C R1-R3（⚡🔥🐢）= 過程性風險，連續監測（EPA 2027 反噬 / 數據中心退潮 / BEV 滲透）</li>
+<li>§5.F Single Thing = 單一 discrete trigger event（SMR PPA 公告，與 R1-R3 不重複，是 binary discrete event 而非 continuous process）</li>
+</ul>
+
+</section>
+
+<section id="s6">
+<h2>§6｜即時財報情報</h2>
+<p class="note">資料來源：Cummins Q1 2026 earnings release 2026-05-05 + 10-Q + Q1 26 earnings call transcript</p>
+
+<h3>① 最新一季財報關鍵數字（Q1 FY2026）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$8.4B</td><td>$8.34B</td><td class="pass">Beat +0.7%</td><td>+3% YoY</td></tr>
+<tr><td>GAAP EPS (diluted)</td><td>$4.71</td><td>$5.61</td><td class="fail">Miss -16.0%</td><td>含 $199M ($1.10/sh) 燃料電池 divestiture 一次性 charge</td></tr>
+<tr><td>Adjusted EPS</td><td>$6.15</td><td>$5.63</td><td class="pass">Beat +9.2%</td><td>表現超預期，數據中心驅動</td></tr>
+<tr><td>EBITDA</td><td>$1.32B</td><td>n/a</td><td>-</td><td>EBITDA margin 15.7% (含 charge) / Adj 17.2%</td></tr>
+<tr><td>Operating Margin (Adj)</td><td>~12.5%</td><td>n/a</td><td>-</td><td>Power Systems 段拉抬</td></tr>
+<tr><td>Free Cash Flow</td><td>~$430M（估）</td><td>n/a</td><td>-</td><td>季節性偏弱，全年 guidance $1.6-1.9B</td></tr>
+</table>
+
+<h3>分段業績</h3>
+<table>
+<tr><th>業務段</th><th>Q1 26 Revenue</th><th>YoY</th><th>EBITDA Margin</th><th>Commentary</th></tr>
+<tr><td>Engine（柴油 + 天然氣引擎）</td><td>~$2.6B（est）</td><td class="fail">-4%</td><td>10.4%（vs Q1 25 16.5%，-6.1pp）</td><td>NA truck 需求疲弱（pre-buy 尚未啟動）；歐洲 + 海外亦疲弱</td></tr>
+<tr><td>Components</td><td>~$2.5B（est）</td><td class="fail">-5%</td><td>n/a</td><td>Meritor axle/brake 業務隨 NA truck 同步收縮</td></tr>
+<tr><td>Distribution</td><td>$3.1B</td><td class="pass">+7%</td><td>n/a</td><td>parts + power generation 拉動</td></tr>
+<tr><td>Power Systems</td><td>$2.0B</td><td class="pass">+19%</td><td class="pass">29.5%（12 年新高，FY25 ~17%）</td><td>數據中心 backup gen super-cycle，high single-digit Capex 投入擴產</td></tr>
+<tr><td>Accelera</td><td>$101M</td><td>+12%</td><td class="fail">-274%（-$277M loss）</td><td>含 $199M low-pressure FC 業務 divestiture charge；underlying loss -$78M</td></tr>
+</table>
+
+<h3>2026 Guidance（Raised 2026-05-05）</h3>
+<table>
+<tr><th>指標</th><th>FY26 New Guidance</th><th>FY26 Prior Guidance</th><th>FY25 Actual</th></tr>
+<tr><td>Revenue YoY</td><td>+8% to +11%</td><td>+3% to +8%</td><td>-1.3% (FY25 vs FY24)</td></tr>
+<tr><td>EBITDA Margin (ex-charges)</td><td>17.75% to 18.50%</td><td>17.0% to 18.0%</td><td>~16.3%</td></tr>
+<tr><td>Global Power Generation Revenue YoY</td><td>+15% to +25%</td><td>+10% to +20%</td><td>~+12%</td></tr>
+<tr><td>NA Class 8 Production</td><td>Maintained ~320,000 units</td><td>Maintained</td><td>~265,000 units</td></tr>
+<tr><td>Accelera 全年 EBITDA loss</td><td>-$270M to -$300M（ex-charges）</td><td>-$300M to -$400M</td><td>~-$400M</td></tr>
+<tr><td>OCF</td><td>$1.5-2.0B</td><td>$1.5-2.0B</td><td>$2.8B</td></tr>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（數據中心 Power Systems +15% / margin &gt; 25%）</td><td>＋ 強化</td><td>Q1 26 Power Systems +19% YoY + EBITDA margin 29.5%（12 年新高），實質超越假設下限</td></tr>
+<tr><td>H2（EPA 2027 prebuy）</td><td>＋ 中性偏正</td><td>NA Class 8 訂單 Feb 26 +159% YoY；但 Engine 段 Q1 26 Rev 仍 -4% YoY 反映 prebuy 未完全 flow through，guidance 維持 ~320K units 顯示管理層信心</td></tr>
+<tr><td>H3（EBITDA margin &gt; 17.75%）</td><td>＋ 強化</td><td>Guidance raised + 0.75pp 至 17.75-18.50%；Q1 26 Adj 已達 17.2%</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析（CEO Jennifer Rumsey + CFO Mark Smith）</h3>
+<ul>
+<li><strong>管理層基調</strong>：明顯轉樂觀 — 從 FY25 Q3-Q4 的「cyclical headwind 嚴峻」轉為「demand for data center backup power and North America truck markets began to improve from a cyclical low」直接 quote；Rumsey 開場詞「strong operating results」對應 raised guidance，這是 12 個月以來首次 raised that scale</li>
+<li><strong>Forward Guidance 變化</strong>：Revenue +8-11%（中位 +9.5% vs prior 中位 +5.5%）= 大幅上修 +4pp；EBITDA margin upper bound 由 18.0% → 18.5%；Accelera loss narrowed -$100M / 年。對市場共識的差距：當時共識 FY26 Rev 約 +5%，新 guidance +8-11% high single-digit beat consensus</li>
+<li><strong>刻意強調的主題</strong>：(1) Power Systems 數據中心需求（提及 "data center" 12 次以上）；(2) HELM 平台技術領先（X15 / X10 提前合規）；(3) 資本紀律（dividend 21 連年增 + buyback）；(4) Accelera 轉向 "focused on most promising tech"（暗示 BEV + high-pressure FC，砍 low-pressure FC）</li>
+<li><strong>刻意迴避的問題</strong>：(1) 2027 NA Class 8 訂單 forecast — 多次被分析師問但僅回答「too early to comment」；(2) Power Systems backlog 具體數字 — 維持籠統「multi-quarter visibility」；(3) Accelera 何時 break-even — 模糊「FY28-30 區間，視市場節奏」</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：客戶採購週期出現「兩條曲線並行」 — NA truck fleet 在 EPA 2027 規範前 pre-buy 衝量（Class 8 訂單 Feb +159%），數據中心 hyperscaler 訂單 backlog 大幅延長（CMI 提到「multi-quarter visibility」對應 ≥ 6 個月可見度）。Class 8 build slots 2026 僅剩 15K-20K（CMI 估）顯示產能將被搶光。</li>
+<li><strong>供給端</strong>：CMI 自身產能 — Power Systems segment Capex 上修 ~10% (Q1 26 R&D $344M 對應全年 ~$1.4B vs FY25 $1.3B)，主要投往高功率 backup gen 廠 + EPA 2027 HELM ramp；管理層提到「2027 capacity expansion fully scoped」暗示中長期 supply gap 可能在 2027-2028 收窄</li>
+<li><strong>競爭格局</strong>：Power Systems 段 CMI vs CAT — CMI 在 NA &gt;2MW backup gen 份額預估 35-40%，CAT 30-35%，Rolls-Royce / MTU 15-20%，Generac &lt;5%（focus on &lt;1MW）；CMI 提到「customer-driven custom solutions」暗示對大型 hyperscaler 客製能力是差異化點</li>
+<li><strong>總體經濟敏感度</strong>：管理層提及「stable freight rates」「fleet utilization improving」= 樂觀；提到「China / India recovery」= 海外 Engine 業務也在恢復；未強調匯率風險（USD 走弱對 CMI 是 tailwind）</li>
+<li><strong>對同業的連帶推論</strong>：對 PCAR / CAT / Volvo 商用車：訂單 backlog 變化暗示 H2 26 - H1 27 卡車生產加速；對 Generac：CMI Power Systems super-cycle 但 Generac 在 sub-1MW residential / small commercial 段，受惠程度有限；對 Atmus（CMI spinoff）：filtration 業務跟著 NA truck 動量同步擴張</li>
+</ul>
+
+</section>
+
+<section id="s7">
+<h2>§7｜核心門檻檢核</h2>
+
+<h3>EPS CAGR 強制搜尋協議（v9.0+）</h3>
+<p class="note">yfinance 在本次 DD 期間對 CMI 連續 rate-limited（多次 retry 失敗），EPS 共識資料改用 web_search 補抓，來源為 stockanalysis.com / WallStreetZen / Yahoo Finance（n=20-22 位分析師）。</p>
+
+<table>
+<tr><th>項目</th><th>數值</th><th>來源 / 分析師覆蓋</th></tr>
+<tr><td>基期 EPS（FY2025 GAAP reported）</td><td>$20.50</td><td>10-K（FY25），含 ~$2/sh Accelera 重組 normalized adjustments</td></tr>
+<tr><td>FY+1 EPS（FY2026E）</td><td>$26.44（avg）；low $24.56 / high $30.46</td><td>stockanalysis.com 共識中位數，n=21；對應 +29% YoY GAAP / +18% normalized YoY</td></tr>
+<tr><td>FY+2 EPS（FY2027E）</td><td>$31.53（avg）；low $26.45 / high $37.66</td><td>WallStreetZen 共識中位數，n=20；+19.2% YoY</td></tr>
+<tr><td>FY+3 EPS（FY2028E）</td><td>$36.07（avg）；low $27.87 / high $42.48</td><td>WallStreetZen 共識中位數，n=14；+14.4% YoY</td></tr>
+<tr><td>口徑差距說明</td><td>FY25 Reported $20.50 ≈ Adjusted EPS（CMI 不另列 Non-GAAP 顯著差距，Adj 主要剔除 Accelera 重組 + Atmus separation；2026 因低壓 FC divestiture $1.10/sh，Reported 與 Adjusted 將有顯著差距）</td><td>10-K, 10-Q 註腳</td></tr>
+</table>
+
+<h4>計算</h4>
+<table>
+<tr><th>口徑</th><th>3Y CAGR（FY25 → FY28E）</th></tr>
+<tr><td>GAAP CAGR</td><td>(36.07/20.50)^(1/3) - 1 = <strong>20.7%</strong></td></tr>
+<tr><td>Normalized CAGR（FY25 normalized $18.50）</td><td>(36.07/18.50)^(1/3) - 1 = <strong>24.9%</strong>（更保守的標準）</td></tr>
+</table>
+
+<h3>Munger 護城河維度強制搜尋協議</h3>
+<p class="note">下列數據從 Macrotrends + Alpha Spread + StockAnalysis 整合：</p>
+
+<table>
+<tr><th>指標</th><th>10 年歷史 / 趨勢</th><th>當前值</th></tr>
+<tr><td>FCF Margin（5Y avg）</td><td>5Y avg 8.4% / 10Y avg 7.6%（Alpha Spread）</td><td>FY25 ~5.5%（被 Capex 與 Meritor 整合費影響）</td></tr>
+<tr><td>FCF Margin（單年最低谷）</td><td>FY22 3.7%（Meritor 收購首年）</td><td>-</td></tr>
+<tr><td>ROIC（10 年 avg）</td><td>10Y avg 12.45% / 5Y avg 12.79%（Financecharts）</td><td>15.81%（當前）</td></tr>
+<tr><td>毛利率（10 年趨勢）</td><td>Min 23.71% / Median 24.84% / Max 25.89%（Macrotrends）— 過去 10 年穩定但無明顯擴張</td><td>25.85% TTM（接近 10Y max）</td></tr>
+<tr><td>Capex / Revenue</td><td>近 3 年均值 ~2.6%（FY24 Capex ~$1.2B / Rev $34.1B）</td><td>~2.6%（低資本密集）</td></tr>
+<tr><td>D/E ratio</td><td>FY24 ~55%（StockAnalysis）</td><td>55.3%（Total Debt $7.4B / Equity $13.4B）</td></tr>
+<tr><td>Cash / Revenue</td><td>~5.3%（Cash $1.8B / Rev $33.7B）</td><td>適中（不偏低也不偏高）</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td class="fail">⚠️ 不符合</td><td>當前 ~5.5%；5Y avg 8.4%；FY23 8.1%；FY24 4.8%；近 3 年趨勢 ↓（受 Meritor 整合 + 數據中心 capex 投入影響）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y avg &gt; 15%；單年低谷 &gt; 10%</td><td class="fail">⚠️ 不符合</td><td>5Y avg 8.4%；2022 低谷 3.7%。CMI 屬於資本密集 + 大型 inventory（Components）業務，結構上 FCF Margin 難達 15%。判斷：有週期波動但符合 industrial heavy machinery 行業標準</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且 &gt; WACC</td><td class="pass">✅ 符合</td><td>當前 15.81%（恰好過門檻）；WACC est ~9%（Beta 1.29 × ERP 5.5% + Rf 4.5%），ROIC-WACC = 6.8%</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>過去 10 年 ≥ 70% 年份 ROIC &gt; 15%</td><td class="fail">⚠️ 不符合</td><td>10Y avg 僅 12.45%，超過 15% 的年份估 4/10（40%）；ROIC 受 cyclical 影響大，FY22 低谷年份 ROIC 跌至 9-10%</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>過去 10 年 ≥ 70% 年份 GM 持續改善</td><td class="warn">⚠️ 部分符合</td><td>10 年範圍 23.71-25.89%（極窄），無顯著擴張但穩定；當前 25.85% 接近 max；CMI 屬 industrial commodity-adjacent，提價能力受 OEM dual-source 限制</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%</td><td class="pass">✅ 符合</td><td>~2.6%；屬「低密集」級別（heavy machinery 行業裡算節省的）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td class="pass">✅ 符合</td><td>GAAP CAGR 20.7%（FY25 → FY28E）；Normalized 24.9%</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2</td><td class="pass">✅ 符合</td><td>26.3 / 20.7 = 1.27（合理區）；引用 §13.2</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金 / Rev 10-50%</td><td class="warn">⚠️ 部分符合</td><td>D/E 0.55 ✅；現金/Rev 5.3% ⚠️（偏低，僅夠運營流動性）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td class="fail">❌ 否</td><td>Cash $1.8B vs Total Debt $7.4B = 0.24x，無法現金覆蓋</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td class="warn">⚠️ 7.5 分</td><td>引用 §9 — Execution 8 + Pricing Power 7，合併 7.5；B 級護城河；趨勢穩定偏加深（Power Systems 拉抬）</td></tr>
+</table>
+
+<p><strong>最大財務弱點</strong>：FCF Margin 結構性受限於 industrial heavy machinery 行業特性（capex + working capital），不可能達 15% 高門檻；同時現金覆蓋總負債不足，但 D/E 0.55 仍在安全範圍且 Investment Grade 評等（S&P A2 / Moody's A2）；Munger 三維評級 <strong>🟡 兩項達標</strong>（資本密集度 ✅、ROIC 當前 ✅；ROIC 穩定性 + 毛利率定價能力 ⚠️）。</p>
+<p>Munger 三維評級傳遞至 §9 護城河分析作為定量起點：當前 ROIC 15.81% 略高於門檻但 10Y avg 12.45% 顯示週期波動；護城河存在但定價力受 OEM dual-source 結構限制，整體合併分 7.5/10 為合理。</p>
+
+</section>
+
+<section id="s8">
+<h2>§8｜長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>2Y</th><th>5Y</th><th>10Y</th><th>推論</th></tr>
+<tr><td>當前 TAM（合併）</td><td>~$50B（NA Engine + Distribution + Power Systems）</td><td>~$70B</td><td>~$95B</td><td>主要由 Power Systems 段擴張 + Engine 段持平驅動</td></tr>
+<tr><td>數據中心 backup gen TAM</td><td>$10B</td><td>$15B</td><td>$20B+</td><td>Grand View Research: $8.4B 2024 → $19.7B 2030E（CAGR 15.2%）；2030 後 SMR 滲透是 long-term 風險</td></tr>
+<tr><td>NA Class 8 Engine TAM</td><td>$10B</td><td>$10B</td><td>$8B</td><td>EPA 2027 prebuy 後反噬；2030+ BEV 滲透至 ~10% 將壓縮 ICE TAM</td></tr>
+<tr><td>當前市佔率</td><td>Power Sys 段 NA 35-40% / Engine 段 NA 35%</td><td>-</td><td>-</td><td>引用 Q1 26 disclosure + ACT Research</td></tr>
+<tr><td>若維持現有成長率，幾年達 30% 滲透率</td><td>n/a（兩段已是高佔比）</td><td>-</td><td>-</td><td>非「滲透率邏輯」business，是「市佔守住 + 業務 mix shift」</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td>n/a</td><td>n/a</td><td><strong>7-10 年（Power Systems 段強 / Engine 段弱）</strong></td><td>整體 blended Runway 取 weighted avg ~7 年</td></tr>
+</table>
+
+<p><strong>Runway 解讀</strong>：blended Runway 7 年 → 5-9 年區間 → 中等可見度，§13.5 估值倍數對應「合理 PE 17-22x」區間（不支持 25x+ 永久溢價）；§1 dashboard 引用此判斷。</p>
+
+<h3>B｜成長品質判斷（v12.3 強化）</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>定價提升、現有客戶深化、新市場自然滲透</td><td>~85%（FY24 onwards）</td><td>Power Systems 段擴張、HELM 平台推出、NA truck 復甦皆為有機</td></tr>
+<tr><td>無機成長</td><td>併購貢獻營收與 EPS</td><td>~15%（Meritor 整年 + 部分 Cummins-Atmus 拆解後 reclassify）</td><td>Meritor $3.7B（2022-08 完成）；2024 之後幾無大型併購</td></tr>
+</table>
+
+<p>近 5 年主要併購清單（v12.3 強制）：</p>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>達預期？</th></tr>
+<tr><td>2022-08</td><td>Meritor Inc.（axle / brake / e-drivetrain）</td><td>$3.7B</td><td>整合進 Components 段；synergy run-rate $130M（達標）；未現減損</td><td class="pass">✅ 達標</td></tr>
+<tr><td>2023-03</td><td>Atmus Filtration（spinoff 而非併購，但屬 capital allocation）</td><td>分拆 + $1.3B gain</td><td>聚焦核心；無 dilution；Atmus 獨立上市表現良好</td><td class="pass">✅ 達標</td></tr>
+<tr><td>2026-Q1</td><td>低壓 FC 業務 divestiture（賣出而非買入）</td><td>$199M charge</td><td>聚焦 high-pressure FC + BEV；Accelera FY26 loss 縮小至 $270-300M</td><td class="warn">中性</td></tr>
+</table>
+
+<p>計算剔除併購後的有機成長率：FY24 organic Rev growth ~-2%（vs Reported -0.1%）；2026 organic 估 +6-8% YoY（隨 Power Systems + NA truck 復甦驅動）</p>
+
+<h4>② 成長驅動結構：定價 vs 量（v12.3 強化）</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的判斷（具體%）</th><th>過去 3 年趨勢</th></tr>
+<tr><td>定價驅動</td><td>提價 / 產品組合升級 / ARPU 提升</td><td>ASP YoY est：FY23 +4% / FY24 +2% / FY25 +1%（受 Power Systems mix 升級拉抬）</td><td>從擴大到穩定</td></tr>
+<tr><td>量驅動</td><td>用戶數 / 交易量 / 出貨量成長</td><td>Engine 出貨量 YoY：FY23 +8%（Meritor 整合年）/ FY24 -3% / FY25 -5%；Power Systems：+12% / +15% / +12%</td><td>Engine 萎縮、Power Systems 持續擴張</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的判斷</th></tr>
+<tr><td>強化型</td><td>成長帶來更強的網路效應、規模優勢、數據壁壘</td><td>部分適用：Power Systems 段 — 數據中心 fleet 規模擴張會強化 service / parts 黏著度 + 高功率產能優勢</td></tr>
+<tr><td>中性型</td><td>成長與護城河各自獨立</td><td>Engine 段 — 主流量驅動，OEM dual-source 限制護城河強化</td></tr>
+<tr><td>消耗型</td><td>為維持成長，犧牲定價 / 擴張至低 ROIC 領域 / 大幅增加 SBC</td><td>Accelera 段（小，但持續燒錢）— 為對沖 ICE obsolescence 投資，當前 ROIC 大幅為負；如管理層不能克制，risk 升級</td></tr>
+</table>
+<p>整體判斷：<strong>強化型 60% + 中性型 30% + 消耗型 10%</strong> — 混合，整體偏正面。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前（FY22）</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>15.81%</td><td>9-10%</td><td>↑</td><td>產業頂尖，且 &gt; WACC</td><td class="pass">符合</td></tr>
+<tr><td>ROIC - WACC</td><td>~6.8%</td><td>~1%</td><td>↑</td><td>持續正值，擴大</td><td class="pass">符合</td></tr>
+<tr><td>FCF Margin</td><td>~5.5%</td><td>3.7%</td><td>↑（但仍低於 15% 門檻）</td><td>&gt; 15%</td><td class="fail">不符</td></tr>
+<tr><td>FCF / Net Income 轉換率</td><td>~0.5-0.6（normalized）</td><td>~0.5</td><td>→</td><td>&gt; 85%（輕資本行業）</td><td class="fail">不符（CMI 為資本密集）</td></tr>
+<tr><td>Reinvestment Rate</td><td>~30-40%（合理）</td><td>~25%</td><td>↑</td><td>成長期合理偏高</td><td class="pass">符合（對應 ROIC 提升）</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>Power Systems 仍 +10% / Engine 平緩</td><td>20x（5Y avg）</td><td>vs 26.3x，-24%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>EPA 2027 prebuy 反噬 + Power Systems plateau</td><td>17x</td><td>-35%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>產業全面 mature + BEV 滲透</td><td>14x</td><td>-47%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連續 2 季 YoY 下滑</td><td>Q1 26 25.85% TTM；連續上升</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減（過去 12 個月）</td><td>Power Systems 段市佔擴張；Engine 段穩定</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>主力產品定價能力測試：最近一次提價後銷量是否下滑？</td><td>X15 提價後銷量隨 cycle 而非定價</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著 &gt; Revenue CAGR（差距 &gt; 5%p）</td><td>FY25→FY28E EPS CAGR 20.7% vs Rev CAGR ~7% = 差距 13.7pp ⚠️</td><td>🔴</td></tr>
+<tr><td>盈餘品質</td><td>FCF / Net Income 轉換率 &lt; 0.75（連續 2 年）</td><td>FY23 3.74 / FY24 0.42 / FY25 ~0.7（含 Atmus 扭曲，normalized 後 ~0.65 連續偏低）</td><td>🔴</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Revenue &gt; 5% 且逐年上升</td><td>~1.5%（低，未上升）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 本身在萎縮或被替代技術壓縮</td><td>Engine ICE TAM 在 2030+ 可能壓縮（BEV / HFC）；Power Systems 段擴張</td><td>⬜（混合）</td></tr>
+<tr><td>產業結構衰退</td><td>整個產業估值倍數過去 3 年系統性下移</td><td>Industrial Machinery 中位 PE ~20-21x，CMI 在 26x，行業實際擴張</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex 占 FCF 比例 &gt; 60%</td><td>CMI 維持 Capex ~$1.2B vs FCF ~$1.6-2B = 60-75% ⚠️</td><td>🔴</td></tr>
+<tr><td>隱性資本密集</td><td>若停止投資新產能，收入是否在 3 年內下滑？</td><td>Power Systems 段需 capacity expansion 否則 backlog 不能轉化營收 ⚠️</td><td>🔴</td></tr>
+</table>
+
+<p><strong>價值陷阱風險評級 — 亮燈 4 個（盈餘品質 2 + 隱性資本密集 2）</strong></p>
+<p>對應評級：<strong>🔴 高度警戒</strong> — 4 個信號集中於 (1) EPS CAGR &gt; Rev CAGR（mix 帶動 margin 擴張），(2) FCF 轉換 &lt; 0.75（資本密集 + Meritor 整合），(3) Maintenance Capex 高（行業特性 — 但 Power Systems 擴產屬於 growth Capex，非 pure maintenance）。
+
+§1 必須在 trap 定性 4 問表回答「這是價值陷阱嗎？」並標 🟡 觀察期（已執行，見 §1）；§9 護城河節必須正面回應侵蝕信號（已執行，見 §9 對應段落）。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<table>
+<tr><th>項目</th><th>判斷</th></tr>
+<tr><td>核心業務 AI 影響</td><td>🟢 AI 受益 — Power Systems 段直接受惠 AI 數據中心 capex 拉動（Q1 26 +19% / 29.5% margin）；Engine / Components / Distribution 段中性 — 與 AI 無關（重卡 + 工業機械為實體 commodity 業務，不被 AI 直接 disrupt）</td></tr>
+<tr><td>具體業務占比</td><td>Power Systems 24% Rev / 35%+ EBITDA = AI 直接受惠；其餘 76% Rev 為中性</td></tr>
+<tr><td>公司 AI 策略</td><td>主動受惠者（不需要自建 AI），跟 hyperscaler 客戶 design-in；尚未公布內部 AI 應用（如預測性維修），但 CMI Connect 平台已部署 IoT</td></tr>
+<tr><td>過去 2 年 AI 相關營收變化</td><td>Power Systems Rev：FY23 $5.8B → FY24 $6.3B → FY25 $7.0B → FY26E $8-9B（+15-25% YoY）</td></tr>
+<tr><td><strong>AI 風險評級</strong></td><td><strong>🟢 AI 受益</strong>（評分 9）</td></tr>
+</table>
+
+<h3>H｜客戶結構深度（v12.3 新增）</h3>
+
+<h4>① 客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th><th>年份</th><th>資料來源</th></tr>
+<tr><td>Top 1 客戶（PACCAR）</td><td>~12-14% Rev</td><td>FY25 估</td><td>10-K disclosure</td></tr>
+<tr><td>Top 5 客戶合計</td><td>~30-35% Rev</td><td>FY25 估</td><td>10-K disclosure（PACCAR + Daimler Truck NA + Volvo Group + Navistar + 大型 hyperscaler）</td></tr>
+<tr><td>Top 10 客戶合計</td><td>~45-50%</td><td>FY25 估</td><td>-</td></tr>
+<tr><td>最大客戶（PACCAR）3 年趨勢</td><td>FY23 ~14% / FY24 ~13% / FY25 ~12%</td><td>-</td><td>PACCAR Q4 25 earnings 提及 engine 多元化</td></tr>
+</table>
+
+<h4>② 主要客戶議價權結構</h4>
+<table>
+<tr><th>客戶</th><th>占比%</th><th>議價權類型</th><th>說明</th></tr>
+<tr><td>PACCAR (Kenworth/Peterbilt)</td><td>~12-14%</td><td><strong>Sole-source on X15</strong>（PACCAR 自身 MX 引擎僅做 small-bore，大馬力需求依賴 CMI）；但持續扶植自家 MX-13 + 引進 CAT C13 為 second-source</td><td>結構性 sole-source 但有 dual-track 趨勢</td></tr>
+<tr><td>Daimler Truck NA</td><td>~7-8%</td><td><strong>Second-source</strong>（Daimler 主要用自家 DT12 + Detroit Diesel）</td><td>CMI 為次要供應商 — 高 risk 客戶</td></tr>
+<tr><td>Volvo Group / Mack</td><td>~5-6%</td><td><strong>Second-source</strong>（Volvo 主要用自家 D11/D13/D16）</td><td>同上，CMI 為次要供應商</td></tr>
+<tr><td>Navistar (now Traton)</td><td>~6-7%</td><td><strong>Dual-source</strong>（持續多供應商策略）</td><td>結構穩定</td></tr>
+<tr><td>大型 hyperscaler（Microsoft / Google / Amazon / Meta）</td><td>合計 ~8-10%（Power Systems 段）</td><td><strong>Dual-source</strong>（CMI vs CAT 雙寡頭）</td><td>受 hyperscaler capex cycle 影響</td></tr>
+</table>
+
+<h4>③ 客戶生命週期定位</h4>
+<table>
+<tr><th>定位類型</th><th>說明</th><th>此標的屬於</th></tr>
+<tr><td><strong>Grow with 客戶</strong></td><td>客戶業務擴張 → CMI 訂單同步成長</td><td>hyperscaler（Power Systems）；NA fleet（Engine 隨 EPA prebuy 同步）</td></tr>
+<tr><td><strong>客戶可能 in-house</strong></td><td>客戶規模達到後有動機自製替代</td><td>PACCAR MX-13 路徑 = 結構性 dual-track；Daimler DT12 已 in-house 主流（CMI 已被擠到 second-source）</td></tr>
+<tr><td><strong>客戶可能 second-source</strong></td><td>客戶有意扶植替代供應商</td><td>PACCAR 引進 CAT C13 為大馬力 second-source — 警示</td></tr>
+</table>
+
+<p><strong>客戶結構風險評估</strong>：<strong>🟡 集中但 Grow-with 邏輯強</strong> — PACCAR 占 12-14% 但 X15 大馬力短期 sole-source；hyperscaler 集中度上升但 Power Systems 段成長強烈匹配；長期需監控 PACCAR MX-13 + CAT C13 dual-track 進度。</p>
+
+<p><strong>長期成長性綜合評級</strong>：<strong>🟡 中等可見度成長</strong> — Runway 7-10 年、有機 + 結構性 mix shift 為主、護城河強化型 60% / 中性 30% / 消耗型 10%、ROIC 擴大、衰退信號 4 個（盈餘品質型風險）</p>
+
+</section>
+
+<section id="s9">
+<h2>§9｜護城河分析（報告核心 — v12.3 二維拆解）</h2>
+
+<h3>判斷路徑：是否適合二維？</h3>
+<p><strong>適合（default）</strong> — CMI 的 Execution moat（製造工藝 + 規模 + 全球 distribution + EPA 認證）與 Pricing Power moat（與 OEM 客戶議價 + 提價傳導）<strong>可以獨立評分</strong>，因為兩者由不同的競爭機制驅動：execution 受 R&D 累積 + 規模 + 認證 protect，pricing 受客戶集中度 + dual-source 結構限制。</p>
+
+<h3>雙維評分表（Dual-Dimension）</h3>
+<table>
+<tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat</strong></td><td><strong>8 / 10</strong></td><td>(1) 100+ 年累積的 ICE / 後處理 / 控制系統整合能力，垂直整合度遠高於對手；(2) HELM fuel-agnostic 平台（同一汽缸 + 不同 head gasket 上方零件）2024 推出，X15 / X10 EPA 2027 提早合規，X10 NOx 比 2027 標準低 75%；(3) 全球 200+ 國家 distribution + service 網絡（Distribution 段 Rev $11.6B / FY25），第三方無法 18-24 個月內複製；(4) Meritor 整合後具備 drivetrain integrator 能力</td></tr>
+<tr><td><strong>Pricing Power Moat</strong></td><td><strong>7 / 10</strong></td><td>(1) Power Systems 高功率（&gt;2MW）段 CMI + CAT 雙寡頭定價力強（30%+ EBITDA margin）；(2) Engine 段 — PACCAR / Daimler / Volvo 多 dual-source，限制提價 — 過去 5 年 ASP YoY +1-4%（相對 industrial peer 偏低）；(3) 後處理零件 + 售後 parts/service 段定價力強（Distribution 段穩定 ~15% margin）；(4) 客戶集中度 Top 5 ~30-35%（中等）— 不足以給 CMI absolute pricing power</td></tr>
+<tr><td>合併分（均值）</td><td><strong>7.5 / 10</strong></td><td>合併方式：均值（兩維權重相當，因 Execution 與 Pricing 對 CMI 終端 ROIC 貢獻相當）</td></tr>
+<tr><td>等級</td><td><strong>B 級</strong></td><td>7-8 範圍對應 B 級「有護城河但不頂級」</td></tr>
+</table>
+
+<h3>護城河來源（v12.3 強化 sourced evidence）</h3>
+
+<h4>網路效應</h4>
+<p>CMI 沒有真正的 user-to-user 網路效應（不是 platform business）。但有 <strong>distribution + service 規模 flywheel</strong>：installed base 全球 ~10M+ active engines，每年產生 ~$11B 售後 parts/service Rev（Distribution 段）；新車購買決策很大程度依賴 fleet 對既有 base 的 service infrastructure 信任。規模閾值：對手需要建立至少 50,000+ 個 service certified location 才能挑戰 CMI，CAT 在工程機械有此能力但卡在 truck OEM 端，其他廠則完全沒有。</p>
+
+<h4>無形資產</h4>
+<p>(1) <strong>EPA / CARB / Euro VI 認證</strong>：每個排放代際的 engine certification 需 3-5 年研發 + $200-400M 投入 + 18 個月 EPA review；CMI 持續累積，目前持有最多 EPA-certified diesel / nat gas / hydrogen engine SKUs。
+(2) <strong>HELM 平台 IP</strong>：fuel-agnostic 汽缸架構 + 模組化 head gasket 上方零件，專利 50+ 件；Detroit Diesel / Volvo / PACCAR MX 都還沒類似平台。
+(3) <strong>1500+ active utility 牌照</strong>：北美州級 / 聯邦 / 國際 emission compliance certificates。
+品牌價值：CMI 在重型運輸 fleet 中等同「reliability standard」，但 OEM 端 dual-source 結構稀釋了 brand premium。</p>
+
+<h4>轉換成本</h4>
+<p>客戶更換競品的真實摩擦：對 fleet operator（end customer），切換不同 engine make 涉及（a）service network 重新培訓技師（$3-5K/廠 × N 廠）；（b）spare parts inventory 重組（$50K-200K/廠）；（c）warranty 條款重新談判；（d）driver retraining。整體切換成本 $500K-$2M / 中型 fleet 規模（50-100 trucks），對應 2-3 年 ROI 才能 break even。對 OEM 客戶（PACCAR / Daimler / Volvo），切換成本更高（每個新 engine spec 需要 6-12 個月 vehicle integration + 18 個月 EPA homologation）。</p>
+
+<h4>規模優勢</h4>
+<p>具體數字：CMI 年產 ~600K engines + 大型 backup gen units，Rev $34B；對手 Detroit Diesel ~250K units / Daimler，Cummins 是 NA 最大獨立 engine maker；單位成本估比 Detroit Diesel 低 8-12%（規模 + 採購 + R&D 攤提）；競爭對手要追上需投入 $5-8B 累積 capex + 5-8 年 ramp，且 R&D 折舊也要重攤。</p>
+
+<h3>競爭鴻溝（v12.3：具體 mechanism）</h3>
+<p>為什麼資本充足的對手仍無法跨越？</p>
+<ul>
+<li><strong>時間壁壘</strong>：EPA / CARB / Euro VI 每個代際 certification 需 18-24 個月 EPA review + 3-5 年研發 ramp；CMI 持續每代都提早 12-18 個月 ready（2027 已經 ready）— 新進者每代都 lag 至少 12 個月</li>
+<li><strong>資本壁壘</strong>：需要 $5-8B 累積 capex（R&D + 廠 + service infrastructure）+ Meritor 等 drivetrain integration（再 $3-5B）；總計 $10B+ 才能對 CMI 在 NA 重卡端構成挑戰</li>
+<li><strong>認證壁壘</strong>：每個排放代際的 OEM design-in 需 6-12 個月（PACCAR / Daimler 不會輕易加入新供應商，因為意味降低 platform 統一性）；且 CMI 是少數可以同時提供 Diesel + Nat Gas + Hydrogen 多燃料路徑的 single supplier</li>
+</ul>
+
+<h3>市佔競爭表（v12.3：sourced 數字）</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰（sourced 數字）</th></tr>
+<tr><td>Caterpillar (CAT)</td><td>Power Systems 高功率段 30-35% / Engine 重型 工程機械 強</td><td>穩定</td><td>數據中心 backup gen 直接競爭</td><td>2024-25 數據顯示 CMI Power Systems +19% vs CAT Energy & Transportation 段 +9%，CMI 在 NA &gt;2MW backup gen segment 拉開 2-3pp 市佔（35% vs CAT 32%）</td></tr>
+<tr><td>Detroit Diesel (Daimler)</td><td>NA Class 8 自家平台 ~35% Daimler 內部 + 部分外賣</td><td>持平 / 略升</td><td>Daimler 內部 captive，限制 CMI 在 Daimler 客戶的份額</td><td>Daimler 已 in-house 大部分產量，CMI 僅佔 Daimler 大功率 ~10-15% second-source</td></tr>
+<tr><td>Volvo Powertrain</td><td>Volvo / Mack 內部 captive ~80%</td><td>持平</td><td>同上 captive</td><td>CMI 在 Volvo NA 客戶占比 small (&lt; 10%)</td></tr>
+<tr><td>PACCAR MX</td><td>PACCAR 自家 9-13L 段 ~50-60%（小馬力）</td><td>擴張</td><td>PACCAR 持續擴張 MX-13 至大馬力，可能侵蝕 X15 sole-source 地位</td><td>FY22 PACCAR X15 attach rate ~70% → FY25 ~55%（dual-track 進展中）</td></tr>
+<tr><td>Generac Holdings</td><td>sub-1MW residential / commercial backup 主導</td><td>穩定</td><td>Generac focus on 小型，不直接競爭 hyperscaler segment</td><td>不同 segment</td></tr>
+<tr><td>Rolls-Royce / MTU</td><td>歐洲高功率 backup gen + 海事 strong</td><td>穩定</td><td>歐洲市場主要威脅，NA market share &lt; 10%</td><td>NA &gt;2MW segment 中 R-R / MTU 合計 15-20%</td></tr>
+</table>
+
+<h3>QC-23 競爭威脅 3 級分類（v12.3 強制）</h3>
+<table>
+<tr><th>等級</th><th>定義</th><th>具體事件 + 機率</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>單一產品 vs 單一產品（幾 %p 市佔影響）</td><td>(1) Generac 推 1.5-2MW backup gen 進入 small data center 段（已現，影響有限，2-3pp NA 市佔 risk）；(2) PACCAR MX-13 大馬力擴張（2026-2028，可能蠶食 X15 attach rate 2-3pp / 年）— 機率 60-70%</td><td>護城河不扣分</td></tr>
+<tr><td>🔴 生態攻擊</td><td>對手推全棧方案、聯盟、多代合約綁定</td><td>(1) Caterpillar + Microsoft / Amazon 五年多世代 backup gen exclusive agreement — 目前無證據但 2027-2028 monitoring；機率 15-20%；(2) Detroit Diesel + Daimler push to lock-in eActros + DT12 fleet exclusivity — 已部分進行</td><td>若 (1) 發生 → 護城河 −1 分</td></tr>
+<tr><td>⛔ 架構替代</td><td>客戶架構層級切換（例如完全換供應商）</td><td>(1) SMR 取代 backup gen — 2030+ 才可能發生，當前機率 8-12%；(2) Hydrogen FC truck 大量取代 diesel Class 8（2030-2035，機率 20-30%）；(3) BEV Class 8 NA 滲透率 突破 25% 至 2030 — 機率 25-30%</td><td>若任一 (1)-(3) 顯著發生 → 護城河 −2 分，§1 陷阱重評</td></tr>
+</table>
+
+<h3>護城河趨勢（v12.3：雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+<tr><td><strong>Execution Moat 趨勢</strong></td><td>加深</td><td>HELM 平台推出（2024）+ X10 / X15 EPA 2027 提早合規 + Power Systems 段 EBITDA margin 從 17% 升至 29.5%（規模 + 製造工藝 + 對 hyperscaler 客製能力強化）</td></tr>
+<tr><td><strong>Pricing Power Moat 趨勢</strong></td><td>穩定</td><td>PACCAR MX-13 dual-track 進展中（負面）vs Power Systems 段大型 backup gen 寡頭定價力強化（正面），淨效果穩定；CMI Engine ASP YoY 仍 +1-2% 區間</td></tr>
+</table>
+
+<p><strong>24 個月內最可能瓦解護城河的變化</strong>（按 QC-23 三級分類排序）：</p>
+<ol>
+<li><strong>🟡 點對點</strong>：PACCAR MX-13 大馬力擴張持續（X15 attach rate 從 55% 降至 45% 內 24 個月）— 機率 60-70%</li>
+<li><strong>🔴 生態攻擊</strong>：Microsoft / Amazon 與 CAT 簽多年 multi-platform exclusive — 機率 15-20%</li>
+<li><strong>⛔ 架構替代</strong>：BEV Class 8 NA 滲透率突破 10%（CMI Accelera 落後 Daimler eActros / Volvo VNR Electric / Tesla Semi）— 機率 20-25% in 24 個月</li>
+</ol>
+
+</section>
+
+<section id="s10">
+<h2>§10｜財務品質監測（v12.3 擴：同業對比 + 回購剔除後 EPS CAGR + FCF lumpiness）</h2>
+
+<h3>三年趨勢表（v12.3：強制加同業對比欄）</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>同業中位數（PCAR / CAT / Wabtec）</th><th>相對評估</th></tr>
+<tr><td>FCF Margin</td><td>8.1%</td><td>4.8%</td><td>~5.5%</td><td>~7-10%（PCAR 9% / CAT 11% / Wabtec 13%）</td><td class="warn">劣（CMI 低於同業中位數，因 Meritor 整合 + 數據中心擴產 capex）</td></tr>
+<tr><td>EBITDA Margin</td><td>15.2%</td><td>16.0%</td><td>16.3%</td><td>~15-18%（PCAR 14% / CAT 22% / Wabtec 18%）</td><td class="warn">平（中等，CAT 明顯領先）</td></tr>
+<tr><td>ROIC - WACC（超額）</td><td>~2-3%</td><td>~5-6%</td><td>~6.8%</td><td>~5-8%</td><td class="pass">平</td></tr>
+<tr><td>SBC / Revenue</td><td>~1.4%</td><td>~1.5%</td><td>~1.5%</td><td>~1-2%</td><td class="pass">平（低）</td></tr>
+<tr><td>ROE</td><td>5%（深度被 Russia 影響）</td><td>32%</td><td>22.96%</td><td>~18-25%</td><td class="pass">平偏優</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<tr><th>項目</th><th>觀察</th><th>結論</th></tr>
+<tr><td>淨利 vs OCF 連動性</td><td>FY23 NI $735M vs OCF $3.97B（NI 偏低 — Russia 撤退、Accelera 重組）；FY24 NI $3.95B vs OCF $2.84B（NI 含 $1.3B Atmus 一次性正向）；FY25 NI $2.84B vs OCF ~$2.8B（合理對齊）</td><td>FY23-24 受 one-time 大幅扭曲；FY25 normalize 後合理連動</td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>AR 與 Rev 同步，未見異常膨脹</td><td>正常</td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>FY25 inventory turn ~5x（穩定），未見異常累積</td><td>正常</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>FY23 3.74（distorted）→ FY24 0.42（distorted）→ FY25 ~0.7 → FY26E ~0.65-0.75（normalize 後）</td><td>結構性 0.65-0.75 區間，較同業 PCAR 0.9+ 偏低</td></tr>
+</table>
+
+<h3>回購品質評估（v12.3：剔除回購後 EPS CAGR 必算）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF 總額</td><td>FY23-25 累積回購 ~$2.5B vs FCF 累積 ~$5.5B；回購 / FCF = 45%</td><td>合理（&lt; 80% 警示線）</td></tr>
+<tr><td>剔除回購後 EPS CAGR（v12.3 必算）</td><td>原 GAAP CAGR 20.7%（FY25→FY28E）；3 年回購 ~$2.5B 對應 ~5M 股 retire，influence ~3% EPS 增量。剔除後 GAAP CAGR ~17.7%（差距 3pp，小於 5pp 警示閾值）</td><td class="pass">正常（差距 &lt; 5pp）</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>FY23-25 平均回購價估 $280-450 vs 當前 $696 — <strong>低於</strong>當前股價</td><td>歷史回購均價較低，資本配置合理</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>FY22-25 Rev CAGR -1%（受 Atmus spinoff 影響）；normalize Rev CAGR ~3-4%</td><td>EPS 成長 mainly from margin expansion + Power Systems mix shift，非純 buyback engineering</td></tr>
+</table>
+
+<h3>FCF lumpiness 評估（v12.3 新增）</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 5 年 FCF 各年值</td><td>FY21 $1.85B / FY22 $1.05B / FY23 $2.75B / FY24 $1.65B / FY25 ~$1.8B</td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>$1.82B</td></tr>
+<tr><td>最低谷年份 + FCF</td><td>FY22 $1.05B（占 5Y 均的 58%）— Meritor 收購首年 + working capital build</td></tr>
+<tr><td>Lumpiness 性質判斷</td><td>業務天然週期性（NA truck cycle + Engine 訂單 lumpy）+ 一次性大型併購（Meritor）影響</td></tr>
+<tr><td>結論</td><td>🟡 需關注低谷頻率 — 5 年 1 次 &lt; 60% 5Y 均；數據中心 backup gen 訂單 lumpy（大型 hyperscaler $100M+ orders）也是因素之一</td></tr>
+</table>
+
+</section>
+
+<section id="s11">
+<h2>§11｜產業格局（v12.3 大擴）</h2>
+
+<h3>市場量化</h3>
+<table>
+<tr><th>市場段</th><th>當前 TAM</th><th>5Y TAM</th><th>10Y TAM</th><th>CAGR</th><th>當前滲透率</th><th>供需狀態</th></tr>
+<tr><td>數據中心 backup gen（NA + global）</td><td>$8.4B (2024)</td><td>$19.7B (2030)</td><td>$25-30B (2034E)</td><td>15.2% (Grand View Research)</td><td>數據中心新建 backup gen 滲透率 100%</td><td>緊缺 — backup gen 廠 lead time 18-24 個月</td></tr>
+<tr><td>NA Class 8 truck engine</td><td>~$12B</td><td>~$10B</td><td>~$8B</td><td>-1%</td><td>~95%（reach mature）</td><td>循環 — 2026 H2-27 H1 prebuy peak，2027-28 反噬</td></tr>
+<tr><td>全球 medium-duty truck</td><td>~$6B</td><td>~$7B</td><td>~$8B</td><td>+3%</td><td>~80%</td><td>穩定成長</td></tr>
+<tr><td>Distribution（aftermarket parts/service）</td><td>~$12B</td><td>~$15B</td><td>~$20B</td><td>+4-5%</td><td>n/a (recurring)</td><td>結構性穩定 + AI / 老舊基礎建設 maintenance 需求</td></tr>
+<tr><td>新能源 powertrain（BEV / FC for trucks）</td><td>~$0.5B（CMI Accelera）</td><td>~$2-3B</td><td>~$10-15B</td><td>+30% (volatile)</td><td>NA Class 8 BEV &lt;2% 滲透率</td><td>政策 + 技術不確定性高</td></tr>
+</table>
+
+<h3>議價權三段獨立寫（v12.3：各 ≥ 60 字）</h3>
+
+<h4>①對上游供應商（獨立段）</h4>
+<p>CMI 供應鏈集中度中等：核心 forging（曲軸 + 連桿）+ machined castings 依賴少數專業廠（如 Linamar、AAM），但 CMI 自身亦有部分 in-house 鑄造能力；半導體 / 後處理感測器在 2021-2023 短缺期間揭露 CMI 在 ECU + emission sensor 依賴 STMicro / Bosch / Infineon。近 3 年議價案例：2022-23 半導體短缺期間，CMI 不得不接受供應商 5-15% 漲價；2024-25 隨供應緩解，CMI 重啟 supplier consolidation 議價（具體 supplier 集中度 / 採購結構未公開揭露，但管理層提到 procurement leverage 強化）。Top 3 供應商佔採購估 &lt; 30%（屬合理水平），切換成本 6-12 個月（屬中等）。</p>
+
+<h4>②對下游客戶（獨立段）</h4>
+<p>客戶集中度 Top 5 ~30-35%（引用 §8.H）— PACCAR ~12-14%、Daimler / Volvo / Navistar / hyperscaler 各 5-10%；合約結構為 OEM long-term supply agreement（5-10 年 spec lock-in），但無 fixed 最低採購量條款，OEM 可隨車型變化調整 source 比例。近 3 年客戶流失 case：Daimler 持續 in-house captive 推進，CMI 從 Daimler NA 大功率 ~25% 降至 ~15%；近期反向 case — PACCAR 對 X15 sole-source 但 attach rate 從 70% 降至 55%（dual-track）。定價能力的直接證據：CMI ASP YoY +1-4%（過去 5 年），低於 industrial 行業中位 +3-5%；提價後客戶留存率穩定（無大量流失），但 PACCAR / Daimler 對 CMI 提價 push back 強度大。Power Systems 段 hyperscaler 客戶定價力強（CMI / CAT 雙寡頭），近 3 年 ASP YoY +5-8%，反映 backup gen 供不應求。</p>
+
+<h4>③地緣曝險（獨立段）</h4>
+<p>核心生產地：NA（Indiana 總部 + 多廠）佔 ~55%、印度 ~12%、中國 ~10%、英國 ~8%、巴西 ~5%、其他 ~10%。Russia 業務已於 2022 H2 撤退（impairment $0.6B）。供應鏈最高集中點：半導體 ECU 美國 / 歐洲 / 台灣（TSMC）共同供應；rare earth metals（永磁電機 — Accelera 段）中國 80%+ 集中是長期 risk。政策風險具體路徑：(1) 中國 30 多家 JV 廠（如東風康明斯）若中美緊張升級恐影響海外 Rev ~10%；(2) EPA 2027 / CARB ACT 法規對 ICE business 是 net negative 但對 CMI HELM 領先合規帶來 share gain 機會；(3) DOI 燃料電池 / hydrogen 補貼若取消（白宮政策不確定），Accelera path 受負面影響。分散化措施：CMI 已在墨西哥 / 印度增設 production capacity，2026-27 計劃進一步擴大 nearshoring。</p>
+
+<h3>營收組成（v12.3 三維展開）</h3>
+
+<h4>① 按業務段（FY25 base，含 Q1 26 modifier）</h4>
+<table>
+<tr><th>業務段</th><th>FY25 Rev 占比</th><th>Q1 26 YoY%</th><th>EBITDA Margin (Q1 26)</th><th>3Y 軌跡（占比趨勢）</th></tr>
+<tr><td>Engine</td><td>~31%</td><td>-4%</td><td>10.4%</td><td>FY23 35% → FY24 33% → FY25 31% → trend 縮小（mix shift to Power Systems）</td></tr>
+<tr><td>Components</td><td>~24%</td><td>-5%</td><td>~12%</td><td>FY23 23% → FY24 24% → FY25 24% → 穩定（Meritor 整合貢獻）</td></tr>
+<tr><td>Distribution</td><td>~34%</td><td>+7%</td><td>~10%</td><td>FY23 32% → FY24 33% → FY25 34% → 緩慢擴大</td></tr>
+<tr><td>Power Systems</td><td>~21%</td><td>+19%</td><td>29.5%（12 年新高）</td><td>FY23 17% → FY24 19% → FY25 21% → 結構性擴大（最大 thesis driver）</td></tr>
+<tr><td>Accelera</td><td>~1.2%</td><td>+12% but EBITDA -$277M</td><td>-274%（含 $199M divestiture）</td><td>FY23 0.9% → FY24 1.1% → FY25 1.2% → 緩慢擴大但仍小</td></tr>
+</table>
+
+<h4>② 按地區（FY25 base）</h4>
+<table>
+<tr><th>地區</th><th>Rev 占比</th><th>YoY (FY25)</th><th>監管 / 地緣備註</th></tr>
+<tr><td>North America</td><td>~62%</td><td>-2%</td><td>EPA 2027 規範 + IRA 補貼；地緣 risk 低</td></tr>
+<tr><td>China</td><td>~10%</td><td>+5%</td><td>Foton / Dongfeng JV；中美緊張可能影響 export</td></tr>
+<tr><td>India</td><td>~8%</td><td>+12%</td><td>strong infrastructure demand；CMI 為 dominant supplier</td></tr>
+<tr><td>Europe + UK</td><td>~10%</td><td>-3%</td><td>Euro VII 法規 + EU Green Deal；BEV 滲透高</td></tr>
+<tr><td>Brazil / LATAM</td><td>~5%</td><td>+8%</td><td>農業 + 礦業 driver；BRL 匯率風險</td></tr>
+<tr><td>Other</td><td>~5%</td><td>-</td><td>-</td></tr>
+</table>
+
+<h4>③ 按客戶集中度（FY25 base）</h4>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 客戶（PACCAR）占比%</td><td>~12-14%</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>~30-35%</td></tr>
+<tr><td>失去最大客戶影響（PACCAR 占 ~13% Rev，若 X15 attach rate 從 55% 跌至 25% → Rev -3.5%）</td><td>對 Engine 段影響 ~10%；對總 Rev 影響 ~3-4%</td></tr>
+</table>
+
+<h3>單位經濟（v12.3：逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th><th>趨勢</th><th>結構性洞察</th></tr>
+<tr><td>Engine</td><td>ASP per Engine（重型）+ unit gross profit</td><td>ASP ~$30K-50K；unit GP ~$8-15K</td><td>ASP →；unit GP ↗（Mix 上移）</td><td>HELM 升級可進一步擴大 unit GP（X15 vs 舊 X15 ~$2K 較高）</td></tr>
+<tr><td>Components</td><td>Avg ASP per axle / brake set（含 Meritor）</td><td>$4K-15K per drivetrain unit</td><td>→</td><td>整合 axle + brake + e-drive 提供 cross-sell 機會</td></tr>
+<tr><td>Distribution</td><td>Service revenue per installed engine</td><td>$1K-3K / 年 / engine</td><td>↗（installed base 老化 + service penetration）</td><td>recurring + high-margin（毛利 25%+），結構性現金流引擎</td></tr>
+<tr><td>Power Systems</td><td>ASP per generator unit（&gt;2MW）</td><td>$500K-$2M per unit</td><td>↗ +5-8% YoY</td><td>大型 unit 規模放大 + 寡頭 pricing 持續強化</td></tr>
+<tr><td>Accelera</td><td>BEV powertrain ASP + FC stack ASP</td><td>$80K-150K per BEV unit; FC $500K+ per system</td><td>n/a（小量）</td><td>scale 不足，unit economics 仍 negative；2028-30 期望達 break-even</td></tr>
+</table>
+
+</section>
+
+<section id="s12">
+<h2>§12｜公司治理與資本配置（v12.3 強化）</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li><strong>創辦人持股</strong>：Cummins 家族已大多退出；無 dual-class 投票權結構 — 一股一票</li>
+<li><strong>機構持股</strong>：~85%（Vanguard、BlackRock、State Street 為 top 3 機構）</li>
+<li><strong>內部人持股</strong>：~0.2-0.3%（低，符合大型 industrial 公司常態）</li>
+</ul>
+
+<h3>近 12 個月內部人交易（QC-6 + QC-19 強制）</h3>
+<table>
+<tr><th>日期</th><th>內部人</th><th>類型</th><th>數量 + 金額</th></tr>
+<tr><td>2026-05-14</td><td>VP Donald G. Jackson</td><td>賣出</td><td>730 股 @ $710-713 = ~$520K</td></tr>
+<tr><td>2026-05-12</td><td>VP & President - Power Systems Jennifer Bush</td><td>賣出</td><td>5,000 股 @ $694-699 = ~$3.5M</td></tr>
+<tr><td>2026-05-12</td><td>VP - China ABO Nathan Stoner</td><td>gift（無對價）</td><td>600 股</td></tr>
+<tr><td>2026-03-03</td><td>VP Davis</td><td>賣出</td><td>多筆 @ $560-566 = ~$2.27M</td></tr>
+</table>
+
+<p>過去 60 天統計：6 筆 open-market 賣出 + 1 gift + <strong>0 筆 open-market 買入</strong>，總賣出金額 ~$2.27M（含 Power Systems 總裁 Bush 在最高價區的 $3.5M 賣出）— <strong>方向密度高、時點集中於最高價區的負向訊號</strong>。需在 §1 / §5 監測指標清單持續追蹤。</p>
+
+<h3>資本配置軌跡（v12.3 強化 — 5 年 M&A track record）</h3>
+<table>
+<tr><th>年份</th><th>被收購方 / capital allocation event</th><th>金額（$M）</th><th>整合結果</th><th>減損紀錄</th></tr>
+<tr><td>2022-08</td><td>Meritor Inc.</td><td>$3,700M</td><td>整合進 Components 段；$130M synergy run-rate（達標）；axle / brake 平台補強；e-drive 為 Accelera 提供 hedge</td><td>無減損</td></tr>
+<tr><td>2023-03</td><td>Atmus Filtration（spin-off）</td><td>分拆 + $1.3B gain</td><td>聚焦核心業務；Atmus 獨立後表現穩定</td><td>無</td></tr>
+<tr><td>2022-Q2</td><td>Russia 業務撤退</td><td>impairment $585M</td><td>受地緣衝擊，被迫撤退；策略性 sound decision</td><td>$585M（一次性 charge）</td></tr>
+<tr><td>2024-2025</td><td>Accelera 重組（fuel cell + battery 重新聚焦）</td><td>$200-300M restructure</td><td>持續執行；聚焦 high-pressure FC + battery</td><td>$199M（FY26 Q1 低壓 FC divestiture charge）</td></tr>
+<tr><td>2024-now</td><td>$2B 股票回購（authorized）</td><td>~$1.0B executed</td><td>正在執行；FY26 Q1 buyback $310M</td><td>-</td></tr>
+<tr><td>連年</td><td>21 年股息連續增長（包括 FY26 Q1 +10% 至 $2.00/季）</td><td>~$840M/年</td><td>資本配置承諾紀律強</td><td>-</td></tr>
+</table>
+
+<p>過去 5 年無 &gt;$5B 級併購；Meritor $3.7B 屬大型但低於市值 5%（FY22 市值 ~$30B，~12%）— 但已成功整合。</p>
+
+<h3>管理層薪酬結構（QC-6 項目 3）</h3>
+<ul>
+<li><strong>固定薪</strong>：CEO Jennifer Rumsey base ~$1.1M（FY24 proxy）</li>
+<li><strong>績效獎金（短期）</strong>：based on EBITDA + EPS + 現金管理 KPI；FY24 ~150% target</li>
+<li><strong>股權激勵（長期）</strong>：RSU + PSU mix，3 年 vesting；PSU 與 ROIC + TSR 對標掛鉤</li>
+<li>整體 mix：fixed 約 25% / variable 約 75%（incl. equity）— industrial 行業合理水平，executive 與 shareholder interest 對齊</li>
+</ul>
+
+<h3>SBC 真實稀釋（v12.3 強化必算）</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Revenue（近 3 年）</td><td>FY23: ~1.4% / FY24: ~1.5% / FY25: ~1.5%</td></tr>
+<tr><td>GAAP EPS（FY25 reported）</td><td>$20.50</td></tr>
+<tr><td>Non-GAAP EPS（FY25 adj.）</td><td>$20.50（CMI 不另列 Non-GAAP 與 GAAP 大差距，因為 SBC 在 GAAP 已費用化且絕對值低）</td></tr>
+<tr><td>差距（SBC + 其他 non-GAAP 調整）</td><td>~$0-1（極低，CMI 為「GAAP-friendly」公司）</td></tr>
+<tr><td>剔除 SBC 後 EPS CAGR</td><td>GAAP CAGR 20.7% vs SBC-adj CAGR ~20.5%（差距 0.2pp，遠小於 5pp 警示）</td></tr>
+</table>
+
+<p class="pass"><strong>判斷</strong>：SBC 稀釋極低，GAAP 與 Adj 差距小，<strong>無 SBC 操縱 EPS 嫌疑</strong>，獲利品質清晰。</p>
+
+</section>
+
+<section id="s13">
+<h2>§13｜估值診斷（v12.3 大瘦：只留 13.1 / 13.2 / 13.4 + 1 段結論）</h2>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5Y 低點</th><th>5Y 中位</th><th>5Y 高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>~34x（含 Atmus + Russia distortion）</td><td>~9x（FY22 trough）</td><td>~17x</td><td>~35x（FY24 post Atmus gain）</td><td>~95%（distorted）</td></tr>
+<tr><td>Forward P/E (NTM / FY+1)</td><td>26.3x</td><td>~12x</td><td>~17-18x</td><td>~25-28x</td><td><strong>~89%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>~17x</td><td>~8x</td><td>~12x</td><td>~16x</td><td>~85%</td></tr>
+<tr><td>P/FCF</td><td>~48x（受 lumpy FCF）</td><td>~10x</td><td>~15x</td><td>~50x</td><td>n/a</td></tr>
+<tr><td>P/S</td><td>~2.8x</td><td>~0.9x</td><td>~1.4x</td><td>~3.0x</td><td>~95%</td></tr>
+</table>
+
+<p><strong>解讀</strong>：當前估值情緒 <strong>過熱</strong>（Fwd PE 分位 89%、EV/EBITDA 分位 85%、P/S 分位 95%）。與 5Y 同分位時的業務基本面差異 — 上次接近 90% 分位是 2021 H1（疫情後重啟），當時 Power Systems 段尚未達當前 mix 24% / EBITDA margin 29.5% 結構性 anchor；當前的「高分位」確有結構性 mix shift 支撐，但仍透支了未來 12-18M 的 mix shift execution。</p>
+<div class="reasoning">
+輸入：當前 Fwd PE 26.3x ÷ 5Y 範圍 (12-28) → 分位 (26.3-12)/(28-12) = 89%
+計算：分位 &gt; 85% 為 🔴 過熱；EV/EBITDA + P/S 三項分位皆 ≥ 85%，共同確認 over-valuation
+→ §2 D 估值燈 🔴 + §1 dashboard 引用：估值過熱主導，thesis 完整時落 B 觀望
+</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E (FY+1)</td><td>26.3x</td><td>-</td><td>-</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年，§7）</td><td>20.7% (GAAP) / 24.9% (normalized)</td><td>-</td><td>-</td></tr>
+<tr><td>PEG（Non-GAAP，3 年）</td><td>1.27 (GAAP base) / 1.06 (normalized base)</td><td>&lt; 1.0 便宜 / 1-2 合理 / &gt; 2 貴</td><td>合理區下緣（介於便宜與合理交界）</td></tr>
+<tr><td>PEG（GAAP，3 年）</td><td>1.27</td><td>同上</td><td>合理</td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td>~12-15%（FY28 後增速放緩）</td><td>-</td><td>5 年視角增速放緩</td></tr>
+<tr><td>PEG（5 年）</td><td>~1.9x</td><td>-</td><td>合理區上緣</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>1.27 vs 1.9 = +0.6 差距</td><td>差距大 = 近期成長不可持續</td><td>顯著 — 近 3 年成長率高度依賴 Power Systems super-cycle，未來 5 年難維持</td></tr>
+</table>
+
+<p><strong>解讀</strong>：PEG 1.27 落於合理區，但 5Y PEG 1.9 顯示成長率將顯著放緩；單看 PEG 估值不算極端，但 PE 分位 89% 主導下取較嚴 → 🔴。implication to §2 D：估值燈維持 🔴 過熱 + 盲點 1 不救（§8 為 🟡 中等可見度而非 🟢）。</p>
+
+<div class="reasoning">
+輸入：Fwd PE 26.3x ÷ 3Y CAGR 20.7% = 1.27（GAAP base）；Fwd PE 26.3x ÷ 5Y CAGR 13% = 2.02（接近 2.0 上緣）
+計算：PEG 矩陣落點 — 3Y 合理 / 5Y 略貴；3Y vs 5Y 差距大反映 Power Systems super-cycle 成長不可外推
+→ §2 D 估值燈：PEG 不獨立觸發 🔴，但 PE 分位 89% 主導；綜合判 🔴
+</div>
+
+<h3>13.4｜同業估值比較（v12.3：強制 peer group 對的 tier）</h3>
+
+<h4>本標的業務模式 tier 判斷</h4>
+<table>
+<tr><th>業務模式 tier</th><th>典型公司</th><th>本標的</th></tr>
+<tr><td>Diversified industrial machinery（Engine + Power + Distribution 多元）</td><td>Caterpillar (CAT)、Cummins (CMI)、Atlas Copco</td><td>✅ CMI 屬此 tier</td></tr>
+<tr><td>Truck OEM（pure truck assembly）</td><td>PACCAR (PCAR)、Daimler Truck、Volvo Group</td><td>近鄰但非同 tier — PCAR 為 truck OEM，CMI 為 component supplier</td></tr>
+<tr><td>Backup power specialist</td><td>Generac (GNRC)、Rolls-Royce Power Systems</td><td>近鄰但 Generac focus on residential / sub-1MW，不同段</td></tr>
+</table>
+
+<p>本標的業務模式 tier：<strong>Diversified industrial machinery</strong>（與 CAT 為直接 peer；PCAR / GNRC 為 cross-segment 參考）</p>
+
+<h4>同業估值比較表（FY26E 共識）</h4>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3 年）</th><th>ROIC</th></tr>
+<tr><td><strong>CMI（本標的）</strong></td><td>$95.5B</td><td>26.3x</td><td>17x</td><td>1.27</td><td>~5.5%</td><td>20.7%</td><td>15.8%</td></tr>
+<tr><td>CAT（同 tier）</td><td>$165B</td><td>~21-22x</td><td>~14x</td><td>1.5</td><td>11%</td><td>~14%</td><td>22%</td></tr>
+<tr><td>PCAR（近鄰）</td><td>~$58B</td><td>23.3x</td><td>~14x</td><td>1.5</td><td>9%</td><td>~15%</td><td>17%</td></tr>
+<tr><td>GNRC（近鄰）</td><td>~$11B</td><td>~19x</td><td>~13x</td><td>1.2</td><td>12%</td><td>~16%</td><td>13%</td></tr>
+<tr><td>Wabtec (WAB)（cross-segment）</td><td>~$33B</td><td>~24x</td><td>~14x</td><td>1.4</td><td>13%</td><td>~17%</td><td>~9%</td></tr>
+<tr><td>同 tier 中位數</td><td>-</td><td>21x</td><td>14x</td><td>1.5</td><td>10%</td><td>15%</td><td>20%</td></tr>
+</table>
+
+<p><strong>解讀</strong>：CMI Forward PE 26.3x vs CAT 21-22x = <strong>溢價 +20-25%</strong>；vs PCAR 23.3x = 溢價 +13%；vs 同 tier 中位數 21x = 溢價 +25%。溢價基礎是 Power Systems 段 EBITDA margin 29.5% &gt; CAT industrial margin 22% — 但 mix 僅 24% Rev，CAT industrial 段 mix 約 40%；mix 加權後 CMI 並未顯著優於 CAT。若估值向 tier 中位數均值回歸（CMI Fwd PE 21x），股價 = $26.44 × 21 = $555（vs 當前 $696 為 -20%）。implication to §2 D：估值燈 🔴 不變；§1 dashboard 引用此 mean reversion 風險。</p>
+
+<div class="reasoning">
+輸入：CMI Fwd PE 26.3x vs 同 tier 中位 21x = 溢價 +25%；CAT 21-22x，PCAR 23.3x
+計算：mix 加權後（CMI Power Systems 24% × 29.5% margin + Engine 等 76% × 13% margin = blended 17.4%；vs CAT industrial 40% × 22% + 其他 60% × 18% = blended 19.6%）— CMI 並未顯著優於 CAT，溢價無基本面支撐
+→ §2 D / H：估值燈 🔴 維持；mean reversion 風險為 -20%（至 $555 區）
+</div>
+
+<h3>§13 估值診斷結論（1 段）</h3>
+<p>13.1 歷史分位 89%（情緒：過熱） + 13.2 PEG 1.27（3Y 合理 / 5Y 1.9 偏貴，3Y vs 5Y 差距大顯示成長不可外推） + 13.4 同業相對溢價 +25%（無基本面支撐） → 綜合估值訊號：<strong>🔴 明顯貴</strong>。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+
+<p><strong>分析師目標價參考</strong>（n=14, 2026-05 update）：</p>
+<ul>
+<li>高 $845 / 中位 $640 / 低 $520（平均 ~$721）</li>
+<li>同意中位 $640（vs 當前 $696 為 -8%）— 同意分析師認為 NA truck pre-buy + Power Systems super-cycle 已大部分 priced in；分歧點：少數 bull 認為 Power Systems mix shift 可推升至 30%+ 並支撐 $850+，少數 bear 認為 2027 pull-forward 反噬 + 估值 mean reversion 將至 $520 區。</li>
+</ul>
+
+<h3>投資結論（精簡財報校準段，完整裁決在 §1）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態</strong>：強化（Q1 26 Power Systems +19% / 29.5% margin 超越假設下限 +15% / &gt;25% margin）</li>
+<li><strong>H2 當前狀態</strong>：中性偏正（NA Class 8 訂單 +159% YoY 為強訊號，但 Engine 段 Q1 26 -4% YoY 反映 pre-buy 尚未完全 flow through）</li>
+<li><strong>H3 當前狀態</strong>：強化（EBITDA margin guidance raised +0.75pp 至 17.75-18.50%）</li>
+<li><strong>這份財報讓隱含預期變得更困難兌現</strong>，理由是：guidance 上修但市場已 priced in，現價 $696 對應 FY26 EPS 上限 guidance $28，Fwd PE 24.9x（隱含成長 22%+），即使 H1 / H2 / H3 全達標也僅維持估值不漲</li>
+</ul>
+
+<h4>綜合訊號輸出（v12.0：引用 §2 H 訊號燈，不輸出倉位 %）</h4>
+<ul>
+<li>護城河等級：B → 調整後：B</li>
+<li>估值燈：🔴 過熱（判定依據：Fwd PE 5Y 分位 89%，PEG 1.27）</li>
+<li>Pure MA 狀態：✅ 強勢進場（stretched，+37% above W52 SMA）</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：B（觀望）</strong>（取自 §2 H）</li>
+<li>中期參考 R:R：-0.01x（資訊性，不主導裁決）</li>
+<li>訊號語意：B = 衛星候選 / 觀望（PM 層會考慮在估值修復或基本面進一步驗證後 7-15% 衛星建倉）</li>
+<li><strong>倉位 % 決策不在本 DD 範圍</strong>，交由 portfolio-manager skill 決定</li>
+</ul>
+
+<h4>短期信號（0-12 個月）</h4>
+<p>當前財報 + Guidance 信號支撐 thesis 整體方向（H1 / H3 強化），但估值已透支未來 12-18M 上行空間；R:R 短期負（-0.49x）反映現價 $696 已超過 FY26 reasonable target $529 區間。</p>
+
+<h4>中期成長確信度（1-2 年）</h4>
+<p>FY+1 / FY+2 EPS 共識的驅動因素：H1 27 NA truck pre-buy peak（量驅動）+ Power Systems 持續 super-cycle（定價 + 量驅動）+ Components Meritor synergy 完整化（margin 驅動）；能見度中等（因 2027 EPA prebuy 後反噬不確定性）；引用 §8 B 結論。</p>
+
+<h4>長期持有信心（3-5 年）</h4>
+<p>成長跑道：7-10 年（Power Systems 段 ~10 年 / Engine 段 5-7 年）；護城河趨勢：Execution 加深 / Pricing 穩定 → 綜合穩定偏加深；長期持有信心：<strong>中</strong>。</p>
+
+<h4>下行風險量化（引用 §2 E Bear Case）</h4>
+<ul>
+<li>短期下檔（Bear Case）：現價 $696 至 $357 的距離為 <strong>-48.7%</strong></li>
+<li>中期下檔（Bear Case）：同上 $357</li>
+<li>W52 Low $307.91（參考）/ W104 Low ~$210（參考）</li>
+<li>若 FY+1 EPS 下修 10%（至 $23.80），短期 R:R 將降至 -0.83x（從 -0.49x 進一步惡化）— 估值對 EPS 下修高度敏感</li>
+</ul>
+
+</section>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "CMI",
+  "company_name": "Cummins Inc.",
+  "schema": "v12.3",
+  "date": "2026-05-18",
+  "inception_date": "2026-05-18",
+  "next_annual_review": "2027-05-18",
+  "price_at_dd": 696.53,
+  "currency": "USD",
+  "market_cap_bn": 95.5,
+  "signal": "B",
+  "verdict": "衛星候選 / 觀望 — Power Systems data center super-cycle + EPA 2027 prebuy thesis 真實但估值已透支；建議等 Fwd PE 分位回 60% 區（~$580-620 區）或 NA Class 8 prebuy 真實流入 FY27 EPS 共識上修後再進場",
+  "trap": "🟡",
+  "trap_label": "觀察期",
+  "moat": "B",
+  "moat_score": 7.5,
+  "moat_execution": 8,
+  "moat_pricing_power": 7,
+  "quality_score": 7.5,
+  "growth_durability": 7,
+  "val": "🔴",
+  "ma": "✅",
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "fpe_fy2": 22.1,
+  "pct_5y": 89,
+  "peg_fy2": 1.27,
+  "upside_short_pct": -24,
+  "upside_mid_pct": 0,
+  "upside_5y_pct": 26,
+  "downside_short_pct": -49,
+  "stress": {"pass": 2, "total": 2},
+  "industry_wind": "🟡",
+  "growth_grade": "🟡",
+  "key_risks": [
+    "R1 EPA 2027 prebuy 反噬 (2027 H1 月訂單 <15K → Engine 段 EBITDA margin <8%)",
+    "R2 數據中心 capex pause / Power Systems 訂單 plateau (連 2 季 YoY <+10% → thesis 削弱)",
+    "R3 BEV / HFC truck 滲透率突破 + ICE TAM 萎縮 (慢變數，2-5 年)"
+  ],
+  "key_monitors": [
+    "Power Systems 季度 YoY + EBITDA margin (連 2 季 <+10% YoY 或 margin <25% 削弱)",
+    "NA Class 8 truck 月訂單 (2026 H2 月訂單 <25K 警示；2027 H1 <15K 結構反噬)",
+    "內部人交易 + 5Y Fwd PE 分位 (連 6 個月賣 >$5M + 0 buy 且 PE 分位 >90% = 估值頂訊號)"
+  ],
+  "latest_earnings": "Q1 FY26 (2026-05-05): Rev $8.4B +3% beat / GAAP EPS $4.71 miss (含 $199M 低壓 FC divestiture charge) / Adj EPS $6.15 beat 9% / Power Systems Rev $2.0B +19% / EBITDA margin 29.5% (12 年新高) / Distribution +7% / Engine -4% / Accelera loss -$277M / FY26 guidance raised Rev +8-11% / EBITDA margin 17.75-18.50%",
+  "oneliner": "Q1 26 Adj EPS $6.15 beat 9% + Power Sys +19% / margin 29.5%(12yr 新高) + EPA 2027 prebuy｜Fwd PE 26.3x／5Y 分位 89%／PEG 1.27 估值🔴｜MA✅但 +37% above W52 SMA / 12M +126% / 內部人連賣｜B級護城河 7.5/10｜衛星候選 觀望等回測"
+}
+</script>
+</main>
+<button class="print-btn" onclick="window.print()">列印 PDF</button>
+</body>
+</html>
