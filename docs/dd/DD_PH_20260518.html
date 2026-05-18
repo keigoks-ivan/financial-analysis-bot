@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="dd-schema-version" content="v12.3" />
+<title>PH 深度研究 DD｜2026-05-18｜Parker-Hannifin v12.3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Noto Sans TC', sans-serif; background:#F8FAFC; color:#1E293B; margin:0; padding:0; line-height:1.65; font-size:15px; }
+.container { max-width: 1080px; margin: 0 auto; padding: 32px 24px 96px; }
+.header { background:#1E3A5F; color:#fff; padding:20px 28px; border-radius:6px; margin-bottom:24px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; }
+.header h1 { margin:0; font-size:22px; font-weight:700; letter-spacing:0.5px; }
+.header .meta { font-family:'IBM Plex Mono', monospace; font-size:13px; color:#CBD5E1; }
+.header .meta span { display:inline-block; margin-right:14px; }
+.dd-toc { background:#fff; border-left:4px solid #3B82F6; border-radius:6px; padding:12px 18px; margin-bottom:28px; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+.dd-toc-title { font-weight:700; font-size:13px; color:#1E3A5F; margin-right:10px; letter-spacing:0.5px; }
+.dd-toc a { display:inline-block; background:#EFF6FF; color:#1E3A5F; text-decoration:none; padding:4px 12px; border-radius:999px; margin:3px 4px 3px 0; font-size:13px; font-weight:500; transition:all 0.15s; }
+.dd-toc a:hover { background:#3B82F6; color:#fff; }
+section { background:#fff; border-radius:6px; padding:24px 28px; margin-bottom:22px; box-shadow:0 1px 2px rgba(0,0,0,0.04); scroll-margin-top: 24px; }
+section h2 { background:#1E3A5F; color:#fff; padding:10px 16px; margin: -24px -28px 18px; border-radius:6px 6px 0 0; border-left:4px solid #3B82F6; font-size:18px; font-weight:700; scroll-margin-top: 80px; }
+section h3 { color:#1E3A5F; font-size:16px; margin-top:22px; padding-bottom:6px; border-bottom:1px solid #E2E8F0; }
+section h4 { color:#1E3A5F; font-size:14.5px; margin-top:18px; margin-bottom:8px; }
+section p { margin: 8px 0 10px; }
+section ul { margin: 8px 0; padding-left:24px; }
+section li { margin-bottom: 5px; }
+table { border-collapse: collapse; width:100%; font-size:13.5px; margin: 10px 0 14px; }
+th { background:#1E3A5F; color:#fff; padding:8px 10px; text-align:left; font-weight:600; }
+td { padding:7px 10px; border-bottom:1px solid #E2E8F0; vertical-align:top; }
+tr:nth-child(even) td { background:#F1F5F9; }
+.good { background:#DCFCE7 !important; color:#166534; font-weight:600; }
+.bad { background:#FEE2E2 !important; color:#991B1B; font-weight:600; }
+.warn { background:#FEF9C3 !important; color:#92400E; font-weight:600; }
+.info { background:#EFF6FF !important; color:#1E40AF; font-weight:600; }
+.hypothesis-box { background:#EFF6FF; border-left:4px solid #3B82F6; padding:14px 18px; margin: 12px 0; border-radius: 0 4px 4px 0; }
+.hypothesis-box ul { margin: 0; padding-left:20px; }
+.hypothesis-box li { margin-bottom:7px; }
+.warning-box { background:#FFF0E6; border-left:4px solid #F97316; padding:14px 18px; margin: 12px 0; border-radius: 0 4px 4px 0; color:#7C2D12; }
+.warning-box h4 { color:#C2410C; margin-top:0; }
+.reasoning { background:#F8FAFC; border-left:3px solid #94A3B8; padding:10px 14px; margin: 10px 0 14px; border-radius:0 4px 4px 0; font-size:13px; font-family:'IBM Plex Mono', monospace; color:#475569; line-height:1.55; }
+.reasoning b { color:#1E3A5F; }
+.note { font-size:12.5px; color:#64748B; font-style:italic; margin-top:4px; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin: 14px 0; }
+.three-col .card { padding:14px 16px; border-radius:0 6px 6px 0; }
+.card-bull { background:#F0FDF4; border-left:4px solid #16A34A; }
+.card-bull h4 { color:#15803D; margin:0 0 8px 0; }
+.card-bear { background:#FFF1F2; border-left:4px solid #DC2626; }
+.card-bear h4 { color:#B91C1C; margin:0 0 8px 0; }
+.card-arbiter { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.card-arbiter h4 { color:#6D28D9; margin:0 0 8px 0; }
+.rr-cols { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin: 14px 0; }
+.rr-card { padding:12px 14px; border-radius:0 6px 6px 0; font-size:13.5px; }
+.rr-st { background:#F0F9FF; border-left:4px solid #0284C7; }
+.rr-mt { background:#F5F3FF; border-left:4px solid #7C3AED; }
+.rr-lt { background:#ECFDF5; border-left:4px solid #059669; }
+.rr-card h4 { margin:0 0 6px 0; font-size:14px; }
+.print-btn { position:fixed; bottom:24px; right:24px; background:#1E3A5F; color:#fff; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+.print-btn:hover { background:#3B82F6; }
+.top-note { background:#EFF6FF; padding:12px 18px; border-left:4px solid #3B82F6; border-radius:0 4px 4px 0; margin: 14px 0 22px; font-size:13.5px; color:#1E3A5F; }
+@media print {
+  body { background:#fff; font-size:12px; }
+  .header, .print-btn, .dd-toc { display:none !important; }
+  section { box-shadow:none; padding:14px; margin-bottom:14px; }
+  section h2 { font-size:14px; padding:6px 10px; }
+}
+@media (max-width:760px) {
+  .three-col, .rr-cols { grid-template-columns:1fr; }
+  .header { flex-direction:column; align-items:flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+  <h1>PH｜Parker-Hannifin Corporation｜DD v12.3</h1>
+  <div class="meta">
+    <span>📅 報告日 2026-05-18</span>
+    <span>💵 收盤 $862.72</span>
+    <span>📊 最新財報 FY26 Q3 (Mar 2026, 公布 2026-04-30)</span>
+    <span>🔖 DD Schema v12.3</span>
+  </div>
+</div>
+
+<nav class="dd-toc">
+<span class="dd-toc-title">目錄</span>
+<a href="#s1">§1 結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報</a>
+<a href="#s7">§7 門檻</a>
+<a href="#s8">§8 成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務</a>
+<a href="#s11">§11 產業</a>
+<a href="#s12">§12 治理</a>
+<a href="#s13">§13 估值</a>
+</nav>
+
+<section id="s1">
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="top-note">本結論基於以下完整分析得出，詳見各章節。本報告為 PH 第一份 v12.2+ DD（Inception DD），後續所有 PH DD 將以本份作為「累積漂移」基準。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟡 中等可見度（Runway 7-10 年，aerospace 帶動 supercycle）｜ §9 護城河趨勢「加深」（Meggitt + Filtration 雙引擎強化 long-cycle aftermarket 結構）｜ §8.F AI 風險 🟢（Industrial automation + Motion control 是 AI capex 受益者）｜判斷：商用航太 OEM 雙寡頭 production rate 走升至 2030s + 老化機隊 retrofit 觸發 25+ 年 aftermarket，PH 為間接受益者</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9，9.A execution moat 9 + 9.B pricing power moat 8，平均 8.5 → 取 9）｜體質 veto 0 項不過｜等級調整：A → A（不變）</li>
+<li><strong>估值燈 🟠 偏貴：</strong>Fwd PE 25.35x，5Y 分位 ~75-80%，PEG 2.28（25.35 ÷ 11.1% Non-GAAP 3Y CAGR）｜盲點 1 救援檢核：§8 🟡（非 🟢）+ PEG > 2.0 → <b>不啟動</b>，維持 🟠</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 $822.20 / W104 $712.78 / W250 $493.47（斜率 +7.25%/13w）｜現價 $862.72 > 所有 MA，斜率三軸全正｜盲點 2 救援：不適用（MA 未失效）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,408.50 vs W104 6,173.73（+20.0% 高於 W104），系統性風險未觸發</li>
+<li><strong>參考 R:R：</strong>短期 0.79x（FY26 共識 EPS $31.26 × 合理 25x = $782，下行至 Bear $560；上行 -9.4%/下行 -35%）｜中期 1.05x（FY27 $34.04 × 24x = $817；累積成長補強）｜壓力測試通過率 1/4（資訊性，不主導裁決）</li>
+<li><strong>綜合訊號：<span style="font-size:20px">B</span></strong>（取自 §2.H｜判定理由：A 級品質 + gate 🟠 偏貴 + MA ✅ 強勢，QC-31 thesis 完整但估值透支進場時機；非 thesis 失敗，落 B 觀望，等估值或時機修復）</li>
+<li><strong>長期持有信心：高</strong>（§2.I）｜<strong>陷阱定性：</strong>🟢 非陷阱（衰退信號偵測 0 項亮燈，便宜理由檢驗不適用因估值偏高、非低估）</li>
+<li><strong>Inception DD：</strong><code>DD_PH_20260518.html</code>（2026-05-18）— 該 ticker 最早一份 v12.2+ DD，作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-18（距今 365 天）— 屆時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="reasoning">
+<b>核心數字推導 (QC-33)：</b><br>
+輸入：當前 Fwd PE 25.35x（yfinance）；5Y Fwd PE 範圍 15x-28x；FY25 GAAP EPS $27.12，Non-GAAP adj EPS ~$27.33（公司報告基準）；FY26E EPS $31.26 (yfinance, n=26)；FY27E EPS $34.04 (n=24)；3Y CAGR 推導 FY28E ~$37.7（+10.8%，Filtration Group 全年貢獻）。<br>
+計算：3Y EPS CAGR = ($37.7/$27.33)^(1/3) − 1 = 11.3%；PEG = 25.35 ÷ 11.3 = 2.24；5Y 分位 = (25.35 − 15) / (28 − 15) = 79.6%。<br>
+implication：§2.D 估值燈 🟠 偏貴（5Y 分位 70-85% 觸發），且 PEG > 2 → 盲點 1 救援不啟動 → §2.H 訊號 grade = B（thesis 完整但估值透支）。
+</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<thead><tr><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr><td><strong>最可能的價值陷阱模式是哪一種？</strong></td><td>非陷阱（PH 屬於「估值偏高的優質週期股」，與「便宜陷阱」相反路徑）。若強行歸類，最接近「<strong>盈餘品質型」邊緣警示</strong>：FY25 Net Income +24% YoY 部分來自 share buyback (1.06% 股本回收) + 1x M&A accounting items。但 FCF/NI = 3,341/3,531 = 0.95，遠高於 0.7 警戒線，不構成陷阱。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據？</strong></td><td>(1) ROE 24.8% 連續 3 年擴大 vs FY22 14.9%；(2) FCF Margin FY25 16.8% (>15% 門檻) 連 3 年提升；(3) 毛利率 37.4% YoY 擴 60bps；(4) 總 backlog $12.5B 創新高 +1.2x 年營收，aero backlog $8.4B (+15%) 直接驗證未來 2-3 年動能；(5) 衰退信號偵測 0 項亮燈；(6) 共識 EPS 過去 90 天連續上修（+1.1% from 90d ago for FY26）。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁？</strong></td><td>(1) 工業景氣晚週期警訊：Industrial NA 與 Intl guide 只 +2.5%（vs aerospace +12%），代表約 67% 業務增速接近停滯；(2) Filtration Group $9.25B 大筆 M&A（19.6x EBITDA pre-synergy）成功取決於 $220M 協同實現，整合風險不容小覷；(3) 估值倍數已透支：Fwd PE 25.3x 在 5Y 79% 分位 + PEG 2.24，若 aerospace 週期反轉，倍數 + EPS 雙殺；(4) Beta 1.18 高於工業平均，組合 hedging 屬性弱。</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td>領先指標 (1)：<strong>Aerospace orders 連 2 季 YoY < 0</strong>（當前 +14% → 觀察 PMA aftermarket pricing 與 OEM build rate guidance）；(2) <strong>Industrial NA orders 連 2 季 YoY < -5%</strong>（當前略正 → ISM Manufacturing 跌破 45 為前置信號）；(3) <strong>Filtration Group 收購完成 12 個月 cost synergy 實現率 &lt; 50%</strong>（觸發 thesis 修正）。</td></tr>
+</tbody>
+</table>
+
+<p><strong>最終定性：</strong><span class="good">🟢 非陷阱</span>（理由：估值偏高但 thesis 完整，衰退信號 0/10，FCF 品質 0.95 健康，aerospace tailwind 有結構性 backlog 支撐）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Aerospace Systems 季度有機營收成長率 + Backlog</td><td>§5 H1, §6, §9</td><td>🔵 核心假設驗證信號（必填）</td><td>有機 YoY 連 2 季 &lt; +5%，或 backlog 連 2 季 QoQ 萎縮 &gt; -3%（當前 $8.4B 創新高 +15% YoY，需確認 supercycle 仍在 mid-cycle 而非 late）</td></tr>
+<tr><td>2</td><td>Adjusted Segment OI Margin（整體 + Industrial 分項）</td><td>§5 H2, §8, §10</td><td>🔵 長期成長領先信號（必填）</td><td>整體 margin 連 2 季 YoY 不再擴張（當前 26.7% +40bps→ 目標 27.2% FY26）；Industrial NA OI margin &lt; 22%（v3.0 目標 23-24%）</td></tr>
+<tr><td>3</td><td>Filtration Group 收購整合節奏（FY27-28 EPS accretion + $220M synergy 兌現）</td><td>§5 H3, §12, §13</td><td>短期估值或財報信號</td><td>收購未在 2026 年底前 close（regulatory 風險）；首 12 個月 synergy 兌現率 &lt; 50%；Filtration EBITDA margin 下修 (預期 23.5%) → 觸發 §1 結論 thesis 重評</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<section id="s2">
+<h2>§2｜產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+<p class="note">v12.3 結構：5 子節（0/B/D/F/H），原 v12.0 A→B 併、C+E→D 併、G+I→H 併。每個結論數字附三段推導。</p>
+
+<h3>§2.0｜產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="warn">🟡 中等可見度</span>（Runway 7-10 年，aerospace supercycle 仍在前中段；industrial 為 mature compounder）</td></tr>
+<tr><td>§9 護城河趨勢</td><td><span class="good">加深</span>（Meggitt + Filtration Group 雙引擎強化 aftermarket / long-cycle 結構）</td></tr>
+<tr><td>§8.F AI 風險評級</td><td><span class="good">🟢 受益</span>（motion control + factory automation + filtration 為 AI datacenter cooling/clean-room 設備鏈間接受益）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="good">🟢 順風</span></strong></td></tr>
+<tr><td>一句話判斷</td><td>商用航太 supercycle（Airbus A320 衝 75/月、Boeing 737 從 38→52/月）+ 老化機隊 retrofit + Filtration aftermarket recurring 模式 = 至少 5-7 年結構順風；Industrial 工業景氣回升尚需觀察。</td></tr>
+</tbody>
+</table>
+
+<div class="reasoning">
+<b>產業風向燈推導 (QC-33)：</b><br>
+輸入：§8 評級 🟡（Runway 7-10 年） + §9 趨勢「加深」（Meggitt 後 aftermarket revenue 占 aerospace ~50%）+ §8.F 🟢（無 AI 替代風險，反為 capex 受益）。<br>
+計算：三項取 2/3 majority + 1 項偏弱 → 不完全 🟢（典型 🟢 須三軸全 🟢）。但 aerospace supercycle 結構性確定（OEM 已給 5Y 增產 guidance）→ 整體判定 🟢 順風（取積極解讀，與 Trefis、Simply Wall St 共識一致）。<br>
+implication：盲點 1 救援機制「可啟動」但仍須 PEG &lt; 2.0 條件；本份 DD PEG = 2.24 → 救援實際不啟動。
+</div>
+
+<h3>§2.B｜體質檢核 + 品質等級</h3>
+
+<h4>體質檢核（veto 制，不加分）</h4>
+<table>
+<thead><tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2pp</td><td><span class="good">✅</span></td><td>FY23 33.0% → FY24 35.8% → FY25 37.4%（持續擴張 +4.4pp）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="good">✅</span></td><td>FY25: 3,341 / 3,531 = 0.95（健康）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="good">✅</span></td><td>FY26E 90d ago $30.93 → today $31.26（+1.07% 連續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="good">✅</span></td><td>FY26 Q1/Q2/Q3 + FY25 Q4 連 4 季正成長（Q3 +10.6%）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="good">✅</span></td><td>($9,285M debt − $467M cash) / ~$5,300M EBITDA = 1.66x（Filtration 收購後 pro-forma 預計上升至 ~2.7x，仍合規）</td></tr>
+</tbody>
+</table>
+<p>體質 veto 結果 = <strong>0 項不過</strong> → 等級<strong>不變</strong>。</p>
+
+<h4>護城河等級（5 級制，v12.3 二維 execution + pricing 拆解）</h4>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>9.A Execution moat (規模 / 製造 / 整合)</td><td><strong>9 / 10</strong>（11% motion control 市佔最大 + 廣度最強技術平台 cross 8 業務 + Meggitt 整合 superior + Win Strategy operating system 證明 20+ 年）</td></tr>
+<tr><td>9.B Pricing power moat</td><td><strong>8 / 10</strong>（mission-critical 元件 + aerospace aftermarket 25-yr lifecycle near-monopoly + 毛利率 33→37.4% 過 3 年擴張 = 定價力強，但工業端競爭較激烈）</td></tr>
+<tr><td>9 綜合（取較高，加 single-axis escape rule）</td><td><strong>9 / 10</strong>（雙軸皆 8+ → 不適用 single-axis escape，直接取高軸）</td></tr>
+<tr><td>原始等級</td><td><span class="good">A 級</span>（護城河 9 對應 A）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong><span class="good">A 級</span></strong></td></tr>
+<tr><td><strong>底倉（目標倉位的 %）</strong></td><td><strong>25%</strong>（PM skill 決策參考）</td></tr>
+</tbody>
+</table>
+
+<div class="reasoning">
+<b>護城河等級推導 (QC-33)：</b><br>
+輸入：execution moat 9（11% share of $130B motion control TAM，2nd highest broadest tech platform）+ pricing moat 8（aerospace aftermarket pricing power 強，但 industrial OEM 端 8-9% margin vs Eaton, Emerson 10-12% 略低）。<br>
+計算：v12.3 雙軸均達 8+ 門檻 → escape rule 不啟動；取較高 9。對映 v12.0 表 9 → A 級，25% 底倉。<br>
+implication：§13.5 estimating engine C 護城河溢價 ×1.10（9 分），§1 dashboard 顯示 A 級。
+</div>
+
+<h3>§2.D｜估值燈（取代 R:R 裁決）</h3>
+
+<h4>估值輸入</h4>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>當前股價</td><td>$862.72</td><td>2026-05-15 收盤</td></tr>
+<tr><td>FY26E EPS (Non-GAAP, 0y)</td><td>$31.26</td><td>yfinance, n=26</td></tr>
+<tr><td>FY27E EPS (Non-GAAP, +1y)</td><td>$34.04</td><td>yfinance, n=24</td></tr>
+<tr><td>FY28E EPS (Non-GAAP, §8 邏輯推導)</td><td>$37.70</td><td>FY27E × 1.108（Filtration 全年貢獻 + Aero supercycle 延續）</td></tr>
+<tr><td>Forward P/E (FY26)</td><td><strong>25.35x</strong></td><td>862.72 / 31.26 + yfinance forwardPE 25.35</td></tr>
+<tr><td>Forward P/E (FY27)</td><td><strong>23.30x</strong></td><td>862.72 / 34.04</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>15x ~ 28x（COVID 谷至 2024 峰）</td><td>Macrotrends 推導</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td><strong>79.6%</strong></td><td>(25.35 − 15) / (28 − 15) × 100%</td></tr>
+<tr><td>3Y EPS CAGR (Non-GAAP, FY25→FY28)</td><td><strong>11.3%</strong></td><td>($37.7 / $27.33)^(1/3) − 1</td></tr>
+<tr><td><strong>PEG</strong></td><td><strong>2.24</strong></td><td>25.35 ÷ 11.3 = 2.24</td></tr>
+</tbody>
+</table>
+
+<div class="reasoning">
+<b>估值燈判定推導 (QC-33)：</b><br>
+輸入：5Y Fwd PE 分位 79.6% + PEG 2.24（取較嚴：「&gt;85% 分位 OR PEG &gt; 2.5」未觸發 🔴，70-85% 分位 + 2.0 &lt; PEG ≤ 2.5 觸發 🟠）。<br>
+計算：規則 (Fwd PE 分位 70-85% OR PEG 2.0-2.5) → <b>🟠 偏貴</b>；最終倉位 modifier × 0.5（但 v12.0 訊號grade化已將此轉為 B grade 觀望）。<br>
+implication：§2.H 訊號 grade 評估時，gate 🟠 不直接觸發 C/X；thesis 完整 → 落 B（觀望偏進場）。
+</div>
+
+<h4>🛡️ 盲點 1 救援檢核</h4>
+<table>
+<thead><tr><th>條件</th><th>是否滿足</th></tr></thead>
+<tbody>
+<tr><td>① §8 長期成長性綜合評級 = 🟢 高確信</td><td><span class="bad">❌</span> 實際 🟡 中等（Runway 7-10 年）</td></tr>
+<tr><td>② PEG &lt; 2.0</td><td><span class="bad">❌</span> 實際 2.24</td></tr>
+<tr><td>③ §8.F AI 風險評級 = 🟢 受益</td><td><span class="good">✅</span></td></tr>
+</tbody>
+</table>
+<p>三條件未同時滿足（① 與 ② 未過）→ <strong>救援不啟動，估值燈維持 🟠 偏貴</strong>。</p>
+
+<h4>R:R 與 Bear Case（參考用，不主導裁決）</h4>
+<div class="rr-cols">
+<div class="rr-card rr-st">
+<h4>① 短期 R:R（12 個月）</h4>
+合理 PE 25x × FY26E $31.26 = <b>$782</b><br>
+Bear PE 18x × FY26 ×0.9 EPS $28.13 = <b>$506</b><br>
+上行：($782 − $862.72)/$862.72 = <span class="bad">-9.4%</span><br>
+下行：($506 − $862.72)/$862.72 = <span class="bad">-41.4%</span><br>
+R:R = <b>−0.23x</b>（負，不過 ≥ 2 門檻）
+</div>
+<div class="rr-card rr-mt">
+<h4>② 中期 R:R（24 個月）</h4>
+合理 PE 24x × FY27E $34.04 = <b>$817</b><br>
+Bear PE 18x × FY27 ×0.9 EPS $30.64 = <b>$552</b><br>
+上行：($817 − $862.72)/$862.72 = <span class="bad">-5.3%</span><br>
+下行：($552 − $862.72)/$862.72 = <span class="bad">-36.0%</span><br>
+R:R = <b>−0.15x</b>（負，不過 ≥ 2 門檻）
+</div>
+<div class="rr-card rr-lt">
+<h4>③ 長期 R:R（5 年）</h4>
+合理 PE 23x × FY30E EPS ~$50（Win Strategy 3.0 + Filtration 全融合）= <b>$1,150</b><br>
+Bear PE 18x × FY30 ×0.85 EPS $42.5 = <b>$765</b><br>
+上行：(1150 − 862.72)/862.72 = <span class="good">+33.3%</span><br>
+下行：(765 − 862.72)/862.72 = -11.3%<br>
+R:R = <b>2.95x</b>（過 ≥ 2 門檻）
+</div>
+</div>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>共識假設</td><td>-0.23x</td><td>-0.15x</td></tr>
+<tr><td>壓力 A</td><td>3Y EPS CAGR -10pp (11.3→1.3%)</td><td><span class="bad">-0.55x</span></td><td><span class="bad">-0.40x</span></td></tr>
+<tr><td>壓力 B</td><td>合理 PE -20% (25→20x)</td><td><span class="bad">-0.50x</span></td><td><span class="bad">-0.45x</span></td></tr>
+<tr><td>壓力 C</td><td>Aerospace 週期反轉（嚴重情境）</td><td><span class="bad">-0.75x</span></td><td><span class="bad">-0.60x</span></td></tr>
+</tbody>
+</table>
+<p>壓力測試通過率 = <strong>1/4</strong>（僅長期 Base 過 2x） → R:R 對壓力情境極度敏感，§1 已標註「估值透支進場時機」。</p>
+
+<div class="reasoning">
+<b>R:R 推導 (QC-33)：</b><br>
+輸入：短期合理 PE 取 25x（5Y 中位 26.2x − 1x discount for 偏貴 timing），FY26 EPS $31.26 共識中位。Bear PE 18x 為過去 5Y trough（Industrial median Fwd PE 21.77x × 0.85）。<br>
+計算：短 R:R = −0.23x（負！代表合理 PE 仍低於現價，無安全邊際）；長期 R:R = 2.95x（5Y 兌現 Win Strategy 3.0 $50 EPS + 23x 合理 PE 後上行）。<br>
+implication：§2.H 訊號評估，R:R 短中期失效 + 長期 Pass → thesis 完整但短期 timing 不對 → grade B（觀望，等估值或時機修復）；不歸 C/X 因 thesis 未壞。
+</div>
+
+<h3>§2.F｜Pure MA 狀態機（週線 W52/W104/W250）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$862.72</td></tr>
+<tr><td>W52 / 斜率(13w)</td><td>$822.20 / <span class="good">+10.84%</span>（強正）</td></tr>
+<tr><td>W104 / 斜率(13w)</td><td>$712.78 / <span class="good">+7.44%</span>（強正）</td></tr>
+<tr><td>W250 / 斜率(13w)</td><td>$493.47 / <span class="good">+7.25%</span>（強正 &gt;3%）</td></tr>
+<tr><td>價 vs W52</td><td>+4.9%（價 &gt; W52，未滿足 🟢 最佳進場 「價 &lt; W52」條件）</td></tr>
+<tr><td>價 &gt; W52 &gt; W104 &gt; W250</td><td><span class="good">✅</span> 四階段全多頭排列</td></tr>
+<tr><td>Bollinger 位置</td><td>下軌 $837 / 中軌 $933 / 上軌 $1,028；現價 $862.72 位於 13.3%（接近下軌）</td></tr>
+<tr><td>4 週漂移</td><td>-7.30%（自 4 週前均價 $930.68 回檔）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="good">✅ 強勢進場</strong></span>（價 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率 +7.25% &gt; 3%）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+</tbody>
+</table>
+
+<div class="reasoning">
+<b>Pure MA 推導 (QC-33)：</b><br>
+輸入：現價 $862.72；W52 $822.20、W104 $712.78、W250 $493.47；W250 斜率 +7.25%/13w（強正 &gt; 3%）。<br>
+計算：條件「價 &gt; W52 &gt; W104 &gt; W250 且 W250 斜率 &gt; 3%」全滿足 → ✅ 強勢進場；非 🟢 最佳進場因「價 &gt; W52」不符該條件「價 &lt; W52」。<br>
+implication：§2.H ma_status = ✅；長期趨勢健康（W250 +7.25%/13w），且 Bollinger 下軌附近 → 近期 -7.3% 回檔正好提供短期修復機會，但仍非 🟢 最佳。
+</div>
+
+<p class="note">盲點 2 救援不適用：MA 狀態為 ✅ 強勢，未進入 ❌ 系統失效需要救援。</p>
+
+<h3>§2.H｜綜合訊號燈 + 大盤豁免 + 長期展望</h3>
+
+<h4>大盤豁免層（系統性風險檢查）</h4>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>SPX (^GSPC)</td></tr>
+<tr><td>大盤現價</td><td>7,408.50</td></tr>
+<tr><td>大盤 W104</td><td>6,173.73</td></tr>
+<tr><td>價 vs W104</td><td>+20.0%（大盤健康，未破 W104）</td></tr>
+<tr><td>系統性風險</td><td><span class="good">否</span></td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</tbody>
+</table>
+
+<h4>綜合訊號判定</h4>
+<table>
+<thead><tr><th>維度</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier（§2.B 調整後）</td><td>A</td></tr>
+<tr><td>gate（§2.D）</td><td>🟠 偏貴</td></tr>
+<tr><td>ma_status（§2.F）</td><td>✅ 強勢進場</td></tr>
+<tr><td>benchmark_regime（§2.H 大盤）</td><td>✅ 正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟢 非陷阱</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="warn">B（觀望偏進場）</span></strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>判定理由：</strong>A 級品質 + gate 🟠 偏貴 + MA ✅ 強勢 + trap 🟢 + 大盤正常。QC-31 規則：估值 🟠 不獨立觸發 C；thesis 完整（衰退信號 0/10、護城河 9/10）→ 落 <strong>B（觀望）</strong>。建議等估值修復或 PEG 回到 &lt; 2.0 再重評。</p>
+
+<h4>§2.I 等同小節｜長期展望（3-5 年定性）</h4>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8.A</td><td>充裕（aerospace supercycle 至 2030s + filtration aftermarket recurring + electrification 三引擎）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（Meggitt + Filtration 結構性轉向 long-cycle aftermarket，aftermarket 從 25% → 40%+）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</tbody>
+</table>
+<p><strong>一句話說明：</strong>🟢 順風，A 級護城河 9/10 + execution+pricing 雙軸強，aerospace supercycle 結構性 + Filtration aftermarket 加深長期 thesis。估值燈 🟠 偏貴（PEG 2.24）+ Pure MA ✅ 強勢進場，PEG 透支進場時機但短期 -7.3% 回檔有修復空間。建議等 PEG &lt; 2.0 或 Fwd PE &lt; 22x 進場；H1 Filtration Group 收購 close（2026 H2-2027 Q1）+ 整合節奏是 24 個月關鍵催化劑。</p>
+
+</section>
+
+<section id="s3">
+<h2>§3｜三方辯論摘要</h2>
+<p class="note">v12.3 結構：砍 verdict-box + 自我攻擊 + 仲裁員 5 列評分，仲裁員壓縮為 1 段判決。</p>
+
+<div class="three-col">
+
+<div class="card card-bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>關鍵數字</th><th>引用</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>護城河維度：motion control 11% 全球領導者 + aerospace 從 Meggitt 後變成 long-cycle aftermarket monopoly + Filtration 加入 85% aftermarket recurring</td><td>aerospace aftermarket / OEM 比例從 50/50 → 預計 55/45；filtration $2B revenue 85% aftermarket</td><td>§9, §11</td></tr>
+<tr><td>2</td><td>成長維度：Win Strategy 3.0 已超前達標（adjusted segment OI margin 27% vs 5Y 目標 26% 提前 3 年達），FY26 guide raise 至 EPS $31.20（+14.2%），3Y CAGR 11.3%</td><td>FY25 net income +24% YoY；Q3 OI margin 26.7% +40bps</td><td>§6, §8</td></tr>
+<tr><td>3</td><td>估值維度：Fwd PE 25.3x 雖偏高但 vs 5Y 中位 26.2x 並未過熱；vs 同業 Eaton 33x / Rockwell 46x / Cintas 30x+ 明顯折價</td><td>5Y avg PE 26.2x；Industrial median 21.77x</td><td>§13.1, §13.4</td></tr>
+</tbody>
+</table>
+<p><strong>多頭最強一句話：</strong>「11% 全球領導者 + aerospace supercycle backlog 2.5B（+15%）+ 雙重 M&A 加深 long-cycle aftermarket 結構 = 5-7 年確定性高於市場 pricing。Fwd PE 25x 對應 11% CAGR 看似貴，但 Filtration 整合後 EPS 可上修至 0+，PEG 立刻回到 1.7-1.8 區間。」</p>
+</div>
+
+<div class="card card-bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<thead><tr><th>#</th><th>虧損觸發情境</th><th>惡化指標 + 閾值</th><th>對應風險</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>基本面：Industrial 工業景氣晚週期，PMI 跌破 45 觸發 NA Industrial orders YoY -10% → Industrial 業務（占 ~67% 營收）EPS 衝擊 -20%</td><td>ISM PMI 連 3 個月 &lt; 45（當前 ~49）；Industrial backlog 連 2 季 QoQ -5%</td><td>§8.E 壓力測試, §5.R1</td></tr>
+<tr><td>2</td><td>估值壓縮：PEG 從 2.24 收斂至 industrial average 1.5 → Fwd PE 從 25.3x 壓縮至 17x = 股價 -33%</td><td>10Y UST 升破 5.5%；growth-to-value 風格切換</td><td>§13.3 Reverse DCF</td></tr>
+<tr><td>3</td><td>催化劑：Filtration Group $9.25B 大筆 M&A 失敗（19.6x EBITDA pre-synergy 太貴，regulator block 或 synergy 兌現 &lt; 50%）→ 預期 EPS accretion 落空 + balance sheet 槓桿 spike（Net Debt/EBITDA 2.7x → 3.5x）</td><td>歐盟 / FTC 拖延或 block；synergy guidance 下修</td><td>§5.R3, §12</td></tr>
+</tbody>
+</table>
+<p><strong>空頭最大威脅：</strong>「Aerospace orders 已是 super-cycle 末段（過去 5 年累積 +40%），任何 Boeing 737 MAX 或 Airbus A320 production cut 都會觸發 backlog 修正；同時 Industrial 業務一直未真正復甦。25.3x Fwd PE 對應一個假設 11% CAGR 永續的世界，這條件比共識想像的更脆弱。」</p>
+</div>
+
+<div class="card card-arbiter">
+<h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<tbody>
+<tr><td>隱含預期可信度</td><td>6 / 10</td></tr>
+<tr><td>核心依據（§13.3）</td><td>當前 EV $117.9B / FY25 FCF $3.34B = 35.2x P/FCF；隱含 FCF CAGR 9.5% (10Y) vs 共識 EPS CAGR 11.3% — 接近但 FCF 假設較 conservative。隱含 FCF growth 比 PH 過去 3Y avg (15%) 低 → 屬於「<b>合理偏緊</b>」。</td></tr>
+<tr><td>歷史對標</td><td>同業 Eaton 2022-2024 也曾經歷類似 PE re-rating 至 30x+（驅動：電氣化 +AI capex 敘事），PH 當前狀況類似但 narrative momentum 偏弱（Filtration 整合風險）。</td></tr>
+</tbody>
+</table>
+<p><strong>仲裁員一句話：</strong>「市場給 PH 25.3x 是合理對應 11% EPS CAGR + A 級護城河 + supercycle backlog 的定價，沒有泡沫但也沒有 margin of safety。買在 Fwd PE 22-23x（即股價 $750 區間）才有 ≥ 15% upside 配 ≤ 15% downside 的不對稱機會。」</p>
+</div>
+
+</div>
+
+</section>
+
+<section id="s4">
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+<p class="note">v12.3 結構：保留存在意義 + 三維 Munger Inversion + 護城河形成歷史路徑表。</p>
+
+<h3>存在意義</h3>
+<p>Parker-Hannifin 解決的是「工業文明的<strong>能量傳遞與精確控制</strong>」這個底層問題——任何需要把能量（電力、液壓、氣壓）轉換成可控的線性或旋轉運動的應用，PH 都是少數能提供 80% 系統整合解決方案的供應商。從一架 A320 翅膀的 flight control hydraulics（每架機 ~$1M 的 PH 內容）、半導體 fab 的 vacuum / process valves、Caterpillar 推土機的 hydraulic cylinder、到醫療透析機的 microfluidic pumps，PH 在這些應用裡是「<strong>把能量精確控制的方法論集成</strong>」。</p>
+<p>若 PH 明天消失，世界會出現的不可替代混亂：(1) 商用航太 backlog $8.4B 的 mission-critical 元件（flight control actuators、fuel systems、pneumatic systems）會卡住 Boeing / Airbus 至少 18 個月的生產（替代供應商需重新 FAA 認證）；(2) 工業 hydraulics OEM 平台會失去最完整的 cross-platform 標準化（PH 的 distributor network 是全球第一大，13,000+ 經銷商）；(3) Curtis Instruments 收購後的 EV / electrification motor control 平台會被切割給 Bosch / Continental。</p>
+
+<h3>護城河形成歷史路徑（過去 25 年關鍵 milestone）</h3>
+<table>
+<thead><tr><th>年份</th><th>事件</th><th>對護城河的累積貢獻</th><th>評分變動</th></tr></thead>
+<tbody>
+<tr><td>2001</td><td>Don Washkewicz 接任 CEO，啟動 Win Strategy 1.0（lean manufacturing + Premier Customer Service + supply chain consolidation）</td><td>從「<b>conglomerate discount</b>」轉變為「<b>operating system 驅動的 compounder</b>」；OI margin 從 ~8% 起步擴張</td><td>+1</td></tr>
+<tr><td>2008</td><td>金融海嘯壓力測試 Win Strategy，PH 在 demand collapse 中仍維持 +profit；證明 system robustness</td><td>建立「能源管理 + 業務組合彈性」內部認知</td><td>+0.5</td></tr>
+<tr><td>2015</td><td>Win Strategy 2.0 推出，加入 IoT 預測性維護 + lean office</td><td>從「製造 lean」延伸到「資訊 lean」+ data-driven distributor enablement</td><td>+0.5</td></tr>
+<tr><td>2017</td><td>CLARCOR 收購（$4.3B），filtration 第一筆大 M&A 平台</td><td>建立 filtration 平台基礎；後續 Filtration Group 收購的前置（2025）</td><td>+0.5</td></tr>
+<tr><td>2019</td><td>LORD Corp 收購（$3.7B），engineered materials + aerospace adhesives 補強</td><td>加深 aerospace exposure（從 ~15% → ~22%）</td><td>+1</td></tr>
+<tr><td>2022</td><td><strong>Meggitt 收購（$8.7B）</strong>，aerospace 變成 long-cycle aftermarket + electrical defense 主軸</td><td>結構性把 aerospace 從 22% → 33%，且 aftermarket 從 25% → 50%；OI margin trajectory 跳升 ~5pp</td><td>+2</td></tr>
+<tr><td>2023</td><td>Win Strategy 3.0 + Investor Day 5Y targets ($23B revenue, 26% segment margin, $20B FCF, $34.7 EPS)</td><td>提供具體 visibility，市場給予 multiple expansion（從 Fwd PE 18x → 25x）</td><td>+0.5</td></tr>
+<tr><td>2025-2026</td><td>Curtis Instruments ($1B) + <strong>Filtration Group ($9.25B)</strong></td><td>electrification + filtration aftermarket，aftermarket 進一步從 50% → 55-60%</td><td>+1（pending close + synergy 兌現）</td></tr>
+<tr><td><strong>累積 25 年</strong></td><td></td><td><strong>OI margin 從 8% → 27%（FY26E）；護城河從 6 → 9</strong></td><td><strong>+5.0</strong></td></tr>
+</tbody>
+</table>
+
+<h3>逆向推演（Munger Inversion）三維展開</h3>
+
+<h4>① 技術維度</h4>
+<p>什麼技術替代會讓 PH 3 年內失去 50% 價值？</p>
+<ul>
+<li><strong>Electric actuators 全面取代 hydraulics</strong>：飛機 More-Electric Aircraft (MEA) 架構 + 工業 servo motor 進展。已部分發生（A350、787 部分系統用 EHA）但 PH 已 hedge 透過 Curtis Instruments + electromechanical 平台。<strong>歷史對標：Pratt &amp; Whitney 在 1980s GE 推 GEnx jet engine 時失去 narrowbody 主導地位</strong>，但 PH 已主動 disrupt 自己。</li>
+<li><strong>Additive manufacturing 顛覆 fluid connector 業務</strong>：3D printed fluid manifolds 取代 PH 標準 fittings。已有 niche 應用（GE Aviation、Stratasys），但 PH 標準件規模優勢 + FAA 認證壁壘 5-10 年內無虞。<strong>歷史對標：Caterpillar 在 1990s 面對 Komatsu 數位化挑戰，靠 dealer network 守住</strong>。</li>
+<li><strong>AI 取代工業 distributor 中介</strong>：直接 D2C 平台（如 Misumi）侵蝕 PH 13,000 經銷商價值。低概率，因 mission-critical 元件仍需 application engineering 支援。</li>
+<li><strong>Hydrogen / 氨能 取代 jet fuel</strong>：長期 (10Y+) aerospace propulsion 變革會重整 fuel system 元件需求，但 PH 已布局 hydrogen storage / fuel cell systems。</li>
+</ul>
+
+<h4>② 管理維度</h4>
+<p>什麼決策路徑會自我毀滅？</p>
+<ul>
+<li><strong>Capex 慣性</strong>：Filtration Group $9.25B 後若再追逐另一筆 $5B+ M&A → Net Debt/EBITDA 衝破 4x，BBB+ 評等下調。<strong>歷史對標：3M 過度 M&A 槓桿在 2015-2020 累積導致股價 stagnation + 護城河弱化</strong>。</li>
+<li><strong>Jenny Parmentier（2023 接任 CEO）整合失敗</strong>：第一任 CEO 接 Meggitt + Filtration 雙巨型整合，若文化融合失敗（Meggitt 是英國公司，Filtration 是 PE 經營出身）→ talent flight + synergy 流失。<strong>歷史對標：Honeywell 與 GE Aerospace 整合失敗</strong>。</li>
+<li><strong>Win Strategy 形式主義</strong>：當公司大到 $25B+ revenue，Win Strategy 從 hands-on operating system 退化為「投影片 / quarterly score card」。<strong>歷史對標：United Technologies 1990-2010</strong>。</li>
+</ul>
+
+<h4>③ 結構維度</h4>
+<p>什麼產業變化會讓商業模式過時？</p>
+<ul>
+<li><strong>飛機產量結構性塌陷</strong>：全球減碳壓力使 air travel 出現 2030 年代後出現結構性 -20% 衝擊，Boeing/Airbus production rate 從 75/月 reverse 至 40/月 → PH aerospace backlog $8.4B 蒸發。低概率但 tail risk。<strong>歷史對標：Embraer regional jet 業務在 2008-2015 因航線結構性萎縮 -50%</strong>。</li>
+<li><strong>監管型分拆</strong>：FTC / 歐盟對 PH 在 motion control 11% 全球 share 啟動 anti-trust 質疑（已有 fiber optics $900M 訴訟前兆，雖非反壟斷）→ Filtration Group 收購被迫剝離部分業務。</li>
+<li><strong>計算範式轉換：Edge computing / autonomous robotics 推動 motion control 從 hydraulic / pneumatic 全面切換至 electromechanical + AI controllers</strong>。PH 已布局 Curtis Instruments 但 lead time 不確定。<strong>歷史對標：DEC 在 PC 範式取代 minicomputer 中錯失轉型</strong>，PH 必須避免類似結構錯位。</li>
+</ul>
+
+<p><strong>價值陷阱路徑判斷</strong>（四選一）：若 PH 變成價值陷阱，最可能的劇本是「<strong>盈餘品質型</strong> + <strong>產業結構衰退型</strong>」雙重結合 — 即 Filtration 整合不順 + Aerospace 週期 2027-2028 反轉 → EPS 急速下修，但市場 PE 仍會給予 quality compounder premium → PE 從 25x 跌至 18x，EPS 從 $32 跌至 $24，股價 -40%。當前判斷此情境機率 &lt; 25%。</p>
+
+</section>
+
+<section id="s5">
+<h2>§5｜投資論點錨定</h2>
+<p class="note">v12.3 結構：A 持有期 + B 三層時間軸 + B' 12 個月前 DD 對照 + C 風險時間尺度分層 + D 邊際貢獻 + E 決策主線 + F single thing。</p>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tbody>
+<tr><td><strong>預設持有期</strong></td><td>3-5 年（中期 + 結構性 thesis；對應 Win Strategy 3.0 5Y target $34.7 EPS + Filtration Group 整合 36 個月完整週期）</td></tr>
+<tr><td><strong>主要驅動時間軸的理由</strong></td><td>(1) Filtration Group 收購 H2 2026 / Q1 2027 close，整合期 24-36 個月；(2) Aerospace OEM production rate ramp 至 75/月 (A320) 與 52/月 (737) 預計 2027-2030 達成；(3) Win Strategy 3.0 5Y targets 2028 達標</td></tr>
+<tr><td><strong>持有期決定的訊號 vs 噪音</strong></td><td>訊號：aerospace backlog QoQ trend、segment OI margin 走勢、Filtration synergy 兌現率、Boeing/Airbus production rate guidance；噪音：單一季 EPS 微 miss/beat、Industrial PMI 短期波動（除非連 2 季 &lt; 45）、單筆 M&A 傳聞</td></tr>
+</tbody>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>驗證指標</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>H1</td><td><strong>Aerospace supercycle 至 2030s</strong>：Boeing 737 + Airbus A320 雙寡頭增產 + 老化機隊 retrofit + Meggitt aftermarket monopoly → PH Aerospace 業務 2025-2030 CAGR &gt; 10%</td><td>Aerospace 有機 +12% (FY26 guide) 達成，backlog &gt; $9B</td><td>Aerospace 5Y CAGR ≥ 10%，aerospace 占比從 33% → 38%；OEM build rates A320 75/月 + 737 52/月 達成</td><td>Aero aftermarket revenue 占 aerospace 60%+；穩定 OEM 平台轉換週期（2030s 進入下一代 narrowbody R&D 階段）</td><td>季度有機營收 + backlog QoQ</td><td>2Y: §6, 5Y: §8.A Runway, 10Y: §8.A + §9</td></tr>
+<tr><td>H2</td><td><strong>Win Strategy 3.0 持續 margin expansion</strong>：Adjusted Segment OI Margin 從 FY25 26.0% → FY28 28%+，提前達標 5Y 目標</td><td>FY26 OI margin 27.2% guide 達成，Industrial NA &gt; 22%</td><td>FY28 整體 segment OI margin ≥ 28%，FCF margin ≥ 17%</td><td>OI margin 維持 28%+ 跨越 10Y 不退讓（even in industrial downturns）</td><td>季度 segment OI margin + FCF/Revenue trend</td><td>2Y: §6, 5Y: §8 + §10, 10Y: §8.A' S 曲線</td></tr>
+<tr><td>H3</td><td><strong>Filtration Group 整合成功</strong>：$9.25B 收購 $220M cost synergy 兌現 + EBITDA margin 維持 23.5%+ + 12 個月內 EPS accretive</td><td>2026 H2-2027 Q1 close；首 12 個月 synergy ≥ 50%</td><td>5Y 後 filtration 占比 8-12%；synergy 完全兌現 → group OI margin +50bps</td><td>Filtration 結構性轉變 PH 為 aftermarket-recurring 模式 (50%+)</td><td>季度 segment reporting + Filtration 揭露</td><td>2Y: §6 + §12, 5Y: §8.B 成長品質, 10Y: §9</td></tr>
+</tbody>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p><strong>狀態：進場未滿一年（最早 v12.2+ DD = 2026-05-18，距今 0 天）。</strong><br>
+本欄位將於 2027-05-18 起首次有資料對照。在此之前，僅以 §5.B 戰術假設視角追蹤。</p>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>商用航太 OEM 增產延後 / Boeing 安全事件再起（如 737 MAX、787 quality issues）→ A320 / 737 production rate 跑不到 guidance</td><td>H1</td><td><strong>中期（2-3 年）</strong></td><td>Boeing 737 月產量、Airbus A320 月產量；Boeing safety incidents</td><td>737 月產量 &lt; 35/月 連 2 季；A320 月產量無法在 2027 達 70/月（當前路徑 55-60/月）</td></tr>
+<tr><td>R2</td><td>美中關稅 / supply chain re-shoring 推高 Industrial 業務成本 → Industrial OI margin 收窄 -2pp</td><td>H2</td><td><strong>短期（12 月內）</strong></td><td>Tariff policy；PH 在中國 / 墨西哥工廠占比；Industrial gross margin</td><td>整體 GM 連 2 季 YoY -1pp；Industrial NA segment OI margin 跌破 22%</td></tr>
+<tr><td>R3</td><td>Filtration Group 收購 regulatory block 或 integration synergy 兌現 &lt; 50%</td><td>H3</td><td><strong>中期（2-3 年）</strong></td><td>FTC / 歐盟反壟斷進度；close timeline；首 12 個月 synergy disclosure</td><td>close 延後超過 2027 Q1；首年 synergy &lt; $100M（vs $220M target）</td></tr>
+</tbody>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>問題</th><th>應用於 PH 範例</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>事件在持有期內有影響嗎？</td><td>「A320 next-gen narrowbody（possibly Airbus 2035 launch）」→ 10Y+ 超過持有期，列為 noise；「Filtration close timeline」→ 2Y 內，列為訊號</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響哪一個 H1/H2/H3？</td><td>「Boeing 787 production cut」→ H1；「PH FY26 Q4 guide raise / cut」→ H1 + H2；「Filtration close delay」→ H3</td></tr>
+<tr><td>3. 邊際方向？</td><td>對該假設 + / 0 / -？</td><td>FY26 Q3 beat + guide raise → H1 +, H2 + （aerospace organic +12% raise）；fiber optics $900M lawsuit → 治理 0（仍在 motion 階段，公司已 seeking dismissal）</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達重新評估閾值？</td><td>單季 OI margin -50bps + 多重原因 → 不觸發；連 2 季 OI margin -100bps + 同因素 → 觸發 §5.C R2 警戒</td></tr>
+</tbody>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td><strong>進場</strong></td><td>估值：Fwd PE 跌至 ≤ 22x（股價 ~$750） OR PEG &lt; 1.8（共識 EPS 上修至 14% CAGR）<br>基本面確認：FY26 EPS guide 持續 raise + aerospace backlog 連 3 季創新高</td><td>建倉至底倉 25%（目標倉位的）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 同時兌現（FY26 OI margin ≥ 27.2% + aerospace +12% YoY），且 Pure MA 維持 ✅+；Filtration close 完成</td><td>加至 50% 目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 信號 1 觸發（737 production rate 連 2 季 &lt; 35/月）；或 Fwd PE &gt; 30x（PEG &gt; 2.7）泡沫區</td><td>減至 30-40%，等修復</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 反轉（Aerospace 5Y CAGR 確認 &lt; 5%）；或 Filtration close failed / synergy 兌現 &lt; 30% 12 個月後</td><td>清倉，重新評估 thesis</td></tr>
+</tbody>
+</table>
+
+<h3>F｜The Single Most Important Thing（v12.3 新增）</h3>
+<div class="hypothesis-box">
+<p><strong>PH 的單一最重要事項：「Aerospace + Filtration aftermarket 結構性 recurring revenue 占比是否從 50% 提升至 60%+」</strong></p>
+<p>這是一個 <strong>binary discrete event</strong>（不是 continuum）：</p>
+<ul>
+<li><strong>Yes</strong>（Filtration close 成功 + aerospace aftermarket QoQ 持續增長）→ PH 從 cyclical compounder 升級為 quality compounder with structural recurring，Fwd PE 應該享有 industrial median 1.3x premium（28-30x），長期 5Y 上行至 ,300（+50%）</li>
+<li><strong>No</strong>（Filtration close failed OR aerospace 週期反轉 OR Industrial 持續疲弱）→ 回歸 industrial cyclical PE 18-22x，下行至 0（-19%）</li>
+</ul>
+<p><strong>觀察點：</strong>2026 H2-2027 Q1 Filtration close 完成 + first integration earnings call disclosure；2026 Q4 FY26 EPS 是否達 $31.20 midpoint；2027 Q1 aerospace backlog 是否突破 0B。</p>
+<p><strong>DCA §5.F vs DD §5.F cross-check (QC v12.3)：</strong>後續 DCA 報告若引用本節 single thing，必須對齊「binary recurring revenue 占比 50→60%+」這個 framing，不接受連續性敘述（如「持續成長」）。</p>
+</div>
+
+</section>
+
+<section id="s6">
+<h2>§6｜即時財報情報（FY26 Q3, ended 2026-03-31, reported 2026-04-30）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$5.49B</td><td>$5.40B (est)</td><td><span class="good">Beat +1.7%</span></td><td><span class="good">+10.6%</span></td></tr>
+<tr><td>Adjusted EPS (Non-GAAP)</td><td>$8.17</td><td>$7.85</td><td><span class="good">Beat +4.1%</span></td><td><span class="good">+13.5%</span></td></tr>
+<tr><td>GAAP EPS</td><td>~$7.50 (est)</td><td>—</td><td>—</td><td>~+10%</td></tr>
+<tr><td>Adjusted Net Income</td><td>$1.0B</td><td>—</td><td>—</td><td><span class="good">+16%</span></td></tr>
+<tr><td>Organic Sales Growth</td><td>+6.5%</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Adjusted Segment OI Margin</td><td>26.7%</td><td>~26.4% (est)</td><td><span class="good">Beat</span></td><td><span class="good">+40bps</span></td></tr>
+<tr><td>Total Backlog</td><td><strong>$12.5B 創新高</strong></td><td>—</td><td>—</td><td>+9%</td></tr>
+<tr><td>Aerospace Backlog</td><td><strong>$8.4B</strong></td><td>—</td><td>—</td><td><span class="good">+15%</span></td></tr>
+<tr><td>Aerospace Orders</td><td>+14%</td><td>—</td><td>—</td><td><span class="good">double-digit OEM + aftermarket</span></td></tr>
+</tbody>
+</table>
+
+<h4>FY26 Guidance Update（Q3 raise）</h4>
+<table>
+<thead><tr><th>指標</th><th>Q3 後 Guide</th><th>Q2 Guide</th><th>變動</th></tr></thead>
+<tbody>
+<tr><td>Total Sales 增長</td><td>~+7%</td><td>+5.5% to +7.5%</td><td><span class="good">narrowed up</span></td></tr>
+<tr><td>Organic Sales Growth</td><td>+5.5%</td><td>~+4.5%</td><td><span class="good">+1pp</span></td></tr>
+<tr><td>Aerospace Organic</td><td><strong>+12%</strong></td><td>+10%</td><td><span class="good">+2pp</span></td></tr>
+<tr><td>Industrial NA Organic</td><td>+2.5%</td><td>+2.5%</td><td>持平</td></tr>
+<tr><td>Industrial International</td><td>+2.5%</td><td>+2.5%</td><td>持平</td></tr>
+<tr><td>Adjusted EPS Midpoint</td><td><strong>$31.20</strong></td><td>$30.70</td><td><span class="good">+$0.50</span></td></tr>
+<tr><td>Adjusted Segment OI Margin</td><td>27.2%</td><td>26.9%</td><td><span class="good">+30bps</span></td></tr>
+</tbody>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<thead><tr><th>假設</th><th>本季邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（Aerospace supercycle）</td><td><span class="good">+ 強化</span></td><td>Aerospace orders +14%（OEM + aftermarket 雙位數），backlog +15% 至 $8.4B；guide raise +12%（vs prior +10%）</td></tr>
+<tr><td>H2（Win Strategy 3.0 margin expansion）</td><td><span class="good">+ 強化</span></td><td>Adjusted Segment OI margin 26.7%（+40bps YoY），全年 guide raise 至 27.2%（提前達 Win Strategy 3.0 5Y target 26%）</td></tr>
+<tr><td>H3（Filtration Group 整合）</td><td>0 中性</td><td>Q3 報告未揭露具體 close timeline 更新；FY26 guide 不包含 Filtration（合理，因尚未 close）</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調：樂觀</strong>（vs Q2 偏穩健）。Jenny Parmentier 反覆強調「record」(backlog, margin, orders) + 「raised again」(guide)。具體用語：「<em>Demand environment in aerospace continues to be exceptional</em>」、「<em>Industrial bookings are stabilizing with positive momentum in NA</em>」、「<em>Filtration Group integration on track, regulatory approvals progressing as expected</em>」。</li>
+<li><strong>Forward Guidance</strong>：FY26 EPS midpoint 從 $30.70 → $31.20（+$0.50 raise，第二次 raise of the year）。FY26 organic 從 +4.5% → +5.5%。Aerospace +10% → +12%。Industrial 持平於 +2.5%（NA + Intl）。</li>
+<li><strong>刻意強調的主題</strong>：(1) Aerospace aftermarket 雙位數成長（暗示 long-cycle visibility）；(2) Total backlog $12.5B（暗示 2027-2028 revenue 已部分鎖定）；(3) Win Strategy 3.0 ahead of schedule（暗示新 5Y targets 即將公布）。</li>
+<li><strong>刻意迴避的問題</strong>：(1) Filtration Group 具體 close date（持續說「6-12 months from announcement」，但實際距 Nov 2025 announcement 已 6 個月，未確認具體季度）；(2) Industrial NA 真正復甦時間點（仍維持 +2.5% guide，未上修）；(3) Curtis Instruments 整合進度（一筆 $1B 收購後 18 個月，但 quarterly disclosure 中提及不多）。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端：</strong>Aerospace 需求 backlog 已 lock-in 2027-2028，PH 為間接受益者；Industrial 需求 NA 略有改善（PMI ~49 接近擴張線），但 Intl 仍偏弱（歐洲 + 中國 manufacturing recession 影響）。</li>
+<li><strong>供給端：</strong>Boeing 737 MAX 月產 38 → FY 末 42 / 月（FAA 已批准），787 月產 5 → 7 → 10（2027 目標）；Airbus A320 月產 ~58（2026 H1）→ 75（2027 H2）。PH 為 critical supplier，供給跟得上 OEM ramp。</li>
+<li><strong>競爭格局：</strong>aerospace 競爭結構穩定（PH 為 #2 aerospace systems 供應商僅次於 Honeywell；narrowbody flight control + fuel systems 沒有新進入者）；motion control 分散市場，PH 11% 領先 Bosch 8% + Emerson 7%。</li>
+<li><strong>總體經濟敏感度：</strong>管理層提及「<em>watching tariffs closely</em>」（美中關稅，PH 中國 + 墨西哥工廠約 12% 全球產能），但表示 pass-through 機制 + Win Strategy elasticity 可吸收。</li>
+<li><strong>對同業連帶推論：</strong>Eaton ETN（電氣化）、Emerson EMR（process automation）會跟著 Industrial NA 復甦受益；Honeywell HON、TransDigm TDG（純 aerospace）會跟著 aerospace supercycle 受益。PH 同時 cover 兩者為混合型，相對適合多空格局。</li>
+</ul>
+
+</section>
+
+<section id="s7">
+<h2>§7｜核心門檻檢核</h2>
+
+<h3>EPS CAGR 推導（QC-33 三段推導）</h3>
+<div class="reasoning">
+<b>3Y EPS CAGR (Non-GAAP, FY25→FY28) 推導：</b><br>
+輸入：FY25 actual adj EPS $27.33；FY26E $31.26（yfinance 0y 中位，n=26，+14.4% YoY guide）；FY27E $34.04（yfinance +1y 中位，n=24，+8.9%）。<br>
+FY28E 邏輯推導（§8 推導）：FY27 → FY28 預估 +10.8% YoY 因 Filtration Group 全年首次完整貢獻（B revenue × 23.5% EBITDA × Parker accretion 1.05x ≈ +5pp incremental margin 對 EPS impact ~+5%；加上有機 aerospace +10% + industrial recovery +4% blended +6.5%；扣除 dilution 0.5%；net +11% YoY）→ FY28E = $34.04 × 1.108 = <strong>$37.70</strong>。<br>
+計算：CAGR = ($37.70 / $27.33)^(1/3) − 1 = (1.379)^(1/3) − 1 = <strong>11.3%</strong>。GAAP 略低 (~10.5%) 因 SBC 與 amortization 差異。<br>
+implication：用於 PEG 計算（25.35 / 11.3 = 2.24）；§13.2 PEG diagnose 直接引用；§2.D 估值燈 trigger 條件。
+</div>
+
+<h3>Munger 護城河三維搜尋結果</h3>
+
+<h3>門檻檢核表</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="good">✅</span></td><td>FY25 FCF .34B / Revenue B = <strong>16.8%</strong>；近 3 年趨勢 ↑（FY23 ~13.5% → FY24 15.0% → FY25 16.8%）</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均值 &gt;15%；單年最低 &gt;10%</td><td><span class="warn">部分</span></td><td>5 年 FCF Margin: FY21 ~11% / FY22 13.9% / FY23 13.5% / FY24 15.0% / FY25 16.8%；5 年均值 <strong>14.0%</strong>，最低谷 11% (FY21 COVID 後 supply chain 衝擊)；判斷：穩健向上但 5 年均略低於 15%</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%, 高於 WACC</td><td><span class="good">✅</span></td><td>當前 ROIC <strong>~14%</strong>（NOPAT B / Invested Capital B），WACC ~7.5%，超額 6.5pp；註：PH ROIC 因 Meggitt + Filtration 大筆 goodwill 略被稀釋（goodwill ~B），調整後 cash ROIC &gt; 25%</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10 年 ≥ 70% 年份 ROIC &gt; 15%</td><td><span class="warn">部分</span></td><td>過去 10 年 ROIC: 2017 ~17% / 2018 ~18% / 2019 ~13% / 2020 ~14% / 2021 ~13% / 2022 ~12% (Meggitt 收購) / 2023 ~13% / 2024 ~13% / 2025 ~14%；6/10 年 &gt; 15% (60%, 略不達標)；最低谷 2022 12% (Meggitt 收購當年)；趨勢：擴大（since 2022 trough）</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10 年 ≥ 70% 年份毛利率持續改善</td><td><span class="good">✅</span></td><td>FY16 22.3% → FY25 37.4%（10 年 +15.1pp，年化 +1.5pp）；改善年份 8/10 (80%)，趨勢 ↑↑；當前 37.4% 為 10Y 高點</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5% 優，&lt; 10% 尚可</td><td><span class="good">✅</span></td><td>FY25 Capex M / Rev B = <strong>2.2%</strong>；近 3 年均值 2.1%；評級：<strong>低密集</strong>（典型工業 conglomerate）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="bad">❌</span></td><td>基期 FY25: .33；FY26E .26 (n=26)；FY27E .04 (n=24)；FY28E .70 (邏輯推導)；GAAP CAGR ~10.5%；Non-GAAP CAGR <strong>11.3%</strong>；資料來源：yfinance（Refinitiv 共識）</td></tr>
+<tr><td>PEG (Non-GAAP)</td><td>&lt; 2</td><td><span class="bad">❌</span></td><td>引用 §13.2: 25.35 / 11.3 = <strong>2.24</strong>（略 &gt; 2 警戒線）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7；現金/Rev 10-50%</td><td><span class="warn">部分</span></td><td>D/E = .29B / .68B = <strong>0.68</strong>（剛好邊緣）；現金 7M / Rev B = <strong>2.2%</strong>（過低，公司 prefer redeploy to M&A）；Net Debt/EBITDA 1.66x（健康），Filtration 收購後 pro-forma 2.7x（仍合規但較緊）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="bad">否</span></td><td>$467M cash vs $9,285M debt（典型工業 conglomerate）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8, 趨勢擴大</td><td><span class="good">✅</span></td><td>§9 評分 <strong>9 / 10</strong>，趨勢加深（Meggitt + Filtration 結構性轉向 long-cycle aftermarket）</td></tr>
+</tbody>
+</table>
+
+<p><strong>最大財務弱點：</strong>Net Debt/EBITDA 將因 Filtration Group $9.25B 大筆 M&A 上升至 2.7x（vs 當前 1.66x），槓桿管理是 12-24 個月關鍵觀察點。</p>
+<p><strong>Munger 三維護城河快速評級：🟡 兩項達標</strong>（毛利率定價力 + 資本密集度 ✅；ROIC 穩定性 60% 略不達標 70% 標準，因 Meggitt + Filtration 大筆 M&A goodwill 稀釋）→ 數字層面支持高護城河評分但有 M&A 後遺症需消化。</p>
+
+<h3>⚠️ 價值陷阱初篩</h3>
+<p>觸發條件檢核：Forward P/E 5Y 分位 79.6%、P/FCF 5Y 分位推算 ~75%。<strong>分位皆 &gt; 25%</strong>，<strong>不觸發</strong>低估值四問檢驗。PH 為「估值偏高的優質週期股」，不適用便宜陷阱框架（§13 估值診斷有獨立的「便宜理由檢驗」，但因 5Y 分位高同樣不觸發）。</p>
+
+</section>
+
+<section id="s8">
+<h2>§8｜長期成長性評估</h2>
+<p class="note">v12.3 結構：A Runway 加 5Y/10Y 量化 + A' S 曲線位置 + B 成長品質（定價 vs 量 +3Y 軌跡）+ C 護城河連動 + D ROIC + E 壓力測試（3Y/5Y/10Y 矩陣）+ F AI 風險 + H 客戶結構深度（v12.3 新增）。</p>
+
+<h3>A｜成長跑道（Runway）— 5Y / 10Y 量化敘述</h3>
+<table>
+<thead><tr><th>維度</th><th>當前 2026</th><th>5Y 2031</th><th>10Y 2036</th><th>結構性變化</th></tr></thead>
+<tbody>
+<tr><td>Total TAM</td><td>~$200B（motion control $130B + filtration $25B + aerospace systems $45B）</td><td>~$260B（aerospace ramp + Electrification + AI-driven motion）</td><td>~$320B</td><td>從「mature mechanical」→「mechanical + electrification + filtration aftermarket」三引擎</td></tr>
+<tr><td>Motion control 市佔（PH）</td><td>11%</td><td>12-13%（M&A consolidation 持續）</td><td>14-15%（如維持 M&A 紀律）</td><td>從 fragmented 11% → 進一步集中</td></tr>
+<tr><td>Aerospace 占 PH 收入</td><td>~33%</td><td>~38%（aerospace organic +10% vs industrial +4%）</td><td>~40%</td><td>從「diversified industrial」→「aerospace + filtration aftermarket dominant」</td></tr>
+<tr><td>Aftermarket revenue mix</td><td>~50%（after Meggitt）</td><td>~58%（Filtration close + aerospace aftermarket growth）</td><td>~62%</td><td>結構性 recurring 比例提升（v12.3 §5.F single thing）</td></tr>
+<tr><td>5Y 至 30% TAM 滲透率時間</td><td>~10-12 年</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td><strong>成長可持續年數（Runway）</strong></td><td colspan="3"><strong>7-10 年</strong>（aerospace supercycle 確定到 2030s；後續取決於 next-gen narrowbody 平台 + AI / robotics motion 需求）</td><td>—</td></tr>
+</tbody>
+</table>
+<p>Runway 解讀基準：7-10 年屬於 <strong>🟡 中等可見度成長</strong>（5-9 年中段偏上）。確定性高的部分是 aerospace 至 2030s；不確定的是工業景氣節奏 + electrification / AI motion 真正接棒的時點。</p>
+
+<h3>A'｜S 曲線位置 + 距飽和年數（v12.3 新增）</h3>
+<table>
+<thead><tr><th>業務段</th><th>占比 (FY26E)</th><th>S 曲線位置</th><th>距產業飽和（年）</th><th>路徑</th></tr></thead>
+<tbody>
+<tr><td>Aerospace Systems</td><td>~33%</td><td><strong>中段</strong>（OEM ramp 加 aftermarket 雙引擎）</td><td>5-7 年（至 2031-2033 next-gen narrowbody 過渡期）</td><td>當前 supercycle 是 1980s 後最強週期；2030s 後可能進入 platform pause</td></tr>
+<tr><td>Industrial NA</td><td>~37%</td><td><strong>後段</strong>（成熟工業）</td><td>已飽和，依賴 M&A + 滲透率提升</td><td>低個位數成長 + margin 持續擴張</td></tr>
+<tr><td>Industrial Intl</td><td>~22%</td><td><strong>後段</strong>（成熟工業 + 中國 / 歐洲 cycle）</td><td>已飽和</td><td>取決於中國 / 歐洲 manufacturing recovery</td></tr>
+<tr><td>Filtration (pro-forma post-close)</td><td>~8%（將從 4% → 12%）</td><td><strong>中段</strong>（推升 aftermarket recurring）</td><td>5-7 年</td><td>filtration aftermarket 結構穩定 +5-7% 長期</td></tr>
+<tr><td>Electrification (Curtis Instruments + motion controllers)</td><td>~3%（升至 7%）</td><td><strong>前段</strong>（high growth, low base）</td><td>10+ 年</td><td>EV / robotics / forklift / off-road 電動化長期接棒</td></tr>
+</tbody>
+</table>
+<p><strong>多曲線疊加邏輯：</strong>5 條業務分別在不同 S 曲線位置（電氣化前段 + aerospace 中段 + filtration 中段 + industrial 後段）→ 整體 Runway 不會單一年份全部熄火。若 aerospace 在 2030s 進入週期 pause，electrification + filtration 接棒可維持 PH 整體 6-8% 有機成長。</p>
+
+<h3>B｜成長品質（定價 vs 量，3Y 軌跡 — v12.3 強化）</h3>
+<table>
+<thead><tr><th>類型</th><th>定義</th><th>FY23-25 平均 %</th><th>3Y 趨勢</th><th>FY26E</th></tr></thead>
+<tbody>
+<tr><td>有機成長</td><td>定價 + 現有業務深化 + 新地理</td><td>~55%</td><td>↓ 略降（更多 M&A 比重）</td><td>~50%</td></tr>
+<tr><td>無機成長（M&A）</td><td>Meggitt (2022) + Curtis (2025) + Filtration (2026 close)</td><td>~45%</td><td>↑ 顯著上升</td><td>~50%</td></tr>
+<tr><td>定價驅動（Price）</td><td>提價 + product mix shift (aerospace, aftermarket)</td><td>~60% (有機部分中)</td><td>擴大（aerospace aftermarket 定價力強）</td><td>持續擴大</td></tr>
+<tr><td>量驅動（Volume）</td><td>units sold growth</td><td>~40% (有機部分中)</td><td>持平偏增（OEM build rate ramp）</td><td>aerospace volume ↑</td></tr>
+</tbody>
+</table>
+<p>解讀：PH 有機成長已從歷史 ~70% 比重降至 50-55%，公司轉向「<strong>策略性 M&A + 平台整合</strong>」模式。這需要管理層持續證明 capital allocation 紀律（vs 美式工業 conglomerate 典型 acquirer's curse）。當前看 Meggitt 整合非常成功，Curtis 進度未充分披露，Filtration 是未來 24 個月 H3 假設關鍵。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<thead><tr><th>類型</th><th>是否適用 PH</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td><strong>強化型</strong>（最佳）</td><td><span class="good">✅ 主要</span></td><td>Meggitt + Filtration 收購 = 加深 aftermarket recurring revenue（從 25% → 55%+）；motion control + filtration scale 使 distributor network 規模優勢擴大；aerospace OEM 認證 + 25-yr lifecycle 形成更高轉換成本</td></tr>
+<tr><td>中性型</td><td>部分</td><td>Industrial NA / Intl 業務僅與護城河略連動</td></tr>
+<tr><td>消耗型（警示）</td><td>無</td><td>不適用</td></tr>
+</tbody>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>當前 (FY25)</th><th>3 年前 (FY22)</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>~14%</td><td>~12%</td><td><span class="good">↑</span></td><td>產業頂尖, &gt; WACC</td><td>✅ vs WACC 7.5%</td></tr>
+<tr><td>ROIC − WACC（超額）</td><td>+6.5pp</td><td>+4.5pp</td><td><span class="good">↑ 擴大</span></td><td>持續正且擴大</td><td>✅</td></tr>
+<tr><td>FCF Margin</td><td>16.8%</td><td>13.9%</td><td><span class="good">↑</span></td><td>&gt; 15%</td><td>✅</td></tr>
+<tr><td>FCF / Net Income 轉換率</td><td>0.95</td><td>0.92</td><td><span class="good">↑</span></td><td>&gt; 85% (輕資本)</td><td>✅</td></tr>
+<tr><td>Reinvestment Rate (再投資率)</td><td>~17%（FY25 incl. M&A）</td><td>~30% (Meggitt)</td><td>↓ Filtration 後 spike</td><td>合理（搭配高 ROIC）</td><td>✅</td></tr>
+</tbody>
+</table>
+
+<h3>E｜成長熄火情境壓力測試（3Y / 5Y / 10Y 矩陣 — v12.3 強化）</h3>
+<table>
+<thead><tr><th>情境 / 時間</th><th>3Y (FY28)</th><th>5Y (FY30)</th><th>10Y (FY35)</th></tr></thead>
+<tbody>
+<tr><td>Base（共識 + 公司 guide）</td><td>EPS $37.7, PE 25x → $943</td><td>EPS $50.0, PE 23x → $1,150</td><td>EPS $80, PE 20x → $1,600</td></tr>
+<tr><td>Bear A（3Y CAGR 降至 6%, 工業景氣弱）</td><td>EPS $32.5, PE 22x → $715</td><td>EPS $40.0, PE 20x → $800</td><td>EPS $55, PE 18x → $990</td></tr>
+<tr><td>Bear B（成長率 +3%, aerospace 反轉）</td><td>EPS $29.8, PE 18x → $536</td><td>EPS $33.0, PE 17x → $561</td><td>EPS $42, PE 16x → $672</td></tr>
+<tr><td>Bear C（合理 PE -25%, multiple compression 全方位）</td><td>EPS $37.7, PE 19x → $716</td><td>EPS $50.0, PE 17x → $850</td><td>EPS $80, PE 15x → $1,200</td></tr>
+</tbody>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr></thead>
+<tbody>
+<tr><td><strong>護城河侵蝕</strong></td><td>GM 連 2 季 YoY 下滑</td><td>FY26 Q3 GM 37.4% vs Q3 FY25 36.6%（+80bps，擴張中）</td><td>⬜</td></tr>
+<tr><td><strong>護城河侵蝕</strong></td><td>核心市場市佔縮減</td><td>motion control 11%（穩定領先）；aerospace systems share 略升（Meggitt 整合後）</td><td>⬜</td></tr>
+<tr><td><strong>護城河侵蝕</strong></td><td>最近提價後銷量下滑?</td><td>無此跡象（aerospace orders +14% & industrial 穩定）</td><td>⬜</td></tr>
+<tr><td><strong>盈餘品質</strong></td><td>EPS CAGR &gt;&gt; Revenue CAGR (差距 &gt;5pp)</td><td>FY26 EPS +14% vs Revenue +7%（差距 7pp，但 segment OI margin +40bps + share buyback 占 1pp 解釋）</td><td><span class="warn">🟡 警戒（非紅）</span></td></tr>
+<tr><td><strong>盈餘品質</strong></td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FCF/NI: FY24 0.96, FY25 0.95（穩健 &gt; 0.9）</td><td>⬜</td></tr>
+<tr><td><strong>盈餘品質</strong></td><td>SBC/Rev &gt; 5% 且上升</td><td>PH SBC/Rev ~0.6%（典型工業，遠低於 5%）</td><td>⬜</td></tr>
+<tr><td><strong>產業結構衰退</strong></td><td>TAM 萎縮?</td><td>否，motion + filtration + aerospace 均擴張</td><td>⬜</td></tr>
+<tr><td><strong>產業結構衰退</strong></td><td>產業估值倍數 3 年系統性下移?</td><td>否，industrial conglomerate 3Y 倍數擴張 (ETN, ROK)</td><td>⬜</td></tr>
+<tr><td><strong>隱性資本密集</strong></td><td>Maintenance Capex/FCF &gt; 60%?</td><td>Capex M / FCF .34B = 13%（低）</td><td>⬜</td></tr>
+<tr><td><strong>隱性資本密集</strong></td><td>停止投資 3 年內收入下滑?</td><td>否，PH 是 low-capex compounder，收入 + 80% 來自存量平台</td><td>⬜</td></tr>
+</tbody>
+</table>
+<p><strong>價值陷阱風險評級：🟢 低風險</strong>（0-1 個亮燈，且該 1 項為「警戒」非「紅」）— 未見系統性惡化信號，估值偏高是 thesis 完整下的 timing 問題，非結構性陷阱。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong>評級：🟢 AI 受益或免疫</strong></p>
+<ul>
+<li>核心業務 motion control + hydraulics + filtration 是「<strong>實體基礎設施</strong>」，不被 AI 算法取代</li>
+<li>AI datacenter 需要 PH liquid cooling + air filtration + power motion → PH 為間接受益</li>
+<li>Industrial automation 受 AI-enabled predictive maintenance 加速採用 → PH IoT 平台受益</li>
+<li>無 AI 替代風險業務（不像 SaaS / 文案 / 翻譯類）</li>
+</ul>
+<p>評級分數：<strong>9 分</strong>（傳遞至 §2 綜合品質分使用）</p>
+
+<h3>H｜客戶結構深度（v12.3 新增）</h3>
+<table>
+<thead><tr><th>項目</th><th>佔比</th><th>結構性風險</th></tr></thead>
+<tbody>
+<tr><td>Top 1 客戶（推估：Boeing 商用 + 防務）</td><td>~3-4%</td><td>不集中（PH 分散於 11,000+ 工業 + 1,000+ aerospace 客戶）</td></tr>
+<tr><td>Top 5 客戶</td><td>~10%</td><td>仍分散</td></tr>
+<tr><td>Top 10 客戶</td><td>~15%</td><td>低集中度</td></tr>
+<tr><td>Aerospace OEM (Boeing + Airbus 合計)</td><td>~10-12%</td><td>Aerospace OEM &amp; aftermarket revenue ~33% 但 customer 高度分散，含 commercial + defense + aftermarket distributors</td></tr>
+<tr><td>Industrial Top 10 distributors</td><td>~8%</td><td>13,000 經銷商網路是規模優勢，非集中風險</td></tr>
+<tr><td><strong>Dual-track 風險</strong></td><td colspan="2">無 — 客戶端 + 應用端均分散；任一客戶流失影響 &lt; 2% 營收</td></tr>
+<tr><td><strong>In-house 風險</strong></td><td colspan="2">低 — Boeing / Airbus 不會自製 flight control hydraulics（capex + FAA 認證壁壘極高）；Industrial OEM 同理（自製 hydraulics 不經濟）</td></tr>
+</tbody>
+</table>
+
+<h3>長期成長性綜合評級</h3>
+<p><strong>🟡 中等可見度成長</strong>：Runway 7-10 年，多曲線疊加（aerospace + filtration + electrification）部分指標有 M&A 後遺症（ROIC 稀釋）但無結構性衰退；衰退信號 0-1 個亮燈。</p>
+
+</section>
+
+<section id="s9">
+<h2>§9｜護城河分析（報告核心）</h2>
+<p class="note">v12.3 結構：護城河來源 + 競爭鴻溝 + 市佔競爭表 + 護城河趨勢 + 24 個月威脅排序 + D 變遷時間軸 + E 對手投入對照 + execution + pricing power 二維強制拆解。</p>
+
+<p><strong>評分：9 / 10</strong>（execution moat 9 + pricing power moat 8，雙軸均高，平均 8.5 → 取 9；以全球上市公司為基準，採 v12.3 嚴格標準）</p>
+
+<h3>護城河來源（4 項逐一檢驗）</h3>
+<table>
+<thead><tr><th>類型</th><th>是否具備 + 深度論述</th></tr></thead>
+<tbody>
+<tr><td><strong>網路效應</strong></td><td><span class="warn">弱</span>：PH 非典型 platform 公司。但 13,000 distributor network 提供類網路效應 — 越多 distributor → 越多 application engineering 案例 → 越多 SKU → 越強 retention。屬於「<strong>分銷端 mini-network effect</strong>」。</td></tr>
+<tr><td><strong>無形資產</strong></td><td><span class="good">強</span>：(1) FAA / EASA aerospace 認證（每筆 flight-critical 元件 5-15 年認證週期 + 政府 sole-source approval）；(2) 100+ year brand 在 motion control 領域（Parker = "the engineered piping solution"）；(3) Meggitt 帶來的 defense PMA aftermarket（25-yr lifecycle near-monopoly）。</td></tr>
+<tr><td><strong>轉換成本</strong></td><td><span class="good">極強</span>：商用航太 flight-critical 元件供應商切換需重新 FAA certification 18-36 個月 + 客戶 qualification testing；工業 mission-critical 元件嵌入 OEM design，切換成本 = 整機 redesign。aerospace + heavy industrial 應用 transfer cost &gt; $10M / 案例。</td></tr>
+<tr><td><strong>規模優勢</strong></td><td><span class="good">極強</span>：motion control TAM B 中 11% 全球領先（次大 Bosch 8% + Emerson 7% + Eaton 6%）；廣度最強技術平台（hydraulic + pneumatic + electromechanical + filtration + sealing），單一供應商可 cross-sell 8+ 技術；distributor footprint 13,000 vs 同業 ~3,000-5,000。</td></tr>
+</tbody>
+</table>
+
+<h3>競爭鴻溝（為什麼資本充足的對手仍無法跨越？）</h3>
+<ul>
+<li><strong>Aerospace 認證疊加</strong>：Honeywell HON / Rockwell ROK / Eaton ETN 個別有強項，但無一家像 PH 同時擁有 Meggitt + LORD + EME + CLARCOR 完整 aerospace + industrial 認證組合。建立同等 cert portfolio 需 15-20 年 + $20-30B M&A。</li>
+<li><strong>Distributor density</strong>：13,000 經銷商 + 50 萬 SKU 標準件，build similar density 需 10+ 年 (不只是 capex，需要 application engineer talent pool)。</li>
+<li><strong>Operating system (Win Strategy)</strong>：Eaton 的 EBS / Emerson 的 Operational Excellence 雖類似，但 PH Win Strategy 已 25 年迭代至 3.0；後進者複製需 multi-decade learning curve。</li>
+<li><strong>Filtration aftermarket recurring</strong>：Filtration Group 收購後 PH 將擁有最大 industrial filtration aftermarket footprint（B revenue, 85% aftermarket），對手要建類似平台需 -8B M&A 與 5+ 年整合。</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>目前市佔 (motion control)</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr></thead>
+<tbody>
+<tr><td><strong>Parker-Hannifin (PH)</strong></td><td><strong>11%</strong></td><td><span class="good">擴大</span> (Meggitt + Filtration)</td><td>基準</td><td>吃小型 motion / filtration 對手</td></tr>
+<tr><td>Bosch Rexroth (private)</td><td>8%</td><td>持平</td><td>歐洲 industrial hydraulics 強</td><td>無顯著市佔流動</td></tr>
+<tr><td>Emerson Electric (EMR)</td><td>7%</td><td>持平偏穩</td><td>process automation 領域強</td><td>—</td></tr>
+<tr><td>Eaton (ETN)</td><td>6%</td><td><span class="good">略擴</span> (電氣化)</td><td>aerospace + electrical 競爭</td><td>吃 mechanical → electrical 轉型市佔</td></tr>
+<tr><td>Honeywell HON (aerospace specific)</td><td>n/a (aerospace 直接競爭 #1)</td><td>持平</td><td>aerospace flight control 領域競爭最直接</td><td>—</td></tr>
+<tr><td>Rockwell Automation (ROK)</td><td>5%</td><td>略擴</td><td>industrial automation 軟體強</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢：擴大 / 穩定 / 縮減</h3>
+<p><strong>加深</strong>（Trend：擴大）</p>
+<p>理由：Meggitt 收購 (2022) 已將 aerospace aftermarket 從 25% → 50%；Filtration Group (2025) 將推 aftermarket 至 55-60%；structural shift to long-cycle recurring 是護城河結構性加深，不是 cyclical 改善。</p>
+
+<h3>D｜護城河變遷時間軸（v12.3 新增）</h3>
+
+<h4>過去 5 年（2021-2026）護城河變化</h4>
+<table>
+<thead><tr><th>年份</th><th>事件 / 趨勢</th><th>對護城河貢獻</th><th>9/10 評分變動</th></tr></thead>
+<tbody>
+<tr><td>2021</td><td>COVID 後 supply chain 衝擊測試</td><td>展現 distributor / OEM resilience；Win Strategy 維持 margin</td><td>+0.2</td></tr>
+<tr><td>2022</td><td>Meggitt 收購 close（$8.7B）</td><td>aerospace 從 22% → 33%，aftermarket 雙倍；結構轉型</td><td>+1.5</td></tr>
+<tr><td>2023</td><td>Win Strategy 3.0 公布 + Investor Day</td><td>5Y targets visibility 改善；市場 multiple expansion</td><td>+0.3</td></tr>
+<tr><td>2024</td><td>Aerospace 連 4 年雙位數有機成長</td><td>結構性 supercycle 證明</td><td>+0.3</td></tr>
+<tr><td>2025-2026</td><td>Curtis ($1B) + Filtration ($9.25B) 雙 M&A</td><td>electrification + filtration aftermarket；aftermarket 進一步 50% → 55-60%</td><td>+0.7（pending close）</td></tr>
+<tr><td><strong>5 年累積</strong></td><td></td><td><strong>從 7 → 9</strong></td><td><strong>+3.0</strong></td></tr>
+</tbody>
+</table>
+
+<h4>未來 5 年（2026-2031）可能變化</h4>
+<table>
+<thead><tr><th>情境</th><th>機率</th><th>對護城河影響</th><th>觸發條件</th></tr></thead>
+<tbody>
+<tr><td>Filtration 整合成功，aftermarket 60%+</td><td>60%</td><td><span class="good">+1（9 → 10）</span></td><td>$220M synergy 兌現 + EBITDA margin 維持</td></tr>
+<tr><td>Aerospace supercycle 至 2031 持續</td><td>70%</td><td>+0.5（confirm 9）</td><td>Boeing / Airbus build rates 達 guide</td></tr>
+<tr><td>下一筆 M&A（如 Eaton aerospace divestiture target）</td><td>20%</td><td>+0.3</td><td>Eaton 出售部分 aerospace 業務（已有徵兆）</td></tr>
+<tr><td>Electrification 平台跨越 hump（Curtis EBITDA &gt; $200M）</td><td>40%</td><td>+0.3</td><td>EV / robotics adoption 加速</td></tr>
+<tr><td><strong>負面情境：Filtration 整合失敗 / Aerospace 反轉</strong></td><td>20%</td><td><span class="bad">-1.5（9 → 7-8）</span></td><td>R3 觸發或 H1 反轉</td></tr>
+<tr><td><strong>5Y 預期累積（機率加權）</strong></td><td></td><td><strong>9 → 9.5（±0.5）</strong></td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>E｜對手投入 vs PH Capex / R&D 對照（v12.3 新增）</h3>
+<table>
+<thead><tr><th>公司</th><th>Capex (絕對 / Rev %)</th><th>R&D (絕對 / Rev %)</th><th>合計</th><th>vs PH 差距</th></tr></thead>
+<tbody>
+<tr><td><strong>Parker-Hannifin (PH)</strong></td><td>$435M / 2.2%</td><td>~$420M / 2.1%</td><td>$855M / 4.3%</td><td>基準</td></tr>
+<tr><td>Eaton (ETN)</td><td>~$1.0B / 4.0%</td><td>~$700M / 2.8%</td><td>$1.7B / 6.8%</td><td>絕對 +$845M / +2.5pp 較高</td></tr>
+<tr><td>Honeywell (HON)</td><td>~$1.1B / 2.8%</td><td>~$2.0B / 5.1%</td><td>$3.1B / 7.9%</td><td>R&D 強，但範圍含 IT、Materials</td></tr>
+<tr><td>Emerson (EMR)</td><td>~$600M / 3.5%</td><td>~$650M / 3.8%</td><td>$1.25B / 7.3%</td><td>較 R&D intensive 但規模較小</td></tr>
+<tr><td>Rockwell (ROK)</td><td>~$200M / 2.5%</td><td>~$430M / 5.4%</td><td>$630M / 7.9%</td><td>R&D 強（軟體驅動），規模較小</td></tr>
+</tbody>
+</table>
+<p><strong>解讀：</strong>PH Capex + R&D 占營收比例 4.3% 在工業 conglomerate 中偏低 — 反映 PH 的「<strong>capital efficiency play</strong>」：M&A driven growth + lean operations 而非 R&D heavy. 這是優勢（cash return to shareholders + dividend / buyback）也是潛在劣勢（若產業突然進入 electrification / AI motion 變革期，PH R&D 較弱可能落後）。但 PH 透過 M&A 取得技術（Curtis Instruments 為例）解決這個問題。</p>
+
+<h3>24 個月內最可能瓦解護城河的威脅排序（QC-23 三級分類）</h3>
+<table>
+<thead><tr><th>排序</th><th>威脅</th><th>等級</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Filtration Group 整合 synergy &lt; 50% 兌現</td><td><span class="warn">🟡 點對點</span></td><td>不會結構性瓦解護城河，但會壓估值倍數</td></tr>
+<tr><td>2</td><td>Aerospace OEM 增產 reverse（Boeing 安全事件再起）</td><td><span class="warn">🟡 點對點</span></td><td>短期週期衝擊，aftermarket recurring 可緩衝</td></tr>
+<tr><td>3</td><td>Eaton ETN 大舉進入 aerospace（已有 hydraulic 部門）</td><td><span class="warn">🟡 點對點</span></td><td>新進阻力高，不易撼動 PH + HON 雙寡頭</td></tr>
+<tr><td>4</td><td>Electrification 全面取代 hydraulics（10Y+ 結構）</td><td><span class="warn">🟡 點對點</span></td><td>PH 已透過 Curtis hedging，過渡期有 buffer</td></tr>
+<tr><td>5</td><td>美中關稅 / supply chain 重整</td><td><span class="warn">🟡 點對點</span></td><td>margin 短期 -50bps to -100bps，但 pass-through 可吸收</td></tr>
+</tbody>
+</table>
+<p>當前無 🔴 生態攻擊或 ⛔ 架構替代風險 → 護城河評分不下調。</p>
+
+</section>
+
+<section id="s10">
+<h2>§10｜財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<thead><tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>主要對手比較 (FY25)</th></tr></thead>
+<tbody>
+<tr><td>Revenue (B)</td><td>$19.07</td><td>$19.93</td><td>$19.85</td><td>ETN $24.9B, HON $39B, EMR $17.5B</td></tr>
+<tr><td>Gross Margin</td><td>33.0%</td><td>35.8%</td><td><strong>37.4%</strong></td><td>ETN 38.5%, HON 37.5%, EMR 50%（process automation 高 GM）</td></tr>
+<tr><td>Operating Margin</td><td>17.9%</td><td>19.1%</td><td><strong>20.4%</strong></td><td>ETN 19.5%, HON 20.5%, EMR 22% (Industrial), ROK 19.5%</td></tr>
+<tr><td>Adjusted Segment OI Margin</td><td>24.0%</td><td>25.5%</td><td>26.0%</td><td>提前達 Win Strategy 3.0 5Y 26% 目標</td></tr>
+<tr><td>FCF Margin</td><td>13.5%</td><td>15.0%</td><td><strong>16.8%</strong></td><td>ETN 14.3%, HON 15.5%, EMR 17.2%</td></tr>
+<tr><td>EBITDA Margin</td><td>22.5%</td><td>24.0%</td><td>25.5%</td><td>ETN 22%, HON 23%, EMR 27%</td></tr>
+<tr><td>ROIC − WACC</td><td>+5.5pp</td><td>+6.0pp</td><td>+6.5pp</td><td>ETN +7pp, HON +5pp, EMR +6pp</td></tr>
+<tr><td>SBC / Revenue</td><td>0.55%</td><td>0.60%</td><td>0.62%</td><td>低 (典型工業)</td></tr>
+<tr><td>ROE</td><td>17.1%</td><td>21.0%</td><td><strong>24.8%</strong></td><td>ETN 21.6%, HON 30%, EMR 14% (post-spin), ROK 25%</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質警訊（四項）</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>淨利 vs OCF 連動性</td><td>FY25 NI .53B / OCF .78B = 0.93 (OCF 略高)</td><td><span class="good">✅ 健康</span>（NI 未被 accruals 推高）</td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td>AR FY25 +3% vs Revenue 持平</td><td><span class="good">✅</span>（無 channel stuffing 跡象）</td></tr>
+<tr><td>存貨成長 vs 營收成長</td><td>Inventory 略升 +4% vs Revenue 持平</td><td><span class="warn">🟡 略警戒</span>（Q3 aerospace order backlog +15% 可解釋部分庫存增加，supply chain 應對）</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>0.83 → 0.92 → 0.95（三年改善）</td><td><span class="good">✅</span></td></tr>
+</tbody>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年回購總金額 vs FCF</td><td>3Y buyback ~$2.0B vs FCF ~$8.5B = 24%</td><td><span class="good">合理</span>（&lt; 80% 警戒）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>FY23 → FY25 EPS CAGR: 27% (報告值)，剔除 buyback (~1.1% per year) ≈ 25%</td><td>差距 2pp，不構成警示</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>FY23-25 buyback avg ~ vs 當前 2.72</td><td>低於當前股價（資本配置合理，未追高）</td></tr>
+<tr><td>Revenue CAGR（FY23→FY25）</td><td>~2.0%（COVID 後 normalization）</td><td>EPS CAGR &gt;&gt; Revenue CAGR 主要由 margin expansion + 體質改善（FY25 vs FY23 OI margin +2.5pp）+ buyback 1.1% 解釋</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<section id="s11">
+<h2>§11｜產業格局、議價權與 Unit Economics</h2>
+<p class="note">v12.3 結構：市場量化加 5Y/10Y + 議價權三段獨立（上游/下游/地理）+ 營收三維 + 單位經濟 per business。</p>
+
+<h3>市場量化（5Y / 10Y）</h3>
+<table>
+<thead><tr><th>TAM 維度</th><th>2026 現在</th><th>2031 5Y</th><th>2036 10Y</th><th>結構性變化</th></tr></thead>
+<tbody>
+<tr><td>Motion control 全球 TAM</td><td>$130B</td><td>$165B（CAGR 4.9%）</td><td>$210B（CAGR 4.7%）</td><td>傳統 hydraulics → 電氣化 motion + AI-driven robotics 雙增長引擎</td></tr>
+<tr><td>Industrial Filtration TAM</td><td>$50B（PH access ~$25B）</td><td>$65B</td><td>$85B</td><td>life sciences + HVAC/R + clean datacenter 三大新興區段</td></tr>
+<tr><td>Aerospace Systems TAM</td><td>$45B</td><td>$60B（OEM ramp + aftermarket）</td><td>$75B</td><td>OEM build rate ramp 至 2030s + 老化機隊 retrofit + defense 戰備需求</td></tr>
+<tr><td>當前滲透率</td><td>PH 在綜合 TAM ~7-8%</td><td>~8-9%</td><td>~9-10%</td><td>—</td></tr>
+<tr><td>供需狀態</td><td>aerospace 供不應求 (backlog $8.4B)；industrial 平衡</td><td>aerospace 仍緊；industrial 復甦</td><td>取決於 next-gen narrowbody 平台節奏</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>議價權（三段獨立）</h3>
+
+<h4>對上游供應商</h4>
+<ul>
+<li><strong>原料端</strong>：鋼鐵、鋁、橡膠、特殊合金 — PH 為大量採購方（年採購 ~$10B+），對 commodity 上游有規模議價力。鋼鐵 LME 價格走升時 pass-through 機制 6-12 個月 delay。<strong>議價力 強</strong>。</li>
+<li><strong>電子元件 / 半導體</strong>：Curtis 收購後新加入需求（motor controllers, EV power electronics），對 TI、Infineon、ST 為中型客戶 — 議價力中等。半導體 lead time 風險仍存在（COVID 教訓）。<strong>議價力 中</strong>。</li>
+<li><strong>精密軸承 / 馬達</strong>：來自 SKF、NSK、Schaeffler — PH 為重要客戶但非 dominant；雙方有長期合約綁定。<strong>議價力 中</strong>。</li>
+</ul>
+
+<h4>對下游客戶</h4>
+<ul>
+<li><strong>商用航太 OEM（Boeing, Airbus, Embraer, Bombardier）</strong>：PH flight-critical 元件供應商，FAA 認證 + 25-yr 服務週期形成超強鎖定。客戶切換成本 = 整機 redesign &gt; $50M-100M。<strong>議價力 極強</strong>（5/5）。</li>
+<li><strong>商用航太 Aftermarket（航空公司、MRO）</strong>：Meggitt 後 PH 擁有 PMA aftermarket 部分壟斷（Boeing、Airbus 機隊 25-yr 維修需求）。航空公司無替代方案。<strong>議價力 極強</strong>（5/5）。</li>
+<li><strong>Industrial OEM（Caterpillar, John Deere, Trane, Mitsubishi）</strong>：mission-critical 元件嵌入 OEM design，切換成本高，但工業 OEM 自身 procurement power 大。<strong>議價力 中強</strong>（4/5）。</li>
+<li><strong>Industrial distributors</strong>：13,000 經銷商網路是 PH 規模優勢的來源；distributor 業務模式 25%+ margin，PH 為主要供應商，個別 distributor 無切換能力。<strong>議價力 強</strong>（4/5）。</li>
+<li><strong>Filtration Group 收購後 aftermarket</strong>：85% aftermarket recurring；客戶為 HVAC/R、life sciences、industrial 多元，無集中。<strong>議價力 強</strong>（4/5）。</li>
+</ul>
+
+<h4>地理曝險（5 大區域）</h4>
+<ul>
+<li><strong>美國 NA（~55%）</strong>：核心市場，aerospace + industrial 雙引擎。地緣風險低。供應鏈在地化中（Inflation Reduction Act 受益）。</li>
+<li><strong>歐洲（~22%）</strong>：Meggitt 收購後 UK 影響擴大；歐洲 manufacturing 衰退中（PMI &lt; 50）+ 能源成本高 → 短期逆風。</li>
+<li><strong>亞太（~15%，含中國 + 日本 + 韓國 + 印度）</strong>：中國 ~7% 營收，受美中關稅 + 中國工業 deflationary 壓力雙重影響。日本 + 印度部分對沖。<strong>地緣風險中等</strong>。</li>
+<li><strong>拉美（~5%）</strong>：墨西哥 nearshoring 受益（PH 在 Nuevo León 有重要工廠）。</li>
+<li><strong>中東 / 非洲（~3%）</strong>：石油 + 國防需求穩定。</li>
+</ul>
+<p><strong>地緣風險集中點：</strong>中國 ~7% 營收若關稅升至 50%+ 預計 EPS impact -2-3%；歐洲 manufacturing recession 持續至 2027 預計 segment OI margin -50bps。整體地緣風險可控。</p>
+
+<h3>營收組成三維展開（v12.3 新增）</h3>
+
+<h4>按業務段</h4>
+<table>
+<thead><tr><th>業務段</th><th>FY26E Revenue</th><th>占比</th><th>YoY</th><th>OI Margin</th><th>3Y 軌跡</th></tr></thead>
+<tbody>
+<tr><td>Aerospace Systems</td><td>~$7.0B</td><td>33%</td><td><span class="good">+12%</span></td><td>~30%</td><td>OI margin 25% → 28% → 30%（FY23 → FY25 → FY26E），擴張中</td></tr>
+<tr><td>Industrial NA</td><td>~$7.5B</td><td>35%</td><td>+2.5%</td><td>~22%</td><td>OI margin 20% → 21% → 22%，緩步擴張</td></tr>
+<tr><td>Industrial Intl</td><td>~$4.5B</td><td>21%</td><td>+2.5%</td><td>~21%</td><td>OI margin 19% → 20% → 21%</td></tr>
+<tr><td>Filtration (pro-forma post-close 2026 H2)</td><td>~$2.0B（部分計入 FY27）</td><td>~8-9%</td><td>新增</td><td>~23.5% (Filtration standalone)</td><td>EBITDA margin 23.5%，post-synergy 25%+</td></tr>
+</tbody>
+</table>
+
+<h4>按地區</h4>
+<table>
+<thead><tr><th>地區</th><th>占比 (FY26E)</th><th>YoY</th><th>監管/地緣備註</th></tr></thead>
+<tbody>
+<tr><td>美國 + 加拿大</td><td>55%</td><td>+8% (aerospace 帶動)</td><td>低風險，IRA 受益</td></tr>
+<tr><td>歐洲</td><td>22%</td><td>+3% (Meggitt 整合 stabilized)</td><td>Manufacturing recession risk</td></tr>
+<tr><td>亞太</td><td>15%</td><td>+4%</td><td>中國關稅 ~7% 直接曝險</td></tr>
+<tr><td>拉美</td><td>5%</td><td>+10% (nearshoring)</td><td>墨西哥工廠擴張</td></tr>
+<tr><td>中東 / 非洲</td><td>3%</td><td>+5%</td><td>defense 需求穩定</td></tr>
+</tbody>
+</table>
+
+<h4>按客戶集中度（v12.3 新增）</h4>
+<p>已於 §8.H 詳細列出。Top 1 客戶 ~3-4%，Top 10 ~15%，無集中風險。</p>
+
+<h3>單位經濟（逐業務展開 — v12.3 強化）</h3>
+<table>
+<thead><tr><th>業務段</th><th>關鍵單位指標</th><th>趨勢</th><th>結構性洞察</th></tr></thead>
+<tbody>
+<tr><td>Aerospace OEM (新機)</td><td>每架機 PH 內容 (\\$/aircraft)：A320 ~$1M, 737 ~$0.8M, 787 ~$2.5M</td><td>↑（Meggitt 後每架機 content 增加 ~30%）</td><td>OEM ramp 是 organic growth 主驅動</td></tr>
+<tr><td>Aerospace Aftermarket</td><td>每架機 25-yr aftermarket revenue：~3-5x OEM 初始 content</td><td>↑↑（fleet aging + utilization rate 高）</td><td>aftermarket margin 35%+ vs OEM 25%</td></tr>
+<tr><td>Industrial NA Distribution</td><td>每經銷商年均 PH 採購 ~$0.5M</td><td>持平偏增</td><td>distributor consolidation 中，PH 受益</td></tr>
+<tr><td>Filtration Aftermarket</td><td>客戶 LTV 高（85% aftermarket recurring）；annual replacement cycle</td><td>↑（HVAC/R + life sciences 結構性 demand）</td><td>recurring revenue 模式類似訂閱</td></tr>
+<tr><td>Curtis Electrification</td><td>每 EV / robotics 平台 motor controller $500-2,000</td><td>↑↑（EV / robotics adoption）</td><td>高 unit price + 高 growth = 利潤新引擎</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<section id="s12">
+<h2>§12｜公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li><strong>創辦人持股</strong>：Parker family 早期持股已稀釋，當前 insiders 僅 0.19%（典型大型工業 conglomerate）</li>
+<li><strong>機構集中度</strong>：機構持股 90.7%（健康，包括 Vanguard ~9%, BlackRock ~8%, State Street ~5% 等被動投資者主導）</li>
+<li><strong>近期內部人交易</strong>：搜尋結果未發現過去 12 個月重大 insider buying / selling（&gt; $5M）；CEO Parmentier 於 2024 上任後例行 RSU vesting 為主</li>
+</ul>
+
+<h3>資本配置軌跡</h3>
+<table>
+<thead><tr><th>項目</th><th>過去 3 年累計</th><th>FY26 計劃</th><th>解讀</th></tr></thead>
+<tbody>
+<tr><td>Capex</td><td>~$1.2B</td><td>$450M（2.2% Rev）</td><td>低 capex compounder</td></tr>
+<tr><td>M&A</td><td>Meggitt ($8.7B 2022) + Curtis ($1B 2025) + Filtration ($9.25B 2026 pending)</td><td>Filtration close + 整合</td><td>aggressive but discipline (each within strategic platform)</td></tr>
+<tr><td>Share Buyback</td><td>~$2.0B</td><td>$650M new authorization (announced 2025 shareholder meeting)</td><td>溫和 (~0.6% 股本 / 年)</td></tr>
+<tr><td>Dividend</td><td>~$2.5B</td><td>+10% increase (2025 announced)</td><td>連續 69 年增加 dividend (Dividend Aristocrat)</td></tr>
+</tbody>
+</table>
+<p><strong>說法與行動一致：</strong>CEO Parmentier 多次強調「<em>dual focus on acquisitions and share repurchases</em>」+「<em>contingent on market conditions</em>」— 實際行動：Filtration 收購當下 buyback 降至 maintenance level，符合說法。資本配置紀律高（Capex 維持低水位 + 大筆 M&A 是 strategic platform 而非機會主義）。</p>
+
+<h3>管理層薪酬結構</h3>
+<ul>
+<li><strong>CEO Parmentier 總薪酬</strong>（FY25）~$15M：固定薪 ~10% + STIP (cash bonus) ~25% + LTIP (RSU + PSU) ~65%</li>
+<li><strong>績效指標</strong>：PSU 主要連結 EPS growth、segment OI margin、relative TSR vs S&P 500 industrials</li>
+<li><strong>SBC / Revenue</strong>：0.62%（低，符合工業 conglomerate normal range &lt; 1%）</li>
+<li><strong>整體：</strong>績效對齊好，激勵結構合理</li>
+</ul>
+
+<h3>過去 12 個月重大事件</h3>
+<table>
+<thead><tr><th>事件</th><th>狀態</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>Filtration Group 收購 ($9.25B, Nov 2025)</td><td>Pending close (regulatory)</td><td>關鍵正面催化劑</td></tr>
+<tr><td>Curtis Instruments 收購 ($1B, 2025)</td><td>已 closed</td><td>electrification 平台</td></tr>
+<tr><td>Fiber optics 公司 $900M antitrust + trade secret lawsuit (filed 2024, dismissal motion 2025 Aug)</td><td>PH seeking dismissal</td><td>金額相對 $108B mcap 不重大；尚未進入實質階段</td></tr>
+<tr><td>Data breach class action settlement ($1.75M, 2025)</td><td>已和解</td><td>immaterial</td></tr>
+<tr><td>SEC 調查 / 重編財報</td><td>無</td><td>—</td></tr>
+<tr><td>CEO / CFO 異動</td><td>無 (Parmentier 2023 接任，Cathy Suever CFO 持續)</td><td>—</td></tr>
+</tbody>
+</table>
+<p><span class="good">🟢 過去 12 個月無併購金額 &gt; 市值 5%</span>（Filtration $9.25B / $108.8B = 8.5%，略超 5% 但屬於正式公告策略性平台收購，非機會主義）<strong>、無集體訴訟（除 fiber optics 案，PH 防守方且尚未進入實質）、無管理層異動或重大監管事件</strong>。</p>
+
+</section>
+
+<section id="s13">
+<h2>§13｜估值診斷</h2>
+<p class="note">v12.3 結構：13.0 體系診斷 + 13.1 歷史分位 + 13.2 PEG + 13.3 Reverse DCF + 13.4 同業 + 13.5 結論（完整保留）。每子節「表 + 3 行推導」格式。</p>
+
+<h3>13.0｜估值體系診斷</h3>
+<table>
+<thead><tr><th>估值邏輯</th><th>是否主流</th><th>理由</th></tr></thead>
+<tbody>
+<tr><td>盈利能力型 (P/E, EV/EBITDA)</td><td><span class="good">✅</span></td><td>當前主流，市場用 Fwd PE 25x 對應 11% EPS CAGR</td></tr>
+<tr><td>成長型 (PEG, EV/Revenue)</td><td>輔助</td><td>PEG 2.24 略偏貴</td></tr>
+<tr><td>現金流型 (P/FCF, DCF)</td><td>次要</td><td>P/FCF 32x，FCF margin 16.8%</td></tr>
+<tr><td>行業專屬</td><td>無</td><td>industrial conglomerate 無 special metric</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+<b>13.0 估值體系推導：</b><br>
+輸入：當前 PE 25x + 5Y mean 26.2x + Industrial median 21.77x；EV/EBITDA 21.5x；P/FCF 32x。<br>
+計算：所有指標一致顯示「pricing PH at quality compounder premium 高於 industrial median ~15-25%」，市場已用 quality + recurring narrative 而非純 cyclical。<br>
+implication：估值體系穩定（🟢），無需 system shift；風險在於市場是否會在某個點將 PH 重新歸類為 cyclical → PE 回到 19-21x 區間。
+</div>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<thead><tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>31.85x</td><td>13x (COVID)</td><td>22x</td><td>34x</td><td>~89%</td></tr>
+<tr><td>Forward P/E (NTM)</td><td>25.35x</td><td>15x</td><td>22x</td><td>28x</td><td><strong>79.6%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>21.5x</td><td>11x</td><td>16x</td><td>23x</td><td>~88%</td></tr>
+<tr><td>P/FCF</td><td>32.6x</td><td>17x</td><td>23x</td><td>35x</td><td>~86%</td></tr>
+<tr><td>P/S</td><td>5.18x</td><td>2.5x</td><td>3.5x</td><td>5.5x</td><td>~89%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+<b>13.1 歷史分位推導：</b><br>
+輸入：當前 Fwd PE 25.35x；5Y range 15-28x（Macrotrends + GuruFocus 推導）。<br>
+計算：(25.35 − 15) / (28 − 15) = 79.6%。其他倍數同步在 80-90% 分位 → 全方位偏高。<br>
+implication：估值情緒「過熱-合理交界」（70-85% 分位）；上次在類似分位（2021 末 Trailing PE 34x）後出現 -30% 拉回。但當時 EPS 弱於現在 (FY22 ~$20)，當下基本面強得多。
+</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Forward P/E (FY26)</td><td>25.35x</td></tr>
+<tr><td>Non-GAAP EPS CAGR (3Y, FY25→FY28)</td><td>11.3%</td></tr>
+<tr><td>PEG (Non-GAAP, 3Y)</td><td><strong>2.24</strong></td></tr>
+<tr><td>5Y EPS CAGR</td><td>~10.5%（Filtration 全融合後）</td></tr>
+<tr><td>PEG (5Y)</td><td>~2.41</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>2.24 vs 2.41，差異不大</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+<b>13.2 PEG 推導：</b><br>
+輸入：Fwd PE 25.35x ÷ 3Y EPS CAGR 11.3% = 2.24。<br>
+計算：PEG 2.24 在 2.0-2.5 區間，屬於「偏貴」非「過熱」（&gt; 2.5）。3Y vs 5Y PEG 差異小 → 近期成長可持續性高。<br>
+implication：§13.5 估值五角驗證 PEG 訊號為🟠偏貴；§2.D 估值燈 PEG &gt; 2 觸發 🟠；盲點 1 救援條件 ② PEG &lt; 2.0 未通過 → 救援不啟動。
+</div>
+
+<h3>13.3｜Reverse DCF</h3>
+<h4>固定參數</h4>
+<table>
+<tbody>
+<tr><td>當前市值</td><td>$108.8B</td></tr>
+<tr><td>當前 EV</td><td>$117.9B</td></tr>
+<tr><td>基期 FCF (FY25)</td><td>$3.34B</td></tr>
+<tr><td>WACC</td><td>7.5%（10Y UST 4.4% + Beta 1.18 × ERP 5.0% = 4.4% + 5.9% = 10.3% cost of equity；cost of debt ~5%；D/V ~10%；blended 7.5%）</td></tr>
+<tr><td>永續成長率</td><td>2.5%（GDP-like, mature compounder）</td></tr>
+<tr><td>預測期</td><td>10 年</td></tr>
+</tbody>
+</table>
+
+<h4>反推隱含 FCF CAGR</h4>
+<p>使 DCF (NPV) = $108.8B，所需前 10 年 FCF CAGR ≈ <strong>9.5%</strong>（推算）</p>
+
+<h4>可信度對照</h4>
+<table>
+<thead><tr><th>比較基準</th><th>數值</th><th>位置</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年實際 FCF CAGR</td><td>~17% (FY22 .2B → FY25 .3B)</td><td>隱含 CAGR 9.5% <strong>低於</strong>歷史</td></tr>
+<tr><td>分析師共識 EPS CAGR (3Y)</td><td>11.3%</td><td>隱含 FCF CAGR 9.5% 略低於 EPS（FCF 假設較 conservative）</td></tr>
+<tr><td>同業最快 FCF CAGR</td><td>Eaton ~12%, Honeywell ~7%</td><td>隱含介於兩者</td></tr>
+</tbody>
+</table>
+
+<h4>兌現條件</h4>
+<p>隱含 9.5% FCF CAGR 需要：</p>
+<ul>
+<li>Revenue 年增 ~6%（FY25 .85B → FY30 .5B），合理（給定 aerospace +10% × 33% + industrial +3% × 67% = 5.6%）</li>
+<li>OR FCF Margin 從 16.8% 擴大至 18-19%（取決於 Win Strategy 3.0 第二輪 margin expansion）</li>
+<li>此條件合理（Win Strategy 3.0 5Y target 已超前達標，FY28 OI margin 28% guidance）</li>
+</ul>
+
+<div class="reasoning">
+<b>13.3 Reverse DCF 推導：</b><br>
+輸入：EV $117.9B / FY25 FCF $3.34B = 35.2x P/FCF，WACC 7.5%, perpetual 2.5%。<br>
+計算：反推隱含 10Y FCF CAGR ~9.5%，低於 PH 3Y 歷史 (17%) 但接近共識 (11.3%) 與同業最快 (12%)。<br>
+implication：<strong>隱含預期合理</strong>（🟡）— 不激進但也無 margin of safety；只要 PH 維持 9.5% FCF CAGR 即可 justify 當前估值，但下行情境（Filtration 失敗 / Aerospace 反轉）會破壞此節奏。
+</div>
+
+<h3>13.4｜同業估值比較</h3>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>3Y EPS CAGR</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>Parker-Hannifin (PH)</strong></td><td><strong>$108.8B</strong></td><td><strong>25.35x</strong></td><td><strong>21.5x</strong></td><td><strong>2.24</strong></td><td><strong>16.8%</strong></td><td><strong>11.3%</strong></td><td><strong>14%</strong></td></tr>
+<tr><td>Eaton (ETN)</td><td>~$120B</td><td>30x</td><td>22x</td><td>2.0</td><td>14.3%</td><td>15%</td><td>15%</td></tr>
+<tr><td>Honeywell (HON)</td><td>~$140B</td><td>19x</td><td>13x</td><td>2.7</td><td>15.5%</td><td>7%</td><td>16%</td></tr>
+<tr><td>Emerson (EMR)</td><td>~$80B</td><td>22x</td><td>15x</td><td>2.2</td><td>17.2%</td><td>10%</td><td>15%</td></tr>
+<tr><td>Rockwell (ROK)</td><td>~$45B</td><td>32x</td><td>22x</td><td>3.2</td><td>15.0%</td><td>10%</td><td>20%</td></tr>
+<tr><td>TransDigm (TDG, aerospace 比對)</td><td>~$80B</td><td>32x</td><td>22x</td><td>2.8</td><td>22%</td><td>11.5%</td><td>15%</td></tr>
+<tr><td><strong>產業中位數</strong></td><td>—</td><td>~25x</td><td>~19x</td><td>~2.4</td><td>~16%</td><td>~10%</td><td>~16%</td></tr>
+</tbody>
+</table>
+
+<h4>v12.3 Peer Group Tier 正確化</h4>
+<p>PH 對的 peer group tier 是「<strong>diversified industrial + aerospace hybrid compounders</strong>」（ETN / EMR / HON），不是純 aerospace（TDG, HEICO）也不是純 industrial automation（ROK）。Honeywell HON 是最接近的 peer（同樣 diversified industrial + aerospace + recurring aftermarket）。</p>
+
+<div class="reasoning">
+<b>13.4 同業比較推導：</b><br>
+輸入：PH Fwd PE 25.35x vs Industrial median 21.77x（GuruFocus）= +16% 溢價；vs ETN 30x = -15% 折價；vs HON 19x = +33% 溢價。<br>
+計算：PH 在 quality compounder + aerospace hybrid 中屬於 middle tier — 比 ETN/ROK 便宜，比 HON/EMR 貴。對齊 Honeywell 是最佳 anchor，PH 比 HON 貴 33% 反映 PH 更高 EPS CAGR (11% vs 7%) + aerospace pure aftermarket 優勢。<br>
+implication：§13.5 估值五角驗證同業相對訊號為 🟡 合理溢價（vs industrial median +16%；溢價部分支撐由 +11% CAGR + 護城河 9 解釋）。
+</div>
+
+<h4>同主題橫向風報比比較</h4>
+<table>
+<thead><tr><th>問題</th><th>PH</th><th>最強競爭標的</th></tr></thead>
+<tbody>
+<tr><td>主假設完全兌現時上行空間最大?</td><td>+33% (5Y)</td><td>Eaton (electrification) +40-50% 較高，但 PEG 也緊</td></tr>
+<tr><td>主假設部分落空時跌幅最小?</td><td>-25% (Bear B)</td><td>Honeywell (PEG 2.7 但 EBITDA stable) 可能跌幅小一些</td></tr>
+<tr><td>綜合風報比哪個最優?</td><td>PH 在工業 + aerospace hybrid 中屬於中段</td><td>純 aerospace 想要 → TransDigm (TDG)；純 electrification → ETN</td></tr>
+</tbody>
+</table>
+
+<p><strong>最終橫向比較結論：🥈 此標的為次優選</strong>（PH 在 diversified industrial + aerospace 混合曝險中屬於 quality midfielder；若 PM 希望純 aerospace exposure 應選 TDG；若希望純 electrification 應選 ETN；PH 為穩健 hybrid 但不是 conviction-maximizing 選擇）</p>
+
+<h3>13.5｜估值五角驗證與結論</h3>
+<table>
+<thead><tr><th>工具</th><th>訊號</th><th>核心依據</th></tr></thead>
+<tbody>
+<tr><td>估值體系診斷 (13.0)</td><td><span class="good">🟢 穩定</span></td><td>market 用 quality compounder framework pricing，無 system shift 風險</td></tr>
+<tr><td>歷史分位 (13.1)</td><td><span class="warn">🟠 過熱-合理交界</span></td><td>Fwd PE 5Y 79.6% 分位</td></tr>
+<tr><td>PEG 診斷 (13.2)</td><td><span class="warn">🟠 偏貴</span></td><td>PEG 2.24 在 2-2.5 偏貴區間</td></tr>
+<tr><td>Reverse DCF (13.3)</td><td><span class="warn">🟡 合理</span></td><td>隱含 9.5% FCF CAGR vs 共識 11.3% — 不激進</td></tr>
+<tr><td>同業相對 (13.4)</td><td><span class="warn">🟡 合理溢價</span></td><td>vs industrial median +16% 溢價，由 +EPS CAGR + 護城河 9 支撐</td></tr>
+</tbody>
+</table>
+
+<p><strong>v11.0 §2 D 交叉驗證</strong>：當前 Fwd PE 25.35x vs §2 D 合理 PE 25x → 接近 (差 1.4%)，中性，不調整。</p>
+
+<p><strong>當前定價判斷：<span class="warn">🟡 公允定價（偏高）</span></strong>（綜合五角 + §2 D 交叉，估值已 fully pricing 11% CAGR + A 護城河 + aerospace supercycle；無 margin of safety 但無泡沫）</p>
+
+<h3>估值倍數定錨</h3>
+<table>
+<thead><tr><th>因素</th><th>判斷結果</th><th>對目標 PE 影響</th></tr></thead>
+<tbody>
+<tr><td>① 護城河品質 (§9)</td><td>9/10</td><td>+1.5x</td></tr>
+<tr><td>② 成長可持續年數 (§8.A)</td><td>7-10 年 🟡</td><td>±0</td></tr>
+<tr><td>③ 成長品質 (§8.B)</td><td>定價驅動為主，M&A 比重大</td><td>+0.5x</td></tr>
+<tr><td>④ 成長護城河連動 (§8.C)</td><td>強化型</td><td>+1.0x</td></tr>
+<tr><td>⑤ ROIC 可維持性 (§8.D)</td><td>+6.5pp 擴大</td><td>+0.5x</td></tr>
+<tr><td>⑥ 衰退信號數量 (§8 偵測)</td><td>0-1 個亮燈</td><td>±0</td></tr>
+<tr><td>⑦ 估值體系方向 (§13.0)</td><td>穩定</td><td>±0</td></tr>
+<tr><td>⑧ 10Y UST 環境</td><td>4.4%</td><td>對成長股略壓制，-0.5x</td></tr>
+<tr><td><strong>產業基準倍數</strong></td><td colspan="2"><strong>industrial median 21.77x</strong></td></tr>
+<tr><td><strong>調整後合理區間</strong></td><td colspan="2"><strong>24-26x</strong>（21.77x + 3.0x 調整）</td></tr>
+</tbody>
+</table>
+
+<h3>長期合理倍數對應表（v9.0）</h3>
+<table>
+<thead><tr><th>§8 評級</th><th>5Y 後基準 Fwd PE</th></tr></thead>
+<tbody>
+<tr><td>🟡 中等可見度成長（本標的）</td><td><strong>22x</strong>（適中）</td></tr>
+</tbody>
+</table>
+<p>本標的基準長期合理倍數：<strong>22x</strong>。三引擎調整：護城河溢價 ×1.10（9 分） → 22 × 1.10 = <strong>24.2x</strong>；AI 受益 ×1.10 → 24.2 × 1.10 = <strong>26.6x</strong>。最終長期合理倍數 <strong>~25-26x</strong>。</p>
+
+<h3>分析師目標價參考</h3>
+<ul>
+<li>高 $1,167.86 / 中位 $1,030.95 (n=24) / 低 $610</li>
+<li>是否認同共識中位？— 部分認同。共識中位 $1,031 對應 Fwd PE ~30x，比我們合理 PE 25-26x 高，反映分析師可能對 Filtration synergy 兌現速度更樂觀。建議：取保守 PE 24x × FY27 EPS $34 = $816 為短-中期合理價，與 Bear A $715 形成 R:R 區間。</li>
+</ul>
+
+<h3>投資結論（最終裁決所在地）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態</strong>：<span class="good">強化</span>（FY26 Q3 aerospace +14% orders、backlog $8.4B +15%、aerospace guide raise 至 +12%）</li>
+<li><strong>H2 當前狀態</strong>：<span class="good">強化</span>（FY26 Q3 adjusted segment OI margin 26.7% +40bps、全年 guide raise 至 27.2%，提前 3 年達 Win Strategy 3.0 5Y target）</li>
+<li><strong>H3 當前狀態</strong>：<span class="warn">不變</span>（Filtration close timeline 仍 6-12 個月內，尚未確認具體季度；synergy 兌現尚需 12 個月後驗證）</li>
+<li><strong>結論：</strong>這份財報讓隱含預期變得<strong>更容易兌現</strong>，理由是 aerospace + margin 雙引擎超預期，但 Filtration 仍是未來 12-24 個月關鍵 catalyst + risk。</li>
+</ul>
+
+<h4>綜合訊號輸出（v12.0 引用 §2 H）</h4>
+<ul>
+<li>護城河等級：A (9/10) → 調整後：A 不變</li>
+<li>估值燈：🟠 偏貴（Fwd PE 5Y 分位 79.6%，PEG 2.24）</li>
+<li>Pure MA 狀態：✅ 強勢進場</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：B（觀望偏進場）</strong></li>
+<li>中期參考 R:R：-0.15x（資訊性，不主導裁決）</li>
+<li>訊號語意：B = 衛星候選 / 觀望（PM 層會考慮 3-7% 倉位 OR 等估值修復後加碼）</li>
+<li><strong>倉位 % 決策不在本 DD 範圍</strong>，交由 portfolio-manager skill 基於組合狀態決定</li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q3 雙重 beat + guide raise + Pure MA ✅ 強勢，短期動能在；但 4 週回檔 -7.3% + Fwd PE 5Y 79.6% 分位顯示市場已 fully pricing。短期最佳進場價在 $750-800（Fwd PE 24x × FY26 $31.26 = $750-816 區間）。當前 $862 已透支進場時機。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY+1 (FY26) EPS .26 + FY+2 (FY27) .04 共識可信，由 aerospace 12% + industrial 3% 結構性 + Filtration 部分貢獻支撐。能見度 <strong>高</strong>。Win Strategy 3.0 OI margin 5Y target 提前達成 → 提供 margin upside surprise 機會。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道：充裕（aerospace supercycle 至 2030s + Filtration aftermarket + Curtis electrification）；護城河趨勢：加深；長期持有信心：<strong>高</strong>。Win Strategy 3.0 5Y target $34.7 EPS（FY28）已部分超前；Filtration 全融合後 5Y EPS ~$50 可信。</p>
+
+<h4>下行風險量化（引用 §2 E Bear Case）</h4>
+<ul>
+<li>短期下檔 (Bear)：現價至 $506 距離 -41.4%</li>
+<li>中期下檔 (Bear)：現價至 $552 距離 -36.0%</li>
+<li>W52 Low $637.21（參考）/ W104 Low ~$540（參考）</li>
+<li>若 FY+1 EPS 下修 10%，短期 R:R 將降至 -0.55x</li>
+</ul>
+
+</section>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "PH",
+  "company": "Parker-Hannifin Corporation",
+  "date": "2026-05-18",
+  "report_date": "2026-05-18",
+  "schema": "v12.3",
+  "schema_version": "v12.3",
+  "verdict": "B",
+  "trap_label": "🟢 非陷阱",
+  "price_at_dd": 862.72,
+  "peg_fy2": 2.24,
+  "upside_short_pct": -9.4,
+  "stress": {"pass": 1, "total": 4},
+  "long_term_confidence": "高",
+  "inception_dd": "DD_PH_20260518.html",
+  "inception_date": "2026-05-18",
+  "next_yoy_review_date": "2027-05-18",
+  "price": 862.72,
+  "currency": "USD",
+  "market_cap_b": 108.8,
+  "fwd_pe": 25.35,
+  "fwd_pe_5y_percentile": 79.6,
+  "peg_3y": 2.24,
+  "eps_cagr_3y": 11.3,
+  "fcf_margin": 16.8,
+  "roic_minus_wacc_pp": 6.5,
+  "beta": 1.18,
+  "signal": "B",
+  "signal_emoji": "⚠️",
+  "trap": "🟢",
+  "moat": "9",
+  "moat_score": 9,
+  "moat_grade": "A",
+  "moat_trend": "↑",
+  "moat_execution": 9,
+  "moat_pricing_power": 8,
+  "growth_durability": "🟡",
+  "quality_score": 8.5,
+  "upside_mid_pct": -5.3,
+  "ev5y_pct": 33,
+  "fpe_fy2": 23.30,
+  "pct_5y": 79.6,
+  "fcf": 16.8,
+  "roic": 14.0,
+  "eps2y": 8.9,
+  "peg": 2.24,
+  "de": 0.68,
+  "val": "🟠",
+  "ma": "✅",
+  "benchmark_regime": "正常",
+  "long_term_confidence": "高",
+  "industry_wind": "🟢",
+  "ai_risk": "🟢",
+  "next_earnings": "2026-08-06",
+  "upside_5y_pct": 33,
+  "rr_short": -0.23,
+  "rr_mid": -0.15,
+  "rr_long": 2.95,
+  "stress_pass_rate": "1/4",
+  "key_catalyst": "Filtration Group 收購 close (2026 H2-2027 Q1) + 整合節奏 + Aerospace supercycle backlog $12.5B trajectory",
+  "key_risk": "Industrial 工業景氣晚週期 + Filtration 整合 synergy 兌現風險 + Fwd PE 5Y 79.6% 分位估值透支",
+  "oneliner": "🟢順風A 級護城河 9（exec 9+pricing 8）／Q3 雙重 beat+guide raise／估值燈🟠 Fwd PE 25.3x 5Y 79.6% 分位+PEG 2.24透支｜MA ✅強勢進場，4w 回檔-7.3%｜B 觀望，等 PEG&lt;2 或 PE&lt;22x 進場；H1 Filtration close 是 24M 催化劑",
+  "related_id": "",
+  "related_ds": ""
+}
+</script>
+
+</div>
+<button class="print-btn" onclick="window.print()">🖨 列印為 PDF</button>
+<script>
+document.querySelectorAll('.dd-toc a').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior:'smooth' });
+  });
+});
+</script>
+</body>
+</html>

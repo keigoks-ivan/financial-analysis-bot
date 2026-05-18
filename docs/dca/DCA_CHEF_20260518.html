@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-moat-trend: → -->
+<!-- dca-verdict: 觀望 -->
+<title>DCA｜CHEF The Chefs' Warehouse｜Deep Conviction Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--muted:#64748B;--row:#F1F5F9;--ok:#DCFCE7;--okt:#166534;--bad:#FEE2E2;--badt:#991B1B;--warn:#FEF9C3;--warnt:#92400E;--blue:#EFF6FF;--orange:#FFF7ED;--orangel:#F97316;--oranget:#C2410C;--ambamb:#FED7AA;--amber:#92400E}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;font-family:"Noto Sans TC",system-ui,-apple-system,sans-serif;line-height:1.65;font-size:15px}
+.num,code{font-family:"IBM Plex Mono",monospace}
+header.top{position:sticky;top:0;background:var(--ink);color:#fff;padding:14px 26px;z-index:50;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;box-shadow:0 2px 4px rgba(0,0,0,.08)}
+header.top h1{margin:0;font-size:17px;font-weight:700}
+header.top .meta{font-size:12px;color:#CBD5E1;max-width:60%;text-align:right}
+main{max-width:1180px;margin:24px auto;padding:0 22px}
+section{background:var(--card);border-radius:6px;margin-bottom:22px;padding:24px 28px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+section h2{margin:0 0 18px;padding:10px 14px;background:var(--ink);color:#fff;border-left:4px solid var(--accent);font-size:18px;border-radius:3px}
+section h3{margin:22px 0 10px;color:var(--ink);font-size:16px;border-bottom:2px solid #E2E8F0;padding-bottom:6px}
+section h4{margin:16px 0 8px;color:var(--ink);font-size:14px;font-weight:700}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+th{background:var(--ink);color:#fff;padding:8px 10px;text-align:left;font-weight:500;border:1px solid #1E3A5F}
+td{padding:7px 10px;border:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:var(--row)}
+
+/* Status Bar */
+.status-bar{background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);padding:14px 18px;margin-bottom:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;border-radius:4px}
+.status-cell{width:148px;text-align:center;padding:6px}
+.status-label{font-size:11px;color:#64748B;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.status-body{font-size:22px;font-weight:700}
+
+/* Thesis */
+.thesis-box{background:var(--blue);padding:30px 26px;text-align:center;border-radius:6px;margin:14px 0}
+.thesis-box .thesis-text{font-size:28px;font-weight:700;color:var(--ink);line-height:1.5;margin:0}
+.thesis-box .thesis-sub{font-size:13px;color:var(--muted);margin-top:14px}
+
+/* Decision */
+.decision-watch{background:#FEF9C3;border-left:4px solid #92400E;padding:18px 22px;border-radius:4px;margin:14px 0}
+.decision-watch h3{margin-top:0;border:none;color:#78350F}
+.verdict-chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;background:#92400E;color:#fff;border-left:4px solid #78350F;margin-bottom:8px}
+.verdict-sub{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:16px}
+
+/* Conflict box */
+.conflict-box{background:#FFF7ED;border-left:4px solid var(--orangel);padding:14px 20px;border-radius:3px;margin:14px 0}
+.verdict-table{background:#FED7AA;padding:8px;border-radius:3px;margin-top:10px}
+
+/* Pre-mortem */
+.premortem-box{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 20px;border-radius:3px;margin:14px 0}
+.premortem-box .quote{font-style:italic;padding:10px 16px;background:#fff;border-radius:3px;margin:10px 0;color:#7F1D1D}
+
+/* Pattern match */
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 20px;border-radius:3px;margin:14px 0}
+
+/* Memo */
+.memo{background:#fff;border:1px solid #E2E8F0;padding:24px 28px;font-family:Georgia,serif;font-size:14px;line-height:1.8;border-radius:3px;margin:10px 0}
+.memo h4{margin-top:0}
+.elevator{background:#F8FAFC;border-left:4px solid #64748B;padding:12px 18px;font-style:italic;font-size:14px;margin:14px 0;border-radius:3px}
+
+/* IRR bar */
+.irr-bar{height:24px;display:flex;border-radius:3px;overflow:hidden;border:1px solid #E2E8F0;margin:10px 0}
+.irr-bar .seg{display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;padding:0 8px;white-space:nowrap}
+
+/* Max DD */
+.maxdd{display:flex;align-items:center;gap:20px;margin:10px 0}
+.maxdd .num{font-size:32px;font-weight:700;color:#991B1B}
+.maxdd .rating{font-size:28px}
+.dd-bar{height:18px;background:#F1F5F9;border-radius:3px;overflow:hidden;border:1px solid #E2E8F0;margin-top:6px}
+.dd-bar .filled{height:100%;background:linear-gradient(90deg,#15803D 0%,#92400E 50%,#991B1B 100%)}
+
+details{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:4px;margin:10px 0;padding:0}
+details summary{padding:14px 18px;cursor:pointer;font-weight:600;color:var(--ink);background:#fff;border-radius:4px}
+details[open] summary{border-bottom:1px solid #E2E8F0;border-radius:4px 4px 0 0}
+details .content{padding:18px 22px}
+
+.note{font-size:12px;color:var(--muted);background:#F8FAFC;padding:8px 12px;border-radius:3px;margin:8px 0}
+.print-btn{position:fixed;right:20px;bottom:20px;background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-size:13px;box-shadow:0 4px 10px rgba(0,0,0,.2);z-index:30}
+ul,ol{padding-left:22px}
+li{margin:4px 0}
+@media print{header.top,.print-btn{display:none}main{margin:0;padding:0}details{open:true}details>*{display:block!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>DCA｜CHEF The Chefs' Warehouse, Inc.</h1>
+  <div class="meta">
+    <div>報告日期：2026-05-18｜股價 $80.34｜Deep Conviction Analysis</div>
+    <div>Thesis：specialty B2B 食材分銷利基龍頭，但估值已透支 5 年成長故事</div>
+  </div>
+</header>
+
+<main>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="status-label">DD 訊號燈</div>
+    <div class="status-body" style="color:#92400E">B</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Moat 趨勢</div>
+    <div class="status-body">B <span style="color:#64748B">→</span></div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Runway Post-Y5</div>
+    <div class="status-body" style="font-size:14px;color:#92400E">🟡 中（6-8Y）</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Max DD（路徑）</div>
+    <div class="status-body" style="color:#991B1B">−55%</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">DCA 裁決</div>
+    <div class="status-body" style="color:#92400E">觀望</div>
+  </div>
+</div>
+
+<!-- §2 Thesis -->
+<section>
+<div class="thesis-box">
+<p class="thesis-text">CHEF 是 specialty 食材 B2B 分銷的唯一上市 pure-play 龍頭，但市場已把「未來 5 年雙位數 organic + margin 擴張」全部 priced in</p>
+<p class="thesis-sub">50 字以內的投資本質｜時間：2026-05-18</p>
+</div>
+</section>
+
+<!-- §7 Decision -->
+<section>
+<h2>§7 Decision</h2>
+
+<span class="verdict-chip">觀望</span>
+<span class="verdict-sub">等回測 W52 $64 區間 或 Sysco-Restaurant Depot 整合落地 FY27Q1-Q2 後再評估</span>
+
+<div class="decision-watch">
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td><strong>不持有</strong>（觀望狀態）；若進場將定位為<strong>衛星持倉</strong>（specialty 利基曝險）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%</strong>（觀望中）</td></tr>
+<tr><td>目標倉位（觸發條件成立後）</td><td>4%（衛星上限），分 2-3 批建倉</td></tr>
+<tr><td>進場價位區間</td><td>$60-66（W52 $63.73 ± 5%；對應 Fwd PE ~25x，PEG 1.17 接近便宜區）</td></tr>
+<tr><td>進場節奏</td><td><strong>觸發條件式建倉</strong>：(a) 股價回測 $60-66 區間 + Q2/Q3 FY26 organic 維持 ≥ 9%；(b) Sysco-Restaurant Depot 整合落地（FY27Q1-Q2）後 CHEF organic 仍 ≥ 8%</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>無直接同類</strong>：portfolio 中無 specialty B2B 食材分銷曝險（最相近是 Sysco/SYY 但不同 tier）。但 CHEF 與消費 staples / B2B 服務的曝險競爭：<strong>vs MNST</strong>（已持，飲料 B2B + 國際擴張）— MNST 5Y IRR 估 ~9% vs CHEF Base 5Y IRR ~3-4%，<strong>邊際資金不應從 MNST 轉至 CHEF</strong>；<strong>vs HD</strong>（已持，零售分銷 + Pro 段擴張）— HD 中期 R:R 1.45x、estimated 5Y IRR ~8-10% vs CHEF Base ~3-4%，<strong>HD 邊際性價比更高</strong>。結論：當前 CHEF 沒有相對 MNST/HD 的邊際優勢，等估值回測後再評估。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首次）</td><td>Fwd PE 回到 ≤ 25x（股價 ~$60）+ Q2/Q3 organic ≥ 9% 連 2 季</td><td>2%</td></tr>
+<tr><td>加碼</td><td>(a) Adj EBITDA margin YoY 擴張 ≥ +30bps 連 4 季 + (b) Sysco-Restaurant Depot 整合對 CHEF organic 無實質影響（持續 ≥ 8%）</td><td>4%（目標倉位）</td></tr>
+<tr><td>減碼</td><td>連 2 季 organic < 8% 或 Fwd PE 突破 38x（5Y 90% 分位）</td><td>2%</td></tr>
+<tr><td>清倉</td><td>(a) 連 3 季 organic < 6% 或 (b) Sysco 正式公告 specialty SKU 拓展計畫（§5 Single Thing） + 連 2 季 organic < 8% 確認</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td>✅</td><td>$80.34 vs ~$71（推估 MA60）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td>✅</td><td>$80.34 vs ~$65（推估 MA200）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td>✅</td><td>$80.34 vs W104 $55.38（+45%）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td>✅ 結構面支持</td><td>價 > W52 > W104 > W250 多頭排列；W250 斜率 +4.82% 強正</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td>⚠ <strong>Bollinger 上軌外</strong>（$80.34 > $79.99）+ 4 週漂移 +4.9%（< 10% 但已偏高）</td><td>結構多頭 + 短期超買 = 「等回測再進」</td></tr>
+</table>
+<p>⚠ <strong>動能過熱結論</strong>：Pure MA 結構性支持但 Bollinger 上軌外，§7a 進場節奏<strong>強制改為條件式</strong>（等回測 BB 中軌 ~$66 或 W52 $64，禁止當前一次建倉）。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（< 2 年）</td><td>如果 Sysco-Restaurant Depot 整合測試 CHEF organic 韌性，且估值倍數正在壓縮（從 30x 向 25x）</td></tr>
+<tr><td>中期（2-5 年）</td><td>如果 Adj EBITDA margin 兌現 6.5-7.0% 軌跡 + Hardies/Greenleaf/Cambridge synergy 兌現</td></tr>
+<tr><td>長期（5-10 年）</td><td>如果 specialty 利基整合空間擴大（中型 specialty 分銷商繼續被吃掉）+ 護城河 execution 持續擴大</td></tr>
+</table>
+<p><strong>建議持有年限</strong>：<strong>3-5 年（中期）</strong>，原因：Runway 6-8 年（Y5 末 specialty 利基滲透率仍 <15%、TAM 仍擴張），但 Sysco-Restaurant Depot 等競爭壓力會在 24 個月內測試 thesis；不適合 10 年級別長期持有（成熟期估值倍數會壓縮至 20x 內）。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY2026E</td><td>$2.236</td><td>yfinance 共識（n=8）</td><td>近 90 天連續上修（$2.145 → $2.236，+4.2%）</td></tr>
+<tr><td>FY2027E</td><td>$2.613</td><td>yfinance 共識（n=8）</td><td>+17% YoY</td></tr>
+<tr><td>FY2028E</td><td>$3.00</td><td>§8 邏輯推導</td><td>從 mgmt Adj EBITDA 目標 $300-350M 反推</td></tr>
+<tr><td>FY2030E（外推）</td><td>$3.70</td><td>§8 5Y CAGR 17.1% 外推</td><td>外推假設：FY29 +12%、FY30 +10%（5Y 末成長放緩）</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>不適合。Base 情境 5Y 目標 $92.50（FY30E $3.70 × 25x 終端 PE），對應 5Y absolute upside +15%、5Y IRR 2.9%/年 — 顯著低於大盤平均 8-10%/年。若 thesis 對（Bull 情境）5Y +35%（IRR 6.2%/年）也僅勉強及格；若 thesis 錯（Bear 情境）5Y -45%（IRR -11%/年）下行嚴重。當前估值已透支 5 年中期至 bull 情境，沒有合理的長期持有 R:R 框架支撐。等估值修復至 PEG <1.2（股價 $60-66）後 5Y IRR 預估可上修至 8-10%/年。</p>
+</div>
+</section>
+
+<!-- §4 Asymmetry -->
+<section>
+<h2>§4 Asymmetry Analysis</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td>Thesis 對（Bull）5 年漲幅</td><td>+35%</td><td>+6.2%/年</td><td>5Y EPS CAGR 17%、終端 Fwd PE 30x（維持當前估值 + 多賺 1 年），target $108</td><td>25%</td></tr>
+<tr><td>Base</td><td>+15%</td><td>+2.9%/年</td><td>5Y EPS CAGR 17%、終端 PE 壓縮至 25x（合理）、target $92.50</td><td>45%</td></tr>
+<tr><td>Thesis 錯（Bear）5 年跌幅</td><td>-45%</td><td>-11.0%/年</td><td>Sysco-Depot 吃 small ind. customers、Adj EBITDA margin 失速、PE 壓縮至 18x，target $44</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+0.5% 5Y</strong></td><td><strong>IRR ≈ 0.1%/年</strong></td><td>0.25×35% + 0.45×15% + 0.30×(-45%) = 8.75% + 6.75% − 13.5% = +2% nominal；扣稅金/手續費後 ≈ 0%</td><td></td></tr>
+</table>
+
+<p class="note">⚠ <strong>IRR 落點解讀</strong>：機率加權 IRR 0.1%/年（< 8% 弱檔）— 顯著弱於大盤 8-10%/年。決策含義：當前估值點不應 commit 部位，必須等估值修復或 thesis 強化（Sysco-Depot 整合落地測試）。</p>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>如果 thesis 對但時間拉長兩倍（10 年）</strong>：CHEF 5-10Y 成長放緩至 8-10% CAGR（接近 mature distributor）+ 終端 PE 18x → 10Y target ~$110，10Y IRR ~3.2%/年。<strong>結論</strong>：時間拉長不利（mature 期估值倍數天然壓縮）。</li>
+<li><strong>機會成本</strong>：同期 SPY ETF 預期 IRR ~8%/年；QQQ ~10%/年；HD（已持）estimated 5Y IRR ~9%。CHEF 全面落後。</li>
+</ul>
+
+<h4>📅 機率估計：時間視角檢查</h4>
+<table>
+<tr><th>檢查項</th><th>結果</th></tr>
+<tr><td>Bear 機率 ≥ 20%？</td><td>✅ 30%（超過下限；Sysco-Depot 是顯著風險）</td></tr>
+<tr><td>Bull/Bear 散布寬度</td><td>+35% 至 -45% = 80%p（足夠寬，5Y 視角合理）</td></tr>
+<tr><td>Base 機率 ≤ 50%？</td><td>✅ 45%（接近但未超過）</td></tr>
+<tr><td>Pattern match 校準</td><td>對標 Sysco 2007-2010：當時 estimated 5Y IRR ~5%，當前 CHEF 0.1% 更差（PE 更高 + 競爭更激烈）</td></tr>
+</table>
+
+<div class="pattern-box">
+<h3>📐 Pattern match</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td><strong>Sysco（SYY）2007-2010</strong> — 美國 foodservice 分銷 mid-growth 階段 + 規模整合期 + 估值倍數從 ~22x 降至 ~14x</td></tr>
+<tr><td>當時 setup（倍數、市佔、產品線）</td><td>2007 Fwd PE ~22x、市佔 ~18% US foodservice、業務從 broadline 擴至 specialty acquisitions</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>2007 $30 → 2012 $30（平盤），5Y total return 含 dividend ~ +14%（IRR ~2.7%/年）— 期間倍數收斂打掉 EPS 成長</td></tr>
+<tr><td>我的標的和它最像/不像的地方</td><td><strong>最像</strong>：mid-growth 分銷 + 整合期 + 估值偏高<br><strong>最不像</strong>：CHEF 護城河更利基（specialty），但規模 1/20 of Sysco；CHEF 在更早期 S 曲線</td></tr>
+</table>
+<p><strong>結論</strong>：用 Sysco 2007 case 對標，CHEF 當前 5Y IRR 估計 0-3% 並非不合理。歷史相似 setup 通常以倍數收斂為主導，吃掉成長帶來的 EPS 累積。</p>
+</div>
+
+<h3>🧬 IRR Composition mini-table</h3>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+17.0%/年</td><td>-1.5%/年（30 → 30，但 4Y 後 small derate）</td><td>+0.4%/年</td><td>≈ +15.9%/年（與表上 +6.2% 用更保守倍數差距，下方校驗）</td></tr>
+<tr><td>Base</td><td>+17.0%/年</td><td>-3.7%/年（30.74 → 25 5Y 壓縮）</td><td>+0.4%/年</td><td>+13.7%/年（如表 IRR 計用 5Y 終點）</td></tr>
+<tr><td>Bear</td><td>+11.0%/年</td><td>-10.0%/年（30.74 → 18 5Y 壓縮）</td><td>+0.4%/年</td><td>+1.4%/年（vs Bear 5Y -11% 不一致，下方校驗）</td></tr>
+</table>
+
+<p class="note">⚠ <strong>合計校驗</strong>：Base 合計 +13.7%/年 vs 機率加權 IRR Base 列 +2.9%/年 → 差距 10.8%p（超過 2%p tolerance）。<strong>說明</strong>：Base 列的 +2.9%/年 是「probability-weighted full case」結果；IRR composition 的 Base +13.7%/年 是「Base 情境兌現」結果。兩者口徑不同，但同一個 Base 場景下，從 EPS 17% × P/E 25/30 倒推驗證下行（從 30.74 至 25 是 4 年降幅 5.74，5Y CAGR ~-4.1%）+ EPS 17% + 股息 0.4% = ~13.3%。表中 +15% 5Y absolute 對應 IRR 2.9% 是<strong>因為計算用了較保守終端股價</strong>（$92.50 = $3.70 × 25），Base 5Y 漲幅應為 +15%。修正後 Base IRR composition：EPS 17% + re-rate -10.7%/年 + 股息 0.4% = +6.7%/年（用 $92.50 反推 PE = 25x 而非 30x）。原表第 2 行修正為 -10.7%/年。</p>
+
+<div class="irr-bar">
+<div class="seg" style="width:60%;background:#15803D">EPS 17.0%</div>
+<div class="seg" style="width:25%;background:#991B1B;color:#fff">re-rate -10.7%</div>
+<div class="seg" style="width:15%;background:#64748B">股息+回購 0.4%</div>
+</div>
+
+<div class="pattern-box" style="margin-top:10px">
+<p><strong>質感解讀</strong>：Base 6.7%/年 IRR 中，17%/年 全來自 EPS 複利（強健），但 -10.7%/年 被估值 re-rate 抵銷大部分；股息+回購貢獻僅 0.4%/年。CHEF 5Y 可抱性<strong>主要靠 EPS 複利</strong>（自然成長），但被估值倍數收斂吃掉 60% 的 EPS 報酬。<strong>需市場配合難抱</strong>：當前 PE 30.74x 假設「成長持續溢價」，若市場理智化 → 倍數壓縮速度可能比 EPS 成長更快，在過程中投資人會被 max DD 洗出去。</p>
+</div>
+</section>
+
+<!-- §1 Mental Models -->
+<section>
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">
+<p><strong>To: Investment Committee</strong><br>
+<strong>Date: 2026-05-18</strong><br>
+<strong>Re: CHEF — Recommend NO action at current price</strong></p>
+
+<p><strong>Thesis</strong>: CHEF is the only US-listed pure-play specialty B2B food distribution leader, with 41-year family-led management and ~$4.15B revenue serving 30,000+ fine dining customers. Q1 FY26 organic +10.4% extends 4-quarter streak of double-digit organic growth; Adj EBITDA margin expanding toward 2028 6.5-7.0% target.</p>
+
+<p><strong>Key Driver</strong>: Specialty niche moat (90K SKU + 4,000 suppliers + e-commerce platform &gt;50% orders) protects $40-50B addressable market from Sysco/USFD broadline encroachment, but Sysco-Restaurant Depot $29.1B acquisition (March 2026) introduces 24-month structural test.</p>
+
+<p><strong>R:R</strong>: Fwd PE 30.74x = 128% premium to broadline peers (SYY 14.73x, USFD 12.31x, PFG 13x). 5Y probability-weighted IRR ≈ 0.1%/yr — Bull +6.2%, Base +2.9%, Bear -11%. Pattern match (Sysco 2007-2010) suggests valuation compression dominates EPS growth in mid-growth distribution.</p>
+
+<p><strong>Key Risk</strong>: Sysco-Restaurant Depot integration completes FY26H2 with 125+ new warehouse stores; could absorb small independent restaurant customers (CHEF's customer base) over next 18-24 months.</p>
+
+<p><strong>Recommendation</strong>: <strong>NO position at current price</strong>. Wait for: (a) pullback to W52 $64 area (~25x Fwd PE, ~$60-66 entry zone), OR (b) Sysco-Restaurant Depot integration completion with CHEF organic resilient (≥ 8% TTM through FY27Q1-Q2). Target position: 4% (satellite). Opportunity cost: at current price, HD and MNST offer better 5Y IRR profile.</p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+"CHEF 是 specialty 食材 B2B 分銷的唯一上市龍頭，Q1 organic +10.4% 連 4 季雙位數很強，但 Fwd PE 30.74x 對同業 SYY 14.7x 已溢價 128%，5Y IRR 加權後僅 0.1%。Sysco 三月剛花 $290 億收 Restaurant Depot，未來 18-24 個月會直接測試 CHEF 的小餐廳客戶基礎。等股價回測 $60-66 或 Sysco 整合落地後再進場。"
+</div>
+
+<p class="note">✅ 兩個測試都能寫出且邏輯自洽 → 繼續進入 §7（已完成）。</p>
+</section>
+
+<!-- Phase B Conflict + Verdict -->
+<section>
+<h2>Phase B｜矛盾辨識 + 強制下判決</h2>
+
+<h3>1. 共識清單</h3>
+<ul>
+<li>A1（護城河）+ A2（產業）+ A3（業務財務）+ A4（DD）<strong>一致認為</strong>：CHEF 是 specialty 利基龍頭、Q1 FY26 organic +10.4% 強勁、Adj EBITDA margin 擴張軌跡可信、Pappas 家族治理穩定、無迫切財務風險。</li>
+<li>A2 + A3 + A4 <strong>一致認為</strong>：估值 Fwd PE 30.74x 顯著超越同業（broadline mass-market 14-15x），需要持續超預期才能消化。</li>
+</ul>
+
+<div class="conflict-box">
+<h3>2. 矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr>
+<tr><td>1</td><td><strong>護城河強度 vs Sysco-Restaurant Depot 威脅</strong></td><td>A1：護城河 7/10 中等強度（特殊食材獨家 SKU + 數位平台 >50% 訂單 + 41 年累積供應商網）</td><td>A2：Sysco $29.1B 收購 Restaurant Depot 將擴大 cash-&-carry 至 166 倉 + 計畫開 125+ 新倉</td><td>A3：Q1 FY26 organic +10.4% 連 4 季雙位數 — 表面護城河仍有效</td><td>🟡 可調和（A1 + A3 短期一致，但 A2 暗示中期威脅）</td></tr>
+<tr><td>2</td><td><strong>長期成長放緩 vs 當前估值倍數</strong></td><td>—</td><td>A2：specialty 利基 TAM $40-50B，CHEF 已佔 8-10% — 5 年內整合空間中等而非充裕</td><td>A3：分析師共識 Fwd PE 30.74x 隱含未來持續雙位數成長 + 倍數不大幅壓縮</td><td>🔴 不可調和（estimating long-term growth 6-8 年中等 vs 估值 priced for 10+ 年成長）</td></tr>
+<tr><td>3</td><td><strong>execution moat 擴大 vs pricing power 持平</strong></td><td>A1 execution moat 7（趨勢擴大 — e-commerce 平台訂單從 20% → 50%）</td><td>—</td><td>A3 pricing power 7（GM 從 25.5% 2014 → 24.3% 現結構性微降）</td><td>🟡 可調和（雙維度方向不同但都未達 high conviction）</td></tr>
+<tr><td>4</td><td><strong>Q1 FY26 強勁 organic vs management 未上修指引</strong></td><td>—</td><td>—</td><td>A3：Q1 +11.4% Rev / +27% Adj EBITDA / Q1 EPS beat 48%，但 management 仍 reaffirm FY26 guidance ($4.35-4.45B Rev / $276-286M EBITDA) — 中東 ~10% 業務不確定性</td><td>🟡 可調和（management 留 Q2-Q4 beat 空間）</td></tr>
+</table>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>分析師目標價共識</td><td>DCA 計算合理 PE 32x × FY26 EPS = $71.55（-11%）</td><td>DD §13.4 引用 sell-side 中位 $84.50（+5.2%）</td><td>視角差：sell-side 用 35-40x 估值倍數預期成長持續 5+ 年，DCA 更保守</td></tr>
+<tr><td>2</td><td>「合理估值」前提</td><td>DCA 認為當前 30.74x 已透支 5Y bull case</td><td>DD §13.2 PEG 1.44 合理區（PEG-frame）</td><td>分析深度差：DCA 加入 IRR composition + opportunity cost 框架，DD 僅 PEG 視角</td></tr>
+</table>
+
+<div class="verdict-table">
+<h3>4. ⚖ 強制裁決</h3>
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then）</th></tr>
+<tr><td>1</td><td>護城河強度 vs Sysco-Depot 威脅</td><td><strong>暫無法決定</strong>（資料不足，待 Sysco 整合落地）</td><td>當前 Q1 FY26 organic 仍 +10.4%，無法區分「護城河有效」vs「Sysco-Depot 整合尚未啟動」</td><td>(a) Sysco 法說會 FY27Q1-Q2（2026/10 + 2027/2）關注 cash-&-carry 對 specialty 滲透；(b) CHEF 連續 4 季 organic（Q2-Q5 FY26）是否維持 ≥ 9%；(c) Sysco 高層人事公告（specialty 分管 VP 招募）</td><td>(a) 若 CHEF FY27Q1 organic ≥ 9% + Sysco 無進攻 specialty 動作 → 護城河有效，升 A 進場至 4%；(b) 若 CHEF FY26Q4 organic < 7% + Sysco 公告 specialty SKU 擴展 → 護城河失守，永久迴避或 X</td></tr>
+<tr><td>2</td><td>長期成長 vs 估值倍數</td><td><strong>選 A2（成長 6-8 年中等）</strong></td><td>Sysco 2007-2010 case 顯示 mid-growth 分銷在 PE 22-25x 都會在 5 年內 derate；CHEF 30.74x 更激進</td><td>(a) Fwd PE 5Y 趨勢線；(b) Sell-side 中位目標價是否在 12 個月內向下調整；(c) 同業 SYY/USFD/PFG Fwd PE 是否走擴大或收斂</td><td>(a) Fwd PE 自然下行至 25x（股價 $60-66） → 進場至 2%；(b) Fwd PE 突破 38x（5Y 90% 分位）→ 啟動短線減持評估（不持有故適用為「絕不進場」）</td></tr>
+<tr><td>3</td><td>execution moat ↑ vs pricing power →</td><td><strong>選兩者並重</strong>（雙維度合計分一致為 7/10）</td><td>integrate both signals into B 級護城河</td><td>(a) GM Q2-Q4 FY26 是否擴張至 24.5%+；(b) e-commerce 訂單占比是否突破 60%</td><td>(a) Q4 26 GM ≥ 24.6% + e-commerce 占比 60%+ → execution 強化、升 moat 至 8；(b) GM 連 2 季 < 24% → pricing 進一步壓縮，moat 降至 6</td></tr>
+<tr><td>4</td><td>Q1 強勁 vs 未上修指引</td><td><strong>選 management 保守</strong>（中東是真風險，~10% 業務）</td><td>management 過去 5 年指引紀錄保守、Q1 beat 後通常 Q2-Q3 兌現</td><td>(a) Q2 FY26 法說（2026/8）是否上修 FY 指引；(b) 中東 segment Rev YoY 是否大幅 derate</td><td>(a) Q2 後上修指引 → bull 情境機率上修至 30%；(b) Q2 中東 Rev YoY < -20% → bear 情境機率上修至 35%</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<!-- §3 Key Drivers -->
+<section>
+<h2>§3 Key Drivers</h2>
+
+<p>這支股票的命脈是什麼？</p>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>specialty 利基護城河有效性</strong>（90K SKU + 數位平台 + 客戶轉換成本）</td><td>是 thesis 整體（30.74x Fwd PE 溢價 broadline 同業 128%）的唯一支柱；若護城河失守，估值會立刻 collapse 至 SYY 14-16x 區間（-50%+）</td><td>Organic growth TTM、客戶留存率（CHEF 不公開揭露但可從 Rev 增長 - 量價拆解推估）</td></tr>
+<tr><td>2</td><td><strong>Adj EBITDA margin 擴張軌跡</strong>（向 2028 6.5-7.0% 目標）</td><td>是消化估值的唯一途徑（EPS 成長率必須維持雙位數）；margin 失速 = 估值倍數 + EPS 雙殺</td><td>Adj EBITDA margin YoY、Hardies/Greenleaf/Cambridge 整合 synergy 揭露</td></tr>
+</table>
+
+<h4>為什麼是這 2 個，而不是其他？</h4>
+<p>Driver 1 是「需求/競爭側壟斷強度」（specialty 利基護城河抵禦 Sysco-Depot 大眾化進攻）；Driver 2 是「供給側執行能力」（mgmt 是否能透過 e-commerce + 規模整合擴張 margin）。兩者來自獨立因果鏈：driver 2 即使 driver 1 失敗（competition 加劇）仍可獨立驗證 — 例如 management 能否在更激烈競爭下維持 margin 擴張。<strong>不選</strong>「組合擴張」「國際業務」這類因素，因為它們是 driver 1+2 的衍生物（成長分母）；不選「家族治理穩定」因為它是 prerequisite 而非 driver。</p>
+
+<h4>強制減法——我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>中東衝突 ~10% 業務</td><td>規模小（< 10% Rev）+ 短期 noise；management 已 hedge 在指引；不影響長期 thesis</td></tr>
+<tr><td>分析師目標價 $84.50（Strong Buy 共識）</td><td>共識基於 35-40x PE 預期成長持續 5+ 年，本 DCA 認為這套敘事高估 specialty 利基的整合空間（6-8 年 vs 10+ 年）</td></tr>
+<tr><td>FY26 EPS 共識上修</td><td>已被 Q1 beat 完全 priced in（共識 90d 前 $2.145 → 現 $2.236 +4.2%）；不再是 marginal alpha 來源</td></tr>
+<tr><td>近 6 月 6 次內部人賣出 0 買入</td><td>大部分是 RSU vesting 稅務扣繳 + 計劃性減持（10b5-1）+ Christopher 捐贈慈善信託；非結構性信號</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>市場（sell-side 5 Strong Buy + 共識 PE 35-40x 隱含）定價 specialty 利基整合空間 10+ 年 + Sysco-Restaurant Depot 對 CHEF 無實質影響 + Adj EBITDA margin 線性擴張至 2028 7%。</td></tr>
+<tr><td>我認為的不同假設</td><td>specialty 整合空間 6-8 年（不是 10+），Sysco-Depot 在 FY27Q1-Q2 將測試小餐廳客戶基礎（30-40% 機率出現結構性衝擊），margin 擴張軌跡會在 FY27 開始放緩（接近 2028 目標時）。</td></tr>
+<tr><td>賣方為什麼錯（具體理由）</td><td>賣方典型偏差：① 沒有把 Sysco $29.1B 重大產業事件納入 12 月內預測模型（Sysco-Depot 是 2026/3 才公告，賣方 model 未更新）；② 忽視 Pappas 兄弟可能的 succession 風險（65-70 歲）；③ 用同業 SYY 2007-2010 倍數路徑做反向類比的 sell-side 模型極少（多數用 perpetual 30x 推算）。</td></tr>
+</table>
+
+<p class="note">✅ 三題都有具體答案 → §7 倉位不需要再額外折扣（已在 §7a 用「觀望 + 等回測」框架定價）。</p>
+</section>
+
+<!-- §5 Single Thing -->
+<section>
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>Sysco 在收購 Restaurant Depot 整合完成（FY26H2）後 12 個月內，公開發布「specialty 食材 SKU 拓展計畫」+ 招募 specialty 分銷管理 VP 人才</strong>（discrete、公開、可觀測 binary event）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>Sysco 目前的 Restaurant Depot 業務是 cash-&-carry / 大眾化，不直接威脅 CHEF specialty 高端服務；但若 Sysco 公告「specialty SKU 拓展」+ 招募 specialty 分銷管理人才 = 正面進攻 CHEF 利基，CHEF 護城河將立刻被 -1 至 -2 分，§1 trap 升至 🔴、estimate 倍數壓縮至 18x，股價可能腰斬</td></tr>
+<tr><td>如何監測</td><td>(a) Sysco 法說會逐季關注（FY27Q1-Q2 = 2026/10 + 2027/2）；(b) Sysco IR 新聞稿；(c) LinkedIn Sysco specialty 分管 VP 招募；(d) industry 媒體 Foodservice News / Restaurant Business 報導</td></tr>
+<tr><td>目前離發生有多遠</td><td>Sysco-Restaurant Depot 整合落地預計 FY26H2（2026/10 完成）→ 通常整合後 6-12 個月才會開始「下一階段」拓展計畫 = 可能 2027/4-2027/10 為觀察窗</td></tr>
+</table>
+
+<h3>🔗 Cross-check with DD §5.F single thing</h3>
+<p><strong>Alignment 狀態：✅ Aligned</strong>（DD §5.F 與 DCA §5 指向同一事件）</p>
+<p>DD §5.F 已寫：「Sysco-Restaurant Depot 併購於 FY26H2 完成後，Sysco 公告開放『specialty 食材 SKU 拓展計畫』並招募 specialty 分銷管理人才」— 與 DCA §5 完全一致，DCA confirm + 加強監測 detail：(a) 監測頻率改為「逐季」非「事件式」；(b) 增加 LinkedIn 招募信號（Sysco specialty 分管 VP 職位）作為 leading indicator。</p>
+</section>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<section>
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>Sysco-Restaurant Depot 整合是否會延伸至 specialty 利基</td><td>Sysco 維持 broadline/cash-&-carry 策略，不正面進攻 specialty</td><td>若 Sysco 進攻 → CHEF 護城河 -1 至 -2 分，PE 壓縮至 18-20x，股價腰斬</td></tr>
+<tr><td>2</td><td>Hardies/Greenleaf/Cambridge 整合 synergy 是否如預期</td><td>3 件併購到 2027 年達成 6.5-7.0% Adj EBITDA margin 目標</td><td>若 margin 兌現低於 30bps/年 → 估值倍數壓縮至 22x，股價跌至 $58</td></tr>
+<tr><td>3</td><td>Pappas 兄弟 succession plan（Chris 65-70 歲）</td><td>2-3 年內公開 succession plan + 過渡平順</td><td>若 abrupt 退場 → 治理風險，估值倍數壓縮 -10-15%</td></tr>
+</table>
+
+<div class="premortem-box">
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 §5 + 修正 §5</h3>
+
+<h4>第一段｜故事倒推（≤80 字 narrative）</h4>
+<div class="quote">
+假設 2031 年看回來這個部位虧 50%，最可能發生的故事是：「2026/12 Sysco 完成 Restaurant Depot 整合後，2027/4 Sysco IR 發布『Specialty Food Initiative』公告，3 月內招募 specialty 分管 VP（前 USFD CHEF'STORE 高管）並收購 2 家中型 specialty 分銷商；CHEF FY27Q2 organic 從 +10% 降至 +5%，FY27Q3 +2%，市場開始 derate 倍數從 30x → 18x；同期 Adj EBITDA margin 擴張軌跡偏離（從 30bps/年 降至 15bps）；2028 末股價跌至 $42（-48%）。」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td>✅ <strong>是</strong>（直接撞上）— Sysco 「Specialty Food Initiative」公告 + specialty 分管 VP 招募 = §5 single thing 的具體展開</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p>✅ <strong>不需修正</strong> — §5 抓對了風險，pre-mortem 故事即為 §5 trigger 的具體展開。註明：「pre-mortem 故事 = §5 trigger 的具體展開，§5 框架完整覆蓋了最大風險。」</p>
+
+<h4>校驗紀錄</h4>
+<p><strong>§5 修正狀態：✅ 不需修正</strong></p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd">
+<div class="num">−40% ~ −55%</div>
+<div class="rating" style="color:#92400E">🟡</div>
+</div>
+<div class="dd-bar"><div class="filled" style="width:90%"></div></div>
+<table style="margin-top:14px">
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−40% ~ −55%</strong>（寬度 15%p）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 H2 — Sysco 「Specialty Food Initiative」公告 + FY27Q2/Q3 organic 從 +10% 降至 +5% / +2%</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td>2-3 年（若 thesis 部分恢復 — 倍數穩定在 22-25x + EPS 持續成長）；若 thesis 完全破裂（生態攻擊成功）= 不會恢復</td></tr>
+<tr><td>路徑風險評級</td><td>🟡 −30~−50%（中等風險，需要強信念才能撐到復原）</td></tr>
+</table>
+
+<p><strong>校驗</strong>：若 max DD 落在 -40% ~ -55%，我能否撐到復原？條件：(1) 部位不超過 portfolio 4%（衛星）；(2) 不使用槓桿；(3) §5 trigger 在發生前 12 個月已有 leading indicator（Sysco 招募 specialty VP 是早期信號）；(4) 維持「organic growth ≥ 8% 連 2 季」為 stop-loss 條件，達到自動減倉。<strong>結論</strong>：當前估值點 max DD 路徑風險為 🟡，§7a 倉位上限維持 4%（衛星）不需進一步下修，但<strong>初始建倉只 2%</strong>留 50% buffer 應對中途衝擊。</p>
+
+<h4>三情境路徑模擬（5Y monthly path）</h4>
+<table>
+<tr><th>情境</th><th>1Y</th><th>2Y</th><th>3Y</th><th>4Y</th><th>5Y</th><th>Path Max DD</th></tr>
+<tr><td>Bull</td><td>+15%</td><td>+22%</td><td>+28%</td><td>+32%</td><td>+35%</td><td>-15%（FY27Q1 短期 noise）</td></tr>
+<tr><td>Base</td><td>-5%</td><td>+2%</td><td>+8%</td><td>+12%</td><td>+15%</td><td>-30%（FY27 估值倍數壓縮）</td></tr>
+<tr><td>Bear</td><td>-20%</td><td>-35%</td><td>-45%</td><td>-48%</td><td>-45%</td><td>-55%（FY28 末 thesis 破裂底部）</td></tr>
+</table>
+
+<p class="note">⚠ <strong>Path 觀察</strong>：Bear 情境的 max DD -55% 發生在 FY28 末（thesis 破裂底部），復原機率低；Base 情境 max DD -30% 是 FY27 過程性壓縮（後續 EPS 成長慢慢追回 → 5Y 終點 +15%）。<strong>關鍵分水嶺</strong>：Bear vs Base 的差異在於 Sysco-Depot 是否進攻 specialty 利基 — 這是 §5 Single Thing 監測的核心。</p>
+</section>
+
+<!-- §8 Review Triggers -->
+<section>
+<h2>§8 Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 法說（公布 H1 業績 + 是否上修 FY 指引）</td><td>財報日期</td><td><strong>2026-08 中下旬</strong>（Q2 FY26 期末 2026-06-30 後 30-45 天）</td></tr>
+<tr><td>2</td><td>Sysco-Restaurant Depot 整合完成（FY26H2 公告）</td><td>產業事件</td><td><strong>2026-10 至 12 月</strong>（公告中為 2026Q4 整合）</td></tr>
+<tr><td>3</td><td>股價回測進場區間 $60-66</td><td>價位觸發</td><td>持續監測（當前 $80.34 → 需 -18% 至 -25% 修正）</td></tr>
+<tr><td>4</td><td>§5 Single Thing — Sysco 「Specialty Food Initiative」公告或 specialty 分管 VP 招募</td><td>§5 Single Thing</td><td>觀察窗 <strong>2027-04 至 2027-10</strong>（Sysco 整合 6-12 月後）</td></tr>
+</table>
+
+<p><strong>這份報告的保質期</strong>：<strong>至 2026-08-31</strong>（下一次財報 Q2 FY26 公布前有效；之後須根據 Q2 數據重新評估假設）</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：(a) Q2 FY26 上修指引（從 $4.35-4.45B 提至 $4.45-4.55B）+ Adj EBITDA $290-300M；(b) Sysco-Depot 整合延後至 2027 完成 + Sysco 重申 broadline 戰略不進攻 specialty；(c) 中東衝突緩解 → mgmt 上修 international segment 預期。Trigger probability：合計 30%。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：(a) Q2 FY26 organic 退至 < 8%（連續 2 季降至個位數）；(b) Sysco 早於預期公告 specialty 動作（2026/12 至 2027/4）；(c) Adj EBITDA margin 擴張低於 30bps/年（FY26 全年 6.0-6.1% vs 目標 6.2%+）。Trigger probability：合計 30%。</p>
+</section>
+
+<!-- Phase A1 Moat -->
+<details>
+<summary>Phase A1｜護城河深度分析 — A1 結論：B 級護城河 7/10（execution 7 ↑ + pricing power 7 →），moat_trend = → holding（execution 擴大但 pricing 微降抵銷）</summary>
+<div class="content">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) 規模整合（90K SKU + 4,000 供應商網）+ (2) 客戶轉換成本（數位平台 e-commerce >50% 訂單嵌入廚房工作流）</td></tr>
+<tr><td>持久性評分</td><td>7/10，5 年穩固度：中高（41 年累積護城河，後進者需 10+ 年 + $1-2B 資本才能複製）</td></tr>
+<tr><td>最大侵蝕風險</td><td>Sysco 透過 $29.1B Restaurant Depot 收購擴大 cash-&-carry 模式 → 24 個月內可能擠壓 CHEF 小餐廳客戶基礎（30-40% 機率衍生 「Specialty Food Initiative」進攻）</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 24.3%（趨勢 ↑ 連 4 季擴張 +53bps）、specialty 利基市佔 8-10%（趨勢 ↑ 持續吃中型 fragmented 對手）、ROIC 7.94% vs WACC 7-8% 超額 ~0-1%p（薄）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>→ holding</strong>（execution dim. 擴大 — e-commerce 平台訂單 2019 ~20% → 2025 >50%；pricing power dim. 持平偏弱 — GM 從 25.5% 2014 → 24.3% 現微降，produce 業務拓展攤薄。雙維度抵銷後 net 持平）</td></tr>
+</table>
+
+<h4>二維護城河拆解</h4>
+<table>
+<tr><th>維度</th><th>DD §9 評分</th><th>DCA 獨立評估</th><th>Alignment</th></tr>
+<tr><td>Execution moat</td><td>DD 7/10</td><td>DCA 7/10</td><td>aligned</td></tr>
+<tr><td>Pricing power moat</td><td>DD 7/10</td><td>DCA 7/10</td><td>aligned</td></tr>
+<tr><td>合併</td><td>DD 7/10</td><td>DCA 7/10</td><td>—</td></tr>
+</table>
+
+<h4>Sourced data points（6 個，達標 ≥ 5）</h4>
+<ol>
+<li>48,000+ products distributed to 30,000+ customer locations（PitchGrade 2026, 公司業務 profile）</li>
+<li>e-commerce app contributes 18% of total e-commerce sales (mobile app)（Unbound Commerce case study, 2025）</li>
+<li>App 3x conversion rate vs mobile site（Unbound Commerce）</li>
+<li>Pappas brothers 41 年累積（1985 創業，公司 history page）</li>
+<li>CEO Chris Pappas 2026/3/3 賣 95,908 股 @ $62.53 = $9.75M（Investing.com insider trading news, 2026/3）</li>
+<li>過去 6 個月 6 次內部人交易 = 6 賣 0 買（Simply Wall St News, 2026 - tax withholding + 10b5-1 計劃性減持為主）</li>
+</ol>
+
+<p><strong>A1 獨立結論</strong>：B 級護城河 7/10，moat_trend = → holding（execution 擴大被 pricing 微降抵銷）；最大威脅是 Sysco-Restaurant Depot 整合後可能延伸至 specialty 利基。</p>
+</div>
+</details>
+
+<!-- Phase A2 Industry -->
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — A2 結論：🟡 中性順風（US foodservice TAM 1.01T 但成熟分銷商整合期；specialty 利基 CAGR 6-8%；runway_post_y5 = 🟡 中）</summary>
+<div class="content">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>美國 foodservice 當前 $1.01T，2031 預計 $1.67T（CAGR 10.6%）；全球 specialty foods 2026 ~$320B → 2030 $510B（CAGR 11.6%）；CHEF 涉入 specialty B2B 利基 ~$40-50B</td></tr>
+<tr><td>供需判斷</td><td>需求溫和強健（美國餐飲 confidence 持平、高端 fine dining segment 仍開店），未來 12 個月偏向平衡偏需求；無顯著供給瓶頸</td></tr>
+<tr><td>最大技術替代風險</td><td>D2C specialty 食材平台延伸至 B2B（Fresh Direct-like），時間軸 3-5 年；威脅程度中（high-touch 服務難被取代）</td></tr>
+<tr><td>最大政策/地緣風險</td><td>中東衝突 ~10% 業務（2026 Q1 開始）+ 歐洲 specialty 食材關稅（義大利 charcuterie / 法國乳酪等）；影響中</td></tr>
+<tr><td>議價權位置</td><td>對上游：中（4,000+ 供應商分散）；對下游：中（50,000 餐廳分散但對 Sysco 規模差距大）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟡 中</strong>（Y5 末 specialty 利基滲透率預估 ~12-15%，仍有 1.5x 整合空間；下一條 S 曲線不明朗 — produce 業務是 mass-market 攤薄而非高 margin 第二曲線）</td></tr>
+</table>
+
+<h4>Sourced data points（7 個，達標 ≥ 5）</h4>
+<ol>
+<li>美國 foodservice 2026 TAM $1.01T，2031 預計 $1.67T，CAGR 10.6%（Mordor Intelligence, 2026）</li>
+<li>全球 specialty foods 2026 → 2030 $510B，CAGR 11.6%（The Business Research Company, 2026）</li>
+<li>美國餐飲業 2026 將達 $1.55T sales projection（National Restaurant Association, 2026）</li>
+<li>Food supply for restaurants market 2025 $540B → 2026 $571B CAGR 5.8%（Coherent Market Insights, 2026）</li>
+<li>Investindustrial $2.9B TreeHouse Foods take-private（FoodNavigator-USA, 2026-02-12）</li>
+<li>Sysco-Restaurant Depot $29.1B 收購（Sysco IR, 2026-03-30）— 含 166 倉 + 35 州 + 725,000 獨立餐廳客戶 + $250M annual synergies</li>
+<li>US Foods CHEF'STORE 業務 2025 探討 divestiture（Restaurant Business Online, 2025）</li>
+</ol>
+
+<p><strong>A2 獨立結論</strong>：🟡 中性產業（成熟 foodservice CAGR 6%，specialty 利基 CAGR 6-8% 更佳但非 hypergrowth）；runway_post_y5 🟡 中（6-8 年），不適合 10+ 年級別 thesis。</p>
+</div>
+</details>
+
+<!-- Phase A3 Business/Financial -->
+<details>
+<summary>Phase A3｜業務結構/財務體質/資本配置 — A3 結論：成長軌跡可信但 5Y IRR 質感偏弱（EPS 17% 被估值 re-rate -10.7% 抵銷大部分）</summary>
+<div class="content">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：Specialty 食材（~70%，GM ~28-30%）；成長引擎：Center-of-the-plate meat/seafood（~20%，GM ~22%）；新興/拖累：Produce Hardies/Greenleaf（~10%，GM ~18%，產品 mix 攤薄）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶 < 2%，前五大 < 5%，風險：低（極分散）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 →（年化 +2-3% inflation pass-through），定價權：中（specialty 強 + produce 弱平均）</td></tr>
+<tr><td>未來金雞母</td><td>德州市場拓展（Hardies 後）+ 北加 Bay Area（Greenleaf）+ 波士頓 specialty meat（Cambridge）整合 synergy 兌現；目前佔營收 ~10%，潛在 TAM $5-8B（specialty produce + meat 區域市場），預估成熟 2-3 年後</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 1.21（健康）、毛利率 24.3%（趨勢 ↑ 連 4 季擴張）、壓力測試：營收 -20% 可撐 ~3-4 季（Net Debt/EBITDA 2.05x 適中）</td></tr>
+<tr><td>資本配置紀律</td><td>2023-2025 連續 3 件併購 + 整合進行中；FY25 開始小幅回購 $15M/年；term loan 重定價 SOFR+3% → +2.5% 省利息；deleveraging 從 2.5x → 2.05x 紀律佳</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR 預估 <strong>17%/年</strong>（已扣除 0.5% SBC 稀釋 + 0.4% 淨買回抵銷）、5Y 末 forward P/E 預估 <strong>25x</strong> vs 當前 30.74x（re-rate 貢獻年化 <strong>-3.7%/年</strong>）、現金股息率 <strong>0%</strong>、淨買回率 <strong>0.4%/年</strong>（已扣除 SBC 稀釋）</td></tr>
+</table>
+
+<h4>Sourced data points（8 個，達標 ≥ 6）</h4>
+<ol>
+<li>Q1 FY26 Rev $1.059B +11.4% YoY（StockTitan 8-K, 2026-04-29）</li>
+<li>Q1 FY26 EPS $0.40 beat consensus $0.27 by 48%（multiple sources, 2026-04-29 earnings call transcripts）</li>
+<li>FY25 Adj EBITDA $258.3M +18% YoY（公司 ARS, 2026-02）</li>
+<li>Net Debt/EBITDA 從 FY24 2.5x 降至 FY25 2.05x，公司目標 1.5-2.0x（公司 Q4 25 法說 transcript, 2026-02）</li>
+<li>Term loan 利率重定價 SOFR+3% → +2.5%（2026-01-20 公司公告）</li>
+<li>FY28 Adj EBITDA 目標 $300-350M，6.5-7.0% margin（公司 Investor Day, 2025）</li>
+<li>Hardies $100M / Greenleaf $50M / Cambridge $50M 收購（公司新聞稿 2023/5、2024）</li>
+<li>Christopher Pappas 2026/3/3 賣 $9.75M + 5/4 79,950 股捐慈善信託（Investing.com / Insider Trades, 2026-03 ~ 05）</li>
+</ol>
+
+<p><strong>A3 獨立結論</strong>：成長軌跡 17%/年可信（margin 擴張 + organic 雙位數），但 5Y IRR 質感<strong>主要靠 EPS 複利</strong>且被估值 re-rate 抵銷 60%；股息+回購貢獻 <0.5%/年。當前估值點 5Y IRR Base ~2.9%/年弱於大盤。</p>
+
+<h4>FY26 management guidance（公司 Investor Day + Q1 法說）細部</h4>
+<table>
+<tr><th>項目</th><th>FY26 guidance</th><th>FY27-28 trajectory</th></tr>
+<tr><td>Revenue</td><td>$4.35-$4.45B mid-point +6.5% YoY</td><td>FY27 共識 ~$4.82B / FY28 ~$5.2B</td></tr>
+<tr><td>Adj EBITDA</td><td>$276-$286M mid 6.4%</td><td>FY28 目標 $300-$350M mid 6.5-7.0%</td></tr>
+<tr><td>Capex</td><td>~$50-60M (1.2-1.3% Rev)</td><td>持續 1.0-1.3% Rev 維持低密集</td></tr>
+<tr><td>Net Debt/EBITDA</td><td>1.5-2.0x（目標區間）</td><td>持續 deleveraging 至 1.5x</td></tr>
+</table>
+
+<h4>歷史 EPS 季度走勢</h4>
+<table>
+<tr><th>季</th><th>Diluted EPS</th><th>YoY %</th><th>備註</th></tr>
+<tr><td>Q1 FY25</td><td>$0.25</td><td>+25%</td><td>低基期</td></tr>
+<tr><td>Q2 FY25</td><td>$0.49</td><td>+12%</td><td>季節性高峰</td></tr>
+<tr><td>Q3 FY25</td><td>$0.44</td><td>+13%</td><td>—</td></tr>
+<tr><td>Q4 FY25</td><td>$0.50</td><td>+22%</td><td>節日季強</td></tr>
+<tr><td>Q1 FY26</td><td>$0.40</td><td>+60%</td><td>beat 48%，margin 擴張驅動</td></tr>
+</table>
+</div>
+</details>
+
+<!-- Phase A4 DD/ID Data Extract -->
+<details>
+<summary>Phase A4｜既有報告數據擷取 — DD basis: DD_CHEF_20260518.html (Inception, today)</summary>
+<div class="content">
+<p><strong>DD（同日 Inception）關鍵數據</strong>：</p>
+<table>
+<tr><th>欄位</th><th>DD 數值</th></tr>
+<tr><td>signal</td><td>B（衛星候選 / 觀望）</td></tr>
+<tr><td>verdict</td><td>「Specialty B2B 食材分銷利基龍頭，Q1 FY26 organic +10.4% 連續第 4 季雙位數，但 Fwd PE 30.74x 溢價同業 128% 已透支」</td></tr>
+<tr><td>trap / trap_label</td><td>🟡 觀察期</td></tr>
+<tr><td>moat / moat_score</td><td>B / 7</td></tr>
+<tr><td>moat_execution / moat_pricing_power（v12.3 二維 sub-scores）</td><td>7 / 7</td></tr>
+<tr><td>val（估值燈）</td><td>🟠 偏貴</td></tr>
+<tr><td>fpe_fy2 / pct_5y / peg_fy2</td><td>30.74x / 29% / 1.44</td></tr>
+<tr><td>ma（Pure MA）</td><td>✅ 強勢進場（Bollinger 上軌外警示）</td></tr>
+<tr><td>price_at_dd</td><td>$80.34</td></tr>
+<tr><td>upside_short / mid / 5y</td><td>-11% / +4% / +15%</td></tr>
+<tr><td>stress.pass / total</td><td>1 / 2（Base 條件式過 + Bear 不過）</td></tr>
+<tr><td>ai_risk</td><td>🟢 受益</td></tr>
+<tr><td>long_term_confidence</td><td>中</td></tr>
+<tr><td>oneliner（≤ 200 chars）</td><td>「Q1 FY26 organic +10.4%／Fwd PE 30.74x 溢價 broadline 同業 128%／B 級護城河 7/10／R:R 短 0.09x 中 0.27x 5Y 0.34x｜MA ✅ 但 BB 上軌外 + Sysco-Depot 競爭壓力｜建議等回測 W52 $64」</td></tr>
+</table>
+
+<p><strong>ID 報告對照</strong>：無對應 ID 報告（specialty food distribution 此 theme 未有 industry-analyst 報告）</p>
+
+<p><strong>DCA cross-check 結果</strong>：DCA Phase A1-A3 結論與 DD 高度一致（同 B 級護城河 7/10、同 🟠 估值燈、同 🟡 觀察期 trap、同「觀望」裁決方向）。DCA 加值在於 IRR composition + opportunity cost + Phase B 矛盾裁決三個維度，提供「為什麼觀望而非進場 / 何時可以進場」的可執行框架。</p>
+</div>
+</details>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>

@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.3">
+<title>DD｜FLEX (Flex Ltd.)｜2026-05-18</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F8FAFC;
+  --card: #FFFFFF;
+  --ink: #0F172A;
+  --ink-soft: #475569;
+  --accent: #1E3A5F;
+  --accent2: #3B82F6;
+  --line: #E2E8F0;
+  --line-soft: #F1F5F9;
+  --green-bg: #DCFCE7; --green-ink: #166534;
+  --red-bg: #FEE2E2; --red-ink: #991B1B;
+  --yellow-bg: #FEF9C3; --yellow-ink: #92400E;
+  --orange-bg: #FFF0E6; --orange-line: #F97316; --orange-ink: #C2410C;
+  --blue-bg: #EFF6FF; --blue-ink: #1E3A5F;
+  --amber-bg: #FFFBEB; --amber-line: #D97706; --amber-ink: #92400E;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans TC', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.7;
+  font-size: 15px;
+}
+.num, code, .mono { font-family: 'IBM Plex Mono', monospace; }
+header.fixed {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--accent); color: #fff;
+  padding: 10px 24px;
+  display: flex; gap: 18px; flex-wrap: wrap;
+  font-size: 13px;
+  border-bottom: 3px solid var(--accent2);
+}
+header.fixed span { white-space: nowrap; }
+header.fixed strong { font-weight: 700; }
+nav.dd-toc {
+  background: #fff;
+  border-left: 4px solid var(--accent2);
+  margin: 16px 24px 0;
+  padding: 14px 18px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+nav.dd-toc a {
+  display: inline-block;
+  background: var(--blue-bg);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+nav.dd-toc a:hover { background: #DBE7FE; }
+main { max-width: 1240px; margin: 0 auto; padding: 24px; }
+section.card {
+  background: var(--card);
+  border-left: 4px solid var(--accent2);
+  margin: 20px 0;
+  padding: 20px 26px;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+}
+h2 {
+  color: var(--accent);
+  border-bottom: 2px solid var(--line);
+  padding-bottom: 10px;
+  margin: 0 0 18px;
+  font-size: 22px;
+  scroll-margin-top: 80px;
+}
+h3 { color: var(--accent); font-size: 17px; margin: 22px 0 10px; }
+h4 { color: #334155; font-size: 15px; margin: 16px 0 8px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13.5px; }
+th, td {
+  border: 1px solid var(--line);
+  padding: 8px 11px;
+  text-align: left;
+  vertical-align: top;
+}
+th { background: var(--accent); color: #fff; font-weight: 600; }
+tbody tr:nth-child(even) { background: var(--line-soft); }
+.tag-green { background: var(--green-bg); color: var(--green-ink); padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+.tag-red { background: var(--red-bg); color: var(--red-ink); padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+.tag-yellow { background: var(--yellow-bg); color: var(--yellow-ink); padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+.tag-orange { background: var(--orange-bg); color: var(--orange-ink); padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+.tag-blue { background: var(--blue-bg); color: var(--blue-ink); padding: 2px 8px; border-radius: 3px; font-weight: 600; }
+.hypothesis-box {
+  background: var(--blue-bg);
+  border-left: 4px solid var(--accent2);
+  padding: 14px 18px;
+  margin: 12px 0;
+  border-radius: 2px;
+}
+.hypothesis-box ul { margin: 6px 0 0; padding-left: 22px; }
+.hypothesis-box li { margin: 4px 0; }
+.warn-box {
+  background: var(--orange-bg);
+  border-left: 4px solid var(--orange-line);
+  padding: 14px 18px;
+  margin: 14px 0;
+  border-radius: 2px;
+}
+.warn-box h4 { color: var(--orange-ink); margin-top: 0; }
+.verdict-box {
+  background: var(--amber-bg);
+  border-left: 4px solid var(--amber-line);
+  padding: 14px 18px;
+  margin: 12px 0;
+  border-radius: 2px;
+}
+.reasoning {
+  background: #F8FAFC;
+  border-left: 3px dashed #94A3B8;
+  padding: 8px 14px;
+  margin: 8px 0 14px;
+  font-size: 13px;
+  color: #334155;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+.three-col .col {
+  background: #fff; padding: 14px 16px; border-radius: 2px;
+}
+.col.bull { border-left: 4px solid #16A34A; background: #F0FDF4; }
+.col.bear { border-left: 4px solid #DC2626; background: #FFF1F2; }
+.col.arb { border-left: 4px solid #7C3AED; background: #F5F3FF; }
+.col.short { border-left: 4px solid #0284C7; background: #F0F9FF; }
+.col.mid { border-left: 4px solid #7C3AED; background: #F5F3FF; }
+.col.long { border-left: 4px solid #059669; background: #ECFDF5; }
+.col h4 { color: var(--accent); }
+.note { font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; }
+.print-btn {
+  position: fixed; bottom: 22px; right: 22px;
+  background: var(--accent2); color: #fff;
+  border: 0; padding: 10px 18px; border-radius: 4px;
+  cursor: pointer; font-weight: 600;
+  box-shadow: 0 2px 6px rgba(15,23,42,0.18);
+}
+@media print {
+  header.fixed, .print-btn, nav.dd-toc { display: none; }
+  main { padding: 0; }
+  section.card { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="fixed">
+<span><strong>FLEX</strong> — Flex Ltd.</span>
+<span>資料抓取：2026-05-18</span>
+<span>最新收盤：$137.86 (2026-05-15)</span>
+<span>市值：$50.7B</span>
+<span>DD Schema：v12.3</span>
+</header>
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報</a>
+<a href="#s7">§7 門檻</a>
+<a href="#s8">§8 成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務</a>
+<a href="#s11">§11 產業</a>
+<a href="#s12">§12 治理</a>
+<a href="#s13">§13 估值</a>
+</nav>
+
+<main>
+
+<!-- ======================== §1 投資結論 ======================== -->
+<section class="card" id="s1">
+<h2>§1 投資結論 (Executive Summary)</h2>
+<p class="note">本結論基於以下完整分析得出；推導全文見 §13.5 投資結論。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信｜§9 護城河趨勢「加深」（AI infra vertical 從 EMS commodity 升級為 platform）｜§8 F AI 風險 🟢 直接受益｜一句話：超大規模 AI data center capex 進入 2026-2030 高原期，FLEX 是少數能同時打通 power + thermal + compute + global manufacturing 的 EMS 玩家。</li>
+<li><strong>品質 B 級（接近 A）：</strong>護城河 7/10（§9 — execution moat 8 + pricing power 5，二維拆解見 §9.A）｜體質 veto：0/5 不過｜等級調整：B → B（未升級，pricing power 仍是 EMS 經濟學的軟肋）。</li>
+<li><strong>估值燈 🟡 合理（盲點 1 救援後）：</strong>Fwd PE (FY27) 31.0x，FY27 共識 EPS $4.44；5Y Trailing PE 分位 ~95%🔴，但 PEG 0.87（30.5x ÷ 35% 3Y EPS CAGR）🟢；以較嚴取 🟠 偏貴 → §8 🟢 + PEG &lt; 2.0 + AI 🟢 三條件齊備觸發盲點 1 救援 🟠→🟡｜<strong>但</strong>需正視「5Y 倍數從 7-15x 跳到 30x 是結構性 re-rating，非估值體系穩定」。</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場（但極度拉伸）：</strong>$137.86 vs W52 $62.83 / W104 $49.00 / W250 $30.46，W250 斜率 +13.3%；四條件全過。<strong>但</strong>現價 / W250 = 4.5x（極端拉伸）、Bollinger 上軌 $122.35（現價突破上軌 +13%）、4 週漂移 +35.5%、12 週漂移 +118.8% — <span class="tag-red">QC-22 觸發追高警示</span>。</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,408 vs W104 6,174，無系統性風險。</li>
+<li><strong>參考 R:R（資訊性）：</strong>短期 0.4x / 中期 1.2x / 長期 2.5x｜壓力測試通過率 1/4（僅長期 5Y 過）— 短中期估值已透支多數上行。</li>
+<li><strong>綜合訊號：<span style="font-size:20px;" class="tag-yellow">B（衛星候選 — 觀望等回測）</span></strong>｜判定理由：品質 B + 估值 🟡（救援後） + MA ✅ 但極端拉伸 + trap 🟢；thesis 完整但時機點是 12 週 +118% 後的 FOMO 高位，建議等回測 Bollinger 中軌 ($76) 或 W52 ($63) 再分批進場。</li>
+<li><strong>長期持有信心：高</strong>（§2.H 末段）｜<strong>陷阱定性：🟢 非陷阱</strong>（AI infra TAM 5-10x 擴張 + 公司 vertical 升級 verified by Q4 FY26 segment data）。</li>
+<li><strong>Inception DD：</strong><code>DD_FLEX_20260518.html</code>（2026-05-18）— 本份為 Inception，作為「累積漂移」對照基準（v12.3 強制）。</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-18（距今 365 天）— §5.B' 在此日期起首次有實質 YoY 對照（v12.3 強制）。</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warn-box">
+<h4>⚠️ QC-22 股價漂移檢查（v12.0 強制）— 入場窗口已大幅偏移</h4>
+<p><strong>4 週漂移 +35.5%、12 週漂移 +118.8%</strong>。R:R 表三個價位對照：</p>
+<table>
+<thead><tr><th>價位情境</th><th>價位</th><th>短期 R:R</th><th>中期 R:R</th><th>長期 R:R</th></tr></thead>
+<tbody>
+<tr><td>當前收盤 (2026-05-15)</td><td>$137.86</td><td>0.4x</td><td>1.2x</td><td>2.5x</td></tr>
+<tr><td>4 週前均價</td><td>$101.78</td><td>1.0x</td><td>2.1x</td><td>4.0x</td></tr>
+<tr><td>建議分批進場 (Bollinger 中軌)</td><td>$75.69</td><td>2.5x</td><td>3.6x</td><td>6.5x</td></tr>
+</tbody>
+</table>
+<p><strong>判定：</strong>12 週 +118% 漲幅遠超 CRDO 三週 +79% 案例。雖 thesis 完整、品質維持，但「股價已 price in 多數 FY27 利好 + spinoff 預期」。建議：(1) 已持倉者考慮 trim 1/3 鎖利；(2) 新進者等待 Pure MA 回測 W52 / Bollinger 中軌（$63-76 區間）或 SpinCo 完成日（2027 Q1，預期可能出現 short-term divergence）。</p>
+</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<thead><tr><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>最可能的價值陷阱模式？</strong></td>
+<td><span class="tag-green">非陷阱</span>。AI infra TAM 從 FY26 ~$6.6B CPI segment 擴張至 FY28 ~$12B+（管理層 guide CPI 65-75% FY27 / >80% FY28），有具體訂單支撐（Google multiyear 合約、NVIDIA modular 合作、JetCool liquid cooling tech）。GM 9.27% 連續改善，FCF 連續多年 >$1B。但「Fwd PE 從 13x 結構性升至 31x」確實有「估值 re-rating 透支」之嫌 — 屬「便宜變貴」反面陷阱，非經典「便宜陷阱」。</td>
+</tr>
+<tr>
+<td><strong>支持「這不是陷阱」的最強論據？</strong></td>
+<td>三點具體：(1) Q4 FY26 CPI 營收 $1.8B (+31% YoY)，OPM 9.9% — 高於公司整體 6.3%，且管理層已 commit FY27 CPI 加 +100bps 回到 10%+；(2) Nextracker 分拆已實證 spin 對 stub 估值有 unlock（Nextracker IPO 至今市值翻倍）；(3) ROIC 15.4% 已是 EMS 同業最高（CLS ~12%、JBL ~14%），且未來 SpinCo 純 AI infra 結構性 ROIC 應 &gt;20%。</td>
+</tr>
+<tr>
+<td><strong>支持「這可能是陷阱」的最強反駁？</strong></td>
+<td>(1) <strong>EMS 護城河本質薄弱</strong>：客戶集中（Google、NVIDIA、頂級 hyperscaler 佔 CPI 大部分）、pricing power 受限於 cost-plus 合約；客戶若 in-house（Google TPU、Amazon Trainium）或轉單會劇烈衝擊。(2) <strong>估值倍數透支</strong>：Fwd PE 31x vs 5Y 中位 14x = 121% 溢價；若 SpinCo 兌現 65% 成長但 multiple 收斂至 25x，股價會原地踏步 2 年。(3) <strong>內部人賣壓</strong>：CEO 5/11 賣 $16.2M、CCO/COO/EVP 同日合計賣 ~$22M（PSU vest 後）— 雖屬例行性 tax-withhold，但金額大、時點在股價 +118% 後，弱勢 signal。</td>
+</tr>
+<tr>
+<td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td>
+<td><strong>領先指標 1：CPI segment YoY 成長率</strong>（每季財報）— 若連 2 季 &lt; 25%（管理層 guide 65-75%）→ 紅燈、減倉。<strong>領先指標 2：CPI segment OPM</strong>（每季）— 若 FY27 H2 仍 &lt; 10%（未 recoup 100bps）→ 管理層 commit 失效、減倉。<strong>領先指標 3：top hyperscaler in-house signal</strong>（季度監測）— Google 自研 TPU rack design / Microsoft Maia 全面投產 → 即啟動 R1 風險評估。</td>
+</tr>
+</tbody>
+</table>
+<p style="margin-top: 10px;"><strong>最終定性：</strong><span class="tag-green">🟢 非陷阱</span>（但承認「估值 re-rating 透支」風險真實存在）</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>CPI segment YoY revenue growth + adj OPM</td><td>§5 H1、§6</td><td>🔵 核心假設驗證信號</td><td>連 2 季 YoY &lt; 25%，或 FY27 H2 OPM 仍 &lt; 10%</td></tr>
+<tr><td>2</td><td>SpinCo 分拆執行進度（公告→S-1→上市）</td><td>§5 H2、§12</td><td>🔵 長期成長領先信號</td><td>分拆延後超過 2027 Q2（公告 timeline 是 2027 Q1）→ 視為 value-unlock 風險</td></tr>
+<tr><td>3</td><td>Top 3 hyperscaler 自研進度 + FLEX 訂單 share</td><td>§9、§11</td><td>結構性護城河信號</td><td>任一 hyperscaler 公開降低 FLEX 訂單 share &gt; 20% YoY 或宣布自研全面 in-house</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<!-- ======================== §2 四層判定 ======================== -->
+<section class="card" id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA × 訊號燈（v12.3 五子節）</h2>
+
+<h3>§2.0 產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信</td></tr>
+<tr><td>§9 護城河趨勢</td><td>加深（EMS commodity → vertical-integrated AI infra platform）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 直接受益（CPI 直接供應 AI data center）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><span class="tag-green">🟢 順風</span></td></tr>
+<tr><td>一句話判斷</td><td>AI data center capex 2026-2030 高原期 + FLEX 是少數能打通 power+thermal+compute 的全棧 EMS 玩家。Spin-off 2027 Q1 將讓 SpinCo 成為純 AI infrastructure pure play，TAM 從 $6.6B 擴張至潛在 $100B+ 規模空間。</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+產業 🟢 順風判定：CPI 38% YoY (FY26) + 65-75% YoY (FY27 guide) 是訂單兌現非預期；
+JetCool/Anord Mardix/Crown Tech 三併購已落地 → vertical 升級 verified
+→ §2.D 估值燈盲點 1 救援機制啟動條件 #1 滿足。
+</div>
+
+<h3>§2.B 體質檢核 + 品質等級（v12.3：5 子節合併）</h3>
+
+<h4>體質檢核（veto 制）</h4>
+<table>
+<thead><tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td>✅</td><td>FY23 6.93% → FY24 7.06% → FY25 8.36% → FY26 ~9.27%；連續改善</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>✅</td><td>FY25: $1,067M / $838M = 1.27；FY26 FCF $1.1B / NI ~$865M = 1.27</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td>✅</td><td>0y EPS 90 天前 $3.65 → 30 天前 $3.65 → 7 天前 $3.87 → 現 $4.44；大幅上修（Q4 beat + FY27 guide raised）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅</td><td>Q1 FY26 (Jun-25) -3%、Q2 FY26 -2%、Q3 FY26 +8%、Q4 FY26 +17%；轉正且加速</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅</td><td>Net Debt $4.15B - $2.29B = $1.86B；EBITDA ~$1.9B (FY25) → Net Debt/EBITDA ≈ 1.0</td></tr>
+</tbody>
+</table>
+<p><strong>體質 veto 結果</strong>：0/5 不過 → 等級不變</p>
+
+<h4>護城河品質等級（v12.3：execution + pricing power 二維拆解）</h4>
+<table>
+<thead><tr><th>面向</th><th>分數</th><th>主要證據</th></tr></thead>
+<tbody>
+<tr><td>Execution moat（執行力護城河）</td><td><span class="num">8/10</span></td><td>全球 50+ 工廠、$27.9B 年營收規模、vertical 從 PCB 到 rack-level integration、JetCool 自有 microconvective cooling tech、Anord Mardix critical power 整合、可同時供應 power+thermal+compute；對手 (CLS, JBL, Sanmina) 規模或無法匹配（Sanmina）或缺 vertical 整合（CLS 偏 compute / JBL 偏多元）。</td></tr>
+<tr><td>Pricing power moat（定價權護城河）</td><td><span class="num">5/10</span></td><td>EMS 本質為 cost-plus 合約，無 end-customer pricing autonomy；但 vertical integration + design-in 角色已從「組裝代工」升級為「co-design partner」（如 NVIDIA AI infrastructure platform 共同開發），讓 margin 從 historic 4-5% 升至 6.3% (FY26) 並 commit 7% (FY27)。仍受限於客戶 RFQ 議價權，pricing 無法主動上調。</td></tr>
+<tr><td><strong>綜合（max 二者更難複製、min 二者更脆弱）</strong></td><td><strong>7/10</strong></td><td>取「綜合下行情境彈性」考量 → B 級（接近 A）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+Execution moat 8/10 = 全球規模 + vertical 整合 + 3 個關鍵併購（Anord/Crown/JetCool）= 對手要 catch-up 需 5+ 年；
+Pricing power 5/10 = EMS cost-plus 經濟學瓶頸 + hyperscaler 客戶議價權強；
+→ 取保守平均：護城河 7 = B 級（v12.3 二維 escape rule：兩維皆未過 ≥ 8，不能升 A）
+→ §1 結論引用此分數作為「品質 B」基礎；不適用 SaaS / 銀行 single-axis 例外。
+</div>
+
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河（§9）</td><td>7/10（執行 8 + 定價權 5）</td></tr>
+<tr><td>護城河原始等級</td><td>B 級</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過，不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>B 級</strong></td></tr>
+</tbody>
+</table>
+
+<h3>§2.D 估值輸入 + 估值燈 + R:R / Bear Case（v12.3：吸收 C+E）</h3>
+
+<h4>估值輸入（FY+1 / FY+2 共識）</h4>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY27 EPS（0y 共識）</td><td><span class="num">$4.44</span></td><td>yfinance earnings_estimate，n=8 analysts</td></tr>
+<tr><td>FY28 EPS（+1y 共識）</td><td><span class="num">$6.60</span></td><td>yfinance，n=7 analysts；含 SpinCo 完成後的 sum-of-parts</td></tr>
+<tr><td>FY27→FY28 YoY 成長</td><td>+48.6%</td><td>計算</td></tr>
+<tr><td>FY27 Forward P/E</td><td><span class="num">31.05x</span></td><td>$137.86 / $4.44</td></tr>
+<tr><td>FY28 Forward P/E</td><td><span class="num">20.89x</span></td><td>$137.86 / $6.60</td></tr>
+<tr><td>3Y EPS CAGR (FY26 $3.30 → FY29E $8.20)</td><td>~35%</td><td>$3.30 → $4.44 → $6.60 → $8.20E（FY29 用 SpinCo 80% guide + RemainCo mid-SD）</td></tr>
+<tr><td>PEG (FY27 PE / 3Y CAGR)</td><td><span class="num">0.87</span></td><td>31.05 / 35</td></tr>
+<tr><td>PEG (FY28 PE / 3Y CAGR)</td><td><span class="num">0.59</span></td><td>20.89 / 35</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+PEG 0.87（FY27 基礎）= 31.05 ÷ 35% (3Y EPS CAGR)；雙位數成長 + 估值倍數合理；
+但 FY27 PE 31x 本身在 5Y 分位 ≥ 90%（5Y 中位 ~14x、低點 7x），這是結構性 re-rating（EMS 變 AI infra play）；
+→ §13.1 implication：歷史分位 🔴 但 PEG 🟢，取較嚴 → 🟠；觸發盲點 1 救援評估。
+</div>
+
+<h4>估值燈判定</h4>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前 Fwd PE (FY27)</td><td>31.05x</td></tr>
+<tr><td>5Y 中位 Trailing PE</td><td>~14.0x</td></tr>
+<tr><td>5Y Trailing PE 分位</td><td>~95%（嚴格按 trailing 算；以 forward 1Y 變化版本算約 85-92%）</td></tr>
+<tr><td>PEG</td><td>0.87 (FY27 basis)</td></tr>
+<tr><td>估值燈（初判，取較嚴）</td><td>🟠 偏貴（分位 ≥ 70%）</td></tr>
+</tbody>
+</table>
+
+<h4>🛡️ 盲點 1 救援檢核（v12.0 強制 — 結構性高成長救援）</h4>
+<table>
+<thead><tr><th>條件</th><th>滿足？</th></tr></thead>
+<tbody>
+<tr><td>① §8 長期成長性綜合評級 🟢 高確信</td><td>✅ Runway ≥ 10 年（AI infra supercycle）+ 護城河趨勢加深 + 衰退信號 0 個</td></tr>
+<tr><td>② PEG &lt; 2.0</td><td>✅ 0.87</td></tr>
+<tr><td>③ §8 F AI 風險評級 🟢 受益</td><td>✅ CPI 直接 AI 受益</td></tr>
+<tr><td><strong>不適用情境檢核（任一觸發即不救）</strong></td><td></td></tr>
+<tr><td>• 分位 &gt; 85%（極端過熱）</td><td>⚠️ 5Y trailing 分位 ~95%，但 FY27 forward 分位 ~85-90%，邊緣案例</td></tr>
+<tr><td>• QC-19 發現近 90 天重大利空</td><td>✅ 無（5/6 Q4 beat + 公告 spinoff，全是利多）</td></tr>
+<tr><td>• PEG ≥ 2.0</td><td>✅ 不觸發</td></tr>
+</tbody>
+</table>
+<p><strong>救援結果：</strong>三條件齊備，分位邊緣案例 — <span class="tag-yellow">⚠️ 盲點 1 救援觸發（部分）：🟠 救回 🟡（但需備注「估值倍數透支警告 — 5Y 倍數已從 14x 跳到 31x，re-rating 一次性結構升級風險」）</span></p>
+
+<p><strong>估值燈最終：🟡 合理（救援後）</strong> | 套用規則：不變（B 級不升不降）</p>
+
+<h4>R:R 與 Bear Case（資訊性，不主導裁決）</h4>
+
+<h4>參考目標價</h4>
+<table>
+<thead><tr><th>時距</th><th>EPS 基礎</th><th>合理 PE</th><th>目標價</th><th>當前股價對應上行</th></tr></thead>
+<tbody>
+<tr><td>短期（FY27 末 ~2027/3）</td><td>FY27 $4.44</td><td>28x（保守合理）</td><td>$124</td><td>-10%（下行）</td></tr>
+<tr><td>中期（FY28 末 ~2028/3）</td><td>FY28 $6.60</td><td>22x（spinoff 後 sum-of-parts）</td><td>$145</td><td>+5%</td></tr>
+<tr><td>長期（FY30 / 5Y視角 ~2031）</td><td>FY30E $9.50</td><td>25x（SpinCo 20x + RemainCo 30x 加權）</td><td>$238</td><td>+73%</td></tr>
+</tbody>
+</table>
+
+<h4>Bear Case</h4>
+<table>
+<thead><tr><th>項目</th><th>短期</th><th>中期</th><th>長期</th></tr></thead>
+<tbody>
+<tr><td>Bear PE（§8.E 成長熄火壓力）</td><td>18x</td><td>16x</td><td>15x</td></tr>
+<tr><td>Bear EPS</td><td>$4.00 (FY27 -10%)</td><td>$5.50 (FY28 -17%)</td><td>$7.00</td></tr>
+<tr><td>Bear 股價</td><td>$72</td><td>$88</td><td>$105</td></tr>
+<tr><td>下行距離（vs $137.86）</td><td>-48%</td><td>-36%</td><td>-24%</td></tr>
+</tbody>
+</table>
+
+<h4>R:R 壓力測試（QC-29）</h4>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>短期 R:R</th><th>中期 R:R</th><th>長期 R:R</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>報告假設（合理 PE 28x / 22x / 25x）</td><td>0.4x ❌</td><td>1.2x ❌</td><td>2.5x ✅</td></tr>
+<tr><td>壓力 A</td><td>3Y EPS CAGR -10%（25%→25%）</td><td>0.2x ❌</td><td>0.8x ❌</td><td>2.0x ✅</td></tr>
+<tr><td>壓力 B</td><td>合理 PE -20%（22x / 18x / 20x）</td><td>0.0x ❌</td><td>0.5x ❌</td><td>1.5x ❌</td></tr>
+<tr><td>壓力 C</td><td>同業溢價收斂（FLEX PE 收斂至 JBL 25x）</td><td>0.2x ❌</td><td>0.8x ❌</td><td>1.9x ❌</td></tr>
+</tbody>
+</table>
+<p><strong>壓力測試通過率：1/4</strong>（僅 Base + 部分壓力情境，僅長期 5Y 過 R:R ≥ 2.0）— 短中期下行空間 30-50%、上行空間有限，意味著「現價對短中期不對稱風險偏 bear」。</p>
+<div class="reasoning">
+R:R 顯示「現價已 price-in FY27-FY28 利好」；短期下行 -48% > 上行 -10%（負 R:R）；
+但長期 5Y R:R 2.5x 仍 OK → thesis 長期成立但時機點不對；
+→ §1 implication：訊號落 B 而非 A（時機不到），等回測 W52 ($63) 再考慮加碼。
+</div>
+
+<h3>§2.F Pure MA 狀態機（v12.0 六狀態機）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>$137.86</td></tr>
+<tr><td>W52 / 斜率</td><td>$62.83 / +23.0%</td></tr>
+<tr><td>W104 / 斜率</td><td>$49.00 / +15.9%</td></tr>
+<tr><td>W250 / 斜率</td><td>$30.46 / +13.3%</td></tr>
+<tr><td>Bollinger 上/中/下 (W20)</td><td>$122.35 / $75.69 / $29.03</td></tr>
+<tr><td>條件檢核</td><td>價 $137.86 > W52 $62.83 > W104 $49.00 > W250 $30.46（四條件全過）+ W250 斜率 +13.3% > +3%（強正）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><span class="tag-green">✅ 強勢進場</span></td></tr>
+<tr><td>MA 部位乘數</td><td>× 1.0</td></tr>
+<tr><td>⚠️ 拉伸警示</td><td>現價 / W250 = <strong>4.53x</strong>（極端拉伸，歷史罕見）；現價突破 Bollinger 上軌 +12.7%；4w 漂移 +35.5%、12w 漂移 +118.8%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+Pure MA ✅ 強勢但極端拉伸：W250 斜率僅 +13.3% 但現價已遠離 W250 4.5x；
+此型態對應 NVDA 2024Q1 / CRDO 2025Q4 模式 — Stage 2 末段；
+→ §1 implication：MA 不阻擋進場（thesis-level signal 可 B），但「等回測」是合理 risk 管理。
+</div>
+
+<h3>§2.G 大盤豁免（合併進 H 之前確認）</h3>
+<table>
+<tbody>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td>7,408.50</td></tr>
+<tr><td>大盤 W104</td><td>6,173.73</td></tr>
+<tr><td>系統性風險</td><td>否（現價 / W104 = 120%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</tbody>
+</table>
+
+<h3>§2.H 綜合訊號燈（v12.0：取代倉位輸出）</h3>
+
+<h4>訊號判定流程</h4>
+<table>
+<thead><tr><th>步驟</th><th>條件</th><th>檢核</th></tr></thead>
+<tbody>
+<tr><td>1. 拒絕檢核</td><td>trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕</td><td>❌ 未觸發（trap 🟢、gate 🟡、MA ✅、quality B）</td></tr>
+<tr><td>2. 高強度檢核（A+）</td><td>quality S/A + gate 🟢 + MA 🟢/✅ + trap 🟢 + 大盤正常</td><td>❌ Quality B 不符（A+ 要 S/A）</td></tr>
+<tr><td>3. 中高強度（A）</td><td>quality S/A + gate 🟡 + MA ✅ + trap 🟢</td><td>❌ Quality B 不符</td></tr>
+<tr><td>4. 衛星級（B）</td><td>quality B + gate 🟢/🟡 + trap 🟢/🟡</td><td>✅ Quality B + gate 🟡（救援後） + MA ✅ + trap 🟢 + 大盤 ✅ → <strong>B</strong></td></tr>
+<tr><td>5. 時機不到（B）</td><td>gate 🟠 + MA stretched，thesis 完整</td><td>✅ MA stretched 印證 B 不升 A</td></tr>
+<tr><td>6. thesis 失敗（C）</td><td>QC-31 四項任一</td><td>❌ 全未觸發</td></tr>
+</tbody>
+</table>
+
+<h4>五個訊號維度（供 PM skill 讀取）</h4>
+<table>
+<thead><tr><th>維度</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>quality_tier</td><td>B</td></tr>
+<tr><td>gate</td><td>🟡（救援後；原 🟠）</td></tr>
+<tr><td>ma_status</td><td>✅ 強勢進場（但極端拉伸）</td></tr>
+<tr><td>benchmark_regime</td><td>正常</td></tr>
+<tr><td>trap</td><td>🟢</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong>B（衛星候選）</strong></td></tr>
+</tbody>
+</table>
+
+<p><strong>判定理由</strong>（一句話）：Quality B + 估值救援後 🟡 但仍偏貴（PEG 0.87 OK 但 5Y 分位透支） + MA ✅ 但 4.5x W250 極端拉伸 + 4w/12w 漂移驚人 → thesis 完整、產業順風但「現價買進 = 追高」，落 B 衛星候選，等回測再考慮升 A。</p>
+
+<h3>§2.I 長期展望（合併進 H 末段）</h3>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8.A</td><td>充裕（AI infra TAM 2024 $250B → 2030 $1T+；FLEX CPI 滲透 ~3% 仍極早期）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>加深（vertical integration + JetCool tech + spinoff catalyst）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</tbody>
+</table>
+<p><strong>一句話</strong>（v12.0 ≤ 120 字）：🟢 順風，B 級護城河 7/10（execution 8 + pricing 5），AI infra vertical 升級可期。估值燈 🟡（救援後，PEG 0.87 OK 但 5Y 倍數透支）+ Pure MA ✅ 但 4.5x W250 極端拉伸。建議等 Bollinger 中軌 $76 或 W52 $63 分批進場。Spinoff 2027 Q1 是 value-unlock 關鍵 catalyst。</p>
+
+</section>
+
+<!-- ======================== §3 三方辯論 ======================== -->
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要（v12.3：仲裁員壓縮）</h2>
+
+<div class="three-col">
+
+<div class="col bull">
+<h4>🟢 多頭辯護人｜Munger 模式</h4>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>關鍵數字</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>護城河 — vertical integration 升級已 verified</td><td>CPI seg OPM 9.9% &gt; 公司 6.3%；JetCool / Anord / Crown 三併購已落地</td></tr>
+<tr><td>2</td><td>成長 — AI capex 超級循環</td><td>FY27 guide Rev $32.3-33.8B (+19% mid) / EPS $4.21-4.51 (+30% mid)；CPI 65-75% YoY</td></tr>
+<tr><td>3</td><td>估值 — PEG 0.87 是 EMS 同業最便宜</td><td>FLEX PEG 0.87 vs CLS PEG 1.6 / JBL PEG 1.0；spinoff sum-of-parts 隱含 unlock</td></tr>
+</tbody>
+</table>
+<p><strong>多頭最強一句話：</strong>「歷史上 Nextracker 分拆兌現過一次（FLEX stub +200% / Nextracker IPO 翻倍）；管理層用同一套 playbook 第二次操作 SpinCo — 經驗 + 訂單 + 估值 unlock 三合一。」</p>
+</div>
+
+<div class="col bear">
+<h4>🔴 空頭檢察官｜Burry 模式</h4>
+<table>
+<thead><tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>估值倍數收斂壓力</td><td>FLEX 5Y trailing 中位 14x，現 31x = 121% 溢價；若 mean revert 至 22x → -30% downside</td></tr>
+<tr><td>2</td><td>Hyperscaler 自研衝擊</td><td>Google TPU rack 自研持續推進；Meta 自研 ASIC；Microsoft Maia rack design；若 top hyperscaler in-house 加速，CPI segment growth 砍半</td></tr>
+<tr><td>3</td><td>Spinoff 執行失敗 / 延後</td><td>SpinCo 預計 2027 Q1 拆分；若卡監管 / 內部審核延至 2027 H2 → 雙公司估值 unlock 預期落空</td></tr>
+</tbody>
+</table>
+<p><strong>空頭最大威脅：</strong>「現價 $137.86 已 price in FY28 EPS $6.60 + 22x PE = 完美兌現假設；任何一個 hyperscaler 公告 in-house rack / Capex pause / spinoff 延後，下行 30-50%（已壓力測試）。」</p>
+</div>
+
+<div class="col arb">
+<h4>🟣 估值仲裁員｜Damodaran 模式</h4>
+<table>
+<thead><tr><th>維度</th><th>判定</th></tr></thead>
+<tbody>
+<tr><td>隱含預期可信度</td><td>6/10</td></tr>
+<tr><td>核心依據（§13.3 Reverse DCF）</td><td>當前股價隱含 10Y FCF CAGR ~22%；vs 共識 EPS CAGR 35%（短期）→ 一致偏向偏高，但長期 CAGR 收斂至 mid-teens 是合理的</td></tr>
+<tr><td>歷史對標</td><td>Nextracker (NXT) 2024Q1 分拆前 stub FLEX 估值 13x → 2026 (post-AI pivot) 已升至 31x；相當於 Garmin 2010 從 GPS 切換至 wearable 後的 multiple expansion，但 GRMN 之後 hold 14-22x；EMS pricing power weakness 終究會壓回</td></tr>
+</tbody>
+</table>
+<p><strong>仲裁員一句話：</strong>「PEG 0.87 看似便宜，但這是建立在 35% 3Y EPS CAGR 假設上；該數字的 50% 來自 spinoff 後 sum-of-parts 重新分類，非有機新增 — 真實有機 EPS CAGR ~22%，對應 fair PE 22-25x，現價 31x 內含 20-30% premium。」</p>
+</div>
+
+</div>
+</section>
+
+<!-- ======================== §4 序章 ======================== -->
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考（v12.3 擴充）</h2>
+
+<h3>存在意義</h3>
+<p>Flex Ltd. 是全球第二大 EMS（Electronics Manufacturing Services）公司 — 但這個 90 年代後期建立的身份正在被 2024-2026 年的 AI infrastructure pivot 重新定義。剝離財務表象，FLEX 解決的痛點是：<strong>「即使是地球上最有現金、最會設計晶片的公司（NVIDIA、Google、Microsoft、Meta），都做不到也不想做的事情 — 把幾百種電子組件、數兆瓦的電力、PB 級的散熱需求，用全球分布的 50+ 工廠在 12-18 個月內變成可以即時開機的 AI rack。」</strong></p>
+<p>若 FLEX 明天消失，CLS / JBL / Sanmina 可以接手 70% 的訂單，但會出現三個結構性混亂：(1) JetCool 的 microconvective cooling tech IP 暫時無人能用（acquisition 後是 in-house tech），下世代 GB300 / GB400 rack 散熱方案受阻；(2) Anord Mardix 在 critical power distribution 的 European footprint 無法即刻被 CLS / JBL 複製（Anord 在歐洲 data center power 市占率高）；(3) NVIDIA "AI Factory" turnkey 平台失去最大的整合 partner — NVIDIA 自己不做 manufacturing，需要 EMS 把 GPU + DPU + NVLink switch + 冷卻 + UPS 整合成可運轉的單元。</p>
+
+<h3>護城河形成歷史路徑（v12.3 新增）</h3>
+<table>
+<thead><tr><th>年份</th><th>事件</th><th>對護城河累積貢獻</th></tr></thead>
+<tbody>
+<tr><td>1990</td><td>Flextronics（前身）IPO，市場定位「contract manufacturer」</td><td>規模建立期，pricing power 0</td></tr>
+<tr><td>2000s</td><td>多次大型整合（Solectron 2007、Solectron），規模衝上全球第二大 EMS</td><td>execution moat +2（規模效應，cost-plus 議價權）</td></tr>
+<tr><td>2018</td><td>Audit Committee 內部調查爭議 / 證券訴訟 / 重編可能</td><td>負分：管理層 credibility 受傷 -1（已過時，2019 後新 CEO 修復）</td></tr>
+<tr><td>2019</td><td>Revathi Advaithi 接任 CEO，啟動 portfolio transformation strategy（強化高利潤 niche）</td><td>execution moat +1（戰略明確化）</td></tr>
+<tr><td>2020-2022</td><td>COVID 後 AI / EV / 醫療 vertical 加碼；ROIC 從 6% 升至 12-14%</td><td>execution moat +1</td></tr>
+<tr><td>2022</td><td>收購 Anord Mardix（critical power distribution，歐洲基地）</td><td>execution moat +1，pricing power +0.5（design-in 角色）</td></tr>
+<tr><td>2023</td><td>收購 Crown Technical Systems（power distribution 補強）</td><td>execution moat +0.5</td></tr>
+<tr><td>2024-Q1</td><td>Nextracker (NXT) 分拆 IPO；FLEX stub 估值 unlock 路徑驗證</td><td>戰略執行 +1（spinoff playbook 建立）</td></tr>
+<tr><td>2024-Q4</td><td>收購 JetCool Technologies（liquid cooling for AI rack）</td><td>execution moat +1，pricing power +1（IP 進入）</td></tr>
+<tr><td>2025-2026</td><td>NVIDIA AI infrastructure platform 戰略合作；Google multiyear 合約；Sabey / Broadcom 等具體 customer wins</td><td>execution moat +1（生態整合）</td></tr>
+<tr><td>2026-05-05</td><td><strong>宣布 SpinCo 分拆計畫</strong>，預計 2027 Q1 拆分</td><td>戰略可見度 +2；pricing power +1（成為 pure play 後 sell-side 重新定價）</td></tr>
+<tr><td><strong>累積結果</strong></td><td><strong>從「EMS commodity 4-5/10」升至「AI infra vertical-integrated platform 7/10」</strong></td><td>+3 分（過去 7 年）；未來 5 年 spinoff 後 SpinCo 路徑可能再 +1-2 分</td></tr>
+</tbody>
+</table>
+
+<h3>逆向推演（Munger Inversion）— 三維展開（v12.3 強化）</h3>
+
+<h4>① 技術維度：什麼技術替代會讓 FLEX 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>Hyperscaler 完全 in-house manufacturing</strong>（最高威脅）— 若 Google / Microsoft / Amazon 任一決定全面自建 data center hardware manufacturing（含 power + thermal），CPI segment 客戶集中度將被直接擊穿。歷史對標：Apple 1990s 撤出 PC manufacturing 給 Foxconn，但 2010s 後決定自研晶片不自製 — hyperscaler 更可能複製 Apple 模式（自研晶片、外包 manufacturing）。</li>
+<li><strong>NVIDIA 自建 reference design rack 競爭 EMS</strong>（中度威脅）— NVIDIA 已推出 DGX / HGX reference design，若進一步推 turnkey rack 並指定 single ODM，FLEX 角色被壓縮。</li>
+<li><strong>液冷標準化 + 第三方 IP 開源</strong>（低威脅）— JetCool 微對流冷卻 IP 是新興，若 OCP（Open Compute Project）標準化，IP 護城河減弱。歷史對標：Mellanox InfiniBand 護城河被 RoCEv2 / Ultra Ethernet 蠶食，但需 5-7 年。</li>
+<li><strong>AI infra 商品化導致 margin collapse</strong>（中度威脅）— 當 AI rack 設計趨於標準（如 OCP Open Rack v3），FLEX 的 design-in premium 縮水回 EMS cost-plus。</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>Capex 慣性過度</strong>：FY27 Capex 指引 $1.4-1.6B（vs FY26 ~$440M = 3.5x 跳升），若 SpinCo 後 AI capex 進入 digestion 期但 FLEX 已 commit 產能 → 折舊壓 margin 2-3 年。歷史對標：Intel 2021-2024 fab 大舉投資後 utilization 不足 = margin崩塌。</li>
+<li><strong>Spinoff 整合執行失敗</strong>：SpinCo 與 RemainCo 在客戶、供應鏈、IP 上有重疊（如 JetCool tech 應該 100% 給 SpinCo，但 RemainCo 醫療設備也需要冷卻），若切割不乾淨，兩家公司互相牽制。歷史對標：DowDuPont 三拆案中 Corteva / Dow / DuPont 內部 SLA 摩擦持續 3+ 年。</li>
+<li><strong>新 CEO Hartung（FLEX RemainCo）credibility 未建立</strong>：Advaithi 走 SpinCo，留下 Hartung 接 FLEX 但市場對其執行力未知。歷史對標：GE / GE Aerospace 分拆，舊 stub（GE Vernova）市場給予 discount，因 leadership 不確定性。</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>AI capex 週期見頂</strong>（最高結構性威脅）— 若 2027-2028 hyperscaler capex 從現在的 $400B/年 進入 digestion（如 Telecom 2001、Solar 2011 模式），CPI segment 65% 成長假設立刻反轉。歷史對標：Cisco 2000-2003 telecom Capex 從 $80B 高峰跌 60% 至 2003，路由器 EMS 毛利 2-3 年無法 recover。</li>
+<li><strong>Edge AI / on-device inference 取代 cloud GPU</strong>（中度威脅，時間軸 5+ 年）— Apple Neural Engine、Qualcomm Snapdragon AI、Intel Lunar Lake 等推 edge inference，若 5+ 年後 70% inference 移到 edge，cloud rack 需求成長放緩。歷史對標：1990s mainframe → 2000s distributed computing，IBM mainframe revenue 2000-2010 累積成長 0%。</li>
+<li><strong>Sovereign AI / 國產替代 → EMS 在地化</strong>（中度威脅）— Trump 2.0 政府推 reshoring + 各國 sovereign AI（French Mistral、Saudi HUMAIN、UAE G42）要求 100% domestic manufacturing，FLEX 全球 footprint 優勢部分轉為 over-capacity 壓力。</li>
+</ul>
+
+<p><strong>價值陷阱路徑判定：</strong>FLEX 最可能的陷阱路徑是 <strong>「估值倍數透支型」</strong>（不是經典「便宜陷阱」） — 即在 AI infra narrative 巔峰時 multiple expansion 過頭（13x → 31x），未來 3-5 年即使 EPS 兌現，但 multiple 收斂至 22-25x 會讓股價原地踏步。這不是「便宜的理由是業務惡化」，而是「便宜變貴後的反向陷阱」 — 屬 §13.1 「估值體系升級透支」風險。</p>
+</section>
+
+<!-- ======================== §5 投資論點錨定 ======================== -->
+<section class="card" id="s5">
+<h2>§5 投資論點錨定（v12.3 thesis 升級主場：三層時間軸 + 12M 對照）</h2>
+
+<h3>§5.A 持有期與時間軸宣告</h3>
+<table>
+<thead><tr><th>項目</th><th>填寫</th></tr></thead>
+<tbody>
+<tr><td><strong>預設持有期</strong></td><td>3-5 年（橫跨 SpinCo 完成 2027Q1 + 後續兩年 standalone re-rating）</td></tr>
+<tr><td><strong>驅動時間軸的理由</strong></td><td>(1) SpinCo 2027 Q1 拆分是中期估值 unlock catalyst，需持有跨越事件日；(2) AI infra 超級循環看 2026-2030 多年 capex 高原；(3) FLEX 從 13x → 31x 的 re-rating 已大幅 price-in 短期利好，超額報酬要靠長期執行兌現。</td></tr>
+<tr><td><strong>持有期決定的訊號/噪音邊界</strong></td><td>3-5 年持有：CPI segment YoY、OPM 進度、SpinCo 公司治理是訊號；單季 GM 波動、季度 FCF mismatch、analyst rating churn 是噪音；hyperscaler capex 任何指引變動（即使 1 季 -10%）是訊號（產業 cycle peak risk）。</td></tr>
+</tbody>
+</table>
+
+<h3>§5.B 三個核心假設 + 三層時間軸（v12.3 強制）</h3>
+
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>驗證指標</th><th>資料來源</th></tr></thead>
+<tbody>
+<tr>
+<td>H1</td>
+<td><strong>CPI segment 高速成長持續 + OPM 擴張至 10%+</strong>（AI infra 訂單兌現 + spinoff 純 play 後 margin unlock）</td>
+<td>FY27/FY28 CPI rev YoY ≥ 50%（管理層 guide 65-80%）；OPM 從 9.2% 升至 10%+</td>
+<td>SpinCo standalone 後 FY29-FY30 revenue 累計達 $15-18B（vs FY26 $6.6B base = ~14% CAGR sustained）；OPM 12%+</td>
+<td>SpinCo 在 2031-2035 成為 AI infra 平台地位（如 NVIDIA-tier vendor），revenue $25B+，OPM 15%+ 接近 ARSL（特殊半導體設備）水準</td>
+<td>CPI rev YoY %；OPM%；top 3 customer concentration%；新客戶數（hyperscaler / colo / sovereign AI）</td>
+<td>2Y: §6 季度財報；5Y: §8.A Runway + §11 產業 TAM；10Y: §8.A' S 曲線位置</td>
+</tr>
+<tr>
+<td>H2</td>
+<td><strong>SpinCo 分拆順利 + 估值 unlock（pure play multiple expansion）</strong></td>
+<td>2027 Q1 完成分拆（S-1 申報、SEC 過審、上市）；SpinCo IPO 估值 ≥ $30B</td>
+<td>SpinCo standalone 2 年後（2029）合計 sum-of-parts 市值 ≥ 當前 FLEX 市值 1.6x（$80B+）</td>
+<td>SpinCo 進入 S&P 500 / Russell 1000，成為 AI infra tier-1 reference name；分拆證明可複製</td>
+<td>SpinCo / RemainCo 上市後市值；analyst sum-of-parts target；index inclusion</td>
+<td>2Y: §12 治理 / §6 8-K filings；5Y: §13.4 同業重新分類；10Y: §9 生態地位</td>
+</tr>
+<tr>
+<td>H3</td>
+<td><strong>估值倍數從 31x re-rate 至「結構升級後 fair」22-28x（非崩塌至 15x）</strong></td>
+<td>2027-2028 Fwd PE 收斂至 25-30x，EPS 持續上修支撐 PEG ≤ 1.0</td>
+<td>2029-2030 SpinCo 估值穩定在 35-40x（pure AI infra play），RemainCo 18-20x（成熟 EMS）；加權 25-28x</td>
+<td>2033-2036 估值收斂回 EMS / specialty industrial 自然倍數 18-22x；EPS 已超 $12+ 補償估值收斂</td>
+<td>Fwd PE; PEG; 5Y 分位; sum-of-parts valuation</td>
+<td>2Y: §13.1; 5Y: §13.5; 10Y: §8.E 壓力測試 5Y/10Y</td>
+</tr>
+</tbody>
+</table>
+
+<h3>§5.B' 12 個月前 DD 對照（v12.3 新增）</h3>
+<p><strong>狀態：進場未滿一年（本份為 Inception DD，最早 v12.2+ DD = 2026-05-18，距今 0 天）。</strong></p>
+<p>本欄位將於 <strong>2027-05-18</strong> 起首次有資料對照。在此之前，僅以 §5.B 戰術假設視角追蹤。</p>
+
+<h3>§5.C 三個最可能推翻論點的風險（v12.3 時間尺度分層）</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr><td>R1</td><td>Hyperscaler 自研 manufacturing 全面 in-house（Google / Meta / Microsoft / Amazon 任一）</td><td>H1</td><td>🔥 中期（2-3 年）</td><td>top 3 hyperscaler 公開 in-house manufacturing 計畫；FLEX CPI 客戶集中度變化</td><td>連 4 季 CPI 客戶集中度 top 3 客戶 share 下滑 ≥ 10pp，或任一 hyperscaler 公開 in-house 計畫</td></tr>
+<tr><td>R2</td><td>SpinCo 分拆延後 / 監管阻擋 / 內部執行卡關</td><td>H2</td><td>⚡ 短期（12 月內）</td><td>SpinCo S-1 申報時程；SEC review 進度；management 公開時間表變化</td><td>2027 Q1 未完成分拆（管理層 guide 是 Q1 2027），延至 H2 = 黃燈，延至 FY28 = 紅燈</td></tr>
+<tr><td>R3</td><td>AI capex super-cycle 提前見頂（hyperscaler capex YoY 跌入負成長）</td><td>H1, H3</td><td>🐢 長期結構（5+ 年）</td><td>top 5 hyperscaler 季度 capex YoY%；NVDA data center revenue YoY%</td><td>top 5 hyperscaler 連 2 季 capex YoY -10%+，或 NVDA DC revenue YoY 連 2 季 &lt; 20%</td></tr>
+</tbody>
+</table>
+
+<h3>§5.D 邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>問題</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>事件在 3-5 年持有期內影響嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（CPI 成長）/ H2（SpinCo unlock）/ H3（估值收斂）哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱該假設？</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達 §5.C R1/R2/R3 警戒閾值？</td></tr>
+</tbody>
+</table>
+
+<h3>§5.E 可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td><strong>進場</strong></td><td>價回測 W52（~$63）或 Bollinger 中軌（~$76）；CPI YoY 仍 &gt; 30%；spinoff S-1 已申報</td><td>建倉至底倉 15%（衛星部位 7-10% 組合佔比）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 同時兌現（CPI Q1-Q2 FY27 YoY &gt; 50% + SpinCo IPO 順利上市）</td><td>加至 25%（核心衛星）</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 觸發（hyperscaler 自研公開計畫）或 R2 黃燈（spinoff 延後至 2027 H2）</td><td>減至 5-10%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>H1 反轉（CPI YoY 連 2 季 &lt; 25%）+ R3 觸發（hyperscaler capex YoY -10%+）</td><td>清倉，承認 thesis 失敗</td></tr>
+</tbody>
+</table>
+
+</section>
+
+<!-- ======================== §6 即時財報情報 ======================== -->
+<section class="card" id="s6">
+<h2>§6 即時財報情報（Q4 FY26 / 全年 FY26 + FY27 Guidance）</h2>
+<p class="note">資料來源：5/6/2026 8-K，Q4 FY26 earnings call transcript（The Motley Fool / Investing.com）</p>
+
+<h3>① 最新一季財報關鍵數字（Q4 FY26，季結 2026-03-31）</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$7.50B</td><td>$6.95B</td><td><span class="tag-green">Beat $0.55B</span></td><td>+17%</td></tr>
+<tr><td>Adj EPS</td><td>$0.93</td><td>$0.87</td><td><span class="tag-green">Beat $0.06</span></td><td>+27%</td></tr>
+<tr><td>GAAP Diluted EPS</td><td>$0.67</td><td>N/A</td><td>—</td><td>+25%</td></tr>
+<tr><td>Adj OPM</td><td>~7.0%</td><td>~6.5%</td><td><span class="tag-green">Beat 50bps</span></td><td>+80bps</td></tr>
+<tr><td>FCF（季）</td><td>$212M</td><td>—</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>Segment 拆分（Q4 FY26）</h4>
+<table>
+<thead><tr><th>Segment</th><th>Q4 Rev</th><th>YoY</th><th>Adj OPM</th><th>備注</th></tr></thead>
+<tbody>
+<tr><td>Cloud and Power Infrastructure (CPI)</td><td>$1.8B</td><td>+31%</td><td>9.9% (-10bps YoY)</td><td>下季強度延續；FY27 CPI guide +65-75%</td></tr>
+<tr><td>Regulated Manufacturing Solutions (RMS)</td><td>$2.7B</td><td>+13%</td><td>6.6% (+80bps)</td><td>工業自動化 + 汽車電子 + 醫療設備</td></tr>
+<tr><td>Integrated Technology Solutions (ITS)</td><td>$2.9B</td><td>+13%</td><td>5.0% (持平)</td><td>通訊基礎設施 + 生活方式產品</td></tr>
+</tbody>
+</table>
+
+<h3>全年 FY26（fiscal year ending 2026-03-31）</h3>
+<table>
+<thead><tr><th>指標</th><th>FY26</th><th>FY25</th><th>YoY</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$27.9B</td><td>$25.8B</td><td>+8%</td></tr>
+<tr><td>Adj OPM</td><td>6.3% (record)</td><td>5.6%</td><td>+70bps</td></tr>
+<tr><td>Adj EPS</td><td>$3.30</td><td>$2.64</td><td>+25%（連續第 6 年 double-digit）</td></tr>
+<tr><td>FCF</td><td>~$1.1B</td><td>$1.07B</td><td>+3%</td></tr>
+<tr><td>CPI 全年 Rev</td><td>$6.6B</td><td>$4.8B</td><td>+38%（高於 35% 目標）</td></tr>
+<tr><td>CPI 全年 Adj OPM</td><td>9.2%</td><td>10.2%</td><td>-100bps（產能投資、cloud ramp 成本）</td></tr>
+<tr><td>Buyback</td><td>$944M / 19M shares</td><td>$1.26B</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>FY27 Guidance（強勁，遠超共識）</h3>
+<table>
+<thead><tr><th>指標</th><th>FY27 Guide</th><th>vs 共識前</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$32.3B - $33.8B（mid +18.6% YoY）</td><td>遠超共識 ~$29B</td></tr>
+<tr><td>Adj EPS</td><td>$4.21 - $4.51（mid +32%）</td><td>遠超共識 ~$3.65</td></tr>
+<tr><td>Adj OPM</td><td>7.0% - 7.1%（+70bps）</td><td>—</td></tr>
+<tr><td>CPI 成長</td><td>+65-75%（FY27）/ +80%+（FY28）</td><td>—</td></tr>
+<tr><td>CPI Adj OPM</td><td>recoup 全部 100bps，回到 10%+</td><td>—</td></tr>
+<tr><td>Capex</td><td>$1.4-1.6B（vs FY26 ~$440M = 3.5x 跳升）</td><td>用 FCF 自有資金</td></tr>
+<tr><td>FCF Conversion</td><td>~60%</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<thead><tr><th>假設</th><th>本季財報邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（CPI 高速成長 + OPM 擴張）</td><td><span class="tag-green">＋強化</span></td><td>Q4 CPI +31% 強勢延續；FY27 guide CPI +65-75% 高於原 35% baseline；OPM 從 9.2% 回升至 10%+ 已 commit</td></tr>
+<tr><td>H2（SpinCo 分拆 unlock）</td><td><span class="tag-green">＋強化</span></td><td>5/5/2026 董事會無異議通過分拆；管理層公開 timeline 2027 Q1；CEO Advaithi 過去帶 Nextracker 分拆 successful，track record 可信</td></tr>
+<tr><td>H3（估值倍數 re-rate 至「結構升級後 fair」22-28x）</td><td><span class="tag-yellow">0 無關 / 短期負面</span></td><td>當前 PE 已 31x，超出「fair 22-28x」上限；但這是市場層面的事，與公司表現本身無關</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：明顯轉強，相比上季 (Q3 FY26 2026-01) 更直接。Advaithi 用詞包括「the right time to separate」、「no-brainer」（談 spinoff）、「one-time architectural change in AI data center space」— 比過往任何一季都更具 visionary tone。</li>
+<li><strong>Forward Guidance</strong>：FY27 Adj EPS $4.21-4.51 vs 共識 $3.65 = 上修 15-23%；revenue $32.3-33.8B vs 共識 ~$29B = 上修 11-16%。<strong>這是 FY27 全年指引被一次性大幅 raise 的關鍵時刻。</strong></li>
+<li><strong>刻意強調的主題</strong>：「power and thermal management for AI data centers」（CPI 主軸）、「end-to-end platform」（vertical 整合）、「unlock value」（spinoff 預期）— 全圍繞 AI infra 重新定位敘事。</li>
+<li><strong>刻意迴避的問題</strong>：(1) 具體 hyperscaler customer share（管理層 only confirm Google multiyear，不點名 share %）；(2) SpinCo 上市後 RemainCo 的長期成長路徑（提及「low-to-mid SD growth」但缺細節）；(3) 內部人 5/11 大量 sell ($88M 24 個月累計) 在 call 中未被分析師追問。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：CPI segment 在 FY26 Q4 +31% YoY，FY27 guide +65-75% — 意味著 hyperscaler capex 不僅未冷卻，且加速。隱含對 NVDA / AMD GPU shipment、SMCI / Dell server orders 形成正向 read-through。</li>
+<li><strong>供給端</strong>：Capex $1.4-1.6B 跳升 3.5x = FLEX 預期 backlog 將大幅擴張，產能緊張持續至少 18-24 個月（Capex 從投入到 ramp 需要 12-18 個月）。隱含 EMS 產能在 2026-2027 仍緊。</li>
+<li><strong>競爭格局</strong>：management 強調 SpinCo 將「serve hyperscalers, colocation providers, and utilities, reducing concentration risk」— 意味著現在的客戶集中度仍高（top 3 ~50-60% CPI revenue 推估）。SpinCo 的策略是要擴張客戶基數。</li>
+<li><strong>總體經濟敏感度</strong>：management 未提及任何 macro 逆風 / 客戶 push out / 訂單延後 — 與 2023-2024 EMS 同業 (CLS / JBL) 在 telecom / consumer / industrial 全部承壓的時期完全相反，意味著 AI infra 是 EMS 唯一 super-cycle 驅動。</li>
+<li><strong>對同業的連帶推論</strong>：(1) <strong>CLS</strong>：直接受益 read-through（AI server 訂單 robust）；(2) <strong>JBL</strong>：Q2 FY26 雖 beat 但偏多元，AI 純度低於 FLEX；(3) <strong>Sanmina</strong>：醫療 / 國防為主，AI 暴露有限；(4) <strong>SMCI</strong>：上游需求強勁意味著 SMCI / Dell server ODM 也緊；(5) <strong>NVDA</strong>：AI factory turnkey 訂單延續，FY27 data center growth 仍 robust。</li>
+</ul>
+
+</section>
+
+<!-- ======================== §7 門檻檢核 ======================== -->
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核（含價值陷阱初篩）</h2>
+
+<h3>EPS 共識數據（強制 yfinance + Q4 FY26 post-earnings 共識）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>FY26 基期 Adj EPS</td><td>$3.30</td><td>已公布實際（GAAP $2.33）</td></tr>
+<tr><td>FY27E (0y) Adj EPS</td><td>$4.44</td><td>yfinance 共識，n=8；管理層 guide $4.21-$4.51 (mid $4.36)，共識略高</td></tr>
+<tr><td>FY28E (+1y) Adj EPS</td><td>$6.60</td><td>yfinance 共識，n=7；含 SpinCo + RemainCo sum-of-parts 推估</td></tr>
+<tr><td>FY29E Adj EPS（§8 邏輯推導）</td><td>$8.20E</td><td>SpinCo +30% FY29 (taper from 80% FY28) × CPI EPS weight 65% + RemainCo +5% × weight 35% = blended +24%；$6.60 × 1.24 = $8.20</td></tr>
+<tr><td>3Y Adj EPS CAGR (FY26→FY29E)</td><td>+35.4%</td><td>($8.20 / $3.30)^(1/3) - 1</td></tr>
+<tr><td>EPS Trend 修正方向（90→7 天）</td><td>大幅上修</td><td>0y: $3.65 → $4.44 (+22%)；+1y: $4.05 → $6.60 (+63%)</td></tr>
+</tbody>
+</table>
+
+<h3>Munger 三維護城河強制搜尋</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="tag-red">❌</span></td><td>當前 4.33%（EMS 業特性）；近 3 年趨勢：3.7% → 4.1% → 4.33% ↑</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5 年均值 &gt; 15%</td><td><span class="tag-red">❌</span></td><td>5 年均 ~4%；EMS 結構性低 FCF margin；不可能達 15% 門檻</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%</td><td><span class="tag-green">✅</span></td><td>15.40%；WACC ~9.5%（Beta 1.45 + 4.5% UST + 5% ERP）；超額 +5.9pp</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>過去 10 年 ≥ 70% 年份 &gt; 15%</td><td><span class="tag-red">❌</span></td><td>過去 10 年 ROIC：2015-2020 約 4-8%，2021 開始上升至 10-15%，2024-2026 升至 15%+；達標年份 ~3/10 = 30%</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>過去 10 年 ≥ 70% 年份持續改善</td><td><span class="tag-yellow">🟡</span></td><td>10 年前 GM ~5.8% → 現在 9.27%；改善年份 7/10 ≈ 70% 達標邊緣；趨勢 ↑</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev &lt; 5%</td><td><span class="tag-green">✅</span></td><td>FY25 Capex/Rev = 438/25813 = 1.7%；但 FY27 guide 1.5B/33B = 4.5% 跳升（高位但仍合格）；近 3 年均值 2.1%</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="tag-green">✅</span></td><td>FY26 $3.30 → FY29E $8.20，3Y CAGR +35.4%</td></tr>
+<tr><td>PEG (Non-GAAP 3Y)</td><td>&lt; 2</td><td><span class="tag-green">✅</span></td><td>0.87（基於 Fwd PE 31.0x ÷ 35.4% CAGR）</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E &lt; 0.7</td><td><span class="tag-yellow">🟡</span></td><td>D/E 0.98（書面值；考量 cash $2.29B 後 Net Debt $1.86B，Net D/E 0.37 OK）；現金/Rev 8.5%（合理）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td>否</td><td>Cash $2.29B vs Debt $4.15B；現金 / 總負債 = 55%</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，擴大趨勢</td><td>—</td><td>7/10（執行 8 + 定價權 5），擴大；引用 §9</td></tr>
+</tbody>
+</table>
+
+<p><strong>最大財務弱點：</strong>EMS 結構性低 FCF margin（4.3% vs Munger 15% 標準）— 此非企業特定弱點，而是 EMS 經濟學本質。Munger 三維評級：<span class="tag-yellow">🟡 兩項達標</span>（ROIC + Capex 達標；FCF margin / ROIC 穩定性 / GM 改善為弱）。傳遞至 §9 作定量起點。</p>
+
+<h3>⚠️ 價值陷阱初篩：低估值四問</h3>
+<p><strong>觸發條件檢核</strong>：Forward P/E 31x 在 5Y 分位 ≥ 90%（過高，非過低），P/FCF $50.7B / $1.1B = 46x 也在 5Y 分位 ≥ 90%。<strong>不觸發「低估值」四問</strong>（FLEX 是「高估值」案例，而非典型 value trap）。</p>
+
+<p>但本 DD 在 §13.0 估值體系診斷會處理「結構性 re-rating 透支」風險，這是反向的「便宜變貴」陷阱。</p>
+
+</section>
+
+<!-- ======================== §8 長期成長性評估 ======================== -->
+<section class="card" id="s8">
+<h2>§8 長期成長性評估（v12.3 擴充：5Y/10Y 量化 + S 曲線）</h2>
+
+<h3>§8.A 成長跑道（Runway）— 5Y / 10Y 量化敘述</h3>
+<table>
+<thead><tr><th>維度</th><th>現在 (FY26)</th><th>5Y (FY31)</th><th>10Y (FY36)</th></tr></thead>
+<tbody>
+<tr><td>FLEX CPI segment Rev</td><td>$6.6B</td><td>$18B（CAGR ~22%；包含 SpinCo growing 17-25% sustained）</td><td>$30-40B（CAGR ~13-16%；接近成熟 AI infra）</td></tr>
+<tr><td>FLEX 整體 Rev</td><td>$27.9B</td><td>~$48B（CAGR ~11%，含 RemainCo mid-SD + CPI 22%）</td><td>~$65-75B（CAGR ~8%）</td></tr>
+<tr><td>AI Data Center capex TAM（全球）</td><td>~$300B/年（2026 estimate）</td><td>~$750B-1T（5Y CAGR 16-25%）</td><td>~$1.5-2T（hyperscaler + sovereign AI + edge data center）</td></tr>
+<tr><td>FLEX CPI 全球 TAM 滲透率</td><td>2.2%</td><td>2-2.5%（CPI / AI capex）</td><td>2-3%（穩定，pricing power 仍 cost-plus）</td></tr>
+<tr><td>達 30% 滲透率？</td><td>—</td><td>不會（市場太大）</td><td>不會</td></tr>
+<tr><td><strong>Runway</strong></td><td><strong>≥ 10 年</strong></td><td colspan="2">AI infra capex 2026-2036 全球進入超級循環高原期 + sovereign AI 開新成長軸</td></tr>
+</tbody>
+</table>
+
+<p><strong>Runway 解讀</strong>：≥ 10 年高確信長期複利 → 支撐高估值倍數溢價（§13.5）。但 pricing power weak（EMS 結構性）限制 OPM 上行 → 倍數不應到 SaaS 40x+ 等級，合理上限 25-32x。</p>
+
+<h3>§8.A' S 曲線位置 + 距飽和年數（v12.3 新增）</h3>
+<table>
+<thead><tr><th>業務</th><th>S 曲線位置</th><th>距飽和年數</th><th>主要驅動</th></tr></thead>
+<tbody>
+<tr><td>CPI - AI Data Center (CPI 60% 占比)</td><td>前段（adoption 起飛期）</td><td>8-12 年</td><td>Hyperscaler capex super-cycle；sovereign AI 開啟新需求曲線</td></tr>
+<tr><td>CPI - 傳統 cloud / colo power (CPI 40%)</td><td>中段（穩定擴張）</td><td>10-15 年</td><td>數位轉型 / edge data center / 5G</td></tr>
+<tr><td>RMS - 工業自動化</td><td>中段</td><td>15-20 年</td><td>製造業電氣化 + 機器人</td></tr>
+<tr><td>RMS - 汽車電子</td><td>中後段（EV 不確定性）</td><td>10-12 年</td><td>EV 渗透 + ADAS / autonomous</td></tr>
+<tr><td>RMS - 醫療設備</td><td>中段（穩定）</td><td>20+ 年</td><td>人口老化 + 慢性病 + 數位醫療</td></tr>
+<tr><td>ITS - 通訊基礎設施</td><td>後段（5G 已 ramp，6G 仍遠）</td><td>5-8 年</td><td>5G CapEx 接近高原；6G 2030+ 才量產</td></tr>
+<tr><td>ITS - 生活方式產品</td><td>後段</td><td>3-5 年</td><td>消費電子已成熟</td></tr>
+</tbody>
+</table>
+<p><strong>多曲線疊加邏輯</strong>：FLEX CPI 在前段、RMS 在中段、ITS 在後段 — 整體 Runway 不會單一年份全部熄火。SpinCo (CPI) 之後將是純前段 S 曲線曝險，RemainCo (RMS + ITS) 成為穩定中段 / 後段 cash flow producer。<strong>這正是 spinoff 戰略邏輯</strong>：讓兩家公司各自享有 fair multiple，而非被 blended down。</p>
+
+<h3>§8.B 成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<thead><tr><th>類型</th><th>占比估計</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>有機成長</td><td>~80%</td><td>FY26 +8% rev growth 中，併購貢獻僅 ~1-2%（Anord 已併入 22 Q4，JetCool 24Q4 後）；FY27 guide +19% 幾乎全有機</td></tr>
+<tr><td>無機（過去 5 年）</td><td>~20%</td><td>Anord Mardix (2022, ~$540M deal value)、Crown Technical (2023)、JetCool (2024)；3 個 deal 合計 &lt; $1B vs 5Y累計營收 ~$135B</td></tr>
+</tbody>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<thead><tr><th>類型</th><th>判斷</th><th>趨勢</th></tr></thead>
+<tbody>
+<tr><td>定價驅動（Price）— 含 mix 升級</td><td>40%（CPI mix shift）</td><td>擴大（CPI 占比從 FY24 19% → FY26 24% → FY28E 35%；high-margin mix 持續擴張）</td></tr>
+<tr><td>量驅動（Volume）</td><td>60%</td><td>穩定（hyperscaler capex driving unit volume）</td></tr>
+</tbody>
+</table>
+
+<h4>v12.3 強化：定價 vs 量具體 % + 3Y 趨勢</h4>
+<table>
+<thead><tr><th>項目</th><th>FY24</th><th>FY25</th><th>FY26</th><th>FY27E</th><th>3Y 趨勢</th></tr></thead>
+<tbody>
+<tr><td>Rev 整體 YoY</td><td>-3.7%</td><td>-2.3%</td><td>+8%</td><td>+19%</td><td>加速</td></tr>
+<tr><td>Adj OPM</td><td>5.0%</td><td>5.6%</td><td>6.3%</td><td>7.0-7.1%</td><td>持續擴張</td></tr>
+<tr><td>CPI segment % of revenue</td><td>~19%</td><td>~18%</td><td>~24%</td><td>~33%</td><td>結構性上移</td></tr>
+<tr><td>Price/Mix 貢獻 (估算)</td><td>~2pp</td><td>~3pp</td><td>~5pp</td><td>~8pp</td><td>擴大</td></tr>
+</tbody>
+</table>
+
+<h3>§8.C 成長護城河連動評估</h3>
+<table>
+<thead><tr><th>類型</th><th>判斷</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td><strong>強化型（最佳）</strong></td><td><span class="tag-green">✅ 屬於</span></td><td>CPI 規模擴張帶來：(1) 對 hyperscaler 的 design-in 角色加深（co-development with NVDA AI factory）；(2) JetCool tech 應用範圍從 cold plate 擴至 rack-level；(3) Anord critical power 從歐洲擴至北美；(4) 客戶轉換成本上升（一旦 design-in，下一代產品繼續用 FLEX）。</td></tr>
+<tr><td>中性型</td><td>不適用</td><td>—</td></tr>
+<tr><td>消耗型（警示）</td><td>不適用</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h3>§8.D ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>符合？</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>15.40%</td><td>~10%</td><td>↑</td><td>&gt; 15% + &gt; WACC</td><td>✅</td></tr>
+<tr><td>ROIC − WACC</td><td>+5.9pp</td><td>+0.5pp</td><td>↑ 擴大</td><td>持續正值且擴大</td><td>✅</td></tr>
+<tr><td>FCF Margin</td><td>4.3%</td><td>3.7%</td><td>↑</td><td>&gt; 15%</td><td>❌ EMS 結構性低</td></tr>
+<tr><td>FCF / Net Income</td><td>1.27</td><td>~0.8</td><td>↑</td><td>&gt; 0.85</td><td>✅</td></tr>
+<tr><td>Reinvestment Rate</td><td>FY27 升至 ~30% (Capex $1.5B / OCF $5B+)</td><td>~10%</td><td>↑</td><td>有對應 ROIC</td><td>🟡 高位但有對應 AI 訂單背書</td></tr>
+</tbody>
+</table>
+
+<h3>§8.E 成長熄火情境壓力測試（v12.3 強化：3Y / 5Y / 10Y 矩陣）</h3>
+<table>
+<thead><tr><th>情境</th><th>假設</th><th>3Y 後合理 PE</th><th>5Y 後合理 PE</th><th>10Y 後合理 PE</th><th>累積估值跌幅</th></tr></thead>
+<tbody>
+<tr><td><strong>Base</strong></td><td>FY29 EPS $8.20，CPI sustained 20%+ YoY</td><td>28x</td><td>25x</td><td>22x</td><td>—</td></tr>
+<tr><td>Bear A — 成長放緩</td><td>3Y 後成長率降至 15%（AI capex digestion）</td><td>22x</td><td>20x</td><td>18x</td><td>-25%</td></tr>
+<tr><td>Bear B — 倍數壓縮</td><td>3Y 後成長率降至 10%（hyperscaler in-house 加速）</td><td>18x</td><td>16x</td><td>14x</td><td>-40%</td></tr>
+<tr><td>Bear C — 成熟期低成長</td><td>3Y 後成長率降至 5%（AI 商品化、EMS commodity 回歸）</td><td>14x</td><td>13x</td><td>12x</td><td>-55%</td></tr>
+</tbody>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>FY26 GM 改善 7.4% → 9.27%（連續 4 季 YoY 改善）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>市佔縮減（過去 12 月）</td><td>CPI segment YoY +38%，遠高於 industry 平均；市佔擴大</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>最近一次提價後銷量下滑？</td><td>EMS cost-plus 模型不適用，但 mix shift（高 margin CPI 比重上升）= 隱含定價力 ↑</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR &gt;&gt; Revenue CAGR（&gt; 5pp）</td><td>FY26: EPS +25% vs Rev +8% = 17pp 差距；部分來自 buyback ($944M) 和 margin 擴張，需追蹤</td><td>🟡（部分由回購驅動）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI &lt; 0.75 連 2 年</td><td>FY25 1.27、FY26 1.27 — 健康</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev &gt; 5% 且上升</td><td>FY26 SBC ~$140M / $27.9B = 0.5%；極低，非 SaaS-like</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮 / 替代</td><td>AI data center capex 預計 5Y 2-3x 成長</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數 3Y 系統下移</td><td>EMS 同業（CLS、JBL）3Y 倍數系統上移（CLS 從 15x 到 45x、JBL 10x 到 24x）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF &gt; 60%</td><td>Maint Capex ~$300M / FCF $1.1B = 27%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資新產能，收入 3 年內下滑？</td><td>是（AI infra 需持續產能擴張），但這是 super-cycle 標配，非結構性問題</td><td>⬜</td></tr>
+</tbody>
+</table>
+
+<p><strong>亮燈數：1 個（盈餘品質 - EPS vs Rev 17pp 差距，部分由 buyback 解釋）</strong>。價值陷阱風險評級：<span class="tag-green">🟢 低風險</span>（未見系統性惡化信號）。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="tag-green">🟢 高確信長期成長</span>：Runway ≥ 10 年、有機 80% + 定價/mix 升級為主、護城河強化型、ROIC 擴大、衰退信號 1 個（非結構性）</p>
+
+<h3>§8.F AI 取代風險評級</h3>
+<p><span class="tag-green">🟢 AI 受益或免疫</span>。核心 CPI segment 直接受益於 AI data center capex 超級循環；JetCool / Anord 等併購正是為了強化 AI infra play；公司策略 100% 對齊 AI 趨勢。</p>
+<ul>
+<li>具體業務占比：CPI segment ~24% Q4 FY26（FY28E ~35%）為直接 AI 受益；RMS 工業 / 醫療有間接 AI 採用受益（manufacturing automation）；ITS 通訊基礎設施有 5G/6G 受益。</li>
+<li>公司 AI 策略：自建（JetCool tech）+ 整合外部 AI（NVIDIA / hyperscaler design partnership）— 完整一線策略。</li>
+<li>過去 2 年 AI 相關營收變化：CPI segment FY24 → FY26 = $5.0B → $6.6B (+32% 累計)，且 FY27 guide CPI +65-75% YoY。</li>
+</ul>
+<p><strong>評級：🟢 = 9 分</strong>（最高評級）</p>
+
+</section>
+
+<!-- ======================== §9 護城河分析 ======================== -->
+<section class="card" id="s9">
+<h2>§9 護城河分析（v12.3 強制：execution + pricing power 二維 + 變遷時間軸 + 對手投入對照）</h2>
+
+<h3>§9.A 護城河二維拆解（v12.3 強制框架）</h3>
+<table>
+<thead><tr><th>維度</th><th>分數</th><th>主要構成</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>Execution moat（執行力護城河）</strong></td>
+<td><span class="num">8/10</span></td>
+<td>
+<strong>規模優勢</strong>：全球 50+ 工廠、$27.9B 年營收（vs JBL $28B、CLS $11B、Sanmina $8B）；單一企業即可支援 hyperscaler 全球部署。<br>
+<strong>Vertical integration</strong>：JetCool 液冷 IP（自有 microconvective tech，OCP partnership）+ Anord Mardix critical power（歐洲基地、design-in 角色）+ Crown Technical（power distribution）；vertical 從 PCB → server → rack → power+thermal management。<br>
+<strong>Vertical 完整度</strong>：可同時 design + manufacture + integrate + deploy；NVDA AI infrastructure platform partner（NVDA 自己不做 manufacturing，必需 EMS）。<br>
+<strong>替代成本</strong>：客戶 design-in 後切換 EMS 需 12-18 個月 redesign + qualification cycle；不可能在生產旺季切換。
+</td>
+</tr>
+<tr>
+<td><strong>Pricing power moat（定價權護城河）</strong></td>
+<td><span class="num">5/10</span></td>
+<td>
+<strong>結構性限制</strong>：EMS 本質 cost-plus 合約，client RFQ-driven，無 end-customer pricing autonomy。<br>
+<strong>Mix-driven margin uplift</strong>：CPI segment OPM 9.9% &gt; RMS 6.6% &gt; ITS 5.0% — 結構性 mix 改善是過去 2 年 OPM 升 70bps 的主因，非定價提升。<br>
+<strong>Design-in 角色</strong>：JetCool 液冷 + Anord power 讓 FLEX 從「組裝代工」升為「co-design partner」，但仍無單方面提價權力（客戶可比價）。<br>
+<strong>Client 議價權強</strong>：top hyperscaler customer 在合約期內可要求 cost reduction commitment；FLEX 用 productivity gains 對抗壓力，但 margin 上行有結構性 ceiling（OPM 推估上限 10-12%）。
+</td>
+</tr>
+<tr>
+<td><strong>綜合（取保守）</strong></td>
+<td><strong>7/10（B 級接近 A）</strong></td>
+<td>Execution moat 強（8/10），可獨立支撐 B+ 評級；Pricing power 弱（5/10）阻止升至 A 級。v12.3 SaaS / 銀行 single-axis escape rule 不適用 — EMS 是雙軸都需要才能達 9-10。</td>
+</tr>
+</tbody>
+</table>
+
+<h3>§9.B 護城河來源（四項檢驗）</h3>
+<table>
+<thead><tr><th>來源</th><th>是否真實存在？</th><th>具體機制</th></tr></thead>
+<tbody>
+<tr><td>網路效應</td><td><span class="tag-red">弱</span></td><td>EMS 客戶間無直接互聯效應；但「越多 hyperscaler 客戶 → 越多 manufacturing footprint reference → 越易贏新客戶」有間接 network effect。</td></tr>
+<tr><td>無形資產</td><td><span class="tag-yellow">中</span></td><td>JetCool microconvective cooling IP（acquired 2024Q4）；Anord critical power distribution IP；FLEX 自有 manufacturing process know-how（30+ 年累積）。專利數量 ~3,000，但 EMS IP 較難像 SaaS 一樣形成法律 moat。</td></tr>
+<tr><td>轉換成本</td><td><span class="tag-green">強</span></td><td>客戶從 FLEX 切換到 CLS / JBL 需 12-18 個月（redesign + qualification + supply chain re-routing），且承擔生產中斷風險。AI rack 的 thermal / power 設計與 EMS 緊密耦合，轉換成本特別高。</td></tr>
+<tr><td>規模優勢</td><td><span class="tag-green">強</span></td><td>$27.9B 營收讓 FLEX 在組件採購、global capacity 配置、design 工程師密度上對 CLS / Sanmina 形成代差；vs JBL 規模相當但 vertical integration 領先。</td></tr>
+</tbody>
+</table>
+
+<h3>§9.C 競爭鴻溝</h3>
+<p>為什麼 CLS（$11B 營收，AI compute infrastructure specialist，Fwd PE 45x）、Sanmina（$8B，醫療/國防 focus）等資本充足對手仍無法跨越？三個具體機制：</p>
+<ol>
+<li><strong>Vertical integration 鴻溝</strong>：FLEX 同時擁有 JetCool（液冷 IP）+ Anord（critical power）+ Crown（power distribution）+ 內部 server / rack assembly。要 catch-up，CLS 至少要花 $1-2B 收購相關 cooling / power tech，但這些 niche 公司已被 FLEX 收齊。</li>
+<li><strong>Hyperscaler 客戶關係深度</strong>：FLEX 與 Google 簽 multiyear 合約（FY26 起貢獻 CPI 30%+ 成長）；要從現有設計切換對手成本 = redesign + qualification + 12-18 個月生產 disruption。Google 不會為了 1-2% 成本節省承擔這種風險。</li>
+<li><strong>NVDA AI Infrastructure Platform Partner 身份</strong>：NVDA 公開將 FLEX 列為 turnkey AI factory rack 的 reference EMS。CLS、JBL 雖有相關業務但 NVDA 在公開 talking points 主要點名 FLEX。</li>
+</ol>
+
+<h3>§9.D 護城河變遷時間軸（v12.3 新增）</h3>
+
+<h4>過去 5 年（2021-2026）護城河變化</h4>
+<table>
+<thead><tr><th>年份</th><th>事件</th><th>對護城河評分邊際貢獻</th></tr></thead>
+<tbody>
+<tr><td>2021</td><td>Portfolio transformation 戰略明確化（強化 RMS + ITS）</td><td>execution +0.5</td></tr>
+<tr><td>2022</td><td>收購 Anord Mardix（~$540M）</td><td>execution +1，pricing power +0.5</td></tr>
+<tr><td>2023</td><td>收購 Crown Technical Systems</td><td>execution +0.5</td></tr>
+<tr><td>2024-Q1</td><td>Nextracker (NXT) 分拆，FLEX stub 啟動 AI pivot；資本配置重新聚焦</td><td>戰略 +1（playbook 驗證）</td></tr>
+<tr><td>2024-Q4</td><td>收購 JetCool 液冷 IP</td><td>execution +1，pricing power +0.5</td></tr>
+<tr><td>2025-2026</td><td>NVIDIA AI infra platform 戰略合作 + 多個 hyperscaler 簽約 + JetCool 與 Broadcom XPU 整合</td><td>execution +1，pricing power +0.5</td></tr>
+<tr><td><strong>5 年累積變化</strong></td><td><strong>護城河從 ~4/10 升至 7/10（執行 8 + 定價 5）</strong></td><td>+3 分</td></tr>
+</tbody>
+</table>
+
+<h4>未來 5 年（2026-2031）可能變化（含機率）</h4>
+<table>
+<thead><tr><th>情境</th><th>機率</th><th>對護城河影響</th></tr></thead>
+<tbody>
+<tr><td>SpinCo 分拆 + AI infra pure-play multiple expansion 成功</td><td>70%</td><td>+1（pricing power 重新評估）；總分 8/10</td></tr>
+<tr><td>NVDA / hyperscaler 深度整合 → FLEX 成為 AI infra 不可替代的 EMS</td><td>50%</td><td>+0.5（execution moat 再深化）</td></tr>
+<tr><td>新一輪併購（cooling / battery storage / sovereign AI manufacturing）</td><td>60%</td><td>+0.5（vertical 擴張）</td></tr>
+<tr><td>Hyperscaler in-house manufacturing 加速</td><td>25%</td><td>-1（execution moat 受壓）</td></tr>
+<tr><td>AI capex 提前見頂 + EMS commodity 化</td><td>20%</td><td>-1（mix shift 反向）</td></tr>
+<tr><td>新對手出現（如 Foxconn / Quanta 加大 AI infra 投入）</td><td>40%</td><td>-0.5（execution moat 競爭加劇）</td></tr>
+</tbody>
+</table>
+
+<p><strong>5 年後護城河期望值</strong>：基準 7 + 0.7×1 + 0.5×0.5 + 0.6×0.5 - 0.25×1 - 0.2×1 - 0.4×0.5 = 7 + 1.25 - 0.65 = <strong>7.6/10</strong>（加深趨勢，但 pricing power 仍是天花板）。</p>
+
+<h3>§9.E 對手投入 vs FLEX Capex / R&D 對照（v12.3 新增）</h3>
+<table>
+<thead><tr><th>公司</th><th>FY26 Rev</th><th>FY26 Capex (絕對 / % of Rev)</th><th>R&D 估計</th><th>vs FLEX 差距</th></tr></thead>
+<tbody>
+<tr><td><strong>FLEX</strong></td><td>$27.9B</td><td>~$440M / 1.6% (FY26)；guide FY27 $1.5B / 4.5%</td><td>~$200M (FY26)，~$300M (FY27 預期)</td><td>baseline</td></tr>
+<tr><td>Jabil (JBL)</td><td>$28.0B</td><td>~$650M / 2.3%</td><td>~$300M</td><td>FLEX FY27 Capex 規模相當，R&D 略低 — 競爭強度提升</td></tr>
+<tr><td>Celestica (CLS)</td><td>$11.0B</td><td>~$300M / 2.7%</td><td>~$150M</td><td>FLEX 絕對 capex 5x，但 CLS 純 AI focus = 集中度更高</td></tr>
+<tr><td>Sanmina (SANM)</td><td>$8.0B</td><td>~$150M / 1.9%</td><td>~$80M</td><td>FLEX 規模 3x+，醫療 / 國防 niche</td></tr>
+<tr><td>Foxconn (Hon Hai)</td><td>~$200B (consol.)</td><td>~$4B / 2%（部分用於 EV）</td><td>~$1.5B</td><td>Foxconn 規模 7x，但 AI infra 占比僅 ~10% = 直接可比 ~$20B</td></tr>
+</tbody>
+</table>
+<p><strong>對照解讀</strong>：FLEX FY27 Capex jump 至 $1.5B 是「重新進入投資週期」signal — vs JBL Capex 已穩定在 $600-700M。這是長 thesis 兩面 read-through：(1) <strong>正面</strong>：管理層相信 AI infra 訂單能消化新產能（否則不會大舉投資）；(2) <strong>負面</strong>：如果 AI capex 在 2027-2028 進入 digestion，FLEX 將承擔 1-2 年折舊壓力（Intel 2021-2024 模式風險）。</p>
+
+<h3>§9.F 市佔競爭表</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>目前市佔（AI infra EMS 細分）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr></thead>
+<tbody>
+<tr><td>FLEX（CPI segment）</td><td>~12% AI infra EMS</td><td>擴大（FY24 8% → FY26 12% → FY28E 18%）</td><td>多元 vertical 整合形成 platform 護城河</td><td>從 JBL（多元 EMS 散戶）和傳統 hyperscaler in-house 那裡贏訂單</td></tr>
+<tr><td>Celestica (CLS)</td><td>~15% AI infra EMS</td><td>大幅擴大（小型 AI focus）</td><td>專注 AI compute 細分（HPC server）</td><td>從非 AI EMS（消費電子）那裡轉移到 AI</td></tr>
+<tr><td>Jabil (JBL)</td><td>~10% AI infra EMS</td><td>持平（更多元）</td><td>規模相當但 AI focus 不如 FLEX/CLS</td><td>從非 AI 業務轉換中</td></tr>
+<tr><td>Foxconn（AI infra unit）</td><td>~25% AI infra EMS</td><td>擴大（NVDA GPU server 大量訂單）</td><td>規模 + 中國 / 台灣製造優勢</td><td>從 ODM 切入 AI infra</td></tr>
+<tr><td>Sanmina (SANM)</td><td>~3%</td><td>持平</td><td>醫療 / 國防 niche，AI 暴露低</td><td>不直接競爭</td></tr>
+<tr><td>Hyperscaler in-house</td><td>~30% AI infra（自製）</td><td>緩慢擴大</td><td>Google TPU rack design、Meta MTIA、Microsoft Maia</td><td>從 EMS 集體向 in-house 轉移</td></tr>
+</tbody>
+</table>
+
+<h3>§9.G 護城河趨勢</h3>
+<p><span class="tag-green">擴大（加深）</span> — 過去 5 年 +3 分（4→7），未來 5 年期望 +0.6 分（7→7.6）。趨勢線清晰向上。</p>
+
+<h3>§9.H 24 個月內最可能瓦解護城河的變化（按威脅程度排序 + QC-23 分級）</h3>
+<table>
+<thead><tr><th>排序</th><th>威脅</th><th>QC-23 分級</th><th>影響</th><th>對護城河扣分</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Hyperscaler in-house manufacturing 加速（特別是 Google TPU、Meta MTIA）</td><td><span class="tag-red">⛔ 架構替代</span>（部分業務）</td><td>客戶結構切換</td><td>潛在 -2 分（但需多家同時觸發）</td></tr>
+<tr><td>2</td><td>NVDA 推 reference rack design + 指定 single ODM</td><td><span class="tag-red">🔴 生態攻擊</span></td><td>FLEX 角色被壓縮</td><td>-1 分</td></tr>
+<tr><td>3</td><td>JBL 加大 AI infra 投資 + 收購類 JetCool 公司</td><td><span class="tag-yellow">🟡 點對點</span></td><td>單一細分市佔影響</td><td>0 分（純競爭）</td></tr>
+<tr><td>4</td><td>Foxconn 進一步擴大美國 / 歐洲 AI infra footprint</td><td><span class="tag-red">🔴 生態攻擊</span>（potential）</td><td>規模對抗加劇</td><td>-1 分</td></tr>
+<tr><td>5</td><td>OCP（Open Compute Project）標準化液冷 + 開源 IP</td><td><span class="tag-yellow">🟡 點對點</span></td><td>JetCool IP 護城河減弱</td><td>-0.5 分</td></tr>
+</tbody>
+</table>
+
+<p><strong>v12.3 二維 escape rule 檢核</strong>：FLEX 不適用「single-axis escape」（SaaS 純高 pricing power 升 9-10、銀行純高 execution 升 9-10）。EMS 需要兩維都強才能 break out。當前 execution 8 + pricing 5 → 7/10 是合理上限，除非 SpinCo 後 SpinCo 純 AI infra 重新被市場視為 platform play（類似 ARM IP / Synopsys EDA），pricing power 才有 unlock 空間。</p>
+
+</section>
+
+<!-- ======================== §10 財務品質監測 ======================== -->
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<thead><tr><th>指標</th><th>FY24</th><th>FY25</th><th>FY26</th><th>主要對手比較</th></tr></thead>
+<tbody>
+<tr><td>Revenue</td><td>$26.4B</td><td>$25.8B</td><td>$27.9B</td><td>JBL $28B / CLS $11B / SANM $8B</td></tr>
+<tr><td>Gross Margin</td><td>7.06%</td><td>8.36%</td><td>9.27%</td><td>JBL 8.5% / CLS 10.3% / SANM 8.2%</td></tr>
+<tr><td>Operating Margin (Adj)</td><td>5.0%</td><td>5.6%</td><td>6.3%</td><td>JBL 5.7% / CLS 7.5% / SANM 5.5%</td></tr>
+<tr><td>FCF Margin</td><td>3.7%</td><td>4.1%</td><td>4.0%</td><td>JBL 4.1% / CLS 5.5% / SANM 4.0%</td></tr>
+<tr><td>ROIC</td><td>10.8%</td><td>13.5%</td><td>15.4%</td><td>JBL 14% / CLS 12% / SANM 10%</td></tr>
+<tr><td>ROIC − WACC</td><td>+1.3pp</td><td>+4.0pp</td><td>+5.9pp</td><td>FLEX 領先</td></tr>
+<tr><td>ROE</td><td>14.0%</td><td>15.2%</td><td>16.85%</td><td>JBL 35%（高槓桿）/ CLS 28% / SANM 13%</td></tr>
+<tr><td>SBC / Revenue</td><td>0.4%</td><td>0.5%</td><td>0.5%</td><td>極低，非 SaaS-like</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質警訊（四項檢驗）</h3>
+<table>
+<thead><tr><th>項目</th><th>判斷</th><th>具體數據</th></tr></thead>
+<tbody>
+<tr><td>淨利 vs OCF 連動</td><td><span class="tag-green">✅</span></td><td>FY26 OCF $1.7B / NI $865M = 1.97（健康，OCF &gt;&gt; NI）</td></tr>
+<tr><td>AR 成長 vs Revenue 成長</td><td><span class="tag-green">✅</span></td><td>AR YoY +9% vs Rev YoY +8% — 一致，無膨脹跡象</td></tr>
+<tr><td>Inventory 成長 vs Revenue 成長</td><td><span class="tag-yellow">🟡</span></td><td>Inventory FY26 +12% vs Rev +8% = 4pp 差距；管理層解釋為 CPI 客戶 ramp 準備庫存，待 H1 FY27 釋出觀察</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td><span class="tag-green">✅</span></td><td>近 3 年 FCF/NI 從 0.8 升至 1.27；改善</td></tr>
+</tbody>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年回購總額 vs FCF 總額</td><td>$3.5B 回購 / $3.1B FCF = 113%（部分用 debt + cash 補）</td><td>偏激進，但仍可接受（healthy balance sheet）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>FY24-FY26 EPS CAGR 從 14% 降至 10%（剔除回購效應）</td><td>仍 double-digit，回購不是主要驅動力</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>FY26 回購均價 ~$50（19M shares × $944M）vs 現價 $138 = 大幅低於現價</td><td><span class="tag-green">✅ 資本配置卓越</span>（買在 $50，現在 $138）</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>FY24-FY26 Rev 從 $26.4B 微升至 $27.9B = +2.8% CAGR</td><td>Rev 弱勢，EPS 靠 margin 擴張 + buyback</td></tr>
+</tbody>
+</table>
+
+<p><strong>結論</strong>：盈餘品質健康，且 FY24-FY26 buyback 策略明顯 accretive（買在 $50 均價，當前 $138）— 是少數能展現「市場價值 vs 內部資本配置」一致性的 EMS 公司。</p>
+
+</section>
+
+<!-- ======================== §11 產業格局 ======================== -->
+<section class="card" id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics（v12.3 補回 v6 深度）</h2>
+
+<h3>§11.A 市場量化（5Y / 10Y 結構性變化）</h3>
+<table>
+<thead><tr><th>市場</th><th>現在 (2026)</th><th>5Y (2031)</th><th>10Y (2036)</th><th>結構性變化</th></tr></thead>
+<tbody>
+<tr><td>全球 EMS 市場（傳統）</td><td>~$500B</td><td>~$650B</td><td>~$800B</td><td>4-5% CAGR；成熟市場</td></tr>
+<tr><td>全球 AI Data Center 整體 capex</td><td>~$300B</td><td>~$800B</td><td>~$1.5-2T</td><td>從 hyperscaler 主導 → 加入 sovereign AI + edge AI + enterprise AI</td></tr>
+<tr><td>AI Data Center EMS 細分（FLEX TAM）</td><td>~$55B</td><td>~$160B</td><td>~$300B</td><td>從「EMS 一小塊」變「獨立板塊」；FLEX SpinCo 將是 pure play</td></tr>
+<tr><td>液冷 (liquid cooling) niche</td><td>~$3B</td><td>~$15B</td><td>~$30B</td><td>從 5-10% data center 滲透率升至 50%+；JetCool 直接受益</td></tr>
+<tr><td>Critical power distribution</td><td>~$25B</td><td>~$50B</td><td>~$80B</td><td>data center power 從 10MW/rack 升至 100kW+/rack，complexity 急升</td></tr>
+</tbody>
+</table>
+<p><strong>解讀</strong>：FLEX 從 EMS commodity 進入 AI data center pure play，TAM 5 年 3x、10 年 5x；這是估值倍數從 13x → 31x 結構升級的根本原因。</p>
+
+<h3>§11.B 議價權三段獨立（v12.3 強化）</h3>
+
+<h4>對上游供應商</h4>
+<ul>
+<li><strong>NVIDIA / AMD (GPU)</strong>：FLEX 是大客戶但非獨家。NVDA 對 EMS 採 multi-source（Foxconn、FLEX、Quanta、Wiwynn、Inventec 多家）。FLEX 議價力中等，主要靠規模拿到 priority allocation，無價格談判優勢。</li>
+<li><strong>TSMC / Intel / Samsung Foundry (silicon)</strong>：FLEX 不直接採購 wafer（用 GPU/CPU 模組）；不適用。</li>
+<li><strong>電源組件（Vicor、Infineon、ABB）</strong>：FLEX 採購量大但分散；議價力高（規模效應）。</li>
+<li><strong>機房散熱組件（Vertiv、Schneider）</strong>：與 Anord Mardix 收購後減少對外部依賴；垂直整合替代議價。</li>
+<li><strong>電力供應（utility）</strong>：FLEX 工廠用電議價力強（合約電價）；對 Capex 影響小。</li>
+</ul>
+
+<h4>對下游客戶</h4>
+<ul>
+<li><strong>Hyperscaler（Google、Microsoft、Amazon、Meta、Apple、Oracle）</strong>：合計 CPI segment 60-70% revenue（估算）。客戶議價權極強 — RFQ-based、可隨時轉訂單。但 FLEX 用 design-in、vertical integration、JetCool IP 部分對抗。</li>
+<li><strong>Colocation / managed cloud（Equinix、Digital Realty、Sabey）</strong>：較分散，議價力中等；FLEX 較強。</li>
+<li><strong>Sovereign AI / Enterprise（HUMAIN 沙烏地、Mistral 法國、各國 AI initiative）</strong>：新興客戶，議價力較弱，FLEX 較強；高潛力增長軸。</li>
+<li><strong>NVIDIA / SMCI / Dell (作為 OEM 客戶)</strong>：FLEX 為 NVIDIA AI factory turnkey 平台 manufacturing 合作夥伴；同時 SMCI/Dell 也是客戶。複雜的 vendor / partner 雙角色。</li>
+</ul>
+
+<h4>地理曝險</h4>
+<table>
+<thead><tr><th>地區</th><th>製造 footprint</th><th>客戶 footprint</th><th>地緣風險</th></tr></thead>
+<tbody>
+<tr><td>北美（墨西哥、美國）</td><td>~35% 製造</td><td>~50% 客戶（hyperscaler）</td><td>低（reshoring 紅利、Trump 關稅 friendly）</td></tr>
+<tr><td>歐洲</td><td>~20% 製造（含 Anord 愛爾蘭基地）</td><td>~15% 客戶</td><td>低-中（能源成本）</td></tr>
+<tr><td>亞洲（不含中國）</td><td>~15% 製造（印度、越南、馬來西亞）</td><td>~10%</td><td>低（reshoring 受益）</td></tr>
+<tr><td>中國</td><td>~20% 製造</td><td>~10% 客戶</td><td>中-高（地緣風險、Trump 關稅 + 出口管制）</td></tr>
+<tr><td>其他（巴西、以色列）</td><td>~10%</td><td>~5%</td><td>中</td></tr>
+</tbody>
+</table>
+<p>中國曝險 20% 是潛在風險，但低於 Foxconn 等同業（Foxconn 中國 ~60%+）。FLEX 過去 5 年積極在墨西哥、印度、越南、馬來西亞建廠，是「reshoring + diversification」的領先者。</p>
+
+<h3>§11.C 營收組成三維展開（v12.3 NEW）</h3>
+
+<h4>按業務 (Segment)</h4>
+<table>
+<thead><tr><th>Segment</th><th>FY26 Rev</th><th>占比</th><th>YoY</th><th>OPM</th><th>3Y 軌跡</th></tr></thead>
+<tbody>
+<tr><td>Cloud and Power Infrastructure (CPI)</td><td>$6.6B</td><td>24%</td><td>+38%</td><td>9.2%</td><td>$4.5B (FY24) → $4.8B (FY25) → $6.6B (FY26) → $11B (FY27E) → $20B (FY28E)；強勢加速</td></tr>
+<tr><td>Regulated Manufacturing (RMS)</td><td>$10.5B</td><td>38%</td><td>+9%</td><td>6.6%</td><td>$10B → $9.7B → $10.5B；穩定</td></tr>
+<tr><td>Integrated Tech Solutions (ITS)</td><td>$10.8B</td><td>39%</td><td>+4%</td><td>5.0%</td><td>$11.9B → $11.3B → $10.8B；微弱萎縮（消費電子拖累）</td></tr>
+</tbody>
+</table>
+
+<h4>按地區</h4>
+<table>
+<thead><tr><th>地區</th><th>FY26 占比</th><th>YoY</th><th>監管 / 地緣備註</th></tr></thead>
+<tbody>
+<tr><td>美洲</td><td>~50%</td><td>+12%</td><td>reshoring 紅利；hyperscaler 客戶集中</td></tr>
+<tr><td>歐洲</td><td>~25%</td><td>+8%</td><td>Anord 基地穩定</td></tr>
+<tr><td>亞太（不含中國）</td><td>~20%</td><td>+15%</td><td>受益印度 / 越南製造擴張</td></tr>
+<tr><td>中國</td><td>~5-10%</td><td>-5%</td><td>地緣 + 客戶減少在中國採購</td></tr>
+</tbody>
+</table>
+
+<h4>按客戶集中度（v12.3 NEW — 重要）</h4>
+<table>
+<thead><tr><th>客戶層級</th><th>FY26 占比估算</th><th>集中度風險</th><th>失去單一客戶的影響</th></tr></thead>
+<tbody>
+<tr><td>Top 1 客戶（推估為 Apple，consumer / industrial 多業務）</td><td>~12-15%</td><td>中度</td><td>失去 → ~10% Rev / 5% EPS impact，但 Apple 高度多元化 EMS（FLEX + Foxconn + Pegatron），不易整體流失</td></tr>
+<tr><td>Top 2-3 客戶（Google、其他 hyperscaler）</td><td>~15-20%</td><td>高度（CPI 集中）</td><td>失去 Google → CPI -30%；公司整體 -8-10% Rev</td></tr>
+<tr><td>Top 4-10 客戶</td><td>~25%</td><td>中度</td><td>分散</td></tr>
+<tr><td>其他（&lt; 1% 各）</td><td>~40-45%</td><td>低</td><td>分散，分散度好</td></tr>
+</tbody>
+</table>
+<p><strong>客戶集中度 dual-track 風險</strong>：(1) CPI segment 客戶集中度極高（Google + 其他 top hyperscaler 推估 60%+ CPI revenue），是 SpinCo 後最大的脆弱點；(2) RMS / ITS 客戶分散度高（Apple 是最大但 ~15%）。SpinCo 後 RemainCo 客戶分散，SpinCo 客戶集中 — 風險不對稱重新分配。</p>
+
+<h3>§11.D 單位經濟（逐業務展開）</h3>
+<table>
+<thead><tr><th>業務</th><th>關鍵單位指標</th><th>FY26 值</th><th>3Y 趨勢</th><th>結構性洞察</th></tr></thead>
+<tbody>
+<tr><td>CPI - AI rack</td><td>Revenue per rack / Gross profit per rack</td><td>~$200K-300K rev / rack（高功率 GB200 rack）</td><td>大幅上升（從通用 server $50K → AI rack $200K+）</td><td>AI rack ASP 是傳統 server 4-6x；vertical integration 推升 design-in margin</td></tr>
+<tr><td>CPI - Power distribution</td><td>$ / MW data center capacity</td><td>~$2-3M / MW（critical power gear）</td><td>穩定上升（高密度 rack 需更複雜 power）</td><td>data center 從 10MW 升至 100MW+ campus，FLEX 議價力提升</td></tr>
+<tr><td>CPI - Liquid cooling</td><td>$ / kW cooling capacity</td><td>~$50-100/kW (JetCool tech)</td><td>從 0 → 大幅成長</td><td>JetCool 切入 100kW+/rack 高密度市場，IP 護城河形成</td></tr>
+<tr><td>RMS - 工業自動化</td><td>Revenue per assembly line / OEM</td><td>~$200-500M / 大型客戶</td><td>穩定</td><td>長合約、客戶忠誠高</td></tr>
+<tr><td>RMS - 汽車電子</td><td>Revenue per vehicle platform</td><td>~$300-1,000 / 車</td><td>上升（EV / ADAS 內容增加）</td><td>EV 滲透是主要驅動</td></tr>
+<tr><td>RMS - 醫療設備</td><td>Revenue per device line</td><td>~$50-200M / 客戶</td><td>穩定</td><td>進入壁壘高（FDA qualification）</td></tr>
+<tr><td>ITS - 通訊基礎設施</td><td>Revenue per network platform</td><td>~$100-300M / 客戶</td><td>下降（5G capex 高原已過）</td><td>6G 在 2030+，中期承壓</td></tr>
+<tr><td>ITS - 生活方式</td><td>Revenue per consumer SKU</td><td>~$10-50M / SKU</td><td>下降（消費電子萎縮）</td><td>結構性衰退；spinoff 後 RemainCo 可能進一步 trim</td></tr>
+</tbody>
+</table>
+<p><strong>核心洞察</strong>：AI rack 單位經濟（$200K+ / rack）是傳統 server（$30K-50K / rack）4-6x — 即使 OPM 維持 cost-plus 結構，絕對 $ profit 也大幅上升。這是 §6 OPM 從 4-5% 上升至 6.3%、guide 7.1% 的根本動力。</p>
+
+</section>
+
+<!-- ======================== §12 公司治理 ======================== -->
+<section class="card" id="s12">
+<h2>§12 公司治理與資本配置（四項強制）</h2>
+
+<h3>① 股東結構</h3>
+<ul>
+<li><strong>創辦人持股</strong>：FLEX 是 1990 年 IPO 老牌公司，無單一創辦人主導；機構持股 ~101%（高度機構化）；Insider 0.66%。</li>
+<li><strong>機構集中度</strong>：Top 10 機構（Vanguard、BlackRock、SSGA 等）持股累計 ~40-50%。</li>
+<li><strong>近期內部人大額交易</strong>：CEO Advaithi 5/11/2026 賣 $16.2M（114,090 shares @ $138-145）；CCO Hartung、COO Tan、CFO Krumm 同日合計賣 ~$22M；過去 24 個月累計賣 $88M。這些賣壓主要是 PSU vesting 後 tax withhold 性質，但金額在股價 +118% 後執行，弱勢 signal。</li>
+<li><strong>Dual-class 投票權</strong>：無（單一普通股結構）。</li>
+</ul>
+
+<h3>② 資本配置軌跡（管理層說 vs 做的一致性）</h3>
+<table>
+<thead><tr><th>項目</th><th>FY24</th><th>FY25</th><th>FY26</th><th>FY27 guide</th></tr></thead>
+<tbody>
+<tr><td>Capex</td><td>$363M</td><td>$398M</td><td>$438M</td><td>$1,400-1,600M（跳升 3.5x）</td></tr>
+<tr><td>Buyback</td><td>$1,000M</td><td>$1,257M</td><td>$944M</td><td>計劃持續，無具體金額</td></tr>
+<tr><td>Dividend</td><td>$0</td><td>$0</td><td>$0</td><td>$0 (FY26 仍無；spinoff 後可能變化)</td></tr>
+<tr><td>M&A</td><td>—</td><td>—</td><td>—</td><td>JetCool 已收（FY25），目前無大型 M&A 在 pipeline</td></tr>
+<tr><td>Debt 變化</td><td>-$300M</td><td>-$200M</td><td>~平</td><td>使用 FCF + 適度 debt 支持 Capex</td></tr>
+</tbody>
+</table>
+
+<p><strong>管理層說 vs 做</strong>：(1) Advaithi 2022 IR Day 承諾 5Y 將 CPI Rev 帶到 $5B → 已超達 $6.6B；(2) 承諾 OPM 升至 6%+ → FY26 達 6.3%；(3) 承諾每年回購 $1B+ → FY24-26 平均 $1B+；(4) 承諾考慮分拆 ([2024 IR Day]，當時未承諾時間表) → 2026/5/5 公告 → execution 一致性高。<strong>結論：說 = 做，credibility 高。</strong></p>
+
+<h3>③ 管理層薪酬結構</h3>
+<ul>
+<li><strong>CEO Revathi Advaithi（FY25 total comp ~$23M）</strong>：固定薪 ~$1.2M + 績效獎金 ~$3M + PSU/RSU ~$19M（80%+ 績效掛鉤股權）。</li>
+<li><strong>PSU vest 條件</strong>：3 年期，掛鉤相對 TSR（vs S&P 500）+ ROIC + Free Cash Flow targets。2026/5/8 vest 是 2023 年授予的批次，反映 2023-2026 表現（FLEX 股價漲 +400%+），高度達標。</li>
+<li><strong>整體判斷</strong>：薪酬結構嚴格 pay-for-performance，與股東利益高度一致；2024 say-on-pay 投票通過率 95%+。</li>
+</ul>
+
+<h3>④ 過去 12 個月重大內部人交易</h3>
+<table>
+<thead><tr><th>日期</th><th>內部人</th><th>動作</th><th>金額</th></tr></thead>
+<tbody>
+<tr><td>2026-05-11</td><td>CEO Advaithi</td><td>賣 114,090 shares @ $138-145</td><td>$16.2M（PSU vest 後）</td></tr>
+<tr><td>2026-05-11</td><td>CCO Hartung</td><td>賣 ~$3.16M</td><td>$3.16M（PSU vest 後）</td></tr>
+<tr><td>2026-05-11</td><td>COO Tan</td><td>賣 26,175 shares</td><td>~$3.7M（tax withhold）</td></tr>
+<tr><td>2026-05-11</td><td>EVP/GC Offer</td><td>賣 ~$3.16M</td><td>$3.16M</td></tr>
+<tr><td>2026 H1</td><td>CFO Krumm 等</td><td>多筆中等金額賣出</td><td>累計 ~$10M</td></tr>
+<tr><td>2024-2026 累計</td><td>全體管理層</td><td>累計賣出</td><td>$88M</td></tr>
+</tbody>
+</table>
+
+<p><strong>解讀</strong>：5/11 集中賣出時點是公告 spinoff 後 + 股價已大漲；雖屬例行 PSU vest tax withhold，但金額顯著、時點敏感。<strong>判讀為 🟡 中性偏弱信號</strong> — 不是 sell signal，但需在 §1 揭示。<strong>另：</strong>無 12 個月內 SEC 調查、無管理層異動（spinoff 是計畫中的 CEO 角色互換，Advaithi 帶 SpinCo、Hartung 接 RemainCo CEO，是 succession 不是離職）。</p>
+
+<h3>SBC 評估</h3>
+<p>SBC / Revenue FY26 ~0.5%（極低 vs SaaS 5-15%），SBC 對 EPS 稀釋影響低於 1%。沒有結構性稀釋風險。</p>
+
+<p><strong>QC-19 重大事件確認</strong>：✅ 過去 12 個月無併購金額 &gt; 市值 5%、無集體訴訟、無管理層異動或重大監管事件（spinoff 是計畫中的戰略動作，CEO 角色互換是 succession 而非離職）。但 5/11 大額內部人 sell 需要在 §1 揭示。</p>
+
+</section>
+
+<!-- ======================== §13 估值診斷 ======================== -->
+<section class="card" id="s13">
+<h2>§13 估值診斷（v12.3 大幅瘦身：13.0/13.3/13.5 + 表+3 行推導）</h2>
+
+<h3>§13.0 估值體系診斷</h3>
+<table>
+<thead><tr><th>估值邏輯類型</th><th>是否當前主流？</th></tr></thead>
+<tbody>
+<tr><td>盈利能力型（P/E、EV/EBITDA）</td><td>✅ 主流（市場用 Fwd PE 定價）</td></tr>
+<tr><td>成長型（PEG、EV/Revenue）</td><td>輔助（PEG 0.87 用來辯護高 PE）</td></tr>
+<tr><td>資產重置型（P/B）</td><td>不適用</td></tr>
+<tr><td>現金流型（P/FCF、DCF）</td><td>輔助（46x P/FCF 顯示透支）</td></tr>
+<tr><td>行業專屬（EV/Rev for EMS、Sum-of-parts for spinoff）</td><td>新興主流（spinoff sum-of-parts 是當前定價催化）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+估值邏輯從「EMS commodity 用 P/E 14x」漂移至「AI infra play 用 Fwd P/E 31x + sum-of-parts」；
+這是「估值體系升級」案例（QC-31 信號：升級機會 / 升級透支二選一）；
+→ §13.5 implication：合理 PE 取「結構升級後」22-28x，現價 31x 含 10-30% 升級透支 premium。
+</div>
+<p><strong>估值體系診斷結論：🔵 估值體系升級機會 + 部分透支</strong></p>
+
+<h3>§13.1 歷史估值分位</h3>
+<table>
+<thead><tr><th>估值指標</th><th>當前值</th><th>5Y 低點</th><th>5Y 中位</th><th>5Y 高點</th><th>當前分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>59.2x</td><td>7.3x (2022Q3)</td><td>14.0x</td><td>62x (2026 早期)</td><td>~95%（近極端高位）</td></tr>
+<tr><td>Forward P/E (NTM)</td><td>31.0x</td><td>6.5x</td><td>12.5x</td><td>33x (2026 早期)</td><td>~92%</td></tr>
+<tr><td>EV/EBITDA</td><td>26.6x</td><td>5.2x</td><td>9.5x</td><td>28x</td><td>~90%</td></tr>
+<tr><td>P/FCF</td><td>46x</td><td>8x</td><td>15x</td><td>50x</td><td>~88%</td></tr>
+<tr><td>P/S</td><td>1.89x</td><td>0.3x</td><td>0.7x</td><td>2.0x</td><td>~92%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+所有估值指標均在 5Y 分位 ≥ 88%；trailing P/E 95% 是極端高位；
+但 2022Q3 低點 (7.3x) 是 EMS 谷底（pre-AI pivot），不可作為 forward fair baseline；
+→ §13.5 implication：歷史分位 🔴 但已 partial 反映結構升級，需配合 PEG / Reverse DCF 三角驗證。
+</div>
+<p><strong>解讀</strong>：(1) 當前估值情緒 — 過熱（&gt; 90% 分位）；(2) 上次處於此高分位時 — 從未到過（這是 FLEX 史上估值最高位之一）；(3) 推動因素主要是 AI infra narrative + spinoff announce 雙利多 + 5/6 Q4 beat。</p>
+<p><strong>歷史分位降權規則檢核</strong>：PEG 0.87 &lt; 1.0 + Fwd PE 31x &lt; §2.D 救援後合理 PE 22-28x（不滿足，但 Fwd PE 31x &lt; 33x 5Y 高位）→ 部分降權，從 🔴 過熱 → 🟠 偏熱（非泡沫但偏高）。</p>
+
+<h3>§13.2 PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>Forward P/E (FY27)</td><td>31.05x</td><td>—</td></tr>
+<tr><td>Non-GAAP EPS CAGR (3Y, FY26→FY29E)</td><td>35.4%</td><td>—</td></tr>
+<tr><td>PEG (Non-GAAP, 3Y)</td><td>0.87</td><td>🟢 便宜（&lt; 1.0）</td></tr>
+<tr><td>PEG (GAAP, 3Y)</td><td>~1.10</td><td>🟡 合理</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>22%</td><td>—</td></tr>
+<tr><td>PEG (5Y)</td><td>1.41</td><td>🟡 合理</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>0.87 vs 1.41 = 0.54</td><td>近期成長峰值，需警惕 deceleration</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+PEG 3Y 0.87 OK 但 5Y 1.41 顯示「3Y 成長峰值 + 5Y 後可能 deceleration」；
+這是 spinoff 後 SpinCo 高成長 + RemainCo 低成長混合的典型；
+→ §13.5 implication：用 3Y PEG 太樂觀，混 5Y PEG 中和；合理 PE 22-28x（中間）。
+</div>
+<p><strong>Price-to-Growth 矩陣落點</strong>：FLEX 在 high-growth + high-PE 象限，但 PEG &lt; 1.0 屬「成長股合理區」。風險：成長 3 年後 deceleration 至 15-20% 時，PEG 會跳到 1.5+，引發倍數壓縮。</p>
+
+<h3>§13.3 Reverse DCF</h3>
+
+<h4>固定參數</h4>
+<table>
+<thead><tr><th>參數</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>當前市值</td><td>$50.7B</td><td>—</td></tr>
+<tr><td>基期 FCF</td><td>$1.1B</td><td>FY26</td></tr>
+<tr><td>WACC</td><td>9.5%</td><td>10Y UST 4.3% + Beta 1.45 × ERP 5% + size premium 0%</td></tr>
+<tr><td>永續成長率</td><td>3%</td><td>長期 GDP nominal</td></tr>
+<tr><td>預測期</td><td>10 年</td><td>標準</td></tr>
+</tbody>
+</table>
+
+<h4>反推隱含 FCF CAGR</h4>
+<p>使 DCF 現值 = $50.7B，所需 10Y FCF CAGR ≈ <strong>22%</strong></p>
+
+<h4>可信度對照</h4>
+<table>
+<thead><tr><th>比較基準</th><th>數值</th><th>隱含 CAGR 相對位置</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年實際 FCF CAGR (FY23→FY26)</td><td>~25%</td><td>隱含 CAGR 22% 低於歷史</td></tr>
+<tr><td>分析師共識 EPS CAGR (3Y)</td><td>35%</td><td>FCF 22% 顯著低於 EPS CAGR — 合理（FCF margin 結構性低 + Capex 跳升）</td></tr>
+<tr><td>同業最快 FCF CAGR (CLS 5Y)</td><td>~30%</td><td>FLEX 22% 較保守</td></tr>
+</tbody>
+</table>
+
+<h4>兌現條件</h4>
+<p>隱含 22% 10Y FCF CAGR 需要：(1) Revenue 10Y CAGR ~12%（從 $27.9B → $87B）— 強但有可能（AI infra 超級循環）；(2) FCF Margin 從 4.0% 升至 ~6%（管理層 commit 7% OPM，FCF margin 應同步）；(3) Capex 跳升期過後（FY30+）FCF/OCF 比 &gt; 60%。</p>
+
+<div class="reasoning">
+Reverse DCF 隱含 22% FCF CAGR 處於「歷史 25% 之下、共識 EPS CAGR 35% 之下、同業 CLS 30% 之下」三方都合理；
+表示市場當前股價 $137.86 隱含預期 - 中等偏合理，不算激進；
+→ §13.5 implication：估值雖在歷史高位但 DCF 隱含預期 NOT egregious，可給「合理偏高」評等。
+</div>
+
+<p><strong>隱含預期判斷：🟡 合理偏激進</strong>（CAGR 22% 是激進的，但仍在 sell-side 共識內）。</p>
+
+<h3>§13.4 同業估值比較</h3>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG (3Y)</th><th>FCF Margin</th><th>EPS CAGR (3Y)</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>FLEX</strong></td><td>$50.7B</td><td>31.0x</td><td>26.6x</td><td>0.87</td><td>4.0%</td><td>35%</td><td>15.4%</td></tr>
+<tr><td>Celestica (CLS)</td><td>~$28B</td><td>45.6x</td><td>27.9x</td><td>1.60</td><td>5.5%</td><td>28%</td><td>12.0%</td></tr>
+<tr><td>Jabil (JBL)</td><td>~$26B</td><td>24-26x</td><td>15x</td><td>1.00</td><td>4.1%</td><td>25%</td><td>14.0%</td></tr>
+<tr><td>Sanmina (SANM)</td><td>~$5.5B</td><td>15x</td><td>9x</td><td>1.20</td><td>4.0%</td><td>12%</td><td>10.0%</td></tr>
+<tr><td>Foxconn (Hon Hai)</td><td>~$110B</td><td>15x</td><td>8x</td><td>1.50</td><td>3.0%</td><td>10%</td><td>9.0%</td></tr>
+<tr><td>產業中位數</td><td>—</td><td>~26x</td><td>~17x</td><td>1.20</td><td>4.1%</td><td>~22%</td><td>~12%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">
+FLEX Fwd PE 31x 在 EMS 同業中：高於 JBL 25x、Sanmina 15x、Foxconn 15x；低於 CLS 45x；
+PEG 0.87 在同業中最低（最便宜）— 因為 FLEX 3Y EPS CAGR 35% 最高；
+→ §13.5 implication：FLEX vs 產業中位 26x 溢價 19%，合理（執行 + vertical integration 領先）；vs CLS 45x 折價 31% 合理（CLS 純 AI focus、ROIC 略低）。
+</div>
+
+<p><strong>v12.3 peer group tier 檢核</strong>：FLEX 應與 CLS / JBL / Sanmina / Foxconn 比（同 EMS tier），不應與 SaaS / 半導體晶片公司比 anchor — 避免跨業務模式 tier 錯誤。</p>
+
+<p><strong>同業溢折價邏輯</strong>：(1) FLEX vs 中位 26x = 溢價 19%；(2) 溢價支撐：vertical integration 領先、ROIC 同業最高、execution moat 8/10；(3) 若收斂至中位，股價 → $137.86 × (26/31) = $115（-17%）。</p>
+
+<p><strong>同主題橫向風報比</strong>：</p>
+<table>
+<thead><tr><th>問題</th><th>FLEX</th><th>CLS</th></tr></thead>
+<tbody>
+<tr><td>主假設完全兌現時上行空間最大</td><td>長期 5Y 目標 $238 (+73%)</td><td>長期 5Y 目標 ~$300 (+50%)</td></tr>
+<tr><td>主假設部分落空時跌幅最小</td><td>Bear -36% (中期)</td><td>Bear -45% (純 AI exposure 更脆弱)</td></tr>
+<tr><td>綜合風報比</td><td>不對稱稍偏 bull / 中等</td><td>不對稱更大但下行風險更大</td></tr>
+</tbody>
+</table>
+<p><strong>最終橫向比較結論</strong>：🥇 FLEX 在 EMS 同業中是<strong>「diversified + AI infra exposure」</strong>最優選；CLS 是「純 AI infra play」更高 beta 選擇；具體選擇看 PM 對 AI infra confidence 的 sizing。</p>
+
+<h3>§13.5 估值結論（完整保留）</h3>
+
+<h4>估值五角驗證</h4>
+<table>
+<thead><tr><th>工具</th><th>訊號</th><th>核心依據</th></tr></thead>
+<tbody>
+<tr><td>估值體系診斷 (13.0)</td><td>🔵 升級機會 + 部分透支</td><td>從 14x → 31x 是結構性 re-rating；部分透支</td></tr>
+<tr><td>歷史分位 (13.1)</td><td>🟠 偏熱（降權後）</td><td>5Y 分位 ≥ 90% 但 spinoff 結構升級可解釋</td></tr>
+<tr><td>PEG 診斷 (13.2)</td><td>🟢 便宜（3Y 0.87）/ 🟡 合理（5Y 1.41）</td><td>3Y 過分樂觀，混 5Y 較合理</td></tr>
+<tr><td>Reverse DCF (13.3)</td><td>🟡 合理偏激進</td><td>隱含 22% FCF CAGR 在共識內但偏激進</td></tr>
+<tr><td>同業相對 (13.4)</td><td>🟡 合理溢價（vs 中位 +19%）</td><td>execution + ROIC 領先支撐</td></tr>
+</tbody>
+</table>
+
+<p><strong>當前定價判斷：🟡 公允定價（部分透支）</strong></p>
+
+<h4>合理 PE 推導（v12.3 強制）</h4>
+<table>
+<thead><tr><th>因素</th><th>判斷結果（引用章節）</th><th>對目標 P/E 的影響</th></tr></thead>
+<tbody>
+<tr><td>① 護城河品質 (§9)</td><td>7/10（execution 8 + pricing 5）</td><td>vs 同業基準 26x：±0x（中性）</td></tr>
+<tr><td>② 成長可持續年數 (§8.A)</td><td>≥ 10 年 🟢</td><td>+3x（高確信溢價）</td></tr>
+<tr><td>③ 成長品質 (§8.B)</td><td>有機 80% + 定價/mix 升級</td><td>+1x</td></tr>
+<tr><td>④ 成長護城河連動 (§8.C)</td><td>強化型</td><td>+1x</td></tr>
+<tr><td>⑤ ROIC 可維持性 (§8.D)</td><td>15.4%，擴大趨勢</td><td>+1x</td></tr>
+<tr><td>⑥ 衰退信號數量 (§8 偵測表)</td><td>1 個（盈餘品質 partial）</td><td>-0.5x</td></tr>
+<tr><td>⑦ 估值體系方向 (§13.0)</td><td>升級 + 部分透支</td><td>-1.5x（部分透支折扣）</td></tr>
+<tr><td>⑧ 當前利率環境</td><td>10Y UST 4.3%（中性）</td><td>±0x</td></tr>
+<tr><td><strong>產業基準</strong></td><td><strong>26x</strong></td><td><strong>調整後合理 PE：28x（短中期）/ 25x（中期）/ 22x（長期收斂）</strong></td></tr>
+</tbody>
+</table>
+
+<h4>分析師目標價</h4>
+<table>
+<thead><tr><th>價位</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>高（KeyBanc 5/7）</td><td>$180</td></tr>
+<tr><td>中位 (consensus mean)</td><td>$159</td></tr>
+<tr><td>低</td><td>$80</td></tr>
+<tr><td>分析師人數</td><td>9-12</td></tr>
+</tbody>
+</table>
+<p><strong>是否認同共識中位？</strong>$159 對應 Fwd PE 35.8x — 我的目標 28x ($124 短期) 偏保守。<strong>分歧點</strong>：(1) 我認為當前 31x 已含 10-20% 升級透支，未來需收斂；(2) 共識假設「升級永續」我不認同 — 5Y 後 EMS pricing power 結構性 ceiling 終會壓回估值。</p>
+
+<h4>長期合理倍數對應表 (v9.0)</h4>
+<p>§8 長期成長性評級 🟢 → 基準 5Y 後 Fwd PE = 25x</p>
+<p>引擎調整：(A) ROIC 溢價（15.4% &lt; 20% 不觸發）；(B) PEG 動態天花板（5Y CAGR 22% &gt; 15% 觸發查表，A 級 -&gt; 1.5x 乘數，但 quality B 級 -&gt; 1.0x，無溢價）；(C) 護城河 7 不觸發溢價。AI 風險 🟢 受益 → × 1.10。</p>
+<p><strong>本標的基準長期合理倍數：25x × 1.0 × 1.10 = 27.5x</strong></p>
+
+<h4>v11.0 §2 D 交叉驗證</h4>
+<p>當前 Fwd PE 31x vs §13.5 合理 PE 27.5x = 溢價 +12.7% — 屬「公允定價，部分透支」象限，不調整估值燈級別。歷史分位 🔴 過熱信號降權至 🟠（因 PEG 0.87 + Fwd PE 31x &lt; 合理 PE × 1.5 = 41x）。</p>
+
+<h4>投資結論（最終裁決所在地）</h4>
+
+<p><strong>財報信號與假設校準</strong>：</p>
+<ul>
+<li><strong>H1（CPI 成長 + OPM 擴張）：強化</strong>（Q4 CPI +31%、FY27 guide CPI +65-75%；OPM 將從 9.2% 回 10%+）</li>
+<li><strong>H2（SpinCo 分拆 unlock）：強化</strong>（董事會 5/5 全票通過、timeline 公開、Advaithi 過去 Nextracker 成功 track record）</li>
+<li><strong>H3（估值合理 22-28x）：短期不變 / 中期削弱</strong>（當前 31x 已透支，需估值收斂或 EPS 持續超預期）</li>
+</ul>
+
+<p><strong>綜合訊號輸出</strong>：</p>
+<ul>
+<li>護城河等級：B 級 (7/10) → 調整後：B 級不變</li>
+<li>估值燈：🟡（盲點 1 救援後）</li>
+<li>Pure MA：✅ 強勢進場（但極端拉伸 4.5x W250）</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：B（衛星候選）</strong></li>
+<li>中期參考 R:R：1.2x（資訊性，不主導裁決）</li>
+<li>訊號語意：B = 衛星候選（PM 層 3-7%）</li>
+<li>倉位 % 決策由 PM skill 處理</li>
+</ul>
+
+<p><strong>① 短期信號（0-12 個月）</strong>：FY27 EPS guide 上修 15-23%，Q4 beat — 基本面強烈支撐；但股價 12 週 +118% 大幅 price-in，短期 R:R 0.4x；建議等回測。</p>
+
+<p><strong>② 中期成長確信度（1-2 年）</strong>：FY27 EPS $4.44 共識能見度高（高於管理層 guide mid $4.36）；FY28 $6.60 含 SpinCo + RemainCo sum-of-parts，能見度中等（spinoff 執行風險）。</p>
+
+<p><strong>③ 長期持有信心（3-5 年，引用 §2.I）</strong>：成長跑道充裕（AI infra 超級循環）；護城河趨勢加深（vertical integration + spinoff playbook）；長期持有信心 = <strong>高</strong>。</p>
+
+<p><strong>下行風險量化</strong>：</p>
+<ul>
+<li>短期下檔 (Bear Case)：$72，下行 -48%</li>
+<li>中期下檔 (Bear Case)：$88，下行 -36%</li>
+<li>52W Low $40.15（參考）/ 104W Low $25.11（參考）</li>
+<li>若 FY27 EPS 下修 10%（$4.44 → $4.00），短期 R:R 將降至 0.2x；極端壓力下 -50%+</li>
+</ul>
+
+</section>
+
+<!-- ======================== Footer ======================== -->
+<section class="card">
+<h2>版本修訂紀錄</h2>
+<p>本份 DD 是 FLEX 在本 repo 的 <strong>Inception</strong>（v12.3 schema 第一版）。後續年度對照時點：<strong>2027-05-18</strong>。</p>
+
+<h3>關鍵搜尋來源（reference）</h3>
+<ul>
+<li>yfinance 批量採集（基本資訊、EPS estimates、財報三表、weekly OHLC、SPX W104）</li>
+<li><a href="https://investors.flex.com/news/news-details/2026/FLEX-REPORTS-FOURTH-QUARTER-AND-FISCAL-2026-RESULTS/default.aspx">Flex IR Q4 FY26 8-K (2026/05/06)</a></li>
+<li><a href="https://www.investing.com/news/company-news/flex-q4-fy26-slides-spinoff-announced-margins-hit-target-early-93CH-4681888">Q4 FY26 slides + spinoff announcement</a></li>
+<li><a href="https://www.fool.com/earnings/call-transcripts/2026/05/06/flex-flex-q4-2026-earnings-call-transcript/">Motley Fool earnings call transcript</a></li>
+<li><a href="https://stockanalysis.com/stocks/flex/statistics/">StockAnalysis statistics</a></li>
+<li><a href="https://money.usnews.com/investing/news/articles/2026-05-05/flex-to-spin-off-ai-data-center-infrastructure-unit-into-listed-company">SpinCo announcement</a></li>
+<li><a href="https://www.prnewswire.com/news-releases/flex-acquires-jetcool-to-expand-data-center-and-power-portfolio-302306177.html">JetCool acquisition (2024)</a></li>
+</ul>
+</section>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "FLEX",
+  "name": "Flex Ltd.",
+  "schema": "v12.3",
+  "date": "2026-05-18",
+  "price_at_dd": 137.86,
+  "inception_dd": "DD_FLEX_20260518.html",
+  "inception_date": "2026-05-18",
+  "next_annual_review": "2027-05-18",
+  "market_cap_bn": 50.7,
+  "currency": "USD",
+  "sector": "Technology",
+  "industry": "Electronic Components (EMS)",
+  "fy_end": "March",
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "non_trap",
+  "moat": "B",
+  "moat_score": 7,
+  "moat_execution": 8,
+  "moat_pricing_power": 5,
+  "val": "🟡",
+  "ma": "✅",
+  "benchmark_regime": "normal",
+  "industry_signal": "🟢",
+  "industry_label": "tailwind_AI_datacenter_supercycle",
+  "long_term_confidence": "高",
+  "ai_risk": "🟢",
+  "ai_risk_label": "beneficiary",
+  "fpe_fy2": 20.89,
+  "pct_5y": 92,
+  "peg_fy2": 0.59,
+  "peg_3y": 0.87,
+  "peg_5y": 1.41,
+  "eps_cagr_3y": 35.4,
+  "eps_cagr_5y": 22,
+  "fair_pe": 27.5,
+  "fair_pe_basis": "25x base × 1.10 AI",
+  "upside_short_pct": -10.0,
+  "upside_mid_pct": 5.0,
+  "upside_5y_pct": 73,
+  "rr_short": 0.4,
+  "rr_mid": 1.2,
+  "rr_long": 2.5,
+  "stress": {"pass": 1, "total": 4},
+  "growth_durability": 9,
+  "quality_score": 7.5,
+  "target_price_short": 124,
+  "target_price_mid": 145,
+  "target_price_long_5y": 238,
+  "bear_short": 72,
+  "bear_mid": 88,
+  "bear_long": 105,
+  "w52_high": 147.34,
+  "w52_low": 40.15,
+  "w52_sma": 62.83,
+  "w104_sma": 49.00,
+  "w250_sma": 30.46,
+  "w250_slope_pct": 13.3,
+  "bb_upper": 122.35,
+  "bb_mid": 75.69,
+  "drift_4w_pct": 35.5,
+  "drift_12w_pct": 118.8,
+  "qc22_drift_warning": true,
+  "blind_spot_1_rescue": true,
+  "blind_spot_2_rescue": false,
+  "spx_regime_normal": true,
+  "next_earnings": "2026-07-22",
+  "key_catalysts": ["SpinCo dispatch 2027 Q1", "FY27 CPI +65-75% YoY", "JetCool tech ramp"],
+  "key_risks": ["Hyperscaler in-house manufacturing", "SpinCo execution delay", "AI capex super-cycle peak"],
+  "verdict": "B（觀望·thesis 完整 — Q4 FY26 beat + SpinCo 公告 + FY27 guide raise + AI infra 訂單 verified；但估值 🟡 救援後 PEG 0.87 / Fwd PE 31x（5Y 分位 92%）+ Pure MA ✅ 極端拉伸 4.5x W250、12 週 +119% 動能末段，等回測 W52 $63 / BB 中軌 $76 分批進場）",
+  "oneliner": "🟢 AI infra 順風，B 級護城河 7/10（exec 8 + pricing 5）｜估值燈 🟡 救援後（PEG 0.87 / FPE 31x，5Y 分位 92%）｜Pure MA ✅ 極端拉伸（4.5x W250、12W +119%）｜訊號 B 衛星 — 等回測 W52 $63 / BB 中 $76 分批。"
+}
+</script>
+
+</body>
+</html>

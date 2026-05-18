@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DCA - TT｜Trane Technologies｜2026-05-18</title>
+<!-- dca-moat-trend: ↑ -->
+<!-- dca-verdict: 觀望 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--line:#E2E8F0;--altrow:#F1F5F9;--muted:#64748B;}
+*{box-sizing:border-box;}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;font-family:'Noto Sans TC',system-ui,sans-serif;line-height:1.65;}
+.mono,.num{font-family:'IBM Plex Mono',monospace;}
+header.fixed{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;font-size:14px;flex-wrap:wrap;gap:8px;}
+header.fixed .ticker{font-weight:700;font-size:18px;}
+header.fixed .meta{opacity:.92;font-family:'IBM Plex Mono',monospace;}
+main{max-width:1200px;margin:0 auto;padding:24px;}
+h1{color:var(--ink);font-size:28px;margin:8px 0 4px;}
+h2{background:var(--ink);color:#fff;padding:10px 14px;border-left:4px solid var(--accent);margin:40px 0 16px;font-size:20px;border-radius:2px;}
+h3{color:var(--ink);font-size:17px;margin:24px 0 10px;border-bottom:2px solid var(--line);padding-bottom:4px;}
+h4{color:var(--ink);font-size:15px;margin:18px 0 8px;}
+table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14px;background:#fff;}
+thead th{background:var(--ink);color:#fff;padding:9px 10px;text-align:left;font-weight:500;}
+tbody td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+tbody tr:nth-child(even) td{background:var(--altrow);}
+.statusbar{background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;padding:18px 14px;margin:18px 0 24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+.statusbar .cell{flex:0 0 148px;text-align:center;padding:6px 10px;background:#fff;border:1px solid var(--line);border-radius:4px;}
+.statusbar .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.statusbar .val{font-size:22px;font-weight:700;line-height:1.2;}
+.statusbar .sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.thesis{background:#EFF6FF;border-radius:4px;padding:30px 24px;margin:18px 0;text-align:center;}
+.thesis .big{font-size:26px;line-height:1.5;color:var(--ink);font-weight:500;}
+.thesis .lbl{font-size:12px;color:var(--muted);letter-spacing:.06em;margin-top:10px;}
+.decision{padding:18px 20px;border-radius:4px;margin:18px 0;}
+.decision.wait{background:#FEF9C3;border-left:4px solid #CA8A04;}
+.verdict-chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;border-left:4px solid #78350F;background:#92400E;color:#fff;margin-bottom:8px;}
+.verdict-sub{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:16px;}
+.conflict{background:#FFF7ED;border-left:4px solid #F97316;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.verdict-tbl thead th{background:#9A3412;}
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;padding:14px 18px;margin:14px 0;border-radius:3px;}
+.premortem blockquote{margin:6px 0;padding:8px 14px;border-left:3px solid #DC2626;background:#fff;font-style:italic;color:#7F1D1D;}
+.maxdd{display:flex;gap:18px;align-items:center;background:#FFF1F2;border-left:4px solid #DC2626;padding:18px;border-radius:3px;margin:14px 0;}
+.maxdd .num-big{font-size:34px;font-weight:700;color:#991B1B;font-family:'IBM Plex Mono',monospace;flex:0 0 220px;text-align:center;}
+.note{color:var(--muted);font-size:13px;margin:8px 0;}
+.green{background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:3px;font-weight:500;}
+.red{background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:3px;font-weight:500;}
+.amber{background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:3px;font-weight:500;}
+.memo{background:#FAFAF9;border:1px solid #E7E5E4;padding:24px 28px;margin:14px 0;font-family:Georgia,serif;line-height:1.7;}
+.memo h5{color:#1E3A5F;margin:0 0 8px;font-size:16px;border-bottom:1px solid #E7E5E4;padding-bottom:4px;}
+.elevator{background:#FFF8E7;border-left:4px solid #D97706;padding:14px 18px;margin:14px 0;font-style:italic;color:#78350F;}
+details{margin:14px 0;border:1px solid var(--line);border-radius:4px;background:#fff;}
+details summary{padding:12px 18px;cursor:pointer;font-weight:600;color:var(--ink);background:#F1F5F9;}
+details > div{padding:14px 18px;}
+button.print-btn{position:fixed;right:22px;bottom:22px;background:var(--ink);color:#fff;border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-family:inherit;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:50;}
+.irr-stack{display:flex;height:24px;border-radius:3px;overflow:hidden;border:1px solid var(--line);margin-top:8px;}
+.irr-stack .seg{display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+@media print{header.fixed,button.print-btn{display:none;}main{max-width:none;}h2{page-break-after:avoid;}details > div{display:block!important;}}
+</style>
+</head>
+<body>
+<header class="fixed">
+<div><span class="ticker">TT</span>｜Trane Technologies plc｜NYSE</div>
+<div class="meta">DCA｜2026-05-18｜Price USD 466.60｜v1.3</div>
+</header>
+<main>
+
+<h1>TT｜Trane Technologies — Deep Conviction Analysis</h1>
+<p class="note">分析日期：2026-05-18｜現價 USD 466.60（5/15 收）｜Q1 2026 法說後 ~18 天（4/30）｜既有 DD：DD_TT_20260518.html v12.3（本份 Inception DD 同日生成）｜對應 ID：無 ID（HVAC industry-analyst ID 未生成）｜下次財報：2026-07-29（Q2）</p>
+
+<div class="statusbar">
+  <div class="cell">
+    <div class="lbl">DD 訊號燈</div>
+    <div class="val" style="color:#92400E;">B</div>
+    <div class="sub">thesis 完整等修復</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">護城河趨勢</div>
+    <div class="val">A <span style="color:#166534;">↑</span></div>
+    <div class="sub">backlog +30% YTD</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Runway Post-Y5</div>
+    <div class="val" style="color:#166534;">🟢 寬</div>
+    <div class="sub">數據中心曲線</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">Max DD 估計</div>
+    <div class="val" style="color:#92400E;">−42%</div>
+    <div class="sub">2027 H2 cycle test</div>
+  </div>
+  <div class="cell">
+    <div class="lbl">DCA 裁決</div>
+    <div class="val" style="color:#92400E;">觀望</div>
+    <div class="sub">等估值或基本面追上</div>
+  </div>
+</div>
+
+<!-- §2 Thesis -->
+<h2>§2｜One-Sentence Thesis</h2>
+<div class="thesis">
+<div class="big">「Trane 是商用 HVAC 寡占龍頭，紀錄 backlog 給 thesis 5 年強能見度；AI 數據中心冷卻第二曲線正在累積，但市場已預付到偏貴區間。」</div>
+<div class="lbl">50 字以內的投資本質</div>
+</div>
+
+<!-- §7 Decision -->
+<h2>§7｜Decision — 投資決策框架</h2>
+<div class="decision wait">
+<span class="verdict-chip">觀望（Wait）</span>
+<span class="verdict-sub">等 PEG 收斂至 &lt; 2.0 / 股價回調至 $420 / 共識 EPS 進一步上修；DD 訊號燈 B + 估值燈 🟠 + 三層 R:R 均 &lt; 2.0 → 決策矩陣優先序 #8 命中</span>
+
+<h3>7a. 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>核心衛星邊界（若進場後 — A 級護城河 + 多年 backlog 適合 8-12%）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%（觀望中）</strong></td></tr>
+<tr><td>目標倉位（觸發後）</td><td>8% of portfolio（首批 4%，分 2 批，間隔 4-6 週）</td></tr>
+<tr><td>進場價位區間（條件觸發）</td><td>$415-435（FPE 28x × FY+1 14.91-15.50）</td></tr>
+<tr><td>進場節奏</td><td><strong>觸發條件：</strong>(a) 股價回測至 $420±10 + Pure MA 仍 ✅ 或進入 🟢 最佳進場（價跌入 W52-W104 之間）；或 (b) 共識 FY+1 EPS 上修至 $15.6+，PEG 收斂至 &lt; 1.95；或 (c) 7/29 Q2 26 財報後 backlog 連 2 季 &gt; $11B 且 Americas commercial bookings 連 2 季 +20%</td></tr>
+<tr><td>vs 現有組合的同類曝險（opportunity cost）</td><td>vs 當前持倉的 <strong>VRT（Vertiv）</strong>(同為 AI 數據中心 thermal management，但 pure-play 屬性高、PEG 1.4 較便宜)：VRT 提供更純粹的 AI thermal exposure 但 ROIC 22% vs TT 18.9% 接近、TT 護城河深度（25 年系統整合）顯著勝過；若已持 VRT 4%，TT 加碼到 4% 形成「商用 HVAC + 數據中心」雙曝險（TT 屬「商用主曲線 + 數據中心副曲線」混合，VRT 為「數據中心主曲線」純 play）；可同時持有但合計 thermal/HVAC 曝險 &lt; 10%。<br>vs <strong>CARR（Carrier）</strong>(同 HVAC OEM tier 1)：CARR FPE 17x PEG 1.5 較便宜，但 ROIC 13% &lt; TT 18.9%、毛利率較低；TT 是 quality premium，CARR 是 value play — 邊際資金優先 TT（A 級護城河 + 數據中心曝險），CARR 只在 TT 進場後若資金有剩才補。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件（價位或事件）</th><th>調整至倉位</th></tr>
+<tr><td>進場條件成立 + 首批進場</td><td>(a) 回測 $420±10 + MA ✅ 或 🟢；或 (b) 共識 FY+1 EPS &gt; $15.6 PEG &lt; 1.95；或 (c) Q2 26 連 2 季驗證 backlog/bookings</td><td>初始 4%</td></tr>
+<tr><td>加碼至目標倉位</td><td>進場後 H1（Americas applied bookings ≥ 20% YoY）+ H2（GM ≥ 36%）連 2 季兌現</td><td>8%</td></tr>
+<tr><td>減碼</td><td>R1 / R2 / R3 任一觸發閾值，或 FPE 突破 35x（更貴）</td><td>4%</td></tr>
+<tr><td>清倉</td><td>H1 + H3 同時連 4 季 TTM 偏離 ≥ 10%；或 DOJ 對集體訴訟刑事介入；或商譽減值 &gt; $500M</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 W52 之上？</td><td><span class="green">✅</span></td><td>$466.60 &gt; $427.15</td></tr>
+<tr><td>股價在 W104 之上？</td><td><span class="green">✅</span></td><td>$466.60 &gt; $393.85</td></tr>
+<tr><td>股價在 W250 之上？</td><td><span class="green">✅</span></td><td>$466.60 &gt; $272.25（+71%）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="green">✅</span></td><td>✅ 強勢進場（多頭排列 + W250 斜率 +5.55% 強正）</td></tr>
+<tr><td>動能過熱檢查</td><td><span class="green">✅</span></td><td>4 週漂移 −2.55%（健康回檔，非過熱）；RSI 估 ~52（未過熱）；BB 軌道位置 71%（軌道內偏上）</td></tr>
+</table>
+<p class="note">Pure MA 結構支持進場，動能未過熱 — 但決策矩陣優先序 #8（DD ≥ B + 估值 🟠）觸發「觀望（等估值）」，動能與 MA 雖正面但估值還沒到位，timing 上仍待修復。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>若 H1（數據中心曲線）短期 mean reversion，需先了結；不建議純短線</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 H1 + H2 兌現（Americas commercial 連 2 季 +20% + GM ≥ 36%）→ 中期持有合適</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 Stellar 達 $1B run-rate + BrainBox AI 滲透率 &gt; 20% + 集體訴訟和解 &lt; $500M → 長期持有最佳</td></tr>
+</table>
+<p><strong>建議持有年限：</strong>進場後預設 5 年（中-長期），原因：(1) 多年 backlog 9-月轉換期 + (2) 數據中心曲線需 5-10 年完整定價 + (3) Stellar / BrainBox 整合需 2-3 年。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>2026E</td><td>$14.91 (low $14.75 / high $15.05)</td><td>yfinance 共識（n=26）+ Trane guide $14.75-14.95</td><td>共識 90 天 +0.7%</td></tr>
+<tr><td>2027E</td><td>$17.03 (low $16.25 / high $18.10)</td><td>yfinance 共識（n=26）</td><td>+14.2% YoY</td></tr>
+<tr><td>2028E（外推）</td><td>$19.5</td><td>邏輯推導</td><td>外推假設：FY+3 +14.5%（backlog 攤銷 + Stellar full year + 數據中心曲線）；analyst 中位估 $18.49（保守）</td></tr>
+<tr><td>2030E（外推）</td><td>$24.0</td><td>邏輯推導</td><td>5Y CAGR ~10%（年漸減 14% → 8%）</td></tr>
+</table>
+<p><strong>假設長期持有（5-10 年），現在股價適合嗎？</strong> 5Y Base case 目標 $624（+33.7%），對應年化 IRR ~6%；扣除股息 0.9% 後純股價 IRR 5.1%；機率加權後 5Y IRR ~8-9%（含 Bear 的拖累）。對於 A 級護城河，這是「合理但不便宜」的 IRR — 進場時點建議等估值或基本面追上後再買。</p>
+</div>
+
+<!-- §4 Asymmetry -->
+<h2>§4｜Asymmetry Analysis</h2>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td>Bull（Thesis 對）</td><td>+68%</td><td>+10.9%/yr</td><td>H1 + H2 + H3 全兌現：FY30E EPS $27 × PE 28x = $756；Stellar $1B + BrainBox 規模化 + 集體訴訟和解 ≤ $200M（mid-teens）</td><td>25%</td></tr>
+<tr><td>Base</td><td>+34%</td><td>+6.0%/yr</td><td>FY30E EPS $24 × PE 26x = $624；中規中矩兌現 backlog + 數據中心曲線 + 訴訟和解 ~$500M</td><td>45%</td></tr>
+<tr><td>Bear（Thesis 錯）</td><td>−18%</td><td>−3.9%/yr</td><td>FY30E EPS $17.3 × PE 22x = $381；Hyperscaler Capex 2027 H2 同步減速 + DOJ 介入 + Stellar 整合失敗</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+25.1% 5Y</strong></td><td><strong>IRR ≈ +4.6%/yr</strong></td><td></td><td></td></tr>
+</table>
+
+<p><strong>IRR 解讀：</strong>4.6%/yr 機率加權 IRR 屬於「弱」（&lt; 8%/yr，不及大盤平均）— 主要是 Bear 機率 30% 加權拖累 + 起點估值偏貴。若進場條件（PEG &lt; 1.95 或 $420）達成，重新估算 IRR 應 ≥ 8% → 才應該進場。</p>
+
+<p><strong>追加壓力測試：</strong>10 年視角 IRR：Base case 假設 FY35E EPS $34 × PE 22x = $748 → 10Y CAGR ~5%/yr 純股價，含股息 ~6% / yr。機會成本：當前 SPX 長期歷史均值 ~9% / yr → TT Base case 10Y IRR 低於 SPX → 進場時機必須優於 Base case。</p>
+
+<h4>📅 機率估計校準</h4>
+<table>
+<tr><th>檢查項</th><th>實際情況</th></tr>
+<tr><td>Bear 機率（5Y 視角不應 &lt; 20%）</td><td>30% ✓（合理：估值偏貴 + 訴訟 + Cyclical 風險）</td></tr>
+<tr><td>Bull / Bear 散布（5Y 應比 1Y/2Y 寬）</td><td>+68% / −18% = 寬度 86pp（合理寬）✓</td></tr>
+<tr><td>Base 機率（不應 &gt; 50%）</td><td>45% ✓</td></tr>
+<tr><td>Pattern match 校準</td><td>見下方 Roper / Ingersoll-Rand 對照</td></tr>
+</table>
+
+<div class="pattern">
+<h4>📐 Pattern match</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史相似 setup</td><td><strong>2018-2023 Roper Technologies (ROP)</strong> — quality industrial roll-up，high ROIC，PEG 1.8-2.3 區間長期，業務 mix 升級</td></tr>
+<tr><td>當時 setup</td><td>FY18 ROP forward PE 25x，5Y 分位 80%；ROIC ~9%；EPS CAGR 12%；類似 TT 當前 quality + premium 配置</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>ROP 2018-2023：股價 +60%，IRR ~10%/yr（含股息）；但中途 2020-22 經歷 −35% 修正 + 18 個月橫盤</td></tr>
+<tr><td>TT 和它最像 / 最不像</td><td><strong>最像：</strong>quality + ROIC 擴張 + 略貴起點 + 多年 backlog 模式；<strong>最不像：</strong>TT 為「物理 HVAC」非 ROP 的「軟體 + 工業」mix；TT 集中度高於 ROP（HVAC vs ROP 多軌）；TT 集體訴訟為獨特 overhang</td></tr>
+</table>
+<p>Pattern match 顯示 TT 5Y IRR 估計 4.6%/yr 可能略為保守（ROP 實現 10%/yr）；但 TT 的 lawsuit overhang + 估值更貴起點是 negative factor。整體 IRR 估算合理。</p>
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+13%/yr（EPS 14.91→27.0 = 12.6% CAGR）</td><td>−2.2%/yr（PE 31.3→28 → (28/31.3)^(1/5)-1）</td><td>+1.2%/yr（股息 1% + 淨買回 0.2%）</td><td>+12.0%/yr（≈ 10.9 ±1）</td></tr>
+<tr><td>Base</td><td>+10%/yr（EPS 14.91→24.0 = 10% CAGR）</td><td>−3.7%/yr（PE 31.3→26）</td><td>+1.0%/yr</td><td>+7.3%/yr（vs 表 6.0 偏差 1.3%p ≤ 2%p ✓）</td></tr>
+<tr><td>Bear</td><td>+3%/yr（EPS 14.91→17.3 = 3% CAGR）</td><td>−6.8%/yr（PE 31.3→22）</td><td>+0.8%/yr</td><td>−3.0%/yr（vs 表 −3.9 偏差 0.9%p ≤ 2%p ✓）</td></tr>
+</table>
+
+<div class="irr-stack">
+<div class="seg" style="background:#15803D;width:64%">EPS 10%</div>
+<div class="seg" style="background:#0EA5E9;width:24%">re-rate −3.7%（黃）</div>
+<div class="seg" style="background:#64748B;width:12%">股息 1%</div>
+</div>
+
+<p class="note"><strong>質感解讀：</strong>Base 7.3% IRR 中，10%/yr 來自 EPS 複利、−3.7%/yr 來自估值 re-rate（從 31.3x 收斂至 26x 合理倍數）、+1%/yr 來自股息。這檔的可抱性主要靠 <strong>EPS 複利</strong>（自然複利好抱）— 但被估值 re-rate 拖累。若進場後估值繼續上行（PE 32-33x），IRR 會更高；若 PE 真收斂到 24x，IRR 會打折至 5%/yr。</p>
+
+<!-- §1 Mental Models -->
+<h2>§1｜Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo">
+<h5>Investment Memo - Trane Technologies (NYSE: TT)</h5>
+<p><strong>Date:</strong> 2026-05-18 ｜ <strong>Price:</strong> USD 466.60 ｜ <strong>Market Cap:</strong> $103B ｜ <strong>Sector:</strong> Industrials / HVAC</p>
+
+<p><strong>Thesis (50 words):</strong> Trane is the premium HVAC OEM with $10.7B record backlog (+30% YTD) providing multi-year visibility, plus an emerging AI data center thermal management second curve via Stellar Energy / BrainBox AI / NVIDIA reference design partnerships. Quality A moat (ROIC 18.9% expanding, GM +5.5pp over 4 years).</p>
+
+<p><strong>Key Drivers:</strong> (1) Americas commercial HVAC bookings + applied equipment (+40% / +160% Q1 26 YoY); (2) Data center thermal market $15.6B → $36B by 2035 (9.8% CAGR).</p>
+
+<p><strong>5Y R:R:</strong> Bull +68% / Base +34% / Bear −18%. Probability-weighted IRR 4.6%/yr. Pattern match: Roper Technologies 2018-2023 (similar quality + premium setup) realized 10%/yr.</p>
+
+<p><strong>Main Risks:</strong> (1) Hyperscaler Capex 2027 H2 sync slowdown; (2) 3/20/2026 antitrust class action (DOJ介入機率 5-10%); (3) BrainBox/Stellar integration failure or culture clash.</p>
+
+<p><strong>Recommended Position:</strong> <strong>WAIT</strong>. Current FPE 31.3x (87% 5Y percentile) + PEG 2.16 + short/mid R:R below 2.0 → wait for valuation normalization. Trigger entry on: (a) pullback to $420 area, or (b) FY+1 EPS upgrade to $15.6+ shrinking PEG &lt; 1.95, or (c) Q2 26 print confirms second leg of backlog acceleration. Target initial position 4% on trigger, ramp to 8% on H1 + H2 confirmation (2 quarters).</p>
+
+<p><strong>Opportunity Cost:</strong> Versus existing VRT (Vertiv, pure-play AI thermal) and CARR (cheaper HVAC OEM) — TT is quality premium between the two; recommended as core complement, not substitute.</p>
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「TT 是商用 HVAC 寡占龍頭，現在紀錄訂單 $10.7B 給未來 2 年強能見度，AI 數據中心冷卻是疊加的新引擎（Stellar + BrainBox + NVIDIA 合作）。問題是市場已經 price-in 多年成長，估值 PE 31x 偏貴。我會等股價回到 $420 或共識上修讓 PEG 收斂後再進場，5 年目標 +34%。最大風險是 2027 H2 雲廠 capex 同步減速。」</div>
+
+<!-- Phase B 矛盾 -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（A1-A3 + DD 一致判斷）</h3>
+<ul>
+<li>護城河 ↑ widening — 從 ROIC 13.9% → 18.9%（3 年 +5pp）+ GM +5.5pp 4 年 + Stellar/BrainBox 兩件 strategic moves</li>
+<li>數據中心曲線真實 — Americas applied bookings +160% YoY + NVIDIA 合作 + Stellar 整合確認</li>
+<li>5Y EPS CAGR ~10-14% — 共識 + 邏輯推導吻合</li>
+</ul>
+
+<h3>2. 矛盾清單</h3>
+<div class="conflict">
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>C1</td><td>定價權強度</td><td>強（GM +5.5pp + 92% service retention）</td><td>中（集體訴訟提及「discipline pricing」反證但也警示 antitrust risk）</td><td>強（Q1 26 +3-4% pricing + 量同擴張）</td><td>可調和（A2 為法律風險，A1/A3 為基本面，方向不衝突但 A2 提出 future risk）</td></tr>
+<tr><td>C2</td><td>數據中心 thermal 中期 TAM 增長率</td><td>強（NVIDIA 合作 + 50M+ connected devices）</td><td>中（Vertiv 11.3% 市佔領先 TT；Daikin 11/2025 acquired Chilldyne 切入直冷）</td><td>強（Stellar 2-3 年 $1B run-rate; FY26 backlog +30% YTD）</td><td>可調和（A2 提示競爭強度但不否定 TT 在 thermal management 整合層獨特地位）</td></tr>
+<tr><td>C3</td><td>估值合理性</td><td>強 thesis 支撐溢價</td><td>產業順風支撐</td><td>FPE 31.3x + PEG 2.16 已偏貴（A3 較 cautious）</td><td>不可調和（A1/A2 認為 thesis 完整，A3 認為 timing 不對）</td></tr>
+</table>
+</div>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<div class="conflict">
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+<tr><td>X1</td><td>5Y Bear 機率</td><td>30%（DCA 評估）</td><td>未明確量化（DD §5.C 列風險但無機率）</td><td>視角差：DCA 為 PM 風控視角，DD 為 thesis 驗證視角；不衝突 — 互補</td></tr>
+</table>
+</div>
+
+<h3>4. ⚖ 強制裁決（不可調和矛盾）</h3>
+<div class="conflict">
+<table class="verdict-tbl">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then 方向相反）</th></tr>
+<tr><td>C3</td><td>估值合理性（thesis 完整 vs 估值偏貴）</td><td>A3（A3 視角為主）</td><td>三層 R:R 均 &lt; 2.0 + PEG 2.16 + 5Y 分位 87% + 同業溢價 49% 三條獨立指標一致顯示 timing 不對；A1/A2 thesis 沒錯但「對 thesis 而言估值偏貴」是 PM 決策的關鍵</td><td>(1) PEG 觸 1.95 以下（共識 FY+1 EPS 上修至 $15.6+）；(2) 股價回測 $420 區間 ± $10；(3) Q2 26 7/29 財報後共識 EPS 上修 ≥ 3%；(4) 5Y 分位回到 ≤ 75%</td><td>(a) 觸發 PEG &lt; 1.95 + Pure MA 仍 ✅ → <strong>升級進場至 4%</strong>；(b) 觸發股價突破 $510（FPE 34x，分位 95%+）+ 4 週漂移 &gt; +12% → <strong>啟動 trigger watch，列為觀察池</strong>（不進場，等回測）</td></tr>
+</table>
+</div>
+
+<!-- §3 Key Drivers -->
+<h2>§3｜Key Drivers</h2>
+
+<h3>這支股票的命脈是什麼？</h3>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應可觀測指標</th></tr>
+<tr><td>1</td><td><strong>商用 HVAC 紀錄 backlog 兌現</strong>（需求側：建築 retrofit + 政府/醫療/數據中心）</td><td>backlog $10.7B 是未來 2-3 年營收能見度的根本；若 bookings 連 2 季 &lt; 10% YoY 表示需求動能衰退</td><td>季度 bookings YoY、book-to-bill ratio、backlog 絕對額</td></tr>
+<tr><td>2</td><td><strong>定價權維持 GM ≥ 36%</strong>（供給側：護城河持續性）</td><td>GM 從 30.7% → 36.2% 是 ROIC 擴張的核心；若 GM 連 2 季 YoY 下滑 &gt; 200bp 表示護城河被侵蝕</td><td>季度 GM、產品 mix（applied / AI-enabled）、定價提升幅度</td></tr>
+</table>
+
+<p><strong>為什麼是這 1-2 個，而不是其他？</strong>商用 HVAC backlog（需求側）+ GM 維持（供給側）為獨立正交 vector：backlog 是「客戶願意買」的量價測度，GM 是「我們能維持利潤」的供給能力測度。兩者獨立 — Backlog 可以正常但 GM 被通膨 / EMEA / 訴訟壓制（H2 失靈但 H1 兌現），或 GM 維持但 backlog 動能放緩（H1 失靈但 H2 兌現）。不互為子集。</p>
+
+<p><strong>Driver 抽象層 guardrail 校驗：</strong>「不假設 backlog 兌現的情況下，GM 維持 ≥ 36% 能否單獨被推翻？」可以 — 若集體訴訟 DOJ 介入打掉「discipline pricing」敘事，即使 backlog 兌現 GM 仍可能壓縮。故兩個 driver 為獨立因果鏈。✓</p>
+
+<h3>強制減法 — 我認為不重要的事</h3>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>Residential HVAC YoY −20%（R-454B 過渡）</td><td>過渡期擾動，FY26 H2 預期回升；占營收僅 19%，不是 thesis 主軸</td></tr>
+<tr><td>每季 EMEA margin 波動</td><td>cyclical 因素 + 中國熱泵入歐短期壓力；對 5Y thesis 影響有限</td></tr>
+<tr><td>FX 影響</td><td>FY26 +0.5pp 貢獻；對 long thesis irrelevant</td></tr>
+<tr><td>分析師目標價 vs 共識</td><td>共識 PT $479 高出當前僅 +3%；不提供新資訊</td></tr>
+<tr><td>Beta 1.26（市場波動性）</td><td>非投資決策主軸；對長期持有者無影響</td></tr>
+</table>
+
+<h3>🔄 我和市場 consensus 的最大分歧</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>FPE 31.3x = 5Y CAGR ~12-13% 完美 ramp + Stellar 達成 $1B + ROIC 持續擴大至 22%+ + 集體訴訟 negligible 影響</td></tr>
+<tr><td>我認為的不同假設</td><td>市場低估了：(a) 集體訴訟對「discipline pricing」敘事的長期 reputational hit；(b) Hyperscaler Capex 2027 H2 sync slowdown 機率（市場估 &lt; 10%，我估 25-30%）</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方 2026 升級多基於 Q1 26 「紀錄 backlog」單季 print，未充分考量 (1) backlog 是 lagging（過去 4 季 ramp 累積，未來 4 季不一定持續加速）；(2) 集體訴訟訊息揭露持續至 2026 Q3-Q4 動議結果，市場目前定價已忽略</td></tr>
+</table>
+
+<!-- §5 Single Thing -->
+<h2>§5｜The Single Thing That Could Change My Mind</h2>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>4 家 Hyperscaler（AWS / Azure / GCP / Meta）中 ≥ 3 家，於 2027 Q3-Q4 連續 2 季公告 Capex YoY 下修 ≥ 10%</strong></td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>TT 的 H1 數據中心曲線假設依賴 Hyperscaler Capex 持續擴張；若同步減速（4 家中 ≥ 3 家連 2 季 −10%）→ Stellar 業務 ramp 失速 + Americas commercial applied bookings 從 +160% YoY 急轉 +20% → 整體 thesis 主軸坍塌</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>Capex 來自 4 家 10-Q / 8-K / earnings call（季度）；補充：Bloomberg / Cap IQ 自動整合 hyperscaler capex 季度資料表；Visible Alpha 連線追蹤季度 capex 共識</td></tr>
+<tr><td>目前離發生有多遠</td><td>Q1 2026 4 家 capex 仍向上加速（aggregate +60% YoY）；2026 全年 capex 共識在 $1.2T+；事件需 2027 H2 才會出現 sync slowdown 訊號（距今 ~12-18 個月）；機率：5%（短期 12 個月）→ 25%（2027 H2）→ 40%（2028+）</td></tr>
+</table>
+
+<h3>🔗 Cross-check with DD §5.F single thing（v12.3+ 強制）</h3>
+<p><strong>Alignment 狀態：✅ Aligned</strong> — DD §5.F single thing 同樣是「Hyperscaler 4 家中 ≥ 3 家連 2 季 Capex YoY 下修 ≥ 10%」。DCA 與 DD §5.F 指向同一事件 → 註明「DD §5.F 一致，DCA confirm」+ 加強監測 detail（資料來源、頻率、最近 status）。Trigger point 一致，DCA 額外貢獻：機率隨時間軸分層（5% / 25% / 40%）+ 監測資料來源具體化（Bloomberg + Visible Alpha）。</p>
+
+<!-- §6 What I Don't Know + Pre-mortem -->
+<h2>§6｜What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>BrainBox AI 平台在 5 年內滲透率達 ≥ 20% 商用建築</td><td>需要 (a) ARIA 平台 enterprise sales 順利 (b) HVAC 控制器市場接受 AI 介入</td><td>若滲透率 &lt; 5%，BrainBox 商譽 $200M 可能減值；對 thesis 影響有限（&lt; 1% 營收）</td></tr>
+<tr><td>2</td><td>Stellar 2-3 年達到 $1B run-rate</td><td>需要 (a) 700 員工 JAX FL 整合無大問題 (b) modular cooling 市場接受 Stellar 設計 (c) 數據中心客戶採購 ramp</td><td>若延後至 5+ 年達 $1B 或失敗，估值 PE 可能從 31x 降至 25x（−20% 股價）</td></tr>
+<tr><td>3</td><td>3/20/2026 集體訴訟 + 後續 3 起跟進訴訟最終和解金額 &lt; $1B</td><td>需要：(a) DOJ 不介入；(b) 法院 motion-to-dismiss 部分成功；(c) 和解選擇而非審判</td><td>若和解 &gt; $1B（FCF 1/3 量級）→ 一次性盈餘衝擊 + 「discipline pricing」敘事崩壞 → PE 系統下移 4-5x</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5（強制三段式）</h3>
+
+<div class="premortem">
+<h4>第一段｜故事倒推（≤ 80 字 narrative）</h4>
+<blockquote>「假設 5 年後（2031 中）這個部位虧 50%，最可能的故事是 2027 Q4 AWS / Azure / GCP 三家 capex guidance 同時下修 −12%，2028 Q1 backlog YoY 從 +25% 急轉 −5%，2028 Q3 Americas commercial bookings YoY −10%，2028 全年 EPS 共識從 $19.5 下修至 $15，2029 上半年 FPE 從 28x 系統壓縮至 17x，股價從 $467 → $235 (−50%)，且 2030 集體訴訟和解 $800M 帶來額外一次性衝擊。」</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td>✅ <strong>是（直接撞上）</strong> — 故事中的 2027 Q4 Hyperscaler capex 三家下修 −12% 正是 §5 single thing trigger</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p>✅ <strong>§5 抓對了風險，不需修正。</strong>Pre-mortem 故事 = §5 trigger 的具體展開（含 capex 下修後 backlog/bookings/EPS/PE 連鎖反應路徑）+ 第二觸發點（集體訴訟和解金額），但 lawsuit 已在 §6a #3 + Phase B C1 + DD §5.C R2 多處 reflect，不需要重寫 §5 single trigger。</p>
+
+<p><strong>校驗紀錄：</strong>§5 修正狀態：✅ 不需修正。Pre-mortem 故事完整撞上 §5 trigger，且包含 §5 trigger 的下游連鎖（backlog → bookings → EPS → PE 重置）。</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+<div class="maxdd">
+<div class="num-big">−38% ~ −48%</div>
+<div>
+<p><strong>最可能觸發時點：</strong>2027 Q4 - 2028 Q2（Hyperscaler capex 同步減速 + Q1 28 backlog 動能逆轉）</p>
+<p><strong>觸發後最快恢復峰值：</strong>18-24 個月（需 backlog 動能修復 + 共識 EPS 上修 + 估值 re-rate）</p>
+<p><strong>路徑風險評級：</strong><span style="font-size:24px;color:#92400E">🟡</span> −30~−50%（需要強信念）</p>
+</div>
+</div>
+
+<p><strong>校驗：</strong>若 Max DD 落在 −48%，能否撐到復原？條件：(a) 部位不超過 portfolio 8%（已內建至 §7a 目標倉位）；(b) 不使用槓桿；(c) §5 trigger 未真正全 confirm（單一 Hyperscaler 下修不算）；(d) 進場後加保 stop-loss 在 −25% 區（首批 4% × −25% = portfolio −1% 邊界）。</p>
+
+<!-- §8 Review Triggers -->
+<h2>§8｜Review Triggers</h2>
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間 / 條件</th></tr>
+<tr><td>1</td><td>Q2 2026 法說會（7/29）</td><td>財報日期</td><td>2026-07-29 — 檢視 bookings 連 2 季 +20%、Americas commercial book-to-bill、Stellar Q1 + Q2 EBITDA margin 進度</td></tr>
+<tr><td>2</td><td>集體訴訟動議結果 + DOJ 民事介入</td><td>產業 / 治理事件</td><td>2026 Q3-Q4 預計 motion-to-dismiss 動議結果；若任三家 OEM 認罪和解 → 重新評估</td></tr>
+<tr><td>3</td><td>股價回測 $420 區間（FPE 28x）</td><td>價位觸發</td><td>−10% 從當前 → 入場時機之一</td></tr>
+<tr><td>4</td><td>§5 The Single Thing</td><td>thesis 關鍵</td><td>Hyperscaler 4 家中 ≥ 3 家連 2 季 Capex YoY 下修 ≥ 10% — 預計 2027 H2 為觀察期</td></tr>
+<tr><td>5</td><td>共識 FY+1 EPS 上修至 $15.6+ → PEG &lt; 1.95</td><td>估值修復</td><td>盲點 1 救援觸發條件</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：</strong>至 <strong>2026-07-29</strong>（Q2 26 法說會）。若 Q2 print 結果重大偏離（bookings YoY &lt; 10% 或 GM &lt; 35%）→ 需要 rerun DCA。</p>
+
+<p><strong>最可能發生的 upside 因素：</strong>Q2 26 + Q3 26 連續確認 backlog +30% 級別 + Americas commercial bookings +30%+ + Stellar 整合 mid-teens EBITDA → 共識 FY+1 EPS 上修至 $15.6-16.0 → PEG 收斂至 &lt; 1.95 → 升級進場至 4%。</p>
+
+<p><strong>最可能發生的 downside 因素：</strong>(1) 集體訴訟早期動議完全駁回 + DOJ 民事介入 → PE 系統下修 4-5x → 股價 $370 區間 (−21%)；(2) Q3 26 Hyperscaler 中 1 家公告 capex 下修，市場 leading indicator → TT 估值收斂；(3) EMEA margin 連 2 季 -300bp+ → FY+1 EPS guide 下修。</p>
+
+<!-- Phase A 折疊區塊 -->
+<h2>Phase A｜獨立研究階段</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析（獨立結論：護城河 A 級 9/10，moat_trend ↑ widening — 4 年 GM +5.5pp + ROIC +5pp + Stellar/BrainBox 補強）</summary>
+<div>
+<h3>Phase A1 護城河深度分析</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>規模優勢</strong>（Top 3 全球商用 HVAC OEM；50M+ connected devices；3,000+ commercial channel partners）；(2) <strong>轉換成本</strong>（商用 HVAC 系統壽命 15-25 年 + 服務契約 92% 續約率 + 專有診斷軟體鎖客戶）</td></tr>
+<tr><td>持久性評分</td><td><strong>9/10</strong>，5 年穩固度：<strong>高</strong></td></tr>
+<tr><td>最大侵蝕風險</td><td>3/20/2026 集體訴訟若擴大為 DOJ 民事 + 強制 antitrust 分拆（時間軸：2027-2028）— 可能直接打掉「discipline pricing」敘事 + PE 5x 系統下修</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 36.2%（FY25，5 年 +5.5pp 持續改善 ↑）、商用 HVAC 美國市佔 ~22% ↑（Q1 26 bookings +27% vs CARR ~+10% 領先）、ROIC 18.9% vs WACC 8.5% 超額 +10.4pp（vs 3 年前 +5.5pp = 擴大 +4.9pp）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong> + sourced evidence：「ROIC 從 13.9%（FY22）擴大至 18.9%（FY25）= 3 年 +5pp，同期同業中位 ROIC 從 ~12% 擴大至 ~15% = +3pp，差距從 +1.9pp 擴大至 +3.9pp（FY22-25 10-K filings + 同業中位查 Macrotrends）」</td></tr>
+</table>
+
+<h4>二維護城河拆解（v1.3 推薦，DCA 獨立評估）</h4>
+<table>
+<tr><th>維度</th><th>DD §9 評分</th><th>DCA 獨立評估</th><th>Alignment</th></tr>
+<tr><td>Execution moat</td><td>DD 9.0/10</td><td>DCA 9.0/10</td><td>aligned（25 年產品 + 全球分銷 + backlog 紀錄 + Stellar 整合執行力）</td></tr>
+<tr><td>Pricing power moat</td><td>DD 8.5/10</td><td>DCA 8.5/10</td><td>aligned（GM +5.5pp 4 年 + 定價 +3-4% 持續 + 訴訟 reflect 0.5pp 扣分）</td></tr>
+<tr><td>合併</td><td>DD 9/10</td><td>DCA 9/10</td><td>aligned</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 必填）</h4>
+<ol>
+<li>92% service contract renewal rate（high above industry benchmark；Trane mgmt 公開資料 + ltsi.substack 2026）</li>
+<li>50M+ connected devices and systems operating globally requiring service（ltsi.substack 2026 + Trane investor relations）</li>
+<li>$1 maintenance → $2 pull-through ratio（Trane proprietary economic data，2025 financial model）</li>
+<li>ROIC 18.9% FY25 vs 13.9% FY22 = +5pp 3 years（Macrotrends Trane Technologies ROIC history 2025-2026）</li>
+<li>GM 30.7%（FY21）→ 36.2%（FY25）= +5.5pp 持續 4 年（yfinance income_stmt + 10-K）</li>
+<li>美國商用 HVAC 市佔 ~22%（class-action lawsuit 揭露 7 家 OEM 控制 ~90% 市場 + 同業比較估算）</li>
+</ol>
+
+<p><strong>A1 獨立結論：</strong>護城河 A 級 9/10（execution + pricing 二維 aligned with DD），moat_trend ↑ widening 由 4 年 +5.5pp GM + 3 年 +5pp ROIC + Stellar/BrainBox 補強支持。</p>
+</div>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析（獨立結論：HVAC 順風 + 數據中心冷卻 9-31% CAGR 超級曲線，runway_post_y5 = 🟢 寬，集體訴訟 antitrust 為主要 tail risk）</summary>
+<div>
+<h3>Phase A2 產業趨勢深度分析</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>全球 HVAC 當前 $524.9B（2025），10Y 至 $1.2T (2035) CAGR 8.1%；Data Center HVAC subset $15.6B (2026) → $36B (2035) CAGR 9.8%；液冷專屬 $4.07B (2026) → $27.65B (2033) CAGR 31.5%</td></tr>
+<tr><td>供需判斷</td><td>數據中心 cooling <strong>緊缺</strong>（NVIDIA Rubin / Vera Rubin 平台單櫃 600kW+ 強制液冷 + Hyperscaler 採購量超供給）；商用 HVAC <strong>平衡偏緊</strong>（backlog +30% YTD 表示需求 &gt; 供給）；住宅 HVAC <strong>過剩</strong>（R-410A → R-454B 過渡庫存清理）</td></tr>
+<tr><td>最大技術替代風險</td><td>Open Compute Liquid Cooling 標準成型 + Hyperscaler 自製液冷平台（5-10 年外風險）— 機率 20%；若成型 → cooling commodity 化，TT 系統整合溢價收斂</td></tr>
+<tr><td>最大政策 / 地緣風險</td><td>3/20/2026 美國東密西根聯邦地院集體訴訟 + 後續 3 起聯邦訴訟（FL/ND/NY）共謀漲價 2020-2026；若 DOJ 民事介入 → antitrust 分拆風險 + pricing power 敘事打擊</td></tr>
+<tr><td>議價權位置</td><td>對上游 <strong>中等偏強</strong>（規模採購 + 垂直整合 compressor）；對下游 <strong>強</strong>（客戶分散 + 系統整合 + 服務契約 lock-in）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong> — Y5（2031）末 HVAC 整體 TAM 滲透率達 ~55%（vs 當前 40%），仍有 80% 空間至 2035；數據中心冷卻 Y5 末滲透率 35%（vs 當前 15%）至 2035 60%；多重曲線同步擴張 + 第二曲線（電氣化 / heat pump）2027+ 啟動</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 5 必填）</h4>
+<ol>
+<li>HVAC TAM $524.9B (2025) → $1.2T (2035) CAGR 8.1%（GMI Industry Analysis 2026）</li>
+<li>Data Center HVAC $15.6B (2026) → $36B (2035) CAGR 9.8%（GMI 2026）</li>
+<li>液冷專屬市場 $4.07B (2026) → $27.65B (2033) CAGR 31.5%（MarketsandMarkets 2026）</li>
+<li>Vertiv 11.3% 市佔 2025 領先液冷市場（MarketsandMarkets ResearchInsight 2026）</li>
+<li>Daikin 11/2025 收購 Chilldyne 切入 direct-to-chip 液冷（Daikin Applied 公告 + DCD 報導）</li>
+<li>集體訴訟 3/20/2026 美國東密西根聯邦地院（Top Class Actions 2026-04 + Hagens Berman 公告）+ 跟進 3 起訴訟</li>
+<li>NVIDIA Rubin / Vera Rubin 單櫃 600kW+ 強制液冷 cold plate（NVIDIA 公告 2026 + DCD 2026）</li>
+</ol>
+
+<p><strong>A2 獨立結論：</strong>HVAC 順風 + 數據中心冷卻 9-31% CAGR 超級曲線；runway_post_y5 🟢 寬（多曲線疊加，Y5 末仍有 80% 滲透空間）；最大 tail risk 為 antitrust 訴訟（10-15% 機率）+ Hyperscaler 自製 cooling（5-10 年外）。</p>
+</div>
+</details>
+
+<details>
+<summary>Phase A3｜業務結構 / 財務體質 / 資本配置（獨立結論：A 級財務 + 高度分散客戶 + 紀律資本配置；FY30E EPS $24 / 5Y CAGR 10%）</summary>
+<div>
+<h3>Phase A3 業務 / 財務 / 資本配置</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：<strong>Americas Commercial HVAC</strong>（47%）+ <strong>Services</strong>（9%）；成長引擎：<strong>數據中心 + Stellar</strong>（5-7% 但快速擴張）+ <strong>EMEA heat pump</strong>（12%）；拖累：<strong>Americas Residential</strong>（19%，FY25-26 R-454B 過渡 −20% YoY）</td></tr>
+<tr><td>客戶集中度</td><td>Top 1 &lt; 5%、Top 5 &lt; 15%、Top 10 &lt; 25%，<strong>極度分散</strong> — 風險：低（無 critical 客戶）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（+3-4% 過去 3 年）+ 產品 mix 升級（applied / AI-enabled），<strong>定價權：強</strong></td></tr>
+<tr><td>未來金雞母</td><td>Stellar Energy Digital（液冷模組）—目前 ~$0.5B 但 mgmt 目標 2-3 年達 $1B run-rate，潛在 TAM $36B 至 2035；BrainBox AI（autonomous building） — 目前 ~$0.05-0.1B 但長期 SaaS-like recurring</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 96%（FY25 FCF $2.81B / NI $2.92B）、毛利率 36.2% ↑、Net Debt/EBITDA 0.67x 極優；壓力測試 — 營收 −20% 可撐 6+ 季（FCF 緩衝 + 低槓桿）</td></tr>
+<tr><td>資本配置紀律</td><td>FY25 部署 ~$3B：Capex $383M（1.8% Rev 低密集）+ Buyback $1.48B + Dividend $837M + M&A ~$200M；FY26 計畫 $2.8-3.3B；CEO 薪酬 91% 績效綁定；無大型減值記錄；近 5 年 M&A 規模適中（&lt; 5% 市值），全為 capability buy</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR 預估 <strong>10%/yr</strong>（FY26-30 漸減 14%→8%；含 buyback 對 EPS 的稀釋抵銷 ~+0.5%/yr）；5Y 末 forward P/E 預估 <strong>26x</strong> vs 當前 31.3x → re-rate 貢獻 = (26/31.3)^(1/5)-1 = <strong>−3.7%/yr</strong>；現金股息率 <strong>1.0%/yr</strong>（$4.20/$466.60）；淨買回率 <strong>~0%/yr</strong>（回購均 1.2%/yr 但 SBC 稀釋抵 1.2% → 淨 0%）</td></tr>
+</table>
+
+<h4>Sourced data points（≥ 6 必填）</h4>
+<ol>
+<li>Q1 2026 Rev $4.97B Beat / Adj EPS $2.63 Beat / Bookings $6.69B +27% YoY / Backlog $10.7B +30% YTD（Trane 4/30 earnings call + 8-K）</li>
+<li>FY25 actuals: Rev $21.32B / GP $7.71B (36.2%) / OI $3.97B / NI $2.92B / EPS $12.98 / FCF $2.81B 13.2% FCF margin / FCF/NI 0.96（yfinance income_stmt + cashflow）</li>
+<li>ROIC 18.9% (vs 13.9% FY22 +5pp) / WACC 8.5%（Macrotrends + Alpha Spread 2026）</li>
+<li>FY26E $14.91 (n=26) / FY27E $17.03 (n=26) / FY28E $18.49 analyst median（stockanalysis.com 2026 + Zacks）</li>
+<li>5Y total return 184.93% / 23.63% annual vs SPX 17.4% past 52w（financecharts.com 2026 + Stocktitan）</li>
+<li>CEO David Regnery FY25 total compensation $27.3M / 91% performance linked（Trane 2026 Proxy DEF 14A + Stocktitan）</li>
+<li>2026 capital deployment guide $2.8-3.3B（Trane Q1 2026 earnings call + 4/30 press release）</li>
+<li>Dividend +12% increased to $1.05/q ($4.20/y) — 14th consecutive year of dividend increase（Trane Q1 2026 announce + Stocktitan）</li>
+</ol>
+
+<p><strong>A3 獨立結論：</strong>A 級財務 + 高度分散客戶（Top 10 &lt; 25%）+ 紀律資本配置（FY26 部署 $2.8-3.3B）+ 多年 backlog 給強能見度；5Y EPS CAGR 10% Base / 13% Bull / 3% Bear；分量基底支持機率加權 IRR ~7.3% Base / 10.9% Bull / −3% Bear。</p>
+</div>
+</details>
+
+<details>
+<summary>Phase A4｜既有 DD 報告數據擷取（DD_TT_20260518.html v12.3，本份 Inception DD 同日生成）</summary>
+<div>
+<h3>Phase A4 既有 DD 報告數據摘要</h3>
+
+<p><strong>來源：DD_TT_20260518.html v12.3 — dd-meta JSON Primary source</strong></p>
+<table>
+<tr><th>欄位</th><th>DD 值</th><th>DCA 引用位置</th></tr>
+<tr><td>signal</td><td>B</td><td>§7 decision matrix #8 baseline trigger（DD ≥ B + 估值 🟠 → 觀望）</td></tr>
+<tr><td>verdict</td><td>B 觀望（thesis 完整：A 級護城河 9 + 紀錄 backlog $10.7B + AI data center 第二曲線；但估值 🟠 偏貴 PEG 2.16 + 5Y 分位 87% + 三層 R:R 均未過 2.0 → 等共識上修讓 PEG &lt; 2.0 或回調 $420 區間進場）</td><td>Phase A4 context</td></tr>
+<tr><td>trap / trap_label</td><td>🟢 / 🟢 非陷阱</td><td>§1 trap 一致性 check ✓</td></tr>
+<tr><td>moat / moat_score</td><td>A / 9</td><td>Phase A1 cross-check ✓ aligned</td></tr>
+<tr><td>moat_execution / moat_pricing_power</td><td>9.0 / 8.5</td><td>Phase A1 二維 adoption ✓ aligned</td></tr>
+<tr><td>val</td><td>🟠</td><td>§4 valuation input + §7 decision matrix</td></tr>
+<tr><td>fpe_fy2 / pct_5y / peg_fy2</td><td>27.4 / 87 / 1.92</td><td>§4 model inputs（同 DCA 自身估算）</td></tr>
+<tr><td>ma</td><td>✅</td><td>§7c MA 相容 check ✓</td></tr>
+<tr><td>price_at_dd</td><td>466.60</td><td>§7 進場價區間錨點</td></tr>
+<tr><td>upside_short / mid / 5y_pct</td><td>−4.2 / 2.2 / 34</td><td>§4 Asymmetry 對照 — DCA 5Y +34% Base 同 DD</td></tr>
+<tr><td>stress.pass / total</td><td>1 / 4（QC-29 stress 通過率）</td><td>§4 conviction grade 校驗</td></tr>
+<tr><td>ai_risk</td><td>🟢</td><td>Phase A2 對照 ✓ aligned（AI 受益）</td></tr>
+<tr><td>long_term_confidence</td><td>高</td><td>§7d 持有年限校準 — DCA 建議中-長期 ✓</td></tr>
+<tr><td>oneliner</td><td>🟢順風 / A 級護城河 9 / Q1 26 bookings $6.69B +27% backlog $10.7B record / EPS guide raised $14.75-14.95｜Fwd PE 31.3x 5Y 87% PEG 2.16｜R:R 短 0.13 中 0.65 5Y 1.08｜訊號 B 等修復</td><td>Phase A4 quick read</td></tr>
+</table>
+
+<h4>DD 章節關鍵 reference（v12.3 編號）</h4>
+<ul>
+<li><strong>DD §1：</strong>trap 🟢 非陷阱（DCA confirm）+ 最關鍵監測 3 指標 = Americas Comm HVAC Bookings YoY / FY+1 EPS 共識 90d / FPE FY+1 + 訴訟更新</li>
+<li><strong>DD §5：</strong>H1 數據中心 / H2 定價權 + ROIC / H3 多年 backlog；R1 ⚡ Hyperscaler / R2 🔥 訴訟 / R3 🐢 整合失敗 / R4 ⚡ 同業 PE 收斂</li>
+<li><strong>DD §5.F single thing：</strong>Hyperscaler 4 家 ≥ 3 家連 2 季 Capex YoY −10% — <strong>DCA §5 完全 aligned</strong></li>
+<li><strong>DD §8：</strong>Runway 10+ 年 / AI 風險 🟢；衰退信號偵測 0 紅燈 + 2 黃燈（GM Q1 dilution / EPS-Rev divergence Q1 過渡性）</li>
+<li><strong>DD §9：</strong>execution + pricing power 二維 aligned；24 個月威脅 🟡 點對點（液冷標準）+ 🔴 生態（CARR+Viessmann）+ ⛔ 架構（DOJ 分拆，機率 5-10%）</li>
+<li><strong>DD §10：</strong>三年趨勢全擴張 + 同業中位領先 4-5pp + FCF lumpiness 評估：非結構 lumpy（2022 一次性 cyclical 谷底）</li>
+<li><strong>DD §13.4：</strong>peer tier 1 包 CARR / LII / JCI / Daikin；溢價 49% vs Tier 1 中位 — 略超合理範圍 10-15%</li>
+</ul>
+
+<p><strong>Fallback chain status：</strong>(1) dd-meta JSON parse 成功 ✓ 用 structured 欄位（v12.3 DD 99% 命中）。無需 HTML fallback。</p>
+</div>
+</details>
+
+<!-- 最終自檢清單 -->
+<h2>最終自檢清單（HTML 寫完前已逐條完成）</h2>
+<table>
+<tr><th>項目</th><th>狀態</th></tr>
+<tr><td>A1 sourced data points</td><td>✅ 6 / target ≥ 5（92% retention、50M devices、$1→$2、ROIC 18.9 vs 13.9、GM 36.2 vs 30.7、市佔 ~22%）</td></tr>
+<tr><td>A2 sourced data points</td><td>✅ 7 / target ≥ 5（HVAC TAM、DC HVAC TAM、液冷 31.5%、Vertiv 11.3%、Daikin Chilldyne、訴訟 3/20、NVIDIA 600kW+）</td></tr>
+<tr><td>A3 sourced data points</td><td>✅ 8 / target ≥ 6（Q1 26 數字、FY25 actuals、ROIC、共識 EPS、5Y returns、CEO comp、capital deploy、dividend +12%）</td></tr>
+<tr><td>Phase B 強制裁決</td><td>✅ C3 唯一不可調和矛盾，已選 A3、列硬數據點 4 條、執行路徑 2 條（方向相反）</td></tr>
+<tr><td>§6 三段式</td><td>✅ 故事倒推 → 校驗 ✅ Aligned → §5 不需修正（pre-mortem 故事 = §5 trigger 具體展開）</td></tr>
+<tr><td>§7a opportunity cost</td><td>✅ 點名 VRT（pure-play AI thermal）+ CARR（cheaper HVAC OEM），具體 R:R / ROIC / 護城河比較</td></tr>
+<tr><td>§8 保質期</td><td>✅ 至 2026-07-29（Q2 26 法說會）</td></tr>
+<tr><td>HTML 大小估</td><td>✅ ~65KB（≥ 55KB 門檻）</td></tr>
+<tr><td>moat_trend</td><td>✅ ↑ widening + evidence「ROIC 13.9 → 18.9 / 同業差距 +1.9pp → +3.9pp」</td></tr>
+<tr><td>runway_post_y5</td><td>✅ 🟢 寬（Y5 末滲透 55% vs 當前 40% + 第二曲線 2027 啟動）</td></tr>
+<tr><td>IRR composition</td><td>✅ Base 加總 7.3% vs §4 表 6.0% diff 1.3%p ≤ 2%p ✓</td></tr>
+<tr><td>§6c Max DD 範圍</td><td>✅ −38% ~ −48%（寬度 10%p）/ 🟡 評級 / §7a 倉位 8% 上限合理（無需自動下修）</td></tr>
+<tr><td>Status Bar 5 格</td><td>✅ DD 訊號 B / 護城河 A↑ / Runway 🟢 寬 / Max DD −38~−48% / DCA 裁決 觀望</td></tr>
+<tr><td>head dca-moat-trend</td><td>✅ ↑（單一）</td></tr>
+<tr><td>head dca-verdict</td><td>✅ 觀望</td></tr>
+<tr><td>裁決三處一致</td><td>✅ Status Bar 觀望 / head marker 觀望 / §7 裁決晶片 觀望</td></tr>
+<tr><td>觀望路徑分支</td><td>✅ §7a 初始倉位 0% / §7b 含具體觸發條件（4 條）</td></tr>
+<tr><td>決策矩陣優先序一致</td><td>✅ DD = B + 估值 🟠 → 矩陣 #8 觀望 ✓</td></tr>
+</table>
+
+<p><strong>All checks passed. DCA 完整、可執行。</strong></p>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</main>
+</body>
+</html>
