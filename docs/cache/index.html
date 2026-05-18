@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Data Cache · InvestMQuest Research</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;margin:0}
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.18rem;flex-wrap:wrap}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.42rem .9rem;font-size:.78rem;color:rgba(255,255,255,.7) !important;text-decoration:none !important}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-dd-menu a.active{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-caret{font-size:.65rem;opacity:.6}
+
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px}
+.hero-inner{max-width:1140px;margin:0 auto}
+.hero-h1{font-size:24px;font-weight:600;color:#0f2a45;margin:0 0 6px}
+.hero-sub{font-size:13px;color:#5a7a9a;line-height:1.65;max-width:780px}
+
+.section{max-width:1140px;margin:18px auto;padding:0 32px}
+.card{background:#fff;border:1px solid #dce8f5;border-radius:8px;padding:18px 22px;margin-bottom:16px}
+.card-h{font-size:14px;font-weight:600;color:#0f2a45;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+
+table.tbl{width:100%;border-collapse:collapse;font-size:12px}
+table.tbl th{text-align:left;color:#5a7a9a;font-weight:600;padding:6px 10px;border-bottom:1px solid #dce8f5;background:#f0f5fb}
+table.tbl td{padding:6px 10px;border-bottom:1px solid #f0f5fb;vertical-align:top}
+table.tbl tr:last-child td{border-bottom:none}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-amber{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-gray{background:#e2e8f0;color:#475569}
+
+.bar-wrap{display:flex;align-items:center;gap:8px;margin-top:4px}
+.bar-track{flex:1;height:8px;background:#f0f5fb;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-label{font-size:11px;color:#5a7a9a;min-width:120px}
+.bar-count{font-size:11px;color:#1e3a5f;font-weight:600;min-width:32px;text-align:right}
+
+input[type=text]#ticker-search{padding:8px 12px;border:1px solid #dce8f5;border-radius:6px;font-size:13px;width:320px;font-family:inherit;color:#1e3a5f;outline:none}
+input[type=text]#ticker-search:focus{border-color:#1e3a5f}
+button#lookup-btn{padding:8px 16px;border:none;border-radius:6px;background:#1e3a5f;color:#fff;font-size:13px;cursor:pointer;font-family:inherit;margin-left:8px}
+button#lookup-btn:hover{background:#0f2a45}
+
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:12px;color:#1e3a5f}
+.kv .k{color:#5a7a9a;font-weight:500}
+.kv .v{font-family:'SF Mono',Monaco,'Cascadia Code','Roboto Mono',monospace}
+
+.subsection{padding:10px 0;border-top:1px solid #f0f5fb}
+.subsection:first-of-type{border-top:none}
+.subsection-h{font-size:12px;font-weight:600;color:#0f2a45;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
+.subsection-h small{font-size:10px;color:#94a3b8;font-weight:400}
+
+.derived-block{margin-top:10px;padding:10px 12px;background:#f0f5fb;border-radius:6px}
+.derived-block .subsection-h{color:#1e3a5f}
+.num-pos{color:#166534;font-weight:600}
+.num-neg{color:#991b1b;font-weight:600}
+.num-neutral{color:#1e3a5f}
+
+.failed-list{font-size:11px;color:#5a7a9a;font-family:'SF Mono',Monaco,monospace;line-height:1.8}
+.failed-list span{display:inline-block;margin:2px 4px;padding:2px 6px;background:#fee2e2;color:#991b1b;border-radius:3px}
+
+.state-msg{padding:60px 24px;text-align:center;color:#94a3b8;font-size:13px}
+.state-msg code{background:#f0f5fb;padding:2px 6px;border-radius:4px;font-family:monospace}
+
+@media(max-width:768px){
+  .hero{padding:16px}
+  .hero-h1{font-size:18px}
+  .section{padding:0 16px}
+  .kv{grid-template-columns:120px 1fr}
+  input[type=text]#ticker-search{width:200px}
+}
+</style>
+</head>
+<body>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+        </div>
+      </div>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">市場<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/briefing/">每日簡報</a>
+          <a href="/weekly/">週報</a>
+          <a href="/earnings/">財報分析</a>
+          <a href="/markets.html">Markets</a>
+          <a href="/sectors.html">Sectors</a>
+          <a href="/six-state/">六狀態機</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/backtest/">量化回測</a>
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/dd-screener/alpha-rank.html">🎯 Alpha Rank</a>
+          <a href="/dd-screener/quality-entry.html">🟢 Quality-Entry</a>
+          <a href="/qgm/">QGM 美股</a>
+          <a href="/qgm-tw/">QGM 台股</a>
+          <a href="/screener.html">Screener 美股</a>
+          <a href="/screener-tw.html">Screener 台股</a>
+          <a href="/screener-jp.html">Screener 日股</a>
+          <a href="/cache/" class="active">🗄 Data Cache</a>
+        </div>
+      </div>
+      <a href="/flow/">🎯 Flow</a>
+      <a href="/mental-models/">🧠 心智模型</a>
+      <a href="/how-to.html">📘 使用說明</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')})});})();</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <h1 class="hero-h1">🗄 Data Cache 狀態</h1>
+    <div class="hero-sub">
+      4 個 cache JSON 的新鮮度、來源、覆蓋率 + per-ticker 查詢工具。<br>
+      Producer 階段（尚無 consumer 接線）— 純粹資料庫狀態檢視。
+      規範細節見 <a href="/cache/README.md" style="color:#1e3a5f">README</a>。
+    </div>
+  </div>
+</div>
+
+<div class="section">
+
+  <!-- Block 1: Freshness panel -->
+  <div class="card">
+    <div class="card-h">📊 新鮮度 / 健康度</div>
+    <div id="freshness-body">
+      <div class="state-msg">載入中…</div>
+    </div>
+  </div>
+
+  <!-- Block 2: Source breakdown -->
+  <div class="card">
+    <div class="card-h">📈 來源分佈</div>
+    <div id="sources-body"></div>
+  </div>
+
+  <!-- Block 3: Per-ticker lookup -->
+  <div class="card">
+    <div class="card-h">🔍 Ticker 查詢</div>
+    <div style="margin-bottom:12px">
+      <input type="text" id="ticker-search" placeholder="輸入 ticker (e.g. NVDA, 2330, RMS.PA)" list="ticker-list" autocomplete="off">
+      <datalist id="ticker-list"></datalist>
+      <button id="lookup-btn">查詢</button>
+    </div>
+    <div id="ticker-body"></div>
+  </div>
+
+  <!-- Block 4: Failed tickers + indices -->
+  <div class="card">
+    <div class="card-h">⚠️ Failed tickers</div>
+    <div id="failed-body"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">📡 Indices snapshot</div>
+    <div id="indices-body"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── Data loaders ───────────────────────────────────────────────────────────
+const DATA = { fund: {}, prices: {} };
+
+async function loadAll() {
+  const files = [
+    ['fund', 'us', 'fundamentals-us.json'],
+    ['fund', 'tw', 'fundamentals-tw.json'],
+    ['prices', 'us', 'prices-us.json'],
+    ['prices', 'tw', 'prices-tw.json'],
+  ];
+  await Promise.all(files.map(async ([kind, region, fname]) => {
+    try {
+      const resp = await fetch('/cache/' + fname + '?t=' + Date.now());
+      if (resp.ok) {
+        DATA[kind][region] = await resp.json();
+      } else {
+        DATA[kind][region] = null;
+      }
+    } catch (e) {
+      DATA[kind][region] = null;
+    }
+  }));
+  render();
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function daysAgo(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Math.round((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
+}
+function hoursAgo(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Math.round((Date.now() - d.getTime()) / (1000 * 60 * 60));
+}
+function fmt(v, digits) {
+  if (v === null || v === undefined) return '—';
+  if (typeof v === 'number') return v.toFixed(digits ?? 2);
+  return String(v);
+}
+function signedFmt(v, digits) {
+  if (v === null || v === undefined) return '—';
+  const n = parseFloat(v);
+  const sign = n > 0 ? '+' : '';
+  const cls = n > 0 ? 'num-pos' : (n < 0 ? 'num-neg' : 'num-neutral');
+  return '<span class="' + cls + '">' + sign + n.toFixed(digits ?? 2) + '</span>';
+}
+function statusBadge(status) {
+  const cls = status === 'ok' ? 'badge-green'
+    : status === 'partial-warn' ? 'badge-amber'
+    : status === 'partial-error' ? 'badge-red'
+    : 'badge-gray';
+  return '<span class="badge ' + cls + '">' + status + '</span>';
+}
+function ageBadge(days, hoursMode) {
+  if (days === null) return '<span class="badge badge-gray">unknown</span>';
+  let cls = 'badge-green', label;
+  if (hoursMode) {
+    label = days + ' h ago';
+    if (days > 48) cls = 'badge-red';
+    else if (days > 24) cls = 'badge-amber';
+  } else {
+    label = days + ' d ago';
+    if (days > 45) cls = 'badge-red';
+    else if (days > 30) cls = 'badge-amber';
+  }
+  return '<span class="badge ' + cls + '">' + label + '</span>';
+}
+
+// ─── Block 1: Freshness panel ──────────────────────────────────────────────
+function renderFreshness() {
+  const rows = [
+    ['US', 'Monthly · Fundamentals', DATA.fund.us, false],
+    ['TW', 'Monthly · Fundamentals', DATA.fund.tw, false],
+    ['US', 'Daily · Prices', DATA.prices.us, true],
+    ['TW', 'Daily · Prices', DATA.prices.tw, true],
+  ];
+  let html = '<table class="tbl"><thead><tr>'
+    + '<th>Region</th><th>Type</th><th>Last refresh</th><th>Next due</th>'
+    + '<th>Coverage</th><th>Failed</th><th>Status</th></tr></thead><tbody>';
+  for (const [region, type, data, hoursMode] of rows) {
+    if (!data) {
+      html += '<tr><td>' + region + '</td><td>' + type + '</td>'
+        + '<td colspan="5" style="color:#94a3b8">cache file not found</td></tr>';
+      continue;
+    }
+    const age = hoursMode ? hoursAgo(data.run_timestamp) : daysAgo(data.run_timestamp);
+    const ageHtml = ageBadge(age, hoursMode);
+    const next = data.next_refresh_due
+      || (hoursMode ? '每交易日' : '');
+    const cov = data.health.success_count + '/' + data.universe_size
+      + ' (' + Math.round(100 * data.health.success_count / data.universe_size) + '%)';
+    html += '<tr>'
+      + '<td><strong>' + region.toUpperCase() + '</strong></td>'
+      + '<td>' + type + '</td>'
+      + '<td>' + data.as_of + ' ' + ageHtml + '</td>'
+      + '<td>' + next + '</td>'
+      + '<td>' + cov + '</td>'
+      + '<td>' + data.health.failed_count + '</td>'
+      + '<td>' + statusBadge(data.health.status) + '</td>'
+      + '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('freshness-body').innerHTML = html;
+}
+
+// ─── Block 2: Source breakdown ─────────────────────────────────────────────
+function renderSources() {
+  const sections = [
+    ['Monthly Fundamentals · US', DATA.fund.us],
+    ['Monthly Fundamentals · TW', DATA.fund.tw],
+    ['Daily Prices · US', DATA.prices.us],
+    ['Daily Prices · TW', DATA.prices.tw],
+  ];
+  let html = '';
+  for (const [title, data] of sections) {
+    if (!data) continue;
+    html += '<div class="subsection"><div class="subsection-h">' + title
+      + ' <small>(' + data.universe_size + ' tickers)</small></div>';
+    const sb = data.source_breakdown;
+    const max = Math.max(...Object.values(sb).map(v => Math.abs(v || 0)));
+    const palette = { 'qgm-us': '#3b82f6', 'qgm-tw': '#3b82f6',
+      'yfinance': '#10b981', 'yfinance-eu': '#10b981',
+      'yfinance-jp': '#10b981', 'yfinance-hk': '#10b981',
+      'screener-us-mirror': '#10b981', 'screener-tw-mirror': '#10b981',
+      'yfinance-fallback': '#f59e0b', 'failed': '#ef4444' };
+    for (const [src, cnt] of Object.entries(sb)) {
+      const pct = max > 0 ? (Math.abs(cnt) / max * 100) : 0;
+      const color = palette[src] || '#94a3b8';
+      html += '<div class="bar-wrap">'
+        + '<span class="bar-label">' + src + '</span>'
+        + '<span class="bar-track"><span class="bar-fill" style="width:' + pct.toFixed(0) + '%;background:' + color + '"></span></span>'
+        + '<span class="bar-count">' + cnt + '</span>'
+        + '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('sources-body').innerHTML = html || '<div class="state-msg">無資料</div>';
+}
+
+// ─── Block 3: Ticker lookup ────────────────────────────────────────────────
+function buildTickerList() {
+  const all = new Set();
+  for (const d of [DATA.fund.us, DATA.fund.tw, DATA.prices.us, DATA.prices.tw]) {
+    if (d && d.tickers) {
+      Object.keys(d.tickers).forEach(t => all.add(t));
+    }
+  }
+  const list = document.getElementById('ticker-list');
+  list.innerHTML = [...all].sort()
+    .map(t => '<option value="' + t + '">').join('');
+}
+
+function findTicker(t) {
+  return {
+    fund_us: (DATA.fund.us?.tickers || {})[t],
+    fund_tw: (DATA.fund.tw?.tickers || {})[t],
+    prices_us: (DATA.prices.us?.tickers || {})[t],
+    prices_tw: (DATA.prices.tw?.tickers || {})[t],
+  };
+}
+
+function renderKv(obj, formatter) {
+  if (!obj) return '<div style="color:#94a3b8">—</div>';
+  let html = '<div class="kv">';
+  for (const [k, v] of Object.entries(obj)) {
+    html += '<div class="k">' + k + '</div>'
+      + '<div class="v">' + (formatter ? formatter(k, v) : fmt(v)) + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderTicker(ticker) {
+  if (!ticker) {
+    document.getElementById('ticker-body').innerHTML
+      = '<div class="state-msg">輸入 ticker 後按查詢，或從 autocomplete 選擇</div>';
+    return;
+  }
+  const t = ticker.toUpperCase().trim();
+  const hits = findTicker(t);
+  const fund = hits.fund_us || hits.fund_tw;
+  const prices = hits.prices_us || hits.prices_tw;
+  const region = hits.fund_us || hits.prices_us ? 'US' : (hits.fund_tw || hits.prices_tw ? 'TW' : '?');
+
+  if (!fund && !prices) {
+    document.getElementById('ticker-body').innerHTML
+      = '<div class="state-msg"><strong>' + t + '</strong> 不在 cache 中</div>';
+    return;
+  }
+
+  let html = '<h3 style="margin:0 0 12px;font-size:16px;color:#0f2a45">'
+    + t + ' <small style="color:#94a3b8;font-weight:normal">· region: ' + region
+    + (fund ? ' · source: ' + fund.quality_source : '')
+    + (fund ? ' · currency: ' + fund.currency : '')
+    + '</small></h3>';
+
+  if (fund) {
+    const ageD = daysAgo(fund.fetched_at);
+    html += '<div class="subsection"><div class="subsection-h">📊 Monthly Fundamentals '
+      + '<small>· refreshed ' + (DATA.fund[region.toLowerCase()] || {}).as_of
+      + ' (' + ageD + ' d ago)</small></div>';
+    const pctFmt = (k, v) => v === null ? '—' : (v + '%');
+    html += '<div class="kv">';
+    html += '<div class="k">quality</div><div class="v">'
+      + 'fcf=' + fmt(fund.quality?.fcf) + '%, '
+      + 'roic=' + fmt(fund.quality?.roic) + '%, '
+      + 'eps2y=' + fmt(fund.quality?.eps2y) + '%, '
+      + 'peg=' + fmt(fund.quality?.peg) + ', '
+      + 'de=' + fmt(fund.quality?.de, 3)
+      + '</div>';
+    html += '<div class="k">eps_estimate</div><div class="v">'
+      + 'fy0=' + fmt(fund.eps_estimate?.fy0) + ', '
+      + 'fy1=' + fmt(fund.eps_estimate?.fy1)
+      + '</div>';
+    html += '<div class="k">info</div><div class="v">'
+      + 'forwardEps=' + fmt(fund.info?.forwardEps) + ', '
+      + 'trailingEps=' + fmt(fund.info?.trailingEps) + ', '
+      + 'bookValue=' + fmt(fund.info?.bookValue)
+      + '</div>';
+    html += '<div class="k">growth</div><div class="v">'
+      + 'rev_yoy=' + fmt(fund.growth?.rev_growth_yoy) + '%'
+      + '</div>';
+    html += '<div class="k">margins</div><div class="v">'
+      + 'gross=' + fmt(fund.margins?.gross) + '%, '
+      + 'op=' + fmt(fund.margins?.operating) + '%, '
+      + 'net=' + fmt(fund.margins?.net) + '%'
+      + '</div>';
+    html += '<div class="k">trends</div><div class="v">'
+      + 'quality_score=' + fmt(fund.trends?.quality_score) + ', '
+      + 'roic_5y_stab=' + fmt(fund.trends?.roic_5y_stability, 3) + ', '
+      + 'fcf_5y_norm=' + fmt(fund.trends?.fcf_5y_normalized, 4)
+      + '</div>';
+    html += '<div class="k">quarterly</div><div class="v">'
+      + 'eps_neg_streak=' + (fund.quarterly?.eps_yoy_neg_streak ?? '—') + ', '
+      + 'fcf_decline=' + (fund.quarterly?.fcf_margin_decline_streak ?? '—')
+      + '</div>';
+    html += '</div></div>';
+  }
+
+  if (prices) {
+    const ageH = hoursAgo((DATA.prices[region.toLowerCase()] || {}).run_timestamp);
+    html += '<div class="subsection"><div class="subsection-h">📈 Daily Prices '
+      + '<small>· refreshed ' + (DATA.prices[region.toLowerCase()] || {}).as_of
+      + ' (' + ageH + ' h ago, source: ' + prices.source + ')</small></div>';
+    html += '<div class="kv">';
+    html += '<div class="k">price</div><div class="v">'
+      + fmt(prices.price) + ' (' + signedFmt(prices.close_change_pct, 2) + '%)'
+      + '</div>';
+    html += '<div class="k">52w</div><div class="v">'
+      + 'dist_high=' + signedFmt(prices.dist_52w_high_pct, 1) + '%'
+      + '</div>';
+    html += '<div class="k">MAs</div><div class="v">'
+      + 'ma21=' + signedFmt(prices.ma21_pct, 1) + '%, '
+      + 'ma50=' + signedFmt(prices.ma50_pct, 1) + '%, '
+      + 'vs_200=' + signedFmt(prices.vs_200ma_pct, 1) + '%, '
+      + 'trend_ok=' + (prices.trend_ok ? '✓' : '✗')
+      + '</div>';
+    if (prices.rs_score !== null && prices.rs_score !== undefined) {
+      html += '<div class="k">RS</div><div class="v">'
+        + 'score=' + fmt(prices.rs_score, 1)
+        + (prices.rs_1w !== undefined ? ' (1w=' + fmt(prices.rs_1w, 0)
+          + ', 4w=' + fmt(prices.rs_4w, 0)
+          + ', 13w=' + fmt(prices.rs_13w, 0) + ')' : '')
+        + '</div>';
+    }
+    html += '<div class="k">tech</div><div class="v">'
+      + 'rsi14=' + fmt(prices.rsi14, 1) + ', '
+      + 'atr_pct=' + fmt(prices.atr_pct, 2) + '%'
+      + '</div>';
+    html += '</div></div>';
+  }
+
+  // Derived (live computed from cache)
+  if (fund && prices && prices.price && fund.eps_estimate?.fy1) {
+    const price = prices.price;
+    const fy0 = fund.eps_estimate.fy0;
+    const fy1 = fund.eps_estimate.fy1;
+    const eps2y = fund.quality?.eps2y;
+    const fy0_per = fy0 ? (price / fy0) : null;
+    const fy1_per = fy1 ? (price / fy1) : null;
+    const peg = (fy1 && eps2y) ? (price / fy1 / (eps2y / 100)) : null;
+    html += '<div class="derived-block"><div class="subsection-h">⚡ Derived (consumer-side calc from cache)</div>';
+    html += '<div class="kv">';
+    html += '<div class="k">PEG (live)</div><div class="v">'
+      + (peg ? peg.toFixed(2) + '  <small style="color:#94a3b8">= price / fy1 / (eps2y/100)</small>' : '—')
+      + '</div>';
+    html += '<div class="k">fy0_per</div><div class="v">'
+      + (fy0_per ? fy0_per.toFixed(2) + 'x' : '—')
+      + '</div>';
+    html += '<div class="k">fy1_per</div><div class="v">'
+      + (fy1_per ? fy1_per.toFixed(2) + 'x' : '—')
+      + '</div>';
+    html += '</div></div>';
+  }
+
+  document.getElementById('ticker-body').innerHTML = html;
+}
+
+// ─── Block 4: Failed tickers ───────────────────────────────────────────────
+function renderFailed() {
+  const groups = [
+    ['Fundamentals · US', DATA.fund.us],
+    ['Fundamentals · TW', DATA.fund.tw],
+    ['Prices · US', DATA.prices.us],
+    ['Prices · TW', DATA.prices.tw],
+  ];
+  let html = '';
+  let total = 0;
+  for (const [title, data] of groups) {
+    if (!data) continue;
+    const list = data.failed_tickers || [];
+    total += list.length;
+    if (list.length === 0) continue;
+    html += '<div class="subsection"><div class="subsection-h">'
+      + title + ' <small>· ' + list.length + ' failed</small></div>';
+    html += '<div class="failed-list">'
+      + list.map(t => '<span>' + t + '</span>').join('')
+      + '</div></div>';
+  }
+  if (total === 0) html = '<div style="color:#94a3b8;font-size:12px">無失敗 ticker</div>';
+  document.getElementById('failed-body').innerHTML = html;
+}
+
+// ─── Indices ────────────────────────────────────────────────────────────────
+function renderIndices() {
+  let html = '';
+  for (const [region, data] of [['US', DATA.prices.us], ['TW', DATA.prices.tw]]) {
+    if (!data || !data.indices || Object.keys(data.indices).length === 0) continue;
+    html += '<div class="subsection"><div class="subsection-h">'
+      + region + ' indices <small>(from ' + region.toLowerCase() + ' prices cache)</small></div>';
+    for (const [sym, d] of Object.entries(data.indices)) {
+      html += '<div class="kv">';
+      html += '<div class="k">' + sym + '</div><div class="v">'
+        + 'price=' + fmt(d.price) + ' (' + signedFmt(d.close_change_pct, 2) + '%)'
+        + (d.drawdown_52w_high_pct !== undefined
+          ? ', dd_from_high=' + signedFmt(d.drawdown_52w_high_pct, 2) + '%'
+          : '')
+        + (d.market_state ? ', state=<strong>' + d.market_state + '</strong>' : '')
+        + (d.six_state_id ? ', six_state=<strong>' + d.six_state_id + ' ' + (d.six_state_label || '') + '</strong>' : '')
+        + (d.distribution_days_25d !== null && d.distribution_days_25d !== undefined
+          ? ', dist_days_25d=' + d.distribution_days_25d : '')
+        + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+  document.getElementById('indices-body').innerHTML = html
+    || '<div style="color:#94a3b8;font-size:12px">無 indices 資料</div>';
+}
+
+// ─── Render orchestrator ────────────────────────────────────────────────────
+function render() {
+  renderFreshness();
+  renderSources();
+  buildTickerList();
+  renderFailed();
+  renderIndices();
+}
+
+// ─── Wire up ────────────────────────────────────────────────────────────────
+document.getElementById('lookup-btn').addEventListener('click', () => {
+  renderTicker(document.getElementById('ticker-search').value);
+});
+document.getElementById('ticker-search').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') renderTicker(e.target.value);
+});
+document.getElementById('ticker-search').addEventListener('input', (e) => {
+  // Auto-render when user picks from datalist (input event fires with full value)
+  const val = e.target.value.toUpperCase().trim();
+  const all = new Set();
+  for (const d of [DATA.fund.us, DATA.fund.tw, DATA.prices.us, DATA.prices.tw]) {
+    if (d?.tickers) Object.keys(d.tickers).forEach(t => all.add(t));
+  }
+  if (all.has(val)) renderTicker(val);
+});
+
+loadAll();
+</script>
+</body>
+</html>
