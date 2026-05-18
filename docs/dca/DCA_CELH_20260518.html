@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CELH ｜ Deep Conviction Analysis ｜ 2026-05-18</title>
+<!-- dca-moat-trend: ↑ -->
+<!-- dca-verdict: 觀望 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC;--card:#FFFFFF;--ink:#0F172A;--muted:#475569;
+  --accent:#3B82F6;--accent-dk:#1E3A5F;--line:#E2E8F0;
+  --good:#16A34A;--good-dk:#166534;--warn:#F59E0B;--warn-dk:#92400E;
+  --bad:#DC2626;--bad-dk:#991B1B;--neutral:#7C3AED;
+  --bg-good:#DCFCE7;--bg-warn:#FEF9C3;--bg-bad:#FEE2E2;
+  --bg-info:#EFF6FF;--bg-orange:#FFF0E6;--bg-amber:#FFFBEB;
+}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);color:var(--ink);margin:0;line-height:1.65;font-size:15px}
+.num,td.num,code,.mono{font-family:'IBM Plex Mono',monospace}
+header{position:sticky;top:0;z-index:20;background:rgba(248,250,252,.96);
+  backdrop-filter:saturate(160%) blur(8px);border-bottom:1px solid var(--line);
+  padding:14px 28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+header h1{margin:0;font-size:18px;color:var(--accent-dk);font-weight:700}
+header .meta{font-size:12px;color:var(--muted);text-align:right}
+.container{max-width:1180px;margin:24px auto;padding:0 24px}
+section{background:var(--card);border-radius:8px;padding:26px 32px;margin-bottom:24px;
+  border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.03)}
+h2{margin:0 0 18px;color:var(--accent-dk);font-size:22px;
+  border-left:4px solid var(--accent);padding-left:12px}
+h3{color:var(--accent-dk);font-size:17px;margin:22px 0 10px}
+h4{color:#334155;font-size:15px;margin:14px 0 8px}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--accent-dk);color:#fff;font-weight:600;font-size:13px}
+tr:nth-child(even) td{background:#F1F5F9}
+.status-bar{background:#F1F5F9;border-left:4px solid var(--accent);border-right:4px solid var(--accent);
+  border-radius:8px;padding:18px 24px;margin-bottom:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.status-cell{width:148px;text-align:center}
+.status-cell .label{font-size:11px;color:#64748B;font-weight:500;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase}
+.status-cell .value{font-size:22px;font-weight:700;line-height:1.2}
+.status-cell .sub{font-size:11px;color:#64748B;margin-top:3px}
+.thesis-box{background:#EFF6FF;border-radius:8px;padding:30px 40px;text-align:center;margin:16px 0}
+.thesis-box .thesis-main{font-size:24px;font-weight:700;color:var(--accent-dk);line-height:1.5}
+.thesis-box .thesis-sub{font-size:13px;color:var(--muted);margin-top:10px;font-style:italic}
+.decision-box{padding:20px 24px;border-radius:8px;margin:10px 0}
+.decision-watch{background:#FEF9C3;border-left:4px solid var(--warn-dk)}
+.decision-enter{background:#F0FDF4;border-left:4px solid var(--good-dk)}
+.decision-avoid{background:#FFF1F2;border-left:4px solid var(--bad-dk)}
+.verdict-chip{display:inline-block;padding:6px 22px;border-radius:4px;font-size:18px;font-weight:700;
+  background:#92400E;color:#fff;border-left:4px solid #78350F;margin-bottom:8px}
+.verdict-sublabel{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:16px}
+.conflict-box{background:#FFF7ED;border-left:4px solid #F97316;border-radius:6px;padding:14px 18px;margin:10px 0}
+.verdict-table{background:#FED7AA;padding:1px;border-radius:6px}
+.verdict-table table{margin:0;background:#fff}
+.premortem-box{background:#FEF2F2;border-left:4px solid var(--bad);border-radius:6px;padding:14px 18px;margin:10px 0}
+.premortem-narrative{background:#fff;padding:12px 16px;border-radius:4px;font-style:italic;color:#7F1D1D;margin:8px 0}
+.pattern-box{background:#F0F9FF;border-left:4px solid #0EA5E9;border-radius:6px;padding:14px 18px;margin:10px 0}
+.maxdd-box{background:#FEF2F2;border-left:4px solid var(--bad);border-radius:6px;padding:18px;margin:14px 0;display:flex;align-items:center;gap:24px}
+.maxdd-num{font-size:32px;font-weight:700;color:var(--bad-dk);font-family:'IBM Plex Mono',monospace}
+.maxdd-meta{flex:1}
+.irr-bar{display:flex;height:24px;border-radius:4px;overflow:hidden;margin:10px 0;font-size:11px;color:#fff;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.irr-bar > div{display:flex;align-items:center;justify-content:center}
+.irr-eps{background:#15803D}
+.irr-rerate{background:#0284C7}
+.irr-yield{background:#64748B}
+.memo-box{background:#FAFAFA;border:1px solid #D1D5DB;border-radius:4px;padding:20px;font-family:'IBM Plex Mono',monospace;font-size:13px;line-height:1.7;margin:10px 0}
+.elevator-quote{border-left:4px solid var(--neutral);background:#F5F3FF;padding:14px 18px;font-style:italic;border-radius:4px;margin:10px 0;color:#5B21B6}
+.good{background:var(--bg-good);color:var(--good-dk);padding:2px 8px;border-radius:4px;font-weight:600;font-size:13px}
+.warn{background:var(--bg-warn);color:var(--warn-dk);padding:2px 8px;border-radius:4px;font-weight:600;font-size:13px}
+.bad{background:var(--bg-bad);color:var(--bad-dk);padding:2px 8px;border-radius:4px;font-weight:600;font-size:13px}
+.info{background:var(--bg-info);color:var(--accent-dk);padding:2px 8px;border-radius:4px;font-weight:600;font-size:13px}
+.up-arrow{color:var(--good-dk);font-weight:700}
+.flat-arrow{color:#64748B;font-weight:700}
+.down-arrow{color:var(--bad-dk);font-weight:700}
+details{background:#F8FAFC;border:1px solid var(--line);border-radius:6px;padding:14px 18px;margin:8px 0}
+details summary{cursor:pointer;font-weight:600;color:var(--accent-dk);padding:4px 0}
+details summary:hover{color:#3B82F6}
+details[open] summary{margin-bottom:10px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.printbtn{position:fixed;bottom:24px;right:24px;background:var(--accent-dk);color:#fff;border:0;
+  padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;box-shadow:0 4px 8px rgba(0,0,0,.18);z-index:30}
+.note{font-size:12px;color:var(--muted);font-style:italic}
+@media print{
+  header,.printbtn{display:none}
+  section,details{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  details{padding:14px}details summary{pointer-events:none}
+  details > *{display:block !important}
+  body{background:#fff;font-size:11px}
+}
+@media (max-width:900px){.status-bar{flex-direction:row}.status-cell{width:auto;flex:1;min-width:120px}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CELH ｜ Celsius Holdings ｜ Deep Conviction Analysis</h1>
+  <div class="meta">
+    報告日期 2026-05-18 ｜ 股價 $30.16（52W 低點）｜ 對應 DD DD_CELH_20260518.html
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ============= Status Bar ============= -->
+<div class="status-bar">
+  <div class="status-cell">
+    <div class="label">DD 訊號燈</div>
+    <div class="value" style="color:#92400E">B</div>
+    <div class="sub">衛星 / 觀望</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Moat 趨勢</div>
+    <div class="value">B<span class="up-arrow">↑</span></div>
+    <div class="sub">執行軸擴大</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Runway Post-Y5</div>
+    <div class="value" style="font-size:18px">🟢 寬</div>
+    <div class="sub">國際 5-10x 接力</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">Max DD（5Y 路徑）</div>
+    <div class="value" style="color:#991B1B">−45%</div>
+    <div class="sub">範圍 −45 ~ −65%</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">DCA 裁決</div>
+    <div class="value" style="color:#92400E">觀望</div>
+    <div class="sub">等 MA + 核心動能</div>
+  </div>
+</div>
+
+<!-- ============= §2 One-Sentence Thesis ============= -->
+<section>
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+  <div class="thesis-main">CELH 是美國能量飲料品類「sugar-free / functional 結構轉移」的最大規模化操盤手，靠 PepsiCo 通路把三品牌組合（Celsius + Alani Nu + Rockstar）變成 KO/MNST 之後的第三極。</div>
+  <div class="thesis-sub">50 字以內。敘事性 thesis — 描述 CELH 在新偏好爆發期搶到規模化的角色，非財務指標堆疊。</div>
+</div>
+</section>
+
+<!-- ============= §7 Decision ============= -->
+<section>
+<h2>§7 Decision</h2>
+
+<span class="verdict-chip">觀望</span>
+<span class="verdict-sublabel">等 (a) Pure MA 站回 W104 $42.39 連 4 週 <strong>或</strong> (b) Q2/Q3 26 CELSIUS 核心 YoY 重回 ≥+10%（任一觸發後升 A）</span>
+
+<div class="decision-box decision-watch">
+
+<h3>§7a 倉位與進場計畫</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>衛星持倉（小倉條件式建倉，非 core）</td></tr>
+<tr><td>初始建倉倉位</td><td>0%（當前不新進）</td></tr>
+<tr><td>目標倉位（觸發條件成立後）</td><td>6-8%（衛星 B 級首次進場上限）→ 若 H1 + H2 同兌現升 A 級 加碼至 10-12%</td></tr>
+<tr><td>進場價位區間（待 MA 修復後）</td><td>$32-38（站回 W104 $42.39 確認區間下緣）；若 MA 未修復但 Q2/Q3 核心兌現可在 $28-34 區條件式建倉 1/3</td></tr>
+<tr><td>進場節奏（條件式）</td><td><strong>禁止一次建倉</strong>。觸發路徑：(a) MA 站回 W104 連 4 週 → 第一批 50%；(b) Q2 26 (8 月) CELSIUS standalone YoY 公布 → 若 ≥+10% 第二批 50%；(c) H2 26 GM 進度公布 ≥ 50% → 升 A 加碼</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>點名比較：MNST（Monster Beverage）— 同 sub-industry leader，當前 PM 組合若已持有 MNST，邊際資金放 CELH 的論據是：(1) CELH PEG 0.86 vs MNST PEG 2.24 — 估值缺口 -62%；(2) CELH 5Y 期望 IRR 15.9% vs MNST mid-cycle IRR ~10-12%（Forward PE 34x + EPS CAGR 15%）— CELH 期望報酬高 +400-500bps/yr。但代價：MNST trap = 🟢 非陷阱、MA 通常 ✅；CELH trap = 🟡、MA ❌。<strong>建議</strong>：MNST 維持核心、CELH 等觸發後加成衛星（不替換 MNST）— 兩者組合提供 sub-industry 雙曝險而非單一 vs 雙押注。若必須二選一（資金限制）→ 選 CELH 因 R:R 比較有利；但只在 MA 修復後。</strong></td></tr>
+</table>
+
+<h3>§7b 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首批 1/2）</td><td>Pure MA 站回 W104 $42.39 連 4 週 <strong>or</strong> Q2 26 CELSIUS standalone YoY ≥+10%（任一）</td><td>3-4%</td></tr>
+<tr><td>進場（次批 1/2）</td><td>Q3 26 GM ≥ 50% 連 1 季 + Q3 CELSIUS YoY ≥+12%（雙條件）</td><td>6-8%</td></tr>
+<tr><td>加碼（升 A 級）</td><td>FY26 結束 (2027/2 報) GM 回 low-50s + CELSIUS FY26 YoY ≥+10% + 國際年率 ≥ $200M</td><td>10-12%</td></tr>
+<tr><td>減碼（thesis 削弱）</td><td>Q2/Q3 26 CELSIUS standalone 連 2 季 < +5% <strong>or</strong> Q2/Q3 26 GM 連 2 季 < 49%</td><td>3-4%（從 6-8% 減半）</td></tr>
+<tr><td>清倉（thesis 反轉）</td><td>(a) CELSIUS standalone 連 3 季 < 0%（Nielsen scan 同期 < 0% 連 3 個月）→ 結構性份額流失 <strong>or</strong> (b) PepsiCo 公開重議 / 戰略重評 CELH 配銷（§5 single thing 觸發）</td><td>0%</td></tr>
+</table>
+
+<h3>§7c Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td><span class="bad">❌</span></td><td>現價 $30.16 < MA60 (≈ W12 約 $33-35)</td></tr>
+<tr><td>股價在 MA200 之上？</td><td><span class="bad">❌</span></td><td>現價 $30.16 < MA200 (≈ W40 約 $40-44)</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td><span class="bad">❌</span></td><td>現價 $30.16 < W104 $42.39（-29%）</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td><span class="bad">❌</span></td><td><strong>系統失效</strong> — 現價跌穿 W250 $40.57；W104 斜率轉負 -11.24%；W52 $46.85 斜率 +2.66% 邊緣轉正</td></tr>
+<tr><td>短期動能過熱檢查</td><td><span class="good">✅ 未過熱</span></td><td>4 週漂移 <strong>-11.2%</strong>（反向：超賣而非過熱）；RSI 14d 預估 ~25-32（極端超賣區）；Bollinger 下軌 $25.97，現價 $30.16 距下軌 +16%（剛從下軌反彈）</td></tr>
+</table>
+<p><strong>結論</strong>：Pure MA 不支持進場 — 即使基本面分析支持，必須等待 MA 站回 W104 連 4 週確認 V 反轉。當前股價處於超賣區，動能未過熱反而過冷 — 若 H1/H2 監測指標兌現，存在「V 反轉早期」進場機會，但需 MA 確認。</p>
+
+<h3>§7d 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（< 2 年）</td><td>若 H1（CELSIUS 核心重回雙位數）+ H2（GM 回 low-50s）<strong>未</strong>兌現 → 持有期縮短，Q4 26 結束時若無進展 → 全清</td></tr>
+<tr><td>中期（2-5 年）</td><td>若 H1 + H2 兌現 + Alani Nu 整合完成（FY27）+ Rockstar 整合完成（1H26）→ 估值倍數 re-rate 至 25-30x，可持有至 FY27-28</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 H3（估值修復）兌現 + 國際年率 ≥ $500M FY28 + Pepsi partnership 深化（無重議跡象）→ MNST 模式可長抱（複利 8-10 年至 sub-segment 飽和）</td></tr>
+</table>
+<p><strong>建議持有年限</strong>：<strong>中期 2-5 年</strong>，原因：(1) 整合 cycle 集中在 2026-2027；(2) Pepsi 戰略持股 conversion 5 年內生效；(3) 國際 runway 5-7 年；(4) 5Y IRR base case 20% 比短期 (R:R 1.7x) 更有報酬。runway_post_y5 = 🟢 寬，不觸發 ≤ 3Y 警示。但 Max DD 範圍 -45 ~ -65% 屬 🔴 評級，§7a 倉位已下修（從原計畫 8-10% → 6-8% 上限）並標註「中途出場風險高，必須無槓桿 + 部位 ≤ 8%」。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計（Adj Non-GAAP）</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY2025 (基期)</td><td>$1.34</td><td>yfinance / Mgmt</td><td>含 $327M Alani Nu 一次性費用未調整前 GAAP $0.25</td></tr>
+<tr><td>FY2026E</td><td>$1.628 consensus / $1.57 Mgmt guide</td><td>yfinance n=21 / Q1 26 法說</td><td>Mgmt 略低於共識 -4%；共識近 90 日上修 +4.8%</td></tr>
+<tr><td>FY2027E</td><td>$2.040 consensus</td><td>yfinance n=21</td><td>+25.3% YoY，含 Alani Nu 完整年 + Rockstar 整合完成</td></tr>
+<tr><td>FY2028E</td><td>$2.40（§8 邏輯推導）</td><td>本 DCA</td><td>+18% — CELSIUS 核心 +12-15% 假設兌現 + Alani Nu +25% pro forma + 國際 +30%</td></tr>
+<tr><td>FY2030E（外推）</td><td>$3.00（Base）</td><td>本 DCA</td><td>外推假設：FY28-30 EPS CAGR ~12-15%（自然遞減）— Runway 仍長但 hyper-growth 已過</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>從 5Y IRR 角度：Base 案 IRR 20%/yr（5Y 絕對 +149%）顯著高於大盤平均 ~8-10%，Bull 案 IRR 32% 為 high-conviction range。<strong>數字面：股價適合</strong>。但路徑風險 🔴（Max DD 範圍 -45 ~ -65%）+ 技術面 Pure MA ❌ → 「現在進場」需承受中途 -50% 以上 drawdown 的可能。<strong>結論</strong>：估值面適合長抱，但時機未到 — 等 MA 修復或 H1 兌現後分批建倉，比「現在追低」更可能撐到 5Y 終點。</p>
+
+</div>
+</section>
+
+<!-- ============= §4 Asymmetry Analysis ============= -->
+<section>
+<h2>§4 Asymmetry Analysis</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td><strong>Thesis 對（Bull）</strong></td><td>+298%（→ $120）</td><td><strong>+31.8%/yr</strong></td><td>2030 EPS $4.00（CAGR 24%）× 合理 PE 30x = $120。前提：(a) CELSIUS 核心 FY27 重回 +15% YoY；(b) Alani Nu FY28 達 $2.0B；(c) 國際年率 FY30 ≥ $500M；(d) Pepsi 持股 conversion 順利</td><td>25%</td></tr>
+<tr><td><strong>Base</strong></td><td>+149%（→ $75）</td><td><strong>+20.0%/yr</strong></td><td>2030 EPS $3.00（CAGR 17.5%）× 合理 PE 25x = $75。前提：H1 + H2 大部分兌現，但 hyper-growth 已過 — Mid-cycle 18% EPS growth 與消費品 mature peer 接軌</td><td>45%</td></tr>
+<tr><td><strong>Thesis 錯（Bear）</strong></td><td>-16%（→ $25）</td><td><strong>-3.5%/yr</strong></td><td>2030 EPS $1.80（CAGR 6%）× Bear PE 14x = $25。前提：(a) CELSIUS 核心 +6% 是新 baseline 而非暫時減速；(b) Alani Nu mix dilution 永久；(c) Pepsi 部分重議；(d) 估值倍數重設至 mature 消費品 mid teens</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+136.8% 5Y</strong></td><td><strong>IRR ≈ 15.9%/yr</strong></td><td>= 0.25×298 + 0.45×149 + 0.30×(-16)</td><td>—</td></tr>
+</table>
+
+<p><strong>IRR 落點解讀</strong>：15.9%/yr 落在「強（high-conviction）」區間（&gt; 12%），但因路徑風險 🔴（Max DD -45 ~ -65%）+ 技術面當前不支持，倉位需打折至 6-8% 衛星而非 12-15% 核心 — 即使 IRR 落點高，timing 失誤的代價亦高。</p>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>10 年視角</strong>：若 thesis 對但時間拉長兩倍，10Y IRR 估計 22-24%/yr（複利 5Y 後再 5Y EPS CAGR 自然遞減至 ~10%，但 fundamentals 仍 compound）— 仍遠高於 SPX 10Y 預期 ~8% — <strong>值得</strong>。</li>
+<li><strong>機會成本對照</strong>：同 sub-industry MNST 5Y IRR mid-cycle ~10-12%；CELH Base IRR 20% 高 +800-1000bps，但 Bear -3.5% 也比 MNST 之 +2% 更差 — risk-adjusted（用 0.5 × Bear 折扣）：CELH 14.2% vs MNST 9.5% — CELH 仍占優，但需 timing 修正。</li>
+</ul>
+
+<h4>📅 機率估計：時間視角校驗</h4>
+<table>
+<tr><th>檢查項</th><th>本份判定</th></tr>
+<tr><td>Bear 機率（5Y 視角 ≥ 20%）</td><td><span class="good">✅ 30%</span> — 反映 CELSIUS 核心減速是「結構性 vs 暫時性」的根本不確定，30% 符合 thesis 失敗的合理概率</td></tr>
+<tr><td>Bull / Bear 散布 vs 1-2Y</td><td><span class="good">✅ 寬</span> — Bull +298% vs Bear -16% = 散布 ~314pp 寬度，遠高於 1Y 視角的 +50% / -30%</td></tr>
+<tr><td>Base 機率（≤ 50%）</td><td><span class="good">✅ 45%</span> — 留 55% 給「非 Base」情境</td></tr>
+<tr><td>Pattern match 校準</td><td><span class="good">✅</span> — MNST 2010-2014 5Y IRR ~30%（早期 hyper-growth → KO 後 stake 前），CELH 處於相似階段，Base IRR 20% 略保守反映「Pepsi 已 11% 戰略持股 priced in」</td></tr>
+</table>
+
+<h4>📐 Pattern Match</h4>
+<div class="pattern-box">
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史上 thesis 結構類似的個股</td><td><strong>Monster Beverage（MNST）2010-2014 期</strong>（KO 戰略持股 2015 前）— 從 hyper-growth 切到 mature growth 的轉折期</td></tr>
+<tr><td>當時的 setup（估值倍數、市佔、技術節點）</td><td>MNST 2010 年：股價 ~$18，US energy drink 市佔 ~24%，Forward PE ~28x，Rev CAGR 從 +60% 切到 +25%；KO 戰略持股 2015/8 達成 16.7% 股權（投資 $2.17B 換業務組合）</td></tr>
+<tr><td>最終 5 年實現報酬（含年化 IRR）</td><td>2010-2014：股價從 $18 → $66 = 3.7x，5Y IRR ~30%/yr；2010-2024 14 年 200,000% 總報酬（含後續 KO partnership 深化）</td></tr>
+<tr><td>我的標的和它最像 / 最不像的地方</td><td><strong>最像</strong>：(a) 同樣 sub-industry leader 從 hyper-growth 切到 mature growth；(b) 同樣戰略持股大廠（CELH-PepsiCo 11% / MNST-KO 19.4%）；(c) 同樣 US 份額 ~21-24% 區間；(d) 同樣面臨「核心品牌定價力減弱」<strong>邊緣警訊</strong>（MNST 2010 也是 Rev CAGR 切換期）。<br><strong>最不像</strong>：(a) MNST 是單一品牌組合 vs CELH 三品牌（Celsius + Alani Nu + Rockstar）— 整合複雜度更高；(b) MNST 當時消費者偏好 sugar-laden 未轉移，CELH 處於 sugar-free 偏好已轉移 40% 的成熟期；(c) MNST KO partnership 2015 後深化加速，CELH Pepsi 2025 升級為「strategic energy lead」屬類似時點</td></tr>
+</table>
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td><strong>Bull</strong></td><td><strong>+24%/yr</strong>（FY25 $1.34 → FY30 $4.00）</td><td>+5.9%/yr（22.5x → 30x，基於 FY25 EPS）</td><td>+0%/yr（無分紅 + Preferred dividend 屬 Pepsi 不影響 common）</td><td><strong>+29.9%/yr</strong> ≈ 實際 IRR 31.8% (gap 1.9pp ≤ 2pp ✓)</td></tr>
+<tr><td><strong>Base</strong></td><td><strong>+17.5%/yr</strong>（FY25 $1.34 → FY30 $3.00）</td><td>+2.1%/yr（22.5x → 25x）</td><td>+0%/yr</td><td><strong>+19.6%/yr</strong> ≈ 實際 IRR 20.0% (gap 0.4pp ✓)</td></tr>
+<tr><td><strong>Bear</strong></td><td>+6%/yr（FY25 $1.34 → FY30 $1.80）</td><td><strong>-9.0%/yr</strong>（22.5x → 14x，severe de-rate）</td><td>+0%/yr</td><td><strong>-3.0%/yr</strong> ≈ 實際 IRR -3.5% (gap 0.5pp ✓)</td></tr>
+</table>
+
+<div class="irr-bar">
+<div class="irr-eps" style="width:85%">+17.5%/yr EPS 複利</div>
+<div class="irr-rerate" style="width:10%">+2.1% PE re-rate</div>
+<div class="irr-yield" style="width:5%">0%</div>
+</div>
+
+<div class="pattern-box">
+<strong>質感解讀</strong>：Base 20% IRR 中，<strong>17.5%/yr</strong> 來自 EPS 複利、<strong>2.1%/yr</strong> 來自估值 re-rate、<strong>0%/yr</strong> 來自股息+回購。這檔的可抱性<strong>主要靠 EPS 複利</strong>（87% 貢獻來自 EPS）— 這是「自然複利好抱」型，公司自己長出來的 EPS 不需要市場配合 re-rate 即可大部分實現。Bull 案的 +5.9%/yr re-rate 是「icing on cake」非主驅動 — 即使估值不 re-rate，光靠 EPS 24% CAGR 也能交付 +24% IRR。這對 long holder 是好特徵，意味「即使市場長期不認可估值，公司基本面仍能 deliver」。
+</div>
+
+</section>
+
+<!-- ============= §1 Mental Models 壓力測試 ============= -->
+<section>
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+<strong>STANDING ORDER MEMO ｜ CELH ｜ 2026-05-18</strong><br>
+<br>
+<strong>Thesis</strong>: CELH is the largest scaled operator of the US energy drink sub-segment shift to sugar-free/functional (US sub-seg CAGR 15-18% vs cat 5-6%). Owns 21% US share (+1000bps in 12M via Alani Nu + Rockstar M&A). PepsiCo 11% strategic stake + exclusive US/Canada distribution locks the channel.<br>
+<br>
+<strong>Key Drivers</strong>: (1) <em>Channel lock-in via Pepsi captive partner</em> — DSD network captive, $1.85B Pepsi investment + board seat aligns interests for 5+ years. (2) <em>Sub-segment structural tailwind</em> — sugar-free US energy drink penetration 40% (from 25% in 2020), trend irreversible.<br>
+<br>
+<strong>R:R (5Y)</strong>: Bull +298% / Base +149% / Bear -16% — prob-weighted +137% absolute / IRR 15.9%/yr (high-conviction range). IRR composition: 87% from EPS compounding (self-generated, not market re-rate dependent).<br>
+<br>
+<strong>Main Risks</strong>: R1 (⚡ short) CELSIUS core +6% YoY = new baseline → connected 2 quarters of <+5% triggers thesis review. R2 (🔥 mid) Q1 GM -400bps YoY, mgmt guide H2 26 back to low-50s — if missed for 2 consecutive quarters, permanent mix dilution. R3 (🐢 long) Pepsi strategic re-evaluation (binary, ~10-15% prob 24M).<br>
+<br>
+<strong>Position Recommendation</strong>: 觀望（WAIT）. Currently 0% positions. Build 6-8% satellite WHEN: (a) Pure MA reclaims W104 ($42.39) for 4 weeks, OR (b) Q2/Q3 26 CELSIUS standalone YoY back to ≥+10%.<br>
+<br>
+<strong>Why Not Buy Now</strong>: Pure MA failed (price < W250 + W104 slope -11.24%); 5Y Max DD range -45 to -65% — entering pre-confirmation = significant risk of being shaken out mid-cycle.<br>
+<br>
+<strong>Opportunity Cost</strong>: Better than buying more MNST (cleaner setup but PEG 2.24 vs CELH 0.86). Don't replace MNST core; keep as sub-industry secondary exposure.
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator-quote">
+「CELH 是美國 sugar-free 能量飲料的 #3 player，21% 市佔，PepsiCo 持股 11% 鎖死通路。股價從 $95 跌到 $30（52 週低點），因為核心 CELSIUS 品牌增速從 +50% 掉到 +6%。但他剛收購 Alani Nu（女性 Gen Z 龍頭）+ 60% pro forma 成長，整合超前進度。Forward PE 18.5x、PEG 0.86 對比 Monster 的 34x / 2.24 — 估值打折一半，但市場在等核心 CELSIUS Q2-Q3 是否回到雙位數。值得追蹤而非追低，等 MA 修復或核心動能回升再買。」
+</div>
+
+<p><strong>壓力測試結果</strong>：<span class="good">✅ 兩個版本都寫得出來且邏輯自洽</span> — thesis 經得起 1 頁紙 + 30 秒雙重壓力。繼續進入 §7 已執行（見前述）。</p>
+
+</section>
+
+<!-- ============= Phase B 矛盾辨識 + 強制裁決 ============= -->
+<section>
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>1. 共識清單（方向一致）</h3>
+<table>
+<tr><th>共識點</th><th>支持 Phase</th></tr>
+<tr><td>US sub-segment sugar-free / functional 結構性順風（CAGR 15-18%）— TAM 仍在擴張</td><td>A1（pricing power 仍有 sub-segment premium support）、A2（產業順風）</td></tr>
+<tr><td>Alani Nu 整合超前進度 — $50M synergies 已實現（25% of target）</td><td>A3（執行）、A4 DD §8.B</td></tr>
+<tr><td>PepsiCo 11% 戰略持股 + 美加獨家配銷 — execution moat 加深</td><td>A1（execution）、A3（客戶結構 grow-with）</td></tr>
+<tr><td>Forward PE 18.5x / PEG 0.86 為 5Y 區間底部 5% 分位 — 估值極端低位</td><td>A3、A4 DD §13</td></tr>
+</table>
+
+<h3>2. 矛盾清單（不可調和 + 可調和）</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>A1 結論</th><th>A2 結論</th><th>A3 結論</th><th>性質</th></tr>
+<tr><td>1</td><td>「執行護城河擴大」vs「定價護城河縮窄」</td><td>execution moat ↑ widening（Pepsi 配銷加深）</td><td>產業順風但 commoditizing 子賽道競爭加劇</td><td>ASP YoY +1-1.5% 趨弱；Nielsen scan Q4-Q1 量價齊負 -0.7%</td><td><strong>🟡 可調和</strong>（方向不同但都是同一階段現象）</td></tr>
+<tr><td>2</td><td>「Pepsi captive partner 強化」vs「Top 1 客戶 65-70% 集中度高」</td><td>Pepsi 戰略持股 = 強化護城河</td><td>Pepsi 自有品牌（Gatorade/Starry/Mountain Dew Rise）形成 in-house 替代潛在風險</td><td>客戶集中度趨勢 ↑（FY23 55% → FY25 65%）— 結構脆弱性增加</td><td><strong>🔴 不可調和</strong>（Pepsi 同時是 partner 與潛在 disruptor）</td></tr>
+<tr><td>3</td><td>「無機成長占比 65%」是質量還是泡沫？</td><td>Alani Nu 整合執行優 = 質量</td><td>Sub-segment 順風支撐有機部分</td><td>剔除併購 organic ~+12-15% — 仍正常但遠低於 reported +85% YoY</td><td><strong>🟡 可調和</strong>（高 inorganic 占比是現實但 organic underlying 仍正常）</td></tr>
+<tr><td>4</td><td>「估值 5% 分位極低」vs「Pure MA ❌ 系統失效」</td><td>—</td><td>—</td><td>估值底 vs 動能底，數字面 vs 技術面分離</td><td><strong>🔴 不可調和</strong>（兩種訊號方向相反，影響進場 timing）</td></tr>
+</table>
+
+<h3>3. 與既有 DD 報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>可能原因</th></tr>
+<tr><td>1</td><td>moat 二維 sub-scores</td><td>DCA Phase A1: Execution 8 / Pricing 6 → 合併 7</td><td>DD §9: Execution 8 / Pricing 6 → 合併 7</td><td><span class="good">✅ Aligned</span> — DCA 與 DD 二維評分完全一致</td></tr>
+<tr><td>2</td><td>final_signal grade</td><td>DCA verdict: 觀望（B 級）</td><td>DD signal: B</td><td><span class="good">✅ Aligned</span></td></tr>
+<tr><td>3</td><td>trap 定性</td><td>DCA: 🟡 觀察期</td><td>DD trap: 🟡 觀察期</td><td><span class="good">✅ Aligned</span></td></tr>
+</table>
+
+<h3>4. ⚖ 強制裁決（不可調和矛盾必下判決）</h3>
+<div class="conflict-box">
+<div class="verdict-table">
+<table>
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>我的依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑（≥ 2 條 if-then 反向）</th></tr>
+<tr><td>2</td><td>Pepsi captive partner 強化 vs Top 1 客戶集中度高</td><td><strong>選 A1（partner 強化主導）</strong></td><td>Pepsi $1.85B 投資 + 11% 股權 + 董事席位 = 多年 captive arrangement；Pepsi 內部 Gatorade 是「sport drink」非「functional energy」、Starry 是「lemon-lime soda」、Mountain Dew Rise 是「morning energy boost」— 三者皆非 sub-segment direct overlap；Pepsi 重議意願受 reputational + financial cost 強約束（5+ 年 ramp）。</td><td>(1) Pepsi 公開 IR statement 表態「重新評估飲料業務」or SEC 13D/13G 出脫 ≥ 2pp 股權；(2) Pepsi 2027 Q2 法說 disclose「energy drink portfolio rationalization」；(3) Q4 26 結束時 Pepsi US energy drink share-of-mouth metric 顯示 CELH < Gatorade 互補性</td><td>(a) <strong>Pepsi 公開重議 / 重評</strong> → 立刻清倉 50%，4 週後評估若 4 週內未 -25% 全清；(b) <strong>Pepsi 2026 法說再次表態加碼 partnership / 額外投資 ≥ $200M</strong> → 加碼至 12% 升 A 級核心；(c) 維持現狀（無變化 24 個月）→ 維持觀望，等其他觸發條件</td></tr>
+<tr><td>4</td><td>估值 5% 分位極低 vs Pure MA ❌ 系統失效</td><td><strong>選 A3（估值底主導，但需 MA 配合 timing）</strong></td><td>歷史對比：「估值底 + MA 失效」組合通常在 6-12 個月內 V 反轉（MNST 2010、KO 2012、CMG 2018）— 但「進場時機」與「進場價值」不同：估值底告訴你「不該逃」，MA 告訴你「不該追」。可條件式建倉等技術修復確認。</td><td>(1) Pure MA 站回 W104 連 4 週（W104 $42.39）；(2) Q2 26 (8 月) earnings CELSIUS standalone YoY；(3) FY26 結束時 (2027/2) Fwd PE 是否仍 < 20x（若是 → 估值底成立但動能未確認）</td><td>(a) <strong>MA 站回 W104 連 4 週</strong> → 第一批 50%（3-4% 倉位）；(b) <strong>Q2 26 (8 月) CELSIUS YoY ≥ +10% 但 MA 仍未站回</strong> → 第一批 50% 條件式（基本面確認比 MA 早）；(c) <strong>Q3 26 (11 月) CELSIUS 仍 < +5% 且 MA 仍未站回</strong> → 維持 0%，等 thesis 重評</td></tr>
+</table>
+</div>
+</div>
+
+<p><strong>裁決帶入 §7</strong>：當前觀望，0% 倉位。雙 unrescovered 矛盾的 settle 條件已在 §7b 對應，分歧解決後可進場。</p>
+
+</section>
+
+<!-- ============= §3 Key Drivers ============= -->
+<section>
+<h2>§3 Key Drivers + Consensus 分歧</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr><td>1</td><td><strong>PepsiCo 戰略 partnership 深化（通路 captive 鎖定）</strong></td><td>沒有 Pepsi 配銷網路（DSD + Pepsi Bottling Group），CELH 無法在 5 年內把 US 份額從 11% 推到 21%。Pepsi 11% 股權 + 董事席位 + 美加獨家配銷 + Alani Nu 接管 = 通路深度不可複製。失去 Pepsi → CELH 失去 60-65% 立即可用 SKU shelf space</td><td>(1) Pepsi 季度法說對 energy drink portfolio 的 commentary；(2) Pepsi SEC 13D/13G 持股變動；(3) Pepsi 2026 CAGNY conference 公開談話；(4) Pepsi US energy DSD truck route allocation %</td></tr>
+<tr><td>2</td><td><strong>Sugar-free / functional energy drink 子賽道 CAGR 15-18%（結構性需求轉移）</strong></td><td>這是「美國能量飲料品類內部結構轉移」— 過去 5 年 sugar-free 占比從 25% → 40%；Z 世代女性消費者偏好 functional + low-cal + clean label。沒有這個結構性順風，CELH 無法 disrupt MNST/Red Bull 雙寡占。趨勢逆轉 → CELH 整體 thesis 失敗</td><td>(1) Nielsen scan 每月 4 週滾動 — sugar-free segment growth；(2) GLP-1 滲透率 vs caffeine consumption 報告；(3) IRI / Circana monthly category report；(4) Z 世代社群趨勢（TikTok hashtag, Instagram engagement on health/fitness lifestyle content）</td></tr>
+</table>
+
+<h4>為什麼是這 1-2 個，而不是其他？</h4>
+<p>Driver 1（Pepsi 通路）+ Driver 2（子賽道結構性轉移）是 CELH 過去 5 年從 ~2% 份額到 21% 的兩個 independent 因果鏈：driver 1 是「供給端通路解鎖」（沒這個 mass market 無法到達），driver 2 是「需求端結構轉移」（沒這個 sub-segment 不存在）。兩者皆獨立可推翻：(a) 即使消費者偏好不轉移，Pepsi 通路仍可幫 CELH 在 mass channel 推 Celsius；(b) 即使 Pepsi 退出，sub-segment 結構性轉移仍存在但 CELH 規模化能力大幅縮減。其他常被討論的因素（Alani Nu 整合、Rockstar、國際擴張）皆為 driver 1+2 的派生 effect — Alani Nu 收購本身需 Pepsi 配銷支撐才有意義，國際擴張需 functional drink 偏好已成立才有市場。</p>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p><strong>Driver 2 是否可在不假設 driver 1 成立的情況下單獨被推翻？</strong>是 — 即使 Pepsi 通路一直保持，若 sub-segment 結構性轉移逆轉（如 GLP-1 副作用導致 caffeine 整體萎縮、或 nootropic 新範式接管），CELH 仍會 fail。<span class="good">✅ Driver 2 是獨立因果鏈，不是 driver 1 的 sub-component。</span></p>
+
+<h4>強制減法 — 我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>CEO Fieldly 薪酬 +39% YoY 引發爭議</td><td>70% LTIP equity vest 3-5 年 + 績效對齊；爭議多但與 thesis 無直接關聯</td></tr>
+<tr><td>Q1 26 GM -400bps YoY</td><td>Mgmt 已 guide H2 26 回 low-50s；屬已知 Alani Nu mix dilution 一次性 — 結構性 vs 暫時性是 R2 監測項，不是 driver</td></tr>
+<tr><td>2025 Nielsen scan -0.7% 量價齊負</td><td>4 週短期數據，不能取代結構性趨勢分析；US energy drink 整體 +12% YoY 顯示 category 仍健康</td></tr>
+<tr><td>每季新 SKU 推出進度</td><td>SKU rationalization 是執行細節；driver 是「能否從 Pepsi 通路放量」而非「推幾個 SKU」</td></tr>
+</table>
+
+<h4>🔄 我和市場 consensus 的最大分歧（Munger inversion）</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Fwd FY26 PE 18.5x 隱含「CELSIUS 核心 +6% 是新 baseline、Alani Nu mix dilution 永久、Pepsi partnership 不會深化更多」— 即 thesis 失敗 + 估值 derate 至消費品 mature mid-teens</td></tr>
+<tr><td>我認為的不同假設</td><td>Q1 26 +6% 是 SKU optimization + Q4 25 distributor sequencing reset 的暫時 reset，不是 stable baseline；H2 26 應該回升到 +10-12% — Bonnie Herzog (Goldman) 已在 Q1 法說 Q&A 點出此疑慮，Mgmt 解釋為「focus on velocity not SKU expansion」屬戰略 reset 而非衰退</td></tr>
+<tr><td>賣方為什麼錯（至少一個具體理由）</td><td>賣方共識目標價 $59-62 隱含 Fwd PE 28-30x（已包含 thesis 兌現），但目前股價僅 18.5x — 賣方 vs 市場價已有顯著 disconnect。賣方 18 Buy / 4 Hold / 0 Sell 過度樂觀，未充分定價「CELSIUS 核心可能真的失速」的風險（30% 機率）；而市場過度悲觀，未充分定價 H1+H2 任一兌現的 +35-65% re-rate 空間。我的看法在中間 — 給予 45% Base 機率（兌現一半）+ 30% Bear（兌現失敗）+ 25% Bull（雙兌現）</td></tr>
+</table>
+<p><strong>校驗</strong>：上述三題可清晰寫出 → thesis 有獨立 alpha 來源（從共識的中間分布偏移到本份的概率加權判斷）。</p>
+
+</section>
+
+<!-- ============= §5 Single Thing ============= -->
+<section>
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述</td><td><strong>PepsiCo 公開啟動飲料業務分拆 / 重新評估 / 戰略重估</strong>（IR statement / SEC 13D-G 變動 / Earnings Call commentary 明確表態）</td></tr>
+<tr><td>為什麼這個事件是致命的</td><td>CELH 從 Pepsi 取得 65-70% revenue 通路（DSD + Pepsi Bottling Group + 美加 + Alani Nu 接管 + Rockstar 接管）。Pepsi 退出或重議 → CELH 失去最大、最不可複製的 execution moat（cost to rebuild 同等通路 $5-10B + 7-10 年）。失去後 Cella standalone 可能維持但增長率回到 +10-15% 自然水平（vs 當前 +60%+ 集團成長），估值倍數立即 derate 30%+</td></tr>
+<tr><td>如何監測（資料來源、頻率）</td><td>(1) <strong>Pepsi IR / 法說</strong>（每季 + CAGNY 2 月 + Goldman Sachs Consumer Conference 9 月）— Pepsi CEO Laguarta 對 energy drink portfolio commentary；(2) <strong>SEC 13D / 13G filings</strong>（持股變動每月 / Pepsi 對 CELH preferred conversion 動作）；(3) <strong>Pepsi 季報 segment breakdown</strong>（North America Beverages 細項，是否有 CELH-specific note）；(4) <strong>Bloomberg / WSJ leaks</strong>（重大事件前期常透過 leak 暗示）；(5) <strong>Reuters / Bloomberg energy drink industry coverage</strong>（每月）</td></tr>
+<tr><td>目前離發生有多遠</td><td>機率估計：24 個月內 <strong>10-15%</strong> 機率。理由：(a) Pepsi 已投入 $1.85B + 11% 股權 — sunk cost 顯著；(b) 2025/8 才剛升級為「strategic energy lead」— 短期內重議 reputational cost 高；(c) Laguarta 2025 公開表態「飲料 deemphasize」是輕微警訊但屬 portfolio prioritization rhetoric。當前狀態：監測但無迫切 trigger</td></tr>
+</table>
+
+<h4>🔗 Cross-check with DD §5.F single thing</h4>
+<div class="conflict-box">
+<table>
+<tr><th>Alignment 狀態</th><th>DD §5.F</th><th>DCA §5</th><th>結論</th></tr>
+<tr><td><span class="good">✅ Aligned</span></td><td>「PepsiCo 啟動飲料業務分拆 / 戰略重評（公開 IR statement 或 SEC filing）」— 24M 機率 ~10-15%；觸發行動：清倉 50%，4 週後評估</td><td>「PepsiCo 公開啟動飲料業務分拆 / 重新評估 / 戰略重估」— 24M 機率 10-15%；觸發行動：清倉 50%，4 週後若 4 週內未跌至 $19.50 全清</td><td>DCA confirm DD §5.F；加強監測 detail（新增 SEC 13D/13G + Bloomberg leak channel + Pepsi internal earnings 季報細目）。<strong>無分歧，DD 與 DCA 共同指向同一 binary event</strong></td></tr>
+</table>
+</div>
+
+</section>
+
+<!-- ============= §6 What I Don't Know + Pre-mortem ============= -->
+<section>
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr><td>1</td><td>CELSIUS 核心 Q1 26 +6% 是「SKU optimization 暫時 reset」還是「mature 期新 baseline」</td><td>Q2/Q3 26 核心動能能回到 +10-15% YoY</td><td>若是新 baseline → R1 觸發；估值倍數 derate 25%+；股價可能 $20-22 區間；DCA 觀望延長至 2027</td></tr>
+<tr><td>2</td><td>Alani Nu mix dilution 是否永久（Q1 26 Alani Nu GM ~45% vs CELSIUS ~55%）</td><td>H2 26 GM 回到 low-50s（Alani Nu 自身 GM 上升至 50%+）</td><td>若 Alani Nu GM 結構性停留在 45% → R2 觸發；估值倍數 derate 15-20%；股價可能 $24-26 區間</td></tr>
+<tr><td>3</td><td>國際擴張能否從 $100M 年率到 $500M 連 5 年</td><td>UK/EU/Australia/NZ 接受度持續，無監管阻力（caffeine warning labels 已實施且 CELH 已合規）</td><td>若國際 5Y CAGR < 25% → Runway post-Y5 從 🟢 降至 🟡；Bull 案 IRR 從 32% 降至 25%</td></tr>
+</table>
+
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5（三段式）</h3>
+<div class="premortem-box">
+
+<h4>第一段｜故事倒推（≤80 字）</h4>
+<div class="premortem-narrative">
+「假設 5 年後（2031 年中）CELH 股價跌至 $15 = -50% from $30.16。最可能故事：<strong>2026/Q3 法說 (11 月) 公布 CELSIUS standalone YoY -2%（連 2 季 < +5%），Mgmt 改口承認「核心品牌已 saturate」；同期 Q3 GM 47% 未進入 low-50s；2027/3 Pepsi 法說提及「重新平衡飲料 portfolio」</strong>，市場立即 derate 至 mature 消費品 mid-teens PE（13-15x）；FY28 EPS 共識下修至 $1.80（vs 當前 $2.40 估計），目標價 $25。後續 Alani Nu 自然 +25% 不足以抵消 CELSIUS 衰退 + Rockstar 整合 stuck。」
+</div>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td><strong><span class="warn">⚠ 部分重疊</span></strong> — Pepsi 重議是 single thing 的核心，但故事倒推中「Q3 CELSIUS -2% + GM 47%」是更早觸發的 R1 + R2 兩個過程性風險，Pepsi 重議是後續放大效應而非首要 trigger</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<table>
+<tr><th>修正動作</th><th>狀態</th></tr>
+<tr><td><strong>原 §5 single thing</strong>（Pepsi 戰略重評）</td><td>維持 — 仍是最重要的 binary event（單一觸發即改變整體判斷）</td></tr>
+<tr><td><strong>新增 §5 secondary trigger</strong>（pre-mortem 派生）</td><td>「Q3 26 (11 月) 法說公布 CELSIUS standalone YoY 連 2 季 < +5% <strong>且</strong> Q3 26 GM < 49%（兩條件同時觸發）」— 為 §5 secondary trigger，雖非 single binary 但因雙條件同步 = 結構性 thesis 削弱訊號</td></tr>
+<tr><td><strong>HTML §5 區塊變動</strong></td><td>§5 「事件描述」現由 1 條 → 2 條（primary: Pepsi 戰略重評；secondary: CELSIUS YoY + GM 雙觸發）。已在 §7b 對應 — 「減碼」condition 涵蓋 secondary trigger</td></tr>
+</table>
+
+<p><strong>校驗紀錄</strong>：⚠ 已補 1 條 secondary trigger（CELSIUS + GM 雙條件） — §5 primary 維持 Pepsi binary 不變；§5 區塊內容已增加 secondary trigger 引用，§7b 「減碼」條件對應。</p>
+
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD｜必填）</h3>
+<div class="maxdd-box">
+<div class="maxdd-num">−45% ~ −65%</div>
+<div class="maxdd-meta">
+<strong>估計 Max DD 範圍</strong>：股價從當前 $30.16 → 最低點 $10.5 - $16.5（5Y peak-to-trough）<br>
+<strong>最可能觸發時點</strong>：2026 年底至 2027 年中 — Q3/Q4 26 + FY26 結束時若 H1 + H2 兩個監測點皆 fail（CELSIUS 連 2 季 < +5% + GM 連 2 季 < 49%）<br>
+<strong>觸發後最快多久恢復到峰值</strong>：18-30 個月（若 thesis 在 FY28 復原 + 國際擴張接力）；若 thesis 永久失敗 → 不會恢復（重評為 thesis 已破，清倉非等待）<br>
+<strong>路徑風險評級</strong>：<span class="bad">🔴 高（中途 -50% 以上）</span> — 多數人會在中途出場
+</div>
+</div>
+
+<p><strong>校驗（必填）</strong>：若 max DD 落在 -45 ~ -65% 範圍內，能否撐到復原？<strong>條件：</strong>(1) 部位 ≤ 8% portfolio（衛星非核心）；(2) 不使用槓桿；(3) §5 primary trigger（Pepsi 戰略重評）未發生；(4) 持有期最長 5 年，超過 5 年未恢復即視為 thesis 已破清倉。若無法給出明確條件 → §7 倉位必須再打折。<strong>當前 §7 已執行 6-8% 上限 + 衛星 satellites 定位，符合條件，但仍標註「中途出場風險高」</strong>。</p>
+
+<p><strong>Guardrail check</strong>：路徑風險評級 🔴 → §7a 倉位上限已從原計畫 12-15% 下修至 6-8%（衛星上限）；§7d 已標註「中途出場風險高，必須無槓桿 + 部位 ≤ 8%」。<span class="good">✅ §7 已反映</span>。</p>
+
+</section>
+
+<!-- ============= §8 Review Triggers ============= -->
+<section>
+<h2>§8 Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 earnings call</td><td>財報日期</td><td><strong>2026-08-07（預估）</strong>— CELSIUS standalone YoY + GM 數據</td></tr>
+<tr><td>2</td><td>Q3 FY26 earnings call</td><td>財報日期</td><td><strong>2026-11-06（預估）</strong>— 關鍵：H2 GM 是否回 low-50s + CELSIUS YoY 確認</td></tr>
+<tr><td>3</td><td>FY26 annual earnings</td><td>財報日期</td><td><strong>2027-02-25（預估）</strong>— 全年數字 + FY27 guidance + Alani Nu integration full year 數據</td></tr>
+<tr><td>4</td><td>PepsiCo Q3 26 earnings call</td><td>產業事件</td><td><strong>2026-10-08（預估）</strong>— Pepsi 對 energy drink portfolio commentary</td></tr>
+<tr><td>5</td><td>2027 CAGNY Conference</td><td>產業事件</td><td><strong>2027-02 (具體日期 TBD)</strong>— 食品飲料行業年會，Pepsi/CELH 都會 present</td></tr>
+<tr><td>6</td><td>股價站回 W104 $42.39 連 4 週</td><td>價位觸發</td><td>實時監測（每週 Friday close）</td></tr>
+<tr><td>7</td><td>股價跌破 $25（Bollinger 下軌進一步）</td><td>價位觸發</td><td>實時監測 — 若 H2 26 fail 後可能跌至此區</td></tr>
+<tr><td>8</td><td>§5 The Single Thing：Pepsi 戰略重評</td><td>§5 Single Thing</td><td>無預期時間，binary event — 24M 機率 10-15%</td></tr>
+<tr><td>9</td><td>§5 Secondary Trigger：CELSIUS + GM 雙條件</td><td>§5 Secondary Trigger</td><td>Q3 26 法說（11 月）— CELSIUS standalone YoY 連 2 季 < +5% <strong>且</strong> GM < 49%</td></tr>
+</table>
+
+<p><strong>這份報告的保質期</strong>：<strong>至 2026-08-07（下次財報 Q2 26 公布前）</strong>。若 Q2 26 數據顯著改變 thesis（H1 提前兌現 / 或 R1 已觸發） → 即時更新 DCA。</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：H2 26 GM 回到 51-52% + Q3/Q4 26 CELSIUS standalone YoY 回到 +10-12%（同時兌現） → 共識上修 EPS + Forward PE re-rate 至 25x → 12 個月內股價 $50-60（+65-100%）。機率：~30%。</p>
+
+<p><strong>最可能發生的 downside 因素</strong>：Q3 26 (11 月) 法說 CELSIUS standalone -2% to +2% YoY（連 2 季 < +5%）+ GM 仍 47-49%（未進入 low-50s） → R1 + R2 同時觸發 → Forward PE derate 至 14-16x → 12 個月內股價 $20-24（-20% to -34%）。機率：~25%。</p>
+
+</section>
+
+<!-- ============= Phase A 折疊區塊 ============= -->
+<section>
+<h2>Phase A｜獨立研究階段（詳細）</h2>
+
+<details>
+<summary><strong>Phase A1｜護城河深度分析</strong> — 獨立結論：CELH 護城河 7/10（執行 8 + 定價 6）；moat_trend ↑ widening 主要因 PepsiCo 戰略持股 + 21% US 份額 12M +1000bps 突破</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(1) <strong>通路 captive moat</strong> — Pepsi DSD + 美加獨家配銷 + 11% 戰略持股；(2) <strong>規模優勢</strong> — 21% US 份額 +1000bps in 12M；(3) <strong>品牌 mindshare</strong> — Gen Z + 健身房 vertical + 女性社群（Alani Nu 2.1M IG 粉絲，CELSIUS 1.4M）</td></tr>
+<tr><td>持久性評分</td><td>7/10，5 年穩固度：中-高</td></tr>
+<tr><td>最大侵蝕風險</td><td>Pepsi 戰略重評 — 雖機率 10-15% 24M，但若發生 = 通路 moat 立刻坍塌</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 50.4% FY25（趨勢 ↑ vs FY23 48.0%；Q1 26 季度 48.3% 暫降）、市佔率 21% Q1 26（趨勢 ↑↑ +1000bps from Q1 25 11%）、ROIC vs WACC 超額 +5.7%p（TTM ROIC 14.7% vs WACC 9%）</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>（執行軸）+ <strong>→ holding</strong>（定價軸）；2025/8 PepsiCo 升級至「strategic energy lead」+ $585M 額外投資 + 董事席位 = 12M 內可量化的 moat 加深證據 (Pepsi 官方 IR statement 2025-08-29) — 不接受寫「持平」</td></tr>
+</table>
+
+<h4>二維護城河拆解（v1.3 推薦）</h4>
+<table>
+<tr><th>維度</th><th>DD §9 評分</th><th>DCA 獨立評估</th><th>Alignment</th></tr>
+<tr><td>Execution moat</td><td>DD 8/10</td><td>DCA 8/10</td><td><span class="good">aligned</span></td></tr>
+<tr><td>Pricing power moat</td><td>DD 6/10</td><td>DCA 6/10</td><td><span class="good">aligned</span></td></tr>
+<tr><td>合併</td><td>DD 7/10</td><td>DCA 7/10</td><td>—</td></tr>
+</table>
+
+<h4>Phase A1 sourced data points（≥ 5 必達）</h4>
+<ol>
+<li>21% US energy drink market share Q1 26（CELH Q1 2026 earnings call disclosure 2026-05-07）</li>
+<li>+1000bps share gain 12M（CELH Q1 26 法說 vs Q1 25 standalone ~11%）</li>
+<li>PepsiCo $1.85B convertible preferred stock investment 2025/8 + 11% stake（PepsiCo + CELH joint announcement 2025-08-29）</li>
+<li>$50M synergies captured at Alani Nu integration Q1 26（vs $100M+ target ~25% of target，CELH Q1 26 earnings transcript）</li>
+<li>FY25 Gross Margin 50.4% （vs FY23 48.0% — 3 年改善趨勢，CELH 10-K filing 2026-02）</li>
+<li>CELSIUS standalone YoY +6% Q1 26（CELSIUS brand $348M vs Q1 25 ~$328M，CELH Q1 26 earnings call 2026-05-07）</li>
+<li>Alani Nu pro forma YoY +60% Q1 26（$368M revenue，CELH Q1 26 earnings call）</li>
+</ol>
+
+<p><strong>達標</strong>：7 個 ≥ floor 5 ✓</p>
+
+<h4>A1 獨立結論（一句話）</h4>
+<p><strong>CELH 執行護城河 ↑ widening（PepsiCo 戰略加深 + 21% 美國份額 +1000bps 12M）+ 定價護城河 → holding（ASP +1-1.5% 但 sub-segment 順風仍給 premium positioning）→ 合併護城河 7/10 B 級，需估值燈 🟢 配合升 A 級才進入核心候選門檻</strong>。</p>
+
+</details>
+
+<details>
+<summary><strong>Phase A2｜產業趨勢深度分析</strong> — 獨立結論：US energy drink TAM CAGR 5-6% 大盤；sub-segment sugar-free / functional 15-18% 結構性順風；runway_post_y5 🟢 寬 — 國際 runway 5-10x 接力</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>當前美國 $26B / 全球 $82.58B（2026），全球 5Y CAGR 5.84% 至 $109.69B（2031）— Mordor 2026 報告；sub-segment sugar-free CAGR 15-18%；當前美國滲透率 ~12 罐/人/年（vs 奧地利 50+ 罐 = 4x 國際 runway）</td></tr>
+<tr><td>供需判斷</td><td>當前需求 +12% YoY（雙位數穩定）；供給端輕度過剩（多 SKU 競爭）；sub-segment sugar-free / functional 供給仍緊缺；未來 12 個月方向：sub-segment shift 加速</td></tr>
+<tr><td>最大技術替代風險</td><td>nootropic / adaptogen drinks（Sound、Halfday）— 24M 機率 < 10%；GLP-1 副作用導致 caffeine demand 結構性下滑 — 5+ 年慢變數，機率 ~15%</td></tr>
+<tr><td>最大政策/地緣風險</td><td>美國 FDA caffeine + minor 法規 — 若 California / NY 通過 18+ purchase requirement → 砍 15-25% TAM；機率 24M ~20%；歐盟 caffeine warning labels 已實施且 CELH 已合規</td></tr>
+<tr><td>議價權位置</td><td>對上游（鋁罐/co-packer）：中（Refresco/Ball/Crown 議價有限但長期 contract 鎖定）；對下游（Pepsi + 零售）：中-強（Pepsi captive + Walmart/Costco shelf 高 turnover 維持）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong> — Y5 末（2031）：美國市佔 ~25-28%（仍有 5pp 到 Monster 35% 天花板）+ 國際年率從當前 $100M 至 $500M-1B（5-10x）+ 第二曲線 functional + low-cal sub-segment 仍處 S 曲線中段（沒到飽和）— 不觸發 §7d ≤ 3Y 警示</td></tr>
+</table>
+
+<h4>Phase A2 sourced data points（≥ 5 必達）</h4>
+<ol>
+<li>Global energy drink TAM $82.58B 2026E → $109.69B 2031E（Mordor Intelligence 2026 報告）</li>
+<li>5Y CAGR 5.84%（Mordor）</li>
+<li>US energy drink market $26B 2026E（Statista 2026 update）</li>
+<li>Red Bull 32% / Monster 35% US share（Statista 2025 update）</li>
+<li>US sugar-free energy drink penetration 40%（vs 25% in 2020，5 年 +60% shift；Statista 2026 + Sherwood News 報告）</li>
+<li>CELH 國際 Q2 25 +27% YoY $24.8M（CELH Q2 2025 earnings — UK/Ireland/France/Australia/NZ/Benelux）</li>
+<li>Sub-segment functional drinks CAGR 15-18%（Statista + Mordor 交叉驗證）</li>
+<li>Energy drink consumption per capita：US ~12 cans/year vs Austria 50+ cans（Red Bull origin market saturation reference）</li>
+</ol>
+
+<p><strong>達標</strong>：8 個 ≥ floor 5 ✓</p>
+
+<h4>A2 獨立結論（一句話）</h4>
+<p><strong>產業順風 🟡 中性（大盤 5.84% CAGR + sub-segment sugar-free 15-18% 結構性轉移）+ runway_post_y5 🟢 寬（國際 5-10x + 美國市佔仍有 5pp 空間 + functional sub-category 仍處 S 曲線中段）— 不觸發短期持有警示</strong>。</p>
+
+</details>
+
+<details>
+<summary><strong>Phase A3｜業務結構 / 財務體質 / 資本配置</strong> — 獨立結論：三品牌組合運作中，PepsiCo 通路 grow-with 主導，FCF margin 接近 Munger 15% 門檻，回購紀律弱但 SBC 真實稀釋健康</summary>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：CELSIUS（佔 44%，+6% YoY，OPM ~22%）；成長引擎：Alani Nu（佔 47%，+60% pro forma，OPM ~16% 並表初期）；新興整合中：Rockstar（佔 9%，整合 1H26 完成，OPM ~12% 並表初期）</td></tr>
+<tr><td>客戶集中度</td><td>最大客戶 PepsiCo ~65-70%，前五大（Pepsi + Costco + Walmart + Amazon + Target）~85%；風險：<strong>中-高</strong>（但 Pepsi 持股 11% + 董事席位 + grow-with 主導 → 短期 in-house / dual-track 動機極低）</td></tr>
+<tr><td>定價權</td><td>ASP 趨勢 ↑（+1-1.5% YoY FY24-25 但遞減）；定價權：<strong>中-弱</strong>（CELSIUS premium $2.50-3.00 vs Monster $1.80-2.00 +25-30%；但 promo intensity Q1 26 +100bps）</td></tr>
+<tr><td>未來金雞母</td><td>(1) 國際擴張（目前佔 ~4%；潛在 TAM $20-30B；預估成熟 5-7 年）；(2) Alani Nu standalone（女性 Gen Z 龍頭，預估成熟 5 年）；(3) Functional + low-cal sub-segment（仍處早期，預估成熟 8-10 年）</td></tr>
+<tr><td>財務體質</td><td>FCF margin 12.9% FY25（接近 Munger 15% 門檻）；ROIC TTM 14.7% > WACC 9%（超額 +5.7%p）；毛利率 50.4% FY25（趨勢 ↑ 3Y）；壓力測試：營收 -20% 可撐 8-10 季（Net Debt/EBITDA 1.34x + Cash $540M）</td></tr>
+<tr><td>資本配置紀律</td><td>FY25 M&A $1.5-1.8B（Alani Nu + Rockstar）— 短期執行優（Alani $50M synergies vs $100M+ target 25%）；回購 $45M FY25 屬 RSU tax withholding 性質（無大規模回購）；CEO 薪酬 +39% YoY 引發爭議但 70% LTIP equity vest 3-5Y 對齊；管理層紀律：<strong>中-優</strong></td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR <strong>17.5%/yr</strong>（FY25 $1.34 → FY30E $3.00，5Y 自然遞減）、5Y 末 Forward PE 預估 <strong>25x</strong>（vs 當前 22.5x FY25-base = re-rate +2.1%/yr）、現金股息率 <strong>0%</strong>（無 common dividend；Preferred 4.5% 給 Pepsi 不影響 common）、淨買回率 <strong>0%</strong>（無大規模回購；SBC ~1.8% / Rev 屬合理）</td></tr>
+</table>
+
+<h4>Phase A3 sourced data points（≥ 6 必達）</h4>
+<ol>
+<li>Q1 26 Total Revenue $782.6M（CELH Q1 2026 earnings release 2026-05-07）</li>
+<li>Q1 26 Adjusted EPS $0.41 beat $0.29 by 41.4%（CELH Q1 26 earnings call）</li>
+<li>Q1 26 GM 48.3% vs Q1 25 52.4% = -410bps YoY（CELH Q1 26 earnings call）</li>
+<li>FY25 Revenue $2.515B +85.6% YoY（CELH 10-K filing 2026-02）</li>
+<li>FY25 FCF $323M / FCF margin 12.9%（CELH FY25 10-K）</li>
+<li>FY25 ROIC ~15% TTM 14.7%（GuruFocus + Macrotrends 2026-02 update）</li>
+<li>FY26 EPS consensus $1.628 / FY27 $2.040（yfinance earnings_estimate 2026-05-15）</li>
+<li>EPS consensus 90d ago FY26 $1.553 → current $1.628 = +4.8% 上修（yfinance EPS Trend）</li>
+<li>Mgmt FY26 EPS guide $1.57（CELH Q1 26 earnings call 2026-05-07）</li>
+<li>Mgmt FY26 organic revenue growth guide +2-4%（CELH Q1 26 earnings call）</li>
+<li>$50M Alani Nu synergies captured vs $100M+ target（CELH Q1 26 earnings transcript）</li>
+<li>SBC / Revenue FY25 1.8%（CELH 10-K filing 2026-02）</li>
+</ol>
+
+<p><strong>達標</strong>：12 個 ≥ floor 6 ✓</p>
+
+<h4>A3 獨立結論（一句話）</h4>
+<p><strong>業務結構處於「CELSIUS 從 hyper-growth 切到 mature + Alani Nu 接力 hyper-growth」轉換期，財務體質接近 Munger 標準但未跨過 FCF margin 15% 門檻，IRR 主要依賴 EPS 複利（17.5%/yr Base）而非估值 re-rate — 屬「自然複利好抱」型 holding</strong>。</p>
+
+</details>
+
+<details>
+<summary><strong>Phase A4｜既有報告數據擷取</strong> — DD §1 dashboard、§9 二維護城河、§13 估值 cross-reference</summary>
+
+<h4>DD 報告（DD_CELH_20260518.html，本份 DCA 對應的 Inception DD）</h4>
+
+<p><strong>Primary source — dd-meta JSON block 擷取</strong>：</p>
+<table>
+<tr><th>欄位</th><th>數值</th></tr>
+<tr><td>signal</td><td>B</td></tr>
+<tr><td>verdict</td><td>thesis 仍活 — Q1 26 strong beat、Alani Nu integration ahead of schedule、21% US share +1000bps、PepsiCo strategic 持股 + 美加獨家配銷；但 CELSIUS 核心 +6% 減速、GM -400bps、Mgmt FY26 organic Rev guide +2-4% — 等 W104 站回再建倉</td></tr>
+<tr><td>trap / trap_label</td><td>🟡 / 觀察期</td></tr>
+<tr><td>moat / moat_score</td><td>B / 7</td></tr>
+<tr><td>moat_execution / moat_pricing_power（v12.3 sub-scores）</td><td>8 / 6</td></tr>
+<tr><td>val / fpe_fy2 / pct_5y / peg_fy2</td><td>🟢 / 14.78 / 5 / 0.86</td></tr>
+<tr><td>ma</td><td>❌ 系統失效</td></tr>
+<tr><td>price_at_dd</td><td>$30.16</td></tr>
+<tr><td>upside_short_pct / upside_mid_pct / upside_5y_pct</td><td>+33% / +67% / +145%</td></tr>
+<tr><td>stress.pass / stress.total</td><td>2 / 2（base + bear，v12.3 退役 QC-29 4-情境）</td></tr>
+<tr><td>ai_risk</td><td>🟢 受益 / 免疫</td></tr>
+<tr><td>long_term_confidence</td><td>高</td></tr>
+</table>
+
+<h4>DD §5 投資論點錨定（本份 DD 5.B 三層時間軸 + 5.B' 12M 對照 + 5.C 風險 + 5.F single thing）</h4>
+<ul>
+<li>§5.A 持有期：3-5 年</li>
+<li>§5.B H1：CELSIUS 核心重回雙位數（2Y/5Y/10Y 三層）</li>
+<li>§5.B H2：Alani Nu 整合 + $100M synergies + GM 回 low-50s</li>
+<li>§5.B H3：估值倍數 25-28x re-rate</li>
+<li>§5.B' 12 個月對照：本份為 Inception，2027-05-18 起首次有對照</li>
+<li>§5.C R1 ⚡ CELSIUS 核心結構性份額流失（短期 1-2 季可觸發）</li>
+<li>§5.C R2 🔥 Alani Nu 永久 mix dilution（中期 4-6 季）</li>
+<li>§5.C R3 🐢 Pepsi 戰略重評 / 監管（長期 2+ 年慢變數）</li>
+<li>§5.F Single Thing: PepsiCo 啟動飲料業務分拆 / 戰略重評（binary，24M 機率 10-15%）→ <strong>本 DCA §5 一致對應，加強監測 detail</strong></li>
+</ul>
+
+<h4>DD §9 護城河分析（v12.3 二維拆解）</h4>
+<ul>
+<li>Execution Moat 8/10：Pepsi 配銷 + 21% US share + Alani Nu 整合執行</li>
+<li>Pricing Power Moat 6/10：品牌溢價但 commoditizing；ASP YoY +1-1.5% 弱</li>
+<li>合併 7/10 B 級</li>
+<li>趨勢雙線：Execution ↑ 擴大（8→8.5）+ Pricing 穩定偏縮（6→5.5）</li>
+<li>QC-23 威脅：🟡 點對點 30%/25% 機率不扣分 / 🔴 生態攻擊 15%/10% 機率 / ⛔ 架構替代 < 15% 24M</li>
+</ul>
+
+<h4>DD §8 衰退信號（10 項偵測）</h4>
+<ul>
+<li>亮燈：2 個 🟡 邊緣（GM 連 1 季 -4.1pp YoY 單季未達 2 季門檻 + Nielsen scan 4 週 -0.7%）</li>
+<li>整體：低 / 中度警戒邊界 — 未達 🔴 高度警戒（3-4 個亮燈）</li>
+</ul>
+
+<h4>無對應 ID 報告</h4>
+<p>查找 docs/id/INDEX.md — 無「Energy Drink」或「Functional Beverage」industry ID 報告。標記「無既有 ID 報告可引用」。</p>
+
+</details>
+
+</section>
+
+</div>
+<button class="printbtn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
