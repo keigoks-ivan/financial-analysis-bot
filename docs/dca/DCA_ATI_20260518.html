@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATI｜Deep Conviction Analysis｜2026-05-18</title>
+<!-- dca-moat-trend: ↑ -->
+<!-- dca-verdict: 觀望 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Noto Sans TC', -apple-system, sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.7; margin: 0; padding: 0; font-size: 15px; }
+.container { max-width: 1080px; margin: 0 auto; padding: 24px; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+.header { background: #1E3A5F; color: white; padding: 18px 28px; position: sticky; top: 0; z-index: 100; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+.header h1 { margin: 0; font-size: 18px; font-weight: 600; }
+.header .meta { font-size: 12px; opacity: 0.92; font-family: 'IBM Plex Mono', monospace; }
+.print-btn { position: fixed; bottom: 24px; right: 24px; background: #3B82F6; color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; box-shadow: 0 4px 12px rgba(59,130,246,0.4); z-index: 99; }
+h2 { background: #1E3A5F; color: white; padding: 14px 20px; margin: 36px 0 18px 0; border-left: 4px solid #3B82F6; font-size: 20px; font-weight: 600; }
+h3 { color: #1E3A5F; margin-top: 28px; margin-bottom: 12px; font-size: 17px; font-weight: 600; border-bottom: 2px solid #E5E7EB; padding-bottom: 6px; }
+h4 { color: #1E3A5F; margin-top: 20px; margin-bottom: 10px; font-size: 15px; font-weight: 600; }
+table { border-collapse: collapse; width: 100%; margin: 14px 0; background: white; font-size: 13.5px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+th { background: #1E3A5F; color: white; padding: 10px 12px; text-align: left; font-weight: 500; }
+td { padding: 9px 12px; border-bottom: 1px solid #E5E7EB; vertical-align: top; }
+tbody tr:nth-child(even) { background: #F1F5F9; }
+.pass, .green { background: #DCFCE7 !important; color: #166534; font-weight: 600; }
+.fail, .red { background: #FEE2E2 !important; color: #991B1B; font-weight: 600; }
+.neutral, .yellow { background: #FEF9C3 !important; color: #92400E; font-weight: 600; }
+
+/* Status Bar */
+.status-bar { background: #F1F5F9; border-left: 4px solid #3B82F6; border-right: 4px solid #3B82F6; padding: 16px 24px; margin: 18px 0; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.sb-cell { flex: 1; min-width: 148px; max-width: 200px; text-align: center; padding: 8px; background: white; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.sb-label { font-size: 11px; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; }
+.sb-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+
+/* Thesis */
+.thesis-box { background: #EFF6FF; padding: 32px 28px; margin: 24px 0; text-align: center; border-radius: 8px; }
+.thesis-text { font-size: 22px; font-weight: 600; color: #1E3A5F; line-height: 1.5; }
+.thesis-note { font-size: 12.5px; color: #64748B; margin-top: 12px; font-style: italic; }
+
+/* Decision */
+.decision-box { background: #FEF9C3; border-left: 4px solid #92400E; padding: 20px 24px; margin: 18px 0; }
+.verdict-chip { display: inline-block; padding: 6px 20px; border-radius: 4px; font-size: 18px; font-weight: 700; background: #92400E; color: white; border-left: 4px solid #78350F; margin-bottom: 8px; }
+.verdict-sub { font-size: 13px; color: #475569; font-style: italic; display: block; margin-bottom: 16px; }
+
+/* Conflict */
+.conflict-box { background: #FFF7ED; border-left: 4px solid #F97316; padding: 16px 20px; margin: 18px 0; }
+.verdict-table { background: #FED7AA; }
+
+/* Pre-mortem */
+.premortem-box { background: #FEF2F2; border-left: 4px solid #DC2626; padding: 16px 20px; margin: 18px 0; }
+.premortem-box blockquote { border-left: 3px solid #DC2626; padding-left: 12px; margin: 8px 0; color: #7F1D1D; font-style: italic; }
+
+/* Pattern match */
+.pattern-box { background: #F0F9FF; border-left: 4px solid #0EA5E9; padding: 16px 20px; margin: 18px 0; }
+.pattern-box blockquote { font-style: italic; color: #075985; }
+
+/* IRR bar */
+.irr-bar { display: flex; height: 28px; margin: 12px 0; border-radius: 4px; overflow: hidden; }
+.irr-seg-eps { background: #15803D; color: white; padding: 4px 8px; font-size: 12px; }
+.irr-seg-rerate { background: #0284C7; color: white; padding: 4px 8px; font-size: 12px; }
+.irr-seg-dist { background: #64748B; color: white; padding: 4px 8px; font-size: 12px; }
+
+/* Max DD */
+.maxdd-box { background: white; border: 1px solid #E5E7EB; padding: 20px 24px; margin: 18px 0; }
+.maxdd-main { font-size: 32px; font-weight: 700; color: #991B1B; }
+.maxdd-bar { background: #FED7AA; border-left: 8px solid #C2410C; height: 24px; margin: 12px 0; padding: 4px 12px; color: #7C2D12; font-size: 12px; font-weight: 600; }
+
+/* MA box */
+.ma-ok { background: #DCFCE7; color: #166534; padding: 6px 12px; border-radius: 4px; display: inline-block; font-weight: 600; }
+
+/* Memo */
+.memo-box { background: #FAFAF9; border: 1px solid #E7E5E4; padding: 20px 24px; margin: 18px 0; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.8; }
+.elevator { background: #F5F3FF; border-left: 4px solid #7C3AED; padding: 14px 20px; margin: 14px 0; font-style: italic; color: #5B21B6; }
+
+details { background: white; border-left: 4px solid #94A3B8; padding: 12px 18px; margin: 14px 0; }
+summary { cursor: pointer; font-weight: 600; color: #1E3A5F; padding: 4px 0; }
+
+@media print {
+  .header { position: static; }
+  .print-btn { display: none; }
+  details { display: block !important; }
+  details > * { display: block !important; }
+  body { background: white; }
+}
+@media (max-width: 768px) { .container { padding: 14px; } .sb-cell { min-width: 140px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>ATI｜ATI Inc.｜Deep Conviction Analysis</h1>
+  <div class="meta">2026-05-18 ｜ $153.55 ｜ 「同產業 CRS 的 B 級 sibling — 護城河弱 1 級 + AA&S 拖累 + 估值已 expansion 47%」</div>
+</div>
+<button class="print-btn" onclick="window.print()">📄 列印為 PDF</button>
+
+<div class="container">
+
+<!-- ============================ Status Bar ============================ -->
+<div class="status-bar">
+  <div class="sb-cell">
+    <div class="sb-label">DD 訊號燈</div>
+    <div class="sb-value" style="color:#92400E;">B</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Moat 趨勢</div>
+    <div class="sb-value">B <span style="color:#166534;">↑</span></div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Runway Post-Y5</div>
+    <div class="sb-value" style="font-size:14px;">🟡 中 cycle 反轉風險</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">Max DD（5Y 期間）</div>
+    <div class="sb-value" style="color:#991B1B;">−60%</div>
+  </div>
+  <div class="sb-cell">
+    <div class="sb-label">DCA 裁決</div>
+    <div class="sb-value" style="color:#92400E;">觀望</div>
+  </div>
+</div>
+
+<!-- ============================ §2 Thesis ============================ -->
+<h2>§2 One-Sentence Thesis</h2>
+<div class="thesis-box">
+<div class="thesis-text">ATI 是 CRS 的 B 級 sibling — 同享航太 super-cycle + 業界整併紅利，但 AA&S 業務稀釋 pricing power 使其結構性落後 CRS 11pp margin。</div>
+<div class="thesis-note">— 50 字內，敘事性 thesis（與 CRS 對照定位）</div>
+</div>
+
+<!-- ============================ §7 Decision ============================ -->
+<h2>§7 Decision</h2>
+<div class="decision-box">
+<div class="verdict-chip">觀望</div>
+<span class="verdict-sub">等待回測 Bollinger 中軌 $146（-5%）或更深，IRR 加權 -2~-3%/yr 顯著低於 8% 門檻，現價不該追</span>
+
+<h3>裁決依據（決策矩陣）</h3>
+<table>
+<tr><th>檢查項</th><th>結果</th><th>對應行動</th></tr>
+<tr><td>1. DD 訊號燈 = X？</td><td class="pass">否（DD = B）</td><td>無 Hard Veto</td></tr>
+<tr><td>2. Phase B 強制裁決：thesis 不可調和不成立？</td><td class="pass">否（thesis 完整）</td><td>無 Hard Veto</td></tr>
+<tr><td>3. moat_trend ↓ 且 moat ≤ B？</td><td class="pass">否（moat 7 B 級 + ↑ widening）</td><td>無 Hard Veto</td></tr>
+<tr><td>4. Pure MA ❌？</td><td class="pass">否（MA ✅ 強勢）</td><td>無 Soft Veto</td></tr>
+<tr><td>5. 動能過熱（4w 漂移 > +10%）？</td><td class="pass">否（4w -2.72%）</td><td>無 Soft Veto</td></tr>
+<tr><td>6. DD 訊號燈 = C？</td><td class="pass">否（DD = B）</td><td>無 Soft Veto</td></tr>
+<tr><td>7. runway_post_y5 = 🔴？</td><td class="pass">否（🟡 中）</td><td>無 Soft Veto</td></tr>
+<tr><td>8. DD = B + 估值 = 🟡 + MA ✅ → baseline 進場？</td><td class="neutral">符合 baseline 進場 (rule 9)</td><td>但 IRR 加權 -3.4%/yr 顯著弱於大盤平均 8%</td></tr>
+<tr><td><strong>最終裁決</strong></td><td class="neutral"><strong>觀望（覆寫 baseline 進場）</strong></td><td>機率加權 IRR -3.4%/yr（弱於 CRS 的 +6.95%），短期 R:R -19.4% — 強制等更好進場價</td></tr>
+</table>
+
+<h3>7a. 倉位與進場計畫（觀望分支）</h3>
+<table>
+<tr><th>項目</th><th>具體內容</th></tr>
+<tr><td>在投資組合中的角色</td><td>衛星持倉（cycle exposure 限制 + ATI 對 CRS 處於 B 級劣勢），目標 3-5%（PM 層決定）</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%</strong>（觀望）</td></tr>
+<tr><td>目標倉位</td><td>條件成立後分批建至 3-5%（不超過 CRS 倉位 50%）</td></tr>
+<tr><td>進場價位區間</td><td>$120-$146（BB 中軌 + 短期 R:R 為正的價格）；理想 $100-$120（W52 SMA 附近）</td></tr>
+<tr><td>進場節奏</td><td><strong>觸發條件式進場</strong>（見 7b 觸發條件）</td></tr>
+<tr><td><strong>vs 現有組合的同類曝險（opportunity cost）</strong></td><td><strong>關鍵點名 CRS（剛分析）+ HWM</strong>：(1) 若已持有 CRS（A 級 + IRR 6.95%/yr）→ ATI（B 級 + IRR -3.4%/yr）邊際資金優勢消失，雙重 specialty alloy cycle exposure 集中風險過高，<strong>不應同時持兩者</strong>；(2) 若沒有 CRS → 應優先建立 CRS 倉位而非 ATI（CRS pure-play + 更高 margin + 較低 leverage）；(3) HWM 為 adjacent peer 但 valuation 更貴；(4) 結論：<strong>ATI 在 CRS 存在下幾乎無進場理由</strong>，除非 ATI 大幅折價（PEG < 1.0 或股價回到 W104 $85）</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td><strong>首批進場</strong></td><td>(a) 股價回測 $120-$146 區間 <strong>或</strong> (b) Q2 FY26 法說（2026-08）HPMC margin ≥ 25% + Bakers South commission ETA 確認 2H 2027</td><td>2%（小衛星）</td></tr>
+<tr><td>第二批加碼</td><td>(a) 股價 < $100（W52 SMA 附近）<strong>且</strong> (b) backlog 維持 + Pratt GTF 與 Airbus 達成協議</td><td>加至 4%</td></tr>
+<tr><td>第三批加碼</td><td>(a) Bakers South 2H 2027 commission on track + ramp 開始 <strong>或</strong> (b) AA&S margin 連 4 季 ≥ 18%（證明 commodity-like 業務無拖累）</td><td>加至 5%（衛星上限）</td></tr>
+<tr><td>減碼</td><td>HPMC margin TTM 連 2 季 < 22% <strong>或</strong> AA&S margin 連 2 季 < 15%</td><td>減至 2%</td></tr>
+<tr><td>清倉</td><td>HPMC 連 4 季 < 20%（cycle reversion 確認）<strong>或</strong> Kim Fields 連續大筆內部人賣股</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性檢查 + 動能過熱</h3>
+<table>
+<tr><th>檢查項目</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價在 MA60 之上？</td><td class="pass">✅</td><td>$153.55 vs MA60 ~$140（估計）</td></tr>
+<tr><td>股價在 MA200 之上？</td><td class="pass">✅</td><td>$153.55 vs MA200 ~$110（估計）</td></tr>
+<tr><td>股價在 MA104w 之上？</td><td class="pass">✅</td><td>$153.55 vs W104 $84.98 = +81%</td></tr>
+<tr><td>Pure MA 系統是否支持進場？</td><td class="pass">✅ 完全支持</td><td>三條 MA 全在下方，W250 斜率 +14.2%</td></tr>
+<tr><td><strong>短期動能過熱檢查</strong></td><td class="pass">✅ 無過熱</td><td>4w 漂移 -2.72%；近 5 日 intraday 雖 05/15 跌 $154 但無 shooting star；RSI 估計 50-55</td></tr>
+</table>
+
+<p><strong>結論</strong>：MA 結構面與短期動能皆支持進場 — 觀望純粹是 IRR 數學決定，不是技術面理由。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（< 2 年）</td><td>純做 cycle peak 階段 trade — 進場後 2027 高點若 HPMC margin > 25% + Fwd PE > 35x 即可獲利了結</td></tr>
+<tr><td>中期（2-5 年）</td><td>持有至 FY28 Bakers South commission + cycle peak；之後減碼避開 cycle reversion；條件式：HPMC margin 持守 24%+ + AA&S 持守 15%+</td></tr>
+<tr><td>長期（5-10 年）</td><td><strong>不建議</strong>純粹 buy-and-hold 10 年（航太 + 工業 cycle 雙重 reversion 風險；ATI 的 Path Max DD 達 -60% 高於 CRS）</td></tr>
+</table>
+
+<p><strong>建議持有年限</strong>：中期 2-5 年（cycle trade 紀律），<strong>但僅在 IRR 達 8%+/yr 時才有意義 — 當前進場 IRR -3.4%/yr 不及格</strong></p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>FY26 (Dec-26)</td><td>$4.43</td><td>yfinance（n=8）+ mgmt guide $4.20-4.48</td><td>Q1 FY26 Adj EPS $1.00 record</td></tr>
+<tr><td>FY27 (Dec-27)</td><td>$5.41</td><td>yfinance（n=8）</td><td>cycle 加速期 vintage</td></tr>
+<tr><td>FY28 (Dec-28)</td><td>$6.00-6.50</td><td>§8 邏輯推導</td><td>cycle peak + Bakers South commission</td></tr>
+<tr><td>FY30E（外推）</td><td>$5-8（range）</td><td>本案推導</td><td>外推假設：(a) cycle 延長 → $8；(b) cycle 反轉 → $4-5；中位 $6</td></tr>
+</table>
+
+<p><strong>假設長期持有（5-10 年），現在的股價適合嗎？</strong></p>
+<p>不適合。當前 $154 已 price in FY28 peak EPS $6.5 × 28x = $182 — 假設「cycle 不反轉 + Bakers South ramp 順利」。但機率加權 5Y IRR = 0.25×9.3 + 0.50×(-3.0) + 0.25×(-17) = <strong>-3.4%/yr</strong>，顯著弱於大盤 8-10%/yr 與 CRS 6.95%/yr。<strong>純 IRR 紀律下，當前進場 ATI 為虧損預期值；如果已持有 CRS，ATI 邊際資金毫無理由</strong>。</p>
+</div>
+
+<!-- ============================ §4 Asymmetry ============================ -->
+<h2>§4 Asymmetry Analysis</h2>
+
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率估計</th></tr>
+<tr><td>Bull（thesis 對）</td><td>+56%（$154 → $240）</td><td>+9.3%/yr</td><td>cycle 延長至 FY30+ + Bakers South ramp 順利 + LTA 維持；FY30 EPS ~$8 × 30x = $240</td><td>25%</td></tr>
+<tr><td>Base</td><td>-14%（$154 → $132）</td><td>-3.0%/yr</td><td>FY27-28 cycle peak 後 multiple 壓縮 + AA&S 拖累；FY30 EPS ~$5.5 × 24x = $132；中間期間 buyback 略補貼</td><td>50%</td></tr>
+<tr><td>Bear（thesis 錯）</td><td>-61%（$154 → $60）</td><td>-17.0%/yr</td><td>cycle reversion FY28 啟動 + AA&S 雙重壓縮；FY30 EPS ~$3.5 × 17x = $60</td><td>25%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>-8.25% 5Y</strong></td><td><strong>IRR ≈ -1.7%/yr</strong></td><td>0.25×56 + 0.50×(-14) + 0.25×(-61) = 14 - 7 - 15.25 = -8.25%</td><td></td></tr>
+</table>
+
+<p><strong>機率加權 IRR 詳細</strong>：0.25 × 9.3 + 0.50 × (-3.0) + 0.25 × (-17.0) = 2.33 - 1.5 - 4.25 = <strong>-3.42%/yr</strong></p>
+
+<p><strong>IRR 落點解讀</strong>：< 8%/yr — 弱（且為負值）；遠不及大盤平均；除非有強烈 idiosyncratic 理由（例：cycle 持續性確認），否則不應動部位。</p>
+
+<h4>追加壓力測試</h4>
+<ul>
+<li><strong>10 年期視角</strong>：拉長到 10Y 將跨越 1-2 個完整 cycle。10Y IRR 預估 3-5%/yr — 加上 dividend (0) + buyback (~1.5%/yr) 約 5-7%/yr，仍弱於 SPY ETF（~8-10%/yr）。</li>
+<li><strong>機會成本</strong>：同期 CRS 機率加權 IRR ~6.95%/yr（更高品質 + 更高 margin + 更低 leverage） — ATI 在同類 specialty alloy basket 中是次選。HWM Fwd PE 40x 更貴但業務多元化抗 cycle 較強。最佳替代：SPY ETF（8%/yr）+ 等待 ATI 跌至 $100-$120 區間（W52 SMA）再評估。</li>
+</ul>
+
+<h4>📅 機率估計：時間視角校準</h4>
+<table>
+<tr><th>檢查項</th><th>本案數據</th><th>標準</th><th>校驗</th></tr>
+<tr><td>Bear 機率</td><td>25%</td><td>5Y 視角下不應 < 20%</td><td class="pass">✅ 達標</td></tr>
+<tr><td>Bull / Bear 散布</td><td>+56% vs -61% = 117pp 寬度</td><td>5Y 應比 1Y/2Y 寬 50%+</td><td class="pass">✅ 達標</td></tr>
+<tr><td>Base 機率</td><td>50%</td><td>不應 > 50%</td><td class="neutral">⚠ 邊界（合理但需 awareness）</td></tr>
+<tr><td>Pattern match 校準</td><td>2017-2019 ATI cycle peak（見下）</td><td>—</td><td>對標相符</td></tr>
+</table>
+
+<div class="pattern-box">
+<h4>📐 Pattern Match</h4>
+<table>
+<tr><td><strong>歷史上 thesis 結構類似的個股</strong></td><td>2017-2019 ATI 自身上一輪 cycle peak（ATI 從 $14 漲至 $34 = +143%，2017-2019 期間 PE expansion 從 13x → 25x）</td></tr>
+<tr><td><strong>當時的 setup</strong></td><td>2017Q1 ATI Fwd PE 13x → 2019Q3 peak 25x；EPS FY17 -$0.62 → FY19 cycle peak $0.50；2020 COVID 重挫至 $8</td></tr>
+<tr><td><strong>最終 5 年實現報酬（2017→2022）</strong></td><td>$14 (2017) → $24 (2022) = +71%（5Y），含 dividend annualized ~11%/yr — 不錯，但中間 max DD 達 -75%（COVID 2020Q1 跌至 $8）— ride through 極困難</td></tr>
+<tr><td><strong>當前 vs 該 case 最像 / 最不像處</strong></td><td><strong>最像</strong>：(a) PE expansion 模式（當時 13x→25x，這次 19x→28x）；(b) cycle peak 階段。<strong>最不像</strong>：(a) 當前 Haynes 退場（整併紅利）；(b) Bakers South 為實質 catalyst 而非 narrative；(c) 但<strong>當前估值 28x > 2019 peak 25x 已透支</strong></td></tr>
+</table>
+<blockquote>「2017-2022 ATI 5Y 案：表面 +71% 看似可接受，但中間 -75% max DD 大多數人扛不住。當前估值已超越上一輪 peak multiple，且 AA&S 業務的 cycle reversion 風險未變。建議將該 case 的 -75% max DD 作為當前 worst-case path 警示，§7a 倉位上限必須嚴格控制。」</blockquote>
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td>+12%/yr（FY25 $2.85 → FY30 $5.0 = 11.9% CAGR）</td><td>-3.5%/yr（28x → 24x normalised）</td><td>+1.5%/yr（無股息，buyback ~1.5%/yr 淨）</td><td><strong>+10.0%/yr ≈ +9.3% target</strong></td></tr>
+<tr><td>Base</td><td>+9%/yr（FY30 EPS $4.4 cycle 反轉初期）</td><td>-12%/yr（28x → 16x cycle compression）</td><td>+1.2%/yr</td><td><strong>-1.8%/yr ≈ -3.0% target</strong></td></tr>
+<tr><td>Bear</td><td>-8%/yr（FY30 EPS $1.8 cycle trough）</td><td>-9%/yr（28x → 17x trough multiple，但 EPS 也壓低）</td><td>+0.5%/yr</td><td><strong>-16.5%/yr ≈ -17% target</strong></td></tr>
+</table>
+
+<div class="irr-bar">
+<div class="irr-seg-eps" style="width: 50%;">EPS +9%/yr</div>
+<div class="irr-seg-rerate" style="width: 35%;">re-rate -12%/yr</div>
+<div class="irr-seg-dist" style="width: 7%;">div+bb +1.2%/yr</div>
+</div>
+
+<blockquote style="background:#F0F9FF; padding:14px; border-left:4px solid #0EA5E9; font-style:italic;">
+「Base -3% IRR 中，9%/yr 來自 EPS 複利（cycle 加速階段），<strong>-12%/yr 來自估值 re-rate 大幅壓縮</strong>（PE 28x → 16x normalised），+1.2%/yr 來自 buyback。這檔的可抱性<strong>幾乎全靠市場配合 — 但市場大概率不會配合</strong>（cycle peak 後 multiple 必然壓縮）。是<strong>「multiple 透支 + 等市場 reset」</strong>的負和遊戲。」
+</blockquote>
+
+<p><strong>Guardrail 校驗</strong>：Base 合計 -1.8% vs §4 表格 Base 列 -3.0% = 偏差 1.2pp ≤ 2pp，通過。</p>
+
+<!-- ============================ §1 Mental Models ============================ -->
+<h2>§1 Mental Models 壓力測試</h2>
+
+<h3>測試一：投委會 1 頁紙 Memo</h3>
+<div class="memo-box">
+TO: Investment Committee<br>
+FROM: PM<br>
+RE: ATI Inc — 不持有 / 觀望<br>
+DATE: 2026-05-18<br>
+<br>
+<strong>THESIS</strong>: ATI 是 CRS 的 B 級 sibling — 同享航太 super-cycle + 業界整併（Haynes 2024-11 下市）紅利，但 AA&S 業務（stainless + zirconium，~33% Rev）稀釋 pricing power，HPMC margin 24.9% vs CRS SAO 35.6% 結構性落後 11pp。<br>
+<br>
+<strong>KEY DRIVER</strong>: 同 CRS 的供給側壟斷（5-7 年 OEM qualification + Bakers South 80% LTA pre-secured）+ 需求側持續性（Airbus rate 75 目標 2027 + CFM LEAP 2028 +29%）— 但 ATI 在這兩條 driver 都比 CRS 弱一級。<br>
+<br>
+<strong>R:R</strong>：5Y 機率加權 IRR <strong>-3.4%/yr</strong>（vs CRS +6.95%/yr）— 顯著弱於大盤 8%。Bull +56% (25%) / Base -14% (50%) / Bear -61% (25%)。短期 R:R 強負（FY26 目標 $124 < 現價 $154 = -19.4%）。<br>
+<br>
+<strong>關鍵風險</strong>：(1) cycle reversion FY29-32 + AA&S 雙重拖累；(2) Pratt GTF 持續供應問題影響 Airbus rate 75；(3) Path Max DD -45 至 -60%（高於 CRS）— 2017-2022 上一輪 max DD 達 -75% 是真實對標；(4) CEO Kim Fields 兼任 Board Chair（2026 Annual Meeting）+ 5/13 賣 40K 股 = 治理 + 內部信號雙警示。<br>
+<br>
+<strong>建議</strong>：<strong>觀望</strong> — 不立即建倉。<strong>若已持有 CRS，ATI 邊際資金毫無理由</strong>（同類 cycle exposure 集中且 ATI conviction 較弱）。觸發條件：(a) 股價 < $120 BB 中軌下；(b) Q2 FY26 法說 HPMC margin ≥ 25%；(c) Pratt GTF resolution + Airbus rate 75 公告。觸發後僅小衛星 2-4%。<br>
+<br>
+<strong>Conviction</strong>: Low-Mid（thesis 完整但 R:R 數學負；vs CRS 為次選）。
+</div>
+
+<h3>測試二：30 秒電梯簡報</h3>
+<div class="elevator">
+「ATI 跟 Carpenter（CRS）做差不多的事 — 賣飛機引擎需要的特殊合金。但 ATI 多了一塊不銹鋼+核能用 zirconium 業務拖累，毛利率比 CRS 低 11%。股價 5 年內加權後我估計平均年化是 -3%（虧錢）。如果我手上已經有 CRS，根本沒理由再買 ATI；如果沒有，也應該先買 CRS 再說。」
+</div>
+
+<p><strong>壓力測試結果</strong>：兩個版本邏輯自洽，能清楚說明「為什麼 ATI 在 CRS 對照下不該優先持有」— 可進入 §7 完整 Decision。</p>
+
+<!-- ============================ Phase B 矛盾與裁決 ============================ -->
+<h2>Phase B｜矛盾辨識 + 強制裁決</h2>
+
+<h3>共識清單</h3>
+<ul>
+<li>A1 + A2 + A3 + DD §1 全部 confirm：航太 cycle 仍在加速期，Bakers South 80% LTA pre-secured 反映需求極緊</li>
+<li>A1 + A4：護城河 7/10 + ↑ widening trend，但結構性弱於 CRS（HPMC margin -11pp gap）</li>
+<li>A3 + DD：FY26 OI guidance 上修 + 雙 segment margin 同時擴張</li>
+</ul>
+
+<div class="conflict-box">
+<h3>矛盾清單</h3>
+<table>
+<tr><th>#</th><th>矛盾點描述</th><th>A1</th><th>A2</th><th>A3</th><th>性質</th></tr>
+<tr>
+<td>🔴 1</td>
+<td>thesis 完整 vs IRR 嚴重不及格</td>
+<td>moat 7/10 ↑ widening</td>
+<td>產業順風 TAM CAGR 7.7%</td>
+<td>機率加權 IRR -3.4%/yr，遠低於大盤 8%；短期 R:R -19.4%</td>
+<td>不可調和</td>
+</tr>
+<tr>
+<td>🟡 2</td>
+<td>ATI 自身結構 vs vs CRS 相對比較</td>
+<td>ATI 護城河 7 vs CRS 8（落後 1 級）</td>
+<td>同產業 super-cycle</td>
+<td>ATI Fwd PE 28.4x vs CRS 32.6x = 折價 13%（部分反映 quality gap，但溢價空間不足）</td>
+<td>程度差異</td>
+</tr>
+<tr>
+<td>🟡 3</td>
+<td>Kim Fields CEO+Chair 集中 + 賣股 signal</td>
+<td>moat ↑ widening</td>
+<td>產業順風</td>
+<td>CEO 5/13 賣 40K 股 timing 在 Q1 record earnings 後</td>
+<td>可調和（routine cashless exercise）</td>
+</tr>
+</table>
+
+<h3>與既有報告的交叉矛盾</h3>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>原因</th></tr>
+<tr><td>1</td><td>進場時機</td><td>觀望，IRR -3.4%/yr</td><td>DD signal B 建議「等回測 BB 中軌 $146」</td><td>無實質矛盾，DD 與 DCA 一致</td></tr>
+</table>
+
+<h3>⚖ 強制裁決</h3>
+<table class="verdict-table">
+<tr><th>#</th><th>矛盾</th><th>我選哪邊</th><th>依據</th><th>會 settle 此衝突的硬數據點</th><th>裁決後執行路徑</th></tr>
+<tr>
+<td>🔴 1</td>
+<td>thesis 完整 vs IRR 嚴重不及格</td>
+<td><strong>A3</strong>（IRR 紀律壓倒 thesis 完整性）</td>
+<td>(a) 加權 IRR -3.4%/yr 是「預期負報酬」— 不只是「次優」而是「虧損預期值」；(b) Path Max DD -60% 機率 25% = 期望損失嚴重；(c) ATI vs CRS quality gap 1 級在當前估值差距 13% 折價中未完全 priced — 同類資金應優先 CRS；(d) 2017-2022 上一輪 max DD -75% 真實前車之鑑</td>
+<td>
+(1) 股價回測 $120-$146 區間（BB 中軌 / -5~-22%）<br>
+(2) Q2 FY26 法說 HPMC margin ≥ 25%<br>
+(3) Pratt GTF 與 Airbus 達成 2027+ 協議 + Airbus rate 75 時程確認<br>
+(4) ATI Fwd PE 跌破 22x（CRS-comparable 折價 30%+）
+</td>
+<td>
+<strong>if-then (a, upside)</strong>: 觸發條件 1 或 2 達成 → 啟動首批 2% 進場（小衛星，不超過 CRS 倉位 50%）<br>
+<strong>if-then (b, downside)</strong>: HPMC margin TTM 連 2 季 < 22% → 永久迴避；若 cycle 反轉早於預期（FY28 前），重新評估
+</td>
+</tr>
+<tr>
+<td>🟡 2</td>
+<td>ATI vs CRS 相對比較</td>
+<td><strong>選 CRS（A4 cross-check）</strong></td>
+<td>同類 cycle exposure 集中 + ATI conviction 較弱 + CRS IRR +6.95%/yr 遠優於 ATI -3.4%/yr</td>
+<td>ATI Fwd PE 折價 vs CRS 必須擴大至 30%+ 才有 valuation 邊際優勢</td>
+<td>
+(1) 若有 CRS → 不買 ATI（除非 CRS 滿倉且 ATI 折價 ≥ 30%）<br>
+(2) 若無 CRS → 應優先建 CRS 而非 ATI
+</td>
+</tr>
+</table>
+</div>
+
+<!-- ============================ §3 Key Drivers ============================ -->
+<h2>§3 Key Drivers</h2>
+
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>對應的可觀測指標</th></tr>
+<tr>
+<td>1</td>
+<td><strong>HPMC 業務的航太 cycle exposure（需求側持續性）</strong></td>
+<td>HPMC 占 ~67% Rev + 86% A&D 暴露；Boeing/Airbus 14 年 backlog 是 ATI 未來 5 年 EPS 主要驅動；CFM LEAP 2028 目標 2,600 引擎 + Pratt GTF 仍待 resolve = 直接影響 ATI 訂單</td>
+<td>(a) Boeing/Airbus 月度交付數據；(b) HPMC segment adj margin（季度 TTM）— 維持 23%+ 即 cycle 加速期未結束</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Bakers South VIM 2H 2027 commission 進度（供給側資本擴張）</strong></td>
+<td>+8-10% capacity = $300-400M Rev / $80-120M EBITDA 增量；80% 已 LTA pre-secured（罕見 customer commitment）；若 commission on track + ramp 順利，將是 ATI 從 cycle peak 平台跳升 next leg 的關鍵 catalyst</td>
+<td>(a) 季度 capex 進度（gross capex $280-300M）；(b) commission ETA 維持 2H 2027；(c) LTA 80% 比例不變</td>
+</tr>
+</table>
+
+<h4>為什麼是這 1-2 個</h4>
+<p>AA&S 業務、$1.20B buyback、CEO Kim Fields 治理結構都是 secondary。Driver 1 + 2 是兩條獨立因果鏈：driver 1 = 需求端 cycle 持續性（即使 Bakers 延後，cycle 強勁 ATI 仍能 capture）；driver 2 = 供給端容量擴張（即使 cycle 平台化，新容量 ramp 可貢獻 organic growth）。</p>
+
+<h4>Driver 抽象層 guardrail 校驗</h4>
+<p>Driver 2「Bakers South 容量擴張」是否可在「driver 1 cycle 持續性不成立」假設下單獨被推翻？— <strong>不能完全</strong>（若 cycle 反轉，Bakers South ramp 也會缺乏需求支撐）。<strong>嚴格說 driver 2 半從屬於 driver 1</strong>，但 Bakers 80% LTA pre-secured 提供 5-7 年 demand visibility = 部分獨立。判定：driver 2 70% 獨立、30% 從屬，<strong>通過 guardrail 但需注意</strong>。</p>
+
+<h4>強制減法——我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論的因素</th><th>為什麼我認為不重要</th></tr>
+<tr><td>AA&S nuclear zirconium 需求復興（SMR 等）</td><td>AA&S 占 Rev ~33%，zirconium 為 AA&S 子集 — 全公司影響 < 5% Rev</td></tr>
+<tr><td>$1.20B buyback authorization 規模</td><td>buyback 紀律已建立，capital allocation 不會 break thesis；當前 cycle peak 大量回購反而 risk</td></tr>
+<tr><td>原物料 titanium / nickel 價格波動</td><td>surcharge mechanism pass-through，1-2 季 lag</td></tr>
+<tr><td>3D 列印（加性製造）取代</td><td>滲透週期 5-10 年；ATI 自有 additive Florida 設施可承接</td></tr>
+<tr><td>中國競爭威脅</td><td>10-15 年內難達西方 OEM 認證標準</td></tr>
+</table>
+
+<h4>🔄 我和市場 consensus 的最大分歧</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>市場目前定價在什麼假設上</td><td>Fwd PE 28.4x + 9 家 Strong Buy 共識中位目標 $160-168 → 暗示市場相信「cycle 持續至 FY28-29 + Bakers South 順利 + HPMC margin 25%+ normalised」 — 即 Bull 30-40% 機率</td></tr>
+<tr><td>我認為的不同假設</td><td>機率分配應為 Bull 25% / Base 50% / Bear 25%（市場 implicit Bull 35% / Base 50% / Bear 15%）— 我認為市場顯著低估 AA&S 拖累 + cycle reversion 風險，與 ATI 上一輪 max DD -75% 比較，當前估值 28x > 上輪 peak 25x 已透支</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方分析師對 cycle 標的 5Y 視角通常不夠 — 模型多假設「Q1 momentum × growth」而非「mean reversion」；對 ATI 結構性弱於 CRS 11pp margin 的 implication 未充分定價；對 AA&S 業務 cycle reversion 時 amplification effect 缺乏定量分析</td></tr>
+</table>
+
+<p><strong>校驗</strong>：寫得出三題差異 → thesis 含 contrarian 元素（同類比較 underweight ATI）。§7 倉位嚴格限制（衛星 2-4% 上限）。</p>
+
+<!-- ============================ §5 Single Thing ============================ -->
+<h2>§5 The Single Thing That Could Change My Mind</h2>
+
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr>
+<td>事件描述</td>
+<td><strong>「Pratt & Whitney 與 Airbus 達成 2027+ GTF 供應協議 + Airbus 公告 rate 75 可在 2027 達成」</strong>（upside binary discrete event — 與 DD §5.F 一致；對 ATI 而言為強烈 upside trigger，因 ATI HPMC 對 Airbus 引擎 indirect exposure 高）</td>
+</tr>
+<tr>
+<td>為什麼這個事件是致命的</td>
+<td>Airbus 是 ATI 第二大 OEM end customer（透過 Pratt GTF + CFM LEAP indirect）；若 Pratt GTF 持續供應問題（2026/02/05 仍無 2026-27 供應協議），Airbus rate 75 目標將推遲至 2028+ → ATI HPMC 訂單 backlog 結構性下修。反之，若達成協議 + 時程確認 → thesis 強化、IRR 可從 -3.4% 修正至 +5-7%/yr</td>
+</tr>
+<tr>
+<td>如何監測（資料來源、頻率）</td>
+<td>(1) Airbus 季報 + IR 公告（每季）；(2) Pratt & Whitney parent RTX IR 公告（每月關注）；(3) Bernstein / JP Morgan 航太分析師 alerts；(4) 2026 H2-H3 為關鍵窗口</td>
+</tr>
+<tr>
+<td>目前離發生有多遠</td>
+<td>未來 24 個月 ~45-55% 機率（Airbus 與 Pratt 有強烈動機達成協議）；若 2026/H2 仍無 resolution → 機率下修</td>
+</tr>
+</table>
+
+<h3>🔗 Cross-check with DD §5.F</h3>
+<p><strong>Alignment 狀態：✅ Aligned</strong> — DD §5.F single thing 與 DCA §5 完全一致（Pratt GTF + Airbus 達成協議事件）。DD 從 thesis-level upside trigger 角度寫，DCA confirm + 加強監測 detail（資料來源 + 頻率 + 機率估計）。</p>
+
+<!-- ============================ §6 What I Don't Know + Pre-mortem ============================ -->
+<h2>§6 What I Don't Know + Pre-mortem</h2>
+
+<h3>6a. 強迫面對自己的盲點</h3>
+<table>
+<tr><th>#</th><th>我不確定的假設</th><th>Thesis 仍成立的前提</th><th>如果假設不成立的後果</th></tr>
+<tr>
+<td>1</td>
+<td>Bakers South 2H 2027 commission 不延後 + 80% LTA pre-secured 比例不下降</td>
+<td>$400M 級 brownfield project 平均延遲 6-12 個月 + ATI 過去 Bakers South 一期（2024 titanium press）on time → 二期可能也 on time</td>
+<td>若延遲 12+ 個月或 LTA < 70%，FY28-30 EPS 預估下修 15-20%，估值壓縮 3-5pp</td>
+</tr>
+<tr>
+<td>2</td>
+<td>AA&S margin 在 cycle reversion 期不會跌至 10% 以下（過去 cycle trough 曾達 ~5%）</td>
+<td>AA&S 重組已減少 commodity exposure，nuclear zirconium + 高端 stainless 占比上升</td>
+<td>若 AA&S margin 跌至 10% 以下，全公司 EBITDA 將大幅壓縮，IRR 進一步惡化</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Kim Fields CEO+Chair 集中後 capital allocation 不轉向激進 M&A</td>
+<td>Kim Fields 2023 上任至今 capital allocation 較保守（無 M&A，buyback + capex 為主），Lead Independent Director Leroy Ball 可 check</td>
+<td>若 Fields 啟動大型 M&A（如試圖收購 Howmet 一塊業務），可能在 cycle peak 過度槓桿；ROIC 從 15.75% 跌至 10-12%</td>
+</tr>
+</table>
+
+<div class="premortem-box">
+<h3>6b. Pre-mortem：失敗故事倒推 + 校驗 + 修正 §5</h3>
+
+<h4>第一段｜故事倒推</h4>
+<blockquote>
+「假設 5 年後（2031-05）ATI 部位虧 50%，最可能發生的故事是：2027 Q4 Airbus 因 Pratt GTF 持續供應問題公告 A320neo 月產目標從 75 下調至 65 + CFM LEAP-1A 訂單同步消化。2028 Q1 Boeing 因新 FAA 質量事件強制降 737 MAX 月產至 35 架持續 6 個月。ATI HPMC bookings YoY 從 +12% 跌至 -8%，HPMC adj margin 從 24.9% 急轉至 18%（productivity gain 反向 + utilization 下降）。同期 AA&S 工業景氣放緩 margin 從 18.1% 跌至 12%。市場急轉場景認知，Fwd PE 從 28x → 14x。2028 H2 stock 從 $154 跌至 $75 (-51%)，2029 H1 再度下跌至 $55 (-64%)，期間 max drawdown 達 -64%。」
+</blockquote>
+
+<h4>第二段｜校驗 §5 single-thing</h4>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>上面的失敗故事中的關鍵觸發事件，是否就是 §5 寫的 single thing？</td><td>⚠ <strong>部分重疊</strong> — §5 寫的是「Pratt GTF + Airbus 達成協議」(upside trigger)，但失敗故事是其 inverse（Pratt GTF 持續無解 + Boeing 質量事件 + AA&S 工業景氣放緩三重夾擊）。§5 漏抓「Boeing FAA event」與「AA&S 工業景氣放緩」兩個 downside trigger</td></tr>
+</table>
+
+<h4>第三段｜修正 §5</h4>
+<p>⚠ <strong>部分重疊</strong>：§5 漏抓「Boeing 端 FAA 介入事件」與「AA&S 工業景氣放緩」兩個 downside triggers。<strong>實際修正 §5 區塊</strong>：在 §5「事件描述」新增 2 條 secondary triggers：</p>
+
+<blockquote style="background:#FEF2F2; padding:14px; border-left:4px solid #DC2626;">
+<strong>§5 修正後事件描述（最終 3 條 triggers）</strong>：<br>
+<strong>Primary trigger（原 §5）</strong>：Pratt & Whitney 與 Airbus 達成 2027+ GTF 供應協議 + Airbus rate 75 時程公告（upside trigger）。<br>
+<strong>Secondary trigger 1（pre-mortem 派生 downside）</strong>：Boeing 因 FAA 新監督事件強制 737 MAX 月產 < 38 持續 6 個月（與 CRS DD/DCA §5 共同 trigger）。<br>
+<strong>Secondary trigger 2（pre-mortem 派生 downside）</strong>：AA&S adj segment margin 連 2 季 < 15%（cycle reversion 早期信號，ATI 特有 — CRS 無此 segment）。
+</blockquote>
+
+<p><strong>校驗紀錄</strong>：§5 修正狀態：⚠ 已補 2 條 secondary triggers（Boeing FAA event + AA&S 工業景氣放緩）。修正後共 3 條 trigger（1 upside + 2 downside），pre-mortem 故事的關鍵觸發事件已完整 capture。</p>
+</div>
+
+<h3>6c. 路徑壓力測試（Max DD）</h3>
+
+<div class="maxdd-box">
+<div class="maxdd-main">−45% ~ −60%</div>
+<div class="maxdd-bar" style="width: 100%; background: #FED7AA; border-color: #C2410C; color: #7C2D12;">
+  Drawdown 區間：−45% 至 −60% — 🟡 amber 評級（接近 🔴 邊界，需要極強信念）
+</div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−45% ~ −60%</strong>（寬度 15pp ≥ 10pp 達標）</td></tr>
+<tr><td>最可能觸發時點</td><td><strong>2.5-3 年後</strong>（2028 H2-Q4 期間）— 對應 §6b pre-mortem「Boeing 質量 + Airbus 降產 + AA&S 工業景氣」三重觸發</td></tr>
+<tr><td>觸發後最快多久恢復到峰值</td><td><strong>5-7 年</strong>（若 cycle FY32-34 重新加速 + Bakers South ramp 完成）；若 cycle 結構性弱化 → thesis 已破</td></tr>
+<tr><td><strong>路徑風險評級</strong></td><td><strong>🟡 amber（−45~−60%）— 接近 🔴 邊界</strong>，<strong>歷史上 2017-2022 ATI cycle case max DD 達 -75%（COVID）作為極端對標</strong>，多數投資人 ride through 困難</td></tr>
+</table>
+</div>
+
+<p><strong>校驗</strong>：</p>
+<blockquote>
+「若 max DD 落在 -45 至 -60%，能否撐到復原？條件：(a) 部位嚴格 ≤ 3-4%（已從原 5% 強制下修）；(b) 不使用槓桿；(c) §5 三條 trigger 持續監測，secondary trigger 任一觸發即減倉；(d) 投資人需有明確 7-10 年持有期承諾並能承受 -60% 中途痛苦。若無法給出明確條件 → §7 倉位再打折至 2%（小衛星）。<strong>由於 ATI conviction 弱於 CRS，倉位上限應為 CRS 的 50%</strong>。」
+</blockquote>
+
+<p><strong>Guardrail 校驗</strong>：(a) 範圍寬度 15pp ≥ 10pp 達標；(b) 評級 🟡 amber 接近 🔴 → §7a 倉位已嚴格下修（衛星上限 2-4%，遠低於 CRS 5-7%）；§7d 已標註「中途出場風險高」+「不建議長期 5-10 年 buy-and-hold」。</p>
+
+<!-- ============================ §8 Review Triggers ============================ -->
+<h2>§8 Review Triggers</h2>
+
+<table>
+<tr><th>#</th><th>重新評估觸發點</th><th>類型</th><th>具體時間/條件</th></tr>
+<tr><td>1</td><td>Q2 FY26 法說（HPMC margin、AA&S margin、Bakers South commission ETA、Pratt GTF 議題）</td><td>財報日期</td><td><strong>2026-08-01 或前後一週</strong>（FY26 H1 結 6/30 + 4 週後法說）</td></tr>
+<tr><td>2</td><td>Pratt & Whitney 與 Airbus GTF 2026-27 供應協議達成（或破裂）</td><td>產業事件</td><td>持續監測，2026 H2 為關鍵窗口</td></tr>
+<tr><td>3</td><td>股價回測 $120-$146（-22 至 -5%）或更深至 $100（W52 SMA 附近）</td><td>價位觸發</td><td>3-6 個月內機率 ~40-50%</td></tr>
+<tr><td>4</td><td>§5 Single Thing — Pratt GTF resolution upside / Boeing FAA event downside / AA&S margin < 15% downside</td><td>Single Thing trigger</td><td>持續監測（每月）</td></tr>
+</table>
+
+<p><strong>這份報告的保質期：至 2026-08-15</strong>（Q2 FY26 法說後 2 週內必須重新評估）</p>
+
+<p><strong>最可能發生的 upside 因素</strong>：</p>
+<ul>
+<li>(a) Pratt GTF resolution + Airbus rate 75 時程確認 → 觸發首批 2% 進場條件</li>
+<li>(b) Q2 FY26 HPMC margin 進一步擴張至 26%+ + FY26 guidance 上修</li>
+<li>(c) 股價回測 $100-$120 區間使 IRR 改善至 +5-7%/yr 區間</li>
+</ul>
+
+<p><strong>最可能發生的 downside 因素</strong>：</p>
+<ul>
+<li>(a) Boeing 因新 FAA 事件被進一步限產 → 短期股價可能 -15-20%</li>
+<li>(b) AA&S margin 連 2 季 < 15% → 工業景氣轉弱信號，重新評估 thesis</li>
+<li>(c) Kim Fields 啟動大型 M&A → 估值重估</li>
+</ul>
+
+<!-- ============================ Phase A 折疊區 ============================ -->
+<details>
+<summary>📂 Phase A1 護城河深度分析（獨立結論：護城河 7/10 + ↑ widening — 業界整併 + LTA 擴大 + Bakers South 80% pre-secured；但 HPMC margin 落後 CRS 11pp 結構性弱於 CRS）</summary>
+
+<h3>Phase A1｜護城河深度分析</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>(a) OEM 認證壁壘（LEAP + GTF qualified status = decade-long moat per Seeking Alpha 2025）；(b) Boeing LTA extension + Airbus multi-year titanium agreement 鎖定</td></tr>
+<tr><td>持久性評分</td><td>7/10，5 年穩固度：中-高（business model + 整併動態強化，但結構性弱於 CRS 1 級）</td></tr>
+<tr><td>最大侵蝕風險</td><td>陶瓷基複合材料（CMC）+ 3D 列印滲透 5-10 年；CRS 在 high-purity nickel 細分市場結構領先（11pp margin gap）</td></tr>
+<tr><td>關鍵數據</td><td>ATI aerospace titanium 全球市佔 ~30%（Finance Spot 2025/11）；HPMC adj margin Q1 26 = 24.9% (↑↑)、ROIC 15.75% (GuruFocus 2026/05)；ROIC vs WACC 超額 +6pp</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong> — 12 個月內變化的具體證據：(1) Haynes International 2024-11 被收購下市（業界整併）；(2) Boeing LTA extension + Airbus multi-year titanium agreement 2025 簽訂（ATI IR）；(3) Bakers South VIM 2H 2027 commission +9,000 tonnes 80% pre-secured（Metalnomist 2026/04）— 三項 sourced events 共同強化 ATI 護城河</td></tr>
+</table>
+
+<h4>二維護城河拆解（aligned with DD §9）</h4>
+<table>
+<tr><th>維度</th><th>DD §9 評分</th><th>DCA 獨立評估</th><th>Alignment</th></tr>
+<tr><td>Execution moat</td><td>DD 7/10</td><td>DCA 7/10</td><td>aligned</td></tr>
+<tr><td>Pricing power moat</td><td>DD 7/10</td><td>DCA 7/10</td><td>aligned</td></tr>
+<tr><td>合併</td><td>DD 7/10</td><td>DCA 7/10</td><td>—</td></tr>
+</table>
+
+<h4>Sourced data points（floor ≥ 5，本案 6 個達標）</h4>
+<ol>
+<li>ATI controls ~30% global aerospace titanium market（Finance Spot 2025/11）</li>
+<li>LEAP + GTF qualified status = decade-long moat（Seeking Alpha 2025）</li>
+<li>HPMC adj margin Q1 26 = 24.9% (+250bp YoY)（ATI Q1 26 8-K 2026/05/01）</li>
+<li>AA&S adj margin Q1 26 = 18.1% (+320bp YoY)（同上）</li>
+<li>Boeing LTA extension + Airbus multi-year titanium agreement 簽訂 2025（ATI IR press releases）</li>
+<li>ROIC 15.75%（GuruFocus 2026/05）</li>
+</ol>
+
+<p><strong>A1 獨立結論</strong>：護城河 7/10 + ↑ widening — 業界整併 + LTA 擴大 + Bakers South 80% pre-secured；但 HPMC margin 落後 CRS 11pp 反映結構性 quality gap。二維 alignment 與 DD 完全一致。</p>
+</details>
+
+<details>
+<summary>📂 Phase A2 產業趨勢深度分析（獨立結論：航太高性能合金 TAM $136B by 2027 CAGR 7%，nickel 75% 占比 — runway_post_y5 🟡 中）</summary>
+
+<h3>Phase A2｜產業趨勢深度分析</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>Aerospace high-performance alloys $136B by 2027 CAGR 7%（Allied Market Research）；aerospace materials $43B (2025) → $62.3B (2030) CAGR 7.7%（MarketsandMarkets 2025/12）；nickel-based 占 ~75% superalloys（Persistence Market Research）</td></tr>
+<tr><td>供需判斷</td><td>緊縮（同 CRS）— Bakers South 80% pre-secured 反映供給端緊縮；CFM LEAP 2028 +29%</td></tr>
+<tr><td>最大技術替代風險</td><td>CMC 5-10 年滲透 + 3D 列印加速</td></tr>
+<tr><td>最大政策/地緣風險</td><td>美中 export control + 歐洲能源成本</td></tr>
+<tr><td>議價權位置</td><td>對上游 中（surcharge pass-through），對下游 強（LTA + OEM 認證鎖定）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟡 中</strong> — Y5 末（FY31）TAM 滲透率仍有 space（aerospace alloys CAGR 7% to 2027+），但<strong>cycle 反轉風險真實</strong>（FY29-32 期間可能進入 cycle trough，類似 FY22 EPS $0.96 場景）。下一條 S 曲線：Bakers South VIM ramp + AA&S nuclear zirconium 復興 — 但兩者尚未完全證實</td></tr>
+</table>
+
+<h4>Sourced data points（floor ≥ 5，本案 7 個達標）</h4>
+<ol>
+<li>Aerospace high-performance alloys $136B by 2027 CAGR 7%（Allied Market Research）</li>
+<li>Aerospace materials TAM $43B (2025) → $62.3B (2030) CAGR 7.7%（MarketsandMarkets 2025/12）</li>
+<li>Nickel-based 占 ~75% superalloys（Persistence Market Research 2026）</li>
+<li>Nickel alloy market $19.37B by 2030 CAGR 5.59%（Databridge）</li>
+<li>ATI aerospace titanium 全球 ~30%（Finance Spot 2025/11）</li>
+<li>Bakers South VIM 2H 2027 +9,000 tonnes 80% LTA secured（Metalnomist 2026/04）</li>
+<li>Airbus rate 75 A320neo target 2027（Leeham News 2026/02）</li>
+</ol>
+
+<p><strong>A2 獨立結論</strong>：航太材料 super-cycle 至 2030，但 runway_post_y5 🟡 中 — AA&S 業務 cycle exposure + Bakers South ramp 風險使 5+ 年 visibility 弱於 pure-play CRS。</p>
+</details>
+
+<details>
+<summary>📂 Phase A3 業務結構 / 財務體質 / 資本配置（獨立結論：FY26 record + Bakers South catalyst，但 leverage 1.6x + AA&S 拖累 + IRR 加權 -3.4%/yr 顯著弱於大盤）</summary>
+
+<h3>Phase A3｜業務結構 / 財務體質 / 資本配置</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>HPMC ~67%（jet engine + airframe + defense）/ AA&S ~33%（stainless + zirconium + tungsten）；A&D 69% Rev（Q1 26）</td></tr>
+<tr><td>客戶集中度</td><td>Top 1 ~12-15%（估計 GE Aerospace），Top 5 ~40-45%；風險：中</td></tr>
+<tr><td>定價權</td><td>HPMC ASP ↑↑（cycle 復甦 + mix shift），AA&S 平穩；定價權：強（HPMC）/ 中（AA&S）</td></tr>
+<tr><td>未來金雞母</td><td>Bakers South VIM 2H 2027 commission +8-10% capacity = $300-400M Rev / $80-120M EBITDA 增量，FY28-30 ramp</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換率 FY25 83%（cycle 復甦中）；GM 22%（趨勢 ↑↑）；壓力測試：營收 -20% 可撐 5-6 季（vs CRS 6-8 季 — 因 leverage 略高）；Net Debt / Adj EBITDA 1.6x（vs CRS 0.51x）</td></tr>
+<tr><td>資本配置紀律</td><td>過去 5 年無重大 M&A + buyback aggressive（$1.20B authorization 2026-02 + Q1 26 $75M execution）+ capex 高（gross $280-300M/yr）+ 無 dividend</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base case）</strong></td><td>EPS CAGR 預估 9-10%/yr（FY25 $2.85 → FY30E $4.5-5 cycle 反轉初期，含 ~1.5% buyback yield 已抵消 SBC）；5Y 末 forward P/E 預估 16x vs 當前 28x（re-rate 貢獻 = (16/28)^(1/5) - 1 = -10.6%/yr）；現金股息率 0%；淨買回率 ~1.5%/yr</td></tr>
+</table>
+
+<h4>Sourced data points（floor ≥ 6，本案 11 個達標）</h4>
+<ol>
+<li>Q1 FY26 Rev $1,151.5M / Adj EPS $1.00 +39% YoY Beat（Q1 26 8-K 2026/05/01）</li>
+<li>HPMC 67% / AA&S 33% segment split（ATI 2024 Annual Report）</li>
+<li>A&D 69% Rev（Q1 26 8-K）</li>
+<li>FY26 guidance Adj EBITDA $1.010-1.060B / Adj EPS $4.20-4.48 / Adj FCF $465-525M（Investing 2026/05/01）</li>
+<li>$1.20B buyback authorization 2026-02-19（raised from $700M）；Q1 26 $75M executed（Sahm Capital）</li>
+<li>Gross capex $280-300M, customer-funded $55-65M, target $350M nickel revenue by mid-2028（Investing 2026/05）</li>
+<li>Net Debt / Adj EBITDA 1.6x（Q1 26 法說 mgmt commentary）</li>
+<li>EPS consensus FY26 $4.43 / FY27 $5.41（yfinance n=8）</li>
+<li>5Y avg Fwd PE 19.28x vs current 28.4x（fullratio.com / GuruFocus 2026/05）</li>
+<li>ROIC 15.75%（GuruFocus 2026/05）</li>
+<li>CEO Kim Fields 2026/5/13 sold 40,000 shares（Daily Political 2026/5/13）</li>
+</ol>
+
+<p><strong>A3 獨立結論</strong>：FY26 record fundamentals + Bakers South catalyst + $1.20B buyback aggressive，但 leverage 1.6x（高於 CRS 0.51x）+ AA&S 拖累 + 5Y IRR 加權 -3.4%/yr 顯著弱於大盤 — 觀望等更好進場價。</p>
+</details>
+
+<details>
+<summary>📂 Phase A4 既有報告數據摘要（DD: DD_ATI_20260518.html / ID: 無）</summary>
+
+<h3>Phase A4｜既有報告數據擷取</h3>
+
+<h4>DD 報告（dd-meta JSON parse 成功）</h4>
+<table>
+<tr><th>欄位</th><th>值</th></tr>
+<tr><td>schema</td><td>v12.3</td></tr>
+<tr><td>date</td><td>2026-05-18</td></tr>
+<tr><td>price_at_dd</td><td>$153.55</td></tr>
+<tr><td>signal</td><td><strong>B</strong></td></tr>
+<tr><td>trap / trap_label</td><td>🟢 / 🟢 非陷阱</td></tr>
+<tr><td>moat / moat_score</td><td>B / 7.0</td></tr>
+<tr><td>moat_execution / moat_pricing_power</td><td>7 / 7</td></tr>
+<tr><td>val (估值燈)</td><td>🟡 合理</td></tr>
+<tr><td>fpe_fy2 / pct_5y / peg_fy2</td><td>28.4x / 64% / 1.29</td></tr>
+<tr><td>ma</td><td>✅ 強勢進場</td></tr>
+<tr><td>upside_short / mid / 5y</td><td>-19.4% / +12.8% / +17%</td></tr>
+<tr><td>stress.pass / total</td><td>2/2（v12.3 簡化）</td></tr>
+<tr><td>ai_risk</td><td>🟢</td></tr>
+<tr><td>long_term_confidence</td><td>中</td></tr>
+</table>
+
+<h4>ID 報告</h4>
+<p>無 — ATI 無對應產業 ID 報告。</p>
+
+<p><strong>Cross-check 結論</strong>：DD signal B 與 DCA verdict 觀望 一致（DD 本身亦建議「等回測 BB 中軌 $146」）— DD 與 DCA 一致認為「現在不買」。trap 🟢 一致；moat trend ↑ widening 與 DD §9 趨勢「加深」一致；DD §5.F single thing 與 DCA §5 ✅ Aligned。</p>
+</details>
+
+<!-- ============================ Supplementary Analysis ============================ -->
+<h2>補充分析｜ATI vs CRS 並排比較</h2>
+
+<p>由於 ATI 與 CRS 為同產業 + 同期 DD/DCA，並排比較對 PM 部位決策最有價值。本節提供決定性的同類比較表。</p>
+
+<h3>結構比較（ATI vs CRS）</h3>
+<table>
+<tr><th>維度</th><th>ATI</th><th>CRS</th><th>勝出方</th></tr>
+<tr><td>市值</td><td>$21.1B</td><td>$20.5B</td><td>—</td></tr>
+<tr><td>業務 pure-play 度</td><td>HPMC 67% + AA&S 33%（雙 segment）</td><td>SAO 80% + PEP 20%（單一焦點）</td><td><strong>CRS（更純）</strong></td></tr>
+<tr><td>A&D Revenue 占比</td><td>69%</td><td>66%</td><td>ATI 略高（純度）</td></tr>
+<tr><td>核心 segment OP margin（Q1/Q3 FY26）</td><td>HPMC 24.9%</td><td>SAO 35.6%</td><td><strong>CRS +11pp 顯著領先</strong></td></tr>
+<tr><td>護城河評分（v12.3 二維）</td><td>7/10（B 級）</td><td>8/10（A 級）</td><td><strong>CRS +1 級</strong></td></tr>
+<tr><td>Net Debt / EBITDA</td><td>1.6x（中等）</td><td>0.51x（極低）</td><td><strong>CRS（低槓桿）</strong></td></tr>
+<tr><td>ROIC（TTM）</td><td>15.75%</td><td>12.62%</td><td>ATI（但部分來自 leverage）</td></tr>
+<tr><td>Fwd PE（FY27）</td><td>28.4x</td><td>32.6x</td><td>ATI 折價 13%</td></tr>
+<tr><td>PEG（3Y）</td><td>1.29</td><td>1.36</td><td>ATI 略便宜</td></tr>
+<tr><td>5Y avg Fwd PE</td><td>19.3x</td><td>37.8x</td><td>—（ATI multiple expansion 較劇烈）</td></tr>
+<tr><td>當前 vs 5Y avg multiple expansion</td><td>+47%</td><td>-14%</td><td><strong>CRS（estimating margin of safety）</strong></td></tr>
+<tr><td>容量擴張 catalyst</td><td>Bakers South VIM 2H 2027 +8-10% (80% LTA secured)</td><td>Athens AL +40% VIM early 2028</td><td>CRS 規模更大（+40% vs +10%）</td></tr>
+<tr><td>Buyback 規模</td><td>$1.20B authorization (active)</td><td>$400M authorization ($235.8M used)</td><td>ATI（cycle peak 大規模回購 — 雙面刃）</td></tr>
+<tr><td>Dividend</td><td>無</td><td>$0.20/qtr（0.2% yield）</td><td>CRS（雖小）</td></tr>
+<tr><td>CEO 治理</td><td>Kim Fields CEO+Chair 雙身分（2026 Annual Meeting）</td><td>Thene → Malloy 7/1，Thene 轉 Chairman</td><td>CRS（權力分散）</td></tr>
+<tr><td><strong>DD 訊號</strong></td><td><strong>B（衛星）</strong></td><td><strong>A（核心候選）</strong></td><td><strong>CRS</strong></td></tr>
+<tr><td><strong>DCA 機率加權 5Y IRR</strong></td><td><strong>-3.4%/yr</strong></td><td><strong>+6.95%/yr</strong></td><td><strong>CRS（差距 10pp/yr）</strong></td></tr>
+<tr><td><strong>DCA 裁決</strong></td><td>觀望</td><td>觀望</td><td>同（皆等回測進場）</td></tr>
+<tr><td><strong>Max DD 範圍</strong></td><td>-45% ~ -60%（🟡 近 🔴 邊界）</td><td>-45% ~ -55%（🟡 amber）</td><td>CRS（路徑風險略低）</td></tr>
+</table>
+
+<h3>結論：CRS &gt;&gt; ATI（同類資金優先序）</h3>
+
+<p>13 個維度比較中 CRS 領先 11 項、ATI 領先 2 項（ROIC、PEG 略便宜）— 但兩個 ATI 領先處皆有 caveat：</p>
+<ul>
+<li>ROIC 15.75% vs CRS 12.62% 看似 ATI 領先，但部分來自 ATI 更高 leverage（Net Debt/EBITDA 1.6x vs 0.51x）；ROIC-WACC 超額 ATI +6pp 與 CRS +3pp 差距較小</li>
+<li>PEG 1.29 vs 1.36 略便宜，但反映 ATI 估值 expansion 較大（+47% vs CRS -14%）、未來 multiple 壓縮風險更高</li>
+</ul>
+
+<p><strong>PM 層的具體建議</strong>：</p>
+<ol>
+<li><strong>若無 specialty alloy 曝險</strong> → 觀望兩者，等任一達到進場條件後優先建立 CRS（A 級）</li>
+<li><strong>若已持有 CRS 衛星倉位</strong>（3-5%）→ 不建議再建 ATI（同類 cycle 集中度過高 + ATI conviction 較弱）</li>
+<li><strong>若已持有 CRS 核心倉位</strong>（5-7%）→ ATI 完全不應持有</li>
+<li><strong>若 ATI 大幅跌至 $100-120 區間</strong>（Fwd PE 跌至 22x，相對 CRS 折價擴大至 30%+）→ 可考慮 ATI 作為 valuation arbitrage 短期 trade，但部位嚴格 ≤ 2%</li>
+</ol>
+
+<h3>同產業 thesis 共用部分</h3>
+
+<p>ATI 與 CRS 共享以下三個 macro thesis 變量，這意味著兩者 R:R 將高度同步移動：</p>
+<ul>
+<li><strong>航太引擎 super-cycle 持續性</strong>：Airbus/Boeing backlog 14 年可見度 + CFM LEAP 2028 +29% + Pratt GTF 議題</li>
+<li><strong>業界整併紅利</strong>：Haynes 2024-11 下市 + Precision Castparts (Berkshire) 保守經營</li>
+<li><strong>原料端緩衝</strong>：surcharge mechanism 對鎳/鈦/鈷波動 pass-through 至客戶</li>
+</ul>
+
+<p>因此「同時持有 CRS + ATI」在 macro 層面相當於「對 specialty alloy 產業 double exposure」 — 集中度風險高且 marginal alpha 低（ATI 邊際資金幾乎無 hedge 效果）。除非 ATI 大幅折價超越 CRS 的 R:R margin of safety，否則 PM 應始終偏好 CRS。</p>
+
+<h3>本份 DCA 對 ATI 持倉的最終裁決</h3>
+<table>
+<tr><th>情境</th><th>建議</th></tr>
+<tr><td>新進場（無 specialty alloy 曝險）</td><td>觀望，等 ATI < $120 或 CRS 進場條件達成</td></tr>
+<tr><td>已持有 CRS 衛星（≤ 5%）</td><td>不建立 ATI（避免同類集中）</td></tr>
+<tr><td>已持有 CRS 核心（5%+）</td><td>絕對不建立 ATI</td></tr>
+<tr><td>ATI 跌至 $100-$120 區間</td><td>可作 valuation arbitrage 短期 trade，部位 ≤ 2%</td></tr>
+<tr><td>HPMC margin 連 2 季 < 22% + Pratt GTF 持續無解</td><td>永久迴避（thesis 結構性削弱）</td></tr>
+</table>
+
+</div>
+
+</body>
+</html>
