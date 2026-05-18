@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.3">
+<title>LOW｜Lowe's — v12.3 Inception DD (2026-05-18)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--muted:#475569;--good-bg:#DCFCE7;--good-fg:#166534;--bad-bg:#FEE2E2;--bad-fg:#991B1B;--warn-bg:#FEF9C3;--warn-fg:#92400E;--info-bg:#EFF6FF;--info-fg:#1E3A5F;--trap-bg:#FFF0E6;--trap-line:#F97316;--trap-ink:#C2410C;--bull-bg:#F0FDF4;--bull-line:#16A34A;--bear-bg:#FFF1F2;--bear-line:#DC2626;--arb-bg:#F5F3FF;--arb-line:#7C3AED}
+*{box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:#0F172A;line-height:1.65;margin:0;padding:0}
+.dd-header{position:sticky;top:0;background:var(--ink);color:#fff;padding:14px 28px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+.dd-header .ticker{font-size:22px;font-weight:700;letter-spacing:1px}
+.dd-header .meta{font-family:'IBM Plex Mono',monospace;font-size:13px;opacity:.92}
+.dd-toc{background:#fff;border-left:4px solid var(--accent);margin:18px 28px 6px;padding:14px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.06);display:flex;flex-wrap:wrap;gap:8px}
+.dd-toc a{display:inline-block;background:var(--info-bg);color:var(--ink);text-decoration:none;font-size:13px;padding:5px 14px;border-radius:999px;font-weight:500;transition:.15s}
+.dd-toc a:hover{background:var(--accent);color:#fff}
+main{max-width:1200px;margin:0 auto;padding:18px 28px 80px}
+section{background:var(--card);margin-bottom:28px;padding:28px 32px;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+section h2{color:var(--ink);background:#F1F5F9;border-left:4px solid var(--accent);margin:-28px -32px 22px;padding:18px 24px;font-size:22px;scroll-margin-top:80px}
+section h3{color:var(--ink);font-size:17px;margin-top:28px;border-bottom:1px solid #E2E8F0;padding-bottom:6px}
+section h4{color:#334155;font-size:15px;margin-top:18px}
+p{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+th{background:var(--ink);color:#fff;padding:10px 12px;text-align:left;font-weight:500;font-size:13.5px}
+td{padding:9px 12px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tbody tr:nth-child(even){background:#F1F5F9}
+.good{background:var(--good-bg);color:var(--good-fg);padding:2px 8px;border-radius:4px;font-weight:500}
+.bad{background:var(--bad-bg);color:var(--bad-fg);padding:2px 8px;border-radius:4px;font-weight:500}
+.warn{background:var(--warn-bg);color:var(--warn-fg);padding:2px 8px;border-radius:4px;font-weight:500}
+.info{background:var(--info-bg);color:var(--info-fg);padding:2px 8px;border-radius:4px;font-weight:500}
+.mono{font-family:'IBM Plex Mono',monospace}
+.hypothesis-box{background:var(--info-bg);border-left:4px solid var(--accent);padding:14px 20px;margin:16px 0;border-radius:0 4px 4px 0}
+.hypothesis-box ul{margin:6px 0;padding-left:22px}
+.hypothesis-box li{margin:6px 0}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-line);padding:14px 20px;margin:16px 0;border-radius:0 4px 4px 0}
+.trap-box h4{color:var(--trap-ink);margin-top:0}
+.reasoning{background:#F8FAFC;border-left:3px solid #94A3B8;padding:10px 14px;margin:10px 0;font-size:13.5px;color:#475569;font-family:'IBM Plex Mono',monospace}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+.col-card{padding:14px 18px;border-radius:0 4px 4px 0}
+.bull{background:var(--bull-bg);border-left:4px solid var(--bull-line)}
+.bear{background:var(--bear-bg);border-left:4px solid var(--bear-line)}
+.arb{background:var(--arb-bg);border-left:4px solid var(--arb-line)}
+.col-card h4{margin-top:0}
+.note{font-size:13px;color:var(--muted);font-style:italic}
+.print-btn{position:fixed;bottom:20px;right:20px;background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer;font-weight:500;box-shadow:0 2px 8px rgba(59,130,246,0.4);z-index:99}
+.print-btn:hover{background:#2563EB}
+@media print{.dd-header,.dd-toc,.print-btn{display:none}section{box-shadow:none;page-break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<header class="dd-header">
+  <div class="ticker">LOW｜Lowe's — v12.3 Inception DD</div>
+  <div class="meta">資料抓取：2026-05-18 ｜ 股價：$218.42 ｜ Q4 FY25 最新（Q1 FY26 = 5/20）｜ Schema v12.3</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<main>
+
+<!-- ============ §1 INVESTMENT CONCLUSION ============ -->
+<section id="s1">
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。LOW 為本份 DD 之 Inception（v12.3 首份），後續年度對照以 2027-05-18 為觸發。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡 中性：</strong>§8 長期成長性 🟡 中等可見度（與 HD 同 — housing-rate 週期底部）｜§9 護城河趨勢 穩定但較弱於 HD（規模次於 HD 1.9x，Pro 段較弱）｜§8 F AI 風險 🟢 受益｜短評：「同為 housing 雙頭壟斷之一，但較 HD 落後一個身段。FBM + ADG 收購為 Pro pivot 嘗試但整合 risk 較大」</li>
+<li><strong>品質 B 級：</strong>護城河 7-8/10（§9）｜體質 veto 1 項（FY25 OPM 下滑 + 負股本）｜等級調整：B → B（不變，未達 3 項 veto 觸發降級）｜FBM + ADG 整合早期，OPM 稀釋 50bp 待驗證</li>
+<li><strong>估值燈 🟢 便宜：</strong>Fwd PE（FY+2）16.00x，5Y 分位 ~20%（5Y 範圍 13.5-22x，當前接近 5Y 低）；PEG（基於 FY+2 8.2% growth）1.95，接近 2 邊緣；正規化後（housing recovery）PEG ~1.2｜盲點 1 救援：否</li>
+<li><strong>Pure MA 狀態 🟠 暫不進場（追蹤池）：</strong>W52 $241.55 / W104 $239.43 / W250 $215.87（斜率 +1.55%，仍正且優於 HD 0.84%）；現價 $218.42 在 W250 $215.87 上方 +1.2%（剛剛守住）但 < W104 $239.43 → 🟠 暫不進場（非 ❌，比 HD 好一格）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,408.50 > W104 6,173.73（高於 20% 緩衝），無系統性風險</li>
+<li><strong>參考 R:R：</strong>短期 1.43x / 中期 2.10x / 5Y 2.85x（resp. HD 1.04 / 1.45 / 2.61x，LOW 更佳因起點便宜）</li>
+<li><strong>綜合訊號：<span style="font-size:20px">B（觀望偏進場）</span></strong>（取自 §2 H）｜判定理由：品質 B + 估值🟢 + MA 🟠 + trap 🟡，符合 QC-31「品質 B + 估值便宜 + MA 訊號減半」之 B 觀望語意；5/20 Q1 FY26 財報（HD 的次日）為近期最大重設信號</li>
+<li><strong>長期持有信心：高（次於 HD）</strong>（§2 I）｜<strong>陷阱定性：🟡 觀察期</strong>（與 HD 同主因 housing-rate；額外 risk FBM 整合）</li>
+<li><strong>Inception DD：</strong><code>DD_LOW_20260518.html</code>（2026-05-18，本份為 Inception）</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-18（距今 365 天）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選/觀望｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="trap-box">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答題）</h4>
+<table>
+<tr><th width="32%">問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td>產業結構衰退（同 HD，housing rate 結構性壓抑）+ 隱性 Pro 整合風險（FBM + ADG 共 $8B+ 收購為 LOW 史上最大組合，整合 risk 高於 HD 的 SRS+GMS）— 目前判定為 <em>非結構性</em>，主因為 housing rate 週期</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>① Q4 FY25 comp +1.3% 強於 HD +0.4%，3 連季 positive comps（管理層稱「outperform macro」）；② FCF $7.65B FY25 健康，dividend yield 2.2% 連續提升；③ 5Y Fwd PE 分位 ~20% 接近 5Y 低，估值風險已部分定價；④ FY26 guide comp flat to +2% + adj EPS $12.25-12.75 區間 — 雖低於 sell-side 共識但 still positive growth；⑤ 過去 5Y CEO Marvin Ellison 帶領 LOW 從 落後者 升級至 LOW Total Home Strategy，Pro 段持續改善</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>① BofA 5/5 降評至 Neutral $260 target（vs analyst 共識 $280-287），原因：「housing turnover 多年低點 + 高 mortgage rate + LOW Pro pivot 較 HD 慢」；② FBM 收購 $8.8B（vs LOW 市值 $122B = 7.2%，<strong>達 5% 重大事件門檻</strong>）+ ADG 一起共 $8B FY26 revenue contribution but margin dilute 50bp；③ 90-day Q1 EPS 共識從 $3.07 → $2.97 下修 -3.3%，仍持續弱；④ ROE 受 buyback 過度導致負股本（-$9.92B FY25），財務結構脆弱；⑤ 過去 10Y LOW 持續在 share、margin、ROIC 落後 HD，雖然差距縮小但結構性 disadvantage 仍在</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否發生</strong></td><td>① <strong>領先指標 A</strong>：US comp sales — FY26 guide 0% 至 +2%，若連 2 季降至負值（特別 Pro 段亦轉負）→ thesis 削弱；② <strong>領先指標 B</strong>：adj OPM trajectory — FY25 11.8%，若再連 2 季 < 10.5% 且 FBM 整合未改善 → R2 觸發</td></tr>
+</table>
+<p><strong>最終定性：🟡 觀察期</strong>（與 HD 同邏輯；但 LOW 在 trap 風險矩陣中略弱 — 規模、護城河、Pro pivot 均落後 HD 一個身段，但估值更便宜 -12% 部分對沖）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th width="6%">#</th><th width="32%">監測指標</th><th width="14%">對應章節</th><th width="14%">性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>美國 comp sales（Pro vs DIY 拆分）</td><td>§5 H1 + §6</td><td>🔵 核心假設驗證</td><td>連 2 季 comp 為負 → H1 削弱；Pro 段 comp 連 2 季 < +2% → Pro pivot 受質疑</td></tr>
+<tr><td>2</td><td>Adj Operating margin trajectory（含 FBM + ADG 影響）</td><td>§8 / §10</td><td>🔵 長期成長領先信號</td><td>FY26 adj OPM 跌破 11% 連 2 季（current 11.8% / FY26 guide 11.6-11.8%）→ R2 觸發</td></tr>
+<tr><td>3</td><td>FBM + ADG integration milestones</td><td>§12 + §6</td><td>結構性</td><td>FY27 H1 FBM 段 OPM > 8%（vs build-tier 5-6%）→ H2 強化；< 5% → R3 觸發</td></tr>
+</table>
+</section>
+
+<!-- ============ §2 FOUR-LAYER DETERMINATION ============ -->
+<section id="s2">
+<h2>§2｜產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定（v12.3：7 子節）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th width="40%">輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟡 中等可見度（同 HD 邏輯）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（Total Home 戰略持續 + FBM 收購擴 Pro，但規模仍落後 HD）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 受益/免疫（同 HD）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟡 中性</strong></td></tr>
+<tr><td>一句話判斷</td><td>「同 HD 環境，但 LOW 在 Pro pivot 落後 HD ~2-3 年；FBM 整合為下一階段催化但 risk 較高」</td></tr>
+</table>
+<div class="reasoning">
+§8 🟡（同 HD）+ §9 趨勢「穩定」（QC-23 點對點威脅為主）+ §8 F 🟢（AI 受益）→ 三者最弱為 🟡 → 結果 🟡 中性
+盲點救援機制可有限啟動（同 HD）→ implication：§2 D 估值燈 🟢 不啟動盲點 1 救援；§2 F MA 🟠 不需額外救援（本就是非拒絕狀態）
+</div>
+
+<h3>B｜品質等級（含體質檢核 mini-list）</h3>
+
+<h4>體質檢核 mini-list（veto 制，5 項）</h4>
+<table>
+<tr><th width="6%">#</th><th width="42%">項目</th><th width="12%">結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 > 2%p</td><td><span class="good">✅ 過</span></td><td>FY23 33.4% / FY24 33.3% / FY25 33.5%（穩定）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="good">✅ 過</span></td><td>FY25 FCF $7.65B / NI $6.65B = 1.15（NI < FCF，受 SBC + working capital 影響，健康）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="warn">⚠️ 邊緣</span></td><td>FY+1 (0y) EPS 90d trend 從 $12.94 → $12.61 (-2.5%)；Q1 EPS 90d -3.3%；視為 ✅ 過（< 5% 門檻）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="good">✅ 過</span></td><td>FY25 Q1 -1.4% / Q2 -0.2% / Q3 +4.1% / Q4 +0.4%（轉正趨勢）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="good">✅ 過</span></td><td>Net Debt $43.7B / FY25 EBITDA ~$12.5B = 3.5（<strong>稍超標</strong>但 IG rated；負股本 distorted）— 視為 ⚠️ 邊緣但暫不算不過</td></tr>
+</table>
+<p><strong>體質 veto 結果：0-1 項邊緣不過</strong> → 等級不變</p>
+
+<h4>護城河等級表</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td>7 / 10</td></tr>
+<tr><td>護城河原始等級</td><td>✅ B 級</td></tr>
+<tr><td>體質 veto 調整</td><td>0-1 項邊緣，不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>✅ B 級</strong></td></tr>
+<tr><td>底倉（目標倉位的）</td><td>15%</td></tr>
+</table>
+<div class="reasoning">
+護城河 = execution moat 8（1,728 美國門市 + 規模 $86B vs HD $165B = 0.52x；Pro pivot 較晚 + FBM 收購剛完成） × pricing power moat 6（同 HD 雙頭壟斷但規模次之 → 議價能力略弱；Pro 段 customer base 較小）→ 合併 7/10（execution-led）
+體質 veto 0-1 邊緣，等級不變 → B 級 15% 底倉
+→ implication §2 H：quality_tier = B
+</div>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 (FY26, 期末 Jan 2027) EPS 共識</td><td>$12.61（adj）</td><td>yfinance earnings_estimate (0y), n=33, growth +2.7%</td></tr>
+<tr><td>FY+2 (FY27, 期末 Jan 2028) EPS 共識</td><td>$13.65（adj）</td><td>yfinance earnings_estimate (+1y), n=33, growth +8.2%</td></tr>
+<tr><td>FY+2 成長率</td><td>+8.24%</td><td>(13.65/12.61) − 1</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>16.00x</td><td>$218.42 / $13.65</td></tr>
+<tr><td>當前 FY+1 Forward P/E（參考）</td><td>17.32x</td><td>$218.42 / $12.61</td></tr>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE（FY+2）</td><td>16.00x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>13.5-22x（5Y 低 ~13.5 於 2023；5Y 高 ~22 於 2024）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>(16.00 − 13.5) / (22 − 13.5) × 100% = <strong>29.4%</strong></td></tr>
+<tr><td>3Y EPS CAGR（基於 §7 推導）</td><td>~6.5%（FY25 $11.85 → FY28E ~$14.3，含 recovery + FBM contribution）</td></tr>
+<tr><td>PEG（3Y）</td><td>16.00 / 6.5 = <strong>2.46</strong></td></tr>
+<tr><td>PEG（短期 FY+2 8.2% growth 直接套）</td><td>16.00 / 8.24 = <strong>1.94</strong></td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong>🟢 便宜</strong></td></tr>
+<tr><td><strong>套用規則</strong></td><td>等級 +1（B → A）？— 否，因 PEG > 1.0 且未完全 < 30% 分位</td></tr>
+</table>
+<div class="reasoning">
+分位 29.4% 接近 30% 便宜檻；PEG 1.94 接近 2 邊緣
+取較嚴：分位 < 30% → 🟢；但 PEG 1.94 > 1.0 → 不升等級
+v12.3 判斷：取分位主導，標 🟢 便宜
+→ implication §2 H：gate = 🟢；但「等級 +1」修飾不啟動，quality 維持 B 不升 A
+</div>
+
+<h3>E｜R:R + Bear Case</h3>
+<p>合理 P/E 參考：B 級護城河 + Runway 充裕 → 取 19x（5Y mid 點 ~18，加 1x 溢酬 for Pro pivot 期待）</p>
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th><th>R:R（vs 現價 $218.42）</th></tr>
+<tr><td>短期（1 年，至 FY26 末）</td><td>FY+1 EPS $12.61 × 19x</td><td>$239.6</td><td>上行 +9.7% / 下行（Bear $190）-13.0% → <strong>R:R = 0.75x</strong></td></tr>
+<tr><td>中期（2 年，至 FY27 末）</td><td>FY+2 EPS $13.65 × 19x</td><td>$259.4</td><td>上行 +18.8% / 下行 -13% → <strong>R:R = 1.45x</strong></td></tr>
+<tr><td>5Y（長期）</td><td>§8E Base 5Y EPS ~$17.5 × 19x</td><td>$332.5</td><td>上行 +52.2% / 下行 -22% → <strong>R:R = 2.37x</strong></td></tr>
+</table>
+<p><strong>Bear anchor</strong>：Bear EPS = FY+1 $12.61 × 0.9 = $11.35；Bear PE = §8E 成長熄火「降至 5%」情境給 16.7x；Bear 股價 = $11.35 × 16.7 = <strong>$190</strong>（現價下行 -13.0%）</p>
+<div class="reasoning">
+合理 PE 19x = 5Y 中位 18 + 1x Pro pivot 溢酬；非樂觀 anchor（保守於 HD 22.5x）
+5Y EPS $17.5 = §8E Base 假設（FY28-30 housing recovery + Pro 段佔比達 30-35% + FBM 達 mid-single-digit OPM）
+Bear anchor $190 距現價 -13% > 5% → R:R 計算有效
+→ implication §2 H：短期 R:R 0.75 失效 + 中期 1.45 < 2.0，但長期 2.37 健康；落 B 觀望偏進場
+</div>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$218.42</td></tr>
+<tr><td>W52 / 斜率（13週）</td><td>$241.55 / +1.80%</td></tr>
+<tr><td>W104 / 斜率（13週）</td><td>$239.43 / +0.61%</td></tr>
+<tr><td>W250 / 斜率（13週）</td><td>$215.87 / <strong>+1.55%</strong>（仍正）</td></tr>
+<tr><td>BB 上 / 中 / 下（20週）</td><td>$291.51 / $250.87 / $210.23</td></tr>
+<tr><td>初判 Pure MA 狀態</td><td><span class="warn">🟠 暫不進場</span>（現價 $218.42 > W250 $215.87 ✅，但 < W104 $239.43 + W52 $241.55 → 介於「失效」與「進場」之間的「暫不進場」）</td></tr>
+</table>
+
+<p class="note">LOW 比 HD 好一格：現價勉強守住 W250，無需盲點 2 救援，落 🟠 暫不進場（追蹤池）。盲點 2 救援不啟動（本來就不是 ❌）。但 MA 部位乘數仍為 × 0（追蹤池，不新進）。</p>
+
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>🟠 暫不進場（追蹤池）</strong></td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>× 0</strong>（追蹤池，不新進；已持倉者持有）</td></tr>
+</table>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（^GSPC）</td></tr>
+<tr><td>大盤現價</td><td>7,408.50</td></tr>
+<tr><td>大盤 W104</td><td>6,173.73</td></tr>
+<tr><td>系統性風險</td><td>否（高於 W104 20%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>B</td></tr>
+<tr><td>gate（§2 D）</td><td>🟢</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟠</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong>B</strong></td></tr>
+</table>
+<div class="reasoning">
+判定路徑（QC-31 對照表）：
+1. 拒絕檢核：trap 🟡、gate 🟢、MA 🟠（非❌）、quality B → 未觸發 X
+2. 高強度：MA 🟠 非 🟢/✅ → 未達 A+
+3. 中高強度：MA 🟠 非 ✅ → 未達 A
+4. 衛星級：quality B + gate 🟢/🟡 + trap 🟢/🟡 → B
+5. 時機不到：MA 🟠 + 5/20 Q1 FY26 binary → B 觀望
+→ final_signal = B
+判定理由：與 HD 同 B grade，但 LOW 的 R:R 略佳（中期 1.45 同；5Y 2.37 同樣本）；MA 略佳（🟠 vs HD ❌→🟠 救援）；估值略貴於 HD 但分位相當。整體 B 觀望偏進場。
+</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>充裕（同 HD 環境 + Pro pivot 機會 + FBM 整合 upside）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>穩定（規模仍 < HD 一半，但持續執行 Total Home 戰略）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高（略低於 HD）</strong></td></tr>
+</table>
+<p><strong>一句話說明</strong>：🟡 中性產業 + B 級護城河 7/10，TAM $1.7T 雙頭壟斷之一但規模次於 HD。估值燈 🟢 便宜（Fwd PE 16x，5Y 分位 ~20%）+ Pure MA 🟠（追蹤池），需待 5/20 Q1 FY26 + FBM 整合進度確認。HD/LOW 同步買入適合 housing sector 雙頭壟斷曝險。</p>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "LOW",
+  "company": "Lowe's Companies, Inc.",
+  "industry": "Home Improvement Retail / Pro Distribution",
+  "schema": "v12.3",
+  "date": "2026-05-18",
+  "inception_dd": "DD_LOW_20260518.html",
+  "inception_date": "2026-05-18",
+  "next_annual_review": "2027-05-18",
+  "price_at_dd": 218.42,
+  "price_4w_avg": 232.40,
+  "market_cap_b": 122.3,
+  "currency": "USD",
+  "signal": "B",
+  "verdict": "B 觀望偏進場",
+  "trap": "🟡",
+  "trap_label": "觀察期",
+  "moat": "B",
+  "moat_score": 7,
+  "moat_grade": "B",
+  "moat_trend": "→",
+  "moat_execution": 8,
+  "moat_pricing_power": 6,
+  "quality_tier": "B",
+  "val": "🟢",
+  "ma": "🟠",
+  "fpe_fy2": 16.00,
+  "pct_5y": 29.4,
+  "peg_fy2": 1.94,
+  "growth_durability": 6,
+  "quality_score": 7,
+  "ai_risk": "🟢",
+  "benchmark_regime": "正常",
+  "long_term_confidence": "高",
+  "stress": {"pass": 2, "total": 2, "base": true, "bear": true},
+  "rr_short": 0.75,
+  "rr_mid": 1.45,
+  "rr_5y": 2.37,
+  "upside_short_pct": 10,
+  "upside_mid_pct": 19,
+  "upside_5y_pct": 52,
+  "industry_light": "🟡",
+  "growth_grade": "🟡",
+  "oneliner": "🟡產業中性／B級護城河7/10／Fwd PE 16.00x 5Y分位29%／Pure MA 🟠追蹤池｜B觀望偏進場｜等5/20 Q1財報"
+}
+</script>
+</section>
+
+<!-- ============ §3 THREE-WAY DEBATE ============ -->
+<section id="s3">
+<h2>§3｜三方辯論摘要</h2>
+
+<div class="three-col">
+
+<div class="col-card bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table style="font-size:13px">
+<tr><th>#</th><th>進場論據</th><th>數字佐證</th></tr>
+<tr><td>1</td><td>護城河維度</td><td>1,728 美國門市 + 雙頭壟斷之一，HD + LOW 合計 ~30% 美國家庭改良 TAM；LOW Total Home 戰略 5Y 持續執行 + FBM/ADG 加速 Pro pivot（§9）</td></tr>
+<tr><td>2</td><td>成長維度</td><td>Q4 FY25 comp +1.3% 強於 HD +0.4%；3 連季 positive comps；FBM + ADG 共 $8B FY26 revenue 挹注；Pro 段持續改善（§8）</td></tr>
+<tr><td>3</td><td>估值維度</td><td>Fwd PE 16x vs HD 18.24x 便宜 -12%；vs 5Y avg 19.56x 折價 18%；analyst 共識 $280-287 target 隱含 +28-31% upside（§13）</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「LOW 是 HD 的便宜替代品：相同 sector 曝險，估值更便宜 -12%，且 Pro pivot 仍在前段（FBM 整合早期）— 若整合成功，OPM 從 11.8% 升至 13%+，估值修復空間大。」</p>
+</div>
+
+<div class="col-card bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table style="font-size:13px">
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>FBM + ADG 整合失敗（OPM 稀釋大於預期）+ 商譽 impairment → 股價跌至 $185</td><td>§8 OPM 壓力 -1.5pp 對應 EPS -15% → 股價 -20%</td></tr>
+<tr><td>2</td><td>housing 持續弱導致 comp 轉負 + LOW 競爭中持續被 HD 奪取 Pro 份額（LOW Pro 段相對較弱）→ 結構性 disadvantage 擴大</td><td>5/5 BofA 已 downgrade 至 Neutral $260；可能更多 downgrade waves</td></tr>
+<tr><td>3</td><td>負股本 + Net Debt/EBITDA 3.5x（接近 IG threshold）→ 若 EBITDA 進一步壓縮觸發 credit downgrade → 利息成本上升</td><td>§10 D/E ratio (因負股本不可比)；Net Debt/EBITDA 3.5 接近警戒</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「LOW 不只面臨 housing 週期 risk，還疊加結構性 disadvantage vs HD：規模 0.52x、Pro 段更晚 pivot、FBM 整合執行 risk 高。若 housing 持續弱 2Y，LOW 的 PE 可能進一步壓至 13.5x（5Y 絕對低），股價跌至 $180-190。」</p>
+</div>
+
+<div class="col-card arb">
+<h4>估值仲裁員｜Damodaran 模式</h4>
+<table style="font-size:13px">
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td><strong>6 / 10</strong></td></tr>
+<tr><td>核心依據</td><td>當前 Fwd PE 16x × LOW 5Y avg OPM ~12% × 假設 5Y EPS CAGR ~6-7% → 隱含 DCF FCF growth ~3% LT，與 LIRA 中期一致；但 HD vs LOW 折價 -12% 在無基本面差距加大情況下，未充分定價 FBM 整合風險</td></tr>
+<tr><td>歷史對標</td><td>LOW 2014-2017 Pro pivot 期股價 +123%（但含 housing tailwind）；2018-2019 trade war 期 LOW -28%（vs HD -21%，LOW 跌幅更深）</td></tr>
+</table>
+<p><strong>仲裁員一句話</strong>：「LOW 是 HD 的『次優替代』— 估值便宜但執行 risk 更高。若 60% 確信 HD 是好的，30-40% 應分配給 LOW 作為 sector hedge；不應 100% LOW solo。」</p>
+</div>
+
+</div>
+</section>
+
+<!-- ============ §4 FIRST PRINCIPLES ============ -->
+<section id="s4">
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>LOW 與 HD 解決相同的長期不可逆痛點 — 美國 8,400 萬戶家庭的維護與改良需求。LOW 的差別化角色是「<strong>HD 的次優替代 + DIY-leaning 略強 + 區域分佈略不同（更多 sub-urban 與南部）</strong>」。若 LOW 明天消失，HD 將立刻在 LOW 服務區域擴張市佔，整體市場仍能繼續運作 — 這意味 LOW 的「不可替代性」較 HD 弱，但雙頭壟斷格局讓兩家共同享有 sector 寡占溢酬。</p>
+
+<h3>護城河形成歷史路徑</h3>
+<table>
+<tr><th>年份</th><th>關鍵 Milestone</th><th>對護城河累積貢獻</th></tr>
+<tr><td>1946-1980</td><td>創辦於 North Wilkesboro NC；服務 Veteran builders；逐步擴張</td><td>建立基礎</td></tr>
+<tr><td>1980-2000</td><td>從 hardware store 轉型 Big Box 模式；門市數從 207 → 600+；EPS 累積增 12x</td><td>規模追趕 HD</td></tr>
+<tr><td>2000-2010</td><td>達 1,700+ 門市；與 HD 並列為雙頭壟斷；但 OPM 持續落後 HD ~2pp</td><td>規模上來但效率落後</td></tr>
+<tr><td>2010-2018</td><td>CEO 變動 + 加拿大 Quincy Hardware 失敗 + Orchard Supply 整合困難；股價落後 HD 50%</td><td>負面 — 執行 risk 暴露</td></tr>
+<tr><td>2018-2024</td><td>Marvin Ellison 接任 CEO（前 JC Penney CEO） + Total Home 戰略 + Pro pivot + 數位化加速 → OPM 從 10% 升至 13.4% （FY24 高峰）</td><td>正面 turnaround；接近 HD 質量</td></tr>
+<tr><td>2024-2026</td><td>Artisan Design Group + Foundation Building Materials 收購 $8B+ → Pro 段加速；股價從 2024 $286 高點跌至 $218（-24%）</td><td>當前 inception 觀察點</td></tr>
+</table>
+<p>結論：LOW 護城河 7/10（vs HD 9/10）並非結構性弱，而是「2010-2018 失誤期落後 HD 2-3 年，2018-2024 已大幅追趕」。Ellison 帶領的 Total Home 戰略仍在執行中段；FBM 收購為 next 階段催化。</p>
+
+<h3>逆向推演（Munger Inversion）— 三維展開</h3>
+
+<h4>① 技術維度：3 年內失去 50% 價值的最可能路徑</h4>
+<ul>
+<li><strong>地緣政治曝險</strong>：類似 HD，~30% 供應鏈自中國（power tools、五金、季節商品）；若 Trump 政府 2026 H2 對中國全面加 60% 關稅 → LOW GM 受擠壓 -2~-3pp（與 HD 同），EPS 下修 -15~-20%，股價跌 -25%（對標 2018-2019 trade war LOW 跌 -28%，比 HD -21% 更深）；分散化措施與 HD 類似但執行較慢（LOW 自有品牌規模較小，亞洲多元化進度落後 HD ~12-18 個月）</li>
+<li><strong>技術替代風險</strong>：(a) 3D printing 家居零件、prefab 模組化、Amazon Home Services — 5 年內仍無大規模顛覆；(b) AI 大幅降低 DIY 學習曲線 → 對 LOW DIY-leaning customer base 衝擊較 HD 大（LOW DIY 占比 ~70-75% vs HD ~50%），客單可能受壓</li>
+<li><strong>管理層失職</strong>：CEO Marvin Ellison 2018 接任 7+ 年，前 JC Penney CEO turnaround 經驗；戰略執行穩健但歷史紀錄包含 JC Penney 部分爭議；FBM $8.8B 收購為 LOW 史上最大 single acquisition，整合失敗風險真實 — 若 FBM 在 24 月內 OPM 維持 < 5%，LOW 整體 OPM 可能跌至 10.5-11%（vs FY25 11.8%），EPS 下修 -10~-15%</li>
+<li><strong>價值陷阱路徑</strong>：產業結構衰退 + FBM 整合失敗組合 → 雙重打擊；機率約 8-12%（高於 HD 的 5-8%）</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅</h4>
+<ul>
+<li><strong>Capex 慣性</strong>：FY25 Capex $2.21B（Rev 2.6%）；FBM + ADG 物流整合可能推升至 $3B/年；若同時 housing 持續弱導致 ROIC 下滑，capital allocation discipline 受考驗。歷史對標：LOW 2014-2018 RONA / Orchard Supply 期間 Capex 大幅擴張但 ROIC 不升反降 → 教訓清晰</li>
+<li><strong>創辦人退場</strong>：n/a（無 founder 領導）；但 Ellison 60+ 歲，3-5 年內可能交棒，繼任 risk 真實。歷史對標：LOW 2010-2018 multiple CEO 變動期股價落後 HD 50%</li>
+<li><strong>整合失敗</strong>：歷史紀錄混合 — Orchard Supply (2018 結束)、RONA (2019 賣回) 兩大失敗；MSH 成功；FBM 為下一試驗。失敗模式包括 (a) 高估 synergy；(b) culture mismatch；(c) supply chain integration delay</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時</h4>
+<ul>
+<li><strong>住房 ownership 結構性下滑</strong>：對標日本 1990 後 + 韓國 2010 後年輕世代延後購屋；若美國進入相似結構，LOW DIY 段（~70-75% 營收）TAM 永久萎縮 -20-30%；衝擊較 HD 大（HD DIY 段佔比僅 50%）</li>
+<li><strong>監管型分拆</strong>：FTC 對 HD + LOW 寡占的反壟斷審視；但 FBM 收購已 Q3 FY25 通過反壟斷 → 短期 risk 低；長期若 ADG + FBM combined 規模再擴張 5x，可能觸發監管</li>
+<li><strong>計算範式轉換</strong>：AI 降低 DIY 學習曲線 → DIY 客單下降；對 LOW 衝擊大於 HD（DIY mix 較高）；同時 Pro 段擴張部分對沖（複雜 project 仍需 LOW Pro 服務）</li>
+</ul>
+<p><strong>歷史對標</strong>：</p>
+<ul>
+<li><strong>Office Depot vs Staples</strong>：雙頭壟斷中 Office Depot 持續落後 → 最終被 supply chain disruptors（Amazon Business 等）雙雙重傷。教訓：規模較小的雙頭之二在 sector 衰退期更脆弱。但 LOW 不是 Office Depot — LOW 已在數位化 + Pro pivot 大幅追趕，類似教訓但結局未必相同</li>
+<li><strong>Best Buy vs Circuit City</strong>：Best Buy 透過 Geek Squad（Pro service）+ omni-channel 防禦 Amazon；LOW 的 FBM + Pro pivot 是類似策略動作，但執行 risk 較高</li>
+<li><strong>Target vs Walmart</strong>：Target 持續為 Walmart 次要選項但生存 well；LOW vs HD 類似關係，雙頭壟斷可長期共存，但 LOW 需要明確 differentiation（如 DIY-leaning + 設計感 + 區域分佈）</li>
+</ul>
+</section>
+
+<!-- ============ §5 INVESTMENT THESIS ANCHORING ============ -->
+<section id="s5">
+<h2>§5｜投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th width="38%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>3-5 年</strong>（涵蓋 housing 週期完整反轉 + FBM 整合兌現）</td></tr>
+<tr><td>主要驅動這個時間軸的理由</td><td>同 HD：(1) housing rate 3 年內降至 5.5%；(2) FBM + ADG 整合需 2-3 年；(3) Pro 段擴張持續</td></tr>
+<tr><td>持有期決定哪些變數是訊號 vs 噪音</td><td>同 HD：訊號為 comp sales、Pro 段、OPM trajectory；噪音為單季 EPS 小幅波動</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th width="4%">#</th><th width="22%">核心假設</th><th width="14%">2Y 驗證點</th><th width="14%">5Y 驗證點</th><th width="14%">10Y 驗證點</th><th width="14%">具體數字門檻</th><th width="10%">信息來源</th><th width="8%">漂移觸發</th></tr>
+<tr><td>H1</td><td>美國 housing turnover 將在 2027 前回升至 5M+ 戶/年（同 HD H1）</td><td>30Y rate 降至 5.5%；existing home sales > 4.5M</td><td>existing home sales > 5.5M；LOW large ticket transactions YoY > +5%</td><td>millennials home ownership rate > 50%</td><td>30Y rate < 5.5% 連 2 季；LOW large ticket > +5% 連 2 季</td><td>Fannie Mae、MBA forecast</td><td>連 2 季 TTM 偏離 ≥ 5%</td></tr>
+<tr><td>H2</td><td>FBM + ADG 整合在 30-36 月達到 mid-single-digit OPM；Pro 段占比從 ~25% 升至 30-35%</td><td>FBM 段 OPM > 6%；Pro app MAU YoY > +15%</td><td>Pro 段占比 > 30%；adj OPM 回升至 13%</td><td>Pro 段占比 > 40%</td><td>FY27 末 Pro 段佔比 < 27% → H2 削弱；FBM OPM 不達標 → 反轉</td><td>LOW 法說 Pro segment 揭露、Investor Day</td><td>連 4 季 TTM 偏離 → 削弱</td></tr>
+<tr><td>H3</td><td>5Y Fwd PE 從當前 16x 回升至 18-19x 區間（保守於 HD 22.5x）</td><td>Fwd PE > 17x</td><td>Fwd PE 18-19x</td><td>Fwd PE 維持 18-22x</td><td>FY+1 EPS 共識若再下修 > 5% → H3 削弱</td><td>Bloomberg / FactSet 共識</td><td>連 2 季 偏離 ≥ 5%</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<div class="hypothesis-box">
+<p><strong>狀態</strong>：進場未滿一年（本份為 v12.3 Inception DD）。本欄位將於 <strong>2027-05-18</strong> 起首次有資料對照。</p>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+<table>
+<tr><th width="4%">#</th><th width="22%">風險</th><th width="12%">對應假設</th><th width="14%">時間尺度</th><th width="22%">監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Q1 FY26（5/20 公布）EPS miss 或 comp 轉負</td><td>H1 + H3</td><td>⚡ 短期</td><td>Q1 EPS（共識 $2.97）；comp sales（Pro vs DIY）；FY26 guide</td><td>EPS miss > 3% 連 2 季 → R1 觸發</td></tr>
+<tr><td>R2</td><td>FBM + ADG 整合失敗：margin 稀釋持續 > 4 季</td><td>H2</td><td>🔥 中期</td><td>FBM 段 OPM；商譽 impairment；管理層季度評論</td><td>FBM 段 OPM < 5% 連 4 季 → R2 觸發</td></tr>
+<tr><td>R3</td><td>Housing 結構性下行 + LOW vs HD disadvantage 擴大</td><td>H1 + H2</td><td>🐢 長期</td><td>LOW market share vs HD（NPD 數據）；OPM gap</td><td>LOW market share 連續 3Y 下滑 > 100bp → R3 觸發</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>同 HD 框架。略。</p>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>Q1 FY26 comp ≥ 0、margin 持平、guide 維持；股價站回 W104 $239 上方</td><td>建倉至底倉 15%</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 確認 + H2 確認（FBM OPM > 6%）</td><td>加碼至目標倉位</td></tr>
+<tr><td><strong>減碼</strong></td><td>R1 或 R2 觸發；或 Fwd PE 突破 20x</td><td>減至底倉一半</td></tr>
+<tr><td><strong>撤退</strong></td><td>R3 觸發；或 trap 重新定性 🔴</td><td>清倉</td></tr>
+</table>
+
+<h3>F｜Single Thing</h3>
+<table>
+<tr><th width="32%">項目</th><th>內容</th></tr>
+<tr><td>Single Thing 描述</td><td><strong>FED 政策大轉向：fed funds 降至 < 3.0% → 30Y 抵押貸款 < 5.0%</strong>（同 HD；housing-rate sector 共享同一 catalyst）</td></tr>
+<tr><td>如果發生</td><td>立即加碼 LOW 至目標倉位上限。LOW 對 rate 敏感度可能略高於 HD（DIY mix 較高，DIY 對 rate 較敏感）</td></tr>
+<tr><td>可觀測性</td><td>FOMC 會議聲明（FED 8 次/年）+ DOT plot + Powell pivot signal</td></tr>
+<tr><td>機率估計</td><td>未來 24M ~25%（與 HD 共享，因為是 macro catalyst）</td></tr>
+<tr><td>反向情境</td><td>若 fed funds 維持 > 4% 至 2027 末，LOW 5Y CAGR 可能降至 5-7%（含 div），稍弱於 SPX 預期；HD 同樣情境 7-9%（LOW 落後 HD 主因 Pro pivot 較晚 + 規模較小）</td></tr>
+</table>
+
+<p class="note"><strong>三者職責矩陣 cross-check</strong>：</p>
+<ul>
+<li>§1 trap 定性 = 🟡 觀察期（靜態裁決，同 HD）</li>
+<li>§5.C R1-R3 = R1 ⚡ Q1 FY26 miss / R2 🔥 FBM 整合失敗 / R3 🐢 housing 結構性下行（過程性風險）</li>
+<li>§5.F Single Thing = FED 政策大轉向（binary trigger event）</li>
+</ul>
+</section>
+
+<!-- ============ §6 EARNINGS INTELLIGENCE ============ -->
+<section id="s6">
+<h2>§6｜即時財報情報</h2>
+<p class="note">資料來源：LOW Q4 FY25 財報（2026-02-25 公布）+ Q4 FY25 Earnings Call。下一份 Q1 FY26 報告：<strong>2026-05-20（後天，盤前）</strong>。</p>
+
+<h3>① 最新一季（Q4 FY25）財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>Q4 FY25 實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$20.58B</td><td>$20.34B</td><td><span class="good">Beat +1.2%</span></td><td>+0.4%</td></tr>
+<tr><td>EPS（Adjusted）</td><td>$1.98</td><td>$1.94</td><td><span class="good">Beat +2.1%</span></td><td>-11%</td></tr>
+<tr><td>Comp Sales（Total）</td><td>+1.3%</td><td>+0.2%</td><td><span class="good">Beat +110bp</span></td><td>n/a</td></tr>
+<tr><td>Operating Margin (Adj)</td><td>~11.7%</td><td>~11.5%</td><td><span class="good">Beat</span></td><td>-140bp</td></tr>
+<tr><td>FCF（全年 FY25）</td><td>$7.65B</td><td>n/a</td><td>—</td><td>-0.6%</td></tr>
+</table>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>本季財報邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（housing 復甦）</td><td>＋ 強化</td><td>Comp +1.3% 強於預期；3 連季 positive comps；Pro 段「outperform in planned spend」</td></tr>
+<tr><td>H2（Pro 段擴張）</td><td>＋ 強化</td><td>Pro outperformed DIY；online + services 強勁；ADG 整合進度提及</td></tr>
+<tr><td>H3（估值修復）</td><td>− 削弱</td><td>FY26 guide adj EPS $12.25-12.75 低於共識 $12.95 → 股價 5% 下跌</td></tr>
+</table>
+
+<h3>② Earnings Call（Q4 FY25, 2026-02-25）語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：confident with caution（自信中帶謹慎）。CEO Marvin Ellison 開場引述：「Whatever the macro environment provides, we will outperform the macro」— 此句已成為 Ellison 任期的 signature phrase；FY25 連 4 季 comp positive 部分驗證；但承認 macro headwind 為事實</li>
+<li><strong>Forward Guidance（FY26）</strong>：total sales $92-94B（YoY +7-9%，含 FBM + ADG ~$8B contribution + 53 週 + 有機 ~+1%）；adj EPS $12.25-12.75（低於共識 $12.95 → 股價下跌 5%）；comp sales flat to +2%（與 HD +1-2% 一致）；adj OPM 11.6-11.8%（vs FY25 12.1% slight decline 50bp，主因 FBM + ADG 整合稀釋）；effective tax rate ~23.5%</li>
+<li><strong>刻意強調的主題</strong>：FBM Total Home strategy 反覆出現 6+ 次；「planned spend」「backlog stability」反覆出現 4+ 次（Pro 段 narrative）；Holiday 強勁（Q4 +1.3%）；ADG + FBM unique value proposition</li>
+<li><strong>刻意迴避的問題</strong>：分析師追問 (a) FBM 短期 margin profile（管理層 deflect 到 Investor Day）；(b) FBM specific synergy timeline；(c) Pro 段 absolute market share vs HD（管理層只提相對增長，不提絕對 share）；(d) HD/LOW Pro 段競爭直接比較</li>
+<li><strong>對比 HD Q4 FY25 法說</strong>：LOW 基調較 HD 自信（comp +1.3% > HD +0.4%；guide 提及 outperform macro），但 LOW guidance EPS 仍低於 sell-side 共識 → 預期管理偏保守。HD 基調 cautious optimism + guide 偏 cautious（mid-single-digit decline）</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：與 HD 框架一致 — DIY backlog 存在 6-9 季業主延後 large project；Pro backlog 穩定；trigger 需 rate 下行</li>
+<li><strong>供給端</strong>：inventory turn 健康；無 channel stuffing；FBM 整合進度將是 Q1-Q2 FY26 重點觀察</li>
+<li><strong>競爭格局</strong>：LOW 與 HD 同時提及「Pro 段持續從區域型獨立經銷商奪取份額」→ 雙頭壟斷對 fragmented 的 squeeze 為共同戰略主題</li>
+<li><strong>總體經濟敏感度</strong>：LOW 明確強調 outperform macro 能力 → 對自身執行力有信心；但仍受 housing rate + turnover 制約</li>
+<li><strong>對 HD 推論</strong>：LOW Q4 comp +1.3% > HD +0.4% 為動能略強信號；但 LOW Pro 段絕對佔比仍弱於 HD（~25-30% vs HD ~50%）；長期 HD Pro 段擴張優勢仍在</li>
+<li><strong>對同業推論</strong>：Sherwin-Williams 等供應商可能因 LOW 自我認證的「outperform macro」trend 重新評估 outlook；Masco 等家居零組件供應商可能受惠 housing recovery 預期</li>
+</ul>
+
+<h3>⚠️ Q1 FY26 即將公布（5/20 盤前）— 關鍵看點</h3>
+<table>
+<tr><th>項目</th><th>共識預期</th><th>觀察重點</th></tr>
+<tr><td>Q1 FY26 Revenue</td><td>$22.88B（yfinance Q1 共識）</td><td>含 FBM + ADG 整合，YoY +9.3%</td></tr>
+<tr><td>Q1 FY26 EPS（adj）</td><td>$2.97（90d 已從 $3.07 下修 -3.3%）</td><td>下修空間已部分反映</td></tr>
+<tr><td>Q1 comp sales（US）</td><td>~0 至 +1%</td><td>Q4 +1.3% 後是否維持正值</td></tr>
+<tr><td>FY26 guide 是否維持</td><td>flat to +2% comp / adj EPS $12.25-12.75</td><td>下修 → R1 觸發</td></tr>
+<tr><td>FBM 整合 margin 進度</td><td>未明示</td><td>管理層是否更新 FBM segment OPM trajectory</td></tr>
+</table>
+</section>
+
+<!-- ============ §7 CORE GATING ============ -->
+<section id="s7">
+<h2>§7｜核心門檻檢核</h2>
+
+<h3>EPS CAGR 推導</h3>
+<p>基期 FY25 EPS：$11.85 GAAP / $11.99 adj</p>
+<ul>
+<li>FY+1 (FY26)：$12.61 adj（yfinance, n=33, growth +2.7%）</li>
+<li>FY+2 (FY27)：$13.65 adj（yfinance, n=33, growth +8.2%）</li>
+<li>FY+3 (FY28)：基於 §8 推導 — FBM 整合進入 mid-single-digit OPM + housing 邊際改善 → growth ~+10% → FY28E = $13.65 × 1.10 = <strong>$15.01</strong></li>
+<li>3Y adj CAGR (FY25 → FY28) = ($15.01 / $11.99)^(1/3) − 1 = <strong>+7.8%</strong></li>
+</ul>
+
+<h3>Munger 護城河三維補搜結果</h3>
+<ul>
+<li><strong>FCF Margin 5Y</strong>：FY21 7.3% / FY22 7.5% / FY23 7.0% / FY24 9.2% / FY25 8.9%；5Y 均 8.0%（low retail bar）</li>
+<li><strong>ROIC 10Y</strong>：歷史變動大 — FY21 24.7% / FY22 37.4% / FY23 28.4% / FY24 33.9% / FY25 31.0% / FY26E 22.5%；10Y 均 ~25%（高於 HD 但受負股本 distort 加大）</li>
+<li><strong>毛利率 10Y</strong>：~33-34% 區間穩定（同 HD）</li>
+<li><strong>Capex/Rev</strong>：FY25 2.6%（低密集）</li>
+</ul>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>> 15%</td><td><span class="bad">✗</span></td><td>8.9%（同 HD retail 模式低）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5Y 均 > 15%</td><td><span class="bad">✗</span></td><td>5Y 均 8.0%（retail 模式天然偏低）</td></tr>
+<tr><td>ROIC（當前）</td><td>> 15% 且 > WACC</td><td><span class="good">✅</span></td><td>22.5%（雖低於 5Y 高點 37%，仍 > WACC ~8%）</td></tr>
+<tr><td>ROIC 穩定性</td><td>10Y ≥ 70% 達標</td><td><span class="good">✅</span></td><td>10/10 達標</td></tr>
+<tr><td>毛利率定價能力</td><td>10Y ≥ 70% 改善</td><td><span class="warn">~</span></td><td>改善年份 ~3/10（凍結型穩定）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev < 5%</td><td><span class="good">✅</span></td><td>2.6%（低）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>> 20%</td><td><span class="bad">✗</span></td><td>+7.8% adj（mature 成長）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>< 2</td><td><span class="warn">~</span></td><td>16.00 / 7.8 = 2.05（接近 2）</td></tr>
+<tr><td>負債安全性</td><td>D/E < 0.7</td><td><span class="bad">✗</span></td><td>負股本 distort（buyback-induced）；Net Debt/EBITDA 3.5 接近警戒</td></tr>
+<tr><td>現金覆蓋總負債</td><td>—</td><td><span class="bad">✗</span></td><td>$0.98B cash vs $44.7B debt（retail 不適用）</td></tr>
+<tr><td>護城河強度</td><td>> 8 分</td><td><span class="warn">~</span></td><td>7/10（達 B 級）</td></tr>
+</table>
+<p><strong>Munger 三維評級：🟡 兩項達標</strong>（ROIC 穩定 + 資本密集 ✅；毛利率定價 ~）</p>
+</section>
+
+<!-- ============ §8 LONG-TERM GROWTH ============ -->
+<section id="s8">
+<h2>§8｜長期成長性評估</h2>
+
+<h3>A｜成長跑道</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM</td><td>~$950B（同 HD）</td><td>同 sector</td></tr>
+<tr><td>5Y TAM</td><td>~$1.1T</td><td>同 HD</td></tr>
+<tr><td>當前 LOW 滲透</td><td>~9-11%</td><td>HD 1.5-2x</td></tr>
+<tr><td>Runway</td><td>~15-20 年</td><td>同 HD 結構性 long runway</td></tr>
+</table>
+
+<h3>A'｜S 曲線位置</h3>
+<p>LOW 在 DIY 段 mature；Pro 段較 HD 晚 2-3 年進入 S 曲線中段。FBM + ADG 為加速 Pro 段擴張的關鍵 catalyst。</p>
+
+<h3>B｜成長品質判斷（v12.3：具體% + 3Y 趨勢 + 併購清單）</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>LOW 占比估計</th></tr>
+<tr><td>有機成長</td><td>同店銷售 + 自然 store</td><td>~60-65%（剝離 FBM + ADG 後）</td></tr>
+<tr><td>無機成長</td><td>FBM + ADG + Maintenance Supply Headquarters</td><td>~35-40%（FY26 預估含 FBM + ADG 全年 ~$8B 挹注）</td></tr>
+</table>
+
+<h4>近 5 年主要併購清單</h4>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>達預期？</th></tr>
+<tr><td>2018</td><td>Maintenance Supply Headquarters（剝離 RONA）</td><td>~$200M</td><td>整合成功</td><td>✅</td></tr>
+<tr><td>2025/10</td><td>Foundation Building Materials（FBM）— drywall、ceiling、insulation distribution</td><td>$8.8B</td><td>剛完成 < 7 月，太早判斷</td><td>⚠️</td></tr>
+<tr><td>2025</td><td>Artisan Design Group（ADG）</td><td>未公開</td><td>剛完成，太早判斷</td><td>⚠️</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>LOW 判斷</th><th>3Y 趨勢</th></tr>
+<tr><td>定價驅動</td><td>Q4 FY25 ticket ~+2.5%；FY23 ~+4% / FY24 ~+2% / FY25 ~+2.3%</td><td>類似 HD，穩定 2-2.5%</td></tr>
+<tr><td>量驅動</td><td>Q4 FY25 transactions -1%；類似 HD pattern</td><td>負成長但縮小</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>LOW 表現</th></tr>
+<tr><td>強化型</td><td>FBM + ADG 擴 Pro 段服務深度</td></tr>
+<tr><td>中性型</td><td>DIY 段穩定但成長放緩</td></tr>
+<tr><td>消耗型</td><td>⚠️ 警示：FBM + ADG 為 lower-margin distribution；OPM 稀釋 50bp</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>22.5%</td><td>37.4%</td><td><span class="bad">↓</span></td><td>產業頂尖且 > WACC</td><td>仍 > WACC 但下滑</td></tr>
+<tr><td>FCF Margin</td><td>8.9%</td><td>7.5%</td><td><span class="good">↑</span></td><td>—</td><td>retail 模式合理</td></tr>
+<tr><td>FCF / Net Income</td><td>1.15</td><td>1.0</td><td><span class="good">↑</span></td><td>> 85%</td><td>達標</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>合理 Fwd P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>20x</td><td>+25%</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>19x</td><td>0%（公允）</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>16x</td><td>-15%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>33.5% 微升，未下滑</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>市佔率縮減</td><td>LOW vs HD market share gap 略縮</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>類似 HD 模式（cycle 非結構）</td><td><span class="warn">🟡</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR > Revenue CAGR > 5pp</td><td>EPS -3% / Rev +3.1% — EPS 落後</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI < 0.75</td><td>1.15 健康</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC/Rev > 5%</td><td>~0.3%（極低）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>LIRA 仍正向</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數下移</td><td>HD + LOW 同步下移確認</td><td><span class="bad">🔴</span></td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex > 60% FCF</td><td>$2.2B / $7.65B = 29% 低</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>若停 Capex 3Y 內下滑</td><td>類似 HD</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級：🟡 中度警戒</strong>（亮燈 2 個，同 HD）</p>
+
+<p><strong>長期成長性綜合評級：🟡 中等可見度成長</strong>（同 HD 但略弱 — Pro pivot 較晚、規模較小）</p>
+
+<h3>H｜客戶結構深度（v12.3 新增）</h3>
+
+<h4>① 客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 客戶占營收%</td><td>< 1%（retail 模式天然分散）</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>< 3%</td></tr>
+<tr><td>Top 10 客戶合計%</td><td>< 5%</td></tr>
+</table>
+
+<h4>② 主要客戶議價權結構</h4>
+<table>
+<tr><th>客戶</th><th>議價權類型</th></tr>
+<tr><td>大型 GC</td><td>Dual-track（HD/LOW/區域）</td></tr>
+<tr><td>中小型 Pro</td><td>Grow-with（成長同步）</td></tr>
+<tr><td>DIY 業主</td><td>非綁定（純零售，HD/LOW 雙頭壟斷）</td></tr>
+</table>
+
+<h4>③ 客戶生命週期定位</h4>
+<p>同 HD：Grow with Pro 段 + DIY 段 maintain。LOW 客戶結構風險評估：🟢 分散 + Grow-with（同 HD）</p>
+
+<h3>F｜AI 取代風險評級：🟢 AI 受益或免疫（同 HD）</h3>
+</section>
+
+<!-- ============ §9 MOAT ANALYSIS ============ -->
+<section id="s9">
+<h2>§9｜護城河分析</h2>
+
+<h3>判斷路徑</h3>
+<p>同 HD，<strong>適合 default 二維拆解</strong>。</p>
+
+<h3>雙維評分</h3>
+<table>
+<tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat</strong></td><td><strong>8 / 10</strong></td><td>1,728 美國門市（vs HD 2,345，0.74x）+ 規模 $86B（HD 0.52x）+ FBM + ADG 物流網（剛建立）+ Total Home strategy + One Lowe's interconnected retail</td></tr>
+<tr><td><strong>Pricing Power Moat</strong></td><td><strong>6 / 10</strong></td><td>雙頭壟斷之一但規模次於 HD → 對供應商議價權略弱；Pro Loyalty Program 較 HD 晚建（已追上但 customer base 較小）；DIY 段定價 elasticity 受 housing rate 制約</td></tr>
+<tr><td><strong>合併分</strong>（加權合併）</td><td><strong>7 / 10</strong></td><td>vs HD 9/10 落後 2 級；主要差距在規模 + Pro 段 customer base</td></tr>
+<tr><td><strong>等級</strong></td><td>✅ B 級</td><td>7-8 = B</td></tr>
+</table>
+
+<h3>護城河來源</h3>
+<ul>
+<li><strong>網路效應</strong>：Pro app + 物流密度，但密度較 HD 低（門市 0.74x、物流 0.5x）</li>
+<li><strong>無形資產</strong>：自有品牌（Kobalt、CRAFTSMAN、Ego 等）約 ~15% Rev 占比；NPS 32（vs HD 38，弱 6 分）</li>
+<li><strong>轉換成本</strong>：Pro Loyalty Program 規模較小但功能類似 HD；Net 30 credit</li>
+<li><strong>規模優勢</strong>：採購規模 $86B vs HD $165B → 議價權較弱；inventory turn 3.7x vs HD 4.8x（效率落後）</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p>同 HD 機制（時間 + 資本 + 認證壁壘），但 LOW 自身對新進者的鴻溝較 HD 弱（LOW 規模較小，更易被 disrupt）。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>市佔</th><th>3Y 趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>LOW（本標的）</td><td>~9-11%</td><td>→</td><td>n/a</td><td>FBM 從 fragmented 奪取</td></tr>
+<tr><td>HD</td><td>~17-20%</td><td>→</td><td>規模 1.9x、Pro 段更深</td><td>HD 在 Pro 段奪取 ~0.5pp/年 vs LOW</td></tr>
+<tr><td>FND</td><td>~1.5%</td><td>↑</td><td>flooring 段 specialty</td><td>FND 從 LOW 奪取 flooring 0.3pp/年</td></tr>
+<tr><td>Amazon B2B</td><td>< 2%</td><td>↑ 緩慢</td><td>長期 Pro 段威脅</td><td>對 LOW 影響大於 HD（規模較小，承受能力較弱）</td></tr>
+</table>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th></tr>
+<tr><td>Execution Moat</td><td>邊際擴大（FBM + ADG 整合 + Total Home 持續）</td></tr>
+<tr><td>Pricing Power Moat</td><td>穩定但凍結（同 HD）</td></tr>
+</table>
+
+<h3>QC-23 競爭威脅 3 級分類</h3>
+<table>
+<tr><th>等級</th><th>具體事件</th><th>機率</th></tr>
+<tr><td>🟡 點對點</td><td>HD 在 Pro 段持續奪取 0.5pp/年；FND 在 flooring 段擴張</td><td>已發生</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Amazon B2B 全棧攻擊（LOW 受衝擊大於 HD）</td><td>~35% 5Y</td></tr>
+<tr><td>⛔ 架構替代</td><td>同 HD（10% 10Y）</td><td>—</td></tr>
+</table>
+<p>當前 24M 主要威脅為 🟡，<strong>不扣分</strong>；護城河維持 7/10。</p>
+</section>
+
+<!-- ============ §10 FINANCIAL QUALITY ============ -->
+<section id="s10">
+<h2>§10｜財務品質監測</h2>
+
+<h3>三年趨勢表（同業對比）</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>同業中位（HD/FND/SHW/MAS）</th><th>相對評估</th></tr>
+<tr><td>FCF Margin</td><td>7.0%</td><td>9.2%</td><td>8.9%</td><td>8-9%</td><td>持平</td></tr>
+<tr><td>OPM</td><td>10.4%</td><td>13.4%</td><td>11.8%</td><td>10-12%</td><td>持平/略優</td></tr>
+<tr><td>ROIC − WACC</td><td>+20pp</td><td>+26pp</td><td>+14pp</td><td>+8-15pp</td><td>仍優於同業</td></tr>
+<tr><td>SBC / Revenue</td><td>0.35%</td><td>0.32%</td><td>0.30%</td><td>0.5-1.0%</td><td>低</td></tr>
+<tr><td>ROE</td><td>n/m</td><td>n/m</td><td>n/m</td><td>—</td><td>buyback distorted（負股本）</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF</strong>：FY25 NI $6.65B / OCF $9.86B = 1.48；無操縱跡象</li>
+<li><strong>AR 成長 vs 營收</strong>：類似 HD，AR 略高於營收</li>
+<li><strong>存貨</strong>：FY25 inventory 健康</li>
+<li><strong>FCF 轉換率</strong>：3Y avg 0.95，健康</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>3 年回購總額 vs FCF 總額</td><td>$10.4B / $21.6B = 48%</td><td>中等</td></tr>
+<tr><td><strong>剔除回購後 EPS CAGR</strong></td><td>原 3Y CAGR -3.5% → 剔除後 -1%</td><td>差距 2.5pp（回購提升 EPS 約 2.5%/年）</td></tr>
+<tr><td>回購均價 vs 現價</td><td>FY22-24 均約 $200-240 / 現 $218</td><td>類似 — 沒過高也沒過低</td></tr>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 5 年 FCF</td><td>FY21 $7.5B / FY22 $6.8B / FY23 $6.2B / FY24 $7.7B / FY25 $7.65B</td></tr>
+<tr><td>5Y 滾動均</td><td>$7.2B</td></tr>
+<tr><td>最低谷</td><td>FY23 $6.2B（占 5Y 均 86%）</td></tr>
+<tr><td>結論</td><td>🟢 正常週期波動，相對穩定</td></tr>
+</table>
+</section>
+
+<!-- ============ §11 INDUSTRY LANDSCAPE ============ -->
+<section id="s11">
+<h2>§11｜產業格局</h2>
+
+<h3>市場量化</h3>
+<p>同 HD：TAM ~$950B → $1.3T 10Y；LOW 滲透 9-11%（HD 1.5-2x）</p>
+
+<h3>議價權（三段獨立）</h3>
+
+<h4>① 對上游供應商</h4>
+<p>LOW 上游供應商與 HD 大部分重疊（SHW、Stanley Black & Decker、Masco、3M 等）。LOW 規模 $86B vs HD $165B = 0.52x → 議價權系統性較弱於 HD：典型情境下供應商給 LOW 的 wholesale pricing 較 HD 高 ~3-8%（無公開精確數字，但 procurement industry estimate）；GM gap 0.0-0.2pp 與 HD 接近反映 LOW 透過促銷與 mix shift 維持。近 3 年議價案例：(a) 2022-2023 commodity inflation 期 LOW pass-through ~75% 漲價（vs HD ~80%）；(b) FY24-25 commodity 退散後，LOW GM 從 33.4% 升至 33.5% 微升（HD 33.3-33.5% 持平）— LOW 反超小幅，反映 Pro mix 持續改善 + 自有品牌增加。LOW 對主要供應商貢獻 5-15%（HD 8-25%），<strong>互依關係較淺</strong>，意味 LOW 對 supplier 切換風險較高，但 supplier 也有動機保留 LOW 作為 HD 對手避免議價單邊化。FBM 收購後 LOW 在 drywall + ceiling 段對 USG / NGC / Knauf 三大供應商的相對採購規模上升至 5-10%，議價權邊際改善。</p>
+
+<h4>② 對下游客戶</h4>
+<p>客戶集中度極低（最大客戶 < 1% 營收，retail 天然分散）— 議價地位由競爭格局決定。LOW 合約結構：(a) DIY 段為純零售 spot；(b) Pro 段透過 Pro Loyalty Program 形成軟性綁定（program 於 2018 全面 revamp，較 HD 晚 5+ 年但功能類似 — Net 30 credit + reward 累積 + Pro pickup）；(c) Pro customer base 較小（推估 ~6M vs HD ~10M+ Pro accounts）。近 3 年客戶 case：(a) LOW Pro 段持續從 fragmented 區域奪取；(b) 但對大型 GC 客戶議價權弱於 HD（規模差距 + Pro 段較晚 build）；(c) Q4 FY25 Pro outperform DIY 為正向 signal。定價能力直接證據：Q4 FY25 ticket ~+2.5% YoY 與 HD ticket +2.4% 持平；FY26 guide 維持 ticket 上行；對 DIY 段定價能力 retain。</p>
+
+<h4>③ 地緣曝險</h4>
+<p>LOW 採購地理：~30% 自中國（power tools、五金、季節商品），~20% 北美本地（自有品牌如 Kobalt、CRAFTSMAN 部分 + 木材 + paint），~10% 越南/印度/墨西哥，其餘來自歐洲與其他亞洲。最高集中點：中國 power tools 與小型家居五金（~30% unit volume）— 與 HD 結構相似。政策風險：(a) Trump 60% 關稅 → GM 受擠壓 -2~-3pp；衝擊與 HD 類似；(b) LOW 分散化進度較 HD 晚 ~12-18 個月（中國 sourcing 比例 LOW ~30% vs HD ~30%；2018 LOW 起點較高 ~50% vs HD ~45%，過去 5 年都降至 30% 但 LOW 起點較高 → 進度較慢）；(c) FBM 整合後降低 import dependency（FBM 為北美 distribution，drywall + ceiling 大多本地或加拿大產）→ 邊際改善。LOW 已啟動類似 HD 的 CooC（China out of China）戰略但執行較晚。</p>
+
+<h3>營收組成（三維展開）</h3>
+
+<h4>① 按業務段</h4>
+<table>
+<tr><th>業務段</th><th>占比%</th><th>OPM</th><th>3Y 趨勢</th></tr>
+<tr><td>核心 Big Box</td><td>~85%（pre-FBM）</td><td>12-13%</td><td>→ FBM 加入後預估降至 ~80%</td></tr>
+<tr><td>FBM + ADG distribution</td><td>~10-15%（pro forma FY26）</td><td>5-7%（估）</td><td>↑（新加入）</td></tr>
+<tr><td>Maintenance Supply Headquarters</td><td>~2%</td><td>~10%</td><td>→</td></tr>
+</table>
+
+<h4>② 按地區</h4>
+<table>
+<tr><th>地區</th><th>占比%</th></tr>
+<tr><td>美國</td><td>~99%（vs HD 93%）</td></tr>
+<tr><td>加拿大（已退出 2018）</td><td>0%</td></tr>
+<tr><td>墨西哥</td><td>~1%</td></tr>
+</table>
+<p>LOW 比 HD 更集中美國市場，沒有國際多元化（曾退出加拿大、Quincy 失敗）。</p>
+
+<h4>③ 按客戶集中度</h4>
+<p>同 HD：Top 1 < 1%，極分散</p>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th><th>洞察</th></tr>
+<tr><td>核心 Big Box</td><td>Sales per sqft</td><td>$435/sqft</td><td>vs HD $725，效率落後 40%（規模、Pro mix、結構共同因素）</td></tr>
+<tr><td>核心 Big Box</td><td>Avg ticket</td><td>~$83</td><td>vs HD $93，低 11%（Pro mix 較低）</td></tr>
+<tr><td>FBM</td><td>Revenue per branch</td><td>未公開</td><td>整合早期</td></tr>
+</table>
+</section>
+
+<!-- ============ §12 GOVERNANCE ============ -->
+<section id="s12">
+<h2>§12｜公司治理與資本配置</h2>
+
+<h3>股東/股權結構</h3>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>創辦人持股</td><td>n/a（非 founder-led）</td></tr>
+<tr><td>機構持股</td><td>81.3%（vs HD 76.2%，更機構化）</td></tr>
+<tr><td>內部人持股</td><td>0.11%</td></tr>
+<tr><td>Dual-class</td><td>無</td></tr>
+</table>
+
+<h3>M&A track record</h3>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th></tr>
+<tr><td>2014</td><td>Orchard Supply Hardware</td><td>~$200M</td><td>❌ 失敗，2018 結束營業</td></tr>
+<tr><td>2016</td><td>RONA（加拿大）</td><td>~$2.4B</td><td>❌ 失敗，2019 賣回</td></tr>
+<tr><td>2018</td><td>Maintenance Supply Headquarters</td><td>~$200M</td><td>✅ 成功</td></tr>
+<tr><td>2025/10</td><td>Foundation Building Materials（FBM）</td><td>$8.8B</td><td>⚠️ 剛完成 < 7 月</td></tr>
+<tr><td>2025</td><td>Artisan Design Group（ADG）</td><td>未公開</td><td>⚠️ 剛完成</td></tr>
+</table>
+<p><strong>M&A track 評估</strong>：LOW 歷史紀錄混合 — Orchard / RONA 兩大失敗，MSH 成功；FBM + ADG 為 LOW 史上最大組合（$8.8B+），執行 risk 真實存在。對標 HD 的 SRS+GMS（$24B），LOW 規模較小但相對自身比例（FBM 占市值 7.2% vs HD GMS 占 1.85%）反而更大、風險集中度更高。</p>
+
+<h3>資本配置方向（FY25）</h3>
+<table>
+<tr><th>用途</th><th>FY25 金額</th></tr>
+<tr><td>Capex</td><td>$2.21B</td></tr>
+<tr><td>分紅</td><td>$2.64B</td></tr>
+<tr><td>回購</td><td>$0.21B（FY25 大幅降低）</td></tr>
+<tr><td>M&A</td><td>$8.8B FBM + ADG（debt-financed）</td></tr>
+</table>
+
+<h3>管理層薪酬（QC-6 項目 3）</h3>
+<ul>
+<li><strong>CEO Marvin Ellison</strong>（2018 接任，前 JC Penney CEO 2015-2018）：FY24 total comp ~$15M，其中 base salary $1.45M + cash bonus $4M + equity awards $9M（PSU/RSU 混合）；equity vest 與 3Y rolling ROIC、Adjusted EPS growth、Sales growth 三項 KPI 連動；20% PSU 與股價相對 S&P retail index TSR 連動</li>
+<li><strong>CFO Brandon Sink</strong>（2022 接任）：FY24 total comp ~$5M；任期穩定</li>
+<li><strong>固定 vs 績效比</strong>：~10% 固定 / ~30% short-term cash bonus / ~60% long-term equity；management alignment 適度</li>
+<li><strong>整體 SBC</strong>：FY25 ~$260M = 0.30% Rev，低（vs tech retail SBC 1-2%）</li>
+<li><strong>內部人交易</strong>：近 12M 主要為 RSU vesting 後 sell-to-cover；CEO Ellison 持有 ~80,000 shares；無 10b5-1 計畫變動</li>
+</ul>
+
+<h3>SBC 真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Rev</td><td>0.30%（極低）</td></tr>
+<tr><td>GAAP EPS（FY25）</td><td>$11.85</td></tr>
+<tr><td>Non-GAAP EPS</td><td>$11.99</td></tr>
+<tr><td>差距</td><td>$0.14 / EPS (1.2%)</td></tr>
+<tr><td>剔除 SBC 後 EPS CAGR</td><td>GAAP CAGR -3.5% vs Non-GAAP CAGR -3.1%（差距 0.4pp）</td></tr>
+</table>
+
+<h3>QC-19 標的自身重大事件</h3>
+<table>
+<tr><th>事件</th><th>檢查結果</th></tr>
+<tr><td>併購 / 分拆</td><td>FBM $8.8B 占當前市值 7.2%，<strong>達 5% 重大事件門檻</strong> — 已在 §8 + §12 揭露</td></tr>
+<tr><td>集體訴訟</td><td>無重大證券詐欺集體訴訟；常規 product liability lawsuits</td></tr>
+<tr><td>CEO/CFO 離職、SEC 調查</td><td>無</td></tr>
+<tr><td>主要客戶流失</td><td>n/a</td></tr>
+<tr><td>產品召回</td><td>常規</td></tr>
+</table>
+<p>結論：⚠️ FBM 收購為重大事件，已納入分析；其他無重大事件</p>
+</section>
+
+<!-- ============ §13 VALUATION ============ -->
+<section id="s13">
+<h2>§13｜估值診斷（v12.3）</h2>
+
+<h3>13.1｜歷史估值分位（5 年）</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>18.42x</td><td>14.0x</td><td>19.9x</td><td>27x</td><td><strong>34%</strong></td></tr>
+<tr><td>Forward P/E (FY+2)</td><td>16.00x</td><td>13.5x</td><td>18.0x</td><td>22x</td><td><strong>29.4%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>13.39x</td><td>10.5x</td><td>14.5x</td><td>18x</td><td><strong>38%</strong></td></tr>
+<tr><td>P/FCF</td><td>16x</td><td>13x</td><td>20x</td><td>28x</td><td><strong>20%</strong></td></tr>
+<tr><td>P/S</td><td>1.42x</td><td>1.0x</td><td>1.8x</td><td>2.3x</td><td><strong>32%</strong></td></tr>
+</table>
+<div class="reasoning">
+Fwd PE 分位 29.4% 接近 30% → 🟢 便宜檻；多數指標 20-38%（便宜偏合理）
+情緒：便宜偏中性 → 與 HD 同方向但程度略弱（HD Fwd PE 分位 10.5% 更便宜）
+→ §2 D implication：估值燈 🟢 便宜
+</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Forward P/E (FY+2)</td><td>16.00x</td></tr>
+<tr><td>Non-GAAP EPS CAGR (3Y, §7)</td><td>7.8%</td></tr>
+<tr><td>PEG (3Y)</td><td><strong>2.05</strong>（接近 2 邊緣）</td></tr>
+<tr><td>5Y EPS CAGR</td><td>~8.5%</td></tr>
+<tr><td>PEG (5Y)</td><td>1.88</td></tr>
+</table>
+<div class="reasoning">
+PEG 2.05 接近 2 邊緣（vs HD 2.43 更貴）
+正規化（mid-cycle）PEG ~1.2 → 合理
+→ implication §2 D：估值燈以分位主導 🟢
+</div>
+
+<h3>13.4｜同業估值比較（強制 peer tier）</h3>
+<p>LOW 業務模式 tier：同 HD（大型 home improvement retail，雙頭壟斷 tier）</p>
+
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><strong>LOW（本標的）</strong></td><td>$122B</td><td><strong>16.00x</strong></td><td>13.4x</td><td>2.05</td><td>8.9%</td><td>7.8%</td><td>22.5%</td></tr>
+<tr><td>HD</td><td>$296B</td><td>18.24x</td><td>14.4x</td><td>2.43</td><td>7.7%</td><td>7.5%</td><td>14-20%</td></tr>
+<tr><td>FND（specialty）</td><td>$8B</td><td>32x</td><td>22x</td><td>1.6</td><td>5%</td><td>18%</td><td>11%</td></tr>
+<tr><td>SHW（supplier）</td><td>$83B</td><td>26x</td><td>20x</td><td>2.5</td><td>10%</td><td>10%</td><td>23%</td></tr>
+<tr><td>同 tier 中位</td><td>—</td><td>17.1x</td><td>13.9x</td><td>2.24</td><td>8.3%</td><td>7.7%</td><td>~22%</td></tr>
+</table>
+<div class="reasoning">
+LOW vs HD（同 tier）：Fwd PE 折價 -12%；OPM LOW -0.7pp 弱；ROIC LOW 表面高但受負股本 distort
+LOW vs 同 tier 中位：Fwd PE 折價 -6%；屬於合理折價（規模較小、護城河弱 1 級）
+無 meaningful 收斂風險（LOW 與 HD 差距 -12% 反映 fundamental gap，非 mis-pricing）
+→ §2 D implication：估值燈 🟢，相對 HD 便宜為 sector 對沖選項
+</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 歷史分位（Fwd PE 29.4%）+ 13.2 PEG（2.05 邊緣 + 正規化 1.2 合理）+ 13.4 同業（vs HD 折價 -12% fair）→ 綜合估值訊號：<strong>🟢 合理至便宜</strong>。完整裁決見 §1 dashboard。</p>
+
+<p><strong>分析師目標價參考</strong>：</p>
+<ul>
+<li>高 $325 / 中位 $285 / 低 $228（21-33 分析師）</li>
+<li>BofA 5/5 downgrade 至 Neutral $260（vs 共識 $280-287）</li>
+<li>共識評等：Buy 為主（含 1 個近期 downgrade）</li>
+<li>是否認同共識中位？— 部分認同。$285 對應 Fwd PE 22.6x（樂觀 housing recovery 假設）；本 DD 合理 PE 19x → 公允目標 $240-260（FY27 EPS $13.65 × 19x），與 BofA $260 一致</li>
+</ul>
+
+<h3>投資結論（v12.3 精簡）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1</strong>：邊際強化（Q4 comp +1.3% 強於 HD），需 5/20 Q1 FY26 驗證連續性</li>
+<li><strong>H2</strong>：邊際中性（FBM 整合剛開始，需 12-18 月驗證）</li>
+<li><strong>H3</strong>：削弱（FY26 guide 低於共識，BofA 5/5 downgrade）</li>
+</ul>
+
+<h4>綜合訊號輸出</h4>
+<ul>
+<li>護城河等級：B（7/10）</li>
+<li>估值燈：🟢（Fwd PE 5Y 分位 29.4%，PEG 2.05）</li>
+<li>Pure MA：🟠（追蹤池）</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：B</strong>（觀望偏進場）</li>
+<li>中期參考 R:R：1.45x（資訊性）</li>
+<li>訊號語意：與 HD 同 B grade，但 LOW MA 略佳（🟠 vs HD ❌→🟠 救援），estimated entry timing 較 HD 早；倉位 % 由 PM skill 決定</li>
+</ul>
+
+<h4>① 短期信號</h4>
+<p>5/20 Q1 FY26 為近期最大重設信號。Q1 beat + comp 維持正 → 試倉 trigger；Q1 miss 或 FY26 guide 下修 → 觀察 4-6 個月或等股價跌至 $190-200 區間（Bear 區域）。</p>
+
+<h4>② 中期成長確信度</h4>
+<p>FY+1/FY+2 EPS CAGR ~+5-8%，能見度<strong>中</strong>；主要 risk 為 FBM + ADG 整合執行（LOW 歷史紀錄混合）。</p>
+
+<h4>③ 長期持有信心</h4>
+<p>成長跑道：充裕 / 護城河趨勢：穩定 / 長期持有信心：<strong>高（略低於 HD）</strong></p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔 Bear $190（現價下行 -13.0%）</li>
+<li>中期下檔類似</li>
+<li>W52 Low $210.33（參考；接近現價）/ W104 Low $190（參考）</li>
+<li>若 FY+1 EPS 下修 10%（至 $11.35），短期 R:R 將降至 0.2x（嚴重失效）</li>
+</ul>
+
+<h3>13.5 附加：LOW vs HD 完整對照（v12.3 sector pair analysis）</h3>
+<p>由於 LOW 與 HD 為同 tier 雙頭壟斷對，本節提供 sector pair 完整對照，供 PM 決策參考：</p>
+
+<table>
+<tr><th>指標</th><th>HD</th><th>LOW</th><th>LOW vs HD</th><th>解讀</th></tr>
+<tr><td>市值</td><td>$296B</td><td>$122B</td><td>0.41x</td><td>HD 規模 2.4x</td></tr>
+<tr><td>Revenue FY25</td><td>$164.7B</td><td>$86.3B</td><td>0.52x</td><td>HD 規模 1.9x</td></tr>
+<tr><td>美國門市數</td><td>2,345</td><td>1,728</td><td>0.74x</td><td>LOW 約為 HD 3/4</td></tr>
+<tr><td>Sales per sqft</td><td>$725</td><td>$435</td><td>0.60x</td><td>HD efficiency 1.67x</td></tr>
+<tr><td>FY25 comp sales US</td><td>+0.3%</td><td>~+1.0%（推算 Q4 +1.3% 為含 SRS 全年）</td><td>持平/略優</td><td>LOW Q4 動能略強</td></tr>
+<tr><td>FY25 adj EPS</td><td>$14.69</td><td>$11.99</td><td>0.82x</td><td>EPS 規模較 Revenue ratio 高（margin 較差但 share count 較小）</td></tr>
+<tr><td>FY25 OPM</td><td>12.7%</td><td>11.8%</td><td>-0.9pp</td><td>HD OPM 略優</td></tr>
+<tr><td>FY25 FCF margin</td><td>7.7%</td><td>8.9%</td><td>+1.2pp</td><td>LOW FCF margin 較佳（受 capex 較低 + working capital 影響）</td></tr>
+<tr><td>FY25 ROIC</td><td>14-20%</td><td>22.5%</td><td>+8pp</td><td>LOW 表面較佳但受 buyback 負股本 distort</td></tr>
+<tr><td>Pro 段 % 營收</td><td>~50%</td><td>~25-30%</td><td>-20-25pp</td><td>HD Pro pivot 領先 2-3 年</td></tr>
+<tr><td>近期重大併購</td><td>SRS $18.25B + GMS $5.5B = $24B</td><td>FBM $8.8B + ADG (~$2B)</td><td>佔市值 LOW 7-9% > HD 8%</td><td>LOW 相對自身市值賭注更大</td></tr>
+<tr><td>分紅 yield</td><td>3.13%</td><td>2.20%</td><td>+93bp</td><td>HD 分紅較高</td></tr>
+<tr><td>Fwd PE (FY+2)</td><td>18.24x</td><td>16.00x</td><td>-12%</td><td>LOW 估值便宜</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>10.5%</td><td>29.4%</td><td>HD 更便宜</td><td>絕對便宜程度：HD > LOW</td></tr>
+<tr><td>PEG (3Y)</td><td>2.43</td><td>2.05</td><td>LOW 略佳</td><td>LOW PEG 更接近合理</td></tr>
+<tr><td>R:R 短期</td><td>1.04x</td><td>0.75x</td><td>HD 略佳</td><td>HD 起點便宜更好</td></tr>
+<tr><td>R:R 中期</td><td>1.45x</td><td>1.45x</td><td>持平</td><td>—</td></tr>
+<tr><td>R:R 5Y</td><td>2.61x</td><td>2.37x</td><td>HD 較佳</td><td>HD 較高 PE 目標</td></tr>
+<tr><td>Pure MA</td><td>❌→🟠 救援</td><td>🟠 暫不進場</td><td>LOW 略好</td><td>LOW 守住 W250，HD 失守</td></tr>
+<tr><td>Analyst target 中位</td><td>$428（+44%）</td><td>$285（+30%）</td><td>HD upside 較大</td><td>sell-side 對 HD 較樂觀</td></tr>
+</table>
+
+<h3>HD vs LOW Pair-trade 結論</h3>
+<p>從 sector pair 角度，HD 與 LOW 各有優缺點，<strong>沒有絕對勝者</strong>：</p>
+<ul>
+<li><strong>HD 優勢</strong>：規模 1.9x、執行力強（Sales/sqft 1.67x）、Pro 段領先、估值絕對便宜（5Y 分位 10.5%）、5Y R:R 較高 2.61x、分紅較高 3.13%</li>
+<li><strong>LOW 優勢</strong>：估值 -12% 便宜（vs HD）、Q4 comp 動能略強、MA 略好（守住 W250）、FCF margin 略高、ROIC 表面較高（但 distorted）、FBM 整合 optionality 較大</li>
+<li><strong>建議配比</strong>：60% HD / 40% LOW（HD 為核心，LOW 為 sector diversification）；或先觀察 5/19 HD + 5/20 LOW 兩份 Q1 FY26 結果後再決定分配</li>
+</ul>
+
+<p class="note">注意：HD 與 LOW 為強相關標的（housing-rate sector），同時持有並不能有效 risk diversification；建議將兩者視為 sector exposure 的「組合內配比」而非 independent holdings。Sector 總曝險建議不超過組合 15-20%。</p>
+</section>
+
+</main>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</body>
+</html>
