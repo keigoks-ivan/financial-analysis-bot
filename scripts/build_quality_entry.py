@@ -305,18 +305,22 @@ def entry_rationale(s: dict, breakdown: dict, ma_label: str) -> str:
 
 
 def wait_hint(s: dict, breakdown: dict, ma_label: str) -> str:
-    """Tier B 「等什麼」— 點出 entry sub-score 最大拖累。"""
+    """Tier B 「等什麼」— 點出 entry sub-score 最大拖累。
+
+    Tie-break 優先序：trend > ma > pullback > pct_5y > val
+    （vs 200MA 過度延伸 / 跌破比 MA 結構鈍化更 actionable；pct_5y 太貴
+    比 val 燈號更具體）。Python max() 平手時取 dict 第一個 key，所以
+    這裡的 dict 插入順序即優先序。"""
     sub = breakdown["entry"]
-    # 找權重後最低貢獻的分項
+    # 加權目標 vs 加權實際 → gap 大代表拖累大；dict 順序 = tie-break 優先序
     weighted = {
-        "pct_5y": sub["pct_5y_norm"] * 0.30,
+        "trend": sub["trend_score"] * 0.15,
         "ma": sub["ma_score"] * 0.25,
         "pullback": sub["pullback_score"] * 0.20,
-        "trend": sub["trend_score"] * 0.15,
+        "pct_5y": sub["pct_5y_norm"] * 0.30,
         "val": sub["val_score"] * 0.10,
     }
-    # 加權目標 vs 加權實際 → 找差距最大的
-    targets = {"pct_5y": 0.30, "ma": 0.25, "pullback": 0.20, "trend": 0.15, "val": 0.10}
+    targets = {"trend": 0.15, "ma": 0.25, "pullback": 0.20, "pct_5y": 0.30, "val": 0.10}
     gap = {k: targets[k] - weighted[k] for k in targets}
     bottleneck = max(gap, key=gap.get)
 
