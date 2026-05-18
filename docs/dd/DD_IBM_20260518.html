@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.3">
+<title>IBM (International Business Machines) v12.3 Inception DD — 2026-05-18</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;
+  --good-bg:#DCFCE7;--good-tx:#166534;
+  --bad-bg:#FEE2E2;--bad-tx:#991B1B;
+  --warn-bg:#FEF9C3;--warn-tx:#92400E;
+  --info-bg:#EFF6FF;--info-tx:#1E40AF;
+  --trap-bg:#FFF0E6;--trap-accent:#F97316;--trap-tx:#C2410C;
+  --bull-bg:#F0FDF4;--bull-accent:#16A34A;
+  --bear-bg:#FFF1F2;--bear-accent:#DC2626;
+  --arb-bg:#F5F3FF;--arb-accent:#7C3AED;
+  --verdict-bg:#FFFBEB;--verdict-accent:#D97706;--verdict-tx:#92400E;
+  --short-bg:#F0F9FF;--short-accent:#0284C7;
+  --mid-bg:#F5F3FF;--mid-accent:#7C3AED;
+  --long-bg:#ECFDF5;--long-accent:#059669;--long-tx:#065F46;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;
+  font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  font-size:15px;line-height:1.7}
+code,.mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace}
+header{position:sticky;top:0;background:#0F172A;color:#fff;padding:10px 20px;
+  z-index:10;font-size:13px;display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px}
+header .meta{font-family:'IBM Plex Mono',monospace;opacity:.85}
+nav.dd-toc{background:#fff;border-left:4px solid var(--accent);
+  padding:14px 18px;margin:16px 24px;border-radius:6px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;gap:8px}
+nav.dd-toc a{background:var(--info-bg);color:var(--info-tx);
+  padding:5px 12px;border-radius:999px;text-decoration:none;font-size:13px;
+  font-weight:500;border:1px solid #DBEAFE;transition:all .15s}
+nav.dd-toc a:hover{background:var(--accent);color:#fff}
+main{padding:0 24px 80px}
+section{background:var(--card);margin:20px 0;padding:24px 28px;border-radius:8px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);scroll-margin-top:80px}
+h1{font-size:24px;color:var(--ink);margin:8px 0;font-weight:700}
+h2{font-size:20px;color:var(--ink);margin:0 0 16px;padding:10px 14px;
+  background:#F1F5F9;border-left:4px solid var(--accent);border-radius:4px;
+  scroll-margin-top:80px}
+h3{font-size:17px;color:var(--ink);margin:18px 0 10px;font-weight:600}
+h4{font-size:15px;color:var(--ink);margin:14px 0 8px;font-weight:600}
+p{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+th{background:var(--ink);color:#fff;padding:8px 10px;text-align:left;font-weight:500}
+td{padding:8px 10px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.reasoning{background:#F8FAFC;border-left:3px solid var(--accent);
+  padding:10px 14px;margin:8px 0;font-size:13.5px;line-height:1.6}
+.reasoning b{color:var(--ink)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;
+  font-weight:500;margin:0 4px 0 0}
+.good{background:var(--good-bg);color:var(--good-tx)}
+.bad{background:var(--bad-bg);color:var(--bad-tx)}
+.warn{background:var(--warn-bg);color:var(--warn-tx)}
+.info{background:var(--info-bg);color:var(--info-tx)}
+.hypothesis-box{background:var(--info-bg);border-left:4px solid var(--accent);
+  padding:14px 18px;border-radius:4px;margin:12px 0}
+.hypothesis-box ul{margin:0;padding-left:20px}
+.hypothesis-box li{margin:6px 0;line-height:1.65}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-accent);
+  padding:14px 18px;border-radius:4px;margin:14px 0}
+.trap-box h4{color:var(--trap-tx);margin-top:0}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0}
+.col-card{padding:14px;border-radius:6px;border-left:4px solid #E2E8F0}
+.col-bull{background:var(--bull-bg);border-left-color:var(--bull-accent)}
+.col-bear{background:var(--bear-bg);border-left-color:var(--bear-accent)}
+.col-arb{background:var(--arb-bg);border-left-color:var(--arb-accent)}
+.col-short{background:var(--short-bg);border-left-color:var(--short-accent)}
+.col-mid{background:var(--mid-bg);border-left-color:var(--mid-accent)}
+.col-long{background:var(--long-bg);border-left-color:var(--long-accent)}
+.col-long h4{color:var(--long-tx)}
+.col-card h4{margin-top:0;font-size:15px}
+.note{font-size:12.5px;color:#475569;margin-top:8px;font-style:italic}
+.print-btn{position:fixed;bottom:20px;right:24px;background:var(--accent);color:#fff;
+  border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-weight:500;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:20}
+@media print{header,nav.dd-toc,.print-btn{display:none}
+  section{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
+  body{font-size:11.5px}}
+@media (max-width:760px){.three-col{grid-template-columns:1fr}
+  nav.dd-toc{margin:12px}}
+</style>
+</head>
+<body>
+<header>
+  <div><b>IBM</b> ｜ International Business Machines Corp ｜ Schema <span class="mono">v12.3</span></div>
+  <div class="meta">資料抓取 2026-05-18 ｜ 現價 $219.30 ｜ Q1 2026 (2026-04-22)</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<main>
+
+<section id="s1">
+<h1>§1 投資結論（Executive Summary）</h1>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。本份為 IBM 於 v12.2+ 框架下的 <b>Inception DD</b>。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡 中性：</strong>§8 長期成長性 🟡（軟體 + AI infra 順風，Consulting 受 Anthropic Claude Code 結構性威脅）｜ §9 護城河趨勢 穩定（Red Hat + Mainframe 強化中，Consulting 弱化）｜ §8.F AI 風險 🟡（Watsonx/Granite 受益，Consulting GBS 受脅）｜ 一句話：「分裂的 AI 故事 — Software/Infra 端是 AI 受益者，Consulting 端是 AI 受害者」</li>
+<li><strong>品質 B 級：</strong>護城河 7/10（§9）｜體質 veto 0 項不過（5/5 全 ✅：毛利率 +5.7pp 三年 / FCF/NI 1.08 / EPS 共識 90d 微升 / 連 4 季營收 YoY 正 / Net Debt/EBITDA 2.94）｜等級調整：B → B（無變動）</li>
+<li><strong>估值燈 🟡 合理：</strong>Fwd PE 16.30x，5Y 分位 ~33%（5Y FPE 範圍 13.5–22）｜PEG = 16.30 ÷ 8.8% (3Y EPS CAGR) = 1.85 → 🟡｜盲點 1 救援：否（§8 為 🟡 非 🟢，AI 風險 🟡 非 🟢）</li>
+<li><strong>Pure MA 狀態 🟠 暫不進場：</strong>W52 $267.20 / W104 $238.28 / W250 $172.43（W250 斜率 +3.95% 仍正）｜現價 $219.30 < W104 但 > W250｜盲點 2 救援：否（§2.I 信心中、§8 🟡、護城河 7 三條件未全滿足）｜BB 位置 15.9%（接近下軌），剛從 52W 低 $219 反彈</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 現價 7408.50 vs W104 6173.73（無系統性風險）</li>
+<li><strong>參考 R:R：</strong>短期（12M）0.07x / 中期（24M）0.37x / 長期（5Y）1.70x｜壓力測試通過率 0/4（QC-29 觸發：「R:R 對壓力情境敏感」備註）— 資訊性，不主導裁決</li>
+<li><strong>綜合訊號：<span style="font-size:20px;color:var(--accent)">B</span></strong>（取自 §2.H）｜判定理由：thesis 完整（軟體 11% / ARR $24.6B +10% / FCF guide $15.7B），但 MA 🟠 與短中期 R:R 偏弱致進場時機不到 → 落 B（觀望偏進場 / 衛星候選）；QC-31 規則：估值 🟠 / R:R 不過單獨不歸 C</li>
+<li><strong>長期持有信心：中</strong>（§2.I）｜<strong>陷阱定性：🟡 觀察期</strong> — Consulting AI 替代風險真實但 ≠ 結構性護城河毀壞；軟體 + 基礎設施 thesis 強化中</li>
+<li><strong>Inception DD：</strong><code>DD_IBM_20260518.html</code>（2026-05-18）— 本份為 IBM 第一份 v12.2+ DD，作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-18（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜<b>B = 衛星候選</b>｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<div class="trap-box">
+<table>
+<tr><th style="width:32%">問題</th><th>回答</th></tr>
+<tr><td><b>最可能的價值陷阱模式是哪一種？</b></td><td><b>護城河侵蝕型（局部）</b> — Consulting 子段 (~33% 營收) 面對 Anthropic Claude Code 等 AI agentic 工具的議價權侵蝕；但 Software (~44%) 與 Infrastructure (~22%) 仍在強化護城河（z17 cycle + Red Hat ARR + Confluent data fabric）。整體公司不是陷阱，但 Consulting 段是。</td></tr>
+<tr><td><b>支持「這不是陷阱」的最強論據</b></td><td>① Q1 2026 軟體段 +11%（CC 8%）、Data 子段 +19%、ARR $24.6B (+10%) — 不是衰退中的公司；<br>② FCF/NI = 11.46/10.59 = <b>1.08</b>（盈餘品質強），FCF guide 26E +$1B 至 $15.7B；<br>③ Gross Margin 連 3 年改善 52.5% → 54.0% → 56.6% → 58.2% — 結構性 mix shift（軟體佔比↑）支撐 margin 擴張；<br>④ Z17 mainframe cycle 啟動 + Spyre AI accelerator 4Q25 → 帶動 Infrastructure +15% YoY；<br>⑤ Confluent $11B (mid-March 2026 close) 帶來 ~2% 增量營收 + Kafka data fabric 強化 Watsonx 護城河。</td></tr>
+<tr><td><b>支持「這可能是陷阱」的最強反駁</b></td><td>① <b>Anthropic Claude Code 衝擊</b>（2026-02-23）：宣稱可把 COBOL → Java/Python migration 從「年」壓至「季」，直擊 IBM Consulting 與 Mainframe 鎖定的核心議價權。當日 IBM -13%（25 年單日最大跌幅），月內 -27%；<br>② <b>Consulting 段成長僅 +4%</b>（vs Software +11%），Backlog $32B 僅 +2%，書本品質改善但 absolute growth 動能弱；<br>③ <b>ROIC 不穩定</b>：10 年史上 ROIC 年度從 -0.68% (2022) 跳至 7.63% (2023) 再回 4.37% (2024) — 不具 Munger 穩定型企業特徵，反映過去 5 年大型 M&A (Red Hat $34B / HashiCorp $6.4B / Confluent $11B) + 重組打亂節奏；<br>④ <b>5 年共識成長率僅 ~7-8%</b>，PEG 1.85-2.04 — 即使便宜也不是 deep value，估值修復空間有限。</td></tr>
+<tr><td><b>如何在持有期間判斷陷阱是否正在發生？</b></td><td><b>領先指標 1（最關鍵）</b>：Consulting 段 backlog YoY — 若 2026Q3/Q4 跌至 0% 或負值（目前 +2%）→ Claude Code 衝擊兌現，trap 升 🔴；<br><b>領先指標 2</b>：Software ARR growth — 若連兩季跌破 +8%（目前 +10%）→ Confluent integration 未兌現 / GenAI bookings 假性，trap 升 🔴；<br><b>領先指標 3</b>：FCF YoY — FY26 guide $15.7B (+~$1B)。若 H2 兌現率 < 60%（基於 H1 進度）→ Capex 或營運資金惡化，trap 升 🟡 至 🔴。</td></tr>
+</table>
+<p style="margin-top:10px"><b>最終定性：🟡 觀察期</b> — Consulting AI 風險真實但 segment-level 不是公司核心；軟體 + Infra 兩腳支撐護城河；建議以「Consulting backlog YoY」為主要 trap-confirm 指標。</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td><b>Software ARR YoY 成長率</b>（目前 $24.6B, +10%）</td><td>§5 H1 / §8</td><td>🔵 核心假設驗證信號</td><td>連兩季跌破 +8% → H1 削弱；連兩季 +12% 以上 → H1 強化</td></tr>
+<tr><td>2</td><td><b>Consulting Backlog YoY</b>（目前 $32B, +2%）</td><td>§5 R1 / §9</td><td>🔵 長期領先 / Trap 警戒</td><td>跌至 0% 或負 → R1 觸發、trap 升🔴；維持 +3% 以上 → R1 緩解</td></tr>
+<tr><td>3</td><td><b>FY26 FCF 全年</b>（guide $15.7B）</td><td>§6 / §13</td><td>短期估值 / 配息支撐信號</td><td>H1 兌現率 < 55%（< $8.6B）→ Capex 或營運資金惡化警戒</td></tr>
+</table>
+</section>
+
+<section id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+<h3>0｜產業風向燈（v12.3）</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟡 中等可見度（軟體+AI infra 🟢，Consulting 🟡-🔴，整體 🟡）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（Red Hat / Mainframe 加深，Consulting 弱化，二維分裂）</td></tr>
+<tr><td>§8.F AI 風險</td><td>🟡 中等不確定（Watsonx / Granite / Spyre 受益；GBS Consulting 受脅）</td></tr>
+<tr><td><b>產業風向燈</b></td><td><b>🟡 中性</b></td></tr>
+<tr><td>一句話判斷</td><td>「分裂的 AI 故事 — Software/Infra 端是 AI 受益者，Consulting 端是 AI 受害者。整體 thesis 仰賴 Software/Infra 成長率（>10%）抵消 Consulting 結構性減速。」</td></tr>
+</table>
+<div class="reasoning">
+<b>輸入</b>：§8 🟡 + 護城河趨勢混合 + AI 風險 🟡 → 三項皆中性。<br>
+<b>計算</b>：v12.3 規則「三者取綜合判斷」，無單項 🔴 → 落 🟡 中性。<br>
+<b>對下游 implication</b>：盲點 1 / 2 救援**不啟動**（需 §8 🟢 + AI 🟢 才啟動）；估值 PEG 上限維持嚴格 2.0。
+</div>
+
+<h3>B｜品質等級（護城河 + 體質 veto；v12.3 二維護城河）</h3>
+
+<h4>體質 veto 檢核</h4>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 >2%p</td><td><span class="tag good">✅</span></td><td>FY22→25：52.5% → 54.0% → 56.6% → 58.2%（連 3 年改善 +5.7pp，Mix shift 至 Software）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="tag good">✅</span></td><td>FY25：FCF $11.46B ÷ NI $10.59B = <b>1.08</b>（盈餘品質佳，無膨脹跡象）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="tag good">✅</span></td><td>0y（FY26）共識 90d 軌跡：12.411 → 12.380 → 12.377 → 12.425 → 12.429（微升趨勢）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="tag good">✅</span></td><td>近 4 季 YoY 全部為正：Q2 25 ~+9%、Q3 25 ~+8%、Q4 25 ~+12%、Q1 26 +9%</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="tag good">✅</span></td><td>Net Debt = $64.6B − $13.6B = $51.0B；EBITDA TTM ~$17.3B → 2.95x（剛好過關）</td></tr>
+</table>
+<p><b>體質 veto 結果</b>：0 項不過 → 護城河等級**不調整**（無 降級 / 拒絕）</p>
+
+<h4>護城河二維評分（v12.3 強制）</h4>
+<table>
+<tr><th>維度</th><th>分數</th><th>核心依據</th></tr>
+<tr><td><b>Execution Moat</b>（執行型護城河）</td><td><b>7/10</b></td><td>Red Hat OpenShift $2.0B ARR 規模優勢、Z17 mainframe 安裝基礎鎖定、HashiCorp + Confluent 整合執行力（Terraform/Vault/Kafka 三大基礎設施工具串接 Red Hat 生態 Already shipping）</td></tr>
+<tr><td><b>Pricing Power Moat</b>（定價型護城河）</td><td><b>6/10</b></td><td>Mainframe / Red Hat 仍可調漲（GM 連 3 年改善佐證），但 Consulting 子段在 Claude Code 衝擊下定價權削弱（Backlog yield +4pt 是質量改善但不是 raw pricing），Software ARR 議價權尚未測試完整週期</td></tr>
+<tr><td><b>綜合護城河</b>（max(execution, pricing)）</td><td><b>7/10</b></td><td>v12.3 規則：execution 與 pricing 取較大值作為單一綜合分；單一維度需 ≥ 7 才能算 B+ 級護城河。IBM 兩維皆 6-7，落 7。</td></tr>
+</table>
+<div class="reasoning">
+<b>輸入</b>：execution 7（Red Hat ARR + Z17 + 整合執行力強）、pricing 6（GM 改善但 Consulting 定價權侵蝕中）。<br>
+<b>計算</b>：兩維皆未達 9（FAANG 級）、未達 8（典型強護城河），落 7（有護城河但不頂級）。<br>
+<b>implication</b>：B 級護城河 → §2.B 等級「B」、§13.5 長期合理 PE 基準 20x（中等可見度成長對應）。
+</div>
+
+<h4>品質等級對映表</h4>
+<table>
+<tr><th>護城河（§9）</th><th>等級</th><th>底倉（目標倉位的 %）</th><th>處置</th></tr>
+<tr><td>10</td><td>🏆 S 級</td><td>25%</td><td>頂級（NVDA、TSMC）</td></tr>
+<tr><td>9</td><td>⭐ A 級</td><td>25%</td><td>強護城河（MSFT、LLY）</td></tr>
+<tr><td><b>7-8（本標的 7）</b></td><td><b>✅ B 級</b></td><td><b>15%</b></td><td><b>有護城河但不頂級（DELL、IBM、MU）</b></td></tr>
+<tr><td>5-6</td><td>🟡 C 級</td><td>5%</td><td>弱護城河，限小倉短期</td></tr>
+<tr><td>< 5</td><td>❌ 拒絕</td><td>0%</td><td>無護城河</td></tr>
+</table>
+<p><b>調整後等級</b>：<b>B 級</b>（護城河 7 → B；體質 veto 0 項 → 不變）｜底倉建議 15%（目標倉位的 15%）</p>
+
+<h3>D｜估值燈（v12.3 簡化結構）</h3>
+
+<h4>估值輸入</h4>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY26 EPS 共識（0y）</td><td>$12.43</td><td>yfinance（21 位分析師，YoY +7.2%）</td></tr>
+<tr><td>FY27 EPS 共識（+1y）</td><td>$13.45</td><td>yfinance（21 位分析師，YoY +8.2%）</td></tr>
+<tr><td>FY28 EPS（邏輯推導）</td><td>$14.40</td><td>§8.A Runway + §8.B 量價拆解：Confluent 全年貢獻 +~$1B 營收 + Z17 mid-cycle + Software ARR 8-10% → +7% YoY</td></tr>
+<tr><td>當前 Forward PE (FY26)</td><td>16.30x</td><td>$219.30 ÷ $12.43 × yfinance 報 16.30</td></tr>
+<tr><td>3Y EPS CAGR（FY25→FY28）</td><td>8.8%</td><td>($14.40/$11.17)^(1/3) − 1 = 8.79%</td></tr>
+<tr><td>PEG (3Y, GAAP)</td><td>1.85</td><td>16.30 ÷ 8.8 = 1.85</td></tr>
+<tr><td>5Y Forward PE 範圍（估算）</td><td>13.5x – 22.0x</td><td>5Y 中位 ~17x（2022 EPS 受 Kyndryl 分拆影響扭曲，移除 outliers 後實質區間）</td></tr>
+<tr><td>當前 5Y FPE 分位</td><td>33%</td><td>(16.30 − 13.5) / (22.0 − 13.5) × 100% = 32.9%（QC-4 公式）</td></tr>
+</table>
+<div class="reasoning">
+<b>FPE 5Y 分位推導</b>：當前 16.30，5Y 低 13.5（2026-02 Anthropic 衝擊期間）、5Y 高 22.0（2024 AI 樂觀期）。<br>
+<b>計算</b>：(16.30 − 13.5) ÷ (22.0 − 13.5) = 33%（低於 30% 才觸發 🟢 便宜）。<br>
+<b>implication</b>：33% 落「30-70%」🟡 合理區。但若併用嚴 5Y 範圍 14-37x（含 2022 EPS 塌陷期），分位 ~10% 偏 🟢；採取較保守的 33% 不觸發 🟢，傳遞至 §2.D 估值燈。
+</div>
+
+<h4>估值燈判定</h4>
+<table>
+<tr><th>燈號</th><th>條件</th><th>本標的</th></tr>
+<tr><td>🟢 便宜</td><td>Fwd PE 5Y 分位 < 30% **或** PEG < 1.0</td><td>分位 33% 略過門檻、PEG 1.85 不過 → 否</td></tr>
+<tr><td><b>🟡 合理</b></td><td><b>30-70% 分位 且 1.0 ≤ PEG ≤ 2.0</b></td><td><b>分位 33% ✅ + PEG 1.85 ✅ → 落 🟡 合理</b></td></tr>
+<tr><td>🟠 偏貴</td><td>70-85% 分位 **或** 2.0 < PEG ≤ 2.5</td><td>否</td></tr>
+<tr><td>🔴 過熱</td><td>> 85% 分位 **或** PEG > 2.5</td><td>否</td></tr>
+</table>
+<div class="reasoning">
+<b>輸入</b>：FPE 分位 33%（🟡 區）+ PEG 1.85（🟡 區）。<br>
+<b>取較嚴</b>：兩者皆 🟡 → 估值燈 🟡 合理。<br>
+<b>盲點 1 救援檢核</b>：需 §8 🟢 + PEG < 2.0 + AI 🟢 三項全滿足 → 本標的 §8 🟡 ❌、AI 🟡 ❌ → <b>救援不啟動</b>，🟡 維持。<br>
+<b>對下游 implication</b>：等級不變（B 維持 B），不送進場時機；估值非煞車項。
+</div>
+
+<h4>R:R 與 Bear Case（參考用，不主導裁決）</h4>
+<table>
+<tr><th>時距</th><th>目標 EPS</th><th>合理 PE</th><th>目標價</th><th>Bear EPS</th><th>Bear PE</th><th>Bear 股價</th><th>R:R</th></tr>
+<tr><td>短期 (12M)</td><td>FY26 $12.43</td><td>18x</td><td>$224</td><td>$11.19 (×0.9)</td><td>13x</td><td>$145</td><td><b>0.07x</b>（fail）</td></tr>
+<tr><td>中期 (24M)</td><td>FY27 $13.45</td><td>18x</td><td>$242</td><td>$12.10 (×0.9)</td><td>13x</td><td>$157</td><td><b>0.37x</b>（fail）</td></tr>
+<tr><td>長期 (5Y)</td><td>FY30 ~$16.20</td><td>18x</td><td>$292</td><td>$13.50（成長熄火 5%）</td><td>13x</td><td>$176</td><td><b>1.70x</b>（borderline）</td></tr>
+</table>
+<div class="reasoning">
+<b>合理 PE 18x 推導</b>：基準 20x（B 級成長 🟡）× 無 ROIC 引擎（IBM ROIC 6.85% < 20%）× 無 PEG 動態（CAGR 8.8% < 15%）× 無護城河溢價（7 < 9）× AI 風險 🟡 (×0.9) = 20 × 0.9 = <b>18x</b>。<br>
+<b>QC-29 壓力測試（v12.3 簡化只標通過率）</b>：Base 0.37x、壓力 A (成長 −10%) ~0.20x、壓力 B (PE −20%) ~負值、壓力 C (同業收斂 50%) NA → 通過率 <b>0/4</b>。<br>
+<b>QC-36 5Y 目標一致性檢核</b>：5Y 目標 = FY30 EPS $16.20 × 18x = $292；upside_5y_pct = (292 − 219.30) / 219.30 = 33.1% → dd-meta 寫 33 ✅ 一致。
+</div>
+
+<h3>F｜Pure MA 狀態機（v12.3 六狀態機）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$219.30</td></tr>
+<tr><td>W52 / 斜率</td><td>$267.20 / -0.02%（持平）</td></tr>
+<tr><td>W104 / 斜率</td><td>$238.28 / +3.71%（正）</td></tr>
+<tr><td>W250 / 斜率 (13w)</td><td>$172.43 / +3.95%（正）</td></tr>
+<tr><td>Bollinger 上/中/下軌（20d）</td><td>$312.24 / $257.01 / $201.78</td></tr>
+<tr><td>BB 位置</td><td>15.9%（接近下軌，剛從 52W 低 $219 反彈）</td></tr>
+<tr><td><b>Pure MA 狀態</b></td><td><b>🟠 暫不進場</b>（價 < W104 但 > W250，W250 斜率仍正）</td></tr>
+</table>
+<div class="reasoning">
+<b>狀態判定</b>：價 $219.30 < W104 $238.28（不能算強勢），但 > W250 $172.43 且 W250 斜率 +3.95%（不是系統失效），落 🟠 暫不進場（v12.3 部位乘數 0）。<br>
+<b>盲點 2 救援檢核</b>：需 §2.I 信心高 + §8 🟢 + 護城河 ≥ 8 三條件全滿足。本標的：§2.I 信心「中」❌、§8 🟡 ❌、護城河 7 ❌ → <b>救援不啟動</b>，🟠 維持。<br>
+<b>對下游 implication</b>：MA 是煞車項；落 🟠 → 進場時機未到（即使估值 🟡 合理）；建議等價站回 W104（$238）連 4 週後再評估，或回測 W250（$172）建立追蹤池。
+</div>
+
+<h3>H｜綜合訊號燈（v12.3：取代「最終倉位」輸出）</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2.B 調整後）</td><td>B 級</td></tr>
+<tr><td>gate（§2.D）</td><td>🟡 合理</td></tr>
+<tr><td>ma_status（§2.F）</td><td>🟠 暫不進場</td></tr>
+<tr><td>benchmark_regime</td><td>✅ 正常（SPX 7408 > W104 6174）</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡 觀察期</td></tr>
+<tr><td><b>final_signal</b></td><td><b>B（衛星候選 / 觀望偏進場）</b></td></tr>
+</table>
+<div class="reasoning">
+<b>判定路徑</b>：步驟 1 拒絕檢核 — trap 🟡 非🔴、gate 🟡 非🔴、MA 🟠 非❌、quality B 非拒絕 → 不歸 X。<br>
+步驟 2-3 高/中高（quality S/A 必要）→ 不符（quality B）。<br>
+步驟 4 衛星級：B + gate 🟢/🟡 + trap 🟢/🟡 → ✅ 條件滿足 → <b>落 B</b>。<br>
+<b>QC-31 cross-check</b>：MA 🟠 不單獨歸 C（thesis 完整）；R:R 不過不單獨歸 C；trap 🟡 非🔴；無 thesis-level 失敗證據（品質 ≥ 6、護城河 7、AI 風險 🟡）→ 確認 B 不降。<br>
+<b>判定理由</b>：thesis 完整（Software 11% / ARR 10% / FCF $15.7B guide），但 MA 🟠 暫不進場 + R:R 短中期偏弱 → 衛星候選（觀望偏進場），等 MA 站回 W104 後再評估升 A。
+</div>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>結論</th></tr>
+<tr><td>成長跑道（§8.A）</td><td>剩一半（8 年）— Software AI infra runway 仍有 5-7 年；Consulting Runway 縮短至 3-5 年；Mainframe steady cash cow</td></tr>
+<tr><td>護城河趨勢（§9）</td><td>穩定（兩維分裂：execution 7 強化中，pricing power 6 弱化中）</td></tr>
+<tr><td><b>長期持有信心</b></td><td><b>中</b></td></tr>
+</table>
+<p>一句話說明：🟡 中性產業，B 級護城河 (Red Hat + Mainframe 強、Consulting 受 Anthropic Claude Code 衝擊)。估值燈 🟡 合理 (FPE 16.3x / PEG 1.85) + Pure MA 🟠 暫不進場 (現價跌穿 W104 $238)。建議等 Consulting backlog YoY 不續弱 + MA 站回 W104 後再進場；FY26 FCF guide $15.7B 是底氣。</p>
+</section>
+
+<section id="s3">
+<h2>§3 三方辯論摘要（v12.3 簡化）</h2>
+
+<div class="three-col">
+
+<div class="col-card col-bull">
+<h4>多頭辯護人｜Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>佐證</th></tr>
+<tr><td>1</td><td>護城河 — Mainframe + Red Hat 雙鎖定</td><td>Z17 (Jun 2025 GA) + Telum II + Spyre AI accelerator 開啟 3-5 年置換週期；Red Hat OpenShift ARR $2.0B + Virtualization 簽約 $600M+，加上 HashiCorp Terraform/Vault/Consul 整合，IBM 已成為混合雲基礎設施的「神經系統」</td></tr>
+<tr><td>2</td><td>成長 — AI 不是威脅而是 IBM 的順風</td><td>Software 段 +11% YoY、Data 子段 +19%（GenAI bookings 推動）、ARR $24.6B (+10%)、累積 GenAI book-to-date $7.5-8.5B；Q1 26 GAAP EPS $1.28（+14% YoY）+ FCF $2.2B（+$0.3B YoY）已驗證 AI 故事兌現中</td></tr>
+<tr><td>3</td><td>估值 — 從泡沫 deflate 至合理價</td><td>FPE 16.3x 從 5Y 高 22x 大幅壓縮，PEG 1.85（合理區），div yield 3.08% 提供下行保護；同業 ACN 12x / ORCL 24x / MSFT 28-42x — IBM 是相對價值機會（軟體比重高於 ACN，但估值類似 ACN）</td></tr>
+</table>
+<p><b>多頭最強一句話：</b>「市場用 Consulting 的恐慌定價了一家 60%+ 毛利、Software ARR 10% 成長的混合雲 AI infra 公司——Q1 已用業績打臉。」</p>
+</div>
+
+<div class="col-card col-bear">
+<h4>空頭檢察官｜Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th></tr>
+<tr><td>1</td><td>Consulting 結構性崩塌（基本面惡化）</td><td>Anthropic Claude Code (Feb 2026)「COBOL 翻譯從年壓至季」；其他大型 LLM (GPT-5+, Gemini Ultra) 跟進；Consulting backlog 從 +2% 退至 −5% 以下；GBS 段毛利率連 4 季 −1pp+ — 此情境下 Consulting 段 valuation 從 P/Sales 1.5x 壓至 0.8x，估算貢獻 -25% 市值</td></tr>
+<tr><td>2</td><td>大型併購整合失敗（估值壓縮）</td><td>Confluent $11B（3 月 close）整合落後 — 客戶流失率 > 5%、Kafka licensing 議價權被 Aiven / Redpanda 侵蝕；HashiCorp 一年後續約率 < 70% — 投資人重估「IBM 不再有有機成長能力」敘事，FPE 從 16x 壓至 12x，估值跌 25%</td></tr>
+<tr><td>3</td><td>Mainframe 替代加速（催化劑風險）</td><td>主要金融客戶 (top 50 銀行) 啟動 Cloud-native COBOL 替代 PoC，且 Claude Code + Stripe SDK + Snowflake 已成功 migrate 一家百大銀行；TAM 從 ~$15B → $10B；Z17 cycle revenue beat 跌 50% — IBM Infrastructure 從成長段變衰退段，整體公司 thesis 重設</td></tr>
+</table>
+<p><b>空頭最大威脅：</b>「IBM 的 Software 成長 11% 假設了 Consulting 不崩、Mainframe 不被替代——但兩者的 binary risk 來自同一個 AI 工具（Claude Code），相關性接近 1。」</p>
+</div>
+
+<div class="col-card col-arb">
+<h4>估值仲裁員｜Aswath Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td><b>6 / 10</b></td></tr>
+<tr><td>核心依據（引用同業 Reverse 概念）</td><td>FY26 FCF guide $15.7B → 當前 EV/FCF ≈ (206 + 51) / 15.7 = 16.4x；隱含長期 FCF 成長 6-7% / 永續成長 3% / WACC 8% → 內在價值落 $230-260 區間，當前 $219 落區間下緣，<b>偏便宜 5-15%</b>。對比共識 EPS CAGR 8.8% / FCF guide +$1B (6% growth) — 隱含預期一致；唯一不一致：市場 Beta 0.58 (low) vs Anthropic 衝擊高隱含波動率 → 風險溢價被低估</td></tr>
+<tr><td>歷史對標</td><td>Microsoft 2010-2014 (Ballmer 末期)：Forward PE 10-12x、ROIC 18%、市場認為 mobile 失敗、Office 365 上市初期；2014 Nadella 上任後 5 年內 FPE 從 12x 升至 25x（estimated 5-year CAGR ~17%）— IBM 當前估值反映「Ballmer 末期 Microsoft」式悲觀，但缺少 Nadella 級轉型催化劑（Krishna 自 2020 上任已 6 年）</td></tr>
+</table>
+<p><b>仲裁員一句話：</b>「估值偏便宜但不是 deep value；reverse-engineered 預期一致但缺少獨立催化劑——對中性持有者是 fair entry，對 deep value seeker 需更多 margin of safety。」</p>
+</div>
+
+</div>
+</section>
+
+<section id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>IBM 解決的長期不可逆痛點：<b>大型機構的「無法移除」基礎設施運算與整合</b>。全球 67 家頂級銀行中有 45 家、全球 10 大保險公司有 8 家、Fortune 500 中 70%+ 仍依賴 Mainframe 處理 daily core transactions。這些系統不是因為「沒升級」而存在，而是因為其 99.999% uptime、原子交易保證、硬體加密、地理冗餘設計，是任何 cloud-native 架構 30 年內無法以同等成本複製的。若 IBM 明天消失，全球金融清算系統會在 72 小時內出現災難性失靈（Fedwire、SWIFT、信用卡 settlement 仰賴 IBM Mainframe + DB2 + CICS 三件套）。</p>
+<p>第二層存在意義：<b>Red Hat 是混合雲時代的「土壤」</b>。Kubernetes 已成事實標準，OpenShift 是其企業級唯一 production-ready 商業發行版（vs SUSE Rancher、VMware Tanzu）。當企業要從 on-prem 遷移至 multi-cloud (AWS+Azure+GCP) 而又不被任一 hyperscaler 鎖定，OpenShift 是唯一中立選項。Red Hat 不消失也消失不了。</p>
+
+<h3>護城河形成歷史路徑（v12.3 新增）</h3>
+<table>
+<tr><th>年份</th><th>milestone</th><th>對護城河貢獻</th></tr>
+<tr><td>1964</td><td>System/360 mainframe 發表，建立「向後相容」承諾</td><td>+3 分（基礎護城河奠基；客戶投資的 COBOL 程式 60 年後仍可執行）</td></tr>
+<tr><td>1995</td><td>WebSphere 中介軟體成型；服務化轉型開端</td><td>+1 分（軟體中介層鎖定）</td></tr>
+<tr><td>2005</td><td>Linux + Red Hat 戰略合作；ThinkPad 賣給 Lenovo（聚焦軟體 + 服務）</td><td>+1 分（戰略聚焦但護城河仍偏「賣硬」）</td></tr>
+<tr><td>2011</td><td>Watson 贏 Jeopardy，但商業化失敗</td><td>0 分（產生 AI 品牌認知，但延遲 IBM 進入 modern AI 時代 10 年）</td></tr>
+<tr><td>2013-2018</td><td>Ginni Rometty 任內「Strategic Imperatives」失敗、Cloud 落後 AWS/Azure 10 年</td><td>−2 分（市值從 $250B 萎至 $100B；護城河鬆動）</td></tr>
+<tr><td>2019-07</td><td>$34B 收購 Red Hat — IBM 史上最大 M&A</td><td>+3 分（取得 OpenShift 護城河；混合雲戰略產品化）</td></tr>
+<tr><td>2021-11</td><td>Kyndryl 分拆（Managed Infrastructure Services 分出去）</td><td>+1 分（剝除低毛利 IT outsourcing，集中於 Software + Strategic Consulting）</td></tr>
+<tr><td>2023-04</td><td>Watsonx 平台發表（Granite LLM 基座 + watsonx.data / watsonx.governance）</td><td>+1 分（重新進入 GenAI 賽道；累積 inception-to-date book $7B+）</td></tr>
+<tr><td>2025-02</td><td>HashiCorp $6.4B 整合完成</td><td>+1 分（Terraform/Vault 串聯 Red Hat 生態，「Security by Default」對企業極具黏性）</td></tr>
+<tr><td>2025-06</td><td>z17 mainframe GA（Telum II + Spyre AI accelerator）</td><td>+1 分（mainframe AI inference 護城河延伸，每日 4500 億次推論）</td></tr>
+<tr><td>2026-03</td><td>Confluent $11B 整合完成（Kafka data streaming）</td><td>+1 分（Watsonx 取得 real-time data fabric，從靜態 DB 走向 event-driven AI）</td></tr>
+<tr><td>2026-02-23</td><td>Anthropic Claude Code 衝擊 — IBM 史上單日最大跌幅 (25 年)</td><td>−1 分（pricing power moat 削弱；execution moat 仍在但被質疑）</td></tr>
+</table>
+<p><b>累積護城河變化</b>：1964-2010 (+5 分) → 2013-2018 (−2 分) → 2019-2026 (+8 分) → 2026-02 (−1 分) = 淨累積 +10 分基底；但 v12.3 二維框架下 execution 7 / pricing 6 反映「Claude Code 衝擊後仍未完全測試」。下次年度對照（2027-05）將是 pricing power 是否守住的關鍵窗口。</p>
+
+<h3>逆向推演（Munger Inversion 三維展開）</h3>
+
+<h4>① 技術維度 — 什麼技術替代會讓 IBM 3 年內失去 50% 價值？</h4>
+<table>
+<tr><th>失效路徑</th><th>歷史對標</th><th>機率（3Y）</th></tr>
+<tr><td>大型 LLM 直接重寫 COBOL → Java/Python，且 ROI 證明 < 18 個月回收（Anthropic Claude Code 已宣稱可行）— Consulting GBS 段 $24B 營收快速崩塌至 $15B</td><td>Sun Microsystems 2008-2012：Java 套件市場被 AWS 直接 hosting 蠶食，Sun 從 $80 跌至被 Oracle 以 $9.50 收購</td><td>15%</td></tr>
+<tr><td>Cloud-native COBOL 替代品成熟（如 Microsoft Azure COBOL on Azure Foundry + Claude）+ 主要 client (top 10 銀行) 成功遷移案例公開 — Mainframe TAM 從 $15B → $9B 內 5 年</td><td>IBM 1990 mainframe 危機：PC + UNIX 直接威脅 mainframe，IBM 1993 虧損 $8B 創歷史最大紀錄；Gerstner 救回</td><td>10%</td></tr>
+<tr><td>Quantum computing 商用化早 5 年（2028 vs 預期 2033），且 IBM Heron/Kookaburra 落後 Google Willow 或 IonQ；Quantum 變現失敗</td><td>IBM 在 Watson AI 2011-2018 商業化失敗（投了 $5B+，產出 < $500M 營收）</td><td>5%</td></tr>
+<tr><td>Red Hat OpenShift 被 Anthos / EKS Anywhere / VMware Tanzu 在 multi-cloud 市占上反超</td><td>None — OpenShift 護城河已穩固</td><td>5%</td></tr>
+</table>
+
+<h4>② 管理維度（v12.3 新增） — 什麼決策路徑會自我毀滅？</h4>
+<table>
+<tr><th>失效路徑</th><th>歷史對標</th></tr>
+<tr><td>Capex 慣性 — Krishna 任內已併購 $51B+（Red Hat 34 + HashiCorp 6.4 + Confluent 11），若繼續 $5B+ 規模整合而 ROIC 未明顯回升至 10%+，董事會可能反彈，管理層人事不穩</td><td>HP 2010-2014：Léo Apotheker 收購 Autonomy $11B 後減值 $8.8B → CEO 下台，HP 分拆為 HPE + HPI</td></tr>
+<tr><td>Krishna 接班斷層（2030 退休？）— 若繼任 CEO 缺乏 cloud-native 背景，回到 1990 年代 IBM 缺乏 vision 的循環</td><td>Microsoft 2000-2014 Ballmer 任內市值停滯 14 年；轉型仰賴 Nadella 個人領導力</td></tr>
+<tr><td>Confluent 整合失敗 — Confluent 創辦人團隊離職 (Jay Kreps 等)、Kafka community 對 IBM 商業化路徑反感、轉投 Aiven / Redpanda；ARR 流失 30%+</td><td>Oracle 收購 Sun 2010：MySQL 社群分裂出 MariaDB，Oracle 失去開源 momentum</td></tr>
+</table>
+
+<h4>③ 結構維度（v12.3 新增） — 什麼產業變化會讓商業模式過時？</h4>
+<table>
+<tr><th>失效路徑</th><th>歷史對標</th></tr>
+<tr><td>Mainframe 整代產業性消失 — AI agentic 工具讓 cloud-native rewrite 成本從 $50M+/系統壓至 $5M，所有金融機構 5 年內換完</td><td>Kodak 2003-2012：數位攝影替代膠片，市場接受度從 5% 升至 85% 僅 9 年</td></tr>
+<tr><td>監管型分拆 — 美國 Antitrust 拆 Big Tech（Google/Meta/Apple/Amazon）後輪到 IBM Mainframe 監管？歷史上 IBM 1969-1982 反托拉斯訴訟懸案 13 年，現代版本是「Mainframe + Red Hat 雙鎖定」可能被認定為 monopoly</td><td>AT&T 1984 拆分：政府反托拉斯訴訟後拆出 7 家 Baby Bells，AT&T 市值縮水 50%+</td></tr>
+<tr><td>計算範式轉換 — Quantum 商用化 + GPU 推論變便宜 100x 後，Mainframe AI 推論優勢消失；客戶轉至 NVIDIA DGX + Snowflake / Databricks，IBM Mainframe + Watsonx 失去差異化</td><td>Intel 2018-2024：x86 在 AI 推論被 NVIDIA GPU 與 Apple/AWS ARM 雙夾擊，市占從 78% 跌至 60%</td></tr>
+</table>
+
+<p><b>v12.3 價值陷阱定性</b>（四選一）：「<b>護城河侵蝕</b>」型（局部於 Consulting 段，整體公司不是）。最可能的惡化劇本 — Consulting AI 替代加速 + Confluent 整合失利 → Software 成長從 10% 退至 6%，FPE 重新評估從 18x 壓至 13x，5 年複合報酬從正轉負。</p>
+</section>
+
+<section id="s5">
+<h2>§5 投資論點錨定（v12.3 升級主場）</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><b>預設持有期</b></td><td>5 年（2026-05 ～ 2031-05）；衛星倉位 — 視 MA 回 W104 後可考慮升核心</td></tr>
+<tr><td><b>主要驅動這個時間軸的理由</b></td><td>(1) 軟體 ARR 從 $24.6B → $40B+ 的 5 年路徑（CAGR 10%）；(2) Z17 mainframe 完整 cycle 5-7 年；(3) Confluent / HashiCorp 整合 ROI 兌現窗口 3-5 年；(4) 估值從 16x → 20x rerate 仰賴連續 8 季 thesis 兌現</td></tr>
+<tr><td><b>這個持有期決定了哪些變數是訊號、哪些是噪音</b></td><td>訊號：Software ARR 成長率、Consulting backlog YoY、FCF 兌現率、ROIC 趨勢；噪音：單季 EPS Beat/Miss（除非 Beat 來源是 mix shift）、AI 工具新聞驚嚇、單一客戶簽約金額</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸（v12.3 強制 sourced floor）</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>Sourced Floor / 漂移觸發</th></tr>
+<tr><td><b>H1</b></td><td>Software 段（含 Red Hat + Confluent + Watsonx）成長率 ≥ 10% 至少持續 5 年</td><td>FY27 Software 段營收 ≥ $32B（FY25 $26.5B × 1.10 × 1.10 = $32.1B）；ARR > $30B</td><td>FY30 Software 段 ≥ $43B；ARR > $40B；ARR / Revenue > 95%（成熟訂閱化）</td><td>FY35 Software 段 ≥ $55B（10Y CAGR 8%）；Software 占公司營收 > 55%</td><td><b>Sourced Floor</b>：管理層 FY26 Software 段 guide >10%（4/22/2026 Q1 earnings call 重申）；ARR $24.6B (+10%) Q1 印證<br><b>漂移（2Y QC-35）</b>：連 2 季 TTM ARR 成長 < 8% → 削弱；連 3 季 < 6% → 反轉</td></tr>
+<tr><td><b>H2</b></td><td>Consulting 段不結構性崩塌（Anthropic Claude Code 衝擊是噪音不是 thesis-killer）</td><td>FY27 Consulting backlog YoY ≥ +1%；GenAI bookings 比例 ≥ 35%</td><td>FY30 Consulting 段營收 ≥ $22B（FY25 $20.7B × 1.025^5 = $23.4B；保守 $22B）；Backlog yields ≥ +5pp vs FY25</td><td>FY35 Consulting 占公司營收 < 25%（從 33% 自然下降，被軟體 outgrowth dilution）</td><td><b>Sourced Floor</b>：Q1 26 Consulting +4% YoY、backlog $32B (+2%)、book quality +4pt（4/22/2026 earnings）<br><b>漂移（2Y QC-35）</b>：連 2 季 backlog YoY 跌至 0% 以下 → 削弱；連 2 季負成長 → 反轉</td></tr>
+<tr><td><b>H3</b></td><td>估值從 FPE 16x 修復至 18-20x（FCF 持續成長 + thesis 兌現驅動）</td><td>FY27 FPE ≥ 17x（rerate +1x）；股價 $228+</td><td>FY30 FPE ≥ 19x；股價 $292+（即 5Y target）</td><td>FY35 FPE 穩定 18-22x（與 ACN/ORCL 中位收斂）</td><td><b>Sourced Floor</b>：5Y FPE 中位 ~17x（已測算）；FCF guide $15.7B → +$1B YoY 提供 baseline<br><b>漂移（5Y QC-35）</b>：連 4 季 FPE 跌至 < 14x 且公司 thesis 兌現 → 削弱（市場非理性過貶）；FPE > 22x 且 thesis 未兌現 → 估值頂部，減倉</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照（v12.3 新增 — Inception placeholder）</h3>
+<div class="hypothesis-box">
+<p><b>狀態</b>：進場未滿一年（最早 v12.2+ DD = <code>DD_IBM_20260518.html</code>，距今 0 天，即本份）。</p>
+<p>本欄位將於 <b>2027-05-18 起</b>首次有資料對照。在此之前，僅以 §5.B 戰術假設視角追蹤，每季財報後在 §6 校準 H1/H2/H3 邊際方向（+/0/−）。</p>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險（v12.3 時間尺度分層 ⚡🔥🐢）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Anthropic Claude Code（或同類 LLM agentic 工具）獲得大型客戶 PoC 成功，IBM Consulting backlog 崩潰</td><td>H2</td><td>🔥 中期（2-3 年）</td><td>Consulting backlog YoY；單一 top-100 client 公開 migrate 案例</td><td>連 2 季 backlog YoY ≤ 0% → 觸發；單一 case study 公開 → 立即降級 trap 至 🔴</td></tr>
+<tr><td>R2</td><td>Confluent / HashiCorp 整合失利 — 員工流失、社群分裂、ARR 流失</td><td>H1</td><td>⚡ 短期（12 月內）</td><td>HashiCorp / Confluent 員工 LinkedIn churn 率；Kafka community PR 動能；Confluent ARR run-rate</td><td>整合一年內離職率 > 30% → 觸發；Confluent ARR 連 2 季 < +15% → 削弱 H1</td></tr>
+<tr><td>R3</td><td>Mainframe Z17 cycle 弱於預期（demand pull-forward 已耗盡或 Spyre 表現未達期望）</td><td>H1（軟體仍仰賴 mainframe linked sales）</td><td>🐢 長期結構（5+ 年）</td><td>Infrastructure 段 YoY；Z17 MIPS 安裝量；watsonx Code Assistant for Z 採用率</td><td>連 4 季 Infrastructure YoY < 0% → 觸發（QC-35 跨年度判定）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>5 年持有期內有影響嗎？（季營收 noise 通常不算）</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（軟體成長）/ H2（Consulting）/ H3（估值修復）哪一個</td></tr>
+<tr><td>3. 邊際方向？</td><td>+ / 0 / − 對 H1-H3 各賦值</td></tr>
+<tr><td>4. 閾值判斷？</td><td>是否觸及 §5.B Sourced Floor 漂移觸發條件</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><b>進場（升 A）</b></td><td>價站回 W104 ($238) 連 4 週 + Consulting backlog YoY 維持 +2% 或更高 + Software ARR 維持 ≥ +10%</td><td>建倉至底倉 15%（目標倉位的 15%）</td></tr>
+<tr><td><b>加碼（升核心）</b></td><td>連 2 季 thesis 全綠（H1+H2+H3 全 +）+ FPE rerate 至 18x</td><td>加碼至 25%（目標倉位），升核心候選</td></tr>
+<tr><td><b>減碼</b></td><td>R1 觸發（Consulting backlog YoY ≤ 0% 連 2 季）；或股價 > $300（FPE > 22x 估值過熱）</td><td>減至 5-7%</td></tr>
+<tr><td><b>撤退</b></td><td>R1 觸發升至 🔴（單一大型客戶公開 migrate）；或 H1 反轉（ARR 連 3 季 < +6%）</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing（v12.3 新增 — Binary Discrete Event）</h3>
+<div class="hypothesis-box">
+<p><b>最關鍵單一事件（Binary）</b>：「IBM Q2 2026（2026-07-23 公布）Consulting 段 backlog YoY 是否維持 ≥ +1%」</p>
+<ul>
+<li><b>若維持 ≥ +1%</b>：證明 Anthropic Claude Code 衝擊是市場恐慌而非結構性 thesis-killer，H2 假設兌現 → MA 站回 W104 後可升 A，建議進場</li>
+<li><b>若跌至 0% 或負</b>：證實 Anthropic 衝擊兌現，H2 反轉 → trap 升 🔴，建議清倉或大幅減倉至 5% 以下</li>
+</ul>
+<p class="note">此為 binary discrete event，無中間態。Q2 2026 財報日（2026-07-23）是 ≤ 67 天內必發生的決策節點。所有其他訊號（軟體 ARR、FCF guide、MA 狀態）在 Q2 backlog 數字出來前均為次要。</p>
+</div>
+</section>
+
+<section id="s6">
+<h2>§6 即時財報情報（Q1 2026, 2026-04-22 公布）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$15.9B</td><td>$14.4B (估)</td><td><span class="tag good">Beat</span></td><td>+9% (+6% CC)</td></tr>
+<tr><td>Operating (Non-GAAP) EPS</td><td>$1.91</td><td>$1.82</td><td><span class="tag good">Beat +$0.09</span></td><td>+19.4%</td></tr>
+<tr><td>GAAP Diluted EPS</td><td>$1.28</td><td>—</td><td><span class="tag good">Beat</span></td><td>+14.3% (vs $1.12)</td></tr>
+<tr><td>FCF</td><td>$2.2B</td><td>—</td><td><span class="tag good">+$0.3B YoY</span></td><td>+15.8%</td></tr>
+<tr><td>GAAP Gross Margin</td><td>56.2%</td><td>—</td><td><span class="tag good">↑</span></td><td>+1-1.5pp YoY</td></tr>
+<tr><td>Operating Pre-tax Margin (Non-GAAP)</td><td>13.4%</td><td>—</td><td><span class="tag good">↑</span></td><td>+0.5pp YoY</td></tr>
+</table>
+
+<h4>分段表現</h4>
+<table>
+<tr><th>段</th><th>營收</th><th>YoY (報告)</th><th>YoY (CC)</th><th>關鍵點</th></tr>
+<tr><td><b>Software</b></td><td>$7.1B</td><td><b>+11%</b></td><td>+8%</td><td>Hybrid Cloud (Red Hat) +13% (+10% CC)；Automation +10% (+7% CC)；Data +19% (+16% CC)；Transaction Processing +6% (+2% CC)</td></tr>
+<tr><td>Consulting</td><td>$5.3B</td><td>+4%</td><td>+1%</td><td>Backlog $32B (+2%)；GenAI bookings 占比 30%；Book quality +4pt YoY</td></tr>
+<tr><td><b>Infrastructure</b></td><td>$3.3B</td><td><b>+15%</b></td><td>+12%</td><td>Z17 mid-cycle peak；watsonx Code Assistant for Z 客戶 MIPS 成長 3x faster</td></tr>
+</table>
+
+<h3>② 財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td><b>H1（軟體 ≥ 10% 成長）</b></td><td><b>＋（強化）</b></td><td>Software +11%（CC +8%），ARR $24.6B (+10%)，Data +19% 帶動，且 Confluent 即將從 Q2 起 full-quarter 貢獻 ~$250M/Q</td></tr>
+<tr><td>H2（Consulting 不崩塌）</td><td>0（中性 — 持續觀察）</td><td>Backlog +2%、Book quality +4pt — 質有改善但量級成長仍受 Anthropic 衝擊壓抑；Q2 是關鍵 binary 事件</td></tr>
+<tr><td><b>H3（估值修復）</b></td><td><b>＋（弱強化）</b></td><td>FCF +15.8% YoY 高於估值倍數修復所需的 6-8% 門檻；管理層 reaffirm 2026 FCF $15.7B；Krishna 派息率提升至 $1.69/季顯示 capital return 紀律未失</td></tr>
+</table>
+
+<h3>③ Earnings Call 語氣解析</h3>
+<ul>
+<li><b>管理層基調</b>：自信，明確優於 Q4 2025 — Krishna 開場直接強調「continued momentum across our businesses」、「reaffirming our full-year outlook」。CFO Jim Kavanaugh 在 GenAI bookings 上強調 inception-to-date 已過 $8B（vs Q4 $7B），1Q 單季新增 ~$1-1.5B，是創歷史單季新高。</li>
+<li><b>Forward Guidance</b>：全年 CC +5%（與年初一致，未上修也未下修）；FCF $15.7B（YoY +$1B）— guide 偏保守，市場對「未上修」失望（Q1 beat 後通常會 raise）。</li>
+<li><b>刻意強調的主題</b>：(1)「Software ARR 增長持續」反覆出現 11 次 — 暗示這是 thesis 真實；(2)「GenAI bookings 健康度」+「book quality」— 對沖 Anthropic 質疑；(3) Confluent 整合 progress 加碼 — 為 Q2 Beat 預鋪。</li>
+<li><b>刻意迴避的問題</b>：(1) 分析師 Toni Sacconaghi (Bernstein) 追問「Consulting AI 替代對 24 個月內 backlog 影響的具體模型」— Krishna 回「we are using AI ourselves to deliver more value per consultant」迴避量化問題；(2) 「Mainframe 客戶是否有大型替代專案啟動」— Kavanaugh 不正面回答，只說「我們 Z17 demand pipeline 健康」。</li>
+</ul>
+
+<h3>④ 產業 Imply 萃取</h3>
+<ul>
+<li><b>需求端</b>：企業 GenAI POC → Production 進入「scale-up phase」— GenAI book of business 2/3 在 Consulting (transformation projects)、1/3 在 Software (subscription) — 暗示市場仍處「找解決方案」階段，Consulting 仍有時間視窗 18-24 個月。</li>
+<li><b>供給端</b>：Infra 段 +15% 高於指引，顯示 Z17 production capacity 沒 bottleneck，但也暗示沒拉到 backlog 過熱（healthy）。</li>
+<li><b>競爭格局</b>：Red Hat OpenShift 對 VMware Tanzu 的市占持續推進（管理層提及 $600M+ virtualization 簽約 since 2024，其中大部分自 VMware 流失客戶）；對 Anthos / EKS-A 維持中立 cloud 角色，未直接對抗。</li>
+<li><b>對同業的連帶推論</b>：Accenture (ACN) 在 IBM 公布前 1 月已發布 Q2 25 (Feb) Consulting +1% YoY，是 IBM Consulting +4% 的下風指標；IBM Consulting 相對 ACN 有 3pp 領先 — 反映 IBM 把 Red Hat / Watsonx 與 Consulting 綁定銷售的優勢；ACN 純諮詢結構更受 AI 替代。對 ORCL：Oracle 的「Cloud 加速」narrative 持續，但 ORCL FPE 24x 已 priced；IBM 16x 反而有相對價值優勢。</li>
+</ul>
+</section>
+
+<section id="s7">
+<h2>§7 核心門檻檢核（v12.3 砍便宜四問）</h2>
+
+<h3>EPS 共識（步驟零 yfinance）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>備註</th></tr>
+<tr><td>基期 EPS（FY25 GAAP）</td><td>$11.17</td><td>實際公布</td></tr>
+<tr><td>FY26E (0y)</td><td>$12.43</td><td>21 位分析師；90 天軌跡：12.411 → 12.380 → 12.377 → 12.425 → 12.429（微升）</td></tr>
+<tr><td>FY27E (+1y)</td><td>$13.45</td><td>21 位分析師；90 天軌跡：13.425 → 13.401 → 13.398 → 13.436 → 13.454（微升）</td></tr>
+<tr><td>FY28E（§8 邏輯推導）</td><td>$14.40</td><td>Confluent 全年貢獻 + Z17 mid-cycle + Software ARR 10%；按 7% YoY 推算（13.45 × 1.071）</td></tr>
+<tr><td>GAAP 3Y CAGR (FY25→FY28)</td><td>8.79%</td><td>($14.40/$11.17)^(1/3) − 1</td></tr>
+<tr><td>口徑差距</td><td>不適用（IBM 同時 publish GAAP / Non-GAAP；非台股法定口徑）</td></tr>
+</table>
+
+<h3>Munger 護城河維度補強</h3>
+<table>
+<tr><th>指標</th><th>標準</th><th>本標的</th><th>判斷</th></tr>
+<tr><td>FCF Margin（當前）</td><td>> 15%</td><td>FY25 $11.46B / $67.54B = <b>17.0%</b></td><td><span class="tag good">符合</span> 趨勢 ↑ (FY22 14%, FY23 19.6%, FY24 18.7%, FY25 17.0%)</td></tr>
+<tr><td>正規化 FCF Margin（Munger）</td><td>5Y 均 > 15%；單年最低谷 > 10%</td><td>5Y 各年值：14.0% (FY22) / 19.6% / 18.7% / 17.0%（FY21 缺）<br>5Y 均：17.3%（4年平均）；最低 14.0% (FY22)</td><td><span class="tag good">符合</span> 穩健</td></tr>
+<tr><td>ROIC（當前）</td><td>> 15%, > WACC</td><td>6.85%（FY25 末），WACC ~8% → 超額 -1.15%p</td><td><span class="tag bad">不符合</span> ROIC < WACC（價值毀滅期內）</td></tr>
+<tr><td>ROIC 穩定性（Munger 10Y）</td><td>10 年中 ≥ 70% 年份 > 15%</td><td>10Y ROIC：~12-15% (2015-2018) → 跌至 3-8% (2019-2025) 主要因 Red Hat / HashiCorp / Confluent 大型 M&A 增加 invested capital；10Y 平均 9.09%；達標年份 ~3/10</td><td><span class="tag bad">不符合</span> M&A 期 ROIC 受壓</td></tr>
+<tr><td>毛利率定價能力（10Y）</td><td>10 年中 ≥ 70% 年份持續改善</td><td>10Y GM：~48% (2015) → 47% (2018) → 52.5% (2022) → 58.2% (2025)；改善 ~6/10 年</td><td><span class="tag warn">勉強符合</span></td></tr>
+<tr><td>資本密集度（Capex/Rev）</td><td>< 5% (優) / < 10% (尚可)</td><td>FY25 Capex $1.74B / Rev $67.5B = <b>2.6%</b>；近 3 年均 2.8%</td><td><span class="tag good">符合</span> 低密集</td></tr>
+<tr><td>D/E ratio</td><td>< 0.7</td><td>Total Debt $64.6B / Equity $32.6B = <b>1.98</b></td><td><span class="tag bad">不符合</span> 高槓桿（M&A 累積）</td></tr>
+<tr><td>現金 / Revenue</td><td>10-50%</td><td>$13.6B / $67.5B = 20%</td><td><span class="tag good">符合</span> 適中</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據</th></tr>
+<tr><td>FCF Margin</td><td>> 15%</td><td><span class="tag good">✅</span></td><td>17.0%（FY25）</td></tr>
+<tr><td>正規化 FCF Margin</td><td>5Y > 15%</td><td><span class="tag good">✅</span></td><td>5Y 均 17.3%（穩健）</td></tr>
+<tr><td>ROIC</td><td>> 15%, > WACC</td><td><span class="tag bad">❌</span></td><td>6.85% < WACC 8% — M&A 累積拖累</td></tr>
+<tr><td>ROIC 穩定性</td><td>10Y ≥ 70%</td><td><span class="tag bad">❌</span></td><td>10Y 達標 3/10 年</td></tr>
+<tr><td>毛利率改善</td><td>10Y ≥ 70%</td><td><span class="tag warn">⚠️</span></td><td>6/10 年（近 3 年加速）</td></tr>
+<tr><td>資本密集度</td><td>< 5%</td><td><span class="tag good">✅</span></td><td>2.6%（low）</td></tr>
+<tr><td>EPS CAGR 3Y</td><td>> 20%</td><td><span class="tag bad">❌</span></td><td>8.8%（中等成長）</td></tr>
+<tr><td>PEG (Non-GAAP)</td><td>< 2</td><td><span class="tag good">✅</span></td><td>1.85（合理）</td></tr>
+<tr><td>負債安全性</td><td>D/E < 0.7</td><td><span class="tag bad">❌</span></td><td>1.98（高槓桿）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="tag bad">否</span></td><td>$13.6B vs $64.6B — Net Debt $51B</td></tr>
+<tr><td>護城河強度</td><td>> 8 分，擴大</td><td><span class="tag warn">⚠️</span></td><td>7 分，二維分裂 (execution 7 強化 / pricing 6 削弱)</td></tr>
+</table>
+<p><b>最大財務弱點</b>：<b>高槓桿 + ROIC < WACC</b>（M&A 累積增 invested capital 但短期 ROIC 反應落後）。<br><b>Munger 三維評級</b>：🟡（ROIC 穩定性 + 定價能力勉強 + 資本密集低，三項中只一項 fully pass，一項 borderline）</p>
+</section>
+
+<section id="s8">
+<h2>§8 長期成長性評估（v12.3 擴充）</h2>
+
+<h3>A｜成長跑道（Runway）— 5Y / 10Y 量化</h3>
+<table>
+<tr><th>維度</th><th>現在（2026）</th><th>5Y（2031）</th><th>10Y（2036）</th></tr>
+<tr><td>當前 TAM（億美元）</td><td>$2,100B（混合雲 + Enterprise AI + Consulting + Mainframe 加總）</td><td>$3,400B</td><td>$5,200B</td></tr>
+<tr><td>細分 TAM</td><td>Software / AI Infra $850B、Consulting $700B、Mainframe $15B、Quantum cloud $2.4B（早期）</td><td>Software $1,500B、Consulting $750B（成熟）、Mainframe $13B（萎縮）、Quantum $40B</td><td>Software $2,500B、Consulting $700B、Mainframe $10B（深度萎縮）、Quantum $250B（商業化期）</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>Software ~5%、Consulting ~3%、Mainframe ~100%（事實壟斷）、Quantum ~30%（早期領先）</td><td>Software ~4%、Consulting ~3%（穩）、Mainframe ~100%、Quantum ~25%</td><td>Software ~3%、Consulting ~3%、Mainframe ~100%（但小池子）、Quantum ~20%</td></tr>
+<tr><td>結構性變化</td><td>從 services 主導 → software ARR 主導；GenAI 滲透 ~5% 變成 75%</td><td>Software 段 / 公司營收占比從 39% → 50%</td><td>Quantum 成為新成長 S 曲線；Mainframe 自然衰減但仍貢獻 stable cash</td></tr>
+<tr><td>Runway 估計</td><td colspan="3"><b>8 年</b>（軟體段 runway 10-12 年中段 + Mainframe 衰減期 5-7 年；Quantum 開始期 + Consulting 衰退取折中）</td></tr>
+</table>
+
+<h3>A'｜S 曲線位置 + 距飽和年數（v12.3 新增）</h3>
+<table>
+<tr><th>業務</th><th>S 曲線位置</th><th>距飽和年數</th><th>邏輯</th></tr>
+<tr><td>Software (Red Hat)</td><td>中段</td><td>6-8 年</td><td>OpenShift ARR $2.0B / TAM $30B = 7% 滲透，仍有 3-4x 上行</td></tr>
+<tr><td>Software (Data + Watsonx)</td><td>前段</td><td>10-12 年</td><td>GenAI 進入企業 production phase；TAM $200B → $1000B（10 年）</td></tr>
+<tr><td>Software (Automation, HashiCorp)</td><td>中段</td><td>5-7 年</td><td>Terraform 已成事實標準；growth 從 hyper 進入 mature</td></tr>
+<tr><td>Consulting</td><td>末段轉折</td><td>3-5 年</td><td>受 AI agentic 工具壓縮，但 GenAI transformation 仍需 18-24 個月 windows</td></tr>
+<tr><td>Mainframe (Z)</td><td>成熟期</td><td>steady cash cow 5-7 年</td><td>Z17 cycle 進行中（GA Jun 2025）；下一代 Z18 預計 2028</td></tr>
+<tr><td>Quantum</td><td>前段</td><td>15+ 年</td><td>Heron / Nighthawk / Kookaburra 在實驗室 → 商用過渡期；$2.4B → $40B (5Y) → $250B (10Y)</td></tr>
+</table>
+<p><b>多曲線疊加結論</b>：IBM 是「3-4 條 S 曲線疊加」的公司。任一年份不會所有業務同時熄火（mainframe 衰減 + consulting 衰退 + software 加速 + quantum 開機），整體 runway 8 年具有 portfolio-resilience 屬性 — 但也意味著沒有單一業務能驅動 hyper-growth (>20% YoY 公司級)。</p>
+
+<h3>B｜成長品質（v12.3 強化 — 定價 vs 量具體 % + 3Y 軌跡）</h3>
+
+<h4>① 有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>占比估計（FY26E）</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>~3-4%（5% CC guide 中）</td><td>Q1 26 Software CC +8%，扣除 HashiCorp / Confluent 全年化貢獻 ~3-4pp 後</td></tr>
+<tr><td>無機成長（M&A）</td><td>~2-3%（HashiCorp 殘餘 + Confluent 全年化）</td><td>Confluent ARR $1B+ → 對 $68B base = 1.5%；HashiCorp 第二年仍貢獻 ~1pp</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量（v12.3 強制具體 % + 3Y 趨勢）</h4>
+<table>
+<tr><th>類型</th><th>占比（FY25 估）</th><th>3Y 軌跡</th><th>佐證</th></tr>
+<tr><td><b>定價驅動（Price / ARPU）</b></td><td><b>~30-40%</b></td><td>↑ 擴大（從 ~20% 升）</td><td>Mainframe Z17 vs Z16 每 MIPS 漲價 ~8%；Red Hat OpenShift 訂閱定價 2024 起 list price +5-8%；watsonx 平台 ARPU 從 $50K/customer 升至 $80K+</td></tr>
+<tr><td><b>量驅動（Volume）</b></td><td><b>~60-70%</b></td><td>→ 持平至小幅縮</td><td>Mainframe 新客戶數量微減（淨負）但每客戶 MIPS 採購量上升；Consulting 訂單金額擴大但個案數量持平；Software ARR 客戶數連 8 季維持 +6-8%</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>本標的判斷</th><th>佐證</th></tr>
+<tr><td><b>強化型（最佳）</b></td><td>✅ Software 段</td><td>每個新 Red Hat / Confluent / HashiCorp 客戶都會帶來更多 Watsonx 升銷機會 — 平台網路效應</td></tr>
+<tr><td>中性型</td><td>Mainframe 段</td><td>成長與護城河無連動（已是壟斷）</td></tr>
+<tr><td><b>消耗型</b></td><td>Consulting 段</td><td>為維持成長，必須投入 GenAI 訓練（每年 ~$2B），但每位顧問貢獻營收下降；Backlog yield +4pt 是 mitigating 但不能完全 offset</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>FY25</th><th>FY23</th><th>趨勢</th><th>標準</th></tr>
+<tr><td>ROIC</td><td>6.85%</td><td>7.63%</td><td>↓</td><td>產業頂尖，> WACC — <b>不符合</b></td></tr>
+<tr><td>ROIC − WACC</td><td>-1.15%p</td><td>-0.37%p</td><td>↓（擴大為負）</td><td>持續正值 — <b>不符合</b></td></tr>
+<tr><td>FCF Margin</td><td>17.0%</td><td>19.6%</td><td>↓（小幅）</td><td>> 15% — ✅</td></tr>
+<tr><td>FCF / NI 轉換率</td><td>1.08</td><td>1.62（NI 受 tax 益）</td><td>正常化中</td><td>> 0.85 — ✅</td></tr>
+<tr><td>再投資率</td><td>~25%（含 M&A）</td><td>~22%</td><td>↑</td><td>成長期合理 — ✅</td></tr>
+</table>
+<p><b>關鍵警示</b>：ROIC < WACC 是 M&A 累積（Red Hat / HashiCorp / Confluent 共 $51B）的短期反應。預期 FY27-FY28 ROIC 應隨 Software ARR scale 回升至 8-10%。若 FY27 ROIC 仍 < 7%，警戒升級。</p>
+
+<h3>E｜成長熄火壓力測試（v12.3 加 5Y / 10Y 情境）</h3>
+<table>
+<tr><th>時間軸</th><th>Base 情境</th><th>Bear A（成長至 5%）</th><th>Bear B（成長至 0%）</th><th>Bear C（衰退 -5%）</th></tr>
+<tr><td><b>3Y EPS（FY28）</b></td><td>$14.40 (CAGR 8.8%)</td><td>$12.85 (CAGR 4.8%)</td><td>$11.17 (CAGR 0%)</td><td>$9.50 (CAGR -5%)</td></tr>
+<tr><td><b>3Y FPE（合理）</b></td><td>18x</td><td>15x</td><td>13x</td><td>10x</td></tr>
+<tr><td><b>3Y 目標價</b></td><td>$259</td><td>$193</td><td>$145</td><td>$95</td></tr>
+<tr><td><b>5Y EPS（FY30）</b></td><td>$16.20 (CAGR 7.7%)</td><td>$14.20 (CAGR 5%)</td><td>$11.17 (持平)</td><td>$8.50 (-5% 衰)</td></tr>
+<tr><td><b>5Y FPE</b></td><td>18x</td><td>15x</td><td>12x</td><td>9x</td></tr>
+<tr><td><b>5Y 目標價</b></td><td>$292</td><td>$213</td><td>$134</td><td>$77</td></tr>
+<tr><td><b>10Y EPS（FY35）</b></td><td>$24.00 (CAGR 7%)</td><td>$18.00 (CAGR 4.9%)</td><td>$11.17 (持平)</td><td>$5.50 (連續衰退)</td></tr>
+<tr><td><b>10Y FPE</b></td><td>18x</td><td>14x</td><td>10x</td><td>8x</td></tr>
+<tr><td><b>10Y 目標價</b></td><td>$432</td><td>$252</td><td>$112</td><td>$44</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季 YoY 下滑</td><td>Q1 26 GM 56.2% (+1.0pp YoY)</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減（12M）</td><td>Mainframe 壟斷穩；Consulting 對 ACN 持平</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>護城河侵蝕</td><td>主力提價後銷量是否下滑</td><td>Mainframe Z17 MIPS 即使漲價仍 +15% 銷售</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR vs Rev CAGR 差距 > 5pp</td><td>EPS CAGR 8.8% vs Rev CAGR ~6% → 差 2.8pp</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI < 0.75 連 2 年</td><td>FY24 1.95、FY25 1.08 — 健康</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>盈餘品質</td><td>SBC / Revenue > 5%</td><td>SBC ~$2.1B / Rev $67.5B = 3.1%</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代</td><td>整體 TAM 擴大（軟體 + AI infra），但 Consulting + Mainframe 子段萎縮</td><td><span class="tag warn">🟡</span></td></tr>
+<tr><td>產業結構衰退</td><td>整產業估值倍數系統下移</td><td>軟體業 5Y FPE 中位數穩於 22-28x；IBM 16x 反而被低估</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex 占 FCF > 60%</td><td>Capex $1.74B / FCF $11.46B = 15% — 低密集</td><td><span class="tag good">⬜</span></td></tr>
+<tr><td>隱性資本密集</td><td>停止投資 3 年內收入下滑？</td><td>Mainframe + Software 訂閱有 inertia，可挺 5+ 年</td><td><span class="tag good">⬜</span></td></tr>
+</table>
+<p><b>價值陷阱風險評級</b>：🟡 **中度警戒**（1 個 🟡 — 產業結構衰退局部於 Consulting 段）。需在 §9 護城河節深入回應 Consulting AI 替代議題。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><b>🟡 中等不確定</b>（v12.3 維持）</p>
+<ul>
+<li><b>受益區</b>（~67% 營收，Software + Infrastructure）：Watsonx 平台、Granite LLM、Spyre AI accelerator、Z 系列 inference 工作負載直接受益 — 隨企業 AI 部署成長，IBM 變得更需要</li>
+<li><b>不確定區</b>（~33% 營收，Consulting）：Anthropic Claude Code 直接威脅 Consulting GBS 子段 — 但 IBM 自身在用 AI 提升每位顧問效率（管理層宣稱 backlog yield +4pt 即此），淨衝擊待 18-24 月 backlog 數字驗證</li>
+<li><b>過去 2 年 AI 相關營收</b>：Watsonx 商業營收從近零升至 ~$700M (FY25)；GenAI book-to-date $8B+（半 2 年內）</li>
+</ul>
+<p><b>評級</b>：🟡 = 6 分（供 §2 引用）</p>
+
+<p><b>長期成長性綜合評級</b>：🟡 中等可見度成長（Runway 8 年，多曲線疊加，部分指標有隱憂 — Consulting 受 AI 威脅；衰退信號 1 個 🟡）</p>
+</section>
+
+<section id="s9">
+<h2>§9 護城河分析（v12.3 二維強制 + 威脅三級分類）</h2>
+
+<p><b>綜合評分</b>：<b>7／10</b>（execution 7 + pricing power 6，二維分裂；按 v12.3 規則取較大值）</p>
+
+<h3>v12.3 二維護城河拆解</h3>
+<table>
+<tr><th>業務段</th><th>Execution Moat</th><th>Pricing Power Moat</th><th>備註</th></tr>
+<tr><td>Mainframe / Z</td><td>9/10</td><td>9/10</td><td>事實壟斷 + 每代漲價 ~8% 成功 + 客戶 lock-in 60 年</td></tr>
+<tr><td>Red Hat / OpenShift</td><td>8/10</td><td>7/10</td><td>OpenShift 是企業級 Kubernetes 唯一 production-ready 商業發行版；定價提升中但與 VMware/Tanzu 有競爭</td></tr>
+<tr><td>HashiCorp / Confluent</td><td>7/10</td><td>5/10</td><td>Terraform / Kafka 是開源事實標準，但 IBM 對 community 議價權弱；商業層定價權待測試</td></tr>
+<tr><td>Watsonx / Data</td><td>5/10</td><td>4/10</td><td>後進入者；GenAI 平台競爭激烈（Microsoft Foundry / AWS Bedrock / Google Vertex）；定價權弱</td></tr>
+<tr><td><b>Consulting</b></td><td>5/10</td><td><b>3/10（受 Claude Code 衝擊）</b></td><td>規模執行力仍在 (top 5 全球諮詢)，但每小時定價權被 AI agentic 工具直接侵蝕</td></tr>
+<tr><td><b>加權平均（按營收）</b></td><td><b>7/10</b></td><td><b>6/10</b></td><td>—</td></tr>
+</table>
+
+<h3>護城河來源</h3>
+<ul>
+<li><b>網路效應</b>：Red Hat / Kafka community 雙向 — 每個新 enterprise 用戶都讓平台對下一個用戶更有價值。OpenShift 已達網路效應臨界量（>10,000 enterprise customers）</li>
+<li><b>無形資產</b>：IBM 品牌（金融 / 政府 / 醫療「safe choice」標籤）+ 4,500+ 累積專利 (FY25)；watsonx 取得 EU AI Act + US FedRAMP 合規認證</li>
+<li><b>轉換成本</b>：Mainframe 客戶遷移成本歷史驗證 $50-200M / 系統，且 IBM 自家 Watson Code Assistant 主動降低自己客戶遷移成本（兩面刃）</li>
+<li><b>規模優勢</b>：FY25 R&D $7.4B + Capex $1.7B = $9.1B 投入；vs Oracle $9.2B、SAP $7.3B、Accenture $1.5B；IBM 在 hybrid cloud + mainframe 細分上是最大投入者</li>
+</ul>
+
+<h3>SaaS / Banking / Insurance Single-axis Escape Rule（v12.3 新增 — 不適用）</h3>
+<p>IBM 是 hybrid technology 公司，**不適用** SaaS/Banking/Insurance 單軸寬鬆規則。必須維持二維護城河 ≥ 7/7 才能算強護城河；IBM 為 7/6 → 落 B+ 級而非 A 級。</p>
+
+<h3>競爭鴻溝</h3>
+<p>為什麼資本充足的對手仍無法跨越？</p>
+<ul>
+<li><b>Mainframe</b>：AWS / Azure 無法複製 — 不是技術問題（理論上可在 cloud 模擬 mainframe）而是 <b>監管+風險偏好</b> 問題。Top 50 全球銀行的 critical core banking 不會 100% 跑在公有雲（regulatory + counter-party risk）。IBM 仍是 「on-prem with cloud-grade tooling」唯一解</li>
+<li><b>Red Hat OpenShift</b>：VMware（Broadcom 收購後）+ SUSE 都試圖搶但 OpenShift 5 年累積 $2B ARR 證明領先；多年來 Kubernetes 認證 + Red Hat enterprise support 是 production-grade differentiator</li>
+<li><b>Consulting</b>：相對弱 — Accenture / Deloitte / Capgemini / TCS 都有相當規模；IBM 的差異化在於「綁定 Red Hat + Watsonx 銷售」</li>
+</ul>
+
+<h3>市佔競爭表（v12.3 強制加 Capex/R&D 絕對額對照）</h3>
+<table>
+<tr><th>對手</th><th>目前市佔（hybrid cloud / mainframe / consulting 混合視角）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>AWS（Amazon）</td><td>Cloud 30%</td><td>擴大</td><td>取代 on-prem migration 的需求</td><td>長期吃 IBM Mainframe（緩慢）</td></tr>
+<tr><td>Microsoft Azure</td><td>Cloud 24%</td><td>擴大</td><td>Foundry / Copilot vs Watsonx；Azure OpenAI 服務</td><td>吃 IBM Watsonx 市佔</td></tr>
+<tr><td>Google Cloud</td><td>Cloud 12%</td><td>擴大</td><td>Vertex AI vs Watsonx；Anthos vs OpenShift</td><td>對 IBM 影響中等</td></tr>
+<tr><td>Oracle</td><td>Database + ERP cloud ~5%</td><td>持平</td><td>Database 鎖定客戶</td><td>橫向對打 IBM data 段</td></tr>
+<tr><td>Accenture</td><td>Consulting 8%</td><td>持平 → 縮</td><td>同類威脅（AI 替代）</td><td>互相蠶食 GenAI consulting</td></tr>
+<tr><td>VMware（Broadcom）</td><td>虛擬化 75% → 持平</td><td>縮減</td><td>vSphere vs OpenShift Virtualization</td><td>被 IBM 吃</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸（v12.3 新增）</h3>
+
+<h4>過去 5 年（2021-2025）護城河變化</h4>
+<table>
+<tr><th>事件</th><th>對護城河貢獻</th></tr>
+<tr><td>Kyndryl 分拆（2021-11）— 移除低毛利 IT outsourcing</td><td>+1 分（mix shift 提純）</td></tr>
+<tr><td>Watsonx 平台發表（2023-04）+ Granite LLM</td><td>+1 分（後進場但有 IP）</td></tr>
+<tr><td>Red Hat OpenShift ARR 從 $1B (2020) → $2B (2025)</td><td>+0.5 分（執行兌現）</td></tr>
+<tr><td>HashiCorp 整合（2025-02）— Terraform/Vault/Consul</td><td>+1 分（執行 moat 強化）</td></tr>
+<tr><td>Z17 mainframe GA（2025-06）+ Telum II + Spyre</td><td>+1 分（hardware moat 延伸）</td></tr>
+<tr><td>Anthropic Claude Code（2026-02）對 Consulting 衝擊</td><td>−1 分（pricing power moat 削弱）</td></tr>
+<tr><td>Confluent 整合（2026-03）— $11B Kafka data streaming</td><td>+0.5 分（execution moat 增強，pricing 尚未測試）</td></tr>
+<tr><td colspan="2"><b>淨變化</b>：+4 分 → 推升整體護城河從 5（2020）→ 7（2025）</td></tr>
+</table>
+
+<h4>未來 5 年（2026-2030）可能變化（含機率）</h4>
+<table>
+<tr><th>情境</th><th>機率</th><th>對護城河影響</th></tr>
+<tr><td>Software ARR 維持 +10% YoY 至 2030 → 滲透率持續提升</td><td>50%</td><td>+1 分</td></tr>
+<tr><td>Anthropic / OpenAI agentic 工具 進入 mainframe migration PoC 階段，但未能 close enterprise deals</td><td>45%</td><td>0 分（pricing 維持）</td></tr>
+<tr><td>單一 top-50 銀行公開遷移 mainframe 成功 → IBM 護城河被質疑</td><td>10%</td><td>−2 分</td></tr>
+<tr><td>Confluent 整合失敗 → ARR < $700M（vs 基期 $1B+）</td><td>15%</td><td>−1 分</td></tr>
+<tr><td>Quantum advantage 確認（2027-2028）→ IBM 卡位先機</td><td>40%</td><td>+0.5 分（小幅 — 變現需 5+ 年）</td></tr>
+<tr><td>EU / US Antitrust 啟動 IBM Mainframe + Red Hat 雙鎖定調查</td><td>5%</td><td>−1 分（5 年內法律不確定）</td></tr>
+</table>
+<p><b>5Y 預期淨變化</b>：+0.5 ~ +1 分（最有機會落 7.5-8 分），條件是 Anthropic 衝擊未升級為 systemic deal loss。</p>
+
+<h3>E｜對手投入 vs IBM Capex / R&D 對照（v12.3 新增）</h3>
+<table>
+<tr><th>公司</th><th>R&D (FY25)</th><th>Capex (FY25)</th><th>R&D / Rev</th><th>vs IBM 差距</th></tr>
+<tr><td><b>IBM</b></td><td><b>$7.4B</b></td><td><b>$1.7B</b></td><td><b>10.9%</b></td><td>—</td></tr>
+<tr><td>Microsoft</td><td>$32.5B</td><td>$58.0B</td><td>12.7%</td><td>R&D 4.4x、Capex 34x（Microsoft Azure AI infra 規模優勢無可挑戰）</td></tr>
+<tr><td>Oracle</td><td>$9.2B</td><td>$21.0B</td><td>16.9%</td><td>R&D 1.2x、Capex 12x（Oracle 用 cloud capex 競爭 IBM 弱項）</td></tr>
+<tr><td>SAP</td><td>$7.3B</td><td>$0.9B</td><td>20.0%</td><td>R&D 持平、Capex 0.5x（SAP 純軟體模式）</td></tr>
+<tr><td>Accenture</td><td>$1.5B</td><td>$0.8B</td><td>2.0%</td><td>R&D 0.2x（ACN 純諮詢，無自家技術）</td></tr>
+<tr><td>Anthropic</td><td>~$3-4B (估)</td><td>~$0（依託 AWS）</td><td>~80%</td><td>R&D 0.5x（小公司高占比；專注 LLM）</td></tr>
+</table>
+<p><b>解讀</b>：IBM R&D $7.4B 絕對額是 Accenture 的 5 倍 — 在 Consulting 段相對對手有「IP 護城河」優勢。但 vs Microsoft Azure Capex $58B（IBM 的 34 倍）— IBM 不可能在純雲端 infra 比拼，必須走差異化（hybrid + mainframe + Red Hat 中立）。Capex / R&D 對照支撐 IBM 在 hybrid cloud 細分仍有護城河，但純雲端市佔注定不可能搶第一。</p>
+
+<h3>護城河趨勢（v12.3 強制雙線標）</h3>
+<ul>
+<li><b>Execution Moat 趨勢</b>：📈 <b>擴大</b>（Red Hat ARR + HashiCorp + Confluent + Z17 連續執行兌現；管理層執行紀律可信）</li>
+<li><b>Pricing Power Moat 趨勢</b>：📉 <b>縮減</b>（Consulting 段定價權被 AI 工具直接侵蝕；Software 段 ARPU 仍升但增速放緩）</li>
+</ul>
+
+<h3>QC-23 競爭威脅三級分類（v12.3 強制使用）</h3>
+<table>
+<tr><th>威脅</th><th>等級</th><th>影響</th></tr>
+<tr><td>Anthropic Claude Code 在 Consulting GBS 市場</td><td>🔴 <b>生態攻擊</b>（vs IBM Consulting + watsonx Code Assistant 全棧）</td><td>護城河 <b>−1 分</b>（已反映於 pricing 6）</td></tr>
+<tr><td>Microsoft Foundry vs Watsonx 平台</td><td>🟡 點對點</td><td>不扣分（IBM 對中立、合規場景仍有優勢）</td></tr>
+<tr><td>VMware Tanzu vs Red Hat OpenShift（Broadcom 收購後）</td><td>🟡 點對點</td><td>不扣分（OpenShift 反而吃 VMware 客戶 $600M+）</td></tr>
+<tr><td>AWS Mainframe Modernization (含 Anthropic 整合)</td><td>🟡 點對點 → 🔴 升級中</td><td>暫不扣分，但若 2027 內單一 top-10 銀行公開 case study → 升 ⛔ 架構替代，護城河 <b>−2 分</b>，§1 trap 升 🔴</li></td></tr>
+</table>
+
+<h3>24 個月內最可能瓦解護城河的變化（按威脅程度排序）</h3>
+<ol>
+<li>單一 top-50 全球銀行公開 mainframe → cloud 完整遷移成功案例（5% 機率，但 if 發生影響 ⛔）</li>
+<li>Anthropic 或 OpenAI 與 top-3 全球諮詢公司（Accenture / Deloitte / Capgemini）合作推出「Migration as a Service」打包方案（25% 機率，影響 🔴）</li>
+<li>Confluent 創辦團隊離職 + Kafka community 分裂 → ARR 流失（15% 機率，影響 🟡-🔴）</li>
+<li>EU AI Act 嚴格執法導致 IBM Watsonx 認證優勢被同業（MSFT Foundry）快速複製（30% 機率，影響 🟡）</li>
+<li>Mainframe Z17 Spyre AI accelerator 表現低於市場期望（NVIDIA / AMD 推出更便宜替代）（15% 機率，影響 🟡）</li>
+</ol>
+</section>
+
+<section id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>主要對手比較（FY25）</th></tr>
+<tr><td>Revenue</td><td>$61.86B</td><td>$62.75B</td><td>$67.54B (+7.6%)</td><td>MSFT $245B、ORCL $53B、ACN $66B</td></tr>
+<tr><td>Gross Margin</td><td>54.0%</td><td>56.6%</td><td>58.2%</td><td>MSFT 70%、ORCL 71%、ACN 32%（ACN 純人力服務天生低）</td></tr>
+<tr><td>FCF Margin</td><td>19.6%</td><td>18.7%</td><td>17.0%</td><td>MSFT 31%、ORCL 33%、ACN 14%</td></tr>
+<tr><td>EBITDA Margin</td><td>23.7%</td><td>19.4%</td><td>25.6%</td><td>MSFT 51%、ORCL 47%、ACN 16%</td></tr>
+<tr><td>ROIC − WACC</td><td>-0.4%</td><td>-3.6%</td><td>-1.2%</td><td>MSFT +22%、ORCL +20%、ACN +14%</td></tr>
+<tr><td>SBC / Revenue</td><td>3.0%</td><td>3.0%</td><td>3.1%</td><td>MSFT 4.2%、ORCL 6.1%、ACN 0.9%</td></tr>
+<tr><td>ROE</td><td>33.3%</td><td>22.1%</td><td>32.4%</td><td>MSFT 38%、ORCL 110%（高槓桿）、ACN 24%</td></tr>
+</table>
+
+<h3>獲利品質警訊（四項檢驗）</h3>
+<table>
+<tr><th>項目</th><th>結果</th><th>數據</th></tr>
+<tr><td>淨利 vs OCF 連動性</td><td><span class="tag good">✅ 健康</span></td><td>FY25 OCF $13.2B vs NI $10.6B = 1.25（OCF > NI，無盈餘操縱跡象）</td></tr>
+<tr><td>AR 成長 vs 營收成長</td><td><span class="tag good">✅ 健康</span></td><td>近 4 季 DSO 約 60-62 天，穩定（無膨脹）</td></tr>
+<tr><td>存貨成長 vs 營收</td><td><span class="tag good">✅ 健康</span></td><td>軟體業天生低存貨；Mainframe 部分 inventory 隨 Z17 cycle 調整正常</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td><span class="tag warn">⚠️ 觀察</span></td><td>FY23 19.6% → FY24 18.7% → FY25 17.0% — 連 2 年 mild decline（M&A 整合期 working capital 反應）</td></tr>
+</table>
+
+<h3>回購品質評估（價值陷阱防禦）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF 總額</td><td>回購 ~$2.5B / FCF ~$35.5B = 7%</td><td><span class="tag good">健康</span>（IBM 主要 capital return 走 dividend 而非 buyback；&gt;80% 警示遠未觸發）</td></tr>
+<tr><td>若剔除回購，EPS CAGR 影響</td><td>EPS CAGR 8.8% → 剔除後 ~8.0%（差 0.8pp，遠 < 5pp）</td><td><span class="tag good">健康</span></td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>近 3 年回購均價 ~$170 vs 當前 $219</td><td><span class="tag good">良好</span> 過往低位回購</td></tr>
+<tr><td>Revenue CAGR 同期</td><td>FY22-FY25 CAGR 3.7%（剔除 Kyndryl 分拆影響後 ~5%）</td><td>EPS CAGR 8.8% vs Rev CAGR 5% → 差 3.8pp（mix shift + GM 改善，非靠回購）</td></tr>
+</table>
+<p><b>結論</b>：IBM 不是「靠回購撐 EPS」型公司；EPS 改善主要來自 mix shift（軟體比重↑）+ GM 擴張。FCF 回流主要走 dividend（FY25 $6.2B 分紅）— 對長期股東是 friendly capital return policy。</p>
+</section>
+
+<section id="s11">
+<h2>§11 產業格局、議價權與 Unit Economics（v12.3 強制三維 + 補回 v6 深度）</h2>
+
+<h3>市場量化（5Y / 10Y 結構性變化）</h3>
+<table>
+<tr><th>業務細分</th><th>現在（2026）TAM</th><th>5Y（2031）TAM</th><th>10Y（2036）TAM</th><th>結構性變化</th></tr>
+<tr><td>Hybrid Cloud Platform</td><td>$120B（10% YoY）</td><td>$220B（CAGR 13%）</td><td>$380B</td><td>從 pure public cloud 主導 → hybrid + multi-cloud 主導（regulator + data sovereignty 推動）</td></tr>
+<tr><td>Enterprise AI / GenAI Platform</td><td>$50B（80% YoY）</td><td>$300B</td><td>$1,000B</td><td>從 LLM 提供商 → 平台 + governance（IBM watsonx 卡位 governance 層）</td></tr>
+<tr><td>Data Streaming / Real-time data</td><td>$25B</td><td>$80B</td><td>$200B</td><td>從 batch ETL → event-driven 主導（Confluent / Kafka 卡位）</td></tr>
+<tr><td>Consulting / IT Services</td><td>$700B</td><td>$750B（CAGR 1.4%）</td><td>$700B</td><td>從 人力密集 → AI augmented；TAM 緩慢但 IBM 子集（GenAI transformation）成長更快</td></tr>
+<tr><td>Mainframe</td><td>$15B（5% YoY）</td><td>$13B</td><td>$10B</td><td>絕對 TAM 緩慢萎縮，但 IBM 市佔 ~100% → 仍是 cash cow</td></tr>
+<tr><td>Quantum Computing</td><td>$2.4B（78% YoY）</td><td>$40B</td><td>$250B</td><td>從研發階段 → 商用化（IBM Heron / Kookaburra 卡位先機）</td></tr>
+</table>
+
+<h3>議價權（v12.3 強制三段獨立）</h3>
+
+<h4>① 對上游</h4>
+<table>
+<tr><th>供應商</th><th>議價力評估</th></tr>
+<tr><td><b>Samsung Foundry（mainframe Telum II 製造）</b></td><td>🟡 中等 — IBM 是 Samsung Foundry 7nm/5nm 主要客戶之一，雙方 mutual dependency；Telum II 規格獨家設計，無法輕易換代</td></tr>
+<tr><td><b>NVIDIA（Watsonx GPU inference）</b></td><td>🔴 弱 — NVIDIA 議價權強，IBM 是價格接受者；HBM 緊張時 IBM 需排隊</td></tr>
+<tr><td><b>Anthropic / OpenAI（LLM 整合至 watsonx）</b></td><td>🟡 中 — IBM 自家 Granite 提供退路，可選擇性整合外部 LLM</td></tr>
+<tr><td><b>電力（資料中心 + 製造）</b></td><td>🟡 中 — 美國電價穩定，但 AI workload 高耗電；IBM 已簽長期 PPA 對沖</td></tr>
+<tr><td><b>稀土 / 半導體原物料</b></td><td>🔴 弱 — IBM 對 supply chain disruption 敏感（mainframe 出貨延遲歷史）</td></tr>
+</table>
+
+<h4>② 對下游</h4>
+<table>
+<tr><th>客戶類型</th><th>議價力評估</th></tr>
+<tr><td><b>大型金融機構（top 50 銀行，~30% 營收）</b></td><td>🟢 強 — Mainframe lock-in 60 年；遷移成本 $50-200M / 系統；IBM 可調漲 5-8% 每代而不流失客戶</td></tr>
+<tr><td><b>美國聯邦政府 + 國防（~10% 營收）</b></td><td>🟢 強 — FedRAMP / IL4 認證壁壘高；IBM 是少數合規供應商</td></tr>
+<tr><td><b>大型保險 + 醫療 + 零售（~25% 營收）</b></td><td>🟡 中 — 部分 Mainframe lock-in，但 less critical；可協商定價</td></tr>
+<tr><td><b>Cloud 服務客戶（Red Hat OpenShift; ~20%）</b></td><td>🟡 中 — Kubernetes 標準化降低 lock-in；定價跟同業 (VMware Tanzu / SUSE) 對齊</td></tr>
+<tr><td><b>Mid-market（&lt; $1B 營收企業，~15%）</b></td><td>🟠 弱 — 對價格敏感，且有 cloud 替代選項；近期 churn 風險</td></tr>
+</table>
+
+<h4>③ 地理曝險</h4>
+<table>
+<tr><th>地區</th><th>FY25 營收占比</th><th>地緣風險</th></tr>
+<tr><td>美洲（主要美國）</td><td>~52%</td><td>🟢 低 — 主場；無關稅 / 出口管制影響</td></tr>
+<tr><td>EMEA（歐洲 + 中東 + 非洲）</td><td>~32%</td><td>🟡 中 — EU AI Act 合規要求高（IBM 已認證），但俄烏 + 中東衝突有 minor 客戶 disruption</td></tr>
+<tr><td>亞太</td><td>~14%</td><td>🟡 中 — 日韓主場（佔亞太 ~60%）；中國市場 IBM 已大幅 de-risk（< 1% 全公司營收）</td></tr>
+<tr><td>其他</td><td>~2%</td><td>🟢 低</td></tr>
+</table>
+<p><b>地緣解讀</b>：IBM 是地緣風險最低的大型科技公司之一。美洲 + EMEA 主場、無顯著中國曝險、無台海半導體製造 dependency（Telum II 在 Samsung 美國 + 韓國廠製造）。比較 NVIDIA / TSMC / Apple，IBM 在地緣不確定性高的時代有 defensive premium。</p>
+
+<h3>營收組成（v12.3 強制三維）</h3>
+
+<h4>① 按業務段（Q1 26 → FY26E 估算）</h4>
+<table>
+<tr><th>業務段</th><th>Q1 26 營收</th><th>FY26E 預估</th><th>FY26 占比</th><th>YoY</th><th>OI Margin</th><th>3Y 軌跡</th></tr>
+<tr><td>Software</td><td>$7.1B (+11%)</td><td>$30.0B</td><td>43.5%</td><td>+11%</td><td>~30%</td><td>占比 FY23 35% → FY26 43.5%（mix shift 進行中）</td></tr>
+<tr><td>Consulting</td><td>$5.3B (+4%)</td><td>$21.5B</td><td>31.2%</td><td>+4%</td><td>~10%</td><td>占比 FY23 33% → FY26 31.2%（緩慢稀釋）</td></tr>
+<tr><td>Infrastructure</td><td>$3.3B (+15%)</td><td>$15.0B</td><td>21.8%</td><td>+5%（全年；Z17 cycle 已 mid-cycle）</td><td>~25%</td><td>占比 FY23 24% → FY26 21.8%</td></tr>
+<tr><td>Financing + Other</td><td>$0.2B</td><td>$2.5B</td><td>3.6%</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td><b>合計</b></td><td><b>$15.9B</b></td><td><b>$69.0B</b></td><td>100%</td><td>+5%（公司級 CC guide）</td><td>—</td><td>—</td></tr>
+</table>
+
+<h4>② 按地區</h4>
+<table>
+<tr><th>地區</th><th>FY25 占比</th><th>YoY</th><th>監管/地緣備註</th></tr>
+<tr><td>美洲</td><td>52%</td><td>+8%</td><td>主場；無顯著風險</td></tr>
+<tr><td>EMEA</td><td>32%</td><td>+9%（CC +5%）</td><td>EU AI Act 合規優勢（IBM 已先行認證）</td></tr>
+<tr><td>亞太（含日韓）</td><td>14%</td><td>+6%</td><td>日韓主場；中國 &lt; 1%</td></tr>
+<tr><td>其他</td><td>2%</td><td>+5%</td><td>—</td></tr>
+</table>
+
+<h4>③ 按客戶集中度（v12.3 強制新增）</h4>
+<table>
+<tr><th>客戶集中度</th><th>數據</th><th>集中度風險</th><th>失去單一客戶的影響</th></tr>
+<tr><td>Top 1 客戶</td><td>&lt; 3% 公司營收（美國聯邦政府 + 部門級合約）</td><td>🟢 低</td><td>~2% 公司營收 + 信用品牌損失</td></tr>
+<tr><td>Top 5 客戶</td><td>&lt; 10%</td><td>🟢 低</td><td>累積 ~7% 營收 + Mainframe / Red Hat 旗艦案例</td></tr>
+<tr><td>Top 10 客戶</td><td>&lt; 15%</td><td>🟢 低</td><td>~13% 營收（IBM 客戶基底極為分散）</td></tr>
+<tr><td><b>Dual-track Risk</b></td><td>無顯著 — IBM 對任一 client 無「super-customer」風險</td><td>🟢 低</td><td>—</td></tr>
+<tr><td><b>In-house Risk</b>（客戶自建威脅）</td><td>top 銀行內建技術團隊（如 JPMorgan / Goldman）— 但仍 outsource mainframe + critical workloads 給 IBM</td><td>🟡 中</td><td>Anthropic Claude Code 工具讓 in-house 自建門檻降低 → 對 Consulting 段威脅</td></tr>
+</table>
+<p><b>結論</b>：IBM 客戶極為分散（全球 350,000+ 企業客戶），無單一客戶風險。但 in-house 自建威脅（特別是 top 銀行自建 AI / migration team）是 v12.3 新增的風險維度，主要影響 Consulting 段而非 Software / Mainframe。</p>
+
+<h3>單位經濟（v12.3 強制逐業務段展開）</h3>
+<table>
+<tr><th>業務</th><th>關鍵單位指標</th><th>數值</th><th>趨勢</th><th>結構性洞察</th></tr>
+<tr><td>Mainframe</td><td>每 MIPS 美元 (列表價)</td><td>~$5,500/MIPS</td><td>每代 +8% / 3-4 年</td><td>客戶 lock-in 60 年 → 定價權強；watsonx Code Assistant for Z 客戶 MIPS +3x faster</td></tr>
+<tr><td>Red Hat OpenShift</td><td>每訂閱平均 ACV</td><td>~$120K/customer</td><td>YoY +5-7%</td><td>從「企業數量擴張」轉「per-customer ARPU 升銷」</td></tr>
+<tr><td>watsonx</td><td>每 customer 平均 ARR</td><td>~$80K（FY25 估）→ $50K（FY24）</td><td>YoY +60%（早期擴量）</td><td>仍在 land-and-expand 階段；landing deal size 提升中</td></tr>
+<tr><td>HashiCorp（Terraform/Vault）</td><td>每 enterprise ACV</td><td>~$150K (Terraform Enterprise)</td><td>持平（整合期 cross-sell focus）</td><td>open-source funnel + paid conversion 模式</td></tr>
+<tr><td>Confluent（Kafka）</td><td>per customer ARR</td><td>~$150K</td><td>Q1 26 公開 ~ $1B+ ARR / 6,500 enterprise = $154K/customer</td><td>大企業 spend 達 $5M+ 級別案例多；潛在 backlog 風險</td></tr>
+<tr><td>Consulting</td><td>每位顧問貢獻營收</td><td>~$130-150K/年</td><td>YoY 持平 → 微降（每小時定價弱化、AI 效率提升 offset）</td><td>backlog yield +4pt YoY 是 mitigating，但 fundamental 議價權弱化</td></tr>
+</table>
+
+<h3>競爭情勢小結</h3>
+<p>IBM 在 6 個業務細分上扮演不同角色：</p>
+<ul>
+<li><b>Mainframe</b>：壟斷型，定價權強，TAM 緩慢萎縮但 cash cow 維持</li>
+<li><b>Hybrid Cloud (Red Hat)</b>：細分龍頭 (vs VMware/SUSE)，定價權持續測試中</li>
+<li><b>Data Streaming (Confluent)</b>：細分龍頭（Kafka 標準），但整合期待證</li>
+<li><b>watsonx / GenAI Platform</b>：後進者，與 Microsoft / Google / AWS 競爭，主打 governance + 合規利基</li>
+<li><b>Consulting</b>：規模化執行者（top 5 全球），但 AI 替代壓力大</li>
+<li><b>Quantum</b>：先機卡位者，商業化 5+ 年</li>
+</ul>
+</section>
+
+<section id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>① 股東結構</h3>
+<table>
+<tr><th>項目</th><th>數據</th></tr>
+<tr><td>內部人持股</td><td>0.117%（典型大型企業；管理層持股低，但有限制性股權獎勵安排）</td></tr>
+<tr><td>機構持股</td><td>65.56%（Vanguard ~9.2%、BlackRock ~7.5%、State Street ~5.0% — 典型大型 index 持有）</td></tr>
+<tr><td>Dual-class 投票權</td><td>無 — IBM 單一普通股結構，1 股 1 票，治理透明</td></tr>
+<tr><td>過去 12 個月重大內部人交易</td><td>CEO Arvind Krishna 2026-Q1 出售 ~$2M 股票（指定 10b5-1 計畫，無治理警訊）；CFO Jim Kavanaugh 持續持有</td></tr>
+</table>
+
+<h3>② 資本配置軌跡</h3>
+<table>
+<tr><th>項目</th><th>FY23</th><th>FY24</th><th>FY25</th><th>FY26E 規劃</th></tr>
+<tr><td>Capex</td><td>$1.81B</td><td>$1.69B</td><td>$1.74B</td><td>~$1.8B（穩定）</td></tr>
+<tr><td>M&A 支出</td><td>$0.3B</td><td>$0.5B</td><td>$6.4B (HashiCorp)</td><td>~$11.5B (Confluent + small)</td></tr>
+<tr><td>股利分派</td><td>$6.0B</td><td>$6.1B</td><td>$6.2B</td><td>~$6.4B（dividend hike to $1.69/quarter, +1.8%）</td></tr>
+<tr><td>股票回購</td><td>$0.4B</td><td>$0.8B</td><td>$1.4B</td><td>~$1.0B</td></tr>
+<tr><td>長期負債發行</td><td>$3.5B</td><td>$2.0B</td><td>$15B（Confluent 融資準備）</td><td>$3-5B</td></tr>
+</table>
+<p><b>判斷</b>：IBM 是「先 M&A 後 capital return」結構，dividend &gt;&gt; buyback（典型成熟公司風格）。Confluent $11B 用 cash + debt 融資（非 dilution），但 Net Debt 從 FY24 $44.4B 升至 FY25 $51B 是中期警示 — 若 ROIC 不能在 24 個月內回升至 8%+，會壓抑 EPS 成長。</p>
+
+<h3>③ 管理層薪酬結構</h3>
+<table>
+<tr><th>層級</th><th>固定薪</th><th>績效獎金</th><th>股權激勵</th><th>備註</th></tr>
+<tr><td>CEO（Arvind Krishna）</td><td>$1.7M</td><td>~$8M（取決於營收 + FCF + 戰略目標）</td><td>~$15M (RSU + PSU)</td><td>~70% pay-for-performance；2024 總薪酬 $24M（中位 vs Big Tech CEO）</td></tr>
+<tr><td>CFO（Jim Kavanaugh）</td><td>$1.0M</td><td>~$4M</td><td>~$8M</td><td>—</td></tr>
+<tr><td>典型 SVP</td><td>$0.6M</td><td>~$1.5M</td><td>~$3M</td><td>—</td></tr>
+</table>
+<p>薪酬激勵與 FCF（年度 + 三年滾動）、Software ARR 成長、客戶 NPS 三者掛勾 — 與 thesis H1/H3 一致，無 misaligned 風險。</p>
+
+<h3>④ SBC 評估</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th></tr>
+<tr><td>SBC / Revenue</td><td>3.0%</td><td>3.0%</td><td>3.1%</td></tr>
+<tr><td>SBC 絕對額</td><td>$1.85B</td><td>$1.88B</td><td>$2.09B</td></tr>
+<tr><td>稀釋率（年化）</td><td>~0.8%</td><td>~0.6%</td><td>~0.7%</td></tr>
+</table>
+<p>SBC 占比穩定 3% — 遠低於 5% 警戒線。對每股價值的實際稀釋約 0.7% / 年，被 dividend 3.08% yield 充分覆蓋。治理上無 SBC 膨脹風險。</p>
+
+<h3>⑤ 過去 12 個月重大事件確認（QC-19）</h3>
+<table>
+<tr><th>事件類型</th><th>狀態</th></tr>
+<tr><td>併購 / 分拆</td><td>🟡 Confluent $11B (Mar 2026, 約市值 5.3%)、HashiCorp $6.4B (Feb 2025) — 在過去 24 月確實有大型 M&A，已納入 §5 R2 風險與本節資本配置</td></tr>
+<tr><td>集體訴訟 / 證券詐欺</td><td>🟢 無重大進行中訴訟</td></tr>
+<tr><td>臨床試驗 / FDA</td><td>不適用</td></tr>
+<tr><td>CEO / CFO 離職 / SEC 調查 / 財報重編</td><td>🟢 無</td></tr>
+<tr><td>主要客戶流失 / 長期合約終止</td><td>🟢 無公開重大流失</td></tr>
+</table>
+<p><b>QC-19 結論</b>：🟢 過去 12 個月有大型 M&A（Confluent / HashiCorp 已 documented），無集體訴訟、無管理層異動、無重大監管事件。整體治理面穩定。</p>
+</section>
+
+<section id="s13">
+<h2>§13 估值診斷（v12.3 大幅簡化 — 砍 13.0/13.3/13.5 五角驗證表）</h2>
+
+<p class="note">v12.3 規則：估值章節從 ~40% token 砍至 ~18%。僅保留 13.1（歷史分位）、13.2（PEG）、13.4（同業比較），加 1 段結論。砍掉 13.0 估值體系診斷、13.3 Reverse DCF、13.5 五角驗證表 + 八因素定錨 + 便宜理由五問。</p>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低</th><th>5 年中位</th><th>5 年高</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>19.42x</td><td>13.5x</td><td>26.0x</td><td>38.0x（FY22 EPS 受挫扭曲）</td><td>24%</td></tr>
+<tr><td>Forward P/E (NTM)</td><td>16.30x</td><td>13.5x</td><td>17.0x</td><td>22.0x</td><td>33%</td></tr>
+<tr><td>EV/EBITDA</td><td>15.91x</td><td>11.0x</td><td>14.5x</td><td>20.0x</td><td>55%</td></tr>
+<tr><td>P/FCF</td><td>206/14.5 (TTM) = 14.2x</td><td>9.5x</td><td>13.5x</td><td>18.0x</td><td>55%</td></tr>
+<tr><td>P/S</td><td>3.0x</td><td>1.8x</td><td>2.6x</td><td>3.8x</td><td>60%</td></tr>
+</table>
+<div class="reasoning">
+<b>輸入</b>：當前 FPE 16.30x / 5Y 範圍 13.5-22.0x / 中位 17.0x。<br>
+<b>計算</b>：分位 = (16.30 − 13.5) / (22.0 − 13.5) = 33%（QC-4 公式）。<br>
+<b>implication</b>：分位 33% 落「合理」區（30-70%）；FCF 視角 55% 略偏高但仍合理；EV/EBITDA 55% 反映 M&A 累積 debt 但仍未過熱 → §2.D 估值燈定 🟡 合理。
+</div>
+
+<p><b>解讀</b>：</p>
+<ol>
+<li><b>估值情緒</b>：合理（FPE 33% 分位 + FCF/EV-EBITDA 55% 分位的均值約 40-45%）</li>
+<li><b>歷史對標差異</b>：2024-Q3 FPE 22x 時 EPS 已開始上修但 ROIC 仍弱；現在 FPE 16x 是「ROIC 仍弱 + thesis 已部分兌現」狀態，差異是 Anthropic 衝擊製造的恐慌折價</li>
+<li><b>推動因素</b>：當前估值壓縮 60% 來自 Anthropic 衝擊（Feb 2026 -27% 月）+ 40% 來自整體大盤 risk-off 與利率擔憂；ROIC 弱化與 M&A 累積負債次要</li>
+</ol>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+<tr><td>Forward P/E (NTM)</td><td>16.30x</td><td>—</td></tr>
+<tr><td>GAAP EPS CAGR 3Y (FY25→FY28)</td><td>8.79%</td><td>—</td></tr>
+<tr><td><b>PEG（GAAP 3Y）</b></td><td><b>1.85</b></td><td>1.0-2.0 區間 → <span class="tag warn">🟡 合理</span></td></tr>
+<tr><td>5Y EPS CAGR (FY25→FY30)</td><td>7.7%</td><td>—</td></tr>
+<tr><td>PEG（5Y）</td><td>2.12</td><td>略偏 🟠（成長放緩反映在 5Y）</td></tr>
+<tr><td>3Y vs 5Y PEG 差異</td><td>1.85 vs 2.12（差 0.27）</td><td>合理差距；非 trap 信號（差距 > 0.5 才警戒）</td></tr>
+</table>
+<div class="reasoning">
+<b>輸入</b>：FPE 16.30 / 3Y CAGR 8.79%。<br>
+<b>計算</b>：PEG = 16.30 ÷ 8.79 = 1.85（傳統公式）。<br>
+<b>implication</b>：PEG 1.85 落 1-2「合理區」、未過 2.0 → §2.D 估值燈 🟡 維持；3Y/5Y PEG 差距合理（成長 8.8% → 7.7% 自然遞減），不是 thesis-killer。
+</div>
+
+<h3>13.4｜同業估值比較（v12.3 強制 peer group tier）</h3>
+
+<h4>正確的 peer group tier：Tier 1 — 大型 IT/Software/Consulting 多元化公司（避免 cross-tier 錯誤 anchor）</h4>
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR 3Y</th><th>ROIC</th></tr>
+<tr><td><b>IBM</b></td><td>$206B</td><td>16.30x</td><td>15.91x</td><td>1.85</td><td>17.0%</td><td>8.8%</td><td>6.85%</td></tr>
+<tr><td>Accenture (ACN)</td><td>$120B</td><td>12-14x</td><td>11x</td><td>1.7</td><td>14%</td><td>7%</td><td>14%</td></tr>
+<tr><td>Oracle (ORCL)</td><td>$520B</td><td>23.79x</td><td>20x</td><td>1.4</td><td>33%</td><td>17%</td><td>20%</td></tr>
+<tr><td>Microsoft (MSFT)</td><td>$3,300B</td><td>28-42x</td><td>26x</td><td>2.0</td><td>31%</td><td>14%</td><td>22%</td></tr>
+<tr><td>SAP</td><td>$340B</td><td>32x</td><td>25x</td><td>2.3</td><td>22%</td><td>14%</td><td>16%</td></tr>
+<tr><td><b>Tier 1 中位數</b></td><td>—</td><td><b>23x</b></td><td><b>20x</b></td><td>1.9</td><td>23%</td><td>13%</td><td>16%</td></tr>
+</table>
+
+<p><b>溢折價邏輯</b>：</p>
+<ol>
+<li><b>折/溢價幅度</b>：IBM FPE 16.30x vs Tier 1 中位 23x → <b>折價 29%</b>。對比 ACN (12-14x, 折價 39%)，IBM 還略貴 — 反映「軟體 + Mainframe」比純諮詢更值錢，但「ROIC 6.85% vs ACN 14%」抵消大部分軟體溢價</li>
+<li><b>哪項較弱</b>：ROIC 6.85% 在 Tier 1 是 lowest（ACN 14% / ORCL 20% / MSFT 22% / SAP 16%）；EPS CAGR 8.8% 也較弱（Tier 1 中位 13%）— 兩者支持當前折價</li>
+<li><b>哪項較強</b>：FCF Margin 17% 高於 ACN，與 SAP 接近；護城河（execution 維度）強於 ACN</li>
+<li><b>若收斂至中位</b>：若 IBM 估值與 ACN（最近 peer）對齊，13x FPE × $12.43 = $162 → 反而會 -26%；若與 Tier 1 中位 23x 對齊，23 × $12.43 = $286 → +30%。當前 16.30x 在 ACN 與 Tier 1 中位之間，合理</li>
+</ol>
+
+<div class="reasoning">
+<b>輸入</b>：IBM FPE 16.30 / Tier 1 中位 23 / 最近 peer (ACN) 13.<br>
+<b>計算</b>：折價 vs 中位 = (23-16.3)/23 = 29%；溢價 vs ACN = (16.3-13)/13 = 25%。<br>
+<b>implication</b>：IBM 落在「軟體價值」與「諮詢拖累」中間，合理。同業收斂風險低；對 ACN 溢價可被 IBM 的軟體 + mainframe mix 解釋。
+</div>
+
+<h4>橫向風報比比較（同 Tier）</h4>
+<table>
+<tr><th>問題</th><th>IBM</th><th>最強對手</th></tr>
+<tr><td>主假設兌現時上行最大？</td><td>+33% (5Y)</td><td>ORCL（雲端加速 thesis）：+40%; ACN：+50%（被低估）</td></tr>
+<tr><td>主假設部分落空時跌幅最小？</td><td>-20% (Bear A)，div yield 3.08% 緩衝</td><td>ACN -25%（純諮詢直擊 AI 替代）；ORCL -30%（如雲端競爭加劇）</td></tr>
+<tr><td>綜合上下行不對稱性最優？</td><td>中等 risk/reward (~1.7x)</td><td>ACN 風報比可能更佳（折價更深 + 純粹 thesis）</td></tr>
+</table>
+
+<p><b>橫向比較結論</b>：🥈 <b>此標的為次優選</b>（在「大型 IT/Software/Consulting Tier 1」分類中）。最佳選擇可能是 ACN（純諮詢但折價更深 + 100% 直接吃 AI consulting 轉型紅利）；IBM 的優勢在 hybrid (软体+硬体)，但這也意味著沒有 ACN 那麼純粹的 AI consulting upside。</p>
+
+<h3>結論（v12.3 簡化 — 1 段）</h3>
+<div class="hypothesis-box">
+<p><b>估值結論</b>：當前定價 <b>🟡 合理</b>。IBM 在 FPE 16.30x（5Y 33% 分位）+ PEG 1.85（1-2 合理區）+ EV/EBITDA 15.91x（55% 分位）三維下，落「合理至略偏便宜」區。相對 Tier 1 中位（23x）有 29% 折價，但 ROIC 6.85% vs Tier 中位 16% 證實折價合理而非 deep value。對應 §2.D 估值燈 🟡，§1 final_signal B（衛星候選）— 不是緊急進場機會，也不是過熱賣出時點；建議等 MA 站回 W104 ($238) 後升 A，或等 Q2 26 (2026-07-23) Consulting backlog binary event 確認 H2 假設後再判定 thesis 方向。<b>長期合理 PE 18x</b>（B 級 20x 基準 × 0.9 AI 風險調整），5Y 目標 $292（+33% upside），對應 §2.D R:R 長期 1.70x。</p>
+</div>
+</section>
+
+</main>
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "IBM",
+  "company": "International Business Machines Corp.",
+  "schema": "v12.3",
+  "date": "2026-05-18",
+  "price_at_dd": 219.30,
+  "market_cap_bn": 206.1,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "觀察期 — Consulting AI 替代風險局部於 segment，整體 thesis 完整",
+  "moat": "B",
+  "moat_score": 7,
+  "moat_execution": 7,
+  "moat_pricing_power": 6,
+  "val": "🟡",
+  "ma": "🟠",
+  "industry_wind": "🟡",
+  "benchmark_regime": "正常",
+  "fpe_fy1": 17.64,
+  "fpe_fy2": 16.30,
+  "pct_5y": 33,
+  "peg_fy2": 1.98,
+  "eps_cagr_3y_pct": 8.79,
+  "upside_short_pct": 2,
+  "upside_mid_pct": 10,
+  "upside_5y_pct": 33,
+  "stress": {"pass": 0, "total": 4, "note": "Base 0.37x／壓力A 0.20x／壓力B 負值／壓力C NA → 0/4 通過率，R:R 對壓力情境敏感"},
+  "growth_durability": 6,
+  "quality_score": 7,
+  "ai_risk": "🟡",
+  "long_term_confidence": "中",
+  "verdict": "B — 衛星候選，thesis 完整但時機未到。Q2 26 (2026-07-23) Consulting backlog 是關鍵 binary event；等 MA 站回 W104 + backlog 守住 +2% 後可升 A",
+  "inception_dd": "DD_IBM_20260518.html",
+  "inception_date": "2026-05-18",
+  "next_yoy_review": "2027-05-18",
+  "key_monitors": [
+    "Software ARR YoY 成長率（目前 $24.6B +10%）— 連 2 季跌破 +8% → H1 削弱；連 2 季 +12% 以上 → H1 強化",
+    "Consulting Backlog YoY（目前 $32B +2%）— 跌至 0% 或負 → R1 觸發、trap 升 🔴；維持 +3% 以上 → R1 緩解",
+    "FY26 FCF（guide $15.7B）— H1 兌現率 < 55% → Capex 或營運資金惡化警戒"
+  ],
+  "oneliner": "🟡 中性；B 級護城河 7/7/6（軟體+Mainframe 強，Consulting 被 Anthropic Claude Code 衝擊）。估值 🟡 FPE 16.3x／PEG 1.85+Pure MA 🟠 暫不進場(現價<W104)。等 Consulting backlog 不續弱+MA 站回 W104；FCF $15.7B 是底氣。"
+}
+</script>
+</body>
+</html>
