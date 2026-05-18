@@ -148,8 +148,10 @@ def load_dd_universe(
     Each returned dict has:
         ticker, name, sector,
         moat_score, moat_grade, moat_trend,
+        moat_execution, moat_pricing_power,   # v12.3+ optional, None for legacy DDs
         signal, trap, val,
         upside_mid_pct, upside_5y_pct, fpe_fy2,
+        pct_5y, growth_durability, quality_score, ai_risk,  # v1.2 quality-entry inputs
         dd_path, dd_date,
         dca_path, dca_date
     """
@@ -206,6 +208,18 @@ def load_dd_universe(
         # ── 2Y forward P/E (FY+2; same value the /research/ table shows) ─
         fpe_fy2 = meta.get("fpe_fy2")
 
+        # ── quality-entry v1.2 fields (propagate dd-meta as-is, allow null) ──
+        # `pct_5y` = 5Y FwdPE percentile (lower = cheaper); main Entry-pillar anchor.
+        # `growth_durability` (1-10), `quality_score` (1-10) — DD §1 analyst scores.
+        # `moat_execution` / `moat_pricing_power` (1-10) — v12.3+ two-axis decomp.
+        # `ai_risk` — 🟢/🟡/🔴 disrupt-risk light, used as quality-entry veto.
+        pct_5y = meta.get("pct_5y")
+        growth_durability = meta.get("growth_durability")
+        quality_score = meta.get("quality_score")
+        moat_execution = meta.get("moat_execution")
+        moat_pricing_power = meta.get("moat_pricing_power")
+        ai_risk = meta.get("ai_risk")
+
         # ── dd_path / dd_date ─────────────────────────────────────────────
         dd_filename = path.name
         dd_path = f"/dd/{dd_filename}"
@@ -221,12 +235,18 @@ def load_dd_universe(
             "moat_score": moat_score,
             "moat_grade": moat_grade,
             "moat_trend": moat_trend,
+            "moat_execution": moat_execution,
+            "moat_pricing_power": moat_pricing_power,
             "signal": signal,
             "trap": trap,
             "val": val_field,
             "upside_mid_pct": upside_mid_pct,
             "upside_5y_pct": upside_5y_pct,
             "fpe_fy2": fpe_fy2,
+            "pct_5y": pct_5y,
+            "growth_durability": growth_durability,
+            "quality_score": quality_score,
+            "ai_risk": ai_risk,
             "dd_path": dd_path,
             "dd_date": dd_date,
             "dca_path": dca_path,

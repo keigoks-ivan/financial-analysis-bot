@@ -12,11 +12,17 @@ from `docs/screener/latest.json` daily snapshot. Same source as
 `flow/ath-hunter.html` consumes, so DD Screener's 起漲點 chip and Flow's ATH
 classification stay in lock-step (zero data drift). null for non-US (TW/JP/EU).
 
+v1.2 (additive, backward-compatible): propagates 6 extra dd-meta fields per
+stock — `pct_5y`, `growth_durability`, `quality_score`, `ai_risk`,
+`moat_execution`, `moat_pricing_power` — to power the quality-entry screener
+(`docs/dd-screener/quality-entry.html`). All nullable; v12.3+ DDs carry the
+two moat sub-scores, older DDs leave them `null`.
+
 ## Top-level shape
 
 ```json
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "run_timestamp": "2026-05-15T08:00:00+08:00",
   "as_of": "2026-05-15",
   "universe_size": 98,
@@ -123,12 +129,18 @@ Each entry in `stocks[]`:
 | `moat_score` | number 1-10 | required (skip ticker if absent) |
 | `moat_grade` | "S"/"A"/"B"/"C"/"X" | required |
 | `moat_trend` | "↑"/"→"/"↓" | Overridden by DCA Phase A1 arrow at build time (94/98 coverage); fallback **"→"** when no DCA arrow (conservative — assume stable, not strengthening) |
+| `moat_execution` | number 1-10 \| null | v12.3+ optional moat sub-score (execution moat); null for legacy DDs |
+| `moat_pricing_power` | number 1-10 \| null | v12.3+ optional moat sub-score (pricing power moat); null for legacy DDs |
 | `signal` | "A+"/"A"/"B"/"C"/"X" | required |
 | `trap` | emoji | required |
 | `val` | emoji | required |
+| `ai_risk` | "🟢"/"🟡"/"🔴" \| null | disrupt-risk light from dd-meta; used as quality-entry veto (🔴 excluded) |
 | `upside_mid_pct` | number | null if missing (retained for legacy/fallback; FE no longer displays) |
 | `upside_5y_pct` | number | null if missing (rarely populated in dd-meta) |
 | `fpe_fy2` | number | FY+2 Forward P/E from dd-meta. Displayed in the screener's 2Y P/E column (right of PEG); mirrors `/research/` `data-pe2y`. |
+| `pct_5y` | number 0-100 \| null | 5Y FwdPE historical percentile (lower = cheaper); main Entry-pillar anchor for quality-entry screener |
+| `growth_durability` | number 1-10 \| null | DD §1 analyst score for growth durability |
+| `quality_score` | number 1-10 \| null | DD §1 holistic quality score (distinct from `quality_source` which is a string tag) |
 | `ev5y_pct` | number | DCA §4 機率加權 5Y EV → annualized IRR (%); **primary 5Y IRR column source**, mirrors `/research/` table. null if no DCA or §4 unparseable. |
 | `dd_path` | "/dd/DD_*.html" | absolute path from site root |
 | `dd_date` | "YYYY-MM-DD" | from dd-meta `date` |

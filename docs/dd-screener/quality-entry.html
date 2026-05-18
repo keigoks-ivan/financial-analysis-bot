@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quality-Entry — 品質複利者 + 勝率切入點 | InvestMQuest</title>
+<meta name="color-scheme" content="light">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){.imq-nav-root{padding:.55rem 12px}.imq-menu{width:100%;justify-content:flex-start;gap:.1rem}.imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}.imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}.imq-dd.open .imq-dd-menu{display:block}}
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}
+.hero-inner{max-width:min(1400px,96vw);margin:0 auto}
+.hero-h1{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}
+.hero-sub{font-size:12px;color:#5a7a9a;line-height:1.6;max-width:920px}
+.hero-stats{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}
+.hero-stat{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 11px;font-size:11px;color:#5a7a9a}
+.hero-stat strong{color:#1e3a5f;font-size:13px;display:block;margin-bottom:1px}
+.section{max-width:min(1400px,96vw);margin:0 auto;padding:24px 32px}
+.formula-panel{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:14px 18px;margin-bottom:20px}
+.formula-panel h3{font-size:13px;font-weight:700;color:#0f2a45;margin-bottom:8px}
+.formula-panel code{background:#f0f5fb;padding:1px 6px;border-radius:3px;font-size:11.5px;color:#1e3a5f}
+.formula-row{font-size:12px;color:#334e68;line-height:1.85}
+.tier-card{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.tier-card h2{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tier-card.tier-a h2{color:#166534}
+.tier-card.tier-b h2{color:#854d0e}
+.tier-card h2 .badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:700}
+.tier-card.tier-a h2 .badge{background:#dcfce7;color:#166534}
+.tier-card.tier-b h2 .badge{background:#fef3c7;color:#854d0e}
+.tier-card .desc{font-size:12px;color:#5a7a9a;margin-bottom:10px;line-height:1.6}
+.tier-card table{width:100%;border-collapse:collapse;font-size:12px}
+.tier-card th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:8px 10px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+.tier-card th.left{text-align:left}
+.tier-card td{padding:8px 10px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums}
+.tier-card td.left{text-align:left;color:#0f2a45;font-weight:500}
+.tier-card td.left .sub{font-size:10px;color:#94a3b8;font-weight:400;margin-top:1px}
+.tier-card td a{color:#2563eb;text-decoration:none;font-weight:700}
+.tier-card td a:hover{text-decoration:underline}
+.score-cell{color:#0f2a45}
+.entry-cell{color:#166534;font-weight:600}
+.entry-low{color:#92400e}
+.meta-cell{font-size:10.5px;color:#5a7a9a;text-align:left !important}
+.empty-row{padding:14px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}
+.caveat-panel{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:12px;color:#854d0e;line-height:1.65}
+.caveat-panel strong{color:#78350f;display:block;margin-bottom:6px}
+.caveat-panel ul{margin-left:18px}
+.footer{padding:30px 32px;font-size:11px;color:#5a7a9a;line-height:1.7;max-width:min(1400px,96vw);margin:0 auto;border-top:1px solid #dce8f5}
+.footer h4{color:#1e3a5f;font-size:12px;margin-top:14px;margin-bottom:6px;font-weight:700}
+.footer code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:10px;color:#1e3a5f}
+</style>
+</head>
+<body>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/dd-screener/alpha-rank.html">Alpha Rank</a>
+          <a href="/dd-screener/quality-entry.html" class="active">Quality-Entry</a>
+          <a href="/backtest/">量化回測</a>
+        </div>
+      </div>
+      <a href="/flow/">🎯 Flow</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')});});})();</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-h1">Quality-Entry — 品質複利者 + 勝率切入點</div>
+    <div class="hero-sub">
+      鎖定<b>有品質、有成長、有護城河、不易被顛覆</b>的標的，
+      並從中挑出<b>相對有勝率的切入點（不要求起漲點）</b>。
+      三支柱複合分數：品質×護城河 40% / 成長持續性 30% / 進場品質 30%。
+      與 <a href="/dd-screener/alpha-rank.html" style="color:#2563eb">Alpha Rank</a>（六法共識）並列：
+      Alpha Rank 適合積極追逐六種數學排名共識；Quality-Entry 適合 quality compounder 逢回佈局。
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>2026-05-18</strong>快照日期</div>
+      <div class="hero-stat"><strong>111</strong>universe</div>
+      <div class="hero-stat"><strong>104</strong>通過 veto</div>
+      <div class="hero-stat"><strong>7</strong>被 veto</div>
+      <div class="hero-stat"><strong>2</strong>Tier A — Buy Zone</div>
+      <div class="hero-stat"><strong>23</strong>Tier B — Wait</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+
+  <div class="formula-panel">
+    <h3>方法論</h3>
+    <div class="formula-row">
+      <b>Final</b> = 0.40·<b>Quality</b> + 0.30·<b>Growth</b> + 0.30·<b>Entry</b>
+    </div>
+    <div class="formula-row" style="margin-top:6px">
+      <b>Quality (品質×護城河)</b>：<code>0.45·moat/10 + 0.25·pass/5 + 0.20·quality_score/10 + 0.10·max(execution,pricing)/10</code>
+    </div>
+    <div class="formula-row">
+      <b>Growth (成長持續性)</b>：<code>0.40·durability/10 + 0.30·clip(eps2y,0,40)/40 + 0.30·clip(ev5y,0,25)/25</code>
+    </div>
+    <div class="formula-row">
+      <b>Entry (進場品質)</b>：<code>0.30·(1−pct_5y/100) + 0.25·MA + 0.20·pullback(dist_52wH) + 0.15·trend(vs_200MA) + 0.10·val</code>
+    </div>
+    <div class="formula-row" style="margin-top:8px;color:#5a7a9a">
+      <b>Vetoes</b>（任一觸發 → 不入榜）：<code>ai_risk==🔴</code> · <code>moat_grade∈(C,X)</code> · <code>trap==🔴</code>
+    </div>
+    <div class="formula-row" style="color:#5a7a9a">
+      <b>Tier 切分</b>：Final ≥ 0.65 才入榜；Entry ≥ 0.65 → Tier A（Buy Zone Now），否則 Tier B（Wait）
+    </div>
+  </div>
+
+  <div class="caveat-panel">
+    <strong>讀法 caveats</strong>
+    <ul>
+      <li><b>不是起漲點 screener</b>：Entry 子分故意把「距 52w 高點 −10 ~ −15%」算作 sweet spot（不是 0 ~ −5%）。這與 Alpha Rank Angle 2「EV×起漲點」設計相反，刻意對應「不一定要起漲點」的目標。</li>
+      <li><b>未做歷史勝率回測</b>：「相對有勝率」claim 來自構造（cheap percentile + 趨勢未破 + 護城河）而非實證 win rate；如要 backtest 證據，需另外開回測 issue。</li>
+      <li><b>MA 標籤為近似</b>：本頁 MA 燈號從 latest.json snapshot 推導（缺各 MA 個別斜率），與 DD §2 F 的完整六狀態機可能微差；以個股 DD 的 MA 段為準。</li>
+      <li><b>缺資料中性處理</b>：pct_5y / growth_durability / quality_score 缺值時用 fallback（如 moat_score 代理），不直接 0 分以免錯殺老 DD。</li>
+      <li><b>跨期不可比</b>：本頁分數僅在「同一份 latest.json snapshot 內」相對排序有意義；不同日期分數絕對值不直接比較。</li>
+    </ul>
+  </div>
+
+  <div class="tier-card tier-a">
+    <h2>🟢 Tier A — Buy Zone Now <span class="badge">Final ≥ 0.65 · Entry ≥ 0.65</span></h2>
+    <div class="desc">三支柱同時及格、且 Entry 子分到位 — 即現在處於「相對有勝率的點位」。Rationale 欄顯示為什麼此檔在 Buy Zone（PE 分位 / MA 狀態 / 距 52w 高點）。</div>
+    <table>
+<thead>
+<tr>
+  <th class="left">Ticker</th>
+  <th>Final</th>
+  <th>Quality</th>
+  <th>Growth</th>
+  <th>Entry</th>
+  <th class="left">Rationale / 等什麼</th>
+  <th class="left">Tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_NVDA_20260418.html">NVDA</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.87</strong></td>
+  <td>1.00</td>
+  <td>0.81</td>
+  <td class="entry-cell">0.75</td>
+  <td class="left">PE 12 分位 / MA ✅ / 距 52wH -4%</td>
+  <td class="meta-cell">S · A · PE 24.2x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_LLY_20260504.html">LLY</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.86</strong></td>
+  <td>0.94</td>
+  <td>0.82</td>
+  <td class="entry-cell">0.78</td>
+  <td class="left">PE 20 分位 / MA 🟡 / 距 52wH -9%</td>
+  <td class="meta-cell">S · A+ · PE 22.1x</td>
+</tr>
+</tbody>
+</table>
+  </div>
+
+  <div class="tier-card tier-b">
+    <h2>🟡 Tier B — Quality Compounder, Wait <span class="badge">Final ≥ 0.65 · Entry &lt; 0.65</span></h2>
+    <div class="desc">品質+護城河+成長都到位但 Entry 子分還沒到位 — watchlist。「等什麼」欄顯示 entry 子分最大拖累來源（PE 分位 / MA / 回檔 / 趨勢 / 估值燈）。（另有 19 檔未顯示）</div>
+    <table>
+<thead>
+<tr>
+  <th class="left">Ticker</th>
+  <th>Final</th>
+  <th>Quality</th>
+  <th>Growth</th>
+  <th>Entry</th>
+  <th class="left">Rationale / 等什麼</th>
+  <th class="left">Tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_TSM_20260323.html">TSM</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.82</strong></td>
+  <td>0.95</td>
+  <td>0.90</td>
+  <td class="entry-cell entry-low">0.56</td>
+  <td class="left">等 PE 分位降至 < 40（現 52）</td>
+  <td class="meta-cell">S · A · PE 18.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_AVGO_20260418.html">AVGO</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.80</strong></td>
+  <td>0.90</td>
+  <td>0.85</td>
+  <td class="entry-cell entry-low">0.62</td>
+  <td class="left">等 PE 分位降至 < 40（現 40）</td>
+  <td class="meta-cell">A · A · PE 22.4x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_V_20260516.html">V</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.78</strong></td>
+  <td>1.00</td>
+  <td>0.63</td>
+  <td class="entry-cell entry-low">0.65</td>
+  <td class="left">等 MA 回穩（現 🟡）</td>
+  <td class="meta-cell">S · B · PE 21.9x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_CDNS_20260504.html">CDNS</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.78</strong></td>
+  <td>0.93</td>
+  <td>0.75</td>
+  <td class="entry-cell entry-low">0.61</td>
+  <td class="left">等 PE 分位降至 < 40（現 53）</td>
+  <td class="meta-cell">A · A · PE 35.9x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_2330TW_20260514.html">2330.TW</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.77</strong></td>
+  <td>0.97</td>
+  <td>0.73</td>
+  <td class="entry-cell entry-low">0.56</td>
+  <td class="left">漲幅消化（vs 200MA +41%）</td>
+  <td class="meta-cell">S · A · PE 18.8x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ASML_20260515.html">ASML</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.77</strong></td>
+  <td>0.99</td>
+  <td>0.70</td>
+  <td class="entry-cell entry-low">0.54</td>
+  <td class="left">等 MA 回穩（現 🟡）</td>
+  <td class="meta-cell">S · A · PE 33.3x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ALAB_20260506.html">ALAB</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.74</strong></td>
+  <td>0.88</td>
+  <td>0.78</td>
+  <td class="entry-cell entry-low">0.52</td>
+  <td class="left">等 MA 回穩（現 —）</td>
+  <td class="meta-cell">A · B · PE 51.4x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MRVL_20260418.html">MRVL</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.74</strong></td>
+  <td>0.90</td>
+  <td>0.70</td>
+  <td class="entry-cell entry-low">0.56</td>
+  <td class="left">等 MA 回穩（現 🟡）</td>
+  <td class="meta-cell">A · A · PE 25.8x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_KLAC_20260516.html">KLAC</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.73</strong></td>
+  <td>0.95</td>
+  <td>0.77</td>
+  <td class="entry-cell entry-low">0.41</td>
+  <td class="left">等 PE 分位降至 < 40（現 97）</td>
+  <td class="meta-cell">S · B · PE 36.2x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MA_20260516.html">MA</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.73</strong></td>
+  <td>0.91</td>
+  <td>0.65</td>
+  <td class="entry-cell entry-low">0.57</td>
+  <td class="left">等 MA 回穩（現 🟠）</td>
+  <td class="meta-cell">A · B · PE 21.7x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_2308TW_20260514.html">2308.TW</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.73</strong></td>
+  <td>0.88</td>
+  <td>0.69</td>
+  <td class="entry-cell entry-low">0.57</td>
+  <td class="left">等 PE 分位降至 < 40（現 56）</td>
+  <td class="meta-cell">A · B · PE 33.4x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NU_20260515.html">NU</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.72</strong></td>
+  <td>0.81</td>
+  <td>0.87</td>
+  <td class="entry-cell entry-low">0.46</td>
+  <td class="left">跌幅過深，等 trend 重建</td>
+  <td class="meta-cell">A · B · PE 11.7x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ANET_20260506.html">ANET</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.72</strong></td>
+  <td>0.86</td>
+  <td>0.65</td>
+  <td class="entry-cell entry-low">0.60</td>
+  <td class="left">等 PE 分位降至 < 40（現 53）</td>
+  <td class="meta-cell">B · B · PE 32.2x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_LRCX_20260425.html">LRCX</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.72</strong></td>
+  <td>0.94</td>
+  <td>0.74</td>
+  <td class="entry-cell entry-low">0.41</td>
+  <td class="left">等 PE 分位降至 < 40（現 89）</td>
+  <td class="meta-cell">A · A · PE 34.8x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MSFT_20260515.html">MSFT</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.72</strong></td>
+  <td>0.93</td>
+  <td>0.59</td>
+  <td class="entry-cell entry-low">0.57</td>
+  <td class="left">等 MA 回穩（現 🟠）</td>
+  <td class="meta-cell">A · B · PE 21.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_AMD_20260506.html">AMD</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.71</strong></td>
+  <td>0.80</td>
+  <td>0.75</td>
+  <td class="entry-cell entry-low">0.56</td>
+  <td class="left">等 PE 分位降至 < 40（現 50）</td>
+  <td class="meta-cell">B · B · PE 31.7x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_PLTR_20260505.html">PLTR</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.71</strong></td>
+  <td>0.93</td>
+  <td>0.70</td>
+  <td class="entry-cell entry-low">0.45</td>
+  <td class="left">跌幅過深，等 trend 重建</td>
+  <td class="meta-cell">A · B · PE 78.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_6146T_20260420.html">6146.T</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.71</strong></td>
+  <td>0.95</td>
+  <td>0.57</td>
+  <td class="entry-cell entry-low">0.52</td>
+  <td class="left">等 PE 分位降至 < 40（現 75）</td>
+  <td class="meta-cell">S · A · PE 35.0x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_3661TW_20260514.html">3661.TW</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.70</strong></td>
+  <td>0.75</td>
+  <td>0.73</td>
+  <td class="entry-cell entry-low">0.61</td>
+  <td class="left">等 MA 回穩（現 🟡）</td>
+  <td class="meta-cell">A · B · PE 27.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_APH_20260504.html">APH</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.70</strong></td>
+  <td>0.88</td>
+  <td>0.70</td>
+  <td class="entry-cell entry-low">0.47</td>
+  <td class="left">等 MA 回穩（現 🟡）</td>
+  <td class="meta-cell">A · A · PE 25.6x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_BESI_20260420.html">BESI</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.70</strong></td>
+  <td>0.84</td>
+  <td>0.83</td>
+  <td class="entry-cell entry-low">0.38</td>
+  <td class="left">等 PE 分位降至 < 40（現 80）</td>
+  <td class="meta-cell">S · A · PE 54.2x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_3017_20260504.html">3017.TW</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.70</strong></td>
+  <td>0.85</td>
+  <td>0.76</td>
+  <td class="entry-cell entry-low">0.44</td>
+  <td class="left">等 PE 分位降至 < 40（現 85）</td>
+  <td class="meta-cell">A · A · PE 22.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_FICO_20260418.html">FICO</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.70</strong></td>
+  <td>0.91</td>
+  <td>0.75</td>
+  <td class="entry-cell entry-low">0.37</td>
+  <td class="left">等 MA 回穩（現 ❌）</td>
+  <td class="meta-cell">A · B · PE 20.2x</td>
+</tr>
+</tbody>
+</table>
+  </div>
+
+</div>
+
+<div class="footer">
+  <h4>數據來源</h4>
+  <ul style="margin-left:18px">
+    <li><code>docs/dd-screener/latest.json</code> v1.2+（含 pct_5y / quality_score / ai_risk / moat sub-scores 等 dd-meta propagated 欄位）</li>
+    <li>MA snapshot 為 yfinance 週線（每次 build 重抓）；timing 欄位來自 docs/screener/latest.json 每日 cron + yfinance fallback</li>
+  </ul>
+  <h4>機器可讀</h4>
+  <p>JSON sidecar: <a href="/dd-screener/quality-entry.json"><code>/dd-screener/quality-entry.json</code></a> · 每日快照: <code>/dd-screener/quality-entry-snapshots/YYYY-MM-DD.json</code></p>
+  <p style="margin-top:16px;color:#94a3b8">Generated by <code>scripts/build_quality_entry.py</code> · schema v1.0</p>
+</div>
+</body>
+</html>

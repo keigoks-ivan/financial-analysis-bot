@@ -559,7 +559,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     tz_taipei = timezone(timedelta(hours=8))
     now = datetime.now(tz_taipei)
     doc = {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "run_timestamp": now.isoformat(timespec="seconds"),
         "as_of": now.strftime("%Y-%m-%d"),
         "universe_size": len(enriched),

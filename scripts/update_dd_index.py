@@ -2724,6 +2724,31 @@ def main():
             file=sys.stderr,
         )
 
+    # Event-driven trigger for Quality-Entry screener (品質複利者 + 勝率切入點).
+    # Reads latest.json (schema v1.2+) and emits docs/dd-screener/quality-entry.{html,json}
+    # plus a daily snapshot. Independent of Alpha Ranker — its failure must not block
+    # this; both are supplementary to the canonical /research/ + /dd-screener/.
+    qe_script = Path(__file__).resolve().parent / "build_quality_entry.py"
+    if not qe_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {qe_script.name}")
+    try:
+        subprocess.run(
+            [sys.executable, str(qe_script)],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(
+            f"\n⚠ Quality-Entry build failed (exit {e.returncode}). "
+            f"Rerun `python3 {qe_script}` manually.",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ Quality-Entry errored: {e}.",
+            file=sys.stderr,
+        )
+
 
 if __name__ == "__main__":
     main()

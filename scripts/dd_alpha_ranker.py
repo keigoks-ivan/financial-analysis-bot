@@ -1039,6 +1039,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
         <div class="imq-dd-menu">
           <a href="/dd-screener/">DD Screener</a>
           <a href="/dd-screener/alpha-rank.html" class="active">Alpha Rank</a>
+          <a href="/dd-screener/quality-entry.html">Quality-Entry</a>
           <a href="/backtest/">量化回測</a>
         </div>
       </div>
