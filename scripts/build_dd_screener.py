@@ -487,25 +487,94 @@ def _moat_trend_for(ticker: str, dca_trend_map: dict, fallback: str) -> str:
     return arrow or fallback
 
 
-def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
-    """Compute live FwdPE estimate from price drift since DD write.
+def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
+    """v1.6: fetch fresh FY EPS estimate from yfinance and auto-match the FY
+    row that the DD anchored on.
 
-    Assumption: consensus FY+2 EPS unchanged since DD. Valid for ~30-90 days;
-    for stale DDs (> 6 months), drift overstates expensiveness because EPS
-    estimates typically grow over time.
+    DD label "FY+1" vs "FY+2" semantics vary by writer (some count from last
+    fiscal year-end, some from current ongoing FY). Instead of guessing, we
+    reverse-engineer the implied EPS at DD time (price_at_dd / fpe_fy2) and
+    pick whichever yfinance annual row (0y / +1y) is closest. This works
+    per-ticker without needing labels.
 
     Returns dict with:
-      live_fpe_est: fpe_fy2 × (price_now / price_at_dd), None if inputs missing
-      pe_drift_pct: % change from DD-time fpe_fy2 (= price drift if EPS static)
+      live_fpe_real:    price_now / yf_eps_matched (None on failure)
+      yf_fy_label:      "0y" | "+1y" — which yfinance row was matched
+      eps_at_dd:        DD-implied EPS (price_at_dd / fpe_fy2)
+      eps_now:          fresh consensus EPS for matched FY
+      eps_revision_pct: (eps_now - eps_at_dd) / eps_at_dd × 100
+    """
+    out = {
+        "live_fpe_real": None,
+        "yf_fy_label": None,
+        "eps_at_dd": None,
+        "eps_now": None,
+        "eps_revision_pct": None,
+    }
+    if not (p_at_dd and fpe_fy2 and p_at_dd > 0 and fpe_fy2 > 0):
+        return out
+    implied = p_at_dd / fpe_fy2
+    out["eps_at_dd"] = round(implied, 4)
+    try:
+        tk = yf.Ticker(yf_ticker)
+        ee = tk.earnings_estimate
+        if ee is None or getattr(ee, "empty", True):
+            return out
+        best = None
+        for row_label in ("0y", "+1y"):
+            try:
+                if row_label not in ee.index:
+                    continue
+                eps = ee.loc[row_label].get("avg")
+                if eps and eps > 0:
+                    err = abs(eps - implied) / implied
+                    if best is None or err < best[1]:
+                        best = (row_label, err, float(eps))
+            except Exception:
+                continue
+        if best is None:
+            return out
+        # Sanity guard: reject if both rows are > 30% off — DD likely used a
+        # different EPS basis (e.g. non-GAAP custom adjustment) and matching
+        # the wrong row would mislead more than the heuristic.
+        if best[1] > 0.30:
+            return out
+        out["yf_fy_label"] = best[0]
+        out["eps_now"] = round(best[2], 4)
+        out["eps_revision_pct"] = round((best[2] - implied) / implied * 100, 1)
+    except Exception:
+        pass
+    return out
+
+
+def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
+    """Compute live FwdPE — preferring fresh yfinance EPS over price-drift heuristic.
+
+    Primary path (v1.6): live_fpe_real = price_now / yfinance FY EPS estimate
+      Captures both price drift AND analyst EPS revisions since DD. Auto-matches
+      the right FY row by implied EPS (DD writers use FY+1 vs FY+2 differently).
+
+    Fallback path (v1.3): live_fpe_heur = fpe_fy2 × (price_now / price_at_dd)
+      Assumes EPS unchanged since DD. Used when yfinance has no earnings_estimate
+      or the match is off (BESI etc).
+
+    Returns dict with:
+      live_fpe_est: live FwdPE (real if matched, heuristic otherwise), None if inputs missing
+      pe_drift_pct: % change from DD-time fpe_fy2 (combines price drift + EPS revision when method=eps)
       dd_age_days: days since DD write date
-      live_pct_5y_est: estimated current 5Y FwdPE percentile (heuristic — assumes
-                       typical 60% relative range; cyclicals will be off)
+      live_pct_5y_est: heuristic current 5Y FwdPE percentile (60% relative range)
+      live_fpe_method: "eps" (real path) | "drift" (heuristic) | None
+      eps_revision_pct: % change in FY EPS estimate since DD (only when method=eps)
+      yf_fy_label: "0y" | "+1y" — which yfinance row was matched (only when method=eps)
     """
     out = {
         "live_fpe_est": None,
         "pe_drift_pct": None,
         "dd_age_days": None,
         "live_pct_5y_est": None,
+        "live_fpe_method": None,
+        "eps_revision_pct": None,
+        "yf_fy_label": None,
     }
     fpe = entry.get("fpe_fy2")
     p_dd = entry.get("price_at_dd")
@@ -523,9 +592,20 @@ def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
     if fpe is None or p_dd is None or p_now is None or p_dd <= 0 or fpe <= 0:
         return out
 
-    drift_factor = p_now / p_dd
-    out["live_fpe_est"] = round(fpe * drift_factor, 2)
-    out["pe_drift_pct"] = round((drift_factor - 1) * 100, 1)
+    # Primary: real EPS path (per ticker yfinance fetch)
+    real = _fetch_live_fy_eps(_yf_ticker_for_ma(entry["ticker"]), p_dd, fpe)
+    if real["eps_now"] is not None and real["eps_now"] > 0:
+        out["live_fpe_est"] = round(p_now / real["eps_now"], 2)
+        out["pe_drift_pct"] = round((out["live_fpe_est"] / fpe - 1) * 100, 1)
+        out["live_fpe_method"] = "eps"
+        out["eps_revision_pct"] = real["eps_revision_pct"]
+        out["yf_fy_label"] = real["yf_fy_label"]
+    else:
+        # Fallback: price-drift heuristic
+        drift_factor = p_now / p_dd
+        out["live_fpe_est"] = round(fpe * drift_factor, 2)
+        out["pe_drift_pct"] = round((drift_factor - 1) * 100, 1)
+        out["live_fpe_method"] = "drift"
 
     # Heuristic live pct_5y: assume the 5Y FwdPE range has relative width ~60%
     # centered on fpe_dd, so [low, high] = [fpe·(1−0.6·pct/100), fpe·(1+0.6·(1−pct/100))].
