@@ -188,6 +188,53 @@ def load_ma_cache(path: Path) -> dict[str, dict]:
     return cache
 
 
+_QUALITY_FIELDS = ("fcf", "roic", "eps2y", "peg", "de")
+
+
+def load_quality_cache(path: Path) -> dict[str, dict]:
+    """v1.5: Read existing latest.json's quality fields (fcf/roic/eps2y/peg/de)
+    so they can be reused when yfinance fails for the quality fetch path.
+
+    Mirrors load_ma_cache(). Only caches yfinance-source rows where at least
+    one of the 5 fields was non-None last run (i.e. previous fetch wasn't
+    itself a total wipe). QGM-sourced rows are skipped — those load from
+    QGM JSON on disk and don't need cache fallback.
+
+    To avoid recursive cache pollution after multi-day outages, we still
+    cache rows previously served from cache, but propagate the original
+    `_cache_stamp` instead of bumping it — so FE always shows the true
+    freshness of the underlying yfinance data.
+    """
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    stamp = data.get("as_of") or "unknown"
+    cache: dict[str, dict] = {}
+    for s in data.get("stocks", []) or []:
+        t = s.get("ticker")
+        if not t:
+            continue
+        src = s.get("quality_source") or ""
+        # Only cache yfinance-path rows (QGM rows load from JSON, no need)
+        if not src.startswith("yfinance"):
+            continue
+        quality = {k: s.get(k) for k in _QUALITY_FIELDS}
+        non_null = sum(1 for v in quality.values() if v is not None)
+        if non_null == 0:
+            continue
+        # Preserve original cache stamp if previous run was already cached
+        existing_stamp = s.get("quality_cache_stamp")
+        cache[t] = {
+            **quality,
+            "_stamp": existing_stamp or stamp,
+            "_was_cached": bool(s.get("quality_from_cache")),
+        }
+    return cache
+
+
 def load_screener_timing_map() -> dict[str, dict]:
     """Build {ticker: {dist_52w_high_pct, ma50_pct, vs_200ma_pct, rs_score,
     rs_1w, rs_4w, rs_13w, timing_source}} from `docs/screener/latest.json`.
@@ -503,6 +550,7 @@ def enrich_ticker(
     timing_fallback: dict,
     skip_ma: bool,
     ma_cache: dict | None = None,
+    quality_cache: dict | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -515,9 +563,32 @@ def enrich_ticker(
 
     v1.3: also computes live_fpe_est / pe_drift_pct / dd_age_days / live_pct_5y_est
     from price drift since DD write (unfreezes valuation columns).
+
+    v1.5: when yfinance returns all-None quality (rate-limit) for a yfinance-
+    source ticker, fall back to previous latest.json's cached values + tag
+    quality_from_cache=True + carry quality_cache_stamp. QGM rows never touch
+    the cache (they load from JSON on disk). Sister to MA cache fallback (v1.4).
     """
     t = entry["ticker"]
     quality, source = get_quality_for_ticker(t, qgm_index)
+
+    # v1.5: quality cache fallback for yfinance-path rows on total-wipe outages.
+    # Only triggers when ALL 5 fields are None AND source is yfinance (QGM rows
+    # come from local JSON, no outage signature). Per-field substitution
+    # preserves any partial fresh data when only some fields fail.
+    quality_from_cache = False
+    quality_cache_stamp = None
+    if source.startswith("yfinance") and quality_cache and t in quality_cache:
+        non_null_fresh = sum(1 for v in quality.values() if v is not None)
+        if non_null_fresh == 0:
+            cached = quality_cache[t]
+            for k in _QUALITY_FIELDS:
+                v = cached.get(k)
+                if v is not None:
+                    quality[k] = v
+            quality_from_cache = True
+            quality_cache_stamp = cached.get("_stamp")
+
     pass_count, fails = evaluate_criteria(quality)
 
     if skip_ma:
@@ -562,6 +633,8 @@ def enrich_ticker(
         "pass_count": pass_count,
         "fail_criteria": fails,
         "quality_source": source,
+        "quality_from_cache": quality_from_cache,
+        "quality_cache_stamp": quality_cache_stamp,
         "ev5y_pct": _ev5y_for(t, dca_ev_map),
         "ma": ma,
         "ma_from_cache": ma_from_cache,
@@ -577,6 +650,11 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     # Step 0: v1.4 — load previous latest.json's MA snapshots as fallback cache
     ma_cache = load_ma_cache(OUTPUT_PATH)
     print(f"  Step 0    MA cache from prev latest.json: {len(ma_cache)} tickers")
+
+    # Step 0b: v1.5 — load previous latest.json's quality fields as fallback
+    # cache for yfinance-source rows (sister to MA cache, same rate-limit cause)
+    quality_cache = load_quality_cache(OUTPUT_PATH)
+    print(f"  Step 0    quality cache from prev latest.json: {len(quality_cache)} yfinance tickers")
 
     # Step 1-2
     universe = load_dd_universe()
@@ -617,7 +695,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
@@ -641,6 +719,11 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     ma_cached = sum(1 for s in enriched if s.get("ma_from_cache"))
     ma_missing = len(enriched) - ma_fresh - ma_cached
     print(f"  Step 5    MA snapshot: fresh={ma_fresh} cached={ma_cached} missing={ma_missing}")
+    yf_rows = [s for s in enriched if (s.get("quality_source") or "").startswith("yfinance")]
+    q_cached = sum(1 for s in yf_rows if s.get("quality_from_cache"))
+    q_wipe = sum(1 for s in yf_rows if all(s.get(k) is None for k in _QUALITY_FIELDS))
+    q_fresh = len(yf_rows) - q_cached - q_wipe
+    print(f"  Step 5    quality (yfinance path): fresh={q_fresh} cached={q_cached} wiped={q_wipe} (of {len(yf_rows)})")
     print(f"  Step 5    pass distribution: pass5={sum(1 for s in enriched if s['pass_count']==5)} "
           f"pass4={sum(1 for s in enriched if s['pass_count']==4)} "
           f"pass3={sum(1 for s in enriched if s['pass_count']==3)}")
