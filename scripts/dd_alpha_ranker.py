@@ -861,6 +861,99 @@ def compute_consensus(angles: dict[str, AngleResult],
     return {"tier_1_overweight": tier_1, "tier_2_satellite": tier_2}
 
 
+# ── anti-consensus (對沖頁面的共識偏向) ────────────────────────────────────────
+# 設計目標：surface 「6 個 angle 多數高分但 1+ 個 angle 反向」的標的，
+# 對沖純共識（cross-group）的「最被一致認可所以利潤被吃完」傾向。
+
+ANTI_STRONG_QUANTILE = 0.25    # top 25% of each angle's distribution
+ANTI_WEAK_QUANTILE = 0.25      # bottom 25%
+ANTI_MIN_STRONG = 3            # 至少 3 個 angle 高分（6 angle 內，考量 A2/A6 經常空）
+ANTI_MIN_WEAK = 1              # 至少 1 個 angle 反向訊號
+ANTI_DISPLAY_MAX = 15          # 上榜上限
+
+
+def _angle_rank_buckets(scores_all: dict[str, float]) -> tuple[set[str], set[str]]:
+    """Return (top_quartile_tickers, bottom_quartile_tickers) for one angle.
+
+    Filtered angles (e.g. Angle 2 起漲點 has scores_all = {} when no candidate
+    passes) return (∅, ∅) — they only contribute "strong" via top5 elsewhere.
+    """
+    if not scores_all:
+        return set(), set()
+    # Sort tickers by score desc; None values treated as -inf (bottom)
+    valid = [(t, s) for t, s in scores_all.items() if s is not None]
+    if len(valid) < 4:
+        return set(), set()
+    valid.sort(key=lambda x: -x[1])
+    n = len(valid)
+    top_n = max(1, int(n * ANTI_STRONG_QUANTILE))
+    bot_n = max(1, int(n * ANTI_WEAK_QUANTILE))
+    top_set = {t for t, _ in valid[:top_n]}
+    bot_set = {t for t, _ in valid[-bot_n:]}
+    return top_set, bot_set
+
+
+def compute_anti_consensus(angles: dict[str, AngleResult],
+                            rows_by_ticker: dict[str, dict]) -> list[dict]:
+    """Find tickers strong in ≥4 angles but with ≥1 weak/contrarian signal.
+
+    Strong = top 25% of that angle's distribution (or top5 for filtered angles)
+    Weak   = bottom 25% of that angle's distribution
+    Missing from a filtered angle (e.g. Angle 2) ≠ weak (no signal at all).
+    """
+    # Pre-compute top/bottom quartile sets for each angle
+    angle_buckets: dict[str, tuple[set, set]] = {}
+    angle_top5: dict[str, set] = {}
+    for ak, ar in angles.items():
+        sa = getattr(ar, "scores_all", None) or {}
+        angle_buckets[ak] = _angle_rank_buckets(sa)
+        angle_top5[ak] = {e["ticker"] for e in ar.top5}
+
+    # Union of all tickers that appear in any angle (top5 or scores)
+    all_tickers: set[str] = set()
+    for ak, ar in angles.items():
+        all_tickers.update(angle_top5[ak])
+        sa = getattr(ar, "scores_all", None) or {}
+        all_tickers.update(sa.keys())
+
+    rows: list[dict] = []
+    for t in all_tickers:
+        strong_angles: list[str] = []
+        weak_angles: list[str] = []
+        for ak in ANGLE_META:
+            top_set, bot_set = angle_buckets.get(ak, (set(), set()))
+            in_top5 = t in angle_top5.get(ak, set())
+            if t in top_set or in_top5:
+                strong_angles.append(ak)
+            elif t in bot_set:
+                weak_angles.append(ak)
+
+        if len(strong_angles) < ANTI_MIN_STRONG or len(weak_angles) < ANTI_MIN_WEAK:
+            continue
+        # Exclude pure-consensus picks (no weak signal) — those go in Tier 1/2 instead
+        r = rows_by_ticker.get(t, {})
+        rows.append({
+            "ticker": t,
+            "name": r.get("name", t),
+            "strong_count": len(strong_angles),
+            "weak_count": len(weak_angles),
+            "strong_angles": strong_angles,
+            "weak_angles": weak_angles,
+            "ma": r.get("ma_state", "—"),
+            "moat_grade": r.get("moat_grade", ""),
+            "moat_score": r.get("moat_score"),
+            "signal": r.get("signal", ""),
+            "ev5y": r.get("ev5y"),
+            "dd_path": r.get("dd_path"),
+            "dca_path": r.get("dca_path"),
+        })
+
+    # 排序：strong desc → weak asc（1 個反向比 2 個值得看）→ moat desc → ticker
+    rows.sort(key=lambda x: (-x["strong_count"], x["weak_count"],
+                             -(x["moat_score"] or 0), x["ticker"]))
+    return rows[:ANTI_DISPLAY_MAX]
+
+
 # ── layer state IO ────────────────────────────────────────────────────────────
 
 def state_path(layer: str) -> Path:
@@ -934,6 +1027,7 @@ def render_html(merged: dict, out_path: Path) -> None:
     universe = merged["universe"]
     angles = merged["angles"]
     consensus = merged["consensus"]
+    anti_consensus = merged.get("anti_consensus", []) or []
 
     # Universe stats
     total = universe.get("total", 0)
@@ -1012,6 +1106,10 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
 .tier-card td a:hover{{text-decoration:underline}}
 .empty-row{{padding:14px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}}
 .angles-hit-pill{{display:inline-block;padding:1px 5px;margin-right:3px;border-radius:3px;background:#eff6ff;color:#1e40af;font-size:9px;font-weight:600}}
+.angles-hit-pill.strong{{background:#dcfce7;color:#166534}}
+.angles-hit-pill.weak{{background:#fed7aa;color:#9a3412}}
+.tier-card.tier-anti h3{{color:#9a3412}}
+.tier-card.tier-anti h3 .badge{{background:#fed7aa;color:#9a3412}}
 .footer{{padding:30px 32px;font-size:11px;color:#5a7a9a;line-height:1.7;max-width:min(1400px,96vw);margin:0 auto;border-top:1px solid #dce8f5}}
 .footer h4{{color:#1e3a5f;font-size:12px;margin-top:14px;margin-bottom:6px;font-weight:700}}
 .footer code{{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:10px;color:#1e3a5f}}
@@ -1103,6 +1201,16 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
     {_tier_table('tier-1', '🔵 Tier 1 — 跨 3 組（重倉候選）', consensus.get('tier_1_overweight', []))}
     {_tier_table('tier-2', '🟡 Tier 2 — 跨 2 組（衛星候選）', consensus.get('tier_2_satellite', []))}
   </div>
+
+  <div class="consensus-section">
+    <h2>🟠 反向訊號 — Anti-Consensus</h2>
+    <div class="desc">
+      3+ 個 angle 進 top quartile (~25%) <strong>但 1+ 個 angle 落 bottom quartile</strong> 的標的。
+      設計用意：對沖前面共識頁面對「萬事齊綠燈」的偏好 — 多數 alpha 來自有<strong>具體爭議點</strong>的標的，
+      非全綠燈。反向訊號 angle（橘色 badge）就是市場分歧處 — 也是 thesis 該深入的地方。
+    </div>
+    {_anti_consensus_table(anti_consensus)}
+  </div>
 </div>
 
 <div class="footer">
@@ -1114,6 +1222,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
     <li>角度 4 護城河複利：<code>moat_num × stress_pass_rate × val_num</code> (S=5/A=4/B=3/C=2/X=1；🟢=1/🟡=.6/🟠=.3/🔴=0)</li>
     <li>角度 5 RS 動能：US 用 screener rs_score；非美股 13W 報酬 percentile 於非美股 sub-universe</li>
     <li>角度 6 Jensen's Alpha：5Y 週線對 SPY OLS 迴歸取 α × 52 = annualized %（歷史實現值）</li>
+    <li>反向訊號 Anti-Consensus：strong = top 25% of angle 分位；weak = bottom 25%。入榜條件 strong ≥ 3 ∩ weak ≥ 1（用以對沖共識 tier 偏向「萬事齊綠燈」的 mega-cap）</li>
   </ul>
   <h4>更新頻率</h4>
   <ul>
@@ -1260,6 +1369,49 @@ def _angle_card(angle_key: str, a: dict | AngleResult) -> str:
       {rows_html}
     </div>
     """
+
+
+def _anti_consensus_table(rows: list[dict]) -> str:
+    """Render anti-consensus tier card (strong ≥4 + weak ≥1)."""
+    out = (f"<div class='tier-card tier-anti'>"
+           f"<h3>🟠 反向訊號（3+ 強 / 1+ 反向） <span class='badge'>{len(rows)} 檔</span></h3>")
+    if not rows:
+        out += "<div class='empty-row'>本期無同時跨多 angle 強且有反向訊號的標的</div></div>"
+        return out
+    out += """<table><thead><tr>
+      <th class="left">標的</th>
+      <th>強/反</th>
+      <th class="left">強 angle</th>
+      <th class="left">反向 angle</th>
+      <th>護城河</th>
+      <th>訊號</th>
+      <th>MA</th>
+      <th class="left">連結</th>
+    </tr></thead><tbody>"""
+    for r in rows:
+        strong_pills = " ".join(
+            f"<span class='angles-hit-pill strong'>{_escape(a.replace('angle_', 'A'))}</span>"
+            for a in r.get("strong_angles", [])
+        )
+        weak_pills = " ".join(
+            f"<span class='angles-hit-pill weak'>{_escape(a.replace('angle_', 'A'))}</span>"
+            for a in r.get("weak_angles", [])
+        )
+        href_dd = f"<a href='{_escape(r.get('dd_path') or '#')}'>DD</a>" if r.get("dd_path") else "—"
+        href_dca = f" · <a href='{_escape(r.get('dca_path'))}'>DCA</a>" if r.get("dca_path") else ""
+        out += (f"<tr>"
+                f"<td class='left'>{_escape(r['ticker'])} <span style='color:#94a3b8;font-size:10px'>{_escape(r.get('name', ''))}</span></td>"
+                f"<td><strong style='color:#166534'>{r['strong_count']}</strong>"
+                f" / <strong style='color:#92400e'>{r['weak_count']}</strong></td>"
+                f"<td class='left'>{strong_pills}</td>"
+                f"<td class='left'>{weak_pills}</td>"
+                f"<td>{_escape(r.get('moat_grade', ''))}</td>"
+                f"<td>{_escape(r.get('signal', ''))}</td>"
+                f"<td>{_escape(r.get('ma', '—'))}</td>"
+                f"<td class='left'>{href_dd}{href_dca}</td>"
+                f"</tr>")
+    out += "</tbody></table></div>"
+    return out
 
 
 def _tier_table(css_class: str, header: str, rows: list[dict]) -> str:
@@ -1467,6 +1619,7 @@ def merge_layer_states(rows: list[dict]) -> dict:
                    if k not in ("name", "type", "group", "top5", "scores_all")},
         )
     consensus = compute_consensus(angle_objs, rows_by_ticker)
+    anti_consensus = compute_anti_consensus(angle_objs, rows_by_ticker)
 
     us_count = sum(1 for r in rows if not _is_non_us(r["ticker"]))
     non_us_count = len(rows) - us_count
@@ -1495,6 +1648,7 @@ def merge_layer_states(rows: list[dict]) -> dict:
         "consensus_groups": GROUPS,
         "angles": {k: a.to_jsonable() for k, a in angle_objs.items()},
         "consensus": consensus,
+        "anti_consensus": anti_consensus,
         "v2_extensions_reserved": [
             "ic_weights", "factor_orthogonalization", "drawdown_factor",
             "momentum_smoothness", "outlier_detection", "kelly_sizing",
