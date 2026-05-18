@@ -44,7 +44,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 .filter-label{font-size:11px;color:#5a7a9a;font-weight:600;margin-right:2px}
 .chip{padding:4px 11px;border:1px solid #dce8f5;border-radius:999px;font-size:11px;cursor:pointer;background:#fff;color:#5a7a9a;user-select:none}
 .chip.active{background:#1e3a5f;color:#fff;border-color:#1e3a5f}
-#search-ticker{padding:3px 9px;border:1px solid #dce8f5;border-radius:6px;font-size:11px;width:140px;font-family:inherit;color:#1e3a5f;outline:none}
+#search-ticker{padding:3px 9px;border:1px solid #dce8f5;border-radius:6px;font-size:11px;width:240px;font-family:inherit;color:#1e3a5f;outline:none}
 #search-ticker:focus{border-color:#1e3a5f}
 #search-clear{padding:3px 7px;border:1px solid #dce8f5;border-radius:6px;font-size:10px;background:#fff;color:#94a3b8;cursor:pointer;font-family:inherit}
 #search-clear:hover{color:#1e3a5f;border-color:#94a3b8}
@@ -230,8 +230,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     </div>
     <div class="filter-group" style="margin-left:auto">
       <span class="filter-label">查 ticker</span>
-      <input type="text" id="search-ticker" placeholder="例：NVDA / 2330.TW" autocomplete="off"
-        title="輸入後在上方顯示該檔資料，不受其他 chip 篩選影響" />
+      <input type="text" id="search-ticker" placeholder="例：NVDA TSM AVGO（多檔以空白或逗號分隔）" autocomplete="off"
+        title="輸入單檔或多檔，以空白 / 逗號分隔。結果依輸入順序顯示，不受其他 chip 篩選影響" />
       <button type="button" id="search-clear" title="清除">✕</button>
     </div>
   </div>
@@ -809,17 +809,28 @@ function renderSearch() {
     return;
   }
 
-  // Case-insensitive substring match on ticker. Common typo "2330" → 2330.TW
-  // is also accepted because indexOf works on raw uppercased ticker incl. dot.
-  var hits = (DATA.stocks || []).filter(function(s) {
-    return (s.ticker || '').toUpperCase().indexOf(q) !== -1;
+  // Multi-ticker support: tokenize by whitespace / comma / slash.
+  // Each token does case-insensitive substring match on ticker
+  // (so "NV" still hits NVDA, "2330" still hits 2330.TW).
+  // Hits preserve input-token order so "NVDA TSM AVGO" shows in that sequence.
+  var tokens = q.split(/[\s,/]+/).filter(function(t) { return t.length > 0; });
+  var seen = {};
+  var hits = [];
+  tokens.forEach(function(tok) {
+    (DATA.stocks || []).forEach(function(s) {
+      var t = (s.ticker || '').toUpperCase();
+      if (t.indexOf(tok) !== -1 && !seen[t]) {
+        seen[t] = true;
+        hits.push(s);
+      }
+    });
   });
 
   count.textContent = hits.length;
   panel.classList.remove('hidden');
 
   if (!hits.length) {
-    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。可輸入完整或部分代碼（例：NVDA / NV / 2330 / 2330.TW），不分大小寫。</p>';
+    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。可輸入單檔或多檔，以空白 / 逗號分隔（例：NVDA / NVDA TSM AVGO / 2330.TW, GOOGL），不分大小寫。</p>';
     return;
   }
 
