@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="dd-schema-version" content="v12.3">
+<title>HON (Honeywell International) v12.3 Inception DD — 2026-05-18</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;
+  --good-bg:#DCFCE7;--good-tx:#166534;
+  --bad-bg:#FEE2E2;--bad-tx:#991B1B;
+  --warn-bg:#FEF9C3;--warn-tx:#92400E;
+  --info-bg:#EFF6FF;--info-tx:#1E40AF;
+  --trap-bg:#FFF0E6;--trap-accent:#F97316;--trap-tx:#C2410C;
+  --bull-bg:#F0FDF4;--bull-accent:#16A34A;
+  --bear-bg:#FFF1F2;--bear-accent:#DC2626;
+  --arb-bg:#F5F3FF;--arb-accent:#7C3AED;
+  --short-bg:#F0F9FF;--short-accent:#0284C7;
+  --mid-bg:#F5F3FF;--mid-accent:#7C3AED;
+  --long-bg:#ECFDF5;--long-accent:#059669;--long-tx:#065F46;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:0;background:var(--bg);color:#0F172A;
+  font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+  font-size:15px;line-height:1.7}
+code,.mono{font-family:'IBM Plex Mono',ui-monospace,Menlo,monospace}
+header{position:sticky;top:0;background:#0F172A;color:#fff;padding:10px 20px;
+  z-index:10;font-size:13px;display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:8px}
+header .meta{font-family:'IBM Plex Mono',monospace;opacity:.85}
+nav.dd-toc{background:#fff;border-left:4px solid var(--accent);
+  padding:14px 18px;margin:16px 24px;border-radius:6px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);display:flex;flex-wrap:wrap;gap:8px}
+nav.dd-toc a{background:var(--info-bg);color:var(--info-tx);
+  padding:5px 12px;border-radius:999px;text-decoration:none;font-size:13px;
+  font-weight:500;border:1px solid #DBEAFE;transition:all .15s}
+nav.dd-toc a:hover{background:var(--accent);color:#fff}
+main{padding:0 24px 80px}
+section{background:var(--card);margin:20px 0;padding:24px 28px;border-radius:8px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);scroll-margin-top:80px}
+h1{font-size:24px;color:var(--ink);margin:8px 0;font-weight:700}
+h2{font-size:20px;color:var(--ink);margin:0 0 16px;padding:10px 14px;
+  background:#F1F5F9;border-left:4px solid var(--accent);border-radius:4px;
+  scroll-margin-top:80px}
+h3{font-size:17px;color:var(--ink);margin:18px 0 10px;font-weight:600}
+h4{font-size:15px;color:var(--ink);margin:14px 0 8px;font-weight:600}
+p{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+th{background:var(--ink);color:#fff;padding:8px 10px;text-align:left;font-weight:500}
+td{padding:8px 10px;border-bottom:1px solid #E2E8F0;vertical-align:top}
+tr:nth-child(even) td{background:#F1F5F9}
+.reasoning{background:#F8FAFC;border-left:3px solid var(--accent);
+  padding:10px 14px;margin:8px 0;font-size:13.5px;line-height:1.6}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;
+  font-weight:500;margin:0 4px 0 0}
+.good{background:var(--good-bg);color:var(--good-tx)}
+.bad{background:var(--bad-bg);color:var(--bad-tx)}
+.warn{background:var(--warn-bg);color:var(--warn-tx)}
+.info{background:var(--info-bg);color:var(--info-tx)}
+.hypothesis-box{background:var(--info-bg);border-left:4px solid var(--accent);
+  padding:14px 18px;border-radius:4px;margin:12px 0}
+.hypothesis-box ul{margin:0;padding-left:20px}
+.hypothesis-box li{margin:6px 0;line-height:1.65}
+.trap-box{background:var(--trap-bg);border-left:4px solid var(--trap-accent);
+  padding:14px 18px;border-radius:4px;margin:14px 0}
+.trap-box h4{color:var(--trap-tx);margin-top:0}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:14px 0}
+.col-card{padding:14px;border-radius:6px;border-left:4px solid #E2E8F0}
+.col-bull{background:var(--bull-bg);border-left-color:var(--bull-accent)}
+.col-bear{background:var(--bear-bg);border-left-color:var(--bear-accent)}
+.col-arb{background:var(--arb-bg);border-left-color:var(--arb-accent)}
+.col-short{background:var(--short-bg);border-left-color:var(--short-accent)}
+.col-mid{background:var(--mid-bg);border-left-color:var(--mid-accent)}
+.col-long{background:var(--long-bg);border-left-color:var(--long-accent)}
+.col-long h4{color:var(--long-tx)}
+.col-card h4{margin-top:0;font-size:15px}
+.note{font-size:12.5px;color:#475569;margin-top:8px;font-style:italic}
+.print-btn{position:fixed;bottom:20px;right:24px;background:var(--accent);color:#fff;
+  border:none;padding:10px 18px;border-radius:24px;cursor:pointer;font-weight:500;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:20}
+@media print{header,nav.dd-toc,.print-btn{display:none}
+  section{box-shadow:none;break-inside:avoid;page-break-inside:avoid}
+  body{font-size:11.5px}}
+@media (max-width:760px){.three-col{grid-template-columns:1fr}
+  nav.dd-toc{margin:12px}}
+</style>
+</head>
+<body>
+<header>
+  <div><b>HON</b> ｜ Honeywell International Inc. ｜ Schema <span class="mono">v12.3</span></div>
+  <div class="meta">資料抓取 2026-05-18 ｜ 現價 $213.24 ｜ Q1 2026 (2026-04-22)</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<main>
+
+<section id="s1">
+<h2>§1｜投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出。<b>本份為 HON 首份 v12.3 DD（Inception DD），三段式拆分中（Solstice 已分割 2025-10-30，Aerospace 預計 2026 Q3 分割為 HONA）</b>，估值與 SOTP 評估須對應「pre-spin 集團」與「post-spin pure-play」雙軌邏輯。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡（中性）：</strong>§8 長期成長性 🟡（混合：Aerospace + Building Auto 強，Industrial Auto 落後）｜§9 護城河趨勢 穩定｜§8 F AI 風險 🟢｜判斷：拆分前是不均衡集團，拆分後將形成兩個 pure-play 順風 vehicle</li>
+<li><strong>品質 B 級（護城河 8/10）：</strong>Execution 8 / Pricing 8｜體質 veto 0 項不過｜B 級不變（接近 A 下緣但未及 9 分）</li>
+<li><strong>估值燈 🟠 偏貴：</strong>Fwd PE 20.3x（FY26 中值 $10.50）5Y 分位 ~19%｜PEG = 20.3 ÷ 7.8% = 2.60；後拆分常態化 9% 算 PEG 2.26 → 🟠｜盲點 1 救援：否（PEG &gt; 2.0）</li>
+<li><strong>Pure MA 🟡 減半進場：</strong>W52 $212.11 / W104 $206.16 / W250 $195.07（斜率 +0.32% 持平）｜價 &gt; W52 &gt; W104 &gt; W250 但 W250 斜率介於 ±3% → 🟡</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,408 vs W104 6,174（+20% 之上，無系統性風險）</li>
+<li><strong>參考 R:R：</strong>短期 +11%｜中期 +20%｜5Y +43%｜Bear 下檔 −15%</li>
+<li><strong>綜合訊號：<span style="font-size:20px">B（觀望偏進場）</span></strong>｜B 級品質 + 估值 🟠 + MA 🟡 雙減半 → QC-31 step 5「thesis 完整但時機不到」</li>
+<li><strong>長期持有信心：中</strong>（Aerospace 拆分後 SOTP unlock 是中期 catalyst，但 Industrial Auto 結構性挑戰未解）｜<strong>陷阱定性：🟢 非陷阱</strong>（拆分本身就是價值結晶機制）</li>
+<li><strong>Inception DD：</strong><code>DD_HON_20260518.html</code>（2026-05-18）— 該 ticker 首份 v12.2+ DD</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-18（距今 365 天）</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心滿格｜A = 核心｜B = 衛星｜C = 觀察池｜X = 迴避。倉位 % 由 portfolio-manager skill 決定。</p>
+
+<div class="trap-box">
+<h4>⚠️ 這是價值陷阱嗎？（強制回答題）</h4>
+<table>
+<tr><th width="22%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td>不適用 — <b>非陷阱</b>。HON 是「主動釋放價值的集團拆解」：Elliott 推動下 2025/2 宣布三分，已執行 Solstice spin、PSS 出售 $1.4B、計畫 Q3 2026 Aerospace 拆分為 HONA。價格折扣不是市場誤判而是「拆分前 holding co. discount」。</td></tr>
+<tr><td>支持「這不是陷阱」的最強論據</td><td>① Aerospace 是 GE Aerospace 等級資產（FY25 sales $17.5B、雙位數成長、OI margin 27%+），按 30-32x Fwd PE 比，獨立後 HONA 合理估值可達 $80-100B。② 體質 veto 全過：FCF/NI 1.32、Net Debt/EBITDA 2.1x、GM 趨穩。③ Q1 26 segment margin +90bps 至 23.3%。</td></tr>
+<tr><td>支持「這可能是陷阱」的最強反駁</td><td>Industrial Automation FY25 -6% 是真實的結構性弱化；若 2026 Q2-Q3 仍持續疲軟，post-spin Automation 公司可能比預期更弱。<b>並且 HONA Form 10 揭示帶走 $22B debt（$16B New Money + $6B Exchange Notes，遠高於市場原預期 $8-12B）</b>，初始 EV/EBITDA 因高 leverage 被壓制。</td></tr>
+<tr><td>如何在持有期間判斷陷阱是否發生</td><td>領先指標：① Industrial Auto 連 2 季 organic &lt; -3% → 警戒；② HONA 拆分後 EV/EBITDA 跌破 25x 連 2 季 → 陷阱觸發，重新評估 thesis</td></tr>
+</table>
+<p><b>最終定性：🟢 非陷阱</b> — 拆分本身就是價值結晶</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>HONA Aerospace spin Form 10 final terms（debt allocation / distribution ratio）</td><td>§5 H1</td><td>若延後至 Q4 26 → 削弱；若 net debt &lt; $18B → 強化（已知 $22B 為偏高基準）</td></tr>
+<tr><td>2</td><td>Industrial Automation 季度 organic sales（剝離 PSS 後可比）</td><td>§8 / §11</td><td>連 2 季 &lt; −3% → 削弱；連 2 季 ≥ +3% → 強化</td></tr>
+<tr><td>3</td><td>HONA 上市後 6 個月 sell-side 共識 EV/EBITDA</td><td>§13 / §6</td><td>≥ 25x SOTP 驗證；&lt; 22x 連 2 季 thesis 失效 signal 降 C</td></tr>
+</table>
+</section>
+
+<section id="s2">
+<h2>§2｜四層判定（v12.3）</h2>
+
+<h3>0｜產業風向燈 🟡 中性</h3>
+<table>
+<tr><th width="35%">輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性</td><td>🟡 中等可見度（Runway 7-9 年，混合）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（Aero 加深、Industrial 持平、Building 加深）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益</td></tr>
+<tr><td>一句話</td><td>拆分前不均衡集團；拆分後 HONA 🟢 順風 + RemainCo 🟡 中性</td></tr>
+</table>
+<div class="reasoning">推導：§8 🟡 + 護城河穩定 + AI 🟢 → 取保守 🟡。implication：盲點 1 救援不適用（§8 非 🟢，PEG &gt; 2 時 🟠 無法救回 🟡）</div>
+
+<h3>B｜品質等級</h3>
+<h4>體質 veto mini-list（5 項）</h4>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt;2%p</td><td><span class="tag good">✅</span></td><td>FY23 37.48% → FY24 38.47% → FY25 36.93%（-1.54pp 未達 2pp 閾值）</td></tr>
+<tr><td>2</td><td>FCF / NI ≥ 0.7</td><td><span class="tag good">✅</span></td><td>FY25 1.15；TTM 1.32</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="tag good">✅</span></td><td>FY26 EPS $10.40-10.55 穩定</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="tag good">✅</span></td><td>2025 Q1-Q4 +4/+5/+6/+6%；Q1 26 -1.7% reported（含 Solstice 一次性）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="tag good">✅</span></td><td>$21B / $10B ≈ 2.1x</td></tr>
+</table>
+<p><b>體質 veto 結果</b> = 0 項不過 → 等級不變</p>
+
+<h4>護城河等級</h4>
+<table>
+<tr><th>輸入</th><th>值</th></tr>
+<tr><td>Execution Moat</td><td>8 / 10</td></tr>
+<tr><td>Pricing Power Moat</td><td>8 / 10</td></tr>
+<tr><td>合併分</td><td>8 / 10</td></tr>
+<tr><td><b>等級</b></td><td><b>B 級</b>（接近 A 下緣）</td></tr>
+</table>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY26）</td><td>$10.50</td><td>mgmt mid $10.35-10.65 + 共識 ~$10.45</td></tr>
+<tr><td>FY+2 EPS（FY27）</td><td>$11.35</td><td>共識 +8%</td></tr>
+<tr><td>FY+1 Forward P/E</td><td>20.3x</td><td>$213.24 / $10.50</td></tr>
+</table>
+
+<h3>D｜估值燈 🟠 偏貴</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE</td><td>20.3x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>18x ~ 30x（5Y avg 24.4x）</td></tr>
+<tr><td>5Y 分位</td><td>(20.3 − 18) / (30 − 18) = <b>19%</b></td></tr>
+<tr><td>3Y EPS CAGR</td><td>+7.8%</td></tr>
+<tr><td>PEG（嚴格）</td><td>20.3 / 7.8 = <b>2.60</b> 🔴</td></tr>
+<tr><td>PEG（後拆分 9%）</td><td>2.26 🟠</td></tr>
+<tr><td><b>估值燈</b></td><td>🟠 偏貴（取嚴 + 部分反映 spin transaction cost 暫壓低 CAGR）</td></tr>
+<tr><td>盲點 1 救援</td><td>否（§8 🟡 非 🟢；PEG &gt; 2.0）</td></tr>
+</table>
+
+<h3>E｜R:R + Bear Case（v12.3 瘦身）</h3>
+<div class="three-col">
+<div class="col-card col-short">
+<h4>① 短期 R:R</h4>
+<p>$10.50 × 22.5x = <b>$236</b><br>上行 +10.7%｜R:R ≈ <b>0.72x</b></p>
+</div>
+<div class="col-card col-mid">
+<h4>② 中期 R:R</h4>
+<p>$11.35 × 22.5x = <b>$255</b><br>上行 +19.6%｜R:R ≈ <b>1.32x</b></p>
+</div>
+<div class="col-card col-long">
+<h4>③ 5Y R:R</h4>
+<p>$14.50 × 21x = <b>$305</b><br>上行 +43.0%｜R:R ≈ <b>2.91x</b></p>
+</div>
+</div>
+<p><b>Bear anchor</b>：Bear EPS $9.45 × Bear PE 19x → <b>$180</b>（-15.4%）。W104 Low $169（參考）</p>
+
+<h3>F｜Pure MA 🟡 減半進場</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$213.24</td></tr>
+<tr><td>W52 / 斜率</td><td>$212.11 / +3.40%</td></tr>
+<tr><td>W104 / 斜率</td><td>$206.16 / +2.30%</td></tr>
+<tr><td>W250 / 斜率 13w</td><td>$195.07 / <b>+0.32%</b> 持平</td></tr>
+<tr><td>52W / 104W H/L</td><td>$248.18 / $186.76（52W）；H $248.18 / L $169.05（104W）</td></tr>
+<tr><td>Bollinger 上/中/下</td><td>$248.89 / $226.04 / $203.19（現價中軌下 6%）</td></tr>
+<tr><td>狀態</td><td>價 &gt; W52 &gt; W104 &gt; W250 + W250 持平 → <b>🟡 減半進場</b></td></tr>
+</table>
+
+<h3>G｜大盤豁免 ✅ 正常</h3>
+<p>SPX 7,408.50 vs W104 6,173.73（+20%，無系統性風險）→ 豁免係數 × 1.0</p>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier</td><td>B</td></tr>
+<tr><td>gate</td><td>🟠</td></tr>
+<tr><td>ma_status</td><td>🟡 減半</td></tr>
+<tr><td>benchmark_regime</td><td>✅ 正常</td></tr>
+<tr><td>trap</td><td>🟢</td></tr>
+<tr><td><b>final_signal</b></td><td><b>B（觀望偏進場）</b></td></tr>
+</table>
+<p>判定理由：B 級品質 + 估值 🟠 + MA 🟡 雙減半，thesis 完整但時機不到，QC-31 step 5 落 B</p>
+
+<h3>I｜長期展望</h3>
+<table>
+<tr><th>維度</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>~8 年混合（Aero 10+、Industrial 6-7、Building 8-10）</td></tr>
+<tr><td>護城河趨勢</td><td>穩定（Aero 加深、Industrial 持平、Building 加深）</td></tr>
+<tr><td><b>長期持有信心</b></td><td><b>中</b></td></tr>
+</table>
+<p><b>一句話</b>：🟡 中性產業位置，B 級護城河 8/10，三段式拆分將釋放 conglomerate discount。估值 🟠 + Pure MA 🟡 減半。關鍵觀察：HONA 拆分後 6 個月內 EV/EBITDA 是否 ≥ 25x。</p>
+</section>
+
+<section id="s3">
+<h2>§3｜三方辯論</h2>
+<div class="three-col">
+<div class="col-card col-bull">
+<h4>多頭 Munger</h4>
+<ol>
+<li><b>SOTP unlock catalyst 明確</b>：HONA × GE Aerospace 30x = $95B + RemainCo × EMR 22-25x = $60B → 合計 $155B vs 當前 $138B → 上行 12%</li>
+<li><b>Aerospace 雙位數成長 + 後市場長尾</b>：14 季連續雙位數 output growth 軌道，aftermarket 雙位數，defense 雙位數</li>
+<li><b>體質 + 低估值</b>：FCF/NI 1.32、Net Debt/EBITDA 2.1x、Fwd PE 5Y 分位僅 19%</li>
+</ol>
+<p><b>一句話</b>：你在 $213 買 HON，等於 $130 買了一張 HONA 票（5 個月後出來，公允價值 $150）+ 免費送一張 Automation 部分</p>
+</div>
+
+<div class="col-card col-bear">
+<h4>空頭 Burry</h4>
+<ol>
+<li><b>Industrial Auto 結構性弱化</b>：FY25 -6%，EMR AspenTech + ROK FactoryTalk 雙重侵蝕</li>
+<li><b>HONA Form 10 揭示 $22B debt（高於市場估 $8-12B 2x）</b>，起始 net debt/EBITDA 4.4x vs GE Aerospace 1.1x，初始 EV/EBITDA 從 27x 被壓至 23-25x</li>
+<li><b>$15B M&A 整合風險未現</b>：2024 Johnson Matthey 觸媒 mix 不利已在 Q3 25 出現 -300bps margin compression</li>
+</ol>
+<p><b>一句話</b>：HONA 帶走 $22B 債務 + RemainCo Industrial 連續疲軟 = SOTP 折扣消散後股價反而還在 $200</p>
+</div>
+
+<div class="col-card col-arb">
+<h4>仲裁員 Damodaran</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td>6.5 / 10</td></tr>
+<tr><td>依據</td><td>EV $159B / FY26 EBITDA $9.8B = 16.2x，需 7-8% 永續 FCF 成長 + ROIC &gt; 12% justify；當前 ROIC 10-12% 介於合理偏高</td></tr>
+<tr><td>歷史對標</td><td>GE 拆分前 EV/EBITDA 19x，三 vehicle 18 個月 +101%；HON 是同類但 HONA 起始 $22B debt 不利對標</td></tr>
+</table>
+<p><b>一句話</b>：估值不算便宜也不算貴；買 HON 你是在賭拆分執行 + 市場願意給 pure-play 更高倍數 — 事件驅動 trade 非 deep value</p>
+</div>
+</div>
+</section>
+
+<section id="s4">
+<h2>§4｜序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>Honeywell 解決的長期且不可逆痛點是 — 當人類在天上飛、在工廠運轉、在大樓內呼吸時，希望這些事「可預測地不出錯」。</p>
+<ul>
+<li><b>Aerospace</b>：商用航班 90% 飛機 avionics penetration、APU 35% 全球市佔；100,000+ APU 在役；72,000+ 引擎交付 since 1959</li>
+<li><b>Industrial Automation（UOP + Process Tech）</b>：全球煉油廠 ~60% 採用 HON UOP 觸媒（UOP 1914 成立）；LNG、SAF、再生能源原料仰賴 HON 製程 IP</li>
+<li><b>Building Automation</b>：全球商辦大樓 BMS ~30% 跑 HON Niagara framework</li>
+</ul>
+
+<h3>護城河形成歷史路徑</h3>
+<table>
+<tr><th>年代</th><th>milestone</th><th>貢獻</th></tr>
+<tr><td>1906</td><td>Honeywell Heating Specialty 成立</td><td>暖通控制起源</td></tr>
+<tr><td>1914</td><td>UOP 成立（後 1959 併入 Allied）</td><td>奠定煉油觸媒 IP 110 年</td></tr>
+<tr><td>1957</td><td>首具民用噴射機 APU 認證</td><td>Aerospace 護城河起點：認證壁壘 + 50 年安裝基礎</td></tr>
+<tr><td>1999</td><td>AlliedSignal + Honeywell 合併</td><td>形成現代 4 大部門結構</td></tr>
+<tr><td>2002-2017</td><td>Cote 時代收購 Tridium（Niagara）、Intelligrated 等</td><td>Building Auto 軟體層 + 倉儲自動化</td></tr>
+<tr><td>2018</td><td>Garrett + Resideo 分割</td><td>第一波 simplify portfolio</td></tr>
+<tr><td>2024</td><td>Vimal Kapur 接任 CEO；Elliott 入股推動拆分</td><td>從「捍衛集團」轉「主動釋放價值」</td></tr>
+<tr><td>2025-2026</td><td>Solstice 拆分 + Sundyne $2.16B + PSS 賣 Brady $1.4B + HONA Form 10 申報 + HONA 預計 Q3 2026 上市</td><td>三段式重組完成</td></tr>
+</table>
+
+<h3>逆向推演（Munger Inversion）三維</h3>
+<h4>① 技術維度</h4>
+<ul>
+<li>APU 電氣化加速（MEA 去 APU）；UOP 觸媒被 Sinopec / Topsoe 滲透；Niagara 被開源 BMS 顛覆；3D 列印替代 aftermarket 零件</li>
+</ul>
+<h4>② 管理維度</h4>
+<ul>
+<li>Capex 慣性（HONA over-spend 在電氣化）；創辦人退場效應（Cote 紀律淡去，Kapur 未經完整週期）；$15B M&A 整合失敗</li>
+</ul>
+<h4>③ 結構維度</h4>
+<ul>
+<li>商用航空週期反轉 2027-2029；監管型再分拆風險；計算範式轉換（Industrial AI 邊緣化 HON Forge）</li>
+</ul>
+</section>
+
+<section id="s5">
+<h2>§5｜投資論點錨定</h2>
+
+<h3>A｜持有期 24 個月</h3>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>假設</th><th>2Y</th><th>5Y</th><th>10Y</th><th>具體閾值</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td>SOTP unlock 機制成立：HONA 12M EV/EBITDA ≥ 25x</td><td>HONA 6M EV/EBITDA ≥ 25x</td><td>HONA 維持 30x</td><td>HONA+RemainCo 合計 $230B</td><td>HONA ≥ 25x；distribution +30d 市值 ≥ $90B</td><td>HONA &lt; 22x 連 2 季 → 削弱</td></tr>
+<tr><td>H2</td><td>Aerospace 後市場循環 2026-2028 上行</td><td>Aero organic ≥ 8%</td><td>Aero OEM volume +5%；aftermarket margin 28%+</td><td>HONA 35,000+ APUs in service</td><td>季度 Aero organic ≥ +6%</td><td>TTM organic &lt; +3% 連 2 季 → 削弱</td></tr>
+<tr><td>H3</td><td>RemainCo Automation margin 從 23% 擴至 25%+</td><td>Building ≥ +6%、Industrial 由負轉正</td><td>RemainCo seg margin 25%；ROIC 13%</td><td>Process+Building $14B → $20B</td><td>Building YoY ≥ +6%</td><td>Industrial &lt; -3% 連 2 季 → 削弱</td></tr>
+</table>
+
+<h3>B'｜12M 前 DD 對照</h3>
+<div class="hypothesis-box">
+<p>進場未滿一年（Inception 2026-05-18）。2027-05-18 起首次有資料對照</p>
+</div>
+
+<h3>C｜三個風險（v12.3 時間尺度）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>時間尺度</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>HONA 拆分執行偏離（debt 過高 / 延後 / distribution ratio 不利）</td><td>⚡ 1-2 季</td><td><b>已部分觸發：$22B vs 估 $8-12B 偏高 2x</b></td></tr>
+<tr><td>R2</td><td>Industrial Auto 結構性衰退加速</td><td>🔥 4-6 季</td><td>連 2 季 organic &lt; -3% → 警戒</td></tr>
+<tr><td>R3</td><td>商用航空週期反轉</td><td>🐢 2+ 年</td><td>IATA RPK YoY &lt; +2% 跨 2 年度（需 ≥ 50% 機率才砍倉）</td></tr>
+</table>
+
+<h3>F｜Single Thing（v12.3）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>描述</td><td>HONA 拆分後 12 個月內 EV/EBITDA 是否達 25x 以上（GE Aerospace 30-32x 給 5x 折讓）</td></tr>
+<tr><td>如果發生</td><td>≥ 25x：加碼；&lt; 22x 連 2 季：減倉；&lt; 20x 連 4 季：清倉</td></tr>
+<tr><td>機率</td><td>≥ 25x：65%；22-25x：25%；&lt; 22x：10%</td></tr>
+</table>
+</section>
+
+<section id="s6">
+<h2>§6｜即時財報情報（Q1 2026, 4/22）</h2>
+
+<table>
+<tr><th>指標</th><th>實際</th><th>預期</th><th>Beat/Miss</th></tr>
+<tr><td>Revenue</td><td>$9.143B</td><td>$9.30B</td><td><span class="tag bad">Miss -1.7%</span>（含 Solstice 剝離 -7pp）</td></tr>
+<tr><td>Adj EPS</td><td>$2.45</td><td>$2.32</td><td><span class="tag good">Beat +$0.13</span></td></tr>
+<tr><td>Segment Margin</td><td>23.3%</td><td>22.4%</td><td><span class="tag good">+90bps</span></td></tr>
+</table>
+
+<h4>分部表現</h4>
+<table>
+<tr><th>分部</th><th>Q1 26 organic</th><th>OI margin</th></tr>
+<tr><td>Aerospace</td><td>+8%</td><td>~27%</td></tr>
+<tr><td>Building Auto</td><td>+8%</td><td>~24%</td></tr>
+<tr><td>Industrial Auto</td><td>-2%</td><td>~21%</td></tr>
+<tr><td>Process Auto</td><td>+2%</td><td>~25%</td></tr>
+</table>
+
+<h4>FY26 Guidance</h4>
+<p>EPS $10.35-10.65 reaffirmed；Q2 EPS $2.40-2.50（含 $0.16 tax + spin transaction cost）；Q2 organic 2-4%；segment margin 22.2-22.5%</p>
+
+<h4>Earnings Call 語氣</h4>
+<ul>
+<li>管理層基調：審慎樂觀；強調 "Aerospace output 3 月顯著改善" + 承認 "Industrial Auto 仍處底部"</li>
+<li>刻意強調：transformation on track、supply chain investment paying off、$3B minimum buyback</li>
+<li>刻意迴避：HONA 具體 distribution ratio（Form 10 final 才會揭示）</li>
+</ul>
+</section>
+
+<section id="s7">
+<h2>§7｜核心門檻檢核</h2>
+
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>數據</th></tr>
+<tr><td>FCF Margin</td><td>&gt; 15%</td><td><span class="tag warn">邊緣 14.48%</span></td><td>FY25</td></tr>
+<tr><td>5Y FCF Margin 均</td><td>&gt; 15%</td><td><span class="tag warn">邊緣 14.2%</span></td><td>FY21-25</td></tr>
+<tr><td>ROIC</td><td>&gt; 15%</td><td><span class="tag bad">不過 12%</span></td><td>TTM 12-14%；WACC 8%</td></tr>
+<tr><td>ROIC 10Y 穩定性</td><td>≥ 70% 年份 &gt; 15%</td><td><span class="tag bad">~35%</span></td><td></td></tr>
+<tr><td>毛利率 10Y 定價</td><td>≥ 70% 改善</td><td><span class="tag warn">5/10</span></td><td></td></tr>
+<tr><td>資本密集度</td><td>&lt; 5%</td><td><span class="tag good">✅ 2.6%</span></td><td>Capex/Rev</td></tr>
+<tr><td>EPS CAGR 3Y</td><td>&gt; 20%</td><td><span class="tag bad">+7.8%</span></td><td>FY25→28E</td></tr>
+<tr><td>PEG</td><td>&lt; 2</td><td><span class="tag bad">2.26-2.60</span></td><td></td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7</td><td><span class="tag warn">中等</span></td><td>Net Debt/EBITDA 2.1x</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分擴大</td><td><span class="tag warn">邊緣 8 持平</span></td><td></td></tr>
+</table>
+<p><b>Munger 三維評級</b>：🟡（資本密集度 ✅、毛利率邊緣；ROIC 與穩定性未達 15% 高標）</p>
+</section>
+
+<section id="s8">
+<h2>§8｜長期成長性</h2>
+
+<h3>A｜Runway</h3>
+<table>
+<tr><th>維度</th><th>數據</th></tr>
+<tr><td>當前 TAM</td><td>Aerospace $200B + Industrial Auto $150B + Building Auto $80B = ~$430B</td></tr>
+<tr><td>2030 TAM</td><td>~$580B</td></tr>
+<tr><td>市佔</td><td>APU 35%、UOP 觸媒 60%、Niagara 30%、avionics 90% 飛機 penetration</td></tr>
+<tr><td><b>Runway</b></td><td><b>~8 年混合</b></td></tr>
+</table>
+
+<h3>B｜成長品質</h3>
+<table>
+<tr><th>類型</th><th>占比</th></tr>
+<tr><td>有機</td><td>~70%</td></tr>
+<tr><td>無機</td><td>~30%（5 年 $15.4B M&A）</td></tr>
+</table>
+
+<h4>近 5 年 M&A 清單</h4>
+<table>
+<tr><th>年份</th><th>標的</th><th>金額</th><th>結果</th></tr>
+<tr><td>2021</td><td>Sparta Systems</td><td>$1.3B</td><td>⚠ 部分</td></tr>
+<tr><td>2023</td><td>CCC</td><td>$700M</td><td>✅</td></tr>
+<tr><td>2024</td><td>Access Solutions</td><td>$4.95B</td><td>⚠ 整合中</td></tr>
+<tr><td>2024</td><td>Civitanavi / CAES</td><td>$200M / $1.9B</td><td>✅ / ✅</td></tr>
+<tr><td>2024</td><td>Air Products LNG / Johnson Matthey 觸媒</td><td>$1.81B / $2.4B</td><td>⚠ / ⚠ mix 問題</td></tr>
+<tr><td>2025</td><td>Sundyne</td><td>$2.16B</td><td>⚠ 早期</td></tr>
+</table>
+
+<h4>定價 vs 量（v12.3 必須具體%）</h4>
+<table>
+<tr><th>類型</th><th>HON 判斷</th><th>3 年趨勢</th></tr>
+<tr><td>定價</td><td>Aero ASP +3-4%、Process +1-2%、Building +2-3%；混合 ~+2.5%</td><td>FY23 +4% → FY25 +2-3% 縮減</td></tr>
+<tr><td>量</td><td>Aero +5-6%、Building +5%、Industrial -4%；混合 ~+3-4%</td><td>FY23 0% → FY25 +5% 擴大</td></tr>
+</table>
+
+<h3>D｜ROIC 與 FCF</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>趨勢</th></tr>
+<tr><td>ROIC</td><td>10-14%</td><td>→</td></tr>
+<tr><td>FCF Margin</td><td>14.48%</td><td>↑ vs FY22 12.71%</td></tr>
+<tr><td>FCF/NI</td><td>1.15-1.32</td><td>↑</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力</h3>
+<table>
+<tr><th>情境</th><th>合理 Fwd P/E</th><th>跌幅</th></tr>
+<tr><td>降至 15%</td><td>23x</td><td>+15%</td></tr>
+<tr><td>降至 10%</td><td>21x</td><td>+4%</td></tr>
+<tr><td>降至 5%（Base）</td><td>19x</td><td>-7%</td></tr>
+<tr><td>降至 2%</td><td>16x</td><td>-21%</td></tr>
+</table>
+
+<h3>衰退信號偵測</h3>
+<p>0 個亮燈 → 🟢 低風險</p>
+
+<h3>F｜AI 風險 🟢 受益</h3>
+<p>自動化是 AI 物理層落地的必要 enabler；HON Forge + Microsoft Azure 雙軌</p>
+
+<h3>H｜客戶結構（v12.3 新增）</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 客戶</td><td>~6-7%（Boeing）</td></tr>
+<tr><td>Top 5 合計</td><td>~15-18%</td></tr>
+<tr><td>Top 10 合計</td><td>~22-25%</td></tr>
+</table>
+<table>
+<tr><th>客戶</th><th>占比</th><th>議價權</th></tr>
+<tr><td>Boeing</td><td>~6-7%</td><td>Sole-source (APU) + Second-source (avionics)</td></tr>
+<tr><td>Airbus</td><td>~3-4%</td><td>類似 Boeing</td></tr>
+<tr><td>美國國防部</td><td>~10%</td><td>Sole-source 多平台</td></tr>
+</table>
+<p><b>客戶結構風險</b>：🟢 分散 + Sole/Grow-with 主導</p>
+</section>
+
+<section id="s9">
+<h2>§9｜護城河分析（v12.3 二維拆解）</h2>
+
+<table>
+<tr><th>維度</th><th>評分</th><th>佐證</th></tr>
+<tr><td><b>Execution Moat</b></td><td>8 / 10</td><td>FAA 認證 7-10 年；UOP 製程 IP 110 年；全球供應鏈整合（Solstice/HONA 雙 spin 不出錯）</td></tr>
+<tr><td><b>Pricing Power Moat</b></td><td>8 / 10</td><td>Aero 後市場 30 年 install base lock-in；Niagara ecosystem lock-in；UOP 觸媒換掉煉廠 $100M+ 停產成本</td></tr>
+<tr><td><b>合併分</b></td><td><b>8 / 10</b></td><td>execution 與 pricing 旗鼓相當，B 級上緣</td></tr>
+</table>
+
+<h3>護城河來源</h3>
+<ul>
+<li><b>網路效應</b>：弱（B2B 工業）</li>
+<li><b>無形資產</b>：強 — ~25,000 active patents、UOP 觸媒 IP 110 年、APU FAA/EASA 認證、Niagara framework；後市場零件 brand premium +20-40%</li>
+<li><b>轉換成本</b>：強（Aero 30 年 + 認證重做 5-7 年）+ 中（Niagara 2-3 年 + $1-5M/site）</li>
+<li><b>規模優勢</b>：中 — HON 年產 ~3000 APU；UOP 觸媒 ~600,000 tons/年</li>
+</ul>
+
+<h3>市佔競爭（誰在吃誰）</h3>
+<table>
+<tr><th>對手</th><th>市佔</th><th>趨勢</th><th>細節</th></tr>
+<tr><td>RTX Collins Aerospace</td><td>Avionics 25-30%</td><td>→</td><td>HON narrow-body avionics 28%→26%；Collins 28%→30%</td></tr>
+<tr><td>GE Aerospace</td><td>商用引擎 35%</td><td>→</td><td>不直接侵蝕 APU 但 next-gen MEA 威脅</td></tr>
+<tr><td>EMR + AspenTech</td><td>Process Auto 25%</td><td>↑</td><td><b>2025/3 全收購完成，$200M synergy by 2027 是直接威脅</b></td></tr>
+<tr><td>ROK</td><td>Industrial 15-20%</td><td>↑</td><td>FactoryTalk + agentic AI 受惠 reshoring</td></tr>
+<tr><td>Schneider + JCI</td><td>BMS 15-20%</td><td>→</td><td>HON Niagara 仍 #1 但 Schneider 滲透加快</td></tr>
+<tr><td>Siemens DI</td><td>全球 Industrial 25%</td><td>↑</td><td>中國 factory automation 壓制 HON</td></tr>
+</table>
+
+<h3>護城河趨勢（v12.3 雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th></tr>
+<tr><td>Execution</td><td>穩定偏擴大（M&A 整合 + 雙 spin 執行）</td></tr>
+<tr><td>Pricing Power</td><td>穩定偏弱（Aero 強 vs Industrial 被侵蝕）</td></tr>
+</table>
+
+<h3>QC-23 威脅三級</h3>
+<table>
+<tr><th>等級</th><th>事件</th><th>機率</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>EMR AspenTech 滲透</td><td>已發生</td><td>不扣分</td></tr>
+<tr><td>🟡 點對點</td><td>ROK FactoryTalk 受惠 reshoring</td><td>已發生</td><td>不扣分</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Schneider + Siemens 全棧綁定大型 operator</td><td>15-20% / 24M</td><td>-1 分</td></tr>
+<tr><td>⛔ 架構替代</td><td>MEA 完全去 APU + UOP 被合成生物學替代</td><td>5-10% / 24M</td><td>-2 分但 &gt; 24M</td></tr>
+</table>
+</section>
+
+<section id="s10">
+<h2>§10｜財務品質</h2>
+
+<h3>三年趨勢（含同業對比）</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>同業中位</th><th>相對</th></tr>
+<tr><td>FCF Margin</td><td>13.93%</td><td>15.05%</td><td>14.48%</td><td>~13%</td><td>優</td></tr>
+<tr><td>EBITDA Margin</td><td>~27%</td><td>~28%</td><td>~26%</td><td>~25%</td><td>優</td></tr>
+<tr><td>ROIC − WACC</td><td>+4-5%p</td><td>+2-3%p</td><td>+3-4%p</td><td>+4%p</td><td>接近</td></tr>
+<tr><td>SBC / Rev</td><td>0.8%</td><td>0.8%</td><td>0.9%</td><td>1.5%</td><td>優</td></tr>
+<tr><td>ROE</td><td>30%</td><td>28%</td><td>26%</td><td>22%</td><td>優</td></tr>
+</table>
+
+<h3>回購品質（v12.3 強化）</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>3 年回購 vs FCF</td><td>$5.5B / $15B = 37%</td></tr>
+<tr><td><b>剔除回購 EPS CAGR</b></td><td>原 +7.8% → 剔除後 +5-6%（差距 ~2pp 健康）</td></tr>
+<tr><td>回購均價 vs 現價</td><td>$200-210 vs $213 略低</td></tr>
+</table>
+
+<h3>FCF Lumpiness（v12.3 新增）</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>5 年 FCF</td><td>FY21 $5.14B / FY22 $4.51B / FY23 $4.60B / FY24 $5.23B / FY25 $5.42B</td></tr>
+<tr><td>5Y 滾動均</td><td>$4.98B</td></tr>
+<tr><td>最低谷</td><td>FY22 $4.51B（91% of 5Y avg）</td></tr>
+<tr><td>結論</td><td>🟢 低 lumpiness（aftermarket recurring 主導）</td></tr>
+</table>
+</section>
+
+<section id="s11">
+<h2>§11｜產業格局（v12.3 大擴）</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li>Aerospace $200B → $260B 2030 (5% CAGR)</li>
+<li>Industrial Auto $150B → $200B (6% CAGR)</li>
+<li>Building Auto $80B → $120B (8% CAGR)</li>
+<li>Process Auto + UOP $50B → $60B (4% CAGR)</li>
+</ul>
+
+<h3>議價權三段獨立</h3>
+<h4>① 對上游</h4>
+<p>供應商集中度低（top 3 &lt; 30%）。鈦合金 + 半導體 + 鋁合金鍛件相對集中。2024 Q3 成功將鈦合金合約延長至 2028 並鎖價 +3% 上限。整體：中等</p>
+
+<h4>② 對下游</h4>
+<p>客戶集中度低-中（Top 5 ~15-18%）。Aerospace 後市場 30 年合約 sticky；新機 OEM 合約 5-10 年；Building Auto dealer lock-in。後市場提價 +3-4% 客戶留存率 &gt; 98%。整體：中強</p>
+
+<h4>③ 地緣曝險</h4>
+<p>美國 ~55%、印度+中國+墨西哥+歐洲 ~45%。中國 ~10-12%（China-for-China）。供應鏈分散 $1B+ 投入。整體：中低</p>
+
+<h3>營收三維</h3>
+<h4>① 業務段</h4>
+<table>
+<tr><th>段</th><th>占比</th><th>YoY</th><th>OI Margin</th></tr>
+<tr><td>Aerospace</td><td>47%</td><td>+雙位</td><td>27%+</td></tr>
+<tr><td>Industrial Auto</td><td>25%</td><td>-6%</td><td>~21%</td></tr>
+<tr><td>Building Auto</td><td>16%</td><td>+雙位</td><td>~24%</td></tr>
+<tr><td>ESS</td><td>12%</td><td>+雙位</td><td>~25%</td></tr>
+</table>
+
+<h4>② 地區</h4>
+<table>
+<tr><th>地區</th><th>占比</th><th>YoY</th></tr>
+<tr><td>美國</td><td>~55%</td><td>+雙位</td></tr>
+<tr><td>歐洲</td><td>~20%</td><td>+ mid-single</td></tr>
+<tr><td>亞太</td><td>~17%</td><td>持平</td></tr>
+<tr><td>其他</td><td>~8%</td><td>+ high-single</td></tr>
+</table>
+
+<h3>單位經濟（v12.3 逐業務段）</h3>
+<table>
+<tr><th>段</th><th>核心 Unit</th><th>數值</th></tr>
+<tr><td>Aerospace</td><td>每在役飛機年化 aftermarket</td><td>$30-40K/年（30 年壽命）</td></tr>
+<tr><td>Industrial Auto</td><td>每大客戶 ARR</td><td>$1-3M/年</td></tr>
+<tr><td>Building Auto</td><td>每 BMS site ARR</td><td>$15-30K/年</td></tr>
+<tr><td>Process Auto</td><td>每 license 5Y</td><td>$50-100M</td></tr>
+</table>
+</section>
+
+<section id="s12">
+<h2>§12｜公司治理與資本配置（v12.3 強化）</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>機構持股 ~70-72%（Vanguard + BlackRock + State Street 合計 ~22%）</li>
+<li>CEO Kapur 持股 0.007% (~$10.7M)，18M 無 insider transaction（正面確認）</li>
+<li>無 dual-class 結構</li>
+<li><b>Elliott Management 2024 Q4 入股 $5B+，推動 2025/2 三分案</b></li>
+</ul>
+
+<h3>5 年 M&A track record（必填）</h3>
+<table>
+<tr><th>年份</th><th>標的</th><th>金額</th><th>結果</th><th>減損</th></tr>
+<tr><td>2021</td><td>Sparta Systems</td><td>$1.3B</td><td>部分達預期</td><td>無</td></tr>
+<tr><td>2023</td><td>CCC</td><td>$700M</td><td>OK</td><td>無</td></tr>
+<tr><td>2024</td><td>Access Solutions</td><td>$4.95B</td><td>整合中</td><td>無</td></tr>
+<tr><td>2024</td><td>CAES / Civitanavi</td><td>$1.9B / $200M</td><td>順利 / 順利</td><td>無 / 無</td></tr>
+<tr><td>2024</td><td>Air Products LNG / Johnson Matthey 觸媒</td><td>$1.81B / $2.4B</td><td>早期 / 早期 + mix 不利</td><td>無</td></tr>
+<tr><td>2025</td><td>Sundyne</td><td>$2.16B</td><td>早期</td><td>無</td></tr>
+</table>
+<p>5 年合計 $15.4B；~60% 順利 + 30% 早期 + 10% 部分達預期；無重大減損</p>
+
+<h3>剝離軌跡</h3>
+<ul>
+<li>2018 Garrett + Resideo / 2024 PPE / 2025/10 Solstice (SOLS) / 2026 H2 PSS 賣 Brady $1.4B / 2026 Q3 HONA spin (Form 10 揭示 <b>$22B debt</b>)</li>
+</ul>
+
+<h3>管理層薪酬</h3>
+<table>
+<tr><th>項目</th><th>說明</th></tr>
+<tr><td>CEO Kapur 2024 總薪酬</td><td>$20.38M（base 7.9% + variable 92.1%）</td></tr>
+<tr><td>Base</td><td>$1.56M</td></tr>
+<tr><td>Bonus</td><td>$2.92M</td></tr>
+<tr><td>LTI</td><td>$13M（多年 vesting）</td></tr>
+</table>
+
+<h3>SBC 真實稀釋（v12.3 必算）</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Rev</td><td>FY23 0.85% / FY24 0.82% / FY25 0.90%</td></tr>
+<tr><td>GAAP EPS FY25</td><td>$7.36</td></tr>
+<tr><td>Adj EPS FY25</td><td>$9.78</td></tr>
+<tr><td>差距</td><td>$2.42（25%，主要 spin/restructuring 一次性，非 SBC）</td></tr>
+<tr><td><b>剔除 SBC 後 EPS CAGR</b></td><td>原 +7.8% vs SBC-removed +7.5%（差距 0.3pp 健康）</td></tr>
+</table>
+<p><b>QC-6 治理綠燈</b>：🟢 12M 無集體訴訟 / SEC 調查 / 重大內部人賣出</p>
+</section>
+
+<section id="s13">
+<h2>§13｜估值診斷（v12.3 大瘦：13.1 / 13.2 / 13.4 + 結論）</h2>
+
+<h3>13.1｜歷史估值分位</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Trailing P/E</td><td>29.0x</td><td>21x</td><td>25x</td><td>32x</td><td>73%</td></tr>
+<tr><td>Forward P/E</td><td>20.3x</td><td>18x</td><td>22.5x</td><td>30x</td><td><b>19%</b></td></tr>
+<tr><td>EV/EBITDA</td><td>16.2x</td><td>13x</td><td>16x</td><td>20x</td><td>46%</td></tr>
+<tr><td>P/FCF</td><td>25.5x</td><td>18x</td><td>23x</td><td>30x</td><td>63%</td></tr>
+<tr><td>P/S</td><td>3.7x</td><td>3.2x</td><td>3.8x</td><td>5x</td><td>28%</td></tr>
+</table>
+<div class="reasoning">推導：Fwd PE 分位 19% 低端 → 🟢 便宜面向；implication：confirm §2 D 取嚴歸 🟠（PEG 主導）。Trailing PE 73% 是因 spin 一次性費用壓低 TTM EPS，不該作為估值錨點</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Fwd PE</td><td>20.3x</td></tr>
+<tr><td>Adj EPS CAGR 3Y</td><td>+7.8%</td></tr>
+<tr><td>PEG（嚴格）</td><td><b>2.60</b> 🔴</td></tr>
+<tr><td>PEG（後拆分 9%）</td><td>2.26 🟠</td></tr>
+<tr><td>PEG 5Y</td><td>2.82</td></tr>
+</table>
+<div class="reasoning">推導：嚴格 PEG 2.60 > 2.5；常態化 9% PEG 2.26 → 取 🟠（部分反映 spin transaction cost）。implication：估值燈 🟠 確認</div>
+
+<h3>13.4｜同業估值比較（v12.3 強制對 tier peer）</h3>
+
+<p><b>業務模式 tier</b>：HON 混合工業集團拆分中，採混合 peer set</p>
+
+<table>
+<tr><th>公司</th><th>市值</th><th>Fwd PE</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR</th><th>ROIC</th></tr>
+<tr><td><b>HON</b></td><td>$138B</td><td>20.3x</td><td>16.2x</td><td>2.60</td><td>14.5%</td><td>+7.8%</td><td>10-14%</td></tr>
+<tr><td>EMR</td><td>$70B</td><td>21.7x</td><td>17x</td><td>1.81</td><td>14%</td><td>+11%</td><td>13%</td></tr>
+<tr><td>ROK</td><td>$36B</td><td>37.5x</td><td>26x</td><td>2.40</td><td>16%</td><td>+10%</td><td>20%</td></tr>
+<tr><td>ETN</td><td>$130B</td><td>30.8x</td><td>22x</td><td>3.06</td><td>12%</td><td>+12%</td><td>16%</td></tr>
+<tr><td>RTX</td><td>$240B</td><td>26.0x</td><td>20x</td><td>2.20</td><td>8%</td><td>+10%</td><td>11%</td></tr>
+<tr><td>GE Aerospace</td><td>$260B</td><td>~32x</td><td>~28x</td><td>2.85</td><td>15%</td><td>+12%</td><td>20%+</td></tr>
+<tr><td>Heico</td><td>$45B</td><td>~52x</td><td>~38x</td><td>3.5</td><td>20%</td><td>+15%</td><td>15%+</td></tr>
+<tr><td>JCI</td><td>$60B</td><td>22x</td><td>17x</td><td>2.10</td><td>10%</td><td>+11%</td><td>12%</td></tr>
+<tr><td>Trane Tech</td><td>$110B</td><td>32x</td><td>22x</td><td>2.5</td><td>13%</td><td>+13%</td><td>22%</td></tr>
+<tr><td><b>peer 中位</b></td><td></td><td><b>~27x</b></td><td>~22x</td><td>2.45</td><td>13.5%</td><td>+11%</td><td>15%</td></tr>
+</table>
+
+<div class="reasoning">推導：HON Fwd PE 20.3x vs peer 中位 27x → 折價 ~25%（conglomerate discount）。SOTP 暗示：HONA × 30x = $95B + RemainCo × 22-25x = $60B = $155B vs 現 $138B → 上行 12%。implication：confirm 🟠 + SOTP unlock thesis 上行空間有限但合理</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1（Fwd PE 5Y 分位 19% 便宜端）+ 13.2（PEG 2.26-2.60 🟠）+ 13.4（折價 25% vs peer 中位）→ 綜合估值訊號：<b>🟠 公允至略貴（pre-spin）/ 🟡 公允（post-spin SOTP）</b>。完整裁決見 §1</p>
+
+<p><b>分析師目標價</b>：高 ~$280 / 中位 $249.92（n=13）/ 低 ~$215</p>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "HON",
+  "company": "Honeywell International Inc.",
+  "schema": "v12.3",
+  "date": "2026-05-18",
+  "price_at_dd": 213.24,
+  "market_cap_bn": 138.0,
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "非陷阱 — 主動三段式拆分釋放 SOTP 價值，conglomerate discount 將自然消散",
+  "moat": "B",
+  "moat_score": 8,
+  "moat_execution": 8,
+  "moat_pricing_power": 8,
+  "val": "🟠",
+  "ma": "🟡",
+  "industry_wind": "🟡",
+  "benchmark_regime": "正常",
+  "fpe_fy1": 20.3,
+  "fpe_fy2": 18.8,
+  "pct_5y": 19,
+  "peg_fy2": 2.26,
+  "eps_cagr_3y_pct": 7.8,
+  "upside_short_pct": 11,
+  "upside_mid_pct": 20,
+  "upside_5y_pct": 43,
+  "stress": {"pass": 2, "total": 2, "note": "Base R:R 中期 1.32x／Bear -15.4% → v12.3 退役 QC-29 4 情境壓測；Base + Bear 2/2 通過"},
+  "growth_durability": 7,
+  "quality_score": 8,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "verdict": "B — 衛星候選，thesis 完整（拆分價值釋放 + 體質 veto 全過 + trap 🟢）但進場時機不到（PEG > 2、W250 動能不足）；等估值修復或 HONA Q3 2026 拆分完成觸發 SOTP unlock 可升 A",
+  "inception_dd": "DD_HON_20260518.html",
+  "inception_date": "2026-05-18",
+  "next_yoy_review": "2027-05-18",
+  "key_monitors": [
+    "HONA Aerospace spin 完成日期 + Form 10 final terms（debt allocation $22B 偏高 vs 市場估 $8-12B）— 預計 Q3 2026 / 6-29",
+    "Industrial Automation 季度 organic growth（剝離 PSS 後可比口徑）— 連 2 季 < -3% → 削弱",
+    "HONA 上市後 6-12 個月 EV/EBITDA — 達 ≥ 25x → SOTP unlock 驗證；< 22x 連 2 季 → thesis 失效"
+  ],
+  "oneliner": "🟡 中性；B 級護城河 8/8/8（Aerospace 認證 + UOP IP + Niagara 強，Industrial Auto 被 EMR/ROK 侵蝕）。估值 🟠 FPE 20.3x／PEG 2.26-2.60+Pure MA 🟡 減半進場(W250+0.32% 持平)。等 HONA Q3 2026 拆分完成觸發 SOTP unlock 或 W250 斜率 +3% 升 A。"
+}
+</script>
+
+</main>
+</body>
+</html>
