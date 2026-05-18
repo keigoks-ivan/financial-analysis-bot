@@ -1054,7 +1054,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
     <div class="hero-h1">Alpha Rank — DD 六法共識排名</div>
     <div class="hero-sub">DD universe ({total} 檔) 由六種數學方法獨立排名，再依三組（品質類 / 報酬估值類 / 動能類）算共識交集。Tier 1 = 跨 3 組（重倉候選）；Tier 2 = 跨 2 組（衛星候選）。設計避開「相關因子重複投票」陷阱 (TASK 修正 3)。</div>
     <div class="hero-stats">
-      <div class="hero-stat"><strong>{as_of}</strong>快照日期</div>
+      <div class="hero-stat"><strong>{_overall_stamp(ts)}</strong>最後更新（台北）</div>
       <div class="hero-stat"><strong>{total}</strong>universe</div>
       <div class="hero-stat"><strong>{us_count}</strong>美股</div>
       <div class="hero-stat"><strong>{non_us_count}</strong>非美股</div>
@@ -1142,6 +1142,19 @@ def _layer_stamp(ts: Optional[str]) -> str:
         return dt.strftime("%m-%d %H:%M")
     except (TypeError, ValueError):
         return _escape(ts[:16])
+
+
+def _overall_stamp(ts_dict: dict) -> str:
+    """Most recent timestamp across all 3 layers, formatted YYYY-MM-DD HH:MM."""
+    stamps = [v for v in (ts_dict or {}).values() if v]
+    if not stamps:
+        return "—"
+    try:
+        latest = max(stamps)  # ISO 8601 sorts correctly as string
+        dt = datetime.fromisoformat(latest)
+        return dt.strftime("%Y-%m-%d %H:%M")
+    except (TypeError, ValueError):
+        return _escape(str(stamps[-1])[:16])
 
 
 def _angle_card_pending(angle_key: str) -> str:

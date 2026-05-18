@@ -542,8 +542,17 @@ def _section_table(rows: list[dict], renderer, empty_msg: str) -> str:
 </table>"""
 
 
+def _fmt_taipei_stamp(iso_str: Optional[str]) -> str:
+    """Convert "2026-05-18T11:49:02+08:00" → "2026-05-18 11:49" for display."""
+    if not iso_str or "T" not in iso_str:
+        return iso_str or "—"
+    date, time = iso_str.split("T", 1)
+    return f"{date} {time[:5]}"
+
+
 def render_html(doc: dict, out_path: Path) -> None:
     as_of = doc["as_of"]
+    run_ts_display = _fmt_taipei_stamp(doc.get("run_timestamp"))
     universe_total = doc["universe_total"]
     eligible_total = doc["eligible_total"]
     vetoed_count = doc["vetoed_count"]
@@ -671,7 +680,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
       Alpha Rank 適合積極追逐六種數學排名共識；Quality-Entry 適合 quality compounder 逢回佈局。
     </div>
     <div class="hero-stats">
-      <div class="hero-stat"><strong>{as_of}</strong>快照日期</div>
+      <div class="hero-stat"><strong>{run_ts_display}</strong>最後更新（台北）</div>
       <div class="hero-stat"><strong>{universe_total}</strong>universe</div>
       <div class="hero-stat"><strong>{eligible_total}</strong>通過 veto</div>
       <div class="hero-stat"><strong>{vetoed_count}</strong>被 veto</div>
