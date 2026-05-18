@@ -16,6 +16,7 @@ import datetime as dt
 import json
 import re
 import sys
+import time
 from pathlib import Path
 
 DOCS = Path(__file__).parent.parent / "docs"
@@ -2674,6 +2675,30 @@ def main():
     screener_script = Path(__file__).resolve().parent / "build_dd_screener.py"
     if not screener_script.exists():
         return
+
+    # v1.4: Cascade debounce — 連續寫多 DD/DCA 時，每次寫完都 trigger 此 cascade，
+    # 每次都跑 yfinance batch (~127 檔 5Y weekly = ~25-30s)，連跑 N 次極易把 yfinance
+    # rate-limit 撞炸。Debounce 60s：若 latest.json 在 60s 內已 rebuild，跳過 cascade。
+    # 連寫 7 個 DD 的情況下，只第一次 trigger 完整 cascade，後 6 次 skip — 等使用者寫
+    # 完整批後手動跑 `python3 scripts/build_dd_screener.py` 一次補齊。
+    DEBOUNCE_SEC = 60
+    screener_latest = DOCS / "dd-screener" / "latest.json"
+    if screener_latest.exists():
+        try:
+            age = time.time() - screener_latest.stat().st_mtime
+            if age < DEBOUNCE_SEC:
+                print(
+                    f"\n⏸ DD Screener cascade debounced — latest.json updated "
+                    f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
+                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry.\n"
+                    f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
+                    f"&& python3 scripts/dd_alpha_ranker.py --layers fundamental "
+                    f"&& python3 scripts/build_quality_entry.py"
+                )
+                return
+        except OSError:
+            pass
+
     print(f"\n→ Auto-trigger: {screener_script.name} (rebuild /dd-screener/ to match universe)")
     screener_ok = False
     try:

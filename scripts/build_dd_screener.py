@@ -163,6 +163,31 @@ def _empty_ma() -> dict:
     }
 
 
+def load_ma_cache(path: Path) -> dict[str, dict]:
+    """v1.4: Read existing latest.json's MA snapshots so they can be reused
+    when yfinance fails (rate-limit, network blip). Each cache entry carries
+    `_stamp` = date of the snapshot it came from, for FE staleness display.
+
+    Without this, a single failed yfinance batch wipes all MA data; with it,
+    we degrade gracefully to last known value.
+    """
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    stamp = data.get("as_of") or "unknown"
+    cache: dict[str, dict] = {}
+    for s in data.get("stocks", []) or []:
+        t = s.get("ticker")
+        ma = s.get("ma") or {}
+        # Only cache rows where at least the price + w250 came through last time
+        if t and ma.get("price") is not None and ma.get("w250") is not None:
+            cache[t] = {**ma, "_stamp": stamp}
+    return cache
+
+
 def load_screener_timing_map() -> dict[str, dict]:
     """Build {ticker: {dist_52w_high_pct, ma50_pct, vs_200ma_pct, rs_score,
     rs_1w, rs_4w, rs_13w, timing_source}} from `docs/screener/latest.json`.
@@ -477,6 +502,7 @@ def enrich_ticker(
     screener_timing: dict,
     timing_fallback: dict,
     skip_ma: bool,
+    ma_cache: dict | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -496,11 +522,20 @@ def enrich_ticker(
 
     if skip_ma:
         ma = _empty_ma()
+        ma_from_cache = False
     else:
         try:
             ma = compute_ma_snapshot(_yf_ticker_for_ma(t))
         except Exception:
             ma = _empty_ma()
+        # v1.4: 若 yfinance 抓不到（rate-limit / 網路 hiccup）就用上次 latest.json
+        # 的 cached MA — 比顯示空白好，且 FE 可以 surface staleness via ma._stamp
+        ma_from_cache = False
+        if ma.get("price") is None and ma_cache and t in ma_cache:
+            cached = ma_cache[t]
+            ma = {k: v for k, v in cached.items() if k != "_stamp"}
+            ma["_cache_stamp"] = cached.get("_stamp")
+            ma_from_cache = True
 
     # Override the loader's "↑" default with DCA Phase A1 arrow; "→" when DCA
     # has none (conservative — don't assume strengthening without evidence).
@@ -529,6 +564,7 @@ def enrich_ticker(
         "quality_source": source,
         "ev5y_pct": _ev5y_for(t, dca_ev_map),
         "ma": ma,
+        "ma_from_cache": ma_from_cache,
         "timing": timing,
         **pe_drift,  # live_fpe_est, pe_drift_pct, dd_age_days, live_pct_5y_est
     }
@@ -537,6 +573,10 @@ def enrich_ticker(
 def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict:
     print(f"=== DD Screener build · {datetime.now().isoformat(timespec='seconds')} ===\n")
     t0 = time.time()
+
+    # Step 0: v1.4 — load previous latest.json's MA snapshots as fallback cache
+    ma_cache = load_ma_cache(OUTPUT_PATH)
+    print(f"  Step 0    MA cache from prev latest.json: {len(ma_cache)} tickers")
 
     # Step 1-2
     universe = load_dd_universe()
@@ -577,7 +617,7 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
@@ -597,6 +637,10 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     # Source-tag breakdown
     src_counts = Counter(s["quality_source"] for s in enriched)
     print(f"  Step 5    quality sources: {dict(src_counts)}")
+    ma_fresh = sum(1 for s in enriched if (s.get("ma") or {}).get("price") is not None and not s.get("ma_from_cache"))
+    ma_cached = sum(1 for s in enriched if s.get("ma_from_cache"))
+    ma_missing = len(enriched) - ma_fresh - ma_cached
+    print(f"  Step 5    MA snapshot: fresh={ma_fresh} cached={ma_cached} missing={ma_missing}")
     print(f"  Step 5    pass distribution: pass5={sum(1 for s in enriched if s['pass_count']==5)} "
           f"pass4={sum(1 for s in enriched if s['pass_count']==4)} "
           f"pass3={sum(1 for s in enriched if s['pass_count']==3)}")
