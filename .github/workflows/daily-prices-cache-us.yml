@@ -1,0 +1,54 @@
+name: Daily Prices Cache · US
+
+# Builds docs/cache/prices-us.json — Tue–Sat 09:30 TPE.
+# Mirrors docs/screener/latest.json (S&P 500 + NQ100) + small yfinance fallback
+# for ~30 EU/JP DD tickers not in screener universe.
+#
+# Runs 30 min after daily-screener-us.yml (22:00 UTC = 06:00 TPE next day)
+# to ensure mirror picks up fresh data.
+
+on:
+  schedule:
+    # 22:30 UTC Mon–Fri = 06:30 TPE Tue–Sat (after daily-screener-us.yml)
+    - cron: "30 22 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cache-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Build US prices cache
+        run: python scripts/build_prices_cache.py --region us
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/cache/prices-us.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "data: US prices cache refresh ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi

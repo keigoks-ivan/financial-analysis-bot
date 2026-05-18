@@ -1,0 +1,53 @@
+name: Daily Prices Cache · TW
+
+# Builds docs/cache/prices-tw.json — Mon–Fri 16:30 TPE.
+# Mirrors docs/screener/tw_latest.json (TWSE 0050+0051+00714) + small yfinance
+# fallback for any DD TW tickers not in screener universe.
+#
+# Runs 30 min after daily-screener-tw.yml (08:00 UTC = 16:00 TPE).
+
+on:
+  schedule:
+    # 08:30 UTC Mon–Fri = 16:30 TPE Mon–Fri (after daily-screener-tw.yml)
+    - cron: "30 8 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cache-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Build TW prices cache
+        run: python scripts/build_prices_cache.py --region tw
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/cache/prices-tw.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "data: TW prices cache refresh ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi

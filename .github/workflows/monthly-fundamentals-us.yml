@@ -1,0 +1,51 @@
+name: Monthly Fundamentals Cache · US
+
+# Builds docs/cache/fundamentals-us.json — 1st of month, after US close.
+# Universe: DD non-TW ∪ SP500+NQ100 extras (~545 tickers).
+# yfinance fetches ~486 tickers (QGM passthrough covers 59 from external repo).
+
+on:
+  schedule:
+    # 22:00 UTC on the 1st of every month = 06:00 TPE next day (after US close)
+    - cron: "0 22 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cache-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy requests
+
+      - name: Build US fundamentals cache
+        run: python scripts/build_fundamentals_cache.py --region us
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/cache/fundamentals-us.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "data: US fundamentals cache refresh ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi

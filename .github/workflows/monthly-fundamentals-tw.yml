@@ -1,0 +1,50 @@
+name: Monthly Fundamentals Cache · TW
+
+# Builds docs/cache/fundamentals-tw.json — 1st of month, after TW close.
+# Universe: DD TW ∪ ETF_0050+0051+00714 (~197 tickers).
+
+on:
+  schedule:
+    # 07:00 UTC on the 1st of every month = 15:00 TPE same day (after TW close)
+    - cron: "0 7 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cache-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy requests
+
+      - name: Build TW fundamentals cache
+        run: python scripts/build_fundamentals_cache.py --region tw
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/cache/fundamentals-tw.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            DATE=$(date -u +"%Y-%m-%d")
+            git commit -m "data: TW fundamentals cache refresh ${DATE}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi
