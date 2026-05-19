@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottom-Out — 深回檔逆向訊號 | InvestMQuest</title>
+<meta name="color-scheme" content="light">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){.imq-nav-root{padding:.55rem 12px}.imq-menu{width:100%;justify-content:flex-start;gap:.1rem}.imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}.imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}.imq-dd.open .imq-dd-menu{display:block}}
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}
+.hero-inner{max-width:min(1400px,96vw);margin:0 auto}
+.hero-h1{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}
+.hero-sub{font-size:12px;color:#5a7a9a;line-height:1.6;max-width:920px}
+.hero-stats{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}
+.hero-stat{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 11px;font-size:11px;color:#5a7a9a}
+.hero-stat strong{color:#1e3a5f;font-size:13px;display:block;margin-bottom:1px}
+.section{max-width:min(1400px,96vw);margin:0 auto;padding:24px 32px}
+.formula-panel{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:14px 18px;margin-bottom:20px}
+.formula-panel h3{font-size:13px;font-weight:700;color:#0f2a45;margin-bottom:8px}
+.formula-panel code{background:#f0f5fb;padding:1px 6px;border-radius:3px;font-size:11.5px;color:#1e3a5f}
+.formula-row{font-size:12px;color:#334e68;line-height:1.85}
+.tier-card{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.tier-card h2{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tier-card.tier-a h2{color:#c2410c}
+.tier-card.tier-b h2{color:#475569}
+.tier-card h2 .badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:700}
+.tier-card.tier-a h2 .badge{background:#fed7aa;color:#c2410c}
+.tier-card.tier-b h2 .badge{background:#e2e8f0;color:#475569}
+.tier-card .desc{font-size:12px;color:#5a7a9a;margin-bottom:10px;line-height:1.6}
+.tier-card table{width:100%;border-collapse:collapse;font-size:12px}
+.tier-card th{background:#f0f6ff;color:#5a7a9a;font-weight:700;padding:8px 10px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+.tier-card th.left{text-align:left}
+.tier-card td{padding:8px 10px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums}
+.tier-card td.left{text-align:left;color:#0f2a45;font-weight:500}
+.tier-card td.left .sub{font-size:10px;color:#94a3b8;font-weight:400;margin-top:1px}
+.tier-card td a{color:#2563eb;text-decoration:none;font-weight:700}
+.tier-card td a:hover{text-decoration:underline}
+.score-cell{color:#0f2a45}
+.drawdown-cell{color:#c2410c;font-weight:600}
+.reversal-cell{color:#9a3412;font-weight:600}
+.reversal-low{color:#64748b}
+.rationale-cell{color:#7c2d12;font-size:11px}
+.wait-cell{color:#475569;font-size:11px}
+.meta-cell{font-size:10.5px;color:#5a7a9a;text-align:left !important}
+.empty-row{padding:14px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}
+.caveat-panel{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:12px;color:#9a3412;line-height:1.65}
+.caveat-panel strong{color:#7c2d12;display:block;margin-bottom:6px}
+.caveat-panel ul{margin-left:18px}
+.footer{padding:30px 32px;font-size:11px;color:#5a7a9a;line-height:1.7;max-width:min(1400px,96vw);margin:0 auto;border-top:1px solid #dce8f5}
+.footer h4{color:#1e3a5f;font-size:12px;margin-top:14px;margin-bottom:6px;font-weight:700}
+.footer code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:10px;color:#1e3a5f}
+</style>
+</head>
+<body>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/dd-screener/alpha-rank.html">Alpha Rank</a>
+          <a href="/dd-screener/quality-entry.html">Quality-Entry</a>
+          <a href="/dd-screener/bottom-out.html" class="active">Bottom-Out</a>
+          <a href="/backtest/">量化回測</a>
+        </div>
+      </div>
+      <a href="/flow/">🎯 Flow</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')});});})();</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-h1">Bottom-Out — 深回檔逆向訊號</div>
+    <div class="hero-sub">
+      鎖定<b>跌幅夠深（-25% ~ -45%）+ 出現觸底反彈訊號 + 尚有護城河地板</b>的標的。
+      三支柱複合分數：Drawdown深度 40% / Reversal訊號 35% / Not-broken Floor 25%。
+      屬<b>高風險逆向區</b>：Tier A 是「reversal 訊號已出現」的逆向機會，Tier B 是「跌夠深但尚未反轉」的 watchlist。
+      與 <a href="/dd-screener/quality-entry.html" style="color:#2563eb">Quality-Entry</a> 互補不重疊（兩者 dist_52w 門檻互斥）。
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>2026-05-19 14:28</strong>最後更新（台北）</div>
+      <div class="hero-stat"><strong>140</strong>universe</div>
+      <div class="hero-stat"><strong>55</strong>通過 veto</div>
+      <div class="hero-stat"><strong>85</strong>被 veto</div>
+      <div class="hero-stat"><strong>3</strong>Tier A — Reversal Confirmed</div>
+      <div class="hero-stat"><strong>12</strong>Tier B — Deep Value Watch</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+
+  <div class="formula-panel">
+    <h3>方法論</h3>
+    <div class="formula-row">
+      <b>Final</b> = 0.40·<b>Drawdown</b> + 0.35·<b>Reversal</b> + 0.25·<b>Floor</b>
+    </div>
+    <div class="formula-row" style="margin-top:6px">
+      <b>Drawdown (深度)</b>：<code>Λ(dist_52w_high_pct)</code> — 甜蜜點 −30% ~ −40%（1.0），兩側遞減；&lt;−70% 給 0.1（可能是 broken thesis）
+    </div>
+    <div class="formula-row">
+      <b>Reversal (觸底訊號)</b>：<code>0.35·drift_4w_score + 0.30·ma_slope_score + 0.20·price_vs_ma50_score + 0.15·rs_recovery_score</code>
+    </div>
+    <div class="formula-row">
+      <b>Floor (護城河地板)</b>：<code>0.40·moat/10 + 0.30·pass/5 + 0.15·quality/10 + 0.15·eps_rev_safety</code>
+    </div>
+    <div class="formula-row" style="margin-top:8px;color:#5a7a9a">
+      <b>Vetoes</b>（任一觸發 → 不入榜）：<code>ai_risk==🔴</code> · <code>moat_grade∈(C,X)</code> · <code>trap==🔴</code> · <code>dist_52w&gt;−15%</code> · <code>eps_revision&lt;−30%</code> · <code>moat_score&lt;6</code>
+    </div>
+    <div class="formula-row" style="color:#5a7a9a">
+      <b>Tier 切分</b>：Final ≥ 0.65 才入榜；Reversal ≥ 0.6 → Tier A（Reversal Confirmed），否則 Tier B（Deep Value Watch）
+    </div>
+  </div>
+
+  <div class="caveat-panel">
+    <strong>⚠ 高風險逆向區 — 使用前必讀</strong>
+    <ul>
+      <li><b>不是價值陷阱 screener</b>：通過 Floor pillar 不保證 thesis 還活著 — 務必先看個股 DD 確認護城河是否仍成立，再判斷是逆向機會還是接落刀。</li>
+      <li><b>不是動量 screener</b>：Tier A 代表「reversal 早期訊號」，不代表起漲點已確認或趨勢已反轉 — 可能還有再跌一段的空間。</li>
+      <li><b>跟 Quality-Entry 互補不重複</b>：dist_52w_high_pct &gt; −15% 的標的被 veto 出 Bottom-Out，dist &lt; −15% 的標的在 Quality-Entry 的 pullback 子分接近 0；兩個 screener 結果設計上不重疊。</li>
+    </ul>
+  </div>
+
+  <div class="tier-card tier-a">
+    <h2>🟠 Tier A — Reversal Confirmed <span class="badge">Final ≥ 0.65 · Reversal ≥ 0.6</span></h2>
+    <div class="desc">深回檔 + 觸底反彈訊號已出現（4w drift 轉正 / MA250 趨平 / 站回 MA50）。Rationale 欄顯示關鍵逆向訊號（dist / 4w / slope）。高風險區：先看 DD 確認 thesis 未崩。</div>
+    <table>
+<thead>
+<tr>
+  <th class="left">Ticker</th>
+  <th>Final</th>
+  <th>Drawdown</th>
+  <th>Reversal</th>
+  <th>Floor</th>
+  <th class="left">Rationale / 等什麼</th>
+  <th class="left">Tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_APP_20260418.html">APP</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.84</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell">0.71</td>
+  <td>0.78</td>
+  <td class="left rationale-cell">dist -33% / 4w +10% / slope +3.9%</td>
+  <td class="meta-cell">B · B · PE 30.3x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_FICO_20260418.html">FICO</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.79</strong></td>
+  <td class="drawdown-cell">0.81</td>
+  <td class="reversal-cell">0.68</td>
+  <td>0.90</td>
+  <td class="left rationale-cell">dist -46% / 4w +18% / slope +0.9%</td>
+  <td class="meta-cell">A · B · PE 20.2x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NOW_20260427.html">NOW</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.75</strong></td>
+  <td class="drawdown-cell">0.69</td>
+  <td class="reversal-cell">0.77</td>
+  <td>0.84</td>
+  <td class="left rationale-cell">dist -50% / 4w +15% / slope -0.2%</td>
+  <td class="meta-cell">B · B · PE 18.0x</td>
+</tr>
+</tbody>
+</table>
+  </div>
+
+  <div class="tier-card tier-b">
+    <h2>⬜ Tier B — Deep Value Watch <span class="badge">Final ≥ 0.65 · Reversal &lt; 0.6</span></h2>
+    <div class="desc">跌幅夠深、護城河地板在，但 reversal 訊號尚未出現。「等什麼」欄點出最大拖累訊號 — 觸發後再評估進場。</div>
+    <table>
+<thead>
+<tr>
+  <th class="left">Ticker</th>
+  <th>Final</th>
+  <th>Drawdown</th>
+  <th>Reversal</th>
+  <th>Floor</th>
+  <th class="left">Rationale / 等什麼</th>
+  <th class="left">Tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_NFLX_20260516.html">NFLX</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.77</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.39</td>
+  <td>0.94</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -3.0%）</td>
+  <td class="meta-cell">A · B · PE 22.6x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_PLTR_20260505.html">PLTR</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.75</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.32</td>
+  <td>0.94</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -5.6%）</td>
+  <td class="meta-cell">A · B · PE 78.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_CRM_20260418.html">CRM</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.74</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.46</td>
+  <td>0.72</td>
+  <td class="left wait-cell">等 4w drift 轉正</td>
+  <td class="meta-cell">B · X · PE 13.8x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_RMS_20260418.html">RMS</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.72</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.29</td>
+  <td>0.88</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -3.4%）</td>
+  <td class="meta-cell">S · X · PE 33.0x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_CMG_20260516.html">CMG</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.71</strong></td>
+  <td class="drawdown-cell">0.94</td>
+  <td class="reversal-cell reversal-low">0.45</td>
+  <td>0.69</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -1.3%）</td>
+  <td class="meta-cell">B · B · PE 24.0x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_BKNG_20260518.html">BKNG</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.70</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.22</td>
+  <td>0.87</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -14.0%）</td>
+  <td class="meta-cell">A · B · PE 12.5x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_DASH_20260518.html">DASH</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.69</strong></td>
+  <td class="drawdown-cell">0.93</td>
+  <td class="reversal-cell reversal-low">0.34</td>
+  <td>0.77</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -8.0%）</td>
+  <td class="meta-cell">B · B · PE 20.4x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_RCL_20260508.html">RCL</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.68</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.31</td>
+  <td>0.70</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -5.0%）</td>
+  <td class="meta-cell">B+ · A · PE 14.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_UBER_20260418.html">UBER</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.68</strong></td>
+  <td class="drawdown-cell">0.70</td>
+  <td class="reversal-cell reversal-low">0.58</td>
+  <td>0.78</td>
+  <td class="left wait-cell">等 4w drift 轉正</td>
+  <td class="meta-cell">A · X · PE 18.0x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_SPOT_20260429.html">SPOT</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.67</strong></td>
+  <td class="drawdown-cell">0.92</td>
+  <td class="reversal-cell reversal-low">0.29</td>
+  <td>0.81</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -14.1%）</td>
+  <td class="meta-cell">A · B · PE 26.4x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NU_20260515.html">NU</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.67</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.17</td>
+  <td>0.83</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -15.3%）</td>
+  <td class="meta-cell">A · B · PE 11.7x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_MELI_20260513.html">MELI</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.66</strong></td>
+  <td class="drawdown-cell">1.00</td>
+  <td class="reversal-cell reversal-low">0.22</td>
+  <td>0.75</td>
+  <td class="left wait-cell">等 4w drift 轉正（現 -13.6%）</td>
+  <td class="meta-cell">A · B · PE 24.6x</td>
+</tr>
+</tbody>
+</table>
+  </div>
+
+</div>
+
+<div class="footer">
+  <h4>數據來源</h4>
+  <ul style="margin-left:18px">
+    <li><code>docs/dd-screener/latest.json</code> v1.2+（含 moat_score / quality_score / ai_risk / eps_revision_pct 等 dd-meta propagated 欄位）</li>
+    <li>MA snapshot 為 yfinance 週線（每次 build 重抓）；timing 欄位來自 docs/screener/latest.json 每日 cron + yfinance fallback</li>
+  </ul>
+  <h4>機器可讀</h4>
+  <p>JSON sidecar: <a href="/dd-screener/bottom-out.json"><code>/dd-screener/bottom-out.json</code></a> · 每日快照: <code>/dd-screener/bottom-out-snapshots/YYYY-MM-DD.json</code></p>
+  <p style="margin-top:16px;color:#94a3b8">Generated by <code>scripts/build_bottom_out.py</code> · schema v1.0</p>
+</div>
+</body>
+</html>

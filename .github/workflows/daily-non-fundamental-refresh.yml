@@ -57,6 +57,10 @@ jobs:
         run: python scripts/build_quality_entry.py
         continue-on-error: true
 
+      - name: Step 4 — Bottom-Out screener
+        run: python scripts/build_bottom_out.py
+        continue-on-error: true
+
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
@@ -68,7 +72,10 @@ jobs:
                   docs/dd-screener/alpha-rank-snapshots/ \
                   docs/dd-screener/quality-entry.html \
                   docs/dd-screener/quality-entry.json \
-                  docs/dd-screener/quality-entry-snapshots/
+                  docs/dd-screener/quality-entry-snapshots/ \
+                  docs/dd-screener/bottom-out.html \
+                  docs/dd-screener/bottom-out.json \
+                  docs/dd-screener/bottom-out-snapshots/
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else

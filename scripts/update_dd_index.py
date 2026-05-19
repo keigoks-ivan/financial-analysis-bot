@@ -2690,10 +2690,11 @@ def main():
                 print(
                     f"\n⏸ DD Screener cascade debounced — latest.json updated "
                     f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
-                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry.\n"
+                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out.\n"
                     f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
                     f"&& python3 scripts/dd_alpha_ranker.py --layers fundamental "
-                    f"&& python3 scripts/build_quality_entry.py"
+                    f"&& python3 scripts/build_quality_entry.py "
+                    f"&& python3 scripts/build_bottom_out.py"
                 )
                 return
         except OSError:
@@ -2771,6 +2772,30 @@ def main():
     except Exception as e:
         print(
             f"\n⚠ Quality-Entry errored: {e}.",
+            file=sys.stderr,
+        )
+
+    # Event-driven trigger for Bottom-Out screener (深回檔逆向訊號).
+    # Reads latest.json (schema v1.2+) and emits docs/dd-screener/bottom-out.{html,json}
+    # plus a daily snapshot. Runs after Quality-Entry — its failure is non-fatal.
+    bo_script = Path(__file__).resolve().parent / "build_bottom_out.py"
+    if not bo_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {bo_script.name}")
+    try:
+        subprocess.run(
+            [sys.executable, str(bo_script)],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(
+            f"\n⚠ Bottom-Out build failed (exit {e.returncode}). "
+            f"Rerun `python3 {bo_script}` manually.",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ Bottom-Out errored: {e}.",
             file=sys.stderr,
         )
 
