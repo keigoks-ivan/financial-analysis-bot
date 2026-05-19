@@ -360,10 +360,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（顏色基於 live 值）
       </li>
 
-      <li><strong>2Y P/E</strong>：即時 FY+2 Forward P/E — <strong>v1.7 起改用即時數值</strong>。
+      <li><strong>2Y P/E</strong>：即時 FY+2 Forward P/E — <strong>v1.7.3 簡化為只顯示最新數字</strong>。
         <br><em>來源（live）：</em>每日 <code>scripts/build_dd_screener.py</code>，主路徑用 yfinance FY EPS 估算（<code>live_fpe_method = 'eps'</code>）；EPS 抓不到時 fallback 用 <code>fpe_fy2 × price_now/price_at_dd</code> 漂移推算（標 <code>*</code>，<code>live_fpe_method = 'drift'</code>，假設 EPS 未 revise — 半年以上會高估「變貴」程度）。
-        <br><em>右方小字 drift %：</em>相對 DD frozen 的偏移幅度（|drift| ≥ 5% 才顯示）— 綠 = 變便宜 ≤ -5%，琥珀 = 變貴 5-15%，紅 = 變貴 ≥ 15%。
-        <br><em>規則：</em>純資訊欄，不參與 pass_count；hover 看 DD frozen + 天數 + drift。
+        <br><em>規則：</em>純資訊欄，不參與 pass_count；無配色 / 無 DD 對照 — 想知 DD 寫入時的對比請看 <code>/research/</code> 表格的 <code>data-pe2y</code> 欄位。
       </li>
 
       <li><strong>D/E（Debt/Equity）</strong>：Total Debt / Stockholders Equity。
@@ -377,13 +376,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <br><em>Tab 分組：</em>完全符合（5/5）/ 差一條（4/5）/ 差兩條（3/5）/ 全部
       </li>
 
-      <li><strong>5Y IRR</strong>：即時 5 年期年化 IRR（%）— <strong>v1.7 起改用即時數值（heuristic 推算）</strong>。
+      <li><strong>5Y IRR</strong>：即時 5 年期年化 IRR（%）— <strong>v1.7.3 簡化為只顯示最新數字（heuristic 推算）</strong>。
         <br><em>來源（live）：</em>從 DCA §4 frozen IRR 用 <code>(price_at_dd / price_now)</code> 回推：
         <br><code style="display:inline-block;margin:4px 0;padding:3px 6px">live_ev5y = ((1 + ev5y/100) × (price_at_dd / price_now)^0.2 − 1) × 100</code>
         <br>直覺：股價跌 → 起點變便宜 → 同樣 5 年 terminal → IRR 變高（合理）。標 <code>*</code> 提醒是推算非實算。
         <br><em>Caveat（重要）：</em><strong>假設 DCA 寫入時的 terminal value（5 年後目標價）未變</strong>。如果 thesis broke（基本面惡化、target 砍半），此 live IRR 會誤導你以為「跌很多 = 更便宜的機會」。建議搭配最新 DCA 報告判讀，不要單看此欄就加倉。
-        <br><em>顯示：</em>主值 = live；下方小字 vs DD = live 跟 frozen 的差距（|diff| ≥ 0.3pp 才顯示）。
-        <br><em>顏色：</em>≥ <code>12%/yr</code> 深綠 / <code>8–12%</code> 中綠 / <code>0–8%</code> 琥珀 / &lt; <code>0%</code> 紅（依 live 值上色）
+        <br><em>顏色：</em>≥ <code>12%/yr</code> 深綠 / <code>8–12%</code> 中綠 / <code>0–8%</code> 琥珀 / &lt; <code>0%</code> 紅（依數值上色，不是對比 DD）
         <br><em>frozen IRR 原始來源：</em><code>scripts/update_dd_index.py</code> <code>collect_dca_ev_map()</code> 解析最新 DCA HTML §4 EV
       </li>
 
@@ -694,35 +692,18 @@ function _sortStocks(stocks) {
 //   EPS rev:  上修 = 綠；下修 = 紅
 // 缺資料 fallback：live 為 null 時退回 frozen DD 值 + 小灰字 "DD" 標記。
 function _renderLivePECell(s) {
-  var pe = s.fpe_fy2;
+  // v1.7.3: 簡化為「只顯示最新數字」— 拿掉 drift % 小字 + 配色 + DD 對照
+  // tooltip。live 缺值時 fallback 顯示 frozen DD 值（無 label）。
+  // heuristic method (`drift` fallback) 仍標 `*` 提醒非 yfinance real EPS 算出。
   var live = s.live_fpe_est;
-  var drift = s.pe_drift_pct;
-  var ddAge = s.dd_age_days;
+  var pe = s.fpe_fy2;
+  var v = (live !== null && live !== undefined) ? live : pe;
+  if (v === null || v === undefined) return '<td>—</td>';
   var method = s.live_fpe_method;
-  if (pe === null || pe === undefined) return '<td>—</td>';
-  if (live === null || live === undefined) {
-    var tipFb = ' title="Live 估算失敗（yfinance 未取得或 rate-limit），暫顯示 DD frozen ' + pe.toFixed(1) + 'x' + (ddAge != null ? ' (' + ddAge + '天前)' : '') + '"';
-    return '<td' + tipFb + '>' + pe.toFixed(1) + '<span style="font-size:9px;color:#94a3b8;margin-left:3px">DD</span></td>';
-  }
-  var color = '#1e3a5f';
-  if (drift !== null) {
-    if (drift <= -5) color = '#166534';
-    else if (drift >= 15) color = '#991B1B';
-    else if (drift >= 5) color = '#92400E';
-  }
-  var sub = '';
-  if (drift !== null && Math.abs(drift) >= 5) {
-    var sign = drift > 0 ? '+' : '';
-    sub = '<span style="font-size:9px;color:' + color + ';margin-left:3px">' + sign + drift.toFixed(0) + '%</span>';
-  }
-  var mark = method === 'drift'
+  var mark = (method === 'drift')
     ? '<sup style="font-size:8px;color:#94a3b8" title="yfinance EPS 未取得，用 price-drift 推算">*</sup>'
     : '';
-  var methodLabel = method === 'eps' ? 'yfinance FY EPS (real)' : (method === 'drift' ? 'price-drift heuristic*（假設 EPS 未變）' : '—');
-  var driftStr = drift !== null ? '; drift ' + (drift > 0 ? '+' : '') + drift.toFixed(1) + '%' : '';
-  var ageStr = ddAge != null ? ' (' + ddAge + '天前)' : '';
-  var tip = ' title="Live FwdPE ' + live.toFixed(1) + 'x · ' + methodLabel + '; DD ' + pe.toFixed(1) + 'x' + ageStr + driftStr + '"';
-  return '<td' + tip + '><strong style="color:' + color + '">' + live.toFixed(1) + '</strong>' + mark + sub + '</td>';
+  return '<td style="font-variant-numeric:tabular-nums">' + v.toFixed(1) + mark + '</td>';
 }
 
 function _renderLivePEGCell(s, flag) {
@@ -810,34 +791,24 @@ function _renderRawEpsCell(s, field) {
 }
 
 function _renderLiveIRRInner(s) {
-  // 5Y IRR cell inner HTML — primary = live (heuristic), drift vs DD as sub
-  var irr = s.ev5y_pct;
+  // v1.7.3: 簡化為「只顯示最新數字」+ IRR 區間配色 — 拿掉 DD 對照 sub-line + 比較 tooltip
+  // live 缺值時 fallback 顯示 frozen DD 值（無 label）；heuristic 標 `*`。
   var live = s.live_ev5y_pct;
-  var method = s.live_ev5y_method;
-  if ((irr === null || irr === undefined) && (live === null || live === undefined)) {
+  var irr = s.ev5y_pct;
+  var shown = (live !== null && live !== undefined) ? live : irr;
+  if (shown === null || shown === undefined) {
     return '<span class="upside-na">—</span>';
   }
-  var shown = (live !== null && live !== undefined) ? live : irr;
-  var isLive = (live !== null && live !== undefined);
   var color;
   if (shown >= 12)      color = '#166534';
   else if (shown >= 8)  color = '#15803D';
   else if (shown >= 0)  color = '#92400E';
   else                  color = '#991B1B';
   var sign = shown > 0 ? '+' : (shown < 0 ? '−' : '');
-  var heurMark = (isLive && method === 'heur')
+  var heurMark = ((live !== null && live !== undefined) && s.live_ev5y_method === 'heur')
     ? '<sup style="font-size:8px;color:#94a3b8" title="heuristic — 用 (price_at_dd/price_now) 回推，假設 DCA terminal value 不變">*</sup>'
     : '';
-  var html = '<span style="color:' + color + ';font-weight:600">' + sign + Math.abs(shown).toFixed(1) + '%/yr</span>' + heurMark;
-  if (isLive && irr !== null && irr !== undefined && Math.abs(live - irr) >= 0.3) {
-    var diff = live - irr;
-    var diffSign = diff > 0 ? '+' : '';
-    var diffColor = diff > 0 ? '#166534' : '#92400E';
-    html += '<div style="font-size:9px;color:' + diffColor + ';margin-top:1px">DD ' + (irr > 0 ? '+' : '') + irr.toFixed(1) + '% (' + diffSign + diff.toFixed(1) + 'pp)</div>';
-  } else if (isLive && irr !== null && irr !== undefined) {
-    html = '<span title="Live ' + shown.toFixed(1) + '%/yr (heuristic); DD ' + irr.toFixed(1) + '%/yr">' + html + '</span>';
-  }
-  return html;
+  return '<span style="color:' + color + ';font-weight:600">' + sign + Math.abs(shown).toFixed(1) + '%/yr</span>' + heurMark;
 }
 
 function buildTable(stocks) {
