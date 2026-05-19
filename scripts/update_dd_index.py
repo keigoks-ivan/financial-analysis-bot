@@ -2690,11 +2690,12 @@ def main():
                 print(
                     f"\n⏸ DD Screener cascade debounced — latest.json updated "
                     f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
-                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out.\n"
+                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out + breakout.\n"
                     f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
                     f"&& python3 scripts/dd_alpha_ranker.py --layers fundamental "
                     f"&& python3 scripts/build_quality_entry.py "
-                    f"&& python3 scripts/build_bottom_out.py"
+                    f"&& python3 scripts/build_bottom_out.py "
+                    f"&& python3 scripts/build_breakout.py"
                 )
                 return
         except OSError:
@@ -2796,6 +2797,30 @@ def main():
     except Exception as e:
         print(
             f"\n⚠ Bottom-Out errored: {e}.",
+            file=sys.stderr,
+        )
+
+    # Event-driven trigger for Breakout screener (突破動能追擊).
+    # Reads latest.json (schema v1.2+) and emits docs/dd-screener/breakout.{html,json}
+    # plus a daily snapshot. Runs after Bottom-Out — its failure is non-fatal.
+    brk_script = Path(__file__).resolve().parent / "build_breakout.py"
+    if not brk_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {brk_script.name}")
+    try:
+        subprocess.run(
+            [sys.executable, str(brk_script)],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(
+            f"\n⚠ Breakout build failed (exit {e.returncode}). "
+            f"Rerun `python3 {brk_script}` manually.",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ Breakout errored: {e}.",
             file=sys.stderr,
         )
 

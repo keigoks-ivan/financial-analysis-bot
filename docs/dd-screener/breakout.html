@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breakout — 突破動能追擊 | InvestMQuest</title>
+<meta name="color-scheme" content="light">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e3a5f;line-height:1.5}
+.imq-nav-root{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:.7rem 20px;font-size:13px;box-shadow:0 1px 3px rgba(0,0,0,.12);position:sticky;top:0;z-index:1000;font-family:'Inter','Noto Sans TC',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.imq-nav-inner{max-width:1140px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.imq-logo{font-weight:700;color:#fff !important;text-decoration:none !important;font-size:15px;letter-spacing:-.02em;flex-shrink:0;background:none !important;padding:0 !important}
+.imq-logo:hover{color:#fff !important;text-decoration:none !important}
+.imq-logo span{color:#3b82f6}
+.imq-menu{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin:0;padding:0;list-style:none}
+.imq-menu > a,.imq-dd-btn{color:rgba(255,255,255,.7) !important;font-size:.8rem;font-weight:500;padding:.42rem .72rem;border-radius:6px;transition:all .15s;background:none;border:0;font-family:inherit;cursor:pointer;text-decoration:none !important;display:inline-flex;align-items:center;gap:.28rem;line-height:1.2;letter-spacing:0}
+.imq-menu > a:hover,.imq-dd-btn:hover{color:#fff !important;background:rgba(255,255,255,.08)}
+.imq-menu > a.active,.imq-dd.active > .imq-dd-btn{color:#fff !important;background:rgba(59,130,246,.22);font-weight:600}
+.imq-dd{position:relative;display:inline-block}
+.imq-dd-menu{display:none;position:absolute;top:100%;left:0;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.35rem 0;min-width:180px;box-shadow:0 10px 28px rgba(0,0,0,.3);z-index:1001}
+.imq-dd:hover .imq-dd-menu,.imq-dd:focus-within .imq-dd-menu,.imq-dd.open .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:.55rem 1rem;color:rgba(255,255,255,.75) !important;font-size:.78rem;text-decoration:none !important;white-space:nowrap;transition:all .12s;font-weight:500}
+.imq-dd-menu a:hover{color:#fff !important;background:rgba(59,130,246,.18)}
+.imq-caret{font-size:.6rem;opacity:.7;margin-top:1px}
+@media(max-width:768px){.imq-nav-root{padding:.55rem 12px}.imq-menu{width:100%;justify-content:flex-start;gap:.1rem}.imq-menu > a,.imq-dd-btn{font-size:.74rem;padding:.32rem .5rem}.imq-dd-menu{position:static;display:none;min-width:auto;box-shadow:none;background:rgba(255,255,255,.04);border:none;padding:.1rem 0 .3rem 1rem;margin:.1rem 0}.imq-dd.open .imq-dd-menu{display:block}}
+.hero{background:#fff;border-bottom:1px solid #dce8f5;padding:24px 32px 18px}
+.hero-inner{max-width:min(1400px,96vw);margin:0 auto}
+.hero-h1{font-size:22px;font-weight:600;color:#0f2a45;margin-bottom:6px}
+.hero-sub{font-size:12px;color:#5a7a9a;line-height:1.6;max-width:920px}
+.hero-stats{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}
+.hero-stat{background:#f0f5fb;border:1px solid #dce8f5;border-radius:6px;padding:7px 11px;font-size:11px;color:#5a7a9a}
+.hero-stat strong{color:#1e3a5f;font-size:13px;display:block;margin-bottom:1px}
+.section{max-width:min(1400px,96vw);margin:0 auto;padding:24px 32px}
+.formula-panel{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:14px 18px;margin-bottom:20px}
+.formula-panel h3{font-size:13px;font-weight:700;color:#0f2a45;margin-bottom:8px}
+.formula-panel code{background:#f0f5fb;padding:1px 6px;border-radius:3px;font-size:11.5px;color:#1e3a5f}
+.formula-row{font-size:12px;color:#334e68;line-height:1.85}
+.tier-card{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:16px 18px;margin-bottom:22px}
+.tier-card h2{font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tier-card.tier-a h2{color:#1d4ed8}
+.tier-card.tier-b h2{color:#475569}
+.tier-card h2 .badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:700}
+.tier-card.tier-a h2 .badge{background:#dbeafe;color:#1d4ed8}
+.tier-card.tier-b h2 .badge{background:#e2e8f0;color:#64748b}
+.tier-card .desc{font-size:12px;color:#5a7a9a;margin-bottom:10px;line-height:1.6}
+.tier-card table{width:100%;border-collapse:collapse;font-size:12px}
+.tier-card th{background:#eff6ff;color:#5a7a9a;font-weight:700;padding:8px 10px;text-align:right;border-bottom:2px solid #dce8f5;font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+.tier-card th.left{text-align:left}
+.tier-card td{padding:8px 10px;text-align:right;border-bottom:1px solid #f0f5fb;font-variant-numeric:tabular-nums}
+.tier-card td.left{text-align:left;color:#0f2a45;font-weight:500}
+.tier-card td.left .sub{font-size:10px;color:#94a3b8;font-weight:400;margin-top:1px}
+.tier-card td a{color:#2563eb;text-decoration:none;font-weight:700}
+.tier-card td a:hover{text-decoration:underline}
+.score-cell{color:#0f2a45}
+.position-cell{color:#1d4ed8;font-weight:600}
+.setup-cell{color:#1e40af;font-weight:600}
+.setup-low{color:#64748b}
+.rationale-cell{color:#1e3a5f;font-size:11px}
+.wait-cell{color:#475569;font-size:11px}
+.meta-cell{font-size:10.5px;color:#5a7a9a;text-align:left !important}
+.empty-row{padding:14px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}
+.caveat-panel{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:12px;color:#1e3a5f;line-height:1.65}
+.caveat-panel strong{color:#1d4ed8;display:block;margin-bottom:6px}
+.caveat-panel ul{margin-left:18px}
+.footer{padding:30px 32px;font-size:11px;color:#5a7a9a;line-height:1.7;max-width:min(1400px,96vw);margin:0 auto;border-top:1px solid #dce8f5}
+.footer h4{color:#1e3a5f;font-size:12px;margin-top:14px;margin-bottom:6px;font-weight:700}
+.footer code{background:#f0f5fb;padding:1px 5px;border-radius:3px;font-size:10px;color:#1e3a5f}
+</style>
+</head>
+<body>
+<header class="imq-nav-root">
+  <div class="imq-nav-inner">
+    <a class="imq-logo" href="/">InvestMQuest<span>.</span> Research</a>
+    <nav class="imq-menu">
+      <a href="/">首頁</a>
+      <div class="imq-dd">
+        <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/research/">個股 DD</a>
+          <a href="/pm/">PM 複盤</a>
+          <a href="/id/">產業深度 ID</a>
+          <a href="/ds/">產業敘述 DS</a>
+          <a href="/comparisons/">多股對比</a>
+        </div>
+      </div>
+      <div class="imq-dd active">
+        <button type="button" class="imq-dd-btn">工具<span class="imq-caret">▾</span></button>
+        <div class="imq-dd-menu">
+          <a href="/dd-screener/">DD Screener</a>
+          <a href="/dd-screener/alpha-rank.html">Alpha Rank</a>
+          <a href="/dd-screener/quality-entry.html">Quality-Entry</a>
+          <a href="/dd-screener/bottom-out.html">Bottom-Out</a>
+          <a href="/dd-screener/breakout.html" class="active">Breakout</a>
+          <a href="/backtest/">量化回測</a>
+        </div>
+      </div>
+      <a href="/flow/">🎯 Flow</a>
+    </nav>
+  </div>
+</header>
+<script>(function(){document.querySelectorAll('.imq-dd-btn').forEach(function(btn){btn.addEventListener('click',function(e){e.preventDefault();var dd=btn.closest('.imq-dd');document.querySelectorAll('.imq-dd.open').forEach(function(d){if(d!==dd)d.classList.remove('open')});dd.classList.toggle('open')})});document.addEventListener('click',function(e){if(!e.target.closest('.imq-dd'))document.querySelectorAll('.imq-dd.open').forEach(function(d){d.classList.remove('open')});});})();</script>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-h1">Breakout — 突破動能追擊</div>
+    <div class="hero-sub">
+      鎖定<b>接近 52 週高點（dist &gt; −7%）+ RS ≥ 80 + MA250 正斜率</b>的 Minervini-style 突破標的。
+      三支柱複合分數：Position（接近 ATH）40% / Momentum Setup 35% / Quality Floor 25%。
+      Tier A 是「動能確認中的 Active Breakout」，Tier B 是「體質合格但尚未觸發的 Pre-Breakout Setup」。
+      與 <a href="/dd-screener/quality-entry.html" style="color:#2563eb">Quality-Entry</a> /
+      <a href="/dd-screener/bottom-out.html" style="color:#ea580c">Bottom-Out</a> 互補不重疊（dist_52w 三段互斥）。
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>2026-05-19 15:01</strong>最後更新（台北）</div>
+      <div class="hero-stat"><strong>140</strong>universe</div>
+      <div class="hero-stat"><strong>12</strong>通過 veto</div>
+      <div class="hero-stat"><strong>128</strong>被 veto</div>
+      <div class="hero-stat"><strong>11</strong>Tier A — Active Breakout</div>
+      <div class="hero-stat"><strong>0</strong>Tier B — Pre-Breakout Setup</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+
+  <div class="formula-panel">
+    <h3>方法論</h3>
+    <div class="formula-row">
+      <b>Final</b> = 0.40·<b>Position</b> + 0.35·<b>Setup</b> + 0.25·<b>Floor</b>
+    </div>
+    <div class="formula-row" style="margin-top:6px">
+      <b>Position（接近 ATH）</b>：<code>Λ(dist_52w_high_pct)</code> — ATH 給 1.0，−2% 0.95，−5% 0.75，−7% 0.55（veto 邊界）；&lt;−20% 給 0（用其他 screener）
+    </div>
+    <div class="formula-row">
+      <b>Setup（動能確認）</b>：<code>0.40·rs_score_norm + 0.30·ma50_position_score + 0.20·ma250_slope_score + 0.10·drift_4w_score</code>
+    </div>
+    <div class="formula-row">
+      <b>Floor（品質地板）</b>：<code>0.40·moat/10 + 0.30·pass/5 + 0.15·quality/10 + 0.15·eps_rev_safety</code>
+    </div>
+    <div class="formula-row" style="margin-top:8px;color:#5a7a9a">
+      <b>Vetoes</b>（任一觸發 → 不入榜）：<code>ai_risk==🔴</code> · <code>moat_grade∈(C,X)</code> · <code>trap==🔴</code> · <code>moat_score&lt;6</code> · <code>dist_52w&lt;−7%</code> · <code>rs&lt;80</code> · <code>MA250 slope&lt;0</code> · <code>vs MA50&gt;+35%</code> · <code>eps_revision&lt;−30%</code>
+    </div>
+    <div class="formula-row" style="color:#5a7a9a">
+      <b>Tier 切分</b>：Final ≥ 0.65 才入榜；Setup ≥ 0.65 → Tier A（Active Breakout），否則 Tier B（Pre-Breakout Setup）
+    </div>
+  </div>
+
+  <div class="caveat-panel">
+    <strong>⚡ 動能區 — 使用前必讀</strong>
+    <ul>
+      <li><b>不是 sure-thing pattern</b>：Breakout 失敗率約 30-50%（Minervini 認知中屬合理）。Tier A 標的不保證繼續漲 — 請配 5-7% stop-loss 進場，讓市場告訴你對不對。</li>
+      <li><b>Overextended trap</b>：Tier A 可能包含「爆衝最後一棒」標的。搭最新 IBD market state（見 <a href="/markets.html" style="color:#2563eb">markets.html</a>）一起看；correction 中的 breakout 容易 fail，請在 confirmed uptrend 中操作。</li>
+      <li><b>跟 Quality-Entry / Bottom-Out 互補不重疊</b>：dist_52w &gt; −7% → Breakout；−10% ~ −15% → Quality-Entry；&lt; −25% → Bottom-Out。同檔股票不會同時在兩個 screener 的 Tier A。</li>
+    </ul>
+  </div>
+
+  <div class="tier-card tier-a">
+    <h2>&#128309; Tier A — Active Breakout <span class="badge">Final ≥ 0.65 · Setup ≥ 0.65</span></h2>
+    <div class="desc">接近 52w 高 + RS ≥ 80 + 動能確認。Rationale 欄顯示 ATH 距離 / RS / vs MA50 / slope 關鍵數字。高動能中高風險 — 配 stop-loss 進場。</div>
+    <table>
+<thead>
+<tr>
+  <th class="left">Ticker</th>
+  <th>Final</th>
+  <th>Position</th>
+  <th>Setup</th>
+  <th>Floor</th>
+  <th class="left">Rationale / 等什麼</th>
+  <th class="left">Tags</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td class="left"><a href="/dd/DD_GOOGL_20260504.html">GOOGL</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.94</strong></td>
+  <td class="position-cell">0.96</td>
+  <td class="setup-cell">0.90</td>
+  <td>0.93</td>
+  <td class="left rationale-cell">dist -1% / RS 86 / MA50 +19% / slope +2.6%</td>
+  <td class="meta-cell">S · B · PE 27.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_ADI_20260427.html">ADI</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.93</strong></td>
+  <td class="position-cell">1.00</td>
+  <td class="setup-cell">0.88</td>
+  <td>0.89</td>
+  <td class="left rationale-cell">dist -3% / RS 87 / MA50 +17% / slope +2.1%</td>
+  <td class="meta-cell">A · A · PE 29.7x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NTAP_20260518.html">NTAP</a><div class="sub">Enterprise Storage / Data Infrastructure</div></td>
+  <td class="score-cell"><strong>0.91</strong></td>
+  <td class="position-cell">1.00</td>
+  <td class="setup-cell">0.91</td>
+  <td>0.78</td>
+  <td class="left rationale-cell">dist -3% / RS 85 / MA50 +14% / slope +0.8%</td>
+  <td class="meta-cell">B · B · PE 13.9x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_AAPL_20260504.html">AAPL</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.90</strong></td>
+  <td class="position-cell">0.98</td>
+  <td class="setup-cell">0.90</td>
+  <td>0.76</td>
+  <td class="left rationale-cell">ATH / RS 80 / MA50 +12% / slope +1.3%</td>
+  <td class="meta-cell">A · B · PE 29.3x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NXPI_20260504.html">NXPI</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.89</strong></td>
+  <td class="position-cell">1.00</td>
+  <td class="setup-cell">0.83</td>
+  <td>0.82</td>
+  <td class="left rationale-cell">dist -5% / RS 83 / MA50 +27% / slope +0.9%</td>
+  <td class="meta-cell">A · B · PE 16.8x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_NVDA_20260418.html">NVDA</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.89</strong></td>
+  <td class="position-cell">0.82</td>
+  <td class="setup-cell">0.90</td>
+  <td>1.00</td>
+  <td class="left rationale-cell">dist -6% / RS 86 / MA50 +15% / slope +3.9%</td>
+  <td class="meta-cell">S · A · PE 24.2x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_TXN_20260504.html">TXN</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.88</strong></td>
+  <td class="position-cell">0.98</td>
+  <td class="setup-cell">0.83</td>
+  <td>0.78</td>
+  <td class="left rationale-cell">dist -2% / RS 92 / MA50 +29% / slope +1.2%</td>
+  <td class="meta-cell">B · B · PE 30.7x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_EBAY_20260516.html">EBAY</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.87</strong></td>
+  <td class="position-cell">0.96</td>
+  <td class="setup-cell">0.92</td>
+  <td>0.66</td>
+  <td class="left rationale-cell">dist -2% / RS 89 / MA50 +15% / slope +1.3%</td>
+  <td class="meta-cell">B · B · PE 17.2x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_HPE_20260518.html">HPE</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.86</strong></td>
+  <td class="position-cell">1.00</td>
+  <td class="setup-cell">0.85</td>
+  <td>0.66</td>
+  <td class="left rationale-cell">dist -3% / RS 89 / MA50 +26% / slope +1.8%</td>
+  <td class="meta-cell">B · B · PE 12.1x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_CVS_20260518.html">CVS</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.85</strong></td>
+  <td class="position-cell">0.96</td>
+  <td class="setup-cell">0.90</td>
+  <td>0.59</td>
+  <td class="left rationale-cell">dist -2% / RS 90 / MA50 +22% / slope +0.5%</td>
+  <td class="meta-cell">B · B · PE 11.5x</td>
+</tr>
+<tr>
+  <td class="left"><a href="/dd/DD_CMI_20260518.html">CMI</a><div class="sub"></div></td>
+  <td class="score-cell"><strong>0.82</strong></td>
+  <td class="position-cell">0.79</td>
+  <td class="setup-cell">0.87</td>
+  <td>0.80</td>
+  <td class="left rationale-cell">dist -5% / RS 81 / MA50 +11% / slope +2.6%</td>
+  <td class="meta-cell">B · B · PE 22.1x</td>
+</tr>
+</tbody>
+</table>
+  </div>
+
+  <div class="tier-card tier-b">
+    <h2>&#9898; Tier B — Pre-Breakout Setup <span class="badge">Final ≥ 0.65 · Setup &lt; 0.65</span></h2>
+    <div class="desc">體質合格、接近突破位，但動能尚未完全確認（RS 不夠強 / MA 條件未達）。「等什麼」欄點出最大拖累因子 — 條件觸發後再評估進場。</div>
+    <div class="empty-row">尚無 Tier B 標的。</div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <h4>數據來源</h4>
+  <ul style="margin-left:18px">
+    <li><code>docs/dd-screener/latest.json</code> v1.2+（含 moat_score / quality_score / ai_risk / eps_revision_pct 等 dd-meta propagated 欄位）</li>
+    <li>MA snapshot 為 yfinance 週線（每次 build 重抓）；timing 欄位來自 docs/screener/latest.json 每日 cron + yfinance fallback</li>
+    <li>RS score = Minervini 相對強度計算（52w 末段加權），dist_52w_high_pct = 與 52 週高點之距離</li>
+  </ul>
+  <h4>機器可讀</h4>
+  <p>JSON sidecar: <a href="/dd-screener/breakout.json"><code>/dd-screener/breakout.json</code></a> · 每日快照: <code>/dd-screener/breakout-snapshots/YYYY-MM-DD.json</code></p>
+  <p style="margin-top:16px;color:#94a3b8">Generated by <code>scripts/build_breakout.py</code> · schema v1.0</p>
+</div>
+</body>
+</html>
