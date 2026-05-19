@@ -2690,12 +2690,13 @@ def main():
                 print(
                     f"\n⏸ DD Screener cascade debounced — latest.json updated "
                     f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
-                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out + breakout.\n"
+                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out + breakout + earnings-acceleration.\n"
                     f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
                     f"&& python3 scripts/dd_alpha_ranker.py --layers fundamental "
                     f"&& python3 scripts/build_quality_entry.py "
                     f"&& python3 scripts/build_bottom_out.py "
-                    f"&& python3 scripts/build_breakout.py"
+                    f"&& python3 scripts/build_breakout.py "
+                    f"&& python3 scripts/build_earnings_acceleration.py"
                 )
                 return
         except OSError:
@@ -2821,6 +2822,31 @@ def main():
     except Exception as e:
         print(
             f"\n⚠ Breakout errored: {e}.",
+            file=sys.stderr,
+        )
+
+    # Event-driven trigger for Earnings Acceleration screener (EPS 加速篩選).
+    # Reads latest.json (schema v1.2+) + fetches yfinance eps_trend/earnings_history
+    # and emits docs/dd-screener/earnings-acceleration.{html,json} plus a daily snapshot.
+    # Runs after Breakout — its failure is non-fatal.
+    ea_script = Path(__file__).resolve().parent / "build_earnings_acceleration.py"
+    if not ea_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {ea_script.name}")
+    try:
+        subprocess.run(
+            [sys.executable, str(ea_script)],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(
+            f"\n⚠ Earnings Acceleration build failed (exit {e.returncode}). "
+            f"Rerun `python3 {ea_script}` manually.",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ Earnings Acceleration errored: {e}.",
             file=sys.stderr,
         )
 
