@@ -2,8 +2,9 @@ name: Daily US Fundamentals
 
 on:
   schedule:
-    # Mon-Fri 22:30 UTC = 30 min after daily-screener-us.yml; uses its latest.json top-N.
-    - cron: "30 22 * * 1-5"
+    # Mon-Fri 22:45 UTC = 45 min after daily-screener-us.yml; uses its latest.json top-N.
+    # Staggered 15 min after daily-prices-cache-us.yml (22:30) to avoid concurrent-push race.
+    - cron: "45 22 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -40,5 +41,13 @@ jobs:
             git commit -m "data: US fundamentals refresh ${DATE}
 
             Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
-            git push
+            for i in 1 2 3; do
+              if git push; then
+                exit 0
+              fi
+              echo "Push attempt $i failed (likely concurrent push); rebasing onto origin/main..."
+              git pull --rebase origin main || { echo "Rebase failed"; exit 1; }
+            done
+            echo "Push failed after 3 attempts"
+            exit 1
           fi
