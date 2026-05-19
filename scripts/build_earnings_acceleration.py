@@ -73,7 +73,10 @@ SCHEMA_VERSION = "1.0"
 # ── scoring constants ─────────────────────────────────────────────────────────
 PILLAR_WEIGHTS = {"revision": 0.50, "beat": 0.30, "floor": 0.20}
 
-TIER_FINAL_MIN = 0.65
+# v1.0.1: Final 門檻從 0.65 拉到 0.75 — bull market 中 quality stocks 大部分都
+# 有正向 revision + beat，0.65 太寬鬆會出 40+ Tier A。0.75 收緊到 high-conviction
+# only (預期 8-15 檔)。Pillar A/B 門檻不動 — 已是強訊號標準。
+TIER_FINAL_MIN = 0.75
 TIER_A_REVISION_MIN = 0.60
 TIER_A_BEAT_MIN = 0.55
 DISPLAY_TOTAL = 25
