@@ -488,8 +488,9 @@ def _moat_trend_for(ticker: str, dca_trend_map: dict, fallback: str) -> str:
 
 
 def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
-    """v1.6: fetch fresh FY EPS estimate from yfinance and auto-match the FY
-    row that the DD anchored on.
+    """v1.7.1: fetch fresh FY EPS estimate from yfinance, auto-match the FY
+    row that the DD anchored on, AND return raw 0y/+1y values + trailingEps
+    for proper 2Y CAGR computation.
 
     DD label "FY+1" vs "FY+2" semantics vary by writer (some count from last
     fiscal year-end, some from current ongoing FY). Instead of guessing, we
@@ -497,12 +498,22 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
     pick whichever yfinance annual row (0y / +1y) is closest. This works
     per-ticker without needing labels.
 
+    2Y CAGR caveat (v1.7.1 fix): yfinance's "0y" and "+1y" rows are 1 year
+    apart (current FY vs next FY). Computing CAGR as ((+1y/0y)**0.5 - 1)
+    is mathematically WRONG — that formula halves a 1-year growth rate into
+    a fake 2-year annualized number. The correct 2Y CAGR uses trailingEps as
+    base: ((+1y / trailingEps)**0.5 - 1) — matches QGM's eps_cagr_2y_fwd
+    convention. We fetch trailingEps from .info here for downstream use.
+
     Returns dict with:
       live_fpe_real:    price_now / yf_eps_matched (None on failure)
       yf_fy_label:      "0y" | "+1y" — which yfinance row was matched
       eps_at_dd:        DD-implied EPS (price_at_dd / fpe_fy2)
       eps_now:          fresh consensus EPS for matched FY
       eps_revision_pct: (eps_now - eps_at_dd) / eps_at_dd × 100
+      eps_0y_raw:       raw 0y avg EPS (current FY estimate) — kept for audit
+      eps_1y_raw:       raw +1y avg EPS (next FY estimate) — used as CAGR end
+      trailing_eps:     info.trailingEps — used as CAGR base for proper 2Y CAGR
     """
     out = {
         "live_fpe_real": None,
@@ -510,6 +521,11 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
         "eps_at_dd": None,
         "eps_now": None,
         "eps_revision_pct": None,
+        # v1.7: raw values for 2Y CAGR computation (independent of DD match)
+        "eps_0y_raw": None,
+        "eps_1y_raw": None,
+        # v1.7.1: trailing EPS for proper 2Y CAGR base (matches QGM convention)
+        "trailing_eps": None,
     }
     if not (p_at_dd and fpe_fy2 and p_at_dd > 0 and fpe_fy2 > 0):
         return out
@@ -520,6 +536,28 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
         ee = tk.earnings_estimate
         if ee is None or getattr(ee, "empty", True):
             return out
+
+        # v1.7: collect both raw rows regardless of DD-match logic
+        for row_label, field in (("0y", "eps_0y_raw"), ("+1y", "eps_1y_raw")):
+            try:
+                if row_label in ee.index:
+                    val = ee.loc[row_label].get("avg")
+                    if val is not None and float(val) > 0:
+                        out[field] = round(float(val), 4)
+            except Exception:
+                pass
+
+        # v1.7.1: fetch trailingEps for proper 2Y CAGR base.
+        # Only fetch info if we have a usable eps_1y (otherwise CAGR can't be
+        # computed anyway — saves ~50% rate-limit pressure on partial-fail tickers).
+        if out["eps_1y_raw"] is not None:
+            try:
+                trailing = tk.info.get("trailingEps")
+                if trailing is not None and float(trailing) > 0:
+                    out["trailing_eps"] = round(float(trailing), 4)
+            except Exception:
+                pass
+
         best = None
         for row_label in ("0y", "+1y"):
             try:
@@ -547,7 +585,9 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
     return out
 
 
-def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
+def _compute_live_pe_drift(
+    entry: dict, ma: dict, live_fy_result: dict | None = None
+) -> dict:
     """Compute live FwdPE — preferring fresh yfinance EPS over price-drift heuristic.
 
     Primary path (v1.6): live_fpe_real = price_now / yfinance FY EPS estimate
@@ -557,6 +597,10 @@ def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
     Fallback path (v1.3): live_fpe_heur = fpe_fy2 × (price_now / price_at_dd)
       Assumes EPS unchanged since DD. Used when yfinance has no earnings_estimate
       or the match is off (BESI etc).
+
+    v1.7: accepts optional pre-fetched `live_fy_result` to avoid duplicate
+    yfinance calls when enrich_ticker also needs eps_0y_raw / eps_1y_raw.
+    If not provided, calls _fetch_live_fy_eps() internally (backward-compat).
 
     Returns dict with:
       live_fpe_est: live FwdPE (real if matched, heuristic otherwise), None if inputs missing
@@ -592,8 +636,10 @@ def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
     if fpe is None or p_dd is None or p_now is None or p_dd <= 0 or fpe <= 0:
         return out
 
-    # Primary: real EPS path (per ticker yfinance fetch)
-    real = _fetch_live_fy_eps(_yf_ticker_for_ma(entry["ticker"]), p_dd, fpe)
+    # Primary: real EPS path — use pre-fetched result if provided (v1.7 no-dupe)
+    real = live_fy_result if live_fy_result is not None else _fetch_live_fy_eps(
+        _yf_ticker_for_ma(entry["ticker"]), p_dd, fpe
+    )
     if real["eps_now"] is not None and real["eps_now"] > 0:
         out["live_fpe_est"] = round(p_now / real["eps_now"], 2)
         out["pe_drift_pct"] = round((out["live_fpe_est"] / fpe - 1) * 100, 1)
@@ -621,6 +667,185 @@ def _compute_live_pe_drift(entry: dict, ma: dict) -> dict:
     return out
 
 
+# ---------------------------------------------------------------------------
+# EPS 2Y CAGR live compute helpers (v1.7 — EPS revision momentum)
+# ---------------------------------------------------------------------------
+
+def _compute_live_eps_cagr(entry: dict, live_fy_result: dict) -> dict:
+    """Compute live 2Y EPS CAGR from yfinance trailingEps + +1y estimate.
+
+    v1.7.1 fix: yfinance's 0y/+1y rows are 1 year apart (current FY vs next FY),
+    so ((+1y/0y)**0.5 - 1) is mathematically wrong (halves a 1yr growth). The
+    correct 2Y CAGR uses trailingEps as the base — matches QGM's
+    eps_cagr_2y_fwd convention (verified against NVDA: 52.89% computed vs
+    QGM frozen 52.73%).
+
+    Formula:
+      cagr = ((eps_+1y / trailingEps) ** 0.5 - 1) * 100
+
+    Writes:
+      eps2y_live:         live 2Y EPS CAGR % (None on failure)
+      eps2y_live_method:  "real" (trailing + +1y) | "missing"
+    """
+    eps_1y = live_fy_result.get("eps_1y_raw")
+    trailing = live_fy_result.get("trailing_eps")
+
+    if eps_1y is not None and trailing is not None and trailing > 0:
+        cagr = ((eps_1y / trailing) ** 0.5 - 1) * 100
+        return {
+            "eps2y_live": round(cagr, 2),
+            "eps2y_live_method": "real",
+        }
+    return {
+        "eps2y_live": None,
+        "eps2y_live_method": "missing",
+    }
+
+
+# Module-level cache: avoid re-reading snapshot file on every per-ticker call.
+_PREV_MONTH_SNAPSHOT_CACHE: dict = {}
+_PREV_MONTH_SNAPSHOT_LOADED: bool = False
+
+
+def _load_prev_month_snapshot() -> dict:
+    """Load the previous month's EPS snapshot (with 60-day grace period).
+
+    Running on 2026-06-15 → looks for 2026-05.json first, then 2026-04.json.
+    Returns the full snapshot dict (with "tickers" key), or {} if not found.
+    Cached at module level so subsequent per-ticker calls don't re-read disk.
+    """
+    global _PREV_MONTH_SNAPSHOT_CACHE, _PREV_MONTH_SNAPSHOT_LOADED
+    if _PREV_MONTH_SNAPSHOT_LOADED:
+        return _PREV_MONTH_SNAPSHOT_CACHE
+
+    _PREV_MONTH_SNAPSHOT_LOADED = True
+    snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
+
+    now = datetime.now(timezone(timedelta(hours=8)))  # Taipei TZ
+    for months_back in (1, 2):
+        # Compute YYYY-MM for (now - N months)
+        m = now.month - months_back
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        candidate = snapshot_dir / f"{y:04d}-{m:02d}.json"
+        if candidate.exists():
+            try:
+                data = json.loads(candidate.read_text(encoding="utf-8"))
+                _PREV_MONTH_SNAPSHOT_CACHE = data
+                return _PREV_MONTH_SNAPSHOT_CACHE
+            except Exception as exc:
+                print(f"  WARN: failed to load EPS snapshot {candidate}: {exc}", file=sys.stderr)
+
+    _PREV_MONTH_SNAPSHOT_CACHE = {}
+    return _PREV_MONTH_SNAPSHOT_CACHE
+
+
+def _compute_eps_revision(entry: dict, eps2y_live: float | None, prev_snapshot: dict) -> dict:
+    """Compute EPS revision momentum vs last month's snapshot.
+
+    revision_dir:
+      "新增"  — ticker not in last month's snapshot (new to universe or snapshot missing)
+      "持平"  — |revision_pp| < 0.5pp
+      "上修"  — revision_pp > 0
+      "下修"  — revision_pp < 0
+
+    Writes:
+      eps2y_prev_month:      last month's eps_cagr_2y value (float or None)
+      eps2y_prev_month_date: month key string e.g. "2026-05" (or None)
+      eps2y_revision_pp:     eps2y_live - eps2y_prev_month (float or None)
+      eps2y_revision_dir:    "新增" | "持平" | "上修" | "下修" | None
+    """
+    ticker = entry.get("ticker")
+    out = {
+        "eps2y_prev_month": None,
+        "eps2y_prev_month_date": None,
+        "eps2y_revision_pp": None,
+        "eps2y_revision_dir": None,
+    }
+
+    if eps2y_live is None:
+        # Can't compute revision without live value
+        return out
+
+    if not prev_snapshot:
+        # No snapshot at all — can't classify
+        return out
+
+    for_month = prev_snapshot.get("for_month")
+    prev_tickers = prev_snapshot.get("tickers") or {}
+    prev_row = prev_tickers.get(ticker)
+
+    if prev_row is None:
+        out["eps2y_revision_dir"] = "新增"
+        out["eps2y_prev_month_date"] = for_month
+        return out
+
+    prev_cagr = prev_row.get("eps_cagr_2y")
+    out["eps2y_prev_month_date"] = for_month
+
+    if prev_cagr is None:
+        out["eps2y_revision_dir"] = "新增"
+        return out
+
+    out["eps2y_prev_month"] = prev_cagr
+    pp = eps2y_live - prev_cagr
+    out["eps2y_revision_pp"] = round(pp, 2)
+
+    if abs(pp) < 0.5:
+        out["eps2y_revision_dir"] = "持平"
+    elif pp > 0:
+        out["eps2y_revision_dir"] = "上修"
+    else:
+        out["eps2y_revision_dir"] = "下修"
+
+    return out
+
+
+def _compute_live_peg(pe_drift: dict, eps2y_live: float | None) -> dict:
+    """Derive live PEG from live_fpe_est / eps2y_live.
+
+    pe_drift: the dict returned by _compute_live_pe_drift() (contains live_fpe_est).
+
+    Writes:
+      live_peg: live PEG ratio (None if either input is missing or ≤ 0)
+    """
+    fpe = pe_drift.get("live_fpe_est")
+    if fpe and eps2y_live and fpe > 0 and eps2y_live > 0:
+        return {"live_peg": round(fpe / eps2y_live, 2)}
+    return {"live_peg": None}
+
+
+def _compute_live_ev5y(entry: dict, ma: dict) -> dict:
+    """Heuristic live 5Y IRR, adjusting for price drift since DD.
+
+    Formula (heuristic — terminal value assumed unchanged):
+      live_ev5y = ((1 + ev5y_pct/100) * (price_at_dd / price_now) ** (1/5) - 1) * 100
+
+    This approximates: if price rose but terminal value (EV at year 5) stayed
+    the same, the annualized IRR from current price is lower.
+
+    Writes:
+      live_ev5y_pct:    adjusted 5Y annualized IRR % (None if inputs missing)
+      live_ev5y_method: "heur" (always; indicates heuristic, not re-modelled)
+    """
+    ev5y = entry.get("ev5y_pct")
+    p_dd = entry.get("price_at_dd")
+    p_now = ma.get("price") if ma else None
+
+    if ev5y is not None and p_dd and p_now and p_dd > 0 and p_now > 0:
+        adj = ((1 + ev5y / 100) * (p_dd / p_now) ** 0.2 - 1) * 100
+        return {
+            "live_ev5y_pct": round(adj, 2),
+            "live_ev5y_method": "heur",
+        }
+    return {
+        "live_ev5y_pct": None,
+        "live_ev5y_method": None,
+    }
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
@@ -631,6 +856,7 @@ def enrich_ticker(
     skip_ma: bool,
     ma_cache: dict | None = None,
     quality_cache: dict | None = None,
+    prev_snapshot: dict | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -648,6 +874,11 @@ def enrich_ticker(
     source ticker, fall back to previous latest.json's cached values + tag
     quality_from_cache=True + carry quality_cache_stamp. QGM rows never touch
     the cache (they load from JSON on disk). Sister to MA cache fallback (v1.4).
+
+    v1.7: fetches _fetch_live_fy_eps() once per ticker and shares result with
+    both _compute_live_pe_drift() and _compute_live_eps_cagr() to avoid a
+    duplicate yfinance call. Also computes EPS revision momentum vs prev_snapshot
+    (monthly snapshot), live_peg, and live_ev5y_pct.
     """
     t = entry["ticker"]
     quality, source = get_quality_for_ticker(t, qgm_index)
@@ -704,7 +935,31 @@ def enrich_ticker(
         timing = {k: v for k, v in timing.items()
                   if k not in ("rs_1w", "rs_4w", "rs_13w")}
 
-    pe_drift = _compute_live_pe_drift(entry, ma)
+    # v1.7: fetch yfinance EPS once; share with both PE drift + 2Y CAGR helpers.
+    # Guard: requires fpe_fy2 + price_at_dd (needed to match the right FY row).
+    # p_now is NOT required here — CAGR only needs eps_0y/eps_1y, not current price.
+    # PE drift will still degrade gracefully when p_now is None.
+    fpe = entry.get("fpe_fy2")
+    p_dd = entry.get("price_at_dd")
+    p_now = ma.get("price") if ma else None
+    live_fy_result: dict | None = None
+    if fpe and p_dd and fpe > 0 and p_dd > 0:
+        live_fy_result = _fetch_live_fy_eps(_yf_ticker_for_ma(t), p_dd, fpe)
+
+    pe_drift = _compute_live_pe_drift(entry, ma, live_fy_result=live_fy_result)
+
+    # v1.7: EPS 2Y CAGR live + revision momentum
+    eps2y_live_result = _compute_live_eps_cagr(entry, live_fy_result or {})
+    eps2y_live = eps2y_live_result.get("eps2y_live")
+
+    eps_revision = _compute_eps_revision(entry, eps2y_live, prev_snapshot or {})
+    live_peg = _compute_live_peg(pe_drift, eps2y_live)  # needs live_fpe_est from pe_drift
+
+    # Compute ev5y_pct before passing to live_ev5y helper (entry doesn't carry it yet)
+    ev5y_pct = _ev5y_for(t, dca_ev_map)
+    # Build a minimal context dict for _compute_live_ev5y (needs ev5y_pct + price_at_dd)
+    ev5y_entry = {**entry, "ev5y_pct": ev5y_pct}
+    live_ev5y = _compute_live_ev5y(ev5y_entry, ma)
 
     return {
         **entry,
@@ -715,11 +970,15 @@ def enrich_ticker(
         "quality_source": source,
         "quality_from_cache": quality_from_cache,
         "quality_cache_stamp": quality_cache_stamp,
-        "ev5y_pct": _ev5y_for(t, dca_ev_map),
+        "ev5y_pct": ev5y_pct,
         "ma": ma,
         "ma_from_cache": ma_from_cache,
         "timing": timing,
-        **pe_drift,  # live_fpe_est, pe_drift_pct, dd_age_days, live_pct_5y_est
+        **pe_drift,         # live_fpe_est, pe_drift_pct, dd_age_days, live_pct_5y_est
+        **eps2y_live_result,  # eps2y_live, eps2y_live_method
+        **eps_revision,     # eps2y_prev_month, eps2y_prev_month_date, eps2y_revision_pp, eps2y_revision_dir
+        **live_peg,         # live_peg
+        **live_ev5y,        # live_ev5y_pct, live_ev5y_method
     }
 
 
@@ -770,12 +1029,22 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
         fb_ok = sum(1 for v in timing_fallback.values() if v.get("dist_52w_high_pct") is not None)
         print(f"  Step 3    timing fallback: {fb_ok}/{len(missing_from_screener)} tickers backfilled")
 
+    # Step 0c: v1.7 — load previous month's EPS snapshot for revision momentum.
+    # Module-level cache (_PREV_MONTH_SNAPSHOT_CACHE) prevents re-read per ticker.
+    prev_snapshot = _load_prev_month_snapshot()
+    has_prev = bool(prev_snapshot.get("tickers"))
+    if has_prev:
+        print(f"  Step 0    EPS prev-month snapshot: {prev_snapshot.get('for_month')} "
+              f"({prev_snapshot.get('succeeded', '?')}/{prev_snapshot.get('universe_size', '?')} tickers)")
+    else:
+        print("  Step 0    EPS prev-month snapshot: not found (revision_dir=新增 for all)")
+
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):

@@ -306,6 +306,18 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
   ═══════════════════════════════════════════════════════════════════════════ -->
   <div class="col-footnote">
     <h3>表格欄位說明</h3>
+
+    <div style="background:#fef7e7;border:1px solid #fbcf80;border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:#5a4a1e">
+      <strong style="color:#7c4a07;display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">EPS 修正動能 — v1.7 新功能</strong>
+      <strong>EPS 2Y CAGR</strong> 欄右方的 <span style="color:#166534;font-weight:600">↑+X.Xpp</span> / <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span> 小字，是「本月 live EPS CAGR」對照「上月初 snapshot」的差值（pp = percentage point）。
+      <br>• <strong>上修（綠）</strong>：分析師對未來 EPS 估算往上調 — 業界已知 alpha factor（Womack 1996 + Bloomberg / FactSet 同名指標），上修股票後續 6-12 個月傾向 outperform
+      <br>• <strong>下修（紅）</strong>：估算往下調，常為基本面領先指標壞訊號
+      <br>• <strong>持平</strong>（|diff| &lt; 0.5pp）：不顯示箭頭，避免雜訊
+      <br>• <strong>「新」chip（灰）</strong>：此 ticker 上月還不在 universe（新加 DD / 新 cover），無對照
+      <br>• <strong>無顯示</strong>：首月 baseline 累積中（snapshot 還沒滿一個月）— hover 看 tooltip 確認
+      <br>每月 2 號 09:00 Taipei 自動 snapshot（<code>.github/workflows/monthly-eps-snapshot.yml</code> → <code>scripts/snapshot_eps_estimates.py</code>），存於 <code>docs/dd-screener/eps-estimates-snapshots/YYYY-MM.json</code>。
+    </div>
+
     <ul>
 
       <li><strong>Ticker</strong>：股票代碼（正規格式）。
@@ -329,20 +341,22 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
       </li>
 
-      <li><strong>EPS 2Y CAGR</strong>：前瞻 2 年 EPS 複合成長率，百分比。
-        <br><em>來源：</em>QGM <code>hard_filter_details.eps_cagr_2y_fwd.value</code> 優先；fallback <code>fundamentals_us._forward_2y_cagr()</code>（yfinance earnings estimates）
-        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
+      <li><strong>EPS 2Y CAGR</strong>：前瞻 EPS 成長率（%）— <strong>v1.7 起改用即時數值</strong>。
+        <br><em>來源（live）：</em>每日 <code>scripts/build_dd_screener.py</code> 用 yfinance <code>earnings_estimate</code> 抓 FY+1 / FY+2 EPS 重算（<code>eps2y_live</code>）；yfinance 缺資料 / rate-limit 時 fallback 顯示 DD frozen 並標灰色 <code>DD</code>。
+        <br><em>修正動能：</em>右方小字 <span style="color:#166534;font-weight:600">↑+X.Xpp</span>（綠 = 上修）/ <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span>（紅 = 下修）= live 對照「上月初 snapshot」的差值；|diff| &lt; 0.5pp 視為持平（不顯示箭頭）；「新」chip = 此 ticker 上月 baseline 未收錄。詳見上方「EPS 修正動能」callout。
+        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 live 值；server 端 <code>pass_count</code> 仍用 frozen <code>eps2y</code> 計算 — QGM 規則語意）
       </li>
 
-      <li><strong>PEG</strong>：前瞻 PEG（Forward PE / EPS 2Y CAGR%）。
-        <br><em>來源：</em>QGM <code>hard_filter_details.peg.value</code> 優先；fallback <code>yfinance .info pegRatio</code>；再 fallback 手算 <code>forwardPE / eps_growth_pct</code>（EPS CAGR > 300% 或 PEG > 10 時回傳 <code>null</code>，避免失真）
-        <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（上限；愈低愈好）
+      <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / live EPS 2Y CAGR</code> — <strong>v1.7 起改用即時數值</strong>。
+        <br><em>來源（live）：</em>純 derive — 分子分母都用 live，所以價格動 + 分析師修正都會反映在這欄。
+        <br><em>規則：</em>frozen DD PEG 進 tooltip（hover 看 DD 對比）；live 任一邊失敗時 fallback 顯示 frozen DD 並標 <code>DD</code>。
+        <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（顏色基於 live 值）
       </li>
 
-      <li><strong>2Y P/E</strong>：FY+2 Forward P/E（資訊欄，無通過門檻顏色）。
-        <br><em>來源：</em><code>dd-meta JSON</code> <code>fpe_fy2</code> 欄位，與 <code>/research/</code> 表格 <code>data-pe2y</code> 同源
-        <br><em>規則：</em>純數字顯示，不參與 pass/fail 計分，僅供估值參考
-        <br><em>v1.3 Live drift：</em>當 DD 寫入後股價漂移 ≥ 10% 時，欄位多顯示「→ live (±X%)」估算。公式 <code>live_fpe = fpe_fy2 × (price_now / price_at_dd)</code>，假設 FY+2 EPS 估算未被 revise（30-90 天內合理；半年以上會高估「變貴」程度，因 EPS 通常年增）。綠色 = 變便宜、橘 = 變貴、紅 = 變貴 ≥ 15%。Hover 看完整 tooltip。
+      <li><strong>2Y P/E</strong>：即時 FY+2 Forward P/E — <strong>v1.7 起改用即時數值</strong>。
+        <br><em>來源（live）：</em>每日 <code>scripts/build_dd_screener.py</code>，主路徑用 yfinance FY EPS 估算（<code>live_fpe_method = 'eps'</code>）；EPS 抓不到時 fallback 用 <code>fpe_fy2 × price_now/price_at_dd</code> 漂移推算（標 <code>*</code>，<code>live_fpe_method = 'drift'</code>，假設 EPS 未 revise — 半年以上會高估「變貴」程度）。
+        <br><em>右方小字 drift %：</em>相對 DD frozen 的偏移幅度（|drift| ≥ 5% 才顯示）— 綠 = 變便宜 ≤ -5%，琥珀 = 變貴 5-15%，紅 = 變貴 ≥ 15%。
+        <br><em>規則：</em>純資訊欄，不參與 pass_count；hover 看 DD frozen + 天數 + drift。
       </li>
 
       <li><strong>D/E（Debt/Equity）</strong>：Total Debt / Stockholders Equity。
@@ -356,9 +370,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <br><em>Tab 分組：</em>完全符合（5/5）/ 差一條（4/5）/ 差兩條（3/5）/ 全部
       </li>
 
-      <li><strong>5Y IRR</strong>：DCA §4 機率加權 5 年期預期價值 → 年化 IRR（%）。
-        <br><em>來源：</em><code>scripts/update_dd_index.py</code> <code>collect_dca_ev_map()</code> 解析最新 DCA HTML 的 §4 EV 數字，換算公式 <code>IRR = (EV/100 + 1)^(1/5) - 1</code>；無 DCA 或 §4 無法解析時顯示「—」
-        <br><em>顏色：</em>≥ <code>12%/yr</code> 深綠 / <code>8–12%</code> 中綠 / <code>0–8%</code> 琥珀 / &lt; <code>0%</code> 紅
+      <li><strong>5Y IRR</strong>：即時 5 年期年化 IRR（%）— <strong>v1.7 起改用即時數值（heuristic 推算）</strong>。
+        <br><em>來源（live）：</em>從 DCA §4 frozen IRR 用 <code>(price_at_dd / price_now)</code> 回推：
+        <br><code style="display:inline-block;margin:4px 0;padding:3px 6px">live_ev5y = ((1 + ev5y/100) × (price_at_dd / price_now)^0.2 − 1) × 100</code>
+        <br>直覺：股價跌 → 起點變便宜 → 同樣 5 年 terminal → IRR 變高（合理）。標 <code>*</code> 提醒是推算非實算。
+        <br><em>Caveat（重要）：</em><strong>假設 DCA 寫入時的 terminal value（5 年後目標價）未變</strong>。如果 thesis broke（基本面惡化、target 砍半），此 live IRR 會誤導你以為「跌很多 = 更便宜的機會」。建議搭配最新 DCA 報告判讀，不要單看此欄就加倉。
+        <br><em>顯示：</em>主值 = live；下方小字 vs DD = live 跟 frozen 的差距（|diff| ≥ 0.3pp 才顯示）。
+        <br><em>顏色：</em>≥ <code>12%/yr</code> 深綠 / <code>8–12%</code> 中綠 / <code>0–8%</code> 琥珀 / &lt; <code>0%</code> 紅（依 live 值上色）
+        <br><em>frozen IRR 原始來源：</em><code>scripts/update_dd_index.py</code> <code>collect_dca_ev_map()</code> 解析最新 DCA HTML §4 EV
       </li>
 
       <li><strong>MA（長期均線健康度）</strong>：股價相對 W52（1 年）與 W250（5 年）週均線的位置與斜率。
@@ -659,20 +678,159 @@ function _sortStocks(stocks) {
   });
 }
 
+// ── Live cell render helpers (v1.7) ─────────────────────────────────────────
+// Pattern: live primary + frozen DD value 進 tooltip + drift/revision 小字附註
+// 適用 4 個 cell：2Y P/E、PEG、EPS 2Y CAGR、5Y IRR。
+// 配色規則：drift / revision 對「品質」的影響方向決定顏色：
+//   PE / PEG: live 變便宜（更低）= 綠；變貴 = 橘 / 紅
+//   IRR:      live 變高 = 綠；變低 = 橘
+//   EPS rev:  上修 = 綠；下修 = 紅
+// 缺資料 fallback：live 為 null 時退回 frozen DD 值 + 小灰字 "DD" 標記。
+function _renderLivePECell(s) {
+  var pe = s.fpe_fy2;
+  var live = s.live_fpe_est;
+  var drift = s.pe_drift_pct;
+  var ddAge = s.dd_age_days;
+  var method = s.live_fpe_method;
+  if (pe === null || pe === undefined) return '<td>—</td>';
+  if (live === null || live === undefined) {
+    var tipFb = ' title="Live 估算失敗（yfinance 未取得或 rate-limit），暫顯示 DD frozen ' + pe.toFixed(1) + 'x' + (ddAge != null ? ' (' + ddAge + '天前)' : '') + '"';
+    return '<td' + tipFb + '>' + pe.toFixed(1) + '<span style="font-size:9px;color:#94a3b8;margin-left:3px">DD</span></td>';
+  }
+  var color = '#1e3a5f';
+  if (drift !== null) {
+    if (drift <= -5) color = '#166534';
+    else if (drift >= 15) color = '#991B1B';
+    else if (drift >= 5) color = '#92400E';
+  }
+  var sub = '';
+  if (drift !== null && Math.abs(drift) >= 5) {
+    var sign = drift > 0 ? '+' : '';
+    sub = '<span style="font-size:9px;color:' + color + ';margin-left:3px">' + sign + drift.toFixed(0) + '%</span>';
+  }
+  var mark = method === 'drift'
+    ? '<sup style="font-size:8px;color:#94a3b8" title="yfinance EPS 未取得，用 price-drift 推算">*</sup>'
+    : '';
+  var methodLabel = method === 'eps' ? 'yfinance FY EPS (real)' : (method === 'drift' ? 'price-drift heuristic*（假設 EPS 未變）' : '—');
+  var driftStr = drift !== null ? '; drift ' + (drift > 0 ? '+' : '') + drift.toFixed(1) + '%' : '';
+  var ageStr = ddAge != null ? ' (' + ddAge + '天前)' : '';
+  var tip = ' title="Live FwdPE ' + live.toFixed(1) + 'x · ' + methodLabel + '; DD ' + pe.toFixed(1) + 'x' + ageStr + driftStr + '"';
+  return '<td' + tip + '><strong style="color:' + color + '">' + live.toFixed(1) + '</strong>' + mark + sub + '</td>';
+}
+
+function _renderLivePEGCell(s, flag) {
+  var peg = s.peg;
+  var live = s.live_peg;
+  if ((peg === null || peg === undefined) && (live === null || live === undefined)) {
+    return '<td>—</td>';
+  }
+  var display, tip;
+  if (live === null || live === undefined) {
+    display = peg.toFixed(2) + 'x<span style="font-size:9px;color:#94a3b8;margin-left:3px">DD</span>';
+    tip = ' title="Live PEG 估算失敗，暫顯示 DD frozen ' + peg.toFixed(2) + 'x"';
+  } else {
+    display = '<strong>' + live.toFixed(2) + 'x</strong>';
+    var parts = ['Live PEG ' + live.toFixed(2) + 'x (live FwdPE / live EPS CAGR)'];
+    if (peg !== null && peg !== undefined) parts.push('DD frozen ' + peg.toFixed(2) + 'x');
+    tip = ' title="' + parts.join('; ') + '"';
+  }
+  // Color flag re-evaluated against live value if available (live primary semantics)
+  var pegForFlag = (live !== null && live !== undefined) ? live : peg;
+  var liveFlag = pegForFlag == null ? null : (pegForFlag <= 2.0 ? 'pass' : 'fail');
+  return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + '</td>';
+}
+
+function _renderLiveEPSCell(s, flag) {
+  var eps = s.eps2y;
+  var live = s.eps2y_live;
+  var revPp = s.eps2y_revision_pp;
+  var revDir = s.eps2y_revision_dir;
+  var prevVal = s.eps2y_prev_month;
+  var prevDate = s.eps2y_prev_month_date;
+  if ((eps === null || eps === undefined) && (live === null || live === undefined)) {
+    return '<td>—</td>';
+  }
+  if (live === null || live === undefined) {
+    var tipFb = ' title="Live EPS CAGR 估算失敗，暫顯示 DD frozen ' + eps.toFixed(1) + '%"';
+    var liveFlagFb = eps == null ? null : (eps >= 15 ? 'pass' : 'fail');
+    return '<td' + tipFb + ' style="' + cellStyle(liveFlagFb) + '">' + eps.toFixed(1) + '%<span style="font-size:9px;color:#94a3b8;margin-left:3px">DD</span></td>';
+  }
+  // live available — build display + revision indicator
+  var display = '<strong>' + live.toFixed(1) + '%</strong>';
+  if (revDir === '上修' || revDir === '下修') {
+    var revColor = revDir === '上修' ? '#166534' : '#991B1B';
+    var arrow = revDir === '上修' ? '↑' : '↓';
+    var revSign = revPp > 0 ? '+' : '';
+    display += '<span style="font-size:9px;color:' + revColor + ';margin-left:3px;font-weight:600">' + arrow + revSign + revPp.toFixed(1) + 'pp</span>';
+  } else if (revDir === '新增') {
+    display += '<span style="font-size:9px;color:#94a3b8;margin-left:3px">新</span>';
+  }
+  // tooltip
+  var parts = ['Live ' + live.toFixed(1) + '% (yfinance FY+1/+2)'];
+  if (revPp !== null && prevVal !== null) {
+    parts.push('上月 (' + prevDate + ') ' + prevVal.toFixed(1) + '%');
+    parts.push('修正 ' + (revPp > 0 ? '+' : '') + revPp.toFixed(1) + 'pp · ' + revDir);
+  } else if (revDir === '新增') {
+    parts.push('上月無此 ticker（新加入 universe）');
+  } else {
+    parts.push('修正動能 baseline 累積中（首月 snapshot 尚未對照）');
+  }
+  if (eps !== null && eps !== undefined) parts.push('DD frozen ' + eps.toFixed(1) + '%');
+  var tip = ' title="' + parts.join('; ') + '"';
+  // Color flag re-evaluated against live value
+  var liveFlag = live == null ? null : (live >= 15 ? 'pass' : 'fail');
+  return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + '</td>';
+}
+
+function _renderLiveIRRInner(s) {
+  // 5Y IRR cell inner HTML — primary = live (heuristic), drift vs DD as sub
+  var irr = s.ev5y_pct;
+  var live = s.live_ev5y_pct;
+  var method = s.live_ev5y_method;
+  if ((irr === null || irr === undefined) && (live === null || live === undefined)) {
+    return '<span class="upside-na">—</span>';
+  }
+  var shown = (live !== null && live !== undefined) ? live : irr;
+  var isLive = (live !== null && live !== undefined);
+  var color;
+  if (shown >= 12)      color = '#166534';
+  else if (shown >= 8)  color = '#15803D';
+  else if (shown >= 0)  color = '#92400E';
+  else                  color = '#991B1B';
+  var sign = shown > 0 ? '+' : (shown < 0 ? '−' : '');
+  var heurMark = (isLive && method === 'heur')
+    ? '<sup style="font-size:8px;color:#94a3b8" title="heuristic — 用 (price_at_dd/price_now) 回推，假設 DCA terminal value 不變">*</sup>'
+    : '';
+  var html = '<span style="color:' + color + ';font-weight:600">' + sign + Math.abs(shown).toFixed(1) + '%/yr</span>' + heurMark;
+  if (isLive && irr !== null && irr !== undefined && Math.abs(live - irr) >= 0.3) {
+    var diff = live - irr;
+    var diffSign = diff > 0 ? '+' : '';
+    var diffColor = diff > 0 ? '#166534' : '#92400E';
+    html += '<div style="font-size:9px;color:' + diffColor + ';margin-top:1px">DD ' + (irr > 0 ? '+' : '') + irr.toFixed(1) + '% (' + diffSign + diff.toFixed(1) + 'pp)</div>';
+  } else if (isLive && irr !== null && irr !== undefined) {
+    html = '<span title="Live ' + shown.toFixed(1) + '%/yr (heuristic); DD ' + irr.toFixed(1) + '%/yr">' + html + '</span>';
+  }
+  return html;
+}
+
 function buildTable(stocks) {
   if (!stocks.length) return '<p style="padding:20px;color:#94a3b8;font-size:12px">（無符合資料）</p>';
 
   var criteria = getCriteria();
   stocks = _sortStocks(stocks);
 
-  // Build header from criteria — every column data-driven for sort.
-  // 2Y P/E (fpe_fy2) is injected right after the PEG criterion so the
-  // valuation metrics cluster together (FCF / ROIC / EPS / PEG / 2Y P/E
-  // / D/E). Matches the field /research/ shows as `data-pe2y`.
+  // v1.7: header sort keys now point to LIVE fields where available.
+  // 2Y P/E / PEG / 5Y IRR / EPS 2Y CAGR 都改成 live primary、frozen 進 tooltip。
+  // 排序時 null 自動沉底（_sortStocks），所以 live 缺失的 ticker 排在後面。
+  var LIVE_SORT_KEY = { 'eps2y': 'eps2y_live', 'peg': 'live_peg' };
   var criteriaHeaders = criteria.map(function(c) {
-    var th = _thSortable(c.label, c.key);
+    var sortKey = LIVE_SORT_KEY[c.key] || c.key;
+    var title;
+    if (c.key === 'eps2y') title = '即時 EPS 2Y CAGR（yfinance FY+1/+2 EPS 估算重算）— 主值為 live，sort 按 live 數值';
+    else if (c.key === 'peg') title = '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值';
+    var th = _thSortable(c.label, sortKey, title ? {title: title} : undefined);
     if (c.key === 'peg') {
-      th += _thSortable('2Y P/E', 'fpe_fy2', {title: 'FY+2 Forward P/E — 與 /research/ 表格同源'});
+      th += _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
     }
     return th;
   }).join('');
@@ -682,7 +840,7 @@ function buildTable(stocks) {
     _thSortable('Moat', 'moat_score', {left: true, title: '依護城河 score 排序'}) +
     criteriaHeaders +
     _thSortable('通過', 'pass_count') +
-    _thSortable('5Y IRR', 'ev5y_pct', {title: 'DCA §4 機率加權年化 IRR（5 年期）— 與 /research/ 表格同源'}) +
+    _thSortable('5Y IRR', 'live_ev5y_pct', {title: '即時 5Y IRR — 由 DCA §4 frozen 值用「price_at_dd / price_now」回推（heuristic，假設 DCA terminal value 不變）；hover 看 DD 對比'}) +
     '<th>MA</th>' +
     _thSortable('距ATH', 'timing.dist_52w_high_pct', {title: '距 52w high (還原權息) — 起漲點 sweet spot ∈ [-7%, 0%]'}) +
     _thSortable('vs50DMA', 'timing.ma50_pct', {title: '距 50DMA — 起漲點 sweet spot ∈ [0%, +5%]'}) +
@@ -692,64 +850,35 @@ function buildTable(stocks) {
 
   var rows = stocks.map(function(s) {
     var pc = computePassCount(s);
+    // v1.7: criteria render dispatches to live helpers for EPS / PEG;
+    // 其他 column (FCF / ROIC / D/E) 仍用 frozen 值 (跟股價無關)。
+    // 2Y P/E injected after PEG cell — separately rendered via _renderLivePECell.
     var criteriaHtml = criteria.map(function(c) {
       var flag = passFlag(s, c);
-      var v = s[c.key];
-      var display;
-      if (v === null || v === undefined) {
-        display = '—';
+      var html;
+      if (c.key === 'eps2y') {
+        html = _renderLiveEPSCell(s, flag);
+      } else if (c.key === 'peg') {
+        html = _renderLivePEGCell(s, flag);
       } else {
-        var decimals = (c.unit === 'x') ? 2 : 1;
-        display = v.toFixed(decimals) + c.unit;
-      }
-      var html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
-      // 2Y P/E injected after PEG — no pass/fail (informational only).
-      // v1.3: if live_fpe_est differs meaningfully from DD fpe_fy2 (price drift since DD),
-      // show as "DD → live (±drift%)" with green/amber color. Heuristic:
-      //   |drift| ≥ 10% → show drift inline with color
-      //   |drift| <  10% → show DD value only (avoid clutter)
-      if (c.key === 'peg') {
-        var pe = s.fpe_fy2;
-        var liveFpe = s.live_fpe_est;
-        var drift = s.pe_drift_pct;
-        var ddAge = s.dd_age_days;
-        var peDisplay;
-        var tooltip = '';
-        if (pe === null || pe === undefined) {
-          peDisplay = '—';
-        } else if (liveFpe !== null && liveFpe !== undefined && drift !== null && Math.abs(drift) >= 10) {
-          var driftColor = drift < 0 ? '#166534' : (drift > 15 ? '#991B1B' : '#92400E');
-          var sign = drift > 0 ? '+' : '';
-          peDisplay = pe.toFixed(1) + '<span style="font-size:9px;color:' + driftColor + ';margin-left:3px">→' +
-                       liveFpe.toFixed(1) + ' (' + sign + drift.toFixed(0) + '%)</span>';
-          tooltip = ' title="DD ' + pe.toFixed(1) + 'x ' + (ddAge != null ? '(' + ddAge + '天前)' : '') + ' → live est ' + liveFpe.toFixed(1) + 'x (price drift ' + sign + drift.toFixed(1) + '%, EPS held static)"';
+        var v = s[c.key];
+        var display;
+        if (v === null || v === undefined) {
+          display = '—';
         } else {
-          peDisplay = pe.toFixed(1);
-          if (liveFpe !== null && liveFpe !== undefined && ddAge != null) {
-            tooltip = ' title="DD ' + pe.toFixed(1) + 'x (' + ddAge + '天前); price drift since DD: ' + (drift > 0 ? '+' : '') + (drift != null ? drift.toFixed(1) : '0') + '%"';
-          }
+          var decimals = (c.unit === 'x') ? 2 : 1;
+          display = v.toFixed(decimals) + c.unit;
         }
-        html += '<td' + tooltip + '>' + peDisplay + '</td>';
+        html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
+      }
+      if (c.key === 'peg') {
+        html += _renderLivePECell(s);
       }
       return html;
     }).join('');
 
-    // 5Y IRR (DCA §4 annualized) — color band mirrors /research/ table:
-    //   ≥12% strong  / 8-12% mid (beats SPX)  / 0-8% weak  / <0 negative
-    var irr = s.ev5y_pct;
-    var irrHtml;
-    if (irr === null || irr === undefined) {
-      irrHtml = '<span class="upside-na">—</span>';
-    } else {
-      var irrColor;
-      if (irr >= 12)      irrColor = '#166534';
-      else if (irr >= 8)  irrColor = '#15803D';
-      else if (irr >= 0)  irrColor = '#92400E';
-      else                irrColor = '#991B1B';
-      var sign = irr > 0 ? '+' : (irr < 0 ? '−' : '');
-      irrHtml = '<span style="color:' + irrColor + ';font-weight:600">'
-        + sign + Math.abs(irr).toFixed(1) + '%/yr</span>';
-    }
+    // 5Y IRR — v1.7 改 live primary (heuristic 回推)
+    var irrHtml = _renderLiveIRRInner(s);
 
     // Links — DD / DCA / Flow (🎯 if ticker is in US screener universe).
     var ddLink = s.dd_path

@@ -1,0 +1,52 @@
+name: Monthly EPS Snapshot
+
+# 每月 2 號 01:00 UTC = 09:00 Taipei 抓 yfinance earnings_estimate。
+# 月 2 號：讓月初分析師更新 settle 1 天後再 capture。
+#
+# 輸出：docs/dd-screener/eps-estimates-snapshots/YYYY-MM.json
+# 用途：build_dd_screener.py 讀取上月 snapshot 計算 EPS revision momentum。
+#
+# 手動觸發（月底測試 / 補跑）：
+#   gh workflow run "Monthly EPS Snapshot"
+
+on:
+  schedule:
+    - cron: "0 1 2 * *"  # 每月 2 號 01:00 UTC = 09:00 Taipei
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  eps-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install "yfinance>=0.2.40" pandas numpy
+
+      - name: Run EPS estimates snapshot
+        run: python scripts/snapshot_eps_estimates.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/dd-screener/eps-estimates-snapshots/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            MONTH=$(TZ=Asia/Taipei date +"%Y-%m")
+            git commit -m "data: EPS estimates snapshot ${MONTH}
+
+            Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            git push
+          fi
