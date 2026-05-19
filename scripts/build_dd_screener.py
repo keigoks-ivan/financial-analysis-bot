@@ -961,6 +961,10 @@ def enrich_ticker(
     ev5y_entry = {**entry, "ev5y_pct": ev5y_pct}
     live_ev5y = _compute_live_ev5y(ev5y_entry, ma)
 
+    # v1.7.2: surface raw EPS estimates so the FE can show per-FY EPS columns
+    # (current FY / next FY consensus + TTM EPS used as CAGR base).
+    _lfy = live_fy_result or {}
+
     return {
         **entry,
         **quality,
@@ -979,6 +983,13 @@ def enrich_ticker(
         **eps_revision,     # eps2y_prev_month, eps2y_prev_month_date, eps2y_revision_pp, eps2y_revision_dir
         **live_peg,         # live_peg
         **live_ev5y,        # live_ev5y_pct, live_ev5y_method
+        # v1.7.2: raw yfinance EPS estimates (current FY / next FY / TTM)
+        # yfinance 0y/+1y are "current FY" / "next FY" — for Dec-FY companies in
+        # May 2026 this maps to calendar 2026 / 2027; for non-Dec-FY tickers
+        # (NVDA Jan, JP Mar) it shifts by 1 calendar year.
+        "eps_fy_curr": _lfy.get("eps_0y_raw"),
+        "eps_fy_next": _lfy.get("eps_1y_raw"),
+        "eps_trailing": _lfy.get("trailing_eps"),
     }
 
 

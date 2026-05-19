@@ -347,6 +347,13 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 live 值；server 端 <code>pass_count</code> 仍用 frozen <code>eps2y</code> 計算 — QGM 規則語意）
       </li>
 
+      <li><strong>Curr FY / Next FY EPS</strong>：yfinance 給的當前/下一會計年度 consensus EPS（USD，純資訊欄無 pass/fail）— <strong>v1.7.2 新增</strong>。
+        <br><em>來源：</em><code>yfinance .earnings_estimate</code> 的 <code>0y</code> 與 <code>+1y</code> 列（分析師共識平均）；hover 看欄位語意 + 數值。
+        <br><em>對應曆年：</em>多數 US Dec-FY 公司：Curr FY ≈ 本曆年、Next FY ≈ 下個曆年；非 Dec-FY 例外（NVDA Jan：Curr = NVDA FY27、Next = FY28；JP 公司 Mar：差約半年）。
+        <br><em>用途：</em>讓使用者驗證 EPS 2Y CAGR 計算來源（公式為 <code>((Next FY EPS / TTM EPS)^0.5 - 1) × 100</code>）；TTM EPS 顯示在 EPS 2Y CAGR cell 的 tooltip。
+        <br><em>FY+2 / 2028+：</em>yfinance 不提供（已驗證 mega caps 全部只到 +1y）；如要更長預估窗，需付費 API（Financial Modeling Prep / Finnhub / Bloomberg）。
+      </li>
+
       <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / live EPS 2Y CAGR</code> — <strong>v1.7 起改用即時數值</strong>。
         <br><em>來源（live）：</em>純 derive — 分子分母都用 live，所以價格動 + 分析師修正都會反映在這欄。
         <br><em>規則：</em>frozen DD PEG 進 tooltip（hover 看 DD 對比）；live 任一邊失敗時 fallback 顯示 frozen DD 並標 <code>DD</code>。
@@ -782,6 +789,26 @@ function _renderLiveEPSCell(s, flag) {
   return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + '</td>';
 }
 
+function _renderRawEpsCell(s, field) {
+  // v1.7.2: raw yfinance EPS estimate（純資訊欄，無 pass/fail color）
+  //   eps_fy_curr  — yfinance 0y (current FY consensus avg, ~下一個 reporting year)
+  //   eps_fy_next  — yfinance +1y (next FY consensus avg, ~後年)
+  //   eps_trailing — info.trailingEps (TTM 實際 EPS, 跨 4 季加總)
+  // 多數 US Dec-FY 公司：0y ≈ 本曆年、+1y ≈ 下個曆年。
+  // 非 Dec-FY (NVDA Jan / JP Mar / etc.) 會差 1 年；以個股 FY 為準。
+  var v = s[field];
+  if (v === null || v === undefined) {
+    return '<td style="color:#94a3b8">—</td>';
+  }
+  var labelMap = {
+    'eps_fy_curr': 'yfinance 0y row — current fiscal year consensus EPS',
+    'eps_fy_next': 'yfinance +1y row — next fiscal year consensus EPS',
+    'eps_trailing': 'info.trailingEps — TTM 實際 EPS (用為 2Y CAGR 計算基準)'
+  };
+  var tip = ' title="' + (labelMap[field] || field) + ': ' + v.toFixed(2) + '"';
+  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:#475569">' + v.toFixed(2) + '</td>';
+}
+
 function _renderLiveIRRInner(s) {
   // 5Y IRR cell inner HTML — primary = live (heuristic), drift vs DD as sub
   var irr = s.ev5y_pct;
@@ -826,9 +853,14 @@ function buildTable(stocks) {
   var criteriaHeaders = criteria.map(function(c) {
     var sortKey = LIVE_SORT_KEY[c.key] || c.key;
     var title;
-    if (c.key === 'eps2y') title = '即時 EPS 2Y CAGR（yfinance FY+1/+2 EPS 估算重算）— 主值為 live，sort 按 live 數值';
+    if (c.key === 'eps2y') title = '即時 EPS 2Y CAGR（trailingEps → +1y EPS 重算）— 主值為 live，sort 按 live 數值';
     else if (c.key === 'peg') title = '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值';
     var th = _thSortable(c.label, sortKey, title ? {title: title} : undefined);
+    if (c.key === 'eps2y') {
+      // v1.7.2: 在 EPS 2Y CAGR 後插入 2 個 raw EPS 欄位供使用者驗證 CAGR 來源
+      th += _thSortable('Curr FY', 'eps_fy_curr', {title: 'Current FY EPS consensus (yfinance 0y row) — 多數 US Dec-FY = 本曆年；NVDA/JP 等差 1 年'});
+      th += _thSortable('Next FY', 'eps_fy_next', {title: 'Next FY EPS consensus (yfinance +1y row) — 多數 US Dec-FY = 下個曆年'});
+    }
     if (c.key === 'peg') {
       th += _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
     }
@@ -870,6 +902,11 @@ function buildTable(stocks) {
           display = v.toFixed(decimals) + c.unit;
         }
         html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
+      }
+      if (c.key === 'eps2y') {
+        // v1.7.2: 緊接 EPS 2Y CAGR 後注入 Curr FY EPS / Next FY EPS 兩欄
+        html += _renderRawEpsCell(s, 'eps_fy_curr');
+        html += _renderRawEpsCell(s, 'eps_fy_next');
       }
       if (c.key === 'peg') {
         html += _renderLivePECell(s);
