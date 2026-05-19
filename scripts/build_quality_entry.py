@@ -47,6 +47,11 @@ TIER_FINAL_MIN = 0.65
 TIER_A_ENTRY_MIN = 0.65
 DISPLAY_TOTAL = 25  # Tier A 全部 + Tier B 補到合計 25
 
+# Archetype 切分（揭露「為什麼合格」的本質差異）
+# 成長型: Growth ≥ 0.55 — 三支柱都到位的標準複利成長股
+# 成熟型: Growth < 0.55 — 成長已放緩，靠護城河+便宜估值入榜（KO/JNJ 路線）
+ARCHETYPE_GROWTH_MIN = 0.55
+
 # Val emoji → numeric (與 dd_alpha_ranker 同表)
 VAL_NUM = {"🟢": 1.0, "🟡": 0.6, "🟠": 0.3, "🔴": 0.0}
 
@@ -391,6 +396,8 @@ def score_ticker(s: dict) -> Optional[dict]:
     if final >= TIER_FINAL_MIN:
         tier = "A" if c >= TIER_A_ENTRY_MIN else "B"
 
+    archetype = "成長型" if b >= ARCHETYPE_GROWTH_MIN else "成熟型"
+
     return {
         "ticker": s["ticker"],
         "name": s.get("name", ""),
@@ -400,6 +407,7 @@ def score_ticker(s: dict) -> Optional[dict]:
         "growth": round(b, 4),
         "entry": round(c, 4),
         "tier": tier,
+        "archetype": archetype,
         "ma_label_today": ma_label,
         "breakdown": breakdown,
         "rationale": entry_rationale(s, breakdown, ma_label) if tier == "A" else None,
@@ -502,13 +510,19 @@ def _ticker_link(row: dict) -> str:
     return label
 
 
+def _archetype_badge(row: dict) -> str:
+    arch = row.get("archetype", "")
+    cls = "arch-mature" if arch == "成熟型" else "arch-growth"
+    return f'<span class="arch-badge {cls}">{arch}</span>'
+
+
 def _row_html_tier_a(row: dict) -> str:
     moat_grade = row.get("moat_grade") or ""
     pct_5y_str = _fmt_pct(row.get("pct_5y"))
     fpe = row.get("fpe_fy2")
     fpe_str = f"{fpe:.1f}" if fpe is not None else "—"
     return f"""<tr>
-  <td class="left">{_ticker_link(row)}<div class="sub">{row.get('sector','')}</div></td>
+  <td class="left">{_ticker_link(row)} {_archetype_badge(row)}<div class="sub">{row.get('sector','')}</div></td>
   <td class="score-cell"><strong>{_fmt_score(row['final'])}</strong></td>
   <td>{_fmt_score(row['quality'])}</td>
   <td>{_fmt_score(row['growth'])}</td>
@@ -524,7 +538,7 @@ def _row_html_tier_b(row: dict) -> str:
     fpe = row.get("fpe_fy2")
     fpe_str = f"{fpe:.1f}" if fpe is not None else "—"
     return f"""<tr>
-  <td class="left">{_ticker_link(row)}<div class="sub">{row.get('sector','')}</div></td>
+  <td class="left">{_ticker_link(row)} {_archetype_badge(row)}<div class="sub">{row.get('sector','')}</div></td>
   <td class="score-cell"><strong>{_fmt_score(row['final'])}</strong></td>
   <td>{_fmt_score(row['quality'])}</td>
   <td>{_fmt_score(row['growth'])}</td>
@@ -574,6 +588,9 @@ def render_html(doc: dict, out_path: Path) -> None:
     tier_b = doc["tier_b"]
     tier_a_overflow = doc["tier_a_overflow"]
     tier_b_overflow = doc["tier_b_overflow"]
+    all_visible = tier_a + tier_b
+    growth_count = sum(1 for r in all_visible if r.get("archetype") == "成長型")
+    mature_count = sum(1 for r in all_visible if r.get("archetype") == "成熟型")
 
     tier_a_html = _section_table(
         tier_a, _row_html_tier_a,
@@ -643,6 +660,9 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
 .entry-cell{{color:#166534;font-weight:600}}
 .entry-low{{color:#92400e}}
 .meta-cell{{font-size:10.5px;color:#5a7a9a;text-align:left !important}}
+.arch-badge{{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;letter-spacing:.02em;vertical-align:1px;margin-left:6px}}
+.arch-growth{{background:#dbeafe;color:#1e40af}}
+.arch-mature{{background:#fef3c7;color:#854d0e}}
 .empty-row{{padding:14px;text-align:center;color:#94a3b8;font-size:12px;font-style:italic}}
 .caveat-panel{{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin-bottom:20px;font-size:12px;color:#854d0e;line-height:1.65}}
 .caveat-panel strong{{color:#78350f;display:block;margin-bottom:6px}}
@@ -700,6 +720,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
       <div class="hero-stat"><strong>{vetoed_count}</strong>被 veto</div>
       <div class="hero-stat"><strong>{len(tier_a)}</strong>Tier A — Buy Zone</div>
       <div class="hero-stat"><strong>{len(tier_b)}</strong>Tier B — Wait</div>
+      <div class="hero-stat"><strong>{growth_count} / {mature_count}</strong>成長型 / 成熟型</div>
     </div>
   </div>
 </div>
@@ -729,7 +750,12 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
   </div>
 
   <div class="caveat-panel">
-    <strong>讀法 caveats</strong>
+    <strong>投資原型（每檔標的旁的小徽章）</strong>
+    <ul>
+      <li><span class="arch-badge arch-growth">成長型</span> <b>Growth 子分 ≥ 0.55</b> — 三支柱都到位的標準複利成長股。報酬主要來自 EPS 持續成長 + 護城河擴張。讀法：Tier A 就是「現在能買的成長股」、Tier B 是「等切入點的成長股」。</li>
+      <li><span class="arch-badge arch-mature">成熟型</span> <b>Growth 子分 &lt; 0.55</b> — 成長已放緩（年化個位數），但因護城河強 + 估值便宜仍入榜（KO/JNJ 路線）。報酬主要來自「估值修復 + 股利」而非「EPS 高成長」 — <b>不要套用成長股的「持有 5 年複利 20%+」期待</b>；適合保守配置 / 防禦倉位。Tier A 的成熟型 Final 通常剛過 0.65 門檻、分數接近邊界，對輸入欄位變動較敏感。</li>
+    </ul>
+    <strong style="margin-top:10px">讀法 caveats</strong>
     <ul>
       <li><b>不是起漲點 screener</b>：Entry 子分故意把「距 52w 高點 −10 ~ −15%」算作 sweet spot（不是 0 ~ −5%）。這與 Alpha Rank Angle 2「EV×起漲點」設計相反，刻意對應「不一定要起漲點」的目標。</li>
       <li><b>未做歷史勝率回測</b>：「相對有勝率」claim 來自構造（cheap percentile + 趨勢未破 + 護城河）而非實證 win rate；如要 backtest 證據，需另外開回測 issue。</li>
