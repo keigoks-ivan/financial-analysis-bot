@@ -795,6 +795,7 @@ HTML 必須包含所有 Phase 和 § 的完整分析內容，不得摘要化。
 - **章節標題**：深藍 #1E3A5F 底色，左側加 4px accent 線（#3B82F6）
 
 - **Status Bar**（§2 之上，最頂部）：
+  - **私站防爬必填（v1.4+）**：HTML `<head>` 內必須緊接 `<meta charset>` 後加一行 `<meta name="robots" content="noindex,nofollow">`。理由：研究站 `research.investmquest.com` 走 noindex 政策避免 Koyfin/SimplyWallSt 等第三方估值資料源觸發 TOS。漏寫 → 下次 `scripts/inject_noindex.py` 會自動補上但 DCA 多一次無謂 diff。
   - **機器可讀標記（v1.2 必填）**：HTML `<head>` 內必須塞一行：
     ```html
     <!-- dca-moat-trend: ↑ -->   <!-- 或 → 或 ↓，三選一 -->

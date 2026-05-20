@@ -11,6 +11,7 @@
 ```html
 <!DOCTYPE html>
 <html lang="zh-Hant"><head>
+<meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="id-skill-version" content="v1.0">
 <meta name="id-theme" content="{THEME}">

@@ -2417,6 +2417,7 @@ HTML 必須包含所有章節的完整分析內容，不得摘要化。
 - 頁首固定：標的代碼 ｜ 資料抓取時間 ｜ 最新股價 ｜ DD Schema v12.3
 - 頁首的 Schema 版本字串必須取自本檔案 frontmatter 的 version 欄位，確保每份 HTML 都自帶生成時所用的 skill 版本戳
 - 同時在 HTML <head> 區加一個 meta 標籤供程式化解析：`<meta name="dd-schema-version" content="v12.3">`，meta content 同樣取自 frontmatter version 欄位
+- **私站防爬必填（v12.3+）**：HTML `<head>` 內必須緊接 `<meta charset>` 後加一行 `<meta name="robots" content="noindex,nofollow">`。理由：研究站 `research.investmquest.com` 走 noindex 政策避免 Koyfin/SimplyWallSt 等第三方估值資料源觸發 TOS。漏寫 → 下次 `scripts/inject_noindex.py` 會自動補上但 DD 多一次無謂 diff。
 - **目錄導覽列（v12.2+ 強制）**：頁首之後必須緊接一個 `<nav class="dd-toc">` 區塊，內含 13 個 anchor 連結指向各章節（§1 結論 / §2 四層判定 / §3 三方辯論 / §4 序章 / §5 論點錨定 / §6 財報 / §7 門檻 / §8 成長 / §9 護城河 / §10 財務 / §11 產業 / §12 治理 / §13 估值）。樣式：`pill-shape badges`（白底卡片 + 4px #3B82F6 左側線；連結淺藍背景 #EFF6FF + 圓角 999px）。每個章節 `<section>` 必須有 `id="s1"` ~ `id="s13"` 對應錨點，且 h2 加 `scroll-margin-top: 80px` 確保跳轉位置不被 sticky header 遮擋。@media print 時 `.dd-toc` 隱藏。**禁止省略此區塊**——無 TOC 的 DD 對長篇報告（80-100 KB）導航體驗極差，視為輸出殘缺
 - 右下角固定「列印為 PDF」按鈕（window.print()）
 - @media print CSS：隱藏頁首與按鈕，確保列印版面整潔

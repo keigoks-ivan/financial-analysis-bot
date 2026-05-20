@@ -181,6 +181,8 @@ tr:last-child td { border-bottom: none; }
 
 完整骨架見 v1.0 版本(章節 §A-§E 結構未變),只是 CSS 改為白底深字。
 
+**`<head>` 必填(v1.2+)**:緊接 `<meta charset>` 後加一行 `<meta name="robots" content="noindex,nofollow">`。理由:研究站 `research.investmquest.com` 走 noindex 政策避免 Koyfin/SimplyWallSt 等第三方估值資料源觸發 TOS。漏寫 → 下次 `scripts/inject_noindex.py` 會自動補上但 comparison 多一次無謂 diff。
+
 關鍵章節:
 - §A Dashboard:verdict-card(綠 border)+ 基本資料表 + 四層排序速覽
 - §B.1-B.4:四層時間框架,每層獨立排序 + 判斷邏輯
