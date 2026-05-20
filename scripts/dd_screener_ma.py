@@ -47,6 +47,12 @@ _ALL_NONE: dict = {
     "drift_4w_pct":    None,
     "above_w52":       None,
     "above_w250":      None,
+    # v1.6: 5y cycle context for entry-state-machine
+    "high_250w_price":       None,
+    "dist_250w_high_pct":    None,
+    "weeks_since_250w_high": None,
+    "is_full_5y":            None,
+    "drift_4w_min_in_8w":    None,
 }
 
 
@@ -78,6 +84,12 @@ def compute_ma_snapshot(yf_ticker: str, period: str = "5y") -> dict:
         "drift_4w_pct":   float | None,
         "above_w52":  bool | None,
         "above_w250": bool | None,
+        # v1.6 5y cycle context (additive, for entry-state-machine page):
+        "high_250w_price":       float | None,
+        "dist_250w_high_pct":    float | None,
+        "weeks_since_250w_high": int   | None,
+        "is_full_5y":            bool  | None,
+        "drift_4w_min_in_8w":    float | None,
       }
 
     Graceful degradation: any field with insufficient history is None.
@@ -126,6 +138,35 @@ def compute_ma_snapshot(yf_ticker: str, period: str = "5y") -> dict:
         above_w52 = (bool(price > w52)) if (price is not None and w52 is not None) else None
         above_w250 = (bool(price > w250)) if (price is not None and w250 is not None) else None
 
+        # --- v1.6: 5y cycle context (true ATH window for entry-state-machine) ---
+        # high_250w_price / dist_250w_high_pct / weeks_since_250w_high / is_full_5y
+        # Needs at least ~1 year of weekly history to be meaningful.
+        high_250w_price = None
+        dist_250w_high_pct = None
+        weeks_since_250w_high = None
+        is_full_5y = None
+        if n >= 50:
+            window = closes.iloc[-250:] if n >= 250 else closes
+            high_p = float(window.max())
+            argmax_pos = int(window.values.argmax())
+            high_250w_price       = _float2(high_p)
+            dist_250w_high_pct    = _float2((float(closes.iloc[-1]) - high_p) / high_p * 100) if high_p else None
+            weeks_since_250w_high = len(window) - argmax_pos - 1
+            is_full_5y            = bool(n >= 250)
+
+        # --- v1.6: PULLBACK 歷史 lookback — past 8 weeks' deepest 4w drift ---
+        # Used by entry-state-machine PULLBACK condition (need drift_4w < -3% at
+        # some point in past 8 weeks → was a real decline into the zone, not
+        # stale-ATH slow drift).
+        drift_4w_min_in_8w = None
+        if n >= 12:
+            past_drifts = [
+                (float(closes.iloc[k]) / float(closes.iloc[k - 4]) - 1) * 100
+                for k in range(max(4, n - 8), n)
+            ]
+            if past_drifts:
+                drift_4w_min_in_8w = _float2(min(past_drifts))
+
         return {
             "price":          price,
             "w52":            w52,
@@ -135,6 +176,11 @@ def compute_ma_snapshot(yf_ticker: str, period: str = "5y") -> dict:
             "drift_4w_pct":   drift_4w_pct,
             "above_w52":      above_w52,
             "above_w250":     above_w250,
+            "high_250w_price":       high_250w_price,
+            "dist_250w_high_pct":    dist_250w_high_pct,
+            "weeks_since_250w_high": weeks_since_250w_high,
+            "is_full_5y":            is_full_5y,
+            "drift_4w_min_in_8w":    drift_4w_min_in_8w,
         }
 
     except Exception:

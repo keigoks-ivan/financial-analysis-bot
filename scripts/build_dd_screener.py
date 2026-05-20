@@ -160,6 +160,10 @@ def _empty_ma() -> dict:
         "price": None, "w52": None, "w104": None, "w250": None,
         "slope_w250_pct": None, "drift_4w_pct": None,
         "above_w52": None, "above_w250": None,
+        # v1.6: 5y cycle context for entry-state-machine (additive, all None on failure)
+        "high_250w_price": None, "dist_250w_high_pct": None,
+        "weeks_since_250w_high": None, "is_full_5y": None,
+        "drift_4w_min_in_8w": None,
     }
 
 
