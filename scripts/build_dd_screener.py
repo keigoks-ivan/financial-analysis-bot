@@ -98,7 +98,7 @@ SCREENER_LATEST = ROOT / "docs" / "screener" / "latest.json"
 CRITERIA = [
     {"key": "fcf",   "label": "FCF≥10%",  "threshold": 10.0, "invert": False, "unit": "%"},
     {"key": "roic",  "label": "ROIC≥15%", "threshold": 15.0, "invert": False, "unit": "%"},
-    {"key": "eps2y", "label": "EPS 2Y CAGR≥15%",  "threshold": 15.0, "invert": False, "unit": "%"},
+    {"key": "eps2y", "label": "FY+1→FY+3 CAGR≥15%",  "threshold": 15.0, "invert": False, "unit": "%"},
     {"key": "peg",   "label": "PEG≤2.0",  "threshold": 2.0,  "invert": True,  "unit": "x"},
     {"key": "de",    "label": "D/E≤0.7",  "threshold": 0.7,  "invert": True,  "unit": "x"},
 ]
@@ -1152,6 +1152,16 @@ def enrich_ticker(
             quality_from_cache = True
             quality_cache_stamp = cached.get("_stamp")
 
+    # v1.9: Override `eps2y` with Excel forward CAGR (eps_fy1_fy3_cagr_pct) BEFORE
+    # evaluate_criteria, so the QGM "EPS 2Y CAGR ≥ 15%" rule (now labelled
+    # "FY+1→FY+3 CAGR ≥ 15%") anchors on Excel buy-side pure forward consensus
+    # instead of yfinance YearAgo→FY+1 mixed window.
+    _excel_record_for_eps2y = excel_snapshot.get(t) if excel_snapshot else None
+    if _excel_record_for_eps2y is not None:
+        _excel_cagr = _excel_record_for_eps2y.get("cagr_fy1_fy3_pct")
+        if _excel_cagr is not None:
+            quality["eps2y"] = round(float(_excel_cagr), 2)
+
     pass_count, fails = evaluate_criteria(quality)
 
     if skip_ma:
@@ -1224,7 +1234,11 @@ def enrich_ticker(
     eps2y_live_result = _compute_live_eps_cagr(entry, live_fy_result or {})
     eps2y_live = eps2y_live_result.get("eps2y_live")
 
-    eps_revision = _compute_eps_revision(entry, eps2y_live, prev_snapshot or {})
+    # v1.9: revision MoM diff anchors on Excel forward CAGR (eps_fy1_fy3_cagr_pct)
+    # instead of yfinance-derived eps2y_live, so the UI's ↑↓pp delta reflects
+    # buy-side consensus shift rather than yfinance YearAgo→FY+1 window noise.
+    excel_cagr_for_rev = (live_fy_result or {}).get("cagr_fy1_fy3_pct")
+    eps_revision = _compute_eps_revision(entry, excel_cagr_for_rev, prev_snapshot or {})
     live_peg = _compute_live_peg(pe_drift, eps2y_live)  # needs live_fpe_est from pe_drift
 
     # Compute ev5y_pct before passing to live_ev5y helper (entry doesn't carry it yet)

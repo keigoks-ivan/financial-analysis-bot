@@ -29,6 +29,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
+# Shared Excel-coverage helpers (v1.x: Excel-only growth signal)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dd_screener_quality import has_excel_cagr, cagr_growth_score  # noqa: E402
+
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
 LATEST_JSON = ROOT / "docs" / "dd-screener" / "latest.json"
@@ -272,34 +276,37 @@ def pillar_setup(s: dict) -> tuple[float, dict]:
 
 
 def pillar_floor(s: dict) -> tuple[float, dict]:
-    """C = 0.40·moat/10 + 0.30·pass_count/5 + 0.15·quality_score/10 + 0.15·eps_rev_safety
+    """C = 0.40·moat/10 + 0.30·pass_count/5 + 0.15·quality_score/10 + 0.15·cagr_growth_score
 
-    REUSED EXACTLY from build_bottom_out.py.
+    REUSED EXACTLY from build_bottom_out.py — 0.15 slot 從 eps_rev_safety
+    換成 Excel forward CAGR;eps_revision_pct < -30% veto 仍保留。
     """
     moat = _safe_float(s.get("moat_score")) or 0
     pass_count = _safe_float(s.get("pass_count")) or 0
     qs = _safe_float(s.get("quality_score"))
-    eps_rev = _safe_float(s.get("eps_revision_pct"))
+    cagr = _safe_float(s.get("eps_fy1_fy3_cagr_pct"))
 
     moat_norm = moat / 10.0
     pass_norm = pass_count / 5.0
     quality_norm = (qs / 10.0) if qs is not None else moat_norm
-    eps_safe = eps_rev_safety_score(eps_rev)
+    cagr_score = cagr_growth_score(cagr)
 
-    score = 0.40 * moat_norm + 0.30 * pass_norm + 0.15 * quality_norm + 0.15 * eps_safe
+    score = 0.40 * moat_norm + 0.30 * pass_norm + 0.15 * quality_norm + 0.15 * cagr_score
     score = _clip01(score)
     return score, {
         "moat_norm": round(moat_norm, 3),
         "pass_norm": round(pass_norm, 3),
         "quality_norm": round(quality_norm, 3),
-        "eps_rev_safety": round(eps_safe, 3),
-        "eps_revision_pct": eps_rev,
+        "cagr_growth_score": round(cagr_score, 3),
+        "cagr_fy1_fy3_pct": cagr,
     }
 
 
 # ── vetoes ────────────────────────────────────────────────────────────────────
 def is_vetoed(s: dict) -> Optional[str]:
     """Return veto reason string, or None if eligible."""
+    if not has_excel_cagr(s):
+        return "Excel EPS 覆蓋外"
     ai_risk = s.get("ai_risk")
     if ai_risk == "🔴":
         return "AI disrupt 🔴"
@@ -806,7 +813,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
       <b>Setup（動能確認）</b>：<code>0.40·rs_score_norm + 0.30·ma50_position_score + 0.20·ma250_slope_score + 0.10·drift_4w_score</code>
     </div>
     <div class="formula-row">
-      <b>Floor（品質地板）</b>：<code>0.40·moat/10 + 0.30·pass/5 + 0.15·quality/10 + 0.15·eps_rev_safety</code>
+      <b>Floor（品質地板）</b>：<code>0.40·moat/10 + 0.30·pass/5 + 0.15·quality/10 + 0.15·cagr_growth_score</code>
     </div>
     <div class="formula-row" style="margin-top:8px;color:#5a7a9a">
       <b>Vetoes</b>（任一觸發 → 不入榜）：<code>ai_risk==🔴</code> · <code>moat_grade∈(C,X)</code> · <code>trap==🔴</code> · <code>moat_score&lt;6</code> · <code>dist_52w&lt;−7%</code> · <code>rs&lt;80</code> · <code>MA250 slope&lt;0</code> · <code>vs MA50&gt;+35%</code> · <code>eps_revision&lt;−30%</code>

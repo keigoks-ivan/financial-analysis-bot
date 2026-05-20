@@ -28,6 +28,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
+# Shared Excel-coverage helper (v1.9: Excel-only growth signal across 5 pages)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dd_screener_quality import has_excel_cagr  # noqa: E402
+
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
 LATEST_JSON = ROOT / "docs" / "dd-screener" / "latest.json"
@@ -202,32 +206,24 @@ def pillar_quality(s: dict) -> tuple[float, dict]:
 
 
 def pillar_growth(s: dict) -> tuple[float, dict]:
-    """B = 0.40·growth_durability/10 + 0.30·clip(eps2y,0,40)/40 + 0.30·clip(ev5y,0,25)/25
+    """B = 0.40·growth_durability/10 + 0.30·clip(cagr_fy1_fy3,0,40)/40 + 0.30·clip(ev5y,0,25)/25
 
-    v1.8.1: eps2y input is Excel-aware — Excel-covered tickers use eps2y_live
-    (live (FY+1 from Excel) / yearAgoEps yfinance, 2Y CAGR), else fall back to
-    DD frozen eps2y. This way the Growth pillar reflects current consensus for
-    the 134 Excel-covered tickers and original DD value for the 12 uncovered.
+    v1.9: 30% slot 從 eps2y_live (yfinance YearAgo→FY+1 mixed window) 換成
+    Excel-sourced eps_fy1_fy3_cagr_pct (FY+1→FY+3 pure forward CAGR)。
+    Excel 覆蓋外 ticker 經 has_excel_cagr veto upstream,不會進到這裡。
     """
     gd = _safe_float(s.get("growth_durability"))
-    # v1.8.1: prefer Excel-derived live 2Y CAGR when ticker is Excel-covered;
-    # fall back to DD frozen `eps2y` when ticker is yfinance-fallback (or when
-    # eps2y_live happens to be null even for Excel ticker — defensive).
-    eps2y_src = s.get("eps2y_live") if s.get("eps_source") == "xlsx" else None
-    if eps2y_src is None:
-        eps2y_src = s.get("eps2y")
-    eps2y = _safe_float(eps2y_src)  # %
-    ev5y = _safe_float(s.get("ev5y_pct"))  # annualized IRR %
-    upside_5y = _safe_float(s.get("upside_5y_pct"))  # total 5Y % return
-    moat = _safe_float(s.get("moat_score")) or 5  # fallback proxy
+    cagr = _safe_float(s.get("eps_fy1_fy3_cagr_pct"))  # %
+    ev5y = _safe_float(s.get("ev5y_pct"))
+    upside_5y = _safe_float(s.get("upside_5y_pct"))
+    moat = _safe_float(s.get("moat_score")) or 5
 
     # growth_durability 缺值 → moat_score (相關但不完全等價，保守降權)
     gd_norm = (gd / 10.0) if gd is not None else (moat / 10.0) * 0.8
 
-    # eps2y 截斷 40% (避免異常值主導)
-    eps_norm = _clip01((eps2y or 0) / 40.0)
+    # CAGR 截斷 40% (異常值不主導)
+    cagr_norm = _clip01((cagr or 0) / 40.0)
 
-    # ev5y_pct 為 null 時 fallback 用 upside_5y_pct / 5 (年化)
     if ev5y is not None:
         ev_input = ev5y
     elif upside_5y is not None:
@@ -236,12 +232,13 @@ def pillar_growth(s: dict) -> tuple[float, dict]:
         ev_input = 0.0
     ev_norm = _clip01(ev_input / 25.0)
 
-    score = 0.40 * gd_norm + 0.30 * eps_norm + 0.30 * ev_norm
+    score = 0.40 * gd_norm + 0.30 * cagr_norm + 0.30 * ev_norm
     score = _clip01(score)
     return score, {
         "growth_durability_norm": round(gd_norm, 3),
-        "eps2y_norm": round(eps_norm, 3),
+        "cagr_fy1_fy3_norm": round(cagr_norm, 3),
         "ev5y_norm": round(ev_norm, 3),
+        "cagr_fy1_fy3_pct": cagr,
     }
 
 
@@ -294,6 +291,8 @@ def pillar_entry(s: dict) -> tuple[float, dict, str]:
 # ── vetoes ────────────────────────────────────────────────────────────────────
 def is_vetoed(s: dict) -> Optional[str]:
     """Return veto reason string, or None if eligible."""
+    if not has_excel_cagr(s):
+        return "Excel EPS 覆蓋外"
     ai_risk = s.get("ai_risk")
     if ai_risk == "🔴":
         return "AI disrupt 🔴"
@@ -753,7 +752,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
       <b>Quality (品質×護城河)</b>：<code>0.45·moat/10 + 0.25·pass/5 + 0.20·quality_score/10 + 0.10·max(execution,pricing)/10</code>
     </div>
     <div class="formula-row">
-      <b>Growth (成長持續性)</b>：<code>0.40·durability/10 + 0.30·clip(eps2y,0,40)/40 + 0.30·clip(ev5y,0,25)/25</code>
+      <b>Growth (成長持續性)</b>：<code>0.40·durability/10 + 0.30·clip(FY+1→FY+3 CAGR,0,40)/40 + 0.30·clip(ev5y,0,25)/25</code>
     </div>
     <div class="formula-row">
       <b>Entry (進場品質)</b>：<code>0.30·(1−pct_5y/100) + 0.25·MA + 0.20·pullback(dist_52wH) + 0.15·trend(vs_200MA) + 0.10·val</code>

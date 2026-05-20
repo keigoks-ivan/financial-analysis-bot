@@ -96,6 +96,38 @@ def _dec(v: Optional[float], digits: int = 2) -> Optional[float]:
         return None
 
 
+# ===== Excel-coverage helpers (shared by 5 dd-screener page builders) ========
+
+
+def has_excel_cagr(s: dict) -> bool:
+    """Universe filter: True iff Excel-derived forward CAGR available.
+    Used across all 5 dd-screener pages to enforce Excel-only growth signal —
+    tickers without Excel coverage (e.g. 6146.T / 6857.T fallback to yfinance)
+    are vetoed from quality-entry / bottom-out / breakout / entry-state /
+    earnings-acceleration so the growth signal is consistent everywhere."""
+    return (
+        s.get("eps_source") == "xlsx"
+        and s.get("eps_fy1_fy3_cagr_pct") is not None
+    )
+
+
+def cagr_growth_score(cagr_pct: Optional[float]) -> float:
+    """0-1 normalized growth score from FY+1->FY+3 Excel forward CAGR %.
+
+    Used in bottom-out / breakout pillar_floor 15% slot (replacing the old
+    eps_rev_safety_score that pulled from yfinance eps_revision_pct).
+
+    Curve: CAGR >= 25% -> 1.0; 0-25% linear; <= 0 -> 0; None -> 0.7 neutral.
+    """
+    if cagr_pct is None:
+        return 0.7
+    if cagr_pct >= 25:
+        return 1.0
+    if cagr_pct <= 0:
+        return 0.0
+    return cagr_pct / 25.0
+
+
 # ===== QGM index =============================================================
 
 

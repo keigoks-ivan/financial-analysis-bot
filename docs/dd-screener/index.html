@@ -316,8 +316,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <h3>表格欄位說明</h3>
 
     <div style="background:#fef7e7;border:1px solid #fbcf80;border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:#5a4a1e">
-      <strong style="color:#7c4a07;display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">EPS 修正動能 — v1.7 新功能</strong>
-      <strong>EPS 2Y CAGR</strong> 欄右方的 <span style="color:#166534;font-weight:600">↑+X.Xpp</span> / <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span> 小字，是「本月 live EPS CAGR」對照「上月初 snapshot」的差值（pp = percentage point）。
+      <strong style="color:#7c4a07;display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">EPS 修正動能 — v1.9 改用 Excel forward CAGR</strong>
+      <strong>FY+1→FY+3 CAGR</strong> 欄右方的 <span style="color:#166534;font-weight:600">↑+X.Xpp</span> / <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span> 小字，是「本月 Excel forward CAGR」對照「上月 Excel snapshot」的差值（pp = percentage point）。
       <br>• <strong>上修（綠）</strong>：分析師對未來 EPS 估算往上調 — 業界已知 alpha factor（Womack 1996 + Bloomberg / FactSet 同名指標），上修股票後續 6-12 個月傾向 outperform
       <br>• <strong>下修（紅）</strong>：估算往下調，常為基本面領先指標壞訊號
       <br>• <strong>持平</strong>（|diff| &lt; 0.5pp）：不顯示箭頭，避免雜訊
@@ -349,20 +349,21 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>
       </li>
 
-      <li><strong>EPS 2Y CAGR</strong>：前瞻 EPS 成長率（%）— <strong>v1.7 起改用即時數值</strong>。
-        <br><em>來源（live）：</em>每日 <code>scripts/build_dd_screener.py</code> 用 yfinance <code>earnings_estimate</code> 抓 FY+1 / FY+2 EPS 重算（<code>eps2y_live</code>）；yfinance 缺資料 / rate-limit 時 fallback 顯示 DD frozen 並標灰色 <code>DD</code>。
-        <br><em>修正動能：</em>右方小字 <span style="color:#166534;font-weight:600">↑+X.Xpp</span>（綠 = 上修）/ <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span>（紅 = 下修）= live 對照「上月初 snapshot」的差值；|diff| &lt; 0.5pp 視為持平（不顯示箭頭）；「新」chip = 此 ticker 上月 baseline 未收錄。詳見上方「EPS 修正動能」callout。
-        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 live 值；server 端 <code>pass_count</code> 仍用 frozen <code>eps2y</code> 計算 — QGM 規則語意）
+      <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
+        <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，144/146 ticker 覆蓋）；2 檔日股 fallback yfinance 「+1y / +2y」row。
+        <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
+        <br><em>修正動能：</em>右方小字 <span style="color:#166534;font-weight:600">↑+X.Xpp</span>（綠 = 上修）/ <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span>（紅 = 下修）= 本月 Excel CAGR vs 上月 Excel snapshot 差值；|diff| &lt; 0.5pp 視為持平（不顯示箭頭）；「新」chip = 此 ticker 上月 baseline 未收錄。詳見上方「EPS 修正動能」callout。
+        <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 Excel forward CAGR；server 端 <code>pass_count</code> 同一欄位 — v1.9 已與 UI 顯示對齊）
       </li>
 
       <li><strong>Curr FY / Next FY EPS</strong>：yfinance 給的當前/下一會計年度 consensus EPS（USD，純資訊欄無 pass/fail）— <strong>v1.7.2 新增</strong>。
         <br><em>來源：</em><code>yfinance .earnings_estimate</code> 的 <code>0y</code> 與 <code>+1y</code> 列（分析師共識平均）；hover 看欄位語意 + 數值。
         <br><em>對應曆年：</em>多數 US Dec-FY 公司：Curr FY ≈ 本曆年、Next FY ≈ 下個曆年；非 Dec-FY 例外（NVDA Jan：Curr = NVDA FY27、Next = FY28；JP 公司 Mar：差約半年）。
-        <br><em>用途：</em>讓使用者驗證 EPS 2Y CAGR 計算來源（公式為 <code>((Next FY EPS / TTM EPS)^0.5 - 1) × 100</code>）；TTM EPS 顯示在 EPS 2Y CAGR cell 的 tooltip。
+        <br><em>用途：</em>讓使用者驗證 forward CAGR 計算來源（公式為 <code>((FY+3 EPS / FY+1 EPS)^0.5 - 1) × 100</code>，Excel 直接給）。
         <br><em>FY+2 / 2028+：</em>yfinance 不提供（已驗證 mega caps 全部只到 +1y）；如要更長預估窗，需付費 API（Financial Modeling Prep / Finnhub / Bloomberg）。
       </li>
 
-      <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / live EPS 2Y CAGR</code> — <strong>v1.7 起改用即時數值</strong>。
+      <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / live EPS 2Y CAGR (yfinance)</code> — <strong>v1.7 起改用即時數值</strong>。注意 PEG 分母仍用 yfinance YearAgo-anchored 2Y CAGR 計算（保留與舊 PEG 數字可比性），與主欄 FY+1→FY+3 CAGR 計算窗口不同。
         <br><em>來源（live）：</em>純 derive — 分子分母都用 live，所以價格動 + 分析師修正都會反映在這欄。
         <br><em>規則：</em>frozen DD PEG 進 tooltip（hover 看 DD 對比）；live 任一邊失敗時 fallback 顯示 frozen DD 並標 <code>DD</code>。
         <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（顏色基於 live 值）
@@ -693,7 +694,7 @@ function _sortStocks(stocks) {
 
 // ── Live cell render helpers (v1.7) ─────────────────────────────────────────
 // Pattern: live primary + frozen DD value 進 tooltip + drift/revision 小字附註
-// 適用 4 個 cell：2Y P/E、PEG、EPS 2Y CAGR、5Y IRR。
+// 適用 4 個 cell：2Y P/E、PEG、FY+1→FY+3 CAGR、5Y IRR。
 // 配色規則：drift / revision 對「品質」的影響方向決定顏色：
 //   PE / PEG: live 變便宜（更低）= 綠；變貴 = 橘 / 紅
 //   IRR:      live 變高 = 綠；變低 = 橘
@@ -737,22 +738,19 @@ function _renderLivePEGCell(s, flag) {
 }
 
 function _renderLiveEPSCell(s, flag) {
-  var eps = s.eps2y;
-  var live = s.eps2y_live;
+  // v1.9: 顯示 Excel FY+1→FY+3 forward CAGR (eps_fy1_fy3_cagr_pct) 取代舊
+  // yfinance YearAgo→FY+1 mixed-window CAGR (eps2y_live)。MoM revision delta
+  // (eps2y_revision_pp/dir) 仍由 build_dd_screener.py 寫入，但 source 改為
+  // Excel CAGR 月差，semantic 一致。
+  var cagr = s.eps_fy1_fy3_cagr_pct;
   var revPp = s.eps2y_revision_pp;
   var revDir = s.eps2y_revision_dir;
   var prevVal = s.eps2y_prev_month;
   var prevDate = s.eps2y_prev_month_date;
-  if ((eps === null || eps === undefined) && (live === null || live === undefined)) {
+  if (cagr === null || cagr === undefined) {
     return '<td>—</td>';
   }
-  if (live === null || live === undefined) {
-    var tipFb = ' title="Live EPS CAGR 估算失敗，暫顯示 DD frozen ' + eps.toFixed(1) + '%"';
-    var liveFlagFb = eps == null ? null : (eps >= 15 ? 'pass' : 'fail');
-    return '<td' + tipFb + ' style="' + cellStyle(liveFlagFb) + '">' + eps.toFixed(1) + '%<span style="font-size:9px;color:#94a3b8;margin-left:3px">DD</span></td>';
-  }
-  // live available — build display + revision indicator
-  var display = '<strong>' + live.toFixed(1) + '%</strong>';
+  var display = '<strong>' + cagr.toFixed(1) + '%</strong>';
   if (revDir === '上修' || revDir === '下修') {
     var revColor = revDir === '上修' ? '#166534' : '#991B1B';
     var arrow = revDir === '上修' ? '↑' : '↓';
@@ -762,7 +760,7 @@ function _renderLiveEPSCell(s, flag) {
     display += '<span style="font-size:9px;color:#94a3b8;margin-left:3px">新</span>';
   }
   // tooltip
-  var parts = ['Live ' + live.toFixed(1) + '% (yfinance FY+1/+2)'];
+  var parts = ['Excel FY+1→FY+3 forward CAGR ' + cagr.toFixed(1) + '%'];
   if (revPp !== null && prevVal !== null) {
     parts.push('上月 (' + prevDate + ') ' + prevVal.toFixed(1) + '%');
     parts.push('修正 ' + (revPp > 0 ? '+' : '') + revPp.toFixed(1) + 'pp · ' + revDir);
@@ -771,11 +769,9 @@ function _renderLiveEPSCell(s, flag) {
   } else {
     parts.push('修正動能 baseline 累積中（首月 snapshot 尚未對照）');
   }
-  if (eps !== null && eps !== undefined) parts.push('DD frozen ' + eps.toFixed(1) + '%');
   var tip = ' title="' + parts.join('; ') + '"';
-  // Color flag re-evaluated against live value
-  var liveFlag = live == null ? null : (live >= 15 ? 'pass' : 'fail');
-  return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + '</td>';
+  var flagFinal = cagr >= 15 ? 'pass' : 'fail';
+  return '<td' + tip + ' style="' + cellStyle(flagFinal) + '">' + display + '</td>';
 }
 
 function _renderRawEpsCell(s, field) {
@@ -796,7 +792,7 @@ function _renderRawEpsCell(s, field) {
     'eps_fy_curr': (src === 'xlsx' ? 'Excel FY1E (current FY consensus avg)' : 'yfinance 0y row — current FY consensus EPS'),
     'eps_fy_next': (src === 'xlsx' ? 'Excel FY2E (next FY consensus avg)' : 'yfinance +1y row — next FY consensus EPS'),
     'eps_fy3':     (src === 'xlsx' ? 'Excel FY3E (2 fiscal years out, consensus avg)' : 'yfinance +2y row — FY+2 consensus EPS'),
-    'eps_trailing': 'info.trailingEps — TTM 實際 EPS (用為 2Y CAGR 計算基準)'
+    'eps_trailing': 'info.trailingEps — TTM 實際 EPS (yfinance fallback path 計算 CAGR 用；Excel 主路徑不再用 TTM)'
   };
   var tipBase = (labelMap[field] || field) + ': ' + v.toFixed(2) + ccySuffix;
   // v1.8.5: append USD reference for foreign listings
@@ -846,7 +842,7 @@ function _renderRawEpsCell(s, field) {
 
 function _renderGrowthCell(s, field, source) {
   // v1.8: render Excel-derived growth/CAGR (FY3 YoY% / FY1→FY3 CAGR) using same
-  // color rules as EPS 2Y CAGR: ≥15% 綠 / <0% 紅 / 其他 灰。Sort-null sinks
+  // color rules as FY+1→FY+3 CAGR: ≥15% 綠 / <0% 紅 / 其他 灰。Sort-null sinks
   // automatically via _sortStocks.
   var v = s[field];
   if (v === null || v === undefined) {
@@ -894,19 +890,20 @@ function buildTable(stocks) {
   stocks = _sortStocks(stocks);
 
   // v1.7: header sort keys now point to LIVE fields where available.
-  // 2Y P/E / PEG / 5Y IRR / EPS 2Y CAGR 都改成 live primary、frozen 進 tooltip。
+  // 2Y P/E / PEG / 5Y IRR / FY+1→FY+3 CAGR 都改成 live primary、frozen 進 tooltip。
   // 排序時 null 自動沉底（_sortStocks），所以 live 缺失的 ticker 排在後面。
-  var LIVE_SORT_KEY = { 'eps2y': 'eps2y_live', 'peg': 'live_peg' };
+  // v1.9: eps2y column 改顯示 Excel forward CAGR，sort key 也改 eps_fy1_fy3_cagr_pct
+  var LIVE_SORT_KEY = { 'eps2y': 'eps_fy1_fy3_cagr_pct', 'peg': 'live_peg' };
   var criteriaHeaders = criteria.map(function(c) {
     var sortKey = LIVE_SORT_KEY[c.key] || c.key;
     var title;
-    if (c.key === 'eps2y') title = '即時 EPS 2Y CAGR（trailingEps → +1y EPS 重算）— 主值為 live，sort 按 live 數值';
+    if (c.key === 'eps2y') title = 'Excel FY+1→FY+3 forward 2Y CAGR — buy-side consensus, 144/146 ticker 覆蓋';
     else if (c.key === 'peg') title = '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值';
     var th = _thSortable(c.label, sortKey, title ? {title: title} : undefined);
     if (c.key === 'eps2y') {
-      // v1.8: 先 push 2 個 Excel-only growth column（FY1→FY3 CAGR / FY3 YoY%），
-      // 再 push Curr FY / Next FY / FY3 EPS。Curr FY / Next FY 帶 1M revision chip。
-      th += _thSortable('FY1→FY3 CAGR', 'eps_fy1_fy3_cagr_pct', {title: 'Excel FY+1 → FY+3 forward 2Y CAGR — 對比左側 EPS 2Y CAGR（後者是 yearAgo → FY+1 anchor，含一個 actual EPS）'});
+      // v1.9: 拿掉重複的 FY1→FY3 CAGR side column（主 EPS column 已改顯示同一個
+      // Excel forward CAGR）。保留 FY3 YoY% (單年 YoY，與 forward 2Y CAGR 不同)
+      // 及三個 raw EPS column (Curr FY / Next FY / FY3)。
       th += _thSortable('FY3 YoY%', 'eps_fy3_yoy_pct', {title: 'Excel FY+2 → FY+3 consensus EPS YoY growth %'});
       th += _thSortable('Curr FY', 'eps_fy_curr', {title: 'Current FY EPS consensus — Excel FY1E；yfinance fallback: 0y row。下方 chip = vs 上月 1M revision%'});
       th += _thSortable('Next FY', 'eps_fy_next', {title: 'Next FY EPS consensus — Excel FY2E；yfinance fallback: +1y row。下方 chip = vs 上月 1M revision%'});
@@ -955,8 +952,8 @@ function buildTable(stocks) {
         html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
       }
       if (c.key === 'eps2y') {
-        // v1.8: FY1→FY3 CAGR + FY3 YoY% + Curr FY (+chip) + Next FY (+chip) + FY3 EPS
-        html += _renderGrowthCell(s, 'eps_fy1_fy3_cagr_pct');
+        // v1.9: 拿掉重複的 FY1→FY3 CAGR cell（主 EPS column 已用同一個 Excel
+        // forward CAGR）。保留 FY3 YoY% + Curr FY / Next FY / FY3 raw EPS。
         html += _renderGrowthCell(s, 'eps_fy3_yoy_pct');
         html += _renderRawEpsCell(s, 'eps_fy_curr');
         html += _renderRawEpsCell(s, 'eps_fy_next');

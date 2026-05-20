@@ -37,6 +37,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
+# Shared Excel-coverage helper (universe filter only — scoring unchanged)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dd_screener_quality import has_excel_cagr  # noqa: E402
+
 # ── suppress yfinance noise ───────────────────────────────────────────────────
 logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3").setLevel(logging.CRITICAL)
@@ -421,6 +425,10 @@ def is_vetoed(s: dict, ed: Optional[dict]) -> Optional[str]:
 
     EA vetoes are intentionally more relaxed than Breakout — no dist_52w_high veto.
     """
+    # Excel-coverage veto (cross-page consistency — 5 dd-screener pages use Excel
+    # forward CAGR; tickers without Excel coverage are excluded from all 5)
+    if not has_excel_cagr(s):
+        return "Excel EPS 覆蓋外"
     # Quality vetoes (same as other screeners)
     ai_risk = s.get("ai_risk")
     if ai_risk == "🔴":

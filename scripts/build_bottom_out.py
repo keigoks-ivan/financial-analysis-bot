@@ -29,6 +29,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
+# Shared Excel-coverage helpers (v1.x: Excel-only growth signal)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from dd_screener_quality import has_excel_cagr, cagr_growth_score  # noqa: E402
+
 # ── paths ─────────────────────────────────────────────────────────────────────
 ROOT = Path(__file__).resolve().parent.parent
 LATEST_JSON = ROOT / "docs" / "dd-screener" / "latest.json"
@@ -313,31 +317,38 @@ def pillar_reversal(s: dict) -> tuple[float, dict]:
 
 
 def pillar_floor(s: dict) -> tuple[float, dict]:
-    """C = 0.40·moat/10 + 0.30·pass_count/5 + 0.15·quality_score/10 + 0.15·eps_rev_safety"""
+    """C = 0.40·moat/10 + 0.30·pass_count/5 + 0.15·quality_score/10 + 0.15·cagr_growth_score
+
+    v1.x: 0.15 slot 從 eps_rev_safety (yfinance eps_revision_pct 30/90 天動能)
+    換成 Excel forward CAGR (eps_fy1_fy3_cagr_pct, FY+1→FY+3 pure forward)。
+    eps_revision_pct < -30% veto 保留作為論點破裂 thesis-break 早期警示。
+    """
     moat = _safe_float(s.get("moat_score")) or 0
     pass_count = _safe_float(s.get("pass_count")) or 0
     qs = _safe_float(s.get("quality_score"))
-    eps_rev = _safe_float(s.get("eps_revision_pct"))
+    cagr = _safe_float(s.get("eps_fy1_fy3_cagr_pct"))
 
     moat_norm = moat / 10.0
     pass_norm = pass_count / 5.0
     quality_norm = (qs / 10.0) if qs is not None else moat_norm
-    eps_safe = eps_rev_safety_score(eps_rev)
+    cagr_score = cagr_growth_score(cagr)
 
-    score = 0.40 * moat_norm + 0.30 * pass_norm + 0.15 * quality_norm + 0.15 * eps_safe
+    score = 0.40 * moat_norm + 0.30 * pass_norm + 0.15 * quality_norm + 0.15 * cagr_score
     score = _clip01(score)
     return score, {
         "moat_norm": round(moat_norm, 3),
         "pass_norm": round(pass_norm, 3),
         "quality_norm": round(quality_norm, 3),
-        "eps_rev_safety": round(eps_safe, 3),
-        "eps_revision_pct": eps_rev,
+        "cagr_growth_score": round(cagr_score, 3),
+        "cagr_fy1_fy3_pct": cagr,
     }
 
 
 # ── vetoes ────────────────────────────────────────────────────────────────────
 def is_vetoed(s: dict) -> Optional[str]:
     """Return veto reason string, or None if eligible."""
+    if not has_excel_cagr(s):
+        return "Excel EPS 覆蓋外"
     ai_risk = s.get("ai_risk")
     if ai_risk == "🔴":
         return "AI disrupt 🔴"
@@ -389,7 +400,7 @@ def bottom_rationale(s: dict, a_breakdown: dict, b_breakdown: dict) -> str:
 def _reversal_wait_hint(b_breakdown: dict, floor_breakdown: dict) -> str:
     """Tier B 「等什麼」— 找 Reversal 和 Floor sub-score 的最大拖累。
 
-    Logic per plan: check drift_4w / ma_slope / price_vs_ma50 / eps_rev_safety
+    Logic: check drift_4w / ma_slope / price_vs_ma50 / cagr_growth_score
     sub-scores against their target weights to find biggest gap.
     """
     # Reversal sub-scores with their weights (within pillar B)
@@ -401,19 +412,19 @@ def _reversal_wait_hint(b_breakdown: dict, floor_breakdown: dict) -> str:
     reversal_targets = {"drift_4w": 0.35, "ma_slope": 0.30, "price_vs_ma50": 0.20}
     reversal_gap = {k: reversal_targets[k] - reversal_weighted[k] for k in reversal_targets}
 
-    # Floor: eps_rev_safety gap (check if it's notably weak)
-    eps_safe = floor_breakdown.get("eps_rev_safety", 0.7)
-    eps_gap = 0.15 - eps_safe * 0.15
+    # Floor: cagr_growth_score gap (check if forward growth is notably weak)
+    cagr_safe = floor_breakdown.get("cagr_growth_score", 0.7)
+    cagr_gap = 0.15 - cagr_safe * 0.15
 
-    # Find the single biggest gap across reversal subs + eps
-    all_gaps = {**reversal_gap, "eps_rev": eps_gap}
+    # Find the single biggest gap across reversal subs + cagr
+    all_gaps = {**reversal_gap, "cagr": cagr_gap}
     bottleneck = max(all_gaps, key=all_gaps.get)
 
     # Build actionable hint
     drift = b_breakdown.get("drift_4w")
     slope = b_breakdown.get("slope_w250")
     ma50 = b_breakdown.get("ma50_pct")
-    eps_rev = floor_breakdown.get("eps_revision_pct")
+    cagr_pct = floor_breakdown.get("cagr_fy1_fy3_pct")
 
     if bottleneck == "drift_4w":
         if drift is not None and drift < 0:
@@ -427,10 +438,10 @@ def _reversal_wait_hint(b_breakdown: dict, floor_breakdown: dict) -> str:
         if ma50 is not None and ma50 < 0:
             return f"等站回 MA50（現 {ma50:.1f}%）"
         return "等站回 MA50"
-    if bottleneck == "eps_rev":
-        if eps_rev is not None:
-            return f"等 EPS 修正止跌（現 {eps_rev:.1f}%）"
-        return "等 EPS 修正止跌"
+    if bottleneck == "cagr":
+        if cagr_pct is not None:
+            return f"等前瞻 CAGR 加速（現 {cagr_pct:.1f}%）"
+        return "等前瞻 CAGR 加速"
     return "—"
 
 
@@ -815,7 +826,7 @@ body{{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1
       <b>Reversal (觸底訊號)</b>：<code>0.35·drift_4w_score + 0.30·ma_slope_score + 0.20·price_vs_ma50_score + 0.15·rs_recovery_score</code>
     </div>
     <div class="formula-row">
-      <b>Floor (護城河地板)</b>：<code>0.40·moat/10 + 0.30·pass/5 + 0.15·quality/10 + 0.15·eps_rev_safety</code>
+      <b>Floor (護城河地板)</b>：<code>0.40·moat/10 + 0.30·pass/5 + 0.15·quality/10 + 0.15·cagr_growth_score</code>
     </div>
     <div class="formula-row" style="margin-top:8px;color:#5a7a9a">
       <b>Vetoes</b>（任一觸發 → 不入榜）：<code>ai_risk==🔴</code> · <code>moat_grade∈(C,X)</code> · <code>trap==🔴</code> · <code>dist_52w&gt;−15%</code> · <code>eps_revision&lt;−30%</code> · <code>moat_score&lt;6</code>

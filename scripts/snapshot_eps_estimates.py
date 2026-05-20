@@ -202,9 +202,12 @@ def snapshot_from_excel(
         fy2 = rec.get("fy2")
         fy3 = rec.get("fy3")
         trailing = trailing_map.get(t)
-        cagr = None
-        if fy2 is not None and trailing and trailing > 0:
-            cagr = round(((fy2 / trailing) ** 0.5 - 1) * 100, 2)
+        # v2: eps_cagr_2y anchors on Excel FY+1→FY+3 forward CAGR (matches
+        # build_dd_screener.py v1.9 — gives MoM revision delta a consistent
+        # pure-forward window instead of TTM→FY+1 backward-forward mix).
+        cagr = rec.get("cagr_fy1_fy3_pct")
+        if cagr is not None:
+            cagr = round(float(cagr), 2)
         results[t] = {
             "eps_fy_curr": fy1,
             "eps_fy_next": fy2,
