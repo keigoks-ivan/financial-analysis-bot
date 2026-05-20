@@ -1016,7 +1016,7 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
     <strong>讀法 8 點(動手前必讀)</strong>
     <ol>
       <li><b>與 Quality-Entry 的定位區別</b>:Quality-Entry 是「單一逢回邏輯」的複合評分;本頁是「突破派抓第一棒、回調派抓後續棒」的雙邏輯接力。兩者並存,服務不同進場哲學。</li>
-      <li><b>Universe 來源(v1.2 retune)</b>:`build_quality_entry.py` 全量 scored(post-veto)中 Quality ≥ <code>{QUALITY_ENTER}</code> ∩ Growth ≥ <code>{GROWTH_ENTER}</code> ∩ archetype=成長型;加 hysteresis(出門檻 Q≤<code>{QUALITY_EXIT}</code> / G≤<code>{GROWTH_EXIT}</code>)防邊界 ticker 進出抖動。<b>v1.2 變更</b>:原 Q≥0.55 / G≥0.50 → 83 太多;Q 實測 min=0.58 → Q≥0.55 無實效;只 G 才是 dial。新閾值 ~49 universe。</li>
+      <li><b>Universe 來源(v1.2 retune)</b>:`build_quality_entry.py` 全量 scored(post-veto)中,<b>新進門檻</b> Quality ≥ <code>{QUALITY_ENTER}</code> ∩ Growth ≥ <code>{GROWTH_ENTER}</code> ∩ archetype=成長型;<b>昨日已在 universe 者</b>只要 Q ≥ <code>{QUALITY_EXIT}</code> / G ≥ <code>{GROWTH_EXIT}</code>(hysteresis <b>保留</b>門檻)就維持,避免邊界 ticker 進出抖動。<b>v1.2 變更</b>:原 Q≥0.55/G≥0.50 → 83 太多;Q 實測 min=0.58 不發揮濾用,只 G 才是 dial。新門檻自然 universe ~49,過渡期含 hysteresis ~72。<b>archetype 分類純量化</b>(`growth_pillar ≥ 0.55` = 成長型),<b>不看 market cap</b>;V/MA/MSFT 等「mature 但仍成長」compounder 因 growth_durability 高,會被分到「成長型」(若想額外過濾大型權值股,需另起 mega-cap saturation filter,非本版)。</li>
       <li><b>兩層結構</b>:第一層 W52/W250 週線 MA 閘(🟢/🟡/🔴/⚪)決定能否進入第二層;第二層才判 BREAKOUT/PULLBACK/RIDING 三狀態。</li>
       <li><b>WEAK ≠ 第二層狀態</b>:WEAK 是第一層否決的標籤(跌破 W52 或 W250),不是第二層的進場狀態。它與三個進場狀態並列顯示是為了完整性。</li>
       <li><b>突破派抓第一棒、回調派抓後續棒;<code>★ NEW</code> 才是新訊號</b>:`is_new=true` 表示今天剛從別狀態轉入此狀態。BREAKOUT 持續中(`is_new=false`)實質接近 RIDING,不是新訊號。</li>
@@ -1080,7 +1080,7 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
 <div class="footer">
   <h4>資料來源</h4>
   <ul style="margin-left:18px">
-    <li><code>docs/dd-screener/latest.json</code> — timing(<code>ma50_pct</code> / <code>rs_score</code>)+ MA(<code>above_w52/w250</code> / <code>slope_w250_pct</code> / <code>drift_4w_pct</code>)+ v1.6 5y cycle context(<code>dist_250w_high_pct</code> / <code>weeks_since_250w_high</code> / <code>drift_4w_min_in_8w</code> / <code>is_full_5y</code>)</li>
+    <li><code>docs/dd-screener/latest.json</code> — timing(<code>ma50_pct</code> / <code>rs_score</code>)+ MA(<code>above_w52/w250</code> / <code>slope_w250_pct</code> / <code>drift_4w_pct</code>)+ v1.6 5y cycle context(<code>dist_250w_high_pct</code> / <code>weeks_since_250w_high</code> / <code>drift_4w_min_in_8w</code> / <code>is_full_5y</code>)<small style="color:#94a3b8"> · v1.6 是 `latest.json.ma` block 的 schema 版號(不同於本頁面 feature 版本 v1.2)</small></li>
     <li><code>docs/dd-screener/quality-entry.json</code> — Quality / Growth sub-scores + archetype(成長型/成熟型)</li>
     <li>WATCH counter 狀態:<code>docs/dd-screener/entry-state-state/watch_counters.json</code>(build-count units)</li>
   </ul>
