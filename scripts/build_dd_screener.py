@@ -562,6 +562,19 @@ def _fetch_live_fy_eps(
         # When True, _compute_live_eps_cagr() switches eps2y_live to use Excel's
         # own forward CAGR (cagr_fy1_fy3_pct) to avoid FX-ratio nonsense.
         "currency_mismatch_xlsx_yf": False,
+        # v1.8.5: foreign-listing native-currency display. For .TW/.T/.HK/.KS
+        # tickers, Excel reports in USD but local investors think in TWD/JPY/etc.
+        # We back-compute an implicit FX from yfinance (financialCurrency) ÷ Excel
+        # (USD) for the same FY, then surface local-currency values for display.
+        # ADRs (TSM/ASML/LVMH ADR forms) are NOT converted — ADR holders trade USD.
+        "eps_display_currency": "USD",
+        "eps_fx_rate": None,
+        "eps_fy_curr_local": None,
+        "eps_fy_next_local": None,
+        "eps_fy3_local": None,
+        "eps_fy_curr_usd_orig": None,  # original Excel USD value (audit)
+        "eps_fy_next_usd_orig": None,
+        "eps_fy3_usd_orig": None,
     }
     if not (p_at_dd and fpe_fy2 and p_at_dd > 0 and fpe_fy2 > 0):
         return out
@@ -691,6 +704,67 @@ def _fetch_live_fy_eps(
         out["eps_revision_pct"] = round((best[2] - implied) / implied * 100, 1)
     except Exception:
         pass
+
+    # v1.8.5: foreign-listing native-currency conversion.
+    # For .TW/.T/.HK/.KS/.SS/.SZ tickers: Excel reports USD per ord share but
+    # local investors think in TWD/JPY/HKD/KRW/etc. Back-compute implicit FX
+    # using yfinance native value (in financialCurrency) vs Excel USD value
+    # for the same FY (typically FY+1, the "0y" row). Then convert FY1/FY2/FY3.
+    # ADRs (no foreign suffix on DD ticker) are skipped — USD is the natural unit.
+    _FOREIGN_SUFFIXES_DISPLAY = (".TW", ".T", ".HK", ".KS", ".KQ", ".SS", ".SZ", ".JP")
+    if (
+        excel_record is not None
+        and dd_ticker
+        and any(dd_ticker.endswith(s) for s in _FOREIGN_SUFFIXES_DISPLAY)
+    ):
+        # FX = yfinance native (financialCurrency) ÷ Excel USD, for "0y" FY
+        # Prefer yf_eps_0y / excel.fy1; fall back to yf_eps_1y / excel.fy2 if 0y unavailable.
+        xlsx_usd_fy1 = excel_record.get("fy1")
+        xlsx_usd_fy2 = excel_record.get("fy2")
+        xlsx_usd_fy3 = excel_record.get("fy3")
+        fx = None
+        if yf_eps_0y and xlsx_usd_fy1 and xlsx_usd_fy1 > 0:
+            fx = yf_eps_0y / xlsx_usd_fy1
+        elif yf_eps_1y and xlsx_usd_fy2 and xlsx_usd_fy2 > 0:
+            fx = yf_eps_1y / xlsx_usd_fy2
+        if fx and fx > 0:
+            # Try to read financialCurrency from yfinance info (typically already
+            # fetched above for currency_mismatch detection; this is best-effort).
+            local_ccy = None
+            try:
+                local_ccy = yf.Ticker(yf_ticker).info.get("financialCurrency")
+            except Exception:
+                pass
+            if not local_ccy:
+                # Suffix-based default (covers most cases without an extra API call)
+                local_ccy = {
+                    ".TW": "TWD", ".T": "JPY", ".JP": "JPY",
+                    ".HK": "HKD", ".KS": "KRW", ".KQ": "KRW",
+                    ".SS": "CNY", ".SZ": "CNY",
+                }.get(next(s for s in _FOREIGN_SUFFIXES_DISPLAY if dd_ticker.endswith(s)), "USD")
+            out["eps_display_currency"] = local_ccy
+            out["eps_fx_rate"] = round(float(fx), 4)
+            # Stash USD originals (audit) before overwriting display fields
+            out["eps_fy_curr_usd_orig"] = xlsx_usd_fy1
+            out["eps_fy_next_usd_orig"] = xlsx_usd_fy2
+            out["eps_fy3_usd_orig"] = xlsx_usd_fy3
+            # Compute local-currency values
+            if xlsx_usd_fy1 is not None:
+                out["eps_fy_curr_local"] = round(xlsx_usd_fy1 * fx, 2)
+            if xlsx_usd_fy2 is not None:
+                out["eps_fy_next_local"] = round(xlsx_usd_fy2 * fx, 2)
+            if xlsx_usd_fy3 is not None:
+                out["eps_fy3_local"] = round(xlsx_usd_fy3 * fx, 2)
+            # OVERWRITE display fields with local-currency values so downstream
+            # (latest.json + UI) consistently shows TWD/JPY/etc. for foreign listings.
+            # Growth/CAGR percentages are currency-agnostic — leave unchanged.
+            if out["eps_fy_curr_local"] is not None:
+                out["eps_0y_raw"] = out["eps_fy_curr_local"]
+            if out["eps_fy_next_local"] is not None:
+                out["eps_1y_raw"] = out["eps_fy_next_local"]
+            if out["eps_fy3_local"] is not None:
+                out["eps_fy3"] = out["eps_fy3_local"]
+
     return out
 
 
@@ -1197,6 +1271,12 @@ def enrich_ticker(
         "eps_source": _lfy.get("eps_source", "yfinance"),
         # v1.8: month-over-month revision per FY (vs prev Excel snapshot)
         **fy_revision,  # eps_fy_curr_revision_pct, eps_fy_next_revision_pct, eps_revision_baseline_date
+        # v1.8.5: foreign-listing native-currency display (TWD/JPY/etc.)
+        "eps_display_currency": _lfy.get("eps_display_currency", "USD"),
+        "eps_fx_rate": _lfy.get("eps_fx_rate"),
+        "eps_fy_curr_usd_orig": _lfy.get("eps_fy_curr_usd_orig"),
+        "eps_fy_next_usd_orig": _lfy.get("eps_fy_next_usd_orig"),
+        "eps_fy3_usd_orig": _lfy.get("eps_fy3_usd_orig"),
     }
 
 

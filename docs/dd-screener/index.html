@@ -783,18 +783,33 @@ function _renderRawEpsCell(s, field) {
   // v1.8: Excel-primary（135 美股/ADR）+ yfinance fallback（12 檔含 .TW/.T 與 4 檔
   // 命名 mismatch）。Curr FY / Next FY 額外掛 1M revision chip 顯示 vs 上月 Excel
   // snapshot 的修正方向。
+  // v1.8.5: 台股 .TW / 日股 .T 等 foreign listing 顯示 native currency (TWD/JPY),
+  // tooltip 列 USD 原值。eps_display_currency = "TWD"/"JPY"/"USD" 三選一。
   var v = s[field];
   if (v === null || v === undefined) {
     return '<td style="color:#94a3b8">—</td>';
   }
   var src = s.eps_source || 'yfinance';
+  var ccy = s.eps_display_currency || 'USD';
+  var ccySuffix = (ccy === 'USD') ? '' : (' ' + ccy);
   var labelMap = {
     'eps_fy_curr': (src === 'xlsx' ? 'Excel FY1E (current FY consensus avg)' : 'yfinance 0y row — current FY consensus EPS'),
     'eps_fy_next': (src === 'xlsx' ? 'Excel FY2E (next FY consensus avg)' : 'yfinance +1y row — next FY consensus EPS'),
     'eps_fy3':     (src === 'xlsx' ? 'Excel FY3E (2 fiscal years out, consensus avg)' : 'yfinance +2y row — FY+2 consensus EPS'),
     'eps_trailing': 'info.trailingEps — TTM 實際 EPS (用為 2Y CAGR 計算基準)'
   };
-  var tipBase = (labelMap[field] || field) + ': ' + v.toFixed(2);
+  var tipBase = (labelMap[field] || field) + ': ' + v.toFixed(2) + ccySuffix;
+  // v1.8.5: append USD reference for foreign listings
+  if (ccy !== 'USD' && s.eps_fx_rate) {
+    var usdField = field === 'eps_fy_curr' ? 'eps_fy_curr_usd_orig'
+                  : field === 'eps_fy_next' ? 'eps_fy_next_usd_orig'
+                  : field === 'eps_fy3' ? 'eps_fy3_usd_orig'
+                  : null;
+    var usdOrig = usdField ? s[usdField] : null;
+    if (usdOrig !== null && usdOrig !== undefined) {
+      tipBase += ' (USD ' + usdOrig.toFixed(2) + ' × FX ' + s.eps_fx_rate.toFixed(2) + ')';
+    }
+  }
   var chip = '';
   // v1.8: month-over-month revision chip for FY1 / FY2 (Excel-vs-Excel)
   var revField = (field === 'eps_fy_curr') ? 'eps_fy_curr_revision_pct'
@@ -821,8 +836,12 @@ function _renderRawEpsCell(s, field) {
     }
   }
   var tip = ' title="' + tipBase + '"';
+  // v1.8.5: append tiny currency tag inline for foreign listings (TWD/JPY/etc.)
+  var ccyTag = (ccy !== 'USD')
+    ? '<span style="font-size:9px;color:#94a3b8;margin-left:2px">' + ccy + '</span>'
+    : '';
   return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:#475569">'
-       + v.toFixed(2) + chip + '</td>';
+       + v.toFixed(2) + ccyTag + chip + '</td>';
 }
 
 function _renderGrowthCell(s, field, source) {
@@ -991,7 +1010,7 @@ function buildTable(stocks) {
 }
 
 function renderEpsSourceBanner() {
-  // v1.8: surface Excel Excel snapshot date + age + diff列表。每月更新提醒。
+  // v1.8: surface Excel snapshot date + age + diff列表。每月更新提醒。
   var src = DATA && DATA.eps_estimates_source;
   var el = document.getElementById('eps-source-banner');
   if (!el) return;
@@ -1003,7 +1022,7 @@ function renderEpsSourceBanner() {
     el.style.color = '#7f1d1d';
     el.innerHTML = '<strong>⚠ EPS 預估資料源缺：</strong>找不到 <code>data/eps-estimates/DD_universe_EPS_estimates_*.xlsx</code>，'
                  + '全部 ' + (src ? src.fallback_yfinance_tickers.length : '?')
-                 + ' 檔暫走 yfinance fallback（GAAP/non-GAAP 風險）。請補 Excel Excel。';
+                 + ' 檔暫走 yfinance fallback（GAAP/non-GAAP 風險）。請補 Excel。';
     return;
   }
   var days = Math.floor((Date.now() - new Date(src.snapshot_date).getTime()) / 86400000);
