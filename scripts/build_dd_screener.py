@@ -502,12 +502,14 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
     pick whichever yfinance annual row (0y / +1y) is closest. This works
     per-ticker without needing labels.
 
-    2Y CAGR caveat (v1.7.1 fix): yfinance's "0y" and "+1y" rows are 1 year
-    apart (current FY vs next FY). Computing CAGR as ((+1y/0y)**0.5 - 1)
-    is mathematically WRONG — that formula halves a 1-year growth rate into
-    a fake 2-year annualized number. The correct 2Y CAGR uses trailingEps as
-    base: ((+1y / trailingEps)**0.5 - 1) — matches QGM's eps_cagr_2y_fwd
-    convention. We fetch trailingEps from .info here for downstream use.
+    2Y CAGR caveat (v1.7.2 fix): yfinance's "0y" and "+1y" rows are 1 year
+    apart (current FY vs next FY). The proper 2Y CAGR end is +1y, but the
+    base must be on the **same accounting basis** as the estimate (non-GAAP
+    for SaaS analysts). info.trailingEps is GAAP TTM — for high-SBC names
+    (DDOG, NET, CRWD, MDB, SNOW…) GAAP TTM ≪ non-GAAP forward, which inflates
+    the CAGR by 5-10×. We now prefer earnings_estimate's "0y" yearAgoEps
+    (last FY actual, same non-GAAP basis as the +1y estimate) and fall back
+    to trailingEps only when yearAgoEps is missing.
 
     Returns dict with:
       live_fpe_real:    price_now / yf_eps_matched (None on failure)
@@ -517,7 +519,8 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
       eps_revision_pct: (eps_now - eps_at_dd) / eps_at_dd × 100
       eps_0y_raw:       raw 0y avg EPS (current FY estimate) — kept for audit
       eps_1y_raw:       raw +1y avg EPS (next FY estimate) — used as CAGR end
-      trailing_eps:     info.trailingEps — used as CAGR base for proper 2Y CAGR
+      eps_year_ago:     0y.yearAgoEps (last FY actual, same basis as estimate)
+      trailing_eps:     info.trailingEps — GAAP TTM fallback CAGR base
     """
     out = {
         "live_fpe_real": None,
@@ -528,7 +531,9 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
         # v1.7: raw values for 2Y CAGR computation (independent of DD match)
         "eps_0y_raw": None,
         "eps_1y_raw": None,
-        # v1.7.1: trailing EPS for proper 2Y CAGR base (matches QGM convention)
+        # v1.7.2: yearAgoEps — same-basis CAGR base (preferred over GAAP TTM)
+        "eps_year_ago": None,
+        # v1.7.1: trailing EPS — GAAP TTM fallback when yearAgoEps missing
         "trailing_eps": None,
     }
     if not (p_at_dd and fpe_fy2 and p_at_dd > 0 and fpe_fy2 > 0):
@@ -551,10 +556,22 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
             except Exception:
                 pass
 
-        # v1.7.1: fetch trailingEps for proper 2Y CAGR base.
-        # Only fetch info if we have a usable eps_1y (otherwise CAGR can't be
-        # computed anyway — saves ~50% rate-limit pressure on partial-fail tickers).
-        if out["eps_1y_raw"] is not None:
+        # v1.7.2: yearAgoEps from 0y row — same accounting basis as the
+        # forward estimate (analysts publish yearAgoEps in the basis they
+        # forecast on, so this is the cleanest CAGR base).
+        try:
+            if "0y" in ee.index:
+                yag = ee.loc["0y"].get("yearAgoEps")
+                if yag is not None and float(yag) > 0:
+                    out["eps_year_ago"] = round(float(yag), 4)
+        except Exception:
+            pass
+
+        # v1.7.1: fetch trailingEps as fallback CAGR base.
+        # Only fetch info if we have a usable eps_1y and no yearAgoEps
+        # (otherwise CAGR can't be computed or yearAgoEps already covers it
+        # — saves yfinance rate-limit pressure).
+        if out["eps_1y_raw"] is not None and out["eps_year_ago"] is None:
             try:
                 trailing = tk.info.get("trailingEps")
                 if trailing is not None and float(trailing) > 0:
@@ -676,29 +693,40 @@ def _compute_live_pe_drift(
 # ---------------------------------------------------------------------------
 
 def _compute_live_eps_cagr(entry: dict, live_fy_result: dict) -> dict:
-    """Compute live 2Y EPS CAGR from yfinance trailingEps + +1y estimate.
+    """Compute live 2Y EPS CAGR from yfinance earnings_estimate.
 
-    v1.7.1 fix: yfinance's 0y/+1y rows are 1 year apart (current FY vs next FY),
-    so ((+1y/0y)**0.5 - 1) is mathematically wrong (halves a 1yr growth). The
-    correct 2Y CAGR uses trailingEps as the base — matches QGM's
-    eps_cagr_2y_fwd convention (verified against NVDA: 52.89% computed vs
-    QGM frozen 52.73%).
+    v1.7.2 fix: prior trailingEps-based formula mixed GAAP TTM (denominator)
+    with non-GAAP forward estimate (numerator) for high-SBC SaaS names,
+    inflating CAGR 5-10× (DDOG observed at 170% vs DD 17.8%). Now prefers
+    0y.yearAgoEps — the last FY actual on the same accounting basis as the
+    analysts' forward estimate — and falls back to trailingEps only when
+    yearAgoEps is missing.
 
     Formula:
-      cagr = ((eps_+1y / trailingEps) ** 0.5 - 1) * 100
+      base = eps_year_ago (preferred) or trailing_eps (fallback)
+      cagr = ((eps_+1y / base) ** 0.5 - 1) * 100
 
     Writes:
       eps2y_live:         live 2Y EPS CAGR % (None on failure)
-      eps2y_live_method:  "real" (trailing + +1y) | "missing"
+      eps2y_live_method:  "yearago" (yearAgoEps + +1y, same-basis, preferred)
+                          | "trailing" (trailingEps + +1y, GAAP/non-GAAP risk)
+                          | "missing"
     """
     eps_1y = live_fy_result.get("eps_1y_raw")
+    year_ago = live_fy_result.get("eps_year_ago")
     trailing = live_fy_result.get("trailing_eps")
 
+    if eps_1y is not None and year_ago is not None and year_ago > 0:
+        cagr = ((eps_1y / year_ago) ** 0.5 - 1) * 100
+        return {
+            "eps2y_live": round(cagr, 2),
+            "eps2y_live_method": "yearago",
+        }
     if eps_1y is not None and trailing is not None and trailing > 0:
         cagr = ((eps_1y / trailing) ** 0.5 - 1) * 100
         return {
             "eps2y_live": round(cagr, 2),
-            "eps2y_live_method": "real",
+            "eps2y_live_method": "trailing",
         }
     return {
         "eps2y_live": None,
