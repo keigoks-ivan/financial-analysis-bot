@@ -81,6 +81,23 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
 .methodology h3{font-size:13px;font-weight:700;color:#0f2a45;margin-bottom:8px}
 .methodology code{background:#f0f5fb;padding:1px 6px;border-radius:3px;font-size:11px;color:#1e3a5f}
 .methodology .row{font-size:12px;color:#334e68;line-height:1.9;margin-bottom:4px}
+/* v1.2 filter chips */
+.filter-bar{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px}
+.filter-label{color:#5a7a9a;font-weight:600;margin-right:4px}
+.filter-divider{color:#cbd5e1;margin:0 4px}
+.filter-count{color:#475569;font-weight:600;margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+.filter-count strong{color:#0f2a45}
+.filter-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid #dce8f5;border-radius:999px;background:#fff;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;user-select:none;transition:all .12s;font-family:inherit;line-height:1.4;letter-spacing:.01em}
+.filter-chip:hover:not(.disabled){border-color:#94a3b8;color:#475569}
+.filter-chip.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.filter-chip.active.chip-breakout-tag{background:#16a34a;border-color:#16a34a}
+.filter-chip.active.chip-pb-watch-tag{background:#0c4a6e;border-color:#0c4a6e}
+.filter-chip.active.chip-pb-conf-tag{background:#1e40af;border-color:#1e40af}
+.filter-chip.active.chip-riding-tag{background:#64748b;border-color:#64748b}
+.filter-chip.active.chip-weak-tag{background:#dc2626;border-color:#dc2626}
+.filter-chip.active.chip-new-tag{background:#92400e;border-color:#92400e}
+.filter-chip.disabled{opacity:.4;cursor:not-allowed}
+.filter-chip .count{opacity:.7;font-weight:500;margin-left:1px}
 </style>
 </head>
 <body>
@@ -128,14 +145,14 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
       與 <a href="/dd-screener/quality-entry.html" style="color:#2563eb">Quality-Entry</a>(單一逢回邏輯複合分)定位互補,<b>不重複</b>。
     </div>
     <div class="hero-stats">
-      <div class="hero-stat"><strong>2026-05-20 10:29</strong>最後更新(台北)</div>
+      <div class="hero-stat"><strong>2026-05-20 10:49</strong>最後更新(台北)</div>
       <div class="hero-stat"><strong>2026-05-20</strong>資料 as-of</div>
-      <div class="hero-stat"><strong>83</strong>universe</div>
-      <div class="hero-stat new-stat"><strong>11</strong>今日新訊號(BK new + PB watch)</div>
-      <div class="hero-stat"><strong>7 / 1</strong>BREAKOUT new / 持續</div>
+      <div class="hero-stat"><strong>72</strong>universe</div>
+      <div class="hero-stat new-stat"><strong>4</strong>今日新訊號(BK new + PB watch)</div>
+      <div class="hero-stat"><strong>0 / 6</strong>BREAKOUT new / 持續</div>
       <div class="hero-stat"><strong>4 / 0</strong>PULLBACK watch / confirmed</div>
-      <div class="hero-stat"><strong>52</strong>RIDING(無新訊號)</div>
-      <div class="hero-stat"><strong>19</strong>WEAK(第一層否決)</div>
+      <div class="hero-stat"><strong>44</strong>RIDING(無新訊號)</div>
+      <div class="hero-stat"><strong>18</strong>WEAK(第一層否決)</div>
     </div>
   </div>
 </div>
@@ -145,15 +162,16 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   
 
   <div class="caveat-panel">
-    <strong>讀法 7 點(動手前必讀)</strong>
+    <strong>讀法 8 點(動手前必讀)</strong>
     <ol>
       <li><b>與 Quality-Entry 的定位區別</b>:Quality-Entry 是「單一逢回邏輯」的複合評分;本頁是「突破派抓第一棒、回調派抓後續棒」的雙邏輯接力。兩者並存,服務不同進場哲學。</li>
-      <li><b>Universe 來源</b>:Quality-Entry 的品質中間層 ∩ 成長型(Quality ≥ 0.55 ∩ Growth ≥ 0.5,僅排除成熟型);加 hysteresis(出門檻 ≤ 0.5 / 0.45)防邊界 ticker 進出抖動。</li>
+      <li><b>Universe 來源(v1.2 retune)</b>:`build_quality_entry.py` 全量 scored(post-veto)中 Quality ≥ <code>0.75</code> ∩ Growth ≥ <code>0.6</code> ∩ archetype=成長型;加 hysteresis(出門檻 Q≤<code>0.7</code> / G≤<code>0.55</code>)防邊界 ticker 進出抖動。<b>v1.2 變更</b>:原 Q≥0.55 / G≥0.50 → 83 太多;Q 實測 min=0.58 → Q≥0.55 無實效;只 G 才是 dial。新閾值 ~49 universe。</li>
       <li><b>兩層結構</b>:第一層 W52/W250 週線 MA 閘(🟢/🟡/🔴/⚪)決定能否進入第二層;第二層才判 BREAKOUT/PULLBACK/RIDING 三狀態。</li>
       <li><b>WEAK ≠ 第二層狀態</b>:WEAK 是第一層否決的標籤(跌破 W52 或 W250),不是第二層的進場狀態。它與三個進場狀態並列顯示是為了完整性。</li>
       <li><b>突破派抓第一棒、回調派抓後續棒;<code>★ NEW</code> 才是新訊號</b>:`is_new=true` 表示今天剛從別狀態轉入此狀態。BREAKOUT 持續中(`is_new=false`)實質接近 RIDING,不是新訊號。</li>
       <li><b>狀態判定用 5 年週線 cycle context + 4 週方向過濾</b>:不是單日 snapshot — `dist_250w_high_pct`(真 ATH 距離)+ `weeks_since_250w_high`(ATH 週齡 0-26 才算近期)+ `drift_4w_min_in_8w`(過去 8 週曾真跌過)是 backtest 證實的設計。</li>
       <li><b>止跌確認需人工;DD 新鮮度紅標 ≠ 閘</b>:PULLBACK_WATCH 升級 PULLBACK_CONFIRMED 由人工看圖判讀(本頁 v1.0 不自動升級,只顯示 WATCH 計數)。DD &gt; 90 天紅標代表 quality 判定可能過期 — Ivan 自行決定是否重跑 DD,本頁不擋訊號。</li>
+      <li><b>【v1.2 新】Filter chips 預設只顯示 BREAKOUT / PULLBACK_WATCH / PULLBACK_CONFIRMED</b>(actionable 訊號)。點 ⚪ RIDING / 🔴 WEAK chip 可展開所有 universe;點「★ 只看新訊號」會再窄到只剩 `is_new=true` 列(BREAKOUT/PULLBACK 才會有 ★)。所有 filter 純 client-side,reload 重置。</li>
     </ol>
   </div>
 
@@ -163,12 +181,24 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
     <div class="row"><b>BREAKOUT</b>(僅 🟢 healthy):<code>dist_250w_high_pct ∈ [-3%, 0%]</code> ∩ <code>weeks_since_250w_high ≤ 2</code> ∩ <code>drift_4w_pct &gt; +5%</code> ∩ <code>ma50_pct ≥ 0</code> ∩ <code>rs_score ≥ 80</code></div>
     <div class="row"><b>PULLBACK_WATCH</b>(🟢/🟡):<code>dist_250w_high_pct ∈ [-15%, -5%]</code> ∩ <code>weeks_since_250w_high ∈ [2, 26]</code> ∩ <code>drift_4w_min_in_8w &lt; -3%</code>(過去 8w 曾真跌過)∩ <code>ma50_pct ∈ [-3%, +3%]</code></div>
     <div class="row"><b>WATCH → CONFIRMED 升級</b>:WATCH 中累積 <code>builds_no_new_low ≥ 3</code> 顯示「✓ 可進場考慮」hint,但本頁 v1.0 <b>不自動升級</b>;由 Ivan 看圖判讀後手動進場。容忍式計數:離開 WATCH 區後 ≤ 7 build 內回來 → 計數延續;超過 → 視為這一波結束、清除狀態。</div>
-    <div class="row" style="color:#5a7a9a;margin-top:6px"><b>已知設計邊界</b>:MA 燈號只看 W250 斜率,不看 W52 斜率(避免 W52 抖動干擾大方向閘)— 趨勢早期警示由 🔴(跌破 W52)觸發。Backtest 結果(5y × 23 ticker):PULLBACK 命中率 6.0%(每檔 ~17 週)/ BREAKOUT 18.4%(每檔 ~5 週,production 加 RS gate 後降)。</div>
+    <div class="row" style="color:#5a7a9a;margin-top:6px"><b>已知設計邊界</b>:MA 燈號只看 W250 斜率,不看 W52 斜率(避免 W52 抖動干擾大方向閘)— 趨勢早期警示由 🔴(跌破 W52)觸發。Backtest 結果(原 v1.1 5y × 23 ticker sample,Q≥0.55):PULLBACK 命中 ~6%(每檔每 ~17 週,合 ~3 次/年)/ BREAKOUT ~18%(production 加 RS≥80 gate 後實際降至 ~10%)。<b>v1.2 retune 後 universe 擴至 ~49 但同屬高品質區段,命中率應接近</b>;未在新 universe 上重 backtest,訊號量明顯異常時可再調 Q/G 門檻。</div>
+  </div>
+
+  <div class="filter-bar" id="entry-state-filters">
+    <span class="filter-label">顯示</span>
+    <button type="button" class="filter-chip chip-breakout-tag active" data-filter="BREAKOUT">🟢 BREAKOUT <span class="count">(6)</span></button>
+    <button type="button" class="filter-chip chip-pb-watch-tag active" data-filter="PULLBACK_WATCH">🔷 PB Watch <span class="count">(4)</span></button>
+    <button type="button" class="filter-chip chip-pb-conf-tag active" data-filter="PULLBACK_CONFIRMED">🔵 PB Conf <span class="count">(0)</span></button>
+    <button type="button" class="filter-chip chip-riding-tag" data-filter="RIDING">⚪ RIDING <span class="count">(44)</span></button>
+    <button type="button" class="filter-chip chip-weak-tag" data-filter="WEAK">🔴 WEAK <span class="count">(18)</span></button>
+    <span class="filter-divider">|</span>
+    <button type="button" class="filter-chip chip-new-tag" data-filter-newonly="1">★ 只看新訊號 <span class="count">(4)</span></button>
+    <span class="filter-count">顯示中 <strong id="filter-visible">0</strong>/<span id="filter-total">0</span></span>
   </div>
 
   <div class="tier-card">
-    <h2>狀態總表 <span class="badge">universe 83</span></h2>
-    <div class="desc">排序:今日新訊號(BREAKOUT_new / PULLBACK_WATCH)優先,其次同狀態內按 RS 由高到低。Ticker 後綴「*」代表上市 &lt; 5 年(以上市以來高點取代真 5y high)。「距 ATH」 hover 顯示真 5 年高點價位。</div>
+    <h2>狀態總表 <span class="badge">universe 72</span></h2>
+    <div class="desc">排序:今日新訊號(BREAKOUT_new / PULLBACK_WATCH)優先,其次同狀態內按 RS 由高到低。Ticker 後綴「*」代表上市 &lt; 5 年(以上市以來高點取代真 5y high)。「距 ATH」 hover 顯示真 5 年高點價位。<br><b>預設只顯示 BREAKOUT / PB Watch / PB Conf</b>(actionable);點上方 chip 切換 RIDING / WEAK / 只看 ★ 新訊號。</div>
     <table>
     <thead>
     <tr>
@@ -189,10 +219,10 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
     </tr>
     </thead>
     <tbody>
-<tr class="state-breakout_new">
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
   <td class="left"><a href="/dd/DD_CRWD_20260418.html">CRWD</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-breakout">🟢 BREAKOUT</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
   <td class="left school-cell">動能突破派</td>
   <td>0.83</td>
   <td>0.60</td>
@@ -205,10 +235,10 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_CRWD_20260418.html">DD</a> · <a href="/dca/DCA_CRWD_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-breakout_new">
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
   <td class="left"><a href="/dd/DD_DDOG_20260516.html">DDOG</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-breakout">🟢 BREAKOUT</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
   <td class="left school-cell">動能突破派</td>
   <td>0.88</td>
   <td>0.62</td>
@@ -221,10 +251,10 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 4 天</span></td>
   <td class="left"><a href="/dd/DD_DDOG_20260516.html">DD</a> · <a href="/dca/DCA_DDOG_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-breakout_new">
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
   <td class="left"><a href="/dd/DD_MRVL_20260418.html">MRVL</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-breakout">🟢 BREAKOUT</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
   <td class="left school-cell">動能突破派</td>
   <td>0.90</td>
   <td>0.70</td>
@@ -237,10 +267,10 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_MRVL_20260418.html">DD</a> · <a href="/dca/DCA_MRVL_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-breakout_new">
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
   <td class="left"><a href="/dd/DD_TXN_20260504.html">TXN</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-breakout">🟢 BREAKOUT</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
   <td class="left school-cell">動能突破派</td>
   <td>0.76</td>
   <td>0.55</td>
@@ -253,42 +283,10 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_TXN_20260504.html">DD</a> · <a href="/dca/DCA_TXN_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-breakout_new">
-  <td class="left"><a href="/dd/DD_STM_20260504.html">STM</a></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-breakout">🟢 BREAKOUT</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
-  <td class="left school-cell">動能突破派</td>
-  <td>0.68</td>
-  <td>0.58</td>
-  <td title="真 5 年高點 = $61.41">-0.3%</td>
-  <td>1</td>
-  <td>+21.3%</td>
-  <td>+39.1%</td>
-  <td>91.4%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 16 天</span></td>
-  <td class="left"><a href="/dd/DD_STM_20260504.html">DD</a> · <a href="/dca/DCA_STM_20260514.html">DCA</a></td>
-</tr>
-<tr class="state-breakout_new">
-  <td class="left"><a href="/dd/DD_HPE_20260518.html">HPE</a></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-breakout">🟢 BREAKOUT</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
-  <td class="left school-cell">動能突破派</td>
-  <td>0.62</td>
-  <td>0.65</td>
-  <td title="真 5 年高點 = $33.10">-1.4%</td>
-  <td>1</td>
-  <td>+15.8%</td>
-  <td>+23.7%</td>
-  <td>89.3%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 2 天</span></td>
-  <td class="left"><a href="/dd/DD_HPE_20260518.html">DD</a> · <a href="/dca/DCA_HPE_20260518.html">DCA</a></td>
-</tr>
-<tr class="state-breakout_new">
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
   <td class="left"><a href="/dd/DD_SIMO_20260427.html">SIMO</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-breakout">🟢 BREAKOUT</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
+  <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
   <td class="left school-cell">動能突破派</td>
   <td>0.70</td>
   <td>0.67</td>
@@ -301,7 +299,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 23 天</span></td>
   <td class="left"><a href="/dd/DD_SIMO_20260427.html">DD</a> · <a href="/dca/DCA_SIMO_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-breakout">
+<tr class="state-breakout" data-state="BREAKOUT" data-is-new="0">
   <td class="left"><a href="/dd/DD_NVDA_20260418.html">NVDA</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-breakout">🟢 BREAKOUT</span></td>
@@ -317,10 +315,10 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_NVDA_20260418.html">DD</a> · <a href="/dca/DCA_NVDA_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-pullback_new">
+<tr class="state-pullback" data-state="PULLBACK_WATCH" data-is-new="0">
   <td class="left"><a href="/dd/DD_HWM_20260418.html">HWM</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
+  <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span></td>
   <td class="left school-cell">回調買入派</td>
   <td>0.90</td>
   <td>0.63</td>
@@ -329,11 +327,11 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td>+4.5%</td>
   <td>+2.5%</td>
   <td>60.7%</td>
-  <td><span class="watch-counting" title="等止跌（3 build 門檻）">1 build / 未破新低</span></td>
+  <td><span class="watch-counting" title="等止跌（3 build 門檻）">2 build / 未破新低</span></td>
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_HWM_20260418.html">DD</a> · <a href="/dca/DCA_HWM_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-pullback">
+<tr class="state-pullback" data-state="PULLBACK_WATCH" data-is-new="0">
   <td class="left"><a href="/dd/DD_JCI_20260518.html">JCI</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span></td>
@@ -345,11 +343,11 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td>-4.6%</td>
   <td>-1.8%</td>
   <td>50.5%</td>
-  <td><span class="watch-ready" title="✓ 可進場考慮">4 build / 未破新低</span></td>
+  <td><span class="watch-ready" title="✓ 可進場考慮">5 build / 未破新低</span></td>
   <td><span class="dd-fresh">DD 2 天</span></td>
   <td class="left"><a href="/dd/DD_JCI_20260518.html">DD</a> · <a href="/dca/DCA_JCI_20260518.html">DCA</a></td>
 </tr>
-<tr class="state-pullback">
+<tr class="state-pullback" data-state="PULLBACK_WATCH" data-is-new="0">
   <td class="left"><a href="/dd/DD_CRS_20260518.html">CRS</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span></td>
@@ -361,14 +359,14 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td>-4.9%</td>
   <td>-1.5%</td>
   <td>48.7%</td>
-  <td><span class="watch-ready" title="✓ 可進場考慮">4 build / 未破新低</span></td>
+  <td><span class="watch-ready" title="✓ 可進場考慮">5 build / 未破新低</span></td>
   <td><span class="dd-fresh">DD 2 天</span></td>
   <td class="left"><a href="/dd/DD_CRS_20260518.html">DD</a> · <a href="/dca/DCA_CRS_20260518.html">DCA</a></td>
 </tr>
-<tr class="state-pullback_new">
+<tr class="state-pullback" data-state="PULLBACK_WATCH" data-is-new="0">
   <td class="left"><a href="/dd/DD_6857T_20260420.html">6857.T</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span> <span class="new-badge" title="今日剛轉入此狀態">★ NEW</span></td>
+  <td><span class="chip chip-pullback-watch">🔷 PULLBACK · WATCH</span></td>
   <td class="left school-cell">回調買入派</td>
   <td>0.92</td>
   <td>0.59</td>
@@ -377,11 +375,11 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td>-12.0%</td>
   <td>+1.4%</td>
   <td>29.9%</td>
-  <td><span class="watch-counting" title="等止跌（3 build 門檻）">2 build / 未破新低</span></td>
+  <td><span class="watch-ready" title="✓ 可進場考慮">3 build / 未破新低</span></td>
   <td><span class="dd-fresh">DD 30 天</span></td>
   <td class="left"><a href="/dd/DD_6857T_20260420.html">DD</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ALAB_20260506.html">ALAB</a></td>
   <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -397,7 +395,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 14 天</span></td>
   <td class="left"><a href="/dd/DD_ALAB_20260506.html">DD</a> · <a href="/dca/DCA_ALAB_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ON_20260505.html">ON</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -413,23 +411,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 15 天</span></td>
   <td class="left"><a href="/dd/DD_ON_20260505.html">DD</a> · <a href="/dca/DCA_ON_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_SEZL_20260520.html">SEZL</a></td>
-  <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.69</td>
-  <td>0.92</td>
-  <td title="真 5 年高點 = $182.16">-41.4%<span class="not-full-5y" title="上市以來高點 — &lt; 5 年歷史">*</span></td>
-  <td>46</td>
-  <td>+35.6%</td>
-  <td>+38.0%</td>
-  <td>90.4%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 0 天</span></td>
-  <td class="left"><a href="/dd/DD_SEZL_20260520.html">DD</a> · <a href="/dca/DCA_SEZL_20260520.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ARM_20260427.html">ARM</a></td>
   <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -445,7 +427,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 23 天</span></td>
   <td class="left"><a href="/dd/DD_ARM_20260427.html">DD</a> · <a href="/dca/DCA_ARM_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_GOOGL_20260504.html">GOOGL</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -461,7 +443,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_GOOGL_20260504.html">DD</a> · <a href="/dca/DCA_GOOGL_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_STX_20260429.html">STX</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -477,7 +459,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 21 天</span></td>
   <td class="left"><a href="/dd/DD_STX_20260429.html">DD</a> · <a href="/dca/DCA_STX_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_QCOM_20260504.html">QCOM</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -493,7 +475,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_QCOM_20260504.html">DD</a> · <a href="/dca/DCA_QCOM_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_NXPI_20260504.html">NXPI</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -509,7 +491,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_NXPI_20260504.html">DD</a> · <a href="/dca/DCA_NXPI_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_WDC_20260518.html">WDC</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -525,7 +507,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 2 天</span></td>
   <td class="left"><a href="/dd/DD_WDC_20260518.html">DD</a> · <a href="/dca/DCA_WDC_20260518.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_BESI_20260420.html">BESI</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -541,7 +523,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 30 天</span></td>
   <td class="left"><a href="/dd/DD_BESI_20260420.html">DD</a> · <a href="/dca/DCA_BESI_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_AMD_20260506.html">AMD</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -557,7 +539,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 14 天</span></td>
   <td class="left"><a href="/dd/DD_AMD_20260506.html">DD</a> · <a href="/dca/DCA_AMD_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_2454_20260504.html">2454.TW</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -573,23 +555,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_2454_20260504.html">DD</a> · <a href="/dca/DCA_2454TW_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_TTMI_20260518.html">TTMI</a></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.69</td>
-  <td>0.65</td>
-  <td title="真 5 年高點 = $167.35">-3.5%</td>
-  <td>1</td>
-  <td>+8.3%</td>
-  <td>+29.8%</td>
-  <td>81.6%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 2 天</span></td>
-  <td class="left"><a href="/dd/DD_TTMI_20260518.html">DD</a> · <a href="/dca/DCA_TTMI_20260518.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_3661TW_20260514.html">3661.TW</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -605,7 +571,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 6 天</span></td>
   <td class="left"><a href="/dd/DD_3661TW_20260514.html">DD</a> · <a href="/dca/DCA_3661TW_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_COHR_20260418.html">COHR</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -621,7 +587,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_COHR_20260418.html">DD</a> · <a href="/dca/DCA_COHR_20260513.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_FIX_20260516.html">FIX</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -637,7 +603,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 4 天</span></td>
   <td class="left"><a href="/dd/DD_FIX_20260516.html">DD</a> · <a href="/dca/DCA_FIX_20260516.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_VRT_20260425.html">VRT</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -653,7 +619,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 25 天</span></td>
   <td class="left"><a href="/dd/DD_VRT_20260425.html">DD</a> · <a href="/dca/DCA_VRT_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_CIEN_20260427.html">CIEN</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -669,7 +635,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 23 天</span></td>
   <td class="left"><a href="/dd/DD_CIEN_20260427.html">DD</a> · <a href="/dca/DCA_CIEN_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ADI_20260427.html">ADI</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -685,7 +651,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 23 天</span></td>
   <td class="left"><a href="/dd/DD_ADI_20260427.html">DD</a> · <a href="/dca/DCA_ADI_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_GLW_20260429.html">GLW</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -701,7 +667,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 21 天</span></td>
   <td class="left"><a href="/dd/DD_GLW_20260429.html">DD</a> · <a href="/dca/DCA_GLW_20260513.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_STRL_20260505.html">STRL</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -717,23 +683,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 15 天</span></td>
   <td class="left"><a href="/dd/DD_STRL_20260505.html">DD</a> · <a href="/dca/DCA_STRL_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_CAT_20260504.html">CAT</a></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.65</td>
-  <td>0.57</td>
-  <td title="真 5 年高點 = $897.45">-4.2%</td>
-  <td>2</td>
-  <td>+3.7%</td>
-  <td>+9.1%</td>
-  <td>77.1%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 16 天</span></td>
-  <td class="left"><a href="/dd/DD_CAT_20260504.html">DD</a> · <a href="/dca/DCA_CAT_20260513.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_CDNS_20260504.html">CDNS</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -749,7 +699,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_CDNS_20260504.html">DD</a> · <a href="/dca/DCA_CDNS_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_NET_20260515.html">NET</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -765,39 +715,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 5 天</span></td>
   <td class="left"><a href="/dd/DD_NET_20260515.html">DD</a> · <a href="/dca/DCA_NET_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_FLEX_20260518.html">FLEX</a><div class="sub">Electronic Components (EMS)</div></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.65</td>
-  <td>0.74</td>
-  <td title="真 5 年高點 = $142.17">-11.2%</td>
-  <td>2</td>
-  <td>+38.2%</td>
-  <td>+44.3%</td>
-  <td>75.0%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 2 天</span></td>
-  <td class="left"><a href="/dd/DD_FLEX_20260518.html">DD</a> · <a href="/dca/DCA_FLEX_20260518.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_LITE_20260506.html">LITE</a></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.68</td>
-  <td>0.66</td>
-  <td title="真 5 年高點 = $970.70">-8.3%</td>
-  <td>1</td>
-  <td>+1.0%</td>
-  <td>+7.2%</td>
-  <td>74.8%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 14 天</span></td>
-  <td class="left"><a href="/dd/DD_LITE_20260506.html">DD</a> · <a href="/dca/DCA_LITE_20260512.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_AVGO_20260418.html">AVGO</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -813,7 +731,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_AVGO_20260418.html">DD</a> · <a href="/dca/DCA_AVGO_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_KEYS_20260418.html">KEYS</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -829,7 +747,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_KEYS_20260418.html">DD</a> · <a href="/dca/DCA_KEYS_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_2330TW_20260514.html">2330.TW</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -845,7 +763,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 6 天</span></td>
   <td class="left"><a href="/dd/DD_2330TW_20260514.html">DD</a> · <a href="/dca/DCA_2330TW_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_AMAT_20260515.html">AMAT</a><div class="sub">Semiconductor Capital Equipment (WFE)</div></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -861,39 +779,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 5 天</span></td>
   <td class="left"><a href="/dd/DD_AMAT_20260515.html">DD</a> · <a href="/dca/DCA_AMAT_20260515.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_JBL_20260418.html">JBL</a></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.69</td>
-  <td>0.57</td>
-  <td title="真 5 年高點 = $355.07">-6.2%</td>
-  <td>2</td>
-  <td>-2.5%</td>
-  <td>+9.2%</td>
-  <td>73.4%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 32 天</span></td>
-  <td class="left"><a href="/dd/DD_JBL_20260418.html">DD</a> · <a href="/dca/DCA_JBL_20260512.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_BE_20260429.html">BE</a></td>
-  <td><span class="ma-chip ma-green">🟢 healthy</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.66</td>
-  <td>0.58</td>
-  <td title="真 5 年高點 = $290.52">-10.0%</td>
-  <td>3</td>
-  <td>+13.1%</td>
-  <td>+27.9%</td>
-  <td>73.3%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 21 天</span></td>
-  <td class="left"><a href="/dd/DD_BE_20260429.html">DD</a> · <a href="/dca/DCA_BE_20260514.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_2383TW_20260418.html">2383.TW</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -909,7 +795,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_2383TW_20260418.html">DD</a> · <a href="/dca/DCA_2383TW_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ROK_20260418.html">ROK</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -925,7 +811,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_ROK_20260418.html">DD</a> · <a href="/dca/DCA_ROK_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_MPWR_20260418.html">MPWR</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -941,7 +827,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_MPWR_20260418.html">DD</a> · <a href="/dca/DCA_MPWR_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_LRCX_20260425.html">LRCX</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -957,7 +843,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 25 天</span></td>
   <td class="left"><a href="/dd/DD_LRCX_20260425.html">DD</a> · <a href="/dca/DCA_LRCX_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_TSM_20260518.html">TSM</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -973,7 +859,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 2 天</span></td>
   <td class="left"><a href="/dd/DD_TSM_20260518.html">DD</a> · <a href="/dca/DCA_TSM_20260518.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_KLAC_20260516.html">KLAC</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -989,7 +875,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 4 天</span></td>
   <td class="left"><a href="/dd/DD_KLAC_20260516.html">DD</a> · <a href="/dca/DCA_KLAC_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_2308TW_20260514.html">2308.TW</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1005,7 +891,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 6 天</span></td>
   <td class="left"><a href="/dd/DD_2308TW_20260514.html">DD</a> · <a href="/dca/DCA_2308TW_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_LLY_20260504.html">LLY</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1021,7 +907,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_LLY_20260504.html">DD</a> · <a href="/dca/DCA_LLY_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_VIK_20260515.html">VIK</a></td>
   <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1037,7 +923,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 5 天</span></td>
   <td class="left"><a href="/dd/DD_VIK_20260515.html">DD</a> · <a href="/dca/DCA_VIK_20260515.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_3017_20260504.html">3017.TW</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1053,23 +939,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_3017_20260504.html">DD</a> · <a href="/dca/DCA_3017TW_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
-  <td class="left"><a href="/dd/DD_CRDO_20260418.html">CRDO</a></td>
-  <td><span class="ma-chip ma-green">🟢 W250 N/A</span></td>
-  <td><span class="chip chip-riding">⚪ RIDING</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.58</td>
-  <td>0.60</td>
-  <td title="真 5 年高點 = $195.04">-13.4%<span class="not-full-5y" title="上市以來高點 — &lt; 5 年歷史">*</span></td>
-  <td>4</td>
-  <td>-13.4%</td>
-  <td>+16.8%</td>
-  <td>54.8%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 32 天</span></td>
-  <td class="left"><a href="/dd/DD_CRDO_20260418.html">DD</a> · <a href="/dca/DCA_CRDO_20260511.html">DCA</a></td>
-</tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_TER_20260504.html">TER</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1085,7 +955,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_TER_20260504.html">DD</a> · <a href="/dca/DCA_TER_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_MOD_20260427.html">MOD</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1101,7 +971,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 23 天</span></td>
   <td class="left"><a href="/dd/DD_MOD_20260427.html">DD</a> · <a href="/dca/DCA_MOD_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ASML_20260515.html">ASML</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1117,7 +987,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 5 天</span></td>
   <td class="left"><a href="/dd/DD_ASML_20260515.html">DD</a> · <a href="/dca/DCA_ASML_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ANET_20260506.html">ANET</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1133,7 +1003,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 14 天</span></td>
   <td class="left"><a href="/dd/DD_ANET_20260506.html">DD</a> · <a href="/dca/DCA_ANET_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_H_20260520.html">H</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1149,7 +1019,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 0 天</span></td>
   <td class="left"><a href="/dd/DD_H_20260520.html">DD</a> · <a href="/dca/DCA_H_20260520.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_FORM_20260427.html">FORM</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1165,7 +1035,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 23 天</span></td>
   <td class="left"><a href="/dd/DD_FORM_20260427.html">DD</a> · <a href="/dca/DCA_FORM_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_CLS_20260428.html">CLS</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1181,7 +1051,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 22 天</span></td>
   <td class="left"><a href="/dd/DD_CLS_20260428.html">DD</a> · <a href="/dca/DCA_CLS_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_ONTO_20260506.html">ONTO</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1197,7 +1067,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 14 天</span></td>
   <td class="left"><a href="/dd/DD_ONTO_20260506.html">DD</a> · <a href="/dca/DCA_ONTO_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-riding">
+<tr class="state-riding" data-state="RIDING" data-is-new="0">
   <td class="left"><a href="/dd/DD_6146T_20260420.html">6146.T</a></td>
   <td><span class="ma-chip ma-green">🟢 healthy</span></td>
   <td><span class="chip chip-riding">⚪ RIDING</span></td>
@@ -1213,7 +1083,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 30 天</span></td>
   <td class="left"><a href="/dd/DD_6146T_20260420.html">DD</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_APP_20260418.html">APP</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1229,7 +1099,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_APP_20260418.html">DD</a> · <a href="/dca/DCA_APP_20260513.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_MSFT_20260515.html">MSFT</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1245,7 +1115,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 5 天</span></td>
   <td class="left"><a href="/dd/DD_MSFT_20260515.html">DD</a> · <a href="/dca/DCA_MSFT_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_V_20260516.html">V</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1261,7 +1131,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 4 天</span></td>
   <td class="left"><a href="/dd/DD_V_20260516.html">DD</a> · <a href="/dca/DCA_V_20260516.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_NFLX_20260516.html">NFLX</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1277,7 +1147,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 4 天</span></td>
   <td class="left"><a href="/dd/DD_NFLX_20260516.html">DD</a> · <a href="/dca/DCA_NFLX_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_NOW_20260427.html">NOW</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1293,7 +1163,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 23 天</span></td>
   <td class="left"><a href="/dd/DD_NOW_20260427.html">DD</a> · <a href="/dca/DCA_NOW_20260513.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_MA_20260516.html">MA</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1309,7 +1179,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 4 天</span></td>
   <td class="left"><a href="/dd/DD_MA_20260516.html">DD</a> · <a href="/dca/DCA_MA_20260516.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_ONON_20260520.html">ONON</a></td>
   <td><span class="ma-chip ma-red">🔴 W250 N/A</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1325,7 +1195,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 0 天</span></td>
   <td class="left"><a href="/dd/DD_ONON_20260520.html">DD</a> · <a href="/dca/DCA_ONON_20260520.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_PLTR_20260505.html">PLTR</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1341,7 +1211,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 15 天</span></td>
   <td class="left"><a href="/dd/DD_PLTR_20260505.html">DD</a> · <a href="/dca/DCA_PLTR_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_FICO_20260418.html">FICO</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1357,7 +1227,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_FICO_20260418.html">DD</a> · <a href="/dca/DCA_FICO_20260512.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_META_20260418.html">META</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1373,7 +1243,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 32 天</span></td>
   <td class="left"><a href="/dd/DD_META_20260418.html">DD</a> · <a href="/dca/DCA_META_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_SPOT_20260429.html">SPOT</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1389,7 +1259,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 21 天</span></td>
   <td class="left"><a href="/dd/DD_SPOT_20260429.html">DD</a> · <a href="/dca/DCA_SPOT_20260514.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_DASH_20260518.html">DASH</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1405,7 +1275,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 2 天</span></td>
   <td class="left"><a href="/dd/DD_DASH_20260518.html">DD</a> · <a href="/dca/DCA_DASH_20260518.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_BKNG_20260518.html">BKNG</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1421,7 +1291,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 2 天</span></td>
   <td class="left"><a href="/dd/DD_BKNG_20260518.html">DD</a> · <a href="/dca/DCA_BKNG_20260518.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_MELI_20260513.html">MELI</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1437,7 +1307,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 7 天</span></td>
   <td class="left"><a href="/dd/DD_MELI_20260513.html">DD</a> · <a href="/dca/DCA_MELI_20260513.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_SE_20260513.html">SE</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1453,23 +1323,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 7 天</span></td>
   <td class="left"><a href="/dd/DD_SE_20260513.html">DD</a> · <a href="/dca/DCA_SE_20260513.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
-  <td class="left"><a href="/dd/DD_CELH_20260518.html">CELH</a></td>
-  <td><span class="ma-chip ma-red">🔴 weak</span></td>
-  <td><span class="chip chip-weak">🔴 WEAK</span></td>
-  <td class="left school-cell">—</td>
-  <td>0.69</td>
-  <td>0.68</td>
-  <td title="真 5 年高點 = $95.15">-69.4%</td>
-  <td>104</td>
-  <td>-15.8%</td>
-  <td>-17.7%</td>
-  <td>19.4%</td>
-  <td>—</td>
-  <td><span class="dd-fresh">DD 2 天</span></td>
-  <td class="left"><a href="/dd/DD_CELH_20260518.html">DD</a> · <a href="/dca/DCA_CELH_20260518.html">DCA</a></td>
-</tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_APH_20260504.html">APH</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1485,7 +1339,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 16 天</span></td>
   <td class="left"><a href="/dd/DD_APH_20260504.html">DD</a> · <a href="/dca/DCA_APH_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_GRAB_20260505.html">GRAB</a></td>
   <td><span class="ma-chip ma-red">🔴 weak</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1501,7 +1355,7 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <td><span class="dd-fresh">DD 15 天</span></td>
   <td class="left"><a href="/dd/DD_GRAB_20260505.html">DD</a> · <a href="/dca/DCA_GRAB_20260511.html">DCA</a></td>
 </tr>
-<tr class="state-weak">
+<tr class="state-weak" data-state="WEAK" data-is-new="0">
   <td class="left"><a href="/dd/DD_NU_20260515.html">NU</a></td>
   <td><span class="ma-chip ma-red">🔴 W250 N/A</span></td>
   <td><span class="chip chip-weak">🔴 WEAK</span></td>
@@ -1534,5 +1388,59 @@ tr.state-pullback_new{background:linear-gradient(90deg,#dbeafe 0%,transparent 60
   <p>JSON sidecar: <a href="/dd-screener/entry-state.json"><code>/dd-screener/entry-state.json</code></a> · 每日快照: <code>/dd-screener/entry-state-snapshots/YYYY-MM-DD.json</code> · 計數狀態: <code>/dd-screener/entry-state-state/watch_counters.json</code></p>
   <p style="margin-top:16px;color:#94a3b8">Generated by <code>scripts/build_entry_state.py</code> · schema v1.0</p>
 </div>
+<script>
+(function(){
+  // v1.2 filter chips — client-side row visibility toggle.
+  // State (predefined defaults, no localStorage — reload resets).
+  var filters = {
+    BREAKOUT: true, PULLBACK_WATCH: true, PULLBACK_CONFIRMED: true,
+    RIDING: false, WEAK: false, newOnly: false,
+  };
+  var rows = document.querySelectorAll('tbody tr[data-state]');
+  var totalEl = document.getElementById('filter-total');
+  var visEl = document.getElementById('filter-visible');
+  totalEl.textContent = rows.length;
+
+  function applyFilters(){
+    var visible = 0;
+    rows.forEach(function(tr){
+      var stateOk = filters[tr.dataset.state] === true;
+      var newOk = !filters.newOnly || tr.dataset.isNew === '1';
+      var show = stateOk && newOk;
+      tr.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    visEl.textContent = visible;
+  }
+
+  function updateChipDisabledState(){
+    document.querySelectorAll('.filter-chip[data-filter]').forEach(function(btn){
+      var key = btn.dataset.filter;
+      var n = 0;
+      rows.forEach(function(tr){ if (tr.dataset.state === key) n++; });
+      if (n === 0) btn.classList.add('disabled');
+    });
+  }
+
+  document.querySelectorAll('.filter-chip[data-filter]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if (btn.classList.contains('disabled')) return;
+      var key = btn.dataset.filter;
+      filters[key] = !filters[key];
+      btn.classList.toggle('active', filters[key]);
+      applyFilters();
+    });
+  });
+  var newBtn = document.querySelector('.filter-chip[data-filter-newonly]');
+  if (newBtn) newBtn.addEventListener('click', function(){
+    filters.newOnly = !filters.newOnly;
+    newBtn.classList.toggle('active', filters.newOnly);
+    applyFilters();
+  });
+
+  updateChipDisabledState();
+  applyFilters();
+})();
+</script>
 </body>
 </html>

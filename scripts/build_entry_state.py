@@ -56,10 +56,13 @@ TAIPEI_TZ = timezone(timedelta(hours=8))
 SCHEMA_VERSION = "1.0"
 
 # ── universe filter (hysteresis) ──────────────────────────────────────────────
-QUALITY_ENTER = 0.55
-QUALITY_EXIT = 0.50
-GROWTH_ENTER = 0.50
-GROWTH_EXIT = 0.45
+# v1.2 retune (2026-05-20): Q≥0.55/G≥0.50 produced 83-ticker universe (too
+# many). Q distribution starts at min=0.58 → Q≥0.55 had no filtering effect;
+# raised Q to 0.75 + tightened G to 0.60 → ~49 ticker universe.
+QUALITY_ENTER = 0.75
+QUALITY_EXIT = 0.70
+GROWTH_ENTER = 0.60
+GROWTH_EXIT = 0.55
 UNIVERSE_MIN_WARN = 10   # banner warning if universe drops below
 
 # ── second-layer state thresholds (圓整、寬鬆,backtest-validated) ───────────
@@ -775,6 +778,20 @@ def _links_html(row: dict) -> str:
     return " · ".join(parts) if parts else "—"
 
 
+def _filter_state_key(row: dict) -> str:
+    """Composite filter key matching the chip toggles (v1.2 filter chips).
+
+    Returns one of: BREAKOUT, PULLBACK_WATCH, PULLBACK_CONFIRMED, RIDING, WEAK.
+    """
+    state = row["state"]
+    sub = row.get("sub_state")
+    if state == STATE_PULLBACK and sub == SUB_CONFIRMED:
+        return "PULLBACK_CONFIRMED"
+    if state == STATE_PULLBACK:
+        return "PULLBACK_WATCH"
+    return state  # BREAKOUT / RIDING / WEAK
+
+
 def _row_html(row: dict) -> str:
     ticker_cell = _ticker_link(row)
     sector = row.get("sector") or ""
@@ -786,7 +803,13 @@ def _row_html(row: dict) -> str:
     else:
         high_tip = "5y high N/A"
 
-    return f"""<tr class="state-{row['state'].lower()}{'_new' if row.get('is_new') and row['state'] in (STATE_BREAKOUT, STATE_PULLBACK) else ''}">
+    is_new_actionable = bool(
+        row.get("is_new") and row["state"] in (STATE_BREAKOUT, STATE_PULLBACK)
+    )
+    state_class = f"state-{row['state'].lower()}{'_new' if is_new_actionable else ''}"
+    filter_key = _filter_state_key(row)
+
+    return f"""<tr class="{state_class}" data-state="{filter_key}" data-is-new="{'1' if is_new_actionable else '0'}">
   <td class="left">{ticker_cell}{sector_sub}</td>
   <td>{_ma_chip_html(row['ma_label'])}</td>
   <td>{_state_chip_html(row)}</td>
@@ -909,6 +932,23 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
 .methodology h3{{font-size:13px;font-weight:700;color:#0f2a45;margin-bottom:8px}}
 .methodology code{{background:#f0f5fb;padding:1px 6px;border-radius:3px;font-size:11px;color:#1e3a5f}}
 .methodology .row{{font-size:12px;color:#334e68;line-height:1.9;margin-bottom:4px}}
+/* v1.2 filter chips */
+.filter-bar{{background:#fff;border:1px solid #dce8f5;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px}}
+.filter-label{{color:#5a7a9a;font-weight:600;margin-right:4px}}
+.filter-divider{{color:#cbd5e1;margin:0 4px}}
+.filter-count{{color:#475569;font-weight:600;margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}}
+.filter-count strong{{color:#0f2a45}}
+.filter-chip{{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border:1px solid #dce8f5;border-radius:999px;background:#fff;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;user-select:none;transition:all .12s;font-family:inherit;line-height:1.4;letter-spacing:.01em}}
+.filter-chip:hover:not(.disabled){{border-color:#94a3b8;color:#475569}}
+.filter-chip.active{{background:#0f172a;color:#fff;border-color:#0f172a}}
+.filter-chip.active.chip-breakout-tag{{background:#16a34a;border-color:#16a34a}}
+.filter-chip.active.chip-pb-watch-tag{{background:#0c4a6e;border-color:#0c4a6e}}
+.filter-chip.active.chip-pb-conf-tag{{background:#1e40af;border-color:#1e40af}}
+.filter-chip.active.chip-riding-tag{{background:#64748b;border-color:#64748b}}
+.filter-chip.active.chip-weak-tag{{background:#dc2626;border-color:#dc2626}}
+.filter-chip.active.chip-new-tag{{background:#92400e;border-color:#92400e}}
+.filter-chip.disabled{{opacity:.4;cursor:not-allowed}}
+.filter-chip .count{{opacity:.7;font-weight:500;margin-left:1px}}
 </style>
 </head>
 <body>
@@ -973,15 +1013,16 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
   {warning_banner}
 
   <div class="caveat-panel">
-    <strong>讀法 7 點(動手前必讀)</strong>
+    <strong>讀法 8 點(動手前必讀)</strong>
     <ol>
       <li><b>與 Quality-Entry 的定位區別</b>:Quality-Entry 是「單一逢回邏輯」的複合評分;本頁是「突破派抓第一棒、回調派抓後續棒」的雙邏輯接力。兩者並存,服務不同進場哲學。</li>
-      <li><b>Universe 來源</b>:Quality-Entry 的品質中間層 ∩ 成長型(Quality ≥ {QUALITY_ENTER} ∩ Growth ≥ {GROWTH_ENTER},僅排除成熟型);加 hysteresis(出門檻 ≤ {QUALITY_EXIT} / {GROWTH_EXIT})防邊界 ticker 進出抖動。</li>
+      <li><b>Universe 來源(v1.2 retune)</b>:`build_quality_entry.py` 全量 scored(post-veto)中 Quality ≥ <code>{QUALITY_ENTER}</code> ∩ Growth ≥ <code>{GROWTH_ENTER}</code> ∩ archetype=成長型;加 hysteresis(出門檻 Q≤<code>{QUALITY_EXIT}</code> / G≤<code>{GROWTH_EXIT}</code>)防邊界 ticker 進出抖動。<b>v1.2 變更</b>:原 Q≥0.55 / G≥0.50 → 83 太多;Q 實測 min=0.58 → Q≥0.55 無實效;只 G 才是 dial。新閾值 ~49 universe。</li>
       <li><b>兩層結構</b>:第一層 W52/W250 週線 MA 閘(🟢/🟡/🔴/⚪)決定能否進入第二層;第二層才判 BREAKOUT/PULLBACK/RIDING 三狀態。</li>
       <li><b>WEAK ≠ 第二層狀態</b>:WEAK 是第一層否決的標籤(跌破 W52 或 W250),不是第二層的進場狀態。它與三個進場狀態並列顯示是為了完整性。</li>
       <li><b>突破派抓第一棒、回調派抓後續棒;<code>★ NEW</code> 才是新訊號</b>:`is_new=true` 表示今天剛從別狀態轉入此狀態。BREAKOUT 持續中(`is_new=false`)實質接近 RIDING,不是新訊號。</li>
       <li><b>狀態判定用 5 年週線 cycle context + 4 週方向過濾</b>:不是單日 snapshot — `dist_250w_high_pct`(真 ATH 距離)+ `weeks_since_250w_high`(ATH 週齡 0-26 才算近期)+ `drift_4w_min_in_8w`(過去 8 週曾真跌過)是 backtest 證實的設計。</li>
       <li><b>止跌確認需人工;DD 新鮮度紅標 ≠ 閘</b>:PULLBACK_WATCH 升級 PULLBACK_CONFIRMED 由人工看圖判讀(本頁 v1.0 不自動升級,只顯示 WATCH 計數)。DD &gt; {DD_STALE_DAYS} 天紅標代表 quality 判定可能過期 — Ivan 自行決定是否重跑 DD,本頁不擋訊號。</li>
+      <li><b>【v1.2 新】Filter chips 預設只顯示 BREAKOUT / PULLBACK_WATCH / PULLBACK_CONFIRMED</b>(actionable 訊號)。點 ⚪ RIDING / 🔴 WEAK chip 可展開所有 universe;點「★ 只看新訊號」會再窄到只剩 `is_new=true` 列(BREAKOUT/PULLBACK 才會有 ★)。所有 filter 純 client-side,reload 重置。</li>
     </ol>
   </div>
 
@@ -991,12 +1032,24 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
     <div class="row"><b>BREAKOUT</b>(僅 🟢 healthy):<code>dist_250w_high_pct ∈ [-3%, 0%]</code> ∩ <code>weeks_since_250w_high ≤ {BREAKOUT_WSH_MAX}</code> ∩ <code>drift_4w_pct &gt; +{BREAKOUT_DRIFT_MIN:.0f}%</code> ∩ <code>ma50_pct ≥ {BREAKOUT_MA50:.0f}</code> ∩ <code>rs_score ≥ {BREAKOUT_RS:.0f}</code></div>
     <div class="row"><b>PULLBACK_WATCH</b>(🟢/🟡):<code>dist_250w_high_pct ∈ [-15%, -5%]</code> ∩ <code>weeks_since_250w_high ∈ [2, 26]</code> ∩ <code>drift_4w_min_in_8w &lt; {PULLBACK_DRIFT_HIST_MAX:.0f}%</code>(過去 8w 曾真跌過)∩ <code>ma50_pct ∈ [-3%, +3%]</code></div>
     <div class="row"><b>WATCH → CONFIRMED 升級</b>:WATCH 中累積 <code>builds_no_new_low ≥ {WATCH_N_DAYS_THRESHOLD}</code> 顯示「✓ 可進場考慮」hint,但本頁 v1.0 <b>不自動升級</b>;由 Ivan 看圖判讀後手動進場。容忍式計數:離開 WATCH 區後 ≤ {GRACE_BUILDS} build 內回來 → 計數延續;超過 → 視為這一波結束、清除狀態。</div>
-    <div class="row" style="color:#5a7a9a;margin-top:6px"><b>已知設計邊界</b>:MA 燈號只看 W250 斜率,不看 W52 斜率(避免 W52 抖動干擾大方向閘)— 趨勢早期警示由 🔴(跌破 W52)觸發。Backtest 結果(5y × 23 ticker):PULLBACK 命中率 6.0%(每檔 ~17 週)/ BREAKOUT 18.4%(每檔 ~5 週,production 加 RS gate 後降)。</div>
+    <div class="row" style="color:#5a7a9a;margin-top:6px"><b>已知設計邊界</b>:MA 燈號只看 W250 斜率,不看 W52 斜率(避免 W52 抖動干擾大方向閘)— 趨勢早期警示由 🔴(跌破 W52)觸發。Backtest 結果(原 v1.1 5y × 23 ticker sample,Q≥0.55):PULLBACK 命中 ~6%(每檔每 ~17 週,合 ~3 次/年)/ BREAKOUT ~18%(production 加 RS≥80 gate 後實際降至 ~10%)。<b>v1.2 retune 後 universe 擴至 ~49 但同屬高品質區段,命中率應接近</b>;未在新 universe 上重 backtest,訊號量明顯異常時可再調 Q/G 門檻。</div>
+  </div>
+
+  <div class="filter-bar" id="entry-state-filters">
+    <span class="filter-label">顯示</span>
+    <button type="button" class="filter-chip chip-breakout-tag active" data-filter="BREAKOUT">🟢 BREAKOUT <span class="count">({summary['BREAKOUT_new'] + summary['BREAKOUT_continuing']})</span></button>
+    <button type="button" class="filter-chip chip-pb-watch-tag active" data-filter="PULLBACK_WATCH">🔷 PB Watch <span class="count">({summary['PULLBACK_WATCH']})</span></button>
+    <button type="button" class="filter-chip chip-pb-conf-tag active" data-filter="PULLBACK_CONFIRMED">🔵 PB Conf <span class="count">({summary['PULLBACK_CONFIRMED']})</span></button>
+    <button type="button" class="filter-chip chip-riding-tag" data-filter="RIDING">⚪ RIDING <span class="count">({summary['RIDING']})</span></button>
+    <button type="button" class="filter-chip chip-weak-tag" data-filter="WEAK">🔴 WEAK <span class="count">({summary['WEAK']})</span></button>
+    <span class="filter-divider">|</span>
+    <button type="button" class="filter-chip chip-new-tag" data-filter-newonly="1">★ 只看新訊號 <span class="count">({new_signals})</span></button>
+    <span class="filter-count">顯示中 <strong id="filter-visible">0</strong>/<span id="filter-total">0</span></span>
   </div>
 
   <div class="tier-card">
     <h2>狀態總表 <span class="badge">universe {universe_size}</span></h2>
-    <div class="desc">排序:今日新訊號(BREAKOUT_new / PULLBACK_WATCH)優先,其次同狀態內按 RS 由高到低。Ticker 後綴「*」代表上市 &lt; 5 年(以上市以來高點取代真 5y high)。「距 ATH」 hover 顯示真 5 年高點價位。</div>
+    <div class="desc">排序:今日新訊號(BREAKOUT_new / PULLBACK_WATCH)優先,其次同狀態內按 RS 由高到低。Ticker 後綴「*」代表上市 &lt; 5 年(以上市以來高點取代真 5y high)。「距 ATH」 hover 顯示真 5 年高點價位。<br><b>預設只顯示 BREAKOUT / PB Watch / PB Conf</b>(actionable);點上方 chip 切換 RIDING / WEAK / 只看 ★ 新訊號。</div>
     <table>
     <thead>
     <tr>
@@ -1035,6 +1088,60 @@ tr.state-pullback_new{{background:linear-gradient(90deg,#dbeafe 0%,transparent 6
   <p>JSON sidecar: <a href="/dd-screener/entry-state.json"><code>/dd-screener/entry-state.json</code></a> · 每日快照: <code>/dd-screener/entry-state-snapshots/YYYY-MM-DD.json</code> · 計數狀態: <code>/dd-screener/entry-state-state/watch_counters.json</code></p>
   <p style="margin-top:16px;color:#94a3b8">Generated by <code>scripts/build_entry_state.py</code> · schema v{SCHEMA_VERSION}</p>
 </div>
+<script>
+(function(){{
+  // v1.2 filter chips — client-side row visibility toggle.
+  // State (predefined defaults, no localStorage — reload resets).
+  var filters = {{
+    BREAKOUT: true, PULLBACK_WATCH: true, PULLBACK_CONFIRMED: true,
+    RIDING: false, WEAK: false, newOnly: false,
+  }};
+  var rows = document.querySelectorAll('tbody tr[data-state]');
+  var totalEl = document.getElementById('filter-total');
+  var visEl = document.getElementById('filter-visible');
+  totalEl.textContent = rows.length;
+
+  function applyFilters(){{
+    var visible = 0;
+    rows.forEach(function(tr){{
+      var stateOk = filters[tr.dataset.state] === true;
+      var newOk = !filters.newOnly || tr.dataset.isNew === '1';
+      var show = stateOk && newOk;
+      tr.style.display = show ? '' : 'none';
+      if (show) visible++;
+    }});
+    visEl.textContent = visible;
+  }}
+
+  function updateChipDisabledState(){{
+    document.querySelectorAll('.filter-chip[data-filter]').forEach(function(btn){{
+      var key = btn.dataset.filter;
+      var n = 0;
+      rows.forEach(function(tr){{ if (tr.dataset.state === key) n++; }});
+      if (n === 0) btn.classList.add('disabled');
+    }});
+  }}
+
+  document.querySelectorAll('.filter-chip[data-filter]').forEach(function(btn){{
+    btn.addEventListener('click', function(){{
+      if (btn.classList.contains('disabled')) return;
+      var key = btn.dataset.filter;
+      filters[key] = !filters[key];
+      btn.classList.toggle('active', filters[key]);
+      applyFilters();
+    }});
+  }});
+  var newBtn = document.querySelector('.filter-chip[data-filter-newonly]');
+  if (newBtn) newBtn.addEventListener('click', function(){{
+    filters.newOnly = !filters.newOnly;
+    newBtn.classList.toggle('active', filters.newOnly);
+    applyFilters();
+  }});
+
+  updateChipDisabledState();
+  applyFilters();
+}})();
+</script>
 </body>
 </html>
 """
