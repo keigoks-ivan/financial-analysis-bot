@@ -801,6 +801,7 @@ def render_html(doc: dict, out_path: Path) -> None:
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+<meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Earnings Acceleration — EPS 加速 | InvestMQuest</title>

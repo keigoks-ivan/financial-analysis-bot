@@ -431,7 +431,8 @@ def generate_cat_page(
 
     page = f"""<!DOCTYPE html>
 <html lang="zh-Hant">
-<head>{adapted_head}
+<head>
+<meta name="robots" content="noindex,nofollow">{adapted_head}
 </head>
 <body>
 

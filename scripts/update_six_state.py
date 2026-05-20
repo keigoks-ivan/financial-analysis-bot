@@ -313,6 +313,7 @@ def generate_html(d):
     html = f"""<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
+  <meta name="robots" content="noindex,nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>六狀態機即時狀態 | InvestMQuest Research</title>

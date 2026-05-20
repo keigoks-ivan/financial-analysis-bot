@@ -109,7 +109,7 @@ def render_html(d):
         overrides_html = f'<h2>§5 Override 清單</h2><ul>{"".join(items)}</ul>'
 
     return f"""<!DOCTYPE html>
-<html lang="zh-Hant"><head><meta charset="UTF-8"><title>PM 儀表 {date}</title>
+<html lang="zh-Hant"><head><meta name="robots" content="noindex,nofollow"><meta charset="UTF-8"><title>PM 儀表 {date}</title>
 <style>
 body{{font-family:-apple-system,BlinkMacSystemFont,'Noto Sans TC',sans-serif;background:#F8FAFC;padding:20px;max-width:900px;margin:0 auto;color:#0F172A;font-size:14px;line-height:1.5}}
 h1{{color:#1E3A5F;border-bottom:3px solid #3B82F6;padding-bottom:8px;font-size:22px;margin:0 0 8px}}

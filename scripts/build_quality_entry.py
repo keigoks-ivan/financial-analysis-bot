@@ -609,6 +609,7 @@ def render_html(doc: dict, out_path: Path) -> None:
     html = f"""<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+<meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quality-Entry — 品質複利者 + 勝率切入點 | InvestMQuest</title>

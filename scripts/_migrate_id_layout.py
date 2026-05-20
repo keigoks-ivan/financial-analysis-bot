@@ -466,6 +466,7 @@ def build_full_html(*, stats, tier_alert_html, fl_ai_title, fl_sw_title, fl_ai_p
     return f"""<!DOCTYPE html>
 <html lang=\"zh-Hant\">
 <head>
+<meta name=\"robots\" content=\"noindex,nofollow\">
 <meta charset=\"UTF-8\">
 <meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">
 <title>產業深度報告 — InvestMQuest Research</title>
