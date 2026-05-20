@@ -290,6 +290,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     🎯 <b>起漲點 模式</b>：距ATH ∈ [-7%, 0%] ∩ 距50DMA ∈ [0%, +5%] ∩ RS ≥ 80。資料源 <code>/screener/latest.json</code>（每日 06:00 TPE 更新，與 Flow ATH Hunter 同源）。非美股（TW/JP/EU）無 timing 資料自動排除。
   </div>
 
+  <!-- v1.8: EPS 估算 source banner — populated by JS from eps_estimates_source -->
+  <div id="eps-source-banner" style="display:none;margin:0 0 12px 0;padding:10px 14px;border-radius:8px;font-size:11.5px;line-height:1.6"></div>
+
   <div class="tab-bar-wrap">
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="tab-5">完全符合 (<span id="cnt-5">—</span>)</button>
@@ -776,23 +779,72 @@ function _renderLiveEPSCell(s, flag) {
 }
 
 function _renderRawEpsCell(s, field) {
-  // v1.7.2: raw yfinance EPS estimate（純資訊欄，無 pass/fail color）
-  //   eps_fy_curr  — yfinance 0y (current FY consensus avg, ~下一個 reporting year)
-  //   eps_fy_next  — yfinance +1y (next FY consensus avg, ~後年)
-  //   eps_trailing — info.trailingEps (TTM 實際 EPS, 跨 4 季加總)
-  // 多數 US Dec-FY 公司：0y ≈ 本曆年、+1y ≈ 下個曆年。
-  // 非 Dec-FY (NVDA Jan / JP Mar / etc.) 會差 1 年；以個股 FY 為準。
+  // v1.7.2: raw EPS estimate（純資訊欄，無 pass/fail color）
+  // v1.8: Excel-primary（135 美股/ADR）+ yfinance fallback（12 檔含 .TW/.T 與 4 檔
+  // 命名 mismatch）。Curr FY / Next FY 額外掛 1M revision chip 顯示 vs 上月 Excel
+  // snapshot 的修正方向。
   var v = s[field];
   if (v === null || v === undefined) {
     return '<td style="color:#94a3b8">—</td>';
   }
+  var src = s.eps_source || 'yfinance';
   var labelMap = {
-    'eps_fy_curr': 'yfinance 0y row — current fiscal year consensus EPS',
-    'eps_fy_next': 'yfinance +1y row — next fiscal year consensus EPS',
+    'eps_fy_curr': (src === 'xlsx' ? 'Excel FY1E (current FY consensus avg)' : 'yfinance 0y row — current FY consensus EPS'),
+    'eps_fy_next': (src === 'xlsx' ? 'Excel FY2E (next FY consensus avg)' : 'yfinance +1y row — next FY consensus EPS'),
+    'eps_fy3':     (src === 'xlsx' ? 'Excel FY3E (2 fiscal years out, consensus avg)' : 'yfinance +2y row — FY+2 consensus EPS'),
     'eps_trailing': 'info.trailingEps — TTM 實際 EPS (用為 2Y CAGR 計算基準)'
   };
-  var tip = ' title="' + (labelMap[field] || field) + ': ' + v.toFixed(2) + '"';
-  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:#475569">' + v.toFixed(2) + '</td>';
+  var tipBase = (labelMap[field] || field) + ': ' + v.toFixed(2);
+  var chip = '';
+  // v1.8: month-over-month revision chip for FY1 / FY2 (Excel-vs-Excel)
+  var revField = (field === 'eps_fy_curr') ? 'eps_fy_curr_revision_pct'
+              : (field === 'eps_fy_next') ? 'eps_fy_next_revision_pct'
+              : null;
+  if (revField) {
+    var rev = s[revField];
+    var baseDate = s.eps_revision_baseline_date;
+    if (rev === null || rev === undefined) {
+      chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">新</div>';
+      tipBase += ' | 上月無此 ticker 或首月部署';
+    } else if (Math.abs(rev) < 0.5) {
+      // 持平 — 不顯示箭頭
+      chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">±0%</div>';
+      tipBase += ' | vs 上月 (' + (baseDate || '?') + ') 持平';
+    } else {
+      var up = rev > 0;
+      var color = up ? '#166534' : '#991B1B';
+      var arrow = up ? '↑' : '↓';
+      var sign = up ? '+' : '';
+      chip = '<div style="font-size:9px;color:' + color + ';font-weight:600;margin-top:1px">'
+           + arrow + sign + rev.toFixed(1) + '% (1M)</div>';
+      tipBase += ' | vs 上月 (' + (baseDate || '?') + ') ' + (up ? '上修' : '下修') + ' ' + sign + rev.toFixed(1) + '%';
+    }
+  }
+  var tip = ' title="' + tipBase + '"';
+  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:#475569">'
+       + v.toFixed(2) + chip + '</td>';
+}
+
+function _renderGrowthCell(s, field, source) {
+  // v1.8: render Excel-derived growth/CAGR (FY3 YoY% / FY1→FY3 CAGR) using same
+  // color rules as EPS 2Y CAGR: ≥15% 綠 / <0% 紅 / 其他 灰。Sort-null sinks
+  // automatically via _sortStocks.
+  var v = s[field];
+  if (v === null || v === undefined) {
+    return '<td style="color:#94a3b8">—</td>';
+  }
+  var color, weight;
+  if (v >= 15)      { color = '#166534'; weight = '600'; }
+  else if (v >= 0)  { color = '#475569'; weight = '400'; }
+  else              { color = '#991B1B'; weight = '600'; }
+  var labelMap = {
+    'eps_fy1_fy3_cagr_pct': 'Excel FY1→FY3 forward 2Y CAGR',
+    'eps_fy3_yoy_pct': 'Excel FY2→FY3 YoY growth %'
+  };
+  var tip = ' title="' + (labelMap[field] || field) + ': ' + v.toFixed(2)
+          + '% (來源 ' + (source || s.eps_source || 'xlsx') + ')"';
+  return '<td' + tip + ' style="font-variant-numeric:tabular-nums;color:' + color
+       + ';font-weight:' + weight + '">' + v.toFixed(1) + '%</td>';
 }
 
 function _renderLiveIRRInner(s) {
@@ -833,9 +885,13 @@ function buildTable(stocks) {
     else if (c.key === 'peg') title = '即時 PEG = live FwdPE / live EPS CAGR — sort 按 live 數值';
     var th = _thSortable(c.label, sortKey, title ? {title: title} : undefined);
     if (c.key === 'eps2y') {
-      // v1.7.2: 在 EPS 2Y CAGR 後插入 2 個 raw EPS 欄位供使用者驗證 CAGR 來源
-      th += _thSortable('Curr FY', 'eps_fy_curr', {title: 'Current FY EPS consensus (yfinance 0y row) — 多數 US Dec-FY = 本曆年；NVDA/JP 等差 1 年'});
-      th += _thSortable('Next FY', 'eps_fy_next', {title: 'Next FY EPS consensus (yfinance +1y row) — 多數 US Dec-FY = 下個曆年'});
+      // v1.8: 先 push 2 個 Excel-only growth column（FY1→FY3 CAGR / FY3 YoY%），
+      // 再 push Curr FY / Next FY / FY3 EPS。Curr FY / Next FY 帶 1M revision chip。
+      th += _thSortable('FY1→FY3 CAGR', 'eps_fy1_fy3_cagr_pct', {title: 'Excel FY+1 → FY+3 forward 2Y CAGR — 對比左側 EPS 2Y CAGR（後者是 yearAgo → FY+1 anchor，含一個 actual EPS）'});
+      th += _thSortable('FY3 YoY%', 'eps_fy3_yoy_pct', {title: 'Excel FY+2 → FY+3 consensus EPS YoY growth %'});
+      th += _thSortable('Curr FY', 'eps_fy_curr', {title: 'Current FY EPS consensus — Excel FY1E；yfinance fallback: 0y row。下方 chip = vs 上月 1M revision%'});
+      th += _thSortable('Next FY', 'eps_fy_next', {title: 'Next FY EPS consensus — Excel FY2E；yfinance fallback: +1y row。下方 chip = vs 上月 1M revision%'});
+      th += _thSortable('FY3 EPS', 'eps_fy3', {title: 'FY+3 EPS consensus — Excel FY3E；yfinance fallback: +2y row（多數 ticker 缺）'});
     }
     if (c.key === 'peg') {
       th += _thSortable('2Y P/E', 'live_fpe_est', {title: '即時 FY+2 Forward P/E — yfinance 每日抓 FY EPS 重算；hover 看 DD frozen 對比與漂移幅度'});
@@ -880,9 +936,12 @@ function buildTable(stocks) {
         html = '<td style="' + cellStyle(flag) + '">' + display + '</td>';
       }
       if (c.key === 'eps2y') {
-        // v1.7.2: 緊接 EPS 2Y CAGR 後注入 Curr FY EPS / Next FY EPS 兩欄
+        // v1.8: FY1→FY3 CAGR + FY3 YoY% + Curr FY (+chip) + Next FY (+chip) + FY3 EPS
+        html += _renderGrowthCell(s, 'eps_fy1_fy3_cagr_pct');
+        html += _renderGrowthCell(s, 'eps_fy3_yoy_pct');
         html += _renderRawEpsCell(s, 'eps_fy_curr');
         html += _renderRawEpsCell(s, 'eps_fy_next');
+        html += _renderRawEpsCell(s, 'eps_fy3');
       }
       if (c.key === 'peg') {
         html += _renderLivePECell(s);
@@ -929,6 +988,55 @@ function buildTable(stocks) {
   }).join('');
 
   return thead + rows + '</tbody></table>';
+}
+
+function renderEpsSourceBanner() {
+  // v1.8: surface Excel Excel snapshot date + age + diff列表。每月更新提醒。
+  var src = DATA && DATA.eps_estimates_source;
+  var el = document.getElementById('eps-source-banner');
+  if (!el) return;
+  if (!src || !src.snapshot_date) {
+    // Excel 缺檔 — 顯示警告（全 universe 走 yfinance fallback）
+    el.style.display = 'block';
+    el.style.background = '#fef2f2';
+    el.style.border = '1px solid #fca5a5';
+    el.style.color = '#7f1d1d';
+    el.innerHTML = '<strong>⚠ EPS 預估資料源缺：</strong>找不到 <code>data/eps-estimates/DD_universe_EPS_estimates_*.xlsx</code>，'
+                 + '全部 ' + (src ? src.fallback_yfinance_tickers.length : '?')
+                 + ' 檔暫走 yfinance fallback（GAAP/non-GAAP 風險）。請補 Excel Excel。';
+    return;
+  }
+  var days = Math.floor((Date.now() - new Date(src.snapshot_date).getTime()) / 86400000);
+  // Threshold: ≤30 info（藍）/ 31-35 warning（橘）/ >35 alert（紅）
+  var bg, border, color, extraMsg = '';
+  if (days > 35) {
+    bg = '#fef2f2'; border = '#fca5a5'; color = '#7f1d1d';
+    extraMsg = ' <strong>請更新 EPS Excel</strong>（距上次 ' + days + ' 天 > 35 天門檻）。';
+  } else if (days > 30) {
+    bg = '#fffbeb'; border = '#fcd34d'; color = '#78350f';
+    extraMsg = ' 距上次 ' + days + ' 天，本月應更新。';
+  } else {
+    bg = '#eff6ff'; border = '#93c5fd'; color = '#1e40af';
+    extraMsg = ' (' + days + ' 天前)';
+  }
+  el.style.display = 'block';
+  el.style.background = bg;
+  el.style.border = '1px solid ' + border;
+  el.style.color = color;
+  var missingHtml = '';
+  if (src.missing_us_adr_tickers && src.missing_us_adr_tickers.length) {
+    missingHtml = ' <span style="color:#7f1d1d">缺漏（命名不一致，走 yfinance）：'
+                + src.missing_us_adr_tickers.map(function(t){return '<code>' + t + '</code>';}).join('、')
+                + '</span>';
+  }
+  var fallbackHtml = '';
+  if (src.fallback_yfinance_tickers && src.fallback_yfinance_tickers.length) {
+    fallbackHtml = ' 未覆蓋 (' + src.fallback_yfinance_tickers.length + ' 檔含 .TW/.T)：'
+                 + '<span title="' + src.fallback_yfinance_tickers.join(', ') + '" style="text-decoration:underline dotted;cursor:help">沿用 yfinance</span>';
+  }
+  el.innerHTML = 'ⓘ <strong>EPS 預估資料：</strong>Excel <code>' + src.snapshot_date + '</code> snapshot'
+              + extraMsg
+              + ' 覆蓋 ' + src.coverage_count + ' 檔。' + fallbackHtml + missingHtml;
 }
 
 function renderAll() {
@@ -1167,6 +1275,7 @@ fetch('./latest.json')
     }
 
     updateHeroBadge();
+    renderEpsSourceBanner();
     renderAll();
   })
   .catch(function(err) {

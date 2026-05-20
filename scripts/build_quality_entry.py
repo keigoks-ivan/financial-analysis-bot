@@ -202,9 +202,21 @@ def pillar_quality(s: dict) -> tuple[float, dict]:
 
 
 def pillar_growth(s: dict) -> tuple[float, dict]:
-    """B = 0.40·growth_durability/10 + 0.30·clip(eps2y,0,40)/40 + 0.30·clip(ev5y,0,25)/25"""
+    """B = 0.40·growth_durability/10 + 0.30·clip(eps2y,0,40)/40 + 0.30·clip(ev5y,0,25)/25
+
+    v1.8.1: eps2y input is Excel-aware — Excel-covered tickers use eps2y_live
+    (live (FY+1 from Excel) / yearAgoEps yfinance, 2Y CAGR), else fall back to
+    DD frozen eps2y. This way the Growth pillar reflects current consensus for
+    the 134 Excel-covered tickers and original DD value for the 12 uncovered.
+    """
     gd = _safe_float(s.get("growth_durability"))
-    eps2y = _safe_float(s.get("eps2y"))  # %
+    # v1.8.1: prefer Excel-derived live 2Y CAGR when ticker is Excel-covered;
+    # fall back to DD frozen `eps2y` when ticker is yfinance-fallback (or when
+    # eps2y_live happens to be null even for Excel ticker — defensive).
+    eps2y_src = s.get("eps2y_live") if s.get("eps_source") == "xlsx" else None
+    if eps2y_src is None:
+        eps2y_src = s.get("eps2y")
+    eps2y = _safe_float(eps2y_src)  # %
     ev5y = _safe_float(s.get("ev5y_pct"))  # annualized IRR %
     upside_5y = _safe_float(s.get("upside_5y_pct"))  # total 5Y % return
     moat = _safe_float(s.get("moat_score")) or 5  # fallback proxy

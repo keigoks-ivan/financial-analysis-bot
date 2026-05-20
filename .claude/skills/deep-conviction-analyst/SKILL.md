@@ -181,7 +181,19 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 
 ### Phase A3｜業務結構 / 財務體質 / 資本配置
 
-**搜尋策略（執行 5-7 次精準搜尋）：**
+**預備步驟（v1.4 新增）：Excel buy-side consensus**
+
+「5Y IRR 分量基底」需要 FY+1/+2/+3 consensus EPS。寫稿前先跑：
+
+```bash
+python3 scripts/get_eps_for_ticker.py {TICKER}
+```
+
+- exit 0：拿到 FY+1/+2/+3 + FY+1→FY+3 2Y CAGR（Excel/Koyfin normalized consensus，buy-side standard，月度凍結比 web_search 散亂片段穩，ADR/TW 自動換成 USD）→ 直接用在表格 EPS CAGR 欄；下方搜尋清單可省「EPS consensus 2027 2028 2029」那條（已有 Excel 數字）。在 §4 IRR mini-table 註明「EPS 來源：Excel snapshot YYYY-MM-DD」。
+- exit 1（NOT in Excel）：照原 search 流程，從 web_search 抓 consensus。
+- exit 2（Excel 缺檔）：通知用戶補檔，繼續 web_search fallback。
+
+**搜尋策略（執行 5-7 次精準搜尋；Excel 覆蓋時可省 EPS consensus 那條）：**
 ```
 [TICKER] revenue breakdown segment product line
 [TICKER] customer concentration top customers
@@ -190,7 +202,7 @@ ls docs/dd/ | grep -E '^DD_({TICKER}|{ALT})_.*\.html$'
 [TICKER] capital allocation buyback dividend capex history
 [TICKER] acquisition track record M&A integration
 [TICKER] forward P/E historical band 5-year multiple range
-[TICKER] EPS consensus 2027 2028 2029 long-term growth
+[TICKER] EPS consensus 2027 2028 2029 long-term growth   ← Excel 覆蓋時可省
 ```
 
 **搜尋完成後，內部完成完整分析思考，但 HTML 僅輸出以下精簡格式：**

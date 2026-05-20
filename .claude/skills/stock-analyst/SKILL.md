@@ -1,8 +1,29 @@
 ---
 name: stock-analyst
-version: v12.3
-released: 2026-05-14
-description: "收到股票 ticker 後，執行完整買側深度研究（DD）。v12.3 變更（直接從 v12.0/v12.2 跳號，同步解決 v12.1/v12.2 metadata 滯後）：核心 reshape — 估值章節（§2+§13）從 ~40% 砍至 ~18%，基本面章節（§5+§8+§9+§11+§12）從 ~35% 擴至 ~55%。① §2 瘦身（9 子節→7 子節：A 體質檢核併入 B、E R:R+Bear Case 大幅瘦身砍 QC-29 壓力測試 4 情境表，只留 3 R:R 數字+1 line Bear anchor）；② §13 大幅瘦身（砍 13.0 估值體系診斷/13.3 Reverse DCF/13.5 五角驗證表+8 因素定錨+便宜理由五問，只留 13.1/13.2/13.4+1 段結論）；③ §7 砍低估值四問+便宜理由四問；④ §5 擴充（5.F single thing 新增—binary discrete event、5.B 假設加 sourced floor+漂移觸發條件、5.C 風險加時間尺度分層 ⚡🔥🐢）；⑤ §8 擴充（8.B 成長品質強化—定價 vs 量具體%+3Y 趨勢，8.H 客戶結構深度新增—top1/5/10+dual-track risk+in-house risk）；⑥ §9 大改（強制 execution moat+pricing power moat 二維拆解+SaaS/銀行/保險 single-axis escape rule+護城河趨勢雙線標+QC-23 威脅三級分類強制使用）；⑦ §11 擴（議價權三段獨立—對上游/對下游/地緣+營收三維+單位經濟逐業務段）；⑧ §13.4 強制對的 peer group tier（禁止跨業務模式 tier 錯誤 anchor）；⑨ dd-meta 新增 optional moat_execution+moat_pricing_power sub-scores。v12.0/v12.2 核心保留：訊號燈 A+/A/B/C/X、護城河 5 級品質+體質 veto、估值燈、Pure MA 六狀態機、大盤豁免、QC-22~36 規則、dd-meta JSON validator。當用戶提及 ticker、個股分析、DD 報告、股票研究、估值分析時，必須觸發此技能。"
+version: v12.4
+released: 2026-05-20
+description: "收到股票 ticker 後，執行完整買側深度研究（DD）。v12.4 變更：EPS estimates source 接 Koyfin/Excel buy-side consensus（步驟零' 最高優先），DD universe 涵蓋 141/146 ticker（含 ADR / TW listings 自動換 USD）；ticker 不在 Excel 自動 fallback yfinance（步驟零）→ web_search（步驟一）；§13 估值需在註腳明標「EPS 來源：Excel snapshot YYYY-MM-DD」供 audit；FY+3 可直接用 Excel consensus 不再需要機械外推，但 §8 邏輯 sanity check 仍必做（若 Excel 與業務邏輯明顯矛盾須在 §13 標明分歧）。v12.3 變更（保留）：核心 reshape — 估值章節（§2+§13）從 ~40% 砍至 ~18%，基本面章節（§5+§8+§9+§11+§12）從 ~35% 擴至 ~55%。① §2 瘦身（9 子節→7 子節：A 體質檢核併入 B、E R:R+Bear Case 大幅瘦身砍 QC-29 壓力測試 4 情境表，只留 3 R:R 數字+1 line Bear anchor）；② §13 大幅瘦身（砍 13.0 估值體系診斷/13.3 Reverse DCF/13.5 五角驗證表+8 因素定錨+便宜理由五問，只留 13.1/13.2/13.4+1 段結論）；③ §7 砍低估值四問+便宜理由四問；④ §5 擴充（5.F single thing 新增—binary discrete event、5.B 假設加 sourced floor+漂移觸發條件、5.C 風險加時間尺度分層 ⚡🔥🐢）；⑤ §8 擴充（8.B 成長品質強化—定價 vs 量具體%+3Y 趨勢，8.H 客戶結構深度新增—top1/5/10+dual-track risk+in-house risk）；⑥ §9 大改（強制 execution moat+pricing power moat 二維拆解+SaaS/銀行/保險 single-axis escape rule+護城河趨勢雙線標+QC-23 威脅三級分類強制使用）；⑦ §11 擴（議價權三段獨立—對上游/對下游/地緣+營收三維+單位經濟逐業務段）；⑧ §13.4 強制對的 peer group tier（禁止跨業務模式 tier 錯誤 anchor）；⑨ dd-meta 新增 optional moat_execution+moat_pricing_power sub-scores。v12.0/v12.2 核心保留：訊號燈 A+/A/B/C/X、護城河 5 級品質+體質 veto、估值燈、Pure MA 六狀態機、大盤豁免、QC-22~36 規則、dd-meta JSON validator。當用戶提及 ticker、個股分析、DD 報告、股票研究、估值分析時，必須觸發此技能。"
+---
+
+## 【v12.4 變更：EPS estimates source 接 Excel buy-side consensus】
+
+**核心改動**：寫 §13 估值前先跑 `python3 scripts/get_eps_for_ticker.py {TICKER}`，Excel 覆蓋（目前 141/146 含 US/ADR/TW 自動換 USD）時直接用 Excel 的 FY+1/+2/+3 + 2Y CAGR 當 anchor，**毋需再做 yfinance fetch 或 web_search 找 EPS consensus**。
+
+**為什麼**：
+1. Excel/Koyfin 是 buy-side 標準的 normalized consensus mean（非 GAAP 對 SaaS 自動處理）
+2. 月度凍結，比 yfinance 每天變、web_search 散亂片段穩
+3. ADR / TW listings 自動 USD 統一單位（解決 yfinance financialCurrency 是 TWD/EUR/CHF 的 FX-ratio 陷阱 — 之前 TSM 從這條路算出 -39.8% 鬼數）
+4. FY+3 也有 consensus（yfinance 沒），不需要原 v9.0 的「§8 邏輯推導」機械外推
+
+**判讀規則**（在「§13 估值 → 步驟零'」詳述）：
+- `exit 0` Excel 覆蓋 → 用 Excel，§13 標註「EPS 來源：Excel snapshot YYYY-MM-DD」
+- `exit 1` 未覆蓋 → fall back yfinance（步驟零）→ web_search（步驟一）
+- `exit 2` Excel 缺檔 → 通知用戶 `cp ~/Downloads/DD_universe_EPS_estimates_*.xlsx data/eps-estimates/`
+
+**§8 sanity check 仍必做**：Excel consensus 是 sell-side 共識，若與你 §8 的成長跑道 / 定價權 / 內生成長率分析明顯矛盾，要在 §13 標明分歧並提出 PM 自家修正值（不是無腦照搬）。
+
+**配套**：`deep-conviction-analyst` skill v1.4 同步加 Phase A3 預備步驟（同樣呼叫 CLI）— DD 與 DCA 引用同一份 Excel snapshot 確保 §13（DD）與 Phase A3（DCA）的 EPS anchor 一致。
+
 ---
 
 ## 【v12.3 重要變更：估值瘦身 × 基本面深度擴充】
@@ -1127,7 +1148,29 @@ print(f"現價 vs W104: {idx_current:.2f} vs {idx_w104:.2f} | 破線: {idx_curre
 
 執行本節前，必須完成以下步驟取得 EPS 共識預估，禁止使用訓練資料估算：
 
-**步驟零（v9.0 新增）：yfinance 程式化抓取（最高優先）**
+**步驟零'（v12.4 新增，最高優先）：Excel buy-side consensus（每月人工 refresh）**
+
+DD universe（≈141 檔含 US/ADR/TW）已有 Koyfin/Excel 每月匯出的 normalized
+consensus（FY+1/+2/+3 + growth + 2Y CAGR），ADR/TW 自動換成 USD 統一單位。
+這是 buy-side standard、比 yfinance 少 GAAP/non-GAAP 歧義、比 web_search 穩定。
+
+寫 §13 估值前先跑：
+
+```bash
+python3 scripts/get_eps_for_ticker.py {TICKER}      # 文字格式，貼進報告 §13 附註
+python3 scripts/get_eps_for_ticker.py {TICKER} --json   # JSON，程式化解析
+```
+
+判讀規則：
+- exit 0 + 印出 FY1/FY2/FY3：用這份當 §13 估值的 anchor，**毋需再做步驟零的 yfinance fetch 或步驟一的 web_search**。記得在 §13 註明「EPS 來源：Excel snapshot YYYY-MM-DD」供 audit。
+- exit 1（NOT in Excel）：ticker 未覆蓋（多數為 .JP 或新加入 universe 的 ticker），fall back 到「步驟零（yfinance）」。
+- exit 2（Excel 缺檔）：通知用戶 `cp ~/Downloads/DD_universe_EPS_estimates_*.xlsx data/eps-estimates/`，然後 fall back yfinance。
+
+FY+3 取得後仍照「§8 邏輯推導」做業務邏輯描述（不可只貼數字），但**不再需要機械外推**——FY+3 直接用 Excel 提供的 consensus 即可。
+
+---
+
+**步驟零（v9.0 新增）：yfinance 程式化抓取（步驟零' 失敗時 fallback）**
 
 在執行任何 web_search 之前，先用 Python yfinance 抓取即時共識預估。
 此資料源與 TradingView 同源（Refinitiv/LSEG），為即時共識中位數，
@@ -1148,7 +1191,7 @@ ee = t.earnings_estimate  # 欄位：avg, low, high, numberOfAnalysts, growth
 
 **yfinance 限制**：僅提供 FY+1 和 FY+2 兩年年度預估，無 FY+3。
 
-**FY+3 推導方式（v9.0 邏輯分析法，禁止機械外推）**：
+**FY+3 推導方式（v9.0 邏輯分析法，禁止機械外推）—— 僅在步驟零' Excel 未覆蓋時適用**：
 FY+3 EPS 必須基於 §8 長期成長性分析推導，不得用「FY+2 growth × 0.7」等機械公式。
 具體步驟：
 1. 從 §8 A（成長跑道 Runway）判斷 3 年後所處的成長階段
@@ -1160,6 +1203,10 @@ FY+3 EPS 必須基於 §8 長期成長性分析推導，不得用「FY+2 growth 
 禁止出現「遞減外推」「線性外推」等無邏輯的描述。
 每個 FY+3 推導必須有具體的業務邏輯支撐（例如：「M9 材料全年貢獻 + 越南廠滿載」
 或「Azure AI 營收佔比從 15% 升至 25%」）。
+
+（v12.4 補：Excel 步驟零' 直接給 FY+3 consensus 時，仍要寫 §8 邏輯描述
+作為 sanity check——若 consensus 與業務邏輯明顯矛盾，要在 §13 註明
+分歧並提出 PM 自家修正值。）
 
 **若 yfinance 失敗**（網路不通或 ticker 不支援），退回步驟一的 web_search 流程。
 

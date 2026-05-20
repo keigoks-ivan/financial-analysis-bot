@@ -85,6 +85,10 @@ from update_dd_index import (  # noqa: E402
     collect_dca_moat_trend_map,
     compute_dca_irr,
 )
+from load_eps_estimates_xlsx import (  # noqa: E402
+    ExcelSnapshot,
+    load_latest_excel,
+)
 
 OUTPUT_DIR = ROOT / "docs" / "dd-screener"
 OUTPUT_PATH = OUTPUT_DIR / "latest.json"
@@ -491,10 +495,22 @@ def _moat_trend_for(ticker: str, dca_trend_map: dict, fallback: str) -> str:
     return arrow or fallback
 
 
-def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
+def _fetch_live_fy_eps(
+    yf_ticker: str,
+    p_at_dd: float,
+    fpe_fy2: float,
+    excel_record: dict | None = None,
+    dd_ticker: str | None = None,
+) -> dict:
     """v1.7.1: fetch fresh FY EPS estimate from yfinance, auto-match the FY
     row that the DD anchored on, AND return raw 0y/+1y values + trailingEps
     for proper 2Y CAGR computation.
+
+    v1.8: when `excel_record` is provided (Excel row for this ticker),
+    override eps_0y_raw / eps_1y_raw with Excel values. yearAgoEps + trailingEps
+    still come from yfinance (historical actual). FY-match (eps_now) is
+    recomputed against Excel values. Adds Excel-only fields eps_fy3 +
+    growth_fy1_fy2_pct + growth_fy2_fy3_pct + cagr_fy1_fy3_pct.
 
     DD label "FY+1" vs "FY+2" semantics vary by writer (some count from last
     fiscal year-end, some from current ongoing FY). Instead of guessing, we
@@ -535,67 +551,139 @@ def _fetch_live_fy_eps(yf_ticker: str, p_at_dd: float, fpe_fy2: float) -> dict:
         "eps_year_ago": None,
         # v1.7.1: trailing EPS — GAAP TTM fallback when yearAgoEps missing
         "trailing_eps": None,
+        # v1.8: Excel-derived fields (None when no Excel record for ticker)
+        "eps_fy3": None,
+        "growth_fy1_fy2_pct": None,
+        "growth_fy2_fy3_pct": None,
+        "cagr_fy1_fy3_pct": None,
+        "eps_source": "yfinance",
+        # v1.8.2: True when Excel covers ticker AND yfinance.info.currency !=
+        # info.financialCurrency (e.g., TSM ADR USD vs TWD-reported earnings).
+        # When True, _compute_live_eps_cagr() switches eps2y_live to use Excel's
+        # own forward CAGR (cagr_fy1_fy3_pct) to avoid FX-ratio nonsense.
+        "currency_mismatch_xlsx_yf": False,
     }
     if not (p_at_dd and fpe_fy2 and p_at_dd > 0 and fpe_fy2 > 0):
         return out
     implied = p_at_dd / fpe_fy2
     out["eps_at_dd"] = round(implied, 4)
+
+    # v1.8: Excel takes priority for FY1/FY2/FY3 + growth fields.
+    # yearAgoEps + trailingEps still come from yfinance (historical actuals).
+    if excel_record is not None:
+        out["eps_source"] = "xlsx"
+        out["eps_0y_raw"] = excel_record.get("fy1")
+        out["eps_1y_raw"] = excel_record.get("fy2")
+        out["eps_fy3"] = excel_record.get("fy3")
+        out["growth_fy1_fy2_pct"] = excel_record.get("growth_fy1_fy2_pct")
+        out["growth_fy2_fy3_pct"] = excel_record.get("growth_fy2_fy3_pct")
+        out["cagr_fy1_fy3_pct"] = excel_record.get("cagr_fy1_fy3_pct")
+
+    # v1.8.1: ALWAYS fetch yfinance 0y/+1y into local vars (independent of Excel
+    # override). Used for:
+    #   (1) FY-match → eps_now → eps_revision_pct (vs DD-time anchor) — kept on
+    #       yfinance baseline for backward compat with v1.7.x (consistent input
+    #       to breakout / bottom-out scoring; avoids Excel-vs-yfinance consensus
+    #       mean drift falsely showing as "EPS revision").
+    #   (2) yearAgoEps (historical actual) — never overridden by Excel.
+    #   Excel still overrides eps_0y_raw / eps_1y_raw / eps_fy3 / growth fields
+    #   in `out` for DISPLAY purposes only.
+    yf_eps_0y = None
+    yf_eps_1y = None
+    yf_eps_2y = None
     try:
         tk = yf.Ticker(yf_ticker)
         ee = tk.earnings_estimate
         if ee is None or getattr(ee, "empty", True):
-            return out
+            ee = None
 
-        # v1.7: collect both raw rows regardless of DD-match logic
-        for row_label, field in (("0y", "eps_0y_raw"), ("+1y", "eps_1y_raw")):
+        if ee is not None:
+            # Always read yfinance 0y / +1y / +2y avg into a dict (audit baseline,
+            # never overridden by Excel — used for FY-match below)
+            _yf = {"0y": None, "+1y": None, "+2y": None}
+            for row_label in _yf:
+                try:
+                    if row_label in ee.index:
+                        val = ee.loc[row_label].get("avg")
+                        if val is not None and float(val) > 0:
+                            _yf[row_label] = round(float(val), 4)
+                except Exception:
+                    pass
+            yf_eps_0y = _yf["0y"]
+            yf_eps_1y = _yf["+1y"]
+            yf_eps_2y = _yf["+2y"]
+
+            # Populate display fields: Excel overrides win for eps_0y_raw / eps_1y_raw / eps_fy3
+            if out["eps_source"] != "xlsx":
+                # yfinance fallback path: copy yfinance locals into display fields
+                out["eps_0y_raw"] = yf_eps_0y
+                out["eps_1y_raw"] = yf_eps_1y
+                if out["eps_fy3"] is None:
+                    out["eps_fy3"] = yf_eps_2y
+                # Compute growth/CAGR for yfinance-sourced rows
+                _fy1 = out["eps_0y_raw"]
+                _fy2 = out["eps_1y_raw"]
+                _fy3 = out["eps_fy3"]
+                if _fy1 and _fy2 and _fy1 > 0:
+                    out["growth_fy1_fy2_pct"] = round((_fy2 / _fy1 - 1) * 100, 4)
+                if _fy2 and _fy3 and _fy2 > 0:
+                    out["growth_fy2_fy3_pct"] = round((_fy3 / _fy2 - 1) * 100, 4)
+                if _fy1 and _fy3 and _fy1 > 0 and _fy3 > 0:
+                    out["cagr_fy1_fy3_pct"] = round(((_fy3 / _fy1) ** 0.5 - 1) * 100, 4)
+            # else: Excel already wrote eps_0y_raw / eps_1y_raw / eps_fy3 + growth/CAGR
+
+            # yearAgoEps (always from yfinance — historical actual, never Excel)
             try:
-                if row_label in ee.index:
-                    val = ee.loc[row_label].get("avg")
-                    if val is not None and float(val) > 0:
-                        out[field] = round(float(val), 4)
+                if "0y" in ee.index:
+                    yag = ee.loc["0y"].get("yearAgoEps")
+                    if yag is not None and float(yag) > 0:
+                        out["eps_year_ago"] = round(float(yag), 4)
             except Exception:
                 pass
 
-        # v1.7.2: yearAgoEps from 0y row — same accounting basis as the
-        # forward estimate (analysts publish yearAgoEps in the basis they
-        # forecast on, so this is the cleanest CAGR base).
-        try:
-            if "0y" in ee.index:
-                yag = ee.loc["0y"].get("yearAgoEps")
-                if yag is not None and float(yag) > 0:
-                    out["eps_year_ago"] = round(float(yag), 4)
-        except Exception:
-            pass
-
-        # v1.7.1: fetch trailingEps as fallback CAGR base.
-        # Only fetch info if we have a usable eps_1y and no yearAgoEps
-        # (otherwise CAGR can't be computed or yearAgoEps already covers it
-        # — saves yfinance rate-limit pressure).
-        if out["eps_1y_raw"] is not None and out["eps_year_ago"] is None:
+        # trailingEps fallback (always yfinance) +
+        # v1.8.3: for Excel-covered tickers, probe info.financialCurrency to
+        # detect currency mismatch. Excel is *always* in USD (Koyfin export
+        # convention), so any ticker whose yfinance financialCurrency ≠ USD
+        # has its yearAgoEps in a foreign currency — dividing Excel USD by
+        # foreign yearAgo gives FX-ratio nonsense. Covers BOTH:
+        #   (a) ADRs where info.currency=USD but financialCurrency=EUR/TWD/CHF
+        #       (TSM, ASML, ONON, SPOT)
+        #   (b) Foreign local listings where both = TWD/JPY but Excel = USD
+        #       (2330.TW, 2454.TW, 2308.TW, etc.)
+        # Cost: ~134 extra info calls per build (cached client-side).
+        need_info = (
+            (out["eps_1y_raw"] is not None and out["eps_year_ago"] is None)
+            or excel_record is not None
+        )
+        if need_info:
             try:
-                trailing = tk.info.get("trailingEps")
+                info = tk.info
+                trailing = info.get("trailingEps")
                 if trailing is not None and float(trailing) > 0:
                     out["trailing_eps"] = round(float(trailing), 4)
+                if excel_record is not None:
+                    fc = info.get("financialCurrency")
+                    if fc and fc.upper() != "USD":
+                        out["currency_mismatch_xlsx_yf"] = True
             except Exception:
                 pass
 
+        # v1.8.1: FY-match against yfinance values (NOT Excel) so eps_revision_pct
+        # remains apples-to-apples vs DD-time anchor (which was reverse-engineered
+        # from frozen price_at_dd / fpe_fy2 — typically anchored on yfinance-era
+        # consensus). Mixing Excel (Koyfin-source) consensus with yfinance-anchored
+        # DD value introduces ~1-4pp systematic bias that misleads breakout /
+        # bottom-out scoring (real-world: 5 ticker demoted out of breakout tier_a).
         best = None
-        for row_label in ("0y", "+1y"):
-            try:
-                if row_label not in ee.index:
-                    continue
-                eps = ee.loc[row_label].get("avg")
-                if eps and eps > 0:
-                    err = abs(eps - implied) / implied
-                    if best is None or err < best[1]:
-                        best = (row_label, err, float(eps))
-            except Exception:
-                continue
+        candidates = [("0y", yf_eps_0y), ("+1y", yf_eps_1y)]
+        for row_label, eps in candidates:
+            if eps and eps > 0:
+                err = abs(eps - implied) / implied
+                if best is None or err < best[1]:
+                    best = (row_label, err, float(eps))
         if best is None:
             return out
-        # Sanity guard: reject if both rows are > 30% off — DD likely used a
-        # different EPS basis (e.g. non-GAAP custom adjustment) and matching
-        # the wrong row would mislead more than the heuristic.
         if best[1] > 0.30:
             return out
         out["yf_fy_label"] = best[0]
@@ -706,15 +794,32 @@ def _compute_live_eps_cagr(entry: dict, live_fy_result: dict) -> dict:
       base = eps_year_ago (preferred) or trailing_eps (fallback)
       cagr = ((eps_+1y / base) ** 0.5 - 1) * 100
 
+    v1.8.2 fix: for Excel-covered ADRs whose ADR currency differs from yfinance
+    financialCurrency (TSM USD vs TWD, ASML/SPOT USD vs EUR, ONON USD vs CHF),
+    dividing Excel FY+1 (USD) by yfinance yearAgoEps (foreign currency) gives
+    FX-ratio nonsense (TSM observed −39.8% vs Excel forward CAGR +25%). When
+    `currency_mismatch_xlsx_yf` flag is set upstream, switch to Excel's own
+    `cagr_fy1_fy3_pct` (FY+1 → FY+3 forward 2Y CAGR — currency-safe).
+
     Writes:
       eps2y_live:         live 2Y EPS CAGR % (None on failure)
       eps2y_live_method:  "yearago" (yearAgoEps + +1y, same-basis, preferred)
+                          | "xlsx_forward" (Excel FY+1→FY+3 — ADR currency-mismatch path)
                           | "trailing" (trailingEps + +1y, GAAP/non-GAAP risk)
                           | "missing"
     """
     eps_1y = live_fy_result.get("eps_1y_raw")
     year_ago = live_fy_result.get("eps_year_ago")
     trailing = live_fy_result.get("trailing_eps")
+    currency_mismatch = live_fy_result.get("currency_mismatch_xlsx_yf", False)
+    xlsx_forward_cagr = live_fy_result.get("cagr_fy1_fy3_pct")
+
+    # v1.8.2: ADR currency-mismatch path — use Excel's own forward CAGR
+    if currency_mismatch and xlsx_forward_cagr is not None:
+        return {
+            "eps2y_live": round(float(xlsx_forward_cagr), 2),
+            "eps2y_live_method": "xlsx_forward",
+        }
 
     if eps_1y is not None and year_ago is not None and year_ago > 0:
         cagr = ((eps_1y / year_ago) ** 0.5 - 1) * 100
@@ -727,6 +832,15 @@ def _compute_live_eps_cagr(entry: dict, live_fy_result: dict) -> dict:
         return {
             "eps2y_live": round(cagr, 2),
             "eps2y_live_method": "trailing",
+        }
+    # v1.8.4: last-resort — Excel covers the ticker but yfinance returned no
+    # earnings_estimate / info (e.g., LVMH ticker not in yfinance; LVMUY would
+    # be). With no yearAgoEps available we can't compute the anchored CAGR,
+    # but Excel's own forward CAGR is still currency-safe and usable.
+    if xlsx_forward_cagr is not None:
+        return {
+            "eps2y_live": round(float(xlsx_forward_cagr), 2),
+            "eps2y_live_method": "xlsx_forward",
         }
     return {
         "eps2y_live": None,
@@ -878,6 +992,37 @@ def _compute_live_ev5y(entry: dict, ma: dict) -> dict:
     }
 
 
+def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
+                              eps_next: float | None, prev_snapshot: dict) -> dict:
+    """Compute month-over-month FY1 / FY2 EPS revision % vs previous Excel snapshot.
+
+    Returns dict with eps_fy_curr_revision_pct, eps_fy_next_revision_pct,
+    eps_revision_baseline_date. Values None when previous snapshot is missing or
+    ticker wasn't in last month's snapshot (new addition).
+    """
+    out = {
+        "eps_fy_curr_revision_pct": None,
+        "eps_fy_next_revision_pct": None,
+        "eps_revision_baseline_date": None,
+    }
+    if not prev_snapshot:
+        return out
+    prev_tickers = prev_snapshot.get("tickers") or {}
+    prev_row = prev_tickers.get(ticker)
+    out["eps_revision_baseline_date"] = (
+        prev_snapshot.get("snapshot_date") or prev_snapshot.get("for_month")
+    )
+    if prev_row is None:
+        return out
+    prev_curr = prev_row.get("eps_fy_curr") or prev_row.get("eps_0y")
+    prev_next = prev_row.get("eps_fy_next") or prev_row.get("eps_1y")
+    if eps_curr and prev_curr and prev_curr > 0:
+        out["eps_fy_curr_revision_pct"] = round((eps_curr / prev_curr - 1) * 100, 2)
+    if eps_next and prev_next and prev_next > 0:
+        out["eps_fy_next_revision_pct"] = round((eps_next / prev_next - 1) * 100, 2)
+    return out
+
+
 def enrich_ticker(
     entry: dict,
     qgm_index: dict,
@@ -889,6 +1034,7 @@ def enrich_ticker(
     ma_cache: dict | None = None,
     quality_cache: dict | None = None,
     prev_snapshot: dict | None = None,
+    excel_snapshot: ExcelSnapshot | None = None,
 ) -> dict:
     """Add quality + MA + ev5y_pct + pass_count + fail_criteria + timing to entry.
 
@@ -971,12 +1117,32 @@ def enrich_ticker(
     # Guard: requires fpe_fy2 + price_at_dd (needed to match the right FY row).
     # p_now is NOT required here — CAGR only needs eps_0y/eps_1y, not current price.
     # PE drift will still degrade gracefully when p_now is None.
+    # v1.8: pass excel_record so Excel overrides FY1/FY2/FY3 when ticker is covered.
     fpe = entry.get("fpe_fy2")
     p_dd = entry.get("price_at_dd")
     p_now = ma.get("price") if ma else None
+    excel_record = excel_snapshot.get(t) if excel_snapshot else None
     live_fy_result: dict | None = None
     if fpe and p_dd and fpe > 0 and p_dd > 0:
-        live_fy_result = _fetch_live_fy_eps(_yf_ticker_for_ma(t), p_dd, fpe)
+        live_fy_result = _fetch_live_fy_eps(
+            _yf_ticker_for_ma(t), p_dd, fpe,
+            excel_record=excel_record, dd_ticker=t,
+        )
+    elif excel_record is not None:
+        # No DD anchor — still surface Excel FY1/FY2/FY3 (no eps_now / revision)
+        live_fy_result = {
+            "live_fpe_real": None, "yf_fy_label": None,
+            "eps_at_dd": None, "eps_now": None, "eps_revision_pct": None,
+            "eps_0y_raw": excel_record.get("fy1"),
+            "eps_1y_raw": excel_record.get("fy2"),
+            "eps_year_ago": None,
+            "trailing_eps": None,
+            "eps_fy3": excel_record.get("fy3"),
+            "growth_fy1_fy2_pct": excel_record.get("growth_fy1_fy2_pct"),
+            "growth_fy2_fy3_pct": excel_record.get("growth_fy2_fy3_pct"),
+            "cagr_fy1_fy3_pct": excel_record.get("cagr_fy1_fy3_pct"),
+            "eps_source": "xlsx",
+        }
 
     pe_drift = _compute_live_pe_drift(entry, ma, live_fy_result=live_fy_result)
 
@@ -997,6 +1163,11 @@ def enrich_ticker(
     # (current FY / next FY consensus + TTM EPS used as CAGR base).
     _lfy = live_fy_result or {}
 
+    # v1.8: per-FY EPS revision vs previous month's Excel snapshot
+    eps_curr_val = _lfy.get("eps_0y_raw")
+    eps_next_val = _lfy.get("eps_1y_raw")
+    fy_revision = _compute_fy_eps_revision(t, eps_curr_val, eps_next_val, prev_snapshot or {})
+
     return {
         **entry,
         **quality,
@@ -1016,12 +1187,16 @@ def enrich_ticker(
         **live_peg,         # live_peg
         **live_ev5y,        # live_ev5y_pct, live_ev5y_method
         # v1.7.2: raw yfinance EPS estimates (current FY / next FY / TTM)
-        # yfinance 0y/+1y are "current FY" / "next FY" — for Dec-FY companies in
-        # May 2026 this maps to calendar 2026 / 2027; for non-Dec-FY tickers
-        # (NVDA Jan, JP Mar) it shifts by 1 calendar year.
-        "eps_fy_curr": _lfy.get("eps_0y_raw"),
-        "eps_fy_next": _lfy.get("eps_1y_raw"),
+        "eps_fy_curr": eps_curr_val,
+        "eps_fy_next": eps_next_val,
         "eps_trailing": _lfy.get("trailing_eps"),
+        # v1.8: Excel-derived FY3 + growth/CAGR columns + provenance
+        "eps_fy3": _lfy.get("eps_fy3"),
+        "eps_fy3_yoy_pct": _lfy.get("growth_fy2_fy3_pct"),
+        "eps_fy1_fy3_cagr_pct": _lfy.get("cagr_fy1_fy3_pct"),
+        "eps_source": _lfy.get("eps_source", "yfinance"),
+        # v1.8: month-over-month revision per FY (vs prev Excel snapshot)
+        **fy_revision,  # eps_fy_curr_revision_pct, eps_fy_next_revision_pct, eps_revision_baseline_date
     }
 
 
@@ -1078,16 +1253,35 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
     has_prev = bool(prev_snapshot.get("tickers"))
     if has_prev:
         print(f"  Step 0    EPS prev-month snapshot: {prev_snapshot.get('for_month')} "
-              f"({prev_snapshot.get('succeeded', '?')}/{prev_snapshot.get('universe_size', '?')} tickers)")
+              f"({prev_snapshot.get('xlsx_covered', prev_snapshot.get('succeeded', '?'))}"
+              f"/{prev_snapshot.get('universe_size', '?')} tickers)")
     else:
         print("  Step 0    EPS prev-month snapshot: not found (revision_dir=新增 for all)")
+
+    # Step 0d: v1.8 — load EPS estimates Excel (primary EPS source)
+    excel_snapshot = load_latest_excel()
+    if excel_snapshot is not None:
+        all_dd_tk = [e["ticker"] for e in universe]
+        us_adr = {t for t in all_dd_tk if "." not in t}
+        # v1.8.3: use alias-aware lookup so 2330.TW resolves to Excel '2330'
+        covered = sorted(t for t in all_dd_tk if excel_snapshot.has(t))
+        missing_us = sorted(t for t in us_adr if not excel_snapshot.has(t))
+        fallback_yf = sorted(t for t in all_dd_tk if not excel_snapshot.has(t))
+        print(f"  Step 0    Excel EPS source: {excel_snapshot.source_file} "
+              f"(snapshot {excel_snapshot.snapshot_date}, covers {len(covered)}/{len(all_dd_tk)})")
+        if missing_us:
+            print(f"  Step 0    Excel missing US/ADR ({len(missing_us)}): {', '.join(missing_us)}")
+    else:
+        print("  Step 0    Excel EPS source: NOT FOUND in data/eps-estimates/ — all tickers fall back to yfinance")
+        missing_us = []
+        fallback_yf = [e["ticker"] for e in universe]
 
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
     enriched: list[dict] = []
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {
-            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot): e["ticker"]
+            ex.submit(enrich_ticker, e, qgm_index, dca_ev_map, dca_trend_map, screener_timing, timing_fallback, skip_ma, ma_cache, quality_cache, prev_snapshot, excel_snapshot): e["ticker"]
             for e in universe
         }
         for i, fut in enumerate(as_completed(futs), 1):
@@ -1149,6 +1343,24 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
         "summary": summary,
         "stocks": enriched,
     }
+    # v1.8: surface Excel provenance + diff for the FE banner
+    if excel_snapshot is not None:
+        doc["eps_estimates_source"] = {
+            "snapshot_date": excel_snapshot.snapshot_date,
+            "source_file": excel_snapshot.source_file,
+            "coverage_count": len([t for t in (e["ticker"] for e in universe)
+                                    if excel_snapshot.has(t)]),
+            "missing_us_adr_tickers": missing_us,
+            "fallback_yfinance_tickers": fallback_yf,
+        }
+    else:
+        doc["eps_estimates_source"] = {
+            "snapshot_date": None,
+            "source_file": None,
+            "coverage_count": 0,
+            "missing_us_adr_tickers": [],
+            "fallback_yfinance_tickers": fallback_yf,
+        }
 
     print(f"\n  ✓ Elapsed: {time.time()-t0:.0f}s")
 
