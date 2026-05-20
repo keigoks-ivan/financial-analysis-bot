@@ -521,8 +521,19 @@ def build_pipeline() -> tuple[dict, dict]:
     print(f"  prior snapshots loaded: {len(prior_snapshots)} (lookback={SNAPSHOT_LOOKBACK})")
     print(f"  yesterday universe: {len(yesterday_universe)} tickers")
 
-    # Universe = quality-middle-layer growth-type (hysteresis-filtered)
-    qe_rows = (qe.get("tier_a") or []) + (qe.get("tier_b") or [])
+    # Universe = quality-middle-layer growth-type (hysteresis-filtered).
+    # v1.1: read from `all_scored` (added in build_quality_entry v1.4) which
+    # contains ALL post-veto rows — not just the top-25 display slice
+    # (tier_a + tier_b), which silently capped our universe at ~23 tickers
+    # and dropped quality compounders like GOOGL / META / NFLX into overflow.
+    qe_rows = qe.get("all_scored")
+    if qe_rows is None:
+        # Fallback for older quality-entry.json (pre-v1.4): use display slice.
+        # WARN so we don't silently under-cover the universe.
+        qe_rows = (qe.get("tier_a") or []) + (qe.get("tier_b") or [])
+        print("  WARN: quality-entry.json missing 'all_scored' — falling back to "
+              f"tier_a+tier_b ({len(qe_rows)} rows). Universe will under-cover; "
+              "rerun build_quality_entry.py to refresh.", file=sys.stderr)
     universe = build_universe(qe_rows, yesterday_universe)
     print(f"  Universe (Q≥{QUALITY_ENTER} / G≥{GROWTH_ENTER} / archetype=成長型, "
           f"with hysteresis): {len(universe)} tickers")

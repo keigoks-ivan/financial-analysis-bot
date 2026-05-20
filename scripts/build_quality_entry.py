@@ -488,6 +488,10 @@ def build_pipeline() -> dict:
         "tier_b": display_b,
         "tier_a_overflow": len(tier_a) - len(display_a),
         "tier_b_overflow": len(tier_b) - len(display_b),
+        # v1.4: expose ALL post-veto scored rows (sorted by final desc) so
+        # downstream consumers (e.g. build_entry_state.py) aren't capped at
+        # DISPLAY_TOTAL=25. tier_a / tier_b above remain display-only slices.
+        "all_scored": scored,
     }
 
 
