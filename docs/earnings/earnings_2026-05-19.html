@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 5/19 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #fafaf9;
+  --surface: #ffffff;
+  --surface-2: #f7f7f5;
+  --border: #e5e5e2;
+  --border-strong: #1a1a1a;
+  --text: #1a1a1a;
+  --text-muted: #666;
+  --text-dim: #999;
+  --accent: #2563eb;
+  --green: #15803d;
+  --green-bg: #f0fdf4;
+  --red: #b91c1c;
+  --red-bg: #fef2f2;
+  --amber: #b45309;
+  --amber-bg: #fffbeb;
+  --orange: #c2410c;
+  --orange-bg: #fff7ed;
+  --radius: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* NAV */
+.imq-nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--border-strong);
+  display: flex; align-items: center; gap: 0;
+  padding: 0 24px; height: 48px;
+  font-size: 13px;
+}
+.imq-brand {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500; font-size: 13px;
+  color: #fff; letter-spacing: -0.02em;
+  margin-right: 24px; white-space: nowrap;
+}
+.imq-brand:hover { color: #e5e5e2; text-decoration: none; }
+.imq-nav > a {
+  color: #ccc; padding: 0 12px; height: 48px;
+  display: flex; align-items: center;
+  font-size: 13px; transition: color 0.15s;
+}
+.imq-nav > a:hover { color: #fff; text-decoration: none; }
+.imq-dd { position: relative; display: flex; align-items: center; }
+.imq-dd-label {
+  color: #ccc; padding: 0 12px; height: 48px;
+  display: flex; align-items: center; cursor: pointer;
+  font-size: 13px; transition: color 0.15s;
+}
+.imq-dd:hover .imq-dd-label { color: #fff; }
+.imq-dd-menu {
+  display: none; position: absolute; top: 48px; left: 0;
+  background: var(--border-strong); border: 1px solid #333;
+  min-width: 160px; border-radius: 4px; padding: 4px 0;
+}
+.imq-dd:hover .imq-dd-menu { display: block; }
+.imq-dd-menu a {
+  display: block; padding: 8px 16px;
+  color: #ccc; font-size: 13px;
+}
+.imq-dd-menu a:hover { color: #fff; background: #333; text-decoration: none; }
+.imq-dd-menu a.active { color: #60a5fa; }
+.imq-dd.active .imq-dd-label { color: #60a5fa; }
+
+/* CONTAINER */
+.container { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
+
+/* BREADCRUMB */
+.breadcrumb {
+  font-size: 12px; color: var(--text-dim);
+  margin-bottom: 24px; font-family: 'IBM Plex Mono', monospace;
+}
+.breadcrumb a { color: var(--text-dim); }
+.breadcrumb a:hover { color: var(--accent); }
+
+/* REPORT HEADER */
+.report-header { margin-bottom: 32px; }
+.report-header h1 {
+  font-size: 28px; font-weight: 700; letter-spacing: -0.03em;
+  margin-bottom: 6px; line-height: 1.2;
+}
+.report-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; color: var(--text-dim);
+  margin-bottom: 16px;
+}
+.report-lede {
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 14px; line-height: 1.65;
+}
+.report-lede strong { color: var(--text); }
+
+/* NOTICE */
+.notice {
+  background: var(--amber-bg); border: 1px solid #fcd34d;
+  border-radius: var(--radius); padding: 10px 14px;
+  font-size: 13px; color: var(--amber); margin-bottom: 24px;
+}
+
+/* TOC */
+.toc {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  margin-bottom: 36px;
+}
+.toc-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.toc ol { padding-left: 20px; }
+.toc li { font-size: 13px; margin-bottom: 4px; }
+
+/* SECTIONS */
+h2 {
+  font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+  margin: 40px 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-strong);
+}
+h3 { font-size: 16px; font-weight: 600; margin: 28px 0 12px; }
+h4 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text-muted);
+  margin: 20px 0 8px;
+}
+
+/* TABLES */
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+thead th {
+  text-align: left; padding: 8px 10px;
+  background: var(--surface-2);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted);
+  border-bottom: 1px solid var(--border-strong);
+}
+tbody td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+tbody tr:hover td { background: var(--surface-2); }
+tbody tr:last-child td { border-bottom: none; }
+
+/* COMPANY CARD */
+.company-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 28px;
+}
+.company-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px; margin-bottom: 16px;
+  flex-wrap: wrap; gap: 8px;
+}
+.ticker {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 20px; font-weight: 700;
+}
+.meta-right {
+  font-size: 13px; color: var(--text-muted);
+  text-align: right;
+}
+.company-card ul { padding-left: 20px; margin: 8px 0; }
+.company-card ul li { margin-bottom: 5px; font-size: 14px; }
+
+/* TAGS */
+.tag {
+  display: inline-block; padding: 2px 7px;
+  border-radius: 4px; font-size: 11px; font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.04em; vertical-align: middle;
+}
+.tag.beat { background: var(--green-bg); color: var(--green); }
+.tag.miss { background: var(--red-bg); color: var(--red); }
+.tag.inline { background: var(--amber-bg); color: var(--amber); }
+.tag.raise { background: var(--green-bg); color: var(--green); }
+.tag.maintain { background: var(--amber-bg); color: var(--amber); }
+.tag.lower { background: var(--red-bg); color: var(--red); }
+
+/* STOCK MOVE */
+.stock-move {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 4px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; font-weight: 600;
+}
+.stock-move.up { background: var(--green-bg); color: var(--green); }
+.stock-move.down { background: var(--red-bg); color: var(--red); }
+
+/* WINNERS / LOSERS */
+.winner-row td:first-child { border-left: 3px solid var(--green); }
+.loser-row td:first-child { border-left: 3px solid var(--red); }
+
+/* CONTRADICTION */
+.contradiction {
+  background: var(--orange-bg);
+  border-left: 3px solid var(--orange);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 18px; margin: 14px 0;
+}
+.contradiction h4 {
+  color: var(--orange); text-transform: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0; margin-top: 0; margin-bottom: 6px;
+}
+.implication { margin-top: 8px; font-size: 14px; }
+.implication strong { color: var(--orange); }
+
+/* SUMMARY LIST */
+.summary-list { list-style: none; padding: 0; }
+.summary-list li {
+  background: var(--surface-2);
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 14px;
+}
+
+/* DISCLAIMER */
+.disclaimer {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 18px;
+  font-size: 12px; color: var(--text-muted);
+  margin-top: 48px; line-height: 1.6;
+}
+
+/* FOOTER */
+footer {
+  text-align: center; margin-top: 24px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; color: var(--text-dim);
+}
+
+/* MOBILE */
+@media (max-width: 720px) {
+  .container { padding: 20px 16px 48px; }
+  .report-header h1 { font-size: 22px; }
+  .company-card { padding: 16px 18px; }
+  .company-header { flex-direction: column; }
+  .meta-right { text-align: left; }
+  .ticker { font-size: 16px; }
+  .imq-nav { overflow-x: auto; }
+  table { font-size: 13px; }
+  thead th, tbody td { padding: 7px 8px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="imq-nav">
+  <a href="/" class="imq-brand">InvestMQuest. Research</a>
+  <a href="/">首頁</a>
+  <div class="imq-dd">
+    <span class="imq-dd-label">研究</span>
+    <div class="imq-dd-menu">
+      <a href="/research/">個股 DD</a>
+      <a href="/id/">產業深度 ID</a>
+      <a href="/id/theses.html">⭐ 九大非共識</a>
+      <a href="/pm/">PM 複盤</a>
+    </div>
+  </div>
+  <div class="imq-dd active">
+    <span class="imq-dd-label">市場</span>
+    <div class="imq-dd-menu">
+      <a href="/briefing/">每日簡報</a>
+      <a href="/earnings/" class="active">財報分析</a>
+      <a href="/weekly/">週報</a>
+      <a href="/six-state/">六狀態機</a>
+    </div>
+  </div>
+  <div class="imq-dd">
+    <span class="imq-dd-label">工具</span>
+    <div class="imq-dd-menu">
+      <a href="/backtest/">量化回測</a>
+      <a href="/qgm/">QGM 美股</a>
+      <a href="/qgm-tw/">QGM 台股</a>
+    </div>
+  </div>
+  <a href="/how-to.html">📘 使用說明</a>
+</nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-05-19
+  </div>
+
+  <header class="report-header">
+    <h1>美股 5/19 財報日深度分析</h1>
+    <div class="report-meta">4 companies analyzed · $50B+ 放寬至 $9B+ · 盤前+盤後完整覆蓋 · 2026-05-19</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>KEYS Keysight 創歷史最強季度，EPS $2.87 大幅超越預期 $2.32（+23.7%），盤中收漲 +1.4% 至 $345.23，Q3 指引 EPS $2.43–2.49 vs 估 $2.14，再次大幅超前。HD Home Depot 盤前 BEAT EPS/Revenue，但調整後 EPS $3.43 較去年同期 $3.56 仍 YoY -3.7%，同店銷售僅 +0.6%（預期 +0.9%），重申全年指引，股價收 +0.88% 至 $302.44，呈現典型「beat + maintain = 溫和正面」格局。CAVA 同店銷售 +9.7%（預期 +6.1%），EPS $0.20 超越預期 $0.17，全年指引全面上調，盤後飆升 +6%，是當日最鮮明的 Beat + Raise = 強勁正面反應案例。TOL Toll Brothers EPS $2.72 大幅超越預期 $2.57，但 YoY -22.3%（vs 去年同期 $3.50），交房量下滑，全年指引上調；房市壓力明確但訂單量 +7% YoY 顯示需求正在復甦。
+    </div>
+  </header>
+
+  <div class="notice">
+    ⚠️ 當日 $50B+ 公司僅 HD（$297B）和 KEYS（$60B），已放寬至 $9B+ 以確保覆蓋零售與地產產業關鍵訊號，並納入 TOL（$9B）和 CAVA（$8.9B）。
+  </div>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#companies">§1 各公司財報重點</a></li>
+      <li><a href="#cross">§2 跨公司比較與趨勢</a></li>
+      <li><a href="#winners">§3 贏家 / 輸家</a></li>
+      <li><a href="#contradictions">§4 矛盾與風險訊號</a></li>
+      <li><a href="#summary">§5 總結</a></li>
+    </ol>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="companies">§1 各公司財報重點</h2>
+
+  <!-- HD -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">HD · The Home Depot</span>
+      <span class="meta-right">$297B · 盤前 BMO · <span class="stock-move up">+0.88% 收 $302.44</span></span>
+    </div>
+
+    <h4>數據表 — Q1 FY2026（截至 2026-05-03）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Non-GAAP EPS</td>
+          <td>$3.43</td>
+          <td>$3.41</td>
+          <td><span class="tag beat">BEAT +0.6%</span> · YoY -3.7%（去年 $3.56）</td>
+        </tr>
+        <tr>
+          <td>GAAP EPS（稀釋）</td>
+          <td>$3.30</td>
+          <td>—</td>
+          <td>YoY -4.3%（去年 $3.45）· Non-GAAP vs GAAP 差 $0.13</td>
+        </tr>
+        <tr>
+          <td>營收</td>
+          <td>$41.77B</td>
+          <td>$41.63B</td>
+          <td><span class="tag beat">BEAT +0.3%</span> · YoY +4.8%</td>
+        </tr>
+        <tr>
+          <td>Adj. EBITDA</td>
+          <td>$6.07B</td>
+          <td>$5.90B</td>
+          <td><span class="tag beat">BEAT +2.8%</span> · Margin 14.5%</td>
+        </tr>
+        <tr>
+          <td>同店銷售（Comp）</td>
+          <td>+0.6%</td>
+          <td>+0.9%</td>
+          <td><span class="tag miss">MISS</span> · 美國 comp +0.4%</td>
+        </tr>
+        <tr>
+          <td>毛利率</td>
+          <td>33.0%</td>
+          <td>~33.1%</td>
+          <td><span class="tag inline">INLINE</span> · YoY -75bps（GMS 收購衝擊）</td>
+        </tr>
+        <tr>
+          <td>淨利潤</td>
+          <td>$3.29B</td>
+          <td>—</td>
+          <td>YoY -4.2%（去年 $3.43B）</td>
+        </tr>
+        <tr>
+          <td>FCF Margin</td>
+          <td>12.4%</td>
+          <td>—</td>
+          <td>YoY 大幅改善（去年 8.8%）+360bps</td>
+        </tr>
+        <tr>
+          <td>Operating Margin</td>
+          <td>11.9%</td>
+          <td>~12%</td>
+          <td><span class="tag inline">INLINE</span> · YoY -100bps</td>
+        </tr>
+        <tr>
+          <td>全年指引（FY2026）</td>
+          <td>維持不變</td>
+          <td>—</td>
+          <td><span class="tag maintain">MAINTAIN</span> · 詳見下方</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>GMS 收購衝擊：</strong>毛利率 -75bps YoY，CFO McPhail 明確指出「the vast majority reflects the acquisition of GMS」，剔除 GMS 後 core gross margin 基本持平。</li>
+      <li><strong>Comp ticket vs transaction 背離：</strong>平均客單價 +2.3% 至 $92.76，但 comp transactions -1.3%，顯示消費者購買頻率下降，靠漲價撐住 comp。</li>
+      <li><strong>大單交易（$1,000+）：</strong>+0.8% YoY，弱但正成長，房市高利率下的大型改裝需求仍受壓制。</li>
+      <li><strong>FCF Margin 大幅改善：</strong>從 8.8% 升至 12.4%（+360bps），是本季最亮眼指標，現金轉換效率顯著提升。</li>
+      <li><strong>門市數：</strong>2,361 間（+11 vs 去年同期），季度新開 2 間，擴張審慎。</li>
+      <li><strong>庫存：</strong>$27.3B，YoY +$1.5B，庫存週轉 4.2x（去年 4.3x），稍微放緩。</li>
+      <li><strong>ROIC：</strong>25.4%（去年 31.3%），大幅下降，主因 GMS 收購使資本基礎擴大。</li>
+      <li><strong>全年指引重申：</strong>總銷售成長 2.5%–4.5%、comp 銷售 flat to +2%、毛利率 33.1%、Adj EPS flat to +4%（基數 $14.69）。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Ted Decker：「underlying demand was 'relatively similar' to what the company saw throughout fiscal 2025」，消費者需求沒有惡化，但也沒有回升。</li>
+      <li>Decker 明確表示：「We are not assuming a 'marked improvement' in underlying demand」，H2 comp 預期改善「solely driven by a return to normal storm activity」（非基本面好轉）。</li>
+      <li>CFO Richard McPhail 在分析師追問 gross margin 時表示：「potential cost pressures building in the form of fuel prices and other commodity input costs, new tariffs have been introduced」，並補充「the environment is different than it was 3 months ago, probably a more volatile external environment.」</li>
+      <li>McPhail 提到公司已申請 tariff refunds（Section 232 相關），但「have received only an immaterial amount so far」，預期後續更多退款。</li>
+      <li>分析師追問 gross margin 改善路徑：McPhail 回應「We expect gross margin for the year to be at 33.1, consistent with our original guide. The change from last year largely reflecting the acquisition of GMS.」</li>
+      <li>關於住房市場：Decker 承認高利率、低房屋周轉率構成持續逆風，北部和西部地區因天氣有利出現正 comp。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li><strong>盤中收 +0.88% 至 $302.44</strong>（Finviz 4PM ET；前收 $299.81，Yahoo Finance 確認）</li>
+      <li>2-source 確認：Finviz 顯示 $302.44 +0.88%；Yahoo Finance 顯示前收 $299.81，漲幅方向一致。</li>
+      <li>漲幅理由：beat EPS/Revenue + 重申全年指引 = 市場解讀為「穩定」，免除了下修指引的尾部風險。Yahoo Finance 報導「company said demand remained consistent」。</li>
+      <li>股價仍在 52 週低點附近（52W low $289.10，52W high $426.75），距高點已跌 -29%，市場並未因 beat 而大幅反彈——估值壓縮風險未消。</li>
+    </ul>
+  </div>
+
+  <!-- KEYS -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">KEYS · Keysight Technologies</span>
+      <span class="meta-right">$60B · 盤後 AMC · <span class="stock-move up">+1.4% 收 $345.23</span></span>
+    </div>
+
+    <h4>數據表 — Q2 FY2026（截至 2026-04-30）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Non-GAAP EPS</td>
+          <td>$2.87</td>
+          <td>$2.32</td>
+          <td><span class="tag beat">BEAT +23.7%</span> · YoY +68.8%（去年 $1.70）</td>
+        </tr>
+        <tr>
+          <td>GAAP EPS（稀釋）</td>
+          <td>$2.02</td>
+          <td>—</td>
+          <td>GAAP vs Non-GAAP 差 $0.85，差距顯著</td>
+        </tr>
+        <tr>
+          <td>淨利潤（GAAP）</td>
+          <td>$349M</td>
+          <td>—</td>
+          <td>Non-GAAP 調整幅度大，需留意</td>
+        </tr>
+        <tr>
+          <td>營收</td>
+          <td>$1.72B</td>
+          <td>$1.71B</td>
+          <td><span class="tag beat">BEAT +0.6%</span> · YoY +31.3%（去年 $1.31B）</td>
+        </tr>
+        <tr>
+          <td>全年指引（FY2026）</td>
+          <td>上調</td>
+          <td>原 ~20%+</td>
+          <td><span class="tag raise">RAISE</span> · 管理層正式上調全年預期</td>
+        </tr>
+        <tr>
+          <td>Q3 FY2026 EPS 指引</td>
+          <td>$2.43–$2.49</td>
+          <td>$2.14（估）</td>
+          <td><span class="tag beat">大幅超前 +16%</span></td>
+        </tr>
+        <tr>
+          <td>Q3 FY2026 Revenue 指引</td>
+          <td>$1.73–$1.75B</td>
+          <td>$1.64B（估）</td>
+          <td><span class="tag beat">超前 +6.7%</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>歷史最強季度：</strong>CEO Dhanasekaran 宣告「Keysight delivered the strongest quarter in the company's history, capping a record first half with all-time highs in orders, revenue, EPS and free cash flow」——訂單、營收、EPS、FCF 四項全部創歷史新高。</li>
+      <li><strong>EPS 超越幅度罕見：</strong>$2.87 vs 估 $2.32，+$0.55 或 +23.7%，是典型的 massive beat，遠超過去幾季的個位數百分點超越。</li>
+      <li><strong>Q3 指引大幅超前：</strong>EPS $2.43–2.49 vs 估 $2.14（+16%）、Revenue $1.73–1.75B vs 估 $1.64B（+6.7%），連續兩季指引大幅超前分析師預期。</li>
+      <li><strong>GAAP vs Non-GAAP 缺口 $0.85：</strong>GAAP EPS $2.02 vs Non-GAAP $2.87，差異主因包含 stock-based compensation、intangibles amortization，需注意非現金費用水位。</li>
+      <li><strong>兩大 Segment：</strong>Communications Solutions Group（CSG）持續受 AI 基礎設施、5G、數據中心驅動；Electronic Industrial Solutions Group（EISG）半導體、汽車電氣化測試需求旺盛。</li>
+      <li><strong>地理分布：</strong>前季（Q1）數據：AI-related orders 成長「significantly above」公司均值 30%，AI 貢獻客戶數翻倍；Q2 延續此趨勢。</li>
+      <li><strong>股票回購：</strong>$1.5B 授權，表達管理層對現金流的高度信心。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Satish Dhanasekaran：「Keysight delivered the strongest quarter in the company's history, capping a record first half with all-time highs in orders, revenue, EPS and free cash flow.」</li>
+      <li>Dhanasekaran 補充：「With strong year-to-date momentum and a robust pipeline of opportunities, we are raising our expectations for fiscal 2026.」——此為正式上調全年指引的關鍵措辭。</li>
+      <li>AI 需求面：Q1 call 中確認 AI 相關訂單成長「significantly above 30%」均值，AI 暴露佔總收入約 10%，但成長動能最強，客戶數翻倍顯示滲透率持續擴大。</li>
+      <li>半導體測試：HBM（高頻寬記憶體）和 AI 驅動的 wafer-level test 需求加速，IC 複雜度提升推動測試費用增加。</li>
+      <li>Transcript 完整版未取得（AMC 盤後，Q2 call 時間為今日盤後），以上 Q3 guidance 和 CEO 引述來自 Benzinga/AP/WTOP 即時新聞。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li><strong>盤中收 +1.4% 至 $345.23</strong>（Daily Political 確認：「Shares of KEYS traded up $4.75 during trading hours on Tuesday, hitting $345.23」；前收 $340.48）</li>
+      <li>2-source 確認：Daily Political $345.23 +$4.75；Benzinga headline「Keysight Stock Climbs On Record Q2 Earnings Beat」——方向一致。</li>
+      <li>注意：報告為 AMC，$345.23 為盤中表現，盤後交易延續的方向性資訊尚待確認，但 Benzinga 標題和 Q3 大幅超前指引支持正向後市。</li>
+      <li>Susquehanna 前一日（5/18）已搶先調高目標價至 $415（from $300），市場部分已提前定價，但 EPS +23.7% 的實際結果仍超越市場最樂觀情境。</li>
+    </ul>
+  </div>
+
+  <!-- CAVA -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">CAVA · CAVA Group（用戶規模補充）</span>
+      <span class="meta-right">$8.9B · 盤後 AMC · <span class="stock-move up">+6% 盤後</span></span>
+    </div>
+
+    <h4>數據表 — Q1 FY2026（16週，截至 2026-04-19）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Adj. EPS</td>
+          <td>$0.20</td>
+          <td>$0.17</td>
+          <td><span class="tag beat">BEAT +17.6%</span> · YoY -9.1%（去年 $0.22）</td>
+        </tr>
+        <tr>
+          <td>營收</td>
+          <td>$438.3M</td>
+          <td>$418.2–418.5M</td>
+          <td><span class="tag beat">BEAT +4.8%</span> · YoY +32.2%</td>
+        </tr>
+        <tr>
+          <td>同店銷售（SSS）</td>
+          <td>+9.7%</td>
+          <td>+6.1%（估）</td>
+          <td><span class="tag beat">BEAT 大幅超越</span> · 含 traffic +6.8%</td>
+        </tr>
+        <tr>
+          <td>Guest Traffic</td>
+          <td>+6.8%</td>
+          <td>—</td>
+          <td>非常強勁——是真實流量成長，非純靠漲價</td>
+        </tr>
+        <tr>
+          <td>Price/Mix</td>
+          <td>+2.9%</td>
+          <td>—</td>
+          <td>漲價貢獻相對合理，不過度依賴</td>
+        </tr>
+        <tr>
+          <td>Restaurant-Level Margin</td>
+          <td>25.1%</td>
+          <td>~24%</td>
+          <td><span class="tag beat">BEAT</span> · YoY 持平（去年 25.1%）</td>
+        </tr>
+        <tr>
+          <td>Adj. EBITDA</td>
+          <td>$61.7M</td>
+          <td>—</td>
+          <td>YoY +37.6%；Margin 14.1%</td>
+        </tr>
+        <tr>
+          <td>淨利潤</td>
+          <td>$23.6M</td>
+          <td>—</td>
+          <td>YoY -8.2%（去年 $25.7M）；稅率提升所致</td>
+        </tr>
+        <tr>
+          <td>新開門市</td>
+          <td>20 間</td>
+          <td>~19 間</td>
+          <td>總計 459 間，YoY +20.2%</td>
+        </tr>
+        <tr>
+          <td>全年指引（FY2026）</td>
+          <td>全面上調</td>
+          <td>—</td>
+          <td><span class="tag raise">RAISE</span> · 詳見下方</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>SSS +9.7% 大幅超越預期 +6.1%：</strong>且主要由流量驅動（+6.8%），顯示 Glazed Salmon 新品引爆效果明顯，非靠漲價拉高 comp。</li>
+      <li><strong>全年指引全面上調：</strong>SSS 預期從 3%–5% 上調至 4.5%–6.5%；Adj. EBITDA 從 $176–184M 上調至 $181–191M；新開門市從 74–76 間上調至 75–77 間。</li>
+      <li><strong>Restaurant-Level Margin 25.1%：</strong>維持去年同期水準，儘管 Glazed Salmon 引入有一定食材成本，展現良好的定價能力。</li>
+      <li><strong>淨利潤 YoY 下滑：</strong>$23.6M vs 去年 $25.7M（-8.2%），原因為有效稅率提升，屬於會計因素，非業務惡化。</li>
+      <li><strong>進軍中西部市場：</strong>Q1 開設 Cincinnati、St. Louis、Columbus 新市場，地理覆蓋持續擴張。</li>
+      <li><strong>估值仍高：</strong>P/E ~147x，P/E/G 需要近乎完美的執行，但本季結果大幅超越，暫時緩解高估值壓力。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Brett Schulman：「Amid today's broader macroeconomic environment and geopolitical uncertainty, our first quarter results reflect our position as a clear industry leader and our ability to meet the moment for the modern consumer.」</li>
+      <li>管理層強調在宏觀不確定環境下，地中海快餐品類的韌性——CAVA 對比 fast casual peers（本週早些時候有同業出現負面 comp）顯示出明顯的品牌差異。</li>
+      <li>Transcript 完整版未取得，以上為 Investing.com 新聞引述。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li><strong>盤後 +6% 以上</strong>（Investing.com 原文：「shares up over 6% in after-hours trading Tuesday」；前收 $79.89）</li>
+      <li>2-source 確認：Investing.com 報導「up over 6% in after-hours」；Yahoo Finance 確認 CAVA 是當日 trending ticker，「raised full-year guidance, indicating confidence」——方向一致。</li>
+      <li>漲幅理由：Beat + Raise 雙重觸發——SSS +9.7% 遠超預期、全年 SSS 指引上調至 4.5%–6.5%（vs 原 3%–5%）。這是本日最清晰的 Beat + Raise = 正向反應案例。</li>
+      <li>之前股價已從高點下跌 ~15%，市場以高波動進入財報，實際結果大幅改善情緒。</li>
+    </ul>
+  </div>
+
+  <!-- TOL -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">TOL · Toll Brothers（$9B，規模補充）</span>
+      <span class="meta-right">$9B · 盤後 AMC · 盤後反應待確認</span>
+    </div>
+
+    <h4>數據表 — Q2 FY2026（截至 2026-04-30）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>EPS（稀釋）</td>
+          <td>$2.72</td>
+          <td>$2.57–2.58</td>
+          <td><span class="tag beat">BEAT +5.8%</span> · YoY -22.3%（去年 $3.50）</td>
+        </tr>
+        <tr>
+          <td>Home Sales Revenue</td>
+          <td>$2.51B</td>
+          <td>$2.41–2.42B</td>
+          <td><span class="tag beat">BEAT +4.1%</span> · YoY -7.4%（去年 $2.71B）</td>
+        </tr>
+        <tr>
+          <td>Total Revenue</td>
+          <td>$2.53B</td>
+          <td>$2.42B</td>
+          <td><span class="tag beat">BEAT +4.5%</span></td>
+        </tr>
+        <tr>
+          <td>交房量</td>
+          <td>2,491 間</td>
+          <td>2,400–2,500（指引區間）</td>
+          <td><span class="tag inline">INLINE</span> · YoY -14.1%（去年 2,899 間）</td>
+        </tr>
+        <tr>
+          <td>平均售價</td>
+          <td>~$1,008K</td>
+          <td>$975–985K（指引）</td>
+          <td><span class="tag beat">BEAT</span> · YoY +8.0%（去年 $933.7K）</td>
+        </tr>
+        <tr>
+          <td>Net Signed Contracts（簽約）</td>
+          <td>$2.81B（2,834 間）</td>
+          <td>—</td>
+          <td>YoY +7.9% 金額、+7.0% 數量——強勁訂單復甦</td>
+        </tr>
+        <tr>
+          <td>Backlog（待交）</td>
+          <td>$6.32B</td>
+          <td>—</td>
+          <td>重要領先指標</td>
+        </tr>
+        <tr>
+          <td>全年指引（FY2026）</td>
+          <td>上調</td>
+          <td>—</td>
+          <td><span class="tag raise">RAISE</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>EPS YoY 大幅衰退 -22.3%：</strong>從 $3.50 降至 $2.72，主因交房量 -14.1%（2,491 vs 2,899），高利率抑制房屋周轉。</li>
+      <li><strong>但平均售價 +8%：</strong>從 $933.7K 升至 ~$1,008K，顯示 luxury homebuyer 對售價的承受力仍強，未大幅讓步。</li>
+      <li><strong>關鍵復甦訊號——簽約量 +7% YoY：</strong>Net signed contracts $2.81B vs 去年 $2.60B（+8%），顯示需求端正在復甦，雖然交房量仍在消化前幾年的週期，但新簽約是領先指標。</li>
+      <li><strong>全年指引上調：</strong>管理層對 H2 更有信心，上調全年 homebuilding 指引，顯示 backlog 和訂單管線支撐。</li>
+      <li><strong>現金：</strong>季末持有 $1.11B 現金，$2.24B revolver 可用，財務彈性充裕。</li>
+      <li><strong>股票回購：</strong>Q2 回購 $175.4M，顯示管理層認為現價偏低。</li>
+      <li><strong>季度股息：</strong>提高至每股 $0.26，管理層對現金流有信心。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>Transcript 未取得（AMC 盤後，transcript 尚未公開）。</li>
+      <li>根據 press release：管理層強調 luxury homebuyer 需求韌性，以及 signed contracts +7% YoY 的正向信號。</li>
+      <li>全年指引上調反映管理層對 H2 交房 pipeline 的信心，incentives 穩定在 ~8% 連續三季。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li>盤後交易資料尚未確認 2 個 source 方向一致的具體 %（report 在今日盤後 8:41 PM UTC）。</li>
+      <li>基本面：EPS beat $2.72 vs 估 $2.57（+5.8%），revenue beat，signed contracts +7%，全年指引上調——方向偏正。</li>
+      <li>風險：EPS YoY -22.3% 的顯著衰退，且整體房市仍承壓（與 HD 的 call 互相呼應）。</li>
+    </ul>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="cross">§2 跨公司比較與趨勢</h2>
+
+  <h3>消費者與住房市場：雙重壓力下的分化</h3>
+  <p style="font-size:14px; margin-bottom: 12px;">HD 和 TOL 同日財報，提供了一次難得的「住房生態系統」橫切面。HD CEO Decker 表示 demand「relatively similar」至去年，未好轉；TOL EPS YoY -22.3%，交房量 -14.1%。但兩家都有相同結論：<strong>壓力來自利率和房屋周轉（inventory lock-in），而非消費者整體倒退</strong>。不約而同地，HD 的 FCF margin 大幅改善（+360bps），TOL 的 signed contracts +7%——顯示底部存在韌性，但宏觀不確定性（tariff、燃料成本）仍是主要變數。</p>
+
+  <h3>AI 基礎設施需求：KEYS 是最直接的 proxy</h3>
+  <p style="font-size:14px; margin-bottom: 12px;">Keysight 的歷史最強季度，直接反映 AI 基礎設施測試需求的加速擴張。AI-related orders 成長大幅超越公司均值（30%+），HBM、Ethernet AI networking、光互連的驗證需求全線爆發。KEYS 不在 Nvidia 供應鏈（不賣晶片），但在<strong>「測試 → 驗證 → 規格化」</strong>的 AI infra cycle 中佔據無法替代的位置，且 margin 隨規模遞升（gross margin 66.7%）。Q3 指引再次大幅超前，顯示 AI capex 週期的可見度延伸至少兩季以上。</p>
+
+  <h3>快餐消費分化：CAVA 的韌性對比同期壓力</h3>
+  <p style="font-size:14px; margin-bottom: 12px;">CAVA SSS +9.7%（vs 估 +6.1%），同業同期有壓力，顯示品牌差異化和菜單創新（Glazed Salmon）帶來真實的流量增長（+6.8%）。在宏觀不確定的環境下，健康導向、高 throughput 的地中海快餐佔據消費升級和消費降級之間的「甜蜜點」——比正餐便宜，比傳統速食健康。</p>
+
+  <h3>Beat/Raise Pattern 分析</h3>
+  <table>
+    <thead>
+      <tr><th>公司</th><th>EPS Beat</th><th>Revenue Beat</th><th>指引</th><th>股價反應</th><th>Pattern</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>KEYS</td>
+        <td>+23.7%</td>
+        <td>+0.6%</td>
+        <td><span class="tag raise">RAISE 大幅</span></td>
+        <td>+1.4%（盤中）</td>
+        <td>Beat + Raise = 正向，但幅度小於 EPS 超越程度</td>
+      </tr>
+      <tr>
+        <td>CAVA</td>
+        <td>+17.6%</td>
+        <td>+4.8%</td>
+        <td><span class="tag raise">RAISE 全面</span></td>
+        <td>+6%（盤後）</td>
+        <td>Beat + Raise = 強勁正向</td>
+      </tr>
+      <tr>
+        <td>HD</td>
+        <td>+0.6%</td>
+        <td>+0.3%</td>
+        <td><span class="tag maintain">MAINTAIN</span></td>
+        <td>+0.88%</td>
+        <td>Narrow Beat + Maintain = 溫和正向，尾部風險解除</td>
+      </tr>
+      <tr>
+        <td>TOL</td>
+        <td>+5.8%</td>
+        <td>+4.5%</td>
+        <td><span class="tag raise">RAISE</span></td>
+        <td>待確認</td>
+        <td>Beat + Raise，但 YoY 大衰退，市場反應取決於定價</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============================================================ -->
+  <h2 id="winners">§3 贏家 / 輸家</h2>
+
+  <h3>贏家（基本面 + 股價正向）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="winner-row">
+        <td>CAVA</td>
+        <td><strong>盤後 +6%。</strong>EPS +17.6% beat（$0.20 vs $0.17），SSS +9.7% 遠超預期 +6.1%，全年 SSS 指引上調至 4.5%–6.5%（vs 原 3%–5%），且主要為真實流量成長（+6.8%）而非漲價。Glazed Salmon 新品效果超預期，中西部新市場進入順利。地中海快餐在宏觀不確定環境下展現品類韌性，估值高但本季執行近乎完美。</td>
+      </tr>
+      <tr class="winner-row">
+        <td>KEYS</td>
+        <td><strong>盤中 +1.4% 收 $345.23。</strong>歷史最強季度，EPS $2.87 超越預期 +23.7%，訂單、營收、EPS、FCF 四項全部創歷史新高。Q3 指引 EPS $2.43–2.49 vs 估 $2.14（+16%），再次大幅超前。AI 基礎設施測試需求持續加速，HBM 和 Ethernet AI networking 驅動。盤中漲幅相對保守（+1.4%），部分因市場已有所定價（Susquehanna 前日上調至 $415）。</td>
+      </tr>
+      <tr class="winner-row">
+        <td>HD</td>
+        <td><strong>收盤 +0.88% 至 $302.44。</strong>雖然漲幅有限，但在住房壓力持續、EPS YoY -3.7% 的背景下，beat EPS/Revenue 並重申全年指引，等於確認沒有下修風險。FCF margin 大幅改善至 12.4%（+360bps YoY）是本季最亮眼的 quality signal。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>輸家（基本面壓力 / 數據不如預期）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="loser-row">
+        <td>TOL（相對）</td>
+        <td><strong>盤後反應待確認。</strong>EPS $2.72 beat 估值，但 YoY -22.3%（去年 $3.50）是顯著的盈利壓縮。交房量 -14.1% YoY，反映高利率對住房交易的持續抑制。雖然 signed contracts +7% 是正面領先指標，但短期 EPS 趨勢仍在下行，全年指引上調能否說服市場需要觀察。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============================================================ -->
+  <h2 id="contradictions">§4 矛盾與風險訊號</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：HD FCF 大幅改善 vs GAAP 淨利潤下滑</h4>
+    <p>HD FCF Margin 從 8.8% 升至 12.4%（+360bps），但 GAAP 淨利潤從 $3.43B 降至 $3.29B（-4.2%）。兩者方向相反。</p>
+    <p class="implication">→ <strong>Implication：</strong>改善的 FCF 部分來自 working capital 管理（如應付帳款延長），非純粹運營效率提升。投資者應區分「cash generation quality」vs「accounting earnings」，不能只看 FCF 的表面改善。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：KEYS Non-GAAP EPS $2.87 vs GAAP EPS $2.02（差距 $0.85）</h4>
+    <p>Non-GAAP vs GAAP 差距 $0.85 或 42%，是本日最大的 adjusted vs reported 缺口。KEYS 的非現金費用（SBC、無形資產攤銷）在快速成長期間明顯膨脹。</p>
+    <p class="implication">→ <strong>Implication：</strong>市場慣性以 Non-GAAP 看 KEYS，但 GAAP EPS $2.02 vs 股價 $345（P/E ~171x GAAP）提醒估值並不便宜。若 AI infra 需求在任何季度放緩，調整後 EPS 的巨大缺口會使估值壓縮更劇烈。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 3：CAVA 淨利潤 YoY 下滑 vs Adj. EBITDA 大幅成長</h4>
+    <p>CAVA 淨利潤 $23.6M（YoY -8.2%，去年 $25.7M），同時 Adj. EBITDA +37.6% 至 $61.7M。方向完全相反。</p>
+    <p class="implication">→ <strong>Implication：</strong>差異來自稅率提升和 SBC 等費用，屬會計因素，但也提醒 CAVA 在 147x P/E 的估值下，任何盈利計算方式的選擇都會顯著影響「合理性」。Restaurant-level margin 25.1% 才是評估品牌實力的更核心指標。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：TOL 簽約量 +7% YoY vs 交房量 -14% YoY</h4>
+    <p>TOL 新簽合約 2,834 間（+7% YoY），但實際交房 2,491 間（-14% YoY）。領先指標 vs 當期交付嚴重背離。</p>
+    <p class="implication">→ <strong>Implication：</strong>背離反映 luxury 建屋週期長（通常 12–18 個月從簽約到交付），且前幾年高利率期間的放緩在現在交房。簽約 +7% 是真正的正面訊號，但 EPS 的改善需要等 2–3 季後才能反映。短期內 EPS YoY 衰退仍是股價壓力來源。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5：HD 重申指引「穩定」vs CFO 警示 tariff 和燃料成本「更不確定」</h4>
+    <p>HD 全年指引維持不變（重申），但 CFO McPhail 表示「the environment is different than it was 3 months ago, probably a more volatile external environment」，並坦承 tariff refunds「have received only an immaterial amount.」</p>
+    <p class="implication">→ <strong>Implication：</strong>「maintain guidance」 + 「更不確定的外部環境」是一個矛盾組合。管理層可能選擇不下修以穩定市場情緒，但實際 cost headwind 尚未完全量化到指引中。若 tariff 成本在 H2 進一步升高，H2 comp 改善的「storm activity」邏輯就會被侵蝕。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 6：住房生態系統的「訊號衝突」</h4>
+    <p>HD CFO 說「homeowners are pulling back on bigger-ticket work」，但 TOL 的平均售價 +8% 至 ~$1,008K，luxury homebuyer 願意支付更高房價。同為住房相關，訊號方向不一致。</p>
+    <p class="implication">→ <strong>Implication：</strong>這是一個「K 型復甦」訊號——高端置業（TOL luxury）和存量屋改裝（HD）面對截然不同的消費心理。高淨值族群在高利率下仍購買豪宅；中產階級推遲 $1,000+ 的改裝項目。投資者需分開看待這兩個細分市場，而非用「住房景氣」一刀切。</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="summary">§5 總結</h2>
+
+  <ul class="summary-list">
+    <li><strong>1. AI 測試基礎設施需求已進入加速擴張期。</strong>KEYS 歷史最強季度（EPS +23.7% beat）不是偶然——HBM、Ethernet AI networking、光互連驗證需求全線爆發。Q3 指引再度大幅超前（+16% vs 估），顯示 AI capex 週期可見度已延伸至少兩季。KEYS 是今日唯一真正受益於 AI megatrend 的直接 proxy，對評估 AI infra supply chain 「design → validate」這段具有高參考價值。</li>
+
+    <li><strong>2. 「Beat + Raise = 強勁正向」vs「Narrow Beat + Maintain = 溫和正向」，股市清晰區分。</strong>CAVA（beat +17.6%，SSS +9.7% vs 估 +6.1%，全面 raise）盤後 +6%；KEYS（beat +23.7%，raise）盤中 +1.4%（部分提前定價）；HD（beat 0.6%，maintain）+0.88%。今日印證：市場對指引方向的敏感度高於 beat 幅度，且「raise + beat」組合是觸發超額收益的必要條件。</li>
+
+    <li><strong>3. 住房生態系統底部存在韌性，但復甦路徑不均。</strong>HD FCF margin 大幅改善，TOL signed contracts +7%——兩個數據都指向底部正在形成。但 EPS 的改善需要時間兌現：HD comp 仍在 0.6%（低於預期 0.9%），TOL 交房量 -14%。「H2 改善靠 storm activity 而非基本面」（HD CEO）這句話是今日最誠實的 forward guidance，也是最大的風險提示。</li>
+
+    <li><strong>4. 地中海快餐的 consumer resilience 訊號與 HD 的消費壓力形成對比。</strong>CAVA traffic +6.8%、SSS +9.7%，在宏觀不確定背景下仍強勁，對比 HD 的 transactions -1.3%，反映消費者 wallet share 的重新分配——外出用餐 > 家裝改造。CAVA 代表的「健康、快速、合理定價」品類正在搶佔消費份額，與 home improvement 的謹慎形成鮮明對比。</li>
+
+    <li><strong>5. Tariff 和燃料成本仍是 2026 H2 最大的系統性風險，尚未完全量化進指引。</strong>HD CFO 直言「environment is different than 3 months ago」，tariff refunds 僅收到 immaterial amount，新的 Section 232 tariff 已引入。KEYS 的測試設備業務相對 insulated（不直接暴露 tariff），但 HD 和 TOL 的成本結構（木材、鋼鐵、進口建材）均存在暴露。若 tariff 在 H2 持續升高，今日「maintain guidance」的公司可能在 Q2 reporting 時面臨下修壓力。</li>
+  </ul>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+  </div>
+
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>

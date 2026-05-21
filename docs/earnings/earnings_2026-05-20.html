@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 5/20 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#ffffff;--bg-subtle:#fafaf9;--surface:#ffffff;--surface-2:#f7f7f5;
+  --border:#e5e5e2;--border-strong:#1a1a1a;--text:#1a1a1a;--text-muted:#666;
+  --text-dim:#999;--accent:#2563eb;--green:#15803d;--green-bg:#f0fdf4;
+  --red:#b91c1c;--red-bg:#fef2f2;--amber:#b45309;--amber-bg:#fffbeb;
+  --orange:#c2410c;--orange-bg:#fff7ed;--radius:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,sans-serif;font-size:15px;line-height:1.7;color:var(--text);background:var(--bg)}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.imq-nav{position:sticky;top:0;z-index:100;background:var(--border-strong);display:flex;align-items:center;padding:0 24px;height:48px;font-size:13px}
+.imq-brand{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:13px;color:#fff;letter-spacing:-0.02em;margin-right:24px;white-space:nowrap}
+.imq-brand:hover{color:#e5e5e2;text-decoration:none}
+.imq-nav>a{color:#ccc;padding:0 12px;height:48px;display:flex;align-items:center;font-size:13px}
+.imq-nav>a:hover{color:#fff;text-decoration:none}
+.imq-dd{position:relative;display:flex;align-items:center}
+.imq-dd-label{color:#ccc;padding:0 12px;height:48px;display:flex;align-items:center;cursor:pointer;font-size:13px}
+.imq-dd:hover .imq-dd-label{color:#fff}
+.imq-dd-menu{display:none;position:absolute;top:48px;left:0;background:var(--border-strong);border:1px solid #333;min-width:160px;border-radius:4px;padding:4px 0}
+.imq-dd:hover .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:8px 16px;color:#ccc;font-size:13px}
+.imq-dd-menu a:hover{color:#fff;background:#333;text-decoration:none}
+.imq-dd-menu a.active{color:#60a5fa}
+.imq-dd.active .imq-dd-label{color:#60a5fa}
+.container{max-width:880px;margin:0 auto;padding:32px 24px 64px}
+.breadcrumb{font-size:12px;color:var(--text-dim);margin-bottom:24px;font-family:'IBM Plex Mono',monospace}
+.breadcrumb a{color:var(--text-dim)}
+.report-header{margin-bottom:32px}
+.report-header h1{font-size:28px;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px;line-height:1.2}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:16px}
+.report-lede{border-left:3px solid var(--accent);padding:12px 16px;background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;font-size:14px;line-height:1.65}
+.notice{background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--amber);margin-bottom:24px}
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:36px}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:10px}
+.toc ol{padding-left:20px}
+.toc li{font-size:13px;margin-bottom:4px}
+h2{font-size:20px;font-weight:700;letter-spacing:-0.02em;margin:40px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--border-strong)}
+h3{font-size:16px;font-weight:600;margin:28px 0 12px}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin:20px 0 8px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+thead th{text-align:left;padding:8px 10px;background:var(--surface-2);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border-strong)}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+tbody tr:hover td{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:none}
+.company-card{border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:28px}
+.company-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.ticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700}
+.meta-right{font-size:13px;color:var(--text-muted);text-align:right}
+.company-card ul{padding-left:20px;margin:8px 0}
+.company-card ul li{margin-bottom:5px;font-size:14px}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;vertical-align:middle}
+.tag.beat{background:var(--green-bg);color:var(--green)}
+.tag.miss{background:var(--red-bg);color:var(--red)}
+.tag.inline{background:var(--amber-bg);color:var(--amber)}
+.tag.raise{background:var(--green-bg);color:var(--green)}
+.tag.maintain{background:var(--amber-bg);color:var(--amber)}
+.tag.lower{background:var(--red-bg);color:var(--red)}
+.stock-move{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.stock-move.up{background:var(--green-bg);color:var(--green)}
+.stock-move.down{background:var(--red-bg);color:var(--red)}
+.winner-row td:first-child{border-left:3px solid var(--green)}
+.loser-row td:first-child{border-left:3px solid var(--red)}
+.stns-row td:first-child{border-left:3px solid var(--amber)}
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:14px 0}
+.contradiction h4{color:var(--orange);text-transform:none;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;letter-spacing:0;margin-top:0;margin-bottom:6px}
+.implication{margin-top:8px;font-size:14px}
+.implication strong{color:var(--orange)}
+.summary-list{list-style:none;padding:0}
+.summary-list li{background:var(--surface-2);border-left:3px solid var(--accent);padding:12px 16px;margin-bottom:10px;border-radius:0 var(--radius) var(--radius) 0;font-size:14px}
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;font-size:12px;color:var(--text-muted);margin-top:48px;line-height:1.6}
+footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim)}
+@media(max-width:720px){
+  .container{padding:20px 16px 48px}
+  .report-header h1{font-size:22px}
+  .company-card{padding:16px 18px}
+  .company-header{flex-direction:column}
+  .meta-right{text-align:left}
+  .ticker{font-size:16px}
+  table{font-size:13px}
+  thead th,tbody td{padding:7px 8px}
+}
+</style>
+</head>
+<body>
+
+<nav class="imq-nav">
+  <a href="/" class="imq-brand">InvestMQuest. Research</a>
+  <a href="/">首頁</a>
+  <div class="imq-dd">
+    <span class="imq-dd-label">研究</span>
+    <div class="imq-dd-menu">
+      <a href="/research/">個股 DD</a>
+      <a href="/id/">產業深度 ID</a>
+      <a href="/id/theses.html">⭐ 九大非共識</a>
+      <a href="/pm/">PM 複盤</a>
+    </div>
+  </div>
+  <div class="imq-dd active">
+    <span class="imq-dd-label">市場</span>
+    <div class="imq-dd-menu">
+      <a href="/briefing/">每日簡報</a>
+      <a href="/earnings/" class="active">財報分析</a>
+      <a href="/weekly/">週報</a>
+      <a href="/six-state/">六狀態機</a>
+    </div>
+  </div>
+  <div class="imq-dd">
+    <span class="imq-dd-label">工具</span>
+    <div class="imq-dd-menu">
+      <a href="/backtest/">量化回測</a>
+      <a href="/qgm/">QGM 美股</a>
+      <a href="/qgm-tw/">QGM 台股</a>
+    </div>
+  </div>
+  <a href="/how-to.html">📘 使用說明</a>
+</nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-05-20
+  </div>
+
+  <header class="report-header">
+    <h1>美股 5/20 財報日深度分析</h1>
+    <div class="report-meta">4 companies analyzed · $50B+ 為主（TJX $167B、LOW $122B、ADI $202B、TGT $58B）· 盤前完整覆蓋 · 2026-05-20</div>
+    <div class="report-lede">
+      <strong>核心發現：</strong>TJX 是今日最亮眼贏家——Q1 FY2027 EPS $1.19（+29% YoY），comp +6%，全年指引上調，股價收 +5.7%；ADI Analog Devices 創歷史最高 EPS $3.09（+67% YoY），但「指引隱含減速」讓股價大跌 -7.1%，是今日最鮮明的 Sell the News 反轉；TGT Target 大幅 beat（EPS $1.71 vs 估 $1.47，+16%），但 GAAP 淨利 YoY -25%，股價下跌 -4%；LOW Lowe's 溫和 beat 重申指引，四連季正 comp，股價 +1%，與昨日 HD 形成對稱呼應——兩家 home improvement 零售商同步傳遞「住房底部韌性」但無明顯回升的訊號。
+    </div>
+  </header>
+
+  <div class="toc">
+    <div class="toc-title">目錄</div>
+    <ol>
+      <li><a href="#companies">§1 各公司財報重點</a></li>
+      <li><a href="#cross">§2 跨公司比較</a></li>
+      <li><a href="#winners">§3 贏家 / 輸家</a></li>
+      <li><a href="#contradictions">§4 矛盾與風險訊號</a></li>
+      <li><a href="#summary">§5 總結</a></li>
+    </ol>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="companies">§1 各公司財報重點</h2>
+
+  <!-- TJX -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">TJX · The TJX Companies</span>
+      <span class="meta-right">$167B · 盤前 BMO · <span class="stock-move up">+5.7% 收盤</span></span>
+    </div>
+
+    <h4>數據表 — Q1 FY2027（截至 2026-05-02）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Diluted EPS</td>
+          <td>$1.19</td>
+          <td>$1.00</td>
+          <td><span class="tag beat">BEAT +19%</span> · YoY +29%（去年 $0.92）</td>
+        </tr>
+        <tr>
+          <td>營收</td>
+          <td>$14.32B</td>
+          <td>$14.01B</td>
+          <td><span class="tag beat">BEAT +2.2%</span> · YoY +9.2%</td>
+        </tr>
+        <tr>
+          <td>Comp Sales（同店銷售）</td>
+          <td>+6%</td>
+          <td>—</td>
+          <td><span class="tag beat">BEAT</span> · 全部分部正成長</td>
+        </tr>
+        <tr>
+          <td>Pretax Profit Margin</td>
+          <td>12.0%</td>
+          <td>—</td>
+          <td>YoY 大幅改善（去年 10.3%）+170bps</td>
+        </tr>
+        <tr>
+          <td>全年 FY2027 EPS 指引</td>
+          <td>$5.08–$5.15</td>
+          <td>—</td>
+          <td><span class="tag raise">RAISE</span> · 同時上調 comp 至 +3%~+4%</td>
+        </tr>
+        <tr>
+          <td>全年 comp 指引</td>
+          <td>+3% to +4%</td>
+          <td>—</td>
+          <td><span class="tag raise">RAISE</span> · 原指引未公開，明顯優於市場預期</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>Comp +6% 全面強勁：</strong>TJX 旗下 Marmaxx（美國 T.J.Maxx / Marshalls）、HomeGoods、TJX Canada、TJX International 全部實現正 comp，展現廣泛的消費者需求。</li>
+      <li><strong>Pretax Margin 12.0%（+170bps YoY）：</strong>去年 Q1 為 10.3%，本季大幅提升，顯示規模效益和商品採購能力的雙重驅動，尤其在 tariff 環境下展現更強的議價力。</li>
+      <li><strong>EPS +29% YoY：</strong>$1.19 vs 去年 $0.92，遠超市場預期 $1.00（+19% beat），是今日 beat 幅度最大的公司之一。</li>
+      <li><strong>Buyback 指引上調：</strong>公司同時宣布增加回購授權，管理層對現金流有強烈信心。</li>
+      <li><strong>股息上調 13%：</strong>財報前已宣布，與今日強勁業績相互印證。</li>
+      <li><strong>Off-price 模式抗 tariff：</strong>機會性採購（opportunistic buying）、票價調整、多元化採購來源讓 TJX 的 tariff 影響遠小於一般零售商。Q2 「started well」評論提供正向的前瞻訊號。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>管理層表示 Q2 「started well」，為全年指引上調提供信心基礎。</li>
+      <li>全年 comp 指引上調至 +3%~+4%，EPS 指引 $5.08~$5.15，均高於財報前市場預期。</li>
+      <li>庫存策略：availability 優異，TJX 能持續取得大品牌商品的好機會，off-price 護城河在消費者謹慎消費環境中更為凸顯。</li>
+      <li>Transcript 完整版引述未取得；以上依據 press release 和 Quiver Quantitative 新聞稿摘要。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li><strong>收盤 +5.7%</strong>（Quiver Quantitative 確認：「TJX is up 5.7% today」；TradingView 確認：「TJX stock has risen by 5.16% compared to the previous week」——方向一致）。</li>
+      <li>漲幅理由：Beat EPS +19% + comp +6% + 全年指引全面上調 + Q2 「started well」——是今日唯一符合「Beat + Raise + 正面前瞻」完整三要素的案例，也是唯一股價正向大幅反應的公司。</li>
+      <li>2-source 確認：Quiver Quantitative +5.7%；TradingView 週漲 +5.16%——方向一致。</li>
+    </ul>
+  </div>
+
+  <!-- ADI -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">ADI · Analog Devices</span>
+      <span class="meta-right">$202B · 盤前 BMO · <span class="stock-move down">-7.1% 至 $384.80</span></span>
+    </div>
+
+    <h4>數據表 — Q2 FY2026（截至 2026-05-02）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Adj. EPS</td>
+          <td>$3.09</td>
+          <td>$2.89–2.90</td>
+          <td><span class="tag beat">BEAT +6.9%</span> · YoY +67% · QoQ +26% · 歷史最高</td>
+        </tr>
+        <tr>
+          <td>營收</td>
+          <td>$3.62B</td>
+          <td>$3.51B</td>
+          <td><span class="tag beat">BEAT +3.1%</span> · YoY +37% · QoQ +15%</td>
+        </tr>
+        <tr>
+          <td>毛利率</td>
+          <td>73%</td>
+          <td>—</td>
+          <td><span class="tag beat">BEAT</span> · YoY +360bps · QoQ +180bps</td>
+        </tr>
+        <tr>
+          <td>Operating Margin</td>
+          <td>49%</td>
+          <td>高端附近</td>
+          <td><span class="tag beat">BEAT 超過指引高端</span> · YoY +780bps</td>
+        </tr>
+        <tr>
+          <td>Industrial Segment</td>
+          <td>50% 佔比</td>
+          <td>—</td>
+          <td>YoY +56% · QoQ +20% · 航天國防、ATE、ETM、broad market 主導</td>
+        </tr>
+        <tr>
+          <td>Communications Segment</td>
+          <td>15% 佔比</td>
+          <td>—</td>
+          <td>YoY +79% · 數據中心業務（佔通訊 75%+）YoY +90%+</td>
+        </tr>
+        <tr>
+          <td>Automotive Segment</td>
+          <td>24% 佔比</td>
+          <td>—</td>
+          <td>YoY +2% · QoQ +8% · BMS + ADAS 雙位數成長</td>
+        </tr>
+        <tr>
+          <td>Q3 FY2026 Revenue 指引</td>
+          <td>$3.09B ±$100M</td>
+          <td>—</td>
+          <td><span class="tag lower">隱含 QoQ -14.6%</span> · 市場解讀為減速</td>
+        </tr>
+        <tr>
+          <td>Q3 Adj. EPS 指引</td>
+          <td>$3.03 ±$0.15</td>
+          <td>—</td>
+          <td><span class="tag lower">QoQ -2%</span> · 從 $3.09 小幅下滑</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13px;color:var(--text-dim);margin:8px 0;font-family:'IBM Plex Mono',monospace;">⚠️ 注意：Benzinga transcript 顯示 Q3 Revenue $3.9B、EPS $3.30；AOL/Motley Fool transcript 顯示 Q3 Revenue $3.09B、EPS $3.03。兩組數據矛盾。依 Investing.com 確認版本，Q3 指引為 $3.09B ±$100M，EPS $3.03 ±$0.15（較 Q2 減速），這是導致股價大跌的關鍵數據。</p>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>歷史最高 EPS $3.09：</strong>較去年同期 $1.85 大幅成長 +67%，顯示 ADI 從半導體週期谷底的強勁反彈——工業和通訊雙重驅動。</li>
+      <li><strong>Data Center 佔 Communications 75%+，YoY +90%+：</strong>AI 基礎設施需求帶動 ADI 的高速串行介面（SERDES）、電源管理 IC 快速上量，與 NVDA/KEYS 同日財報的 AI infra 主題形成呼應。</li>
+      <li><strong>Industrial YoY +56%：</strong>航天國防是最重要引擎，ATE（自動測試設備，與 KEYS 方向一致）、ETM（電子測試測量）同步加速，反映製造業資本支出週期的恢復。</li>
+      <li><strong>毛利率 73%（+360bps YoY）：</strong>Favorable mix（高毛利工業 / 通訊佔比提升）+ 產能利用率提高 + 定價能力三重疊加。Operating Margin 49% 也超過指引高端。</li>
+      <li><strong>Empower Semiconductor 收購：</strong>$1.5B 收購，預期在 AI 基礎設施業務帶來未來增長。</li>
+      <li><strong>Q3 指引隱含 QoQ -14.6%（Rev）：</strong>這是最關鍵的負面訊號——$3.62B → $3.09B（±$100M），市場解讀為強勁 Q2 後的「一次性超越期」結束，週期性回調的開始。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CFO Richard Puccio：「EPS was a record $3.09, up 26% sequentially and 67% year over year.」——強調歷史新高。</li>
+      <li>CFO 補充：「We delivered a strong quarter supported by disciplined execution and broad based demand across all of our [segments].」</li>
+      <li>關於 Q3 季節性：「The fourth quarter for us is usually up in the low single digits. As we and so that is the best outlook we have right now for the back half of 2026.」——暗示 Q4 回升，但 Q3 是季節性低谷。</li>
+      <li>分析師 Tore Svanberg（Stifel Nicolaus）追問成長空間，CFO 回應：「We still have a lot of upside on the current base revenue of ADI, both internally and externally.」——長期上行觀點維持。</li>
+      <li>毛利率指引：Q3 gross margin 下降 50bps，主要因「one-time prior period benefits」消退，非結構性惡化。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li><strong>-7.1% 至 $384.80</strong>（GuruFocus 確認：「ADI experienced a notable decline, dropping by 7.1%, bringing the current price to $384.80」；Investing.com 確認：「7.07% in pre-market trading, shares priced at $385.02」——方向一致）。</li>
+      <li>下跌理由：Q3 Revenue 指引 $3.09B（QoQ -14.6%）被市場解讀為「成長週期見頂」的訊號。儘管 EPS +67% beat，但前瞻指引的 QoQ 大幅回落觸發「Beat + Guidance Disappoint = Sell the News」——與昨日 NVDA 盤後輕跌形成對比，但 ADI 的下跌幅度更劇烈，因為它不是 AI 需求驅動（更多是工業週期）。</li>
+    </ul>
+  </div>
+
+  <!-- TGT -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">TGT · Target Corporation</span>
+      <span class="meta-right">$58B · 盤前 BMO · <span class="stock-move down">-4.0% 收盤</span></span>
+    </div>
+
+    <h4>數據表 — Q1 FY2026（截至 2026-05-02）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Adj. EPS</td>
+          <td>$1.71</td>
+          <td>$1.41–1.47</td>
+          <td><span class="tag beat">BEAT +16–21%</span> · YoY +31.5%（vs 去年 adj. $1.30）</td>
+        </tr>
+        <tr>
+          <td>GAAP EPS（稀釋）</td>
+          <td>$1.71</td>
+          <td>—</td>
+          <td>GAAP 淨利 $781M · YoY -24.8%（去年 $1.04B）</td>
+        </tr>
+        <tr>
+          <td>營收</td>
+          <td>$25.44B</td>
+          <td>$24.64–24.66B</td>
+          <td><span class="tag beat">BEAT +3.2%</span> · YoY +6.7%</td>
+        </tr>
+        <tr>
+          <td>同店銷售（Comp）</td>
+          <td>+5.6%</td>
+          <td>+2.4%（估）</td>
+          <td><span class="tag beat">大幅 BEAT</span> · 含 traffic +4.4% + digital +8.9%</td>
+        </tr>
+        <tr>
+          <td>Guest Traffic</td>
+          <td>+4.4%</td>
+          <td>—</td>
+          <td>真實流量成長，非靠漲價</td>
+        </tr>
+        <tr>
+          <td>Digital Comp Sales</td>
+          <td>+8.9%</td>
+          <td>—</td>
+          <td>同日配送（Target Circle 360）成長 +27%+</td>
+        </tr>
+        <tr>
+          <td>Non-merchandise Sales</td>
+          <td>+~25%</td>
+          <td>—</td>
+          <td>Roundel（廣告）、Target Circle 360、Target+ 高速增長</td>
+        </tr>
+        <tr>
+          <td>Operating Margin</td>
+          <td>4.5%</td>
+          <td>—</td>
+          <td>YoY -170bps（去年 6.2%）——顯著惡化</td>
+        </tr>
+        <tr>
+          <td>全年 Revenue 指引</td>
+          <td>+4% YoY</td>
+          <td>原 +2%</td>
+          <td><span class="tag raise">RAISE +2ppts</span> · EPS 指引維持高端（$7.50–$8.50）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>GAAP 淨利 YoY -24.8%（$781M vs $1.04B）：</strong>Adj. EPS +31.5% vs GAAP 淨利 -24.8% 的背離極大，差異來源需確認——可能包含重組費用、法律和解費用、或 GS SG&A 增加，今日財報的核心矛盾點。</li>
+      <li><strong>Operating Margin 4.5%（去年 6.2%，-170bps）：</strong>毛利率擴張但 SG&A 大幅增加，反映 Target 正在加速投資（7 家新店、Target Circle 360 擴張、AI 和技術改革）。</li>
+      <li><strong>Comp +5.6%（vs 估 +2.4%）：</strong>大幅超越市場預期，是六大品類全線成長的結果，玩具（$10 以下 +9%）和交換卡（雙位數）表現突出。</li>
+      <li><strong>Target+ GMV +60% YoY：</strong>第三方市場業務強勁成長，高毛利、輕資產的非商品銷售比例持續提升。</li>
+      <li><strong>第 2,000 家門市開業：</strong>Q1 新開 7 家，全年計畫 30+ 家，首次達到 2,000 店里程碑。</li>
+      <li><strong>全年 Revenue 指引上調 +2ppts 至 +4%：</strong>前收為 +2%，大幅上調顯示管理層對 H2 的信心。但 EPS 指引僅重申「接近高端」而非明確上調，說明 margin 壓力仍是主要顧慮。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Michael Fiddelke：「Even with this early progress, we know our work is just beginning, and we have confidence we're on the right path because guests are responding in areas where we are leaning in and driving change.」——主動引導謹慎預期，儘管財報超預期。</li>
+      <li>Fiddelke 向媒體表示：「Despite our updated guidance, we're maintaining a cautious outlook given the work we know we have in front of us and ongoing uncertainty in the macroeconomic environment.」——明確打壓過度樂觀的市場情緒。</li>
+      <li>全六大品類成長：食品、服裝、家居、電子、玩具、美妝均實現正 comp，廣度是這次 beat 的核心。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li><strong>收盤 -4.0% 附近</strong>（CNBC 報導：「Target shares fell nearly 4% on Wednesday」；Timothy Sykes 實時 -4.24%——方向一致）。</li>
+      <li>2-source 確認：CNBC「fell nearly 4%」；Timothy Sykes 盤中 -4.24%。</li>
+      <li>下跌理由：大幅 beat EPS 和 comp 後仍下跌 4%，是今日第二個 Sell the News 案例。市場擔憂：① GAAP 淨利 YoY -24.8%，盈利品質受疑；② Operating Margin 大幅惡化 -170bps；③ CEO 主動降低後市預期，給全年 EPS 指引留出 flexibility 而非明確上調；④ BofA 已在財報前發警告，認為 Q1 表現一次性偏強，H2 可能轉弱。</li>
+    </ul>
+  </div>
+
+  <!-- LOW -->
+  <div class="company-card">
+    <div class="company-header">
+      <span class="ticker">LOW · Lowe's Companies</span>
+      <span class="meta-right">$122B · 盤前 BMO · <span class="stock-move up">+1.1% 收盤</span></span>
+    </div>
+
+    <h4>數據表 — Q1 FY2026（截至 2026-05-01）</h4>
+    <table>
+      <thead>
+        <tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Adj. Diluted EPS</td>
+          <td>$3.03</td>
+          <td>$2.96–2.97</td>
+          <td><span class="tag beat">BEAT +2.0%</span> · YoY +3.8%（vs 去年 $2.92 GAAP）</td>
+        </tr>
+        <tr>
+          <td>GAAP Diluted EPS</td>
+          <td>$2.90</td>
+          <td>—</td>
+          <td>YoY -0.7%（去年 $2.92）· 差值來自 $96M 收購攤銷</td>
+        </tr>
+        <tr>
+          <td>營收</td>
+          <td>$23.08–23.1B</td>
+          <td>$22.91–22.97B</td>
+          <td><span class="tag beat">BEAT +0.5–0.7%</span> · YoY +10.3%</td>
+        </tr>
+        <tr>
+          <td>同店銷售（Comp）</td>
+          <td>+0.6%</td>
+          <td>—</td>
+          <td><span class="tag inline">INLINE</span> · 連續第四季正 comp</td>
+        </tr>
+        <tr>
+          <td>Online Sales</td>
+          <td>+15.5%</td>
+          <td>—</td>
+          <td>強勁數位轉型</td>
+        </tr>
+        <tr>
+          <td>毛利率</td>
+          <td>32.7%</td>
+          <td>—</td>
+          <td>YoY -70bps（FBM + ADG 收購稀釋效果）</td>
+        </tr>
+        <tr>
+          <td>SG&A 佔比</td>
+          <td>19.2%</td>
+          <td>—</td>
+          <td>YoY leverage +17bps，成本控制有效</td>
+        </tr>
+        <tr>
+          <td>FCF</td>
+          <td>$2.8B</td>
+          <td>—</td>
+          <td>一季現金流強勁 · 含還債 $2.4B bond maturity</td>
+        </tr>
+        <tr>
+          <td>ROIC</td>
+          <td>26.8%</td>
+          <td>—</td>
+          <td>高品質資本回報指標</td>
+        </tr>
+        <tr>
+          <td>全年 FY2026 指引</td>
+          <td>維持不變</td>
+          <td>—</td>
+          <td><span class="tag maintain">MAINTAIN</span> · 總銷售 $92–94B · Adj. EPS $12.25–12.75</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h4>關鍵細節</h4>
+    <ul>
+      <li><strong>四連季正 Comp（+0.6%）：</strong>這在高利率 + 低住房周轉的環境下是顯著成就。CEO Ellison 直言：「60-65% 的收入來自 DIY 客戶，這是個非常艱難的 DIY 住房市場，能連四季正 comp 我們很滿意。」</li>
+      <li><strong>月度 comp 明顯波動：</strong>2 月 -1.4% → 3 月 +2.1% → 4 月 +0.5%，受天氣影響明顯，春季執行帶動正面效果，但動能並不穩固。</li>
+      <li><strong>Revenue +10.3% 但 comp 僅 +0.6%：</strong>差異來自 FBM（建材）和 ADG（地面）等收購，為 reported growth 帶來約 9.7ppts 的 M&A 貢獻。Organic comp 是真實業務健康指標，僅 +0.6%。</li>
+      <li><strong>Pro（專業客戶）vs DIY 分化：</strong>Pro 客戶表現繼續優於 DIY，appliances（家電）和 home services（安裝服務）是兩大增長亮點，符合「延遲自裝，轉向委外服務」的消費趨勢。</li>
+      <li><strong>Adj. Debt to EBITDAR 3.1x：</strong>目標 2.75x（mid-2027），去槓桿進度中，Q1 還清 $2.4B 債券。</li>
+      <li><strong>Tariff 提及：</strong>Ellison 承認採購政策仍「fluid（流動中）」，公司有全球採購應對策略，但額外 tariff 升級可能衝擊指引。</li>
+    </ul>
+
+    <h4>Earnings Call 重點</h4>
+    <ul>
+      <li>CEO Marvin Ellison：「Roughly 60% to 65% of our revenue is from the do-it-yourself customer, and this has been a really difficult do-it-yourself housing market, so for us to do four consecutive quarters of positive comps, we were pleased with that.」——誠實承認市場艱難，但肯定執行成果。</li>
+      <li>CFO Brandon Sink：關於 $96M 收購攤銷費用解釋了 GAAP vs Adj. EPS 的差距——$3.03 Adj. vs $2.90 GAAP，屬非現金會計調整，不影響現金盈利能力。</li>
+      <li>全年指引重申（MAINTAIN）：管理層對全年 comp flat to +2% 和 Adj. EPS $12.25–12.75 保持信心，未因季度強勁而上調。</li>
+      <li>Tariff 應對：「global sourcing playbook」存在，但 Ellison 明確說政策仍「fluid」，不能完全消除不確定性。</li>
+    </ul>
+
+    <h4>Stock Reaction</h4>
+    <ul>
+      <li><strong>收盤 +1.1%</strong>（CNBC 確認：「Shares of the company rose more than 1% on Wednesday」；Finviz 前收 $219.08 顯示小幅上漲——方向一致）。</li>
+      <li>2-source 確認：CNBC「rose more than 1%」；Lowe's 截圖 Yahoo Finance showing TradingView 周變化一致——正向。</li>
+      <li>漲幅理由：Narrow beat（adj. EPS +2%）+ 重申全年指引 = 尾部風險排除，溫和正向反應。與昨日 HD（+0.88%）高度相似——兩家 home improvement 零售商同步展現「住房壓力持續但底部存在韌性」的信號，市場給出類似溫和 +1% 的反應。</li>
+    </ul>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="cross">§2 跨公司比較</h2>
+
+  <h3>消費者 K 型分化：5/20 完整版</h3>
+  <p style="font-size:14px; margin-bottom:14px;">今日四家公司加上昨日 CAVA（+6%）和 HD（+0.88%），提供了本週最完整的消費者健康讀數：</p>
+  <table>
+    <thead>
+      <tr><th>公司</th><th>消費客群</th><th>Comp/SSS</th><th>關鍵訊號</th><th>股價</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>TJX</td>
+        <td>價值型購物者（尋求品牌折扣）</td>
+        <td>+6%</td>
+        <td>Off-price 在消費謹慎環境下需求最旺</td>
+        <td>+5.7% ✅</td>
+      </tr>
+      <tr>
+        <td>TGT</td>
+        <td>中產主流消費者</td>
+        <td>+5.6%</td>
+        <td>Traffic +4.4% 強，但 margin 惡化</td>
+        <td>-4.0% ❌</td>
+      </tr>
+      <tr>
+        <td>CAVA（5/19）</td>
+        <td>健康導向、外食族</td>
+        <td>+9.7%</td>
+        <td>Premium fast casual 穿越宏觀壓力</td>
+        <td>+6% ✅</td>
+      </tr>
+      <tr>
+        <td>LOW</td>
+        <td>DIY + Pro 住房改裝</td>
+        <td>+0.6%</td>
+        <td>四連季正 comp，但仍受住房市場壓制</td>
+        <td>+1.1% ✅</td>
+      </tr>
+      <tr>
+        <td>HD（5/19）</td>
+        <td>DIY + Pro 住房改裝</td>
+        <td>+0.6%</td>
+        <td>同上，FCF 大幅改善</td>
+        <td>+0.88% ✅</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px; margin-top:12px; margin-bottom:20px;"><strong>核心洞察：</strong>消費者正在「精打細算但不停止消費」——TJX 的 off-price 和 CAVA 的健康外食同步受益，說明消費者仍在花錢，但更有選擇性。住房改裝（HD/LOW）受到利率壓制，但底部韌性存在。</p>
+
+  <h3>ADI vs KEYS：半導體測試 + 類比晶片的 AI 受益程度對比</h3>
+  <p style="font-size:14px; margin-bottom:14px;">ADI（-7.1%）和 KEYS（+1.4% 昨日）均受益於 AI 基礎設施需求，但市場反應截然不同：</p>
+  <table>
+    <thead>
+      <tr><th>維度</th><th>KEYS（5/19）</th><th>ADI（5/20）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>EPS Beat</td><td>+23.7%</td><td>+6.9%</td></tr>
+      <tr><td>YoY EPS 成長</td><td>+68.8%</td><td>+67%</td></tr>
+      <tr><td>Q3 指引方向</td><td>大幅超前（+16%）</td><td>QoQ -14.6%（隱含減速）</td></tr>
+      <tr><td>股價反應</td><td>+1.4%</td><td>-7.1%</td></tr>
+      <tr><td>關鍵差異</td><td>前瞻指引持續加速</td><td>前瞻指引暗示週期性回落</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:14px; margin-top:12px;"><strong>結論：</strong>「Beat is default, Guidance is alpha」在半導體板塊體現最明顯。兩家公司 EPS YoY 成長相近，但 KEYS 的 Q3 指引繼續加速、ADI 的 Q3 指引減速，造成截然不同的市場反應。</p>
+
+  <!-- ============================================================ -->
+  <h2 id="winners">§3 贏家 / 輸家</h2>
+
+  <h3>贏家（Beat + Raise + 正向股價）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="winner-row">
+        <td>TJX</td>
+        <td><strong>收盤 +5.7%。</strong>EPS $1.19（+29% YoY），beat 估值 +19%，comp +6%（全部分部正成長），pretax margin 12.0%（YoY +170bps），全年 EPS 和 comp 指引全面上調，Q2「started well」。今日唯一「Beat + Raise + 正面前瞻」三要素俱全、且股價正向大幅反應的案例。Off-price 業態在消費謹慎環境下需求最旺，且 tariff 衝擊最小。</td>
+      </tr>
+      <tr class="winner-row">
+        <td>LOW</td>
+        <td><strong>收盤 +1.1%。</strong>adj. EPS $3.03 beat +2%，四連季正 comp，FCF $2.8B，重申全年指引（無下修風險）。溫和正向反應。與 HD 昨日 +0.88% 完全呼應，住房底部韌性獲兩家 home improvement 同步確認。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Sell the News（Beat + 股價下跌）</h3>
+  <table>
+    <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr class="stns-row">
+        <td>TGT</td>
+        <td><strong>收盤 -4.0%。</strong>adj. EPS $1.71 beat +16%，comp +5.6%（vs 估 +2.4%），全年 revenue 指引上調 +2ppts。但 GAAP 淨利 YoY -24.8%，operating margin -170bps，CEO 主動降低後市預期，EPS 指引僅重申「接近高端」而非明確上調。BofA 事前已警告 Q1 或為一次性強勢，市場選擇 Sell the News。</td>
+      </tr>
+      <tr class="loser-row">
+        <td>ADI</td>
+        <td><strong>收盤 -7.1% 至 $384.80。</strong>EPS $3.09（歷史最高），YoY +67% beat 估值 +6.9%。但 Q3 Revenue 指引 $3.09B（QoQ -14.6%）被市場解讀為成長週期見頂，觸發大幅停利出場。從 52 週高點 $435.72 大幅回落。典型「歷史最強季度後季節性指引減速 = Sell」格局，不同於 KEYS（AI 需求持續加速的去週期性半導體測試業務）。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============================================================ -->
+  <h2 id="contradictions">§4 矛盾與風險訊號</h2>
+
+  <div class="contradiction">
+    <h4>矛盾 1：TGT Adj. EPS +31.5% vs GAAP 淨利 -24.8%——最大品質缺口</h4>
+    <p>TGT Q1 adj. EPS $1.71（+31.5% YoY）大幅超越預期，但 GAAP 淨利 $781M vs 去年 $1.04B（-24.8%）。同一公司、同一季度，兩個方向完全相反的利潤數字。</p>
+    <p class="implication">→ <strong>Implication：</strong>差異規模達 $260M，遠超「正常 SBC 調整」的範疇，可能包含法律費用、重組費用、或新業務投資的大額一次性支出。若是重組投資（如新供應鏈、AI 系統），未來效益可能逐季兌現；若是真實費用增加，Adj. EPS 的高品質存疑。這是 TGT 股價下跌 -4% 的核心疑慮——市場對「哪個 EPS 是真的」沒有信心。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 2：ADI Q3 指引 $3.09B vs Benzinga 報導 $3.9B——數據矛盾警戒</h4>
+    <p>Benzinga transcript 顯示 Q3 Revenue $3.9B、EPS $3.30；但 Investing.com / AOL / Motley Fool transcript 顯示 Q3 Revenue $3.09B（±$100M）、EPS $3.03（±$0.15）。兩組數字差距接近 $800M，邏輯上無法同時為真。</p>
+    <p class="implication">→ <strong>Implication：</strong>依市場反應（ADI -7.1%）判斷，實際 Q3 指引為 $3.09B 的較保守版本，Benzinga 報導可能存在 OCR 或整理錯誤。這個矛盾的存在提醒：初期財報季中，transcript 資料品質差異顯著，應以原始 8-K press release 為準，不宜完全依賴第三方整理版本。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 3：LOW/HD 住房底部韌性 vs TGT 消費者支出實際強勁——宏觀讀數衝突</h4>
+    <p>HD（昨日）和 LOW（今日）均反映「住房改裝需求受壓，DIY 客戶謹慎」；但 TGT comp +5.6%（traffic +4.4%）和 CAVA SSS +9.7%（traffic +6.8%）顯示消費者流量強勁，並非緊縮。兩個方向的信號同時存在。</p>
+    <p class="implication">→ <strong>Implication：</strong>消費者並非「停止消費」，而是「選擇性消費」——住房大型改裝延遲、但日常外食、服裝折扣購物、健康飲食持續。這是 K 型復甦的消費端版本：特定類別（off-price、健康餐飲）強勁，大件耐久財（home improvement）疲軟。宏觀「消費強/弱」的二元判斷已失效，需要品類層級分析。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 4：ADI 通訊（Data Center YoY +90%+）強勁 vs Q3 Revenue 大幅回落</h4>
+    <p>ADI Q2 通訊 segment（Data Center 佔 75%+）YoY +90%+，AI 基礎設施需求爆發；但 Q3 指引 Revenue QoQ -14.6%，隱含通訊需求或工業需求其中之一大幅放緩。</p>
+    <p class="implication">→ <strong>Implication：</strong>Q3 指引的 QoQ 大幅回落主要有兩個可能解釋：① Q2 的通訊業務存在一次性大單或 pull-forward 效應，Q3 回歸正常節奏；② 工業 segment（佔 50%）在 Q2 的+56% YoY 反彈後進入週期性放緩。季節性因素（Q3 通常是 ADI 的弱季）也是已知因素。管理層稱「Q4 usually up in low single digits」——顯示 Q3 是谷底，Q4 有望回升。</p>
+  </div>
+
+  <div class="contradiction">
+    <h4>矛盾 5：TJX +5.7% 大漲 vs TGT -4.0% 大跌——同為零售商，截然對立</h4>
+    <p>TJX 和 TGT 同為大型零售商，同日財報，但股價反應相差接近 10ppts。TJX beat +19%、指引上調、正向前瞻；TGT beat +16%、revenue 指引上調，但 GAAP 盈利惡化、CEO 降低後市預期。</p>
+    <p class="implication">→ <strong>Implication：</strong>這是同日最清晰的「盈利品質決定股價反應」案例。TJX 的 margin 擴張（pretax +170bps）和「歡迎前往」；TGT 的 margin 壓縮（operating -170bps）和管理層的謹慎預期是分水嶺。兩家都 beat，但一家在改善品質、另一家在投資期花錢，市場對兩種模式給出截然不同的評價。</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <h2 id="summary">§5 總結</h2>
+
+  <ul class="summary-list">
+    <li><strong>1. 今日 Pattern 最核心：指引 QoQ 方向 &gt; EPS 絕對 Beat 幅度。</strong>ADI EPS +67% YoY 歷史最高，beat 估值 +6.9%，卻因 Q3 指引 QoQ -14.6% 大跌 -7.1%。TJX EPS +29% YoY，beat +19%，因指引上調加速大漲 +5.7%。兩個案例完美說明：市場定價的是「成長是否在加速還是減速」，而非「這一季有多強」。Beat 本身已無意義，Q 前進方向才是定價核心。</li>
+
+    <li><strong>2. Off-price 是當前最有優勢的零售業態，TJX 是明證。</strong>TJX comp +6%、pretax margin +170bps、全年指引上調——在 tariff 不確定、消費者謹慎的環境下，off-price 通過機會性採購吸收品牌廠的超額庫存，把「別人的危機」轉成自己的優勢。這與 CAVA 的「平價健康外食」邏輯相似：消費降級 + 消費謹慎，讓「提供更好價值的業態」受益。TGT 的轉型方向正確（數位 + Roundel + Target+），但投資期的 margin 壓力讓市場失去耐心。</li>
+
+    <li><strong>3. 住房生態系統確認「底部韌性但無明顯回升」——HD（5/19）+ LOW（5/20）雙確認。</strong>兩家 home improvement 巨頭同週報告，comp 均為 +0.6%，股價均在 +0.88% 至 +1.1% 之間。兩家 CFO 均警告 tariff 和燃料成本仍是逆風。住房周轉仍低，但 Pro 客戶需求穩健、FCF 均大幅改善。結論：住房改裝的需求底部已確認存在，但「恢復性成長」需要等待利率下降或住房庫存解凍。2026 H2 改善預期均依賴天氣正常化，而非結構性因素。</li>
+
+    <li><strong>4. AI 基礎設施週期擴散至類比晶片（ADI），但受週期性干擾。</strong>ADI 通訊（Data Center YoY +90%+）和工業（+56%）雙線強勁，印證 AI 基礎設施需求已從 GPU / 測試設備（NVDA / KEYS）擴散到「電源管理、類比信號處理」層。但 ADI 的 Q3 指引減速顯示：工業半導體的週期性復甦仍有波動，不能像 KEYS 一樣被視為「AI needs-driven，不受週期干擾」。純 AI infra 測試（KEYS）和廣泛應用類比晶片（ADI）在市場眼中是不同的故事。</li>
+
+    <li><strong>5. 五天跨公司匯總（5/19–5/20）：消費者有選擇性，半導體有分化，住房在底部。</strong>本週消費者訊號：CAVA +9.7% SSS（健康外食 ✅）、TJX +6% comp（off-price ✅）、TGT +5.6% comp（中產通才 ✅ 但 margin ❌）、LOW/HD +0.6% comp（住房改裝 底部韌性）。半導體訊號：NVDA $81.6B +85%（AI算力 ✅ Sell the News）、KEYS $1.72B +31%（AI測試 ✅ 加速）、ADI $3.62B +37%（類比/工業 ✅ Q3 減速 ❌）。住房底部確認。整體訊號：AI capex 週期仍在加速（NVDA Q2 $91B），消費者分化加劇，住房等待催化劑。</li>
+  </ul>
+
+  <div class="disclaimer">
+    <strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，
+    僅供參考，<strong>不構成任何投資建議</strong>。
+    投資涉及風險，投資人應自行判斷並諮詢專業顧問。
+    過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。
+  </div>
+
+  <footer>
+    © 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a>
+  </footer>
+</div>
+</body>
+</html>
