@@ -235,7 +235,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     </div>
     <div class="filter-group" style="margin-left:auto">
       <span class="filter-label">查 ticker</span>
-      <input type="text" id="search-ticker" placeholder="例：NVDA TSM AVGO（多檔以空白或逗號分隔）" autocomplete="off"
+      <input type="text" id="search-ticker" placeholder="例：NVDA / V (空白=精準) / NVDA TSM AVGO" autocomplete="off"
         title="輸入單檔或多檔，以空白 / 逗號分隔。結果依輸入順序顯示，不受其他 chip 篩選影響" />
       <button type="button" id="search-clear" title="清除">✕</button>
     </div>
@@ -1091,34 +1091,65 @@ function renderSearch() {
   var count = document.getElementById('search-count');
   if (!panel || !body) return;
 
-  var q = (state.searchQuery || '').trim().toUpperCase();
+  var raw = state.searchQuery || '';
+  var q = raw.trim().toUpperCase();
   if (!q || !DATA) {
     panel.classList.add('hidden');
     return;
   }
 
-  // Multi-ticker support: tokenize by whitespace / comma / slash.
-  // Each token does case-insensitive substring match on ticker
-  // (so "NV" still hits NVDA, "2330" still hits 2330.TW).
-  // Hits preserve input-token order so "NVDA TSM AVGO" shows in that sequence.
+  // v1.9.1: 「打完 ticker 加空白 = exact match only」behaviour.
+  //   "V"   → prefix match → V, VIK, VRT
+  //   "V "  → exact match → just Visa
+  //   "NV"  → prefix → NVDA, NVMI
+  //   "V AAPL" → V exact (followed by space delimiter) + AAPL prefix
+  //   "V AAPL " → both exact (both followed by delimiter)
+  // Token "2330" still resolves to "2330.TW" via suffix-tolerant exact match.
+  var endsWithDelim = /[\s,/]$/.test(raw);
   var tokens = q.split(/[\s,/]+/).filter(function(t) { return t.length > 0; });
   var seen = {};
   var hits = [];
-  tokens.forEach(function(tok) {
+  tokens.forEach(function(tok, i) {
+    var isLast = (i === tokens.length - 1);
+    // Non-last tokens are "complete" (followed by delimiter).
+    // Last token is "complete" only when input ends with a delimiter.
+    var isComplete = !isLast || endsWithDelim;
+    // Pass 1: exact match — also tolerate ".TW"/".T"/".JP"/".HK"/".KS" suffix
+    // so typing "2330 " exact-matches 2330.TW
+    var exactHit = null;
     (DATA.stocks || []).forEach(function(s) {
       var t = (s.ticker || '').toUpperCase();
-      if (t.indexOf(tok) !== -1 && !seen[t]) {
-        seen[t] = true;
-        hits.push(s);
+      if (exactHit) return;
+      if (t === tok || t === tok + '.TW' || t === tok + '.T' ||
+          t === tok + '.JP' || t === tok + '.HK' || t === tok + '.KS') {
+        exactHit = s;
       }
     });
+    if (exactHit && !seen[(exactHit.ticker || '').toUpperCase()]) {
+      seen[(exactHit.ticker || '').toUpperCase()] = true;
+      hits.push(exactHit);
+    }
+    // Pass 2: prefix matches — only when token is NOT complete (still typing).
+    // If complete, skip prefix so user gets clean exact-only result.
+    if (!isComplete) {
+      var prefixHits = (DATA.stocks || []).filter(function(s) {
+        var t = (s.ticker || '').toUpperCase();
+        return t.indexOf(tok) === 0 && !seen[t];
+      }).sort(function(a, b) {
+        return (a.ticker || '').localeCompare(b.ticker || '');
+      });
+      prefixHits.forEach(function(s) {
+        seen[(s.ticker || '').toUpperCase()] = true;
+        hits.push(s);
+      });
+    }
   });
 
   count.textContent = hits.length;
   panel.classList.remove('hidden');
 
   if (!hits.length) {
-    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。可輸入單檔或多檔，以空白 / 逗號分隔（例：NVDA / NVDA TSM AVGO / 2330.TW, GOOGL），不分大小寫。</p>';
+    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。按字首比對（打 <code>V</code> 不會撈到 AVGO/NVDA）。多檔以空白 / 逗號分隔（例：<code>NVDA TSM AVGO</code> / <code>2330.TW, GOOGL</code>），不分大小寫。</p>';
     return;
   }
 
