@@ -1129,9 +1129,10 @@ function renderSearch() {
       seen[(exactHit.ticker || '').toUpperCase()] = true;
       hits.push(exactHit);
     }
-    // Pass 2: prefix matches — only when token is NOT complete (still typing).
-    // If complete, skip prefix so user gets clean exact-only result.
-    if (!isComplete) {
+    // Pass 2: prefix matches — skip when (a) token is "complete" (user typed
+    // trailing delimiter) AND (b) exact hit succeeded. If exact failed, still
+    // fall back to prefix so "NV " doesn't return empty.
+    if (!isComplete || !exactHit) {
       var prefixHits = (DATA.stocks || []).filter(function(s) {
         var t = (s.ticker || '').toUpperCase();
         return t.indexOf(tok) === 0 && !seen[t];
@@ -1149,7 +1150,10 @@ function renderSearch() {
   panel.classList.remove('hidden');
 
   if (!hits.length) {
-    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。按字首比對（打 <code>V</code> 不會撈到 AVGO/NVDA）。多檔以空白 / 逗號分隔（例：<code>NVDA TSM AVGO</code> / <code>2330.TW, GOOGL</code>），不分大小寫。</p>';
+    body.innerHTML = '<p style="padding:20px;color:#94a3b8;font-size:12px">查無此 ticker。<br>'
+                   + '• 字首比對：<code>V</code> → V/VIK/VRT；<code>NV</code> → NVDA/NVMI<br>'
+                   + '• 精準比對：<code>V&nbsp;</code>（後加空白）→ 只 Visa；<code>2330&nbsp;</code> → 只 2330.TW<br>'
+                   + '• 多檔：<code>NVDA TSM AVGO</code>（空白分隔，前面自動精準、最後一檔字首）</p>';
     return;
   }
 
