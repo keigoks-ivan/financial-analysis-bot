@@ -2690,13 +2690,14 @@ def main():
                 print(
                     f"\n⏸ DD Screener cascade debounced — latest.json updated "
                     f"{age:.0f}s ago (< {DEBOUNCE_SEC}s window).\n"
-                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out + breakout + earnings-acceleration.\n"
+                    f"   Skipping build_dd_screener + alpha-ranker + quality-entry + bottom-out + breakout + earnings-acceleration + entry-state.\n"
                     f"   寫完整批後請手動跑：python3 scripts/build_dd_screener.py "
                     f"&& python3 scripts/dd_alpha_ranker.py --layers fundamental "
                     f"&& python3 scripts/build_quality_entry.py "
                     f"&& python3 scripts/build_bottom_out.py "
                     f"&& python3 scripts/build_breakout.py "
-                    f"&& python3 scripts/build_earnings_acceleration.py"
+                    f"&& python3 scripts/build_earnings_acceleration.py "
+                    f"&& python3 scripts/build_entry_state.py"
                 )
                 return
         except OSError:
@@ -2847,6 +2848,32 @@ def main():
     except Exception as e:
         print(
             f"\n⚠ Earnings Acceleration errored: {e}.",
+            file=sys.stderr,
+        )
+
+    # Event-driven trigger for Entry State screener (BREAKOUT / RIDING / WATCH classifier).
+    # Reads quality-entry.json (Q≥0.55 / G≥0.50 universe with archetype=成長型) +
+    # yfinance MA/RSI snapshots and emits docs/dd-screener/entry-state.{html,json}
+    # plus a daily snapshot + state_store (WATCH hysteresis counters).
+    # Runs after Earnings Acceleration — its failure is non-fatal.
+    es_script = Path(__file__).resolve().parent / "build_entry_state.py"
+    if not es_script.exists():
+        return
+    print(f"\n→ Auto-trigger: {es_script.name}")
+    try:
+        subprocess.run(
+            [sys.executable, str(es_script)],
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(
+            f"\n⚠ Entry State build failed (exit {e.returncode}). "
+            f"Rerun `python3 {es_script}` manually.",
+            file=sys.stderr,
+        )
+    except Exception as e:
+        print(
+            f"\n⚠ Entry State errored: {e}.",
             file=sys.stderr,
         )
 
