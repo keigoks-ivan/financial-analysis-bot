@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings Analysis · 5/21 — InvestMQuest Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ffffff;--bg-subtle:#fafaf9;--surface:#ffffff;--surface-2:#f7f7f5;--border:#e5e5e2;--border-strong:#1a1a1a;--text:#1a1a1a;--text-muted:#666;--text-dim:#999;--accent:#2563eb;--green:#15803d;--green-bg:#f0fdf4;--red:#b91c1c;--red-bg:#fef2f2;--amber:#b45309;--amber-bg:#fffbeb;--orange:#c2410c;--orange-bg:#fff7ed;--radius:8px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Noto Sans TC',-apple-system,sans-serif;font-size:15px;line-height:1.7;color:var(--text);background:var(--bg)}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.imq-nav{position:sticky;top:0;z-index:100;background:var(--border-strong);display:flex;align-items:center;padding:0 24px;height:48px;font-size:13px}
+.imq-brand{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:13px;color:#fff;letter-spacing:-0.02em;margin-right:24px;white-space:nowrap}
+.imq-brand:hover{color:#e5e5e2;text-decoration:none}
+.imq-nav>a{color:#ccc;padding:0 12px;height:48px;display:flex;align-items:center;font-size:13px}
+.imq-nav>a:hover{color:#fff;text-decoration:none}
+.imq-dd{position:relative;display:flex;align-items:center}
+.imq-dd-label{color:#ccc;padding:0 12px;height:48px;display:flex;align-items:center;cursor:pointer;font-size:13px}
+.imq-dd:hover .imq-dd-label{color:#fff}
+.imq-dd-menu{display:none;position:absolute;top:48px;left:0;background:var(--border-strong);border:1px solid #333;min-width:160px;border-radius:4px;padding:4px 0}
+.imq-dd:hover .imq-dd-menu{display:block}
+.imq-dd-menu a{display:block;padding:8px 16px;color:#ccc;font-size:13px}
+.imq-dd-menu a:hover{color:#fff;background:#333;text-decoration:none}
+.imq-dd-menu a.active{color:#60a5fa}
+.imq-dd.active .imq-dd-label{color:#60a5fa}
+.container{max-width:880px;margin:0 auto;padding:32px 24px 64px}
+.breadcrumb{font-size:12px;color:var(--text-dim);margin-bottom:24px;font-family:'IBM Plex Mono',monospace}
+.breadcrumb a{color:var(--text-dim)}
+.report-header{margin-bottom:32px}
+.report-header h1{font-size:28px;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px;line-height:1.2}
+.report-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text-dim);margin-bottom:16px}
+.report-lede{border-left:3px solid var(--accent);padding:12px 16px;background:var(--surface-2);border-radius:0 var(--radius) var(--radius) 0;font-size:14px;line-height:1.65}
+.notice{background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--radius);padding:10px 14px;font-size:13px;color:var(--amber);margin-bottom:24px}
+.toc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:36px}
+.toc-title{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin-bottom:10px}
+.toc ol{padding-left:20px}.toc li{font-size:13px;margin-bottom:4px}
+h2{font-size:20px;font-weight:700;letter-spacing:-0.02em;margin:40px 0 20px;padding-bottom:10px;border-bottom:2px solid var(--border-strong)}
+h3{font-size:16px;font-weight:600;margin:28px 0 12px}
+h4{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin:20px 0 8px}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+thead th{text-align:left;padding:8px 10px;background:var(--surface-2);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-bottom:1px solid var(--border-strong)}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+tbody tr:hover td{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:none}
+.company-card{border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;margin-bottom:28px}
+.company-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.ticker{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700}
+.meta-right{font-size:13px;color:var(--text-muted);text-align:right}
+.company-card ul{padding-left:20px;margin:8px 0}
+.company-card ul li{margin-bottom:5px;font-size:14px}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;vertical-align:middle}
+.tag.beat{background:var(--green-bg);color:var(--green)}
+.tag.miss{background:var(--red-bg);color:var(--red)}
+.tag.inline{background:var(--amber-bg);color:var(--amber)}
+.tag.raise{background:var(--green-bg);color:var(--green)}
+.tag.maintain{background:var(--amber-bg);color:var(--amber)}
+.tag.lower{background:var(--red-bg);color:var(--red)}
+.stock-move{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.stock-move.up{background:var(--green-bg);color:var(--green)}
+.stock-move.down{background:var(--red-bg);color:var(--red)}
+.winner-row td:first-child{border-left:3px solid var(--green)}
+.loser-row td:first-child{border-left:3px solid var(--red)}
+.stns-row td:first-child{border-left:3px solid var(--amber)}
+.contradiction{background:var(--orange-bg);border-left:3px solid var(--orange);border-radius:0 var(--radius) var(--radius) 0;padding:14px 18px;margin:14px 0}
+.contradiction h4{color:var(--orange);text-transform:none;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;letter-spacing:0;margin-top:0;margin-bottom:6px}
+.implication{margin-top:8px;font-size:14px}
+.implication strong{color:var(--orange)}
+.summary-list{list-style:none;padding:0}
+.summary-list li{background:var(--surface-2);border-left:3px solid var(--accent);padding:12px 16px;margin-bottom:10px;border-radius:0 var(--radius) var(--radius) 0;font-size:14px}
+.disclaimer{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;font-size:12px;color:var(--text-muted);margin-top:48px;line-height:1.6}
+footer{text-align:center;margin-top:24px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim)}
+@media(max-width:720px){.container{padding:20px 16px 48px}.report-header h1{font-size:22px}.company-card{padding:16px 18px}.company-header{flex-direction:column}.meta-right{text-align:left}.ticker{font-size:16px}table{font-size:13px}thead th,tbody td{padding:7px 8px}}
+</style>
+</head>
+<body>
+
+<nav class="imq-nav">
+  <a href="/" class="imq-brand">InvestMQuest. Research</a>
+  <a href="/">首頁</a>
+  <div class="imq-dd"><span class="imq-dd-label">研究</span><div class="imq-dd-menu"><a href="/research/">個股 DD</a><a href="/id/">產業深度 ID</a><a href="/id/theses.html">⭐ 九大非共識</a><a href="/pm/">PM 複盤</a></div></div>
+  <div class="imq-dd active"><span class="imq-dd-label">市場</span><div class="imq-dd-menu"><a href="/briefing/">每日簡報</a><a href="/earnings/" class="active">財報分析</a><a href="/weekly/">週報</a><a href="/six-state/">六狀態機</a></div></div>
+  <div class="imq-dd"><span class="imq-dd-label">工具</span><div class="imq-dd-menu"><a href="/backtest/">量化回測</a><a href="/qgm/">QGM 美股</a><a href="/qgm-tw/">QGM 台股</a></div></div>
+  <a href="/how-to.html">📘 使用說明</a>
+</nav>
+
+<div class="container">
+<div class="breadcrumb"><a href="/">首頁</a> › <a href="/earnings/">財報分析</a> › 2026-05-21</div>
+
+<header class="report-header">
+  <h1>美股 5/21 財報日深度分析</h1>
+  <div class="report-meta">11 companies analyzed（用戶指定）· WMT $1.04T · DE $151B · NTES $73B · ROST $70B · TTWO $44B · WDAY $32B · ZM $29B · WSM $21B · RL $20B · NIO $14B · DECK $14B · 2026-05-21</div>
+  <div class="report-lede">
+    <strong>核心發現：</strong>今日最亮眼是 <strong>ROST 美股盤後 +4.9% 至 $228</strong>——comp +17%（vs 估 ~7-8%）、EPS $2.02 大幅超越指引 $1.60-1.67（+22%）、全年 EPS 指引從 $6.61 大幅上調至 $7.50-7.74（+13-17%）；<strong>RL Ralph Lauren +11% 為當日標普 500 最強</strong>，Asia +31%、北美 comp +16%、Q4 revenue +12% 遠超 mid-single-digit 指引。WDAY 盤後 +10-14%——Agentic AI 年化收入接近 $500M、Sana AI 加速、margin 上調至 30.5%。<strong>NVDA 5/20 連動主題持續</strong>：DE Deere 卻 -7.7%（Beat EPS +15% 但農業景氣憂慮 + 大型農機需求 -15-20%）、WMT -3.6% premarket（EPS in-line + 對 tariff 警示）。NIO 雖然交付 +98%、Q2 指引 110-115K 車輛強勁，但仍受到質疑。GTA VI 11/19 確認上市，TTWO +0.64% 盤後但 FY2027 EPS 指引 $8.00。
+  </div>
+</header>
+
+<div class="notice">⚠️ 用戶指定 12 家公司（WMT/DE/NTES/ROST/TTWO/WDAY/ZM/WSM/RL/NIO/DECK/BJ）。其中 BJ 為 5/22 BMO 報告（非 5/21），已從本分析排除。實際分析 11 家。</div>
+
+<div class="toc">
+  <div class="toc-title">目錄</div>
+  <ol>
+    <li><a href="#companies">§1 各公司財報重點（WMT / DE / NTES / ROST / TTWO / WDAY / ZM / WSM / RL / NIO / DECK）</a></li>
+    <li><a href="#cross">§2 跨公司比較與趨勢</a></li>
+    <li><a href="#winners">§3 贏家 / 輸家</a></li>
+    <li><a href="#contradictions">§4 矛盾與風險訊號</a></li>
+    <li><a href="#summary">§5 總結</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="companies">§1 各公司財報重點</h2>
+
+<!-- WMT -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">WMT · Walmart</span>
+    <span class="meta-right">$1.04T · 盤前 BMO · <span class="stock-move down">-3.58% premarket 至 $126.16</span></span>
+  </div>
+  <h4>數據表 — Q1 FY2027（截至 2026-04-30）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Adj. EPS</td><td>$0.66</td><td>$0.66</td><td><span class="tag inline">INLINE</span> · YoY +8.2%（去年 $0.61）</td></tr>
+      <tr><td>GAAP EPS</td><td>$0.67</td><td>—</td><td>YoY +19.6%（含 equity gains）</td></tr>
+      <tr><td>Total Revenue</td><td>$177.8B</td><td>$176.7B</td><td><span class="tag beat">BEAT +$1.0B</span> · YoY +7.3% reported · +6% constant currency</td></tr>
+      <tr><td>Walmart US Comp Sales</td><td>+4.1%</td><td>—</td><td>含 100bps headwind from pharmacy maximum fair pricing</td></tr>
+      <tr><td>Sam's Club Comp（ex-fuel）</td><td>+3.9%</td><td>—</td><td>Transactions +6.2% · Ticket -2.2%</td></tr>
+      <tr><td>Global eCommerce</td><td>+26%</td><td>—</td><td>US Marketplace +50%、Advertising +50%、Delivery +45%</td></tr>
+      <tr><td>Q1 FY27 OI growth</td><td>+4.0-6.0%（指引）</td><td>—</td><td>實際小幅 OI 受 fuel 影響</td></tr>
+      <tr><td>FY2027 Guidance</td><td>維持原指引</td><td>—</td><td><span class="tag maintain">MAINTAIN</span> · cautious outlook</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>EPS $0.66 in-line + Revenue $177.8B beat +$1.0B：</strong>典型「beat top-line miss EPS expectations on guidance reaffirmation」格局。</li>
+    <li><strong>Walmart US Comp +4.1%（去除 100bps 製藥公平定價拖累 → 真實 ~5.1%）：</strong>美國零售動能強勁，主因 grocery + general merchandise。</li>
+    <li><strong>Marketplace 加速：</strong>US Marketplace net sales +50%、跨境 marketplace 推進 Canada + Mexico、廣告收入 +50%。</li>
+    <li><strong>Delivery 45%、~50% eCommerce 由 club-fulfilled delivery 貢獻：</strong>Sam's Club 履行成本下降，是 eCommerce 利潤率改善的核心。</li>
+    <li><strong>Fuel cost headwind：</strong>distribution costs 大幅受 fuel 影響，operating income 增長低於 revenue 增長。</li>
+    <li><strong>FY27 維持原指引（comp 3.5-4.5%、Adj EPS 全年指引）：</strong>未在強勁 Q1 後上調，是市場失望的核心因素。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO 強調 tariff 仍是 H2 最大不確定性，公司繼續實施全球採購和定價策略應對。</li>
+    <li>Marketplace + Advertising 增長被定位為「higher-margin growth engine」，但仍佔總 revenue 比重小。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>premarket -3.58% 至 $126.16</strong>（Investing.com 確認；ChartMill 確認「dipped 2.6%」收盤前——方向一致下跌）。</li>
+    <li>下跌理由：EPS in-line（未 beat），revenue beat 但 OI 受 fuel 拖累，FY27 指引維持不變（無 raise）。市場對「全年看不到加速」失望。Walmart's tariff warning shapes retail outlook（CNBC）。</li>
+  </ul>
+</div>
+
+<!-- DE -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">DE · Deere & Company</span>
+    <span class="meta-right">$140B · 盤前 BMO · <span class="stock-move down">-7.7% 至 $517.16</span></span>
+  </div>
+  <h4>數據表 — Q2 FY2026（截至 2026-05-03）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Diluted EPS</td><td>$6.55</td><td>$5.70-5.74</td><td><span class="tag beat">BEAT +14-15%</span> · YoY -1.4%（去年 $6.64）</td></tr>
+      <tr><td>Total Revenue</td><td>$13.369B</td><td>$11.50-12.73B</td><td><span class="tag beat">BEAT +5-16%</span> · YoY +5% · 第四連季 EPS beat</td></tr>
+      <tr><td>Production & Precision Ag</td><td>$4.50B</td><td>—</td><td>YoY -14% · Operating margin 壓縮至 15.7%</td></tr>
+      <tr><td>Small Ag & Turf</td><td>—</td><td>—</td><td>YoY +16% · Operating margin 提升</td></tr>
+      <tr><td>Construction & Forestry</td><td>$3.79B</td><td>—</td><td>YoY +29% · 本季最大引擎 · Margin 14.8%</td></tr>
+      <tr><td>IEEPA Tariff Recovery</td><td>$272M（一次性）</td><td>—</td><td>Q2 包含一次性退款，後續可能更多</td></tr>
+      <tr><td>Tenna LLC 收購</td><td>$439M</td><td>—</td><td>建築科技公司，強化 C&F 數位化</td></tr>
+      <tr><td>FY2026 Net Income 指引</td><td>$4.5-5.0B</td><td>—</td><td><span class="tag maintain">MAINTAIN</span> · 未上調</td></tr>
+      <tr><td>FY2026 大型農機指引</td><td>北美 -15-20%（產業）</td><td>—</td><td>Large Ag 仍處低谷</td></tr>
+      <tr><td>FY2026 C&F 指引</td><td>+20%（上調）</td><td>+15%（原）</td><td><span class="tag raise">RAISE +5ppts</span> · 數據中心建設驅動</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>EPS $6.55 大幅 beat $5.70-5.74（+14-15%）：</strong>第四連季 EPS beat，但 YoY -1.4%（從去年 $6.64 下滑）。</li>
+    <li><strong>Production & Precision Ag -14%：</strong>北美大型農機需求承壓，operating margin 從 18.5% 壓縮至 15.7%（-280bps）。</li>
+    <li><strong>Construction & Forestry +29% 為本季驚奇：</strong>主因 data center construction（+$100B 2026、+雙位數 2027）+ IIJA infrastructure + oil & gas + warehouse 多重驅動，order book +60% since November。</li>
+    <li><strong>C&F 全年指引從 +15% 上調至 +20%：</strong>order backlog 達 2024 April 以來最高，>80% production slots 全年已填滿。</li>
+    <li><strong>$272M IEEPA tariff recovery：</strong>最高法院推翻 IEEPA tariffs 帶來的退款，後續預期更多 refund 流入。</li>
+    <li><strong>北美大型農機需求 -15-20%：</strong>全年產業 volume 預期，管理層認為 2026 是 cycle 底部，2027 起復甦。</li>
+    <li><strong>'See and Spray' + Starlink 合作：</strong>高毛利 recurring revenue 是未來成長驅動，但短期影響有限。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO John May：「As we address ongoing challenges within global agricultural markets, our comprehensive portfolio continues to drive market share expansion and support our targets for sustained growth.」</li>
+    <li>Order book context：「In North America, our order book continues to strengthen, up more than 60% since November, now at its highest level since April of 2024, with over 80% of production slots filled for the year.」</li>
+    <li>Data center 驅動：「Data center construction is expected to top $100 billion in 2026, with additional double-digit growth into 2027.」</li>
+    <li>大型農機底部：管理層認為 FY2026 是農業 cycle 底部，2027 起預期復甦，但 USDA 數據顯示農場收入仍承壓。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>收盤 -7.7% 至 $517.16</strong>（GuruFocus 確認「dropping by 7.7%, $43.30 decrease」；Yahoo Finance 確認「fell 6.88%」；Google Finance 確認「-5.08% intraday」——方向一致大跌，採用 GuruFocus 收盤 -7.7%）。</li>
+    <li>下跌理由：儘管 EPS 大幅 beat +14-15%，但 FY26 net income 指引未上調，大型農機 -15-20% 拖累情緒，且股價已從低點反彈 +52.5% YTD。市場執著於「為何沒有 raise net income guidance」而非「beat」。Investing.com：「decline may reflect broader market concerns, including tariff headwinds and macroeconomic pressures」。</li>
+  </ul>
+</div>
+
+<!-- NTES -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">NTES · NetEase</span>
+    <span class="meta-right">$73B · 盤前 BMO · <span class="stock-move down">-4.13% premarket 至 $111.99</span></span>
+  </div>
+  <h4>數據表 — Q1 FY2026（截至 2026-03-31）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Non-GAAP EPS（ADS）</td><td>$2.56</td><td>$2.02</td><td><span class="tag beat">BEAT +26.7%</span></td></tr>
+      <tr><td>Diluted EPS（RMB per share）</td><td>RMB17.46</td><td>RMB15.39-15.45</td><td><span class="tag beat">BEAT +13.5%</span></td></tr>
+      <tr><td>Total Revenue（USD）</td><td>$4.43B</td><td>$4.20B</td><td><span class="tag beat">BEAT +5.5%</span> · YoY +6.3%</td></tr>
+      <tr><td>Revenue（RMB）</td><td>RMB30.6B</td><td>—</td><td>YoY +6.1%</td></tr>
+      <tr><td>Games Revenue（RMB）</td><td>RMB25.7B</td><td>—</td><td>YoY +6.9% · 佔總收入 84%</td></tr>
+      <tr><td>Online Game Revenue</td><td>RMB25.1B</td><td>—</td><td>YoY +7% · QoQ +18% 強勁</td></tr>
+      <tr><td>Gross Margin</td><td>69.4%</td><td>—</td><td>大幅改善 · Gross profit +14.8% YoY</td></tr>
+      <tr><td>Non-GAAP Net Income</td><td>RMB11.3B</td><td>—</td><td>持平 YoY</td></tr>
+      <tr><td>Net Cash</td><td>RMB167.5B（~$23B）</td><td>—</td><td>現金部位非常充裕</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>EPS Beat +26.7%（ADS Non-GAAP）：</strong>$2.56 vs 估 $2.02，是當日 China internet 公司中 EPS beat 幅度最大。</li>
+    <li><strong>Online Game 強勁加速：</strong>QoQ +18%、YoY +7%，由 Where Winds Meet、Marvel Rivals、Fantasy Westward Journey 三大主力驅動。</li>
+    <li><strong>Marvel Rivals Steam 排名持續強勢：</strong>海外市場表現是本季最大亮點，新一代主機平台 Marvel Rivals 為全球 hit。</li>
+    <li><strong>Gross Margin 69.4%（去年 ~67%）：</strong>大幅改善 +240bps，self-developed 比例提升 + scale 效果。</li>
+    <li><strong>新作 Pipeline：</strong>Sea of Elements 和 Ananta 正在進展，預計 2026 年底-2027 推出。</li>
+    <li><strong>Net Cash RMB167.5B（~$23B）：</strong>佔市值約 30%，回購和股息空間充裕。</li>
+    <li><strong>Innovative Businesses（廣告 + 教育 + 電商）：</strong>非遊戲部分仍貢獻穩定收入，但成長停滯。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>VP of Finance Aileen Mo：「Total net revenue rose 6% year over year to RMB 30.6 billion. Online game revenue totaled RMB 25.1 billion, increasing 18% quarter over quarter.」</li>
+    <li>Bill Pang（代讀 CEO William Ding）：「2026 was 'off to a solid start'」，強調 self-developed games 的 Fantasy Westward Journey franchise 持續創新高。</li>
+    <li>marketing spend 增加：管理層提及 marketing expenses 上升，可能拖累短期 operating margin。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>premarket -4.13% 至 $111.99</strong>（Investing.com 確認；Quiver Quantitative 同步確認盤前下跌）。</li>
+    <li>下跌理由：儘管 EPS 大幅 beat +26.7%，但市場聚焦於：① marketing expenses 增加；② Innovative Businesses 部分 segment 收入下滑；③ 中概股整體情緒（地緣政治）。Investing.com：「mixed investor sentiment...broader market trends or specific investor concerns, such as increased marketing expenses」。</li>
+  </ul>
+</div>
+
+<!-- ROST -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">ROST · Ross Stores</span>
+    <span class="meta-right">$70B · 盤後 AMC · <span class="stock-move up">+4.9% 至 $228.02</span></span>
+  </div>
+  <h4>數據表 — Q1 FY2026（13週，截至 2026-05-02）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Diluted EPS</td><td>$2.02</td><td>$1.66-1.73（管理層 $1.60-1.67）</td><td><span class="tag beat">BEAT +17-22%</span> · YoY +37%（去年 $1.47）</td></tr>
+      <tr><td>Total Sales</td><td>$6.0B</td><td>$5.5-5.65B</td><td><span class="tag beat">BEAT +6-9%</span> · YoY +21%</td></tr>
+      <tr><td>Comp Sales</td><td>+17%</td><td>+7-8%</td><td><span class="tag beat">大幅 BEAT</span> · YoY 從 flat 大幅躍升</td></tr>
+      <tr><td>Net Income</td><td>$650M</td><td>—</td><td>YoY +35.7%（去年 $479M）</td></tr>
+      <tr><td>Operating Margin</td><td>13.4%</td><td>11.8-12.1%（管理層）</td><td><span class="tag beat">BEAT +130bps</span> · YoY +120bps</td></tr>
+      <tr><td>FCF Margin</td><td>10.4%</td><td>—</td><td>YoY +630bps（去年 4.1%）</td></tr>
+      <tr><td>Q2 Comp 指引</td><td>+6-7%</td><td>—</td><td><span class="tag raise">RAISE</span> · 持續加速</td></tr>
+      <tr><td>FY2026 EPS 指引</td><td>$7.50-$7.74</td><td>$6.61（原 baseline）</td><td><span class="tag raise">RAISE +13-17%</span></td></tr>
+      <tr><td>FY2026 Comp 指引</td><td>+6-7%</td><td>+3-4%（原）</td><td><span class="tag raise">RAISE</span></td></tr>
+      <tr><td>Q1 Buyback</td><td>$319M（1.5M 股）</td><td>—</td><td>$2.55B 授權持續執行</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>Comp +17% 是 ROST 歷史上少見的單季水平：</strong>遠超管理層自己的 +7-8% 估計，比 TJX 5/20 公布的 +6% 高出 11ppts。</li>
+    <li><strong>EPS $2.02（+37% YoY）大幅超越指引上緣（$1.67）：</strong>+22% beat，且 OI margin 從預期 11.8-12.1% 跳升至 13.4%。</li>
+    <li><strong>FCF Margin 從 4.1% 跳升至 10.4%：</strong>+630bps 改善，是當日所有零售商中 FCF 改善幅度最大。</li>
+    <li><strong>客流量是主要驅動：</strong>CEO Conroy 強調「customer traffic was the primary driver of the strong sales trend」——非靠漲價，而是真實消費者流量增加。</li>
+    <li><strong>Spring assortment 執行優異：</strong>春季商品轉換是 Q1 強勁的核心，merchandise + marketing + in-store experience 三項改善並進。</li>
+    <li><strong>FY2026 EPS 指引大幅上調 +13-17%（$6.61 → $7.50-7.74）：</strong>意味著 Q2-Q4 仍預期強勁，非 Q1 一次性。</li>
+    <li><strong>Q1 新增 17 家門市（13 Ross + 4 dd's）：</strong>持續地理擴張。</li>
+    <li><strong>Q1 回購 $319M（1.5M 股）：</strong>$2.55B 兩年授權持續執行。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO Jim Conroy：「We achieved outstanding sales and earnings results in the first quarter with superb execution throughout the business, especially the transition of our Spring assortment.」</li>
+    <li>Conroy 續：「Customer traffic was the primary driver of the strong sales trend as compelling merchandise assortments, higher customer acquisition and engagement from our ongoing marketing initiatives, and an improved in-store experience are resonating with shoppers.」</li>
+    <li>Conroy 上調指引：「Based on our first quarter results and our second quarter guidance, we are increasing our 2026 fiscal year same store sales growth to 6% to 7% on top of a 5% gain in 2025. As a result, fiscal 2026 earnings per share are now projected to be in the range of $7.50 to $7.74, or growth of 13% to 17%」。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>盤後 +4.9% 至 $228.02</strong>（StockStory 確認「stock traded up 4.9% to $228.02 immediately following the results」；FinancialContent 確認 EPS guidance +2.7% above 估值——方向一致正向）。</li>
+    <li>上漲理由：「impressive beat on both profit and sales」——當日唯一同時達成 EPS +22%、Revenue +9%、Comp +17% vs +7-8%、全年指引 raise +13-17% 四要素全面強勁的公司。Off-price 模式在 tariff + 消費分化環境下繼續強勢驗證。</li>
+    <li>盤後漲幅相對溫和（+4.9%），原因可能是市場已部分預期（Benzinga 報導 5/20 收盤前已上漲 2.4% 反映情緒）。</li>
+  </ul>
+</div>
+
+<!-- TTWO -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">TTWO · Take-Two Interactive</span>
+    <span class="meta-right">$44B · 盤後 AMC · <span class="stock-move up">+0.64% 盤後 至 $236.62</span></span>
+  </div>
+  <h4>數據表 — Q4 FY2026（截至 2026-03-31）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Net Bookings</td><td>$1.58B</td><td>$1.51-1.56B（管理層）/ $1.552B（估）</td><td><span class="tag beat">BEAT</span> · 超越 guidance 上緣</td></tr>
+      <tr><td>GAAP Revenue</td><td>$1.68B</td><td>$1.573-1.623B（指引）</td><td><span class="tag beat">BEAT</span> · YoY +6%</td></tr>
+      <tr><td>Adj. EPS</td><td>$0.57+</td><td>$0.46-0.56（指引）/ $0.57（估）</td><td><span class="tag beat">BEAT/INLINE</span></td></tr>
+      <tr><td>Recurrent Consumer Spending</td><td>+7%</td><td>—</td><td>recurring revenue 持續加速</td></tr>
+      <tr><td>FY2027 Bookings 指引</td><td>$9.37B</td><td>$9.4B（Wedbush）</td><td><span class="tag inline">INLINE</span> · YoY +40%</td></tr>
+      <tr><td>FY2027 EPS 指引</td><td>$8.00</td><td>$6.40（Wedbush）</td><td><span class="tag beat">大幅 BEAT +25%</span></td></tr>
+      <tr><td>GTA VI 發售日期</td><td>2026-11-19</td><td>—</td><td>確認，無延期 · 是本季最重要訊號</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>GTA VI 11/19/2026 確認不延期：</strong>這是當日 TTWO 最重要訊號，移除了股價最大的尾部風險（延期擔憂）。Wedbush 認為「Rockstar 通常在發售前 6 個月就會宣布延期」，現在沒有 → 信心高。</li>
+    <li><strong>FY2027 EPS $8.00 vs Wedbush 估 $6.40（+25%）：</strong>大幅超前市場最樂觀預估，反映管理層對 GTA VI launch year 的信心。</li>
+    <li><strong>Net Bookings $1.58B 超越 guidance 上緣 $1.56B：</strong>NBA 2K + GTA Online + mobile 等 recurrent spending 持續強勁。</li>
+    <li><strong>Recurrent Consumer Spending +7% YoY：</strong>RCS 預期佔 FY2026 78% bookings，業務模式從「一次性遊戲銷售」轉向「持續變現」。</li>
+    <li><strong>GTA Online 是 FY2027 最大變數：</strong>Morgan Stanley 假設 40M 套 GTA VI 在 FY2027 銷售，但更關鍵的是 GTA Online MAU 對長期 EPS 影響。</li>
+    <li><strong>GTA VI 定價 US$80：</strong>較傳統 $70 高 +14%，但 unprecedented development cost 已被計入。</li>
+    <li><strong>$5B 股票回購授權（擴大）：</strong>顯示管理層對 GTA VI 後現金流的信心。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO Strauss Zelnick 強調 GTA VI 不延期，「fiscal 2027 should be a record bookings year」並建立「higher financial baseline」。</li>
+    <li>管理層描述 GTA VI 為「a platform with a long tail, not a one-year event」——明確將 GTA VI 定位為 multi-year revenue streamer。</li>
+    <li>Morgan Stanley「Take-Two's earnings profile is becoming more durable...nearly 80% of bookings come from ongoing engagement rather than new purchases」。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>盤後 +0.64% 至 $236.62</strong>（Investing.com 確認；24/7 Wall St 確認 in-line Q4 + 強勁 FY27 guidance）。</li>
+    <li>漲幅有限原因：盤前 Best Buy 邊際 GTA VI 預售訊號已部分驅動股價上漲，財報只是「確認延期風險消除」+「FY27 EPS 大幅超預期」。市場對「FY27 baseline」更感興趣，當前 quarter 反應有限。</li>
+    <li>Morgan Stanley 目標價 $280（19% upside）；Wedbush $300。長期看 GTA VI 11/19 launch 是真正的 catalyst。</li>
+  </ul>
+</div>
+
+<!-- WDAY -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">WDAY · Workday</span>
+    <span class="meta-right">$32B · 盤後 AMC · <span class="stock-move up">+10.8% 盤後（最高 +14%）</span></span>
+  </div>
+  <h4>數據表 — Q1 FY2027（截至 2026-04-30）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Non-GAAP EPS</td><td>$2.66</td><td>$2.51-2.56</td><td><span class="tag beat">BEAT +4-6%</span> · YoY +19%</td></tr>
+      <tr><td>GAAP EPS</td><td>$0.87</td><td>—</td><td>YoY +248%（去年 $0.25 含 $166M 重組費用）</td></tr>
+      <tr><td>Total Revenue</td><td>$2.542B</td><td>$2.52-2.567B</td><td><span class="tag inline">INLINE</span> · YoY +13.5%</td></tr>
+      <tr><td>Subscription Revenue</td><td>$2.354B</td><td>$2.335B（指引）</td><td><span class="tag beat">BEAT</span> · YoY +14.3%</td></tr>
+      <tr><td>Operating Income</td><td>$338M</td><td>—</td><td>YoY +766%（margin 13.3% vs 1.8%）</td></tr>
+      <tr><td>12個月 Subscription Backlog</td><td>$8.806B</td><td>—</td><td>YoY +15.5%</td></tr>
+      <tr><td>Non-GAAP Operating Margin</td><td>30.5%</td><td>30.0%（指引）</td><td><span class="tag beat">BEAT</span></td></tr>
+      <tr><td>Agentic AI Annualized Revenue</td><td>~$500M</td><td>—</td><td>4,000+ 客戶使用，比前季翻倍</td></tr>
+      <tr><td>FY2027 Subscription Revenue 指引</td><td>$9.925-$9.950B</td><td>—</td><td><span class="tag maintain">MAINTAIN</span> · +12-13% YoY</td></tr>
+      <tr><td>FY2027 Operating Margin 指引</td><td>30.5%</td><td>30.0%（原）</td><td><span class="tag raise">RAISE +50bps</span></td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>EPS $2.66 vs 估 $2.51-2.56 大幅 beat +4-6%：</strong>盤後 +10-14% 主要由此 + margin raise 驅動。</li>
+    <li><strong>Agentic AI 年化收入接近 $500M：</strong>「4,000+ 客戶使用至少一個 AI agent，比前季翻倍」。AI 不是未來故事，而是當前增長引擎。</li>
+    <li><strong>FY2027 Non-GAAP Operating Margin 指引從 30.0% 上調至 30.5%（+50bps）：</strong>是觸發 +10% 盤後上漲的核心 catalyst。</li>
+    <li><strong>Aneel Bhusri 回任 CEO 第一季：</strong>共同創辦人 Bhusri 取代 Carl Eschenbach，本季為其回歸首份財報，市場給予肯定。</li>
+    <li><strong>Sana AI integration + IT Service Management 拓展：</strong>新產品線開拓，超出傳統 HR/Finance 範圍。</li>
+    <li><strong>GAAP EPS +248%（去年含 $166M 重組費用）：</strong>去年同期基數低，今年 GAAP profitability 大幅改善。</li>
+    <li><strong>YTD 股價跌 43%：</strong>盤後 +10-14% 後仍距 52 週高 $276 遠，估值已大幅修正。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO Aneel Bhusri：「Our core business is strong, our AI strategy is working, and we're moving with the speed and focus required to lead.」——首要任務確立。</li>
+    <li>President of Product and Technology Gerrit Kazmaier：「Annualized revenue from agentic AI solutions is approaching $500 million.」</li>
+    <li>Bhusri 關於 Sana：「Our integration of the Sana platform and expansion into IT service management represent significant steps forward in our AI journey.」</li>
+    <li>Chief AI Officer Joel Hellermark：「We are building an AI-native platform that will redefine enterprise software.」</li>
+    <li>分析師關注 Workday 是否能在 AI 取代 SaaS 趨勢下生存——管理層強調 AI 是業務加速劑非替代品。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>盤後 +10.8% 至 ~$135（最高 +14%）</strong>（ChartMill 確認「surged roughly 10.8% in after-hours」；CNBC 確認「surged as much as 14% in extended trading」——方向一致大漲，採用 ChartMill +10.8%）。</li>
+    <li>2-source 確認：ChartMill +10.8%；CNBC「up to +14%」——方向一致。</li>
+    <li>上漲理由：① Beat EPS +4-6%；② Margin 指引上調至 30.5%；③ Agentic AI $500M 年化收入印證「AI is working」；④ YTD 已跌 43%，多空力道反轉 catalyst。WDAY 是「AI risk vs AI benefit」debate 中本季最強有力的反證。</li>
+  </ul>
+</div>
+
+<!-- ZM -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">ZM · Zoom Communications</span>
+    <span class="meta-right">$29B · 盤後 AMC · <span class="stock-move up">+8.17% 盤後 至 $104.10</span></span>
+  </div>
+  <h4>數據表 — Q1 FY2027（截至 2026-04-30）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Non-GAAP EPS</td><td>$1.55</td><td>$1.40-1.42</td><td><span class="tag beat">BEAT +9-11%</span> · YoY +8.4%（去年 $1.43）</td></tr>
+      <tr><td>GAAP EPS</td><td>$1.42</td><td>—</td><td>YoY +75%（去年 $0.81）</td></tr>
+      <tr><td>Total Revenue</td><td>$1.239B</td><td>$1.22-1.225B</td><td><span class="tag beat">BEAT +1.1-1.6%</span> · YoY +5.5% · 超越 guidance 上緣</td></tr>
+      <tr><td>Enterprise Revenue</td><td>$755.7M</td><td>—</td><td>YoY +7.2% · 較 Online 強勁</td></tr>
+      <tr><td>Online Revenue</td><td>$483.3M</td><td>—</td><td>YoY +2.8% · 持續減速</td></tr>
+      <tr><td>GAAP Operating Margin</td><td>25.1%</td><td>—</td><td>YoY +450bps</td></tr>
+      <tr><td>Non-GAAP Operating Margin</td><td>41.1%</td><td>~40%（指引）</td><td><span class="tag beat">BEAT</span> · YoY +130bps</td></tr>
+      <tr><td>Q1 FCF</td><td>$500.5M</td><td>—</td><td>YoY +8%（去年 $463.4M）</td></tr>
+      <tr><td>$100K+ TTM 客戶</td><td>4,534</td><td>—</td><td>持續增長</td></tr>
+      <tr><td>Cash 餘額</td><td>$7.7B</td><td>—</td><td>強勁現金部位</td></tr>
+      <tr><td>Q2 Revenue 指引</td><td>$1.265-1.270B</td><td>—</td><td><span class="tag raise">RAISE</span> · YoY ~5%</td></tr>
+      <tr><td>FY2027 Revenue 指引</td><td>$5.080-5.090B</td><td>—</td><td><span class="tag raise">RAISE</span></td></tr>
+      <tr><td>FY2027 Non-GAAP EPS 指引</td><td>$5.96-$6.00</td><td>—</td><td><span class="tag raise">RAISE</span></td></tr>
+      <tr><td>Buyback Authorization 擴大</td><td>+$1.0B</td><td>—</td><td>顯示管理層信心</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>EPS $1.55 vs 估 $1.40-1.42 大幅 beat +9-11%：</strong>operating leverage 持續改善，gross profit 流向 bottom line。</li>
+    <li><strong>Revenue $1.239B 超越 guidance 上緣 $1.225B：</strong>Enterprise +7.2% 是主驅動，相對 Online +2.8% 顯示 Zoom 從 consumer 向 enterprise 轉型成功。</li>
+    <li><strong>Non-GAAP Operating Margin 41.1%：</strong>YoY +130bps，業內最佳，效率驅動而非成長驅動。</li>
+    <li><strong>4,534 個 $100K+ TTM 客戶：</strong>大型 enterprise customers 持續累積，較 Q4 4,500 增加；alongside Zoom Phone（>10M seats global）和 CX（contact center）拓展。</li>
+    <li><strong>FY2027 EPS 指引 $5.96-6.00：</strong>從 Q1 強勁外推，全年指引上調。</li>
+    <li><strong>$1B 新增 buyback authorization：</strong>Cash $7.7B 充裕，回購力度持續。</li>
+    <li><strong>AI Companion 持續整合：</strong>Workplace AI Companion 已 default 啟用，後續 monetization 在 enterprise tier 加速。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO Eric Yuan：「We saw continued momentum in the first quarter, with revenue up 5.5% year over year, exceeding the high end of our guidance.」</li>
+    <li>Yuan 強調 enterprise customer growth + AI Companion 整合是核心增長引擎。</li>
+    <li>Zoom Phone（>10M seats globally）已成為 enterprise upsell 主要管道之一。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>盤後 +8.17% 至 $104.10</strong>（StockTitan 確認「After-hours, ZM has gained 8.17%, stock trading at $104.10」——具體數字精確）。</li>
+    <li>上漲理由：① EPS beat +9-11%；② Revenue 超越 guidance 上緣；③ FY2027 全年指引 raise；④ $1B 新增 buyback。在 SaaS 板塊整體承壓的環境下，Zoom 展現「AI as efficiency engine」而非「AI threat」的故事。</li>
+    <li>與 WDAY 同日同方向（兩家 SaaS 公司都上漲），是當日 SaaS 板塊 narrative 反轉的雙重訊號。</li>
+  </ul>
+</div>
+
+<!-- WSM -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">WSM · Williams-Sonoma</span>
+    <span class="meta-right">$21B · 盤前 BMO · <span class="stock-move up">+3.96% 收盤</span></span>
+  </div>
+  <h4>數據表 — Q1 FY2026（截至 2026-05-03）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Diluted EPS</td><td>$1.93</td><td>$1.80</td><td><span class="tag beat">BEAT +7.2%</span> · YoY +4.3%</td></tr>
+      <tr><td>Total Net Revenue</td><td>$1.81B</td><td>$1.81B</td><td><span class="tag inline">INLINE</span> · YoY +4.4%</td></tr>
+      <tr><td>Comp Brand Revenue</td><td>+4.8%</td><td>—</td><td>每個品牌都正成長</td></tr>
+      <tr><td>Pottery Barn Comp</td><td>+1%</td><td>—</td><td>主品牌穩定</td></tr>
+      <tr><td>Pottery Barn Children's Comp</td><td>+4.5%</td><td>—</td><td>強勁</td></tr>
+      <tr><td>West Elm Comp</td><td>+8.5%</td><td>—</td><td>當季最強，YoY 加速</td></tr>
+      <tr><td>Williams Sonoma Comp</td><td>+5%</td><td>—</td><td>on top of +7.3% last year</td></tr>
+      <tr><td>B2B Growth</td><td>+13.7%</td><td>—</td><td>Trade +9% · Contract +22%</td></tr>
+      <tr><td>Operating Margin</td><td>16.2%</td><td>—</td><td>YoY 持平，內部 exceeds 預期</td></tr>
+      <tr><td>FY2026 Revenue 指引</td><td>+2.7-6.7%</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      <tr><td>FY2026 Comp 指引</td><td>+2-6%</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      <tr><td>FY2026 Operating Margin 指引</td><td>17.5-18.1%</td><td>—</td><td><span class="tag maintain">MAINTAIN</span></td></tr>
+      <tr><td>Q1 Buyback</td><td>$287.8M</td><td>—</td><td>持續股東回報</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>Comp +4.8% 全品牌正成長：</strong>West Elm 突出（+8.5%），住房逆風中展現品牌韌性。</li>
+    <li><strong>B2B +13.7%（Contract +22%）：</strong>商業客戶業務是隱藏增長引擎，addresses housing cycle 之外的需求。</li>
+    <li><strong>EPS $1.93（+7.2% beat $1.80）：</strong>數字 vs Zacks Consensus 大幅超越。</li>
+    <li><strong>FY26 指引維持：</strong>未在 Q1 強勁後上調，反映 tariff 仍是不確定性。</li>
+    <li><strong>Tariff 假設：</strong>front-loaded 在 H1 FY2026，oil 維持高位，未來無 tariff refund 計入。</li>
+    <li><strong>Q1 回購 $287.8M + 股息 $85.6M：</strong>共 $373.4M 股東回報。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO Laura Alber：「We are off to a strong start in 2026. In Q1, our comp came in at 4.8%, and we delivered an operating margin of 16.2%. Every brand delivered a positive comp in the quarter.」</li>
+    <li>Alber 強調 outperformance 持續：「We continue to outperform on both the top and bottom lines. We are delivering compounding results year-after-year despite the cyclical swings of the housing market and other macroeconomic events.」</li>
+    <li>tariff impact 預期 front-loaded H1 FY2026，後續減輕。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>收盤 +3.96%</strong>（Robinhood / Motley Fool 確認「+3.96%」；Stockstory 確認「in-line revenue, EPS beat」——方向一致正向）。</li>
+    <li>漲幅理由：EPS beat、comp +4.8% 全品牌正成長、B2B +13.7% 隱性增長、operating margin 維持高位。然而 FY26 維持指引不上調，限制了漲幅大小。</li>
+  </ul>
+</div>
+
+<!-- RL -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">RL · Ralph Lauren</span>
+    <span class="meta-right">$20B · 盤前 BMO · <span class="stock-move up">+11% 收盤 至 $363.37（標普500最強）</span></span>
+  </div>
+  <h4>數據表 — Q4 FY2026（截至 2026-03-28）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Adj. EPS</td><td>$2.80</td><td>$2.55-2.63</td><td><span class="tag beat">BEAT +6.6-9.8%</span></td></tr>
+      <tr><td>Total Net Revenue</td><td>$1.979B</td><td>$1.85-1.904B</td><td><span class="tag beat">BEAT +4-7%</span> · YoY +17% reported · +12% constant currency</td></tr>
+      <tr><td>FY2026 Revenue（全年）</td><td>$8B+ (首次)</td><td>—</td><td>YoY +15%</td></tr>
+      <tr><td>FY2026 Adj. Operating Margin</td><td>16.0%（constant currency 15.4%）</td><td>—</td><td>YoY +200bps（全年）</td></tr>
+      <tr><td>Q4 Gross Margin</td><td>69.7%（GAAP），69%（adj）</td><td>—</td><td>YoY +110bps（GAAP）</td></tr>
+      <tr><td>Q4 Adj. Operating Margin</td><td>11.0%</td><td>—</td><td>YoY +70bps（vs 指引 -80~-120bps，反向 beat 大幅）</td></tr>
+      <tr><td>Q4 Average Unit Retail</td><td>+16%</td><td>—</td><td>full price selling、discount 減少、mix 改善</td></tr>
+      <tr><td>北美 Revenue（Q4）</td><td>$763M（+8%）</td><td>—</td><td>Comp +16%（brick-and-mortar +14%、digital +21%）</td></tr>
+      <tr><td>Europe Revenue（Q4）</td><td>$620M（+18% reported，+6% cc）</td><td>—</td><td>強勁</td></tr>
+      <tr><td>Asia Revenue（Q4）</td><td>$564M（+31% reported，+28% cc）</td><td>—</td><td>中國 Lunar New Year 拉動 · Comp +25%</td></tr>
+      <tr><td>Q4 New Customers</td><td>+1.4M</td><td>—</td><td>DTC 新增，YoY low double digit</td></tr>
+      <tr><td>季度股息</td><td>$1.00（+10%）</td><td>—</td><td>連續股息上調</td></tr>
+      <tr><td>FY2026 股東回報</td><td>$700M+</td><td>—</td><td>buyback + 股息</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>Asia +31%（constant currency +28%）為當季最強訊號：</strong>中國 Lunar New Year 拉動，comp store sales +25%——是高度有意義的奢侈消費復甦訊號。</li>
+    <li><strong>北美 Comp +16%（B&M +14%、Digital +21%）：</strong>連 RL 自己都預期低，但實際表現極強，全價銷售比例提升。</li>
+    <li><strong>Q4 Operating Margin +70bps vs 指引 -80~-120bps（即反向 beat 約 150-200bps）：</strong>顛覆性的 margin beat，是當日股價 +11% 的主因。</li>
+    <li><strong>Average Unit Retail +16%：</strong>50% 來自更高比例 full-price selling，50% 來自 mix improvement。RL 是真正在「luxurifying」業務。</li>
+    <li><strong>FY26 Revenue $8B+ 首破：</strong>YoY +15%，達到歷史里程碑。</li>
+    <li><strong>Women's apparel + outerwear + handbags 三者均 +20%+：</strong>非 traditional 服裝類別加速，是奢侈品 mix shift 的訊號。</li>
+    <li><strong>Marketing 投入增加（Q4 8.1% vs 6.6% 去年；全年 +21%）：</strong>主動花錢買 brand power，是「邁向真正 luxury house」策略的一部分。</li>
+    <li><strong>新開店 108 家（FY26）：</strong>包含 Chengdu、Vancouver、London、Munich、New Delhi flagships，全球擴張持續。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO Patrice Louvet 強調 Asia 強勁（特別是 China Lunar New Year）+ DTC 增長 + AUR 提升。</li>
+    <li>Guggenheim analyst Simeon Siegel 在 call 後評論：「strong top and bottom line beat」，並指出財報前投資者情緒「increasingly negative」——意外性極高。</li>
+    <li>21 個分析師平均評級為 Overweight，目標價 $429.64（18% upside from $363）。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>收盤 +11% 至 $363.37</strong>（CoinCentral 確認「stock hit $363.37 on Thursday, up 11%」；ChartMill 確認「blowout quarter」——方向一致大漲）。</li>
+    <li>2-source 確認：CoinCentral +11% to $363.37；ChartMill「Blowout Quarter」；Yahoo「best single-day gain in over a year」——多 source 一致。</li>
+    <li>漲幅理由：① EPS +6.6-9.8% beat；② Q4 OP margin +70bps vs 指引 -80~-120bps 的反向 beat；③ Asia +31% 印證中國奢侈消費復甦；④ 北美 comp +16% 在低預期環境中遠超；⑤ marketing 投入 +21% 顯示管理層對品牌長期信心。「Top performer in the S&P 500 for the session」（Dow Jones Market Data）。</li>
+  </ul>
+</div>
+
+<!-- NIO -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">NIO · NIO Inc.</span>
+    <span class="meta-right">$14B · 盤前 BMO · <span class="stock-move down">下跌（options volatility）</span></span>
+  </div>
+  <h4>數據表 — Q1 FY2026（截至 2026-03-31）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Non-GAAP EPS</td><td>-$0.20</td><td>-$0.08 to -$0.36</td><td><span class="tag beat">BEAT vs $0.36</span> · MISS vs $0.08（範圍中間）</td></tr>
+      <tr><td>Total Revenue（USD）</td><td>$3.70B</td><td>$3.55-3.74B</td><td><span class="tag beat">BEAT 上緣</span> · YoY +112.2%</td></tr>
+      <tr><td>Revenue（RMB）</td><td>RMB25.53B</td><td>—</td><td>YoY +112% · 超 guidance 上緣</td></tr>
+      <tr><td>Vehicle Deliveries</td><td>83,465 輛</td><td>80,000-83,000（guidance）</td><td><span class="tag beat">BEAT</span> · YoY +98.3% · 史上最強</td></tr>
+      <tr><td>NIO Brand 交付</td><td>58,543 輛</td><td>—</td><td>主品牌維持核心</td></tr>
+      <tr><td>ONVO 交付</td><td>13,339 輛</td><td>—</td><td>中端品牌成長中</td></tr>
+      <tr><td>FIREFLY 交付</td><td>11,583 輛</td><td>—</td><td>小型高端電動車新品</td></tr>
+      <tr><td>Vehicle Margin</td><td>18.8%</td><td>—</td><td>YoY +860bps（去年 10.2%）</td></tr>
+      <tr><td>Gross Margin</td><td>19.0%</td><td>—</td><td>YoY 大幅改善 · Gross profit +428%</td></tr>
+      <tr><td>GAAP Net Loss</td><td>RMB332.1M</td><td>—</td><td>YoY 大幅改善（前幾季均 RMB數十億虧損）</td></tr>
+      <tr><td>Non-GAAP Adj. Operating Profit</td><td>RMB66.8M（profit）</td><td>—</td><td>連續第二季 Non-GAAP profitability</td></tr>
+      <tr><td>Q2 交付指引</td><td>110,000-115,000 輛</td><td>—</td><td><span class="tag raise">RAISE</span> · YoY +52.7-59.6%</td></tr>
+      <tr><td>Q2 Revenue 指引</td><td>RMB32.78-34.44B</td><td>—</td><td><span class="tag raise">RAISE</span> · YoY +72-81%</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>Q1 交付 83,465 輛 YoY +98.3%：</strong>超越自家 guidance 上緣，三大品牌（NIO + ONVO + FIREFLY）合計輸出，多品牌策略奏效。</li>
+    <li><strong>Vehicle Margin 18.8%（去年 10.2%）+860bps：</strong>規模效應 + 成本控制，向自主盈利模式靠近。</li>
+    <li><strong>連續第二季 Non-GAAP 盈利：</strong>從 Q4 2025 首次盈利後維持，是公司歷史轉折點。</li>
+    <li><strong>Q2 交付指引 110,000-115,000：</strong>YoY +52.7-59.6%，意味著 ES9 + L80 + FIREFLY 推進加速，產能利用率提升。</li>
+    <li><strong>Total deliveries since founding: 1,081,057（突破 100 萬輛累計）：</strong>YTD 4 月已累計 112,821 輛，較去年同期 +71%。</li>
+    <li><strong>對比 XPeng：</strong>NIO +98% delivery growth vs XPeng -33%（Q1 deliveries declined to 62,682），NIO 在 China EV 競爭中明顯領先。</li>
+    <li><strong>原物料成本仍是風險：</strong>晶片、銅、鋰等成本上升可能壓縮 margins。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO William Bin Li：「We expect total deliveries in the second quarter to range between 110,000 and 115,000 vehicles, with a year-over-year growth of 52.7% to 59.6%.」</li>
+    <li>管理層強調 ES9 和 ONVO L80 launches + smart-driving technology 升級為 Q2 加速主因。</li>
+    <li>2026 全年盈利路徑：管理層仍維持「全年 sustained profitability」目標，但需在 Q3、Q4 持續執行。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>盤前下跌</strong>（Rollingout：「NIO reported 98% delivery growth and 112% revenue growth in Q1 but shares fell today」；Invezz：「options trading reflected mixed investor sentiment and expectations for higher volatility」——方向一致下跌）。</li>
+    <li>下跌理由：① 期權市場已 priced in ±8.4% 變動；② Revenue 雖然 beat 但落在 guidance 上緣，沒驚艷；③ Q1 GAAP 仍虧損 RMB332M（投資者擔心 Q2-Q4 能否真正 GAAP 盈利）；④ 中概股整體情緒（中國經濟、地緣政治）；⑤ 原物料成本上升壓力。Quiver Quantitative 顯示 EPS beat 但 revenue 略 miss（-$484M vs 估）。</li>
+  </ul>
+</div>
+
+<!-- DECK -->
+<div class="company-card">
+  <div class="company-header">
+    <span class="ticker">DECK · Deckers Outdoor</span>
+    <span class="meta-right">$14B · 盤後 AMC · <span class="stock-move up">+4.96% 盤後</span></span>
+  </div>
+  <h4>數據表 — Q4 FY2026（截至 2026-03-31）</h4>
+  <table>
+    <thead><tr><th>指標</th><th>實際</th><th>預期</th><th>YoY / 備註</th></tr></thead>
+    <tbody>
+      <tr><td>Diluted EPS</td><td>$0.96</td><td>$0.83-0.85</td><td><span class="tag beat">BEAT +13-16%</span> · YoY -4%（去年 $1.00）</td></tr>
+      <tr><td>Total Revenue（Q4）</td><td>$1.119B</td><td>$1.09-1.115B</td><td><span class="tag beat">BEAT +0.4-3%</span> · YoY +9.6% · cc +7.7%</td></tr>
+      <tr><td>HOKA Revenue（Q4）</td><td>$671.2M</td><td>—</td><td>YoY +14.5%</td></tr>
+      <tr><td>UGG Revenue（Q4）</td><td>$408.6M</td><td>—</td><td>YoY +9.2%（季度 Q4 +9%，超出 fall 延伸銷售預期）</td></tr>
+      <tr><td>FY2026 Total Revenue</td><td>$5.472B</td><td>—</td><td>YoY +9.8% · 創歷史新高</td></tr>
+      <tr><td>FY2026 HOKA</td><td>$2.587B</td><td>—</td><td>YoY +15.9% · 接近 $2.6B</td></tr>
+      <tr><td>FY2026 UGG</td><td>$2.739B</td><td>—</td><td>YoY +8.2% · 創歷史新高</td></tr>
+      <tr><td>FY2026 Diluted EPS</td><td>$7.02</td><td>—</td><td>YoY +11% · 含 $1.1B buyback 影響</td></tr>
+      <tr><td>FY2026 Operating Margin</td><td>23.1%</td><td>—</td><td>best-in-class</td></tr>
+      <tr><td>FY2027 Revenue 指引</td><td>$5.86-5.91B</td><td>$5.82B</td><td><span class="tag raise">RAISE 略</span> · YoY +7-8%（HSD growth）</td></tr>
+      <tr><td>FY2027 Diluted EPS 指引</td><td>$7.30-7.45</td><td>$7.29</td><td><span class="tag inline">INLINE / 略 BEAT</span></td></tr>
+      <tr><td>FY2027 Operating Margin 指引</td><td>~21.5%</td><td>—</td><td>YoY -160bps（投資加速）</td></tr>
+      <tr><td>HOKA FY2027 指引</td><td>low double-digit growth</td><td>—</td><td>延續 momentum</td></tr>
+      <tr><td>UGG FY2027 指引</td><td>mid single-digit growth</td><td>—</td><td>核心品牌成熟期</td></tr>
+      <tr><td>$5B 新增 Buyback Authorization</td><td>—</td><td>—</td><td>大幅擴大資本回報</td></tr>
+    </tbody>
+  </table>
+  <h4>關鍵細節</h4>
+  <ul>
+    <li><strong>EPS $0.96 beat $0.83-0.85（+13-16%）：</strong>顯著超越，但 YoY -4%（前年同期 $1.00）的衰退仍待消化。</li>
+    <li><strong>HOKA FY26 $2.587B（YoY +15.9%）：</strong>2026 fiscal 接近 $2.6B 規模，已成為 DECK 第二大品牌（接近 UGG）。</li>
+    <li><strong>UGG FY26 $2.739B（YoY +8.2%）：</strong>核心品牌持續創新高，Q4 +9% 比預期強勁，得益於 fall 商品延伸銷售。</li>
+    <li><strong>FY2027 Operating Margin 指引 21.5%（YoY -160bps）：</strong>主動投資加速：marketing、employees、technology、HOKA 新店（20-25 家/年）、DTC 拓展。</li>
+    <li><strong>$5B 新增 Buyback：</strong>FY2027 計劃 buyback 約 80% of FCF，資本回報持續。</li>
+    <li><strong>FY2028-2030 multi-year framework：</strong>HSD revenue growth、HOKA LDD、UGG MSD、Low-double-digit EPS growth。</li>
+    <li><strong>Bernstein 警告 HOKA growth 從 24% 放緩到 mid-teens：</strong>是市場對「品牌生命週期」最大擔憂，今日 +4.96% 反映市場接受 mid-teens 為新常態。</li>
+  </ul>
+  <h4>Earnings Call 重點</h4>
+  <ul>
+    <li>CEO Stefano Caroti：「Fiscal 2026 was another record year for Deckers, with revenue and earnings growth powered by the continued momentum of HOKA and the enduring strength of UGG.」</li>
+    <li>Caroti 續：「Our focus on brand building, product innovation and category leadership, along with marketplace execution, continues to drive full-price demand across an expanding global audience, underscoring the long-term potential of our portfolio.」</li>
+    <li>CFO Steven Fasching：FY2027 EPS guide $7.30-7.45 includes expectation to repurchase ~80% of FY27 FCF。</li>
+    <li>HOKA 新店規劃：20-25 家/年，focus on major cities and international markets。</li>
+  </ul>
+  <h4>Stock Reaction</h4>
+  <ul>
+    <li><strong>盤後 +4.96%</strong>（Quiver Quantitative 確認「+4.96%」；Investing.com 確認「rose 4.38% in after-hours trading」；WWD 確認「increased over 4 percent」——方向一致正向，採用 Quiver +4.96%）。</li>
+    <li>上漲理由：① EPS beat +13-16%；② FY27 Revenue 指引略 raise（$5.86-5.91B vs $5.82B est）；③ $5B 新增 buyback authorization；④ Asia + EMEA expansion 持續。市場對「HOKA growth deceleration」擔憂被「FY27 EPS in line + buyback」緩解。</li>
+  </ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="cross">§2 跨公司比較與趨勢</h2>
+
+<h3>本日 SaaS / Enterprise Software 板塊反彈訊號（WDAY + ZM 雙確認）</h3>
+<table>
+  <thead><tr><th>公司</th><th>EPS Beat</th><th>Revenue YoY</th><th>Operating Margin</th><th>股價反應</th><th>關鍵故事</th></tr></thead>
+  <tbody>
+    <tr><td>WDAY</td><td>+4-6%</td><td>+13.5%</td><td>30.5%（指引上調）</td><td>+10-14% 盤後</td><td>Agentic AI $500M 年化、Sana 加速</td></tr>
+    <tr><td>ZM</td><td>+9-11%</td><td>+5.5%</td><td>41.1%（YoY +130bps）</td><td>+8.17% 盤後</td><td>Enterprise +7.2%、AI Companion 整合、$1B 新 buyback</td></tr>
+  </tbody>
+</table>
+<p style="font-size:14px;margin-top:12px;margin-bottom:20px;"><strong>核心洞察：</strong>SaaS 板塊近 6-9 個月承壓於「AI 將取代 SaaS」的 narrative。今日 WDAY + ZM 同步 +10% 和 +8%，是 narrative 反轉的重要信號。雙公司均印證：① AI 是 SaaS 公司的 efficiency engine（margin 改善），不是替代品；② Agentic AI 已產生實際收入（WDAY $500M 年化）；③ Operating margin 持續擴張（ZM 41.1%、WDAY 30.5% raised）。</p>
+
+<h3>消費者 K 型分化：本週完整版（5/19-21）</h3>
+<table>
+  <thead><tr><th>公司</th><th>業態</th><th>Comp/SSS</th><th>EPS Beat</th><th>股價</th><th>Pattern</th></tr></thead>
+  <tbody>
+    <tr><td>ROST</td><td>Off-price 折扣</td><td>+17%</td><td>+22%</td><td>+4.9% ✅</td><td>大幅 Beat + Raise</td></tr>
+    <tr><td>RL</td><td>奢侈品（lifestyle）</td><td>北美 +16%、Asia +25%</td><td>+9.8%</td><td>+11% ✅</td><td>大幅 Beat + Margin reversal</td></tr>
+    <tr><td>TJX（5/20）</td><td>Off-price 折扣</td><td>+6%</td><td>+19%</td><td>+5.7% ✅</td><td>Beat + Raise</td></tr>
+    <tr><td>WSM</td><td>家居 / 高端</td><td>+4.8%</td><td>+7.2%</td><td>+3.96% ✅</td><td>Beat + Maintain</td></tr>
+    <tr><td>DECK</td><td>Premium 鞋類</td><td>—</td><td>+13-16%</td><td>+4.96% ✅</td><td>Beat + Slight Raise</td></tr>
+    <tr><td>WMT</td><td>Mass 零售</td><td>US +4.1%</td><td>0%</td><td>-3.58% ❌</td><td>EPS in-line + Maintain</td></tr>
+    <tr><td>TGT（5/20）</td><td>Mid-mass</td><td>+5.6%</td><td>+16%</td><td>-4.0% ❌</td><td>Beat but GAAP erosion</td></tr>
+    <tr><td>LOW（5/20）</td><td>住房改裝</td><td>+0.6%</td><td>+2%</td><td>+1.1% ✅</td><td>Narrow Beat + Maintain</td></tr>
+  </tbody>
+</table>
+<p style="font-size:14px;margin-top:12px;margin-bottom:20px;"><strong>分化結論：</strong>消費端 K 型分化在本週達到極端：① Off-price（ROST/TJX）和奢侈品（RL）兩端均強勁——消費降級和消費升級並存；② 中間 mass-market（WMT/TGT）承壓；③ 住房改裝（HD/LOW）持續底部；④ 高端鞋類（DECK）穩健。RL Asia +31% 是中國奢侈消費復甦的明確訊號，是不可忽視的 cross-border investment thesis。</p>
+
+<h3>農業 cycle vs AI infra 連動：DE 數據中心驚奇</h3>
+<p style="font-size:14px;margin-bottom:14px;">Deere C&F segment +29% YoY 並上調全年指引從 +15% 至 +20%，數據中心建設是 catalyst（CEO 引述「Data center construction is expected to top $100 billion in 2026, with additional double-digit growth into 2027」）。這與 KEYS（5/19）+ NVDA（5/20）+ ADI（5/20）+ DE（5/21 C&F）構成完整的 AI infra supply chain：design → manufacturing → power → construction → land prep。Deere 的水利/管道承包商業務也受益於 data center 周邊基礎設施擴張。</p>
+
+<!-- ============================================================ -->
+<h2 id="winners">§3 贏家 / 輸家</h2>
+
+<h3>贏家（Beat + Raise + 正向股價）</h3>
+<table>
+  <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+  <tbody>
+    <tr class="winner-row"><td>RL</td><td><strong>收盤 +11% 至 $363.37。</strong>EPS +9.8% beat、Q4 Revenue +12% 遠超 mid-single-digit 指引、Q4 OP Margin +70bps vs 指引 -80~-120bps（反向 beat 約 150-200bps）、Asia +31%（中國 Lunar New Year 拉動）、北美 comp +16%。當日標普 500 最強 stock，best single-day gain in over a year。中國奢侈消費復甦得到明確驗證。</td></tr>
+    <tr class="winner-row"><td>WDAY</td><td><strong>盤後 +10-14%。</strong>EPS +4-6% beat、Non-GAAP Operating Margin 指引從 30.0% 上調至 30.5%、Agentic AI 年化收入接近 $500M（4000+ 客戶使用）、Sana 整合加速。YTD 已跌 43% 後的 narrative 反轉，是「SaaS 不死於 AI」的最強反證。</td></tr>
+    <tr class="winner-row"><td>ZM</td><td><strong>盤後 +8.17% 至 $104.10。</strong>EPS +9-11% beat、Revenue 超越 guidance 上緣、Enterprise +7.2%、Operating Margin 41.1%（YoY +130bps）、FY2027 Revenue 和 EPS 指引上調、$1B 新增 buyback。SaaS 板塊雙確認反彈訊號。</td></tr>
+    <tr class="winner-row"><td>ROST</td><td><strong>盤後 +4.9% 至 $228.02。</strong>Comp +17%（vs +7-8% 估）大幅超越、EPS $2.02 vs 指引上緣 $1.67 + 22%、Operating Margin 13.4% vs 指引 11.8-12.1%、FCF Margin 從 4.1% 跳升至 10.4%、FY2026 EPS 指引從 $6.61 大幅上調至 $7.50-7.74（+13-17%）。當日 retail 最強。</td></tr>
+    <tr class="winner-row"><td>DECK</td><td><strong>盤後 +4.96%。</strong>EPS +13-16% beat、FY27 Revenue 指引略 raise、$5B 新增 buyback。HOKA growth 從 24% 放緩至 mid-teens 已被市場接受為新常態。</td></tr>
+    <tr class="winner-row"><td>WSM</td><td><strong>收盤 +3.96%。</strong>EPS +7.2% beat、Comp +4.8% 全品牌正成長、B2B +13.7% 隱藏增長、West Elm +8.5% 強勁。FY26 指引維持（無 raise）限制漲幅。</td></tr>
+    <tr class="winner-row"><td>TTWO</td><td><strong>盤後 +0.64%。</strong>GTA VI 11/19 不延期確認、FY2027 EPS 指引 $8.00 大幅超越 Wedbush 估 $6.40（+25%）、Net Bookings 超越上緣。漲幅有限因 GTA VI 預期已部分定價。</td></tr>
+  </tbody>
+</table>
+
+<h3>輸家（Beat 但 Sell the News / Miss / Premarket 下跌）</h3>
+<table>
+  <thead><tr><th style="width:80px;">公司</th><th>原因</th></tr></thead>
+  <tbody>
+    <tr class="loser-row"><td>DE</td><td><strong>收盤 -7.7% 至 $517.16。</strong>EPS $6.55 大幅 beat +14-15%、C&F segment +29% 是 AI/data center 驚奇——但 FY26 net income 指引未上調、大型農機 -15-20% 持續壓力、股價 YTD 已大幅反彈。市場執著於「沒有 raise」而非「強勁 beat」。</td></tr>
+    <tr class="stns-row"><td>WMT</td><td><strong>premarket -3.58% 至 $126.16。</strong>EPS in-line（未 beat）、Revenue beat 但 OI 受 fuel 拖累、FY27 指引維持不變。在強勁 Q1 後未上調指引讓市場失望，加上 CEO 對 tariff H2 的警示。</td></tr>
+    <tr class="stns-row"><td>NTES</td><td><strong>premarket -4.13% 至 $111.99。</strong>EPS +26.7% 大幅 beat、Online Game QoQ +18%——但 marketing expenses 增加、Innovative Businesses 部分 segment 收入下滑、中概股整體情緒。</td></tr>
+    <tr class="loser-row"><td>NIO</td><td><strong>盤前下跌（options-driven）。</strong>Q1 交付 83,465 輛 YoY +98.3%、Revenue YoY +112%、Vehicle Margin 從 10.2% 升至 18.8%、Q2 指引交付 110-115K（YoY +52-60%）——但 GAAP 仍 net loss、原物料成本擔憂、options market 預期高波動。基本面強勁但情緒承壓。</td></tr>
+  </tbody>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="contradictions">§4 矛盾與風險訊號</h2>
+
+<div class="contradiction">
+  <h4>矛盾 1：DE EPS beat +15% 全年指引維持卻跌 -7.7%——市場執著於 raise</h4>
+  <p>DE Q2 EPS $6.55 大幅 beat $5.70（+15%），C&F segment +29% 受 data center 受益、C&F 全年指引從 +15% 上調至 +20%——但 FY26 整體 net income 指引維持 $4.5-5.0B 未動。市場大跌 -7.7%。</p>
+  <p class="implication">→ <strong>Implication：</strong>「Beat is default, Raise is alpha」的最新案例。Q1 + Q2 累積 EPS $8.97 已佔 FY26 中點指引 $4.75B / 雪松股 ~280M 估算的 ~$17 EPS 的約 53%——意味著管理層暗示 H2 大幅減速。市場質疑 H2 大型農機更糟、tariff retrace 不確定（$272M IEEPA refund 後續）。$272M 一次性 tariff refund 可能讓 Q2 看起來比 underlying 強勁。</p>
+</div>
+
+<div class="contradiction">
+  <h4>矛盾 2：NIO 交付 +98%、Revenue +112%、Vehicle Margin 從 10% 升至 19%——股價卻跌</h4>
+  <p>NIO Q1 所有 fundamental 指標均創公司歷史最佳。Q2 交付指引 110-115K 意味著繼續加速。但盤前下跌，options trading 反映「mixed sentiment + higher volatility expectations」。</p>
+  <p class="implication">→ <strong>Implication：</strong>① GAAP 仍虧損 RMB332M，市場想看真正的 GAAP profitability；② Non-GAAP 盈利規模小（RMB66.8M）相比累積虧損；③ 中概股政治風險（地緣政治、退市威脅）；④ 原物料價格（晶片、銅、鋰）回升威脅；⑤ XPeng/Li Auto 競爭。NIO 從「失敗者」轉「轉折者」需要 2-3 季持續驗證，當前股價反映期間風險折扣。</p>
+</div>
+
+<div class="contradiction">
+  <h4>矛盾 3：WMT EPS in-line 卻 -3.58%——強勁基本面 vs 指引保守</h4>
+  <p>Walmart US Comp +4.1%（去除 100bps pharmacy headwind 後實 ~5.1%）、eCommerce +26%、Marketplace +50%、Advertising +50%——但 FY27 指引維持不變，EPS in-line $0.66。</p>
+  <p class="implication">→ <strong>Implication：</strong>市場期望 WMT 在強勁 Q1 後給予全年指引 raise，但管理層保留以應對 tariff 不確定性。fuel cost 在 Q1 已壓 OI growth 至 +4-6%（vs Revenue +6%）——若 fuel + tariff H2 持續，全年 EPS 可能難以達到上端。Walmart 的 cautious tone 是整個 retail sector 的 H2 風險訊號。</p>
+</div>
+
+<div class="contradiction">
+  <h4>矛盾 4：消費者 K 型——ROST +17% comp、RL Asia +31% vs WMT 在 H2 警示</h4>
+  <p>ROST（off-price）和 RL（奢侈）兩端表現極強；同時 WMT（mass）EPS in-line + 維持 cautious、TGT（5/20）GAAP 淨利 -25%。</p>
+  <p class="implication">→ <strong>Implication：</strong>消費者並未崩潰，而是 trading down（去 off-price）或 trading up（買奢侈）。中間 mass-market 持續被擠壓。對投資策略意味著：① off-price（TJX/ROST）和奢侈（RL/luxury houses）是相對 outperformer；② mass-market（WMT/TGT）面臨結構性 share loss；③ 住房改裝（HD/LOW）等待 housing cycle 復甦的長期論點未變。</p>
+</div>
+
+<div class="contradiction">
+  <h4>矛盾 5：WDAY/ZM SaaS 反彈 vs INTU（5/20）-11% 大跌——「AI ally vs AI threat」narrative 分化</h4>
+  <p>同一週內：INTU 17% 裁員後 -11%（市場讀「AI 取代核心業務」）；WDAY 盤後 +10-14%（市場讀「Agentic AI 帶來新收入」）；ZM +8.17%（市場讀「AI as efficiency engine」）。同樣是 SaaS 公司，市場 narrative 完全相反。</p>
+  <p class="implication">→ <strong>Implication：</strong>SaaS 業者的命運取決於「AI 是 incremental revenue 還是 substitutive threat」的市場判斷。WDAY/ZM 的 Agentic AI / AI Companion 被視為「sell more to existing customers」；INTU 被視為「core TurboTax DIY 流失給 AI-native 競爭者」。AI strategy 是 SaaS 公司估值的最大 alpha 來源，必須積極說服市場「我是 AI 受益者」而非「受害者」。</p>
+</div>
+
+<div class="contradiction">
+  <h4>矛盾 6：TTWO GTA VI 11/19 不延期 + FY27 EPS $8.00 但盤後僅 +0.64%</h4>
+  <p>TTWO FY2027 EPS 指引 $8.00 大幅超越 Wedbush 估 $6.40（+25%），GTA VI 確認不延期——這是 multi-year 級別的好消息。但盤後僅 +0.64%。</p>
+  <p class="implication">→ <strong>Implication：</strong>市場對 GTA VI 的期望已大幅 priced in 至股價。Best Buy 預售訊號早已外洩，Wedbush「go/no-go moment」已過。FY27 EPS $8.00 也仍只是 base case（Morgan Stanley 40M units 假設），GTA Online 長期 monetization 才是真正的 alpha。短期股價反應限於消除 tail risk（無延期），不是新增 upside。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="summary">§5 總結</h2>
+
+<ul class="summary-list">
+  <li><strong>1. SaaS 板塊 narrative 反轉訊號明確（WDAY +10-14% + ZM +8.17%），Agentic AI 已從風險變為收益催化劑。</strong>WDAY Agentic AI 年化收入接近 $500M（4,000+ 客戶使用，比前季翻倍）；ZM AI Companion default 啟用 + Enterprise +7.2%。兩家公司均印證「AI 是 SaaS 公司的 efficiency engine + monetization upside，不是替代品」。對比 INTU（5/20）-11% 的「AI 取代核心業務」negative narrative，WDAY/ZM 是反證。建議重新評估 enterprise SaaS 板塊 sentiment（CRM、ADBE 等）。</li>
+
+  <li><strong>2. 中國奢侈消費復甦獲 RL Asia +31% 明確驗證。</strong>RL Asia revenue +31% reported（+28% constant currency），其中 comparable store sales +25%，主因 China Lunar New Year 強勁拉動。對比過去兩年中國奢侈消費「結構性下滑」的悲觀 narrative，RL 是當日最強訊號。建議追蹤 LVMH、Hermes、Estée Lauder（化妝品中國暴露）等 China-luxury 受益公司，以及 Asia 區域 expansion 加速的 lifestyle 品牌（Tapestry、Capri Holdings）。</li>
+
+  <li><strong>3. AI infra supply chain 擴散至 construction equipment（DE C&F +29%），完整 supply chain mapping 浮現。</strong>5/19-21 跨日完整 supply chain 訊號：KEYS（測試設備）→ NVDA（GPU）→ ADI（類比 / 電源）→ DE（construction / data center site prep）。Deere CEO 直接引述「Data center construction is expected to top $100 billion in 2026, with additional double-digit growth into 2027」。建議追蹤 Caterpillar（CAT）、Vertiv（VRT）、GE Vernova（GEV）等下游 data center infra 供應商，以及 utility / power company（NEE、CEG）持續看好。</li>
+
+  <li><strong>4. 消費者 K 型分化在本週達到極端，off-price 和奢侈兩端最受益，mass-market 持續被擠壓。</strong>本週數據：ROST comp +17%、TJX +6%、RL 北美 comp +16% / Asia +25%、WSM West Elm +8.5%、DECK +13-16% EPS beat——全部 outperform。同時 WMT EPS in-line、TGT GAAP 淨利 -25%。Mid-mass retail（WMT、TGT、可能 KSS、JWN）面臨結構性 share loss to off-price + luxury houses。投資組合應 overweight off-price + premium，underweight mid-mass。</li>
+
+  <li><strong>5. 「Beat is default, Raise is alpha」與「Sell the News」並存，今日多家典型案例（DE -7.7%、WMT -3.58%、NTES -4.13%）。</strong>DE EPS +15% beat 卻 -7.7% 是當日最典型 sell-the-news；WMT EPS in-line + maintain 也 -3.58%；NTES EPS +26.7% beat 卻 -4.13%。共同特徵：① YTD 已大幅上漲；② 全年指引未 raise；③ 一次性因素混入（DE $272M IEEPA refund）。對比 ROST、WDAY、ZM、RL 等獲市場獎勵者的共通點：① 全年指引明確 raise；② operating margin reversal 或 expansion；③ structural narrative shift（不只是 cyclical beat）。</li>
+
+  <li><strong>6. GTA VI 確認 11/19 不延期 + FY27 EPS $8.00 大幅超預期——但市場已 priced in，TTWO 僅 +0.64%。</strong>TTWO FY2027 EPS $8.00 vs Wedbush 估 $6.40（+25%）是 multi-year 級別的好消息，但市場反應有限因為：① Best Buy 預售訊號已外洩；② 延期風險早已是 known issue；③ Morgan Stanley 40M units 已是 base case；④ GTA Online MAU 長期 monetization 才是真正的 alpha。投資建議：TTWO 是 multi-year hold，等 11/19 launch 後的 launch quarter（FY27 Q4）和 FY28 GTA Online MAU 數據才是真正 catalyst。</li>
+</ul>
+
+<div class="disclaimer"><strong>免責聲明：</strong>本網站所有內容（包含財報分析、earnings call 摘要及產業比較）均由 AI 自動生成，僅供參考，<strong>不構成任何投資建議</strong>。投資涉及風險，投資人應自行判斷並諮詢專業顧問。過往表現不代表未來業績。本網站與任何被分析公司均無利益關係。</div>
+<footer>© 2026 InvestMQuest Research · 由 AI 自動生成，僅供參考 · <a href="https://research.investmquest.com">research.investmquest.com</a></footer>
+</div>
+</body>
+</html>
