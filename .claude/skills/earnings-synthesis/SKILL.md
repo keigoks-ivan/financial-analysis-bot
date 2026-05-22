@@ -1,8 +1,11 @@
 ---
 name: earnings-synthesis
-description: 把過去 30 天 docs/earnings/earnings_YYYY-MM-DD.html 的所有日報串成一份產業/子產業 trend + investment implication 的統整 HTML。輕掃 per-company 重點，心力放產業 read-through。**缺失交易日自動 web fill-gap 補回重要公司精簡結果**（不另存日報檔，融入趨勢章節）+ 中量 web augmentation（3-5 輪/主題）+ 9 章節敘事為主表格為輔。觸發：用戶說「跑最近財報的統整」/「earnings 統整」/「30 天財報統整」/「月度財報統整」/「財報季統整」/「過去 30 天財報重點」/「earnings synthesis」/「earnings monthly recap」/「earnings 30-day recap」/「monthly earnings rollup」。
-version: v1.0
+description: 把過去 30 天 docs/earnings/earnings_YYYY-MM-DD.html 的所有日報串成一份產業/子產業 trend + investment implication 的統整 HTML。輕掃 per-company 重點，心力放產業 read-through。**缺失交易日自動 web fill-gap 補回重要公司精簡結果**（不另存日報檔，融入趨勢章節）+ 中量 web augmentation（3-5 輪/主題）+ **8 章節**敘事為主表格為輔（v1.1 拿掉 §8 Methodology，source citations 改為 inline）。**v1.1 強制 Step 4.5 self-review gate + Step 5.5 post-write sanity check + Step 8.5 reflective review 反思**：寫稿前/後對 ticker completeness、未來日期 fact-check、本地/web 標籤、跨章節一致進行三重檢查。觸發：用戶說「跑最近財報的統整」/「earnings 統整」/「30 天財報統整」/「月度財報統整」/「財報季統整」/「過去 30 天財報重點」/「earnings synthesis」/「earnings monthly recap」/「earnings 30-day recap」/「monthly earnings rollup」。
+version: v1.1
 date: 2026-05-22
+changelog:
+  - v1.1 (2026-05-22)：拿掉 §8 Methodology 章節；新增 Step 4.5 self-review、Step 5.5 post-write sanity、Step 8.5 reflective review；明確要求 ticker completeness sweep（top-20 mkt cap 個別 confirm 是否覆蓋）；明確要求未來日期必有 source URL（防 hallucinate dates）；明確要求本地 day-內盲點處理（earnings_YYYY-MM-DD.html 存在但漏該日重要 ticker 時，當作 in-day webfill 補回）。
+  - v1.0 (2026-05-22)：initial release.
 ---
 
 # Workflow: earnings-synthesis / 30 天財報統整
@@ -36,15 +39,16 @@ date: 2026-05-22
 
 ---
 
-## Step 0.5 — 缺失日 web fill-gap
+## Step 0.5 — 缺失日 web fill-gap + 本地 day-內盲點掃描
 
-對 Step 0 算出的每個 `missing_date`，跑 light 補資料流程：
+對 Step 0 算出的每個 `missing_date`，跑 light 補資料流程；**同時對本地已覆蓋日做 day-內盲點掃描**（local-but-incomplete check）：
 
 1. **掃當日 reporting universe**：
    - `WebSearch "earnings reports {Month} {Day} {Year} large cap"`
    - 補一次 `WebSearch "S&P 500 companies reporting {YYYY-MM-DD} pre-market post-market"`
    - 解析回傳，列出當天有 report 的 ticker。
 2. **篩重要公司**：mkt cap ≥ **$50B**（沿用本地日報 threshold），取前 **5-10 家**最重要（mkt cap × abs(surprise%) × abs(reaction%) 綜合排序；無法判斷 surprise 時 fallback 純 mkt cap）。
+2.5. **本地 day-內盲點掃描（v1.1 新增）**：對每份本地日報 `earnings_YYYY-MM-DD.html`，掃 WebSearch 確認當日**所有 ≥$200B 公司**是否都被本地覆蓋。若有遺漏（例如本地 5/20 報告 9 家但漏 NVDA AMC），則對該漏掉的 ticker 用相同 Step 0.5 流程做 light webfetch，並在 §1 fill-gap 表標為「day-內盲點」。**這條最重要 — top-20 mkt cap 級別的個股 earnings 不能因為本地編輯失誤而消失於 synthesis**。常需檢查的 top-20 名單：NVDA, MSFT, AAPL, AMZN, GOOGL, META, TSLA, BRK.B, JPM, V, MA, LLY, ORCL, UNH, XOM, JNJ, WMT, PG, HD, BAC。
 3. **Light WebFetch per ticker**（每家 1-2 輪，不要超過）：
    - 目標 source：Seeking Alpha headline、Zacks earnings call、Reuters/Bloomberg/CNBC earnings recap、公司 IR press release。
    - 抽取：`{eps_actual, eps_estimate, eps_surprise_pct, revenue_actual, revenue_estimate, guidance_tilt: "raise/maintain/cut/no-guide", reaction_pct, one_line_thesis}`
@@ -155,6 +159,64 @@ date: 2026-05-22
 
 ---
 
+## Step 4.5 — Self-Review Gate（反思 / write-time critic）
+
+**v1.1 新增、強制執行**。Step 4 完成 web augmentation 之後、Step 5 開寫 HTML 之前，必須對手上的 in-memory 數據做 5 軸 sanity check。**這個 step 沒過就不准開寫**。
+
+### 4.5.A. Ticker Completeness Sweep（重點）
+
+對本期 window 內 US top-20 mkt cap 公司逐一 confirm 是否覆蓋：
+
+```
+top_20_mkt_cap = [NVDA, MSFT, AAPL, AMZN, GOOGL, META, TSLA, BRK.B, 
+                  JPM, V, MA, LLY, ORCL, UNH, XOM, JNJ, WMT, PG, HD, BAC]
+```
+
+對每一檔：
+1. 確認該公司 earnings date 是否落在 window 內
+2. 如是，確認是否在 `local_reports[]` 任一份的 tickers 名單中
+3. 如不在，且不在 `web_filled_companies[]`，則**必須補回**（走 Step 0.5.2.5 day-內盲點流程，light webfetch）
+
+**這條最容易漏的是 day-內盲點**：本地某日報告涵蓋了 N 家，但**該日另有 mega-cap 報 earnings 沒被收進去**（典型例：NVDA AMC 在當日本地報告主場已存其他 retail 公司時被遺漏）。Top-20 級別的 ticker 必須補回。
+
+### 4.5.B. 未來日期 Fact-Check（防 hallucinate）
+
+掃過 `web_filled_companies[]` 與你在 Step 4 抓到的 catalyst / event dates，並準備寫進 §7 Watchlist 的「earnings ahead」名單前：
+
+- **任何「earnings ahead」日期都必須有對應的 source URL**（earnings whisper / company IR / WallStreetHorizon / TipRanks earning calendar 等）。
+- 不可由模型自由生成 date（例如「~5/30 NVDA Q2」這種就是 hallucinate — NVDA Q2 FY27 真實日期是 8/26，模型不應自由填空）。
+- **NVDA 行事曆**：Feb / May / Aug / Nov（fiscal quarter ends April/Jul/Oct/Jan）。若不確定，WebSearch `"NVDA next earnings date"` 確認。
+- 其他常被誤判的：AAPL（Jan/Apr/Jul/Oct）、AMZN（Jan/Apr/Jul/Oct/月底）、MSFT（Jan/Apr/Jul/Oct/月底）。
+- 如連 WebSearch 都查不到精確日期，就**用含糊但安全的表述**（如「Q2 FY27 預期 ~8 月底」）而非具體編日期。
+
+### 4.5.C. Source Provenance Check
+
+對每條 §3 trend 主訊號裡會出現的數字（%, $, +XX% YoY），確認該數字能在：
+1. 本地 `local_reports[].sections.sec2-sec5` 找到原始引用，或
+2. `web_filled_companies[]` 的 `thesis_one_liner` / 對應 source URL 找到，或
+3. Step 4 web augmentation 抓回的 source quote 裡找到
+
+如有任何數字「印象記憶」但找不到 source，**移除或改成定性敘述**（如「+8x 訂單」→「訂單顯著加速」），不可保留精確數字。
+
+### 4.5.D. 本地 vs Web 標籤完整性
+
+確認 in-memory 結構裡每個 ticker 都有正確 provenance flag：
+- 本地深度料 → `<span class="source-local">` 將在 HTML 出現
+- Web 補料（缺失日 + day-內盲點）→ `<span class="source-webfill">` 將在 HTML 出現
+
+§6 ADD/CUT 名單原則上**只用本地深度料**。Web 補料公司原則上在 §6 confidence-note 提及為 confirm-only — 但**唯一例外是 top-5 mkt cap 的 day-內盲點 webfill**（例：NVDA / MSFT / AAPL 等級），可破例入主 ADD/CUT 但必須在 confidence 欄標「業務 High / 短期 entry Medium」並附 caveat 段。
+
+### 4.5.E. 跨章節一致性 Plan
+
+寫 HTML 之前，先草擬：
+- §0 TL;DR 5 條 → 每條必須在 §3 對應 trend block 展開
+- §6 ADD/CUT/HOLD 每個 ticker → 必須在 §4 對應產業段有業務敘述背景
+- §7 Watchlist catalysts → 必須與 §3 trends 有 logical link（不可空降不相關的 event）
+
+如發現任一條 violate，回 Step 3-4 補資料，不要硬寫。
+
+---
+
 ## Step 5 — HTML output
 
 輸出到 `docs/earnings/synthesis_YYYY-MM-DD.html`（檔名 = 跑 skill 當天的日期）。
@@ -192,7 +254,7 @@ date: 2026-05-22
 </header>
 ```
 
-### 5.C. 9 章節骨架
+### 5.C. 8 章節骨架（v1.1 從 9 章節縮成 8 章節：拿掉 §8 Methodology）
 
 每章 H2 用 `<h2 id="secX">§X 章節名</h2>` 格式。`<div class="toc">` 列 9 章。
 
@@ -249,20 +311,13 @@ date: 2026-05-22
 
 §7 下 30 天 Watchlist
   - Catalysts ahead：
-    - 即將 report 的重要公司（依當前已知 earnings 行事曆）
+    - 即將 report 的重要公司（依當前已知 earnings 行事曆 — **必有 source URL，不可自由生成日期**；見 Step 4.5.B）
     - 即將公布的產業數據（CPI / PMI / FOMC / Powell speech）
     - 政策事件（tariff 期限、藥價、地緣政治）
   - 篇幅約 400-600 字 + 1 張 catalyst calendar 小表
+  - **v1.1**：本章是 NVDA Q2 / AAPL Q3 等 mega-cap 下次 earnings 行事曆最容易出 hallucinate date 的地方，每個 date 必須在 Step 4.5.B fact-check 通過才能寫。如無法精確查證，用「Q2 FY27 預期 ~Aug」等含糊表述。
 
-§8 Methodology footnote
-  - **本地日報清單**：N 份檔名 + 連結到 docs/earnings/earnings_*.html
-  - **缺失日 web sources**：per ticker 列 source URL（每家 1-2 個）
-  - **ticker → sector 對應表**：完整列出 Step 2 的 mapping
-  - **信心度註腳**：
-    - 本地深度料 = high confidence（個股單篇分析 ≥ 800 字、含 earnings call quote）
-    - Web 補料 = medium-low confidence（公開新聞稿層級、無 earnings call colour）
-    - **僅供趨勢輔證、不作獨立 PM action 主錨**
-  - 篇幅約 300-500 字
+（v1.1 刪除原 §8 Methodology — source citations 改為各章 inline 引用 + §6 confidence-note。）
 ```
 
 ### 5.D. Toc 與導覽
@@ -279,7 +334,6 @@ date: 2026-05-22
     <li><a href="#sec5">§5 矛盾與弱訊號</a></li>
     <li><a href="#sec6">§6 PM Implications</a></li>
     <li><a href="#sec7">§7 下 30 天 Watchlist</a></li>
-    <li><a href="#sec8">§8 Methodology</a></li>
   </ol>
 </div>
 ```
@@ -290,6 +344,66 @@ date: 2026-05-22
 - prose : table ≥ 7:3（敘事為主、表格為輔）
 - §6 是篇幅最大章節（≥ 18% 內容）
 - 每個 source citation 用 `<span class="source-local">`/`<span class="source-webfill">` tag 或括號引用
+
+---
+
+## Step 5.5 — Post-Write Sanity Check（v1.1 新增）
+
+HTML 寫完、commit 前，跑下列 grep 自我驗證。任一條 fail 就回頭修。
+
+### 5.5.A. 結構基本盤
+
+```bash
+python3 -c "
+import re
+with open('docs/earnings/synthesis_{YYYY-MM-DD}.html') as f: s = f.read()
+print('size:', len(s), 'chars')
+print('sections H2:', len(re.findall(r'<h2 id=\"sec', s)))   # 應為 8
+print('trend blocks:', len(re.findall(r'class=\"trend-block\"', s)))   # 應 5-7
+print('source-local refs:', len(re.findall(r'class=\"source-local\"', s)))   # 應 ≥ 50
+print('source-webfill refs:', len(re.findall(r'class=\"source-webfill\"', s)))   # 應 ≥ web-fill ticker 數 × 2
+print('add/cut/hold tags:', len(re.findall(r'class=\"tag-(add|cut|hold)\"', s)))
+print('external URLs:', len(re.findall(r'href=\"https?://', s)))   # 應 ≥ 12 (2 per trend × 6 trends)
+"
+```
+
+Gate：size ≥ 60KB；H2 = 8；trends 5-7；external URLs ≥ 12。
+
+### 5.5.B. 未來日期反查
+
+對 §7 watchlist 表格的每個 `<td>` 含日期，grep 確認該日期出自 Step 4.5.B 通過過的 source URL。**任何 `YYYY-MM-DD` 或 `M/DD` 格式的具體日期，如不能對應到一個 source URL，必須改為含糊表述**。
+
+特別檢查：
+- `~5/30` / `5月底` 這類「month-end」guess → 必須 source confirm
+- 「NVDA Q2 / AAPL Q3」這類 fiscal quarter → 必須對應到真實財報日（NVDA fiscal Q2 = 8/26、Q3 = 11月底 等）
+
+### 5.5.C. Top-20 mkt cap 覆蓋反查
+
+```bash
+for t in NVDA MSFT AAPL AMZN GOOGL META TSLA JPM V MA LLY ORCL UNH XOM JNJ WMT PG HD BAC; do
+  if grep -q "$t" docs/earnings/synthesis_{YYYY-MM-DD}.html; then
+    echo "$t ✓"
+  else
+    echo "$t ✗ MISSING"
+  fi
+done
+```
+
+如該公司有在 window 內 report earnings 但 grep 不到 → 回 Step 4.5.A 補回。
+如該公司沒在 window 內 report（如 LLY 4 月已報過、AAPL 4/30 已在 4/30 local） → 確認本身 ticker 至少在 §2 行業地圖或 §6 holdwatch 中出現一次。
+
+### 5.5.D. 本地 / Web 分色標籤一致
+
+確認每個 web-filled ticker 的所有出現都帶 `<span class="source-webfill">`。
+
+```bash
+# webfill ticker 應該出現在以下 3 個地方都有 webfill tag：
+# §1 fill-gap table, §2 industry map, §3 trend block (confirm webfill list), §6 confidence-note
+```
+
+### 5.5.E. 跨章節一致 final check
+
+讀 §0 TL;DR 5 條，對每條找 §3 對應 trend block 確認 narrative 一致。讀 §6 ADD 名單，對每個 ticker 找 §4 對應產業段確認業務敘述背景。讀 §7 watchlist，對每個 catalyst 找 §3 對應 trend 確認 logical link。
 
 ---
 
@@ -387,6 +501,94 @@ Add/cut/hold: {X}/{Y}/{Z} 檔
 Live: https://research.investmquest.com/earnings/synthesis_YYYY-MM-DD.html
 Index: https://research.investmquest.com/earnings/
 ```
+
+---
+
+## Step 8.5 — Reflective Review（反思 / post-publish critic, v1.1 新增）
+
+commit & push 之後、Step 8 回報用戶之前，跑 **inline 自我反思**。讀自己剛寫的 HTML 全文，對下列五題用 contrarian 角度回答：
+
+### 8.5.A. 「如果這次 synthesis 有大錯，最可能錯在哪？」
+
+從用戶角度想：「我點開這份 HTML，第一個會挑剔的是什麼？」常見錯誤類型：
+- **遺漏關鍵 ticker**：top-20 mkt cap 公司在 window 內報了 earnings 但沒被覆蓋（NVDA day-內盲點是 v1.0 翻車的真實案例）
+- **虛構未來日期**：§7 catalyst calendar 寫了「~5/30 NVDA Q2」這類 hallucinate
+- **Trend 主訊號數字找不到 source**：印象記憶寫的 +XX% 但 grep 不到原始引用
+- **§6 add 名單沒有業務背景**：§4 對應產業段找不到敘述支撐
+- **§0 TL;DR 與 §3 trends 編號不一致**
+
+### 8.5.B. 「我的 ADD 名單反向想：如果其中 3 檔是錯的，可能的理由是什麼？」
+
+對 §6 ADD 名單每檔，問自己：
+- 業務動能是否真的可持續 4-8 季？還是只是 cyclical bounce？
+- 估值（NTM P/E vs 5Y avg）已經 priced in 多少 thesis？
+- 同產業同主題的其他名稱有沒有可能反而是更乾淨的 add？
+
+如有任一檔通不過這個反向 test，移到 HOLD/WATCH。
+
+### 8.5.C. 「Web 補料公司的 confidence flag 是否誠實？」
+
+對每個 web-filled ticker，確認：
+- §1 fill-gap 表 source URL 真的能驗證關鍵數字（不是泛泛 calendar 頁）
+- §3 trend confirm list 有明確區分本地 vs webfill
+- §6 confidence-note 真的有點明「web 補料不入主 add/cut」
+
+### 8.5.D. 「§7 Watchlist 的每個 catalyst 都有真實 source 嗎？」
+
+特別檢查日期 — 用 contrarian 心態假設「這個日期是我亂編的」，去找 source 反證。如找不到精確 source，立即改為含糊表述。
+
+### 8.5.E. 「最重要：我有沒有過度自信？」
+
+讀 §0 TL;DR — 5 條 conviction shift 是否有任何一條是「我覺得這樣比較簡潔好讀」而非「實際 trend 浮現」？如有，改寫成更謙遜的措辭（如「初步觀察」「需 H2 驗證」）。
+
+**如 8.5.A-E 任一條發現問題**：
+- 小錯（cosmetic / 措辭）→ 直接 patch HTML，commit 一次 `fix(synthesis): self-review 反思 patch`
+- 大錯（漏 ticker / 虛構日期 / trend 無證據）→ 必須通知用戶承認失誤 + 給修補 plan，**不可悄悄改**
+
+---
+
+## Bullet-First 條列化原則（v1.1 新增、強制）
+
+**v1.0 翻車的另一條原因是「prose 太密、重點埋在長段落」**。v1.1 起，所有 §3/§4/§5/§6 內容**預設 bullet-first**，prose 退為輔助。
+
+### 規則
+
+1. **每個 §3 trend block** 的結構固定為：
+   - `<p class="signal-row">` 1 句 anchor（≤ 30 字，講 trend 大方向）
+   - `<h4>關鍵 data points</h4>` + `<ul class="bullets">`（4-6 條 bullets）
+   - `<h4>Confirm 名單（本地）</h4>` + `<ul>` （按日期分行）
+   - `<h4>Refute 名單（本地）</h4>` + `<ul>` （按日期分行）
+   - `<h4>跨產業 read-through</h4>` + `<ul>` （2-3 條）
+   - `<h4>外部 corroboration</h4>` + `<ul>` （3-4 條，每條 source + finding）
+   - `<p class="caveat">` 1 段 caveat（≤ 80 字）
+
+2. **每個 §4 industry block** 的結構固定為：
+   - `<p class="lead-row">` 1 句 anchor
+   - 2-4 個 `<h4>` 子段，每段 `<ul class="bullets">`（3-6 條）
+   - `<p class="lead-row">` 1 句 implication（PM 行動結論）
+
+3. **§5 contradiction** 的結構固定為：
+   - `<h4>` 矛盾標題
+   - `<ul>` 證據與暗示（3-5 條 bullets）
+   - `<p class="pm-action">` 1 句 PM action
+
+4. **§6 PM Implications** 已是 imply-list — **保持條列**。不要寫長段 prose。
+
+### 禁止
+
+- ❌ **任何段落 > 100 字**（除非是 disclaimer 或極特殊 caveat）
+- ❌ **bullet 內套 bullet 超過 1 層**（保持平鋪）
+- ❌ **用「然而」「另一方面」串接 4+ 個事實**（拆成 bullets）
+- ❌ **數字混雜在敘述中**（用 `<strong>` 標出，或單獨成 bullet）
+
+### CSS class 提示
+
+- `signal-row` / `lead-row`：1 句 anchor，白底淺色 border
+- `caveat`：黃底警告
+- `pm-action`：白底 PM 行動結論
+- `source-local` / `source-webfill`：inline tag
+- `bullets`：bullet list（單層）
+- `imply-list`：卡片式 list（用在 §6 add/cut/hold）
 
 ---
 
