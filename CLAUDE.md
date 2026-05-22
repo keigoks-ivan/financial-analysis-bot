@@ -55,6 +55,22 @@ Agent({
 
 當用戶說「push earnings」/「發布財報」/「發佈財報」/「發布新財報」/「更新 earnings index」時，自動觸發 `push-earnings` skill（`.claude/skills/push-earnings/`），照其 9 個 steps 執行。
 
+## Workflow: 30 天財報統整 (earnings synthesis)
+
+當用戶說「跑最近財報的統整」/「earnings 統整」/「30 天財報統整」/「月度財報統整」/「財報季統整」/「過去 30 天財報重點」/「earnings synthesis」/「earnings monthly recap」/「earnings 30-day recap」/「monthly earnings rollup」時，自動觸發 `earnings-synthesis` skill（`.claude/skills/earnings-synthesis/`）。
+
+**定位**：消費端 skill — 假設 `docs/earnings/earnings_YYYY-MM-DD.html` 30 天日報已存在。重點是把 vertical 日報串成 horizontal sector-level 敘事 + investment implication，不重做 per-company 分析。
+
+**輸出**：
+- HTML：`docs/earnings/synthesis_YYYY-MM-DD.html`（同階層；prefix `synthesis_` 不與日報 regex 衝突，push-earnings 不會誤抓）
+- 索引：`docs/earnings/index.html` 在 hero 之後 / 日報列表之前插入 `<section id="monthly-synthesis">` highlight card（CSS 已預備在 index.html `.synthesis-tag` / `.synthesis-list` 規則）
+
+**素材結構**：本地日報的 §2/§3/§4/§5 + lede + report-meta（複用 push-earnings 的 parsing 邏輯）+ **缺失交易日 web fill-gap**（mkt cap ≥ $50B 的當日 earnings，light WebFetch 取 EPS/rev/guidance/reaction）+ 中量 WebSearch / WebFetch（3-5 輪/主題）做趨勢深掘。Ticker → 子產業 mapping 走 `docs/id/ID_*.html` id-meta `related_tickers[]` 為主、`docs/dd/dd-meta` industry 補強、inline 硬表 fallback。本地深度料 vs web 補料在報告中**明確分色標示（`.source-local` 藍 vs `.source-webfill` 橘）+ 信心度註腳**，§6 add/cut/hold 建議只用本地深度料當主錨。
+
+**Critic**：無強制 gate（v1 政策同 push-earnings）。用戶可在發布後手動跑 `id-review --mode synthesis`（未來 Phase 2 才有此 mode；現階段用一般 cold-review）。
+
+**git flow**：commit 訊息格式 `Add earnings synthesis: window YYYY-MM-DD → YYYY-MM-DD`，直接 push main。
+
 ## Workflow: DCA 深度定見分析
 
 當用戶說「幫我跑 {ticker} dca」/「{ticker} 定見」/「{ticker} dca」/「conviction analysis {ticker}」/「最終判斷 {ticker}」時，自動觸發 `deep-conviction-analyst` skill（`.claude/skills/deep-conviction-analyst/`）。
