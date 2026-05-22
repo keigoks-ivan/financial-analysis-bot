@@ -16,6 +16,7 @@
 
 | Date | Ticker | Thesis | Filename | DD basis | ID basis |
 |:---|:---|:---|:---|:---|:---|
+| 2026-05-22 | LEVI | LEVI 是全球最具文化資本的 denim 品牌，正從批發 supplier 變身為 DTC-led lifestyle 公司，margin 與成長同時 reset | DCA_LEVI_20260522.html | DD_LEVI_20260522.html | — |
 | 2026-05-22 | WMT | WMT 把美國 70% 家庭每週採購這個 toll booth 升級成 ad-driven 高邊際機器 — 規模 + 數據 + 自動化是 3 重複利 | DCA_WMT_20260522.html | DD_WMT_20260522.html | — |
 | 2026-05-12 | MPWR | MPWR 用 BCD 製程把 48V→800V AI 電力架構從「板級模組」吃成「晶片級整合」，是少數靠製程而非靠規模建立護城河的類比公司 | DCA_MPWR_20260512.html | DD_MPWR_20260418.html | ID_AIDCPowerElectronics_20260421.html / ID_AIDataCenter_20260419.html / ID_Transformers_20260419.html |
 | 2026-05-12 | KEYS | KEYS 是高頻訊號驗證的雙寡頭之一，5G/6G/AI 1.6T 所有 design 都得通過它的儀器，等於對通訊基建升級收 toll | DCA_KEYS_20260512.html | DD_KEYS_20260418.html | ID_AINetworking_20260419.html / ID_SiliconPhotonicsCPO_20260419.html / ID_QuantumComputing_20260427.html |
