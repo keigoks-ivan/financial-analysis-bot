@@ -69,10 +69,18 @@ _EMPTY_QUALITY = {
 }
 
 # Universe-observed EU listings — extend as new EU DD tickers are added.
+# Use EU_SUFFIX_MAP for the common pattern "{dd_ticker}{suffix}" → yf_ticker.
 EU_SUFFIX_MAP = {
     "AENA": ".MC",   # Madrid
     "BESI": ".AS",   # Amsterdam
     "RMS":  ".PA",   # Paris (Hermès)
+}
+
+# For cases where the yfinance ticker does NOT follow the simple suffix-append
+# pattern (e.g. LVMH on Euronext Paris is "MC.PA", not "LVMH.PA"), use an
+# explicit override. Checked BEFORE EU_SUFFIX_MAP in resolution helpers.
+TICKER_YF_OVERRIDE = {
+    "LVMH": "MC.PA",   # Euronext Paris (primary EUR listing)
 }
 
 
@@ -178,6 +186,9 @@ def _yf_ticker_for(dd_ticker: str) -> str:
     """Resolve DD ticker → yfinance ticker (handle EU suffix; TW/JP pass through)."""
     # TW: "2330.TW" stays "2330.TW"
     # JP: "6857.T" stays "6857.T"
+    # Explicit override (e.g. "LVMH" → "MC.PA") takes precedence
+    if dd_ticker in TICKER_YF_OVERRIDE:
+        return TICKER_YF_OVERRIDE[dd_ticker]
     # EU: "RMS" → "RMS.PA" via EU_SUFFIX_MAP
     if dd_ticker in EU_SUFFIX_MAP:
         return f"{dd_ticker}{EU_SUFFIX_MAP[dd_ticker]}"

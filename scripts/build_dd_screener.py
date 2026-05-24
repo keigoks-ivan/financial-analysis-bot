@@ -76,6 +76,7 @@ sys.path.insert(0, str(SCRIPTS))
 from dd_screener_dd_loader import load_dd_universe  # noqa: E402
 from dd_screener_quality import (  # noqa: E402
     EU_SUFFIX_MAP,
+    TICKER_YF_OVERRIDE,
     get_quality_for_ticker,
     load_qgm_index,
 )
@@ -155,8 +156,12 @@ def _sort_key(s: dict) -> tuple:
 
 
 def _yf_ticker_for_ma(dd_ticker: str) -> str:
-    """Same suffix resolution as quality module."""
-    return f"{dd_ticker}{EU_SUFFIX_MAP[dd_ticker]}" if dd_ticker in EU_SUFFIX_MAP else dd_ticker
+    """Same resolution as quality module: explicit override → EU suffix → pass-through."""
+    if dd_ticker in TICKER_YF_OVERRIDE:
+        return TICKER_YF_OVERRIDE[dd_ticker]
+    if dd_ticker in EU_SUFFIX_MAP:
+        return f"{dd_ticker}{EU_SUFFIX_MAP[dd_ticker]}"
+    return dd_ticker
 
 
 def _empty_ma() -> dict:
