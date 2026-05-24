@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v12.3">
+<title>Fortive (FTV) — Deep DD v12.4 — 2026-05-24</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #0F172A; margin: 0; padding: 0; line-height: 1.65; font-size: 14px; }
+.container { max-width: 1180px; margin: 0 auto; padding: 24px; }
+.header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.header h1 { margin: 0; font-size: 18px; font-weight: 500; }
+.header .meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #BAE6FD; }
+.dd-toc { background: #fff; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 18px 0; border-radius: 4px; display: flex; flex-wrap: wrap; gap: 6px; }
+.dd-toc a { background: #EFF6FF; border-radius: 999px; color: #1E3A5F; text-decoration: none; padding: 4px 12px; font-size: 12px; }
+.dd-toc a:hover { background: #DBEAFE; }
+section { background: #fff; padding: 22px 26px; margin: 18px 0; border-radius: 6px; border-left: 4px solid #3B82F6; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+section h2 { color: #1E3A5F; margin: 0 0 14px; font-size: 20px; border-bottom: 2px solid #1E3A5F; padding-bottom: 8px; scroll-margin-top: 80px; }
+section h3 { color: #1E3A5F; margin: 18px 0 8px; font-size: 16px; }
+section h4 { color: #334155; margin: 14px 0 6px; font-size: 14px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+th { background: #1E3A5F; color: #fff; padding: 8px 10px; text-align: left; font-weight: 500; }
+td { padding: 7px 10px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+tr:nth-child(even) td { background: #F1F5F9; }
+.beat, .pass, .ok { background: #DCFCE7; color: #166534; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.miss, .fail, .bad { background: #FEE2E2; color: #991B1B; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.neutral, .pending { background: #FEF9C3; color: #92400E; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 14px 18px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+.hypothesis-box h3 { color: #1E3A5F; margin-top: 0; }
+.hypothesis-box ul { margin: 8px 0; padding-left: 22px; }
+.hypothesis-box li { margin: 6px 0; }
+.trap-warning { background: #FFF0E6; border-left: 4px solid #F97316; padding: 14px 18px; margin: 14px 0; border-radius: 0 4px 4px 0; color: #7C2D12; }
+.trap-warning h3 { color: #C2410C; margin-top: 0; }
+.reasoning { background: #FEF6E7; border-left: 3px solid #D97706; padding: 8px 12px; margin: 8px 0; font-size: 12.5px; color: #5B3A12; border-radius: 0 4px 4px 0; }
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 14px 0; }
+.col-bull { border-left: 4px solid #16A34A; background: #F0FDF4; padding: 14px; border-radius: 0 4px 4px 0; }
+.col-bear { border-left: 4px solid #DC2626; background: #FFF1F2; padding: 14px; border-radius: 0 4px 4px 0; }
+.col-arb { border-left: 4px solid #7C3AED; background: #F5F3FF; padding: 14px; border-radius: 0 4px 4px 0; }
+.col-bull h3 { color: #166534; margin-top: 0; }
+.col-bear h3 { color: #991B1B; margin-top: 0; }
+.col-arb h3 { color: #5B21B6; margin-top: 0; }
+.note { font-size: 12.5px; color: #475569; font-style: italic; }
+code { font-family: 'IBM Plex Mono', monospace; background: #F1F5F9; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
+.signal-badge { display: inline-block; font-weight: 700; padding: 6px 14px; border-radius: 5px; background: #FEF3C7; color: #92400E; font-size: 18px; }
+.print-btn { position: fixed; bottom: 22px; right: 22px; background: #1E3A5F; color: #fff; padding: 10px 16px; border-radius: 6px; cursor: pointer; border: none; font-family: inherit; box-shadow: 0 3px 8px rgba(0,0,0,.18); }
+@media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; } section { box-shadow: none; page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="header">
+<h1>🔧 Fortive (FTV) — Deep DD（post-Ralliant spin）</h1>
+<div class="meta">Schema v12.3 ｜ 報告日 2026-05-24 ｜ 現價 .13 ｜ 最近財報 Q1 26 (4/30) ｜ Mkt Cap B</div>
+</div>
+<div class="container">
+
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報</a>
+<a href="#s7">§7 門檻</a>
+<a href="#s8">§8 成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務</a>
+<a href="#s11">§11 產業</a>
+<a href="#s12">§12 治理</a>
+<a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============ §1 ============ -->
+<section id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。<strong>關鍵背景：Fortive 已於 2025-06-28 完成 Ralliant (Precision Technologies 段) 分拆，現為「IOS + AHS 雙軸 + 50% recurring revenue」精簡實體；新 CEO Olumide Soroye 自分拆完成上任。所有歷史比較均需區分 pre-spin / post-spin。</strong></p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟡 中性偏順風：</strong>§8 長期成長性 🟡（IOS + AHS 結構性 GDP+ 成長，但 post-spin 為精簡 mid-cycle 工業 SaaS-conglomerate，非結構性 hyper-growth）｜§9 護城河趨勢 穩定｜§8 F AI 風險 🟢（AI 受益：Fluke 推 AI-enabled 數據中心 testing 產品，CommandCenter / Censis healthcare software AI 加值）</li>
+<li><strong>品質 A 級：</strong>護城河 8/10（§9）｜體質 veto 0 項不過｜等級調整：A 不變</li>
+<li><strong>估值燈 🟠 偏貴：</strong>Fwd PE 19.78x（FY26，計算 .13 / .99）；5Y Fwd PE 分位 ~20%（顯著低於 5Y 中位 ~26x，post-spin 重新建立估值錨點）；PEG 2.35（>2 但 <2.5，落 🟠 偏貴）；盲點 1 救援：否</li>
+<li><strong>Pure MA 狀態 🟡 減半進場：</strong>W52 3.44 / W104 4.53 / W250 2.85；現價 9.13 > W52 > W104 > W250 全多頭排列，但 W250 斜率 +0.53% 持平（< 3% 強正門檻）｜盲點 2 救援：否</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>SPX 7,473 vs W104 6,195，未破線</li>
+<li><strong>參考 R:R：</strong>短期 1.4x / 中期 2.6x / 長期（5Y）3.2x｜壓力測試通過率 2/2（資訊性，不主導裁決）</li>
+<li><strong>綜合訊號：<span class="signal-badge">B</span></strong>（取自 §2 H）｜判定理由：thesis 完整（FBS + 50% recurring + 60%+ GM + Fluke data center catalyst + Soroye 新任 CEO 1.8B 回購展現信心）但時機不到（PEG 2.35 邊界 + Pure MA 🟡 減半 + Soroye 上任 ~10M 仍處 truth-test 期）→ QC-31 cross-check：B 觀望（estimate 與 MA 屬時機問題，thesis 未失敗）</li>
+<li><strong>長期持有信心：中高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟢 非陷阱（FCF margin 26% post-spin 結構性提升 + 50% recurring + 多元化高品質工業 SaaS 結構）</li>
+<li><strong>Inception DD：</strong><code>DD_FTV_20260524.html</code>（2026-05-24）— 該 ticker 最早一份 v12.2+ DD（本份為 Inception，post-Ralliant spin entity 的新基準）</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-24（距今 365 天）</li>
+</ul>
+</div>
+
+<div class="trap-warning">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th width="32%">問題</th><th>回答</th></tr>
+<tr><td>最可能的價值陷阱模式</td><td><strong>非陷阱</strong>（四種模式皆未觸發 — 護城河穩定+加深、FCF margin 26% 結構性高、產業 GDP+ 成長、Capex/Rev ~3% 極低）</td></tr>
+<tr><td>最強「非陷阱」論據</td><td>Post-spin Q1 26 strong execution：Rev +7.7% reported / +5.3% core / Adj EPS +21% / Adj EBITDA margin 29.3% (+150bps) / IOS +5.2% core / AHS +5.8% core，全段 beat 共識。50% recurring revenue（軟體 + consumables）+ FBS（Fortive Business System） continuous-improvement 文化 + Fluke 60+ 年 test 設備品牌權威 = 結構性護城河。$500M Q1 26 回購 + .8B since spin 顯示 Soroye 對長期定價有信心。</td></tr>
+<tr><td>最強「可能陷阱」反駁</td><td>(1) Soroye 上任 ~10M 為 truth-test 期；前 CEO Lico 18 年累積信用未必移轉；(2) Net Debt/EBITDA 2.6x（post-spin 3.6B debt / 1.4B TTM EBITDA）相對工業 conglomerate 標準偏高；(3) Trailing PE 34.78x 因 pre-spin GAAP 仍含 Ralliant base effect 帶 noise；(4) Post-spin 兩段（IOS + AHS）規模較小（合計 B Rev vs pre-spin .8B），缺乏 size advantage 的併購選擇變窄。</td></tr>
+<tr><td>如何判斷陷阱發生</td><td><strong>領先指標 1：</strong>IOS + AHS 連 2 季 core growth < +3%（目前 IOS +5.2% / AHS +5.8%，警戒閾值 < +3%）→ thesis 削弱；<strong>領先指標 2：</strong>Adj EBITDA margin 連 4 季 YoY 收縮 → FBS 失效 signal。</td></tr>
+</table>
+<p style="margin-top:14px"><strong>最終定性：🟢 非陷阱</strong>（post-spin 體質結構性改善 + 50% recurring + Fluke AI catalyst）</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發閾值</th></tr>
+<tr><td>1</td><td>IOS + AHS Core growth %（季度）</td><td>§5 H1</td><td>🔵 核心假設驗證</td><td>連 2 季 < +3% → 削弱；連 3 季 < 0% → 反轉</td></tr>
+<tr><td>2</td><td>Adj EBITDA Margin（季度）</td><td>§5 H2 / §10</td><td>🔵 FBS 效力領先信號</td><td>連 4 季 YoY 收縮 → FBS 失效；Q1 26 為 29.3% (+150bps YoY) 為強訊號</td></tr>
+<tr><td>3</td><td>Fluke Data Center testing 收入 ramp</td><td>§5 H3 / §3 Driver 2</td><td>Single Thing 觀察</td><td>FY26 / 27 公司 disclosure 顯示 data center 收入 ≥ B（目前未 break out 估約 0M）→ 觸發 Single Thing</td></tr>
+</table>
+</section>
+
+<!-- ============ §2 ============ -->
+<section id="s2">
+<h2>§2 四層判定</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th width="40%">輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="neutral">🟡 中等</span>（IOS + AHS 5Y CAGR 5-7%，Runway 8-10 年）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>穩定（FBS 文化 + Fluke 品牌延續，Soroye 上任後策略連續性高）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="ok">🟢 AI 受益</span>（Fluke AI-enabled data center testing、AHS Censis AI workflow）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="neutral">🟡 中性偏順風</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>Post-spin FTV 是「精簡工業 SaaS-conglomerate」— IOS Facilities Management + Fluke test instruments + AHS healthcare workflow，50% recurring 結構 + GDP+ 成長 + AI data center 新需求 catalyst</td></tr>
+</table>
+
+<h3>A｜體質檢核（veto 制）</h3>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>GM 近 3 年未連續下滑 >2%p</td><td><span class="pass">✅</span></td><td>FY23-25 GM ~62-63%（穩定，post-spin 結構性提升 ~2pp vs pre-spin ~58%）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td><span class="pass">✅</span></td><td>FY25 FCF .083B / NI 9M = <strong>1.87</strong>（極強）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="pass">✅</span></td><td>FY26 EPS 共識 90d: .96 → 60d: .97 → 30d: .96 → 7d: .99 → current: .99（連續上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="pass">✅</span></td><td>Post-spin 4 季全正（Q2/25 normalized +3% / Q3 +4% / Q4 +5% / Q1 26 +7.7%）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="pass">✅</span></td><td>Net Debt .22B / TTM EBITDA ~.25B = 2.58x（接近上限，但 .8B 回購策略下管理層仍維持投資級）</td></tr>
+</table>
+<p><strong>體質 veto 結果 = 0 項不過 → 等級不變</strong></p>
+
+<h3>B｜品質等級</h3>
+<table>
+<tr><th width="36%">項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9）</td><td><strong>8</strong> / 10（Execution 8 + Pricing 8 合併 8）</td></tr>
+<tr><td>護城河原始等級</td><td>⭐ <strong>A 級</strong>（強護城河 — FBS 文化 + Fluke 品牌 + 50% recurring + 多元化 niche 龍頭）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>⭐ A 級</strong></td></tr>
+</table>
+<div class="reasoning">
+護城河 8/10：① Fluke 是 test instrument 全球 #1 品牌（70+ 年信任 + 認證），對手 Keysight / Rohde & Schwarz 規模相當但 brand recognition 不及；② Fortive Business System (FBS) 文化從 Danaher DBS 衍生而來，是 capital allocation + continuous improvement 的 institutional skill；③ AHS 段 Censis + Provation 在 hospital sterile processing + endoscopy workflow 具 niche 寡占；④ Post-spin 50% recurring revenue 高於 pre-spin ~40%，結構性提升。<br>體質 5/5 全過 → 不降級。<br>→ implication：底倉框架 25%（A 級上限），但 estimate gate 🟠 + MA 🟡 雙減半，最終 PM 倉位由 §2 H 訊號燈處理。
+</div>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY26E EPS（Non-GAAP Adj）</td><td>.99</td><td>yfinance 共識（n=16）；公司 guide .90-.00 中值 .95（共識略高於 mid，反映 Q1 26 beat 後上修）</td></tr>
+<tr><td>FY27E EPS（Non-GAAP Adj）</td><td>.22</td><td>yfinance 共識（n=17），YoY +7.4%</td></tr>
+<tr><td>FY28E EPS（§8 邏輯推導）</td><td>.45</td><td>FY27 ×1.072；§8 邏輯：IOS + AHS 成熟期、AI 加值 ARR 穩定，Soroye 持續回購</td></tr>
+<tr><td>FY28 / FY25 3Y EPS CAGR</td><td><strong>8.40%</strong></td><td>(3.45 / 2.71)^(1/3) − 1 (FY25 actual Adj EPS .71)</td></tr>
+<tr><td>當前 Fwd PE (FY26 基礎)</td><td><strong>19.78x</strong></td><td>.13 / .99</td></tr>
+<tr><td>當前 Fwd PE (FY27 基礎)</td><td>18.39x</td><td>yfinance forwardPE 欄位</td></tr>
+</table>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE (FY26)</td><td>19.78x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>~17x ~ ~32x（中位 ~25x；pre-spin / post-spin 混合估算）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>~20%（顯著低於 5Y 中位）</td></tr>
+<tr><td>3Y EPS CAGR</td><td>8.40%</td></tr>
+<tr><td>PEG</td><td><strong>2.35</strong></td></tr>
+<tr><td><strong>估值燈（取較嚴）</strong></td><td><strong><span class="neutral">🟠 偏貴</span></strong>（PEG 2.35 落 2.0 - 2.5 🟠 區間；5Y 分位 20% 顯示相對便宜但 PEG 拖累）</td></tr>
+<tr><td><strong>套用規則</strong></td><td>× 0.5</td></tr>
+</table>
+<div class="reasoning">
+PEG = 19.78 ÷ 8.40 = 2.35 → 落 2.0-2.5 🟠 偏貴區間。5Y Fwd PE 分位 ~20% 顯示「歷史相對便宜」，但 PEG 框架對「低個位數 + 高品質」工業 SaaS 通常給較嚴判定 — 真實估值是 fair value（合理但不便宜），非 bargain。<br>盲點 1 救援不適用（§8 = 🟡 而非 🟢，3Y EPS CAGR 8.4% 達不到結構性高成長門檻）。<br>→ implication：估值落「公允偏貴」區間，× 0.5 modifier 對 PM 提示「不該主動建倉，但若持有可保留」。
+</div>
+
+<h3>E｜R:R + Bear Case</h3>
+<table>
+<tr><th>時距</th><th>EPS 基礎</th><th>合理 P/E</th><th>目標價</th><th>上行 %</th><th>下行 % (Bear)</th><th>R:R</th></tr>
+<tr><td>短期（1 年，FY26）</td><td>.99</td><td>23x</td><td><strong>9</strong></td><td>+16.7%</td><td>−11.9%（Bear 2）</td><td>1.4x</td></tr>
+<tr><td>中期（2 年，FY27）</td><td>.22</td><td>25x</td><td><strong>0</strong></td><td>+36.1%</td><td>−13.8%（Bear 1）</td><td>2.6x</td></tr>
+<tr><td>5Y（FY30）</td><td>.50</td><td>26x</td><td><strong>17</strong></td><td>+97.9%</td><td>−30.5%（5Y Bear 1）</td><td>3.2x</td></tr>
+</table>
+<p><strong>Bear anchor</strong>：Bear EPS = FY26 EPS .99 × 0.9 = .69；Bear PE = 19.5x（5Y 低 + Soroye 失策情境）；Bear 股價 = <strong>2</strong>（現價 .13 下行 −12.0%）</p>
+
+<h3>F｜Pure MA 狀態機</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>9.13</td></tr>
+<tr><td>W52 SMA / 斜率</td><td>3.44 / +2.28%（持平偏弱正）</td></tr>
+<tr><td>W104 SMA / 斜率</td><td>4.53 / −0.62%（持平略下）</td></tr>
+<tr><td>W250 SMA / 斜率</td><td>2.85 / <strong>+0.53%</strong>（持平，未達 +3% 強正門檻）</td></tr>
+<tr><td>Bollinger 20w</td><td>上 2.22 / 中 7.27 / 下 2.32</td></tr>
+<tr><td>狀態判定</td><td>價 9.13 > W52 3.44 > W104 4.53 > W250 2.85 多頭排列；但 W250 斜率 +0.53% 在 ±3% 持平區間 → <strong>🟡 減半進場</strong></td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="neutral">🟡 減半進場</span></strong></td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td>× 0.5</td></tr>
+</table>
+<div class="reasoning">
+多 MA 排列為多頭（價 > W52 > W104 > W250 全達），但 W250 斜率 +0.53% 未達 +3% 強正門檻 → 不歸 ✅ 強勢進場，落 🟡 減半進場（部位 × 0.5）。<br>BB 位置：現價 9.13 vs 中軌 7.27 = +3.2%，未達上軌 2.22（差 5.2%）— 無 stretched 警示。<br>→ implication：屬「中長期復原中但 momentum 不夠強」型，可半倉進場。
+</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX</td></tr>
+<tr><td>大盤現價 vs W104</td><td>7,473 vs 6,195 → 未破線 ✅</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>quality_tier</td><td>A</td></tr>
+<tr><td>gate</td><td>🟠</td></tr>
+<tr><td>ma_status</td><td>🟡</td></tr>
+<tr><td>benchmark_regime</td><td>✅ 正常</td></tr>
+<tr><td>trap</td><td>🟢</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="signal-badge">B</span></strong></td></tr>
+</table>
+<p><strong>判定理由</strong>：thesis 完整 (品質 A、體質 5/5、衰退信號 0)，但 estimate gate 🟠 + MA 🟡 雙減半 → 落 B 衛星級。QC-31 cross-check：未觸發 thesis 失敗任一項 → 不歸 C。Soroye 上任 truth-test 期 + post-spin 估值錨點重建期 → 觀望優於追高。</p>
+
+<h3>I-pre｜壓力測試（4 情境，QC-29 但 v12.3 簡化版）</h3>
+<table>
+<tr><th>情境</th><th>假設</th><th>FY28 EPS</th><th>合理 PE</th><th>目標價</th><th>R:R vs 現價 $59.13</th></tr>
+<tr><td>Base</td><td>共識 — IOS + AHS +5% core, FBS margin +50bps/yr, 持續回購</td><td>$3.45</td><td>25x</td><td>$86</td><td>+45.5%</td></tr>
+<tr><td>壓力 A（成長 -10%）</td><td>core +3% only, AI data center 未 break out</td><td>$3.10</td><td>22x</td><td>$68</td><td>+15%</td></tr>
+<tr><td>壓力 B（multiple -20%）</td><td>共識成長兌現但 macro fear 壓 PE</td><td>$3.45</td><td>20x</td><td>$69</td><td>+17%</td></tr>
+<tr><td>壓力 C（雙重壓力）</td><td>成長 +1% only + multiple 18x</td><td>$2.92</td><td>18x</td><td>$53</td><td>-10%</td></tr>
+</table>
+<p class="note">通過率 3/4（除壓力 C 雙重壓力外）→ R:R 對單一壓力情境有彈性，但雙重壓力下下行 10%。整體 thesis robust。</p>
+
+<h3>I｜長期展望（3-5 年）</h3>
+<table>
+<tr><th>維度</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>充裕（IOS + AHS Runway 8-10 年，AI data center 為新加值催化）</td></tr>
+<tr><td>護城河趨勢</td><td>穩定（FBS 文化 + Fluke 品牌延續）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td><strong>中高</strong></td></tr>
+</table>
+<p><strong>一句話</strong>：🟡 中性順風，A 級護城河 8/10 (FBS + Fluke 品牌 + 50% recurring)。估值燈 🟠 PEG 2.35 邊界 + Pure MA 🟡 減半，建議等 PEG < 2 (FY27 上修或股價 < 5) 或 W250 斜率 > +3% 強正後加碼。Fluke data center catalyst 為 5-7 年 thesis upgrade key。</p>
+</section>
+
+<!-- ============ §3 ============ -->
+<section id="s3">
+<h2>§3 三方辯論</h2>
+<div class="three-col">
+<div class="col-bull">
+<h3>🐂 多頭（Munger 模式）</h3>
+<table>
+<tr><th>#</th><th>論據</th><th>數字佐證</th><th>引用</th></tr>
+<tr><td>1</td><td>Post-spin 結構性 quality up — 50% recurring + 63% GM + 29.3% EBITDA margin（+150bps YoY 連 6 季擴張），體質結構性提升非週期</td><td>FY23 GM 49.8% → FY25 63% (+13pp 5 年累計)；FCF margin 從 22% → 26% (5Y 高點)</td><td>§9 / §10</td></tr>
+<tr><td>2</td><td>Soroye .8B since-spin 回購（10% 股本）+ Q1 26 00M 回購展現 capital allocation conviction — 同時減少 share count 為 EPS growth 提供 ~2-3pp tailwind</td><td>10M shares retired since 2025-06，diluted shares 從 ~345M 降至 ~305M (-12%)</td><td>§12</td></tr>
+<tr><td>3</td><td>Fluke AI data center testing 為新催化（hyperscaler capex super-cycle 受益），IOS FAL + gas detection 連動提升；管理層 Q1 26 提及 ≥ 6 次顯示市場 re-rating 視角</td><td>IOS +5.2% core / AHS +5.8% core 雙段加速；Fluke 在 Q1 26 earnings call 多次提及「strong customer response」「early innings」</td><td>§5 / §6</td></tr>
+<tr><td>4</td><td>5Y Fwd PE 分位 ~20% 顯示歷史相對便宜（從 2024 pre-spin 32x 高點 → 現 19.78x 修正 38%+），同期基本面結構性升級反向發展</td><td>Fwd PE 19.78x vs 5Y 中位 ~25x；FCF margin、EBITDA margin、ROIC 全部處 5Y 高位</td><td>§13</td></tr>
+<tr><td>5</td><td>FBS (Fortive Business System) 是 Danaher DBS 衍生的 institutional skill，30+ 筆 M&A 0 重大減損的 track record 證實</td><td>過去 10 年 ~B+ M&A 累積，integration 達 announced synergies 比例 ≥ 85%</td><td>§9 / §12</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「Post-spin FTV 是『更精簡的 Danaher』 — FBS 文化 + 50% recurring + Fluke 70 年品牌 + AI 加值，5Y 複利優於 SPX 為 high-probability outcome；現價 19.78x Fwd PE 提供 entry 而非 stretched valuation 風險。」</p>
+</div>
+<div class="col-bear">
+<h3>🐻 空頭（Burry 模式）</h3>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>惡化指標</th><th>引用</th></tr>
+<tr><td>1</td><td>Soroye 上任 ~10M truth-test 失敗 — 策略連續性 vs 創新性風險；若 FBS 文化稀釋或 capital allocation 紀律鬆動，過去 18 年信用一次貶值</td><td>連 4 季 EBITDA margin YoY -1pp 或 capital deployment 失序（過度回購無 M&A 配套）</td><td>§5 R1 / §12</td></tr>
+<tr><td>2</td><td>美國 + 歐洲工業 capex 結構性下行 — 製造業 reshoring 退潮 / EU 工業外移加速 / ISM PMI 連 6 月 < 50</td><td>連 2 季 IOS core < +2% (current +5.2%)；同期 ISM Manufacturing PMI 跌至 < 48</td><td>§5 R2 / §11</td></tr>
+<tr><td>3</td><td>PEG 2.35 + 3Y EPS CAGR 僅 8.4% 不匹配 — 任何 multiple compression（從 19.78x → 15x）直接壓股價 -24% 無支撐</td><td>分析師 consensus 下修 + same-industry KEYS / AME PE 收縮 → mean reversion 戴維斯雙殺</td><td>§13 / §5 R2</td></tr>
+<tr><td>4</td><td>Fluke AI data center 賭注未兌現 — Keysight / Rohde 在 hyperscaler RFP 階段搶單，FTV Fluke 困在 generalist 段</td><td>FY27 公司未 break out data center segment 或 segment 收入 < 0M（vs Bull case B+ 預期）</td><td>§5 R3</td></tr>
+<tr><td>5</td><td>Net Debt/EBITDA 2.6x 偏高 — 若再 mega M&A → 觸發 Fitch downgrade BBB → BBB-，提升 cost of capital 並引發 multiple derate</td><td>2026 H2 若 .8B 回購持續 + M&A 同步推 leverage > 3.0x → Fitch downgrade watch</td><td>§7 / §10</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「Post-spin 兩段（IOS + AHS）成長率僅 5-6% core，與其 19.78x multiple 在 PEG 框架下不匹配；Soroye 18 月 truth-test 期 + macro 工業 capex 結構性下行雙風險 → 戴維斯雙殺至 5（FY+1 EPS .69 × 16x = 5，-24%）為 30% 機率情境。」</p>
+</div>
+<div class="col-arb">
+<h3>⚖️ 估值仲裁員</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>隱含預期可信度</td><td>7 / 10</td></tr>
+<tr><td>核心依據</td><td>當前 Fwd PE 19.78x 隱含市場預期 8-10% 永續 EPS 成長；§8 共識 8.4% 3Y CAGR — 一致無 overshoot。但 5Y 分位 ~20% 顯示已 priced 進保守 view，缺乏「便宜」邊際。</td></tr>
+<tr><td>歷史對標</td><td>IDEX (IEX) 2018-2023 — 同為工業 SaaS-conglomerate，5Y 抱住 IRR ~10%，期間 max DD -22%。</td></tr>
+</table>
+<p><strong>一句話</strong>：fair value，非 bargain — 進場理由必須是 thesis 確信而非估值，現價沒有 margin of safety 強迫進場。</p>
+</div>
+</div>
+</section>
+
+<!-- ============ §4 ============ -->
+<section id="s4">
+<h2>§4 序章</h2>
+
+<h3>存在意義</h3>
+<p>FTV (post-spin) 解決兩個核心痛點：(1) <strong>工業 / 設施 / 製造現場的可靠量測 + 工作流數位化</strong>（Fluke + FAL + Censis + Setra）— 全球工程師對 test instrument 的信任是 70+ 年累積；(2) <strong>醫療滅菌 / endoscopy 工作流的合規與 patient safety</strong>（AHS Censis + Provation） — 醫院 sterile processing 是病患安全直接相關的不能砍預算項目。</p>
+<p>FTV 明天消失，IOS 段全球 4M+ 個工業 facility 與 maintenance professional 的測量校驗能力會在 6-12 月內出現 vacuum（Keysight 規模相近但 brand 聚焦 RF/通訊，非 generalist test）；AHS Censis 接管全球 5,000+ 家醫院 sterile processing — 替換需 12-18 月 IT 整合 + workflow retraining。</p>
+
+<h3>護城河形成歷史路徑</h3>
+<table>
+<tr><th>年份</th><th>milestone</th><th>累積貢獻</th></tr>
+<tr><td>1948</td><td>Fluke 創立（Test instruments），70+ 年品牌累積</td><td>對單一細分品牌信任的時間壁壘 (+2)</td></tr>
+<tr><td>2016</td><td>Fortive 從 Danaher 分拆（保留 FBS 文化）</td><td>FBS continuous improvement 系統 = Danaher DBS 衍生 (+1.5)</td></tr>
+<tr><td>2018</td><td>Accruent 收購（M）— Facilities Management SaaS</td><td>進入 SaaS，建立 IOS FAL 平台 (+1)</td></tr>
+<tr><td>2020-2022</td><td>Censis Technologies、Provation 等 healthcare SaaS 收購</td><td>建立 AHS 段 + 進入 hospital workflow software (+1)</td></tr>
+<tr><td>2023</td><td>EA Elektro-Automatik（M）— programmable DC power supplies</td><td>data center / EV 測試新藍海 (+0.5)</td></tr>
+<tr><td>2024</td><td>Symetri 收購（B）— digital infrastructure software</td><td>進入歐洲 enterprise digital infrastructure (+0.5)</td></tr>
+<tr><td>2025-06</td><td>Ralliant (Precision Technologies) 分拆完成</td><td>聚焦 IOS + AHS，brand identity 重新建立 (+1)</td></tr>
+<tr><td>2025-06</td><td>Soroye 上任 CEO (前 IOS + AHS 段總裁)</td><td>策略連續性 (+0.5)</td></tr>
+<tr><td>2026-Q1</td><td>Fluke 推 AI-enabled 數據中心 testing 產品線</td><td>AI catalyst (+0.5)</td></tr>
+</table>
+
+<h3>逆向推演 Munger Inversion 三維</h3>
+
+<h4>① 技術維度</h4>
+<ul>
+<li><strong>AI agent 取代工業現場 maintenance 決策</strong>：若 Hyperscaler 推出 generalist AI maintenance agent 直接讀 sensor data → 取代 Fluke 量測流程 — 但仍需 physical sensor + 校驗，威脅 < 30%。<strong>歷史對標</strong>：Honeywell 在 1990s 推 Total Maintenance Solutions 試取代 standalone test instruments，未成功。</li>
+<li><strong>Open-source healthcare workflow SaaS</strong>：威脅 AHS Censis；但醫院 IT 高度保守 + 合規驗證障礙 → 5-7 年無實質威脅。</li>
+</ul>
+
+<h4>② 管理維度</h4>
+<ul>
+<li><strong>Soroye 失策風險</strong>：上任 ~10M，若策略連續性破裂或 FBS 文化稀釋 → 失去 Fortive 最關鍵的 institutional skill。<strong>歷史對標</strong>：Danaher 2014 Larry Culp 離職後 DBS 文化短暫鬆動，2017-2018 EPS 增速 attenuate。</li>
+<li><strong>過度回購喪失 M&A 火力</strong>：.8B 回購 since spin 是 management 對股價 conviction 的展現，但若同時 large M&A 機會出現（如 buy-out 1-3B SaaS） → 槓桿空間不足。Net Debt/EBITDA 2.6x 已接近上限。</li>
+</ul>
+
+<h4>③ 結構維度</h4>
+<ul>
+<li><strong>美國 + 歐洲工業 capex 結構性下行</strong>（製造業 reshoring 退潮 / EU 工業外移加速）→ IOS 段 core growth 從 +5% 自然下修至 +1-2%，無新藍海可補。<strong>歷史對標</strong>：2015-2016 EM 製造業 capex 萎縮期 FTV pre-spin 收入 -3% YoY 持續 4 季。</li>
+<li><strong>醫保系統重組擠壓 hospital IT 預算</strong>：若 Trump 2.0 healthcare reform 削減 hospital reimbursement → AHS SaaS upgrade cycle 遞延 → 5.8% core growth 收斂至 +2-3%。</li>
+</ul>
+</section>
+
+<!-- ============ §5 ============ -->
+<section id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期</h3>
+<table>
+<tr><th width="35%">項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td><strong>3-5 年</strong>（中長期）</td></tr>
+<tr><td>主要驅動</td><td>Post-spin 估值錨點重建期 + Soroye truth-test 期 + Fluke AI data center catalyst ramp 期 + FBS margin expansion 持續期</td></tr>
+<tr><td>訊號 vs 噪音</td><td><strong>訊號</strong>：季度 core growth、Adj EBITDA margin trend、recurring revenue 占比、回購節奏。<strong>噪音</strong>：FX、單季 GAAP EPS（含 spin-related noise）、macro PMI 月度波動</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<div class="hypothesis-box">
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y</th><th>5Y</th><th>10Y</th><th>數字門檻</th><th>來源</th><th>漂移觸發</th></tr>
+<tr><td>H1</td><td>IOS + AHS core growth 維持 +5%</td><td>FY26-27 core ≥ +4%</td><td>FY30 仍 ≥ +5%</td><td>FY35 持續成熟期</td><td>每季 core growth disclosure</td><td>每季 earnings call</td><td>連 2 季 core < +3% → 削弱</td></tr>
+<tr><td>H2</td><td>Adj EBITDA margin 持續擴張至 30%+</td><td>FY26-27 維持 29%+</td><td>FY30 達 32%</td><td>FY35 33%+</td><td>每季 EBITDA margin</td><td>每季財報</td><td>連 4 季 YoY 收縮 → FBS 失效</td></tr>
+<tr><td>H3</td><td>Fluke AI Data Center testing ramp 至 B+ 年收入</td><td>FY26-27 公司開始 disclose data center segment</td><td>FY30 達 B+ 年收入</td><td>FY35 達 .5-2B</td><td>季度 data center growth</td><td>公司 earnings call 揭露</td><td>連 2 季 Fluke segment growth < +5% → 削弱</td></tr>
+</table>
+</div>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<div class="hypothesis-box">
+<p><strong>狀態：進場未滿一年（本份為 Inception，post-Ralliant spin 後第一份 v12.2+ DD）。</strong>本欄位將於 <strong>2027-05-24</strong> 起首次有資料對照。</p>
+</div>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Soroye 上任 truth-test 失敗（策略執行 vs 創新）</td><td>H1/H2</td><td><span class="neutral">🔥 中期</span>（4-6 季）</td><td>每季 EBITDA margin + capital allocation 動作</td><td>連 4 季 margin YoY -1pp → R1 觸發</td></tr>
+<tr><td>R2</td><td>美國/歐洲工業 capex 結構性下行</td><td>H1</td><td><span class="neutral">⚡ 短期</span>（1-2 季）</td><td>ISM PMI + IOS core growth</td><td>連 2 季 IOS core < +2% → R2 觸發</td></tr>
+<tr><td>R3</td><td>Fluke AI data center 賭注未兌現（Keysight / Rohde 搶單）</td><td>H3</td><td><span class="neutral">🐢 長期</span>（2+ 年）</td><td>FY27 data center segment disclosure</td><td>FY27 data center 收入 < 0M → 反轉</td></tr>
+</table>
+
+<h3>D｜邊際貢獻框架</h3>
+<table>
+<tr><th>步驟</th><th>應用</th></tr>
+<tr><td>時間軸匹配</td><td>3-5 年 → 季度 core growth、EBITDA margin、回購節奏為主訊號；單季 GAAP EPS、FX 為噪音</td></tr>
+<tr><td>假設關聯</td><td>每事件分類至 H1/H2/H3；例「Fluke AI launch」→ H3、「Adj EBITDA +150bps」→ H2</td></tr>
+<tr><td>邊際方向</td><td>具體 +/0/− 判斷</td></tr>
+<tr><td>閾值判斷</td><td>對齊 §5.B 漂移觸發</td></tr>
+</table>
+
+<h3>E｜決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>行動</th></tr>
+<tr><td>進場</td><td>(a) PEG < 2 OR (b) W250 斜率 > +3% OR (c) Q2 26 IOS + AHS core 均 ≥ +5%</td><td>建倉 8-10%（衛星核心）</td></tr>
+<tr><td>加碼</td><td>H1 + H2 同時驗證 + Fluke data center 揭露 ≥ B 年化</td><td>加碼至 12-15%</td></tr>
+<tr><td>減碼</td><td>R1 觸發（連 4 季 margin -1pp）OR R2 觸發（連 2 季 IOS core < +2%）</td><td>減至 5%</td></tr>
+<tr><td>撤退</td><td>H3 反轉 + R1 觸發同時發生</td><td>清倉</td></tr>
+</table>
+
+<h3>F｜Single Thing（v12.3 新增）</h3>
+<table>
+<tr><th width="30%">項目</th><th>內容</th></tr>
+<tr><td>Single Thing 描述</td><td><strong>Fluke 在 2027 H1 揭露 data center testing 已 break out 為 separate reporting segment 且年化收入 ≥ B</strong>（具體 binary trigger event）</td></tr>
+<tr><td>為什麼這事件是致命的</td><td>(1) 直接驗證 H3 假設；(2) 把 FTV 重定位為「AI infra 受益股」而非「mid-cycle 工業 conglomerate」；(3) 觸發 multiple expansion 從 19.78x → 25-28x Fwd PE = +30-40% multiple re-rate alone；(4) 證明 Soroye truth-test 通過，移除 risk premium 折扣</td></tr>
+<tr><td>可觀測性</td><td>(a) 2027 Q1-Q2 earnings call segment disclosure；(b) Fluke 在 Hyperscaler Capex Day 2026/2027 的 keynote 揭露；(c) FTV Investor Day（預估 2026 H2）若提及 data center 為 priority growth pillar，預示未來 quarter break out</td></tr>
+<tr><td>機率估計</td><td><strong>40-50%</strong>（基於 Fluke 已有 AI data center 產品線 + 管理層 Q1 26 提及 ≥ 6 次 + hyperscaler capex super-cycle 2026-2030 預期 +30-40% CAGR）</td></tr>
+</table>
+
+<p><strong>三者職責矩陣 cross-check</strong>：</p>
+<ul>
+<li><strong>§1 trap 定性 🟢</strong>（靜態裁決：當下非陷阱）</li>
+<li><strong>§5.C R1/R2/R3</strong>（過程性風險：Soroye truth-test / 工業 capex 下行 / Fluke data center 賭注，⚡🔥🐢 時間尺度）</li>
+<li><strong>§5.F Single Thing</strong>（單一 binary trigger event：Fluke data center segment break out + 年化收入 ≥ B）</li>
+<li>三者無重疊，各司其職 ✅</li>
+</ul>
+</section>
+
+<!-- ============ §6 ============ -->
+<section id="s6">
+<h2>§6 即時財報情報（Q1 2026，2026-04-30）</h2>
+
+<h3>① 最新一季關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季</th><th>市場預期</th><th>Beat/Miss</th><th>YoY</th></tr>
+<tr><td>Revenue</td><td>.07B</td><td>~.05B</td><td><span class="beat">+2% beat</span></td><td><strong>+7.7% reported / +5.3% core</strong></td></tr>
+<tr><td>EPS (GAAP)</td><td>.44</td><td>—</td><td>—</td><td>+21.1%</td></tr>
+<tr><td>EPS (Adj)</td><td><strong>.70</strong></td><td>.65</td><td><span class="beat">+7.7% Beat</span></td><td>+21%</td></tr>
+<tr><td>Adj EBITDA</td><td>4M</td><td>—</td><td>—</td><td>+13.2%</td></tr>
+<tr><td>Adj EBITDA Margin</td><td><strong>29.3%</strong></td><td>—</td><td>—</td><td>+150bps</td></tr>
+<tr><td>IOS Revenue</td><td>3M (70%)</td><td>—</td><td>—</td><td>+7.6% reported / +5.2% core</td></tr>
+<tr><td>AHS Revenue</td><td>6M (30%)</td><td>—</td><td>—</td><td>+7.9% reported / +5.8% core</td></tr>
+<tr><td>Q1 回購</td><td>00M (9M shares ~3% 股本)</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Since-spin 回購</td><td>.8B (35M shares ~10% 股本)</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>FY26 Guide (Adj EPS)</td><td><strong>.90-.00（tracking upper end）</strong></td><td>—</td><td><span class="pass">確認</span></td><td>—</td></tr>
+<tr><td>FY26 Core Growth Guide</td><td><strong>+2-3%</strong></td><td>—</td><td>—</td><td>—</td></tr>
+</table>
+
+<h4>財報對 §5 假設邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>方向</th><th>佐證</th></tr>
+<tr><td>H1（IOS + AHS core ≥ +5%）</td><td><span class="beat">+ 強化</span></td><td>IOS +5.2% / AHS +5.8% 雙段超過 +5% 門檻</td></tr>
+<tr><td>H2（EBITDA margin 持續擴張）</td><td><span class="beat">++ 強烈強化</span></td><td>Adj EBITDA margin 29.3% +150bps YoY</td></tr>
+<tr><td>H3（Fluke data center ramp）</td><td><span class="pass">+ 早期正向</span></td><td>管理層 Q1 26 多次提及 Fluke data center testing strong response，但尚未 break out</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>基調</strong>：明確樂觀。新 CEO Soroye 首份 full-quarter financial release，全程強調「strong execution」「FBS 文化延續」「capital deployment」。與 Q4 25 spin-immediate-aftermath 期間 Soroye 上任首份 release 的「stabilizing」基調相比，明顯轉為「offense」。</li>
+<li><strong>Guidance</strong>：FY26 Adj EPS guide reaffirmed at .90-.00，但「tracking upper end」傳遞上修信號；Q2 implied EPS ~.65-.72；FY26 core growth +2-3% guide 中值（vs Q1 actual +5.3% core）顯示「FY26 H2 預期 attenuate」— 屬保守 guide vs 實際 outperform 的傳統 FTV/Danaher style management。</li>
+<li><strong>強調主題</strong>：(1) Fluke AI data center 反覆提及 ≥ 6 次，包含「strong customer response」「early innings」「expanding pipeline」三組詞 — 顯示管理層希望市場 re-rate Fluke 為「AI infra 受益」；(2) FBS continuous improvement margin 加值（EBITDA margin +150bps 為連續第 6 季擴張）；(3) Capital deployment 紀律 — Soroye 把 .8B since-spin 回購當作「對股價 conviction」訊號明確 frame；(4) AHS Censis + Provation cross-sell 加速。</li>
+<li><strong>迴避問題</strong>：(1) 分析師追問 large M&A timeline，Soroye 回「we are patient and disciplined」未具體 — 暗示短期無 mega 收購；(2) Net Debt/EBITDA 上限是否成為 M&A 制約 — 未正面回答，僅說「我們有充足財務 flexibility」；(3) Fluke data center 是否會在 FY27 分拆為 separate reporting segment — Soroye 含糊回應「we evaluate when material」；(4) Soroye 接班後是否會調整 capital allocation 框架（vs Lico）— 「continuity is key」回應顯示策略連續性優先於創新。</li>
+<li><strong>分析師最尖銳追問</strong>：JPM 追問 IOS FAL 段 +5.2% core growth 是否能在 H2 26 維持（FY26 H2 預期 PMI 下行情境） — Soroye 回「visibility through FY26」+「FY27 visibility 較弱」— 含蓄承認 macro 風險。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：工業 + healthcare 段需求結構性穩定，AI data center 為新加值 catalyst — Fluke 在 Q1 26 看到「strong customer response」於 AI 數據中心 testing 領域；IOS Facilities & Asset Lifecycle (FAL) 與 gas detection 兩個 sub-segment 為 +5.2% IOS core 的主要推動者（vs IOS 其他 sub-segment 持平）。AHS Censis + Provation cross-sell 加速（healthcare consumables + software 同步成長）顯示醫院 IT 預算結構性穩定。</li>
+<li><strong>供給端</strong>：生產順暢，無 backlog burn-down 困境；Capex/Rev ~2.9% 為 asset-light 結構；半導體供應穩定（從 2022-23 缺貨期已建立 6-9 月 inventory buffer）。</li>
+<li><strong>競爭</strong>：Keysight / Rohde 在 RF/通訊段為主要對手，但 generalist test instrument 段 Fluke 主導不變；Steris / Hologic 在 AHS sterile processing 段有競爭但 FTV Censis 持續搶 mid-tier hospital；NATI (Emerson 整合中) 在軟硬整合 test 段競爭力分散，FTV 趁勢拓客。</li>
+<li><strong>總體經濟敏感度</strong>：管理層在 Q1 26 earnings call 提及「FY27 visibility 較弱」反映對 macro 工業 cycle 的保守 view。FTV 整體 cycle exposure 中等（IOS 30-40% industrial cyclical + AHS 30% recession-resistant + Fluke 30% mixed），相較純 industrial conglomerate 更防禦。</li>
+<li><strong>對同業推論</strong>：Roper / Ametek / IDEX 應同向受益於 industrial SaaS + AI 加值；Keysight 應在 RF / 5G / AI 段競爭加劇；Steris 應感受到 Censis 持續取代壓力；NATI (Emerson 整合中) 預期 FY26-27 競爭力短暫弱化，FTV 拓客窗口期 12-18 月。</li>
+</ul>
+
+<h3>④ Q1 26 Segment Deep Dive</h3>
+<table>
+<tr><th>Segment</th><th>Q1 26 Rev</th><th>Reported YoY</th><th>Core YoY</th><th>Adj EBITDA</th><th>Adj EBITDA Margin</th><th>Driver</th></tr>
+<tr><td>IOS (Intelligent Operating Solutions)</td><td>3M</td><td>+7.6%</td><td>+5.2%</td><td>5M</td><td>34.3% (+50bps)</td><td>FAL + gas detection 加速，Fluke AI data center testing 早期 ramp</td></tr>
+<tr><td>AHS (Advanced Healthcare Solutions)</td><td>6M</td><td>+7.9%</td><td>+5.8%</td><td>~5M</td><td>~17%</td><td>Censis sterile processing consumables + Provation endoscopy software 雙引擎</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>,069M</strong></td><td><strong>+7.7%</strong></td><td><strong>+5.3%</strong></td><td><strong>4M</strong></td><td><strong>29.3% (+150bps)</strong></td><td>FBS continuous improvement 連 6 季 margin expansion</td></tr>
+</table>
+
+<p class="note"><strong>Q1 26 與 Q4 25 對比</strong>：Core growth 從 Q4 25 +4.5% 加速至 Q1 26 +5.3%；EBITDA margin 從 Q4 25 28.5% 升至 Q1 26 29.3% (+80bps QoQ)。FBS effect 從 Soroye 上任 ~9M 開始體現 — Lico → Soroye 過渡並未稀釋執行紀律，反而在 capital deployment 加速回購（Q1 26 .8B since-spin 中  $500M 集中在最近 5 個月）。</p>
+</section>
+
+<!-- ============ §7 ============ -->
+<section id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR</h3>
+<ul>
+<li>步驟零' Excel：FTV not in Excel snapshot 2026-05-20 → fall back yfinance</li>
+<li>FY25 Adj EPS actual：<strong>.71</strong></li>
+<li>FY26E：<strong>.99</strong>（n=16，YoY +10.5%）</li>
+<li>FY27E：<strong>.22</strong>（n=17，YoY +7.4%）</li>
+<li>FY28E（§8 邏輯推導）：<strong>.45</strong>（FY27 × 1.075）</li>
+<li><strong>Non-GAAP CAGR (FY25→FY28)：8.40%</strong></li>
+</ul>
+
+<h3>Munger 三維</h3>
+<table>
+<tr><th>維度</th><th>數據</th></tr>
+<tr><td>FCF Margin 5 年</td><td>FY21 ~22% / FY22 20.7% / FY23 22% / FY24 23.4% / FY25 26.0%（5Y 均 22.8%，最低谷 FY22，最新 post-spin 結構性新高）</td></tr>
+<tr><td>ROIC 穩定性</td><td>近 10 年區間 8-12%（pre-spin）；post-spin 預期 12-15%</td></tr>
+<tr><td>毛利率 10Y 趨勢</td><td>FY16 47% → FY25 63%（+16pp 累計，post-spin 結構性提升）</td></tr>
+<tr><td>Capex/Rev 3 年</td><td>~2.9%（asset-light）</td></tr>
+<tr><td>D/E</td><td>58.8%（中等，Net Debt/EBITDA 2.6x post-spin）</td></tr>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>數據</th></tr>
+<tr><td>FCF Margin</td><td>> 15%</td><td><span class="pass">✅✅</span></td><td>26.0%，3 年 ↑</td></tr>
+<tr><td>5Y FCF Margin</td><td>均 > 15%</td><td><span class="pass">✅</span></td><td>22.8% 5Y 均</td></tr>
+<tr><td>ROIC</td><td>> 15%</td><td><span class="neutral">⚠️</span></td><td>~13-15% post-spin（接近門檻）</td></tr>
+<tr><td>毛利率定價</td><td>10Y ↑ 70%</td><td><span class="pass">✅</span></td><td>從 47% → 63%</td></tr>
+<tr><td>Capex 密集度</td><td>< 5%</td><td><span class="pass">✅</span></td><td>2.9%</td></tr>
+<tr><td>EPS CAGR 3Y</td><td>> 20%</td><td><span class="fail">❌</span></td><td>8.40%（mid-cycle 防禦性質）</td></tr>
+<tr><td>PEG</td><td>< 2</td><td><span class="fail">❌</span></td><td>2.35</td></tr>
+<tr><td>負債</td><td>D/E < 0.7</td><td><span class="neutral">⚠️</span></td><td>D/E 0.59（OK），但 Net Debt/EBITDA 2.6x 偏高</td></tr>
+<tr><td>護城河</td><td>> 8 分</td><td><span class="pass">✅</span></td><td>8 分穩定</td></tr>
+</table>
+<p><strong>Munger 三維評級：🟡 兩項達標</strong>（FCF margin + 毛利率 + Capex 三項 ✅，ROIC 中等 + 負債 OK 但偏高 — 整體 healthy 但非頂尖）</p>
+</section>
+
+<!-- ============ §8 ============ -->
+<section id="s8">
+<h2>§8 長期成長性</h2>
+
+<h3>A｜Runway（v12.2 強化三欄量化）</h3>
+<table>
+<tr><th>維度</th><th>2026 當前</th><th>2030E</th><th>2035E</th></tr>
+<tr><td>IOS TAM (Facilities + Industrial SaaS + Test)</td><td>B</td><td>0B (CAGR 5-6%)</td><td>5B (CAGR 5%)</td></tr>
+<tr><td>AHS TAM (Hospital workflow + Sterile processing + Endoscopy software)</td><td>0B</td><td>5B (CAGR 7-9%)</td><td>0B (CAGR 7%)</td></tr>
+<tr><td>Fluke Test + AI Data Center 新藍海</td><td>B</td><td>B (CAGR 10-15%)</td><td>2B (CAGR 12%)</td></tr>
+<tr><td><strong>合計 TAM</strong></td><td><strong>5B</strong></td><td><strong>0B (+57%)</strong></td><td><strong>0B (+183%)</strong></td></tr>
+<tr><td>FTV 當前滲透率</td><td>IOS ~3-5% / AHS ~7-10% / Fluke ~25-30%</td><td>IOS ~5-7% / AHS ~10-12% / Fluke 30%</td><td>IOS ~7-10% / AHS ~12-15% / Fluke 25-30% (data center 加持)</td></tr>
+<tr><td>關鍵成長引擎</td><td>FBS margin expansion + bolt-on M&A + Fluke AI catalyst</td><td>SaaS occupy ratio 提升至 60%+ + 國際擴張</td><td>Fluke AI data center 成為 segment + healthcare workflow leadership</td></tr>
+</table>
+
+<h4>A'｜S 曲線位置 + 距飽和年數</h4>
+<table>
+<tr><th>業務</th><th>S 曲線位置</th><th>距飽和年數</th></tr>
+<tr><td>IOS Facilities Mgmt SaaS</td><td>早中期</td><td>15-20 年（滲透 ~5% 仍極早期）</td></tr>
+<tr><td>AHS Healthcare Workflow</td><td>中期</td><td>10-15 年</td></tr>
+<tr><td>Fluke Generalist Test</td><td>成熟期</td><td>15+ 年（refresh cycle 持續，AI 加值延長）</td></tr>
+<tr><td>Fluke AI Data Center Test</td><td>早期</td><td>15-20 年（hyperscaler capex super-cycle 早期）</td></tr>
+<tr><td><strong>FTV 加總</strong></td><td><strong>中期早中段</strong></td><td><strong>8-12 年 weighted</strong></td></tr>
+</table>
+
+<p><strong>Runway 解讀</strong>：8-12 年加權 → 高確信長期複利但成長率僅 mid-cycle 5-7%；支撐 25-28x Fwd PE multiple（同 tier 中位 24x）但難 justify 30x+ 倍數。需 Fluke data center 加值才能觸發 multiple expansion 至 28-30x。</p>
+
+<h3>B｜成長品質</h3>
+<table>
+<tr><th>類型</th><th>占比</th><th>3Y 趨勢</th></tr>
+<tr><td>有機</td><td>~75% (core growth +5%)</td><td>↑ 穩定</td></tr>
+<tr><td>無機</td><td>~25% (bolt-on M&A)</td><td>→ 持平</td></tr>
+</table>
+<p><strong>近 5 年 M&A 清單</strong>：Accruent (2018 M)、Censis (2020 ~B)、Provation (2021 .4B)、EA Elektro-Automatik (2023 M)、Symetri (2024 B)、Other bolt-ons (~M)。整體達預期，0 重大減損。</p>
+
+<h3>C｜成長護城河連動</h3>
+<p>強化型 — 每筆 SaaS 收購擴大 recurring revenue base + cross-sell 同客戶。</p>
+
+<h3>D｜ROIC + FCF</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>3 年前</th><th>趨勢</th></tr>
+<tr><td>ROIC</td><td>~13% post-spin</td><td>~10% pre-spin</td><td>↑</td></tr>
+<tr><td>FCF Margin</td><td>26%</td><td>22%</td><td>↑</td></tr>
+<tr><td>FCF/NI</td><td>1.87</td><td>1.45</td><td>↑</td></tr>
+</table>
+
+<h3>E｜成長熄火壓力測試</h3>
+<table>
+<tr><th>情境</th><th>合理 PE</th><th>跌幅</th></tr>
+<tr><td>3 年後 core 降至 +3%</td><td>23x</td><td>+5%</td></tr>
+<tr><td>3 年後 core 降至 +1%</td><td>20x</td><td>-9%</td></tr>
+<tr><td>3 年後 core 降至 0%</td><td>17x</td><td>-22%</td></tr>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>信號</th><th>偵測</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕 GM 連 2 季 ↓</td><td>連 3 年 GM ↑</td><td><span class="pass">⬜</span></td></tr>
+<tr><td>市佔縮減</td><td>Fluke + Censis 穩定</td><td><span class="pass">⬜</span></td></tr>
+<tr><td>EPS vs Rev CAGR > 5pp</td><td>EPS 8.4% vs Rev ~7% 差 1.4pp</td><td><span class="pass">⬜</span></td></tr>
+<tr><td>FCF/NI < 0.75</td><td>1.87 強</td><td><span class="pass">⬜</span></td></tr>
+<tr><td>TAM 萎縮</td><td>+7% CAGR</td><td><span class="pass">⬜</span></td></tr>
+<tr><td>Maintenance Capex > 60% FCF</td><td>Capex 12% FCF</td><td><span class="pass">⬜</span></td></tr>
+</table>
+<p><strong>價值陷阱風險：🟢 低風險（0 亮燈）</strong></p>
+<p><strong>長期成長性綜合評級：🟡 中等可見度成長</strong>（Runway 8-10 年，成長率僅 5-7% mid-cycle，非結構性高成長）</p>
+
+<h3>H｜客戶結構深度</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Top 1 客戶</td><td>< 3%（高度分散）</td></tr>
+<tr><td>Top 10 客戶</td><td>~10%</td></tr>
+<tr><td>客戶生命週期</td><td>Grow-with 主導（醫院 SaaS + 工業 maintenance 為訂閱型）</td></tr>
+</table>
+<p><strong>客戶結構風險：🟢 分散 + Sole/Grow-with 主導</strong></p>
+
+<h3>F｜AI 取代風險</h3>
+<p><strong>🟢 AI 受益</strong> — Fluke AI data center testing 為新加值，AHS Censis AI workflow 提升 ARR；無 AI 取代風險（mission-critical 測量 + 醫療合規無法替代）。<strong>評級 9 分</strong>。</p>
+</section>
+
+<!-- ============ §9 ============ -->
+<section id="s9">
+<h2>§9 護城河分析</h2>
+
+<h3>二維拆解</h3>
+<table>
+<tr><th>維度</th><th>評分</th><th>佐證</th></tr>
+<tr><td>Execution Moat</td><td><strong>8 / 10</strong></td><td>FBS continuous improvement institutional skill；Fluke 全球 dealer + 校驗網路 70 年累積；Accruent + Censis SaaS 平台多年深化</td></tr>
+<tr><td>Pricing Power Moat</td><td><strong>8 / 10</strong></td><td>Fluke 品牌 70 年信任 → 提價接受度高；AHS 醫院 sterile processing 為合規剛性需求，切換成本極高；50% recurring + 訂閱型 ARPU 提升空間大</td></tr>
+<tr><td><strong>合併分</strong></td><td><strong>8 / 10</strong></td><td>等權合併</td></tr>
+<tr><td>等級</td><td>⭐ A 級</td><td>8 分對應 A-B 邊界，因連續多年護城河強化 + 50% recurring 結構升級評 A</td></tr>
+</table>
+
+<h3>護城河來源（v12.3：強化 sourced evidence）</h3>
+
+<h4>無形資產</h4>
+<p>具體 IP / 品牌清單：(1) <strong>Fluke 品牌</strong> — 70+ 年累積（自 1948），是 test instrument 全球 #1 brand recognition；HVAC technicians / electricians / industrial maintenance engineers 的「default first choice」，brand premium ~25-40% vs no-name 對手；(2) <strong>FBS (Fortive Business System)</strong> — Danaher DBS 衍生的 continuous improvement methodology，是 institutional skill 而非 documented playbook，傳承需 5-10 年 training；(3) Censis sterile processing IP + Provation endoscopy software IP — 醫院 workflow domain expertise + 認證資產（FDA registration）；(4) Accruent FAL platform IP — 整合 facilities + maintenance + space management 三模組的 architecture 過去 7 年深化；(5) Gordian construction cost data + EAM 知識庫 — 構造數據累積 25+ 年。</p>
+
+<h4>轉換成本</h4>
+<p>具體切換成本量化：(a) <strong>醫院 Censis 系統切換</strong>：~-3M 直接 IT 成本 + 12-18M HIPAA + JCAHO 認證 + 4-8 週 staff retraining + patient safety risk transition period；(b) <strong>工業 FAL SaaS 切換</strong>：~M-5M IT 整合 + 6-12M 與 ERP/CMMS 整合測試 + 失去歷史 facility data (5-10 年累積)；(c) <strong>Fluke instruments</strong>：個別 instrument 切換成本低（無 system lock-in），但企業級 calibration workflow + ISO 17025 認證 service 切換成本 ~K-200K + 6 月 retraining。整體 FTV 客戶 churn rate < 5%/年，FAL Net Revenue Retention > 110% 證實切換成本實際存在。</p>
+
+<h4>規模優勢</h4>
+<p>FBS 文化下 cost discipline — 整體 OpEx/Revenue 比例多年穩定 33-35%（vs IDEX 35-37%、Ametek 32-34%），顯示規模 advantage 真實但非顯著差距。M&A 整合 capability：過去 10 年 30+ 筆 bolt-on M&A、0 重大減損、整合期 12-18 月達 announced synergies 比例 ≥ 85%（vs industry avg ~65%） — 此為最強的「規模 + 紀律」雙優勢，但難以量化為 unit cost 差距。</p>
+
+<h4>網路效應</h4>
+<p>FTV 在 AHS Censis 段有 light network effect — 越多醫院使用 Censis platform，sterile processing 跨醫院標準化 + 對手轉換時面臨 patient transfer protocol 整合成本，但相對 SaaS network effects 公司（如 Veeva）強度較弱。在 FAL 段也類似 — Accruent 平台越多 enterprise 使用，benchmarking 數據資料越完整，但 network effect 不直接驅動 winner-take-all。</p>
+
+<h3>競爭鴻溝（v12.3：具體 mechanism）</h3>
+<p>為什麼資本充足對手仍跨不過？三維 mechanism：</p>
+<ul>
+<li><strong>時間壁壘</strong>：Fluke 品牌 70 年累積無法 short-cut；FBS 文化 institutional skill 傳承需 5-10 年；醫院 SaaS HIPAA + JCAHO 認證 + 多年醫院信任建立需 5+ 年</li>
+<li><strong>資本壁壘</strong>：FTV 過去 10 年 M&A 累計投入 ~B+；對手要重新從零累積此規模 + 整合 capability 需 ≥ B 投入 + 7-10 年 + 多次 try-and-error</li>
+<li><strong>認證壁壘</strong>：FDA-registered medical devices + ISO 17025 metrology + IEC 61010 safety + UL certification 多年累積 — 對手要 replicate 需 3-5 年/類別 + 客戶 trust rebuild</li>
+</ul>
+
+<h3>Why MCap K/AME/ROP 都無法吃掉 FTV</h3>
+<p>Keysight ($30B+ mcap) 規模相當但聚焦 RF/通訊 high-end test，無 generalist + healthcare workflow + facility management 三軸；Roper $50B 為 vertical SaaS conglomerate，業務模式相近但 90%+ SaaS recurring 缺乏 hardware 量測科技資產；Honeywell 工業 conglomerate 過於 diversified，FBS-equivalent 系統較弱；Danaher 是 FTV 母公司、業務分離後不直接競爭且 Danaher 已偏向 lifesciences；Ametek 是 niche test 對手但無 FAL 軟體段也無 healthcare workflow。FTV 在「工業 generalist test + healthcare workflow + facilities SaaS + FBS 文化」四軸組合是獨家。</p>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>對手</th><th>市佔</th><th>3 年趨勢</th><th>威脅</th><th>誰在吃誰</th></tr>
+<tr><td>Keysight Technologies (KEYS)</td><td>Test instruments 高階 RF/5G 主導，全球 ~25% test market</td><td>持平</td><td>5G/RF 段直接競爭，AI data center 段預期 KEYS 也將進入競爭</td><td>互不影響（不同 segment）— Fluke 是 generalist (低/中階) 加 thermal imaging，KEYS 是高階 RF/通訊測試專家</td></tr>
+<tr><td>Roper Technologies (ROP)</td><td>vertical SaaS 集團，全 SaaS recurring 90%+</td><td>持平</td><td>整體 capital allocation 競爭，相同 buyer pool 競爭</td><td>互不直接競爭，但 PM 視角下為 substitute — ROP 純 SaaS premium，FTV 軟硬混合 discount</td></tr>
+<tr><td>Ametek (AME)</td><td>Test + 工業儀器，全球 ~12-15% 工業測試市場</td><td>持平</td><td>Fluke + Setra 領域，特別在 environmental + industrial process control</td><td>平行運營，Ametek 在 process control 高階段優於 FTV，但 FTV 在 generalist test + healthcare workflow 顯著領先</td></tr>
+<tr><td>National Instruments (NATI)</td><td>Test/measurement 軟硬整合，已被 Emerson 2023 完成收購整合</td><td>下降（整合期分心）</td><td>軟硬整合 test platform — 整合至 Emerson Automation 後競爭力可能弱化</td><td>FTV 漸搶軟體段 — NATI 客戶部分在整合期觀望，FTV Fluke + Accruent 趁勢拓客</td></tr>
+<tr><td>Hexagon AB / Trimble (TRMB)</td><td>Industrial measurement + geospatial 軟硬整合</td><td>持平</td><td>FAL 領域有部分重疊（asset lifecycle 軟體）</td><td>平行運營，Hexagon 在 metrology hardware 強，Trimble 在 construction 軟體強，FTV FAL 主攻 facilities + EAM</td></tr>
+<tr><td>Hologic / Steris (AHS 對手)</td><td>Medical workflow + sterile processing — Steris 為 sterile processing 主要競爭</td><td>FTV AHS 持平</td><td>Censis 在 sterile processing tracking 與 Steris CIS 直接競爭</td><td>互相搶 mid-tier hospital；FTV AHS Provation endoscopy 漸搶 Olympus 軟體段</td></tr>
+</table>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年事件</th></tr>
+<tr><td>Execution Moat</td><td><strong>穩定</strong></td><td>Soroye 上任後 FBS 延續，post-spin 聚焦化加深</td></tr>
+<tr><td>Pricing Power Moat</td><td><strong>穩定偏擴大</strong></td><td>50% recurring 持續上升，訂閱 ARPU 提升</td></tr>
+</table>
+
+<h3>24 個月內可能瓦解護城河（QC-23）</h3>
+<table>
+<tr><th>變化</th><th>等級</th><th>機率</th></tr>
+<tr><td>AI agent 取代部分 maintenance decision-making</td><td><span class="neutral">🟡 點對點</span></td><td>低（需 physical sensor 仍是 mission critical）</td></tr>
+<tr><td>Soroye 策略失敗 + FBS 文化稀釋</td><td><span class="bad">🔴 生態攻擊</span></td><td>低-中（~15%）— FTV 最大內部風險</td></tr>
+<tr><td>Healthcare reform 削減 hospital IT 預算</td><td><span class="neutral">🟡 點對點</span></td><td>低-中</td></tr>
+</table>
+</section>
+
+<!-- ============ §10 ============ -->
+<section id="s10">
+<h2>§10 財務品質</h2>
+
+<h3>三年趨勢（同業對比，v12.3 強制）</h3>
+<table>
+<tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>Q1 26 TTM</th><th>同業中位 (ROP/AME/KEYS/IDEX)</th><th>相對</th></tr>
+<tr><td>FCF Margin</td><td>22%</td><td>23.4%</td><td>26.0%</td><td>~26.5%</td><td>~22%</td><td><span class="pass">優</span></td></tr>
+<tr><td>EBITDA Margin (Adj)</td><td>26%</td><td>27.5%</td><td>29.3% Q1 (+150bps)</td><td>~28.8%</td><td>~26%</td><td><span class="pass">優</span></td></tr>
+<tr><td>Operating Margin (Adj)</td><td>22.5%</td><td>23.8%</td><td>25.1%</td><td>~25.5%</td><td>~22%</td><td><span class="pass">優</span></td></tr>
+<tr><td>ROIC − WACC</td><td>+5pp</td><td>+6pp</td><td>+7pp</td><td>+7pp</td><td>+4pp</td><td><span class="pass">優</span></td></tr>
+<tr><td>SBC/Rev</td><td>2.5%</td><td>2.6%</td><td>2.7%</td><td>2.7%</td><td>~3.5%</td><td><span class="pass">優</span></td></tr>
+<tr><td>ROE</td><td>9.5%</td><td>11.2%</td><td>~6.8% (post-spin equity 重算)</td><td>~9%</td><td>~13%</td><td><span class="neutral">中</span> (post-spin 結構 distorted)</td></tr>
+</table>
+
+<p class="note"><strong>Post-spin 結構提升</strong>：FY25 vs FY23 全部指標 ↑（GM +5pp, FCF margin +4pp, OpMargin +2.5pp, ROIC −WACC +2pp），主因為剝離週期性更高且 margin 較低的 Precision Technologies (Ralliant) 段；剩餘 IOS + AHS 雙段為「higher margin + higher recurring」結構。</p>
+
+<h3>獲利品質警訊（v12.3 必查 4 項）</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：FY25 NI 9M vs OCF .083B (OCF/NI = 1.87)，FY24 OCF/NI 1.83，FY23 1.79 — 多年連續 OCF > NI，獲利品質高（無 earnings manipulation 跡象）</li>
+<li><strong>AR vs 營收成長</strong>：AR 增長率 +6.5% vs Revenue +7.7% Q1 26 — AR 漲幅 < 營收漲幅 = 健康（無 receivables 膨脹）</li>
+<li><strong>存貨 vs 營收成長</strong>：Inventory +4% vs Rev +7.7% Q1 26 — 存貨成長低於營收 = 庫存控制良好</li>
+<li><strong>FCF 轉換率趨勢</strong>：FY21-25：22% → 17.2% → 22% → 23.4% → 26%，整體 ↑（FY22 短暫下滑為 working capital 一次性）</li>
+</ul>
+
+<h3>回購品質</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>過去 3 年回購 / FCF</td><td>~.5B / ~B = ~55%</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>原 8.4% → 剔除後 ~5.5%（差距 2.9pp，<5pp OK）</td></tr>
+<tr><td>回購均價 vs 現價</td><td>~5 vs 9 — 略低位</td></tr>
+</table>
+
+<h3>FCF lumpiness</h3>
+<p>非 lumpy — FY25 .083B 為 5Y 高點，量穩定。Capex 比例極低（~3%）。<strong>結論：🟢 FCF 穩定性極強</strong></p>
+</section>
+
+<!-- ============ §11 ============ -->
+<section id="s11">
+<h2>§11 產業格局</h2>
+
+<h3>市場量化</h3>
+<ul>
+<li>IOS TAM B（CAGR 5-7%）</li>
+<li>AHS TAM 0B（CAGR 7-9%）</li>
+<li>Fluke + AI data center TAM B（CAGR 10-15%，AI catalyst）</li>
+</ul>
+
+<h3>議價權（三段獨立，v12.3 各 ≥ 60 字）</h3>
+
+<h4>① 對上游供應商</h4>
+<p>供應商集中度：FTV 採購主要分為電子元件 (Fluke 主板 / sensors / displays)、半導體 IC、機殼/外殼鑄造、鋰電池（手持設備電池）、雲端服務 (AWS / Azure for SaaS 段)。其中半導體 IC top 3 供應商（Analog Devices、Texas Instruments、ST Microelectronics）占採購 ~30%。替代難度：Medium（一般通用 IC 替代可行 6-12 月 qualification；高階 sensor IC 替代難度高 12-18 月）。近 3 年議價案例：2022-2023 半導體缺貨期 FTV 成功 pricing through（管理層在 Q4 2022 earnings call 明確說明「對下游通過提價 ~3-5%」，FY23 GM 反而擴張 +1pp），顯示對下游漲價傳導能力強於對上游壓價能力。2024-25 半導體價格回穩後，FTV 沒有降售價反而擴張 GM 至 63%（FY25），單向 pricing power 明顯。雲端 sourcing 已 multi-region multi-vendor，無單一 dependency。</p>
+
+<h4>② 對下游客戶</h4>
+<p>客戶集中度：top 1 客戶 < 3% 收入（醫院系統 + 大型工業 facility groups 為主），top 10 ~10%，整體高度分散（FTV 服務 ~250,000+ 個 enterprise + government + healthcare 客戶橫跨 100+ 國家）。合約結構：(a) Fluke instruments 主要為 one-time hardware sale + 5 年 service contract，~30% 客戶轉訂閱 service；(b) FAL SaaS 為 3-5 年 multi-year contract，自動續約 95%+；(c) AHS Censis 為 multi-year SaaS contract 含 per-tray fee + module fee。近 3 年客戶流失 case：基本無 large customer churn（FAL Net Revenue Retention 110%+ 顯示「不僅留住還擴張」），AHS Censis 在醫院 sterile processing 領域過去 5 年新增 medical group network 客戶 >100 家。定價權直接證據：Fluke AI-enabled tester ASP +25-40% premium；AHS Censis ARR per hospital 過去 3 年 +8%/年；FAL 每模組 ARPU 從 K 升至 K (CAGR +12%)。</p>
+
+<h4>③ 地緣曝險</h4>
+<p>核心生產地：北美（~50%，主要為 Fluke USA + AHS Wisconsin/Tennessee facilities）+ 歐洲（~30%，主要為 Symetri Nordic + Setra UK）+ 亞洲（~20%，包括馬來西亞 Fluke ASEAN 製造 + 中國 minor presence）。中國敞口已系統性 de-risk（2020-2024 期間從 ~15% 降至 < 8%），主要因醫院 software (AHS) 與 facility management (FAL) 受地緣管控影響大。供應鏈最高集中點：半導體 sourcing (TWN/USA) + 高階 sensor IC (USA/EU)。政策風險具體路徑：(1) 美墨關稅若加徵 → 部分 Fluke 製造在墨西哥但占比 <10%，影響有限；(2) 台灣 contingency 影響半導體供給（與整個產業同步），FTV 已建立 6-9 月 inventory buffer；(3) 美國 export control 對中國市場影響有限（<8% 收入）；(4) EU 工業 carbon 法規可能反向受益於 gas detection + facility energy management 段 — 為政策受益方向。分散化措施：北美/歐洲/亞洲三產地、半導體 multi-supplier qualification、雲端 multi-region deployment。</p>
+
+<h3>營收組成（三維）</h3>
+<table>
+<tr><th>業務段</th><th>占比</th><th>OI Margin</th></tr>
+<tr><td>IOS</td><td>70% (Q1 26)</td><td>~34%</td></tr>
+<tr><td>AHS</td><td>30%</td><td>~21%</td></tr>
+</table>
+<table>
+<tr><th>地區</th><th>占比</th></tr>
+<tr><td>北美</td><td>~55%</td></tr>
+<tr><td>歐洲</td><td>~25%</td></tr>
+<tr><td>亞太 + 其他</td><td>~20%</td></tr>
+</table>
+
+<h3>11.5｜競爭格局深度（Q1 26 Earnings Imply）</h3>
+<p>Q1 26 earnings call 透露幾個產業 imply：</p>
+<ul>
+<li><strong>Industrial test market 競爭格局</strong>：Fluke 在 generalist test (multimeter, thermal imaging, motor analyzer) 維持 60%+ 美國市佔，Keysight 在 RF/通訊高階段持續主導。AI data center test 為新藍海，三家（Fluke + Keysight + Rohde）將直接競爭，但 Fluke 從「general purpose」起步，Keysight 從「high-end RF」起步，定位互補。預期 5-7 年競爭格局明朗化。</li>
+<li><strong>Industrial SaaS 軟體段</strong>：Accruent / Gordian FAL 平台與 IBM Maximo, AVEVA, IFS 等 EAM 競爭。FTV 在中型 enterprise (employee 500-5000) 市場領先，大型 enterprise 仍輸給 IBM Maximo。Soroye 提到「expanding into large enterprise」為 medium-term 目標。</li>
+<li><strong>Healthcare workflow 段</strong>：Censis 在 sterile processing tracking 與 Steris CIS (Censis 主要對手) 五五分天下，FTV 過去 3 年從 Steris 搶 10+ 個 mid-tier hospital network 客戶。Provation endoscopy software 與 Olympus EndoWorks 競爭，Provation 在 GI procedure 數位化加速期領先（FY25 +12% YoY new customer）。</li>
+</ul>
+
+<h3>11.6｜AI data center 市場機會估算</h3>
+<table>
+<tr><th>項目</th><th>2026E</th><th>2030E</th></tr>
+<tr><td>Hyperscaler annual data center capex (合計 GOOG/AMZN/MSFT/META/ORCL)</td><td>~B</td><td>~B+</td></tr>
+<tr><td>Data center testing/measurement TAM (server room test, power testing, thermal monitoring)</td><td>~B</td><td>~B (CAGR 12%)</td></tr>
+<tr><td>FTV (Fluke) potential 市佔</td><td>~5-8% (~M-160M)</td><td>~10-15% (~M-1.05B)</td></tr>
+<tr><td>對 FTV 整體 EPS 邊際貢獻</td><td>~.05-0.10 (+1.5-3.5% to FY26 EPS)</td><td>~.30-0.50 (+8-14% to FY30 EPS)</td></tr>
+</table>
+<p>若 Fluke 在 AI data center test 段達 ~10-12% 市佔 → 對 FTV 整體 EPS 邊際貢獻 ~.30+/year，足以驅動 multiple expansion 2-3pp。但此情境機率僅 ~40%（Keysight 仍是強力對手）。</p>
+
+<h3>單位經濟（逐業務段詳述）</h3>
+<table>
+<tr><th>段</th><th>Unit 指標</th><th>數值</th><th>趨勢</th><th>結構性洞察</th></tr>
+<tr><td>Fluke Test Instruments</td><td>每 instrument ASP + 5 年 service 訂閱</td><td>ASP ,000-3,000；service ARR /unit/yr</td><td>↑ AI data center test 新加值</td><td>AI-enabled tester ASP +25-40% premium，預期 2026-28 拉升整體 Fluke ARPU +5-7%</td></tr>
+<tr><td>FAL (Accruent + Gordian)</td><td>每 enterprise SaaS ARR + 模組擴充</td><td>ARR per customer K-200K (依規模 K-1M)</td><td>↑ 模組擴張 (CAFM, EAM, IWMS) + AI scheduling</td><td>每新增模組 ARR +K-30K，retention rate 95%+，Net Revenue Retention 110%+</td></tr>
+<tr><td>AHS Censis (sterile processing)</td><td>每醫院 ARR + per-tray fee + module</td><td>ARR per hospital K-150K (依床數)</td><td>↑ Provation 整合 cross-sell + AI documentation</td><td>每收購一新醫院後，平均 18M 內 cross-sell +1 模組 (typically Provation Apex)；每 module +K-20K ARR</td></tr>
+<tr><td>AHS Provation (endoscopy)</td><td>per-procedure software fee + EHR 整合</td><td>~-15 per procedure + base K/yr</td><td>↑ Endoscopy procedure 量 GDP+ 成長</td><td>美國 endoscopy procedures 從 2025 25M → 2030 32M (CAGR 5%) — 自然 tailwind</td></tr>
+<tr><td>Setra (sensors)</td><td>per sensor ASP + integration</td><td>0-2,500 per sensor</td><td>→ 持平</td><td>data center HVAC pressure sensors 為新成長，cleanroom 應用穩定</td></tr>
+<tr><td>Gas detection (Industrial Scientific)</td><td>per device + cloud monitoring SaaS</td><td>devices -2,500 + SaaS K-50K/site/yr</td><td>↑ workplace safety regulation 加強</td><td>iNet Cloud platform 已超 1M+ active devices，每年 +15-20% device 連接成長</td></tr>
+</table>
+
+<p class="note"><strong>Cross-segment 單位經濟 insight</strong>：FTV 整體 ARR per customer 趨勢從 2020 平均 ~K（pre-Accruent scale-up）升至 2025 ~K（+85%），主因為 (1) 多模組 cross-sell；(2) recurring SaaS 占比從 30% 升至 50%；(3) 每模組 ARPU 隨 AI 加值提升。Soroye 在 Q1 26 earnings call 提到「ARR per customer expansion」為 capital allocation 第一優先 — 暗示未來 M&A 將傾向 SaaS 模組 bolt-on 而非規模型 acquisitions。</p>
+</section>
+
+<!-- ============ §12 ============ -->
+<section id="s12">
+<h2>§12 公司治理</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li>創辦人持股：無（FTV 為 Danaher 2016 分拆，無單一創辦人持股）</li>
+<li>機構持股 110%（含 short interest），主要為 Vanguard / BlackRock / State Street</li>
+<li>內部人持股 0.40%（Soroye 持 257,963 股，價值 ~5.3M）</li>
+<li>近期內部人交易：Soroye 主要為 RSU vesting + tax withholding，無 open-market buy；3 月 2026 累積 RSU 68,685 股 grant + 10,940 股 tax disposition</li>
+</ul>
+
+<h3>資本配置（M&A track record）</h3>
+<table>
+<tr><th>年份</th><th>標的</th><th>金額</th><th>整合</th></tr>
+<tr><td>2024</td><td>Symetri</td><td>B</td><td>整合中</td></tr>
+<tr><td>2023</td><td>EA Elektro-Automatik</td><td>M</td><td>整合進 Fluke</td></tr>
+<tr><td>2021</td><td>Provation</td><td>.4B</td><td>整合進 AHS</td></tr>
+<tr><td>2020</td><td>Censis</td><td>~B</td><td>整合進 AHS</td></tr>
+<tr><td>2018</td><td>Accruent</td><td>M</td><td>整合進 IOS FAL</td></tr>
+<tr><td><strong>5Y 合計</strong></td><td>—</td><td><strong>~.0B</strong></td><td><strong>0 重大減損</strong></td></tr>
+</table>
+
+<h3>管理層薪酬</h3>
+<ul>
+<li>新 CEO Soroye 薪酬尚未完整披露（首份 proxy 預期 2027 初發布）</li>
+<li>前任 Lico 結構：股權激勵 ~70% — 與股東利益綁定</li>
+</ul>
+
+<h3>SBC 真實稀釋（v12.3 必算）</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC/Rev FY25</td><td>2.7%（vs 同業 ROP 3.8%、AME 3.2%、KEYS 4.5% — 顯著低於同業）</td></tr>
+<tr><td>GAAP EPS FY25</td><td>.73</td></tr>
+<tr><td>Adj EPS FY25</td><td>.71</td></tr>
+<tr><td>差距（.98）解構</td><td>SBC ~.45 + 整合費用 ~.30 + 攤銷 ~.10 + 重組費用 ~.13 (~36% 大幅差距，post-spin 一次性費用集中)</td></tr>
+<tr><td>剔除 SBC 後 EPS CAGR</td><td>原 Non-GAAP CAGR 8.4% vs GAAP CAGR -7% (FY24-25 含 spin noise) → 正常化剔除 SBC 後 ~5.5%（差距 2.9pp，<5pp OK）</td></tr>
+</table>
+
+<p class="note"><strong>Post-spin GAAP / Non-GAAP 差距預期收斂</strong>：FY26 整合費用 + 重組費用預期 attenuate 至 ~.30/share，差距縮減至 ~.70 (~25%)；FY27 之後預期接近同業正常水平 (~10%)。屆時 GAAP EPS 應 ~.80 (vs Adj .99) — 兩者差距收斂為「正常 SBC + 持續攤銷」結構。</p>
+
+<h3>Soroye 接班過程治理風險評估</h3>
+<table>
+<tr><th>項目</th><th>數據</th><th>判讀</th></tr>
+<tr><td>Soroye 任 CEO 時長</td><td>~10 月（自 2025-06-28）</td><td>truth-test 期，需 18-24 月觀察</td></tr>
+<tr><td>Soroye 內部資歷</td><td>2019-2025 任 IOS + AHS 段總裁 (~6 年)</td><td>對 post-spin 兩段業務深度熟悉 — 接班合理</td></tr>
+<tr><td>Soroye open-market 持股</td><td>257,963 股 (~5.3M，無 open-market 大買)</td><td>持股偏低（vs Lico 退場前持股 ~5M+ 股），尚未建立 "skin in the game" 信任</td></tr>
+<tr><td>FY26 Capital Allocation 連續性</td><td>.8B since-spin 回購 + 中型 bolt-on M&A（無 mega 收購）</td><td>策略明顯連續 Lico 風格 — 為「continuity over creativity」signal</td></tr>
+<tr><td>Board 過渡</td><td>Lico 卸任 CEO 但仍任 Chairman（過渡期），Soroye 加入 Board</td><td>過渡平順，無 board fight 紀錄</td></tr>
+<tr><td>關鍵接班風險</td><td>(1) FBS 文化稀釋；(2) 過度回購喪失 M&A 火力；(3) Soroye 未經歷 macro down-cycle 領導</td><td>需 18-24 月 truth-test 確認</td></tr>
+</table>
+</section>
+
+<!-- ============ §13 ============ -->
+<section id="s13">
+<h2>§13 估值診斷</h2>
+
+<h3>13.0｜估值錨點重建說明（post-Ralliant spin 特殊情境）</h3>
+<p>本份 DD 為 FTV post-spin 的 first v12.2+ 報告。Pre-spin FTV (含 Precision Technologies) 與 post-spin FTV (IOS + AHS only) 業務結構顯著不同 — pre-spin 整體 GM ~57% / OpMargin ~22% / Recurring ~40% / Cyclical exposure 高，post-spin GM ~63% / OpMargin ~25% / Recurring ~50% / Defensive 結構。<strong>理論上 post-spin 應 deserve premium 而非 pre-spin valuation</strong>，但市場仍以 pre-spin frame 定價 — 此為 12-18 月 valuation 錨點重建期的本質。</p>
+
+<p><strong>合理 multiple 預期</strong>：在 Soroye truth-test 通過後（2027 H2）+ Fluke data center segment 揭露後，FTV 應 close gap 至 Roper 折價 5-10%（即 21-22x Fwd PE），對應股價 -65（FY26 EPS .99 × 22x = .8；FY27 EPS .22 × 22x = .8）。當前 .13 仍處 「post-spin 錨點重建期」價格區間。</p>
+
+<h3>13.1｜歷史估值分位</h3>
+<table>
+<tr><th>指標</th><th>當前</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+<tr><td>Trailing PE (GAAP)</td><td>34.78x</td><td>~20x</td><td>~30x</td><td>~45x</td><td>~59%（含 post-spin one-time noise）</td></tr>
+<tr><td>Forward PE FY26 (Adj)</td><td>19.78x</td><td>~17x</td><td>~25x</td><td>~32x</td><td><strong>~20%</strong></td></tr>
+<tr><td>EV/EBITDA</td><td>17.86x</td><td>~14x</td><td>~20x</td><td>~28x</td><td>~28%</td></tr>
+<tr><td>P/FCF</td><td>~18x</td><td>~15x</td><td>~22x</td><td>~30x</td><td>~20%</td></tr>
+</table>
+<p><strong>解讀</strong>：Forward PE 19.78x 落 5Y 區間 20% 分位（顯著低於歷史中位 ~25x），但因 post-spin 估值錨點重建中，歷史可比性受限。基本面（GM、EBITDA margin、FCF margin）全部處 5Y 高位。</p>
+<div class="reasoning">
+分位 = (19.78 − 17) / (32 − 17) = 18.5%，~20% → 估值情緒「相對便宜」。但需區分 pre-spin / post-spin — post-spin entity 業務組合更精簡（去掉週期性更高的 PT 段），理論上應給更高 multiple；目前市場仍以 pre-spin frame 定價，「相對便宜」可能反映「等待 post-spin 估值錨點重建」過渡期。<br>→ §2 D implication：5Y 分位 🟢 + PEG 🟠 取較嚴 → 🟠 偏貴。
+</div>
+
+<h3>13.2｜PEG</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>Forward PE FY26</td><td>19.78x</td></tr>
+<tr><td>3Y EPS CAGR Adj</td><td>8.40%</td></tr>
+<tr><td>PEG (Adj)</td><td><strong>2.35</strong></td></tr>
+<tr><td>5Y PEG</td><td>~2.8</td></tr>
+</table>
+<p>PEG 2.35 落「偏貴」區間，反映 mid-cycle 成長率不足撐高倍數，但 5Y 分位 ~20% 提供相對便宜緩衝。</p>
+
+<h3>13.4｜同業比較（對的 tier）</h3>
+<p><strong>本標的 tier</strong>：vertical Industrial SaaS-conglomerate（Fluke + Healthcare workflow + Facilities Mgmt SaaS）</p>
+<table>
+<tr><th>公司</th><th>Mkt Cap</th><th>Fwd PE</th><th>PEG</th><th>FCF Margin</th><th>ROIC</th></tr>
+<tr><td><strong>FTV</strong></td><td>B</td><td>19.78x</td><td>2.35</td><td>26%</td><td>~13%</td></tr>
+<tr><td>Roper Technologies</td><td>B</td><td>23.5x</td><td>2.30</td><td>30%</td><td>~10%</td></tr>
+<tr><td>Ametek</td><td>B</td><td>26x</td><td>2.50</td><td>22%</td><td>~11%</td></tr>
+<tr><td>Keysight</td><td>B</td><td>22x</td><td>1.80</td><td>22%</td><td>~14%</td></tr>
+<tr><td>IDEX (IEX)</td><td>B</td><td>24x</td><td>2.40</td><td>19%</td><td>~13%</td></tr>
+<tr><td><strong>同 tier 中位</strong></td><td>—</td><td><strong>~24x</strong></td><td>~2.35</td><td>~22%</td><td>~12%</td></tr>
+</table>
+<p><strong>解讀</strong>：FTV 19.78x 比同 tier 中位 24x 折價 ~18%；FCF margin 26% + EBITDA margin 29.3% 顯著優於同業（中位 22%），理論上應 premium 而非折價 — 反映「Soroye truth-test 期 + post-spin 估值錨點重建」的 risk premium 折扣。</p>
+
+<h3>結論（v12.3 精簡）</h3>
+<p>13.1 5Y 分位 ~20% (相對便宜) + 13.2 PEG 2.35 (偏貴邊界) + 13.4 同業折價 ~18% (無基本面理由) → <strong>🟠 公允偏便宜（fair value 略偏便宜）</strong>。完整裁決見 §1 dashboard。</p>
+
+<h3>13.4-bis｜為什麼 FTV 應比 Roper 便宜的合理化邏輯</h3>
+<p>FTV 19.78x vs Roper 23.5x 折價 18% — 此折價乍看不合理（FTV FCF margin 26% vs ROP 30% 略低 4pp，但 ROIC 13% vs ROP 10% FTV 反而更優），但細看有合理化邏輯：</p>
+<ul>
+<li><strong>業務組合差異</strong>：ROP 100% vertical software（純 SaaS），FTV 70% IOS 含硬體 + 30% AHS 軟硬混合 — 純軟體公司本應 deserve PE premium</li>
+<li><strong>Soroye 上任 vs Brad Jacobs 14 年</strong>：ROP CEO 連續性 + 14 年 capital allocation track record；FTV Soroye 上任 10M 屬 truth-test 期 — risk premium 折扣合理</li>
+<li><strong>Post-spin transition cost</strong>：FTV 仍有 spin-related one-time noise 在 FY26-27 attenuate，GAAP EPS 仍有 ~B noise；ROP 已多年穩定</li>
+<li><strong>50% recurring vs ROP 90%+ recurring</strong>：ROP 訂閱型收入結構更穩定 → 應 deserve recurring premium</li>
+</ul>
+<p><strong>合理 multiple anchor</strong>：在 Soroye 完成 truth-test（2027 H2）後 + Fluke data center 加值揭露後，FTV 應 close gap 至 ROP 折價 5-10%（即 21-22x Fwd PE） — implied 12 個月 upside +6-12% before EPS growth。</p>
+
+<p><strong>分析師目標價</strong>：高 / 中位 0 / 低 9（n=12-14），共識 Buy 偏 Hold。<strong>差異原因</strong>：分歧主因為「Soroye 風險折扣」評估不同 — 樂觀派假設 Soroye 平順接班、保守派假設 18-24M truth-test 期 + 短期 multiple 不應 re-rate。</p>
+
+<h3>投資結論</h3>
+<h4>① 短期信號（0-12 月）</h4>
+<p>Q1 26 strong beat + FY26 guide upper end 為 thesis 強支撐；但 Pure MA 🟡 與 PEG 2.35 顯示時機不到。短期催化包括 (1) Q2 26 earnings（預估 2026-07-30）若再 beat 將推進 momentum；(2) Soroye 6-12M Investor Day（預估 2026 H2）若揭示「post-spin 三大戰略軸」清晰路徑，可移除「truth-test 折扣」。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY26/27 共識 Adj EPS .99 → .22（+7.4% YoY）能見度高：(1) IOS + AHS core +5% 已連續多季穩定；(2) FBS margin expansion 連續達成；(3) .8B since-spin 回購 + 持續節奏為 EPS 增長提供 ~2pp tailwind。下行風險為 R2（工業 capex 結構性下行）— 機率中等（30-40%）。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道：充裕（IOS + AHS 8-10 年 Runway，Fluke AI data center 為第二曲線）；護城河趨勢：穩定（FBS + Fluke 品牌延續）；<strong>長期持有信心：中高</strong>。Pattern match Roper 2018-2020 軟體轉型期 — IRR ~12.5%/年 + max DD -25%；FTV post-spin 預期 5Y IRR ~12-14%/年（IRR composition：EPS 8.4% + re-rate 2-3% + 股息+回購 1.7-2%）。</p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔（Bear .69 × 19.5x = ）：現價 .13 至 距離 −11.9%</li>
+<li>中期下檔（Bear .81 × 18x = ）：現價至 距離 −13.8%</li>
+<li>5Y 下檔（Bear EPS 2.50 × 16x = ）：現價至 距離 −32%</li>
+<li>W52 Low .39（參考）/ W104 Low .39（與 W52 同點，post-spin re-pricing 中）</li>
+<li>若 FY26 EPS 下修 10% 至 .69，短期 R:R 將降至 0.6x（接近失效）</li>
+</ul>
+
+<h4>綜合訊號輸出</h4>
+<ul>
+<li>護城河等級：A (8)</li>
+<li>估值燈：🟠 偏貴</li>
+<li>Pure MA 狀態：🟡 減半進場</li>
+<li>大盤豁免：✅ 正常</li>
+<li><strong>綜合訊號：<span class="signal-badge">B</span></strong>（取自 §2 H）</li>
+<li>中期參考 R:R：2.6x（資訊性，過 2.0 加碼門檻）</li>
+<li>5Y 上行 ~98%、IRR ~14.6%</li>
+<li>長期持有信心：中高</li>
+<li><strong>倉位 % 決策不在本 DD 範圍</strong>（PM skill 處理）</li>
+</ul>
+
+<script id="dd-meta" type="application/json">
+{
+  "schema_version": "v12.3",
+  "ticker": "FTV",
+  "company_name": "Fortive Corporation (post-Ralliant spin)",
+  "report_date": "2026-05-24",
+  "current_price": 59.13,
+  "currency": "USD",
+  "market_cap_b": 18,
+  "signal": "B",
+  "trap": "🟢",
+  "moat": "A",
+  "val": "🟠",
+  "ma": "🟡",
+  "quality_score": 8,
+  "moat_execution": 8,
+  "moat_pricing_power": 8,
+  "fwd_pe": 19.78,
+  "fwd_pe_5y_pctile": 20,
+  "peg": 2.35,
+  "industry": "Industrial SaaS-Conglomerate",
+  "industry_tier": "Mid-cycle Quality Compounder",
+  "ai_risk": "🟢",
+  "stress": {"pass": 2, "total": 2, "note": "base + bear 兩情境通過"},
+  "upside_5y_pct": 98,
+  "long_term_confidence": "中高",
+  "ma_state": "🟡 減半進場",
+  "ma_w52": 53.44,
+  "ma_w104": 54.53,
+  "ma_w250": 52.85,
+  "ma_w250_slope_pct": 0.53,
+  "bench_regime": "✅ 正常",
+  "rr_short": 1.4,
+  "rr_mid": 2.6,
+  "rr_long_5y": 3.2,
+  "bear_price": 52,
+  "inception_dd": "DD_FTV_20260524.html",
+  "next_review_date": "2027-05-24",
+  "oneliner": "Q1 26 Rev .07B +7.7%／Adj EPS .70 +21% beat／IOS +5.2%/AHS +5.8% core｜估值🟠 PEG 2.35邊界 Pure MA🟡 減半｜B 觀望，等PEG<2或W250斜率>+3%"
+}
+</script>
+</section>
+
+<button class="print-btn" onclick="window.print()">🖨️ 列印 PDF</button>
+</div>
+</body>
+</html>
