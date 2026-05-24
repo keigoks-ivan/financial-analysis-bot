@@ -16,6 +16,8 @@
 
 | Date | Ticker | Thesis | Filename | DD basis | ID basis |
 |:---|:---|:---|:---|:---|:---|
+| 2026-05-24 | ALV | ALV 是全球唯一 44% 市佔的被動安全 oligopoly，當前 Fwd PE 10.3x（5Y 6.7% 極端低位）+ PEG 0.91 + China/India 雙引擎 organic +40%/+38% + $2.5B/5Y 加速回購 = 估值便宜 × 結構成長 × 股東回報三層 stack；建議分批進場（B 衛星 5-7%） | DCA_ALV_20260524.html | DD_ALV_20260524.html | — |
+| 2026-05-24 | BWA | BWA 是 propulsion Tier 1 EV transition execution play — turbo CR2 65% cash cow + eProducts $2.6B 規模 +27% CAGR + Data Center turbine 新引擎；估值 🟡 PEG 1.15 合理但需等動能 reset（W52 拉回 $46-50）後分批；裁決：B 衛星 3-5%（vs ALV opportunity cost 略遜） | DCA_BWA_20260524.html | DD_BWA_20260524.html | — |
 | 2026-05-24 | AXTI | AXTI 是 InP supply-constrained 結構性順風期的二把手，36% 市佔 + Tongmei 垂直整合是真實 cost moat — 但 187x FwdPE 已透支 2030 全部好消息 | DCA_AXTI_20260524.html | DD_AXTI_20260524.html | — |
 | 2026-05-24 | MTSI | MTSI 是 AI 光學基建中 NVIDIA 不碰、AVGO 吃不下的 specialty III-V 王者 — 200G/lane photodetector design-in 全 module 廠 + vertical integration 完成 + Adj GM 衝刺 60% 為真實護城河，但 FwdPE 56-76x 已 priced | DCA_MTSI_20260524.html | DD_MTSI_20260524.html | — |
 | 2026-05-22 | LEVI | LEVI 是全球最具文化資本的 denim 品牌，正從批發 supplier 變身為 DTC-led lifestyle 公司，margin 與成長同時 reset | DCA_LEVI_20260522.html | DD_LEVI_20260522.html | — |
