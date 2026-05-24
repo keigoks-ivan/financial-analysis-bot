@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v12.4">
+<title>DD｜MDB MongoDB｜2026-05-24｜v12.4</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Noto Sans TC', sans-serif; background: #F8FAFC; color: #1E293B; margin: 0; padding: 0; line-height: 1.7; }
+.container { max-width: 1080px; margin: 0 auto; padding: 24px; }
+header.page-head { background: #1E3A5F; color: #fff; padding: 16px 24px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,.08); }
+header.page-head .meta { font-family: 'IBM Plex Mono', monospace; font-size: 13px; opacity: .92; }
+header.page-head h1 { margin: 0 0 4px; font-size: 20px; }
+nav.dd-toc { background: #FFFFFF; border-left: 4px solid #3B82F6; padding: 12px 16px; margin: 16px 0 28px; display: flex; flex-wrap: wrap; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+nav.dd-toc a { background: #EFF6FF; color: #1E3A5F; padding: 4px 12px; border-radius: 999px; text-decoration: none; font-size: 13px; font-weight: 500; border: 1px solid #DBEAFE; }
+nav.dd-toc a:hover { background: #DBEAFE; }
+section { background: #FFFFFF; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.05); padding: 28px 32px; margin-bottom: 24px; }
+section h2 { font-size: 22px; color: #1E3A5F; border-left: 4px solid #3B82F6; padding-left: 12px; margin-top: 0; scroll-margin-top: 80px; }
+section h3 { font-size: 17px; color: #1E3A5F; margin: 18px 0 10px; }
+section h4 { font-size: 15px; color: #334155; margin: 14px 0 8px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0 16px; font-size: 14px; }
+th { background: #1E3A5F; color: #fff; padding: 8px 10px; text-align: left; font-weight: 500; }
+td { padding: 7px 10px; border-bottom: 1px solid #E2E8F0; vertical-align: top; }
+tr:nth-child(even) td { background: #F1F5F9; }
+.num { font-family: 'IBM Plex Mono', monospace; }
+.bull { background: #DCFCE7; color: #166534; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.bear { background: #FEE2E2; color: #991B1B; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.warn { background: #FEF9C3; color: #92400E; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.neutral { background: #EFF6FF; color: #1E40AF; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 14px 18px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+.hypothesis-box h3 { margin-top: 0; color: #1E3A5F; }
+.trap-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 14px 18px; margin: 14px 0; border-radius: 0 4px 4px 0; }
+.trap-box h3 { color: #C2410C; margin-top: 0; }
+.reasoning { background: #F8FAFC; border-left: 3px solid #94A3B8; padding: 10px 14px; margin: 10px 0; font-size: 13px; color: #334155; font-family: 'IBM Plex Mono', monospace; }
+.debate-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+.debate-card { padding: 14px 16px; border-radius: 0 4px 4px 0; }
+.bull-card { background: #F0FDF4; border-left: 4px solid #16A34A; }
+.bull-card h4 { color: #166534; }
+.bear-card { background: #FFF1F2; border-left: 4px solid #DC2626; }
+.bear-card h4 { color: #991B1B; }
+.arb-card { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+.arb-card h4 { color: #5B21B6; }
+.rr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin: 14px 0; }
+.rr-card { padding: 14px 16px; border-radius: 0 4px 4px 0; }
+.rr-short { background: #F0F9FF; border-left: 4px solid #0284C7; }
+.rr-mid { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+.rr-long { background: #ECFDF5; border-left: 4px solid #059669; }
+.rr-card h4 { margin-top: 0; }
+.note { font-size: 13px; color: #475569; font-style: italic; }
+.signal-grade { font-size: 28px; font-weight: 700; color: #1E3A5F; padding: 4px 12px; background: #FEF3C7; border-radius: 6px; }
+.print-btn { position: fixed; bottom: 24px; right: 24px; background: #1E3A5F; color: #fff; padding: 10px 16px; border-radius: 24px; border: 0; cursor: pointer; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,.15); }
+@media print { header.page-head, nav.dd-toc, .print-btn { display: none; } section { box-shadow: none; page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+<header class="page-head">
+<div class="container">
+<h1>MongoDB Inc — MDB｜DD v12.4</h1>
+<div class="meta">資料抓取：2026-05-24｜現價 $326.13｜最新財報 Q4 FY26 (1/31/2026，3/4 公布)｜Q1 FY27 將於 5/28/2026 盤後公布｜Schema v12.4｜yfinance + 8 補搜</div>
+</div>
+</header>
+
+<div class="container">
+<nav class="dd-toc">
+<a href="#s1">§1 結論</a>
+<a href="#s2">§2 四層判定</a>
+<a href="#s3">§3 三方辯論</a>
+<a href="#s4">§4 序章</a>
+<a href="#s5">§5 論點錨定</a>
+<a href="#s6">§6 財報</a>
+<a href="#s7">§7 門檻</a>
+<a href="#s8">§8 成長</a>
+<a href="#s9">§9 護城河</a>
+<a href="#s10">§10 財務</a>
+<a href="#s11">§11 產業</a>
+<a href="#s12">§12 治理</a>
+<a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ========== §1 投資結論 ========== -->
+<section id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<div class="hypothesis-box">
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<ul>
+<li><strong>產業風向燈 🟡 中性：</strong>§8 長期成長性 🟡（Atlas $2B+ ARR + AI workload 受益但 FY27 guide 顯著放緩至 +16-18%）｜§9 護城河趨勢 持平（execution dim）/ 受壓（pricing power dim — Databricks Lakebase + Snowflake Crunchy Data 雙路攻 OLTP/PostgreSQL 戰場）｜§8 F AI 風險 🟡（Atlas Vector Search 不再 unique，PostgreSQL/Oracle 等都加 native vector）</li>
+<li><strong>品質 B 級：</strong>護城河 7/10（§9 execution 7 + pricing power 7 二維等權）｜體質 veto 4/5 通過（GAAP 仍虧但 FCF 強）｜估值燈 🟠 → 等級不變 → <strong>B 級</strong></li>
+<li><strong>估值燈 🟠 偏貴：</strong>Fwd PE NTM 57.7x（GuruFocus 5/19）；5Y Fwd PE 區間 ~40-100x，當前分位 ~25-30% 中性偏便宜｜PEG ~2.6（FY27 EPS CAGR 22% 假設）｜EV/Sales NTM ~7x 5Y 分位 ~30%（已從 2021 高峰 25x 壓縮 72%）｜盲點 1 救援：§8 🟡 不滿足 ❌ → 維持 🟠</li>
+<li><strong>Pure MA 🟡 觀察池（W104/W250 倒置）：</strong>W52 $301.54 斜率 +8.03% 強正｜W104 $273.58 斜率 -4.05%｜W250 $314.29 斜率 -1.05% 持平｜現價 $326.13 &gt; W52 &gt; W250 &gt; W104（W104 &lt; W250 倒置因 2024-25 深跌期間 W104 被拉低）；屬「深 DD 後 V 型反彈」型，未滿足典型多頭排列但站上 W250 為 constructive 訊號</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 SPX，現價 7,473.47 &gt; W104 6,194.58（+20.6%），無系統性風險</li>
+<li><strong>參考 R:R：</strong>短期 0.15x / 中期 0.92x / 5Y 1.85x｜壓力測試 base + bear 2/2 通過（Bear 錨點 = FY27 Non-GAAP EPS $5.20 × 0.9 × Bear PE 25x = $117，下行 -64%）｜資訊性，不主導裁決</li>
+<li><strong>綜合訊號：<span class="signal-grade">B</span></strong>（取自 §2 H）｜判定理由：thesis 部分完整（Atlas $2B+ + FCF 強），但成長明顯放緩（FY26 +23% → FY27 guide +16-18%）+ 估值 🟠 + Q1 FY27 (5/28) binary catalyst 將至；落 B 觀望，非 A 因成長 deceleration</li>
+<li><strong>長期持有信心：中</strong>（§2 I）｜<strong>陷阱定性：</strong>🟡 觀察期（盈餘品質型 + 成長放緩混合 — Atlas 仍 +29% 強勢但 FY27 整體 guide +16-18% 為近年最弱，NRR 從 120%+ 降至 118%）</li>
+<li><strong>Inception DD：</strong><code>DD_MDB_20260524.html</code>（2026-05-24，本份為 Inception）— 該 ticker 最早一份 v12.4 DD，作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-24（距今 365 天）— Inception 日期 + 365 天</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>橫向比較（同業 SaaS 數據庫 / 雲端數據）</h3>
+<table>
+<tr><th>公司</th><th>Forward PE (NTM)</th><th>EV/Sales NTM</th><th>3Y 營收 CAGR</th><th>FCF Margin</th><th>NRR</th><th>本研究判斷</th></tr>
+<tr><td><strong>MDB</strong></td><td class="num">57.7x</td><td class="num">~7x</td><td class="num">~22%</td><td class="num">~17%</td><td class="num">118%</td><td><span class="warn">B 級 / 🟠 偏貴 / 🟡 觀察池</span></td></tr>
+<tr><td>SNOW（Snowflake）</td><td class="num">71x</td><td class="num">~9.5x</td><td class="num">~27%</td><td class="num">~24%</td><td class="num">125%</td><td>同 tier 較大 + 成長較快 + NRR 較高，估值溢價合理</td></tr>
+<tr><td>DDOG（Datadog）</td><td class="num">86x</td><td class="num">~13x</td><td class="num">~24%</td><td class="num">~32%</td><td class="num">~115%</td><td>同 tier 較貴；observability 業務不同</td></tr>
+<tr><td>ESTC（Elastic）</td><td class="num">~25x</td><td class="num">~5x</td><td class="num">~17%</td><td class="num">~15%</td><td class="num">~108%</td><td>更便宜但成長更慢；ES 搜尋 + 觀察性</td></tr>
+<tr><td>ORCL（Oracle，傳統 DB）</td><td class="num">~22x</td><td class="num">~10x</td><td class="num">~10%</td><td class="num">~25%</td><td class="num">N/A</td><td>規模 50x，但雲端轉型中</td></tr>
+<tr><td>Databricks（pre-IPO，含 Lakebase）</td><td class="num">N/A</td><td class="num">~12x（傳）</td><td class="num">~65%</td><td class="num">~10%</td><td class="num">~140%</td><td>OLTP 直接威脅者，2025 Neon 收購補齊 PostgreSQL</td></tr>
+</table>
+<div class="reasoning">
+橫向關鍵：MDB Fwd PE 57x 介於 ESTC (25x) 與 SNOW (71x) / DDOG (86x) 之間
+EV/Sales 7x 為同 tier 最便宜；但 NRR 118% / FCF margin 17% / 3Y CAGR 22% 也是最低
+implication → 估值便宜部分被「成長最慢 + NRR 趨勢下滑」對沖；非單純 mean reversion 機會
+</div>
+
+<div class="trap-box">
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式是哪一種？</strong></td><td>成長放緩 + 護城河受壓型混合 — FY27 guide +16-18% 為近年最弱（vs FY26 +23%）；Databricks Lakebase + Snowflake Crunchy Data 雙路 OLTP 攻勢；Atlas Vector Search 不再 unique（PostgreSQL/Oracle/Redis 等都加 native vector）</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據是什麼？</strong></td><td>① Atlas $2B+ ARR 規模化 + Q4 FY26 +29% YoY 仍是 cohort 領先；② 65,200+ 客戶數 + 2,700 季淨新；③ FCF margin 17% 持續健康，現金生成能力強；④ developer-first 開發者體驗為 MDB 結構優勢，PostgreSQL 雖 strong 但 NoSQL 場景 MDB 仍是首選；⑤ 估值已從 2021 高峰 EV/Sales 25x 壓至 7x = -72%，多數 deceleration 風險已 priced in</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁是什麼？</strong></td><td>① NRR 從 FY24 120% 一路降至 FY26 Q4 118% 趨勢未止；② FY27 guide $2.86-2.90B (+16-18%) 為近 6 年最弱成長率，可能進入「mature SaaS」階段；③ 競爭格局根本變化：Databricks Neon (Lakebase) + Snowflake Crunchy Data 雙巨頭收購 PostgreSQL 公司直接攻 MDB OLTP 戰場；④ 向 AI workload 移轉雖在做但 Vector Search 已被 commoditized；⑤ 高 SBC 結構（占 Rev ~24%）持續稀釋</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生？</strong></td><td>① NRR 連 2 季 &lt; 115%（當前 118%）→ 削弱信號；② Atlas YoY growth 連 2 季 &lt; 22%（當前 +29% 但 FY27 guide +21-23%）→ 結構性放緩；③ $100K+ ARR 客戶數季增 &lt; 50（當前 ~80 季增）→ 客戶 expansion 慢；④ 連 4 季 FCF margin &lt; 15% → 現金品質下降</td></tr>
+</table>
+<p><strong>最終定性</strong>：<span class="warn">🟡 觀察期</span> — Atlas 規模 + FCF 健康支撐 thesis，但成長 deceleration + 競爭壓力使「陷阱」可能性升高；需 Q1 FY27 (5/28) catalyst 驗證</p>
+</div>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>Atlas YoY growth（季）</td><td>§5 H1 / §6</td><td>🔵 核心假設驗證信號</td><td>連 2 季 &lt; 22%（當前 +29%，FY27 guide +21-23%）</td></tr>
+<tr><td>2</td><td>NRR 趨勢</td><td>§5 H2 / §8</td><td>🔵 長期成長領先信號</td><td>連 2 季 &lt; 115%（當前 118%，已從 120%+ 滑落）</td></tr>
+<tr><td>3</td><td>FCF margin / SBC 稀釋</td><td>§10 / §12</td><td>盈餘品質信號</td><td>連 4 季 FCF margin &lt; 15% 或 SBC/Rev &gt; 28%</td></tr>
+</table>
+
+</section>
+
+<!-- ========== §2 四層判定 ========== -->
+<section id="s2">
+<h2>§2 四層判定（產業風向 × 品質 × 估值燈 × Pure MA）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="warn">🟡 中等可見度</span>（Atlas 強勢 + AI workload 受益但 FY27 guide 顯著放緩，Runway 7-9 年）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>execution 持平 / pricing power 受壓（Databricks Lakebase + Snowflake Crunchy Data 雙路攻 OLTP）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="warn">🟡 中等</span>（Atlas Vector Search 為部分受益，但已被 commoditized；PostgreSQL/Oracle 等都加 native vector，差異化縮減）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="warn">🟡 中性</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>NoSQL document DB 龍頭仍堅實，AI workload 加速 vector + retrieval 需求；但 OLTP 戰場 PostgreSQL 在 cloud-native 復興 + 巨頭收購壓 MDB pricing power upside；TAM 仍擴張但 MDB 並非唯一受益者</td></tr>
+</table>
+
+<h3>B｜品質等級（含體質 veto mini-list）</h3>
+
+<h4>體質檢核（veto 制 5 項）</h4>
+<table>
+<tr><th>#</th><th>項目</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2%p</td><td><span class="bull">✅</span></td><td>Non-GAAP GM FY24 ~75% / FY25 ~74% / FY26 ~74%，穩定（Atlas mix 上升略壓 GM）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7（金融以外）</td><td><span class="warn">N/A（GAAP NI 為負）</span></td><td>FCF $410M+ vs GAAP NI 仍負；以 FCF/Rev 17% 替代判定 ✅</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td><span class="bear">❌</span></td><td>Q4 FY26 後 Q1 FY27 guide 顯著低於共識，分析師 FY27 EPS 共識下修 -10-15%（從 ~$5.80 至 ~$5.20）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td><span class="bull">✅</span></td><td>FY26 Q1-Q4 YoY 全部正成長（+23/+22/+22/+27%）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td><span class="bull">✅</span></td><td>Cash + ST inv ~$2.5B vs Debt ~$1.1B（convertible note）= Net Cash $1.4B 充裕</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = 4/5 通過（第 3 項 ❌ EPS 共識下修；第 2 項 N/A 以 FCF 替代）→ 護城河等級不變（&lt; 3 項不過）</p>
+
+<h4>護城河等級</h4>
+<table>
+<tr><th>項目</th><th>值</th></tr>
+<tr><td>護城河分數（§9 雙維加權）</td><td class="num">7 / 10（execution 7 + pricing power 7，等權合併）</td></tr>
+<tr><td>護城河原始等級</td><td>B 級（7 分）</td></tr>
+<tr><td>體質 veto 調整</td><td>4/5 通過（&lt; 3 項不過），等級不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>B 級</strong></td></tr>
+<tr><td>底倉建議</td><td>15%（目標倉位的，B 級門檻）— 但等待估值 + MA 條件</td></tr>
+</table>
+<div class="reasoning">
+護城河 7 = B 級（developer-first NoSQL + Atlas managed cloud + vector search but Databricks/Snowflake OLTP 攻勢正在發生）
+implication → 體質 veto 4/5 通過（EPS 共識下修為新增警示），等級不變但估值/MA 將決定最終 signal
+</div>
+
+<h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY27, ending Jan 2027）</td><td class="num">$5.20（共識）</td><td>WebSearch / 分析師（從 ~$5.80 下修 -10-15% post Q4 FY26 guide）</td></tr>
+<tr><td>FY+2 EPS（FY28, ending Jan 2028）</td><td class="num">$6.50（共識）</td><td>WebSearch / 分析師（隱含 +25% YoY）</td></tr>
+<tr><td>FY+2 vs FY+1 成長率</td><td class="num">+25%</td><td>($6.50 / $5.20) − 1</td></tr>
+<tr><td>當前 Forward P/E (FY27)</td><td class="num">62.7x</td><td>$326.13 ÷ $5.20</td></tr>
+<tr><td>當前 Forward P/E (FY28, NTM-like)</td><td class="num">50.2x</td><td>$326.13 ÷ $6.50</td></tr>
+<tr><td>當前 Forward P/E (NTM blended)</td><td class="num">57.7x</td><td>GuruFocus 5/19 snapshot</td></tr>
+<tr><td>當前 EV/Sales NTM</td><td class="num">~7x</td><td>EV ≈ $25B (市值 $26B − 淨現金 $1.4B) ÷ FY27 Rev guide $2.86B</td></tr>
+</table>
+<p class="note">EPS 來源：MDB not in Excel snapshot 2026-05-20 → fall back WebSearch 共識（含 Q4 FY26 後下修反映）。Q1 FY27 (5/28) 公告後 estimate 可能再變動。</p>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE NTM</td><td class="num">57.7x</td></tr>
+<tr><td>5Y Fwd PE 範圍</td><td>~40-100x（IPO 後高峰至 2024 低點）</td></tr>
+<tr><td>當前 Fwd PE 5Y 分位</td><td class="num">~25-30%（中性偏便宜）</td></tr>
+<tr><td>3Y EPS CAGR (Non-GAAP, §7)</td><td class="num">~22%</td></tr>
+<tr><td>PEG (NTM PE 57.7 ÷ 22)</td><td class="num">2.62</td></tr>
+<tr><td>EV/Sales NTM</td><td class="num">~7x</td></tr>
+<tr><td>EV/Sales 5Y 範圍</td><td>~5x（2024 低）~25x（2021 高）</td></tr>
+<tr><td>當前 EV/Sales 5Y 分位</td><td class="num">~10%</td></tr>
+<tr><td><strong>估值燈</strong></td><td><strong><span class="warn">🟠 偏貴</span></strong></td></tr>
+<tr><td>判定依據</td><td>PEG 2.62 &gt; 2.5 邊界 + Fwd PE 5Y 分位 中性 ~25% + EV/Sales 5Y 分位 ~10% 極端便宜，但 PEG 取較嚴 → 🟠（PEG 主導）</td></tr>
+<tr><td>套用規則</td><td>× 0.5（半倉入場）</td></tr>
+</table>
+
+<h4>🛡️ 盲點 1 防禦：結構性高成長救援審核</h4>
+<table>
+<tr><th>條件</th><th>滿足？</th></tr>
+<tr><td>① §8 長期成長性綜合評級 = 🟢 高確信</td><td><span class="bear">❌</span>（§8 = 🟡，FY27 guide +16-18% 顯著放緩）</td></tr>
+<tr><td>② PEG &lt; 2.0</td><td><span class="bear">❌</span>（PEG 2.62 高於 2.0）</td></tr>
+<tr><td>③ §8 F AI 風險 = 🟢</td><td><span class="bear">❌</span>（AI 🟡 — Vector Search 已 commoditized）</td></tr>
+</table>
+<p><strong>救援結果</strong>：三條件全部不滿足 → <strong>盲點 1 救援不觸發，維持 🟠 偏貴</strong></p>
+
+<p><strong>估值燈調整後等級</strong>：B 級不變，但 modifier × 0.5（半倉），需與 MA 合併判定</p>
+
+<h3>E｜R:R + Bear Case</h3>
+
+<h4>合理 P/E 參考</h4>
+<p>SaaS 數據庫 leader at growth 18-22% 業界合理 PE range：35-55x（NTM）；給 MDB 取 45x（中位偏保守，反映成長放緩 + 競爭壓力）；5 年長期合理 PE：35x（成熟期）</p>
+
+<table>
+<tr><th>時距</th><th>計算</th><th>目標價</th><th>R:R</th></tr>
+<tr><td>短期（1 年, FY27 anchor）</td><td>$5.20 × 45x = $234</td><td class="num">$234</td><td class="num">-0.44x（負，現價已透支）</td></tr>
+<tr><td>中期（2 年, FY28 anchor）</td><td>$6.50 × 50x = $325</td><td class="num">$325</td><td class="num">-0.005x（平盤）</td></tr>
+<tr><td>5Y（長期, FY30E anchor）</td><td>$10.50 × 35x = $367（FY30 EPS 用 §8 邏輯）</td><td class="num">$367</td><td class="num">0.20x</td></tr>
+</table>
+
+<p><strong>Bear anchor（1 行）</strong>：Bear EPS = FY27 EPS $5.20 × 0.9 = $4.68；Bear PE（§8 E 成長熄火「降至 10%」情境）= 25x；Bear 股價 = $4.68 × 25 = $117（現價下行 -64%）</p>
+
+<div class="reasoning">
+短/中期 R:R 為負或近 0 — 短中期估值已透支；5Y 0.20x 偏低需 FY30 EPS $10.50 兌現
+壓力測試 = base + bear 2/2 通過（資訊性）
+implication → 進場時機不利，5Y view 空間有限；§2 H 將綜合判定為 B（觀望）
+</div>
+
+<h3>F｜Pure MA 狀態機（六狀態，含盲點 2 救援評估）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td class="num">$326.13</td></tr>
+<tr><td>W52 / 斜率 13w</td><td class="num">$301.54 / +8.03%</td></tr>
+<tr><td>W104 / 斜率 13w</td><td class="num">$273.58 / -4.05%</td></tr>
+<tr><td>W250 / 斜率 13w</td><td class="num">$314.29 / -1.05%</td></tr>
+<tr><td>Bollinger（上/中/下）</td><td class="num">$423.95 / $309.43 / $194.91</td></tr>
+<tr><td>位置（vs Bollinger）</td><td>軌道內，BB 位置 57.3%（剛過中軌）</td></tr>
+<tr><td><strong>MA 結構觀察</strong></td><td>價 &gt; W52 &gt; W250 &gt; W104（W104 &lt; W250 倒置）— 屬「深 DD 後 V 型反彈」型，2024-25 期間 W104 被拉低；現價站上 W250 但未滿足典型多頭排列</td></tr>
+<tr><td><strong>原 MA 狀態</strong></td><td><strong><span class="warn">🟡 觀察池</span></strong>（價 $326.13 &gt; W250 $314.29 ✓，但 W250 斜率 -1.05% 持平偏弱 + W104 &lt; W250 表示尚未完成 reset；W52 斜率 +8.03% 強正為 constructive 訊號）</td></tr>
+</table>
+
+<p class="note">盲點 2 救援審核：目前 MA 狀態 🟡 觀察池（非 ❌ 系統失效），盲點 2 救援機制不需啟動。但需注意 W250 斜率仍負（-1.05%），若進一步惡化至 -3% 以下將觸發 ❌；當前狀態屬 V 型反彈進行中。</p>
+
+<h4>近 5 交易日 Intraday 訊號檢查（QC-24）</h4>
+<table>
+<tr><th>日期</th><th>O</th><th>H</th><th>L</th><th>C</th><th>備註</th></tr>
+<tr><td>2026-05-18</td><td class="num">311.91</td><td class="num">339.97</td><td class="num">309.40</td><td class="num">330.00</td><td>強勢 +6%，動能突破</td></tr>
+<tr><td>2026-05-19</td><td class="num">338.63</td><td class="num">349.21</td><td class="num">331.01</td><td class="num">334.68</td><td>創高後收低，盤中 -4.2% 衝高回落（QC-24 警示）</td></tr>
+<tr><td>2026-05-20</td><td class="num">331.30</td><td class="num">336.83</td><td class="num">323.59</td><td class="num">329.14</td><td>內收，正常</td></tr>
+<tr><td>2026-05-21</td><td class="num">325.40</td><td class="num">325.40</td><td class="num">312.73</td><td class="num">317.50</td><td>跌破 5/20 低，弱勢 -3.5%</td></tr>
+<tr><td>2026-05-22</td><td class="num">318.05</td><td class="num">330.99</td><td class="num">318.05</td><td class="num">326.13</td><td>反彈 +2.7%，動能修復</td></tr>
+</table>
+<p class="note">5/19 衝高回落觸發 QC-24，5/21 弱勢 -3.5% 為動能消化期；5/22 反彈但未突破 5/18 高 $339.97；當週價格區間 $312-339 = ~9% 波動，屬正常季前震盪</p>
+
+<h3>G｜大盤豁免層（系統性風險）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>SPX（^GSPC，美股通用）</td></tr>
+<tr><td>大盤現價</td><td class="num">7,473.47</td></tr>
+<tr><td>大盤 W104</td><td class="num">6,194.58</td></tr>
+<tr><td>系統性風險</td><td><span class="bull">否</span>（大盤遠高於 W104 +20.6%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+
+<h4>本標的五訊號維度</h4>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td><strong>B 級</strong>（護城河 7 + 體質 veto 4/5 → 等級不變）</td></tr>
+<tr><td>gate（§2 D 估值燈）</td><td><strong>🟠 偏貴</strong>（PEG 2.62，盲點 1 救援未觸發）</td></tr>
+<tr><td>ma_status（§2 F）</td><td><strong>🟡 觀察池</strong>（V 型反彈中，W104 &lt; W250 倒置）</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常（×1.0）</td></tr>
+<tr><td>trap（§1 定性）</td><td><strong>🟡 觀察期</strong></td></tr>
+</table>
+
+<h4>訊號燈判定邏輯（含 QC-31 cross-check）</h4>
+<table>
+<tr><th>步驟</th><th>條件</th><th>本案結果</th></tr>
+<tr><td>1. 拒絕檢核</td><td>trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕</td><td>None 觸發 → 不歸 X</td></tr>
+<tr><td>2. 高強度檢核</td><td>S/A + 🟢 + ✅/🟢 + 🟢 trap + 正常</td><td>quality B 不是 S/A → 不歸 A+</td></tr>
+<tr><td>3. 中高強度</td><td>S/A + 🟡 + ✅ + 🟢 trap</td><td>quality B → 不歸 A</td></tr>
+<tr><td>4. 衛星級</td><td>B + 🟢/🟡 + 🟢/🟡 trap；或 S/A 有一項訊號減半</td><td>quality B + gate 🟠 邊界 + trap 🟡 + MA 🟡 → 衛星級</td></tr>
+<tr><td>5. 時機不到（thesis 完整）</td><td>gate 🟠 + MA stretched，或多項訊號減半但無 QC-31 C 觸發</td><td>thesis 部分完整（quality B + 護城河 7 + AI 🟡 + 信心中），多項訊號減半但無 QC-31 C 觸發 → <strong>歸 B 觀望</strong></td></tr>
+<tr><td>6. thesis 失敗</td><td>QC-31 四項：品質 &lt; 6.0；護城河侵蝕信號 ≥ 3；trap 🔴；AI 🔴</td><td>None 觸發（品質 7；護城河侵蝕信號 2（Databricks + Snowflake 攻勢）但未達 3；trap 🟡；AI 🟡）→ 不歸 C</td></tr>
+</table>
+
+<p><strong>final_signal</strong>：<span class="signal-grade">B</span>（衛星候選，觀望等修復）</p>
+<p>判定理由：thesis 部分完整（Atlas 強 + FCF 健康），但 quality B + 估值 🟠 + MA 🟡 + 成長放緩 + Q1 FY27 (5/28) binary catalyst 將至 → QC-31 第 5 條（時機不到，thesis 完整）落 B 觀望，非 C 迴避</p>
+
+<p><strong>dd-meta sub-scores</strong>：<code>moat_execution: 7, moat_pricing_power: 7</code>（v12.3 optional）</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8A</td><td>剩約 5-7 年（NoSQL document DB 仍擴張，AI workload 為新成長引擎，但成熟期接近）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>execution 持平（developer-first 優勢仍在）/ pricing power 受壓（Databricks Lakebase + Snowflake Crunchy Data 雙路攻 OLTP）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong></td></tr>
+</table>
+<p><strong>一句話</strong>：🟡 中性風向 + B 級護城河 7/10，developer-first NoSQL 領導者面臨 PostgreSQL 復興 + 巨頭收購雙路壓力。估值燈 🟠 偏貴 (PEG 2.62) + Pure MA 🟡 觀察池 V 型反彈中。建議等 Q1 FY27 (5/28) 後若 Atlas &gt; +25% YoY + NRR 守 118%+ 再行動。</p>
+
+</section>
+
+<!-- ========== §3 三方辯論 ========== -->
+<section id="s3">
+<h2>§3 三方辯論摘要</h2>
+
+<div class="debate-grid">
+<div class="debate-card bull-card">
+<h4>【多頭辯護人｜Charlie Munger 模式】</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>佐證</th></tr>
+<tr><td>1</td><td>護城河：developer-first NoSQL document DB 標準 + Atlas managed cloud 規模化</td><td>NRR 118% + 65,200+ 客戶 + 2,799 $100K ARR + Atlas $2B+ ARR（§9）</td></tr>
+<tr><td>2</td><td>成長：Atlas 仍 +29% YoY + AI vector search workload 進入 ramp 期</td><td>Q4 FY26 Atlas +29% / FY27 Atlas guide +21-23%；vector search + retrieval workload 為新成長引擎</td></tr>
+<tr><td>3</td><td>估值：EV/Sales 7x 5Y 分位 ~10% 極端便宜；股價已從 $435 高點壓至 $326 = -25%</td><td>vs SNOW EV/Sales 9.5x SNOW 折價 -26% + vs DDOG 13x SNOW 折價 -46% — MDB 是同 tier 最便宜</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「NoSQL document DB 仍是 cloud-native app 預設選擇；Atlas $2B+ ARR 證明 thesis 兌現中；估值已壓至 EV/Sales 7x 為 5Y 極端便宜，下行有限。」</p>
+</div>
+
+<div class="debate-card bear-card">
+<h4>【空頭檢察官｜Michael Burry 模式】</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>對應風險</th></tr>
+<tr><td>1</td><td>FY27 guide +16-18% 為近年最弱，可能是「mature SaaS」階段起點；NRR 從 120%+ 滑至 118% 趨勢未止</td><td>§5 R1 — 結構性成長放緩</td></tr>
+<tr><td>2</td><td>Databricks Lakebase + Snowflake Crunchy Data 雙巨頭收購 PostgreSQL 直接攻 MDB OLTP 戰場</td><td>§5 R2 — 護城河 pricing power 侵蝕</td></tr>
+<tr><td>3</td><td>Atlas Vector Search 不再 unique，PostgreSQL/Oracle/Redis 等都加 native vector，AI workload 差異化縮減</td><td>§5 R3 — AI 變現失敗</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「Databricks Lakebase (Neon 收購 May 2025) + Snowflake Postgres (Crunchy Data 2025) 兩個 $100B+ market cap 對手直攻 MDB 核心 OLTP 戰場 + Vector Search commoditized，12-24 個月 thesis 結構性破裂機率 30%。」</p>
+</div>
+
+<div class="debate-card arb-card">
+<h4>【估值仲裁員｜Aswath Damodaran 模式】</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td>5 / 10</td></tr>
+<tr><td>核心依據</td><td>當前 EV/Sales 7x × NTM Rev $2.88B = EV $20B；若隱含 5Y Rev CAGR 17% + Mature OPM 25% → DCF fair value ~$280；vs 現價 $326 = 略貴 16% (隱含預期略高於合理 cash flow value)</td></tr>
+<tr><td>歷史對標</td><td>Salesforce 2014-2018 同階段（Rev $5B / growth 28%→22%）估值 EV/Sales 從 8x 壓至 6x；MDB $2.5B Rev / growth 18-23% 對標較類似但 PostgreSQL 競爭壓力 + 規模較小</td></tr>
+</table>
+<p><strong>仲裁員一句話</strong>：「估值已不極端便宜也不極端貴 — fair value ~$280 vs 現價 $326 略偏 high；買賣決策應由 thesis + 競爭 + Q1 FY27 catalyst 驅動。」</p>
+</div>
+</div>
+
+</section>
+
+<!-- ========== §4 序章 ========== -->
+<section id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>MongoDB 解決的不可逆痛點：<strong>「為 cloud-native 應用提供 schema-less + 水平擴展 + 開發者友善的資料儲存層」</strong>。傳統 SQL DB（PostgreSQL / MySQL / Oracle）對開發者要求 schema-first design + 嚴格 join；MongoDB 用 document model（BSON / JSON-like）讓開發者直接存取 nested objects + 動態擴展 schema。在 web / mobile / IoT / 微服務時代，這個體驗對開發者生產力提升明顯。Atlas managed cloud 進一步把 ops / scaling / backup 全部 managed，讓 startup 與大企業都能用相同 stack。若 MDB 明天消失，65,200+ 企業（包括 Forbes G2000 一半以上）將被迫遷移至 PostgreSQL + JSONB（次選但 schema 仍需設計）+ DocumentDB（AWS 自有 MDB-compatible）/ Cosmos DB（Azure）；應用層 ORM + ODM 需要重寫。短期混亂 6-12 個月。</p>
+
+<h3>護城河形成歷史路徑</h3>
+<table>
+<tr><th>年份</th><th>關鍵 milestone</th><th>對護城河的累積貢獻</th></tr>
+<tr><td>2007</td><td>10gen 成立（Eliot Horowitz + Dwight Merriman + Kevin Ryan）</td><td>NoSQL document DB 早期 mover，10+ 年技術 lead</td></tr>
+<tr><td>2009</td><td>MongoDB 開源 GA</td><td>developer ecosystem 自然擴張，GitHub stars 累積</td></tr>
+<tr><td>2013</td><td>10gen 改名 MongoDB Inc.</td><td>企業化轉型，commercial enterprise license</td></tr>
+<tr><td>2016</td><td>MongoDB Atlas 推出（managed cloud）</td><td>從 license sales 轉為 consumption SaaS</td></tr>
+<tr><td>2017 Oct</td><td>IPO，市值 ~$2B</td><td>充足現金 + 機構覆蓋率</td></tr>
+<tr><td>2018</td><td>SSPL license 改變（防止 AWS 等 hyperscaler 自帶 MDB）</td><td>防 commodification，但有爭議</td></tr>
+<tr><td>2020-2022</td><td>Atlas multi-cloud (AWS / Azure / GCP)</td><td>multi-cloud 中立性</td></tr>
+<tr><td>2023 Jun</td><td>Atlas Vector Search GA</td><td>AI workload 切入點，早於多數 NoSQL 對手</td></tr>
+<tr><td>2024</td><td>Atlas Search + Stream Processing</td><td>從 DB 變「資料應用平台」</td></tr>
+<tr><td>2025 May</td><td>Databricks 收購 Neon (PostgreSQL serverless) — Lakebase 開始威脅</td><td>OLTP 戰場壓力起點</td></tr>
+<tr><td>2025</td><td>Snowflake 收購 Crunchy Data (PostgreSQL)</td><td>OLTP 戰場第二壓力源</td></tr>
+<tr><td>2026 Mar</td><td>Q4 FY26 Rev $695M +27% beat，但 FY27 guide +16-18% 顯著放緩 → 股價 AH -20%</td><td>thesis 受挑戰：成長放緩確認</td></tr>
+</table>
+
+<h3>逆向推演（Munger Inversion）三維展開</h3>
+
+<h4>① 技術維度 — 什麼技術替代會讓 MDB 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>PostgreSQL + JSONB 取代 MongoDB document model</strong>：PostgreSQL 自 9.4 (2014) 起支援 JSONB，但 ops 體驗較差；Neon / Supabase / Crunchy Data 提供 cloud-native PostgreSQL 後體驗大幅改善；對標 <em>MySQL 2008-2014</em>：被 PostgreSQL 在開發者偏好上反超</li>
+<li><strong>Cosmos DB / DocumentDB API-compatible 取代 Atlas</strong>：AWS DocumentDB + Azure Cosmos DB 提供 MongoDB API 兼容，hyperscaler 客戶可繞過 MDB；對標 <em>Elasticsearch vs OpenSearch 2021-2024</em>：AWS fork ES 為 OpenSearch 後 ES 市佔大幅下滑</li>
+<li><strong>Vector DB (Pinecone / Weaviate / Chroma) + RAG 直接整合</strong>：AI workload 需要的不只是 vector storage，是 vector + retrieval + LLM 整合；MDB Atlas Vector Search 雖然有但專業 vector DB + LangChain ecosystem 更深</li>
+<li><strong>Lakehouse 範式 (Databricks Delta Lake + Iceberg) 取代專有 DB</strong>：企業移向 lakehouse 後 OLTP / OLAP 邊界模糊，MDB 在純 OLTP 角色被擠壓</li>
+</ul>
+
+<h4>② 管理維度 — 什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>過度投資 AI 但 monetization 不兌現</strong>：若 MDB 為跟 Databricks AI 軍備競賽，每年新增 $300M+ AI R&amp;D 但 Atlas Vector Search 月收入仍低，FCF margin 從 17% 跌至 8%，估值倍數重設；對標 <em>Salesforce 2022-23 Einstein AI 投入</em>：短期未能轉化營收</li>
+<li><strong>SSPL license 後續調整失敗</strong>：若 hyperscaler 加強自有 MongoDB-compatible service，MDB 需要在 license + community 之間做艱難平衡</li>
+<li><strong>收購整合失敗（Voyage AI / Pre-IPO 收購等）</strong>：若 2024-25 收購（Voyage AI vector embedding model 提供商）整合失敗，AI 戰略 narrative 破裂</li>
+</ul>
+
+<h4>③ 結構維度 — 什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>NoSQL document DB 變為 commodity</strong>：PostgreSQL + Neon / Supabase 提供類似 developer experience 但 cheaper，企業逐漸從 MDB 切換；對標 <em>Hadoop 2014-2020</em>：當時的「大資料」標準後被 cloud-native 範式取代</li>
+<li><strong>Hyperscaler 自有 NoSQL 方案壓低 MDB pricing power</strong>：AWS DynamoDB + GCP Firestore + Azure Cosmos DB 各自強化，特別在 single-cloud customer 戰場</li>
+<li><strong>Lakehouse 普及讓 OLTP / Analytics 二分法消失</strong>：若 2028+ 企業大規模採用 lakehouse one-stop，MDB 在 OLTP 角色 incremental 機會減少</li>
+</ul>
+
+<p class="note">三維風險中，技術維度 ① ② 已 active（PostgreSQL 復興 + Cosmos DB 攻勢）；管理維度尚未發生但 Voyage AI 整合 + Stream Processing 推進為觀察點；結構維度為長期遠端風險（5+ 年）。</p>
+
+</section>
+
+<!-- ========== §5 投資論點錨定 ========== -->
+<section id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td><strong>預設持有期</strong></td><td>2-4 年（中期 thesis；持有期較短因 PostgreSQL 競爭加速 + 成長 deceleration）</td></tr>
+<tr><td><strong>主要驅動這個時間軸的理由</strong></td><td>Atlas Vector Search + AI workload 變現曲線 = 2-3 年；FY27 guide +16-18% 為近年最弱，需 1-2 年觀察是否能透過 AI 加速回 +25%+；Databricks Lakebase + Snowflake Crunchy Data 整合落地時程約 18-24 個月，是 MDB 護城河 stress test 視窗</td></tr>
+<tr><td><strong>這個持有期決定了哪些變數是訊號、哪些是噪音</strong></td><td>訊號：Atlas YoY growth、NRR 趨勢、Vector Search 客戶採用、Databricks Lakebase / Snowflake Postgres GA 後對 MDB OLTP 影響；噪音：單季 EPS beat/miss、單月股價波動</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體數字門檻</th><th>信息來源</th><th>漂移觸發條件</th></tr>
+<tr><td>H1</td><td>Atlas 維持 cloud-native document DB 標準地位，AI vector workload 為新成長引擎</td><td>Atlas YoY ≥ 22%（FY27 guide +21-23%）</td><td>FY30 Atlas Rev ≥ $5B（vs 當前 $2B 2.5x）+ Vector Search 占 Atlas ≥ 15%</td><td>2035 MDB 是 ≥ 30% Fortune 1000 NoSQL OLTP 預設</td><td>FY27 Atlas ≥ +21%；FY28 Atlas ≥ +22%；Vector Search 季增 ≥ +30%</td><td>每季 8-K + Q4 FY26 法說 transcript</td><td>連 2 季 Atlas &lt; 22% → 削弱；&lt; 18% → 反轉</td></tr>
+<tr><td>H2</td><td>NRR 守 ≥ 115%，consumption-based pricing 在 AI workload 下 organic expansion</td><td>NRR 不破 115%（當前 118%）</td><td>FY30 NRR ≥ 110%</td><td>2035 NRR ≥ 105% 成熟期</td><td>FY27 NRR 不低於 115%；FY28 不低於 113%</td><td>每季 8-K</td><td>連 2 季 NRR &lt; 115% → 削弱；&lt; 110% → 反轉</td></tr>
+<tr><td>H3</td><td>FCF margin 維持 ≥ 17%，operating leverage 從 R&amp;D + S&amp;M 槓桿釋放</td><td>FY27 FCF margin ≥ 16%</td><td>FY30 FCF margin ≥ 22%；Non-GAAP OPM ≥ 20%</td><td>2035 GAAP profitable，SBC/Rev &lt; 15%</td><td>FY27 FCF 不低於 15%；FY28 不低於 17%</td><td>FY26 法說 outlook</td><td>連 2 季 FCF margin &lt; 15% → 削弱；&lt; 12% → 反轉</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p class="note"><strong>狀態：進場未滿一年（本份為 Inception，2026-05-24）</strong>。本欄位將於 2027-05-24 起首次有資料對照。</p>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度標記</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>FY27 guide +16-18% 為「mature SaaS」起點，成長持續 deceleration</td><td>H1</td><td>⚡ 短期（1-2 季可觸發）</td><td>Atlas YoY growth / NRR 趨勢</td><td>連 2 季 Atlas &lt; 22% + NRR &lt; 115%</td></tr>
+<tr><td>R2</td><td>Databricks Lakebase + Snowflake Crunchy Data 雙巨頭壓 MDB OLTP / PostgreSQL 替代加速</td><td>H1 / H2</td><td>🔥 中期（4-6 季）</td><td>$100K+ ARR 客戶數季增；Databricks/Snowflake PostgreSQL GA 後 customer churn</td><td>$100K+ 客戶季增 &lt; 50（當前 ~80）+ 連 2 季 NRR &lt; 115%</td></tr>
+<tr><td>R3</td><td>Atlas Vector Search commoditized，AI workload 變現不及預期</td><td>H1</td><td>🐢 長期（2+ 年慢變數）</td><td>Vector Search / Voyage AI 變現指標；Atlas 整體 growth 是否回升</td><td>FY28 Vector Search 占 Atlas &lt; 8%（vs target ≥ 15%）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<tr><th>判斷步驟</th><th>問題</th></tr>
+<tr><td>1. 時間軸匹配？</td><td>事件影響 2-4 年持有期嗎？單季 EPS miss 是噪音，年度 Atlas growth 趨勢是訊號。</td></tr>
+<tr><td>2. 假設關聯？</td><td>事件影響 H1（Atlas + AI）/ H2（NRR）/ H3（FCF）哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否達 §5 C 警戒閾值？</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td><strong>進場</strong></td><td>Q1 FY27 (5/28) 後若 Atlas YoY +25%+ + NRR 守 ≥ 118% + 股價站回 W250 ($314) 持續 4 週</td><td>建倉 4-7%，首次進場（衛星倉）</td></tr>
+<tr><td><strong>加碼</strong></td><td>H1 + H2 兩季連續確認（Atlas growth 加速至 +25% + NRR 回升 ≥ 120% + Vector Search 季增 ≥ +30%）</td><td>加碼至 8-10%，升核心邊界</td></tr>
+<tr><td><strong>減碼</strong></td><td>R2 觸發（Databricks/Snowflake PostgreSQL ramp 顯著吃 MDB share）或股價追高至 $400+</td><td>減至 3-4%，重新評估</td></tr>
+<tr><td><strong>撤退</strong></td><td>核心假設 H1 推翻（Atlas YoY 連 2 季 &lt; 18%）或 NRR 連 2 季 &lt; 110%</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing（binary discrete event）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Single Thing 描述</strong></td><td>2026 H2 或 2027 H1 Databricks Lakebase 或 Snowflake Postgres 公布 ≥ $200M ARR + ≥ 500 客戶（顯示 MDB OLTP 戰場結構性失分），同時 MDB Atlas Q1-Q2 FY27 growth 跌破 +20% YoY</td></tr>
+<tr><td><strong>如果發生</strong></td><td>立刻評估清倉 thesis-level reset — Databricks/Snowflake 結構性吃 MDB share + MDB 自身成長確認結構性放緩 = thesis 雙重失敗</td></tr>
+<tr><td><strong>可觀測性</strong></td><td>Databricks IPO prospectus (2026 Q3/Q4) + 後續 Q1-Q2 公告 + Snowflake 法說會 Postgres 客戶數揭露；MDB 季度 8-K</td></tr>
+<tr><td><strong>機率估計</strong></td><td>未來 12-18 個月發生機率：~20%</td></tr>
+</table>
+
+</section>
+
+<!-- ========== §6 即時財報情報 ========== -->
+<section id="s6">
+<h2>§6 即時財報情報</h2>
+<p class="note">資料來源：Q4 FY26 8-K（2026-03-04 公布）+ Earnings Call transcript。Q1 FY27（ending 4/30/2026）將於 2026-05-28 盤後公布（4 天後），本份 DD 採 Q4 FY26 為最新事實</p>
+
+<h3>① 最新一季財報關鍵數字（Q4 FY26, 季結 1/31/2026）</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Total Revenue</td><td class="num">$695.1M</td><td class="num">~$670M</td><td><span class="bull">Beat +3.8%</span></td><td class="num">+27%</td></tr>
+<tr><td>Subscription Revenue</td><td class="num">$673.1M</td><td class="num">—</td><td>—</td><td class="num">+27%</td></tr>
+<tr><td>Atlas Revenue</td><td class="num">~$500M（72% 占比）</td><td class="num">—</td><td>—</td><td class="num">+29%</td></tr>
+<tr><td>Non-GAAP EPS</td><td class="num">$1.65</td><td class="num">$1.47</td><td><span class="bull">Beat +12.2%</span></td><td>—</td></tr>
+<tr><td>FCF（季）</td><td class="num">~$133M</td><td>—</td><td>—</td><td class="num">~+25%</td></tr>
+<tr><td>NRR</td><td class="num">118%（-2pp QoQ）</td><td class="num">~120%</td><td><span class="warn">Miss -2pp</span></td><td>趨勢下滑</td></tr>
+<tr><td>客戶總數</td><td class="num">65,200+（+2,700 季淨新）</td><td>—</td><td>—</td><td class="num">+15%</td></tr>
+<tr><td>$100K+ ARR 客戶</td><td class="num">2,799</td><td>—</td><td>—</td><td class="num">+13%</td></tr>
+</table>
+
+<h4>FY27 Guidance（Q4 FY26 一起公告）</h4>
+<table>
+<tr><th>指標</th><th>Q1 FY27 Guide</th><th>FY27 Full-Year Guide</th></tr>
+<tr><td>Revenue</td><td class="num">$659-664M（+20-21% YoY）</td><td class="num">$2.86-2.90B（+16-18%）</td></tr>
+<tr><td>Atlas growth</td><td class="num">~+26%</td><td class="num">+21-23%</td></tr>
+<tr><td>Non-GAAP EPS</td><td class="num">$1.15-1.19</td><td class="num">~$5.20（共識下修）</td></tr>
+</table>
+
+<p class="note">⚠️ 市場反應：股價在 Q4 FY26 報告後 AH -20%，因 Q1 FY27 EPS guide $1.15-1.19 顯著低於共識 $1.40+ + FY27 整體 guide $2.86-2.90B 為近年最弱。Atlas growth FY27 +21-23% 雖然強勁但被市場視為「Atlas mature 的開始」</p>
+
+<h4>財報對 §5 假設的邊際貢獻</h4>
+<table>
+<tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（Atlas 維持標準地位）</td><td><strong>0 中性</strong></td><td>Atlas +29% 仍強，但 FY27 Atlas guide +21-23% 顯示放緩；vector search 採用率持續但未具體揭露</td></tr>
+<tr><td>H2（NRR 守 115%+）</td><td><strong>－削弱</strong></td><td>NRR 從 120% 降至 118%（-2pp QoQ），趨勢未止；需 Q1 FY27 驗證是否止跌</td></tr>
+<tr><td>H3（FCF margin ≥ 17%）</td><td><strong>0 中性</strong></td><td>FY26 FCF margin 維持 17%，Q4 FCF margin 19%；FY27 guide 未具體 FCF 數字</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：謹慎偏保守。CEO Dev Ittycheria 強調「macro headwinds for non-Atlas business」+「Atlas remains strong」；CFO Serge Tanjga 強調「conservative guidance approach for FY27」。語氣較 Q3 FY26 保守。</li>
+<li><strong>Forward Guidance</strong>：FY27 rev $2.86-2.90B (+16-18%) 低於分析師 ~$3.0B 預期 (-3-5%) + EPS $5.20 低於 $5.80 共識 (-10%)。明顯保守。</li>
+<li><strong>刻意強調的主題</strong>：Atlas growth、Voyage AI 整合、Vector Search 客戶採用、AI workload 機會 — 訊號：希望市場相信 AI 為新成長引擎，但 quantification 仍模糊</li>
+<li><strong>刻意迴避的問題</strong>：分析師追問「Databricks Lakebase 競爭」時，管理層回答「we have differentiated developer experience」未具體 head-to-head；對「NRR 趨勢」問題說「stabilizing」但未明確止跌時間表</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：非 Atlas（self-managed Enterprise Advanced）guide 為 mid-to-upper single digit growth — 顯示傳統 license / 自管部署需求結構性低速；客戶遷移至 Atlas 仍是主要驅動力</li>
+<li><strong>供給端</strong>：FCF margin 維持 17% 健康，cloud infra cost 未顯著上升</li>
+<li><strong>競爭格局</strong>：管理層未正面比較 Databricks / Snowflake，但「macro headwinds for non-Atlas」可能部分掩蓋 PostgreSQL 競爭實際影響</li>
+<li><strong>對同業的連帶推論</strong>：MDB FY27 guide deceleration 可能預示同 tier consumption SaaS 同步放緩；對 SNOW (FY27 guide +27%) 對比之下顯得 SNOW 仍強，可能加劇 SNOW vs MDB 估值倍數差距</li>
+</ul>
+
+</section>
+
+<!-- ========== §7 核心門檻檢核 ========== -->
+<section id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR（v12.4 步驟零'：Excel snapshot 未覆蓋，fall back WebSearch）</h3>
+<ul>
+<li>基期 FY26 GAAP EPS：~-$1.00（GAAP 仍負）</li>
+<li>基期 FY26 Non-GAAP EPS：~$4.20</li>
+<li>FY27E Non-GAAP EPS：$5.20（共識，下修自 $5.80）</li>
+<li>FY28E Non-GAAP EPS：$6.50（共識，隱含 +25% YoY）</li>
+<li>FY29E Non-GAAP EPS（§8 邏輯推導）：~$8.00（隱含 +23%，operating leverage 持續但 growth deceleration 中和）</li>
+<li><strong>3 年 Non-GAAP EPS CAGR</strong>：($8.00 / $4.20)^(1/3) − 1 = <span class="num">+23.9%</span>（簡化用 22% 為下游 PEG）</li>
+<li>口徑差距：GAAP 與 Non-GAAP 差距主要為 SBC ($500M+/年) + 收購攤銷</li>
+<li>資料來源：WebSearch 整理（Q4 FY26 後 sell-side 下修共識）</li>
+</ul>
+
+<h3>門檻檢核表</h3>
+<table>
+<tr><th>項目</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td><span class="bull">✓</span></td><td>當前 17%，趨勢：→（FY24 24% → FY25 18% → FY26 17%，輕微下滑）</td></tr>
+<tr><td>FCF Margin 5 年均值</td><td>5 年均 &gt; 15%；最低谷 &gt; 10%</td><td><span class="bull">✓</span></td><td>5 年值：FY22 10% → FY23 15% → FY24 24% → FY25 18% → FY26 17%；均值 17%，最低谷 10%</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，且高於 WACC</td><td><span class="warn">N/A（GAAP 虧損）</span></td><td>GAAP NI 仍為負；以 Non-GAAP NI ~$400M / 總 capital ~$4B = ~10% 替代</td></tr>
+<tr><td>毛利率定價能力</td><td>10 年 ≥ 70% 年份持續改善</td><td><span class="warn">⚠️</span></td><td>Non-GAAP GM FY22 73% → FY23 74% → FY24 75% → FY25 74% → FY26 74%（持平，Atlas mix 上升略壓 GM）</td></tr>
+<tr><td>資本密集度</td><td>Capex/Rev &lt; 5%</td><td><span class="bull">✓✓</span></td><td>當前 ~1.5%（cloud-native asset-light），3 年均 ~1.3%</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td><span class="bull">✓</span></td><td>Non-GAAP 3Y CAGR +22-24%（基期 $4.20 → FY29E $8.00）</td></tr>
+<tr><td>PEG（Non-GAAP）</td><td>&lt; 2.0</td><td><span class="warn">⚠️</span></td><td>NTM PEG 57.7 / 22% = 2.62（邊界偏貴）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7</td><td><span class="bull">✓</span></td><td>Total Debt ~$1.1B（convertible）/ Equity ~$1.2B = D/E 0.92；但 Cash + ST inv ~$2.5B 淨現金狀態</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td><span class="bull">是</span></td><td>~$2.5B vs $1.1B = +127%</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分</td><td><span class="warn">⚠️</span></td><td>7 分（execution 7 + pricing power 7），趨勢：execution 持平 / pricing 受壓</td></tr>
+</table>
+
+<p><strong>Munger 三維護城河快速評級</strong>：🟡 兩項達標 — 資本密集度 ✓✓ + FCF margin ✓；毛利率持平（未持續改善）；整體偏 🟡 中度</p>
+
+<p><strong>最大財務弱點</strong>：FY27 guide deceleration 顯著（+16-18% vs FY26 +23%）+ NRR 從 120%+ 滑至 118% 趨勢未止 — 「成長 quality」開始受質疑</p>
+
+</section>
+
+<!-- ========== §8 長期成長性評估 ========== -->
+<section id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（億美元）</td><td>~$96B（雲端 + 自管 DB 合計）</td><td>來源：IDC + Gartner 2026；含 OLTP + NoSQL + analytics DB</td></tr>
+<tr><td>估計可達 TAM（億美元）</td><td>~$160B by 2030</td><td>加上 vector DB / AI workload 子集（+$15B）</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>~3%（$2.46B / $96B）</td><td>NoSQL document DB 子集約 25-30% 領先</td></tr>
+<tr><td>若維持現有成長率（17%），幾年達 30% 滲透率</td><td>~12-15 年</td><td>TAM 擴張 + 競爭加劇預期實際更慢</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>5-7 年</strong></td><td>document DB + Atlas mature 進入 mid-cycle；AI vector workload 可延伸 2-3 年</td></tr>
+</table>
+
+<p><strong>Runway 解讀</strong>：5-7 年 = 中等可見度 — 估值需對應可見度折扣（vs SNOW Runway 10+ 年更佳）</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>Atlas consumption expansion + 客戶數增加</td><td><span class="num">~95%</span></td><td>主要來源</td></tr>
+<tr><td>無機成長</td><td>Voyage AI（2024）+ 其他小型收購</td><td><span class="num">~5%</span></td><td>2024 Voyage AI 為 Vector embedding 補位</td></tr>
+</table>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的判斷（必須含具體%）</th><th>過去 3 年趨勢</th></tr>
+<tr><td>定價驅動（Price）</td><td>Atlas ASP / capacity unit price</td><td>ASP YoY ~穩定（+1-3% 帶 Atlas mix）</td><td>持平</td></tr>
+<tr><td>量驅動（Volume）</td><td>consumption 量 / 客戶數 / 工作負載</td><td>客戶數 YoY +15% / consumption 量 YoY ~+25%</td><td>FY24 +35% → FY25 +28% → FY26 +25%（連續下滑）</td></tr>
+</table>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>定義</th><th>具體表現</th></tr>
+<tr><td><strong>強化型</strong>（最佳）</td><td>成長帶來更強的網路效應、規模優勢、數據壁壘</td><td>⚠️ 部分 — Atlas 規模化 + developer ecosystem 加深，但 Vector Search 不再 unique 削弱差異化</td></tr>
+<tr><td>中性型</td><td>—</td><td>—</td></tr>
+<tr><td>消耗型（警示）</td><td>為維持成長犧牲定價 / 高 SBC</td><td>⚠️ SBC ~24% of Rev 高位需 operating leverage 兌現</td></tr>
+</table>
+<p><strong>判斷</strong>：本標的屬「強化型 + 部分消耗型」混合。Atlas + developer 為強化路徑；Vector Search commoditization + SBC 為消耗路徑</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC（GAAP）</td><td>負</td><td>負</td><td>→</td><td>&gt; WACC</td><td><span class="bear">✗</span></td></tr>
+<tr><td>ROIC（Non-GAAP, OPM 替代）</td><td>~10%</td><td>~5%</td><td>↑</td><td>&gt; WACC</td><td><span class="warn">⚠️ 接近 WACC ~10%</span></td></tr>
+<tr><td>FCF Margin</td><td>17%</td><td>15%</td><td>↑</td><td>&gt; 15%</td><td><span class="bull">✓</span></td></tr>
+<tr><td>Reinvestment Rate</td><td>~高（OpEx 仍 &gt; Rev 75%）</td><td>類似</td><td>↓ 漸降</td><td>—</td><td>合理</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 10%</td><td>成長放緩至市場平均</td><td class="num">25x</td><td>vs 當前 57.7x → -57%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>成熟期低成長</td><td class="num">15x</td><td>vs 當前 57.7x → -74%</td></tr>
+</table>
+
+<h3>⚠️ 衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+<tr><td>護城河侵蝕</td><td>市佔率縮減</td><td>document DB 領先但 PostgreSQL + Cosmos DB 攻勢加劇</td><td><span class="warn">🟡</span></td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR</td><td>EPS Non-GAAP 3Y CAGR +22% vs Rev +22%（差距 0%）</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Revenue &gt; 5% 且逐年上升</td><td>SBC/Rev FY24 ~25% → FY26 ~24%（高位但下降）</td><td><span class="warn">🟡</span></td></tr>
+<tr><td>產業結構衰退</td><td>整個產業估值倍數 3 年系統性下移</td><td>SaaS 整體 EV/Sales 從 25x 壓至 8-12x 已 priced in</td><td><span class="warn">🟡</span></td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex 占 FCF 比例</td><td>Capex ~$40M / FCF ~$410M = ~10% 極低</td><td>⬜</td></tr>
+</table>
+
+<p><strong>價值陷阱風險評級</strong>：🟡 3 個 yellow lights，中度警戒 — 護城河受 PostgreSQL 攻勢 + SBC 高位 + SaaS rerating；需密切監控</p>
+
+<p><strong>長期成長性綜合評級</strong>：<span class="warn">🟡 中等可見度成長</span> — Runway 5-7 年、有機成長為主、護城河 mixed（execution 強 / pricing 受壓）、ROIC 兌現中、衰退信號 3 個 yellow lights</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p>MDB AI 風險評級：<span class="warn">🟡 中等不確定</span> — 部分業務（Atlas Vector Search）受益，但 PostgreSQL + Pinecone + Cosmos DB 等都加 native vector，差異化縮減；MDB 在 vector + LLM RAG 整合上落後 Pinecone / Weaviate 等專業 vector DB；Voyage AI 收購為部分對策</p>
+<p>必填證據：</p>
+<ul>
+<li>具體業務占比 vs AI 受益區域：~30-40% Atlas 客戶採用 Vector Search</li>
+<li>公司 AI 策略：Voyage AI 整合（vector embedding model）+ Atlas Vector Search</li>
+<li>過去 2 年 AI 相關營收變化：Vector Search 客戶採用上升但具體營收貢獻未獨立揭露</li>
+</ul>
+<p>評級分數對應：🟡 = 6 分</p>
+
+<h3>H｜客戶結構深度</h3>
+
+<h4>① 客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th><th>年份</th><th>資料來源</th></tr>
+<tr><td>Top 1 客戶占營收%</td><td>未具體披露，估 &lt; 3%（極分散）</td><td>FY26</td><td>10-K（無 single customer &gt; 10%）</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>估 ~10%</td><td>FY26</td><td>推估</td></tr>
+<tr><td>Top 10 客戶合計%</td><td>估 ~15-20%</td><td>FY26</td><td>推估</td></tr>
+<tr><td>$100K+ ARR 客戶數</td><td>FY24 ~2,000 → FY25 ~2,500 → FY26 2,799（+13% YoY）</td><td>—</td><td>各季 8-K</td></tr>
+<tr><td>總客戶數</td><td>FY26 65,200+（+15% YoY）</td><td>—</td><td>10-K</td></tr>
+</table>
+
+<h4>② 主要客戶議價權結構</h4>
+<table>
+<tr><th>客戶類型</th><th>占比%</th><th>議價權類型</th><th>說明</th></tr>
+<tr><td>Enterprise（Fortune 1000）</td><td>~25%</td><td><strong>Grow-with（部分）→ Dual-track</strong></td><td>大企業多為 multi-DB 策略，MDB + PostgreSQL 並存</td></tr>
+<tr><td>Mid-market / 新創</td><td>~50%</td><td><strong>Grow-with</strong></td><td>主要 Atlas 用戶，從小單擴張</td></tr>
+<tr><td>Developer 個人 / 開源</td><td>~25%</td><td><strong>Sole-source（部分）</strong></td><td>長期培育 funnel，多年後轉付費</td></tr>
+</table>
+
+<h4>③ 客戶生命週期定位</h4>
+<table>
+<tr><th>定位類型</th><th>說明</th><th>此標的屬於</th></tr>
+<tr><td><strong>Grow with 客戶</strong></td><td>客戶業務擴張 → 本標的訂單同步成長</td><td>✅ 主要 — NRR 118% 證明 expansion 仍 active 但放緩</td></tr>
+<tr><td>客戶可能 in-house</td><td>客戶規模達到後有動機自製替代</td><td>⚠️ 部分大客戶有 in-house PostgreSQL / Cassandra 動機</td></tr>
+<tr><td>客戶可能 second-source</td><td>客戶已開始或有意扶植替代供應商</td><td>⚠️ 普遍 — 多數企業 multi-DB（MDB + PostgreSQL + Redis 並存）</td></tr>
+</table>
+
+<p><strong>客戶結構風險評估</strong>：<span class="bull">🟢 分散 + Sole/Grow-with 主導</span> — 65,200+ 客戶、Top 1 &lt; 3%、developer funnel 持續；但 dual-track 風險 + Databricks/Snowflake PostgreSQL 攻勢需持續監控</p>
+
+</section>
+
+<!-- ========== §9 護城河分析 ========== -->
+<section id="s9">
+<h2>§9 護城河分析（報告核心）</h2>
+
+<h3>評分：二維拆解（execution + pricing power）</h3>
+<table>
+<tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat</strong>（製造工藝 / 研發深度 / 規模效率）</td><td>7 / 10</td><td>① 17 年 NoSQL document DB 技術 lead；② Atlas managed cloud 10+ 年累積；③ 65,200+ 客戶 + 5,000+ devs/year onboarded；④ multi-cloud (AWS/Azure/GCP) reach；⑤ developer-first 體驗為 standard；扣分：產品 velocity vs Databricks / SNOW 較慢</td></tr>
+<tr><td><strong>Pricing Power Moat</strong>（轉換成本 / 無形資產 / 網路效應 / 客戶依賴度）</td><td>7 / 10</td><td>① consumption-based + NRR 118%（從 120%+ 滑落）；② 切換成本 6-12 個月（中型企業）；③ Atlas vector + stream + search 整合形成 platform lock-in；扣分：Databricks Lakebase + Snowflake Postgres 直攻 OLTP；PostgreSQL 復興削弱長期 pricing upside</td></tr>
+<tr><td><strong>合併分</strong>（等權合併）</td><td>7 / 10</td><td>execution 7 + pricing 7 = 7</td></tr>
+<tr><td><strong>等級</strong></td><td>B 級</td><td>7 分 = B</td></tr>
+</table>
+
+<h3>護城河來源（sourced evidence）</h3>
+
+<h4>網路效應</h4>
+<p><strong>部分具備</strong>：</p>
+<ul>
+<li><strong>Developer ecosystem</strong>：MongoDB University 100 萬+ developer certifications；GitHub mongodb organization 100+ repos；Stack Overflow MongoDB tag 500K+ questions</li>
+<li><strong>Driver ecosystem</strong>：官方 + community drivers 涵蓋 20+ languages</li>
+<li><strong>規模閾值</strong>：~30,000+ 客戶（2020）後 developer ecosystem 自我維持；當前 65,200+ 遠超閾值</li>
+</ul>
+
+<h4>無形資產</h4>
+<ul>
+<li><strong>IP / 專利</strong>：~150 U.S. patents（document model / replication / sharding 等核心）</li>
+<li><strong>監管牌照</strong>：HIPAA、SOC 2、PCI DSS、ISO 27001 等</li>
+<li><strong>品牌溢價</strong>：「NoSQL = MongoDB」narrative 已固化</li>
+</ul>
+
+<h4>轉換成本</h4>
+<ul>
+<li><strong>切換成本</strong>：企業從 MongoDB 切換至 PostgreSQL 需重寫 schema design + ORM/ODM + 應用層；中型企業 6-12 個月，$500K-$2M（顧問費）；大型企業 12-24 個月，$5M-$20M</li>
+<li><strong>Atlas lock-in</strong>：使用 Atlas Vector Search / Stream Processing / Marketplace data 後額外 lock-in</li>
+</ul>
+
+<h4>規模優勢</h4>
+<ul>
+<li><strong>R&amp;D 槓桿</strong>：$450M/年 R&amp;D vs 中型對手 $50-100M，可同時 fund Atlas / Vector / Stream / Voyage AI 多軌</li>
+<li><strong>cloud cost 規模採購</strong>：AWS/Azure/GCP top 50 客戶，享 enterprise discount</li>
+</ul>
+
+<h3>競爭鴻溝</h3>
+<p><strong>為什麼資本充足的對手仍無法跨越？</strong></p>
+<ul>
+<li><strong>① 時間壁壘</strong>：17 年 NoSQL 技術 lead + developer mindshare 累積；對手 Cosmos DB / DocumentDB 雖 API-compatible 但 ecosystem 體驗較差</li>
+<li><strong>② 資本壁壘</strong>：需要 $2B+ 累積 R&amp;D + ecosystem 投入才能追上；hyperscaler 雖有資本但分散 priority</li>
+<li><strong>③ 認證壁壘</strong>：HIPAA / SOC 2 等需要 1-2 年</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔（NoSQL + OLTP DB 合計）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td><strong>MongoDB</strong></td><td class="num">~5-6%</td><td>持平（NoSQL 子集 ~25-30% 領先）</td><td>—</td><td>—</td></tr>
+<tr><td>PostgreSQL（Neon / Supabase / Crunchy）</td><td class="num">~18%</td><td>↑↑（cloud-native PostgreSQL 復興）</td><td>JSONB + cloud-native 體驗追上 MDB；Neon (Databricks) + Crunchy (SNOW) 加速</td><td>主要吃 MDB OLTP share</td></tr>
+<tr><td>AWS DynamoDB</td><td class="num">~8%</td><td>持平</td><td>AWS-native 客戶 default</td><td>AWS-only 客戶內擴大</td></tr>
+<tr><td>Microsoft Cosmos DB</td><td class="num">~5%</td><td>↑</td><td>Microsoft 生態 + multi-API（MongoDB API-compatible）</td><td>Azure 客戶內擴大，部分吃 MDB</td></tr>
+<tr><td>Oracle / SQL Server</td><td class="num">~15%</td><td>↓</td><td>傳統 enterprise lock-in</td><td>正被 cloud-native DB 三方吃</td></tr>
+</table>
+
+<h3>QC-23 競爭威脅 3 級分類</h3>
+<table>
+<tr><th>等級</th><th>威脅事件</th><th>機率</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>Cosmos DB 在 Azure 客戶內擴大 share</td><td>已發生 ongoing</td><td>護城河不扣分（MDB 仍在 multi-cloud 客戶領先）</td></tr>
+<tr><td>🔴 生態攻擊</td><td>Databricks Lakebase + Snowflake Postgres + AWS Aurora DSQL 三巨頭 PostgreSQL 全棧攻 OLTP</td><td>中（50-60%）</td><td>護城河 −1 分（從 7 → 6）；需重評</td></tr>
+<tr><td>⛔ 架構替代</td><td>未來 5-10 年 lakehouse + 整合式 vector + LLM 變成 default，MDB 在 OLTP 角色被擠壓</td><td>低（15-25%）</td><td>護城河 −2 分（從 7 → 5）；§1 陷阱定性 reset</td></tr>
+</table>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+<tr><td><strong>Execution Moat 趨勢</strong></td><td><span class="warn">持平</span></td><td>Voyage AI 收購補位、Stream Processing GA、Atlas Vector Search 維持；產品 velocity 略慢於 SNOW / Databricks</td></tr>
+<tr><td><strong>Pricing Power Moat 趨勢</strong></td><td><span class="warn">受壓</span></td><td>NRR 從 120%+ 降至 118% 趨勢未止；Databricks Lakebase + SNOW Crunchy Data 雙路 OLTP 攻勢；Vector Search commoditization</td></tr>
+</table>
+
+</section>
+
+<!-- ========== §10 財務品質 ========== -->
+<section id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表（強制加同業對比欄）</h3>
+<table>
+<tr><th>指標</th><th>FY24</th><th>FY25</th><th>FY26</th><th>同業中位數（SNOW/DDOG/NET 平均）</th><th>相對評估</th></tr>
+<tr><td>FCF Margin</td><td class="num">24%</td><td class="num">18%</td><td class="num">17%</td><td class="num">~22%</td><td>中位偏弱</td></tr>
+<tr><td>Non-GAAP OPM</td><td class="num">~10%</td><td class="num">~12%</td><td class="num">~12%</td><td class="num">~16%</td><td>劣（DDOG 25%）</td></tr>
+<tr><td>Non-GAAP GM</td><td class="num">75%</td><td class="num">74%</td><td class="num">74%</td><td class="num">~77%</td><td>略劣</td></tr>
+<tr><td>ROIC（Non-GAAP 替代）</td><td class="num">~5%</td><td class="num">~8%</td><td class="num">~10%</td><td class="num">~12%</td><td>中位偏弱</td></tr>
+<tr><td>SBC / Revenue</td><td class="num">~25%</td><td class="num">~24%</td><td class="num">~24%</td><td class="num">~25%</td><td>中位（SaaS 業界常態）</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>淨利 vs OCF 連動性</strong>：GAAP NI 仍負，OCF 正 — SBC 為主要差距來源</li>
+<li><strong>AR 成長 vs 營收成長</strong>：大致同步</li>
+<li><strong>FCF 轉換率趨勢</strong>：FY24 24% → FY25 18% → FY26 17%，輕微下滑趨勢需監控</li>
+</ul>
+
+<h3>回購品質評估</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF 總額</td><td class="num">~$200M / $1.1B = 18%</td><td>低，回購非主要 capital 配置</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>原 Non-GAAP EPS 3Y CAGR ~22%；若無回購 ~21%（差距 1pp，&lt; 5pp 警示）</td><td><span class="bull">✅ 通過</span></td></tr>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 5 年 FCF 各年值</td><td>FY22 ~$50M / FY23 $250M / FY24 $390M / FY25 $400M / FY26 $410M</td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>$300M</td></tr>
+<tr><td>結論</td><td><span class="bull">🟢 業務穩定，FY23 起 FCF 持續正成長</span></td></tr>
+</table>
+
+</section>
+
+<!-- ========== §11 產業格局 ========== -->
+<section id="s11">
+<h2>§11 產業格局</h2>
+
+<p><strong>市場量化</strong>：</p>
+<ul>
+<li>TAM：$96B（FY26 雲端 + 自管 DB）→ $160B by 2030（CAGR ~14%）</li>
+<li>細分：NoSQL document DB $25B / OLTP DB $50B / Analytics DB $30B / Vector DB $5B (CAGR 45%)</li>
+<li>供需狀態：需求穩定，AI workload 為新 incremental 來源</li>
+</ul>
+
+<h3>議價權（三段獨立）</h3>
+
+<h4>① 對上游供應商（hyperscaler AWS / Azure / GCP）</h4>
+<p>MDB 對上游議價權為 <strong>「規模買家但 single-vendor lock-in 風險」</strong>。MDB Atlas 75%+ 工作負載在 AWS，享有 enterprise discount 30-40%，但同時面臨 AWS DocumentDB 競爭（API-compatible 直接 fork）。AWS 同時是供應商與競爭對手，這是結構性矛盾。Microsoft Cosmos DB + Azure 整合更深，MDB 在 Azure 客戶內議價權弱。GCP 為 weakest cloud 但雙方關係較中立。</p>
+
+<h4>② 對下游客戶（企業）</h4>
+<p>MDB 對下游議價權為 <strong>「中等 — Atlas + developer lock-in 強，但 PostgreSQL 替代壓力大」</strong>。65,200+ 客戶、Top 1 &lt; 3% 極分散，但 NRR 從 120% 降至 118% 顯示 expansion 受壓。中型企業遷移成本 6-12 個月 + $500K-2M 仍是 meaningful barrier；大企業 dual-DB 策略普遍（MDB + PostgreSQL 並存）。FY27 guide deceleration 部分反映 customer cost optimization 壓力。</p>
+
+<h4>③ 地緣曝險</h4>
+<p>MDB 核心業務地：美國 ~60%、歐洲 ~25%、亞太 ~15%。無中國 / 俄羅斯曝險。GDPR 已對應；無重大地緣風險。</p>
+
+<h3>營收組成</h3>
+
+<h4>① 按業務段</h4>
+<table>
+<tr><th>業務段</th><th>占比%</th><th>YoY%</th><th>OI Margin</th><th>3Y 軌跡</th></tr>
+<tr><td>Atlas（managed cloud）</td><td class="num">~72%</td><td class="num">+29%</td><td>主導</td><td>持續上升（FY24 65% → FY26 72%）</td></tr>
+<tr><td>Enterprise Advanced（自管）</td><td class="num">~25%</td><td class="num">~+5%</td><td>低</td><td>下降趨勢</td></tr>
+<tr><td>Professional Services + Other</td><td class="num">~3%</td><td class="num">~持平</td><td>低</td><td>持平</td></tr>
+</table>
+
+<h4>② 按地區</h4>
+<table>
+<tr><th>地區</th><th>占比%</th><th>YoY%</th></tr>
+<tr><td>美洲</td><td class="num">~60%</td><td class="num">~+20%</td></tr>
+<tr><td>EMEA</td><td class="num">~25%</td><td class="num">~+25%</td></tr>
+<tr><td>APAC</td><td class="num">~15%</td><td class="num">~+30%</td></tr>
+</table>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th><th>趨勢</th></tr>
+<tr><td>Atlas</td><td>ARPU per $100K+ customer</td><td>~$640K/yr ($2,799 客戶 × $1.78B = $635K avg)</td><td>↑（FY25 $580K → FY26 $640K）</td></tr>
+<tr><td>Enterprise Advanced</td><td>License + Support per customer</td><td>未具體揭露</td><td>持平</td></tr>
+</table>
+
+</section>
+
+<!-- ========== §12 公司治理 ========== -->
+<section id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<ul>
+<li><strong>創辦人持股</strong>：Dwight Merriman 仍持 ~2%；CEO Dev Ittycheria（2014 加入）持 ~1%</li>
+<li><strong>機構集中度</strong>：機構持股 ~85%；Vanguard / BlackRock / T. Rowe Price 為 top holders</li>
+<li><strong>內部人交易</strong>：CEO + CFO 按 10b5-1 plan 持續賣出，屬 SaaS 高管常態；無 unusual pattern</li>
+</ul>
+
+<h3>資本配置軌跡</h3>
+<ul>
+<li>再投資：R&amp;D $450M/年（占 Rev ~18%）+ S&amp;M $1B/年（占 Rev ~41%）— 高度 reinvestment</li>
+<li>併購：Voyage AI（2024，AI embedding）+ 其他小型補位</li>
+<li>回購：$200M（3 年累計）— 主要 offset SBC 稀釋</li>
+</ul>
+
+<h4>過去 5 年 M&amp;A track record</h4>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額（$M）</th><th>整合結果</th><th>減損紀錄</th></tr>
+<tr><td>2024</td><td>Voyage AI（vector embedding model）</td><td>未披露</td><td>整合中（2026 Atlas Vector Search 強化）</td><td>無</td></tr>
+<tr><td>2019</td><td>Realm（mobile DB）</td><td>$39M</td><td>整合為 Realm Mobile DB / Atlas Device Sync</td><td>無</td></tr>
+</table>
+<p>過去 5 年無重大 M&amp;A，有機成長為主</p>
+
+<h3>管理層薪酬結構</h3>
+<ul>
+<li>固定薪：低 — CEO ~$800K / CFO ~$600K</li>
+<li>績效獎金：中等</li>
+<li>股權激勵：高 — RSU + PSU 占 ~75%，4-year vesting</li>
+</ul>
+
+<h3>SBC 真實稀釋</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Revenue（近 3 年）</td><td>FY24 25% / FY25 24% / FY26 24%（持平）</td></tr>
+<tr><td>GAAP EPS（FY26）</td><td>~-$1.00</td></tr>
+<tr><td>Non-GAAP EPS（FY26）</td><td>~$4.20</td></tr>
+<tr><td><strong>差距</strong></td><td><strong>~$5.20</strong>（SBC 為主因）</td></tr>
+<tr><td><strong>剔除 SBC 後 EPS CAGR</strong></td><td>原 Non-GAAP CAGR 22% vs 剔除 SBC 21%（差距 1pp，&lt; 5pp 警示門檻內）</td></tr>
+</table>
+
+</section>
+
+<!-- ========== §13 估值診斷 ========== -->
+<section id="s13">
+<h2>§13 估值診斷</h2>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>N/A（GAAP 虧損）</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Forward P/E NTM (Non-GAAP)</td><td class="num">57.7x</td><td class="num">~40x</td><td class="num">~70x</td><td class="num">~150x</td><td class="num">~25%</td></tr>
+<tr><td>EV/EBITDA</td><td>N/A</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>P/FCF</td><td class="num">~65x</td><td class="num">~30x</td><td class="num">~70x</td><td class="num">~200x</td><td class="num">~30%</td></tr>
+<tr><td>EV/Sales NTM</td><td class="num">~7x</td><td class="num">~5x</td><td class="num">~12x</td><td class="num">~25x</td><td class="num">~10%</td></tr>
+</table>
+
+<div class="reasoning">
+EV/Sales 7x 5Y 分位 10% = 極端便宜（已從 2021 高 25x 壓縮 72%）
+Forward PE NTM 57.7x 5Y 分位 25% = 中性偏便宜
+→ §2 D 估值燈 🟠 由 PEG 主導，但 EV/Sales 確認非極端過熱
+</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E (NTM)</td><td class="num">57.7x</td><td>—</td><td>絕對值偏高</td></tr>
+<tr><td>Non-GAAP EPS CAGR (3 年)</td><td class="num">22%</td><td>—</td><td>FY26 $4.20 → FY29E $8.00</td></tr>
+<tr><td><strong>PEG (Non-GAAP, 3 年)</strong></td><td class="num">2.62</td><td>&lt; 1.0 便宜 / 1-2 合理 / &gt; 2 貴</td><td>剛跨入「貴」</td></tr>
+<tr><td>5Y EPS CAGR（含 Runway）</td><td class="num">~20%</td><td>—</td><td>FY26-FY31 推導</td></tr>
+<tr><td>PEG (5 年)</td><td class="num">2.89</td><td>—</td><td>長期視角更偏貴</td></tr>
+</table>
+
+<div class="reasoning">
+PEG = 57.7 ÷ 22 = 2.62 邊界貴
+5Y PEG 2.89 更偏貴，反映成長 trajectory deceleration
+→ §2 D 估值燈 🟠 維持
+</div>
+
+<h3>13.4｜同業估值比較（強制 peer group tier）</h3>
+
+<p>本標的業務模式 tier：<strong>NoSQL document DB + cloud SaaS</strong>。Peer group 應以 consumption-led SaaS data infra tier 為主（SNOW / DDOG / NET / CFLT / ESTC），避免與純訂閱型 CRM / NOW 比 PE。</p>
+
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E (NTM)</th><th>EV/Sales NTM</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR (3Y)</th><th>NRR</th></tr>
+<tr><td><strong>MDB</strong></td><td class="num">$26B</td><td class="num">57.7x</td><td class="num">7x</td><td class="num">2.62</td><td class="num">17%</td><td class="num">22%</td><td class="num">118%</td></tr>
+<tr><td>SNOW（Snowflake）</td><td class="num">$59.7B</td><td class="num">71x</td><td class="num">9.5x</td><td class="num">2.03</td><td class="num">24%</td><td class="num">35%</td><td class="num">125%</td></tr>
+<tr><td>DDOG（Datadog）</td><td class="num">~$45B</td><td class="num">86x</td><td class="num">13x</td><td class="num">~2.5</td><td class="num">32%</td><td class="num">~28%</td><td class="num">~115%</td></tr>
+<tr><td>NET（Cloudflare）</td><td class="num">~$50B</td><td class="num">~150x</td><td class="num">20x</td><td class="num">~4.5</td><td class="num">12%</td><td class="num">~28%</td><td class="num">~110%</td></tr>
+<tr><td>ESTC（Elastic）</td><td class="num">~$10B</td><td class="num">~25x</td><td class="num">5x</td><td class="num">~1.5</td><td class="num">15%</td><td class="num">~17%</td><td class="num">~108%</td></tr>
+<tr><td><strong>同 tier 中位數</strong></td><td>—</td><td class="num">~71x</td><td class="num">9.5x</td><td class="num">~2.5</td><td class="num">17%</td><td class="num">~25%</td><td class="num">~115%</td></tr>
+</table>
+
+<div class="reasoning">
+MDB Fwd PE 57.7x vs tier 中位 71x = -19% 折價；EV/Sales 7x vs 9.5x = -26% 折價
+MDB NRR 118% 高於 NET/ESTC 但低於 SNOW；FCF margin 17% 為中位偏低
+→ implication：估值折價部分被「成長最慢 + NRR 趨勢下滑」對沖；mean reversion upside 有限 (~10-20%)
+</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 EV/Sales 5Y 分位 10%（極端便宜）+ Fwd PE 5Y 分位 25%（中性偏便宜）+ 13.2 PEG 2.62（邊界剛跨入貴）+ 13.4 同業相對 -19% Fwd PE 折價（有部分基本面對沖）→ 綜合估值訊號：<span class="warn">🟠 偏貴（基本面對沖後估值便宜不顯著）</span>。完整裁決見 §1 dashboard。</p>
+
+<p><strong>分析師目標價參考</strong>：</p>
+<ul>
+<li>高 $495 / 中位 $356.74 / 低 $260（n=39 位）</li>
+<li>共識 Buy；BMO $360 / BofA $375 / Citi $450</li>
+<li>本研究判斷：認同 Buy 但偏保守，預期合理 2027 末目標 $300-380（隱含 5Y CAGR ~5-8%）</li>
+</ul>
+
+<h3>投資結論（精簡財報校準段）</h3>
+
+<p><strong>財報信號與假設校準</strong></p>
+<ul>
+<li>H1 當前狀態：<strong>0 中性</strong>（Atlas +29% 仍強，但 FY27 Atlas guide +21-23% 顯示放緩）</li>
+<li>H2 當前狀態：<strong>削弱</strong>（NRR 從 120% 降至 118%，趨勢未止）</li>
+<li>H3 當前狀態：<strong>0 中性</strong>（FCF margin 維持 17%）</li>
+<li><strong>這份財報讓隱含預期變得更難兌現，理由是 FY27 guide 顯著保守 + NRR deceleration + Q1 FY27 EPS guide miss 引發 AH -20%。</strong></li>
+</ul>
+
+<p><strong>綜合訊號輸出</strong></p>
+<ul>
+<li>護城河等級：B → 調整後：B（體質 veto 4/5 通過）</li>
+<li>估值燈：🟠 偏貴（PEG 2.62）</li>
+<li>Pure MA 狀態：🟡 觀察池（V 型反彈中）</li>
+<li>大盤豁免：正常（×1.0）</li>
+<li><strong>綜合訊號：<span class="signal-grade">B</span></strong>（衛星候選，觀望等修復）</li>
+<li>中期參考 R:R：-0.005x（資訊性，現價已透支）</li>
+<li>訊號語意：B = 衛星候選，PM 層可考慮 3-5% 試倉</li>
+<li><strong>倉位 % 決策不在本 DD 範圍</strong>，交由 portfolio-manager skill 處理</li>
+</ul>
+
+<p><strong>① 短期信號（0-12 個月）</strong>：Q1 FY27 (5/28/2026) 將至，分析師預期 Atlas 仍 +25-26% + EPS $1.15-1.19；若 beat + NRR 守 118% 則股價可能反彈至 $380；若 miss 則回測 $260 區。建議 earning 前不追，earning 後若 Atlas +25%+ + NRR ≥ 118% 進場。</p>
+
+<p><strong>② 中期成長確信度（1-2 年）</strong>：FY27 product rev guide $2.86-2.90B（+16-18%）+ FY28 EPS 共識 $6.50（+25% YoY）— 驅動因素是 Atlas 持續 expansion + Vector Search ramp，能見度中等。</p>
+
+<p><strong>③ 長期持有信心（3-5 年）</strong>：成長跑道 5-7 年 / 護城河 execution 持平 + pricing power 受壓 / 長期持有信心：<strong>中</strong></p>
+
+<p><strong>下行風險量化</strong>：</p>
+<ul>
+<li>Bear Case：$117，現價至 Bear 距離 -64%</li>
+<li>W52 Low $188.83（參考）/ W104 Low $154.39（參考）</li>
+<li>若 FY+1 EPS 再下修 10%（Q1 FY27 後 NRR 跌破 115% 觸發），合理 PE 從 45x 壓至 38x → 短期目標價從 $234 降至 $178，R:R 進一步惡化</li>
+<li>SaaS 整體 EV/Sales sector 倍數若再壓 30%（從當前中位 ~8x 壓至 ~5.5x），MDB EV/Sales 從 7x 壓至 ~5x，對應股價 ~$240（-26%）— 屬非 ticker-specific 系統性風險，不直接 priced</li>
+</ul>
+
+<p><strong>關鍵 catalyst 日期表</strong>：</p>
+<table>
+<tr><th>日期</th><th>事件</th><th>對 MDB 影響</th></tr>
+<tr><td>2026-05-28</td><td>Q1 FY27 報告 + Earnings Call（盤後）</td><td>🔴 高 — 短期 binary catalyst；Atlas growth + NRR 趨勢驗證</td></tr>
+<tr><td>2026-06（預估）</td><td>MongoDB World 2026 年會</td><td>🟡 中 — 新產品 / Voyage AI 整合進展 / Atlas Vector Search 路線圖</td></tr>
+<tr><td>2026-08（預估）</td><td>Q2 FY27 報告</td><td>🟡 中 — guidance 是否上修</td></tr>
+<tr><td>2026-09 至 2026-12（預估）</td><td>Databricks IPO 路演 + 定價（影響 Lakebase 競爭 narrative）</td><td>🔴 高 — 結構性 catalyst</td></tr>
+<tr><td>2026-11（預估）</td><td>Q3 FY27 報告</td><td>🟡 中</td></tr>
+<tr><td>2027-03（預估）</td><td>Q4 FY27 + FY28 guide</td><td>🔴 高 — FY28 vision setting</td></tr>
+</table>
+
+</section>
+
+<!-- ========== dd-meta JSON ========== -->
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "MDB",
+  "schema": "v12.4",
+  "date": "2026-05-24",
+  "price_at_dd": 326.13,
+  "currency": "USD",
+  "market_cap_b": 26.0,
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "觀察期",
+  "moat": "B",
+  "moat_score": 7.0,
+  "moat_execution": 7,
+  "moat_pricing_power": 7,
+  "val": "🟠",
+  "ma": "🟡",
+  "ai_risk": "🟡",
+  "industry_wind": "🟡",
+  "fpe_fy1": 62.7,
+  "fpe_fy2": 50.2,
+  "pct_5y": 25,
+  "peg_fy2": 2.62,
+  "peg_3y": 2.62,
+  "peg_5y": 2.89,
+  "eps_cagr_3y": 22.0,
+  "eps_source": "WebSearch fallback (MDB not in Excel snapshot 2026-05-20); Q4 FY26 post-print consensus 下修 -10-15%",
+  "fcf_margin": 17,
+  "nrr": 118,
+  "rr_short": -0.44,
+  "rr_mid": -0.005,
+  "rr_5y": 0.20,
+  "stress": {"pass": 2, "total": 2},
+  "upside_short_pct": -28,
+  "upside_mid_pct": -0.4,
+  "upside_5y_pct": 13,
+  "target_short": 234,
+  "target_mid": 325,
+  "target_5y": 367,
+  "bear_price": 117,
+  "growth_durability": 6,
+  "quality_score": 7,
+  "long_term_confidence": "中",
+  "verdict": "B 觀望（thesis 部分完整、Atlas 仍強 + FCF 17% 健康，但 FY27 guide deceleration + NRR 趨勢下滑 + Databricks/Snowflake PostgreSQL 雙路攻勢；等 Q1 FY27 5/28 + Atlas YoY ≥ +25% + NRR ≥ 118% 後再行動）",
+  "inception_dd": "DD_MDB_20260524.html",
+  "inception_date": "2026-05-24",
+  "oneliner": "MDB Q4 FY26 Rev $695M +27% beat / Atlas +29% / NRR 118%；FY27 guide +16-18% 最弱→AH-20%．估值🟠 PEG 2.62 + MA 🟡 V反彈 + Q1 FY27 5/28 catalyst．B 觀望，等 Atlas+25%+NRR≥118%再進場."
+}
+</script>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+</div>
+</body>
+</html>
