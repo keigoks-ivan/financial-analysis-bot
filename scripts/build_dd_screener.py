@@ -299,6 +299,99 @@ def _percentile_rank_value(val: float, population: list[float]) -> float:
     return sum(1 for x in population if x <= val) / len(population) * 100.0
 
 
+def _chunked_download_with_retry(
+    tickers: list[str],
+    period: str = "300d",
+    interval: str = "1d",
+    chunk_size: int = 50,
+    max_retries: int = 3,
+    backoff_seconds: tuple[int, ...] = (15, 60, 180),
+) -> "pd.DataFrame":
+    """Batch-fetch daily OHLC for many tickers, robust to yfinance rate-limits.
+
+    Splits the ticker list into chunks of ``chunk_size`` and downloads each
+    chunk independently. If a chunk raises ``YFRateLimitError`` or returns an
+    empty frame, it is retried up to ``max_retries`` times with exponential
+    backoff per ``backoff_seconds``. Successful chunks are concatenated into
+    a single multi-index DataFrame (columns = MultiIndex(ticker, ohlc)) that
+    matches the shape of ``yf.download(group_by='ticker')``.
+
+    Failed chunks are silently dropped — downstream callers handle missing
+    tickers via ``_get_closes() returning None``. Never raises.
+    """
+    if not tickers:
+        return pd.DataFrame()
+
+    chunks: list[pd.DataFrame] = []
+    n_chunks = (len(tickers) + chunk_size - 1) // chunk_size
+    failed_tickers: list[str] = []
+
+    for chunk_idx in range(n_chunks):
+        chunk_tickers = tickers[chunk_idx * chunk_size:(chunk_idx + 1) * chunk_size]
+        chunk_df: pd.DataFrame | None = None
+
+        for attempt in range(max_retries):
+            try:
+                df = yf.download(
+                    chunk_tickers,
+                    period=period,
+                    interval=interval,
+                    group_by="ticker",
+                    progress=False,
+                    threads=True,
+                    auto_adjust=True,
+                )
+                # Empty frame = rate-limited or all tickers invalid — retry.
+                if df is None or df.empty:
+                    raise RuntimeError("empty frame returned (likely rate-limited)")
+                chunk_df = df
+                break
+            except Exception as exc:
+                exc_name = type(exc).__name__
+                if attempt < max_retries - 1:
+                    delay = backoff_seconds[min(attempt, len(backoff_seconds) - 1)]
+                    print(
+                        f"  [chunked] chunk {chunk_idx + 1}/{n_chunks} "
+                        f"attempt {attempt + 1}/{max_retries} failed "
+                        f"({exc_name}); sleeping {delay}s ...",
+                        file=sys.stderr,
+                    )
+                    time.sleep(delay)
+                else:
+                    print(
+                        f"  [chunked] chunk {chunk_idx + 1}/{n_chunks} "
+                        f"exhausted {max_retries} retries ({exc_name}); "
+                        f"dropping {len(chunk_tickers)} tickers",
+                        file=sys.stderr,
+                    )
+                    failed_tickers.extend(chunk_tickers)
+
+        if chunk_df is not None:
+            chunks.append(chunk_df)
+            # Small inter-chunk delay to be gentle on yfinance even on success.
+            if chunk_idx < n_chunks - 1:
+                time.sleep(2)
+
+    if not chunks:
+        print(f"  [chunked] all {n_chunks} chunks failed", file=sys.stderr)
+        return pd.DataFrame()
+
+    # Concat along columns axis; pandas will align ticker MultiIndex correctly.
+    try:
+        combined = pd.concat(chunks, axis=1)
+    except Exception as exc:
+        print(f"  [chunked] concat failed: {exc}", file=sys.stderr)
+        return pd.DataFrame()
+
+    succeeded = len(tickers) - len(failed_tickers)
+    print(
+        f"  [chunked] Done: {succeeded}/{len(tickers)} tickers fetched "
+        f"across {n_chunks} chunks (chunk_size={chunk_size})",
+        file=sys.stderr,
+    )
+    return combined
+
+
 def compute_yfinance_timing_fallback(
     missing_tickers: list[str],
     screener_data: dict[str, dict],
@@ -340,18 +433,21 @@ def compute_yfinance_timing_fallback(
         file=sys.stderr,
     )
 
-    try:
-        raw = yf.download(
-            all_yf_tickers,
-            period="300d",
-            interval="1d",
-            group_by="ticker",
-            progress=False,
-            threads=True,
-            auto_adjust=True,
-        )
-    except Exception as exc:
-        print(f"  [fallback] yf.download failed: {exc}", file=sys.stderr)
+    # Chunked download with retry/backoff (added 2026-05-24).
+    # Yahoo Finance tightened rate-limits in 2024-2025; a single batch of
+    # 500+ tickers reliably trips YFRateLimitError, wiping the entire
+    # timing column. Chunks of 50 with exponential backoff make the build
+    # resilient without re-runs.
+    raw = _chunked_download_with_retry(
+        all_yf_tickers,
+        period="300d",
+        interval="1d",
+        chunk_size=50,
+        max_retries=3,
+        backoff_seconds=(15, 60, 180),
+    )
+    if raw is None or raw.empty:
+        print(f"  [fallback] yf.download returned empty after retries", file=sys.stderr)
         return {}
 
     # Helper: extract Close series for a yf ticker from the multi-ticker frame.
