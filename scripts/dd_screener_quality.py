@@ -74,6 +74,7 @@ EU_SUFFIX_MAP = {
     "AENA": ".MC",   # Madrid
     "BESI": ".AS",   # Amsterdam
     "RMS":  ".PA",   # Paris (Hermès)
+    "SU":   ".PA",   # Paris (Schneider Electric)
 }
 
 # For cases where the yfinance ticker does NOT follow the simple suffix-append
@@ -81,6 +82,7 @@ EU_SUFFIX_MAP = {
 # explicit override. Checked BEFORE EU_SUFFIX_MAP in resolution helpers.
 TICKER_YF_OVERRIDE = {
     "LVMH": "MC.PA",   # Euronext Paris (primary EUR listing)
+    "ABB":  "ABBNY",   # NYSE ADR (USD); ABB on its own returns 404 on yfinance
 }
 
 
