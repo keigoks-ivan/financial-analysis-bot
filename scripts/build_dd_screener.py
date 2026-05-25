@@ -88,6 +88,7 @@ from update_dd_index import (  # noqa: E402
 )
 from load_eps_estimates_xlsx import (  # noqa: E402
     ExcelSnapshot,
+    find_latest_excel,
     load_latest_excel,
 )
 
@@ -828,6 +829,21 @@ def _fetch_live_fy_eps(
             fx = yf_eps_0y / xlsx_usd_fy1
         elif yf_eps_1y and xlsx_usd_fy2 and xlsx_usd_fy2 > 0:
             fx = yf_eps_1y / xlsx_usd_fy2
+        # Fallback: yfinance.info.epsCurrentYear / forwardEps (separate endpoint
+        # bucket — survives earnings_estimate rate-limit). Both are in local
+        # currency (financialCurrency). epsCurrentYear matches Excel fy1 semantics
+        # most closely; forwardEps is NTM and slightly biased toward fy2.
+        if (not fx or fx <= 0) and xlsx_usd_fy1 and xlsx_usd_fy1 > 0:
+            try:
+                _info = yf.Ticker(yf_ticker).info
+                _eps_cy = _info.get("epsCurrentYear")
+                _eps_fw = _info.get("forwardEps")
+                if _eps_cy and float(_eps_cy) > 0:
+                    fx = float(_eps_cy) / xlsx_usd_fy1
+                elif _eps_fw and float(_eps_fw) > 0:
+                    fx = float(_eps_fw) / xlsx_usd_fy1
+            except Exception:
+                pass
         if fx and fx > 0:
             # Try to read financialCurrency from yfinance info (typically already
             # fetched above for currency_mismatch detection; this is best-effort).
@@ -1029,9 +1045,15 @@ _PREV_MONTH_SNAPSHOT_LOADED: bool = False
 
 
 def _load_prev_month_snapshot() -> dict:
-    """Load the previous month's EPS snapshot (with 60-day grace period).
+    """Load the previous EPS snapshot used as baseline for revision computation.
 
-    Running on 2026-06-15 → looks for 2026-05.json first, then 2026-04.json.
+    Lookup order:
+      1. Intra-month dated baseline within current Excel's month:
+         eps-estimates-snapshots/{YYYY-MM}-DD.json with DD < current Excel date.
+         Picks the most recent one — supports multiple intra-month refreshes
+         (e.g. 5/20 Excel then 5/25 Excel: 5/25 build compares vs 5/20).
+      2. Existing month-back fallback: 1 then 2 months back from wall clock,
+         {YYYY-MM}.json (canonical month-end snapshot).
     Returns the full snapshot dict (with "tickers" key), or {} if not found.
     Cached at module level so subsequent per-ticker calls don't re-read disk.
     """
@@ -1042,6 +1064,40 @@ def _load_prev_month_snapshot() -> dict:
     _PREV_MONTH_SNAPSHOT_LOADED = True
     snapshot_dir = ROOT / "docs" / "dd-screener" / "eps-estimates-snapshots"
 
+    # Step 1: intra-month dated baseline. Derive current Excel snapshot date
+    # from data/eps-estimates/ filename (DD_universe_EPS_estimates_YYYYMMDD.xlsx).
+    try:
+        latest_xlsx = find_latest_excel()
+    except Exception:
+        latest_xlsx = None
+    if latest_xlsx is not None:
+        import re
+        m = re.search(r"_(\d{4})(\d{2})(\d{2})\.xlsx$", latest_xlsx.name)
+        if m:
+            cy, cm, cd = m.group(1), m.group(2), m.group(3)
+            current_date_iso = f"{cy}-{cm}-{cd}"
+            current_month = f"{cy}-{cm}"
+            # Find dated baselines in the same month, strictly older
+            dated_re = re.compile(rf"^{current_month}-(\d{{2}})\.json$")
+            candidates = []
+            if snapshot_dir.exists():
+                for p in snapshot_dir.iterdir():
+                    mm = dated_re.match(p.name)
+                    if mm and mm.group(1) < cd:
+                        candidates.append(p)
+            if candidates:
+                pick = sorted(candidates, key=lambda p: p.name)[-1]
+                try:
+                    data = json.loads(pick.read_text(encoding="utf-8"))
+                    _PREV_MONTH_SNAPSHOT_CACHE = data
+                    print(f"  EPS baseline: intra-month {pick.name} "
+                          f"(current Excel {current_date_iso})", file=sys.stderr)
+                    return _PREV_MONTH_SNAPSHOT_CACHE
+                except Exception as exc:
+                    print(f"  WARN: failed to load intra-month baseline {pick}: {exc}",
+                          file=sys.stderr)
+
+    # Step 2: existing month-back fallback
     now = datetime.now(timezone(timedelta(hours=8)))  # Taipei TZ
     for months_back in (1, 2):
         # Compute YYYY-MM for (now - N months)
@@ -1168,16 +1224,18 @@ def _compute_live_ev5y(entry: dict, ma: dict) -> dict:
 
 
 def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
-                              eps_next: float | None, prev_snapshot: dict) -> dict:
-    """Compute month-over-month FY1 / FY2 EPS revision % vs previous Excel snapshot.
+                              eps_next: float | None, eps_fy3: float | None,
+                              prev_snapshot: dict) -> dict:
+    """Compute period-over-period FY1 / FY2 / FY3 EPS revision % vs prev snapshot.
 
     Returns dict with eps_fy_curr_revision_pct, eps_fy_next_revision_pct,
-    eps_revision_baseline_date. Values None when previous snapshot is missing or
-    ticker wasn't in last month's snapshot (new addition).
+    eps_fy3_revision_pct, eps_revision_baseline_date. Values None when previous
+    snapshot is missing or ticker wasn't in prior snapshot (new addition).
     """
     out = {
         "eps_fy_curr_revision_pct": None,
         "eps_fy_next_revision_pct": None,
+        "eps_fy3_revision_pct": None,
         "eps_revision_baseline_date": None,
     }
     if not prev_snapshot:
@@ -1191,10 +1249,13 @@ def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
         return out
     prev_curr = prev_row.get("eps_fy_curr") or prev_row.get("eps_0y")
     prev_next = prev_row.get("eps_fy_next") or prev_row.get("eps_1y")
+    prev_fy3 = prev_row.get("eps_fy3")
     if eps_curr and prev_curr and prev_curr > 0:
         out["eps_fy_curr_revision_pct"] = round((eps_curr / prev_curr - 1) * 100, 2)
     if eps_next and prev_next and prev_next > 0:
         out["eps_fy_next_revision_pct"] = round((eps_next / prev_next - 1) * 100, 2)
+    if eps_fy3 and prev_fy3 and prev_fy3 > 0:
+        out["eps_fy3_revision_pct"] = round((eps_fy3 / prev_fy3 - 1) * 100, 2)
     return out
 
 
@@ -1355,7 +1416,14 @@ def enrich_ticker(
     # v1.8: per-FY EPS revision vs previous month's Excel snapshot
     eps_curr_val = _lfy.get("eps_0y_raw")
     eps_next_val = _lfy.get("eps_1y_raw")
-    fy_revision = _compute_fy_eps_revision(t, eps_curr_val, eps_next_val, prev_snapshot or {})
+    # v1.8.6: revision must compare apples-to-apples in USD. When FX conversion
+    # ran (foreign listings), eps_0y_raw / eps_1y_raw are in local currency but
+    # the prior snapshot stored raw Excel USD. Use *_usd_orig for the diff so
+    # TW/JP/HK don't show absurd ~3000% revisions on currency basis change.
+    _rev_curr = _lfy.get("eps_fy_curr_usd_orig") or eps_curr_val
+    _rev_next = _lfy.get("eps_fy_next_usd_orig") or eps_next_val
+    _rev_fy3 = _lfy.get("eps_fy3_usd_orig") or _lfy.get("eps_fy3")
+    fy_revision = _compute_fy_eps_revision(t, _rev_curr, _rev_next, _rev_fy3, prev_snapshot or {})
 
     return {
         **entry,

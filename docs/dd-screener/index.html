@@ -316,14 +316,15 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
     <h3>表格欄位說明</h3>
 
     <div style="background:#fef7e7;border:1px solid #fbcf80;border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:11px;line-height:1.7;color:#5a4a1e">
-      <strong style="color:#7c4a07;display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">EPS 修正動能 — v1.9 改用 Excel forward CAGR</strong>
-      <strong>FY+1→FY+3 CAGR</strong> 欄右方的 <span style="color:#166534;font-weight:600">↑+X.Xpp</span> / <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span> 小字，是「本月 Excel forward CAGR」對照「上月 Excel snapshot」的差值（pp = percentage point）。
+      <strong style="color:#7c4a07;display:block;margin-bottom:6px;font-size:12px;letter-spacing:.02em">EPS 修正動能 — v1.10 動態 baseline + FY3 加入</strong>
+      <strong>FY+1→FY+3 CAGR</strong> 欄右方的 <span style="color:#166534;font-weight:600">↑+X.X% (5D)</span> / <span style="color:#991B1B;font-weight:600">↓-X.X% (1M)</span> 小字，是「本份 Excel forward CAGR」對照「上一份 Excel snapshot」的差值；尾段 <code>(5D)</code> / <code>(1M)</code> 是 baseline 多舊。<strong>Curr / Next / FY+3 EPS</strong> 三欄底下也都有同樣 chip — FY1 / FY2 / FY3 各自獨立 vs baseline。
       <br>• <strong>上修（綠）</strong>：分析師對未來 EPS 估算往上調 — 業界已知 alpha factor（Womack 1996 + Bloomberg / FactSet 同名指標），上修股票後續 6-12 個月傾向 outperform
       <br>• <strong>下修（紅）</strong>：估算往下調，常為基本面領先指標壞訊號
-      <br>• <strong>持平</strong>（|diff| &lt; 0.5pp）：不顯示箭頭，避免雜訊
-      <br>• <strong>「新」chip（灰）</strong>：此 ticker 上月還不在 universe（新加 DD / 新 cover），無對照
-      <br>• <strong>無顯示</strong>：首月 baseline 累積中（snapshot 還沒滿一個月）— hover 看 tooltip 確認
-      <br>每月 2 號 09:00 Taipei 自動 snapshot（<code>.github/workflows/monthly-eps-snapshot.yml</code> → <code>scripts/snapshot_eps_estimates.py</code>），存於 <code>docs/dd-screener/eps-estimates-snapshots/YYYY-MM.json</code>。
+      <br>• <strong>持平</strong>（|diff| &lt; 0.5%）：不顯示箭頭，避免雜訊
+      <br>• <strong>「新」chip（灰）</strong>：此 ticker 上一份 snapshot 還不在 universe（新加 DD / 新 cover），無對照
+      <br>• <strong>無顯示</strong>：首份 baseline 累積中（snapshot 還沒有 prior）— hover 看 tooltip 確認
+      <br><strong>CAGR 數字單位細節</strong>：CAGR chip 顯示的是「兩個 CAGR % 的絕對差」（兩個百分點之差），但為了視覺與 FY1/FY2/FY3 EPS chip 一致，後綴用 <code>%</code> 而非 <code>pp</code>。tooltip 會標註絕對差語意。
+      <br>baseline 來源優先順序：(1) 同月內較早的 <code>{YYYY-MM}-DD.json</code>（intra-month 5/20→5/25 這種短期 refresh），(2) 1-2 個月前的月度 snapshot。每月 2 號 09:00 Taipei 自動 snapshot（<code>.github/workflows/monthly-eps-snapshot.yml</code> → <code>scripts/snapshot_eps_estimates.py</code>），存於 <code>docs/dd-screener/eps-estimates-snapshots/YYYY-MM.json</code>。
     </div>
 
     <ul>
@@ -352,7 +353,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
       <li><strong>FY+1→FY+3 CAGR</strong>：Excel buy-side forward 2Y CAGR（%）— <strong>v1.9 起改用 Excel snapshot</strong>。
         <br><em>來源：</em>Excel <code>cagr_fy1_fy3_pct</code>（FY+1 → FY+3 純前瞻 2 年期複合成長率，144/146 ticker 覆蓋）；2 檔日股 fallback yfinance 「+1y / +2y」row。
         <br><em>窗口語意：</em>跟舊版「yearAgo → FY+1」(含 1 個過去實際 EPS) 不同；現在是 2 個前瞻 estimate (FY+1 vs FY+3) — buy-side 對未來 2 年的純前瞻 expectation。
-        <br><em>修正動能：</em>右方小字 <span style="color:#166534;font-weight:600">↑+X.Xpp</span>（綠 = 上修）/ <span style="color:#991B1B;font-weight:600">↓-X.Xpp</span>（紅 = 下修）= 本月 Excel CAGR vs 上月 Excel snapshot 差值；|diff| &lt; 0.5pp 視為持平（不顯示箭頭）；「新」chip = 此 ticker 上月 baseline 未收錄。詳見上方「EPS 修正動能」callout。
+        <br><em>修正動能：</em>右方小字 <span style="color:#166534;font-weight:600">↑+X.X% (5D)</span>（綠 = 上修）/ <span style="color:#991B1B;font-weight:600">↓-X.X% (1M)</span>（紅 = 下修）= 本份 Excel CAGR vs 上一份 Excel snapshot 差值（絕對 pp 差，標 % 為視覺一致）；尾段 <code>(5D/1M)</code> 動態反映 baseline 多舊；|diff| &lt; 0.5 視為持平；「新」chip = 此 ticker 上份 baseline 未收錄。詳見上方「EPS 修正動能」callout。
         <br><em>QGM MLB 門檻：</em><code>≥ 15%</code>（顏色基於 Excel forward CAGR；server 端 <code>pass_count</code> 同一欄位 — v1.9 已與 UI 顯示對齊）
       </li>
 
@@ -737,6 +738,28 @@ function _renderLivePEGCell(s, flag) {
   return '<td' + tip + ' style="' + cellStyle(liveFlag) + '">' + display + '</td>';
 }
 
+// Dynamic baseline-age label: "5D" / "12D" / "1M" / "2M" based on
+// elapsed days between as_of and eps_revision_baseline_date. Replaces the
+// hard-coded "1M" (originally month-over-month) so intra-month refreshes
+// show their actual age ("5D" when baseline is 5 days old, etc.).
+var __AS_OF_GLOBAL = null;
+function _baselineAgeLabel(baselineDate) {
+  if (!baselineDate || !__AS_OF_GLOBAL) return '';
+  var b = String(baselineDate);
+  // baselineDate may be "YYYY-MM-DD" or fallback "YYYY-MM" — pad to first day
+  if (/^\d{4}-\d{2}$/.test(b)) b = b + '-01';
+  var bd = new Date(b);
+  var asOfStr = String(__AS_OF_GLOBAL);
+  if (/^\d{4}-\d{2}$/.test(asOfStr)) asOfStr = asOfStr + '-01';
+  var ao = new Date(asOfStr);
+  if (isNaN(bd) || isNaN(ao)) return '';
+  var days = Math.round((ao - bd) / 86400000);
+  if (days <= 0) return '0D';
+  if (days <= 21) return days + 'D';
+  var months = Math.round(days / 30);
+  return months + 'M';
+}
+
 function _renderLiveEPSCell(s, flag) {
   // v1.9: 顯示 Excel FY+1→FY+3 forward CAGR (eps_fy1_fy3_cagr_pct) 取代舊
   // yfinance YearAgo→FY+1 mixed-window CAGR (eps2y_live)。MoM revision delta
@@ -751,21 +774,29 @@ function _renderLiveEPSCell(s, flag) {
     return '<td>—</td>';
   }
   var display = '<strong>' + cagr.toFixed(1) + '%</strong>';
+  // CAGR baseline age label — uses eps_revision_baseline_date when present
+  // (per-FY revision baseline; intra-month aware), falls back to eps2y prev_date.
+  var cagrBaselineDate = s.eps_revision_baseline_date || prevDate;
+  var cagrAgeLabel = _baselineAgeLabel(cagrBaselineDate);
+  var cagrAgeSuffix = cagrAgeLabel ? (' (' + cagrAgeLabel + ')') : '';
   if (revDir === '上修' || revDir === '下修') {
     var revColor = revDir === '上修' ? '#166534' : '#991B1B';
     var arrow = revDir === '上修' ? '↑' : '↓';
     var revSign = revPp > 0 ? '+' : '';
-    display += '<span style="font-size:9px;color:' + revColor + ';margin-left:3px;font-weight:600">' + arrow + revSign + revPp.toFixed(1) + 'pp</span>';
+    // v1.10: drop "pp" suffix for visual consistency with EPS revision chip.
+    // Underlying math is still absolute pp delta of two CAGR percentages.
+    display += '<span style="font-size:9px;color:' + revColor + ';margin-left:3px;font-weight:600">' + arrow + revSign + revPp.toFixed(1) + '%' + cagrAgeSuffix + '</span>';
   } else if (revDir === '新增') {
     display += '<span style="font-size:9px;color:#94a3b8;margin-left:3px">新</span>';
   }
   // tooltip
   var parts = ['Excel FY+1→FY+3 forward CAGR ' + cagr.toFixed(1) + '%'];
+  var cagrBaseTip = cagrBaselineDate ? ('baseline ' + cagrBaselineDate + (cagrAgeLabel ? ' (' + cagrAgeLabel + ' 前)' : '')) : 'baseline';
   if (revPp !== null && prevVal !== null) {
-    parts.push('上月 (' + prevDate + ') ' + prevVal.toFixed(1) + '%');
-    parts.push('修正 ' + (revPp > 0 ? '+' : '') + revPp.toFixed(1) + 'pp · ' + revDir);
+    parts.push(cagrBaseTip + ' ' + prevVal.toFixed(1) + '%');
+    parts.push('修正 ' + (revPp > 0 ? '+' : '') + revPp.toFixed(1) + 'pp (絕對差) · ' + revDir);
   } else if (revDir === '新增') {
-    parts.push('上月無此 ticker（新加入 universe）');
+    parts.push('baseline 無此 ticker（新加入 universe）');
   } else {
     parts.push('修正動能 baseline 累積中（首月 snapshot 尚未對照）');
   }
@@ -807,28 +838,33 @@ function _renderRawEpsCell(s, field) {
     }
   }
   var chip = '';
-  // v1.8: month-over-month revision chip for FY1 / FY2 (Excel-vs-Excel)
+  // v1.10: per-FY revision chip for FY1 / FY2 / FY3 (Excel-vs-prev-snapshot).
+  // Age suffix now dynamic — "5D" / "1M" / "{N}D" derived from baseline date.
   var revField = (field === 'eps_fy_curr') ? 'eps_fy_curr_revision_pct'
               : (field === 'eps_fy_next') ? 'eps_fy_next_revision_pct'
+              : (field === 'eps_fy3') ? 'eps_fy3_revision_pct'
               : null;
   if (revField) {
     var rev = s[revField];
     var baseDate = s.eps_revision_baseline_date;
+    var ageLabel = _baselineAgeLabel(baseDate);
+    var ageSuffix = ageLabel ? (' (' + ageLabel + ')') : '';
+    var baseTipName = baseDate ? (baseDate + (ageLabel ? ' / ' + ageLabel + ' 前' : '')) : '?';
     if (rev === null || rev === undefined) {
       chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">新</div>';
-      tipBase += ' | 上月無此 ticker 或首月部署';
+      tipBase += ' | baseline 無此 ticker 或首次部署';
     } else if (Math.abs(rev) < 0.5) {
       // 持平 — 不顯示箭頭
-      chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">±0%</div>';
-      tipBase += ' | vs 上月 (' + (baseDate || '?') + ') 持平';
+      chip = '<div style="font-size:9px;color:#94a3b8;margin-top:1px">±0%' + ageSuffix + '</div>';
+      tipBase += ' | vs ' + baseTipName + ' 持平';
     } else {
       var up = rev > 0;
       var color = up ? '#166534' : '#991B1B';
       var arrow = up ? '↑' : '↓';
       var sign = up ? '+' : '';
       chip = '<div style="font-size:9px;color:' + color + ';font-weight:600;margin-top:1px">'
-           + arrow + sign + rev.toFixed(1) + '% (1M)</div>';
-      tipBase += ' | vs 上月 (' + (baseDate || '?') + ') ' + (up ? '上修' : '下修') + ' ' + sign + rev.toFixed(1) + '%';
+           + arrow + sign + rev.toFixed(1) + '%' + ageSuffix + '</div>';
+      tipBase += ' | vs ' + baseTipName + ' ' + (up ? '上修' : '下修') + ' ' + sign + rev.toFixed(1) + '%';
     }
   }
   var tip = ' title="' + tipBase + '"';
@@ -1305,6 +1341,7 @@ fetch('./latest.json')
   })
   .then(function(data) {
     DATA = data;
+    __AS_OF_GLOBAL = data.as_of || null;
 
     // Seed custom thresholds from MLB preset
     if (data.presets && data.presets['MLB']) {
