@@ -1224,16 +1224,18 @@ def _compute_live_ev5y(entry: dict, ma: dict) -> dict:
 
 
 def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
-                              eps_next: float | None, prev_snapshot: dict) -> dict:
-    """Compute month-over-month FY1 / FY2 EPS revision % vs previous Excel snapshot.
+                              eps_next: float | None, eps_fy3: float | None,
+                              prev_snapshot: dict) -> dict:
+    """Compute period-over-period FY1 / FY2 / FY3 EPS revision % vs prev snapshot.
 
     Returns dict with eps_fy_curr_revision_pct, eps_fy_next_revision_pct,
-    eps_revision_baseline_date. Values None when previous snapshot is missing or
-    ticker wasn't in last month's snapshot (new addition).
+    eps_fy3_revision_pct, eps_revision_baseline_date. Values None when previous
+    snapshot is missing or ticker wasn't in prior snapshot (new addition).
     """
     out = {
         "eps_fy_curr_revision_pct": None,
         "eps_fy_next_revision_pct": None,
+        "eps_fy3_revision_pct": None,
         "eps_revision_baseline_date": None,
     }
     if not prev_snapshot:
@@ -1247,10 +1249,13 @@ def _compute_fy_eps_revision(ticker: str, eps_curr: float | None,
         return out
     prev_curr = prev_row.get("eps_fy_curr") or prev_row.get("eps_0y")
     prev_next = prev_row.get("eps_fy_next") or prev_row.get("eps_1y")
+    prev_fy3 = prev_row.get("eps_fy3")
     if eps_curr and prev_curr and prev_curr > 0:
         out["eps_fy_curr_revision_pct"] = round((eps_curr / prev_curr - 1) * 100, 2)
     if eps_next and prev_next and prev_next > 0:
         out["eps_fy_next_revision_pct"] = round((eps_next / prev_next - 1) * 100, 2)
+    if eps_fy3 and prev_fy3 and prev_fy3 > 0:
+        out["eps_fy3_revision_pct"] = round((eps_fy3 / prev_fy3 - 1) * 100, 2)
     return out
 
 
@@ -1417,7 +1422,8 @@ def enrich_ticker(
     # TW/JP/HK don't show absurd ~3000% revisions on currency basis change.
     _rev_curr = _lfy.get("eps_fy_curr_usd_orig") or eps_curr_val
     _rev_next = _lfy.get("eps_fy_next_usd_orig") or eps_next_val
-    fy_revision = _compute_fy_eps_revision(t, _rev_curr, _rev_next, prev_snapshot or {})
+    _rev_fy3 = _lfy.get("eps_fy3_usd_orig") or _lfy.get("eps_fy3")
+    fy_revision = _compute_fy_eps_revision(t, _rev_curr, _rev_next, _rev_fy3, prev_snapshot or {})
 
     return {
         **entry,

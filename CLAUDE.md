@@ -55,6 +55,12 @@ Agent({
 
 當用戶說「push earnings」/「發布財報」/「發佈財報」/「發布新財報」/「更新 earnings index」時，自動觸發 `push-earnings` skill（`.claude/skills/push-earnings/`），照其 9 個 steps 執行。
 
+## Workflow: refresh DD screener with new EPS Excel
+
+當用戶丟新 `DD_universe_EPS_estimates_YYYYMMDD.xlsx`（無論放 Downloads/ 或直接給路徑）並要 update，或說「update eps screener」/「更新 dd-screener」/「DD screener 更新 EPS」/「跑新 Excel 更新 screener」/「refresh EPS estimates」/「{path}.xlsx 更新表格」時，自動觸發 `refresh-eps-screener` skill（`.claude/skills/refresh-eps-screener/`），照其 8 個 steps 執行。
+
+**核心**：同月內 5/20→5/25 這種 intra-month refresh，skill 會先 cp 舊 `{YYYY-MM}.json` snapshot 為 `{YYYY-MM}-DD.json` 保留 baseline（避免被新 snapshot 覆蓋抹掉），讓 build 撿到 prior baseline 算 FY1/FY2/FY3 EPS revision%。**Spot-check 對照 Excel Notes 第 8 列「Updated EPS vs YYYY-MM-DD」是 hard gate**，sanity 不過不要 commit。非美股 (TW/JP/HK/KS/CN/CH) FX 自動換算走既有 pipeline，不用手動處理。
+
 ## Workflow: 30 天財報統整 (earnings synthesis)
 
 當用戶說「跑最近財報的統整」/「earnings 統整」/「30 天財報統整」/「月度財報統整」/「財報季統整」/「過去 30 天財報重點」/「earnings synthesis」/「earnings monthly recap」/「earnings 30-day recap」/「monthly earnings rollup」時，自動觸發 `earnings-synthesis` skill（`.claude/skills/earnings-synthesis/`）。
