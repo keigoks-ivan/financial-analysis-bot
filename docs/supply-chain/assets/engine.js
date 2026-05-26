@@ -58,6 +58,16 @@ function ddLinkFor(tickerStr) {
   return null;
 }
 
+// Golden intersection: ⚑ × core_business × high-growth. The strictest
+// possible "high-conviction pick" filter — excludes diversified giants
+// (TSMC, Corning, Broadcom) whose CPO exposure can't move EPS, and
+// excludes structurally locked-in but stagnant players (mature OSAT).
+function isGolden(node, company) {
+  return !!node.single
+    && company.core_business === true
+    && company.growth_trajectory === "high";
+}
+
 /* ---------- tabs ---------- */
 function renderTabs() {
   const wrap = document.getElementById("topicTabs");
@@ -368,13 +378,16 @@ function openDrawer(id) {
       const dd = ddLinkFor(c.ticker);
       const ddBtn = dd ? ` <a href="${dd.href}" class="dd-link" target="_blank" rel="noopener" title="開啟 DD 報告">DD ↗</a>` : "";
       const tickerHTML = c.ticker ? `<span class="tk">${c.ticker}</span>` : "";
-      return `<tr>
-        <td><span class="co-name"><span class="co-flag">${(FLAG[c.country] || "")}</span>${c.name}${tickerHTML}${ddBtn}</span></td>
+      const gold = isGolden(n, c);
+      const goldBadge = gold ? '<span class="gold-badge" title="金交集 · ⚑ × 核心業務 × 高速增長">💎</span> ' : '';
+      const rowCls = gold ? ' class="golden"' : '';
+      return `<tr${rowCls}>
+        <td>${goldBadge}<span class="co-name"><span class="co-flag">${(FLAG[c.country] || "")}</span>${c.name}${tickerHTML}${ddBtn}</span></td>
         <td><span class="co-share">${c.share || "—"}</span>${bar}</td>
         <td><span class="co-note">${c.note || ""}${csrc}</span>${prod}</td>
       </tr>`;
     }).join("");
-    body.appendChild(section(`主要廠商 (${n.companies.length})　<span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink-faint)">依國別標示 · <span style="color:${cc}">●</span> = 有對應 DD 報告</span>`,
+    body.appendChild(section(`主要廠商 (${n.companies.length})　<span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink-faint)">依國別標示 · <span style="color:${cc}">●</span> = 有對應 DD 報告 · <span style="color:#F59E0B">💎</span> = 金交集</span>`,
       `<table class="co-table"><thead><tr><th>公司</th><th>市佔／地位</th><th>角色／產品</th></tr></thead><tbody>${rows}</tbody></table>`));
   }
 
@@ -417,6 +430,65 @@ function closeDrawer() {
   dr.classList.remove("show");
   dr.setAttribute("aria-hidden","true");
   highlightPath(null, false);
+}
+
+/* ---------- golden intersection block (above def-block) ---------- */
+function renderGoldenIntersection() {
+  const slot = document.getElementById("goldBlock");
+  if (!slot) return;
+
+  // Collect (node, company) pairs that qualify
+  const pairs = [];
+  for (const n of TOPIC.nodes) {
+    if (!n.single) continue;
+    for (const c of (n.companies || [])) {
+      if (isGolden(n, c)) pairs.push({ node: n, company: c });
+    }
+  }
+
+  // Dedupe by ticker — same company may appear in multiple nodes
+  const byKey = new Map();
+  for (const p of pairs) {
+    const key = p.company.ticker || p.company.name;
+    if (!byKey.has(key)) byKey.set(key, { company: p.company, nodes: [] });
+    byKey.get(key).nodes.push(p.node);
+  }
+
+  if (byKey.size === 0) {
+    slot.style.display = "none";
+    return;
+  }
+  slot.style.display = "";
+
+  const rows = [...byKey.values()].map(({ company, nodes }) => {
+    const flag = FLAG[company.country] || "";
+    const dd = ddLinkFor(company.ticker);
+    const ddBtn = dd ? ` <a href="${dd.href}" class="dd-link" target="_blank" rel="noopener" title="開啟 DD 報告">DD ↗</a>` : "";
+    const tickerHTML = company.ticker ? `<span class="tk">${company.ticker}</span>` : "";
+    const nodeChips = nodes.map(n => `<span class="gold-node-chip">${n.name}</span>`).join("");
+    // Use first node's single as the headline lock evidence
+    const single = nodes[0].single || "";
+    const note = company.note || "";
+    const prod = company.products ? `<div class="gold-prod">🔧 ${company.products}</div>` : "";
+    return `<tr>
+      <td><span class="gold-co"><span class="co-flag">${flag}</span><strong>${company.name}</strong>${tickerHTML}</span>${ddBtn}</td>
+      <td>${nodeChips}</td>
+      <td><span class="gold-single">⚑ ${single}</span></td>
+      <td><span class="gold-note">${note}</span>${prod}</td>
+    </tr>`;
+  }).join("");
+
+  slot.innerHTML = `
+    <h3><span class="ico">💎</span>金交集 Top Picks · ${byKey.size} 檔</h3>
+    <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（非 side bet） × <em>業務高速增長</em>（&gt;30% CAGR 或 hyperscaler 大單）三條件的公司 — 排除掉「太大太分散」（如 TSMC 集團 / Corning 集團）與「結構性鎖喉但停滯」的紅海玩家，留下對 EPS 真正有推力的 high-conviction picks。</p>
+    <div class="gold-table-wrap">
+      <table class="gold-table">
+        <thead><tr><th>公司</th><th>節點</th><th>鎖喉證據</th><th>業務說明</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p class="gold-foot">判準：<code>core_business: true</code>（≥20% revenue 來自此 segment / 純玩家 / 公司公開定位 flagship） × <code>growth_trajectory: "high"</code>（&gt;30% CAGR / NVDA·AMD·META 已下大單）。由 <code>supply-chain-cartographer</code> skill 在研究時標註，validator pre-commit 把關。</p>
+  `;
 }
 
 /* ---------- definitions block (footer card) ---------- */
@@ -481,6 +553,7 @@ async function boot() {
     renderLegend();
     renderStats();
     renderGrid();
+    renderGoldenIntersection();
     renderDefinitions();
     bindSearch();
     const dc = document.getElementById("drClose"); if (dc) dc.onclick = closeDrawer;

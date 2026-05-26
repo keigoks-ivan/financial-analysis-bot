@@ -156,6 +156,19 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
                     f"node {nid}.companies[{j}]: country={ctry!r} not in "
                     f"{sorted(COUNTRY_VALUES)}"
                 )
+            # Golden-intersection optional fields — must be correct type/enum when present
+            if "core_business" in c and not isinstance(c["core_business"], bool):
+                errs.append(
+                    f"node {nid}.companies[{j}]: core_business must be bool, "
+                    f"got {type(c['core_business']).__name__}"
+                )
+            if "growth_trajectory" in c:
+                gt = c["growth_trajectory"]
+                if gt not in {"high", "med", "low"}:
+                    errs.append(
+                        f"node {nid}.companies[{j}]: growth_trajectory={gt!r}; "
+                        f"allowed ['high', 'med', 'low']"
+                    )
 
         # sources: each must have label + url
         for j, s in enumerate(n.get("sources", []) or []):

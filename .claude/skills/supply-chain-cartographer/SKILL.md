@@ -197,6 +197,50 @@ done
 | **鎖喉點** | 製程與客戶內製深度綁定，結構上難以替代 | TSMC CoWoS-L、TSMC CoW、TSMC COUPE |
 | **封裝級單點** | 與主製程同步設計、被整進客戶平台 | 健策 CoWoS lid/IHS、旭化成 PSPI、VisEra COUPE 光波導 |
 
+## 💎 金交集 Framework（嚴格 3 條件 AND）
+
+⚑ 是「strategic single-point」但**單獨用會把 TSMC / Corning / Broadcom 也標出來** — 那些是「太大太分散，CPO 部位推不動 EPS」的大象。投資視角需要更嚴格的篩子：
+
+**isGolden(node, company) = node.single AND company.core_business AND company.growth_trajectory == "high"**
+
+三條件同時滿足才是 💎，缺一不可。引擎 (`engine.js`) 自動算交集、在頁面底部 hero section 列表，drawer 公司表的金交集 row 加 💎 prefix + 淡金色背景。
+
+### 判準（明確化、減少主觀）
+
+**`core_business: true` 的條件（任一即過）**：
+- 當前 ≥ **20% revenue** 來自此 segment（從財報 / 法說資料）
+- **Pure-play** 純玩家（整家公司就做這個，如 Lumentum / Coherent / FOCI / Browave）
+- 公司管理層**公開定位**這 segment 為「第二大核心業務」/「flagship」/「未來主成長引擎」（如大立光把 SiPh 列為第二核心 — 但 currently 占比 <5% so 仍未過）
+
+**`core_business: false` 的條件（任一即否決）**：
+- 大集團一小 segment（如 TSMC COUPE 占 <1%、Corning AI fiber 占 <20%、Broadcom CPO 占 <5%）
+- 主業在別處（味之素 Ajinomoto 雖然 ABF 膜 95% 獨佔，但味之素是大食品/化工集團）
+
+**`growth_trajectory: "high"` 的條件（任一）**：
+- 此 segment **>30% CAGR** 或 **>50% YoY**
+- 已有 NVDA / AMD / META / MSFT / GOOGL 等 hyperscaler 級客戶**下大單或 strategic deal**（NVDA $2B+ 投資鎖容量也算）
+- 法說 / 公開財測明確 guide 數倍成長（如 Himax 2028 rev $2.4B vs 2026 $1.16B）
+
+**`growth_trajectory: "med"`**：10-30% CAGR / 規劃中但尚未量產 / 送樣階段
+**`growth_trajectory: "low"`**：<10% CAGR / 替代源 / 紅海 / 結構性鎖喉但停滯
+
+### 標註時機
+
+寫 JSON 時，**只在你已有具體證據時才標 `core_business` / `growth_trajectory`**。Missing 視為 false / unknown — 不會誤判為 💎。寧可漏標也不要錯標。
+
+### 為什麼這個交集有 alpha
+
+- ⚑ 單獨 → 把大象（TSMC / Corning / Broadcom）也標出來
+- ⚑ + core_business → 排除大集團，只留「EPS 真的能動」的公司
+- + high_growth → 排除「鎖喉但停滯」的紅海玩家
+- 三個 AND → 留下 **PM 直覺 high-conviction 的 5-7 檔**
+
+兩個 worked example 的 💎 池：
+- **CoWoS（6 檔）**：健策 3653 / 家登 3680 / 弘塑 3131 / 新應材 4749 / 萬潤 6187 / Amkor AMKR
+- **CPO（5 檔）**：Himax HIMX / FOCI 3363 / Browave 3163 / Lumentum LITE / Coherent COHR
+
+這些正好是 sell-side / activist（Hunterbrook、Ming-Chi Kuo、Citrini）反覆推的標的 — 不是巧合，他們用類似框架。
+
 ## 信心度標註 convention（在 `single` 與 `note` 欄位）
 
 ```
@@ -265,6 +309,8 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 | `products` | (opt) | 具體產品線 |
 | `note` | (opt) | 1-2 句說明這家在本節點的角色 |
 | `src` | (opt) | 該廠商獨家來源 URL（drawer 中顯示 ↗ 小圖示） |
+| `core_business` | (opt) | **金交集（💎）標註用** — bool；TRUE = 此 segment 是該公司核心業務（≥20% revenue / pure-play / 公司公開定位 flagship）。FALSE 或省略視為「side bet / 大集團一小塊」 |
+| `growth_trajectory` | (opt) | **金交集（💎）標註用** — enum `"high"` / `"med"` / `"low"`：HIGH = >30% CAGR or hyperscaler 已下大單；MED = 10-30% CAGR；LOW = <10% / 紅海 |
 
 ### 範例：
 
