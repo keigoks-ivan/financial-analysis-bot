@@ -47,7 +47,9 @@ _SUFFIX_STRIPS = (".TW", ".T", ".JP", ".HK", ".KS", ".KQ", ".SS", ".SZ")
 # Add new pairs here as the universe expands; this is the single source of
 # truth (no env var, no config file — keep it surgical and reviewable in git).
 _EXPLICIT_ALIASES = {
-    "LVMH": "MC",   # LVMH Moët Hennessy — Koyfin uses Paris primary "MC"
+    "LVMH": "MC",      # LVMH Moët Hennessy — Koyfin uses Paris primary "MC"
+    "SU":   "SU.FR",   # Schneider Electric — Koyfin uses Euronext Paris "SU.FR"
+                       # (raw "SU" key returned Suncor CAD data → bad; .FR disambiguates)
 }
 
 # Excel rows to drop on load (treated as if not present → consumers fall back
@@ -56,11 +58,11 @@ _EXPLICIT_ALIASES = {
 # downstream consensus. Single source of truth — both snapshot + build see
 # the same skip set. Public so build_dd_screener.py can distinguish "known
 # bad Excel row" from "genuine naming mismatch" in the coverage banner.
-SKIP_TICKERS = {
-    "SU",   # 2026-05-26 Koyfin export: FY values appear wrong (likely CAD→USD
-            # mapping issue — Suncor reports CAD, Excel shows ~$7 USD FY1).
-    "ABB",  # 2026-05-26 Koyfin export: all FY fields are None (no data fetched).
-}
+SKIP_TICKERS: set[str] = set()
+# 2026-05-26 update: ABB Koyfin export now returns valid FY data (was all-None),
+# SU resolved via _EXPLICIT_ALIASES mapping to "SU.FR" (Euronext Paris primary).
+# Both removed from skip-list. Re-add here if a future Koyfin export reverts to
+# bad data.
 
 
 def _alias_keys(ticker: str) -> list[str]:
