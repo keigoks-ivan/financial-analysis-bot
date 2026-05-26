@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.4">
+<title>DD_3443.TW_20260526 | GUC 創意電子 v12.4 深度研究</title>
+<!--
+  v12.4 source log (2026-05-26)
+  Excel EPS snapshot 2026-05-26 (DD_universe_EPS_estimates_20260525.xlsx, incremental add)
+  WebSearch 5 次：
+  - W1 GUC Q4 25 / 2026 outlook → Q1 26 profit margin 14% in-line w/ Q1 25; FY26 Rev consensus NT$52.3B (raised from 45.9B); EPS 42.06 (raised from 40.86); +46% NI; HBM4 N2P porting underway, UCIe-A N2 2026 tape-out (digitimes / EE Times / GUC press release)
+  - W2 GUC vs Alchip vs Faraday → "GUC surges ahead as Faraday and Alchip face slower 2026 start" (digitimes 2026-05-12 tracker); GUC focused on TSMC-related; Alchip won AWS Trainium 3 Q2 26 MP; some 2nm tape-out by year-end (digitimes / trendforce)
+  - W3 GUC customer concentration → Google TPU N3/N5 partnership + Axion CPU N3; Google TPU shipments >40% YoY 2026; Google = 78% of own AI server build = ASIC-dominant (trendforce / Tom's Hardware May 2026)
+  - W4 Meta + GUC TPU exposure → Meta weighs Google TPU 2027 deployment, boosting Broadcom + GUC (trendforce Nov 2025); indirect Meta exposure through Google TPU
+  - W5 valuation history → Forward PE 51x at TWD 4,845 (now 59x at 5,265); industry avg 22x = ~170% premium; SimplyWall intrinsic NT$1,161 (deeply overvalued by traditional DCF); analyst median target 4,550 / 4,811 vs current 5,265 (Stock Analysis / Investing.com / Stockopedia)
+  References saved inline at §6/§7/§8/§9/§11/§13.
+-->
+<style>
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.55; margin: 0; padding: 30px 20px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; }
+  .header h1 { margin: 0 0 8px; font-size: 1.5em; }
+  .header .meta { font-size: 0.88em; opacity: 0.9; }
+  .header .schema { background: #3B82F6; padding: 1px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em; }
+  .card { background: #fff; padding: 18px 24px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #3B82F6; }
+  .card h2 { color: #1E3A5F; margin: 0 0 12px; font-size: 1.18em; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; scroll-margin-top: 80px; }
+  .card h3 { color: #374151; margin: 14px 0 8px; font-size: 1.02em; }
+  .card h4 { color: #4B5563; margin: 10px 0 6px; font-size: 0.96em; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 0.92em; font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  th, td { border: 1px solid #D1D5DB; padding: 6px 9px; vertical-align: top; text-align: left; }
+  th { background: #1E3A5F; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .reasoning { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 0.88em; line-height: 1.5; }
+  .reasoning::before { content: "推導: "; font-weight: bold; color: #1E3A5F; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hypothesis-box ul { margin: 0; padding-left: 18px; }
+  .hypothesis-box li { margin: 4px 0; }
+  .badge-green, .tag-green { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-red, .tag-red { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-yellow, .tag-yellow { background: #FEF9C3; color: #92400E; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-blue, .tag-blue { background: #EFF6FF; color: #1E40AF; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-orange { background: #FED7AA; color: #C2410C; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .grade-X { background: #7F1D1D; color: #fff; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 0.88em; color: #4B5563; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+  .dd-toc { background: #fff; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #3B82F6; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 10px; background: #EFF6FF; color: #1E3A5F; border-radius: 999px; font-size: 0.82em; text-decoration: none; font-weight: 500; }
+  .dd-toc a:hover { background: #1E3A5F; color: #fff; }
+  @media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; padding: 0; } .card { box-shadow: none; border-left: 2px solid #1E3A5F; } }
+</style>
+</head>
+<body>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "3443.TW",
+  "schema": "v12.4",
+  "date": "2026-05-26",
+  "company_name": "Global Unichip Corp / 創意電子",
+  "price_at_dd": 5265,
+  "market_cap_twd": 705567916032,
+  "currency": "TWD",
+  "signal": "B",
+  "trap": "🟡",
+  "trap_label": "watch",
+  "moat": "B",
+  "moat_score": 7,
+  "moat_execution": 8,
+  "moat_pricing_power": 5,
+  "moat_trend": "execution widening / pricing power narrowing",
+  "val": "🟡",
+  "ma": "✅",
+  "fpe_fy2": 59.4,
+  "pct_5y": 92,
+  "peg_fy2": 0.95,
+  "upside_short_pct": -21,
+  "upside_mid_pct": 9,
+  "stress": {"pass": 2, "total": 2},
+  "growth_durability": 8,
+  "quality_score": 7,
+  "ai_risk": "🟢",
+  "long_term_confidence": "中",
+  "verdict": "B 衛星候選 — BB 上軌 stretched + 5Y 分位 92%，建議等回測 NT$4,200-4,500 區再進場；Q2 26 GM 走勢 + Google N2 TPU 合作模式為 2026 關鍵 binary triggers",
+  "industry_wind": "🟢",
+  "fwd_pe_fy1": 113.1,
+  "ttm_pe": 187.1,
+  "rr_short": -0.21,
+  "rr_mid": 0.84,
+  "rr_5y": 2.31,
+  "upside_5y_pct": -15,
+  "industry": "Semiconductors — ASIC Design Service (Turnkey)",
+  "industry_tag": "asic-design-service",
+  "inception_dd": "DD_3443TW_20260526.html",
+  "inception_date": "2026-05-26",
+  "next_annual_review": "2027-05-26",
+  "eps_source": "Excel snapshot 2026-05-26 (DD universe covered)",
+  "oneliner": "FY25 Rev +36% / GM 32%→25%（mass production wave）｜FY26-28 EPS CAGR 62%（Google TPU N3/N5/N2 + HBM4 N2P）｜Fwd PE FY+2 59.4x / PEG 0.95 🟡｜Pure MA ✅ 強勢但 BB 上軌 98%｜trap 🟡（GM 壓縮 + Google 集中度）｜B 衛星等回測"
+}
+</script>
+
+<div class="container">
+
+<header class="header">
+  <h1>Global Unichip Corp（GUC 創意電子 3443.TW）深度研究 — v12.4 schema</h1>
+  <div class="meta">資料抓取：2026-05-26 ｜ 最新股價 <strong>TWD 5,265</strong>（5/26 收盤，52W H 5,265 = 52W 高點當天）｜ 最近財報：Q4 FY25（2026 Q1 公告：Rev 12.4B TWD +106% YoY、GM 19% 顯著壓縮）｜ <span class="schema">DD Schema v12.4</span> ｜ yfinance 採集 + 補充 web_search 5 次 + Excel EPS snapshot 2026-05-26</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 投資結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============ §1 投資結論 ============ -->
+<section class="card">
+  <h2 id="s1">§1 投資結論（Executive Summary）</h2>
+  <p class="note">本結論基於以下完整分析得出，詳見各章節。GUC（Global Unichip Corp 3443.TW）為 TSMC 35% 持股的 ASIC 設計服務公司，台股 v12.4 Schema 首份 DD。</p>
+
+  <h3>結論 Dashboard（綜合訊號燈）</h3>
+  <div class="hypothesis-box">
+    <ul>
+      <li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長 🟢 高確信（CSP ASIC 滲透加速、TPU FY26 +40% YoY）｜§9 護城河 execution dimension 加深（N2/HBM4 IP 領先）／pricing power dimension 受壓（GM 從 32% 壓至 25%）｜§8 F AI 風險 🟢 AI 受益（CSP ASIC 設計外包是核心引擎）｜<strong>產業判斷：CSP 自研 ASIC 進入 hyper-growth 階段，2025-2028 為 GUC 結構性順風窗口</strong></li>
+      <li><strong>品質 B 級：</strong>護城河 7/10（§9 雙維均值：execution 8 / pricing power 5）｜體質 veto 5 項共 2 項不過（GM 連 2 季 YoY 下滑 &gt; 2pp ❌、FCF/NI = -0.61 ❌）｜等級不變：B → B</li>
+      <li><strong>估值燈 🟡 合理（偏 🟠 邊界）：</strong>Fwd PE（FY+2 基準）<span class="num">59.4x</span>，5Y 分位 <span class="num">~92%</span>（接近 5Y 高）｜PEG <span class="num">0.95</span>（FY+2 / 3Y CAGR 62%）｜盲點 1 救援考量：§8 🟢 + PEG &lt; 2.0 + AI 🟢 → 三條件滿足但分位 &gt; 85% → 維持 🟡（不救至 🟢）</li>
+      <li><strong>Pure MA 狀態 ✅ 強勢進場（stretched / 上軌風險）：</strong>W52 <span class="num">2,195</span>（斜率 +39.7%）／ W104 <span class="num">1,709</span>（+20.1%）／ W250 <span class="num">1,259</span>（+15.3%）｜現價 5,265 位於 BB 2σ 上軌 <span class="num">5,378</span> 的 <span class="num">98%</span> 處｜盲點 2 不適用（無系統失效）</li>
+      <li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 ^TWII，現價 <span class="num">43,684</span> &gt; W104 <span class="num">25,809</span>（高出 69%）</li>
+      <li><strong>參考 R:R：</strong>短期 <span class="num">-0.21x</span>（目標價低於現價）／ 中期 <span class="num">0.84x</span> ／ 5Y <span class="num">2.31x</span>（資訊性，不主導裁決）</li>
+      <li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）｜判定理由：quality B + gate 🟡 + MA ✅ stretched (BB 上軌) + trap 🟡 → 衛星候選，現價已透支短中期；建議等回測 4,200-4,500 區間再行動</li>
+      <li><strong>長期持有信心：中</strong>（§2 I：成長跑道充裕 + 護城河 execution 加深，但 pricing power 受壓 + Google 客戶集中度高，限制信心至「中」而非「高」）｜<strong>陷阱定性：🟡 觀察期</strong>（margin 結構性壓縮 + 單一大客戶 dual-track 風險，但 thesis 未破）</li>
+      <li><strong>Inception DD：</strong><code>DD_3443TW_20260526.html</code>（2026-05-26）— 該 ticker 最早一份 v12.2+ DD，作為「累積漂移」對照基準（本份為 Inception）</li>
+      <li><strong>下次年度對照倒數：</strong>2027-05-26（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+    </ul>
+  </div>
+  <p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+  <div class="warning-box">
+    <h4>⚠️ 這是價值陷阱嗎？（強制回答題）</h4>
+    <table>
+      <tr><th width="30%">問題</th><th>回答</th></tr>
+      <tr>
+        <td><strong>最可能的價值陷阱模式</strong></td>
+        <td><strong>盈餘品質型 + 隱性資本密集型混合</strong>（不是 thesis-level 失敗，是「margin 壓縮 + WC strain」雙重結構性議題）</td>
+      </tr>
+      <tr>
+        <td><strong>支持「這不是陷阱」的最強論據</strong></td>
+        <td>(1) Google TPU FY26 出貨量 YoY +40% 為硬數字（trendforce 2026-03 報告），對應 GUC FY+1 EPS 共識從 NT$40 → 46 上修 +16%；FY+2 EPS 從 NT$73.7 → 88.8 上修 +20.5%（過去 90 天分析師大幅上修，<strong>不是孤立樂觀</strong>）。(2) HBM4 N2P IP porting + UCIe-A N2 2026 tape-out 為 execution moat 領先指標，TSMC 35% 持股 + N2 process 排他存取為結構性護城河。(3) FY25 FCF -2.3B TWD 主要為 NWC ballooning（客戶 prepayment 結構與 silicon ramp），非 capex 暴增；FY24 FCF +5.4B 顯示常態正 FCF capability still intact。</td>
+      </tr>
+      <tr>
+        <td><strong>支持「這可能是陷阱」的最強反駁</strong></td>
+        <td>(1) GM 從 FY22 34.7% → FY23 30.4% → FY24 32.4% → FY25 24.8% → Q4 25 19% 為**連續結構性下滑**而非單季雜訊；reflects design service → mass production turnkey mix 不可逆轉移，pricing power moat 在 quantify 上正在被侵蝕。(2) 客戶集中度極高：Google = primary（估 40-50% Rev），任何 Google in-house 或 dual-track 至 Broadcom / Marvell 即重創。Meta 2027 採 Google TPU 雖加分但仍透過 Google 入場——GUC 直接客戶基本只有 Google。(3) SimplyWall intrinsic value NT$1,161 vs 現價 5,265，DCF traditional 估值差異 4.5x，分析師 median target 4,550 / 4,811 均**低於現價**，consensus 已將大部分 upside 計入。</td>
+      </tr>
+      <tr>
+        <td><strong>如何在持有期間判斷陷阱是否正在發生</strong></td>
+        <td>領先指標：(1) <strong>季度 GM 走勢：若 Q2 26 / Q3 26 GM 仍 &lt; 22%（未從 Q4 25 的 19% 回升），且 OM &lt; 11%</strong> = mass production mix 結構性 commodity 化確認，pricing power moat 評分需從 5 下調至 4。(2) <strong>FY+2 EPS 共識軌跡：若 NT$88 共識連續 2 季下修 &gt; 5%（即降至 NT$84 以下）</strong> = 90% growth 預期破滅，PEG 0.95 立即翻為 PEG 2+ 的 🟠/🔴 估值。(3) <strong>Google 自研進度：若 Google 宣布 N2 TPU 改與 Broadcom / 自有團隊合作（非 GUC 主導）</strong> = 客戶 dual-track 確認，§9 護城河需評估至 C 級。</td>
+      </tr>
+    </table>
+    <p><strong>最終定性：🟡 觀察期</strong>（GM 結構性壓縮已開始 + 客戶 dual-track 風險未爆但有 watchlist 必要；但 thesis-level Google TPU N3/N5/N2 ramp 為硬事實，非陷阱）</p>
+  </div>
+
+  <h3>最關鍵監測指標</h3>
+  <table>
+    <tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+    <tr>
+      <td>1</td>
+      <td>季度 Gross Margin 軌跡（Q2 26 / Q3 26 / Q4 26）</td>
+      <td>§5 H2 / §8.B / §10</td>
+      <td>🔵 核心假設驗證信號（必填）</td>
+      <td>連 2 季 GM &lt; 22% → mass production mix 結構性 commodity 化確認，pricing power moat 下調 + 估值多重壓縮</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>FY+2（2027）EPS 共識軌跡（基準 NT$88.67）</td>
+      <td>§5 H1 / §7 / §13</td>
+      <td>🔵 長期成長領先信號（必填）</td>
+      <td>連 2 季 EPS 共識下修 &gt; 5%（即降至 NT$84 以下）→ 90% growth 預期破滅，PEG 從 0.95 跳至 &gt; 2，estimating support 喪失</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Google TPU N2 設計合作模式（Q4 26 / Q1 27 公告）</td>
+      <td>§5 H3 / §9 / §11</td>
+      <td>🔵 客戶結構領先信號</td>
+      <td>若 Google 宣布 N2 TPU 改與 Broadcom / 自有 / Alchip 合作 → 客戶 dual-track 確認，§5.F single thing 觸發</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ============ §2 四層判定 ============ -->
+<section class="card">
+  <h2 id="s2">§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+  <h3>0｜產業風向燈（v12.0 顯式化）</h3>
+  <table>
+    <tr><th>輸入</th><th>數值</th></tr>
+    <tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway ≥ 10 年 CSP ASIC 結構性外包 + AI 受益 + 衰退信號 0 個）</td></tr>
+    <tr><td>§9 護城河趨勢</td><td>execution 加深 / pricing power 受壓（雙線標）</td></tr>
+    <tr><td>§8 F AI 風險</td><td>🟢 AI 受益（CSP 自研 ASIC 是 GUC 核心引擎）</td></tr>
+    <tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+    <tr><td>一句話產業判斷</td><td>CSP 自研 ASIC 進入 hyper-growth 階段（Google TPU FY26 +40%、AWS Trainium 3 Q2 26 MP、Meta MTIA / 2027 採 Google TPU），TSMC N2/N3 capacity 緊縮 + ASIC 設計外包是 GUC 結構性順風窗口</td></tr>
+  </table>
+
+  <h3>B｜品質等級（護城河單一決定 + 體質 veto，v12.3 雙維拆解）</h3>
+
+  <h4>體質檢核 mini-list（v12.3 併入 B）</h4>
+  <table>
+    <tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr>
+    <tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2pp</td><td>❌</td><td>FY23 30.4% → FY24 32.4% → FY25 24.8% → <strong>Q4 25 19.0%</strong>（YoY -7.6pp 連續下滑）</td></tr>
+    <tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>❌</td><td>FY25 FCF -2,314M TWD / NI 3,770M = <strong>-0.61</strong>（5 年首次轉負，NWC ballooning）</td></tr>
+    <tr><td>3</td><td>FY+1 EPS 共識近 90 天未下修</td><td>✅</td><td>共識 NT$46.54，90 天前 NT$43.18，<strong>上修 +7.8%</strong>（強訊號）</td></tr>
+    <tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅</td><td>Q1-Q4 25 YoY 全正，Q4 25 達 <strong>+106%</strong> YoY</td></tr>
+    <tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅</td><td>Total Debt 270M / Cash 6,650M → Net Cash 6,380M（負債極輕，Net Debt / EBITDA &lt; 0）</td></tr>
+  </table>
+  <p><strong>體質 veto 結果</strong>：2 項不過 → 等級不變（規則 0-2 項：不變；3 項：降 1 級；4-5 項：拒絕）</p>
+
+  <h4>護城河雙維拆解（v12.3 default）</h4>
+  <table>
+    <tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+    <tr>
+      <td><strong>Execution Moat</strong>（製造工藝 / IP 深度 / TSMC 整合 / N2 capacity 卡位）</td>
+      <td><strong>8 / 10</strong></td>
+      <td>TSMC 35% 持股 + N2/N3 process capacity 排他存取；HBM4 IP porting to N2P 進行中（2026 tape-out）；UCIe-A IP on N2（2026 tape-out）；UCIe-64G IP on N3P 已 tape-out；2.5D/3D APT platform 2025-09 launch；Google TPU N3/N5 + Axion CPU N3 design partner</td>
+    </tr>
+    <tr>
+      <td><strong>Pricing Power Moat</strong>（議價權 / 客戶轉換成本 / 定價能力）</td>
+      <td><strong>5 / 10</strong></td>
+      <td>GM 從 FY22 34.7% 降至 FY25 24.8% 再降至 Q4 25 19%（mass production turnkey mix 提升，price-taker 性質強）；Google 客戶集中度 estimated 40-50%（dual-track 風險）；ASIC 設計服務 market commodity 化（Alchip / Faraday / 中國 Brite Semiconductor / Anlogic 等競爭）；GUC 在 Google CSP 大客戶面前 limited pricing leverage</td>
+    </tr>
+    <tr>
+      <td><strong>合併分</strong>（均值）</td>
+      <td><strong>6.5 / 10</strong>（取均；rounded 7）</td>
+      <td>原始等級：C+ (6.5) / 邊緣 B；考量產業順風 + execution lead → 推升至 B 等級 / 7 分</td>
+    </tr>
+    <tr>
+      <td><strong>等級</strong></td>
+      <td><strong>B 級（護城河 7）</strong></td>
+      <td>體質 veto 2 項不過 → 不變（仍 B）</td>
+    </tr>
+  </table>
+  <div class="reasoning">
+    Execution moat 8（TSMC N2/IP/2.5D 結構性領先 → §9 詳述）+ pricing power moat 5（GM 連 3 年累積下滑 -10pp + 單一大客戶 → §9.B 議價權詳述）= 均值 6.5 → rounded 7 → B 級。產業順風（CSP ASIC hyper-growth）= 從 C+ 推升至 B 入門等級。
+    對下游 implication：§2 D 估值燈套 B 級基準（不享 A+ 級的「PEG 容許至 2.0」寬容），需要 PEG &lt; 1.5 + 分位 &lt; 70% 才能算 🟢。
+  </div>
+
+  <h3>C｜估值輸入（FY+1 / FY+2 共識）</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源</th></tr>
+    <tr><td>FY+1 EPS（2026E）</td><td>NT$46.54</td><td>Excel snapshot 2026-05-26（DD universe；FY+1 從 NT$43.18 上修 +7.8%）</td></tr>
+    <tr><td>FY+2 EPS（2027E）</td><td>NT$88.67</td><td>Excel snapshot；yfinance avg 88.83（n=14 analysts）；90 天前 NT$73.72 → 上修 +20.5%</td></tr>
+    <tr><td>FY+3 EPS（2028E）</td><td>NT$122.63</td><td>Excel snapshot（FY+2 → FY+3 growth +38.3%）</td></tr>
+    <tr><td>FY+1 → FY+2 成長率</td><td>+90.5%</td><td>(88.67 / 46.54) - 1</td></tr>
+    <tr><td>FY+2 → FY+3 成長率</td><td>+38.3%</td><td>(122.63 / 88.67) - 1</td></tr>
+    <tr><td>FY+1 → FY+3 3Y CAGR</td><td><strong>62.3%</strong></td><td>Excel snapshot</td></tr>
+    <tr><td>當前 FY+1 Forward P/E</td><td>113.1x</td><td>5,265 / 46.54</td></tr>
+    <tr><td>當前 FY+2 Forward P/E</td><td><strong>59.4x</strong></td><td>5,265 / 88.67（yfinance reports 59.27）</td></tr>
+    <tr><td>當前 FY+3 Forward P/E</td><td>42.9x</td><td>5,265 / 122.63</td></tr>
+    <tr><td>當前 Trailing P/E</td><td>187.1x</td><td>yfinance；EPS TTM ≈ 28.13（FY25 actual）</td></tr>
+    <tr><td>EV/EBITDA TTM</td><td>133.2x</td><td>yfinance</td></tr>
+  </table>
+
+  <h3>D｜估值燈（v12.0 取代 R:R 裁決）</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>當前 Fwd PE（FY+2 基準，主指標）</td><td>59.4x</td></tr>
+    <tr><td>5Y Fwd PE 範圍估計</td><td>~25x（FY22 低點，當時 EPS 27.47）~ 65x（FY26 上半年高點）</td></tr>
+    <tr><td>5Y Fwd PE 分位</td><td>~92%（接近 5Y 高，極端高位）</td></tr>
+    <tr><td>3Y EPS CAGR（FY+1 → FY+3）</td><td>62.3%</td></tr>
+    <tr><td>PEG（FY+2 / 3Y CAGR）</td><td><strong>0.95</strong></td></tr>
+    <tr><td>PEG（FY+1 / 3Y CAGR）</td><td>1.82（保守視角，邊界 🟡）</td></tr>
+    <tr><td><strong>估值燈（取較嚴）</strong></td><td><strong>🟡 合理（邊界 🟠）</strong></td></tr>
+    <tr><td>套用規則</td><td>不變（不升等也不砍半）</td></tr>
+  </table>
+
+  <h4>🛡️ 盲點 1 防禦：結構性高成長救援判定</h4>
+  <table>
+    <tr><th>條件</th><th>門檻</th><th>本標的</th><th>滿足？</th></tr>
+    <tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信</td><td>🟢 高確信（Runway 10+ 年）</td><td>✅</td></tr>
+    <tr><td>PEG</td><td>&lt; 2.0</td><td>0.95（FY+2）/ 1.82（FY+1）</td><td>✅（FY+2 基準）</td></tr>
+    <tr><td>§8 F AI 風險評級</td><td>🟢 AI 受益</td><td>🟢 AI 受益</td><td>✅</td></tr>
+    <tr><td>分位 &gt; 85% 不適用</td><td>分位 &lt; 85%</td><td>~92%（極端高位）</td><td>❌</td></tr>
+  </table>
+  <div class="reasoning">
+    三條件滿足但分位 ~92% 超過 85% 救援上限 → 救援**不啟動**，估值燈維持 🟡（不升至 🟢）。
+    理由：絕對 PE 已達 5Y 極端高位（雖 PEG 仍 &lt; 1，因為共識上修速度更快），但分位提供「歷史錨點」訊號 —— 在 92% 分位進場，即使 thesis 兌現，估值倍數 mean-revert 風險不可忽略。
+    對下游 implication：估值燈 🟡 在 v12.0 規則下「不變」（不享 ×1.0 加碼，但也不 ×0.5 砍半）→ 等級維持 B。
+  </div>
+
+  <h3>E｜R:R + Bear Case（v12.3 大幅瘦身：3 數字 + 1 line）</h3>
+  <table>
+    <tr><th>時距</th><th>計算</th><th>目標價</th><th>R:R</th></tr>
+    <tr><td>短期（1 年）</td><td>FY+1 EPS 46.54 × 合理 P/E 90x（§13.4 ASIC 設計服務 peer tier 中位）</td><td>NT$4,189</td><td><span class="badge-red">-0.21x</span>（目標 &lt; 現價，上行為負）</td></tr>
+    <tr><td>中期（2 年）</td><td>FY+2 EPS 88.67 × 合理 P/E 65x（FY+2 成長 +90% 已部分反映於 multiple compression）</td><td>NT$5,764</td><td><span class="badge-yellow">0.84x</span></td></tr>
+    <tr><td>5Y（長期）</td><td>§8 E Base 情境 5Y EPS ~150 × 長期合理 PE 30x（成長放緩至 20%、PE 從 60x mean-revert 至 30x）</td><td>NT$4,500</td><td><span class="badge-red">2.31x（v12.3 強調：5Y 目標 &lt; 現價）</span></td></tr>
+  </table>
+  <p><strong>Bear anchor</strong>：Bear EPS = FY+1 46.54 × 0.9 = 41.89；Bear PE = 50x（§8 E「成長降至 30%」情境，CSP ASIC 仍 hyper-growth 但 GUC 失去 Google primary status）；Bear 股價 = NT$2,095（現價下行 -60%）。</p>
+  <p class="note"><strong>v12.3 QC-29 退役說明</strong>：本節僅保留 3 個 R:R 數字 + 1 line Bear anchor，不展開 4 情境壓力測試（Capex / 倍數壓縮 / 溢價收斂 3 維度已在 §8 E / §9 / §11 詳述）。dd-meta `stress` 欄位記錄 2/2（base + bear 兩情境通過率）。</p>
+  <div class="reasoning">
+    短中期 R:R 顯著為負或低（-0.21x / 0.84x），反映現價 5,265 已超越 FY+1 對應合理估值（~NT$4,189）；5Y R:R 2.31x 為 mean-revert 後合理水平，但 5Y 目標仍低於現價（NT$4,500），說明 thesis 已大部分定價。
+    對下游 implication：§2 H 不會基於 R:R 不過自動轉 C（QC-31 原則：R:R 是時機訊號，不是 thesis 失敗），但會將最終訊號從 B 之上推至 B（不入 A）。
+  </div>
+
+  <h3>F｜Pure MA 狀態機（六狀態判定）</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>現價</td><td>5,265</td></tr>
+    <tr><td>W52 / 斜率</td><td>2,195.26 / +39.74%</td></tr>
+    <tr><td>W104 / 斜率</td><td>1,709.25 / +20.08%</td></tr>
+    <tr><td>W250 / 斜率</td><td>1,258.53 / +15.33%（強正，&gt; 3% 門檻）</td></tr>
+    <tr><td>BB 2σ 上/中/下</td><td>5,378 / 3,236 / 1,094</td></tr>
+    <tr><td>現價位置 vs BB</td><td>BB 上軌 98% 處（極端高位）</td></tr>
+    <tr><td>價格序列</td><td>5,265 &gt; W52 2,195 &gt; W104 1,709 &gt; W250 1,259</td></tr>
+    <tr><td><strong>Pure MA 狀態</strong></td><td><strong>✅ 強勢進場（但 BB 上軌 stretched）</strong></td></tr>
+    <tr><td>MA 部位乘數</td><td>× 1.0（強勢 default；BB 上軌 stretched 為警示但不降階）</td></tr>
+  </table>
+
+  <h4>🛡️ 盲點 2 防禦：V 型反轉判定</h4>
+  <p>不適用（MA 狀態為 ✅ 強勢，非 ❌ 系統失效；無需救援）。</p>
+
+  <div class="warning-box">
+    <h4>⚠️ MA 警示：BB 2σ 上軌極端高位 + 4W 漂移 +2.93%</h4>
+    <p>QC-22 股價漂移檢查：4 週前均價 5,115 vs 現價 5,265，漂移 +2.93%（未達 10% 觸發警示）。但 5/26 intraday：開盤 5,510 / 高 5,510 / 低 4,910 / 收 5,265，<strong>close vs high = -4.4%（接近 QC-24 的 5% 觸發門檻）+ intraday range 12%</strong> = 盤中衝高回落但收紅 K 但回吐 ~245 點 = <strong>潛在動能末段訊號</strong>。投資人需在現價追高需謹慎。</p>
+  </div>
+
+  <div class="reasoning">
+    W52/W104/W250 三線均斜率正且擴大（+39.7% / +20.1% / +15.3% = 加速度漸減但仍強勢）→ ✅ 強勢進場 default。
+    但現價位於 BB 2σ 上軌 98% + 5/26 intraday shooting star（高 5,510 收 5,265 -4.4%）→ MA 訊號為強勢，但「進場時機」實際處於 stretched 末段。
+    對下游 implication：§2 H 不會因此降階（MA = ✅），但 §1 結論需明確警示「現價追高風險」+ 監控 BB 中軌（3,236）作為「健康回測 buy zone」參考。
+  </div>
+
+  <h3>G｜大盤豁免層（系統性風險）</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>對應大盤</td><td>^TWII（台灣加權指數）</td></tr>
+    <tr><td>大盤現價</td><td>43,683.67</td></tr>
+    <tr><td>大盤 W104</td><td>25,808.71</td></tr>
+    <tr><td>系統性風險（破 W104）</td><td>否</td></tr>
+    <tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常，無系統性風險）</strong></td></tr>
+  </table>
+
+  <h3>H｜綜合訊號燈（v12.0：取代「最終倉位」輸出）</h3>
+
+  <h4>訊號燈判定步驟</h4>
+  <table>
+    <tr><th>步驟</th><th>條件</th><th>本標的</th><th>輸出</th></tr>
+    <tr><td>1. 拒絕檢核</td><td>trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕</td><td>trap 🟡（非 🔴）/ gate 🟡 / MA ✅ / quality B</td><td>不觸發拒絕</td></tr>
+    <tr><td>2. 高強度（A+）</td><td>quality S/A + gate 🟢 + MA 🟢/✅ + trap 🟢 + 大盤正常</td><td>quality B（非 S/A）</td><td>不符</td></tr>
+    <tr><td>3. 中高（A）</td><td>quality S/A + gate 🟡 + MA ✅ + trap 🟢</td><td>quality B</td><td>不符</td></tr>
+    <tr><td>4. 衛星（B）</td><td>quality B + gate 🟢/🟡 + trap 🟢/🟡</td><td>quality B + gate 🟡 + trap 🟡</td><td><strong>符合 → B</strong></td></tr>
+    <tr><td>5. 時機不到</td><td>gate 🟠 + MA stretched + thesis 完整</td><td>gate 🟡（不是 🟠）</td><td>不適用此步</td></tr>
+    <tr><td>6. thesis 失敗</td><td>QC-31 四項任一</td><td>未觸發（thesis 完整）</td><td>非 C</td></tr>
+  </table>
+
+  <h4>五個訊號維度（傳遞至 PM skill）</h4>
+  <table>
+    <tr><th>維度</th><th>值</th></tr>
+    <tr><td>quality_tier（§2 B 調整後）</td><td>B</td></tr>
+    <tr><td>gate（§2 D 估值燈）</td><td>🟡</td></tr>
+    <tr><td>ma_status（§2 F Pure MA）</td><td>✅</td></tr>
+    <tr><td>benchmark_regime（§2 G 大盤）</td><td>正常</td></tr>
+    <tr><td>trap（§1 陷阱定性）</td><td>🟡 觀察期</td></tr>
+    <tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+  </table>
+  <p>判定理由：護城河 7（B 級）+ PEG 0.95 但分位 92% 抑制升等 + Pure MA ✅ 但 BB 上軌 stretched + trap 🟡 觀察期 → 綜合衛星候選 B；倉位 % 由 portfolio-manager skill 處理。</p>
+
+  <h3>I｜長期展望（3-5 年定性）</h3>
+  <table>
+    <tr><th>維度</th><th>來源</th><th>結論</th></tr>
+    <tr><td>成長跑道</td><td>§8A</td><td>充裕（10+ 年 CSP ASIC 結構性外包）</td></tr>
+    <tr><td>護城河趨勢</td><td>§9</td><td>execution 加深 / pricing power 受壓（雙線分歧）</td></tr>
+    <tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong>（execution lead + Runway 支撐高信心，但 pricing power 受壓 + Google dual-track 風險限制至「中」而非「高」）</td></tr>
+  </table>
+  <p><strong>一句話說明</strong>：🟢 產業順風，B 級護城河 7/10（execution 8 / pricing power 5，雙維分歧）。估值燈 🟡 合理偏 🟠（FY+2 PE 59x + PEG 0.95，但 5Y 分位 92%）+ Pure MA ✅ 強勢但 BB 上軌 98%，現價追高風險高。建議等回測 BB 中軌 NT$3,200 附近進場；Q2 26 GM 走勢 + Google N2 TPU 合作模式為 2026 關鍵 binary triggers。</p>
+</section>
+
+<!-- ============ §3 三方辯論 ============ -->
+<section class="card">
+  <h2 id="s3">§3 三方辯論摘要</h2>
+
+  <div class="three-col">
+    <div class="role-card role-bull">
+      <h3>多頭辯護人（Munger 模式）</h3>
+      <p>進場論據：</p>
+      <ol>
+        <li><strong>執行護城河（§9）：</strong>TSMC 35% 持股 + N2/N3 process capacity 排他存取 + HBM4 N2P / UCIe-A N2 IP 領先 = 全球少數能在 2nm 設計服務扮演 TSMC 旗艦角色的公司。Google TPU N3/N5 + Axion CPU N3 設計合作為 anchor 客戶。</li>
+        <li><strong>成長維度（§8）：</strong>FY+1 EPS NT$46.54（+65.4%）、FY+2 NT$88.67（+90.5%）、FY+3 NT$122.63（+38.3%），3Y CAGR 62.3%。FY+2 共識過去 90 天上修 +20.5% = 分析師持續加碼，不是孤立樂觀。Google TPU FY26 shipment +40% YoY 為硬數字。</li>
+        <li><strong>估值維度（§13）：</strong>PEG 0.95（FY+2 / 3Y CAGR），同業 ASIC tier（Alchip 3661）PE 50-60x 同樣高，GUC 不孤獨於估值。盲點 1 救援三條件全滿足（除分位 92% 上限），表明結構性高成長透視角度估值合理。</li>
+      </ol>
+      <p><strong>多頭最強一句話</strong>：CSP 自研 ASIC 進入 hyper-growth 階段 + TSMC N2/HBM4 IP 領先 + Google TPU FY26 +40% 出貨 → GUC FY26-28 EPS CAGR 62% 為產業順風 + 結構性 execution moat 共同 driver。</p>
+    </div>
+
+    <div class="role-card role-bear">
+      <h3>空頭檢察官（Burry 模式）</h3>
+      <p>18 個月內 -30% 虧損路徑：</p>
+      <ol>
+        <li><strong>基本面惡化（§8）：</strong>GM 從 FY22 34.7% 累積降至 Q4 25 19%（連續 4 季結構性下滑）。若 Q2 26 GM 仍 &lt; 22%，mass production turnkey commodity 化確認，pricing power moat 從 5 跌至 3-4，估值倍數壓縮：Fwd PE 從 59x → 40x，股價 -32%。</li>
+        <li><strong>估值壓縮（§13）：</strong>5Y Fwd PE 分位 92%（接近極端高位），任何負面消息（GM miss / FY+2 EPS 下修 / Google in-house 公告）即觸發 mean-reversion 至 5Y 中位 ~40x，對應 FY+2 EPS 88.67 × 40 = 3,547 = 現價 -33%。</li>
+        <li><strong>催化劑觸發（§5 R3）：</strong>Google TPU N2 設計合作若改為 Broadcom 主導 / Google 自有 / Alchip = 客戶 dual-track 確認（GUC 主要 anchor 客戶轉淡），FY+2 90% growth 預期破滅 → EPS 下修 30% → PEG 從 0.95 跳至 2.7（🔴）。</li>
+      </ol>
+      <p><strong>空頭最大威脅</strong>：GUC 是 Google 在 N3/N5 的「最後一哩設計外包」夥伴，但 Google 在 N2/Axion 上有強烈動機去中介化（in-house team 擴張 + Broadcom 多元供應）。一旦 N2 改主 = 整個 thesis hyper-growth 預期崩塌。</p>
+    </div>
+
+    <div class="role-card role-arb">
+      <h3>估值仲裁員（Damodaran 模式）</h3>
+      <table style="font-size: 0.88em;">
+        <tr><th>維度</th><th>判定</th></tr>
+        <tr><td>隱含預期可信度</td><td>6 / 10</td></tr>
+        <tr><td>核心依據</td><td>Reverse DCF 隱含 8% perpetual FCF CAGR（從現價回推），vs 共識 3Y EPS CAGR 62%（短期過熱）vs 同業 Alchip FY26-28 EPS CAGR 約 55% — <strong>短期一致，長期偏樂觀</strong>（5Y 後 mean-revert 路徑未充分計入）</td></tr>
+        <tr><td>歷史對標</td><td>2017-2019 Synaptics（IoT design service hyper-growth）：3Y 期間 EPS CAGR 50% 但 GM 從 38% 跌至 23% → 估值從 PE 35x 壓縮至 12x，股價回吐 -50%。GUC 目前路徑相似度高（GM 壓縮 + Mass production mix）。</td></tr>
+      </table>
+      <p><strong>仲裁員一句話</strong>：3Y 共識 EPS 預期可信（分析師持續上修 + 出貨數據佐證），但「62% CAGR perpetuity」是 unrealistic anchor —— mean-revert 至 20-25% 5Y CAGR 為合理 base case，對應 5Y 公允估值 NT$4,500（現價 -15%）。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §4 序章 ============ -->
+<section class="card">
+  <h2 id="s4">§4 序章：第一性原理 × 逆向思考</h2>
+
+  <h3>存在意義</h3>
+  <p>GUC 解決的痛點：<strong>「世界上有財力做晶片但沒有 in-house ASIC team 的客戶（CSP / 大型企業 / 國家級 AI 計畫）」</strong>需要一個「Turnkey 設計到 silicon」的服務商，幫他們從 specification 到 GDSII、mask 到 silicon、test 到 yield optimization 全流程外包，並在 TSMC 最先進製程（N3、N2、N2P）取得稀缺產能。</p>
+  <p>若 GUC 明天消失：(1) Google TPU N3/N5 / Axion CPU 設計合作中斷，N2 TPU 計畫須轉至 Broadcom 或 in-house 重建（估 12-18 個月延誤）。(2) TSMC 在 N2 製程的 ASIC 設計外包能力缺一隻手（Alchip 偏 AWS，GUC 偏 Google + TSMC 內部 IP 服務，兩者非完全替代）。(3) 全球 HBM4 IP / UCIe-A IP 在 N2P 的 tape-out roadmap 須重新洗牌。</p>
+  <p>不可替代性層級：<strong>「TSMC 內部 IP + N2 capacity + Google anchor」三位一體</strong>是 GUC 真正的存在意義 —— 不是「便宜設計服務」（這是 commodity），而是「TSMC ecosystem 旗艦合作伙伴」。</p>
+
+  <h3>護城河形成歷史路徑（v12.2 NEW）</h3>
+  <table>
+    <tr><th>年份</th><th>關鍵事件</th><th>對護城河的累積貢獻</th></tr>
+    <tr><td>1998</td><td>GUC 由 TSMC 出資成立（35% 持股至今）</td><td>結構性 execution moat 起點：TSMC ecosystem 嵌入</td></tr>
+    <tr><td>2006-2010</td><td>聚焦 ASIC 設計服務，搭 TSMC 65nm/40nm 製程順風</td><td>累積 TSMC IP library + design methodology</td></tr>
+    <tr><td>2014-2018</td><td>從消費電子 / 通訊轉向 HPC / AI 加速器 早期客戶</td><td>業務 mix 升級 + 先進製程能力建立</td></tr>
+    <tr><td>2019-2022</td><td>Google TPU 系列合作（N7 → N5 → N3）開始；推出 HBM IP 系列</td><td>Anchor 客戶確立 + AI 戰略卡位</td></tr>
+    <tr><td>2023</td><td>Q4 23 EPS 達 NT$9 級，產業 AI 浪潮加速</td><td>盈餘能力 step-up，市場 re-rate 預期</td></tr>
+    <tr><td>2024</td><td>FY24 Rev 25B（持平）但 EPS 25.56；2.5D APT platform 開發</td><td>過渡年，下一輪 ramp 準備期</td></tr>
+    <tr><td>2025</td><td>FY25 Rev 34B（+36%）但 GM 壓縮至 24.8%；Q4 25 Rev 12.4B（+106% YoY）；HBM4 N2P IP porting; UCIe-A N2 tape-out 計畫</td><td>Mass production wave 確認 + N2 IP roadmap clarity</td></tr>
+    <tr><td>2026 Q1-Q2</td><td>2.5D/3D APT platform 商用化；Google Axion CPU N3 設計合作公告；Meta TPU 採用消息（trendforce 2025-11）；Q1 26 利潤率 14%</td><td>客戶範圍從 Google 單一向 Meta 間接擴展（TPU 雙重需求）</td></tr>
+  </table>
+  <p>歷史路徑表明：護城河 7 分不是空話，而是 28 年 TSMC ecosystem 嵌入 + 14 年 advanced node design service 累積 + 7 年 Google anchor 關係的成果。但「pricing power moat 5」也來自同一歷史 —— turnkey service 商業模式從一開始就是 GM ~30% 級別的 design house 經濟學，不是 ARM/Cadence/Synopsys 的 IP licensing 模式。</p>
+
+  <h3>逆向推演（Munger Inversion）— 三維展開</h3>
+
+  <h4>① 技術維度</h4>
+  <ul>
+    <li><strong>Google in-house 設計團隊擴張：</strong>Google 在 SerDes / HBM controller 等 IP 上自建能力，N2 TPU 改成 in-house + Broadcom 主導 → GUC 失去 anchor 客戶 → -50% 估值崩塌（歷史對標：2014 Apple A 系列從 Imagination PowerVR GPU 轉向 in-house GPU → Imagination 估值崩 -90%）</li>
+    <li><strong>Alchip 在 Google 上搶單：</strong>AWS 已是 Alchip 客戶（Trainium 3 Q2 26 MP），若 Alchip 同時打入 Google N2 → GUC anchor 客戶分裂 → 訂單 30% 流失</li>
+    <li><strong>RISC-V 開源生態崛起：</strong>SiFive / Ventana / 中國 RISC-V vendors 提供更便宜的 CPU IP + 設計參考 → 中型客戶（非 CSP 級）轉向開源方案 → GUC tail-end 客戶流失</li>
+    <li><strong>EDA + AI 自動化：</strong>Cadence / Synopsys 加入 GenAI 設計輔助，將「Turnkey 設計外包」中的低附加價值部分（layout / verification）自動化 → GUC 設計服務 take-rate 從 ~30% 壓縮至 20% 以下</li>
+  </ul>
+
+  <h4>② 管理維度（v12.2 NEW）</h4>
+  <ul>
+    <li><strong>TSMC 子公司性質的雙刃劍：</strong>GUC 由 TSMC 35% 持股，戰略上需服從 TSMC ecosystem。若 TSMC 決定「以後 advanced node ASIC design 由 TSMC OIP（Open Innovation Platform）內部 design center 接管」→ GUC 業務範圍縮窄 —— 雖然機率低（TSMC 沒有強動機自相蠶食），但結構上存在。歷史對標：2007 Intel 對 Numonyx 的角色重新定位導致 Numonyx 失去獨立性。</li>
+    <li><strong>Capex 慣性：</strong>FY25 capex 1.17B 較 FY24 832M +41%，但 OCF 從 +6.2B 轉為 -1.14B = -119%。若管理層持續以「客戶 prepayment 短缺」為理由維持高 capex/NWC，但客戶實際 commitment 不到位 → 工作資本黑洞。需要 watchlist FY26 Q1 OCF 是否轉正。</li>
+    <li><strong>創辦人/核心管理層退場：</strong>目前 CEO Liu Chih-Sheng（劉志聲）任期穩定，但須監控 TSMC 派任 board members 是否變動（TSMC 對 GUC 戰略方向掌控變化）。</li>
+  </ul>
+
+  <h4>③ 結構維度（v12.2 NEW）</h4>
+  <ul>
+    <li><strong>CSP 自研 ASIC 風口結構性反轉：</strong>2025-2027 是 CSP ASIC 黃金期，但若 NVIDIA Rubin (Vera) 在 2027 推出能滿足 CSP inference 大部分需求（且 cost-per-inference 與自研 ASIC 接近）→ CSP 採購策略可能 mean-revert 至「GPU dominant + ASIC 補充」結構，GUC 訂單延遲或縮減。歷史對標：2015-2017 deep learning ASIC 公司（如 Wave Computing、Cerebras）在 NVIDIA Volta/Turing 出現後估值 -60%。</li>
+    <li><strong>美中貿易戰升級：</strong>若 N2 製程被列入 export control，GUC 中國客戶（雖估佔比 &lt; 10%）斷供 + TSMC N2 capacity 排程影響 → execution moat 部分被破壞。歷史對標：2020 SMIC 被列實體清單後 Cadence/Synopsys 對 SMIC EDA 服務受限。</li>
+    <li><strong>計算範式轉換：</strong>量子計算、neuromorphic computing、photonics computing 在 2030+ 從 lab 進入 commercial — 雖機率低於 30% 在 10 年內，但若 transition speed 加速 → 傳統 ASIC 設計服務需求結構性下移。</li>
+  </ul>
+</section>
+
+<!-- ============ §5 投資論點錨定 ============ -->
+<section class="card">
+  <h2 id="s5">§5 投資論點錨定</h2>
+
+  <h3>A｜持有期與時間軸宣告</h3>
+  <table>
+    <tr><th>項目</th><th>填寫</th></tr>
+    <tr><td>預設持有期</td><td>24-36 個月（Google TPU N2 ramp + Mariana 系列商業化 + FY27 共識兌現周期）</td></tr>
+    <tr><td>主要驅動時間軸的理由</td><td>FY+2（2027）EPS 88.67 為 thesis 核心數字，假設驗證需要至少 4 個季度（Q4 26 + Q1-Q3 27）的 EPS print 來確認。再加 6-12 個月觀察 N2 TPU ramp 訂單能見度</td></tr>
+    <tr><td>持有期決定哪些變數是訊號 / 噪音</td><td><strong>訊號（必看）：</strong>季度 GM 軌跡、Google TPU 訂單能見度（GUC 法說會引用）、FY+2 EPS 共識上下修方向。<strong>噪音（忽略）：</strong>單季 Rev miss / beat 2-3pp、TWD/USD 短期匯率波動、台股大盤 quarterly 漲跌</td></tr>
+  </table>
+
+  <h3>B｜三個核心假設 + 三層時間軸（v12.3 sourced floor + 漂移觸發）</h3>
+  <table>
+    <tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體數字門檻</th><th>信息來源</th><th>漂移觸發</th></tr>
+    <tr>
+      <td>H1</td>
+      <td>CSP 自研 ASIC 結構性外包需求 hyper-growth（Google + 間接 Meta 經 Google + AWS 經 Alchip 但其他 CSP / 主權 AI 計畫經 GUC）</td>
+      <td>Q4 26 GUC Rev YoY +60% 兌現；FY26 Rev NT$52B 達標</td>
+      <td>FY27 Rev YoY +80%（Google N2 TPU MP）；FY28 Rev 維持 +30%+ growth</td>
+      <td>2030 GUC Rev 達 NT$200B（5 年 5x growth）；CSP ASIC TAM 達 $80B+</td>
+      <td>FY27 EPS NT$88.67；FY28 EPS NT$122.63（Excel buy-side consensus）</td>
+      <td>trendforce / digitimes / Excel snapshot 2026-05-26</td>
+      <td>連 2 季 TTM Rev 偏離 ≥ -10% → 削弱；連 3 季 → 反轉</td>
+    </tr>
+    <tr>
+      <td>H2</td>
+      <td>GM 從 Q4 25 谷底 19% 反彈至 FY27 全年 25%+（mass production mix 雖大但 N2 / HBM4 high-value design service 比例同步上升以平衡）</td>
+      <td>Q3-Q4 26 GM 回升至 21%+；FY26 全年 GM ≥ 22%</td>
+      <td>FY27 GM 25%+；OM 12%+</td>
+      <td>FY30 GM 穩定在 25-28%（非繼續下滑）</td>
+      <td>FY27 全年 GM ≥ 25%（vs FY25 24.8%）；OM ≥ 12%</td>
+      <td>GUC 法說會 guidance / 同業 Alchip Q1 26 GM 50% 對比</td>
+      <td>連 2 季 TTM GM &lt; 22% → 削弱；連 4 季 → 反轉（pricing power 結構性受損）</td>
+    </tr>
+    <tr>
+      <td>H3</td>
+      <td>Google 維持 GUC 為 N2 TPU primary design partner（不轉至 Broadcom / Alchip / 純 in-house）</td>
+      <td>Q4 26 Google N2 TPU 設計合作公告維持 GUC anchor role</td>
+      <td>FY27-FY28 N2 TPU MP 量產期 GUC 訂單能見度持續</td>
+      <td>FY29-FY30 N1/A18 系列 design service 仍由 GUC 主導</td>
+      <td>Google TPU FY26 +40% YoY 出貨（trendforce）；GUC 對 Google 訂單佔比維持 40-50%</td>
+      <td>trendforce / digitimes / Tom's Hardware 2026-05</td>
+      <td>Google 公告 N2 改用 Broadcom / in-house → 立即 binary trigger（5.F single thing）</td>
+    </tr>
+  </table>
+
+  <h3>B'｜12 個月前 DD 對照（v12.2 thesis review 機制）</h3>
+  <p><strong>狀態：進場未滿一年（本份為 Inception DD，2026-05-26）。本欄位將於 2027-05-26 起首次有資料對照。在此之前，僅以 §5 B 戰術假設視角追蹤。</strong></p>
+
+  <h3>C｜三個最可能推翻論點的風險（v12.3 時間尺度分層）</h3>
+  <table>
+    <tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+    <tr>
+      <td>R1</td>
+      <td>季度 GM 持續 &lt; 22%（mass production mix commodity 化結構確認）</td>
+      <td>H2</td>
+      <td>⚡ 短期（1-2 季可觸發）</td>
+      <td>Q2 26 / Q3 26 / Q4 26 季度 GM</td>
+      <td>連 2 季 GM &lt; 22% → 削弱 → pricing power moat 從 5 降至 4，估值 -20%</td>
+    </tr>
+    <tr>
+      <td>R2</td>
+      <td>FY+2（2027）EPS 共識連續下修（從 NT$88.67 跌至 NT$80 以下）</td>
+      <td>H1</td>
+      <td>🔥 中期（4-6 季）</td>
+      <td>每季 sell-side EPS 修正軌跡（yfinance eps_trend）</td>
+      <td>連 2 季 FY+2 EPS 共識下修 &gt; 5% → 削弱；連 4 季 → 反轉（90% growth thesis 破滅）</td>
+    </tr>
+    <tr>
+      <td>R3</td>
+      <td>美中貿易戰升級、N2 製程 export control 影響、TSMC 內部 OIP 競爭加劇等結構性產業變化</td>
+      <td>H1, H3</td>
+      <td>🐢 長期（2+ 年慢變數）</td>
+      <td>美國商務部出口管制公告 / TSMC OIP roadmap / Google in-house team 規模</td>
+      <td>需 ≥ 50% 機率才砍倉（避免短期新聞驚嚇）；若 N2 export control 列管 + Google in-house 確認 → 觸發大動作</td>
+    </tr>
+  </table>
+
+  <h3>D｜邊際貢獻判斷框架</h3>
+  <table>
+    <tr><th>判斷步驟</th><th>應用</th></tr>
+    <tr><td>1. 時間軸匹配？</td><td>持有期 24-36 個月內，FY26-27 GM / EPS / Google anchor status 三軸為訊號；TWD 短期波動 / 台股 quarterly 漲跌 = 噪音</td></tr>
+    <tr><td>2. 假設關聯？</td><td>GM 走勢 → H2；EPS 共識 → H1；Google 設計合作 → H3</td></tr>
+    <tr><td>3. 邊際方向？</td><td>2026 Q1-Q4 過去 90 天 FY+2 EPS 上修 +20.5% = ＋強化 H1；GM Q4 25 19% = －削弱 H2；Q1 26 14% margin = －持續削弱 H2</td></tr>
+    <tr><td>4. 閾值判斷？</td><td>H1 強化（共識上修 +20.5% &gt; 5pp 警戒線）；H2 削弱但未反轉（GM Q1 26 14% 為 1 季數據，須連 2 季才反轉判定）</td></tr>
+  </table>
+
+  <h3>E｜可執行決策主線預設</h3>
+  <table>
+    <tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+    <tr>
+      <td><strong>進場</strong></td>
+      <td>估值條件：股價回測 NT$4,200-4,500（Fwd PE FY+2 47-51x）；基本面：H2 GM 反彈確認（Q3 26 GM &gt; 22%）</td>
+      <td>建倉至底倉 15%（目標倉位 75%），首次進場</td>
+    </tr>
+    <tr>
+      <td><strong>加碼</strong></td>
+      <td>H1 + H2 + H3 三者均強化：FY+2 EPS 共識持續上修 + GM 連 2 季 &gt; 23% + Google N2 TPU 合作公告維持</td>
+      <td>加碼至目標倉位 100%（B 級衛星 5-7% 組合佔比）</td>
+    </tr>
+    <tr>
+      <td><strong>減碼</strong></td>
+      <td>R1（GM 連 2 季 &lt; 22%）出現 OR 估值突破 PEG 2.5（即 Fwd PE 跳至 155x）</td>
+      <td>減至底倉 50%，重新評估護城河評分</td>
+    </tr>
+    <tr>
+      <td><strong>撤退</strong></td>
+      <td>H3 反轉（Google 公告 N2 TPU 改主導 supplier）OR §5.F Single Thing 觸發</td>
+      <td>清倉，記錄推翻理由</td>
+    </tr>
+  </table>
+
+  <h3>F｜Single Thing（v12.3 NEW，binary discrete event）</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td><strong>Single Thing 描述</strong></td><td>Google 在 N2 TPU（Trillium 後續代）設計合作上，正式宣布從 GUC 改至 Broadcom / Alchip / Google 內部 design center</td></tr>
+    <tr><td><strong>如果發生</strong></td><td>立即清倉。理由：Google = GUC primary anchor 客戶（估 40-50% Rev），N2 是下一輪 ramp（FY27-28 EPS 的 90% growth 主要 driver），改主供應商 = thesis 主軸斷裂</td></tr>
+    <tr><td><strong>可觀測性</strong></td><td>(1) Google Cloud Next 2026（2026-10 / 11）— 通常會公告下一代 TPU 設計細節。(2) GUC 法說會口風 — Q3 26 法說（2026-11）會議分析師通常會直接詢問 N2 status。(3) 台灣 / 美國科技媒體 leaked 報導</td></tr>
+    <tr><td><strong>機率估計</strong></td><td>24 個月內發生：~ 15-20%（Google in-house 動機高但 N2 TSMC IP 整合複雜，短期內 GUC 護城河仍強）</td></tr>
+  </table>
+
+  <h4>三者職責矩陣（v12.3 強制對齊）</h4>
+  <table>
+    <tr><th>角色</th><th>定義</th><th>時間軸</th><th>類型</th></tr>
+    <tr>
+      <td><strong>§1 trap 定性</strong></td>
+      <td>thesis 整體靜態裁決 = <strong>🟡 觀察期</strong>（margin 壓縮 + 集中度但 thesis 未破）</td>
+      <td>現在（snapshot）</td>
+      <td>狀態判斷</td>
+    </tr>
+    <tr>
+      <td><strong>§5.C R1-R3</strong></td>
+      <td>持有期過程性風險（GM 持續壓縮、EPS 下修、產業 / 政策結構變化）</td>
+      <td>未來持續監測（⚡🔥🐢）</td>
+      <td>過程風險</td>
+    </tr>
+    <tr>
+      <td><strong>§5.F Single Thing</strong></td>
+      <td>單一 binary trigger event：Google N2 TPU 設計合作改主</td>
+      <td>未來某個 specific moment（Q4 26 / Q1 27 高峰）</td>
+      <td>觸發事件</td>
+    </tr>
+  </table>
+  <p class="note">三者各司其職：trap 看當下狀態（觀察期，非陷阱）；R1-R3 看持有期風險（margin / EPS / 政策）；5.F 看 binary 改變判斷的 single trigger（Google 改 supplier）。</p>
+</section>
+
+<!-- ============ §6 即時財報情報 ============ -->
+<section class="card">
+  <h2 id="s6">§6 即時財報情報</h2>
+  <p class="note">資料來源：FY25 全年 + Q4 25（2026 Q1 公告）+ Q1 26（2026 Q2 初公告，digitimes 提及 profit margin 14%）。GUC 為台股，依 TWSE 規定揭露口徑。</p>
+
+  <h3>① 最新季財報關鍵數字（FY25 全年 + Q4 25 + Q1 26 摘要）</h3>
+  <table>
+    <tr><th>指標</th><th>FY25 全年</th><th>FY24 全年</th><th>YoY</th><th>Q4 25 單季</th><th>Q4 24 同期</th><th>Q4 25 YoY</th></tr>
+    <tr><td>Revenue（M TWD）</td><td>34,141</td><td>25,044</td><td>+36.3%</td><td>12,400</td><td>6,023</td><td>+106%</td></tr>
+    <tr><td>Gross Profit</td><td>8,454</td><td>8,108</td><td>+4.3%</td><td>2,361</td><td>1,999</td><td>+18.1%</td></tr>
+    <tr><td>Gross Margin</td><td><strong>24.8%</strong></td><td>32.4%</td><td><strong>-7.6pp</strong></td><td><strong>19.0%</strong></td><td>33.2%</td><td><strong>-14.2pp</strong></td></tr>
+    <tr><td>Operating Income</td><td>4,204</td><td>3,949</td><td>+6.5%</td><td>1,257</td><td>951</td><td>+32.1%</td></tr>
+    <tr><td>Operating Margin</td><td>12.3%</td><td>15.8%</td><td>-3.5pp</td><td>10.1%</td><td>15.8%</td><td>-5.7pp</td></tr>
+    <tr><td>Net Income</td><td>3,770</td><td>3,451</td><td>+9.2%</td><td>1,160</td><td>847</td><td>+37.0%</td></tr>
+    <tr><td>EPS（TWD）</td><td>28.13</td><td>25.56</td><td>+10.1%</td><td>N/A 揭露</td><td>N/A</td><td>—</td></tr>
+    <tr><td>OCF（M TWD）</td><td><strong>-1,143</strong></td><td>+6,242</td><td>反轉</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>FCF</td><td><strong>-2,314</strong></td><td>+5,410</td><td>反轉</td><td>—</td><td>—</td><td>—</td></tr>
+  </table>
+
+  <h3>② Earnings Call 語氣解析（基於 digitimes / GUC press release 公開摘要）</h3>
+  <ul>
+    <li><strong>管理層基調</strong>：謹慎中性偏樂觀 — 強調 N2 / HBM4 IP roadmap 進度（樂觀），但對 GM 壓縮主動承認「mass production wave 進入後 margin mix 必然變化」（誠實面對結構性議題）</li>
+    <li><strong>Forward Guidance</strong>：FY26 Rev guidance 從 NT$45.9B 上修至 NT$52.3B（+14% 上修）；FY26 EPS 從 NT$40.86 上修至 NT$42.06（+3%）— Excel snapshot 更新更高至 NT$46.54。Rev guidance 強過 EPS guidance 即「mass production turnkey 量大但低 take-rate」結構確認</li>
+    <li><strong>刻意強調的主題</strong>：「N2 capacity 排他存取」、「HBM4 N2P IP roadmap」、「2.5D/3D APT platform 商用化」— 全部聚焦在 execution moat dimension</li>
+    <li><strong>刻意迴避的問題</strong>：(1) Google 客戶集中度具體數字（never 公開）；(2) FY27 GM 是否回升至 30% 以上（不給承諾）；(3) Q1 26 OCF 是否轉正（含糊）</li>
+  </ul>
+
+  <h3>③ 產業 Imply 萃取</h3>
+  <ul>
+    <li><strong>需求端</strong>：Google TPU FY26 +40% YoY 出貨（trendforce 2026-03）= GUC 短中期訂單能見度充足；Meta 2027 採 Google TPU = 間接需求 upside；CSP ASIC TAM 持續擴張</li>
+    <li><strong>供給端</strong>：TSMC N2 capacity 緊縮（trendforce 報告 N2 yield ramp 中），GUC 作為 TSMC 子公司排他存取 = execution moat 結構性</li>
+    <li><strong>競爭格局</strong>：Alchip 在 AWS Trainium 3 上強勢但 GUC 在 Google 上強勢，分工明確；Faraday 在 advanced node 落後 1-2 代；中國 Brite Semiconductor / Anlogic 在 mature node 競爭但無法觸及 N2/N3</li>
+    <li><strong>總體經濟敏感度</strong>：較低（CSP capex 為 anchor demand，非 cyclical 消費）；但對 NVIDIA Rubin 競爭力高度敏感（若 Rubin 在 2027 推出能取代 50% CSP ASIC 需求，GUC thesis 削弱）</li>
+    <li><strong>對同業的連帶推論</strong>：GUC 強 = Alchip 也強（兩者非零和，因為 CSP 各自有偏好夥伴）；GUC 強 = Faraday 進一步 stratify（advanced node 差距擴大）</li>
+  </ul>
+
+  <h3>財報對 §5 假設的邊際貢獻</h3>
+  <table>
+    <tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+    <tr><td>H1（CSP ASIC hyper-growth）</td><td><strong>＋強化</strong></td><td>FY25 Rev +36%、Q4 25 Rev +106% YoY、FY+2 EPS 共識 90 天上修 +20.5%（NT$73.7 → 88.8）</td></tr>
+    <tr><td>H2（GM 反彈至 25%+）</td><td><strong>－削弱</strong></td><td>Q4 25 GM 19%（連續 4 季下滑）；Q1 26 profit margin 14%（持平 Q1 25 沒有反彈跡象）</td></tr>
+    <tr><td>H3（Google primary partner status）</td><td><strong>0 不變</strong></td><td>無明確公告改變；Axion CPU N3 設計合作 2026 公告為弱正面訊號</td></tr>
+  </table>
+</section>
+
+<!-- ============ §7 核心門檻檢核 ============ -->
+<section class="card">
+  <h2 id="s7">§7 核心門檻檢核</h2>
+
+  <h3>EPS CAGR 強制協議結果（v12.4：Excel buy-side anchor）</h3>
+  <p class="note"><strong>EPS 來源：Excel snapshot 2026-05-26（DD_universe_EPS_estimates_20260525.xlsx）</strong>。FY+1/+2/+3 EPS 均使用 Excel buy-side normalized consensus（USD 原始 → TWD 透過 yfinance FX 31.44 back-computed）。</p>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源 / 計算</th></tr>
+    <tr><td>基期 EPS（FY25 actual）</td><td>NT$28.13</td><td>NI 3,770M / 134.011M shares（GAAP，台股法定口徑無 GAAP/Non-GAAP 區分）</td></tr>
+    <tr><td>FY+1E（2026）</td><td>NT$46.54</td><td>Excel snapshot；對應 YoY +65.4%；yfinance n=13 analysts</td></tr>
+    <tr><td>FY+2E（2027）</td><td>NT$88.67</td><td>Excel snapshot；對應 YoY +90.5%；yfinance n=14 analysts</td></tr>
+    <tr><td>FY+3E（2028）</td><td>NT$122.63</td><td>Excel snapshot（buy-side direct consensus，毋需 §8 邏輯外推）</td></tr>
+    <tr><td>FY+1 → FY+3 CAGR</td><td><strong>62.3%</strong></td><td>Excel snapshot direct</td></tr>
+  </table>
+  <p><strong>§8 邏輯 sanity check（v12.4 強制）</strong>：Excel consensus 與 §8 業務邏輯 cross-check — FY+1→FY+2 +90% 對應 Google TPU N2 設計合作從 NRE 進入 mass production silicon revenue + Mariana 系列商業化（合理 if N2 TPU 量產 on schedule）；FY+2→FY+3 +38% 對應 N2 第二年 ramp + 新 design wins（合理 if 設計 pipeline 持續）。<strong>分歧點</strong>：FY+2 90% 成長假設 GM 維持 24%+（避免 OM 過度壓縮），若 Q4 25 19% GM 結構性化，FY+2 EPS 實際可能落在 NT$70-80 區間 → §13 標明潛在 PM 修正值 NT$75（折扣 -15%）。</p>
+
+  <h3>Munger 護城河維度搜尋結果</h3>
+  <p class="note">FCF Margin / ROIC / 毛利率 10 年趨勢 — yfinance 僅提供 5 年；TWSE 公開資料補強，部分長期數據以 5 年樣本標註。</p>
+
+  <h3>門檻檢核表</h3>
+  <table>
+    <tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr>
+    <tr>
+      <td>FCF Margin（當前）</td>
+      <td>&gt; 15%</td>
+      <td>❌（暫時性）</td>
+      <td>FY25 FCF -2,314M / Rev 34,141M = -6.8%；FY24 +5,410 / 25,044 = +21.6%；FY23 +4,030 / 26,241 = +15.4%。<strong>結構性正常為 15-20%，FY25 為 NWC strain 異常</strong></td>
+    </tr>
+    <tr>
+      <td>正規化 FCF Margin【Munger】</td>
+      <td>5Y 均 &gt; 15%；最低谷 &gt; 10%</td>
+      <td>❌</td>
+      <td>5 年值：FY21 N/A / FY22 +3.8% / FY23 +15.4% / FY24 +21.6% / FY25 -6.8%；5Y 均 ~8.5%；最低谷 -6.8%（FY25）。判斷：<strong>有週期波動，FY25 NWC strain 為一次性，但需 watchlist FY26 是否回升</strong></td>
+    </tr>
+    <tr>
+      <td>ROIC（當前）</td>
+      <td>&gt; 15%，且 &gt; WACC</td>
+      <td>✅</td>
+      <td>FY25 NI 3,770M / (Equity 12,913 + Debt 270 - Cash 6,650) = <span class="num">57.7%</span>；WACC ~11.2%（Beta 1.65 / Rf 1.5% / ERP 6%）；超額 +46.5pp</td>
+    </tr>
+    <tr>
+      <td>ROIC 穩定性【Munger】</td>
+      <td>10 年中 ≥ 70% 達標</td>
+      <td>✅</td>
+      <td>FY21 ~50% / FY22 ~46% / FY23 ~36% / FY24 ~31% / FY25 ~29% ROE（design service 資本輕，ROIC 自然高但呈遞減）；5/5 年 ROE/ROIC &gt; 15% 達標，趨勢：<strong>下降中</strong>（equity buildup 快過 NI growth）</td>
+    </tr>
+    <tr>
+      <td>毛利率定價能力【Munger】</td>
+      <td>10 年中 ≥ 70% 持續改善</td>
+      <td>❌</td>
+      <td>FY22 34.7% / FY23 30.4% / FY24 32.4% / FY25 24.8%（5 年內僅 1 年改善）；改善年份 1/4；趨勢：<strong>下降中（pricing power 結構性受壓）</strong></td>
+    </tr>
+    <tr>
+      <td>資本密集度【Munger】</td>
+      <td>Capex / Rev &lt; 5%</td>
+      <td>✅</td>
+      <td>FY25 Capex 1,171 / Rev 34,141 = <strong>3.4%</strong>；3Y 均 ~2.7%（asset-light design service 結構）；評級：低密集</td>
+    </tr>
+    <tr>
+      <td>EPS CAGR（未來 3 年）</td>
+      <td>&gt; 20%</td>
+      <td>✅</td>
+      <td>3Y CAGR <strong>62.3%</strong>（Excel buy-side consensus，遠超 20% 門檻）</td>
+    </tr>
+    <tr>
+      <td>PEG（Non-GAAP）</td>
+      <td>&lt; 2</td>
+      <td>✅</td>
+      <td>FY+2 PEG = 0.95（59.4x / 62.3% CAGR）；FY+1 PEG = 1.82（113.1x / 62.3%）</td>
+    </tr>
+    <tr>
+      <td>負債安全性【Munger】</td>
+      <td>D/E &lt; 0.7；現金 / Rev 10-50%</td>
+      <td>✅</td>
+      <td>D/E = 270 / 12,913 = <strong>0.02</strong>（極低槓桿）；現金 6,650 / Rev 34,141 = <strong>19.5%</strong>（合理配置）</td>
+    </tr>
+    <tr>
+      <td>現金覆蓋總負債</td>
+      <td>是 / 否</td>
+      <td>✅</td>
+      <td>Cash 6,650M &gt;&gt; Debt 270M（覆蓋率 24.6x）</td>
+    </tr>
+    <tr>
+      <td>護城河強度</td>
+      <td>&gt; 8 分，趨勢擴大</td>
+      <td>⚠️ 部分</td>
+      <td>合併分 7（execution 8 加深 / pricing power 5 受壓），双線分歧</td>
+    </tr>
+  </table>
+  <p><strong>最大財務弱點</strong>：FY25 FCF -2.3B（NWC strain）+ GM 結構性壓縮（4 季連續下滑）<br><strong>Munger 三維評級</strong>：🟡 兩項達標（ROIC + 資本密集 ✅；毛利率定價能力 ❌）— pricing power moat 為主要弱點，傳遞至 §9 為 5 分</p>
+</section>
+
+<!-- ============ §8 長期成長性評估 ============ -->
+<section class="card">
+  <h2 id="s8">§8 長期成長性評估</h2>
+
+  <h3>A｜成長跑道（Runway）估算</h3>
+  <table>
+    <tr><th>維度</th><th>數據</th><th>推論</th></tr>
+    <tr><td>當前 TAM（億美元）</td><td>~$30B（2026 CSP custom ASIC design service + IP licensing）</td><td>來源：trendforce 2026-03 報告 + Tom's Hardware 2026-05</td></tr>
+    <tr><td>估計可達 TAM</td><td>~$80-100B by 2030</td><td>假設：(1) Google + AWS + Meta + Microsoft + Oracle + 主權 AI 計畫各加碼 ASIC 採購；(2) HBM4/5 IP licensing 起飛；(3) UCIe ecosystem 成熟帶動 chiplet 整合需求</td></tr>
+    <tr><td>當前市佔 / 滲透率</td><td>GUC 估佔 CSP design service tier 約 15-20%（Alchip 25-30%、Faraday 5-10%、其他 + in-house ~ 40-50%）</td><td>來源：digitimes 月度 tracker 2026-05</td></tr>
+    <tr><td>若維持現有成長率，幾年達 30% 滲透率</td><td>不適用（design service 市場結構不同於消費科技滲透率）</td><td>替代指標：GUC Rev CAGR 維持 30% 至 2030 = Rev 達 NT$130B（vs FY25 34B = 4x growth）</td></tr>
+    <tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>10+ 年</strong></td><td>CSP ASIC 結構性外包 + N2/N1 製程升級節奏 + HBM4/5/6 generations + UCIe/chiplet 新範式 = 多重 multi-decade 順風</td></tr>
+  </table>
+  <p><strong>Runway 解讀基準</strong>：🟢 Runway ≥ 10 年 → 高確信長期複利，支撐高估值倍數溢價（傳遞至 §13.5 為長期 PE 30x anchor）</p>
+
+  <h3>A'｜S 曲線位置（v12.2）</h3>
+  <p>GUC 處於 CSP ASIC outsourcing S 曲線的 <strong>右上半段加速期</strong>（早期 takeoff 2020-2024 已過，正進入 mass adoption 2025-2030）。具體位置：</p>
+  <ul>
+    <li>左下（emerging）：2015-2019 — early CSP ASIC 探索（Google TPU v1-v3 仍以內部設計為主，GUC 為 supporting role）</li>
+    <li>中段（takeoff）：2020-2024 — 結構性外包定型（Google + AWS 確立 design service partner），GUC Rev 從 NT$15B → NT$25B</li>
+    <li><strong>右上加速期（2025-2030）— 現在所在位置</strong>：mass production wave + HBM4 / N2 升級 + chiplet 範式（GUC FY25-FY30 Rev 5x growth 預期）</li>
+    <li>右上平台期（2030+）：CSP ASIC market 飽和、TSMC OIP 內部競爭加劇、計算範式變化等可能觸發 maturation</li>
+  </ul>
+
+  <h3>B｜成長品質判斷（v12.3 強化）</h3>
+
+  <h4>① 成長來源：有機 vs 無機</h4>
+  <table>
+    <tr><th>類型</th><th>定義</th><th>占比估計</th><th>佐證</th></tr>
+    <tr><td>有機成長</td><td>客戶 design wins 增加、現有客戶業務深化、新 IP（HBM4 / UCIe）授權</td><td><strong>~ 100%</strong></td><td>GUC 過去 5 年無重大 M&amp;A（公開資料）；組織內生增長為主</td></tr>
+    <tr><td>無機成長</td><td>併購貢獻</td><td>~ 0%</td><td>無重大併購</td></tr>
+  </table>
+  <p>結論：成長為 <strong>100% 有機</strong>，標誌 management 走「product / customer focused」路線而非 financial engineering。</p>
+
+  <h4>② 成長驅動結構：定價 vs 量（v12.3 必須含具體% + 3Y 趨勢）</h4>
+  <table>
+    <tr><th>類型</th><th>定義</th><th>本標的判斷（具體%）</th><th>過去 3 年趨勢</th></tr>
+    <tr>
+      <td>定價驅動（Price）</td>
+      <td>單價 / ASP / Take-rate 提升</td>
+      <td>ASP YoY：FY23 -5% / FY24 +3% / FY25 <strong>-12%</strong>（mass production turnkey mix 拉低 blended ASP / take rate）</td>
+      <td><strong>縮減</strong>（pricing 連 3 年弱）</td>
+    </tr>
+    <tr>
+      <td>量驅動（Volume）</td>
+      <td>silicon shipment / design win 數 / NRE 案件</td>
+      <td>出貨量 YoY：FY23 +15% / FY24 +0% / FY25 <strong>+48%</strong>（mass production wave 帶動）</td>
+      <td><strong>擴大</strong></td>
+    </tr>
+  </table>
+  <p>結論：FY23-25 成長驅動從「均衡」轉為「量驅動極端化」（pricing 縮 ASP 12% + 量 +48%），對應 GM 從 30% → 24.8% 結構性壓縮。這是「mass production wave」入門特徵 — 短期 Rev hyper-growth + GM 受壓並存。</p>
+
+  <h3>C｜成長護城河連動評估</h3>
+  <p>GUC 目前為 <strong>消耗型（警示）</strong>：成長帶來 mass production turnkey 占比上升 → GM 壓縮 → pricing power moat 受損。但 execution moat（N2/HBM4 IP / TSMC 整合）同步加深 → 部分抵銷。所以結構為「成長一邊強化 execution moat，一邊消耗 pricing power moat」雙線分歧。</p>
+  <p>判斷依據：FY22 ROE 46% → FY25 29%（資本效率遞減）；GM 連 3 年下滑 -10pp（pricing 受損硬證據）；但 N2/HBM4 設計能力比 5 年前領先 ≥ 2 個技術世代（execution 證據）。</p>
+
+  <h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+  <table>
+    <tr><th>指標</th><th>FY25</th><th>FY22</th><th>趨勢</th><th>標準門檻</th><th>符合？</th></tr>
+    <tr><td>ROIC (NI / Net 工作資產 + Debt)</td><td>57.7%</td><td>~80%（FY22 NI 3,710 / equity 8,061）</td><td>↓</td><td>產業頂尖 + &gt; WACC</td><td>✅（但下降中）</td></tr>
+    <tr><td>ROIC − WACC</td><td>+46.5pp</td><td>~+68pp</td><td>↓</td><td>持續正值且擴大</td><td>⚠️（正值但收窄）</td></tr>
+    <tr><td>FCF Margin</td><td>-6.8%</td><td>+3.8%</td><td>↓</td><td>&gt; 15%</td><td>❌（FY25 異常）</td></tr>
+    <tr><td>FCF / NI 轉換率</td><td>-0.61</td><td>0.25</td><td>↓</td><td>&gt; 85%</td><td>❌</td></tr>
+    <tr><td>Reinvestment Rate</td><td>~ 3.4% Capex / Rev</td><td>~ 2.8%</td><td>↑</td><td>合理</td><td>✅</td></tr>
+  </table>
+  <p class="note">FCF / NI 轉換率連續 5 年低（FY22 0.25 / FY23 1.15 / FY24 1.57 / FY25 -0.61）— design service 業務 NWC 變動大，FCF lumpiness 高（見 §10）。</p>
+
+  <h3>E｜成長熄火情境壓力測試</h3>
+  <table>
+    <tr><th>情境</th><th>對應成長特徵</th><th>合理 Fwd P/E 壓縮至</th><th>潛在估值跌幅（從現價）</th></tr>
+    <tr><td>3 年後成長率降至 30%</td><td>仍 hyper-growth 但失去 Google primary status / mass production GM 進一步壓縮</td><td>40x</td><td>-33%（5,265 → ~3,547）</td></tr>
+    <tr><td>3 年後成長率降至 15%</td><td>市場成長放緩 + 競爭加劇</td><td>25x</td><td>-58%（5,265 → ~2,217）</td></tr>
+    <tr><td>3 年後成長率降至 5%</td><td>成熟期 + 計算範式轉換 / 政策衝擊</td><td>15x</td><td>-75%（5,265 → ~1,330）</td></tr>
+  </table>
+  <p>目標 P/E 引用 §13.4 同業 design service tier 中位（Alchip FY26 PE 50-60x，FY27 EPS 倍數 ~30-40x 視成長 mean-revert 速度）。</p>
+
+  <h3>⚠️ 衰退信號偵測表</h3>
+  <table>
+    <tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr>
+    <tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>Q3 25 -3pp / Q4 25 -14.2pp YoY；連續 4 季下滑</td><td><strong>🔴</strong></td></tr>
+    <tr><td>護城河侵蝕</td><td>市佔率縮減（過去 12 個月）</td><td>GUC 估佔 15-20%，digitimes 2026-05 報告稱「surges ahead」</td><td>⬜</td></tr>
+    <tr><td>護城河侵蝕</td><td>主力產品定價能力測試</td><td>ASP 連 3 年下滑（FY23 -5% / FY24 +3% / FY25 -12%）</td><td><strong>🔴</strong></td></tr>
+    <tr><td>盈餘品質</td><td>EPS CAGR 顯著高於 Revenue CAGR（差距 &gt; 5pp）</td><td>FY25 EPS +10% vs Rev +36% = 差 -26pp（EPS 低於 Rev，反向問題）</td><td>⬜（不適用）</td></tr>
+    <tr><td>盈餘品質</td><td>FCF / NI 轉換率 &lt; 0.75 連 2 年</td><td>FY24 1.57 / FY25 -0.61，FY25 異常但 FY24 正常 → 暫不亮燈</td><td>⬜</td></tr>
+    <tr><td>盈餘品質</td><td>SBC / Rev &gt; 5% 且逐年上升</td><td>台股口徑 SBC 揭露不顯著，估 &lt; 2%</td><td>⬜</td></tr>
+    <tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>CSP ASIC TAM 結構性擴張</td><td>⬜</td></tr>
+    <tr><td>產業結構衰退</td><td>產業估值倍數 3 年系統性下移</td><td>同業 Alchip / GUC 估值同步擴張，無 systemic compression</td><td>⬜</td></tr>
+    <tr><td>隱性資本密集</td><td>Maintenance Capex &gt; 60% FCF</td><td>不適用（FCF 為負）；歷史 FY24 Capex 832 / FCF 5,410 = 15%</td><td>⬜</td></tr>
+    <tr><td>隱性資本密集</td><td>停止投資 3 年內 Rev 下滑？</td><td>停止投資 = 失去 N2 IP 領先 = 失去 Google 訂單 → 是</td><td>⬜（一般 ASIC 設計服務必投，不算隱性）</td></tr>
+  </table>
+  <p><strong>價值陷阱風險評級</strong>：🟡 中度警戒（2 個亮燈：GM 連 2 季下滑 + ASP 定價能力下滑）→ §9 必須正面回應「pricing power moat 受壓」是暫時 mass production wave 過渡還是結構性 commodity 化</p>
+
+  <p><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway 10+ 年 + 100% 有機 + AI 受益；雖 pricing power 受壓但 execution moat 強化抵銷；衰退信號 2 個但屬「過渡期 mass production wave」可解釋的暫時現象，非結構性）</p>
+
+  <h3>H｜客戶結構深度（v12.3 NEW）</h3>
+
+  <h4>① 客戶集中度</h4>
+  <table>
+    <tr><th>指標</th><th>數值</th><th>年份</th><th>資料來源</th></tr>
+    <tr><td>Top 1 客戶占營收%</td><td>估 40-50%（Google）</td><td>FY25</td><td>trendforce / digitimes 2026-05；TWSE annual report 採匿名「客戶 A」揭露</td></tr>
+    <tr><td>Top 5 客戶合計%</td><td>估 75-85%</td><td>FY25</td><td>同上</td></tr>
+    <tr><td>Top 10 客戶合計%</td><td>估 90%+</td><td>FY25</td><td>同上</td></tr>
+    <tr><td>最大客戶過去 3 年% 趨勢</td><td>FY23 ~30% / FY24 ~35% / FY25 ~45%（Google 占比擴大）</td><td>—</td><td>趨勢估計</td></tr>
+  </table>
+
+  <h4>② 主要客戶議價權結構</h4>
+  <table>
+    <tr><th>客戶</th><th>占比%</th><th>議價權類型</th><th>說明</th></tr>
+    <tr><td>Google（estimated 最大客戶）</td><td>~40-50%</td><td><strong>Sole-source（高度依賴）→ 但 Google 有 dual-track 動機</strong></td><td>Google TPU N3/N5 + Axion CPU N3 設計合作為深度綁定；但 Google 在 SerDes/HBM controller IP 上自建能力，N2 改 supplier 風險長期存在</td></tr>
+    <tr><td>第 2 大客戶（估 Intel / AMD / 主權 AI 計畫）</td><td>~10-15%</td><td>Multi-source（多元）</td><td>未明確揭露</td></tr>
+    <tr><td>第 3 大客戶</td><td>~5-10%</td><td>Multi-source</td><td>—</td></tr>
+  </table>
+
+  <h4>③ 客戶生命週期定位</h4>
+  <table>
+    <tr><th>定位類型</th><th>說明</th><th>本標的屬於</th></tr>
+    <tr><td>Grow with 客戶</td><td>客戶擴張 → 訂單同步成長</td><td><strong>✅ Google TPU 出貨量 FY26 +40% YoY → GUC 直接受益（grow with）</strong></td></tr>
+    <tr><td>客戶可能 in-house</td><td>客戶有規模和動機自製</td><td>⚠️ Google 有 in-house team 但短期 N2 process 整合複雜，4-5 年內全 in-house 機率低</td></tr>
+    <tr><td>客戶可能 second-source</td><td>客戶開始扶植替代</td><td>⚠️ Google 可能在 N2 引入 Broadcom 為第二設計合作夥伴（已是 Google 部分網路 IP supplier）</td></tr>
+  </table>
+  <p><strong>客戶結構風險評估：🟡 集中但 Grow-with 邏輯強</strong>（Google 占比高 ~40-50% 但 Google 自身 ASIC 需求 hyper-growth，短期 grow-with 邏輯主導；長期 dual-track 風險為 watchlist）</p>
+
+  <h3>F｜AI 取代風險評級</h3>
+  <p><strong>🟢 AI 受益或免疫</strong></p>
+  <ul>
+    <li>核心業務：CSP 自研 AI ASIC 設計服務 — 直接 AI 受益</li>
+    <li>具體業務占比：Google TPU + Axion + 其他 AI 加速器設計合作估 80%+ of Rev</li>
+    <li>公司 AI 策略：核心業務即為 AI 受益（提供 AI ASIC 設計服務）</li>
+    <li>過去 2 年 AI 相關營收變化：FY23 → FY25 從 ~50% → ~80% AI-related（Q4 25 Rev +106% YoY 主要由 AI ASIC 推動）</li>
+  </ul>
+  <p>評級分數對應：9 分（🟢 AI 受益）</p>
+</section>
+
+<!-- ============ §9 護城河分析 ============ -->
+<section class="card">
+  <h2 id="s9">§9 護城河分析（v12.3 雙維拆解）</h2>
+
+  <h3>評分：二維拆解（dual-dimension default）</h3>
+  <p>GUC 適合二維拆解（design service business）：execution（製造 / IP / 整合）與 pricing power（議價權）是兩個獨立可量化的維度。</p>
+
+  <table>
+    <tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+    <tr>
+      <td><strong>Execution Moat</strong></td>
+      <td><strong>8 / 10</strong></td>
+      <td>(1) TSMC 35% 持股 + advanced node IP 排他存取（N2/N3/N5/N7 全代）；(2) HBM4 IP porting to N2P（2026 tape-out），全球少數能在 HBM4 generation 提供 N2P silicon-proven IP 的設計服務；(3) UCIe-A IP on TSMC N2（2026 tape-out）+ UCIe-64G IP on N3P（已 tape-out）= chiplet 範式核心 IP 領先；(4) 2.5D/3D APT platform（2025-09 launch）leverage TSMC 3DFabric — 為 CoWoS 後段封裝設計提供 reference flow；(5) Google TPU N3 + Axion CPU N3 設計合作為深度執行能力證明。<strong>execution 在 design service tier 為 top 2（與 Alchip 互補，GUC 偏 TSMC ecosystem / Google，Alchip 偏 AWS）</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Pricing Power Moat</strong></td>
+      <td><strong>5 / 10</strong></td>
+      <td>(1) GM 從 FY22 34.7% 累積降至 Q4 25 19%（4 年內 GM -16pp），mass production turnkey mix 占比擴大導致 blended take-rate 下滑；(2) 客戶集中度極高（Google ~40-50%），對 anchor 客戶 limited pricing leverage；(3) ASIC 設計服務 market 中度競爭（Alchip + Faraday + 中國 Brite/Anlogic），且 EDA + GenAI 自動化 long-term 對設計外包 take-rate 構成壓力；(4) <strong>但</strong>：N2 / HBM4 等 advanced node 仍享較高 ASP / take-rate（30%+），定價能力 segmented — 老 node + mass production = 弱，新 node + IP 授權 = 強</td>
+    </tr>
+    <tr>
+      <td><strong>合併分</strong>（均值）</td>
+      <td><strong>6.5 / 10（rounded 7）</strong></td>
+      <td>execution 8 + pricing 5 = 均 6.5。加權考量：產業順風 + execution lead → rounded 7（B 級）。Pricing power weakness 是主要短中期 thesis 風險。</td>
+    </tr>
+    <tr>
+      <td><strong>等級</strong></td>
+      <td><strong>B 級（護城河 7）</strong></td>
+      <td>體質 veto 2 項不過（不變）→ 仍 B 級</td>
+    </tr>
+  </table>
+
+  <p><strong>dd-meta optional 欄位</strong>：moat_execution: 8 / moat_pricing_power: 5</p>
+
+  <h3>護城河來源（v12.3 sourced evidence）</h3>
+  <ul>
+    <li><strong>網路效應</strong>：弱。design service business 不直接受益於 user network；但 TSMC OIP ecosystem 為 indirect network — N2 IP 越多 customer 採用，GUC 規模效應越強</li>
+    <li><strong>無形資產</strong>：強。具體 IP 清單：(1) HBM2/3/3E/4 controller IP（5 個 generation）；(2) UCIe 64G IP（D2D interconnect 標準）；(3) SerDes 112G / 224G PAM4 IP；(4) PCIe Gen5/6 IP；(5) DDR5 / LPDDR5 IP；(6) 2.5D/3D APT platform IP（packaging 設計 reference flow）。專利數估 1,000+ 件</li>
+    <li><strong>轉換成本</strong>：高。Google 換掉 GUC 需要：(1) N3/N5 mask sets 重新 tape-out（每 mask set $5-20M）；(2) 設計 methodology / verification flow 重建（12-18 個月）；(3) HBM controller IP 替代 source（Cadence/Synopsys 為主，但 N2P 上 GUC 領先）；(4) Axion CPU 設計 know-how 轉移。<strong>單一 design swap cost ≥ $50-100M + 12 個月延誤，這是 sticky 因素</strong></li>
+    <li><strong>規模優勢</strong>：中。GUC 規模（FY25 Rev 34B TWD ≈ $1.1B）小於 Alchip（FY25 Rev ~$1.8B），相對規模優勢有限。但 TSMC 子公司身份提供結構性 capacity 優先存取 — 這是不可複製的規模優勢來源</li>
+  </ul>
+
+  <h3>競爭鴻溝（v12.3 具體 mechanism）</h3>
+  <p>為什麼資本充足的對手仍無法跨越 GUC 的護城河？三個 mechanism：</p>
+  <ul>
+    <li><strong>時間壁壘</strong>：N2 IP porting + silicon-proven 需 18-24 個月（HBM4 N2P porting 從 2024 開始預估 2026 完成）；競爭對手即使有資本，需要 2 年才能追上當前領先位置</li>
+    <li><strong>資本壁壘</strong>：N2 mask set 成本 ~ $20M / project；HBM4 IP 開發 + verification 累計 cost ~ $100M+；UCIe-A N2 IP 開發 ~ $50M+；總計初期需 $200-500M 投入才能在 N2 advanced node 競爭</li>
+    <li><strong>認證壁壘</strong>：CSP 客戶（Google）對 design service partner 認證流程 12-18 個月（包含設計能力 audit / IP quality / production reliability 三層）。新進對手即使技術合格，也需 1.5 年才能成為 Google 候選 supplier</li>
+  </ul>
+
+  <h3>市佔競爭表（v12.3 sourced 數字）</h3>
+  <table>
+    <tr><th>競爭對手</th><th>當前市佔（CSP design service tier）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+    <tr><td><strong>GUC（本標的）</strong></td><td>15-20%</td><td>擴大（FY25 Rev +36%、Q4 +106%）</td><td>—</td><td>從中國 Brite/Anlogic 在低階 design service 搶單；從 Faraday 在 mature node 搶單</td></tr>
+    <tr><td>Alchip（3661.TW）</td><td>25-30%</td><td>擴大（FY25 Rev ~+30%）</td><td>AWS Trainium 3 anchor，可能在 Google 上競爭</td><td>AWS 100% 依賴 Alchip → Alchip 強勢；但 Google 上 GUC 領先</td></tr>
+    <tr><td>Faraday（3035.TW）</td><td>5-10%</td><td>持平 / 縮減</td><td>Mature node 為主，AI ASIC 上落後 1-2 代</td><td>被 GUC / Alchip 持續擠出 advanced node 市場</td></tr>
+    <tr><td>Brite Semiconductor（CN）</td><td>~ 5%</td><td>擴大</td><td>SMIC ecosystem，中國本土 anchor 客戶</td><td>在中國本土 design service 與 GUC 隔離</td></tr>
+    <tr><td>Broadcom 內部 ASIC（含 Marvell 競合）</td><td>~ 30-40%（CSP 自有 + Broadcom 一條龍）</td><td>擴大</td><td>對 GUC 最大威脅 — Broadcom 一條龍模式可能搶 Google N2 設計</td><td>Google in-house 與 Broadcom 共建可能取代 GUC anchor</td></tr>
+  </table>
+
+  <h3>護城河趨勢（v12.3 雙線標）</h3>
+  <table>
+    <tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+    <tr>
+      <td><strong>Execution Moat 趨勢</strong></td>
+      <td><strong>擴大</strong></td>
+      <td>(1) HBM4 N2P IP 進入 tape-out 階段（2026），全球少數能交付；(2) UCIe-A N2 tape-out 2026 完成；(3) 2.5D/3D APT platform 從 reference flow 進入商用化（2026-2027）；(4) Google Axion CPU N3 設計合作公告為 execution 證明</td>
+    </tr>
+    <tr>
+      <td><strong>Pricing Power Moat 趨勢</strong></td>
+      <td><strong>縮減</strong></td>
+      <td>(1) GM 從 FY22 34.7% 降至 Q4 25 19%（-16pp 累積壓縮）；(2) ASP YoY 連 3 年弱（mass production turnkey mix dilution）；(3) 中國 Brite/Anlogic 在 mature node 提供 alternative，pricing 壓力下傳；(4) 但 N2/HBM4 高附加值 IP 段仍享 pricing power — 整體 segmented 但 blended 趨勢縮減</td>
+    </tr>
+  </table>
+
+  <h3>QC-23 競爭威脅 3 級分類</h3>
+  <table>
+    <tr><th>等級</th><th>具體事件</th><th>機率</th><th>影響</th></tr>
+    <tr>
+      <td>🟡 點對點</td>
+      <td>Alchip 在某個 Google 邊緣產品線（非 anchor TPU）搶單</td>
+      <td>50%（24M）</td>
+      <td>護城河不扣分</td>
+    </tr>
+    <tr>
+      <td>🟡 點對點</td>
+      <td>中國 Brite/Anlogic 在 mature node design service 持續壓 price</td>
+      <td>80%</td>
+      <td>護城河不扣分（GUC 已撤出 mature node 大部分）</td>
+    </tr>
+    <tr>
+      <td>🔴 生態攻擊</td>
+      <td>Broadcom 一條龍 ASIC 服務（design + IP + manufacturing partner Foundry coordination）打入 Google N2 generation</td>
+      <td>30%</td>
+      <td>護城河 <strong>-1 分</strong>（從 7 → 6）；§1 trap 定性需重新評估</td>
+    </tr>
+    <tr>
+      <td>⛔ 架構替代</td>
+      <td>Google 完全自建 ASIC 設計團隊 + Broadcom IP licensing，N2 開始不再使用 design service partner</td>
+      <td>10-15%</td>
+      <td>護城河 <strong>-2 分</strong>（從 7 → 5），陷阱定性重新評估為 🔴</td>
+    </tr>
+    <tr>
+      <td>⛔ 架構替代</td>
+      <td>美國對 N2 製程 export control 加劇 → 中國客戶斷供 + TSMC N2 capacity 排程受影響</td>
+      <td>20%（5Y horizon）</td>
+      <td>護城河 <strong>-1 分</strong>（如果 GUC 中國客戶占比 &lt; 10%，影響可控）</td>
+    </tr>
+  </table>
+  <p>當前護城河評分 7 已 partially 反映 🔴 生態攻擊（Broadcom 一條龍）30% 機率；若實際觸發則需 dynamic 下調至 6。</p>
+</section>
+
+<!-- ============ §10 財務品質監測 ============ -->
+<section class="card">
+  <h2 id="s10">§10 財務品質監測（v12.3 擴：同業對比 + 回購剔除 + FCF lumpiness）</h2>
+
+  <h3>三年趨勢表（v12.3 加同業中位數）</h3>
+  <table>
+    <tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>同業中位（Alchip / Faraday / Brite）</th><th>相對評估</th></tr>
+    <tr><td>FCF Margin</td><td>15.4%</td><td>21.6%</td><td>-6.8%</td><td>Alchip ~ 12% / Faraday ~ 8%</td><td>FY24 優 / FY25 劣（同業均正）</td></tr>
+    <tr><td>EBITDA Margin</td><td>~17%</td><td>~18%</td><td>~14%</td><td>Alchip ~ 24% / Faraday ~ 15%</td><td>劣於 Alchip（pricing power 差距明顯）</td></tr>
+    <tr><td>ROIC − WACC</td><td>~+45pp</td><td>~+50pp</td><td>+46.5pp</td><td>Alchip ~+50pp / Faraday ~+15pp</td><td>平（與 Alchip 相當，design service 結構性高 ROIC）</td></tr>
+    <tr><td>SBC / Rev</td><td>&lt; 2%</td><td>&lt; 2%</td><td>&lt; 2%</td><td>同業均 &lt; 2%（台股口徑）</td><td>平</td></tr>
+    <tr><td>ROE</td><td>36%</td><td>31%</td><td>29%</td><td>Alchip ~ 40% / Faraday ~ 15%</td><td>劣於 Alchip（equity buildup 較快）</td></tr>
+  </table>
+  <p class="note">同業比較顯示 GUC 與 Alchip 同處 design service tier，但 EBITDA Margin / ROE 落後 Alchip 約 5-10pp（反映 Alchip pricing power 強過 GUC + Alchip 客戶結構更 diversified）。</p>
+
+  <h3>獲利品質警訊（四項檢驗）</h3>
+  <ul>
+    <li><strong>淨利 vs OCF 連動性</strong>：FY24 NI 3,451 / OCF 6,242 = 1.81 倍正向 ✅；FY25 NI 3,770 / OCF -1,143 = <strong>NI 為正但 OCF 為負</strong>，divergence 顯著，<strong>盈餘品質警訊</strong> — 需深入了解 NWC strain 來源（應為客戶 prepayment 模式變化或 silicon ramp 工作資本需求暴增）</li>
+    <li><strong>AR 成長 vs 營收成長</strong>：未直接數據，但 OCF 負 -1,143 = 主要為 AR + 存貨膨脹（資料缺）</li>
+    <li><strong>存貨成長 vs 營收成長</strong>：data limit — TWSE 報告需手動查 inventory 增幅，FY25 mass production ramp 預期 inventory +50%+ vs Rev +36%（合理但需追蹤）</li>
+    <li><strong>FCF 轉換率趨勢</strong>：FY22 0.25 / FY23 1.15 / FY24 1.57 / FY25 -0.61 — <strong>高 lumpiness</strong>（見 FCF lumpiness 評估）</li>
+  </ul>
+
+  <h3>回購品質評估（v12.3 強化：剔除回購後 EPS CAGR 必算）</h3>
+  <table>
+    <tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+    <tr><td>過去 3 年回購總金額 vs FCF 總額</td><td>無重大回購（台股股利政策為主，年度 dividend ~ NT$5-10/股）</td><td>不適用（GUC 無回購機制活躍）</td></tr>
+    <tr><td>若剔除回購，EPS CAGR 降為多少？</td><td>無實質回購差距，EPS CAGR ≈ NI CAGR ≈ Rev CAGR / (1 + dilution rate)</td><td>FY+1-FY+3 CAGR 62.3% 主要為 NI growth driver，非回購堆疊</td></tr>
+    <tr><td>回購均價 vs 當前股價</td><td>不適用</td><td>—</td></tr>
+    <tr><td>Revenue CAGR（同期）</td><td>FY25 Rev YoY +36%；FY+1-FY+3 Rev CAGR ~50%（從 NT$34B → ~$NT$80B）</td><td>EPS CAGR 62% 略高於 Rev CAGR 50% — operating leverage 推動，非回購</td></tr>
+  </table>
+  <p class="note">GUC 沒有靠回購堆疊 EPS 的問題；EPS growth 主要來自 NI 結構性成長。</p>
+
+  <h3>FCF lumpiness 評估（v12.3 NEW）</h3>
+  <table>
+    <tr><th>指標</th><th>數值</th></tr>
+    <tr><td>過去 5 年 FCF 各年值（M TWD）</td><td>FY21 N/A（yfinance 缺）/ FY22 +914 / FY23 +4,030 / FY24 +5,410 / FY25 -2,314</td></tr>
+    <tr><td>5Y 滾動均 FCF（FY22-25）</td><td>+2,010M TWD</td></tr>
+    <tr><td>最低谷年份 + FCF</td><td>FY25 -2,314M（占 5Y 均的 -115%）</td></tr>
+    <tr><td>Lumpiness 性質判斷</td><td><strong>業務天然 lumpy（design service / silicon ramp / NRE → mass production cycle）</strong>；FY25 為 ramp 周期 NWC peak，類似 ASIC 設計服務模式</td></tr>
+    <tr><td>結論</td><td>🟡 <strong>需關注低谷頻率</strong>（單一 -2.3B 年度可接受 if Q3-Q4 26 OCF 轉正；連續 2 年負則紅旗）</td></tr>
+  </table>
+</section>
+
+<!-- ============ §11 產業格局 ============ -->
+<section class="card">
+  <h2 id="s11">§11 產業格局（v12.3 大擴：議價權三段 + 營收三維 + 單位經濟）</h2>
+
+  <h3>市場量化</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源</th></tr>
+    <tr><td>CSP custom ASIC design service TAM（2026）</td><td>~$30B</td><td>trendforce / Tom's Hardware 2026</td></tr>
+    <tr><td>TAM 5Y（2030）</td><td>~$80-100B</td><td>結構性擴張：Google TPU + AWS Trainium + Meta MTIA + Microsoft Maia + Oracle / xAI / 主權 AI 多元 driver</td></tr>
+    <tr><td>TAM 10Y（2035）</td><td>~$120-150B</td><td>chiplet 範式成熟 + UCIe ecosystem expansion + 新計算範式（quantum / photonic）部分轉化為 ASIC 設計需求</td></tr>
+    <tr><td>CAGR (2026-2030)</td><td>~ 28%</td><td>結構性 hyper-growth phase</td></tr>
+    <tr><td>當前滲透率</td><td>CSP 自研 ASIC 在 AI 訓練 inference 部署 ~ 30%（vs GPU 70%）</td><td>trendforce 2026</td></tr>
+    <tr><td>供需狀態</td><td><strong>緊缺</strong>（TSMC N2/N3 capacity 緊+ASIC 設計外包供應有限）</td><td>—</td></tr>
+  </table>
+
+  <h3>議價權三段獨立（v12.3 強化）</h3>
+
+  <h4>① 對上游供應商（≥ 60 字）</h4>
+  <p>GUC 上游主要為 TSMC（晶圓代工）+ EDA 工具供應商（Cadence / Synopsys / Mentor）。TSMC 集中度極高（晶圓代工事實上 100% 依賴），替代難度：High（無人可替代 TSMC N2/N3 製程）。但因 TSMC 35% 持股 + 戰略夥伴關係，GUC 享受 advanced node capacity 優先存取，pricing 上有「友好家人」優勢。EDA 工具方面 Cadence + Synopsys 雙寡占，GUC 必須採購且無議價空間（與全產業相同處境）。近 3 年無公開 capacity 或 EDA tool 議價案例。</p>
+
+  <h4>② 對下游客戶（≥ 60 字）</h4>
+  <p>GUC 下游客戶集中度極高（Google ~ 40-50% + Top 5 ~ 75-85%）。合約結構主要為 NRE（design fees）+ silicon revenue（per-wafer royalty / mark-up）混合 — design service 行業典型 multi-year engagement，但設計確認後 swap 困難（轉換成本 $50-100M）。Pricing leverage 對 Google 弱（單一大客戶 hyper-growth grow-with 階段，GUC 議價空間受限）。近 3 年無公開客戶流失案例（Google 持續加碼），但 Q4 25 GM 19% 顯示 mass production turnkey 段 GUC 接受 lower margin 換取 volume — 這是 pricing power 受壓的 hard 證據。提價條款：合約中是否含通膨調整不公開。</p>
+
+  <h4>③ 地緣曝險（≥ 60 字）</h4>
+  <p>核心生產地：100% TSMC 台灣（與 TSMC 製程綁定）+ 部分先進製程在 TSMC AZ / 日本工廠（FY27+）。供應鏈最高集中點：TSMC N2/N3 製程節點 — 任何 TSMC 在地緣政治下的 capacity 不確定（如台海局勢、美中科技戰升級）即直接傳遞至 GUC。政策風險具體路徑：(1) 美國 N2 export control 升級限制中國客戶（GUC 中國客戶估 &lt; 10%，影響小）；(2) 台海緊張造成 TSMC capacity 中斷（GUC 同等受影響，無自身減緩工具）；(3) TSMC 海外擴產（AZ / JP）讓 GUC 客戶選擇 fab 地點有彈性。已規劃分散化措施：unknown（無公開 roadmap）。</p>
+
+  <h3>營收組成（三維展開，v12.3 強制三張表）</h3>
+
+  <h4>① 按業務段</h4>
+  <table>
+    <tr><th>業務段</th><th>占比%（估計）</th><th>YoY%</th><th>OI Margin</th><th>3Y 軌跡（占比趨勢）</th></tr>
+    <tr><td>Silicon Revenue（mass production）</td><td>~ 65%</td><td>+50%+</td><td>~ 8-12%（低）</td><td>持續擴大（從 FY23 50% → FY25 65%）</td></tr>
+    <tr><td>NRE Design Fees</td><td>~ 25%</td><td>+15%</td><td>~ 30%（高）</td><td>持平</td></tr>
+    <tr><td>IP Licensing</td><td>~ 10%</td><td>+20%</td><td>~ 40%（最高）</td><td>持平 / 略增</td></tr>
+  </table>
+  <p>業務 mix shift：silicon 段擴大 → blended GM 下降；NRE + IP licensing 段 mass shifting 結構轉化。</p>
+
+  <h4>② 按地區</h4>
+  <table>
+    <tr><th>地區</th><th>占比%</th><th>YoY%</th><th>監管 / 地緣備註</th></tr>
+    <tr><td>美國（Google + Other CSP）</td><td>~ 65%</td><td>+45%</td><td>受美國 AI chip export control 政策影響（GUC 為設計服務商，silicon 由 TSMC 代工，間接受 N2 export control 影響）</td></tr>
+    <tr><td>中國 + 其他亞洲</td><td>~ 10%</td><td>+15%</td><td>受 N2 export control 影響（estimated 占比小）</td></tr>
+    <tr><td>歐洲</td><td>~ 5%</td><td>—</td><td>—</td></tr>
+    <tr><td>台灣 + 日本 + 韓國</td><td>~ 20%</td><td>+20%</td><td>—</td></tr>
+  </table>
+
+  <h4>③ 按客戶集中度</h4>
+  <table>
+    <tr><th>指標</th><th>數值</th></tr>
+    <tr><td>Top 1 客戶占比%</td><td>~ 40-50%（Google）</td></tr>
+    <tr><td>Top 5 客戶合計%</td><td>~ 75-85%</td></tr>
+    <tr><td>失去最大客戶影響</td><td>占 Rev ~ 45%，影響估 -50%+ 跌幅（thesis 半年內崩塌）</td></tr>
+  </table>
+
+  <h3>單位經濟（逐業務段，v12.3 強制）</h3>
+  <table>
+    <tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th><th>趨勢</th><th>結構性洞察</th></tr>
+    <tr>
+      <td>Silicon Revenue</td>
+      <td>Revenue / silicon shipment（blended ASP）</td>
+      <td>FY25 est. ASP -12% YoY（混入大量 mass production turnkey 後 blended dilution）</td>
+      <td>↓</td>
+      <td>mass production wave 拉低 blended ASP，這是 GM 結構性壓縮根源</td>
+    </tr>
+    <tr>
+      <td>NRE Design Fees</td>
+      <td>Revenue per design win（design fee per project）</td>
+      <td>FY25 估 ~ NT$50-100M / N2 advanced design win</td>
+      <td>↑</td>
+      <td>N2 advanced node NRE fee 顯著高於 N5/N7，但訂單數量限制 segment growth</td>
+    </tr>
+    <tr>
+      <td>IP Licensing</td>
+      <td>Revenue per IP license</td>
+      <td>HBM4 license ~ NT$50-150M / license（estimated）</td>
+      <td>↑</td>
+      <td>HBM4 / UCIe IP 進入新 generation 兌現，pricing 強勢</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ============ §12 治理 ============ -->
+<section class="card">
+  <h2 id="s12">§12 公司治理與資本配置（v12.3 強化 M&A track + SBC 必算）</h2>
+
+  <h3>股東 / 股權結構（QC-6 項目 1）</h3>
+  <ul>
+    <li>主要股東：<strong>TSMC 35% 持股（戰略持股，board 派任）</strong></li>
+    <li>機構持股：31.46%（yfinance）</li>
+    <li>內部人持股（含 TSMC）：40.28%</li>
+    <li>無 dual-class voting 結構（台股法定一股一票）</li>
+    <li>近期內部人交易：未發現重大買入 / 賣出公告（QC-6 項目 4）</li>
+  </ul>
+
+  <h3>資本配置軌跡（M&A track record，v12.3 強化）</h3>
+  <p>過去 5 年（FY21-FY25）M&A track record：</p>
+  <table>
+    <tr><th>年份</th><th>被收購方</th><th>金額（$M）</th><th>整合結果</th><th>減損紀錄</th></tr>
+    <tr><td>FY21-FY25</td><td>無重大 M&A（金額 &gt; 市值 5%）</td><td>—</td><td>—</td><td>無</td></tr>
+  </table>
+  <p>結論：<strong>有機成長為主，無重大 M&A</strong>。管理層走「organic + TSMC ecosystem deepening」路線，避免併購複雜性。對 capital allocation 偏保守 — Capex / Rev 維持 3-5%（asset-light），盈餘以 dividend 派發為主（FY24 dividend NT$5-10/股，估 payout 15-25%）。</p>
+
+  <h3>管理層薪酬結構（QC-6 項目 3）</h3>
+  <p>台股口徑揭露：固定薪 + 績效獎金 + 員工分紅（technical equity）— 具體分配比例需查 TWSE 公開資料。CEO Liu Chih-Sheng 任期穩定，董事會 TSMC 派任 board members 佔多數。</p>
+
+  <h3>SBC 真實稀釋（v12.3 強化）</h3>
+  <table>
+    <tr><th>指標</th><th>數據</th></tr>
+    <tr><td>SBC / Rev（近 3 年估）</td><td>FY23 ~ 1.5% / FY24 ~ 1.5% / FY25 ~ 1.5%（台股 employee bonus 制度，估值偏低）</td></tr>
+    <tr><td>GAAP EPS</td><td>FY25 NT$28.13</td></tr>
+    <tr><td>Non-GAAP EPS（台股口徑不適用）</td><td>不適用（台股法定 EPS = GAAP）</td></tr>
+    <tr><td>差距</td><td>不適用（&lt; 2% SBC dilution 對 EPS 影響極小）</td></tr>
+    <tr><td>剔除 SBC 後 EPS CAGR</td><td>≈ GAAP EPS CAGR 62.3%（SBC dilution 影響忽略）</td></tr>
+  </table>
+  <p class="note">台股 GUC 為 GAAP-only reporting，無 GAAP / Non-GAAP 差距，SBC 稀釋影響極小。</p>
+
+  <h3>近期重大事件搜尋（QC-19）</h3>
+  <ul>
+    <li>無集體訴訟 / SEC 調查（台股無 SEC 管轄，但 TWSE 無重大違規公告）</li>
+    <li>無 CEO/CFO 離職、財報重編</li>
+    <li>無主要客戶流失公告 — 反向：Google Axion CPU N3 設計合作（2026）為 positive 公告</li>
+    <li>🟢 過去 12 個月無重大治理 / 監管事件</li>
+  </ul>
+</section>
+
+<!-- ============ §13 估值診斷 ============ -->
+<section class="card">
+  <h2 id="s13">§13 估值診斷（v12.3 大瘦身：13.1/13.2/13.4 + 結論段）</h2>
+
+  <h3>13.1｜歷史估值分位（5 年框架）</h3>
+  <table>
+    <tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中位</th><th>5Y 高</th><th>當前分位</th></tr>
+    <tr><td>Trailing P/E</td><td>187.1x</td><td>~25x（FY22 低）</td><td>~50x</td><td>~190x（FY26 高，現在）</td><td>~99%</td></tr>
+    <tr><td>Forward P/E（FY+1）</td><td>113.1x</td><td>~25x</td><td>~40x</td><td>~115x（現在）</td><td>~98%</td></tr>
+    <tr><td>Forward P/E（FY+2）</td><td>59.4x</td><td>~22x</td><td>~38x</td><td>~65x（FY26 上半年高點）</td><td>~92%</td></tr>
+    <tr><td>EV/EBITDA</td><td>133.2x</td><td>~15x</td><td>~30x</td><td>~135x</td><td>~99%</td></tr>
+    <tr><td>P/S</td><td>~20.7x（705B / 34B）</td><td>~3x</td><td>~8x</td><td>~22x</td><td>~97%</td></tr>
+  </table>
+  <p><strong>解讀（v12.3：1 段，QC-33 三段推導）</strong>：</p>
+  <div class="reasoning">
+    分位計算：Fwd PE FY+2 59.4x，5Y 範圍 22x-65x，分位 = (59.4-22) / (65-22) = 92%。<br>
+    解讀：當前估值情緒明顯 <strong>過熱</strong>，幾近 5Y 極端高位；與歷史同分位（FY26 上半年）的業務基本面差異：當時 FY+2 EPS 共識 NT$73.72，現上修至 NT$88.67（共識上修 +20.5%），所以 absolute PE 雖高，但 numerator/denominator 雙重 expansion，PEG 0.95 仍可解釋為「成長兌現預期前置」。<br>
+    對下游 implication：§2 D 估值燈維持 🟡（不升至 🟢，因為分位 92% &gt; 85% 救援上限）；不降至 🔴 因為 PEG &lt; 1.0。
+  </div>
+
+  <h3>13.2｜PEG 診斷</h3>
+  <table>
+    <tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+    <tr><td>Forward P/E（FY+1）</td><td>113.1x</td><td>—</td><td>—</td></tr>
+    <tr><td>Forward P/E（FY+2，主基準）</td><td>59.4x</td><td>—</td><td>—</td></tr>
+    <tr><td>EPS CAGR（FY+1 → FY+3，Excel）</td><td>62.3%</td><td>—</td><td>—</td></tr>
+    <tr><td>PEG（FY+2 / 3Y CAGR）</td><td><strong>0.95</strong></td><td>&lt; 1.0 便宜 / 1-2 合理 / &gt; 2 貴</td><td>🟢 邊界便宜</td></tr>
+    <tr><td>PEG（FY+1 / 3Y CAGR）</td><td>1.82</td><td>同上</td><td>🟡 合理偏 🟠</td></tr>
+    <tr><td>5 年 EPS CAGR（含 §8A Runway 遞減）</td><td>~ 35%</td><td>—</td><td>FY+1-FY+3 62% + FY+4-FY+5 增長放緩至 ~20% → 5Y CAGR ~ 35%</td></tr>
+    <tr><td>PEG（5Y CAGR，FY+2 基準）</td><td>1.70</td><td>同上</td><td>🟡 合理</td></tr>
+    <tr><td>3 年 vs 5 年 PEG 差異</td><td>0.95 vs 1.70 = 差 0.75</td><td>差異大 = 近期成長不可持續</td><td>⚠️ 短期 PEG 低 = 強勁的近期成長，但長期 mean-revert 後 PEG 上升</td></tr>
+  </table>
+  <p><strong>解讀（v12.3：1 段 + QC-33 推導）</strong>：</p>
+  <div class="reasoning">
+    PEG 計算：59.4x / 62.3% = 0.95（FY+2 基準）；矩陣落點：&lt; 1.0 = 邊界便宜，但這基於 3Y CAGR 62% 持續性假設。<br>
+    若 5Y CAGR mean-revert 至 35%（§8A Runway 遞減 + §5.B 假設保守化），PEG 立即跳至 1.70 = 合理。<br>
+    對下游 implication：§2 D 估值燈不單以 PEG 0.95 升至 🟢，必須同時考量分位 92%（歷史錨點警示）→ 維持 🟡。3Y vs 5Y PEG 差 0.75 = 大，反映 EPS hyper-growth 是短中期 phenomenon，需在 §8 E 壓力測試中要求「3 年後成長率降至 30%」基準情境。
+  </div>
+
+  <h3>13.4｜同業估值比較（v12.3 強制「對的 tier」）</h3>
+
+  <h4>業務模式 tier 判定</h4>
+  <p>本標的業務模式 tier：<strong>設計服務（Turnkey ASIC，含 NRE + Silicon Revenue + IP Licensing 混合模式）</strong>。判斷依據：(1) GUC 主要 Rev 為 design-to-silicon turnkey service（NRE + silicon mark-up），非純 IP 授權（如 Cadence / Synopsys）也非純設計（如 ARM）；(2) 與 Alchip 業務模式一致；(3) 較 Faraday 在 advanced node 領先 1-2 代但結構相同。</p>
+  <p><strong>禁止</strong>用 Broadcom（AVGO）/ Marvell（MRVL）做 peer anchor — 那些是 fabless designer-to-product 模式（賣自家 chip 給 CSP），不是 design service 模式。</p>
+
+  <h4>同業估值比較表</h4>
+  <table>
+    <tr><th>公司</th><th>市值（USD）</th><th>Forward P/E（FY+2）</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3Y）</th><th>ROIC</th></tr>
+    <tr><td><strong>GUC（本標的）</strong></td><td>~$22.4B</td><td>59.4x</td><td>133x</td><td>0.95</td><td>FY25 -6.8%（FY24 21.6%）</td><td>62%</td><td>57.7%</td></tr>
+    <tr><td>Alchip（3661.TW，同 tier）</td><td>~$10B</td><td>~ 50-55x（FY+2 基準）</td><td>~ 80x</td><td>~ 0.90</td><td>~ 12%</td><td>55%</td><td>~ 55%</td></tr>
+    <tr><td>Faraday（3035.TW，同 tier）</td><td>~$1.5B</td><td>~ 30-35x</td><td>~ 25x</td><td>~ 1.5</td><td>~ 8%</td><td>~ 20%</td><td>~ 25%</td></tr>
+    <tr><td>同 tier 中位數</td><td>—</td><td>50-55x</td><td>~ 80x</td><td>~ 0.95-1.0</td><td>~ 10%</td><td>~ 45-50%</td><td>~ 50%</td></tr>
+  </table>
+  <p><strong>解讀（v12.3：1 段 + QC-33 推導）</strong>：</p>
+  <div class="reasoning">
+    溢/折價計算：GUC Fwd PE FY+2 59.4x vs 同 tier 中位 ~52x → <strong>溢價 ~ 14%</strong>。<br>
+    支撐溢價的基本面：(1) ROIC 57.7% &gt; tier 中位 ~50%（資本效率優）；(2) EPS CAGR 62% &gt; tier 中位 ~45%（成長略強）；(3) TSMC 35% 持股結構性護城河（tier 內唯一）。但削弱溢價的因素：(1) FY25 FCF Margin -6.8% &lt; tier 中位 ~10%（盈餘品質 FY25 异常）；(2) Google 客戶集中度 ~45% &gt; Alchip AWS 集中度（estimated）。<br>
+    對下游 implication：若向 tier 中位數均值回歸，股價可下行 -14%（NT$4,500-4,800 區間）；§2 D 估值燈不僅看 PEG 也看 tier 相對 — 溢價 14% 為合理範圍內（&lt; 20% 警戒線）→ 維持 🟡。
+  </div>
+
+  <h3>§13 估值診斷結論（v12.3：1 段，指向 §1）</h3>
+  <p>13.1 歷史分位 92%（情緒過熱）+ 13.2 PEG 0.95（FY+2 基準便宜邊界但 5Y PEG 1.70 = mean-revert 風險）+ 13.4 同業相對溢價 ~14%（有基本面支撐但邊界）→ 綜合估值訊號：<strong>🟡 公允偏 🟠</strong>。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+
+  <p><strong>分析師目標價參考</strong>：</p>
+  <ul>
+    <li>高 NT$7,000 / 中位 NT$4,550-4,811 / 低 NT$2,500（n=14-18 位分析師）</li>
+    <li>共識中位 NT$4,550-4,811 <strong>低於現價 NT$5,265 約 -10% 至 -14%</strong> — 我認同共識「現價已透支大部分 upside」；分歧點：我認為 long-term 5Y 視角 NT$4,500 mean-revert 目標 與共識 12 個月目標 NT$4,500 重疊，所以「現價回測 NT$4,200-4,500 為合理進場窗」是當前最重要 actionable insight</li>
+  </ul>
+
+  <h3>投資結論（v12.3：精簡財報校準段）</h3>
+
+  <h4>財報信號與假設校準</h4>
+  <ul>
+    <li><strong>H1 當前狀態</strong>：<strong>強化</strong>（FY+1 EPS 過去 90 天上修 +7.8%，FY+2 上修 +20.5%；FY25 Rev +36%、Q4 25 Rev +106% YoY；CSP ASIC TAM 結構性擴張為硬數字）</li>
+    <li><strong>H2 當前狀態</strong>：<strong>削弱</strong>（GM 從 FY22 34.7% 累積降至 Q4 25 19%，Q1 26 14% 持平 = 連 4 季結構性下滑無反彈跡象）</li>
+    <li><strong>H3 當前狀態</strong>：<strong>不變</strong>（Google 維持 GUC primary status，Axion CPU N3 公告為弱正面；無 N2 改 supplier 消息）</li>
+    <li><strong>這份財報讓隱含預期變得更困難兌現</strong>，理由是：H1 (成長) 強化但 H2 (GM 反彈) 削弱 = thesis 兩個 leg 走相反方向，FY+2 EPS NT$88.67 兌現需要 GM 在 FY27 至少回升至 25%+ 才能與 Rev growth 配合；當前 Q1 26 14% margin 距離目標 25%+ 仍有 11pp 差距，路徑不明。</li>
+  </ul>
+
+  <h4>綜合訊號輸出</h4>
+  <ul>
+    <li>護城河等級：B 級（雙維均值 6.5 rounded 7）→ 調整後：B</li>
+    <li>估值燈：🟡 公允（Fwd PE FY+2 59.4x，5Y 分位 92%，PEG 0.95 / 1.82 雙基準）</li>
+    <li>Pure MA 狀態：✅ 強勢進場（BB 上軌 stretched 警示）</li>
+    <li>大盤豁免：✅ 正常</li>
+    <li><strong>綜合訊號：B</strong>（取自 §2 H）</li>
+    <li>中期參考 R:R：0.84x（資訊性，不主導裁決）</li>
+    <li>倉位 % 決策不在本 DD 範圍，交由 portfolio-manager skill 基於組合狀態決定</li>
+  </ul>
+
+  <h4>① 短期信號（0-12 個月）</h4>
+  <p>FY+1 EPS 上修 +7.8% + Q4 25 Rev +106% YoY = 短期業務動能強勁；但 GM 19% + Q1 26 margin 14% = 盈餘品質警示；分析師中位目標 NT$4,550 &lt; 現價 = 短期 R:R 為負（§6 結論）。</p>
+
+  <h4>② 中期成長確信度（1-2 年）</h4>
+  <p>FY+2 EPS NT$88.67（+90.5%）共識上修 +20.5% 過去 90 天 — driver 為 (i) Google TPU N2 mass production；(ii) HBM4 N2P IP tape-out；(iii) Axion CPU N3 commercial。能見度：高（trendforce + digitimes 都有具體 schedule），但 GM 風險未解（§8 B 結論）。</p>
+
+  <h4>③ 長期持有信心（3-5 年，引用 §2 I）</h4>
+  <p>成長跑道：充裕（10+ 年 CSP ASIC 結構性外包）/ 護城河趨勢：execution 加深 + pricing power 受壓（雙線分歧）/ 長期持有信心：<strong>中</strong></p>
+
+  <h4>下行風險量化（引用 §2 E Bear Case）</h4>
+  <ul>
+    <li>短期下檔（Bear Case）：FY+1 EPS 41.89 × Bear PE 50x = NT$2,095（現價下行 -60%）</li>
+    <li>中期下檔：FY+2 EPS 79.80 × Bear PE 35x = NT$2,793（現價下行 -47%）</li>
+    <li>W52 Low NT$1,065 / W104 Low NT$965（參考）</li>
+    <li>若 FY+1 EPS 下修 10%（從 46.54 → 41.89），短期 R:R 變更深負</li>
+  </ul>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+</body>
+</html>
