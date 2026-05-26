@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="dd-schema-version" content="v12.4">
+<title>DD_2368.TW_20260526 | 金像電 Gold Circuit v12.4 深度研究</title>
+<!--
+  v12.4 source log (2026-05-26)
+  EPS source: Excel snapshot 2026-05-26 NOT covered → yfinance fallback
+  WebSearch 5 次：
+  - W1 NVIDIA Blackwell GB200 + Rubin Q3-Q4 2026 ramp (Tom's Hardware / SemiAnalysis / 2026/01 CES); Rubin NVL72 2H 2026 量產 + PCB demand 升級層/銅量
+  - W2 Gold Circuit AI server PCB business 2025 Q3 GM 35.6% record 80% server rev / 50% AI / ASIC UBB anchor 客戶 Amazon + NVIDIA GB200/B100/B200 design wins (vocus / UAnalyze / CMoney 即時新聞)
+  - W3 FY26 capex 巨擴 NT$7.2B 啟動 Q4 25 + Thailand subsidiary expansion (UAnalyze / 經濟日報 / 豐雲學堂 2026/05)
+  - W4 analyst target NT$796.89 mean (high $925 / low $697) - 注：vs 現價 1,465 已遠超目標 50%+，反映共識嚴重落後 (Simply Wall St / Investing.com / Yahoo Finance)
+  - W5 PCB AI 升級需求 layer count + copper volume 翻倍 (Unimicron, Ibiden, Gold Circuit) - 結構性 demand surge from Vera Rubin requirements (Tom's Hardware 2026/01)
+  References saved inline at §6/§7/§8/§9/§11/§13.
+-->
+<style>
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.55; margin: 0; padding: 30px 20px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; }
+  .header h1 { margin: 0 0 8px; font-size: 1.5em; }
+  .header .meta { font-size: 0.88em; opacity: 0.9; }
+  .header .schema { background: #3B82F6; padding: 1px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em; }
+  .card { background: #fff; padding: 18px 24px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #3B82F6; }
+  .card h2 { color: #1E3A5F; margin: 0 0 12px; font-size: 1.18em; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; scroll-margin-top: 80px; }
+  .card h3 { color: #374151; margin: 14px 0 8px; font-size: 1.02em; }
+  .card h4 { color: #4B5563; margin: 10px 0 6px; font-size: 0.96em; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 0.92em; font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  th, td { border: 1px solid #D1D5DB; padding: 6px 9px; vertical-align: top; text-align: left; }
+  th { background: #1E3A5F; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .reasoning { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 0.88em; line-height: 1.5; }
+  .reasoning::before { content: "推導: "; font-weight: bold; color: #1E3A5F; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hypothesis-box ul { margin: 0; padding-left: 18px; }
+  .hypothesis-box li { margin: 4px 0; }
+  .badge-green, .tag-green { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-red, .tag-red { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-yellow, .tag-yellow { background: #FEF9C3; color: #92400E; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-blue, .tag-blue { background: #EFF6FF; color: #1E40AF; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-orange { background: #FED7AA; color: #C2410C; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .grade-X { background: #7F1D1D; color: #fff; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 0.88em; color: #4B5563; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+  .dd-toc { background: #fff; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #3B82F6; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 10px; background: #EFF6FF; color: #1E3A5F; border-radius: 999px; font-size: 0.82em; text-decoration: none; font-weight: 500; }
+  .dd-toc a:hover { background: #1E3A5F; color: #fff; }
+  @media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; padding: 0; } .card { box-shadow: none; border-left: 2px solid #1E3A5F; } }
+</style>
+</head>
+<body>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "2368.TW",
+  "schema": "v12.4",
+  "date": "2026-05-26",
+  "company_name": "Gold Circuit Electronics Ltd / 金像電",
+  "price_at_dd": 1465,
+  "market_cap_twd": 740378738688,
+  "currency": "TWD",
+  "signal": "B",
+  "trap": "🟢",
+  "trap_label": "non-trap",
+  "moat": "B",
+  "moat_score": 8,
+  "moat_execution": 8,
+  "moat_pricing_power": 7,
+  "moat_trend": "execution widening / pricing power widening",
+  "val": "🟡",
+  "ma": "✅",
+  "fpe_fy2": 24.07,
+  "pct_5y": 85,
+  "peg_fy2": 0.30,
+  "upside_short_pct": 8,
+  "upside_mid_pct": 25,
+  "stress": {"pass": 2, "total": 2},
+  "growth_durability": 8,
+  "quality_score": 8,
+  "ai_risk": "🟢",
+  "long_term_confidence": "高",
+  "verdict": "B 衛星候選（接近 A）— 估值 PEG 0.30 顯著便宜但 5Y 分位 85% + BB 上軌 95% stretched + 4W 漂移 +8.22% 接近 QC-22 警示，分批進場（首批回測 NT$1,300 或回到 BB 中軌 NT$1,013 區間，第二批 Q1 26 業績兌現確認）",
+  "industry_wind": "🟢",
+  "fwd_pe_fy1": 41.5,
+  "ttm_pe": 77.3,
+  "rr_short": 0.20,
+  "rr_mid": 1.45,
+  "rr_5y": 3.50,
+  "upside_5y_pct": 100,
+  "industry": "Electronic Components — AI Server PCB / HDI",
+  "industry_tag": "ai-server-pcb",
+  "inception_dd": "DD_2368TW_20260526.html",
+  "inception_date": "2026-05-26",
+  "next_annual_review": "2027-05-26",
+  "eps_source": "yfinance 2026-05-26 (Excel not covered) — FY26 n=1 analyst noisy / FY27 n=8 robust",
+  "oneliner": "FY25 Rev +54% / GM 29→33% / Q3 25 GM 35.6% record｜FY26-27 EPS 35.31→60.85 (90d +37%)｜Fwd PE FY+2 24x PEG 0.30 🟡｜AI 伺服器 PCB Amazon ASIC UBB + NVIDIA GB200/B100/B200 design wins｜trap 🟢｜B 衛星等回測 NT$1,300"
+}
+</script>
+
+<div class="container">
+
+<header class="header">
+  <h1>Gold Circuit Electronics（金像電 2368.TW）深度研究 — v12.4 schema</h1>
+  <div class="meta">資料抓取：2026-05-26 ｜ 最新股價 <strong>TWD 1,465</strong>（5/26 收盤，今日創 52W 高 1,495 後收 1,465）｜ 最近財報：Q4 FY25（2026 Q1 公告，Rev 16.4B TWD +66% YoY、GM 33.7%）｜ <span class="schema">DD Schema v12.4</span> ｜ yfinance + WebSearch 5 次（Excel 未覆蓋，EPS fallback yfinance n=8 for FY+2）</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============ §1 投資結論 ============ -->
+<section class="card">
+  <h2 id="s1">§1 投資結論（Executive Summary）</h2>
+  <p class="note">金像電（Gold Circuit Electronics 2368.TW）為台灣 AI 伺服器 PCB / HDI 製造商，NVIDIA GB200/B100/B200 + Amazon ASIC UBB anchor 客戶。台股 v12.4 Schema 首份 DD（Inception）。</p>
+
+  <h3>結論 Dashboard（綜合訊號燈）</h3>
+  <div class="hypothesis-box">
+    <ul>
+      <li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長 🟢 高確信（AI 伺服器 PCB 結構性 demand surge，Vera Rubin 2H 2026 量產要求 layer count + 銅量翻倍）｜§9 護城河 execution dimension 加深（NVIDIA GB200/B100/B200 design wins 確立）+ pricing power dimension 加深（GM 從 FY22 26.6% 升至 Q3 25 35.6% 連續擴張）｜§8 F AI 風險 🟢 AI 受益｜<strong>產業判斷：AI 伺服器 PCB 進入 hyper-growth phase + 升級層需求結構性</strong></li>
+      <li><strong>品質 B 級（接近 A）：</strong>護城河 8/10（§9 雙維均值：execution 8 / pricing power 7，雙線同步加深）｜體質 veto 5 項共 1 項不過（FCF/NI -0.47 ❌ Capex 巨擴 NT$7.2B 一次性 NWC strain）｜等級不變：B → B（但接近 A 邊界）</li>
+      <li><strong>估值燈 🟡 合理（PEG 維度 🟢 / 分位維度 🟠）：</strong>Fwd PE（FY+2 基準）<span class="num">24.07x</span>，5Y 分位 <span class="num">~85%</span>（估值 re-rate 後仍偏高位）｜PEG <span class="num">0.30</span>（FY+2 / 2Y CAGR 79%）<strong>顯著便宜</strong>｜兩維度衝突取較嚴 → 🟡 合理；但 PEG 強訊號使估值燈不降至 🟠</li>
+      <li><strong>Pure MA 狀態 ✅ 強勢進場（stretched）：</strong>W52 <span class="num">668</span>（斜率 +54.7%）／ W104 <span class="num">437</span>（+37.1%）／ W250 <span class="num">254</span>（+28.8%）｜現價 1,465 位於 BB 2σ 上軌 <span class="num">1,541</span> 的 <span class="num">95%</span> 處｜4W 漂移 <span class="num">+8.22%</span>（接近 QC-22 10% 警示閾值）</li>
+      <li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 ^TWII，現價 <span class="num">43,684</span> &gt; W104 <span class="num">25,809</span></li>
+      <li><strong>參考 R:R：</strong>短期 <span class="num">0.20x</span> / 中期 <span class="num">1.45x</span> / 5Y <span class="num">3.50x</span>（資訊性，不主導裁決；5Y R:R 強因 EPS CAGR 高 + 估值倍數 mean-revert 後仍正空間）</li>
+      <li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H，接近 A 邊界）｜判定理由：quality B (護城河 8) + gate 🟡 (PEG 強但分位偏高) + MA ✅ stretched + trap 🟢 → 衛星候選；條件式分批可進場，現價 stretched 但 thesis 完整</li>
+      <li><strong>長期持有信心：高</strong>（§2 I：執行 + 議價權雙線加深 + AI 伺服器 PCB hyper-growth phase + 客戶分散 NVIDIA + Amazon + ASIC）｜<strong>陷阱定性：🟢 非陷阱</strong>（GM 連續擴張 + 多客戶 + 結構性 demand 升級）</li>
+      <li><strong>Inception DD：</strong><code>DD_2368TW_20260526.html</code>（2026-05-26）— 該 ticker 最早一份 v12.2+ DD，作為「累積漂移」對照基準（本份為 Inception）</li>
+      <li><strong>下次年度對照倒數：</strong>2027-05-26（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+    </ul>
+  </div>
+  <p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+  <div class="warning-box">
+    <h4>⚠️ 這是價值陷阱嗎？（強制回答題）</h4>
+    <table>
+      <tr><th width="30%">問題</th><th>回答</th></tr>
+      <tr>
+        <td><strong>最可能的價值陷阱模式</strong></td>
+        <td><strong>非陷阱（thesis 結構性順風 + 各項指標方向皆正）</strong></td>
+      </tr>
+      <tr>
+        <td><strong>支持「這不是陷阱」的最強論據</strong></td>
+        <td>(1) GM 從 FY22 26.6% → FY25 32.8% → Q3 25 35.6% record，連續結構性擴張為硬證據（vs GUC 連 4 季結構性下滑相反方向）；(2) NVIDIA GB200/B100/B200 design wins + Amazon ASIC UBB anchor 客戶 = 客戶多元化（不像 GUC 集中在 Google 一家）；(3) NVIDIA Vera Rubin 2H 2026 量產要求 PCB layer count + 銅量翻倍，結構性 demand 升級為 NVIDIA 官方 confirmed 路線圖（Tom's Hardware 2026/01 CES）；(4) AI server rev 占 H2 2025 達 50% server rev = ~40% 公司 rev，前瞻趨勢明確；(5) FY+2 EPS 共識（n=8 analysts）90d 上修 +37%（從 44.42 → 60.85），sell-side 強烈 conviction。</td>
+      </tr>
+      <tr>
+        <td><strong>支持「這可能是陷阱」的最強反駁</strong></td>
+        <td>(1) 估值已被市場部分定價：FY+2 PE 24x 在 5Y 範圍中為 ~85% 分位（雖然 PEG 0.30 顯著便宜但絕對 PE 已不低）；(2) 從 52W 低 241 至高 1,495 = +520% rally，市場已 priced in 多數 AI server PCB 樂觀 narrative；(3) FY25 FCF -4.5B 異常（Capex 6.8B 暴增 +32% YoY），如果 Capex 巨擴的 productive capacity 用不滿（Vera Rubin 量產推遲 / NVIDIA capacity 限制下游 OEM），則 fixed cost burden 沈重；(4) 分析師 mean target NT$796.89（high 925 / low 697）大幅低於現價 NT$1,465 — sell-side target 嚴重落後股價，但這也意味目標可能 catch-up 上修而非股價下行；(5) 中國低成本 PCB（深南電路、滬電股份）對 mature 段競爭潛在 commodity 化壓力。</td>
+      </tr>
+      <tr>
+        <td><strong>如何在持有期間判斷陷阱是否正在發生</strong></td>
+        <td>領先指標：(1) <strong>季度 GM 走勢：若 Q1-Q2 26 GM 跌回 30% 以下（連 2 季）</strong> = pricing power 開始 commodity 化 → moat 評分需從 8 降至 7。(2) <strong>FY+1 EPS 共識軌跡：若 NT$35.31 連續下修 &gt; 10%（即降至 NT$32 以下）</strong> = AI server PCB ramp 速度不如預期 → PEG 0.30 失效。(3) <strong>NVIDIA Vera Rubin 量產進度：若 Q3-Q4 26 NVIDIA 公告 Rubin NVL72 量產推遲超過 6 個月</strong> = 結構性 demand catalyst delayed → 估值倍數 mean-revert 風險。(4) <strong>Thailand 新廠投產進度：若 2027 H1 Thailand 廠 yield 未達 production grade</strong> = capex burst 未換來相應 capacity → FCF persistently 負影響股息與再投資。</td>
+      </tr>
+    </table>
+    <p><strong>最終定性：🟢 非陷阱</strong>（thesis 結構性順風 + GM 擴張 + 多客戶分散 + AI 結構性 demand 升級。estimating 風險屬「進場時機」非 thesis 失敗。）</p>
+  </div>
+
+  <h3>最關鍵監測指標</h3>
+  <table>
+    <tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+    <tr>
+      <td>1</td>
+      <td>季度 Gross Margin 軌跡（Q1-Q2 26）</td>
+      <td>§5 H1 / §8.B / §10</td>
+      <td>🔵 核心假設驗證信號（必填）</td>
+      <td>連 2 季 GM &lt; 30% → pricing power moat 從 7 降至 6，估值 PEG 失去 anchor</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>NVIDIA Vera Rubin 量產進度（2H 26 schedule）</td>
+      <td>§5 H2 / §11</td>
+      <td>🔵 長期成長領先信號（必填）</td>
+      <td>2H 26 NVIDIA 公告 Rubin NVL72 量產推遲 &gt; 6 個月 → 結構性 demand catalyst 延後，估值倍數 mean-revert</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Thailand 新廠 yield ramp（2026 H2 - 2027 H1）</td>
+      <td>§5 H3 / §10</td>
+      <td>🔵 capex efficiency 信號</td>
+      <td>若 Thailand 廠 2027 H1 yield 未達 production grade → FCF persistently 負，影響股息與護城河 reinvestment</td>
+    </tr>
+  </table>
+</section>
+
+<!-- ============ §2 四層判定 ============ -->
+<section class="card">
+  <h2 id="s2">§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+  <h3>0｜產業風向燈</h3>
+  <table>
+    <tr><th>輸入</th><th>數值</th></tr>
+    <tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（Runway ≥ 10 年 AI 伺服器 PCB + chiplet integration + HBM4/5 generations）</td></tr>
+    <tr><td>§9 護城河趨勢</td><td>execution + pricing power <strong>雙線加深</strong>（GM expanding + design wins 擴大）</td></tr>
+    <tr><td>§8 F AI 風險</td><td>🟢 AI 受益（AI 伺服器 PCB = 直接 AI capex 受益者）</td></tr>
+    <tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+    <tr><td>一句話產業判斷</td><td>NVIDIA Vera Rubin 2H 2026 量產要求 PCB layer count 與銅量翻倍 → AI 伺服器 PCB 段升級 hyper-growth 5+ 年；2368 為 NVIDIA + Amazon ASIC UBB 雙 anchor 設計合作夥伴，結構性受益</td></tr>
+  </table>
+
+  <h3>B｜品質等級（護城河單一決定 + 體質 veto，v12.3 雙維拆解）</h3>
+
+  <h4>體質檢核 mini-list（v12.3 併入 B）</h4>
+  <table>
+    <tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr>
+    <tr><td>1</td><td>毛利率近 3 年未連續下滑 &gt; 2pp</td><td>✅</td><td>FY22 26.6% → FY23 25.7% → FY24 29.3% → FY25 32.8% → <strong>Q3 25 35.6% record</strong>（4 年累積 +6pp，結構性擴張）</td></tr>
+    <tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>❌</td><td>FY25 FCF -4,539M TWD / NI 9,607M = <strong>-0.47</strong>（一次性 Capex 6.8B 巨擴 +32% YoY，Thailand 新廠投資）</td></tr>
+    <tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td>✅</td><td>FY+1 EPS 90d 從 31.53 → 35.31（n=1 analyst），<strong>上修 +12%</strong>；FY+2（n=8）90d 從 44.42 → 60.85 <strong>上修 +37%</strong>（強訊號）</td></tr>
+    <tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅</td><td>Q1-Q4 25 YoY 全正，Q3 25 Rev +60%、Q4 25 +66% YoY，動能強勁</td></tr>
+    <tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅</td><td>Total Debt 18.07B / Cash 18.11B = Net Cash 0.04B（負債由 FY24 7.33B 升至 18.07B 為 Capex 融資但 cash balance 同步上升）；Net Debt/EBITDA ≈ 0 → 健康</td></tr>
+  </table>
+  <p><strong>體質 veto 結果</strong>：1 項不過 → 等級不變</p>
+
+  <h4>護城河雙維拆解（v12.3 default）</h4>
+  <table>
+    <tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+    <tr>
+      <td><strong>Execution Moat</strong></td>
+      <td><strong>8 / 10</strong></td>
+      <td>(1) NVIDIA GB200 / B100 / B200 design wins 確立 — 高層數高銅量 PCB 設計能力 mass production proven；(2) Amazon ASIC UBB anchor 客戶高市占（CSP 自研 ASIC 段）；(3) FY25 Capex 6.8B + Thailand 子公司擴產 CNY 1.3B = 結構性 capacity 領先布局；(4) Q3 25 GM 35.6% record = 在 AI server 升級段擁有技術定價力；(5) 多客戶分散（NVIDIA + Amazon + 其他 CSP），不像 GUC 單一 Google 依賴；(6) 800G switch board 高階產品線</td>
+    </tr>
+    <tr>
+      <td><strong>Pricing Power Moat</strong></td>
+      <td><strong>7 / 10</strong></td>
+      <td>(1) GM 連 3 年結構性擴張（FY22 26.6% → FY25 32.8%，+6.2pp）反映向上 mix shift；(2) AI server PCB 升級層為高 complexity 段，技術門檻提升 ASP；(3) 但 PCB 仍為相對 commodity 化產業，中國 vendors（深南電路 SCC、滬電股份 WUS）在 mature node 段有 cost 競爭力；(4) NVIDIA 對 supplier 議價權強（單一客戶 OEM 採購規模大），但 Vera Rubin 升級層需 advanced PCB 能力，2368 短期不易被替代；(5) Amazon ASIC UBB 段 share leadership 提供 pricing leverage</td>
+    </tr>
+    <tr>
+      <td><strong>合併分</strong>（均值）</td>
+      <td><strong>7.5 / 10（rounded 8）</strong></td>
+      <td>execution 8 + pricing 7 = 均 7.5。產業順風 + 雙線擴張 → rounded 8（B 級接近 A 邊界）</td>
+    </tr>
+    <tr>
+      <td><strong>等級</strong></td>
+      <td><strong>B 級（護城河 8）</strong></td>
+      <td>體質 veto 1 項不過 → 不變（仍 B）；但 8 分接近 A 級 9 分門檻</td>
+    </tr>
+  </table>
+  <p><strong>dd-meta optional 欄位</strong>：moat_execution: 8 / moat_pricing_power: 7</p>
+  <div class="reasoning">
+    Execution 8（NVIDIA GB200/B100/B200 + Amazon ASIC UBB 雙 anchor + Thailand 擴產）+ pricing 7（GM 連 3 年擴張 +6pp）= 均值 7.5 → rounded 8 → B 接近 A。產業順風 + 雙線同步加深的稀有性使 2368 接近 A 級護城河（vs GUC 雙線分歧只能保住 B）。
+    對下游 implication：§2 D 估值燈套接近 A 級基準（容許 PEG 至 2.0 仍 🟡），現在 PEG 0.30 顯著便宜。
+  </div>
+
+  <h3>C｜估值輸入</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源</th></tr>
+    <tr><td>FY+1 EPS（2026E）</td><td>NT$35.31</td><td>yfinance n=1 analyst（注：單一 analyst 估計噪音大；90d trend 31.5→41.5→37.85→38.42→35.31 上下震盪）</td></tr>
+    <tr><td>FY+2 EPS（2027E）</td><td>NT$60.85</td><td>yfinance n=8 analysts（robust）；90d 從 44.42 → 60.85 <strong>上修 +37%</strong></td></tr>
+    <tr><td>FY+3 EPS（2028E，邏輯外推）</td><td>NT$~75（+23% YoY 假設成長放緩）</td><td>§8 邏輯外推（AI server PCB hyper-growth 後段 deceleration）</td></tr>
+    <tr><td>FY+1 → FY+2 成長率</td><td>+72%</td><td>(60.85 / 35.31) - 1</td></tr>
+    <tr><td>FY25 actual EPS</td><td>NT$~19.01</td><td>NI 9,607M / 505.4M shares</td></tr>
+    <tr><td>FY25 → FY+2 2Y CAGR</td><td><strong>~79%</strong></td><td>(60.85 / 19.01)^(1/2) - 1</td></tr>
+    <tr><td>FY+1 → FY+3 3Y CAGR</td><td>~28%</td><td>(75 / 35.31)^(1/2) - 1（從 FY+1 起算 2 年 CAGR）</td></tr>
+    <tr><td>當前 FY+1 Forward P/E</td><td>41.5x</td><td>1,465 / 35.31</td></tr>
+    <tr><td>當前 FY+2 Forward P/E</td><td><strong>24.07x</strong></td><td>1,465 / 60.85（yfinance reports 24.07）</td></tr>
+    <tr><td>當前 Trailing P/E</td><td>77.3x</td><td>yfinance（EPS TTM ~19.0）</td></tr>
+    <tr><td>EV/EBITDA</td><td>39.4x</td><td>yfinance</td></tr>
+  </table>
+
+  <h3>D｜估值燈</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>當前 Fwd PE（FY+2 基準）</td><td>24.07x</td></tr>
+    <tr><td>5Y Fwd PE 範圍估計</td><td>~8x（FY22-23 低點，AI 浪潮前）~ 28x（FY26 上半年高）</td></tr>
+    <tr><td>5Y Fwd PE 分位</td><td>~85%（偏高）</td></tr>
+    <tr><td>2Y EPS CAGR（FY25 → FY+2）</td><td>79%</td></tr>
+    <tr><td>PEG（FY+2 / 2Y CAGR）</td><td><strong>0.30（顯著便宜）</strong></td></tr>
+    <tr><td>PEG（FY+1 / 2Y CAGR）</td><td>0.52（仍便宜）</td></tr>
+    <tr><td><strong>估值燈（兩維度衝突取較嚴）</strong></td><td><strong>🟡 合理</strong>（PEG 強訊號 🟢 vs 5Y 分位 偏高 🟠 → 取中間）</td></tr>
+    <tr><td>套用規則</td><td>不變（不升等也不砍半）</td></tr>
+  </table>
+
+  <h4>🛡️ 盲點 1 防禦：結構性高成長救援判定</h4>
+  <table>
+    <tr><th>條件</th><th>門檻</th><th>本標的</th><th>滿足？</th></tr>
+    <tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信</td><td>🟢 高確信</td><td>✅</td></tr>
+    <tr><td>PEG</td><td>&lt; 2.0</td><td>0.30 顯著便宜</td><td>✅</td></tr>
+    <tr><td>§8 F AI 風險評級</td><td>🟢 AI 受益</td><td>🟢 AI 受益</td><td>✅</td></tr>
+    <tr><td>分位 &gt; 85% 上限</td><td>分位 &lt; 85%</td><td>~85%（邊界）</td><td>⚠️ 邊界</td></tr>
+  </table>
+  <div class="reasoning">
+    三條件滿足，分位 ~85% 在邊界（vs GUC 92% 已超過）→ 盲點 1 救援邊界觸發。
+    但因為 PEG 已顯著便宜（0.30），不需要救援將 🟠 改為 🟡 — 估值燈本身就維持 🟡，現狀已合理。
+    對下游 implication：等級維持 B（接近 A），不升不降。
+  </div>
+
+  <h3>E｜R:R + Bear Case（v12.3 大幅瘦身：3 個數字 + 1 line Bear anchor）</h3>
+  <table>
+    <tr><th>時距</th><th>計算</th><th>目標價</th><th>R:R</th></tr>
+    <tr><td>短期（1 年）</td><td>FY+1 EPS 35.31 × 合理 P/E 45x（PCB AI tier 成長股 PE）</td><td>NT$1,589</td><td><span class="badge-yellow">0.20x</span>（短期略高於現價 +8.5%）</td></tr>
+    <tr><td>中期（2 年）</td><td>FY+2 EPS 60.85 × 合理 P/E 30x（成長放緩後 mean-revert）</td><td>NT$1,825</td><td><span class="badge-yellow">1.45x</span></td></tr>
+    <tr><td>5Y（長期）</td><td>§8 E Base 情境 5Y EPS ~95 × 長期合理 PE 22x（成長放緩至 15-20%、PE 從 40x mean-revert 至 22x）</td><td>NT$2,930</td><td><span class="badge-green">3.50x</span></td></tr>
+  </table>
+  <p><strong>Bear anchor（1 行）</strong>：Bear EPS = FY+1 35.31 × 0.9 = 31.78；Bear PE = 28x（§8E 成長熄火至 30%-50%）；Bear 股價 = NT$890（現價下行 -39%）</p>
+  <p class="note"><strong>dd-meta `stress` 欄位</strong>：2/2（base + bear 兩情境通過率）。Note：v12.3 已退役 QC-29 4 情境壓測。</p>
+  <div class="reasoning">
+    短期 R:R 0.20x 略不過進場門檻（&lt; 2.0），中期 1.45x、5Y 3.50x 為支持進場訊號。
+    對下游 implication：§2 H 不會基於 R:R 不過自動轉 C（thesis 完整），但會將最終訊號從 A 之上推至 B（不入 A 因為 quality 8 而非 9，且 5Y 分位偏高）。
+  </div>
+
+  <h3>F｜Pure MA 狀態機</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>現價</td><td>1,465</td></tr>
+    <tr><td>W52 / 斜率</td><td>667.76 / +54.70%</td></tr>
+    <tr><td>W104 / 斜率</td><td>436.59 / +37.10%</td></tr>
+    <tr><td>W250 / 斜率</td><td>253.58 / +28.81%（強正）</td></tr>
+    <tr><td>BB 2σ 上/中/下</td><td>1,541 / 1,013 / 485</td></tr>
+    <tr><td>現價位置 vs BB</td><td>BB 上軌 95% 處（接近 stretched）</td></tr>
+    <tr><td>4W 漂移</td><td>+8.22%（接近 QC-22 10% 警示閾值）</td></tr>
+    <tr><td>價格序列</td><td>1,465 &gt; W52 668 &gt; W104 437 &gt; W250 254</td></tr>
+    <tr><td><strong>Pure MA 狀態</strong></td><td><strong>✅ 強勢進場（stretched）</strong></td></tr>
+    <tr><td>MA 部位乘數</td><td>× 1.0（強勢 default；stretched 為警示但不降階）</td></tr>
+  </table>
+
+  <h4>QC-24 近 5 交易日 intraday 訊號</h4>
+  <p>近 5 日強勁上漲：5/20 close 1,235 → 5/26 close 1,465 = +18.6% 五日內。5/26 開 1,465 高 1,495 低 1,425 收 1,465：close vs high = -2.0%（未觸發 QC-24 5% shooting star 門檻），但今日震盪幅度 +4.8% 顯示動能末段消化。</p>
+
+  <div class="warning-box">
+    <h4>⚠️ MA 警示：BB 2σ 上軌 95% + 4W 漂移 +8.22% 接近 QC-22 門檻</h4>
+    <p>5 日內 +18.6% rally 為動能爆衝；4W 漂移 +8.22% 未達 QC-22 10% 警示但接近邊界；BB 上軌 95% 表示近期已 stretched。建議分批進場：等回測 BB 中軌 NT$1,013 或回到 4W 漂移 &lt; +3% 後啟動第一批。</p>
+  </div>
+
+  <h3>G｜大盤豁免層</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th></tr>
+    <tr><td>對應大盤</td><td>^TWII</td></tr>
+    <tr><td>大盤現價</td><td>43,683.67</td></tr>
+    <tr><td>大盤 W104</td><td>25,808.71</td></tr>
+    <tr><td>系統性風險</td><td>否</td></tr>
+    <tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+  </table>
+
+  <h3>H｜綜合訊號燈</h3>
+
+  <h4>訊號燈判定步驟</h4>
+  <table>
+    <tr><th>步驟</th><th>條件</th><th>本標的</th><th>輸出</th></tr>
+    <tr><td>1. 拒絕檢核</td><td>trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕</td><td>trap 🟢 / gate 🟡 / MA ✅ / quality B</td><td>不觸發</td></tr>
+    <tr><td>2. 高強度（A+）</td><td>quality S/A + gate 🟢 + MA 🟢/✅ + trap 🟢</td><td>quality B（接近 A 但未到 9）</td><td>不符</td></tr>
+    <tr><td>3. 中高（A）</td><td>quality S/A + gate 🟡 + MA ✅ + trap 🟢</td><td>quality B（8 分接近 A 邊界但未及）</td><td>不符</td></tr>
+    <tr><td>4. 衛星（B）</td><td>quality B + gate 🟢/🟡 + trap 🟢/🟡</td><td>quality B + gate 🟡 + trap 🟢</td><td><strong>符合 → B</strong>（接近 A 邊界）</td></tr>
+  </table>
+
+  <h4>五個訊號維度</h4>
+  <table>
+    <tr><th>維度</th><th>值</th></tr>
+    <tr><td>quality_tier</td><td>B</td></tr>
+    <tr><td>gate</td><td>🟡</td></tr>
+    <tr><td>ma_status</td><td>✅</td></tr>
+    <tr><td>benchmark_regime</td><td>正常</td></tr>
+    <tr><td>trap</td><td>🟢 非陷阱</td></tr>
+    <tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong>（接近 A 邊界）</td></tr>
+  </table>
+  <p>判定理由：護城河 8（B 級接近 A）+ PEG 0.30 顯著便宜但 5Y 分位 85% 抑制升等 + Pure MA ✅ stretched + trap 🟢 → 衛星候選 B；倉位 % 由 portfolio-manager skill 處理。</p>
+
+  <h3>I｜長期展望（3-5 年定性）</h3>
+  <table>
+    <tr><th>維度</th><th>來源</th><th>結論</th></tr>
+    <tr><td>成長跑道</td><td>§8A</td><td>充裕（10+ 年 AI 伺服器 PCB + chiplet integration + HBM4/5 升級節奏）</td></tr>
+    <tr><td>護城河趨勢</td><td>§9</td><td><strong>execution + pricing power 雙線加深</strong>（GM expanding + design wins 擴大）</td></tr>
+    <tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong>（雙維護城河加深 + AI 受益 + 客戶分散 NVIDIA + Amazon + ASIC）</td></tr>
+  </table>
+  <p><strong>一句話說明</strong>：🟢 產業順風，B 級護城河 8/10（接近 A，execution + pricing power 雙線加深）。估值燈 🟡 PEG 0.30 顯著便宜但 5Y 分位 85% + Pure MA ✅ 強勢但 BB 上軌 95% stretched + 4W +8.22% 接近 QC-22 邊界。建議分批：首批回測 NT$1,300 區間進場，Q1 26 業績兌現 + 估值消化後加碼。</p>
+</section>
+
+<!-- ============ §3 三方辯論 ============ -->
+<section class="card">
+  <h2 id="s3">§3 三方辯論摘要</h2>
+
+  <div class="three-col">
+    <div class="role-card role-bull">
+      <h3>多頭辯護人</h3>
+      <p>進場論據：</p>
+      <ol>
+        <li><strong>護城河（§9）：</strong>NVIDIA GB200 / B100 / B200 design wins + Amazon ASIC UBB anchor + Thailand 擴產 NT$1.3B/CNY 1.3B = 結構性 capacity 領先 + GM 從 FY22 26.6% 升至 Q3 25 35.6% record 為硬證據。</li>
+        <li><strong>成長（§8）：</strong>FY+2 EPS 共識（n=8）90d 上修 +37%（44.42 → 60.85），sell-side 強烈 conviction。FY+1 → FY+2 +72% growth。Vera Rubin 2H 26 量產 = 結構性 demand 升級。</li>
+        <li><strong>估值（§13）：</strong>PEG 0.30 顯著便宜（FY+2 PE 24x ÷ 2Y CAGR 79%）。即使 PE mean-revert 至 22x 5Y 後，仍因 EPS hyper-growth 提供強勁複利。</li>
+      </ol>
+      <p><strong>多頭最強一句話</strong>：NVIDIA Vera Rubin 量產要求 layer count + 銅量翻倍 + 2368 雙 anchor 客戶 (NVIDIA + Amazon) + GM 結構性擴張 = AI server PCB 升級段稀有受益者。</p>
+    </div>
+
+    <div class="role-card role-bear">
+      <h3>空頭檢察官</h3>
+      <p>18 個月內 -30% 虧損路徑：</p>
+      <ol>
+        <li><strong>估值高位</strong>：從 52W 低 241 至高 1,495 = +520% rally，市場已 priced in 多數樂觀 narrative。FY+2 PE 24x 在 5Y 範圍中 85% 分位，任何負面消息（GM miss / NVIDIA Rubin 量產推遲 / 中國 PCB 競爭加劇）即觸發 mean-revert。</li>
+        <li><strong>Capex 風險（§10）</strong>：FY25 Capex 6.8B + Thailand 新廠 + 公司公告 NT$7.2B 新 capex 啟動 Q4 25。如果 NVIDIA Rubin 量產推遲 / OEM capacity 限制，Capex 巨擴的 productive capacity 用不滿 → fixed cost burden 沈重。</li>
+        <li><strong>催化劑觸發</strong>：分析師 mean target NT$796.89（high 925 / low 697）大幅低於現價 NT$1,465。雖然這可能 catch-up 上修，但若 Q1-Q2 26 GM 不及預期，sell-side 反向下修，股價可跌至 NT$1,000-1,100（-25 至 -32%）。</li>
+      </ol>
+      <p><strong>空頭最大威脅</strong>：NVIDIA Vera Rubin 量產推遲 6+ 個月 + 2368 capex burst 用不滿 + GM 從 35% 跌回 30% → 三重 catalyst 同時觸發即 -30%。</p>
+    </div>
+
+    <div class="role-card role-arb">
+      <h3>估值仲裁員</h3>
+      <table style="font-size: 0.88em;">
+        <tr><th>維度</th><th>判定</th></tr>
+        <tr><td>隱含預期可信度</td><td>7 / 10</td></tr>
+        <tr><td>核心依據</td><td>Reverse DCF 隱含 12% perpetual FCF CAGR vs 共識 2Y EPS CAGR 79%（短期過於樂觀但 5Y 平均應落於 25-35%/yr，與隱含一致）</td></tr>
+        <tr><td>歷史對標</td><td>2017-2020 Ibiden（FCBGA substrate）AI 早期 ramp：3Y 期間 EPS CAGR ~40%，股價 +180%。整體成長路徑類似但 Ibiden 為 substrate 而 2368 為 PCB，相對技術門檻略低</td></tr>
+      </table>
+      <p><strong>仲裁員一句話</strong>：3Y 共識 EPS 預期可信（NVIDIA Rubin schedule 為硬事實 + sell-side n=8 連續上修），但「FY+1 35.31 (n=1) + FY+2 60.85 (n=8)」共識的 noise 較大，5Y mean-revert 至 20-25% CAGR 為合理 base case，對應 5Y 公允估值 NT$2,500-3,000（現價 +70-105%）。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ §4 序章 ============ -->
+<section class="card">
+  <h2 id="s4">§4 序章：第一性原理 × 逆向思考</h2>
+
+  <h3>存在意義</h3>
+  <p>2368 解決的痛點：<strong>AI 伺服器（NVIDIA HGX / GB200 / Rubin、CSP 自研 ASIC 板）需要極端規格的高層數高銅量 PCB（typically 20+ layers + 高頻訊號完整性 + 高功率分配能力）。</strong>當 NVIDIA Blackwell B200 / Rubin R200 等 GPU 從 1.5kW 升至 2.5-3kW，PCB 需要支援更高的電流密度與更精密的訊號 routing — 這是 commodity PCB 廠商做不到的技術升級段。</p>
+  <p>若 2368 明天消失：(1) NVIDIA GB200 / B100 / B200 量產的 PCB 供應鏈缺一個重要 OEM partner；(2) Amazon ASIC UBB 大客戶失去高市占 supplier，需要 12-18 個月 qualify 替代源；(3) AI server OEM 廠（鴻海、廣達、緯創）對高階 PCB 採購需轉至 Ibiden / Unimicron / 中國廠，但這些短期 capacity 已滿。</p>
+  <p>不可替代性層級：<strong>「AI server 高層 PCB capacity + NVIDIA 認證 + Thailand 海外擴產規避地緣風險」三位一體</strong>是 2368 真正的存在意義。</p>
+
+  <h3>護城河形成歷史路徑</h3>
+  <table>
+    <tr><th>年份</th><th>關鍵事件</th><th>對護城河的累積貢獻</th></tr>
+    <tr><td>1989</td><td>金像電成立，初期聚焦消費電子 PCB</td><td>製造能力建立</td></tr>
+    <tr><td>2000-2010</td><td>從消費電子轉向通訊 + 工業 PCB；推出高層數 (HDI) 能力</td><td>技術 ladder up 至 8-12 層 HDI</td></tr>
+    <tr><td>2018-2020</td><td>佈局伺服器 PCB；早期 NVIDIA Volta / Ampere 板</td><td>進入 server tier；CSP 客戶初步認證</td></tr>
+    <tr><td>2022-2023</td><td>NVIDIA H100 (Hopper) PCB 量產供應；Amazon ASIC UBB anchor 客戶確立</td><td>AI server 段 design win 累積；CSP 客戶高市占</td></tr>
+    <tr><td>2024</td><td>FY24 Rev 38.9B (+30%)、GM 29.3%、AI server 占比突破 20% Rev</td><td>盈餘能力 step-up、AI mix 確立</td></tr>
+    <tr><td>2025</td><td>FY25 Rev 60B (+54%) / GM 32.8% / Q3 25 GM 35.6% record / NVIDIA GB200/B100/B200 設計贏單 / FY25 Capex 6.8B 暴增；H2 2025 Server rev 80% + AI server 占 server rev 50% (公司全年約 30-40%)</td><td>AI server primary supplier 地位確立 + 護城河升級</td></tr>
+    <tr><td>2026 Q1-Q2</td><td>Capex 新增 NT$7.2B 啟動；Thailand 子公司擴產 1.3B；Vera Rubin 量產 H2 26 預期 → 升級層 demand 結構性</td><td>下一輪 capacity expansion + Vera Rubin 升級護城河</td></tr>
+  </table>
+  <p>歷史路徑顯示：護城河 8 分為 35+ 年累積 + 7-8 年 server tier 升級 + 3-4 年 AI 升級段的結果，且雙維（execution + pricing power）同時加深，這在 PCB 業界中屬少見組合。</p>
+
+  <h3>逆向推演（Munger Inversion）— 三維展開</h3>
+
+  <h4>① 技術維度</h4>
+  <ul>
+    <li><strong>NVIDIA 採購策略改變</strong>：若 NVIDIA 把更多 PCB 訂單轉至 Ibiden / Unimicron 多元化，2368 share 下滑 → 護城河 -1 分。歷史對標：2015-2017 Apple 把 PCB 訂單從 Foxconn 轉至 Pegatron + Wistron 多元化 → Foxconn AAPL share 下滑 -20%</li>
+    <li><strong>陶瓷基板取代有機 PCB</strong>：若 advanced packaging 改用陶瓷 substrate 取代 PCB（如 CoWoS 後段）→ 2368 業務段萎縮。但這條路徑機率 &lt; 10%（5Y 內），陶瓷 substrate 成本仍高於 PCB 5-10x</li>
+    <li><strong>EDA + AI 自動化 PCB 設計</strong>：Cadence Allegro AI 設計輔助讓更多廠商能設計高層 PCB → 競爭加劇。但 PCB 製造能力（yield、銅量處理）為實體工藝瓶頸，不易被 AI 自動化</li>
+    <li><strong>中國 PCB 技術追趕</strong>：滬電股份 WUS、深南電路 SCC 在 advanced PCB 段技術追趕 → 取代 2368 在中階段位置。機率 30%（5Y 內），但 NVIDIA / Amazon CSP 客戶因地緣對中國 vendor 依賴度降低 → 利好台灣 PCB 廠</li>
+  </ul>
+
+  <h4>② 管理維度</h4>
+  <ul>
+    <li><strong>Capex 失控</strong>：FY25 Capex 6.8B + FY26 計畫 7.2B + Thailand 1.3B = 累積 &gt; 15B over 24 個月。若 NVIDIA Rubin 量產推遲，Capacity 用不滿 → fixed cost 沈重。歷史對標：2018 SanDisk over-investment in 3D NAND fab → 後續 5 年 ROIC 從 25% 跌至 10%。Watchlist：FY27 H1 Thailand 廠 yield ramp</li>
+    <li><strong>單一管理層風險</strong>：金像電由創辦家族經營，CEO 經驗豐富但 succession 不明確（公開資料缺）。若創辦人退場且交棒不順 → 戰略連續性風險</li>
+    <li><strong>客戶集中</strong>：雖然多客戶（NVIDIA + Amazon + ASIC），但 NVIDIA + Amazon 合計可能 &gt; 50%，dual-track 風險存在</li>
+  </ul>
+
+  <h4>③ 結構維度</h4>
+  <ul>
+    <li><strong>AI capex 結構性反轉</strong>：若 2027-2028 hyperscaler 因投資回報壓力降速 AI capex → 整個 AI server PCB segment 萎縮。但這條 5Y 機率 &lt; 25%</li>
+    <li><strong>美中貿易戰升級 → 雙重影響</strong>：(i) 利好 — 美國 hyperscaler 加速去中國 PCB 供應；(ii) 利空 — 若中國對台製品反制，台灣 PCB 廠出口受限。Thailand 廠為地緣分散化措施，部分對沖</li>
+    <li><strong>計算範式轉換</strong>：量子 / neuromorphic / photonics 2030+ 進入商用 → 傳統 PCB 段需求結構性下移。機率 &lt; 15%（10 年內）</li>
+  </ul>
+</section>
+
+<!-- ============ §5 投資論點錨定 ============ -->
+<section class="card">
+  <h2 id="s5">§5 投資論點錨定</h2>
+
+  <h3>A｜持有期與時間軸宣告</h3>
+  <table>
+    <tr><th>項目</th><th>填寫</th></tr>
+    <tr><td>預設持有期</td><td>24-48 個月（NVIDIA Vera Rubin 2H 2026 量產 + FY27 EPS 兌現 + Thailand 廠 ramp）</td></tr>
+    <tr><td>主要驅動時間軸的理由</td><td>FY+2（2027）EPS NT$60.85（+72% from FY+1）為 thesis 核心數字；Vera Rubin 量產為 2H 26 主要 catalyst window；Thailand 廠 ramp 為 FY27 productivity driver</td></tr>
+    <tr><td>持有期決定哪些變數是訊號 / 噪音</td><td><strong>訊號（必看）：</strong>季度 GM 軌跡、NVIDIA Rubin 量產 schedule、Thailand 廠 yield ramp、FY+2 EPS 共識方向。<strong>噪音（忽略）：</strong>單季 Rev miss / beat 2-3pp、TWD 短期匯率、台股大盤季度漲跌</td></tr>
+  </table>
+
+  <h3>B｜三個核心假設 + 三層時間軸</h3>
+  <table>
+    <tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>數字門檻</th><th>信息來源</th><th>漂移觸發</th></tr>
+    <tr>
+      <td>H1</td>
+      <td>季度 GM 維持 32%+ 水平（pricing power 不被 commodity 化）</td>
+      <td>Q1-Q4 26 季度 GM ≥ 32%；FY26 全年 GM ≥ 33%</td>
+      <td>FY27-FY29 全年 GM 維持 32-35% 區間</td>
+      <td>FY30 GM 維持 30%+（非結構性下滑）</td>
+      <td>FY26 全年 GM ≥ 33%（vs FY25 32.8%）</td>
+      <td>公司法說 / 季報</td>
+      <td>連 2 季 GM &lt; 30% → 削弱</td>
+    </tr>
+    <tr>
+      <td>H2</td>
+      <td>NVIDIA Vera Rubin 量產 2H 2026 兌現 → FY27 EPS 60.85 達標</td>
+      <td>Q3-Q4 26 Vera Rubin NVL72 量產確認；FY26 EPS NT$35.31 達標</td>
+      <td>FY27-FY28 NVIDIA Rubin Ultra / Vera 換代節奏明確</td>
+      <td>FY29-FY30 NVIDIA Feynman 架構升級延續</td>
+      <td>FY27 EPS NT$60.85 達標（vs 共識）</td>
+      <td>NVIDIA 法說 / Tom's Hardware / SemiAnalysis</td>
+      <td>NVIDIA Rubin 量產推遲 &gt; 6 個月 → 削弱</td>
+    </tr>
+    <tr>
+      <td>H3</td>
+      <td>Thailand 新廠 2026 H2 投產 + 2027 H1 yield ramp 達 production grade</td>
+      <td>2027 H1 Thailand 廠 utilization &gt; 60%</td>
+      <td>FY28-FY29 Thailand 廠擴產第二期</td>
+      <td>FY30+ Thailand 廠為 GUC、ASIC、CSP 替代供應</td>
+      <td>2027 H1 Thailand utilization ≥ 60% + yield 達 production grade</td>
+      <td>公司法說會 + Capex 進度更新</td>
+      <td>Thailand 廠 yield ramp 延後 &gt; 12 個月 → 削弱</td>
+    </tr>
+  </table>
+
+  <h3>B'｜12 個月前 DD 對照</h3>
+  <p><strong>狀態：進場未滿一年（本份為 Inception DD，2026-05-26）。本欄位將於 2027-05-26 起首次有資料對照。</strong></p>
+
+  <h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+  <table>
+    <tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+    <tr>
+      <td>R1</td>
+      <td>季度 GM 下滑（pricing power commodity 化）</td>
+      <td>H1</td>
+      <td>⚡ 短期（1-2 季可觸發）</td>
+      <td>Q1 26 / Q2 26 GM</td>
+      <td>連 2 季 GM &lt; 30% → 削弱 → 估值倍數 -20%</td>
+    </tr>
+    <tr>
+      <td>R2</td>
+      <td>NVIDIA Vera Rubin 量產推遲</td>
+      <td>H2</td>
+      <td>🔥 中期（4-6 季）</td>
+      <td>NVIDIA Q2-Q3 26 法說會 Rubin schedule update</td>
+      <td>推遲 &gt; 6 個月 → 削弱；推遲 &gt; 12 個月 → 反轉</td>
+    </tr>
+    <tr>
+      <td>R3</td>
+      <td>Capex 失控 / Thailand 廠 yield ramp 失敗</td>
+      <td>H3</td>
+      <td>🐢 長期（2+ 年慢變數）</td>
+      <td>2027 H1 / H2 Thailand 廠 yield + 公司法說會 capex effectiveness 評估</td>
+      <td>2027 H1 Thailand yield ramp 失敗 + FCF 持續 -3B → 砍倉</td>
+    </tr>
+  </table>
+
+  <h3>D｜邊際貢獻判斷框架</h3>
+  <table>
+    <tr><th>判斷步驟</th><th>應用</th></tr>
+    <tr><td>1. 時間軸匹配？</td><td>持有期 24-48 個月內，季度 GM / NVIDIA Rubin schedule / Thailand 廠 ramp 為訊號；短期 Rev miss / 匯率 = 噪音</td></tr>
+    <tr><td>2. 假設關聯？</td><td>GM → H1；NVIDIA → H2；Thailand → H3</td></tr>
+    <tr><td>3. 邊際方向？</td><td>FY25 Q3 GM 35.6% record + Q4 GM 33.7% = ＋強化 H1；FY+2 EPS 共識 90d 上修 +37% = ＋強化 H2；Capex 6.8B + Thailand 啟動 = ＋強化 H3（capacity 布局）但 FCF 短期 -4.5B</td></tr>
+    <tr><td>4. 閾值判斷？</td><td>H1/H2/H3 三條全強化，當前 thesis 動能強勁</td></tr>
+  </table>
+
+  <h3>E｜可執行決策主線預設</h3>
+  <table>
+    <tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+    <tr>
+      <td><strong>進場</strong></td>
+      <td>估值：股價回測 NT$1,200-1,300（Fwd PE FY+2 20-22x），基本面：Q1 26 GM &gt; 31% 確認</td>
+      <td>建倉至底倉 15%（目標倉位 75%），首次進場</td>
+    </tr>
+    <tr>
+      <td><strong>加碼</strong></td>
+      <td>H1 + H2 + H3 三條同步強化：Q2-Q3 26 GM &gt; 32% + NVIDIA Rubin Q3 26 量產確認 + Thailand 廠 ramp 進度</td>
+      <td>加碼至目標倉位 100%（B 級接近 A，衛星 5-7%）</td>
+    </tr>
+    <tr>
+      <td><strong>減碼</strong></td>
+      <td>R1（GM 連 2 季 &lt; 30%）或 R2（NVIDIA Rubin 推遲 &gt; 6 個月）</td>
+      <td>減至底倉 50%</td>
+    </tr>
+    <tr>
+      <td><strong>撤退</strong></td>
+      <td>核心假設 H1+H2 同時破裂（Q1 26 GM &lt; 28% + NVIDIA Rubin 推遲 &gt; 12 個月）OR §5.F Single Thing 觸發</td>
+      <td>清倉</td>
+    </tr>
+  </table>
+
+  <h3>F｜Single Thing</h3>
+  <table>
+    <tr><th>項目</th><th>內容</th></tr>
+    <tr><td><strong>Single Thing 描述</strong></td><td>NVIDIA Vera Rubin NVL72 量產正式推遲 12+ 個月（從 2H 2026 推至 2H 2027+）</td></tr>
+    <tr><td><strong>如果發生</strong></td><td>立即減倉 50%。理由：NVIDIA Rubin 是 H2 thesis 主軸，量產推遲 12+ 個月 = FY27 EPS 60.85 不可能兌現 + Thailand 廠 ramp 用不滿 + 估值倍數從 24x mean-revert 至 15-18x</td></tr>
+    <tr><td><strong>可觀測性</strong></td><td>(i) NVIDIA 季度法說會（每季）；(ii) Vera Rubin schedule 公開公告（GTC 大會、CES）；(iii) NVIDIA 客戶 OEM 廠商（鴻海、廣達）法說會口風變化</td></tr>
+    <tr><td><strong>機率估計</strong></td><td>24 個月內發生：~ 15%（NVIDIA Rubin 為 NVIDIA 重點戰略產品，內部執行紀律強；但 N3 / N2 製程 yield 不確定性 + ecosystem readiness 仍為變數）</td></tr>
+  </table>
+
+  <h4>三者職責矩陣</h4>
+  <table>
+    <tr><th>角色</th><th>定義</th><th>時間軸</th></tr>
+    <tr><td>§1 trap 定性</td><td>🟢 非陷阱（thesis 結構性強）</td><td>現在（static）</td></tr>
+    <tr><td>§5.C R1-R3</td><td>持有期過程性風險（GM 壓縮 / Rubin 推遲 / Capex 失控）</td><td>未來持續監測（⚡🔥🐢）</td></tr>
+    <tr><td>§5.F Single Thing</td><td>NVIDIA Rubin 量產 12+ 推遲 binary trigger</td><td>未來某 specific moment</td></tr>
+  </table>
+</section>
+
+<!-- ============ §6 即時財報情報 ============ -->
+<section class="card">
+  <h2 id="s6">§6 即時財報情報</h2>
+
+  <h3>① 最新季財報關鍵數字（FY25 全年 + Q4 25 + Q3 25 摘要）</h3>
+  <table>
+    <tr><th>指標</th><th>FY25</th><th>FY24</th><th>YoY</th><th>Q3 25 單季</th><th>Q4 25 單季</th></tr>
+    <tr><td>Revenue（M TWD）</td><td>60,003</td><td>38,952</td><td>+54.0%</td><td>17,680</td><td>16,408</td></tr>
+    <tr><td>Gross Profit</td><td>19,683</td><td>11,396</td><td>+72.7%</td><td>6,288</td><td>5,524</td></tr>
+    <tr><td>Gross Margin</td><td><strong>32.8%</strong></td><td>29.3%</td><td><strong>+3.5pp</strong></td><td><strong>35.6%（record）</strong></td><td>33.7%</td></tr>
+    <tr><td>Operating Income</td><td>14,010</td><td>8,066</td><td>+73.7%</td><td>4,646</td><td>3,988</td></tr>
+    <tr><td>Operating Margin</td><td>23.3%</td><td>20.7%</td><td>+2.6pp</td><td>26.3%</td><td>24.3%</td></tr>
+    <tr><td>Net Income</td><td>9,607</td><td>5,616</td><td>+71.1%</td><td>3,229</td><td>2,931</td></tr>
+    <tr><td>EPS（TWD）</td><td>~19.01</td><td>11.25</td><td>+69%</td><td>~6.4</td><td>~5.8</td></tr>
+    <tr><td>OCF（M TWD）</td><td>2,259</td><td>5,625</td><td>降</td><td>—</td><td>—</td></tr>
+    <tr><td>FCF</td><td><strong>-4,539</strong></td><td>+470</td><td>反轉</td><td>—</td><td>—</td></tr>
+    <tr><td>Capex</td><td>-6,798</td><td>-5,155</td><td>+32%</td><td>—</td><td>—</td></tr>
+  </table>
+
+  <h3>② Earnings Call 語氣解析</h3>
+  <ul>
+    <li><strong>管理層基調</strong>：強烈樂觀 — Q3 25 GM 35.6% record 主動披露 + 公布 NT$7.2B 新 capex 啟動 Q4 25 + Thailand 子公司擴產 = 雙倍 down on AI server PCB</li>
+    <li><strong>Forward Guidance</strong>：Q4 25 Rev mgmt 預期 sequential decline ~1%（ASIC 客戶 product transition cycle 短期 slowdown，但 800G switch 需求強）；FY26 預期持續 Rev hyper-growth +50%+ trajectory</li>
+    <li><strong>刻意強調的主題</strong>：「AI server 升級層」、「NVIDIA GB200 / B100 / B200 量產順利」、「Thailand 廠進度」、「800G switch」— 全部聚焦在升級段 demand</li>
+    <li><strong>刻意迴避的問題</strong>：(1) NVIDIA / Amazon 個別客戶占比具體數字；(2) Vera Rubin design win 是否確認；(3) Q1-Q2 26 季度 GM 是否能維持 35%（保守給 32%+）</li>
+  </ul>
+
+  <h3>③ 產業 Imply 萃取</h3>
+  <ul>
+    <li><strong>需求端</strong>：NVIDIA Rubin 2H 2026 量產要求 PCB layer count + 銅量翻倍；CSP 自研 ASIC 加速 → AI server PCB 結構性 demand 升級</li>
+    <li><strong>供給端</strong>：高層 PCB capacity 緊縮，2368 + Ibiden + Unimicron 為主要受益者；2368 Thailand 擴產為長期 supply 解決方案</li>
+    <li><strong>競爭格局</strong>：中國深南電路 / 滬電股份在 mature 段競爭，但美國 hyperscaler 因地緣對中國 vendor 依賴度降低 → 利好台灣 PCB 廠</li>
+    <li><strong>總體經濟敏感度</strong>：對 NVIDIA 訂單敏感（CSP capex driver），對 consumer 段不敏感</li>
+    <li><strong>對同業的連帶推論</strong>：2368 強 = Ibiden / Unimicron 同強（AI server PCB 三巨頭）；2368 強 = 滬電股份 / 深南電路 在 advanced 段受壓</li>
+  </ul>
+
+  <h3>財報對 §5 假設的邊際貢獻</h3>
+  <table>
+    <tr><th>假設</th><th>邊際方向</th><th>關鍵佐證</th></tr>
+    <tr><td>H1（GM 維持 32%+）</td><td><strong>＋強化</strong></td><td>Q3 25 35.6% record + Q4 25 33.7% + FY25 全年 32.8%</td></tr>
+    <tr><td>H2（NVIDIA Rubin 2H 26 量產）</td><td><strong>＋強化</strong></td><td>NVIDIA 2026/01 CES 公告 Vera Rubin 2H 2026 量產時間表確定；2368 design win 已確立</td></tr>
+    <tr><td>H3（Thailand 擴產 / 雙重 Capex）</td><td><strong>＋強化（但 FCF 短期負面）</strong></td><td>FY25 Capex 6.8B + FY26 計畫 7.2B + Thailand 1.3B 啟動，capacity 布局明確；FCF -4.5B 為一次性短期</td></tr>
+  </table>
+</section>
+
+<!-- ============ §7 核心門檻檢核 ============ -->
+<section class="card">
+  <h2 id="s7">§7 核心門檻檢核</h2>
+
+  <h3>EPS CAGR 強制協議結果（v12.4：Excel 未覆蓋 → yfinance fallback）</h3>
+  <p class="note">2368.TW NOT in Excel snapshot 2026-05-26 → fall back yfinance（步驟零）</p>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源 / 計算</th></tr>
+    <tr><td>基期 EPS（FY25 actual）</td><td>NT$~19.01</td><td>NI 9,607M / 505.4M shares</td></tr>
+    <tr><td>FY+1E（2026）</td><td>NT$35.31</td><td>yfinance n=1 analyst（注：單一 analyst，noisy）</td></tr>
+    <tr><td>FY+2E（2027）</td><td>NT$60.85</td><td>yfinance n=8 analysts；90d 上修 +37% 強勁動能</td></tr>
+    <tr><td>FY+3E（2028）</td><td>NT$~75（邏輯外推）</td><td>§8 邏輯推導：FY+1→FY+2 +72% 後成長放緩至 +23%（AI server PCB 段 deceleration）</td></tr>
+    <tr><td>FY25 → FY+2 2Y CAGR</td><td><strong>79%</strong></td><td>(60.85 / 19.01)^(1/2) - 1</td></tr>
+    <tr><td>FY+1 → FY+3 3Y CAGR</td><td>~28%</td><td>(75 / 35.31)^(1/2) - 1</td></tr>
+  </table>
+
+  <h3>門檻檢核表</h3>
+  <table>
+    <tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據</th></tr>
+    <tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td>❌（一次性）</td><td>FY25 FCF -4,539 / Rev 60,004 = -7.6%；FY24 +1.2%；FY23 +12.2%。<strong>Capex 6.8B 一次性 NWC strain；FY27 預期回正</strong></td></tr>
+    <tr><td>正規化 FCF Margin</td><td>5Y 均 &gt; 15%；最低谷 &gt; 10%</td><td>❌</td><td>5 年值：FY22 +9.4% / FY23 +12.2% / FY24 +1.2% / FY25 -7.6%；5Y 均 ~3.8%；判斷：<strong>有週期波動，FY25 Capex 巨擴為一次性</strong></td></tr>
+    <tr><td>ROIC（當前）</td><td>&gt; 15%</td><td>✅</td><td>FY25 NI 9,607 / (Equity 33,481 + Debt 18,073 - Cash 18,114) = <strong>~29%</strong>；超額 +18pp</td></tr>
+    <tr><td>ROIC 穩定性</td><td>10 年 ≥ 70% 達標</td><td>✅</td><td>近 4 年 ROE 均 &gt; 15%；趨勢：升高（FY22 ~30% → FY25 ~29% 持平）</td></tr>
+    <tr><td>毛利率定價能力</td><td>10 年 ≥ 70% 持續改善</td><td>✅</td><td>FY22 26.6% → FY23 25.7% → FY24 29.3% → FY25 32.8%（4 年中 3 年改善），<strong>趨勢明確擴張</strong></td></tr>
+    <tr><td>資本密集度</td><td>Capex/Rev &lt; 5%</td><td>❌</td><td>FY25 Capex 6,798 / Rev 60,004 = <strong>11.3%</strong>（PCB 製造業需要設備擴產，Thailand 廠投資推升）；3Y 均 ~9%</td></tr>
+    <tr><td>EPS CAGR（未來 3 年）</td><td>&gt; 20%</td><td>✅</td><td>3Y CAGR ~28%（從 FY+1 起算）</td></tr>
+    <tr><td>PEG</td><td>&lt; 2</td><td>✅</td><td>FY+2 PEG = 0.30 / FY+1 PEG = 0.52（顯著便宜）</td></tr>
+    <tr><td>負債安全性</td><td>D/E &lt; 0.7</td><td>✅</td><td>D/E = 18,073 / 33,481 = 0.54；現金 18,114 ≈ Debt 18,073 = Net Cash 中性</td></tr>
+    <tr><td>現金覆蓋總負債</td><td>是 / 否</td><td>✅</td><td>Cash 18.1B ≈ Debt 18.1B（覆蓋率 1.0x）</td></tr>
+    <tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td>✅</td><td>合併分 8（execution 8 + pricing 7），雙線同步擴張</td></tr>
+  </table>
+  <p><strong>最大財務弱點</strong>：FY25 FCF -4.5B + 資本密集度 11.3%（Capex 巨擴 Thailand 廠）<br><strong>Munger 三維評級</strong>：🟢 三項全達標（ROIC + 毛利率定價能力 + 負債安全性）；資本密集度高為 PCB 業界特性，非個股問題</p>
+</section>
+
+<!-- ============ §8 長期成長性評估 ============ -->
+<section class="card">
+  <h2 id="s8">§8 長期成長性評估</h2>
+
+  <h3>A｜成長跑道</h3>
+  <table>
+    <tr><th>維度</th><th>數據</th><th>推論</th></tr>
+    <tr><td>當前 TAM（AI 伺服器 PCB）</td><td>~$15B（2026）</td><td>來源：Tom's Hardware 2026 + 同業估計</td></tr>
+    <tr><td>可達 TAM 2030</td><td>~$40-50B</td><td>NVIDIA Rubin / Feynman 升級層 + CSP ASIC 加速 + AMD MI400 + 主權 AI</td></tr>
+    <tr><td>當前市佔</td><td>2368 估佔 AI server PCB 段 8-12%（vs Ibiden 25% / Unimicron 20% / 中國 vendors 25%）</td><td>—</td></tr>
+    <tr><td><strong>Runway</strong></td><td><strong>10+ 年</strong></td><td>NVIDIA / AMD 升級節奏 + CSP ASIC + chiplet 範式 + HBM 升級</td></tr>
+  </table>
+
+  <h3>A'｜S 曲線位置</h3>
+  <p>2368 處於 AI server PCB 升級段 S 曲線的 <strong>右上加速期</strong>（早期 takeoff 2022-2024 已過，正進入 mass adoption 2025-2030）。Y5 末 TAM 滲透率 ~50-60%，仍有空間。</p>
+
+  <h3>B｜成長品質判斷</h3>
+
+  <h4>① 成長來源：有機 vs 無機</h4>
+  <table>
+    <tr><th>類型</th><th>占比估計</th></tr>
+    <tr><td>有機成長</td><td>~ 100%（無重大併購，AI server PCB 段為內生成長）</td></tr>
+    <tr><td>無機成長</td><td>~ 0%</td></tr>
+  </table>
+
+  <h4>② 成長驅動結構：定價 vs 量</h4>
+  <table>
+    <tr><th>類型</th><th>具體%</th><th>3Y 趨勢</th></tr>
+    <tr>
+      <td>定價驅動</td>
+      <td>ASP YoY：FY23 +5% / FY24 +8% / FY25 +12%（AI server 升級層 mix shift 拉升 blended ASP）</td>
+      <td><strong>擴大</strong>（pricing 連 3 年強）</td>
+    </tr>
+    <tr>
+      <td>量驅動</td>
+      <td>出貨量 YoY：FY23 +5% / FY24 +20% / FY25 +37%</td>
+      <td>擴大</td>
+    </tr>
+  </table>
+  <p>結論：FY23-25 成長 <strong>定價 + 量同步擴張</strong>（vs GUC 量極端化但 ASP 弱）。這是「pricing power moat 加深」的硬證據。</p>
+
+  <h3>C｜成長護城河連動評估</h3>
+  <p>2368 為 <strong>強化型</strong>：成長帶來 NVIDIA / Amazon 多客戶分散 + 升級層技術 ladder up + Thailand 海外擴產規避地緣風險 → 護城河同步加深。GM 連 3 年擴張 +6pp 為定價權加深證據。</p>
+
+  <h3>D｜ROIC 與 FCF 長期可維持性</h3>
+  <table>
+    <tr><th>指標</th><th>FY25</th><th>趨勢</th><th>符合</th></tr>
+    <tr><td>ROIC</td><td>~29%</td><td>↑</td><td>✅</td></tr>
+    <tr><td>ROIC − WACC</td><td>+18pp</td><td>↑</td><td>✅</td></tr>
+    <tr><td>FCF Margin</td><td>-7.6%</td><td>↓（一次性）</td><td>❌（短期）</td></tr>
+    <tr><td>FCF / NI</td><td>-0.47</td><td>↓（一次性）</td><td>❌（短期）</td></tr>
+    <tr><td>Reinvestment Rate</td><td>11.3%</td><td>↑</td><td>合理（成長期）</td></tr>
+  </table>
+
+  <h3>E｜成長熄火情境壓力測試</h3>
+  <table>
+    <tr><th>情境</th><th>合理 Fwd P/E 壓縮至</th><th>跌幅（從現價）</th></tr>
+    <tr><td>3 年後成長率降至 30%</td><td>22x</td><td>-23%</td></tr>
+    <tr><td>3 年後成長率降至 15%</td><td>15x</td><td>-50%</td></tr>
+    <tr><td>3 年後成長率降至 5%</td><td>10x</td><td>-66%</td></tr>
+  </table>
+
+  <h3>⚠️ 衰退信號偵測表</h3>
+  <table>
+    <tr><th>信號</th><th>數據</th><th>亮燈？</th></tr>
+    <tr><td>GM 連 2 季 YoY 下滑</td><td>無，連續擴張</td><td>⬜</td></tr>
+    <tr><td>市佔率縮減</td><td>2368 share 擴大</td><td>⬜</td></tr>
+    <tr><td>主力產品定價能力</td><td>ASP YoY 連 3 年強</td><td>⬜</td></tr>
+    <tr><td>EPS CAGR vs Rev CAGR</td><td>FY25 EPS +69% vs Rev +54% = 差 +15%（operating leverage 健康，非靠回購）</td><td>⬜</td></tr>
+    <tr><td>FCF / NI 連 2 年 &lt; 0.75</td><td>FY25 -0.47 一次性</td><td>⬜（短期）</td></tr>
+    <tr><td>SBC / Rev</td><td>&lt; 2%</td><td>⬜</td></tr>
+    <tr><td>TAM 萎縮</td><td>TAM 擴張</td><td>⬜</td></tr>
+    <tr><td>產業估值倍數下移</td><td>AI PCB tier 整體 re-rate</td><td>⬜</td></tr>
+    <tr><td>Maintenance Capex &gt; 60% FCF</td><td>不適用（FY25 FCF 負）</td><td>⬜</td></tr>
+    <tr><td>停止投資 3Y Rev 下滑？</td><td>是（PCB 業必投）</td><td>⬜（不算隱性）</td></tr>
+  </table>
+  <p><strong>價值陷阱風險評級</strong>：🟢 低風險（0 個亮燈）</p>
+
+  <p><strong>長期成長性綜合評級：🟢 高確信長期成長</strong>（Runway 10+ 年 + 雙線護城河加深 + AI 受益 + 衰退信號 0 個）</p>
+
+  <h3>H｜客戶結構深度</h3>
+  <h4>① 客戶集中度</h4>
+  <table>
+    <tr><th>指標</th><th>數值</th></tr>
+    <tr><td>Top 1 客戶占營收%（估）</td><td>~ 25-30%（推測為 NVIDIA OEM 鏈或 Amazon）</td></tr>
+    <tr><td>Top 5 客戶合計%</td><td>~ 55-65%</td></tr>
+  </table>
+
+  <h4>② 主要客戶議價權</h4>
+  <table>
+    <tr><th>客戶</th><th>議價權類型</th></tr>
+    <tr><td>NVIDIA 系（OEM 廠商鴻海/廣達等）</td><td>Multi-source（NVIDIA 多 supplier 但 2368 在 GB200/B100/B200 有 design win 確立）</td></tr>
+    <tr><td>Amazon ASIC UBB</td><td>Sole-source / High share</td></tr>
+    <tr><td>其他 CSP / 800G switch 客戶</td><td>Multi-source</td></tr>
+  </table>
+
+  <h4>③ 客戶生命週期定位</h4>
+  <p><strong>🟢 分散 + Grow-with 主導</strong>（NVIDIA + Amazon + 其他 CSP 並行，無單一大客戶風險如 GUC）</p>
+
+  <h3>F｜AI 取代風險評級</h3>
+  <p><strong>🟢 AI 受益</strong>：核心業務為 AI server PCB 升級層，AI capex 直接驅動。具體業務占比：AI server ~30-40% of Rev，且結構性擴張中。</p>
+</section>
+
+<!-- ============ §9 護城河分析 ============ -->
+<section class="card">
+  <h2 id="s9">§9 護城河分析（雙維拆解）</h2>
+
+  <h3>評分：二維拆解</h3>
+  <table>
+    <tr><th>維度</th><th>評分</th><th>佐證</th></tr>
+    <tr>
+      <td>Execution Moat</td>
+      <td>8/10</td>
+      <td>(1) NVIDIA GB200/B100/B200 design wins 確立 mass production proven；(2) Amazon ASIC UBB anchor 客戶高市占；(3) Thailand 子公司擴產 1.3B 海外 capacity；(4) Q3 25 GM 35.6% record 顯示工藝領先；(5) 多客戶分散優勢（vs GUC 單一）</td>
+    </tr>
+    <tr>
+      <td>Pricing Power Moat</td>
+      <td>7/10</td>
+      <td>(1) GM 連 3 年擴張 +6.2pp 為硬證據；(2) AI server PCB 升級層 high complexity 段技術門檻提升 ASP；(3) ASP YoY 連 3 年強；(4) 但 PCB 仍相對 commodity 化，中國 vendors 在 mature 段競爭</td>
+    </tr>
+    <tr>
+      <td>合併分</td>
+      <td>8（rounded）</td>
+      <td>execution 8 + pricing 7 = 7.5 → rounded 8（B 級接近 A）</td>
+    </tr>
+  </table>
+
+  <h3>護城河來源</h3>
+  <ul>
+    <li><strong>網路效應</strong>：弱（PCB 製造業不適用）</li>
+    <li><strong>無形資產</strong>：中（35+ 年技術累積 + NVIDIA / Amazon / CSP 認證 + 高層 PCB 設計能力 IP）</li>
+    <li><strong>轉換成本</strong>：高（OEM 切換 PCB supplier 需 12-18 個月 qualify，且 mass production 良率需重新驗證）</li>
+    <li><strong>規模優勢</strong>：中（vs Ibiden / Unimicron 規模較小，但在 AI server 升級層段定位明確）</li>
+  </ul>
+
+  <h3>競爭鴻溝</h3>
+  <p>對手難以跨越的具體 mechanism：(1) 高層 PCB 工藝 know-how 需 5-10 年累積；(2) NVIDIA / Amazon 認證流程 12-18 個月 + 大規模生產良率驗證；(3) Thailand 廠 capex 6-8B TWD 才能複製等量 capacity。</p>
+
+  <h3>市佔競爭表</h3>
+  <table>
+    <tr><th>競爭對手</th><th>當前市佔</th><th>3 年趨勢</th><th>誰在吃誰</th></tr>
+    <tr><td><strong>2368</strong></td><td>8-12%</td><td>擴大</td><td>從中國 vendors 在 advanced 段搶單</td></tr>
+    <tr><td>Ibiden</td><td>25%（global PCB）</td><td>持平</td><td>FCBGA substrate 強，但 standard PCB 漸失</td></tr>
+    <tr><td>Unimicron</td><td>20%</td><td>持平</td><td>Substrate + PCB 雙線</td></tr>
+    <tr><td>深南電路 / 滬電股份</td><td>合計 ~25%</td><td>持平 / 縮減（advanced 段）</td><td>中國本土強，但美系 hyperscaler 因地緣去依賴</td></tr>
+  </table>
+
+  <h3>護城河趨勢（雙線標）</h3>
+  <table>
+    <tr><th>維度</th><th>趨勢</th><th>3 年事件</th></tr>
+    <tr><td>Execution Moat</td><td><strong>擴大</strong></td><td>NVIDIA GB200/B100/B200 design wins + Thailand 擴產 + 雙 anchor 客戶</td></tr>
+    <tr><td>Pricing Power Moat</td><td><strong>擴大</strong></td><td>GM 連 3 年 +6.2pp + ASP YoY 連 3 年強 + AI 升級層 high complexity 段定價力</td></tr>
+  </table>
+
+  <h3>QC-23 競爭威脅 3 級分類</h3>
+  <table>
+    <tr><th>等級</th><th>具體事件</th><th>機率</th><th>影響</th></tr>
+    <tr><td>🟡 點對點</td><td>NVIDIA 把更多 PCB 訂單轉至 Ibiden / Unimicron 多元化</td><td>40%</td><td>不扣分（多元化是常態）</td></tr>
+    <tr><td>🟡 點對點</td><td>中國 PCB 廠商在 mature 段競爭</td><td>60%</td><td>不扣分（2368 已撤出 mature 段）</td></tr>
+    <tr><td>🔴 生態攻擊</td><td>陶瓷 substrate 取代有機 PCB（在 advanced packaging 段）</td><td>10%</td><td>-1 分（但 5Y 內機率低）</td></tr>
+    <tr><td>⛔ 架構替代</td><td>計算範式轉換（量子 / photonic 取代傳統運算）</td><td>5%（10 年內）</td><td>-2 分（極低機率短期）</td></tr>
+  </table>
+</section>
+
+<!-- ============ §10 財務品質 ============ -->
+<section class="card">
+  <h2 id="s10">§10 財務品質監測</h2>
+
+  <h3>三年趨勢表（同業對比）</h3>
+  <table>
+    <tr><th>指標</th><th>FY23</th><th>FY24</th><th>FY25</th><th>同業中位（Ibiden / Unimicron / 滬電）</th><th>相對評估</th></tr>
+    <tr><td>FCF Margin</td><td>+12.2%</td><td>+1.2%</td><td>-7.6%</td><td>~ 6-8%</td><td>FY25 暫劣（Capex 一次性）</td></tr>
+    <tr><td>EBITDA Margin</td><td>~22%</td><td>~25%</td><td>~28%</td><td>~ 22-26%</td><td>優於同業中位</td></tr>
+    <tr><td>ROIC − WACC</td><td>+14pp</td><td>+15pp</td><td>+18pp</td><td>~ +10pp</td><td>明顯優</td></tr>
+    <tr><td>SBC / Rev</td><td>&lt; 2%</td><td>&lt; 2%</td><td>&lt; 2%</td><td>~ 1-2%</td><td>平</td></tr>
+    <tr><td>ROE</td><td>25%</td><td>26%</td><td>~29%</td><td>~ 18-22%</td><td>明顯優</td></tr>
+  </table>
+
+  <h3>獲利品質警訊</h3>
+  <ul>
+    <li>淨利 vs OCF 連動性：FY25 NI 9,607 / OCF 2,259 = 4.25 倍（OCF 偏低因 NWC + Capex strain）— 警示但屬 capex 巨擴一次性現象</li>
+    <li>AR / 存貨成長：data limit；FY25 mass production ramp 預期 inventory 上升</li>
+    <li>FCF 轉換率：FY25 -0.47 異常，FY22-24 均 &gt; 0.5</li>
+  </ul>
+
+  <h3>回購品質</h3>
+  <p>無重大回購機制（台股 dividend 為主，2368 dividend 估 NT$5-10/股）。EPS growth 純為 NI 結構性成長，非回購堆疊。</p>
+
+  <h3>FCF lumpiness 評估</h3>
+  <table>
+    <tr><th>指標</th><th>數值</th></tr>
+    <tr><td>過去 5 年 FCF</td><td>FY22 +3,081 / FY23 +3,653 / FY24 +470 / FY25 -4,539</td></tr>
+    <tr><td>5Y 滾動均 FCF</td><td>+666M TWD</td></tr>
+    <tr><td>最低谷年份</td><td>FY25 -4,539（占 5Y 均 -682%）</td></tr>
+    <tr><td>Lumpiness 性質</td><td><strong>業務天然 lumpy（PCB 製造業 + capex 周期）+ FY25 為 Thailand 擴產一次性</strong></td></tr>
+    <tr><td>結論</td><td>🟡 需關注低谷頻率（單年可接受 if FY26-27 回正）</td></tr>
+  </table>
+</section>
+
+<!-- ============ §11 產業格局 ============ -->
+<section class="card">
+  <h2 id="s11">§11 產業格局</h2>
+
+  <h3>市場量化</h3>
+  <table>
+    <tr><th>項目</th><th>數值</th><th>來源</th></tr>
+    <tr><td>AI server PCB TAM 2026</td><td>~$15B</td><td>Tom's Hardware / 同業估計</td></tr>
+    <tr><td>TAM 2030</td><td>~$40-50B</td><td>NVIDIA / AMD 升級節奏 + CSP ASIC 加速</td></tr>
+    <tr><td>CAGR 2026-2030</td><td>~ 28%</td><td>結構性 hyper-growth</td></tr>
+    <tr><td>當前滲透率</td><td>AI server 占整體 server 出貨 ~ 25%（2026），預估 2030 達 50%+</td><td>—</td></tr>
+    <tr><td>供需狀態</td><td><strong>緊缺</strong>（高層 PCB capacity 緊縮）</td><td>—</td></tr>
+  </table>
+
+  <h3>議價權三段獨立</h3>
+
+  <h4>① 對上游供應商（≥ 60 字）</h4>
+  <p>上游主要為銅箔 / 玻纖布 / 樹脂 / 設備（Cadence/Synopsys EDA）供應商。集中度中等：銅箔由南亞、長春化工等台灣 vendors 提供，樹脂由日本 / 台灣 vendors 多元化。Pricing leverage：2368 規模相對中等，pricing 上隨原料波動傳遞但有 ~3-6 個月 lag。地緣面：受惠台灣電子供應鏈完整生態。近 3 年無重大上游 disrupted 案例。</p>
+
+  <h4>② 對下游客戶（≥ 60 字）</h4>
+  <p>下游客戶包括 NVIDIA OEM 鏈（鴻海、廣達、緯創）+ Amazon ASIC UBB + 其他 CSP + 800G switch 廠商。Top 5 估佔 55-65%，多元分散。NVIDIA 對 PCB supplier 議價權強但 2368 在 GB200/B100/B200 為 design-locked supplier（mass production qualification 後切換成本高）。Amazon ASIC UBB 為 high share sole-source。近 3 年 ASP YoY 連 3 年強 = pricing power 結構性擴張硬證據。提價條款：合約結構含原料 pass-through（一般 PCB 業界慣例）。</p>
+
+  <h4>③ 地緣曝險（≥ 60 字）</h4>
+  <p>核心生產地：~70% 台灣（楊梅 + 桃園廠）+ ~25% 中國（部分廠區）+ Thailand 子公司新廠 ramp 中（2027 H1 productive）。供應鏈最高集中點：台灣 PCB 生產設備（製程精密度）。政策風險具體路徑：(i) 美中貿易戰升級利好（美系 hyperscaler 去中國 PCB 供應）；(ii) 台海局勢不穩風險（但 Thailand 擴產為地緣分散化措施）；(iii) 美國對中國電子產業 export control 加碼長期利好台灣 PCB 廠。已規劃 Thailand 廠 + 持續評估其他海外 capacity 布局。</p>
+
+  <h3>營收組成（三維展開）</h3>
+
+  <h4>① 按業務段</h4>
+  <table>
+    <tr><th>業務段</th><th>占比%（估）</th><th>YoY%</th><th>OI Margin</th></tr>
+    <tr><td>AI Server PCB（NVIDIA + CSP ASIC + 800G switch）</td><td>~ 40%</td><td>+100%+</td><td>~ 28%</td></tr>
+    <tr><td>General Server PCB</td><td>~ 40%</td><td>+30%</td><td>~ 22%</td></tr>
+    <tr><td>Consumer / Industrial PCB</td><td>~ 20%</td><td>+10%</td><td>~ 15%</td></tr>
+  </table>
+
+  <h4>② 按地區</h4>
+  <table>
+    <tr><th>地區</th><th>占比%</th><th>YoY%</th></tr>
+    <tr><td>美國</td><td>~ 60%</td><td>+70%</td></tr>
+    <tr><td>中國</td><td>~ 20%</td><td>+30%</td></tr>
+    <tr><td>歐洲 / 日韓 / 其他</td><td>~ 20%</td><td>+25%</td></tr>
+  </table>
+
+  <h4>③ 按客戶集中度</h4>
+  <table>
+    <tr><th>指標</th><th>數值</th></tr>
+    <tr><td>Top 1 客戶占比%</td><td>~ 25-30%</td></tr>
+    <tr><td>Top 5 客戶合計%</td><td>~ 55-65%</td></tr>
+  </table>
+
+  <h3>單位經濟（逐業務段）</h3>
+  <table>
+    <tr><th>業務段</th><th>核心 Unit 指標</th><th>趨勢</th></tr>
+    <tr><td>AI Server PCB</td><td>ASP per AI server board ~ NT$50K-100K（升級層）</td><td>↑（升級驅動 ASP）</td></tr>
+    <tr><td>General Server PCB</td><td>ASP per server board ~ NT$15K-25K</td><td>→</td></tr>
+  </table>
+</section>
+
+<!-- ============ §12 治理 ============ -->
+<section class="card">
+  <h2 id="s12">§12 治理</h2>
+
+  <h3>股東結構</h3>
+  <ul>
+    <li>機構持股：40.99%</li>
+    <li>內部人持股：31.51%（含創辦家族）</li>
+    <li>無 dual-class</li>
+  </ul>
+
+  <h3>資本配置軌跡</h3>
+  <p>FY25 Capex 6.8B + FY26 計畫新增 7.2B + Thailand 1.3B = 累積 &gt; 15B over 24 個月。管理層在 AI server PCB 升級窗口大規模投資，戰略一致。過去 5 年無重大 M&A，純有機成長路線。</p>
+
+  <h3>管理層薪酬結構</h3>
+  <p>台股口徑揭露：固定薪 + 績效獎金 + 員工分紅。創辦家族經營，CEO 任期穩定。</p>
+
+  <h3>SBC 真實稀釋</h3>
+  <p>台股口徑 SBC &lt; 2%，無 GAAP/Non-GAAP 差距，SBC 稀釋影響極小。</p>
+
+  <h3>近期重大事件（QC-19）</h3>
+  <p>🟢 過去 12 個月：無重大訴訟、無 SEC 調查（台股不適用但 TWSE 無違規）、無 CEO/CFO 異動、雙重 Capex 公告（NT$7.2B + Thailand）為正向擴張公告</p>
+</section>
+
+<!-- ============ §13 估值診斷 ============ -->
+<section class="card">
+  <h2 id="s13">§13 估值診斷</h2>
+
+  <h3>13.1｜歷史估值分位</h3>
+  <table>
+    <tr><th>估值指標</th><th>當前值</th><th>5Y 低</th><th>5Y 中</th><th>5Y 高</th><th>分位</th></tr>
+    <tr><td>Forward P/E (FY+2)</td><td>24.07x</td><td>~8x</td><td>~14x</td><td>~28x</td><td>~85%</td></tr>
+    <tr><td>Forward P/E (FY+1)</td><td>41.5x</td><td>~10x</td><td>~18x</td><td>~45x</td><td>~85%</td></tr>
+    <tr><td>EV/EBITDA</td><td>39.4x</td><td>~10x</td><td>~16x</td><td>~42x</td><td>~88%</td></tr>
+    <tr><td>P/FCF</td><td>不適用</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>P/S</td><td>~12x（740B/60B）</td><td>~2x</td><td>~4x</td><td>~13x</td><td>~85%</td></tr>
+  </table>
+  <div class="reasoning">
+    當前估值情緒偏高（5Y 分位 85% 接近極端高位），但與歷史同分位時的業務基本面有重大差異：FY25 FCF 為負（一次性），FY26-27 EPS 共識持續上修（90d +37%），AI server PCB segment re-rate 是市場理性反映。
+    對下游 implication：§2 D 估值燈不單看分位，須結合 PEG 0.30 → 維持 🟡 合理（不升 🟢 因為分位高，不降 🟠 因為 PEG 強）。
+  </div>
+
+  <h3>13.2｜PEG 診斷</h3>
+  <table>
+    <tr><th>指標</th><th>數值</th><th>判斷</th></tr>
+    <tr><td>Fwd PE FY+2</td><td>24.07x</td><td>—</td></tr>
+    <tr><td>2Y EPS CAGR (FY25 → FY+2)</td><td>79%</td><td>—</td></tr>
+    <tr><td>PEG FY+2</td><td><strong>0.30</strong></td><td>🟢 顯著便宜</td></tr>
+    <tr><td>5Y EPS CAGR（含 Runway 遞減）</td><td>~ 32%</td><td>—</td></tr>
+    <tr><td>PEG 5Y</td><td>0.75</td><td>🟡 合理便宜</td></tr>
+    <tr><td>3Y vs 5Y PEG 差距</td><td>0.45</td><td>差距大 = 短期 EPS hyper-growth 不可持續，5Y mean-revert 後 PEG 上升至合理</td></tr>
+  </table>
+  <div class="reasoning">
+    PEG 0.30（FY+2 基準）顯著便宜，但這基於 2Y CAGR 79% 假設。
+    5Y mean-revert 後 PEG 0.75 仍合理（&lt; 1.0）。
+    對下游 implication：§2 D 估值燈不單以 PEG 0.30 升至 🟢，因為分位 85% 抑制；最終維持 🟡 合理。
+  </div>
+
+  <h3>13.4｜同業估值比較（v12.3 強制對 tier）</h3>
+  <p>本標的業務模式 tier：<strong>AI server PCB / HDI 製造（advanced segment）</strong>。Peer：Ibiden（substrate + PCB）、Unimicron（substrate + PCB）、滬電股份（中國 PCB）、深南電路。</p>
+  <table>
+    <tr><th>公司</th><th>Forward P/E (FY+2)</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR (2Y)</th><th>ROIC</th></tr>
+    <tr><td><strong>2368</strong></td><td>24.07x</td><td>39.4x</td><td>0.30</td><td>FY25 -7.6%（一次性）</td><td>79%</td><td>~29%</td></tr>
+    <tr><td>Ibiden</td><td>~ 25x</td><td>~ 18x</td><td>~ 0.80</td><td>~ 8%</td><td>~ 30%</td><td>~ 12%</td></tr>
+    <tr><td>Unimicron</td><td>~ 20x</td><td>~ 12x</td><td>~ 0.65</td><td>~ 6%</td><td>~ 30%</td><td>~ 18%</td></tr>
+    <tr><td>滬電股份</td><td>~ 22x</td><td>~ 14x</td><td>~ 0.70</td><td>~ 5%</td><td>~ 30%</td><td>~ 20%</td></tr>
+    <tr><td>同 tier 中位</td><td>~ 22-24x</td><td>~ 14-18x</td><td>~ 0.70</td><td>~ 6-8%</td><td>~ 30%</td><td>~ 17%</td></tr>
+  </table>
+  <div class="reasoning">
+    溢/折價：2368 Fwd PE FY+2 24.07x vs 同 tier 中位 ~22-24x → <strong>持平或略溢價 ~ 0-10%</strong>。
+    支撐因素：(i) ROIC 29% &gt; tier 中位 17%（明顯優）；(ii) 2Y EPS CAGR 79% &gt; tier 中位 30%（明顯優）；(iii) GM 32.8% expanding vs 同業持平。
+    對下游 implication：估值在合理範圍，無顯著溢價問題；§2 D 估值燈 🟡。
+  </div>
+
+  <h3>§13 估值診斷結論</h3>
+  <p>13.1 歷史分位 85%（情緒偏高）+ 13.2 PEG 0.30（顯著便宜）+ 13.4 同業相對持平 → 綜合估值訊號：<strong>🟡 合理</strong>（PEG 強訊號抵銷分位偏高警示）。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+
+  <p><strong>分析師目標價參考</strong>：</p>
+  <ul>
+    <li>mean NT$796.89 / high NT$925 / low NT$697（n=9 analysts，Strong Buy 共識）</li>
+    <li>共識中位 NT$796.89 <strong>大幅低於現價 NT$1,465（-46%）</strong> — 但這可能為 sell-side target lag（過去 90d 共識持續上修 +37%，但目標價更新較慢）；我認為分析師目標將 catch-up 上修至 NT$1,400-1,800 區間 within 3-6 個月</li>
+  </ul>
+
+  <h3>投資結論</h3>
+  <h4>財報信號與假設校準</h4>
+  <ul>
+    <li><strong>H1（GM 維持 32%+）：強化</strong>（Q3 25 35.6% record + Q4 25 33.7% + FY25 全年 32.8%）</li>
+    <li><strong>H2（NVIDIA Rubin 2H 26）：強化</strong>（NVIDIA 2026/01 CES 公告確認 2H 2026 量產）</li>
+    <li><strong>H3（Thailand 廠 ramp）：強化但 FCF 短期負面</strong>（Capex 雙重啟動，capacity 布局明確）</li>
+    <li><strong>三條 leg 均強化 + thesis 完整 + 估值合理（PEG 0.30）= 進場 thesis 穩健</strong></li>
+  </ul>
+
+  <h4>綜合訊號輸出</h4>
+  <ul>
+    <li>護城河等級：B（接近 A）</li>
+    <li>估值燈：🟡 合理</li>
+    <li>Pure MA 狀態：✅ 強勢進場（stretched）</li>
+    <li>大盤豁免：✅ 正常</li>
+    <li><strong>綜合訊號：B（接近 A 邊界）</strong></li>
+    <li>中期參考 R:R：1.45x</li>
+  </ul>
+
+  <h4>① 短期信號（0-12 個月）</h4>
+  <p>Q1 26 業績兌現 + GM 維持 30%+ 為短期 catalyst；BB 上軌 stretched 為時機警示。短期下檔 NT$1,200-1,300 為合理回測區。</p>
+
+  <h4>② 中期成長確信度（1-2 年）</h4>
+  <p>FY+2 EPS NT$60.85（+72%）共識上修 +37% 過去 90d — driver 為 NVIDIA Rubin 量產 + AI server PCB 升級層 + Thailand 廠 ramp。能見度高（NVIDIA schedule + n=8 analysts）。</p>
+
+  <h4>③ 長期持有信心</h4>
+  <p>成長跑道充裕 + 護城河雙線加深 + 客戶分散 → 長期持有信心 <strong>高</strong>。</p>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+</body>
+</html>

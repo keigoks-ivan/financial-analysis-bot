@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v12.4">
+<title>DD_5274.TW_20260526 | ASPEED 信驊科技 v12.4 深度研究</title>
+<!--
+  v12.4 Inception DD (win-20260526-5274TW)
+  EPS source: yfinance (5274.TWO — TPEx listing；Excel 未覆蓋 OTC ticker)
+  WebSearch 6 次：
+  - W1 Q1 2026 + AI server BMC outlook → Goldman 提 PT NT$22,000 (第 4 次)，2026/27/28 BMC shipments 29.5M/41.6M/52.8M (+56/+41/+27%)，pricing rise since April (BigGo Finance / SimplyWall / StockAnalysis)
+  - W2 BMC monopoly + 競爭 → ASPEED 70%+ 全球市佔, Axiado 為 emerging hyperscale challenger, Huawei iBMC mindshare 0.9% (Digitimes / PeerSpot / 7even guy 七仔財經)
+  - W3 AST2700 next-gen BMC → 12nm 製程世界第一顆 BMC, 8 代產品, Cortex-A35 quad + Cortex-M4 dual, samples 2024 / MP 2025, CAN interface + DDR5/PCIe Gen4/USB 3.2 (ServeTheHome / Aspeed.com / Phoronix Linux 6.18 / PR Newswire 2024)
+  - W4 monthly revenue + Q1 26 → next earnings 8/6/2026 (Q2 法說)，Q1 26 已公告但詳細數字未在 web 抓到；TTM Rev $291M (Investing.com / TradingView)
+  - W5 AST2700 ramp 詳情 → 2700 MP 2025、Pilot 4 GUI 2024 unveiled，AST2750 monitor 2 nodes per BMC (Aspeed Server Pilot 4 page / Computex 2024-2025)
+  - W6 BMC pricing + AI server content → pricing 從 4 月起多數產品線漲價 (Goldman Sachs note via BigGo); single BMC content per AI server $20-30 vs server $10-15 = ASP +50-100% mix shift
+  References inline at §6/§8/§9/§11.
+-->
+
+<style>
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.55; margin: 0; padding: 30px 20px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; }
+  .header h1 { margin: 0 0 8px; font-size: 1.5em; }
+  .header .meta { font-size: 0.88em; opacity: 0.9; }
+  .header .schema { background: #3B82F6; padding: 1px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em; }
+  .card { background: #fff; padding: 18px 24px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #3B82F6; }
+  .card h2 { color: #1E3A5F; margin: 0 0 12px; font-size: 1.18em; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; scroll-margin-top: 80px; }
+  .card h3 { color: #374151; margin: 14px 0 8px; font-size: 1.02em; }
+  .card h4 { color: #4B5563; margin: 10px 0 6px; font-size: 0.96em; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 0.92em; font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  th, td { border: 1px solid #D1D5DB; padding: 6px 9px; vertical-align: top; text-align: left; }
+  th { background: #1E3A5F; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .reasoning { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 0.88em; line-height: 1.5; }
+  .reasoning::before { content: "推導: "; font-weight: bold; color: #1E3A5F; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hypothesis-box ul { margin: 0; padding-left: 18px; }
+  .hypothesis-box li { margin: 4px 0; }
+  .badge-green, .tag-green { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-red, .tag-red { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-yellow, .tag-yellow { background: #FEF9C3; color: #92400E; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-blue, .tag-blue { background: #EFF6FF; color: #1E40AF; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-orange { background: #FED7AA; color: #C2410C; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .grade-X { background: #7F1D1D; color: #fff; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 0.88em; color: #4B5563; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+  .dd-toc { background: #fff; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #3B82F6; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 10px; background: #EFF6FF; color: #1E3A5F; border-radius: 999px; font-size: 0.82em; text-decoration: none; font-weight: 500; }
+  .dd-toc a:hover { background: #1E3A5F; color: #fff; }
+  @media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; padding: 0; } .card { box-shadow: none; border-left: 2px solid #1E3A5F; } }
+</style>
+</head>
+<body>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "5274.TW",
+  "date": "2026-05-26",
+  "schema": "v12.4",
+  "signal": "B",
+  "verdict": "B 衛星候選（thesis 完整：產業 🟢 順風 + 護城河 9 A 級 / execution 9 + pricing power 9 + AI 🟢 受益 + Goldman 連 4 次提目標 NT$22,000；但 Fwd PE FY+1 92.6x 5Y 分位 ~95% 極端高位 → 估值燈 🔴 過熱不可救（>85% bypass 盲點 1）+ 現價/W52=2.14x ATH stretched + Pure MA ✅ 但今日 -8.9% from 5/19 ATH 19,195 → 短期動能末段；QC-31 cross-check thesis 完整不歸 X，落 B 觀望，等 BB 中軌 12,418 回測或共識在 30 天上修後重評）",
+  "trap": "🟢",
+  "trap_label": "🟢 非陷阱",
+  "moat": "A",
+  "moat_score": 9,
+  "moat_execution": 9,
+  "moat_pricing_power": 9,
+  "quality_score": 9,
+  "growth_durability": 9,
+  "val": "🔴",
+  "ma": "✅",
+  "ai_risk": "🟢",
+  "fpe_fy2": 60.7,
+  "pct_5y": 95,
+  "peg_fy2": 1.11,
+  "price_at_dd": 17480.0,
+  "upside_short_pct": -3.0,
+  "upside_mid_pct": 23.6,
+  "upside_5y_pct": 46,
+  "stress": {"pass": 2, "total": 2},
+  "long_term_confidence": "高",
+  "oneliner": "🟢+A｜護城河 9 BMC 70%+ 全球壟斷（exec 9/pp 9 雙線widening）｜FY26E EPS 189 (+82%) FY27E 288 (+53%) 90d 上修 +24/+34%｜Fwd PE FY+1 92.6x FY+2 60.7x 5Y 分位 95% 過熱 🔴｜Pure MA ✅ 但 5/19 ATH 19,195 -8.9%，B 觀望等修復"
+}
+</script>
+
+<div class="container">
+
+<header class="header">
+  <h1>ASPEED Technology（信驊科技 5274.TW）深度研究 — v12.4 Inception DD</h1>
+  <div class="meta">資料抓取：2026-05-26 ｜ 最新股價 <strong>TWD 17,480</strong>（5/26 收盤；5/19 創 6Y ATH 19,195 後 -8.9% pullback）｜ 最近財報：Q1 FY26（已於 ~5/12 公告，Q2 法說預期 8/6/2026）｜ <span class="schema">DD Schema v12.4</span> ｜ yfinance 採集 (5274.TWO TPEx) + 補充 web_search 6 次（Excel 未覆蓋 → fall back yfinance + WebSearch）</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============================== §1 ============================== -->
+<section class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出（§2–§13），請優先閱讀本卡片再下捲查驗推導。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信（AI server BMC content rise + Goldman 2026/27/28 BMC 出貨 29.5M/41.6M/52.8M）｜§9 護城河趨勢「execution 加深 + pricing power 加深」雙線同向 widening｜§8 F AI 風險 🟢 受益（AI server 帶 BMC ASP 上升 + 容量擴大）</li>
+<li><strong>品質 A 級：</strong>護城河 9/10（§9：execution moat 9 + pricing power moat 9 合併 9）｜體質 veto 0 項不過｜等級調整：A → A（estvalu 🔴 不上調）</li>
+<li><strong>估值燈 🔴 過熱（不可救）：</strong>Fwd PE FY+1 92.6x，5Y 分位 ~95%（極端高位 > 85% bypass 盲點 1）｜Fwd PE FY+2 60.7x，PEG (FY+1) 1.69 / PEG (FY+2) 1.11｜原始判定 🔴 過熱維持</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 8,166 / W104 6,043 / W250 3,945（斜率 +19.3%）｜現價 17,480 全部上方｜但現價/W52 = 2.14x 極度拉開，5/19 創 6Y ATH 19,195 後 -8.9% 短期 pullback｜BB 上 19,016（96% 接近上軌）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 ^TWII（OTC index 高度相關），現價 43,645 vs W104 25,808｜無系統性風險訊號</li>
+<li><strong>參考 R:R（v12.3 三時距，資訊性不主導裁決）：</strong>短期 -0.08x（FY+1 EPS × 90x = 16,994 < 現價）／ 中期 0.43x（FY+2 EPS × 75x = 21,608, +23.6%）／ 5Y 1.05x（5Y 目標 26,000, +46%）｜壓力測試 base + bear 2/2 過｜典型 monopoly + hyper-growth Stage 4 的「估值透支」case</li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H，QC-31 cross-check 後）｜判定理由：原 matrix step 1（gate 🔴）→ X，但 QC-31 規定 thesis 完整下 X 只在「thesis 同時失敗」時才成立；本標的 quality A + trap 🟢 + 護城河 9 widening + AI 🟢 全綠，落 B 觀望偏進場（等修復），不歸 X</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟢 非陷阱（BMC 全球 70%+ 結構性壟斷、AI server BMC 結構性 ASP 上升、Goldman 連 4 次提目標 NT$22,000、共識持續上修 30 天 +24%）</li>
+<li><strong>Inception DD：</strong><code>DD_5274.TW_20260526.html</code>（2026-05-26）— 本份為 5274.TW 第一份 v12.2+ DD，作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-26（距今 365 天）— 屆時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜<span style="background:#FED7AA;color:#C2410C;padding:1px 5px;border-radius:2px"><strong>B = 衛星候選 / 觀望偏進場</strong></span>｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<thead><tr><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td>非陷阱。理論上的最大風險路徑是「<strong>產業結構衰退型</strong>」(若 AI server cycle 在 FY27-28 進入消化期) 或「<strong>護城河侵蝕型</strong>」(Axiado / Huawei iBMC / Aspeed Open BMC 開源化 滲透壓力 reduces pricing power)。但目前共識持續上修 + Goldman 連 4 次提目標表示 sell-side 對結構性故事高度認可。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>(1) <strong>全球壟斷</strong>：70%+ BMC 市佔，Huawei iBMC mindshare 僅 0.9% (PeerSpot 2025/09)；BMC 是 mission-critical 元件，客戶 switching cost 極高（驗證需 12-18 個月+ system-level certification）；(2) <strong>AI server BMC content rise</strong>：傳統 server BMC 占 BOM $10-15，AI server 升至 $20-30+（含 AST2700 12nm + CAN interface + dual-node monitoring），ASP +50-100% mix shift；(3) <strong>共識持續強勁上修</strong>：FY26 EPS 90 天從 152.72 → 188.82 (+24%)，FY27 從 215.64 → 288.10 (+34%)；(4) <strong>Goldman Sachs 連 4 次提目標 NT$22,000</strong>（年初至今每次法說後上修，最新 2026/04-05）；(5) <strong>Margin 結構性高位</strong>：OI margin 52.7% / ROE 84.7% / ROIC ~50%+ 全為 IC design 業 outlier 頂尖；(6) <strong>Net Cash 7.4B</strong>，無負債壓力；(7) 共識 FY+3 EPS 由 §8 邏輯推導 ~384，3Y CAGR (FY25→FY28) 54.7%。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>(1) <strong>Stage 4 估值極端 stretched</strong>：Fwd PE FY+1 92.6x 為 5Y 分位 ~95%，歷史上 ASPEED 2022-2023 cycle low 時 PE 25-40x，現在 92x 完全 priced in 持續超預期；(2) <strong>單一產品結構性風險</strong>：BMC 佔 ~85%+ 營收，若 AI server cycle FY27-28 進入消化或 server demand normalize，營收下行斜率可能 -30~-50%；(3) <strong>Axiado 為 emerging hyperscale challenger</strong>，已從 Microsoft / hyperscale 拿到首批 design wins；NVIDIA MGX servers 已有 Gigabyte 採 Axiado BMC 對比 ASPEED；(4) <strong>歷史週期性</strong>：ASPEED 2022 EPS 55 → 2023 EPS 26 (cycle bottom -53%) 再 2024 67 (+158%) 再 2025 104 (+55%)。週期顯示 BMC 業務並非完全線性，5Y 持有可能遇到 cycle reset；(5) <strong>共識在過去 90 天上修 24-34%</strong>，雖正面但意味著對 Q2-Q4 26 兌現 bar 已抬高，若 Q2 法說（8/6）reaffirm 但未進一步上修，市場可能 sell-the-news；(6) 現價 17,480 / W52 8,166 = 2.14x 為極度 stretched，歷史 mean reversion 路徑通常 -30~-50% pullback 才回到 W52 lined。</td></tr>
+<tr><td><strong>持有期間如何判斷陷阱發生中？</strong></td><td>① <strong>月營收 YoY 趨勢</strong>：ASPEED 月營收每月 10 日左右公告，連 2 月 YoY &lt; +30%（vs FY25 average +55-65% baseline）→ 削弱；② <strong>FY+1 / FY+2 EPS 共識 30 天 delta</strong>：若停止上修並開始連 2 月下修 → 陷阱風險升高；③ <strong>Axiado / 開源 BMC 在 hyperscale 滲透公告</strong>：任一 hyperscaler（AWS/Meta/Microsoft/Google）公開公告採用非 ASPEED BMC → R2 觸發；④ <strong>GM 結構性下滑</strong>：連 2 季 GM YoY &lt; -1.5pp（QC-26 結構性 margin test）→ 警戒；⑤ <strong>5/19 ATH 19,195 後 4 週累計跌幅 ≥ -15%</strong>（顯示 short-term momentum mean reversion）。</td></tr>
+</tbody>
+</table>
+<p><strong>最終定性：<span class="tag-green">🟢 非陷阱</span></strong>｜<em>所有領先指標均處正面位置：月營收強勁、共識持續強上修、margin 維持頂尖高位、Goldman 連續上修目標。估值高但屬「monopoly + AI 受益 + hyper-growth」的合理擠壓，非價值陷阱。</em></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>月營收 YoY%（每月 10 日 ASPEED 公告）</td><td>§5 H1</td><td>🔵 核心假設驗證信號（必填）</td><td>連 2 月 YoY &lt; +30%（vs FY25 +55-65% baseline）→ 削弱 H1；連 3 月 YoY &lt; +10% → 反轉</td></tr>
+<tr><td>2</td><td>AST2700 出貨占比 + AI server BMC ASP trend（quarterly call disclosure）</td><td>§5 H2 / §8 / §9</td><td>🔵 長期成長領先信號（必填）</td><td>AST2700 占比 FY26E 30%+ / FY27E 60%+ 兌現 → 強化 H2；任季 ASP YoY &lt; +5% → 削弱 pricing power 假設</td></tr>
+<tr><td>3</td><td>Q2 FY26 法說會（8/6/2026）— 共識 Q2 26 EPS 51.7（vs Q1 26 49.4 baseline）</td><td>§13 / §6</td><td>短期估值或財報信號</td><td>Q2 EPS &lt; 45 → 削弱動能；Q2 EPS &gt; 55 + FY26 上修指引 → 強化；FY27 EPS 共識 30 天上修方向（current 288.10）</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>本結論定論（一句話）：</strong>ASPEED 是 BMC 全球壟斷 + AI server BMC content rise 雙引擎結構性故事，thesis 高度完整；但 5/19 創 6Y ATH 19,195 後 Fwd PE FY+1 92.6x 為 5Y 分位 95% 極端，三時距 R:R 全 &lt; 1.1 typical「monopoly 透支」timing 問題；落 B 觀望，等 BB 中軌 12,418 區回測或共識在 30 天再上修後重評。</p>
+</section>
+
+<!-- ============================== §2 ============================== -->
+<section class="card" id="s2">
+<h2>§2 四層判定（產業風向 × 品質 × 估值燈 × Pure MA）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="tag-green">🟢 高確信</span>（Runway ≥ 10 年，衰退信號 0 個）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>execution 加深 + pricing power 加深（雙線同向 widening）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="tag-green">🟢 受益</span>（AI server BMC content $20-30 vs server $10-15 = ASP +50-100% 結構性上升）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="tag-green">🟢 順風</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>BMC 業務從 server 標配（穩定 7-9% YoY growth）轉為 AI server 加值（ASP +50-100% + 容量擴大）+ Aspeed 從 「server cycle 受益者」升級為 「AI capex 受益者」，TAM 從 ~$0.5B 2024 → ~$1.5B 2028+（5Y CAGR ~25-30%）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">§8 🟢 + §9 雙線 widening + AI 🟢 → 三維全 green → 風向燈 🟢 順風；implication：盲點 1 救援機制可啟動（但 ASPEED 分位 95% > 85% 限制，仍不可救）</div>
+
+<h3>B｜品質等級（護城河單一決定 + 體質 veto mini-list）</h3>
+
+<h4>體質 veto mini-list（5 項 default ✅）</h4>
+<table>
+<thead><tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 > 2%p</td><td>✅</td><td>FY23 64.1% → FY24 64.3% → FY25 68%（持續擴張）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>✅</td><td>FY25 FCF 4.62B / NI 3.93B = 1.17（高轉換率，fab-less IP 業特性）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td>✅</td><td>90 天前 152.72 → 30 天前 172.60 → current 188.82（持續強勁上修 +24%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅</td><td>Q2-Q4 25 YoY 全正 +30~70%（cycle recovery + AI ramp 雙驅動）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅</td><td>Cash 7.73B − Debt 0.31B = Net Cash 7.42B（負債極低）</td></tr>
+</tbody>
+</table>
+<p><strong>體質 veto 結果：0 項不過 → 等級不變</strong></p>
+
+<h4>護城河等級</h4>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河分數（§9）</td><td>9 / 10</td></tr>
+<tr><td>子拆解：execution moat（§9 二維拆解）</td><td>9 / 10</td></tr>
+<tr><td>子拆解：pricing power moat（§9 二維拆解）</td><td>9 / 10</td></tr>
+<tr><td>合併邏輯</td><td>等權平均 9.0；execution 與 pricing power 雙線同向 widening — IC design + 70% 壟斷 + 高 OI margin 52.7% 三者證明二維雙強</td></tr>
+<tr><td>護城河原始等級</td><td>A 級（9 分）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>A 級</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">護城河 9 = A 級；execution + pricing power 雙線 widening 是相對罕見的雙強護城河（vs 2345 的 execution widening + pricing power constrained 為單軸）；implication：底倉建議目標倉位的 25%（A 級 default）；但因 estvalu 🔴 過熱 → 訊號降級為 B 觀望</div>
+
+<h3>C｜估值輸入</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY+1 EPS（FY2026E）</td><td>188.82 TWD</td><td>yfinance earnings_estimate avg, n=2（覆蓋 sparse）</td></tr>
+<tr><td>FY+2 EPS（FY2027E）</td><td>288.10 TWD</td><td>yfinance earnings_estimate avg, n=15</td></tr>
+<tr><td>FY+2 成長率</td><td>+52.6%</td><td>(288.10 / 188.82) − 1</td></tr>
+<tr><td>FY+3 EPS（FY2028E，§8 邏輯推導）</td><td>~384 TWD</td><td>Goldman BMC units FY28 52.8M (+27% YoY) × 平均 ASP +5% blended → EPS +33% YoY；FY+2 × 1.33 = 383；§8.A Runway + §8.B 成長品質</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>92.6x</td><td>17,480 ÷ 188.82</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>60.7x</td><td>17,480 ÷ 288.10（同 yfinance forwardPE 60.7）</td></tr>
+<tr><td>3 年 EPS CAGR（FY25 → FY28）</td><td>54.7%</td><td>(384 / 103.73)^(1/3) − 1</td></tr>
+</tbody>
+</table>
+
+<h3>D｜估值燈（v12.3 主裁決）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前 Fwd PE（FY+1）</td><td>92.6x</td></tr>
+<tr><td>5Y Fwd PE 範圍估計</td><td>~25x（2022 cycle bottom）~ 95x（current ATH）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>~95%（落 > 85% 區間 → 🔴 極端高位）</td></tr>
+<tr><td>3Y EPS CAGR（§7 推導）</td><td>54.7%</td></tr>
+<tr><td>PEG（FY+1 PE / 3Y CAGR）</td><td>1.69（1-2 合理區間）</td></tr>
+<tr><td>PEG（FY+2 PE / 3Y CAGR）</td><td>1.11（接近便宜）</td></tr>
+<tr><td><strong>原始估值燈（取較嚴）</strong></td><td><strong><span class="badge-red">🔴 過熱</span></strong>（分位 95% 較嚴於 PEG 1.69）</td></tr>
+</tbody>
+</table>
+
+<div class="warning-box">
+<h4>⚠️ 盲點 1 救援檢查（結構性高成長救援）— 不可救</h4>
+<table>
+<thead><tr><th>條件</th><th>門檻</th><th>本標的</th><th>過？</th></tr></thead>
+<tbody>
+<tr><td>① §8 長期成長性綜合評級</td><td>🟢 高確信</td><td>🟢</td><td>✅</td></tr>
+<tr><td>② PEG</td><td>&lt; 2.0</td><td>1.69（FY+1） / 1.11（FY+2）</td><td>✅</td></tr>
+<tr><td>③ §8 F AI 風險評級</td><td>🟢 AI 受益</td><td>🟢</td><td>✅</td></tr>
+<tr><td><strong>不適用情境</strong></td><td>分位 &gt; 85% → 維持 🔴 不救</td><td><strong>分位 ~95% &gt; 85%</strong></td><td>❌ <strong>盲點 1 救援不啟動</strong></td></tr>
+</tbody>
+</table>
+<p><strong>救援結果：🔴 維持，不可救</strong>｜原因：分位 95% 超過 85% 上限，即使三條件全 ✓，盲點 1 規則明確排除「極端過熱」情境。</p>
+</div>
+
+<p><strong>最終估值燈：<span class="tag-red">🔴 過熱</span></strong>｜套用規則：原規則直接拒絕（0%），但 QC-31 cross-check：本標的 thesis 完整（quality A + trap 🟢 + 護城河 9 widening + AI 🟢），thesis-level 無失敗訊號 → 訊號降級為 B 觀望，非 X 拒絕。</p>
+<div class="reasoning">分位 95% + PEG 1.69 取較嚴 → 🔴；盲點 1 不可救（分位 &gt; 85%）；implication：對 PM skill 而言不適合現在進場，但因 thesis 完整可列 watchlist 等修復；QC-31 規則：估值 🔴 單獨不歸 C/X，落 B 觀望</div>
+
+<h3>E｜R:R + Bear Case（v12.3 精簡：3 個數字 + 1 line anchor）</h3>
+<table>
+<thead><tr><th>時距</th><th>計算（合理 PE 取 75-90x mid-range，因 monopoly 結構性溢價）</th><th>目標價</th><th>上行</th><th>R:R</th></tr></thead>
+<tbody>
+<tr><td>短期（1 年，FY+1 EPS × 90x）</td><td>188.82 × 90</td><td>~16,994</td><td>-2.8%</td><td><span class="badge-red">-0.08x</span></td></tr>
+<tr><td>中期（2 年，FY+2 EPS × 75x）</td><td>288.10 × 75</td><td>~21,608</td><td>+23.6%</td><td><span class="badge-red">0.43x</span></td></tr>
+<tr><td>5Y（長期，§8 E Base FY+5 EPS 500 × 50x）</td><td>500 × 50</td><td>~25,000</td><td>+43.0%</td><td><span class="badge-yellow">1.05x</span></td></tr>
+</tbody>
+</table>
+<p><strong>Bear anchor（1 line）：</strong>Bear EPS = FY+1 EPS × 0.9 = 188.82 × 0.9 = 169.94；Bear PE（§8 E 成長熄火降至 10% 情境）= 30x；Bear 股價 = 169.94 × 30 = <strong>5,098 TWD</strong>（現價下行 -70.8%）；W52 Low（參考）3,680 / W104 Low（參考）~3,200。</p>
+<p class="note">dd-meta <code>stress</code> 欄位 2/2（base + bear 兩情境通過）。三時距 R:R 全 &lt; 2.0：典型 monopoly + hyper-growth Stage 4 的 timing 問題（估值透支），<strong>非 thesis 失敗</strong>。</p>
+
+<h3>F｜Pure MA 狀態機（週線六狀態）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>17,480</td></tr>
+<tr><td>W52 / 斜率</td><td>8,166 / +49.9%</td></tr>
+<tr><td>W104 / 斜率</td><td>6,043 / +29.4%</td></tr>
+<tr><td>W250 / 斜率</td><td>3,945 / +19.3%</td></tr>
+<tr><td>BB 上 / 中 / 下（20w）</td><td>19,016 / 12,418 / 5,821</td></tr>
+<tr><td>現價 / W52 比</td><td>2.14x（極度拉開：典型 stretched 訊號）</td></tr>
+<tr><td>近 5 日 OHLC（QC-24 intraday）</td><td>5/20 15,560 → 5/21 16,440 → 5/22 17,780 → 5/25 17,725 → 5/26 17,480；5/19 ATH 19,195（intraday） → 5/20 -9% 大跌後反彈整理</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="tag-green">✅ 強勢進場</span></strong>（價 > W52 > W104 > W250 且 W250 斜率 +19.3% > 0）</td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>× 1.0</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">三條 MA 全在價之下、斜率全正 → ✅ 強勢進場；BUT 現價 / W52 2.14x 極度 stretched，5/19 創 ATH 19,195 後 -8.9% pullback 顯示動能末段；BB 上軌 19,016 vs 現價 17,480（92%）；implication：MA 沒給煞車訊號 but 數學上已 priced in 過多預期，配合 §2 D 🔴 過熱 → 落 B 觀望時機</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>^TWII（加權指數，TPEx OTC index 高度相關 ~0.95）</td></tr>
+<tr><td>大盤現價</td><td>43,645</td></tr>
+<tr><td>大盤 W104</td><td>25,808</td></tr>
+<tr><td>系統性風險（破 W104）</td><td>否（現價 / W104 = 1.69x）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</tbody>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<h4>判定路徑（依序評估）</h4>
+<table>
+<thead><tr><th>步驟</th><th>條件</th><th>本標的</th><th>輸出</th></tr></thead>
+<tbody>
+<tr><td>1. 拒絕檢核（機械）</td><td>trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕</td><td>gate 🔴！</td><td>機械: X</td></tr>
+<tr><td>1. cross-check QC-31</td><td>本表 X 觸發後仍需 QC-31 cross-check；X 只在 thesis 同時失敗時成立（品質&lt;6 / 護城河侵蝕≥3 / 陷阱🔴 / AI🔴 任一）</td><td>品質 9 / 護城河 widening / 陷阱 🟢 / AI 🟢 — 全綠</td><td><strong>X 降級為 B</strong></td></tr>
+<tr><td>2-3. A+ / A</td><td>S/A + gate 🟢/🟡</td><td>quality A 但 gate 🔴</td><td>不觸發</td></tr>
+<tr><td>4. B 衛星級</td><td>quality B + gate 🟢/🟡，或 S/A 訊號減半</td><td>quality A，gate 🔴 但 thesis 完整視為「S/A 訊號減半」場景</td><td><strong>→ B（衛星候選 / 觀望偏進場）</strong></td></tr>
+</tbody>
+</table>
+
+<h4>五個訊號維度（傳遞至 PM skill）</h4>
+<table>
+<tbody>
+<tr><th>quality_tier（§2 B 調整後）</th><td>A</td></tr>
+<tr><th>gate（§2 D）</th><td>🔴（盲點 1 不可救，極端過熱）</td></tr>
+<tr><th>ma_status（§2 F）</th><td>✅ 強勢進場（但 ATH 後 -8.9% 動能末段警示）</td></tr>
+<tr><th>benchmark_regime（§2 G）</th><td>正常（^TWII 在 W104 上）</td></tr>
+<tr><th>trap（§1 定性）</th><td>🟢 非陷阱</td></tr>
+<tr><th><strong>final_signal</strong></th><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+</tbody>
+</table>
+<p><strong>判定理由（一句話）：</strong>gate 🔴 過熱但 QC-31 cross-check thesis 完整 → 不歸 X；落 B 觀望偏進場（等估值修復或共識上修補上倍數）。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8.A</td><td>充裕（Goldman BMC units 2026/27/28 29.5M/41.6M/52.8M = 3Y +146% 累計；AI server BMC content rise + AST2700 mix shift；TAM 5Y CAGR ~25-30%）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>execution + pricing power 雙線 widening — 12nm 製程世界第一顆 BMC + 70%+ 全球壟斷 + AST2700 next-gen 鞏固</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</tbody>
+</table>
+<p class="note"><strong>一句話說明：</strong>🟢 順風，A 級護城河 9/10 雙線 widening，BMC 全球壟斷 + AI server content rise 雙引擎；估值燈 🔴 過熱（Fwd PE FY+1 92.6x 分位 95%）+ Pure MA ✅ 但 5/19 ATH 後 -8.9% 短期動能末段。建議等 BB 中軌 12,418 回測 或 Q2 26 法說 8/6 reaffirm 後重評；長期持有信心高但短期透支。</p>
+</section>
+
+<!-- ============================== §3 ============================== -->
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要</h2>
+<div class="three-col">
+
+<div class="role-card role-bull">
+<h3>多頭辯護人 ｜ Munger 模式</h3>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>數字佐證</th><th>章節</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>BMC 全球壟斷護城河</td><td>70%+ 市佔；Huawei iBMC mindshare 0.9%；Axiado 雖為 emerging challenger 但仍未威脅核心 share；客戶 switching cost 高（12-18 個月+ certification）</td><td>§9</td></tr>
+<tr><td>2</td><td>AI server BMC content 結構性上升</td><td>傳統 server BMC $10-15 → AI server $20-30+；AST2700 12nm + CAN + dual-node monitoring 帶 ASP +50-100%；Goldman BMC units FY26 29.5M (+56%)</td><td>§8 / §11</td></tr>
+<tr><td>3</td><td>共識持續強勁上修 + Goldman 連 4 次提目標</td><td>FY26 EPS 90 天 152.72 → 188.82 (+24%); FY27 215.64 → 288.10 (+34%); Goldman PT NT$22,000 從 NT$20,000 上修</td><td>§13 / §6</td></tr>
+</tbody>
+</table>
+<p><strong>多頭最強一句話：</strong>ASPEED 是 AI server cycle 中少數真正 monopoly + AI capex 結構性受益者，OI margin 52.7%、ROE 84.7%、ROIC ~50%+ 是壟斷的數字證明，估值高有其結構性理由。</p>
+</div>
+
+<div class="role-card role-bear">
+<h3>空頭檢察官 ｜ Burry 模式</h3>
+<table>
+<thead><tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th><th>對應風險</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>單一產品 cycle reset（BMC 占 85%+ 營收）</td><td>歷史 FY22 EPS 55 → FY23 EPS 26（-53% cycle bottom）；若 AI server cycle 在 FY27-28 進入消化期，BMC 出貨 +27% 假設可能不達標</td><td>§5 R1</td></tr>
+<tr><td>2</td><td>Axiado / Open BMC / Huawei 滲透加速</td><td>Axiado 已從 hyperscale 拿到首批 design wins；NVIDIA MGX servers 已有 Gigabyte 採 Axiado；Open BMC 標準化趨勢</td><td>§5 R2 / §9</td></tr>
+<tr><td>3</td><td>Stage 4 mean reversion + 估值多重壓縮</td><td>現價 / W52 = 2.14x，6Y price 19x；Fwd PE FY+1 92.6x 分位 95%；若 Q2 法說 in-line 而未上修 → sell-the-news -20~-30% 可能</td><td>§2 F / §13</td></tr>
+</tbody>
+</table>
+<p><strong>空頭最大威脅：</strong>歷史顯示 ASPEED 並非完全線性成長 — 2023 cycle bottom EPS -53%；若 FY27-28 進入消化期 + 估值 mean reversion 至 PE 40-50x，股價可能 -40~-60% pullback；當前 92x Fwd PE 對 disappoint 異常敏感。</p>
+</div>
+
+<div class="role-card role-arb">
+<h3>估值仲裁員 ｜ Damodaran 模式</h3>
+<table>
+<tbody>
+<tr><th>隱含預期可信度</th><td>5 / 10</td></tr>
+<tr><th>核心依據</th><td>當前 Fwd PE 92x 隱含「BMC units 持續 +27%+ 連 3 年 + ASP 持續 +5-10% YoY + monopoly 結構不變」三條件全勝；vs sell-side 共識（Goldman +56/+41/+27%）相對保守對齊，但市場已 priced in lift</td></tr>
+<tr><th>歷史對標</th><td>ASPEED 2024 cycle recovery（PE 從 25 → 60）+ 後續一年 +200%；類似路徑暗示如果 thesis 維持，PE 雖高但仍可 hold；但若 disappoint 則 cycle reset 痛苦</td></tr>
+</tbody>
+</table>
+<p><strong>仲裁員一句話：</strong>估值「貴但不離譜」— monopoly + AI 結構性受益確實支撐高 PE，但 92x Fwd PE 已將 FY26-28 完美兌現 priced in；買在當前需要相信共識會繼續上修 +20%+，否則沒有 cushion。</p>
+</div>
+
+</div>
+</section>
+
+<!-- ============================== §4 ============================== -->
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義（第一性原理）</h3>
+<p>ASPEED 解決的痛點是「<strong>讓伺服器永遠可遠端管理</strong>」— BMC（Baseboard Management Controller）是每台 server 在 OS 故障、CPU 凍結、甚至電源失效時仍能被遠端遙控、診斷、重啟的 system-on-chip 黑盒子，是現代 data center 「always-on」承諾的物理 enabler。沒有 BMC，IT 必須派人現場處理每一個故障；有了 BMC，hyperscaler 可以用 10 個 admin 管 100 萬台 server。ASPEED 在這個極小但 mission-critical 的 socket 上做到 70%+ 全球壟斷 — 不是因為 BMC 設計多難，而是因為：(1) BMC firmware 必須與 server OEM 各家不同 OS / hardware stack 深度整合（驗證週期 12-18 個月）；(2) 失效成本極高（一顆 BMC 失靈可能拖垮 1U server 整條生產線）；(3) 全球只有 4-5 家供應商，ASPEED 規模 + 多代產品 ecosystem 形成 winner-take-most 動態。若 ASPEED 消失：整個 server 業必須在 2-3 年內找替代 → 短期供應癱瘓 + 長期 IP 重建。它的「存在」本質是 server 業 32 年發展中累積的 hidden infrastructure layer。</p>
+
+<h3>【護城河形成歷史路徑】（20+ 年 milestone）</h3>
+<table>
+<thead><tr><th>年份</th><th>關鍵事件</th><th>對護城河的累積貢獻</th></tr></thead>
+<tbody>
+<tr><td>2004</td><td>創立 ASPEED Technology，從 video / display chip 切入</td><td>進入 server peripheral IC design 領域，建立基礎 IC design + firmware 能力</td></tr>
+<tr><td>2009-2012</td><td>第 1-2 代 BMC 商業化（AST1100, AST2000 系列）</td><td>第一階段 BMC 設計能力建立；server OEM 客戶 base 累積</td></tr>
+<tr><td>2014</td><td>第 3 代 AST2400 進入主流（Intel Romley/Haswell 平台搭配）</td><td>確立 server BMC 主流供應商地位</td></tr>
+<tr><td>2017</td><td>第 4-5 代 AST2500（Skylake/Cascade Lake 主流）</td><td>達到全球 BMC 市佔 ~60%+，超越前主要對手 Emulex / Avago</td></tr>
+<tr><td>2020-2022</td><td>第 6-7 代 AST2600（Ice Lake/Sapphire Rapids 主流），加入 Hyperscale BMC 支援</td><td>市佔 → 70%+；hyperscaler 大規模採用</td></tr>
+<tr><td>2023</td><td>產業 cycle bottom（FY EPS 26.60 -53%）；但 ASPEED 維持市佔不退</td><td>證明 monopoly 結構在 cycle low 期間仍堅固</td></tr>
+<tr><td>2024</td><td>FY 強復甦（EPS 67.83 +155%）；AI server BMC content rise 啟動</td><td>從 server cycle 受益者升級為 AI capex 受益者</td></tr>
+<tr><td>2025</td><td>FY25 EPS 103.73 +53%；AST2700 12nm 樣品交付</td><td>12nm 製程世界第一顆 BMC，技術領先 1-2 代</td></tr>
+<tr><td>2026+</td><td>AST2700 MP 出貨 + Pilot 4 GUI + AI server multi-node BMC + Goldman BMC units 2028 52.8M (+146% from 2025 ~21M)</td><td>execution + pricing power 雙線 widening；12nm 領先 1.5-2 代</td></tr>
+</tbody>
+</table>
+
+<h3>【逆向推演 三維展開】Munger Inversion</h3>
+
+<h4>① 技術維度：什麼技術替代會讓 ASPEED 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>Open BMC 開源化加速 + CPU 廠（Intel / AMD）整合 BMC 進 CPU SoC</strong>：若 Intel / AMD 在 Granite Rapids+ 或 Genoa+ 加入 integrated BMC（消除 discrete chip），ASPEED 失去獨立 socket。歷史對標：Intel 早年在 chipset 整合 north bridge 殺掉 VIA / SiS。</li>
+<li><strong>Axiado 從 hyperscale 拿下 design wins</strong>：Axiado 將 AI 安全 + BMC + ROT 整合一顆，已在 NVIDIA MGX servers（Gigabyte）取得首批 OEM。若 hyperscaler 接受 Axiado 邏輯，ASPEED 失去 hyperscale 高端 30-40% wallet。歷史對標：Marvell 切入 Broadcom 主導的 storage chip 市場 5 年內拿下 30%。</li>
+<li><strong>NVIDIA Grace / DGX 端到端整合（NVIDIA 自製 BMC）</strong>：NVIDIA 在 DGX H100/B100 系列已自製管理 controller，未來 GPU server 可能完全 bypass discrete BMC。歷史對標：NVIDIA 在 PCIe switch 領域逐步切入。</li>
+<li><strong>Chiplet + UCIe 後端整合 BMC 為 silicon IP 而非 discrete chip</strong>：若 chiplet 標準化使 BMC 成為 silicon IP block 嵌入 CPU 或 GPU package，ASPEED 商業模式重構。歷史對標：early FPGA 從 discrete → embedded 變化。</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>創辦人陳東玲離任 + 二代管理層斷層</strong>：ASPEED 創辦人陳東玲（Chris Lin）仍是核心；若退場後二代 R&D + 業務策略不能延續會被 Axiado 等 challenger 蠶食。歷史對標：MediaTek 早年蔡明介接班 ridge 期動能短暫放緩。</li>
+<li><strong>過度 over-invest 至 non-BMC 領域</strong>：若 ASPEED 投入過多至 Cupola360 全景智慧管理或其他 adjacencies 而分散資源，核心 BMC R&D 投入降至 75% 以下 → 技術領先優勢 erode。</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>Server 業結構性萎縮（如雲服務取代私有 server）</strong>：若企業大規模轉移至全 SaaS / public cloud，private server demand 萎縮會壓低 BMC 出貨 volume。但 hyperscale 自身的 server demand 仍會持續，整體 BMC TAM 應該維持。</li>
+<li><strong>邊緣計算（Edge）取代 centralized server</strong>：若大量計算移至邊緣（低成本 / 低功耗 device）而非 data center，server BMC 需求結構性下降。Manageable 但會壓制長期 growth。</li>
+<li><strong>美中半導體分離造成 China BMC 自主化加速</strong>：China 政府 mandate Huawei iBMC / 國產 BMC 在 China 製 server 採用 → ASPEED China 業務 ~10-15% 可能 cut to zero。歷史對標：China RAN 用 Huawei 取代 Ericsson。</li>
+</ul>
+</section>
+
+<!-- ============================== §5 ============================== -->
+<section class="card" id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<thead><tr><th>項目</th><th>填寫</th></tr></thead>
+<tbody>
+<tr><td>預設持有期</td><td>36-60 個月（覆蓋 FY26-30 AI server BMC 主升段 + AST2700 cycle peak）</td></tr>
+<tr><td>主要驅動這個時間軸的理由</td><td>(1) AST2700 量產周期典型 4-6 年（前代 AST2600 從 2020 至今仍主流）；(2) Goldman 預測 BMC units 2026/27/28 三年加速期；(3) AI server cycle 結構性可見度 ≥ 5 年</td></tr>
+<tr><td>時間軸決定哪些是訊號 vs 噪音</td><td>訊號：月營收 YoY、BMC units shipment、Q2-Q4 法說 ASP 趨勢、Axiado / Huawei iBMC hyperscale 滲透公告；噪音：單季匯率影響、單一品牌 OEM design loss、短期 inventory adjustment</td></tr>
+</tbody>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸 + sourced floor + 漂移觸發</h3>
+
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體數字門檻 + 信息來源</th><th>漂移觸發條件</th></tr></thead>
+<tbody>
+<tr>
+<td>H1</td>
+<td><strong>BMC unit shipment 持續高速擴張 + AI server BMC content 結構性 ASP 上升</strong></td>
+<td>FY26 BMC units 達 29.5M (+56% Goldman 預估)</td>
+<td>FY28 BMC units 達 52.8M + AST2700 占比 ≥ 60%</td>
+<td>FY30+ AI server BMC TAM 維持 ≥ $1.5B + ASPEED 全球 share ≥ 65%</td>
+<td>units 連 4 季 YoY ≥ +40%；信息來源：Goldman Sachs 2026 報告 + ASPEED 月營收 + Counterpoint Research BMC tracker</td>
+<td>連 2 季 TTM Rev YoY 偏離 ≥ 15pp（即 &lt; +40%）→ 削弱（QC-35：2Y 假設連 2 季偏離）</td>
+</tr>
+<tr>
+<td>H2</td>
+<td><strong>AST2700 量產 ramp 順利 + 鞏固 12nm 領先優勢</strong></td>
+<td>FY26 AST2700 占 BMC 出貨 ≥ 30%</td>
+<td>FY28-30 AST2700 占 ≥ 80%；後續 AST2800 啟動</td>
+<td>FY30+ 持續每 5-7 年代際升級節奏，無對手追上 12nm 製程節點</td>
+<td>AST2700 出貨占比 30%+；信息來源：ASPEED quarterly call + ServeTheHome AST2700 reviews + Phoronix Linux 6.18 ASPEED kernel support</td>
+<td>FY26 H2 法說推遲 AST2700 ramp 時程 → 削弱；AST2700 良率問題公告 → 反轉</td>
+</tr>
+<tr>
+<td>H3</td>
+<td><strong>OI margin 維持 50%+ 高位（不受 Axiado / 開源 BMC 滲透壓力影響）</strong></td>
+<td>FY26 FY OI margin ≥ 50%（vs FY25 51.3%）</td>
+<td>FY27-30 OI margin 在 48-53% 區間穩定</td>
+<td>FY30+ OI margin 結構性 ≥ 45%（暗示 monopoly pricing power 持久）</td>
+<td>OI margin ≥ 50%；信息來源：ASPEED 季財報 + 同業 Axiado 公開資料（如有 IPO） + 加 GM 趨勢追蹤</td>
+<td>連 2 季 TTM OI margin YoY 下滑 ≥ 1.5pp → 削弱（QC-26 結構性 margin 測試）；連 4 季下滑 → 反轉</td>
+</tr>
+</tbody>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p class="note"><strong>狀態：</strong>進場未滿一年（最早 v12.2+ DD = 2026-05-26 本份 Inception，距今 0 天）。<br>本欄位將於 <strong>2027-05-26</strong> 起首次有資料對照。<br>在此之前，僅以 §5 B 戰術假設視角追蹤。</p>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>單一產品 BMC cycle reset（歷史 FY23 -53%）+ AI server 進入消化期</td>
+<td>H1</td>
+<td>🔥 中期（4-6 季）</td>
+<td>AWS/Meta/Microsoft/Google 合計 Capex YoY %；ASPEED 月營收 YoY</td>
+<td>合計 capex YoY 連 2 季 &lt; +10% → 警戒；連 3 季 &lt; 0% → 大動作；ASPEED 月營收 YoY 連 2 月 &lt; +20% → 警戒</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>Axiado / Open BMC / Huawei iBMC 在 hyperscale 滲透加速</td>
+<td>H1 + H3</td>
+<td>🔥 中期（4-6 季）</td>
+<td>Axiado / Open BMC 在 hyperscaler / NVIDIA MGX 設計勝利公告；ASPEED 季度 OI margin 趨勢</td>
+<td>任一 hyperscaler 公告非 ASPEED BMC 大規模採用；或 ASPEED OI margin 連 2 季 -1pp 同期</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>CPU 廠（Intel/AMD）整合 BMC 進 CPU SoC / chiplet 化</td>
+<td>H1 + H2</td>
+<td>🐢 長期（2+ 年慢變數）</td>
+<td>Intel/AMD 新世代 CPU spec sheet（是否仍需 discrete BMC）；NVIDIA Grace+ DGX 全自製管理 controller 公告</td>
+<td>Intel/AMD 公告 integrated BMC in next-gen CPU SoC（≥ 50% 機率 36M 內發生才砍倉）</td>
+</tr>
+</tbody>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>問題</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>事件影響 36-60 個月持有期內嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（BMC units + ASP）/ H2（AST2700）/ H3（margin）中哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否觸發 §5.B 漂移條件？</td></tr>
+</tbody>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td>進場</td><td>BB 中軌 12,418 區間回測（-29% from 17,480）或 Q2 26 法說（8/6）大幅上修 FY26/27 共識 + 確認 AST2700 ramp</td><td>建倉至底倉 30%（A 級首倉，目標倉位的 7-8%）</td></tr>
+<tr><td>加碼</td><td>H1（BMC units +56% 兌現）+ H2（AST2700 占比 ≥ 30%）雙確認</td><td>加碼至底倉 100%（目標倉位的 25%）</td></tr>
+<tr><td>減碼</td><td>R1 早期信號（月營收 YoY &lt; +30% 連 2 月）或 R2 觸發（Axiado hyperscale 公告）</td><td>減至底倉 33%</td></tr>
+<tr><td>撤退</td><td>H1 反轉 OR §1 trap 從 🟢 變 🔴 OR OI margin 連 4 季下滑 OR R3 大幅進展（CPU 整合 BMC）</td><td>清倉</td></tr>
+</tbody>
+</table>
+
+<h3>F｜Single Thing</h3>
+<table>
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>Single Thing 描述</td><td><strong>2026 Q2 法說會（8/6/2026）— ASPEED 公告 AST2700 出貨占比 + FY26 全年指引上修方向</strong></td></tr>
+<tr><td>如果發生（強化）</td><td>AST2700 ≥ 30% 出貨占比 + FY26 EPS 指引上修至 200+ → 加碼至底倉 100%；可能進一步上修估值倍數至 PE 100+</td></tr>
+<tr><td>如果發生（削弱）</td><td>AST2700 占比 &lt; 20% + FY26 EPS 指引維持不變 → 估值倍數 mean-revert 至 PE 60-70x，股價 -25~-35% pullback；減倉 50%</td></tr>
+<tr><td>可觀測性</td><td>2026-08-06 Q2 26 法說會（excellent visibility，明確日期）</td></tr>
+<tr><td>機率估計</td><td>強化機率 60%（基於 Goldman 連 4 次提目標 + 共識 90 天上修 +24% 軌跡）</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================== §6 ============================== -->
+<section class="card" id="s6">
+<h2>§6 即時財報情報（Q1 FY26 已公告於 ~5/12，詳細數字待 Q2 法說補充）</h2>
+
+<h3>① 最新一季財報關鍵數字（基於 yfinance 解讀 + 業界估計）</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr></thead>
+<tbody>
+<tr><td>Revenue（TWD）</td><td>~3.5B（業界估算）</td><td>~3.3B</td><td><span class="badge-beat">Beat</span></td><td>~+90% YoY (vs Q1 25 ~1.8B)</td></tr>
+<tr><td>EPS（TWD）</td><td>~49.42（yfinance 0q EPS Trend current 已 update）</td><td>~36.22（90 天前估）</td><td><span class="badge-beat">Beat 大幅</span></td><td>+196% YoY (vs Q1 25 16.65)</td></tr>
+<tr><td>Gross Margin</td><td>~68%</td><td>~66%</td><td><span class="badge-beat">Beat</span></td><td>+2pp YoY</td></tr>
+<tr><td>Operating Margin</td><td>~52%</td><td>~50%</td><td><span class="badge-beat">Beat</span></td><td>+2pp YoY</td></tr>
+</tbody>
+</table>
+<p class="note">Note：Q1 26 actual 詳細數字由業界 sell-side 估算 + yfinance 0q EPS trend 推導。完整 figures 需在 Q2 法說會 8/6/2026 confirm。yfinance 0q EPS 從 90 天前的 36.22 升至 current 49.42 (+36.5%) 表明 Q1 是 strong beat。</p>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<thead><tr><th>假設</th><th>本季財報邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（BMC units + ASP）</td><td>＋強化</td><td>Q1 26 Rev +90% YoY 加速；Goldman 連 4 次提目標即承認 demand pull-in</td></tr>
+<tr><td>H2（AST2700）</td><td>＋強化（待 Q2 法說明確）</td><td>2025 MP 已啟動；Computex 2025 展示 multi-OEM 採用</td></tr>
+<tr><td>H3（OI margin）</td><td>＋強化</td><td>Q1 OI margin ~52% vs FY25 51.3% 維持頂尖；證明 pricing power 持久</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析（基於 Q4 25 法說 + Goldman 解讀）</h3>
+<table>
+<tbody>
+<tr><th>管理層基調</th><td>樂觀 — Q4 25 法說已上修 FY26 指引；Goldman 反映管理層提供 strong forward visibility</td></tr>
+<tr><th>Forward Guidance</th><td>FY26 全年 BMC units +56% YoY (Goldman 數字反映管理層 indication)；Pricing 從 4 月起多數產品線漲價</td></tr>
+<tr><th>刻意強調的主題</th><td>(1) AST2700 12nm 技術領先；(2) AI server BMC content rise；(3) AST2750 multi-node monitoring 為差異化亮點</td></tr>
+<tr><th>刻意迴避的問題</th><td>(1) Axiado 競爭 specific 對策；(2) Top hyperscaler 客戶營收占比；(3) China market 中長期 visibility</td></tr>
+</tbody>
+</table>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：Q1 26 +90% YoY 確認 AI server BMC content rise 結構性故事；hyperscaler 採購 vendor consolidation 對 ASPEED 有利</li>
+<li><strong>供給端</strong>：Pricing 從 4 月起漲價（substrate 緊缺背景下）→ supply tight = pricing leverage 進一步擴大</li>
+<li><strong>競爭格局</strong>：Axiado 雖在 hyperscale (NVIDIA MGX with Gigabyte) 取得首批 design wins，但未威脅 ASPEED 核心 share；Huawei iBMC 0.9% mindshare → 結構性挑戰邊緣化</li>
+<li><strong>總體經濟敏感度</strong>：AI capex 與一般 IT capex 已脫鉤，ASPEED 風險主要在 AI cycle 本身的可持續性</li>
+<li><strong>對同業的連帶推論</strong>：對 server OEM（Dell / HPE / Supermicro / Quanta / Wistron）：BMC 是 component 標配但 ASPEED 議價權強；對 NVIDIA：GPU server 仍需 BMC，ASPEED 直接間接受益；對 Broadcom/Marvell：networking switch 與 BMC 是 complementary 不衝突</li>
+</ul>
+</section>
+
+<!-- ============================== §7 ============================== -->
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 資料來源</h3>
+<p>步驟零' Excel：<code>NOT in Excel</code>（5274.TW/.TWO 屬 TPEx OTC ticker，Excel 未覆蓋 OTC tickers）→ fall back yfinance（步驟零）。</p>
+<p>yfinance earnings_estimate（n=2/15 analysts，5274.TWO，2026-05-26 抓取）：</p>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>基期 FY2025 EPS（actual）</td><td>103.73 TWD</td></tr>
+<tr><td>FY+1（FY2026E）EPS</td><td>188.82（avg, n=2 即 sparse coverage，growth +82.0%）</td></tr>
+<tr><td>FY+2（FY2027E）EPS</td><td>288.10（avg, n=15，growth +52.6%）</td></tr>
+<tr><td>FY+3（FY2028E）EPS（§8 邏輯推導）</td><td>~384（FY+2 × 1.33 — Goldman BMC units FY28 52.8M +27% YoY + ASP +5% blended → +33%）</td></tr>
+<tr><td>EPS Trend 90 天修正</td><td>FY+1 從 152.72 → 188.82 (+24%) ；FY+2 從 215.64 → 288.10 (+34%)</td></tr>
+<tr><td><strong>3 年 EPS CAGR（FY25 → FY28）</strong></td><td><strong>54.7%</strong>（台股單一口徑）</td></tr>
+</tbody>
+</table>
+
+<h3>門檻檢核表</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>&gt; 15%</td><td>✓✓</td><td>FY25 FCF 4.62B / Rev 9.08B = 50.8%！極端高（IC design + monopoly 特性）</td></tr>
+<tr><td>正規化 FCF Margin（5Y）</td><td>5Y 均 &gt; 15%；最低谷 &gt; 10%</td><td>✓✓</td><td>近 5 年均 40-50%；FY23 cycle bottom 仍 ≥ 30%；最高位 IC design 業</td></tr>
+<tr><td>ROIC（當前）</td><td>&gt; 15%，&gt; WACC</td><td>✓✓</td><td>ROIC ~ 50%+；WACC ~ 8%；超額 +42pp（極端優勢）</td></tr>
+<tr><td>ROIC 穩定性</td><td>過去 10 年 ≥ 70% ROIC &gt; 15%</td><td>✓✓</td><td>過去 10 年除 2023 cycle bottom 均 &gt; 20%；趨勢擴大</td></tr>
+<tr><td>毛利率定價能力</td><td>10 年 ≥ 70% 改善</td><td>✓</td><td>GM 從 2015 ~55% 升至 2025 ~68%，趨勢明顯擴大</td></tr>
+<tr><td>資本密集度</td><td>Capex / Rev &lt; 5% 優</td><td>✓✓</td><td>近 3 年 ~3-4%（fab-less IC design 業特性）</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>&gt; 20%</td><td>✓✓</td><td>54.7%</td></tr>
+<tr><td>PEG（3 年）</td><td>&lt; 2</td><td>✓</td><td>1.69（FY+1） / 1.11（FY+2）</td></tr>
+<tr><td>負債安全性</td><td>D/E &lt; 0.7</td><td>✓✓</td><td>D/E 0.04（淨現金）；現金 / Rev 85.1%（高配置但 IC design 業普遍）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td>✓✓</td><td>Net Cash 7.42B（極端）</td></tr>
+<tr><td>護城河強度</td><td>&gt; 8 分，趨勢擴大</td><td>✓✓</td><td>9/10（execution 9 + pricing power 9 雙線 widening）</td></tr>
+</tbody>
+</table>
+<p><strong>Munger 三維護城河快速評級：<span class="tag-green">🟢 三項全達標</span></strong>（ROIC 穩定性 ✓ + 資本密集度 ✓ + 毛利率定價能力 ✓）— ASPEED 是 Munger 標準的「卓越企業」。</p>
+<p><strong>最大財務弱點</strong>：單一產品結構（BMC ~85%+ 營收）— 若 BMC cycle reset 影響全企業，無 buffer。</p>
+</section>
+
+<!-- ============================== §8 ============================== -->
+<section class="card" id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+<tbody>
+<tr><td>當前 BMC TAM（2024）</td><td>~$0.5B</td><td>業界估計，含 BMC SoC + firmware</td></tr>
+<tr><td>2028E TAM</td><td>~$1.5B</td><td>AI server BMC content rise + units +146% 推動，5Y CAGR ~30%</td></tr>
+<tr><td>2030E TAM</td><td>~$2.0-2.5B</td><td>後續 AST2800 + edge BMC 接力</td></tr>
+<tr><td>當前滲透率</td><td>~85% 全球 BMC adoption（hyperscaler ≥ 95%、enterprise ~80%）</td><td></td></tr>
+<tr><td>若維持 +30% CAGR，飽和年</td><td>~6-8 年</td><td>5Y 仍在主升段</td></tr>
+<tr><td><strong>Runway 估計</strong></td><td><strong>≥ 10 年</strong></td><td>AST2700 + AST2800 + Edge BMC + 機器人 BMC 多代接力</td></tr>
+</tbody>
+</table>
+<p><strong>Runway 解讀：≥ 10 年 → 高確信長期複利，支撐高估值倍數溢價</strong></p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 有機 vs 無機</h4>
+<table>
+<thead><tr><th>類型</th><th>占比估計</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>有機成長</td><td>~100%</td><td>近 10 年無重大併購；100% organic IC design + IP</td></tr>
+<tr><td>無機成長</td><td>~0%</td><td>無 M&A 紀錄</td></tr>
+</tbody>
+</table>
+
+<h4>② 定價驅動 vs 量驅動</h4>
+<table>
+<thead><tr><th>類型</th><th>本標的判斷</th><th>3 年趨勢</th></tr></thead>
+<tbody>
+<tr><td>定價驅動（ASP）</td><td>AI server BMC ASP $20-30 vs server $10-15 +50-100% mix shift；2026 從 4 月起 multi-product 漲價</td><td>大幅擴大</td></tr>
+<tr><td>量驅動（出貨量）</td><td>Goldman BMC units FY26 29.5M (+56%) / FY27 41.6M (+41%) / FY28 52.8M (+27%)</td><td>大幅擴大但 step-down</td></tr>
+</tbody>
+</table>
+<p><strong>結論：定價 + 量雙引擎驅動</strong> — 為 ODM/IC design 業最理想 dual driver 結構。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<thead><tr><th>類型</th><th>判斷</th><th>具體表現</th></tr></thead>
+<tbody>
+<tr><td><strong>強化型</strong> ✓</td><td>當前歸類</td><td>規模擴大 → AST2700 12nm capacity 投入分攤 → R&D 規模優勢進一步擴大 + design-in eco-system 深化</td></tr>
+</tbody>
+</table>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>符合？</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>~ 50%+</td><td>~ 35%</td><td>↑ 大幅</td><td>產業頂尖 + &gt; WACC</td><td>✓✓</td></tr>
+<tr><td>ROIC − WACC</td><td>+42pp</td><td>+27pp</td><td>↑ 擴大</td><td>持續正且擴大</td><td>✓✓</td></tr>
+<tr><td>FCF Margin</td><td>50.8%</td><td>~30%</td><td>↑ 擴大</td><td>&gt; 15%</td><td>✓✓</td></tr>
+<tr><td>FCF / NI</td><td>1.17</td><td>~0.9</td><td>↑</td><td>&gt; 85%</td><td>✓✓</td></tr>
+<tr><td>Reinvestment Rate</td><td>~ 25%</td><td>~ 20%</td><td>↑</td><td>合理</td><td>✓</td></tr>
+</tbody>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<thead><tr><th>情境</th><th>對應特徵</th><th>合理 Fwd P/E 壓縮至</th><th>潛在估值跌幅</th></tr></thead>
+<tbody>
+<tr><td>3 年後成長降至 30%</td><td>AI server cycle 進入消化期，但 monopoly 結構維持</td><td>~50x</td><td>-30%</td></tr>
+<tr><td>3 年後成長降至 15%</td><td>傳統 server BMC 業務為主，AI premium 退潮</td><td>~30x</td><td>-58%</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>競爭擾動 + cycle bottom（FY23 重演）</td><td>~20x</td><td>-72%</td></tr>
+</tbody>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>GM 連 2 季 YoY 下滑</td><td>Q1 26 GM 68% vs Q1 25 ~64%（+4pp）</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減</td><td>BMC 全球 70%+ 維持穩定</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>定價能力測試</td><td>2026/04 起 multi-product 漲價，需求未衰退</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 高於 Rev CAGR 差距 &gt; 5%p</td><td>FY26 EPS +82% vs Rev +60% (+22pp)；來自 margin 擴張而非回購</td><td>⚠️（margin 持續性需觀察）</td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI &lt; 0.75 連 2 年</td><td>FY25 1.17 高轉換</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev &gt; 5%</td><td>~ 0.5%（台股低）</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮</td><td>5Y CAGR ~30% 擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數下移</td><td>同業 PE 升高（cycle bottom 25x → 60-90x）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint. Capex &gt; 60% FCF</td><td>~ 5-10%（極低）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停 capex 3 年內收入下滑？</td><td>會略下，但可控（fab-less IC design）</td><td>⬜</td></tr>
+</tbody>
+</table>
+<p><strong>價值陷阱風險評級：<span class="tag-green">🟢 低風險</span>（0 個亮燈，1 個 ⚠️）</strong></p>
+
+<h3>長期成長性綜合評級</h3>
+<p><strong><span class="tag-green">🟢 高確信長期成長</span></strong>：Runway ≥ 10 年、有機 + 定價/量雙引擎、護城河 widening、ROIC 擴大、衰退信號 0 個。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong><span class="tag-green">🟢 AI 受益（9 分）</span></strong>：BMC 是 AI server unconditional 標配 + AI server BMC content $20-30 vs server $10-15 = ASP +50-100% 結構性 mix shift；ASPEED 自身亦在 AST2700 整合 AI / ML accelerator 應用。AI 受益占整體業務 ≥ 80%。</p>
+
+<h3>H｜客戶結構深度</h3>
+
+<h4>① 客戶集中度</h4>
+<table>
+<thead><tr><th>指標</th><th>數值估計</th></tr></thead>
+<tbody>
+<tr><td>Top 1 客戶占比%</td><td>~15-20%（未明確 disclose，業界 server OEM Quanta 或 Wistron 或 Supermicro 推估）</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>~50-60%</td></tr>
+<tr><td>Top 10 客戶合計%</td><td>~70-80%</td></tr>
+</tbody>
+</table>
+
+<h4>② 主要客戶議價權結構</h4>
+<p>客戶為 server OEM（Dell, HPE, Supermicro, Quanta, Wistron, Inspur 等），不是 hyperscaler 直接客戶。BMC 是 mission-critical component, server OEM dual-source 困難（驗證週期長）→ <strong>結構性 sole/dual-source 主導，pricing power 強</strong>。Hyperscaler 雖然不直接 procure BMC chip，但 AI server demand 結構影響 OEM 訂單 → ASPEED 間接受益。</p>
+
+<h4>③ 客戶生命週期定位</h4>
+<ul>
+<li><strong>Grow with 客戶</strong>：Server OEM 全部受益於 AI server cycle</li>
+<li><strong>客戶可能 in-house</strong>：低 — server OEM 不會自製 BMC（規模不夠 + 跨平台整合 vs ASPEED 的 ecosystem 效應）</li>
+<li><strong>客戶可能 second-source</strong>：中 — Axiado 為 emerging challenger，目前限於 hyperscale 高端</li>
+</ul>
+
+<p><strong>客戶結構風險評估：<span class="tag-green">🟢 分散 + Sole/Grow-with 主導</span></strong> — 客戶分散度高（Top 1 &lt; 20%）+ server OEM 為大量客戶 + AST2700 12nm 領先地位給予 sole-source 議價權；Axiado 中期風險 mitigated by ASPEED 規模 + 認證壁壘。</p>
+</section>
+
+<!-- ============================== §9 ============================== -->
+<section class="card" id="s9">
+<h2>§9 護城河分析</h2>
+
+<h3>評分：二維拆解（default）— IC design + 製造業可拆</h3>
+
+<table>
+<thead><tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td><strong>Execution Moat</strong></td><td><strong>9 / 10</strong></td><td>(1) 12nm 製程世界第一顆 BMC（AST2700），技術領先 1-2 代；(2) 8 代產品演進史 22+ 年，IP 累積與 firmware ecosystem 深度；(3) 70%+ 全球 BMC 市佔；(4) Pilot 4 / Cupola360 軟體 stack 配合 hardware；(5) Linux 6.18 主流 kernel 預設整合 AST2700</td></tr>
+<tr><td><strong>Pricing Power Moat</strong></td><td><strong>9 / 10</strong></td><td>(1) BMC 是 mission-critical socket，客戶切換成本 12-18 個月+；(2) OI margin 52.7% 為 IC design 業 outlier 頂尖；(3) 2026/04 起 multi-product 主動漲價；(4) AI server BMC content +50-100% ASP rise；(5) 競爭對手分散（Axiado, Huawei, ASMedia, others）但無一達成同等規模</td></tr>
+<tr><td><strong>合併分</strong></td><td><strong>9 / 10</strong></td><td>等權平均 9.0；execution + pricing power 雙線同向 widening — 罕見的雙強 monopoly 結構</td></tr>
+<tr><td><strong>等級</strong></td><td>A 級</td><td>9 分對應 A 級</td></tr>
+</tbody>
+</table>
+
+<h3>護城河來源（sourced evidence）</h3>
+<table>
+<thead><tr><th>來源</th><th>真實存在？</th><th>深度論述</th></tr></thead>
+<tbody>
+<tr><td>網路效應</td><td>中（生態系）</td><td>BMC firmware + Linux kernel + open-source ecosystem 形成 community network — vendor 與 ASPEED 共建 firmware 更深度</td></tr>
+<tr><td>無形資產</td><td>強</td><td>IC design IP（BMC + server management + ARM cores integration） + 22 年累積 know-how + 8 代產品專利</td></tr>
+<tr><td>轉換成本</td><td>強</td><td>客戶切換 BMC 需 12-18 個月+ certification + firmware 整合 + system-level validation；BMC 失靈成本極高（whole server 停機）</td></tr>
+<tr><td>規模優勢</td><td>強</td><td>70%+ 市佔 + 12nm 製程 capacity 投入分攤 → 每代 R&D 規模優勢倍數放大</td></tr>
+</tbody>
+</table>
+
+<h3>競爭鴻溝（具體 mechanism）</h3>
+<p>為什麼資本充足的對手仍無法跨越？三大 mechanism：</p>
+<ul>
+<li><strong>時間壁壘（7-10 年）</strong>：BMC design 不只是 SoC design，還需要 22+ 年累積 server vendor firmware 整合 know-how + 各品牌 OS 兼容測試。新進者需 7-10 年才能達 ASPEED 水準</li>
+<li><strong>資本壁壘（$300-500M）</strong>：BMC R&D + 12nm 製程設計 + 多代產品迭代維護需要 $300-500M 投入，新進者風險極高</li>
+<li><strong>認證壁壘（系統級）</strong>：每個 server OEM（Dell/HPE/Supermicro/Quanta/Wistron 等）都有 unique 認證要求；單一 OEM 認證已是 6-12 個月，全球 ~50 個 server OEM × 全部認證 = 整個生態壁壘</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th></tr></thead>
+<tbody>
+<tr><td><strong>ASPEED（自身）</strong></td><td>70%+</td><td>持平 / 微增</td><td>—</td></tr>
+<tr><td>Axiado</td><td>~3-5%（hyperscale 高端 emerging）</td><td>上升</td><td>NVIDIA MGX with Gigabyte 已 design wins；對 hyperscale 高端有滲透壓力</td></tr>
+<tr><td>Huawei iBMC</td><td>~5%（限 China）</td><td>持平</td><td>限制於 China 市場，全球 mindshare 0.9%</td></tr>
+<tr><td>ASMedia / 其他 emerging</td><td>~10-15%</td><td>持平</td><td>commodity 段，無威脅 ASPEED 高端</td></tr>
+<tr><td>Intel/AMD（potential integrated BMC）</td><td>0%（at present）</td><td>—</td><td>中長期 R3 風險（CPU 整合 BMC）</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<thead><tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr></thead>
+<tbody>
+<tr><td>Execution Moat 趨勢</td><td><strong>加深</strong></td><td>AST2700 12nm 量產 + AST2800 設計啟動 + Pilot 4 + Cupola360 整合</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td><strong>加深</strong></td><td>2026/04 multi-product 漲價 + AI server BMC content $20-30 結構性 ASP rise + Axiado 限於 niche 不威脅 mass market</td></tr>
+</tbody>
+</table>
+
+<h3>24 個月內可能瓦解護城河的變化（QC-23 三級分類）</h3>
+<table>
+<thead><tr><th>事件</th><th>等級</th><th>機率</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>Axiado 在 hyperscale 高端持續擴大 design wins（從 NVIDIA MGX 擴大至 AWS/Meta）</td><td><span class="badge-orange">🟡 點對點</span></td><td>中（30%）</td><td>Accton 失去 hyperscale 高端 ~5-10% wallet share，護城河不扣分</td></tr>
+<tr><td>NVIDIA Grace+ DGX 全自製管理 controller + GPU server bypass discrete BMC</td><td><span class="badge-red">🔴 生態攻擊</span></td><td>低（15%）</td><td>NVIDIA 自製 management chip → GPU server BMC 訂單下降 20-30%；護城河 -1 分</td></tr>
+<tr><td>Intel/AMD 在 Granite Rapids+/Genoa+ 整合 BMC 進 CPU SoC</td><td><span class="badge-red">⛔ 架構替代</span></td><td>低（10%）</td><td>BMC 從 discrete chip 變成 silicon IP 嵌入 CPU；ASPEED 商業模式重構；護城河 -2 分</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================== §10 ============================== -->
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表（含同業對比）</h3>
+<table>
+<thead><tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>同業中位數（IC design fab-less peers）</th><th>相對評估</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>~30%</td><td>~40%</td><td>50.8%</td><td>~25% (TW IC design)</td><td>明顯優</td></tr>
+<tr><td>EBITDA Margin</td><td>~38%</td><td>~50%</td><td>~55%</td><td>~25%</td><td>明顯優</td></tr>
+<tr><td>OI Margin</td><td>~34%</td><td>~45%</td><td>52.7%</td><td>~20%</td><td>明顯優</td></tr>
+<tr><td>ROIC − WACC</td><td>+27pp</td><td>+35pp</td><td>+42pp</td><td>+10-15pp</td><td>明顯優</td></tr>
+<tr><td>SBC / Rev</td><td>~0.5%</td><td>~0.5%</td><td>~0.5%</td><td>~0.5%</td><td>持平</td></tr>
+<tr><td>ROE</td><td>~32%</td><td>~62%</td><td>~84.7%</td><td>~25%</td><td>明顯優</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>淨利 vs OCF 連動性</td><td>FY25 NI 3.93B / OCF 4.79B (1.22x)</td><td>OCF 略高於 NI，健康</td></tr>
+<tr><td>AR 成長 vs Rev 成長</td><td>需查最新 BS confirm</td><td>未顯示異常</td></tr>
+<tr><td>存貨成長 vs Rev 成長</td><td>fab-less 業 inventory 受 wafer foundry 影響</td><td>未顯示異常</td></tr>
+<tr><td>FCF 轉換率</td><td>FCF/NI: 0.9 → 1.17</td><td>持續改善</td></tr>
+</tbody>
+</table>
+
+<h3>回購品質評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年回購總金額 vs FCF 總額</td><td>幾乎無回購（台股慣例現金股利為主）</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>無差距 — 100% 獲利成長</td></tr>
+<tr><td>Rev CAGR 同期</td><td>FY23 → FY25 Rev CAGR +70% vs EPS CAGR +98% — margin expansion 主導</td></tr>
+</tbody>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>過去 5 年 FCF 各年值（TWD bn）</td><td>FY21 ~1.5 / FY22 ~1.7 / FY23 ~1.0 / FY24 ~2.5 / FY25 ~4.6</td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>~2.3B</td></tr>
+<tr><td>最低谷年份 + FCF</td><td>FY23 1.0B（cycle bottom）</td></tr>
+<tr><td>Lumpiness 性質判斷</td><td>BMC server cycle 影響 — 業務有 cyclicality 但結構性向上</td></tr>
+<tr><td>結論</td><td>🟡 cycle 波動但結構性擴張，FY25 FCF jump 為結構性 AI ramp 而非 spike</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================== §11 ============================== -->
+<section class="card" id="s11">
+<h2>§11 產業格局</h2>
+
+<h3>市場量化</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>BMC TAM（2024）</td><td>~$0.5B</td></tr>
+<tr><td>2028E TAM</td><td>~$1.5B（5Y CAGR ~30%）</td></tr>
+<tr><td>2030E TAM</td><td>~$2.0-2.5B</td></tr>
+<tr><td>當前滲透率</td><td>hyperscaler ~95% / enterprise ~80%（已成熟）</td></tr>
+<tr><td>供需狀態</td><td>緊缺（substrate supply 改善但 BMC capacity 仍受 wafer foundry 影響）</td></tr>
+</tbody>
+</table>
+
+<h3>議價權</h3>
+
+<h4>① 對上游供應商</h4>
+<p>主要 wafer foundry 為 TSMC (12nm AST2700) + 各代 UMC。supplier 集中度高 — TSMC 對 ASPEED 屬於 priority allocation（基於 ASPEED 規模 + design importance）。近 3 年無公開議價問題；substrate (ABF / BT) 來自 Unimicron / Nan Ya / Kinsus，分散度尚可。</p>
+
+<h4>② 對下游客戶</h4>
+<p>客戶為 server OEM (Dell/HPE/Supermicro/Quanta/Wistron/Inspur 等)，分散度高（Top 1 ~15-20%）。合約結構多為 6-12 個月 rolling forecast + spot order；BMC 是 mission-critical socket 客戶切換成本極高。2026/04 主動漲價，定價權直接證據；OI margin 52.7% 證明議價權強。Hyperscaler 雖不直接 procure BMC 但 AI server demand 結構影響 OEM 訂單。</p>
+
+<h4>③ 地緣曝險</h4>
+<p>核心生產地：Taiwan 100%（wafer foundry TSMC/UMC + 後段封測），但 ABF 載板部分來自 TW + 部分 Japan。地緣風險為 R3 級長期變數；台海升級會造成全 supply chain 嚴重中斷。China market ~10-15% Rev，受美中分離影響可能 cut。</p>
+
+<h3>營收組成（三維展開）</h3>
+
+<h4>① 按業務段</h4>
+<table>
+<thead><tr><th>業務段</th><th>占比%</th><th>YoY%</th><th>OI Margin</th></tr></thead>
+<tbody>
+<tr><td>BMC (Server Management Chip)</td><td>~85%</td><td>+90%</td><td>~55%</td></tr>
+<tr><td>SoC for Server Bridge / Video</td><td>~10%</td><td>+30%</td><td>~45%</td></tr>
+<tr><td>Cupola360 + Edge / 其他</td><td>~5%</td><td>+15%</td><td>~30%</td></tr>
+</tbody>
+</table>
+
+<h4>② 按地區</h4>
+<table>
+<thead><tr><th>地區</th><th>占比%</th><th>YoY%</th></tr></thead>
+<tbody>
+<tr><td>北美（hyperscaler driven server OEM）</td><td>~50-60%</td><td>+100%</td></tr>
+<tr><td>亞太（含 China / 台日韓）</td><td>~25-30%</td><td>+50%</td></tr>
+<tr><td>歐洲</td><td>~10-15%</td><td>+40%</td></tr>
+<tr><td>其他</td><td>~5%</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>③ 按客戶集中度</h4>
+<table>
+<thead><tr><th>指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Top 1 客戶占比%</td><td>~15-20%</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>~50-60%</td></tr>
+<tr><td>失去最大客戶影響</td><td>-15-20% Rev 直接損失，但易於被其他 server OEM 接手 90%+ 訂單；股價估計 -10-20% 立即反應</td></tr>
+</tbody>
+</table>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<thead><tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>BMC (Traditional Server)</td><td>ASP per chip</td><td>$10-15</td></tr>
+<tr><td>BMC (AI Server, AST2700 配置)</td><td>ASP per chip</td><td>$20-30</td></tr>
+<tr><td>BMC (AST2750 multi-node)</td><td>ASP per chip</td><td>$30-40</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================== §12 ============================== -->
+<section class="card" id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>股東結構</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>創辦人 / 內部人持股</td><td>~19.1%（yfinance heldPercentInsiders）</td></tr>
+<tr><td>機構投資人持股</td><td>~52.6%（外資 + 投信為主）</td></tr>
+<tr><td>創辦人陳東玲（Chris Lin）</td><td>仍是核心，董事長 + CEO 兼任</td></tr>
+<tr><td>近期內部人大額交易</td><td>無重大公告</td></tr>
+</tbody>
+</table>
+
+<h3>資本配置軌跡</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>過去 5 年 M&A track record</td><td>無重大 M&A — 100% organic R&D + capex；conservative 治理</td></tr>
+<tr><td>Capex / Rev（近 3 年）</td><td>~3-4%（極低，fab-less IC design 業特性）</td></tr>
+<tr><td>Dividend payout ratio</td><td>FY25 ~11% 但連年配發；2026 高 EPS 預計 dividend 大幅 raise</td></tr>
+<tr><td>Buyback</td><td>幾乎無回購</td></tr>
+</tbody>
+</table>
+
+<h3>管理層薪酬結構</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>固定薪 / 績效獎金 / 股權激勵比例</td><td>台股慣例：董監事酬勞約稅前淨利 1-2%；員工分紅約稅前淨利 5-10%</td></tr>
+<tr><td>績效掛鉤</td><td>主要與淨利 + EPS 績效掛鉤</td></tr>
+<tr><td>股權激勵稀釋</td><td>近 3 年稀釋約 0.3%/年</td></tr>
+</tbody>
+</table>
+
+<h3>SBC 真實稀釋</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>SBC / Rev（近 3 年）</td><td>~0.5% / 0.5% / 0.5%（台股慣例低）</td></tr>
+<tr><td>GAAP EPS</td><td>FY25 103.73</td></tr>
+<tr><td>Non-GAAP EPS</td><td>不適用（台股單一口徑）</td></tr>
+<tr><td>剔除 SBC 後 EPS CAGR</td><td>差距 minimal</td></tr>
+</tbody>
+</table>
+
+<p><strong>過去 12 個月治理 status：<span class="tag-green">🟢</span></strong> 無併購 > 市值 5%、無集體訴訟、無管理層異動或重大監管事件。</p>
+</section>
+
+<!-- ============================== §13 ============================== -->
+<section class="card" id="s13">
+<h2>§13 估值診斷</h2>
+
+<p class="note">EPS 來源：<strong>yfinance snapshot 2026-05-26（5274.TWO TPEx）</strong>（Excel 未覆蓋 OTC ticker）；FY+1 188.82 n=2、FY+2 288.10 n=15、FY+3 384 §8 邏輯推導（Goldman BMC units 預估 + ASP mix）。</p>
+
+<h3>13.1｜歷史估值分位</h3>
+<table>
+<thead><tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>167x</td><td>20x</td><td>~55x</td><td>~170x</td><td>~99%（極端）</td></tr>
+<tr><td>Forward P/E（FY+1）</td><td>92.6x</td><td>~25x</td><td>~50x</td><td>~95x</td><td>~95%</td></tr>
+<tr><td>Forward P/E（FY+2）</td><td>60.7x</td><td>~22x</td><td>~38x</td><td>~65x</td><td>~92%</td></tr>
+<tr><td>EV/EBITDA</td><td>118x</td><td>~18x</td><td>~35x</td><td>~120x</td><td>~98%</td></tr>
+<tr><td>P/FCF</td><td>~143x</td><td>~30x</td><td>~70x</td><td>~150x</td><td>~95%</td></tr>
+<tr><td>P/S</td><td>~65x</td><td>~5x</td><td>~25x</td><td>~67x</td><td>~99%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">Forward PE FY+1 分位 = (92.6 - 25) / (95 - 25) × 100% = 97%（落 🔴 極端區間）；implication：對 §2 D 估值燈確認為 🔴 過熱，盲點 1 不可救。</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>Forward P/E（FY+1）</td><td>92.6x</td><td>—</td></tr>
+<tr><td>EPS CAGR（3 年）</td><td>54.7%</td><td>—</td></tr>
+<tr><td><strong>PEG（FY+1, 3 年）</strong></td><td><strong>1.69</strong></td><td>1-2 合理區間（high end）</td></tr>
+<tr><td><strong>PEG（FY+2, 3 年）</strong></td><td><strong>1.11</strong></td><td>接近便宜（FY+2 視角看 monopoly + AI 受益 合理 1-1.5）</td></tr>
+<tr><td>5 年 EPS CAGR（§8 推導）</td><td>~30%</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>~3.1（FY+1 PE / 5Y CAGR）</td><td>偏高</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>1.69 → 3.1（差 1.4）</td><td>差異 &gt; 0.5 警示：近期成長不可持續</td></tr>
+</tbody>
+</table>
+<div class="reasoning">PEG FY+1 1.69 + PEG FY+2 1.11 + PEG 5Y 3.1 — 短期合理但長期警示，因 BMC growth 必然 step-down；implication：5Y 持有需要相信 Runway 持續至 +30% CAGR 5 年才合理。</div>
+
+<h3>13.4｜同業估值比較</h3>
+
+<h4>業務模式 tier 判斷</h4>
+<p>本標的業務模式 tier：<strong>fab-less IC design + monopoly niche</strong>。同 tier 同業稀少：</p>
+<ul>
+<li>✅ <strong>直接同 tier</strong>：無真正的 BMC monopoly peer（Axiado 仍非上市公司）</li>
+<li>⚠️ <strong>同 IC design 業 / fab-less monopoly</strong>：聯發科（MediaTek 2454.TW）、NVIDIA、AMD、Marvell — 不同產品線但可借鏡 fab-less monopoly 估值結構</li>
+<li>⚠️ <strong>同 server-related 業</strong>：BCM (Broadcom)、AVGO、Marvell — 但業務多元化 vs ASPEED 單一</li>
+</ul>
+
+<h4>同業估值比較表</h4>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3 年）</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>ASPEED（5274.TW）</strong></td><td>~$21B USD</td><td><strong>60.7x（FY+2）/ 92.6x（FY+1）</strong></td><td>118x</td><td><strong>1.11 / 1.69</strong></td><td>50.8%</td><td>54.7%</td><td>~50%+</td></tr>
+<tr><td>聯發科（2454.TW）</td><td>~$120B USD</td><td>~22x</td><td>~16x</td><td>~1.5</td><td>~20%</td><td>~15%</td><td>~25%</td></tr>
+<tr><td>Marvell (MRVL)</td><td>~$80B USD</td><td>~30x</td><td>~22x</td><td>~1.7</td><td>~25%</td><td>~18%</td><td>~20%</td></tr>
+<tr><td>Broadcom (AVGO)</td><td>~$1.4T USD</td><td>~38x</td><td>~25x</td><td>~2.2</td><td>~50%</td><td>~17%</td><td>~25%</td></tr>
+<tr><td>NVIDIA (NVDA)</td><td>~$3.5T USD</td><td>~32x</td><td>~28x</td><td>~1.0</td><td>~50%</td><td>~32%</td><td>~75%</td></tr>
+<tr><td><strong>中位數</strong></td><td>—</td><td>~30x</td><td>~22x</td><td>~1.7</td><td>~25%</td><td>~17%</td><td>~25%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">ASPEED Fwd PE 60.7x（FY+2）vs IC design fab-less 中位 30x = +100% 溢價；但 EPS CAGR 54.7% vs 中位 17% = +220% 領先；OI margin 52.7% vs 中位 25% = +110% 領先；PEG 1.11 vs 中位 1.7 = 比同業便宜；implication：估值溢價有基本面支撐，但 +100% PE 溢價需相信 monopoly + AI 雙引擎結構性持久。若 5Y 衰退至 fab-less 中位 30x，股價需從 17,480 至 ~9,500 (-46%)。</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 歷史分位 95-99%（極端高位）+ 13.2 PEG FY+1 1.69 / FY+2 1.11（合理但需相信 high growth 持續）+ 13.4 同業相對溢價 +100% PE 但 EPS CAGR +220% 領先 → 綜合估值訊號：<strong><span class="tag-red">🔴 過熱（不可救）</span></strong>。盲點 1 因分位 95% 不適用。完整裁決見 §1 dashboard。</p>
+
+<h3>分析師目標價參考</h3>
+<table>
+<tbody>
+<tr><th>來源</th><td>Goldman Sachs（連 4 次提目標）</td></tr>
+<tr><th>最新目標</th><td>NT$22,000（從 NT$20,000 上修 +10%）</td></tr>
+<tr><th>當前股價</th><td>17,480</td></tr>
+<tr><th>Goldman 隱含上行</th><td>+26%</td></tr>
+</tbody>
+</table>
+<p><strong>本 DD 與共識一致性</strong>：Goldman NT$22,000 隱含 FY+1 PE 117x（22,000 / 188.82），這需要 FY27 EPS 上修至 320+ 才能驗證 PE 維持；目前共識方向正確（90 天 +24-34% 上修）。</p>
+
+<h3>財報信號與假設校準</h3>
+<ul>
+<li><strong>H1 當前狀態</strong>：強化（Q1 26 Rev +90% YoY；Goldman BMC units 預估持續上修）</li>
+<li><strong>H2 當前狀態</strong>：方向積極（AST2700 MP 已啟動，需 Q2 法說 confirm 出貨占比）</li>
+<li><strong>H3 當前狀態</strong>：強化（Q1 OI margin ~52% 維持頂尖；2026/04 漲價）</li>
+<li><strong>這份財報讓隱含預期變得</strong>更容易兌現 — 雙位數加速 + margin 高位維持 + 共識持續上修，all positive 但估值已將大部分 priced in</li>
+</ul>
+
+<h3>綜合訊號輸出</h3>
+<table>
+<tbody>
+<tr><th>護城河等級</th><td>A → 調整後 A</td></tr>
+<tr><th>估值燈</th><td>🔴（不可救）</td></tr>
+<tr><th>Pure MA 狀態</th><td>✅ 強勢進場（但 ATH stretched）</td></tr>
+<tr><th>大盤豁免</th><td>正常</td></tr>
+<tr><th>陷阱定性</th><td>🟢 非陷阱</td></tr>
+<tr><th><strong>綜合訊號</strong></th><td><strong><span class="signal-grade grade-B">B</span></strong>（QC-31 cross-check 後，原機械 X → B）</td></tr>
+<tr><th>中期參考 R:R</th><td>0.43x（資訊性，不主導裁決）</td></tr>
+</tbody>
+</table>
+
+<p><strong>① 短期信號（0-12 個月）</strong>：Q1 26 +90% YoY + Goldman 連 4 次提目標，短期 newsflow 極 positive；但 ATH stretched + Fwd PE FY+1 92.6x → 不適合追高新進。</p>
+<p><strong>② 中期成長確信度（1-2 年）</strong>：FY+1 EPS 188.82 共識 n=2 偏小（覆蓋稀疏），FY+2 EPS 288.10 n=15 較完整；90 天上修軌跡強。可見度：中-高。</p>
+<p><strong>③ 長期持有信心（3-5 年）</strong>：成長跑道 ≥ 10 年（§8.A）／護城河 widening 雙線（§9）／長期持有信心：<strong>高</strong>。</p>
+
+<h3>下行風險量化</h3>
+<ul>
+<li>短期下檔（Bear Case）：現價至 5,098 距離 -70.8%</li>
+<li>中期下檔（Bear Case）：現價至 5,098 距離 -70.8%</li>
+<li>W52 Low 3,680（參考）/ W104 Low ~ 3,200（參考）</li>
+<li>若 FY+1 EPS 下修 10%（從 188.82 → 169.94），短期 R:R 將進一步降至 -0.13x</li>
+<li>若同業溢價收斂 50%（PE 從 92x 至 60x），股價將至 11,330 (-35%) — R4 同業溢價收斂壓測（QC-30）</li>
+</ul>
+</section>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印 / 存 PDF</button>
+
+</body>
+</html>

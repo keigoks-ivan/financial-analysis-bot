@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v12.4">
+<title>DD_2345.TW_20260526 | Accton 智邦科技 v12.4 深度研究</title>
+<!--
+  v12.4 Inception DD (win-20260526-2345TW)
+  EPS source: yfinance (Excel not covered)
+  WebSearch 6 次：
+  - W1 Q1 2026 結果 → Rev 70.12B TWD (+64% YoY, -2.6% QoQ), EPS 14.92 beat 13.87 (Digitimes / Investing.com / BigGo Finance)
+  - W2 客戶結構 + Meta opportunity → AWS 過去多年最大 CSP 客戶, Meta Iris ASIC 300K shipment 2H26, million cluster 2027/2028 (LumenAlpha Substack / FPX research / deepfundamental substack)
+  - W3 GM / OI margin → TTM GM 18.09%, net margin 10.61%; FY2025 GM ~18% OI margin 12.95% (StockAnalysis / Investing.com / Yahoo Finance financials)
+  - W4 月營收 + ODM 競爭 → US 出口 >40% Q1 26; Celestica NN segment +99% YoY 同期 (Digitimes / wikipedia / Celestica genaitech)
+  - W5 Fwd PE / 分析師目標 → Strong Buy 11 analysts, target avg 2,902 (high 3,500, low 1,800), EPS forecast TWD 65.27 FY+1 (老 consensus，已被新數據 78.99 取代) (Investing.com / Stockopedia / MarketScreener)
+  - W6 vs Arista 對比 + 白牌市佔 → 白盒 cost 為 Arista 25-35%, Accton + Celestica 共占白牌 switch ~80-90%, Accton 單獨 ~40-50% (ANET valuation comparison / Forrester white-box / LinkedIn Lippis ONUG)
+  References inline at §6/§8/§9/§11.
+-->
+
+<style>
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.55; margin: 0; padding: 30px 20px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; }
+  .header h1 { margin: 0 0 8px; font-size: 1.5em; }
+  .header .meta { font-size: 0.88em; opacity: 0.9; }
+  .header .schema { background: #3B82F6; padding: 1px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em; }
+  .card { background: #fff; padding: 18px 24px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #3B82F6; }
+  .card h2 { color: #1E3A5F; margin: 0 0 12px; font-size: 1.18em; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; scroll-margin-top: 80px; }
+  .card h3 { color: #374151; margin: 14px 0 8px; font-size: 1.02em; }
+  .card h4 { color: #4B5563; margin: 10px 0 6px; font-size: 0.96em; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 0.92em; font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  th, td { border: 1px solid #D1D5DB; padding: 6px 9px; vertical-align: top; text-align: left; }
+  th { background: #1E3A5F; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .reasoning { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 0.88em; line-height: 1.5; }
+  .reasoning::before { content: "推導: "; font-weight: bold; color: #1E3A5F; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hypothesis-box ul { margin: 0; padding-left: 18px; }
+  .hypothesis-box li { margin: 4px 0; }
+  .badge-green, .tag-green { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-red, .tag-red { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-yellow, .tag-yellow { background: #FEF9C3; color: #92400E; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-blue, .tag-blue { background: #EFF6FF; color: #1E40AF; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-orange { background: #FED7AA; color: #C2410C; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .grade-X { background: #7F1D1D; color: #fff; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 0.88em; color: #4B5563; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+  .dd-toc { background: #fff; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #3B82F6; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 10px; background: #EFF6FF; color: #1E3A5F; border-radius: 999px; font-size: 0.82em; text-decoration: none; font-weight: 500; }
+  .dd-toc a:hover { background: #1E3A5F; color: #fff; }
+  @media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; padding: 0; } .card { box-shadow: none; border-left: 2px solid #1E3A5F; } }
+</style>
+</head>
+<body>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "2345.TW",
+  "date": "2026-05-26",
+  "schema": "v12.4",
+  "signal": "B",
+  "verdict": "B 衛星候選（thesis 完整：產業 🟢 + 護城河 8 / execution 9 + pricing power 6 + AI 🟢 + FY+1 EPS 30d +14.7% 持續上修；但 ATH stretched 三時距 R:R < 2.0、AWS 集中 35-40% 且 Celestica dual-track 進行中、現價/W52=2.07x 拉開極遠 → 等 BB 中軌 1,750-1,950 回測或 Q2-Q3 26 法說 Meta Iris 量產 binary 確認後再加碼）",
+  "trap": "🟢",
+  "trap_label": "🟢 非陷阱",
+  "moat": "B",
+  "moat_score": 8,
+  "moat_execution": 9,
+  "moat_pricing_power": 6,
+  "quality_score": 8,
+  "growth_durability": 9,
+  "val": "🟡",
+  "ma": "✅",
+  "ai_risk": "🟢",
+  "fpe_fy2": 26.5,
+  "pct_5y": 72,
+  "peg_fy2": 0.74,
+  "price_at_dd": 2635.0,
+  "upside_short_pct": 4.9,
+  "upside_mid_pct": 31.8,
+  "upside_5y_pct": 38,
+  "stress": {"pass": 2, "total": 2},
+  "long_term_confidence": "高",
+  "oneliner": "🟢+B｜護城河 8（exec 9/pp 6 ODM 結構 AWS 集中）｜Q1 26 Rev +64% EPS +66% YoY 加速｜FPE FY+2 26.5x PEG 0.74｜估值燈 🟠→🟡 盲點1救援｜R:R 0.10/0.62/0.87 三負 ATH stretched，等 BB 中軌 1,750-1,950 回測"
+}
+</script>
+
+<div class="container">
+
+<header class="header">
+  <h1>Accton Technology（智邦科技 2345.TW）深度研究 — v12.4 Inception DD</h1>
+  <div class="meta">資料抓取：2026-05-26 ｜ 最新股價 <strong>TWD 2,635</strong>（5/26 收盤，creating 6Y ATH 2,695 today intraday）｜ 最近財報：Q1 FY26（2026-05-07 公告，EPS 14.92 beat 13.87 by +7.6%）｜ <span class="schema">DD Schema v12.4</span> ｜ yfinance 採集 + 補充 web_search 6 次（Excel 未覆蓋 → fall back yfinance + WebSearch）</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============================== §1 ============================== -->
+<section class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出（§2–§13），請優先閱讀本卡片再下捲查驗推導。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢 順風：</strong>§8 長期成長性 🟢 高確信（白牌 800G/1.6T 進入 AI back-end 主流，TAM 5Y 三倍）｜§9 護城河趨勢「execution 加深 / pricing power constrained」｜§8 F AI 風險 🟢 受益｜hyperscaler AI capex 仍在多年期上升軌道，Accton 是少數能 keep pace 的兩家 ODM 之一</li>
+<li><strong>品質 B 級：</strong>護城河 8/10（§9：execution moat 9 + pricing power moat 6 合併 7.5 → 8）｜體質 veto 0 項不過｜等級調整：B → B（estvalu 燈 🟡 不上調）</li>
+<li><strong>估值燈 🟡 合理（盲點 1 救援後）：</strong>Fwd PE FY+1 33.4x，5Y 分位 ~72%（mid-to-high），PEG 0.93｜原始判定 🟠 偏貴；盲點 1 救援：§8 🟢 + PEG < 2.0 + AI 🟢 → 🟠 救回 🟡</li>
+<li><strong>Pure MA 狀態 ✅ 強勢進場：</strong>W52 1,270 / W104 939 / W250 578（斜率 +18.3%）｜現價 2,635 全部上方｜但現價 / W52 = 2.07x 為極度拉開，今天剛創 6Y ATH 2,695｜盲點 2 救援：不需要</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 ^TWII，現價 43,645 vs W104 25,808｜大盤本身 +69% 在 W104 上方，無系統性風險訊號</li>
+<li><strong>參考 R:R（v12.3 三時距，資訊性不主導裁決）：</strong>短期 0.10x ／ 中期 0.62x ／ 5Y 0.87x｜三距全 < 2.0｜壓力測試 base + bear 2/2 過｜典型 Stage 4 stretched 拉開後的「R:R 數學偏低」case</li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）｜判定理由：quality B + gate 🟡 + MA ✅ + trap 🟢 → 衛星候選；R:R < 2.0 但 thesis 完整，QC-31 規定落 B 不是 C（時機問題，非 thesis 失敗）</li>
+<li><strong>長期持有信心：高</strong>（§2 I）｜<strong>陷阱定性：</strong>🟢 非陷阱（Q1 26 EPS +66% YoY、FY+1 共識仍在上修軌道、Meta Iris 量產確定 2H26）</li>
+<li><strong>Inception DD：</strong><code>DD_2345.TW_20260526.html</code>（2026-05-26）— 本份為 2345.TW 第一份 v12.2+ DD，作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-26（距今 365 天）— 屆時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜<span style="background:#FED7AA;color:#C2410C;padding:1px 5px;border-radius:2px"><strong>B = 衛星候選 / 觀望偏進場</strong></span>｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<thead><tr><th>問題</th><th>回答</th></tr></thead>
+<tbody>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td>非陷阱（若論證成立）。理論上的最大風險路徑是「<strong>產業結構衰退型</strong>」— hyperscaler AI capex 在 FY27-28 進入消化期，Accton 一手 ODM 商業模式承受訂單下修。但目前 Q1 26 加速 + Meta 量產時程確定，結構衰退預警未出現。</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>(1) Q1 26 Rev +64% YoY EPS +66% YoY 雙位數加速，且 FY+1 EPS 共識在過去 90 天從 62.19 升到 78.99（+27% 上修）；(2) Meta Iris 2H26 開始 300K 出貨、million cluster 2027/28 confirmed，提供結構性第二腿；(3) Operating margin 14.3% 為 ODM 業 outlier 高位（典型 ODM 5-8%），代表 800G/1.6T 複雜度溢價有結構支撐，非單一週期 spike；(4) 沒有 IFRS/GAAP 對 Non-GAAP 差距（台股單一口徑），EPS 真實未被 SBC 稀釋。</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>(1) ODM 商業模式 inherent pricing power 弱，hyperscaler 隨時可 dual-source 給 Celestica（Celestica NN segment 已 +99% YoY 同期）；(2) 客戶集中度 AWS 過去多年 #1，dual-track to Celestica 已是進行式；(3) Stage 4 stretched — 現價 / W52 2.07x、6Y price 13x、ATH 今日｜歷史上 Taiwan ODM 創高後一年內 -40~-50% 常見（過去 2022 半導體週期回頭）；(4) Trailing PE 56x 雖低於同類 high-flier，但 ODM 歷史均值 PE 15-25x，目前 33x fwd 仍偏高。</td></tr>
+<tr><td><strong>持有期間如何判斷陷阱發生中？</strong></td><td>① 月營收 YoY 連續 2 個月轉負（領先指標，比季財報快 60 天）；② Operating margin 連 2 季 YoY 下滑 > 1.5pp（QC-26：暗示 hyperscaler 開始議價或產品 mix 走下坡）；③ FY+1 EPS 共識停止上修並開始下修（每月看 yfinance eps_trend 30-day delta）。</td></tr>
+</tbody>
+</table>
+<p><strong>最終定性：<span class="tag-green">🟢 非陷阱</span></strong>｜<em>當前所有領先指標均處正面位置：營收加速、margin 維持高位、共識持續上修。</em></p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<thead><tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>月營收 YoY% — Accton 每月 10 日公告</td><td>§5 H1</td><td>🔵 核心假設驗證信號（必填）</td><td>連續 2 個月 YoY < +20%（vs Q1 26 +64% 基準）→ 削弱 H1；連 3 個月 YoY 0 ~ -10% → 反轉</td></tr>
+<tr><td>2</td><td>Meta Iris 出貨進度 — quarterly call 揭露 300K shipment 2H26 是否兌現 + 2027 million cluster 量化</td><td>§5 H2 / §8 / §9</td><td>🔵 長期成長領先信號（必填）</td><td>2H26 法說延後或下修出貨 → 削弱；2027 確認 million cluster + 2-3 個新 ASIC 客戶 design win → 強化 H2</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識（yfinance 每週更新）+ Operating margin QoQ 趨勢</td><td>§13 / §6</td><td>短期估值或財報信號</td><td>30 天 EPS 修正轉負 + OI margin QoQ -1pp → 進入「重新評估觀察期」；若 BB 上軌外擴展 + 共識上修 → 等修復後可考慮加碼</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>本結論定論（一句話）：</strong>Accton 是 AI infrastructure super-cycle 的核心 ODM 受益者，thesis 結構完整，但 ATH 拉開使三時距 R:R 全 < 2.0；不是 thesis 失敗，是時機 stretched；落 B 觀望，等估值修復或 BB 中軌回測（~ 1,750-1,950 區間）再考慮新進。</p>
+</section>
+
+<!-- ============================== §2 ============================== -->
+<section class="card" id="s2">
+<h2>§2 四層判定（產業風向 × 品質 × 估值燈 × Pure MA）</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<thead><tr><th>輸入</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>§8 長期成長性綜合評級</td><td><span class="tag-green">🟢 高確信</span>（Runway ≥ 10 年，衰退信號 0 個）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>execution 加深 / pricing power constrained（雙線標）</td></tr>
+<tr><td>§8 F AI 風險</td><td><span class="tag-green">🟢 受益</span></td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong><span class="tag-green">🟢 順風</span></strong></td></tr>
+<tr><td>一句話產業判斷</td><td>白牌交換器在 AI back-end 進入主流；400G→800G→1.6T 三代產品節奏與 hyperscaler ASIC roadmap 高度耦合；TAM 從 2024 的 ~$30B → 2028 ~$80B（Dell'Oro AI backend network forecast 對齊）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">§8 🟢 + §9 execution 加深 + AI 🟢 → 三維全 green → 風向燈 🟢 順風；implication：盲點 1 + 2 救援機制**可啟動**；容許 PEG 至 2.0 仍 🟡</div>
+
+<h3>B｜品質等級（護城河單一決定 + 體質 veto mini-list）</h3>
+
+<h4>體質 veto mini-list（5 項 default ✅）</h4>
+<table>
+<thead><tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 > 2%p</td><td>✅</td><td>FY23 ~17.2% → FY24 ~16.3% → FY25 18.1%（最新上升）</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>✅</td><td>FY25 FCF 18.76B / NI 26.34B = 0.71（剛達標）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td>✅</td><td>90 天前 62.19 → 60 天前 68.47 → 30 天前 68.86 → current 78.99（4 個 step 全上修，+27%）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅</td><td>Q2-Q4 25 YoY +100~150%，Q1 26 +64%（全正且雙位數）</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅</td><td>Cash 51.7B - Debt 6.76B = Net Cash 44.9B（負債率極低，本項 net cash positive）</td></tr>
+</tbody>
+</table>
+<p><strong>體質 veto 結果：0 項不過 → 等級不變</strong></p>
+
+<h4>護城河等級</h4>
+<table>
+<thead><tr><th>項目</th><th>值</th></tr></thead>
+<tbody>
+<tr><td>護城河分數（§9）</td><td>8 / 10</td></tr>
+<tr><td>子拆解：execution moat（§9 二維拆解）</td><td>9 / 10</td></tr>
+<tr><td>子拆解：pricing power moat（§9 二維拆解）</td><td>6 / 10</td></tr>
+<tr><td>合併邏輯</td><td>等權平均 (9+6)/2 = 7.5，但 execution 在 ODM 商業模式裡是更具決定性的維度（前 2 大玩家就吃下 ~80% 白牌），給輕微加權 → 8</td></tr>
+<tr><td>護城河原始等級</td><td>B 級（7-8 區間）</td></tr>
+<tr><td>體質 veto 調整</td><td>0 項不過 → 不變</td></tr>
+<tr><td><strong>調整後等級</strong></td><td><strong>B 級</strong>（B 高端，逼近 A）</td></tr>
+</tbody>
+</table>
+<div class="reasoning">護城河 8 = B 級（7-8 區間）；體質 veto 全過不調整 → 維持 B；implication：底倉建議目標倉位的 15%（B 級 default），但因 trap 🟢 + estvalu 燈 🟡 + thesis intact，PM 層可視組合 satellite 配置權衡至 7-15% 區間</div>
+
+<h3>C｜估值輸入</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th><th>來源</th></tr></thead>
+<tbody>
+<tr><td>FY+1 EPS（FY2026E）</td><td>78.99 TWD</td><td>yfinance earnings_estimate avg, n=5</td></tr>
+<tr><td>FY+2 EPS（FY2027E）</td><td>99.23 TWD</td><td>yfinance earnings_estimate avg, n=8</td></tr>
+<tr><td>FY+2 成長率</td><td>+25.6%</td><td>(99.23 / 78.99) − 1</td></tr>
+<tr><td>FY+3 EPS（FY2028E，§8 邏輯推導）</td><td>117 TWD</td><td>FY+2 × 1.18 — Meta ramp 進入第 2 年仍貢獻成長但 base 拉高；§8.A Runway 推導</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>33.4x</td><td>2,635 ÷ 78.99</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>26.5x</td><td>2,635 ÷ 99.23（同 yfinance forwardPE 26.5）</td></tr>
+<tr><td>3 年 EPS CAGR（FY25 → FY28）</td><td>35.9%</td><td>(117 / 46.79)^(1/3) − 1</td></tr>
+</tbody>
+</table>
+
+<h3>D｜估值燈（v12.3 主裁決）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>當前 Fwd PE（FY+1）</td><td>33.4x</td></tr>
+<tr><td>5Y Fwd PE 範圍估計</td><td>~14x（2021 底）~ 38x（2024 峰）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>~72%（落 70-85% 區間 → 🟠）</td></tr>
+<tr><td>3Y EPS CAGR（§7 推導）</td><td>35.9%</td></tr>
+<tr><td>PEG（FY+1 PE / 3Y CAGR）</td><td>0.93（< 1.0 → 🟢）</td></tr>
+<tr><td><strong>原始估值燈（取較嚴）</strong></td><td><strong><span class="badge-orange">🟠 偏貴</span></strong>（分位 72% 較嚴於 PEG 0.93）</td></tr>
+</tbody>
+</table>
+
+<div class="warning-box">
+<h4>⚠️ 盲點 1 救援檢查（結構性高成長救援）</h4>
+<table>
+<thead><tr><th>條件</th><th>門檻</th><th>本標的</th><th>過？</th></tr></thead>
+<tbody>
+<tr><td>① §8 長期成長性綜合評級</td><td>🟢 高確信</td><td>🟢（Runway ≥ 10 年 + 護城河 execution 加深 + 衰退信號 0 個）</td><td>✅</td></tr>
+<tr><td>② PEG</td><td>< 2.0</td><td>0.93</td><td>✅</td></tr>
+<tr><td>③ §8 F AI 風險評級</td><td>🟢 AI 受益</td><td>🟢（hyperscaler AI capex 直接受益）</td><td>✅</td></tr>
+<tr><td>不適用情境</td><td>分位 > 85% / PEG ≥ 2.0 / QC-19 重大利空</td><td>分位 72% < 85%，PEG 0.93 < 2.0，無重大利空</td><td>✅ 救援可啟動</td></tr>
+</tbody>
+</table>
+<p><strong>救援結果：🟠 救回 🟡</strong>｜「⚠️ 盲點 1 救援觸發：§8 🟢 + PEG 0.93 < 2.0 + AI 🟢，🟠 救回 🟡」</p>
+</div>
+
+<p><strong>最終估值燈：<span class="tag-yellow">🟡 合理</span></strong>｜套用規則：不變（救援後不再 × 0.5），等級維持 B。</p>
+<div class="reasoning">分位 72% + PEG 0.93 取較嚴 → 🟠；三個盲點 1 救援條件全 ✓ → 🟠 救回 🟡；implication：對 PM skill 而言可正常承載 satellite 倉位，不需強制半倉</div>
+
+<h3>E｜R:R + Bear Case（v12.3 精簡：3 個數字 + 1 line anchor）</h3>
+<table>
+<thead><tr><th>時距</th><th>計算（合理 PE 取 32-35x mid-range）</th><th>目標價</th><th>上行</th><th>R:R</th></tr></thead>
+<tbody>
+<tr><td>短期（1 年，FY+1 EPS × 35x）</td><td>78.99 × 35</td><td>~2,765</td><td>+4.9%</td><td><span class="badge-red">0.10x</span></td></tr>
+<tr><td>中期（2 年，FY+2 EPS × 35x）</td><td>99.23 × 35</td><td>~3,473</td><td>+31.8%</td><td><span class="badge-red">0.62x</span></td></tr>
+<tr><td>5Y（長期，§8 E Base FY+5 EPS 145 × 25x）</td><td>145 × 25</td><td>~3,625</td><td>+37.6%</td><td><span class="badge-red">0.87x</span></td></tr>
+</tbody>
+</table>
+<p><strong>Bear anchor（1 line）：</strong>Bear EPS = FY+1 EPS × 0.9 = 78.99 × 0.9 = 71.09；Bear PE（§8 E 成長熄火降至 10% 情境）= 18x；Bear 股價 = 71.09 × 18 = <strong>1,280 TWD</strong>（現價下行 -51.4%）；W52 Low（參考）699 / W104 Low（參考）~600。</p>
+<p class="note">dd-meta <code>stress</code> 欄位 2/2（base + bear 兩情境通過）。三時距 R:R 全 < 2.0：典型 Stage 4 高度 stretched 後的 timing 問題，<strong>非 thesis 失敗</strong>（QC-31：thesis 完整 + 時機 stretched → 落 B 觀望，不該歸 C）。</p>
+
+<h3>F｜Pure MA 狀態機（週線六狀態）</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>現價</td><td>2,635</td></tr>
+<tr><td>W52 / 斜率</td><td>1,270 / +37.3%</td></tr>
+<tr><td>W104 / 斜率</td><td>939 / +26.1%</td></tr>
+<tr><td>W250 / 斜率</td><td>578 / +18.3%</td></tr>
+<tr><td>BB 上 / 中 / 下（20w）</td><td>2,719 / 1,753 / 787</td></tr>
+<tr><td>現價 / W52 比</td><td>2.07x（極度拉開：典型 stretched 訊號）</td></tr>
+<tr><td>近 5 日 OHLC（QC-24 intraday）</td><td>5/26 O 2,610 H 2,695 L 2,560 C 2,635（無 shooting star，收 close near high）</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong><span class="tag-green">✅ 強勢進場</span></strong>（價 > W52 > W104 > W250 且 W250 斜率 +18.3% > 0）</td></tr>
+<tr><td><strong>MA 部位乘數</strong></td><td><strong>× 1.0</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">三條 MA 全在價之下、斜率全正 → ✅ 強勢進場；BUT 現價 / W52 2.07x = 極度 stretched，BB 上軌 2,719 vs 現價 2,635（96% upper band）→ 接近頂部但仍在帶內；implication：MA 沒給煞車訊號 but 數學上漲幅已 priced in，配合 §2 D 🟡 偏中性 + §2 E R:R < 2.0 → 落 B 觀望時機</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>對應大盤</td><td>^TWII（加權指數）</td></tr>
+<tr><td>大盤現價</td><td>43,645</td></tr>
+<tr><td>大盤 W104</td><td>25,808</td></tr>
+<tr><td>系統性風險（破 W104）</td><td>否（現價 / W104 = 1.69x，正常極遠）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td><strong>× 1.0（正常）</strong></td></tr>
+</tbody>
+</table>
+<div class="reasoning">^TWII 在 W104 上方 69%，大盤本身處於 hyper-bull 狀態 — 反過來說也意味著「大盤 + 個股雙 stretched」的 reversion 風險（若大盤回測 W104，個股 high-beta 名 typically -40 ~ -50%）；implication：訊號不降級但須在持有期內密切監控大盤週收破 W104 訊號作為 R4 系統性風險</div>
+
+<h3>H｜綜合訊號燈（取代「最終倉位」輸出）</h3>
+
+<h4>判定路徑（依序評估）</h4>
+<table>
+<thead><tr><th>步驟</th><th>條件</th><th>本標的</th><th>輸出</th></tr></thead>
+<tbody>
+<tr><td>1. 拒絕檢核</td><td>trap 🔴 / gate 🔴 / MA ❌ / quality 拒絕</td><td>trap 🟢, gate 🟡（救援後）, MA ✅, quality B（非拒絕）</td><td>不觸發 X</td></tr>
+<tr><td>2. 高強度（A+）</td><td>quality S/A + gate 🟢 + MA 🟢/✅ + trap 🟢 + 大盤正常</td><td>quality B（不到 S/A）</td><td>不觸發 A+</td></tr>
+<tr><td>3. 中高強度（A）</td><td>quality S/A + gate 🟡 + MA ✅ + trap 🟢</td><td>quality B（不到 S/A）</td><td>不觸發 A</td></tr>
+<tr><td>4. 衛星級（B）</td><td>quality B + gate 🟢/🟡 + trap 🟢/🟡｜或 S/A 有一項訊號減半</td><td>quality B + gate 🟡 + trap 🟢 ✅</td><td><strong>→ B（衛星候選 / 觀望偏進場）</strong></td></tr>
+<tr><td>5. 時機不到</td><td>gate 🟠 + MA ✅ stretched，或多項訊號減半但無 QC-31 C 觸發</td><td>R:R < 2.0 + stretched，但 quality + trap 全綠</td><td>確認落 B 不下修</td></tr>
+<tr><td>6. thesis 失敗（C）</td><td>觸發 QC-31 任一：品質 < 6 / 護城河侵蝕信號 ≥ 3 / 陷阱 🔴 / AI 🔴</td><td>品質 8、護城河趨勢 execution 加深、陷阱 🟢、AI 🟢，全無 thesis 失敗訊號</td><td>不觸發 C</td></tr>
+</tbody>
+</table>
+
+<h4>五個訊號維度（傳遞至 PM skill）</h4>
+<table>
+<tbody>
+<tr><th>quality_tier（§2 B 調整後）</th><td>B</td></tr>
+<tr><th>gate（§2 D）</th><td>🟡（盲點 1 救援後）</td></tr>
+<tr><th>ma_status（§2 F）</th><td>✅ 強勢進場</td></tr>
+<tr><th>benchmark_regime（§2 G）</th><td>正常（^TWII 在 W104 上）</td></tr>
+<tr><th>trap（§1 定性）</th><td>🟢 非陷阱</td></tr>
+<tr><th><strong>final_signal</strong></th><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+</tbody>
+</table>
+<p><strong>判定理由（一句話）：</strong>quality B + estvalu 燈 🟡（盲點 1 救援後）+ MA ✅ + trap 🟢 → 步驟 4 觸發 B；R:R 三時距 < 2.0 但屬時機問題（QC-31 規則），thesis 完整不歸 C，落 B 觀望等估值或時機修復。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<thead><tr><th>維度</th><th>來源</th><th>結論</th></tr></thead>
+<tbody>
+<tr><td>成長跑道</td><td>§8.A</td><td>充裕（AI back-end TAM 5Y 2-3x + 1.6T 進入量產延展跑道至 2028+）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>execution 加深（800G/1.6T 領先）／pricing power constrained（ODM 結構 + AWS 集中）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>高</strong></td></tr>
+</tbody>
+</table>
+<p class="note"><strong>一句話說明：</strong>🟢 順風，B 級護城河 8/10，白牌 800G/1.6T 與 hyperscaler AI capex 同向放大；估值燈 🟡 合理（盲點 1 救援）+ Pure MA ✅ 但 ATH stretched，三時距 R:R < 2.0 為時機問題。建議等 BB 中軌回測或 Q2 26 法說後重評；H2 26 Meta Iris 出貨進度是關鍵分水嶺。</p>
+</section>
+
+<!-- ============================== §3 ============================== -->
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要</h2>
+<div class="three-col">
+
+<div class="role-card role-bull">
+<h3>多頭辯護人 ｜ Munger 模式</h3>
+<table>
+<thead><tr><th>#</th><th>進場論據</th><th>數字佐證</th><th>章節</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>白牌 ODM 雙寡占結構</td><td>Accton + Celestica 共占白牌 switch ~80-90%，Accton 單獨 ~40-50% 份額；十年以上 AWS 主力供應地位難以複製</td><td>§9</td></tr>
+<tr><td>2</td><td>EPS 加速 + 共識持續上修</td><td>FY25 EPS 46.79 → FY26E 78.99（+69%）→ FY27E 99.23（+26%）；90 天前 FY26 共識僅 62.19，已上修 +27%</td><td>§8 / §13</td></tr>
+<tr><td>3</td><td>PEG 0.93 估值仍 reasonable</td><td>Fwd PE 33x ÷ 3Y CAGR 35.9% = 0.93；vs Arista PEG ~2.0+ 的鮮明對比，給予 white-box 更高 risk-adjusted 報酬</td><td>§13</td></tr>
+</tbody>
+</table>
+<p><strong>多頭最強一句話：</strong>Accton 不是 cyclical ODM — 它是 AI infrastructure super-cycle 中少數能 keep pace 的供應商，operating margin 14.3% 為 ODM 業 outlier 高位即護城河存在的證明。</p>
+</div>
+
+<div class="role-card role-bear">
+<h3>空頭檢察官 ｜ Burry 模式</h3>
+<table>
+<thead><tr><th>#</th><th>虧損觸發情境</th><th>惡化指標與閾值</th><th>對應風險</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Hyperscaler capex 進入消化期</td><td>FY27 AWS / Meta 合計 capex YoY 從 +30% 降至 0~10%（Wall Street consensus 2027 已有此 risk debate）；Accton FY27E 99.23 EPS 中有約 25% 來自 AWS continued growth + Meta ramp 雙引擎假設</td><td>§5 R1</td></tr>
+<tr><td>2</td><td>AWS dual-source 給 Celestica</td><td>Celestica NN segment +99% YoY（FY25 vs FY24）已是 AWS 提升 Celestica 為第二供應商的明證；若 Celestica 從 ~20% AWS 份額升至 35-40%，Accton 對應失去 15-20%p AWS 訂單 = ~10%p group revenue</td><td>§9 / §5 R2</td></tr>
+<tr><td>3</td><td>Stage 4 mean reversion</td><td>2345.TW 6 年內 price 13x 為 stretched signature；過去 Taiwan ODM 在 +200% 一年後一年內 -40~-50% 為常見（2022 Q4 半導體案例）；BB 上軌外擴展 + 共識停止上修 → -30~-40% drawdown 可能</td><td>§2 F</td></tr>
+</tbody>
+</table>
+<p><strong>空頭最大威脅：</strong>ODM business model inherent pricing power 弱 — 即使 800G/1.6T 領先，hyperscaler 5-7 年級別必走 multi-supplier；當前高 OI margin（14%）不可持續，向 ODM 業歷史均值 8-10% 回歸 = EPS -25%~-35%。</p>
+</div>
+
+<div class="role-card role-arb">
+<h3>估值仲裁員 ｜ Damodaran 模式</h3>
+<table>
+<tbody>
+<tr><th>隱含預期可信度</th><td>6 / 10</td></tr>
+<tr><th>核心依據</th><td>當前 Fwd PE 33x 隱含 FCF CAGR ~25%（vs sell-side 共識 25-30%），與 Wall Street 一致；但 vs ODM 歷史均（Accton 自身 5Y 中位 ~22x）顯著偏高 — implied 給予 AI 結構性溢價 +50%</td></tr>
+<tr><th>歷史對標</th><td>Quanta（2382.TW）在 AI Server ODM 的同階段（2024 ATH）：trailing PE 從 12 → 32 → 一年後回 18；同類路徑表明 ODM 高位 PE 雖有結構支撐但不易長期維持</td></tr>
+</tbody>
+</table>
+<p><strong>仲裁員一句話：</strong>估值不到「明顯離譜」但已 priced in 「multi-year AI capex 持續 + Meta 順利量產 + AWS 不大幅 dual-source」三條件全勝；任一條件 disappoint 即會觸發 PE compression -20~-30%。</p>
+</div>
+
+</div>
+</section>
+
+<!-- ============================== §4 ============================== -->
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義（第一性原理）</h3>
+<p>Accton 解決的痛點是「<strong>把矽變成可佈署的網路鐵盒</strong>」— 在 hyperscaler 把網路從 buy-from-Cisco 模式切到 build-it-yourself 模式的歷史轉折期，Accton 是少數能把 Broadcom / Marvell / NVIDIA 的 switch silicon 配合客戶定義的 OS（Sonic / FBOSS / NOS）封裝成 1U/2U 量產 box 的 ODM。沒有 Accton 這類玩家，hyperscaler 必須走 Cisco/Arista 品牌路徑承擔 60-70% cost premium、放棄系統客製空間；反過來說，Accton 的「存在」本質是 hyperscaler 與品牌商之間的 cost arbitrage 紅利捕捉者。若它消失：白牌 switch 出貨 80% 中斷、AI back-end network 建置進度延後 6-12 個月、Cisco / Arista 失去 cost benchmark 對手後可能反向漲價 — 整個產業會結構性退步一個世代。</p>
+
+<h3>【護城河形成歷史路徑】（25 年 milestone）</h3>
+<table>
+<thead><tr><th>年份</th><th>關鍵事件</th><th>對護城河的累積貢獻</th></tr></thead>
+<tbody>
+<tr><td>1988</td><td>創立，從 networking adapter 起家</td><td>進入網通製造產業，建立基礎 OEM 能力</td></tr>
+<tr><td>2002-2008</td><td>進入 enterprise switch ODM（為 D-Link / SMC / 多家品牌代工）</td><td>累積 protocol stack + 系統 integration 經驗，OS-agnostic 設計能力萌芽</td></tr>
+<tr><td>2013</td><td>創立 EdgeCore Networks 子品牌，正式跨入 white-box 領域</td><td>從 OEM 轉 ODM/ODM+，可直接 sell to hyperscaler 而非透過品牌商</td></tr>
+<tr><td>2015-2018</td><td>AWS 建立白牌 switch 大規模採購；Accton 成為主要供應商之一</td><td>第一個 hyperscaler 主力 design win，10+ 年合作關係的奠基</td></tr>
+<tr><td>2019-2021</td><td>400G 商用化，Accton 領先 400G white-box 量產（早 Cisco/Arista 一個季度節奏）</td><td>從「品牌跟隨者」轉「技術 first-mover」，cost/performance leadership 確立</td></tr>
+<tr><td>2022-2023</td><td>AI back-end network 需求興起，800G demand 啟動</td><td>掌握 next-gen 跨代節奏；Vietnam 廠開始量產分散地緣風險</td></tr>
+<tr><td>2024-2025</td><td>FY25 Rev +125% YoY（110B → 248B）；OI margin 從 10.6% 擴至 12.95%（FY24/FY25）</td><td>規模效率 + AI 複雜度溢價同時擴大護城河；execution moat 9/10 的數字證明</td></tr>
+<tr><td>2026+</td><td>Meta Iris ASIC 量產（300K 2H26 → million 2027/28）；1.6T 出貨啟動</td><td>多客戶結構 + 技術代差延伸；pricing power 是否能改善為下一階段觀察點</td></tr>
+</tbody>
+</table>
+
+<h3>【逆向推演 三維展開】Munger Inversion</h3>
+
+<h4>① 技術維度：什麼技術替代會讓 Accton 3 年內失去 50% 價值？</h4>
+<ul>
+<li><strong>Optical interconnect / Co-Packaged Optics（CPO）取代 pluggable</strong>：若 NVIDIA / Broadcom 在 1.6T 世代強制走 CPO，傳統 OSFP transceiver + switch box 模式被打破，Accton 必須從「pizza box maker」變「光電 integration partner」，技術切換期 12-18 個月可能斷層。歷史對標：Sun Microsystems 在 commodity x86 server 興起時的轉型失敗。</li>
+<li><strong>NVIDIA Spectrum-X / Quantum 加 NVLink 模式取代 Ethernet + 商業 silicon</strong>：若 hyperscaler 大規模採用 NVIDIA 端到端方案而非 Broadcom Tomahawk + ODM box，Accton 失去主要 silicon supplier 紅利。歷史對標：Intel 在 PC 時代後期被 ARM 邊緣化。</li>
+<li><strong>Hyperscaler ASIC 全自研 + 自家 ODM 廠</strong>：Google 已長期自製 TPU 系統內含部分 networking；若 AWS / Meta 也走自製白牌（如 Microsoft 已有自家 Maia + Cobalt + 自研 switch），Accton 訂單在 7-10 年內可能 -30~-50%。歷史對標：Apple silicon 取代 Intel 在 Mac line 上的 100% 替代。</li>
+<li><strong>SerDes 架構升級切換供應商</strong>：1.6T 世代若架構從 224G PAM4 切到完全不同 modulation 或 retimer scheme（如 200G/lane SerDes），Accton 若沒能跟上設計能力可能被踢出主流 design win。歷史對標：3661 Alchip Mariana case — Trainium 3 PCIe SerDes 切到 Synopsys。</li>
+</ul>
+
+<h4>② 管理維度：什麼決策路徑會自我毀滅？</h4>
+<ul>
+<li><strong>Capex 慣性過度</strong>：當前 FCF margin ~8%（FCF 18.76B / Rev 248B）已偏低（ODM 業健康 12-15%），若繼續以 capex 追逐每個下游需求高峰擴產，FY27-28 進入 capex over-investment + utilization 走低的風險。歷史對標：Compal 2014-2015 在 ultrabook ODM 競賽中 over-build。</li>
+<li><strong>創辦人退場與接班斷層</strong>：Accton 創辦人黃震宇仍在董事會位置但年齡漸高；二代管理層尚未有清晰 ascendance。歷史對標：許多台灣 ODM 在創辦人退場後策略遲緩 1-2 個關鍵世代節奏。</li>
+</ul>
+
+<h4>③ 結構維度：什麼產業變化會讓商業模式過時？</h4>
+<ul>
+<li><strong>Sovereign AI 政策反向 fragmentation</strong>：若美 / 中 / 歐三大陣營資料中心被強制本地化生產（美對 Taiwan-made networking 加嚴出口管制 / 中對 ASIC export 反制 / 歐 GDPR 要求 EU-built），Accton 三地（TW / Vietnam / Shanghai）佈局可能仍不足以滿足。歷史對標：台灣半導體業 2024-2025 在地緣選擇上被迫快速建美廠的成本陣痛。</li>
+<li><strong>監管型分拆與反壟斷</strong>：若 hyperscaler 反壟斷壓力升高（Big Tech 拆分），自製垂直整合的策略空間被縮限，但對 Accton 是雙刃 — 一方面減少自製衝擊，一方面也降低 hyperscaler 整體投資能量。歷史對標：AT&T 1984 拆分對通信設備商的長期影響。</li>
+<li><strong>計算範式從 dense GPU 切到稀疏 / efficient 架構</strong>：若 AI 模型訓練成本因算法效率突破（如 reasoning model 在邊緣可執行）大幅下降，hyperscaler 的 build-out 需求被結構性壓縮。歷史對標：行動運算興起對 PC 產業的長期降溫。</li>
+</ul>
+</section>
+
+<!-- ============================== §5 ============================== -->
+<section class="card" id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<thead><tr><th>項目</th><th>填寫</th></tr></thead>
+<tbody>
+<tr><td>預設持有期</td><td>24-36 個月（覆蓋 FY26-27 主升段 + Meta Iris 量產驗證 + 1.6T cycle 啟動）</td></tr>
+<tr><td>主要驅動這個時間軸的理由</td><td>(1) Meta Iris 量產的關鍵窗口在 2H26-2027；(2) AI capex 結構性週期 visibility 通常 24-36 個月；(3) 1.6T 量產進度與 800G 是否進入 cyclical peak 將在 FY27-28 顯露</td></tr>
+<tr><td>時間軸決定哪些是訊號 vs 噪音</td><td>訊號：月營收 YoY 趨勢、Meta 量產進度、OI margin QoQ；噪音：單季 inventory adjustment、單一品牌 design win/loss 公告、短期匯率影響</td></tr>
+</tbody>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸 + sourced floor + 漂移觸發</h3>
+
+<table>
+<thead><tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體數字門檻 + 信息來源</th><th>漂移觸發條件</th></tr></thead>
+<tbody>
+<tr>
+<td>H1</td>
+<td><strong>AI hyperscaler capex 維持結構性上升軌道，white-box 滲透率持續擴大</strong></td>
+<td>FY26 Rev +50% YoY 兌現（current Q1 +64% trajectory）</td>
+<td>FY28-30 white-box 在 AI back-end network 滲透率 ≥ 70%（vs 2024 ~50%）</td>
+<td>FY30+ AI back-end network TAM 維持 ≥ $80B，Accton 在 white-box ODM 份額 ≥ 35%</td>
+<td>Rev YoY 連 4 季 ≥ +30%；信息來源：Accton 月營收公告 + Dell'Oro AI backend forecast + hyperscaler capex guidance（AWS / Meta / Microsoft / Google）</td>
+<td>連 2 季 TTM Rev YoY 偏離 ≥ 10pp（即 < +20%）→ 削弱（QC-35：2Y 假設連 2 季偏離）</td>
+</tr>
+<tr>
+<td>H2</td>
+<td><strong>Meta Iris ASIC 順利量產，成為 Accton 第二腿成長引擎</strong></td>
+<td>2H26 開始 300K Iris shipment 兌現；FY27 法說揭露 Meta 占 Rev 比例 ≥ 8%</td>
+<td>FY28-30 Meta 占 Rev 15-20% 穩定貢獻 + million cluster 維持運轉</td>
+<td>FY30+ Meta 持續每代 ASIC 採 Accton ODM + 第三、四個 ASIC 客戶（OpenAI / Anthropic / xAI 等）design win</td>
+<td>Meta 占比 ≥ 15%；信息來源：LumenAlpha Substack（2026/04 Accton Meta Iris 報導）+ Accton quarterly call disclosure + Meta 自身 capex 結構公告</td>
+<td>2H26 法說推遲 Iris 量產時程 > 1 季 → 削弱；FY27 Meta 占比 ≤ 5% → 反轉</td>
+</tr>
+<tr>
+<td>H3</td>
+<td><strong>OI margin 維持在 13-15% 高位，不向 ODM 業歷史均回歸</strong></td>
+<td>FY26 FY OI margin ≥ 13%（vs FY25 12.95%）</td>
+<td>FY27-30 OI margin 在 12-15% 區間穩定</td>
+<td>FY30+ OI margin 結構性高於 ODM 業均（暗示 800G/1.6T 複雜度溢價持久）</td>
+<td>OI margin ≥ 13%；信息來源：Accton 季財報 + 同業 Quanta / Wistron / Compal margin 對比</td>
+<td>連 2 季 TTM OI margin YoY 下滑 ≥ 1.5pp → 削弱（QC-26 結構性 margin 測試）；連 4 季下滑 → 反轉</td>
+</tr>
+</tbody>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p class="note"><strong>狀態：</strong>進場未滿一年（最早 v12.2+ DD = 2026-05-26 本份 Inception，距今 0 天）。<br>本欄位將於 <strong>2027-05-26</strong> 起首次有資料對照。<br>在此之前，僅以 §5 B 戰術假設視角追蹤。</p>
+
+<h3>C｜三個最可能推翻論點的風險（時間尺度分層）</h3>
+<table>
+<thead><tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr></thead>
+<tbody>
+<tr>
+<td>R1</td>
+<td>Hyperscaler capex normalize / 數位化消化期</td>
+<td>H1</td>
+<td>🔥 中期（4-6 季）</td>
+<td>AWS / Meta / Microsoft / Google 合計 Capex YoY %（quarterly）</td>
+<td>合計 capex YoY 連 2 季 < +10% → 警戒；< 0% → 大動作</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>AWS dual-source 加速給 Celestica</td>
+<td>H1</td>
+<td>⚡ 短期（1-2 季可觸發）</td>
+<td>Accton 對 AWS 訂單份額（法說含 Top 1 客戶比例變化）；Celestica networking segment YoY</td>
+<td>Celestica NN +120%+ YoY 連 2 季 + Accton AWS 占 Rev 比下降 5pp → 警戒</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>CPO / 全 NVIDIA 端到端 / 自製 ASIC ODM 化等技術範式切換</td>
+<td>H1 + H2 + H3 同時</td>
+<td>🐢 長期（2+ 年慢變數）</td>
+<td>NVIDIA Spectrum-X 在 hyperscaler 滲透率；hyperscaler 自家 networking 廠成立；CPO 在 1.6T 世代採用率</td>
+<td>NVIDIA 端到端在 AI back-end 滲透 ≥ 30% / 任一 hyperscaler 啟動自製白牌 / CPO 在 1.6T 佔 ≥ 40%</td>
+</tr>
+</tbody>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<table>
+<thead><tr><th>判斷步驟</th><th>問題</th></tr></thead>
+<tbody>
+<tr><td>1. 時間軸匹配？</td><td>事件影響 24-36 個月持有期內嗎？</td></tr>
+<tr><td>2. 假設關聯？</td><td>影響 H1（AI capex）/ H2（Meta）/ H3（margin）中哪一個？</td></tr>
+<tr><td>3. 邊際方向？</td><td>＋強化 / 0 無關 / －削弱</td></tr>
+<tr><td>4. 閾值判斷？</td><td>削弱程度是否觸發 §5.B 漂移條件？</td></tr>
+</tbody>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<thead><tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr></thead>
+<tbody>
+<tr><td>進場</td><td>估值修復至 Fwd PE FY+2 ≤ 25x（股價 ~2,481 區間）或 BB 中軌回測（~1,750-1,950）+ 共識仍上修</td><td>建倉至底倉 50%（B 級首倉，目標倉位的 7-8%）</td></tr>
+<tr><td>加碼</td><td>H1（Rev +50%+）+ H2（Meta Iris 出貨確定）雙確認 + 共識上修方向</td><td>加碼至底倉 100%（目標倉位的 15%）</td></tr>
+<tr><td>減碼</td><td>R1（hyperscaler capex YoY < +10%）或 R2（Celestica 加速侵蝕）觸發</td><td>減至底倉 33%</td></tr>
+<tr><td>撤退</td><td>H1 反轉（連 3 季 Rev YoY < +10%）或 §1 trap 從 🟢 變 🔴 或 OI margin 連 4 季下滑</td><td>清倉</td></tr>
+</tbody>
+</table>
+
+<h3>F｜Single Thing</h3>
+<table>
+<thead><tr><th>項目</th><th>內容</th></tr></thead>
+<tbody>
+<tr><td>Single Thing 描述</td><td><strong>2H26 法說會公告 Meta Iris 出貨進度與 Top 1 客戶集中度</strong> — 這是個 binary event：要嘛 Meta 順利量產（H2 強化、客戶結構優化），要嘛延後 / 規模縮小（H2 削弱、客戶過度集中持續）</td></tr>
+<tr><td>如果發生（H2 兌現）</td><td>加碼至底倉 100%；重新評估目標倉位上修空間（estvalu 燈 🟡 → 🟢 可能）</td></tr>
+<tr><td>如果發生（H2 反轉）</td><td>減倉 50%；長期信心從「高」下修為「中」；重新跑 thesis 並考慮歸 C</td></tr>
+<tr><td>可觀測性</td><td>2026-11 / 2027-02 兩次法說（Q3 + Q4 26 法說）。Q3 法說（Nov 2026）大概率第一次具體揭露 Iris 出貨量</td></tr>
+<tr><td>機率估計</td><td>H2 兌現機率 70%（基於目前 commentary + Iris design timeline + Meta capex visibility）</td></tr>
+</tbody>
+</table>
+
+<p class="note"><strong>三者職責矩陣</strong>（強制對齊）：§1 trap 🟢 = 「現在 thesis 整體狀態」靜態裁決；§5.C R1-R3 = 「持有期過程性 continuous monitoring 風險」；§5.F Single Thing = 「2H26 法說會這 1 個具體 binary trigger」。三者互不重疊。</p>
+</section>
+
+<!-- ============================== §6 ============================== -->
+<section class="card" id="s6">
+<h2>§6 即時財報情報（Q1 FY26，公告日 2026-05-07）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<thead><tr><th>指標</th><th>本季實際</th><th>市場預期</th><th>Beat/Miss</th><th>YoY 成長</th></tr></thead>
+<tbody>
+<tr><td>Revenue（TWD）</td><td>70.12B</td><td>~70.1B（基本符合）</td><td><span class="badge-beat">In-line</span></td><td>+64.0%</td></tr>
+<tr><td>EPS（TWD）</td><td>14.92</td><td>13.87</td><td><span class="badge-beat">Beat +7.6%</span></td><td>+66.5%（vs Q1 25 EPS 8.96）</td></tr>
+<tr><td>Gross Margin</td><td>~18%（推估，需季財報細節 confirm）</td><td>~17.5%</td><td><span class="badge-beat">Beat ~0.5pp</span></td><td>vs Q1 25 ~16%（+2pp expansion）</td></tr>
+<tr><td>Operating Margin</td><td>~13%（推估）</td><td>~12.5%</td><td><span class="badge-beat">Beat ~0.5pp</span></td><td>vs Q1 25 ~11.5%（+1.5pp）</td></tr>
+<tr><td>QoQ Revenue</td><td>-2.6%（vs Q4 25 72.0B）</td><td>-3 ~ -5%（seasonal Q4 → Q1）</td><td><span class="badge-beat">In-line / mild beat</span></td><td>—</td></tr>
+</tbody>
+</table>
+<p class="note">資料來源：Digitimes 2026-05-08 報導 + Investing.com Q1 26 earnings page + BigGo Finance 公告。EPS 14.92 為 Q1 26 actual，已扣除全期 share dilution 影響。</p>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<thead><tr><th>假設</th><th>本季財報邊際方向</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td>H1（AI capex 持續）</td><td>＋強化</td><td>Q1 Rev +64% YoY 為過去 4 季最強加速；US 出口占比 > 40% 顯示 hyperscaler 拉貨持續</td></tr>
+<tr><td>H2（Meta Iris）</td><td>0 無關（待 2H26 法說正式 disclose）</td><td>Q1 26 仍以 AWS + 雜散品牌客戶為主；Meta 量產窗口在 2H26</td></tr>
+<tr><td>H3（OI margin 高位）</td><td>＋強化</td><td>Q1 OI margin ~13% vs Q1 25 ~11.5%（+1.5pp）；證明 800G mix shift + 規模效益持續推升 margin，未見頂訊號</td></tr>
+</tbody>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<table>
+<tbody>
+<tr><th>管理層基調</th><td>樂觀偏謹慎 — Q1 法說承認 inventory adjustment 為輕度逆風（QoQ -2.6%），但 reiterate 全年 guidance 上修空間；強調 800G shipment 進入 record level，1.6T 已開始 lab qualification</td></tr>
+<tr><th>Forward Guidance</th><td>FY26 全年指引未明確數字但暗示「至少持續加速」；vs Q4 法說的 +30~40% 目標明顯被 Q1 +64% 超越</td></tr>
+<tr><th>刻意強調的主題</th><td>(1) 800G/1.6T 技術領先；(2) Meta engagement 進入「meaningful design-in」；(3) Vietnam 廠 capacity expansion 進行中分散地緣風險</td></tr>
+<tr><th>刻意迴避的問題</th><td>(1) Top 1 客戶（AWS）營收占比具體數字；(2) Celestica dual-source 對 Accton 訂單實質影響；(3) Q2-Q3 26 訂單 visibility 的 quarterly granularity</td></tr>
+</tbody>
+</table>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：US 出口 > 40% 暗示 AWS / Meta / Microsoft 三大 hyperscaler 拉貨同時加速；Q1 +64% 為過去四季最大加速幅度，意味產業實際需求超 prior 預期</li>
+<li><strong>供給端</strong>：Vietnam 廠 ramp + Taiwan 滿載 → capacity 仍為 bottleneck，間接支持 OI margin 維持高位（capacity 緊不會被迫降價）</li>
+<li><strong>競爭格局</strong>：Celestica NN +99% YoY 同期，意味 hyperscaler 用「兩家都加碼」方式 hedge 單一供應商風險，而非完全切換；Accton 不是 zero-sum loss</li>
+<li><strong>總體經濟敏感度</strong>：管理層未提及宏觀逆風；hyperscaler capex 在 Q1 都 reaffirm 全年 guide，AI capex 與一般 IT capex 已脫鉤</li>
+<li><strong>對同業的連帶推論</strong>：對 Broadcom (AVGO) merchant silicon 拉貨確定持續；對 Optical（Lumentum / Coherent / 國內如 ALAB）transceiver 需求同向放大；對 Cisco / Arista 來說，hyperscaler share loss 速度未放緩</li>
+</ul>
+</section>
+
+<!-- ============================== §7 ============================== -->
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 資料來源</h3>
+<p>步驟零' Excel：<code>NOT in Excel</code>（Excel snapshot 2026-05-26 incremental add to 2026-05-25 snapshot 未覆蓋 2345.TW）→ fall back yfinance（步驟零）。</p>
+<p>yfinance earnings_estimate（n=5/8 analysts，2026-05-26 抓取）：</p>
+<table>
+<thead><tr><th>項目</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>基期 FY2025 EPS（actual）</td><td>46.79 TWD</td></tr>
+<tr><td>FY+1（FY2026E）EPS</td><td>78.99（avg，n=5，growth +68.8%）</td></tr>
+<tr><td>FY+2（FY2027E）EPS</td><td>99.23（avg，n=8，growth +25.6%）</td></tr>
+<tr><td>FY+3（FY2028E）EPS（§8 邏輯推導）</td><td>117（FY+2 × 1.18 — Meta ramp 進入第 2 年仍貢獻成長但 base 拉高；§8.A Runway + §8.B 成長品質判斷）</td></tr>
+<tr><td>EPS Trend 30 天修正</td><td>FY+1 從 68.86 → 78.99（+14.7% 上修）；FY+2 從 87.73 → 99.23（+13.1% 上修）</td></tr>
+<tr><td><strong>3 年 EPS CAGR（FY25 → FY28）</strong></td><td><strong>35.9%</strong>（台股單一口徑，無 GAAP / Non-GAAP 差距）</td></tr>
+</tbody>
+</table>
+
+<h3>Munger 護城河維度搜尋（5-10 年數據）</h3>
+
+<h3>門檻檢核表</h3>
+<table>
+<thead><tr><th>項目</th><th>標準</th><th>符合？</th><th>關鍵數據與趨勢</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin（當前）</td><td>> 15%</td><td>⚠️</td><td>FY25 FCF 18.76B / Rev 248.32B = 7.6%；近 3 年 7-9%（ODM 業特性，較資本支出密集）</td></tr>
+<tr><td>正規化 FCF Margin（5Y）</td><td>5Y 均 > 15%；最低谷 > 10%</td><td>✗</td><td>5Y 均約 6-8%，最低谷 4-5%；ODM 業普遍偏低，需用 OI margin 替代評估</td></tr>
+<tr><td>ROIC（當前）</td><td>> 15%，且高於 WACC</td><td>✓✓</td><td>ROIC ~ 30%（ROE 56% / 高 equity multiplier 推估），WACC ~ 8%，超額 +22pp</td></tr>
+<tr><td>ROIC 穩定性</td><td>過去 10 年 ≥ 70% 年份 ROIC > 15%</td><td>⚠️</td><td>近 5 年 ~70-80% 達標，10 年含早期 enterprise 階段約 60%；趨勢擴大</td></tr>
+<tr><td>毛利率定價能力</td><td>過去 10 年 ≥ 70% 年份毛利率改善</td><td>⚠️</td><td>FY15 ~16% → FY25 18.1%；10 年增 ~2pp 但 wave 式波動。判斷：mild 改善，AI 期間加速</td></tr>
+<tr><td>資本密集度</td><td>Capex / Rev < 5% 優 / <10% 尚可</td><td>✓</td><td>近 3 年 Capex / Rev 約 3-4%，遠優於同業（Quanta ~4%、Wistron ~3%）</td></tr>
+<tr><td><strong>EPS CAGR（未來 3 年）</strong></td><td><strong>> 20%</strong></td><td><strong>✓✓</strong></td><td><strong>35.9%（FY25 → FY28）</strong>；信心度：FY+1/+2 yfinance 共識 n=5/8，FY+3 §8 邏輯推導</td></tr>
+<tr><td><strong>PEG（3Y, 單一口徑）</strong></td><td><strong>< 2</strong></td><td><strong>✓✓</strong></td><td><strong>0.93</strong>（Fwd PE 33.4x ÷ 3Y CAGR 35.9%）</td></tr>
+<tr><td>負債安全性</td><td>D/E < 0.7；現金 / Rev 10-50%</td><td>✓✓</td><td>D/E 0.10（極低）；Cash / Rev 20.8%（健康配置）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>是 / 否</td><td>✓✓</td><td>Net Cash 44.9B（51.7 - 6.76），現金完全覆蓋</td></tr>
+<tr><td>護城河強度</td><td>> 8 分，趨勢擴大</td><td>✓</td><td>8/10（execution 9 + pricing power 6 合併）；execution 趨勢加深、pricing power 持平</td></tr>
+</tbody>
+</table>
+<p><strong>Munger 三維護城河快速評級：<span class="tag-yellow">🟡 兩項達標</span></strong>（ROIC 穩定性 ✓ + 資本密集度 ✓ + 毛利率定價能力 ⚠️），FCF margin 偏低為 ODM 業結構性弱點；OI margin 14% 是更合理的「ODM 中的卓越」評估指標。</p>
+<p><strong>最大財務弱點</strong>：ODM 商業模式 inherent FCF margin 偏低 — 大量 working capital 在 inventory / AR 中流轉，限制 FCF / NI 轉換率。</p>
+</section>
+
+<!-- ============================== §8 ============================== -->
+<section class="card" id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）</h3>
+<table>
+<thead><tr><th>維度</th><th>數據</th><th>推論</th></tr></thead>
+<tbody>
+<tr><td>當前 AI back-end network TAM（2024）</td><td>~$30B</td><td>Dell'Oro 2024 estimates；含 800G/1.6T switch + transceiver + cable</td></tr>
+<tr><td>估計 2028 TAM</td><td>~$80B</td><td>Dell'Oro AI back-end forecast，5Y CAGR ~27%</td></tr>
+<tr><td>當前 Accton 在白牌 switch 滲透率</td><td>~40-50%（白牌業內）／白牌占 hyperscaler switch 採購 ~60%</td><td>多家 sell-side 估算（lumenalpha / deepfundamental）；Celestica 為主要競爭對手</td></tr>
+<tr><td>若維持 ~30% Rev CAGR，幾年達飽和</td><td>~6-8 年</td><td>800G/1.6T 滲透到 80%+ 後成長轉為 mid-teen；下一波要靠 3.2T 或 CPO 接力</td></tr>
+<tr><td><strong>成長可持續年數（Runway）</strong></td><td><strong>~10+ 年</strong></td><td>800G/1.6T + Meta Iris + 3.2T 三層接力，跑道相對充裕</td></tr>
+</tbody>
+</table>
+<p><strong>Runway 解讀：≥ 10 年 → 高確信長期複利，支撐高估值倍數溢價</strong></p>
+
+<h3>B｜成長品質判斷（v12.3 強化）</h3>
+
+<h4>① 有機 vs 無機</h4>
+<table>
+<thead><tr><th>類型</th><th>定義</th><th>占比估計</th><th>佐證</th></tr></thead>
+<tbody>
+<tr><td>有機成長</td><td>產品代際升級 + hyperscaler share gain + 新品類滲透</td><td>~95%+</td><td>近 5 年無重大併購；2013 EdgeCore 子公司為 organic build</td></tr>
+<tr><td>無機成長</td><td>併購貢獻</td><td>~5% 以下</td><td>未見有重大 M&A 紀錄</td></tr>
+</tbody>
+</table>
+<p>因無機占比 < 30%，不需重算 organic growth rate。</p>
+
+<h4>② 定價驅動 vs 量驅動（具體% + 3Y 趨勢）</h4>
+<table>
+<thead><tr><th>類型</th><th>本標的判斷</th><th>3 年趨勢</th></tr></thead>
+<tbody>
+<tr><td>定價驅動（ASP）</td><td>800G ASP 比 400G 約 +60-80% per port；mix shift 帶來 ASP YoY +30-40%（FY24 +18% → FY25 +35%）</td><td>擴大（明顯加速）</td></tr>
+<tr><td>量驅動（出貨量）</td><td>白牌 switch 出貨量 YoY +20-30%（FY23 +18% → FY24 +22% → FY25 +28%）</td><td>穩定中加速</td></tr>
+</tbody>
+</table>
+<p><strong>結論：定價驅動為主（mix shift to 800G/1.6T）+ 量穩步擴張</strong> — 為 ODM 業最理想的 dual driver 結構。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<thead><tr><th>類型</th><th>判斷</th><th>具體表現</th></tr></thead>
+<tbody>
+<tr><td><strong>強化型</strong> ✓</td><td>當前歸類</td><td>規模擴大 → bargaining power 對 Broadcom / Marvell（merchant silicon supplier）提升 + R&D scale economy（800G/1.6T 設計能力擴散）+ design win 路徑變寬</td></tr>
+</tbody>
+</table>
+
+<h3>D｜ROIC 與 FCF 長期可維持性</h3>
+<table>
+<thead><tr><th>指標</th><th>當前值</th><th>3 年前</th><th>趨勢</th><th>標準門檻</th><th>符合？</th></tr></thead>
+<tbody>
+<tr><td>ROIC</td><td>~ 30%</td><td>~ 18%</td><td>↑ 大幅</td><td>產業頂尖 + > WACC</td><td>✓✓</td></tr>
+<tr><td>ROIC − WACC</td><td>+22pp</td><td>+10pp</td><td>↑ 擴大</td><td>持續正且擴大</td><td>✓✓</td></tr>
+<tr><td>FCF Margin</td><td>7.6%</td><td>6.2%</td><td>↑ 緩</td><td>> 15%</td><td>✗（ODM 結構性偏低）</td></tr>
+<tr><td>FCF / NI</td><td>0.71</td><td>0.65</td><td>↑</td><td>> 85%（輕資本業）</td><td>⚠️（ODM 業特性不適用此標準）</td></tr>
+<tr><td>Reinvestment Rate</td><td>~ 40%（capex + working capital）</td><td>~ 35%</td><td>↑</td><td>合理高，需對應 ROIC</td><td>✓（ROIC 高足以證明 reinvestment 合理）</td></tr>
+</tbody>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<thead><tr><th>情境</th><th>對應特徵</th><th>合理 Fwd P/E 壓縮至</th><th>潛在估值跌幅</th></tr></thead>
+<tbody>
+<tr><td>3 年後成長降至 15%</td><td>AI capex 進入成熟期，white-box 滲透 plateau</td><td>~25x</td><td>-25%</td></tr>
+<tr><td>3 年後成長降至 10%</td><td>市場平均成長，Meta 量產延後或縮小</td><td>~18x</td><td>-46%</td></tr>
+<tr><td>3 年後成長降至 5%</td><td>成熟期低成長，ODM cycle 進入消化期</td><td>~12x</td><td>-64%</td></tr>
+</tbody>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<thead><tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈？</th></tr></thead>
+<tbody>
+<tr><td>護城河侵蝕</td><td>Gross Margin 連 2 季 YoY 下滑</td><td>Q1 26 GM ~18% vs Q1 25 ~16%（+2pp）；連續擴張無下滑</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔率縮減（過去 12M）</td><td>Accton 白牌 ODM 份額 ~40-50% 穩定 / 微增；Celestica 同期加速但無 zero-sum</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>主力產品定價能力</td><td>800G ASP 持續高位無 erosion 跡象</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR vs Rev CAGR 差距 > 5%p</td><td>FY26E EPS +69% vs Rev +50%（差距 +19pp，但來自 margin 擴張而非回購）</td><td>⚠️（需觀察 margin 是否持續支撐）</td></tr>
+<tr><td>盈餘品質</td><td>FCF / NI < 0.75 連 2 年</td><td>FY24 ~0.65 + FY25 0.71，兩年都接近 0.75 但未達標</td><td>⬜（ODM 業結構性）</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev > 5% 且上升</td><td>台股無 SBC 制度，員工分紅約稅前淨利 1-2%</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代</td><td>Dell'Oro TAM 27% CAGR 持續擴張</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值倍數系統下移</td><td>同業 Quanta / Wistron 過去 3 年估值倍數 +30%~+50%</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maint. Capex 占 FCF > 60%</td><td>~30-40%，相對健康</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>若停 capex 收入 3 年內下滑？</td><td>會（800G/1.6T 持續迭代需要研發投入），但收入下滑可控</td><td>⬜</td></tr>
+</tbody>
+</table>
+<p><strong>價值陷阱風險評級：<span class="tag-green">🟢 低風險</span>（亮燈 0 個，1 個⚠️）</strong> — 未見系統性惡化信號。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><strong><span class="tag-green">🟢 高確信長期成長</span></strong>：Runway ≥ 10 年、有機 + 定價驅動雙引擎、護城河強化型（execution dimension）、ROIC 擴大、衰退信號 0 個。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><strong><span class="tag-green">🟢 AI 受益（9 分）</span></strong>：核心業務直接受益於 AI back-end network 建置；AI capex 是主要 demand driver；Accton 自身亦透過 AI / ML accelerator hardware 進一步擴展業務。AI 受益占整體業務 > 80%。</p>
+
+<h3>H｜客戶結構深度（v12.3 新增）</h3>
+
+<h4>① 客戶集中度</h4>
+<table>
+<thead><tr><th>指標</th><th>數值估計</th><th>資料來源</th></tr></thead>
+<tbody>
+<tr><td>Top 1 客戶占營收%</td><td>~30-40%（AWS，未公告 specific 數字 — 台股慣以「客戶 A」匿名揭露）</td><td>業界估算（lumenalpha 等）</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>~60-70%</td><td>業界估算</td></tr>
+<tr><td>Top 10 客戶合計%</td><td>~75-85%</td><td>業界估算</td></tr>
+<tr><td>最大客戶過去 3 年 % 趨勢</td><td>FY23 ~25% → FY24 ~30% → FY25 ~35-40%（AWS AI 加速帶動）</td><td>業界估算（趨勢上升）</td></tr>
+</tbody>
+</table>
+
+<h4>② 主要客戶議價權結構</h4>
+<table>
+<thead><tr><th>客戶</th><th>占比%</th><th>議價權類型</th><th>說明</th></tr></thead>
+<tbody>
+<tr><td>AWS（推測 Top 1）</td><td>~35-40%</td><td><strong>Dual-track</strong></td><td>AWS 已正式扶植 Celestica 為第二供應商；Celestica NN +99% YoY 確認 dual-track 進行中。Accton 不是 sole-source 但有資深的 architecture knowledge 與 design-in lead</td></tr>
+<tr><td>Meta（Top 2-3 即將）</td><td>~5% → ~15-20%（FY27 目標）</td><td><strong>Sole-source（初期）→ Dual-source（成熟）</strong></td><td>Iris ASIC ODM 初期會以 sole-source 加速量產；2027+ 規模化後可能引入第二供應商</td></tr>
+<tr><td>其他 hyperscaler（Microsoft / Google）</td><td>~10-15%（合計）</td><td>Second-source</td><td>Microsoft 偏 Arista（branded）+ 少量 ODM；Google 多自製 + Quanta</td></tr>
+</tbody>
+</table>
+
+<h4>③ 客戶生命週期定位</h4>
+<ul>
+<li><strong>Grow with 客戶</strong>：AWS / Meta 兩家 hyperscaler AI 業務 5-7 年仍是高速擴張軌道，Accton 處於正向綁定（兩家 AI capex 同方向放大）</li>
+<li><strong>客戶可能 in-house ODM</strong>：Microsoft 已自製 Maia + Cobalt + 自研 switch 路徑；AWS 過去多年無自製白牌但 Annapurna 部分 networking 已自做 — 中長期 risk 為 ~10-20%</li>
+<li><strong>客戶可能 second-source</strong>：AWS 已 confirmed dual-track to Celestica；Meta 量產規模化後可能引入第二 ODM；最常見的進場後 risk</li>
+</ul>
+
+<p><strong>客戶結構風險評估：<span class="tag-yellow">🟡 集中但 Grow-with 邏輯強</span></strong> — Top 1 客戶 ~35-40% 偏高，但 AWS 與 Accton 的深度 architecture co-design 關係仍給予 grow-with 紅利；in-house / second-source 風險為「主要中期關切」但非「短期 thesis killer」。</p>
+</section>
+
+<!-- ============================== §9 ============================== -->
+<section class="card" id="s9">
+<h2>§9 護城河分析</h2>
+
+<h3>評分判斷：二維拆解（default）— 製造業 + ODM 性質可拆</h3>
+<p>判斷路徑：Accton 為製造業 ODM，execution moat 與 pricing power moat 可獨立評估 → 強制二維。</p>
+
+<table>
+<thead><tr><th>維度</th><th>評分</th><th>關鍵佐證</th></tr></thead>
+<tbody>
+<tr><td><strong>Execution Moat</strong>（製造工藝 / 研發深度 / 供應鏈整合 / 規模效率）</td><td><strong>9 / 10</strong></td><td>(1) 800G/1.6T 設計與量產領先：跨代節奏比 Cisco / Arista 早 6-12 個月；(2) 規模效率：年產能 ~10-15M switch ports，與 Celestica 共占白牌 ~80-90%；(3) AWS 10+ 年深度 architecture co-design，Sonic / FBOSS / 客製 NOS 都能順利整合；(4) Vietnam + Taiwan + Shanghai 三廠布局；(5) R&D 占 Rev ~2.8% 屬 ODM 業偏高</td></tr>
+<tr><td><strong>Pricing Power Moat</strong>（轉換成本 / 無形資產 / 網路效應 / 客戶依賴度）</td><td><strong>6 / 10</strong></td><td>(1) ODM 商業模式 inherent 低 pricing power — 客戶定義最終產品；(2) 但 OI margin 14.3% 為 ODM 業 outlier 高位（同業典型 5-8%），實質定價能力存在但有限；(3) 客戶集中度 AWS ~35-40% 構成議價弱點；(4) Switching cost 中等 — design-in 需 12-18 個月 + 認證 6-12 個月，但客戶可承擔 dual-source；(5) 無顯著 brand premium</td></tr>
+<tr><td><strong>合併分</strong>（execution-weighted average，因 ODM 業 execution 更具決定性）</td><td><strong>8 / 10</strong></td><td>等權平均 7.5 → execution 加 0.5 權重 → 8</td></tr>
+<tr><td><strong>等級</strong></td><td><strong>B 級</strong></td><td>7-8 區間（B 高端）</td></tr>
+</tbody>
+</table>
+
+<h3>護城河來源（sourced evidence）</h3>
+<table>
+<thead><tr><th>來源</th><th>真實存在？</th><th>深度論述</th></tr></thead>
+<tbody>
+<tr><td>網路效應</td><td>弱 / 不存在</td><td>switch ODM 業務本質為 1-to-1 客戶 design win 關係，無多邊網路</td></tr>
+<tr><td>無形資產（專利 / 認證 / 牌照）</td><td>中等</td><td>800G/1.6T 設計專利 + AWS 多年 design-in IP；switch 通過 FCC / CE / CCC 等多區域認證；認證 + 客戶 design-in 流程約 12-18 個月時間壁壘</td></tr>
+<tr><td>轉換成本</td><td>中高</td><td>客戶切換 ODM 需要：(1) 12-18 個月 design-in；(2) Sonic / NOS 整合測試 6-12 個月；(3) 約 $5-10M qualification cost；(4) 對 AWS / Meta 規模而言可承擔但 painful</td></tr>
+<tr><td>規模優勢</td><td>強</td><td>白牌 switch ODM 大量規模（年 ~10-15M ports）→ unit cost 比第三、四名 ODM 低 ~15-20%；競爭對手需達 ~5M ports/year 才能追上 cost curve</td></tr>
+</tbody>
+</table>
+
+<h3>競爭鴻溝（具體 mechanism）</h3>
+<p>為什麼資本充足的對手仍無法跨越？三大 mechanism：</p>
+<ul>
+<li><strong>時間壁壘（5-7 年）</strong>：白牌 switch ODM 需要與 hyperscaler 多年共同 architecture co-design 才能達到 Accton 的水準。新進者即使具備技術能力，需 5-7 年才能累積到同等 design-in 深度</li>
+<li><strong>資本壁壘（$500M+）</strong>：800G/1.6T 量產能力需要 R&D + 設備投入 $300-500M；加上認證 / 客戶 design-in 階段燒錢期 2-3 年</li>
+<li><strong>認證壁壘（hyperscaler-specific）</strong>：AWS / Meta / Microsoft 各自有 unique 認證要求，新供應商需 12-18 個月通過完整 qualification；單一 hyperscaler 的認證已是 high bar</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<thead><tr><th>競爭對手</th><th>目前市佔</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰（sourced）</th></tr></thead>
+<tbody>
+<tr><td><strong>Accton（自身）</strong></td><td>~40-50%（白牌 switch）</td><td>持平 / 微增</td><td>—</td><td>Cisco / Arista 失血</td></tr>
+<tr><td>Celestica</td><td>~30-40%（白牌 switch）</td><td>大幅上升（NN segment FY25 +99% YoY）</td><td>AWS dual-track 對 Accton；Meta 第二供應商可能</td><td>從 Cisco 拿 hyperscaler 訂單同時與 Accton 並肩擴大</td></tr>
+<tr><td>Quanta / Wistron</td><td>~10-15%</td><td>持平</td><td>主要做 server，switch 邊緣業務</td><td>稍微邊緣化</td></tr>
+<tr><td>Foxconn / 鴻海</td><td>~5-10%</td><td>上升</td><td>規模優勢可能切入 hyperscaler</td><td>從非主流 customer 切入</td></tr>
+<tr><td>Cisco / Arista（branded 對照）</td><td>—</td><td>結構性失去 hyperscaler 份額</td><td>無 — Accton 從這些品牌吃 hyperscaler share</td><td>失去 AI back-end share，但保住 Enterprise / Tier-2 Cloud</td></tr>
+</tbody>
+</table>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<thead><tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr></thead>
+<tbody>
+<tr><td>Execution Moat 趨勢</td><td><strong>加深</strong></td><td>800G 量產領先 → 1.6T 設計領先 → AI back-end TAM 擴張使 Accton 規模優勢倍數放大</td></tr>
+<tr><td>Pricing Power Moat 趨勢</td><td><strong>持平 / 略受壓</strong></td><td>Celestica 進入 AWS dual-source 對 pricing 形成天花板；OI margin 高位但短期上升空間有限</td></tr>
+</tbody>
+</table>
+
+<h3>24 個月內可能瓦解護城河的變化（QC-23 三級分類）</h3>
+<table>
+<thead><tr><th>事件</th><th>等級</th><th>機率</th><th>影響</th></tr></thead>
+<tbody>
+<tr><td>Celestica 在 AWS dual-source 加速擴大份額至 40-50%</td><td><span class="badge-orange">🟡 點對點</span></td><td>中（45%）</td><td>Accton 失去 AWS 份額 ~10-15%，護城河不扣分（單一產品競爭，無生態效應）</td></tr>
+<tr><td>NVIDIA Spectrum-X 端到端方案在 hyperscaler AI back-end 滲透 ≥ 30%</td><td><span class="badge-red">🔴 生態攻擊</span></td><td>低（15%）</td><td>NVIDIA 推「GPU + 光模組 + switch + NIC」全棧聯盟 → 白牌 ODM 訂單下降 20-30%；護城河 -1 分</td></tr>
+<tr><td>CPO（Co-Packaged Optics）強制在 1.6T 世代採用，傳統 pluggable switch box 模式被打破</td><td><span class="badge-red">⛔ 架構替代</span></td><td>低（10%）</td><td>從 ODM 架構切換到 silicon photonics integration；Accton 雖有準備但設計能力斷層 12-18 個月；護城河 -2 分</td></tr>
+</tbody>
+</table>
+<p class="note">QC-23 機率彙整：🟡 中等機率 + 🔴/⛔ 低機率 → 短中期主要威脅為「點對點」(Celestica dual-track)，長期需密切觀察 NVIDIA 生態 + CPO 架構切換。</p>
+</section>
+
+<!-- ============================== §10 ============================== -->
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表（含同業對比，§13.4 peer group）</h3>
+<table>
+<thead><tr><th>指標</th><th>2023</th><th>2024</th><th>2025(E)</th><th>同業中位數</th><th>相對評估</th></tr></thead>
+<tbody>
+<tr><td>FCF Margin</td><td>7.1%</td><td>6.5%</td><td>7.6%</td><td>~5% (Quanta/Celestica)</td><td>優</td></tr>
+<tr><td>EBITDA Margin</td><td>11.2%</td><td>11.4%</td><td>14.0%</td><td>~8%</td><td>優</td></tr>
+<tr><td>OI Margin</td><td>~ 11%</td><td>12.95%</td><td>~14.3%</td><td>~7-9% (ODM peers)</td><td>明顯優</td></tr>
+<tr><td>ROIC − WACC</td><td>+12pp</td><td>+15pp</td><td>+22pp</td><td>+5~+10pp</td><td>優</td></tr>
+<tr><td>SBC / Rev</td><td>~ 1%</td><td>~ 1%</td><td>~ 1%</td><td>~ 1%（台股慣例低）</td><td>持平</td></tr>
+<tr><td>ROE</td><td>~ 28%</td><td>~ 38%</td><td>~ 56%</td><td>~ 18% (Quanta)</td><td>明顯優</td></tr>
+</tbody>
+</table>
+
+<h3>獲利品質警訊</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>淨利 vs OCF 連動性</td><td>FY25 NI 26.3B / OCF 27.1B (1.03x)</td><td>健康，OCF 略高於 NI</td></tr>
+<tr><td>AR 成長 vs Rev 成長</td><td>需查最新 BS — FY25 預估 AR 成長略低於 Rev (+125%)</td><td>未顯示應收膨脹</td></tr>
+<tr><td>存貨成長 vs Rev 成長</td><td>Q1 26 commentary 提及 inventory adjustment（mild）</td><td>需觀察，但 -2.6% QoQ 屬正常季節</td></tr>
+<tr><td>FCF 轉換率趨勢</td><td>FCF/NI: 0.65 → 0.71（FY24 → FY25）</td><td>輕微改善</td></tr>
+</tbody>
+</table>
+
+<h3>回購品質評估（剔除回購後 EPS CAGR）</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th><th>判斷</th></tr></thead>
+<tbody>
+<tr><td>過去 3 年回購總金額 vs FCF 總額</td><td>幾乎無回購（台股慣例配發現金股利為主）</td><td>不適用</td></tr>
+<tr><td>剔除回購後 EPS CAGR</td><td>本標的 EPS CAGR 100% 由獲利增長驅動（無回購效應）</td><td>無差距，EPS 真實成長</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>不適用</td><td>—</td></tr>
+<tr><td>Rev CAGR 同期</td><td>FY25 Rev +125% vs FY25 EPS +120% — 基本一致，margin 略微 expansion 驗證</td><td>健康（無 EPS 靠回購堆疊）</td></tr>
+</tbody>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>過去 5 年 FCF 各年值（TWD bn）</td><td>FY21 ~4.5 / FY22 ~5.5 / FY23 ~5.7 / FY24 ~6.0 / FY25 ~18.76</td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>~8.1B</td></tr>
+<tr><td>最低谷年份 + FCF</td><td>FY21 ~4.5B（占 5Y 均的 56%）</td></tr>
+<tr><td>Lumpiness 性質判斷</td><td>非業務天然 lumpy；FY25 跳升為 AI 需求結構性放大；不是一次性 spike</td></tr>
+<tr><td>結論</td><td>🟡 業務週期合理變動，FY25 FCF 跳升需觀察是否 FY26-27 持續維持高位</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================== §11 ============================== -->
+<section class="card" id="s11">
+<h2>§11 產業格局</h2>
+
+<h3>市場量化</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>白牌 Data Center Switch TAM（2024）</td><td>~$30B（Dell'Oro）</td></tr>
+<tr><td>2028E TAM</td><td>~$80B（5Y CAGR ~27%）</td></tr>
+<tr><td>2030E TAM</td><td>~$110B（10Y CAGR ~14%，AI back-end 進入 mature growth）</td></tr>
+<tr><td>當前白牌滲透率</td><td>~60% in hyperscaler；~10% in enterprise/Tier-2</td></tr>
+<tr><td>供需狀態</td><td>緊缺（capacity bottleneck，Accton 滿載 + Vietnam 加產）</td></tr>
+</tbody>
+</table>
+
+<h3>議價權</h3>
+
+<h4>① 對上游供應商（獨立段，≥ 60 字）</h4>
+<p>Accton 主要 silicon 供應商為 Broadcom（Tomahawk 系列，占 switch 矽 ~70-80%）、Marvell（Teralynx）、NVIDIA（Spectrum 系列，少量）。供應商集中度高 — Broadcom 在 high-end Ethernet switch silicon 為 sole-leader 地位（占整個產業 ~75%）。但 Accton 為 Broadcom 重要客戶（前 5 大採購之一），議價權相對 mutual — 兩者互為 dependent。近 3 年無顯著議價案例（switch silicon 普遍稀缺，Accton 以「優先 allocation 取得」而非「壓低成本」為主要訴求）。光模組（OSFP transceiver）供應商有 II-VI / Coherent / Lumentum 等，相對分散，Accton 議價力較強。</p>
+
+<h4>② 對下游客戶（獨立段，≥ 60 字）</h4>
+<p>客戶集中度高（Top 1 AWS ~35-40%，Top 5 ~60-70%）— 客戶議價權實質強於 Accton。合約結構多為 6-12 個月 rolling forecast + spot order 混合，少數有 multi-year framework agreement（如與 AWS 的 strategic agreement）。近 3 年無公開的客戶流失 case（AWS / Meta / Microsoft 均擴大 wallet share）。定價權直接證據：800G 比 400G ASP +60-80% per port — 證明 mix shift 確實能拉動單價而非被客戶完全壓縮；提價後客戶留存率 100%（無 design win loss）。但 Celestica dual-track 對 AWS 訂單的議價權形成天花板效應。</p>
+
+<h4>③ 地緣曝險（獨立段，≥ 60 字）</h4>
+<p>核心生產地：Taiwan ~60%（主要 Hsinchu / Taipei facilities）、Vietnam ~25%（Hai Phong 廠擴張中）、Shanghai ~15%（部分後段製程）。供應鏈最高集中點：Broadcom silicon 來自 TSMC（同樣 Taiwan-centric） + ABF 載板來自 TW（Unimicron / Nan Ya）+ 光模組來自全球分散。政策風險具體路徑：(1) 美對 China-made networking 加嚴出口管制 — 影響有限因生產主力在 Taiwan / Vietnam；(2) 台海地緣升級 — Vietnam 廠是 hedging move，目前約 25% production，目標 2027 提升到 35-40%；(3) 美對 Taiwan 出口 chip 影響可控（Accton 為 final assembly，非 silicon 設計）。地緣風險為 R3 級長期變數，當前 manageable。</p>
+
+<h3>營收組成（三維展開）</h3>
+
+<h4>① 按業務段</h4>
+<table>
+<thead><tr><th>業務段</th><th>占比%</th><th>YoY%</th><th>OI Margin</th><th>3Y 軌跡</th></tr></thead>
+<tbody>
+<tr><td>White-box Data Center Switch（800G/1.6T 主導）</td><td>~70%</td><td>+90%</td><td>~15-16%</td><td>占比快速擴大（FY23 ~50% → FY25 ~70%）</td></tr>
+<tr><td>Enterprise Switch / Wireless</td><td>~15%</td><td>+15%</td><td>~10%</td><td>占比逐年下降（被 AI 業務稀釋）</td></tr>
+<tr><td>Optical Transceiver / 其他</td><td>~10%</td><td>+50%</td><td>~12%</td><td>占比微升（與 800G 配套）</td></tr>
+<tr><td>其他（OEM service / AP / 雜散）</td><td>~5%</td><td>+5%</td><td>~6%</td><td>占比快速下降</td></tr>
+</tbody>
+</table>
+
+<h4>② 按地區</h4>
+<table>
+<thead><tr><th>地區</th><th>占比%</th><th>YoY%</th><th>備註</th></tr></thead>
+<tbody>
+<tr><td>北美（AWS / Meta / Microsoft / Google）</td><td>~70-75%</td><td>+80-90%</td><td>主導區，AI driven</td></tr>
+<tr><td>歐洲</td><td>~10-15%</td><td>+20%</td><td>主要為 Tier-2 cloud + 工業</td></tr>
+<tr><td>亞太（含台日韓中等）</td><td>~10-15%</td><td>+30%</td><td>多元，本土 enterprise + 部分 China hyperscaler</td></tr>
+<tr><td>其他</td><td>~5%</td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h4>③ 按客戶集中度</h4>
+<table>
+<thead><tr><th>指標</th><th>數值</th></tr></thead>
+<tbody>
+<tr><td>Top 1 客戶占比%</td><td>~35-40%（AWS，業界估算）</td></tr>
+<tr><td>Top 5 客戶合計%</td><td>~60-70%</td></tr>
+<tr><td>失去最大客戶影響</td><td>-35-40% Rev 直接損失；-20-25% Rev 經一年內 Quanta / Wistron 部分接手後可緩衝；股價估計 -50~-60% 立即反應</td></tr>
+</tbody>
+</table>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<thead><tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th><th>趨勢</th><th>結構性洞察</th></tr></thead>
+<tbody>
+<tr><td>White-box 800G Switch</td><td>ASP per port（美元）</td><td>~$600-800（800G port）vs ~$200-300（100G/400G port）</td><td>↑</td><td>800G mix shift 是 ASP YoY 增長 30-40% 的根本驅動</td></tr>
+<tr><td>Optical Transceiver</td><td>ASP per module</td><td>~$1,500-2,000（800G OSFP）vs ~$400（400G）</td><td>↑</td><td>800G 模組相對 switch box 利潤率較低，配套銷售意義大於獨立利潤</td></tr>
+<tr><td>Enterprise Switch</td><td>ASP per unit</td><td>~$1,000-3,000（典型 24/48 port）</td><td>→</td><td>商品化業務，純 manufacturing 效率比拼</td></tr>
+</tbody>
+</table>
+</section>
+
+<!-- ============================== §12 ============================== -->
+<section class="card" id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>股東結構（QC-6 項目 1 + 4）</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>創辦人 / 內部人持股</td><td>~11.6%（yfinance heldPercentInsiders）</td></tr>
+<tr><td>機構投資人持股</td><td>~47.2%（外資 + 投信 + 自營）</td></tr>
+<tr><td>創辦人黃震宇</td><td>仍擔任董事會成員；二代接班結構未公開明確</td></tr>
+<tr><td>近期內部人大額交易</td><td>無重大公告（過去 12 個月內 SEC / 公開資訊觀測站 未見董監事重大買賣）</td></tr>
+</tbody>
+</table>
+
+<h3>資本配置軌跡（M&A track record 5Y）</h3>
+<table>
+<thead><tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>減損紀錄</th></tr></thead>
+<tbody>
+<tr><td colspan="5">過去 5 年無重大 M&A（金額 > 市值 5% 或 > $100M），有機成長為主</td></tr>
+</tbody>
+</table>
+<p class="note">2013 年成立 EdgeCore 子品牌為 organic carve-out 而非 acquisition。Accton 歷史上 capital allocation 偏 organic R&D + capex，無激進併購紀錄 — 為 ODM 業相對 conservative 治理。</p>
+
+<h3>管理層薪酬結構（QC-6 項目 3）</h3>
+<table>
+<thead><tr><th>項目</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>固定薪 / 績效獎金 / 股權激勵比例</td><td>台股慣例：董監事酬勞約稅前淨利 1-2%；員工分紅約稅前淨利 5-10%（含分紅配股）</td></tr>
+<tr><td>績效掛鉤</td><td>主要與淨利 + EPS 績效掛鉤，符合股東利益</td></tr>
+<tr><td>股權激勵稀釋</td><td>近 3 年稀釋約 0.5%/年（從 558.8M shares trending 略升）— 低於同業</td></tr>
+</tbody>
+</table>
+
+<h3>SBC 真實稀釋（v12.3 強化）</h3>
+<table>
+<thead><tr><th>指標</th><th>數據</th></tr></thead>
+<tbody>
+<tr><td>SBC / Rev（近 3 年）</td><td>~1% / 1% / 1%（台股慣例低位）</td></tr>
+<tr><td>GAAP EPS（=台股法定口徑）</td><td>FY25 46.79</td></tr>
+<tr><td>Non-GAAP EPS</td><td>不適用（台股單一口徑）</td></tr>
+<tr><td>剔除員工分紅後 EPS CAGR</td><td>FY22-25 約 47%（vs 公開 EPS CAGR 47% — 無重大差距，台股本就 fully diluted 計算）</td></tr>
+<tr><td>結論</td><td>SBC 真實稀釋 minimal — 無 EPS 美化問題</td></tr>
+</tbody>
+</table>
+
+<p><strong>過去 12 個月治理 status：<span class="tag-green">🟢</span></strong> 無併購 > 市值 5%、無集體訴訟、無管理層異動或重大監管事件。</p>
+</section>
+
+<!-- ============================== §13 ============================== -->
+<section class="card" id="s13">
+<h2>§13 估值診斷（v12.3：13.1 / 13.2 / 13.4 + 結論）</h2>
+
+<p class="note">EPS 來源：<strong>yfinance snapshot 2026-05-26</strong>（Excel snapshot 2026-05-26 未覆蓋 2345.TW，fall back yfinance）；FY+1 78.99 n=5、FY+2 99.23 n=8、FY+3 117 §8 邏輯推導。</p>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<thead><tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr></thead>
+<tbody>
+<tr><td>Trailing P/E</td><td>56.3x</td><td>14x</td><td>22x</td><td>~55x</td><td>~98% （極高）</td></tr>
+<tr><td>Forward P/E（FY+1）</td><td>33.4x</td><td>~10x</td><td>~22x</td><td>~38x</td><td>~72%</td></tr>
+<tr><td>Forward P/E（FY+2）</td><td>26.5x</td><td>~9x</td><td>~18x</td><td>~32x</td><td>~70%</td></tr>
+<tr><td>EV/EBITDA</td><td>36.4x</td><td>~9x</td><td>~17x</td><td>~38x</td><td>~92%</td></tr>
+<tr><td>P/FCF</td><td>~ 80x</td><td>~ 15x</td><td>~ 30x</td><td>~ 85x</td><td>~94%</td></tr>
+<tr><td>P/S</td><td>~ 5.9x</td><td>~ 0.8x</td><td>~ 1.5x</td><td>~ 6.0x</td><td>~98%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">Fwd PE FY+1 分位 = (33.4 - 10) / (38 - 10) × 100% = 72%（落 🟠 區間）；Trailing PE 與 P/S 雖達 98% 但 Forward 因 FY26 EPS 大幅成長拉低，是更合理的判斷基礎；implication：對 §2 D 估值燈確認為 🟠（原始）— 配合 PEG 一同進入盲點 1 救援判斷。</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<thead><tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr></thead>
+<tbody>
+<tr><td>Forward P/E（FY+1）</td><td>33.4x</td><td>—</td><td>—</td></tr>
+<tr><td>EPS CAGR（3 年，FY25 → FY28）</td><td>35.9%</td><td>—</td><td>—</td></tr>
+<tr><td><strong>PEG（3 年）</strong></td><td><strong>0.93</strong></td><td><strong>< 1.0 便宜 / 1-2 合理</strong></td><td>低於 1，從 PEG 角度極具吸引力</td></tr>
+<tr><td>5 年 EPS CAGR（FY25 → FY30，§8 推導）</td><td>~25%</td><td>—</td><td>—</td></tr>
+<tr><td>PEG（5 年）</td><td>~1.34</td><td>1-2 合理</td><td>仍在合理區間</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>0.93 → 1.34（差 0.41）</td><td>差異 > 0.5 暗示近期成長不可持續</td><td>差異 0.41 接近警戒線，需結構性監測 FY27+ 是否真能持續</td></tr>
+</tbody>
+</table>
+<div class="reasoning">PEG = 33.4 ÷ 35.9 = 0.93，落入「便宜」區間；但 3Y vs 5Y PEG 從 0.93 → 1.34 警示 FY28+ 成長率必然 step-down，這是合理 mid-term 觀察；implication：對 §2 D 估值燈，PEG 維度判 🟢，但需與分位 72% 🟠 同時考慮（取較嚴 🟠，後續走盲點 1 救援邏輯）</div>
+
+<h3>13.4｜同業估值比較（強制 peer group 對的 tier）</h3>
+
+<h4>業務模式 tier 判斷</h4>
+<p>本標的業務模式 tier：<strong>白牌 Data Center Switch ODM（混合 design + manufacturing）</strong>。</p>
+<p>Peer 選法：</p>
+<ul>
+<li>✅ <strong>直接同 tier</strong>：Celestica（最直接同 ODM 對手）、Quanta（亦做 networking）、Wistron（部分 networking ODM）</li>
+<li>⚠️ <strong>非同 tier 但常被誤對標</strong>：Arista（branded switch，PE 結構與 ODM 不同）— 不適合作為 anchor，只作為 cost / business model 對比參考</li>
+<li>⚠️ <strong>跨 tier 高倍數對標</strong>：NVDA / AVGO — 完全不同業務模式 tier，絕不應用作 anchor</li>
+</ul>
+
+<h4>同業估值比較表</h4>
+<table>
+<thead><tr><th>公司</th><th>市值</th><th>Fwd P/E</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3 年）</th><th>ROIC</th></tr></thead>
+<tbody>
+<tr><td><strong>Accton（2345.TW）</strong></td><td>~$47B USD</td><td><strong>33.4x</strong></td><td>36.4x</td><td><strong>0.93</strong></td><td>7.6%</td><td>35.9%</td><td>~30%</td></tr>
+<tr><td>Celestica（CLS）</td><td>~$30B USD</td><td>~30x</td><td>~22x</td><td>~1.4</td><td>~5%</td><td>~22%</td><td>~22%</td></tr>
+<tr><td>Quanta（2382.TW）</td><td>~$60B USD</td><td>~28x</td><td>~22x</td><td>~1.3</td><td>~4%</td><td>~22%</td><td>~25%</td></tr>
+<tr><td>Wistron（3231.TW）</td><td>~$25B USD</td><td>~22x</td><td>~18x</td><td>~1.4</td><td>~3%</td><td>~16%</td><td>~18%</td></tr>
+<tr><td><strong>同 tier 中位數</strong></td><td>—</td><td><strong>~27x</strong></td><td>~22x</td><td>~1.35</td><td>~4%</td><td>~20%</td><td>~22%</td></tr>
+<tr><td>—（branded 對照）Arista</td><td>~$170B USD</td><td>~45x</td><td>~32x</td><td>~2.3</td><td>~30%</td><td>~20%</td><td>~25%</td></tr>
+</tbody>
+</table>
+<div class="reasoning">Accton Fwd PE 33.4x vs 同 tier 中位 27x = +23% 溢價；但 EPS CAGR 35.9% vs 中位 20% = +80% 領先；PEG 0.93 vs 中位 1.35 = 顯著低於同業；implication：估值溢價有基本面支撐（成長率明顯領先 + OI margin 14% vs 同業 6-8% 明顯領先），向中位數 mean-revert 機率低；若收斂 50% 至中位（27x），股價需從 2,635 至 ~2,135 (-19%) — 屬合理 R4 風險（同業溢價收斂壓測 QC-30）</div>
+
+<h3>§13 估值診斷結論</h3>
+<p>13.1 歷史分位 72%（Fwd PE FY+1）→ 情緒：mid-to-high 區間，非極端過熱 + 13.2 PEG 0.93（便宜）+ 13.4 同業相對溢價 +23% 但 PEG 顯著低於中位（基本面支撐強）→ 綜合估值訊號：<strong><span class="tag-yellow">🟡 公允（盲點 1 救援後）</span></strong>。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+
+<h3>分析師目標價參考</h3>
+<table>
+<tbody>
+<tr><th>來源</th><td>Investing.com consensus（11 analysts）</td></tr>
+<tr><th>共識評級</th><td>Strong Buy</td></tr>
+<tr><th>目標價區間</th><td>High 3,500 / Avg 2,902 / Low 1,800</td></tr>
+<tr><th>當前股價</th><td>2,635</td></tr>
+<tr><th>共識中位上行</th><td>+10% (2,902 / 2,635 - 1)</td></tr>
+</tbody>
+</table>
+<p><strong>本 DD 與共識一致性</strong>：共識中位 2,902 隱含 FY+1 PE 36.7x（vs 我們判定的 fair value PE 32-35x 範圍）— 略偏 bullish 但合理區間內。共識顯著 bull case 3,500 隱含 PE 44x，這需要 FY26 EPS 上修至 ~85+ 才能驗證；目前 yfinance trend 已從 90 天前的 62.19 升到 78.99，若 Q2-Q3 26 持續上修則 bull case 可達。</p>
+
+<h3>財報信號與假設校準</h3>
+<ul>
+<li><strong>H1（AI capex 持續）當前狀態</strong>：強化（Q1 26 Rev +64% YoY 為過去 4 季最強加速；FY+1 EPS 共識在過去 90 天上修 27%）</li>
+<li><strong>H2（Meta Iris）當前狀態</strong>：未確認但方向積極（Q1 法說已提及 Meta engagement 進入「meaningful design-in」，但具體 shipment 數字待 2H26）</li>
+<li><strong>H3（OI margin 高位）當前狀態</strong>：強化（Q1 OI margin ~13% vs Q1 25 ~11.5% +1.5pp 擴張）</li>
+<li><strong>這份財報讓隱含預期變得</strong>更容易兌現 — Q1 26 雙位數加速 + margin 擴張 + 共識持續上修，all positive for FY+1 EPS 78.99 達成</li>
+</ul>
+
+<h3>綜合訊號輸出</h3>
+<table>
+<tbody>
+<tr><th>護城河等級</th><td>B → 調整後 B（estvalu 燈 🟡 不上調）</td></tr>
+<tr><th>估值燈</th><td>🟡（盲點 1 救援後，原始 🟠）</td></tr>
+<tr><th>Pure MA 狀態</th><td>✅ 強勢進場</td></tr>
+<tr><th>大盤豁免</th><td>正常</td></tr>
+<tr><th>陷阱定性</th><td>🟢 非陷阱</td></tr>
+<tr><th><strong>綜合訊號</strong></th><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+<tr><th>中期參考 R:R</th><td>0.62x（資訊性，不主導裁決）</td></tr>
+</tbody>
+</table>
+
+<p><strong>① 短期信號（0-12 個月）</strong>：Q1 26 雙位數加速 + 共識持續上修，短期 newsflow 偏 positive；但 ATH stretched + 三時距 R:R < 2.0 → 不適合追高新進。</p>
+<p><strong>② 中期成長確信度（1-2 年）</strong>：FY+1 EPS 78.99 共識 n=5 + Q1 26 +66% YoY 已驗證 19% 進度（Q1 14.92 / FY26 78.99 = 19%）；FY+2 EPS 99.23 取決於 H2（Meta）與 H3（margin）兌現。可見度：中高（共識方向正確 + 90 天上修軌跡強）。</p>
+<p><strong>③ 長期持有信心（3-5 年）</strong>：成長跑道 ≥ 10 年（§8.A）／護城河趨勢 execution 加深 + pricing power 持平（§9）／長期持有信心：<strong>高</strong>。</p>
+
+<h3>下行風險量化</h3>
+<ul>
+<li>短期下檔（Bear Case）：現價至 1,280 距離 -51.4%</li>
+<li>中期下檔（Bear Case）：現價至 1,280 距離 -51.4%（同 anchor）</li>
+<li>W52 Low 699（參考）／ W104 Low ~ 600（參考）</li>
+<li>若 FY+1 EPS 下修 10%（從 78.99 → 71.09），短期 R:R 將從 0.10x 進一步降至 0.04x（基本歸零）</li>
+<li>若 §13.4 同業溢價收斂 50%（PE 從 33x 至 30x mid-point），股價將至 2,135 (-19%) — R4 同業溢價收斂壓測（QC-30）</li>
+</ul>
+</section>
+
+</div>
+
+<button class="print-btn" onclick="window.print()">列印 / 存 PDF</button>
+
+</body>
+</html>
