@@ -2,8 +2,10 @@
  * Each topic HTML sets <body data-topic="xxx"> and includes this file.
  * The engine fetches:
  *   data/{topic}.json  — node graph for the topic
- *   data/_dd_links.json — ticker → DD report path (built by scripts/build_supply_chain_dd_index.py)
- *   data/_topics.json  — manifest of all topics + active flag, drives tab strip
+ *   data/dd_links.json — ticker → DD report path (built by scripts/build_supply_chain_dd_index.py)
+ *   data/topics.json   — manifest of all topics + active flag, drives tab strip
+ * (Filenames intentionally non-_prefixed — GitHub Pages' Jekyll layer strips
+ *  underscore-prefix files from publish output.)
  */
 (function () {
 const COMP = {
@@ -464,8 +466,8 @@ async function boot() {
   try {
     const [topic, ddLinks, manifest] = await Promise.all([
       fetchJSON(`data/${topicId}.json`),
-      fetchJSON(`data/_dd_links.json`).catch(() => ({})),
-      fetchJSON(`data/_topics.json`).catch(() => ({ topics: [{ id: topicId, tab: topicId, active: true }] })),
+      fetchJSON(`data/dd_links.json`).catch(() => ({})),
+      fetchJSON(`data/topics.json`).catch(() => ({ topics: [{ id: topicId, tab: topicId, active: true }] })),
     ]);
     TOPIC = topic;
     DD_LINKS = ddLinks;

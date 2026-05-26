@@ -2,7 +2,9 @@
 """Scan docs/dd/DD_{TICKER}_{YYYYMMDD}.html and emit a ticker→relative-path map
 for the supply-chain pages to deep-link company rows to their DD reports.
 
-Output: docs/supply-chain/data/_dd_links.json
+Output: docs/supply-chain/data/dd_links.json
+  (Filename intentionally non-_prefixed — GitHub Pages' Jekyll strips
+   underscore-prefix files from publish output.)
 
 Conventions:
   * Filename pattern: DD_<TICKER>_<YYYYMMDD>.html
@@ -30,7 +32,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DD_DIR = ROOT / "docs" / "dd"
-OUT = ROOT / "docs" / "supply-chain" / "data" / "_dd_links.json"
+OUT = ROOT / "docs" / "supply-chain" / "data" / "dd_links.json"
 REL_FROM_SUPPLY_CHAIN = "../dd"  # /supply-chain/cowos.html → ../dd/DD_...html
 
 PAT = re.compile(r"^DD_(?P<ticker>[A-Za-z0-9.]+)_(?P<date>\d{8})\.html$")
