@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>使用說明 — InvestMQuest Research</title>
-<meta name="description" content="如何呼喚 skill / SOP：個股 DD / 產業 DD / 組合複盤 / Flagship 更新的完整指令清單">
+<meta name="description" content="如何呼喚 11 套 Claude skill / SOP：個股 DD / DCA / 產業 DD / DS / 多股對比 / PM 複盤 / 財報統整 / Flagship 更新的完整指令清單">
 <style>
 body{font-family:-apple-system,'Noto Sans TC',sans-serif;background:#FAFAF9;color:#1E1B4B;margin:0;padding:0;font-size:14px;line-height:1.7}
 header{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#fff;padding:.75rem 0;position:sticky;top:0;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.12)}
@@ -25,16 +25,25 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 .skill-card{background:#fff;border:1px solid #E5E7EB;border-radius:12px;margin:18px 0;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.03)}
 .skill-head{padding:14px 20px;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;gap:14px}
 .skill-head.blue{background:linear-gradient(90deg,#DBEAFE 0%,#fff 60%)}
+.skill-head.indigo{background:linear-gradient(90deg,#E0E7FF 0%,#fff 60%)}
 .skill-head.purple{background:linear-gradient(90deg,#EDE9FE 0%,#fff 60%)}
+.skill-head.pink{background:linear-gradient(90deg,#FCE7F3 0%,#fff 60%)}
 .skill-head.green{background:linear-gradient(90deg,#DCFCE7 0%,#fff 60%)}
+.skill-head.teal{background:linear-gradient(90deg,#CCFBF1 0%,#fff 60%)}
 .skill-head.amber{background:linear-gradient(90deg,#FEF3C7 0%,#fff 60%)}
+.skill-head.red{background:linear-gradient(90deg,#FEE2E2 0%,#fff 60%)}
+.skill-head.grey{background:linear-gradient(90deg,#F1F5F9 0%,#fff 60%)}
 .skill-icon{font-size:24px}
 .skill-title{flex:1}
 .skill-title h2{margin:0;font-size:16.5px;font-weight:700}
 .skill-title h2.blue{color:#1E3A5F}
+.skill-title h2.indigo{color:#3730A3}
 .skill-title h2.purple{color:#4C1D95}
+.skill-title h2.pink{color:#9D174D}
 .skill-title h2.green{color:#166534}
+.skill-title h2.teal{color:#0F766E}
 .skill-title h2.amber{color:#713F12}
+.skill-title h2.red{color:#991B1B}
 .skill-title .sub{color:#6B7280;font-size:11.5px;margin-top:2px}
 .skill-meta{font-size:11px;color:#94A3B8;font-family:'IBM Plex Mono',monospace}
 
@@ -68,6 +77,14 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 .flow .step{padding:3px 0;padding-left:14px;position:relative}
 .flow .step::before{content:'→';position:absolute;left:0;color:#7C3AED;font-weight:700}
 .flow .step:first-child::before{content:'▸';color:#16A34A}
+
+.skill-tree{background:#F8FAFC;border:1px solid #CBD5E1;border-radius:10px;padding:18px 20px;margin:18px 0}
+.skill-tree h3{margin-top:0;color:#0F172A;font-size:15px}
+.skill-tree-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.skill-tree-col{background:#fff;border:1px solid #E2E8F0;border-radius:8px;padding:12px 14px;font-size:12.5px}
+.skill-tree-col .col-title{font-weight:700;color:#0F172A;margin-bottom:8px;font-size:13px;padding-bottom:6px;border-bottom:1px solid #E2E8F0}
+.skill-tree-col ul{margin:0;padding-left:18px;color:#374151;font-size:12px;line-height:1.7}
+.skill-tree-col code{background:#F3F4F6;padding:1px 5px;border-radius:3px;font-size:11px;color:#4C1D95}
 </style>
 </head>
 <body>
@@ -106,6 +123,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         <button type="button" class="imq-dd-btn">研究<span class="imq-caret">▾</span></button>
         <div class="imq-dd-menu">
           <a href="/research/">個股 DD</a>
+          <a href="/dca/">深度定見 DCA</a>
           <a href="/pm/">PM 複盤</a>
           <a href="/id/">產業深度 ID</a>
           <a href="/ds/">產業敘述 DS</a>
@@ -149,19 +167,57 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 <div class="container">
   <div class="crumb"><a href="/">首頁</a> &rsaquo; 使用說明</div>
   <h1>使用說明 — 如何呼喚 skill / SOP</h1>
-  <p class="sub">本站研究內容由 4 套 Claude skill（stock-analyst / industry-analyst / portfolio-manager / geopolitics-dd）+ 多份 SOP 協作產出。本頁列出<strong>每個研究工作流對應的觸發指令</strong>，讓你知道「想要 X，該說什麼」。</p>
+  <p class="sub">本站研究內容由 <strong>11 套 Claude skill</strong> + 多份 SOP 協作產出。本頁列出<strong>每個研究工作流對應的觸發指令</strong>，讓你知道「想要 X，該說什麼」。最後更新 2026-05-26。</p>
 
-  <!-- ========== 四個 skill 與 flagship 更新 ========== -->
+  <!-- ========== Skill Map ========== -->
+  <div class="skill-tree">
+    <h3>🗺️ 11 套 Skill 地圖</h3>
+    <p style="font-size:12.5px;color:#475569;margin:6px 0 0">分四層職責：<strong>研究產出</strong> · <strong>研究升級</strong> · <strong>消費端統整</strong> · <strong>發布 + 維運</strong>。</p>
+    <div class="skill-tree-grid">
+      <div class="skill-tree-col">
+        <div class="col-title">🔬 研究產出（生產端）</div>
+        <ul>
+          <li><code>stock-analyst</code> v12.4 — 個股 DD</li>
+          <li><code>deep-conviction-analyst</code> v1.3 — DCA（DD 之上決策層）</li>
+          <li><code>industry-analyst</code> v1.6 — 產業 DD (ID)</li>
+          <li><code>industry-ds</code> v1.2 — 產業敘述 (DS)</li>
+          <li><code>geopolitics-dd</code> v1.0 — 地緣政治</li>
+          <li><code>portfolio-manager</code> v1.0 — 組合複盤 (PM)</li>
+        </ul>
+      </div>
+      <div class="skill-tree-col">
+        <div class="col-title">🔧 研究升級 / 校驗</div>
+        <ul>
+          <li><code>id-review</code> v1.4 — ID / DS Cold-review critic</li>
+          <li><code>dd-v12-3-upgrade</code> v1.2 — DD 批次升級 worker</li>
+        </ul>
+      </div>
+      <div class="skill-tree-col">
+        <div class="col-title">📊 消費端統整</div>
+        <ul>
+          <li><code>multi-stock-comparator-v1</code> v1.5 — 多股對比</li>
+          <li><code>earnings-synthesis</code> v1.1 — 30 天財報統整</li>
+        </ul>
+      </div>
+      <div class="skill-tree-col">
+        <div class="col-title">🚀 發布 / 維運</div>
+        <ul>
+          <li><code>push-earnings</code> v1.0 — 發布財報 + 更新 index</li>
+          <li><code>refresh-eps-screener</code> v1.0 — DD Screener EPS 月度更新</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
-  <!-- Stock Analyst -->
+  <!-- ========== 1. Stock Analyst ========== -->
   <div class="skill-card">
     <div class="skill-head blue">
       <div class="skill-icon">📊</div>
       <div class="skill-title">
         <h2 class="blue">stock-analyst · 個股 DD</h2>
-        <div class="sub">v12.0 買側深度研究，輸出綜合訊號燈（A+/A/B/C/X）</div>
+        <div class="sub">v12.4 — Excel buy-side consensus 接口；v12.3 雙軸護城河 + 估值瘦身 + 基本面擴充</div>
       </div>
-      <div class="skill-meta">~/skills/stock-analyst/</div>
+      <div class="skill-meta">~/skills/stock-analyst/ · v12.4</div>
     </div>
     <div class="skill-body">
       <table>
@@ -169,90 +225,143 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         <tr>
           <td>研究單一股票</td>
           <td><code>研究 NVDA</code><br><code>幫我做 2330 DD</code></td>
-          <td>docs/dd/DD_{ticker}_{date}.html（13 章完整 DD）</td>
+          <td>docs/dd/DD_{ticker}_{date}.html（13 章完整 DD）+ INDEX append + research 頁同步 + dd-screener rebuild</td>
         </tr>
         <tr>
           <td>刷新既有 DD</td>
           <td><code>再做一次 TSLA DD</code><br><code>刷新 AVGO</code></td>
-          <td>新日期 DD，舊版保留；自動比對前版</td>
+          <td>新日期 DD；自動讀最近一份 DD 的 §5 假設 / §1 監測指標做 12M 對照；舊版保留</td>
         </tr>
         <tr>
           <td>批次研究</td>
           <td><code>研究 NVDA / AMD / AVGO</code></td>
-          <td>三份獨立 DD + 附一段比較</td>
-        </tr>
-        <tr>
-          <td>特定層面深挖</td>
-          <td><code>幫我看 AMAT 的護城河</code></td>
-          <td>專章分析（非全篇 DD）</td>
+          <td>三份獨立 DD，依序執行；最後可附比較段</td>
         </tr>
       </table>
-
+      <div class="tips"><strong>⚡ v12.4 EPS 接 Excel</strong>：DD universe ≈141 ticker（含 US/ADR/TW 自動換 USD）走 Koyfin/Excel 月度 buy-side consensus（FY+1/+2/+3 + 2Y CAGR），優先於 yfinance / WebSearch。ADR / TW listings 自動換成 USD 避免 FX 陷阱。Excel 缺檔 → fallback yfinance → WebSearch。</div>
+      <div class="tips"><strong>⚡ v12.3 結構重排</strong>：估值章節（§2+§13）從 ~40% 砍至 ~18%（13.0/13.3/13.5 砍掉，只留 13.1/13.2/13.4 + 1 段結論）；基本面（§5+§8+§9+§11+§12）擴至 ~55%（§9 強制 execution + pricing power 雙軸拆解；§5.F 加 Single Thing；§8.H 加客戶結構深度；QC-23 三級威脅分類強制使用）。</div>
       <div class="example">
-        <span class="you">你：</span> 「研究 BESI」<br>
-        <span class="bot">Claude：</span> WebSearch 最新財報 → 查 AMAT 持股狀態 → 讀 docs/id/ 找對應產業背景（ID_AdvancedPackaging / ID_HBM）→ 寫 DD_BESI_{date}.html → push
+        <span class="you">你：</span> 「研究 3653」<br>
+        <span class="bot">Claude：</span> 跑 <code>get_eps_for_ticker.py</code> 查 Excel → fall back yfinance（3653.TW NOT in Excel）→ WebSearch Rubin / MCL / Q1 法說 → 寫 13 章 DD（91KB）→ append INDEX → push
       </div>
     </div>
   </div>
 
-  <!-- Industry Analyst -->
+  <!-- ========== 2. Deep Conviction Analyst (NEW) ========== -->
   <div class="skill-card">
-    <div class="skill-head purple">
-      <div class="skill-icon">🔷</div>
+    <div class="skill-head indigo">
+      <div class="skill-icon">🎯</div>
       <div class="skill-title">
-        <h2 class="purple">industry-analyst · 產業 DD（Industry DD / ID）</h2>
-        <div class="sub">v1.5 跨多檔個股共用的產業研究，含 9 Gates pre-publish check + Thesis Cornerstone 驗證 + 母題/子題結構</div>
+        <h2 class="indigo">deep-conviction-analyst · DCA（投資決策層）<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.3 — 位於 DD 之上的「投資決策層」：Phase A 三軸獨立搜尋 + Phase B 矛盾辨識 + Phase C PM 決策框架，輸出 ≥ 50KB 的可執行 HTML 投資決策報告</div>
       </div>
-      <div class="skill-meta">~/skills/industry-analyst/</div>
+      <div class="skill-meta">~/skills/deep-conviction-analyst/ · v1.3</div>
     </div>
     <div class="skill-body">
       <table>
         <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
         <tr>
-          <td>建新產業母題 DD</td>
-          <td><code>研究 {主題} 產業</code><br><code>研究 GLP-1</code><br><code>研究玻璃基板封裝</code></td>
-          <td>docs/id/ID_{Topic}_{date}.html（14 章 ID）+ §11 關聯個股清單</td>
+          <td>單檔深度定見分析</td>
+          <td><code>幫我跑 NVDA DCA</code><br><code>{ticker} 定見</code><br><code>該不該進場 LLY</code></td>
+          <td>docs/dca/DCA_{ticker}_{date}.html（&gt;50KB 含 §2 thesis / §7 倉位 / §4 R:R / Status Bar 5 格 / Phase B 強制裁決）+ INDEX + research 頁「定見」📋 連結同步</td>
         </tr>
         <tr>
-          <td>建子題 DD（母題下分支）</td>
-          <td><code>{母題} 的 {子題名}</code><br><code>資安 SaaS M2 AI × 資安雙刃劍</code></td>
-          <td>子題 ID + cross-ID 依賴圖（§11.5）自動關聯母題與兄弟</td>
-        </tr>
-        <tr>
-          <td>刷新既有 ID</td>
-          <td><code>刷新 ID_HBM</code><br><code>更新 AI Accelerator Demand</code></td>
-          <td>新版 ID，v1.x → v1.(x+1)</td>
-        </tr>
-        <tr>
-          <td>局部補丁</td>
-          <td><code>更新 ID_AP 的 §4 TAM</code></td>
-          <td>只重寫該段（skill v1.5 支援）</td>
-        </tr>
-        <tr>
-          <td>建新 Flagship</td>
-          <td><code>建 {產業} flagship</code>（需 ≥ 5 份 ID）</td>
-          <td>docs/id/theses-{category}.html + 啟用 Library tab</td>
+          <td>跨 Skill：DD + DCA 一起跑</td>
+          <td><code>做完 DD 後再跑 DCA</code></td>
+          <td>DD 寫完後直接觸發 DCA，Phase A4 自動讀 dd-meta JSON 取 trap / signal / moat 數據</td>
         </tr>
       </table>
-
-      <div class="tips"><strong>⚡ v1.5 九道 Gate</strong>：發布前自動跑 (1) core ticker financials &lt; 60 天、(2) event thesis &lt; 14 天、(2.1) <strong>Thesis Cornerstone Fact Verification</strong>（獨家 / 首家 / 唯一 類 claim 必須獨立驗證）、(3) cross-ID 一致、(3.1) cross-ID thesis bias 偵測、(4) catalyst 標示、(5) unit glossary、(6) layer 分層、(7) sub-topic value-add。阻斷 Gate（1/2/2.1/3）任一 fail 直接阻斷。</div>
-
+      <div class="tips"><strong>⚡ Status Bar 5 格機讀</strong>：DD 訊號燈 / Moat 趨勢 + 箭頭 / Runway Y5+ / Max DD / DCA 裁決（進場 / 觀望 / 迴避）— HTML <code>&lt;head&gt;</code> 內含 <code>dca-moat-trend</code> 與 <code>dca-verdict</code> 兩個機讀 marker，下游 research 頁 generator 自動解析。</div>
+      <div class="tips"><strong>⚡ Phase B 強制裁決</strong>：A1 / A2 / A3 三軸獨立搜尋，最常見偷懶 = 列了矛盾不下判決；本 skill 強制每個不可調和矛盾必須選邊 + 給「會 settle 的硬數據點」+ ≥ 2 條 if-then 反向路徑。</div>
       <div class="example">
-        <span class="you">你：</span> 「研究 AI Agent / Agentic AI 平台」<br>
-        <span class="bot">Claude：</span> 4 個 research agents 並行（Horizontal 平台 / Vertical 內嵌 / Framework+Infra / Pure-play 新創）→ 14 章 HTML 含 Thesis Box + Kill Scenario + Falsification Test → INDEX 掛載 → push
+        <span class="you">你：</span> 「2327 DCA」<br>
+        <span class="bot">Claude：</span> Phase A1 護城河（5 sourced points）+ A2 產業（5 points）+ A3 業務（6 points）→ Phase B 強制 2 矛盾下判決 → §7 觀望（4W +111% 動能 + R:R 雙負，等回測 NT$328 BB 中軌）+ §6c Max DD -55%~-70% 🔴 → push
       </div>
     </div>
   </div>
 
-  <!-- Geopolitics DD -->
+  <!-- ========== 3. Industry Analyst ========== -->
   <div class="skill-card">
-    <div class="skill-head" style="background:linear-gradient(90deg,#FEE2E2 0%,#fff 60%)">
+    <div class="skill-head purple">
+      <div class="skill-icon">🔷</div>
+      <div class="skill-title">
+        <h2 class="purple">industry-analyst · 產業 DD（ID）</h2>
+        <div class="sub">v1.6 — 14 章 schema，<strong>敘述為主 + 表格為輔（每張表強制前言 + 後解讀）</strong>；含 S 曲線 + value chain + cross-ID 依賴圖 + 9 Gate pre-publish check</div>
+      </div>
+      <div class="skill-meta">~/skills/industry-analyst/ · v1.6</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>建新產業母題 ID</td>
+          <td><code>研究 {主題} 產業</code><br><code>研究 GLP-1</code><br><code>研究玻璃基板封裝</code></td>
+          <td>docs/id/ID_{Topic}_{date}.html（14 章 ID）+ §11 關聯個股 + cross-ID 依賴圖</td>
+        </tr>
+        <tr>
+          <td>建子題 ID（母題下分支）</td>
+          <td><code>{母題} 的 {子題名}</code><br><code>資安 SaaS M2 AI × 資安雙刃劍</code></td>
+          <td>子題 ID 自動關聯母題與兄弟 IDs</td>
+        </tr>
+        <tr>
+          <td>刷新既有 ID</td>
+          <td><code>刷新 ID_HBM</code></td>
+          <td>新版 ID；自動跑 8.7 mandatory critic gate</td>
+        </tr>
+        <tr>
+          <td>局部補丁</td>
+          <td><code>更新 ID_AP 的 §4 TAM</code></td>
+          <td>只重寫該段（v1.5+ 支援）</td>
+        </tr>
+        <tr>
+          <td>建新 Flagship</td>
+          <td><code>建 {產業} flagship</code>（需 ≥ 5 份 ID）</td>
+          <td>docs/id/theses-{category}.html + Library tab 啟用</td>
+        </tr>
+      </table>
+      <div class="tips"><strong>⚡ v1.6 敘述主導反轉</strong>：原則 4 從「Tables-heavy」改為「Narrative-led」；QC-I24 每張表強制前言 + 後解讀；敘述比例從 &lt; 30% → 50-60%。理由：使用者 feedback「表格看不懂要表達什麼」。</div>
+      <div class="tips"><strong>⚡ 九道 Gate（含 critic）</strong>：發布前自動跑 (1) core ticker financials &lt; 60 天 / (2) event thesis &lt; 14 天 / (2.1) Thesis Cornerstone Fact Verification（「獨家 / 首家 / 唯一」必獨立驗證）/ (2.2) base/bull/bear 三檔強制 / (3) cross-ID 一致 / (3.1) cross-ID thesis bias / (4) catalyst / (5) unit / (6) layer / (7) sub-topic value-add / Step 8.7 強制 spawn <code>id-review</code> 跑 critic。</div>
+    </div>
+  </div>
+
+  <!-- ========== 4. Industry DS (NEW) ========== -->
+  <div class="skill-card">
+    <div class="skill-head pink">
+      <div class="skill-icon">📖</div>
+      <div class="skill-title">
+        <h2 class="pink">industry-ds · 產業敘述 DS（Discourse）<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.2 — 與 ID 並列的姊妹 skill；以「歷史 → 現供 → 未供 → 現需 → 未需 → 短中長期推估」為敘事骨架；文字 ≥ 80% / 表格 ≤ 20%</div>
+      </div>
+      <div class="skill-meta">~/skills/industry-ds/ · v1.2</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>建敘述型產業報告</td>
+          <td><code>{主題} ds</code><br><code>{產業} 敘述報告</code><br><code>分析 {產業} 供需循環</code></td>
+          <td>docs/ds/DS_{Theme}_{date}.html（11 章 + cross-link 到對應 ID）</td>
+        </tr>
+        <tr>
+          <td>歷史/未來敘事研究</td>
+          <td><code>{主題} 歷史與未來</code><br><code>discourse {industry}</code></td>
+          <td>同上；§6 三情境（base/bull/bear）+ §10 雙路徑 + §11 關聯個股</td>
+        </tr>
+      </table>
+      <div class="tips"><strong>⚡ ID vs DS</strong>：ID 給 PM 表格 dashboard 快速決策；DS 給供需循環敘事深度準備。同 theme 可並存（DS 的 <code>related_ids[]</code> 指向同主題 ID）。Taxonomy 完全共用 ID。</div>
+      <div class="tips"><strong>⚡ Critic gate</strong>：Step 8.7 強制 spawn <code>id-review --mode ds</code>（reuse id-review 加 6 條 DS-specific 檢查：表格比 / history-future causality / 供需平衡 / §6 三情境 / §10 雙路徑 / §11 一致性）。</div>
+    </div>
+  </div>
+
+  <!-- ========== 5. Geopolitics DD ========== -->
+  <div class="skill-card">
+    <div class="skill-head red">
       <div class="skill-icon">🌏</div>
       <div class="skill-title">
-        <h2 style="color:#991B1B">geopolitics-dd · 地緣政治深度研究</h2>
+        <h2 class="red">geopolitics-dd · 地緣政治深度研究</h2>
         <div class="sub">v1.0 跨域研究 — 母議題 Master overview + N 子議題 + 三線預警儀表板（經濟/軍事/政治 × D-180/D-30/D-7）+ 情境 × 產業投資決策矩陣</div>
       </div>
-      <div class="skill-meta">~/skills/geopolitics-dd/</div>
+      <div class="skill-meta">~/skills/geopolitics-dd/ · v1.0</div>
     </div>
     <div class="skill-body">
       <table>
@@ -268,30 +377,24 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
           <td>情境機率樹 + 三線預警 + 產業投資含義</td>
         </tr>
         <tr>
-          <td>投資組合地緣壓測</td>
+          <td>組合地緣壓測</td>
           <td><code>{情境} 對持倉的影響</code></td>
-          <td>情境 × 產業投資決策矩陣（buy / short / hedge）</td>
+          <td>情境 × 產業矩陣（buy / short / hedge）</td>
         </tr>
       </table>
-
-      <div class="tips"><strong>⚡ 涵蓋議題</strong>：中台動武、俄烏、中東、朝鮮半島、南海、印巴邊境、拉美政變。每個議題含 D-180 / D-30 / D-7 三線預警（經濟層 / 軍事層 / 政治層），可隨時間更新偵測信號。</div>
-
-      <div class="example">
-        <span class="you">你：</span> 「研究中台衝突地緣政治」<br>
-        <span class="bot">Claude：</span> 拆 N 子議題（軍事準備 / 經濟脫鉤 / 政治決策 / 半導體供應鏈 / 第三方介入）→ 三線預警儀表板 → 情境 × 產業矩陣（TSM / 半導體 / 航運 / 國防 / RE）→ Master HTML + push
-      </div>
+      <div class="tips"><strong>⚡ 涵蓋議題</strong>：中台動武、俄烏、中東、朝鮮半島、南海、印巴邊境、拉美政變。每個議題含 D-180 / D-30 / D-7 三線預警，可隨時間更新偵測信號。</div>
     </div>
   </div>
 
-  <!-- Portfolio Manager -->
+  <!-- ========== 6. Portfolio Manager ========== -->
   <div class="skill-card">
     <div class="skill-head green">
       <div class="skill-icon">🏛️</div>
       <div class="skill-title">
         <h2 class="green">portfolio-manager · 組合複盤（PM）</h2>
-        <div class="sub">中長期成長股 core (≤5) + satellite (≤3) + cash 現金殘差；v1.1 加 ID 曝險聚合</div>
+        <div class="sub">v1.0 — 中長期成長股 core(≤5) + satellite(≤3) + cash 殘差（5% 硬性下限，無上限）；4 級 override 協議 L1 Sizing / L2 Horizon / L3 Information / L4 Thesis（direction override 預設禁止）</div>
       </div>
-      <div class="skill-meta">~/skills/portfolio-manager/</div>
+      <div class="skill-meta">~/skills/portfolio-manager/ · v1.0</div>
     </div>
     <div class="skill-body">
       <table>
@@ -303,7 +406,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         </tr>
         <tr>
           <td>Rebalance 提案</td>
-          <td><code>重跑 PM 提案</code><br><code>調整配置</code></td>
+          <td><code>重跑 PM 提案</code></td>
           <td>新版 PM 報告，含賣 / 減 / 加 / 新進 / 維持</td>
         </tr>
         <tr>
@@ -314,18 +417,154 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         <tr>
           <td>單一 ticker 決策</td>
           <td><code>NVDA 要不要加碼</code></td>
-          <td>引用既有 DD + 組合 context 的 L1-L4 override 分析</td>
+          <td>引用既有 DD/DCA + 組合 context 的 L1-L4 override 分析</td>
         </tr>
       </table>
-
-      <div class="example">
-        <span class="you">你：</span> 「重跑週度複盤」<br>
-        <span class="bot">Claude：</span> 讀 portfolio/prices.json 當日收盤 → 掃 docs/dd/INDEX.md 最新 DD → 跑個股矩陣 + 組合檢核 + ID 曝險聚合 → 產 PM_{date}.html + push
-      </div>
+      <div class="tips"><strong>⚡ PM 規則</strong>：所有個股判斷引用 docs/dd/ 與 docs/dca/ 已存在的報告（分析師角色）；PM 不做單股研究，只做組合決策。</div>
     </div>
   </div>
 
-  <!-- Flagship Update -->
+  <!-- ========== 7. Multi-Stock Comparator (NEW) ========== -->
+  <div class="skill-card">
+    <div class="skill-head amber">
+      <div class="skill-icon">⚖️</div>
+      <div class="skill-title">
+        <h2 class="amber">multi-stock-comparator-v1 · 多股對比<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.5-cc-tuned — 2-5 檔個股四層時間框架對比（&lt;12M / 2-3Y / 3-5Y / 5-10Y）；從本地 dca/ 或 dd/ 讀最新報告，不重做個股研究</div>
+      </div>
+      <div class="skill-meta">~/skills/multi-stock-comparator-v1/ · v1.5</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>2-5 檔同類比較</td>
+          <td><code>比較 NVDA 與 AVGO</code><br><code>2330 vs TSM vs ASML 用 DCA 對比</code><br><code>該選哪一家</code></td>
+          <td>docs/comparisons/MS_{tickers}_{date}.html（4 個時距各打分）+ index 卡片</td>
+        </tr>
+      </table>
+      <div class="tips"><strong>⚡ 消費端 skill</strong>：假設目標 ticker 的 DCA / DD 已存在於 docs/dca/ 或 docs/dd/，不自動觸發 stock-analyst 或 deep-conviction-analyst。報告日 &gt;3 天時走 WebSearch 重抓現價並重算 Fwd PE / PEG。</div>
+    </div>
+  </div>
+
+  <!-- ========== 8. Earnings Synthesis (NEW) ========== -->
+  <div class="skill-card">
+    <div class="skill-head teal">
+      <div class="skill-icon">📰</div>
+      <div class="skill-title">
+        <h2 class="teal">earnings-synthesis · 30 天財報統整<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.1 — 把過去 30 天的 earnings 日報串成產業/子產業 trend + investment implication；缺失交易日自動 web fill-gap 補大型公司</div>
+      </div>
+      <div class="skill-meta">~/skills/earnings-synthesis/ · v1.1</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>30 天財報重點統整</td>
+          <td><code>跑最近財報的統整</code><br><code>earnings 統整</code><br><code>monthly earnings rollup</code></td>
+          <td>docs/earnings/synthesis_{date}.html（8 章節敘事為主表格為輔）+ 在 earnings/index.html hero 後 inject highlight card</td>
+        </tr>
+      </table>
+      <div class="tips"><strong>⚡ 消費端 + Web fill-gap</strong>：本地 earnings 日報 + 缺失交易日 web fill-gap 補 mkt cap ≥ $50B 公司（light WebFetch 取 EPS/rev/guidance/reaction，融入趨勢章節不另存日報檔）。本地深度料 vs web 補料明確分色標示（藍 vs 橘）+ 信心度註腳。</div>
+      <div class="tips"><strong>⚡ v1.1 強制三重檢查</strong>：Step 4.5 self-review gate + Step 5.5 post-write sanity check + Step 8.5 reflective review — 對 ticker completeness / 未來日期 fact-check / 本地 vs web 標籤 / 跨章節一致進行三重檢查。</div>
+    </div>
+  </div>
+
+  <!-- ========== 9. ID Review (NEW) ========== -->
+  <div class="skill-card">
+    <div class="skill-head grey">
+      <div class="skill-icon">🔍</div>
+      <div class="skill-title">
+        <h2 style="color:#0F172A">id-review · ID / DS Cold-review critic<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.4.1 — 對既有 ID / DS 跑 cold-review critic 並 patch 大錯；user-in-the-loop patch + commit & push 工作流；被 industry-analyst / industry-ds 強制呼叫做 mandatory critic gate</div>
+      </div>
+      <div class="skill-meta">~/skills/id-review/ · v1.4.1</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th width="28%">觸發指令</th><th>會產出</th></tr>
+        <tr>
+          <td>對既有 ID 跑 critic</td>
+          <td><code>review ID_HBM</code><br><code>audit {ID 主題}</code><br><code>這份 ID 還活著嗎</code></td>
+          <td>docs/id/_critic_{Theme}_{date}.md（大錯 / cosmetic 分類）+ user 確認後直接 patch HTML</td>
+        </tr>
+        <tr>
+          <td>對 DS 跑 critic</td>
+          <td><code>review DS_{Theme} --mode ds</code></td>
+          <td>同上但走 DS-specific 8 條檢查（DS-1 表格比 / DS-2 因果閉合 / DS-3 供需平衡 / 等）</td>
+        </tr>
+      </table>
+      <div class="tips"><strong>⚡ Decision-time critic（CLAUDE.md 強制）</strong>：當用戶討論「考慮加倉 / 減倉 X 產業 theme」或「{theme} thesis 還活著嗎」時，主 agent 必須先 spawn id-review sub-agent 對相關 ID 跑冷讀，再給投資建議。Boris verify-app pattern 翻譯到投資決策層 — 寫 ID 的 agent 與驗 thesis 的 agent 不同。</div>
+    </div>
+  </div>
+
+  <!-- ========== 10. Push Earnings (NEW) ========== -->
+  <div class="skill-card">
+    <div class="skill-head grey">
+      <div class="skill-icon">📤</div>
+      <div class="skill-title">
+        <h2 style="color:#0F172A">push-earnings · 發布財報 + 更新 index<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.0 — 9-step 工作流：掃 docs/earnings/ 新增的 earnings_{date}.html，diff 對 index，提 takeaway/company count，建 &lt;li&gt; 並排序，commit & push</div>
+      </div>
+      <div class="skill-meta">~/skills/push-earnings/ · v1.0</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th>觸發指令</th></tr>
+        <tr>
+          <td>發布新財報日報</td>
+          <td><code>push earnings</code> / <code>發布財報</code> / <code>更新 earnings index</code></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== 11. Refresh EPS Screener (NEW) ========== -->
+  <div class="skill-card">
+    <div class="skill-head grey">
+      <div class="skill-icon">📈</div>
+      <div class="skill-title">
+        <h2 style="color:#0F172A">refresh-eps-screener · DD Screener EPS 月度更新<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.0 — 用新 <code>DD_universe_EPS_estimates_YYYYMMDD.xlsx</code> 更新 /dd-screener/；同月內 intra-month refresh 自動保留前一份 snapshot 當 baseline 算 FY1/FY2/FY3 EPS revision%</div>
+      </div>
+      <div class="skill-meta">~/skills/refresh-eps-screener/ · v1.0</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th>觸發指令</th></tr>
+        <tr>
+          <td>用新 Excel 更新 screener</td>
+          <td><code>update eps screener</code> / <code>更新 dd-screener</code> / <code>refresh EPS estimates</code> / 直接丟 <code>DD_universe_EPS_estimates_*.xlsx</code> 並要 update</td>
+        </tr>
+      </table>
+      <div class="tips"><strong>⚡ FX pipeline</strong>：非美股 (TW/JP/HK/KS/CN/CH) 走既有 FX pipeline 自動換成 local currency 顯示。Spot-check 對照 Excel Notes 第 8 列「Updated EPS vs YYYY-MM-DD」是 hard gate，sanity 不過不要 commit。</div>
+    </div>
+  </div>
+
+  <!-- ========== 12. DD v12.3 Upgrade (NEW) ========== -->
+  <div class="skill-card">
+    <div class="skill-head grey">
+      <div class="skill-icon">🔄</div>
+      <div class="skill-title">
+        <h2 style="color:#0F172A">dd-v12-3-upgrade · DD 批次升級 worker<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:600">NEW</span></h2>
+        <div class="sub">v1.2 — 對既有 DD 做 v12.3 升級的 batch worker；多 window 並行 via manifest claim；每 5 batch 觸發 cold-review sub-agent 抽查品質</div>
+      </div>
+      <div class="skill-meta">~/skills/dd-v12-3-upgrade/ · v1.2</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="32%">你的意圖</th><th>觸發指令</th></tr>
+        <tr>
+          <td>批次升級舊 DD 至 v12.3</td>
+          <td><code>跑 v12.3 升級 N 檔</code> / <code>v12.3 batch</code> / <code>升級 DD 到 v12.3</code> / <code>/dd-v12-3-upgrade [N]</code></td>
+        </tr>
+      </table>
+      <div class="tips"><strong>⚡ Anti-laziness gate</strong>：所有 patch 須通過 DD ≥ 80KB / DCA ≥ 50KB / 數字必引 source / 章節 checklist 齊備。每 5 batch 觸發 cold-review 抽查。</div>
+    </div>
+  </div>
+
+  <!-- ========== Flagship Update ========== -->
   <div class="skill-card">
     <div class="skill-head amber">
       <div class="skill-icon">⭐</div>
@@ -348,7 +587,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
           <td><strong>B</strong> 季度 refresh</td>
           <td>每 90 天主幹全面校正（對齊 Q 報季節）</td>
           <td><code>季度 refresh flagship</code></td>
-          <td>每 90 天（主幹）</td>
+          <td>每 90 天</td>
         </tr>
         <tr>
           <td><strong>C</strong> 擴充新條</td>
@@ -363,73 +602,52 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
           <td>每 18-24 月</td>
         </tr>
       </table>
-
       <div class="tips"><strong>⚡ Status Bar 看燈號</strong>：/id/theses.html 頂部自動顯示 🟢 Fresh（&lt;60 天）/ 🟡 Approaching（60-90 天）/ 🟠 B refresh 已到期（90-120 天）/ 🔴 Overdue（&gt;120 天）。看到黃 / 橘 / 紅 就呼喚 B refresh。</div>
-
-      <div class="example">
-        <span class="you">你：</span>（2026-07 底）「季度 refresh flagship」<br>
-        <span class="bot">Claude：</span> 讀 pre_publish_check.md 跑 7 Gates → Gate 1 檢查 NVDA/AVGO/MU 等 Q 報 → Gate 2 掃 event thesis → 更新每條 thesis 的 consensus / ours / evidence → 更新 Status bar 日期 → v1.0.1 → v1.1.0 → push
-      </div>
-    </div>
-  </div>
-
-  <!-- 建新 Flagship -->
-  <div class="skill-card">
-    <div class="skill-head amber">
-      <div class="skill-icon">🆕</div>
-      <div class="skill-title">
-        <h2 class="amber">建新產業 Flagship（生技 / 能源 / 雲端等）</h2>
-        <div class="sub">需先累積 ≥ 5 份該產業 ID 且有 cross-cutting insight</div>
-      </div>
-      <div class="skill-meta">flagship_build_protocol.md</div>
-    </div>
-    <div class="skill-body">
-      <p>當某產業累積 5 份以上 ID + 有 cross-cutting insight 時可建 flagship。步驟：</p>
-
-      <div class="flow">
-        <div class="step">先確認有 5+ 份對應產業 ID（如生技類已建 GLP-1、CAR-T、醫材、數位健康、基因治療 5 份）</div>
-        <div class="step">你：「建生技 flagship」</div>
-        <div class="step">Claude 跑 flagship_build_protocol.md 的 7 段建置結構（Library / Status / Hero / TOC / Layers / Synthesis / Portfolio）</div>
-        <div class="step">產出 docs/id/theses-biotech.html</div>
-        <div class="step">回 docs/id/theses.html 把對應 tab 從 grey 改為 active</div>
-        <div class="step">git push</div>
-      </div>
-
-      <div class="example">
-        <span class="you">你：</span>（累積 5 份生技 ID 後）「建生技 flagship」<br>
-        <span class="bot">Claude：</span> 掃 5 份 ID 找 cross-cutting thesis（至少 3 條出現在 ≥ 2 份）→ 生技特有 Layer 分法（需求 / 技術 / 臨床 / 政策）→ 填 7 段模板 → 啟用 Library tab
-      </div>
     </div>
   </div>
 
   <!-- ========== Skill 之間的整合 ========== -->
   <div class="skill-card">
-    <div class="skill-head" style="background:linear-gradient(90deg,#F1F5F9 0%,#fff 60%)">
+    <div class="skill-head grey">
       <div class="skill-icon">🔗</div>
       <div class="skill-title">
         <h2 style="color:#0F172A">Skill 之間的整合關係</h2>
-        <div class="sub">四套 skill 如何協作</div>
+        <div class="sub">11 套 skill 如何協作 — 兩條主動線</div>
       </div>
     </div>
     <div class="skill-body">
+      <h4 style="color:#1E3A5F;margin:0 0 6px;font-size:13px">個股研究流：DD → DCA → comparator</h4>
       <div class="flow">
-        <div class="step">industry-analyst 產 ID → §11 列關聯個股、§11.5 cross-ID 依賴圖</div>
-        <div class="step">stock-analyst 建 DD 時自動掃 docs/id/INDEX.md → 命中 ID 則 §9/§11 引用（不重寫產業通論）</div>
-        <div class="step">portfolio-manager 複盤時掃 docs/id/INDEX.md → 計算組合的 ID 曝險矩陣（§7.5）</div>
-        <div class="step">geopolitics-dd 產生情境 → industry-analyst 可建對應產業風險 ID；portfolio-manager 拿情境 × 產業矩陣做組合壓測</div>
-        <div class="step">多份 ID 累積 5+ → 建 flagship（跨 ID synthesis）</div>
-        <div class="step">flagship 的 thesis 被 event 打臉 → A 補丁；90 天 → B refresh</div>
+        <div class="step">stock-analyst 寫 DD（讀 docs/id/INDEX.md 命中 ID 則引用，不重寫產業通論）</div>
+        <div class="step">deep-conviction-analyst 跑 DCA — Phase A4 自動讀 dd-meta JSON 取 trap / signal / moat（fallback HTML extract）</div>
+        <div class="step">multi-stock-comparator-v1 讀本地 dca/ 或 dd/ 對 2-5 檔做四時距對比（不重做個股）</div>
+        <div class="step">portfolio-manager 複盤時掃 docs/dd/INDEX.md 與 docs/dca/INDEX.md → 計算組合的 ID 曝險矩陣 (§7.5)</div>
       </div>
-      <p style="margin-top:12px;font-size:12.5px;color:#6B7280">四套 skill 共用 <code>docs/dd/INDEX.md</code>、<code>docs/id/INDEX.md</code> 和 <code>references/</code> 作為單一事實源。任何一處更新會透過索引檔自動傳導。</p>
+      <h4 style="color:#1E3A5F;margin:12px 0 6px;font-size:13px">產業研究流：ID + DS（並列）→ Flagship</h4>
+      <div class="flow">
+        <div class="step">industry-analyst 產 ID（表格 dashboard 給 PM 快速決策）+ §11 列關聯個股 + §11.5 cross-ID 依賴圖</div>
+        <div class="step">industry-ds 產 DS（敘事供需循環給深度準備）— 同 theme 與 ID 並存，via <code>related_ids[]</code> 關聯</div>
+        <div class="step">id-review 對 ID / DS 跑 mandatory critic（Step 8.7 強制 spawn）</div>
+        <div class="step">geopolitics-dd 產情境 → industry-analyst 可建對應風險 ID；portfolio-manager 拿情境 × 產業矩陣做組合壓測</div>
+        <div class="step">多份 ID 累積 5+ → 建 flagship（跨 ID synthesis）</div>
+      </div>
+      <h4 style="color:#1E3A5F;margin:12px 0 6px;font-size:13px">維運流：發布 + 更新</h4>
+      <div class="flow">
+        <div class="step">earnings-synthesis 每月跑 30 天統整</div>
+        <div class="step">push-earnings 發新財報日報 + 更新 index</div>
+        <div class="step">refresh-eps-screener 每月用新 Excel 更新 /dd-screener/</div>
+        <div class="step">dd-v12-3-upgrade 批次升級舊 DD（每 5 batch cold-review 抽查）</div>
+      </div>
+      <p style="margin-top:12px;font-size:12.5px;color:#6B7280">11 套 skill 共用 <code>docs/dd/INDEX.md</code>、<code>docs/dca/INDEX.md</code>、<code>docs/id/INDEX.md</code>、<code>docs/ds/INDEX.md</code> 和 <code>references/</code> 作為單一事實源。任何一處更新會透過索引檔自動傳導。</p>
     </div>
   </div>
 
   <!-- ========== 心智模型 ========== -->
   <div class="skill-card">
-    <div class="skill-head" style="background:linear-gradient(90deg,#CCFBF1 0%,#fff 60%)">
+    <div class="skill-head teal">
       <div class="skill-icon">🧠</div>
       <div class="skill-title">
-        <h2 style="color:#0F4C3A">心智模型 · Munger Latticework P1</h2>
+        <h2 class="teal">心智模型 · Munger Latticework P1</h2>
         <div class="sub">20 個核心模型 · 五大領域 · 文章閱讀式</div>
       </div>
       <div class="skill-meta">docs/mental-models/</div>
@@ -444,34 +662,111 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
     </div>
   </div>
 
+  <!-- ========== Flow Dashboard ========== -->
+  <div class="skill-card">
+    <div class="skill-head indigo">
+      <div class="skill-icon">🎯</div>
+      <div class="skill-title">
+        <h2 class="indigo">🎯 Flow · 投資流程儀表板</h2>
+        <div class="sub">Cockpit / ATH Hunter / Timing Board / RS Board 四個視角，把 DD universe 串成「找標的 → 等時機 → 開倉 → 維護」的完整流程</div>
+      </div>
+      <div class="skill-meta">docs/flow/</div>
+    </div>
+    <div class="skill-body">
+      <table>
+        <tr><th width="22%">視角</th><th width="22%">網址</th><th>用途</th></tr>
+        <tr>
+          <td><strong>Cockpit</strong></td>
+          <td><code>/flow/cockpit.html</code></td>
+          <td>主控台 — DD universe 全面狀態（signal / trap / val / MA / 變動）</td>
+        </tr>
+        <tr>
+          <td><strong>ATH Hunter</strong></td>
+          <td><code>/flow/ath-hunter.html</code></td>
+          <td>逼近全時高的標的 + 新高突破名單</td>
+        </tr>
+        <tr>
+          <td><strong>Timing Board</strong></td>
+          <td><code>/flow/timing-board.html</code></td>
+          <td>進場時機檢視 — MA 狀態、Bollinger、回檔比例</td>
+        </tr>
+        <tr>
+          <td><strong>RS Board</strong></td>
+          <td><code>/flow/rs-board.html</code></td>
+          <td>Relative Strength 強弱表 — DD universe + benchmark 對照</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
   <!-- ========== Quick Reference ========== -->
   <div class="quick-ref">
     <h2>🚀 Quick Reference — 常用指令速查</h2>
     <div class="qr-grid">
       <div class="qr-item">
-        <div class="qr-intent">想研究單一股票</div>
+        <div class="qr-intent">研究單一股票</div>
         <div class="qr-phrase"><code>研究 {ticker}</code></div>
         <div class="qr-note">例：研究 NVDA / 研究 2330</div>
       </div>
       <div class="qr-item">
-        <div class="qr-intent">想研究產業（母題）</div>
-        <div class="qr-phrase"><code>研究 {主題} 產業</code></div>
-        <div class="qr-note">例：研究 AI ASIC 產業 / 研究 GLP-1 / 研究 Agentic AI 平台</div>
+        <div class="qr-intent">DD + DCA 一起跑</div>
+        <div class="qr-phrase"><code>研究 {ticker} 然後跑 DCA</code></div>
+        <div class="qr-note">例：研究 LLY 然後跑 DCA</div>
       </div>
       <div class="qr-item">
-        <div class="qr-intent">想研究產業子題</div>
+        <div class="qr-intent">單檔 DCA（已有 DD）</div>
+        <div class="qr-phrase"><code>{ticker} DCA</code> / <code>{ticker} 定見</code></div>
+        <div class="qr-note">DD 之上的投資決策報告 &gt;50KB</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">多股對比</div>
+        <div class="qr-phrase"><code>比較 {T1} {T2} {T3}</code></div>
+        <div class="qr-note">例：比較 NVDA AVGO MRVL</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">研究產業（母題 ID）</div>
+        <div class="qr-phrase"><code>研究 {主題} 產業</code></div>
+        <div class="qr-note">例：研究 AI ASIC 產業 / GLP-1 / Agentic AI</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">產業敘述 DS</div>
+        <div class="qr-phrase"><code>{主題} ds</code> / <code>{產業} 敘述報告</code></div>
+        <div class="qr-note">與 ID 並列的姊妹報告 — 供需循環敘事</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">產業子題</div>
         <div class="qr-phrase"><code>{母題} 的 {子題名}</code></div>
         <div class="qr-note">例：資安 SaaS M2 AI × 資安的雙刃劍</div>
       </div>
       <div class="qr-item">
-        <div class="qr-intent">想研究地緣政治</div>
+        <div class="qr-intent">研究地緣政治</div>
         <div class="qr-phrase"><code>研究 {地緣議題}</code></div>
         <div class="qr-note">例：研究中台衝突 / 俄烏停火情境</div>
       </div>
       <div class="qr-item">
         <div class="qr-intent">組合週度複盤</div>
-        <div class="qr-phrase"><code>PM 複盤</code> 或 <code>基金經理人複盤</code></div>
+        <div class="qr-phrase"><code>PM 複盤</code></div>
         <div class="qr-note">每週六建議執行一次</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">30 天財報統整</div>
+        <div class="qr-phrase"><code>跑最近財報的統整</code></div>
+        <div class="qr-note">earnings 月度 rollup</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">對 ID 跑 critic</div>
+        <div class="qr-phrase"><code>review ID_{主題}</code></div>
+        <div class="qr-note">user-in-the-loop patch + push</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">DD Screener EPS 月更</div>
+        <div class="qr-phrase"><code>update eps screener</code></div>
+        <div class="qr-note">需有新 DD_universe_EPS_estimates_*.xlsx</div>
+      </div>
+      <div class="qr-item">
+        <div class="qr-intent">發布財報日報</div>
+        <div class="qr-phrase"><code>push earnings</code></div>
+        <div class="qr-note">掃 docs/earnings/ 新檔 + 更新 index</div>
       </div>
       <div class="qr-item">
         <div class="qr-intent">Flagship 事件補丁（A）</div>
@@ -481,7 +776,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
       <div class="qr-item">
         <div class="qr-intent">Flagship 季度 refresh（B）</div>
         <div class="qr-phrase"><code>季度 refresh flagship</code></div>
-        <div class="qr-note">每 90 天，Status Bar 轉黃 / 橘就該做</div>
+        <div class="qr-note">每 90 天，Status Bar 轉黃就該做</div>
       </div>
       <div class="qr-item">
         <div class="qr-intent">建新產業 flagship</div>
@@ -491,23 +786,23 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
       <div class="qr-item">
         <div class="qr-intent">刷新個股 DD</div>
         <div class="qr-phrase"><code>再做一次 {ticker} DD</code></div>
-        <div class="qr-note">自動比對舊版差異</div>
+        <div class="qr-note">自動讀最近 DD 做 12M 對照</div>
       </div>
       <div class="qr-item">
-        <div class="qr-intent">刷新產業 ID</div>
-        <div class="qr-phrase"><code>刷新 ID_{Topic}</code></div>
-        <div class="qr-note">會跑 skill v1.4 Gates 檢查</div>
+        <div class="qr-intent">DD 批次升級 v12.3</div>
+        <div class="qr-phrase"><code>跑 v12.3 升級 N 檔</code></div>
+        <div class="qr-note">batch worker，每 5 batch 抽查</div>
       </div>
     </div>
   </div>
 
   <!-- ========== 進階：建議工作流 ========== -->
   <div class="skill-card">
-    <div class="skill-head" style="background:linear-gradient(90deg,#E0E7FF 0%,#fff 60%)">
+    <div class="skill-head indigo">
       <div class="skill-icon">📅</div>
       <div class="skill-title">
-        <h2 style="color:#4338CA">建議工作流（週 / 月 / 季 節奏）</h2>
-        <div class="sub">讓 skill 運轉有規律</div>
+        <h2 class="indigo">建議工作流（週 / 月 / 季 節奏）</h2>
+        <div class="sub">讓 11 套 skill 運轉有規律</div>
       </div>
     </div>
     <div class="skill-body">
@@ -520,12 +815,17 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         </tr>
         <tr>
           <td><strong>重大財報後</strong></td>
-          <td>該 ticker 的 DD + 相關 flagship thesis 檢查</td>
-          <td><code>刷新 {ticker} DD</code> + <code>更新 flagship 第 X 條</code></td>
+          <td>該 ticker 的 DD + DCA + 相關 flagship 檢查</td>
+          <td><code>研究 {ticker} 然後跑 DCA</code> + <code>更新 flagship 第 X 條</code></td>
+        </tr>
+        <tr>
+          <td><strong>每月底</strong></td>
+          <td>30 天 earnings 統整 + DD Screener EPS 月更</td>
+          <td><code>跑最近財報的統整</code> + <code>update eps screener</code></td>
         </tr>
         <tr>
           <td><strong>每月</strong></td>
-          <td>掃 docs/id/INDEX.md 檢查 🟡/🔴 stale 狀態</td>
+          <td>掃 docs/id/INDEX.md 檢查 🟡/🔴 stale；對重要 theme spawn id-review</td>
           <td><code>幫我看哪些 ID 該 refresh 了</code></td>
         </tr>
         <tr>
@@ -535,13 +835,13 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         </tr>
         <tr>
           <td><strong>每半年</strong></td>
-          <td>新產業 ID 擴充（看當下市場熱點）</td>
-          <td><code>研究 {新主題}</code></td>
+          <td>新產業 ID / DS 擴充（看當下市場熱點）</td>
+          <td><code>研究 {新主題}</code> / <code>{主題} ds</code></td>
         </tr>
         <tr>
           <td><strong>每年</strong></td>
-          <td>Flagship 是否該進 v2（觀察 A 補丁頻率）</td>
-          <td><code>評估 flagship 是否需要 v2.0 重寫</code></td>
+          <td>Flagship 是否該進 v2.0；舊 DD 批次升級到最新 schema</td>
+          <td><code>評估 flagship 是否需要 v2.0 重寫</code> / <code>跑 v12.3 升級 N 檔</code></td>
         </tr>
       </table>
     </div>
@@ -549,10 +849,10 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 
   <!-- ========== Troubleshooting ========== -->
   <div class="skill-card">
-    <div class="skill-head" style="background:linear-gradient(90deg,#FEE2E2 0%,#fff 60%)">
+    <div class="skill-head red">
       <div class="skill-icon">🔧</div>
       <div class="skill-title">
-        <h2 style="color:#991B1B">常見情境 / Troubleshooting</h2>
+        <h2 class="red">常見情境 / Troubleshooting</h2>
       </div>
     </div>
     <div class="skill-body">
@@ -560,7 +860,7 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         <tr><th width="42%">情境</th><th>怎麼做</th></tr>
         <tr>
           <td>我不確定該跑哪個 skill</td>
-          <td>describe 想要什麼結果即可（「我想知道 NVDA 現在該不該加倉」 → Claude 自動判斷該跑 PM / DD / ID）</td>
+          <td>describe 想要什麼結果即可（「我想知道 NVDA 現在該不該加倉」 → Claude 自動判斷該跑 DCA + PM）</td>
         </tr>
         <tr>
           <td>Skill 執行到一半卡住</td>
@@ -576,7 +876,19 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         </tr>
         <tr>
           <td>發布前要確認沒錯</td>
-          <td>skill v1.4 會自動跑 7 Gates；若想手動 peer review 說「讓我看草稿，還不要 push」</td>
+          <td>industry-analyst v1.6 自動跑 9 Gates + Step 8.7 mandatory critic；想手動 peer review 說「讓我看草稿，還不要 push」</td>
+        </tr>
+        <tr>
+          <td>想對既有 ID 跑 critic</td>
+          <td>說「review ID_{主題}」即跑 id-review skill，user-in-the-loop patch + push</td>
+        </tr>
+        <tr>
+          <td>DD 寫好但忘記跑 DCA</td>
+          <td>說「{ticker} DCA」即可單獨跑 DCA（會自動讀剛寫好的 DD）</td>
+        </tr>
+        <tr>
+          <td>想知道 thesis 還活著嗎</td>
+          <td>說「{theme} thesis 還活著嗎」會自動 spawn industry-thesis-critic（CLAUDE.md decision-time critic 機制）</td>
         </tr>
       </table>
     </div>
@@ -589,11 +901,12 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
 
 
 <!-- ========== 自動更新頁面 ========== -->
+<div class="container" style="padding-top:0">
 <div class="skill-card">
-  <div class="skill-head" style="background:linear-gradient(90deg,#D1FAE5 0%,#fff 60%)">
+  <div class="skill-head green">
     <div class="skill-icon">🤖</div>
     <div class="skill-title">
-      <h2 style="color:#065F46">自動更新頁面 — Markets / Sectors / Screener</h2>
+      <h2 class="green">自動更新頁面 — Markets / Sectors / Screener</h2>
       <div class="sub">GitHub Actions 定時排程，無需人工介入；亦可手動觸發</div>
     </div>
     <div class="skill-meta">scripts/ + .github/workflows/</div>
@@ -618,83 +931,132 @@ h1{color:#0F172A;font-size:1.9rem;font-weight:800;letter-spacing:-.03em;margin:0
         <td><strong>Screener 美股</strong></td>
         <td><code>/screener.html</code></td>
         <td>QGM 選股清單（latest.json + fundamentals.json）</td>
-        <td>每日 06:30 TW（22:30 UTC 前日）</td>
+        <td>每日 06:30 TW</td>
         <td>GitHub → Actions → <em>Daily Screener US</em> → Run workflow</td>
       </tr>
       <tr>
         <td><strong>Screener 台股</strong></td>
         <td><code>/screener-tw.html</code></td>
-        <td>QGM 台股選股清單（tw_latest.json + tw_fundamentals.json）</td>
-        <td>每日 07:00 TW（23:00 UTC 前日）</td>
+        <td>QGM 台股選股清單</td>
+        <td>每日 07:00 TW</td>
         <td>GitHub → Actions → <em>Daily Screener TW</em> → Run workflow</td>
       </tr>
       <tr>
         <td><strong>Screener 日股</strong></td>
         <td><code>/screener-jp.html</code></td>
-        <td>RS+VCP 日股選股清單（jp_latest.json） · 母體 TOPIX Core 30 + Nikkei 225</td>
-        <td>每日 16:00 TW（08:00 UTC = 17:00 JST，東京收盤後）</td>
+        <td>RS+VCP 日股選股清單（母體 TOPIX Core 30 + Nikkei 225）</td>
+        <td>每日 16:00 TW（東京收盤後）</td>
         <td>GitHub → Actions → <em>Daily JP RS+VCP Screener</em> → Run workflow</td>
+      </tr>
+      <tr>
+        <td><strong>DD Screener</strong></td>
+        <td><code>/dd-screener/</code></td>
+        <td>~210 檔 DD universe 的 QGM-MLB overlay（FCF / ROIC / EPS CAGR / PEG / D/E 五項打分）+ Earnings Acceleration / Quality Entry / Bottom Out / Breakout / Entry State 子頁</td>
+        <td>每次 DD 寫完自動觸發（debounce 60s）</td>
+        <td>本地 <code>python3 scripts/build_dd_screener.py</code></td>
       </tr>
       <tr>
         <td><strong>Fundamentals 日股</strong></td>
         <td><code>/screener/jp_fundamentals.json</code></td>
-        <td>EPS 1Y / Rev 1Y forward CAGR + ROIC + FCF% (yfinance analyst consensus + 自算 ROIC)</td>
-        <td><em>手動觸發</em>（fundamentals 一季變一次，不排 cron）</td>
+        <td>EPS 1Y / Rev 1Y forward CAGR + ROIC + FCF%</td>
+        <td><em>手動觸發</em>（fundamentals 一季變一次）</td>
         <td>GitHub → Actions → <em>Manual JP Fundamentals</em> → Run workflow</td>
       </tr>
     </table>
 
-    <div class="tips" style="margin-top:12px"><strong>⚡ 手動觸發步驟</strong>：GitHub repo 頁面 → 上方 <strong>Actions</strong> tab → 左側選對應 workflow → 右側 <strong>Run workflow</strong> 按鈕 → 選 <code>main</code> branch → <strong>Run workflow</strong>。約 1-3 分鐘後 commit 自動推上 main，頁面即更新。</div>
+    <div class="tips" style="margin-top:12px"><strong>⚡ 手動觸發步驟</strong>：GitHub repo 頁面 → 上方 <strong>Actions</strong> tab → 左側選對應 workflow → 右側 <strong>Run workflow</strong> 按鈕 → 選 <code>main</code> branch → <strong>Run workflow</strong>。約 1-3 分鐘後 commit 自動推上 main。</div>
 
-    <div class="tips" style="margin-top:8px"><strong>⚡ 腳本位置</strong>：
-      <code>scripts/update_markets.py</code>（Markets + Sectors）、
-      <code>scripts/screener.py</code>（美股）、
-      <code>scripts/screener_tw.py</code>（台股）。
-      資料寫入 <code>docs/markets.html</code>、<code>docs/sectors.html</code>、<code>docs/screener/latest.json</code> 等，GitHub Actions 自動 commit + push。
-    </div>
+    <div class="tips" style="margin-top:8px"><strong>⚡ DD Screener 自動同步</strong>：任何 DD 寫完跑 <code>update_dd_index.py</code> 後會自動 trigger <code>build_dd_screener.py</code>（rebuild <code>docs/dd-screener/latest.json</code>），讓 /research/ 與 /dd-screener/ 兩個頁面 universe 永遠一致。yfinance 失敗時 screener rebuild 會 warn 但不 abort research sync。</div>
 
-    <div class="tips" style="margin-top:8px"><strong>⚡ 不更新的欄位</strong>：PE、PB、PEG、EPS 成長率、展望、P/NAV 等基本面敘述欄位需人工維護，腳本只更新量化市場數據。</div>
-
-    <div class="example">
-      <span class="you">你：</span>（想立刻刷新 Markets 數據）<br>
-      <span class="bot">做法：</span> GitHub → Actions → Weekly Market Update → Run workflow；或在本地執行 <code>python scripts/update_markets.py</code>（需已安裝 yfinance）
-    </div>
+    <div class="tips" style="margin-top:8px"><strong>⚡ 不更新的欄位</strong>：PE、PB、PEG、EPS 成長率、展望、P/NAV 等敘述欄位需人工維護，腳本只更新量化市場數據。</div>
   </div>
 </div>
 
-<!-- ========== Skill 版本 Changelog (D4, 2026-04-24) ========== -->
+<!-- ========== Site Composition (CLAUDE.md) ========== -->
 <div class="skill-card">
-  <div class="skill-head" style="background:linear-gradient(90deg,#EDE9FE 0%,#fff 60%)">
-    <div class="skill-icon">📜</div>
+  <div class="skill-head grey">
+    <div class="skill-icon">🏗️</div>
     <div class="skill-title">
-      <h2 style="color:#4C1D95">Skill 版本 Changelog</h2>
-      <div class="sub">各 skill 版本差異，讓讀者了解不同版本報告的可比性</div>
+      <h2 style="color:#0F172A">站點組成 · 4 repos 共生</h2>
+      <div class="sub">research.investmquest.com 由 4 個 repo 共同生成 docs/ 內容</div>
     </div>
   </div>
   <div class="skill-body">
-    <h3 style="color:#5B21B6;margin:8px 0 4px;font-size:14px">industry-analyst</h3>
+    <table>
+      <tr><th width="20%">內容路徑</th><th>對應 repo</th></tr>
+      <tr>
+        <td><code>/qgm/</code>、<code>/qgm-tw/</code></td>
+        <td>minervini-quality-backtest</td>
+      </tr>
+      <tr>
+        <td><code>/briefing/YYYY-*</code>、<code>/weekly/</code></td>
+        <td>morning-briefing</td>
+      </tr>
+      <tr>
+        <td><code>/backtest/</code></td>
+        <td>v7-backtest</td>
+      </tr>
+      <tr>
+        <td>其他（首頁、<code>/earnings/</code>、<code>/research/</code>、<code>/pm/</code>、<code>/dd/</code>、<code>/dca/</code>、<code>/id/</code>、<code>/ds/</code>、<code>/comparisons/</code>、<code>/supply-chain/</code>、<code>/flow/</code>、<code>/markets.html</code>、<code>/sectors.html</code>、<code>/screener*.html</code>、<code>/how-to.html</code>）</td>
+        <td><strong>financial-analysis-bot（本 repo）</strong></td>
+      </tr>
+    </table>
+    <div class="tips" style="margin-top:10px"><strong>⚡ 不確定時</strong>：<code>git -C &lt;repo&gt; log --oneline -- docs/&lt;path&gt;</code> 看哪個 repo 有歷史。改外部 repo 是新的 commit/push 範圍，動手前先確認。</div>
+  </div>
+</div>
+
+<!-- ========== Skill 版本 Changelog ========== -->
+<div class="skill-card">
+  <div class="skill-head purple">
+    <div class="skill-icon">📜</div>
+    <div class="skill-title">
+      <h2 class="purple">Skill 版本 Changelog</h2>
+      <div class="sub">各 skill 當前版本 + 重要變更</div>
+    </div>
+  </div>
+  <div class="skill-body">
+
+    <h3 style="color:#5B21B6;margin:8px 0 4px;font-size:14px">當前版本一覽（2026-05-26）</h3>
+    <table>
+      <tr><th>Skill</th><th>版本</th><th>類型</th></tr>
+      <tr><td>stock-analyst</td><td><strong>v12.4</strong></td><td>研究產出</td></tr>
+      <tr><td>deep-conviction-analyst</td><td><strong>v1.3</strong></td><td>研究產出（NEW since 2026-05）</td></tr>
+      <tr><td>industry-analyst</td><td><strong>v1.6</strong></td><td>研究產出</td></tr>
+      <tr><td>industry-ds</td><td><strong>v1.2</strong></td><td>研究產出（NEW since 2026-05）</td></tr>
+      <tr><td>geopolitics-dd</td><td>v1.0</td><td>研究產出</td></tr>
+      <tr><td>portfolio-manager</td><td>v1.0</td><td>研究產出</td></tr>
+      <tr><td>multi-stock-comparator-v1</td><td><strong>v1.5</strong></td><td>消費端統整（NEW since 2026-05）</td></tr>
+      <tr><td>earnings-synthesis</td><td><strong>v1.1</strong></td><td>消費端統整（NEW since 2026-05）</td></tr>
+      <tr><td>id-review</td><td><strong>v1.4.1</strong></td><td>研究升級 / 校驗（NEW since 2026-04）</td></tr>
+      <tr><td>push-earnings</td><td>v1.0</td><td>發布維運（NEW since 2026-05）</td></tr>
+      <tr><td>refresh-eps-screener</td><td>v1.0</td><td>發布維運（NEW since 2026-05）</td></tr>
+      <tr><td>dd-v12-3-upgrade</td><td>v1.2</td><td>研究升級（NEW since 2026-05）</td></tr>
+    </table>
+
+    <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">stock-analyst 主要變更</h3>
     <table>
       <tr><th>版本</th><th>日期</th><th>主要變更</th></tr>
-      <tr><td><strong>v1.0</strong></td><td>2026-04-19</td><td>初版。11 章 schema；🟡 規則；QC-I1-I6；stock-analyst 整合鉤子</td></tr>
-      <tr><td><strong>v1.1-v1.4</strong></td><td>2026-04-19 → 04-21</td><td>八份 peer review 改進；QC-I7-I23；14 章 schema；Insight-first；事件型 vs 結構型 thesis 分類；9 Gate pre-publish check</td></tr>
-      <tr><td><strong>v1.5</strong></td><td>2026-04-21</td><td>Gate 2.1 Thesis Cornerstone Fact Verification + Gate 3.1 Cross-ID Thesis Bias Detection（源於 ID_Transformers「Eaton 獨家」錯誤）</td></tr>
-      <tr><td><strong>v1.6</strong></td><td>2026-04-24</td><td>敘述主導反轉（原則 4 從 Tables-heavy 改為 Narrative-led）；QC-I24 每表強制前言 + 後解讀；敘述比例 < 30% → 50-60%</td></tr>
-      <tr><td><strong>v1.7</strong></td><td>2026-04-24</td><td>Batch 2 + 3 spec 執行：QC-I25-I36（Phase 統一、時間點標注、Kill Scenario 量化、歷史類比反例、信心度分布、三欄式、DD 引用範本、loser 清單、non-obvious 擴充、cross-geography、反向告警、12 月複盤）；Gate 2.2（base/bull/bear 三檔強制）</td></tr>
+      <tr><td><strong>v12.4</strong></td><td>2026-05</td><td><strong>EPS estimates 接 Excel buy-side consensus</strong>（Koyfin 月度匯出，DD universe ≈141 ticker 含 US/ADR/TW 自動換 USD）；ADR/TW listings 避免 FX 陷阱；FY+3 consensus 直接用，不再機械外推</td></tr>
+      <tr><td><strong>v12.3</strong></td><td>2026-05</td><td><strong>估值瘦身（§2+§13 ~40% → ~18%）+ 基本面擴充（§5+§8+§9+§11+§12 ~35% → ~55%）</strong>；§9 強制 execution + pricing power 雙軸拆解；§5.F 加 Single Thing；§8.H 加客戶結構深度；QC-23 三級威脅分類強制使用；§13.4 強制對的 peer group tier</td></tr>
+      <tr><td>v12.0-v12.2</td><td>2026-04~05</td><td>分析師 / 基金經理人分工（DD 輸出 final_signal A+/A/B/C/X，倉位交由 PM skill）；§2 四層判定矩陣；盲點救援；QC-22~36；dd-meta JSON 強制 schema</td></tr>
     </table>
-    <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">其他 skill</h3>
+
+    <h3 style="color:#5B21B6;margin:14px 0 4px;font-size:14px">industry-analyst 主要變更</h3>
     <table>
-      <tr><th>Skill</th><th>當前版本</th><th>上次更新</th></tr>
-      <tr><td>stock-analyst</td><td>v12.0</td><td>2026-04 累積 peer review</td></tr>
-      <tr><td>portfolio-manager</td><td>v1.1</td><td>加 ID 曝險聚合（§7.5 矩陣）</td></tr>
-      <tr><td>geopolitics-dd</td><td>v1.0</td><td>2026-04-24 首發</td></tr>
+      <tr><th>版本</th><th>日期</th><th>主要變更</th></tr>
+      <tr><td><strong>v1.6</strong></td><td>2026-04-24</td><td><strong>敘述主導反轉</strong>（原則 4 從 Tables-heavy 改為 Narrative-led）；QC-I24 每張表強制前言 + 後解讀；敘述比例 &lt; 30% → 50-60%</td></tr>
+      <tr><td>v1.5</td><td>2026-04-21</td><td>Gate 2.1 Thesis Cornerstone Fact Verification + Gate 3.1 Cross-ID Thesis Bias Detection</td></tr>
+      <tr><td>v1.0-v1.4</td><td>2026-04-19~21</td><td>初版 11 章 → 14 章 schema；🟡 規則；QC-I1-I23；Insight-first；事件型 vs 結構型 thesis 分類；9 Gate pre-publish check</td></tr>
     </table>
-    <p style="font-size:12px;color:#6B7280;margin-top:10px">Skill 版本升級的意義：<strong>新版 QC 規則回溯適用</strong>——例 v1.7 發布後，過去 v1.4 產的 ID 下次 refresh 時必須補齊新規則（三欄式、時間點、loser 清單等）。已發布 ID 的原版內容不會追溯修改（除非觸發 A 級事件補丁或 90 天 B refresh）。</p>
+
+    <p style="font-size:12px;color:#6B7280;margin-top:10px">Skill 版本升級的意義：<strong>新版 QC 規則回溯適用</strong>——舊版產的報告下次 refresh 時必須補齊新規則。已發布報告的原版內容不會追溯修改（除非觸發 A 級事件補丁或 90 天 B refresh）。</p>
   </div>
 </div>
 
 <div class="footer">
-  InvestMQuest Research · 使用說明 v1.3 · 2026-04-25<br>
-  Skill 版本：stock-analyst v12.0 · <strong>industry-analyst v1.7</strong> · portfolio-manager v1.1 · geopolitics-dd v1.0
+  InvestMQuest Research · 使用說明 v2.0 · 2026-05-26<br>
+  Skill 版本：stock-analyst v12.4 · deep-conviction-analyst v1.3 · industry-analyst v1.6 · industry-ds v1.2 · geopolitics-dd v1.0 · portfolio-manager v1.0 · multi-stock-comparator-v1 v1.5 · earnings-synthesis v1.1 · id-review v1.4.1 · push-earnings v1.0 · refresh-eps-screener v1.0 · dd-v12-3-upgrade v1.2
+</div>
 </div>
 </body>
 </html>
