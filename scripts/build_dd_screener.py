@@ -88,6 +88,7 @@ from update_dd_index import (  # noqa: E402
 )
 from load_eps_estimates_xlsx import (  # noqa: E402
     ExcelSnapshot,
+    SKIP_TICKERS,
     find_latest_excel,
     load_latest_excel,
 )
@@ -1614,7 +1615,11 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
         us_adr = {t for t in all_dd_tk if "." not in t}
         # v1.8.3: use alias-aware lookup so 2330.TW resolves to Excel '2330'
         covered = sorted(t for t in all_dd_tk if excel_snapshot.has(t))
-        missing_us = sorted(t for t in us_adr if not excel_snapshot.has(t))
+        # Exclude SKIP_TICKERS from the "naming mismatch" red callout — those
+        # are intentionally dropped at load time (known-bad Koyfin rows), not
+        # a naming inconsistency. They still appear in fallback_yf below.
+        missing_us = sorted(t for t in us_adr
+                            if not excel_snapshot.has(t) and t not in SKIP_TICKERS)
         fallback_yf = sorted(t for t in all_dd_tk if not excel_snapshot.has(t))
         print(f"  Step 0    Excel EPS source: {excel_snapshot.source_file} "
               f"(snapshot {excel_snapshot.snapshot_date}, covers {len(covered)}/{len(all_dd_tk)})")
