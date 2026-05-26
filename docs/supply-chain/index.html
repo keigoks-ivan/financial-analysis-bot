@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>供應鏈地圖 — InvestMQuest Research</title>
+<meta name="description" content="半導體與 AI 產業供應鏈互動視覺化：每個主題拆成 19-31 個節點，標註競爭態勢與客戶獨家／關鍵單點，公司列表直接連到對應 DD 報告。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/engine.css">
+<style>
+.hub-shell{max-width:1180px;margin:0 auto;padding:1.5rem 1.5rem 3rem}
+.hub-hero{padding:2rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.hub-hero h1{font-size:1.85rem;font-weight:800;color:var(--accent-deep);letter-spacing:-.025em;display:flex;align-items:center;gap:.6rem}
+.hub-hero h1 .spark{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(124,58,237,.18)}
+.hub-hero .sub{color:#4B5563;font-size:.92rem;line-height:1.7;max-width:780px;margin-top:.6rem}
+.hub-hero .meta{display:flex;gap:1.5rem;margin-top:.85rem;font-size:11.5px;color:#6B7280}
+.hub-hero .meta b{color:var(--accent-deep);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px}
+
+.hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.hub-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px 16px;
+  transition:all .15s;display:block;color:inherit;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
+.hub-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-md);color:inherit}
+.hub-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.hub-card.soon{opacity:.55;pointer-events:none;background:#FAFAFA}
+.hub-card.soon::before{background:#CBD5E1}
+.hub-card .hb-tag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--accent);font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.hub-card .hb-tag .dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.hub-card.soon .hb-tag{color:#94A3B8}
+.hub-card.soon .hb-tag .dot{background:#CBD5E1}
+.hub-card h3{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin-bottom:5px}
+.hub-card .hb-sub{font-size:12px;color:#6B7280;line-height:1.55;min-height:34px}
+.hub-card .hb-arrow{color:var(--accent);font-size:13px;margin-top:8px;font-weight:600}
+.hub-card.soon .hb-arrow{color:#94A3B8;font-weight:500}
+.hub-card .hb-soon-badge{display:inline-block;font-size:9.5px;background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:6px;
+  font-weight:600;letter-spacing:.04em;margin-left:6px}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="hdr-inner">
+    <div class="logo">InvestM<span>Quest</span></div>
+    <nav>
+      <a href="/">首頁</a>
+      <a href="/research/">研究中心</a>
+      <a href="/id/">產業 ID</a>
+      <a href="/ds/">產業 DS</a>
+      <a href="/supply-chain/" class="active">供應鏈</a>
+      <a href="/markets.html">市場</a>
+    </nav>
+  </div>
+</header>
+
+<main class="hub-shell">
+  <div class="crumb"><a href="/">首頁</a> / <a href="/research/">研究</a> / 供應鏈地圖</div>
+
+  <div class="hub-hero">
+    <h1><span class="spark"></span>供應鏈地圖 Supply Chain Maps</h1>
+    <p class="sub">把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家單點的互動圖，點任一節點看廠商列表並直接跳到對應 DD 報告。位於 <a href="/id/">產業 ID</a>（表格 dashboard）與 <a href="/ds/">產業 DS</a>（敘述供需循環）之外的第三種產業視角 — 看「製程節點上誰是脆弱依賴點」。</p>
+    <div class="meta">
+      <div><b id="liveCount">—</b> 已上線</div>
+      <div><b id="soonCount">—</b> 即將推出</div>
+      <div><b>5</b> 競爭態勢分級</div>
+      <div><b>⚑</b> 客戶獨家／關鍵單點識別</div>
+    </div>
+  </div>
+
+  <div class="hub-grid" id="hubGrid"></div>
+</main>
+
+<footer class="site">
+  供應鏈地圖 · 主題 master view · <a href="/research/">回研究中心</a> ·
+  資料為公開資訊整理，僅供研究參考，非投資建議
+</footer>
+
+<script>
+(async function(){
+  const manifest = await fetch("data/_topics.json").then(r => r.json()).catch(() => ({topics:[]}));
+  const topics = manifest.topics || [];
+  const grid = document.getElementById("hubGrid");
+  const live = topics.filter(t => t.active).length;
+  const soon = topics.length - live;
+  document.getElementById("liveCount").textContent = live;
+  document.getElementById("soonCount").textContent = soon;
+
+  const subOf = {
+    cowos:    "TSMC 主導 2.5D 先進封裝 · 31 節點 · ABF/Disco/家登/弘塑等 10 個獨佔單點",
+    cpo:      "共封裝光學 · 矽光子整進交換器/ASIC · 玻璃 EUV 對應/微透鏡",
+    hbm:      "高頻寬 DRAM 緊跟 AI · 三強寡占 · HBM4 base die 改台積電",
+    advanced: "2nm GAA / 1.4nm 製程 · 設備 / 製程 / 良率新戰場",
+    siph:     "矽光子平台 · 光電轉換 + 共封裝 · 下世代 datacenter 互連",
+    plp:      "面板級封裝 PLP / FOPLP · 大尺寸 chiplet 攜帶能力競賽",
+    icdesign: "Fabless / EDA / IP · chiplet 生態系與設計服務 ASIC 雙雄",
+    material: "矽晶圓 / 光阻 / 特化 / 載板 · 全段半導體材料寡占地圖",
+    asic:     "客製 AI 晶片 / XPU · Broadcom / Marvell / 世芯 / 創意",
+    substrate:"IC 載板 ABF / BT / 玻璃 · AI 載板層數翻倍",
+    power:    "AI 資料中心電源 + 液冷 · GB300 倒數計時",
+    server:   "AI 伺服器 ODM / 系統整合 · 鴻海 / 緯創 / 廣達 / 緯穎",
+    robot:    "人形機器人 · 60+ 種馬達 / 感測器 / 減速機關鍵零組件",
+    leosat:   "低軌衛星 (LEO) · 接收器 + 衛星 + 地面站 · Starlink 系生態",
+    defense:  "軍工 / 國防安全供應鏈 · 雷達 / 武器 / 電戰系統",
+  };
+
+  grid.innerHTML = topics.map(t => {
+    const cls = t.active ? "hub-card" : "hub-card soon";
+    const href = t.active ? `${t.id}.html` : "#";
+    const sub = subOf[t.id] || "";
+    const tag = t.active ? "上線中" : "即將推出";
+    const arrow = t.active ? "查看供應鏈地圖 →" : "預告 — 開發中";
+    return `<a class="${cls}" href="${href}">
+      <div class="hb-tag"><span class="dot"></span>${tag}</div>
+      <h3>${t.title || t.tab}</h3>
+      <div class="hb-sub">${sub}</div>
+      <div class="hb-arrow">${arrow}</div>
+    </a>`;
+  }).join("");
+})();
+</script>
+</body>
+</html>
