@@ -169,6 +169,13 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
                         f"node {nid}.companies[{j}]: growth_trajectory={gt!r}; "
                         f"allowed ['high', 'med', 'low']"
                     )
+            if "supply_chain_lock" in c:
+                scl = c["supply_chain_lock"]
+                if scl not in {"tight", "med", "loose"}:
+                    errs.append(
+                        f"node {nid}.companies[{j}]: supply_chain_lock={scl!r}; "
+                        f"allowed ['tight', 'med', 'loose']"
+                    )
 
         # sources: each must have label + url
         for j, s in enumerate(n.get("sources", []) or []):

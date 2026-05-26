@@ -58,14 +58,21 @@ function ddLinkFor(tickerStr) {
   return null;
 }
 
-// Golden intersection: ⚑ × core_business × high-growth. The strictest
-// possible "high-conviction pick" filter — excludes diversified giants
-// (TSMC, Corning, Broadcom) whose CPO exposure can't move EPS, and
-// excludes structurally locked-in but stagnant players (mature OSAT).
+// Top Pick filter: ⚑ × core_business × supply_chain_lock=tight.
+// supply_chain_lock replaces YoY growth (a noisy momentum signal) with
+// structural lock-in (the actual definition of "supply chain super tight"):
+//   1. backlog/order book ≥ 12 months forward
+//   2. sold out / capacity-constrained (waitlist exists)
+//   3. multi-year exclusive named contract with hyperscaler/AI lab
+//   4. pricing power demonstrated (ASP increasing YoY)
+//   5. customer publicly named you as multi-gen supplier
+// Any one of the 5 signals = "tight". This catches ASML (backlog),
+// SK Hynix HBM (sold out), Apple+TSMC (multi-gen), Meta+Broadcom (1GW
+// commit) — supply-chain truth that YoY growth misses.
 function isGolden(node, company) {
   return !!node.single
     && company.core_business === true
-    && company.growth_trajectory === "high";
+    && company.supply_chain_lock === "tight";
 }
 
 /* ---------- tabs ---------- */
@@ -379,7 +386,7 @@ function openDrawer(id) {
       const ddBtn = dd ? ` <a href="${dd.href}" class="dd-link" target="_blank" rel="noopener" title="開啟 DD 報告">DD ↗</a>` : "";
       const tickerHTML = c.ticker ? `<span class="tk">${c.ticker}</span>` : "";
       const gold = isGolden(n, c);
-      const goldBadge = gold ? '<span class="gold-badge" title="Top Pick · ⚑ × 核心業務 × 高速增長">💎</span> ' : '';
+      const goldBadge = gold ? '<span class="gold-badge" title="Top Pick · ⚑ × 核心業務 × 供應鏈鎖喉緊俏">💎</span> ' : '';
       const rowCls = gold ? ' class="golden"' : '';
       return `<tr${rowCls}>
         <td>${goldBadge}<span class="co-name"><span class="co-flag">${(FLAG[c.country] || "")}</span>${c.name}${tickerHTML}${ddBtn}</span></td>
@@ -480,14 +487,14 @@ function renderGoldenIntersection() {
 
   slot.innerHTML = `
     <h3><span class="ico">💎</span>Top Picks · ${byKey.size} 檔</h3>
-    <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（非 side bet） × <em>業務高速增長</em>（&gt;30% CAGR 或 hyperscaler 大單）三條件的公司 — 排除掉「太大太分散」（如 TSMC 集團 / Corning 集團）與「結構性鎖喉但停滯」的紅海玩家，留下對 EPS 真正有推力的 high-conviction picks。</p>
+    <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（非 side bet） × <em>供應鏈鎖喉緊俏</em> 三條件的公司 — 用「結構性 lock-in」取代「YoY 高成長」這個噪音指標，留下真正客戶離不開的 high-conviction picks。</p>
     <div class="gold-table-wrap">
       <table class="gold-table">
         <thead><tr><th>公司</th><th>節點</th><th>鎖喉證據</th><th>業務說明</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <p class="gold-foot">判準：<code>core_business: true</code>（≥20% revenue 來自此 segment / 純玩家 / 公司公開定位 flagship） × <code>growth_trajectory: "high"</code>（&gt;30% CAGR / NVDA·AMD·META 已下大單）。由 <code>supply-chain-cartographer</code> skill 在研究時標註，validator pre-commit 把關。</p>
+    <p class="gold-foot">判準：<code>core_business: true</code>（≥20% revenue / 純玩家 / flagship） × <code>supply_chain_lock: "tight"</code>（5 訊號任一即過：訂單 ≥ 12 月 / sold out / 多年 exclusive 名單 / pricing power / 客戶多代 supplier）。由 <code>supply-chain-cartographer</code> skill 研究時手動標註，validator pre-commit 把關。</p>
   `;
 }
 

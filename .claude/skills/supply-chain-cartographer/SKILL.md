@@ -197,47 +197,51 @@ done
 | **鎖喉點** | 製程與客戶內製深度綁定，結構上難以替代 | TSMC CoWoS-L、TSMC CoW、TSMC COUPE |
 | **封裝級單點** | 與主製程同步設計、被整進客戶平台 | 健策 CoWoS lid/IHS、旭化成 PSPI、VisEra COUPE 光波導 |
 
-## 💎 金交集 Framework（嚴格 3 條件 AND）
+## 💎 Top Picks Framework（嚴格 3 條件 AND）
 
-⚑ 是「strategic single-point」但**單獨用會把 TSMC / Corning / Broadcom 也標出來** — 那些是「太大太分散，CPO 部位推不動 EPS」的大象。投資視角需要更嚴格的篩子：
+⚑ 是「strategic single-point」但**單獨用會把 TSMC / Corning / Broadcom 也標出來** — 那些是「太大太分散，部位推不動 EPS」的大象。投資視角需要更嚴格的篩子：
 
-**isGolden(node, company) = node.single AND company.core_business AND company.growth_trajectory == "high"**
+**isGolden(node, company) = node.single AND company.core_business AND company.supply_chain_lock == "tight"**
 
-三條件同時滿足才是 💎，缺一不可。引擎 (`engine.js`) 自動算交集、在頁面底部 hero section 列表，drawer 公司表的金交集 row 加 💎 prefix + 淡金色背景。
+三條件同時滿足才是 💎 Top Pick，缺一不可。引擎 (`engine.js`) 自動算交集、在頁面底部 hero section 列表，drawer 公司表的 Top Pick row 加 💎 prefix + 淡金色背景。
+
+**為何用 `supply_chain_lock` 取代之前的 `growth_trajectory`**：YoY 高成長是 momentum 信號（股價已漲完？），不是「供應鏈緊俏」信號。ASML 整體 +15% YoY 但 EUV backlog $30B+ 全球必經，TSMC corporate +25% YoY 但 N2/CoWoS sold out 到 2027 — 這些是「客戶離不開」的結構性 lock，比 YoY 強得多。換成 lock 後 false negatives 大幅下降。
 
 ### 判準（明確化、減少主觀）
 
 **`core_business: true` 的條件（任一即過）**：
 - 當前 ≥ **20% revenue** 來自此 segment（從財報 / 法說資料）
 - **Pure-play** 純玩家（整家公司就做這個，如 Lumentum / Coherent / FOCI / Browave）
-- 公司管理層**公開定位**這 segment 為「第二大核心業務」/「flagship」/「未來主成長引擎」（如大立光把 SiPh 列為第二核心 — 但 currently 占比 <5% so 仍未過）
+- 公司管理層**公開定位**這 segment 為「第二大核心業務」/「flagship」/「未來主成長引擎」
 
 **`core_business: false` 的條件（任一即否決）**：
 - 大集團一小 segment（如 TSMC COUPE 占 <1%、Corning AI fiber 占 <20%、Broadcom CPO 占 <5%）
 - 主業在別處（味之素 Ajinomoto 雖然 ABF 膜 95% 獨佔，但味之素是大食品/化工集團）
 
-**`growth_trajectory: "high"` 的條件（任一）**：
-- 此 segment **>30% CAGR** 或 **>50% YoY**
-- 已有 NVDA / AMD / META / MSFT / GOOGL 等 hyperscaler 級客戶**下大單或 strategic deal**（NVDA $2B+ 投資鎖容量也算）
-- 法說 / 公開財測明確 guide 數倍成長（如 Himax 2028 rev $2.4B vs 2026 $1.16B）
+**`supply_chain_lock: "tight"` 的條件（5 訊號任一即過）**：
+1. 📅 **訂單能見度 ≥ 12 個月** — ASML EUV backlog $30B+；京鼎 3413 訂單看到 9 個月；Apple 鎖 TSMC N2 三年
+2. 🚫 **Sold out / capacity-constrained** — TSMC CoWoS 2026 月產能 120K 仍緊；SK Hynix HBM sold out through 2026
+3. 🤝 **多年 exclusive 公開命名** — NVIDIA → Navitas 800V Kyber；Meta → Broadcom 1GW（2031 合約）；Anthropic → Google TPU 3.5GW；Tesla → Samsung AI6 ₩22 兆
+4. 💰 **Pricing power demonstrated** — HBM3E → HBM4 ASP \$300 → \$500/stack；EUV pellicle 每片 \$300-500K
+5. 🎯 **客戶公開多代 supplier** — AWS → Alchip Trainium 3+4；Apple → TSMC N2/N2P/A16；NVIDIA Rubin → 健策/AVC/Cooler Master/Delta（centralized procurement）
 
-**`growth_trajectory: "med"`**：10-30% CAGR / 規劃中但尚未量產 / 送樣階段
-**`growth_trajectory: "low"`**：<10% CAGR / 替代源 / 紅海 / 結構性鎖喉但停滯
+**`supply_chain_lock: "med"`**：有部分鎖喉但沒過 5 訊號（如雙占之一非絕對 lead、補位廠商）
+**`supply_chain_lock: "loose"`**：替代源多、紅海、無多年 visibility
 
 ### 標註時機
 
-寫 JSON 時，**只在你已有具體證據時才標 `core_business` / `growth_trajectory`**。Missing 視為 false / unknown — 不會誤判為 💎。寧可漏標也不要錯標。
+寫 JSON 時，**只在你已有具體證據時才標 `core_business` / `supply_chain_lock`**。Missing 視為 false / unknown — 不會誤判為 💎。寧可漏標也不要錯標。Validator (`scripts/validate_supply_chain_meta.py`) 會驗 enum 值合法（`tight` / `med` / `loose`）。
 
 ### 為什麼這個交集有 alpha
 
-- ⚑ 單獨 → 把大象（TSMC / Corning / Broadcom）也標出來
-- ⚑ + core_business → 排除大集團，只留「EPS 真的能動」的公司
-- + high_growth → 排除「鎖喉但停滯」的紅海玩家
-- 三個 AND → 留下 **PM 直覺 high-conviction 的 5-7 檔**
+- ⚑ 單獨 → 把大象（broad 集團）也標出來
+- ⚑ + core_business → 排除「side bet」非核心業務
+- + supply_chain_lock=tight → 排除「YoY 高但客戶可換」的雜訊 + 抓「YoY 普通但 backlog 鎖死」的真緊俏（如 ASML）
+- 三個 AND → 留下 **真客戶離不開、EPS 推力結構性 high-conviction 的 5-15 檔**
 
-兩個 worked example 的 💎 池：
+兩個 worked example 的 💎 池（lock-based 標註後）：
 - **CoWoS（6 檔）**：健策 3653 / 家登 3680 / 弘塑 3131 / 新應材 4749 / 萬潤 6187 / Amkor AMKR
-- **CPO（5 檔）**：Himax HIMX / FOCI 3363 / Browave 3163 / Lumentum LITE / Coherent COHR
+- **HBM（14 檔）**：ASML / Lam / 京鼎 / Disco / ASMPT / BESI / Onto / SK Hynix / Micron / GUC / Amkor / Unimicron / Nan Ya / Kinsus
 
 這些正好是 sell-side / activist（Hunterbrook、Ming-Chi Kuo、Citrini）反覆推的標的 — 不是巧合，他們用類似框架。
 
@@ -309,8 +313,9 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 | `products` | (opt) | 具體產品線 |
 | `note` | (opt) | 1-2 句說明這家在本節點的角色 |
 | `src` | (opt) | 該廠商獨家來源 URL（drawer 中顯示 ↗ 小圖示） |
-| `core_business` | (opt) | **金交集（💎）標註用** — bool；TRUE = 此 segment 是該公司核心業務（≥20% revenue / pure-play / 公司公開定位 flagship）。FALSE 或省略視為「side bet / 大集團一小塊」 |
-| `growth_trajectory` | (opt) | **金交集（💎）標註用** — enum `"high"` / `"med"` / `"low"`：HIGH = >30% CAGR or hyperscaler 已下大單；MED = 10-30% CAGR；LOW = <10% / 紅海 |
+| `core_business` | (opt) | **Top Pick（💎）標註用** — bool；TRUE = 此 segment 是該公司核心業務（≥20% revenue / pure-play / 公司公開定位 flagship）。FALSE 或省略視為「side bet / 大集團一小塊」 |
+| `supply_chain_lock` | (opt) | **Top Pick（💎）標註用** — enum `"tight"` / `"med"` / `"loose"`：TIGHT = 5 訊號任一過（≥12 月訂單能見 / sold out / 多年 exclusive 命名 / pricing power demonstrated / 客戶多代 supplier）；MED = 雙占 #2 或補位；LOOSE = 替代源多 / 紅海。**用 lock 取代舊 `growth_trajectory`** 是為了抓真正客戶離不開的供應商（YoY growth 是噪音）。|
+| `growth_trajectory` | (legacy) | 舊版欄位，已被 `supply_chain_lock` 取代。仍可標但 isGolden() 不再使用。|
 
 ### 範例：
 
