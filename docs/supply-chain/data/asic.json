@@ -1,0 +1,570 @@
+{
+  "id": "asic",
+  "tab": "ASIC",
+  "title": "客製 AI 晶片（ASIC / XPU）供應鏈",
+  "subtitle": "Hyperscaler 自研 AI ASIC 從 side bet 升級成主戰場：Google TPU v7 Ironwood + v8t/v8i 三供應商策略（Broadcom 訓練 + MediaTek 推論 + Marvell MPU）；AWS Trainium 3 由 Alchip 世芯獨家設計，年度 run rate $20B+；Meta MTIA / OpenAI ASIC 1GW 規模透過 Broadcom 2027 落地；Microsoft Maia 200 + Cobalt 200 + AWS Graviton 5 同採 ARM Neoverse V3。Broadcom 拿 70%+ 設計服務市佔 + ASIC rev $50B 2026，Alchip 在 AWS 獨家位置撐 $3-6B 2026 rev；EDA 由 Synopsys（+Ansys $35B 整合）+ Cadence + Siemens 三家 74% 寡占；TW 設計服務（Alchip 3661 + GUC 3443 + MediaTek 2454）為 Broadcom/Marvell 之外的第三勢力。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 23 },
+    { "k": "涵蓋廠商", "v": "80+" },
+    { "k": "獨佔/客戶獨家單點", "v": 12, "sub": "Broadcom 70%·Marvell 20-25%·Alchip Trainium 獨家·GUC HBM4 first·MediaTek TPU 8i·Synopsys 31%+Ansys $35B·Synopsys+Ansys multi-physics·ARM Neoverse V3·Credo+Astera·TSMC N2 ASIC 80%·Google 4-vendor·AWS 自研最完整", "hot": true }
+  ],
+  "rows": [
+    { "id": "ip", "label": "核心 IP / 子系統 IP & Subsystem", "main": false },
+    { "id": "eda", "label": "EDA 工具 / 多物理 EDA Tooling", "main": false },
+    { "id": "design-svc", "label": "ASIC 設計服務 Design Service", "main": true },
+    { "id": "foundry-pkg", "label": "Foundry / 封裝 / 記憶體 Foundry & Pkg", "main": false },
+    { "id": "demand", "label": "終端 Hyperscaler ASIC Demand", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "ip-arm",
+      "row": "ip",
+      "col": 1, "span": 1,
+      "kind": "rail",
+      "name": "ARM Neoverse CPU IP",
+      "nameEn": "ARM Neoverse CPU IP",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · ARM Neoverse V3 同時驅動 AWS Graviton 5 + Microsoft Cobalt 200；Graviton 連續 3 年 AWS 新增 CPU 容量 >50%（信心度 high · ARM newsroom + TechInsights）",
+      "desc": "Hyperscaler ARM 自研 CPU 全用 Neoverse V3 / N3 / CSS V3 — 4-64 core 設計加速 + AI 整合。ARM 由 IP 廠商升級為矽片廠商（AGI CPU 自製試水）。",
+      "marketSize": "Graviton $20B run rate",
+      "growth": "Hyperscaler 全切",
+      "analysis": "AWS Graviton 5 (Neoverse V3, 64-core, +50% perf) 2025/Q4 推出，AWS 新增 CPU 容量超過 50%；Microsoft Cobalt 200 + Azure Boost 同採 V3；ARM 自身 AGI CPU 進入晶片市場（Omdia 2026/04 報告）；SiFive + Tenstorrent 為 RISC-V 補位但量產規模有限。",
+      "companies": [
+        { "name": "ARM Holdings", "ticker": "ARM", "country": "UK", "share": "CPU IP 全球壟斷", "products": "Neoverse V3 / N3 / CSS V3", "note": "Graviton + Cobalt + 多家 hyperscaler 全採用", "core_business": true, "growth_trajectory": "high" },
+        { "name": "SiFive", "ticker": "—", "country": "US", "share": "RISC-V CPU IP 領先", "products": "RISC-V P870 / X280", "note": "Google + Meta + Intel 採用，未上市" },
+        { "name": "Tenstorrent", "ticker": "—", "country": "US", "share": "RISC-V + AI 加速 IP", "products": "Wormhole / Blackhole + 自家 chip", "note": "Rapidus FY2027 量產首客戶" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }, { "id": "ds-alchip" }, { "id": "ds-guc" }],
+      "sources": [
+        { "label": "ARM Neoverse V3 AWS Graviton 5 + MSFT Cobalt 200 (TechInsights)", "url": "https://www.techinsights.com/blog/arm-neoverse-v3-heads-clouds-aws-graviton5-microsoft-cobalt-200" },
+        { "label": "ARM converged AI data center (ARM Newsroom)", "url": "https://newsroom.arm.com/blog/arm-converged-ai-data-center-aws-graviton5" }
+      ]
+    },
+    {
+      "id": "ip-iface",
+      "row": "ip",
+      "col": 2, "span": 1,
+      "kind": "rail",
+      "name": "高速介面 IP (PCIe/UCIe/Ethernet)",
+      "nameEn": "High-Speed Interface IP",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · Credo (CRDO) PCIe Gen6 AEC + SerDes IP 整套，FY26 revenue >$800M (+85% YoY)；Astera Labs (ALAB) PCIe/CXL retimer 在所有主流 AI 平台 qualified（信心度 high · Datagravity + Astera Labs 多源）",
+      "desc": "ASIC 對外連 GPU/CPU/HBM/Networking 需要 PCIe Gen5/Gen6 + UCIe（chiplet）+ Ethernet 224G SerDes；IP 端 Synopsys + Cadence + Alphawave（QCOM 收購）三強寡占。",
+      "marketSize": "Credo +85% YoY FY26",
+      "growth": "PCIe Gen6 全切",
+      "analysis": "Synopsys + Cadence 為 PCIe / UCIe IP 雙占；Alphawave 被 Qualcomm 2025 收購後成為其 datacenter IP 入口；Credo (CRDO) 自家 SerDes IP + 整套 AEC（Active Electrical Cable）+ retimer，已成 hyperscaler PCIe Gen6 主供；Astera Labs (ALAB) Aries Smart DSP Retimer 在所有 AI 平台 qualified、Scorpio Fabric Switch + UALink 2026 推出。",
+      "companies": [
+        { "name": "Synopsys", "ticker": "SNPS", "country": "US", "share": "Interface IP #1", "products": "PCIe / UCIe / Ethernet 224G / DDR / HBM PHY", "note": "+ Ansys $35B 整合 (July 2025)", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Cadence Design Systems", "ticker": "CDNS", "country": "US", "share": "Interface IP #2", "products": "PCIe / D2D / Memory IP", "note": "IP business +22% YoY", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Alphawave Semi (+QCOM)", "ticker": "QCOM", "country": "US", "share": "DSP-based SerDes IP", "products": "112G/224G SerDes + chiplet", "note": "Qualcomm 2025 收購整合 datacenter IP" },
+        { "name": "Credo Technology", "ticker": "CRDO", "country": "US", "share": "PCIe Gen6 AEC 領先", "products": "SerDes IP + AEC + retimer", "note": "FY26 rev >$800M (+85% YoY)", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Astera Labs", "ticker": "ALAB", "country": "US", "share": "PCIe/CXL retimer incumbency", "products": "Aries retimer + Scorpio switch + UALink", "note": "All AI platforms qualified", "core_business": true, "growth_trajectory": "high" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }, { "id": "ds-alchip" }, { "id": "ds-guc" }],
+      "sources": [
+        { "label": "Credo CRDO PCIe Gen6 AEC hyperscaler (Datagravity)", "url": "https://www.datagravity.dev/p/from-niche-to-necessary-credos-quiet" },
+        { "label": "Astera Labs Aries Smart DSP Retimer + UALink", "url": "https://www.asteralabs.com/products/pcie-cxl-smart-dsp-retimers/" },
+        { "label": "Credo + Astera Labs comparison (TradingView)", "url": "https://www.tradingview.com/news/zacks:c10651e8f094b:0-crdo-vs-alab-which-high-speed-connectivity-stock-has-more-upside/" }
+      ]
+    },
+    {
+      "id": "ip-hbm",
+      "row": "ip",
+      "col": 3, "span": 1,
+      "kind": "rail",
+      "name": "HBM PHY / Controller IP",
+      "nameEn": "HBM PHY / Controller IP",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · GUC 創意 3443 全球首款 HBM4 PHY IP 在 TSMC N3P 投片（March 2025）+ HBM4E / C-HBM4E 與 TSMC 3DFabric 整合（信心度 high · CNYES + Tom's Hardware + GUC 官方多源）",
+      "desc": "HBM4 12Gbps + HBM4E 12.8GT/s 對 PHY / Controller IP 要求極嚴；GUC 為 TSMC 子公司，HBM4 IP 與 TSMC N3P + CoWoS-R 整合領先一輪。",
+      "marketSize": "HBM4 12Gbps PHY",
+      "growth": "TSMC + GUC 整合",
+      "analysis": "GUC 創意 3443（TSMC 35% 持股）2025/3 在 TSMC N3P 完成 HBM4 PHY tapeout，2026/Q1 與 HBM4 樣品驗證；2.5x 帶寬 vs HBM3、1.5x 功耗效率、2x 面積效率；Synopsys + Cadence + Rambus 為傳統 HBM IP 競爭者；C-HBM4E 為 TSMC + GUC 為客戶量身訂製。",
+      "companies": [
+        { "name": "GUC 創意電子", "ticker": "3443", "country": "TW", "share": "HBM4 PHY world's first on TSMC N3P", "products": "HBM4 PHY + Controller + UCIe + 2.5D/3D APT", "note": "TSMC 35% 持股、AI ASIC 設計服務 + IP 雙軌", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Synopsys (HBM IP)", "ticker": "SNPS", "country": "US", "share": "HBM PHY IP #2", "products": "HBM3E / HBM4 PHY IP", "note": "標準 HBM IP 庫" },
+        { "name": "Cadence (HBM IP)", "ticker": "CDNS", "country": "US", "share": "HBM PHY IP #3", "products": "HBM3E / HBM4 PHY + Controller", "note": "與 Synopsys 競合" },
+        { "name": "Rambus", "ticker": "RMBS", "country": "US", "share": "Memory IP niche", "products": "HBM PHY + DDR PHY", "note": "memory IP 老牌" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }, { "id": "ds-alchip" }, { "id": "ds-guc" }],
+      "sources": [
+        { "label": "GUC HBM4 IP world's first on TSMC N3P (CNYES)", "url": "https://news.cnyes.com/news/id/5920350" },
+        { "label": "TSMC + GUC HBM4 HBM4E C-HBM4E (Tom's Hardware)", "url": "https://www.tomshardware.com/pc-components/dram/hbm-undergoes-major-architectural-shakeup-as-tsmc-and-guc-detail-hbm4-hbm4e-and-c-hbm4e-3nm-base-dies-to-enable-2-5x-performance-boost-with-speeds-of-up-to-12-8gt-s-by-2027" }
+      ]
+    },
+    {
+      "id": "ip-other",
+      "row": "ip",
+      "col": 4, "span": 1,
+      "kind": "rail",
+      "name": "AI 加速器 IP / NPU",
+      "nameEn": "AI Accelerator IP / NPU",
+      "competition": "highgrowth",
+      "desc": "AI ASIC 中的 NPU / Tensor 引擎 IP — 多採客製設計（Broadcom / Marvell 自有）；外部 IP 較少（Tenstorrent / Hailo / Imagination）。",
+      "marketSize": "客製 NPU 主流",
+      "growth": "Open NPU IP",
+      "analysis": "Hyperscaler ASIC 的 NPU 多採客製設計（Broadcom 拿 Google TPU tensor core 設計、Alchip 處理 AWS Trainium NPU PnR）；外部 IP 玩家：Tenstorrent（RISC-V + AI 整合 IP）、Hailo（edge AI）、Imagination（GPU + NPU IP）；Cadence Tensilica DSP 為 niche AI IP。",
+      "companies": [
+        { "name": "Tenstorrent", "ticker": "—", "country": "US", "share": "RISC-V + AI IP 領先", "products": "Wormhole / Blackhole IP + 自家 ASIC", "note": "Rapidus 2nm 首客戶、未上市" },
+        { "name": "Hailo", "ticker": "—", "country": "IL", "share": "Edge AI NPU", "products": "Hailo-8 / Hailo-15", "note": "Edge NPU 領先、私人公司" },
+        { "name": "Imagination Tech", "ticker": "—", "country": "UK", "share": "GPU + NPU IP", "products": "Series 4 NPU + IMG B", "note": "中國 mobile / 邊緣 AI" },
+        { "name": "Cadence Tensilica", "ticker": "CDNS", "country": "US", "share": "DSP-based AI IP", "products": "Tensilica HiFi / Vision", "note": "在 Cadence 內部" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }],
+      "sources": [
+        { "label": "Tenstorrent Rapidus 2nm first customer (Digitimes)", "url": "https://www.digitimes.com/news/a20260211VL208/rapidus-production-capacity-2nm-2027.html" }
+      ]
+    },
+    {
+      "id": "eda-rtl",
+      "row": "eda",
+      "col": 1, "span": 1,
+      "kind": "rail",
+      "name": "RTL → GDS EDA",
+      "nameEn": "RTL → GDS EDA",
+      "competition": "oligopoly",
+      "single": "近乎獨佔 · Synopsys 31% + Cadence 30% + Siemens 13% = 74% 全球 EDA；ASIC/SoC 設計段佔 EDA 市場 40%（信心度 high · MarketsandMarkets + Mordor）",
+      "desc": "EDA 軟體 chain：RTL 描述（Verilog/SystemVerilog） → 邏輯合成（Synopsys DC、Cadence Genus） → 佈局繞線（Synopsys Fusion、Cadence Innovus） → 時序簽核（Synopsys PrimeTime、Cadence Tempus）。",
+      "marketSize": "EDA $34.7B 2035",
+      "growth": "AI EDA +24% CAGR",
+      "analysis": "EDA 三強 Synopsys (31%) + Cadence (30%) + Siemens EDA (13%) 寡占；Synopsys 完成 Ansys $35B 收購（July 2025）成為唯一 device-to-system 全 stack 廠；Cadence IP 業務 +22% YoY；Siemens EDA + Mentor 整合多年。Keysight + Zuken 補 niche。",
+      "companies": [
+        { "name": "Synopsys", "ticker": "SNPS", "country": "US", "share": "EDA #1 31%", "products": "Design Compiler / Fusion / PrimeTime + Ansys multi-physics", "note": "完成 Ansys $35B 收購、device-to-system 全 stack", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Cadence Design Systems", "ticker": "CDNS", "country": "US", "share": "EDA #2 30%", "products": "Genus / Innovus / Tempus / Cerebrus AI", "note": "IP business +22% YoY", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Siemens EDA", "ticker": "SIE.DE", "country": "DE", "share": "EDA #3 13%", "products": "Mentor Calibre / Tessent / PADS", "note": "Calibre DRC/LVS 主流" },
+        { "name": "Keysight Technologies", "ticker": "KEYS", "country": "US", "share": "EDA + test", "products": "PathWave + ADS RF design", "note": "RF + Power design + test" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }, { "id": "ds-alchip" }, { "id": "ds-guc" }],
+      "sources": [
+        { "label": "EDA top 5 = 70-85% (MarketsandMarkets)", "url": "https://www.marketsandmarkets.com/Market-Reports/ai-eda-market-212473295.html" },
+        { "label": "Synopsys + Ansys $35B closes (Synopsys)", "url": "https://investors.ansys.com/news-releases/news-release-details/synopsys-completes-acquisition-ansys" }
+      ]
+    },
+    {
+      "id": "eda-physics",
+      "row": "eda",
+      "col": 2, "span": 1,
+      "kind": "rail",
+      "name": "多物理 / Multi-Die Sign-off",
+      "nameEn": "Multi-Physics & Multi-Die Sign-off",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · Synopsys + Ansys $35B 整合（July 2025）為唯一 device-to-system multi-physics + EDA 全 stack；Cadence Allegro / Voltus 補位（信心度 high · DCD + Futurum 多源）",
+      "desc": "Advanced packaging（CoWoS / 3D-IC）+ Multi-die 加大 thermal + EMI + mechanical 整合複雜度；multi-physics sign-off 為新興 EDA 戰場。",
+      "marketSize": "Multi-die 結構性放大",
+      "growth": "Advanced pkg 推升",
+      "analysis": "Synopsys + Ansys 整合後第一波 multi-physics 整合產品 H1 2026 上市，涵蓋 thermal + CFD + mechanical + EM；Cadence Allegro + Voltus 補位（Cadence 自家 multi-physics）；Siemens Simcenter（從 Mentor 延伸）為傳統 CFD 競合。",
+      "companies": [
+        { "name": "Synopsys + Ansys", "ticker": "SNPS", "country": "US", "share": "Multi-physics 全 stack", "products": "Ansys Mechanical/CFD/HFSS + Synopsys EDA", "note": "$35B 收購、唯一 device-to-system", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Cadence (Allegro/Voltus)", "ticker": "CDNS", "country": "US", "share": "Multi-physics 補位", "products": "Allegro PCB + Voltus + Celsius thermal", "note": "Cadence 自家 multi-physics" },
+        { "name": "Siemens Simcenter", "ticker": "SIE.DE", "country": "DE", "share": "Mechanical / CFD 老牌", "products": "Simcenter + STAR-CCM+", "note": "傳統 mechanical EDA" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }, { "id": "ds-alchip" }, { "id": "ds-guc" }, { "id": "fp-pkg" }],
+      "sources": [
+        { "label": "Synopsys AI-powered EDA Ansys integration (DCD)", "url": "https://www.datacenterdynamics.com/en/news/synopsys-launches-ai-powered-eda-solutions-including-first-integrated-ansys-tools-since-acquisition/" }
+      ]
+    },
+    {
+      "id": "eda-ai",
+      "row": "eda",
+      "col": 3, "span": 1,
+      "kind": "rail",
+      "name": "AI-powered EDA",
+      "nameEn": "AI-powered EDA",
+      "competition": "highgrowth",
+      "desc": "AI / 強化學習驅動的 EDA 自動化：自動探索 design space、PPA 最佳化、test pattern 生成；Synopsys DSO.ai + Cadence Cerebrus 為兩大平台。",
+      "marketSize": "$4.27B 2026 → $15.85B",
+      "growth": "+24.4% CAGR",
+      "analysis": "AI EDA 自 2023 起爆量；Synopsys DSO.ai 已用於 2nm GAA + AI ASIC 多 tapeout；Cadence Cerebrus 整合進 Verisium 驗證；行業預估 AI EDA 自 $4.27B (2026) 增至 $15.85B (2032)。",
+      "companies": [
+        { "name": "Synopsys DSO.ai", "ticker": "SNPS", "country": "US", "share": "AI EDA 領先", "products": "DSO.ai + AI Insight", "note": "強化學習 PnR 自動最佳化" },
+        { "name": "Cadence Cerebrus", "ticker": "CDNS", "country": "US", "share": "AI EDA 第二", "products": "Cerebrus + Verisium", "note": "AI 探索 + 自動驗證" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }, { "id": "ds-alchip" }],
+      "sources": [
+        { "label": "AI EDA $4.27B 2026 → $15.85B 2032 (MarketsandMarkets)", "url": "https://www.marketsandmarkets.com/Market-Reports/ai-eda-market-212473295.html" }
+      ]
+    },
+    {
+      "id": "ds-broadcom",
+      "row": "design-svc",
+      "col": 1, "span": 1,
+      "kind": "stage",
+      "name": "Broadcom (AVGO)",
+      "nameEn": "Broadcom Custom Silicon",
+      "competition": "monopoly",
+      "single": "鎖喉點 · Broadcom 70%+ 全球客製 AI ASIC 設計服務市佔；Google TPU v7/v8t + Meta MTIA + OpenAI 2027 1GW + Anthropic 3.5GW；Q1 FY26 AI rev $8.4B (+106% YoY)（信心度 high · IBT + investing.com 多源）",
+      "desc": "Broadcom 為 Hyperscaler 自研 AI ASIC 最大設計服務廠：管 SerDes / interconnect / packaging / tapeout / mass production。70%+ 市佔遠超 Marvell + Alchip。",
+      "marketSize": "ASIC rev $50B 2026",
+      "growth": "$100B AI 2027",
+      "analysis": "客戶清單：Google TPU v7 Ironwood + v8t（訓練）2031 合約；Meta MTIA + 2026/4 commit 1GW；OpenAI 自研 ASIC 2027 deployment >1GW；Anthropic 3.5GW Google TPU 2027 起。Q1 FY26 AI rev $8.4B (+106% YoY)，總 rev $14.9B；2027 AI revenue 路線圖 $100B。",
+      "companies": [
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "ASIC 設計服務 70%+", "products": "Google TPU 全部+ Meta MTIA + OpenAI + Anthropic + Tomahawk switch", "note": "AI rev $8.4B Q1 FY26 (+106% YoY)、$100B 2027 路線", "core_business": true, "growth_trajectory": "high" }
+      ],
+      "upstream": [{ "id": "ip-arm" }, { "id": "ip-iface" }, { "id": "ip-hbm" }, { "id": "ip-other" }, { "id": "eda-rtl" }, { "id": "eda-physics" }, { "id": "eda-ai" }],
+      "downstream": [{ "id": "fp-foundry" }, { "id": "d-google" }, { "id": "d-meta" }, { "id": "d-openai" }],
+      "sources": [
+        { "label": "Broadcom $8.4B AI rev Q1 FY26 (IBT)", "url": "https://www.ibtimes.com/what-broadcom-unknown-company-building-ai-chips-powering-google-anthropic-openai-meta-3802922" },
+        { "label": "Broadcom SWOT AI custom silicon (Investing.com)", "url": "https://www.investing.com/news/swot-analysis/broadcoms-swot-analysis-ai-chip-stock-gains-momentum-with-tpu-growth-93CH-4702908" }
+      ]
+    },
+    {
+      "id": "ds-marvell",
+      "row": "design-svc",
+      "col": 2, "span": 1,
+      "kind": "stage",
+      "name": "Marvell (MRVL)",
+      "nameEn": "Marvell Custom ASIC",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · Marvell 20-25% 客製 ASIC 設計服務市佔；AWS Trainium primary partner（co-design）+ Microsoft Maia；Custom rev $0 → $1.5B FY26，Trainium 業務年化 run rate >$20B（信心度 high · TradingKey + Foreign Policy Journal）",
+      "desc": "Marvell 為 Broadcom 之後第二大客製 ASIC 設計服務廠；強項在 SerDes + 光電子整合 + memory subsystem。",
+      "marketSize": "Custom $1.5B FY26",
+      "growth": "Trainium +40% QoQ",
+      "analysis": "AWS Trainium primary partner（與 Alchip 後段協作）；MSFT Maia 200 設計贏單；Google 與 Marvell 洽談 MPU + 第三 inference TPU；Q1 2026 Trainium business +40% QoQ、年化 run rate $20B+；74% revenue 自 data center。",
+      "companies": [
+        { "name": "Marvell Technology", "ticker": "MRVL", "country": "US", "share": "ASIC 設計服務 20-25%", "products": "AWS Trainium + MSFT Maia + custom SerDes + 光電子", "note": "Custom rev $0 → $1.5B FY26、74% rev from datacenter", "core_business": true, "growth_trajectory": "high" }
+      ],
+      "upstream": [{ "id": "ip-arm" }, { "id": "ip-iface" }, { "id": "ip-hbm" }, { "id": "ip-other" }, { "id": "eda-rtl" }, { "id": "eda-physics" }, { "id": "eda-ai" }],
+      "downstream": [{ "id": "fp-foundry" }, { "id": "d-aws" }, { "id": "d-msft" }, { "id": "d-google" }],
+      "sources": [
+        { "label": "Marvell AWS Trainium primary $20B run rate (Foreign Policy)", "url": "https://www.foreignpolicyjournal.com/2026/05/11/amazons-nasdaq-amzn-225-billion-trainium-backlog-makes-marvell-technology-nasdaq-mrvl-a-key-beneficiary/" },
+        { "label": "Marvell custom silicon beyond NVDA/AVGO (HeyGoTrade)", "url": "https://www.heygotrade.com/en/blog/marvell-mrvl-custom-ai-silicon-beyond-nvidia-broadcom/" }
+      ]
+    },
+    {
+      "id": "ds-alchip",
+      "row": "design-svc",
+      "col": 3, "span": 1,
+      "kind": "stage",
+      "name": "Alchip 世芯 (3661)",
+      "nameEn": "Alchip Design Service",
+      "competition": "monopoly",
+      "single": "鎖喉點 · Alchip 為 AWS Trainium 3 + Trainium 4 primary (possibly ONLY) 設計服務供應；Trainium 3 在 TSMC 3nm，2026Q2 量產；2026 rev $3-6B（信心度 high · UAnalyze + CNYES 多源）",
+      "desc": "Alchip 為台廠 ASIC 設計服務龍頭，與 Broadcom 在 Marvell 之上協作 AWS Trainium 系列；TSMC 3nm/2nm 後段設計強項。",
+      "marketSize": "Trainium 3 2026Q2 量產",
+      "growth": "FY26 $3-6B rev",
+      "analysis": "Amazon 最大客戶、Intel 第二大；AWS Trainium 3 (3nm) 2026Q2 量產；Trainium 4 已開始設計；2026 baseline rev $3B、潛在 $6B（million-unit 量級訂單）。世芯-KY 為 TSMC + 大廠 ASIC tapeout 兩大設計服務之一。",
+      "companies": [
+        { "name": "Alchip 世芯-KY", "ticker": "3661", "country": "TW", "share": "AWS Trainium 3/4 獨家", "products": "AWS Trainium 全代 + Intel + 多家 HPC", "note": "Amazon 最大客戶、2026 rev $3-6B 預估", "core_business": true, "growth_trajectory": "high" }
+      ],
+      "upstream": [{ "id": "ip-arm" }, { "id": "ip-iface" }, { "id": "ip-hbm" }, { "id": "eda-rtl" }, { "id": "eda-physics" }, { "id": "eda-ai" }],
+      "downstream": [{ "id": "fp-foundry" }, { "id": "d-aws" }],
+      "sources": [
+        { "label": "Alchip AWS Trainium 3/4 primary supplier (UAnalyze)", "url": "https://uanalyze.com.tw/articles/981539191" },
+        { "label": "ASIC 主升段 創意 / 世芯-KY / 智原 (CNYES)", "url": "https://news.cnyes.com/news/id/6262181" }
+      ]
+    },
+    {
+      "id": "ds-guc",
+      "row": "design-svc",
+      "col": 4, "span": 1,
+      "kind": "stage",
+      "name": "GUC 創意 (3443)",
+      "nameEn": "GUC Design Service",
+      "competition": "oligopoly",
+      "desc": "GUC 為 TSMC 子公司（35% 持股），擅長 AI ASIC 設計服務 + 高速介面 IP + 2.5D/3D APT 平台；HBM4 PHY world's first 領先 Synopsys/Cadence。",
+      "marketSize": "TSMC 35% 持股",
+      "growth": "HBM4 IP 領先",
+      "analysis": "GUC 從傳統 ASIC 設計服務轉型為 high-speed interface IP + advanced packaging integration platform；HBM4 PHY 全球首款（TSMC N3P, 2025/3 tapeout）+ 2.5D/3D APT 平台（與 TSMC 3DFabric 深度整合）。AI ASIC 設計贏單持續累積。",
+      "companies": [
+        { "name": "GUC 創意電子", "ticker": "3443", "country": "TW", "share": "TSMC 子公司 ASIC 設計", "products": "HBM4 PHY world's first + 2.5D/3D APT + AI ASIC SoC", "note": "TSMC 35% 持股、與 TSMC 3DFabric 整合", "core_business": true, "growth_trajectory": "high" }
+      ],
+      "upstream": [{ "id": "ip-iface" }, { "id": "ip-hbm" }, { "id": "eda-rtl" }, { "id": "eda-physics" }],
+      "downstream": [{ "id": "fp-foundry" }, { "id": "fp-pkg" }],
+      "sources": [
+        { "label": "GUC HBM4 IP TSMC N3P first (TechNews)", "url": "https://technews.tw/2025/04/02/guc-hbm4-ip-tsmc-n3p" },
+        { "label": "GUC 3443 ASIC 旗手 (Pocket)", "url": "https://www.pocket.tw/school/report/SCHOOL/6546/" }
+      ]
+    },
+    {
+      "id": "ds-mtk-others",
+      "row": "design-svc",
+      "col": 5, "span": 1,
+      "kind": "stage",
+      "name": "MediaTek + 智原 + Socionext",
+      "nameEn": "MediaTek + Faraday + Socionext",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · MediaTek 2454 為 Google TPU v8i (inference) + v7e/v8e 變體獨家設計（Broadcom 拿 v8t 訓練）；2031 合約期、2026Q3 量產（信心度 high · TechSpot + Wccftech + TheNextWeb 多源）",
+      "desc": "MediaTek 為 Google TPU 第二設計合作夥伴；智原（UMC 子公司）+ Socionext（日本，NEC + Fujitsu 整合）+ Alphawave（QCOM 收購）補位。",
+      "marketSize": "TPU v8i 千萬量產",
+      "growth": "MediaTek TPU 8i 2026",
+      "analysis": "Google TPU v8 雙軌：Broadcom v8t（訓練）+ MediaTek v8i（推論）+ v7e/v8e 變體；2026Q3 量產，潛在 2027 5M 顆 / 2028 7M 顆；MediaTek 把 ARM CPU IP + I/O + TSMC 製造關係整合。智原（3035）UMC 子公司，AI / Edge AI 為主；Socionext（NEC + Fujitsu 整合）日本主流；Alphawave 已被 Qualcomm 收購。",
+      "companies": [
+        { "name": "MediaTek 聯發科", "ticker": "2454", "country": "TW", "share": "Google TPU v8i 獨家", "products": "TPU v7 I/O + v8i + v7e/v8e", "note": "與 Broadcom 平行雙軌、2031 合約", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Faraday 智原", "ticker": "3035", "country": "TW", "share": "UMC ASIC 設計服務", "products": "UMC 14nm / 22nm / 28nm IP + ASIC", "note": "UMC 子公司、AIoT / Edge AI", "core_business": true, "growth_trajectory": "med" },
+        { "name": "Socionext", "ticker": "6526.T", "country": "JP", "share": "日本 ASIC 設計服務", "products": "AI / HPC ASIC", "note": "NEC + Fujitsu 整合、日本主流" },
+        { "name": "Alphawave (+QCOM)", "ticker": "QCOM", "country": "US", "share": "DSP-based ASIC + IP", "products": "112G/224G SerDes + chiplet", "note": "Qualcomm 2025 收購整合" }
+      ],
+      "upstream": [{ "id": "ip-arm" }, { "id": "ip-iface" }, { "id": "eda-rtl" }],
+      "downstream": [{ "id": "fp-foundry" }, { "id": "d-google" }],
+      "sources": [
+        { "label": "Google TPU v8 split Broadcom + MediaTek (Wccftech)", "url": "https://wccftech.com/google-splits-tpuv8-strategy-two-chips-broadcom-training-mediatek-inference-duties/" },
+        { "label": "MediaTek AI ASIC billion-dollar bet (TechSpot)", "url": "https://www.techspot.com/news/110798-mediatek-targets-billion-dollar-ai-asic-business-smartphone.html" }
+      ]
+    },
+    {
+      "id": "fp-foundry",
+      "row": "foundry-pkg",
+      "col": 1, "span": 1,
+      "kind": "rail",
+      "name": "Foundry (TSMC N3/N2)",
+      "nameEn": "Foundry (TSMC N3/N2)",
+      "competition": "monopoly",
+      "single": "鎖喉點 · TSMC N3/N3P 為當前 AI ASIC 主流、N2 接棒（2026 起）；TSMC 在 AI ASIC 製造佔 ~80%+，Samsung SF3/SF2 + Intel 18A 補位（信心度 high · 通用知識 + 2nm topic 已論證）",
+      "desc": "AI ASIC tapeout 後 → foundry 製造 wafer；TSMC N3/N3P 為 2025-2026 主流，N2 2026 量產接棒；Samsung SF2P + Intel 18A 為次選。",
+      "marketSize": "TSMC AI ASIC 80%+",
+      "growth": "N3 → N2 過渡",
+      "analysis": "TSMC N3/N3P 為當前 AI ASIC (TPU/Trainium/Maia/MTIA/OpenAI) 主流；N2 GAA 2026 起接 Apple A19 + AI Custom；Samsung SF2P (70% yield) 在 Qualcomm + Tesla AI6 + AMD 切入；Intel 18A 為 Microsoft + AWS 對外 foundry 部分服務。",
+      "companies": [
+        { "name": "TSMC", "ticker": "2330", "country": "TW", "share": "AI ASIC ~80%+ foundry", "products": "N3 / N3P / N2 / N2P / A16", "note": "與 GUC + Alchip 深度合作" },
+        { "name": "Samsung Foundry", "ticker": "005930.KS", "country": "KR", "share": "SF2P 切入", "products": "SF2 / SF2P / SF2Z", "note": "Qualcomm + Tesla AI6 + AMD" },
+        { "name": "Intel Foundry", "ticker": "INTC", "country": "US", "share": "18A 對外 foundry", "products": "18A / 18A-P / 14A", "note": "MSFT + AWS 對外、Panther Lake 自用" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "fp-pkg" }],
+      "sources": [
+        { "label": "TSMC N3 AI ASIC 主流 + N2 接棒 (Tom's Hardware)", "url": "https://www.tomshardware.com/tech-industry/semiconductors/tsmcs-2nm-n2-process-node-enters-production-this-year-a16-and-n2p-arriving-next-year" }
+      ]
+    },
+    {
+      "id": "fp-pkg",
+      "row": "foundry-pkg",
+      "col": 2, "span": 1,
+      "kind": "rail",
+      "name": "CoWoS / Advanced Pkg",
+      "nameEn": "CoWoS / Advanced Packaging",
+      "competition": "monopoly",
+      "desc": "AI ASIC 必經 CoWoS（HBM + Logic 2.5D 整合）；TSMC CoWoS-L/S 月產能 2025 末 75K → 2026 末 120K wafers。Amkor 為第二來源（Intel EMIB）。",
+      "marketSize": "TSMC CoWoS 120K/月",
+      "growth": "AI 2x YoY",
+      "analysis": "TSMC CoWoS-L 為 AI ASIC + HBM 整合鎖喉；GUC 2.5D/3D APT 平台 + TSMC 3DFabric 深度整合，為 ASIC 客戶提供 chip-package co-design；ASE / Amkor / SK Hynix Indiana 2.5D 為次要 2.5D 來源。",
+      "companies": [
+        { "name": "TSMC CoWoS", "ticker": "2330", "country": "TW", "share": "CoWoS-L/S 主導", "products": "CoWoS-L / CoWoS-S / 3DFabric", "note": "AI 加速器封裝核心、HBM 整合" },
+        { "name": "Amkor", "ticker": "AMKR", "country": "US", "share": "EMIB 第二來源", "products": "EMIB + 2.5D pkg", "note": "Intel EMIB 雙廠" },
+        { "name": "ASE Tech", "ticker": "3711", "country": "TW", "share": "OSAT advanced pkg", "products": "FOCoS / VIPack", "note": "advanced pkg +60% rev 2024" }
+      ],
+      "upstream": [{ "id": "fp-foundry" }, { "id": "eda-physics" }, { "id": "ds-guc" }],
+      "downstream": [{ "id": "fp-hbm" }, { "id": "d-google" }, { "id": "d-meta" }, { "id": "d-aws" }, { "id": "d-msft" }],
+      "sources": [
+        { "label": "TSMC CoWoS 120K/month 2026 (TrendForce)", "url": "https://www.trendforce.com/news/2025/12/29/news-sk-hynix-reportedly-plans-first-u-s-2-5d-packaging-line-eyes-turnkey-hbm-to-challenge-tsmc/" }
+      ]
+    },
+    {
+      "id": "fp-hbm",
+      "row": "foundry-pkg",
+      "col": 3, "span": 1,
+      "kind": "rail",
+      "name": "HBM3E / HBM4 記憶體",
+      "nameEn": "HBM3E / HBM4 Memory",
+      "competition": "oligopoly",
+      "desc": "AI ASIC 必配 HBM3E / HBM4；SK Hynix 62% + Samsung 17-35% + Micron 21% 寡占；C-HBM4E（custom HBM）2027 量產，TSMC + GUC 合作客製。",
+      "marketSize": "HBM4 $500/stack",
+      "growth": "AI HBM bit +35×",
+      "analysis": "SK Hynix HBM4 主導，Micron 翻身、Samsung 4nm base 同廠；C-HBM4E (TSMC + GUC + DRAM 廠) 客製 base die 提供 hyperscaler 客製 HBM 平台。詳細見 HBM topic。",
+      "companies": [
+        { "name": "SK Hynix", "ticker": "000660.KS", "country": "KR", "share": "HBM 62%", "products": "HBM3E 12-Hi + HBM4", "note": "NVDA 主供 + AI ASIC 平台" },
+        { "name": "Samsung HBM", "ticker": "005930.KS", "country": "KR", "share": "HBM 17-35%", "products": "HBM3E / HBM4 + 4nm base", "note": "HBM4 首發 2026/2" },
+        { "name": "Micron Technology", "ticker": "MU", "country": "US", "share": "HBM 21%", "products": "HBM3E / HBM4", "note": "HBM4E base die 委 TSMC" }
+      ],
+      "upstream": [{ "id": "ip-hbm" }],
+      "downstream": [{ "id": "fp-pkg" }, { "id": "d-google" }, { "id": "d-aws" }, { "id": "d-msft" }],
+      "sources": [
+        { "label": "TSMC + GUC C-HBM4E custom HBM (Tom's Hardware)", "url": "https://www.tomshardware.com/pc-components/dram/hbm-undergoes-major-architectural-shakeup-as-tsmc-and-guc-detail-hbm4-hbm4e-and-c-hbm4e-3nm-base-dies-to-enable-2-5x-performance-boost-with-speeds-of-up-to-12-8gt-s-by-2027" }
+      ]
+    },
+    {
+      "id": "fp-substrate",
+      "row": "foundry-pkg",
+      "col": 4, "span": 1,
+      "kind": "rail",
+      "name": "IC Substrate (ABF / BT)",
+      "nameEn": "IC Substrate (ABF / BT)",
+      "competition": "oligopoly",
+      "desc": "AI ASIC + CoWoS pkg 接 ABF 載板（16+ 層、高速）。台廠 ABF 三雄 + Ibiden + SEMCO 為主流。",
+      "marketSize": "ABF gap 35% 2028",
+      "growth": "AI rev >50%",
+      "analysis": "Ajinomoto ABF 膜 95-98% 獨佔；TW ABF 三雄欣興 3037 + 南電 8046 + 景碩 3189；景碩在 BT + ABF 整合服務 Google / Meta ASIC。詳見 HBM topic + advanced topic。",
+      "companies": [
+        { "name": "Unimicron 欣興", "ticker": "3037", "country": "TW", "share": "ABF #1 TW", "products": "16+ 層 ABF", "note": "AI rev >50%、16+ 層 60% rev" },
+        { "name": "Nan Ya PCB 南電", "ticker": "8046", "country": "TW", "share": "ABF #2 TW", "products": "ABF 高階", "note": "非長約彈性" },
+        { "name": "Kinsus 景碩", "ticker": "3189", "country": "TW", "share": "BT + ABF #3", "products": "BT + ABF", "note": "Google / Meta ASIC 切入" },
+        { "name": "Ibiden", "ticker": "4062.T", "country": "JP", "share": "ABF JP #1", "products": "ABF 載板", "note": "高階 ABF + 與 Intel 合作" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "fp-pkg" }],
+      "sources": [
+        { "label": "ABF gap 35% 2028 + TW 三雄 (TechNews)", "url": "https://finance.technews.tw/2026/04/27/ai-carrier-board-shortage/" }
+      ]
+    },
+    {
+      "id": "d-google",
+      "row": "demand",
+      "col": 1, "span": 1,
+      "kind": "demand",
+      "name": "Google TPU v7/v8",
+      "nameEn": "Google TPU v7/v8",
+      "competition": "highgrowth",
+      "single": "客戶獨家 · Google TPU v8 雙晶片策略：Broadcom v8t（訓練）+ MediaTek v8i（推論）+ Marvell 洽談第三 inference TPU + MPU；2026Q3 量產，2028 7M 顆出貨（信心度 high · Wccftech + Tom's + TheNextWeb 多源）",
+      "desc": "Google TPU v7 Ironwood + v8 雙晶片是 hyperscaler ASIC 多供應商策略典範。",
+      "marketSize": "5M (2027) → 7M (2028)",
+      "growth": "Broadcom + MediaTek + Marvell",
+      "analysis": "TPU v7 Ironwood: Broadcom 設計 + MediaTek I/O；TPU v8t (training): Broadcom + TSMC 2nm；TPU v8i (inference): MediaTek + TSMC + Google 自家設計；TPU v7e/v8e: MediaTek 變體。Google 為 Hyperscaler ASIC 設計多元化先驅，三家供應商 + 2031 合約。Anthropic 3.5GW Google TPU 2027 起。",
+      "companies": [
+        { "name": "Google (Alphabet)", "ticker": "GOOGL", "country": "US", "share": "Hyperscaler ASIC 領先", "products": "TPU v7 Ironwood + v8t + v8i + Iron Wood", "note": "Anthropic 3.5GW + 自用 + Cloud 提供" }
+      ],
+      "upstream": [{ "id": "ds-broadcom" }, { "id": "ds-marvell" }, { "id": "ds-mtk-others" }, { "id": "fp-pkg" }, { "id": "fp-hbm" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Google TPU 8t/8i Broadcom + MediaTek (Wccftech)", "url": "https://wccftech.com/google-splits-tpuv8-strategy-two-chips-broadcom-training-mediatek-inference-duties/" },
+        { "label": "Google 4-partner chip strategy (TheNextWeb)", "url": "https://thenextweb.com/news/google-inference-chips-nvidia-challenge-supply-chain" }
+      ]
+    },
+    {
+      "id": "d-meta",
+      "row": "demand",
+      "col": 2, "span": 1,
+      "kind": "demand",
+      "name": "Meta MTIA v3",
+      "nameEn": "Meta MTIA v3",
+      "competition": "highgrowth",
+      "desc": "Meta MTIA（Meta Training & Inference Accelerator）v3 由 Broadcom 設計；Meta 2026/4 commit 1GW 與 Broadcom 合作。",
+      "marketSize": "1GW commit 2026",
+      "growth": "Hyperion 訓練",
+      "analysis": "Meta MTIA v1/v2/v3 全 Broadcom 設計；2026/4 公開 commit 1GW；服務於 Hyperion 訓練 + 8GW Catawba data center。Meta 為 Broadcom 第三大客戶（後 Google + OpenAI）。",
+      "companies": [
+        { "name": "Meta", "ticker": "META", "country": "US", "share": "MTIA 自研", "products": "MTIA v2 / MTIA v3", "note": "2026/4 Broadcom 1GW commit、8GW Catawba" }
+      ],
+      "upstream": [{ "id": "ds-broadcom" }, { "id": "fp-pkg" }, { "id": "fp-hbm" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Meta 1GW Broadcom commit (IBT)", "url": "https://www.ibtimes.com/what-broadcom-unknown-company-building-ai-chips-powering-google-anthropic-openai-meta-3802922" }
+      ]
+    },
+    {
+      "id": "d-msft",
+      "row": "demand",
+      "col": 3, "span": 1,
+      "kind": "demand",
+      "name": "Microsoft Maia 200 + Cobalt 200",
+      "nameEn": "Microsoft Maia 200 + Cobalt 200",
+      "competition": "highgrowth",
+      "desc": "Microsoft Azure 自研雙線：Maia 200 (AI 加速器，Marvell 設計) + Cobalt 200 (ARM Neoverse V3 CPU)；MSFT 同時為 Intel 18A foundry 對外服務客戶。",
+      "marketSize": "Azure $80B capex 2026",
+      "growth": "雙線 AI + CPU",
+      "analysis": "Maia 100 (Cobalt 100 = Neoverse N2) → Maia 200 + Cobalt 200 (Neoverse V3)；Marvell 為 Maia 200 設計合作。MSFT 同時用 Intel 18A 為自家 + 對外 foundry 服務。",
+      "companies": [
+        { "name": "Microsoft", "ticker": "MSFT", "country": "US", "share": "Azure AI 自研", "products": "Maia 200 + Cobalt 200 + Azure Boost", "note": "Marvell + ARM 整合、Intel 18A 客戶" }
+      ],
+      "upstream": [{ "id": "ds-marvell" }, { "id": "ip-arm" }, { "id": "fp-pkg" }, { "id": "fp-hbm" }],
+      "downstream": [],
+      "sources": [
+        { "label": "MSFT Cobalt 200 ARM Neoverse V3 (TechInsights)", "url": "https://www.techinsights.com/blog/arm-neoverse-v3-heads-clouds-aws-graviton5-microsoft-cobalt-200" }
+      ]
+    },
+    {
+      "id": "d-aws",
+      "row": "demand",
+      "col": 4, "span": 1,
+      "kind": "demand",
+      "name": "AWS Trainium 3 + Graviton 5",
+      "nameEn": "AWS Trainium 3 + Graviton 5",
+      "competition": "highgrowth",
+      "single": "客戶獨家 · AWS Trainium 3 + Graviton 5 為 hyperscaler 最完整自研堆疊：Trainium 3 由 Alchip 設計 + Marvell 協作，年化 $20B+ run rate；Graviton 5 用 ARM Neoverse V3，連 3 年新 CPU 容量 >50%（信心度 high · Foreign Policy + ARM 多源）",
+      "desc": "AWS 自研 silicon 三線：Trainium（訓練）+ Inferentia（推論）+ Graviton（CPU）；Trainium 3 由 Alchip primary 設計 + Marvell 協作，年化 run rate $20B+。",
+      "marketSize": "Trainium $20B run rate",
+      "growth": "Trainium 3/4 ramp",
+      "analysis": "Trainium 3 (3nm) 2026Q2 量產、Trainium 4 設計中；Graviton 5 (Neoverse V3) 2025/Q4 推出，AWS 新增 CPU 容量 >50% 連續 3 年；Amazon Trainium backlog $225B（過去訂單累積）。",
+      "companies": [
+        { "name": "Amazon AWS", "ticker": "AMZN", "country": "US", "share": "Hyperscaler 自研最完整", "products": "Trainium 3 + Inferentia + Graviton 5", "note": "Trainium $20B run rate、Graviton 50% AWS CPU 容量" }
+      ],
+      "upstream": [{ "id": "ds-alchip" }, { "id": "ds-marvell" }, { "id": "ip-arm" }, { "id": "fp-pkg" }, { "id": "fp-hbm" }],
+      "downstream": [],
+      "sources": [
+        { "label": "AWS Trainium $225B backlog Marvell beneficiary (Foreign Policy)", "url": "https://www.foreignpolicyjournal.com/2026/05/11/amazons-nasdaq-amzn-225-billion-trainium-backlog-makes-marvell-technology-nasdaq-mrvl-a-key-beneficiary/" },
+        { "label": "Graviton 5 + Cobalt 200 ARM V3 (ARM)", "url": "https://newsroom.arm.com/blog/arm-converged-ai-data-center-aws-graviton5" }
+      ]
+    },
+    {
+      "id": "d-openai",
+      "row": "demand",
+      "col": 5, "span": 1,
+      "kind": "demand",
+      "name": "OpenAI + Anthropic + Tesla",
+      "nameEn": "OpenAI + Anthropic + Tesla",
+      "competition": "highgrowth",
+      "desc": "新一波 AI 公司自研 ASIC：OpenAI 與 Broadcom 2027 deploy >1GW；Anthropic 用 Google TPU 3.5GW 2027 起；Tesla Dojo 2 自研 + Samsung SF2P AI6。",
+      "marketSize": "OpenAI 1GW 2027",
+      "growth": "AI 公司全自研",
+      "analysis": "OpenAI 與 Broadcom 合作 ASIC 首發 2027 deploy >1GW（XAI 2nm）；Anthropic 不自研但用 Google TPU 3.5GW 2027；Tesla Dojo 2 自研晶片於 Samsung SF2P 量產（AI6 ₩22 兆訂單）；XAI / Inflection 用 NVDA + 自研混合。",
+      "companies": [
+        { "name": "OpenAI", "ticker": "—", "country": "US", "share": "Broadcom ASIC 2027 1GW", "products": "OpenAI custom ASIC", "note": "Broadcom 2027 deploy >1GW、未上市" },
+        { "name": "Anthropic", "ticker": "—", "country": "US", "share": "Google TPU 3.5GW 2027", "products": "Claude on TPU", "note": "不自研、Google TPU 大客戶、未上市" },
+        { "name": "Tesla", "ticker": "TSLA", "country": "US", "share": "Dojo 2 + AI6", "products": "Dojo 2 自研 + AI6 (Samsung)", "note": "Samsung SF2P ₩22 兆 AI6 訂單" }
+      ],
+      "upstream": [{ "id": "ds-broadcom" }, { "id": "fp-pkg" }, { "id": "fp-hbm" }],
+      "downstream": [],
+      "sources": [
+        { "label": "OpenAI 2027 1GW Broadcom (IBT)", "url": "https://www.ibtimes.com/what-broadcom-unknown-company-building-ai-chips-powering-google-anthropic-openai-meta-3802922" },
+        { "label": "Anthropic 3.5GW Google TPU 2027 (HeyGoTrade)", "url": "https://www.heygotrade.com/en/blog/add-avgo-ai-custom-silicon-2026/" }
+      ]
+    }
+  ],
+  "edges": [
+    ["ip-arm", "ds-broadcom"],
+    ["ip-arm", "ds-marvell"],
+    ["ip-arm", "ds-alchip"],
+    ["ip-arm", "ds-mtk-others"],
+    ["ip-iface", "ds-broadcom"],
+    ["ip-iface", "ds-marvell"],
+    ["ip-iface", "ds-alchip"],
+    ["ip-iface", "ds-guc"],
+    ["ip-hbm", "ds-broadcom"],
+    ["ip-hbm", "ds-marvell"],
+    ["ip-hbm", "ds-alchip"],
+    ["ip-hbm", "ds-guc"],
+    ["ip-other", "ds-broadcom"],
+    ["ip-other", "ds-marvell"],
+    ["eda-rtl", "ds-broadcom"],
+    ["eda-rtl", "ds-marvell"],
+    ["eda-rtl", "ds-alchip"],
+    ["eda-rtl", "ds-guc"],
+    ["eda-rtl", "ds-mtk-others"],
+    ["eda-physics", "ds-broadcom"],
+    ["eda-physics", "ds-marvell"],
+    ["eda-physics", "ds-alchip"],
+    ["eda-physics", "fp-pkg"],
+    ["eda-ai", "ds-broadcom"],
+    ["eda-ai", "ds-marvell"],
+    ["eda-ai", "ds-alchip"],
+    ["ds-broadcom", "fp-foundry"],
+    ["ds-broadcom", "d-google"],
+    ["ds-broadcom", "d-meta"],
+    ["ds-broadcom", "d-openai"],
+    ["ds-marvell", "fp-foundry"],
+    ["ds-marvell", "d-aws"],
+    ["ds-marvell", "d-msft"],
+    ["ds-marvell", "d-google"],
+    ["ds-alchip", "fp-foundry"],
+    ["ds-alchip", "d-aws"],
+    ["ds-guc", "fp-foundry"],
+    ["ds-guc", "fp-pkg"],
+    ["ds-mtk-others", "fp-foundry"],
+    ["ds-mtk-others", "d-google"],
+    ["fp-foundry", "fp-pkg"],
+    ["fp-pkg", "fp-hbm"],
+    ["fp-pkg", "d-google"],
+    ["fp-pkg", "d-meta"],
+    ["fp-pkg", "d-aws"],
+    ["fp-pkg", "d-msft"],
+    ["fp-hbm", "d-google"],
+    ["fp-hbm", "d-aws"],
+    ["fp-hbm", "d-msft"],
+    ["fp-substrate", "fp-pkg"]
+  ]
+}
