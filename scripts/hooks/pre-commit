@@ -18,7 +18,39 @@
 
 set -e
 
+# .nojekyll guard: this site is hand-written static HTML+JSON+JS, NEVER uses
+# Jekyll. Removing docs/.nojekyll re-enables Jekyll and Pages builds will
+# timeout / error (historical incident 2026-05-26: 1609-file docs/ choked
+# Jekyll, multiple consecutive Pages builds errored before .nojekyll added).
+# Always check; cost is one stat() call.
+if [ ! -f docs/.nojekyll ]; then
+  echo ""
+  echo "❌ docs/.nojekyll is missing — commit blocked."
+  echo ""
+  echo "   This file MUST exist to prevent GitHub Pages from running Jekyll"
+  echo "   on docs/. Without it, Pages re-enables Jekyll, builds slow down"
+  echo "   as docs/ grows, and eventually time out (2026-05-26 incident)."
+  echo ""
+  echo "   Fix: 'touch docs/.nojekyll && git add docs/.nojekyll', then retry."
+  echo "   Bypass: --no-verify (only if you truly want Jekyll, which you don't)."
+  exit 1
+fi
+
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)
+STAGED_DEL=$(git diff --cached --name-only --diff-filter=D)
+
+# Block deletion of docs/.nojekyll
+if echo "$STAGED_DEL" | grep -qx 'docs/\.nojekyll'; then
+  echo ""
+  echo "❌ Refusing to delete docs/.nojekyll — commit blocked."
+  echo ""
+  echo "   This file disables Jekyll on Pages. Removing it will cause Pages"
+  echo "   builds to time out as docs/ grows. See 2026-05-26 incident."
+  echo ""
+  echo "   If you truly need Jekyll, bypass with --no-verify, but the site"
+  echo "   architecture (hand-written HTML + JSON + JS) does not need it."
+  exit 1
+fi
 
 STAGED_DD=$(echo "$STAGED" | grep -E '^docs/dd/DD_.*\.html$' || true)
 STAGED_ID=$(echo "$STAGED" | grep -E '^docs/id/ID_.*\.html$' || true)
