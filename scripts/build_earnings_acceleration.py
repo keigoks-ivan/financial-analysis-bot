@@ -77,12 +77,13 @@ SCHEMA_VERSION = "1.0"
 # ── scoring constants ─────────────────────────────────────────────────────────
 PILLAR_WEIGHTS = {"revision": 0.50, "beat": 0.30, "floor": 0.20}
 
-# v1.0.1: Final 門檻從 0.65 拉到 0.75 — bull market 中 quality stocks 大部分都
-# 有正向 revision + beat，0.65 太寬鬆會出 40+ Tier A。0.75 收緊到 high-conviction
-# only (預期 8-15 檔)。Pillar A/B 門檻不動 — 已是強訊號標準。
-TIER_FINAL_MIN = 0.75
-TIER_A_REVISION_MIN = 0.60
-TIER_A_BEAT_MIN = 0.55
+# v1.0.2: re-tighten — v1.0.1 (final 0.75, rev 0.60, beat 0.55) produced ~50 Tier A
+# in 2026-05 bull market, losing signal. New thresholds yield ~10-15 tickers ("most
+# accelerating EPS, top scorers only"): all three pillars must clear high bars
+# simultaneously — pure revision strength alone or beat alone is not enough.
+TIER_FINAL_MIN = 0.88
+TIER_A_REVISION_MIN = 0.85
+TIER_A_BEAT_MIN = 0.70
 DISPLAY_TOTAL = 25
 
 MOAT_SCORE_MIN = 6
