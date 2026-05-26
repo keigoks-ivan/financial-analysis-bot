@@ -380,7 +380,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
         <br><em>FY+2 / 2028+：</em>yfinance 不提供（已驗證 mega caps 全部只到 +1y）；如要更長預估窗，需付費 API（Financial Modeling Prep / Finnhub / Bloomberg）。
       </li>
 
-      <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / live EPS 2Y CAGR (yfinance)</code> — <strong>v1.7 起改用即時數值</strong>。注意 PEG 分母仍用 yfinance YearAgo-anchored 2Y CAGR 計算（保留與舊 PEG 數字可比性），與主欄 FY+1→FY+3 CAGR 計算窗口不同。
+      <li><strong>PEG</strong>：即時前瞻 PEG = <code>live FwdPE / Excel FY+1→FY+3 CAGR</code> — <strong>v1.10 起分母改用 Excel forward CAGR，與主欄「FY+1→FY+3 CAGR」一致</strong>。之前用 yfinance YearAgo→FY+1 anchored CAGR，對 SBC 重的 SaaS（GAAP TTM 被 SBC 壓低）造成 fake-low PEG（CDNS 0.77 → 修正後 2.32；DDOG 4.42 → 3.79）。當 Excel CAGR 缺值（FY1 負如 NBIS / CRWV / NVTS、或 yfinance-only ticker 如 6857.T）會 fallback 回 yfinance CAGR。
         <br><em>來源（live）：</em>純 derive — 分子分母都用 live，所以價格動 + 分析師修正都會反映在這欄。
         <br><em>規則：</em>frozen DD PEG 進 tooltip（hover 看 DD 對比）；live 任一邊失敗時 fallback 顯示 frozen DD 並標 <code>DD</code>。
         <br><em>QGM MLB 門檻：</em><code>≤ 2.0x</code>（顏色基於 live 值）

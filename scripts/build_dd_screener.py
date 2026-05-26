@@ -1253,17 +1253,30 @@ def _compute_eps_revision(entry: dict, eps2y_live: float | None, prev_snapshot: 
     return out
 
 
-def _compute_live_peg(pe_drift: dict, eps2y_live: float | None) -> dict:
-    """Derive live PEG from live_fpe_est / eps2y_live.
+def _compute_live_peg(pe_drift: dict, eps2y_live: float | None,
+                       live_fy_result: dict | None = None) -> dict:
+    """Derive live PEG from live_fpe_est / CAGR.
+
+    v1.10: prefer Excel pure-forward CAGR (eps_fy1_fy3_cagr_pct, what the UI's
+    "CAGR" column displays) over eps2y_live (yfinance yearAgo→FY+1, basis
+    can mix GAAP TTM with non-GAAP forward → fake-low PEG for SBC-heavy SaaS).
+    CDNS observed: eps_fy1_fy3_cagr_pct=17.15, eps2y_live=52.0 → old PEG
+    39.83/52 = 0.77 (misleading), new PEG 39.83/17.15 = 2.32 (realistic).
+
+    Falls back to eps2y_live only when Excel CAGR is unavailable
+    (FY1 negative for NBIS/CRWV/NVTS; yfinance-only tickers like 6857.T).
 
     pe_drift: the dict returned by _compute_live_pe_drift() (contains live_fpe_est).
+    live_fy_result: dict returned by _fetch_live_fy_eps() (contains cagr_fy1_fy3_pct).
 
     Writes:
-      live_peg: live PEG ratio (None if either input is missing or ≤ 0)
+      live_peg: live PEG ratio (None if FPE or CAGR is missing/≤ 0)
     """
     fpe = pe_drift.get("live_fpe_est")
-    if fpe and eps2y_live and fpe > 0 and eps2y_live > 0:
-        return {"live_peg": round(fpe / eps2y_live, 2)}
+    excel_cagr = (live_fy_result or {}).get("cagr_fy1_fy3_pct")
+    cagr = excel_cagr if excel_cagr is not None else eps2y_live
+    if fpe and cagr and fpe > 0 and cagr > 0:
+        return {"live_peg": round(fpe / cagr, 2)}
     return {"live_peg": None}
 
 
@@ -1474,7 +1487,7 @@ def enrich_ticker(
     # buy-side consensus shift rather than yfinance YearAgo→FY+1 window noise.
     excel_cagr_for_rev = (live_fy_result or {}).get("cagr_fy1_fy3_pct")
     eps_revision = _compute_eps_revision(entry, excel_cagr_for_rev, prev_snapshot or {})
-    live_peg = _compute_live_peg(pe_drift, eps2y_live)  # needs live_fpe_est from pe_drift
+    live_peg = _compute_live_peg(pe_drift, eps2y_live, live_fy_result)  # FPE & Excel CAGR
 
     # Compute ev5y_pct before passing to live_ev5y helper (entry doesn't carry it yet)
     ev5y_pct = _ev5y_for(t, dca_ev_map)
