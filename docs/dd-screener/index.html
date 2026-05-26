@@ -891,11 +891,13 @@ function _renderLiveEPSCell(s, flag) {
     var revColor = revDir === '上修' ? '#166534' : '#991B1B';
     var arrow = revDir === '上修' ? '↑' : '↓';
     var revSign = revPp > 0 ? '+' : '';
-    // v1.10: drop "pp" suffix for visual consistency with EPS revision chip.
-    // Underlying math is still absolute pp delta of two CAGR percentages.
-    display += '<span style="font-size:9px;color:' + revColor + ';margin-left:3px;font-weight:600">' + arrow + revSign + revPp.toFixed(1) + '%' + cagrAgeSuffix + '</span>';
+    // v1.11: chip renders on a NEW LINE below the CAGR % (block <div> with
+    // margin-top) to match the EPS chip layout in _renderRawEpsCell.
+    // Math unchanged — still absolute pp delta of two CAGR percentages,
+    // suffix kept as "%" for visual consistency with the EPS revision chip.
+    display += '<div style="font-size:9px;color:' + revColor + ';margin-top:1px;font-weight:600">' + arrow + revSign + revPp.toFixed(1) + '%' + cagrAgeSuffix + '</div>';
   } else if (revDir === '新增') {
-    display += '<span style="font-size:9px;color:#94a3b8;margin-left:3px">新</span>';
+    display += '<div style="font-size:9px;color:#94a3b8;margin-top:1px">新</div>';
   }
   // tooltip
   var parts = ['Excel FY+1→FY+3 forward CAGR ' + cagr.toFixed(1) + '%'];
