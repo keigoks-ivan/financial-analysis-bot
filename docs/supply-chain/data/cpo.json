@@ -1,0 +1,459 @@
+{
+  "id": "cpo",
+  "tab": "CPO",
+  "title": "CPO 共封裝光學供應鏈",
+  "subtitle": "Co-Packaged Optics — 光引擎與交換器/GPU 同 package 整合，解決 1.6T/3.2T 時代的功耗、密度、距離瓶頸。2026H2 進量產拐點：TSMC COUPE Gen1（AMD first adopter）、Broadcom Tomahawk 5/6 Bailly/Davisson、NVIDIA Spectrum-X/Quantum-X Photonics。NVIDIA 已投資 Lumentum / Coherent 各 $2B 鎖雷射，與 Corning 達 $3.2B 光纖長約，與 Marvell 達 $2B 策略合作。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 19 },
+    { "k": "涵蓋廠商", "v": "85+" },
+    { "k": "獨佔/客戶獨家單點", "v": 7, "sub": "TSMC·Himax·FOCI·Largan·Browave·Corning·VisEra", "hot": true }
+  ],
+  "rows": [
+    { "id": "equip", "label": "設備・自動化 EQUIPMENT", "main": false },
+    { "id": "flow",  "label": "CPO 主製程流 MAIN FLOW", "main": true },
+    { "id": "material", "label": "光學元件・材料 OPTICS & MATERIALS", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "eq-fab",
+      "row": "equip", "col": 1, "span": 3, "kind": "rail",
+      "name": "矽光子前段製程設備",
+      "nameEn": "SiPh Front-end (Etch · Depo · CMP)",
+      "competition": "oligopoly",
+      "desc": "PIC 晶圓的蝕刻、氧化層/SiN 沉積、CMP 平坦化、Ge 磊晶（光偵測器）；與邏輯前段設備高度重疊。",
+      "growth": "重疊邏輯前段",
+      "analysis": "Lam（蝕刻 ~50%）、AMAT（沉積/介電蝕刻）、東京威力（塗佈顯影）為主要供應。CPO 不增加新設備類，但 SiN 波導與 Ge 磊晶需特殊製程模組。",
+      "companies": [
+        { "name": "Lam Research", "ticker": "LRCX", "country": "US", "share": "蝕刻整體 ~50%", "products": "DRIE + 介電蝕刻", "note": "SiPh 蝕刻主供" },
+        { "name": "Applied Materials", "ticker": "AMAT", "country": "US", "share": "沉積 #1 / CMP ~42%", "products": "PVD/CVD + Reflexion CMP", "note": "SiN/SiO2 沉積關鍵" },
+        { "name": "Tokyo Electron", "ticker": "8035.T", "country": "JP", "share": "蝕刻 ~15% / 塗佈顯影近獨佔", "products": "Tactras 蝕刻 + CLEAN TRACK", "note": "EUV 黃光必經" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-foundry" }],
+      "sources": [
+        { "label": "蝕刻設備市佔 (Intel Market Research)", "url": "https://www.intelmarketresearch.com/semiconductor-etch-equipment-market-market-16371" }
+      ]
+    },
+    {
+      "id": "eq-laser",
+      "row": "equip", "col": 4, "span": 3, "kind": "rail",
+      "name": "雷射 / 玻璃加工 / 對位設備",
+      "nameEn": "Laser · TGV · Alignment",
+      "competition": "highgrowth",
+      "desc": "雷射切割、玻璃穿孔（TGV）、暫時鍵合與精密光學對位設備；CPO 板級玻璃載板與 FAU 對位的關鍵設備。",
+      "growth": "玻璃載板 + FAU 對位",
+      "analysis": "Disco 在雷射切割/研磨近獨佔；台廠鈦昇切入 TGV 鑽孔（8000 孔/秒）供 TSMC CoPoS/COUPE；EVG 暫時鍵合領先；日廠 Hakusan 主供 MT ferrule 對位設備。",
+      "companies": [
+        { "name": "Disco", "ticker": "6146.T", "country": "JP", "share": ">70-80%", "products": "雷射切割 + grinder", "note": "切割近獨佔" },
+        { "name": "鈦昇 TYC", "ticker": "8027.TWO", "country": "TW", "share": "TGV 領先台廠", "products": "TGV 鑽孔 + 雷射加工", "note": "切入 TSMC CoPoS/COUPE", "src": "https://www.moneyweekly.com.tw/ArticleData/Info/Article/225803" },
+        { "name": "EV Group / SUSS", "ticker": "— / SMHN.DE", "country": "AT", "share": "暫時鍵合雙寡占", "products": "TB/Debond + 對位", "note": "薄晶圓 SiPh 必經" },
+        { "name": "Hakusan", "ticker": "—", "country": "JP", "share": "MT ferrule 對位", "products": "光纖陣列對位設備", "note": "CPO 高密度光對位" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-foundry" }],
+      "sources": [
+        { "label": "鈦昇 TGV 切入先進封裝 (Money Weekly)", "url": "https://www.moneyweekly.com.tw/ArticleData/Info/Article/225803" },
+        { "label": "Hakusan MT ferrule CPO role", "url": "https://hakusan-mfg.co.jp/en/project/1552/" }
+      ]
+    },
+    {
+      "id": "eq-inspect",
+      "row": "equip", "col": 7, "span": 3, "kind": "rail",
+      "name": "光學量測 / AOI 檢測 / 測試",
+      "nameEn": "Optical Metrology · AOI · Test",
+      "competition": "oligopoly",
+      "desc": "PIC 晶圓光學量測、FAU 對準量測、CPO 封裝外觀 AOI、成品光電測試與探針卡；Advantest 自研 SiPh 測試方案。",
+      "growth": "SiPh 新測試類",
+      "analysis": "前段 KLA / Onto / Camtek 主導；Camtek 接 OSAT CoWoS-like AP 訂單；台廠致茂為 TSMC CoWoS-L RDL 測試重要供應；Advantest 切入 SiPh wafer-level test。",
+      "companies": [
+        { "name": "KLA / Onto / Camtek", "ticker": "KLAC / ONTO / CAMT", "country": "US", "share": "AP 量測雙雄+前段", "products": "RDL/microbump/PIC 量測", "note": "先進封裝檢測領導" },
+        { "name": "致茂 Chroma", "ticker": "2360.TW", "country": "TW", "share": "測試全球第 4", "products": "SLT + 光電 ATE", "note": "TSMC CoWoS-L RDL 測試" },
+        { "name": "Advantest", "ticker": "6857.T", "country": "JP", "share": "ATE 寡占", "products": "SiPh wafer-level test 開發中", "note": "切入 SiPh 測試" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-assembly" }],
+      "sources": [
+        { "label": "Advantest SiPh test (TrendForce)", "url": "https://www.trendforce.com/news/2026/04/01/news-silicon-photonics-race-intensifies-as-tsmc-targets-2026-coupe-production-samsung-eyes-2029-cpo-turnkey/" }
+      ]
+    },
+    {
+      "id": "f-foundry",
+      "row": "flow", "col": 1, "span": 2, "kind": "stage",
+      "name": "PIC 晶圓代工 / SiPh 平台",
+      "nameEn": "PIC Foundry / SiPh Platform",
+      "competition": "monopoly",
+      "single": "鎖喉點 · TSMC COUPE Gen1 2026H2 量產，AMD first adopter；NVIDIA Spectrum-X / Quantum-X 用 COUPE + 3D 混合鍵合（SoIC-X）",
+      "desc": "光子整合電路（PIC）晶圓代工平台，把光元件做在矽晶圓上。TSMC COUPE 用 SoIC-X 把電子 die 疊在光子 die 上，是全鏈最關鍵的鎖喉點。",
+      "marketSize": "$5-10x 功耗效率",
+      "growth": "2026H2 量產",
+      "analysis": "TSMC COUPE Gen1 鎖 AMD 為首發客戶、NVIDIA Spectrum-X 用之；技術上 5-10x 功耗效率、10-20x 低延遲。GlobalFoundries Fotonix（2022 推出、2026/5 推出 SCALE CPO 平台）為第二選擇，Tower Semi 中階替代，Samsung 2029 推 CPO turnkey 落後 3 年。",
+      "companies": [
+        { "name": "TSMC 台積電", "ticker": "2330.TW", "country": "TW", "share": "COUPE 平台主導", "products": "COUPE + SoIC-X 3D 混合鍵合", "note": "Gen1 2026H2 量產，AMD first adopter；NVDA Spectrum-X 用之", "src": "https://www.trendforce.com/news/2026/04/01/news-silicon-photonics-race-intensifies-as-tsmc-targets-2026-coupe-production-samsung-eyes-2029-cpo-turnkey/" },
+        { "name": "GlobalFoundries", "ticker": "GFS", "country": "US", "share": "Fotonix / SCALE", "products": "300mm SiPh + RF-CMOS 整合 / OCI MSA CPO 平台", "note": "2026 營收翻倍，2028>$1B", "src": "https://www.trendforce.com/news/2026/05/07/news-globalfoundries-reportedly-sees-silicon-photonics-revenue-doubling-in-2026-passing-1b-by-2028/" },
+        { "name": "Tower Semiconductor", "ticker": "TSEM", "country": "IL", "share": "中階替代", "products": "200mm SiPh", "note": "2026 中產能 3x" },
+        { "name": "Intel Foundry", "ticker": "INTC", "country": "US", "share": "歷史 SiPh 領先", "products": "Intel SiPh 平台", "note": "外包客戶少；自家用為主" },
+        { "name": "Samsung Foundry", "ticker": "005930.KS", "country": "KR", "share": "2029 規劃", "products": "CPO turnkey", "note": "落後 TSMC 3 年" }
+      ],
+      "upstream": [{ "id": "eq-fab" }, { "id": "eq-laser" }, { "id": "m-waveguide" }, { "id": "m-wafer" }],
+      "downstream": [{ "id": "f-engine" }, { "id": "f-assembly" }],
+      "sources": [
+        { "label": "TSMC COUPE 2026H2 量產 (TrendForce)", "url": "https://www.trendforce.com/news/2026/04/01/news-silicon-photonics-race-intensifies-as-tsmc-targets-2026-coupe-production-samsung-eyes-2029-cpo-turnkey/" },
+        { "label": "GF Fotonix SCALE CPO 平台", "url": "https://www.techinsights.com/blog/gf-fotonix-unites-cmos-photonics" },
+        { "label": "TSMC COUPE 技術論文", "url": "https://research.tsmc.com/page/on-chip-interconnect/14.html" }
+      ]
+    },
+    {
+      "id": "f-engine",
+      "row": "flow", "col": 3, "span": 1, "kind": "stage",
+      "name": "光引擎 6.4T",
+      "nameEn": "Optical Engine 6.4T",
+      "competition": "oligopoly",
+      "desc": "把雷射、調變器（modulator）、光偵測器（PD）、波長分波（WDM）整合成一個可裝在 ASIC 旁的小型光引擎，是 CPO 的核心模組。",
+      "growth": "Marvell 1.6T 已 sample",
+      "analysis": "Broadcom 內製（TH5/TH6 Bailly/Davisson），Coherent 在 OFC 2026 展示 6.4T socketed CPO + ELS，Marvell 有 6.4T CPO + 1.6T LPO 兩條，Cisco 自製 Silicon One CPO。NVIDIA 投 $2B Marvell 鎖光引擎協作。",
+      "companies": [
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "TH5/6 Bailly 內製", "products": "8× 6.4T 光引擎 + TH5 ASIC", "note": "已出 50,000+ TH5 Bailly 2025" },
+        { "name": "Coherent", "ticker": "COHR", "country": "US", "share": "6.4T socketed", "products": "32×200G PIC + ELS", "note": "OFC 2026 展示，NVIDIA 鎖 $2B" },
+        { "name": "Marvell", "ticker": "MRVL", "country": "US", "share": "6.4T CPO + 1.6T LPO", "products": "6.4T Light Engine + 1.6T LPO 8×200G PAM4", "note": "<5pJ/bit；NVIDIA 投 $2B" },
+        { "name": "Cisco Silicon One", "ticker": "CSCO", "country": "US", "share": "自製", "products": "Silicon One CPO", "note": "自家交換器整合" }
+      ],
+      "upstream": [{ "id": "f-foundry" }, { "id": "f-laser" }],
+      "downstream": [{ "id": "f-assembly" }],
+      "sources": [
+        { "label": "Marvell 1.6T LPO 5pJ/bit (Marvell)", "url": "https://www.stocktitan.net/news/MRVL/marvell-demonstrates-silicon-photonics-light-engine-for-low-power-qgm3yegtal5m.html" },
+        { "label": "Coherent 6.4T CPO ELS at OFC 2026", "url": "https://www.stocktitan.net/news/COHR/coherent-demonstrates-multiple-co-packaged-optics-cpo-technologies-9b9rcc85qq6s.html" }
+      ]
+    },
+    {
+      "id": "f-laser",
+      "row": "flow", "col": 4, "span": 1, "kind": "stage",
+      "name": "ELS / DFB 雷射晶片",
+      "nameEn": "ELS / DFB Laser Chip",
+      "competition": "oligopoly",
+      "desc": "外部雷射源（External Laser Source, ELS / ELSFP）+ DFB 雷射晶片，主流 1310nm CW 雷射；CPO 主流架構為「外部雷射 + 內部矽光調變」。NVIDIA 已投 $2B Lumentum + $2B Coherent 鎖容量。",
+      "marketSize": "NVDA $4B 鎖容量",
+      "growth": "11.8% CAGR",
+      "analysis": "EML/DFB 五強：Lumentum / Coherent / Mitsubishi / Sumitomo / Broadcom。NVIDIA 各投 $2B 鎖 Lumentum + Coherent 容量；Furukawa 新建 DFB 廠供 ELSFP；AAOI 推 400mW 25dBm ELSFP；Sivers Semi 是被忽略的 InP chokepoint（sub-30% yield，與 WIN Semi 合作擴產）。",
+      "companies": [
+        { "name": "Lumentum", "ticker": "LITE", "country": "US", "share": "ELS/UHP 雷射雙領先", "products": "ELSFP 1310nm 24dBm UHP", "note": "NVIDIA 投 $2B，Q1 2026 取樣", "src": "https://www.lumentum.com/en/products/external-laser-source-els-module-ultra-high-power-laser" },
+        { "name": "Coherent", "ticker": "COHR", "country": "US", "share": "EML/DFB 領先", "products": "ELS + CW + PIC + isolator", "note": "NVIDIA 投 $2B 鎖長約" },
+        { "name": "Sumitomo Electric / Mitsubishi", "ticker": "5802.T / 6503.T", "country": "JP", "share": "EML 五強", "products": "1310nm DFB + EML", "note": "日廠核心雷射" },
+        { "name": "Furukawa Electric", "ticker": "5801.T", "country": "JP", "share": "新建 DFB 廠", "products": "高功率 DFB 晶片", "note": "專供 ELSFP（CPO ELS）", "src": "https://www.furukawaelectric.com/en/release/2025/comm_20251217.html" },
+        { "name": "AAOI", "ticker": "AAOI", "country": "US", "share": "400mW UHP", "products": "BH DFB 400mW / 25dBm ELSFP", "note": "2026H2 量產" },
+        { "name": "Sivers Semi / NTT Electronics", "ticker": "SIVE / —", "country": "SE", "share": "InP chokepoint", "products": "InP DFB array (sub-30% yield)", "note": "WIN Semi 代工擴產，hyperscaler 客戶" }
+      ],
+      "upstream": [{ "id": "m-iiiv" }],
+      "downstream": [{ "id": "f-engine" }, { "id": "f-assembly" }],
+      "sources": [
+        { "label": "NVIDIA 投 $4B Coherent + Lumentum (SiliconAngle)", "url": "https://siliconangle.com/2026/03/02/nvidia-invests-4b-co-packaged-optics-suppliers-lumentum-coherent/" },
+        { "label": "Furukawa DFB ELSFP 新廠", "url": "https://www.furukawaelectric.com/en/release/2025/comm_20251217.html" },
+        { "label": "Sivers Semi InP chokepoint", "url": "https://aleabitoreddit.substack.com/p/sivers-semi-sive-the-cpo-laser-supplier" }
+      ]
+    },
+    {
+      "id": "f-eic",
+      "row": "flow", "col": 5, "span": 1, "kind": "stage",
+      "name": "EIC / Driver / TIA",
+      "nameEn": "EIC · Driver · TIA",
+      "competition": "oligopoly",
+      "desc": "電子端介面：驅動 Mach-Zehnder 或 microring 調變器的驅動 IC、把 PD 微弱電流轉成電壓的 transimpedance amplifier（TIA）。224G/lane 為 2026 重點。",
+      "growth": "市場 $5→$10B (24→26)",
+      "analysis": "Marvell + MACOM 雙強 400G+；Semtech 2026/3 推 224G TIA + MZM driver 全家族（含 CPO/NPO）；Credo 在 retimer/DSP 補位 LPO/AEC 路線。",
+      "companies": [
+        { "name": "Marvell", "ticker": "MRVL", "country": "US", "share": "driver/TIA 主導", "products": "224G driver + TIA", "note": "雙領先" },
+        { "name": "MACOM", "ticker": "MTSI", "country": "US", "share": "400G/800G/1.6T", "products": "高速 quad-channel TIA + driver", "note": "高階主供" },
+        { "name": "Semtech", "ticker": "SMTC", "country": "US", "share": "224G 新世代", "products": "CEI-224G-Linear TIA + MZM driver", "note": "for LRO/LPO/XPO/NPO/CPO", "src": "https://www.semtech.com/company/press/semtech-launches-224-gbps-ic-family-for-linear-optics-era" },
+        { "name": "Credo", "ticker": "CRDO", "country": "US", "share": "DSP/retimer 補位", "products": "AEC + LPO retimer", "note": "光電混合路線替代" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-assembly" }],
+      "sources": [
+        { "label": "Semtech 224G linear optics", "url": "https://www.semtech.com/company/press/semtech-launches-224-gbps-ic-family-for-linear-optics-era" }
+      ]
+    },
+    {
+      "id": "f-assembly",
+      "row": "flow", "col": 6, "span": 2, "kind": "stage",
+      "name": "CPO 整合封裝",
+      "nameEn": "CPO Co-Pack Assembly",
+      "competition": "oligopoly",
+      "desc": "把 ASIC / GPU / 光引擎 / EIC driver / FAU / MLA 整合到同一 package；通常用 TSMC CoWoS + COUPE 整合，OSAT 承接後段。",
+      "growth": "ASE + Foxconn FIT",
+      "analysis": "TSMC 主導 wafer-level CPO 整合（COUPE in CoWoS package）；ASE 為 TSMC 最大 OSAT 夥伴，已推 SiPh 封裝平台；Foxconn FIT 主攻光收發模組封裝；ASMPT/BESI 提供 hybrid bonding 設備支援 SoIC-X。",
+      "companies": [
+        { "name": "TSMC 台積電", "ticker": "2330.TW", "country": "TW", "share": "wafer-level 整合主導", "products": "CoWoS + COUPE 同包", "note": "Gen1/2 內製" },
+        { "name": "ASE 日月光", "ticker": "3711.TW", "country": "TW", "share": "OSAT 全球第一", "products": "SiPh 封裝平台 + CPO 委外", "note": "NVIDIA CPO 合作夥伴" },
+        { "name": "Foxconn FIT", "ticker": "2317.TW", "country": "TW", "share": "光模組封裝", "products": "CPO 光收發模組", "note": "NVIDIA 合作；FIT 主攻" },
+        { "name": "ASMPT / BESI", "ticker": "0522.HK / BESI.AS", "country": "SG", "share": "hybrid bonding", "products": "TC bonder + hybrid", "note": "SoIC-X 整合所需" }
+      ],
+      "upstream": [{ "id": "f-foundry" }, { "id": "f-engine" }, { "id": "f-laser" }, { "id": "f-eic" }, { "id": "eq-inspect" }, { "id": "m-mla" }, { "id": "m-fau" }, { "id": "m-collimator" }],
+      "downstream": [{ "id": "f-switch" }],
+      "sources": [
+        { "label": "ASE CPO 平台 (ASE Global)", "url": "https://ase.aseglobal.com/blog/technology/advanced-packaging-for-ai-chiplet-and-cpo/" }
+      ]
+    },
+    {
+      "id": "f-switch",
+      "row": "flow", "col": 8, "span": 1, "kind": "stage",
+      "name": "Switch ASIC / GPU 整合",
+      "nameEn": "Switch ASIC / GPU Integration",
+      "competition": "monopoly",
+      "desc": "把 CPO module 與交換器主晶片或 GPU 整合成完整系統（Bailly = TH5 + 8× 6.4T 光引擎；Spectrum-X / Quantum-X 用 COUPE）。",
+      "marketSize": "75% 散熱 70% 功耗",
+      "growth": "AVGO + NVDA 雙馬",
+      "analysis": "Broadcom Bailly（51.2T TH5）2025 出貨 50,000+ 給 Meta（確認）+ Tencent；TH6 Davisson 102.4T 已宣布。NVIDIA Quantum-X（InfiniBand）2H 2025 出貨，Spectrum-X（Ethernet）2H 2026 出貨；Marvell 也有 6.4T CPO 自家方案。",
+      "companies": [
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "TH5 Bailly 50k+ 2025", "products": "Tomahawk 5/6 Bailly/Davisson 51.2T/102.4T CPO", "note": "Meta 確認，Tencent 推測", "src": "https://docs.broadcom.com/docs/th5-51.2t-bailly-cpo" },
+        { "name": "NVIDIA", "ticker": "NVDA", "country": "US", "share": "Spectrum/Quantum-X", "products": "Spectrum-X 400Tb/s + Quantum-X 144×800G", "note": "2H 2026 Ethernet / 2H 2025 IB", "src": "https://nvidianews.nvidia.com/news/nvidia-spectrum-x-co-packaged-optics-networking-switches-ai-factories" },
+        { "name": "Marvell", "ticker": "MRVL", "country": "US", "share": "自家光引擎", "products": "6.4T CPO + 1.6T LPO", "note": "NVIDIA 投 $2B 合作" },
+        { "name": "Cisco", "ticker": "CSCO", "country": "US", "share": "Silicon One", "products": "Silicon One CPO", "note": "自家交換器" }
+      ],
+      "upstream": [{ "id": "f-assembly" }, { "id": "m-shuffle" }, { "id": "m-fiber" }, { "id": "m-connector" }],
+      "downstream": [{ "id": "d-demand" }],
+      "sources": [
+        { "label": "Broadcom TH5 Bailly CPO", "url": "https://docs.broadcom.com/docs/th5-51.2t-bailly-cpo" },
+        { "label": "NVIDIA Spectrum-X Photonics", "url": "https://nvidianews.nvidia.com/news/nvidia-spectrum-x-co-packaged-optics-networking-switches-ai-factories" },
+        { "label": "NextPlatform: Broadcom CPO third time charm", "url": "https://www.nextplatform.com/2025/10/17/the-third-time-will-be-the-charm-for-broadcom-switch-co-packaged-optics/" }
+      ]
+    },
+    {
+      "id": "d-demand",
+      "row": "flow", "col": 9, "span": 1, "kind": "demand",
+      "name": "終端需求 / Hyperscaler",
+      "nameEn": "Hyperscalers (Demand)",
+      "competition": "highgrowth",
+      "desc": "CPO 最終客戶：超大型雲端/AI 工廠。2030 預估光纖端口將佔 AI 網路 71%、銅線退至 29%。",
+      "marketSize": "$8.1B by 2030",
+      "growth": "Yole 137% CAGR",
+      "analysis": "Meta（TH5 Bailly 確認）、Microsoft、Google、Tencent 為早期採用者。Yole 預估 CPO 市場 2024 $46M → 2030 $8.1B（CAGR 137%）；IDTechEx 預估 2036 $20B；BofA 預估 AI optical 連結市場 2025 $14B → 2030 $73B（CAGR 39%）。",
+      "companies": [
+        { "name": "Meta Platforms", "ticker": "META", "country": "US", "share": "Bailly 確認", "products": "AI 訓練 + 推論叢集", "note": "TH5 Bailly 早期採用" },
+        { "name": "Microsoft / Google", "ticker": "MSFT / GOOGL", "country": "US", "share": "早期採用", "products": "Maia / TPU AI factory", "note": "Spectrum-X 客戶" },
+        { "name": "Tencent / Alibaba / ByteDance", "ticker": "0700.HK / BABA / —", "country": "CN", "share": "TH5 / 自研", "products": "Bailly 推測 + 自研 ASIC", "note": "中國雲端 + 自研 ASIC" },
+        { "name": "OpenAI / xAI / CoreWeave", "ticker": "— / — / CRWV", "country": "US", "share": "新雲端", "products": "AI 工廠擴建", "note": "間接吸收 NVDA Spectrum-X" }
+      ],
+      "upstream": [{ "id": "f-switch" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Yole CPO $46M→$8.1B 2030", "url": "https://www.yolegroup.com/product/report/co-packaged-optics-2025/" },
+        { "label": "IDTechEx CPO $20B 2036 37% CAGR", "url": "https://www.semiconductor-today.com/news_items/2025/dec/idtechex-291225.shtml" },
+        { "label": "Meta TH5 Bailly 確認 (NextPlatform)", "url": "https://www.nextplatform.com/2025/10/17/the-third-time-will-be-the-charm-for-broadcom-switch-co-packaged-optics/" }
+      ]
+    },
+    {
+      "id": "m-mla",
+      "row": "material", "col": 1, "span": 1, "kind": "rail",
+      "name": "微透鏡陣列 MLA",
+      "nameEn": "Microlens Array (MLA)",
+      "competition": "monopoly",
+      "single": "客戶獨家 · Himax 為 TSMC COUPE Gen1 + Gen2 唯一 MLA 供應（Hunterbrook + Ming-Chi Kuo 多源證實）",
+      "desc": "把 PIC grating coupler 出來的散射光收成平行光、再聚焦進光纖核心的微小光學陣列；nanoimprint lithography（NIL）製程。",
+      "marketSize": "鎖喉點",
+      "growth": "Himax 2028 EPS $3.40e",
+      "analysis": "Himax 透過獨家 NIL 製程在玻璃晶圓上做 V-groove + 微透鏡 + 微稜鏡，是 TSMC COUPE Gen1/2 的唯一 MLA 供應；玉晶光在 1.6T 光模組 MLA 已進入美系資料中心客戶供應鏈（不同路線）。Ming-Chi Kuo 估 Himax 2026 營收 $1.16B → 2028 $2.4B。",
+      "companies": [
+        { "name": "Himax 奇景", "ticker": "HIMX", "country": "TW", "share": "COUPE Gen1/2 唯一", "products": "WLO MLA + V-groove glass wafer (NIL)", "note": "與 FOCI 合作 FAU 整合，鎖喉點", "src": "https://hntrbrk.com/himax/" },
+        { "name": "玉晶光 Genius Electronic", "ticker": "3406.TW", "country": "TW", "share": "1.6T MLA 美系 DC", "products": "Pancake Lens 衍生 MLA", "note": "已進美系 DC 供應鏈" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-assembly" }],
+      "sources": [
+        { "label": "Hunterbrook: Himax stealth supplier for NVIDIA optics", "url": "https://hntrbrk.com/himax/" },
+        { "label": "Ming-Chi Kuo: Himax key AI upstream winner in TSMC COUPE", "url": "https://medium.com/@mingchikuo/himax-emerging-as-a-key-ai-upstream-winner-in-tsmcs-coupe-silicon-photonics-significantly-baf39a9393c9" },
+        { "label": "理財周刊 台灣光學軍團 CPO 矽光子", "url": "https://www.moneyweekly.com.tw/ArticleData/Info/Article/220809" }
+      ]
+    },
+    {
+      "id": "m-fau",
+      "row": "material", "col": 2, "span": 1, "kind": "rail",
+      "name": "光纖陣列 FAU",
+      "nameEn": "Fiber Array Unit (FAU)",
+      "competition": "monopoly",
+      "single": "客戶獨家 · FOCI 上詮為 TSMC COUPE Gen1 + Gen2 唯一 FAU 供應商（ReLFACon 專利 + Reflowable Lensed Fiber Array Connector）",
+      "desc": "把多根光纖精準排列在 V-groove 基板上的精密元件，與 PIC 的光輸出口對位後封裝；基板材質決定熱穩定與 CTE 匹配。",
+      "marketSize": "鎖喉點",
+      "growth": "FOCI 2025 +38.72%",
+      "analysis": "FOCI 上詮（3363）獨家供 COUPE Gen1/2 FAU，用自家 ReLFACon 技術做可回流的透鏡光纖陣列；Browave（3163）以 Shuffle Box 進 NVIDIA Spectrum-X、FAU 在 NVIDIA 認證中；HYC、USConec 也有 FAU 產品。",
+      "companies": [
+        { "name": "FOCI 上詮", "ticker": "3363.TWO", "country": "TW", "share": "COUPE Gen1/2 唯一", "products": "ReLFACon FAU + 被動對位", "note": "2H 2026 量產 AMD COUPE", "src": "https://www.digitimes.com/news/a20250206PD215/tsmc-siph-optical-communication-cpo-foci.html" },
+        { "name": "Browave 波若威", "ticker": "3163.TW", "country": "TW", "share": "認證進度領先", "products": "FAU + Shuffle Box + IFAU", "note": "NVIDIA 認證中" },
+        { "name": "HYC / USConec", "ticker": "— / —", "country": "GLOBAL", "share": "全球替代", "products": "High-precision pitch FAU", "note": "次要替代" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-assembly" }],
+      "sources": [
+        { "label": "FOCI sole FAU for COUPE (Digitimes)", "url": "https://www.digitimes.com/news/a20250206PD215/tsmc-siph-optical-communication-cpo-foci.html" },
+        { "label": "Himax + FOCI joint FAU", "url": "https://hntrbrk.com/himax/" }
+      ]
+    },
+    {
+      "id": "m-collimator",
+      "row": "material", "col": 3, "span": 1, "kind": "rail",
+      "name": "微稜鏡 / Collimator",
+      "nameEn": "Micro-Prism · Collimator",
+      "competition": "oligopoly",
+      "single": "客戶獨家（送樣中） · 大立光 TSMC 微稜鏡 collimator 送樣 + AMD COUPE 測試中",
+      "desc": "把 PIC 出口的擴散光束 90° 轉折並準直，引入光纖；插入損失需 <1.2dB。源自手機潛望式鏡頭技術。",
+      "growth": "Largan 新二大主業",
+      "analysis": "大立光（3008）將 SiPh 列為「第二大核心業務」，TSMC COUPE 微稜鏡與 FAU 棱鏡 collimator 送樣、AMD 專案測試中；亞光（3019）模造玻璃透鏡切入 ELS 準直；今國光（6209）轉型 SiPh I/O 精密元件。",
+      "companies": [
+        { "name": "Largan 大立光", "ticker": "3008.TW", "country": "TW", "share": "TSMC 送樣領先", "products": "微稜鏡 collimator + FAU prism", "note": "AMD COUPE 測試中", "src": "https://www.trendforce.com/news/2026/01/05/news-largan-precision-reportedly-eyes-cpo-opportunity-via-tsmc-collaboration-amd-samples-in-testing/" },
+        { "name": "亞光 Asia Optical", "ticker": "3019.TW", "country": "TW", "share": "ELS collimator", "products": "模造玻璃 + 準直鏡頭", "note": "CPO ELS 準直主供" },
+        { "name": "今國光 Kinik Optical", "ticker": "6209.TW", "country": "TW", "share": "SiPh I/O", "products": "PIC I/O 精密光學元件", "note": "AI DC 基礎設施轉型" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-assembly" }],
+      "sources": [
+        { "label": "TrendForce: Largan + TSMC CPO AMD 測試", "url": "https://www.trendforce.com/news/2026/01/05/news-largan-precision-reportedly-eyes-cpo-opportunity-via-tsmc-collaboration-amd-samples-in-testing/" },
+        { "label": "Largan TSMC CPO (TechNews)", "url": "https://finance.technews.tw/2026/01/08/largan-tsmc-cpo/" },
+        { "label": "Sinotrade 台灣 CPO 供應鏈分工", "url": "https://www.sinotrade.com.tw/richclub/hotstock/%E5%8F%B0%E7%A9%8D%E9%9B%BB%E8%B2%A0%E8%B2%AC%E9%80%A0%E5%85%89-%E5%A4%A7%E7%AB%8B%E5%85%89%E8%B2%A0%E8%B2%AC%E8%BD%89%E5%85%89%E2%80%94CPO-%E4%BE%9B%E6%87%89%E9%8F%88%E5%88%86%E5%B7%A5%E5%9C%96%E8%A7%A3%E8%88%87%E5%8F%B0%E7%81%A3%E5%8F%97%E6%83%A0%E8%82%A1%E6%8A%95%E8%B3%87%E5%9C%B0%E5%9C%96-%E8%82%A1%E5%B8%82%E8%A9%B1%E9%A1%8C-69defbdc3f76ec0ab4fb68d8" }
+      ]
+    },
+    {
+      "id": "m-shuffle",
+      "row": "material", "col": 4, "span": 1, "kind": "rail",
+      "name": "Shuffle Box / 光纖整線",
+      "nameEn": "Shuffle Box · Fiber Harness",
+      "competition": "highgrowth",
+      "single": "客戶獨家 · 波若威 Shuffle Box 已確認進 NVIDIA Spectrum-X CPO 交換器供應鏈，市佔 40-50%",
+      "desc": "在交換器面板側做光纖重排佈線（shuffle）的元件，把 multi-fiber 端口的光纖重新分配到適當位置；NVIDIA Spectrum-X 系統級必需品。",
+      "growth": "40-50% Spectrum-X",
+      "analysis": "波若威（3163）的 Shuffle Box 已確認進 NVIDIA Spectrum-X CPO 交換器供應鏈、市佔 40-50%（信心度：med，單一 BuBu Research substack 來源，待法說會確認）。",
+      "companies": [
+        { "name": "Browave 波若威", "ticker": "3163.TW", "country": "TW", "share": "Spectrum-X ~40-50%", "products": "Shuffle Box + IFAU + FAU", "note": "信心度 med，單一研究機構來源" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-switch" }],
+      "sources": [
+        { "label": "Bull case of Browave (BuBu Research)", "url": "https://buburesearch.substack.com/p/the-bull-case-of-browave-3163-tw" }
+      ]
+    },
+    {
+      "id": "m-waveguide",
+      "row": "material", "col": 5, "span": 1, "kind": "rail",
+      "name": "光波導 / 光耦合層",
+      "nameEn": "Optical Waveguide · Coupler",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · 采鈺 VisEra 用 TSMC lithography + thin-film deposition 做 SiPh 光波導 + 光耦合結構（光進晶片低損失關鍵）",
+      "desc": "在 SiPh 晶片表面做光波導與光耦合結構，是「光進晶片時最低損失」的關鍵層；TSMC COUPE 平台中由 VisEra 提供。",
+      "growth": "高毛利切入",
+      "analysis": "采鈺（6789）利用 TSMC 的成熟黃光 + 薄膜沉積技術做 SiPh 晶片表面光波導，並提供光耦合結構（grating coupler / edge coupler）確保光進晶片損失最小化。為 TSMC CoPoS + COUPE 生態核心光學元件供應商。",
+      "companies": [
+        { "name": "VisEra 采鈺", "ticker": "6789.TWO", "country": "TW", "share": "TSMC COUPE 光學要角", "products": "SiPh waveguide + grating/edge coupler", "note": "TSMC 集團、毛利高槓桿成長", "src": "https://www.cmoney.tw/forum/article/178365633" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-foundry" }],
+      "sources": [
+        { "label": "TSMC COUPE × Metalens × VisEra (Atlas Peak)", "url": "https://www.atlaspeakresearch.com/report/66ebb8" },
+        { "label": "采鈺 CoPoS 與 COUPE 光學角色", "url": "https://www.cmoney.tw/forum/article/178365633" }
+      ]
+    },
+    {
+      "id": "m-fiber",
+      "row": "material", "col": 6, "span": 1, "kind": "rail",
+      "name": "光纖 Optical Fiber",
+      "nameEn": "Optical Fiber",
+      "competition": "monopoly",
+      "single": "近獨佔 · Corning 為光纖全球龍頭，NVIDIA $3.2B 鎖 10x 美國 optical 產能（2026/5/6 公佈）",
+      "desc": "連接 CPO 模組到後端網路的光纖；CPO 需高密度多芯光纖配合 FAU。NVIDIA 鎖 Corning 為美國供應主軸。",
+      "marketSize": "$500M warrants",
+      "growth": "10x US 容量",
+      "analysis": "Corning（GLW）光纖全球第一，NVIDIA 2026/5/6 宣布長約：投資高達 $3.2B、Corning 將提升美國 optical 產能 10x、光纖產能 +50%、北卡與德州新建 3 廠（+3,000 工作機會）。NVIDIA 同時取得 $500M Corning 股權 warrants。",
+      "companies": [
+        { "name": "Corning", "ticker": "GLW", "country": "US", "share": "光纖全球第一", "products": "多芯光纖 + CPO 光連結方案", "note": "NVIDIA $3.2B 長約，2H 2026 出貨配合 Spectrum-X", "src": "https://www.cnbc.com/2026/05/06/nvidia-corning-optical-factories-nc-texas-ai.html" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-switch" }],
+      "sources": [
+        { "label": "NVIDIA + Corning $3.2B long-term partnership", "url": "https://nvidianews.nvidia.com/news/nvidia-and-corning-announce-long-term-partnership-to-strengthen-us-manufacturing-for-ai-infrastructure" },
+        { "label": "CNBC: NVIDIA invest up to $3.2B in Corning", "url": "https://www.cnbc.com/2026/05/06/nvidia-corning-optical-factories-nc-texas-ai.html" }
+      ]
+    },
+    {
+      "id": "m-connector",
+      "row": "material", "col": 7, "span": 1, "kind": "rail",
+      "name": "MPO / MT 連接器",
+      "nameEn": "MPO · MT Ferrule",
+      "competition": "oligopoly",
+      "desc": "高密度多芯光纖連接器（MPO/MTP），CPO 需要 narrow-pitch 變體（MTDS, 125/127µm pitch, 24-32 芯 single row）。",
+      "growth": "narrow-pitch MTDS",
+      "analysis": "US Conec 1992 把 MPO 標準升級為 MTP 品牌、是全球領導；新推 MTDS narrow-pitch（125/127µm pitch、24-32 芯）專為 CPO 設計；Senko 為日系第二，Hakusan 主供 MT ferrule 對位設備。",
+      "companies": [
+        { "name": "US Conec", "ticker": "—", "country": "US", "share": "MPO/MTP 領導", "products": "MTP + MTDS narrow-pitch MT ferrule", "note": "未上市，MTP 品牌持有", "src": "https://www.usconec.com/media/qq2pvsjt/mtp-solutions-brochure.pdf" },
+        { "name": "Senko", "ticker": "—", "country": "JP", "share": "日系第二", "products": "MPO 連接器 + MT ferrule", "note": "未上市" },
+        { "name": "Yamaichi / Sumitomo", "ticker": "—", "country": "JP", "share": "次要", "products": "高密度光連接器", "note": "替代源" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-switch" }],
+      "sources": [
+        { "label": "US Conec MTP solutions brochure", "url": "https://www.usconec.com/media/qq2pvsjt/mtp-solutions-brochure.pdf" }
+      ]
+    },
+    {
+      "id": "m-iiiv",
+      "row": "material", "col": 8, "span": 1, "kind": "rail",
+      "name": "III-V Epi 磊晶",
+      "nameEn": "III-V (InP/GaAs) Epitaxy",
+      "competition": "oligopoly",
+      "desc": "DFB / EML 雷射晶片所用的磷化銦（InP）/砷化鎵（GaAs）磊晶晶圓；產能少、yield 低（sub-30%），是雷射端的真正瓶頸。",
+      "marketSize": "11.8% CAGR DFB",
+      "growth": "聯亞 76% YoY",
+      "analysis": "InP 為主流 1310nm/1550nm DFB 雷射基板，wafer yield <30%、scaled 供應商少、需求遠超產能；聯亞（3081）2025 累計營收 +76.2% YoY、股價爆漲；全新光電（2455）為第二台廠；WIN Semi（3105）是全球最大化合物半導體代工，Sivers 與其簽 InP 雷射 HVM 代工合約。",
+      "companies": [
+        { "name": "LandMark 聯亞", "ticker": "3081.TWO", "country": "TW", "share": "InP epi 領先台廠", "products": "800G/1.6T InP epi wafer", "note": "2025 營收 +76.2% YoY 至 NT$1.97B" },
+        { "name": "全新光電 VPEC", "ticker": "2455.TW", "country": "TW", "share": "III-V epi", "products": "GaAs / InP epi wafer", "note": "1.6T 模組磊晶供應" },
+        { "name": "WIN Semiconductor", "ticker": "3105.TWO", "country": "TW", "share": "化合物半導體代工", "products": "GaAs / InP foundry", "note": "Sivers InP DFB 代工" },
+        { "name": "TrueLight 光環", "ticker": "3234.TWO", "country": "TW", "share": "VCSEL/PIN", "products": "200G/400G optical TRx + VCSEL", "note": "VCSEL 主供" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-laser" }],
+      "sources": [
+        { "label": "LandMark + VPEC photonics growth (Digitimes)", "url": "https://www.digitimes.com/news/a20251211VL213/photonics-growth-taiwan-cpo-manufacturing.html" },
+        { "label": "Sivers + WIN Semi InP HVM", "url": "https://aleabitoreddit.substack.com/p/sivers-semi-sive-the-cpo-laser-supplier" }
+      ]
+    },
+    {
+      "id": "m-wafer",
+      "row": "material", "col": 9, "span": 1, "kind": "rail",
+      "name": "SOI / 矽晶圓",
+      "nameEn": "SOI · Silicon Wafer",
+      "competition": "oligopoly",
+      "desc": "PIC 製程用的 SOI（Silicon-On-Insulator）晶圓 + 標準矽晶圓；SOI 是 SiPh 主流基板，由 Soitec 在歐洲主導。",
+      "marketSize": "8.7% CAGR Si wafer",
+      "growth": "Soitec SOI 寡占",
+      "analysis": "SOI 晶圓由 Soitec（FR）近獨佔（>70%）、Shin-Etsu / SUMCO 補位；標準 300mm 矽晶圓信越（4063）/SUMCO（3436）雙寡占；台廠環球晶（6488）全球第三。",
+      "companies": [
+        { "name": "Soitec", "ticker": "SOI.PA", "country": "FR", "share": "SOI ~70%+", "products": "Smart Cut SOI 晶圓", "note": "SiPh 基板近獨佔" },
+        { "name": "Shin-Etsu / SUMCO", "ticker": "4063.T / 3436.T", "country": "JP", "share": "300mm 全球前二", "products": "300mm 拋光晶圓", "note": "邏輯與 SiPh 共用" },
+        { "name": "GlobalWafers 環球晶", "ticker": "6488.TWO", "country": "TW", "share": "全球第三", "products": "300mm + SOI", "note": "美國 Sherman 廠擴產" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-foundry" }],
+      "sources": [
+        { "label": "矽晶圓市場與前五市佔 (Stellar MR)", "url": "https://www.stellarmr.com/report/silicon-wafer-market/2769" }
+      ]
+    }
+  ],
+  "edges": [
+    ["eq-fab", "f-foundry"],
+    ["eq-laser", "f-foundry"],
+    ["eq-inspect", "f-assembly"],
+    ["m-wafer", "f-foundry"],
+    ["m-waveguide", "f-foundry"],
+    ["m-iiiv", "f-laser"],
+    ["m-mla", "f-assembly"],
+    ["m-fau", "f-assembly"],
+    ["m-collimator", "f-assembly"],
+    ["m-shuffle", "f-switch"],
+    ["m-fiber", "f-switch"],
+    ["m-connector", "f-switch"],
+    ["f-foundry", "f-engine"],
+    ["f-foundry", "f-assembly"],
+    ["f-laser", "f-engine"],
+    ["f-laser", "f-assembly"],
+    ["f-engine", "f-assembly"],
+    ["f-eic", "f-assembly"],
+    ["f-assembly", "f-switch"],
+    ["f-switch", "d-demand"]
+  ]
+}
