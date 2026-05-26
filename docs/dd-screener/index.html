@@ -122,6 +122,9 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 .ath-chip:hover{background:#d1fae5;border-color:#10b981}
 .ath-chip.at-high{background:#10b981;border-color:#059669;color:#fff}
 .ath-chip.at-high:hover{background:#059669}
+.ath-chip.selected{box-shadow:0 0 0 2px #0f766e inset;background:#0f766e;border-color:#0f766e;color:#fff}
+.ath-chip.selected:hover{background:#134e4a}
+.ath-chip.selected .ath-meta{color:#d1fae5}
 .ath-chip .ath-meta{font-size:9px;font-weight:500;opacity:.85;font-variant-numeric:tabular-nums}
 .qichi-banner{background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%);border:1px solid #f59e0b;border-radius:8px;padding:8px 14px;margin:0 0 12px 0;font-size:11px;color:#92400e;display:flex;align-items:center;gap:8px}
 /* Column footnote */
@@ -216,7 +219,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f5fb;color:#1e
 </div>
 
 <section class="ath-spotlight" id="ath-spotlight" aria-label="近 ATH 個股快速導航">
-  <span class="ath-label">🚀 近 ATH (5Y 高 ≥ −2% · ≤ 2W)：</span>
+  <span class="ath-label">🚀 近 5Y 新高（日線 ≥ −2% · ≤ 10D）：</span>
   <span class="ath-empty" id="ath-empty-placeholder" style="display:none">暫無 ticker 觸頂</span>
 </section>
 
@@ -752,29 +755,30 @@ function _renderLivePEGCell(s, flag) {
 }
 
 // ── ATH spotlight (rendered once at load; independent of tier/filter state) ──
-// Render tickers near 250-week (5Y) high above the filter row. Click a chip →
-// pipe the ticker into the existing search input, which surfaces its full row.
+// v1.1: switched from weekly 250w high → DAILY 5y high. Weekly bars compress
+// intraweek peaks out and were up to 7 days stale during the week. The daily
+// fields (ma.high_5y_daily_price / ma.dist_5y_high_daily_pct / ma.days_since_5y_high)
+// come from build_dd_screener.compute_daily_5y_highs() — fresh every build.
+// Filter: dist ≥ −2% ∩ days_since ≤ 10 (~2 trading weeks). Gate is_full_5y
+// from weekly path stays — same signal: ticker has ≥ 5y of history. Click
+// chip → pipe into search input, surface full row below.
 function renderAthSpotlight(stocks) {
   var section = document.getElementById('ath-spotlight');
   var placeholder = document.getElementById('ath-empty-placeholder');
   if (!section || !Array.isArray(stocks)) return;
-  // Strip prior chips (idempotent — supports rebuild scenarios)
   var prevChips = section.querySelectorAll('.ath-chip');
   for (var i = 0; i < prevChips.length; i++) prevChips[i].remove();
-  // Filter: tight ATH proximity rule, mirroring entry-state.html BREAKOUT trigger
-  // (dist ≥ −2% ∩ weeks_since ≤ 2), gated by is_full_5y to drop synthetic highs.
   var hits = stocks.filter(function(s) {
     var m = s && s.ma;
     if (!m || m.is_full_5y !== true) return false;
-    var d = m.dist_250w_high_pct, w = m.weeks_since_250w_high;
+    var d = m.dist_5y_high_daily_pct, ds = m.days_since_5y_high;
     return d !== null && d !== undefined && d >= -2
-        && w !== null && w !== undefined && w <= 2;
+        && ds !== null && ds !== undefined && ds <= 10;
   });
-  // Sort: closest to ATH first; tie-break fresher weeks_since first.
   hits.sort(function(a, b) {
-    var da = a.ma.dist_250w_high_pct, db = b.ma.dist_250w_high_pct;
+    var da = a.ma.dist_5y_high_daily_pct, db = b.ma.dist_5y_high_daily_pct;
     if (db !== da) return db - da;
-    return a.ma.weeks_since_250w_high - b.ma.weeks_since_250w_high;
+    return a.ma.days_since_5y_high - b.ma.days_since_5y_high;
   });
   hits = hits.slice(0, 25);
   if (hits.length === 0) {
@@ -786,23 +790,60 @@ function renderAthSpotlight(stocks) {
     var btn = document.createElement('button');
     btn.type = 'button';
     var m = s.ma;
-    var dist = m.dist_250w_high_pct;
-    var weeks = m.weeks_since_250w_high;
+    var dist = m.dist_5y_high_daily_pct;
+    var days = m.days_since_5y_high;
     btn.className = 'ath-chip' + (dist === 0 ? ' at-high' : '');
     btn.setAttribute('data-ticker', s.ticker);
     btn.setAttribute('title',
-      s.ticker + ' · 距 5Y 高 ' + dist.toFixed(2) + '% · 創高 ' + weeks + ' 週前 · 點擊在下方搜尋');
+      s.ticker + ' · 距 5Y 日線高 ' + dist.toFixed(2) + '% · 創高 ' + days
+        + ' 個交易日前 · 5Y 高 $' + (m.high_5y_daily_price !== undefined && m.high_5y_daily_price !== null ? m.high_5y_daily_price.toFixed(2) : '?')
+        + ' · 點擊在下方搜尋');
     btn.innerHTML = '<span>' + s.ticker + '</span>'
-      + '<span class="ath-meta">' + (dist > 0 ? '+' : '') + dist.toFixed(1) + '% W' + weeks + '</span>';
+      + '<span class="ath-meta">' + (dist > 0 ? '+' : '') + dist.toFixed(1) + '% D' + days + '</span>';
     btn.addEventListener('click', function() {
       var input = document.getElementById('search-ticker');
       if (!input) return;
-      input.value = s.ticker;
+      // Multi-select toggle: append ticker if absent, remove if present.
+      // Trailing space ensures every token is parsed as exact match (renderSearch
+      // v1.9.1 rule: token followed by delimiter → exact, no prefix expansion).
+      // Without trailing space, last token would prefix-match ("V" → V/VIK/VRT).
+      var current = (input.value || '').trim();
+      var tokens = current ? current.split(/[\s,/]+/).filter(Boolean) : [];
+      // Case-insensitive matching for dedup (input might have lowercase from typing)
+      var tickerUC = s.ticker.toUpperCase();
+      var idx = tokens.findIndex(function(t) { return t.toUpperCase() === tickerUC; });
+      if (idx >= 0) {
+        tokens.splice(idx, 1);
+      } else {
+        tokens.push(s.ticker);
+      }
+      input.value = tokens.length ? (tokens.join(' ') + ' ') : '';
       input.dispatchEvent(new Event('input', {bubbles: true}));
-      input.scrollIntoView({behavior: 'smooth', block: 'center'});
+      syncAthChipSelection();
+      if (tokens.length === 1) {
+        // First selection → scroll into view so user sees the search panel
+        input.scrollIntoView({behavior: 'smooth', block: 'center'});
+      }
     });
     section.appendChild(btn);
   });
+  syncAthChipSelection();
+}
+
+// Reflect search input state onto ATH chips (.selected class). Called after
+// chip click (toggle) and from the search input listener (clear button / type).
+function syncAthChipSelection() {
+  var input = document.getElementById('search-ticker');
+  if (!input) return;
+  var raw = (input.value || '').trim();
+  var tokensUC = raw ? raw.split(/[\s,/]+/).filter(Boolean).map(function(t) { return t.toUpperCase(); }) : [];
+  var setUC = {};
+  tokensUC.forEach(function(t) { setUC[t] = true; });
+  var chips = document.querySelectorAll('.ath-chip');
+  for (var i = 0; i < chips.length; i++) {
+    var t = (chips[i].getAttribute('data-ticker') || '').toUpperCase();
+    chips[i].classList.toggle('selected', !!setUC[t]);
+  }
 }
 
 // Dynamic baseline-age label: "5D" / "12D" / "1M" / "2M" based on
@@ -1374,11 +1415,13 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
   input.addEventListener('input', function() {
     state.searchQuery = input.value;
     if (DATA) renderSearch();
+    syncAthChipSelection();
   });
   clear.addEventListener('click', function() {
     input.value = '';
     state.searchQuery = '';
     if (DATA) renderSearch();
+    syncAthChipSelection();
     input.focus();
   });
 })();

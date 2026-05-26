@@ -572,6 +572,79 @@ def compute_yfinance_timing_fallback(
     return out
 
 
+def compute_daily_5y_highs(dd_tickers: list[str]) -> dict[str, dict]:
+    """Batch-fetch 5y DAILY closes and compute true 5Y daily high per ticker.
+
+    Returns {dd_ticker: {high_5y_daily_price, dist_5y_high_daily_pct, days_since_5y_high}}.
+    Tickers yfinance can't fetch are omitted; merge code defaults them to None.
+
+    Why this exists: dd_screener_ma.compute_ma_snapshot() pulls 5y WEEKLY closes
+    (cached in data/weekly_cache/). Weekly highs compress intraweek peaks out and
+    can be up to 7 days stale between Friday closes. For the ATH spotlight
+    surfaced above the main table, we want today-fresh DAILY granularity over
+    the same 5y window — meaningful "did this ticker just print a new ATH" vs.
+    "what was Friday's peak weekly close."
+
+    Cost: one chunked yf.download per build (~30-60s for 200 tickers, chunk_size=50).
+    Reuses _chunked_download_with_retry() infrastructure so rate-limit handling
+    matches the timing-fallback path.
+    """
+    if not dd_tickers:
+        return {}
+
+    yf_map: dict[str, str] = {t: _yf_ticker_for_ma(t) for t in dd_tickers}
+    yf_tickers = list(set(yf_map.values()))
+    print(
+        f"  [daily-5y] Fetching {len(yf_tickers)} tickers (5y daily) for ATH high ...",
+        file=sys.stderr,
+    )
+    raw = _chunked_download_with_retry(
+        yf_tickers,
+        period="5y",
+        interval="1d",
+        chunk_size=50,
+        max_retries=3,
+        backoff_seconds=(15, 60, 180),
+    )
+    if raw is None or raw.empty:
+        print("  [daily-5y] yf.download returned empty after retries", file=sys.stderr)
+        return {}
+
+    def _get_closes(yf_ticker: str):
+        try:
+            if len(yf_tickers) == 1:
+                s = raw["Close"].dropna()
+            else:
+                s = raw[yf_ticker]["Close"].dropna()
+            return s if not s.empty else None
+        except (KeyError, TypeError):
+            return None
+
+    out: dict[str, dict] = {}
+    for dd_t, yf_t in yf_map.items():
+        closes = _get_closes(yf_t)
+        if closes is None or len(closes) < 50:
+            continue
+        try:
+            high = float(closes.max())
+            argmax = int(closes.values.argmax())
+            last = float(closes.iloc[-1])
+            if high <= 0:
+                continue
+            out[dd_t] = {
+                "high_5y_daily_price": round(high, 2),
+                "dist_5y_high_daily_pct": round((last - high) / high * 100, 2),
+                "days_since_5y_high": len(closes) - argmax - 1,
+            }
+        except Exception:
+            continue
+    print(
+        f"  [daily-5y] Computed for {len(out)}/{len(dd_tickers)} tickers",
+        file=sys.stderr,
+    )
+    return out
+
+
 def _ev5y_for(ticker: str, dca_ev_map: dict) -> float | None:
     """Resolve DCA §4 5Y EV → annualized IRR (%) for one ticker.
 
@@ -1539,6 +1612,14 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
         missing_us = []
         fallback_yf = [e["ticker"] for e in universe]
 
+    # Step 3.5: daily 5y high — single batched yf.download, fresh today for the
+    # ATH spotlight on the main page. Weekly ma.high_250w_price stays for
+    # backward compat (entry-state.html consumers); the daily fields live
+    # alongside it in the same `ma` sub-object.
+    daily_5y_map: dict[str, dict] = {}
+    if not skip_ma:
+        daily_5y_map = compute_daily_5y_highs(all_dd_tickers)
+
     # Step 3 + 4 enrichment, parallel
     print(f"  Step 3-4  enriching (workers={workers}, skip_ma={skip_ma}) ...")
     enriched: list[dict] = []
@@ -1557,6 +1638,15 @@ def build(top_n: int | None, skip_ma: bool, dry_run: bool, workers: int) -> dict
             if i % 10 == 0 or i == len(futs):
                 elapsed = time.time() - t0
                 print(f"    [{i:>3}/{len(futs)}] {elapsed:.0f}s")
+
+    # Step 4.5: merge daily 5y high fields into ma sub-object (post-enrich so
+    # we don't widen enrich_ticker's signature). For tickers whose daily fetch
+    # failed, leave keys absent — FE renders the spotlight conservatively.
+    if daily_5y_map:
+        for row in enriched:
+            d5y = daily_5y_map.get(row.get("ticker"))
+            if d5y and isinstance(row.get("ma"), dict):
+                row["ma"].update(d5y)
 
     # Step 5: sort (pass/fail already computed above)
     enriched.sort(key=_sort_key)
