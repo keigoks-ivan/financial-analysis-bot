@@ -1,0 +1,667 @@
+{
+  "id": "power",
+  "tab": "電源散熱",
+  "title": "AI 資料中心 電源 / 散熱供應鏈",
+  "subtitle": "AI rack 功率從 Hopper 40kW → Blackwell 120kW → Rubin Ultra Kyber 600kW-1MW，逼出兩條同步進行的架構革命：(1) 電源從 54V DC 升級到 800V HVDC（Rubin Ultra 2027 量產，銅用量 -45%、TCO -30%）；(2) 散熱從風冷強制升級為 Direct Liquid Cooling（GB300 起、Rubin NVL72 標準化）。NVIDIA 已 publish 800V partner list（Navitas / MPWR / TI / ADI / Infineon / Delta / Vertiv / Eaton 等）+ Rubin cold plate 四供應商（AVC / Cooler Master / Jentech / Delta），TW 廠商在散熱整套（雙鴻 / 奇鋐 / 健策 / 高力）+ PSU 領導（台達 70% Blackwell）雙線結構性受惠。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 24 },
+    { "k": "涵蓋廠商", "v": "90+" },
+    { "k": "獨佔/客戶獨家單點", "v": 10, "sub": "MPWR ZPD·Navitas·Delta 70% PSU·Rubin 4-supplier (AVC/Cooler Master/Jentech/Delta)·雙鴻 3D VC·高力 CDU·Vertiv+Eaton+Ecolab 3 收購·Trane+LiquidStack·Rubin DLC mandatory", "hot": true }
+  ],
+  "rows": [
+    { "id": "power-ic", "label": "電源關鍵 IC / 元件 Power IC & Devices", "main": false },
+    { "id": "power-flow", "label": "伺服器電源 / 配電 Server Power & PDU", "main": true },
+    { "id": "thermal-comp", "label": "散熱零組件 Thermal Components", "main": true },
+    { "id": "cooling-sys", "label": "機架 / 設施冷卻 Rack & Facility Cooling", "main": false },
+    { "id": "demand", "label": "終端需求 Demand", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "ic-vrm",
+      "row": "power-ic",
+      "col": 1, "span": 1,
+      "kind": "rail",
+      "name": "VRM Controller / Power IC",
+      "nameEn": "VRM Controller / Power IC",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · Monolithic Power (MPWR) ZPD 垂直供電 + 800V VDC sampling，預期 NVIDIA Vera Rubin VR200/R200 取得 70% 份額（信心度 high · Simply Wall St + Seeking Alpha 多源）",
+      "desc": "AI GPU 在 1V 級電壓下抽 2000W+ 電流，VRM（Voltage Regulator Module）+ 多相 Buck 控制器是關鍵。MPWR ZPD（Zone Power Density）整合多相到單一模組，PDN 電阻 -5×、密度達 3A/mm²。",
+      "marketSize": "MPWR 70% Vera Rubin",
+      "growth": "Enterprise +50% YoY",
+      "analysis": "MPWR 2026 Enterprise Data 成長下限自 30-40% 上修至 50%+；ADI 與 TI 為類比 IC 雙強補位；Renesas / Infineon / ROHM / ST / OnSemi 為 NVIDIA 800V partner list 全員。MPWR ZPD 為 Vera Rubin VR200/R200 預估 70% 份額、收入潛在 +$100M。",
+      "companies": [
+        { "name": "Monolithic Power Systems", "ticker": "MPWR", "country": "US", "share": "Vera Rubin 70%", "products": "ZPD 垂直供電 + 800VDC sampling", "note": "AI GPU 2000W+ 供電核心，integrated multi-phase", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Analog Devices", "ticker": "ADI", "country": "US", "share": "類比 IC #1", "products": "Power management IC", "note": "NVIDIA 800V partner，broad analog 大廠" },
+        { "name": "Texas Instruments", "ticker": "TXN", "country": "US", "share": "Power IC 大廠", "products": "完整 800V VDC 架構 (March 2026)", "note": "與 NVIDIA 合作 next-gen power" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "Power IC 補位", "products": "Auto + DC power IC", "note": "NVIDIA 800V partner" },
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "Power 領先", "products": "GaN + SiC + Si power", "note": "NVIDIA 800V partner，三軌全打" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-psu" }],
+      "sources": [
+        { "label": "MPWR ZPD Vera Rubin 70% (Simply Wall St)", "url": "https://simplywall.st/community/narratives/us/semiconductors/nasdaq-mpwr/monolithic-power-systems/cafbznfq-monolithic-power-systems-mpwr-the-ai-power-architect-and-the-2026-enterprise-data-floor" },
+        { "label": "TI 800VDC architecture for AI data center (TI)", "url": "https://www.ti.com/about-ti/newsroom/news-releases/2026/2026-03-16-ti-unveils-complete-800-vdc-power-architecture-for-future-generation-ai-data-centers-with-nvidia.html" },
+        { "label": "NVIDIA 800V partner list (Navitas)", "url": "https://navitassemi.com/navitas-supports-800-vdc-power-architecture-for-nvidias-next-generation-ai-factory-computing-platforms/" }
+      ]
+    },
+    {
+      "id": "ic-gan",
+      "row": "power-ic",
+      "col": 2, "span": 1,
+      "kind": "rail",
+      "name": "GaN 功率元件",
+      "nameEn": "GaN Power Devices",
+      "competition": "highgrowth",
+      "single": "客戶獨家 · Navitas (NVTS) 為 NVIDIA 800V HVDC architecture 公開合作夥伴；100V GaN FET + GaNSafe IC + GaNFast 技術為 Kyber rack 核心（信心度 high · Navitas + NVIDIA 官方 SEC 8-K）",
+      "desc": "GaN（氮化鎵）以高頻 + 低損耗特性切入 800V HVDC 的 DC-DC 轉換，效率 +5%、體積 -50%。NVIDIA 點名 Navitas 為 800V partner、Innoscience 也在 list 上。",
+      "marketSize": "Navitas 2027 ramp",
+      "growth": "Rubin Ultra 切換",
+      "analysis": "Navitas（NVTS）NVIDIA 800V 公開合作，2027 收入彎曲點；EPC + Infineon GaN business 補位；Innoscience（中國，未上市 / 香港 IPO 計畫）為 NVIDIA 800V partner 之一；MPWR ZPD 已是 GaN+Si 混合。",
+      "companies": [
+        { "name": "Navitas Semiconductor", "ticker": "NVTS", "country": "US", "share": "NVIDIA 800V 公開合作", "products": "GaNFast + GaNSafe + GeneSiC", "note": "100V/650V GaN + SiC 全套 800V HVDC", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Infineon (GaN)", "ticker": "IFX.DE", "country": "DE", "share": "GaN 第二", "products": "CoolGaN", "note": "GaN + SiC + Si 三軌" },
+        { "name": "Innoscience 英諾賽科", "ticker": "—", "country": "CN", "share": "NVIDIA 800V partner", "products": "GaN-on-Si", "note": "中國 GaN 大廠、香港 IPO 計畫" },
+        { "name": "STMicroelectronics (GaN)", "ticker": "STM", "country": "EU", "share": "GaN 切入", "products": "MasterGaN", "note": "NVIDIA 800V partner" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-psu" }, { "id": "f-rack" }],
+      "sources": [
+        { "label": "NVIDIA selects Navitas for 800V HVDC (Stocktitan)", "url": "https://www.stocktitan.net/news/NVTS/nvidia-selects-navitas-to-collaborate-on-next-generation-800-v-hvdc-yfo1gj9fknlt.html" },
+        { "label": "Navitas Semiconductor + NVIDIA SEC filing", "url": "https://www.sec.gov/Archives/edgar/data/1821769/000162828025027705/ex9912025-05x21prrenvidiac.htm" }
+      ]
+    },
+    {
+      "id": "ic-sic",
+      "row": "power-ic",
+      "col": 3, "span": 1,
+      "kind": "rail",
+      "name": "SiC 高壓 / 整流",
+      "nameEn": "SiC High-Voltage / Rectifier",
+      "competition": "oligopoly",
+      "desc": "SiC（碳化矽）在高壓（650V-1700V）、高溫場景優於 Si；用於 800V HVDC 機房側整流、DC-DC 一次轉換；通常 GaN 做機架內、SiC 做機架前。",
+      "marketSize": "SiC 800V 整流",
+      "growth": "HVDC 全切",
+      "analysis": "Infineon + ROHM + Wolfspeed + ST + OnSemi 為 SiC 五強；Wolfspeed 2024-2025 重組（Mohawk Valley 200mm fab），ROHM 與 ON Semi 美日合作；800V HVDC 機房側 AC→DC + DC→DC 一次轉換為 SiC 主戰場。",
+      "companies": [
+        { "name": "Wolfspeed", "ticker": "WOLF", "country": "US", "share": "SiC 純玩家", "products": "200mm SiC wafer + MOSFET", "note": "Mohawk Valley fab 重組中" },
+        { "name": "Infineon (SiC)", "ticker": "IFX.DE", "country": "DE", "share": "SiC 領先", "products": "CoolSiC 全系列", "note": "GaN + SiC 雙軌" },
+        { "name": "ROHM", "ticker": "6963.T", "country": "JP", "share": "SiC 第二", "products": "SiC MOSFET", "note": "NVIDIA 800V partner" },
+        { "name": "STMicroelectronics", "ticker": "STM", "country": "EU", "share": "SiC 補位", "products": "STPOWER SiC", "note": "NVIDIA 800V partner" },
+        { "name": "ON Semi", "ticker": "ON", "country": "US", "share": "SiC 切入", "products": "EliteSiC", "note": "NVIDIA 800V partner" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-rack" }, { "id": "f-grid" }],
+      "sources": [
+        { "label": "NVIDIA 800V partner list incl ROHM/STM/ON (Navitas)", "url": "https://navitassemi.com/navitas-supports-800-vdc-power-architecture-for-nvidias-next-generation-ai-factory-computing-platforms/" }
+      ]
+    },
+    {
+      "id": "ic-passive",
+      "row": "power-ic",
+      "col": 4, "span": 1,
+      "kind": "rail",
+      "name": "電感 / 電容 / 連接",
+      "nameEn": "Magnetics / Caps / Connectors",
+      "competition": "oligopoly",
+      "desc": "AI 高密度電源需要超低 ESR 電容 + 高頻電感 + 高電流連接器；NVIDIA Rubin rack 將多用 busbar 取代 cable。",
+      "marketSize": "Passive 結構升級",
+      "growth": "電感倍增",
+      "analysis": "TDK + Murata + Yageo 國巨 + Vishay 為被動元件主流；高頻電感（10MHz+）+ 高耐壓電容（800V級）需求結構性放大；Amphenol + TE Connectivity + Molex（Koch private）為高電流連接器；金居 8358 / 中美晶 5483 為銅箔基板補位。",
+      "companies": [
+        { "name": "TDK", "ticker": "6762.T", "country": "JP", "share": "電感龍頭", "products": "電感 + 高頻磁性元件", "note": "AI 高頻 inductor 結構升級" },
+        { "name": "Murata", "ticker": "6981.T", "country": "JP", "share": "MLCC 領先", "products": "高耐壓 MLCC", "note": "800V cap 全球領先" },
+        { "name": "Yageo 國巨", "ticker": "2327", "country": "TW", "share": "MLCC 第二", "products": "MLCC + chip resistor", "note": "高耐壓 + 高功率產品線" },
+        { "name": "Amphenol", "ticker": "APH", "country": "US", "share": "連接器 #1", "products": "高電流 power connector", "note": "AI server busbar + 連接" },
+        { "name": "TE Connectivity", "ticker": "TEL", "country": "CH", "share": "連接器 #2", "products": "Power + RF connector", "note": "Hyperscaler 連接核心、Schaffhausen HQ NYSE 雙掛" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-psu" }, { "id": "f-rack" }],
+      "sources": [
+        { "label": "800V HVDC PSU value倍增 (CNYES)", "url": "https://news.cnyes.com/news/id/6050728" }
+      ]
+    },
+    {
+      "id": "f-psu",
+      "row": "power-flow",
+      "col": 1, "span": 1,
+      "kind": "stage",
+      "name": "Server PSU (12V/48V/HVDC)",
+      "nameEn": "Server PSU (12V/48V/HVDC)",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · 台達電 2308 70% Blackwell PSU 市佔 + 60%+ AI server power、±400V 2026 出貨、800V 2026H2 small ship → 2027 ramp（信心度 high · TechNews + Sinotrade 多源）",
+      "desc": "AI server PSU 從 3kW → 5.5kW（GB200/300）→ 12kW（VR200）→ 單櫃 PSU 價值 $60-70K → $150K+（Rubin Ultra）。Delta 主導，光寶 + AES-KY + Flex Power 補位。",
+      "marketSize": "Delta 70% Blackwell",
+      "growth": "$150K/cabinet Rubin",
+      "analysis": "台達 660kW 800V power cabinet 已展示，2026H2 出貨；光寶（2301）切入 server PSU；AES-KY（6781）由 Artesyn 美洲背景擅長高功率；Flex Power（FLEX）、LiteOn、Megmeet 為 NVIDIA 公開 800V power system partner。",
+      "companies": [
+        { "name": "Delta Electronics 台達", "ticker": "2308", "country": "TW", "share": "Blackwell PSU 70%", "products": "5.5kW/12kW PSU + 800V power cabinet (660kW)", "note": "60%+ AI server power、800V H2 2026 ship", "core_business": true, "growth_trajectory": "high" },
+        { "name": "LiteOn Technology 光寶", "ticker": "2301", "country": "TW", "share": "Server PSU #2", "products": "Server PSU + BBU", "note": "AI server power 切入加速", "core_business": true, "growth_trajectory": "high" },
+        { "name": "AES-KY Artesyn", "ticker": "6781", "country": "TW", "share": "高功率 server PSU", "products": "高密度 server PSU", "note": "TWSE listed、Artesyn 美洲血統、NVIDIA AI server PSU 主供之一", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Flex Power", "ticker": "FLEX", "country": "US", "share": "NVIDIA 800V partner", "products": "AI server PSU + power module", "note": "NVIDIA 公開合作" },
+        { "name": "Megmeet", "ticker": "002851.SZ", "country": "CN", "share": "NVIDIA 800V partner", "products": "Server PSU", "note": "NVIDIA 公開合作" }
+      ],
+      "upstream": [{ "id": "ic-vrm" }, { "id": "ic-gan" }, { "id": "ic-passive" }],
+      "downstream": [{ "id": "f-rack" }],
+      "sources": [
+        { "label": "Delta 70% Blackwell PSU + 800V (Sinotrade)", "url": "https://www.sinotrade.com.tw/richclub/hotstock/%E5%8F%B0%E9%81%94%E9%9B%BB-2308-%E5%81%9A%E4%BB%80%E9%BA%BC-%E6%B3%95%E8%AA%AA%E6%9C%83%E9%87%8D%E9%BB%9E%E6%9C%89%E5%93%AA%E4%BA%9B-Q1-EPS-7-91%E5%85%83%E6%94%B9%E5%AF%AB%E5%96%AE%E5%AD%A3%E7%B4%80%E9%8C%84-%C2%B1400V%E4%BB%8A%E5%B9%B4%E5%87%BA%E8%B2%A8-800V%E8%93%84%E5%8B%A22027%E5%B9%B4%E6%94%BE%E9%87%8F-%E8%82%A1%E5%B8%82%E8%A9%B1%E9%A1%8C-69f3237ae912b0007968ba63" },
+        { "label": "Delta ±400V shipping + 800V queued (TechNews)", "url": "https://technews.tw/2026/04/30/hvdc-400-800-hvdc/" },
+        { "label": "AI 電力需求衝上 MW (TechNews)", "url": "https://technews.tw/2026/04/21/ai-power-shelf-mw-delta/" }
+      ]
+    },
+    {
+      "id": "f-bbu",
+      "row": "power-flow",
+      "col": 2, "span": 1,
+      "kind": "stage",
+      "name": "BBU 模組 / Rack UPS",
+      "nameEn": "BBU Module / Rack UPS",
+      "competition": "oligopoly",
+      "desc": "AI rack 級 UPS = BBU（Battery Backup Unit）+ 邊緣 UPS；GB300 / Rubin BBU 採高功率密度鋰電池 + 快速切換電路。",
+      "marketSize": "GB300 BBU $20K/櫃",
+      "growth": "Rubin BBU $40K+",
+      "analysis": "Delta + LiteOn 為 BBU 模組整合主力；Samsung SDI + LG Energy Solution 為鋰電池供應；Vertiv + Schneider 為機房 UPS（百 kW-MW 級）。BBU 提供 90 秒-3 分鐘 ride-through。",
+      "companies": [
+        { "name": "Delta BBU", "ticker": "2308", "country": "TW", "share": "BBU 模組領先", "products": "高密度 BBU + 切換電路", "note": "與 NVIDIA Rubin BBU 共開發" },
+        { "name": "LiteOn", "ticker": "2301", "country": "TW", "share": "BBU 第二", "products": "BBU + 鋰電池模組整合", "note": "AI rack BBU 主流" },
+        { "name": "Samsung SDI", "ticker": "006400.KS", "country": "KR", "share": "鋰電池芯", "products": "高功率鋰電池芯", "note": "BBU 鋰電池主供" },
+        { "name": "LG Energy Solution", "ticker": "373220.KS", "country": "KR", "share": "鋰電池芯 #2", "products": "鋰電池 ESS + BBU", "note": "與 LG/Hyperscaler 合作" },
+        { "name": "Vertiv UPS", "ticker": "VRT", "country": "US", "share": "機房 UPS 領先", "products": "Liebert eXL / EXM2", "note": "MW 級資料中心 UPS" }
+      ],
+      "upstream": [{ "id": "ic-vrm" }],
+      "downstream": [{ "id": "f-rack" }],
+      "sources": [
+        { "label": "Delta Q1 2026 EPS + BBU (Sinotrade)", "url": "https://www.sinotrade.com.tw/richclub/hotstock/%E5%8F%B0%E9%81%94%E9%9B%BB-2308-%E5%81%9A%E4%BB%80%E9%BA%BC-%E6%B3%95%E8%AA%AA%E6%9C%83%E9%87%8D%E9%BB%9E%E6%9C%89%E5%93%AA%E4%BA%9B-Q1-EPS-7-91%E5%85%83%E6%94%B9%E5%AF%AB%E5%96%AE%E5%AD%A3%E7%B4%80%E9%8C%84-%C2%B1400V%E4%BB%8A%E5%B9%B4%E5%87%BA%E8%B2%A8-800V%E8%93%84%E5%8B%A22027%E5%B9%B4%E6%94%BE%E9%87%8F-%E8%82%A1%E5%B8%82%E8%A9%B1%E9%A1%8C-69f3237ae912b0007968ba63" }
+      ]
+    },
+    {
+      "id": "f-rack",
+      "row": "power-flow",
+      "col": 3, "span": 1,
+      "kind": "stage",
+      "name": "Power Shelf / 800V Rack",
+      "nameEn": "Power Shelf / 800V Rack",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · Delta 660kW 800V power rack 已在 GTC 2026 展示，2026H2 出貨；Vertiv 800VDC portfolio 2026H2、Eaton MV solid-state transformer 開發中（信心度 high · 多源）",
+      "desc": "Power Shelf 將 AC 自機房側轉成 DC（54V → 800V），輸出至 GPU rack；Rubin Ultra Kyber rack 規劃 600kW-1MW 級。",
+      "marketSize": "Rubin Ultra 1MW",
+      "growth": "2026H2 起跑",
+      "analysis": "Delta 660kW 800V power cabinet 為 Rubin Ultra Kyber 核心；Vertiv 800VDC portfolio H2 2026 推出；Eaton 開發 medium-voltage solid-state transformer；SolarEdge 99% 效率 SST 開發中。Lead Wealth + LiteOn + Megmeet 為 NVIDIA 公開 800V system partner。",
+      "companies": [
+        { "name": "Delta Electronics 台達", "ticker": "2308", "country": "TW", "share": "660kW 800V power rack", "products": "33kV AC → 0.65V DC one-stop, 92.1% efficiency", "note": "GTC 2026 展示，H2 出貨", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "800VDC portfolio H2 2026", "products": "Liebert + 800VDC 整合", "note": "資料中心 power leader", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "MV solid-state transformer", "products": "MV SST + 800V switchgear", "note": "$9.5B 收購 Boyd Thermal，power + cooling 雙軌", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "Power infra 龍頭", "products": "EcoStruxure 800V + 整合", "note": "DC infrastructure 主流" }
+      ],
+      "upstream": [{ "id": "f-psu" }, { "id": "f-bbu" }, { "id": "ic-gan" }, { "id": "ic-sic" }, { "id": "ic-passive" }],
+      "downstream": [{ "id": "d-nvda" }, { "id": "d-asic" }, { "id": "d-hyper" }],
+      "sources": [
+        { "label": "NVIDIA 800V HVDC architecture (NVIDIA blog)", "url": "https://developer.nvidia.com/blog/building-the-800-vdc-ecosystem-for-efficient-scalable-ai-factories/" },
+        { "label": "800V HVDC partner list (Insightology)", "url": "https://www.insightologyresearch.com/p/800v-hvdc-powering-the-next-generation" }
+      ]
+    },
+    {
+      "id": "f-pdu",
+      "row": "power-flow",
+      "col": 4, "span": 1,
+      "kind": "stage",
+      "name": "PDU / Busbar 配電",
+      "nameEn": "PDU / Busbar Distribution",
+      "competition": "oligopoly",
+      "desc": "rack 內 PDU + busbar 把 800V 母線分發到各 server；800V 架構下 busbar 銅截面 -45% 但仍是關鍵承載元件。",
+      "marketSize": "Cu -45% Rubin Ultra",
+      "growth": "Busbar 取代 cable",
+      "analysis": "Eaton + Schneider + Vertiv 為 PDU + busbar 三大；Vertiv 與 Strategic Thermal Labs 整合（2025/Q4）強化整套；Legrand 補位。Rubin Ultra rack 內全 busbar、外部 800V cable。",
+      "companies": [
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "PDU + busbar 領先", "products": "Power Xpert + busway", "note": "+ Boyd $9.5B 收購整合 cooling" },
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "PDU/UPS/cooling", "products": "EcoStruxure + Motivair", "note": "Power + cooling 全套" },
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "PDU + rack 整合", "products": "Geist PDU + iCOM", "note": "Strategic Thermal Labs 2025 整合", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Legrand", "ticker": "LR.PA", "country": "FR", "share": "PDU 補位", "products": "Raritan PDU", "note": "Datacenter PDU 第三" }
+      ],
+      "upstream": [{ "id": "f-rack" }],
+      "downstream": [{ "id": "d-hyper" }],
+      "sources": [
+        { "label": "Vertiv acquires Strategic Thermal Labs (Substack)", "url": "https://datacenterrichness.substack.com/p/vertiv-acquires-strategic-thermal" }
+      ]
+    },
+    {
+      "id": "f-grid",
+      "row": "power-flow",
+      "col": 5, "span": 1,
+      "kind": "stage",
+      "name": "Grid / Substation / SOFC",
+      "nameEn": "Grid / Substation / SOFC",
+      "competition": "oligopoly",
+      "desc": "AI fab 級 GW 規模對 utility transformer / switchgear / SOFC（固態氧化物燃料電池）需求結構性放大；hyperscaler 自建電廠成為 baseline。",
+      "marketSize": "GW-scale AI factory",
+      "growth": "SOFC baseline",
+      "analysis": "ABB + Schneider + Eaton + Siemens 為 MV substation 巨頭；GE Vernova 為發電 / utility transformer；Bloom Energy 為 SOFC 主供（高力 8996 為 Bloom 熱交換器供應商，~30% 比例上升）；Hyperscaler 自建 SMR / SOFC 加速。",
+      "companies": [
+        { "name": "ABB", "ticker": "ABBN.SW", "country": "CH", "share": "MV switchgear 龍頭", "products": "EcoFlex + RX 系列", "note": "MV power 主流" },
+        { "name": "GE Vernova", "ticker": "GEV", "country": "US", "share": "Utility transformer + 發電", "products": "MV transformer + gas turbine", "note": "AI data center 自建電廠主供" },
+        { "name": "Bloom Energy", "ticker": "BE", "country": "US", "share": "SOFC 領先", "products": "SOFC fuel cell", "note": "AI data center baseline power 採用加速" },
+        { "name": "Siemens Energy", "ticker": "ENR.DE", "country": "DE", "share": "MV + 發電", "products": "MV substation + 風機", "note": "歐洲 AI 電網主流" }
+      ],
+      "upstream": [{ "id": "ic-sic" }],
+      "downstream": [{ "id": "f-pdu" }],
+      "sources": [
+        { "label": "Bloom Energy + 高力 SOFC AI baseload (CNYES)", "url": "https://news.cnyes.com/news/id/6259565" }
+      ]
+    },
+    {
+      "id": "t-tim",
+      "row": "thermal-comp",
+      "col": 1, "span": 1,
+      "kind": "rail",
+      "name": "TIM 熱介面材料",
+      "nameEn": "Thermal Interface Material",
+      "competition": "oligopoly",
+      "desc": "TIM 在 GPU die ↔ lid / cold plate 之間，是熱阻關鍵；Rubin 預期改用 indium-based TIM + MCL（micro-channel lid）。",
+      "marketSize": "Liquid metal TIM",
+      "growth": "Indium TIM Rubin",
+      "analysis": "Indium Corp + Henkel + Honeywell + Dow Performance 為 TIM 四強；Liquid metal TIM（Galinstan）為高階；Rubin platform 預期改 indium 銲接 lid + MCL 結構，TIM 結構升級。",
+      "companies": [
+        { "name": "Indium Corp", "ticker": "—", "country": "US", "share": "Indium TIM 領先", "products": "Liquid metal + Indium foil + solder paste", "note": "高階 GPU TIM + Rubin Indium-based" },
+        { "name": "Henkel", "ticker": "HEN.DE", "country": "DE", "share": "TIM 雙占之一", "products": "Bergquist Gap Pad + grease", "note": "歐美 OSAT + server" },
+        { "name": "Honeywell", "ticker": "HON", "country": "US", "share": "TIM 主供", "products": "PCM TIM + Gap-pad", "note": "資料中心 TIM" },
+        { "name": "Dow Performance Silicone", "ticker": "DOW", "country": "US", "share": "Silicone TIM", "products": "Dowsil thermal grease + gap fillers", "note": "高功率密度 TIM" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "t-coldplate" }],
+      "sources": [
+        { "label": "Rubin Indium-based TIM (vocus)", "url": "https://vocus.cc/article/6982d050fd897800013941cb" }
+      ]
+    },
+    {
+      "id": "t-coldplate",
+      "row": "thermal-comp",
+      "col": 2, "span": 1,
+      "kind": "rail",
+      "name": "Cold Plate 水冷板",
+      "nameEn": "Cold Plate",
+      "competition": "monopoly",
+      "single": "鎖喉點 · NVIDIA Vera Rubin NVL72 cold plate centralized procurement 點名四家：AVC (奇鋐 3017) + Cooler Master + Jentech (健策 3653) + Delta (台達 2308)（信心度 high · Digitimes + 工商時報 多源）",
+      "desc": "Cold plate 是 DLC（Direct Liquid Cooling）核心：冷卻液在精密微通道中流過 GPU / CPU 上方，效率為傳統空冷的 5-10×。GB300 起標準化、Rubin NVL72 集中採購。",
+      "marketSize": "Rubin 4-supplier 鎖定",
+      "growth": "GB300 DLC mandatory",
+      "analysis": "NVIDIA 為 Vera Rubin NVL72 採集中採購 cold plate，公開四家供應商：AVC 奇鋐（40-50% GB300 share）+ Cooler Master（lead supplier、Roger Lin 創辦人 33 年從未受訪）+ Jentech 健策（首次入列、Micro-Channel Lid MCL 領先）+ Delta 台達。",
+      "companies": [
+        { "name": "AVC 奇鋐", "ticker": "3017", "country": "TW", "share": "GB300 cold plate 40-50%", "products": "Cold plate + manifold + 完整 DLC", "note": "2025 rev US$4.5B 翻倍，one-stop 液冷整套", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Cooler Master", "ticker": "—", "country": "TW", "share": "Lead supplier GB200/300", "products": "Cold plate + manifold + RDHx", "note": "33 年私人公司、未上市、NVIDIA 主供" },
+        { "name": "Jentech 健策", "ticker": "3653", "country": "TW", "share": "Rubin 新進四供", "products": "Micro-Channel Lid (MCL) + cold plate + manifold", "note": "首家整合 MCL，Rubin GTC 2026 首次列入", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Delta Electronics 台達", "ticker": "2308", "country": "TW", "share": "Rubin 四供之一", "products": "Cold plate + 整合 power", "note": "Power + cooling 雙軌領先", "core_business": true, "growth_trajectory": "high" }
+      ],
+      "upstream": [{ "id": "t-tim" }],
+      "downstream": [{ "id": "c-cdu" }, { "id": "c-manifold" }],
+      "sources": [
+        { "label": "NVIDIA Rubin cold plate 4 suppliers (Digitimes)", "url": "https://www.digitimes.com/news/a20260318PD231/nvidia-rubin-liquid-cooling-ai-server-launch.html" },
+        { "label": "健策 Rubin GTC 2026 首次列入 (Pocket)", "url": "https://www.pocket.tw/school/report/SCHOOL/6817/" },
+        { "label": "奇鋐 2025 rev $4.5B 翻倍 (Sinotrade)", "url": "https://www.sinotrade.com.tw/richclub/hotstock/%E5%A5%87%E9%8B%90-3017-%E5%81%9A%E4%BB%80%E9%BA%BC-%E5%8E%BB%E5%B9%B4%E7%87%9F%E6%94%B6%E8%A1%9D%E7%A0%B4%E5%8D%83%E5%84%84%E5%AF%AB%E6%96%B0%E7%8C%B7-%E7%99%BC%E8%A1%A8%E6%9C%83%E6%8F%AD%E9%9C%B2%E5%8D%81%E5%B9%B4%E7%A3%A8%E4%B8%80%E5%8A%8D%E9%82%81%E5%90%91%E6%B6%B2%E5%86%B7%E5%85%83%E5%B9%B4-%E8%82%A1%E5%B8%82%E8%A9%B1%E9%A1%8C-69e73ca3828d0b0adeeda706" }
+      ]
+    },
+    {
+      "id": "t-vc",
+      "row": "thermal-comp",
+      "col": 3, "span": 1,
+      "kind": "rail",
+      "name": "3D VC / Heat Pipe",
+      "nameEn": "3D Vapor Chamber / Heat Pipe",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · 雙鴻 3324（Auras）3D VC + heat pipe 為 NVIDIA GB200/300 主供，2026 散熱大贏家（大和升 40% TP）（信心度 high · CT + 旺得富 多源）",
+      "desc": "3D VC（Vapor Chamber）為 GPU die-level 散熱關鍵，把熱從點源擴散到面；heat pipe 為傳統補強。Rubin 規格升級到更密的 micro VC。",
+      "marketSize": "Auras + 超眾 寡占",
+      "growth": "AI 結構升級",
+      "analysis": "Auras 雙鴻（3324）為 NVIDIA AI server 3D VC + cold plate 主供，2025 4Q 飆漲、外資調 TP；超眾（6230）為 VC 補位（鴻海集團）；力致（3483）+ 泰碩（3338）+ 業強（6124）為 heat pipe 中位玩家；AVC 自製 VC 內製比例上升。",
+      "companies": [
+        { "name": "Auras 雙鴻", "ticker": "3324", "country": "TW", "share": "AI 3D VC 龍頭", "products": "3D VC + heat pipe + cold plate", "note": "NVIDIA GB200/300 cold plate 主供、Rubin 機會大", "core_business": true, "growth_trajectory": "high" },
+        { "name": "超眾 Chaun-Choung", "ticker": "6230", "country": "TW", "share": "VC 第二", "products": "Vapor chamber + 散熱模組", "note": "鴻海集團，server VC 補位", "core_business": true, "growth_trajectory": "high" },
+        { "name": "力致 Lici", "ticker": "3483", "country": "TW", "share": "Heat pipe 領先", "products": "Heat pipe + heat sink", "note": "Server + GPU heat pipe 主流" },
+        { "name": "AVC 奇鋐 (in-house VC)", "ticker": "3017", "country": "TW", "share": "VC 內製比例升", "products": "VC + heat pipe", "note": "垂直整合 + cold plate" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "t-heatsink" }, { "id": "t-coldplate" }],
+      "sources": [
+        { "label": "Auras 雙鴻 GB200/300 + Rubin (CT)", "url": "https://www.ctee.com.tw/news/20251028900400-420101" },
+        { "label": "奇鋐 + 雙鴻 + 健策 液冷三雄 (Sinotrade)", "url": "https://www.sinotrade.com.tw/richclub/hotstock/%E6%B6%B2%E5%86%B7%E6%89%93%E7%A0%B4%E7%99%BD%E5%8D%80%E8%88%87%E7%81%B0%E5%8D%80%E7%95%8C%E7%B7%9A-%E5%8F%B0%E9%81%94%E9%9B%BB-2308--%E9%9B%99%E9%B4%BB-3324--%E5%A5%87%E9%8B%90-3017--%E4%B8%89%E5%A4%A7%E5%9F%BA%E5%BB%BA%E9%9C%B8%E4%B8%BB%E5%85%A8%E9%9D%A2%E6%BB%B2%E9%80%8F-AI-%E8%B3%87%E6%96%99%E4%B8%AD%E5%BF%83-%E7%94%A2%E6%A5%AD%E7%86%B1%E8%A9%B1-6964b77480fc0a261b354593" }
+      ]
+    },
+    {
+      "id": "t-heatsink",
+      "row": "thermal-comp",
+      "col": 4, "span": 1,
+      "kind": "rail",
+      "name": "Heat Sink / IHS Lid",
+      "nameEn": "Heat Sink / IHS Lid",
+      "competition": "oligopoly",
+      "desc": "傳統風冷散熱片 + GPU 上蓋（IHS/lid）為 GB300 之前主流；Rubin 後逐步被 cold plate + MCL 取代但 ASIC server 仍需。",
+      "marketSize": "AI ASIC 仍需",
+      "growth": "風冷轉液冷",
+      "analysis": "AVC 奇鋐 + Cooler Master + 健策（IHS lid 領先）+ Delta 為 heat sink + IHS 主流；健策 CoWoS lid 95%+ 全球壟斷；非 Rubin / 非 NVIDIA 平台仍需 lid。",
+      "companies": [
+        { "name": "Jentech 健策 (CoWoS lid)", "ticker": "3653", "country": "TW", "share": "CoWoS lid >95%", "products": "Lid / IHS / Cu plate / MCL", "note": "TSMC CoWoS 獨家 IHS、Rubin 切 MCL", "core_business": true, "growth_trajectory": "high" },
+        { "name": "AVC 奇鋐", "ticker": "3017", "country": "TW", "share": "Heat sink 領先", "products": "Heat sink + cold plate", "note": "風冷 + 液冷 portfolio" },
+        { "name": "Cooler Master", "ticker": "—", "country": "TW", "share": "Heat sink 第二", "products": "Heat sink + cold plate", "note": "未上市、NVIDIA 主供" },
+        { "name": "Delta Thermal", "ticker": "2308", "country": "TW", "share": "Heat sink + cold plate", "products": "整合 power + thermal", "note": "雙軌領先" }
+      ],
+      "upstream": [{ "id": "t-vc" }],
+      "downstream": [{ "id": "c-sidecar" }],
+      "sources": [
+        { "label": "健策 CoWoS lid + MCL Rubin (Vocus)", "url": "https://vocus.cc/article/6982d050fd897800013941cb" }
+      ]
+    },
+    {
+      "id": "t-fan",
+      "row": "thermal-comp",
+      "col": 5, "span": 1,
+      "kind": "rail",
+      "name": "高密度風扇",
+      "nameEn": "High-Density Fans",
+      "competition": "oligopoly",
+      "desc": "AI server 即使 DLC 仍需高密度風扇散熱輔助元件（VRM、NIC、PSU）；液冷+風冷混合機架（hybrid cooling）為 GB300 主流。",
+      "marketSize": "Hybrid cooling",
+      "growth": "AI 風扇結構升級",
+      "analysis": "Delta + Sunon 建準 + AVC + Sunonwealth 建準（同集團）+ Ebm-papst（德國）為高效風扇主流；AI server 風扇從 60mm/80mm 升 80mm/100mm，轉速與壓力提升。",
+      "companies": [
+        { "name": "Delta Fan", "ticker": "2308", "country": "TW", "share": "AI server 風扇領先", "products": "高密度 EC fan", "note": "與 NVIDIA / Hyperscaler 標準合作" },
+        { "name": "Sunon 建準電機", "ticker": "8045", "country": "TW", "share": "風扇 #2", "products": "EC fan + 散熱模組", "note": "AI server + 5G 通信" },
+        { "name": "AVC Fan", "ticker": "3017", "country": "TW", "share": "風扇 + 散熱", "products": "整合風扇 + 散熱模組", "note": "風冷整合" },
+        { "name": "Ebm-papst", "ticker": "—", "country": "DE", "share": "歐洲 EC fan 領先", "products": "高效 EC fan", "note": "Datacenter EC fan 主流" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "c-sidecar" }],
+      "sources": [
+        { "label": "AI server 散熱模組需求 (Yahoo TW)", "url": "https://tw.stock.yahoo.com/news/%E5%81%A5%E7%AD%96%E5%8F%97%E6%83%A0ai%E4%BC%BA%E6%9C%8D%E5%99%A8%E6%95%A3%E7%86%B1%E9%9C%80%E6%B1%82-%E7%87%9F%E6%94%B6-%E7%94%A2%E5%93%81%E9%99%84%E5%8A%A0%E5%83%B9%E5%80%BC%E9%BD%8A%E5%8D%87-030800192.html" }
+      ]
+    },
+    {
+      "id": "t-qd",
+      "row": "thermal-comp",
+      "col": 6, "span": 1,
+      "kind": "rail",
+      "name": "QD / Pump / 接頭",
+      "nameEn": "Quick Disconnect / Pump / Fittings",
+      "competition": "oligopoly",
+      "desc": "DLC 機房用 Quick Disconnect 連接 cold plate ↔ manifold ↔ CDU；無漏液設計 + 熱插拔 + 高流量。Pump 為 CDU 循環核心。",
+      "marketSize": "QD AI 結構放大",
+      "growth": "Hot-swap 必要",
+      "analysis": "Stäubli + Parker Hannifin + CPC + Asetek + CoolIT 為 QD + pump 主流；Stäubli 在工業級 hot-swap 領先；Parker 為工業 + 醫療雙軌；台廠帆宣 6196 + 信紘科 6667 整合循環管路。",
+      "companies": [
+        { "name": "Stäubli", "ticker": "—", "country": "CH", "share": "工業 QD 領先", "products": "Hot-swap QD 連接器", "note": "AI server 無漏液 QD 主流" },
+        { "name": "Parker Hannifin", "ticker": "PH", "country": "US", "share": "QD + pump", "products": "PARKER HVDS pump + QD", "note": "工業 + 資料中心" },
+        { "name": "Asetek", "ticker": "ASTK.OL", "country": "EU", "share": "DLC pump + QD", "products": "Asetek SimSports + Datacenter", "note": "DLC 早期玩家" },
+        { "name": "CoolIT Systems (Ecolab)", "ticker": "ECL", "country": "US", "share": "DLC + QD + pump", "products": "Coolant + DLC 整合", "note": "Ecolab $4.75B 收購 (March 2026)", "core_business": true, "growth_trajectory": "high" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "c-cdu" }, { "id": "c-manifold" }],
+      "sources": [
+        { "label": "Ecolab acquires CoolIT $4.75B March 2026 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/data-center-liquid-cooling-market" }
+      ]
+    },
+    {
+      "id": "c-cdu",
+      "row": "cooling-sys",
+      "col": 1, "span": 1,
+      "kind": "stage",
+      "name": "CDU (冷卻液分配)",
+      "nameEn": "Coolant Distribution Unit",
+      "competition": "monopoly",
+      "single": "客戶獨家 · 高力 8996 CDU + Side-car + Radiator 整套，60-80kW → 150kW+ 規格升級，Feb 2026 rev +260% YoY；Vertiv 全球 #1 11.3% 液冷市佔（信心度 high · 七仔財經 + Yahoo TW + Marketsandmarkets）",
+      "desc": "CDU 為 DLC 系統心臟：把資料中心一次水（primary loop）冷卻分發給機架二次水（secondary loop），透過熱交換器隔離，避免一次水污染進入精密電子。",
+      "marketSize": "DLC $6B 2026 → $27B 2035",
+      "growth": "+18.2% CAGR",
+      "analysis": "Vertiv 11.3% 全球液冷 #1（2025）；Schneider Electric 收購 Motivair 強化 CDU；Boyd Thermal（Eaton $9.5B 收購 Nov 2025）；CoolIT 被 Ecolab $4.75B（March 2026）；高力 8996 為 CDU + 板式熱交換器 TW 主力（Feb 2026 rev +260% YoY、2026 EPS 預估 17.05）；Asetek + DCX 為 CDU 補位（DCX 8.15MW facility-scale CDU Nov 2025）。",
+      "companies": [
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "液冷 #1 11.3%", "products": "Liebert CDU + RDHx + 整合", "note": "Strategic Thermal Labs 2025 整合", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Eaton (+Boyd Thermal)", "ticker": "ETN", "country": "US", "share": "CDU + power 整合", "products": "Boyd CDU + Eaton power", "note": "$9.5B 收購 Nov 2025、power+cooling one-stop", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Schneider Electric (+Motivair)", "ticker": "SU.PA", "country": "FR", "share": "CDU + power 整合", "products": "Motivair CDU + EcoStruxure", "note": "Power + cooling one-stop" },
+        { "name": "高力 Kaori", "ticker": "8996", "country": "TW", "share": "TW CDU 主力", "products": "CDU + Side-car + Radiator (60-150kW+)", "note": "Feb 2026 rev +260% YoY、Bloom Energy SOFC 補位", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Ecolab (+CoolIT)", "ticker": "ECL", "country": "US", "share": "CDU + DLC 整合", "products": "CoolIT CDU + Ecolab water chem", "note": "$4.75B 收購 March 2026", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Asetek", "ticker": "ASTK.OL", "country": "EU", "share": "DLC pure-play", "products": "DLC CDU + QD + pump", "note": "DLC 早期玩家" }
+      ],
+      "upstream": [{ "id": "t-coldplate" }, { "id": "t-qd" }],
+      "downstream": [{ "id": "c-chiller" }, { "id": "d-nvda" }, { "id": "d-hyper" }],
+      "sources": [
+        { "label": "Vertiv 11.3% liquid cooling lead (MarketsandMarkets)", "url": "https://www.marketsandmarkets.com/ResearchInsight/data-center-liquid-cooling-market.asp" },
+        { "label": "Eaton acquires Boyd $9.5B (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/data-center-liquid-cooling-market" },
+        { "label": "高力 CDU + 60-150kW 2026 (七仔財經)", "url": "https://7evenguy.com/what-is-8996-doing/" },
+        { "label": "DLC market $6B 2026 → $27.1B 2035 (gminsights)", "url": "https://www.gminsights.com/industry-analysis/data-center-liquid-cooling-market" }
+      ]
+    },
+    {
+      "id": "c-sidecar",
+      "row": "cooling-sys",
+      "col": 2, "span": 1,
+      "kind": "stage",
+      "name": "Sidecar / RDHx",
+      "nameEn": "Sidecar / Rear Door HX",
+      "competition": "oligopoly",
+      "desc": "Sidecar HX + RDHx（Rear Door Heat Exchanger）為 hybrid cooling 過渡方案：rack 旁邊 / 背面 attach 熱交換器，可以在不大改既有機房下導入部分液冷。",
+      "marketSize": "Hybrid 過渡",
+      "growth": "Brownfield 主流",
+      "analysis": "Vertiv + Schneider + Rittal + Stulz 為 RDHx 四大；高力 8996 切入 Side-car 補位；TW server ODM 自製 sidecar 加速；GB300 brownfield 部署多採 hybrid（部分液冷 + 部分風冷）。",
+      "companies": [
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "RDHx 領先", "products": "Liebert XDR", "note": "Hybrid cooling 主流" },
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "RDHx 補位", "products": "EcoStruxure RDHx", "note": "與 Motivair 整合" },
+        { "name": "Rittal", "ticker": "—", "country": "DE", "share": "Rack + RDHx 第三", "products": "Rittal LCP + 機櫃", "note": "歐美 brownfield 主流（私人）" },
+        { "name": "Stulz", "ticker": "—", "country": "DE", "share": "CRAC + RDHx", "products": "CyberAir + RDHx", "note": "私人公司、歐洲 datacenter 主流" },
+        { "name": "高力 Kaori", "ticker": "8996", "country": "TW", "share": "Side-car 切入", "products": "Side-car HX", "note": "與 Bloom 合作 SOFC" }
+      ],
+      "upstream": [{ "id": "t-heatsink" }, { "id": "t-fan" }],
+      "downstream": [{ "id": "c-chiller" }],
+      "sources": [
+        { "label": "Top 5 liquid cooling Vertiv/Schneider/Rittal/Stulz/Boyd (Sustainability)", "url": "https://sustainabilitymag.com/top10/top-10-liquid-cooling-companies" }
+      ]
+    },
+    {
+      "id": "c-manifold",
+      "row": "cooling-sys",
+      "col": 3, "span": 1,
+      "kind": "stage",
+      "name": "Manifold / Hose",
+      "nameEn": "Manifold / Hose",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · NVIDIA Vera Rubin manifold + hose 隨 cold plate 同採購；健策 3653 + AVC 3017 + Cooler Master + Delta 四家同步進入（信心度 high · Digitimes 2026/03 公開）",
+      "desc": "Manifold 是 cold plate ↔ CDU 之間的多通路分流器；hose 為連接管。Rubin platform centralized procurement 把 cold plate + manifold + hose 一起綁。",
+      "marketSize": "Rubin 4 供 同步",
+      "growth": "Centralized 採購",
+      "analysis": "NVIDIA Vera Rubin 把 cold plate + manifold + hose 採購集中至四家：AVC（奇鋐）+ Cooler Master + Jentech（健策）+ Delta；hose 與 fittings 由 Stäubli + Parker + Smart Hose 補位。",
+      "companies": [
+        { "name": "Jentech 健策", "ticker": "3653", "country": "TW", "share": "Rubin manifold + MCL 整合", "products": "Manifold + MCL + cold plate", "note": "MCL 與 manifold 整合領先", "core_business": true, "growth_trajectory": "high" },
+        { "name": "AVC 奇鋐", "ticker": "3017", "country": "TW", "share": "Manifold + cold plate 整合", "products": "Manifold + cold plate + CDU", "note": "GB300 cold plate 40-50% 整合" },
+        { "name": "Cooler Master", "ticker": "—", "country": "TW", "share": "Manifold 雙占之一", "products": "Manifold + cold plate", "note": "未上市、NVIDIA lead supplier" },
+        { "name": "Delta Electronics", "ticker": "2308", "country": "TW", "share": "Manifold 第四", "products": "Manifold + cold plate", "note": "整合 power + thermal" }
+      ],
+      "upstream": [{ "id": "t-coldplate" }, { "id": "t-qd" }],
+      "downstream": [{ "id": "c-cdu" }],
+      "sources": [
+        { "label": "Vera Rubin 4 cold plate suppliers + manifold (Digitimes)", "url": "https://www.digitimes.com/news/a20260318PD231/nvidia-rubin-liquid-cooling-ai-server-launch.html" },
+        { "label": "GB300 cold plate suppliers (Hansen Fluid)", "url": "http://www.hansenfluid.com/dc/GB300-Nvidia.htm" }
+      ]
+    },
+    {
+      "id": "c-immersion",
+      "row": "cooling-sys",
+      "col": 4, "span": 1,
+      "kind": "stage",
+      "name": "Immersion 浸沒式冷卻",
+      "nameEn": "Immersion Cooling",
+      "competition": "highgrowth",
+      "single": "客戶獨家 · 2026 一年內 3 大併購 — Trane + LiquidStack (Feb)、Ecolab + CoolIT (March)、Eaton + Boyd Thermal $9.5B (Nov 2025)；hyperscaler 浸沒式爆量整合（信心度 high · Mordor + Fortune Business 多源）",
+      "desc": "Immersion cooling 把整台 server 浸入介電液（non-conductive）中，散熱效率比 cold plate 再好 30%+。Single-phase（油類）+ Two-phase（沸騰）兩派。",
+      "marketSize": "$5.72B 2026 → $13.3B 2031",
+      "growth": "+18.4% CAGR",
+      "analysis": "LiquidStack 被 Trane Technologies（TT）收購 Feb 2026 + Series C $75M Jan 2026；GRC 拿 $120M Abu Dhabi 8000-tank 合約；Submer + Fujitsu PRIMERGY pod 整合（Dec 2025）；Iceotope KUL AI 8-GPU 浸沒（Nov 2025）；DCX 8.15MW facility-scale CDU（Nov 2025）。",
+      "companies": [
+        { "name": "Trane Technologies (+LiquidStack)", "ticker": "TT", "country": "US", "share": "Two-phase 領先", "products": "DataTank + 80kW boiling chambers", "note": "$75M Series C + Trane 收購", "core_business": true, "growth_trajectory": "high" },
+        { "name": "Green Revolution Cooling (GRC)", "ticker": "—", "country": "US", "share": "Single-phase 領先", "products": "ICEraQ Series 10", "note": "$120M Abu Dhabi 8000-tank 合約" },
+        { "name": "Submer", "ticker": "—", "country": "EU", "share": "Single-phase + 模組", "products": "SmartPodX MicroDC", "note": "Spain HQ、與 Fujitsu PRIMERGY 整合 + Germany Auto AI" },
+        { "name": "Iceotope", "ticker": "—", "country": "UK", "share": "Chassis immersion", "products": "KUL AI 8-GPU + KUL2", "note": "封閉腔體浸沒、研究 / 邊緣 AI" }
+      ],
+      "upstream": [{ "id": "t-tim" }],
+      "downstream": [{ "id": "d-hyper" }],
+      "sources": [
+        { "label": "Trane acquires LiquidStack Feb 2026 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/data-center-liquid-cooling-market" },
+        { "label": "Immersion cooling market $5.72B 2026 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/immersion-cooling-market-in-data-centers" },
+        { "label": "GRC $120M Abu Dhabi 8000-tank (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/immersion-cooling-market-in-data-centers" }
+      ]
+    },
+    {
+      "id": "c-chiller",
+      "row": "cooling-sys",
+      "col": 5, "span": 1,
+      "kind": "stage",
+      "name": "Chiller / Cooling Tower",
+      "nameEn": "Chiller / Cooling Tower",
+      "competition": "oligopoly",
+      "desc": "一次水冷卻來源：chiller（冷水機）+ cooling tower（冷卻塔）+ dry cooler 三類。45°C warm-water 冷卻為 AI 主流（DCX、Submer 規格）。",
+      "marketSize": "45°C warm-water",
+      "growth": "Brownfield 改造",
+      "analysis": "Trane + Carrier + Daikin + Johnson Controls + EVAPCO 為 chiller / cooling tower 主流；45°C warm-water 冷卻效率提升 30%、PUE < 1.12；亞洲新建 AI 機房多採 free-cooling + chiller hybrid。",
+      "companies": [
+        { "name": "Trane Technologies", "ticker": "TT", "country": "US", "share": "Chiller #1", "products": "Chiller + cooling tower + LiquidStack", "note": "整合 immersion + traditional" },
+        { "name": "Carrier", "ticker": "CARR", "country": "US", "share": "Chiller + HVAC", "products": "Centrifugal + Screw chillers", "note": "資料中心 HVAC 領先" },
+        { "name": "Daikin", "ticker": "6367.T", "country": "JP", "share": "Chiller + HVAC 全球", "products": "Industrial chiller", "note": "亞洲 + 全球 datacenter" },
+        { "name": "Johnson Controls", "ticker": "JCI", "country": "US", "share": "Chiller + 建築自動", "products": "YORK chillers", "note": "Hyperscaler 簽長約" },
+        { "name": "EVAPCO", "ticker": "—", "country": "US", "share": "Cooling tower 領先", "products": "Closed-circuit cooler + tower", "note": "Hyperscaler 客製大型 tower" }
+      ],
+      "upstream": [{ "id": "c-cdu" }, { "id": "c-sidecar" }],
+      "downstream": [{ "id": "d-hyper" }],
+      "sources": [
+        { "label": "DCX 8.15MW 45°C warm-water CDU (DCEngineer)", "url": "https://thedatacenterengineer.com/news/dcx-announces-8-15-mw-facility-scale-cdu-for-45-c-warm-water-ai-data-center-cooling/" }
+      ]
+    },
+    {
+      "id": "d-nvda",
+      "row": "demand",
+      "col": 1, "span": 2,
+      "kind": "demand",
+      "name": "NVIDIA GB300 / Vera Rubin / Rubin Ultra",
+      "nameEn": "NVIDIA GB300 / Vera Rubin / Rubin Ultra",
+      "competition": "highgrowth",
+      "single": "鎖喉點 · NVIDIA Rubin 起 DLC mandatory（liquid cooling required, not optional）；Rubin Ultra Kyber 2027 全切 800V HVDC，rack 規格 600kW-1MW（信心度 high · NVIDIA blog + Tom's + 多源）",
+      "desc": "Hopper 40kW → Blackwell 120kW → Rubin Ultra Kyber 600kW-1MW per rack；DLC 自 GB300 起標準化；800V HVDC 自 Rubin Ultra 起 mandatory。",
+      "marketSize": "Rubin Ultra 1MW/rack",
+      "growth": "DLC 100% adopt",
+      "analysis": "GB300 NVL72：72 GPU + DLC + 12kW PSU、單櫃 PSU 價值 $60-70K；Vera Rubin NVL72：2026H2 啟動，centralized cold plate 採購；Rubin Ultra Kyber：2027 量產 600kW-1MW + 800V HVDC + 12kW PSU、單櫃 PSU 價值 $150K+ × cold plate $40-60K+。",
+      "companies": [
+        { "name": "NVIDIA", "ticker": "NVDA", "country": "US", "share": "AI GPU 領先", "products": "GB300 NVL72 + Vera Rubin NVL72 + Rubin Ultra Kyber", "note": "DLC + 800V 兩條規格雙重升級驅動" }
+      ],
+      "upstream": [{ "id": "f-rack" }, { "id": "c-cdu" }, { "id": "c-manifold" }],
+      "downstream": [],
+      "sources": [
+        { "label": "NVIDIA 800V HVDC ecosystem (NVIDIA blog)", "url": "https://developer.nvidia.com/blog/building-the-800-vdc-ecosystem-for-efficient-scalable-ai-factories/" },
+        { "label": "Rubin Ultra Kyber 600kW-1MW (Insightology)", "url": "https://www.insightologyresearch.com/p/800v-hvdc-powering-the-next-generation" }
+      ]
+    },
+    {
+      "id": "d-asic",
+      "row": "demand",
+      "col": 3, "span": 1,
+      "kind": "demand",
+      "name": "AMD MI400 + Hyperscaler ASIC",
+      "nameEn": "AMD MI400 + Hyperscaler ASIC",
+      "competition": "highgrowth",
+      "desc": "AMD Helios MI400 + Google TPU v8 + Meta MTIA v3 + Microsoft Maia 200 + AWS Trainium v3 各家 ASIC 也跟進液冷 + 800V 規格。",
+      "marketSize": "ASIC 跟進 DLC",
+      "growth": "Hyperscaler 內製",
+      "analysis": "AMD Helios MI400 服務器規格與 NVIDIA Rubin 平行對標；Google TPU v8 + Meta MTIA v3 + Microsoft Maia 200 + AWS Trainium v3 全切 DLC；Tesla Dojo 2 切自研液冷 + 自研電源。",
+      "companies": [
+        { "name": "AMD", "ticker": "AMD", "country": "US", "share": "MI400 + Helios", "products": "MI400 + Helios rack", "note": "與 NVIDIA Rubin 平行對標" },
+        { "name": "Google (Alphabet)", "ticker": "GOOGL", "country": "US", "share": "TPU 領先", "products": "TPU v8 + AI Hypercomputer", "note": "Iron Wood TPU 全切 DLC" },
+        { "name": "Microsoft", "ticker": "MSFT", "country": "US", "share": "Maia 200 + 自研 cooling", "products": "Maia 200 + Azure Boost", "note": "AWS 自研 NVDA 冷卻 also" }
+      ],
+      "upstream": [{ "id": "f-rack" }, { "id": "c-cdu" }],
+      "downstream": [],
+      "sources": [
+        { "label": "AWS develops NVIDIA cooling tech (DCD)", "url": "https://www.datacenterdynamics.com/en/news/amazon-web-services-develops-cooling-technology-for-next-generation-nvidia-gpus/" }
+      ]
+    },
+    {
+      "id": "d-hyper",
+      "row": "demand",
+      "col": 4, "span": 1,
+      "kind": "demand",
+      "name": "Hyperscaler 機房建置",
+      "nameEn": "Hyperscaler Data Centers",
+      "competition": "highgrowth",
+      "desc": "Google + Meta + MSFT + AWS + Oracle + Tesla 為 AI 機房 capex 主力；2026 capex 預估 $400B+。Sovereign AI（沙烏地、UAE、Stargate）為次大需求。",
+      "marketSize": "$400B+ capex 2026",
+      "growth": "Sovereign AI 上量",
+      "analysis": "Hyperscaler 自建電源 + 冷卻、長約鎖容量；Sovereign AI（沙烏地 HUMAIN、UAE G42、Stargate Project）為新增需求。Vertiv + Eaton + Schneider 為 hyperscaler 一站式整合首選。",
+      "companies": [
+        { "name": "Google (Alphabet)", "ticker": "GOOGL", "country": "US", "share": "$100B+ capex 2026", "products": "Iron Wood TPU + 自建電網", "note": "自建電網 + SOFC" },
+        { "name": "Meta", "ticker": "META", "country": "US", "share": "$80B+ capex 2026", "products": "Hyperion + 8GW Catawba", "note": "8GW Catawba + 自建電網" },
+        { "name": "Microsoft", "ticker": "MSFT", "country": "US", "share": "$80B+ capex 2026", "products": "Azure + Stargate", "note": "$80B+ FY26 capex" },
+        { "name": "Amazon AWS", "ticker": "AMZN", "country": "US", "share": "$100B+ capex 2026", "products": "Trainium v3 + 自研 cooling", "note": "AWS 自研 NVIDIA 冷卻方案" },
+        { "name": "Oracle / Stargate", "ticker": "ORCL", "country": "US", "share": "Stargate $500B 5yr", "products": "Abilene TX 1GW 開始", "note": "與 NVIDIA + OpenAI 三方合作" }
+      ],
+      "upstream": [{ "id": "f-pdu" }, { "id": "c-cdu" }, { "id": "c-immersion" }, { "id": "c-chiller" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Hyperscaler capex 2026 (Insightology)", "url": "https://www.insightologyresearch.com/p/800v-hvdc-powering-the-next-generation" }
+      ]
+    },
+    {
+      "id": "d-odm",
+      "row": "demand",
+      "col": 5, "span": 2,
+      "kind": "demand",
+      "name": "TW Server ODM 整合",
+      "nameEn": "TW Server ODMs",
+      "competition": "highgrowth",
+      "desc": "Foxconn + Quanta + Wistron + Inventec + Compal + Gigabyte 為 NVIDIA GB300 / Rubin server 主要 ODM，整合電源 + 散熱 + 主機板。",
+      "marketSize": "AI server 50-60K 2026",
+      "growth": "TW 全包 NVIDIA",
+      "analysis": "Foxconn 鴻海 2317（市佔 #1，Mexico + Houston ramp）+ Quanta 廣達 2382（最早切 NVIDIA AI）+ Wistron 緯創 3231（HGX 主供）+ Inventec 英業達 2356 + Compal 仁寶 2324 + Gigabyte 技嘉 2376 + Wiwynn 緯穎 6669 為 TW server 七強。",
+      "companies": [
+        { "name": "Foxconn 鴻海", "ticker": "2317", "country": "TW", "share": "AI server ODM #1", "products": "GB300 NVL72 + Vera Rubin", "note": "Mexico + Houston AI fab" },
+        { "name": "Quanta 廣達", "ticker": "2382", "country": "TW", "share": "NVIDIA AI 早期", "products": "HGX + GB300 server", "note": "與 NVIDIA + Microsoft 主供" },
+        { "name": "Wistron 緯創", "ticker": "3231", "country": "TW", "share": "HGX 主供", "products": "HGX + GB300", "note": "Wiwynn 母公司" },
+        { "name": "Wiwynn 緯穎", "ticker": "6669", "country": "TW", "share": "Hyperscaler ODM", "products": "Meta / MSFT 自研 ODM", "note": "Hyperscaler 自研 ASIC 主流" },
+        { "name": "Inventec 英業達", "ticker": "2356", "country": "TW", "share": "AI server 補位", "products": "AI server + 數據中心", "note": "NVIDIA + AMD 雙線" },
+        { "name": "Gigabyte 技嘉", "ticker": "2376", "country": "TW", "share": "AI server + 主機板", "products": "GIGAPOD 整套", "note": "AI server 雙路品牌主供" }
+      ],
+      "upstream": [{ "id": "f-rack" }, { "id": "c-cdu" }],
+      "downstream": [],
+      "sources": [
+        { "label": "TW AI infrastructure boom (Substack)", "url": "https://richard367.substack.com/p/taiwans-ai-power-and-cooling-infrastructure" },
+        { "label": "TW thermal supply chain unsung veterans (TVBS)", "url": "https://news.tvbs.com.tw/english/3183921" }
+      ]
+    }
+  ],
+  "edges": [
+    ["ic-vrm", "f-psu"],
+    ["ic-gan", "f-psu"],
+    ["ic-gan", "f-rack"],
+    ["ic-sic", "f-rack"],
+    ["ic-sic", "f-grid"],
+    ["ic-passive", "f-psu"],
+    ["ic-passive", "f-rack"],
+    ["f-psu", "f-rack"],
+    ["f-bbu", "f-rack"],
+    ["f-rack", "d-nvda"],
+    ["f-rack", "d-asic"],
+    ["f-rack", "d-hyper"],
+    ["f-rack", "d-odm"],
+    ["f-grid", "f-pdu"],
+    ["f-pdu", "d-hyper"],
+    ["t-tim", "t-coldplate"],
+    ["t-tim", "c-immersion"],
+    ["t-coldplate", "c-cdu"],
+    ["t-coldplate", "c-manifold"],
+    ["t-vc", "t-heatsink"],
+    ["t-vc", "t-coldplate"],
+    ["t-heatsink", "c-sidecar"],
+    ["t-fan", "c-sidecar"],
+    ["t-qd", "c-cdu"],
+    ["t-qd", "c-manifold"],
+    ["c-cdu", "c-chiller"],
+    ["c-cdu", "d-nvda"],
+    ["c-cdu", "d-hyper"],
+    ["c-cdu", "d-asic"],
+    ["c-cdu", "d-odm"],
+    ["c-sidecar", "c-chiller"],
+    ["c-manifold", "c-cdu"],
+    ["c-immersion", "d-hyper"],
+    ["c-chiller", "d-hyper"]
+  ]
+}
