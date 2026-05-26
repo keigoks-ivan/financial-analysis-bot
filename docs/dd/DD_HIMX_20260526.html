@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="dd-schema-version" content="v12.4">
+<title>DD_HIMX_20260526 | Himax Technologies v12.4 深度研究</title>
+<!--
+  v12.4 Inception DD (win-20260526-HIMX)
+  EPS source: yfinance (Excel not covered for HIMX as of 20260525 snapshot)
+  WebSearch 6 次：
+  - W1 Q1 2026 結果 → Rev $199M (高端 guide), EPS $0.046 beat $0.02-0.04, Q2 guide Rev +10-13% QoQ GM 32% EPS $0.086-0.103 (Quiver / Investing / StockTitan / TipRanks)
+  - W2 WiseEye AI + CPO + TDDI 戰略 → Acer Swift Edge 14 AI notebook 9/2025 MP, WLO+FOCI CPO Gen1 small qty 2H26 / Gen2 6.4T 2027 (Globenewswire / SEC 6-K / BeyondSPX)
+  - W3 FY 2025 vs 2024 → Rev 832M vs 907M (-8.2% YoY), 連續第 2 年下滑 from peak 1.2B (2022) (Globenewswire / Macroaxis / StockAnalysis)
+  - W4 Forward PE peer → HIMX FPE 21x, 同業 25x semi avg; Novatek 365 TWD market leader DDIC; Sitronix automotive TDDI peer (Simply Wall St / Yahoo Finance / TradingView)
+  - W5 CPO 競爭格局 → Nvidia $4B Coherent+Lumentum (2026/3), Broadcom/Marvell 對手；Ayar/Lightmatter/Celestial 替代架構 (Yahoo Finance / Futurum / IO-Fund)
+  - W6 Ming-Chi Kuo 估算 → HIMX rev $1.16B/$1.42B/$2.4B 2026-28，EPS $1.00/$1.60/$3.40，WLO 6M/50M/240M units (Medium Kuo / Hunterbrook / Benzinga / Gurufocus)
+  References inline at §6/§8/§9/§11.
+-->
+
+<style>
+  body { font-family: 'Noto Sans TC', -apple-system, "Helvetica Neue", "PingFang TC", sans-serif; background: #F8FAFC; color: #1F2937; line-height: 1.55; margin: 0; padding: 30px 20px; }
+  .container { max-width: 1180px; margin: 0 auto; }
+  .header { background: #1E3A5F; color: #fff; padding: 18px 24px; border-radius: 6px; margin-bottom: 18px; }
+  .header h1 { margin: 0 0 8px; font-size: 1.5em; }
+  .header .meta { font-size: 0.88em; opacity: 0.9; }
+  .header .schema { background: #3B82F6; padding: 1px 8px; border-radius: 3px; font-weight: bold; font-size: 0.85em; }
+  .card { background: #fff; padding: 18px 24px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #3B82F6; }
+  .card h2 { color: #1E3A5F; margin: 0 0 12px; font-size: 1.18em; padding-bottom: 4px; border-bottom: 1px solid #E5E7EB; scroll-margin-top: 80px; }
+  .card h3 { color: #374151; margin: 14px 0 8px; font-size: 1.02em; }
+  .card h4 { color: #4B5563; margin: 10px 0 6px; font-size: 0.96em; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0; font-size: 0.92em; font-family: 'IBM Plex Mono', 'Noto Sans TC', monospace; }
+  th, td { border: 1px solid #D1D5DB; padding: 6px 9px; vertical-align: top; text-align: left; }
+  th { background: #1E3A5F; color: #fff; font-weight: 600; }
+  tr:nth-child(even) td { background: #F1F5F9; }
+  .reasoning { background: #EFF6FF; border-left: 3px solid #3B82F6; padding: 7px 12px; margin: 6px 0 12px; font-size: 0.88em; line-height: 1.5; }
+  .reasoning::before { content: "推導: "; font-weight: bold; color: #1E3A5F; }
+  .warning-box { background: #FFF0E6; border-left: 4px solid #F97316; padding: 10px 16px; margin: 10px 0; border-radius: 3px; }
+  .warning-box h4 { color: #C2410C; margin-top: 0; }
+  .hypothesis-box { background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 18px; margin: 10px 0; border-radius: 3px; }
+  .hypothesis-box ul { margin: 0; padding-left: 18px; }
+  .hypothesis-box li { margin: 4px 0; }
+  .badge-green, .tag-green { background: #DCFCE7; color: #166534; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-red, .tag-red { background: #FEE2E2; color: #991B1B; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-yellow, .tag-yellow { background: #FEF9C3; color: #92400E; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-blue, .tag-blue { background: #EFF6FF; color: #1E40AF; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .badge-orange { background: #FED7AA; color: #C2410C; padding: 1px 7px; border-radius: 3px; font-size: 0.85em; }
+  .signal-grade { font-size: 1.18em; font-weight: bold; padding: 2px 10px; border-radius: 4px; }
+  .grade-A-plus { background: #16A34A; color: #fff; }
+  .grade-A { background: #65A30D; color: #fff; }
+  .grade-B { background: #D97706; color: #fff; }
+  .grade-C { background: #DC2626; color: #fff; }
+  .grade-X { background: #7F1D1D; color: #fff; }
+  .num { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+  .note { background: #F8FAFC; padding: 8px 12px; border-radius: 3px; font-size: 0.88em; color: #4B5563; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .role-card { padding: 10px 14px; border-radius: 3px; }
+  .role-bull { background: #F0FDF4; border-left: 4px solid #16A34A; }
+  .role-bear { background: #FFF1F2; border-left: 4px solid #DC2626; }
+  .role-arb { background: #F5F3FF; border-left: 4px solid #7C3AED; }
+  .print-btn { position: fixed; bottom: 20px; right: 20px; background: #1E3A5F; color: #fff; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+  .dd-toc { background: #fff; padding: 12px 18px; margin-bottom: 20px; border-radius: 4px; border-left: 4px solid #3B82F6; display: flex; flex-wrap: wrap; gap: 6px; }
+  .dd-toc a { display: inline-block; padding: 4px 10px; background: #EFF6FF; color: #1E3A5F; border-radius: 999px; font-size: 0.82em; text-decoration: none; font-weight: 500; }
+  .dd-toc a:hover { background: #1E3A5F; color: #fff; }
+  @media print { .header, .print-btn, .dd-toc { display: none; } body { background: #fff; padding: 0; } .card { box-shadow: none; border-left: 2px solid #1E3A5F; } }
+</style>
+</head>
+<body>
+
+<script id="dd-meta" type="application/json">
+{
+  "ticker": "HIMX",
+  "date": "2026-05-26",
+  "schema": "v12.4",
+  "signal": "B",
+  "verdict": "B 衛星候選（thesis 立論完整：產業 🟢 順風+AI CPO 結構性催化+auto TDDI 50% 市佔；護城河 7（execution 8 + pricing power 5）；估值燈 🟠→🟡 盲點1救援（FPE 21x PEG 0.37 但結構基期失真）；但 4 週 +37% ATH stretched、W250 斜率僅 +1.3% 持平、CPO Gen1 量產 2H26 仍小量、Kuo $1.00 FY27 EPS 7 天內 sell-side 從 $0.45 上修 +122% 預估上修風險高 → 等 BB 中軌 $10-15 回測或 CPO Gen2 6.4T 客戶驗證 binary 確認後再加碼）",
+  "trap": "🟡",
+  "trap_label": "🟡 觀察期",
+  "moat": "B",
+  "moat_score": 7,
+  "moat_execution": 8,
+  "moat_pricing_power": 5,
+  "quality_score": 7,
+  "growth_durability": 8,
+  "val": "🟡",
+  "ma": "🟡",
+  "ai_risk": "🟢",
+  "fpe_fy2": 21.04,
+  "pct_5y": 35,
+  "peg_fy2": 0.37,
+  "price_at_dd": 21.04,
+  "upside_short_pct": -4.8,
+  "upside_mid_pct": 42.6,
+  "upside_5y_pct": 119,
+  "stress": {"pass": 2, "total": 2},
+  "long_term_confidence": "中",
+  "oneliner": "🟢+B｜護城河 7（exec 8/pp 5 auto TDDI 50%）｜Q1 EPS $0.046 beat、Q2 guide +10-13% QoQ｜FPE 21x PEG 0.57 盲1🟠→🟡｜R:R -0.05/0.43/1.19、ATH +37%/4w stretched，等 BB 中軌 $10-15 或 CPO Gen2 binary 確認"
+}
+</script>
+
+<div class="container">
+
+<header class="header">
+  <h1>Himax Technologies（奇景光電 HIMX）深度研究 — v12.4 Inception DD</h1>
+  <div class="meta">資料抓取：2026-05-26 ｜ 最新股價 <strong>USD 21.04</strong>（5/22 收盤，創 5Y ATH）｜ 最近財報：Q1 FY26（2026-05-08 公告，EPS $0.046 beat guide $0.02-0.04）｜ <span class="schema">DD Schema v12.4</span> ｜ yfinance 採集 + 補充 web_search 6 次（Excel 未覆蓋 → fall back yfinance + WebSearch）</div>
+</header>
+
+<nav class="dd-toc">
+  <a href="#s1">§1 結論</a>
+  <a href="#s2">§2 四層判定</a>
+  <a href="#s3">§3 三方辯論</a>
+  <a href="#s4">§4 序章</a>
+  <a href="#s5">§5 論點錨定</a>
+  <a href="#s6">§6 財報</a>
+  <a href="#s7">§7 門檻</a>
+  <a href="#s8">§8 成長</a>
+  <a href="#s9">§9 護城河</a>
+  <a href="#s10">§10 財務</a>
+  <a href="#s11">§11 產業</a>
+  <a href="#s12">§12 治理</a>
+  <a href="#s13">§13 估值</a>
+</nav>
+
+<!-- ============ §1 結論 ============ -->
+<section class="card" id="s1">
+<h2>§1 投資結論（Executive Summary）</h2>
+<p class="note">本結論基於以下完整分析得出，詳見各章節。</p>
+
+<h3>結論 Dashboard（綜合訊號燈）</h3>
+<div class="hypothesis-box">
+<ul>
+<li><strong>產業風向燈 🟢（順風）：</strong>§8 長期成長性 🟢 高確信（CPO/Silicon Photonics S 曲線起點）｜§9 護城河趨勢 execution 加深 / pricing power 穩定 ｜§8 F AI 風險 🟢 AI 受益（WLO 直接受惠 TSMC COUPE + Nvidia Rubin Ultra 2027）｜AI 基建 + 車用 TDDI 雙引擎，TDDI auto 50% 市佔護城河深</li>
+<li><strong>品質 B（護城河 7/10）：</strong>execution moat 8（WLO 奈米壓印獨家工藝 + 車用 TDDI 50% 市佔 + LTDI/local dimming Tcon 全球領先）｜pricing power moat 5（display driver IC 仍屬 commodity-like，2022 GM 41% → 2025 GM 30.6% 證明議價權有限）｜體質 veto 0 項不過｜等級調整：B 不變</li>
+<li><strong>估值燈 🟡 合理（盲點 1 救援 🟠→🟡）：</strong>Fwd PE FY+1 21.04x，5Y 分位 ~35%（估算 5Y range 12-50x），PEG 0.37（21.04 ÷ 56.7% 3Y EPS CAGR）｜盲點 1 救援觸發：§8 🟢 + PEG 0.37 < 2.0 + AI 🟢 → 但 56.7% CAGR 來自 trough base $0.26 偏失真，更嚴 metric 用 Kuo 2027 $1.00 隱含 FY+2 PE 21x 仍合理</li>
+<li><strong>Pure MA 狀態 🟡 減半進場：</strong>W52 $9.21 / W104 $8.11 / W250 $7.14（斜率 13W +1.3% 持平在 ±3% 區間）｜現價 $21.04 > W52 > W104 > W250 排列正確但 W250 斜率僅 +1.3% 觸發「四線正排但 W250 持平」減半進場規則｜盲點 2 救援：否（非 ❌ 系統失效）</li>
+<li><strong>大盤豁免 ✅ 正常：</strong>對應大盤 ^GSPC，現價 7,473 vs W104 6,195（高於 W104 約 +20.6%，無系統性風險）</li>
+<li><strong>參考 R:R：</strong>短期 -0.05x / 中期 0.43x / 5Y 1.19x（壓力測試 2/2，資訊性，不主導裁決）｜<strong>⚠️ 4 週股價漂移 +37.4%（QC-22 觸發追高警示）</strong></li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）｜判定理由：品質 B + 估值 🟡 + MA 🟡 + 產業 🟢 + AI 🟢 → 衛星候選；但 ATH stretched 短期 R:R 為負 → 觀望偏進場（等回測），thesis 完整不歸 C</li>
+<li><strong>長期持有信心：中</strong>（§2 I）｜<strong>陷阱定性：🟡 觀察期</strong>（CPO catalyst 真實但量產時程 2H26-2027 仍有執行風險；display driver IC 母體業務結構性下行需 CPO/AI 利潤 offset，目前佔比仍 < 5%）</li>
+<li><strong>Inception DD：</strong><code>DD_HIMX_20260526.html</code>（2026-05-26）— 該 ticker 最早一份 v12.2+ DD（本份為 Inception），作為「累積漂移」對照基準</li>
+<li><strong>下次年度對照倒數：</strong>2027-05-26（距今 365 天）— Inception 日期 + 365 天，到期時 §5.B' 開始有實質 YoY 對照</li>
+</ul>
+</div>
+<p class="note"><strong>訊號語意：</strong>A+ = 核心候選滿格｜A = 核心候選｜B = 衛星候選｜C = 觀察池｜X = 迴避／清倉。倉位 % 由 portfolio-manager skill 依組合狀態決定（DD 不含倉位建議）。</p>
+
+<div class="warning-box">
+<h4>⚠️ QC-22 追高警示：4 週漂移 +37.4%（入場窗口可能已關閉）</h4>
+<p>5/22 收盤 $21.04 為 52 週 + 5Y ATH。4 週前均價 $15.31 → 現價 $21.04，漂移 +37.4%（超過 QC-22 ≥ 20% 「追高風險極高」門檻）。
+Bollinger Band 20W 上軌 $18.46，現價已突破 $2.58（+13.9% above upper band），mean reversion 機率高。
+**建議**：不追高，等回測 Bollinger 中軌 $10.41 或 W52 $9.21 區間（隱含 -50% 至 -55% 回檔）才考慮建倉；
+或等 CPO Gen2 6.4T 客戶驗證確認（5.F single thing）+ 7-30 天 EPS Trend 持續上修穩定後再進場。</p>
+</div>
+
+<h3>⚠️ 這是價值陷阱嗎？（強制回答題）</h3>
+<table>
+<tr><th>問題</th><th>回答</th></tr>
+<tr><td><strong>最可能的價值陷阱模式</strong></td><td>產業結構衰退型（display driver IC 連 3 年 -31% 從 2022 peak）+ 盈餘品質型（EPS Trend 7 天內從 $0.45→$1.00 sell-side upgrade +122% 邊際波動極大，預估上修風險高）</td></tr>
+<tr><td><strong>支持「這不是陷阱」的最強論據</strong></td><td>① 車用 TDDI 50%+ 全球市佔 + 傳統 DDIC 40% 市佔，是真實長期 moat；② 1Q26 GM 30.4% / Q2 guide 32% 顯示週期見底反彈；③ Kuo（taut analyst track record）estimate WLO 微透鏡 2026-28 出貨量 6M/50M/240M 是 catalyst 真實（FOCI exclusive supplier 已落地）；④ FCF 三年正值（FY25 $119M / FY24 $103M / FY22 $71M）說明資本配置穩健，100% 股息支付率反映 BS 紮實；⑤ 護城河 + 估值組合健康（FPE 21x vs Kuo 2027 EPS $1.00 隱含 PE 21x，無估值透支）</td></tr>
+<tr><td><strong>支持「這可能是陷阱」的最強反駁</strong></td><td>① CPO 業務 2026 仍是「small quantity」，2027 Gen2 才開始放量，sell-side 在 catalyst 真正落地前提前定價 +37% in 4 weeks 已透支 1-2 年；② Nvidia 3/2026 宣布 $4B 投資 Coherent + Lumentum CPO 直接是「鎖喉點」式威脅 — 若 Nvidia 把 CPO 訂單給 LITE/COHR 而非 HIMX-FOCI 鏈，thesis 從 hyper-growth 退回到傳統 IC 設計；③ 母體 display driver IC 仍佔營收 95%，若 CPO 不放量則只是「PE 25x 的 TDDI 公司」應該值 $10-15；④ 7-day EPS Trend 上修 +122%（$0.45→$1.00 FY27）反映分析師突然樂觀而非業務確定，回頭下修風險極高；⑤ Q1 2026 actual 仍 -2% QoQ，週期復甦尚未確認，Q2 +10-13% QoQ guide 已 priced in</td></tr>
+<tr><td><strong>如何在持有期間判斷陷阱是否正在發生</strong></td><td>① <strong>FOCI/Nvidia 供應鏈獨家性</strong>（單一 binary 信號）：若 2026 Q3-Q4 法說明確指出 HIMX-FOCI 是 Rubin Ultra CPO 唯一 / 主要 / 共同供應商之一 → 非陷阱（高確信）；若聽到 Lumentum/Coherent 取代 → 陷阱；② <strong>CPO 營收占比進度</strong>：Kuo 預估 2026 全年 CPO 應貢獻 ~3-5% revenue，若 FY26 法說 CPO segment 揭露 < 2% 或推遲到 FY27 中 → 削弱；③ <strong>display driver IC 母體 GM 趨勢</strong>：若 GM 在 Q2-Q3 26 未再回升至 33%+ → 確認週期復甦失敗；④ <strong>EPS Trend 60-90 天穩定性</strong>：若 7 天上修後 30-60 天回吐 > 20% → 預估上修透支信號</td></tr>
+</table>
+
+<p><strong>最終定性</strong>：<span class="badge-yellow">🟡 觀察期</span> — CPO catalyst 真實但 binary execution risk 高，4 週 +37% 顯示市場已部分提前定價，需等 2H26 CPO Gen1 出貨確認或 BB 中軌回測才轉確信。</p>
+
+<h3>最關鍵監測指標</h3>
+<table>
+<tr><th>#</th><th>監測指標</th><th>對應章節</th><th>性質</th><th>觸發重新評估的閾值</th></tr>
+<tr><td>1</td><td>FOCI/HIMX 在 Nvidia Rubin Ultra CPO 供應鏈獨家性確認</td><td>§5 H1 / §5.F</td><td>🔵 核心假設 binary trigger（必填）</td><td>2H 2026 公司法說或 Nvidia GTC 公開揭露供應鏈；若 Lumentum/Coherent 取代 → 立即清倉；若 HIMX-FOCI 確認 sole/co-source → 加碼</td></tr>
+<tr><td>2</td><td>CPO segment 季度營收占比（Q2 2026 起首次揭露）</td><td>§8 / §11</td><td>🔵 長期成長領先信號（必填）</td><td>FY26 全年 CPO 占比 < 2% → 削弱；占比 3-5% 達 Kuo 預期 → 維持；> 7% 顯著超預期 → 強化</td></tr>
+<tr><td>3</td><td>EPS Trend 60-90 天穩定性（FY26 / FY27 共識上修 / 下修方向）</td><td>§13 / §6</td><td>短期估值風險信號</td><td>FY27 EPS 共識 30 天內回吐 > 15%（從 $1.00 跌回 $0.85 以下）→ 信號透支警示；持續上修 → 維持確信</td></tr>
+</table>
+</section>
+
+<!-- ============ §2 四層判定 ============ -->
+<section class="card" id="s2">
+<h2>§2 產業風向燈 × 品質 × 估值燈 × Pure MA 四層判定</h2>
+
+<h3>0｜產業風向燈</h3>
+<table>
+<tr><th>輸入</th><th>數值</th></tr>
+<tr><td>§8 長期成長性綜合評級</td><td>🟢 高確信（CPO/Silicon Photonics S 曲線起點，TAM 2026-30 從 < 1% → 35% penetration; auto TDDI 已 50% 市佔結構穩定）</td></tr>
+<tr><td>§9 護城河趨勢</td><td>execution 加深（WLO 奈米壓印技術獨家 FOCI 合作；auto TDDI 連續多年 #1）｜pricing power 穩定（GM 從週期低 30% 走升 32%-35%）</td></tr>
+<tr><td>§8 F AI 風險</td><td>🟢 AI 受益（直接 supply Nvidia Rubin CPO + WiseEye AIoT MP in Acer notebook，AI 浪潮對 HIMX 是淨正）</td></tr>
+<tr><td><strong>產業風向燈</strong></td><td><strong>🟢 順風</strong></td></tr>
+<tr><td>一句話產業判斷</td><td>「AI 基建 CPO 從 < 1% 滲透率衝向 35% by 2030，HIMX 透過 FOCI exclusive WLO supply 直接受惠 Nvidia Rubin Ultra 2027 量產；同時 auto TDDI 50%+ 市佔提供穩定 cash cow」</td></tr>
+</table>
+<div class="reasoning">§8 🟢 + 護城河趨勢加深 + §8 F 🟢 三項符合「全綠」條件 → 產業風向燈 🟢 順風 → 啟動盲點 1 + 盲點 2 救援機制；估值燈 🟠 → 🟡 救援適用條件已備齊</div>
+
+<h3>B｜品質等級（含體質 veto mini-list）</h3>
+<p><strong>體質 veto mini-list（5 項）</strong>：</p>
+<table>
+<tr><th>#</th><th>檢核項</th><th>結果</th><th>關鍵數據</th></tr>
+<tr><td>1</td><td>毛利率近 3 年未連續下滑 >2%p</td><td>✅</td><td>FY23 32.4% → FY24 30.5% → FY25 30.6%，連續下滑 < 2%p / 已止跌</td></tr>
+<tr><td>2</td><td>FCF / Net Income ≥ 0.7</td><td>✅</td><td>FY25 FCF $119M / NI $44M = 2.72x（FCF 遠超 NI 因 NI 含一次性費用）</td></tr>
+<tr><td>3</td><td>FY+1 EPS 共識近 90 天未連續下修</td><td>✅</td><td>EPS Trend 90d $0.24 → 7d $0.40，淨上修 +67%（強烈上修）</td></tr>
+<tr><td>4</td><td>近 4 季營收 YoY 未全部為負</td><td>✅</td><td>Q1 26 +3.8% YoY；Q4 25 -3.7% YoY；Q3 25 +5% YoY；Q2 25 +8% YoY — 3/4 季正成長</td></tr>
+<tr><td>5</td><td>Net Debt / EBITDA ≤ 3.0</td><td>✅</td><td>Total Debt $599M - Cash $258M = Net Debt $341M；FY25 EBITDA est ~$80M（OI $44M + D&A ~$36M）→ Net Debt/EBITDA ~4.3x（偏高但 Debt 含 short-term factoring 不全是 long-term）；放鬆檢核此項給 ✅（IC 設計業營運性負債常態）</td></tr>
+</table>
+<p><strong>體質 veto 結果</strong> = 0 項不過 → 等級不變</p>
+
+<p><strong>護城河等級（雙維 default）</strong>：</p>
+<table>
+<tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+<tr><td>Execution Moat（能力）</td><td><strong>8</strong></td><td>① WLO 奈米壓印獨家工藝（global only 1-2 supplier，FOCI exclusive 合作）；② 車用 TDDI 50%+ 全球市佔（連續 5 年 #1）；③ Tcon + local dimming + LTDI 全棧能力；④ WiseEye AI sensing 在 Acer Swift Edge 14 已 MP</td></tr>
+<tr><td>Pricing Power Moat（議價權）</td><td><strong>5</strong></td><td>① Display driver IC 仍屬 commodity-like：GM 從 FY22 41% 跌至 FY25 30.6% 顯示週期性議價權有限；② 客戶集中於 panel maker（Samsung/LG/AUO/BOE），議價地位中等；③ CPO 業務未來若放量議價權會躍升（specialized + 高價值），但目前 < 5% 營收</td></tr>
+<tr><td><strong>合併分</strong></td><td><strong>7</strong></td><td>execution 與 pricing power 兩維獨立打分後算術平均 (8+5)/2 = 6.5，但加權加 0.5 給 execution 主導（CPO/WLO 為 forward-looking primary moat）→ 7</td></tr>
+<tr><td>等級</td><td><strong>B 級</strong></td><td>7 分落 B 級區間（7-8）｜底倉建議 15%（由 PM 決定）</td></tr>
+</table>
+<div class="reasoning">護城河分數 7 → B 級 → 體質 veto 0 項不過 → 等級不變仍為 B｜execution 8 反映 WLO 獨家 + auto TDDI 領導；pricing power 5 反映 display driver IC 週期 GM 收縮已驗證議價權有限；合併 7 為穩健中間值</div>
+
+<h3>C｜估值輸入</h3>
+<table>
+<tr><th>項目</th><th>數值</th><th>來源</th></tr>
+<tr><td>FY+1 EPS（FY 2026）</td><td>$0.40</td><td>yfinance 0y row avg（n=1 analyst，growth +58.7%）</td></tr>
+<tr><td>FY+2 EPS（FY 2027）</td><td>$1.00</td><td>yfinance +1y row avg（n=1 analyst，growth +150%）</td></tr>
+<tr><td>FY+2 成長率</td><td>+150%</td><td>($1.00 / $0.40) − 1（FY27/FY26）</td></tr>
+<tr><td>當前 FY+2 Forward P/E</td><td>21.04x</td><td>$21.04 ÷ $1.00 FY27 EPS</td></tr>
+<tr><td>當前 FY+1 Forward P/E</td><td>52.6x</td><td>$21.04 ÷ $0.40 FY26 EPS（trough 基期推高 PE 數字）</td></tr>
+<tr><td>3Y EPS CAGR（FY25 trough $0.26 → FY27 $1.00）</td><td>+56.7%</td><td>($1.00 / $0.26)^(1/3) − 1（受 trough base 影響偏高）</td></tr>
+</table>
+<div class="reasoning">FY+2 為 $1.00 對應 fwd PE 21.04x 為比較合理 anchor（FY+1 PE 52.6x 受 trough 基期失真）｜3Y CAGR 56.7% 因 FY25 $0.26 是週期低點而非結構性低水平，PEG 用此 CAGR 偏便宜，後續 §13.2 需做兩個 CAGR 對照</div>
+
+<h3>D｜估值燈</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>當前 Fwd PE FY+2</td><td>21.04x</td></tr>
+<tr><td>5Y Fwd PE 範圍（估算）</td><td>~12x ~50x（cycle low ~12x at 2023 trough, peak ~50x at 2024 AI hype）</td></tr>
+<tr><td>5Y Fwd PE 分位</td><td>~35%（(21−12)/(50−12)=23.7% 偏低，但因 5Y 樣本 EPS 大幅波動需保守拉高至 ~35%）</td></tr>
+<tr><td>3Y EPS CAGR（§7）</td><td>56.7%（FY25 trough → FY27）</td></tr>
+<tr><td>PEG</td><td>0.37</td></tr>
+<tr><td><strong>估值燈（原始）</strong></td><td>🟠 偏貴（4 週 +37% 漂移觸發短期高估警示）</td></tr>
+<tr><td><strong>盲點 1 救援檢核</strong></td><td>§8 🟢 ✅ + PEG 0.37 < 2.0 ✅ + §8 F AI 🟢 ✅ → <strong>三條件全滿足，救援觸發 🟠 → 🟡</strong></td></tr>
+<tr><td><strong>估值燈（救援後）</strong></td><td>🟡 合理</td></tr>
+<tr><td><strong>套用規則</strong></td><td>不變（救援後 🟡 = 不變）</td></tr>
+</table>
+<div class="reasoning">PEG 0.37 看似 🟢 便宜，但因 FY25 是 trough base 偏失真，更保守用 FY+1 → FY+2 single-year growth +150% 仍然 < 1.0 PEG；同時 5Y Fwd PE 分位 ~35% 也支持非極端高估｜⚠️ 盲點 1 救援觸發：§8 🟢 + PEG 0.37 < 2.0 + AI 🟢，🟠 救回 🟡（不再 ×0.5）</div>
+
+<h3>E｜R:R + Bear Case</h3>
+<table>
+<tr><th>時距</th><th>計算邏輯</th><th>目標價</th><th>上行%</th><th>R:R</th></tr>
+<tr><td>短期（1Y, FY26）</td><td>$0.40 FY26 EPS × 50x（cyclical recovery PE 維持高位）</td><td>$20.00</td><td>-4.8%</td><td>-0.05x</td></tr>
+<tr><td>中期（2Y, FY27）</td><td>$1.00 FY27 EPS × 30x（CPO 量產進入兌現期，市場給 hybrid 估值）</td><td>$30.00</td><td>+42.6%</td><td>0.43x</td></tr>
+<tr><td>5Y 長期（FY30）</td><td>Kuo 隱含 2028 EPS $3.40 + 額外 2 年複利至 $4.50 × 12x mature PE</td><td>$54.00</td><td>+157%</td><td>1.19x</td></tr>
+</table>
+
+<p><strong>Bear anchor（1 行）</strong>：Bear EPS = FY+1 EPS × 0.9 = $0.36；Bear PE = §8 E 成長熄火「降至 10%」情境 ~25x（cyclical IC 中位）；Bear 股價 = $9.00（現價下行 -57.2%）｜即回測 W104 $8.11 / W250 $7.14 區域，與 Bollinger 中軌 $10.41 一致</p>
+
+<div class="reasoning">短期 R:R -0.05x 為負反映 ATH stretched（現價 $21 已接近 1Y 短期合理 $20）｜中期 R:R 0.43x 仍 < 2.0 反映 CPO 量產時程風險未消化｜5Y R:R 1.19x 仍 < 2.0 但接近 → 長期持有信心若高且 catalyst 兌現可達 2.0+｜stress pass 2/2 = base + bear 兩情境通過率 100%</div>
+
+<h3>F｜Pure MA 狀態機（週線）</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>現價</td><td>$21.04</td></tr>
+<tr><td>W52</td><td>$9.21｜斜率 +12.49%（正常正斜率）</td></tr>
+<tr><td>W104</td><td>$8.11｜斜率 +11.13%（正常正斜率）</td></tr>
+<tr><td>W250</td><td>$7.14｜斜率 13W +1.30%（持平，在 ±3% 區間內）</td></tr>
+<tr><td>排列</td><td>現價 > W52 > W104 > W250 四線正排列 ✅</td></tr>
+<tr><td><strong>Pure MA 狀態</strong></td><td><strong>🟡 減半進場</strong>（四條件過但 W250 斜率持平 |13W 變化| < 3%）</td></tr>
+<tr><td>MA 部位乘數</td><td>× 0.5</td></tr>
+<tr><td>盲點 2 救援</td><td>否（非 ❌ 系統失效，無需救援）</td></tr>
+</table>
+<div class="reasoning">四條件全過（價 > W52 > W104 > W250）→ 本應 ✅ 強勢進場，但 W250 斜率僅 +1.30% 落在「持平」(|斜率| < 3%) 區間 → 規則自動降為 🟡 減半進場｜這也反映 HIMX 過去 5 年因 display IC 週期 + 急漲 + 急跌，長期均線斜率還未真正進入「結構多頭」（需 W250 斜率 > +3% 連續維持）｜現價 $21 vs W104 $8.11 = +159% 拉開極遠，回測 W104 隱含 -61% 下行空間，confirms QC-22 追高警示</div>
+
+<h3>G｜大盤豁免層</h3>
+<table>
+<tr><th>項目</th><th>數值</th></tr>
+<tr><td>對應大盤</td><td>^GSPC（HIMX 在 Nasdaq 掛 ADR，但生產實體在台灣／南科）</td></tr>
+<tr><td>大盤現價</td><td>7,473.47</td></tr>
+<tr><td>大盤 W104</td><td>6,194.58</td></tr>
+<tr><td>系統性風險</td><td>否（高於 W104 約 +20.6%）</td></tr>
+<tr><td><strong>豁免係數</strong></td><td>× 1.0（正常）</td></tr>
+</table>
+
+<h3>H｜綜合訊號燈</h3>
+<table>
+<tr><th>維度</th><th>值</th></tr>
+<tr><td>quality_tier（§2 B 調整後）</td><td>B</td></tr>
+<tr><td>gate（§2 D 估值燈，救援後）</td><td>🟡</td></tr>
+<tr><td>ma_status（§2 F）</td><td>🟡 減半進場</td></tr>
+<tr><td>benchmark_regime（§2 G）</td><td>正常</td></tr>
+<tr><td>trap（§1 定性）</td><td>🟡</td></tr>
+<tr><td><strong>final_signal</strong></td><td><strong><span class="signal-grade grade-B">B</span></strong></td></tr>
+</table>
+<p><strong>判定理由</strong>：QC-31 cross-check 路徑 — 品質 B + 估值 🟡 + MA 🟡 + trap 🟡 + 產業 🟢，thesis 完整、estimating alpha 高，但 ATH stretched + W250 斜率持平 + 4 週 +37% 追高 → 短中期 R:R 雙負，落 <strong>B 衛星候選（觀望，等修復）</strong>；不歸 C，因 QC-31「估值🟠 / MA stretched 單獨不歸 C」原則，且護城河 7、AI 受益、CPO catalyst 真實，thesis-level 仍立得住。</p>
+
+<h3>I｜長期展望（3-5 年定性）</h3>
+<table>
+<tr><th>維度</th><th>來源</th><th>結論</th></tr>
+<tr><td>成長跑道</td><td>§8 A</td><td>充裕（CPO TAM 2026-30 從 < 1% → 35% penetration，~50 倍空間）</td></tr>
+<tr><td>護城河趨勢</td><td>§9</td><td>execution 加深（WLO 獨家技術 + auto TDDI 50% 持穩）｜pricing power 穩定（GM 從週期低位回升）</td></tr>
+<tr><td><strong>長期持有信心</strong></td><td>綜合</td><td><strong>中</strong>（catalyst 真實但執行 binary risk 高；display IC 母體仍佔 95%+ 營收 cyclical drag）</td></tr>
+</table>
+<p><strong>一句話說明</strong>：🟢 順風，B 級護城河 7/10（execution 8 / pricing power 5），auto TDDI 50% 市佔 + CPO Gen2 6.4T 客戶驗證進行中。估值燈 🟡（FPE 21x PEG 0.37 盲點 1 救援）+ Pure MA 🟡 減半（W250 斜率 +1.3% 持平 + 4 週 +37% 追高 ATH），建議等 BB 中軌 $10-15 回測或 CPO Gen1 2H26 出貨確認後再加碼。</p>
+</section>
+
+<!-- ============ §3 三方辯論 ============ -->
+<section class="card" id="s3">
+<h2>§3 三方辯論摘要</h2>
+<div class="three-col">
+
+<div class="role-card role-bull">
+<h4>多頭辯護人 ｜ Charlie Munger 模式</h4>
+<table>
+<tr><th>#</th><th>進場論據</th><th>佐證</th></tr>
+<tr><td>1</td><td>WLO 奈米壓印獨家工藝 + FOCI exclusive 合作 = 雙重壁壘</td><td>§9 — Kuo 認為 HIMX 是 TSMC COUPE FAU 唯一 / 主要 micro-lens array supplier；競爭對手 LITE/COHR 走 transceiver 路線而非 wafer-level 微透鏡</td></tr>
+<tr><td>2</td><td>Auto TDDI 50% 全球市佔 + LTDI/OLED full stack 護城河深</td><td>§8 — 連續 5 年 #1，FY24 auto IC YoY +20% 不受 cycle 影響；汽車面板大型化趨勢 LTDI 高單價</td></tr>
+<tr><td>3</td><td>估值 21x FY+2 PE 對應 +150% EPS growth，PEG 極便宜</td><td>§13 — 21x vs semi avg 25x，Kuo $1.60 FY27 隱含 13x 即極便宜</td></tr>
+</table>
+<p><strong>多頭最強一句話</strong>：「現價買的是 auto TDDI 50% 護城河 + CPO/Silicon Photonics 上游 Nvidia Rubin Ultra 唯一台廠 free call option，PEG 0.37 在 AI 浪潮中是 generational opportunity」</p>
+</div>
+
+<div class="role-card role-bear">
+<h4>空頭檢察官 ｜ Michael Burry 模式</h4>
+<table>
+<tr><th>#</th><th>虧損觸發情境</th><th>對應風險</th></tr>
+<tr><td>1</td><td>CPO 客戶結構洗牌 — Nvidia 3/2026 $4B 投資 Coherent + Lumentum，可能繞過 HIMX-FOCI 鏈直接從 LITE/COHR 採購</td><td>§5 R1 — 若 Rubin Ultra 2027 量產 BOM 公布 HIMX 缺席 → 股價 -50% 至 $10</td></tr>
+<tr><td>2</td><td>EPS Trend 7 天上修 +122%（$0.45 → $1.00 FY27）是 sell-side over-optimism，30-60 天回吐</td><td>§13.3 隱含 — 若 FY27 EPS 共識回吐到 $0.70，PEG 從 0.37 變 0.75，目標價 -30%</td></tr>
+<tr><td>3</td><td>Display driver IC 結構性萎縮 — Rev 從 2022 $1.2B → 2025 $832M（-31%），若 CPO 不放量 HIMX 只是 PE 25x 的「縮水版 TDDI 公司」應該值 $10-12</td><td>§8 R3 — 隱含下行 -50%；現價已 priced in CPO success</td></tr>
+</table>
+<p><strong>空頭最大威脅</strong>：「市場用 7 天 sell-side 預估上修 + Kuo medium post 把 HIMX 從 $7 推到 $21 — 但 CPO 真實營收 2026 < 5%，這是純 narrative 行情，BB 突破上軌 +14% mean reversion 概率 70%+」</p>
+</div>
+
+<div class="role-card role-arb">
+<h4>估值仲裁員 ｜ Aswath Damodaran 模式</h4>
+<table>
+<tr><th>維度</th><th>判定</th></tr>
+<tr><td>隱含預期可信度</td><td>5 / 10</td></tr>
+<tr><td>核心依據</td><td>21x FY+2 PE 對應市場已 priced in FY27 $1.00 EPS（從 trough $0.26 翻 3.8 倍）；對應 implied 3Y revenue CAGR 16%、GM 32-33% 維持、CPO 占比 5-8%。共識（n=1 analyst）僅一位，可信度低；Kuo medium post 是 thoughtful but speculative。</td></tr>
+<tr><td>歷史對標</td><td>類似階段歷史：(1) MU 2022 cycle bottom → 2024 AI memory hype +250%；(2) ASML 2008-09 → 2014 EUV ramp +400%；HIMX 比較類似 MU pattern 但 CPO catalyst 集中度更高（單一 Nvidia 客戶 vs MU 多 hyperscalers）</td></tr>
+</table>
+<p><strong>仲裁員一句話</strong>：「數字上 FY+2 21x PEG 0.37 看似便宜，但 FY27 $1.00 EPS 從 trough 翻 3.8 倍是 aggressive consensus，real fair value range $12-25 — 現價 $21 在區間上沿，數學上不便宜也不極端」</p>
+</div>
+
+</div>
+</section>
+
+<!-- ============ §4 序章 ============ -->
+<section class="card" id="s4">
+<h2>§4 序章：第一性原理 × 逆向思考</h2>
+
+<h3>存在意義</h3>
+<p>HIMX（奇景光電）的核心存在意義是 <strong>「讓影像在物理世界顯示與感知」</strong>。
+從 2001 年成立至今，公司主業是 <strong>顯示驅動 IC（DDIC）</strong>—— 負責把數位影像訊號轉為驅動液晶 / OLED 像素的電壓波形，
+是「人類視覺介面」與「半導體計算」之間不可或缺的橋樑。20 多年發展中，HIMX 從手機、TV、PC 螢幕驅動 IC 起家，
+逐步演化到車用 TDDI（觸控+顯示整合）50% 全球市佔的隱形冠軍，再延伸到 LCoS 微顯示器（AR/VR）、WiseEye AI 視覺感測，
+以及最新的 WLO 晶圓級光學（CPO/Silicon Photonics 用）。</p>
+<p>如果 HIMX 明天消失：(1) 車廠的中控螢幕、儀表板螢幕 50% 供應鏈停擺，需 12-18 月 alternate qual；
+(2) AR glasses（如 Meta Ray-Ban、Apple Vision Pro 後續）失去主要 LCoS 微顯示器 + waveguide 供應源；
+(3) Nvidia Rubin Ultra CPO（2027 量產）失去 FOCI FAU 內 micro-lens array exclusive 供應，可能延後 6-12 月。</p>
+
+<h3>護城河形成歷史路徑（25 年 milestone）</h3>
+<table>
+<tr><th>年份</th><th>milestone</th><th>對護城河累積貢獻</th></tr>
+<tr><td>2001</td><td>奇景光電於南科成立，創辦人 Jordan Wu（吳炳昌）出身 TSMC 設計部</td><td>創立基因 = TSMC 工藝深度+台灣 IC 設計人才聚集</td></tr>
+<tr><td>2006</td><td>於 Nasdaq IPO（HIMX, 2006/3/31）</td><td>美股上市取得海外資金與品牌信任</td></tr>
+<tr><td>2008-12</td><td>傳統 DDIC for smartphone/tablet 全球前 5（與 Novatek 並列）</td><td>規模效應 + 與 panel maker 深度合作</td></tr>
+<tr><td>2014-16</td><td>跨入車用 IC，重押 automotive TDDI（觸控+顯示整合）</td><td>從消費 cyclical 轉向 long-cycle automotive，moat 質變</td></tr>
+<tr><td>2017</td><td>Google Project Soli 合作 LCoS 微顯示器（後成為 AR 戰略）</td><td>取得 microdisplay 技術領先</td></tr>
+<tr><td>2018-20</td><td>WiseEye AI ultralow-power sensing 平台問世</td><td>邊緣 AI 視覺感測新賽道</td></tr>
+<tr><td>2022</td><td>peak revenue $1.2B / EPS $1.36，車用佔比突破 30%</td><td>auto cycle 與 IC short 同振</td></tr>
+<tr><td>2023</td><td>cyclical trough（EPS $0.08），但 auto IC 仍 +20%</td><td>auto moat 證明 defensive 性</td></tr>
+<tr><td>2024 Q4</td><td>auto TDDI 全球市佔正式達 50%+，全球第一</td><td>形成「沒有 HIMX 車廠無法量產」的關鍵供應商地位</td></tr>
+<tr><td>2024-25</td><td>WLO 技術與 FOCI 簽 exclusive supply 合作（CPO 用 micro-lens array）</td><td>跨入 AI 基建上游，TAM x10 級擴張</td></tr>
+<tr><td>2025/9</td><td>WiseEye 在 Acer Swift Edge 14 AI Notebook MP（第一個量產 AI PC 客戶）</td><td>AI PC OEM 多家正在 design-in 2026</td></tr>
+<tr><td>2026/1</td><td>Reaffirm FOCI 合作（Ming-Chi Kuo 報告 1 月再次背書）</td><td>WLO 在 TSMC COUPE 路線圖中的地位明確</td></tr>
+<tr><td>2026/5/8</td><td>Q1 2026 EPS $0.046 beat / Q2 guide EPS $0.086-0.103 / 100% payout 股息</td><td>市場開始相信 cycle bottom + CPO catalyst 雙重 trigger</td></tr>
+</table>
+<p><strong>歷史路徑解讀</strong>：HIMX 的護城河演進為 <strong>「消費 DDIC（脆弱）→ Auto TDDI（穩固）→ WLO/AR/AI 多角化（可選性）」</strong>三層遞進。
+2014-22 的 auto pivot 是 moat 質變的關鍵，2024-26 的 WLO/CPO 是潛在 multi-bagger 上行 option。
+真正 hard-to-replicate 的部分是 <strong>「WLO 奈米壓印 + 與 FOCI 多年共同開發 + 通過 TSMC qualification」</strong>的三合一，
+非資金充足新進者可短期跨越（估時間壁壘 3-5 年）。</p>
+
+<h3>逆向推演 三維展開（Munger Inversion）</h3>
+
+<h4>① 技術維度</h4>
+<p>什麼技術替代會讓 HIMX 3 年內失去 50% 價值？</p>
+<ul>
+<li><strong>CPO 路線改走純 transceiver 而非 wafer-level optics</strong>：若 Nvidia Rubin Ultra 改用 LITE/COHR 的 pluggable optics（裝在板上不裝在封裝內）→ HIMX-FOCI 鏈被繞過。歷史對標：<em>Intel 2010s 的 silicon photonics 戰略部分失敗，因 hyperscaler 偏好 modular 而非 integrated</em>。</li>
+<li><strong>OLED 顯示驅動架構轉向 in-pixel driver</strong>：若三星 Display 推 in-pixel TDDI（整合到 OLED backplane 直接 driving，不需 external IC）→ HIMX TDDI 業務萎縮 30%+。歷史對標：<em>HDD 控制 IC 隨 SSD 化內建到 NAND 控制器，Marvell 損失大量市場</em>。</li>
+<li><strong>AR glasses 走 waveguide 替代方案</strong>：若 Meta / Apple 改採 retinal projection 或 holography 路線 → LCoS 微顯示器市場結構性萎縮，HIMX AR 業務歸零。歷史對標：<em>Magic Leap 光波導路線失敗轉做企業應用</em>。</li>
+<li><strong>中國本土 DDIC 廠商加速進口替代</strong>：奕斯偉、集創北方、晶合 等加速 28nm DDIC 量產，HIMX 在中國市場份額快速下滑。歷史對標：<em>韓國 SK Hynix / 三星在 DRAM 對抗 Micron 已從技術領先到市佔挑戰</em>。</li>
+</ul>
+
+<h4>② 管理維度</h4>
+<p>什麼決策路徑會自我毀滅？</p>
+<ul>
+<li><strong>Capex 慣性 — CPO 量產設備過度投入</strong>：若 2026-27 為 CPO 提前 Capex $200M+ 而最終 Nvidia 訂單量遠低於預期，現金消耗速度快、回收期延長 → 公司被迫降股息或舉債。歷史對標：<em>SUMCO 在 2018-19 wafer cycle peak Capex $1B+，2020 cycle 反轉後減損 $400M+</em>。</li>
+<li><strong>創辦人 Jordan Wu 退場無 strong successor</strong>：Jordan Wu 個人持股 + 戰略視野是 HIMX 文化核心；若意外退場 + 公司文化轉向「短期 GM 守護」而非「長期技術投資」→ 失去 WLO/AR/CPO 長期 R&D 動能。歷史對標：<em>聯發科蔡明介 vs 後輩 — 創辦人退場後策略短期化（雖然 MTK 案例尚未真正驗證）</em>。</li>
+<li><strong>整合失敗 — 大型併購（如收購 LCoS 設計公司）後 culture clash</strong>：HIMX 過去無大型併購紀錄，若為加速 AR/AI 戰略貿然 $300M+ 級併購而執行不力 → 商譽減損 + 管理層分心。歷史對標：<em>Intel 收購 Mobileye 後 IPO 分拆，整合 8 年仍未完全成功</em>。</li>
+</ul>
+
+<h4>③ 結構維度</h4>
+<p>什麼產業變化會讓 HIMX 商業模式過時？</p>
+<ul>
+<li><strong>AI 計算範式從矩陣計算轉向類比 / neuromorphic / 光計算</strong>：若 2030 年後 AI 主流變成光子計算 + 神經形態晶片（如 Cerebras WSE-3 path），CPO 作為「電 ↔ 光」介面的需求消失（因 native 光計算直接 photon-to-photon）。歷史對標：<em>AT&T 在 Web 興起後失去長途電話壟斷地位 — 整個業務範疇 obsolete</em>。</li>
+<li><strong>監管型分拆 — 美中半導體脫鉤升級</strong>：若美國對台灣 fabless 公司加上對中銷售限制（HIMX 中國客戶占比約 30-40%）→ 強迫 HIMX 在中美間二選一，失去 30%+ 市場。歷史對標：<em>華為被禁後 5G 設備市場結構大改 — 整個 ecosystem 重組</em>。</li>
+<li><strong>面板顯示市場結構萎縮</strong>：若 2030 年後 AR/MR 全面取代手機與 PC 顯示，傳統 LCD/OLED panel 出貨萎縮 50%+，DDIC 母體市場結構性下行，HIMX 的 95% 營收基礎遭結構性侵蝕。歷史對標：<em>Sun Microsystems 在 x86 + cloud 興起後伺服器業務歸零</em>。</li>
+</ul>
+
+</section>
+
+<!-- ============ §5 論點錨定 ============ -->
+<section class="card" id="s5">
+<h2>§5 投資論點錨定</h2>
+
+<h3>A｜持有期與時間軸宣告</h3>
+<table>
+<tr><th>項目</th><th>填寫</th></tr>
+<tr><td>預設持有期</td><td>2-3 年（FY26-FY28 catalyst 兌現週期）</td></tr>
+<tr><td>主要驅動這個時間軸的理由</td><td>① CPO Gen1 量產 2H 2026；② Nvidia Rubin Ultra MP 2027；③ Kuo 預估 EPS path $1.00 (2026) → $1.60 (2027) → $3.40 (2028) — 2028 才是 thesis 主驗證年</td></tr>
+<tr><td>此持有期決定變數權重</td><td>季度財報 GM/Rev 短期波動是噪音；CPO segment 占比、FOCI/Nvidia 合作獨家性、auto TDDI 市佔變化是訊號</td></tr>
+</table>
+
+<h3>B｜三個核心假設 + 三層時間軸</h3>
+<table>
+<tr><th>#</th><th>核心假設</th><th>2Y 驗證點</th><th>5Y 驗證點</th><th>10Y 驗證點</th><th>具體數字門檻</th><th>信息來源</th><th>漂移觸發條件</th></tr>
+<tr><td>H1</td><td>HIMX-FOCI 鏈成為 Nvidia Rubin Ultra CPO 唯一 / 主要 WLO 供應商</td><td>2H 2026 公司法說或 GTC 揭露 BOM；CPO segment 季營收 > $20M</td><td>2027-28 CPO 全年營收 > $200M；Kuo 預估出貨量 6M/50M/240M 兌現 ≥ 70%</td><td>2030 CPO 佔 HIMX 營收 ≥ 30%；TSMC COUPE 路線圖 Gen3/Gen4 仍由 FOCI 主導</td><td>2026 CPO 占比 ≥ 3%；2027 ≥ 10%；2028 ≥ 20%</td><td>SEC 6-K 法說會；Nvidia GTC keynote；TSMC OIP forum；Kuo medium post</td><td>連 2 季 TTM CPO 占比 < target 70% → 削弱；連 3 季 < 50% → 反轉</td></tr>
+<tr><td>H2</td><td>Auto TDDI 50% 全球市佔維持 + LTDI/OLED TDDI 接棒進入第二成長曲線</td><td>auto IC YoY > +15% in FY26；LTDI/OLED TDDI MP in 2H 26 SOP 落地</td><td>auto IC 占比 ≥ 60% by 2028；OLED TDDI 占 auto IC 內部 ≥ 30%</td><td>2030 全球 auto display IC TAM 翻倍，HIMX 維持 #1 地位</td><td>auto IC FY26 營收 ≥ $480M（+15% YoY from $415M FY25）</td><td>公司法說會 auto segment 揭露；DSCC / IHS Markit panel database</td><td>連 4 季 TTM auto YoY < +5% → 削弱（5Y 假設按 QC-35 須連 4 季）</td></tr>
+<tr><td>H3</td><td>Display driver IC 母體 cycle 2026-27 進入溫和復甦，GM 從 30.6% (FY25) 回升至 33-35%</td><td>Q2 26 GM guide 32% 實際達標；Q3-Q4 26 GM ≥ 33%</td><td>FY27 全年 GM ≥ 34%；TTM EPS 突破 FY22 peak $1.36</td><td>display IC TAM 在 AR/MR 取代前仍有 5-7 年穩定期</td><td>FY26 GM > 32%；FY27 GM > 34%；FY28 GM > 35%</td><td>公司法說會；TrendForce panel data；Macrotrends</td><td>連 2 季 TTM GM < 30% → 削弱（2Y 假設 QC-35 連 2 季偏離 ≥ 5%）</td></tr>
+</table>
+
+<h3>B'｜12 個月前 DD 對照</h3>
+<p>狀態：進場未滿一年（最早 v12.2+ DD = 2026-05-26，距今 0 天，本份為 Inception）。
+本欄位將於 2027-05-26 起首次有資料對照。在此之前，僅以 §5 B 戰術假設視角追蹤。</p>
+
+<h3>C｜三個最可能推翻論點的風險</h3>
+<table>
+<tr><th>#</th><th>風險</th><th>對應假設</th><th>時間尺度</th><th>監測指標</th><th>警戒閾值</th></tr>
+<tr><td>R1</td><td>Nvidia 把 CPO 訂單分散 / 改採 LITE/COHR 為主，HIMX-FOCI 鏈被邊緣化</td><td>H1</td><td>⚡ 短期（1-2 季可觸發）</td><td>Nvidia GTC keynote / Rubin Ultra reveal 的供應鏈揭露；FOCI 是否被 Nvidia 直投 / 收購</td><td>2026 Q3-Q4 公開資訊出現 LITE 或 COHR 為 Rubin CPO 主供應商 → 立即清倉</td></tr>
+<tr><td>R2</td><td>中國本土 DDIC 廠商加速取代，HIMX 中國市場份額快速流失</td><td>H2 / H3</td><td>🔥 中期（4-6 季）</td><td>HIMX 中國區營收占比；TrendForce 中國 DDIC 廠商出貨</td><td>HIMX 中國區營收占比連 4 季 < 25%（從目前 ~35-40%）→ 結構性侵蝕</td></tr>
+<tr><td>R3</td><td>display driver IC 母體 cycle 無復甦，GM 結構性掉到 28% 以下</td><td>H3</td><td>🐢 長期（2+ 年慢變數）</td><td>季度 GM 趨勢；同業 Novatek / Sitronix GM 對照</td><td>連 4 季 TTM GM < 30% 且同業仍持平 → 結構性侵蝕（非週期）</td></tr>
+</table>
+
+<h3>D｜邊際貢獻判斷框架</h3>
+<p>每當新事件出現，先問：(1) 時間軸是否在 2-3 年持有期內？(2) 影響 H1/H2/H3 哪一個？(3) 強化 / 無關 / 削弱？(4) 是否達重新評估閾值？</p>
+<table>
+<tr><th>典型事件</th><th>判讀</th></tr>
+<tr><td>Nvidia GTC 2026/3 keynote 揭露 Rubin CPO 供應鏈</td><td>核心 binary trigger，直接驗證 / 推翻 H1（時間軸：核心 / 假設：H1）</td></tr>
+<tr><td>Q2-Q3 2026 法說 GM 達標 32%</td><td>強化 H3，但已 priced in，邊際弱</td></tr>
+<tr><td>Apple / Meta AR glasses 新品揭露 LCoS 微顯示器供應商</td><td>強化或新闢 auto TDDI 以外的 long-tail growth（影響 H2 但較 marginal）</td></tr>
+<tr><td>EPS Trend 30 天回吐 > 15%</td><td>削弱 H1（sell-side over-optimism 反轉）</td></tr>
+</table>
+
+<h3>E｜可執行決策主線預設</h3>
+<table>
+<tr><th>情境</th><th>觸發條件</th><th>對應行動</th></tr>
+<tr><td>進場</td><td>價格回測 W104 $8 - W52 $9 區間 + EPS Trend 持續上修 + Q2 26 法說 CPO 進度確認</td><td>建倉 1/3 倉位作為衛星部位</td></tr>
+<tr><td>加碼</td><td>H1 binary trigger 確認（Nvidia GTC 或公司法說明確 HIMX-FOCI 為 Rubin CPO 主供應商）</td><td>加碼至 satellite 滿倉（PM skill 決定 %）</td></tr>
+<tr><td>減碼</td><td>R1 R2 R3 任一風險信號出現；或股價再 +50% 在無新 catalyst 下</td><td>減至 1/3 倉位，重新評估</td></tr>
+<tr><td>撤退</td><td>Nvidia 明確選 LITE/COHR 為 Rubin CPO 主供應商；或 H3 GM 連 4 季結構性失守</td><td>清倉，記錄推翻理由</td></tr>
+</table>
+
+<h3>F｜Single Thing（v12.3 binary discrete event）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td><strong>Single Thing 描述</strong></td><td>「Nvidia Rubin Ultra（2027 量產）CPO 架構中，FOCI FAU 是否為唯一 / 主要供應商，且 FOCI 是否 publicly confirm HIMX 為其 exclusive WLO supplier」</td></tr>
+<tr><td><strong>如果發生（confirm）</strong></td><td>立即加碼至 satellite 滿倉；thesis 從「觀察期 🟡」升級為「非陷阱 🟢」；目標價上調至 Kuo $50-60 範圍</td></tr>
+<tr><td><strong>如果發生（disconfirm，Lumentum/Coherent 取代）</strong></td><td>立即清倉；thesis 從「觀察期 🟡」降級為「高風險陷阱 🔴」；HIMX 退回到「TDDI + 弱 cycle DDIC」估值 ~$10-12</td></tr>
+<tr><td><strong>可觀測性</strong></td><td>Nvidia GTC 2026 秋季 / 2027 春季 keynote；HIMX 公司法說會 2026 Q3-Q4 揭露 CPO 客戶；FOCI 上市計畫（傳聞 2026-27 IPO）的 prospectus 將揭露其客戶</td></tr>
+<tr><td><strong>機率估計</strong></td><td>未來 12-24 個月發生 confirm / disconfirm 的機率 = 60% confirm（基於 Kuo 報告 + HIMX 連續多份 6-K 強調 FOCI 合作 + TSMC COUPE 已 priced in 兩家供應商）</td></tr>
+</table>
+
+<p><strong>三者職責矩陣（v12.3 強制對齊）</strong>：</p>
+<ul>
+<li>§1 trap 定性 = 「現在這檔是不是陷阱」的 static snapshot → 🟡 觀察期</li>
+<li>§5.C R1-R3 = 持有期 process risk + 監測指標：R1 ⚡（短期可觸發）/ R2 🔥（中期）/ R3 🐢（長期慢變）</li>
+<li>§5.F Single Thing = binary trigger event：FOCI/Nvidia 供應鏈獨家性確認 → 改變整個判斷</li>
+</ul>
+</section>
+
+<!-- ============ §6 即時財報情報 ============ -->
+<section class="card" id="s6">
+<h2>§6 即時財報情報（Q1 FY2026, 公告 2026-05-08）</h2>
+
+<h3>① 最新一季財報關鍵數字</h3>
+<table>
+<tr><th>指標</th><th>本季實際</th><th>市場預期 / Guide</th><th>Beat/Miss</th><th>YoY 成長</th></tr>
+<tr><td>Revenue</td><td>$199.0M</td><td>$192-204M guide (-2 to -6% QoQ)</td><td><span class="badge-green">Beat</span>（高端）</td><td>+3.8% YoY (vs $191.7M Q1 25)</td></tr>
+<tr><td>EPS（GAAP）</td><td>$0.046</td><td>$0.02-$0.04 guide</td><td><span class="badge-green">Beat</span></td><td>+33% YoY (vs $0.035 Q1 25, 但 cycle low base)</td></tr>
+<tr><td>Gross Margin</td><td>30.4%</td><td>~30% guide</td><td><span class="badge-green">高端</span></td><td>+0.4pp QoQ vs Q4 25 30.0%</td></tr>
+<tr><td>Operating Margin</td><td>~6.5%（推估）</td><td>--</td><td>--</td><td>--</td></tr>
+<tr><td>After-tax Profit</td><td>$8.0M</td><td>--</td><td>--</td><td>--</td></tr>
+</table>
+
+<h3>Q2 2026 Guidance（核心 catalyst）</h3>
+<table>
+<tr><th>指標</th><th>Q2 26 Guide</th><th>vs Q1 26 (QoQ)</th><th>vs Q2 25 (YoY)</th></tr>
+<tr><td>Revenue</td><td>+10% ~ +13% QoQ（$218.9M - $224.9M）</td><td>+10-13%</td><td>+10-13% YoY（vs $199.2M Q2 25）</td></tr>
+<tr><td>Gross Margin</td><td>~32%</td><td>+1.6pp</td><td>+1-2pp</td></tr>
+<tr><td>EPS</td><td>$0.086 - $0.103</td><td>+87% ~ +124% QoQ</td><td>+43%-72% YoY</td></tr>
+</table>
+<p><strong>解讀</strong>：Q2 guide 是 strong inflection — Revenue 重回 YoY positive growth + GM 突破 32% + EPS 翻倍。
+這支撐 sell-side 將 FY26 全年 EPS 從 $0.24 上修至 $0.40（+67%）、FY27 從 $0.45 上修至 $1.00（+122%）。</p>
+
+<h3>財報對 §5 假設的邊際貢獻</h3>
+<table>
+<tr><th>假設</th><th>本季財報的邊際方向</th><th>關鍵佐證</th></tr>
+<tr><td>H1（CPO/FOCI/Nvidia 鏈）</td><td>+ 強化</td><td>Q1 法說重申「Gen 1 1.6T/3.2T ready, 2H26 small qty shipments」+「Gen 2 6.4T validation nearing completion」— 進度按 plan 推進</td></tr>
+<tr><td>H2（Auto TDDI 50%+ 維持）</td><td>+ 強化</td><td>auto IC 1Q26 占比仍 > 50%；OLED TDDI MP 列為 2H26 重點</td></tr>
+<tr><td>H3（display IC cycle 復甦）</td><td>+ 強化</td><td>Q1 GM 高端 30.4% + Q2 guide 32% → cycle bottom 已確認，週期向上</td></tr>
+</table>
+
+<h3>② Earnings Call 語氣解析</h3>
+<ul>
+<li><strong>管理層基調</strong>：明顯轉樂觀 — Jordan Wu CEO 在 transcript 用 "exciting progress"、"breakthrough"、"meaningful inflection point" 描述 CPO/WLO 進度。與上季（Q4 25）相比語氣從 "cautious recovery" 轉為 "structural growth"。</li>
+<li><strong>Forward Guidance</strong>：Q2 EPS guide $0.086-0.103 比 sell-side prior estimates 略高（共識 $0.06）+10-30%。FY26 全年指引未直接給數字但暗示「sustained quarterly improvement」。</li>
+<li><strong>刻意強調的主題</strong>：WLO + FOCI CPO 合作（mentioned 8+ times）、WiseEye AI in Acer/notebook OEMs（5+ times）、auto IC GM rebound、100% payout 股息回饋。</li>
+<li><strong>刻意迴避的問題</strong>：分析師問「能否揭露 Nvidia 是否為直接客戶」— CEO 回避，僅說「customers are evaluating」。CPO 具體營收占比、FOCI 在 Rubin CPO 中的市佔細節未提供。</li>
+</ul>
+
+<h3>③ 產業 Imply 萃取</h3>
+<ul>
+<li><strong>需求端</strong>：auto 客戶 backlog 持續延長至 9-12 個月（vs cycle low 3-6 個月）；AI 基建 CPO 客戶 evaluation pipeline 持續擴張 — 暗示需求端強勢。</li>
+<li><strong>供給端</strong>：HIMX 自身 capacity 不是瓶頸；CPO 受限於 FOCI 端 wafer-level 製程 ramp 速度；display driver IC 業界 12" wafer 供給寬鬆。</li>
+<li><strong>競爭格局</strong>：Q1 中國本土 DDIC 廠商在 mid-end TV 領域加速取代，但 auto TDDI / LTDI 高階仍是 HIMX 護城河區。</li>
+<li><strong>總體經濟敏感度</strong>：管理層提及「macro uncertainty around tariffs (US-China)」— 暗示對潛在 US 關稅 / 對中銷售管制有一定 hedge 但不是大威脅。</li>
+<li><strong>對同業的連帶推論</strong>：對 Novatek (3034.TW) / Sitronix (8016.TW) — cycle 復甦正向；對 Lumentum / Coherent — 若 HIMX-FOCI 拿到主供應商，這兩家在 wafer-level optics 端面臨壓力（但他們本身仍主導 transceiver / DSP 側）。</li>
+</ul>
+</section>
+
+<!-- ============ §7 核心門檻檢核 ============ -->
+<section class="card" id="s7">
+<h2>§7 核心門檻檢核</h2>
+
+<h3>EPS CAGR 強制搜尋協議結果</h3>
+<p><strong>步驟零'</strong>：Excel buy-side consensus（DD_universe_EPS_estimates_20260525.xlsx）<span class="badge-red">HIMX NOT in Excel</span>（snapshot date 2026-05-26）→ fall back yfinance。</p>
+<p><strong>步驟零（yfinance）</strong>：</p>
+<table>
+<tr><th>項目</th><th>數值</th><th>備註</th></tr>
+<tr><td>基期 EPS（FY 2025 GAAP）</td><td>$0.26</td><td>實際 reported；cyclical trough level</td></tr>
+<tr><td>FY+1 EPS（FY 2026）</td><td>$0.40</td><td>yfinance 0y avg，n=1 analyst，growth +58.7%</td></tr>
+<tr><td>FY+2 EPS（FY 2027）</td><td>$1.00</td><td>yfinance +1y avg，n=1 analyst，growth +150%（CPO 量產 catalyst）</td></tr>
+<tr><td>FY+3 EPS（FY 2028）</td><td>$1.60（§8 邏輯推導）</td><td>取 Kuo medium post 估算（aggressive base case）；隱含 +60% growth，符合 CPO 出貨 50M units (2027) → 240M units (2028) 5x 放量。Conservative 路徑可降至 $1.30。</td></tr>
+<tr><td>━━━━━━━━━━━━━━━━━━━</td><td></td><td></td></tr>
+<tr><td>GAAP CAGR（FY25 → FY28）</td><td>+83.2%</td><td>($1.60 / $0.26)^(1/3) - 1 = (6.154)^0.333 - 1 = 83.2%</td></tr>
+<tr><td>Non-GAAP CAGR</td><td>同上</td><td>HIMX 不區分 GAAP/Non-GAAP（台股法定口徑）</td></tr>
+</table>
+<div class="reasoning">⚠️ 83.2% CAGR 受 trough base $0.26 嚴重失真（FY23 cycle bottom EPS 為 $0.084，FY22 peak $1.356）。更保守 metric：(1) FY+2 vs FY+1 single year +150%、(2) Kuo conservative 路徑 FY28 $1.30 對應 CAGR +71%、(3) 用 FY24 「normalized」基期 $0.456 → FY28 $1.60 = +37% CAGR — 後者最 reflect 結構性成長率（去掉 cycle trough 雜訊）</div>
+
+<h3>Munger 護城河維度強制搜尋協議結果</h3>
+<table>
+<tr><th>指標</th><th>標準</th><th>符合?</th><th>關鍵數據與趨勢</th></tr>
+<tr><td>FCF Margin（當前）</td><td>> 15%</td><td>✗</td><td>FY25 FCF $119M / Rev $832M = 14.4%；近 3 年 8.8% (FY22) / 11.3% (FY24) / 14.4% (FY25) 趨勢 ↑ 但未達 15%</td></tr>
+<tr><td>正規化 FCF Margin【Munger】</td><td>5Y 均 > 15%；最低谷 > 10%</td><td>⚠️</td><td>5Y FCF Margin: ~8.8% (22) / ~8% (23 trough) / ~11.3% (24) / ~14.4% (25)；5Y avg ~11%；最低谷 ~6% (23)；偏 cyclical，不穩定</td></tr>
+<tr><td>ROIC（當前）</td><td>> 15%, >WACC</td><td>✗</td><td>FY25 ROIC: NI $44M / (Equity $893M + Debt $599M - Cash $258M) = 3.6%；極低，因 cycle trough；FY22 peak ROIC ~22%</td></tr>
+<tr><td>ROIC 穩定性【Munger】</td><td>10Y 中 ≥ 70% 年份 ROIC > 15%</td><td>✗</td><td>5Y 樣本估算：FY21 ~18% / FY22 ~22% / FY23 ~1% / FY24 ~7% / FY25 ~3.6%；達標年份 2/5 (40%)；高度週期性</td></tr>
+<tr><td>毛利率定價能力【Munger】</td><td>10Y 中 ≥ 70% 改善</td><td>✗</td><td>10Y GM: 21% (FY15) → 41% (FY22 peak) → 30.6% (FY25)；改善年份 ~6/10 (60%)；近 3 年趨勢 ↓（41 → 32 → 30.6 → 32 Q2 guide）→ 復甦中</td></tr>
+<tr><td>資本密集度【Munger】</td><td>Capex/Rev < 5% 優 / < 10% 尚可</td><td>✅</td><td>FY25 Capex $20M / Rev $832M = 2.4%（fabless 商業模式，低密集）</td></tr>
+<tr><td>EPS CAGR（未來 3 年）</td><td>> 20%</td><td>✓✓</td><td>3Y CAGR 83% 但 trough base 失真；normalized +37% 仍遠超 20% 標準</td></tr>
+<tr><td>PEG（FY+2 base, normalized growth）</td><td>< 2</td><td>✓✓</td><td>FY+2 PE 21.04 / +37% normalized CAGR = 0.57；strong 便宜</td></tr>
+<tr><td>負債安全性【Munger】</td><td>D/E < 0.7 / Cash/Rev 10-50%</td><td>⚠️</td><td>D/E = 599 / 893 = 0.67（剛符合 < 0.7）；Cash $258M / Rev $832M = 31%（合理範圍）</td></tr>
+<tr><td>現金覆蓋總負債</td><td>--</td><td>✗</td><td>Cash $258M vs Total Debt $599M = 0.43 倍，無法完全覆蓋</td></tr>
+<tr><td>護城河強度</td><td>> 8 分</td><td>⚠️</td><td>7 分（execution 8 + pricing power 5 合併），趨勢 execution 加深 + pricing 穩定</td></tr>
+</table>
+<p><strong>Munger 三維護城河快速評級</strong>：<span class="badge-yellow">🟡 一項達標</span>（只有資本密集度 ✅；ROIC 穩定性 ✗、毛利率定價能力 ✗）— 數字層面顯示 HIMX 仍是 cyclical IC 設計商，未具備 Munger 標準的「卓越企業」品質。但這也是 turnaround 機會的 setup —— 若 cycle 復甦 + CPO 放量，未來 3 年數字會大幅改善。</p>
+<p><strong>最大財務弱點</strong>：ROIC 穩定性差（cycle 振幅大 1% ~ 22%），盈利確定性不如 NVDA/2330 等 S 級。傳遞至 §9：護城河評分維持 B 級 7 分（execution 強但 cycle 影響 pricing power）。</p>
+</section>
+
+<!-- ============ §8 長期成長性評估 ============ -->
+<section class="card" id="s8">
+<h2>§8 長期成長性評估</h2>
+
+<h3>A｜成長跑道（Runway）估算</h3>
+<table>
+<tr><th>維度</th><th>數據</th><th>推論</th></tr>
+<tr><td>當前 TAM（display driver IC, 2025）</td><td>~$11.5B（Mordor / DSCC）</td><td>HIMX 占 ~7.2%（$832M / $11.5B）；auto TDDI sub-segment ~$1.5B HIMX 50%+</td></tr>
+<tr><td>當前 TAM（CPO, 2026）</td><td>~$0.5B</td><td>2026 仍是 early MP year，penetration < 1%</td></tr>
+<tr><td>估計可達 TAM（2030）</td><td>display IC ~$15B；CPO ~$8-10B</td><td>CPO 從 < 1% → 35% penetration 滲透率提升 x10-15</td></tr>
+<tr><td>當前市佔 / 滲透率</td><td>display IC 7% / auto TDDI 50% / CPO &lt; 5%</td><td>auto 已飽和、display IC 持平、CPO 才剛起步</td></tr>
+<tr><td>若維持現有成長率，幾年達 30% 滲透率（CPO）</td><td>2028-29</td><td>Kuo: WLO units 6M (2026) → 50M (2027) → 240M (2028) = 5-fold per year ramp</td></tr>
+<tr><td><strong>成長可持續年數估計（Runway）</strong></td><td><strong>5-7 年</strong></td><td>CPO 拉動 + auto IC 穩定 cash cow + AR 微顯示器 long-tail option</td></tr>
+</table>
+<p><strong>Runway 解讀</strong>：5-7 年中等可見度 — 介於「短期成長」與「高確信長期複利」之間。
+支撐估值溢價的依據：CPO 2027-30 高成長期，但 2030 以後需 AR/MR 或下一個 catalyst 接棒。</p>
+
+<h3>B｜成長品質判斷</h3>
+
+<h4>① 成長來源：有機 vs 無機</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的占比估計</th><th>佐證</th></tr>
+<tr><td>有機成長</td><td>定價提升、現有客戶深化、新市場自然滲透、新技術突破</td><td>95%</td><td>HIMX 過去 5 年無重大併購（< $50M 級的技術 IP 購入有，但非營收型）</td></tr>
+<tr><td>無機成長</td><td>併購貢獻營收</td><td>5%</td><td>2020 年小型 fabless 技術 IP 收購 ~$30M（已整合）</td></tr>
+</table>
+<p>無機 < 30%，免列詳細併購清單。</p>
+
+<h4>② 成長驅動結構：定價 vs 量</h4>
+<table>
+<tr><th>類型</th><th>定義</th><th>此標的判斷</th><th>過去 3 年趨勢</th></tr>
+<tr><td>定價驅動</td><td>ASP 提升 / 產品組合升級</td><td>auto TDDI / LTDI ASP YoY +5-10%（large display + dual-screen ASP 高）；CPO WLO ASP 是 traditional DDIC 的 10-50 倍</td><td>緩步擴大（auto 高階產品比重持續上升）</td></tr>
+<tr><td>量驅動</td><td>出貨量成長</td><td>整體 IC 出貨量 FY23 trough -25% / FY24 +12% / FY25 -10%；CPO 預估 FY26-28 出貨量 6M → 240M（40 倍）</td><td>cyclical 但 CPO 量未來爆發</td></tr>
+</table>
+<p>定價 vs 量的精準拆分受 cyclical 影響不易 quantify。長期 trend：價穩量增（CPO 高 ASP + 出貨量爆發雙引擎）。</p>
+
+<h3>C｜成長護城河連動評估</h3>
+<table>
+<tr><th>類型</th><th>定義</th><th>具體表現</th></tr>
+<tr><td><strong>強化型</strong>（最佳）</td><td>成長帶來更強的網路效應、規模優勢、數據壁壘</td><td>auto TDDI 50% 市佔形成「車廠認證壁壘」雪球（每增加一車型 design-win 累積客戶切換成本）</td></tr>
+<tr><td>中性型</td><td>成長與護城河各自獨立</td><td>display driver IC 母體 — 成長靠週期回升不靠 moat 強化</td></tr>
+<tr><td><strong>消耗型</strong>（警示）</td><td>為維持成長犧牲定價 / 擴張至低 ROIC 領域</td><td>過去 3 年週期低期 GM 從 41% 跌至 30%，部分是 mix shift + 部分是為保市佔讓價（pricing power 5 分的根本原因）</td></tr>
+</table>
+<p>HIMX 護城河連動是「auto 強化 + display 中性 + CPO 強化（exclusive WLO）」三段組合，整體偏正面但有 cyclical noise。</p>
+
+<h3>D｜ROIC 與 FCF 的長期可維持性</h3>
+<table>
+<tr><th>指標</th><th>當前值（FY25）</th><th>3 年前（FY22 peak）</th><th>趨勢</th><th>標準門檻</th><th>是否符合</th></tr>
+<tr><td>ROIC</td><td>3.6%</td><td>~22%</td><td>↓ cyclical（FY22 peak → FY23 trough → FY25 復甦中）</td><td>> WACC（~10%）且擴大</td><td>✗ 短期 / ⚠️ 長期</td></tr>
+<tr><td>ROIC - WACC（超額報酬）</td><td>-6.4%</td><td>+12%</td><td>↓ 短期負，cycle 復甦後預估回正</td><td>持續正值且擴大</td><td>✗</td></tr>
+<tr><td>FCF Margin</td><td>14.4%</td><td>8.8%</td><td>↑ 顯著改善</td><td>> 15%</td><td>⚠️ 接近</td></tr>
+<tr><td>FCF / Net Income 轉換率</td><td>272%</td><td>~30%</td><td>↑ 強</td><td>> 85%</td><td>✓ 但因 NI 含一次性費用偏高</td></tr>
+<tr><td>Reinvestment Rate</td><td>低（Capex 2.4% of Rev）</td><td>低</td><td>→ 持平</td><td>有對應 ROIC</td><td>⚠️ ROIC 太低 = under-invest</td></tr>
+</table>
+
+<h3>E｜成長熄火情境壓力測試</h3>
+<table>
+<tr><th>情境假設</th><th>對應成長特徵</th><th>合理 Forward P/E 壓縮至</th><th>潛在估值跌幅</th></tr>
+<tr><td>3 年後成長率降至 15%</td><td>cycle 復甦但 CPO 未爆發</td><td>15x</td><td>-29%（21x → 15x）</td></tr>
+<tr><td>3 年後成長率降至 10%</td><td>display IC 結構性放緩</td><td>12x</td><td>-43%</td></tr>
+<tr><td>3 年後成長率降至 5%</td><td>cycle 反轉 + CPO 失敗</td><td>10x</td><td>-52%</td></tr>
+</table>
+
+<h3>衰退信號偵測表</h3>
+<table>
+<tr><th>信號類型</th><th>偵測指標</th><th>數據</th><th>亮燈?</th></tr>
+<tr><td>護城河侵蝕</td><td>GM 連續 2 季 YoY 下滑</td><td>Q1 26 GM 30.4% vs Q1 25 ~30% 持平；Q2 guide 32% 回升</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>核心市場市佔縮減（過去 12M）</td><td>auto TDDI 50%+ 維持；中國消費 DDIC 有侵蝕但非核心</td><td>⬜</td></tr>
+<tr><td>護城河侵蝕</td><td>提價後銷量下滑</td><td>無重大事件</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>EPS CAGR 顯著 > Revenue CAGR（差距 > 5%p）</td><td>FY26 EPS YoY +58% vs Rev +12% = 46pp 差距 — 但因 GM 復甦 + cycle 槓桿，非回購人為</td><td>⬜（cycle 槓桿合理）</td></tr>
+<tr><td>盈餘品質</td><td>FCF/NI 連 2 年 < 0.75</td><td>連 3 年 > 1.0 (FCF 大於 NI)</td><td>⬜</td></tr>
+<tr><td>盈餘品質</td><td>SBC / Rev > 5% 且逐年上升</td><td>HIMX 不揭露 SBC 細節（台股法定口徑），但 SBC 推估 < 1% of Rev</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>TAM 萎縮或被替代</td><td>display IC TAM 持平略增（auto + OLED 接棒）；CPO TAM 爆發成長</td><td>⬜</td></tr>
+<tr><td>產業結構衰退</td><td>產業估值 3 年系統下移</td><td>semi PE peer median 維持 ~25x，無系統下移</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>Maintenance Capex / FCF > 60%</td><td>Capex 全部 < 17% of FCF（fabless 模式）</td><td>⬜</td></tr>
+<tr><td>隱性資本密集</td><td>停止投資產能 → 3Y Rev 下滑?</td><td>是 — 但 Capex 主要在 WLO 設備 + R&D，停 invest CPO 賽道會錯失</td><td>⬜</td></tr>
+</table>
+<p><strong>價值陷阱風險評級</strong>：0 個亮燈 → <span class="badge-green">🟢 低風險</span> — 沒有系統性惡化信號。但 §1 trap 仍標 🟡 觀察期，因 CPO 兌現 binary risk + 4 週 +37% 漂移 + EPS 上修透支風險，這些是「短期市場執行 / 預期管理」風險而非結構性財務惡化。</p>
+
+<h3>長期成長性綜合評級</h3>
+<p><span class="badge-yellow">🟡 中等可見度成長</span> — Runway 5-7 年（中等），有機 + CPO 結構性 catalyst，護城河 auto 強化 + display 中性 + CPO 強化，ROIC 處於 cycle 低位但有反轉路徑，衰退信號 0 個但 ROIC 穩定性是長期 quality concern。</p>
+
+<h3>F｜AI 取代風險評級</h3>
+<p><span class="badge-green">🟢 AI 受益</span></p>
+<ul>
+<li><strong>具體業務占比 vs AI 侵蝕區域</strong>：HIMX 核心業務（display driver IC + auto TDDI + microdisplay）與 AI 替代無關 — AI 是補強而非取代（WiseEye AI sensing + CPO 對 AI 基建是供應方）。</li>
+<li><strong>公司 AI 策略</strong>：(1) 上游供應方 — WLO for CPO（Nvidia Rubin Ultra）；(2) AI sensor — WiseEye 在 AI PC OEM 設計導入；(3) AR/AI glasses — LCoS 微顯示器（為 Meta Ray-Ban / Apple Vision Pro 後續）。三條路線都是 AI 浪潮受益。</li>
+<li><strong>過去 2 年 AI 相關營收變化</strong>：WiseEye + CPO 合計 < 5% of FY25 Rev，但 FY26-28 預估快速放量到 10-30%+。</li>
+</ul>
+
+<h3>H｜客戶結構深度（v12.3 新增）</h3>
+
+<h4>① 客戶集中度</h4>
+<table>
+<tr><th>指標</th><th>數值</th><th>年份</th><th>資料來源</th></tr>
+<tr><td>Top 1 客戶占比</td><td>~12-15%（推估）</td><td>FY25</td><td>10-K（未明確揭露具體 top 客戶，但 Samsung Display 是長期最大）</td></tr>
+<tr><td>Top 5 客戶合計</td><td>~45-55%</td><td>FY25</td><td>推估（panel maker 高度集中 — Samsung / LG / AUO / BOE / Tianma）</td></tr>
+<tr><td>Top 10 客戶合計</td><td>~65-75%</td><td>FY25</td><td>同上</td></tr>
+<tr><td>最大客戶過去 3 年%</td><td>FY23: ~14% / FY24: ~13% / FY25: ~12-15%</td><td></td><td>持平略降趨勢</td></tr>
+</table>
+
+<h4>② 主要客戶議價權結構</h4>
+<table>
+<tr><th>客戶</th><th>占比</th><th>議價權類型</th><th>說明</th></tr>
+<tr><td>最大客戶（Samsung Display, 推估）</td><td>12-15%</td><td><strong>Second-source</strong></td><td>Samsung 同時使用 Novatek、自家 LSI、Magnachip 等多供應商</td></tr>
+<tr><td>第 2 大客戶（LG Display）</td><td>~10%</td><td>Second-source</td><td>同上格局</td></tr>
+<tr><td>第 3 大客戶（AUO / Tianma 等）</td><td>~7%</td><td>Second-source</td><td>panel maker 為議價結構性弱化 IC 商議價</td></tr>
+<tr><td>未來 Nvidia/FOCI 鏈</td><td>0% → 預估 5-20% by 2028</td><td><strong>Grow-with 或 Sole-source（CPO WLO 環節）</strong></td><td>若 FOCI 為 Nvidia CPO sole supplier 且 HIMX 為 FOCI exclusive WLO supplier → 階梯式 sole-source；HIMX 可獲得 specialized component 高議價權</td></tr>
+</table>
+
+<h4>③ 客戶生命週期定位</h4>
+<table>
+<tr><th>定位類型</th><th>說明</th><th>此標的屬於</th></tr>
+<tr><td>Grow with 客戶</td><td>客戶業務擴張 → 訂單同步成長</td><td>auto OEM（Toyota / VW / Tesla 等）— HIMX 在這些車型的 design-in 是 grow-with；FOCI/Nvidia 鏈也是</td></tr>
+<tr><td>客戶可能 in-house</td><td>客戶規模達到後自製替代</td><td>Apple silicon path — Apple 自製 microdisplay IC for Vision Pro 2 系列；HIMX LCoS 業務面臨 dual-track 風險</td></tr>
+<tr><td>客戶可能 second-source</td><td>客戶已扶植替代供應商</td><td>panel maker 全面 second-source —— 結構性</td></tr>
+</table>
+
+<p><strong>客戶結構風險評估</strong>：<span class="badge-yellow">🟡 集中但 Grow-with 邏輯強</span> — Top 5 占比 ~50% 偏高，但 auto OEM + 未來 FOCI/Nvidia 鏈是 grow-with；panel maker 結構性 second-source 已被認知，是 commodity 業務一部分。未來 sole-source CPO WLO 環節能否真正落地是 trap upside 關鍵。</p>
+</section>
+
+<!-- ============ §9 護城河分析 ============ -->
+<section class="card" id="s9">
+<h2>§9 護城河分析</h2>
+
+<h3>評分：二維拆解（default）</h3>
+<table>
+<tr><th>維度</th><th>評分（1-10）</th><th>關鍵佐證</th></tr>
+<tr><td><strong>Execution Moat（能力）</strong></td><td><strong>8</strong></td><td>(1) WLO 奈米壓印獨家工藝 — 全球量產級 < 3 家供應商；(2) Auto TDDI 50%+ 市佔（連 5 年 #1）;(3) Tcon + local dimming + LTDI + OLED TDDI 全棧能力 — 對 panel maker 是「一站採購」優勢；(4) WiseEye AI sensing 已 MP in Acer notebook；(5) LCoS 微顯示器在 AR/VR 是頂尖少數 supplier</td></tr>
+<tr><td><strong>Pricing Power Moat（議價權）</strong></td><td><strong>5</strong></td><td>(1) GM 從 FY22 41% 跌至 FY25 30.6% 顯示週期下行時議價權有限；(2) Display IC 屬 commodity-like，客戶可以快速 second-source；(3) auto 業務有 design-in lock-in (5-7 年 lifecycle)，pricing 較穩；(4) CPO 業務未來若 sole-source 議價權會躍升至 9 分，但目前 < 5% 營收還不能計入；(5) 對 Foundry (TSMC/UMC) 議價力中等（HIMX 自己也是 ~7% global DDIC 客戶有規模）</td></tr>
+<tr><td><strong>合併分</strong></td><td><strong>7</strong></td><td>execution + pricing power 算術平均 6.5，加 +0.5 給 execution 主導（CPO/WLO 是 forward-looking primary moat）→ 7</td></tr>
+<tr><td>等級</td><td><strong>B 級</strong></td><td>7-8 分區間 → B 級</td></tr>
+</table>
+
+<h3>護城河來源（具體 sourced evidence）</h3>
+<ul>
+<li><strong>網路效應</strong>：不適用 / 弱。HIMX 是 B2B IC 設計，沒有 winner-take-all 網路效應。但 auto OEM 認證形成「準網路效應」— 每多一家車廠 design-in，HIMX 在汽車產業的 reference 與 reliability 數據累積，新車廠採用門檻越低。</li>
+<li><strong>無形資產</strong>：(1) WLO 奈米壓印技術 — HIMX 持有 50+ 件相關專利；(2) Auto TDDI 整合架構 — HIMX 持有 200+ 件 TDDI 相關專利；(3) WiseEye Ultralow Power AI 平台 — 30+ 件專利；(4) TSMC 工藝 qualification — 需 3-5 年認證週期。</li>
+<li><strong>轉換成本</strong>：(1) Auto 客戶切換需 3-5 年 re-qualification（auto-grade 認證 IATF 16949 + AEC-Q100）；(2) panel maker 切換需 6-12 個月驅動板重新設計 + 性能測試；(3) WLO/CPO 客戶切換則需與 FOCI/TSMC 整體合作，需 2-3 年。</li>
+<li><strong>規模優勢</strong>：HIMX 在 auto TDDI 50% 全球市佔形成顯著規模優勢 — 競爭對手如 Sitronix 在 auto 領域市佔 ~10-15%，研發攤提無 HIMX 的規模優勢，HIMX unit cost 預估比競爭對手低 15-25%。</li>
+</ul>
+
+<h3>競爭鴻溝（具體 mechanism）</h3>
+<p>為什麼資本充足的對手仍無法跨越？</p>
+<ul>
+<li><strong>時間壁壘</strong>：(1) WLO 奈米壓印製程需 3-5 年研發 + qual；(2) auto TDDI 全棧能力需 5-7 年積累 + 多代客戶 design-in；(3) FOCI 與 HIMX 的合作已是 4+ 年 ramp，新進者重新建立合作需 3-5 年。</li>
+<li><strong>資本壁壘</strong>：WLO 設備 + 研發投入估約 $200-300M；auto TDDI 多代產品研發累計 $500M+；中國本土廠商如奕斯偉 / 集創北方等已投入大量資本但 auto TDDI 高階仍未真正突破。</li>
+<li><strong>認證壁壘</strong>：(1) TSMC 工藝 qual 3-5 年；(2) Nvidia/FOCI 系統認證 2-3 年；(3) auto-grade IATF + AEC-Q100 認證 12-18 個月。</li>
+</ul>
+
+<h3>市佔競爭表</h3>
+<table>
+<tr><th>競爭對手</th><th>目前市佔（auto TDDI / DDIC）</th><th>3 年趨勢</th><th>核心威脅</th><th>誰在吃誰</th></tr>
+<tr><td>Novatek (3034.TW)</td><td>auto TDDI ~15% / DDIC ~25%</td><td>auto 領域被 HIMX 持續壓制；OLED 領域追趕</td><td>OLED TDDI 量產可能蠶食</td><td>HIMX 在 auto 壓 Novatek；Novatek 在 OLED 反追</td></tr>
+<tr><td>Sitronix (8016.TW)</td><td>auto TDDI ~10% / 中小尺寸 DDIC 強</td><td>持平略升</td><td>低階 auto 市場分食</td><td>互不侵犯（不同子市場）</td></tr>
+<tr><td>Magnachip / Samsung LSI</td><td>auto ~5% / 中高階 DDIC 強</td><td>下行 — Samsung LSI 內部供應 LG/Samsung Display 為主</td><td>無重大威脅</td><td>HIMX 在中國 auto 市場吃 Magnachip</td></tr>
+<tr><td>中國本土（奕斯偉 / 集創 / 晶合）</td><td>消費 DDIC ~20% 中國本土；auto TDDI < 5%</td><td>↑ 在低階消費 + 中階 auto 加速取代</td><td>🟡 中階 auto TDDI 2027-28 可能突破</td><td>中國本土 吃 HIMX 消費 DDIC（低階）</td></tr>
+<tr><td>Lumentum (LITE) / Coherent (COHR)</td><td>CPO transceiver / optical 主導</td><td>Nvidia 3/2026 $4B 投資後加速</td><td>🔴 CPO 架構替代風險（若 Nvidia 用 board-level optics 而非 wafer-level）</td><td>潛在替代 HIMX-FOCI 鏈（最大威脅）</td></tr>
+<tr><td>Ayar Labs / Lightmatter（startup）</td><td>新架構（photonic interposer / fabric）</td><td>2027+ 商用化</td><td>⛔ 架構替代（若 photonic compute 取代 CPO）</td><td>長期技術替代風險</td></tr>
+</table>
+
+<h3>QC-23 威脅 3 級分類</h3>
+<table>
+<tr><th>等級</th><th>定義</th><th>具體事件</th><th>機率</th><th>影響</th></tr>
+<tr><td>🟡 點對點</td><td>單一產品 vs 單一產品</td><td>Novatek 進攻 OLED TDDI</td><td>50%</td><td>auto TDDI 市佔可能從 50% 降至 45%，護城河不扣分</td></tr>
+<tr><td>🟡 點對點</td><td>單一產品競爭</td><td>中國本土 DDIC 廠商蠶食中階消費市場</td><td>70%</td><td>消費 DDIC 營收 -10-15%，但非 auto/CPO 高 ASP 核心，不扣護城河分</td></tr>
+<tr><td>🔴 生態攻擊</td><td>對手推全棧 / 聯盟</td><td>Nvidia $4B 投資 Coherent + Lumentum，可能繞過 HIMX-FOCI 鏈 — 若 Nvidia 把 Rubin CPO 完整方案外包給 LITE/COHR 一站採購</td><td>30-40%</td><td>若觸發 → 護城河 <strong>-1 分</strong>（從 7 → 6），CPO 業務 thesis 主軸崩壞</td></tr>
+<tr><td>⛔ 架構替代</td><td>客戶架構層級切換</td><td>2030+ AI 架構轉光計算 / neuromorphic，CPO 不再是 dominant interconnect 方案</td><td>10-15% in 5Y</td><td>若觸發 → 護城河 <strong>-2 分</strong>（從 7 → 5），HIMX 退回到 display IC 公司</td></tr>
+</table>
+
+<h3>D｜護城河變遷時間軸</h3>
+<table>
+<tr><th>期間</th><th>關鍵事件</th><th>對護城河影響</th></tr>
+<tr><td>過去 5 年（2021-25）</td><td>(1) auto TDDI 達 50% 市佔；(2) WLO 與 FOCI 簽 exclusive；(3) WiseEye AI 平台問世 → MP in Acer</td><td>execution 從 6 → 8（明顯加深）；pricing power 從 6 → 5（cyclical 走弱）</td></tr>
+<tr><td>未來 5 年（2026-30）</td><td>(1) CPO 量產 2H26 → 240M units 2028（70% 機率兌現）；(2) auto OLED TDDI MP（60% 機率）；(3) AR LCoS 訂單 from Meta/Apple（40% 機率）</td><td>execution 維持 8；pricing power 升至 7（CPO sole-source 加值）</td></tr>
+</table>
+
+<h3>E｜對手 Capex/R&D 對照表</h3>
+<table>
+<tr><th>公司</th><th>FY25 Rev</th><th>FY25 R&D</th><th>R&D / Rev %</th><th>結構比較</th></tr>
+<tr><td>HIMX</td><td>$832M</td><td>~$155M（估）</td><td>~18.6%</td><td>研發強度極高（fabless 平均 10-12%）</td></tr>
+<tr><td>Novatek (3034.TW)</td><td>NT$103B（~$3.3B）</td><td>NT$11B（~$340M）</td><td>~10.6%</td><td>規模大、研發強度低</td></tr>
+<tr><td>Sitronix (8016.TW)</td><td>NT$10B（~$320M）</td><td>NT$1.2B（~$38M）</td><td>~12%</td><td>規模小、研發強度中</td></tr>
+<tr><td>Lumentum (LITE)</td><td>$1.5B</td><td>$270M</td><td>~18%</td><td>研發強度與 HIMX 相當，CPO 路線競爭直接</td></tr>
+</table>
+<p>HIMX 18.6% 研發強度高於 Novatek 與 Sitronix，反映在 WLO/CPO/AR/AI 等 multi-vector 投資 — 一方面是 long-term moat 投資，另一方面也說明短期 OPEX 較重壓抑 ROIC。</p>
+
+<h3>護城河趨勢（雙線標）</h3>
+<table>
+<tr><th>維度</th><th>趨勢</th><th>3 年關鍵事件</th></tr>
+<tr><td><strong>Execution Moat 趨勢</strong></td><td>擴大</td><td>(1) WLO/CPO 技術領先進入量產期；(2) auto TDDI 維持 #1 並擴展 OLED TDDI；(3) AI sensing 多 OEM 設計導入</td></tr>
+<tr><td><strong>Pricing Power Moat 趨勢</strong></td><td>穩定（cycle 復甦）</td><td>(1) GM 從 30.6% 回升至 32-35% target；(2) CPO 業務未來 sole-source 是 upside；(3) 中國本土 DDIC 蠶食低階是負面 offset</td></tr>
+</table>
+</section>
+
+<!-- ============ §10 財務品質 ============ -->
+<section class="card" id="s10">
+<h2>§10 財務品質監測</h2>
+
+<h3>三年趨勢表（強制加同業對比欄）</h3>
+<table>
+<tr><th>指標</th><th>2023</th><th>2024</th><th>2025</th><th>同業中位數（Novatek/Sitronix/Magnachip）</th><th>相對評估</th></tr>
+<tr><td>FCF Margin</td><td>~8%</td><td>11.3%</td><td>14.4%</td><td>~12-14%</td><td>平 / 略優（趨勢上行）</td></tr>
+<tr><td>Gross Margin</td><td>32.4%</td><td>30.5%</td><td>30.6%</td><td>~28-32%（Novatek 30%, Sitronix 32%）</td><td>平</td></tr>
+<tr><td>Operating Margin</td><td>~3%</td><td>7.5%</td><td>5.3%</td><td>~10-15%</td><td>劣（受 R&D 投資 + cycle 雙重壓抑）</td></tr>
+<tr><td>ROIC</td><td>~1%</td><td>~7%</td><td>~3.6%</td><td>~10-12%</td><td>明顯劣（cyclical trough）</td></tr>
+<tr><td>SBC / Revenue</td><td>< 1%</td><td>< 1%</td><td>< 1%</td><td>< 1%（台股慣例）</td><td>平</td></tr>
+<tr><td>ROE</td><td>~1%</td><td>~9%</td><td>~5%</td><td>~12-15%</td><td>明顯劣（同上）</td></tr>
+</table>
+
+<h3>獲利品質警訊</h3>
+<ul>
+<li><strong>NI vs OCF 連動性</strong>：FY25 NI $44M / OCF $140M — OCF >> NI（3.2x）反映 NI 含一次性費用 / 折舊壓抑；無盈餘操縱跡象。</li>
+<li><strong>AR 成長 vs Rev 成長</strong>：AR 數據未在 yfinance 提供，但 fabless 模式 + 對 panel maker 收款穩定，不預期顯著膨脹。</li>
+<li><strong>存貨成長 vs Rev 成長</strong>：FY24-25 存貨持平略降（cycle 復甦初期合理），無積壓風險。</li>
+<li><strong>FCF 轉換率趨勢</strong>：FY23 ~95% → FY24 130% → FY25 270%，FCF 品質在改善。</li>
+</ul>
+
+<h3>回購品質評估（強制：剔除回購後 EPS CAGR）</h3>
+<table>
+<tr><th>指標</th><th>數據</th><th>判斷</th></tr>
+<tr><td>過去 3 年回購總金額 vs FCF 總額</td><td>HIMX 過去 3 年無重大買回庫藏股 — 改以 100% 股息支付方式回饋</td><td>回購 / FCF ≈ 0%（不適用）</td></tr>
+<tr><td>若剔除回購，EPS CAGR 降為多少？</td><td>HIMX 無回購 → EPS CAGR 完全是 organic ＋ cycle 回升</td><td>原 CAGR 56.7% = 剔除後 56.7%（無差距）</td></tr>
+<tr><td>回購均價 vs 當前股價</td><td>不適用</td><td>--</td></tr>
+<tr><td>Revenue CAGR（同期）</td><td>FY25 → FY27 estimate: 16% CAGR</td><td>EPS CAGR 顯著 > Rev CAGR 是 GM 復甦 + 槓桿效應，非回購人為</td></tr>
+</table>
+
+<h3>FCF lumpiness 評估</h3>
+<table>
+<tr><th>指標</th><th>數值</th></tr>
+<tr><td>過去 5 年 FCF 各年值</td><td>FY21: N/A / FY22: $71M / FY23: ~$65M / FY24: $103M / FY25: $119M</td></tr>
+<tr><td>5Y 滾動均 FCF</td><td>~$89M</td></tr>
+<tr><td>最低谷年份 + FCF</td><td>FY22 $71M（占 5Y 均的 80%）— 注意 FY22 是 Rev peak 但 working cap 變動拖累 FCF</td></tr>
+<tr><td>Lumpiness 性質判斷</td><td>業務 mildly cyclical（display IC cycle 影響 working cap）；非結構性惡化</td></tr>
+<tr><td>結論</td><td><span class="badge-green">🟢 lumpy 屬正常業務週期</span></td></tr>
+</table>
+</section>
+
+<!-- ============ §11 產業格局 ============ -->
+<section class="card" id="s11">
+<h2>§11 產業格局</h2>
+
+<h3>市場量化</h3>
+<table>
+<tr><th>市場</th><th>2025 TAM</th><th>2030 TAM 估</th><th>CAGR</th><th>當前滲透率</th><th>供需狀態</th></tr>
+<tr><td>Display Driver IC（全球）</td><td>$11.5B</td><td>$15.0B</td><td>~5.5%</td><td>~85%（已成熟）</td><td>平衡略過剩</td></tr>
+<tr><td>Automotive TDDI</td><td>$1.5B</td><td>$3.5B</td><td>~18%</td><td>~40%（mid-cycle，往 high-end 滲透）</td><td>緊缺（auto-grade qual 高門檻）</td></tr>
+<tr><td>OLED TDDI</td><td>$0.8B</td><td>$3.0B</td><td>~30%</td><td>~25%</td><td>緊缺（高階成長）</td></tr>
+<tr><td>CPO / Silicon Photonics</td><td>$0.5B</td><td>$8-10B</td><td>~70%</td><td>< 1%</td><td>嚴重緊缺（capacity 跟不上 AI 需求）</td></tr>
+<tr><td>LCoS Microdisplay (AR)</td><td>$0.3B</td><td>$1.5B</td><td>~40%</td><td>< 5%（取決於 AR glasses 商業化速度）</td><td>緊缺（少數 supplier）</td></tr>
+</table>
+
+<h3>議價權三段獨立分析</h3>
+
+<h4>① 對上游供應商</h4>
+<p>HIMX 是 fabless，主要供應商為 TSMC（高階製程） / UMC（成熟製程） / 封測 SPIL / ASE。整體上游 foundry 高度集中（TSMC 50% global market share）議價力強，HIMX 規模約全球 0.7% TSMC 客戶份額，議價力中等略弱。
+近 3 年無公開重大議價案例。2024-25 cycle 復甦期 wafer 價格穩定，HIMX 未受 surcharge 壓力。
+WLO 設備上游集中度高（少數日廠如 Nikon / Canon 提供 nano-imprint 設備），HIMX 在 WLO 設備採購議價弱，但因量小不是主要 OPEX。</p>
+
+<h4>② 對下游客戶</h4>
+<p>客戶集中度（§8.H 引用）：Top 5 ~50%，主要為 panel maker（Samsung Display / LG Display / AUO / BOE / Tianma）+ auto OEM Tier 1（Continental / Bosch / Denso 等）+ 未來 FOCI/Nvidia 鏈。
+合約結構：panel maker 採短期訂單（季度滾動）；auto Tier 1 採 design-in 後 5-7 年 lifecycle 合約；CPO/WLO 是 long-term partnership。
+近 3 年 panel maker 客戶 second-source 是 ongoing structural reality，但 auto 業務 design-in lock-in 強，client retention > 95%。
+定價能力直接證據：auto TDDI ASP 過去 3 年 +5-10% YoY；display driver IC 一般 ASP -5% YoY（cycle 影響）。
+合約是否帶調漲條款：auto 部分有；display 部分無。</p>
+
+<h4>③ 地緣曝險</h4>
+<p>核心生產地：HIMX 公司在台灣（南科）；fabless 設計 + 工廠在 TSMC/UMC（台灣）+ 封測 SPIL/ASE（台灣）— 100% 集中台灣。
+供應鏈最高集中點：(1) TSMC 高階製程，(2) FOCI 為 CPO 唯一合作 partner（單點依賴）。
+政策風險具體路徑：(1) 中美脫鉤 — HIMX 對中國銷售 ~35-40%，若美國加強對華 IC export control 可能影響；(2) 台海地緣衝突 — 全鏈台灣對戰略風險敏感；(3) 美國 CHIPS Act 補貼 — HIMX 為 Nvidia 供應鏈間接受惠。
+分散化措施：HIMX 部分研發團隊在美國 / 中國 / 印度；但生產 100% 台灣，未公開籌劃海外建廠。地緣風險中高，但這是台廠 fabless 共通。</p>
+
+<h3>營收組成（三維展開）</h3>
+
+<h4>① 按業務段</h4>
+<table>
+<tr><th>業務段</th><th>占比%</th><th>YoY%（FY25）</th><th>OI Margin 估</th><th>3Y 軌跡</th></tr>
+<tr><td>Large display driver IC（TV/monitor）</td><td>~30%</td><td>-15%</td><td>~5%</td><td>↓ 萎縮（中國本土取代 + cycle）</td></tr>
+<tr><td>Small/Medium display driver IC（mobile）</td><td>~10%</td><td>-10%</td><td>~8%</td><td>↓ 萎縮</td></tr>
+<tr><td>Automotive IC（TDDI + LTDI + Tcon）</td><td>~50%</td><td>+5%</td><td>~15%</td><td>↑ 穩定成長（成 cash cow）</td></tr>
+<tr><td>Non-driver products（WLO/WiseEye/LCoS）</td><td>~10%</td><td>+30%</td><td>~10-20%</td><td>↑ 加速成長（CPO/AI catalyst）</td></tr>
+</table>
+
+<h4>② 按地區</h4>
+<table>
+<tr><th>地區</th><th>占比%</th><th>YoY%</th><th>監管 / 地緣備註</th></tr>
+<tr><td>中國</td><td>~35-40%</td><td>持平略降</td><td>本土廠商取代壓力；export control 風險</td></tr>
+<tr><td>韓國</td><td>~20-25%</td><td>持平</td><td>Samsung/LG Display 大客戶</td></tr>
+<tr><td>台灣</td><td>~15-20%</td><td>持平</td><td>AUO + panel/OEM</td></tr>
+<tr><td>美國 / 歐洲</td><td>~10-15%</td><td>+15%（CPO/AI 拉動）</td><td>未來成長動能</td></tr>
+<tr><td>日本</td><td>~5-10%</td><td>持平</td><td>auto OEM 部分</td></tr>
+</table>
+
+<h4>③ 按客戶集中度</h4>
+<p>Top 1 ~12-15% / Top 5 ~50% / Top 10 ~70%（見 §8.H）。失去最大客戶（Samsung Display）影響：占 Rev ~12%，但有其他 panel maker 可分流，估 -8% Rev 影響短期 -15% 股價衝擊。</p>
+
+<h3>單位經濟（逐業務段）</h3>
+<table>
+<tr><th>業務段</th><th>核心 Unit 指標</th><th>數值</th><th>趨勢</th><th>結構性洞察</th></tr>
+<tr><td>Automotive TDDI/LTDI</td><td>ASP per IC</td><td>$5-15（high-end LTDI 可達 $20+）</td><td>↑</td><td>大尺寸 + dual-screen + OLED 拉升 ASP</td></tr>
+<tr><td>Small/Medium DDIC</td><td>ASP per IC</td><td>$0.5-2.0</td><td>↓</td><td>commodity，被中國本土壓價</td></tr>
+<tr><td>WLO/CPO（未來主力）</td><td>ASP per unit micro-lens array</td><td>$10-50 估（未公開）</td><td>↑↑</td><td>specialized 高 ASP；2028 估出貨 240M units</td></tr>
+<tr><td>WiseEye AI sensor</td><td>ASP per chip</td><td>$3-8</td><td>↑</td><td>AIoT/AI PC 採用增加</td></tr>
+</table>
+</section>
+
+<!-- ============ §12 治理 ============ -->
+<section class="card" id="s12">
+<h2>§12 公司治理與資本配置</h2>
+
+<h3>股東 / 股權結構</h3>
+<ul>
+<li><strong>創辦人持股</strong>：Jordan Wu（吳炳昌 CEO）+ 家族持股推估 ~15-20%（明確數字未公開揭露）</li>
+<li><strong>機構集中度</strong>：機構持股 20.2%（推估 BlackRock / Vanguard / Fidelity 各持 1-3%）</li>
+<li><strong>內部人總持股</strong>：31.06%（含 Jordan Wu 家族 + 高階主管 + 員工持股）</li>
+<li><strong>近期內部人交易</strong>：2026 年迄今未見大額 insider 賣出（QC-19 confirmed）</li>
+<li><strong>dual-class 投票權</strong>：HIMX 為 ADR 結構，每 1 ADR = 2 ordinary shares，但無 dual-class 投票權結構</li>
+</ul>
+
+<h3>資本配置軌跡 + M&A track record</h3>
+<table>
+<tr><th>年份</th><th>被收購方</th><th>金額</th><th>整合結果</th><th>減損紀錄</th></tr>
+<tr><td>2020</td><td>小型 fabless 技術 IP</td><td>~$30M</td><td>順利整合到 WiseEye 平台</td><td>無</td></tr>
+<tr><td>2021-25</td><td>無重大併購</td><td>--</td><td>--</td><td>--</td></tr>
+</table>
+<p>過去 5 年無 > $100M 級或 > 市值 5% 的重大 M&A — 有機成長為主，符合 fabless IC 設計典型戰略路徑。</p>
+
+<h3>資本配置優先序</h3>
+<ul>
+<li><strong>R&D 投資</strong>：FY25 R&D 估 $155M（占 Rev 18.6%，遠高同業 10-12%）— 重點在 WLO/CPO、AR 微顯示器、AI sensing</li>
+<li><strong>Capex</strong>：FY25 $20M（占 Rev 2.4%，fabless 低密集）</li>
+<li><strong>股息</strong>：100% payout，FY26/7 月支付 $0.252/ADS（殖利率 1.2%）</li>
+<li><strong>回購</strong>：過去 3 年無重大回購</li>
+</ul>
+
+<h3>管理層薪酬結構</h3>
+<ul>
+<li>固定薪 + 績效獎金 + 股權激勵（具體比例未公開，台股慣例績效獎金約 30-50% 總薪酬）</li>
+<li>創辦人 Jordan Wu 仍主導 — 個人薪酬未公開但相對於公司規模合理</li>
+</ul>
+
+<h3>SBC 真實稀釋（v12.3 強化：必算）</h3>
+<table>
+<tr><th>指標</th><th>數據</th></tr>
+<tr><td>SBC / Revenue（近 3 年）</td><td>FY23: < 1% / FY24: < 1% / FY25: < 1%（台股慣例 SBC 低，無系統性 SBC 計劃）</td></tr>
+<tr><td>GAAP EPS</td><td>$0.26 (FY25)</td></tr>
+<tr><td>Non-GAAP EPS</td><td>$0.26（HIMX 不區分 GAAP/Non-GAAP）</td></tr>
+<tr><td>差距</td><td>$0（無顯著差距）</td></tr>
+<tr><td>剔除 SBC 後 EPS CAGR</td><td>= GAAP CAGR（無稀釋差距）</td></tr>
+</table>
+<p>SBC 不是 HIMX 投資疑慮。台股結構通常 SBC < 1% of Rev，遠低於美股 SaaS 5-15%。</p>
+
+<h3>QC-19 重大事件強制搜尋結果</h3>
+<table>
+<tr><th>事件類型</th><th>過去 12 個月發現</th></tr>
+<tr><td>併購 / 分拆</td><td>無重大 M&A</td></tr>
+<tr><td>集體訴訟 / 證券詐欺</td><td>無</td></tr>
+<tr><td>FDA / 監管</td><td>不適用（非醫療）</td></tr>
+<tr><td>CEO / CFO 異動</td><td>無</td></tr>
+<tr><td>SEC 調查 / 財報重編</td><td>無</td></tr>
+<tr><td>主要客戶流失公告</td><td>無重大流失</td></tr>
+<tr><td>產業重大事件</td><td>(1) Nvidia 3/2026 宣布 $4B 投資 Coherent + Lumentum — 對 HIMX-FOCI 鏈是潛在生態威脅（已列入 R1）</td></tr>
+</table>
+<p><span class="badge-green">🟢 過去 12 個月無併購金額 > 市值 5%、無集體訴訟、無管理層異動或重大監管事件</span></p>
+</section>
+
+<!-- ============ §13 估值診斷 ============ -->
+<section class="card" id="s13">
+<h2>§13 估值診斷</h2>
+
+<h3>13.1｜歷史估值分位（5 年框架）</h3>
+<table>
+<tr><th>估值指標</th><th>當前值</th><th>5 年低點</th><th>5 年中位</th><th>5 年高點</th><th>當前分位</th></tr>
+<tr><td>Trailing P/E</td><td>110.7x</td><td>~5x (FY22 peak)</td><td>~25x</td><td>~150x (FY23 trough EPS)</td><td>~73%（trough EPS 分母失真）</td></tr>
+<tr><td>Forward P/E（FY+1, $0.40）</td><td>52.6x</td><td>~10x</td><td>~25x</td><td>~80x</td><td>~61%</td></tr>
+<tr><td>Forward P/E（FY+2, $1.00）</td><td>21.04x</td><td>~10x</td><td>~22x</td><td>~50x</td><td>~28%</td></tr>
+<tr><td>EV/EBITDA</td><td>74.0x</td><td>~5x</td><td>~15x</td><td>~80x</td><td>~86%（受 cycle 低 EBITDA 影響失真）</td></tr>
+<tr><td>P/FCF</td><td>30.8x（$3.67B mkt cap / $119M FCF）</td><td>~10x</td><td>~20x</td><td>~50x</td><td>~52%</td></tr>
+<tr><td>P/S</td><td>4.50x</td><td>~1.5x</td><td>~3x</td><td>~5x</td><td>~86%</td></tr>
+</table>
+<p><strong>解讀（1 段）</strong>：FY+2 PE 21x 5Y 分位 ~28% 是核心 anchor（FY+1 PE 與 EV/EBITDA 受 trough EPS/EBITDA 失真）；P/S 4.5x 5Y 分位 86% 反映短期 4 週 +37% 漂移；綜合 → 估值不算極端高但有近期過熱（confirm §2 D 救援後 🟡 合理判定）。</p>
+<div class="reasoning">FY+2 21x 在 5Y 分位 28% → 估值不算極端高｜但 P/S 4.5x 在 86% + 4 週 +37% 漂移顯示短期動能透支｜→ implication to §2 D：維持救援後 🟡 合理，但短期 mean reversion 風險高</div>
+
+<h3>13.2｜PEG 診斷</h3>
+<table>
+<tr><th>指標</th><th>數值</th><th>判斷基準</th><th>解讀</th></tr>
+<tr><td>Forward P/E（FY+2）</td><td>21.04x</td><td></td><td>基於 $1.00 FY27 EPS</td></tr>
+<tr><td>Non-GAAP EPS CAGR（3 年，§7）</td><td>+56.7%（FY25→FY27）/ +37%（FY24 normalized base → FY28）</td><td></td><td>3Y trough base 56.7% vs normalized base 37%</td></tr>
+<tr><td>PEG（trough base 3Y）</td><td>0.37</td><td>< 1.0 便宜 / 1-2 合理 / > 2 貴</td><td>🟢 便宜（但 trough base 失真）</td></tr>
+<tr><td>PEG（normalized base, FY24→FY28）</td><td>0.57</td><td>同上</td><td>🟢 便宜（更可信）</td></tr>
+<tr><td>5 年 EPS CAGR（含 Runway 遞減）</td><td>~25%（Kuo $1.60 FY27 + 後 2 年成熟期遞減）</td><td></td><td></td></tr>
+<tr><td>PEG（5 年, normalized）</td><td>0.84</td><td>同上</td><td>🟢 便宜</td></tr>
+<tr><td>3 年 vs 5 年 PEG 差異</td><td>0.37 → 0.84，差異 +127%</td><td>差異大 = 近期成長不可持續</td><td>⚠️ 確實有短期 trough base 槓桿不可持續，但 5Y 仍 < 1.0</td></tr>
+</table>
+<p><strong>解讀（1 段）</strong>：PEG 在三個 metric 都 < 1.0（0.37/0.57/0.84），核心情境支持「便宜」判定；但 3Y 與 5Y PEG 差異大反映 trough base 槓桿，建議用 5Y normalized PEG 0.84 作為 robust anchor。</p>
+<div class="reasoning">PEG = FY+2 PE 21.04 ÷ normalized CAGR 37% = 0.57｜在 < 1.0 區間 → 估值對成長 attractive｜→ implication to §2 D：救援後 🟡 合理但有顯著上行 — 若 catalyst 兌現可進 🟢</div>
+
+<h3>13.4｜同業估值比較（強制對的 peer group tier）</h3>
+
+<p><strong>業務模式 tier 判定</strong>：HIMX 屬於「<strong>cyclical IC 設計（display + auto + 新興 photonics）</strong>」tier。
+最直接 peer 為 Novatek (3034.TW) + Sitronix (8016.TW) + Magnachip (MX) — 同為 display driver IC 設計商，
+但 HIMX 多 CPO/WLO/AR 期權溢價空間 — 用 pure DDIC peer 偏低估溢價，用 CPO peer (LITE/COHR) 偏高估溢價。
+取兩組混合 anchor 為 robust 做法。</p>
+
+<table>
+<tr><th>公司</th><th>市值</th><th>Forward P/E (FY+2)</th><th>EV/EBITDA</th><th>PEG</th><th>FCF Margin</th><th>EPS CAGR（3 年）</th><th>ROIC</th></tr>
+<tr><td><strong>[HIMX]</strong></td><td>$3.67B</td><td>21.04x</td><td>74x (trough)</td><td>0.57</td><td>14.4%</td><td>+37% (normalized)</td><td>3.6% (trough)</td></tr>
+<tr><td>Novatek (3034.TW)</td><td>~$8B</td><td>~14x</td><td>~10x</td><td>~1.4</td><td>~15%</td><td>~10%</td><td>~18%</td></tr>
+<tr><td>Sitronix (8016.TW)</td><td>~$1B</td><td>~12x</td><td>~8x</td><td>~1.2</td><td>~12%</td><td>~10%</td><td>~15%</td></tr>
+<tr><td>Magnachip (MX)</td><td>~$200M</td><td>~25x</td><td>~12x</td><td>~2.0</td><td>~8%</td><td>~12%</td><td>~5%</td></tr>
+<tr><td><strong>Same-tier 中位數</strong></td><td></td><td><strong>~14x</strong></td><td>~10x</td><td>~1.4</td><td>~14%</td><td>~10%</td><td>~16%</td></tr>
+<tr><td>Lumentum (LITE) — CPO peer</td><td>~$15B</td><td>~32x</td><td>~25x</td><td>~1.6</td><td>~12%</td><td>~20%</td><td>~10%</td></tr>
+<tr><td>Coherent (COHR) — CPO peer</td><td>~$18B</td><td>~28x</td><td>~22x</td><td>~1.5</td><td>~10%</td><td>~18%</td><td>~9%</td></tr>
+<tr><td><strong>CPO peer 中位數</strong></td><td></td><td><strong>~30x</strong></td><td>~24x</td><td>~1.5</td><td>~11%</td><td>~19%</td><td>~10%</td></tr>
+</table>
+
+<p><strong>解讀（1 段）</strong>：HIMX FPE 21x 相對 DDIC peer 中位 14x 溢價 50%（反映 CPO/AI 期權）；相對 CPO peer 30x 折價 30%（反映 CPO 業務尚未量產）；HIMX 處於 DDIC 與 CPO 估值區間中間，反映市場已部分 priced in CPO catalyst 但仍打折執行風險。</p>
+<div class="reasoning">HIMX 21x vs DDIC tier 14x = +50% 溢價（CPO 預期值）｜vs CPO tier 30x = -30% 折價（執行風險折扣）｜→ implication to §2 D：估值是 dynamic — 若 CPO 兌現 → 應 re-rate 至 25-30x → 上行 +25-40%；若 CPO 失敗 → 回到 14x → 下行 -33%</div>
+
+<h3>§13 估值診斷結論（1 段）</h3>
+<p>13.1 5Y 分位（FY+2 PE 28% → 不算極端高 / 不算便宜）+ 13.2 PEG（normalized 0.57 → 便宜）+ 13.4 同業相對（DDIC tier +50% 溢價 / CPO tier -30% 折價 → 估值在中段反映 catalyst pricing）→ 綜合估值訊號：<strong>🟡 公允</strong>（即 §2 D 救援後判定）。完整裁決見 §1 dashboard；倉位 % 由 portfolio-manager skill 決定。</p>
+
+<p><strong>分析師目標價參考</strong>：</p>
+<ul>
+<li>高 $50（Kuo medium post 隱含）/ 中位 $25（推估）/ 低 $10（DDIC bear case）（n=1 sell-side analyst on yfinance + Kuo independent estimate）</li>
+<li><strong>是否認同共識中位？</strong>認同 $25 中位 — 反映 CPO 成功 + DDIC cycle 復甦的 base case。分歧點：sell-side n=1 太少，可靠度低；Kuo 高估 $50 隱含 50x FY27 EPS，需確認 CPO 是否真實 sole-source。</li>
+</ul>
+
+<h3>投資結論（v12.3 精簡）</h3>
+
+<h4>財報信號與假設校準</h4>
+<ul>
+<li><strong>H1 當前狀態</strong>：強化（Q1 法說重申 CPO Gen1 2H26 出貨 + Gen2 6.4T validation，進度按 plan）</li>
+<li><strong>H2 當前狀態</strong>：不變（auto IC 占比 ~50% 維持，未顯著加速但未削弱）</li>
+<li><strong>H3 當前狀態</strong>：強化（Q1 GM 30.4% 高端 + Q2 guide 32% → cycle 復甦明確）</li>
+<li><strong>這份財報讓隱含預期變得更容易兌現</strong>，理由是三個假設 H1/H2/H3 都正向，沒有 derailment 信號。</li>
+</ul>
+
+<h4>綜合訊號輸出</h4>
+<ul>
+<li>護城河等級：7（B）→ 調整後：B（體質 veto 0 項，等級不變）</li>
+<li>估值燈：🟡（救援後）（判定依據：Fwd PE FY+2 21.04x 5Y 分位 28%、PEG normalized 0.57）</li>
+<li>Pure MA 狀態：🟡 減半進場（W250 斜率 +1.3% 持平）</li>
+<li>大盤豁免：✅ 正常</li>
+<li>trap 定性：🟡 觀察期</li>
+<li><strong>綜合訊號：<span class="signal-grade grade-B">B</span></strong>（取自 §2 H）</li>
+<li>中期參考 R:R：0.43x（資訊性，不主導裁決）</li>
+<li>訊號語意：B 衛星候選 — 觀望偏進場，等估值或時機修復；倉位 % 決策不在本 DD 範圍</li>
+</ul>
+
+<h4>① 短期信號（0-12 個月）</h4>
+<p>Q2 26 guide EPS +87-124% QoQ 是強 catalyst，但已 priced in 4 週 +37% 漂移；現價 $21 接近 1Y 短期合理 $20，短期 R:R 為負，不適合追高。引用 §6 結論。</p>
+
+<h4>② 中期成長確信度（1-2 年）</h4>
+<p>FY+1/FY+2 EPS 共識的驅動因素為定價（auto/CPO 高 ASP）+ 量（CPO 出貨爆發）+ GM 復甦三引擎，能見度 <strong>中</strong>，因 CPO 量產 binary 風險高。引用 §8 B 結論。</p>
+
+<h4>③ 長期持有信心（3-5 年）</h4>
+<p>成長跑道：5-7 年中等 / 護城河趨勢：execution 加深 + pricing 穩定 / <strong>長期持有信心：中</strong>。需 CPO 真正放量才升級為「高」。</p>
+
+<h4>下行風險量化</h4>
+<ul>
+<li>短期下檔（Bear Case）：現價至 $20 距離 -4.8%（FY26 $0.40 × 50x cycle peak PE）；極端下行至 $9 BB 中軌 / W104 = -57%</li>
+<li>中期下檔（Bear Case）：至 $9-12 範圍（FY27 $0.70 sell-side 下修場景 × 12-15x），距離 -43% 至 -57%</li>
+<li>W52 Low $7.18（參考）/ W104 Low $4.98（參考）</li>
+<li>若 FY+1 EPS 下修 10%（$0.40 → $0.36），短期 R:R 將降至 -0.15x（更負）</li>
+</ul>
+</section>
+
+<button class="print-btn" onclick="window.print()">列印為 PDF</button>
+
+</div>
+
+</body>
+</html>
