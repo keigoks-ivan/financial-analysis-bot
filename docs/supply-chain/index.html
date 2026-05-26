@@ -4,39 +4,96 @@
 <meta name="robots" content="noindex,nofollow">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>供應鏈地圖 — InvestMQuest Research</title>
-<meta name="description" content="半導體與 AI 產業供應鏈互動視覺化：每個主題拆成 19-31 個節點，標註競爭態勢與客戶獨家／關鍵單點，公司列表直接連到對應 DD 報告。">
+<title>供應鏈地圖 Supply Chain Maps — InvestMQuest Research</title>
+<meta name="description" content="電子產業供應鏈全景：32 個子產業沿 8 大功能模組 × 5 大終端市場展開，每個子產業展開成節點 × 廠商 × 競爭態勢 × 客戶獨家/關鍵單點的互動圖。AI/雲端 ramp 拉動 HBM、CPO、先進封裝、晶圓代工、ABF 載板、液冷散熱、AI 晶片 等核心鏈條結構性緊俏。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/engine.css">
 <style>
-.hub-shell{max-width:1180px;margin:0 auto;padding:1.5rem 1.5rem 3rem}
-.hub-hero{padding:2rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.hub-shell{max-width:1240px;margin:0 auto;padding:1.5rem 1.5rem 3rem}
+.hub-hero{padding:2rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.75rem}
 .hub-hero h1{font-size:1.85rem;font-weight:800;color:var(--accent-deep);letter-spacing:-.025em;display:flex;align-items:center;gap:.6rem}
 .hub-hero h1 .spark{width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(124,58,237,.18)}
-.hub-hero .sub{color:#4B5563;font-size:.92rem;line-height:1.7;max-width:780px;margin-top:.6rem}
-.hub-hero .meta{display:flex;gap:1.5rem;margin-top:.85rem;font-size:11.5px;color:#6B7280}
+.hub-hero .sub{color:#4B5563;font-size:.92rem;line-height:1.7;max-width:880px;margin-top:.6rem}
+.hub-hero .meta{display:flex;gap:1.5rem;margin-top:.85rem;font-size:11.5px;color:#6B7280;flex-wrap:wrap}
 .hub-hero .meta b{color:var(--accent-deep);font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px}
 
-.hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-.hub-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px 20px 16px;
+/* ====== Section heading ====== */
+.sec-head{display:flex;align-items:baseline;gap:.8rem;margin:1.75rem 0 .75rem;border-bottom:1px solid var(--border);padding-bottom:.55rem}
+.sec-head h2{font-size:1.15rem;font-weight:700;color:var(--ink);letter-spacing:-.015em;margin:0}
+.sec-head .sec-en{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);letter-spacing:.06em;text-transform:uppercase}
+.sec-head .sec-hint{margin-left:auto;font-size:11.5px;color:#6B7280}
+
+/* ====== Coverage matrix ====== */
+.cov-legend{display:flex;align-items:center;gap:14px;font-size:11.5px;color:#6B7280;margin-bottom:10px;flex-wrap:wrap}
+.cov-legend .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:6px;border:1px solid var(--border);background:#fff;font-weight:500}
+.cov-legend .sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+.cov-legend .sw-on{background:var(--accent)}
+.cov-legend .sw-soon{background:#DDD6FE}
+.cov-legend .sw-na{background:#F1F5F9;border:1px solid #E5E7EB}
+
+.matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:var(--shadow-sm);margin-bottom:0}
+.matrix{display:grid;grid-template-columns:170px repeat(5,minmax(150px,1fr));min-width:920px}
+.matrix .mh{font-size:11px;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em;padding:13px 12px 10px;border-bottom:1px solid var(--border);background:#FAFAFA}
+.matrix .mh.col{text-align:center}
+.matrix .mh.col .mh-en{display:block;font-size:9.5px;color:#9CA3AF;font-weight:500;margin-top:2px;letter-spacing:.05em;text-transform:none}
+.matrix .row-label{padding:14px 14px;border-top:1px solid var(--border);background:linear-gradient(90deg,#FAFAFA 0%,#fff 100%);font-size:13px;font-weight:700;color:var(--ink);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.matrix .row-label .row-en{font-size:10px;color:var(--ink-faint);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+
+.matrix .cell{padding:12px 11px;border-top:1px solid var(--border);border-left:1px solid var(--border-soft);position:relative;display:flex;flex-direction:column;gap:5px;min-height:78px;background:#fff}
+.matrix .cell.lvl-on{background:linear-gradient(135deg,#F5F3FF 0%,#EDE9FE 100%);cursor:pointer}
+.matrix .cell.lvl-on:hover{background:linear-gradient(135deg,#EDE9FE 0%,#DDD6FE 100%)}
+.matrix .cell.lvl-soon{background:#FAFAFA}
+.matrix .cell.lvl-na{background:#F8FAFB;color:#9CA3AF}
+.matrix .cell.lvl-na .c-title,.matrix .cell.lvl-na .c-tag{color:#94A3B8}
+
+.matrix .cell a{color:inherit;text-decoration:none;display:flex;flex-direction:column;gap:5px;height:100%}
+.matrix .c-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.matrix .lvl-on .c-tag{color:var(--accent-deep)}
+.matrix .lvl-soon .c-tag{color:#94A3B8}
+.matrix .c-tag .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.matrix .c-title{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.35}
+.matrix .c-sub{font-size:10.5px;color:#6B7280;line-height:1.45;margin-top:auto}
+.matrix .lvl-on .c-sub{color:#6D28D9}
+.matrix .cell .arrow{font-size:11px;color:var(--accent);font-weight:700;margin-top:3px;align-self:flex-end}
+.matrix .lvl-on:hover .arrow{transform:translateX(2px)}
+
+/* ====== Card grid ====== */
+.module-block{margin-top:1.75rem}
+.module-head{display:flex;align-items:baseline;gap:.8rem;margin-bottom:.6rem;padding:.65rem 1rem;border-radius:8px;background:linear-gradient(90deg,var(--accent-soft) 0%,#fff 70%);border-left:3px solid var(--accent)}
+.module-head h3{font-size:1.02rem;font-weight:700;color:var(--accent-deep);margin:0;letter-spacing:-.01em}
+.module-head .mod-en{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#7C3AED;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.module-head .mod-count{margin-left:auto;font-size:11px;color:#6B7280}
+.module-head .mod-count b{color:var(--accent-deep);font-weight:700;font-family:'IBM Plex Mono',monospace}
+
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.tcard{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px 13px;
   transition:all .15s;display:block;color:inherit;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
-.hub-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-md);color:inherit}
-.hub-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
-.hub-card.soon{opacity:.55;pointer-events:none;background:#FAFAFA}
-.hub-card.soon::before{background:#CBD5E1}
-.hub-card .hb-tag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--accent);font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.hub-card .hb-tag .dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
-.hub-card.soon .hb-tag{color:#94A3B8}
-.hub-card.soon .hb-tag .dot{background:#CBD5E1}
-.hub-card h3{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.01em;margin-bottom:5px}
-.hub-card .hb-sub{font-size:12px;color:#6B7280;line-height:1.55;min-height:34px}
-.hub-card .hb-arrow{color:var(--accent);font-size:13px;margin-top:8px;font-weight:600}
-.hub-card.soon .hb-arrow{color:#94A3B8;font-weight:500}
-.hub-card .hb-soon-badge{display:inline-block;font-size:9.5px;background:#FEF3C7;color:#92400E;padding:2px 7px;border-radius:6px;
-  font-weight:600;letter-spacing:.04em;margin-left:6px}
+.tcard.live{cursor:pointer}
+.tcard.live:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.tcard.live::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+.tcard.soon{opacity:.62;background:#FAFAFA}
+.tcard.soon::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#CBD5E1}
+
+.tcard .t-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:5px;margin-bottom:6px}
+.tcard.live .t-tag{color:var(--accent-deep);background:#EDE9FE}
+.tcard.soon .t-tag{color:#94A3B8;background:#F1F5F9}
+.tcard .t-tag .dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+
+.tcard h4{font-size:14px;font-weight:700;color:var(--ink);margin:0 0 2px;letter-spacing:-.01em;line-height:1.3}
+.tcard .t-en{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-faint);letter-spacing:.02em;margin-bottom:8px}
+.tcard .t-vendors{font-size:11.5px;color:#6B7280;line-height:1.55;margin-bottom:8px;min-height:36px}
+.tcard .t-foot{font-size:11.5px;color:var(--accent);font-weight:600}
+.tcard.soon .t-foot{color:#94A3B8;font-weight:500}
+
+@media (max-width:680px){
+  .hub-hero h1{font-size:1.5rem}
+  .hub-hero .meta{gap:.9rem}
+  .matrix{min-width:760px}
+  .card-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -60,65 +117,465 @@
 
   <div class="hub-hero">
     <h1><span class="spark"></span>供應鏈地圖 Supply Chain Maps</h1>
-    <p class="sub">把產業鏈拆成節點 × 廠商 × 競爭態勢 × 客戶獨家單點的互動圖，點任一節點看廠商列表並直接跳到對應 DD 報告。位於 <a href="/id/">產業 ID</a>（表格 dashboard）與 <a href="/ds/">產業 DS</a>（敘述供需循環）之外的第三種產業視角 — 看「製程節點上誰是脆弱依賴點」。</p>
+    <p class="sub">電子產業供應鏈全景：32 個子產業沿 <b>8 大功能模組 × 5 大終端市場</b> 展開，每個子產業展開成節點 × 廠商 × 競爭態勢 × 客戶獨家/關鍵單點的互動圖。位於 <a href="/id/">產業 ID</a>（表格 dashboard）與 <a href="/ds/">產業 DS</a>（敘述供需循環）之外的第三種產業視角 — 看「製程節點上誰是脆弱依賴點」。</p>
     <div class="meta">
-      <div><b id="liveCount">—</b> 已上線</div>
-      <div><b id="soonCount">—</b> 即將推出</div>
+      <div><b id="liveCount">9</b> 已上線</div>
+      <div><b id="soonCount">23</b> 規劃中</div>
       <div><b>5</b> 競爭態勢分級</div>
       <div><b>⚑</b> 客戶獨家／關鍵單點識別</div>
     </div>
   </div>
 
-  <div class="hub-grid" id="hubGrid"></div>
+  <!-- ====== Section: Coverage Matrix ====== -->
+  <div class="sec-head">
+    <h2>覆蓋矩陣</h2>
+    <span class="sec-en">Coverage Matrix</span>
+    <span class="sec-hint">8 功能模組 × 5 終端市場</span>
+  </div>
+
+  <div class="cov-legend">
+    <span class="chip"><span class="sw sw-on"></span>已上線 — 可點擊進入</span>
+    <span class="chip"><span class="sw sw-soon"></span>規劃中 — 即將推出</span>
+    <span class="chip"><span class="sw sw-na"></span>未涵蓋 — 暫不規劃</span>
+  </div>
+
+  <div class="matrix-wrap">
+    <div class="matrix">
+      <div class="mh"></div>
+      <div class="mh col">AI/雲端<span class="mh-en">AI / Cloud</span></div>
+      <div class="mh col">智慧型手機<span class="mh-en">Smartphone</span></div>
+      <div class="mh col">車用<span class="mh-en">Automotive</span></div>
+      <div class="mh col">PC/NB<span class="mh-en">PC / NB</span></div>
+      <div class="mh col">消費/工業<span class="mh-en">Consumer / Industrial</span></div>
+
+      <!-- Row: Computing -->
+      <div class="row-label">運算<span class="row-en">Computing</span></div>
+      <div class="cell lvl-on"><a href="asic.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">AI 晶片 / ASIC</div><div class="c-sub">NVIDIA · Broadcom · Marvell · Alchip · GUC</div><div class="arrow">→</div></a></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">手機 AP</div><div class="c-sub">Apple · Qualcomm · MediaTek</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">車用 SoC / MCU</div><div class="c-sub">Mobileye · NVDA Drive · NXP · Renesas</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">CPU / 伺服器處理器</div><div class="c-sub">Intel · AMD EPYC · Arm · RISC-V</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">FPGA</div><div class="c-sub">Xilinx · Altera · Lattice</div></div>
+
+      <!-- Row: Memory -->
+      <div class="row-label">記憶體<span class="row-en">Memory</span></div>
+      <div class="cell lvl-on"><a href="hbm.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">HBM 高頻寬記憶體</div><div class="c-sub">SK Hynix · Samsung · Micron</div><div class="arrow">→</div></a></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">LPDDR / UFS</div><div class="c-sub">Samsung · Micron · SK Hynix</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">車規 DRAM</div><div class="c-sub">— 暫不規劃</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">DRAM / NAND SSD</div><div class="c-sub">Samsung · SK Hynix · Micron · 長江存儲</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">工業 NOR</div><div class="c-sub">— 暫不規劃</div></div>
+
+      <!-- Row: Connectivity -->
+      <div class="row-label">連接<span class="row-en">Connectivity</span></div>
+      <div class="cell lvl-on"><a href="cpo.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">光通訊 / CPO</div><div class="c-sub">Coherent · Lumentum · InnoLight · 矽光子 SiPh</div><div class="arrow">→</div></a></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">無線 5G / Wi-Fi</div><div class="c-sub">Qualcomm · MTK · Skyworks · Qorvo</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">車用 V2X</div><div class="c-sub">車載乙太網 · TSN · DSRC/C-V2X</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">高速 SerDes / IP</div><div class="c-sub">Synopsys · Cadence · Alphawave</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">LoRa / 工業網</div><div class="c-sub">— 暫不規劃</div></div>
+
+      <!-- Row: Sensing -->
+      <div class="row-label">感測<span class="row-en">Sensing</span></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">資料中心 IMU</div><div class="c-sub">— 暫不規劃</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">CIS + 光學鏡頭</div><div class="c-sub">Sony · 大立光 · 玉晶光 · Sunny</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">LiDAR / Radar</div><div class="c-sub">Hesai · Luminar · Aptiv · onsemi</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">PC webcam</div><div class="c-sub">— 暫不規劃</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">MEMS 感測</div><div class="c-sub">Bosch · ST · InvenSense · Knowles</div></div>
+
+      <!-- Row: Power -->
+      <div class="row-label">電源<span class="row-en">Power</span></div>
+      <div class="cell lvl-on"><a href="power.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">資料中心電源</div><div class="c-sub">Vicor · MPS · Infineon · Navitas · Vertiv</div><div class="arrow">→</div></a></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">手機 PMIC</div><div class="c-sub">Qualcomm · TI · MPS · 矽力</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">車用 SiC/GaN + IGBT</div><div class="c-sub">Wolfspeed · Infineon · ST · Rohm</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">PC 電源</div><div class="c-sub">— 暫不規劃</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">工業電源</div><div class="c-sub">— 暫不規劃</div></div>
+
+      <!-- Row: Passives & Materials -->
+      <div class="row-label">被動 / 材料<span class="row-en">Passives & Materials</span></div>
+      <div class="cell lvl-on"><a href="material.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">半導體材料 + 載板</div><div class="c-sub">JSR · 信越 · SUMCO · 味之素 ABF</div><div class="arrow">→</div></a></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">MLCC / 被動元件</div><div class="c-sub">Murata · TDK · 國巨 · 華新科 · Yageo</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">車規 MLCC</div><div class="c-sub">Murata · TDK · Samsung Electro</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">通用 PCB</div><div class="c-sub">— 暫不規劃</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">工業被動</div><div class="c-sub">— 暫不規劃</div></div>
+
+      <!-- Row: Manufacturing & Equipment -->
+      <div class="row-label">製造 / 設備<span class="row-en">Manufacturing & Equipment</span></div>
+      <div class="cell lvl-on"><a href="cowos.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">先進封裝 + 晶圓代工</div><div class="c-sub">TSMC CoWoS · Amkor · ASE · 2nm GAA</div><div class="arrow">→</div></a></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">半導體前段設備</div><div class="c-sub">ASML · AMAT · LAM · TEL · KLA</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">車用 foundry</div><div class="c-sub">— 暫不規劃</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">檢測 / 量測</div><div class="c-sub">KLA · Onto · Camtek · Cohu · Advantest</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">成熟製程</div><div class="c-sub">— 暫不規劃</div></div>
+
+      <!-- Row: Display, Mechanical & Thermal -->
+      <div class="row-label">顯示 / 機構 / 散熱<span class="row-en">Display · Mech · Thermal</span></div>
+      <div class="cell lvl-on"><a href="power.html"><div class="c-tag"><span class="dot"></span>已上線</div><div class="c-title">液冷 / 散熱</div><div class="c-sub">Vertiv · Boyd · 雙鴻 · 奇鋐 · 建準</div><div class="arrow">→</div></a></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">OLED / Mini-LED</div><div class="c-sub">Samsung · LG · BOE · AUO · Innolux</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">車用 Display + 連接器</div><div class="c-sub">JDI · TE · Amphenol · 貿聯</div></div>
+      <div class="cell lvl-na"><div class="c-tag"><span class="dot"></span>未涵蓋</div><div class="c-title">NB OLED / EMS</div><div class="c-sub">— 暫不規劃</div></div>
+      <div class="cell lvl-soon"><div class="c-tag"><span class="dot"></span>規劃中</div><div class="c-title">EMS / 系統組裝</div><div class="c-sub">Foxconn · Quanta · Wistron · Pegatron</div></div>
+    </div>
+  </div>
+
+  <!-- ====== Section: Sub-Industry Cards by Module ====== -->
+  <div class="sec-head" style="margin-top:2.5rem">
+    <h2>子產業列表</h2>
+    <span class="sec-en">Sub-Industry Inventory</span>
+    <span class="sec-hint">8 模組 × 32 子產業</span>
+  </div>
+
+  <!-- Module 1: Computing -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>運算</h3>
+      <span class="mod-en">Computing</span>
+      <span class="mod-count"><b>5</b> 子產業 · <b>1</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <a class="tcard live" href="asic.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>AI 訓練 / 推論晶片</h4>
+        <div class="t-en">AI Training / Inference Silicon</div>
+        <div class="t-vendors">NVIDIA · AMD · Google TPU · AWS Trainium · Broadcom ASIC · Marvell · Alchip · GUC</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>CPU / 伺服器處理器</h4>
+        <div class="t-en">CPU / Server Processor</div>
+        <div class="t-vendors">Intel · AMD EPYC · Arm · RISC-V</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>車用 SoC / MCU</h4>
+        <div class="t-en">Automotive SoC / MCU</div>
+        <div class="t-vendors">Mobileye · NVIDIA Drive · Qualcomm · Renesas · NXP · Infineon · STMicro</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>手機 / 邊緣 AP</h4>
+        <div class="t-en">Mobile / Edge AP</div>
+        <div class="t-vendors">Apple · Qualcomm · MediaTek · Samsung</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>FPGA / 可程式邏輯</h4>
+        <div class="t-en">FPGA / Programmable Logic</div>
+        <div class="t-vendors">AMD Xilinx · Intel Altera · Lattice · Microchip</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 2: Memory -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>記憶體</h3>
+      <span class="mod-en">Memory</span>
+      <span class="mod-count"><b>3</b> 子產業 · <b>1</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <a class="tcard live" href="hbm.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>HBM 高頻寬記憶體</h4>
+        <div class="t-en">High Bandwidth Memory</div>
+        <div class="t-vendors">SK Hynix · Samsung · Micron</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>DRAM / NAND</h4>
+        <div class="t-en">DRAM / NAND Flash</div>
+        <div class="t-vendors">Samsung · SK Hynix · Micron · 長江存儲 · 長鑫</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>新型記憶體</h4>
+        <div class="t-en">Emerging Memory</div>
+        <div class="t-vendors">MRAM · ReRAM · CXL</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 3: Connectivity -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>連接</h3>
+      <span class="mod-en">Connectivity</span>
+      <span class="mod-count"><b>5</b> 子產業 · <b>1</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <a class="tcard live" href="cpo.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>光通訊 / CPO</h4>
+        <div class="t-en">Optical / Co-Packaged Optics</div>
+        <div class="t-vendors">Coherent · Lumentum · AAOI · InnoLight · 新易盛 · Eoptolink · 矽光子 SiPh</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>資料中心網通晶片</h4>
+        <div class="t-en">DC Networking ASIC</div>
+        <div class="t-vendors">Broadcom · Marvell · Astera Labs · Credo</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>無線通訊 5G / Wi-Fi</h4>
+        <div class="t-en">Wireless 5G / Wi-Fi</div>
+        <div class="t-vendors">Qualcomm · MediaTek · Skyworks · Qorvo · Murata</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>車用通訊 V2X</h4>
+        <div class="t-en">Automotive V2X</div>
+        <div class="t-vendors">車載乙太網 · TSN · DSRC / C-V2X</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>高速介面 IP / SerDes</h4>
+        <div class="t-en">High-Speed IP / SerDes</div>
+        <div class="t-vendors">Synopsys · Cadence · Alphawave</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 4: Sensing -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>感測</h3>
+      <span class="mod-en">Sensing</span>
+      <span class="mod-count"><b>4</b> 子產業 · <b>0</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>CIS 影像感測器</h4>
+        <div class="t-en">CMOS Image Sensor</div>
+        <div class="t-vendors">Sony · Samsung · OmniVision · Galaxycore</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>車用感測 LiDAR / Radar</h4>
+        <div class="t-en">Automotive LiDAR / Radar</div>
+        <div class="t-vendors">Luminar · Hesai · Innoviz · Aptiv · ON Semi</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>MEMS 感測</h4>
+        <div class="t-en">MEMS Sensors</div>
+        <div class="t-vendors">Bosch · ST · InvenSense · Knowles</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>光學鏡頭 / 模組</h4>
+        <div class="t-en">Optical Lens / Module</div>
+        <div class="t-vendors">大立光 · 玉晶光 · Sunny Optical · 舜宇</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 5: Power -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>電源</h3>
+      <span class="mod-en">Power</span>
+      <span class="mod-count"><b>4</b> 子產業 · <b>1</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <a class="tcard live" href="power.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>資料中心電源</h4>
+        <div class="t-en">Data Center Power</div>
+        <div class="t-vendors">Vicor · MPS · Infineon · Navitas · Vertiv</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>車用功率 SiC / GaN</h4>
+        <div class="t-en">Automotive SiC / GaN</div>
+        <div class="t-vendors">Wolfspeed · Infineon · onsemi · ST · Rohm</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>電源管理 IC PMIC</h4>
+        <div class="t-en">Power Management IC</div>
+        <div class="t-vendors">TI · ADI · MPS · Renesas · Qualcomm</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>IGBT / MOSFET</h4>
+        <div class="t-en">IGBT / MOSFET</div>
+        <div class="t-vendors">Infineon · Mitsubishi · Fuji · 富鼎 · 大中</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 6: Passives & Materials -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>被動 / 材料</h3>
+      <span class="mod-en">Passives & Materials</span>
+      <span class="mod-count"><b>3</b> 子產業 · <b>2</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>MLCC / 被動元件</h4>
+        <div class="t-en">MLCC / Passives</div>
+        <div class="t-vendors">Murata · Samsung Electro · TDK · 國巨 · 華新科 · Yageo</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <a class="tcard live" href="material.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>半導體材料</h4>
+        <div class="t-en">Semiconductor Materials</div>
+        <div class="t-vendors">JSR · TOK · 信越 · SUMCO · 台勝科 · 勝高</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+      <a class="tcard live" href="substrate.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>PCB / 載板 ABF / BT</h4>
+        <div class="t-en">PCB / Substrate (ABF / BT)</div>
+        <div class="t-vendors">欣興 · 南電 · 景碩 · Ibiden · Unimicron · AT&S</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Module 7: Manufacturing & Equipment -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>製造 / 設備</h3>
+      <span class="mod-en">Manufacturing & Equipment</span>
+      <span class="mod-count"><b>4</b> 子產業 · <b>2</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>半導體前段設備</h4>
+        <div class="t-en">Wafer Fab Equipment</div>
+        <div class="t-vendors">ASML · AMAT · LAM · TEL · KLA</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <a class="tcard live" href="cowos.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>先進封裝 CoWoS / SoIC</h4>
+        <div class="t-en">Advanced Packaging</div>
+        <div class="t-vendors">TSMC · Amkor · ASE · JCET · Powertech</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>檢測 / 量測設備</h4>
+        <div class="t-en">Inspection / Metrology</div>
+        <div class="t-vendors">KLA · Onto · Camtek · Cohu · Advantest</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <a class="tcard live" href="advanced.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>晶圓代工</h4>
+        <div class="t-en">Foundry (2nm GAA Deep-Dive)</div>
+        <div class="t-vendors">TSMC · Samsung · Intel Foundry · SMIC · GlobalFoundries · UMC</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Module 8: Display / Mech / Thermal -->
+  <div class="module-block">
+    <div class="module-head">
+      <h3>顯示 / 機構 / 散熱</h3>
+      <span class="mod-en">Display · Mechanical · Thermal</span>
+      <span class="mod-count"><b>4</b> 子產業 · <b>1</b> 已上線</span>
+    </div>
+    <div class="card-grid">
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>OLED / Mini-LED / Micro-LED</h4>
+        <div class="t-en">OLED / Mini-LED / Micro-LED</div>
+        <div class="t-vendors">Samsung Display · LG Display · BOE · AUO · Innolux</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <a class="tcard live" href="power.html">
+        <span class="t-tag"><span class="dot"></span>已上線</span>
+        <h4>液冷 / 散熱</h4>
+        <div class="t-en">Liquid Cooling / Thermal</div>
+        <div class="t-vendors">Vertiv · Boyd · Asetek · 雙鴻 · 奇鋐 · 建準</div>
+        <div class="t-foot">查看供應鏈地圖 →</div>
+      </a>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>連接器 / Cable</h4>
+        <div class="t-en">Connectors / Cable</div>
+        <div class="t-vendors">Amphenol · TE · Foxconn FIT · Bizlink · 貿聯</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+      <div class="tcard soon">
+        <span class="t-tag"><span class="dot"></span>規劃中</span>
+        <h4>EMS / 系統組裝</h4>
+        <div class="t-en">EMS / System Assembly</div>
+        <div class="t-vendors">Foxconn · Quanta · Wistron · Inventec · Pegatron · SMCI</div>
+        <div class="t-foot">即將推出</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Topical / cross-cutting maps -->
+  <div class="sec-head" style="margin-top:2.5rem">
+    <h2>跨主題地圖</h2>
+    <span class="sec-en">Topical Maps</span>
+    <span class="sec-hint">未歸入 32-theme 框架的獨立主題</span>
+  </div>
+  <div class="card-grid">
+    <a class="tcard live" href="robot.html">
+      <span class="t-tag"><span class="dot"></span>已上線</span>
+      <h4>人形機器人</h4>
+      <div class="t-en">Humanoid Robot</div>
+      <div class="t-vendors">NVIDIA Jetson Thor · HD+Nabtesco · 上銀 · 和大 · 大銀 · Tesla Optimus · Figure · 鴻海</div>
+      <div class="t-foot">查看供應鏈地圖 →</div>
+    </a>
+    <a class="tcard live" href="leosat.html">
+      <span class="t-tag"><span class="dot"></span>已上線</span>
+      <h4>低軌衛星 LEO</h4>
+      <div class="t-en">LEO Satellite</div>
+      <div class="t-vendors">SpaceX · Amazon Leo · 華通 · 昇達科 · 啟碁 · 耀登 · Rocket Lab+Mynaric</div>
+      <div class="t-foot">查看供應鏈地圖 →</div>
+    </a>
+    <a class="tcard live" href="spacedc.html">
+      <span class="t-tag"><span class="dot"></span>已上線</span>
+      <h4>太空資料中心</h4>
+      <div class="t-en">Orbital Data Center</div>
+      <div class="t-vendors">SpaceX Starship · Starcloud · NVIDIA Space-1 · Meta+Overview SBSP · Mynaric · AWS Ground Station</div>
+      <div class="t-foot">查看供應鏈地圖 →</div>
+    </a>
+    <a class="tcard live" href="siph.html">
+      <span class="t-tag"><span class="dot"></span>已上線</span>
+      <h4>矽光子平台</h4>
+      <div class="t-en">Silicon Photonics Platform</div>
+      <div class="t-vendors">TSMC COUPE · 聯亞 · Lumentum · Coherent · InnoLight · Himax · 上詮 · 光聖</div>
+      <div class="t-foot">查看供應鏈地圖 →</div>
+    </a>
+  </div>
 </main>
 
 <footer class="site">
-  供應鏈地圖 · 主題 master view · <a href="/research/">回研究中心</a> ·
+  供應鏈地圖 · 32 子產業 × 8 功能模組 × 5 終端市場 ·
+  <a href="/research/">回研究中心</a> ·
   資料為公開資訊整理，僅供研究參考，非投資建議
 </footer>
 
-<script>
-(async function(){
-  const manifest = await fetch("data/topics.json").then(r => r.json()).catch(() => ({topics:[]}));
-  const topics = manifest.topics || [];
-  const grid = document.getElementById("hubGrid");
-  const live = topics.filter(t => t.active).length;
-  const soon = topics.length - live;
-  document.getElementById("liveCount").textContent = live;
-  document.getElementById("soonCount").textContent = soon;
-
-  const subOf = {
-    cowos:    "TSMC 主導 2.5D 先進封裝 · 31 節點 · ABF/Disco/家登/弘塑等 10 個獨佔單點",
-    cpo:      "共封裝光學 · 矽光子整進交換器/ASIC · 玻璃 EUV 對應/微透鏡",
-    hbm:      "高頻寬 DRAM 緊跟 AI · 三強寡占 · HBM4 base die 改台積電",
-    advanced: "2nm GAA / 1.4nm 製程 · 設備 / 製程 / 良率新戰場",
-    siph:     "矽光子平台 · 光電轉換 + 共封裝 · 下世代 datacenter 互連",
-    plp:      "面板級封裝 PLP / FOPLP · 大尺寸 chiplet 攜帶能力競賽",
-    icdesign: "Fabless / EDA / IP · chiplet 生態系與設計服務 ASIC 雙雄",
-    material: "矽晶圓 / 光阻 / 特化 / 載板 · 全段半導體材料寡占地圖",
-    asic:     "客製 AI 晶片 / XPU · Broadcom / Marvell / 世芯 / 創意",
-    substrate:"IC 載板 ABF / BT / 玻璃 · AI 載板層數翻倍",
-    power:    "AI 資料中心電源 + 液冷 · GB300 倒數計時",
-    server:   "AI 伺服器 ODM / 系統整合 · 鴻海 / 緯創 / 廣達 / 緯穎",
-    robot:    "人形機器人 · 60+ 種馬達 / 感測器 / 減速機關鍵零組件",
-    leosat:   "低軌衛星 (LEO) · 接收器 + 衛星 + 地面站 · Starlink 系生態",
-    defense:  "軍工 / 國防安全供應鏈 · 雷達 / 武器 / 電戰系統",
-  };
-
-  grid.innerHTML = topics.map(t => {
-    const cls = t.active ? "hub-card" : "hub-card soon";
-    const href = t.active ? `${t.id}.html` : "#";
-    const sub = subOf[t.id] || "";
-    const tag = t.active ? "上線中" : "即將推出";
-    const arrow = t.active ? "查看供應鏈地圖 →" : "預告 — 開發中";
-    return `<a class="${cls}" href="${href}">
-      <div class="hb-tag"><span class="dot"></span>${tag}</div>
-      <h3>${t.title || t.tab}</h3>
-      <div class="hb-sub">${sub}</div>
-      <div class="hb-arrow">${arrow}</div>
-    </a>`;
-  }).join("");
-})();
-</script>
 </body>
 </html>
