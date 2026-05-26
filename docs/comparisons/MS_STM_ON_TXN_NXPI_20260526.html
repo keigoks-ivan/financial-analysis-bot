@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta name="robots" content="noindex,nofollow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>STM vs ON vs TXN vs NXPI — Analog/Auto/Power Semi 四檔對比｜2026-05-26</title>
+<meta name="description" content="Analog / Auto / Power 半導體四檔（STM / ON / TXN / NXPI）DCA 對比 — 四層時間框架（<12M / 2-3Y / 3-5Y / 5-10Y）橫向打分。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#ffffff; --bg-soft:#f7f8fa; --bg-card:#fbfcfd;
+  --border:#d0d8e0; --border-light:#e5e7eb;
+  --text:#1a1d24; --text-2:#475569; --text-3:#94a3b8;
+  --blue:#1565c0; --orange:#c2410c; --green:#15803d; --red:#991b1b; --amber:#92400e;
+  --gold:#fef3c7; --silver:#f1f5f9; --bronze:#ffedd5;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:'Inter','Noto Sans TC','PingFang TC','Microsoft JhengHei','Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--text); line-height:1.7; font-size:14.5px;
+  -webkit-font-smoothing:antialiased;
+}
+.num, .mono, code { font-family:'IBM Plex Mono',monospace; }
+.container { max-width:1200px; margin:0 auto; padding:24px 28px 80px; }
+
+.topnav {
+  position:sticky; top:0; z-index:100; background:#ffffff;
+  border-bottom:1px solid var(--border-light);
+  padding:10px 28px; display:flex; gap:18px; align-items:center; font-size:13px;
+  box-shadow:0 1px 4px rgba(15,23,42,.04);
+}
+.topnav .brand { font-weight:700; color:var(--text); letter-spacing:-.01em; }
+.topnav .crumb { color:var(--text-3); }
+.topnav nav { margin-left:auto; display:flex; gap:14px; font-family:'IBM Plex Mono',monospace; font-size:12px; }
+.topnav nav a { color:var(--text-2); text-decoration:none; padding:4px 0; }
+.topnav nav a:hover { color:var(--blue); }
+
+.hero { padding:24px 0 16px; border-bottom:1px solid var(--border-light); margin-bottom:24px; }
+.hero .eyebrow {
+  display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--blue); background:#eff6ff; padding:3px 10px; border-radius:20px;
+  font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+}
+.hero h1 { font-size:30px; font-weight:800; letter-spacing:-.02em; margin-top:14px; color:var(--text); line-height:1.25; }
+.hero .meta { font-size:13px; color:var(--text-2); margin-top:10px; line-height:1.7; }
+.hero .meta code { font-size:12px; background:var(--bg-soft); padding:2px 6px; border-radius:3px; }
+
+h2 {
+  font-size:22px; font-weight:700; color:var(--text); margin:40px 0 14px;
+  padding:10px 14px; background:var(--bg-soft);
+  border-left:4px solid var(--blue); letter-spacing:-.005em;
+}
+h3 { font-size:17px; font-weight:700; color:var(--text); margin:22px 0 10px; }
+h4 { font-size:14px; font-weight:600; color:var(--text-2); margin:14px 0 8px; text-transform:uppercase; letter-spacing:.05em; }
+p { margin:8px 0; }
+ul, ol { margin:8px 0 12px 22px; }
+li { margin:5px 0; }
+
+table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+th { background:#1f2937; color:#fff; padding:9px 11px; text-align:left; font-weight:500; font-size:12.5px; }
+td { padding:9px 11px; border-bottom:1px solid var(--border-light); border-right:1px solid var(--border-light); vertical-align:top; }
+td:last-child { border-right:none; }
+tr:last-child td { border-bottom:1px solid var(--border); }
+tr:nth-child(even) td { background:var(--bg-soft); }
+table.tight td, table.tight th { padding:6px 9px; font-size:12.5px; }
+
+.status-grid {
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;
+  margin:16px 0 24px;
+}
+.status-cell {
+  background:#fff; border:1px solid var(--border); border-radius:6px;
+  padding:14px 12px; text-align:center;
+}
+.status-cell .label {
+  font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:.06em;
+  font-weight:600; font-family:'IBM Plex Mono',monospace;
+}
+.status-cell .ticker { font-size:18px; font-weight:800; color:var(--text); margin-top:6px; letter-spacing:.02em; }
+.status-cell .signal { font-size:24px; font-weight:800; margin-top:4px; }
+.status-cell .sub { font-size:11px; color:var(--text-2); margin-top:3px; }
+.sig-A { color:#15803d; }
+.sig-B { color:#c2410c; }
+
+.verdict-box {
+  background:linear-gradient(180deg,#eff6ff 0%, #f8fafc 100%);
+  border:1px solid #bfdbfe; border-left:4px solid var(--blue);
+  padding:20px 26px; margin:18px 0; border-radius:6px;
+}
+.verdict-box .label {
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--blue); letter-spacing:.1em; text-transform:uppercase; font-weight:600;
+}
+.verdict-box .pick {
+  font-size:28px; font-weight:800; color:var(--text); letter-spacing:-.02em; margin-top:6px;
+}
+.verdict-box .pick .ticker-tag {
+  background:var(--green); color:#fff; padding:3px 14px; border-radius:5px;
+  font-size:24px; margin-right:10px; font-family:'IBM Plex Mono',monospace;
+}
+.verdict-box .reasoning { margin-top:14px; font-size:14px; color:var(--text); line-height:1.75; }
+.verdict-box ol { margin-top:10px; }
+
+.rank-grid {
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;
+  margin:18px 0;
+}
+.rank-card {
+  background:#fff; border:1px solid var(--border); border-radius:6px;
+  padding:14px 14px; position:relative; overflow:hidden;
+}
+.rank-card .rank-label {
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--text-3); letter-spacing:.08em; text-transform:uppercase; font-weight:600;
+}
+.rank-card .rank-period { font-size:14px; font-weight:700; color:var(--text); margin-top:4px; }
+.rank-card .rank-list { margin-top:10px; }
+.rank-card .rank-row { font-size:13px; padding:4px 0; display:flex; align-items:baseline; gap:8px; }
+.rank-card .medal { font-size:14px; flex-shrink:0; }
+.rank-card .ticker-name { font-weight:700; font-family:'IBM Plex Mono',monospace; font-size:13px; min-width:50px; }
+.rank-card .reason { font-size:12px; color:var(--text-2); }
+
+.tint-green { background:#dcfce7; color:#166534; padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-yellow { background:#fef9c3; color:var(--amber); padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-orange { background:#ffedd5; color:var(--orange); padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-red { background:#fee2e2; color:var(--red); padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+.tint-blue { background:#dbeafe; color:#1e3a8a; padding:2px 7px; border-radius:3px; font-size:12px; font-weight:600; }
+
+.box-alpha {
+  background:#f0f9ff; border-left:4px solid #0ea5e9;
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+.box-warn {
+  background:#fef9c3; border-left:4px solid var(--amber);
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+.box-danger {
+  background:#fee2e2; border-left:4px solid var(--red);
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+.box-good {
+  background:#dcfce7; border-left:4px solid var(--green);
+  padding:14px 18px; margin:14px 0; border-radius:0 4px 4px 0;
+}
+
+.stack-row { display:flex; align-items:center; margin:6px 0; font-size:12.5px; gap:10px; }
+.stack-row .ticker-label { width:64px; font-weight:700; font-family:'IBM Plex Mono',monospace; flex-shrink:0; }
+.stack-bar {
+  flex:1; height:22px; display:flex; border-radius:3px; overflow:hidden;
+  background:#f1f5f9; border:1px solid var(--border-light); position:relative;
+}
+.stack-seg { display:flex; align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:600; }
+.seg-eps { background:#15803d; }
+.seg-rerate-pos { background:#1565c0; }
+.seg-rerate-neg { background:#991b1b; }
+.seg-shr { background:#64748b; }
+.stack-row .total { width:90px; text-align:right; font-family:'IBM Plex Mono',monospace; font-weight:600; flex-shrink:0; }
+
+.footnote { font-size:12px; color:var(--text-2); font-style:italic; margin-top:6px; }
+hr { border:none; border-top:1px solid var(--border-light); margin:24px 0; }
+
+@media (max-width:900px) {
+  .status-grid { grid-template-columns:repeat(2, 1fr); }
+  .rank-grid { grid-template-columns:repeat(2, 1fr); }
+  .topnav nav { display:none; }
+}
+@media print {
+  .topnav { display:none; }
+  body { background:#fff; }
+}
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <span class="brand">InvestMQuest Research</span>
+  <span class="crumb">/ comparisons / STM vs ON vs TXN vs NXPI</span>
+  <nav>
+    <a href="#sA">§A Dashboard</a>
+    <a href="#sB1">&lt;12M</a>
+    <a href="#sB2">2-3Y</a>
+    <a href="#sB3">3-5Y</a>
+    <a href="#sB4">5-10Y</a>
+    <a href="#sC">§C IRR</a>
+    <a href="#sD">§D Bear</a>
+    <a href="#sE">§E 裁決</a>
+  </nav>
+</div>
+
+<div class="container">
+
+<div class="hero">
+  <span class="eyebrow">Multi-Stock Comparator · v1.4-cc-tuned</span>
+  <h1>STM vs ON vs TXN vs NXPI — Analog / Auto / Power 半導體四檔 DCA 對比</h1>
+  <div class="meta">
+    四檔皆是 Analog/Auto/Industrial/Power 半導體類股,DCA 均為「<strong>觀望</strong>」(等回測進場),但「觀望品質」差異極大。<br>
+    來源:<code>DCA_STM_20260514</code> · <code>DCA_ON_20260511</code> · <code>DCA_TXN_20260511</code> · <code>DCA_NXPI_20260511</code><br>
+    最新股價(2026-05-25 收盤):STM $66.86 / ON $115.40 / TXN $309.21 / NXPI $316.47 — 全數較 DCA 日再上漲,過熱情況加劇。
+  </div>
+</div>
+
+<!-- §A 對比 Dashboard -->
+<h2 id="sA">§A 對比 Dashboard</h2>
+
+<h3>四檔現況一覽</h3>
+<div class="status-grid">
+  <div class="status-cell">
+    <div class="label">STM</div>
+    <div class="ticker">$66.86</div>
+    <div class="signal sig-B">B</div>
+    <div class="sub">Moat B↑ / Runway 🟢 / MaxDD <strong style="color:#991b1b">-65%🔴</strong></div>
+  </div>
+  <div class="status-cell">
+    <div class="label">ON</div>
+    <div class="ticker">$115.40</div>
+    <div class="signal sig-B">B</div>
+    <div class="sub">Moat B→ / Runway 🟢 / MaxDD -55%🟡</div>
+  </div>
+  <div class="status-cell">
+    <div class="label">TXN</div>
+    <div class="ticker">$309.21</div>
+    <div class="signal sig-B">B</div>
+    <div class="sub">Moat B↑ / Runway <strong style="color:#92400e">🟡</strong> / MaxDD -50%🟡</div>
+  </div>
+  <div class="status-cell" style="border:2px solid var(--green); background:#f0fdf4;">
+    <div class="label">NXPI</div>
+    <div class="ticker">$316.47</div>
+    <div class="signal sig-B">B</div>
+    <div class="sub">Moat <strong style="color:#15803d">A→ (9/10)</strong> / Runway 🟢 / MaxDD <strong style="color:#15803d">-45%🟡</strong></div>
+  </div>
+</div>
+
+<h3>關鍵指標橫向比對</h3>
+<table>
+<tr><th>維度</th><th>STM</th><th>ON</th><th>TXN</th><th>NXPI</th><th>Winner</th></tr>
+<tr><td>DCA 報告日</td><td>2026-05-14</td><td>2026-05-11</td><td>2026-05-11</td><td>2026-05-11</td><td>—</td></tr>
+<tr><td>DCA 裁決</td><td><span class="tint-yellow">觀望</span></td><td><span class="tint-yellow">觀望</span></td><td><span class="tint-yellow">觀望</span></td><td><span class="tint-yellow">觀望</span></td><td>四檔皆觀望</td></tr>
+<tr><td>FPE FY27 (最新價)</td><td>36.7x</td><td>28.4x</td><td>35.0x</td><td><span class="tint-green">18.0x</span></td><td><strong>NXPI</strong></td></tr>
+<tr><td>5Y PE 分位</td><td>~90%+</td><td>~80%+</td><td>67%</td><td><span class="tint-green">40-45%</span></td><td><strong>NXPI</strong></td></tr>
+<tr><td>4w 漂移</td><td><span class="tint-red">+62%</span> (24w +140%)</td><td>YTD +90%</td><td>+44% (RSI 72-77)</td><td><span class="tint-green">+23%</span></td><td><strong>NXPI</strong></td></tr>
+<tr><td>Pure MA 狀態</td><td>✅ 但 W104 +118% 極端</td><td>❌ stack 倒掛</td><td>🟡 W250 持平</td><td>🟡 觀察池</td><td>NXPI / TXN</td></tr>
+<tr><td>5Y IRR (機率加權)</td><td><span class="tint-red">-0.7%/yr</span></td><td>+5.4%/yr</td><td>+2.1%/yr</td><td><span class="tint-green">+8.3%/yr</span></td><td><strong>NXPI</strong></td></tr>
+<tr><td>Bull / Base / Bear</td><td>+13.6 / -3.1 / -18.0</td><td>+14.3 / +6.2 / -6.7</td><td>+9.9 / +2.8 / -8.2</td><td><span class="tint-green">+20.1 / +9.9 / -6.9</span></td><td><strong>NXPI</strong></td></tr>
+<tr><td>Moat 評級</td><td>B↑ (~7/10)</td><td>B→ (~7/10)</td><td>B↑ (~8/10)</td><td><span class="tint-green">A→ (9/10)</span></td><td><strong>NXPI</strong></td></tr>
+<tr><td>Runway Post-Y5</td><td>🟢 寬 (3 曲線)</td><td>🟢 寬</td><td><span class="tint-yellow">🟡 中</span></td><td>🟢 寬 (SDV 滲透中段)</td><td>三檔並列</td></tr>
+<tr><td>Max DD 路徑風險</td><td><span class="tint-red">-65% 🔴</span></td><td>-55% 🟡</td><td>-50% 🟡</td><td><span class="tint-green">-45% 🟡</span></td><td><strong>NXPI</strong></td></tr>
+<tr><td>Bear 風險性質</td><td><span class="tint-red">範式 (class action binary)</span></td><td>執行 (GM 可監測)</td><td>執行 + 結構 (China 5y)</td><td><span class="tint-green">執行 (design wins 季度)</span></td><td><strong>NXPI</strong></td></tr>
+</table>
+
+<div class="verdict-box">
+  <div class="label">最終推薦標的</div>
+  <div class="pick"><span class="ticker-tag">NXPI</span> 四層時間框架全勝</div>
+  <div class="reasoning">
+    <strong>NXPI 是這四檔裡唯一在 &lt;12M / 2-3Y / 3-5Y / 5-10Y 四層時間框架都排第一的標的。</strong>核心理由:
+    <ol>
+      <li><strong>估值絕對便宜</strong> — FPE 18x 是另外三檔(28-37x)的 0.5x,5Y 分位 40-45% 是四檔最低,意味 PE re-rate 在 IRR 中只拖累 -1%/yr(STM -22%、TXN -17%、ON -4%);</li>
+      <li><strong>護城河品質最高</strong> — A 級 9/10(其他三檔 B 級 7-8),ASIL D + S32 toolchain 7-15 年 Tier-1 lock-in 是四檔中最深、最久;</li>
+      <li><strong>動能最不過熱</strong> — 4w 漂移 +23%(其他三檔 +44~+62% 或 YTD +90%),mean reversion 風險最低;Pure MA 雖 🟡 觀察池但非極端 stretched;</li>
+      <li><strong>Bear case 是可監測的執行風險</strong>(SDV design wins 季度觀測) — 不像 STM 的範式風險(class action binary + Auto MCU 結構流失)需要焦慮一整段抱期。</li>
+    </ol>
+    <strong>但前提仍是「觀望」:</strong>4 檔 DCA 全是「等回測」verdict,5/25 股價較 DCA 日再上漲 5-13%,過熱情況加劇。NXPI 是「最不該等的」那一檔,不是「應該追的」那一檔 — 等 BB 中軌 $222 或 W104 站穩 4 週才動。
+  </div>
+</div>
+
+<h3>四層時間框架排序速覽</h3>
+<div class="rank-grid">
+  <div class="rank-card">
+    <div class="rank-label">&lt;12M</div>
+    <div class="rank-period">短期</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span><span class="reason">4w +23% 最不過熱</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">TXN</span><span class="reason">RSI 72-77 但 fundamentals 強</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">ON</span><span class="reason">MA stack 倒掛 + YTD +90%</span></div>
+      <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">STM</span><span class="reason">24w +140% 極端透支</span></div>
+    </div>
+  </div>
+  <div class="rank-card">
+    <div class="rank-label">2-3Y</div>
+    <div class="rank-period">中期</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span><span class="reason">SDV cycle bottom + PE 便宜</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">ON</span><span class="reason">Q1 26 cycle inflection 確認</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">STM</span><span class="reason">cycle recovery 但 AI DC binary</span></div>
+      <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">TXN</span><span class="reason">PE 已 priced cycle peak</span></div>
+    </div>
+  </div>
+  <div class="rank-card" style="border:2px solid var(--green); background:#f0fdf4;">
+    <div class="rank-label">3-5Y</div>
+    <div class="rank-period">中長期 (核心 IRR)</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span><span class="reason">+8.3%/yr 唯一過大盤</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">ON</span><span class="reason">+5.4%/yr 次優</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">TXN</span><span class="reason">+2.1%/yr re-rate 吞 EPS</span></div>
+      <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">STM</span><span class="reason">-0.7%/yr 加權為負</span></div>
+    </div>
+  </div>
+  <div class="rank-card">
+    <div class="rank-label">5-10Y</div>
+    <div class="rank-period">長期</div>
+    <div class="rank-list">
+      <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span><span class="reason">Moat 9 + lock-in 7-15y</span></div>
+      <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">STM</span><span class="reason">3 curves 但 execution heavy</span></div>
+      <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">ON</span><span class="reason">multi-curves 但 moat 升慢</span></div>
+      <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">TXN</span><span class="reason">Runway 🟡 + China 替代</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- §B.1 <12M 短期 -->
+<h2 id="sB1">§B.1 &lt;12M 短期 — Pure MA + 動能過熱 + 估值分位</h2>
+
+<h3>短期關鍵維度</h3>
+<table>
+<tr><th>維度</th><th>STM</th><th>ON</th><th>TXN</th><th>NXPI</th></tr>
+<tr><td>Pure MA 狀態</td><td>✅ 但 W104 乖離 <strong style="color:#991b1b">+118%</strong></td><td>❌ stack 倒掛 (W52&lt;W104&lt;W250)</td><td>🟡 多空排列正確但 W250 斜率 +0.90% 持平</td><td>🟡 剛站回 W104 &lt; 4 週,W250 +0.98%</td></tr>
+<tr><td>4 週漂移</td><td><strong style="color:#991b1b">+62%</strong></td><td>YTD +90%</td><td>+44%</td><td><strong style="color:#15803d">+23%</strong></td></tr>
+<tr><td>24 週漂移</td><td><strong style="color:#991b1b">+140%</strong> (極端 setup)</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>RSI 14d (估算)</td><td>75-85 (極度 overbought)</td><td>高 (BB 上軌外)</td><td>72-77 (overbought)</td><td>高但較低</td></tr>
+<tr><td>距 BB 中軌</td><td>$45-50 (-25% ~ -33%)</td><td>$68.97 (-40%)</td><td>$208 (-33%)</td><td>$222 (-30%)</td></tr>
+<tr><td>FPE FY27 (最新價)</td><td>36.7x</td><td>28.4x</td><td>35.0x</td><td><strong style="color:#15803d">18.0x</strong></td></tr>
+<tr><td>5Y PE 分位</td><td>~90%+ 極高</td><td>~80%+ 高</td><td>67% 偏高</td><td><strong style="color:#15803d">40-45% 中低</strong></td></tr>
+<tr><td>單日近期漂移</td><td>5/13 +9.43% 單日;5/25 再到 $66.86</td><td>5/14 ATH $119.10 後拉回</td><td>5/25 $309.21 (前收 $298.39 +3.6%)</td><td>5/25 $316.47 (前收 $299.15 +5.7%)</td></tr>
+</table>
+
+<h3>短期排序與判斷邏輯</h3>
+<div class="rank-grid">
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">TXN</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">ON</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">STM</span></div>
+  </div></div>
+</div>
+
+<div class="box-alpha">
+<strong>為什麼這個排序?</strong><br><br>
+短期(&lt;12M)的核心評估是:<strong>「mean reversion 風險誰最低?」</strong>不是「誰最強」,而是「誰最不該等」。<br><br>
+<strong>NXPI 🥇:</strong>4w +23% 是四檔中唯一低於 30% 的、FPE 5Y 分位 40-45% 是四檔最低,意味即使短期 PE 壓縮也只是回到中位附近(非泡沫破裂);Pure MA 雖 🟡 觀察池(W104 站穩未滿 4 週)但不像 STM 那樣極端 stretched。如果硬要選一檔短期可動的,NXPI 是唯一答案 — 但 DCA 仍說等 BB 中軌 $222 才動,5/25 $316.47 距 BB 中軌仍 -30%。<br><br>
+<strong>TXN 🥈:</strong>RSI 72-77 + 4w +44% 是過熱,但 W250 斜率 +0.90% 是「持平正斜率」(非橫盤),且 Pure MA 多空排列正確 — 相對 ON 的 stack 倒掛強。問題是 FPE 35x 5Y 67% 分位:基本面強但估值已 priced cycle peak。<br><br>
+<strong>ON 🥉:</strong>Pure MA stack 倒掛(W52&lt;W104&lt;W250)是「V-recovery 過渡期」的典型表現,YTD +90% 也是 4 檔中最猛之一。BB 上軌外 + 5/14 創 ATH $119.10 後拉回說明已接近短期 climax。<br><br>
+<strong>STM 4️⃣:</strong>24w +140% 是歷史極端 setup(歷史頻率 80% 在 1 個月內回測 15-25%);W104 乖離 +118%、單日 +9.43%、BB 上軌突破 +28% — 這些都不是「強勢」訊號而是「動能末端透支」的訊號。短期任何進場都是在賭「STM 是這次 80% 機率的例外」。
+</div>
+
+<!-- §B.2 2-3Y 中期 -->
+<h2 id="sB2">§B.2 2-3Y 中期 — 拐點兌現 + Cycle 復甦 + 估值修復</h2>
+
+<h3>中期關鍵維度</h3>
+<table>
+<tr><th>維度</th><th>STM</th><th>ON</th><th>TXN</th><th>NXPI</th></tr>
+<tr><td>Cycle 拐點狀態</td><td>Q1 26 +23% YoY 確認觸底</td><td>Q1 26 +0.7% YoY 三年首正(inflection)</td><td>Q1 26 三引擎共振(Industrial+30%、Auto 中個位、DC+90%)</td><td>Q1 26 +12% YoY 確認反彈</td></tr>
+<tr><td>主要 binary 事件</td><td><strong>AI DC FY26 ≥ $500M / FY27 ≥ $1B</strong>(mgmt commit)</td><td><strong>連 2 季 GAAP GM ≥ 38%</strong> 中位</td><td><strong>H2 26 漲價 兌現 (10%+)</strong></td><td><strong>Q4 26 SDV 占 Auto ≥ 50%</strong></td></tr>
+<tr><td>下一個 settle 日</td><td>2026-07-23 Q2 法說</td><td>2026-08-01 Q2 26 GM print</td><td>2026-07-22 Q2 26 ASP / 10/22 H2 漲價</td><td>2026-07 Q2 actual Rev / GM</td></tr>
+<tr><td>FY+1 EPS YoY 共識</td><td>+84% (cycle trough bounce)</td><td>+38%</td><td>+15% (FY27)</td><td>+19%</td></tr>
+<tr><td>FY+2 EPS YoY 共識</td><td>+25-43% (cycle 正常化)</td><td>+20% (cycle peak)</td><td>+8% (cycle peak)</td><td>+19% (SDV 加速)</td></tr>
+<tr><td>2Y R:R</td><td>失敗(目標 $19.94 &lt; 現價 -64%)</td><td>—</td><td>1.58x</td><td>1.58x</td></tr>
+<tr><td>機會成本對手</td><td>NXPI/MRVL/AVGO(自評)</td><td>ADI/NXPI(自評)</td><td>NXPI/ADI(自評)</td><td>NVDA/AVGO/TSM(自評,但 diversifier 角色)</td></tr>
+</table>
+
+<h3>中期排序與判斷邏輯</h3>
+<div class="rank-grid">
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">ON</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">STM</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">TXN</span></div>
+  </div></div>
+</div>
+
+<div class="box-alpha">
+<strong>為什麼這個排序?</strong><br><br>
+中期(2-3Y)的核心評估是:<strong>「拐點兌現 vs 估值修復誰拿到對的組合?」</strong><br><br>
+<strong>NXPI 🥇:</strong>四檔中唯一「cycle bottom 已 confirm + 估值仍便宜 + 結構性 SDV 浪潮加速」三合一的標的。Q1 26 +12% YoY、Q2 guide +18%、PE 18x 5Y 40-45% 分位 — 不需要 PE re-rate 就能靠 EPS 自然複利拿到 IRR。SDV 占 Auto 50% by Q4 26 是公司給的硬 milestone,2027 H1 SDV 完整兌現的時間軸與 2-3Y 視角完全契合。<br><br>
+<strong>ON 🥈:</strong>SiC 200mm 量產經濟學顯化 + AI DC ARR doubling 是真實的中期 driver。但 Pure MA stack 倒掛意味市場仍懷疑 cycle 真實性 — 拐點存在但估值已先把 cycle bull case priced。Pattern match 是 NXPI 2019-2020(本身就是這次的 NXPI),意味 ON 走的是 NXPI 過去的路。<br><br>
+<strong>STM 🥉:</strong>cycle recovery 速度是四檔最快(FY27 EPS +84% YoY),但 PE 64x trough → 18x mean revert 是 -22%/yr 持續壓力 — re-rate 會把 EPS 全部吃掉。AI DC FY27 $1B 是 binary,結果在 8-12 個月後才 settle,中期視角下不確定性最高。<br><br>
+<strong>TXN 4️⃣:</strong>三引擎共振是真的(Q1 大爆發),但 FPE 30x = 5Y 67% 分位已 priced cycle 完整擴張 5 年。歷史 pattern 顯示 TXN 自己 2024/9 cycle peak 後 18 個月跌 -42%、ADI 2021/12 -35%、MCHP 2022/3 -50% — cycle peak setup 後估值倍數壓縮是 base case。「H2 漲價」是次要 catalyst,主要 risk 是 cycle 真的在 peak。
+</div>
+
+<!-- §B.3 3-5Y 中長期 -->
+<h2 id="sB3">§B.3 3-5Y 中長期 — TAM 滲透 + 護城河趨勢 + IRR 質感</h2>
+
+<h3>5Y IRR 三情境機率加權對比</h3>
+<table>
+<tr><th>標的</th><th>Bull (機率)</th><th>Base (機率)</th><th>Bear (機率)</th><th>機率加權 IRR</th><th>vs 大盤 ~8%</th></tr>
+<tr style="background:#fee2e2;"><td><strong>STM</strong></td><td>+13.6%/yr (25%)</td><td>-3.1%/yr (45%)</td><td>-18.0%/yr (30%)</td><td><strong style="color:#991b1b">-0.7%/yr</strong></td><td>遠不及</td></tr>
+<tr><td><strong>ON</strong></td><td>+14.3%/yr (25%)</td><td>+6.2%/yr (45%)</td><td>-6.7%/yr (30%)</td><td>+5.4%/yr</td><td>不及</td></tr>
+<tr><td><strong>TXN</strong></td><td>+9.9%/yr (25%)</td><td>+2.8%/yr (45%)</td><td>-8.2%/yr (30%)</td><td>+2.1%/yr</td><td>遠不及</td></tr>
+<tr style="background:#dcfce7;"><td><strong>NXPI</strong></td><td><strong>+20.1%/yr (25%)</strong></td><td><strong>+9.9%/yr (50%)</strong></td><td>-6.9%/yr (25%)</td><td><strong style="color:#15803d">+8.3%/yr</strong></td><td><strong>唯一過大盤</strong></td></tr>
+</table>
+
+<h3>護城河趨勢 + Pattern Match</h3>
+<table>
+<tr><th>維度</th><th>STM</th><th>ON</th><th>TXN</th><th>NXPI</th></tr>
+<tr><td>Moat 評級</td><td>B↑ (7/10)</td><td>B→ (7/10)</td><td>B↑ (8/10)</td><td><strong style="color:#15803d">A→ (9/10)</strong></td></tr>
+<tr><td>Moat 趨勢</td><td>↑ (200mm + AI DC)</td><td>→ (SiC 25% holding,2027-30 +0.4)</td><td>↑ (300mm cost lead widening)</td><td>→ (ASIL D 認證持平)</td></tr>
+<tr><td>Pattern match</td><td>MU 2016-2018 (cycle + HBM)</td><td>NXPI 2019-2020 (cycle bottom V)</td><td>TXN 2024/9 + ADI 2021/12 + MCHP 2022/3 (cycle peak)</td><td>Infineon 2019-2024 + NXP 2016-2021 (cycle 觸底反彈)</td></tr>
+<tr><td>Pattern 歷史 IRR</td><td>+55%/yr 但中途 -52% drawdown</td><td>+20%/yr 5Y</td><td>cycle peak 後 -30~-50%</td><td>Infineon +16%/yr / NXP +14%/yr</td></tr>
+<tr><td>單變數可證偽性</td><td>AI DC FY26 &lt; $300M (8-12M)</td><td>連 2 季 GM &lt; 38%</td><td>SMIC BCD 28nm > 80% 良率 (2-3y)</td><td>2027 H1 失歐美 Top 5 OEM SDV (12-18M)</td></tr>
+</table>
+
+<h3>中長期排序與判斷邏輯</h3>
+<div class="rank-grid">
+  <div class="rank-card" style="border:2px solid var(--green); background:#f0fdf4;"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">ON</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">TXN</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">STM</span></div>
+  </div></div>
+</div>
+
+<div class="box-alpha">
+<strong>為什麼這個排序?</strong><br><br>
+3-5Y 是 DCA 預設視角(2-3Y 中期 + 5Y 視窗的交集),也是這個對比真正的 alpha 所在。<strong>核心評估:「機率加權 IRR + 護城河品質 + IRR 質感(複利 vs re-rate)」三維加權。</strong><br><br>
+<strong>NXPI 🥇:</strong>四檔中唯一機率加權 IRR 過大盤(+8.3% vs 大盤 ~8%);Bull +20.1% 也是最高,即使 Bear -6.9% 也比 STM -18% / TXN -8.2% 保護更好;Base 機率 50%(其他三檔 45%)代表 thesis 更穩定。護城河 9/10 是四檔最高且 lock-in 7-15 年最長 — ASIL D + S32 toolchain 是平台級鎖定,不是單顆晶片競爭。Pattern match 是 Infineon 2019-2024 同類 cycle 走過 +16%/yr,有 NXP 自己 2016-2021 歷史錨點(+14%/yr)。<br><br>
+<strong>ON 🥈:</strong>+5.4%/yr 機率加權低於大盤但 IRR composition 仍是 EPS 主導(+10.8% 自然複利)。問題是 SiC GM 結構性 vs 週期性是不可調和矛盾(同業 TXN/NXPI 早回 56-58%、ON 落後 18-20pp),這個未癒是 Bear case 的核心。Pattern match 是 NXPI 2019-2020(ON 在走 NXPI 過去的路)— 但 ON 入場 PE 25x 比 NXPI 當年的 11x 高 2.3x,類比顯示入場時點不對。<br><br>
+<strong>TXN 🥉:</strong>+2.1%/yr 加權弱於大盤 4 倍;最大問題是 IRR composition — EPS +16.1%/yr 是漂亮的複利,但 re-rate -16.8%/yr 完全吃掉(38x → 25x mean revert)。Pattern match 全是 cycle peak setup(TXN 自己/ADI/MCHP),結局都是 -30~-50% drawdown。製造 moat 是真的但 Analog 不是結構性高成長產業,撐不住 30x+ 永久倍數。<br><br>
+<strong>STM 4️⃣:</strong>-0.7%/yr 加權為負,Base 案 -3.1%/yr — 即使 Bull case +13.6% 都不如 NXPI Base 9.9%。問題在 PE 64x trough → 18x mean revert 是 -22%/yr 持續壓力,EPS +24.8% 高速 recovery 被 PE compression 吞噬殆盡。Pattern match MU 2016-2018 雖然 +55%/yr,但中途 -52% drawdown — 「多數人無法抱住終點」是這類「cycle + 新引擎」雙重 narrative 的常見路徑。
+</div>
+
+<!-- §B.4 5-10Y 長期 -->
+<h2 id="sB4">§B.4 5-10Y 長期 — Runway + 第二曲線 + 範式風險</h2>
+
+<h3>長期關鍵維度</h3>
+<table>
+<tr><th>維度</th><th>STM</th><th>ON</th><th>TXN</th><th>NXPI</th></tr>
+<tr><td>Runway Post-Y5</td><td>🟢 寬(3 曲線:Auto+EV SiC+AI DC + MEMS#1)</td><td>🟢 寬(EV SiC 中段 + AI DC 早段)</td><td><strong style="color:#92400e">🟡 中</strong>(Analog 成熟 + Edge AI 接力)</td><td>🟢 寬(SDV 滲透中段 + ASIL D 7-15y lock-in)</td></tr>
+<tr><td>Moat 5y 後預期</td><td>取決於 AI DC 兌現 + class action</td><td>7→7.4(+0.4 升級慢)</td><td>取決於中國 BCD 替代速度</td><td><strong style="color:#15803d">9→9.5(若 SDV+lock-in 全兌現)</strong></td></tr>
+<tr><td>10Y IRR (thesis 對)</td><td>+8-10%/yr(時間拉長後改善)</td><td>+3.4%/yr(next cycle bottom 拖累)</td><td>+12%/yr Bull / +6%/yr Base</td><td>+11.5%/yr</td></tr>
+<tr><td>主要長期風險</td><td>class action 範式 + Auto MCU 結構流失 + AI DC binary</td><td>中國時代電氣/士蘭微海外擴張 + Infineon 30% by 2030</td><td>SMIC BCD 替代 + China 中高階蔓延(2028-)</td><td>Tesla AI5 (2027) + Qualcomm Ride Elite + 中國 local (5y away)</td></tr>
+<tr><td>風險性質</td><td><strong style="color:#991b1b">範式風險</strong>(class action binary 無法監測)</td><td>執行 + 結構混合</td><td>執行 + 結構(中國替代 5y)</td><td><strong style="color:#15803d">執行風險</strong>(design wins 季度可觀測)</td></tr>
+</table>
+
+<h3>長期排序與判斷邏輯</h3>
+<div class="rank-grid">
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥇</span><span class="ticker-name">NXPI</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥈</span><span class="ticker-name">STM</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">🥉</span><span class="ticker-name">ON</span></div>
+  </div></div>
+  <div class="rank-card"><div class="rank-list">
+    <div class="rank-row"><span class="medal">4️⃣</span><span class="ticker-name">TXN</span></div>
+  </div></div>
+</div>
+
+<div class="box-alpha">
+<strong>為什麼這個排序?</strong>(注意:長期排序 STM 上位至 🥈、TXN 跌至 4️⃣ — 與 3-5Y 排序不同,這是這個對比的核心洞察。)<br><br>
+<strong>NXPI 🥇:</strong>四檔中 Moat 最高(9/10)+ Lock-in 最長(7-15 年)+ Runway 🟢 寬;5-10Y 視角下 SDV 占 Auto 從 50%(Q4 26)→ 65%(2030)是真實的結構性順風,且護城河從 9→9.5 可能升級(若 Tesla AI5 / Qualcomm 沒結構性侵蝕)。Bear case 是執行風險(design wins 季度可觀測,中國 local 5+ 年才能 ASIL D 認證),這意味抱期不需要對「不可監測的 binary」焦慮 — 跟 STM 的 class action 完全相反。<br><br>
+<strong>STM 🥈:</strong>3 條 secular curves(Auto + EV SiC + AI DC + MEMS#1)是四檔最豐富的 runway 結構。問題是執行風險集中(class action 是範式 binary,5-10Y 仍懸著;Auto MCU 結構流失是慢性出血;AI DC 需 mgmt commit FY27 $1B 達標)。10Y 視角下 thesis 對時 IRR 可改善到 +8-10%/yr — 但抱期會持續焦慮。在 5-10Y 視角下 STM 上位至次選,是因為 Runway 結構強過 ON(後者 moat 升級慢)和 TXN(Runway 🟡 only)。<br><br>
+<strong>ON 🥉:</strong>SiC 25% 守住 + AI DC 雙引擎是真實的,但 moat 從 7→7.4 只升 +0.4(5Y 預期)— 這意味中國本土廠崛起 + Infineon 30% by 2030 戰略提前達成是 base case 之一,structural 順風不是 secular tailwind。10Y IRR 3.4%/yr 是四檔最弱(因為 next cycle bottom 2031-2032 拖累)— 「等 cycle peak 出場」才是合理策略,不該抱 10Y。<br><br>
+<strong>TXN 4️⃣:</strong>Runway 🟡 中是四檔唯一非 🟢 — 5Y 後就要面對「Analog 成熟 + Edge AI 接力 + 中國中高階 BCD 替代」三重挑戰。長期持有 $292 在 FY+5 EPS $11.50 × 25x = $290 是 0% return(不含股息回購)。即使 thesis 對,10Y 內中國 BCD 替代蔓延到中高階 Industrial Analog 是 base case 風險,而 TXN 沒有像 NXPI 那樣的 ASIL D 護城河擋住。<br><br>
+<strong>時間軸切換洞察:</strong>STM 在 3-5Y 是 4️⃣ 但在 5-10Y 上位至 🥈,是因為 cycle PE compression(-22.4%/yr)在 5Y 是核心痛點,但 10Y 時間拉長後痛點被稀釋,且 3 條 secular curves 開始發力。TXN 反之 — 3-5Y 還能靠 cycle 兌現拿 +2.1%/yr,5-10Y 進入 Analog 成熟期 + China 替代風險,跌至最差。
+</div>
+
+<!-- §C IRR Composition -->
+<h2 id="sC">§C IRR Composition 質感對比 — 靠自己跑 vs 靠市場配合</h2>
+
+<p>5Y Base 案 IRR 拆解為三項:<strong>EPS CAGR(自然複利)+ PE re-rate(市場配合)+ 股息回購(現金返還)</strong>。看數字不夠,要看「組成質感」 — 同樣 IRR,EPS 主導 vs PE 主導差很多。</p>
+
+<h3>Base 案 IRR Composition 視覺化</h3>
+
+<div style="margin:18px 0;">
+  <div class="stack-row">
+    <div class="ticker-label">STM</div>
+    <div class="stack-bar">
+      <div class="stack-seg seg-eps" style="width:48%;">EPS +24.8</div>
+      <div class="stack-seg seg-rerate-neg" style="width:43%;">re-rate -22.4</div>
+      <div class="stack-seg seg-shr" style="width:1%;">+0.6</div>
+    </div>
+    <div class="total" style="color:#991b1b;">-3.1%/yr</div>
+  </div>
+  <div class="stack-row">
+    <div class="ticker-label">ON</div>
+    <div class="stack-bar">
+      <div class="stack-seg seg-eps" style="width:64%;">EPS +10.8</div>
+      <div class="stack-seg seg-rerate-neg" style="width:26%;">re-rate -4.4</div>
+      <div class="stack-seg seg-shr" style="width:10%;">+1.8</div>
+    </div>
+    <div class="total" style="color:#15803d;">+6.2%/yr</div>
+  </div>
+  <div class="stack-row">
+    <div class="ticker-label">TXN</div>
+    <div class="stack-bar">
+      <div class="stack-seg seg-eps" style="width:45%;">EPS +16.1</div>
+      <div class="stack-seg seg-rerate-neg" style="width:47%;">re-rate -16.8</div>
+      <div class="stack-seg seg-shr" style="width:8%;">+3.0</div>
+    </div>
+    <div class="total" style="color:#92400e;">+2.3%/yr</div>
+  </div>
+  <div class="stack-row">
+    <div class="ticker-label">NXPI</div>
+    <div class="stack-bar">
+      <div class="stack-seg seg-eps" style="width:72%;">EPS +10.7</div>
+      <div class="stack-seg seg-rerate-neg" style="width:7%;">-1.0</div>
+      <div class="stack-seg seg-shr" style="width:21%;">+3.0</div>
+    </div>
+    <div class="total" style="color:#15803d;">+9.5%/yr</div>
+  </div>
+</div>
+<p class="footnote">Bar 長度按 abs(%) 顯示三項相對權重 ; 綠 = EPS 自然複利、紅 = PE re-rate 拖累、灰 = 股息回購。</p>
+
+<h3>質感解讀(這是這個對比的核心 alpha)</h3>
+<table>
+<tr><th>標的</th><th>IRR 質感</th><th>抱性說明</th></tr>
+<tr style="background:#dcfce7;"><td><strong>NXPI</strong></td><td>🟢 <strong>EPS 主導 + re-rate 拖累最小</strong></td><td><strong>+9.5% 中 EPS 占 +10.7%(112%),re-rate 只拖 -1.0%(11%)</strong>。屬「自然複利好抱 + 估值已便宜不需大修復」型 — 不需要市場配合 re-rate 即可拿到大頭。這就是 PE 18x 入場的紅利:沒有空間再壓縮多少。</td></tr>
+<tr><td><strong>ON</strong></td><td>🟡 EPS 主導 + re-rate 中等拖累</td><td>+6.2% 中 EPS 占 +10.8%(174%),re-rate 拖 -4.4%(71%)。EPS 自然複利好但 PE 25x 入場仍有壓縮空間。可抱性中等 — cycle 兌現速度決定。</td></tr>
+<tr><td><strong>TXN</strong></td><td>🔴 EPS 與 re-rate 接近對沖</td><td>+2.3% 中 EPS 占 +16.1%(700%),re-rate 拖 -16.8%(730%) — <strong>EPS 對了但市場給的倍數縮水,等於每年送 -3%/yr 給市場</strong>。這是「EPS 對了股價不對」的經典 cycle 股陷阱。要解:等估值倍數已經回到 25-27x 再進。</td></tr>
+<tr style="background:#fee2e2;"><td><strong>STM</strong></td><td>🔴🔴 <strong>EPS 與 re-rate 高度對沖 + cycle 失真</strong></td><td>-3.1% 中 EPS +24.8%(漂亮的 cycle bounce)被 re-rate -22.4% 與 cycle cross term 完全吞噬。trough cycle 案(FY26 EPS $0.99 失真)是雙倍失真 — EPS 從 trough 反彈虛胖、PE 從 64x trough 失真值 mean revert 雙重打擊。這是「cycle 復甦看似漂亮,但 trough EPS 沒有複利意義」的最壞組合。</td></tr>
+</table>
+
+<div class="box-good">
+<strong>核心洞察:</strong> NXPI 是四檔中唯一「不需要市場配合」的標的 — 抱期間就算 PE 沒漲,光靠 EPS 自然複利 +10.7%/yr 也能拿到 7-8% IRR(扣 1% re-rate 加 3% 股息回購)。STM/TXN 反之 — 即使 EPS 兌現,市場給的倍數縮水會吃掉大半甚至全部 EPS 紅利。這就是「Buy at right price」的 PE 18x vs 30x+ 結構差別。
+</div>
+
+<!-- §D Bear Case + Max DD -->
+<h2 id="sD">§D Bear Case + Max DD 路徑對比 — 執行風險 vs 範式風險</h2>
+
+<h3>各檔 Bear Case 與 §5 Single Thing 對比</h3>
+<table>
+<tr><th>標的</th><th>§5 Single Thing (Primary)</th><th>Secondary</th><th>監測頻率</th><th>風險性質</th></tr>
+<tr><td><strong>STM</strong></td><td>AI DC FY26 Rev &lt; $300M (vs mgmt commit $500M)</td><td>Auto MCU 全球市佔降至 &lt; 7% (vs 9.2%)</td><td>季法說 (3M) + Yole 報告</td><td><strong style="color:#991b1b">範式風險 + 執行風險混合</strong>(class action binary 屬範式 — discovery 結果 2026 H2)</td></tr>
+<tr><td><strong>ON</strong></td><td>連 2 季 GAAP GM &lt; 38%</td><td>Tesla/VW/BMW 任一 SiC 訂單轉手 STM/Infineon</td><td>季法說 + OEM 月度</td><td>執行風險(GM 數字 + OEM design win 可觀測)</td></tr>
+<tr><td><strong>TXN</strong></td><td>SMIC BCD 28nm 良率 &gt; 80% + Tier-1 Auto 設計導入</td><td>連 2 季 Industrial YoY &lt; +5% + Auto YoY &lt; 0%</td><td>SMIC 法說(3M) + Yole 拆解</td><td>執行 + 結構混合(中國替代 5y 是 long-term structural)</td></tr>
+<tr><td><strong>NXPI</strong></td><td>2027 H1 內失去歐美 Top 5 OEM SDV design win</td><td>連 2 季 Auto YoY &lt; +10% + SDV 占 Auto 停滯 ≤ 46%</td><td>OEM 月度 + 季法說</td><td><strong style="color:#15803d">執行風險</strong>(design wins 季度公開可觀測)</td></tr>
+</table>
+
+<h3>Max DD 路徑壓力</h3>
+<table>
+<tr><th>標的</th><th>5Y Max DD 評級</th><th>觸發條件(歷史)</th><th>復原時間</th><th>路徑風險</th></tr>
+<tr style="background:#fee2e2;"><td><strong>STM</strong></td><td>-65% 🔴</td><td>cycle peak after V-recovery + class action 不利文件</td><td>4-5 年(若無 class action settlement); cycle 高 beta + 治理疑慮疊加</td><td><strong>最高</strong></td></tr>
+<tr><td><strong>ON</strong></td><td>-55% 🟡</td><td>cycle 反彈失速 + 結構性 GM 永久 38-42%</td><td>2-3 年</td><td>中度</td></tr>
+<tr><td><strong>TXN</strong></td><td>-50% 🟡</td><td>cycle peak after estimates upgrade(歷史 ADI/MCHP/TXN 自己)</td><td>1-2 年</td><td>中度</td></tr>
+<tr style="background:#dcfce7;"><td><strong>NXPI</strong></td><td>-45% 🟡</td><td>SDV design win 流失 + cycle 反彈失速雙觸發</td><td>1-2 年</td><td><strong>最低</strong></td></tr>
+</table>
+
+<div class="box-warn">
+<strong>執行風險 vs 範式風險的關鍵差異:</strong><br><br>
+<strong>執行風險(可監測、可證偽):</strong>NXPI / ON / TXN 的 §5 trigger 都是季度可觀測的硬指標(GM 數字、design win 公告、SDV 占比、Auto YoY)— 一旦 trigger 觸發,1-2 季可確認;trigger 不觸發時抱期不需焦慮。<br><br>
+<strong>範式風險(模糊、5-10 年才能 settle):</strong>STM 的 class action discovery 是 binary 法律事件(無法預先觀察 path)— 2026 H2 進入 discovery 後不利文件揭露是無法監測的;CEO/CFO 2024 H1 賣股 $8M 期間發布樂觀預測是「smoking gun 風險」— 抱期間會持續焦慮。<br><br>
+<strong>對長期持有者的含義:</strong>NXPI 是四檔中「抱得最安心」的(知道哪天會 wake up 看到 trigger 觸發,平時不需要每天追新聞);STM 是「抱得最焦慮」的(class action 任何一天可能爆發 smoking gun)。這就是為什麼 §B.4 長期排序 NXPI 🥇 / STM 🥈 是基於 runway 寬度,但若加入「抱期焦慮成本」NXPI 領先優勢會更明顯。
+</div>
+
+<!-- §E 最終裁決 -->
+<h2 id="sE">§E 最終裁決</h2>
+
+<h3>四層時間框架排序矩陣</h3>
+<table>
+<tr><th>時間框架</th><th>🥇 第一</th><th>🥈 第二</th><th>🥉 第三</th><th>4️⃣ 第四</th></tr>
+<tr style="background:#dcfce7;"><td>&lt;12M 短期</td><td><strong>NXPI</strong></td><td>TXN</td><td>ON</td><td>STM</td></tr>
+<tr style="background:#dcfce7;"><td>2-3Y 中期</td><td><strong>NXPI</strong></td><td>ON</td><td>STM</td><td>TXN</td></tr>
+<tr style="background:#dcfce7;"><td>3-5Y 中長期</td><td><strong>NXPI</strong></td><td>ON</td><td>TXN</td><td>STM</td></tr>
+<tr style="background:#dcfce7;"><td>5-10Y 長期</td><td><strong>NXPI</strong></td><td>STM</td><td>ON</td><td>TXN</td></tr>
+<tr><td><strong>加權合計</strong></td><td><strong style="color:#15803d">NXPI 四層全勝</strong></td><td>ON / STM 中段拉扯</td><td>—</td><td>TXN 三層最弱</td></tr>
+</table>
+
+<div class="verdict-box">
+  <div class="label">推薦標的</div>
+  <div class="pick"><span class="ticker-tag">NXPI</span> 適用所有四層時間框架</div>
+  <div class="reasoning">
+    <strong>主要理由(三條):</strong>
+    <ol>
+      <li><strong>四層時間框架唯一全勝</strong> — 從 &lt;12M 短期到 5-10Y 長期,NXPI 都是排第一。其他三檔在不同時間軸有不同的弱點(STM 短中期動能透支 + 範式風險、ON 5-10Y moat 升級慢、TXN 長期 Runway 🟡),沒有一致性。</li>
+      <li><strong>IRR 質感最乾淨</strong> — 5Y Base IRR +9.5% 中 EPS 占 112%、re-rate 只 -1%。是四檔中唯一「不需要市場配合」的標的 — 抱期間就算 PE 沒漲,光靠 EPS 自然複利 +10.7%/yr 也能拿到 7-8% IRR。</li>
+      <li><strong>Bear case 是可監測的執行風險</strong> — §5 trigger(2027 H1 失歐美 Top 5 OEM SDV)是季度公開可觀測的,不像 STM 的 class action 範式 binary。抱期不需要持續焦慮。</li>
+    </ol>
+    <strong>進場條件:</strong>5/25 收 $316.47 與 DCA 建議的 $215-235 進場區間有 +35-47% 距離,<strong>現價仍不該追</strong>。等 (a) 回測 BB 中軌 $222 ± 5%($211-233),或 (b) Pure MA 站穩 W104 滿 4 週,任一條件成立後分 3 批接,初始 1.5%、目標 4%。
+  </div>
+</div>
+
+<h3>為什麼不選其他三檔</h3>
+<table>
+<tr><th>標的</th><th>不選的具體理由</th></tr>
+<tr><td><strong>不選 STM</strong></td><td>① 3-5Y 機率加權 IRR -0.7%/yr 是四檔最差,Base case 都是負值;② 24 週 +140% 動能極端透支(歷史 80% 機率 1 個月內回測 15-25%),5/25 $66.86 較 DCA 日再 +5.5%,情況加劇;③ class action discovery 2026 H2 是不可監測的範式 binary 風險,抱期焦慮成本最高;④ Auto MCU #4(9.2%)結構性流失(Renesas R-Car Gen5 + Infineon AURIX RISC-V 雙重攻擊);⑤ IRR composition 中 EPS +24.8% 被 re-rate -22.4% 完全吞噬 + cycle trough 失真。</td></tr>
+<tr><td><strong>不選 ON</strong></td><td>① 3-5Y IRR +5.4%/yr 不及大盤;② Pure MA stack 倒掛(W52&lt;W104&lt;W250)是 V-recovery 過渡期,不是已 confirm 進場形態;③ SiC GM 結構性 vs 週期性是不可調和矛盾(同業 TXN/NXPI 早回 56-58%、ON 落後 18-20pp);④ moat 5y 後預期 7→7.4 升級慢(中國本土廠崛起 + Infineon 30% by 2030);⑤ 同樣是 cycle bottom + 第二曲線 + SiC 三合一敘事,NXPI 已經是 ON 的 pattern match — 在 NXPI 自己面前 ON 是次等選擇。</td></tr>
+<tr><td><strong>不選 TXN</strong></td><td>① 3-5Y IRR +2.1%/yr 弱於大盤 4 倍;② IRR composition 是「EPS 對了股價不對」的經典 cycle 股陷阱(EPS +16.1% 被 re-rate -16.8% 完全對沖);③ FPE 35x 5Y 67% 分位 + RSI 72-77 + 4w +44% 是 cycle peak setup(歷史 TXN 自己 2024/9 / ADI 2021/12 / MCHP 2022/3 後 12-18 個月 -30~-50%);④ Runway 🟡 是四檔唯一非 🟢,5-10Y 視角下面對 Analog 成熟 + 中國中高階 BCD 替代;⑤ 5Y 持有 $292 對應 0% return 不含股息,加股息回購也只 ~3%/yr — 與大盤平均差距遠。</td></tr>
+</table>
+
+<h3>時間軸切換敏感度</h3>
+<div class="box-alpha">
+<strong>結論:NXPI 對時間軸最不敏感 — 是這個對比的最大 alpha。</strong><br><br>
+其他三檔的排序在不同時間軸會切換:STM 從 4️⃣(3-5Y)→ 🥈(5-10Y)是因為 cycle PE compression 痛點在 5Y 是核心、10Y 被時間稀釋,且 3 secular curves 開始發力;TXN 從 🥉(3-5Y)→ 4️⃣(5-10Y)是因為 cycle 兌現紅利在 3-5Y 還能拿、5-10Y 進入 Analog 成熟期被中國替代風險吞噬。<br><br>
+<strong>NXPI 在四層時間軸都是 🥇</strong>,意味:<br>
+&nbsp;&nbsp;• 如果你只想做短期 cycle play(等 BB 中軌進、cycle peak 出),NXPI 是首選;<br>
+&nbsp;&nbsp;• 如果你想做 2-3Y 拐點兌現,NXPI 也是首選(SDV 占比 50% by Q4 26 milestone 對齊時間軸);<br>
+&nbsp;&nbsp;• 如果你想做 3-5Y 結構性持有,NXPI 仍是首選(IRR 質感乾淨 + moat 9/10);<br>
+&nbsp;&nbsp;• 如果你想壓 5-10Y 長期倉,NXPI 還是首選(ASIL D + S32 toolchain 7-15 年 lock-in 是四檔最長)。<br><br>
+這種「時間軸無關」的穩定首選是 multi-stock comparator 最理想的結果 — 用戶不需要說明持有期就能選擇。
+</div>
+
+<h3>進場條件與監測指標</h3>
+<table>
+<tr><th>項目</th><th>NXPI 具體計畫</th></tr>
+<tr><td>當前股價</td><td>$316.47(2026-05-25 收)— 較 DCA $295 上漲 +7.3%,過熱加劇</td></tr>
+<tr><td>進場價位區間</td><td>$215-235(BB 中軌 $222 ± W104 $220 區間)— 距現價 -25% ~ -32%</td></tr>
+<tr><td>進場節奏</td><td>條件式分批,等 (a) 回測 BB 中軌 $222 ± 5% 或 (b) Pure MA 站穩 W104 滿 4 週,任一條件成立後分 3 批接,每批間隔 ≥ 2 週</td></tr>
+<tr><td>初始倉位</td><td>1.5%(試倉);⛔ 禁止 04/29 +26% 後 chase</td></tr>
+<tr><td>目標倉位</td><td>4%(從 §6c Max DD 🟡 評級下修,原計畫 6% → 4%)</td></tr>
+<tr><td>主要監測 trigger</td><td>① Q2 26 actual Rev ≥ $3.45B + GM ≥ 57.5%(2026/07);② SDV 占 Auto ≥ 50% by Q4 26;③ Tier-1 OEM SDV design win 季度公告</td></tr>
+<tr><td>清倉 trigger</td><td>2027 H1 內失去歐美 Top 5 OEM(VW/Stellantis/Ford/GM/BMW 任一)SDV central compute design win 給 Qualcomm Ride Elite 或 NVIDIA Drive Thor</td></tr>
+</table>
+
+<h3>一句話 Takeaway</h3>
+<div class="verdict-box" style="background:linear-gradient(180deg,#f0fdf4 0%, #f8fafc 100%); border-color:var(--green);">
+  <div class="reasoning" style="font-size:16px;">
+    <strong>四檔 Analog/Auto/Power 半導體都是「觀望」verdict,但 NXPI 是「最不該等的觀望」 — 估值最便宜(FPE 18x vs 28-37x)、護城河最高(A 9/10)、動能最不過熱(4w +23%)、IRR 質感最乾淨(EPS 自然複利占 112%、re-rate 只 -1%)、Bear 是可監測的執行風險。等 BB 中軌 $222 回測動 1.5%→4%。其他三檔現價都別追:STM 範式風險最重 + 動能極端、TXN 是 cycle peak 估值陷阱、ON 是 NXPI 的次等 pattern match。</strong>
+  </div>
+</div>
+
+<hr>
+<p class="footnote">本報告由 <code>multi-stock-comparator-v1</code> skill v1.4-cc-tuned 自動產生,讀取本地 DCA 報告(<code>docs/dca/</code>)抽取維度。最新股價(2026-05-25 收)透過 WebSearch 取得,Fwd PE 已重算,MA50/MA200/RSI 沿用 DCA 報告日數據。報告非投資建議,僅供研究參考。</p>
+
+</div>
+
+</body>
+</html>
