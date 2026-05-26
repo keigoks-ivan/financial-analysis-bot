@@ -148,9 +148,9 @@ Agent({
 - 禁止 stingtao voice 殘留（「本版補齊」「先前漏掉」等）
 
 **Plumbing**：
-- `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`（DD 新增後手跑；尚未掛 update_dd_index.py）
+- `scripts/validate_supply_chain_meta.py`：驗 `docs/supply-chain/data/*.json`（pre-commit hook 會跑、staged-only；validator 自身變動時 full-sweep 全部 topic）
+- `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`。**已掛 update_dd_index.py 自動鏈** — 跑 DD/DCA 同步時會自動 rebuild 一次，不需手動。
 - engine 完全抽離（`assets/engine.{css,js}`），新 topic 不需動 code
-- 無 pre-commit validator（v1.0 限制；audit script 在 SKILL.md Step 4）
 
 **現況**：CoWoS（31 nodes 3 列）+ CPO（19 nodes 5 列）兩個 topic 上線；剩下 13 個 topic 在 manifest 中標 `active: false`（HBM / 先進製程 / 矽光子 / 面板級封裝 / IC 設計 / 半導體材料 / ASIC / IC 基板 / 電源散熱 / AI 伺服器 ODM / 機器人 / 低軌衛星 / 軍工國防）。
 

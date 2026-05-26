@@ -2725,6 +2725,21 @@ def main():
             file=sys.stderr,
         )
 
+    # Event-driven trigger for supply-chain DD link map. Independent of screener
+    # — pure file glob, no network. Always run so /supply-chain/ company tables
+    # deep-link to the latest DD reports even when yfinance / screener flaked.
+    sc_script = Path(__file__).resolve().parent / "build_supply_chain_dd_index.py"
+    if sc_script.exists():
+        print(f"\n→ Auto-trigger: {sc_script.name} (rebuild /supply-chain/ DD link map)")
+        try:
+            subprocess.run([sys.executable, str(sc_script)], check=True)
+        except subprocess.CalledProcessError as e:
+            print(
+                f"\n⚠ supply-chain DD link rebuild failed (exit {e.returncode}). "
+                f"Rerun `python3 {sc_script}` manually.",
+                file=sys.stderr,
+            )
+
     # Event-driven trigger for DD Alpha Ranker fundamental layer (angles 1/3/4).
     # Per TASK §修正 7: must run only after update_dd_index + build_dd_screener
     # fully succeed — never on half-stale data. Failure here is non-fatal
