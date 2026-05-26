@@ -429,7 +429,7 @@ function renderDefinitions() {
   `).join("");
   slot.innerHTML = `
     <h3><span class="ico">⚑</span>客戶獨家 / 關鍵單點 — 定義</h3>
-    <p class="lede">節點上的 <em>⚑</em> 旗標代表「投資視角的脆弱依賴點」 — <em>跟左上角「競爭態勢」badge 正交</em>，由作者依下列 4 種子情況之一手動標註：</p>
+    <p class="lede">節點上的 <em>⚑</em> 旗標代表「投資視角的脆弱依賴點」 — <em>跟左上角「競爭態勢」badge 正交</em>。由 <code>supply-chain-cartographer</code> skill 在研究時依下列 4 種情況之一判斷後標註，每個 ⚑ 須引用 ≥2 來源並標註信心度（high / med）：</p>
     <div class="def-grid">${cards}</div>
     <p style="margin-top:12px;font-size:11px;color:var(--ink-faint);line-height:1.55">
       ${SP_TOOLTIP.note}。圖例中的 ⚑ 籤可以滑鼠移上看快速定義、點擊則切換「只看單點」篩選。
