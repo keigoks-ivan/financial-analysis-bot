@@ -50,6 +50,17 @@ _EXPLICIT_ALIASES = {
     "LVMH": "MC",   # LVMH Moët Hennessy — Koyfin uses Paris primary "MC"
 }
 
+# Excel rows to drop on load (treated as if not present → consumers fall back
+# to yfinance). Use when Koyfin export has clearly bad data for a ticker
+# (wrong currency, wrong mapping, all-None) and we don't want it polluting
+# downstream consensus. Single source of truth — both snapshot + build see
+# the same skip set.
+_SKIP_TICKERS = {
+    "SU",   # 2026-05-26 Koyfin export: FY values appear wrong (likely CAD→USD
+            # mapping issue — Suncor reports CAD, Excel shows ~$7 USD FY1).
+    "ABB",  # 2026-05-26 Koyfin export: all FY fields are None (no data fetched).
+}
+
 
 def _alias_keys(ticker: str) -> list[str]:
     """Return candidate Excel keys to try for a given DD ticker.
@@ -160,6 +171,8 @@ def _parse_eps_sheet(sheet_root, sst: list[str]) -> dict[str, dict]:
             continue
         ticker = ticker.strip()
         if not ticker:
+            continue
+        if ticker in _SKIP_TICKERS:
             continue
 
         # Excel stores growth/CAGR as fractions (0.0985 = 9.85%). Convert to pct.
