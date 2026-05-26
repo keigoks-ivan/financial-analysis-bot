@@ -597,7 +597,7 @@ def _row_html_tier_a(row: dict) -> str:
     rs_str = f"{rs:.0f}" if rs is not None else "—"
     rationale = row.get("rationale") or "—"
     return f"""<tr>
-  <td class="left">{_ticker_link(row)}<div class="sub">{row.get('sector','')}</div></td>
+  <td class="left">{_ticker_link(row)}</td>
   <td class="score-cell"><strong>{_fmt_score(row['final'])}</strong></td>
   <td class="position-cell">{_fmt_score(row['position'])}</td>
   <td class="setup-cell">{_fmt_score(row['setup'])}</td>
@@ -613,7 +613,7 @@ def _row_html_tier_b(row: dict) -> str:
     fpe_str = f"{fpe:.1f}" if fpe is not None else "—"
     wait = row.get("wait_hint") or "—"
     return f"""<tr>
-  <td class="left">{_ticker_link(row)}<div class="sub">{row.get('sector','')}</div></td>
+  <td class="left">{_ticker_link(row)}</td>
   <td class="score-cell"><strong>{_fmt_score(row['final'])}</strong></td>
   <td class="position-cell">{_fmt_score(row['position'])}</td>
   <td class="setup-cell setup-low">{_fmt_score(row['setup'])}</td>

@@ -794,8 +794,7 @@ def _filter_state_key(row: dict) -> str:
 
 def _row_html(row: dict) -> str:
     ticker_cell = _ticker_link(row)
-    sector = row.get("sector") or ""
-    sector_sub = f'<div class="sub">{sector}</div>' if sector else ""
+    sector_sub = ""  # v1.x: industry subtitle removed per user request — ticker only
 
     high_250w = row.get("high_250w_price")
     if high_250w is not None:

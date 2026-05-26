@@ -537,7 +537,7 @@ def _row_html_tier_a(row: dict) -> str:
     fpe = row.get("fpe_fy2")
     fpe_str = f"{fpe:.1f}" if fpe is not None else "—"
     return f"""<tr>
-  <td class="left">{_ticker_link(row)} {_archetype_badge(row)}<div class="sub">{row.get('sector','')}</div></td>
+  <td class="left">{_ticker_link(row)} {_archetype_badge(row)}</td>
   <td class="score-cell"><strong>{_fmt_score(row['final'])}</strong></td>
   <td>{_fmt_score(row['quality'])}</td>
   <td>{_fmt_score(row['growth'])}</td>
@@ -553,7 +553,7 @@ def _row_html_tier_b(row: dict) -> str:
     fpe = row.get("fpe_fy2")
     fpe_str = f"{fpe:.1f}" if fpe is not None else "—"
     return f"""<tr>
-  <td class="left">{_ticker_link(row)} {_archetype_badge(row)}<div class="sub">{row.get('sector','')}</div></td>
+  <td class="left">{_ticker_link(row)} {_archetype_badge(row)}</td>
   <td class="score-cell"><strong>{_fmt_score(row['final'])}</strong></td>
   <td>{_fmt_score(row['quality'])}</td>
   <td>{_fmt_score(row['growth'])}</td>
