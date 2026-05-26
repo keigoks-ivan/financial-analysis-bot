@@ -3,7 +3,7 @@ name: multi-stock-comparator-v1
 description: "收到 2-5 檔個股 ticker(可選 DCA / DD)後,從本地 dca/ 或 dd/ 目錄讀取最新報告,執行短中長期(<12M / 2-3Y / 3-5Y / 5-10Y)四層時間框架對比分析,輸出 HTML 比較報告至 docs/comparisons/。當用戶提及『這兩三檔哪個好』、『多檔比較』、『同類對比』、『該選哪一家』、『DCA / DD 對比分析』時,必須觸發此技能。"
 ---
 
-# 多標的對比分析框架 v1.4-cc-tuned(Claude Code · financial-analysis-bot 環境)
+# 多標的對比分析框架 v1.5-cc-tuned(Claude Code · financial-analysis-bot 環境)
 
 > 本版本為 Claude Code 環境專用版。v1.4(claude.ai)版本依賴 web_fetch INDEX_URL 解析 DCA/DD 連結;本版改用本地檔案系統直接讀取,完全繞過 web 部署延遲與權限規則。
 >
@@ -216,11 +216,31 @@ HTML 報告結構固定五大章節:
 - 四層時間框架排序卡片
 - 一句話結論(推薦標的 + 主要理由)
 
+### §A.1 業務地圖 + 護城河來源對照(v1.5 新增 — 強制章節)
+
+這節要回答:**「四檔到底做什麼、靠什麼賺錢、競爭對手是誰、護城河的具體 mechanism 是什麼?」** — 不是評分,是 anatomy。
+
+必含一張「業務地圖 + 護城河來源」對照表,N + 1 columns(維度 + 每檔一欄),固定 6 rows:
+
+| Row | 內容要求 |
+|:---|:---|
+| **營收 mix**(latest FY) | 各 segment 占比 + 1 行 trend(例:Auto 50% / Industrial 30% / Comm 20%,Auto 過去 2 年由 45% → 50%) |
+| **主要產品線**(具體 part / platform) | 不是「賣晶片」這種抽象描述,要寫具體 product family(例:S32 platform、SiC MOSFET 1200V、ASIL D MCU) |
+| **客戶集中度** | Top 1 / Top 5 / Top 10 客戶占比 + 是否有 OEM dual-track risk(in-house 替代) |
+| **直接對打的 socket** | 在這次比較圈裡,該檔直接對打誰的什麼 socket(例:NXPI vs STM 在 SDV central compute、TXN vs ADI 在 BMS DAC) |
+| **護城河來源**(具體 mechanism) | 禁止只寫「scale / brand / IP」這種抽象詞。要寫具體 mechanism(例:ASIL D + S32 toolchain → Tier-1 7-15 年 lock-in;300mm Analog fab → cost lead 25-30%) |
+| **護城河趨勢來源** | 趨勢箭頭 ↑/→/↓ + 1 行根因(例:↑ ← 200mm SiC 量產顯著拉開成本 / → ← 認證體系穩定但中國 local 追上中) |
+
+表後必含一段「**業務地圖洞察**」 box(box-alpha),內容:
+- 在這個比較圈裡,**業務 overlap 最深的是哪兩檔**(用相同 product family 直接對打)
+- 哪檔業務最 differentiated(有獨家 segment 不在其他三檔產品線裡)
+- 哪檔護城河 mechanism 是「結構性硬 lock-in」(認證 / 平台 / 7+ 年 design cycle) vs 「執行領先」(良率 / 成本曲線 / scale)— 前者抗擊穿能力強很多
+
 ### §B 短中長超長四層獨立打分
 四個獨立小節,每層獨立評估、獨立給排序:
 - **§B.1 <12M 短期**:Pure MA + EPS revision + 最近催化
 - **§B.2 2-3Y 中期**:拐點催化 + 估值修復 + PE re-rate
-- **§B.3 3-5Y 中長期**:TAM + 護城河趨勢 + EPS 兌現
+- **§B.3 3-5Y 中長期**:護城河來源解剖(深) + TAM + EPS 兌現 + IRR 質感(兩段式 — v1.5 強制)
 - **§B.4 5-10Y 長期**:Runway post-Y5 + 範式風險 + 第二曲線
 
 每層必須:
@@ -228,6 +248,25 @@ HTML 報告結構固定五大章節:
 - 三檔(2-5 檔)横向對比表
 - 給出該層的排序(第一 / 第二 / 第三)
 - 一段「為什麼這個排序」的判斷邏輯(不是堆疊數字)
+
+### §B.3 兩段式架構(v1.5 強制)
+
+§B.3 不能再是「Moat 評級 1 row + IRR 表」的快剪。必須拆成上下兩段:
+
+**§B.3.a 護城河來源解剖**(必含)
+
+對每檔回答三個問題,逐檔寫一段 100-200 字:
+1. **這檔的護城河 mechanism 具體是什麼?**(引 §A.1 的「護城河來源」row 並 expand)
+2. **這個 mechanism 為什麼能撐 3-5 年?**(時間因素:認證年限 / 設計週期 / 客戶切換成本 / 良率學習曲線斜率)
+3. **3-5 年內最可能讓 mechanism 失效的單一事件是什麼?**(對齊 §5 Single Thing)
+
+這 3 段不是堆疊數字 — 是 mechanism 級別的判斷。**禁止只寫「ASIL D 很硬 / 300mm 成本領先很強」** 這種口號,必須寫「ASIL D 從新 OEM 評估到投產要 5-7 年,所以 2030 前歐美 Top 5 OEM 不會切換」這種有時間軸的因果鏈。
+
+**§B.3.b 排序判斷**(必含)
+
+承接 §B.3.a,給排序 + 判斷邏輯。原本的 IRR 表 / Pattern Match 表保留在這段。
+
+---
 
 ### §C IRR Composition 質感對比(縱深層)
 這是 3-5Y view 真正的 alpha 所在,必須獨立成章:
@@ -453,6 +492,7 @@ skill 行為:
 
 ## 【版本歷史】
 
+- **v1.5-cc-tuned(2026-05-26)**:補強 skill 結構性缺口 — 用戶 feedback「基本面 / 業務面 / 競爭態勢 / 護城河說明過少」。新增 **§A.1 業務地圖 + 護城河來源對照**(6 rows × N 檔,強制章節 — 營收 mix、主要產品線、客戶集中度、直接對打 socket、護城河 mechanism、護城河趨勢來源)+ box-alpha 業務地圖洞察;**§B.3 拆成兩段式**(§B.3.a 護城河來源解剖每檔 100-200 字 mechanism 級判斷,禁止口號;§B.3.b 排序判斷承接 a 段),解決 v1.4 將護城河壓縮成「評分 + 趨勢箭頭」一格的問題。骨架其他章節維持不動。
 - **v1.4-cc-tuned(2026-05-13)**:在 Claude Code (financial-analysis-bot) 環境完成 fine-tune — 環境常數鎖定為 `docs/dca/` / `docs/dd/` / `docs/comparisons/` / `.html`;股價來源固定走 `WebSearch`(`fetch_prices.py` 為 batch job 不適用 ad-hoc);git flow 為手動 `add / commit / push`,未啟用 push-comparisons skill;新增第七步「append 到 `docs/comparisons/index.html`」。「環境參數待確認」段刪除。
 - **v1.4-cc(2026-05-13)**:Claude Code 環境專用版本。第一步改為 ls 本地 dca/ / dd/ 目錄(取代 v1.4 的 web_fetch INDEX_URL)。直接 read_file 本地 markdown(取代 web_fetch report URL)。輸出至 `docs/comparisons/` 而非 `/mnt/user-data/outputs/`,可直接 git push 上線。新增「環境參數待確認」段,部署時需與本地 Claude 確認真實路徑/檔名/git 流程。
 - **v1.4(2026-05-13)**:加入 INDEX_URL 強制第一步協議,解決 Claude.ai 環境 web_fetch 權限限制。但發現 INDEX 頁更新頻率 ≠ DCA 產生頻率,導致新 DCA 仍可能 fetch 失敗(LITE/COHR/FN 案例)。本問題在 cc 版徹底解決(直接讀本地檔)。
