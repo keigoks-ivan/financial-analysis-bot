@@ -127,6 +127,33 @@ Agent({
 
 **Plumbing**：無 pre-commit validator（與 DCA 同政策）；無 build script（listing 是 skill-appended，類似 `push-earnings` 模式）；目前無 `push-comparisons` skill，git flow 是手動 `add / commit / push`。
 
+## Workflow: 產業供應鏈互動地圖（supply-chain map）
+
+當用戶說「跑 {topic} 供應鏈地圖」/「{topic} 供應鏈」/「畫 {topic} 供應鏈」/「supply-chain {topic}」/「{topic} supply chain map」時，自動觸發 `supply-chain-cartographer` skill（`.claude/skills/supply-chain-cartographer/`）。
+
+**定位**：與 industry-analyst（ID 表格 dashboard）和 industry-ds（敘述供需循環）並列的**第三種產業視角** — 互動式節點圖，看「製程節點上誰是脆弱依賴點」。同 theme 可與 ID / DS 並存。
+
+**輸出**：
+- JSON：`docs/supply-chain/data/{topic}.json`（節點圖資料，schema 見 SKILL.md）
+- HTML：`docs/supply-chain/{topic}.html`（thin template，~60 行，load engine.js）
+- Manifest：把 `docs/supply-chain/data/topics.json` 該 topic 的 `active` 翻成 `true`
+- 上站路徑：`https://research.investmquest.com/supply-chain/{topic}.html`
+
+**Row 數彈性**：3-6 列由產業敘事決定（半導體製造 3 列 / 光電混合 5 列 / IC 設計 5 列 / 機器人 6 列）— 引擎不強制。
+
+**核心規則**：
+- 每個 ⚑（客戶獨家／關鍵單點）必須 ≥2 來源、信心度標註（high/med + 條件文字）
+- TW 中文源（TechNews / Money Weekly / 工商時報 / 鉅亨 / 法說 vocus）至少 30%
+- ⚑ 子類用 4-bucket 框架（近乎獨佔 / 客戶獨家 / 鎖喉點 / 封裝級單點）
+- 禁止 stingtao voice 殘留（「本版補齊」「先前漏掉」等）
+
+**Plumbing**：
+- `scripts/build_supply_chain_dd_index.py`：scan docs/dd/ 重建 `dd_links.json`（DD 新增後手跑；尚未掛 update_dd_index.py）
+- engine 完全抽離（`assets/engine.{css,js}`），新 topic 不需動 code
+- 無 pre-commit validator（v1.0 限制；audit script 在 SKILL.md Step 4）
+
+**現況**：CoWoS（31 nodes 3 列）+ CPO（19 nodes 5 列）兩個 topic 上線；剩下 13 個 topic 在 manifest 中標 `active: false`（HBM / 先進製程 / 矽光子 / 面板級封裝 / IC 設計 / 半導體材料 / ASIC / IC 基板 / 電源散熱 / AI 伺服器 ODM / 機器人 / 低軌衛星 / 軍工國防）。
+
 ## Git pre-commit hook
 
 Repo 有 dd/id meta validator pre-commit hook。新 clone 啟用方式與 bypass 細節：見 `scripts/README.md`。
