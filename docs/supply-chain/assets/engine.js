@@ -379,7 +379,7 @@ function openDrawer(id) {
       const ddBtn = dd ? ` <a href="${dd.href}" class="dd-link" target="_blank" rel="noopener" title="開啟 DD 報告">DD ↗</a>` : "";
       const tickerHTML = c.ticker ? `<span class="tk">${c.ticker}</span>` : "";
       const gold = isGolden(n, c);
-      const goldBadge = gold ? '<span class="gold-badge" title="金交集 · ⚑ × 核心業務 × 高速增長">💎</span> ' : '';
+      const goldBadge = gold ? '<span class="gold-badge" title="Top Pick · ⚑ × 核心業務 × 高速增長">💎</span> ' : '';
       const rowCls = gold ? ' class="golden"' : '';
       return `<tr${rowCls}>
         <td>${goldBadge}<span class="co-name"><span class="co-flag">${(FLAG[c.country] || "")}</span>${c.name}${tickerHTML}${ddBtn}</span></td>
@@ -387,7 +387,7 @@ function openDrawer(id) {
         <td><span class="co-note">${c.note || ""}${csrc}</span>${prod}</td>
       </tr>`;
     }).join("");
-    body.appendChild(section(`主要廠商 (${n.companies.length})　<span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink-faint)">依國別標示 · <span style="color:${cc}">●</span> = 有對應 DD 報告 · <span style="color:#F59E0B">💎</span> = 金交集</span>`,
+    body.appendChild(section(`主要廠商 (${n.companies.length})　<span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink-faint)">依國別標示 · <span style="color:${cc}">●</span> = 有對應 DD 報告 · <span style="color:#F59E0B">💎</span> = Top Pick</span>`,
       `<table class="co-table"><thead><tr><th>公司</th><th>市佔／地位</th><th>角色／產品</th></tr></thead><tbody>${rows}</tbody></table>`));
   }
 
@@ -479,7 +479,7 @@ function renderGoldenIntersection() {
   }).join("");
 
   slot.innerHTML = `
-    <h3><span class="ico">💎</span>金交集 Top Picks · ${byKey.size} 檔</h3>
+    <h3><span class="ico">💎</span>Top Picks · ${byKey.size} 檔</h3>
     <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（非 side bet） × <em>業務高速增長</em>（&gt;30% CAGR 或 hyperscaler 大單）三條件的公司 — 排除掉「太大太分散」（如 TSMC 集團 / Corning 集團）與「結構性鎖喉但停滯」的紅海玩家，留下對 EPS 真正有推力的 high-conviction picks。</p>
     <div class="gold-table-wrap">
       <table class="gold-table">
