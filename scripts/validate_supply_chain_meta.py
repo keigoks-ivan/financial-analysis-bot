@@ -176,6 +176,14 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
                         f"node {nid}.companies[{j}]: supply_chain_lock={scl!r}; "
                         f"allowed ['tight', 'med', 'loose']"
                     )
+            # Forward-core trajectory (B 例外 — requires 3 hard conditions per SKILL.md)
+            if "core_business_trajectory" in c:
+                cbt = c["core_business_trajectory"]
+                if cbt not in {"high", "med", "low"}:
+                    errs.append(
+                        f"node {nid}.companies[{j}]: core_business_trajectory={cbt!r}; "
+                        f"allowed ['high', 'med', 'low']"
+                    )
 
         # sources: each must have label + url
         for j, s in enumerate(n.get("sources", []) or []):

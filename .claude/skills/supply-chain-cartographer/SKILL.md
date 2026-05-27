@@ -258,6 +258,26 @@ done
 - 大集團一小 segment（如 TSMC COUPE 占 <1%、Corning AI fiber 占 <20%、Broadcom CPO 占 <5%）
 - 主業在別處（味之素 Ajinomoto 雖然 ABF 膜 95% 獨佔，但味之素是大食品/化工集團）
 
+**Forward-Core 例外（用 `core_business_trajectory: "high"`）**：
+
+預設規則：用「**今天**的 segment revenue %」判 `core_business`。但少數高確信案例可開 forward 例外 — 即使 segment 當前 <20% rev，仍可標 `core_business: true` + 加 `core_business_trajectory: "high"` 升 💎。
+
+**三條件必須全過**（任一缺 → 不開 forward 例外）：
+
+1. **管理層公開 guide 具體金額** — 必須是「2027 ASIC > $10 億美元」這種**具體數字** + 時間點，不是「策略佈局」「未來重點」這類空話。
+2. **已 signed 多年合約 ≥3 年** — 必須是公開揭露的 binding contract、非 MOU / LOI。
+3. **已有 named hyperscaler 級客戶** — Apple / NVIDIA / Google / AWS / Meta / MSFT / OpenAI / Anthropic / Tesla 任一具名 + 公開承諾。
+
+**已批准的 forward-core 案例**：
+- **MediaTek 2454 (asic ds-mtk-others)**：(i) 自報 ASIC 2026 >$10 億、2027 target $10B+；(ii) Google TPU v8i 合約鎖到 2031；(iii) Google + AWS 公開命名。當前 ASIC ~10% MTK 營收，三條件全過 → forward 例外升 💎。
+
+**不通過的反例**（即使 narrative 漂亮）：
+- **鴻海 2317 humanoid**：humanoid <1% Foxconn 營收、Foxconn 集團 $200B → 要做到 20% 需 humanoid 業務 $40B，數學上 5 年內不可能。
+- **Hoya 7741 EUV mask blank**：沒具體金額 guide、沒 signed 合約、客戶經 ASML 中介非直接 named。
+- **京鼎 3413 AMAT OEM**：80%+ 已經 AMAT 營收（current core 過），但結構是 supplier-captive（AMAT 可換 OEM）不是 customer-exclusive，是 ⚑ 框架誤用不是 forward 問題。
+
+→ Forward-core **是「升級加分項」**、不是「萬用救生圈」。三條件 hard gate。寧可漏 alpha 也不要 false positive。
+
 **`supply_chain_lock: "tight"` 的條件（5 訊號任一即過）**：
 1. 📅 **訂單能見度 ≥ 12 個月** — ASML EUV backlog $30B+；京鼎 3413 訂單看到 9 個月；Apple 鎖 TSMC N2 三年
 2. 🚫 **Sold out / capacity-constrained** — TSMC CoWoS 2026 月產能 120K 仍緊；SK Hynix HBM sold out through 2026
