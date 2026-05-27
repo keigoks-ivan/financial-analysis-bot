@@ -198,6 +198,15 @@ done
 - **A1** 全球市佔 ≥75% **且持續 ≥3 年**（排除單一年度週期性領先）
 - **A2** 全球唯一 commercial supplier（第二源還在 R&D / sampling 不算）
 - **A3** 對 top-tier 客戶（TSMC / NVDA / AAPL / Apple silicon / 6 大 hyperscaler）100% 獨家 + 合約鎖 ≥2 年
+- **A4** **結構性 cartel** — ≤3 家加總 ≥90% 全球 + 結構性 capex / IP / qualification barrier 阻擋 4th entrant ≥5 年 viable。**與 competitive oligopoly 區分**（後者新進入者 5 年內 commercial、客戶能 reshuffle）。
+  典範案例：
+  - HBM-grade DRAM trio (SK Hynix + Micron + Samsung 91%, CXMT 5+ 年內做不到 1c-nm + 12/16-Hi)
+  - EUV mask blank (Hoya 60% + AGC 34% = 94%)
+  - BaTiO₃ 粉體 (Sakai + Fuji ~70%)
+  - Nano-Ni 內電極 (JX Nippon + Sumitomo ~75%)
+  - 高階 AI MLCC (Murata + SEMCO ~80%)
+  - TC-NCF (Resonac + Henkel ≥90%)
+  - ABF substrate AI grade (Unimicron + Ibiden quiet duopoly)
 
 ### Gate B · 切換成本（**≥2 條**過）
 
@@ -220,7 +229,10 @@ done
 
 1. **Demand-side concentration ≠ supplier ⚑**：TSMC 占 70% 先進邏輯需求是 demand 集中，不是 TSMC 為單點供應商（除非 topic 是把 TSMC 當 supplier 看，如 IC 設計→ Foundry）
 2. **Supplier captive to customer ≠ customer-exclusive supplier**：京鼎 80% 營收來自 AMAT 是「供應商依賴客戶」（vulnerability），不是「客戶只能找京鼎」（moat）。要看反向：AMAT 有多 OEM (UCTT / Ichor)，不算 ⚑。
-3. **Oligopoly ≠ Monopoly**：4-6 家加總 >85% 但個別都 <40% 是 competitive oligopoly。每家都有真正競爭、可在 12 月內被內部 reshuffle。不打 ⚑。
+3. **Competitive Oligopoly ≠ Structural Cartel**（最常見混淆）：
+   - **不打 ⚑（competitive oligopoly）**：4-6 家加總 >85% 但個別都 <40% + **新進入者 5 年內 commercial 可能**（如 DPU 三強 Nvidia/AMD/Marvell、Retimer 六強 Astera/Credo/Parade/Renesas/Montage/Microchip、SerDes IP 四強 Synopsys/Cadence/Alphawave/Credo）— 客戶能在 12 月內 reshuffle、無結構性鎖
+   - **打 ⚑（過 Gate A4 structural cartel）**：≤3 家加總 ≥90% + **結構性 capex / IP barrier 5 年內阻擋 4th entrant**（如 HBM-grade DRAM trio、EUV mask blank duopoly、BaTiO₃ + nano-Ni 雙占、TC-NCF 雙占）— 客戶結構性 locked-in 整個 cartel
+   - **快速判別**：問「5 年內會不會有有效第 4 家？」— 不會 → Gate A4；有 → competitive oligopoly
 4. **代理商 / 通路商不是真正的鎖喉**：合約模型、客戶可短期切換或自建直購通路。不打 ⚑。
 5. **「全球少數能做」≠ 「唯一」**：3+ 家能做就是 oligopoly。不打 ⚑。
 6. **「領先 / 第一名」≠ 「壟斷」**：40-60% 是 leader，>75% sustained 才是 monopoly。
