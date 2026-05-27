@@ -1,0 +1,622 @@
+{
+  "id": "dc-networking",
+  "tab": "資料中心網通晶片",
+  "title": "資料中心網通晶片供應鏈",
+  "subtitle": "AI cluster networking silicon — 從 Switch ASIC（Broadcom Tomahawk 6 / Cisco Silicon One / Nvidia Spectrum）到 NIC/DPU、PCIe Retimer、Optical DSP、AEC，五大環節在 800G→1.6T 過渡與 NVLink/UALink scale-up 戰爭下，少數玩家集中度高；台廠以 ASIC 設計服務（創意/世芯/智原）+ BMC（信驊）+ PCIe Retimer（譜瑞）+ PCIe Switch（祥碩）切入。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 19 },
+    { "k": "涵蓋廠商", "v": "70+" },
+    {
+      "k": "獨佔/客戶獨家單點",
+      "v": 15,
+      "sub": "Broadcom·NVLink·Cisco·NVIDIA CX/BF·Astera·Credo·Marvell·信驊·譜瑞·祥碩·TSMC·創意…",
+      "hot": true
+    }
+  ],
+  "rows": [
+    { "id": "upstream", "label": "上游：IP / EDA / ASIC 設計服務 / 製造 Upstream IP & Foundry", "main": false },
+    { "id": "switch", "label": "交換 / 路由 ASIC（Switch Fabric Silicon）", "main": true },
+    { "id": "host", "label": "NIC / DPU / 伺服器周邊 IC Host-side Silicon", "main": false },
+    { "id": "signal", "label": "高速訊號鏈 IC（Retimer / DSP / AEC / CPO）", "main": false },
+    { "id": "demand", "label": "終端需求：Hyperscaler / AI Platform / Enterprise", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "u-ip",
+      "row": "upstream",
+      "col": 1,
+      "span": 2,
+      "kind": "rail",
+      "name": "高速 SerDes / PHY IP / EDA",
+      "nameEn": "224G SerDes · PHY IP · EDA",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · Synopsys + Cadence + Alphawave + Credo IP 控制 224G SerDes IP 市場 ~85%（信心度 high · 多源證實）",
+      "desc": "224G PAM4 SerDes IP、112G/224G Ethernet PHY、PCIe 6.0/UALink IP，是 AI ASIC 客製化的核心基石。",
+      "marketSize": "224G $50 億+",
+      "growth": "1.6T 拉動",
+      "analysis": "Synopsys 為 SerDes IP 龍頭、Cadence 緊追，Alphawave Semi 為 224G XLR SerDes 領先挑戰者（Qualcomm 收購中）、Credo IP 切入 AEC 與 LPO；Verisilicon + 中國 Innolinks 為次級玩家。",
+      "companies": [
+        { "name": "Synopsys", "ticker": "SNPS", "country": "US", "share": "SerDes IP #1", "products": "DesignWare 224G PHY + 112G + PCIe 6.0", "note": "EDA + IP 龍頭" },
+        { "name": "Cadence", "ticker": "CDNS", "country": "US", "share": "SerDes IP #2", "products": "224G LR SerDes + PCIe Gen6 IP", "note": "EDA 雙雄之一" },
+        { "name": "Alphawave Semi", "ticker": "AWE.L", "country": "UK", "share": "224G 領先挑戰", "products": "UltraAthenaCORE 224G XLR + 1.6T", "note": "Qualcomm 2026 收購中" },
+        { "name": "Credo Technology", "ticker": "CRDO", "country": "US", "share": "AEC + LPO IP", "products": "HiWire AEC SerDes + Linear DSP", "note": "也做 AEC 產品" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "u-asic-svc" }, { "id": "sw-ethernet" }, { "id": "nic" }, { "id": "dpu" }, { "id": "retimer-pcie" }, { "id": "dsp-optical" }],
+      "sources": [
+        { "label": "Synopsys 224G PHY (Synopsys)", "url": "https://www.synopsys.com/articles/224g-ethernet-phy-ip.html" },
+        { "label": "Cadence 224G SerDes (Cadence)", "url": "https://www.cadence.com/en_US/home/tools/silicon-solutions/protocol-ip/high-speed-ethernet/224g-lr-ser-des-phy.html" },
+        { "label": "Alphawave 1G-224G (Alphawave)", "url": "https://awavesemi.com/silicon-ip/phy-ip/1g-224g-serdes/" }
+      ]
+    },
+    {
+      "id": "u-asic-svc",
+      "row": "upstream",
+      "col": 3,
+      "span": 2,
+      "kind": "rail",
+      "name": "AI ASIC 設計服務",
+      "nameEn": "AI ASIC Design Service",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · 創意 5443 + 世芯-KY 3661 + 智原 3035 為 TSMC ASIC 生態三雄（信心度 high · 公司公告）",
+      "desc": "為 hyperscaler 客戶（Google/Meta/AWS）設計 AI ASIC / TPU / XPU，整合 IP + foundry + advanced packaging。",
+      "marketSize": "$200 億+",
+      "growth": "AI ASIC 爆發",
+      "analysis": "創意 5443（TSMC 子公司）2026 動能來自 CPU 量產 + AI ASIC；世芯-KY 3661 3nm AI 晶片 26Q2 量產爬坡（Google/AWS）；智原 3035 切入 AI ASIC 設計服務；聯發科 2454 自報 ASIC 營收 2026 突破 $10 億美元（Google TPU 對手）；Broadcom + Marvell 為國際對手（已含在 CoWoS / ASIC topic）。",
+      "companies": [
+        { "name": "創意電子 GUC", "ticker": "3443.TW", "country": "TW", "share": "TSMC 子公司", "products": "AI ASIC 設計服務 + CPU + Advanced Packaging", "note": "2026 CPU 量產" },
+        { "name": "世芯-KY Alchip", "ticker": "3661.TW", "country": "TW", "share": "3nm 領先", "products": "AI ASIC 3nm 設計服務", "note": "Google + AWS 客戶" },
+        { "name": "智原 Faraday", "ticker": "3035.TW", "country": "TW", "share": "ASIC 第三", "products": "ASIC + IP integration", "note": "ASIC 設計服務" },
+        { "name": "MediaTek 聯發科", "ticker": "2454.TW", "country": "TW", "share": "ASIC > $10 億 (26)", "products": "Google TPU + Nephos 交換 ASIC", "note": "ASIC 第二大 + Nephos 子公司" }
+      ],
+      "upstream": [{ "id": "u-ip" }],
+      "downstream": [{ "id": "sw-ethernet" }, { "id": "sw-mediatek" }, { "id": "d-hyperscaler" }],
+      "sources": [
+        { "label": "ASIC 三雄營收 (豐雲)", "url": "https://www.sinotrade.com.tw/richclub/hotstock/ASIC-%E5%AE%A2%E8%A3%BD%E5%8C%96%E6%99%B6%E7%89%87%E7%88%86%E7%99%BC-%E5%85%88%E9%80%B2%E8%A3%BD%E7%A8%8B%E9%A0%98%E8%88%AA%E8%88%87%E5%8F%B0%E8%82%A1%E4%B8%89%E9%9B%84%E4%B8%96%E8%8A%AF-KY-%E6%99%BA%E5%8E%9F-%E5%89%B5%E6%84%8F%E6%9C%80%E6%96%B0%E7%87%9F%E6%94%B6%E6%88%B0%E5%A0%B1-%E8%82%A1%E5%B8%82%E8%A9%B1%E9%A1%8C-6911950439ec3111657868d7" },
+        { "label": "聯發科 ASIC > $10 億 (鉅亨)", "url": "https://news.cnyes.com/news/id/6392217" }
+      ]
+    },
+    {
+      "id": "u-foundry",
+      "row": "upstream",
+      "col": 5,
+      "span": 2,
+      "kind": "rail",
+      "name": "AI 邏輯製造（前段晶圓）",
+      "nameEn": "Logic Foundry (3nm / 2nm)",
+      "competition": "monopoly",
+      "single": "鎖喉點 · TSMC 為 3nm AI ASIC 與 5nm 800G DSP 唯一 leading-edge 代工（信心度 high）",
+      "desc": "3nm / 5nm 為 AI ASIC + 800G/1.6T 光通訊 DSP 的關鍵製程；Samsung GAA 3nm 切入 ASIC 後段（含 Google 部分），Intel Foundry 18A 試圖切入。",
+      "marketSize": "$140 億 AI",
+      "growth": "AI > 50%",
+      "analysis": "TSMC 在 3nm 領先（Apple / Nvidia / Broadcom / AMD / 聯發科）+ 5nm DSP 製造（Marvell / Broadcom）為 AI ASIC 與光通訊 silicon 的 single source；Samsung GAA 3nm 切入 Google TPU 後段；中國 SMIC 受限於 EUV 出口管制。詳細見【半導體前段設備】+【先進製程】topic。",
+      "companies": [
+        { "name": "TSMC 台積電", "ticker": "2330.TW", "country": "TW", "share": "leading-edge >90%", "products": "N3/N3E/N2 + N5 DSP", "note": "AI 製造 single point" },
+        { "name": "Samsung Foundry", "ticker": "005930.KS", "country": "KR", "share": "GAA 3nm 切入", "products": "GAA 3nm AI ASIC", "note": "Google TPU 部分" },
+        { "name": "Intel Foundry", "ticker": "INTC", "country": "US", "share": "18A 試水", "products": "Intel 18A + 14A", "note": "2026/2027 切入" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "sw-ethernet" }, { "id": "sw-router" }, { "id": "sw-scale-up" }, { "id": "nic" }, { "id": "dpu" }, { "id": "retimer-pcie" }, { "id": "dsp-optical" }],
+      "sources": [
+        { "label": "AI ASIC 客戶名單 + 3nm (UDN)", "url": "https://money.udn.com/money/story/5612/8807633" }
+      ]
+    },
+    {
+      "id": "u-substrate",
+      "row": "upstream",
+      "col": 7,
+      "span": 2,
+      "kind": "rail",
+      "name": "ABF 載板・先進封裝",
+      "nameEn": "ABF Substrate · Advanced Packaging",
+      "competition": "oligopoly",
+      "desc": "AI ASIC + Switch ASIC + DPU 都需要 FC-BGA ABF 載板（高層數）+ CoWoS-S/L 先進封裝；交換晶片如 Tomahawk 6 為 chiplet multi-die 設計。",
+      "growth": "10.6% CAGR",
+      "analysis": "與 CoWoS 供應鏈共享：欣興 22% + Ibiden + Shinko + 南電 + AT&S 為 ABF 主力；先進封裝由 TSMC CoWoS / Amkor 主導。Tomahawk 6 是 Broadcom 首款 chiplet multi-die 交換 ASIC，封裝難度倍增。詳細見【CoWoS】+【IC 基板】topic。",
+      "companies": [
+        { "name": "欣興 Unimicron", "ticker": "3037.TW", "country": "TW", "share": "ABF ~22%", "products": "高層數 ABF FC-BGA", "note": "全球最大" },
+        { "name": "Ibiden", "ticker": "4062.T", "country": "JP", "share": "前二", "products": "高密度 ABF", "note": "Nvidia 主供" },
+        { "name": "南電 Nan Ya PCB", "ticker": "8046.TW", "country": "TW", "share": "第三", "products": "ABF + BT 載板", "note": "ABF 主力" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "sw-ethernet" }, { "id": "nic" }, { "id": "dpu" }],
+      "sources": [
+        { "label": "ABF 載板市場 (CoWoS supply chain map)", "url": "https://research.investmquest.com/supply-chain/cowos.html" }
+      ]
+    },
+    {
+      "id": "sw-ethernet",
+      "row": "switch",
+      "col": 1,
+      "span": 3,
+      "kind": "stage",
+      "name": "Ethernet 交換 ASIC",
+      "nameEn": "Ethernet Switch ASIC",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · Broadcom Tomahawk 6（102.4 Tbps）AI 交換 ASIC 市場領導 ~70%+ merchant、order backlog >$10 億美元（信心度 high · 多源證實）",
+      "desc": "AI 資料中心 Ethernet scale-out fabric 核心晶片：Tomahawk（leaf/spine）+ Trident（edge feature）+ Jericho（router）+ Cisco Silicon One + Nvidia Spectrum + MediaTek-Nephos。",
+      "marketSize": "$120 億+",
+      "growth": "Tomahawk 6 爆發",
+      "analysis": "Broadcom Tomahawk 6 為全球首款 102.4 Tbps single-chip + multi-die 交換 ASIC、2025/6 出貨、OEM 2026Q1 量產、客戶 backlog >$10 億；Cisco Silicon One G300 2026/2 推出對標、強調 gigawatt AI cluster；Nvidia Spectrum-X (含 SiPh) Meta + Oracle 採用；MediaTek-Nephos 為中國 Inspur / Cloud 替代源。",
+      "companies": [
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "merchant ~70%", "products": "Tomahawk 6 (102.4T) + Trident 5 + Tomahawk Ultra", "note": "AI switch 龍頭、backlog >$10B" },
+        { "name": "Cisco Systems", "ticker": "CSCO", "country": "US", "share": "Silicon One 挑戰", "products": "Silicon One G300 (102.4T)", "note": "2026/2 推出對標 TH6" },
+        { "name": "Nvidia", "ticker": "NVDA", "country": "US", "share": "Spectrum-X 平台", "products": "Spectrum-X SN5600 (51.2T) + Photonics", "note": "Meta + Oracle 採用、含 CPO" },
+        { "name": "MediaTek-Nephos", "ticker": "2454.TW", "country": "TW", "share": "中國替代", "products": "Taurus 25.6T + 51.2T", "note": "聯發科 spinout" }
+      ],
+      "upstream": [{ "id": "u-ip" }, { "id": "u-asic-svc" }, { "id": "u-foundry" }, { "id": "u-substrate" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }, { "id": "d-enterprise" }],
+      "sources": [
+        { "label": "Tomahawk 6 102.4 Tbps + $10B backlog (Broadcom)", "url": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-ships-tomahawk-6-worlds-first-1024-tbps-switch" },
+        { "label": "Cisco Silicon One G300 vs Tomahawk 6 (ComSoc)", "url": "https://techblog.comsoc.org/2026/02/11/ciscos-silicon-one-g300-as-the-dominant-ai-networking-fabric-competing-with-broadcoms-tomahawk-6-series/" }
+      ]
+    },
+    {
+      "id": "sw-router",
+      "row": "switch",
+      "col": 4,
+      "span": 2,
+      "kind": "stage",
+      "name": "AI 跨資料中心路由 ASIC",
+      "nameEn": "Inter-DC Router (Jericho-class)",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · Broadcom Jericho 4 為跨資料中心 AI fabric 唯一商用解，互連 >100 萬 XPU（信心度 high · Broadcom 公告）",
+      "desc": "為連接多個 AI 資料中心、構建 distributed training cluster 設計的 deep-buffer router ASIC。",
+      "marketSize": "新興類別",
+      "growth": "DCI 爆發",
+      "analysis": "Broadcom Jericho 4 為跨 DC AI fabric 唯一商用解、單一 fabric 互連 >100 萬 XPU；Cisco Silicon One 部分機種對標 routing；Nvidia Spectrum-X 中也支援 inter-DC；對 hyperscaler 多 site AI training 是必備。",
+      "companies": [
+        { "name": "Broadcom Jericho", "ticker": "AVGO", "country": "US", "share": "near-monopoly DCI", "products": "Jericho 4 fabric router", "note": "AI multi-DC 唯一商用" },
+        { "name": "Cisco", "ticker": "CSCO", "country": "US", "share": "傳統 routing", "products": "Silicon One Q200/Q201", "note": "傳統 routing/converged" }
+      ],
+      "upstream": [{ "id": "u-foundry" }, { "id": "u-ip" }],
+      "downstream": [{ "id": "d-hyperscaler" }],
+      "sources": [
+        { "label": "Broadcom Jericho 4 ships (Broadcom)", "url": "https://investors.broadcom.com/news-releases/news-release-details/broadcom-ships-jericho4-enabling-distributed-ai-computing-across" }
+      ]
+    },
+    {
+      "id": "sw-scale-up",
+      "row": "switch",
+      "col": 6,
+      "span": 3,
+      "kind": "stage",
+      "name": "Scale-up 互連（NVLink / UALink）",
+      "nameEn": "Scale-up Fabric (NVLink · UALink)",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · NVIDIA NVLink Switch + NVLink 5/6 為 GPU rack 內 scale-up 唯一封閉解（信心度 high · 多源證實）",
+      "desc": "GPU/XPU 之間高速直連 fabric（NVLink/NVSwitch 為 Nvidia 封閉、UALink 為 Open consortium 對抗）。",
+      "marketSize": "鎖喉點",
+      "growth": "AI cluster 爆發",
+      "analysis": "Nvidia NVLink 5/6 + NVSwitch 為 GB200/Rubin rack scale-up fabric、封閉壟斷；2024 成立的 UALink Consortium（AMD + Broadcom + Cisco + Astera Labs + Google + Meta + Microsoft + HPE）2026 推 UALink 1.0；Astera Labs Scorpio 為早期 UALink switch chip 設計樣本。",
+      "companies": [
+        { "name": "NVIDIA NVLink", "ticker": "NVDA", "country": "US", "share": "scale-up 100% 封閉", "products": "NVLink Switch + NVLink 5/6", "note": "GB200/Rubin rack 必備" },
+        { "name": "UALink Consortium", "ticker": "—", "country": "GLOBAL", "share": "開放對抗", "products": "UALink 1.0 spec (2025)", "note": "AMD + Broadcom + Cisco + Astera + 4 hyperscaler" },
+        { "name": "Astera Labs", "ticker": "ALAB", "country": "US", "share": "UALink switch 早期", "products": "Scorpio scale-up fabric switch", "note": "AI rack 內 PCIe/UALink switch" }
+      ],
+      "upstream": [{ "id": "u-foundry" }, { "id": "u-ip" }],
+      "downstream": [{ "id": "d-nvidia" }, { "id": "d-hyperscaler" }],
+      "sources": [
+        { "label": "NVIDIA Spectrum-X + NVLink (Nvidia)", "url": "https://www.nvidia.com/en-us/networking/spectrumx/" },
+        { "label": "UALink 對抗 NVLink (NextPlatform)", "url": "https://www.nextplatform.com/2025/10/08/cisco-takes-on-broadcom-nvidia-for-fat-ai-datacenter-interconnects/" }
+      ]
+    },
+    {
+      "id": "sw-mediatek",
+      "row": "switch",
+      "col": 9,
+      "span": 4,
+      "kind": "stage",
+      "name": "ARM-based / 中國本土交換晶片",
+      "nameEn": "ARM / China Domestic Switch ASIC",
+      "competition": "highgrowth",
+      "desc": "ARM-based switch silicon（Marvell / Innovium 系列）+ 中國本土替代（盛科 + Centec）；對美系壟斷的長期挑戰。",
+      "growth": "中國本土化",
+      "analysis": "Marvell（前 Innovium）Teralynx 系列在 Tier-2 OEM 市場有份額；中國盛科 Centec 為國家戰略本土交換 ASIC（華為 + 中國雲）；MediaTek-Nephos 部分機種已上市。Switch silicon 短期難撼動 Broadcom 但長期是分散風險源頭。",
+      "companies": [
+        { "name": "Marvell (Innovium)", "ticker": "MRVL", "country": "US", "share": "Tier-2", "products": "Teralynx 10/12", "note": "2021 收購 Innovium" },
+        { "name": "Centec 盛科", "ticker": "688702.SS", "country": "CN", "share": "中國本土", "products": "TsingMa 系列", "note": "華為合作" },
+        { "name": "MediaTek 聯發科", "ticker": "2454.TW", "country": "TW", "share": "Nephos 子公司", "products": "Taurus 25.6T+", "note": "中國市場替代" }
+      ],
+      "upstream": [{ "id": "u-asic-svc" }, { "id": "u-foundry" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-enterprise" }],
+      "sources": [
+        { "label": "Switch ASIC 全景 (Elegant Network)", "url": "https://elegantnetwork.github.io/posts/A-Summary-of-Network-ASICs/" }
+      ]
+    },
+    {
+      "id": "nic",
+      "row": "host",
+      "col": 1,
+      "span": 3,
+      "kind": "stage",
+      "name": "NIC / SuperNIC",
+      "nameEn": "NIC · SuperNIC",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · NVIDIA ConnectX-8 (CX-8) 為 Spectrum-X 平台 scale-out NIC 鎖定解，整合 PCIe Gen6（信心度 high · Nvidia 公告）",
+      "desc": "Server / GPU 端 Ethernet NIC：每 GPU 配 NIC 提供 RoCE / adaptive routing；800G CX-8 為 AI scale-out 標配。",
+      "marketSize": "AI 100% 配額",
+      "growth": "PCIe Gen6 量產",
+      "analysis": "NVIDIA CX-8 (PCIe Gen6 + 800GbE) 為 Spectrum-X 平台 scale-out NIC、與 NVSwitch 形成封閉生態；Broadcom Thor 為 AI Ethernet NIC 800G 首款 merchant；Intel E810 在傳統 cloud 仍有份額；台廠勝偉達 + 智邦做 NIC card / OCP NIC 整合。",
+      "companies": [
+        { "name": "NVIDIA ConnectX", "ticker": "NVDA", "country": "US", "share": "AI scale-out 主導", "products": "ConnectX-8 SuperNIC (800G + Gen6)", "note": "Spectrum-X 配套" },
+        { "name": "Broadcom Thor", "ticker": "AVGO", "country": "US", "share": "merchant 800G NIC", "products": "Thor-2 800G AI Ethernet NIC", "note": "首款 merchant 800G AI NIC" },
+        { "name": "Intel E810", "ticker": "INTC", "country": "US", "share": "傳統 cloud", "products": "E810 100GbE NIC", "note": "成熟雲端" }
+      ],
+      "upstream": [{ "id": "u-ip" }, { "id": "u-foundry" }, { "id": "u-substrate" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }, { "id": "d-enterprise" }],
+      "sources": [
+        { "label": "NVIDIA CX-8 SuperNIC (Nvidia)", "url": "https://developer.nvidia.com/blog/nvidia-connectx-8-supernics-advance-ai-platform-architecture-with-pcie-gen6-connectivity/" },
+        { "label": "Broadcom 首款 800G AI NIC (Broadcom)", "url": "https://www.broadcom.com/company/news/product-releases/63641" }
+      ]
+    },
+    {
+      "id": "dpu",
+      "row": "host",
+      "col": 4,
+      "span": 3,
+      "kind": "stage",
+      "name": "DPU / SmartNIC",
+      "nameEn": "DPU · SmartNIC",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · NVIDIA BlueField + AMD Pensando + Marvell Octeon 三家寡占 hyperscaler DPU 市場 >80%（信心度 high · 多源證實）",
+      "desc": "Server 端 offload 處理器：infrastructure services（網路 / 儲存 / 安全）卸載至 DPU，釋放 CPU 算力。",
+      "marketSize": "$11 億→$44 億",
+      "growth": "15% CAGR",
+      "analysis": "NVIDIA BlueField-4（800G + 6x compute）整合 ConnectX-8 + Arm + AI 加速；AMD Pensando（Elba + Salina）為 hyperscaler P4 programmable 主供；Marvell Octeon 10 為首款 5nm DPU。50% 雲端供應商已採用 DPU、35% AI training 已 offload。",
+      "companies": [
+        { "name": "NVIDIA BlueField", "ticker": "NVDA", "country": "US", "share": "AI infra 主導", "products": "BlueField-3 / BF-4 (800G)", "note": "與 CX-8 整合" },
+        { "name": "AMD Pensando", "ticker": "AMD", "country": "US", "share": "hyperscaler P4", "products": "Elba + Salina DPU", "note": "Azure + Oracle 主供" },
+        { "name": "Marvell Octeon", "ticker": "MRVL", "country": "US", "share": "5G + cloud", "products": "Octeon 10 (5nm)", "note": "首款 5nm DPU + Arm Neoverse N2" },
+        { "name": "Intel IPU", "ticker": "INTC", "country": "US", "share": "次要", "products": "Mount Evans IPU", "note": "Google 部分" }
+      ],
+      "upstream": [{ "id": "u-ip" }, { "id": "u-foundry" }, { "id": "u-substrate" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }],
+      "sources": [
+        { "label": "DPU 三雄 + 50% 雲採用 (Introl)", "url": "https://introl.com/blog/dpus-smartnics-data-center-infrastructure-bluefield-pensando-2025" }
+      ]
+    },
+    {
+      "id": "bmc",
+      "row": "host",
+      "col": 7,
+      "span": 3,
+      "kind": "stage",
+      "name": "伺服器管理晶片（BMC）",
+      "nameEn": "Server BMC · Management IC",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · 信驊 ASPEED 5274 全球 BMC ~70-80% 近壟斷（信心度 high · 公司公告）",
+      "desc": "Server out-of-band 管理晶片（BMC SoC）、橋接控制器（Bridge IC）、I/O 擴充、PRoT 安全晶片；CPU 升級拉動量價齊揚。",
+      "marketSize": "鎖喉點",
+      "growth": "AI server +30%",
+      "analysis": "ASPEED 信驊 5274 為全球 BMC SoC 龍頭 ~70-80%、Open BMC 生態核心；新唐 4919 為次要本土玩家；AMI / Aspeed 共同推 Open BMC。BMC 是 AI 伺服器、儲存、ODM 平台不可缺；CPU 角色升級（獨立機架 / chiplet）拉動 BMC 量+價雙提升。",
+      "companies": [
+        {
+          "name": "ASPEED 信驊",
+          "ticker": "5274.TWO",
+          "country": "TW",
+          "share": "BMC ~70-80%",
+          "products": "AST2600 / AST2700 BMC SoC + Bridge IC + PRoT",
+          "note": "BMC 全球壟斷、AI server 受惠",
+          "src": "https://www.aspeedtech.com/tw/server/",
+          "core_business": true,
+          "growth_trajectory": "high"
+        },
+        { "name": "Nuvoton 新唐", "ticker": "4919.TW", "country": "TW", "share": "次要 BMC", "products": "BMC + EC + 微控", "note": "ASPEED 對手" },
+        { "name": "Lattice Semi", "ticker": "LSCC", "country": "US", "share": "Mach-NX 安全", "products": "Mach-NX PRoT FPGA", "note": "BMC platform RoT" }
+      ],
+      "upstream": [{ "id": "u-foundry" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-enterprise" }],
+      "sources": [
+        { "label": "ASPEED BMC 龍頭 (Pocket)", "url": "https://www.pocket.tw/school/report/SCHOOL/6651/" },
+        { "label": "BMC + CPU 升級 (Vocus)", "url": "https://vocus.cc/article/69e0445bfd89780001926d06" }
+      ]
+    },
+    {
+      "id": "pcie-switch",
+      "row": "host",
+      "col": 10,
+      "span": 3,
+      "kind": "stage",
+      "name": "PCIe Switch / 封包交換器",
+      "nameEn": "PCIe Switch · Packet Switch",
+      "competition": "oligopoly",
+      "single": "客戶獨家 · 祥碩 5269 自研 PCIe Packet Switch 已 Gen4 量產、Gen5/6/7 開發中（信心度 med · 公司公告）",
+      "desc": "Server / 儲存 / AI rack 內 PCIe lane 擴充 + 拓撲管理；CXL 共享記憶體加速。",
+      "marketSize": "$10 億+",
+      "growth": "PCIe 6.0 拉動",
+      "analysis": "Astera Labs Scorpio（UALink switch）+ Microchip Switchtec + Broadcom PEX 為 PCIe switch 主力；祥碩 5269（華擎子公司）為 PCIe Packet Switch TW 自研 + Gen 4 量產、Gen 5/6/7 開發中（AI server + edge）；XConn 與 Marvell 部分產品線補位。",
+      "companies": [
+        { "name": "Astera Labs", "ticker": "ALAB", "country": "US", "share": "Scorpio 領先", "products": "Scorpio P / X fabric switch", "note": "AI rack scale-up" },
+        { "name": "Microchip", "ticker": "MCHP", "country": "US", "share": "Switchtec 領先", "products": "Switchtec PCIe Gen5 switch", "note": "傳統 PCIe switch 龍頭" },
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "PEX 系列", "products": "PEX PCIe 6.0 switch", "note": "整合 NIC 平台" },
+        { "name": "祥碩 ASMedia", "ticker": "5269.TW", "country": "TW", "share": "TW 自研", "products": "PCIe Packet Switch Gen4 量產", "note": "華擎子公司、Gen5/6/7 開發中" }
+      ],
+      "upstream": [{ "id": "u-ip" }, { "id": "u-foundry" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }, { "id": "d-enterprise" }],
+      "sources": [
+        { "label": "祥碩 PCIe Gen 6/7 開發 (LineBank)", "url": "https://www.linebank.com.tw/wealth-investment/topics/1703" },
+        { "label": "Astera Scorpio (Retimer 報告)", "url": "https://www.fortunebusinessinsights.com/retimer-market-113225" }
+      ]
+    },
+    {
+      "id": "retimer-pcie",
+      "row": "signal",
+      "col": 1,
+      "span": 3,
+      "kind": "stage",
+      "name": "PCIe Retimer · CXL Retimer",
+      "nameEn": "PCIe / CXL Retimer",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · Astera Labs 為 PCIe 5.0/CXL retimer hyperscaler AI 主供、與譜瑞 4966 + Credo + Renesas + Parade + Microchip + Montage 合計 ~92%（信心度 high · 多源證實）",
+      "desc": "PCIe 5/6 + CXL retimer / redriver — 延伸 PCIe 訊號至 AI rack 全長、CXL 共享記憶體必備。",
+      "marketSize": "$18→$56 億",
+      "growth": "13.5% CAGR",
+      "analysis": "Astera Labs 為 PCIe 5/CXL hyperscaler 主供（2024 rev >$3.4 億）+ 首款 PCIe 6.0 retimer 已出貨；Credo 強對手 + PCIe 6.0 early；譜瑞 4966 PCIe 5 x16 retimer 量產 + Tier-1 CSP 進入 + USB4 retimer non-Intel >90%；Montage / Parade / Microchip / TI / Renesas 補位。前 6 家合計 92%。PCIe 6.0 segment CAGR 31.4%。",
+      "companies": [
+        {
+          "name": "Astera Labs",
+          "ticker": "ALAB",
+          "country": "US",
+          "share": "PCIe 5/CXL 主導",
+          "products": "Aries PCIe 5/6 retimer + Leo CXL + Scorpio",
+          "note": "AI hyperscaler 主供",
+          "src": "https://www.fortunebusinessinsights.com/retimer-market-113225",
+          "core_business": true,
+          "growth_trajectory": "high"
+        },
+        {
+          "name": "譜瑞-KY Parade",
+          "ticker": "4966.TW",
+          "country": "TW",
+          "share": "PCIe 5 + USB4 >90%",
+          "products": "PCIe 5 x16 Retimer + USB4 retimer",
+          "note": "Tier-1 CSP 進入、Spectra7 併購擴 DC",
+          "src": "https://news.cnyes.com/news/id/6422291",
+          "core_business": true,
+          "growth_trajectory": "high"
+        },
+        { "name": "Credo Technology", "ticker": "CRDO", "country": "US", "share": "PCIe 5 + 6 早期", "products": "PCIe Gen6 retimer + AEC SerDes", "note": "PCIe + AEC 雙軸" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "automotive PCIe", "products": "PCIe 4/5 retimer AEC-Q100", "note": "車用主力" },
+        { "name": "Montage Technology", "ticker": "688008.SS", "country": "CN", "share": "中國領先", "products": "PCIe 4/5 retimer + CXL", "note": "中國第一" },
+        { "name": "Microchip / TI", "ticker": "MCHP / TXN", "country": "US", "share": "次梯隊", "products": "PCIe 4/5 retimer", "note": "傳統 enterprise" }
+      ],
+      "upstream": [{ "id": "u-ip" }, { "id": "u-foundry" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }, { "id": "d-enterprise" }],
+      "sources": [
+        { "label": "Retimer 6 廠 92% (Fortune)", "url": "https://www.fortunebusinessinsights.com/retimer-market-113225" },
+        { "label": "Astera PCIe 6.0 首款 (Polaris)", "url": "https://www.polarismarketresearch.com/industry-analysis/retimer-market" },
+        { "label": "譜瑞 Tier-1 CSP 量產 (鉅亨)", "url": "https://news.cnyes.com/news/id/6422291" }
+      ]
+    },
+    {
+      "id": "dsp-optical",
+      "row": "signal",
+      "col": 4,
+      "span": 3,
+      "kind": "stage",
+      "name": "光通訊 DSP（PAM4）",
+      "nameEn": "Optical DSP (PAM4 800G · 1.6T)",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · Marvell Inphi 為 800G PAM4 DSP >60%、1.6T 'Ara' DSP FY26H2 量產（信心度 high · 公司公告）",
+      "desc": "光模組內的訊號 DSP — 把 GPU 端 NRZ/PAM4 電訊號處理成可走光纖的格式；800G 主流、1.6T 過渡中。",
+      "marketSize": "$30 億+",
+      "growth": "1.6T 100%+",
+      "analysis": "Marvell（前 Inphi 2021 收購）為 800G PAM4 DSP >60%、1.6T Ara 平台 FY26H2 量產 + 20%+ 功耗下降；Broadcom 走 CPO（共封裝光學）整合 DSP 路線；MaxLinear + Semtech + Credo LRO/LPO 補位；隨 CPO 滲透 DSP 部分被 in-package 取代是長期變數（見 CPO topic）。",
+      "companies": [
+        {
+          "name": "Marvell Technology",
+          "ticker": "MRVL",
+          "country": "US",
+          "share": "800G DSP >60%",
+          "products": "Spica/Orion 800G + Ara 1.6T DSP",
+          "note": "Inphi 2021 收購",
+          "src": "https://photoncap.net/p/copper-wall-age-of-light-dissecting",
+          "core_business": true,
+          "growth_trajectory": "high"
+        },
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "CPO 整合", "products": "1.6T CPO DSP", "note": "走 CPO 整合路線（見 CPO topic）" },
+        { "name": "MaxLinear", "ticker": "MXL", "country": "US", "share": "次梯隊", "products": "Keystone 800G DSP", "note": "成本敏感" },
+        { "name": "Semtech", "ticker": "SMTC", "country": "US", "share": "Active Copper / LR Linear", "products": "FiberEdge linear redriver", "note": "LRO/LPO" },
+        { "name": "Credo Technology", "ticker": "CRDO", "country": "US", "share": "LPO + AEC SerDes", "products": "Linear Direct Drive DSP", "note": "LPO 推動者" }
+      ],
+      "upstream": [{ "id": "u-ip" }, { "id": "u-foundry" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }],
+      "sources": [
+        { "label": "Marvell 1.6T Ara FY26 量產 (Photoncap)", "url": "https://photoncap.net/p/copper-wall-age-of-light-dissecting" },
+        { "label": "Optical Module DSP 預測 (HTF)", "url": "https://www.htfmarketintelligence.com/report/global-optical-module-dsp-chip-market" }
+      ]
+    },
+    {
+      "id": "aec",
+      "row": "signal",
+      "col": 7,
+      "span": 3,
+      "kind": "stage",
+      "name": "Active Electrical Cable（AEC）",
+      "nameEn": "Active Electrical Cable",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · Credo Technology AEC 市佔 ~75% 領導、AWS + Microsoft + xAI + Meta 主供（信心度 high · 多源證實）",
+      "desc": "5-7 米內、用銅纜+SerDes IC 取代光收發的低成本訊號延伸方案；AI rack 內部+rack 間互連大量採用。",
+      "marketSize": "$40 億(28)",
+      "growth": "170% FY26",
+      "analysis": "Credo 為 AEC 開創者 + 全球 ~75% 市佔、FY26 營收年增 170%；AWS 主要客戶（紫色 cable 標誌性）+ Microsoft + xAI + Meta 拓展；Astera Labs + Broadcom + Marvell 部分 SerDes 切入但 AEC 整套生態 Credo 主導；長線威脅是 LPO（被動光） + CPO，但短期 AEC 仍是 hyperscaler 首選。",
+      "companies": [
+        {
+          "name": "Credo Technology",
+          "ticker": "CRDO",
+          "country": "US",
+          "share": "AEC ~75%",
+          "products": "HiWire AEC + SerDes",
+          "note": "AWS 紫色 cable + xAI + Meta + Azure",
+          "src": "https://chipstockinvestor.com/credo-technology-ai-data-center-tech-momentum-headed-into-2026/",
+          "core_business": true,
+          "growth_trajectory": "high"
+        },
+        { "name": "Amphenol / Molex / TE", "ticker": "APH / —", "country": "US", "share": "passive cable", "products": "DAC + AEC OEM", "note": "被動連接器 + AEC 組裝" },
+        { "name": "嘉澤 Lotes / 立訊", "ticker": "3533.TW / 002475.SZ", "country": "TW", "share": "TW + CN 連接器", "products": "OSFP + AEC 組裝", "note": "嘉澤 TW + 立訊 CN 連接器供應" }
+      ],
+      "upstream": [{ "id": "u-ip" }, { "id": "u-foundry" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }],
+      "sources": [
+        { "label": "Credo AEC 75% + AWS (CNBC)", "url": "https://www.cnbc.com/2025/10/17/500-purple-cables-put-credo-in-middle-of-the-ai-boom.html" },
+        { "label": "Credo FY26 170% 成長 (Chip Stock)", "url": "https://chipstockinvestor.com/credo-technology-ai-data-center-tech-momentum-headed-into-2026/" }
+      ]
+    },
+    {
+      "id": "cpo-edge",
+      "row": "signal",
+      "col": 10,
+      "span": 3,
+      "kind": "stage",
+      "name": "CPO / 矽光子整合（cross-link）",
+      "nameEn": "CPO · Silicon Photonics (Linked)",
+      "competition": "highgrowth",
+      "desc": "光電共封裝 — 把光引擎、雷射、DSP 整合至 ASIC 旁邊，取代可插拔光模組；800G 起步、1.6T 量產關鍵。",
+      "growth": "見 CPO topic",
+      "analysis": "Broadcom Tomahawk 6 Photonics + Nvidia Spectrum-X Photonics 為前兩款商用 CPO 交換器；Marvell + Lumentum + Coherent + Himax MLA + FOCI FAU 等構成 CPO 供應鏈。詳細見【CPO 共封裝光學供應鏈】 topic。",
+      "companies": [
+        { "name": "Broadcom CPO", "ticker": "AVGO", "country": "US", "share": "CPO 領導", "products": "Tomahawk 6 Photonics 102.4T", "note": "見 CPO topic" },
+        { "name": "NVIDIA Photonics", "ticker": "NVDA", "country": "US", "share": "Spectrum-X 整合", "products": "Spectrum-X Photonics", "note": "見 CPO topic" },
+        { "name": "Himax / FOCI / 上游 CPO 鏈", "ticker": "HIMX / 3363.TWO", "country": "TW", "share": "見 CPO topic", "products": "MLA + FAU + V-groove", "note": "詳細見 CPO supply chain" }
+      ],
+      "upstream": [{ "id": "u-foundry" }],
+      "downstream": [{ "id": "d-hyperscaler" }, { "id": "d-nvidia" }],
+      "sources": [
+        { "label": "CPO supply chain (本站)", "url": "https://research.investmquest.com/supply-chain/cpo.html" }
+      ]
+    },
+    {
+      "id": "d-hyperscaler",
+      "row": "demand",
+      "col": 1,
+      "span": 5,
+      "kind": "demand",
+      "name": "Hyperscaler（自研 + 商用混合）",
+      "nameEn": "Hyperscaler (Custom + Merchant)",
+      "competition": "monopoly",
+      "single": "鎖喉點 · AWS + Azure + Google + Meta + Oracle + xAI 為 Switch ASIC / DPU / Retimer / AEC 的最終買家，集中度 >75%（信心度 high）",
+      "desc": "AI 資料中心網通晶片的最終買家 — 自研 ASIC（Trainium / TPU / Maia / MTIA）+ 商用 GPU 混合採購。",
+      "marketSize": "$350 億 CapEx",
+      "growth": "Meta $1,350 億",
+      "analysis": "Meta 2026 CapEx $1,350 億 + 自研 MTIA-3 帶動信驊 + 創意；AWS Trainium + AEC 紫色 cable 為 Credo 客戶；Azure Maia + Oracle + xAI（Colossus 用 Spectrum-X）+ Google TPU（Broadcom + 聯發科共同設計）— 六家集中度 >75%。",
+      "companies": [
+        { "name": "AWS Trainium", "ticker": "AMZN", "country": "US", "share": "Trainium + Inferentia", "products": "自研 ASIC + Anthropic 大客戶", "note": "與 Credo / Astera 緊密" },
+        { "name": "Microsoft Azure Maia", "ticker": "MSFT", "country": "US", "share": "Maia 100", "products": "Maia AI ASIC", "note": "OpenAI 主要平台" },
+        { "name": "Google TPU", "ticker": "GOOGL", "country": "US", "share": "TPU v6/v7", "products": "Broadcom + 聯發科共設計", "note": "ASIC pioneer" },
+        { "name": "Meta MTIA", "ticker": "META", "country": "US", "share": "MTIA-3", "products": "自研 MTIA-3", "note": "$1,350 億 CapEx" },
+        { "name": "Oracle / xAI", "ticker": "ORCL / —", "country": "US", "share": "Spectrum-X 採用", "products": "Nvidia 為主 + 部分自研", "note": "xAI Colossus 用 Spectrum-X" }
+      ],
+      "upstream": [{ "id": "sw-ethernet" }, { "id": "sw-router" }, { "id": "sw-scale-up" }, { "id": "sw-mediatek" }, { "id": "nic" }, { "id": "dpu" }, { "id": "bmc" }, { "id": "pcie-switch" }, { "id": "retimer-pcie" }, { "id": "dsp-optical" }, { "id": "aec" }, { "id": "cpo-edge" }, { "id": "u-asic-svc" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Meta $1,350 億 + MTIA-3 (工商時報)", "url": "https://www.ctee.com.tw/news/20260130700075-439901" }
+      ]
+    },
+    {
+      "id": "d-nvidia",
+      "row": "demand",
+      "col": 6,
+      "span": 4,
+      "kind": "demand",
+      "name": "NVIDIA AI Platform（垂直整合）",
+      "nameEn": "NVIDIA AI Platform",
+      "competition": "monopoly",
+      "single": "鎖喉點 · NVIDIA GB200/Rubin rack scale-up 內 NVLink 5/6 + ConnectX-8 + BlueField + Spectrum-X 完整垂直閉環（信心度 high）",
+      "desc": "NVIDIA 自家從 GPU → NVLink → NIC → DPU → Spectrum-X switch 完整垂直整合 — 對 hyperscaler 另一條 single-source 路徑。",
+      "marketSize": "GB200 / Rubin",
+      "growth": "AI factory 爆發",
+      "analysis": "GB200 NVL72 + GB300 + Rubin Ultra（2026/27）每架 rack 都需 NVSwitch + ConnectX-8 + BlueField-4 + Spectrum-X 配套；雖然 AWS/Meta 自研 ASIC 分食，但 NVIDIA 仍占 AI 加速器營收 ~80%；Spectrum-X 已被 Meta + Oracle + xAI 採用，與 Broadcom merchant 路線形成競爭。",
+      "companies": [
+        { "name": "NVIDIA", "ticker": "NVDA", "country": "US", "share": "AI 加速器 ~80%", "products": "GB200/300 + Rubin + NVLink/CX-8/BF-4/Spectrum-X", "note": "垂直整合閉環" }
+      ],
+      "upstream": [{ "id": "sw-scale-up" }, { "id": "nic" }, { "id": "dpu" }, { "id": "retimer-pcie" }, { "id": "dsp-optical" }, { "id": "aec" }, { "id": "cpo-edge" }, { "id": "pcie-switch" }],
+      "downstream": [],
+      "sources": [
+        { "label": "NVIDIA Spectrum-X 平台 (Nvidia)", "url": "https://www.nvidia.com/en-us/networking/spectrumx/" }
+      ]
+    },
+    {
+      "id": "d-enterprise",
+      "row": "demand",
+      "col": 10,
+      "span": 3,
+      "kind": "demand",
+      "name": "企業 / Tier-2 雲 / Telecom",
+      "nameEn": "Enterprise · Tier-2 Cloud · Telecom",
+      "competition": "redocean",
+      "desc": "企業資料中心、Tier-2 雲（Coreweave/Lambda）、Telecom 5G、Edge 邊緣運算等非 hyperscaler 市場。",
+      "marketSize": "成熟分散",
+      "growth": "Tier-2 GPU cloud",
+      "analysis": "傳統 enterprise 採購偏 Cisco + Arista + Dell / HPE 整機；Tier-2 GPU cloud（Coreweave / Lambda / Crusoe）為 Nvidia GB200 大客戶；Telecom 5G + Edge 為 Marvell Octeon / Intel IPU 主要市場；中國本土雲（阿里 / 騰訊 / 百度）走盛科 + 聯發科 Nephos 路線。",
+      "companies": [
+        { "name": "Coreweave / Lambda / Crusoe", "ticker": "—", "country": "US", "share": "Tier-2 GPU", "products": "Nvidia GB200 cluster", "note": "AI 創業生態" },
+        { "name": "Cisco / Arista / HPE", "ticker": "CSCO / ANET / HPE", "country": "US", "share": "傳統企業", "products": "整機+軟體棧", "note": "傳統 networking 整機" },
+        { "name": "中國雲 (阿里/騰訊/百度)", "ticker": "BABA / 0700.HK / BIDU", "country": "CN", "share": "中國市場", "products": "盛科 + 聯發科 Nephos", "note": "本土替代生態" }
+      ],
+      "upstream": [{ "id": "sw-ethernet" }, { "id": "sw-mediatek" }, { "id": "nic" }, { "id": "dpu" }, { "id": "bmc" }, { "id": "pcie-switch" }, { "id": "retimer-pcie" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Tier-2 GPU cloud (NextPlatform)", "url": "https://www.nextplatform.com/2025/10/08/cisco-takes-on-broadcom-nvidia-for-fat-ai-datacenter-interconnects/" }
+      ]
+    }
+  ],
+  "edges": [
+    ["u-ip", "u-asic-svc"],
+    ["u-ip", "sw-ethernet"],
+    ["u-ip", "sw-router"],
+    ["u-ip", "sw-scale-up"],
+    ["u-ip", "nic"],
+    ["u-ip", "dpu"],
+    ["u-ip", "retimer-pcie"],
+    ["u-ip", "dsp-optical"],
+    ["u-ip", "aec"],
+    ["u-ip", "pcie-switch"],
+    ["u-asic-svc", "sw-ethernet"],
+    ["u-asic-svc", "sw-mediatek"],
+    ["u-asic-svc", "d-hyperscaler"],
+    ["u-foundry", "sw-ethernet"],
+    ["u-foundry", "sw-router"],
+    ["u-foundry", "sw-scale-up"],
+    ["u-foundry", "sw-mediatek"],
+    ["u-foundry", "nic"],
+    ["u-foundry", "dpu"],
+    ["u-foundry", "bmc"],
+    ["u-foundry", "pcie-switch"],
+    ["u-foundry", "retimer-pcie"],
+    ["u-foundry", "dsp-optical"],
+    ["u-foundry", "aec"],
+    ["u-foundry", "cpo-edge"],
+    ["u-substrate", "sw-ethernet"],
+    ["u-substrate", "nic"],
+    ["u-substrate", "dpu"],
+    ["sw-ethernet", "d-hyperscaler"],
+    ["sw-ethernet", "d-nvidia"],
+    ["sw-ethernet", "d-enterprise"],
+    ["sw-router", "d-hyperscaler"],
+    ["sw-scale-up", "d-nvidia"],
+    ["sw-scale-up", "d-hyperscaler"],
+    ["sw-mediatek", "d-hyperscaler"],
+    ["sw-mediatek", "d-enterprise"],
+    ["nic", "d-hyperscaler"],
+    ["nic", "d-nvidia"],
+    ["nic", "d-enterprise"],
+    ["dpu", "d-hyperscaler"],
+    ["dpu", "d-nvidia"],
+    ["dpu", "d-enterprise"],
+    ["bmc", "d-hyperscaler"],
+    ["bmc", "d-enterprise"],
+    ["pcie-switch", "d-hyperscaler"],
+    ["pcie-switch", "d-nvidia"],
+    ["pcie-switch", "d-enterprise"],
+    ["retimer-pcie", "d-hyperscaler"],
+    ["retimer-pcie", "d-nvidia"],
+    ["retimer-pcie", "d-enterprise"],
+    ["dsp-optical", "d-hyperscaler"],
+    ["dsp-optical", "d-nvidia"],
+    ["aec", "d-hyperscaler"],
+    ["aec", "d-nvidia"],
+    ["cpo-edge", "d-hyperscaler"],
+    ["cpo-edge", "d-nvidia"]
+  ]
+}
