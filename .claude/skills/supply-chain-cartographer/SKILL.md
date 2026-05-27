@@ -198,8 +198,9 @@ done
 - **A1** 全球市佔 ≥75% **且持續 ≥3 年**（排除單一年度週期性領先）
 - **A2** 全球唯一 commercial supplier（第二源還在 R&D / sampling 不算）
 - **A3** 對 top-tier 客戶（TSMC / NVDA / AAPL / Apple silicon / 6 大 hyperscaler）100% 獨家 + 合約鎖 ≥2 年
-- **A4** **結構性 cartel** — ≤3 家加總 ≥90% 全球 + 結構性 capex / IP / qualification barrier 阻擋 4th entrant ≥5 年 viable。**與 competitive oligopoly 區分**（後者新進入者 5 年內 commercial、客戶能 reshuffle）。
-  典範案例：
+- **A4** **結構性 cartel** — ≤3 家加總 ≥90% **可投資 addressable market** + 結構性 capex / IP / qualification barrier 阻擋 4th entrant ≥5 年 viable。**與 competitive oligopoly 區分**（後者新進入者 5 年內 commercial、客戶能 reshuffle）。
+  **「Addressable market」定義**：對非中國 hyperscaler 客戶可實際購買的市場（排除如 Empyrean China-only EDA、Yusur China-only NIC 等政治/地緣性受限供應商）。同一 topic 內口徑要一致。
+  典範案例（記憶體 / 材料）：
   - HBM-grade DRAM trio (SK Hynix + Micron + Samsung 91%, CXMT 5+ 年內做不到 1c-nm + 12/16-Hi)
   - EUV mask blank (Hoya 60% + AGC 34% = 94%)
   - BaTiO₃ 粉體 (Sakai + Fuji ~70%)
@@ -207,6 +208,10 @@ done
   - 高階 AI MLCC (Murata + SEMCO ~80%)
   - TC-NCF (Resonac + Henkel ≥90%)
   - ABF substrate AI grade (Unimicron + Ibiden quiet duopoly)
+  典範案例（設備 / 設計）：
+  - EDA RTL→GDS (Synopsys + Cadence + Siemens ~74% 全球, 但 addressable 100% — Empyrean China-only 排除)
+  - AI Datacenter NIC (Nvidia CX + Broadcom Thor + Intel E810 ~95% addressable, AMD 退場 / Marvell 整合至 DPU)
+  - DPU / SmartNIC (Nvidia BlueField + AMD Pensando + Marvell Octeon ~90%; Intel IPU 退場、Fungible defunct)
 
 ### Gate B · 切換成本（**≥2 條**過）
 
