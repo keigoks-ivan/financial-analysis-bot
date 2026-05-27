@@ -186,16 +186,56 @@ done
 - 太多列（>6）→ 視覺垃圾，重新分群
 - 太少列（=2，除非純材料）→ 失去階層感
 
-## 4-Bucket Single-Point Framework（⚑ 旗標）
+## ⚑ Single-Point Framework — v1.2 嚴格 Gate（2026-05-27 起）
 
-只要符合以下任一情境就標 ⚑（與「競爭態勢」badge **正交** — oligopoly 節點也可以打 ⚑）：
+> **重大變更**：v1.2 把 ⚑ 的合格條件從「4-bucket 任一過（OR）」改成「3 道 Gate 全過（AND）+ Kill Test」。
+> Reason: v1.0/v1.1 的 OR 規則讓每 topic 噴出 15+ ⚑ flag，稀釋了「真單點」的訊號。
+> 嚴格 Gate 後實測：fe-equipment 15→10、dc-networking 15→6、passive 9→3。降幅 40-67%。
+> 4-bucket 改成**分類標籤**（描述 ⚑ 的性質），不再是合格判準。
 
-| 子類 | 判斷標準 | 範例 |
+### Gate A · 結構壟斷（**任一**過即可）
+
+- **A1** 全球市佔 ≥75% **且持續 ≥3 年**（排除單一年度週期性領先）
+- **A2** 全球唯一 commercial supplier（第二源還在 R&D / sampling 不算）
+- **A3** 對 top-tier 客戶（TSMC / NVDA / AAPL / Apple silicon / 6 大 hyperscaler）100% 獨家 + 合約鎖 ≥2 年
+
+### Gate B · 切換成本（**≥2 條**過）
+
+- **B1** 替換 qualification + ramp 週期 ≥24 個月
+- **B2** 客戶平台已整合 IP（co-design / NDA / 專利交叉）
+- **B3** 第二源量產規模 < 領先廠 1/5
+
+### Gate C · 經濟槓桿（**必過**）
+
+- 此 segment ≥30% revenue **或** pure-play 純玩家
+
+### Kill Test（commit 前最後驗證）
+
+問：**「客戶能不能在 12 個月內無 yield / 出貨延遲地把這家換掉？」**
+- **NO** → 通過、標 ⚑
+- **MAYBE** → 留主表 + drawer note，**不打 ⚑**
+- **YES** → 拿掉 ⚑
+
+### Anti-patterns（容易誤標的陷阱）
+
+1. **Demand-side concentration ≠ supplier ⚑**：TSMC 占 70% 先進邏輯需求是 demand 集中，不是 TSMC 為單點供應商（除非 topic 是把 TSMC 當 supplier 看，如 IC 設計→ Foundry）
+2. **Supplier captive to customer ≠ customer-exclusive supplier**：京鼎 80% 營收來自 AMAT 是「供應商依賴客戶」（vulnerability），不是「客戶只能找京鼎」（moat）。要看反向：AMAT 有多 OEM (UCTT / Ichor)，不算 ⚑。
+3. **Oligopoly ≠ Monopoly**：4-6 家加總 >85% 但個別都 <40% 是 competitive oligopoly。每家都有真正競爭、可在 12 月內被內部 reshuffle。不打 ⚑。
+4. **代理商 / 通路商不是真正的鎖喉**：合約模型、客戶可短期切換或自建直購通路。不打 ⚑。
+5. **「全球少數能做」≠ 「唯一」**：3+ 家能做就是 oligopoly。不打 ⚑。
+6. **「領先 / 第一名」≠ 「壟斷」**：40-60% 是 leader，>75% sustained 才是 monopoly。
+7. **「送樣中 / 量產規劃」不算量產**：only commercial mass-production counts for Gate A。
+
+### 4-bucket（分類標籤，非合格判準）
+
+通過 v1.2 嚴格 Gate 後，用以下 4 個 bucket **描述** ⚑ 的性質（filled into `single` field 文字）：
+
+| 子類 | 通常符合哪個 Gate | 範例 |
 |---|---|---|
-| **近乎獨佔** | 全球市佔 >70%，無有效第二源 | 味之素 ABF 膜 95-98%、Disco 切割 >70-80%、家登 EUV pod ~85%、Himax COUPE MLA |
-| **客戶獨家** | 對 TSMC/NVDA 等關鍵客戶的某段製程是唯一供應，全球市佔可能不大 | 弘塑 TSMC SoIC 濕清洗、新應材 TSMC 3nm Rinse、FOCI COUPE FAU、Browave NVIDIA Shuffle Box 40-50% |
-| **鎖喉點** | 製程與客戶內製深度綁定，結構上難以替代 | TSMC CoWoS-L、TSMC CoW、TSMC COUPE |
-| **封裝級單點** | 與主製程同步設計、被整進客戶平台 | 健策 CoWoS lid/IHS、旭化成 PSPI、VisEra COUPE 光波導 |
+| **近乎獨佔** | A1 ✓ | ZEISS SMT EUV optics、ASML EUV、Lasertec EUV mask 90%、家登 EUV pod ~80%、中砂 鑽石碟 3nm 70% |
+| **客戶獨家** | A3 ✓ | TSMC SoIC 弘塑 100%、Credo AWS 紫色 cable co-designed、信驊 BMC 70-80% server OEM lock |
+| **鎖喉點** | A2 ✓ + B2 ✓ | TSMC CoWoS-L、Broadcom Jericho 4 inter-DC router、NVLink scale-up |
+| **封裝級單點** | A2/A3 + B2 ✓ | 健策 CoWoS lid/IHS、Mitsui EUV pellicle ASML license |
 
 ## 💎 Top Picks Framework（嚴格 3 條件 AND）
 
