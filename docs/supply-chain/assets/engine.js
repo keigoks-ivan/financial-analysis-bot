@@ -43,8 +43,6 @@ const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls)
 const compOf = n => COMP[n.competition] || COMP.emerging;
 const colorOf = n => `var(${compOf(n).cssVar})`;
 const flagOf = c => c.country && FLAG[c.country] ? FLAG[c.country] : "";
-const parseShare = s => { if (!s) return null; const m = String(s).match(/(\d+(\.\d+)?)/); return m ? parseFloat(m[1]) : null; };
-const maxShareIn = cos => { let mx = 0; cos.forEach(c => { const p = parseShare(c.share); if (p != null && p > mx) mx = p; }); return mx; };
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./,""); } catch(e) { return u; } };
 const cssEsc = s => String(s).replace(/"/g,'\\"');
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
@@ -376,10 +374,7 @@ function openDrawer(id) {
       `<div class="dr-single"><span class="ic">⚑</span><span>${n.single}</span></div>`));
 
   if (n.companies && n.companies.length) {
-    const maxS = maxShareIn(n.companies);
     const rows = n.companies.map(c => {
-      const pct = parseShare(c.share);
-      const bar = pct != null && maxS ? `<div class="co-bar"><i style="width:${Math.max(6, (pct/maxS)*100)}%;background:${cc}"></i></div>` : "";
       const prod = c.products ? `<span class="co-prod">🔧 ${c.products}</span>` : "";
       const csrc = c.src ? ` <a href="${c.src}" target="_blank" rel="noopener" class="src-icon" title="來源">↗</a>` : "";
       const dd = ddLinkFor(c.ticker);
@@ -390,7 +385,7 @@ function openDrawer(id) {
       const rowCls = gold ? ' class="golden"' : '';
       return `<tr${rowCls}>
         <td>${goldBadge}<span class="co-name"><span class="co-flag">${(FLAG[c.country] || "")}</span>${c.name}${tickerHTML}${ddBtn}</span></td>
-        <td><span class="co-share">${c.share || "—"}</span>${bar}</td>
+        <td><span class="co-share">${c.share || "—"}</span></td>
         <td><span class="co-note">${c.note || ""}${csrc}</span>${prod}</td>
       </tr>`;
     }).join("");
