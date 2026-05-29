@@ -1,0 +1,562 @@
+{
+  "id": "datacenter",
+  "tab": "資料中心建置",
+  "title": "AI 資料中心 實體建置（Facility Buildout）供應鏈",
+  "subtitle": "Hyperscaler 2026 capex 衝上 $725B（vs 2025 $410B），但綁住整個 build-out 的不再是晶片或伺服器，而是「把電送進機房」的實體基建——美國 2026 規劃的 ~12GW 容量僅約 5GW 真正動工，其餘卡在電力設備交期。大型電力變壓器交期由 12-18 個月拉長到 120-210 週（2.5-4 年）、全球變壓器產能利用率 98%、大型燃氣渦輪機 slot 售罄至 2030。本圖聚焦 grid→變電→備援自帶發電→室內配電→設施散熱→廠房互連 六段 facility-scale 環節（與『電源散熱』topic 的 rack/board 層互補不重疊）。關鍵結論：此層是『產能短缺 × 寡占卡特爾』題材，TW 重電四雄（華城／士電／中興電／亞力）吃國際大廠外溢訂單、能見度到 2028-2030，但真正不可替代的單點僅一個——大型燃氣渦輪機三強卡特爾。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 24 },
+    { "k": "涵蓋廠商", "v": "85+" },
+    { "k": "關鍵單點 ⚑", "v": 1, "sub": "大型燃氣渦輪機三強卡特爾", "hot": true }
+  ],
+  "rows": [
+    { "id": "grid", "label": "電網接入・變電 Grid Interconnect & Substation", "main": true },
+    { "id": "backup", "label": "自帶發電・備援 On-site Generation & Backup", "main": true },
+    { "id": "distribution", "label": "室內配電・切換 In-facility Distribution", "main": true },
+    { "id": "cooling", "label": "設施散熱・水循環 Facility Cooling", "main": false },
+    { "id": "shell", "label": "廠房・互連・終端 Shell, Interconnect & Demand", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "g-goes",
+      "row": "grid", "col": 1, "span": 1, "kind": "rail",
+      "name": "電工鋼 GOES（變壓器鐵芯）", "nameEn": "Grain-Oriented Electrical Steel",
+      "competition": "oligopoly",
+      "desc": "高導磁晶粒取向矽鋼，是電力變壓器鐵芯的核心材料，也是整條變壓器交期的最上游瓶頸；高導磁 HiB 等級佔 GOES 約 58%。",
+      "marketSize": "$9.25B(2025)→$12.1B(2030)",
+      "growth": "產能利用率 98%",
+      "analysis": "全球 GOES 前五大（中國寶武、ArcelorMittal、日本製鐵、POSCO、JFE）合計約 44% 市佔、POSCO 約 16.8% 居首——屬高度整合的寡占而非單點（≤3 家未達 90%，故不打 ⚑）。但美國本土僅 Cleveland-Cliffs（前 AK Steel）一家能產 GOES，在 Buy-American／關稅情境下構成『美國境內唯一』的政策性鎖喉，是本層最值得追蹤的脆弱依賴點。日本製鐵擴 Hirohata 40%、POSCO 光陽線提升 premium 等級 30% 因應需求。",
+      "companies": [
+        { "name": "Cleveland-Cliffs", "ticker": "CLF", "country": "US", "share": "美國本土唯一 GOES", "products": "GOES / 矽鋼鐵芯料", "note": "美國境內唯一 GOES 產能，政策性鎖喉但全球可替代" },
+        { "name": "日本製鐵 Nippon Steel", "ticker": "5401.T", "country": "JP", "share": "premium HiB 領先", "products": "高導磁 GOES (HiB)", "note": "擴 Hirohata 40%、併 U.S. Steel 拓美國足跡" },
+        { "name": "POSCO", "ticker": "005490.KS", "country": "KR", "share": "~16.8% 居首", "products": "GOES 全等級", "note": "光陽線提升 premium 等級 30%" },
+        { "name": "JFE Steel", "ticker": "5411.T", "country": "JP", "share": "premium GOES", "products": "GOES" },
+        { "name": "China Baowu", "ticker": "—", "country": "CN", "share": "量產規模最大", "products": "GOES", "note": "中國產能，受美歐關稅／地緣限制（非全 addressable）" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "g-lpt" }, { "id": "g-mvtx" }],
+      "sources": [
+        { "label": "Mordor: Grain-Oriented Electrical Steel Market (top-5 / POSCO 16.8%)", "url": "https://www.mordorintelligence.com/industry-reports/grain-oriented-electrical-steel-market" },
+        { "label": "Fastmarkets: US construction slowed by electrical steel (Cliffs sole domestic)", "url": "https://www.fastmarkets.com/insights/us-construction-slowed-by-difficulties-to-source-electrical-steel/" }
+      ]
+    },
+    {
+      "id": "g-lpt",
+      "row": "grid", "col": 2, "span": 2, "kind": "stage",
+      "name": "大型電力變壓器 LPT (>100MVA)", "nameEn": "Large Power Transformer",
+      "competition": "highgrowth",
+      "desc": "把輸電網高壓降到資料中心可用電壓的核心設備；>100MVA 大型機組交期已由 24-30 個月拉長到 120-210 週（2.5-4+ 年），是整個 buildout 的頭號瓶頸。",
+      "marketSize": "交期 120-210 週",
+      "growth": "價格 +79%",
+      "analysis": "全球大型變壓器是『產能全面售罄』的高成長寡占，而非單一供應商鎖喉——Hitachi Energy（ABB 系）、GE Vernova、Siemens Energy、三菱電機、現代電氣等 6+ 家皆能造，客戶可多源、產能正全面擴張（Siemens Energy 投 $1B 在北卡 Charlotte 建廠 2027 投產），故不打 ⚑。GE Vernova 電氣化部門 Q1 2026 資料中心訂單就等於整個 2025 年、總 backlog $163B。台廠華城吃外溢訂單，AI 變壓器 2026 營收估翻倍。",
+      "companies": [
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "全球 LPT 領先", "products": ">100MVA 變壓器、HVDC", "note": "Hitachi 旗下，原 ABB Power Grids" },
+        { "name": "GE Vernova", "ticker": "GEV", "country": "US", "share": "電氣化 backlog $163B", "products": "LPT、變電設備", "note": "Q1'26 DC 訂單 = 全 2025 年" },
+        { "name": "Siemens Energy", "ticker": "ENR.DE", "country": "DE", "share": "全球大廠", "products": "LPT、GIS", "note": "投 $1B 北卡新廠 2027 投產" },
+        { "name": "華城電機 Hua Eng", "ticker": "1519.TW", "country": "TW", "share": "AI 變壓器 2026 翻倍", "products": "電力變壓器（產能 ~5 萬 MVA/年）", "note": "變壓器佔營收 70%、訂單能見 2028、吃國際外溢單", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "現代電氣 Hyundai Electric", "ticker": "267260.KS", "country": "KR", "share": "對美出口擴張", "products": "LPT", "note": "韓系大型變壓器對美出貨" }
+      ],
+      "upstream": [{ "id": "g-goes" }],
+      "downstream": [{ "id": "g-gis" }, { "id": "g-mvtx" }],
+      "sources": [
+        { "label": "pv-magazine: US transformer lead times extend to four years", "url": "https://pv-magazine-usa.com/2026/05/11/u-s-transformer-market-faces-severe-supply-constraints-as-lead-times-extend-to-four-years/" },
+        { "label": "PowerMag: Transformers in 2026 — Shortage, Scramble", "url": "https://www.powermag.com/transformers-in-2026-shortage-scramble-or-self-inflicted-crisis/" },
+        { "label": "華城 AI 變壓器 2026 翻倍、訂單見 2028（旺得富）", "url": "https://wantrich.chinatimes.com/news/20260221900001-420101" }
+      ]
+    },
+    {
+      "id": "g-mvtx",
+      "row": "grid", "col": 4, "span": 1, "kind": "stage",
+      "name": "中壓・乾式變壓器 MV / Dry-Type", "nameEn": "Medium-Voltage / Dry-Type Transformer",
+      "competition": "highgrowth",
+      "desc": "把園區中壓再降到機房配電盤可用電壓的變壓器，交期同樣吃緊；台廠重電四雄主戰場。",
+      "marketSize": "TW 訂單見 2030",
+      "growth": "重電四雄滿載至 2027+",
+      "analysis": "中壓變壓器是全球性競爭寡占（Schneider、Eaton、ABB、Siemens + 台廠），客戶可多源。台灣『重電四雄』華城／士電／中興電／亞力受惠台電強韌電網計畫 + AI 機房 + 半導體擴廠三引擎，在手訂單能見 2028-2030：華城累積 >$150 億、亞力 >$100 億並由 3 年延至 4-5 年。東元（TECO-Westinghouse）切北美馬達與變壓器、併購馬來西亞 Dynaciate 拓東南亞 DC 工程。均屬週期性產能緊俏受惠，非結構鎖喉。",
+      "companies": [
+        { "name": "華城電機 Hua Eng", "ticker": "1519.TW", "country": "TW", "share": "重電四雄", "products": "中壓 / 乾式變壓器", "note": "AI DC + 台電肥單雙引擎" },
+        { "name": "士電 Shihlin Electric", "ticker": "1503.TW", "country": "TW", "share": "重電四雄", "products": "變壓器 + 錶後儲能", "note": "海外大型變壓器需求、能見 2029-2030" },
+        { "name": "亞力電機 Allis", "ticker": "1514.TW", "country": "TW", "share": "重電四雄", "products": "變壓器、配電", "note": "訂單 >$100 億、能見延至 4-5 年" },
+        { "name": "東元 TECO", "ticker": "1504.TW", "country": "TW", "share": "馬達 + 變壓器", "products": "變壓器、馬達、DC 工程", "note": "TECO-Westinghouse 北美 + 併 Dynaciate 拓 DC" },
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "全球配電龍頭", "products": "MV / 乾式變壓器", "note": "整廠配電方案" }
+      ],
+      "upstream": [{ "id": "g-goes" }, { "id": "g-lpt" }],
+      "downstream": [{ "id": "g-hvdc" }, { "id": "d-lvswgr" }],
+      "sources": [
+        { "label": "重電四雄訂單直見 2030（旺得富）", "url": "https://wantrich.chinatimes.com/news/20260221900001-420101" },
+        { "label": "重電四雄訂單滿到 2027、奪輝達單（旺得富）", "url": "https://wantrich.chinatimes.com/news/20260415900381-420101" },
+        { "label": "重電四雄全球卡位戰（鉅亨）", "url": "https://news.cnyes.com/news/id/6224125" }
+      ]
+    },
+    {
+      "id": "g-gis",
+      "row": "grid", "col": 5, "span": 1, "kind": "stage",
+      "name": "GIS 氣體絕緣開關設備", "nameEn": "Gas-Insulated Switchgear (GIS)",
+      "competition": "oligopoly",
+      "desc": "變電站高壓側的開關 / 保護設備，把市電與自帶發電切入機房；SF6-free 機種為新趨勢。",
+      "marketSize": "—",
+      "growth": "AI 用電帶動",
+      "analysis": "全球 GIS 是 Hitachi Energy／Siemens／GE／三菱／現代主導的競爭寡占。中興電在『台灣國內』GIS 具獨佔地位——但這是國內市場的客戶配置（國際大廠都做得出 GIS），非全球能力獨佔，依 v1.5 不打 ⚑。中興電另以 IDC 機房空調 + 發電機系統國內市佔約 70%（客戶含中華電信、精誠），並已過台積電供應商認證、佈局氫能燃料電池。",
+      "companies": [
+        { "name": "中興電工 Chung-Hsin", "ticker": "1513.TW", "country": "TW", "share": "TW 國內 GIS 獨佔 / IDC 空調 70%", "products": "GIS、機房空調、發電機系統、氫燃料電池", "note": "國內市場獨佔屬客戶配置非能力獨佔；過台積電認證" },
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "全球 GIS 領先", "products": "GIS、變電站", "note": "" },
+        { "name": "Siemens Energy", "ticker": "ENR.DE", "country": "DE", "share": "全球大廠", "products": "GIS、開關設備", "note": "" },
+        { "name": "三菱電機 Mitsubishi Electric", "ticker": "6503.T", "country": "JP", "share": "全球大廠", "products": "GIS", "note": "" }
+      ],
+      "upstream": [{ "id": "g-lpt" }, { "id": "b-turbine" }],
+      "downstream": [{ "id": "d-lvswgr" }],
+      "sources": [
+        { "label": "中興電國內 GIS 獨佔 / IDC 空調 70%、過台積電認證（旺得富）", "url": "https://wantrich.chinatimes.com/news/20260226900533-420101" },
+        { "label": "中興電卡位半導體 + 氫能燃料電池（TechNews）", "url": "https://technews.tw/2026/04/27/chung-hsin-electricity/" }
+      ]
+    },
+    {
+      "id": "g-hvdc",
+      "row": "grid", "col": 6, "span": 1, "kind": "rail",
+      "name": "變電站・固態變壓器 SST・HVDC", "nameEn": "Substation / Solid-State Transformer / HVDC",
+      "competition": "emerging",
+      "desc": "整合變電站、固態變壓器（SST）與高壓直流接入，因應 800V HVDC 架構與『一顆變壓器簡化供電 7 關卡』的新拓樸。",
+      "marketSize": "新興",
+      "growth": "800V HVDC 2027 放量",
+      "analysis": "固態變壓器與站級 HVDC 是萌芽中的新環節：Hitachi Energy／Siemens 提供站級 HVDC；台達電結合重電與電源開發『固態變壓器』+ Power Rack；Eaton 主打『一顆變壓器』簡化傳統供電 7 道關卡。技術路線未定、玩家仍在卡位，故標 emerging。",
+      "companies": [
+        { "name": "Delta 台達電", "ticker": "2308.TW", "country": "TW", "share": "SST + Power Rack", "products": "固態變壓器、±400V/800V HVDC", "note": "重電 × 電源整合、美國德州 Plano 新廠建置中" },
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "簡化供電拓樸", "products": "整合式變壓器、配電", "note": "『一顆變壓器』簡化 7 關卡" },
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "站級 HVDC", "products": "HVDC、變電站", "note": "" }
+      ],
+      "upstream": [{ "id": "g-mvtx" }],
+      "downstream": [{ "id": "d-busway" }],
+      "sources": [
+        { "label": "台達電 ±400V 今年出貨、800V 2027 放量、固態變壓器（豐雲學堂）", "url": "https://www.sinotrade.com.tw/richclub/hotstock/%E5%8F%B0%E9%81%94%E9%9B%BB%E6%B3%95%E8%AA%AA%E6%9C%83-Q1-EPS-7-91%E5%85%83%E6%94%B9%E5%AF%AB%E5%96%AE%E5%AD%A3%E7%B4%80%E9%8C%84-%C2%B1400V%E4%BB%8A%E5%B9%B4%E5%87%BA%E8%B2%A8-800V%E8%93%84%E5%8B%A22027%E5%B9%B4%E6%94%BE%E9%87%8F-%E8%82%A1%E5%B8%82%E8%A9%B1%E9%A1%8C-69f3237ae912b0007968ba63" },
+        { "label": "Eaton『一顆變壓器』簡化供電 7 關卡（數位時代）", "url": "https://www.bnext.com.tw/article/84435/2025-eaton" }
+      ]
+    },
+
+    {
+      "id": "b-turbine",
+      "row": "backup", "col": 1, "span": 2, "kind": "stage",
+      "name": "大型燃氣渦輪機（自帶發電）", "nameEn": "Large Gas Turbine (Behind-the-Meter)",
+      "competition": "oligopoly",
+      "single": "結構卡特爾 · 大型燃氣渦輪機全球僅 GE Vernova／Siemens Energy／三菱動力三家能造（合計約 2/3 產能、北美重型機組 >50%），slot 已售罄至 2030、交期 3-5 年，18-24 月內無法 qualify 第四家、無新進入者數十年（信心度 high · GlobalEnergyMonitor『2/3 由三家建造』+ GE Vernova 法說 80GW backlog 延伸至 2029 雙源）",
+      "desc": "因電網接入排隊過長，hyperscaler 改在園區直接架設燃氣渦輪機自帶發電（behind-the-meter）；快啟動 aeroderivative 機種 5 分鐘內可恢復供電。",
+      "marketSize": "slot 售罄至 2030",
+      "growth": "GEV backlog ~110GW",
+      "analysis": "全球能造大型燃氣渦輪機者實質僅三家：GE Vernova（市值 ~$162B、全球在建 ~55/175GW）、Siemens Energy（~$91B）、三菱重工（~$84B），三家合計約 2/3 全球產能、北美重型機組 >50%，並以龐大裝機基礎 + 長約服務綁定客戶。產能售罄至 2030、交期 3-5 年，18-24 個月內無法認證第四家——通過 v1.5 雙軸（能力非替代 S1/S2 + 結構卡特爾 M2），是本層唯一真單點 ⚑。但三家皆為大型／多角化集團（卡特爾互打的一員），依框架不標 💎 satellite，列為 🐘 elephant——以核心持股估值框架操作，非衛星 EPS 推力。Caterpillar／Solar Turbines 在較小 frame（Titan 350）補位並倍增產能。",
+      "companies": [
+        { "name": "GE Vernova", "ticker": "GEV", "country": "US", "share": "全球在建 ~55/175GW", "products": "重型 frame + aeroderivative 燃氣渦輪機", "note": "backlog 延伸 2029、Greenville 產能 55→70-80 台/年", "node_role": "elephant" },
+        { "name": "Siemens Energy", "ticker": "ENR.DE", "country": "DE", "share": "三強之一", "products": "重型燃氣渦輪機", "note": "市值 ~$91B、多角化能源集團", "node_role": "elephant" },
+        { "name": "三菱重工 Mitsubishi Heavy", "ticker": "7011.T", "country": "JP", "share": "三強之一", "products": "重型燃氣渦輪機（Mitsubishi Power）", "note": "市值 ~$84B、綜合重工集團一小段", "node_role": "elephant" },
+        { "name": "Caterpillar / Solar Turbines", "ticker": "CAT", "country": "US", "share": "中小 frame 補位", "products": "Titan 350 等較小燃氣渦輪機 + gas genset", "note": "倍增渦輪機產能、接 2GW gas genset 大單" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "g-gis" }, { "id": "d-sts" }],
+      "sources": [
+        { "label": "GlobalEnergyMonitor: 2/3 of turbines built by just three companies", "url": "https://globalenergymonitor.org/article/press-releases/brazils-vast-renewables-can-power-steel-decarbonization" },
+        { "label": "Utility Dive: GE Vernova 80GW gas turbine backlog into 2029", "url": "https://www.utilitydive.com/news/ge-vernova-gas-turbine-investor/807662/" },
+        { "label": "Power-Eng: GE Vernova turbine slots tighten through 2030", "url": "https://www.power-eng.com/gas/turbines/data-centers-drive-record-surge-in-ge-vernova-power-equipment-orders-as-turbine-slots-tighten-through-2030/" }
+      ]
+    },
+    {
+      "id": "b-genset",
+      "row": "backup", "col": 3, "span": 1, "kind": "stage",
+      "name": "柴油・燃氣發電機組 Genset (>2MW)", "nameEn": "Diesel / Gas Genset",
+      "competition": "oligopoly",
+      "desc": "傳統 N+1/2N 備援電力；>2MW 高馬力段是資料中心主力，交期約 18 個月。",
+      "marketSize": "$8.6B(2026)",
+      "growth": "高馬力段緊俏",
+      "analysis": "競爭寡占：Caterpillar、Cummins 主宰 >2MW 高馬力段（自礦業/船舶交叉銷售），前五大（Cat、Cummins、MTU、Generac、Kohler）合計約 63-72%。客戶可多源，無結構鎖喉故不打 ⚑。Cummins 投 $1.5 億擴 Fridley 廠、QSK95 產出 +30% 解 18 月交期；Rolls-Royce mtu 以飛輪電池混合搶 Tier 4。",
+      "companies": [
+        { "name": "Caterpillar", "ticker": "CAT", "country": "US", "share": ">2MW 領先", "products": "柴油/燃氣 genset", "note": "高馬力段龍頭、接 2GW gas genset 單" },
+        { "name": "Cummins", "ticker": "CMI", "country": "US", "share": ">2MW 領先", "products": "柴油 genset (QSK95)", "note": "擴 Fridley 廠 +30% 解交期" },
+        { "name": "Rolls-Royce (mtu)", "ticker": "RR.L", "country": "UK", "share": "Tier 4 高階", "products": "mtu genset + 飛輪混合", "note": "Frankfurt 72MW 天然氣 hyperscale 單" },
+        { "name": "Generac", "ticker": "GNRC", "country": "US", "share": "<1MW 為主", "products": "genset", "note": "" },
+        { "name": "Kohler", "ticker": "—", "country": "US", "share": "<1MW + 企業/edge", "products": "genset", "note": "未上市" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-sts" }],
+      "sources": [
+        { "label": "Mordor: Data Center Generator Market (top-5 share / Cat & Cummins >2MW)", "url": "https://www.mordorintelligence.com/industry-reports/data-center-generator-market" },
+        { "label": "Diesel Generator Market: Cat, Cummins, Generac, Rolls-Royce, Mitsubishi (Yahoo)", "url": "https://finance.yahoo.com/sectors/energy/articles/diesel-generator-market-industry-report-081300686.html" }
+      ]
+    },
+    {
+      "id": "b-ups",
+      "row": "backup", "col": 4, "span": 1, "kind": "stage",
+      "name": "設施級 UPS（不斷電系統）", "nameEn": "Facility-Scale UPS",
+      "competition": "oligopoly",
+      "desc": "機房級不斷電系統，橋接市電中斷到 genset 啟動的秒級空窗；模組化 UPS 為主流。",
+      "marketSize": "—",
+      "growth": "Vertiv Q1'26 +30%",
+      "analysis": "競爭寡占：Vertiv、Schneider、Eaton、ABB、華為主導模組化 UPS。Vertiv 為臨界基建龍頭（Q1 2026 營收 $26.5 億 +30%、美洲 +44%），但市佔分散、客戶可多源，不打 ⚑。鋰電 + 再生能源混合正降低對柴油備援的依賴。",
+      "companies": [
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "模組化 UPS 領先", "products": "UPS、電力模組、busway", "note": "Q1'26 +30%、美洲 DC 需求 +44%" },
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "整合電力方案", "products": "Galaxy UPS、配電", "note": "" },
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "自製斷路器 + 開關供應穩定", "products": "UPS、開關櫃", "note": "併 Boyd Thermal 補散熱" },
+        { "name": "華為 Huawei", "ticker": "—", "country": "CN", "share": "模組化 UPS 前段班", "products": "UPS", "note": "未上市（受地緣限制）" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-busway" }],
+      "sources": [
+        { "label": "IntelMarket: Data Center Modular UPS Outlook (Huawei/Vertiv/Schneider)", "url": "https://www.intelmarketresearch.com/data-center-modular-uninterruptible-power-supply-market-40514" },
+        { "label": "Vertiv 8-K Q1 2026 (+30% net sales)", "url": "https://www.sec.gov/Archives/edgar/data/0001674101/000167410126000006/exhibit991vrt02112026.htm" }
+      ]
+    },
+    {
+      "id": "b-bess",
+      "row": "backup", "col": 5, "span": 1, "kind": "rail",
+      "name": "併網儲能 BESS（錶後）", "nameEn": "Grid-Tie Battery Energy Storage",
+      "competition": "highgrowth",
+      "desc": "錶後儲能用於削峰填谷、需量反應與離網支撐，緩解電網接入排隊；台灣峰離峰電價差催出需求。",
+      "marketSize": "TW 錶後儲能",
+      "growth": "士電 2026 +300MWh",
+      "analysis": "高成長競爭市場：Tesla Megapack、Fluence、Schneider、台廠（士電、台達）皆參與。士電 2026 預計再取 >300MWh 專案，錶後儲能成新成長動能。屬紅海化高成長，無單點鎖喉。",
+      "companies": [
+        { "name": "士電 Shihlin Electric", "ticker": "1503.TW", "country": "TW", "share": "TW 錶後儲能", "products": "BESS + 變壓器", "note": "2026 估再取 >300MWh" },
+        { "name": "Tesla", "ticker": "TSLA", "country": "US", "share": "Megapack 領先", "products": "Megapack BESS", "note": "" },
+        { "name": "Fluence", "ticker": "FLNC", "country": "US", "share": "公用級 BESS", "products": "Gridstack", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-lvswgr" }],
+      "sources": [
+        { "label": "士電錶後儲能 2026 估再取 >300MWh（豐雲學堂）", "url": "https://www.sinotrade.com.tw/richclub/industry/AI-%E8%B3%87%E6%96%99%E4%B8%AD%E5%BF%83%E8%88%88%E5%BB%BA%E8%88%87%E9%9B%BB%E5%AD%90%E6%A5%AD%E6%93%B4%E5%BB%A0-%E8%8F%AF%E5%9F%8E-%E5%A3%AB%E9%9B%BB-%E4%B8%AD%E8%88%88%E9%9B%BB-%E4%BA%9E%E5%8A%9B%E9%87%8D%E9%9B%BB%E5%BB%A0%E5%95%86%E6%8E%A5%E5%96%AE%E7%81%AB%E7%86%B1-%E7%94%A2%E6%A5%AD%E7%86%B1%E8%A9%B1-69ddf4043f76ec0ab4f49eff" }
+      ]
+    },
+    {
+      "id": "b-fuelcell",
+      "row": "backup", "col": 6, "span": 1, "kind": "rail",
+      "name": "燃料電池・SOFC・SMR（自帶電）", "nameEn": "Fuel Cell / SOFC / SMR",
+      "competition": "emerging",
+      "desc": "繞過電網接入的替代自帶電源：固態氧化物燃料電池（SOFC）即時供電、小型模組化反應爐（SMR）為 2028+ 的乾淨基載選項。",
+      "marketSize": "新興",
+      "growth": "behind-the-meter",
+      "analysis": "萌芽環節：Bloom Energy 的 SOFC 已部署多座 hyperscale 機房作主電源；中興電佈局氫能燃料電池。SMR 則與『核能 / SMR』topic 交叉（此處僅作為自帶電源選項列出）。技術與監管未定，玩家卡位中。",
+      "companies": [
+        { "name": "Bloom Energy", "ticker": "BE", "country": "US", "share": "SOFC 領先", "products": "Energy Server SOFC", "note": "多座 hyperscale 機房主電源" },
+        { "name": "中興電工 Chung-Hsin", "ticker": "1513.TW", "country": "TW", "share": "氫能佈局", "products": "氫燃料電池", "note": "新商機卡位" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-lvswgr" }],
+      "sources": [
+        { "label": "中興電氫能燃料電池佈局（TechNews）", "url": "https://technews.tw/2026/04/27/chung-hsin-electricity/" }
+      ]
+    },
+
+    {
+      "id": "d-lvswgr",
+      "row": "distribution", "col": 1, "span": 1, "kind": "stage",
+      "name": "低壓開關櫃・配電盤 LV Switchgear", "nameEn": "Low-Voltage Switchgear / Panelboard",
+      "competition": "oligopoly",
+      "desc": "機房內把電分配到各列機櫃前的低壓開關與保護設備；含斷路器、配電盤、MCC。",
+      "marketSize": "—",
+      "growth": "AI 機房標配",
+      "analysis": "全球競爭寡占：Schneider、Eaton、ABB、Siemens 主導，台廠士電／亞力／中興電補位。斷路器自製能力（Eaton）帶來供應穩定性優勢。客戶可多源，無單點。",
+      "companies": [
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "配電龍頭", "products": "低壓開關櫃、配電盤", "note": "" },
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "斷路器自製", "products": "開關櫃、斷路器", "note": "供應鏈穩定性優勢" },
+        { "name": "ABB", "ticker": "ABBN.SW", "country": "CH", "share": "全球大廠", "products": "低壓開關設備", "note": "" },
+        { "name": "亞力電機 Allis", "ticker": "1514.TW", "country": "TW", "share": "TW 配電補位", "products": "配電盤、開關櫃", "note": "" }
+      ],
+      "upstream": [{ "id": "g-mvtx" }, { "id": "g-gis" }, { "id": "b-bess" }, { "id": "b-fuelcell" }, { "id": "d-sts" }],
+      "downstream": [{ "id": "d-busway" }],
+      "sources": [
+        { "label": "重電廠商接單火熱（豐雲學堂）", "url": "https://www.sinotrade.com.tw/richclub/industry/AI-%E8%B3%87%E6%96%99%E4%B8%AD%E5%BF%83%E8%88%88%E5%BB%BA%E8%88%87%E9%9B%BB%E5%AD%90%E6%A5%AD%E6%93%B4%E5%BB%A0-%E8%8F%AF%E5%9F%8E-%E5%A3%AB%E9%9B%BB-%E4%B8%AD%E8%88%88%E9%9B%BB-%E4%BA%9E%E5%8A%9B%E9%87%8D%E9%9B%BB%E5%BB%A0%E5%95%86%E6%8E%A5%E5%96%AE%E7%81%AB%E7%86%B1-%E7%94%A2%E6%A5%AD%E7%86%B1%E8%A9%B1-69ddf4043f76ec0ab4f49eff" }
+      ]
+    },
+    {
+      "id": "d-busway",
+      "row": "distribution", "col": 2, "span": 1, "kind": "stage",
+      "name": "高架匯流排 Overhead Busway", "nameEn": "Overhead Busway / Busduct",
+      "competition": "oligopoly",
+      "desc": "以銅/鋁排取代電纜的高架配電軌道，800V 架構下為剛需；mission-critical 機房標配。",
+      "marketSize": "CAGR ~6.2%",
+      "growth": "800V 剛需",
+      "analysis": "競爭寡占：5-6 家佔 >75%——Starline（Legrand 併購中，DC busway 純玩家領先）、Vertiv（E&I）、Eaton、Schneider、ABB、Siemens。雖 Starline 是 mission-critical 純玩家，但 Vertiv／Eaton／Schneider 皆能供同類產品、客戶可換，故不打 ⚑。",
+      "companies": [
+        { "name": "Starline (Legrand)", "ticker": "LR.PA", "country": "FR", "share": "DC busway 純玩家領先", "products": "Track busway", "note": "Legrand 併 Universal Electric (Starline)" },
+        { "name": "Vertiv (E&I)", "ticker": "VRT", "country": "US", "share": "busway + switchgear", "products": "Busway、開關櫃、轉換開關", "note": "2021 併 E&I Engineering $18 億" },
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "全球配電", "products": "Busway", "note": "" },
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "全球配電", "products": "Canalis busway", "note": "" }
+      ],
+      "upstream": [{ "id": "g-hvdc" }, { "id": "b-ups" }, { "id": "d-lvswgr" }, { "id": "d-pdc" }],
+      "downstream": [{ "id": "s-reit" }, { "id": "s-demand" }],
+      "sources": [
+        { "label": "DCD: Legrand buying busway maker Starline", "url": "https://www.datacenterdynamics.com/en/news/legrand-buying-busway-maker-starline/" },
+        { "label": "DataBridge: Data Center Busway Market (5-6 players >75%)", "url": "https://www.databridgemarketresearch.com/reports/global-data-center-busway-market" }
+      ]
+    },
+    {
+      "id": "d-sts",
+      "row": "distribution", "col": 3, "span": 1, "kind": "stage",
+      "name": "STS・ATS 自動切換開關", "nameEn": "Static / Automatic Transfer Switch",
+      "competition": "oligopoly",
+      "desc": "在市電、UPS、genset、渦輪機之間做毫秒級無縫切換，是冗餘供電的核心開關。",
+      "marketSize": "—",
+      "growth": "2N 冗餘剛需",
+      "analysis": "競爭寡占：Vertiv、Eaton、ASCO（Schneider）、Cummins 主導。產品標準化、客戶可多源，無單點。",
+      "companies": [
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "STS 領先", "products": "靜態切換開關 STS", "note": "" },
+        { "name": "ASCO (Schneider)", "ticker": "SU.PA", "country": "FR", "share": "ATS 老牌", "products": "自動切換開關 ATS", "note": "" },
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "轉換開關", "products": "ATS / STS", "note": "" },
+        { "name": "Cummins", "ticker": "CMI", "country": "US", "share": "搭 genset 整套", "products": "ATS", "note": "" }
+      ],
+      "upstream": [{ "id": "b-turbine" }, { "id": "b-genset" }],
+      "downstream": [{ "id": "d-lvswgr" }],
+      "sources": [
+        { "label": "Leton: Leading data center generator/ATS providers 2026", "url": "https://letonpower.com/comparing-leading-data-center-generator-service-providers-in-2026/" }
+      ]
+    },
+    {
+      "id": "d-pdc",
+      "row": "distribution", "col": 4, "span": 1, "kind": "rail",
+      "name": "模組化電力中心 Power Skid / PDC", "nameEn": "Modular Power Skid / Power Distribution Center",
+      "competition": "highgrowth",
+      "desc": "把變壓器、開關、UPS、配電預整合成工廠製模組化單元（skid），縮短現場交期；部分開發商自製繞過交期。",
+      "marketSize": "新興高成長",
+      "growth": "縮短現場交期",
+      "analysis": "高成長：Vertiv、Schneider、Eaton 推預整合 power skid；Crusoe 等開發商甚至自製開關設備繞過傳統交期。屬縮短 buildout 工期的工程創新，玩家分散無單點。",
+      "companies": [
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "預整合模組", "products": "Power Module / skid", "note": "" },
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "預製模組", "products": "Prefabricated power module", "note": "" },
+        { "name": "Crusoe", "ticker": "—", "country": "US", "share": "自製繞過交期", "products": "自製開關設備", "note": "未上市；自建以避交期" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "d-busway" }],
+      "sources": [
+        { "label": "Tom's Hardware: half of US DC builds delayed; modular skids & self-made switchgear", "url": "https://www.tomshardware.com/tech-industry/artificial-intelligence/half-of-planned-us-data-center-builds-have-been-delayed-or-canceled-growth-limited-by-shortages-of-power-infrastructure-and-parts-from-china-the-ai-build-out-flips-the-breakers" }
+      ]
+    },
+
+    {
+      "id": "c-water",
+      "row": "cooling", "col": 1, "span": 1, "kind": "rail",
+      "name": "水處理・再生水 Water Treatment", "nameEn": "Water Treatment / Reclaimed Water",
+      "competition": "redocean",
+      "desc": "蒸發冷卻與冰水系統的水源處理、再生水與零排放方案，因 AI 機房耗水爭議而升溫。",
+      "marketSize": "—",
+      "growth": "耗水監管升溫",
+      "analysis": "成熟競爭（紅海）：Ecolab、Veolia 等水務大廠主導，技術標準化，無供應鏈鎖喉。納入是為呈現冷卻水循環的最上游。",
+      "companies": [
+        { "name": "Ecolab", "ticker": "ECL", "country": "US", "share": "工業水處理龍頭", "products": "水處理化學/服務", "note": "" },
+        { "name": "Veolia", "ticker": "VIE.PA", "country": "FR", "share": "水務龍頭", "products": "再生水、水處理", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "c-tower" }],
+      "sources": [
+        { "label": "Coherent: Data Center Cooling Market (water/cooling segments)", "url": "https://www.coherentmarketinsights.com/industry-reports/data-center-cooling-market" }
+      ]
+    },
+    {
+      "id": "c-tower",
+      "row": "cooling", "col": 2, "span": 1, "kind": "stage",
+      "name": "冷卻水塔・乾冷器 Cooling Tower / Dry Cooler", "nameEn": "Cooling Tower / Dry Cooler",
+      "competition": "oligopoly",
+      "desc": "把機房廢熱排到大氣的末端散熱設備，佔資料中心冷卻市場約 18%。",
+      "marketSize": "~18% 冷卻市場",
+      "growth": "—",
+      "analysis": "競爭寡占：SPX Cooling、Baltimore Aircoil、EVAPCO、Vertiv。設備標準化、客戶可多源，無單點。",
+      "companies": [
+        { "name": "SPX Technologies", "ticker": "SPXC", "country": "US", "share": "冷卻水塔領先", "products": "Cooling tower", "note": "" },
+        { "name": "Baltimore Aircoil (BAC)", "ticker": "—", "country": "US", "share": "冷卻水塔大廠", "products": "Cooling tower / 乾冷器", "note": "未獨立上市" },
+        { "name": "EVAPCO", "ticker": "—", "country": "US", "share": "蒸發冷卻", "products": "Cooling tower", "note": "私人公司" }
+      ],
+      "upstream": [{ "id": "c-water" }],
+      "downstream": [{ "id": "c-chiller" }],
+      "sources": [
+        { "label": "Coherent: Data Center Cooling Market (cooling tower ~18%)", "url": "https://www.coherentmarketinsights.com/industry-reports/data-center-cooling-market" }
+      ]
+    },
+    {
+      "id": "c-chiller",
+      "row": "cooling", "col": 3, "span": 1, "kind": "stage",
+      "name": "冰水主機 Chiller", "nameEn": "Chiller",
+      "competition": "oligopoly",
+      "desc": "資料中心主要散熱來源，佔美國冷卻市場最大宗（~30%）；液冷時代仍是設施側熱排放主幹。",
+      "marketSize": "美國冷卻 ~30%",
+      "growth": "冷卻市場 14.9% CAGR",
+      "analysis": "競爭寡占：Johnson Controls、Trane、Daikin、Carrier、Vertiv。ABI 評 Vertiv／Johnson Controls 為熱管理領導，Vertiv 創新領先、JCI/Vertiv/Daikin 部署領先。設備標準化、客戶可多源，無單點。",
+      "companies": [
+        { "name": "Johnson Controls", "ticker": "JCI", "country": "US", "share": "熱管理領導", "products": "Chiller、CRAH", "note": "部署領先" },
+        { "name": "Trane Technologies", "ticker": "TT", "country": "US", "share": "冰水主機大廠", "products": "Chiller", "note": "" },
+        { "name": "Daikin", "ticker": "6367.T", "country": "JP", "share": "部署領先三強", "products": "Chiller、空調", "note": "" },
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "冷卻創新領先", "products": "Chiller、CDU、CRAH", "note": "ABI 創新評比第一" }
+      ],
+      "upstream": [{ "id": "c-tower" }],
+      "downstream": [{ "id": "c-crah" }, { "id": "c-cdu" }],
+      "sources": [
+        { "label": "ABI: Vertiv & Johnson Controls lead thermal management ranking", "url": "https://www.abiresearch.com/press/vertiv-and-johnson-controls-take-the-lead-in-abi-researchs-thermal-management-providers-for-data-centers-competitive-ranking?hsLang=en" },
+        { "label": "Coherent: cooling market 14.9% CAGR / chillers ~30%", "url": "https://www.coherentmarketinsights.com/industry-reports/data-center-cooling-market" }
+      ]
+    },
+    {
+      "id": "c-crah",
+      "row": "cooling", "col": 4, "span": 1, "kind": "stage",
+      "name": "CRAH・機房空調・熱泵", "nameEn": "CRAH / Air Handling",
+      "competition": "oligopoly",
+      "desc": "機房級空氣循環與顯熱排除設備；風冷與液冷混合機房仍需 CRAH 處理殘餘熱負載。",
+      "marketSize": "—",
+      "growth": "風液混合過渡",
+      "analysis": "競爭寡占：Vertiv、Stulz、Schneider、Munters。台廠中興電在『國內』IDC 機房空調市佔約 70%（國內客戶配置非全球能力獨佔）。設備標準化、無單點。",
+      "companies": [
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "機房空調領先", "products": "CRAH / CRAC", "note": "" },
+        { "name": "Stulz", "ticker": "—", "country": "DE", "share": "精密空調專家", "products": "CRAH", "note": "私人公司" },
+        { "name": "中興電工 Chung-Hsin", "ticker": "1513.TW", "country": "TW", "share": "TW 國內 IDC 空調 ~70%", "products": "機房空調系統", "note": "國內市佔，非全球鎖喉" }
+      ],
+      "upstream": [{ "id": "c-chiller" }],
+      "downstream": [{ "id": "s-demand" }],
+      "sources": [
+        { "label": "中興電 IDC 機房空調國內 ~70%（旺得富）", "url": "https://wantrich.chinatimes.com/news/20260226900533-420101" }
+      ]
+    },
+    {
+      "id": "c-cdu",
+      "row": "cooling", "col": 5, "span": 1, "kind": "rail",
+      "name": "設施級 CDU・二次側冷卻迴路", "nameEn": "Facility CDU / Coolant Loop",
+      "competition": "highgrowth",
+      "desc": "連接設施冰水（一次側）與機櫃冷板（二次側）的冷卻液分配單元（設施/列級，非機櫃內 rack-CDU——後者見『電源散熱』topic）。",
+      "marketSize": "CDU+manifold ~25%",
+      "growth": "液冷滲透加速",
+      "analysis": "高成長：Vertiv、Boyd（Eaton 併購）、Schneider 主導設施/列級 CDU；台廠高力（Kaori）以真空硬銲熱交換器切入，液冷已佔營收約一半、三位數成長。Eaton 併 Boyd Thermal 整合『開關+散熱』供應穩定性。屬高成長競爭，無單點（此節點與機櫃內 CDU 區隔）。",
+      "companies": [
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "液冷 CDU 領先", "products": "設施/列級 CDU", "note": "液冷市場龍頭 ~11%" },
+        { "name": "Boyd (Eaton)", "ticker": "ETN", "country": "US", "share": "CDU + 冷板", "products": "Boyd Thermal CDU", "note": "Eaton 併購整合" },
+        { "name": "高力 Kaori", "ticker": "8996.TW", "country": "TW", "share": "熱交換器 + CDU", "products": "真空硬銲熱交換器、CDU", "note": "液冷佔營收約半、三位數成長", "core_business": true, "supply_chain_lock": "med" }
+      ],
+      "upstream": [{ "id": "c-chiller" }],
+      "downstream": [{ "id": "s-demand" }],
+      "sources": [
+        { "label": "高力 AI 液冷散熱 + 燃料電池三大事業（鉅亨）", "url": "https://news.cnyes.com/news/id/6259565" },
+        { "label": "ABI / cooling market: liquid cooling top players & CDU share", "url": "https://www.abiresearch.com/press/vertiv-and-johnson-controls-take-the-lead-in-abi-researchs-thermal-management-providers-for-data-centers-competitive-ranking?hsLang=en" }
+      ]
+    },
+
+    {
+      "id": "s-epc",
+      "row": "shell", "col": 1, "span": 1, "kind": "rail",
+      "name": "資料中心 EPC・營建", "nameEn": "Data Center Construction / EPC",
+      "competition": "highgrowth",
+      "desc": "機房廠房設計—採購—營建（EPC），含結構、機電（MEP）統包；工期與電力設備交期是 buildout 雙瓶頸。",
+      "marketSize": "—",
+      "growth": "$725B capex 驅動",
+      "analysis": "高成長競爭：Turner、DPR、Holder、Jacobs、AECOM 等大型營造/工程商承接 hyperscale 機房。進入門檻在執行規模與 mission-critical 經驗，但供應商眾多、無單點。",
+      "companies": [
+        { "name": "Jacobs Solutions", "ticker": "J", "country": "US", "share": "DC 工程設計", "products": "EPC / MEP 設計", "note": "" },
+        { "name": "AECOM", "ticker": "ACM", "country": "US", "share": "基建工程", "products": "DC 設計營建", "note": "" },
+        { "name": "Turner / DPR / Holder", "ticker": "—", "country": "US", "share": "mission-critical 營造", "products": "機房總承包", "note": "私人營造商" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "s-reit" }],
+      "sources": [
+        { "label": "Motley Fool: hyperscalers spend $500B+ in 2026 on data centers", "url": "https://www.fool.com/investing/2026/02/07/this-datacenter-reit-could-double-as-hyperscalers/" }
+      ]
+    },
+    {
+      "id": "s-reit",
+      "row": "shell", "col": 2, "span": 2, "kind": "stage",
+      "name": "Colo・REIT 機房開發商", "nameEn": "Colocation / Data Center REIT",
+      "competition": "oligopoly",
+      "desc": "自建並出租機房白空間給 hyperscaler 的開發商與 REIT；美國機房空置率 2025 年底僅 1.3%、北維州 <1%。",
+      "marketSize": "空置率 1.3%",
+      "growth": "EQIX capex $4-5B/年",
+      "analysis": "競爭寡占：Equinix、Digital Realty 為上市雙龍頭，Vantage、QTS（Blackstone）、CoreWeave 等私募/新雲補位；Blackstone 推 $2B BXDC REIT IPO。Equinix 計畫 2026-29 每年資本支出 $40-50 億、capacity 翻倍。需求側集中但供應商可選，非單點。",
+      "companies": [
+        { "name": "Equinix", "ticker": "EQIX", "country": "US", "share": "互連型 REIT 龍頭", "products": "Colocation、互連", "note": "2026-29 capex $4-5B/年、容量翻倍" },
+        { "name": "Digital Realty", "ticker": "DLR", "country": "US", "share": "hyperscale REIT 龍頭", "products": "Wholesale 機房", "note": "" },
+        { "name": "Iron Mountain", "ticker": "IRM", "country": "US", "share": "DC 擴張中", "products": "Colocation", "note": "" },
+        { "name": "Vantage / QTS (Blackstone)", "ticker": "BX", "country": "US", "share": "私募 hyperscale", "products": "Hyperscale 機房", "note": "Blackstone 推 BXDC REIT IPO" }
+      ],
+      "upstream": [{ "id": "d-busway" }, { "id": "s-epc" }],
+      "downstream": [{ "id": "s-demand" }],
+      "sources": [
+        { "label": "Top Data Center REITs: EQIX, DLR, IRM", "url": "https://www.heygotrade.com/en/blog/Top-Data-Center-REITs-EQIX-DLR-IRM/" },
+        { "label": "Equinix capex $4-5B/yr, capacity to double; vacancy 1.3% (Motley Fool)", "url": "https://www.fool.com/investing/2026/02/07/this-datacenter-reit-could-double-as-hyperscalers/" }
+      ]
+    },
+    {
+      "id": "s-fiber",
+      "row": "shell", "col": 4, "span": 1, "kind": "rail",
+      "name": "結構化佈線・廠內光纖", "nameEn": "Structured Cabling / Facility Fiber",
+      "competition": "oligopoly",
+      "desc": "機房內結構化佈線、光纖配線與互連（與『矽光子/網通』的光模組區隔，此處為設施級實體佈線）。",
+      "marketSize": "—",
+      "growth": "AI fabric 拉動",
+      "analysis": "競爭寡占：Corning、CommScope、Prysmian 主導光纖與結構化佈線。Corning AI 光纖雖緊俏但僅佔集團一小段（非核心 → 不標 💎）。佈線標準化、客戶可多源。",
+      "companies": [
+        { "name": "Corning", "ticker": "GLW", "country": "US", "share": "光纖龍頭", "products": "光纖、結構化佈線", "note": "AI 光纖佔集團 <20%" },
+        { "name": "CommScope", "ticker": "COMM", "country": "US", "share": "結構化佈線", "products": "佈線、連接", "note": "" },
+        { "name": "Prysmian", "ticker": "PRY.MI", "country": "EU", "share": "電纜/光纜龍頭", "products": "電力/光纖電纜", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "s-demand" }],
+      "sources": [
+        { "label": "Coherent: Data Center infrastructure / cabling context", "url": "https://www.coherentmarketinsights.com/industry-reports/data-center-cooling-market" }
+      ]
+    },
+    {
+      "id": "s-dcim",
+      "row": "shell", "col": 5, "span": 1, "kind": "rail",
+      "name": "DCIM・BMS 機房管理軟體", "nameEn": "DCIM / Building Management Software",
+      "competition": "oligopoly",
+      "desc": "資料中心基礎設施管理（DCIM）與樓宇管理系統（BMS），監控電力/散熱/空間並做容量規劃。",
+      "marketSize": "—",
+      "growth": "AI 機房複雜度升",
+      "analysis": "競爭寡占：Schneider EcoStruxure、Vertiv、Nlyte、Honeywell 主導。軟體可替換、客戶綁定度中等，無單點。",
+      "companies": [
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "EcoStruxure DCIM", "products": "DCIM / BMS", "note": "" },
+        { "name": "Vertiv", "ticker": "VRT", "country": "US", "share": "DCIM + 硬體整合", "products": "DCIM", "note": "" },
+        { "name": "Honeywell", "ticker": "HON", "country": "US", "share": "BMS 大廠", "products": "Building management", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "s-demand" }],
+      "sources": [
+        { "label": "ABI / market context: DCIM & thermal management leaders", "url": "https://www.abiresearch.com/press/vertiv-and-johnson-controls-take-the-lead-in-abi-researchs-thermal-management-providers-for-data-centers-competitive-ranking?hsLang=en" }
+      ]
+    },
+    {
+      "id": "s-demand",
+      "row": "shell", "col": 6, "span": 1, "kind": "demand",
+      "name": "Hyperscaler 機房需求", "nameEn": "Hyperscaler Demand",
+      "competition": "oligopoly",
+      "desc": "終端需求：六大 hyperscaler 2026 capex 合計 >$725B、75% 投 AI 基建，是整條 facility buildout 的需求引擎。",
+      "marketSize": "capex >$725B(2026)",
+      "growth": "+77% YoY",
+      "analysis": "需求集中於 Microsoft／Google／Amazon／Meta／Oracle／xAI：Google 單一 2026 capex $175-185B（vs 前年 $91.5B）。需求側集中是 demand concentration（非供應商單點）——但正是這股需求把上游電力設備產能全面逼到售罄，造就本層的『短缺溢價』題材。",
+      "companies": [
+        { "name": "Microsoft", "ticker": "MSFT", "country": "US", "share": "hyperscale capex 龍頭", "products": "Azure AI 機房", "note": "" },
+        { "name": "Alphabet (Google)", "ticker": "GOOGL", "country": "US", "share": "2026 capex $175-185B", "products": "GCP / TPU 機房", "note": "" },
+        { "name": "Amazon (AWS)", "ticker": "AMZN", "country": "US", "share": "hyperscale capex", "products": "AWS 機房", "note": "" },
+        { "name": "Meta", "ticker": "META", "country": "US", "share": "hyperscale capex", "products": "自建 AI 機房（1GW+）", "note": "" },
+        { "name": "Oracle / xAI / CoreWeave", "ticker": "ORCL", "country": "US", "share": "新雲擴張", "products": "AI 雲機房", "note": "" }
+      ],
+      "upstream": [{ "id": "d-busway" }, { "id": "c-crah" }, { "id": "c-cdu" }, { "id": "s-reit" }, { "id": "s-fiber" }, { "id": "s-dcim" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Hyperscaler 2026 capex >$725B, Google $175-185B (Motley Fool)", "url": "https://www.fool.com/investing/2026/02/07/this-datacenter-reit-could-double-as-hyperscalers/" }
+      ]
+    }
+  ],
+  "edges": [
+    ["g-goes", "g-lpt"], ["g-goes", "g-mvtx"],
+    ["g-lpt", "g-gis"], ["g-lpt", "g-mvtx"],
+    ["g-mvtx", "g-hvdc"], ["g-mvtx", "d-lvswgr"],
+    ["g-gis", "d-lvswgr"],
+    ["g-hvdc", "d-busway"],
+    ["b-turbine", "g-gis"], ["b-turbine", "d-sts"],
+    ["b-genset", "d-sts"],
+    ["b-ups", "d-busway"],
+    ["b-bess", "d-lvswgr"],
+    ["b-fuelcell", "d-lvswgr"],
+    ["d-lvswgr", "d-busway"],
+    ["d-sts", "d-lvswgr"],
+    ["d-pdc", "d-busway"],
+    ["d-busway", "s-reit"], ["d-busway", "s-demand"],
+    ["c-water", "c-tower"],
+    ["c-tower", "c-chiller"],
+    ["c-chiller", "c-crah"], ["c-chiller", "c-cdu"],
+    ["c-crah", "s-demand"],
+    ["c-cdu", "s-demand"],
+    ["s-epc", "s-reit"],
+    ["s-reit", "s-demand"],
+    ["s-fiber", "s-demand"],
+    ["s-dcim", "s-demand"]
+  ],
+  "single_point_framework": "v1.3"
+}
