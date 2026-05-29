@@ -1,0 +1,487 @@
+{
+  "id": "grid-power",
+  "tab": "電網重電",
+  "title": "電網 / 變壓器 / 開關設備供應鏈",
+  "subtitle": "AI 資料中心的真正瓶頸已從晶片移到電網接點：標準電力變壓器交期拉到 128 週、GSU 升壓變壓器 144 週，大廠 LPT 排到 48-60 個月，GSU 需求 2019→2025 暴增 274%。重電三巨頭（GE Vernova 在手單 $150B、Siemens Energy $158B、Hitachi Energy）與韓系（曉星重工/HD 現代電氣/LS Electric 合計在手 ₩33 兆 ≈ 5-6 年）全數售罄，稀缺進一步上移到鐵心材料 —— 方向性電磁鋼片（GOES）與非晶合金帶材兩處才是真正 2-3 家寡占、18-24 個月內無第二量產源的鎖喉點。台廠重電四雄（華城 / 中興電 / 亞力 / 士電）靠美國變壓器與 GIS 出單、能見度看到 2028-2030，是 demand-pull 的結構性受惠者，但身處全球寡占節點而非單點。本圖採『重電設備供應端』視角（誰製造變壓器/開關、上游材料、出口商、電網 EPC、互聯隊列）；若要看資料中心廠房側把這些設備當輸入的 facility-scale 視角，見並列的『資料中心實體建置 datacenter』圖。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 20 },
+    { "k": "涵蓋廠商", "v": "60+" },
+    { "k": "獨佔/客戶獨家單點", "v": 1, "sub": "非晶帶材西方近獨佔", "hot": true }
+  ],
+  "rows": [
+    { "id": "materials", "label": "關鍵材料 / 鐵心鋼 Key Materials & Core Steel", "main": false },
+    { "id": "components", "label": "關鍵零組件 Critical Components", "main": false },
+    { "id": "transformers", "label": "變壓器 Transformers (LPT / GSU / 配電)", "main": true },
+    { "id": "switchgear-hvdc", "label": "開關 / HVDC / 配電 Switchgear · HVDC · Distribution", "main": true },
+    { "id": "grid-epc-demand", "label": "電網服務 / EPC / 終端需求 Grid Services · EPC · Demand", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "m-goes",
+      "row": "materials", "col": 1, "span": 2,
+      "kind": "rail",
+      "name": "方向性電磁鋼片 GOES",
+      "nameEn": "Grain-Oriented Electrical Steel",
+      "competition": "oligopoly",
+      "desc": "變壓器鐵心的疊片用鋼，低鐵損取向矽鋼；全球前五大廠商約掌握 67% 供應，亞太 48% / 歐洲 26%。AI 變壓器爆量直接拉動 GOES 缺口。",
+      "marketSize": "前五大 ~67%",
+      "growth": "AI 變壓器拉貨",
+      "analysis": "全球 GOES 並非單一來源 —— 日鐵（6.5%-Si 領先）、JFE、POSCO、寶武、Cleveland-Cliffs 皆量產，故屬寡占而非能力獨佔。但 Cleveland-Cliffs（Butler PA + Zanesville OH）是美國唯一在地 GOES 生產商，在關稅 / 在地化政策下成為美國變壓器供應鏈的區域型鎖喉，值得留意但非全球單點。",
+      "companies": [
+        { "name": "日本製鐵 Nippon Steel", "ticker": "5401.T", "country": "JP", "share": "技術領先 6.5%-Si", "note": "低鐵損取向矽鋼技術標竿" },
+        { "name": "JFE Steel / JFE Holdings", "ticker": "5411.T", "country": "JP", "share": "亞太主力", "note": "2024/10 收購 thyssenkrupp 印度電磁鋼廠 $485M" },
+        { "name": "POSCO Holdings", "ticker": "005490.KS", "country": "KR", "share": "亞洲 GOES 大廠", "note": "韓系變壓器出口的鋼源" },
+        { "name": "寶武 / 寶鋼 Baowu", "ticker": "600019.SS", "country": "CN", "share": "中國 ~40% 需求", "note": "中國最大電工鋼供應" },
+        { "name": "Cleveland-Cliffs", "ticker": "CLF", "country": "US", "share": "美國唯一 GOES", "note": "Butler PA + Zanesville OH，美國在地化政策下的區域鎖喉" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "t-lpt" }, { "id": "t-korea" }, { "id": "t-huacheng" }, { "id": "t-mvdist" } ],
+      "sources": [
+        { "label": "Business Research Insights — GOES 前五大佔 67%", "url": "https://www.businessresearchinsights.com/market-reports/grain-oriented-electrical-steel-market-120431" },
+        { "label": "Cleveland-Cliffs Butler Works — 美國唯一 GOES 生產商", "url": "https://www.clevelandcliffs.com/operations/steelmaking/butler-works" }
+      ]
+    },
+    {
+      "id": "m-amorphous",
+      "row": "materials", "col": 3, "span": 2,
+      "kind": "rail",
+      "name": "非晶合金帶材",
+      "nameEn": "Amorphous Metal Ribbon",
+      "competition": "monopoly",
+      "single": "近乎獨佔（西方）· 非晶合金帶材全球 3 家（Proterial/Metglas + 青島雲路 + 原日立系，日立非晶產能現已大致併入 Proterial → 對非中國客戶實為近雙占）合計 ≥85%；快速凝固製帶具數十年製程壁壘、18-24 個月內無第二西方量產源。非中國供應幾乎全靠 Metglas（Conway SC + 安來 JP），屬不可投資型鎖喉（Metglas 為 Bain 私有）（信心度 med-high · Spherical Insights + Metglas/Proterial 雙源）",
+      "desc": "高效率配電變壓器鐵心用非晶帶材，鐵損較矽鋼低 70-80%。製程為熔湯急冷成帶，全球僅 3 家有規模量產。",
+      "marketSize": "3 家 ≥85%",
+      "growth": "高效配電變壓器",
+      "analysis": "非晶帶材是配電變壓器（非 LPT）的高效鐵心，全球 Proterial/Metglas、青島雲路、日立系合計 ≥85%。對非中國客戶而言 Metglas（美 Conway SC + 日安來）近乎唯一西方供應、且為私有（Bain 主導財團持有）無法純曝險；青島雲路 300834.SZ 為中國純玩家但地緣受限。屬真實鎖喉但投資端為不可投資 / 受限。",
+      "companies": [
+        { "name": "Proterial / Metglas", "ticker": "—", "country": "US", "share": "西方近乎唯一", "products": "Metglas 非晶帶材 (Conway SC + 安來 JP)", "note": "前日立金屬，現 Bain 財團私有；2025/6 新增印度 JV", "node_role": "uninvestable" },
+        { "name": "青島雲路 Qingdao Yunlu", "ticker": "300834.SZ", "country": "CN", "share": "中國領先", "products": "非晶 / 奈米晶帶材", "note": "中國純玩家，地緣受限非中國客戶難採用", "core_business": true, "supply_chain_lock": "med" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "t-mvdist" } ],
+      "sources": [
+        { "label": "Spherical Insights — 非晶合金帶材 3 家 ≥85%", "url": "https://www.sphericalinsights.com/blogs/world-s-top-10-companies-in-amorphous-alloy-band-market-2025-industry-intelligence-report-by-spherical-insights-2024-2035" },
+        { "label": "Metglas Conway SC 擴產解決變壓器荒", "url": "https://metglas.com/metglas-inc-announces-plant-expanstion-to-help-solve-transformer-shortage/" },
+        { "label": "Proterial 印度非晶帶材 JV 公告 (2026/02)", "url": "https://www.proterial.com/e/press/2026/n0227.html" }
+      ]
+    },
+    {
+      "id": "m-copper",
+      "row": "materials", "col": 5, "span": 1,
+      "kind": "rail",
+      "name": "銅繞組 / 銅材",
+      "nameEn": "Copper Windings",
+      "competition": "redocean",
+      "desc": "變壓器與開關設備的繞組導體；商品化定價、供應廣泛但受銅價波動影響。",
+      "marketSize": "商品化",
+      "growth": "隨銅價",
+      "analysis": "銅繞組為大宗商品，全球銅材供應商眾多、非鎖喉；對成本影響大但供給無瓶頸。",
+      "companies": [
+        { "name": "全球銅材大廠 (泛指)", "ticker": "—", "country": "GLOBAL", "share": "供應廣泛", "note": "非鎖喉、價格隨 LME 銅價" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "t-lpt" }, { "id": "s-cable" } ],
+      "sources": [
+        { "label": "中鋼產品規格參考 (繞組用銅/鋼材)", "url": "https://www.csc.com.tw/csc/pd/doc/spec_es_c_2016.pdf" }
+      ]
+    },
+    {
+      "id": "m-csc",
+      "row": "materials", "col": 6, "span": 1,
+      "kind": "rail",
+      "name": "中鋼電磁鋼片",
+      "nameEn": "China Steel — Electrical Steel",
+      "competition": "emerging",
+      "desc": "台灣中鋼以無方向性電磁鋼為主（50A1300 級自 1993 年起），開發 0.1-0.2mm 超薄片切入無人機 / 機器人馬達；精緻鋼品約占營收 11.5%。",
+      "marketSize": "精緻鋼 ~11.5% 營收",
+      "growth": "超薄片開發中",
+      "analysis": "中鋼 2002.TW 並非 GOES（方向性）玩家，產品以馬達用無方向性電磁鋼為主，超薄片為新成長點。在本鏈為支援節點、非鎖喉。",
+      "companies": [
+        { "name": "中鋼 China Steel", "ticker": "2002.TW", "country": "TW", "share": "台灣電磁鋼主力", "products": "無方向性電磁鋼 + 0.1-0.2mm 超薄片", "note": "精緻鋼品占比目標升至 12.8%" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "t-mvdist" } ],
+      "sources": [
+        { "label": "TechNews — 中鋼 0.1mm 電磁鋼片精緻鋼品", "url": "https://finance.technews.tw/2026/05/22/fine-steel-products/" }
+      ]
+    },
+    {
+      "id": "c-oltc",
+      "row": "components", "col": 1, "span": 2,
+      "kind": "rail",
+      "name": "有載分接開關 OLTC",
+      "nameEn": "On-Load Tap Changers",
+      "competition": "oligopoly",
+      "desc": "變壓器內調壓的關鍵機構，每台 LPT 必備；市場 $1.8B(2025)→$3.2B(2034)。MR（VACUTAP）為品牌標竿。",
+      "marketSize": "MR ~25-40% 領先",
+      "growth": "隨變壓器拉貨",
+      "analysis": "Maschinenfabrik Reinhausen（MR，德國私有）為 OLTC 全球領導 25-40%，但 Hitachi Energy/ABB（~20%）與華明 002270.SZ 皆為可靠替代源，前三家合計僅 ~50-60% → 屬寡占領導而非能力獨佔，不打單點旗。",
+      "companies": [
+        { "name": "Maschinenfabrik Reinhausen (MR)", "ticker": "—", "country": "DE", "share": "全球 ~25-40%", "products": "VACUTAP 真空分接開關", "note": "家族私有、品牌標竿但非獨佔" },
+        { "name": "Hitachi Energy / ABB", "ticker": "ABBN.SW", "country": "CH", "share": "~20%", "note": "OLTC 第二陣營" },
+        { "name": "華明電力 Huaming", "ticker": "002270.SZ", "country": "CN", "share": "中國領先", "note": "成本型替代源" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "t-lpt" }, { "id": "t-korea" }, { "id": "t-huacheng" } ],
+      "sources": [
+        { "label": "Dataintelo — Tap Changer 市場 (MR 35-40%)", "url": "https://dataintelo.com/report/global-tap-changer-market" },
+        { "label": "Marketintelo — OLTC (MR / Hitachi / 華明)", "url": "https://marketintelo.com/report/on-load-tap-changer-market" }
+      ]
+    },
+    {
+      "id": "c-bushing",
+      "row": "components", "col": 3, "span": 1,
+      "kind": "rail",
+      "name": "高壓套管",
+      "nameEn": "HV Bushings (RIP/RIS)",
+      "competition": "oligopoly",
+      "desc": "變壓器與 GIS 的高壓引線絕緣介面；多為自製 + 專業廠供應，無確認的硬性缺貨。",
+      "marketSize": "寡占",
+      "growth": "隨設備拉貨",
+      "analysis": "高壓套管由 HSP（德國私有）、GE Vernova、Hitachi Energy 等供應，自製比例高、替代源充足，屬寡占非鎖喉。",
+      "companies": [
+        { "name": "HSP Hochspannungsgeräte", "ticker": "—", "country": "DE", "share": "專業套管廠", "note": "RIP/RIS 乾式套管" },
+        { "name": "GE Vernova", "ticker": "GEV", "country": "US", "share": "自製套管", "note": "搭配自家變壓器" },
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "自製套管", "note": "整合於變壓器產線" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "t-lpt" }, { "id": "s-gis" } ],
+      "sources": [
+        { "label": "HSP Köln — RIP 套管產品", "url": "https://www.hspkoeln.de/en/products/setft" }
+      ]
+    },
+    {
+      "id": "c-relay",
+      "row": "components", "col": 4, "span": 2,
+      "kind": "rail",
+      "name": "保護電驛 / 電網自動化",
+      "nameEn": "Protection Relays & Grid Automation",
+      "competition": "oligopoly",
+      "desc": "變電站保護、SCADA、智慧電網控制；數家國際大廠 + 專業廠分食。",
+      "marketSize": "寡占",
+      "growth": "智慧電網拉動",
+      "analysis": "保護電驛 / 電網自動化由 Schneider、ABB、Siemens、GE Vernova、SEL（美國私有）競爭，屬寡占。",
+      "companies": [
+        { "name": "Schneider Electric", "ticker": "SU.PA", "country": "FR", "share": "領先群", "note": "EcoStruxure 電網自動化" },
+        { "name": "ABB / Hitachi Energy", "ticker": "ABBN.SW", "country": "CH", "share": "領先群", "note": "Relion 保護電驛" },
+        { "name": "SEL Schweitzer", "ticker": "—", "country": "US", "share": "保護電驛大廠", "note": "美國私有，電驛強勢" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "s-gis" }, { "id": "g-epc" } ],
+      "sources": [
+        { "label": "MarketsandMarkets — APAC HVDC / 電網自動化玩家", "url": "https://www.marketsandmarkets.com/ResearchInsight/asia-pacific-hvdc-transmission-companies.asp" }
+      ]
+    },
+    {
+      "id": "t-lpt",
+      "row": "transformers", "col": 1, "span": 2,
+      "kind": "stage",
+      "name": "超高壓電力變壓器 LPT / GSU",
+      "nameEn": "Large Power & GSU Transformers",
+      "competition": "oligopoly",
+      "desc": "瓶頸主角，交期 48-60 個月。市場 ~$30.4B(2025)→$41-46B(2030-33)。GE Vernova、Siemens Energy、Hitachi Energy、ABB 全數售罄。",
+      "marketSize": "$30B→$45B",
+      "growth": "交期 48-60 月",
+      "analysis": "LPT/GSU 為全球寡占，四大（GE Vernova 在手 $150B、Siemens Energy $158B、Hitachi、ABB）head-to-head 競爭且韓系 + 台系加產能，屬結構性緊俏的寡占而非單點。緊俏推力來自需求 × 鐵心材料瓶頸。",
+      "companies": [
+        { "name": "GE Vernova", "ticker": "GEV", "country": "US", "share": "在手單 $150B (+25% 2025)", "note": "電網設備龍頭、大型集團" },
+        { "name": "Siemens Energy", "ticker": "ENR.DE", "country": "DE", "share": "在手單 $158B", "note": "Grid Technologies 強勢" },
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "全球前三", "note": "HVDC + 變壓器整合" },
+        { "name": "ABB", "ticker": "ABBN.SW", "country": "CH", "share": "全球前四", "note": "配電 + 中壓強勢" }
+      ],
+      "upstream": [ { "id": "m-goes" }, { "id": "m-copper" }, { "id": "c-oltc" }, { "id": "c-bushing" } ],
+      "downstream": [ { "id": "g-epc" }, { "id": "g-utility" } ],
+      "sources": [
+        { "label": "GE Vernova 1Q26 — 在手單 $150B", "url": "https://www.sec.gov/Archives/edgar/data/0001996810/000199681026000063/gevpressrelease1q26.htm" },
+        { "label": "Technavio — 電力變壓器市場", "url": "https://www.technavio.com/report/power-transformers-market-industry-analysis" },
+        { "label": "pv-magazine — 美國變壓器交期拉到 4 年", "url": "https://pv-magazine-usa.com/2026/05/11/u-s-transformer-market-faces-severe-supply-constraints-as-lead-times-extend-to-four-years/" }
+      ]
+    },
+    {
+      "id": "t-korea",
+      "row": "transformers", "col": 3, "span": 2,
+      "kind": "stage",
+      "name": "韓系變壓器出口商",
+      "nameEn": "Korean Transformer Exporters",
+      "competition": "highgrowth",
+      "desc": "美國 UHV 出口主力，big-4 在手單 ₩33 兆（5-6 年）。曉星 ₩15.1 兆、HD 現代電氣在手 $7.888B、LS Electric ₩5.64 兆。",
+      "marketSize": "big-4 ₩33 兆",
+      "growth": "美國出口爆發",
+      "analysis": "韓系三雄是美國變壓器出口最大受惠者、且合約多含關稅轉嫁。屬高成長寡占受惠者，非鎖喉節點。",
+      "companies": [
+        { "name": "曉星重工 Hyosung Heavy", "ticker": "298040.KS", "country": "KR", "share": "在手 ₩15.1 兆", "note": "首破 ₩15 兆、TN 廠 2028 前 +50%、合約含關稅轉嫁" },
+        { "name": "HD 現代電氣 HD Hyundai Electric", "ticker": "267260.KS", "country": "KR", "share": "在手 $7.888B", "note": "Q1 接單 $1.797B、Alabama 擴產" },
+        { "name": "LS Electric", "ticker": "010120.KS", "country": "KR", "share": "在手 ₩5.64 兆", "note": "Bastrop TX 廠完工、$123M 美單" }
+      ],
+      "upstream": [ { "id": "m-goes" }, { "id": "c-oltc" } ],
+      "downstream": [ { "id": "g-epc" } ],
+      "sources": [
+        { "label": "Businesskorea — 韓系 big-4 在手 ₩33 兆", "url": "https://www.businesskorea.co.kr/news/articleView.html?idxno=256786" },
+        { "label": "Seoul Economic — 韓系電力設備創紀錄美單", "url": "https://en.sedaily.com/news/2026/05/01/korean-power-equipment-makers-clinch-record-orders-on-us" }
+      ]
+    },
+    {
+      "id": "t-huacheng",
+      "row": "transformers", "col": 5, "span": 1,
+      "kind": "stage",
+      "name": "華城電機",
+      "nameEn": "Fortune Electric",
+      "competition": "highgrowth",
+      "desc": "台廠首家打進德州 Stargate（首單 NT$2B）；AIDC 訂單累計 NT$12-14bn，總在手 >NT$30bn，能見度看到 2028-2030。",
+      "marketSize": "在手 >NT$30bn",
+      "growth": "AIDC 占比倍增",
+      "analysis": "華城 1519.TW 為變壓器純玩家、台廠首入 Stargate，AIDC 營收占比 2025 ~5% → 2026 10%+。屬全球寡占節點上的高成長受惠者；訂單能見強但非能力獨佔，不列 💎。",
+      "companies": [
+        { "name": "華城電機 Fortune Electric", "ticker": "1519.TW", "country": "TW", "share": "台廠首入 Stargate", "products": "超高壓 / 配電變壓器", "note": "AIDC 訂單累計 NT$12-14bn、能見 2028-2030" }
+      ],
+      "upstream": [ { "id": "m-goes" }, { "id": "c-oltc" } ],
+      "downstream": [ { "id": "g-epc" } ],
+      "sources": [
+        { "label": "優分析 — 華城 Stargate NT$2B 訂單到 2028", "url": "https://uanalyze.com.tw/articles/5724726208" },
+        { "label": "工商時報 — 華城 2026 賺兩個資本額", "url": "https://www.ctee.com.tw/news/20260102700199-439901" },
+        { "label": "vocus — 華城 1519 法說會 2025/12", "url": "https://vocus.cc/article/693c2b3ffd89780001ab8b7d" }
+      ]
+    },
+    {
+      "id": "t-shihlin",
+      "row": "transformers", "col": 6, "span": 1,
+      "kind": "stage",
+      "name": "士林電機",
+      "nameEn": "Shihlin Electric",
+      "competition": "highgrowth",
+      "desc": "美國出口占營收 15-20%，訂單能見度到 2027，2026/3 啟動調漲。重電 + 配電盤雙線。",
+      "marketSize": "美單 15-20% 營收",
+      "growth": "能見度到 2027",
+      "analysis": "士林電機 1503.TW 重電與配電並進、美國出口比重上升，屬寡占受惠者。",
+      "companies": [
+        { "name": "士林電機 Shihlin Electric", "ticker": "1503.TW", "country": "TW", "share": "美單 15-20% 營收", "products": "變壓器 + 開關 + 配電盤", "note": "2026/3 啟動調漲、能見度到 2027" }
+      ],
+      "upstream": [ { "id": "m-goes" } ],
+      "downstream": [ { "id": "g-epc" } ],
+      "sources": [
+        { "label": "商周財富網 — 重電四雄誰領風騷", "url": "https://wealth.businessweekly.com.tw/GArticle.aspx?id=ARTL003016830" },
+        { "label": "旺得富 — 重電訂單能見 2030 / EPS", "url": "https://wantrich.chinatimes.com/news/20260221900001-420101" }
+      ]
+    },
+    {
+      "id": "t-tatung",
+      "row": "transformers", "col": 7, "span": 1,
+      "kind": "stage",
+      "name": "大同 / 東元",
+      "nameEn": "Tatung / TECO",
+      "competition": "highgrowth",
+      "desc": "大同電力業務在手 >NT$20bn、345kV LPT 取得北美認證並間接供貨；東元中壢線試產 69kV、印尼廠取得美單。",
+      "marketSize": "大同在手 >NT$20bn",
+      "growth": "北美認證放量",
+      "analysis": "大同 2371.TW 取得北美 LPT 認證、透過美系廠間接供貨；東元 1504.TW 整合馬達 + 變壓器 + 開關切入。屬高成長受惠者。",
+      "companies": [
+        { "name": "大同 Tatung", "ticker": "2371.TW", "country": "TW", "share": "電力在手 >NT$20bn", "products": "345kV LPT (北美認證)", "note": "經美系廠 GIS 間接供貨北美" },
+        { "name": "東元 TECO", "ticker": "1504.TW", "country": "TW", "share": "印尼廠美單 $7M", "products": "馬達 + 變壓器 + 開關", "note": "中壢新線試產 69kV" }
+      ],
+      "upstream": [ { "id": "m-goes" } ],
+      "downstream": [ { "id": "g-epc" } ],
+      "sources": [
+        { "label": "經濟日報 — 大同奪北美變壓器大單", "url": "https://money.udn.com/money/story/5612/9266946" },
+        { "label": "經濟日報 — 台電示警設備缺貨 東元/大同贏家", "url": "https://money.udn.com/money/story/5612/9150972" }
+      ]
+    },
+    {
+      "id": "t-mvdist",
+      "row": "transformers", "col": 8, "span": 1,
+      "kind": "stage",
+      "name": "中型 / 配電變壓器",
+      "nameEn": "MV / Distribution Transformers",
+      "competition": "redocean",
+      "desc": "中低壓配電變壓器，供應廣泛；Eaton 在美增 $340M 三相產能。",
+      "marketSize": "供應廣泛",
+      "growth": "在地擴產",
+      "analysis": "配電變壓器供應商眾多（Eaton、Hubbell、ABB、Schneider、CG），屬紅海競爭、產能瓶頸但非鎖喉。",
+      "companies": [
+        { "name": "Eaton", "ticker": "ETN", "country": "US", "share": "美三相增產 $340M", "note": "在地產能擴張" },
+        { "name": "Hubbell", "ticker": "HUBB", "country": "US", "share": "配電強勢", "note": "電網元件廣線" }
+      ],
+      "upstream": [ { "id": "m-goes" }, { "id": "m-amorphous" }, { "id": "m-csc" } ],
+      "downstream": [ { "id": "g-utility" } ],
+      "sources": [
+        { "label": "The Invading Sea — 電網設備 / Eaton $340M", "url": "https://www.theinvadingsea.com/2025/12/05/power-grid-electricity-supply-chain-data-centers-transformers-circuit-breakers-utilities/" }
+      ]
+    },
+    {
+      "id": "s-gis",
+      "row": "switchgear-hvdc", "col": 1, "span": 2,
+      "kind": "stage",
+      "name": "GIS 氣體絕緣開關",
+      "nameEn": "Gas-Insulated Switchgear",
+      "competition": "oligopoly",
+      "desc": "變電站核心開關設備，$26.4B(2024)→$56B(2033)、9.9% CAGR；集中度高。",
+      "marketSize": "$26B→$56B",
+      "growth": "9.9% CAGR",
+      "analysis": "GIS 全球由 Mitsubishi Electric、Hitachi Energy、Siemens Energy、ABB、Hyundai 分食，屬寡占。",
+      "companies": [
+        { "name": "Mitsubishi Electric", "ticker": "6503.T", "country": "JP", "share": "GIS 領先群", "note": "高壓 GIS 強勢" },
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "GIS 領先群", "note": "SF6-free 領先" },
+        { "name": "Siemens Energy", "ticker": "ENR.DE", "country": "DE", "share": "GIS 領先群", "note": "Blue GIS" }
+      ],
+      "upstream": [ { "id": "c-bushing" }, { "id": "c-relay" } ],
+      "downstream": [ { "id": "g-epc" }, { "id": "g-utility" } ],
+      "sources": [
+        { "label": "Precedence Research — GIS 市場 $26B→$56B", "url": "https://www.precedenceresearch.com/gas-insulated-switchgear-market" }
+      ]
+    },
+    {
+      "id": "s-chunghsin",
+      "row": "switchgear-hvdc", "col": 3, "span": 2,
+      "kind": "stage",
+      "name": "中興電工 / 亞力",
+      "nameEn": "Chung-Hsin / Alex Electric",
+      "competition": "highgrowth",
+      "desc": "中興電 GIS 為核心，台電 GIS ~80% / 非台電 ~65% 市佔，在手單 NT$431bn 看到 2030；亞力在手 >NT$110bn、能見度 4-5 年。",
+      "marketSize": "中興電在手 NT$431bn",
+      "growth": "能見度到 2030",
+      "analysis": "中興電 1513.TW 為台灣 GIS 龍頭、在手單創高，能見度看到 2030；亞力 1514.TW 產能倍增中。台灣市場領導，但全球 GIS 仍是寡占節點 → 高成長受惠者非單點，不列 💎。",
+      "companies": [
+        { "name": "中興電工 Chung-Hsin Electric", "ticker": "1513.TW", "country": "TW", "share": "台電 GIS ~80%", "products": "GIS / 重電統包", "note": "在手單 NT$431bn 看到 2030、2025 EPS 創高" },
+        { "name": "亞力電機 Alex Electric", "ticker": "1514.TW", "country": "TW", "share": "在手 >NT$110bn", "products": "配電盤 / 開關", "note": "能見度 4-5 年、產能倍增" }
+      ],
+      "upstream": [ { "id": "c-relay" } ],
+      "downstream": [ { "id": "g-epc" } ],
+      "sources": [
+        { "label": "優分析 — 中興電 GIS 市佔 70-80%", "url": "https://uanalyze.com.tw/articles/5408332746" },
+        { "label": "富果 — 中興電法說會 2026/04/23", "url": "https://blog.fugle.tw/post/earnings-call-1513-2026-04-23" },
+        { "label": "經濟日報 — 台電釋單 GIS 中興電獨得", "url": "https://money.udn.com/money/story/5612/9340241" }
+      ]
+    },
+    {
+      "id": "s-hvdc",
+      "row": "switchgear-hvdc", "col": 5, "span": 2,
+      "kind": "stage",
+      "name": "HVDC 換流站",
+      "nameEn": "HVDC Converter Stations",
+      "competition": "oligopoly",
+      "desc": "$7.7B(2026)→$10.9B(2031)；Hitachi / Siemens / GE 約占 2025 接單 60-65%，前五大 >80%。",
+      "marketSize": "前三 60-65%",
+      "growth": "長距離輸電",
+      "analysis": "HVDC 換流站由 Hitachi Energy（在手 $4.2B）、Siemens Energy（$3.8B）、GE Vernova 主導，前三約 60-65%、前五 >80%，屬高集中寡占。400kV 混合直流斷路器據報僅 Hitachi/Siemens 具量產能力但此子主張僅單一來源，未達雙源門檻故不打單點旗。",
+      "companies": [
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "在手 $4.2B", "note": "HVDC 接單龍頭" },
+        { "name": "Siemens Energy", "ticker": "ENR.DE", "country": "DE", "share": "在手 $3.8B", "note": "HVDC Plus" },
+        { "name": "GE Vernova", "ticker": "GEV", "country": "US", "share": "前三", "note": "HVDC + Grid Solutions" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "g-epc" }, { "id": "g-utility" } ],
+      "sources": [
+        { "label": "Mordor — HVDC 換流站市場", "url": "https://www.mordorintelligence.com/industry-reports/global-hvdc-converter-station-market-industry" }
+      ]
+    },
+    {
+      "id": "s-sf6free",
+      "row": "switchgear-hvdc", "col": 7, "span": 1,
+      "kind": "rail",
+      "name": "SF6-free 開關",
+      "nameEn": "SF6-Free Switchgear",
+      "competition": "highgrowth",
+      "desc": "$474M(2024)→$1,186M(2031)、14% CAGR。環保法規驅動。",
+      "marketSize": "$474M→$1.2B",
+      "growth": "14% CAGR",
+      "analysis": "SF6-free 開關由 Hitachi（2025/5 全球首套 550kV 供國家電網）、GE Vernova、Siemens 領先，屬高成長新興賽道。",
+      "companies": [
+        { "name": "Hitachi Energy", "ticker": "6501.T", "country": "JP", "share": "550kV 首套", "note": "EconiQ 環保氣體" },
+        { "name": "GE Vernova", "ticker": "GEV", "country": "US", "share": "420kV", "note": "g3 環保氣體" }
+      ],
+      "upstream": [],
+      "downstream": [ { "id": "s-gis" } ],
+      "sources": [
+        { "label": "openPR — SF6-free GIS 市場", "url": "https://www.openpr.com/news/4164099/sf6-free-gas-insulated-metal-enclosed-switchgear-gis-market" }
+      ]
+    },
+    {
+      "id": "s-cable",
+      "row": "switchgear-hvdc", "col": 8, "span": 1,
+      "kind": "stage",
+      "name": "高壓 / 海纜",
+      "nameEn": "HV & Subsea Cable",
+      "competition": "oligopoly",
+      "desc": "Prysmian + Nexans 合計 >40% 海纜 HVDC；Prysmian 輸電在手 ~€16B、Nexans 輸電在手 €7.9-8.1B(+27% YoY)。",
+      "marketSize": "P+N >40% 海纜",
+      "growth": "輸電在手單創高",
+      "analysis": "高壓 / 海纜由 Prysmian、Nexans 雙強領導，屬寡占；在手單因離岸風電 + 跨國輸電而創高。",
+      "companies": [
+        { "name": "Prysmian", "ticker": "PRY.MI", "country": "EU", "share": "海纜雙強 (義大利)", "note": "輸電在手 ~€16B" },
+        { "name": "Nexans", "ticker": "NEX.PA", "country": "FR", "share": "海纜雙強", "note": "輸電在手 €7.9-8.1B (+27% YoY)" }
+      ],
+      "upstream": [ { "id": "m-copper" } ],
+      "downstream": [ { "id": "g-epc" } ],
+      "sources": [
+        { "label": "Prysmian Q3-2025 財報 (輸電在手單)", "url": "https://www.prysmian.com/sites/www.prysmian.com/files/media/documents/investors/ENG%20-%20Financial%20Report-%2030%20september%202025.pdf" },
+        { "label": "Nexans Q3-2025 新聞稿 (輸電 +27% YoY)", "url": "https://www.nexans.com/regulated-informations/q3-2025-financial-information-press-release/" }
+      ]
+    },
+    {
+      "id": "g-epc",
+      "row": "grid-epc-demand", "col": 1, "span": 3,
+      "kind": "stage",
+      "name": "電網 EPC / 線路施工",
+      "nameEn": "Grid EPC & Line Construction",
+      "competition": "oligopoly",
+      "desc": "Quanta Services 為美國最大電力承包商、在手 $44B(Q4-2025) 創高；MYR Group 較小但高毛利。",
+      "marketSize": "Quanta 在手 $44B",
+      "growth": "T&D 勞務龍頭",
+      "analysis": "Quanta Services PWR 是美國 T&D 主要勞務通道、在手單創高；MYR Group MYRG 為高毛利補位。屬美國寡占龍頭。",
+      "companies": [
+        { "name": "Quanta Services", "ticker": "PWR", "country": "US", "share": "美國最大電力承包", "note": "在手 $44B、T&D 勞務龍頭" },
+        { "name": "MYR Group", "ticker": "MYRG", "country": "US", "share": "高毛利補位", "note": "T&D + C&I 施工" }
+      ],
+      "upstream": [ { "id": "t-lpt" }, { "id": "t-korea" }, { "id": "s-gis" }, { "id": "s-hvdc" } ],
+      "downstream": [ { "id": "g-utility" } ],
+      "sources": [
+        { "label": "FinancialContent — Quanta 在手 $44B", "url": "https://markets.financialcontent.com/stocks/article/finterra-2026-1-22-the-architect-of-electrification-a-deep-dive-into-quanta-services-pwr-in-2026" },
+        { "label": "Cabot Wealth — Quanta / MYR", "url": "https://www.cabotwealth.com/daily/stock-market/3-stocks-for-the-energy-transmission-crisis" }
+      ]
+    },
+    {
+      "id": "g-utility",
+      "row": "grid-epc-demand", "col": 4, "span": 5,
+      "kind": "demand",
+      "name": "公用事業 / 互聯隊列",
+      "nameEn": "Utilities / Interconnection Queue",
+      "competition": "highgrowth",
+      "desc": "需求拉動：美國互聯隊列 2.6 TW（>2× 已裝置）、平均排隊 ~5 年；McKinsey 估 AI DC 需求 2025→2030 增 3.5× 至 156 GW。台電強韌電網 NT$564.5bn 10 年計畫。",
+      "marketSize": "互聯隊列 2.6 TW",
+      "growth": "AI 需求 3.5×",
+      "analysis": "公用事業與互聯隊列是整鏈的 demand-pull：2.6 TW 排隊、平均 5 年；CenterPoint 德州大型負載申請一年內 +700%（1→8 GW）。這是上游一切緊俏的源頭。",
+      "companies": [
+        { "name": "美國公用事業 (泛指)", "ticker": "—", "country": "US", "share": "互聯隊列 2.6 TW", "note": "AI 大型負載申請暴增" },
+        { "name": "台電 Taipower", "ticker": "—", "country": "TW", "share": "強韌電網 NT$564.5bn", "note": "10 年計畫 + NT$50bn 釋單" }
+      ],
+      "upstream": [ { "id": "g-epc" }, { "id": "t-mvdist" }, { "id": "s-gis" } ],
+      "downstream": [],
+      "sources": [
+        { "label": "Utility Dive / LBNL — 互聯隊列 2.6 TW", "url": "https://www.utilitydive.com/news/grid-interconnection-queue-berkeley-lab-lbnl/712926/" },
+        { "label": "RMI — 互聯改革 / McKinsey 156 GW", "url": "https://rmi.org/interconnection-reform-ai-data-centers-generator-queues/" },
+        { "label": "旺得富 — 台電強韌電網釋單", "url": "https://wantrich.chinatimes.com/news/20260226900533-420101" }
+      ]
+    }
+  ],
+  "edges": [
+    ["m-goes", "t-lpt"], ["m-goes", "t-korea"], ["m-goes", "t-huacheng"], ["m-goes", "t-shihlin"], ["m-goes", "t-tatung"], ["m-goes", "t-mvdist"],
+    ["m-amorphous", "t-mvdist"],
+    ["m-copper", "t-lpt"], ["m-copper", "s-cable"],
+    ["m-csc", "t-mvdist"],
+    ["c-oltc", "t-lpt"], ["c-oltc", "t-korea"], ["c-oltc", "t-huacheng"],
+    ["c-bushing", "t-lpt"], ["c-bushing", "s-gis"],
+    ["c-relay", "s-gis"], ["c-relay", "g-epc"],
+    ["t-lpt", "g-epc"], ["t-lpt", "g-utility"],
+    ["t-korea", "g-epc"],
+    ["t-huacheng", "g-epc"],
+    ["t-shihlin", "g-epc"],
+    ["t-tatung", "g-epc"],
+    ["t-mvdist", "g-utility"],
+    ["s-gis", "g-epc"], ["s-gis", "g-utility"],
+    ["s-chunghsin", "g-epc"],
+    ["s-hvdc", "g-epc"], ["s-hvdc", "g-utility"],
+    ["s-sf6free", "s-gis"],
+    ["s-cable", "g-epc"],
+    ["g-epc", "g-utility"]
+  ],
+  "single_point_framework": "v1.3"
+}
