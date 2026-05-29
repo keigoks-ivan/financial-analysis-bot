@@ -1,0 +1,495 @@
+{
+  "id": "auto-semi",
+  "tab": "車用半導體",
+  "title": "車用半導體供應鏈（Automotive Semiconductor）",
+  "subtitle": "2026 車用半導體市場 ~$68-77B、2030 上看 $132-133B（CAGR ~11%），單車含矽量 $759(2024)→$1,332(2030)。產業由 IDM 五強（Infineon / NXP / ST / TI / Renesas ≈ 50% 市佔）主導、製造以成熟製程 + AEC-Q100 車規認證為門檻、EV 把功率（SiC/IGBT/GaN）推成最大增量。與消費/AI 鏈最大差異：車廠強制 dual-source + ISO 26262 ASIL 設計鎖定（design-in 5-7 年、生命週期 10+ 年），結構上刻意避免單一來源，故真單點稀少、護城河多來自『換不掉的設計鎖』而非市佔壟斷。",
+  "single_point_framework": "v1.3",
+  "stats": [
+    { "k": "供應鏈節點", "v": 26 },
+    { "k": "涵蓋廠商", "v": "85+" },
+    { "k": "近乎獨佔 / 關鍵單點", "v": 0, "sub": "0 個真單點 — 車廠強制 dual-source + ASIL 設計鎖，全鏈為寡占競爭（MCU/SiC/CIS/MEMS 皆有合格替代源），護城河來自設計鎖非壟斷", "hot": false }
+  ],
+  "rows": [
+    { "id": "material", "label": "上游材料 / 基板", "main": "SiC 基板・磊晶・矽晶圓・功率封裝陶瓷基板・導線架" },
+    { "id": "fab", "label": "晶圓製造 / 代工", "main": "車規 foundry（成熟製程）・IDM 自有 fab・SiC/GaN 代工・車用封測" },
+    { "id": "compute", "label": "運算 / 控制晶片", "main": "車用 MCU・ADAS/AD SoC・Zonal/Gateway・車規記憶體" },
+    { "id": "power", "label": "功率 / 類比 / 分立", "main": "SiC/IGBT/GaN 功率元件・類比 PMIC・閘極驅動・整流/MOSFET" },
+    { "id": "sense", "label": "感測 / 連接", "main": "車用 CIS・毫米波雷達・LiDAR・MEMS/IMU・TPMS・車載乙太網" },
+    { "id": "demand", "label": "下游需求", "main": "Tier-1 系統整合・車廠 OEM" }
+  ],
+  "nodes": [
+    {
+      "id": "m-sic-sub", "row": "material", "col": 1, "span": 2, "kind": "rail",
+      "name": "SiC 基板（長晶）", "nameEn": "SiC Substrate",
+      "competition": "oligopoly",
+      "desc": "碳化矽單晶長晶、切片、研磨；EV 800V 平台與快充的關鍵材料，正由 150mm 轉 200mm。",
+      "marketSize": "車用佔 SiC ~70% (2035E)",
+      "growth": "200mm 轉換中",
+      "analysis": "SiC 基板為 5 家寡占：Wolfspeed（Ch.11 重整後，產能轉 200mm Mohawk Valley）、Coherent（已推 200mm 磊晶）、ROHM(SiCrystal)、ST（垂直整合自製）、Infineon（併購擴產）；中國天岳/天科以價格切入。台廠以磊晶與代工切入長晶較少。dual-source 為車廠常態，非單一來源。",
+      "companies": [
+        { "name": "Wolfspeed", "ticker": "WOLF", "country": "US", "share": "基板領先（重整中）", "note": "Ch.11 2025、舊股近乎歸零；200mm Mohawk Valley" },
+        { "name": "Coherent", "ticker": "COHR", "country": "US", "share": "200mm 磊晶領先", "note": "350/500µm 200mm SiC epi 量產" },
+        { "name": "ROHM (SiCrystal)", "ticker": "6963.T", "country": "JP", "share": "基板 + 元件垂直整合" },
+        { "name": "環球晶 GlobalWafers", "ticker": "6488.TWO", "country": "TW", "share": "SiC 基板切入中", "note": "矽晶圓全球 #3，SiC 擴產" }
+      ],
+      "upstream": [], "downstream": [{ "id": "f-sic-foundry" }, { "id": "p-sic-dev" }],
+      "sources": [
+        { "label": "SiC wafer market — automotive 70.6% by 2035", "url": "https://www.researchnester.com/reports/silicon-carbide-wafer-market/8302" },
+        { "label": "Wolfspeed 8-K FY2026 (Ch.11 / 200mm)", "url": "https://www.sec.gov/Archives/edgar/data/0000895419/000089541926000024/ex991q3-26.htm" }
+      ]
+    },
+    {
+      "id": "m-sic-epi", "row": "material", "col": 3, "span": 1, "kind": "rail",
+      "name": "SiC 磊晶", "nameEn": "SiC Epitaxy",
+      "competition": "oligopoly",
+      "desc": "在 SiC 基板上長磊晶層，決定功率元件良率與耐壓。",
+      "marketSize": "良率關鍵", "growth": "隨 SiC 放量",
+      "analysis": "磊晶由基板廠（Coherent / Resonac 昭和電工）+ 專業磊晶廠分食；台廠嘉晶 EpiWorld 為車用 SiC/GaN 磊晶切入者，與漢磊集團合作。",
+      "companies": [
+        { "name": "嘉晶 EpiWorld", "ticker": "3016.TW", "country": "TW", "share": "SiC/GaN 磊晶", "note": "漢磊集團；車用磊晶" },
+        { "name": "Resonac 昭和電工", "ticker": "4004.T", "country": "JP", "share": "SiC 磊晶領先" },
+        { "name": "Coherent", "ticker": "COHR", "country": "US", "share": "垂直整合磊晶" }
+      ],
+      "upstream": [{ "id": "m-sic-sub" }], "downstream": [{ "id": "f-sic-foundry" }],
+      "sources": [
+        { "label": "嘉晶/漢磊 車用 SiC 磊晶 (uanalyze)", "url": "https://uanalyze.com.tw/articles/872417587" }
+      ]
+    },
+    {
+      "id": "m-wafer", "row": "material", "col": 4, "span": 1, "kind": "rail",
+      "name": "矽晶圓", "nameEn": "Silicon Wafer",
+      "competition": "oligopoly",
+      "desc": "車用成熟製程仍以矽晶圓為主（MCU/類比/分立）。",
+      "marketSize": "—", "growth": "穩定",
+      "analysis": "矽晶圓五強：信越、SUMCO、環球晶（#3）、Siltronic、SK Siltron；車規需求穩定但成長慢於 AI。",
+      "companies": [
+        { "name": "環球晶 GlobalWafers", "ticker": "6488.TWO", "country": "TW", "share": "全球 #3" },
+        { "name": "Shin-Etsu 信越", "ticker": "4063.T", "country": "JP", "share": "全球 #1" },
+        { "name": "SUMCO", "ticker": "3436.T", "country": "JP", "share": "全球 #2" }
+      ],
+      "upstream": [], "downstream": [{ "id": "f-foundry-auto" }, { "id": "f-idm-fab" }],
+      "sources": [
+        { "label": "矽晶圓市場結構 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/automotive-semiconductor-market" }
+      ]
+    },
+    {
+      "id": "m-leadframe", "row": "material", "col": 5, "span": 1, "kind": "rail",
+      "name": "導線架 / 封裝材料", "nameEn": "Leadframe / Pkg Materials",
+      "competition": "oligopoly",
+      "desc": "車規分立/功率元件大量使用導線架封裝，需高可靠度。",
+      "marketSize": "—", "growth": "穩定",
+      "analysis": "導線架由日廠 Mitsui High-tec、新光(SH Precision)領先；台廠順德 為車用導線架供應商。",
+      "companies": [
+        { "name": "順德 Shun Sin", "ticker": "2351.TW", "country": "TW", "share": "車用導線架" },
+        { "name": "Mitsui High-tec", "ticker": "6966.T", "country": "JP", "share": "導線架領先" }
+      ],
+      "upstream": [], "downstream": [{ "id": "f-pkg" }],
+      "sources": [
+        { "label": "車用導線架供應鏈 (工研院 IEK)", "url": "https://iknow.stpi.narl.org.tw/post/Read.aspx?PostID=18037" }
+      ]
+    },
+    {
+      "id": "m-dbc", "row": "material", "col": 6, "span": 1, "kind": "rail",
+      "name": "功率模組陶瓷基板", "nameEn": "DBC / AMB Ceramic Substrate",
+      "competition": "oligopoly",
+      "desc": "EV 逆變器功率模組散熱核心：DBC/AMB（覆銅/活性金屬硬焊陶瓷）。",
+      "marketSize": "EV 逆變器關鍵", "growth": "隨 SiC 模組",
+      "analysis": "Rogers Curamik、Heraeus、Denka、Kyocera 領先；台廠同欣電以車用功率模組封裝切入。",
+      "companies": [
+        { "name": "Rogers", "ticker": "ROG", "country": "US", "share": "DBC 領先" },
+        { "name": "同欣電 Tong Hsing", "ticker": "6271.TW", "country": "TW", "share": "功率模組/CIS 封裝" },
+        { "name": "Denka", "ticker": "4061.T", "country": "JP", "share": "AMB 基板" }
+      ],
+      "upstream": [], "downstream": [{ "id": "p-sic-dev" }, { "id": "p-igbt" }],
+      "sources": [
+        { "label": "EV 功率模組基板 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/automotive-semiconductor-market" }
+      ]
+    },
+    {
+      "id": "f-foundry-auto", "row": "fab", "col": 1, "span": 2, "kind": "stage",
+      "name": "車規晶圓代工（成熟製程）", "nameEn": "Automotive Foundry (Mature Node)",
+      "competition": "oligopoly",
+      "desc": "車用 MCU/類比/分立多在 28nm 以上成熟製程，需 AEC-Q100 車規認證與長期供貨承諾。",
+      "marketSize": "TSMC 車用佔比個位數%", "growth": "非 AI 復甦中",
+      "analysis": "純代工：TSMC（車用 AEC-Q100，惟車用僅佔個位數% 營收）、UMC（#3 pure-play、車規製程齊全）、GlobalFoundries（車用 2026 拚 $1.5B）、世界先進 VIS（車用電源/類比成熟製程）、Tower。車廠需求集中於 foundry 是 demand 集中，非 foundry 單點供應。",
+      "companies": [
+        { "name": "TSMC", "ticker": "2330.TW", "country": "TW", "share": "車用 AEC-Q100", "note": "車用佔比小，但先進車用 SoC 必經（demand 集中，非供應單點）" },
+        { "name": "UMC 聯電", "ticker": "2303.TW", "country": "TW", "share": "#3 pure-play、車規齊全", "core_business": true, "supply_chain_lock": "med" },
+        { "name": "GlobalFoundries", "ticker": "GFS", "country": "US", "share": "車用 2026 ~$1.5B" },
+        { "name": "世界先進 VIS", "ticker": "5347.TWO", "country": "TW", "share": "車用電源/類比" }
+      ],
+      "upstream": [{ "id": "m-wafer" }], "downstream": [{ "id": "c-mcu" }, { "id": "p-analog" }, { "id": "c-adas" }],
+      "sources": [
+        { "label": "Trailing-edge foundry roadmaps (Tom's Hardware)", "url": "https://www.tomshardware.com/tech-industry/semiconductors/the-trailing-edge-foundry-roadmap-examined" },
+        { "label": "TSMC 車用全球僅 ~4% (數位時代)", "url": "https://www.bnext.com.tw/article/61591/automotive-chip-semiconductor-tsmc" }
+      ]
+    },
+    {
+      "id": "f-idm-fab", "row": "fab", "col": 3, "span": 2, "kind": "stage",
+      "name": "IDM 自有晶圓廠", "nameEn": "IDM In-house Fabs",
+      "competition": "oligopoly",
+      "desc": "車用 IDM 多自有 fab（IGBT/類比/MCU），垂直整合確保車規可靠度與供貨。",
+      "marketSize": "IDM 五強 ≈ 50%", "growth": "擴產 SiC",
+      "analysis": "Infineon、ST、onsemi、Bosch、TI、Renesas 皆有自有 fab；2021 缺貨後加速 in-house + 委外混合（fab-lite）。Infineon 2024 車用 >$8B 居首。",
+      "companies": [
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "車用 #1 ~13.7%", "core_business": true, "supply_chain_lock": "med" },
+        { "name": "STMicroelectronics", "ticker": "STM", "country": "CH", "share": "車用 ~10.2%" },
+        { "name": "onsemi", "ticker": "ON", "country": "US", "share": "功率/CIS 自製" },
+        { "name": "Bosch", "ticker": "—", "country": "DE", "share": "自有 fab（私人）", "note": "Tier-1 + 半導體垂直整合" }
+      ],
+      "upstream": [{ "id": "m-wafer" }], "downstream": [{ "id": "c-mcu" }, { "id": "p-igbt" }, { "id": "s-mems" }],
+      "sources": [
+        { "label": "車用半導體五強 ≈ 50% (Yole / TechInsights)", "url": "https://www.techinsights.com/blog/automotive-semiconductor-market" }
+      ]
+    },
+    {
+      "id": "f-sic-foundry", "row": "fab", "col": 5, "span": 1, "kind": "stage",
+      "name": "SiC / GaN 代工", "nameEn": "SiC / GaN Foundry",
+      "competition": "oligopoly",
+      "desc": "為無自有 SiC/GaN 產能的設計廠代工功率元件。",
+      "marketSize": "WBG 代工", "growth": "高速增長",
+      "analysis": "X-Fab、Tower、台廠漢磊 Episil（SiC/GaN 專業代工）為主；漢磊為台系少數 6 吋 SiC 代工 + GaN-on-Si。",
+      "companies": [
+        { "name": "漢磊 Episil", "ticker": "5263.TWO", "country": "TW", "share": "台系 SiC/GaN 代工", "core_business": true, "supply_chain_lock": "med" },
+        { "name": "X-FAB", "ticker": "XFAB.PA", "country": "FR", "share": "SiC 代工領先" },
+        { "name": "Tower Semi", "ticker": "TSEM", "country": "IL", "share": "類比/功率代工" }
+      ],
+      "upstream": [{ "id": "m-sic-epi" }], "downstream": [{ "id": "p-gan" }, { "id": "p-sic-dev" }],
+      "sources": [
+        { "label": "漢磊 車用 SiC/GaN 代工 (uanalyze)", "url": "https://uanalyze.com.tw/articles/872417587" }
+      ]
+    },
+    {
+      "id": "f-pkg", "row": "fab", "col": 6, "span": 1, "kind": "stage",
+      "name": "車用封測", "nameEn": "Automotive OSAT / Test",
+      "competition": "oligopoly",
+      "desc": "車規封裝與測試，需高可靠度（AEC-Q）與長期供貨。",
+      "marketSize": "—", "growth": "穩定",
+      "analysis": "ASE 日月光（車用封測領先）、Amkor（車用佔比高）、台廠同欣電（CIS/功率模組）、京元電（車用測試）。",
+      "companies": [
+        { "name": "ASE 日月光", "ticker": "3711.TW", "country": "TW", "share": "車用封測領先" },
+        { "name": "Amkor", "ticker": "AMKR", "country": "US", "share": "車用佔比高" },
+        { "name": "同欣電 Tong Hsing", "ticker": "6271.TW", "country": "TW", "share": "CIS/功率模組封裝" }
+      ],
+      "upstream": [{ "id": "f-idm-fab" }, { "id": "m-leadframe" }], "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "車用封測供應鏈 (工研院)", "url": "https://iknow.stpi.narl.org.tw/post/Read.aspx?PostID=18037" }
+      ]
+    },
+    {
+      "id": "c-mcu", "row": "compute", "col": 1, "span": 2, "kind": "stage",
+      "name": "車用 MCU", "nameEn": "Automotive MCU",
+      "competition": "oligopoly",
+      "desc": "引擎/底盤/車身/電池管理的即時控制核心；功能安全（ASIL）等級最高。design-in 5-7 年 + 生命週期 10+ 年 = 高切換成本，但車廠強制 dual-source、5 家可互換，屬寡占設計鎖、非單點。",
+      "marketSize": "$13.3B (2026)", "growth": "CAGR ~6%",
+      "analysis": "前五強 81.5%：Infineon AURIX 三核安全架構 28.5%、NXP S32 平台 20%、Renesas ~15%、Microchip、ST（嵌入式 PCM）。台廠新唐 Nuvoton（併購 Panasonic 半導體）以車用周邊 MCU 切入。切換需重跑 ASIL 認證，但車廠政策性 dual-source。",
+      "companies": [
+        { "name": "Infineon (AURIX)", "ticker": "IFX.DE", "country": "DE", "share": "車用 MCU ~28.5%", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "NXP (S32)", "ticker": "NXPI", "country": "NL", "share": "車用 MCU ~20%", "core_business": true, "supply_chain_lock": "med" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "車用 MCU ~15%" },
+        { "name": "新唐 Nuvoton", "ticker": "4919.TW", "country": "TW", "share": "車用周邊 MCU", "note": "併 Panasonic 半導體" }
+      ],
+      "upstream": [{ "id": "f-foundry-auto" }, { "id": "f-idm-fab" }], "downstream": [{ "id": "c-gateway" }, { "id": "d-tier1" }],
+      "sources": [
+        { "label": "車用 MCU 前五強 81.5%、Infineon 28.5% (Persistence)", "url": "https://finance.yahoo.com/news/automotive-mcu-market-reach-us-150100354.html" },
+        { "label": "ISO 26262 / AEC-Q100 設計鎖 (Synopsys)", "url": "https://www.synopsys.com/glossary/what-is-iso-26262.html" },
+        { "label": "新唐 等台廠車用 MCU/電子整理 (異想夢遊)", "url": "https://peiyunlin.pixnet.net/blog/posts/1006955732" }
+      ]
+    },
+    {
+      "id": "c-adas", "row": "compute", "col": 3, "span": 2, "kind": "stage",
+      "name": "ADAS / 自駕 SoC", "nameEn": "ADAS / AD SoC",
+      "competition": "oligopoly",
+      "desc": "L2+~L4 感知與決策運算（30-2,000 TOPS）；軟體堆疊與工具鏈是護城河。",
+      "marketSize": "L2+ 2026-31 翻倍", "growth": "高速增長",
+      "analysis": "三強路線：NVIDIA Drive（Orin 254 TOPS / Thor 2,000 TOPS，CUDA + Omniverse 軟體生態）、Qualcomm Snapdragon Ride（SA8295P，BMW/GM/Stellantis）、Mobileye EyeQ6（封閉式安全路線）；中國 Horizon 地平線崛起。客戶可在三家間選，屬寡占競爭非單點。",
+      "companies": [
+        { "name": "NVIDIA (Drive)", "ticker": "NVDA", "country": "US", "share": "高階 L3/L4 領先" },
+        { "name": "Qualcomm (Ride)", "ticker": "QCOM", "country": "US", "share": "中階設計贏單多" },
+        { "name": "Mobileye", "ticker": "MBLY", "country": "IL", "share": "EyeQ 量大" },
+        { "name": "Horizon Robotics 地平線", "ticker": "9660.HK", "country": "CN", "share": "中國 ADAS 崛起" }
+      ],
+      "upstream": [{ "id": "f-foundry-auto" }], "downstream": [{ "id": "d-tier1" }, { "id": "d-oem" }],
+      "sources": [
+        { "label": "ADAS SoC 三強 teardown (Medium)", "url": "https://medium.com/@hemanthchakravarthy/the-adas-soc-wars-nvidia-drive-orin-vs-034e41dc938d" }
+      ]
+    },
+    {
+      "id": "c-gateway", "row": "compute", "col": 5, "span": 1, "kind": "stage",
+      "name": "Zonal / Gateway 處理器", "nameEn": "Zonal / Gateway Processor",
+      "competition": "oligopoly",
+      "desc": "區域控制器/中央閘道，整合 E/E 架構（software-defined vehicle）。",
+      "marketSize": "SDV 架構核心", "growth": "高速增長",
+      "analysis": "NXP（S32G）、Infineon、TI、Renesas R-Car、Qualcomm 競逐；軟體定義車架構帶動 zonal 集中化。",
+      "companies": [
+        { "name": "NXP (S32G)", "ticker": "NXPI", "country": "NL", "share": "Zonal 領先" },
+        { "name": "TI", "ticker": "TXN", "country": "US", "share": "Jacinto" },
+        { "name": "Renesas (R-Car)", "ticker": "6723.T", "country": "JP", "share": "R-Car gateway" }
+      ],
+      "upstream": [{ "id": "c-mcu" }], "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "SDV zonal 架構 (S&P Global)", "url": "https://www.spglobal.com/automotive-insights/en/blogs/2026/04/automotive-semiconductor-market-trends" }
+      ]
+    },
+    {
+      "id": "c-memory", "row": "compute", "col": 6, "span": 1, "kind": "stage",
+      "name": "車規記憶體", "nameEn": "Automotive Memory",
+      "competition": "oligopoly",
+      "desc": "車規 DRAM / NOR / NAND，需寬溫 + 長供貨。",
+      "marketSize": "—", "growth": "ADAS 帶動",
+      "analysis": "Micron（車用記憶體領先）、台廠華邦電（車用 NOR/利基 DRAM）、旺宏（車用 NOR Flash 全球前列）。",
+      "companies": [
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "車用記憶體領先" },
+        { "name": "華邦電 Winbond", "ticker": "2344.TW", "country": "TW", "share": "車用 NOR/利基 DRAM" },
+        { "name": "旺宏 Macronix", "ticker": "2337.TW", "country": "TW", "share": "車用 NOR Flash 前列" }
+      ],
+      "upstream": [], "downstream": [{ "id": "c-adas" }, { "id": "c-mcu" }],
+      "sources": [
+        { "label": "車用記憶體需求 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/automotive-semiconductor-market" },
+        { "label": "華邦/旺宏 等台廠車用記憶體 (異想夢遊)", "url": "https://peiyunlin.pixnet.net/blog/posts/1006955732" }
+      ]
+    },
+    {
+      "id": "p-sic-dev", "row": "power", "col": 1, "span": 2, "kind": "stage",
+      "name": "SiC 功率元件 / 模組", "nameEn": "SiC Power Device / Module",
+      "competition": "oligopoly",
+      "desc": "EV 主逆變器 800V 平台核心，效率 + 快充優於矽。",
+      "marketSize": "EV 最大增量", "growth": "高速增長",
+      "analysis": "ST（Tesla 早期主供）、Infineon、onsemi、ROHM、Wolfspeed 五強；車廠強制 dual-source（如 Tesla 同時用 ST + onsemi）。垂直整合（自有基板）為成本護城河。",
+      "companies": [
+        { "name": "STMicroelectronics", "ticker": "STM", "country": "CH", "share": "SiC 元件領先" },
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "SiC 快速擴張", "core_business": true, "supply_chain_lock": "med" },
+        { "name": "onsemi", "ticker": "ON", "country": "US", "share": "SiC 垂直整合" },
+        { "name": "ROHM", "ticker": "6963.T", "country": "JP", "share": "SiC 元件" }
+      ],
+      "upstream": [{ "id": "m-sic-sub" }, { "id": "m-dbc" }, { "id": "f-sic-foundry" }], "downstream": [{ "id": "d-tier1" }, { "id": "d-oem" }],
+      "sources": [
+        { "label": "SiC 元件五強 (ResearchNester)", "url": "https://www.researchnester.com/reports/silicon-carbide-wafer-market/8302" }
+      ]
+    },
+    {
+      "id": "p-igbt", "row": "power", "col": 3, "span": 1, "kind": "stage",
+      "name": "IGBT", "nameEn": "IGBT",
+      "competition": "oligopoly",
+      "desc": "傳統 EV/HEV 逆變器主力（與 SiC 並存於不同價格帶）。",
+      "marketSize": "成熟但仍大", "growth": "穩定",
+      "analysis": "Infineon（IGBT 全球 #1）、Fuji Electric、Mitsubishi、安森美；中國比亞迪半導體、士蘭微自製崛起。",
+      "companies": [
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "IGBT 全球 #1" },
+        { "name": "Fuji Electric", "ticker": "6504.T", "country": "JP", "share": "IGBT 前列" },
+        { "name": "BYD Semi 比亞迪半導體", "ticker": "002594.SZ", "country": "CN", "share": "車用 IGBT 自製" }
+      ],
+      "upstream": [{ "id": "m-dbc" }], "downstream": [{ "id": "d-oem" }],
+      "sources": [
+        { "label": "IGBT 車用市場 (Yole)", "url": "https://www.yolegroup.com/product/report/automotive-semiconductor-trends-2025/" }
+      ]
+    },
+    {
+      "id": "p-gan", "row": "power", "col": 4, "span": 1, "kind": "stage",
+      "name": "GaN 功率", "nameEn": "GaN Power",
+      "competition": "highgrowth",
+      "desc": "車用 OBC（車載充電）、DC-DC 與 LiDAR 驅動，48V/低壓快充。",
+      "marketSize": "新興放量", "growth": "高速增長",
+      "analysis": "Infineon、Power Integrations、Navitas（NVIDIA 800V 資料中心同源技術）、Innoscience（已 2577.HK 掛牌、全球 GaN ~30%）；台系世界先進/漢磊代工切入。",
+      "companies": [
+        { "name": "Navitas", "ticker": "NVTS", "country": "US", "share": "GaN 快充領先" },
+        { "name": "Power Integrations", "ticker": "POWI", "country": "US", "share": "GaN OBC" },
+        { "name": "Innoscience", "ticker": "2577.HK", "country": "CN", "share": "全球 GaN ~30%", "note": "2024/12 港交所掛牌" }
+      ],
+      "upstream": [{ "id": "f-sic-foundry" }], "downstream": [{ "id": "d-oem" }],
+      "sources": [
+        { "label": "GaN 車用 (Yole)", "url": "https://www.yolegroup.com/product/report/automotive-semiconductor-trends-2025/" }
+      ]
+    },
+    {
+      "id": "p-analog", "row": "power", "col": 5, "span": 1, "kind": "stage",
+      "name": "車用類比 / PMIC", "nameEn": "Automotive Analog / PMIC",
+      "competition": "oligopoly",
+      "desc": "電源管理、訊號鏈、車身電子；高混料、長尾。",
+      "marketSize": "IDM 主場", "growth": "穩定",
+      "analysis": "TI（車用類比 #1）、ADI、Infineon、ST；台廠致新、茂達以利基車用 PMIC 切入。高度 dual-source、無單點。",
+      "companies": [
+        { "name": "Texas Instruments", "ticker": "TXN", "country": "US", "share": "車用類比 #1" },
+        { "name": "Analog Devices", "ticker": "ADI", "country": "US", "share": "訊號鏈領先" },
+        { "name": "致新 GMT", "ticker": "8081.TW", "country": "TW", "share": "利基車用 PMIC" }
+      ],
+      "upstream": [{ "id": "f-foundry-auto" }], "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "車用類比 IDM 結構 (Grand View)", "url": "https://www.grandviewresearch.com/industry-analysis/automotive-semiconductors-market" },
+        { "label": "致新/茂達 等台廠車用 PMIC (異想夢遊)", "url": "https://peiyunlin.pixnet.net/blog/posts/1006955732" }
+      ]
+    },
+    {
+      "id": "p-discrete", "row": "power", "col": 6, "span": 1, "kind": "stage",
+      "name": "整流 / MOSFET 分立", "nameEn": "Rectifier / MOSFET Discrete",
+      "competition": "oligopoly",
+      "desc": "車用整流二極體、低壓 MOSFET、保護元件。",
+      "marketSize": "利基", "growth": "EV 重組中",
+      "analysis": "onsemi、Diodes Inc、Infineon；台廠朋程 Actron（車用發電機整流子全球前列、利基近主導）、富鼎（車用 MOSFET）。朋程整流子隨內燃機下滑、轉 EV 元件。",
+      "companies": [
+        { "name": "朋程 Actron", "ticker": "8255.TW", "country": "TW", "share": "車用整流子利基近主導", "core_business": true, "supply_chain_lock": "med", "note": "發電機整流二極體；轉型 EV 功率" },
+        { "name": "onsemi", "ticker": "ON", "country": "US", "share": "分立元件領先" },
+        { "name": "富鼎 APEC", "ticker": "8147.TWO", "country": "TW", "share": "車用 MOSFET" }
+      ],
+      "upstream": [], "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "朋程車用整流子 (異想夢遊/車用電子表)", "url": "https://peiyunlin.pixnet.net/blog/posts/1006955732" }
+      ]
+    },
+    {
+      "id": "s-cis", "row": "sense", "col": 1, "span": 1, "kind": "stage",
+      "name": "車用影像感測 CIS", "nameEn": "Automotive CIS",
+      "competition": "oligopoly",
+      "desc": "ADAS 環景/前視鏡頭核心，需高動態（HDR）與 LED 閃爍抑制。",
+      "marketSize": "ADAS 帶動", "growth": "高速增長",
+      "analysis": "onsemi 為車用 CIS 長期領先（車用感測營收 ~28.7%、120dB HDR），但 Sony 與 OmniVision（豪威）加速搶進 → 由近主導轉向三強競爭。",
+      "companies": [
+        { "name": "onsemi", "ticker": "ON", "country": "US", "share": "車用 CIS 領先 ~28.7%", "note": "Sony/OmniVision 競爭升溫" },
+        { "name": "Sony", "ticker": "6758.T", "country": "JP", "share": "CIS 整體 #1，車用搶進" },
+        { "name": "OmniVision 豪威", "ticker": "603501.SS", "country": "CN", "share": "車用快速成長" }
+      ],
+      "upstream": [{ "id": "f-idm-fab" }], "downstream": [{ "id": "c-adas" }],
+      "sources": [
+        { "label": "onsemi 車用 CIS 28.7% vs Sony 競爭 (24/7 Wall St)", "url": "https://247wallst.com/technology-3/2026/05/11/onsemi-is-facing-a-continued-slowdown-in-sic-and-greater-competition-in-cis-from-sony/" }
+      ]
+    },
+    {
+      "id": "s-radar", "row": "sense", "col": 2, "span": 1, "kind": "stage",
+      "name": "毫米波雷達晶片", "nameEn": "mmWave Radar IC",
+      "competition": "oligopoly",
+      "desc": "77/79GHz 車用雷達 SoC（CMOS/SiGe），ADAS 全天候感測。",
+      "marketSize": "L2+ 標配", "growth": "高速增長",
+      "analysis": "NXP（車用雷達 #1）、Infineon、TI（單晶片雷達）、ADI；四強寡占，客戶可換。",
+      "companies": [
+        { "name": "NXP", "ticker": "NXPI", "country": "NL", "share": "車用雷達 #1" },
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "雷達 MMIC 前列" },
+        { "name": "TI", "ticker": "TXN", "country": "US", "share": "單晶片雷達" }
+      ],
+      "upstream": [{ "id": "f-idm-fab" }], "downstream": [{ "id": "c-adas" }],
+      "sources": [
+        { "label": "車用雷達晶片結構 (MarketsandMarkets)", "url": "https://www.marketsandmarkets.com/Market-Reports/automotive-semiconductor-195.html" }
+      ]
+    },
+    {
+      "id": "s-lidar", "row": "sense", "col": 3, "span": 1, "kind": "stage",
+      "name": "LiDAR", "nameEn": "LiDAR",
+      "competition": "highgrowth",
+      "desc": "高階 L3+ 3D 點雲感測；中國車廠加速標配。",
+      "marketSize": "L3+ 滲透中", "growth": "高速增長",
+      "analysis": "Hesai 禾賽（全球出貨領先）、RoboSense、Luminar、Innoviz；中國廠以量產成本領先。產業仍洗牌、無單點。",
+      "companies": [
+        { "name": "Hesai 禾賽", "ticker": "HSAI", "country": "CN", "share": "全球出貨領先" },
+        { "name": "Luminar", "ticker": "LAZR", "country": "US", "share": "高階長距" },
+        { "name": "Innoviz", "ticker": "INVZ", "country": "IL", "share": "BMW 等" }
+      ],
+      "upstream": [], "downstream": [{ "id": "c-adas" }],
+      "sources": [
+        { "label": "車用 LiDAR 市場 (Research and Markets)", "url": "https://www.researchandmarkets.com/reports/5774741/autonomous-driving-soc-research-report" }
+      ]
+    },
+    {
+      "id": "s-mems", "row": "sense", "col": 4, "span": 1, "kind": "stage",
+      "name": "車用 MEMS / IMU", "nameEn": "Automotive MEMS / IMU",
+      "competition": "oligopoly",
+      "desc": "ESP 車身穩定、安全氣囊、胎壓、IMU 慣性導航的微機電感測。",
+      "marketSize": "安全強制", "growth": "穩定",
+      "analysis": "Bosch 為車用 MEMS 規模龍頭（車用 MEMS ~33%、慣性子段 ~46%；同時是最大 Tier-1，系統+感測垂直整合），但非能力獨佔 — Murata SCHA600、ST ASM330LHB、TDK-InvenSense 均已 AEC-Q100 + ASIL-D 認證、可供 ESP/氣囊/IMU 同級應用。既有產線換供應商需 3-5 年（客戶配置鎖、非能力單點），故為寡占規模領先而非壟斷（critic DEMOTE，2026-05-29）。Bosch 為私人公司、無純股票曝險。",
+      "companies": [
+        { "name": "Bosch", "ticker": "—", "country": "DE", "share": "車用 MEMS 規模龍頭（私人）", "note": "~33% 車用 MEMS；私人公司、無純股票曝險" },
+        { "name": "STMicroelectronics", "ticker": "STM", "country": "CH", "share": "ASM330LHB ASIL-D 可替代" },
+        { "name": "TDK (InvenSense)", "ticker": "6762.T", "country": "JP", "share": "車用 IMU（$1.3B 併購擴張）" },
+        { "name": "Murata", "ticker": "6981.T", "country": "JP", "share": "SCHA600 ESC/ESP ASIL-D" }
+      ],
+      "upstream": [{ "id": "f-idm-fab" }], "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "Bosch 車用 MEMS 領先地位 (Yole)", "url": "https://www.yolegroup.com/product/report/automotive-semiconductor-trends-2025/" },
+        { "label": "車用 MEMS 感測結構 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/automotive-semiconductor-market" }
+      ]
+    },
+    {
+      "id": "s-tpms", "row": "sense", "col": 5, "span": 1, "kind": "stage",
+      "name": "胎壓偵測 TPMS", "nameEn": "TPMS",
+      "competition": "oligopoly",
+      "desc": "強制法規（多數市場標配）的胎壓感測模組與晶片。",
+      "marketSize": "法規標配", "growth": "穩定",
+      "analysis": "晶片端 Infineon / NXP / Sensata 領先；模組端台廠為升 CUB、同致 為主要供應，外銷售後市場（AM）強。",
+      "companies": [
+        { "name": "Sensata", "ticker": "ST", "country": "US", "share": "TPMS 系統領先" },
+        { "name": "為升 CUB Elecparts", "ticker": "2231.TW", "country": "TW", "share": "TPMS 模組（AM 強）" },
+        { "name": "Infineon", "ticker": "IFX.DE", "country": "DE", "share": "TPMS 晶片" }
+      ],
+      "upstream": [{ "id": "f-idm-fab" }], "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "TPMS 概念股/供應鏈 (wantgoo)", "url": "https://www.wantgoo.com/index/%5E481/stocks" }
+      ]
+    },
+    {
+      "id": "s-ethernet", "row": "sense", "col": 6, "span": 1, "kind": "stage",
+      "name": "車載乙太網 PHY", "nameEn": "Automotive Ethernet PHY",
+      "competition": "oligopoly",
+      "desc": "SDV / zonal 架構的高速車內骨幹（1-10Gbps）。",
+      "marketSize": "SDV 骨幹", "growth": "高速增長",
+      "analysis": "Marvell（車用乙太網領先，2024 被 Infineon 以 $2.5B 收購其車用乙太網事業）、Broadcom、NXP；併購後 Infineon 強化車用連接版圖。",
+      "companies": [
+        { "name": "Marvell (→ Infineon 車用乙太)", "ticker": "MRVL", "country": "US", "share": "車用乙太領先", "note": "車用乙太事業 2024 售 Infineon $2.5B" },
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "車用乙太前列" },
+        { "name": "NXP", "ticker": "NXPI", "country": "NL", "share": "車用網路" }
+      ],
+      "upstream": [{ "id": "c-gateway" }], "downstream": [{ "id": "d-tier1" }],
+      "sources": [
+        { "label": "Infineon $2.5B 收購 Marvell 車用乙太 (Persistence)", "url": "https://finance.yahoo.com/news/automotive-mcu-market-reach-us-150100354.html" }
+      ]
+    },
+    {
+      "id": "d-tier1", "row": "demand", "col": 1, "span": 3, "kind": "demand",
+      "name": "Tier-1 系統整合", "nameEn": "Tier-1 Suppliers",
+      "competition": "oligopoly",
+      "desc": "把晶片整合成 ECU/域控制器/模組賣給車廠；半導體採購的關鍵中介。",
+      "marketSize": "採購中樞", "growth": "SDV 重組",
+      "analysis": "Bosch、Continental、ZF、Denso、Aptiv、Magna 主導；軟體定義車促使部分車廠（Tesla/BYD）跳過 Tier-1 直採晶片。",
+      "companies": [
+        { "name": "Bosch", "ticker": "—", "country": "DE", "share": "全球 Tier-1 #1" },
+        { "name": "Denso", "ticker": "6902.T", "country": "JP", "share": "Tier-1 前列（Toyota 系）" },
+        { "name": "Continental", "ticker": "CON.DE", "country": "DE", "share": "Tier-1 前列" },
+        { "name": "Aptiv", "ticker": "APTV", "country": "US", "share": "電氣架構領先" }
+      ],
+      "upstream": [{ "id": "c-mcu" }, { "id": "s-mems" }, { "id": "p-sic-dev" }], "downstream": [{ "id": "d-oem" }],
+      "sources": [
+        { "label": "Tier-1 與車用半導體採購結構 (S&P Global)", "url": "https://www.spglobal.com/automotive-insights/en/blogs/2026/04/automotive-semiconductor-market-trends" }
+      ]
+    },
+    {
+      "id": "d-oem", "row": "demand", "col": 4, "span": 3, "kind": "demand",
+      "name": "車廠 OEM", "nameEn": "Automaker OEMs",
+      "competition": "redocean",
+      "desc": "最終需求；EV/SDV 龍頭開始垂直整合晶片設計與直接採購。",
+      "marketSize": "單車含矽 $1,332 (2030)", "growth": "EV/SDV 帶動",
+      "analysis": "Tesla（自研 FSD SoC + 直採 SiC dual-source）、BYD（垂直整合半導體）、Toyota/VW 等傳統車廠經 Tier-1。EV + L2+ ADAS 把單車含矽量推升近一倍。",
+      "companies": [
+        { "name": "Tesla", "ticker": "TSLA", "country": "US", "share": "自研 SoC + 直採" },
+        { "name": "BYD", "ticker": "002594.SZ", "country": "CN", "share": "垂直整合半導體" },
+        { "name": "Toyota", "ticker": "7203.T", "country": "JP", "share": "全球銷量前列" }
+      ],
+      "upstream": [{ "id": "d-tier1" }, { "id": "c-adas" }], "downstream": [],
+      "sources": [
+        { "label": "單車含矽 $759→$1,332 (Yole)", "url": "https://www.yolegroup.com/product/report/automotive-semiconductor-trends-2025/" }
+      ]
+    }
+  ],
+  "edges": [
+    ["m-sic-sub", "f-sic-foundry"], ["m-sic-sub", "p-sic-dev"], ["m-sic-epi", "f-sic-foundry"],
+    ["m-sic-sub", "m-sic-epi"], ["m-wafer", "f-foundry-auto"], ["m-wafer", "f-idm-fab"],
+    ["m-leadframe", "f-pkg"], ["m-dbc", "p-sic-dev"], ["m-dbc", "p-igbt"],
+    ["f-foundry-auto", "c-mcu"], ["f-foundry-auto", "p-analog"], ["f-foundry-auto", "c-adas"],
+    ["f-idm-fab", "c-mcu"], ["f-idm-fab", "p-igbt"], ["f-idm-fab", "s-mems"],
+    ["f-sic-foundry", "p-gan"], ["f-sic-foundry", "p-sic-dev"],
+    ["f-idm-fab", "f-pkg"], ["m-leadframe", "f-idm-fab"],
+    ["c-mcu", "c-gateway"], ["c-mcu", "d-tier1"], ["c-adas", "d-tier1"], ["c-adas", "d-oem"],
+    ["c-gateway", "d-tier1"], ["c-memory", "c-adas"], ["c-memory", "c-mcu"],
+    ["p-sic-dev", "d-tier1"], ["p-sic-dev", "d-oem"], ["p-igbt", "d-oem"], ["p-gan", "d-oem"],
+    ["p-analog", "d-tier1"], ["p-discrete", "d-tier1"],
+    ["s-cis", "c-adas"], ["s-radar", "c-adas"], ["s-lidar", "c-adas"],
+    ["s-mems", "d-tier1"], ["s-tpms", "d-tier1"], ["s-ethernet", "d-tier1"],
+    ["f-pkg", "d-tier1"], ["d-tier1", "d-oem"]
+  ]
+}
