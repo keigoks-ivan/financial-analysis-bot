@@ -48,7 +48,10 @@ docs/supply-chain/
 ```
 scripts/
   build_supply_chain_dd_index.py   # 掃 docs/dd/ 重建 dd_links.json
+  build_supply_chain_tiers.py      # 掃全部 data/*.json，把 💎/🐘/🔒 三層去重聚合，
+                                   # 注入 index.html 的「全站 Top Picks 統整」區（TIERS_AUTO 標記）
 ```
+> 任何 map 的 ⚑/💎/`node_role` 改動後（含新增 topic），**重跑 `python3 scripts/build_supply_chain_tiers.py`** 刷新 hub 統整區，與 index.html 併入同一 commit。
 
 ## 工作流（標準 5 輪研究 + 4 步輸出）
 
