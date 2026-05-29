@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- dca-moat-trend: ↑ -->
+<!-- dca-verdict: 觀望 -->
+<title>DCA｜Curtiss-Wright (CW) — Deep Conviction Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F8FAFC;--card:#FFFFFF;--ink:#1E3A5F;--accent:#3B82F6;--row:#F1F5F9;}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:#1f2937;font-family:'Noto Sans TC',system-ui,sans-serif;line-height:1.7;font-size:15px;}
+code,.mono{font-family:'IBM Plex Mono',monospace;}
+header.fixed{position:sticky;top:0;z-index:50;background:#0f2540;color:#fff;padding:10px 20px;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+header.fixed .tk{font-size:18px;font-weight:900;letter-spacing:1px;}
+header.fixed b{color:#93c5fd;}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 18px 80px;}
+h2{background:var(--ink);color:#fff;padding:10px 16px;border-left:4px solid var(--accent);border-radius:0 4px 4px 0;margin:34px 0 14px;font-size:19px;}
+h3{color:var(--ink);border-bottom:2px solid #e2e8f0;padding-bottom:6px;margin:22px 0 10px;font-size:16px;}
+h4{color:#334155;margin:14px 0 6px;font-size:14.5px;}
+.card{background:var(--card);border:1px solid #e5e9f0;border-radius:10px;padding:16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(15,37,64,.05);}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px;}
+th,td{border:1px solid #dde3ec;padding:7px 10px;text-align:left;vertical-align:top;}
+th{background:var(--ink);color:#fff;font-weight:500;}
+tbody tr:nth-child(even){background:var(--row);}
+.g{background:#DCFCE7;color:#166534;}.r{background:#FEE2E2;color:#991B1B;}.y{background:#FEF9C3;color:#92400E;}.b{background:#EFF6FF;color:#1e40af;}
+/* status bar */
+.statusbar{display:flex;gap:12px;justify-content:center;background:#F1F5F9;border-left:4px solid #3B82F6;border-right:4px solid #3B82F6;border-radius:8px;padding:14px 10px;margin:14px 0;flex-wrap:wrap;}
+.statusbar .cell{width:160px;text-align:center;}
+.statusbar .lbl{font-size:11px;color:#64748B;display:block;margin-bottom:3px;}
+.statusbar .val{font-size:22px;font-weight:700;}
+/* thesis */
+.thesis{background:#EFF6FF;border-radius:10px;padding:24px;text-align:center;margin:14px 0;}
+.thesis .big{font-size:26px;font-weight:700;color:#1E3A5F;line-height:1.5;}
+.thesis .sub{font-size:13px;color:#64748b;margin-top:8px;}
+/* decision */
+.decision{background:#FEF9C3;border-left:4px solid #92400E;border-radius:0 10px 10px 0;padding:16px 18px;margin:12px 0;}
+.chip{display:inline-block;padding:6px 20px;border-radius:4px;font-size:18px;font-weight:700;background:#92400E;color:#fff;border-left:4px solid #78350F;margin-bottom:6px;}
+.chipsub{font-size:13px;color:#475569;font-style:italic;display:block;margin-bottom:14px;}
+/* phase B */
+.conflict{background:#FFF7ED;border-left:4px solid #F97316;border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;}
+.verdict-tbl th{background:#9A3412;}
+.verdict-tbl{background:#FED7AA;}
+/* premortem */
+.premortem{background:#FEF2F2;border-left:4px solid #DC2626;border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;}
+.premortem .story{font-style:italic;border-left:3px solid #DC2626;padding-left:12px;color:#7f1d1d;}
+/* pattern / irr */
+.pattern{background:#F0F9FF;border-left:4px solid #0EA5E9;border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;}
+.maxdd{background:#fff;border:1px solid #e5e9f0;border-radius:10px;padding:16px 18px;margin:12px 0;}
+.maxdd .num{font-size:32px;font-weight:700;font-family:'IBM Plex Mono',monospace;}
+.bar{height:18px;border-radius:4px;display:flex;overflow:hidden;margin:8px 0;}
+.memo{border:1px solid #cbd5e1;border-radius:6px;padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:#fcfcfd;white-space:pre-wrap;}
+.elevator{border-left:3px solid #3B82F6;padding-left:12px;font-style:italic;color:#475569;margin:10px 0;}
+details{background:#fff;border:1px solid #e5e9f0;border-radius:8px;margin:8px 0;padding:6px 14px;}
+summary{cursor:pointer;font-weight:600;color:#1E3A5F;padding:6px 0;}
+.printbtn{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.note{font-size:12.5px;color:#64748b;}
+ul.tight li{margin:3px 0;}
+@media print{header.fixed,.printbtn{display:none;}details{border:none;}details[open] summary{}details>*{display:block!important;}body{font-size:11px;}}
+@media(max-width:760px){.statusbar .cell{width:44%;}}
+</style>
+</head>
+<body>
+<header class="fixed">
+<span class="tk">CW</span>
+<span>Curtiss-Wright｜Deep Conviction</span>
+<span>日期：<b>2026-05-29</b></span>
+<span>股價：<b>$747.73</b></span>
+<span>裁決：<b>觀望（估值過熱，5Y IRR ~4-5%）</b></span>
+</header>
+
+<div class="wrap">
+
+<!-- ===== STATUS BAR ===== -->
+<div class="statusbar">
+<div class="cell"><span class="lbl">DD 訊號燈</span><span class="val" style="color:#92400E;">B</span></div>
+<div class="cell"><span class="lbl">Moat 趨勢</span><span class="val">A <span style="color:#166534;">↑</span></span></div>
+<div class="cell"><span class="lbl">Runway Post-Y5</span><span class="val">🟢 寬</span></div>
+<div class="cell"><span class="lbl">Max DD（路徑）</span><span class="val" style="color:#92400E;">−50%</span></div>
+<div class="cell"><span class="lbl">DCA 裁決</span><span class="val" style="color:#92400E;">觀望</span></div>
+</div>
+
+<!-- ===== §2 THESIS ===== -->
+<h2>§2　One-Sentence Thesis</h2>
+<div class="thesis">
+<div class="big">CW 是核海軍與商業核電不可替換的 sole-source 組件商，潛艇倍增 + AI 驅動的核能復興同時放大其認證壁壘的價值。</div>
+<div class="sub">48 字 — 投資本質（敘事，非財務指標）</div>
+</div>
+
+<!-- ===== §7 DECISION ===== -->
+<h2>§7　Decision</h2>
+<div class="decision">
+<span class="chip">觀望</span>
+<span class="chipsub">公司一流、護城河加深、跑道極長——但 Fwd PE 44-49x（5Y 分位 ~94%、PEG 3.45）使 5Y 機率加權 IRR 僅 ~4-5%/yr，低於大盤；等估值修復或回測再進場。</span>
+
+<h3>7a. 倉位與進場計畫（觀望路徑）</h3>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>角色</td><td>watchlist（高品質候選，等價格）；條件成立後可為核心持倉</td></tr>
+<tr><td>初始建倉倉位</td><td><strong>0%</strong>（現價不進場）</td></tr>
+<tr><td>目標倉位（條件成立後）</td><td>4%（衛星）→ 條件強化可至 6%（核心邊緣）；因 §6c Max DD 🟡 已自上限下修（原想 6% → 先設 4%）</td></tr>
+<tr><td>觸發進場條件</td><td>Fwd PE 5Y 分位回落 &lt; 70%（約 Fwd PE &lt; 33x，股價 ~$560 區）<strong>或</strong>回測 BB 中軌 $694 <strong>且</strong> book-to-bill 維持 ≥ 1.0x</td></tr>
+<tr><td>進場節奏</td><td>條件式分批（觸發第一批 50%，AP1000 RCP 訂單落地確認後第二批）</td></tr>
+<tr><td><strong>vs 現有組合同類曝險（opportunity cost）</strong></td><td><strong>點名 BWXT</strong>（已有 DD，同「核海軍 sole-source + SMR」主題，同樣 🔴 估值過熱 NTM ~47x / 5Y 分位 ~100%）。兩者皆 priced-to-perfection，邊際資金<strong>現在不應投入任一</strong>；若被迫選，BWXT 是純核能 pure-play（彈性大但波動大）、CW 是多角化複利機（防禦性強 beta 0.87）。CW 的 5Y IRR ~4-5% 與 BWXT 相近、皆偏弱 → 結論：兩者都觀望，等其一先修復估值再動。</td></tr>
+</table>
+
+<h3>7b. 加碼與減碼條件</h3>
+<table>
+<tr><th>行動</th><th>觸發條件</th><th>調整至倉位</th></tr>
+<tr><td>進場（首批）</td><td>Fwd PE &lt; 33x（~$560）或回測 BB 中軌 $694 + B2B ≥ 1.0x</td><td>2%</td></tr>
+<tr><td>加碼</td><td>AP1000 RCP 訂單 2026 落地（§5 Single Thing 兌現）+ 估值未再衝高</td><td>4%</td></tr>
+<tr><td>加碼</td><td>SMR 占商業核電升至 ≥ 15% + naval 段持續雙位數</td><td>6%</td></tr>
+<tr><td>減碼</td><td>Fwd PE 突破 50x（進一步透支）或 book-to-bill 連 2 季 &lt; 1.0x</td><td>減半</td></tr>
+<tr><td>清倉</td><td>國防潛艇撥款結構性削減（FYDP 大幅下修）或核心 thesis H1 推翻</td><td>0%</td></tr>
+</table>
+
+<h3>7c. Pure MA 相容性 + 動能過熱</h3>
+<table>
+<tr><th>檢查項</th><th>狀態</th><th>說明</th></tr>
+<tr><td>股價 &gt; MA60（週線近似 W52 $587）</td><td class="g">✅</td><td>$747.73 &gt; $587</td></tr>
+<tr><td>股價 &gt; MA200（W104 $460）</td><td class="g">✅</td><td>遠在其上</td></tr>
+<tr><td>股價 &gt; MA104w（$460）</td><td class="g">✅</td><td>✅</td></tr>
+<tr><td>Pure MA 系統支持進場？</td><td class="g">✅</td><td>✅ 強勢進場（三線多頭 + W250 斜率 +11.7%）</td></tr>
+<tr><td><strong>短期動能過熱</strong></td><td class="y">⚠ 接近 52 週高 + BB 上軌</td><td>現價 = BB 上軌 $756.6 的 98.8%；4 週漂移 +2.4%（未過 +10%，但貼近 52W 高 $760.7）；5/27 衝高回落（高 755.9 收 742.6）</td></tr>
+</table>
+<p class="note"><strong>結論：</strong>Pure MA 結構支持（多頭），但價貼近 52 週高 + BB 上軌 = 短期不該追。即使裁決轉進場，§7a 進場節奏亦須條件式（等回測 BB 中軌 $694）。本案裁決為觀望（估值 🔴 主導），MA 不是主要阻力。</p>
+
+<h3>7d. 建議持有年限</h3>
+<table>
+<tr><th>持有年限</th><th>條件</th></tr>
+<tr><td>短期（&lt; 2 年）</td><td>不適用——現價進場短期 R:R 為負（合理價 $498-563 &lt; 現價）</td></tr>
+<tr><td>中期（2-5 年）</td><td>若以合理估值進場（&lt; 33x）→ EPS 複利 + 估值修復雙引擎</td></tr>
+<tr><td>長期（5-10 年）</td><td>若 AP1000/SMR renaissance 兌現（首批 SMR 2029-30，US 400GW by 2050）→ 第二成長曲線，runway 充裕</td></tr>
+</table>
+<p><strong>建議持有年限：長期（5-10 年），但前提是以合理估值進場。</strong>原因：護城河 ↑ widening + runway 🟢 寬（核能復興遠在 Y5 之後仍有跑道）支持長抱；但現價進場的 5Y IRR 僅 ~4-5%（見 §4），時間無法救回估值起點過高的問題。</p>
+
+<h4>EPS 預測參考表</h4>
+<table>
+<tr><th>年份</th><th>EPS 估計</th><th>來源</th><th>備注</th></tr>
+<tr><td>2026E</td><td>$15.21（guide $14.90-15.30）</td><td>yfinance Refinitiv n=7</td><td>+15% YoY</td></tr>
+<tr><td>2027E</td><td>$17.05</td><td>yfinance Refinitiv n=7</td><td>+12.1%</td></tr>
+<tr><td>2030E（外推）</td><td>~$23.3</td><td>§8 邏輯外推</td><td>外推假設：FY27 後 ~11%/yr（AP1000 交付 + 潛艇含量 + margin 擴張遞減）</td></tr>
+</table>
+<p><strong>假設長期持有（5-10 年），現價適合嗎？</strong>不適合作為進場點。以 FY2030E $23.3 × 長期合理 PE 30x = $699 ≈ 現價 $747.73——意味即使 5 年後 EPS 成長 76%，若 PE 正常化至 30x，股價幾乎原地踏步（含股息/回購年化 ~4-5%）。這正是「好公司、貴價格」的典型 IRR 壓縮（見 §4 IRR composition：Base 12% EPS 複利被 −9.4%/yr 的 re-rate 大幅抵銷）。等估值修復才是正確進場時機。</p>
+</div>
+
+<!-- ===== §4 ASYMMETRY ===== -->
+<h2>§4　Asymmetry Analysis</h2>
+<table>
+<tr><th>情境</th><th>5 年絕對</th><th>年化 IRR</th><th>依據</th><th>機率</th></tr>
+<tr class="g"><td>Bull（thesis 對）</td><td>+77%</td><td>+12.1%/yr</td><td>EPS CAGR 15%（AP1000 + SMR 提前放量）+ PE 維持溢價 ~38x + 股息回購 2.1%</td><td>25%</td></tr>
+<tr class="y"><td>Base</td><td>+25.8%</td><td>+4.7%/yr</td><td>EPS CAGR 12% − 估值 re-rate（49x→30x，−9.4%/yr）+ 股息回購 2.1%</td><td>45%</td></tr>
+<tr class="r"><td>Bear（thesis 錯）</td><td>−21.8%</td><td>−4.8%/yr</td><td>EPS CAGR 8%（核電失望）− 倍數壓縮至歷史均 22x（−14.9%/yr）+ 股息回購 2.1%</td><td>30%</td></tr>
+<tr><td><strong>機率加權期望值</strong></td><td><strong>+24.3% 5Y</strong></td><td><strong>IRR ≈ +4.4%/yr</strong></td><td>0.25×77 + 0.45×25.8 + 0.30×(−21.8)</td><td>100%</td></tr>
+</table>
+<p class="note"><strong>IRR 落點解讀：~4.4%/yr = 弱（&lt; 8%，不及大盤平均）。</strong>這是「優質但昂貴」標的的典型結果——公司基本面強，但進場估值過高使預期報酬被壓至大盤之下。沒有強烈 idiosyncratic 理由不該在此價位動部位 → 印證觀望裁決。</p>
+<p class="note"><strong>追加壓力測試：</strong>拉長至 10 年，Base 10Y IRR ≈ 7-8%/yr（estim; EPS 複利持續但 re-rate 一次性，後 5 年無 re-rate 拖累）——仍僅追平大盤。機會成本：同期 S&P500 長期 ~8-10%/yr，CW 現價進場不具相對優勢。</p>
+
+<h4>情境推導詳述（為什麼是這些機率與報酬）</h4>
+<p><strong>Bull（25%，+12.1%/yr）：</strong>AP1000 RCP 訂單 2026 落地 + SMR 提前放量 + 國防潛艇全速 → EPS CAGR 加速至 15%（FY30 ~$26）。市場因核電現金流變現給予持續溢價，Fwd PE 僅小幅回落至 ~38x（仍高於歷史）。機率 25% 反映「兩條腿都順 + 倍數不崩」需多項條件同時成立。即便如此，re-rate 仍倒扣 −5%/yr——說明此價位連 Bull 都靠 EPS 撐，不靠倍數擴張。</p>
+<p><strong>Base（45%，+4.7%/yr）：</strong>國防腿如預算兌現（高確定），核電腿溫和推進但現金流後置，EPS CAGR 12%。市場理性地把 49x 正常化至 30x（仍給優質溢價，高於歷史均 22x）。這是最可能路徑——好公司持續複利，但進場倍數過高使報酬被 re-rate 吃掉一半以上。</p>
+<p><strong>Bear（30%，−4.8%/yr）：</strong>AP1000 訂單延後 + SMR 時程滑動 + 國防撥款受政治僵局干擾 → EPS CAGR 降至 8%。市場對核電 renaissance 失去耐心，倍數壓縮至歷史均 22x。注意 Bear 機率 30%（&gt; 20% floor）——5Y 視角下，「倍數正常化」幾乎是基準預期而非尾部，真正的不確定是「壓多深 + EPS 成長能否部分對沖」。</p>
+<p class="note"><strong>機率校準檢查：</strong>Bear 30%（≥ 20% ✓）；Bull/Bear 5Y 散布 77% vs −22%（寬度 99%p，遠 &gt; 1Y 視角 ✓）；Base 45%（≤ 50% ✓）；Pattern match（2021 高倍數工業複利機）初期 IRR ~0-3%/yr，與本案 Base 4.7% 同量級 ✓。</p>
+
+<div class="pattern">
+<h4>📐 Pattern Match</h4>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>歷史相似 setup</td><td>2021 高品質工業複利機在 peak multiple 進場（如 Roper RD/Fastenal/Sherwin-Williams 於 ~35-45x PE）</td></tr>
+<tr><td>當時 setup</td><td>優質護城河 + 結構成長故事 + 倍數位於 5Y 高位（90%+ 分位）</td></tr>
+<tr><td>最終實現報酬</td><td>2021 高點進場者經歷 1.5-2 年 flat/負報酬（EPS 持續成長但倍數正常化抵銷），IRR 前段 ~0-3%/yr，待倍數消化後才恢復複利</td></tr>
+<tr><td>CW 最像 / 最不像</td><td>最像：同為「優質 + 高倍數 + 結構成長」；最不像：CW 有 AP1000/SMR 的 binary 上行選擇權（未列 guidance），上行尾部較肥</td></tr>
+</table>
+<p class="note">這不是說會複製，而是讓 5Y IRR ~4-5% 的估計有歷史錨點——高品質在 peak multiple 進場，初期報酬被 re-rate 吃掉是反覆出現的 pattern。</p>
+</div>
+
+<h4>🧬 IRR Composition（5Y IRR 質感拆解）</h4>
+<table>
+<tr><th>情境</th><th>EPS CAGR 貢獻</th><th>估值 re-rate 貢獻</th><th>股息 + 淨買回</th><th>合計年化</th></tr>
+<tr><td>Bull</td><td style="color:#15803d;">+15.0%</td><td style="color:#991b1b;">−5.0%</td><td style="color:#15803d;">+2.1%</td><td style="color:#15803d;">+12.1%</td></tr>
+<tr><td>Base</td><td style="color:#15803d;">+12.0%</td><td style="color:#991b1b;">−9.4%</td><td style="color:#15803d;">+2.1%</td><td style="color:#92400E;">+4.7%</td></tr>
+<tr><td>Bear</td><td style="color:#15803d;">+8.0%</td><td style="color:#991b1b;">−14.9%</td><td style="color:#15803d;">+2.1%</td><td style="color:#991b1b;">−4.8%</td></tr>
+</table>
+<div class="bar">
+<div style="width:50%;background:#15803d;" title="EPS +12%"></div>
+<div style="width:39%;background:#991b1b;" title="re-rate −9.4%"></div>
+<div style="width:9%;background:#64748b;" title="股息+回購 +2.1%"></div>
+</div>
+<p class="note">Base 列視覺化：綠（EPS +12%）｜紅（re-rate −9.4%）｜灰（股息+回購 +2.1%）</p>
+<p class="elevator">Base 4.7% IRR 中，EPS 複利貢獻 +12%/yr，但估值 re-rate <strong>倒扣 −9.4%/yr</strong>，股息+回購 +2.1%/yr。這檔的「可抱性」主要靠 EPS 自然複利——但現價進場時，<strong>幾乎全部複利被估值正常化吃掉</strong>，屬「需市場配合（倍數不崩）才好抱」的高風險組合。只有估值修復後進場，EPS 複利才能真正落袋。</p>
+<p class="note">Guardrail check：IRR composition Base 合計 +4.7% vs §4 表 Base 列 IRR +4.7%（diff 0%p ≤ 2%p）✅；vs 機率加權 +4.4%（diff 0.3%p）✅。</p>
+
+<!-- ===== §1 MENTAL MODELS ===== -->
+<h2>§1　Mental Models 壓力測試</h2>
+<h4>測試一：投委會 1 頁紙 Memo</h4>
+<div class="memo">標的：Curtiss-Wright (CW)｜現價 $747.73｜市值 $27.6B
+裁決：觀望（不在此價位建倉）
+
+THESIS：核海軍與商業核電不可替換的 sole-source 組件商；國防潛艇倍增（FY27 Navy 造艦 $65.8B +50%、FYDP 潛艇 $124.9B）+ AI 驅動核能復興（SMR DC 市場 $6.8B→$40.2B、US 400GW by 2050）雙引擎放大認證壁壘價值。
+
+KEY DRIVER：(1) 核海軍含量隨潛艇產能倍增（供給側壟斷 × 國防 super-cycle）；(2) 商業核電 AP1000 RCP + SMR 獨家硬體變現（需求側，獨立因果鏈）。
+
+R:R（5Y IRR）：Bull +12.1%/yr (25%) | Base +4.7%/yr (45%) | Bear −4.8%/yr (30%) → 加權 +4.4%/yr。弱（&lt; 8% 大盤）。
+
+主要風險：估值倍數壓縮（44-49x → 歷史均 22x = 股價腰斬，與 EPS 無關）；AP1000 RCP 訂單 2026 落空。
+
+建議倉位：現價 0%。觸發進場：Fwd PE &lt; 33x（~$560）或回測 BB 中軌 $694。條件成立後衛星 4%（Max DD 🟡 已下修上限）。</div>
+
+<h4>測試二：30 秒電梯簡報</h4>
+<div class="elevator">「CW 是做核潛艇和核電廠那些『換一個供應商要重新認證 5-10 年』的關鍵零件——美國海軍和 Westinghouse 幾乎只能用它。國防大擴軍 + AI 用電拉動核電復興，需求超強。問題只有一個：股價已經漲到 44 倍本益比、5 年前的 2 倍，把所有好消息都先漲完了。好公司，但現在太貴，等回檔再買。」（約 130 字）</div>
+<p class="note">兩個版本皆邏輯自洽（thesis 清楚、R:R 誠實、風險具體）→ 通過，進入 §7（已於上方呈現）。</p>
+
+<!-- ===== PHASE B ===== -->
+<h2>Phase B　矛盾辨識 + 強制裁決</h2>
+<div class="conflict">
+<h4>1. 共識清單（A1-A3 方向一致 = 高信心區）</h4>
+<ul class="tight">
+<li>護城河強且加深（A1 + A3 一致）：sole-source 認證 + 訂單動能（B2B 1.3x）+ margin 擴張。</li>
+<li>產業順風確立（A2 + A3 一致）：FY27 國防造艦 +50%、核能復興政策 + AI 用電。</li>
+<li>估值偏貴（A3 + Phase A4 DD 一致）：Fwd PE ~44-49x、PEG 3.45、5Y 分位 94%。</li>
+</ul>
+
+<h4>2. 矛盾清單</h4>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>性質</th></tr>
+<tr><td>C1</td><td>A1/A2「基本面/產業極強、跑道極長」 vs A3「估值已透支、5Y IRR 僅 ~4-5%」</td><td class="y">🟡 可調和（品質與時機分屬不同維度）</td></tr>
+<tr><td>C2</td><td>A2「核電 renaissance 結構成長」 vs A3「首批 SMR 2029-30、AP1000 訂單未列 guidance」（敘事熱 vs 現金流後置）</td><td>🔴 不可調和（時間軸對 5Y IRR 影響重大）</td></tr>
+</table>
+
+<h4>3. 與既有報告交叉矛盾</h4>
+<table>
+<tr><th>#</th><th>矛盾點</th><th>Phase A 結論</th><th>DD 結論</th><th>原因</th></tr>
+<tr><td>X1</td><td>MA 狀態</td><td>A：股價多頭強勢 ✅</td><td>DD 5/24 標 ma 🟡（BB stretched 視角）</td><td>視角差（DCA 用機械狀態機 ✅；DD manual 標 🟡 強調 BB 上軌）；本質一致——強勢但 stretched</td></tr>
+</table>
+
+<h4>4. ⚖ 強制裁決（不可調和矛盾）</h4>
+<table class="verdict-tbl">
+<tr><th>#</th><th>矛盾</th><th>選邊</th><th>依據</th><th>會 settle 的硬數據點</th><th>裁決後執行路徑（≥2 if-then）</th></tr>
+<tr><td>C2</td><td>核電敘事熱 vs 現金流後置</td><td>A3（現金流後置，不為敘事付過高溢價）</td><td>首批 SMR 商轉 2029-30（GE Hitachi/X-energy，World Nuclear/DCD 2026）已超出 5Y 窗口前半；AP1000 RCP 訂單明確「未列入 FY26 guidance」——上行為選擇權非已定價現金流。為尚未變現的選擇權付 PEG 3.45 不理性。</td><td>(1) AP1000 RCP 訂單公告（CW 法說 Q2'26 8/6 或 Q3'26 11 月）；(2) SMR 占商業核電比重季度披露（目標 2026 ≥ 12%）；(3) Westinghouse / 美國新建核電案 FID 決策</td><td>(a) 2026 內取得 AP1000 RCP 訂單 + 估值未衝高 → 升級進場（敘事變現金流，加碼至 4%）；(b) 2026 全年無 AP1000 訂單 + 股價維持 44x+ → 維持觀望/減碼評估，下行選擇權已落空但溢價仍在</td></tr>
+</table>
+<p class="note">C1（可調和）：品質（A1/A2）與時機（A3）是正交維度——好公司不等於現在好價格。裁決方式不是選邊，而是「承認品質高 → 列入 watchlist；承認估值貴 → 設條件式進場價」。已落實於 §7a。</p>
+</div>
+
+<!-- ===== §3 KEY DRIVERS ===== -->
+<h2>§3　Key Drivers</h2>
+<table>
+<tr><th>#</th><th>Key Driver</th><th>為什麼是命脈</th><th>可觀測指標</th></tr>
+<tr><td>1</td><td>核海軍含量隨潛艇產能倍增（供給側壟斷 × 國防 super-cycle）</td><td>Naval 26.9% 為最大終端市場 + sole-source 認證 = 最深護城河；FY27 造艦 +50%、FYDP 潛艇 $124.9B 直接拉動含量</td><td>book-to-bill、naval 段 YoY、Columbia/Virginia 撥款節奏</td></tr>
+<tr><td>2</td><td>商業核電 renaissance（AP1000 RCP + SMR）獨家硬體變現</td><td>需求側獨立引擎（能源/AI 用電，非國防預算）；每反應爐 ~$110M + 數十年服務尾，第二成長曲線</td><td>AP1000 RCP 訂單、SMR 占商業核電比重、SMR FID 數</td></tr>
+</table>
+<p><strong>為什麼是這 2 個：</strong>兩者是 thesis 的兩條正交因果鏈——driver 1 是「供給側壟斷 × 國防財政」，driver 2 是「需求側能源轉型 × AI 用電」。<strong>Guardrail check：</strong>driver 2 可在不假設 driver 1 成立下單獨被推翻（核電失望但國防續強，或反之）→ 確為獨立 driver，非 sub-component ✅。其餘（Defense Electronics、Aerospace、General Industrial）雖貢獻營收，但非估值溢價的命脈。</p>
+<h4>強制減法——我認為不重要的事</h4>
+<table>
+<tr><th>市場常討論</th><th>為什麼不重要</th></tr>
+<tr><td>單季 EPS beat 幅度</td><td>持有期 3-5 年，單季 beat/miss 是噪音；backlog $4.3B 已鎖定多年能見度</td></tr>
+<tr><td>Commercial Aerospace / General Industrial 週期</td><td>合計 ~24%，非 sole-source、非溢價來源；對 thesis 邊際影響小</td></tr>
+<tr><td>季度毛利率小幅波動</td><td>訂單型業務有 mix 季節性；看 TTM OPM 趨勢即可（QC-34 季節性過濾）</td></tr>
+</table>
+<h4>🔄 我和市場 consensus 的最大分歧</h4>
+<table>
+<tr><td>市場目前定價假設</td><td>Fwd PE 44-49x 隱含「國防 super-cycle + 核電 renaissance 同時全兌現 + 倍數維持溢價」——把後置的核電選擇權（2029-30 才商轉）提前充分定價</td></tr>
+<tr><td>我的不同假設</td><td>國防腿可靠（FY27 預算確認），但核電腿時間後置 + 訂單未定；倍數從 44x 正常化的下行風險 &gt; EPS 上修空間</td></tr>
+<tr><td>賣方為什麼錯</td><td>賣方目標價（中位 $698-720）外推 re-rating 動能、貼近現價，卻忽略 PEG 3.45 的數學——12.7% EPS 成長撐不起 44x，除非倍數永久停留高位（歷史 CW 僅 ~22x，難持續）</td></tr>
+</table>
+<p class="note">三題皆有具體差異 → thesis 具獨立 alpha 來源（contrarian = 「估值正常化風險被低估」），但因 alpha 來自「等價格」而非「比市場更看好基本面」，§7 倉位採條件式（現價 0%）。</p>
+
+<!-- ===== §5 SINGLE THING ===== -->
+<h2>§5　The Single Thing That Could Change My Mind</h2>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>事件描述（primary）</td><td><strong>Westinghouse AP1000 反應爐冷卻劑泵（RCP）訂單於 2026 年落地</strong>（目前明確未列入 FY26 guidance = 純上行選擇權）</td></tr>
+<tr><td>為什麼致命</td><td>這是「核電 renaissance 從敘事變現金流」的單點驗證。落地 → driver 2 兌現、~$110M/反應爐 × 多座可見度、估值得基本面支撐（值得進場）；落空/延後 → 最熱敘事 air-pocket，倍數先回落（強化觀望/等更好價格）</td></tr>
+<tr><td>如何監測</td><td>CW 季度法說（Q2'26 8/6、Q3'26 11 月）對 AP1000 訂單時點措辭；Westinghouse / 美國新建核電案 FID 公告；頻率：季度 + 重大新聞即時</td></tr>
+<tr><td>離發生多遠</td><td>管理層維持「2026 內取得」指引，但時點受客戶決策牽動；主觀機率 ~60-70%（12-24 個月）</td></tr>
+<tr><td>事件描述（secondary，§6b pre-mortem 派生）</td><td><strong>國防潛艇撥款節奏結構性放緩</strong>（FYDP 潛艇 $124.9B 大幅下修 / 連 2 季 book-to-bill &lt; 1.0x）——driver 1 的破壞觸發</td></tr>
+</table>
+<h4>🔗 Cross-check with DD §5.F</h4>
+<p><strong>✅ Aligned。</strong>DD v12.4 §5.F single thing = AP1000 RCP 訂單是否 2026 落地，與本 DCA §5 primary trigger 指向<strong>同一事件</strong>。DCA confirm 並加強監測 detail（資料來源：CW 法說 Q2'26 8/6；頻率：季度）。§6b pre-mortem 派生的 secondary trigger（國防撥款放緩）為 DCA 補充的第二監測點。</p>
+
+<!-- ===== §6 ===== -->
+<h2>蒙格多元思維模型交叉驗證</h2>
+<div class="card">
+<table>
+<tr><th>思維模型</th><th>套用於 CW</th><th>結論</th></tr>
+<tr><td>反過來想（Inversion）</td><td>要讓這筆投資 5 年虧 50%，最容易的路徑不是「公司變壞」（護城河太硬），而是「進場太貴 + 倍數正常化」。所以真正該避的不是 CW 這家公司，而是「在 44x 進場」這個動作。</td><td>→ 觀望（避開壞價格，非避開好公司）</td></tr>
+<tr><td>機會成本</td><td>邊際資金放 CW（IRR ~4-5%）vs 放現金等待 vs 加碼組合中更好 R:R 標的。CW 現價的預期報酬低於大盤 → 機會成本不利。</td><td>→ 不在此價位佔用資金</td></tr>
+<tr><td>誘因偏誤（賣方）</td><td>賣方目標價 $698-720 貼近現價、外推動能；其誘因是維持覆蓋與交易量，非絕對報酬。PEG 3.45 的數學被動能敘事掩蓋。</td><td>→ 不錨定賣方目標價</td></tr>
+<tr><td>安全邊際（Graham/Buffett）</td><td>合理價 $498-563（33x）vs 現價 $747——不僅無安全邊際，現價已含 −25~−33% 的負安全邊際。Bear $340。</td><td>→ 等價格進入安全邊際區</td></tr>
+<tr><td>能力圈</td><td>業務可理解（mission-critical 組件 + 認證壁壘），thesis 一句話說得清 → 在能力圈內，可長期追蹤。</td><td>→ 列入 watchlist，非放棄</td></tr>
+</table>
+<p class="note">五個模型交叉驗證一致指向同一結論：好公司、在能力圈內、值得長期追蹤，但<strong>現價缺乏安全邊際且機會成本不利</strong> → 觀望等價格。這不是對 CW 的否定，而是對「進場時機」的紀律。</p>
+</div>
+
+<h2>§6　What I Don't Know + Pre-mortem</h2>
+<h4>6a. 盲點</h4>
+<table>
+<tr><th>#</th><th>不確定的假設</th><th>thesis 仍成立的前提</th><th>假設不成立的後果</th></tr>
+<tr><td>1</td><td>倍數能否維持在 40x+（vs 歷史 22x）</td><td>市場持續給核電/國防溢價</td><td>倍數正常化 → 5Y 報酬被 re-rate 吃光（Base 已假設此）</td></tr>
+<tr><td>2</td><td>AP1000/SMR 商業化時程</td><td>2029-30 首批 SMR 如期 + AP1000 新建推進</td><td>核電腿延後 → driver 2 變現延後，上行選擇權貶值</td></tr>
+<tr><td>3</td><td>國防預算政治可持續性</td><td>FYDP 潛艇 $124.9B 不被 CR/僵局打斷</td><td>naval 動能放緩 → driver 1 削弱</td></tr>
+</table>
+
+<p class="note"><strong>盲點深掘：</strong>三個盲點中，盲點 1（倍數能否維持 40x+）對 5Y 報酬影響最大且最不可知——它取決於市場對「核電/國防溢價」的集體心理，而非 CW 可控的基本面。盲點 2（核電時程）是 binary 且後置（首批 SMR 2029-30），對 5Y 窗口前半影響有限、對 Y5+ 影響大。盲點 3（國防政治）是慢變數，FYDP $124.9B 提供緩衝但不免疫於 CR/僵局。三者共同點：<strong>沒有一個是「CW 執行力」的問題</strong>——公司會繼續做好它能控制的（複利、認證、訂單），不確定的全是「市場願意付多少倍數」與「外部時程」。這正是為何裁決是觀望（估值/時機）而非迴避（thesis 失敗）。</p>
+
+<div class="premortem">
+<h4>6b. Pre-mortem（三段式）</h4>
+<p><strong>第一段｜故事倒推：</strong></p>
+<p class="story">「假設 5 年後（2031）這個部位虧 ~40%：最可能的故事是——2026-27 AP1000 RCP 訂單一再延後、SMR 商轉時程滑到 2031+，市場對『核電 renaissance』失去耐心；同時國防預算在政治僵局下 naval 撥款節奏放緩，book-to-bill 跌破 1.0x。EPS 仍以 ~8% 緩升，但市場把 Fwd PE 從 44x 重估至歷史均 22x。EPS 成長救不回倍數腰斬，股價從 $747 跌至 ~$450（W104 區），帳面 −40%。」</p>
+<p><strong>第二段｜校驗 §5 single-thing：</strong></p>
+<table>
+<tr><th>檢查問題</th><th>答案</th></tr>
+<tr><td>失敗故事的關鍵觸發，是否就是 §5 的 single thing？</td><td class="y">⚠ 部分重疊</td></tr>
+</table>
+<p class="note">§5 primary（AP1000 訂單落空）撞上失敗故事的一半（核電腿）；但失敗故事還含「國防撥款放緩」這條 §5 原本未列的面向。</p>
+<p><strong>第三段｜修正 §5：</strong>已在 §5 區塊<strong>實際補上 secondary trigger</strong>「國防潛艇撥款結構性放緩 / 連 2 季 B2B &lt; 1.0x」（§5 trigger 數從 1 → 2）。</p>
+<p><strong>校驗紀錄：</strong>§5 修正狀態 = <strong>⚠ 已補 1 條 secondary trigger</strong>（國防撥款 driver 1 破壞點）。</p>
+</div>
+
+<div class="maxdd">
+<h4>6c. 路徑壓力測試（Max DD）</h4>
+<div><span class="num" style="color:#92400E;">−38% ~ −50%</span> &nbsp;<span style="font-size:28px;">🟡</span></div>
+<div class="bar"><div style="width:63%;background:#f59e0b;"></div><div style="width:37%;background:#e5e9f0;"></div></div>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>估計 Max DD 範圍</td><td><strong>−38% ~ −50%</strong>（下界：倍數壓至歷史均 22x × FY27 $17 ≈ $375；上界：回測 W104 $460 ≈ −38%）</td></tr>
+<tr><td>最可能觸發時點</td><td>2027 ~ 2028：AP1000 訂單落空 + 國防撥款放緩疊加，或大盤 risk-off 對高倍數股的 de-rating</td></tr>
+<tr><td>恢復時間</td><td>若 thesis 未破（EPS 仍複利）→ 12-24 個月可隨 EPS 追回；若 driver 1 結構性削弱 → thesis 已破，不會恢復</td></tr>
+<tr><td>路徑風險評級</td><td class="y">🟡 −30~−50%（需要強信念才扛得住）</td></tr>
+</table>
+<p class="note"><strong>校驗：</strong>若 Max DD 落在 −50%，能否撐到復原？條件：部位 ≤ portfolio 4%（已自 6% 下修）、不用槓桿、§5 primary trigger 未發生（AP1000 訂單仍 on track）。若 AP1000 訂單落空 + naval 放緩同時發生 → thesis 動搖，不應硬扛。範圍寬度 12%p（≥ 10%p ✓）。評級 🟡 → §7a 倉位上限已下修 6%→4%。</p>
+</div>
+
+<!-- ===== §8 ===== -->
+<h2>§8　Review Triggers</h2>
+<table>
+<tr><th>#</th><th>觸發點</th><th>類型</th><th>具體條件</th></tr>
+<tr><td>1</td><td>Q2 FY2026 財報</td><td>財報日期</td><td>2026-08-06（book-to-bill、naval YoY、AP1000 訂單措辭、guidance）</td></tr>
+<tr><td>2</td><td>AP1000 RCP 訂單 / SMR 進展</td><td>產業事件</td><td>Westinghouse / 美國核電案 FID；SMR 占商業核電比重季度披露</td></tr>
+<tr><td>3</td><td>估值修復至進場區</td><td>價位觸發</td><td>Fwd PE &lt; 33x（~$560）或回測 BB 中軌 $694</td></tr>
+<tr><td>4</td><td>§5 Single Thing</td><td>單點事件</td><td>AP1000 RCP 訂單落地（primary）；book-to-bill 連 2 季 &lt; 1.0x（secondary）</td></tr>
+</table>
+<p><strong>報告保質期：至 2026-08-06（Q2 FY2026 財報發布前有效）。</strong></p>
+<p><strong>最可能 upside：</strong>2026 內 AP1000 RCP 訂單落地 + FY26 guidance 再上修 → 核電腿變現金流，但需注意估值是否已先反映。<br>
+<strong>最可能 downside：</strong>倍數正常化（44x → 30x 以下）——即使 EPS 持續成長，re-rate 拖累使股價滯漲或回檔（Base IRR 僅 4.7% 的核心成因）。</p>
+
+<!-- ===== PHASE A (collapsible) ===== -->
+<h2>Phase A　獨立研究階段（折疊）</h2>
+
+<details>
+<summary>Phase A1｜護城河深度分析 — 結論：sole-source 認證護城河 ↑ widening，execution 9 / pricing 8</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>主要護城河類型</td><td>無形資產（NAVSEA 海軍核子認證 50+ 年）+ 高轉換成本（換供應商需 5-10 年重新認證）</td></tr>
+<tr><td>持久性評分</td><td>9/10，5 年穩固度：高</td></tr>
+<tr><td>最大侵蝕風險</td><td>SMR 技術路線洗牌使 CW 押注設計商出局（長尾，CW 跨多設計商分散）</td></tr>
+<tr><td>關鍵數據</td><td>毛利率 37.2%（→ 穩定）、ROIC 16.2%（↑，vs WACC ~8-9% 超額 ~7-8%p）、book-to-bill 1.3x、backlog $4.3B</td></tr>
+<tr><td><strong>moat_trend</strong></td><td><strong>↑ widening</strong>：FY27 Navy 造艦預算 +~50%（$65.8B，naval-technology 2026）→ 潛艇含量結構性增加；AP1000 RCP 獨家（~$110M/反應爐）+ SMR 占比 10%→12%（CW Q1'26 法說）= sole-source 範圍擴大</td></tr>
+</table>
+<table>
+<tr><th>維度</th><th>DD §9</th><th>DCA 獨立</th><th>Alignment</th></tr>
+<tr><td>Execution moat</td><td>9/10</td><td>9/10</td><td>aligned</td></tr>
+<tr><td>Pricing power moat</td><td>8/10</td><td>8/10</td><td>aligned</td></tr>
+<tr><td>合併</td><td>9/10</td><td>9/10</td><td>aligned</td></tr>
+</table>
+<p class="note"><strong>Sourced data points（8）：</strong>ROIC 16.2%（stockanalysis 2026）、GM 37.2%、AP1000 RCP ~$110M/反應爐（CW Q1'26）、SMR 10%→12%（CW Q1'26 法說）、50+ 年 NAVSEA 認證、book-to-bill 1.3x（Q1'26）、backlog $4.3B（+5% vs Dec'25）、21 筆併購 avg $97.7M（Tracxn 2026）。</p>
+<h4>護城河四來源逐項拆解（深度）</h4>
+<p><strong>① 無形資產（最強，9.5/10）：</strong>CW 護城河的第一性來源不是專利，而是<strong>監管認證 + zero-failure 安全紀錄</strong>。美國海軍核子推進計畫（源自 1950s Rickover 海軍核能）的供應商認證（NAVSEA / Knolls / Bettis 體系）需要數十年累積，且一旦失效紀錄出現即永久出局——這是一種「以安全紀錄為貨幣」的牌照護城河。AP1000 反應爐冷卻劑泵（RCP）的設計認證同理：核安全監管（NRC）對 RCP 這類「失效即災難」的組件採取極端保守的供應商驗證，CW 是 Westinghouse AP1000 設計的唯一合格 RCP 供應商。這類無形資產的年期以「數十年」計，遠超一般專利的 20 年。</p>
+<p><strong>② 轉換成本（極高，9/10）：</strong>量化來看，換掉 CW 的核子組件供應商，採購方需付出：(a) 5-10 年的重新認證流程（NAVSEA 或 NRC）；(b) 重建 zero-failure 安全紀錄的時間（無法加速）；(c) 對潛艇/反應爐這類 multi-decade 生命週期項目，供應商更換的工程整合風險。對美國海軍而言，潛艇是國家戰略資產，幾乎不可能為了採購成本去冒供應商切換的安全風險——這使 CW 的 naval 含量近乎「鎖死」。</p>
+<p><strong>③ 規模/工程整合優勢（中強，7/10）：</strong>CW 透過 21 筆 bolt-on 併購（avg $97.7M）建立了跨防務電子、感測、嵌入式運算、核子泵閥的整合工程能力。新進者需同時建立製造設施 + 認證 + 紀錄三者，且核子級製造的專業人才稀缺。這條護城河在商業/工業 niche 較弱（故 pricing power 給 8 而非 9）。</p>
+<p><strong>④ 網路效應（不適用）：</strong>CW 非平台型業務，無網路效應——這是 pricing power（8）略低於 execution（9）的結構原因，已在二維拆解反映。</p>
+<h4>競爭鴻溝 mechanism（為什麼資本充足對手跨不過）</h4>
+<p>三維壁壘至少滿足兩個：<strong>① 時間壁壘</strong>（海軍/NRC 認證 5-10 年，無法用錢買快）；<strong>② 紀錄壁壘</strong>（zero-failure track record 需數十年累積，是最不可複製的）；<strong>③ 資本+人才壁壘</strong>（核子級製造設施 + 稀缺專業人才）。這正是「錢買不到時間與紀錄」的典型——即使對手有無限資本，也無法在 thesis 持有期（3-5 年）內跨越認證 + 紀錄壁壘。</p>
+<h4>moat_trend ↑ widening 的具體證據</h4>
+<p>過去 12 個月護城河<strong>加深</strong>的 sourced 證據：(1) FY27 Navy 造艦預算 $65.8B（+~50% YoY，naval-technology 2026）→ 潛艇產能擴張直接放大 CW 的 sole-source 含量基數；(2) book-to-bill 1.3x（Q1'26）= 訂單 &gt; 出貨，backlog 升至 $4.3B（+5%）；(3) Ultra Energy（$200M，2024 底）+ WSC（$34M）把護城河延伸至下一代 SMR 設計商，AP1000 RCP 獨家位置變現在即。沒有任一「持平」的理由——認證範圍與訂單基數同步擴大。</p>
+<p><strong>A1 獨立結論：</strong>認證型 sole-source 護城河（9/10），execution + pricing 雙線 ↑ widening，是「錢買不到時間與紀錄」的結構護城河；侵蝕風險僅來自長尾的 SMR 技術路線分歧（已透過跨多設計商分散）。</p>
+</details>
+
+<details>
+<summary>Phase A2｜產業趨勢深度分析 — 結論：國防 + 核電雙引擎結構順風，runway 🟢 寬</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>TAM 與成長</td><td>國防造艦 FY27 $65.8B（+~50% YoY，2nd largest since 1955）；SMR DC 電力市場 $6.8B（2025）→ $40.2B（2034，22.3% CAGR）</td></tr>
+<tr><td>供需判斷</td><td>國防供給受造船廠產能制約（緊缺，故 $8.7B 投入 industrial base）；核電硬體因認證壁壘供給集中。未來 12 個月需求向上</td></tr>
+<tr><td>最大技術替代風險</td><td>SMR 技術路線分歧 / 核電復興再熄火（如福島後 10 年停滯），但 US 400GW by 2050 政策錨定</td></tr>
+<tr><td>最大政策/地緣風險</td><td>國防預算 CR / 政治僵局延後潛艇撥款（影響 driver 1）</td></tr>
+<tr><td>議價權位置</td><td>對上游 中、對下游 強（sole-source）</td></tr>
+<tr><td><strong>runway_post_y5</strong></td><td><strong>🟢 寬</strong>：S 曲線——國防中段、核電早期；首批 SMR 商轉 2029-30（GE Hitachi/X-energy）= 跑道主體在 Y5 之後；US 400GW by 2050 + 數據中心用電 17→35GW（2030）= 第二曲線 10-20 年級</td></tr>
+</table>
+<p class="note"><strong>Sourced data points（8）：</strong>FY27 Navy 造艦 $65.8B（naval-technology 2026）、Columbia $16.2B FY27（armyrecognition 2026）、FYDP 潛艇 $124.9B FY27-31、首 Columbia 2028 交付（USNI 2026/4/29）、SMR DC 市場 $6.8B→$40.2B 22.3% CAGR（marketintelo）、數據中心 17→35GW by 2030、US 400GW by 2050、首批 SMR 2029-30（World Nuclear/DCD）。</p>
+<h4>國防腿：FY27 預算的結構性確認（深度）</h4>
+<p>FY2027 國防預算對 CW 的 driver 1 是<strong>強力背書</strong>。Navy 造艦請求 $65.8B（按通膨調整為 1955 以來第二大，僅次 1962「41 for Freedom」彈道飛彈潛艇計畫），其中 Columbia-class $16.2B（含第 4 艘 SSBN-829 採購 + 工業基礎），Virginia-class 2 艘 $8.4B + AP $5.58B。更關鍵的是 <strong>FYDP（FY27-31）潛艇承諾 $124.9B</strong>（$62B 採購 5 艘 Columbia + $62.9B 採購 10 艘 Virginia）——這是 5 年的可見度，不是單年波動。另投入 $8.7B 海事工業基礎（含 $2.5B 供應商開發、$3.1B 核子造船生產力），直接緩解造船廠產能瓶頸 = CW 含量出貨的上游限制鬆綁。首艘 Columbia（SSBN-826）2028 交付（USNI 2026/4/29）。</p>
+<p><strong>意涵：</strong>driver 1 的「量」（潛艇產能）有 5 年預算錨定，CW 的 naval sole-source 含量隨之倍增，這是 thesis 中能見度最高、確定性最強的一條腿。</p>
+<h4>核電腿：renaissance 真實但現金流後置（深度）</h4>
+<p>核電 renaissance 的需求驅動是真實且多重的：(1) AI/數據中心用電 17GW（2022）→ 35GW（2030），grid interconnection 延遲達 10 年 → 科技巨頭轉向核電 PPA（Microsoft+Constellation 重啟 TMI、AWS 投資 X-energy、Google+Kairos 500MWe）；(2) US 政策目標 400GW 核能 by 2050；(3) SMR for 數據中心市場 $6.8B（2025）→ $40.2B（2034，22.3% CAGR）。<strong>但時間軸是關鍵矛盾</strong>：首批 SMR（GE Hitachi/X-energy）商轉預計 2029-30，廣義 SMR 市場 2024 $6.0B → 2030 僅 $7.14B（保守口徑 CAGR 3%）——意味核電腿的大規模現金流主體落在 thesis Y5（2031）之後。CW 的 AP1000 RCP 訂單明確「未列入 FY26 guidance」= 上行選擇權而非已定價現金流。</p>
+<h4>runway_post_y5 🟢 寬的判準</h4>
+<p>S 曲線位置：國防 = 中段穩健成長；商業核電/SMR = 起飛前段（早期 S 曲線）。Y5 末（2030）：國防潛艇仍在產能爬坡（遠未飽和）；核電才剛進入首批商轉（2029-30）。第二曲線（SMR 規模化 + AP1000 新建潮）主體在 2030s，US 400GW by 2050 提供 20 年級錨定 → <strong>🟢 寬</strong>（Y5 之後跑道不僅存在，且核電腿的主升段才正要開始）。這也是為何即便現價 IRR 弱，長期持有信心仍為「高」——問題純在進場估值，不在跑道。</p>
+<p><strong>A2 獨立結論：</strong>國防 super-cycle（FY27 預算確認、FYDP $124.9B 5 年錨定）+ 核電 renaissance（政策 + AI 用電驅動，但現金流後置至 Y5+）雙引擎結構順風，runway 🟢 寬。</p>
+</details>
+
+<details>
+<summary>Phase A3｜業務 / 財務 / 資本配置 — 結論：高品質複利機，估值是唯一硬傷</summary>
+<table>
+<tr><th>項目</th><th>內容</th></tr>
+<tr><td>營收結構</td><td>現金牛：Naval & Power（含核海軍 + 核電，最深護城河）；成長引擎：Defense Electronics + 商業核電；拖累/週期：Commercial Aero + General Industrial（~24%）</td></tr>
+<tr><td>客戶集中度</td><td>美國政府（~57.7% 國防相關，直接+間接）；商業客戶分散；風險：低（sole-source 使集中反成護城河）</td></tr>
+<tr><td>定價權</td><td>ASP → 穩定 + mix 升級；定價權：強（OPM 擴張為證）</td></tr>
+<tr><td>未來金雞母</td><td>商業核電（AP1000 RCP + SMR），目前占比小，潛在 TAM 大，成熟 ~2029-30 後</td></tr>
+<tr><td>財務體質</td><td>FCF 轉換 114%、毛利率 37.2%（→）、D/E 0.44、Net Debt/EBITDA 0.97x；壓力測試營收 −20% 仍 FCF 正</td></tr>
+<tr><td>資本配置紀律</td><td>紀律 bolt-on（avg $97.7M，無重大減損）+ 回購授權 $2.07B（2024 $250M）+ 股利（+14%）；花錢有效</td></tr>
+<tr><td><strong>5Y IRR 分量基底（Base）</strong></td><td>EPS CAGR ~12%（FY25 $13.23 → FY30 ~$23.3，consensus FY26 $15.21 / FY27 $17.05）；5Y 末 Fwd PE ~30x vs 當前 ~49x（re-rate −9.4%/yr）；股息率 ~0.13%；淨買回率 ~2%（扣 SBC ~1%）</td></tr>
+</table>
+<p class="note"><strong>EPS 來源：</strong>CW NOT in Excel snapshot 2026-05-26 → yfinance Refinitiv consensus（n=7）。FY26 $15.21 / FY27 $17.05 / FY28 §8 推導 $18.93。</p>
+<p class="note"><strong>Sourced data points（9）：</strong>FY25 Rev $3,498M +12.1%、FY25 Adj EPS $13.23、Q1'26 Rev $913.7M +13%、Q1'26 Adj EPS $3.48 +23%（businesswire 2026/5/6）、FCF $553.7M（FCF/NI 1.14）、OPM 18.2%、D/E 0.44（stockanalysis）、buyback 授權 $2.07B / 2024 $250M、FY26 guide EPS $14.90-15.30。</p>
+<h4>逐業務段營收結構（深度）</h4>
+<p>CW 三個 segment（Aerospace & Industrial / Defense Electronics / Naval & Power）對應六個終端市場（FY2025）：Naval Defense 26.9%、Aerospace Defense 19.2%、Power & Process 18.2%、Commercial Aerospace 12.3%、General Industrial 11.8%、Ground Defense 11.6%。國防相關合計 ~57.7%（受政府預算驅動），商業/民用 ~42.3%。Q4'25 動能：Ground Defense +36%、Commercial Aerospace +22%、Power & Process +22% 三者最快。<strong>價值集中在 Naval & Power</strong>——它同時是現金牛（核海軍 sole-source）與成長引擎（商業核電 + SMR），是 thesis 的核心。</p>
+<h4>財務體質與獲利品質（深度）</h4>
+<p>FY2025：Rev $3,498M（+12.1%）、GM 37.2%、OPM 18.2%、Net margin 13.8%、FCF $553.7M（margin 15.8%、FCF/NI 1.14）、OCF $643M、Capex $89.7M（Capex/Rev 僅 2.6% = 輕資本）。三年趨勢全向上：FCF margin 10%（2022）→ 15.8%（2025），OPM 16%（2023）→ 18.2%（2025），ROIC ~13% → 16.2%。<strong>獲利品質真實</strong>：OCF $643M &gt; NI $484M（無操縱）、SBC ~1% 營收（低稀釋）、GAAP vs Adj EPS 差距僅 ~3%（主為併購無形攤銷）。盈餘品質型陷阱的徵兆（FCF/NI &lt; 0.75、SBC 膨脹、EPS 靠回購）皆不存在。FCF lumpiness 溫和（5Y 谷底 FY22 $257M ≈ 5Y 均 65%），屬訂單型業務正常週期。</p>
+<h4>資本配置紀律（深度）</h4>
+<p>過去 5 年 M&A track record：Ultra Energy（$200M，2024）+ WSC（$34M，2024）= 核儀控 + SMR 設計商佈局；21 筆累計 avg $97.7M（~0.6/yr），<strong>無單筆 &gt; 市值 5%</strong>（$1.38B）、無重大減損——紀律型 bolt-on acquirer，是治理正面。股東回報：回購授權升至 $2.07B（2024 回購 $250M / ~766K 股），自 2021 累計 &gt; $700M；股利 $0.24/季（+14%，yield ~0.13% token）。<strong>唯一資本配置警訊</strong>：當前 44x 高位若大量回購 = 高價買回，需監測（過去回購均價遠低於現價，紀錄良好）。</p>
+<h4>5Y IRR 分量基底推導（深度）</h4>
+<p>Base case 四分量：(1) EPS CAGR ~12%——consensus FY26 $15.21 (+15%) / FY27 $17.05 (+12%)，FY28 後隨 runway 微降至 ~11%，FY30 ~$23.3；(2) 估值 re-rate −9.4%/yr——當前 Fwd PE ~49x（FY26 基礎）正常化至 5Y 末 ~30x，`(30/49)^(1/5)-1`；(3) 股息率 ~0.13%；(4) 淨買回率 ~2%（buyback yield 2.08% 扣 SBC ~1% 稀釋後 ~1.1-2%，取 2% 含授權加速）。合計 12 − 9.4 + 2.1 ≈ +4.7%/yr。<strong>關鍵洞察</strong>：EPS 複利強（12%），但被估值正常化（−9.4%）幾乎完全抵銷——這就是「優質但昂貴」的 IRR 壓縮機制。</p>
+<p><strong>A3 獨立結論：</strong>高品質複利機（ROIC 16% + FCF 轉換 114% + 紀律資本配置 + 低 SBC），基本面無瑕；唯一硬傷是估值——Fwd PE 44-49x 使 5Y IRR 基底僅 ~4-5%，EPS 複利被 re-rate 吃光。</p>
+</details>
+
+<details>
+<summary>Phase A4｜既有報告數據擷取（DD_CW_20260529.html + 5/24）</summary>
+<table>
+<tr><th>DD dd-meta 欄位</th><th>值</th><th>DCA 引用</th></tr>
+<tr><td>signal</td><td>B</td><td>§7 decision matrix（DD ≥ B）</td></tr>
+<tr><td>trap / trap_label</td><td>🟢 / 非陷阱</td><td>§1 一致（風險為 over-valuation）</td></tr>
+<tr><td>moat / moat_score</td><td>A / 9</td><td>A1 cross-check aligned</td></tr>
+<tr><td>moat_execution / pricing_power</td><td>9 / 8</td><td>A1 二維 aligned</td></tr>
+<tr><td>val</td><td>🔴</td><td>§4 / §7（估值過熱主導觀望）</td></tr>
+<tr><td>fpe_fy2 / pct_5y / peg_fy2</td><td>43.9 / 94 / 3.45</td><td>§4 IRR re-rate 輸入</td></tr>
+<tr><td>ma</td><td>✅</td><td>§7c（強勢但 BB stretched）</td></tr>
+<tr><td>price_at_dd</td><td>747.73</td><td>§7 進場價錨點</td></tr>
+<tr><td>upside_short/mid/5y_pct</td><td>−33 / −25 / −10</td><td>§4 對照（現價上行為負）</td></tr>
+<tr><td>stress</td><td>2/2</td><td>§4 conviction 校驗</td></tr>
+<tr><td>ai_risk</td><td>🟢</td><td>A2 對照（AI 受益）</td></tr>
+<tr><td>long_term_confidence</td><td>高</td><td>§7d（長抱前提：合理估值進場）</td></tr>
+<tr><td>DD §5.F single thing</td><td>AP1000 RCP 訂單 2026</td><td>§5 ✅ aligned</td></tr>
+</table>
+<p class="note">ID 報告：docs/id/ 無 CW 對應專屬 ID（CW 跨「specialty defense + 商業核電」多主題）；相關主題見 supply-chain / 核電 renaissance 敘事。Phase A4 = 純數據輸入，無獨立結論。</p>
+</details>
+
+<p class="note" style="margin-top:28px;border-top:1px solid #e2e8f0;padding-top:12px;">
+Deep Conviction Analysis｜生成 2026-05-29｜DD basis: DD_CW_20260529.html（v12.4）｜資料：yfinance、CW Q1'26 法說/8-K、naval-technology、armyrecognition、USNI、businesswire、stockanalysis、World Nuclear。本報告為投資決策框架，非投資建議；呈現條件化判斷，不含直接買賣建議。
+</p>
+
+</div>
+<button class="printbtn" onclick="window.print()">列印為 PDF</button>
+</body>
+</html>
