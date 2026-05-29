@@ -1,0 +1,324 @@
+{
+  "id": "cxl",
+  "tab": "CXL / 記憶體介面",
+  "title": "CXL / 記憶體介面晶片供應鏈",
+  "subtitle": "AI 伺服器「記憶體牆」的旁路 — DDR5 每條 RDIMM 都必經 RCD（暫存時脈驅動器）+ DB（資料緩衝器）+ SPD Hub + PMIC 一組介面晶片，全球僅 Montage 瀾起 / Rambus / Renesas 三家 JEDEC 認證、自 DDR4 起十年無新進者，是整段最硬的結構性鎖喉。MRDIMM（MRCD/MDB）隨 AMD Venice（2026）/ Intel Diamond Rapids（延至 2027）放量；CXL 記憶體擴展（Astera Leo 已上 Azure、Montage MXC / Marvell Structura 送樣）2026 H2 初放量、池化 2027。本圖揭露：除 RCD/DB 三雄 cartel 外，CXL 控制器、PMIC、模組皆為 JEDEC 多源設計下的競爭性寡占 — 真正能力鎖喉集中在介面晶片組一處。",
+  "single_point_framework": "v1.3",
+  "stats": [
+    { "k": "供應鏈節點", "v": 13 },
+    { "k": "涵蓋廠商", "v": "40+" },
+    { "k": "結構性鎖喉單點", "v": 1, "sub": "DDR5 RCD/DB 介面晶片組 — Montage+Rambus+Renesas 三雄 JEDEC cartel（≥95%、DDR4 起無新進者）", "hot": true }
+  ],
+  "rows": [
+    { "id": "chipset", "label": "DDR5 / MRDIMM 介面晶片組 Memory Interface Chipset", "main": true },
+    { "id": "companion", "label": "模組伴隨晶片：SPD Hub / TS / PMIC Companion Chips", "main": false },
+    { "id": "cxl", "label": "CXL 控制晶片：記憶體擴展 / 池化 / 交換 CXL Controllers & Switch", "main": true },
+    { "id": "module", "label": "記憶體模組：DRAM IDM + 模組廠 Memory Modules", "main": true },
+    { "id": "demand", "label": "終端需求：CPU 平台 / Hyperscaler / AI 伺服器 Demand", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "n-rcd",
+      "row": "chipset", "col": 1, "span": 2, "kind": "rail",
+      "name": "RCD 暫存時脈驅動器",
+      "nameEn": "Registering Clock Driver (RCD)",
+      "competition": "monopoly",
+      "single": "結構性鎖喉（三雄 JEDEC cartel）· 每條 DDR5 RDIMM/LRDIMM 必裝 RCD，全球僅 Montage 瀾起（~40-45%）+ Rambus（自報 mid-40%）+ Renesas（殘值 ~10-15%）三家 JEDEC 認證、合計 ≥95%；每世代需與 Samsung/Micron/SK Hynix 共同認證 18-24 月、自 DDR4 起十年無新進者 → 客戶可在三雄間 dual-source 但無法脫離 cartel（信心度 high · Rambus 法說自報 + Montage 招股書 Frost&Sullivan + 多源）",
+      "desc": "RDIMM/LRDIMM 上重新驅動位址/命令/時脈訊號的核心介面晶片，DDR5 高速下不可或缺；Gen4 已達 7,200 MT/s 量產、Gen6 9,600 MT/s 送樣。",
+      "marketSize": "RCD TAM ~$8.7 億（2025）",
+      "growth": "CAGR ~35% to 2030",
+      "analysis": "Montage 瀾起 688008 為全球記憶體互連晶片營收第一（2024 Frost & Sullivan）、Rambus 自報 DDR5 RCD 出貨量 mid-40%、Renesas（前 IDT）為唯一全家族（RCD+DB+PMIC+TS+SPD）但整體市佔流失。三雄 dual-source 互換性高（drop-in），但 cartel 整體 = 每條 DDR5 RDIMM 必經、JEDEC + 類比 IP + DRAM 廠共同認證構成 5 年內阻擋第 4 家的結構性壁壘 → 列結構性 cartel ⚑（待 critic 裁；Montage/Rambus 為 cartel locker、Renesas 為大型 MCU 集團一小段）。",
+      "companies": [
+        { "name": "Montage 瀾起科技", "ticker": "688008.SS", "country": "CN", "share": "RCD ~40-45%（營收第一）", "products": "Gen1-4 RCD（7,200 MT/s 量產）", "note": "純玩記憶體互連、AI 資料中心驅動、互連晶片營收 +53% YoY；TSMC/UMC 代工", "core_business": true, "supply_chain_lock": "tight", "src": "https://www.trendforce.com/news/2026/02/09/news-global-memory-interconnect-leader-montage-technology-rides-ai-data-center-boom-to-hk-ipo/" },
+        { "name": "Rambus", "ticker": "RMBS", "country": "US", "share": "DDR5 RCD 出貨 mid-40%", "products": "Gen3/4/5 RCD", "note": "DDR5 單位市佔自報 mid-40%、年年上修。chip-segment locker；惟 ~40-45% 營收仍為 IP 授權/權利金（非純玩家，pricing power 部分被授權業務稀釋）", "core_business": true, "supply_chain_lock": "tight", "src": "https://www.fool.com/earnings/call-transcripts/2026/02/02/rambus-rmbs-q4-2025-earnings-call-transcript/" },
+        { "name": "Renesas（前 IDT）", "ticker": "6723.T", "country": "JP", "share": "殘值 ~10-15%", "products": "Gen6 RCD 9,600 MT/s 首發 + 全家族", "note": "大型 MCU/類比集團、記憶體介面僅一小段（推不動整體 EPS）；唯一全家族供應", "node_role": "elephant" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-idm" }, { "id": "n-modtw" }],
+      "sources": [
+        { "label": "TrendForce：Montage 全球記憶體互連龍頭赴港 IPO（Frost&Sullivan）", "url": "https://www.trendforce.com/news/2026/02/09/news-global-memory-interconnect-leader-montage-technology-rides-ai-data-center-boom-to-hk-ipo/" },
+        { "label": "Rambus Q4 2025 法說逐字稿（DDR5 RCD mid-40%）", "url": "https://www.fool.com/earnings/call-transcripts/2026/02/02/rambus-rmbs-q4-2025-earnings-call-transcript/" },
+        { "label": "Digitimes：Montage DDR5 2025 營收獲利大增", "url": "https://www.digitimes.com/news/a20260402VL208/2025-ddr5-growth-profit-revenue.html" },
+        { "label": "中國記憶體廠商加速 DDR5 研發、逼近三大廠（TechNews）", "url": "https://technews.tw/2026/05/18/chinese-memory-manufacturers-accelerate-ddr5-rd/" }
+      ]
+    },
+    {
+      "id": "n-db",
+      "row": "chipset", "col": 3, "span": 1, "kind": "rail",
+      "name": "DB 資料緩衝器",
+      "nameEn": "Data Buffer (DB)",
+      "competition": "oligopoly",
+      "desc": "LRDIMM 上緩衝 DRAM 資料線、降低負載以拉高容量/速度的介面晶片；與 RCD 同世代共同認證。",
+      "marketSize": "RCD/DB 同 chipset",
+      "growth": "隨 LRDIMM",
+      "analysis": "與 RCD 同三雄（Montage / Rambus / Renesas）、與 RCD 共同認證為一組 chipset；Montage DB 領先。結構與 RCD 同屬三雄 cartel，但本節點列 oligopoly（cartel 鎖喉以 RCD 節點代表標示，避免重複打旗）。",
+      "companies": [
+        { "name": "Montage 瀾起科技", "ticker": "688008.SS", "country": "CN", "share": "DB 領先", "products": "DDR5 Data Buffer", "note": "與 RCD 共同認證" },
+        { "name": "Rambus", "ticker": "RMBS", "country": "US", "share": "DB 第二", "products": "DDR5 DB", "note": "與 RCD 同步出貨" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "DB 殘值", "products": "DDR5 DB", "note": "全家族之一" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-idm" }, { "id": "n-modtw" }],
+      "sources": [
+        { "label": "Rambus DDR5 DIMM chipset 總覽", "url": "https://www.rambus.com/memory-interface-chips/ddr5-dimm-chipset/" }
+      ]
+    },
+    {
+      "id": "n-mrcd",
+      "row": "chipset", "col": 4, "span": 2, "kind": "rail",
+      "name": "MRDIMM 緩衝器 MRCD / MDB",
+      "nameEn": "MRDIMM Buffer (MRCD + MDB)",
+      "competition": "oligopoly",
+      "desc": "MRDIMM（多階 RDIMM）把兩個 rank 多工成單倍頻寬，AI 推論伺服器頻寬剛需；Gen2 送樣、量產綁 CPU 平台。",
+      "marketSize": "MRDIMM TAM ~$6 億",
+      "growth": "2027 放量",
+      "analysis": "同三雄供應：Montage Gen2 MRCD/MDB 送樣 Samsung/SK Hynix、Renesas 宣稱首套完整 Gen2 chipset、Rambus 2026 末初貢獻。量產綁 Intel Diamond Rapids（延 2027）/ AMD Venice（2026）→ 平台延遲為主要風險。競爭性寡占。",
+      "companies": [
+        { "name": "Montage 瀾起科技", "ticker": "688008.SS", "country": "CN", "share": "MRCD/MDB 領先", "products": "Gen2 MRCD/MDB 送樣", "note": "送樣 Samsung/SK Hynix" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "首套完整 Gen2", "products": "RRG50120 MRCD + MDB + PMIC", "note": "宣稱業界首套完整 Gen2 chipset" },
+        { "name": "Rambus", "ticker": "RMBS", "country": "US", "share": "2026 末初貢獻", "products": "MRCD/MDB (12800)", "note": "主要貢獻 2027" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-idm" }, { "id": "n-modtw" }],
+      "sources": [
+        { "label": "Montage Gen2 MRCD/MDB ES 送樣", "url": "https://www.montage-tech.com/Press_Releases/20250124" },
+        { "label": "Renesas 業界首套完整 Gen2 MRDIMM chipset", "url": "https://www.renesas.com/en/about/newsroom/renesas-introduces-industry-s-first-complete-memory-interface-chipset-solutions-second-generation" }
+      ]
+    },
+    {
+      "id": "n-ckd",
+      "row": "chipset", "col": 6, "span": 1, "kind": "rail",
+      "name": "CKD 客戶端時脈驅動器",
+      "nameEn": "Clock Driver (CKD, CUDIMM)",
+      "competition": "oligopoly",
+      "desc": "CUDIMM/CSODIMM（客戶端）上的時脈驅動器，DDR5 6,400 MT/s+ PC/NB 模組需要；同三雄 + 台廠切入。",
+      "marketSize": "客戶端",
+      "growth": "PC DDR5 升速",
+      "analysis": "Montage / Rambus / Renesas 主供、客戶端市場較開放；Apacer/ADATA 等模組廠採用。競爭性寡占。",
+      "companies": [
+        { "name": "Montage 瀾起科技", "ticker": "688008.SS", "country": "CN", "share": "CKD 領先", "products": "CKD for CUDIMM", "note": "客戶端時脈驅動" },
+        { "name": "Rambus", "ticker": "RMBS", "country": "US", "share": "CKD 補位", "products": "Client Clock Driver", "note": "PC/NB DDR5" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-modtw" }],
+      "sources": [
+        { "label": "Montage 記憶體介面產品線", "url": "https://www.montage-tech.com/Memory_Interface" }
+      ]
+    },
+    {
+      "id": "n-spd",
+      "row": "companion", "col": 1, "span": 2, "kind": "rail",
+      "name": "SPD Hub + 溫度感測 TS",
+      "nameEn": "SPD Hub + Temperature Sensor",
+      "competition": "oligopoly",
+      "desc": "DDR5 模組強制內建的 I3C SPD EEPROM + Hub + 整合溫度感測，JEDEC SPD5118 規格。",
+      "marketSize": "模組伴隨",
+      "growth": "隨 DDR5 滲透",
+      "analysis": "同三雄（Montage M88SPD5118 / Renesas SPD5118 / Rambus SPD1605）；JEDEC 強制、無短週期替代但三家互換。競爭性寡占。",
+      "companies": [
+        { "name": "Montage 瀾起科技", "ticker": "688008.SS", "country": "CN", "share": "SPD Hub 領先", "products": "M88SPD5118", "note": "I3C SPD + TS 整合" },
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "SPD Hub", "products": "SPD5118", "note": "全家族之一" },
+        { "name": "Rambus", "ticker": "RMBS", "country": "US", "share": "SPD Hub", "products": "SPD1605Gxx", "note": "與 RCD 配套" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-idm" }, { "id": "n-modtw" }],
+      "sources": [
+        { "label": "Montage DDR5 SPD/PMIC/TS 產品頁", "url": "https://www.montage-tech.com/DDR5_SPD_PMIC_TS" }
+      ]
+    },
+    {
+      "id": "n-pmic-s",
+      "row": "companion", "col": 3, "span": 2, "kind": "rail",
+      "name": "伺服器 RDIMM PMIC",
+      "nameEn": "Server RDIMM PMIC",
+      "competition": "oligopoly",
+      "desc": "DDR5 首度把電源管理 IC 移上模組（DDR4 無），伺服器 RDIMM/LRDIMM PMIC 每模組增 $15-20 TAM。",
+      "marketSize": "$15-20/模組",
+      "growth": "CAGR ~6%",
+      "analysis": "Renesas P8900（IDT 傳承、60+ 模組廠驗證）為伺服器 RDIMM PMIC 最強、Rambus PMIC5020 + Montage 競爭。伺服器段 Renesas 領先但可替代。競爭性寡占。",
+      "companies": [
+        { "name": "Renesas", "ticker": "6723.T", "country": "JP", "share": "伺服器 PMIC 領先", "products": "P8900 PMIC", "note": "60+ 模組廠驗證、IDT 傳承" },
+        { "name": "Rambus", "ticker": "RMBS", "country": "US", "share": "伺服器 PMIC 競爭", "products": "PMIC5020 Extreme Current", "note": "7,200 MT/s" },
+        { "name": "Montage 瀾起科技", "ticker": "688008.SS", "country": "CN", "share": "伺服器 PMIC", "products": "DDR5 PMIC", "note": "配套 RCD/DB" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-idm" }, { "id": "n-modtw" }],
+      "sources": [
+        { "label": "Renesas P8900 DDR5 RDIMM/LRDIMM PMIC", "url": "https://www.renesas.com/en/products/power-management/multi-channel-power-management-ics-pmics/p8900-pmic-ddr5-rdimms-and-lrdimms" }
+      ]
+    },
+    {
+      "id": "n-pmic-c",
+      "row": "companion", "col": 5, "span": 2, "kind": "rail",
+      "name": "客戶端 DIMM PMIC",
+      "nameEn": "Client DIMM PMIC",
+      "competition": "redocean",
+      "desc": "PC/NB UDIMM/SODIMM/CUDIMM 的 DDR5 模組 PMIC；較不差異化、台廠立錡切入。",
+      "marketSize": "客戶端電源",
+      "growth": "PC DDR5",
+      "analysis": "客戶端較開放：Richtek 立錡（RTQ5119A/5132/5136）、Monolithic Power MPS（MP5431）、Renesas、Samsung 自製競爭。立錡為台廠在記憶體介面唯一有感切入點（客戶端 PMIC），伺服器段仍 Renesas 主導。紅海。",
+      "companies": [
+        { "name": "Richtek 立錡", "ticker": "6286.TW", "country": "TW", "share": "客戶端 PMIC 要角", "products": "RTQ5119A / RTQ5132 / RTQ5136", "note": "台廠記憶體介面切入點；MediaTek 集團、客戶端為主戰場" },
+        { "name": "Monolithic Power MPS", "ticker": "MPWR", "country": "US", "share": "客戶端 PMIC", "products": "MP5431", "note": "客戶端 DDR5" },
+        { "name": "Samsung（自製）", "ticker": "005930.KS", "country": "KR", "share": "自有模組", "products": "in-house client PMIC", "note": "自家模組自製" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "n-modtw" }],
+      "sources": [
+        { "label": "Richtek RTQ5119A DDR5 RDIMM PMIC datasheet", "url": "https://www.richtek.com/assets/product_file/RTQ5119A/DSQ5119A-02.pdf" },
+        { "label": "記憶體概念股 群聯/威剛/十銓 DDR5（pocket.tw）", "url": "https://www.pocket.tw/school/report/perspective/7376/" }
+      ]
+    },
+    {
+      "id": "n-cxlmem",
+      "row": "cxl", "col": 1, "span": 3, "kind": "stage",
+      "name": "CXL 記憶體控制器（擴展 / 池化）",
+      "nameEn": "CXL Memory Controller (Expansion / Pooling)",
+      "competition": "oligopoly",
+      "desc": "把 DDR5 經 PCIe/CXL 介面掛到 CPU、做記憶體擴展與跨機池化的控制晶片；CXL 2.0 擴展已部署、3.x 池化送樣。",
+      "marketSize": "CXL 市場 2028 ~$150 億",
+      "growth": "CAGR ~31%",
+      "analysis": "Astera Labs Leo（已上 Microsoft Azure M 系列、唯一具名 hyperscaler 部署，但 2026 H2 才初量產）、Montage MXC（CXL 3.1 送樣 Samsung/SK Hynix）、Marvell Structera X（與 AMD/Intel + 三大 DRAM 互通）、Microchip SMC 2000 四家競爭。多源送樣/量產、無單一鎖定。競爭性寡占（Astera 首動領先）。",
+      "companies": [
+        { "name": "Astera Labs", "ticker": "ALAB", "country": "US", "share": "CXL 控制器領先（首動）", "products": "Leo CXL Smart Memory Controller", "note": "唯一具名 hyperscaler（Azure M 系列）；Leo 2026 H2 初量產，主營仍 Aries retimer" },
+        { "name": "Montage 瀾起科技", "ticker": "688008.SS", "country": "CN", "share": "CXL 3.1 送樣", "products": "MXC M88MX6852 (CXL 3.1)", "note": "送樣 Samsung/SK Hynix；PCIe 6.2 x8、雙通道 DDR5-8000" },
+        { "name": "Marvell", "ticker": "MRVL", "country": "US", "share": "CXL 擴展/近記憶體", "products": "Structera X / Structera A", "note": "與 AMD EPYC + Intel Xeon + 三大 DRAM 互通驗證" },
+        { "name": "Microchip", "ticker": "MCHP", "country": "US", "share": "早期 CXL", "products": "SMC 2000", "note": "2022 起送樣、非領先" }
+      ],
+      "upstream": [{ "id": "n-idm" }],
+      "downstream": [{ "id": "n-cpu" }, { "id": "n-demand" }],
+      "sources": [
+        { "label": "Astera Leo CXL 控制器上 Microsoft Azure M 系列", "url": "https://ir.asteralabs.com/news-releases/news-release-details/astera-labs-leo-cxl-smart-memory-controllers-microsoft-azure-m" },
+        { "label": "Montage MXC M88MX6852 (CXL 3.1)", "url": "https://www.montage-tech.com/MXC/M88MX6852" },
+        { "label": "Marvell Structera 與 AMD/Intel 互通", "url": "https://www.marvell.com/company/newsroom/marvell-announces-successful-interoperability-structera-cxl-portfolio-amd-intel.html" },
+        { "label": "瀾起推 CXL 3.1 記憶體擴展控制器（中央社）", "url": "https://www.cna.com.tw/postwrite/chi/411128" },
+        { "label": "瀾起以 CXL 記憶體技術重塑 AI 資料中心（Digitimes 中文）", "url": "https://www.digitimes.com.tw/tech/dt/n/shwnws.asp?id=0000722207_MDG3KXO1LLQTEK8X93ODW" }
+      ]
+    },
+    {
+      "id": "n-cxlsw",
+      "row": "cxl", "col": 4, "span": 3, "kind": "stage",
+      "name": "CXL 交換 / Fabric",
+      "nameEn": "CXL Switch / Fabric",
+      "competition": "emerging",
+      "desc": "跨多機/多機架做記憶體池化所需的 CXL 交換晶片；CXL 3.x 池化的關鍵但尚在量產前夕。",
+      "marketSize": "新興",
+      "growth": "2028 放量",
+      "analysis": "Marvell 以 $540M 併購 XConn（CXL switch 新創，Apollo 2 PCIe 6.2+CXL 3.1 混合）→ 獨立 CXL switch 新創段被整併、Marvell 成事實領導者（Structera S 2026 Q3 送樣、FY2028 才有 $100M 級營收）。客戶替代為 CPU 內建 fabric。新興、集中度高但量產未到。",
+      "companies": [
+        { "name": "Marvell（含 XConn）", "ticker": "MRVL", "country": "US", "share": "CXL switch 事實領導", "products": "Structera S 30260 + XConn Apollo 2", "note": "$540M 併 XConn（2026 初完成）；Structera S 2026 Q3 送樣" },
+        { "name": "Intel（CPU 內建）", "ticker": "INTC", "country": "US", "share": "整合式 fabric", "products": "CPU 內建 CXL", "note": "非獨立 switch、為客戶替代路線" }
+      ],
+      "upstream": [{ "id": "n-cxlmem" }],
+      "downstream": [{ "id": "n-demand" }],
+      "sources": [
+        { "label": "Marvell 以 $540M 併購 XConn", "url": "https://www.datacenterdynamics.com/en/news/marvell-acquires-pcie-and-cxl-switch-provider-xconn-technologies-for-540m/" },
+        { "label": "Marvell Structera S 次世代 CXL switch", "url": "https://www.marvell.com/company/newsroom/marvell-next-gen-cxl-switch-memory-pooling-breaks-ai-memory-wall.html" }
+      ]
+    },
+    {
+      "id": "n-idm",
+      "row": "module", "col": 1, "span": 3, "kind": "stage",
+      "name": "DRAM IDM + CXL 模組",
+      "nameEn": "DRAM IDM + CXL Modules",
+      "competition": "oligopoly",
+      "desc": "DRAM 三巨頭供應顆粒並自製 RDIMM / CXL 記憶體模組（CMM-D / CMM-DDR5）；控制上游記憶體供給。",
+      "marketSize": "DRAM 三巨頭",
+      "growth": "AI 記憶體超循環",
+      "analysis": "Samsung（CMM-D 128/256GB）、SK Hynix（HBM 主導 + CMM-DDR5）、Micron（96GB CXL 2.0 模組）三巨頭；DRAM 寡占 + 自製 CXL 模組。2026 記憶體漲價超循環。",
+      "companies": [
+        { "name": "Samsung", "ticker": "005930.KS", "country": "KR", "share": "DRAM #1", "products": "DDR5 + CMM-D CXL", "note": "最大 DDR5、CXL 模組 128/256GB" },
+        { "name": "SK Hynix", "ticker": "000660.KS", "country": "KR", "share": "DRAM/HBM 領先", "products": "DDR5 RDIMM + CMM-DDR5", "note": "HBM 主導、DDR5 伺服器強" },
+        { "name": "Micron", "ticker": "MU", "country": "US", "share": "DRAM #3", "products": "RDIMM/LRDIMM + 96GB CXL", "note": "AI 伺服器 DRAM 增佔" }
+      ],
+      "upstream": [{ "id": "n-rcd" }, { "id": "n-mrcd" }, { "id": "n-spd" }, { "id": "n-pmic-s" }],
+      "downstream": [{ "id": "n-cxlmem" }, { "id": "n-cpu" }],
+      "sources": [
+        { "label": "Samsung 最佳化 DDR5 DIMM 解決方案", "url": "https://semiconductor.samsung.com/news-events/tech-blog/optimized-ddr5-dimm-solutions-powering-leading-edge-server-memory-modules/" },
+        { "label": "工商時報：AI 記憶體飆漲 2026/05", "url": "https://www.ctee.com.tw/news/20260503700368-430801" },
+        { "label": "輝達改用 LPDDR、宜鼎/威剛持續看旺（經濟日報）", "url": "https://money.udn.com/money/story/5607/9481305" }
+      ]
+    },
+    {
+      "id": "n-modtw",
+      "row": "module", "col": 4, "span": 3, "kind": "stage",
+      "name": "模組廠（含台廠）",
+      "nameEn": "Module Makers (incl. Taiwan)",
+      "competition": "oligopoly",
+      "desc": "純組裝模組廠買齊 RCD/DB/SPD/PMIC + DRAM 顆粒做 RDIMM / 工業 / 嵌入式模組；台廠在工業/嵌入式利基強。",
+      "marketSize": "模組組裝",
+      "growth": "台廠超循環",
+      "analysis": "SMART Modular（企業伺服器 OEM、供 hyperscaler）+ 台廠 Innodisk 宜鼎 5289（工業/嵌入式、Feb 2026 單月 EPS = 2024 全年）、ADATA 威剛 3260、Apacer 宇瞻 2469（CUDIMM 9,000 MT/s）。競爭性、多家可 qualify；2026 台廠借貸囤積記憶體顆粒。",
+      "companies": [
+        { "name": "Innodisk 宜鼎", "ticker": "5289.TW", "country": "TW", "share": "工業/嵌入式領先", "products": "工業 DDR5 / CAMM2 / LPDDR5X", "note": "AI 邊緣 + 工業；Feb 2026 單月 EPS 超 2024 全年" },
+        { "name": "ADATA 威剛", "ticker": "3260.TW", "country": "TW", "share": "消費 + 企業", "products": "DDR5 RDIMM/LRDIMM/消費", "note": "AI 伺服器 RDIMM 成長" },
+        { "name": "Apacer 宇瞻", "ticker": "2469.TW", "country": "TW", "share": "消費 + 嵌入式", "products": "DDR5 CUDIMM (9,000 MT/s)", "note": "嵌入式 + 消費為主" },
+        { "name": "SMART Modular", "ticker": "—", "country": "US", "share": "企業 OEM", "products": "伺服器 DIMM OEM", "note": "供 hyperscaler；私有" }
+      ],
+      "upstream": [{ "id": "n-rcd" }, { "id": "n-db" }, { "id": "n-mrcd" }, { "id": "n-ckd" }, { "id": "n-spd" }, { "id": "n-pmic-s" }, { "id": "n-pmic-c" }],
+      "downstream": [{ "id": "n-cpu" }],
+      "sources": [
+        { "label": "Innodisk AI Memory 系列", "url": "https://www.innodisk.com/en/ai-memory-series" },
+        { "label": "台灣模組廠超級循環 宜鼎/威剛（Sinotrade）", "url": "https://www.sinotrade.com.tw/richclub/hotstock/AI%E7%87%92%E5%87%BA%E8%A8%98%E6%86%B6%E9%AB%94%E8%B6%85%E7%B4%9A%E5%BE%AA%E7%92%B0-%E5%8F%B0%E7%81%A3%E6%A8%A1%E7%B5%84%E5%BB%A0%E6%9C%89%E5%93%AA%E4%BA%9B--%E5%AE%9C%E9%BC%8E2%E6%9C%88%E5%96%AE%E6%9C%88%E4%BA%AE%E7%9C%BC%E6%88%90%E7%82%BA%E5%8D%83%E9%87%91%E8%82%A1-%E5%A8%81%E5%89%9B-%E5%BB%A3%E7%A9%8E%E8%82%A1%E5%83%B9%E5%86%8D%E5%89%B5%E6%96%B0%E9%AB%98-%E8%82%A1%E5%B8%82%E8%A9%B1%E9%A1%8C-69ba1811e32a6662e6b35b26" },
+        { "label": "記憶體之王、宜鼎/威剛/創見比較（旺得富/中時）", "url": "https://wantrich.chinatimes.com/news/20260508900291-420101" }
+      ]
+    },
+    {
+      "id": "n-cpu",
+      "row": "demand", "col": 1, "span": 3, "kind": "demand",
+      "name": "CPU 平台（CXL host）",
+      "nameEn": "CPU Platform (CXL Host)",
+      "competition": "oligopoly",
+      "desc": "Intel Xeon / AMD EPYC 定義 CXL/MRDIMM 支援世代與通道數，是介面晶片需求的觸發器；平台時程決定放量。",
+      "marketSize": "伺服器 CPU",
+      "growth": "通道數倍增",
+      "analysis": "AMD EPYC（Genoa 起原生 CXL Type-3、Venice 2026 16 通道 + MRDIMM2）+ Intel Xeon（5th Gen 起 Type-3、Diamond Rapids 16 通道但延至 2027）雙占。Intel Diamond Rapids 延遲為 MRDIMM/CXL 放量主要逆風。",
+      "companies": [
+        { "name": "AMD", "ticker": "AMD", "country": "US", "share": "EPYC CXL 先行", "products": "EPYC Genoa/Turin/Venice", "note": "Venice 2026 16 通道 + MRDIMM2，時程領先" },
+        { "name": "Intel", "ticker": "INTC", "country": "US", "share": "Xeon", "products": "Xeon 6 / Diamond Rapids", "note": "Diamond Rapids 16 通道延至 2027 → MRDIMM 逆風" }
+      ],
+      "upstream": [{ "id": "n-idm" }, { "id": "n-modtw" }, { "id": "n-cxlmem" }],
+      "downstream": [{ "id": "n-demand" }],
+      "sources": [
+        { "label": "ServeTheHome：CXL 終於在 2025 到來", "url": "https://www.servethehome.com/cxl-is-finally-coming-in-2025-amd-intel-marvell-xconn-inventec-lenovo-asus-kioxia-montage-arm/" },
+        { "label": "Intel Diamond Rapids 延至 2027（Tom's Hardware）", "url": "https://www.tomshardware.com/pc-components/cpus/intels-upcoming-xeon-7-diamond-rapids-server-cpus-reportedly-delayed-to-2027" }
+      ]
+    },
+    {
+      "id": "n-demand",
+      "row": "demand", "col": 4, "span": 3, "kind": "demand",
+      "name": "Hyperscaler / AI 伺服器",
+      "nameEn": "Hyperscaler / AI Server",
+      "competition": "oligopoly",
+      "desc": "雲端與 AI 推論伺服器是 CXL 記憶體擴展/池化的終端用戶，記憶體頻寬與容量為瓶頸；CXL 附著率 2028 估 ~30%（多為 CPU 伺服器非 GPU 訓練機）。",
+      "marketSize": "CXL 附著率 2028 ~30%",
+      "growth": "推論 + DB/HPC",
+      "analysis": "Microsoft Azure（Astera Leo CXL 擴展首部署）+ AWS/Google/Meta 推論與資料庫負載、Inventec 英業達 96-DIMM CXL 擴展盒 ODM。CXL 2.0 擴展真實放量、3.0 池化 2027；GPU 訓練機仍用 NVLink/InfiniBand 非 CXL。",
+      "companies": [
+        { "name": "Microsoft Azure", "ticker": "MSFT", "country": "US", "share": "CXL 首部署", "products": "Azure M 系列 (Astera Leo)", "note": "唯一具名 hyperscaler CXL 部署" },
+        { "name": "Inventec 英業達", "ticker": "2356.TW", "country": "TW", "share": "CXL 擴展盒 ODM", "products": "96-DIMM CXL expansion box", "note": "台灣 ODM 切入 CXL 基礎建設" },
+        { "name": "AWS / Google / Meta", "ticker": "—", "country": "US", "share": "推論 / 資料庫", "products": "CXL 記憶體池", "note": "CPU 伺服器記憶體擴展為主" }
+      ],
+      "upstream": [{ "id": "n-cxlmem" }, { "id": "n-cxlsw" }, { "id": "n-cpu" }],
+      "downstream": [],
+      "sources": [
+        { "label": "ServerMall：CXL in 2026 記憶體擴展與池化", "url": "https://servermall.com/blog/cxl-in-2026-memory-expansion-and-pooling/" },
+        { "label": "宜鼎 CXL — 打破記憶體牆的關鍵技術（CMoney）", "url": "https://www.cmoney.tw/forum/article/176962269" }
+      ]
+    }
+  ],
+  "edges": [
+    ["n-rcd", "n-idm"], ["n-rcd", "n-modtw"],
+    ["n-db", "n-idm"], ["n-db", "n-modtw"],
+    ["n-mrcd", "n-idm"], ["n-mrcd", "n-modtw"],
+    ["n-ckd", "n-modtw"],
+    ["n-spd", "n-idm"], ["n-spd", "n-modtw"],
+    ["n-pmic-s", "n-idm"], ["n-pmic-s", "n-modtw"],
+    ["n-pmic-c", "n-modtw"],
+    ["n-idm", "n-cxlmem"], ["n-idm", "n-cpu"],
+    ["n-modtw", "n-cpu"],
+    ["n-cxlmem", "n-cpu"], ["n-cxlmem", "n-demand"],
+    ["n-cxlsw", "n-demand"],
+    ["n-cpu", "n-demand"]
+  ]
+}
