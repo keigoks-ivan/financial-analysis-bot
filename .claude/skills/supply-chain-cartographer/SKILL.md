@@ -186,49 +186,62 @@ done
 - 太多列（>6）→ 視覺垃圾，重新分群
 - 太少列（=2，除非純材料）→ 失去階層感
 
-## ⚑ Single-Point Framework — v1.2 嚴格 Gate（2026-05-27 起）
+## ⚑ Single-Point Framework — v1.3 雙軸 + 硬預算 + critic gate（2026-05-29 起）
 
-> **重大變更**：v1.2 把 ⚑ 的合格條件從「4-bucket 任一過（OR）」改成「3 道 Gate 全過（AND）+ Kill Test」。
-> Reason: v1.0/v1.1 的 OR 規則讓每 topic 噴出 15+ ⚑ flag，稀釋了「真單點」的訊號。
-> 嚴格 Gate 後實測：fe-equipment 15→10、dc-networking 15→6、passive 9→3。降幅 40-67%。
-> 4-bucket 改成**分類標籤**（描述 ⚑ 的性質），不再是合格判準。
+> **重大變更**（取代 v1.2 的單軸 3-Gate）：
+> 1. **主軸從「市佔集中度」換成「非替代性」**。v1.2 拿 Gate A（結構壟斷）當必過主軸，但**市佔高 ≠ 不可或缺** — 一家 95% 市佔但有 3 家已認證替代源、6 個月可 ramp 的供應商不是單點；一家 40% 市佔但 IP 被 co-design 進客戶產品、requalify 要 3 年的才是。v1.3 把**非替代性（換不換得掉 × 多久）設為主軸（Axis 1）**，市佔結構降為**佐證軸（Axis 2）**。兩軸 AND。
+> 2. **每 topic 硬預算**：⚑ ≤ `max(5, ceil(節點數 × 0.15))`。強迫排序，超出降主表 note。validator pre-commit 把關（topic JSON 標 `single_point_framework: "v1.3"` 後變 hard error；未標只 warn，供漸進遷移）。
+> 3. **critic gate**：寫 ⚑ 的 agent ≠ 判 ⚑ 的 agent（Boris verify pattern）。候選清單寫完後 spawn `single-point-critic` 對抗裁決。
+> Reason: v1.2 後全站仍 **29% 節點打 ⚑**（hbm / advanced 達 50%）。市佔軸漏了一堆「市佔高但客戶可換」的假單點 + 把「重要製程」「第二供應源」也誤標。
 
-### Gate A · 結構壟斷（**任一**過即可）
+### 判定：兩軸都過 AND（缺一不可）+ 經濟 gate + Kill Test
 
-- **A1** 全球市佔 ≥75% **且持續 ≥3 年**（排除單一年度週期性領先）
-- **A2** 全球唯一 commercial supplier（第二源還在 R&D / sampling 不算）
-- **A3** 對 top-tier 客戶（TSMC / NVDA / AAPL / Apple silicon / 6 大 hyperscaler）100% 獨家 + 合約鎖 ≥2 年
-- **A4** **結構性 cartel** — ≤3 家加總 ≥90% **可投資 addressable market** + 結構性 capex / IP / qualification barrier 阻擋 4th entrant ≥5 年 viable。**與 competitive oligopoly 區分**（後者新進入者 5 年內 commercial、客戶能 reshuffle）。
-  **「Addressable market」定義**：對非中國 hyperscaler 客戶可實際購買的市場（排除如 Empyrean China-only EDA、Yusur China-only NIC 等政治/地緣性受限供應商）。同一 topic 內口徑要一致。
-  典範案例（記憶體 / 材料）：
-  - HBM-grade DRAM trio (SK Hynix + Micron + Samsung 91%, CXMT 5+ 年內做不到 1c-nm + 12/16-Hi)
-  - EUV mask blank (Hoya 60% + AGC 34% = 94%)
-  - BaTiO₃ 粉體 (Sakai + Fuji ~70%)
-  - Nano-Ni 內電極 (JX Nippon + Sumitomo ~75%)
-  - 高階 AI MLCC (Murata + SEMCO ~80%)
-  - TC-NCF (Resonac + Henkel ≥90%)
-  - ABF substrate AI grade (Unimicron + Ibiden quiet duopoly)
-  典範案例（設備 / 設計）：
-  - EDA RTL→GDS (Synopsys + Cadence + Siemens ~74% 全球, 但 addressable 100% — Empyrean China-only 排除)
-  - AI Datacenter NIC (Nvidia CX + Broadcom Thor + Intel E810 ~95% addressable, AMD 退場 / Marvell 整合至 DPU)
-  - DPU / SmartNIC (Nvidia BlueField + AMD Pensando + Marvell Octeon ~90%; Intel IPU 退場、Fungible defunct)
+**Axis 1 · 非替代性（主軸）— 客戶在時間壓力下換不掉**
 
-### Gate B · 切換成本（**≥2 條**過）
+- **S1** 今天**沒有** drop-in 已認證的第二量產源（送樣 / R&D / 「規劃中」**不算**第二源 — 仍視為單一源）
+- **S2** 替換 requalification + ramp 週期 ≥ 18-24 個月（製程整合，非型錄零件可隨插即用）
+- **S3** IP / co-design lock — 客戶產品**實體整合**此供應商 IP（NDA / 專利交叉 / 客製光罩 / 共同開發製程）
+- **Axis 1 過 = S1 為真 AND（S2 或 S3）**
 
-- **B1** 替換 qualification + ramp 週期 ≥24 個月
-- **B2** 客戶平台已整合 IP（co-design / NDA / 專利交叉）
-- **B3** 第二源量產規模 < 領先廠 1/5
+**Axis 2 · 市場結構（佐證軸）— 確認鎖喉是結構性、非暫時單一採購**
 
-### Gate C · 經濟槓桿（**必過**）
+- **M1** 該家 ≥ 60% **addressable**（排除 China-only 受限供應）市場、且 sustained ≥3 年，或
+- **M2** ≤3 家 ≥90% addressable + 結構性 capex / IP / qualification barrier 阻 4th entrant ≥5 年 viable（**structural cartel**，非 competitive oligopoly — 後者客戶 5 年內能 reshuffle）
+- **Axis 2 過 = M1 或 M2**
+- **「Addressable market」定義**：對非中國 hyperscaler 客戶可實際購買的市場（排除 Empyrean China-only EDA、Yusur China-only NIC 等地緣受限）。同 topic 內口徑一致。
+- M2 典範 cartel（兩軸都過的真案例）：HBM-grade DRAM trio（$30B/fab barrier）、EUV mask blank (AGC 59% + HOYA 34%)、BaTiO₃ 粉體 (Sakai + Fuji ~70%)、TC-NCF 若客戶無法 dual-source 時。
 
-- 此 segment ≥30% revenue **或** pure-play 純玩家
+**經濟槓桿 gate（必過，沿用 v1.2 Gate C）**：此 segment ≥30% 該公司 revenue **或** pure-play 純玩家 — 否則只是 vulnerability note，不是可投資鎖喉。（注意：節點本身可以是 ⚑，但若該節點的壟斷者是大集團一小 segment〔如 Ajinomoto〕，⚑ 仍成立、但**不得**把該大集團標 💎。）
 
-### Kill Test（commit 前最後驗證）
-
-問：**「客戶能不能在 12 個月內無 yield / 出貨延遲地把這家換掉？」**
-- **NO** → 通過、標 ⚑
-- **MAYBE** → 留主表 + drawer note，**不打 ⚑**
+**Kill Test（最後驗證）**：「客戶能不能在 **12 個月內無 yield / 出貨延遲**地把這家換掉？」
+- **NO** → 可標 ⚑
+- **MAYBE** → 主表 + drawer note，**不打 ⚑**
 - **YES** → 拿掉 ⚑
+
+### 非替代性分（超預算時用來排序、決定誰留）
+
+候選數超過硬預算時，用下式由高到低排序，只留 top N：
+```
+非替代性分 = 下游停產風險(此節點斷供 → 下游多少 % 產出停, 0-1)
+           × 替代 ramp 時間(月 / 24, cap 1.0)
+           × 該家對此節點的控制度(% addressable, 0-1)
+```
+三項都接近滿分才是真單點。被擠掉的候選**在 commit message 列出**（no silent truncation）。
+
+### Critic gate（v1.3 新增 — 寫 ⚑ 與驗 ⚑ 分離）
+
+寫完候選 ⚑ 清單後（Step 1 之後、commit 之前），spawn sub-agent 對抗裁決：
+
+```
+Agent({
+  description: "Cold-review {topic} ⚑ flags",
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  prompt: "You are the single-point-critic. 用 v1.3 雙軸框架（Axis 1 非替代性 S1/S2/S3、Axis 2 結構 M1/M2、經濟 gate、Kill Test）對 {topic} 的 N 個候選 ⚑ 逐一判 KEEP / DEMOTE / SPLIT。對每個**強制說出第二供應源或替代品的名字** — 說得出 = DEMOTE，說不出 = 真單點。同時檢查 💎 是否誤標在『第二供應源 / oligopoly 互打的一員 / 大集團一小 segment』。Default to DEMOTE when uncertain。"
+})
+```
+
+critic 投 KEEP / DEMOTE / SPLIT；SPLIT 由主 agent 最終定奪並在 commit message 註明裁決理由。
 
 ### Anti-patterns（容易誤標的陷阱）
 
@@ -254,7 +267,9 @@ done
 | **鎖喉點** | A2 ✓ + B2 ✓ | TSMC CoWoS-L、Broadcom Jericho 4 inter-DC router、NVLink scale-up |
 | **封裝級單點** | A2/A3 + B2 ✓ | 健策 CoWoS lid/IHS、Mitsui EUV pellicle ASML license |
 
-## 💎 Top Picks Framework（嚴格 3 條件 AND）
+## 💎 Top Picks Framework — v1.3 收緊（3 條件 AND + 每 topic 上限 3-5）
+
+> **v1.3 變更**：(1) `supply_chain_lock="tight"` 從「5 訊號任一」改「**≥2 訊號**」；(2) `core_business` 砍掉「管理層公開定位 flagship」敘事後門，只留可查的 ≥20% rev / pure-play；(3) **每 topic 💎 硬上限 3-5 檔**（validator 在 `single_point_framework:"v1.3"` 下強制 ≤5）；(4) **禁止把「第二供應源 / oligopoly 互打的一員 / 大集團一小 segment」標 💎** — 即使所在節點是 ⚑。hbm 三宗實例：Amkor（CoWoS 第二來源）、欣興/南電/景碩（互打 oligopoly）、Ajinomoto（食品集團）。根因都是「把**受惠於鎖喉的人**，誤當**鎖喉本身**」— 兩者投資 thesis 可能都成立，但 supply-chain map 的 💎 只標後者。
 
 ⚑ 是「strategic single-point」但**單獨用會把 TSMC / Corning / Broadcom 也標出來** — 那些是「太大太分散，部位推不動 EPS」的大象。投資視角需要更嚴格的篩子：
 
@@ -269,7 +284,7 @@ done
 **`core_business: true` 的條件（任一即過）**：
 - 當前 ≥ **20% revenue** 來自此 segment（從財報 / 法說資料）
 - **Pure-play** 純玩家（整家公司就做這個，如 Lumentum / Coherent / FOCI / Browave）
-- 公司管理層**公開定位**這 segment 為「第二大核心業務」/「flagship」/「未來主成長引擎」
+- ~~公司管理層公開定位 flagship / 未來主成長引擎~~ **（v1.3 移除：純敘事後門，管理層永遠這樣講；要 forward 例外走下方 Forward-Core 三 hard gate）**
 
 **`core_business: false` 的條件（任一即否決）**：
 - 大集團一小 segment（如 TSMC COUPE 占 <1%、Corning AI fiber 占 <20%、Broadcom CPO 占 <5%）
@@ -295,7 +310,7 @@ done
 
 → Forward-core **是「升級加分項」**、不是「萬用救生圈」。三條件 hard gate。寧可漏 alpha 也不要 false positive。
 
-**`supply_chain_lock: "tight"` 的條件（5 訊號任一即過）**：
+**`supply_chain_lock: "tight"` 的條件（v1.3：**≥2 訊號**過 — 舊版「任一即過」太鬆，2026 半導體隨便一家緊俏廠都有「訂單能見 ≥12 月」這條）**：
 1. 📅 **訂單能見度 ≥ 12 個月** — ASML EUV backlog $30B+；京鼎 3413 訂單看到 9 個月；Apple 鎖 TSMC N2 三年
 2. 🚫 **Sold out / capacity-constrained** — TSMC CoWoS 2026 月產能 120K 仍緊；SK Hynix HBM sold out through 2026
 3. 🤝 **多年 exclusive 公開命名** — NVIDIA → Navitas 800V Kyber；Meta → Broadcom 1GW（2031 合約）；Anthropic → Google TPU 3.5GW；Tesla → Samsung AI6 ₩22 兆
@@ -316,9 +331,9 @@ done
 - + supply_chain_lock=tight → 排除「YoY 高但客戶可換」的雜訊 + 抓「YoY 普通但 backlog 鎖死」的真緊俏（如 ASML）
 - 三個 AND → 留下 **真客戶離不開、EPS 推力結構性 high-conviction 的 5-15 檔**
 
-兩個 worked example 的 💎 池（lock-based 標註後）：
-- **CoWoS（6 檔）**：健策 3653 / 家登 3680 / 弘塑 3131 / 新應材 4749 / 萬潤 6187 / Amkor AMKR
-- **HBM（14 檔）**：ASML / Lam / 京鼎 / Disco / ASMPT / BESI / Onto / SK Hynix / Micron / GUC / Amkor / Unimicron / Nan Ya / Kinsus
+worked example 的 💎 池：
+- **HBM（v1.3 re-graded：⚑ 11→5、💎 12→4）**：ASML（EUV 唯一）/ SK Hynix + Micron（DRAM cartel 鎖定者，pricing power + sold-out）/ 欣興 Unimicron（AI-grade ABF #2，NVDA Blackwell 命名、結構性缺口）。砍掉的 8 檔多是 demoted-node 連帶（Lam/Disco/BESI/Onto/GUC）或第二源/oligopoly 互打（Amkor/南電/景碩）。
+- **CoWoS（6 檔，**仍 v1.2 未 re-grade**）**：健策 3653 / 家登 3680 / 弘塑 3131 / 新應材 4749 / 萬潤 6187 / Amkor AMKR — 待 v1.3 雙軸 + critic 重評（含 Amkor 是否為第二源的同類檢查）。
 
 這些正好是 sell-side / activist（Hunterbrook、Ming-Chi Kuo、Citrini）反覆推的標的 — 不是巧合，他們用類似框架。
 
@@ -440,6 +455,15 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 - 每個節點 `sources` ≥1 個權威 URL
 - `edges` 中每個 ID 都對應到 `nodes[].id`
 - `upstream` / `downstream` 內 ID 也要對應到 nodes
+
+### Step 1.5（v1.3 必做）：spawn single-point-critic 對抗驗 ⚑ / 💎
+
+寫完 JSON 的候選 ⚑ / 💎 後、commit 之前，**強制** spawn `single-point-critic` sub-agent（範本見上方 ⚑ Framework「Critic gate」段），對每個候選跑雙軸 + Kill Test、強制 name 第二源。依裁決：
+- DEMOTE → 移除該 node 的 `single`，competition 改回真實 enum（monopoly→oligopoly 等），保留 analysis 文字當主表 note
+- SPLIT 且超預算 → 用非替代性分排序，擠掉最弱者
+- 💎 mis-assignment（第二源 / oligopoly 一員 / 大集團）→ 移除該公司 `core_business` / 把 `supply_chain_lock` 降 `med`
+
+新 topic JSON 頂層標 `"single_point_framework": "v1.3"`，validator 才會強制硬預算。critic report 可選存 `docs/supply-chain/_critic_{topic}_{YYYYMMDD}.md`。
 
 ### Step 2：寫 thin `docs/supply-chain/{topic}.html`（複製 cowos.html / cpo.html 改 3 處）
 
@@ -616,6 +640,7 @@ done
 | **G1: Schema** | JSON parse + 所有 required 欄位齊 | `python3 -c "json.load(...)"` 不報錯 |
 | **G2: 引用完整** | 每個 node `sources` ≥1，URL 真實 | 不允許「待補」 |
 | **G3: Single-point 雙源** | 每個 ⚑ 節點背後 ≥2 來源（或標明 med 信心度） | analysis 文字明標 |
+| **G3.5: v1.3 雙軸 + 預算 + critic** | ⚑ 過 Axis 1 非替代性 ∧ Axis 2 結構；⚑ ≤ max(5, ceil(nodes×0.15))；💎 ≤ 5；single-point-critic 已裁決 | topic JSON 標 `single_point_framework:"v1.3"`，validator 強制 |
 | **G4: Edge consistency** | 所有 edges 兩端 ID 都在 nodes[] | audit script 通過 |
 | **G5: Stats 一致** | `stats[2].v` 等於實際 `single` 數 | python audit 通過 |
 | **G6: 命名** | `single` 文字含 4-bucket 之一 + 信心度標註 | 人工檢視 |

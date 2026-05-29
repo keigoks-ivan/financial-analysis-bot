@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -103,6 +104,7 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
         errs.append("nodes: must be non-empty list")
     node_ids: set[str] = set()
     single_count = 0
+    golden_count = 0  # ⚑-node × core_business × supply_chain_lock=tight (isGolden in engine.js)
     for i, n in enumerate(nodes):
         if not isinstance(n, dict):
             errs.append(f"nodes[{i}]: must be dict")
@@ -131,8 +133,15 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
         if "span" in n and not isinstance(n["span"], int):
             errs.append(f"node {nid}: span must be int, got {type(n['span']).__name__}")
 
-        if n.get("single"):
+        node_has_single = bool(n.get("single"))
+        if node_has_single:
             single_count += 1
+        # 💎 Top Pick = ⚑ node × core_business × supply_chain_lock==tight
+        if node_has_single:
+            for c in n.get("companies", []) or []:
+                if isinstance(c, dict) and c.get("core_business") is True \
+                        and c.get("supply_chain_lock") == "tight":
+                    golden_count += 1
 
         # required list fields
         for k in ("companies", "upstream", "downstream", "sources"):
@@ -235,6 +244,23 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
             errs.append(
                 f"stats[2].v={declared} but {single_count} nodes have 'single' field — "
                 "update stats card or fix node flags"
+            )
+
+    # v1.3 hard caps (⚑ budget + 💎 cap). Only enforced when the topic opts in
+    # via `single_point_framework: "v1.3"` — lets the 25 un-migrated maps pass
+    # until they are re-graded under the dual-axis + critic framework.
+    if d.get("single_point_framework") == "v1.3" and isinstance(nodes, list):
+        budget = max(5, math.ceil(len(nodes) * 0.15))
+        if single_count > budget:
+            errs.append(
+                f"v1.3 ⚑ budget: {single_count} single-points exceed per-topic cap "
+                f"{budget} (= max(5, ceil({len(nodes)} nodes × 0.15)) — rank by "
+                "non-substitutability and demote overflow to main-table notes"
+            )
+        if golden_count > 5:
+            errs.append(
+                f"v1.3 💎 cap: {golden_count} Top Picks exceed cap 5 — tighten "
+                "core_business / supply_chain_lock (≥2 signals) or rank to top 3-5"
             )
 
     return errs
