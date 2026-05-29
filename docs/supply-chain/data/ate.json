@@ -1,0 +1,439 @@
+{
+  "id": "ate",
+  "tab": "測試介面 / ATE",
+  "title": "測試介面 / ATE（探針卡 / 測試座 / Final Test）供應鏈",
+  "subtitle": "AI 晶片「測試牆」— Blackwell 級 GPU 在 ATE 上的測試時間 >20 分鐘（5nm 手機 SoC 僅 30-60 秒），測試成本佔晶片成本由 2-5% 升至先進封裝 10-15%。FT → burn-in → 再 FT → SLT 多重 insertion 把測試介面（探針卡 / 測試座）變成耗材級剛需。設備端 Advantest + Teradyne 雙占 ~85% ATE、致茂 Chroma 為 NVIDIA GPU 系統級測試（SLT）長期主供（客戶集中、非能力獨佔）；台廠在「機構設備 + 測試介面」整段最強 — 鴻勁 7769（AI 控溫分選機全球 #3、CoWoS 測試線 ATC）、穎崴 6515（全球第一大測試座）、旺矽 6223 / 精測 6510（MEMS 探針卡三雄）、京元電 2449（最大獨立測試廠、自製高功率 burn-in）。本圖核心發現：測試介面整段是『有能力對手存在的競爭性寡占』，經 v1.5 能力非替代性 + critic 對抗檢驗後，真正能力鎖喉（⚑）僅超精密探針（LEENO >70%）一處 — SLT、ATE、ATC 分選機、探針卡、測試座皆降為競爭性寡占。",
+  "single_point_framework": "v1.3",
+  "stats": [
+    { "k": "供應鏈節點", "v": 18 },
+    { "k": "涵蓋廠商", "v": "70+" },
+    { "k": "能力鎖喉單點", "v": 1, "sub": "超精密晶圓探針 Probe Pins（LEENO >70%）— 唯一通過 v1.5 能力非替代性的節點", "hot": true }
+  ],
+  "rows": [
+    { "id": "ate", "label": "測試主機：ATE / SLT / Burn-in 系統 Test & Burn-in Systems", "main": true },
+    { "id": "machine", "label": "機構設備：晶圓針測機 + 分選機（控溫）Prober & Handler", "main": true },
+    { "id": "probecard", "label": "探針卡（晶圓級測試介面）Probe Card — wafer-level interface", "main": true },
+    { "id": "socket", "label": "測試座 / 接觸元件（封裝級測試介面）Socket & Contactor", "main": true },
+    { "id": "component", "label": "上游介面零組件：載板 / 探針 / MEMS Tip Interface Components", "main": false },
+    { "id": "demand", "label": "終端需求：測試代工 OSAT / 晶圓代工 / IC 設計 Demand", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "a-soc",
+      "row": "ate", "col": 1, "span": 2, "kind": "rail",
+      "name": "SoC / 邏輯 ATE",
+      "nameEn": "SoC / Logic ATE",
+      "competition": "oligopoly",
+      "desc": "測試 CPU / GPU / ASIC / SoC 功能與效能的數位測試主機；AI 加速器需 2048-bit HBM 介面、>700W 供電、224 Gbps PAM4 高速 I/O 測試。",
+      "marketSize": "ATE 全球 ~$80-90 億（2026）",
+      "growth": "AI 驅動 +50% YoY",
+      "analysis": "Advantest（V93000 EXA Scale）與 Teradyne（UltraFLEXplus + UltraPHY 224G）雙占全球 ATE ~85%、SoC ATE Advantest 約 56→66% 領先。JPMorgan 指 Advantest 為 NVIDIA AI GPU 測試「唯一」設備商、V93000 已在 NVIDIA / AMD / Google TPU / AWS Trainium qualify；Teradyne 守 Apple 手機 SoC + 部分 ASIC、224G 模組切入 AI ASIC。⚑ 候選：兩家皆有能力（Teradyne 測其他 AI 晶片）→ NVIDIA 單選 Advantest 屬客戶配置而非全球能力獨佔，列競爭性雙占（待 critic 裁）。",
+      "companies": [
+        { "name": "Advantest 愛德萬", "ticker": "6857.T", "country": "JP", "share": "ATE ~50% / SoC ~56-66%", "products": "V93000 EXA Scale、T2000", "note": "NVIDIA AI GPU 測試主力（JPMorgan 稱唯一）；純測試設備玩家、交期吃緊。惟 Teradyne 有能力測其他 AI 晶片 → 客戶配置而非能力獨佔", "src": "https://finance.yahoo.com/news/ai-growth-brings-tests-semi-100002008.html" },
+        { "name": "Teradyne", "ticker": "TER", "country": "US", "share": "ATE ~30% / SoC ~25-35%", "products": "UltraFLEXplus + UltraPHY 224G、Magnum", "note": "Apple SoC + AI ASIC；224G PAM4 切入 AI 加速器，NVIDIA GPU 流程未取得" },
+        { "name": "Chroma 致茂", "ticker": "2360.TW", "country": "TW", "share": "中高階補位", "products": "ATE + 三溫 handler", "note": "以 SLT 為主切入（見 SLT 節點）" }
+      ],
+      "upstream": [{ "id": "m-prober" }, { "id": "m-handler" }],
+      "downstream": [{ "id": "d-osat" }, { "id": "d-foundry" }],
+      "sources": [
+        { "label": "Yahoo/JPMorgan：AI 為半導體測試雙占帶來新考驗", "url": "https://finance.yahoo.com/news/ai-growth-brings-tests-semi-100002008.html" },
+        { "label": "半導體測試設備需求增 愛德萬搭上 AI（technews.tw）", "url": "https://technews.tw/2025/01/10/advantest-nvidia-japanese-chip-stock/" },
+        { "label": "The Chip Testing Bottleneck (Data Gravity)", "url": "https://www.datagravity.dev/p/the-chip-testing-bottleneck" }
+      ]
+    },
+    {
+      "id": "a-mem",
+      "row": "ate", "col": 3, "span": 1, "kind": "rail",
+      "name": "記憶體 ATE",
+      "nameEn": "Memory ATE (HBM / DRAM)",
+      "competition": "oligopoly",
+      "desc": "測試 DRAM / HBM stack / GDDR7 / LPDDR6 的高速記憶體測試主機；HBM 上量推升 wafer / stack 測試需求。",
+      "marketSize": "ATE 約 35-40%",
+      "growth": "HBM 帶動",
+      "analysis": "Advantest（T5503HS2 / V93000 整合 SoC+記憶體）vs Teradyne（Magnum 7H，HBM wafer 測試快 ~40%）競爭性雙占；HBM 領先權兩家互有消長（Advantest 早期 incumbent、Teradyne 以 Magnum 7H 切入 post-stack）。非單點。",
+      "companies": [
+        { "name": "Advantest 愛德萬", "ticker": "6857.T", "country": "JP", "share": "HBM/DRAM 領先", "products": "T5503HS2 (16,256 ch, 9 Gbps)、V93000", "note": "三大記憶體廠 wafer 測試 incumbent" },
+        { "name": "Teradyne", "ticker": "TER", "country": "US", "share": "挑戰者", "products": "Magnum 7H / EPIC", "note": "Magnum 7H HBM wafer 測試速度優勢、post-stack qualified" }
+      ],
+      "upstream": [{ "id": "m-prober" }, { "id": "m-handler" }],
+      "downstream": [{ "id": "d-osat" }],
+      "sources": [
+        { "label": "Advantest T5503HS2 記憶體測試系統", "url": "https://www.advantest.com/en/products/semiconductor-test-system/memory/t5503hs2/" },
+        { "label": "Digitimes：HBM 推升 Advantest 設備交期吃緊 2026", "url": "https://www.digitimes.com/news/a20260116PD217/demand-advantest-equipment-hbm-2026.html" }
+      ]
+    },
+    {
+      "id": "a-slt",
+      "row": "ate", "col": 4, "span": 1, "kind": "rail",
+      "name": "系統級測試 SLT",
+      "nameEn": "System-Level Test (SLT)",
+      "competition": "oligopoly",
+      "desc": "在接近真實系統環境下對封裝晶片做整機功能驗證（非晶圓針測）；AI GPU 因 die size、功耗、chiplet 良率必跑 SLT，是 FT 之後的額外 insertion。",
+      "marketSize": "SLT TAM ~$7-8 億，2026 +30%",
+      "growth": "AI ASIC 爆發",
+      "analysis": "致茂在 NVIDIA GPU SLT 整機為長期主要供應商、AMD MI300 亦為客戶；UBS 指 SLT 市場規模小、Advantest/Teradyne 缺乏投入 R&D 誘因，致茂憑首動 + 15 年 co-design 形成強 lock。但 critic 裁定：Teradyne Titan HP（2025/10）+ Cohu 具備 SLT 能力，致茂的鎖定屬「客戶集中 + 商業誘因不足」而非全球能力獨佔 → 降為競爭性寡占（客戶集中風險，非 ⚑ 能力鎖喉）。",
+      "companies": [
+        { "name": "Chroma 致茂", "ticker": "2360.TW", "country": "TW", "share": "NVIDIA GPU SLT 長期主供", "products": "3200 / 3210 / 3110 Gen2 SLT 整機", "note": "客戶集中於 NVIDIA（+AMD MI300）；SLT 佔總營收約 10-15%（非純玩家）。對手 Teradyne/Cohu 有能力但未在 NVIDIA qualify — 屬客戶配置非能力獨佔", "src": "https://english.cw.com.tw/article/article.action?id=3695" },
+        { "name": "Cohu", "ticker": "COHU", "country": "US", "share": "通用 SLT / handler", "products": "Eclipse + T-Core (3000W)", "note": "通用 SLT，未見 NVIDIA GPU SLT 證據" },
+        { "name": "Teradyne", "ticker": "TER", "country": "US", "share": "AI SLT 新進", "products": "Titan HP (2025/10)", "note": "切入 AI/雲端 SLT，未及 NVIDIA GPU" }
+      ],
+      "upstream": [{ "id": "s-ai" }],
+      "downstream": [{ "id": "d-osat" }, { "id": "d-fabless" }],
+      "sources": [
+        { "label": "CommonWealth：致茂如何成為 NVIDIA 獨家供應商之一", "url": "https://english.cw.com.tw/article/article.action?id=3695" },
+        { "label": "先進封裝需求激增推升 SLT 測試設備需求（vocus.cc）", "url": "https://vocus.cc/article/682f150efd89780001c953ee" },
+        { "label": "Investing.com：致茂為 NVIDIA / AMD AI GPU 大贏家（UBS/Mizuho）", "url": "https://www.investing.com/news/stock-market-news/taiwanbased-chroma-seen-as-major-winner-from-nvidia-and-amds-surging-ai-gpu-demand-432SI-3118821" }
+      ]
+    },
+    {
+      "id": "a-burnin",
+      "row": "ate", "col": 5, "span": 2, "kind": "rail",
+      "name": "Burn-in 系統 / 老化測試",
+      "nameEn": "Burn-in Systems",
+      "competition": "oligopoly",
+      "desc": "在高溫高壓下提前篩出早夭晶片；AI GPU burn-in 功率由 600W → 1kW，wafer-level burn-in（WLBI）切入 AI 處理器與 SiC。",
+      "marketSize": "~$7-8 億，CAGR ~9-10%",
+      "growth": "AI / SiC 推升",
+      "analysis": "Aehr（FOX wafer-level + Sonoma 超高功率 AI 處理器 burn-in）為 WLBI 領導者、Cohu（Neon SiC）、ESPEC（環境箱）、致茂分溫整合競爭；OSAT 自製高功率 burn-in（京元電）為另一路線。多家競爭，非單點。",
+      "companies": [
+        { "name": "Aehr Test Systems", "ticker": "AEHR", "country": "US", "share": "WLBI 領導者", "products": "FOX-XP / Sonoma / Tahoe", "note": "AI 處理器超高功率 burn-in 訂單放量" },
+        { "name": "Cohu", "ticker": "COHU", "country": "US", "share": "SiC / 封裝級", "products": "Neon SiC burn-in", "note": "2024 切入 SiC die burn-in" },
+        { "name": "ESPEC 愛斯佩克", "ticker": "6986.T", "country": "JP", "share": "環境/老化箱", "products": "burn-in 箱 + 板", "note": "環境試驗龍頭" }
+      ],
+      "upstream": [{ "id": "s-burnin" }],
+      "downstream": [{ "id": "d-osat" }],
+      "sources": [
+        { "label": "Aehr 強化 AI 市占 — Sonoma burn-in 追加訂單", "url": "https://www.aehr.com/2025/07/aehr-strengthens-ai-market-share-with-additional-orders-for-sonoma-production-test-and-burn-in-systems/" },
+        { "label": "Cohu 進入 SiC burn-in 市場", "url": "https://ir.cohu.com/news-releases/news-release-details/cohu-enters-silicon-carbide-sic-burn-test-market" }
+      ]
+    },
+    {
+      "id": "m-prober",
+      "row": "machine", "col": 1, "span": 3, "kind": "stage",
+      "name": "晶圓針測機 Prober",
+      "nameEn": "Wafer Prober",
+      "competition": "oligopoly",
+      "desc": "晶圓級測試（CP / wafer sort）的機構平台，把探針卡精準對位到 wafer pad（對位精度 <0.5µm）；2.5D/3D 與 chiplet 推升 die-level probing。",
+      "marketSize": "~$20 億（2026）",
+      "growth": "CAGR ~6.7%",
+      "analysis": "Tokyo Electron（TEL）~38% 為先進製程 tool-of-record 領先、Accretech（東京精密）~15-18% 為強力第二、FormFactor ~10-12%、旺矽 MPI ~5-8% 工程站起家。TEL 領先但非壟斷（Accretech 為真實替代）；Accretech + Advantest 2025/12 合作 die-level prober。競爭性寡占。",
+      "companies": [
+        { "name": "Tokyo Electron 東京威力科創", "ticker": "8035.T", "country": "JP", "share": "~38% 先進製程領先", "products": "Precio 系列 prober", "note": "先進邏輯 tool-of-record，對位 <0.5µm" },
+        { "name": "Accretech 東京精密", "ticker": "7729.T", "country": "JP", "share": "~15-18%", "products": "UF/APM prober", "note": "強力第二；與 Advantest 合作 die-level prober" },
+        { "name": "FormFactor", "ticker": "FORM", "country": "US", "share": "~10-12%", "products": "Cascade 工程/量產 prober", "note": "探針卡龍頭兼做 prober" },
+        { "name": "旺矽 MPI", "ticker": "6223.TW", "country": "TW", "share": "~5-8%", "products": "工程探針站 + 量產 prober", "note": "工程站 + 光電自動測試切入" }
+      ],
+      "upstream": [{ "id": "p-hbm" }, { "id": "p-logic" }, { "id": "p-rf" }],
+      "downstream": [{ "id": "a-soc" }, { "id": "a-mem" }],
+      "sources": [
+        { "label": "Wafer Prober Market 2026-2031 (Mordor)", "url": "https://www.mordorintelligence.com/industry-reports/wafer-prober-market" },
+        { "label": "Accretech × Advantest die-level prober 合作", "url": "https://www.accretech.com/en/news/jointdevelopmentofdie_levelprober_202512.html" }
+      ]
+    },
+    {
+      "id": "m-handler",
+      "row": "machine", "col": 4, "span": 3, "kind": "stage",
+      "name": "分選機 + 主動控溫 Handler / ATC",
+      "nameEn": "Final-Test Handler + Active Thermal Control",
+      "competition": "oligopoly",
+      "desc": "Final test 時搬運 / 定位 / 分類封裝晶片，並以主動控溫（ATC）在數百 W~kW 功率下維持測試溫度；CoWoS GPU 測試流程的關鍵機構。",
+      "marketSize": "~$23-24 億（2026）",
+      "growth": "CAGR ~12%",
+      "analysis": "Advantest ~19%、Cohu ~16%（Eclipse + T-Core 3000W）、鴻勁 Hon Precision 全球 #3（SEMI ~32% 市占，AI 高溫分選細分接近主宰）、長川 CCTech（中國）競爭。鴻勁 ATC 在 TSMC CoWoS / NVIDIA Blackwell 測試線為現役主力，但 Cohu Eclipse、Advantest HA1200 為有能力替代 → 屬客戶配置 + 高轉換成本（>18 月）而非全球能力獨佔，列競爭性寡占。",
+      "companies": [
+        { "name": "鴻勁精密 Hon Precision", "ticker": "7769.TW", "country": "TW", "share": "全球 #3 / AI 控溫細分領先 ~32%", "products": "IC 測試分選機 + ATC（現 3000W→6000W）", "note": "AI 佔 78%、CoWoS 測試線 ATC 主力；客戶 TSMC/NVIDIA/ASE/京元電；訂單能見 1H26。Cohu/Advantest 有能力替代（>18 月轉換）→ 競爭性寡占", "src": "https://www.digitimes.com/news/a20241030PD217/cowos-taiwan-revenue-testing-demand.html" },
+        { "name": "Cohu", "ticker": "COHU", "country": "US", "share": "~16%", "products": "Eclipse + T-Core (3000W)", "note": "西方 AI handler 主要替代；25,000 台 install base" },
+        { "name": "Advantest 愛德萬", "ticker": "6857.T", "country": "JP", "share": "~19%", "products": "HA1200 die-level handler", "note": "die-level 控溫新進" },
+        { "name": "長川科技 CCTech", "ticker": "300604.SZ", "country": "CN", "share": "中國本土", "products": "分選機 + 探針台", "note": "中國國產替代" }
+      ],
+      "upstream": [{ "id": "s-ai" }, { "id": "s-mem" }],
+      "downstream": [{ "id": "a-soc" }, { "id": "a-mem" }],
+      "sources": [
+        { "label": "鴻勁搶 CoWoS 測試訂單、美系 CSP 客戶（Digitimes）", "url": "https://www.digitimes.com/news/a20241030PD217/cowos-taiwan-revenue-testing-demand.html" },
+        { "label": "溫控設備大廠鴻勁市占 32%（cnyes.com）", "url": "https://news.cnyes.com/news/id/6230575" },
+        { "label": "Global Test Handler Market to $2.4B 2026 (HDIN)", "url": "https://www.hdinresearch.com/news/1105" }
+      ]
+    },
+    {
+      "id": "p-hbm",
+      "row": "probecard", "col": 1, "span": 2, "kind": "stage",
+      "name": "記憶體 / HBM 探針卡",
+      "nameEn": "Memory / HBM Probe Card",
+      "competition": "oligopoly",
+      "desc": "DRAM / HBM wafer 測試介面，HBM 卡需測 15 萬+ pin、10 Gbps+ 高並行，單卡 $10-20 萬美元，為耗材級重複採購。",
+      "marketSize": "探針卡 ~$27 億、記憶體段 ~40%",
+      "growth": "HBM3E→HBM4 超級循環",
+      "analysis": "FormFactor（SmartMatrix，唯一量產驗證的 10 Gbps+ 高並行架構、供三大 HBM 廠）高頻領先；MJC 中華精測之外 MJC（Micronics Japan）自稱 DRAM 探針卡全球 #1（約 #2 兩倍）、JEM 為記憶體純玩 HBM 黑馬、TSE（韓）以 80% 低價切入。FormFactor 高頻有真實能力差距但 MJC/JEM 為可名指替代 → 競爭性寡占（HBM4 高頻段 FormFactor 最接近能力鎖喉，待 critic）。",
+      "companies": [
+        { "name": "FormFactor", "ticker": "FORM", "country": "US", "share": "HBM 高頻領先", "products": "SmartMatrix (10 Gbps+ 高並行)", "note": "供三大 HBM 廠；HBM 季營收約 $40-50M、HBM3→HBM4 增測試強度。MJC/JEM 為可名指替代 → 競爭性寡占（HBM4 高頻段值得未來 re-grade）", "src": "https://www.fool.com/earnings/call-transcripts/2026/02/04/formfactor-form-q4-2025-earnings-call-transcript/" },
+        { "name": "Micronics Japan (MJC)", "ticker": "6871.T", "country": "JP", "share": "DRAM 探針卡 #1", "products": "VC / VS 垂直 MEMS + 懸臂", "note": "自稱 DRAM #1（#2 兩倍）；80% 記憶體" },
+        { "name": "Japan Electronic Materials (JEM)", "ticker": "6855.T", "country": "JP", "share": "記憶體純玩", "products": "VC/VS MEMS + 懸臂 CE", "note": "HBM 隱形成長股、YoY +70%" },
+        { "name": "TSE", "ticker": "—", "country": "KR", "share": "低價挑戰者", "products": "DRAM/NAND/HBM 卡", "note": "韓國未上市；80% 低價搶單、品質/良率待證" }
+      ],
+      "upstream": [{ "id": "c-tip" }, { "id": "c-pin" }],
+      "downstream": [{ "id": "m-prober" }],
+      "sources": [
+        { "label": "FormFactor Q4 2025 法說逐字稿", "url": "https://www.fool.com/earnings/call-transcripts/2026/02/04/formfactor-form-q4-2025-earnings-call-transcript/" },
+        { "label": "JEM — HBM 隱形成長股 (Variant Perceptions)", "url": "https://variantperceptions.substack.com/p/japan-electronic-materials-hidden" },
+        { "label": "AI 測試需求火熱！探針卡三雄（money.udn.com）", "url": "https://money.udn.com/money/story/5710/9191391" }
+      ]
+    },
+    {
+      "id": "p-logic",
+      "row": "probecard", "col": 3, "span": 2, "kind": "stage",
+      "name": "先進邏輯 MEMS 探針卡",
+      "nameEn": "Advanced-Logic MEMS Probe Card",
+      "competition": "oligopoly",
+      "desc": "5nm/3nm/2nm 邏輯與 AI ASIC 的 wafer 測試介面，<40µm pitch、2 萬+ 接點，需光刻 MEMS 製程。",
+      "marketSize": "探針卡先進邏輯段 ~45-50%",
+      "growth": "AI ASIC + 2nm 上量",
+      "analysis": "Technoprobe（TPEG 自製 MEMS tip、垂直整合，奪 TSMC 2nm ~30% qualification）與 FormFactor（MicroSpring MEMS）為兩種差異化架構雙占、客戶兩家皆 qualify；台廠精測 PTI（全自製 MEMS、NS50 56GHz+）、旺矽 MPI（台廠 AI ASIC MEMS 先行）、穎崴（取得 Technoprobe TPEG 授權組裝）切入。能力分散於多家 → 競爭性寡占（非單點）。",
+      "companies": [
+        { "name": "Technoprobe", "ticker": "TPRO.MI", "country": "EU", "share": "先進邏輯領先", "products": "TPEG 自製 MEMS tip 垂直整合", "note": "奪 TSMC 2nm ~30% qualification；AI 佔營收 35%" },
+        { "name": "FormFactor", "ticker": "FORM", "country": "US", "share": "邏輯/foundry 領先", "products": "MicroSpring MEMS / Apollo", "note": "MEMS 專利估 >70%；與 Technoprobe 雙占架構" },
+        { "name": "中華精測 PTI", "ticker": "6510.TW", "country": "TW", "share": "全球非記憶體 MEMS #3（台廠最強）", "products": "NS50 MEMS 20-50µm、224 Gbps", "note": "全自製 MEMS（All-in-house）、TSMC 先進製程 qualified；非獨家" },
+        { "name": "旺矽 MPI", "ticker": "6223.TW", "country": "TW", "share": "台廠 AI ASIC MEMS 先行", "products": "VPC 垂直探針卡 + MEMS", "note": "MEMS 產能 2026 底 10 倍擴產；國內 AI ASIC 探針卡領先但精測/穎崴同競爭" },
+        { "name": "穎崴 WinWay", "ticker": "6515.TW", "country": "TW", "share": "MEMS 探針卡新進", "products": "授權 Technoprobe TPEG 組裝", "note": "5 年 $60M 採購合約取得 TPEG；組裝/通路非自研 tip" }
+      ],
+      "upstream": [{ "id": "c-tip" }],
+      "downstream": [{ "id": "m-prober" }],
+      "sources": [
+        { "label": "Technoprobe Q2 2025 法說（Investing.com）", "url": "https://www.investing.com/news/transcripts/earnings-call-transcript-technoprobe-q2-2025-sees-revenue-beat-stock-up-339-93CH-4179002" },
+        { "label": "旺矽通吃 ASIC/HBM/CPO、MEMS 擴產（money.udn.com）", "url": "https://money.udn.com/money/story/5607/9267640" },
+        { "label": "穎崴探針卡大單到手、Technoprobe 長約（money.udn.com）", "url": "https://money.udn.com/money/story/5710/9192665" }
+      ]
+    },
+    {
+      "id": "p-rf",
+      "row": "probecard", "col": 5, "span": 2, "kind": "stage",
+      "name": "RF / 薄膜 / 工程探針卡",
+      "nameEn": "RF / Membrane / Engineering Probe Card",
+      "competition": "redocean",
+      "desc": "RF、parametric、CIS 與工程驗證用探針卡，含薄膜（membrane）特殊製程；技術門檻較邏輯/HBM 低、玩家分散。",
+      "marketSize": "探針卡 ~3-5%",
+      "growth": "穩定",
+      "analysis": "FormFactor（懸臂/membrane legacy）、Cascade（Tektronix Component Solutions）、JEM America、HTSI 漢民測試（台灣 RF membrane 自研）等多家供應；HTSI 在台灣 RF membrane 為區域專家但全球非唯一。紅海競爭。",
+      "companies": [
+        { "name": "HTSI 漢民測試", "ticker": "—", "country": "TW", "share": "台灣 RF membrane 專家", "products": "自研 membrane 探針卡 + ISS 校正", "note": "未上市；RF 薄膜利基、全球非唯一（FormFactor/JEM America/Cascade 亦有）" },
+        { "name": "FormFactor", "ticker": "FORM", "country": "US", "share": "membrane legacy", "products": "懸臂 + membrane", "note": "傳統 membrane 產品線" },
+        { "name": "Cascade (Tektronix)", "ticker": "—", "country": "US", "share": "RF / 工程", "products": "RF probe card / station", "note": "Tektronix Component Solutions" }
+      ],
+      "upstream": [{ "id": "c-tip" }],
+      "downstream": [{ "id": "m-prober" }],
+      "sources": [
+        { "label": "HTSI SEMICON Taiwan 2025", "url": "https://www.hermes-testing.com.tw/en/events/htsisemicontaiwan2025/" },
+        { "label": "TechInsights 年度探針卡報告摘要 2025/05", "url": "https://www.techinsights.com/blog/annual-probe-card-report-summary-may-2025" }
+      ]
+    },
+    {
+      "id": "s-ai",
+      "row": "socket", "col": 1, "span": 2, "kind": "stage",
+      "name": "AI / HPC 高功率測試座",
+      "nameEn": "AI / HPC High-Power Test Socket",
+      "competition": "oligopoly",
+      "desc": "Final test 時 DUT 與 loadboard 間的接觸介面，AI GPU 需 >2 萬 I/O、>4000W 散熱、抗大封裝翹曲（warpage）；訊號完整性為採購首要標準。",
+      "marketSize": "測試座 ~$16-17 億（2026）",
+      "growth": "AI ASP 3-5x",
+      "analysis": "穎崴 WinWay 2025 成全球第一大測試座（HyperSocket + 液冷整合，NVIDIA 最信任供應商）、ISC（韓，橡膠型，HBM/大 die）、Yamaichi（日，高頻）、Smiths/Molex（DaVinci Gen V，獲某大 AI GPU 商獨家）共四家具備大 die AI socket 能力。各家為差異化平台 + 18 月以上共同開發 lock，但屬競爭性寡占（多家有能力），非單一能力鎖喉。",
+      "companies": [
+        { "name": "穎崴 WinWay", "ticker": "6515.TW", "country": "TW", "share": "全球第一大測試座", "products": "HyperSocket + HEATCon + 液冷", "note": "AI/HPC 佔 42-44%、sub-7nm 87%；NVIDIA 最信任供應商、北美 67% 營收。ISC/Yamaichi/Smiths 同具 AI socket 能力 → 競爭性寡占", "src": "https://money.udn.com/money/story/5735/8994239" },
+        { "name": "Smiths Interconnect / Molex", "ticker": "—", "country": "US", "share": "AI GPU burn-in/FT", "products": "DaVinci Gen V (224 Gbps)", "note": "獲某大 AI GPU 商獨家；2026/4 併入 Molex（Koch）" },
+        { "name": "Yamaichi 山一電機", "ticker": "—", "country": "JP", "share": "高頻/傳統邏輯", "products": "高頻 IC socket", "note": "日本未上市；AI 世代龍頭地位受 WinWay 挑戰" },
+        { "name": "ISC", "ticker": "095340.KQ", "country": "KR", "share": "橡膠型領先", "products": "矽橡膠接觸 socket", "note": "高頻/HBM 大 die；客戶 SK Hynix/Samsung" }
+      ],
+      "upstream": [{ "id": "c-loadboard" }, { "id": "c-pin" }],
+      "downstream": [{ "id": "m-handler" }, { "id": "a-slt" }],
+      "sources": [
+        { "label": "穎崴躍全球第一大測試座供應商（money.udn.com）", "url": "https://money.udn.com/money/story/5735/8994239" },
+        { "label": "Smiths Interconnect DaVinci Gen V 大單", "url": "https://www.smiths.com/news-and-insights/news/2025/smiths-interconnect-announces-significant-contract-win" },
+        { "label": "WinWay 成全球最大測試座供應商（Digitimes）", "url": "https://www.digitimes.com/news/a20250627PD231/supplier-2025-test-interface-demand-revenue.html" }
+      ]
+    },
+    {
+      "id": "s-mem",
+      "row": "socket", "col": 3, "span": 2, "kind": "stage",
+      "name": "記憶體 / HBM 測試座",
+      "nameEn": "Memory / HBM Test Socket",
+      "competition": "oligopoly",
+      "desc": "DRAM / HBM stack final test 接觸介面；矽橡膠型在高頻、高並行、平面度上對大 die 有優勢。",
+      "marketSize": "測試座記憶體段",
+      "growth": "HBM 帶動",
+      "analysis": "ISC（矽橡膠 socket 近獨佔型、SK Hynix/Samsung）、LEENO（HBM 專用 socket + 探針）、WinWay 補位競爭。ISC 橡膠型有性能差異但 spring-pin 路線（LEENO/Smiths）為可 requalify 替代，競爭性寡占。",
+      "companies": [
+        { "name": "ISC", "ticker": "095340.KQ", "country": "KR", "share": "橡膠型領先 ~25-30%", "products": "矽橡膠接觸 socket (HBM3E/4)", "note": "高頻訊號完整性優於 pogo；SK Hynix/Samsung" },
+        { "name": "LEENO Industrial", "ticker": "058470.KQ", "country": "KR", "share": "HBM socket + 探針", "products": "HBM 專用 socket 幾何", "note": "超精密探針延伸做 socket" },
+        { "name": "穎崴 WinWay", "ticker": "6515.TW", "country": "TW", "share": "補位", "products": "記憶體 socket", "note": "AI socket 龍頭兼做記憶體" }
+      ],
+      "upstream": [{ "id": "c-loadboard" }, { "id": "c-pin" }],
+      "downstream": [{ "id": "m-handler" }],
+      "sources": [
+        { "label": "ISC 推 CPU/GPU 矽橡膠 socket（The Elec）", "url": "https://www.thelec.net/news/articleView.html?idxno=3300" },
+        { "label": "Nvidia AI 供應鏈 vs 韓國晶片測試廠 (Korea Plus)", "url": "https://koreaplus-lifes.com/isc-ai-chip-testing-korea/" }
+      ]
+    },
+    {
+      "id": "s-burnin",
+      "row": "socket", "col": 5, "span": 2, "kind": "stage",
+      "name": "Burn-in 測試座 / H-pin",
+      "nameEn": "Burn-in Socket / Contactor",
+      "competition": "oligopoly",
+      "desc": "老化測試用接觸座，需耐高溫高電流、可自動化量產；H-pin（沖壓彈簧針）為成本/熱性能路線。",
+      "marketSize": "Burn-in socket 段",
+      "growth": "AI burn-in 增",
+      "analysis": "Smiths/Plastronics（H-pin）、WinWay、Yamaichi、Boyd（前 Sensata/Qinex）多家競爭；技術成熟、可替代性高，紅海偏寡占。",
+      "companies": [
+        { "name": "Smiths / Plastronics", "ticker": "—", "country": "US", "share": "H-pin 領先", "products": "H-pin burn-in socket", "note": "2023 併 Plastronics、2026 併入 Molex" },
+        { "name": "穎崴 WinWay", "ticker": "6515.TW", "country": "TW", "share": "AI burn-in 補位", "products": "burn-in socket", "note": "AI socket 龍頭延伸" },
+        { "name": "Boyd (Qinex)", "ticker": "—", "country": "US", "share": "熱/burn-in", "products": "burn-in / 熱測試 socket", "note": "2022 由 Sensata 售予 Boyd" }
+      ],
+      "upstream": [{ "id": "c-loadboard" }, { "id": "c-pin" }],
+      "downstream": [{ "id": "a-burnin" }],
+      "sources": [
+        { "label": "Sensata 將 Qinex 售予 Boyd", "url": "https://www.businesswire.com/news/home/20220701005382/en/Sensata-Technologies-Sells-Semiconductor-Test-and-Thermal-Business-Qinex-to-Boyd-Corporation" },
+        { "label": "Molex 完成併購 Smiths Interconnect", "url": "https://www.molex.com/en-us/news/molex-completes-acquisition-of-smiths-interconnect" }
+      ]
+    },
+    {
+      "id": "c-loadboard",
+      "row": "component", "col": 1, "span": 2, "kind": "rail",
+      "name": "測試載板 Loadboard / DUT Board",
+      "nameEn": "Loadboard / DUT Board",
+      "competition": "oligopoly",
+      "desc": "承載 socket 與訊號路由的高速 PCB，連接測試座到 ATE；AI 高速訊號（PAM4）需高層數、低損耗材料。",
+      "marketSize": "載板/介面板段",
+      "growth": "AI 高速帶動",
+      "analysis": "雍智 Yangzhi（台灣 load board 客製設計龍頭、服務聯發科/世芯/瑞昱，後段 80%）、各 socket 廠自製競爭；客製設計服務為護城河，但玩家多、可替代。",
+      "companies": [
+        { "name": "雍智科技 Yangzhi", "ticker": "6683.TWO", "country": "TW", "share": "台灣 load board 領先", "products": "FT load board + burn-in board + 前段探針卡(17.5%)", "note": "2025 營收創高 NT$21.4B；客戶聯發科/瑞昱/世芯-KY；探針卡 tip 外購" },
+        { "name": "WinWay / R&D 廠自製", "ticker": "—", "country": "GLOBAL", "share": "socket 廠垂直整合", "products": "loadboard 整合方案", "note": "socket 廠多自備 loadboard" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "s-ai" }, { "id": "s-mem" }, { "id": "s-burnin" }],
+      "sources": [
+        { "label": "雍智三大產品線帶勁（money.udn.com）", "url": "https://money.udn.com/money/story/11074/9217511" },
+        { "label": "雍智前段測試載板營收爆增逾倍（vocus.cc）", "url": "https://vocus.cc/article/68fc3538fd897800017ad7d0" }
+      ]
+    },
+    {
+      "id": "c-pin",
+      "row": "component", "col": 3, "span": 2, "kind": "rail",
+      "name": "探針 / 彈簧針 Probe Pins",
+      "nameEn": "Probe Pins / Spring Contacts",
+      "competition": "monopoly",
+      "single": "近乎獨佔 · LEENO 在超精密晶圓測試探針（最細 0.075mm）全球市占 >70%，深度 qualify 於 Samsung/SK Hynix/TSMC/NVIDIA，requalify 需重新認證；Feinmetall/INGUN 主攻板級非超精密晶圓針（信心度 med-high · 多源，惟 >70% 部分為自報）",
+      "desc": "探針卡與測試座內的微細接觸元件（彈簧針 / pogo pin / 沖壓針）；超精密晶圓針需 0.075mm 級、高電流密度、長壽命。",
+      "marketSize": "探針 ~$6.8 億（2025）",
+      "growth": "→$10.8 億 2032",
+      "analysis": "LEENO（韓）在超精密晶圓測試探針 >70%、營益率 ~50%、1000+ 客戶含 Samsung/SK Hynix/TSMC/NVIDIA，為韓系供應鏈單一來源風險；Feinmetall + INGUN（德）主攻板級/模組級 test probe。超精密晶圓針段 LEENO 近獨佔（板級非其守備）→ ⚑ 候選。",
+      "companies": [
+        { "name": "LEENO Industrial", "ticker": "058470.KQ", "country": "KR", "share": "超精密晶圓針 >70%", "products": "LEENO PIN（0.075mm）+ socket", "note": "純玩探針/socket、營益率 ~50%；韓系供應鏈單源", "core_business": true, "supply_chain_lock": "tight", "src": "https://pitchbook.com/profiles/company/165302-47" },
+        { "name": "Feinmetall", "ticker": "—", "country": "DE", "share": "板級 test probe", "products": "彈簧針 / 高頻接觸", "note": "德國未上市；板級/模組級為主" },
+        { "name": "INGUN", "ticker": "—", "country": "DE", "share": "板級 test probe", "products": "測試探針", "note": "德國未上市；ICT/板級" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "p-hbm" }, { "id": "s-ai" }, { "id": "s-mem" }, { "id": "s-burnin" }],
+      "sources": [
+        { "label": "LEENO 市場地位 (PitchBook)", "url": "https://pitchbook.com/profiles/company/165302-47" },
+        { "label": "Probe Pin Market to $1.08B by 2032 (GlobeNewswire)", "url": "https://www.globenewswire.com/news-releases/2026/03/02/3247525/0/en/Probe-Pin-Market-Projected-to-Reach-1-08-Billion-by-2032-Future-Terms-Growth-Drivers.html" }
+      ]
+    },
+    {
+      "id": "c-tip",
+      "row": "component", "col": 5, "span": 2, "kind": "rail",
+      "name": "MEMS 探針頭 Tip",
+      "nameEn": "MEMS Probe Tip",
+      "competition": "oligopoly",
+      "desc": "光刻製程做出的 MEMS 探針尖（垂直彈簧/接觸），<40µm pitch 的核心元件，決定先進邏輯/HBM 探針卡能力。",
+      "marketSize": "探針卡內含",
+      "growth": "MEMS 滲透 ~45%",
+      "analysis": "Technoprobe TPEG（自製 cleanroom 垂直整合，僅供自家 + 授權穎崴）與 FormFactor MicroSpring 為兩種自製架構雙占；精測/MJC/JEM 亦自製記憶體/邏輯 MEMS tip。兩家差異化但客戶皆 qualify → 競爭性寡占，非單點。",
+      "companies": [
+        { "name": "Technoprobe TPEG", "ticker": "TPRO.MI", "country": "EU", "share": "自製 tip 領先", "products": "TPEG MEMS tip", "note": "垂直整合 cleanroom、授權穎崴組裝、IP 不外流" },
+        { "name": "FormFactor", "ticker": "FORM", "country": "US", "share": "MicroSpring", "products": "MicroSpring MEMS", "note": "MEMS 專利估 >70%；部分外包製造" },
+        { "name": "中華精測 PTI", "ticker": "6510.TW", "country": "TW", "share": "全自製", "products": "NS50 MEMS tip", "note": "All-in-house MEMS 工藝" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "p-hbm" }, { "id": "p-logic" }, { "id": "p-rf" }],
+      "sources": [
+        { "label": "FormFactor：MEMS vs 傳統探針卡比較", "url": "https://www.formfactor.com/blog/2026/mems-vs-traditional-probe-cards-a-detailed-comparison/" },
+        { "label": "穎崴-Technoprobe 5 年 MEMS 探針卡合約（Digitimes）", "url": "https://www.digitimes.com/news/a20251211PD219/probe-card-mems-probe-wafer-testing.html" }
+      ]
+    },
+    {
+      "id": "d-osat",
+      "row": "demand", "col": 1, "span": 2, "kind": "demand",
+      "name": "測試代工 OSAT",
+      "nameEn": "Test OSAT / Foundry Test",
+      "competition": "oligopoly",
+      "desc": "獨立測試與封測廠，採購全部 ATE / handler / socket / probe card；AI GPU 測試流程（FT→burn-in→FT→SLT）大幅拉長、burn-in 600W→1kW。",
+      "marketSize": "測試代工",
+      "growth": "AI 測試時間倍增",
+      "analysis": "京元電 KYEC 為最大獨立測試廠、NVIDIA Blackwell GB 封裝 final test 近乎主宰 + 自製高功率 burn-in 護城河（AI 佔比 2026 >55%）；日月光 ASE、Amkor、力成 Powertech 競爭。京元電自製 burn-in 領先但非完全排他，列寡占需求端。",
+      "companies": [
+        { "name": "京元電 KYEC", "ticker": "2449.TW", "country": "TW", "share": "最大獨立測試廠", "products": "晶圓針測 + FT + 自製 burn-in", "note": "NVIDIA Blackwell 測試主力、自製 1kW burn-in；2026 capex NT$500 億創高" },
+        { "name": "日月光 ASE", "ticker": "3711.TW", "country": "TW", "share": "全球最大 OSAT", "products": "封裝 + 測試", "note": "CoWoS 後段 + 測試" },
+        { "name": "Amkor", "ticker": "AMKR", "country": "US", "share": "全球 #2 OSAT", "products": "封裝 + 測試", "note": "Arizona 廠" },
+        { "name": "力成 Powertech", "ticker": "6239.TW", "country": "TW", "share": "記憶體封測領先", "products": "記憶體 + 邏輯封測", "note": "HBM/記憶體測試" }
+      ],
+      "upstream": [{ "id": "a-soc" }, { "id": "a-mem" }, { "id": "a-slt" }, { "id": "a-burnin" }],
+      "downstream": [{ "id": "d-fabless" }],
+      "sources": [
+        { "label": "京元電：最純 AI 測試受惠股（wantrich.chinatimes.com）", "url": "https://wantrich.chinatimes.com/news/20260128900324-420101" },
+        { "label": "京元電擴資本支出至 500 億元（money.udn.com）", "url": "https://money.udn.com/money/story/5612/9434005" }
+      ]
+    },
+    {
+      "id": "d-foundry",
+      "row": "demand", "col": 3, "span": 2, "kind": "demand",
+      "name": "晶圓代工 / 先進封裝",
+      "nameEn": "Foundry / Advanced Packaging",
+      "competition": "oligopoly",
+      "desc": "TSMC CoWoS 等先進封裝產生 GPU+HBM 模組，模組級測試需精密控溫；代工/封裝廠是測試介面需求的源頭。",
+      "marketSize": "先進製程/封裝",
+      "growth": "CoWoS 上量",
+      "analysis": "TSMC 主導先進邏輯與 CoWoS 封裝（demand-side 集中，非測試介面供應商）；Samsung、Intel Foundry 競爭。其 wafer sort / 模組測試外包帶動 prober / probe card / handler 需求。",
+      "companies": [
+        { "name": "TSMC 台積電", "ticker": "2330.TW", "country": "TW", "share": "先進製程 + CoWoS 主導", "products": "N3/N2 + CoWoS-L/S", "note": "wafer sort 外包 KYEC；CoWoS 模組測試需 ATC handler" },
+        { "name": "Samsung Foundry", "ticker": "005930.KS", "country": "KR", "share": "先進製程 #2", "products": "SF2 + 先進封裝", "note": "自有測試 + 外包" }
+      ],
+      "upstream": [{ "id": "a-soc" }],
+      "downstream": [{ "id": "d-fabless" }],
+      "sources": [
+        { "label": "鴻勁搭 CoWoS 成長浪潮（Digitimes）", "url": "https://www.digitimes.com/news/a20241030PD217/cowos-taiwan-revenue-testing-demand.html" }
+      ]
+    },
+    {
+      "id": "d-fabless",
+      "row": "demand", "col": 5, "span": 2, "kind": "demand",
+      "name": "IC 設計 / 雲端自研晶片",
+      "nameEn": "Fabless / Hyperscaler Silicon",
+      "competition": "oligopoly",
+      "desc": "AI 加速器與 ASIC 的最終擁有者，定義測試規格、決定 ATE / SLT / socket 採用世代；測試良率直接影響其出貨。",
+      "marketSize": "AI 加速器需求源",
+      "growth": "AI 超級循環",
+      "analysis": "NVIDIA、AMD GPU + Google/AWS/Meta/Microsoft 自研 ASIC + Broadcom/Marvell 設計服務為測試需求終極源頭；其晶片複雜度（die size、功耗、chiplet）直接推升測試時間與介面 ASP。demand 端集中。",
+      "companies": [
+        { "name": "NVIDIA", "ticker": "NVDA", "country": "US", "share": "AI GPU 主導", "products": "Blackwell / Rubin GPU", "note": "測試流程最長、帶動致茂 SLT / 鴻勁 ATC / WinWay socket" },
+        { "name": "AMD", "ticker": "AMD", "country": "US", "share": "AI GPU #2", "products": "MI300/MI400", "note": "致茂 SLT 客戶" },
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "ASIC 設計服務領先", "products": "TPU / 客製 ASIC", "note": "Google TPU；京元電測試" },
+        { "name": "Google / AWS / Meta", "ticker": "—", "country": "US", "share": "雲端自研 ASIC", "products": "TPU / Trainium / MTIA", "note": "hyperscaler 自研晶片帶動 ASIC 測試" }
+      ],
+      "upstream": [{ "id": "d-osat" }, { "id": "d-foundry" }, { "id": "a-slt" }],
+      "downstream": [],
+      "sources": [
+        { "label": "AI 晶片測試介面需求大增、台廠訂單看到 2026（Digitimes）", "url": "https://www.digitimes.com/news/a20251112PD227/ai-asic-chips-demand-mpi-winway-chpt-keystone-2026.html" }
+      ]
+    }
+  ],
+  "edges": [
+    ["c-tip", "p-hbm"], ["c-tip", "p-logic"], ["c-tip", "p-rf"],
+    ["c-pin", "p-hbm"], ["c-pin", "s-ai"], ["c-pin", "s-mem"], ["c-pin", "s-burnin"],
+    ["c-loadboard", "s-ai"], ["c-loadboard", "s-mem"], ["c-loadboard", "s-burnin"],
+    ["p-hbm", "m-prober"], ["p-logic", "m-prober"], ["p-rf", "m-prober"],
+    ["s-ai", "m-handler"], ["s-mem", "m-handler"], ["s-ai", "a-slt"], ["s-burnin", "a-burnin"],
+    ["m-prober", "a-soc"], ["m-prober", "a-mem"], ["m-handler", "a-soc"], ["m-handler", "a-mem"],
+    ["a-soc", "d-osat"], ["a-mem", "d-osat"], ["a-slt", "d-osat"], ["a-burnin", "d-osat"],
+    ["a-soc", "d-foundry"], ["a-slt", "d-fabless"],
+    ["d-osat", "d-fabless"], ["d-foundry", "d-fabless"]
+  ]
+}
