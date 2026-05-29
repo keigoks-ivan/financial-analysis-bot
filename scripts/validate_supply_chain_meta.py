@@ -193,6 +193,28 @@ def validate_topic(d: dict, filename_stem: str) -> list[str]:
                         f"node {nid}.companies[{j}]: core_business_trajectory={cbt!r}; "
                         f"allowed ['high', 'med', 'low']"
                     )
+            # node_role tier (🐘 elephant / 🔒 uninvestable) — orthogonal to 💎.
+            # 💎 satellite stays derived from core_business×supply_chain_lock; node_role
+            # marks the two tiers the golden intersection deliberately cannot capture.
+            if "node_role" in c:
+                nr = c["node_role"]
+                if nr not in {"elephant", "uninvestable"}:
+                    errs.append(
+                        f"node {nid}.companies[{j}]: node_role={nr!r}; "
+                        f"allowed ['elephant', 'uninvestable']"
+                    )
+                # must sit on a ⚑ node (tiers describe chokepoint owners)
+                if not n.get("single"):
+                    errs.append(
+                        f"node {nid}.companies[{j}]: node_role={nr!r} but node has no "
+                        "'single' (⚑) — tiers only apply to chokepoint nodes"
+                    )
+                # mutually exclusive with 💎 satellite
+                if c.get("core_business") is True and c.get("supply_chain_lock") == "tight":
+                    errs.append(
+                        f"node {nid}.companies[{j}]: node_role={nr!r} conflicts with 💎 "
+                        "satellite (core_business+tight) — a company is one tier, not both"
+                    )
 
         # sources: each must have label + url
         for j, s in enumerate(n.get("sources", []) or []):

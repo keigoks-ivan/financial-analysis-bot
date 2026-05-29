@@ -435,40 +435,36 @@ function closeDrawer() {
 }
 
 /* ---------- golden intersection block (above def-block) ---------- */
-function renderGoldenIntersection() {
-  const slot = document.getElementById("goldBlock");
-  if (!slot) return;
+// Tier of a (node, company): 💎 satellite (derived) / 🐘 elephant / 🔒 uninvestable (node_role).
+function tierOf(n, c) {
+  if (isGolden(n, c)) return "satellite";
+  if (c.node_role === "elephant") return "elephant";
+  if (c.node_role === "uninvestable") return "uninvestable";
+  return null;
+}
 
-  // Collect (node, company) pairs that qualify
-  const pairs = [];
+// Collect + dedupe (by ticker) the companies of one tier across all ⚑ nodes.
+function collectTier(tier) {
+  const byKey = new Map();
   for (const n of TOPIC.nodes) {
     if (!n.single) continue;
     for (const c of (n.companies || [])) {
-      if (isGolden(n, c)) pairs.push({ node: n, company: c });
+      if (tierOf(n, c) !== tier) continue;
+      const key = c.ticker && c.ticker !== "—" ? c.ticker : c.name;
+      if (!byKey.has(key)) byKey.set(key, { company: c, nodes: [] });
+      byKey.get(key).nodes.push(n);
     }
   }
+  return byKey;
+}
 
-  // Dedupe by ticker — same company may appear in multiple nodes
-  const byKey = new Map();
-  for (const p of pairs) {
-    const key = p.company.ticker || p.company.name;
-    if (!byKey.has(key)) byKey.set(key, { company: p.company, nodes: [] });
-    byKey.get(key).nodes.push(p.node);
-  }
-
-  if (byKey.size === 0) {
-    slot.style.display = "none";
-    return;
-  }
-  slot.style.display = "";
-
-  const rows = [...byKey.values()].map(({ company, nodes }) => {
+function tierRows(byKey) {
+  return [...byKey.values()].map(({ company, nodes }) => {
     const flag = FLAG[company.country] || "";
     const dd = ddLinkFor(company.ticker);
     const ddBtn = dd ? ` <a href="${dd.href}" class="dd-link" target="_blank" rel="noopener" title="開啟 DD 報告">DD ↗</a>` : "";
-    const tickerHTML = company.ticker ? `<span class="tk">${company.ticker}</span>` : "";
+    const tickerHTML = company.ticker && company.ticker !== "—" ? `<span class="tk">${company.ticker}</span>` : "";
     const nodeChips = nodes.map(n => `<span class="gold-node-chip">${n.name}</span>`).join("");
-    // Use first node's single as the headline lock evidence
     const single = nodes[0].single || "";
     const note = company.note || "";
     const prod = company.products ? `<div class="gold-prod">🔧 ${company.products}</div>` : "";
@@ -479,18 +475,47 @@ function renderGoldenIntersection() {
       <td><span class="gold-note">${note}</span>${prod}</td>
     </tr>`;
   }).join("");
+}
 
-  slot.innerHTML = `
-    <h3><span class="ico">💎</span>Top Picks · ${byKey.size} 檔</h3>
-    <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（非 side bet） × <em>供應鏈鎖喉緊俏</em> 三條件的公司 — 用「結構性 lock-in」取代「YoY 高成長」這個噪音指標，留下真正客戶離不開的 high-conviction picks。</p>
-    <div class="gold-table-wrap">
-      <table class="gold-table">
-        <thead><tr><th>公司</th><th>節點</th><th>鎖喉證據</th><th>業務說明</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-    <p class="gold-foot">判準：<code>core_business: true</code>（≥20% revenue / 純玩家 / flagship） × <code>supply_chain_lock: "tight"</code>（5 訊號任一即過：訂單 ≥ 12 月 / sold out / 多年 exclusive 名單 / pricing power / 客戶多代 supplier）。由 <code>supply-chain-cartographer</code> skill 研究時手動標註，validator pre-commit 把關。</p>
-  `;
+function tierTable(byKey, cls, headFirst) {
+  return `<div class="gold-table-wrap"><table class="gold-table ${cls}">
+      <thead><tr><th>${headFirst}</th><th>節點</th><th>鎖喉證據</th><th>業務說明</th></tr></thead>
+      <tbody>${tierRows(byKey)}</tbody></table></div>`;
+}
+
+function renderGoldenIntersection() {
+  const slot = document.getElementById("goldBlock");
+  if (!slot) return;
+
+  const sat = collectTier("satellite");
+  const ele = collectTier("elephant");
+  const uni = collectTier("uninvestable");
+
+  if (sat.size === 0 && ele.size === 0 && uni.size === 0) {
+    slot.style.display = "none";
+    return;
+  }
+  slot.style.display = "";
+
+  let html = "";
+  if (sat.size) {
+    html += `<h3><span class="ico">💎</span>Satellite Top Picks · ${sat.size} 檔</h3>
+    <p class="lede">同時滿足 <em>⚑ 客戶獨家／關鍵單點</em> × <em>核心業務</em>（純玩家 / ≥20% rev，非 side bet） × <em>供應鏈鎖喉緊俏</em>（≥2 訊號）三條件 — 鎖喉<strong>推得動該股 EPS</strong> 的 high-conviction picks。</p>
+    ${tierTable(sat, "", "公司")}`;
+  }
+  if (ele.size) {
+    html += `<h3 class="tier-ele"><span class="ico">🐘</span>Elephant · ${ele.size} 檔 — 最不可或缺，但鎖喉被稀釋</h3>
+    <p class="lede">它<strong>就是</strong>鎖喉本身（壟斷／近獨佔），但身處大型多角化集團，單一節點推不動 EPS。<strong>用 core-holding 框架評</strong>（估值 / 整體成長 / 週期），不是 single-point satellite alpha。</p>
+    ${tierTable(ele, "tier-ele-tbl", "公司")}`;
+  }
+  if (uni.size) {
+    html += `<h3 class="tier-uni"><span class="ico">🔒</span>不可投資的鎖喉 · ${uni.size} 個</h3>
+    <p class="lede">結構上唯一 / sole-source，但<strong>買不到純曝險</strong> — 未上市，或已是某上市母體的次組件。要曝險請透過母體 / 客戶。</p>
+    ${tierTable(uni, "tier-uni-tbl", "節點供應商")}`;
+  }
+  html += `<p class="gold-foot">三層分類：💎 <code>core_business:true</code> × <code>supply_chain_lock:"tight"</code>（鎖喉推得動 EPS）｜🐘 <code>node_role:"elephant"</code>（是鎖喉但太大太分散，用 core-holding 評）｜🔒 <code>node_role:"uninvestable"</code>（唯一但買不到，透過母體玩）。由 <code>supply-chain-cartographer</code> skill 標註，validator pre-commit 把關。</p>`;
+
+  slot.innerHTML = html;
 }
 
 /* ---------- definitions block (footer card) ---------- */

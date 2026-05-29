@@ -337,6 +337,24 @@ worked example 的 💎 池：
 
 這些正好是 sell-side / activist（Hunterbrook、Ming-Chi Kuo、Citrini）反覆推的標的 — 不是巧合，他們用類似框架。
 
+## 三層 Tier — 鎖喉 ≠ 可買（v1.4 起，2026-05-29）
+
+> **動機**：💎 單獨用會把「最不可或缺的節點 owner」誤判 — 因為最深的鎖喉（TSMC、Ajinomoto、ZEISS）往往**太大或不可投資**，反而過不了 💎 的 core_business gate。但「不是 💎」不代表「不重要」。v1.4 把坐在 ⚑ 節點上的公司分三層，讓「最不可或缺」與「最 top pick」**分開呈現**。
+
+| Tier | 判準 | 怎麼評 | 範例 |
+|---|---|---|---|
+| 💎 **Satellite** | ⚑ 節點 × `core_business:true` × `supply_chain_lock:"tight"` — 鎖喉**推得動該股 EPS**（純玩家 / 純度高） | satellite alpha，部位推得動 | ASML、家登、台光電、ASPEED |
+| 🐘 **Elephant** | `node_role:"elephant"` — **它就是鎖喉本身**（壟斷／近獨佔）但身處大型多角化集團，單節點 <~30% 營收推不動 EPS | **core-holding 框架**（估值/整體成長/週期），非 single-point | TSMC、Ajinomoto、Mitsui Chemicals |
+| 🔒 **Uninvestable** | `node_role:"uninvestable"` — sole-source 但**買不到純曝險**：未上市，或已是某上市母體的次組件 | 透過母體 / 客戶玩 | ZEISS+Cymer+Trumpf（→ ASML）、Namics、Crusoe |
+
+**標註規則**：
+- `node_role` 是 optional enum（`elephant` / `uninvestable`），**只標在 ⚑ 節點**上的公司。
+- 與 💎 satellite **互斥**：標了 `node_role` 就不能同時 `core_business:true`+`tight`（validator 強制；標 node_role 時應移除 cb/lock）。
+- 💎 satellite **不另設欄位**，仍由 `isGolden()` = `core_business`×`supply_chain_lock` 推導。
+- 判斷「elephant vs satellite」的關鍵問句：**「這個鎖喉節點占這家公司營收多少 %？」** ≥~30% 或純玩家 → satellite；個位數 %（大集團一小塊）→ elephant。
+- 判斷「uninvestable」：沒有可買的獨立 equity（ticker `—`／私人／已併入母體）。
+- engine 在頁尾 `#goldBlock` **分三區渲染**（💎 / 🐘 / 🔒），各自獨立表格與顏色。
+
 ## 信心度標註 convention（在 `single` 與 `note` 欄位）
 
 ```
