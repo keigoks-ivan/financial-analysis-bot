@@ -171,6 +171,24 @@ if [ -n "$TARGETS_SC" ]; then
   fi
 fi
 
+# Supply-chain hub rollup: when map data changed AND all validation passed,
+# regenerate the cross-map 💎/🐘/🔒 synthesis between the TIERS_AUTO markers in
+# docs/supply-chain/index.html and stage it — so /supply-chain/ can never go
+# stale relative to the maps, regardless of whether they were edited via the
+# cartographer skill or by hand. (Only rewrites between markers; manual hub
+# edits like the coverage matrix are preserved.)
+if [ -n "$STAGED_SC" ] && [ "$FAIL" -eq 0 ]; then
+  echo "→ pre-commit: rebuilding hub tiers rollup (supply-chain data changed)"
+  if python3 scripts/build_supply_chain_tiers.py > /tmp/_sc_tiers.log 2>&1; then
+    git add docs/supply-chain/index.html
+  else
+    echo ""
+    echo "❌ build_supply_chain_tiers.py FAILED — commit blocked."
+    tail -15 /tmp/_sc_tiers.log | sed 's/^/   /'
+    FAIL=1
+  fi
+fi
+
 if [ "$FAIL" -ne 0 ]; then
   exit 1
 fi
