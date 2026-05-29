@@ -602,6 +602,10 @@ single: "近獨佔 · <主張> （信心度 high · 多源證實）"
 # 重建 dd_links（DD 新增過就要跑）
 python3 scripts/build_supply_chain_dd_index.py
 
+# 【必跑】重生 hub 跨站統整（💎/🐘/🔒 三層）— 任何 ⚑/💎/node_role 改動都要刷新，
+# 否則 /supply-chain/ 的「全站 Top Picks 統整」會 stale。會改寫 index.html。
+python3 scripts/build_supply_chain_tiers.py
+
 # 本機測試
 python3 -m http.server 8765 --directory docs &
 # 開瀏覽器訪問 http://localhost:8765/supply-chain/{topic}.html
