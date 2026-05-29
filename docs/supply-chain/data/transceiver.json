@@ -1,0 +1,364 @@
+{
+  "id": "transceiver",
+  "tab": "光收發模組",
+  "title": "光收發模組（Pluggable Optical Transceiver）供應鏈",
+  "subtitle": "可插拔 800G / 1.6T QSFP-DD / OSFP 光收發模組（有別於 CPO 共封裝光學路線、亦不同於矽光子平台圖）。2026 為 1.6T 放量首年，AI optical TAM 估 $16.5B(2025)→$26B(2026, +57% YoY)。全鏈最緊的鎖喉不在模組整合層（旭創 / Coherent / 新易盛 競爭寡占），而在上游 200G/lane EML 雷射晶片 — NVIDIA 2026/3 對 Lumentum + Coherent 各投 $2B（共 $4B）鎖產能，使其餘買家交期排到 2027 之後。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 15 },
+    { "k": "涵蓋廠商", "v": "40+" },
+    { "k": "獨佔/關鍵單點", "v": 1, "sub": "200G/lane EML 雷射晶片", "hot": true }
+  ],
+  "rows": [
+    { "id": "equip", "label": "設備・測試 EQUIPMENT", "main": false },
+    { "id": "mat", "label": "基板・磊晶 SUBSTRATE & EPI", "main": false },
+    { "id": "chip", "label": "光電晶片 OPTO-ELECTRONIC CHIPS", "main": true },
+    { "id": "optics", "label": "光學・被動元件 OPTICS & PASSIVES", "main": false },
+    { "id": "module", "label": "模組組裝・需求 MODULE & DEMAND", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "eq-mocvd",
+      "row": "equip", "col": 1, "span": 4, "kind": "rail",
+      "name": "MOCVD 磊晶設備",
+      "nameEn": "MOCVD Epitaxy Tools",
+      "competition": "oligopoly",
+      "desc": "金屬有機化學氣相沉積反應爐，長出每顆雷射 / 光偵測器底下的 III-V（InP / GaAs）磊晶層。",
+      "marketSize": "利基資本設備",
+      "growth": "磊晶擴產 2026",
+      "analysis": "Aixtron（DE）+ Veeco（US）雙寡占；中國受出口管制無法取得頂規 InP-capable MOCVD，是中國雷射晶片自主化的結構性天花板 — 但對西方買家是雙供應，不構成單點。",
+      "companies": [
+        { "name": "Aixtron", "ticker": "AIXA.DE", "country": "DE", "share": "MOCVD ~50%", "products": "InP / GaAs MOCVD 反應爐", "note": "頂規 InP recipe 對中國封鎖" },
+        { "name": "Veeco", "ticker": "VECO", "country": "US", "share": "MOCVD #2", "products": "GaAs / InP MOCVD", "note": "西方買家第二源" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-inp-epi" }],
+      "sources": [
+        { "label": "TechTimes: NVIDIA $4B laser lockup 推升交期", "url": "https://www.techtimes.com/articles/317281/20260527/ai-data-center-optical-component-shortage-nvidias-4b-laser-lockup-pushes-rivals-past-2027.htm" }
+      ]
+    },
+    {
+      "id": "eq-align",
+      "row": "equip", "col": 5, "span": 4, "kind": "rail",
+      "name": "主動光學對位・封裝・測試設備",
+      "nameEn": "Active Alignment · Packaging · Test",
+      "competition": "oligopoly",
+      "desc": "次微米主動對位、光封裝與光電測試設備；TrendForce 點名為有別於晶片缺貨的「製造良率」瓶頸。",
+      "marketSize": "內嵌於組裝",
+      "growth": "1.6T 高密度拉動",
+      "analysis": "對位 / 封裝 know-how 集中於整合廠內製（Fabrinet）與 FAU 廠（上詮）；非單一來源，但構成良率護城河。Advantest / 致茂切入光電測試。",
+      "companies": [
+        { "name": "致茂 Chroma", "ticker": "2360.TW", "country": "TW", "share": "光電 ATE", "products": "SLT + 光電測試", "note": "台廠測試要角" },
+        { "name": "Advantest", "ticker": "6857.T", "country": "JP", "share": "ATE 寡占", "products": "光模組 wafer-level test", "note": "切入 SiPh / 光電測試" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "m-ems" }],
+      "sources": [
+        { "label": "TrendForce: 2026 光收發模組 TAM 與良率瓶頸", "url": "https://www.trendforce.com/presscenter/news/20260420-13017.html" }
+      ]
+    },
+    {
+      "id": "f-inp-sub",
+      "row": "mat", "col": 1, "span": 4, "kind": "rail",
+      "name": "InP 磷化銦基板",
+      "nameEn": "InP Substrate",
+      "competition": "oligopoly",
+      "desc": "磷化銦晶圓基板，是 EML / CW 雷射與光偵測器的根本材料；產能少、供需缺口大（2025 約缺 70%）。",
+      "marketSize": "供需缺口 ~70%",
+      "growth": "極高（2M 需求 vs 600k 產能）",
+      "analysis": "三家寡占 Sumitomo（JP）/ Coherent（US）/ AXT（US）；AXT 持 60-70% 但廠在中國、受中國出口許可閘制（2025Q4 出貨延遲）。對西方客戶仍可向 Sumitomo / Coherent 採購 → 是地緣風險與週期緊俏，非能力單點，不打 ⚑。",
+      "companies": [
+        { "name": "AXT", "ticker": "AXTI", "country": "US", "share": "InP 60-70%", "products": "InP / GaAs 基板", "note": "廠在中國、出口許可閘制" },
+        { "name": "Sumitomo Electric", "ticker": "5802.T", "country": "JP", "share": "InP 二大", "products": "InP 拋光基板", "note": "西方可採購第二源" },
+        { "name": "Coherent / II-VI", "ticker": "COHR", "country": "US", "share": "InP 自供 + 外售", "products": "InP 基板 + 雷射", "note": "垂直整合" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "f-inp-epi" }],
+      "sources": [
+        { "label": "InP the quiet bottleneck (yianisz)", "url": "https://yianisz.substack.com/p/indium-phosphide-inp-the-quiet-bottleneck" },
+        { "label": "Digitimes: InP 基板短缺 / IntelliEPI 需求", "url": "https://www.digitimes.com/news/a20251229PD212/substrate-intelliepi-demand-data-growth.html" },
+        { "label": "AXT Q4'25 中國出口許可延遲", "url": "https://www.semiconductor-today.com/news_items/2026/mar/axt-090326.shtml" }
+      ]
+    },
+    {
+      "id": "f-inp-epi",
+      "row": "mat", "col": 5, "span": 4, "kind": "stage",
+      "name": "InP / GaAs 磊晶片",
+      "nameEn": "InP / GaAs Epitaxial Wafers",
+      "competition": "oligopoly",
+      "desc": "在 InP / GaAs 基板上磊晶成長、賣給雷射 / PD 晶片廠的磊晶片；雷射廠外包磊晶帶動 merchant 模式成長。",
+      "marketSize": "雷射晶片 BoM 一環",
+      "growth": "極高（全新 2026 capex NT$4-5B）",
+      "analysis": "台廠磊晶聚落估全球 ~70% 合計市佔（Digitimes / moomoo）：全新 VPEC、聯亞 LandMark、聯德 IntelliEPI；加英系 IQE。多供應商 → 寡占而非絕對單點。EML 缺貨外溢拉動 CW 雷射磊晶需求。",
+      "companies": [
+        { "name": "全新 VPEC", "ticker": "2455.TW", "country": "TW", "share": "化合物磊晶全球前三", "products": "InP / GaAs 磊晶片", "note": "InP / GaAs 缺貨直接受惠，2026 大幅 capex" },
+        { "name": "聯亞 LandMark", "ticker": "3081.TW", "country": "TW", "share": "InP epi 領先台廠", "products": "InP epi + CW 雷射 / PD", "note": "InP ~40% 營收，2025 +52-104%" },
+        { "name": "聯德 IntelliEPI", "ticker": "3638.TWO", "country": "TW", "share": "InP epi", "products": "InP / GaAs 磊晶", "note": "InP >50% Q1'25 營收" },
+        { "name": "IQE", "ticker": "IQE.L", "country": "UK", "share": "歐系磊晶", "products": "化合物半導體磊晶", "note": "全球替代源" }
+      ],
+      "upstream": [{ "id": "eq-mocvd" }, { "id": "f-inp-sub" }],
+      "downstream": [{ "id": "d-eml" }, { "id": "d-cwld" }, { "id": "d-pd" }],
+      "sources": [
+        { "label": "moomoo: 台廠 InP 磊晶 ~70% 市佔", "url": "https://www.moomoo.com/community/feed/the-indium-phosphide-supply-crisis-that-hits-a-critical-point-114770606358534" },
+        { "label": "富果: 全新 VPEC 分析", "url": "https://blog.fugle.tw/post/vpec-analysis" }
+      ]
+    },
+    {
+      "id": "d-eml",
+      "row": "chip", "col": 1, "span": 2, "kind": "stage",
+      "name": "EML 電吸收調變雷射",
+      "nameEn": "EML (Electro-absorption Modulated Laser)",
+      "competition": "oligopoly",
+      "single": "容量鎖喉點（雙寡占）· 200G/lane EML 為 1.6T 模組唯一可行光源，僅 Lumentum + Coherent 兩家量產出貨、且 Coherent InP 廠售罄至 2027；Sumitomo / MACOM 200G/lane 認證落後 ≥18-24 月。NVIDIA 2026/3 各投 $2B（共 $4B）鎖兩家容量 + 優先供貨，使其餘買家交期排到 2027 之後、12 個月內無法補源（信心度 high · TechTimes + TrendForce + VerifiedMarket 多源）",
+      "desc": "高速模組的雷射引擎；200G-per-lane EML 是 1.6T 的關鍵啟用晶片。InP yield 僅 15-50%。",
+      "marketSize": "緊俏 · 2026 雙位數漲價",
+      "growth": "極高（NVDA $4B 鎖容量）",
+      "analysis": "全鏈最硬鎖喉，但本質是容量緊俏雙寡占非單一壟斷：Lumentum + Coherent 兩家量產 200G/lane EML，Coherent 以 Sherman TX InP 廠擴產但售罄至 2027。Sumitomo / Mitsubishi / MACOM 在 EML 有能力但 200G/lane 落後 ≥18-24 月。NVIDIA $4B lockup 各鎖兩家 + 優先容量讓其餘買家交期推到 2027 後 — 12 個月內無法換源補貨 = 真鎖喉點。",
+      "companies": [
+        { "name": "Lumentum", "ticker": "LITE", "country": "US", "share": "高階 EML ~50-60%", "products": "200G/lane EML 量產", "note": "NVIDIA 投 $2B，雙位數漲價（定價權）", "src": "https://www.techtimes.com/articles/317281/20260527/ai-data-center-optical-component-shortage-nvidias-4b-laser-lockup-pushes-rivals-past-2027.htm", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "Coherent", "ticker": "COHR", "country": "US", "share": "EML #2", "products": "EML + InP 雷射", "note": "Sherman TX InP 廠售罄至 2027；NVIDIA 投 $2B", "core_business": true, "supply_chain_lock": "tight" },
+        { "name": "Sumitomo / Mitsubishi", "ticker": "5802.T / 6503.T", "country": "JP", "share": "EML 有能力", "products": "1310nm DFB / EML", "note": "200G/lane 落後" },
+        { "name": "MACOM", "ticker": "MTSI", "country": "US", "share": "EML / driver", "products": "高速 EML + driver", "note": "補位" }
+      ],
+      "upstream": [{ "id": "f-inp-epi" }],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "TechTimes: NVIDIA $4B EML lockup", "url": "https://www.techtimes.com/articles/317281/20260527/ai-data-center-optical-component-shortage-nvidias-4b-laser-lockup-pushes-rivals-past-2027.htm" },
+        { "label": "TrendForce: 雷射鎖定 / 缺貨", "url": "https://www.trendforce.com/presscenter/news/20251208-12823.html" },
+        { "label": "VerifiedMarket: EML laser chip market", "url": "https://www.verifiedmarketresearch.com/product/eml-laser-chip-market/" }
+      ]
+    },
+    {
+      "id": "d-cwld",
+      "row": "chip", "col": 3, "span": 2, "kind": "stage",
+      "name": "CW / DFB 連續波雷射",
+      "nameEn": "CW / DFB Laser (light source)",
+      "competition": "highgrowth",
+      "desc": "連續波雷射光源（用於矽光子型 pluggable 與 EML-替代設計）；EML 缺貨外溢直接拉動 CW 雷射需求。",
+      "marketSize": "EML 外溢受惠",
+      "growth": "極高（聯亞 2025 +52-104%）",
+      "analysis": "因 NVIDIA 壟斷 EML 容量，需求外溢到 CW 雷射 — 帶動聯亞 LandMark 受惠。多供應商、高成長，非單點。",
+      "companies": [
+        { "name": "聯亞 LandMark", "ticker": "3081.TW", "country": "TW", "share": "CWLD 受惠台廠", "products": "CW 雷射 + PD", "note": "EML 外溢直接受惠" },
+        { "name": "Lumentum", "ticker": "LITE", "country": "US", "share": "CW 雷射領先", "products": "CW / UHP 雷射", "note": "" },
+        { "name": "全新 VPEC", "ticker": "2455.TW", "country": "TW", "share": "CW 雷射磊晶", "products": "CW 雷射 epi", "note": "上游磊晶供應" }
+      ],
+      "upstream": [{ "id": "f-inp-epi" }],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "工商時報: 雷射缺貨潮", "url": "https://www.ctee.com.tw/news/20251221700017-430502" },
+        { "label": "經濟日報: 聯亞 CWLD", "url": "https://money.udn.com/money/story/5607/8946386" }
+      ]
+    },
+    {
+      "id": "d-dsp",
+      "row": "chip", "col": 5, "span": 2, "kind": "stage",
+      "name": "PAM4 DSP / 重定時器",
+      "nameEn": "PAM4 DSP / Retimer",
+      "competition": "oligopoly",
+      "desc": "DSP-based pluggable 內負責整形 100G / 200G-per-lane PAM4 訊號的數位訊號處理器。",
+      "marketSize": "PAM4 光 DSP ~$7.5B(2025)",
+      "growth": "~18% CAGR",
+      "analysis": "Marvell 800G 光 DSP >60%；Marvell + Broadcom + MaxLinear 合計 ~70%。Broadcom 為部分 hyperscaler 已驗證的第二源 + Credo / MaxLinear 補位 → 寡占非絕對單點；LPO（線性 pluggable）長線威脅移除 DSP。",
+      "companies": [
+        { "name": "Marvell", "ticker": "MRVL", "country": "US", "share": "800G DSP >60%", "products": "800G / 1.6T PAM4 DSP", "note": "領先但 Broadcom 為第二源" },
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "DSP #2", "products": "PAM4 DSP", "note": "hyperscaler 第二源" },
+        { "name": "MaxLinear", "ticker": "MXL", "country": "US", "share": "DSP 補位", "products": "PAM4 DSP", "note": "" },
+        { "name": "Credo", "ticker": "CRDO", "country": "US", "share": "DSP / retimer", "products": "DSP + LPO retimer", "note": "光電混合路線" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "DataInsights: PAM4 optical DSP", "url": "https://www.datainsightsmarket.com/reports/pam4-optical-dsp-460842" },
+        { "label": "MarketReportAnalytics: PAM4 DSP ICs", "url": "https://www.marketreportanalytics.com/reports/pam4-dsp-ics-381739" }
+      ]
+    },
+    {
+      "id": "d-tia",
+      "row": "chip", "col": 7, "span": 1, "kind": "stage",
+      "name": "TIA / 驅動器",
+      "nameEn": "TIA / Driver (analog front-end)",
+      "competition": "oligopoly",
+      "desc": "跨阻放大器 + 調變器驅動 IC；224G 高線性類比晶片是 LPO（移除 DSP）的核心。",
+      "marketSize": "內嵌類比",
+      "growth": "高（LPO 上行）",
+      "analysis": "Semtech、MACOM、MaxLinear 領先；LPO 關鍵啟用者。競爭寡占。",
+      "companies": [
+        { "name": "Semtech", "ticker": "SMTC", "country": "US", "share": "224G 新世代", "products": "224G TIA + MZM driver", "note": "LPO / CPO 全家族" },
+        { "name": "MACOM", "ticker": "MTSI", "country": "US", "share": "高速 TIA / driver", "products": "PURE DRIVE 200G LPO", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "Semtech 224G IC family for linear optics", "url": "https://www.semtech.com/company/press/semtech-launches-224-gbps-ic-family-for-linear-optics-era" }
+      ]
+    },
+    {
+      "id": "d-pd",
+      "row": "chip", "col": 8, "span": 1, "kind": "stage",
+      "name": "光偵測器 PD",
+      "nameEn": "Photodetector (PIN / APD)",
+      "competition": "highgrowth",
+      "desc": "接收端光偵測二極體，把光轉成電；與雷射共用同一 InP / GaAs 磊晶基礎。",
+      "marketSize": "共用磊晶",
+      "growth": "高",
+      "analysis": "聯亞 / 全新 / 環宇活躍；多供應商、高成長。",
+      "companies": [
+        { "name": "聯亞 LandMark", "ticker": "3081.TW", "country": "TW", "share": "PD 台廠", "products": "InP PD", "note": "" },
+        { "name": "Coherent", "ticker": "COHR", "country": "US", "share": "PD 領先", "products": "高速 PD", "note": "" }
+      ],
+      "upstream": [{ "id": "f-inp-epi" }],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "工商時報: 雷射 / PD 供應鏈", "url": "https://www.ctee.com.tw/news/20251221700017-430502" }
+      ]
+    },
+    {
+      "id": "m-fau",
+      "row": "optics", "col": 1, "span": 3, "kind": "rail",
+      "name": "光纖陣列 FAU / 光學耦合",
+      "nameEn": "Fiber Array Unit (FAU)",
+      "competition": "oligopoly",
+      "desc": "把光纖精準排列並與光引擎輸出口對位的高精度元件；高密度模組 content 上升。",
+      "marketSize": "利基成長",
+      "growth": "極高（上詮 EPS 估 +175-260%）",
+      "analysis": "上詮 FOCI 做最難的保偏（PM）對位、為 TSMC COUPE 核心夥伴；與波若威構成 FAU 雙雄。Pluggable 角度為寡占、高 know-how，非單點（CPO 圖中 FOCI 為 COUPE 獨家，本圖從 pluggable 角度描述）。",
+      "companies": [
+        { "name": "上詮 FOCI", "ticker": "3363.TWO", "country": "TW", "share": "FAU 領先", "products": "PM-FAU + 被動對位", "note": "TSMC COUPE 核心夥伴" },
+        { "name": "波若威 Browave", "ticker": "3163.TW", "country": "TW", "share": "FAU 雙雄", "products": "FAU + 光被動", "note": "NVIDIA 認證中" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "TechNews: 上詮 FOCI 矽光子", "url": "https://finance.technews.tw/2025/11/24/foci-3363/" },
+        { "label": "今周刊: FAU 雙雄", "url": "https://www.businesstoday.com.tw/article/category/183008/post/202603180009/" }
+      ]
+    },
+    {
+      "id": "m-passive",
+      "row": "optics", "col": 4, "span": 3, "kind": "rail",
+      "name": "光被動 / 連接器 / 隔離器",
+      "nameEn": "Passive Optics · Connectors · Isolators",
+      "competition": "redocean",
+      "desc": "透鏡、隔離器、MPO / RF 連接器、模組內光學次組件。",
+      "marketSize": "分散",
+      "growth": "高",
+      "analysis": "光聖 Gigalane 從 RF 連接器轉進資料中心光被動（GM >40% 目標、2026Q1 EPS +83%）；眾多台廠競爭。",
+      "companies": [
+        { "name": "光聖 Gigalane", "ticker": "6442.TW", "country": "TW", "share": "北美 CSP 光被動", "products": "光被動 + 連接器", "note": "2026Q1 EPS +83%" },
+        { "name": "波若威 Browave", "ticker": "3163.TW", "country": "TW", "share": "光被動", "products": "WDM / 光被動", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "鉅亨網: 光聖", "url": "https://news.cnyes.com/news/id/6386561" },
+        { "label": "Pocket: 光聖", "url": "https://www.pocket.tw/school/report/SCHOOL/6283/" }
+      ]
+    },
+    {
+      "id": "m-vcsel",
+      "row": "optics", "col": 7, "span": 2, "kind": "rail",
+      "name": "VCSEL 短距方案",
+      "nameEn": "VCSEL (short-reach SR)",
+      "competition": "redocean",
+      "desc": "多模 VCSEL 短距模組（機櫃內），GaAs-based、成本低，但在 800G+ 漸失市佔給單模 EML。",
+      "marketSize": "成熟成本路線",
+      "growth": "1.6T 重要性下降",
+      "analysis": "成熟競爭（Lumentum / Coherent / Broadcom + 台廠 GaAs 磊晶全新 / 穩懋）。紅海、1.6T 相關性下降。",
+      "companies": [
+        { "name": "Broadcom", "ticker": "AVGO", "country": "US", "share": "VCSEL 領先", "products": "短距 VCSEL", "note": "" },
+        { "name": "穩懋 WIN Semi", "ticker": "3105.TWO", "country": "TW", "share": "GaAs 代工", "products": "VCSEL / GaAs foundry", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "富果: VPEC GaAs / VCSEL", "url": "https://blog.fugle.tw/post/vpec-analysis" }
+      ]
+    },
+    {
+      "id": "m-integrator",
+      "row": "module", "col": 1, "span": 3, "kind": "stage",
+      "name": "模組整合廠（品牌）",
+      "nameEn": "Module Integrators (transceiver brand)",
+      "competition": "oligopoly",
+      "desc": "設計並銷售成品 QSFP-DD / OSFP 800G / 1.6T 光收發模組給 hyperscaler 的廠商。",
+      "marketSize": "$26B (2026)",
+      "growth": "極高（800G+ 出貨 2.6x）",
+      "analysis": "競爭寡占，明確非單點。旭創 InnoLight #1（30-40%、約佔 NVIDIA 採購 35%）、Coherent #2（15-20%）、新易盛 Eoptolink 快速成長（8-15%、H1'25 +283%），加 Lumentum / 光迅 / AAOI。Top-5 約 50% 營收。",
+      "companies": [
+        { "name": "旭創 InnoLight", "ticker": "300308.SZ", "country": "CN", "share": "30-40% #1", "products": "800G / 1.6T 模組", "note": "約佔 NVIDIA 800G 採購 35%" },
+        { "name": "新易盛 Eoptolink", "ticker": "300502.SZ", "country": "CN", "share": "8-15%", "products": "800G / 1.6T 模組", "note": "H1'25 +283%" },
+        { "name": "Coherent", "ticker": "COHR", "country": "US", "share": "15-20% #2", "products": "800G / 1.6T 模組", "note": "垂直整合雷射" },
+        { "name": "光迅 Accelink", "ticker": "002281.SZ", "country": "CN", "share": "模組", "products": "800G 模組", "note": "" },
+        { "name": "AAOI", "ticker": "AAOI", "country": "US", "share": "1.6T 新單", "products": "800G / 1.6T 模組", "note": "2026/3 >$200M 1.6T 訂單" },
+        { "name": "眾達-KY / 前鼎", "ticker": "4977.TW / 4908.TW", "country": "TW", "share": "台廠模組", "products": "光收發模組", "note": "台廠補位" }
+      ],
+      "upstream": [{ "id": "d-eml" }, { "id": "d-cwld" }, { "id": "d-dsp" }, { "id": "d-tia" }, { "id": "d-pd" }, { "id": "m-fau" }, { "id": "m-passive" }, { "id": "m-vcsel" }, { "id": "m-ems" }],
+      "downstream": [{ "id": "d-demand" }],
+      "sources": [
+        { "label": "ip-fiber: InnoLight + Eoptolink 佔 NVIDIA 800G 60%", "url": "https://ip-fiber.com/blogs/news/nvidia-orders-surge-innolight-and-eoptolink-dominate-60-of-800g-sfp-optical-modules-supply" },
+        { "label": "Cignal AI: 800GbE 出貨 +60%", "url": "https://cignal.ai/2025/05/800gbe-optics-shipments-to-grow-60-in-2025/" }
+      ]
+    },
+    {
+      "id": "m-ems",
+      "row": "module", "col": 4, "span": 2, "kind": "stage",
+      "name": "委外光學組裝 EMS",
+      "nameEn": "Contract Optical Assembly (EMS)",
+      "competition": "oligopoly",
+      "desc": "替不自建產線的 OEM 做高精度光封裝 / 組裝。",
+      "marketSize": "Fabrinet FY25 >$3.4B",
+      "growth": "高",
+      "analysis": "Fabrinet 在高階委外光學組裝領先，datacom 約佔 FY25 營收 60%；但 NVIDIA 僅佔 27.6%（FY25，較 FY24 35.1% 下滑）、Top-2 46% — 集中度風險但客戶可雙源（Foxconn FIT、Luxshare 走 POET 光引擎）。高價值但非不可替代，不打 ⚑。",
+      "companies": [
+        { "name": "Fabrinet", "ticker": "FN", "country": "SG", "share": "高階委外光學領先", "products": "光封裝 / 組裝", "note": "datacom ~60% 營收、NVDA 27.6%" },
+        { "name": "Foxconn FIT", "ticker": "6088.HK", "country": "HK", "share": "光模組組裝", "products": "光收發模組組裝", "note": "替代委外源" },
+        { "name": "Luxshare 立訊", "ticker": "002475.SZ", "country": "CN", "share": "光引擎 / 組裝", "products": "POET 800G 光引擎", "note": "替代委外源" }
+      ],
+      "upstream": [{ "id": "eq-align" }],
+      "downstream": [{ "id": "m-integrator" }],
+      "sources": [
+        { "label": "Fabrinet 10-K 客戶集中度", "url": "https://investor.fabrinet.com/static-files/9a916b94-df74-471d-971e-a5ac4b02107c" },
+        { "label": "POET: FIT / Luxshare 800G 光引擎", "url": "https://www.eenewseurope.com/en/poet-samples-800g-optical-engine-for-datacentre-interconnect/" }
+      ]
+    },
+    {
+      "id": "d-demand",
+      "row": "module", "col": 6, "span": 3, "kind": "demand",
+      "name": "超大規模雲 / NVIDIA 需求",
+      "nameEn": "Hyperscaler & NVIDIA Demand",
+      "competition": "highgrowth",
+      "desc": "NVIDIA（GB200 / GB300 + Spectrum / Quantum 交換器）、Google、Amazon、Meta、Microsoft — 拉動全鏈的需求端。",
+      "marketSize": "AI optics → ~$100B by 2030",
+      "growth": "極高（LightCounting）",
+      "analysis": "NVIDIA 的容量預配（$4B EML lockup）主動重塑上游供給；hyperscaler 正驗證 1.6T 供下一代叢集。",
+      "companies": [
+        { "name": "NVIDIA", "ticker": "NVDA", "country": "US", "share": "需求主導", "products": "GB200 / GB300 + 交換器", "note": "$4B EML lockup 重塑供給" },
+        { "name": "Google / Amazon / Meta / Microsoft", "ticker": "GOOGL / AMZN / META / MSFT", "country": "US", "share": "hyperscaler 需求", "products": "AI 叢集", "note": "驗證 1.6T" }
+      ],
+      "upstream": [{ "id": "m-integrator" }],
+      "downstream": [],
+      "sources": [
+        { "label": "LightCounting: AI optics → $100B by 2030", "url": "https://www.lightcounting.com/newsletter/en/march-2026-ethernet-optics-382" }
+      ]
+    }
+  ],
+  "edges": [
+    ["eq-mocvd", "f-inp-epi"],
+    ["f-inp-sub", "f-inp-epi"],
+    ["f-inp-epi", "d-eml"],
+    ["f-inp-epi", "d-cwld"],
+    ["f-inp-epi", "d-pd"],
+    ["d-eml", "m-integrator"],
+    ["d-cwld", "m-integrator"],
+    ["d-dsp", "m-integrator"],
+    ["d-tia", "m-integrator"],
+    ["d-pd", "m-integrator"],
+    ["m-fau", "m-integrator"],
+    ["m-passive", "m-integrator"],
+    ["m-vcsel", "m-integrator"],
+    ["eq-align", "m-ems"],
+    ["m-ems", "m-integrator"],
+    ["m-integrator", "d-demand"]
+  ],
+  "single_point_framework": "v1.3"
+}

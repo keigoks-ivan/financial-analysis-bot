@@ -1,0 +1,370 @@
+{
+  "id": "copper",
+  "tab": "連接器 / 銅纜",
+  "title": "高速連接器 / 銅纜（Connectors & Copper Cabling）供應鏈",
+  "subtitle": "AI 機櫃內 scale-up 互連的銅路線：DAC 被動銅纜 / ACC 主動銅纜 / AEC 主動電纜 / NVLink 背板連接器 / GB200 NVL72 銅纜卡匣 / CPU·GPU LGA 插槽。整體為競爭寡占（Amphenol / TE / Molex / 立訊 / 貿聯 互打），唯一結構性鎖喉是 Credo 在 AEC 晶片 ~73-88% 近壟斷。ACC-MSA 2026/2 成軍 13 家（含 NVIDIA / Amphenol / Luxshare / Molex / TE）明示多源互通，由設計層面壓抑單點集中。",
+  "stats": [
+    { "k": "供應鏈節點", "v": 16 },
+    { "k": "涵蓋廠商", "v": "35+" },
+    { "k": "獨佔/關鍵單點", "v": 1, "sub": "Credo AEC 晶片", "hot": true }
+  ],
+  "rows": [
+    { "id": "conn", "label": "連接器 CONNECTORS", "main": false },
+    { "id": "cable", "label": "銅纜組裝 CABLE ASSEMBLY", "main": true },
+    { "id": "active", "label": "主動銅 ACTIVE COPPER (AEC / ACC)", "main": false },
+    { "id": "socket", "label": "插槽 SOCKETS", "main": false },
+    { "id": "demand", "label": "終端需求 DEMAND", "main": false }
+  ],
+  "nodes": [
+    {
+      "id": "conn-backplane",
+      "row": "conn", "col": 1, "span": 3, "kind": "stage",
+      "name": "NVLink 背板 / 脊柱連接器",
+      "nameEn": "NVLink Backplane / Spine Connectors",
+      "competition": "oligopoly",
+      "desc": "盲插高密度背板連接器（Amphenol Paladin HD / UltraPass），承載 GB200 NVL72 脊柱卡匣間 130 TB/s NVLink fabric。",
+      "marketSize": "GB200 連接器 ~RMB 1-2M/rack",
+      "growth": "IT Datacom +133% YoY",
+      "analysis": "Amphenol 為 NVLink 背板「primary initial source」，但 SemiAnalysis 明指「3 sources、份額隨時間變動」；TE 為標準備援、Luxshare 認證中 → 非單點。Amphenol 為大型多角化集團（🐘），不打 ⚑、不標 💎。",
+      "companies": [
+        { "name": "Amphenol", "ticker": "APH", "country": "US", "share": "primary ~50%+ 初期", "products": "Paladin HD2, UltraPass, OverPass 224G", "note": "primary initial source、3 源之一", "src": "https://newsletter.semianalysis.com/p/gb200-hardware-architecture-and-component" },
+        { "name": "TE Connectivity", "ticker": "TEL", "country": "CH", "share": "次要備援", "products": "Sliver, 224G 背板", "note": "已驗證備援" },
+        { "name": "Luxshare 立訊", "ticker": "002475.SZ", "country": "CN", "share": "認證中 20-30% 目標", "products": "高速銅連接器", "note": "海外擴產" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "cbl-nvlink" }],
+      "sources": [
+        { "label": "SemiAnalysis: GB200 hardware BOM", "url": "https://newsletter.semianalysis.com/p/gb200-hardware-architecture-and-component" },
+        { "label": "雪球: 安費諾 GB200 連接器", "url": "https://xueqiu.com/4563918998/283290141" }
+      ]
+    },
+    {
+      "id": "conn-nearpkg",
+      "row": "conn", "col": 4, "span": 3, "kind": "stage",
+      "name": "近封裝 / 224G I/O 連接器",
+      "nameEn": "Near-Package & 224G I/O (OSFP / QSFP-DD)",
+      "competition": "oligopoly",
+      "desc": "近 ASIC 與前面板可插拔 I/O 籠連接器，112G→224G per lane 供 800G / 1.6T 端口。",
+      "marketSize": "DC 銅高速連接器 $276M(24)→$481M(32)",
+      "growth": "~8.7-12% CAGR",
+      "analysis": "標準 4 強寡占 — Amphenol（Paladin / ExtremePort OSFP）、TE（Sliver）、Molex、Samtec 都出 224G。OIF 推 448G（OSFP-XD）。無單點。",
+      "companies": [
+        { "name": "Amphenol", "ticker": "APH", "country": "US", "share": "領先", "products": "ExtremePort OSFP 224G", "note": "" },
+        { "name": "TE Connectivity", "ticker": "TEL", "country": "CH", "share": "前二", "products": "Sliver 224G OSFP", "note": "" },
+        { "name": "Molex (Koch)", "ticker": "—", "country": "US", "share": "前四", "products": "224G I/O", "note": "未上市、Koch 持有" },
+        { "name": "Samtec", "ticker": "—", "country": "US", "share": "前四", "products": "224G", "note": "未上市" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "cbl-acc" }],
+      "sources": [
+        { "label": "Amphenol 224G high-speed solutions", "url": "https://www.amphenol-cs.com/224g-high-speed-solutions" },
+        { "label": "Copper high-speed connectors for DC market", "url": "https://www.intelmarketresearch.com/copper-high-speed-connectors-for-data-centers-market-23337" }
+      ]
+    },
+    {
+      "id": "conn-tw-io",
+      "row": "conn", "col": 7, "span": 2, "kind": "rail",
+      "name": "台廠高速 I/O 連接器",
+      "nameEn": "Taiwan High-Speed I/O Connectors",
+      "competition": "redocean",
+      "desc": "台廠二線連接器廠供高速線 / 連接器與 CPO 連接器訂單進 AI 伺服器鏈。",
+      "marketSize": "次階層補位",
+      "growth": "高",
+      "analysis": "詮欣 Cvilux 拿下兩家美系 CPO 交換器連接器 + 散熱訂單；凡甲 / 宣德在 GB200 鏈。全球 tier-1 之下的分散紅海。",
+      "companies": [
+        { "name": "詮欣 Cvilux", "ticker": "6205.TW", "country": "TW", "share": "CPO 連接器補位", "products": "CPO 交換器連接器 + 224G 高速線", "note": "兩家美系客戶" },
+        { "name": "凡甲 Bellwether", "ticker": "3526.TW", "country": "TW", "share": "GB200 連接器", "products": "GB200 連接器", "note": "" },
+        { "name": "宣德 Speed Tech", "ticker": "5457.TW", "country": "TW", "share": "GB200 零組件", "products": "GB200 連接器", "note": "立訊供應鏈受惠" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "cbl-dac" }],
+      "sources": [
+        { "label": "經濟日報: 詮欣 CPO 訂單", "url": "https://udn.com/news/story/7253/9224620" },
+        { "label": "經濟日報: GB200 台鏈連接器", "url": "https://money.udn.com/money/story/5607/8318394" }
+      ]
+    },
+    {
+      "id": "cbl-nvlink",
+      "row": "cable", "col": 1, "span": 2, "kind": "stage",
+      "name": "NVLink 銅纜卡匣組裝",
+      "nameEn": "NVLink Copper Cable Cartridge Assembly",
+      "competition": "oligopoly",
+      "desc": "GB200 NVL72 用 ~5,184 條同軸銅纜（>3.2km）組成 4 個 NVLink 卡匣，連 72 顆 GPU @ 900 GB/s；組成盲插卡匣。",
+      "marketSize": "2025 增量銅 ~RMB 60bn",
+      "growth": "~115% CAGR 2024-26",
+      "analysis": "Amphenol 為卡匣主要組裝，但鴻騰 Foxconn FIT 拿下 NVLink 銅纜 + 卡匣線組訂單、鴻海拿 NVLink 交換器 tray；組裝層多源。非單點。",
+      "companies": [
+        { "name": "Amphenol", "ticker": "APH", "country": "US", "share": "primary 卡匣", "products": "NVLink 脊柱卡匣 18x1RU", "note": "" },
+        { "name": "Foxconn FIT 鴻騰", "ticker": "6088.HK", "country": "HK", "share": "GB200 放量拿份額", "products": "NVLink 銅纜 + 線組", "note": "份額隨 ramp 上升" },
+        { "name": "Luxshare 立訊", "ticker": "002475.SZ", "country": "CN", "share": "DAC / ACC 組裝", "products": "DAC / ACC 線組", "note": "Google / Cisco 已拿單" }
+      ],
+      "upstream": [{ "id": "conn-backplane" }],
+      "downstream": [{ "id": "dem-rack-odm" }],
+      "sources": [
+        { "label": "NVIDIA: GB200 NVL72 設計 (OCP)", "url": "https://developer.nvidia.com/blog/nvidia-contributes-nvidia-gb200-nvl72-designs-to-open-compute-project/" },
+        { "label": "FIT 6088 GB200 銅纜訂單 (CMBI)", "url": "https://hk-official.cmbi.info/upload/eccd9bdf-5f71-414f-a08d-36e55b8f8430.pdf" }
+      ]
+    },
+    {
+      "id": "cbl-bizlink",
+      "row": "cable", "col": 3, "span": 2, "kind": "stage",
+      "name": "貿聯 電源線束 + ACC",
+      "nameEn": "BizLink Power Whip & ACC",
+      "competition": "highgrowth",
+      "desc": "貿聯供 GB200 / GB300 Power Whip、Inner Busbar、Inner / Rack Cable 加 DAC / AEC 資料傳輸品；已量產 224Gbps 銅纜。",
+      "marketSize": "法人 2026 營收上看千億元",
+      "growth": "伺服器線束價值 ~2x 一般伺服器",
+      "analysis": "2024 起 NVIDIA 認證 GB200 核心供應商；電源互連營收估 RMB 3.8bn(2025)→8.8bn(2026)。高成長但營收偏電源線束 + 多角化（EV / 工業），近高成長而非純玩家鎖喉，不標 💎。",
+      "companies": [
+        { "name": "貿聯-KY BizLink", "ticker": "3665.TWO", "country": "TW", "share": "NVIDIA 認證核心", "products": "Power Whip, Busbar, DAC / AEC, 224G 銅纜", "note": "GB200 / GB300 線束" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "dem-nvl72" }],
+      "sources": [
+        { "label": "CMoney: 貿聯 GB200 認證", "url": "https://cmnews.com.tw/article/sara-58206d02-d8cb-11ef-a382-a1f4c31fecf2" },
+        { "label": "Vocus: 貿聯法人報告", "url": "https://vocus.cc/article/68ec9cebfd89780001c40fd0" }
+      ]
+    },
+    {
+      "id": "cbl-tw-power",
+      "row": "cable", "col": 5, "span": 2, "kind": "rail",
+      "name": "台廠電源 / 備援連接器",
+      "nameEn": "Taiwan Power & BBU Connectors",
+      "competition": "oligopoly",
+      "desc": "GB200 BBU、電源連接器與客製線束 / 浸沒散熱相關連接器。",
+      "marketSize": "電源 / BBU 連接器",
+      "growth": "高",
+      "analysis": "健和興在電源連接器市佔高（Delta / Lite-On 客戶）、切 GB200 BBU；信邦做客製連接器 / 線束 + 浸沒散熱。",
+      "companies": [
+        { "name": "健和興 Excel Cell", "ticker": "3003.TW", "country": "TW", "share": "電源連接器高市佔", "products": "GB200 BBU + 電源連接器", "note": "Delta / Lite-On 客戶" },
+        { "name": "信邦 Sinbon", "ticker": "3023.TW", "country": "TW", "share": "客製線束", "products": "客製連接器 / 線束 + 浸沒散熱", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "dem-nvl72" }],
+      "sources": [
+        { "label": "經濟日報: 健和興法說 BBU", "url": "https://money.udn.com/money/story/5612/8391267" },
+        { "label": "理財周刊: 信邦", "url": "https://www.moneyweekly.com.tw/ArticleData/Info/Article/227864" }
+      ]
+    },
+    {
+      "id": "cbl-dac",
+      "row": "cable", "col": 7, "span": 1, "kind": "rail",
+      "name": "DAC 被動銅纜",
+      "nameEn": "DAC Passive Copper Cable",
+      "competition": "redocean",
+      "desc": "被動直連銅纜、無訊號晶片；224G / 800G 時延伸距離縮到 ~1m（400G 時 3-5m）。商品化、分散。",
+      "marketSize": "224G 占比縮小",
+      "growth": "漸被 ACC / AEC 取代",
+      "analysis": "眾多供應商（Amphenol / Molex / TE / Luxshare / Juniper 加台 / 中組裝廠）。紅海；800G+ 漸被 ACC / AEC 取代。",
+      "companies": [
+        { "name": "Luxshare 立訊", "ticker": "002475.SZ", "country": "CN", "share": "DAC 領先", "products": "DAC", "note": "" },
+        { "name": "Amphenol", "ticker": "APH", "country": "US", "share": "DAC 領先", "products": "DAC", "note": "" }
+      ],
+      "upstream": [{ "id": "conn-tw-io" }],
+      "downstream": [{ "id": "dem-hyperscaler" }],
+      "sources": [
+        { "label": "Vitex: 800G interconnect DAC/ACC/AEC/AOC 指南", "url": "https://www.vitextech.com/blogs/blog/800g-interconnect-selection-guide-dac-acc-aec-and-aoc-for-ai-data-center-fabrics" }
+      ]
+    },
+    {
+      "id": "cbl-acc",
+      "row": "cable", "col": 8, "span": 1, "kind": "rail",
+      "name": "ACC 主動銅纜（線性 EQ）",
+      "nameEn": "Active Copper Cable (Linear EQ)",
+      "competition": "emerging",
+      "desc": "兩端帶類比線性等化器的銅纜，~2-2.5m、極低功耗（1.6T 約 2.5W）；由 ACC-MSA（2026/2 成軍）規範。",
+      "marketSize": "2025 增量銅一環",
+      "growth": "高",
+      "analysis": "明示多源 — ACC-MSA 13 家含 Amphenol / Luxshare / Molex / TE / MACOM / Semtech，設計即互通，無單一鎖定。",
+      "companies": [
+        { "name": "MACOM", "ticker": "MTSI", "country": "US", "share": "ACC 線性驅動", "products": "ACC linear driver", "note": "MSA co-chair" },
+        { "name": "Semtech", "ticker": "SMTC", "country": "US", "share": "ACC 線性 EQ", "products": "ACC linear EQ", "note": "MSA co-chair" }
+      ],
+      "upstream": [{ "id": "conn-nearpkg" }],
+      "downstream": [{ "id": "dem-hyperscaler" }],
+      "sources": [
+        { "label": "ACC-MSA: 13 家成軍 (GlobeNewswire)", "url": "https://www.globenewswire.com/news-release/2026/02/23/3242613/19814/en/Thirteen-Industry-Leaders-Unite-to-Define-Active-Copper-Cable-Standards.html" },
+        { "label": "ACC-MSA 組織", "url": "https://www.acc-msa.org/news/thirteen-industry-leaders-unite-to-define-active-copper-cable-standard" }
+      ]
+    },
+    {
+      "id": "aec-credo",
+      "row": "active", "col": 1, "span": 2, "kind": "stage",
+      "name": "Credo AEC 晶片 + 主動纜",
+      "nameEn": "Credo AEC Chip + Cable",
+      "competition": "monopoly",
+      "single": "鎖喉點 · Credo AEC 晶片 ~73%(Q2'25)→~88%(2026) 全球市佔近壟斷；AEC = retimer / DSP 內嵌連接器，把銅延伸到 ~5-10m 供 row / rack scale-up。hyperscaler 換源需 firmware + interop + 可靠度燒機 6-12 個月，12 月內無法無痕替換（信心度 high · CNBC + Credo 8-K + exoswan 多源；註：Marvell / Astera 追趕中，18-36 月後鎖喉或鬆動）",
+      "desc": "AEC = retimer / DSP 內嵌於連接器，把銅延伸到 ~5-10m 供 row / rack scale-up；Credo 開創並主導此類。",
+      "marketSize": "AEC →$4bn by 2028",
+      "growth": "Credo +200% YoY",
+      "analysis": "真近壟斷 — Credo ~73%(Q2'25)→~88%(2026) AEC 市佔；Q3 FY26 營收 $407M（+201% YoY），AEC 約佔 Q1 FY26 $217M / $223M。全圖唯一真鎖喉。Marvell（1.6T AEC DSP）+ Astera（Aries）有能力但份額極小、尚未規模化取代。",
+      "companies": [
+        { "name": "Credo Technology", "ticker": "CRDO", "country": "US", "share": "AEC ~73-88%", "products": "AEC, SerDes, DSP, ZeroFlap optics", "note": "AI 連接純玩家", "src": "https://www.cnbc.com/2025/10/17/500-purple-cables-put-credo-in-middle-of-the-ai-boom.html", "core_business": true, "supply_chain_lock": "tight" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "aec-cable-mfr" }],
+      "sources": [
+        { "label": "CNBC: Credo $500 purple cables", "url": "https://www.cnbc.com/2025/10/17/500-purple-cables-put-credo-in-middle-of-the-ai-boom.html" },
+        { "label": "Credo Q3 FY26 8-K", "url": "https://www.sec.gov/Archives/edgar/data/0001807794/000162828026013205/credoq32026ex-9911.htm" },
+        { "label": "AEC 市佔 ~88% (exoswan)", "url": "https://exoswan.com/ai-infrastructure-stocks/" }
+      ]
+    },
+    {
+      "id": "aec-marvell",
+      "row": "active", "col": 3, "span": 2, "kind": "stage",
+      "name": "Marvell AEC DSP",
+      "nameEn": "Marvell AEC DSP",
+      "competition": "oligopoly",
+      "desc": "Marvell 出首顆 1.6T AEC DSP（200G/lane）已 GA；晶片端挑戰 Credo，同時加碼光（2026/2 併 Celestial AI）。",
+      "marketSize": "挑戰者",
+      "growth": "高",
+      "analysis": "AEC #2 挑戰者但遠落後 Credo；Marvell 戰略重心日益偏光、漸離銅。多角化集團。",
+      "companies": [
+        { "name": "Marvell", "ticker": "MRVL", "country": "US", "share": "挑戰者", "products": "1.6T AEC DSP 200G/lane", "note": "多角化（ASIC / 光 / 儲存）" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "aec-cable-mfr" }],
+      "sources": [
+        { "label": "Marvell: active copper cables blog", "url": "https://www.marvell.com/blogs/active-copper-cables-ai-rack-interconnects.html" }
+      ]
+    },
+    {
+      "id": "aec-astera",
+      "row": "active", "col": 5, "span": 2, "kind": "stage",
+      "name": "Astera Labs Aries（PCIe / CXL 主動纜）",
+      "nameEn": "Astera Labs Aries Smart Cable",
+      "competition": "oligopoly",
+      "desc": "Aries DSP retimer 內嵌彈性銅纜，把 PCIe Gen5 / CXL 延伸到 ~7m。邊界節點 — 偏 PCIe / CXL scale-out 而非 NVLink scale-up。",
+      "marketSize": "PCIe retimer 領先",
+      "growth": "高",
+      "analysis": "Astera 主導 PCIe retimer（Aries），但 AEC 為利基、遠不及 Credo；競 Credo Taurus 線。成長故事在 Scorpio switch 而非 AEC。",
+      "companies": [
+        { "name": "Astera Labs", "ticker": "ALAB", "country": "US", "share": "PCIe retimer 領先 / AEC 利基", "products": "Aries Smart Cable, Scorpio, Leo", "note": "AI 連接純玩家" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "aec-cable-mfr" }],
+      "sources": [
+        { "label": "Astera Aries Smart Cable Modules", "url": "https://www.asteralabs.com/products/aries-smart-cable-modules/" },
+        { "label": "CRDO vs ALAB 比較", "url": "https://www.tradingview.com/news/zacks:f817bafd9094b:0-crdo-vs-alab-which-high-speed-connectivity-stock-is-the-smarter-buy/" }
+      ]
+    },
+    {
+      "id": "aec-cable-mfr",
+      "row": "active", "col": 7, "span": 2, "kind": "rail",
+      "name": "AEC 纜線製造（連接器廠）",
+      "nameEn": "AEC Cable Manufacturers",
+      "competition": "oligopoly",
+      "desc": "AEC 纜線組裝端 — Amphenol / Molex / TE / 貿聯 把 Credo / Marvell DSP 包進纜線本體。",
+      "marketSize": "AEC DC $738M(25)→$3.57B(34)",
+      "growth": "~23.8% CAGR",
+      "analysis": "Molex / Amphenol / TE 合計 >45% AEC 纜線市場（2025）；晶片是鎖喉（Credo）、纜線本體是競爭環節。",
+      "companies": [
+        { "name": "Molex (Koch)", "ticker": "—", "country": "US", "share": "AEC 纜 >45%（合計）", "products": "AEC 纜", "note": "未上市" },
+        { "name": "Amphenol", "ticker": "APH", "country": "US", "share": "AEC 纜", "products": "AEC 纜", "note": "大型集團" },
+        { "name": "TE Connectivity", "ticker": "TEL", "country": "CH", "share": "AEC 纜", "products": "AEC 纜", "note": "" }
+      ],
+      "upstream": [{ "id": "aec-credo" }, { "id": "aec-marvell" }, { "id": "aec-astera" }],
+      "downstream": [{ "id": "dem-hyperscaler" }],
+      "sources": [
+        { "label": "AEC market: Molex / APH / TE >45%", "url": "https://www.intelmarketresearch.com/aec-active-cable-for-data-centers-market-27749" }
+      ]
+    },
+    {
+      "id": "sock-lotes",
+      "row": "socket", "col": 1, "span": 4, "kind": "stage",
+      "name": "CPU / GPU LGA 插槽",
+      "nameEn": "CPU / GPU LGA Sockets",
+      "competition": "oligopoly",
+      "desc": "嘉澤 Lotes 為全球前三 CPU 插槽供應商（~30-35%），供 Intel（Eagle Stream→Birch Stream，腳位 4,677→7,529）與 AMD（AM5）；GPU / 加速器 socketing 萌芽。",
+      "marketSize": "CPU socket $1.87B(24)→$2.76B(30)",
+      "growth": "6.7% CAGR（腳位升級拉 ASP）",
+      "analysis": "強寡占（~30-35%）但 TE + Foxconn 共定 LGA de-facto 標準、非單點。腳位攀升（Birch Stream 7,529 pins）拉 ASP。socket TAM 不大。",
+      "companies": [
+        { "name": "嘉澤 Lotes", "ticker": "3533.TW", "country": "TW", "share": "~30-35% 前三", "products": "LGA socket, Birch Stream", "note": "插槽純玩家" },
+        { "name": "Foxconn", "ticker": "2317.TW", "country": "TW", "share": "tier-1", "products": "LGA / PGA socket", "note": "大型集團" },
+        { "name": "TE Connectivity", "ticker": "TEL", "country": "CH", "share": "tier-1 de-facto 標準", "products": "socket", "note": "" }
+      ],
+      "upstream": [],
+      "downstream": [{ "id": "dem-nvl72" }],
+      "sources": [
+        { "label": "富果: Lotes 全球前三", "url": "https://blog.fugle.tw/post/lotes-report-2023" },
+        { "label": "鉅亨網: 嘉澤 伺服器插槽龍頭", "url": "https://news.cnyes.com/news/id/6175869" }
+      ]
+    },
+    {
+      "id": "dem-nvl72",
+      "row": "demand", "col": 1, "span": 3, "kind": "demand",
+      "name": "GB200 / GB300 NVL72 機櫃",
+      "nameEn": "GB200 / GB300 NVL72 Racks",
+      "competition": "highgrowth",
+      "desc": "每櫃 72 Blackwell GPU + 36 Grace CPU；銅取代光省 ~20kW/rack；GB300 走「短距銅 + 長距 CPO」。",
+      "marketSize": "10k racks 在手 → 50k 估",
+      "growth": "scale-up 銅 ~RMB 100bn 增量",
+      "analysis": "錨點需求。Broadcom 稱銅壽命延到 2028。GB300 scale-up 脊柱仍續用銅。",
+      "companies": [
+        { "name": "NVIDIA", "ticker": "NVDA", "country": "US", "share": "需求主導", "products": "GB200 / GB300 NVL72", "note": "" }
+      ],
+      "upstream": [{ "id": "cbl-bizlink" }, { "id": "cbl-tw-power" }, { "id": "sock-lotes" }, { "id": "dem-rack-odm" }],
+      "downstream": [],
+      "sources": [
+        { "label": "NVIDIA: GB200 NVL72", "url": "https://www.nvidia.com/en-us/data-center/gb200-nvl72/" },
+        { "label": "山證: 高速銅纜深度", "url": "https://www.hstong.com/news/hk/detail/24080609560388770" }
+      ]
+    },
+    {
+      "id": "dem-rack-odm",
+      "row": "demand", "col": 4, "span": 2, "kind": "demand",
+      "name": "機櫃 ODM / NVLink 交換器代工",
+      "nameEn": "Rack ODM / NVLink Switch Integration",
+      "competition": "highgrowth",
+      "desc": "鴻海拿下 NVLink 交換器 tray 代工；每櫃 7 顆 NVLink 交換器。",
+      "marketSize": "代工拉動連接器 content",
+      "growth": "高",
+      "analysis": "鴻海為 NVLink 交換器代工要角（UDN）；Quanta / Wiwynn / Wistron 組裝機櫃，帶動連接器 content。",
+      "companies": [
+        { "name": "鴻海 Hon Hai", "ticker": "2317.TW", "country": "TW", "share": "NVLink 交換器代工", "products": "NVLink switch tray", "note": "" }
+      ],
+      "upstream": [{ "id": "cbl-nvlink" }],
+      "downstream": [{ "id": "dem-nvl72" }],
+      "sources": [
+        { "label": "經濟日報: 鴻海 NVLink 交換器", "url": "https://money.udn.com/money/story/5612/8037218" }
+      ]
+    },
+    {
+      "id": "dem-hyperscaler",
+      "row": "demand", "col": 6, "span": 3, "kind": "demand",
+      "name": "超大規模 scale-up 機房",
+      "nameEn": "Hyperscaler Scale-Up Fabric",
+      "competition": "highgrowth",
+      "desc": "Amazon、Microsoft、xAI 跨 GPU 叢集部署 AEC / ACC；Credo 客戶集中度在分散（Amazon 86%→61%）。",
+      "marketSize": "scale-up 銅需求擴張",
+      "growth": "高",
+      "analysis": "需求跨 hyperscaler 分散 — 支撐多源論與 Credo 出貨量。",
+      "companies": [
+        { "name": "Amazon / Microsoft / xAI", "ticker": "AMZN / MSFT", "country": "US", "share": "AEC scale-up 部署", "products": "AEC / ACC 叢集", "note": "" }
+      ],
+      "upstream": [{ "id": "cbl-dac" }, { "id": "cbl-acc" }, { "id": "aec-cable-mfr" }],
+      "downstream": [],
+      "sources": [
+        { "label": "Credo hyperscaler 集中度", "url": "https://chipstockinvestor.com/credo-technology-ai-data-center-tech-momentum-headed-into-2026/" }
+      ]
+    }
+  ],
+  "edges": [
+    ["conn-backplane", "cbl-nvlink"],
+    ["conn-nearpkg", "cbl-acc"],
+    ["conn-tw-io", "cbl-dac"],
+    ["aec-credo", "aec-cable-mfr"],
+    ["aec-marvell", "aec-cable-mfr"],
+    ["aec-astera", "aec-cable-mfr"],
+    ["aec-cable-mfr", "dem-hyperscaler"],
+    ["cbl-nvlink", "dem-rack-odm"],
+    ["cbl-bizlink", "dem-nvl72"],
+    ["cbl-tw-power", "dem-nvl72"],
+    ["cbl-dac", "dem-hyperscaler"],
+    ["cbl-acc", "dem-hyperscaler"],
+    ["sock-lotes", "dem-nvl72"],
+    ["dem-rack-odm", "dem-nvl72"]
+  ],
+  "single_point_framework": "v1.3"
+}
